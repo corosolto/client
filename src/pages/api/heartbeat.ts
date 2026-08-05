@@ -2,29 +2,25 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { geoFrom } from '../../lib/geo';
+import { json, jsonError } from '../../lib/http';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
-  if (!supabaseAdmin)
-    return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
+  if (!supabaseAdmin) return json(NOT_CONFIGURED, 503);
   let body: any;
-  try { body = await request.json(); } catch {
-    return new Response(JSON.stringify({ error: 'bad_json' }), { status: 400, headers: { 'content-type': 'application/json' } });
-  }
+  try { body = await request.json(); } catch { return jsonError('bad_json', 400); }
   const { nick, token } = body ?? {};
-  if (typeof nick !== 'string' || typeof token !== 'string')
-    return new Response(JSON.stringify({ error: 'missing_fields' }), { status: 400, headers: { 'content-type': 'application/json' } });
+  if (typeof nick !== 'string' || typeof token !== 'string') return jsonError('missing_fields', 400);
 
   const { data: player } = await supabaseAdmin
     .from('players').select('nick').eq('nick', nick.slice(0, 14)).eq('token', token).maybeSingle();
-  if (!player)
-    return new Response(JSON.stringify({ error: 'token inválido' }), { status: 403, headers: { 'content-type': 'application/json' } });
+  if (!player) return jsonError('token inválido', 403);
 
   const g = geoFrom(request);
   await supabaseAdmin.from('presence').upsert({
     nick: player.nick, last_seen: new Date().toISOString(),
     city: g?.city ?? null, country: g?.country ?? null, lat: g?.lat ?? null, lon: g?.lon ?? null,
   });
-  return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
+  return json({ ok: true });
 };

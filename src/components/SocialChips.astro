@@ -1,0 +1,28 @@
+---
+// Ícones das redes do jogador. Usa a lista nova (`socials`) e cai pro
+// `social_link` legado quando o jogador só tem uma rede — mesma lógica que
+// estava duplicada em /ranking e /u/<id>/<nick>.
+import { normalizeSocialUrl, socialNet, NET_INFO, netIcon } from '../lib/social';
+
+interface Props {
+  socials?: { net?: string; url: string }[] | null;
+  socialLink?: string | null;
+  size?: number;
+  /** estilo de cada <a> (a cor da rede é acrescentada depois) */
+  linkStyle?: string;
+}
+const { socials, socialLink, size = 15, linkStyle = '' } = Astro.props;
+
+const list = socials?.length
+  ? socials
+  : (socialLink ? [{ net: socialNet(socialLink), url: socialLink }] : []);
+---
+{list.map((s) => {
+  const net = s.net || socialNet(s.url);
+  const info = NET_INFO[net] || NET_INFO.site;
+  return (
+    <a href={normalizeSocialUrl(s.url)} target="_blank" rel="noopener" title={info.label}
+       style={`${linkStyle};color:${info.color};text-decoration:none`}
+       set:html={netIcon(net, size)} />
+  );
+})}

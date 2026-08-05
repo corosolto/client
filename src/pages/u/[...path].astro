@@ -2,9 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import { supabaseAdmin } from '../../lib/supabase';
 import { displayTime } from '../../lib/fmt';
-import { normalizeSocialUrl, socialAvatar, socialNet, NET_INFO, netIcon } from '../../lib/social';
-import { CHARS, charSvg } from '../../lib/charsvg';
-import { sideOf } from '../../lib/side';
+import PlayerAvatar from '../../components/PlayerAvatar.astro';
+import SocialChips from '../../components/SocialChips.astro';
 
 export const prerender = false;
 
@@ -51,30 +50,18 @@ const desc = p ? `${p.kills} kills · K/D ${kd} · ${p.wins > 0 ? p.wins : "—"
   {p && (
     <>
       <div style="display:flex;align-items:center;gap:16px">
-        {(() => {
-          const av = p.players.avatar_url || socialAvatar(p.players.social_link);
-          if (av) return <img src={av} alt={`Avatar de ${nick}`} width="72" height="72" style="border-radius:50%;border:2px solid #4a5a2a;object-fit:cover">;
-          if (p.last_character && CHARS[p.last_character]) {
-            const [, sc] = sideOf(p.matches_p, p.matches_b);
-            return (
-              <svg width="72" height="72" viewBox="688 36 120 120" style="border-radius:50%;border:2px solid #4a5a2a;background:#161a12">
-                <Fragment set:html={charSvg(p.last_character, sc, 'cav-head')} />
-              </svg>
-            );
-          }
-          return <div style="width:72px;height:72px;border-radius:50%;border:2px solid #4a5a2a;background:#161a12;display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--cs);font-family:'Arial Black',sans-serif">{p.nick[0].toUpperCase()}</div>;
-        })()}
+        <PlayerAvatar
+          nick={p.nick} avatarUrl={p.players.avatar_url} socialLink={p.players.social_link}
+          character={p.last_character} matchesP={p.matches_p} matchesB={p.matches_b}
+          size={72} clipId="cav-head" alt={`Avatar de ${nick}`}
+          imgStyle="border-radius:50%;border:2px solid #4a5a2a;object-fit:cover"
+          svgStyle="border-radius:50%;border:2px solid #4a5a2a;background:#161a12"
+          initialStyle="width:72px;height:72px;border-radius:50%;border:2px solid #4a5a2a;background:#161a12;display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--cs);font-family:'Arial Black',sans-serif" />
         <div>
           <h1 style="margin-bottom:4px">{nick}</h1>
           <div>
-            {(p.players.socials?.length ? p.players.socials : (p.players.social_link ? [{ net: socialNet(p.players.social_link), url: p.players.social_link }] : [])).map((s: any) => {
-              const net = s.net || socialNet(s.url), info = NET_INFO[net] || NET_INFO.site;
-              return (
-                <a href={normalizeSocialUrl(s.url)} target="_blank" rel="noopener" title={info.label}
-                   style={`display:inline-block;margin-right:8px;color:${info.color};text-decoration:none`}
-                   set:html={netIcon(net, 20)} />
-              );
-            })}
+            <SocialChips socials={p.players.socials} socialLink={p.players.social_link} size={20}
+                         linkStyle="display:inline-block;margin-right:8px" />
           </div>
         </div>
       </div>

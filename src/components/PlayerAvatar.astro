@@ -1,0 +1,46 @@
+---
+// Avatar do jogador, com a cascata de fallback: foto → avatar da rede social →
+// retrato do personagem que ele joga → inicial do nick.
+// Essa cascata estava duplicada em /ranking e /u/<id>/<nick>.
+//
+// Os estilos vêm por prop porque as duas telas usam medidas diferentes
+// (24px alinhado na tabela × 72px com borda no perfil) e a ideia aqui é
+// centralizar a LÓGICA sem mexer no visual de nenhuma das duas.
+import { socialAvatar } from '../lib/social';
+import { CHARS, charSvg } from '../lib/charsvg';
+import { sideOf } from '../lib/side';
+
+interface Props {
+  nick: string;
+  avatarUrl?: string | null;
+  socialLink?: string | null;
+  character?: string | null;
+  matchesP?: number;
+  matchesB?: number;
+  size: number;
+  /** id único do clipPath — precisa ser distinto por retrato na mesma página */
+  clipId: string;
+  alt?: string;
+  imgStyle?: string;
+  svgStyle?: string;
+  /** se vazio, não desenha o fallback de inicial (a tabela do ranking não usa) */
+  initialStyle?: string;
+}
+const {
+  nick, avatarUrl, socialLink, character, matchesP = 0, matchesB = 0,
+  size, clipId, alt = '', imgStyle = '', svgStyle = '', initialStyle = '',
+} = Astro.props;
+
+const photo = avatarUrl || socialAvatar(socialLink);
+const hasChar = !!(character && CHARS[character]);
+const [, sideColor] = sideOf(matchesP, matchesB);
+---
+{photo && <img src={photo} alt={alt} width={size} height={size} style={imgStyle} />}
+{!photo && hasChar && (
+  <svg width={size} height={size} viewBox="688 36 120 120" style={svgStyle}>
+    <Fragment set:html={charSvg(character!, sideColor, clipId)} />
+  </svg>
+)}
+{!photo && !hasChar && initialStyle && (
+  <div style={initialStyle}>{(nick[0] || '?').toUpperCase()}</div>
+)}

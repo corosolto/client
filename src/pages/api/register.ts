@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { buildSocialUrl } from '../../lib/social';
+import { json, jsonError } from '../../lib/http';
 
 export const prerender = false;
 
@@ -16,8 +17,7 @@ function prune(now: number) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  if (!supabaseAdmin)
-    return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
+  if (!supabaseAdmin) return json(NOT_CONFIGURED, 503);
 
   // rate limit de registro: 10/min por IP (anti nick-farming)
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
@@ -25,23 +25,26 @@ export const POST: APIRoute = async ({ request }) => {
   prune(now);
   const prev = regHits.get(ip) || [];
   const recent = prev.filter(t => now - t < REG_WINDOW_MS);
-  if (recent.length >= 10)
-    return new Response(JSON.stringify({ error: 'rate_limited' }), { status: 429, headers: { 'content-type': 'application/json' } });
+  if (recent.length >= 10) return jsonError('rate_limited', 429);
   recent.push(now); regHits.set(ip, recent);
 
   let body: any;
-  try { body = await request.json(); } catch {
-    return new Response(JSON.stringify({ error: 'bad_json' }), { status: 400, headers: { 'content-type': 'application/json' } });
-  }
+  try { body = await request.json(); } catch { return jsonError('bad_json', 400); }
   const { nick, token, social, socials, accessToken, avatarUrl } = body ?? {};
   if (typeof nick !== 'string' || typeof token !== 'string' || nick.trim().length < 2)
-    return new Response(JSON.stringify({ error: 'missing_fields' }), { status: 400, headers: { 'content-type': 'application/json' } });
+    return jsonError('missing_fields', 400);
+
+  // o nick normalizado é a chave de tudo daqui pra baixo (era recalculado 4×)
+  const n = nick.trim().slice(0, 14);
   const { error } = await supabaseAdmin.rpc('register_player', {
-    p_nick: nick.trim().slice(0, 14), p_token: token,
+    p_nick: n, p_token: token,
     p_social: typeof social === 'string' ? social.slice(0, 60) : null,
   });
-  if (error)
-    return new Response(JSON.stringify({ error: error.message }), { status: 409, headers: { 'content-type': 'application/json' } });
+  if (error) return jsonError(error.message, 409);
+
+  // atualiza só a linha do dono do par nick+token
+  const updateOwn = (patch: Record<string, unknown>) =>
+    supabaseAdmin!.from('players').update(patch).eq('nick', n).eq('token', token);
 
   // multi-redes: [{net, handle}] → [{net, url}] + social_link = primeira
   if (Array.isArray(socials) && socials.length) {
@@ -50,11 +53,8 @@ export const POST: APIRoute = async ({ request }) => {
       .slice(0, 5)
       .map((s: any) => ({ net: s.net.slice(0, 12), url: buildSocialUrl(s.net, s.handle.slice(0, 40)) }))
       .filter((s: any) => s.url);
-    if (list.length) {
-      await supabaseAdmin.from('players')
-        .update({ socials: list, social_link: list[0].url.slice(0, 60) })
-        .eq('nick', nick.trim().slice(0, 14)).eq('token', token);
-    }
+    if (list.length)
+      await updateOwn({ socials: list, social_link: list[0].url.slice(0, 60) });
   }
 
   // se veio sessão OAuth, vincula auth_user + avatar do provedor/custom
@@ -62,15 +62,14 @@ export const POST: APIRoute = async ({ request }) => {
     const { data: { user } } = await supabaseAdmin.auth.getUser(accessToken);
     if (user) {
       const meta: any = user.user_metadata || {};
-      await supabaseAdmin.from('players').update({
+      await updateOwn({
         auth_user: user.id,
         avatar_url: typeof avatarUrl === 'string' ? avatarUrl.slice(0, 300)
           : (meta.avatar_url || meta.picture || null),
-      }).eq('nick', nick.trim().slice(0, 14)).eq('token', token);
+      });
     }
   } else if (typeof avatarUrl === 'string' && avatarUrl.length > 10) {
-    await supabaseAdmin.from('players').update({ avatar_url: avatarUrl.slice(0, 300) })
-      .eq('nick', nick.trim().slice(0, 14)).eq('token', token);
+    await updateOwn({ avatar_url: avatarUrl.slice(0, 300) });
   }
-  return new Response(JSON.stringify({ ok: true }), { headers: { 'content-type': 'application/json' } });
+  return json({ ok: true });
 };

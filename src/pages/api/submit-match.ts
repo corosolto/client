@@ -3,6 +3,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { geoFrom } from '../../lib/geo';
+import { json, jsonError } from '../../lib/http';
 
 export const prerender = false;
 
@@ -17,22 +18,17 @@ function prune(now: number) {
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
-  if (!supabaseAdmin)
-    return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
+  if (!supabaseAdmin) return json(NOT_CONFIGURED, 503);
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || clientAddress || 'unknown';
   const now = Date.now();
   prune(now);
-  if (hits.get(ip) && now - hits.get(ip)! < WINDOW_MS)
-    return new Response(JSON.stringify({ error: 'rate_limited' }), { status: 429, headers: { 'content-type': 'application/json' } });
+  if (hits.get(ip) && now - hits.get(ip)! < WINDOW_MS) return jsonError('rate_limited', 429);
 
   let body: any;
-  try { body = await request.json(); } catch {
-    return new Response(JSON.stringify({ error: 'bad_json' }), { status: 400, headers: { 'content-type': 'application/json' } });
-  }
+  try { body = await request.json(); } catch { return jsonError('bad_json', 400); }
   const { nick, token, won, kills, deaths, headshots, bestStreak, rounds, team, seconds, character } = body ?? {};
-  if (typeof nick !== 'string' || typeof token !== 'string')
-    return new Response(JSON.stringify({ error: 'missing_fields' }), { status: 400, headers: { 'content-type': 'application/json' } });
+  if (typeof nick !== 'string' || typeof token !== 'string') return jsonError('missing_fields', 400);
 
   const n = nick.slice(0, 14);
   // cascata de compatibilidade: se a função do banco está desatualizada
@@ -49,15 +45,15 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     error = r.error;
     if (!/could not find the function|schema cache/i.test(r.error.message)) break; // erro real (token, rate limit…)
   }
-  if (error)
-    return new Response(JSON.stringify({ error: error.message }), { status: 403, headers: { 'content-type': 'application/json' } });
+  if (error) return jsonError(error.message, 403);
 
   hits.set(ip, now);
   // geo: presença + histórico agregado por cidade (nunca IP bruto)
   const g = geoFrom(request);
-  if (g) {    const today = new Date().toISOString().slice(0, 10);
+  if (g) {
+    const today = new Date().toISOString().slice(0, 10);
     await supabaseAdmin.from('presence').upsert({
-      nick: nick.slice(0, 14), last_seen: new Date().toISOString(),
+      nick: n, last_seen: new Date().toISOString(),
       city: g.city, country: g.country, lat: g.lat, lon: g.lon,
     });
     if (g.city) {
@@ -70,7 +66,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
       });
     }
   }
-  return new Response(JSON.stringify(degraded
+  return json(degraded
     ? { ok: true, warn: 'banco desatualizado — rode supabase/schema.sql (perdeu rounds/time/tempo desta partida)' }
-    : { ok: true }), { headers: { 'content-type': 'application/json' } });
+    : { ok: true });
 };

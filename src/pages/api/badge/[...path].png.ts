@@ -9,6 +9,8 @@ import { FONT_BOLD_B64 } from '../../../lib/font-data';
 import { displayTime } from '../../../lib/fmt';
 import { CHARS, charSvg, charName } from '../../../lib/charsvg';
 import { socialAvatar } from '../../../lib/social';
+import { sideOf } from '../../../lib/side';
+import { json } from '../../../lib/http';
 
 export const prerender = false;
 
@@ -35,13 +37,6 @@ async function avatarDataUri(url?: string | null): Promise<string | null> {
     const png = await sharp(buf).resize(120, 120, { fit: 'cover' }).png().toBuffer();
     return 'data:image/png;base64,' + png.toString('base64');
   } catch { return null; }
-}
-
-// lado do jogador: P > B = PETISTA, B > P = BOLSONARISTA, empate = NEUTRO
-export function sideOf(mp: number, mb: number): [string, string] {
-  if (mp > mb) return ['PETISTA', '#e03232'];
-  if (mb > mp) return ['BOLSONARISTA', '#1faa4d'];
-  return ['NEUTRO', '#ffd23f'];
 }
 
 function badgeSvg(p: any, avatarUri: string | null, charId: string | null): string {
@@ -91,14 +86,12 @@ export const GET: APIRoute = async (ctx) => {
   } catch (e: any) {
     // stack fica no log da Vercel, nunca na resposta (vazava caminho interno)
     console.error('[badge] falhou:', e);
-    return new Response(JSON.stringify({ error: 'erro ao gerar a badge' }),
-      { status: 500, headers: { 'content-type': 'application/json' } });
+    return json({ error: 'erro ao gerar a badge' }, 500);
   }
 };
 
 const handle: APIRoute = async ({ params, request }) => {
-  if (!supabaseAdmin)
-    return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
+  if (!supabaseAdmin) return json(NOT_CONFIGURED, 503);
   const parts = (params.path || '').split('/').filter(Boolean);
   let query = supabaseAdmin.from('stats').select('*, players!inner(id, nick, social_link, avatar_url)');
   const first = parts[0] || '';

@@ -2,9 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { displayTime } from '../lib/fmt';
-import { normalizeSocialUrl, socialAvatar, socialNet, NET_INFO, netIcon } from '../lib/social';
-import { CHARS, charSvg } from '../lib/charsvg';
-import { sideOf } from '../lib/side';
+import PlayerAvatar from '../components/PlayerAvatar.astro';
+import SocialChips from '../components/SocialChips.astro';
 
 export const prerender = false;
 
@@ -38,29 +37,16 @@ const rows = players.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
           <tr style={`${(curPage - 1) * PAGE_SIZE + i < 3 ? 'color:#ffd23f;font-weight:bold' : 'color:#c9bfa4'}`}>
             <td>{(curPage - 1) * PAGE_SIZE + i + 1}</td>
             <td>
-              {(() => {
-                const av = p.avatar_url || socialAvatar(p.social_link);
-                if (av) return <img src={av} alt="" width="24" height="24" style="border-radius:50%;vertical-align:-6px;margin-right:6px;object-fit:cover">;
-                if (p.last_character && CHARS[p.last_character]) {
-                  const [, sc] = sideOf(p.matches_p, p.matches_b);
-                  return (
-                    <svg width="24" height="24" viewBox="688 36 120 120" style="vertical-align:-5px;margin-right:6px;border-radius:50%">
-                      <Fragment set:html={charSvg(p.last_character, sc, `cav-r${i}`)} />
-                    </svg>
-                  );
-                }
-                return null;
-              })()}
+              <PlayerAvatar
+                nick={p.nick} avatarUrl={p.avatar_url} socialLink={p.social_link}
+                character={p.last_character} matchesP={p.matches_p} matchesB={p.matches_b}
+                size={24} clipId={`cav-r${i}`}
+                imgStyle="border-radius:50%;vertical-align:-6px;margin-right:6px;object-fit:cover"
+                svgStyle="vertical-align:-5px;margin-right:6px;border-radius:50%" />
               {onlineNicks.has(p.nick) && <span title="online agora" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3fdd57;box-shadow:0 0 6px #3fdd57;margin-right:6px;vertical-align:1px"></span>}
               <a href={p.id ? `/u/${p.id}/${encodeURIComponent(p.nick)}` : `/u/${encodeURIComponent(p.nick)}`} style="color:inherit">{p.nick}</a>
-              {(p.socials?.length ? p.socials : (p.social_link ? [{ net: socialNet(p.social_link), url: p.social_link }] : [])).map((s: any) => {
-                const net = s.net || socialNet(s.url), info = NET_INFO[net] || NET_INFO.site;
-                return (
-                  <a href={normalizeSocialUrl(s.url)} target="_blank" rel="noopener" title={info.label}
-                     style={`display:inline-block;margin-left:6px;vertical-align:-3px;color:${info.color};text-decoration:none`}
-                     set:html={netIcon(net, 15)} />
-                );
-              })}
+              <SocialChips socials={p.socials} socialLink={p.social_link} size={15}
+                           linkStyle="display:inline-block;margin-left:6px;vertical-align:-3px" />
             </td>
             <td>{p.matches}</td>
             <td>{p.wins > 0 ? p.wins : "—"}</td>
