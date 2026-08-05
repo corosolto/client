@@ -220,8 +220,16 @@ export class Game {
     this.keys = {};
     this._kd = e => {
       if (e.code === 'Tab') { e.preventDefault(); this._showScoreboard(true); }
-      // em pointer lock, engole atalhos do navegador (Ctrl+S/D/A/R…) — Ctrl+W o Chrome não deixa prevenir, use C pra agachar
-      if ((e.ctrlKey || e.metaKey) && document.pointerLockElement) e.preventDefault();
+      // Em pointer lock, engole os atalhos que o navegador deixa prevenir
+      // (Ctrl+S/D/A…). Os RESERVADOS não dá: Ctrl+W fecha a aba e Ctrl+R
+      // recarrega mesmo com preventDefault — testado no Chromium. Por isso
+      // agachar NÃO é mais Ctrl (veja _updatePlayer): com só a aba do jogo
+      // aberta, Ctrl+W ao andar agachado pra frente fechava o navegador
+      // inteiro no meio da partida.
+      if ((e.ctrlKey || e.metaKey) && document.pointerLockElement) {
+        e.preventDefault();
+        this._avisaCtrl();
+      }
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];
@@ -756,8 +764,12 @@ export class Game {
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
     }
-    // crouch (CTRL ou C) — slower, steadier aim
-    const wantCrouch = (this.keys.ControlLeft || this.keys.ControlRight || this.keys.KeyC) && p.grounded;
+    // crouch (C) — slower, steadier aim.
+    // Ctrl saiu de propósito: combinado com as teclas do jogo ele dispara
+    // atalhos reservados do navegador que a página não consegue bloquear —
+    // Ctrl+W fecha a aba (e o navegador, se for a única), Ctrl+R recarrega e
+    // perde a partida, Ctrl+1/2/3 troca de aba.
+    const wantCrouch = this.keys.KeyC && p.grounded;
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * 7)));
     const sprint = (this.keys.ShiftLeft || this.keys.ShiftRight) && p.crouchF < 0.3;
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
@@ -1096,6 +1108,13 @@ export class Game {
   }
 
   /* ================= HUD ================= */
+  // quem vem do CS aperta Ctrl por reflexo; avisa uma vez por partida em vez
+  // de simplesmente não agachar sem explicação
+  _avisaCtrl() {
+    if (this._ctrlAvisado) return;
+    this._ctrlAvisado = true;
+    this._banner('AGACHAR É NO C', 'Ctrl é atalho do navegador (Ctrl+W fecha a aba)');
+  }
   _banner(title, sub) {
     this.el.bannerTitle.textContent = title;
     this.el.bannerSub.textContent = sub;

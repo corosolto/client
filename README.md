@@ -51,7 +51,7 @@ npm run preview       # serve dist/client estaticamente
 | W A S D | Mover |
 | Mouse | Mirar |
 | Shift | Correr |
-| **Ctrl ou C** | **Agachar — mira mais estável** |
+| **C** | **Agachar — mira mais estável** (Ctrl não: é atalho do navegador) |
 | Espaço | Pular |
 | Clique esq. | Atirar |
 | Clique dir. | Luneta da AWP |
