@@ -24,6 +24,15 @@ const RADIO = {
 const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
 const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
 
+// scene.remove() NÃO libera a VRAM: o buffer da geometria fica vivo na GPU até
+// alguém chamar dispose(). Sem isso, cada arma largada no chão vazava as
+// geometrias dela pro resto da partida.
+// SÓ geometria: os materiais vêm do matCache compartilhado de characters.js
+// (M()), então dar dispose neles apagaria o material de bots e drops vivos.
+function freeGeometries(obj) {
+  if (obj) obj.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+}
+
 export class Game {
   constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, nickname, mapId, testMode = false, onQuit, onMatchEnd }) {
     this.renderer = renderer;
@@ -239,7 +248,7 @@ export class Game {
       if (e.code === 'KeyE' && this.nearPickup) {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
-        if (dropIdx >= 0) { this.scene.remove(pk.mesh); this.drops.splice(dropIdx, 1); }
+        if (dropIdx >= 0) { this.scene.remove(pk.mesh); freeGeometries(pk.mesh); this.drops.splice(dropIdx, 1); }
         this.nearPickup = null;
       }
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
@@ -369,7 +378,7 @@ export class Game {
       this.player.weapon = 'awp';
     }
     this.player.scoped = false; this.player.reloadUntil = 0;
-    for (const d of this.drops) this.scene.remove(d.mesh);
+    for (const d of this.drops) { this.scene.remove(d.mesh); freeGeometries(d.mesh); }
     this.drops = [];
     for (const k in this.vm.models) this.vm.models[k].visible = k === this.player.weapon;
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
@@ -482,7 +491,7 @@ export class Game {
       const newDef = defs[(Math.random() * defs.length) | 0];
       swapBot.def = newDef; swapBot.name = newDef.name;
       this.scene.remove(swapBot.mesh.group);
-      swapBot.mesh.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+      freeGeometries(swapBot.mesh.group);
       swapBot.mesh = buildCharacter(newDef);
       swapBot.mesh.group.traverse(o => { o.userData.botOwner = swapBot; });
       this.scene.add(swapBot.mesh.group);
@@ -883,7 +892,7 @@ export class Game {
       for (const b of this.bots) {
         if (!b.alive) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
-        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this.scene.remove(pk.mesh); this.drops.splice(i, 1); break; }
+        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this.scene.remove(pk.mesh); freeGeometries(pk.mesh); this.drops.splice(i, 1); break; }
       }
     }
   }
@@ -1189,7 +1198,7 @@ export class Game {
     this.el.lockHint.classList.add('hidden');
     this.el.scoreboard.classList.add('hidden');
     this.el.vignette.style.opacity = 0;
-    this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    freeGeometries(this.scene);
     this.scene.clear();
   }
 }
