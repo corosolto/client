@@ -15,11 +15,13 @@ export const prerender = false;
 const fontBuffers = [Buffer.from(FONT_BOLD_B64, 'base64')];
 let wasmReady: Promise<unknown> | null = null;
 function init(req: Request) {
+  // NÃO deixar a promise rejeitada no cache: com `??=` puro, um blip de rede no
+  // primeiro badge fritava TODOS os badges daquela instância morna pra sempre.
   return wasmReady ??= (async () => {
     const r = await fetch(new URL('/wasm/resvg.wasm', req.url));
     if (!r.ok) throw new Error('wasm fetch failed: ' + r.status);
     return initWasm(await r.arrayBuffer());
-  })();
+  })().catch(err => { wasmReady = null; throw err; });
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -87,7 +89,9 @@ export const GET: APIRoute = async (ctx) => {
   try {
     return await handle(ctx);
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: String(e?.message || e), stack: String(e?.stack || '').slice(0, 600) }),
+    // stack fica no log da Vercel, nunca na resposta (vazava caminho interno)
+    console.error('[badge] falhou:', e);
+    return new Response(JSON.stringify({ error: 'erro ao gerar a badge' }),
       { status: 500, headers: { 'content-type': 'application/json' } });
   }
 };

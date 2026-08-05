@@ -23,6 +23,11 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'token inválido' }), { status: 403, headers: { 'content-type': 'application/json' } });
 
   const b64 = image.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '');
+  // barra pelo tamanho da string ANTES de decodificar: base64 rende ~0,75 byte
+  // por char, então 3MB ≈ 4M chars. Decodificar primeiro alocava o buffer
+  // inteiro (dezenas de MB na função) só pra recusar depois.
+  if (b64.length > 4_100_000)
+    return new Response(JSON.stringify({ error: 'imagem muito grande (máx ~3MB)' }), { status: 400, headers: { 'content-type': 'application/json' } });
   let png: Buffer;
   try {
     const buf = Buffer.from(b64, 'base64');

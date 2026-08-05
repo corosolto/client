@@ -11,12 +11,18 @@ export const prerender = false;
 const hits = new Map<string, number>();
 const WINDOW_MS = 30_000;
 
+// idem register.ts: sem expurgo o Map acumulava um registro por IP pra sempre.
+function prune(now: number) {
+  for (const [k, t] of hits) if (now - t >= WINDOW_MS) hits.delete(k);
+}
+
 export const POST: APIRoute = async ({ request, clientAddress }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
 
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || clientAddress || 'unknown';
   const now = Date.now();
+  prune(now);
   if (hits.get(ip) && now - hits.get(ip)! < WINDOW_MS)
     return new Response(JSON.stringify({ error: 'rate_limited' }), { status: 429, headers: { 'content-type': 'application/json' } });
 
