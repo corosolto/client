@@ -30,12 +30,12 @@
     "eval:vm": "node tools/eval/vm-mint-audit.mjs",
     "eval:kick": "node tools/eval/vm-kick-sim.mjs",
     "eval:bots": "node tools/eval/botsim.mjs 60 all",
-  "//eval:site": "Contrato das 13 rotas do site SEM Supabase (o estado do CI): status, corpo, XML do sitemap e JSON-LD parseável. `astro build` verde não prova nada disso — /ranking pode dar 500 e o build passa. Sobe o astro dev sozinho; SITE_URL aponta pra um alvo externo. --mutante=jsonld prova que morde.",
-  "eval:site": "node tools/eval/site-smoke.mjs",
-  "//eval:og": "Renderiza e MEDE os 3 cards de og:image (1200×630) em node puro. Não dá pra testar pela rota: o dev server não carrega resvg-wasm porque src/lib/font-data.ts (996 KB de base64) estoura o parser de TS — a rota da badge quebra igual em dev. Também confere se a fonte decodificada tem tamanho plausível: extração truncada rendia card SEM TEXTO passando por 1200×630.",
-  "eval:og": "node --experimental-strip-types --import ./tools/eval/ts-resolve.mjs tools/eval/og-check.mjs",
-  "//eval:sitemap": "Prova o fatiamento do sitemap com totais falsos (0, 5000, 5001, 12000). O modo índice é código que NINGUÉM alcança pedindo a URL — perfis só entram com RANKING_ON e precisariam de 5000+ jogadores. Checa páginas contíguas sem buraco, teto por página, XML bem formado nos dois modos e escape de & no nick.",
-  "eval:sitemap": "node --experimental-strip-types tools/eval/sitemap-check.mjs",
+    "//eval:site": "Contrato das 13 rotas do site SEM Supabase (o estado do CI): status, corpo, XML do sitemap e JSON-LD parseável. `astro build` verde não prova nada disso — /ranking pode dar 500 e o build passa. Sobe o astro dev sozinho; SITE_URL aponta pra um alvo externo. --mutante=jsonld prova que morde.",
+    "eval:site": "node tools/eval/site-smoke.mjs",
+    "//eval:og": "Renderiza e MEDE os 3 cards de og:image (1200×630) em node puro. Não dá pra testar pela rota: o dev server não carrega resvg-wasm porque src/lib/font-data.ts (996 KB de base64) estoura o parser de TS — a rota da badge quebra igual em dev. Também confere se a fonte decodificada tem tamanho plausível: extração truncada rendia card SEM TEXTO passando por 1200×630.",
+    "eval:og": "node --experimental-strip-types --import ./tools/eval/ts-resolve.mjs tools/eval/og-check.mjs",
+    "//eval:sitemap": "Prova o fatiamento do sitemap com totais falsos (0, 5000, 5001, 12000). O modo índice é código que NINGUÉM alcança pedindo a URL — perfis só entram com RANKING_ON e precisariam de 5000+ jogadores. Checa páginas contíguas sem buraco, teto por página, XML bem formado nos dois modos e escape de & no nick.",
+    "eval:sitemap": "node --experimental-strip-types tools/eval/sitemap-check.mjs",
     "eval:ctfhud": "node tools/eval/ctfhud-check.mjs",
     "eval:mat": "node tools/eval/mat-check.mjs",
     "//eval:seo": "LÊ dist/client/ — o HTML publicado, não o .astro. Rode `npm run build` antes, ou use `npm run check:seo`, que já faz os dois. `--mutate` prova que a régua morde.",
@@ -57,7 +57,6 @@
     "eval:grafite": "node tools/eval/graffiti-census.mjs",
     "//eval:grafite:ar": "A régua IRMÃ da cobertura, e ela existe porque cobertura é cega pro defeito oposto: peça flutuando não derruba o número, ela MELHORA (cobre a placa de trás). Mede peça a peça — vão atrás, tapada na frente, sobreposta. Exige navegador e `npm run eval:serve` no ar. `--fotos N` fotografa as piores: quando o número não move depois de um conserto que deveria movê-lo, é a foto que resolve.",
     "eval:grafite:ar": "node tools/eval/graffiti-audit.mjs",
-
     "audio": "node tools/gen-audio-manifest.mjs",
     "audio:check": "node tools/gen-audio-manifest.mjs --check",
     "feet": "node tools/gen-foot-offsets.mjs",
@@ -93,6 +92,7 @@
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
     "dejavu-fonts-ttf": "^2.37.3",
+    "js-yaml": "4.3.1",
     "sharp": "^0.35.3"
   },
   "private": true,
@@ -104,5 +104,8 @@
     "aeo.js": "^0.0.16",
     "meshoptimizer": "^1.2.0",
     "playwright": "^1.62.1"
+  },
+  "overrides": {
+    "js-yaml": "4.3.1"
   }
 }
