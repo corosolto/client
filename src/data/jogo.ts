@@ -171,6 +171,15 @@ export const MAPAS: Mapa[] = [
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
+  {
+    id: 'fy_campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Campo de várzea no centro de uma comunidade — todos os becos convergem pra ele.',
+    detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
+      'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
+      'Quatro becos descem do morro e desembocam em bordas diferentes do campo — cada um é uma rota ' +
+      'de flanco separada. O campo tem traves, alambrado derrubado, container e arquibancada de cimento. ' +
+      'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
+  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }

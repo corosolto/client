@@ -4,6 +4,7 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
+import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
 
 export const MAPS = {
   awp_map:     { name: 'Praça dos Três Poderes', build: buildBrasilia }, // Brasília fiel (substitui o clássico)
@@ -33,6 +34,8 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   fy_quebrada: { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
+  // Campo do Morro: campo de várzea central com 4 becos convergindo do galpão de baile funk (spec plans/11).
+  fy_campomorro: { name: 'Campo do Morro', build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'awp_map';
