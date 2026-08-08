@@ -192,9 +192,10 @@ export const FACCOES: { id: string; nome: string; lema: string; cor: string; not
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
   { id: 'funkeiros', nome: 'Funkeiros', lema: 'A treta se faz no bailão!', cor: '#ffd23f', nota: 'A facção mais nova: mandrake, cria, trap, tamborzão. Ostenta antes, atira depois.' },
+  { id: 'mitico', nome: 'Mítico', lema: 'A treta atravessa os séculos!', cor: '#9d4edd', nota: 'Heróis históricos e folclore brasileiro: Zumbi, Lampião, Saci, Cuca, Curupira. Ninguém da atualidade.' },
 ];
 
-/** 44 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
+/** 53 personagens (public/js/characters.js). `faccao` casa com FACCOES[].id */
 export const PERSONAGENS: Personagem[] = [
   { id: 'esquerdomacho', faccao: 'E', nome: 'Esquerdomacho', blurb: 'Barba, tote bag e 47 bottons. Mira acadêmica: analisa a treta antes de atirar.' },
   { id: 'sindicato', faccao: 'E', nome: 'Líder do Sindicato', blurb: 'Boné vermelho, colete de assembleia e megafone. Convoca greve de fogo a cada round.' },
@@ -244,6 +245,16 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'trapfunk', faccao: 'funkeiros', nome: 'Trap Funk', blurb: 'Autotune no grito de guerra e 808 no peito. Trap em dose dupla.' },
   { id: 'fluxo', faccao: 'funkeiros', nome: 'Fluxo', blurb: 'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.' },
   { id: 'ostentacao', faccao: 'funkeiros', nome: 'Ostentação', blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.' },
+
+  { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares acelera a recarga dos aliados próximos.' },
+  { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.' },
+  { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.' },
+  { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!' },
+  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Roqueiro do interior com maldição. A sétima lua transforma — garras no lugar da arma.' },
+  { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.' },
+  { id: 'macunaima', faccao: 'mitico', nome: 'Macunaíma', blurb: 'O herói sem nenhum caráter. Arma pega no chão vale mais na mão dele — ai, que preguiça.' },
+  { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — dorme com o medo.' },
+  { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];
 
 export interface Controle { tecla: string; acao: string; }

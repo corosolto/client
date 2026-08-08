@@ -1059,7 +1059,7 @@ const stripStep = (dir) => {
 $('strip-up').onclick = () => { ui.click(); stripStep(-1); };
 $('strip-down').onclick = () => { ui.click(); stripStep(1); };
 // Contador de elenco nos cards de facção ("8 PERSONAGENS" — referência telas/02)
-for (const f of ['e', 'b', 'u', 'c', 'f']) {
+for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
   const n = CHARACTERS.filter(c => c.team === f.toUpperCase()).length;
   const card = $('btn-team-' + f);
   if (!card) continue;
@@ -1073,6 +1073,7 @@ $('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
 $('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
 $('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
 $('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
+$('btn-team-m') && ($('btn-team-m').onclick = () => { sfx.uiClick(); pickTeam('M'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -1165,7 +1166,7 @@ $('char-confirm').onclick = () => {
 
 // Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
 function setEnemyPickMode(on, myFaction) {
-  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
     if (b) b.classList.toggle('hidden', !!(on && f.toUpperCase() === myFaction));
   }
@@ -1175,7 +1176,7 @@ function setEnemyPickMode(on, myFaction) {
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
-const FACTION_NAME = { P: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS', M: 'MÍTICO' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
@@ -1458,7 +1459,7 @@ let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
   teamPreviewsDone = true;
-  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F']]) {
+  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F'], ['btn-team-m', 'M']]) {
     const box = document.querySelector(`#${btn} .team-chars`);
     if (!box) continue;
     const chars = CHARACTERS.filter(c => c.team === fac && GLB_CHARS.has(c.id)).slice(0, 4);
@@ -1487,7 +1488,7 @@ function pickTeam(faction) {
   currentFaction = faction;
   currentTeam = faction === 'B' ? 'B' : 'E';
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
-  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
     const b = $('btn-team-' + f);
     if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
   }
