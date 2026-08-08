@@ -171,6 +171,15 @@ export const MAPAS: Mapa[] = [
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
+  {
+    id: 'fy_escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Comunidade cortada por uma escadaria monumental de azulejo colorido, com caveirão no patamar central.',
+    detalhe: 'O mapa de verticalidade pura: um time nasce na rua lá embaixo (bar, mercadinho, carros), ' +
+      'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão — três lances ' +
+      'de escada com patamares de barricada e um caveirão atravessado no meio da subida. Dois becos laterais ' +
+      'sobem por trás das casas e dão rota de flanco sem expor na escada. Cada patamar é um andar de combate: ' +
+      'você só enxerga o próximo lance, nunca o escadão inteiro.',
+  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }
