@@ -171,6 +171,15 @@ export const MAPAS: Mapa[] = [
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
+  {
+    id: 'fy_lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo — a luta pela vertical.',
+    detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
+      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas — cada uma é um ' +
+      'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
+      'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
+      'norte é mais alto — é a posição de sniper do mapa.',
+  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }
