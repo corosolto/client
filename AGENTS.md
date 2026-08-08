@@ -43,7 +43,7 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 |---|---|---|---|
 | `public/` | o **jogo** | 31 arquivos `.js`, 26.912 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 17 páginas `.astro`, 13 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 165 scripts em `tools/eval/`, 45 em `tools/` | node puro: sobe o jogo real sem browser |
+| `tools/` | o **arnês** | 166 scripts em `tools/eval/`, 47 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
@@ -122,6 +122,9 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | o plano de release, degrau a degrau | [`plans/08-RELEASE-PROFISSIONAL.md`](plans/08-RELEASE-PROFISSIONAL.md) | com o corte defendido |
 | como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
+| criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
+| revisar asset gerado (nota de fora) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | crítico adversarial de contexto limpo — quem constrói não dá a nota |
+| skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |
 | licença, arte paga e marca | [`docs/docs/licenca.md`](docs/docs/licenca.md) | **o que vale hoje** e o que está decidido e pendente |
@@ -137,10 +140,10 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check
+npm run check:fast   # node tools/eval/runner.mjs syntax docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check spec:check skills:check
 ```
 
-`package.json` tem **55 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **60 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

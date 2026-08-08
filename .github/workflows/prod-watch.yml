@@ -1,0 +1,75 @@
+# prod-watch — vigia o que o EDGE está servindo, não o que o repo diz.
+#
+# O CASO QUE COMPROU ESTE WORKFLOW (08/08/2026): o site inteiro fora do ar com
+#   "The requested module './fparms.js' does not provide an export named 'preloadStaticVm'"
+# A origem Vercel estava íntegra; a Cloudflare (edge TTL de 1 mês sobre /js/*,
+# `?v=2` fixo na época) servia main.js de um deploy com fparms.js de outro.
+# Repo verde, build verde, produção morta — nenhum portão media a interseção.
+# O probe é `tools/eval/prod-coherence.mjs` (leia o cabeçalho dele).
+#
+# DOIS GATILHOS:
+#   · cron a cada 15 min — cache podre pode nascer a qualquer deploy;
+#   · deployment_status success em production — a janela de risco é logo após
+#     publicar; aproveita e PURGA o edge (Fase 3: cinto e suspensório, ver
+#     scripts/cloudflare-setup.sh para a regra que segura /js/* por 1 mês).
+#
+# EM FALHA: dispara repository_dispatch `prod-crash`, que o crash-fix.yml
+# consome. O GITHUB_TOKEN dispara dispatch com `actions: write` (a proteção
+# anti-recursão do GitHub barra eventos de PUSH criados pelo token, não
+# repository_dispatch — é o caminho oficial entre workflows).
+name: prod-watch
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  deployment_status:
+  workflow_dispatch:
+
+permissions:
+  # contents: write é o que autoriza POST /dispatches com GITHUB_TOKEN
+  # (actions: write NÃO autoriza — o dispatch morria 403 e o crash-fix nunca
+  # rodava; pego na review do Greptile, PR #95)
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    # deployment_status: só produção bem-sucedida interessa (preview não é prod).
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'production')
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+
+      # Purge pós-deploy ANTES do probe: medir o edge velho acusaria o deploy
+      # novo. Sem o secret cadastrado, pula — o probe ainda vale.
+      # (o secret mora no env DO JOB: `if` de step não enxerga env do próprio step)
+      - name: purge do edge Cloudflare (/js/* + /style.css)
+        if: env.CF_API_TOKEN != ''
+        run: |
+          ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
+          curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
+
+      - name: probe de coerência do edge
+        id: probe
+        run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
+
+      - name: edge incoerente → dispara prod-crash
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/{owner}/{repo}/dispatches -X POST \
+            -f event_type=prod-crash \
+            -F 'client_payload[fingerprint]=edge-incoerente' \
+            -F 'client_payload[message]=prod-watch: prod-coherence.mjs reprovou o edge' \
+            -F 'client_payload[source]=prod-watch.yml' \
+            -F 'client_payload[version]=desconhecida'

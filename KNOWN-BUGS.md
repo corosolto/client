@@ -44,6 +44,38 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro
+
+**Evidência (08/08, ~03:14, print do jogador + curl).** Boot morto em
+`https://www.csbrasil.online` com o banner vermelho:
+`Uncaught SyntaxError: The requested module './fparms.js' does not provide an export named
+'preloadStaticVm' @ /js/main.js:6:25`. curl no edge: `main.js` da era alpha.34 (importa
+`preloadStaticVm` e `CONFIRM_MAX_MS`), `fparms.js`/`game.js` pós-`b772f88` (não exportam).
+Headers: `x-vercel-cache: HIT` + `cf-cache-status: HIT`, `age: 20816`.
+
+**Causa raiz.** A cache rule `assets_jogo` da Cloudflare
+(`scripts/cloudflare-setup.sh:68-78`) segura `/js/*` no edge por **1 mês** com
+`override_origin`, e o import map servido usava `?v=2` **fixo entre releases** — URL
+igual para conteúdo diferente, então o edge montou a página com módulos de deploys
+diferentes. O repo já tinha as duas metades do conserto (remoção do símbolo em `b772f88`,
+`?v=` amarrado ao `pkg.version` em `src/pages/index.astro:20-56`) — faltava publicar e
+purgar. A origem (`csbrasil.vercel.app`, alpha.37) está coerente; o veneno é só cache.
+
+**Por que passou por tudo.** Nenhum portão media o que o edge serve: `check:fast` mede o
+repo, o build mede o build. A incoerência só existe na interseção dos caches.
+
+**Régua:** `npm run prod:coherence` (`tools/eval/prod-coherence.mjs`) — baixa o HTML de
+produção, segue o import map e reprova qualquer import nomeado sem export no alvo. Na
+manhã do incidente, com o site quebrado, ele saía 1 citando `CONFIRM_MAX_MS`. Mutação:
+`--selftest` (export arrancado tem que sair 1 citando o símbolo). Quem roda é o
+`prod-watch.yml` a cada 15 min; em vermelho, dispara `prod-crash` → `crash-fix.yml`
+(purge do edge + re-probe; se não resolver, issue `crash-auto`).
+
+**Remediação manual restante:** purge do edge (`/js/*`) com token da Cloudflare — sem o
+`CF_API_TOKEN` cadastrado, o purge automático dos workflows é pulado.
+
+---
+
 ### ~~BUG-35 · "partida rápida demais pra ser verdade" numa partida legítima~~ · RESOLVIDO 07/08 (issue #87)
 
 **Palavras de quem reportou** (maurodesouza, issue #87): *"Durante uma partida no modo

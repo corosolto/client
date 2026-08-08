@@ -57,8 +57,12 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         run: |
           set -e
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Autoria do bump: assina como csbrasil-deploy-bot quando a conta máquina
+          # estiver configurada (variável BOT_GIT_EMAIL com o noreply dela); sem ela,
+          # cai no github-actions[bot] de sempre. O avatar do passarinho só aparece se
+          # o e-mail bater com uma conta real — bot "de mentira" não tem foto.
+          git config user.name "csbrasil-deploy-bot"
+          git config user.email "${{ secrets.BOT_GIT_EMAIL || vars.BOT_GIT_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}"
           # Rebase ANTES do commit: se a main andou desde o evento, a tag fica no commit
           # certo (tagar antes do rebase deixaria a tag órfã do push).
           git pull --rebase origin main
@@ -93,7 +97,11 @@ jobs:
       - name: GitHub Release
         if: steps.guard.outputs.skip != 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # RELEASE_TOKEN (PAT da conta csbrasil-deploy-bot) faz o Release sair com
+          # nome+foto dela; sem o secret, GITHUB_TOKEN e o autor vira github-actions[bot].
+          # A proteção anti-recursão do GitHub NÃO vale para PAT — o guard
+          # "chore(release)" lá em cima é o que impede o loop (caso previsto no topo).
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           TAG=$(git describe --tags --exact-match HEAD)
           T=${TAG#v}

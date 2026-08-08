@@ -249,12 +249,17 @@ function medir() {
      uma pessoa não é régua, é retrato — e vermelho que não corresponde a defeito ensina
      a ignorar vermelho. O fato que importa sobrevive com git puro: o lock declara N e o
      clone carrega M < N (o resto é baixado sob demanda). */
+  /* Nativas: diretórios REAIS em .claude/skills — no git, symlink aparece como
+     entrada única sem filhos; só diretório real tem SKILL.md listado. */
+  const nativas = sh('git', ['ls-files', '.claude/skills']).trim().split('\n')
+    .filter((p) => p.endsWith('/SKILL.md') && p.split('/').length === 3)
+    .map((p) => p.split('/')[2]);
   f.skills = {
     versionadas: dirsSkill.size,
     comSkillMd: skl.filter((p) => p.endsWith('/SKILL.md') && p.split('/').length === 4).length,
     lock: existe('skills-lock.json') ? Object.keys(JSON.parse(ler('skills-lock.json')).skills || {}).length : null,
-    gauntlet: existe('.claude/skills/gauntlet-fps/SKILL.md'),
-    cmd: 'git ls-files .agents/skills · skills-lock.json',
+    nativas,
+    cmd: 'git ls-files .agents/skills · git ls-files .claude/skills · skills-lock.json',
   };
 
   /* ---- gente: quem assina commit, descontando agentes ---- */
@@ -608,9 +613,13 @@ const BLOCOS = {
     '`.claude/skills/` são **symlinks** para `.agents/skills/` — uma cópia só, dois nomes, porque ' +
     'o Claude Code lê de `.claude/` e outros arnêses leem de `.agents/`.',
     '',
-    f.skills.gauntlet
-      ? 'A skill do loop desta casa, **`gauntlet-fps`**, é a única que nasceu aqui: vive em `.claude/skills/gauntlet-fps/SKILL.md`, não é symlink e não entra no lock.'
-      : '⚠️ A skill `gauntlet-fps` **não foi encontrada** nesta árvore.',
+    f.skills.nativas.length
+      ? 'As skills que **nasceram aqui** (' +
+        f.skills.nativas.map((s) => `\`${s}\``).join(', ') +
+        ') são diretórios reais em `.claude/skills/`, não entram no lock, e ganham symlink em ' +
+        '`.agents/skills/` pelo `npm run skills:sync` — é o que as torna visíveis para Kimi, ' +
+        'OpenCode e outros agentes. O `skills:check` (no `check:fast`) reprova se o link faltar.'
+      : '⚠️ Nenhuma skill nativa encontrada em `.claude/skills/`.',
     rodape(f.skills.cmd),
   ].join('\n'),
 

@@ -49,6 +49,30 @@ curl -sI https://www.csbrasil.online/audio/a/<hash-de-um-arquivo-real>.wav | gre
 - No dia seguinte, o dashboard da Vercel deve mostrar queda acentuada de
   Edge Requests; o da Cloudflare mostra o tráfego absorvido.
 
+### Purge do edge — quando e como (a lição do BUG-39)
+
+A regra `assets_jogo` segura `/js/*` no edge por **1 mês** com
+`override_origin`. Em 08/08 isso derrubou o site inteiro: o import map ainda
+usava `?v=2` fixo e o edge montou a página com módulos de deploys diferentes
+(cache split-brain — ver KNOWN-BUGS.md, BUG-39). Desde então o `?v=` sai do
+`pkg.version` (`src/pages/index.astro:20-56`), então release nova = URL nova e
+o mix não deveria mais acontecer. Se acontecer, ou depois de qualquer deploy
+de emergência:
+
+```bash
+# precisa de CF_API_TOKEN (Zone → Cache Purge → Edit) ou CF_EMAIL + CF_GLOBAL_KEY
+ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+  | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
+curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+  --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+  "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
+```
+
+Depois do purge, a prova de que o edge ficou coerente é
+`npm run prod:coherence` (o mesmo probe que o `prod-watch.yml` roda a cada
+15 min e que o `crash-fix.yml` roda depois do purge automático pós-deploy).
+
 ## 2. Fase B — host externo de assets (R2) — só quando o tráfego justificar
 
 Não executar junto com a fase A. Critério para puxar: a fase A não segurar
