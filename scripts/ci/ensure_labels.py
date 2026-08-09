@@ -10,6 +10,8 @@ LABELS = {
     "bot-fixable": ("0e8a16", "Issue ou PR elegível para tentativa automatizada de correção"),
     "covered-by-pr": ("fbca04", "Issue já atacada por PR aberta"),
     "crash-auto": ("B60205", "crash de produção reportado por /api/jserror ou prod-watch"),
+    "stale-backlog": ("c2e0c6", "Issue antiga ou desalinhada com o checkout atual; precisa revalidação"),
+    "needs-repro": ("f9d0c4", "Issue precisa passos de reprodução mais concretos"),
 }
 
 

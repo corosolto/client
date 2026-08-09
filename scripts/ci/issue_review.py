@@ -9,13 +9,12 @@ SENSITIVE_LABELS = {
 }
 
 
-def main() -> int:
-    payload = json.load(sys.stdin)
+def review_issue(payload: dict) -> dict:
     issue = payload["issue"]
     prs = payload.get("prs", [])
     labels = {l["name"] for l in issue.get("labels", [])}
-    title = issue["title"]
     number = issue["number"]
+    body = (issue.get("body") or "").strip()
 
     labels_add: list[str] = []
     if labels and labels.issubset(SAFE_LABELS):
@@ -24,6 +23,8 @@ def main() -> int:
         labels_add.append("bot-fixable")
     elif "documentation" in labels:
         labels_add.append("bot-fixable")
+    if len(body) < 24 and "crash-auto" not in labels:
+        labels_add.append("needs-repro")
 
     covered = None
     pattern = re.compile(rf"(closes|fixes|resolves)\s+#?{number}\b", re.I)
@@ -47,12 +48,19 @@ def main() -> int:
         lines.append(f"- já parece coberta pela PR #{covered['number']} — {covered['title']}")
     if "bot-fixable" in labels_add:
         lines.append("- candidata a `/bot-fix` por manter escopo pequeno/determinístico")
+    if "needs-repro" in labels_add:
+        lines.append("- falta contexto suficiente; pedir passos de reprodução antes de atacar")
 
-    print(json.dumps({
+    return {
         "labels_add": sorted(set(labels_add)),
         "comment": "\n".join(lines),
         "covered_pr": covered,
-    }))
+    }
+
+
+def main() -> int:
+    payload = json.load(sys.stdin)
+    print(json.dumps(review_issue(payload)))
     return 0
 
 

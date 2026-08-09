@@ -23,6 +23,7 @@ Permissões mínimas recomendadas para o token:
 - comentário de classificação de PR
 - sugestão de duplicata para `crash-auto`
 - bootstrap de draft PR a partir de issue elegível via `/bot-fix`
+- sweep periódico/manual das issues abertas
 
 ## Regras
 
@@ -44,3 +45,34 @@ Permissões mínimas recomendadas para o token:
 3. se elegível, maintainer comenta `/bot-fix`
 4. bot cria branch `bot/issue-<n>` e abre draft PR bootstrap
 5. daí a PR pode ser continuada por humano ou por um futuro fix-bot
+
+## O que o bot corrige hoje
+
+Hoje o bot não altera código sozinho. Ele faz três coisas:
+
+- classifica issue e PR
+- identifica issue pequena/determinística como `bot-fixable`
+- abre branch e PR draft com `/bot-fix`
+
+Isso é intencional. Sem chave de modelo e policy de execução, ligar push de código direto em IA aumenta risco operacional.
+
+## Evolução para correção automática por IA
+
+A próxima etapa é separar em dois estágios:
+
+1. `csbrasil-bot` orquestra GitHub
+2. um worker de IA pega a branch bootstrap e produz commits pequenos
+
+Opções práticas:
+
+- Codex/Claude/Kimi/OpenCode rodando em runner self-hosted
+- serviço externo que recebe issue + branch e devolve commit/push
+- agente manual assistido: workflow abre a PR e um operador dispara o agente na branch
+
+Guardrails mínimos:
+
+- só permitir `bot-fixable`
+- sempre basear em `main`
+- exigir CI/smoke verde
+- manter draft por padrão
+- nunca automergir gameplay, backend, anti-cheat ou mapa
