@@ -23,7 +23,7 @@ def review_issue(payload: dict) -> dict:
         labels_add.append("bot-fixable")
     elif "documentation" in labels:
         labels_add.append("bot-fixable")
-    if len(body) < 24 and "crash-auto" not in labels:
+    if len(body) < 24 and "crash-auto" not in labels and not labels.intersection(SAFE_LABELS):
         labels_add.append("needs-repro")
 
     covered = None
