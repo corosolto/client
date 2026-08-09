@@ -38,5 +38,13 @@ jobs:
           cat /tmp/csbrasil-dev.log
           exit 1
       - name: Run smoke test
-        run: npx -y playwright@1.55.0 test tests/smoke/web-smoke.spec.js --reporter=list
-
+        run: npx -y playwright@1.55.0 test tests/smoke/web-smoke.spec.js --reporter=list --trace=on --output=test-results
+      - name: Upload smoke artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-web-artifacts
+          path: |
+            /tmp/csbrasil-dev.log
+            test-results
+          if-no-files-found: ignore

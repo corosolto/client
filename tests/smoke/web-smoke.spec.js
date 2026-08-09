@@ -1,5 +1,13 @@
 const { test, expect } = require('@playwright/test');
 
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  await page.screenshot({
+    path: `test-results/${testInfo.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`,
+    fullPage: true,
+  });
+});
+
 test('menu, ranking, team, char and initial hud boot', async ({ page }) => {
   const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
   await page.goto(`${base}/?debug=1`);
