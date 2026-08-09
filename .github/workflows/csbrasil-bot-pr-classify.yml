@@ -17,15 +17,45 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
+      DESIRED_BASE_BRANCH: ${{ vars.PR_DEFAULT_BASE_BRANCH || 'staging' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release
       - name: Fetch PR metadata
-        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles > /tmp/pr.json
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+      - name: Route PR and set assignee
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          pr = json.load(open('/tmp/pr.json'))
+          payload = {'pr': pr, 'desired_base': '${{ env.DESIRED_BASE_BRANCH }}'}
+          pathlib.Path('/tmp/pr-route-input.json').write_text(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_route.py < /tmp/pr-route-input.json > /tmp/pr-route.json
+          python3 - <<'PY'
+          import json, subprocess
+          route = json.load(open('/tmp/pr-route.json'))
+          pr_number = '${{ github.event.pull_request.number }}'
+          if route.get('retarget_to'):
+              exists = subprocess.run(
+                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', route['retarget_to']],
+                  stdout=subprocess.DEVNULL,
+                  stderr=subprocess.DEVNULL,
+              )
+              if exists.returncode == 0:
+                  subprocess.run(['gh', 'pr', 'edit', pr_number, '--base', route['retarget_to']], check=True)
+              else:
+                  route['retarget_to'] = None
+                  open('/tmp/pr-route.json', 'w').write(json.dumps(route))
+          if route.get('add_assignee'):
+              subprocess.run(['gh', 'pr', 'edit', pr_number, '--add-assignee', route['add_assignee']], check=True)
+          PY
+      - name: Refresh PR metadata after routing
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Classify PR
         run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
       - name: Apply labels
@@ -46,10 +76,15 @@ jobs:
           import json, subprocess, pathlib
           pr = json.load(open('/tmp/pr.json'))
           labels = json.load(open('/tmp/pr-labels.json'))
+          route = json.load(open('/tmp/pr-route.json'))
           payload = {
               'files': pr.get('files', []),
               'changedFiles': pr.get('changedFiles', 0),
               'labels_add': labels.get('labels_add', []),
+              'baseRefName': pr.get('baseRefName'),
+              'author_login': ((pr.get('author') or {}).get('login')),
+              'add_assignee': route.get('add_assignee'),
+              'retarget_to': route.get('retarget_to'),
           }
           pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
           PY

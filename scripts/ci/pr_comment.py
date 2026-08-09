@@ -8,12 +8,23 @@ def main() -> int:
     labels_add = payload.get("labels_add", [])
     files = payload.get("files", [])
     changed = payload.get("changedFiles", len(files))
+    base_branch = payload.get("baseRefName", "main")
+    author = payload.get("author_login")
+    assignee = payload.get("add_assignee")
+    retarget = payload.get("retarget_to")
 
     lines = [
         "## csbrasil-bot classification",
         "",
         f"- arquivos alterados: `{changed}`",
+        f"- base efetiva: `{base_branch}`",
     ]
+    if author:
+        lines.append(f"- autor: `@{author}`")
+    if assignee:
+        lines.append(f"- assignee aplicado: `@{assignee}`")
+    if retarget:
+        lines.append(f"- PR reencaminhada automaticamente para `{retarget}`")
     if labels_add:
         lines.append(f"- labels sugeridas/aplicadas: `{', '.join(labels_add)}`")
     else:
