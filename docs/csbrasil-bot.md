@@ -33,7 +33,7 @@ Permissões mínimas recomendadas para o token:
 - o bot só mergea PR com label `safe-automerge` e checks verdes
 - PR com pendência do Greptile recebe `needs-greptile-resolution` e fica fora de automerge até um maintainer aplicar `greptile-resolved`
 - `greptile-autofix` vale para uma tentativa e é removida antes do worker; outro PR com a mesma label bloqueia a execução
-- o autofix aceita no máximo 5 arquivos, 160 linhas e 3 threads, e veta workflow, dependência, backend, gameplay, mapa e entradas críticas
+- os limites de escopo e superfícies vetadas são definidos pela policy executável em `scripts/ci/greptile_autofix.py`
 - o merge só ocorre após novo SHA, checks obrigatórios verdes e zero thread de review ativa
 - em crashes automáticos, o bot sugere duplicatas; ele não fecha sozinho nesta fase
 - para abrir PR de issue, o gatilho é um comentário de maintainer `/bot-fix`
