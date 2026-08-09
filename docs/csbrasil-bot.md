@@ -24,6 +24,7 @@ Permissões mínimas recomendadas para o token:
 - sugestão de duplicata para `crash-auto`
 - bootstrap de draft PR a partir de issue elegível via `/bot-fix`
 - sweep periódico/manual das issues abertas
+- runner self-hosted para continuar branch bootstrap via `/bot-fix-runner`
 
 ## Regras
 
@@ -46,6 +47,10 @@ Permissões mínimas recomendadas para o token:
 - `PR_DEFAULT_BASE_BRANCH`: opcional; default `staging`
   - se uma PR abrir contra `main`, o bot pode reencaminhar para essa branch
   - exemplos: `staging`, `staging/v2.0.0-alpha.42`, `release/v2.0.0-alpha.42`
+- `FIX_BOT_COMMAND`: obrigatório no runner self-hosted
+  - comando que executa o adapter real
+  - recebe `FIX_BOT_TASK_FILE` e `FIX_BOT_REPO_ROOT` no ambiente
+  - exemplos de wrapper: Codex, Claude, Kimi, OpenCode ou comando custom
 
 ## Fluxo de issue -> PR
 
@@ -86,3 +91,13 @@ Guardrails mínimos:
 - exigir CI/smoke verde
 - manter draft por padrão
 - nunca automergir gameplay, backend, anti-cheat ou mapa
+
+## Fluxo self-hosted do fix-bot
+
+1. maintainer comenta `/bot-fix`
+2. bot abre branch `bot/issue-N` e draft PR
+3. maintainer comenta `/bot-fix-runner` na issue, ou dispara `workflow_dispatch`
+4. workflow prepara um JSON com issue/branch/PR
+5. runner self-hosted executa `FIX_BOT_COMMAND`
+6. o adapter faz commits pequenos na branch e dá push
+7. PR continua draft até revisão humana ou automerge seguro
