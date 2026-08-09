@@ -32,11 +32,19 @@ Permissões mínimas recomendadas para o token:
 - o bot só mergea PR com label `safe-automerge` e checks verdes
 - em crashes automáticos, o bot sugere duplicatas; ele não fecha sozinho nesta fase
 - para abrir PR de issue, o gatilho é um comentário de maintainer `/bot-fix`
+- PR nova pode ser reencaminhada automaticamente para a branch de integração/release configurada
+- PR nova recebe assignee do próprio autor quando fizer sentido
 
 ## Secrets
 
 - `CSBRASIL_BOT_TOKEN`: obrigatório para labels, comentários e merge bot
 - `STAGING_URL`: opcional; quando presente, habilita smoke contra staging
+
+## Variables
+
+- `PR_DEFAULT_BASE_BRANCH`: opcional; default `staging`
+  - se uma PR abrir contra `main`, o bot pode reencaminhar para essa branch
+  - exemplos: `staging`, `staging/v2.0.0-alpha.42`, `release/v2.0.0-alpha.42`
 
 ## Fluxo de issue -> PR
 
@@ -53,6 +61,7 @@ Hoje o bot não altera código sozinho. Ele faz três coisas:
 - classifica issue e PR
 - identifica issue pequena/determinística como `bot-fixable`
 - abre branch e PR draft com `/bot-fix`
+- em PR nova, aplica labels de roteamento, tenta assinar o autor como assignee e pode trocar a base branch
 
 Isso é intencional. Sem chave de modelo e policy de execução, ligar push de código direto em IA aumenta risco operacional.
 
