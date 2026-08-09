@@ -40,7 +40,7 @@ export const GLB_CHARS = new Set([
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
   // Mítico (6ª facção). GLBs gerados no Mint MCP (mint.gg), ~1MB cada, formato GLB PBR.
-  'zumbi', 'mariabonita', 'saci', 'curupira', 'cuca', 'macunaima', 'lobisomem', 'lampiao', 'bandeirante',
+  'mariabonita', 'saci', 'lampiao', 'lobisomem', 'bandeirante', 'cuca', 'curupira',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando

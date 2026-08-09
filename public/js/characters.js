@@ -589,9 +589,6 @@ export const CHARACTERS = [
   //  TIME MÍTICO (M) — heróis históricos, folclore e literatura brasileira.
   //  Nenhum personagem da atualidade, nenhum copyright. Spec: plans/09-TIME-MITICO.md
   // ═══════════════════════════════════════════════════════════════════════════
-  { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
-    blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
-    pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
   { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
     blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
     pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
@@ -602,14 +599,17 @@ export const CHARACTERS = [
     blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
     pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
   { id: 'lobisomem', team: 'M', tribe: 'mitico', name: 'Lobisomem',
-    blurb: 'Roqueiro do interior com maldição. A sétima lua transforma — garras no lugar da arma.',
+    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo-guará acorda na sexta-feira à meia-noite.',
     pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
   { id: 'bandeirante', team: 'M', tribe: 'mitico', name: 'Bandeirante',
     blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.',
     pal: { skin: 0xc09070, shirt: 0x4a3a2a, pants: 0x3a2a1a, hair: 0x4a3a2a, boots: 0x2a1a0a } },
-  { id: 'macunaima', team: 'M', tribe: 'mitico', name: 'Macunaíma',
-    blurb: 'O herói sem nenhum caráter. Arma pega no chão vale mais na mão dele — ai, que preguiça.',
-    pal: { skin: 0xa07a5a, shirt: 0x5a8a5a, pants: 0x3a4a3a, hair: 0x1a0a00, boots: 0x4a3a2a } },
+  { id: 'boto', team: 'M', tribe: 'mitico', name: 'Boto Cor de Rosa',
+    blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.',
+    pal: { skin: 0xffaaaa, shirt: 0xffffff, pants: 0xffffff, hair: 0x6a4a3a, boots: 0xffffff } },
+  { id: 'mula', team: 'M', tribe: 'mitico', name: 'Mula-sem-cabeça',
+    blurb: 'A mulher amaldiçoada. Fogo pelo toco do pescoço, galopa pelas noites — não tem cabeça pra mirar.',
+    pal: { skin: 0x4a3020, shirt: 0x2a1a1a, pants: 0x1a0a0a, hair: 0xff4400, boots: 0x1a0a0a } },
   { id: 'cuca', team: 'M', tribe: 'mitico', name: 'Cuca',
     blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".',
     pal: { skin: 0x4a6a4a, shirt: 0x2a3a2a, pants: 0x3a2a3a, hair: 0x2a2a1a, boots: 0x1a2a1a } },
@@ -631,8 +631,8 @@ export const CHAR_WEAPON = {
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   // Time Mítico
-  zumbi: 'ak', mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'pistol',
-  bandeirante: 'mosin', macunaima: 'ak', cuca: 'shotgun', curupira: 'mp5',
+  mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'pistol',
+  bandeirante: 'mosin', boto: 'deagle', mula: 'shotgun', cuca: 'shotgun', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 

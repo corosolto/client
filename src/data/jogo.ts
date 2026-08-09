@@ -273,13 +273,13 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'fluxo', faccao: 'funkeiros', nome: 'Fluxo', blurb: 'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.' },
   { id: 'ostentacao', faccao: 'funkeiros', nome: 'Ostentação', blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.' },
 
-  { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares acelera a recarga dos aliados próximos.' },
   { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.' },
   { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.' },
   { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!' },
-  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Roqueiro do interior com maldição. A sétima lua transforma — garras no lugar da arma.' },
+  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo-guará acorda na sexta-feira à meia-noite.' },
   { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.' },
-  { id: 'macunaima', faccao: 'mitico', nome: 'Macunaíma', blurb: 'O herói sem nenhum caráter. Arma pega no chão vale mais na mão dele — ai, que preguiça.' },
+  { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.' },
+  { id: 'mula', faccao: 'mitico', nome: 'Mula-sem-cabeça', blurb: 'A mulher amaldiçoada. Fogo pelo toco do pescoço, galopa pelas noites — não tem cabeça pra mirar.' },
   { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — dorme com o medo.' },
   { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];
