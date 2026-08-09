@@ -24,7 +24,7 @@ jobs:
       - name: Classify issue
         id: triage
         run: |
-          gh issue view "$ISSUE_NUMBER" --json title > /tmp/issue.json
+          gh issue view "$ISSUE_NUMBER" --json number,title,url > /tmp/issue.json
           python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
           cat /tmp/triage.json
       - name: Apply labels
@@ -36,4 +36,39 @@ jobs:
           if labels:
               subprocess.run(['gh', 'issue', 'edit', '${{ github.event.issue.number }}', '--add-label', ','.join(labels)], check=True)
           PY
-
+      - name: Suggest crash duplicate
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, pathlib
+          current = json.load(open('/tmp/issue.json'))
+          title = current['title'].lower()
+          if not title.startswith('crash em produção:'):
+              raise SystemExit(0)
+          out = subprocess.check_output([
+              'gh', 'issue', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,url,labels'
+          ], text=True)
+          data = json.loads(out)
+          pathlib.Path('/tmp/crashes.json').write_text(json.dumps({
+              'current': current,
+              'others': data,
+          }))
+          PY
+          python3 scripts/ci/crash_dedupe.py < /tmp/crashes.json > /tmp/dup.json
+          python3 - <<'PY'
+          import json, subprocess
+          dup = json.load(open('/tmp/dup.json')).get('duplicate')
+          if not dup:
+              raise SystemExit(0)
+          body = (
+              "Possível duplicata automática detectada.\n\n"
+              f"- candidata: #{dup['number']} — {dup['title']}\n"
+              f"- link: {dup['url']}\n"
+              f"- similaridade: {dup['score']}\n\n"
+              "Sugestão do bot apenas; fechamento continua humano."
+          )
+          subprocess.run([
+              'gh', 'issue', 'comment', '${{ github.event.issue.number }}',
+              '--body', body
+          ], check=True)
+          PY

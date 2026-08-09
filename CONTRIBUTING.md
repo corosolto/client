@@ -181,6 +181,14 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
    > compatível: elas seguem MIT dentro do conjunto, que é distribuído sob
    > AGPL-3.0. Se isso for decisivo pra você, pergunte antes de abrir o PR.
 
+O CI valida a presença de `Signed-off-by:` em cada commit do PR.
+
+Para assinar:
+
+```bash
+git commit -s -m "feat: minha mudança"
+```
+
 ## Reportando bugs
 
 Abra uma issue com: o que aconteceu, o que você esperava, passos pra reproduzir,

@@ -9,6 +9,19 @@ jobs:
   verify-staging:
     runs-on: ubuntu-latest
     if: ${{ secrets.STAGING_URL != '' }}
+    timeout-minutes: 20
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Probe staging
         run: curl -fsS "${{ secrets.STAGING_URL }}" >/dev/null
+      - name: Install Chromium
+        run: npx -y playwright@1.55.0 install --with-deps chromium
+      - name: Run smoke against staging
+        env:
+          BASE_URL: ${{ secrets.STAGING_URL }}
+        run: npx -y playwright@1.55.0 test tests/smoke/web-smoke.spec.js --reporter=list

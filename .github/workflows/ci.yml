@@ -62,6 +62,22 @@ jobs:
       # Supabase, que é exatamente o estado do CI.
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         run: node tools/eval/site-smoke.mjs
+  dco:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check Signed-off-by
+        run: |
+          printf '{"baseRefOid":"%s","headRefOid":"%s"}' \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" > /tmp/dco.json
+          python3 scripts/ci/dco_check.py < /tmp/dco.json
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

@@ -38,4 +38,30 @@ jobs:
           if remove:
               subprocess.run(['gh', 'pr', 'edit', '${{ github.event.pull_request.number }}', '--remove-label', ','.join(remove)], check=True)
           PY
-
+      - name: Update bot classification comment
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, pathlib
+          pr = json.load(open('/tmp/pr.json'))
+          labels = json.load(open('/tmp/pr-labels.json'))
+          payload = {
+              'files': pr.get('files', []),
+              'changedFiles': pr.get('changedFiles', 0),
+              'labels_add': labels.get('labels_add', []),
+          }
+          pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_comment.py < /tmp/pr-comment-payload.json > /tmp/pr-comment.md
+          python3 - <<'PY'
+          import json, subprocess
+          marker = '## csbrasil-bot classification'
+          comments = json.loads(subprocess.check_output([
+              'gh', 'api', 'repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments'
+          ], text=True))
+          body = open('/tmp/pr-comment.md').read()
+          for c in comments:
+              if c.get('user', {}).get('login') == 'csbrasil-bot' and marker in c.get('body', ''):
+                  subprocess.run(['gh', 'api', f"repos/${{ github.repository }}/issues/comments/{c['id']}", '-X', 'PATCH', '-f', f'body={body}'], check=True)
+                  raise SystemExit(0)
+          subprocess.run(['gh', 'pr', 'comment', '${{ github.event.pull_request.number }}', '--body-file', '/tmp/pr-comment.md'], check=True)
+          PY

@@ -4,6 +4,7 @@
 
 - `pr-fast`
 - `smoke-web` quando a PR toca jogo/UI/site
+- `dco` para toda contribuição via PR
 
 ## Labels
 
@@ -36,3 +37,7 @@ Não entra em automerge:
 Use a branch `staging` para validar combinações de PRs antes de produção.
 O workflow de staging deve apontar para `STAGING_URL`.
 
+## Crash triage
+
+Issues `crash-auto` devem ser agrupadas por assinatura de erro antes de
+virarem fila humana. O bot só sugere duplicata; o fechamento continua humano.

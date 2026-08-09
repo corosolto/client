@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 
 test('menu, ranking, team, char and initial hud boot', async ({ page }) => {
-  await page.goto('http://127.0.0.1:4321/?debug=1');
+  const base = process.env.BASE_URL || 'http://127.0.0.1:4321';
+  await page.goto(`${base}/?debug=1`);
 
   await expect(page.locator('#main-menu')).toBeVisible();
   await expect(page.locator('#btn-jogar')).toBeVisible();
