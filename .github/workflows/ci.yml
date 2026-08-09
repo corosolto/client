@@ -1,10 +1,14 @@
-name: CI
+name: pr-fast
 
 on:
   push:
     branches: [main]
     tags: ['v*']
   pull_request:
+
+concurrency:
+  group: pr-fast-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -16,6 +20,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Python CI scripts syntax
+        run: python3 -m py_compile scripts/ci/*.py
+      - name: Bash scripts syntax
+        run: bash -n scripts/*.sh
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
 

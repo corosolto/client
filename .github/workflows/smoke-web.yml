@@ -1,0 +1,42 @@
+name: smoke-web
+
+on:
+  pull_request:
+    paths:
+      - 'public/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/smoke/**'
+      - '.github/workflows/smoke-web.yml'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium
+        run: npx -y playwright@1.55.0 install --with-deps chromium
+      - name: Start dev server
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 4321 >/tmp/csbrasil-dev.log 2>&1 &
+      - name: Wait for app
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4321/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/csbrasil-dev.log
+          exit 1
+      - name: Run smoke test
+        run: npx -y playwright@1.55.0 test tests/smoke/web-smoke.spec.js --reporter=list
+

@@ -1,0 +1,38 @@
+name: csbrasil-bot-automerge
+
+on:
+  pull_request_target:
+    types: [labeled, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CSBRASIL_BOT_TOKEN != '' }}
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fetch PR status
+        run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup > /tmp/automerge.json
+      - name: Check eligibility
+        run: python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
+      - name: Merge when eligible
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+          data = json.load(open('/tmp/automerge-result.json'))
+          if not data.get('eligible'):
+              print('automerge: not eligible')
+              sys.exit(0)
+          subprocess.run(['gh', 'pr', 'merge', '${{ github.event.pull_request.number }}', '--squash', '--delete-branch', '--auto'], check=True)
+          PY
+

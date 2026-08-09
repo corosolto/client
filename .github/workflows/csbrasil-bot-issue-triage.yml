@@ -1,0 +1,39 @@
+name: csbrasil-bot-issue-triage
+
+on:
+  issues:
+    types: [opened, reopened, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CSBRASIL_BOT_TOKEN != '' }}
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Classify issue
+        id: triage
+        run: |
+          gh issue view "$ISSUE_NUMBER" --json title > /tmp/issue.json
+          python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
+          cat /tmp/triage.json
+      - name: Apply labels
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          data = json.load(open('/tmp/triage.json'))
+          labels = data.get('labels_add', [])
+          if labels:
+              subprocess.run(['gh', 'issue', 'edit', '${{ github.event.issue.number }}', '--add-label', ','.join(labels)], check=True)
+          PY
+

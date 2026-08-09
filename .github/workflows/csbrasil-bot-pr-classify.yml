@@ -1,0 +1,41 @@
+name: csbrasil-bot-pr-classify
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.CSBRASIL_BOT_TOKEN != '' }}
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fetch PR metadata
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles > /tmp/pr.json
+      - name: Classify PR
+        run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
+      - name: Apply labels
+        run: |
+          python3 - <<'PY'
+          import json, subprocess
+          data = json.load(open('/tmp/pr-labels.json'))
+          add = data.get('labels_add', [])
+          remove = data.get('labels_remove', [])
+          if add:
+              subprocess.run(['gh', 'pr', 'edit', '${{ github.event.pull_request.number }}', '--add-label', ','.join(add)], check=True)
+          if remove:
+              subprocess.run(['gh', 'pr', 'edit', '${{ github.event.pull_request.number }}', '--remove-label', ','.join(remove)], check=True)
+          PY
+

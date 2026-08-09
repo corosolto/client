@@ -1,0 +1,14 @@
+name: staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  verify-staging:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.STAGING_URL != '' }}
+    steps:
+      - name: Probe staging
+        run: curl -fsS "${{ secrets.STAGING_URL }}" >/dev/null
