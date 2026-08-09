@@ -279,7 +279,7 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo-guará acorda na sexta-feira à meia-noite.' },
   { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.' },
   { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.' },
-  { id: 'mula', faccao: 'mitico', nome: 'Mula-sem-cabeça', blurb: 'A mulher amaldiçoada. Fogo pelo toco do pescoço, galopa pelas noites — não tem cabeça pra mirar.' },
+  { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.' },
   { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — dorme com o medo.' },
   { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];

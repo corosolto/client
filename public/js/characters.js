@@ -607,9 +607,9 @@ export const CHARACTERS = [
   { id: 'boto', team: 'M', tribe: 'mitico', name: 'Boto Cor de Rosa',
     blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.',
     pal: { skin: 0xffaaaa, shirt: 0xffffff, pants: 0xffffff, hair: 0x6a4a3a, boots: 0xffffff } },
-  { id: 'mula', team: 'M', tribe: 'mitico', name: 'Mula-sem-cabeça',
-    blurb: 'A mulher amaldiçoada. Fogo pelo toco do pescoço, galopa pelas noites — não tem cabeça pra mirar.',
-    pal: { skin: 0x4a3020, shirt: 0x2a1a1a, pants: 0x1a0a0a, hair: 0xff4400, boots: 0x1a0a0a } },
+  { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
+    blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
+    pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
   { id: 'cuca', team: 'M', tribe: 'mitico', name: 'Cuca',
     blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".',
     pal: { skin: 0x4a6a4a, shirt: 0x2a3a2a, pants: 0x3a2a3a, hair: 0x2a2a1a, boots: 0x1a2a1a } },
@@ -632,7 +632,7 @@ export const CHAR_WEAPON = {
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   // Time Mítico
   mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'pistol',
-  bandeirante: 'mosin', boto: 'deagle', mula: 'shotgun', cuca: 'shotgun', curupira: 'mp5',
+  bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 
