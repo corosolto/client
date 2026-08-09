@@ -17,31 +17,46 @@ permissions:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    if: >-
-      secrets.CSBRASIL_BOT_TOKEN != '' &&
-      (
-        github.event_name == 'workflow_dispatch' ||
-        (
-          github.event.issue.pull_request == null &&
-          startsWith(github.event.comment.body, '/bot-fix-runner') &&
-          contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)
-        )
-      )
-    env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
-      ISSUE_NUMBER: ${{ inputs.issue_number || github.event.issue.number }}
     outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
       branch: ${{ steps.prepare.outputs.branch }}
       issue_number: ${{ steps.prepare.outputs.issue_number }}
       linked_pr: ${{ steps.prepare.outputs.linked_pr }}
     steps:
+      - name: Gate execution
+        id: gate
+        env:
+          HAS_BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN != '' }}
+          IS_WORKFLOW_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          IS_ISSUE_COMMENT: ${{ github.event.issue.pull_request == null }}
+          HAS_FIX_COMMAND: ${{ vars.FIX_BOT_COMMAND != '' }}
+          COMMENT_BODY: ${{ github.event.comment.body || '' }}
+          AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association || '' }}
+        run: |
+          enabled=false
+          if [ "$HAS_BOT_TOKEN" = "true" ] && [ "$HAS_FIX_COMMAND" = "true" ]; then
+            if [ "$IS_WORKFLOW_DISPATCH" = "true" ]; then
+              enabled=true
+            elif [ "$IS_ISSUE_COMMENT" = "true" ] && [[ "$COMMENT_BODY" == /bot-fix-runner* ]] && [[ ",OWNER,MEMBER,COLLABORATOR," == *",$AUTHOR_ASSOCIATION,"* ]]; then
+              enabled=true
+            fi
+          fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         with:
           token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
           fetch-depth: 0
+      - name: Export issue number
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
+        run: echo "ISSUE_NUMBER=${{ inputs.issue_number || github.event.issue.number }}" >> "$GITHUB_ENV"
       - name: Ensure labels exist
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         run: python3 scripts/ci/ensure_labels.py bot-fixable
       - name: Fetch issue and PR context
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
         run: |
           gh issue view "$ISSUE_NUMBER" --json number,title,body,labels,url > /tmp/fix-issue.json
           gh pr list --state open --limit 100 --json number,title,url,body,headRefName > /tmp/fix-prs.json
@@ -60,8 +75,17 @@ jobs:
           PY
       - name: Build fix-bot payload
         id: prepare
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
         run: |
           python3 scripts/ci/fix_bot_prepare.py < /tmp/fix-bot-prepare-input.json > /tmp/fix-bot-task.json
+          git ls-remote --exit-code --heads origin "$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('/tmp/fix-bot-task.json').read_text())['branch'])
+          PY
+          )" >/dev/null
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -73,6 +97,7 @@ jobs:
           PY
           cat /tmp/fix-bot.outputs >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
+        if: ${{ steps.gate.outputs.enabled == 'true' }}
         with:
           name: fix-bot-task
           path: /tmp/fix-bot-task.json
@@ -80,7 +105,7 @@ jobs:
   run:
     needs: prepare
     runs-on: self-hosted
-    if: ${{ secrets.CSBRASIL_BOT_TOKEN != '' && vars.FIX_BOT_COMMAND != '' }}
+    if: ${{ needs.prepare.outputs.enabled == 'true' && needs.prepare.outputs.branch != '' }}
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
