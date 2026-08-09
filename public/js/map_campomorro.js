@@ -1,19 +1,16 @@
-// CAMPO DO MORRO (fy_campomorro) — spec plans/11-CAMPO-DO-MORRO.md: morro carioca com
-// CAMPO DE VÁRZEA no centro — todos os becos convergem pra ele. Um time nasce no campo
-// (centro, exposto); o outro nasce no GALPÃO DO BAILE FUNK (periferia, protegido, tem que
-// descer). O mapa é CONVERGÊNCIA: todo caminho leva ao campo, e quem segura o campo segura
-// o jogo.
+// CAMPO DO MORRO (fy_campomorro) — spec plans/11-CAMPO-DO-MORRO.md: campo de várzea
+// central com BECOS RADIANDO EM TODAS AS DIREÇÕES como uma rosa dos ventos / estrela.
+// O pedido do dono: "becos de todos os lados como uma estrela rosa dos ventos".
 //
-// PLANTA (eixo longo = z; norte = -z). Faixas em x:
-//   GALPÃO    z ∈ [-42, -26]  y=0   spawn B (paredão de som, portão de aço)
-//   BECOS     z ∈ [-26, -10]  y=0   4 vielas convergindo do galpão pro campo
-//   CAMPO     z ∈ [-10, 15]   y=0   campo de várzea (~40 × 25 m jogáveis)
-//   ARQUIBANC z ∈ [15, 20]    y=0   arquibancada de cimento + vestiário container
-//   MURO SUL  z ∈ [20, 25]    y=0   muro com grafite de homenagem
+// PLANTA (grid 5×5, cada célula 10 m). H = casa, . = corredor, F = campo:
+//   H . . . H       beco NW <──    beco NE ──>
+//   . H . H .       
+//   . . F . .       ← beco W    CAMPO    beco E →
+//   . H . H .       
+//   H . . . H       beco SW <──    beco SE ──>
 //
-// O DESENHO é assimétrico de propósito: centro exposto × periferia protegida. O
-// balanceamento mora no número de saídas do galpão: o time B precisa vigiar 4 bocas de
-// beco, e cada uma chega numa borda diferente do campo.
+// Os vãos formam 4 corredores cardeais (N, S, E, W) + 4 diagonais (zig-zag
+// pelas celulas vazias). 8 direções de ataque convergindo no campo central.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -25,16 +22,20 @@ import { detailFor } from './textures.js';
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
-export const HALF_X = 24, HALF_Z = 42;
+export const HALF_X = 26, HALF_Z = 26;
+const CELL = 10;        // cada célula do grid
+const GRID = [-2, -1, 0, 1, 2];  // centros: -20, -10, 0, 10, 20
+// padrao da estrela: H=casa, .=vão (corredor). Centro = campo.
+const STAR = [
+  ['H', '.', '.', '.', 'H'],   // z=-20
+  ['.', 'H', '.', 'H', '.'],   // z=-10
+  ['.', '.', 'F', '.', '.'],   // z=0 (campo)
+  ['.', 'H', '.', 'H', '.'],   // z=10
+  ['H', '.', '.', '.', 'H'],   // z=20
+];
 
 export const CAMPOMORRO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_som', 'arquibancada'];
-
-// fronteiras das zonas
-const GALP = { z0: -HALF_Z, z1: -26 };
-const ALLEY = { z0: -26, z1: -10 };
-const CAMPO = { z0: -10, z1: 15 };
-const ARQ = { z0: 15, z1: 20 };
 
 export function buildCampoMorro(scene, T) {
   const colliders = [], occluders = [], pickups = [];
@@ -50,15 +51,22 @@ export function buildCampoMorro(scene, T) {
     }
     return m;
   };
-  const MAT = {
-    asphalt: lam({ map: T.asphalt }),
-    concrete: lam({ map: T.concrete }),
-    concreteDark: lam({ map: T.concreteDark }),
-    dirt: lam({ map: T.dirt }),
-    grass: lam({ map: T.grass }),
-  };
-  // terra de campo de várzea (mais verde que o dirt genérico)
-  const MAT_CAMPO = lam({ map: T.grass, color: 0x8a8a5a, roughness: 1.0 });
+
+  // Override de texturas no browser
+  let TEX = { dirt: lam({ map: T.dirt }), concrete: lam({ map: T.concrete }),
+    grass: lam({ map: T.grass }), asphalt: lam({ map: T.asphalt }),
+    concreteDark: lam({ map: T.concreteDark }) };
+  if (typeof document !== 'undefined') {
+    const load = (url, rx = 4, ry = 4) => {
+      const t = new THREE.TextureLoader().load(url);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+      return t;
+    };
+    TEX.dirt = lam({ map: load('/img/textures/dirt_field.webp', 6, 6), roughness: 1.0 });
+    TEX.wall = lam({ map: load('/img/textures/favela_wall.webp', 2, 2) });
+    TEX.asphalt = lam({ map: load('/img/textures/asphalt_br.webp', 6, 6) });
+    TEX.concrete = lam({ map: load('/img/textures/concrete_br.webp', 4, 4) });
+  }
 
   const aoMat = aoMatFactory();
   const SKIRT = new ContactSkirt({ low: LOWQ });
@@ -78,10 +86,8 @@ export function buildCampoMorro(scene, T) {
     }
     return m;
   }
-  const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
 
-  // ---- textura de parede de comunidade ----
   function paredeTex(pint, crua, seed) {
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -96,8 +102,7 @@ export function buildCampoMorro(scene, T) {
       for (let r2 = -3; r2 < 4; r2++) for (let k = -2; k < 3; k++) {
         const bx = px + k * 60 + (r2 % 2 ? 30 : 0), by = py + r2 * 30, v = rnd();
         x.fillStyle = `rgb(${146 + v * 44 | 0},${84 + v * 32 | 0},${56 + v * 24 | 0})`; x.fillRect(bx, by, 54, 24);
-        x.fillStyle = 'rgba(40,26,20,0.5)';
-        for (let h2 = 0; h2 < 3; h2++) x.fillRect(bx + 6 + h2 * 15, by + 6, 9, 12);
+        x.fillStyle = 'rgba(40,26,20,0.5)'; for (let h2 = 0; h2 < 3; h2++) x.fillRect(bx + 6 + h2 * 15, by + 6, 9, 12);
       }
       x.restore();
     }
@@ -110,164 +115,85 @@ export function buildCampoMorro(scene, T) {
     paredeTex('#c4a87a', 0.3, 301), paredeTex('#a89d8a', 0.4, 502),
     paredeTex('#8d6e5a', 0.5, 703), paredeTex('#b0a06a', 0.35, 904),
   ];
-  // textura do alambrado (malha de ferro)
-  function alambradoTex() {
-    const S = 128, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
-    x.fillStyle = 'rgba(0,0,0,0)'; x.clearRect(0, 0, S, S);
-    x.strokeStyle = 'rgba(120,120,110,0.6)'; x.lineWidth = 1;
-    for (let i = 0; i <= S; i += 8) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, S); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(S, i); x.stroke(); }
-    const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    return lam({ map: tex, transparent: true, side: THREE.DoubleSide });
-  }
-  const MAT_ALAM = alambradoTex();
 
   const PB = new PropBatch({ bucket: 24 });
 
   /* ===================== CÉU / LUZ ===================== */
-  scene.background = T.sky || new THREE.Color(0xb9c6d2);
+  if (typeof document !== 'undefined') {
+    scene.background = new THREE.TextureLoader().load('/img/textures/sky_rj.webp');
+  } else {
+    scene.background = T.sky || new THREE.Color(0xb9c6d2);
+  }
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_campomorro');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.5); sun.position.set(30, 40, 10); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
-  sun.shadow.camera.left = -HALF_X - 5; sun.shadow.camera.right = HALF_X + 5;
+  sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
 
   /* ===================== CHÃO ===================== */
-  addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
-  // campo de várzea (terra/sintético gasto)
-  addFloor(40, 25, 0, (CAMPO.z0 + CAMPO.z1) / 2, MAT_CAMPO, 0.01);
-  // piso do galpão (cimento)
-  addFloor(HALF_X * 2, GALP.z1 - GALP.z0, 0, (GALP.z0 + GALP.z1) / 2, MAT.concrete, 0.01);
+  addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, TEX.dirt, -0.01);
 
-  /* ===================== HELPERS ===================== */
-  function casa(x, z, w, d, h, matIdx) {
-    const mat = PAREDES[matIdx % PAREDES.length];
-    addBox(w, h, d, mat, x, 0, z);
-    solids.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 });
-    addBox(w + 0.3, 0.12, d + 0.3, MAT.concreteDark, x, h, z, { collide: false });
-  }
-
-  // alambrado como parede parcial (não colide mas é visível — cover visual)
-  function alambrado(x, z, w, h, d) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), MAT_ALAM);
-    if (d) { m.position.set(x, h / 2, z); } else { m.position.set(x, h / 2, z); m.rotation.y = Math.PI / 2; }
-    root.add(m);
-  }
-
-  /* ===================== GALPÃO DO BAILE (spawn B) =====================
-     Estrutura no extremo norte. Interior jogável com paredão de som como
-     cover central. Duas saídas para becos distintos. O portão de aço fica
-     meio aberto — é a boca principal pro campo. */
-  // paredes do galpão: norte (cheia) + sul (com portão). Laterais FICAM ABERTAS —
-  // é um galpão de baile, não uma fortaleza. Sem isto, as laterais bloqueavam os becos
-  // e TODO caminho do spawn B saía pelo portão sul, dando 1 rota só na CTF2.
-  addBox(HALF_X * 2, 5, 0.4, MAT.concrete, 0, 0, GALP.z0 + 0.2);    // parede norte
-  // telhado do galpão
-  addBox(HALF_X * 2, 0.2, GALP.z1 - GALP.z0, lam({ color: 0x3a3a3a, roughness: 0.8, metalness: 0.3 }), 0, 5, (GALP.z0 + GALP.z1) / 2, { collide: false });
-  // parede sul do galpão com PORTÃO central + VÃOS DOS BECOS nos pontos onde os
-  // becos NW (-16) e NE (16) desembocam. Sem estes vãos, TODO caminho dos becos
-  // ao galpão é forçado pelo portão central, e a CTF2 vê 1 rota só.
-  {
-    const z = GALP.z1;
-    // segmentos sólidos da parede: tudo exceto os vãos
-    const vaos = [[-19, -13], [-3, 3], [13, 19]].sort((a, b) => a[0] - b[0]);
-    let x = -HALF_X + 0.2;
-    for (const [g0, g1] of vaos) {
-      if (g0 > x) {
-        addBox(g0 - x, 4, 0.4, MAT.concrete, (x + g0) / 2, 0, z);
-        solids.push({ x0: x, x1: g0, z0: z - 0.3, z1: z + 0.3 });
+  /* ===================== GRID DA ESTRELA ===================== */
+  for (let gi = 0; gi < 5; gi++) for (let gj = 0; gj < 5; gj++) {
+    const cell = STAR[gj][gi];
+    if (cell === 'H') {
+      const cx = GRID[gi] * CELL / 2, cz = GRID[gj] * CELL / 2;   // -20, -10, 0, 10, 20
+      // bloco de casas (2-3 casas por célula, não uma caixa gigante)
+      const mi = (gi * 3 + gj * 7) & 3;
+      const h = 3.5 + ((gi + gj * 3) % 3) * 0.5;
+      const matMat = TEX.wall || PAREDES[mi];
+      // casa principal
+      addBox(7, h, 7, matMat, cx, 0, cz);
+      solids.push({ x0: cx - 3.5, x1: cx + 3.5, z0: cz - 3.5, z1: cz + 3.5 });
+      // telhado/laje
+      addBox(7.3, 0.12, 7.3, TEX.concreteDark, cx, h, cz, { collide: false });
+      // caixa d'água em algumas
+      if ((gi + gj) % 2 === 0) addBox(1.8, 1.8, 1.8, lam({ color: 0x1a1a1a }), cx, h, cz, { collide: false });
+    } else if (cell === 'F') {
+      // campo central — piso de várzea + traves + alambrado
+      addFloor(CELL + 6, CELL + 6, GRID[gi] * CELL / 2, GRID[gj] * CELL / 2, TEX.dirt, 0.03);
+      const fx = GRID[gi] * CELL / 2, fz = GRID[gj] * CELL / 2;
+      // traves
+      for (const [gx, gy] of [[fx - 4, fz], [fx + 4, fz]]) {
+        addBox(0.1, 2.4, 0.1, lam({ color: 0xffffff }), gx, 0, gy - 3, { collide: false });
+        addBox(0.1, 2.4, 0.1, lam({ color: 0xffffff }), gx, 0, gy + 3, { collide: false });
+        addBox(0.1, 0.1, 6.2, lam({ color: 0xffffff }), gx, 2.4, gy, { collide: false });
       }
-      x = g1;
-    }
-    if (HALF_X - 0.2 > x) {
-      addBox(HALF_X - 0.2 - x, 4, 0.4, MAT.concrete, (x + HALF_X - 0.2) / 2, 0, z);
-      solids.push({ x0: x, x1: HALF_X - 0.2, z0: z - 0.3, z1: z + 0.3 });
-    }
-  }
-  // pilares de canto do galpão
-  for (const cx of [-HALF_X + 0.5, HALF_X - 0.5])
-    addBox(0.6, 5, 0.6, MAT.concreteDark, cx, 0, GALP.z1);
-
-  // PAREDÃO DE SOM — cover central do galpão
-  addBox(8.0, 3.0, 1.0, lam({ color: 0x1a1a1a, roughness: 0.9 }), 0, 0, -35);
-  // caixas de equipamento
-  addBox(2.0, 1.2, 1.5, lam({ color: 0x2a2a2a }), -8, 0, -36);
-  addBox(1.5, 1.0, 1.5, lam({ color: 0x2a2a2a }), 8, 0, -36);
-  // mesa de DJ
-  addBox(2.5, 1.0, 0.8, lam({ color: 0x1a1a1a }), 0, 0, -40);
-  // luz estroboscópica (decoração — cilindro escuro no teto)
-  addBox(0.3, 0.3, 0.3, lam({ color: 0x0a0a0a }), 0, 4.6, -35, { collide: false });
-
-  /* ===================== BECOS (4 vielas convergindo) =====================
-     Cada beco é um corredor de ~3 m de largura com casas dos dois lados.
-     Todos terminam numa borda DIFERENTE do campo — é o que faz a convergência.
-     O afastamento entre becos é ≥ 6 m (CTF2). */
-  function beco(cx, z0, z1, matBase) {
-    const w = 3.5, mw = w / 2;
-    // paredes (casas) dos dois lados
-    for (const [wx, side] of [[cx - mw - 2, -1], [cx + mw + 2, 1]]) {
-      casa(wx, (z0 + z1) / 2 - 4, 4, 4, 3.5, matBase);
-      casa(wx, (z0 + z1) / 2 + 4, 4, 4, 3 + ((wx * 3) % 2), matBase + 1);
-      if (Math.abs(z1 - z0) > 14) casa(wx, (z0 + z1) / 2, 4, 4, 3.5, matBase + 2);
+      // container (cover)
+      addBox(5, 2.5, 2.5, lam({ color: 0x4a6a4a }), fx + 3, 0, fz + 3);
+      solids.push({ x0: fx + 0.5, x1: fx + 5.5, z0: fz + 1.75, z1: fz + 4.25 });
+      // banco
+      addBox(2.5, 0.5, 0.6, lam({ color: 0x8a6a3a }), fx - 3, 0, fz + 3);
     }
   }
-  // 4 becos, bem separados em x (≥ 6 m entre centros)
-  beco(-16, -26, -10, 0);   // NW
-  beco(-5, -26, -10, 1);    // centro-O
-  beco(6, -26, -10, 2);     // centro-L
-  beco(16, -26, -10, 0);    // NE
 
-  /* ===================== CAMPO DE VÁRZEA ===================== */
-  // TRAVES (gol) — na diagonal menor do campo
-  // trave oeste
-  for (const sx of [-18, -17]) { addBox(0.1, 2.4, 0.1, lam({ color: 0xffffff }), sx, 0, CAMPO.z0 + 2); addBox(0.1, 0.1, 1.5, lam({ color: 0xffffff }), sx, 2.4, CAMPO.z0 + 2); }
-  // trave leste
-  for (const sx of [17, 18]) { addBox(0.1, 2.4, 0.1, lam({ color: 0xffffff }), sx, 0, CAMPO.z1 - 2); addBox(0.1, 0.1, 1.5, lam({ color: 0xffffff }), sx, 2.4, CAMPO.z1 - 2); }
-  // rede (caixa fina atrás da trave)
-  // ALAMBRADO nas laterais do campo (parede parcial)
-  for (const fx of [-20, 20]) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(25, 2.5), MAT_ALAM);
-    m.position.set(fx, 1.25, (CAMPO.z0 + CAMPO.z1) / 2); m.rotation.y = Math.PI / 2; root.add(m);
-    // postes do alambrado
-    for (const pz of [CAMPO.z0, CAMPO.z0 + 8, (CAMPO.z0 + CAMPO.z1) / 2, CAMPO.z1 - 8, CAMPO.z1])
-      addBox(0.08, 2.5, 0.08, lam({ color: 0x3a3a3a, metalness: 0.5 }), fx, 0, pz, { collide: false });
-  }
-  // trecho de alambrado DERRUBADO (cover improvisado no campo)
-  addBox(4.0, 1.0, 0.1, MAT_ALAM, -14, 0, 2, { ry: 0.3, collide: false });
-  // BANCO DE RESERVAS
-  addBox(3.0, 0.5, 0.6, lam({ color: 0x8a6a3a }), -8, 0, CAMPO.z1 - 4);
-  // CONTAINER do vestiário
-  addBox(6.0, 2.5, 2.5, lam({ color: 0x4a6a4a, roughness: 0.7 }), 12, 0, CAMPO.z1 - 3);
-  solids.push({ x0: 9, x1: 15, z0: CAMPO.z1 - 4.25, z1: CAMPO.z1 - 1.75 });
-
-  /* ===================== ARQUIBANCADA ===================== */
-  // degraus de cimento (3 níveis)
-  for (let i = 0; i < 3; i++)
-    addBox(HALF_X * 2, 0.5, 1.5, MAT.concrete, 0, 0, ARQ.z0 + i * 1.5 + 0.75);
-  // placa de "churrasco do troféu"
-  addBox(3.0, 1.5, 0.1, lam({ color: 0x8a4a2a }), -10, 1.5, ARQ.z1 - 0.5, { collide: false });
-
-  /* ===================== MURO SUL (com grafite de homenagem) ===================== */
-  addBox(HALF_X * 2, 3, 0.4, MAT.concrete, 0, 0, HALF_Z - 0.2);
-  // muros laterais (norte já tem o galpão; sul tem muro)
-  for (const sx of [-HALF_X, HALF_X]) {
-    addBox(0.5, 3, HALF_Z * 2, MAT.concrete, sx, 0, 0);
+  /* ===================== GALPÃO DO BAILE (num canto, como cover, não como spawn) ===================== */
+  {
+    const gx = -20, gz = -20;
+    addBox(8, 4, 6, TEX.wall || PAREDES[2], gx, 0, gz);
+    solids.push({ x0: gx - 4, x1: gx + 4, z0: gz - 3, z1: gz + 3 });
+    addBox(8.2, 0.2, 6.2, lam({ color: 0x3a3a3a }), gx, 4, gz, { collide: false });
+    addBox(4.0, 2.5, 0.8, lam({ color: 0x1a1a1a }), gx + 2, 0, gz, { collide: false });   // paredão
   }
 
-  /* ===================== BARRACAS E COMÉRCIO PERTO DO CAMPO ===================== */
-  // barraquinha de lanche (na borda do campo)
-  casa(-12, 5, 3, 3, 2.5, 1);
-  addBox(3, 0.5, 0.1, lam({ color: 0xcc4422 }), -12, 2.5, 3.6, { collide: false });
-  // barraca de camelô
-  casa(10, -5, 3, 3, 2.5, 0);
+  /* ===================== COVER nos corredores ===================== */
+  // carros nos corredores diagonais
+  addBox(1.8, 1.4, 4.0, lam({ color: 0x8a2020, roughness: 0.3, metalness: 0.5 }), -10, 0, 10, { ry: 0.6 });
+  addBox(1.8, 1.4, 4.0, lam({ color: 0x202060, roughness: 0.3, metalness: 0.5 }), 10, 0, -10, { ry: 0.6 });
+  // caçambas
+  addBox(2.0, 1.2, 1.5, lam({ color: 0x2a5a4a }), 0, 0, -10);
+  addBox(2.0, 1.2, 1.5, lam({ color: 0x2a5a4a }), 0, 0, 10);
 
-  /* ===================== CARROS ===================== */
-  for (const [cx, cz, cry] of [[-15, -20, 0.2], [14, -22, -0.1]])
-    addBox(1.8, 1.4, 4.0, lam({ color: cry > 0 ? 0x8a2020 : 0x202060, roughness: 0.3, metalness: 0.5 }), cx, 0, cz, { ry: cry });
+  /* ===================== MUROS EXTERNOS ===================== */
+  for (const sx of [-HALF_X, HALF_X])
+    addBox(0.5, 3, HALF_Z * 2, TEX.concrete, sx, 0, 0);
+  for (const sz of [-HALF_Z, HALF_Z])
+    addBox(HALF_X * 2, 3, 0.5, TEX.concrete, 0, 0, sz);
 
-  /* ===================== GROUND HEIGHT (plano) ===================== */
+  /* ===================== GROUND HEIGHT ===================== */
   const groundHeightAt = () => 0;
 
   /* ===================== WAYPOINTS + A* ===================== */
@@ -281,36 +207,21 @@ export function buildCampoMorro(scene, T) {
   for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP)
     for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP)
       if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
-
   const linha = (x0, z0, x1, z1, passo = 2.4, inf = 0.35) => {
     const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / passo));
     for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (!blocked(x, z, inf)) nodes.push({ x, z }); }
   };
-  // adensamento nos becos (corredores estreitos não pegam nós da grade 3,4 m)
-  for (const bx of [-16, -5, 6, 16]) linha(bx, -26, bx, -10, 2.0);
-  // dentro do galpão (incluindo as laterais abertas que conectam aos becos)
-  for (const bz of [-40, -37, -34, -31, -28]) linha(-20, bz, 20, bz, 3.0);
-  // bordas laterais do galpão (conectam becos NW/NE ao interior)
-  linha(-20, -26, -20, -40, 3.0);
-  linha(20, -26, 20, -40, 3.0);
-  // adensamento nos cantos do galpão (pickups)
-  linha(-12, -40, -12, -34, 2.0);
-  linha(12, -40, 12, -34, 2.0);
-  linha(-8, -40, -8, -34, 2.0);
-  linha(8, -40, 8, -34, 2.0);
-  // travessias do campo
-  for (const bz of [-8, -4, 0, 4, 8, 12]) linha(-19, bz, 19, bz, 3.0);
-  // arquibancada
-  linha(-20, 16, 20, 16, 3.0);
-  linha(-20, 18, 20, 18, 3.0);
-  // bordas do campo
-  linha(-20, -8, -20, 14, 3.0);
-  linha(20, -8, 20, 14, 3.0);
-  // conexões beco → campo
-  for (const bx of [-16, -5, 6, 16]) linha(bx, -10, bx, -7, 2.0);
-  // portas laterais do galpão (garantem 3 saídas separadas para CTF2)
-  linha(-HALF_X + 0.5, -32, -20, -32, 2.0);
-  linha(HALF_X - 0.5, -32, 20, -32, 2.0);
+  // 4 corredores cardeais (vão de ponta a ponta pelo centro)
+  linha(0, -HALF_Z + 2, 0, HALF_Z - 2, 2.0);   // N-S
+  linha(-HALF_X + 2, 0, HALF_X - 2, 0, 2.0);   // W-E
+  // 4 corredores diagonais (zig-zag pelas celulas vazias)
+  linha(-20, -20, -10, -10, 2.0);   linha(-10, -10, 0, 0, 2.0);   linha(0, 0, 10, 10, 2.0);   linha(10, 10, 20, 20, 2.0);   // NW→SE
+  linha(20, -20, 10, -10, 2.0);   linha(10, -10, 0, 0, 2.0);   linha(0, 0, -10, 10, 2.0);   linha(-10, 10, -20, 20, 2.0);   // NE→SW
+  // corredores secundários (conectando os cardeais)
+  for (const z of [-10, 10]) { linha(-20, z, 20, z, 3.0); linha(-10, z, 10, z, 3.0); }
+  for (const x of [-10, 10]) { linha(x, -20, x, 20, 3.0); linha(x, -10, x, 10, 3.0); }
+  // bordas
+  for (const z of [-23, 23]) linha(-23, z, 23, z, 3.0);
 
   const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
@@ -330,38 +241,30 @@ export function buildCampoMorro(scene, T) {
   }
 
   /* ===================== SPAWNS =====================
-     Time A (E) no CAMPO (centro, exposto por desenho)
-     Time B (B) no GALPÃO (protegido, tem que descer) */
+     E no extremo do corredor SE (z+), B no extremo do corredor NW (z-). */
   const spawns = {
-    E: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: 3, yaw: Math.PI })),   // olhando pra cima (norte)
-    B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -38, yaw: 0 })),       // olhando pra baixo (sul)
+    E: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: 22, yaw: Math.PI })),
+    B: [-4.5, -1.5, 1.5, 4.5].map(x => ({ x, z: -22, yaw: 0 })),
   };
 
-  /* ===================== CTF — 4 BANDEIRAS =====================
-     Convergência: as bandeiras cobrem o caminho do galpão ao fundo do campo.
-     Alternam lados para evitar colinearidade. */
+  /* ===================== CTF — 4 BANDEIRAS ===================== */
   const ctfPoints = [
-    { id: 'R', label: 'GALPAO',     x: 10,  z: -32 },
-    { id: 'C', label: 'CAMPO',      x: -10, z: -2 },
-    { id: 'P', label: 'TRAVE',      x: 10,  z: 10 },
-    { id: 'B', label: 'ARQUIBANC',  x: -10, z: 17 },
+    { id: 'R', label: 'N',     x: 10,  z: -15 },
+    { id: 'E', label: 'W',     x: -10, z: -2 },
+    { id: 'P', label: 'SE',    x: 10,  z: 10 },
+    { id: 'B', label: 'S',     x: -10, z: 15 },
   ];
 
-  /* ===================== ARSENAL NO CHÃO ===================== */
+  /* ===================== ARSENAL ===================== */
   const gmat = lam({ color: 0x20242a });
   const place = (kind, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
-  // dentro do galpão
-  place('ak', -8, -36);    place('mp5', 8, -36);
-  place('shotgun', -5, -38); place('deagle', 5, -34);
-  // becos
-  place('mp5', -16, -18);  place('m4', 16, -18);
-  place('shotgun', -5, -20); place('mp5', 6, -20);
-  // campo
-  place('ak', -10, 0);     place('m4', 10, 5);
-  place('awp', -15, -8);   place('m400', 15, 12);
-  place('deagle', 0, 8);   place('shotgun', -8, 12);
-  // arquibancada
-  place('ak', 8, 16);      place('mp5', -8, 16);
+  place('ak', -5, 0);     place('m4', 5, 3);
+  place('shotgun', 0, 5); place('mp5', -4, -4);
+  place('awp', -10, -10); place('m400', 10, 10);
+  place('deagle', 0, -10); place('mp5', 0, 10);
+  place('ak', 10, 0);     place('shotgun', -10, 0);
+  place('mp5', -20, 0);   place('m4', 20, 0);
+  place('deagle', 0, -20); place('deagle', 0, 20);
 
   PB.build(root);
   SKIRT.build(root);
