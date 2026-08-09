@@ -1,0 +1,103 @@
+name: csbrasil-bot-fix-runner
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue elegível para executar o fix-bot"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: >-
+      secrets.CSBRASIL_BOT_TOKEN != '' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.issue.pull_request == null &&
+          startsWith(github.event.comment.body, '/bot-fix-runner') &&
+          contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)
+        )
+      )
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ inputs.issue_number || github.event.issue.number }}
+    outputs:
+      branch: ${{ steps.prepare.outputs.branch }}
+      issue_number: ${{ steps.prepare.outputs.issue_number }}
+      linked_pr: ${{ steps.prepare.outputs.linked_pr }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          fetch-depth: 0
+      - name: Ensure labels exist
+        run: python3 scripts/ci/ensure_labels.py bot-fixable
+      - name: Fetch issue and PR context
+        run: |
+          gh issue view "$ISSUE_NUMBER" --json number,title,body,labels,url > /tmp/fix-issue.json
+          gh pr list --state open --limit 100 --json number,title,url,body,headRefName > /tmp/fix-prs.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          issue = json.loads(Path('/tmp/fix-issue.json').read_text())
+          labels = {label['name'] for label in issue.get('labels', [])}
+          if 'bot-fixable' not in labels:
+              raise SystemExit('issue não está etiquetada como bot-fixable')
+          payload = {
+              'issue': issue,
+              'prs': json.loads(Path('/tmp/fix-prs.json').read_text()),
+          }
+          Path('/tmp/fix-bot-prepare-input.json').write_text(json.dumps(payload))
+          PY
+      - name: Build fix-bot payload
+        id: prepare
+        run: |
+          python3 scripts/ci/fix_bot_prepare.py < /tmp/fix-bot-prepare-input.json > /tmp/fix-bot-task.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          task = json.loads(Path('/tmp/fix-bot-task.json').read_text())
+          with open(Path('/tmp/fix-bot.outputs'), 'w') as fh:
+              fh.write(f"branch={task['branch']}\n")
+              fh.write(f"issue_number={task['issue_number']}\n")
+              fh.write(f"linked_pr={task['linked_pr']['number'] if task.get('linked_pr') else ''}\n")
+          PY
+          cat /tmp/fix-bot.outputs >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fix-bot-task
+          path: /tmp/fix-bot-task.json
+
+  run:
+    needs: prepare
+    runs-on: self-hosted
+    if: ${{ secrets.CSBRASIL_BOT_TOKEN != '' && vars.FIX_BOT_COMMAND != '' }}
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ needs.prepare.outputs.issue_number }}
+      FIX_BOT_COMMAND: ${{ vars.FIX_BOT_COMMAND }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          ref: ${{ needs.prepare.outputs.branch }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: fix-bot-task
+          path: /tmp
+      - name: Run fix-bot adapter
+        run: bash scripts/ci/run-fix-bot.sh /tmp/fix-bot-task.json
+      - name: Push bot branch updates
+        run: git push
+      - name: Comment issue with execution result
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "csbrasil-bot executou o worker self-hosted na branch \`${{ needs.prepare.outputs.branch }}\`. Revise a PR draft antes de merge."
