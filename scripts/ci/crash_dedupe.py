@@ -13,10 +13,7 @@ def normalize(title: str) -> str:
     return t
 
 
-def main() -> int:
-    payload = json.load(sys.stdin)
-    current = payload["current"]
-    others = payload["others"]
+def find_duplicate(current: dict, others: list[dict]) -> dict | None:
     current_norm = normalize(current["title"])
     current_num = current["number"]
 
@@ -30,14 +27,21 @@ def main() -> int:
             best_score = score
             best = issue
 
-    out = {"duplicate": None}
     if best and best_score >= 0.84:
-        out["duplicate"] = {
+        return {
             "number": best["number"],
             "title": best["title"],
             "url": best["url"],
             "score": round(best_score, 3),
         }
+    return None
+
+
+def main() -> int:
+    payload = json.load(sys.stdin)
+    current = payload["current"]
+    others = payload["others"]
+    out = {"duplicate": find_duplicate(current, others)}
     print(json.dumps(out))
     return 0
 
