@@ -11,13 +11,13 @@
 //   - maiúsculas com letter-spacing largo em tudo que é rótulo
 // O objetivo é o site parecer a mesma coisa que o jogo, não um site sobre o jogo.
 //
-// PASSAGEM DE VISUAL (05/08/2026) — o dono: "o design das telas estáticas não
+// PASSAGEM DE VISUAL (05/08/2026) - o dono: "o design das telas estáticas não
 // está bom… precisamos refazer o visual frontend". Quatro coisas faltavam, e
 // todas as quatro têm origem medida em `references/telas/`:
 //
 //  1. MARCA. O topo era um lockup de TEXTO com um ▰ vermelho. `public/logo.png`
 //     (651×526, RGBA) existia no repo e não era usado por NINGUÉM. Agora ele é
-//     o topo, junto com o canarinho animado — que é personagem do jogo
+//     o topo, junto com o canarinho animado - que é personagem do jogo
 //     (`src/data/jogo.ts`, facção B) e não enfeite.
 //  2. IMAGEM. Nenhuma página interna tinha uma única imagem do jogo, sendo que
 //     `public/img/map-previews/*.jpg` (5) e `public/img/team-*.webp` (5) já
@@ -25,7 +25,7 @@
 //     uma delas como fundo graduado.
 //  3. ABERTURA DE PÁGINA. `h1` + `.sub` eram texto solto no topo do <main>.
 //     Viraram um bloco só, com a ETIQUETA ÂMBAR de canto que a referência usa em
-//     TODAS as telas ("01. MENU PRINCIPAL", "04. ESCOLHA DO MAPA") — ver o canto
+//     TODAS as telas ("01. MENU PRINCIPAL", "04. ESCOLHA DO MAPA") - ver o canto
 //     superior esquerdo de references/telas/01,02,04.
 //  4. LINHA DE META. `8v8 · ROUNDS · 15 MIN · DIA` (tela 04) virou `.meta`, e a
 //     etiqueta âmbar sobre a arte do mapa ("FERRO VELHO DO ZÉ", mesma tela)
@@ -33,9 +33,9 @@
 //     card do jogo em vez de um card de documentação.
 //
 // PESO: esta passagem NÃO adiciona nenhum arquivo binário. Todas as imagens
-// usadas já estavam versionadas (ver `public/` = 350,9 MB contra teto de 250 —
+// usadas já estavam versionadas (ver `public/` = 350,9 MB contra teto de 250 -
 // plans/08 §1.1). O canarinho do topo sai pelo WebP animado de 96 KB, não pelo
-// GIF de 368 KB — mesmo conteúdo, 24 quadros, 26% do peso.
+// GIF de 368 KB - mesmo conteúdo, 24 quadros, 26% do peso.
 import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, RANKING_ON } from '../lib/site';
 
 interface Props {
@@ -44,7 +44,7 @@ interface Props {
   ogImage?: string;
   ogImageAlt?: string;
   /** dimensões da og:image. Sem elas o card fica em branco no primeiro
-   *  compartilhamento, enquanto o crawler da rede não baixou a imagem —
+   *  compartilhamento, enquanto o crawler da rede não baixou a imagem -
    *  https://developers.facebook.com/docs/sharing/webmasters/images */
   ogImageWidth?: number;
   ogImageHeight?: number;
@@ -68,7 +68,7 @@ const {
   title,
   description = DESC_SHORT,
   ogImage = abs('/og-image.jpg'),
-  ogImageAlt = `${BRAND_FULL} — arena de sniper estilo CS 1.6 numa Brasília fictícia`,
+  ogImageAlt = `${BRAND_FULL} - arena de sniper estilo CS 1.6 numa Brasília fictícia`,
   ogImageWidth = 1200,
   ogImageHeight = 630,
   ogType = 'website',
@@ -82,21 +82,21 @@ const {
 const temSub = Astro.slots.has('sub');
 
 // CANONICAL: normaliza a barra final. Sem isso, /ranking e /ranking/ emitem dois
-// canonicals diferentes e o buscador trata como duas páginas — o mesmo tipo de
+// canonicals diferentes e o buscador trata como duas páginas - o mesmo tipo de
 // diluição que o host sem `www` causava (ver astro.config.mjs).
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = new URL(path, Astro.site ?? SITE).toString();
 
 // JSON-LD de site: emitido UMA vez, aqui, com @id estável. As páginas que
 // precisam de nó próprio passam por `jsonld` e referenciam o jogo por @id em
-// vez de repetir o objeto VideoGame inteiro — era o que sobre.astro fazia, e
+// vez de repetir o objeto VideoGame inteiro - era o que sobre.astro fazia, e
 // dois nós VideoGame com a mesma url e sem @id confundem a deduplicação.
 const baseGraph = [
   { '@type': 'WebSite', '@id': WEBSITE_ID, url: SITE + '/', name: BRAND_FULL,
     alternateName: [BRAND, BRAND_ALT], inLanguage: 'pt-BR',
     publisher: { '@id': ORG_ID } },
   /* `logo` é a MARCA ISOLADA, não o cartão de compartilhamento. Apontava para
-     `og-image.jpg` — que é paisagem 1200×630 com texto e cena — e schema.org
+     `og-image.jpg` - que é paisagem 1200×630 com texto e cena - e schema.org
      pede a marca (https://schema.org/logo). `/logo.png` é o lockup em PNG com
      alfa, 651×526, e é o mesmo arquivo que o topo do site usa. */
   { '@type': 'Organization', '@id': ORG_ID, name: `${BRAND} contributors`,
@@ -110,7 +110,7 @@ const baseGraph = [
    que ancorar. schema.org: WebPage é o tipo do próprio documento
    (https://schema.org/WebPage).
 
-   NÃO emitimos se a página já trouxe um nó do próprio tipo dela — AboutPage
+   NÃO emitimos se a página já trouxe um nó do próprio tipo dela - AboutPage
    (/sobre) e ProfilePage (/u/*) SÃO subtipos de WebPage, e dois nós de página
    pra mesma URL é o mesmo defeito de deduplicação que os dois `VideoGame`
    causavam antes do `@id` estável. FAQPage fica FORA desta lista de propósito:
@@ -138,7 +138,7 @@ const pageGraph = hasOwnPageNode ? [] : [{
 }];
 
 // O /ranking sai do nav enquanto RANKING_ON for false (src/lib/site.ts). A página
-// continua respondendo — só deixa de ser oferecida, pra ninguém clicar num aviso.
+// continua respondendo - só deixa de ser oferecida, pra ninguém clicar num aviso.
 const NAV: [string, string][] = [
   ...(RANKING_ON ? [['/ranking', 'RANKING'] as [string, string]] : []),
   ['/personagens', 'PERSONAGENS'],
@@ -161,7 +161,7 @@ const NAV: [string, string][] = [
     pro mesmo destino: é o alvo pra quem não casa com nenhum idioma declarado, e
     sem ele o buscador escolhe sozinho qual versão mostrar a esse público.
     As duas linhas apontam pro canonical, ou seja, sempre o host com `www` e sem
-    barra final — mesmo motivo do canonical acima: apex e www são a MESMA página,
+    barra final - mesmo motivo do canonical acima: apex e www são a MESMA página,
     e emitir hreflang com host divergente reintroduz a diluição que o canonical
     acabou de resolver.
     Auto-referência é obrigatória pelo protocolo: toda página do conjunto tem que
@@ -190,13 +190,13 @@ const NAV: [string, string][] = [
 <meta name="twitter:image:alt" content={ogImageAlt}>
 {/* O favicon TEM que ser declarado aqui. Antes havia um <link rel="icon"> com um
     SVG em data: URI (uma mira improvisada), e link declarado sempre ganha do
-    `/favicon.ico` implícito — por isso o ícone de marca não aparecia na aba
+    `/favicon.ico` implícito - por isso o ícone de marca não aparecia na aba
     mesmo depois de o arquivo entrar no repo. */}
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!-- `three/addons/` NÃO é enfeite: sem ele o `site-bg.js` (linha 535) morre antes de
      desenhar. Ele importa `map_brasilia.js`, que chega em `mapprops.js`, que importa
-     `three/addons/loaders/GLTFLoader.js` — e um especificador sem entrada no import map
+     `three/addons/loaders/GLTFLoader.js` - e um especificador sem entrada no import map
      é `pageerror`, não aviso. Medido em PRODUÇÃO em 07/08 pela `tools/eval/console-check.mjs`:
      /sobre, /armas, /mapas, /personagens e /como-jogar cuspiam o mesmo erro e ficavam
      SEM o fundo 3D, com o site respondendo 200. O `index.astro` tem a entrada desde
@@ -206,7 +206,7 @@ const NAV: [string, string][] = [
      de llmstxt.org; `/llms-full.txt`, `/docs.json` e `/ai-index.json` e os
      espelhos `.md` são gerados no build (scripts/aeo.mjs, via aeo.js).
      HIPÓTESE, não fato: NÃO existe especificação que obrigue crawler nenhum a
-     ler `rel="alternate" type="text/plain"` — nenhuma documentação de Google,
+     ler `rel="alternate" type="text/plain"` - nenhuma documentação de Google,
      OpenAI ou Anthropic promete isso hoje. As tags custam 4 linhas e tornam os
      arquivos descobríveis a partir do HTML; o ganho é declaradamente aposta. -->
 <link rel="alternate" type="text/plain" href={abs('/llms.txt')} title="Resumo do site em texto (llms.txt)">
@@ -220,7 +220,7 @@ const NAV: [string, string][] = [
   --amber:#e8b34b; --amber-dim:#9c7f45; --amber-soft:rgba(232,179,75,.09);
   --amber-hi:#ffd479;
   --bone:#d8cfae; --bone-dim:#8f866d;
-  --ink:#f2ead8;      /* títulos — o branco-osso da referência */
+  --ink:#f2ead8;      /* títulos - o branco-osso da referência */
   --bg:#0a0a08; --panel:rgba(18,16,10,.78); --panel-2:rgba(24,21,13,.9);
   --line:#3a3018; --line-hi:#5c4a22;
   --red:#e03232; --green:#1faa4d; --purple:#a07bd6;
@@ -230,7 +230,7 @@ const NAV: [string, string][] = [
      amarelo, TRETA vermelho. Só aparecem no fio da marca, em nenhum texto. */
   --br-white:#f0efe9; --br-yellow:#f5c518; --br-red:#e5121c;
   --mono:"Lucida Console",Monaco,Consolas,"Courier New",monospace;
-  --topo:66px;        /* altura do topo fixo — usada pelo scroll-margin das âncoras */
+  --topo:66px;        /* altura do topo fixo - usada pelo scroll-margin das âncoras */
 }
 *{margin:0;padding:0;box-sizing:border-box;border-radius:0!important}
 html{background:var(--bg);scroll-behavior:smooth}
@@ -245,13 +245,13 @@ img{max-width:100%}
    navegador considerar focável, agora e depois. */
 :focus-visible{outline:2px solid var(--amber-hi);outline-offset:2px}
 /* O <main> recebe foco por programa (skip link) e o anel nele não informa nada
-   — o que o leitor precisa é que o cursor foi pro conteúdo, e isso o
+ - o que o leitor precisa é que o cursor foi pro conteúdo, e isso o
    tabindex="-1" já resolve. */
 main:focus-visible{outline:none}
 
 /* SKIP LINK. Primeiro focável da página: o <header> sticky tem 8 links de
    navegação antes do conteúdo, e sem isto quem usa teclado ou leitor de tela
-   atravessa os 8 em TODA página. Fora da tela até receber foco — nunca
+   atravessa os 8 em TODA página. Fora da tela até receber foco - nunca
    `display:none`, que o tiraria da ordem de tabulação e o tornaria inútil. */
 .skip{position:absolute;left:-9999px;top:0;z-index:100;
   background:var(--amber);color:#141008;font-weight:bold;letter-spacing:1px;
@@ -262,7 +262,7 @@ main:focus-visible{outline:none}
    A vinheta abriu de .72 para .60 no centro: com .72 o mundo 3D que o
    `site-bg.js` desenha (o mesmo `buildBrasilia` do menu) ficava invisível e o
    site parecia preto liso. O brilho âmbar do topo é o mesmo halo do céu da
-   tela 01. As bordas continuam em .96 — é ali que mora o texto. */
+   tela 01. As bordas continuam em .96 - é ali que mora o texto. */
 #bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
 #bg-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;
   background:
@@ -284,7 +284,7 @@ body>header{display:flex;align-items:center;gap:16px;padding:0 20px;min-height:v
   background:linear-gradient(180deg,rgba(8,7,4,.98),rgba(8,7,4,.90));
   border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
   flex-wrap:wrap;backdrop-filter:blur(6px)}
-/* filete âmbar na base — o mesmo que o banner do canarinho já traz desenhado e
+/* filete âmbar na base - o mesmo que o banner do canarinho já traz desenhado e
    o mesmo que separa faixa de conteúdo no HUD. */
 body>header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
   background:linear-gradient(90deg,var(--amber) 0%,rgba(232,179,75,.35) 46%,transparent 100%)}
@@ -302,7 +302,7 @@ nav a{color:var(--bone-dim);text-decoration:none;font-size:11px;letter-spacing:2
   padding:6px 2px;border-bottom:2px solid transparent;transition:color .12s;white-space:nowrap}
 nav a:hover{color:var(--amber)}
 nav a[aria-current="page"]{color:var(--amber);border-bottom-color:var(--amber)}
-/* CTA: cheio, texto escuro — é assim que a referência marca a ação primária
+/* CTA: cheio, texto escuro - é assim que a referência marca a ação primária
    (tela 04 "CONTINUAR", tela 09). Contorno é sempre secundário. */
 .btn-play{margin-left:auto;background:var(--amber);color:#141008!important;font-weight:bold;
   letter-spacing:2px;padding:10px 22px;border:1px solid var(--amber);text-decoration:none;
@@ -314,8 +314,8 @@ nav a[aria-current="page"]{color:var(--amber);border-bottom-color:var(--amber)}
 
 /* ---- CTA dentro do conteúdo ----
    Existe separado do `.btn-play` do topo porque o do topo é `white-space:nowrap`
-   e `margin-left:auto` — as páginas o reusavam com `style=` inline e, com um
-   rótulo longo ("▶ Jogar agora — grátis"), ele estourava 13 px pra fora da tela
+   e `margin-left:auto` - as páginas o reusavam com `style=` inline e, com um
+   rótulo longo ("▶ Jogar agora - grátis"), ele estourava 13 px pra fora da tela
    em 390 px de largura. Era o único overflow horizontal do site. */
 .cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:32px 0 0}
 .btn-cta{display:inline-block;background:var(--amber);color:#141008;font-weight:bold;
@@ -357,7 +357,7 @@ hr{border:0;border-top:1px solid var(--line);margin:28px 0}
   min-height:210px;display:flex;align-items:flex-end}
 /* A ARTE OCUPA SÓ A METADE DIREITA, e não o fundo inteiro.
    Motivo medido: as capturas de arena são 640×640. Esticadas por trás de uma
-   faixa de 1000×186 elas viram um recorte 5,4:1 — ampliação de 1,6× num
+   faixa de 1000×186 elas viram um recorte 5,4:1 - ampliação de 1,6× num
    pedacinho da imagem, que sai borrado e ilegível (foi o que a primeira versão
    fez). Num bloco de 480×210 o recorte é 2,3:1 e a arena se reconhece.
    Como benefício, o texto fica sobre painel liso: a máscara zera a arte antes
@@ -391,7 +391,7 @@ hr{border:0;border-top:1px solid var(--line);margin:28px 0}
 /* =================== CARDS COM ARTE DO JOGO ===================
    `.card` é o painel do site quando ele tem imagem. `.fig` é a moldura: mesma
    graduação da .phead, cantos em âmbar (o mesmo L que o HUD desenha em volta da
-   mira) e a ETIQUETA INCLINADA com o nome — que é o adesivo âmbar sobre a arte
+   mira) e a ETIQUETA INCLINADA com o nome - que é o adesivo âmbar sobre a arte
    do mapa em references/telas/04_escolha_mapa.png. */
 .card{display:flex;flex-direction:column;background:var(--panel);
   border:1px solid var(--line);border-top:3px solid var(--amber);
@@ -416,14 +416,14 @@ hr{border:0;border-top:1px solid var(--line);margin:28px 0}
     linear-gradient(var(--amber),var(--amber)) 100% 100%/12px 1px no-repeat,
     linear-gradient(var(--amber),var(--amber)) 100% 100%/1px 12px no-repeat;
   opacity:.65}
-/* Nome do mapa no PAINEL, em amarelo (pedido do dono 06/08 — o chip sobre a foto saiu) */
+/* Nome do mapa no PAINEL, em amarelo (pedido do dono 06/08 - o chip sobre a foto saiu) */
 .map-nome{color:var(--amber);font-size:20px;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px}
 .fig-tag{position:absolute;z-index:3;left:0;bottom:12px;background:var(--amber);color:#171106;
   font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;
   padding:4px 14px 4px 12px;max-width:92%;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
 
-/* card largo: arte à esquerda, texto à direita — o enquadramento da tela 04 */
+/* card largo: arte à esquerda, texto à direita - o enquadramento da tela 04 */
 .card.wide{flex-direction:row;align-items:stretch;margin:0 0 14px}
 .card.wide .fig{flex:0 0 44%;aspect-ratio:auto;min-height:230px;
   border-bottom:0;border-right:1px solid var(--line)}
@@ -489,7 +489,7 @@ body>footer a:hover{color:var(--amber)}
    O público é brasileiro e majoritariamente de celular, então o corte de 860px
    não é "degradação": é o segundo desenho. A nav vira uma faixa de rolagem
    horizontal PRÓPRIA (não quebra em 3 linhas nem empurra o conteúdo pra baixo),
-   e o documento continua sem rolagem horizontal — quem rola é a faixa. */
+   e o documento continua sem rolagem horizontal - quem rola é a faixa. */
 @media (max-width:860px){
   :root{--topo:56px}
   body>header{gap:10px;padding:0 12px}
@@ -543,15 +543,15 @@ body>footer a:hover{color:var(--amber)}
 <header>
   {/* MARCA: logo + canarinho, que é o pedido do dono e é personagem do elenco.
 
-      O <picture> resolve peso E acessibilidade, nessa ordem — em <picture> o
+      O <picture> resolve peso E acessibilidade, nessa ordem - em <picture> o
       primeiro <source> que casa é o que vale:
         1. prefers-reduced-motion → `canarinho-pistola.png`, PARADO. Um GIF em
            laço no topo de toda página é exatamente o que essa preferência pede
            para não existir.
-        2. WebP animado, 96 KB, 24 quadros — mesmo conteúdo do GIF por 26% do
+        2. WebP animado, 96 KB, 24 quadros - mesmo conteúdo do GIF por 26% do
            peso. É o caminho de 97% dos navegadores.
         3. <img> GIF, 368 KB: só para quem não decodifica WebP animado. */}
-  <a class="brand" href="/" aria-label={`${BRAND_FULL} — página inicial`}>
+  <a class="brand" href="/" aria-label={`${BRAND_FULL} - página inicial`}>
     <img class="brand-logo" src="/logo.png" width="651" height="526" alt={BRAND_FULL}>
     <picture class="brand-bird" aria-hidden="true">
       <source media="(prefers-reduced-motion: reduce)" srcset="/img/canarinho-pistola.png">
@@ -583,11 +583,11 @@ body>footer a:hover{color:var(--amber)}
   <slot />
 </main>
 <footer>
-  <a href="/" aria-label={`${BRAND_FULL} — página inicial`}>
+  <a href="/" aria-label={`${BRAND_FULL} - página inicial`}>
     <img class="foot-logo" src="/logo.png" width="651" height="526" alt="" loading="lazy">
   </a>
   <div><strong style="color:var(--bone)">{BRAND_FULL}</strong> · FPS de navegador, grátis e sem instalação</div>
-  <div>Sátira política fictícia, sem lado e sem ódio — celebração da cultura brasileira 🇧🇷</div>
+  <div>Sátira política fictícia, sem lado e sem ódio - celebração da cultura brasileira 🇧🇷</div>
   <div>
     {/* separadores com `{' · '}` explícito: o espaço literal entre `·` e a
         próxima tag some na compilação e sai "Como jogar ·Changelog". */}
@@ -602,7 +602,7 @@ body>footer a:hover{color:var(--amber)}
 <script>
   /* NAV + RODAPÉ em EN (mesma régua de idioma das páginas gêmeas e do jogo:
      ?lang= > localStorage cs_lang > navigator.language). As gêmeas EN existem
-     para personagens/mapas/armas/como-jogar/sobre — rótulo e href trocam juntos.
+     para personagens/mapas/armas/como-jogar/sobre - rótulo e href trocam juntos.
      /mapa e /changelog continuam só PT (issue #54) e ficam com o rótulo em PT
      DE PROPÓSITO: avisa que a página de destino é PT antes do clique. */
   try {
@@ -636,7 +636,7 @@ body>footer a:hover{color:var(--amber)}
         if (t.includes('FPS de navegador, grátis e sem instalação'))
           d.textContent = t.replace('FPS de navegador, grátis e sem instalação', 'Browser FPS, free, no install');
         else if (t.includes('Sátira política fictícia'))
-          d.textContent = 'Fictional political satire, no sides and no hate — a celebration of Brazilian culture 🇧🇷';
+          d.textContent = 'Fictional political satire, no sides and no hate - a celebration of Brazilian culture 🇧🇷';
         else if (t.includes('Paródia independente'))
           d.textContent = 'Independent parody, not affiliated with Valve. Counter-Strike is a Valve Corporation trademark.';
       });

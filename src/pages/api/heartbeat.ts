@@ -1,4 +1,4 @@
-// POST /api/heartbeat — presença "online agora" com geo aproximado (cidade).
+// POST /api/heartbeat - presença "online agora" com geo aproximado (cidade).
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { geoFrom } from '../../lib/geo';

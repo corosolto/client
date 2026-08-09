@@ -35,6 +35,8 @@ jobs:
         run: npm run arch:check
       - name: Manifesto de wallpapers está em dia
         run: npm run media:check
+      - name: Texto público sem travessão
+        run: npm run travessao:check
 
       # ── PORTÃO DE QUALIDADE ───────────────────────────────────────────────
       # Os quatro arneses abaixo rodam em NODE PURO (sem Chrome/SwiftShader) e

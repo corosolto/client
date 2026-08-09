@@ -1,4 +1,4 @@
-// POST /api/avatar — upload de foto de perfil validado por nick+token
+// POST /api/avatar - upload de foto de perfil validado por nick+token
 // (sem login OAuth). Redimensiona pra 128×128 e grava no bucket avatars.
 import type { APIRoute } from 'astro';
 import sharp from 'sharp';
@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
 
-  // Rota SEM limite que aceitava ~3 MB de base64 e rodava `sharp` — o vetor de
+  // Rota SEM limite que aceitava ~3 MB de base64 e rodava `sharp` - o vetor de
   // custo/DoS mais caro do backend (CPU + memória + upload no Storage por
   // request). 5 uploads/10 min por IP: ninguém troca de foto mais que isso.
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';

@@ -9,7 +9,7 @@
 // outra não sabe qual é a entidade, e a rich card fica inconsistente.
 //
 // DECISÃO: o nome é **CORO SOLTO: Treta Suprema**.
-// "CS BRASIL" vira `alternateName` — some da UI, sobrevive só onde ajuda a
+// "CS BRASIL" vira `alternateName` - some da UI, sobrevive só onde ajuda a
 // busca (JSON-LD alternateName, keywords, e a frase "ex-CS BRASIL" no title da
 // home). Quem já busca "cs brasil" continua achando; quem chega novo aprende o
 // nome certo. O domínio segue csbrasil.online: trocar domínio no dia do
@@ -23,7 +23,7 @@ export const BRAND_ALT = 'CS BRASIL';
 
 // "40+ personagens" virou "44": o número exato existe e sai de src/data/jogo.ts
 // (PERSONAGENS.length), que é o mesmo que as páginas, o llms.txt e o JSON-LD
-// usam. Aproximação numa descrição que o buscador cita é ruído gratuito — e
+// usam. Aproximação numa descrição que o buscador cita é ruído gratuito - e
 // aqui ela era a ÚNICA fonte que não dizia 44.
 export const DESC_SHORT =
   'FPS gratuito de navegador estilo CS 1.6: arena de sniper satírica numa Brasília fictícia, ' +
@@ -49,18 +49,18 @@ export const abs = (path = '/') => new URL(path, SITE).toString();
    "vamos desabilitar o ranking por enquanto, depois a gente ajeita; vamos usar
    o supabase pra monitorar os usuários por enquanto."
 
-   É FLAG, não remoção — religar tem que custar uma linha. Com `false`:
+   É FLAG, não remoção - religar tem que custar uma linha. Com `false`:
      · `/ranking` e `/u/*` respondem 200 com aviso + `noindex` (não 404: a URL
        volta, e 404 em URL indexada joga fora o histórico de busca);
      · o link some do nav e do rodapé (`Layout.astro`);
      · `/api/leaderboard` responde `{disabled:true}` e o painel do jogo mostra
-       "desligado" em vez de tabela — o cliente NÃO conhece esta flag, ele só
+       "desligado" em vez de tabela - o cliente NÃO conhece esta flag, ele só
        reage à resposta da API. Uma fonte de verdade, no servidor;
      · o FAQ e o JSON-LD da home param de prometer ranking global.
 
    O QUE **NÃO** PARA: a coleta. `submit_match` continua gravando e a telemetria
    nova (`/api/telemetry`) continua medindo. Desligar a vitrine não é desligar o
-   dado — quando o ranking voltar, o histórico está lá.
+   dado - quando o ranking voltar, o histórico está lá.
 
    AO RELIGAR, LEIA ISTO: a rota canônica do perfil já é `/u/<id>/<nick>`, mas o
    cliente monta o legado `/u/<nick>` (`main.js`, `renderGlobal`). Nick aceita

@@ -1,5 +1,5 @@
 // DejaVu Sans Bold (Bitstream Vera License) embutida pra render server-side.
-// Gerada de dejavu-fonts-ttf — sem depender de fontes do sistema.
+// Gerada de dejavu-fonts-ttf - sem depender de fontes do sistema.
 export const FONT_BOLD_B64 =
   'AAEAAAATAQAABAAwRkZUTXPB9PAAAAE8AAAAHEdERUaNwIfxAAABWAAAAjhHUE9T1BxgqAAAA5AAAIg2R1NVQr1/LFYAAIvIAAAV2E9TLzJaV5iUAAChoAAA' +
   'AFZjbWFwBLRH+QAAofgAABZeY3Z0ID65MQgAALhYAAACVGZwZ21bAmvwAAC6rAAAAKxnYXNwAAcABwAAu1gAAAAMZ2x5ZpofOO4AALtkAAfvAGhlYWQN9wG7' +

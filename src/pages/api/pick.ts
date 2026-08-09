@@ -1,7 +1,7 @@
-// POST /api/pick — contadores de ESCOLHA (mapa, modo, facção, personagem, arma, música).
-// Pedido do dono (06/08): "tracker tudo — mapas escolhidos, músicas mais tocadas, armas,
+// POST /api/pick - contadores de ESCOLHA (mapa, modo, facção, personagem, arma, música).
+// Pedido do dono (06/08): "tracker tudo - mapas escolhidos, músicas mais tocadas, armas,
 // times e personagens". Irmã pobre e feliz da /api/telemetry: sem nick, sem placar, sem
-// julgamento — só um contador diário por (kind, key), via RPC track_pick (migration 013,
+// julgamento - só um contador diário por (kind, key), via RPC track_pick (migration 013,
 // no acervo privado). Falha NUNCA chega ao jogador: o cliente manda por sendBeacon.
 // Rate limit próprio (120/min/IP): uma sessão real gera ~meia dúzia de picks por partida
 // + trocas de música; o loop de curl é quem esse teto corta.

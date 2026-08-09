@@ -1,6 +1,6 @@
 ---
-// /about — GÊMEA EM INGLÊS do /sobre (pedido do dono, 06/08: usuário em EN cai
-// na versão EN). Mesma estrutura da PT; textos traduzidos aqui por overlay — o
+// /about - GÊMEA EM INGLÊS do /sobre (pedido do dono, 06/08: usuário em EN cai
+// na versão EN). Mesma estrutura da PT; textos traduzidos aqui por overlay - o
 // PT continua a fonte dos dados (src/data/jogo.ts). O nó VideoGame continua
 // morando na home: esta página só REFERENCIA o GAME_ID, igual a irmã PT.
 // Redirecionamento por idioma: cada página manda pro par quando o idioma
@@ -38,7 +38,7 @@ const jsonld = [
 ];
 ---
 <Layout
-  title={`About — free CS 1.6-style browser FPS | ${BRAND_FULL}`}
+  title={`About - free CS 1.6-style browser FPS | ${BRAND_FULL}`}
   description={`What ${BRAND_FULL} is: a free CS 1.6-style browser FPS, satirical and Brazilian, with ${PERSONAGENS.length} characters, ${MAPAS.length} maps and ${ARMAS.length} weapons. No installation.`}
   jsonld={jsonld}
   h1="CS 1.6-style sniper arena, Brazil edition"
@@ -63,7 +63,7 @@ const jsonld = [
   </div>
 
   <div class="cta-row">
-    <a class="btn-cta" href="/?lang=en">▶ Play now — free</a>
+    <a class="btn-cta" href="/?lang=en">▶ Play now - free</a>
     <a class="btn-cta btn-2" href="/how-to-play">How to play</a>
   </div>
   <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Runs in a desktop browser. No installation, no sign-up.</p>
@@ -79,7 +79,7 @@ const jsonld = [
   <h2>The name</h2>
   <p>
     The game is called <strong>{BRAND_FULL}</strong>. It was born as
-    <strong> {BRAND_ALT}</strong> and a lot of people still search for that name — that's why the
+    <strong> {BRAND_ALT}</strong> and a lot of people still search for that name - that's why the
     domain stays the same and the old name remains registered as an alternate name. Same game.
   </p>
 
@@ -94,16 +94,16 @@ const jsonld = [
       no download, no installation and no sign-up.</p></details>
   <details><summary><strong>What are the factions?</strong></summary>
     <p>{FACCOES.map(f => FAC_NOME_EN[f.id] || f.nome).join(', ')}. Two of them have nothing to do
-      with politics. Every character is a fictional, original archetype — no real people.</p></details>
+      with politics. Every character is a fictional, original archetype - no real people.</p></details>
   <details><summary><strong>Is this an official Valve or Counter-Strike game?</strong></summary>
     <p>No. It's an independent fan-made parody, with no affiliation with Valve whatsoever.
       Counter-Strike is a trademark of Valve Corporation.</p></details>
   <details><summary><strong>Does the game take a political side?</strong></summary>
-    <p>No. It's light satire handed out equally to every side — no gore, no hate,
+    <p>No. It's light satire handed out equally to every side - no gore, no hate,
       celebrating Brazilian culture.</p></details>
   <details><summary><strong>Is there a global ranking?</strong></summary>
     <p>Not yet. The game is in <strong>alpha</strong> and the global ranking is switched off until
-      the scoreboard is trustworthy — the current model is forgeable, and a forgeable leaderboard
+      the scoreboard is trustworthy - the current model is forgeable, and a forgeable leaderboard
       is a wrong number published. Your match stats are saved in the browser and show up in the
       game's RANKING menu. When it comes back, every player gets their public page at{' '}
       <code>/u/&lt;id&gt;/&lt;nick&gt;</code> again, with a PNG badge generated on the fly.</p></details>
@@ -113,7 +113,7 @@ const jsonld = [
 
   {/* LICENÇA: AGPL-3.0 desde 07/08/2026, igual a página PT. Esta ressalva dizia
       "MIT HOJE, AGPL decidida mas NÃO aplicada" e continuou dizendo DEPOIS que a
-      migração rodou — a troca das 8 superfícies pegou os arquivos PT e passou ao
+      migração rodou - a troca das 8 superfícies pegou os arquivos PT e passou ao
       largo do gêmeo EN. Resultado: /about em inglês declarou MIT num repositório
       AGPL até 07/08, e quem achou foi o dono, não o portão. Ver docs/licenca. */}
   <h2>Open source</h2>
@@ -122,7 +122,7 @@ const jsonld = [
     and stays out of the repository). Contributions made before 07/08/2026 came in under MIT,
     which is compatible: they stay MIT inside the AGPL whole. Contributions are welcome:{' '}
     <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">github.com/rubenmarcus/csbrasil</a>{' '}
-    — and the good first-contribution tasks live in
+ - and the good first-contribution tasks live in
     <a href="https://github.com/rubenmarcus/csbrasil/issues" rel="noopener"> issues</a>.
   </p>
 </Layout>

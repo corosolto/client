@@ -1,9 +1,9 @@
-// POST /api/funnel — etapa do funil de sessão (land/menu/match_start/match_end/quit).
+// POST /api/funnel - etapa do funil de sessão (land/menu/match_start/match_end/quit).
 // Ver supabase/migrations/017.
 //
 // A pergunta que responde: "dos que chegam, quantos CHEGAM A JOGAR e quantos
 // TERMINAM?" O contador diário por etapa dá a conversão land→match_start→match_end.
-// sendBeacon, fail-silent, anônimo (nem anonId é preciso — é só um contador).
+// sendBeacon, fail-silent, anônimo (nem anonId é preciso - é só um contador).
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';

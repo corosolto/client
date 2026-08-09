@@ -1,9 +1,9 @@
 ---
-// /faccoes/<id> — uma página por facção.
+// /faccoes/<id> - uma página por facção.
 //
 // POR QUE EXISTE: /personagens lista as 5 facções e os 44 personagens numa URL
 // só. "tribos urbanas jogo", "funkeiros jogo brasileiro" e "palhaços" são buscas
-// DIFERENTES, e hoje competem entre si dentro da mesma página — nenhuma delas
+// DIFERENTES, e hoje competem entre si dentro da mesma página - nenhuma delas
 // tem um <title> ou uma <meta description> que fale só dela.
 //
 // A FONTE DOS DADOS é src/data/jogo.ts, mesma de /personagens. Nada é digitado
@@ -30,7 +30,7 @@ const outras = FACCOES.filter((f) => f.id !== faccao.id);
 const url = abs(`/faccoes/${faccao.id}`);
 
 /* Mesmo mapa de /personagens, e pelo mesmo motivo: `P` -> `petistas` não é
-   derivável de `P`. Duplicado de propósito em vez de exportado — são 5 linhas, e
+   derivável de `P`. Duplicado de propósito em vez de exportado - são 5 linhas, e
    um import cruzado entre duas páginas por uma tabela de nome de arquivo é pior
    de achar do que a duplicação. Se virar 3 lugares, aí vai pro data/jogo.ts. */
 const PLACA: Record<string, string> = {
@@ -66,7 +66,7 @@ const jsonld = [
 ];
 ---
 <Layout
-  title={`${faccao.nome} — os ${elenco.length} personagens da facção | ${BRAND_FULL}`}
+  title={`${faccao.nome} - os ${elenco.length} personagens da facção | ${BRAND_FULL}`}
   description={`${faccao.nota} Conheça os ${elenco.length} personagens jogáveis da facção ${faccao.nome} no ${BRAND_FULL}, com o lema “${faccao.lema}”.`}
   jsonld={jsonld}
   h1={faccao.nome}
@@ -74,7 +74,7 @@ const jsonld = [
   heroImg="/img/map-previews/awp_map.jpg"
   heroPos="52%">
   <Fragment slot="sub">
-    “{faccao.lema}” — {faccao.nota}
+    “{faccao.lema}” - {faccao.nota}
   </Fragment>
 
   <p class="meta"><b>{elenco.length} personagens</b><i>·</i>facção {faccao.nome}<i>·</i>
@@ -108,7 +108,7 @@ const jsonld = [
   </p>
   <p style="margin-top:10px">
     Todas as {FACCOES.length} numa página só: <a href="/personagens">personagens</a>.
-    Nenhum personagem representa pessoa real — são arquétipos, e a zoeira é distribuída
+    Nenhum personagem representa pessoa real - são arquétipos, e a zoeira é distribuída
     igualmente. <a href="/">▶ JOGAR</a>
   </p>
 </Layout>

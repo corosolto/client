@@ -1,15 +1,15 @@
 ---
-// /armas — página de conteúdo indexável do arsenal.
+// /armas - página de conteúdo indexável do arsenal.
 //
 // POR QUE ELA EXISTE (SEO): "awp", "ak 47", "arma de fps de navegador" são
 // buscas com volume real, e até agora o site não tinha UMA linha de texto sobre
-// as 26 armas — a informação só existia dentro do JS do jogo, que buscador
+// as 26 armas - a informação só existia dentro do JS do jogo, que buscador
 // nenhum lê. É a página mais barata de escrever e a que mais amplia a
 // superfície de long tail do domínio.
 //
 // AS IMAGENS (adicionadas em 05/08). Até aqui a página era texto puro: 26 armas
 // descritas por número e nenhuma mostrada. As miniaturas de `/img/weapons/<id>.webp`
-// NÃO são arte gerada — são renders dos MESMOS GLB que o jogo carrega, feitos por
+// NÃO são arte gerada - são renders dos MESMOS GLB que o jogo carrega, feitos por
 // `tools/eval/weapon-shots.mjs` com o `weaponModel()` de `public/js/weapons.js`.
 // Mesma câmera, mesma luz e MESMA CAIXA nas 26, então a escala entre elas é verdadeira:
 // a Mosin (1,19 m) sai 4,9× mais comprida que o revólver (0,245 m) porque ela é.
@@ -67,12 +67,12 @@ const jsonld = [
 ];
 ---
 <Layout
-  {/* og:image própria, gerada em runtime por /api/og/armas.png (issue #33) —
+  {/* og:image própria, gerada em runtime por /api/og/armas.png (issue #33) -
       antes caía na og-image.png genérica, igual pra todo o site. */}
   ogImage={abs('/api/og/armas.png')}
   ogImageAlt={`Card com o arsenal do ${BRAND_FULL}`}
-  title={`Armas — as ${ARMAS.length} do arsenal | ${BRAND_FULL}`}
-  description={`Todas as ${ARMAS.length} armas do ${BRAND_FULL}: AWP, AK-47, M4A1, MD97, Mosin, escopeta, SMGs e faca — com imagem, dano, pente, reserva e cadência de cada uma, mais as ${ARREMESSO.length} granadas.`}
+  title={`Armas - as ${ARMAS.length} do arsenal | ${BRAND_FULL}`}
+  description={`Todas as ${ARMAS.length} armas do ${BRAND_FULL}: AWP, AK-47, M4A1, MD97, Mosin, escopeta, SMGs e faca - com imagem, dano, pente, reserva e cadência de cada uma, mais as ${ARREMESSO.length} granadas.`}
   jsonld={jsonld}
   h1="Arsenal"
   kicker={`${ARMAS.length} armas · ${classes.length} classes · ${ARREMESSO.length} de arremesso`}
@@ -80,23 +80,23 @@ const jsonld = [
   heroPos="66%">
   <Fragment slot="sub">
     {ARMAS.length} armas jogáveis, divididas em {classes.length} classes. Os números abaixo são os
-    mesmos que o jogo usa em partida — dano por projétil, tamanho do pente, munição de reserva e o
+    mesmos que o jogo usa em partida - dano por projétil, tamanho do pente, munição de reserva e o
     intervalo entre tiros em segundos. Troque de arma com <code>1</code> (primária),
-    <code>2</code> (pistola) e <code>3</code> (faca) — e as duas granadas de arremesso no
+    <code>2</code> (pistola) e <code>3</code> (faca) - e as duas granadas de arremesso no
     <code>4</code> (fumaça) e no <code>5</code> (fragmentação).
   </Fragment>
 
   <div class="panel">
     <strong style="color:var(--amber)">Como ler a tabela.</strong>
     <p style="margin-top:6px">
-      <b>DANO</b> é por projétil que acerta o corpo — headshot multiplica, e a M3 dispara 9 bagos
+      <b>DANO</b> é por projétil que acerta o corpo - headshot multiplica, e a M3 dispara 9 bagos
       de {ARMAS.find(a => a.id === 'shotgun')?.dano} por tiro. <b>CAD.</b> é o intervalo entre
       disparos: quanto menor, mais rápido. A AWP mata com um tiro em qualquer lugar do corpo; é a
       única arma do jogo com essa propriedade, e é o que define o ritmo da arena.
     </p>
     <p style="margin-top:6px">
       <b>AS IMAGENS SÃO OS MODELOS DO JOGO</b>, renderizados do mesmo arquivo 3D que carrega
-      em partida — não é ilustração. Todas foram tiradas com a mesma câmera e a mesma caixa,
+      em partida - não é ilustração. Todas foram tiradas com a mesma câmera e a mesma caixa,
       então o tamanho de uma comparado com a outra é o tamanho de verdade: a faca é aquele
       tiquinho ao lado da Mosin porque ela é 4,9× menor.
     </p>
@@ -127,8 +127,8 @@ const jsonld = [
                       decoding="async">
                     <strong>{a.nome}</strong></td>
                   <td class="num">{a.dano}{a.id === 'shotgun' ? ' ×9' : ''}</td>
-                  <td class="num">{a.pente || '—'}</td>
-                  <td class="num">{a.reserva || '—'}</td>
+                  <td class="num">{a.pente || ' - '}</td>
+                  <td class="num">{a.reserva || ' - '}</td>
                   <td class="num">{a.cadencia}</td>
                 </tr>
                 <tr>
@@ -218,7 +218,7 @@ const jsonld = [
      do catálogo na hora. Numa grade de cartões isso se perde. */
   .wshot{display:block;width:180px;height:69px;max-width:100%;margin:0 0 2px -6px}
   /* 180×69 exibido a partir de um arquivo 360×138: 2× de densidade, que é o que mantém
-     o cano — 2 px de espessura — sem serrilha em tela retina. `width`/`height` no HTML
+     o cano - 2 px de espessura - sem serrilha em tela retina. `width`/`height` no HTML
      reservam a caixa antes do byte chegar (sem isso as 26 `lazy` fazem a página pular
      durante a rolagem, que é o pior efeito colateral de lazy-load). */
   td:has(> .wshot){padding-top:10px;min-width:196px}

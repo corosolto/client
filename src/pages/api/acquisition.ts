@@ -1,4 +1,4 @@
-// POST /api/acquisition — de onde veio o jogador (referrer, UTM, código de referência).
+// POST /api/acquisition - de onde veio o jogador (referrer, UTM, código de referência).
 // Ver supabase/migrations/019.
 //
 // Capturado UMA vez por anon_id (o cliente usa flag de localStorage). A 1ª
@@ -19,7 +19,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 /* referrer só interessa como HOST. URL inteira pode carregar query (tokens,
-   nicks em /u/*) — host basta pra "veio do reddit" e não vaza nada. */
+   nicks em /u/*) - host basta pra "veio do reddit" e não vaza nada. */
 function hostDe(url: string | null | undefined): string | null {
   if (typeof url !== 'string' || !url) return null;
   try { return new URL(url).host || null; } catch { return null; }

@@ -1,4 +1,4 @@
-// GET /api/leaderboard — ranking global (top 100) via service key no servidor.
+// GET /api/leaderboard - ranking global (top 100) via service key no servidor.
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { RANKING_ON } from '../../lib/site';
@@ -9,7 +9,7 @@ export const prerender = false;
 export const GET: APIRoute = async ({ request }) => {
   // Ranking desligado (site.ts): a rota responde 200 com `disabled`, não 404 nem
   // 503. É o cliente que decide como mostrar, e `disabled` diz "de propósito",
-  // enquanto um erro diria "quebrou" — e o jogador entenderia bug onde é escolha.
+  // enquanto um erro diria "quebrou" - e o jogador entenderia bug onde é escolha.
   if (!RANKING_ON)
     return new Response(JSON.stringify({ disabled: true }), {
       headers: { 'content-type': 'application/json', 'cache-control': 'public, max-age=300' },
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
   if (!supabaseAdmin)
     return new Response(NOT_CONFIGURED, { status: 503, headers: { 'content-type': 'application/json' } });
   /* 30/min por IP: o painel do jogo busca isto uma vez por abertura. O ranking está
-     desligado hoje (`RANKING_ON`), e é justamente por isso que o limite entra agora —
+     desligado hoje (`RANKING_ON`), e é justamente por isso que o limite entra agora -
      religar uma rota de leitura sem limite, com tráfego chegando, é o pior momento. */
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
   if (!(await rateLimit(supabaseAdmin, 'leaderboard', ip, 30, 60)))

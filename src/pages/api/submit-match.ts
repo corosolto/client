@@ -1,4 +1,4 @@
-// POST /api/submit-match — valida + rate-limita (por IP) e grava via RPC no DB.
+// POST /api/submit-match - valida + rate-limita (por IP) e grava via RPC no DB.
 // A validação do token do jogador acontece dentro do RPC (schema.sql).
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
@@ -7,7 +7,7 @@ import { rateLimit } from '../../lib/ratelimit';
 
 export const prerender = false;
 
-// Rate limit por IP: 1 submit/30 s. ERA um `new Map()` de módulo — que na
+// Rate limit por IP: 1 submit/30 s. ERA um `new Map()` de módulo - que na
 // Vercel some no cold start e dá um orçamento novo por instância de lambda
 // (ver o cabeçalho de src/lib/ratelimit.ts). Agora conta no Postgres, então é
 // o mesmo limite pra todas as instâncias. O limite por NICK (1/90 s) e o teto
@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   const n = nick.slice(0, 14);
   /* MODO DA PARTIDA (issue #87). A trava de tempo do RPC aplica um piso de segundos por
      rodada, e o piso do ABATE (80 s, rodada de 99 s) não vale pro CAPTURA, onde a rodada
-     não tem janela de tempo — era isso que recusava partida legítima e ainda marcava o
+     não tem janela de tempo - era isso que recusava partida legítima e ainda marcava o
      jogador. Só 'rounds' e 'ctf' passam; qualquer outra coisa vira null, e null cai no
      piso BAIXO do lado do banco (cliente com JS em cache não pode ser punido). */
   const m = mode === 'rounds' || mode === 'ctf' ? mode : null;
@@ -72,6 +72,6 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     }
   }
   return new Response(JSON.stringify(degraded
-    ? { ok: true, warn: 'banco desatualizado — rode supabase/schema.sql (perdeu rounds/time/tempo desta partida)' }
+    ? { ok: true, warn: 'banco desatualizado - rode supabase/schema.sql (perdeu rounds/time/tempo desta partida)' }
     : { ok: true }), { headers: { 'content-type': 'application/json' } });
 };

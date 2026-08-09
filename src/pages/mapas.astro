@@ -1,15 +1,15 @@
 ---
-// /mapas — página de conteúdo indexável das arenas.
+// /mapas - página de conteúdo indexável das arenas.
 // Mesmo racional de /armas: nome de mapa é busca própria ("ferro velho",
 // "piscina da treta") e o texto só existia dentro do JS do jogo.
 //
 // PASSAGEM DE VERDADE (05/08/2026). Três coisas mentiam aqui, e as três vinham
 // de texto escrito à mão em vez de derivado do dado:
-//   · a lista de arenas (a "Praça (clássico)" saiu do jogo, a Quebrada entrou —
+//   · a lista de arenas (a "Praça (clássico)" saiu do jogo, a Quebrada entrou -
 //     ver o cabeçalho de src/data/jogo.ts);
-//   · "Três abrem em rounds e duas em CTF" — é 2 e 3 desde que a Quebrada entrou.
+//   · "Três abrem em rounds e duas em CTF" - é 2 e 3 desde que a Quebrada entrou.
 //     Agora os dois números são CONTADOS de `MAPAS[].ctf`, não digitados;
-//   · "respawn de 2,5 s" — `public/js/game.js:76` diz `RESPAWN_DELAY = 2.2`, e a
+//   · "respawn de 2,5 s" - `public/js/game.js:76` diz `RESPAWN_DELAY = 2.2`, e a
 //     /como-jogar já tinha sido corrigida em 04/08. Esta ficou pra trás.
 // Junto: "4×4" não é fixo, é o PADRÃO (`settings.bots`, public/js/main.js:18,
 // aceita de 1 a 8 por lado).
@@ -22,7 +22,7 @@
 //
 // A LINHA `.meta` também vem de lá: naquela tela ela é `8v8 · ROUNDS · 15 MIN ·
 // DIA`. Aqui os campos são derivados do dado (`m.ctf`, `m.id`), nunca digitados
-// — foi digitar à mão que quebrou os números desta página duas vezes.
+// - foi digitar à mão que quebrou os números desta página duas vezes.
 import Layout from '../layouts/Layout.astro';
 import { MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
@@ -58,12 +58,12 @@ const jsonld = [
 ];
 ---
 <Layout
-  {/* og:image própria, gerada em runtime por /api/og/mapas.png (issue #33) —
+  {/* og:image própria, gerada em runtime por /api/og/mapas.png (issue #33) -
       antes caía na og-image.png genérica, igual pra todo o site. */}
   ogImage={abs('/api/og/mapas.png')}
   ogImageAlt={`Card com as 5 arenas do ${BRAND_FULL}`}
-  title={`Mapas — as ${MAPAS.length} arenas | ${BRAND_FULL}`}
-  description={`As ${MAPAS.length} arenas do ${BRAND_FULL}: ${MAPAS.map(m => m.nome).join(', ')} — layout, modo e como jogar cada uma.`}
+  title={`Mapas - as ${MAPAS.length} arenas | ${BRAND_FULL}`}
+  description={`As ${MAPAS.length} arenas do ${BRAND_FULL}: ${MAPAS.map(m => m.nome).join(', ')} - layout, modo e como jogar cada uma.`}
   jsonld={jsonld}
   h1="Mapas"
   kicker={`${MAPAS.length} arenas · rounds e CTF`}
@@ -73,11 +73,11 @@ const jsonld = [
       literal entre `}` e `{` é engolido e sai "2abrem". */}
   <Fragment slot="sub">
     {MAPAS.length} arenas jogáveis.{' '}{nRounds}{' '}{plural(nRounds, 'abre', 'abrem')} em rounds e
-    {' '}{nCtf}{' '}{plural(nCtf, 'abre', 'abrem')} em Capture the Flag — mas nenhuma trava o modo:
+    {' '}{nCtf}{' '}{plural(nCtf, 'abre', 'abrem')} em Capture the Flag - mas nenhuma trava o modo:
     dá pra jogar qualquer mapa em qualquer modo pelo menu antes da partida.
   </Fragment>
 
-  {/* ARENA DE ABERTURA: imagem à esquerda, texto à direita — o enquadramento da
+  {/* ARENA DE ABERTURA: imagem à esquerda, texto à direita - o enquadramento da
       tela de escolha de mapa do jogo. As outras quatro entram na grade. */}
   <article class="card wide">
     <div class="fig">
@@ -120,7 +120,7 @@ const jsonld = [
       2,2 s. Round de 1:39; leva o round o time com mais abates quando o relógio zera; 3 rounds
       vencem a partida, e a 5ª rodada é o teto.</li>
     <li><strong>Capture the Flag:</strong> quatro bandeiras espalhadas pela arena. A geometria da
-      Loja H, do Ferro Velho e da Quebrada foi desenhada em volta delas — por isso os três abrem
+      Loja H, do Ferro Velho e da Quebrada foi desenhada em volta delas - por isso os três abrem
       em CTF. Em CTF a rodada acaba por captura, não por relógio.</li>
     <li>O mapa é sorteado ou escolhido na tela de seleção, antes de começar.</li>
   </ul>

@@ -1,4 +1,4 @@
-// POST /api/telemetry — quanto se joga e em qual mapa. Ver supabase/migrations/012.
+// POST /api/telemetry - quanto se joga e em qual mapa. Ver supabase/migrations/012.
 //
 // SEPARADA DE /api/submit-match DE PROPÓSITO. As duas rotas recebem o fim da
 // mesma partida, mas respondem a perguntas diferentes:
@@ -10,12 +10,12 @@
 //                 travar quem forja ranking, e aqui só apagaria dado real
 //                 (partida curta, ou duas pessoas no mesmo Wi-Fi).
 //
-// O limite daqui é outro problema — abuso automatizado. 60/min por IP cobre com
+// O limite daqui é outro problema - abuso automatizado. 60/min por IP cobre com
 // folga o jogo real (uma partida dura minutos) e corta o loop de `curl`.
 //
 // Anônimo por design: `anonId` é um UUID gerado no cliente e guardado no
 // localStorage. Identifica navegador, não pessoa, e some quando o jogador limpa
-// o storage. Nenhum IP é gravado — o IP só serve ao rate limit, em memória do
+// o storage. Nenhum IP é gravado - o IP só serve ao rate limit, em memória do
 // Postgres do `rl_take`, e nunca entra nas tabelas de telemetria.
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
@@ -47,7 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'bad_anon_id' }, 400);
 
   // Telemetria NUNCA derruba o fim de partida do jogador. Qualquer falha aqui
-  // (banco fora, migration 012 não aplicada) responde ok e some — o cliente
+  // (banco fora, migration 012 não aplicada) responde ok e some - o cliente
   // manda isto por sendBeacon e não olha a resposta de qualquer jeito.
   try {
     const { error } = await supabaseAdmin.rpc('track_match', {

@@ -4,7 +4,7 @@
 // depende de resvg-wasm, e o dev server do Astro NÃO consegue carregar esse
 // módulo (a rota da badge, que é código antigo, quebra igual em dev com
 // "Maximum call stack size exceeded" dentro do Vite). Com o SVG isolado aqui,
-// dá pra renderizar e medir o PNG em node puro, sem Astro no caminho — que é
+// dá pra renderizar e medir o PNG em node puro, sem Astro no caminho - que é
 // como a verificação desta issue foi feita. Ver tools/eval/og-check.mjs.
 //
 // O VOCABULÁRIO VISUAL É O DA BADGE de propósito: fundo #0c0e11, âmbar #ffd23f,
@@ -14,7 +14,7 @@ import { MAPAS, ARMAS, PERSONAGENS, FACCOES } from '../data/jogo';
 import { BRAND } from './site';
 
 export interface Card {
-  /** etiqueta do canto, ex. "5 ARENAS" — inteira, na caixa âmbar dimensionada por ela */
+  /** etiqueta do canto, ex. "5 ARENAS" - inteira, na caixa âmbar dimensionada por ela */
   etiqueta: string;
   titulo: string;
   sub: string;
@@ -55,7 +55,7 @@ export const CARDS: Record<string, () => Card> = {
 
 export const TIPOS = Object.keys(CARDS);
 
-/** 1200×630 — o tamanho que X, Facebook e LinkedIn usam pro card grande. */
+/** 1200×630 - o tamanho que X, Facebook e LinkedIn usam pro card grande. */
 export const OG_W = 1200;
 export const OG_H = 630;
 
@@ -76,7 +76,7 @@ export function cardSvg(c: Card): string {
     /* Etiqueta âmbar do canto, no formato das telas do jogo ("05 ARENAS").
        A caixa é dimensionada pelo texto: com largura fixa, "44 PERSONAGENS"
        vazava, e a primeira versão disto mostrava só "5" porque cortava no
-       primeiro espaço. 11,5px/char é medida da DejaVu Bold em 19px — folgado o
+       primeiro espaço. 11,5px/char é medida da DejaVu Bold em 19px - folgado o
        bastante pra não apertar e apertado o bastante pra não flutuar. */
     const t = esc(c.etiqueta);
     const w = Math.round(c.etiqueta.length * 11.5 + 30);

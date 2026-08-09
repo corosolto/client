@@ -5,9 +5,9 @@
 // pra isso, embute o avatar. O avatar vinha de duas fontes CONTROLADAS PELO
 // USUÁRIO e ambas caíam num `fetch(url)` cru:
 //
-//   players.avatar_url  — gravado por POST /api/register (campo `avatarUrl` do
+//   players.avatar_url - gravado por POST /api/register (campo `avatarUrl` do
 //                         corpo, aceito com um `.slice(0,300)` e mais nada)
-//   socialAvatar(social_link) — derivado do link social, também do usuário
+//   socialAvatar(social_link) - derivado do link social, também do usuário
 //
 // Como /api/badge/<id>.png é público e sem auth, qualquer pessoa podia:
 //   1. registrar um nick com avatarUrl = http://169.254.169.254/latest/meta-data/
@@ -20,15 +20,15 @@
 // A CORREÇÃO
 //  - só https (nada de http:, file:, data:, gopher:, blob:)
 //  - host tem que estar na allowlist (os provedores de avatar que o produto de
-//    fato usa) — allowlist, não blocklist: DNS rebinding e encoding exótico
+//    fato usa) - allowlist, não blocklist: DNS rebinding e encoding exótico
 //    derrotam blocklist, não derrotam allowlist
 //  - sem user:senha embutido na URL
 //  - redirect manual, com o destino de cada salto revalidado (github.com/<u>.png
-//    redireciona pra avatars.githubusercontent.com — legítimo, e checado)
+//    redireciona pra avatars.githubusercontent.com - legítimo, e checado)
 //  - teto de bytes e timeout, pra não virar vetor de custo
 //
 // NOTA: com allowlist de host não é preciso resolver DNS e comparar faixas
-// privadas — nenhum dos hosts abaixo aponta pra rede interna, e um atacante não
+// privadas - nenhum dos hosts abaixo aponta pra rede interna, e um atacante não
 // controla o DNS deles. Se um dia entrar host de terceiro arbitrário aqui, aí
 // sim vira obrigatório checar o IP resolvido.
 
@@ -67,7 +67,7 @@ const MAX_HOPS = 3;
 
 /**
  * Busca um avatar com as travas acima. Devolve null (nunca lança) em qualquer
- * recusa — quem chama já tem cascata de fallback (personagem do jogo → inicial).
+ * recusa - quem chama já tem cascata de fallback (personagem do jogo → inicial).
  */
 export async function fetchAvatar(raw?: string | null): Promise<Buffer | null> {
   let url = raw || '';

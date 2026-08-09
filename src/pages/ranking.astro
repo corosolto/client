@@ -1,5 +1,5 @@
 ---
-// /ranking — leaderboard global (SSR).
+// /ranking - leaderboard global (SSR).
 //
 // DUAS CORREÇÕES ESTRUTURAIS AQUI:
 //
@@ -12,7 +12,7 @@
 //
 // 2. JSON-LD `ItemList`. Um ranking sem dado estruturado é, pro crawler, uma
 //    tabela qualquer. Com ItemList + posição, ele entende que é uma
-//    classificação — e é isso que um assistente de IA precisa pra responder
+//    classificação - e é isso que um assistente de IA precisa pra responder
 //    "quem é o melhor jogador de CORO SOLTO".
 import Layout from '../layouts/Layout.astro';
 import { supabaseAdmin } from '../lib/supabase';
@@ -30,7 +30,7 @@ Astro.response.headers.set(
 );
 
 /* RANKING DESLIGADO (src/lib/site.ts). A página responde 200 com aviso + noindex, e
-   NÃO 404: a URL está indexada e vai voltar — 404 joga fora o histórico de busca dela,
+   NÃO 404: a URL está indexada e vai voltar - 404 joga fora o histórico de busca dela,
    e um 410 seria mentira, porque não foi removida. `noindex, follow` tira a página do
    índice enquanto o conteúdo não existe, sem cortar os links que passam por ela.
    Quando religar, é só `RANKING_ON = true`: nada aqui embaixo mudou. */
@@ -53,14 +53,14 @@ const totHs = players.reduce((s, p) => s + (p.headshots || 0), 0);
 /* Título e descrição também mentiam com RANKING_ON=false: prometiam
    "leaderboard global … atualiza a cada partida" numa página que só mostra um
    aviso. `noindex` tira do índice de BUSCA, mas NÃO impede que um crawler de IA
-   leia e cite — a página segue `Allow` no robots.txt de propósito, porque a
+   leia e cite - a página segue `Allow` no robots.txt de propósito, porque a
    resposta certa pra "qual é o ranking de CORO SOLTO?" é "não tem por enquanto",
    e é melhor que a IA leia isso do que invente. */
 const pageTitle = !RANKING_ON
-  ? `Ranking global — desligado durante o alpha | ${BRAND_FULL}`
+  ? `Ranking global - desligado durante o alpha | ${BRAND_FULL}`
   : curPage > 1
-    ? `Ranking global — página ${curPage} | ${BRAND_FULL}`
-    : `Ranking global — os maiores abatedores | ${BRAND_FULL}`;
+    ? `Ranking global - página ${curPage} | ${BRAND_FULL}`
+    : `Ranking global - os maiores abatedores | ${BRAND_FULL}`;
 const pageDesc = !RANKING_ON
   ? `O ranking global do ${BRAND_FULL} está desligado enquanto o jogo está em alpha: o placar ainda é forjável, e publicar classificação forjável é publicar número errado. Volta no mesmo endereço.`
   : players.length
@@ -107,7 +107,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
   heroImg="/img/map-previews/fy_havan.jpg"
   heroPos="50%">
   {RANKING_ON && <Fragment slot="sub">
-    Classificado por kills. Atualiza ao fim de cada partida — jogue uma e o seu nome entra aqui.
+    Classificado por kills. Atualiza ao fim de cada partida - jogue uma e o seu nome entra aqui.
   </Fragment>}
   {!RANKING_ON && <Fragment slot="sub">
     O placar entre jogadores está fora do ar enquanto o jogo é alpha. Os seus números de partida
@@ -118,7 +118,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
     <div class="panel">
       <p><strong>O ranking está desligado por enquanto.</strong></p>
       <p>O jogo está em <strong>alpha</strong>. Enquanto o placar não for confiável, publicar
-      classificação é publicar número errado — então ele sai do ar em vez de mentir. Volta no
+      classificação é publicar número errado - então ele sai do ar em vez de mentir. Volta no
       mesmo endereço, com os perfis junto.</p>
       <p>Enquanto isso: <a href="/mapa">quem está jogando agora</a> ·
       <a href="/changelog">o que mudou</a> · <a href="/">▶ JOGAR</a></p>
@@ -187,7 +187,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
                     })}
                   </td>
                   <td class="num">{p.matches}</td>
-                  <td class="num">{p.wins > 0 ? p.wins : "—"}</td>
+                  <td class="num">{p.wins > 0 ? p.wins : " - "}</td>
                   <td class="num" style="color:var(--amber)">{p.kd}</td>
                   <td class="num">{p.kills}</td>
                   <td class="num">{p.deaths}</td>
@@ -214,7 +214,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
       <div class="panel" style="margin-top:26px">
         <p>
           Seu perfil público fica em <code>/u/&lt;seu-nick&gt;</code>, com uma
-          <strong> badge PNG gerada na hora</strong> — cole o link no X, no Discord ou no WhatsApp e
+          <strong> badge PNG gerada na hora</strong> - cole o link no X, no Discord ou no WhatsApp e
           a badge aparece sozinha no card. <a href="/">Jogue uma partida</a> pra entrar na lista.
         </p>
       </div>

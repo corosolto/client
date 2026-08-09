@@ -1,4 +1,4 @@
-// Server-side Supabase client — a SERVICE_ROLE key fica SÓ aqui (env var da
+// Server-side Supabase client - a SERVICE_ROLE key fica SÓ aqui (env var da
 // Vercel), nunca no browser. Sem envs configuradas, os endpoints devolvem 503.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 

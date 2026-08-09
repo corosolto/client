@@ -1,9 +1,9 @@
-// POST /api/perf — amostra de performance do cliente (FPS, boot, dispositivo).
+// POST /api/perf - amostra de performance do cliente (FPS, boot, dispositivo).
 // Ver supabase/migrations/018.
 //
 // UMA amostra por sessão (depois do boot), não por frame. Responde "quantos
 // jogam abaixo de 30 FPS?" e "quanto demora o boot frio pra quem não é o dev?"
-// — requisito declarado do dono (máquina fraca). O js_error pega crash; isto
+// - requisito declarado do dono (máquina fraca). O js_error pega crash; isto
 // pega engasgo. Anônimo, sem IP, fail-silent.
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';

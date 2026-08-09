@@ -1,8 +1,8 @@
-// POST /api/feedback — o que o jogador achou + email + consentimento de
+// POST /api/feedback - o que o jogador achou + email + consentimento de
 // newsletter. Ver supabase/migrations/013.
 //
 // O email aqui NÃO é anônimo de propósito: ele é a razão da rota existir
-// (semente da lista de newsletter — o dono ainda não tem funil). Por isso o
+// (semente da lista de newsletter - o dono ainda não tem funil). Por isso o
 // consentimento é campo obrigatório e explícito, validado também no banco.
 //
 // Rate limit apertado (5/hora por IP): feedback real é raro; o que vem em loop
@@ -47,15 +47,15 @@ export const POST: APIRoute = async ({ request }) => {
 
   /* NOTIFICAÇÃO DEPOIS DO BANCO, E SEM PODER DERRUBAR A RESPOSTA (issue #85).
      A ordem importa: o feedback já está gravado quando o email sai, então provedor
-     fora do ar custa a notificação e não o dado. `notificar` não lança — devolve
-     boolean — e sem `FEEDBACK_TO` ela não faz nada e avisa uma vez no log.
+     fora do ar custa a notificação e não o dado. `notificar` não lança - devolve
+     boolean - e sem `FEEDBACK_TO` ela não faz nada e avisa uma vez no log.
      NÃO vai IP no corpo, pela mesma razão da telemetria. */
   await notificar(`[CORO SOLTO] feedback de ${email.trim()}`, {
     mensagem: message.trim(),
     email: email.trim(),
     newsletter: newsletter === true ? 'sim' : 'não',
-    mapa: typeof map === 'string' ? map.slice(0, 40) : '—',
-    versao: typeof version === 'string' ? version.slice(0, 40) : '—',
+    mapa: typeof map === 'string' ? map.slice(0, 40) : ' - ',
+    versao: typeof version === 'string' ? version.slice(0, 40) : ' - ',
   });
 
   return json({ ok: true });

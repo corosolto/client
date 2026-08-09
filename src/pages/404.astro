@@ -1,21 +1,21 @@
 ---
-// 404 — quem erra a URL recebia a página padrão da Vercel: fundo branco,
+// 404 - quem erra a URL recebia a página padrão da Vercel: fundo branco,
 // tipografia de sistema, zero relação com o jogo e nenhuma saída.
 //
 // DUAS DECISÕES QUE NÃO SÃO ÓBVIAS:
 //
 // 1. A PÁGINA É ESTÁTICA (prerender), e a dica de `/u/` é resolvida no cliente.
 //    Num 404 pré-renderizado, `Astro.url.pathname` é o caminho de BUILD
-//    (`/404`), não o que o visitante pediu — então detectar `/u/` no servidor
+//    (`/404`), não o que o visitante pediu - então detectar `/u/` no servidor
 //    daria sempre falso. Fazer a página SSR só pra ler o path custaria uma
 //    invocação de função em cada varredura de bot que bate em URL inexistente,
 //    que é justamente o tráfego mais barato de servir estático. Então a dica sai
 //    por 6 linhas de JS lendo `location.pathname`, e sem JS ela simplesmente não
-//    aparece — o resto da página funciona igual.
+//    aparece - o resto da página funciona igual.
 //
 // 2. O RANKING SÓ É OFERECIDO SE ESTIVER LIGADO. A issue #37 pede "Jogar,
 //    Ranking, Como jogar" como saídas, mas com `RANKING_ON = false`
-//    (src/lib/site.ts) o /ranking responde só um aviso de "desligado" — mandar
+//    (src/lib/site.ts) o /ranking responde só um aviso de "desligado" - mandar
 //    alguém que já se perdeu pra uma segunda página sem conteúdo é piorar o
 //    problema. Com a flag desligada, a saída vira o mapa ao vivo.
 import Layout from '../layouts/Layout.astro';
@@ -30,7 +30,7 @@ import { BRAND_FULL, RANKING_ON } from '../lib/site';
   heroImg="/img/map-previews/fy_ferrovelho.jpg"
   heroPos="45%">
   <Fragment slot="sub">
-    Essa URL não existe. Acontece — <strong>a mira do endereço também abre</strong>.
+    Essa URL não existe. Acontece - <strong>a mira do endereço também abre</strong>.
   </Fragment>
 
   <div class="panel">
@@ -44,10 +44,10 @@ import { BRAND_FULL, RANKING_ON } from '../lib/site';
     </p>
   </div>
 
-  {/* Só aparece quando o caminho pedido começa com /u/ — ver a decisão 1 no topo. */}
+  {/* Só aparece quando o caminho pedido começa com /u/ - ver a decisão 1 no topo. */}
   <div class="panel" id="dica-perfil" hidden>
     <p><strong>Procurando um jogador?</strong> O perfil público fica em
-    <code>/u/&lt;id&gt;/&lt;nick&gt;</code> — o <code>id</code> faz parte do endereço, então
+    <code>/u/&lt;id&gt;/&lt;nick&gt;</code> - o <code>id</code> faz parte do endereço, então
     digitar só o nick não chega lá.</p>
     <p style="margin-top:8px">
       {RANKING_ON
@@ -58,7 +58,7 @@ import { BRAND_FULL, RANKING_ON } from '../lib/site';
   </div>
 
   <p class="lead" style="margin-top:24px">
-    Se você chegou aqui por um link do próprio site, isso é bug —
+    Se você chegou aqui por um link do próprio site, isso é bug -
     <a href="https://github.com/rubenmarcus/csbrasil/issues">abra uma issue</a> dizendo de onde veio.
   </p>
 </Layout>
@@ -69,7 +69,7 @@ import { BRAND_FULL, RANKING_ON } from '../lib/site';
   //
   // O GATILHO É MAIS LARGO QUE O `/u/` QUE A ISSUE PEDIU, e por um motivo
   // medido: `/u/<qualquer-coisa>` NÃO chega nesta página. A rota catch-all
-  // src/pages/u/[...path].astro casa com tudo sob /u/ e responde 200 — 302 pra
+  // src/pages/u/[...path].astro casa com tudo sob /u/ e responde 200 - 302 pra
   // /ranking quando o Supabase está configurado, ou uma casca de perfil vazia
   // quando não. Testado: /u, /u/, /u/naoexiste e /u/abc/def devolvem todos 200.
   // Se a dica só olhasse '/u/', ela nunca apareceria pra ninguém.

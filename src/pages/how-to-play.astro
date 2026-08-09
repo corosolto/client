@@ -1,7 +1,7 @@
 ---
-// /how-to-play — GÊMEA EM INGLÊS do /como-jogar (pedido do dono, 06/08: usuário em EN
+// /how-to-play - GÊMEA EM INGLÊS do /como-jogar (pedido do dono, 06/08: usuário em EN
 // cai na versão EN). Mesmo dataset (src/data/jogo.ts); passos/FAQ/controles traduzidos
-// AQUI por overlay — o PT continua a fonte, e os números de round/respawn/times vêm
+// AQUI por overlay - o PT continua a fonte, e os números de round/respawn/times vêm
 // dos mesmos textos conferidos contra public/js/game.js. Redirecionamento por idioma:
 // cada página manda pro par quando o idioma resolvido não bate (regras do i18n.js).
 import Layout from '../layouts/Layout.astro';
@@ -17,17 +17,17 @@ const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 // Nomes de mapa são marca própria (aparecem assim no menu do jogo): ficam em PT.
 const PASSOS = [
   { nome: 'Open the game in a desktop browser',
-    texto: 'Go to www.csbrasil.online on Chrome, Edge or Firefox. No download, no install, no signup — the arena loads right in the tab.' },
+    texto: 'Go to www.csbrasil.online on Chrome, Edge or Firefox. No download, no install, no signup - the arena loads right in the tab.' },
   { nome: 'Pick a nick',
     texto: 'The nick is 2 to 14 characters and stays saved in your browser: it’s the name shown on the match scoreboard and in kill announcements. Not required to play.' },
   { nome: 'Pick a faction and a character',
-    texto: 'Five factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 44 characters in total, and they all play exactly the same — your pick is style, not advantage.' },
+    texto: 'Five factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 44 characters in total, and they all play exactly the same - your pick is style, not advantage.' },
   { nome: 'Pick the map and the mode',
     texto: `${cap(porExtenso[MAPAS.length])} arenas: ${MAPAS.map(m => m.nome).join(', ')}. ${cap(porExtenso[nRounds])} open in rounds and ${porExtenso[nCtf]} in Capture the Flag, but you can switch any map’s mode before starting. Team size is yours too: from 1v1 up to 8v8, with 4v4 as the default.` },
   { nome: 'Aim, crouch, shoot',
-    texto: 'WASD moves, the mouse aims, left click shoots and right click opens the scope. Crouching with Ctrl (or C) makes your aim much steadier — it’s the difference between hitting and missing with a no-scope AWP.' },
+    texto: 'WASD moves, the mouse aims, left click shoots and right click opens the scope. Crouching with Ctrl (or C) makes your aim much steadier - it’s the difference between hitting and missing with a no-scope AWP.' },
   { nome: 'Win the round',
-    texto: 'Rounds last 1 minute and 39 seconds; the team with more kills when the clock hits zero takes the round. Three rounds win the match, and the fifth round is the cap — if nobody reaches three, whoever has more rounds wins.' },
+    texto: 'Rounds last 1 minute and 39 seconds; the team with more kills when the clock hits zero takes the round. Three rounds win the match, and the fifth round is the cap - if nobody reaches three, whoever has more rounds wins.' },
 ];
 
 const FAQ: [string, string][] = [
@@ -36,9 +36,9 @@ const FAQ: [string, string][] = [
   ['What are the controls?',
    'WASD moves, mouse aims, left click shoots, right click opens the scope, Ctrl (or C) crouches and steadies your aim, Shift runs, Space jumps, R reloads, 1/2/3 switch between primary, pistol and knife, Z/X/V open the voice commands, M switches teams and Tab shows the scoreboard.'],
   ['How does a round work?',
-   'The default is 4v4 — you and 3 allied bots against 4 enemy bots — with a 2.2-second respawn. Each round lasts 1 minute and 39 seconds, and the team with more kills when the clock ends takes it. Three rounds win the match, with the fifth round as the cap. In the menu you can change team size from 1 to 8 per side.'],
+   'The default is 4v4 - you and 3 allied bots against 4 enemy bots - with a 2.2-second respawn. Each round lasts 1 minute and 39 seconds, and the team with more kills when the clock ends takes it. Three rounds win the match, with the fifth round as the cap. In the menu you can change team size from 1 to 8 per side.'],
   ['Is there a global ranking?',
-   'Not yet. The game is in alpha and the global ranking is off until the scoreboard is trustworthy — publishing a leaderboard that can be forged would be publishing wrong numbers. Your match stats stay saved in your browser and show up in the game’s RANKING menu.'],
+   'Not yet. The game is in alpha and the global ranking is off until the scoreboard is trustworthy - publishing a leaderboard that can be forged would be publishing wrong numbers. Your match stats stay saved in your browser and show up in the game’s RANKING menu.'],
   ['Does it work on mobile?',
    'The game was made for desktop, with mouse and keyboard. On a touchscreen you’ll see a notice recommending you play on a computer.'],
   ['Can I play with friends?',
@@ -52,7 +52,7 @@ const CONTROLES_EN: Record<string, string> = {
   'W A S D': 'Move',
   Mouse: 'Aim',
   Shift: 'Run',
-  'Ctrl ou C': 'Crouch — makes your aim much steadier',
+  'Ctrl ou C': 'Crouch - makes your aim much steadier',
   'Espaço': 'Jump',
   'Clique esquerdo': 'Shoot',
   'Clique direito': 'Scope (weapons with sights) / ADS',
@@ -97,7 +97,7 @@ const jsonld = [
 ];
 ---
 <Layout
-  title={`How to play — controls and rules | ${BRAND_FULL}`}
+  title={`How to play - controls and rules | ${BRAND_FULL}`}
   description={`${BRAND_FULL} guide: 6 steps from the first click to the first round, the controls table, round and Capture the Flag rules, and the most common questions.`}
   jsonld={jsonld}
   h1="How to play"
@@ -108,12 +108,12 @@ const jsonld = [
     <link rel="alternate" hreflang="pt-BR" href={abs('/como-jogar')} />
     <link rel="alternate" hreflang="en" href={abs('/how-to-play')} />
   </Fragment>
-  {/* RESPOSTA CURTA E FACTUAL NO TOPO — mesmo desenho da página PT: é o
+  {/* RESPOSTA CURTA E FACTUAL NO TOPO - mesmo desenho da página PT: é o
       parágrafo que um assistente de IA cita inteiro, então ele responde a
       pergunta sozinho e usa os mesmos números do JSON-LD. */}
   <Fragment slot="sub">
     <strong>Short answer:</strong> open <strong>www.csbrasil.online</strong> in a desktop
-    browser, click to lock the mouse and play — no download, install or signup.{' '}
+    browser, click to lock the mouse and play - no download, install or signup.{' '}
     <strong>WASD</strong> moves, the <strong>mouse</strong> aims, <strong>left click</strong>{' '}
     shoots and <strong>right click</strong> opens the scope. Each round lasts <strong>1:39</strong>,
     the default is <strong>4v4</strong> against bots and <strong>3 rounds win</strong> the match.
@@ -146,7 +146,7 @@ const jsonld = [
 
   <h2>Rules</h2>
   <ul>
-    <li><strong>Format:</strong> 4v4 by default — you plus 3 allied bots against 4 enemy bots —
+    <li><strong>Format:</strong> 4v4 by default - you plus 3 allied bots against 4 enemy bots -
       with a 2.2 s respawn. In the menu, team size goes from 1 to 8 per side.</li>
     <li><strong>Round:</strong> 1:39. The team with more kills when the clock hits zero takes the round;
       3 rounds win the match, and the 5th round is the cap.</li>
@@ -164,7 +164,7 @@ const jsonld = [
     <li>The radar always shows allies, and enemies for 1.6 s when they fire. Noise is information.</li>
     <li>In Praça dos Três Poderes, the giant cracked voting machine in the middle is the best mid cover.</li>
     <li>Running (Shift) makes noise and costs you accuracy. Walk when you’re crossing an angle.</li>
-    <li>With the knife out you move faster — it’s for rotating, not just for humiliating.</li>
+    <li>With the knife out you move faster - it’s for rotating, not just for humiliating.</li>
   </ul>
 
   <h2>Frequently asked questions</h2>
@@ -176,7 +176,7 @@ const jsonld = [
   ))}
 
   <div class="cta-row">
-    <a class="btn-cta" href="/?lang=en">▶ Play now — free</a>
+    <a class="btn-cta" href="/?lang=en">▶ Play now - free</a>
     <a class="btn-cta btn-2" href="/maps">See the arenas</a>
   </div>
 </Layout>

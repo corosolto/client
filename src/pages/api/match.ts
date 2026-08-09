@@ -1,4 +1,4 @@
-// POST /api/match — evento RICO de partida (anônimo), uma linha por partida.
+// POST /api/match - evento RICO de partida (anônimo), uma linha por partida.
 // Ver supabase/migrations/016.
 //
 // COMPLEMENTA /api/telemetry (012, agregado) e /api/submit-match (só registrado):

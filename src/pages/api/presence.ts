@@ -1,14 +1,14 @@
-// POST /api/presence — "estou com o jogo aberto agora", por anonId.
+// POST /api/presence - "estou com o jogo aberto agora", por anonId.
 //
 // POR QUE EXISTE, separada do /api/heartbeat (07/08):
 // o heartbeat exige `nick` + `token` e o cliente só o dispara com
-// `game && registeredNick` (public/js/main.js) — ou seja, jogador REGISTRADO e
+// `game && registeredNick` (public/js/main.js) - ou seja, jogador REGISTRADO e
 // DENTRO de partida. Com o site no ar, a Vercel Analytics mostrava 8 pessoas e o
 // rodapé mostrava nada. As duas medidas estavam certas: contam coisas diferentes,
 // e a maioria nunca digita nick.
 //
 // "N online" é lido como "quantas pessoas estão com o jogo aberto", então é isso
-// que esta rota mede — inclusive quem está parado no menu.
+// que esta rota mede - inclusive quem está parado no menu.
 //
 // `anonId` é o MESMO UUID de localStorage da telemetria (`cs_anon`): identifica
 // NAVEGADOR, não pessoa, e some quando o jogador limpa o site. Nenhum IP é
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (typeof anonId !== 'string' || !UUID_RE.test(anonId)) return json({ error: 'bad_anon_id' }, 400);
 
   /* Presença NUNCA atrapalha o jogador: isto sai por sendBeacon e ninguém lê a
-     resposta. Banco fora, migration 014 não aplicada — responde ok e some. É a
+     resposta. Banco fora, migration 014 não aplicada - responde ok e some. É a
      mesma regra da telemetria, e pelo mesmo motivo. */
   try {
     const g = geoFrom(request);
@@ -52,6 +52,6 @@ export const POST: APIRoute = async ({ request }) => {
       p_city: g?.city ?? null,
       p_country: g?.country ?? null,
     });
-  } catch { /* silencioso de propósito — ver comentário acima */ }
+  } catch { /* silencioso de propósito - ver comentário acima */ }
   return json({ ok: true });
 };
