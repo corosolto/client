@@ -180,6 +180,24 @@ export const MAPAS: Mapa[] = [
       'sobem por trás das casas e dão rota de flanco sem expor na escada. Cada patamar é um andar de combate: ' +
       'você só enxerga o próximo lance, nunca o escadão inteiro.',
   },
+  {
+    id: 'fy_campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Campo de várzea no centro de uma comunidade — todos os becos convergem pra ele.',
+    detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
+      'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
+      'Quatro becos descem do morro e desembocam em bordas diferentes do campo — cada um é uma rota ' +
+      'de flanco separada. O campo tem traves, alambrado derrubado, container e arquibancada de cimento. ' +
+      'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
+  },
+  {
+    id: 'fy_lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo — a luta pela vertical.',
+    detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
+      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas — cada uma é um ' +
+      'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
+      'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
+      'norte é mais alto — é a posição de sniper do mapa.',
+  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }
