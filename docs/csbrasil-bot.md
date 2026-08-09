@@ -30,6 +30,7 @@ Permissões mínimas recomendadas para o token:
 - o bot pode comentar, etiquetar e mergear PRs explicitamente elegíveis
 - o bot não decide sozinho sobre gameplay, backend, anti-cheat ou mapas
 - o bot só mergea PR com label `safe-automerge` e checks verdes
+- PR com pendência do Greptile recebe `needs-greptile-resolution` e fica fora de automerge até um maintainer aplicar `greptile-resolved`
 - em crashes automáticos, o bot sugere duplicatas; ele não fecha sozinho nesta fase
 - para abrir PR de issue, o gatilho é um comentário de maintainer `/bot-fix`
 - PR nova pode ser reencaminhada automaticamente para a branch de integração/release configurada

@@ -38,6 +38,8 @@ def main() -> int:
         lines.append("- motivo: mudança de runtime/UI precisa validação integrada")
     if "safe-automerge" in labels_add:
         lines.append("- motivo: PR pequena e reversível fora de superfícies sensíveis")
+    if "needs-greptile-resolution" in labels_add:
+        lines.append("- bloqueio: há apontamento/check do Greptile; não mergear sem marcar `greptile-resolved`")
 
     print("\n".join(lines))
     return 0
