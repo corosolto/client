@@ -1,0 +1,280 @@
+name: greptile-autofix
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+concurrency:
+  group: greptile-autofix-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  prepare:
+    if: github.event.label.name == 'greptile-autofix'
+    runs-on: ubuntu-latest
+    outputs:
+      eligible: ${{ steps.prepare.outputs.eligible }}
+      secrets_ready: ${{ steps.prepare.outputs.secrets_ready }}
+      head_sha: ${{ steps.prepare.outputs.head_sha }}
+      head_branch: ${{ steps.prepare.outputs.head_branch }}
+      head_repo: ${{ steps.prepare.outputs.head_repo }}
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: policy
+          persist-credentials: false
+
+      - name: Prepare one small PR
+        id: prepare
+        env:
+          ACTOR: ${{ github.actor }}
+          HAS_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+          HAS_BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN != '' }}
+        run: |
+          python3 policy/scripts/ci/ensure_labels.py greptile-autofix
+          permission=$(gh api "repos/${{ github.repository }}/collaborators/$ACTOR/permission" --jq .permission 2>/dev/null || true)
+          case "$permission" in admin|maintain|write) ;; *) echo "actor sem permissão de escrita" >&2; exit 1;; esac
+          gh pr view "$PR_NUMBER" --json number,title,isDraft,state,labels,reviewDecision,mergeStateStatus,mergeable,statusCheckRollup,files,additions,deletions,changedFiles,baseRefName,headRefName,headRefOid,headRepositoryOwner,headRepository,isCrossRepository,maintainerCanModify,author > /tmp/pr.json
+          gh pr list --state open --label greptile-autofix --json number --limit 20 > /tmp/labeled.json
+          gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id isResolved isOutdated path line originalLine comments(first:20){nodes{body url author{login}}}}}}}}' -F owner='${{ github.repository_owner }}' -F repo='${{ github.event.repository.name }}' -F number="$PR_NUMBER" > /tmp/threads.json
+          python3 - <<'PY'
+          import json
+          pr = json.load(open('/tmp/pr.json'))
+          owner = (pr.get('headRepositoryOwner') or {}).get('login', '')
+          repo = (pr.get('headRepository') or {}).get('name', '')
+          pr['headRepo'] = f'{owner}/{repo}'
+          json.dump({
+              'pr': pr,
+              'labeled_prs': [item['number'] for item in json.load(open('/tmp/labeled.json'))],
+              'threads': json.load(open('/tmp/threads.json'))['data']['repository']['pullRequest']['reviewThreads']['nodes'],
+          }, open('/tmp/autofix-input.json', 'w'))
+          PY
+          python3 policy/scripts/ci/greptile_autofix.py prepare < /tmp/autofix-input.json > /tmp/autofix-task.json
+          python3 policy/scripts/ci/greptile_autofix.py prompt < /tmp/autofix-input.json > /tmp/greptile-prompt.md
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          task = json.load(open('/tmp/autofix-task.json'))
+          print(f"eligible={str(task['eligible']).lower()}")
+          print(f"head_sha={task['head_sha']}")
+          print(f"head_branch={task['head_branch']}")
+          print(f"head_repo={task['head_repo']}")
+          print(f"secrets_ready={str(os.environ['HAS_OPENAI_KEY'] == 'true' and os.environ['HAS_BOT_TOKEN'] == 'true').lower()}")
+          PY
+          gh pr edit "$PR_NUMBER" --remove-label greptile-autofix
+
+      - name: Report blocked attempt
+        if: steps.prepare.outputs.eligible != 'true' || steps.prepare.outputs.secrets_ready != 'true'
+        run: |
+          python3 - <<'PY' > /tmp/blocked.md
+          import json
+          task = json.load(open('/tmp/autofix-task.json'))
+          reasons = task.get('reasons', [])
+          if '${{ steps.prepare.outputs.secrets_ready }}' != 'true':
+              reasons.append('configure OPENAI_API_KEY e CSBRASIL_BOT_TOKEN')
+          print('## greptile-autofix não executado\n')
+          print('\n'.join(f'- {reason}' for reason in reasons))
+          PY
+          gh pr comment "$PR_NUMBER" --body-file /tmp/blocked.md
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: steps.prepare.outputs.eligible == 'true' && steps.prepare.outputs.secrets_ready == 'true'
+        with:
+          name: greptile-task-${{ github.run_id }}
+          path: |
+            /tmp/autofix-task.json
+            /tmp/greptile-prompt.md
+          retention-days: 1
+
+  worker:
+    needs: prepare
+    if: needs.prepare.outputs.eligible == 'true' && needs.prepare.outputs.secrets_ready == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted policy
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: policy
+          persist-credentials: false
+
+      - name: Checkout exact PR head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: ${{ needs.prepare.outputs.head_repo }}
+          ref: ${{ needs.prepare.outputs.head_sha }}
+          fetch-depth: 0
+          path: work
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: greptile-task-${{ github.run_id }}
+          path: /tmp/autofix
+
+      - name: Run Codex on Greptile threads
+        uses: openai/codex-action@b11346a6fa031e2e164ab4b7c7ea201afffd7d59
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: /tmp/autofix/greptile-prompt.md
+          output-file: /tmp/codex-result.md
+          working-directory: work
+          permission-profile: :workspace
+          safety-strategy: drop-sudo
+          codex-version: 0.147.0
+
+      - name: Export patch only
+        run: |
+          git -C work diff --check
+          git -C work diff --binary --no-ext-diff > /tmp/worker.patch
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: greptile-patch-${{ github.run_id }}
+          path: /tmp/worker.patch
+          retention-days: 1
+
+  verify-and-merge:
+    needs: [prepare, worker]
+    if: needs.worker.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      HEAD_BRANCH: ${{ needs.prepare.outputs.head_branch }}
+      ORIGINAL_HEAD: ${{ needs.prepare.outputs.head_sha }}
+    steps:
+      - name: Checkout trusted policy
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          path: policy
+          persist-credentials: false
+
+      - name: Checkout exact PR head cleanly
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: ${{ needs.prepare.outputs.head_repo }}
+          ref: ${{ needs.prepare.outputs.head_sha }}
+          fetch-depth: 0
+          path: clean
+          persist-credentials: false
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: greptile-task-${{ github.run_id }}
+          path: /tmp/task
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: greptile-patch-${{ github.run_id }}
+          path: /tmp/patch
+
+      - name: Apply and verify patch
+        run: |
+          git -C clean apply --index --binary /tmp/patch/worker.patch
+          git -C clean diff --cached --check
+          python3 - <<'PY'
+          import json, os, subprocess
+          task = json.load(open('/tmp/task/autofix-task.json'))
+          changed = subprocess.check_output(['git', '-C', 'clean', 'diff', '--cached', '--name-only'], text=True).splitlines()
+          churn = 0
+          for line in subprocess.check_output(['git', '-C', 'clean', 'diff', '--cached', '--numstat'], text=True).splitlines():
+              add, delete, _ = line.split('\t', 2)
+              churn += (int(add) if add.isdigit() else 0) + (int(delete) if delete.isdigit() else 0)
+          symlinks = [path for path in changed if os.path.islink(os.path.join('clean', path))]
+          json.dump({
+              'allowed_paths': task['allowed_paths'], 'diff_files': changed, 'diff_churn': churn,
+              'diff_bytes': os.path.getsize('/tmp/patch/worker.patch'), 'symlink_files': symlinks,
+          }, open('/tmp/diff.json', 'w'))
+          PY
+          python3 policy/scripts/ci/greptile_autofix.py verify < /tmp/diff.json > /tmp/diff-result.json
+          python3 - <<'PY'
+          import json
+          result = json.load(open('/tmp/diff-result.json'))
+          if not result['eligible']:
+              raise SystemExit('; '.join(result['reasons']))
+          PY
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: clean/package-lock.json
+
+      - name: Validate repository gates
+        working-directory: clean
+        run: npm run check:deploy
+
+      - name: Commit and push repair
+        id: push
+        working-directory: clean
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          BOT_EMAIL: ${{ secrets.BOT_GIT_EMAIL }}
+        run: |
+          git config user.name csbrasil-bot
+          git config user.email "${BOT_EMAIL:-csbrasil-bot@users.noreply.github.com}"
+          git commit -s -m "fix(bot): resolve Greptile feedback on #${PR_NUMBER}"
+          gh auth setup-git
+          git push origin "HEAD:$HEAD_BRANCH"
+          echo "head_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for required checks
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          for _ in $(seq 1 60); do
+            gh pr view "$PR_NUMBER" --json statusCheckRollup > /tmp/checks.json
+            if python3 - <<'PY'
+          import json
+          data = json.load(open('/tmp/checks.json'))['statusCheckRollup']
+          names = {item.get('name') or item.get('context') for item in data}
+          required = {'build', 'dco', 'versao-bumpada', 'Greptile Review', 'Vercel'}
+          raise SystemExit(0 if required <= names else 1)
+          PY
+            then break; fi
+            sleep 15
+          done
+          gh pr checks "$PR_NUMBER" --watch --interval 15 --fail-fast
+
+      - name: Recheck threads and merge
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          EXPECTED_HEAD: ${{ steps.push.outputs.head_sha }}
+        run: |
+          gh pr view "$PR_NUMBER" --json number,title,isDraft,state,labels,reviewDecision,mergeStateStatus,mergeable,statusCheckRollup,files,additions,deletions,changedFiles,baseRefName,headRefName,headRefOid,headRepositoryOwner,headRepository,isCrossRepository,maintainerCanModify,author > /tmp/final-pr.json
+          gh api graphql -f query='query($owner:String!,$repo:String!,$number:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$number){reviewThreads(first:100){nodes{id isResolved isOutdated path line originalLine comments(first:20){nodes{body url author{login}}}}}}}}' -F owner='${{ github.repository_owner }}' -F repo='${{ github.event.repository.name }}' -F number="$PR_NUMBER" > /tmp/final-threads.json
+          python3 - <<'PY'
+          import json, os
+          json.dump({
+              'pr': json.load(open('/tmp/final-pr.json')),
+              'threads': json.load(open('/tmp/final-threads.json'))['data']['repository']['pullRequest']['reviewThreads']['nodes'],
+              'expected_head': os.environ['EXPECTED_HEAD'],
+          }, open('/tmp/final-input.json', 'w'))
+          PY
+          python3 policy/scripts/ci/greptile_autofix.py final < /tmp/final-input.json > /tmp/final-result.json
+          python3 - <<'PY'
+          import json
+          result = json.load(open('/tmp/final-result.json'))
+          if not result['eligible']:
+              raise SystemExit('; '.join(result['reasons']))
+          PY
+          gh pr merge "$PR_NUMBER" --squash --delete-branch
+
+      - name: Report failure without merging
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "greptile-autofix parou sem mergear. Veja a etapa vermelha desta execução: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

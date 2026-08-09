@@ -12,6 +12,7 @@ LABELS = {
     "target:release": ("5319e7", "PR apontando para uma branch de release"),
     "needs-greptile-resolution": ("b60205", "PR não pode ser mergeada enquanto houver pendência do Greptile"),
     "greptile-resolved": ("0e8a16", "Maintainer confirmou que os apontamentos do Greptile foram resolvidos"),
+    "greptile-autofix": ("7057ff", "Autoriza uma tentativa de correção automática em PR pequeno"),
     "bot-fixable": ("0e8a16", "Issue ou PR elegível para tentativa automatizada de correção"),
     "covered-by-pr": ("fbca04", "Issue já atacada por PR aberta"),
     "crash-auto": ("B60205", "crash de produção reportado por /api/jserror ou prod-watch"),
