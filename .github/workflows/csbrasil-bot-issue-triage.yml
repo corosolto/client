@@ -21,6 +21,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Ensure labels exist
+        run: python3 scripts/ci/ensure_labels.py crash-auto bot-fixable covered-by-pr
       - name: Classify issue
         id: triage
         run: |
@@ -35,6 +37,27 @@ jobs:
           labels = data.get('labels_add', [])
           if labels:
               subprocess.run(['gh', 'issue', 'edit', '${{ github.event.issue.number }}', '--add-label', ','.join(labels)], check=True)
+          PY
+      - name: Review issue and comment
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          issue = json.load(open('/tmp/issue.json'))
+          prs = json.loads(subprocess.check_output([
+              'gh', 'pr', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,url,body'
+          ], text=True))
+          pathlib.Path('/tmp/issue-review-input.json').write_text(json.dumps({'issue': issue, 'prs': prs}))
+          PY
+          python3 scripts/ci/issue_review.py < /tmp/issue-review-input.json > /tmp/issue-review.json
+          python3 - <<'PY'
+          import json, subprocess
+          data = json.load(open('/tmp/issue-review.json'))
+          labels = data.get('labels_add', [])
+          if labels:
+              subprocess.run(['gh', 'issue', 'edit', '${{ github.event.issue.number }}', '--add-label', ','.join(labels)], check=True)
+          body = data['comment']
+          subprocess.run(['gh', 'issue', 'comment', '${{ github.event.issue.number }}', '--body', body], check=True)
           PY
       - name: Suggest crash duplicate
         run: |

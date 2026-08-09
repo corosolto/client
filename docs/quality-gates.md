@@ -13,6 +13,7 @@
 - `needs-human-gameplay`: mudança em jogo/mapa/render/HUD
 - `needs-human-backend`: mudança em API/Supabase/anti-cheat
 - `bot-fixable`: docs, manifests, changelog, pequenos fixes determinísticos
+- `covered-by-pr`: issue já atacada por PR aberta
 
 ## Merge policy
 
@@ -41,3 +42,13 @@ O workflow de staging deve apontar para `STAGING_URL`.
 
 Issues `crash-auto` devem ser agrupadas por assinatura de erro antes de
 virarem fila humana. O bot só sugere duplicata; o fechamento continua humano.
+
+## Bot-fix workflow
+
+Issues com label `bot-fixable` podem receber comentário de maintainer:
+
+```text
+/bot-fix
+```
+
+Isso faz o `csbrasil-bot` abrir uma draft PR bootstrap a partir da `main`.
