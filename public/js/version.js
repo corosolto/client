@@ -2,7 +2,7 @@
 // ATENÇÃO: o mesmo ?v= vai no import map do index.astro (bump dos dois lados juntos,
 // senão o navegador serve módulos JS velhos do cache — causa raiz de "correções que
 // não chegavam ao usuário" por dias).
-export const VERSION = '2.0.0-alpha.46';
+export const VERSION = '2.0.0-alpha.47';
 
 /* POR QUE 2.0.0-alpha E NÃO 3.3.0 (04/08/2026)
    O número tinha saltado de 1.15.0 para 3.1.0 sem nenhum release no meio: nenhuma das
