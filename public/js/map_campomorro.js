@@ -53,9 +53,11 @@ export function buildCampoMorro(scene, T) {
   };
 
   // Override de texturas no browser
-  let TEX = { dirt: lam({ map: T.dirt }), concrete: lam({ map: T.concrete }),
-    grass: lam({ map: T.grass }), asphalt: lam({ map: T.asphalt }),
-    concreteDark: lam({ map: T.concreteDark }) };
+  const Tdirt = T && T.dirt, Tconc = T && T.concrete, Tgrass = T && T.grass,
+    Tasph = T && T.asphalt, TconcD = T && T.concreteDark;
+  let TEX = { dirt: lam({ map: Tdirt }), concrete: lam({ map: Tconc }),
+    grass: lam({ map: Tgrass }), asphalt: lam({ map: Tasph }),
+    concreteDark: lam({ map: TconcD }) };
   if (typeof document !== 'undefined') {
     const load = (url, rx = 4, ry = 4) => {
       const t = new THREE.TextureLoader().load(url);
@@ -282,10 +284,10 @@ export function buildCampoMorro(scene, T) {
   grafitar({
     id: 'fy_campomorro',
     root, T, waypoints: nodes, seed: 5077, passo: 0.72, alcance: 9, cobre: 0.06, minLarg: 0.3,
-    murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 71, separacao: 15 },
+    murais: { texturas: (T && T.muraisHom) || [], nomes: (T && T.muraisHomNomes) || [], seed: 71, separacao: 15 },
     bandas: [
       { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 30, fonte: 'poster',
-        pool: (T.posterFiles || []).map((_, i) => i) },
+        pool: ((T && T.posterFiles) || []).map((_, i) => i) },
       { y0: 0.25, y1: 2.35, larg: 3.6, alturas: [2.0, 1.5, 1.1, 0.8, 0.6],
         pool: D_PIXO.concat(D_THROW, D_TAG, D_CARTAZERA, D_LAMBE, D_PERSO) },
       { y0: 2.3, y1: 4.3, larg: 4.4, alturas: [1.9, 1.4, 1.0],

@@ -1101,7 +1101,7 @@ export class Game {
     /* MODO ARENA: mata-mata onde quem morre troca de time. O jogo corre sem rounds,
        respawn contínuo, e a partida acaba quando um time fica com ≤ 1 jogador.
        ?arena=1 ativa. */
-    this.arena = QP.get('arena') === '1';
+    this.arena = QS.get('arena') === '1';
     this.arenaSwitched = 0;   // contador de trocas (pro HUD)
     /* game.js:944 — RELÓGIO DE PARTIDA DO CAPTURA (não é relógio de round). Só o modo
        CTF usa; no modo de abate fica Infinity e nada o lê. Ele NÃO reinicia a cada

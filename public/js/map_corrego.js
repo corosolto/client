@@ -78,6 +78,7 @@ export function buildCorrego(scene, T) {
     return m;
   }
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
+  const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
 
   function paredeTex(pint, crua, seed) {
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
