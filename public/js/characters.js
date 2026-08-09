@@ -105,7 +105,7 @@ export const CHAR_FX = {
 // `E` (não `P`) e `C` (07/08): o rename Time E deixou esta tabela para trás e os palhaços
 // nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dá erro — dá contorno BRANCO, que
 // parece decisão de arte. Régua: `tools/eval/faccao-paleta-check.mjs`.
-const TEAM_RIM = { E: 0xff5555, B: 0x55dd66, U: 0x4aa3ff, C: 0xff6ec7, F: 0xffc233 };
+const TEAM_RIM = { E: 0xff5555, B: 0x55dd66, U: 0x4aa3ff, C: 0xff6ec7, F: 0xffc233, M: 0x9d4edd };
 export function charRimColor(def) {
   const c = new THREE.Color(TEAM_RIM[(def && def.team) || 'E'] || 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
@@ -584,6 +584,38 @@ export const CHARACTERS = [
   { id: 'ostentacao', team: 'F', tribe: 'funkeiros', name: 'Ostentação',
     blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.',
     pal: { skin: 0xd9a066, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0xffd23f } },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //  TIME MÍTICO (M) — heróis históricos, folclore e literatura brasileira.
+  //  Nenhum personagem da atualidade, nenhum copyright. Spec: plans/09-TIME-MITICO.md
+  // ═══════════════════════════════════════════════════════════════════════════
+  { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
+    blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
+    pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
+  { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
+    blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
+    pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
+  { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
+    blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
+    pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
+  { id: 'lampiao', team: 'M', tribe: 'mitico', name: 'Lampião',
+    blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
+    pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
+  { id: 'lobisomem', team: 'M', tribe: 'mitico', name: 'Lobisomem',
+    blurb: 'Roqueiro do interior com maldição. A sétima lua transforma — garras no lugar da arma.',
+    pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
+  { id: 'bandeirante', team: 'M', tribe: 'mitico', name: 'Bandeirante',
+    blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.',
+    pal: { skin: 0xc09070, shirt: 0x4a3a2a, pants: 0x3a2a1a, hair: 0x4a3a2a, boots: 0x2a1a0a } },
+  { id: 'macunaima', team: 'M', tribe: 'mitico', name: 'Macunaíma',
+    blurb: 'O herói sem nenhum caráter. Arma pega no chão vale mais na mão dele — ai, que preguiça.',
+    pal: { skin: 0xa07a5a, shirt: 0x5a8a5a, pants: 0x3a4a3a, hair: 0x1a0a00, boots: 0x4a3a2a } },
+  { id: 'cuca', team: 'M', tribe: 'mitico', name: 'Cuca',
+    blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".',
+    pal: { skin: 0x4a6a4a, shirt: 0x2a3a2a, pants: 0x3a2a3a, hair: 0x2a2a1a, boots: 0x1a2a1a } },
+  { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
+    blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
+    pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -598,6 +630,9 @@ export const CHAR_WEAPON = {
   palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
+  // Time Mítico
+  zumbi: 'ak', mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'pistol',
+  bandeirante: 'mosin', macunaima: 'ak', cuca: 'shotgun', curupira: 'mp5',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 
@@ -772,7 +807,7 @@ export function buildCharacter(def) {
   /* `E` (era `P`, rename de 06/08) e `C` explícito: sem o ramo, a facção cai no ELSE e sai
      azul de Tribos Urbanas — o time do jogador usava braçadeira azul e os palhaços também.
      O else continua sendo o U, de propósito, e é isso que a régua declara. */
-  const band = def.team === 'E' ? 0xe03232 : def.team === 'B' ? 0x1faa4d : def.team === 'F' ? 0xffc233 : def.team === 'C' ? 0xc23a86 : 0x4aa3ff;
+  const band = def.team === 'E' ? 0xe03232 : def.team === 'B' ? 0x1faa4d : def.team === 'F' ? 0xffc233 : def.team === 'C' ? 0xc23a86 : def.team === 'M' ? 0x7b2cbf : 0x4aa3ff;
   parts.armL.add(marcaAdereco(box(D.bracoW + 0.02, 0.08, D.bracoD + 0.02, band, 0, -bracoLen * 0.24, 0)));
 
   addAccessories(def, parts, torsoW);

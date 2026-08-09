@@ -1220,7 +1220,7 @@ export class Game {
     const pal = (pdef && pdef.pal) || { skin: 0xd9a066, shirt: 0x3a4a5a };
     // LUVA POR TIME no fallback procedural também (mãos genéricas por time — pedido do dono):
     // P vermelho, B verde, U roxo; blend 55% (igual ao fparms) pra não virar luva plástica.
-    const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc };
+    const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, C: 0xf0f0f0, F: 0xffc233, M: 0x9d4edd };
     const skinMat = dark(pal.skin);
     if (GLOVE[this.playerFaction]) skinMat.color.lerp(new THREE.Color(GLOVE[this.playerFaction]), 0.85);
     const sleeveMat = dark(pal.shirt);
@@ -3599,6 +3599,7 @@ export class Game {
     if (f === 'B') return dark ? '#1faa4d' : '#55dd66';            // Time B verde
     if (f === 'C') return dark ? '#c23a86' : '#ff6ec7';            // Palhaços rosa-circo
     if (f === 'F') return dark ? '#c79a12' : '#ffc233';            // Funkeiros ouro
+    if (f === 'M') return dark ? '#5e35b1' : '#9d4edd';            // Mítico roxo
     return dark ? '#aaaaaa' : '#999999';
   }
   /* TINTA CLARA DO TIME — só pra TEXTO sobre chip tingido (killfeed). Por que existe:
@@ -3612,15 +3613,15 @@ export class Game {
   _teamInk(side) {
     if (this._mirror(side)) return '#cbaaff';
     const f = this._factionOf(side);
-    return ({ U: '#a8cdff', E: '#ff9a9a', B: '#a9f0b6', C: '#ffb3e0', F: '#ffd98a' })[f] || '#d6d6d6';
+    return ({ U: '#a8cdff', E: '#ff9a9a', B: '#a9f0b6', C: '#ffb3e0', F: '#ffd98a', M: '#d0a3f0' })[f] || '#d6d6d6';
   }
   // Pack de vozes/round por FACÇÃO: o lado do jogador usa 'U' (Tribos) quando a facção é Tribos
   // Urbanas; senão o lado (P/B). O inimigo é sempre político. Corrige "Tribos usa voz de Time E".
   // Facção que ocupa um LADO físico (P/B): lado do jogador = playerFaction, o outro = enemyFaction.
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
-  _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
+  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
   _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }   // inimigo = mesma facção
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
@@ -6010,7 +6011,7 @@ export class Game {
          cada um"). O brasão é o MESMO arquivo que estampa a bandeira CTF (img/brasoes/),
          lido pela letra da facção que ocupa o lado — nunca pelo lado cru (a lição do
          _factionOf: lado 'B' ≠ facção 'B' por acidente de letra). */
-      const BRASAO_FILE = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f' };
+      const BRASAO_FILE = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f', M: 'm' };
       const coluna = (side) => {
         const fac = this._factionOf(side);
         const f = BRASAO_FILE[fac];
