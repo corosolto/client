@@ -7,6 +7,8 @@ import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
 import { buildEscadao, ESCADAO_PROPS } from './map_escadao.js';
 import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
 import { buildLajes, LAJES_PROPS } from './map_lajes.js';
+import { buildCorrego, CORREGO_PROPS } from './map_corrego.js';
+import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
 
 export const MAPS = {
   awp_map:     { name: 'Praça dos Três Poderes', build: buildBrasilia }, // Brasília fiel (substitui o clássico)
@@ -39,6 +41,8 @@ export const MAPS = {
   fy_escadao: { name: 'Escadão (Morro)', build: buildEscadao, props: ESCADAO_PROPS, ctfMode: true },
   fy_campomorro: { name: 'Campo do Morro', build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
   fy_lajes: { name: 'Lajes (Comunidade)', build: buildLajes, props: LAJES_PROPS, ctfMode: true },
+  fy_corrego: { name: 'Córrego (Favela de SP)', build: buildCorrego, props: CORREGO_PROPS, ctfMode: true },
+  fy_mansao: { name: 'Mansão do Joá', build: buildMansao, props: MANSAO_PROPS, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'awp_map';
