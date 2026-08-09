@@ -110,6 +110,7 @@
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
+    "brace-expansion": "5.0.8",
     "dejavu-fonts-ttf": "^2.37.3",
     "sharp": "^0.35.3"
   },
