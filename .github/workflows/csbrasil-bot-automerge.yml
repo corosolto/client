@@ -17,8 +17,8 @@ jobs:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
       - name: Fetch PR status
@@ -35,4 +35,3 @@ jobs:
               sys.exit(0)
           subprocess.run(['gh', 'pr', 'merge', '${{ github.event.pull_request.number }}', '--squash', '--delete-branch', '--auto'], check=True)
           PY
-

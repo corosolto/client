@@ -17,7 +17,8 @@ SAFE_PREFIXES = (
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
-    ".github/",
+    ".github/ISSUE_TEMPLATE/",
+    ".github/PULL_REQUEST_TEMPLATE",
     "docs/",
 )
 
@@ -51,6 +52,7 @@ def main() -> int:
     touches_runtime_ui = touches_gameplay or any(
         p.startswith(("public/", "src/")) for p in files
     )
+    touches_workflows = any(p.startswith(".github/workflows/") for p in files)
     only_safe = files and all(
         any(p == prefix or p.startswith(prefix) for prefix in SAFE_PREFIXES) for p in files
     )
@@ -63,6 +65,8 @@ def main() -> int:
         labels_remove.append("safe-automerge")
     if touches_runtime_ui and changed_files > 0:
         labels_add.append("needs-staging")
+    if touches_workflows:
+        labels_remove.append("safe-automerge")
     if only_safe and changed_files <= 5 and additions + deletions <= 160:
         labels_add.append("safe-automerge")
     elif changed_files > 0:
