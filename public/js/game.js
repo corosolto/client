@@ -1098,6 +1098,11 @@ export class Game {
     this.roundCaps = { E: 0, B: 0 };    // capturas DESTA rodada (o ctfCaps é da partida toda)
     this.matchKills = { E: 0, B: 0 };   // abates das rodadas JÁ FECHADAS (desempate do _endMatch)
     this.timeLeft = ROUND_TIME;
+    /* MODO ARENA: mata-mata onde quem morre troca de time. O jogo corre sem rounds,
+       respawn contínuo, e a partida acaba quando um time fica com ≤ 1 jogador.
+       ?arena=1 ativa. */
+    this.arena = QP.get('arena') === '1';
+    this.arenaSwitched = 0;   // contador de trocas (pro HUD)
     /* game.js:944 — RELÓGIO DE PARTIDA DO CAPTURA (não é relógio de round). Só o modo
        CTF usa; no modo de abate fica Infinity e nada o lê. Ele NÃO reinicia a cada
        rodada (é o que o diferencia do `timeLeft`) e só aparece no HUD nos últimos
@@ -1856,6 +1861,9 @@ export class Game {
     this.roundKills = { E: 0, B: 0 };
     this.roundCaps = { E: 0, B: 0 };
     this.timeLeft = ROUND_TIME;
+    /* MODO ARENA: sem timer de round — a partida só acaba quando um time fica
+       com ≤ 1 jogador (_checkArenaWin). */
+    if (this.arena) this.timeLeft = Infinity;
     this._matchPoint = false;    // banner de MATCH POINT dispara uma vez por round
     this._resultado = null;      // o título do placar é da RODADA que acabou, não da que começa
     // game.js:1868 — pedido de fim de rodada do CAPTURA é POR RODADA: se a rodada acabou
@@ -2852,6 +2860,12 @@ export class Game {
     ent._killT = this.time;
     ent.alive = false; ent.hp = 0; ent.deaths++;
     ent.respawnAt = this.time + RESPAWN_DELAY;
+    /* MODO ARENA: quem morre vai pro time do assassino. A troca é aplicada no
+       respawn (não aqui) pra não quebrar o killfeed nem o estado do frame atual. */
+    if (this.arena && attacker && attacker.team !== ent.team) {
+      ent._switchTeam = attacker.team;
+      this.arenaSwitched++;
+    }
     // Sem drop de arma onde morreu: o arsenal completo já está no respawn, então drops
     // pelo mapa viravam lixo espalhado (pedido do usuário: nada de arma jogada no chão).
     // this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon === 'knife' ? 'awp' : ent.weapon);
@@ -2885,6 +2899,24 @@ export class Game {
       this.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
     }
     this._feed(attacker, ent, weap, head);
+    /* MODO ARENA: checa se a troca de time esvaziou um lado (≤ 1 sobrando). */
+    if (this.arena) this._checkArenaWin();
+  }
+  /* ===================== MODO ARENA: condição de vitória =====================
+     Conta jogadores por time (player + bots, vivos e mortos — o morto vai
+     trocar no respawn). Se um time ficou com ≤ 1, o outro vence. */
+  _checkArenaWin() {
+    const all = [this.player, ...this.bots];
+    const e = all.filter(e => e.team === 'E').length;
+    const b = all.filter(e => e.team === 'B').length;
+    if (e <= 1 || b <= 1) {
+      const winner = e > b ? 'E' : 'B';
+      this.state = 'matchEnd';
+      this.el.matchEnd.classList.remove('hidden');
+      this.el.matchTitle.textContent = winner === this.player.team ? 'VOCÊ SOBREVIVEU!' : 'VOCÊ FOI CONVERTIDO';
+      this.el.matchSub.textContent = `Time ${this._teamTag(winner)} venceu com ${Math.max(e, b)} jogadores`;
+      this.el.matchStats.innerHTML = `Trocas de time: ${this.arenaSwitched} · Seus abates: ${this.player.kills}`;
+    }
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================
      Dono: "matam muito fácil e o usuário não vê de onde veio o tiro". O indicador antigo era
@@ -4917,6 +4949,11 @@ export class Game {
   }
   _respawnPlayer() {
     const p = this.player;
+    /* MODO ARENA: aplica a troca de time antes de escolher o spawn. */
+    if (this.arena && p._switchTeam) {
+      p.team = p._switchTeam; p._switchTeam = null;
+      this.sfx.general('headshot');   // sting de troca
+    }
     const s = this._pickSpawn(p.team);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
@@ -5074,6 +5111,8 @@ export class Game {
         g.position.y = b.pos.y + Math.max(-0.6, 0 - b.deadT * 0.3);
       }
       if (this.time >= b.respawnAt && (this.state === 'live')) {
+        /* MODO ARENA: bot troca de time antes do respawn. */
+        if (this.arena && b._switchTeam) { b.team = b._switchTeam; b._switchTeam = null; }
         const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
         b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
         /* RENASCER NO MESMO PIXEL: o _pickSpawn devolve o ponto MAIS SEGURO, e ele é o mesmo
