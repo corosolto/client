@@ -56,9 +56,9 @@ conservadorismo: é o que permite `tools/eval/harness.mjs` subir a classe `Game`
 puro em segundos — que é o que faz o quality gate existir. Um bundler no meio quebraria a régua
 junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adicione CDN.
 
-**Mexeu em `public/js/*.js`? Bump o `?v=` nos dois lados** — `public/js/version.js` e o
-import map de `src/pages/index.astro`. Sem isso o browser serve o módulo velho do cache, e
-isso já custou dias de "correção que não chegava ao usuário".
+**Mexeu em `public/js/*.js`? Preserve o cache-bust por conteúdo** — o import map de
+`src/pages/index.astro` e o arnês usam o manifesto recursivo de `scripts/module-cache.mjs`.
+`public/js/version.js` continua sincronizado com `package.json` pelo release.
 
 O porquê completo de cada regra da fronteira está em
 [`docs/docs/stack.md`](docs/docs/stack.md).

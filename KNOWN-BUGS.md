@@ -63,7 +63,7 @@ mantidos; não foi feito upgrade do Three porque as versões novas removem WebGL
 
 **Medição:** urna **9/8 → 8/8 vetores**; triplanar **2 → 0 varyings próprios**. A régua
 `tools/eval/shader-budget-check.mjs` (`npm run eval:shaderbudget`, em `check:fast` e
-`check:deploy`) lê todas as primitivas, materiais, instancing e sombras reais. Treze mutantes cobrem o fog,
+`check:deploy`) lê todas as primitivas, materiais, instancing e sombras reais. Os mutantes cobrem o fog,
 triplanar, instalação dos chunks e evolução de cor, clearcoat, anisotropia e luzes do asset.
 Um compile real no Chrome/SwiftShader com contexto WebGL1 gerou os dois programas sem erro GL.
 

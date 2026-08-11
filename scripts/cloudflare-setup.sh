@@ -67,8 +67,8 @@ read -r -d '' RULES <<'JSON' || true
     },
     {
       "ref": "assets_jogo",
-      "description": "assets-jogo: áudio/modelos/imagens/js no edge por 1 mês",
-      "expression": "(http.host eq \"www.csbrasil.online\" and (starts_with(http.request.uri.path, \"/audio/\") or starts_with(http.request.uri.path, \"/models/\") or starts_with(http.request.uri.path, \"/img/\") or starts_with(http.request.uri.path, \"/vendor/\") or starts_with(http.request.uri.path, \"/js/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/posters/\")))",
+      "description": "assets-jogo: áudio/modelos/imagens/js versionado no edge por 1 mês",
+      "expression": "(http.host eq \"www.csbrasil.online\" and (starts_with(http.request.uri.path, \"/audio/\") or starts_with(http.request.uri.path, \"/models/\") or starts_with(http.request.uri.path, \"/img/\") or starts_with(http.request.uri.path, \"/js/\") or starts_with(http.request.uri.path, \"/fonts/\") or starts_with(http.request.uri.path, \"/posters/\")))",
       "action": "set_cache_settings",
       "action_parameters": {
         "cache": true,

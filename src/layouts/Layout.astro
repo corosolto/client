@@ -37,13 +37,16 @@
 // plans/08 §1.1). O canarinho do topo sai pelo WebP animado de 96 KB, não pelo
 // GIF de 368 KB - mesmo conteúdo, 24 quadros, 26% do peso.
 import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, RANKING_ON } from '../lib/site';
+import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 import pkg from '../../package.json';
 
 const V = pkg.version;
+const { modules: JS_MODULES, revision: JS_REV } = moduleCacheManifest();
 const THREE_IMPORTMAP = JSON.stringify({
   imports: {
     three: `/vendor/three.module.js?v=${V}`,
     'three/addons/': '/vendor/addons/',
+    ...Object.fromEntries(JS_MODULES.map((module) => [`/js/${module}`, `/js/${module}?v=${V}-${JS_REV}`])),
   },
 });
 
@@ -542,7 +545,7 @@ body>footer a:hover{color:var(--amber)}
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 <div id="bg-overlay"></div>
 <div id="bg-scan"></div>
-<script type="module" src="/js/site-bg.js"></script>
+<script type="module" src={`/js/site-bg.js?v=${V}-${JS_REV}`}></script>
 <header>
   {/* MARCA: logo + canarinho, que é o pedido do dono e é personagem do elenco.
 

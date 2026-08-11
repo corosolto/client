@@ -1,46 +1,15 @@
 ---
-/* O import map usa a versão do package.json como cache-bust único. */
+/* Módulos crus precisam mudar de URL no mesmo build em que o conteúdo muda. */
+import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 import pkg from '../../package.json';
 
 const V = pkg.version;
-const MODULOS = [
-  "main.js",
-  "game.js",
-  "glbchars.js",
-  "weapons.js",
-  "characters.js",
-  "audio.js",
-  "maps.js",
-  "map_brasilia.js",
-  "map_piscina.js",
-  "map_havan.js",
-  "map_ferrovelho.js",
-  "map_quebrada.js",
-  "map_decals.js",
-  "graffiti_pass.js",
-  "graffiti_layout.js",
-  "mapprops.js",
-  "fparms.js",
-  "vmattach.js",
-  "stylize.js",
-  "bloom.js",
-  "gpuparticles.js",
-  "textures.js",
-  "glcontext.js",
-  "version.js",
-  "i18n.js",
-  "handik.js",
-  "springs.js",
-  "botbrain/brain.js",
-  "botbrain/features.js",
-  "botbrain/recorder.js",
-  "botbrain/sense.js"
-];
+const { modules: MODULOS, revision: JS_REV } = moduleCacheManifest();
 const IMPORTMAP = JSON.stringify({
   imports: {
     three: `./vendor/three.module.js?v=${V}`,
     'three/addons/': './vendor/addons/',
-    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}`])),
+    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}-${JS_REV}`])),
   },
 });
 ---
@@ -1047,6 +1016,6 @@ const IMPORTMAP = JSON.stringify({
   }
 </script>
 
-<script type="module" src={`/js/main.js?v=${V}`} is:inline></script>
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>

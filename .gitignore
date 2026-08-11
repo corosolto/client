@@ -157,6 +157,9 @@ graphify-out/cache/
 graphify-out/manifest.json
 graphify-out/.graphify_root
 graphify-out/.graphify_analysis.json
+graphify-out/.graphify_labels.json
+graphify-out/.graphify_labels.json.sig
+graphify-out/20??-??-??/
 
 # BOTBRAIN: dataset bootstrap (regenerável via bot:record, grande)
 tools/eval/data/

@@ -42,8 +42,8 @@ não enumerada à mão:
 | licença canônica | `LICENSE` | linhas 1, 10, 42, 63 (+7)  |
 | badge + seção de licenças | `README.md` | linhas 3, 381, 387, 388 (+1)  |
 | termo que o contribuidor aceita | `CONTRIBUTING.md` | linhas 183, 186, 189  |
-| rodapé do site | `src/layouts/Layout.astro` | linha 601  |
-| JSON-LD do jogo | `src/pages/index.astro` | linha 404  |
+| rodapé do site | `src/layouts/Layout.astro` | linha 604  |
+| JSON-LD do jogo | `src/pages/index.astro` | linha 373  |
 | página `/sobre` | `src/pages/sobre.astro` | linhas 121, 124, 133  |
 | `llms.txt` (resposta para LLM) | `public/llms.txt` | linhas 9, 46  |
 | rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |
