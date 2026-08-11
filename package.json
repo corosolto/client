@@ -58,7 +58,7 @@
     "eval:webgl": "node tools/eval/webgl-compat-check.mjs",
     "//eval:shaderlog": "Logs WebGL nulos viram string vazia antes de trim; rotas usam versão e arnêses estáticos usam hash do core sob cache imutável. Mutantes: sem-guardas|sem-cache-bust.",
     "eval:shaderlog": "node tools/eval/shader-log-check.mjs",
-    "//eval:shaderbudget": "Todas as primitivas da urna precisam caber nos 8 varying vectors mínimos do WebGL1; deriva custo do GLB e protege instalação/fallback do fog e triplanar não-flat. Mutantes: fog-separado|tri-separado|sem-install|tri-flat|urna-color|urna-clearcoat|urna-segunda.",
+    "//eval:shaderbudget": "Todas as primitivas da urna precisam caber nos 8 varying vectors mínimos do WebGL1; deriva materiais, instancing e sombras da cena, e protege fog/triplanar. Mutantes: fog-separado|tri-separado|tri-varying|sem-install|sem-patch|tri-flat|lam-flat|urna-color|urna-clearcoat|urna-anisotropy|urna-instancing|urna-segunda|sombra-extra.",
     "eval:shaderbudget": "node tools/eval/shader-budget-check.mjs",
     "//eval:og": "Renderiza e MEDE os 3 cards de og:image (1200×630) em node puro. Não dá pra testar pela rota: o dev server não carrega resvg-wasm porque src/lib/font-data.ts (996 KB de base64) estoura o parser de TS — a rota da badge quebra igual em dev. Também confere se a fonte decodificada tem tamanho plausível: extração truncada rendia card SEM TEXTO passando por 1200×630.",
     "eval:og": "node --experimental-strip-types --import ./tools/eval/ts-resolve.mjs tools/eval/og-check.mjs",

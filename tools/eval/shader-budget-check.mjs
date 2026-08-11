@@ -2,7 +2,10 @@
 import { readFileSync } from 'node:fs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-const mutants = ['fog-separado', 'tri-separado', 'sem-install', 'tri-flat', 'urna-color', 'urna-clearcoat', 'urna-segunda'];
+const mutants = [
+  'fog-separado', 'tri-separado', 'tri-varying', 'sem-install', 'sem-patch', 'tri-flat', 'lam-flat',
+  'urna-color', 'urna-clearcoat', 'urna-anisotropy', 'urna-instancing', 'urna-segunda', 'sombra-extra',
+];
 if (mutant && !mutants.includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
@@ -72,10 +75,49 @@ if (mutant === 'sem-install') {
   bloom = bloom.replace('SC.fog_pars_fragment = FOG_FRAG_PARS;', '');
   if (bloom === before) throw new Error('MUTANTE NAO APLICOU: sem-install');
 }
+if (mutant === 'sem-patch') {
+  const before = bloom;
+  bloom = bloom.replace('\npatchFogChunks();', '');
+  if (bloom === before) throw new Error('MUTANTE NAO APLICOU: sem-patch');
+}
 if (mutant === 'tri-flat') {
   const before = brasilia;
   brasilia = brasilia.replace('triplanar(lam({ color:', 'triplanar(lam({ flatShading: true, color:');
   if (brasilia === before) throw new Error('MUTANTE NAO APLICOU: tri-flat');
+}
+if (mutant === 'lam-flat') {
+  const before = brasilia;
+  brasilia = brasilia.replace(
+    'new THREE.MeshStandardMaterial({ roughness:',
+    'new THREE.MeshStandardMaterial({ flatShading: true, roughness:',
+  );
+  if (brasilia === before) throw new Error('MUTANTE NAO APLICOU: lam-flat');
+}
+if (mutant === 'tri-varying') {
+  const before = brasilia;
+  brasilia = brasilia
+    .replace(
+      'sh.uniforms.uTriScale = { value: scale };\n      sh.fragmentShader',
+      `sh.uniforms.uTriScale = { value: scale };
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\\nvarying vec3 vBudgetLeak;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\\nvBudgetLeak = transformed;');
+      sh.fragmentShader`,
+    )
+    .replace('\\nfloat gTriL;', '\\nvarying vec3 vBudgetLeak;\\nfloat gTriL;')
+    .replace(
+      'vec3 triP = cameraPosition - ( vec4( vViewPosition, 0.0 ) * viewMatrix ).xyz;',
+      'vec3 triP = cameraPosition - ( vec4( vViewPosition, 0.0 ) * viewMatrix ).xyz;\\n  triP += vBudgetLeak * 0.000001;',
+    );
+  if (brasilia === before) throw new Error('MUTANTE NAO APLICOU: tri-varying');
+}
+if (mutant === 'sombra-extra') {
+  const before = brasilia;
+  brasilia = brasilia.replace(
+    'const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35);',
+    'const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35); fill.castShadow = true;',
+  );
+  if (brasilia === before) throw new Error('MUTANTE NAO APLICOU: sombra-extra');
 }
 
 const primitives = urna.meshes?.flatMap((mesh) => mesh.primitives || []) || [];
@@ -88,6 +130,17 @@ if (mutant === 'urna-clearcoat') {
   material.extensions ||= {};
   material.extensions.KHR_materials_clearcoat = { clearcoatFactor: 1, clearcoatTexture: { index: 0 } };
 }
+if (mutant === 'urna-anisotropy') {
+  material.extensions ||= {};
+  material.extensions.KHR_materials_anisotropy = { anisotropyStrength: 1 };
+}
+if (mutant === 'urna-instancing') {
+  urna.nodes ||= [];
+  urna.nodes.push({
+    mesh: 0,
+    extensions: { EXT_mesh_gpu_instancing: { attributes: { _COLOR_0: primitive.attributes.POSITION } } },
+  });
+}
 if (mutant === 'urna-segunda') {
   const expensiveMaterial = structuredClone(material);
   expensiveMaterial.extensions ||= {};
@@ -95,7 +148,7 @@ if (mutant === 'urna-segunda') {
   urna.materials.push(expensiveMaterial);
   const expensivePrimitive = structuredClone(primitive);
   expensivePrimitive.material = urna.materials.length - 1;
-  primitives.push(expensivePrimitive);
+  urna.meshes[0].primitives.push(expensivePrimitive);
 }
 const fixtureOk = Boolean(
   primitive?.attributes?.POSITION !== undefined
@@ -121,33 +174,45 @@ const collectTextureKeys = (value, result = []) => {
   }
   return result;
 };
-const shadowRows = 1;
+const directionalLights = [...brasilia.matchAll(/const\s+(\w+)\s*=\s*new THREE\.DirectionalLight\(/g)]
+  .map((match) => match[1]);
+const shadowRows = directionalLights
+  .filter((name) => new RegExp(`\\b${name}\\.castShadow\\s*=\\s*true`).test(brasilia)).length;
 const budgetedExtensions = new Set([
   'KHR_materials_anisotropy', 'KHR_materials_clearcoat', 'KHR_materials_emissive_strength',
   'KHR_materials_ior', 'KHR_materials_iridescence', 'KHR_materials_sheen',
   'KHR_materials_specular', 'KHR_materials_transmission', 'KHR_materials_unlit',
   'KHR_materials_volume',
 ]);
-const budgetFor = (item) => {
+const instanceColorMeshes = new Set((urna.nodes || [])
+  .filter((node) => node.extensions?.EXT_mesh_gpu_instancing?.attributes?._COLOR_0 !== undefined)
+  .map((node) => node.mesh));
+const primitiveRecords = urna.meshes.flatMap((mesh, meshIndex) =>
+  (mesh.primitives || []).map((item) => ({ item, meshIndex })));
+const budgetFor = ({ item, meshIndex }) => {
   const mat = urna.materials?.[item.material] || {};
   const itemPbr = mat.pbrMetallicRoughness || {};
   const textures = collectTextureKeys(mat, []);
-  const uv = textures.length + (itemPbr.metallicRoughnessTexture && loaderSplitsMetalRough ? 1 : 0);
+  const anisotropy = mat.extensions?.KHR_materials_anisotropy;
+  const anisotropyUv = anisotropy && (anisotropy.anisotropyStrength ?? 1) > 0 ? 1 : 0;
+  const uv = textures.length
+    + (itemPbr.metallicRoughnessTexture && loaderSplitsMetalRough ? 1 : 0)
+    + anisotropyUv;
   const base = 2
     + (item.attributes?.TANGENT !== undefined ? 2 : 0)
-    + (item.attributes?.COLOR_0 !== undefined ? 1 : 0);
+    + (item.attributes?.COLOR_0 !== undefined || instanceColorMeshes.has(meshIndex) ? 1 : 0);
   const transmission = mat.extensions?.KHR_materials_transmission ? 1 : 0;
   const unknown = Object.keys(mat.extensions || {}).filter((extension) => !budgetedExtensions.has(extension));
   return { rows: base + shadowRows + Math.ceil(uv / 2) + fogRows + transmission, uv, unknown };
 };
-const budgets = primitives.filter((item) => item.material !== undefined).map(budgetFor);
-const primaryBudget = budgetFor(primitive);
+const budgets = primitiveRecords.filter(({ item }) => item.material !== undefined).map(budgetFor);
+const primaryBudget = budgetFor(primitiveRecords.find(({ item }) => item === primitive));
 const uvVaryings = primaryBudget.uv;
 const urnaRows = Math.max(...budgets.map(({ rows }) => rows));
 const allFeaturesBudgeted = budgets.every(({ unknown }) => unknown.length === 0);
 
 const triSource = brasilia.slice(brasilia.indexOf('function triplanar('), brasilia.indexOf('mat.customProgramCacheKey'));
-const triAddsVarying = /\bvarying\b/.test(triSource);
+const triAddsVarying = /(?:^|\\n|\n)\s*varying\s/.test(triSource);
 const triUsesBase = /vec3 triP = cameraPosition - \( vec4\( vViewPosition, 0\.0 \) \* viewMatrix \)\.xyz;/.test(brasilia)
   && /vec3 triN = inverseTransformDirection\( vNormal, viewMatrix \);/.test(brasilia);
 const fogInstalled = [
@@ -155,14 +220,17 @@ const fogInstalled = [
   ['fog_vertex', 'FOG_VERT'],
   ['fog_pars_fragment', 'FOG_FRAG_PARS'],
   ['fog_fragment', 'FOG_FRAG'],
-].every(([chunk, source]) => new RegExp(`SC\\.${chunk}\\s*=\\s*${source}`).test(bloom));
+].every(([chunk, source]) => new RegExp(`SC\\.${chunk}\\s*=\\s*${source}`).test(bloom))
+  && /\npatchFogChunks\(\);/.test(bloom);
 const fallbackFogSymmetric = (bloom.match(/#if !defined\( STANDARD \).*MATCAP/g) || []).length === 3
   && /varying vec3 vFogPosV/.test(bloom)
   && /vFogPosV = mvPosition\.xyz/.test(bloom)
   && /vec3 owfFogPosV = vFogPosV/.test(bloom);
 const triCalls = brasilia.split('\n').filter((line) => line.includes('triplanar(') && !line.includes('function triplanar'));
+const lamSource = brasilia.slice(brasilia.indexOf('const lam ='), brasilia.indexOf('function addBox('));
 const triNonFlat = triCalls.length > 0
-  && triCalls.every((line) => line.includes('triplanar(lam(') && !line.includes('flatShading'));
+  && triCalls.every((line) => line.includes('triplanar(lam(') && !line.includes('flatShading'))
+  && !lamSource.includes('flatShading');
 
 const checks = [
   ['SB1', fixtureOk && loaderSplitsMetalRough && allFeaturesBudgeted, `todas as primitivas da urna têm features contabilizadas; caso-base usa ${uvVaryings} UVs`],
@@ -176,7 +244,24 @@ const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) {
   console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
 }
-if (mutant && !failed.length) failed.push(['MUT', false, `mutação ${mutant} não foi detectada`]);
+const mutantClause = {
+  'fog-separado': 'SB2',
+  'tri-separado': 'SB4',
+  'tri-varying': 'SB4',
+  'sem-install': 'SB5',
+  'sem-patch': 'SB5',
+  'tri-flat': 'SB6',
+  'lam-flat': 'SB6',
+  'urna-color': 'SB2',
+  'urna-clearcoat': 'SB2',
+  'urna-anisotropy': 'SB2',
+  'urna-instancing': 'SB2',
+  'urna-segunda': 'SB2',
+  'sombra-extra': 'SB2',
+};
+if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
+  failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
+}
 if (failed.length) {
   console.error(`\x1b[31mSHADER-BUDGET ${failed.length} VERMELHA(S)${mutant ? ` (mutante=${mutant})` : ''}\x1b[0m`);
   process.exitCode = 1;
