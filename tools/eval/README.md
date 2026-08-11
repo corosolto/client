@@ -132,8 +132,11 @@ migração pros GLBs da Mint.
 **Menus P1 (3 gerações):**
 `p1-menu.mjs` · `p1-menu2.mjs` · `p1-menu3.mjs` · `p1-game.mjs` · `p0-armas.mjs`
 
-**Rodadas R7x (feel):**
-`r7-feel-capture.mjs` · `r75-capture.mjs` · `r76-capture.mjs` · `r77-capture.mjs`
+**Aposentada — Rodadas R7x (feel)** (movida para `tools/eval/aposentados/` em
+2026-08-11, issue #43):
+`r7-feel-capture.mjs` · `r75-capture.mjs` · `r76-capture.mjs` · `r77-capture.mjs`.
+Eram capturas de tuning de game feel; o que decidiram sobreviveu nos comentários
+de causa raiz do `game.js`/`springs.js` e no `CHANGELOG.md`.
 
 **Look Quake 4** (o projeto escolheu o look CS 1.6 na v3.2.0):
 `vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`
