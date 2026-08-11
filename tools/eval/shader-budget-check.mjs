@@ -1,5 +1,5 @@
 /* WebGL1 precisa caber no piso de oito vetores variáveis da especificação. */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { posix } from 'node:path';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 
@@ -9,7 +9,7 @@ const mutants = [
   'sem-install', 'sem-patch', 'tri-flat', 'lam-flat',
   'urna-color', 'urna-clearcoat', 'urna-anisotropy', 'urna-instancing', 'urna-segunda',
   'sombra-extra', 'sombra-condicional', 'sombra-pontual', 'sombra-reativada', 'spot-map',
-  'cache-antigo', 'cache-omitido', 'cache-constante', 'cache-podado',
+  'cache-antigo', 'cache-omitido', 'cache-constante', 'cache-podado', 'cache-entry-site',
 ];
 if (mutant && !mutants.includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
@@ -307,9 +307,19 @@ const triNonFlat = triCalls.length > 0
   && !lamSource.includes('flatShading');
 const manifest = moduleCacheManifest();
 let cachedModules = manifest.modules;
-if (mutant === 'cache-omitido') cachedModules = cachedModules.filter((module) => module !== 'vao.js');
+let cacheMutationApplied = true;
+if (mutant === 'cache-omitido' || mutant === 'cache-entry-site') {
+  const omitted = mutant === 'cache-omitido' ? 'vao.js' : 'site-bg.js';
+  const before = cachedModules.length;
+  cachedModules = cachedModules.filter((module) => module !== omitted);
+  cacheMutationApplied = cachedModules.length === before - 1;
+}
 if (mutant === 'cache-podado' && !cachedModules.includes('editor/editor.js')) {
+  const before = cachedModules.length;
   cachedModules = [...cachedModules, 'editor/editor.js'];
+  cacheMutationApplied = cachedModules.length === before + 1;
+} else if (mutant === 'cache-podado') {
+  cacheMutationApplied = false;
 }
 let contentRevisionChanged = moduleCacheManifest('public/js', (file) => {
   const content = readFileSync(file);
@@ -335,11 +345,27 @@ const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
 )].map((match) => `${match[1].replace(/\/$/, '')}/`))];
 const publishedModulesOnly = prunedJsPrefixes.length > 0
   && cachedModules.every((module) => !prunedJsPrefixes.some((prefix) => module.startsWith(prefix)));
+const filesOnDisk = [];
+const visitDirectory = (directory = '') => {
+  for (const entry of readdirSync(posix.join('public/js', directory), { withFileTypes: true })) {
+    const module = posix.join(directory, entry.name);
+    if (entry.isDirectory()) visitDirectory(module);
+    else if (entry.isFile() && entry.name.endsWith('.js')) filesOnDisk.push(module);
+  }
+};
+visitDirectory();
+const expectedPublishedModules = filesOnDisk
+  .filter((module) => !prunedJsPrefixes.some((prefix) => module.startsWith(prefix)))
+  .sort();
+const publishedGraphComplete = cachedModules.length === expectedPublishedModules.length
+  && expectedPublishedModules.every((module, index) => cachedModules[index] === module);
 const moduleCache = cacheContract(indexPage)
   && cacheContract(layoutPage)
   && cacheContract(evalServer)
   && [...reachableModules].every((module) => cachedModules.includes(module))
   && publishedModulesOnly
+  && publishedGraphComplete
+  && cacheMutationApplied
   && contentRevisionChanged;
 
 const checks = [
@@ -378,6 +404,7 @@ const mutantClause = {
   'cache-omitido': 'SB7',
   'cache-constante': 'SB7',
   'cache-podado': 'SB7',
+  'cache-entry-site': 'SB7',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);

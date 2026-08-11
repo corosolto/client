@@ -63,8 +63,9 @@ desenvolvimento mas não faz parte do site publicado. SB7 cruza o manifesto com 
 JavaScript podados para impedir que as duas listas voltem a divergir.
 
 **Medição:** manifesto **49 → 37 módulos**, anúncios `editor/**` **12 → 0**. Depois da poda,
-o import map construído anuncia 37 módulos e todos os 37 existem em `dist/client`. O mutante
-`cache-podado` recoloca um módulo removido e acende exatamente SB7. A entrega em produção só
+o import map construído anuncia 37 módulos e todos os 37 existem em `dist/client`. Os mutantes
+`cache-podado` e `cache-entry-site` recolocam uma bancada removida ou omitem o entrypoint do
+site e acendem exatamente SB7. A entrega em produção só
 fica comprovada quando `prod-coherence` sair verde contra o novo deploy.
 
 ### ~~BUG-47 · shader da urna excedia o limite mínimo do WebGL1~~ · RESOLVIDO 11/08
