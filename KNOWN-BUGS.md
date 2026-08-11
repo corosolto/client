@@ -44,6 +44,68 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-49 · toda página SSR servia 200 com corpo VAZIO em produção~~ · RESOLVIDO 12/08
+
+**Sintoma literal.** O dono, 12/08: *"a pagina mapa online (aovivo) esta quebrada"*.
+
+**Escopo real, maior que o relatado.** Não era só o `/mapa`. As TRÊS páginas
+`prerender = false` estavam assim, em produção E no preview:
+
+| rota | tipo | antes |
+|---|---|---:|
+| `/mapa` (ao vivo) | SSR | **200, 0 bytes** |
+| `/ranking` | SSR | **200, 0 bytes** |
+| `/u/<perfil>` | SSR | **200, 0 bytes** |
+| `/mapas`, `/armas` | estáticas | 200, 17-65 KB ✓ |
+| `/sitemap.xml`, `/api/*` | endpoints | 200, com corpo ✓ |
+
+**Evidência antes.** Chamando o handler construído direto no node, dentro do diretório da
+função (que é o cwd de produção):
+
+```
+/mapa      status=200  corpo=0 bytes  ENOENT: scandir '<func>/public/js'
+/ranking   status=200  corpo=0 bytes  ENOENT: scandir '<func>/public/js'
+/sitemap.xml  status=200  2005 bytes   ← idêntico ao que produção servia
+```
+
+**Causa.** `3e5b0ea` (#194, 11/08 23:23) pôs `moduleCacheManifest()` no escopo do módulo
+de `src/layouts/Layout.astro`, ou seja, em toda renderização de página. Ele faz
+`readdirSync('public/js')` relativo ao cwd. Para página estática isso roda no BUILD, onde
+o diretório existe. Para página SSR roda dentro da função da Vercel, que não empacota
+`public/js`. E como o Astro faz STREAMING, o 200 e os headers já tinham saído quando o
+`ENOENT` estourou: o resultado não é 500, é 200 com casca vazia. Status sozinho chamava
+aquilo de saudável, e por isso durou um dia no ar.
+
+**Refutados, com medição.** (a) o rename de ids de mapa do #200 — produção roda a `main`,
+sem ele, e quebrava igual; (b) timeout de função — produção respondia em **0,1 s**, e
+estouro daria 10-60 s; (c) a poda do `prune-dist.mjs` — ela só remove `dev.html` e
+`models/fpvm`; (d) Cloudflare — o domínio da Vercel, sem CDN na frente, falhava idêntico.
+
+**Conserto.** `astro.config.mjs` calcula o manifesto UMA vez e injeta como constante via
+`vite.define`; `Layout.astro` consome `__MANIFESTO_JS__`. Nenhuma página lê disco em
+tempo de requisição, então a classe inteira morre — não sobra caminho em que página
+dependa de arquivo que a função não empacotou. Estática e SSR passam a servir a mesma
+revisão.
+
+**Depois.** `/mapa` 15.353 bytes · `/ranking` 11.423 · `/u/exemplo` 10.081.
+
+**Por que nenhum portão pegou, e o que mudou.** O `eval:site` cobre `/ranking` e checa
+corpo — e passou o tempo todo, porque sobe um `astro dev` LOCAL, onde `public/js` existe:
+media um mundo onde o defeito não pode acontecer (LIÇÃO 3). O `/mapa` tinha ainda a
+cegueira trivial de nunca ter estado na lista de rotas dele.
+
+- régua nova: `npm run eval:ssr` (`tools/eval/ssr-render-check.mjs`) — mede o ARTEFATO do
+  build, entrando no diretório da função. `--mutante=corpo-vazio|lanca` provam que morde;
+  `--mutante=sem-publicjs` ficou VERDE de propósito e virou asserção de que a leitura de
+  disco em tempo de renderização continua morta.
+- `eval:site` passou a cobrar TAMANHO de corpo, não só status, e ganhou `/mapa`: 13 → 14
+  rotas.
+
+**Custo declarado.** O manifesto passa a ser congelado quando a config do Astro carrega.
+Em `astro dev`, acrescentar ou editar módulo em `public/js` só muda a revisão depois de
+reiniciar o servidor — antes recalculava a cada renderização. Build e produção não são
+afetados, porque lá a config carrega uma vez por build de qualquer jeito.
+
 ### ~~BUG-48 · import map anunciava módulos removidos do deploy~~ · RESOLVIDO NO BUILD 11/08
 
 **Sintoma literal.** A issue #197 registrou `prod-watch: edge, banco ou schema de
