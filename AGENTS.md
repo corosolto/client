@@ -107,6 +107,10 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
+**Commit de agente leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`) — é o que
+sustenta o "cada commit diz qual" do README. A convenção completa mora em
+`CONTRIBUTING.md`.
+
 ---
 
 ## Onde está cada coisa

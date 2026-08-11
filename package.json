@@ -2,7 +2,7 @@
   "name": "coro-solto",
   "version": "2.0.0-alpha.84",
   "license": "AGPL-3.0-only",
-  "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS de navegador estilo CS 1.6 (site Astro + jogo vanilla em Three.js)",
+  "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS de navegador estilo CS 1.6 (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
     "dev": "npm run copy-wasm && astro dev",
     "build": "npm run copy-wasm && astro build && node scripts/prune-dist.mjs",

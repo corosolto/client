@@ -200,6 +200,21 @@ Se ainda não instalou as dependências, assine manualmente:
 git commit -s -m "feat: minha mudança"
 ```
 
+### Commit de agente leva nome
+
+Este repositório é **AI generated e AI friendly**: boa parte do código é escrita
+por agentes de IA, e todo commit feito ou co-escrito por um agente leva o
+trailer `Agent:` com o nome dele — é o que sustenta o "cada commit diz qual" do
+README:
+
+```bash
+git commit -s -m "fix: minha correção" --trailer "Agent: Kimi Code"
+```
+
+Humano commitando sozinho não precisa do trailer. Agente commitando em nome de
+humano mantém o `Signed-off-by` de quem assina e acrescenta o `Agent:` de quem
+escreveu.
+
 ## Reportando bugs
 
 Abra uma issue com: o que aconteceu, o que você esperava, passos pra reproduzir,

@@ -8,11 +8,14 @@
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
 [![vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel)](https://vercel.com)
 
-Construído em par com agentes de IA — cada commit diz qual:
+**AI generated & AI friendly** — construído em par com agentes de IA, e cada
+commit diz qual escreveu (trailer `Agent:`, convenção em `CONTRIBUTING.md`):
 
 [![Claude Fable 5](https://img.shields.io/badge/agente-Claude_Fable_5-d97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
 [![Claude Opus](https://img.shields.io/badge/agente-Claude_Opus-d97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
 [![Kimi K3](https://img.shields.io/badge/agente-Kimi_K3-1a1a2e)](https://www.kimi.com)
+[![Codex GPT](https://img.shields.io/badge/agente-Codex_GPT-412991?logo=openai&logoColor=white)](https://openai.com/codex/)
+[![GLM](https://img.shields.io/badge/agente-GLM-0f62fe)](https://z.ai)
 [![Gemini](https://img.shields.io/badge/arte_2D-Gemini-4285f4?logo=googlegemini&logoColor=white)](https://deepmind.google/technologies/gemini/)
 [![OpenRouter](https://img.shields.io/badge/API-OpenRouter-6566f1)](https://openrouter.ai)
 [![Tripo3D](https://img.shields.io/badge/3D-Tripo3D-ff6b35)](https://www.tripo3d.ai)

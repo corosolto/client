@@ -84,6 +84,9 @@ Tab mostra o placar · Esc pausa.
 
 ## Para contribuidores e agentes de código
 
+- O código é **AI generated & AI friendly**: escrito em par com agentes de IA
+  (Claude, Kimi, Codex/GPT, GLM), e cada commit identifica o autor pelo trailer
+  `Agent:`. Contribuições de agentes são bem-vindas e seguem `AGENTS.md`.
 - Ordem de leitura do repositório: `docs/README.md` → `STATUS.md` → `README.md`
   → `CONTRIBUTING.md`.
 - O jogo é `public/js/*.js` (vanilla ES modules, Three.js vendored, zero build).
