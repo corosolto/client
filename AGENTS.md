@@ -41,7 +41,7 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 33 arquivos `.js`, 27.484 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `public/` | o **jogo** | 33 arquivos `.js`, 27.464 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 18 páginas `.astro`, 19 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
 | `tools/` | o **arnês** | 152 scripts em `tools/eval/`, 46 em `tools/` | node puro: sobe o jogo real sem browser |
 

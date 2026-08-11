@@ -2,6 +2,9 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 
+// Bancadas removidas por prune-dist.mjs não podem aparecer no import map publicado.
+const UNPUBLISHED_PREFIXES = ['editor/'];
+
 export function moduleCacheManifest(root = 'public/js', read = readFileSync) {
   const absoluteRoot = resolve(root);
   const files = [];
@@ -13,7 +16,10 @@ export function moduleCacheManifest(root = 'public/js', read = readFileSync) {
     }
   };
   walk(absoluteRoot);
-  const modules = files.map((file) => relative(absoluteRoot, file).split(sep).join('/')).sort();
+  const modules = files
+    .map((file) => relative(absoluteRoot, file).split(sep).join('/'))
+    .filter((module) => !UNPUBLISHED_PREFIXES.some((prefix) => module.startsWith(prefix)))
+    .sort();
   const hash = createHash('sha256');
   for (const module of modules) {
     hash.update(`${module}\0`);

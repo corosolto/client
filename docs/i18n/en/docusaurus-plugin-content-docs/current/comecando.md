@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 27,484 lines in 33 files | `cat public/js/*.js \| wc -l` |
+| Game code | 27,464 lines in 33 files | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6,435** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,001 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -244,13 +244,12 @@ each boundary rule pays for, and why it is hard, is in
 single page, so that there are no two versions of the same boundary.
 
 What you need to know **before editing** is the consequence: the game is loaded by the
-Astro page via a **versioned import map** (`src/pages/index.astro:97-123`).
+Astro page through an **import map versioned by content hash** (`src/pages/index.astro`).
 
-:::danger Bump the `?v=` on both sides
-`public/js/version.js:2-4` warns, in so many words, that the same `?v=` goes into the
-import map of `index.astro`. Touch `public/js/*.js` without bumping both sides, and the
-browser serves the old module from cache — it was the root cause of "fixes that never
-reached the user" for days.
+:::danger Preserve the published manifest
+`scripts/module-cache.mjs` hashes the published modules under `public/js/`, and the import map
+applies that revision to the entire graph. Do not bump it manually or include benches
+removed by `scripts/prune-dist.mjs`. `npm run eval:shaderbudget` (SB7) checks both properties.
 :::
 
 ## Commands you will use {#commands-you-will-use}

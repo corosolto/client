@@ -9,7 +9,7 @@ const mutants = [
   'sem-install', 'sem-patch', 'tri-flat', 'lam-flat',
   'urna-color', 'urna-clearcoat', 'urna-anisotropy', 'urna-instancing', 'urna-segunda',
   'sombra-extra', 'sombra-condicional', 'sombra-pontual', 'sombra-reativada', 'spot-map',
-  'cache-antigo', 'cache-omitido', 'cache-constante',
+  'cache-antigo', 'cache-omitido', 'cache-constante', 'cache-podado',
 ];
 if (mutant && !mutants.includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
@@ -37,6 +37,7 @@ let brasilia = readFileSync('public/js/map_brasilia.js', 'utf8');
 let indexPage = readFileSync('src/pages/index.astro', 'utf8');
 let layoutPage = readFileSync('src/layouts/Layout.astro', 'utf8');
 let evalServer = readFileSync('tools/eval/serve.mjs', 'utf8');
+const pruneDist = readFileSync('scripts/prune-dist.mjs', 'utf8');
 const loader = readFileSync('public/vendor/addons/loaders/GLTFLoader.js', 'utf8');
 const urna = parseGlb('public/models/props/urna.glb');
 
@@ -307,6 +308,9 @@ const triNonFlat = triCalls.length > 0
 const manifest = moduleCacheManifest();
 let cachedModules = manifest.modules;
 if (mutant === 'cache-omitido') cachedModules = cachedModules.filter((module) => module !== 'vao.js');
+if (mutant === 'cache-podado' && !cachedModules.includes('editor/editor.js')) {
+  cachedModules = [...cachedModules, 'editor/editor.js'];
+}
 let contentRevisionChanged = moduleCacheManifest('public/js', (file) => {
   const content = readFileSync(file);
   return file.endsWith('/vao.js') ? Buffer.concat([content, Buffer.from('\n')]) : content;
@@ -326,10 +330,16 @@ const visitModule = (module) => {
 visitModule('main.js');
 const cacheContract = (source) => source.includes('moduleCacheManifest')
   && (source.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
+const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
+  /['"](?:dist\/client|\.vercel\/output\/static)\/js\/([^'"]+)['"]/g,
+)].map((match) => `${match[1].replace(/\/$/, '')}/`))];
+const publishedModulesOnly = prunedJsPrefixes.length > 0
+  && cachedModules.every((module) => !prunedJsPrefixes.some((prefix) => module.startsWith(prefix)));
 const moduleCache = cacheContract(indexPage)
   && cacheContract(layoutPage)
   && cacheContract(evalServer)
   && [...reachableModules].every((module) => cachedModules.includes(module))
+  && publishedModulesOnly
   && contentRevisionChanged;
 
 const checks = [
@@ -367,6 +377,7 @@ const mutantClause = {
   'cache-antigo': 'SB7',
   'cache-omitido': 'SB7',
   'cache-constante': 'SB7',
+  'cache-podado': 'SB7',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
