@@ -210,10 +210,22 @@ export function skyRadiance(mapId) {
   return new THREE.Color((AERIAL[mapId] || AERIAL_DEFAULT).color);
 }
 
-/* Névoa de um mapa. Os map_*.js chamam isto no lugar de `new THREE.Fog(...)`. */
-export function makeAerialFog(mapId) {
+/* A tabela, exportada para LEITURA. Quem quer a cor do céu de um mapa continua chamando
+   `skyRadiance`; isto existe para o arnês `clima.html`, que precisa dos valores de
+   partida dos sliders e do nome dos campos. Exportar não é convite para escrever: o que
+   ships sai daqui, medido por `tools/eval/r3_fog.py` sobre frames reais. */
+export const AERIAL_TABELA = AERIAL;
+
+/* Névoa de um mapa. Os map_*.js chamam isto no lugar de `new THREE.Fog(...)`.
+
+   `over` (opcional) sobrescreve campos da tabela — `{ d, color, sun, dir }`. Existe para o
+   arnês de clima poder mexer no sol e na cor SEM duplicar a montagem da névoa aqui: sem
+   ele, o arnês teria que reimplementar o patch direcional e o ramo de fallback, e viraria
+   uma segunda definição do mesmo fato — exatamente o que a paleta de facção acabou de
+   deixar de ser. Nenhum chamador de produção passa `over`. */
+export function makeAerialFog(mapId, over = null) {
   const q = QP();
-  const A = AERIAL[mapId] || AERIAL_DEFAULT;
+  const A = over ? { ...(AERIAL[mapId] || AERIAL_DEFAULT), ...over } : (AERIAL[mapId] || AERIAL_DEFAULT);
   const dOv = parseFloat(q.get('fogd'));
   const d = isFinite(dOv) ? dOv : A.d;
   // sem o patch (vendor diferente / ?fog2=0) a exponencial mudaria o look sem a cor

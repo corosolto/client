@@ -16,11 +16,14 @@
           do outro lado do mapa. Cinco emblemas lindos e indistinguíveis a 64 px são
           cinco emblemas inúteis. Mede-se a distância média por pixel entre cada par.
 
-     C3 · PALETA ESPELHADA. `brasoes.js` declara `COR_TIME` espelhando `_teamColor()` de
-          `game.js` (o original é método de instância, não dá para importar). Espelho sem
-          verificação apodrece: aqui o hex de cada facção é EXTRAÍDO do fonte do
-          `game.js` e comparado com o do módulo. Se alguém mudar a cor lá e não aqui,
-          esta régua fica vermelha antes de a bandeira ficar errada em partida.
+     C3 · A BANDEIRA PINTA A COR DA ORIGEM. Havia aqui um espelho: `brasoes.js` declarava
+          `COR_TIME` copiando `_teamColor()` de `game.js`, e esta cláusula extraía o hex
+          do TEXTO do `game.js` para comparar as duas cópias. O espelho acabou — a cor de
+          facção nasce em `public/js/paleta.js` e os três consumidores importam de lá —,
+          então o C3 deixou de garimpar fonte e passa a importar a origem. O que ele mede
+          continua valendo e é o que interessa ao jogador: a cor que a BANDEIRA de fato
+          pinta é a da facção. Quem impede o espelho de voltar é o F2 do
+          `faccao-paleta-check.mjs`, que é node puro e roda no `check:fast`.
 
    ── A MUTAÇÃO QUE DEIXA A RÉGUA VERMELHA ────────────────────────────────────────
    Régua que nunca falhou não é régua, é decoração. As duas mutações abaixo são o teste
@@ -53,21 +56,24 @@ const NOME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F:
 const WEBER_MIN = 0.25;      // mesmo teto do canarinho
 const DIST_MIN = 14;         // distância média por pixel entre duas bandeiras a 64 px
 
-/* ── C3: a paleta que o jogo REALMENTE usa, lida do fonte ─────────────────────────
-   `_teamColor` é método de instância (usa `_mirror`/`_factionOf`), então não há import
-   possível: a verificação honesta é ler o texto do arquivo e extrair os hexes claros. */
-function paletaDoJogo() {
-  const src = fs.readFileSync('public/js/game.js', 'utf8');
-  const bloco = src.slice(src.indexOf('_teamColor(side'), src.indexOf('_teamColor(side') + 900);
-  const out = {};
-  /* `[A-Z]` e não `[PBUCF]` (07/08): a lista fechada era uma lista escrita à mão dentro de
-     um regex, e envelheceu como toda lista escrita à mão — no rename Time E de 06/08 o
-     `game.js` passou a dizer `f === 'E'`, este regex parou de casar a facção do jogador, e
-     o C3 comparou vazio com vazio para ela. Cegueira de régua, não defeito de arte. */
-  for (const m of bloco.matchAll(/f === '([A-Z])'\)\s*return\s*dark\s*\?\s*'(#[0-9a-f]{6})'\s*:\s*'(#[0-9a-f]{6})'/g)) {
-    out[m[1]] = m[3];
-  }
-  return out;
+/* ── C3: a paleta de ORIGEM, agora importada em vez de garimpada no texto ──────────
+   Esta função lia o corpo de `_teamColor` com um regex sobre 900 caracteres de
+   `game.js`. Isso já tinha custado uma cegueira própria (a lista `[PBUCF]` dentro do
+   regex envelheceu no rename Time E e o C3 passou a comparar vazio com vazio para a
+   facção do jogador), e o comentário antigo justificava o garimpo assim: *"`_teamColor`
+   é método de instância, então não há import possível"*.
+
+   Isso deixou de ser verdade. O que é de instância é QUAL facção está de cada lado; a
+   cor de cada facção mora em `public/js/paleta.js` e é importável. `_teamColor` hoje só
+   escolhe entre `ESPELHO` e `tons(facção)` — não há mais hex nenhum para garimpar.
+
+   Com import não existe regex para envelhecer. Quem garante que `game.js` de fato usa
+   esta origem é o F2 do `faccao-paleta-check.mjs` (nenhum espelho novo), que é node puro
+   e roda no `check:fast`; aqui o C3 volta ao que sempre quis ser — o export do
+   `brasoes.js` bate com a origem. */
+async function paletaDaOrigem() {
+  const { PALETA } = await import(pathToFileURL(path.resolve('public/js/paleta.js')).href);
+  return Object.fromEntries(Object.entries(PALETA).map(([f, t]) => [f, t.base]));
 }
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -143,16 +149,16 @@ fs.mkdirSync(OUT, { recursive: true });
 console.log(`RÉGUA DAS BANDEIRAS${MUTAR ? `  [MUTAÇÃO: ${MUTAR}]` : ''}\n`);
 
 /* ── C3 ─────────────────────────────────────────────────────────────────────────── */
-const doJogo = paletaDoJogo();
+const doJogo = await paletaDaOrigem();
 let c3 = true;
-console.log('C3 · paleta espelhada (brasoes.js  vs  game.js:_teamColor)');
+console.log('C3 · o que a bandeira pinta bate com a origem (brasoes.js  vs  paleta.js)');
 for (const f of FACS) {
   let meu = (dados.cores[f] || '').toLowerCase();
   if (MUTAR === 'cor-errada' && f === 'F') meu = '#4aa3ff';
   const dele = (doJogo[f] || '').toLowerCase();
   const ok = meu === dele && !!dele;
   if (!ok) c3 = false;
-  console.log(`   ${f}  módulo ${meu || '—'}   jogo ${dele || '—'}   ${ok ? 'ok' : 'DIVERGE'}`);
+  console.log(`   ${f}  bandeira ${meu || '—'}   origem ${dele || '—'}   ${ok ? 'ok' : 'DIVERGE'}`);
 }
 console.log(`   ${c3 ? 'PASSA' : 'FALHA'}\n`);
 

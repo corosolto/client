@@ -1615,10 +1615,19 @@ function runNode(script, env = {}, args = []) {
       + `(melhor mapa: ${melhorMapa.mapa || '-'} com ${melhorMapa.normalMap || 0}). `
       + 'NB: o enunciado da rodada dizia "0 normalMap nos 5 mapas"; a medição em runtime desmente — '
       + 'o map.js:20-28 (lam) pendura normal+rough derivados do albedo, e só o praca_old passa por lá.');
+    /* A descrição fala no PASSADO quando está verde, e no presente quando está vermelha.
+       Antes ela dizia "é este o 'três níveis de acabamento na mesma tela' que o dono
+       descreveu" SEMPRE — inclusive depois do conserto (commit f038a53), com 0/44. Custou
+       uma leitura errada: quem chega pelo texto conclui que o defeito está aberto e vai
+       consertar o que já foi consertado. Régua que descreve um defeito que não existe mais
+       é documentação errada, que é o defeito mais caro deste repo. */
     put('CHR5B', 'personagem não fica abaixo do acabamento do melhor mapa do mundo',
       semSuperficie === 0 || (melhorMapa.normalMap || 0) === 0,
-      `${semSuperficie}/${P.length} personagens com 0 mapas de superfície contra ${melhorMapa.normalMap || 0} normalMaps no ${melhorMapa.mapa || '-'} `
-      + `— é este o "três níveis de acabamento na mesma tela" que o dono descreveu. `
+      (semSuperficie === 0
+        ? `0/${P.length} personagens sem mapa de superfície (contra ${melhorMapa.normalMap || 0} normalMaps no ${melhorMapa.mapa || '-'}). `
+          + `O "três níveis de acabamento na mesma tela" que o dono descreveu foi fechado em f038a53 — 27/44 na época. `
+        : `${semSuperficie}/${P.length} personagens com 0 mapas de superfície contra ${melhorMapa.normalMap || 0} normalMaps no ${melhorMapa.mapa || '-'} `
+          + `— é este o "três níveis de acabamento na mesma tela" que o dono descreveu. Conserto: \`node tools/char-surface-maps.mjs --sem-mapa\`. `)
       + `Fonte medida: ${fonteGLB ? 'GLB' : 'procedural (sem GLB de personagem nesta árvore — o procedural não tem textura por construção)'}.`,
       'warn');
 
@@ -2171,6 +2180,57 @@ function runNode(script, env = {}, args = []) {
   put('HUD1', '?vmlab=1 materializa o menu de armas do loadout no HUD real',
     itens.length === 4 && falhasHud.length === 0,
     itens.length ? itens.map((item) => `${item.id}:${item.ok ? 'ok' : item.evid}`).join(' · ') : out.trim());
+}
+
+/* ── 9.9 CUSTO DE CENA ───────────────────────────────────────────────────────
+   Lê a medição que `tools/eval/cena-check.mjs` gravou. Ela precisa de navegador e por
+   isso não pode rodar daqui; o que cabe no `check` é COBRAR que a medição exista, seja
+   recente, e esteja dentro do teto.
+
+   O teto vem de `cena-tetos.mjs`, o MESMO módulo que a régua de navegador importa. É a
+   LIÇÃO 2 aplicada de saída: um limiar, dois leitores. Se este arquivo escrevesse o
+   próprio número, um mapa poderia nascer aprovado aqui e reprovado lá.
+
+   CENA3 cobra a IDADE do probe. Sem isso a cláusula é pior que inútil: ela juraria verde
+   sobre uma medição de duas semanas atrás, que é a LIÇÃO 3 pelo lado do tempo — medir
+   outro jogo, só que o de antigamente. Probe velho fica AMARELO (warn) em vez de vermelho
+   porque a árvore de quem só mexeu no site não tem por que reprovar por isso; quem
+   precisa do número fresco é o pré-deploy, e lá quem manda é a própria `eval:cena`. */
+{
+  const pProbe = join(ROOT, 'tools/eval/cena_probe.json');
+  if (!existsSync(pProbe)) {
+    skip('CENA1', 'custo de cena dentro do teto', 'sem tools/eval/cena_probe.json — rode `npm run eval:cena`');
+  } else {
+    const j = JSON.parse(readFileSync(pProbe, 'utf8'));
+    const { TETOS } = await import('./cena-tetos.mjs');
+    const medidos = (j.mapas || []).filter((m) => m.calls != null && m.tris != null);
+    const estouros = [];
+    for (const m of medidos) {
+      const t = TETOS[m.mapa];
+      if (!t || t.calls == null) continue;
+      if (m.calls > t.calls) estouros.push(`${m.mapa} ${m.calls} calls > ${t.calls}`);
+      if (m.tris > t.tris) estouros.push(`${m.mapa} ${m.tris} tris > ${t.tris}`);
+    }
+    put('CENA1', 'nenhum mapa acima do teto de calls/triângulos por frame (medido no navegador)',
+      estouros.length === 0,
+      `${medidos.length} mapa(s) medidos em ${j.commit || '?'} · `
+      + medidos.map((m) => `${m.mapa} ${m.calls}c/${(m.tris / 1000) | 0}kt`).join(' · ')
+      + (estouros.length ? ` -> ESTOUROU: ${estouros.join(', ')}` : ''));
+
+    const semNumero = (j.mapas || []).filter((m) => m.calls == null || m.tris == null);
+    put('CENA2', 'todo mapa do registro entrou na medição (nenhum saiu da conta calado)',
+      semNumero.length === 0 && medidos.length >= 5,
+      `${medidos.length} medidos, ${semNumero.length} sem número`
+      + (semNumero.length ? ` [${semNumero.map((m) => `${m.mapa}: ${m.fatal || 'sem número'}`).join(' | ')}]` : ''));
+
+    const dias = j.medidoEm ? (Date.now() - Date.parse(j.medidoEm)) / 86400000 : Infinity;
+    put('CENA3', 'a medição de custo de cena é recente (≤ 14 dias)',
+      dias <= 14,
+      `probe de ${j.medidoEm || '?'} (${isFinite(dias) ? `${dias.toFixed(1)} dias` : 'sem data'}), commit ${j.commit || '?'}`
+      + (j.mutante ? ` | ATENÇÃO: probe de rodada MUTANTE (${j.mutante}) — não é medição do jogo` : '')
+      + ' | atualize com `npm run eval:cena`',
+      'warn');
+  }
 }
 
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────

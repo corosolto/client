@@ -38,19 +38,19 @@
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import * as THREE from 'three';
 
-/* PALETA DO TIME — espelha `Game._teamColor()` (`public/js/game.js`, bloco "Capture the
-   Flag"): P vermelho, B verde, U azul, C rosa-circo, F ouro. É espelho declarado, pelo
-   mesmo motivo e no mesmo formato que `TEAM_RIM` em `characters.js:105` já faz: o
-   original é MÉTODO DE INSTÂNCIA da classe `Game` (depende de `_mirror`/`_factionOf`,
-   que são estado de partida), então não há o que importar. Se a paleta mudar lá, muda
-   aqui — `tools/eval/brasao-check.mjs` falha se os dois discordarem. */
-/* `E` e não `P` (07/08): o rename Time E de 06/08 trocou a letra no `BRASAO` logo abaixo
-   e no arquivo (`img/brasoes/p.png` -> `e.png`) e ESQUECEU esta linha. Com `COR_TIME['E']`
-   indefinido, `bandeiraTextura('E')` saía por `!cor` na primeira linha e devolvia `null` —
-   a bandeira do time do jogador ficava sem cor E sem brasão, os dois de uma vez, que foi
-   como o defeito chegou: *"quando captura bandeira não pinta de vermelho e nem põe o
-   brasão"*. Régua: `tools/eval/faccao-paleta-check.mjs`. */
-const COR_TIME = { E: '#ff5555', B: '#55dd66', U: '#4aa3ff', C: '#ff6ec7', F: '#ffc233' };
+/* PALETA DO TIME — não mora mais aqui. Morava, e por isso o rename Time E (06/08) pôde
+   trocar a letra no `BRASAO` logo abaixo e no arquivo (`img/brasoes/p.png` -> `e.png`) e
+   ESQUECER a paleta: com `COR_TIME['E']` indefinido, `bandeiraTextura('E')` saía por
+   `!cor` na primeira linha e devolvia `null` — bandeira sem cor E sem brasão, que foi
+   como o dono descreveu o defeito em 07/08.
+
+   O comentário que ficava aqui dizia que não havia o que importar, porque o original é
+   método de instância de `Game`. O que é de instância é QUAL facção está de cada lado;
+   a cor DE uma facção não é estado de partida. Agora vem de `paleta.js`, junto com o rim
+   de `characters.js` e o `_teamColor` do próprio `game.js`. */
+import { BASE_POR_FACCAO } from './paleta.js';
+
+const COR_TIME = BASE_POR_FACCAO;
 
 /* Só estas cinco têm brasão. Facção fora da lista devolve `null` de propósito: é o sinal
    combinado com o chamador para ele manter o pano que já desenhava. */

@@ -1,5 +1,7 @@
 // 8 fictional satirical archetypes — procedural low-poly meshes.
 import * as THREE from 'three';
+// cor de facção: UMA origem, a mesma de game.js e brasoes.js — ver paleta.js.
+import { PALETA, num } from './paleta.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CLAREZA COMPETITIVA DO PERSONAGEM  (critério C1 do BAR + A2 p/ personagens)
@@ -102,12 +104,25 @@ export const CHAR_FX = {
 // 0.35 (era 0.45 na R2): com o piso agora multiplicativo o rim voltou a ser o único
 // termo aditivo do personagem, e cada ponto que ele anda na direção do branco é croma
 // que ele TIRA do boneco. Medido no char_sim: 0.45 custava ~1,5 de C* sem ganhar ΔL*.
-// `E` (não `P`) e `C` (07/08): o rename Time E deixou esta tabela para trás e os palhaços
-// nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dá erro — dá contorno BRANCO, que
-// parece decisão de arte. Régua: `tools/eval/faccao-paleta-check.mjs`.
-const TEAM_RIM = { E: 0xff5555, B: 0x55dd66, U: 0x4aa3ff, C: 0xff6ec7, F: 0xffc233 };
+/* Braçadeira: qual TOM cada facção usa. Os hexes vêm de `paleta.js`; o que fica aqui é só
+   a escolha de tom, que não é uniforme (ver o bloco no ponto de uso, em `buildCharacter`).
+   Facção desconhecida cai no base de U, que é o `else` que a régua F1 declara. */
+function bracadeiraDaFaccao(team) {
+  const p = PALETA[team];
+  if (!p) return PALETA.U.base;
+  return (team === 'F' || team === 'U') ? p.base : p.escura;
+}
+
+// A tabela literal saiu daqui (07/08): o rename Time E a deixou para trás e os palhaços
+// nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dava erro — dava contorno BRANCO,
+// que parece decisão de arte. Agora a cor vem de `paleta.js`, a mesma que a bandeira e o
+// `_teamColor` usam, e facção nova entra nas três de uma vez.
+// O `|| 0xffffff` continua: facção desconhecida cai em BRANCO como sempre caiu, e não no
+// cinza do NEUTRO de paleta.js. Unificar origem não é hora de mudar pixel — se o branco
+// for defeito, é conserto com régua própria. Por isso lê `PALETA` direto, e não `tons()`.
 export function charRimColor(def) {
-  const c = new THREE.Color(TEAM_RIM[(def && def.team) || 'E'] || 0xffffff);
+  const p = PALETA[(def && def.team) || 'E'];
+  const c = new THREE.Color(p ? num(p.base) : 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }
 
@@ -759,8 +774,15 @@ export function buildCharacter(def) {
   // team armband
   /* `E` (era `P`, rename de 06/08) e `C` explícito: sem o ramo, a facção cai no ELSE e sai
      azul de Tribos Urbanas — o time do jogador usava braçadeira azul e os palhaços também.
-     O else continua sendo o U, de propósito, e é isso que a régua declara. */
-  const band = def.team === 'E' ? 0xe03232 : def.team === 'B' ? 0x1faa4d : def.team === 'F' ? 0xffc233 : def.team === 'C' ? 0xc23a86 : 0x4aa3ff;
+     O else continua sendo o U, de propósito, e é isso que a régua declara.
+
+     ATENÇÃO AO TOM, e ele está PRESERVADO como estava: E, B e C usam o tom ESCURO da
+     facção; F e U usam o tom BASE (0xffc233 e 0x4aa3ff, não 0xc79a12 e 0x2f7fe0). Não sei
+     dizer se foi decisão de arte ou resíduo do mesmo rename — os dois que fogem do padrão
+     são justamente as facções adicionadas depois. Unificar a ORIGEM da cor não é hora de
+     mudar pixel, então a mistura continua explícita aqui em vez de virar `.escura` para
+     todo mundo. Se for para padronizar, é mudança visual com A/B próprio. */
+  const band = num(bracadeiraDaFaccao(def.team));
   parts.armL.add(marcaAdereco(box(D.bracoW + 0.02, 0.08, D.bracoD + 0.02, band, 0, -bracoLen * 0.24, 0)));
 
   addAccessories(def, parts, torsoW);

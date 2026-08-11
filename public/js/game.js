@@ -14,6 +14,9 @@ import { skyRadiance } from './bloom.js';
 import { RecoilAxis, ViewModelRig } from './springs.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { frase, tr } from './i18n.js';   // EN por camada — o crash 'frase is not defined' de 06/08 foi este import faltando
+// cor de facção: UMA origem, importada também por brasoes.js e characters.js. O espelho
+// que este import substitui apagou a bandeira do jogador em 07/08 — ver paleta.js.
+import { tons, ESPELHO } from './paleta.js';
 import { PlayerRecorder } from './botbrain/recorder.js';   // BOTBRAIN: grava (estado→ação) do jogador (só quando recordTraining)
 import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o vetor de estado do bot p/ a rede
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
@@ -3666,14 +3669,10 @@ export class Game {
   // Cor do time no CTF (anel/bandeira/HUD). AZUL pro lado do JOGADOR quando a facção é Tribos
   // Urbanas; senão P vermelho / B verde. `dark` = tom mais escuro (pano da bandeira).
   _teamColor(side, dark = false) {
-    if (this._mirror(side)) return dark ? '#6a2fb5' : '#a05cff';   // MIRROR (mesma facção) -> inimigo roxo
-    const f = this._factionOf(side);
-    if (f === 'U') return dark ? '#2f7fe0' : '#4aa3ff';            // Tribos azul
-    if (f === 'E') return dark ? '#e03232' : '#ff5555';            // Time E vermelho
-    if (f === 'B') return dark ? '#1faa4d' : '#55dd66';            // Time B verde
-    if (f === 'C') return dark ? '#c23a86' : '#ff6ec7';            // Palhaços rosa-circo
-    if (f === 'F') return dark ? '#c79a12' : '#ffc233';            // Funkeiros ouro
-    return dark ? '#aaaaaa' : '#999999';
+    // o que depende de partida fica aqui (quem é espelho, que facção está de cada lado);
+    // a COR de cada facção mora em paleta.js e é a mesma que bandeira e rim consomem.
+    const p = this._mirror(side) ? ESPELHO : tons(this._factionOf(side));
+    return dark ? p.escura : p.base;
   }
   /* TINTA CLARA DO TIME — só pra TEXTO sobre chip tingido (killfeed). Por que existe:
      o chip do killfeed é `background:${cor}2e` (a própria cor do time a 18%) com o texto
@@ -3684,9 +3683,7 @@ export class Game {
      style.css:521-522) — a versão PÁLIDA da cor. Aqui ela ganha nome e vale pras 6 facções.
      Mantém a leitura "vermelho = time-e / verde = time-b" e passa a 5,9-9,1:1. */
   _teamInk(side) {
-    if (this._mirror(side)) return '#cbaaff';
-    const f = this._factionOf(side);
-    return ({ U: '#a8cdff', E: '#ff9a9a', B: '#a9f0b6', C: '#ffb3e0', F: '#ffd98a' })[f] || '#d6d6d6';
+    return (this._mirror(side) ? ESPELHO : tons(this._factionOf(side))).palida;
   }
   // Pack de vozes/round por FACÇÃO: o lado do jogador usa 'U' (Tribos) quando a facção é Tribos
   // Urbanas; senão o lado (P/B). O inimigo é sempre político. Corrige "Tribos usa voz de Time E".
