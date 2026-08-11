@@ -109,9 +109,14 @@ sobreviveu nos comentários de causa raiz do `audio.js` (master chain com
 limiter anti-clip, `duckBus` sidechain, caps de bounce em ~80ms) e nos portões
 `audio:check`/`assert:assets` — nenhuma delas é mais execução de portão.
 
-**Rodada G2-R6 (pose e troca de arma):**
+**Aposentada — Rodada G2-R6 (pose e troca de arma)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
 `g2r6-blackband.mjs` · `g2r6-bots.mjs` · `g2r6-bots2.mjs` · `g2r6-capture.mjs` ·
-`g2r6-pose-tune.mjs` · `g2r6-switch-capture.mjs` · `g2r6-switch2.mjs`
+`g2r6-pose-tune.mjs` · `g2r6-switch-capture.mjs` · `g2r6-switch2.mjs`. O que
+mediram sobreviveu: a pose e o framing da arma nos comentários de causa raiz do
+`weapons.js`/`game.js`; o critério de troca (holster→draw, nunca duas armas no
+quadro) no `BAR-CONSISTENCIA.md` §C14; e `g2r6-bots2` foi o predecessor do
+`botsim.mjs`, que o substituiu (ver o cabeçalho do `botsim.mjs`).
 
 **Rodada G2-R7 / R7b / R8 (framing e boca do cano):**
 `g2r7-aksweep.mjs` · `g2r7-capture.mjs` · `g2r7-mzmarks.mjs` · `g2r7-mzprobe.mjs` ·

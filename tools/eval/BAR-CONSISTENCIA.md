@@ -320,7 +320,7 @@ frame em que a animação termina**, nem antes nem depois. *Método:* log de tem
 Diferença **≤ 50 ms**.
 
 **C14 — Troca de arma tem holster e draw.**
-*Método:* `tools/eval/g2r6-switch-capture.mjs`. Nenhum frame com **duas armas visíveis**;
+*Método:* `tools/eval/aposentados/g2r6-switch-capture.mjs`. Nenhum frame com **duas armas visíveis**;
 nenhum frame com **nenhuma arma**; a arma nova entra pela borda inferior do quadro (como em
 Halo/CS), não materializa na posição final.
 
