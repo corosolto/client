@@ -1,9 +1,10 @@
-/* Logs WebGL anuláveis não podem esconder o diagnóstico real do shader. */
+/* Logs WebGL anuláveis não podem esconder o diagnóstico real do shader.
+   E o WeakMap de drawBuffers não pode derrubar o loop quando createFramebuffer falha (#171). */
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutant && !['sem-guardas', 'sem-cache-bust', 'addons-immutable', 'cloudflare-vendor'].includes(mutant)) {
+if (mutant && !['sem-guardas', 'sem-cache-bust', 'addons-immutable', 'cloudflare-vendor', 'framebuffer-nulo'].includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
 
@@ -27,6 +28,14 @@ if (mutant === 'sem-guardas') {
     /(gl\.get(?:Shader|Program)InfoLog\([^;]+\))\s*\|\|\s*'';/g,
     '$1;',
   );
+}
+if (mutant === 'framebuffer-nulo') {
+  const before = vendor;
+  vendor = vendor.replace(
+    /\n\t\t\t\tif \( framebuffer == null \) return;[^\n]*\n/,
+    '',
+  );
+  if (vendor === before) throw new Error('MUTANTE NAO APLICOU: framebuffer-nulo');
 }
 if (mutant === 'sem-cache-bust') {
   productSources = productSources.map(([file, source]) => [file, source.replace('?v=${V}', '')]);
@@ -102,11 +111,61 @@ if (immutableVendor || !revalidatesNow || cloudflareSetup.includes('starts_with(
   failures.push('SL6 addons do Three sem URL própria precisam revalidar no servidor');
 }
 
+/* SL7 executa a drawBuffers REAL do vendor: com framebuffer nulo (falha de
+   alocação sob pressão/perda de contexto, #171) ela não pode lançar — e os
+   caminhos normais precisam continuar emitindo os mesmos draw buffers. */
+const drawBuffersMatch = vendor.match(/function drawBuffers\( renderTarget, framebuffer \) \{[\s\S]*?\n\t\}/);
+let drawBuffersFn = null;
+if (drawBuffersMatch) {
+  try {
+    drawBuffersFn = Function(
+      'defaultDrawbuffers', 'currentDrawbuffers', 'gl', 'capabilities', 'extensions',
+      `${drawBuffersMatch[0]}\nreturn drawBuffers;`,
+    );
+  } catch { /* SL7 vermelha abaixo */ }
+}
+const runDrawBuffers = (renderTarget, framebuffer) => {
+  const calls = [];
+  const gl = {
+    COLOR_ATTACHMENT0: 0x8CE0,
+    BACK: 0x0405,
+    drawBuffers: (buffers) => calls.push(buffers.slice()),
+  };
+  const extensions = { get: () => ({ drawBuffersWEBGL: (buffers) => calls.push(buffers.slice()) }) };
+  drawBuffersFn([], new WeakMap(), gl, { isWebGL2: true }, extensions)(renderTarget, framebuffer);
+  return calls;
+};
+if (!drawBuffersFn) {
+  failures.push('SL7 drawBuffers não encontrada no vendor');
+} else {
+  try {
+    const calls = runDrawBuffers({ isWebGLMultipleRenderTargets: false }, null);
+    if (calls.length) failures.push('SL7 framebuffer nulo não devia emitir drawBuffers');
+  } catch (error) {
+    failures.push(`SL7 framebuffer nulo derruba o loop: ${error.message}`);
+  }
+  const esperados = [
+    [{ isWebGLMultipleRenderTargets: false }, {}, [0x8CE0]],
+    [{ isWebGLMultipleRenderTargets: true, texture: [{}, {}] }, {}, [0x8CE0, 0x8CE1]],
+    [null, {}, [0x0405]],
+  ];
+  for (const [renderTarget, framebuffer, esperado] of esperados) {
+    try {
+      const calls = runDrawBuffers(renderTarget, framebuffer);
+      if (calls.length !== 1 || calls[0].join(',') !== esperado.join(',')) {
+        failures.push(`SL7 caminho normal alterado: [${calls.map((c) => c.join(',')).join('|')}] ≠ [${esperado.join(',')}]`);
+      }
+    } catch (error) {
+      failures.push(`SL7 caminho normal quebrou: ${error.message}`);
+    }
+  }
+}
+
 if (mutant && !failures.length) failures.push(`mutação ${mutant} não foi detectada`);
 for (const failure of failures) console.error(`  \x1b[31m✗\x1b[0m ${failure}`);
 if (failures.length) {
   console.error(`\x1b[31mSHADER-LOG ${failures.length} VERMELHA(S)\x1b[0m${mutant ? ` (mutante=${mutant})` : ''}`);
   process.exitCode = 1;
 } else {
-  console.log('\x1b[32mSHADER-LOG verde: logs nulos e entrega versionada protegidos\x1b[0m');
+  console.log('\x1b[32mSHADER-LOG verde: logs nulos, framebuffer nulo e entrega versionada protegidos\x1b[0m');
 }

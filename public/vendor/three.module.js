@@ -23161,6 +23161,9 @@ function WebGLState( gl, extensions, capabilities ) {
 
 			if ( drawBuffers === undefined ) {
 
+				// #171: createFramebuffer() pode falhar sob pressão/perda de contexto; sem a guarda o WeakMap.set lança e mata o loop
+				if ( framebuffer == null ) return;
+
 				drawBuffers = [];
 				currentDrawbuffers.set( framebuffer, drawBuffers );
 

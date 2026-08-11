@@ -84,6 +84,27 @@ true; }`). EP4 exige early-return e dispatch único; EP5 recorta a condição
 inteira do step de issue; EP6 **executa** a `origemDoJogo` inline do cliente
 contra oito fixtures (mutantes `sem-early-return` e `abre-externo`).
 
+### ~~BUG-50 · WeakMap do Three derrubava o loop quando createFramebuffer falhava~~ · RESOLVIDO 12/08 (issue #171)
+
+**Evidência antes.** Issue #171 (fingerprint `b598fe98`, alpha.57): `TypeError:
+WeakMap keys must be objects or non-registered symbols`, stack
+`drawBuffers@three.module.js:23160` ← `setRenderTarget` ← `RenderPass` do
+`EffectComposer` (bloom) ← `game.update`. Reproduzida ainda na alpha.81.
+
+**Causa.** `drawBuffers(renderTarget, framebuffer)` chama
+`currentDrawbuffers.set(framebuffer, …)` sem guarda. Quando `gl.createFramebuffer()`
+falha — pressão de memória GL ou perda de contexto síncrona — o framebuffer fica
+nulo, o `WeakMap.set` lança e o `requestAnimationFrame` morre no meio da partida.
+
+**Correção.** Guarda no vendor: framebuffer nulo retorna sem emitir drawBuffers.
+Os três caminhos normais (alvo simples, MRT, tela) continuam emitindo os mesmos
+buffers. Arnêses `public/*.html` receberam o hash novo do vendor (`?h=`).
+
+**Régua.** SL7 do `tools/eval/shader-log-check.mjs` extrai e executa a
+`drawBuffers` real do vendor: framebuffer nulo não pode lançar nem emitir, e os
+caminhos normais têm os buffers comparados byte a byte. Mutante `framebuffer-nulo`
+remove a guarda e acende a SL7.
+
 ### ~~BUG-49 · toda página SSR servia 200 com corpo VAZIO em produção~~ · RESOLVIDO 12/08
 
 **Sintoma literal.** O dono, 12/08: *"a pagina mapa online (aovivo) esta quebrada"*.
