@@ -14,6 +14,8 @@
 #     stack e versão, DEDUPLICADA por fingerprint. Corrigir código não é
 #     determinístico e a casa proíbe conserto sem régua — humano/agente local
 #     pega da issue. NENHUM commit na main sai daqui.
+#   · externo (extensão ou script cross-origin): preservado na telemetria bruta,
+#     mas encerra sem issue porque não pertence ao jogo.
 #
 # SECRETS: CF_API_TOKEN (Zone → Cache Purge) — sem ele o purge é pulado e a
 # classe cache-split cai direto no probe (que já falha e vira issue).
@@ -49,12 +51,13 @@ jobs:
         env:
           MSG: ${{ github.event.client_payload.message }}
           SRC: ${{ github.event.client_payload.source }}
-        run: |
-          if echo "$MSG $SRC" | grep -qiE "does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|prod-coherence"; then
-            echo "classe=cache-split" >> "$GITHUB_OUTPUT"
-          else
-            echo "classe=codigo" >> "$GITHUB_OUTPUT"
-          fi
+          STK: ${{ github.event.client_payload.stack }}
+          ORIGIN: ${{ github.event.client_payload.origin }}
+        run: node scripts/classify-crash.mjs >> "$GITHUB_OUTPUT"
+
+      - name: erro externo — preservado sem issue
+        if: steps.cls.outputs.classe == 'externo'
+        run: echo "origem externa confirmada; a linha bruta permanece na telemetria."
 
       - name: purge do edge Cloudflare (classe cache-split)
         if: steps.cls.outputs.classe == 'cache-split' && env.CF_API_TOKEN != ''

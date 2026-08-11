@@ -21,9 +21,10 @@ const IMPORTMAP = JSON.stringify({
 <script is:inline>
 (function(){
   var TETO_SESSAO = 10;      // no máximo 10 erros DISTINTOS por carregamento de página
+  var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -92,14 +93,20 @@ const IMPORTMAP = JSON.stringify({
     return c;
   }
 
-  function reporta(kind, msg, source, stack){
+  function reporta(kind, msg, source, stack, externa){
     if (reportando) return null;                           // guarda de laço
     try{
       var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
       if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
       if (!enviados[fp]) {
-        if (nEnviados >= TETO_SESSAO) return null;
-        enviados[fp] = 1; nEnviados++;
+        if (externa) {
+          if (nExternos >= TETO_EXTERNO) return null;
+          nExternos++;
+        } else {
+          if (nEnviados >= TETO_SESSAO) return null;
+          nEnviados++;
+        }
+        enviados[fp] = 1;
       }
       reportando = true;
       var c = contexto();
@@ -125,10 +132,32 @@ const IMPORTMAP = JSON.stringify({
     var msg = String((r && r.message) || r || '');
     return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
   }
-  function origemDoJogo(source){
-    if (!source) return true;
-    if (/^(chrome|moz|safari-web)-extension:\/\//i.test(source)) return false;
-    try { return new URL(source, location.href).origin === location.origin; } catch(_) { return true; }
+  /* URL http só prova origem em source/stack; na mensagem ela é payload do
+     jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
+     qualquer campo: o navegador reporta frame injetado até na mensagem (#157). */
+  function origemDoJogo(source, stack, mensagem){
+    var sourceText = String(source || '');
+    var extensao = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
+    if (extensao.test(sourceText)) return false;
+    var propria = location.origin;
+    if (sourceText && /^https?:\/\//i.test(sourceText)) {
+      try {
+        if (new URL(sourceText, location.href).origin !== propria) return false;
+        return true;
+      } catch(_) {}
+    }
+    var prova = sourceText + '\n' + String(stack || '');
+    var urls = prova.match(/https?:\/\/[^\s)'"<>]+/gi) || [];
+    var viuPropria = false, viuExterna = false;
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        if (new URL(urls[i], location.href).origin === propria) viuPropria = true;
+        else viuExterna = true;
+      } catch(_) {}
+    }
+    if (viuPropria) return true;
+    if (extensao.test(prova + '\n' + String(mensagem || ''))) return false;
+    return !viuExterna;
   }
 
   function ligaFalha(){
@@ -222,24 +251,26 @@ const IMPORTMAP = JSON.stringify({
   window.addEventListener('error', function(e){
     var loc = e.filename ? (e.filename + ':' + e.lineno + ':' + e.colno) : '';
     var msg = (e.message || e.error || '?');
+    var interna = origemDoJogo(e.filename, e.error && e.error.stack, String(msg));
     if (consoleErroNativo) {
       try { consoleErroNativo('Erro global não tratado', e.error || msg); } catch(_) {}
     }
     // A factory já registrou a falha final; o throw apenas interrompe o módulo sem renderer.
     if (window.__semWebgl && /sem_webgl/.test(String(msg))) return;
-    showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
-    reporta('error', msg, loc, e.error && e.error.stack);
-    if (!window.__CS_MAIN_READY__ && origemDoJogo(loc)) erroDoBoot = e.error || new Error(String(msg));
-    if (lancamento.ativo && origemDoJogo(loc)) lancamento.fail(e.error || new Error(String(msg)), loc);
+    if (interna) showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
+    reporta('error', msg, loc, e.error && e.error.stack, !interna);
+    if (!window.__CS_MAIN_READY__ && interna) erroDoBoot = e.error || new Error(String(msg));
+    if (lancamento.ativo && interna) lancamento.fail(e.error || new Error(String(msg)), loc);
   });
   window.addEventListener('unhandledrejection', function(e){
     var r = e.reason;
+    var interna = origemDoJogo(null, r && r.stack, String((r && r.message) || r || ''));
     if (consoleErroNativo) {
       try { consoleErroNativo('Promise rejeitada sem tratamento', r); } catch(_) {}
     }
-    showDebug('promise', (r && r.message) || String(r), r && r.stack);
-    reporta('promise', (r && r.message) || String(r), null, r && r.stack);
-    if (lancamento.ativo && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
+    if (interna) showDebug('promise', (r && r.message) || String(r), r && r.stack);
+    reporta('promise', (r && r.message) || String(r), null, r && r.stack, !interna);
+    if (lancamento.ativo && interna && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
   });
 
   /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam

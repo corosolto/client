@@ -44,6 +44,46 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-51 · erro de extensão ou beacon virava bug do jogo
+
+**Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
+`chrome-extension://` ou `moz-extension://` na origem, stack ou mensagem. #142 e #144
+apontam integralmente para `static.cloudflareinsights.com`; os offsets correspondem às
+chamadas `Array.prototype.at()` do beacon Cloudflare em navegador antigo. Mesmo assim, as
+sete ocorrências foram classificadas como `codigo` e abriram issues `crash-auto`.
+
+**Causa.** O cliente preserva e envia todo erro, mas usa a proveniência apenas para decidir
+parte do watchdog. A API despacha toda primeira ocorrência e o workflow trata qualquer coisa
+que não seja cache inconsistente como código do jogo.
+
+**Régua.** `tools/eval/error-provenance-check.mjs` deve executar o classificador real e
+provar: esquema de extensão e URL cross-origin são externos; same-origin e sinais opacos não
+são descartados; a API grava antes de filtrar o dispatch; o workflow não abre issue externa;
+e o cliente não atribui erro externo ao lançamento. Mutantes cobrem cada fronteira.
+
+**Revisão adversarial (11/08, três leituras independentes).** Quatro furos achados no
+primeiro desenho, todos fechados e guardados por fixture ou mutante:
+
+1. `CACHE_SPLIT_RE` tinha precedência sobre a proveniência: erro de extensão com
+   mensagem de import dinâmico virava `cache-split` e podia acionar purge do
+   Cloudflare. Proveniência agora vence (EP7 + mutante `cache-antes-origem`).
+2. URL externa só na **mensagem** era tratada como proveniência: uma promise do
+   próprio jogo rejeitada com texto ("falha ao carregar https://api…") calava o
+   watchdog. URL http só prova origem em `source`/`stack`; esquema de extensão
+   continua valendo na mensagem (#157). Vale no helper e no cliente (EP3 + EP6 +
+   mutante `cliente-mensagem-url`).
+3. Erros externos consumiam o teto de 10 envios da sessão: dez mensagens de
+   extensão impediam um erro real de chegar ao banco. Externo agora tem cota
+   própria de 3 (`TETO_EXTERNO`, mutante `sem-teto-externo`).
+4. Em `?debug=1`, erro externo ainda abria o `crash-overlay`. `showDebug` agora
+   só dispara para proveniência interna (mutante `debug-externo`).
+
+A régua também mentia: EP4/EP5/EP6 aprovavam mutações comportamentais (guarda sem
+`return`, `externo` como último OR da condição de issue, `origemDoJogo(){ return
+true; }`). EP4 exige early-return e dispatch único; EP5 recorta a condição
+inteira do step de issue; EP6 **executa** a `origemDoJogo` inline do cliente
+contra oito fixtures (mutantes `sem-early-return` e `abre-externo`).
+
 ### ~~BUG-49 · toda página SSR servia 200 com corpo VAZIO em produção~~ · RESOLVIDO 12/08
 
 **Sintoma literal.** O dono, 12/08: *"a pagina mapa online (aovivo) esta quebrada"*.

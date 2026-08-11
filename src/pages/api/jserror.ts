@@ -20,6 +20,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';
+import { classifyCrash, shouldDispatchCrash } from '../../lib/error-provenance.mjs';
 
 export const prerender = false;
 
@@ -64,13 +65,17 @@ export const POST: APIRoute = async ({ request }) => {
   const matchSecs = Number.isFinite(body?.matchSecs)
     ? Math.max(0, Math.min(86400, Math.floor(body.matchSecs)))
     : null;
+  const source = str(body?.source, 300);
+  const stack = str(body?.stack, 4000);
+  const origin = new URL(request.url).origin;
+  const classification = classifyCrash({ message, source, stack }, origin);
 
   const { error } = await supabaseAdmin.rpc('report_js_error', {
     p_fingerprint: fingerprint,
     p_kind: ['error', 'promise', 'console'].includes(body?.kind) ? body.kind : 'error',
     p_message: message,
-    p_source: str(body?.source, 300),
-    p_stack: str(body?.stack, 4000),
+    p_source: source,
+    p_stack: stack,
     p_version: str(body?.version, 40),
     p_route: route,
     p_user_agent: str(request.headers.get('user-agent'), 400),
@@ -83,6 +88,9 @@ export const POST: APIRoute = async ({ request }) => {
     p_breadcrumbs: breadcrumbs,
   });
   if (error) return json({ error: 'indisponivel' }, 503);
+
+  // Proveniência externa fica no banco bruto, mas não consome dispatch nem abre bug do jogo.
+  if (!shouldDispatchCrash(classification)) return json({ ok: true, escalated: false, classification });
 
   /* PRIMEIRA OCORRÊNCIA → repository_dispatch `prod-crash` (crash-fix.yml).
      O UPDATE condicional é atômico: duas requisições simultâneas do mesmo erro
@@ -116,7 +124,7 @@ export const POST: APIRoute = async ({ request }) => {
             },
             body: JSON.stringify({
               event_type: 'prod-crash',
-              client_payload: { fingerprint, message, source: str(body?.source, 300), stack: str(body?.stack, 4000), version: str(body?.version, 40) },
+              client_payload: { fingerprint, message, source, stack, origin, version: str(body?.version, 40) },
             }),
           });
           if (!resp.ok) throw new Error(`dispatch ${resp.status}`);
