@@ -155,7 +155,7 @@ Antes de acusar a página, o mapa ou o motor, pergunte se o instrumento estava o
 > `images.every(complete)`: 0 faltando, e os 26 arquivos respondiam 200 no `dist`. (`git show a88a00a`)
 >
 > **Caso estrutural, ainda aberto: BUG-28.** No headless não há `WebGLRenderer.render()`, então
-> ninguém chama `scene.updateMatrixWorld()` — e **92 dos 92 occluders** do `fy_pool_day` ficam
+> ninguém chama `scene.updateMatrixWorld()` — e **92 dos 92 occluders** do `piscina_treta` ficam
 > com a matriz na identidade. Toda métrica de bot que dependa de linha de visão no headless está
 > medida contra geometria empilhada na origem. No navegador isso nunca aparece.
 >

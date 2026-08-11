@@ -150,7 +150,7 @@ acrescenta vermelho"*.
 
 ### 3. Números, com `arquivo:linha`
 
-A afirmação "melhorei a iluminação" não é revisável. "O chão do `awp_map` estava 8 pontos
+A afirmação "melhorei a iluminação" não é revisável. "O chão do `praca_poderes` estava 8 pontos
 de L\* acima das paredes, causa em `map_brasilia.js:NNN`, corrigido para X" é. Essa
 exigência não é estilo — é o que permite que a próxima rodada confira o seu trabalho.
 
@@ -248,11 +248,11 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.920 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.920 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 
 **5 mapas registrados** — 2 abrem em rodadas e 3 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 6 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
@@ -292,7 +292,7 @@ Para adicionar um mapa no formato de hoje:
 4. **Rode `node tools/eval/pickup-check.mjs`** (alimenta a `VM14`): todo pickup precisa
    ser alcançável **a pé**, por flood-fill de conectividade real em grade de 0,25 m
    semeado nos spawns dos dois times. Já aconteceu de armas caírem dentro da piscina do
-   `fy_pool_day` com o quality gate marcando vão **0,0000 — VERDE**.
+   `piscina_treta` com o quality gate marcando vão **0,0000 — VERDE**.
 5. **Rode `node tools/eval/botsim.mjs 60 <mapId>`**: os bots precisam navegar o seu mapa
    sem travar (`BOT3` stuck ≤ 4%), sem andar de lado (`BOT1`) e sem girar parados (`BOT2`).
    Waypoint desconexo é o defeito mais comum de mapa novo, e já quebrou PRs antes

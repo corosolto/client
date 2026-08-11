@@ -295,7 +295,7 @@ const IMPORTMAP = JSON.stringify({
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
-<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo awp_map do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
+<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
 <meta name="author" content="CORO SOLTO contributors">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -361,7 +361,7 @@ const IMPORTMAP = JSON.stringify({
       "alternateName": ["CORO SOLTO", "CS BRASIL", "CS BRASIL: Treta Suprema"],
       "url": "https://www.csbrasil.online/",
       "image": "https://www.csbrasil.online/og-image.jpg",
-      "description": "FPS de navegador gratuito e satírico: arena de sniper estilo CS 1.6 (awp_map) numa Brasília fictícia. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag.",
+      "description": "FPS de navegador gratuito e satírico: arena de sniper estilo CS 1.6 (praca_poderes) numa Brasília fictícia. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag.",
       "genre": ["Shooter", "FPS", "Comédia", "Sátira"],
       "gamePlatform": ["Web Browser", "Desktop"],
       "applicationCategory": "GameApplication",
@@ -393,7 +393,7 @@ const IMPORTMAP = JSON.stringify({
   "@id": "https://www.csbrasil.online/#faq",
   "mainEntity": [
     { "@type": "Question", "name": "O que é CORO SOLTO: Treta Suprema?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: arena de sniper estilo awp_map do CS 1.6 ambientada numa Brasília fictícia e satírica. Tem 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: arena de sniper estilo praca_poderes do CS 1.6 ambientada numa Brasília fictícia e satírica. Tem 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
     { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
     { "@type": "Question", "name": "Quais são os controles?",
@@ -535,7 +535,7 @@ const IMPORTMAP = JSON.stringify({
       <!-- O cartaz do mapa é a tela inteira do passo: arte grande, nome grande e a
            ficha da partida (modo · bots · armas) LIDA EM CIMA DA ARTE, não num form. -->
       <div class="map-picker">
-        <img id="map-thumb" src="/img/map-previews/awp_map.jpg" alt="preview do mapa">
+        <img id="map-thumb" src="/img/map-previews/praca_poderes.jpg" alt="preview do mapa">
         <button id="map-mode" type="button" title="Clique pra trocar entre ROUNDS e CAPTURE THE FLAG">ROUNDS</button>
         <span id="map-dots" aria-hidden="true"></span>
         <!-- Setas do carrossel: `title` além do aria-label porque o dono reprovou duas
@@ -803,7 +803,7 @@ const IMPORTMAP = JSON.stringify({
       <!-- A mira sai do sistema de cor do HUD: quem escolhe é o jogador (CS2/Valorant). -->
       <label class="set-row">Cor da mira
         <!-- Ciano é o PADRÃO e por isso vem primeiro: é o único matiz que nenhum cenário
-             dos 4 mapas ocupa. "Branca" desceu porque some na parede do awp_map (1,28:1). -->
+             dos 4 mapas ocupa. "Branca" desceu porque some na parede do praca_poderes (1,28:1). -->
         <select id="set-xhair">
           <option value="#4fe8e0">Ciano (padrão)</option>
           <option value="#46e08a">Verde</option>

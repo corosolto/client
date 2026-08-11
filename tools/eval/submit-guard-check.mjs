@@ -59,10 +59,10 @@
    MEDIDO ANTES DO CONSERTO (07/08, `--amostra --sementes=4242,7,99,1234,555,8080,31337,2026,64,777`)
 
      recusadas pela regra vigente (80 s/rodada) : 6 de 50 partidas de captura (12 %)
-     menor s/rodada de partida inteira          : 48,0 s   (awp_map, semente 64)
-     MENOR RODADA INDIVIDUAL                    : 31,1 s   (fy_pool_day, semente 99)
-     mapas atingidos                            : awp_map 3/10, fy_ferrovelho 2/10,
-                                                  fy_quebrada 1/10
+     menor s/rodada de partida inteira          : 48,0 s   (praca_poderes, semente 64)
+     MENOR RODADA INDIVIDUAL                    : 31,1 s   (piscina_treta, semente 99)
+     mapas atingidos                            : praca_poderes 3/10, ferro_velho 2/10,
+                                                  quebrada 1/10
 
    E o simulador é o caso LENTO: o jogador dele é passivo. O Mauro estava de AWP limpando
    a viela — jogo humano bom produz rodada mais curta que qualquer linha desta tabela.

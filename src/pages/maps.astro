@@ -10,23 +10,23 @@ import { MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> = {
-  awp_map: {
+  praca_poderes: {
     nome: 'Three Powers Plaza',
     resumo: 'The main arena: a fictional Brasília with a giant cracked voting machine in the middle.',
-    detalhe: 'A reinterpretation of CS 1.6’s awp_map, Brasília edition. Two tall platforms face each ' +
+    detalhe: 'A reinterpretation of CS 1.6’s praca_poderes, Brasília edition. Two tall platforms face each ' +
       'other, and mid is dominated by a giant cracked electronic voting machine that works as central ' +
       'cover. Around it: a boteco, a pastel stand, a protest camp and the silhouette of Congress on ' +
       'the horizon. This is the map where the AWP rules - long angles, short cover, and nowhere ' +
       'truly safe.',
   },
-  fy_pool_day: {
+  piscina_treta: {
     nome: 'Fight Pool',
-    resumo: 'Indoor hall with a pool in the middle - the Brazilian fy_pool_day.',
+    resumo: 'Indoor hall with a pool in the middle - the Brazilian piscina_treta.',
     detalhe: 'Indoor arena, no sky, with the sunken pool splitting the map into two levels. ' +
       'Close, vertical combat: whoever controls the edge controls the round. ' +
       'It’s where the shotgun and the SMGs finally beat the AWP.',
   },
-  fy_havan: {
+  loja_h: {
     nome: 'H Store (Parking Lot)',
     resumo: 'Megastore parking lot with a statue, shopping carts and cars re-drawn every match.',
     detalhe: 'Asphalt and concrete, with rows of cars that CHANGE every match ' +
@@ -34,14 +34,14 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
       'Opens in Capture the Flag because the geometry was designed around the flags - ' +
       'but you can switch to rounds in the menu.',
   },
-  fy_ferrovelho: {
+  ferro_velho: {
     nome: 'Zé’s Junkyard',
     resumo: 'A junkyard at sunset, with the stacked-car canyon of the WEST ALLEY.',
     detalhe: 'Piles of cars form real walls. The west flank is the WEST ALLEY: a straight canyon ' +
       'of double car walls, with two side exits into the core and a hanging sign at the south mouth. ' +
       'Low, warm light, long shadows. Four flags, all reachable from both spawns.',
   },
-  fy_quebrada: {
+  quebrada: {
     nome: 'Quebrada (Baile Street)',
     resumo: 'A long straight outskirts street, with the baile rotunda at one end and the dirt pitch at the other.',
     detalhe: 'The newest map, and the only one that’s a STREET: asphalt down the axis, sidewalk on ' +
@@ -91,7 +91,7 @@ const jsonld = [
   jsonld={jsonld}
   h1="Maps"
   kicker={`${MAPAS.length} arenas · rounds and CTF`}
-  heroImg={preview('fy_ferrovelho')}
+  heroImg={preview('ferro_velho')}
   heroPos="62%">
   {/* `{' '}` explícito entre expressões: dentro de um <Fragment slot>, o espaço
       literal entre `}` e `{` é engolido. */}

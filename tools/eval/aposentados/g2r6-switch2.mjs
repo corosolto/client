@@ -21,7 +21,7 @@ const page = await browser.newPage({ viewport: { width: 1512, height: 982 }, dev
 let errors = 0;
 page.on('console', m => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); });
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_pool_day`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'load' });
 await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 90000 });
 await page.waitForTimeout(1000);

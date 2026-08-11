@@ -12,7 +12,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForFunction(() => window.__game.vm.staticVms && window.__game.vm.staticVms.ak, null, { timeout: 180000 });
 const r = await page.evaluate(() => {

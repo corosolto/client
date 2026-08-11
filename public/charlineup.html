@@ -23,7 +23,7 @@
    Tudo o que muda entre um shot e outro é o QUERY, que é lido pelo CHAR_FX —
    então o A/B é o mesmo binário com uma flag, não duas builds.
 
-   query: ?map=fy_havan&chars=a,b,c&w=1600&h=900  (+ qualquer flag de CHAR_FX)
+   query: ?map=loja_h&chars=a,b,c&w=1600&h=900  (+ qualquer flag de CHAR_FX)
    API p/ o playwright: window.LINEUP = { ready, ids, so(i), todos(), fundo() }
    ============================================================================ */
 import * as THREE from 'three';
@@ -34,7 +34,7 @@ import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
 import { enableLightBloom } from './js/bloom.js';
 
 const qp = new URLSearchParams(location.search);
-const MAPID = resolveMapId(qp.get('map') || 'fy_havan');
+const MAPID = resolveMapId(qp.get('map') || 'loja_h');
 const IDS = (qp.get('chars') || 'trapfunk,oakley,coach,emo,blackmetal,gotinha,padata,canarinho').split(',').filter(Boolean);
 const W = +(qp.get('w') || 1600), H = +(qp.get('h') || 900);
 

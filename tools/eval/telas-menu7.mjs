@@ -91,7 +91,7 @@ if (want('02') || want('03')) {
 
 /* ---------- 05 HUD + 06 PAUSA: exigem partida viva ---------- */
 if (want('05') || want('06')) {
-  await page.goto(`${BASE}/?debug=1&auto=P,mst&map=awp_map`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/?debug=1&auto=P,mst&map=praca_poderes`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 240000 });
   await page.waitForTimeout(2000);
   if (want('05')) await shot('05_hud');

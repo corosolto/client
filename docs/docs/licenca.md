@@ -119,7 +119,7 @@ com trabalho mesclado**:
 
 | Quem | O que entrou | Onde |
 |---|---|---|
-| `daltonfontes` | o mapa `fy_pool_day` ("Piscinão da Treta"), 1 commit | está nesta branch |
+| `daltonfontes` | o mapa `piscina_treta` ("Piscinão da Treta"), 1 commit | está nesta branch |
 | **William Oliveira** (`@woliveiras`) | o **cliente Godot desktop**, 13 commits, PR #14 mesclado em 18/07/2026 | **`main` — não está nesta branch** |
 
 :::caution O `git shortlog` da branch de trabalho NÃO enumera os contribuidores do projeto

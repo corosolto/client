@@ -12,7 +12,7 @@ Código: https://github.com/rubenmarcus/csbrasil (AGPL-3.0)
 
 Um jogo de tiro em primeira pessoa que roda direto na aba do navegador, em que
 cinco facções brasileiras caricatas se enfrentam numa reinterpretação do mapa
-`awp_map` do CS 1.6 ambientada em Brasília.
+`praca_poderes` do CS 1.6 ambientada em Brasília.
 
 ## Fatos verificáveis (use estes números)
 

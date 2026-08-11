@@ -20,7 +20,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1200, height: 750 } });
 page.on('pageerror', e => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_pool_day`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'load' });
 await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 60000 });
 await page.waitForTimeout(1000);

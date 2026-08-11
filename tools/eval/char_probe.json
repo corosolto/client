@@ -70,7 +70,7 @@
   "medidoEm": "runtime (MAPS[id].build)",
   "porMapa": [
    {
-    "mapa": "awp_map",
+    "mapa": "praca_poderes",
     "materiais": 104,
     "map": 89,
     "normalMap": 16,
@@ -80,7 +80,7 @@
     "triangulos": 3713
    },
    {
-    "mapa": "fy_pool_day",
+    "mapa": "piscina_treta",
     "materiais": 117,
     "map": 96,
     "normalMap": 0,
@@ -90,7 +90,7 @@
     "triangulos": 4380
    },
    {
-    "mapa": "fy_havan",
+    "mapa": "loja_h",
     "materiais": 250,
     "map": 83,
     "normalMap": 18,
@@ -100,7 +100,7 @@
     "triangulos": 18374
    },
    {
-    "mapa": "fy_ferrovelho",
+    "mapa": "ferro_velho",
     "materiais": 285,
     "map": 247,
     "normalMap": 9,
@@ -110,7 +110,7 @@
     "triangulos": 22914
    },
    {
-    "mapa": "fy_quebrada",
+    "mapa": "quebrada",
     "materiais": 319,
     "map": 194,
     "normalMap": 10,

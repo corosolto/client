@@ -1,10 +1,10 @@
 // Recaptura 1 mapa com teleporte pra coordenada fixa (miolo conhecido do mapa).
-// Uso: node tools/eval/g2ui-map-tp.mjs fy_pool_day 0,23 [-2.4..2.4]
+// Uso: node tools/eval/g2ui-map-tp.mjs piscina_treta 0,23 [-2.4..2.4]
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const OUT = '/tmp/gauntlet/g2ui-maps';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
-const MAP = process.argv[2] || 'fy_pool_day';
+const MAP = process.argv[2] || 'piscina_treta';
 const [TX, TZ] = (process.argv[3] || '0,23').split(',').map(Number);
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

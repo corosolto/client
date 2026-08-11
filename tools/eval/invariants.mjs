@@ -1783,9 +1783,9 @@ function runNode(script, env = {}, args = []) {
      MAP4  "no mapa brasília ... SE ATIRA E FICA A MARCA NO AR como se tivesse uma parede
             invisível" (colisor de bala sem malha visível atrás)
      MAP5/CTF2 "a LOJA FICA VAZIA DOS CANTOS" + "os bots e jogadores têm mais OPÇÕES"
-   SOBRE OS TETOS DA MAP1: o mapa desta rodada (fy_havan) tem que ficar em ZERO — ele foi
+   SOBRE OS TETOS DA MAP1: o mapa desta rodada (loja_h) tem que ficar em ZERO — ele foi
    consertado e é onde o defeito foi relatado. Os outros quatro entram com o teto MEDIDO no
-   baseline a95999a (awp_map 47, fy_pool_day 474, fy_ferrovelho 4), que congela
+   baseline a95999a (praca_poderes 47, piscina_treta 474, ferro_velho 4), que congela
    a dívida existente sem inventar um verde: ela é de outra natureza (no piscinão são células
    no fundo da piscina encostando na parede dela; nos outros, bases de coluna e canteiros
    decorativos) e mexer nesses mapas não estava no pedido. O teto NÃO deixa a dívida crescer:
@@ -1805,7 +1805,7 @@ function runNode(script, env = {}, args = []) {
 
       // ---- MAP1: corpo dentro de sólido ----
       // praca_old saiu do dicionário junto com o mapa (o dono mandou apagar a praça clássica).
-      const TETO_DENTRO = { awp_map: 47, fy_pool_day: 474, fy_havan: 0, fy_ferrovelho: 4 };
+      const TETO_DENTRO = { praca_poderes: 47, piscina_treta: 474, loja_h: 0, ferro_velho: 4 };
       {
         const linhas = [], acima = [], spawnRuins = [];
         for (const [id, teto] of Object.entries(TETO_DENTRO)) {
@@ -1818,13 +1818,13 @@ function runNode(script, env = {}, args = []) {
           !erros.length && !acima.length && !spawnRuins.length,
           erros.length ? `mapa(s) não carregaram: ${erros.map((m) => m.map).join(', ')}`
             : `pontos por mapa (medido/teto): ${linhas.join(', ')} | spawns dentro de sólido: ${spawnRuins.length ? spawnRuins.join(', ') : 0}` +
-              ` | pior penetração no fy_havan ${M.fy_havan ? M.fy_havan.piorPenetracao : '?'} m`);
+              ` | pior penetração no loja_h ${M.loja_h ? M.loja_h.piorPenetracao : '?'} m`);
       }
 
       // ---- MAP2: andar do respawn + respawn visível de fora ----
       /* Duas cláusulas. (a) vale pros 5 mapas: os slots de um time têm que estar TODOS no
          mesmo andar (Δ ≤ 0,30 m, o degrau) — um slot que escorregou do mezanino nasce 3,4 m
-         abaixo dos outros e ninguém percebe. (b) é o pedido literal do dono no fy_havan: o
+         abaixo dos outros e ninguém percebe. (b) é o pedido literal do dono no loja_h: o
          time da loja nasce no ANDAR DE CIMA (chão ≥ 3,0 m) e NENHUM ponto andável a ≥ 25 m
          enxerga a cabeça de quem nasce (medido com o `_losClear` do game.js). 25 m é a
          distância em que o tiro de sniper é instantâneo e o respawn não teve tempo de nada.
@@ -1838,13 +1838,13 @@ function runNode(script, env = {}, args = []) {
           for (const t of (m.exposicaoPorTime || [])) {
             if (t.chaoMax - t.chaoMin > 0.30) desnivel.push(`${m.map}/${t.team} Δ${(t.chaoMax - t.chaoMin).toFixed(2)} m`);
             evid.push(`${m.map}/${t.team} chão ${t.chaoMin} m exp ${(t.fracMedia * 100).toFixed(1)}%`);
-            if (m.map === 'fy_havan' && t.team === 'B') { havanAndar = t.chaoMin; havanExp = t.fracMedia; havanVis = t.maiorVisada; }
+            if (m.map === 'loja_h' && t.team === 'B') { havanAndar = t.chaoMin; havanExp = t.fracMedia; havanVis = t.maiorVisada; }
           }
         }
         const ok = !desnivel.length && havanAndar !== null && havanAndar >= 3.0 && havanExp === 0 && havanVis === 0;
-        put('MAP2', 'cada time nasce todo no MESMO andar, e o respawn da loja (fy_havan/B) fica no andar de cima e não é visto de fora',
+        put('MAP2', 'cada time nasce todo no MESMO andar, e o respawn da loja (loja_h/B) fica no andar de cima e não é visto de fora',
           ok,
-          `fy_havan/B chão ${havanAndar} m (mezanino = 3,4) · exposição ${havanExp === null ? '?' : (havanExp * 100).toFixed(1)}% dos pontos a ≥ 25 m · maior visada ${havanVis} m` +
+          `loja_h/B chão ${havanAndar} m (mezanino = 3,4) · exposição ${havanExp === null ? '?' : (havanExp * 100).toFixed(1)}% dos pontos a ≥ 25 m · maior visada ${havanVis} m` +
           ` | slots fora de nível: ${desnivel.length ? desnivel.join(', ') : 0} | ${evid.join(' · ')}`);
       }
 
@@ -1856,12 +1856,12 @@ function runNode(script, env = {}, args = []) {
          que fez o jogador "escalar parede invisível"), e a TRAVESSIA (o A* e o flood-fill de
          andabilidade têm que subir por ela; o mezanino já foi uma ILHA no grafo). */
       {
-        const m = M.fy_havan;
+        const m = M.loja_h;
         const es = m && (m.escadas || [])[0];
         const tv = m && (m.travessia || [])[0];
         if (!es) {
           put('MAP3', 'a escada do mezanino é uma escada de verdade e o grafo sobe por ela', false,
-            'fy_havan não declarou `world.stairs` — sem declaração não há o que medir');
+            'loja_h não declarou `world.stairs` — sem declaração não há o que medir');
         } else {
           const criterios = [es.okEspelho, es.okPiso, es.okBlondel, es.okLargura, es.okInclinacao, es.okDesvio];
           const fora = criterios.filter((c) => !c).length;
@@ -1881,7 +1881,7 @@ function runNode(script, env = {}, args = []) {
          meio — é o mecanismo do "os bots da loja ficam todos na bandeira do meio";
          (b) uma bandeira a menos de 2 raios (9 m) do spawn mais próximo pode ser capturada
          de dentro do respawn. (c) linha de tiro > 0 quer dizer "existe ALGUM lugar de onde
-         se atira nela": a MID do fy_havan estava cravada na estátua e media 0,0 m. */
+         se atira nela": a MID do loja_h estava cravada na estátua e media 0,0 m. */
       {
         const R_CAP = 4.5, colin = [], perto = [], enterrada = [], evid = [];
         for (const m of (j.mapas || [])) {
@@ -1903,7 +1903,7 @@ function runNode(script, env = {}, args = []) {
       /* ---- MAP2B: o respawn é um LUGAR, não uma fresta ----
          POR QUE ESTA INVARIANTE EXISTE, e por que ela é irmã obrigatória da MAP2: a MAP2
          cobra exposição ZERO e é fácil demais de satisfazer — basta emparedar. Foi o que
-         aconteceu no fy_havan: uma chicana de 19 m a 1,80 m da parede de portas zerou a
+         aconteceu no loja_h: uma chicana de 19 m a 1,80 m da parede de portas zerou a
          exposição E reduziu o respawn a uma faixa de 2,6 m com metade do armário do outro
          lado. Verde na régua, péssimo no jogo. Sem um teto do OUTRO lado, o próximo agente
          reconstrói a fresta — e reconstrói de boa-fé, porque a régua mandava.
@@ -1932,7 +1932,7 @@ function runNode(script, env = {}, args = []) {
          (game.js:2611, raycast NÃO-recursivo). O truque legítimo de dar corpo de bala a um
          GLB (que é Group e o raycast não-recursivo atravessa) é uma CAIXA DE PROCURAÇÃO
          invisível; o defeito é usar a mesma caixa em geometria PROCEDURAL e dimensioná-la
-         pelo AABB do conjunto em vez da massa real. Medido no awp_map: 5 occluders, o pior
+         pelo AABB do conjunto em vez da massa real. Medido no praca_poderes: 5 occluders, o pior
          com 100% da superfície sem nada desenhado atrás até 11,1 m de altura (o "V" entre as
          asas do Panteão da Pátria, que é o vazio que o edifício DESENHA).
          TOLERÂNCIA DECLARADA: 0,35 m — menor que o raio do corpo (0,38), ou seja, uma folga
@@ -1962,20 +1962,20 @@ function runNode(script, env = {}, args = []) {
                  de cobertura ≤ 7,0 m (= duas arestas do grafo, STEP 3,4 m) e densidade ≥
                  0,35× a mediana do próprio mapa. O segundo é o que o dono enunciou e o
                  primeiro é o que tem dente: encher os cantos sobe a MEDIANA junto, então a
-                 razão min/mediana mal se mexe (0,67× -> 0,68× no fy_havan) enquanto o
+                 razão min/mediana mal se mexe (0,67× -> 0,68× no loja_h) enquanto o
                  espaçamento do pior quadrante cai de 7,83 m para 6,24 m.
            CTF2  quantos caminhos SEPARADOS (≥ 6 m de afastamento no miolo) existem entre
                  cada spawn e cada bandeira. É a forma medível de "os bots convergem todos
                  pro meio": com 1, todo bot do time percorre a mesma fita.
          ESCOPO DA MAP5 — declarado, não escondido: a régua roda nos 4 mapas e o número de
-         todos aparece na evidência, mas o TETO só é cobrado no fy_havan. A regra do dono foi
-         enunciada sobre a loja dele; aplicá-la ao awp_map reprovaria a ESPLANADA, cujo vazio
-         é o assunto do mapa (é uma praça monumental de 200 m), e ao fy_pool_day, um salão de
+         todos aparece na evidência, mas o TETO só é cobrado no loja_h. A regra do dono foi
+         enunciada sobre a loja dele; aplicá-la ao praca_poderes reprovaria a ESPLANADA, cujo vazio
+         é o assunto do mapa (é uma praça monumental de 200 m), e ao piscina_treta, um salão de
          25 m onde um quadrante da grade 4×4 mede 6 m — menos que uma gôndola. Cobrar um teto
          de povoamento nesses dois seria pedir outro mapa, não consertar um defeito.
          A CTF2 é cobrada nos 4: "ter mais de um caminho" não é estilo de mapa nenhum. */
       {
-        const ALVO_MAP5 = 'fy_havan';
+        const ALVO_MAP5 = 'loja_h';
         const evid = [], ruins = [];
         for (const m of (j.mapas || [])) {
           if (m.err) continue;
@@ -2027,8 +2027,8 @@ function runNode(script, env = {}, args = []) {
           princípio do AUD1), e varre os outros dois caminhos atrás de qualquer escrita
           em `.material`.
      MAT2 faixa 0,80-1,40 do orçamento do mapa. O piso e o teto não são gosto: o
-          orçamento dos 5 mapas MEDIDOS já varia 1,38× entre si (2,60 no fy_ferrovelho a
-          3,60 no awp_map), então exigir do viewmodel uma faixa MAIS ESTREITA que a que
+          orçamento dos 5 mapas MEDIDOS já varia 1,38× entre si (2,60 no ferro_velho a
+          3,60 no praca_poderes), então exigir do viewmodel uma faixa MAIS ESTREITA que a que
           os próprios mapas têm seria inventar rigor. 1,40 é essa dispersão arredondada
           pra cima; 0,80 é ela espelhada pra baixo.
      FOG1 razão fumaça/céu ≤ 1,00, e o teto é FÍSICO, não estético: uma nuvem iluminada
@@ -2063,7 +2063,7 @@ function runNode(script, env = {}, args = []) {
         const igual = !vm.erro && vm.metalFactor === mfGlb && vm.roughFactor === rfGlb && (vm.envMapIntensity ?? 1) === 1 && mut.length === 0;
         /* ---- MAT1 GANHOU A METADE QUE FALTAVA: CROMATICIDADE ----------------------
            A versão anterior desta invariante mediu só ΔL* (claridade) e ficou VERDE com
-           ΔL* 5,3 no awp_map. O dono jogou e disse: "a mesma arma no chão sai cinza-escura
+           ΔL* 5,3 no praca_poderes. O dono jogou e disse: "a mesma arma no chão sai cinza-escura
            correta, NA MÃO sai dourada/bronze". Os dois são compatíveis — dourado é desvio
            de MATIZ e CROMA, não de claridade, e L* não enxerga nenhum dos dois.
            Agora entra Δa*b* = hypot(Δa*, Δb*) por arma (mão − chão) e a RAZÃO DE CROMA
@@ -2075,7 +2075,7 @@ function runNode(script, env = {}, args = []) {
              mat_shade.py, que é ±0,2 medido dobrando as amostras). Medido HOJE, com o rig
              tingido: 0,84 · 0,40 · 0,64 · 0,09 · 0,19 (média 0,43).
              RAZÃO DE CROMA mediana por mapa dentro de [0,70 ; 1,45]. Antes do conserto o
-             ferro velho estava em 0,66 (arma na mão DESSATURADA) e o awp_map em 2,03 na
+             ferro velho estava em 0,66 (arma na mão DESSATURADA) e o praca_poderes em 2,03 na
              AK (arma na mão com o DOBRO do croma) — a banda exclui os dois estados que o
              dono reprovou e admite o que sobrou.
            A razão de croma só entra na conta com armas de croma mensurável no chão
@@ -2101,7 +2101,7 @@ function runNode(script, env = {}, args = []) {
           if (mR !== null && (mR < CHR_RAZ[0] || mR > CHR_RAZ[1])) foraRaz.push(`${m.map} ${mR.toFixed(2)}×`);
         }
         const legadoPares = (j.shade?.armas || []).map((a) => {
-          const v = a.caminhos['vmLegado@awp_map'], c = a.caminhos['chao@awp_map'];
+          const v = a.caminhos['vmLegado@praca_poderes'], c = a.caminhos['chao@praca_poderes'];
           return (v && c) ? { v, c } : null;
         }).filter(Boolean);
         const legado = legadoPares.map(({ v, c }) => v.Lmean - c.Lmean);
@@ -2114,7 +2114,7 @@ function runNode(script, env = {}, args = []) {
           `(${mut.length} escrita(s) em .material) · ΔL* 1ªpessoa−chão por mapa: ${dL.join(' · ')} | ` +
           `Δa*b* MEDIANO (teto ${CHR_DAB_TETO}): ${dAB.join(' · ')} — fora: ${foraDAB.length ? foraDAB.join(', ') : 0} | ` +
           `razão de croma mão/chão (faixa ${CHR_RAZ[0]}-${CHR_RAZ[1]}): ${razC.join(' · ')} — fora: ${foraRaz.length ? foraRaz.join(', ') : 0}` +
-          (legado.length ? ` | com ?vmmat=legacy no awp_map: ΔL* ${(legado.reduce((s, x) => s + x, 0) / legado.length).toFixed(1)} e Δa*b* ${legadoAB.toFixed(2)}` : '') +
+          (legado.length ? ` | com ?vmmat=legacy no praca_poderes: ΔL* ${(legado.reduce((s, x) => s + x, 0) / legado.length).toFixed(1)} e Δa*b* ${legadoAB.toFixed(2)}` : '') +
           (vm.erro ? ` | ERRO: ${vm.erro}` : ''));
       }
 

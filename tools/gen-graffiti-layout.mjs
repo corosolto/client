@@ -27,7 +27,7 @@
    Uso:
      npm run eval:serve &
      node tools/gen-graffiti-layout.mjs            # os 5
-     node tools/gen-graffiti-layout.mjs fy_quebrada
+     node tools/gen-graffiti-layout.mjs quebrada
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -35,7 +35,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
-const MAPAS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const MAPAS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 const ONLY = process.argv[2];
 
 const gRoot = execSync('npm root -g').toString().trim();

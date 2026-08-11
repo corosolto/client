@@ -11,7 +11,7 @@ const browser = await chromium.launch({
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
 });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
-await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForFunction(() => window.__game.vm.staticVms && window.__game.vm.staticVms.ak, null, { timeout: 180000 });
 await page.evaluate(() => {

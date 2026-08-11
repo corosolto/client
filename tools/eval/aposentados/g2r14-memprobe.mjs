@@ -22,7 +22,7 @@ page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
 page.on('pageerror', e => errs.push(e.message));
 page.on('crash', () => { crashed = true; console.error('!!! RENDERER CRASH (Aw Snap) !!!'); });
 
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_havan&ctf=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=loja_h&ctf=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => !!window.__game, null, { timeout: 180000 });
 // fast-forward: em swiftshader o countdown de 3s (game-time) leva ~60s wall — avança o relógio
 await page.waitForFunction(() => {

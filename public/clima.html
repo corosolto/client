@@ -26,7 +26,7 @@
       hoje evita — e a fumaça volta a discordar do céu, que foi o defeito "a tela lava pra
       branco" que o dono relatou.
 
-  USO   /clima.html?map=fy_havan     (qualquer id de `MAPS`)
+  USO   /clima.html?map=loja_h     (qualquer id de `MAPS`)
   ═══════════════════════════════════════════════════════════════════════════════════
 -->
 <style>
@@ -145,8 +145,8 @@ sol.castShadow = true;
 scene.add(sol, new THREE.HemisphereLight(0x9fb8d0, 0x2a2a26, 0.55));
 
 /* padrão do mapa = o que a tabela diz. `AERIAL_TABELA` não tem entrada para todo mapa
-   (o default é o awp_map), então a leitura passa pelo mesmo fallback do bloom.js. */
-const BASE = AERIAL_TABELA[MAP] || AERIAL_TABELA.awp_map;
+   (o default é o praca_poderes), então a leitura passa pelo mesmo fallback do bloom.js. */
+const BASE = AERIAL_TABELA[MAP] || AERIAL_TABELA.praca_poderes;
 const hex = (n) => '#' + n.toString(16).padStart(6, '0');
 const estado = () => ({ d: BASE.d, color: BASE.color, sun: [...BASE.sun], dir: BASE.dir, exp: 1.0 });
 let E = estado();

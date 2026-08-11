@@ -67,7 +67,7 @@ const LARG_MIN = 1.20;          // largura mínima
 const INCLIN = [25, 40];        // inclinação em GRAUS (o código antigo dizia "30 a 40%", que é rampa)
 
 /* ---- MAP2B: "o respawn é um LUGAR, não uma fresta".
-   POR QUE EXISTE (regressão de 08/2026, relatada pelo dono): o depósito do fy_havan foi
+   POR QUE EXISTE (regressão de 08/2026, relatada pelo dono): o depósito do loja_h foi
    construído com uma chicana-parede de 19 m a 1,80 m da parede de portas, e os 4 spawns
    ficaram numa faixa de 2,6 m de profundidade — a MAP2 (exposição) ficou 0,0%, VERDE, e a
    experiência ficou péssima. Exposição zero é fácil: basta emparedar. O que faltava era a
@@ -115,7 +115,7 @@ const QUAD_N = 4;               // grade QUAD_N × QUAD_N
 const QUAD_MIN_AND = 40;        // m² de chão andável pra um quadrante entrar na conta
 /* DOIS critérios, e o segundo é o que tem dente. O dono enunciou o primeiro ("densidade
    abaixo de X do MEDIANO") e ele sozinho NÃO mede o que ele quer: encher os cantos sobe a
-   mediana junto, então a razão min/mediana fica parada. Medido no fy_havan: antes 0,67×,
+   mediana junto, então a razão min/mediana fica parada. Medido no loja_h: antes 0,67×,
    depois 0,68× — enquanto a densidade ABSOLUTA do pior quadrante subia 1,63 -> 2,57 peças
    por 100 m² (+58%). A razão fica como rede de segurança (pega o mapa onde UM pedaço é
    deserto e o resto é entulhado); quem cobra o povoamento é o espaçamento absoluto.
@@ -157,7 +157,7 @@ for (const mapId of MAP_IDS) {
   ray.camera = g.camera;   // sprites (fumaça/ícone) precisam de câmera pra raycast — ver filtro abaixo
   /* SÓLIDO = malha. Sprite/linha/ponto são billboard e decal: um raio que "encosta" num
      sprite de poeira não significa que o corpo do jogador está dentro de coisa nenhuma.
-     Sem este filtro o awp_map derruba o arnês (Sprite.raycast exige câmera) e, pior,
+     Sem este filtro o praca_poderes derruba o arnês (Sprite.raycast exige câmera) e, pior,
      contaria fumaça como chão. */
   const solido = (h) => h.object && h.object.isMesh && !h.object.isSprite;
   const primeiroSolido = (hits) => { for (const h of hits) if (solido(h)) return h; return null; };

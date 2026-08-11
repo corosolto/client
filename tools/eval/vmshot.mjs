@@ -16,7 +16,7 @@ const p = await b.newPage({ viewport: { width: W, height: H } });
 const errs = [];
 p.on('pageerror', e => errs.push(e.message.split('\n')[0]));
 p.on('console', m => { const t = m.text(); if (m.type()==='error' && !/404|Not Found/.test(t)) errs.push(t.slice(0,200)); });
-await p.goto(`${BASE}/?debug=1&map=fy_ferrovelho&auto=B,bozo`, { waitUntil:'domcontentloaded', timeout:180000 });
+await p.goto(`${BASE}/?debug=1&map=ferro_velho&auto=B,bozo`, { waitUntil:'domcontentloaded', timeout:180000 });
 await p.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 900000 });
 await p.waitForTimeout(4000);
 for (const w of LIST) {

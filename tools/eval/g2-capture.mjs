@@ -1,4 +1,4 @@
-// GAUNTLET 2.0 capture: entra numa partida debug (fy_pool_day, outdoor claro), troca de
+// GAUNTLET 2.0 capture: entra numa partida debug (piscina_treta, outdoor claro), troca de
 // arma via _switchWeapon e captura cada viewmodel. Viewport configurável (aspect 16:9 e
 // 3:2 do MacBook do dono). Falha em qualquer erro de console.
 // Uso: node tools/eval/g2-capture.mjs <outDir> <W,H> [arma1,arma2,...] [segundosEspera]
@@ -24,7 +24,7 @@ const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 let errors = 0;
 page.on('console', m => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); });
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_pool_day`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'load' });
 await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 60000 });
 await page.waitForTimeout(1200);

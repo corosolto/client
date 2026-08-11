@@ -15,7 +15,7 @@
  "flutuando": 0,
  "mapas": [
   {
-   "map": "awp_map",
+   "map": "praca_poderes",
    "waypoints": 554,
    "pickups": 50,
    "spawnPiorDistWaypoint": 3.49,
@@ -983,7 +983,7 @@
    ]
   },
   {
-   "map": "fy_pool_day",
+   "map": "piscina_treta",
    "waypoints": 74,
    "pickups": 72,
    "spawnPiorDistWaypoint": 2.28,
@@ -2369,7 +2369,7 @@
    ]
   },
   {
-   "map": "fy_havan",
+   "map": "loja_h",
    "waypoints": 634,
    "pickups": 64,
    "spawnPiorDistWaypoint": 2.72,
@@ -3603,7 +3603,7 @@
    ]
   },
   {
-   "map": "fy_ferrovelho",
+   "map": "ferro_velho",
    "waypoints": 296,
    "pickups": 60,
    "spawnPiorDistWaypoint": 1.89,
@@ -4761,7 +4761,7 @@
    ]
   },
   {
-   "map": "fy_quebrada",
+   "map": "quebrada",
    "waypoints": 343,
    "pickups": 62,
    "spawnPiorDistWaypoint": 1.21,

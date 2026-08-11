@@ -22,7 +22,7 @@ const page = await browser.newPage({ viewport: { width: W, height: H } });
 let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[page-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
-await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst${XQS}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst${XQS}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForFunction(() => {
   const g = window.__game, m = g.vm.staticVms && g.vm.staticVms.rifle;

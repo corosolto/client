@@ -1,10 +1,10 @@
 // Recaptura 1 mapa teleportando o jogador pra posição de um bot que RODOU o mapa
-// (spawn em corredor → nenhum yaw mostra o miolo). Uso: node tools/eval/g2ui-map-bot.mjs fy_pool_day 12
+// (spawn em corredor → nenhum yaw mostra o miolo). Uso: node tools/eval/g2ui-map-bot.mjs piscina_treta 12
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const OUT = '/tmp/gauntlet/g2ui-maps';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
-const MAP = process.argv[2] || 'fy_pool_day';
+const MAP = process.argv[2] || 'piscina_treta';
 const ROAM = parseFloat(process.argv[3] || '12');
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

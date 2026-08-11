@@ -1,4 +1,4 @@
-// Havan (fy_havan) — CTF, v2: estacionamento MAIOR (76×116, 40+ vagas, 34 modelos de carro)
+// Havan (loja_h) — CTF, v2: estacionamento MAIOR (76×116, 40+ vagas, 34 modelos de carro)
 // e texturas ricas (asfalto c/ óleo+rachadura, azul Havan c/ sujeira). G2-R3: fachada
 // GRECO-ROMANA (frontão c/ logo, colunata, cornija, banners) como skin sobre a estrutura.
 // Time B spawnam
@@ -1589,7 +1589,7 @@ export function buildHavan(scene, T) {
      ρ = 0,0088: 6,7 % a 30 m, 24 % a 60 m, 54 % a 100 m e 92 % a 180 m. A cor-base saiu de
      0xb9c8d2 (chute) pro azul MEDIDO do céu logo acima da silhueta do muro, que é o que
      apaga a aresta; o calor volta pelo termo de contraluz. ?nofog=1 / ?fog2=0. */
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_havan');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('loja_h');
   /* RAZÃO SOL/HEMI (item 8 da revisão; alvo: ΔL* sol↔sombra ≥ 26 no asfalto).
      Estava sol 1,65 / hemi 1,15 — razão 1,43. Com o sol quase a pino (elevação ~65°, ou
      seja N·L ≈ 0,90 no chão), o asfalto iluminado ficava só ~3,1× a sombra, que depois do
@@ -1875,7 +1875,7 @@ export function buildHavan(scene, T) {
      sozinha: ela é malha vertical no caminho do raio como qualquer muro. Nada de
      caso especial pra ela — caso especial é o que não sobrevive à próxima mudança. */
   grafitar({
-    id: 'fy_havan',
+    id: 'loja_h',
     root, T, waypoints: nodes, seed: 5501, passo: 1.0, alcance: 9, cobre: 0.06, minLarg: 0.32,
     /* SÓ DO LADO DE FORA (dono, 07/08: "pode tirar os graffitis de dentro da loja,
        pode deixar só na parte de fora que ficou boa"). O interior da loja é z < -6;

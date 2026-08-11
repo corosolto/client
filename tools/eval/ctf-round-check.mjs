@@ -59,7 +59,7 @@ if (MUT === 'semteto') fonte = fonte.replace(/const CTF_MATCH_TIME = \d+;/, 'con
 
 /* ── CTF-R2/R3: SIMULA a partida (o motor de verdade, não a declaração) ───────────── */
 const textures = initTextures();
-const MAPA = process.env.CTF_MAPA || 'fy_ferrovelho';
+const MAPA = process.env.CTF_MAPA || 'ferro_velho';
 const g = bootGame(MAPA, { textures, ctf: true, seed: 4242 });
 /* MUTAÇÃO `pace`: reproduz EXATAMENTE o estado anterior ao conserto — com `PACE` off, o
    alvo de capturas não era avaliado nunca. Desligar `_checkCtfAlvo` na instância é o

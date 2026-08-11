@@ -9,7 +9,7 @@
    "texRoughMedia": 0.43389176470588225,
    "texMetalFrac05": 0.2652,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 41.06215679199305,
      "Lmedia_por_texel": 43.213427575476516,
      "Lp05": 17.089365576195803,
@@ -35,7 +35,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 50.896441242532745,
      "Lmedia_por_texel": 52.55409552604165,
      "Lp05": 23.360542653904986,
@@ -61,7 +61,7 @@
      "metal_ef": 0.15766062745098042,
      "rough_ef": 0.43389176470588225
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 36.09155323933552,
      "Lmedia_por_texel": 40.099670692073296,
      "Lp05": 11.432527941077485,
@@ -87,7 +87,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 33.910029065107956,
      "Lmedia_por_texel": 36.58499116753873,
      "Lp05": 11.351838033027757,
@@ -113,7 +113,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 44.333399277668704,
      "Lmedia_por_texel": 46.46189435713155,
      "Lp05": 17.233379806164976,
@@ -139,7 +139,7 @@
      "metal_ef": 0.15766062745098042,
      "rough_ef": 0.43389176470588225
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 35.29714603812615,
      "Lmedia_por_texel": 38.019073236485816,
      "Lp05": 8.532093742250701,
@@ -165,7 +165,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 30.343931017326902,
      "Lmedia_por_texel": 32.98737179870155,
      "Lp05": 10.079631246254547,
@@ -191,7 +191,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 41.85697785255704,
      "Lmedia_por_texel": 44.05761558753127,
      "Lp05": 15.749814240475455,
@@ -217,7 +217,7 @@
      "metal_ef": 0.15766062745098042,
      "rough_ef": 0.43389176470588225
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 29.343134548750847,
      "Lmedia_por_texel": 31.800722960534426,
      "Lp05": 7.387661957505296,
@@ -243,7 +243,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 30.615843684715824,
      "Lmedia_por_texel": 33.3767356590449,
      "Lp05": 8.983138242028819,
@@ -269,7 +269,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 41.155468197035084,
      "Lmedia_por_texel": 43.40194938084746,
      "Lp05": 14.290971220249826,
@@ -295,7 +295,7 @@
      "metal_ef": 0.15766062745098042,
      "rough_ef": 0.43389176470588225
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 30.10082027372223,
      "Lmedia_por_texel": 32.44262959969649,
      "Lp05": 6.997061560133574,
@@ -321,7 +321,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 35.8607205849375,
      "Lmedia_por_texel": 38.15546768229484,
      "Lp05": 13.762435444909844,
@@ -347,7 +347,7 @@
      "metal_ef": 0.28665568627450977,
      "rough_ef": 0.43389176470588225
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 48.966472129964814,
      "Lmedia_por_texel": 50.76057190991596,
      "Lp05": 21.458093117401113,
@@ -373,7 +373,7 @@
      "metal_ef": 0.15766062745098042,
      "rough_ef": 0.43389176470588225
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 32.33908630403678,
      "Lmedia_por_texel": 35.30362157983839,
      "Lp05": 10.074137324724195,
@@ -409,7 +409,7 @@
    "texRoughMedia": 0.503193725490196,
    "texMetalFrac05": 0.692,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 47.859146951191946,
      "Lmedia_por_texel": 49.16306038671216,
      "Lp05": 32.65808253223474,
@@ -435,7 +435,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 58.82789790774013,
      "Lmedia_por_texel": 59.79857130476719,
      "Lp05": 44.943043456141254,
@@ -461,7 +461,7 @@
      "metal_ef": 0.23632141176470586,
      "rough_ef": 0.503193725490196
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 41.56569631996705,
      "Lmedia_por_texel": 44.817256585169105,
      "Lp05": 26.08865341616181,
@@ -487,7 +487,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 40.487025119875895,
      "Lmedia_por_texel": 42.22072974943125,
      "Lp05": 25.4230709686043,
@@ -513,7 +513,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 52.3251064587885,
      "Lmedia_por_texel": 53.65956044341754,
      "Lp05": 38.05015562054735,
@@ -539,7 +539,7 @@
      "metal_ef": 0.23632141176470586,
      "rough_ef": 0.503193725490196
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 43.05193062832875,
      "Lmedia_por_texel": 44.848378088816965,
      "Lp05": 28.62612521458189,
@@ -565,7 +565,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 36.371295795294934,
      "Lmedia_por_texel": 38.08795337867551,
      "Lp05": 21.897392066552555,
@@ -591,7 +591,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 49.83349477985423,
      "Lmedia_por_texel": 51.223897919292355,
      "Lp05": 35.414142464201845,
@@ -617,7 +617,7 @@
      "metal_ef": 0.23632141176470586,
      "rough_ef": 0.503193725490196
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 35.68272839962977,
      "Lmedia_por_texel": 38.23808712244193,
      "Lp05": 18.207627795549833,
@@ -643,7 +643,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 36.96648971607045,
      "Lmedia_por_texel": 38.64572083504759,
      "Lp05": 22.898262228732513,
@@ -669,7 +669,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 49.18690044602511,
      "Lmedia_por_texel": 50.52918266727137,
      "Lp05": 35.419371429658014,
@@ -695,7 +695,7 @@
      "metal_ef": 0.23632141176470586,
      "rough_ef": 0.503193725490196
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 36.92277026460052,
      "Lmedia_por_texel": 38.54535084747931,
      "Lp05": 20.183410043526166,
@@ -721,7 +721,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 42.10948920367357,
      "Lmedia_por_texel": 43.51174409146176,
      "Lp05": 27.647524319707948,
@@ -747,7 +747,7 @@
      "metal_ef": 0.429675294117647,
      "rough_ef": 0.503193725490196
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 57.10753862219399,
      "Lmedia_por_texel": 58.18144024787096,
      "Lp05": 43.23096230177299,
@@ -773,7 +773,7 @@
      "metal_ef": 0.23632141176470586,
      "rough_ef": 0.503193725490196
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 37.93967248447563,
      "Lmedia_por_texel": 40.17814440642302,
      "Lp05": 23.763143248390776,
@@ -809,7 +809,7 @@
    "texRoughMedia": 0.3459592156862745,
    "texMetalFrac05": 0.2108,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 37.084132838712904,
      "Lmedia_por_texel": 39.508551465366246,
      "Lp05": 18.11542382185023,
@@ -835,7 +835,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 46.45021235449486,
      "Lmedia_por_texel": 48.2602985192365,
      "Lp05": 27.372324240709133,
@@ -861,7 +861,7 @@
      "metal_ef": 0.14828000000000002,
      "rough_ef": 0.3459592156862745
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 32.545897828952036,
      "Lmedia_por_texel": 36.256728765556,
      "Lp05": 13.28383970630874,
@@ -887,7 +887,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 30.136933231585008,
      "Lmedia_por_texel": 33.15928596783041,
      "Lp05": 12.12288107727666,
@@ -913,7 +913,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 39.88610733269385,
      "Lmedia_por_texel": 42.19615108590532,
      "Lp05": 20.879547134302406,
@@ -939,7 +939,7 @@
      "metal_ef": 0.14828000000000002,
      "rough_ef": 0.3459592156862745
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 32.60599512865317,
      "Lmedia_por_texel": 34.88811602891105,
      "Lp05": 12.354705513637992,
@@ -965,7 +965,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 26.691712358055625,
      "Lmedia_por_texel": 29.785259499400528,
      "Lp05": 10.834225850481499,
@@ -991,7 +991,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 37.210474658768064,
      "Lmedia_por_texel": 39.6234340196606,
      "Lp05": 19.062444156195603,
@@ -1017,7 +1017,7 @@
      "metal_ef": 0.14828000000000002,
      "rough_ef": 0.3459592156862745
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 26.20106382138201,
      "Lmedia_por_texel": 28.53628622119592,
      "Lp05": 8.891155760211522,
@@ -1043,7 +1043,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 26.478016970932792,
      "Lmedia_por_texel": 29.669184505835723,
      "Lp05": 9.984320027135535,
@@ -1069,7 +1069,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 36.060974345334756,
      "Lmedia_por_texel": 38.53185264304501,
      "Lp05": 18.326781751712844,
@@ -1095,7 +1095,7 @@
      "metal_ef": 0.14828000000000002,
      "rough_ef": 0.3459592156862745
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 26.65712198073882,
      "Lmedia_por_texel": 28.78607119773776,
      "Lp05": 9.082500774924277,
@@ -1121,7 +1121,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 31.856427523664106,
      "Lmedia_por_texel": 34.565491222023624,
      "Lp05": 14.69316550793354,
@@ -1147,7 +1147,7 @@
      "metal_ef": 0.2696,
      "rough_ef": 0.3459592156862745
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 44.16555942016336,
      "Lmedia_por_texel": 46.11093888732975,
      "Lp05": 25.242954049461723,
@@ -1173,7 +1173,7 @@
      "metal_ef": 0.14828000000000002,
      "rough_ef": 0.3459592156862745
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 29.276698488642054,
      "Lmedia_por_texel": 32.04093413354511,
      "Lp05": 12.027203201273522,
@@ -1209,7 +1209,7 @@
    "texRoughMedia": 0.60392,
    "texMetalFrac05": 0.5904,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 48.05115540012133,
      "Lmedia_por_texel": 49.50104809271022,
      "Lp05": 29.66276435202368,
@@ -1235,7 +1235,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 60.17755588371734,
      "Lmedia_por_texel": 61.07624740961611,
      "Lp05": 45.4077009655735,
@@ -1261,7 +1261,7 @@
      "metal_ef": 0.2995028235294118,
      "rough_ef": 0.60392
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 41.70846879886412,
      "Lmedia_por_texel": 45.27530443597657,
      "Lp05": 21.925318999089377,
@@ -1287,7 +1287,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 40.60677772473653,
      "Lmedia_por_texel": 42.489453671112855,
      "Lp05": 22.374540694103835,
@@ -1313,7 +1313,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 53.71295661709871,
      "Lmedia_por_texel": 54.953509353463794,
      "Lp05": 38.21423522269396,
@@ -1339,7 +1339,7 @@
      "metal_ef": 0.2995028235294118,
      "rough_ef": 0.60392
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 41.52775400045558,
      "Lmedia_por_texel": 44.19453246514458,
      "Lp05": 17.720117112200093,
@@ -1365,7 +1365,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 36.454127957977775,
      "Lmedia_por_texel": 38.325016118063175,
      "Lp05": 19.465782248993932,
@@ -1391,7 +1391,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 51.24902120086108,
      "Lmedia_por_texel": 52.54609680736685,
      "Lp05": 35.75505639977663,
@@ -1417,7 +1417,7 @@
      "metal_ef": 0.2995028235294118,
      "rough_ef": 0.60392
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 35.19550689671877,
      "Lmedia_por_texel": 38.09017144076654,
      "Lp05": 14.474258210702573,
@@ -1443,7 +1443,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 37.09347518099117,
      "Lmedia_por_texel": 39.01717239729946,
      "Lp05": 19.861921798716622,
@@ -1469,7 +1469,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 50.67662503221267,
      "Lmedia_por_texel": 51.937596628865606,
      "Lp05": 35.847611673524085,
@@ -1495,7 +1495,7 @@
      "metal_ef": 0.2995028235294118,
      "rough_ef": 0.60392
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 36.16584788658201,
      "Lmedia_por_texel": 38.43711819545152,
      "Lp05": 15.88277453661766,
@@ -1521,7 +1521,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 42.4065088751766,
      "Lmedia_por_texel": 43.92370728835353,
      "Lp05": 25.03199360992142,
@@ -1547,7 +1547,7 @@
      "metal_ef": 0.5445505882352941,
      "rough_ef": 0.60392
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 58.52240084441904,
      "Lmedia_por_texel": 59.5244259569905,
      "Lp05": 43.59378265708656,
@@ -1573,7 +1573,7 @@
      "metal_ef": 0.2995028235294118,
      "rough_ef": 0.60392
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 37.534321693402575,
      "Lmedia_por_texel": 40.193133706845124,
      "Lp05": 19.0842956812398,
@@ -1609,7 +1609,7 @@
    "texRoughMedia": 0.3891749019607843,
    "texMetalFrac05": 0.7448,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 41.53252930187115,
      "Lmedia_por_texel": 43.828080516596614,
      "Lp05": 19.518245799093528,
@@ -1635,7 +1635,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 54.87564321923262,
      "Lmedia_por_texel": 56.151086569262155,
      "Lp05": 30.58875765013716,
@@ -1661,7 +1661,7 @@
      "metal_ef": 0.3752682352941177,
      "rough_ef": 0.3891749019607843
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 37.625378899719045,
      "Lmedia_por_texel": 41.17747766171925,
      "Lp05": 14.099461628129617,
@@ -1687,7 +1687,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 34.300342174143026,
      "Lmedia_por_texel": 37.14694215045407,
      "Lp05": 13.392097232045508,
@@ -1713,7 +1713,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 48.51340672737467,
      "Lmedia_por_texel": 50.19040276960784,
      "Lp05": 24.086703867563955,
@@ -1739,7 +1739,7 @@
      "metal_ef": 0.3752682352941177,
      "rough_ef": 0.3891749019607843
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 35.092261741627205,
      "Lmedia_por_texel": 37.99111586413499,
      "Lp05": 12.096857674819084,
@@ -1765,7 +1765,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 30.67527937955997,
      "Lmedia_por_texel": 33.543788343428396,
      "Lp05": 11.765172582492987,
@@ -1791,7 +1791,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 45.746875330117646,
      "Lmedia_por_texel": 47.507551587010035,
      "Lp05": 21.99916485785844,
@@ -1817,7 +1817,7 @@
      "metal_ef": 0.3752682352941177,
      "rough_ef": 0.3891749019607843
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 29.38957179008582,
      "Lmedia_por_texel": 31.82491560392061,
      "Lp05": 9.364088285598317,
@@ -1843,7 +1843,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 30.595874267167645,
      "Lmedia_por_texel": 33.579266459322554,
      "Lp05": 10.946601269674034,
@@ -1869,7 +1869,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 44.573145623317,
      "Lmedia_por_texel": 46.33941802669687,
      "Lp05": 20.89280780387,
@@ -1895,7 +1895,7 @@
      "metal_ef": 0.3752682352941177,
      "rough_ef": 0.3891749019607843
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 29.833826116414315,
      "Lmedia_por_texel": 32.457410629607246,
      "Lp05": 9.513281479433395,
@@ -1921,7 +1921,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 36.398805686714255,
      "Lmedia_por_texel": 38.86506431004901,
      "Lp05": 15.849799419140354,
@@ -1947,7 +1947,7 @@
      "metal_ef": 0.6823058823529411,
      "rough_ef": 0.3891749019607843
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 52.66668724681105,
      "Lmedia_por_texel": 54.05450178161281,
      "Lp05": 28.587595926871124,
@@ -1973,7 +1973,7 @@
      "metal_ef": 0.3752682352941177,
      "rough_ef": 0.3891749019607843
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 33.41695411489471,
      "Lmedia_por_texel": 36.147510413152645,
      "Lp05": 12.458457956302887,
@@ -2009,7 +2009,7 @@
    "texRoughMedia": 0.376398431372549,
    "texMetalFrac05": 0.6688,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 39.43952660064207,
      "Lmedia_por_texel": 42.165331054023014,
      "Lp05": 16.75141374609469,
@@ -2035,7 +2035,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 51.568976729935024,
      "Lmedia_por_texel": 53.29576005008626,
      "Lp05": 22.551470142567567,
@@ -2061,7 +2061,7 @@
      "metal_ef": 0.34108713725490203,
      "rough_ef": 0.376398431372549
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 35.17582873016495,
      "Lmedia_por_texel": 39.61789434340497,
      "Lp05": 12.291852841007387,
@@ -2087,7 +2087,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 32.1933122597409,
      "Lmedia_por_texel": 35.545602922809465,
      "Lp05": 10.862649447082475,
@@ -2113,7 +2113,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 45.01806061189969,
      "Lmedia_por_texel": 47.2292588965618,
      "Lp05": 16.576683017017373,
@@ -2139,7 +2139,7 @@
      "metal_ef": 0.34108713725490203,
      "rough_ef": 0.376398431372549
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 31.946935104799387,
      "Lmedia_por_texel": 35.60564737253239,
      "Lp05": 10.694952021696587,
@@ -2165,7 +2165,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 28.588436137349632,
      "Lmedia_por_texel": 31.986311301915407,
      "Lp05": 9.930630427845447,
@@ -2191,7 +2191,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 42.348219681273996,
      "Lmedia_por_texel": 44.657400589253044,
      "Lp05": 15.18609543442074,
@@ -2217,7 +2217,7 @@
      "metal_ef": 0.34108713725490203,
      "rough_ef": 0.376398431372549
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 26.693355769770477,
      "Lmedia_por_texel": 29.418025780146905,
      "Lp05": 8.35677487556329,
@@ -2243,7 +2243,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 28.59583633821947,
      "Lmedia_por_texel": 32.19526922763762,
      "Lp05": 9.163551344076836,
@@ -2269,7 +2269,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 41.389811366657135,
      "Lmedia_por_texel": 43.751260818775556,
      "Lp05": 14.093252014330076,
@@ -2295,7 +2295,7 @@
      "metal_ef": 0.34108713725490203,
      "rough_ef": 0.376398431372549
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 27.124940671917308,
      "Lmedia_por_texel": 30.433963800582905,
      "Lp05": 8.400437893704392,
@@ -2321,7 +2321,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 34.37820718168061,
      "Lmedia_por_texel": 37.311011562589464,
      "Lp05": 13.668640677538338,
@@ -2347,7 +2347,7 @@
      "metal_ef": 0.6201584313725491,
      "rough_ef": 0.376398431372549
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 49.37572998622027,
      "Lmedia_por_texel": 51.24376618810717,
      "Lp05": 20.59185536442552,
@@ -2373,7 +2373,7 @@
      "metal_ef": 0.34108713725490203,
      "rough_ef": 0.376398431372549
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 30.674030227446348,
      "Lmedia_por_texel": 34.16747661574711,
      "Lp05": 11.11140615101386,
@@ -2409,7 +2409,7 @@
    "texRoughMedia": 0.2633960784313725,
    "texMetalFrac05": 0.54,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 33.64705697355198,
      "Lmedia_por_texel": 37.02063242297195,
      "Lp05": 11.79431697912942,
@@ -2435,7 +2435,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 44.83934660606232,
      "Lmedia_por_texel": 46.838742508110045,
      "Lp05": 25.031819478153828,
@@ -2461,7 +2461,7 @@
      "metal_ef": 0.2853210196078431,
      "rough_ef": 0.2633960784313725
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 30.43190754501316,
      "Lmedia_por_texel": 33.88690841239599,
      "Lp05": 10.82743646729445,
@@ -2487,7 +2487,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 26.921215587719193,
      "Lmedia_por_texel": 30.84962786196164,
      "Lp05": 6.6913027591547865,
@@ -2513,7 +2513,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 38.23836213083126,
      "Lmedia_por_texel": 40.72557959946256,
      "Lp05": 18.606108393251972,
@@ -2539,7 +2539,7 @@
      "metal_ef": 0.2853210196078431,
      "rough_ef": 0.2633960784313725
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 28.81559543237774,
      "Lmedia_por_texel": 31.33900954273317,
      "Lp05": 6.707627196402798,
@@ -2565,7 +2565,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 24.271118153999574,
      "Lmedia_por_texel": 28.06670823037077,
      "Lp05": 7.054263313285624,
@@ -2591,7 +2591,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 35.745058392057416,
      "Lmedia_por_texel": 38.29731428762043,
      "Lp05": 16.997747324051396,
@@ -2617,7 +2617,7 @@
      "metal_ef": 0.2853210196078431,
      "rough_ef": 0.2633960784313725
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 23.98669201071264,
      "Lmedia_por_texel": 26.52202315637225,
      "Lp05": 6.776533787420753,
@@ -2643,7 +2643,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 23.91425071130983,
      "Lmedia_por_texel": 27.975993243352555,
      "Lp05": 5.529367584716561,
@@ -2669,7 +2669,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 34.801356832365315,
      "Lmedia_por_texel": 37.42999545315755,
      "Lp05": 16.075191078895834,
@@ -2695,7 +2695,7 @@
      "metal_ef": 0.2853210196078431,
      "rough_ef": 0.2633960784313725
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 24.120864322749675,
      "Lmedia_por_texel": 26.57757802891856,
      "Lp05": 5.426590807650082,
@@ -2721,7 +2721,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 29.188525015419494,
      "Lmedia_por_texel": 32.75047501707416,
      "Lp05": 9.91602349914789,
@@ -2747,7 +2747,7 @@
      "metal_ef": 0.5187654901960784,
      "rough_ef": 0.2633960784313725
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 42.46415981600714,
      "Lmedia_por_texel": 44.57041902496244,
      "Lp05": 22.8088481711832,
@@ -2773,7 +2773,7 @@
      "metal_ef": 0.2853210196078431,
      "rough_ef": 0.2633960784313725
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 27.40815327946282,
      "Lmedia_por_texel": 30.25555255939649,
      "Lp05": 9.430332486809519,
@@ -2809,7 +2809,7 @@
    "texRoughMedia": 0.4065349019607843,
    "texMetalFrac05": 0.118,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 36.188053780749485,
      "Lmedia_por_texel": 38.53737924845276,
      "Lp05": 21.94844799052793,
@@ -2835,7 +2835,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 46.19541988552448,
      "Lmedia_por_texel": 47.94581418475926,
      "Lp05": 31.38268078831633,
@@ -2861,7 +2861,7 @@
      "metal_ef": 0.1964945098039216,
      "rough_ef": 0.4065349019607843
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 31.554485648653593,
      "Lmedia_por_texel": 35.562449840523946,
      "Lp05": 16.627675463793828,
@@ -2887,7 +2887,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 29.208712310319697,
      "Lmedia_por_texel": 32.14166898191789,
      "Lp05": 15.516726244932055,
@@ -2913,7 +2913,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 39.61770606044561,
      "Lmedia_por_texel": 41.85954317784211,
      "Lp05": 24.67871200401232,
@@ -2939,7 +2939,7 @@
      "metal_ef": 0.1964945098039216,
      "rough_ef": 0.4065349019607843
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 31.277767870169306,
      "Lmedia_por_texel": 33.64146650470571,
      "Lp05": 17.706834885463373,
@@ -2965,7 +2965,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 25.63673757239533,
      "Lmedia_por_texel": 28.616626465946354,
      "Lp05": 13.476065611182296,
@@ -2991,7 +2991,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 36.859977251649255,
      "Lmedia_por_texel": 39.20318866655105,
      "Lp05": 22.5149871570654,
@@ -3017,7 +3017,7 @@
      "metal_ef": 0.1964945098039216,
      "rough_ef": 0.4065349019607843
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 24.93779957640411,
      "Lmedia_por_texel": 27.3492275560269,
      "Lp05": 11.107113665209543,
@@ -3043,7 +3043,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 25.468893568438094,
      "Lmedia_por_texel": 28.539726169471734,
      "Lp05": 13.173340648411621,
@@ -3069,7 +3069,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 35.71455235531556,
      "Lmedia_por_texel": 38.100042658852786,
      "Lp05": 21.95636878678482,
@@ -3095,7 +3095,7 @@
      "metal_ef": 0.1964945098039216,
      "rough_ef": 0.4065349019607843
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 25.383565652442883,
      "Lmedia_por_texel": 27.533383706138768,
      "Lp05": 11.998319334081057,
@@ -3121,7 +3121,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 30.89174067792049,
      "Lmedia_por_texel": 33.502689425041346,
      "Lp05": 17.9434070325618,
@@ -3147,7 +3147,7 @@
      "metal_ef": 0.35726274509803924,
      "rough_ef": 0.4065349019607843
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 43.94302558367828,
      "Lmedia_por_texel": 45.83449787691627,
      "Lp05": 29.208276443064662,
@@ -3173,7 +3173,7 @@
      "metal_ef": 0.1964945098039216,
      "rough_ef": 0.4065349019607843
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 28.018168080874876,
      "Lmedia_por_texel": 30.930283858270432,
      "Lp05": 15.080814355961376,
@@ -3209,7 +3209,7 @@
    "texRoughMedia": 0.5028125490196079,
    "texMetalFrac05": 0.3232,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 35.24813471577152,
      "Lmedia_por_texel": 36.95382377086476,
      "Lp05": 17.881842727366674,
@@ -3235,7 +3235,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 46.265971838133574,
      "Lmedia_por_texel": 47.588455404175235,
      "Lp05": 23.586838794802524,
@@ -3261,7 +3261,7 @@
      "metal_ef": 0.18576196078431373,
      "rough_ef": 0.5028125490196079
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 31.957056687221776,
      "Lmedia_por_texel": 35.51452276695372,
      "Lp05": 11.627854707120107,
@@ -3287,7 +3287,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 28.347818277017236,
      "Lmedia_por_texel": 30.41699609470874,
      "Lp05": 11.686407456442868,
@@ -3313,7 +3313,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 39.97796101939372,
      "Lmedia_por_texel": 41.67033783346913,
      "Lp05": 17.381178930157184,
@@ -3339,7 +3339,7 @@
      "metal_ef": 0.18576196078431373,
      "rough_ef": 0.5028125490196079
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 28.65773548110351,
      "Lmedia_por_texel": 31.02626075708794,
      "Lp05": 10.418410260946075,
@@ -3365,7 +3365,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 25.0977088847019,
      "Lmedia_por_texel": 26.937340629495935,
      "Lp05": 10.375227948053748,
@@ -3391,7 +3391,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 37.343739621160545,
      "Lmedia_por_texel": 39.01576838910583,
      "Lp05": 15.870188121748129,
@@ -3417,7 +3417,7 @@
      "metal_ef": 0.18576196078431373,
      "rough_ef": 0.5028125490196079
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 24.763560658704296,
      "Lmedia_por_texel": 26.865212717771595,
      "Lp05": 7.258963731316583,
@@ -3443,7 +3443,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 24.665696376454104,
      "Lmedia_por_texel": 26.63715735985604,
      "Lp05": 9.235784525683208,
@@ -3469,7 +3469,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 36.056384198865906,
      "Lmedia_por_texel": 37.7411681884834,
      "Lp05": 15.07420988903202,
@@ -3495,7 +3495,7 @@
      "metal_ef": 0.18576196078431373,
      "rough_ef": 0.5028125490196079
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 24.066613341812946,
      "Lmedia_por_texel": 25.59874564870593,
      "Lp05": 6.866574118912051,
@@ -3521,7 +3521,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 30.35606378194592,
      "Lmedia_por_texel": 32.06101975464572,
      "Lp05": 14.42868172107432,
@@ -3547,7 +3547,7 @@
      "metal_ef": 0.33774901960784315,
      "rough_ef": 0.5028125490196079
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 44.16324138637103,
      "Lmedia_por_texel": 45.58570393199769,
      "Lp05": 21.831762752808828,
@@ -3573,7 +3573,7 @@
      "metal_ef": 0.18576196078431373,
      "rough_ef": 0.5028125490196079
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 27.767015421636042,
      "Lmedia_por_texel": 30.186265521798656,
      "Lp05": 10.3180776778201,
@@ -3609,7 +3609,7 @@
    "texRoughMedia": 0.34850039215686274,
    "texMetalFrac05": 0.5056,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 35.39821701837695,
      "Lmedia_por_texel": 38.25762075307312,
      "Lp05": 15.708302170276934,
@@ -3635,7 +3635,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 46.87591497532219,
      "Lmedia_por_texel": 48.764680971505015,
      "Lp05": 24.035022071956284,
@@ -3661,7 +3661,7 @@
      "metal_ef": 0.27312611764705885,
      "rough_ef": 0.34850039215686274
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 31.959970377771544,
      "Lmedia_por_texel": 35.917937391070325,
      "Lp05": 11.55175875446669,
@@ -3687,7 +3687,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 28.39928918460735,
      "Lmedia_por_texel": 31.861839217462986,
      "Lp05": 10.02648985779702,
@@ -3713,7 +3713,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 40.31335832194367,
      "Lmedia_por_texel": 42.70494586879575,
      "Lp05": 17.7710433779676,
@@ -3739,7 +3739,7 @@
      "metal_ef": 0.27312611764705885,
      "rough_ef": 0.34850039215686274
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 29.494683686161874,
      "Lmedia_por_texel": 32.33664704938486,
      "Lp05": 9.19180704573575,
@@ -3765,7 +3765,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 25.227492718039844,
      "Lmedia_por_texel": 28.684485577472525,
      "Lp05": 9.265527466761945,
@@ -3791,7 +3791,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 37.63559386137684,
      "Lmedia_por_texel": 40.12125643832999,
      "Lp05": 16.23224270299297,
@@ -3817,7 +3817,7 @@
      "metal_ef": 0.27312611764705885,
      "rough_ef": 0.34850039215686274
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 24.333523177757904,
      "Lmedia_por_texel": 26.743726041674126,
      "Lp05": 7.600295906427965,
@@ -3843,7 +3843,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 24.972564068918288,
      "Lmedia_por_texel": 28.63038746499447,
      "Lp05": 8.030641860053784,
@@ -3869,7 +3869,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 36.56101047518234,
      "Lmedia_por_texel": 39.12002366670936,
      "Lp05": 15.143782904583333,
@@ -3895,7 +3895,7 @@
      "metal_ef": 0.27312611764705885,
      "rough_ef": 0.34850039215686274
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 24.53947571244169,
      "Lmedia_por_texel": 27.128867199924063,
      "Lp05": 7.01891723600514,
@@ -3921,7 +3921,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 30.567810150288498,
      "Lmedia_por_texel": 33.657807067588195,
      "Lp05": 12.777706810534976,
@@ -3947,7 +3947,7 @@
      "metal_ef": 0.49659294117647057,
      "rough_ef": 0.34850039215686274
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 44.549640851074216,
      "Lmedia_por_texel": 46.57405228950608,
      "Lp05": 21.943899120008936,
@@ -3973,7 +3973,7 @@
      "metal_ef": 0.27312611764705885,
      "rough_ef": 0.34850039215686274
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 28.168735126677035,
      "Lmedia_por_texel": 31.246218348147302,
      "Lp05": 10.32714632368111,
@@ -4009,7 +4009,7 @@
    "texRoughMedia": 0.5204564705882353,
    "texMetalFrac05": 0.8932,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 28.91859483680147,
      "Lmedia_por_texel": 31.92100558523244,
      "Lp05": 10.335495446954901,
@@ -4035,7 +4035,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 41.50447956279592,
      "Lmedia_por_texel": 43.61671531800488,
      "Lp05": 20.5762088667963,
@@ -4061,7 +4061,7 @@
      "metal_ef": 0.4119694117647059,
      "rough_ef": 0.5204564705882353
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 25.501749767614793,
      "Lmedia_por_texel": 30.892727836303564,
      "Lp05": 7.3887796316514,
@@ -4087,7 +4087,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 22.36891121519189,
      "Lmedia_por_texel": 25.83903024447502,
      "Lp05": 5.888889826963044,
@@ -4113,7 +4113,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 34.98156073484786,
      "Lmedia_por_texel": 37.61851594701973,
      "Lp05": 14.73178881230562,
@@ -4139,7 +4139,7 @@
      "metal_ef": 0.4119694117647059,
      "rough_ef": 0.5204564705882353
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 21.693381672159433,
      "Lmedia_por_texel": 25.11968896500867,
      "Lp05": 4.724068953823902,
@@ -4165,7 +4165,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 19.496693621341223,
      "Lmedia_por_texel": 22.68529636085512,
      "Lp05": 6.264434502932839,
@@ -4191,7 +4191,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 32.38929346383719,
      "Lmedia_por_texel": 35.066342745732555,
      "Lp05": 13.599981153087807,
@@ -4217,7 +4217,7 @@
      "metal_ef": 0.4119694117647059,
      "rough_ef": 0.5204564705882353
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 18.40006703048249,
      "Lmedia_por_texel": 20.76655706789185,
      "Lp05": 5.331469021417838,
@@ -4243,7 +4243,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 18.98226263115802,
      "Lmedia_por_texel": 22.496458043582873,
      "Lp05": 4.697417544386197,
@@ -4269,7 +4269,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 31.27351336139057,
      "Lmedia_por_texel": 34.048399716964866,
      "Lp05": 12.359692065163216,
@@ -4295,7 +4295,7 @@
      "metal_ef": 0.4119694117647059,
      "rough_ef": 0.5204564705882353
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 17.577054220234146,
      "Lmedia_por_texel": 19.953459136867167,
      "Lp05": 4.039712281249955,
@@ -4321,7 +4321,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 24.462934715628435,
      "Lmedia_por_texel": 27.504548881651093,
      "Lp05": 8.599286304329471,
@@ -4347,7 +4347,7 @@
      "metal_ef": 0.749035294117647,
      "rough_ef": 0.5204564705882353
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 39.410974490565856,
      "Lmedia_por_texel": 41.67418531902458,
      "Lp05": 18.915326897570658,
@@ -4373,7 +4373,7 @@
      "metal_ef": 0.4119694117647059,
      "rough_ef": 0.5204564705882353
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 21.333625161816503,
      "Lmedia_por_texel": 25.268275864814758,
      "Lp05": 6.844656226059476,
@@ -4409,7 +4409,7 @@
    "texRoughMedia": 0.43755921568627454,
    "texMetalFrac05": 0.3544,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 32.26266255621611,
      "Lmedia_por_texel": 35.15184663462568,
      "Lp05": 13.762792715650981,
@@ -4435,7 +4435,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 42.1250916448725,
      "Lmedia_por_texel": 44.350190028900194,
      "Lp05": 21.33138979670123,
@@ -4461,7 +4461,7 @@
      "metal_ef": 0.21436800000000003,
      "rough_ef": 0.43755921568627454
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 28.36962998276359,
      "Lmedia_por_texel": 33.12277710941605,
      "Lp05": 9.69513955818065,
@@ -4487,7 +4487,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 25.51771494894317,
      "Lmedia_por_texel": 28.979209827977513,
      "Lp05": 8.438297951890299,
@@ -4513,7 +4513,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 35.589552357940974,
      "Lmedia_por_texel": 38.36081896298993,
      "Lp05": 15.46465059813838,
@@ -4539,7 +4539,7 @@
      "metal_ef": 0.21436800000000003,
      "rough_ef": 0.43755921568627454
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 26.275393447190122,
      "Lmedia_por_texel": 29.305754140423243,
      "Lp05": 6.843075712166202,
@@ -4565,7 +4565,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 22.342837766041935,
      "Lmedia_por_texel": 25.71914040981374,
      "Lp05": 8.038268324073421,
@@ -4591,7 +4591,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 32.93150684484677,
      "Lmedia_por_texel": 35.788193453948104,
      "Lp05": 14.194343420246458,
@@ -4617,7 +4617,7 @@
      "metal_ef": 0.21436800000000003,
      "rough_ef": 0.43755921568627454
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 21.40162859656753,
      "Lmedia_por_texel": 23.8432769613055,
      "Lp05": 6.475288785829773,
@@ -4643,7 +4643,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 21.946839211860567,
      "Lmedia_por_texel": 25.56016994870046,
      "Lp05": 6.598624474863998,
@@ -4669,7 +4669,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 31.759557198661472,
      "Lmedia_por_texel": 34.73898205152671,
      "Lp05": 12.90924057258718,
@@ -4695,7 +4695,7 @@
      "metal_ef": 0.21436800000000003,
      "rough_ef": 0.43755921568627454
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 21.254270994992474,
      "Lmedia_por_texel": 23.763990719109458,
      "Lp05": 5.526514060663809,
@@ -4721,7 +4721,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 27.42068773172528,
      "Lmedia_por_texel": 30.499028503684613,
      "Lp05": 11.183506220852799,
@@ -4747,7 +4747,7 @@
      "metal_ef": 0.38976,
      "rough_ef": 0.43755921568627454
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 39.865188676724266,
      "Lmedia_por_texel": 42.252125525967266,
      "Lp05": 19.561865786610063,
@@ -4773,7 +4773,7 @@
      "metal_ef": 0.21436800000000003,
      "rough_ef": 0.43755921568627454
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 24.589989793061772,
      "Lmedia_por_texel": 28.110114803510996,
      "Lp05": 8.640495757396533,
@@ -4809,7 +4809,7 @@
    "texRoughMedia": 0.39399372549019607,
    "texMetalFrac05": 0.7888,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 35.18144693533471,
      "Lmedia_por_texel": 38.23312194199309,
      "Lp05": 13.12227513477756,
@@ -4835,7 +4835,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 48.13500721843587,
      "Lmedia_por_texel": 49.97964383416788,
      "Lp05": 23.896057697876962,
@@ -4861,7 +4861,7 @@
      "metal_ef": 0.3957282352941177,
      "rough_ef": 0.39399372549019607
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 31.54232600137135,
      "Lmedia_por_texel": 36.27582854318076,
      "Lp05": 9.656276850861506,
@@ -4887,7 +4887,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 28.151034745178798,
      "Lmedia_por_texel": 31.80434452361842,
      "Lp05": 7.790991751897549,
@@ -4913,7 +4913,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 41.53575731352194,
      "Lmedia_por_texel": 43.887113830243216,
      "Lp05": 17.41818373323531,
@@ -4939,7 +4939,7 @@
      "metal_ef": 0.3957282352941177,
      "rough_ef": 0.39399372549019607
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 27.812064876759955,
      "Lmedia_por_texel": 31.520033205620745,
      "Lp05": 6.2461928668801345,
@@ -4965,7 +4965,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 24.94972073822435,
      "Lmedia_por_texel": 28.554708111493547,
      "Lp05": 7.526345684895738,
@@ -4991,7 +4991,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 38.90925654954466,
      "Lmedia_por_texel": 41.34656027501664,
      "Lp05": 15.902236144681172,
@@ -5017,7 +5017,7 @@
      "metal_ef": 0.3957282352941177,
      "rough_ef": 0.39399372549019607
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 23.284680096624406,
      "Lmedia_por_texel": 25.884661605965498,
      "Lp05": 6.406069773078253,
@@ -5043,7 +5043,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 24.863436655860873,
      "Lmedia_por_texel": 28.70957539885113,
      "Lp05": 6.053391406432359,
@@ -5069,7 +5069,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 38.00543082500132,
      "Lmedia_por_texel": 40.49830011168614,
      "Lp05": 14.59515302611501,
@@ -5095,7 +5095,7 @@
      "metal_ef": 0.3957282352941177,
      "rough_ef": 0.39399372549019607
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 23.517903641369273,
      "Lmedia_por_texel": 26.725633723225513,
      "Lp05": 5.114755712732528,
@@ -5121,7 +5121,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 30.46524986979309,
      "Lmedia_por_texel": 33.67880255691764,
      "Lp05": 10.664045134028171,
@@ -5147,7 +5147,7 @@
      "metal_ef": 0.7195058823529412,
      "rough_ef": 0.39399372549019607
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 45.9662430784525,
      "Lmedia_por_texel": 47.95126170192934,
      "Lp05": 21.960892531430098,
@@ -5173,7 +5173,7 @@
      "metal_ef": 0.3957282352941177,
      "rough_ef": 0.39399372549019607
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 27.200961496671656,
      "Lmedia_por_texel": 30.87120295393638,
      "Lp05": 8.180732683059496,
@@ -5209,7 +5209,7 @@
    "texRoughMedia": 0.4820533333333334,
    "texMetalFrac05": 0.6024,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 38.521772877684576,
      "Lmedia_por_texel": 40.80406721690118,
      "Lp05": 20.5245569611957,
@@ -5235,7 +5235,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 50.69511216814668,
      "Lmedia_por_texel": 52.17898993070784,
      "Lp05": 30.97528492878063,
@@ -5261,7 +5261,7 @@
      "metal_ef": 0.31524015686274515,
      "rough_ef": 0.4820533333333334
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 33.626244082510404,
      "Lmedia_por_texel": 38.245612630111424,
      "Lp05": 14.339416348678053,
@@ -5287,7 +5287,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 31.336336355465303,
      "Lmedia_por_texel": 34.142279079697346,
      "Lp05": 14.09364076603132,
@@ -5313,7 +5313,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 44.14772490877273,
      "Lmedia_por_texel": 46.08047095371327,
      "Lp05": 24.22465980229319,
@@ -5339,7 +5339,7 @@
      "metal_ef": 0.31524015686274515,
      "rough_ef": 0.4820533333333334
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 31.045591493337497,
      "Lmedia_por_texel": 34.42582186644988,
      "Lp05": 11.66920888065744,
@@ -5365,7 +5365,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 27.52969659124809,
      "Lmedia_por_texel": 30.273174917003676,
      "Lp05": 12.353388133780427,
@@ -5391,7 +5391,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 41.40368458077533,
      "Lmedia_por_texel": 43.40658713197502,
      "Lp05": 22.17329706113094,
@@ -5417,7 +5417,7 @@
      "metal_ef": 0.31524015686274515,
      "rough_ef": 0.4820533333333334
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 25.929499326051438,
      "Lmedia_por_texel": 28.7210082888402,
      "Lp05": 9.6154987140687,
@@ -5443,7 +5443,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 27.51511361589444,
      "Lmedia_por_texel": 30.423425658901724,
      "Lp05": 11.532750464047808,
@@ -5469,7 +5469,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 40.372477967323285,
      "Lmedia_por_texel": 42.3811292634543,
      "Lp05": 21.52710775938266,
@@ -5495,7 +5495,7 @@
      "metal_ef": 0.31524015686274515,
      "rough_ef": 0.4820533333333334
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 25.99255111942674,
      "Lmedia_por_texel": 28.745918266334304,
      "Lp05": 9.53953111289145,
@@ -5521,7 +5521,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 33.250495413300996,
      "Lmedia_por_texel": 35.6451335036946,
      "Lp05": 16.685229560028297,
@@ -5547,7 +5547,7 @@
      "metal_ef": 0.5731639215686275,
      "rough_ef": 0.4820533333333334
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 48.62208499990772,
      "Lmedia_por_texel": 50.242441980856015,
      "Lp05": 29.009639911270938,
@@ -5573,7 +5573,7 @@
      "metal_ef": 0.31524015686274515,
      "rough_ef": 0.4820533333333334
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 29.09854782879874,
      "Lmedia_por_texel": 32.54546086991537,
      "Lp05": 12.36444211147423,
@@ -5609,7 +5609,7 @@
    "texRoughMedia": 0.5134086274509804,
    "texMetalFrac05": 0.5852,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 37.875550545029576,
      "Lmedia_por_texel": 39.80893435215588,
      "Lp05": 17.920825054883686,
@@ -5635,7 +5635,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 49.96511612698174,
      "Lmedia_por_texel": 51.34158997681107,
      "Lp05": 31.763191524346915,
@@ -5661,7 +5661,7 @@
      "metal_ef": 0.3044705098039216,
      "rough_ef": 0.5134086274509804
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 32.703624643516,
      "Lmedia_por_texel": 37.08110371176742,
      "Lp05": 11.57988562403236,
@@ -5687,7 +5687,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 30.765022955907906,
      "Lmedia_por_texel": 33.171080715154,
      "Lp05": 12.142826989601375,
@@ -5713,7 +5713,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 43.35227716908741,
      "Lmedia_por_texel": 45.16198508643593,
      "Lp05": 25.108214197688753,
@@ -5739,7 +5739,7 @@
      "metal_ef": 0.3044705098039216,
      "rough_ef": 0.5134086274509804
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 31.195264792846462,
      "Lmedia_por_texel": 34.09158710231187,
      "Lp05": 7.993137801182833,
@@ -5765,7 +5765,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 27.058088988250873,
      "Lmedia_por_texel": 29.35658238817366,
      "Lp05": 10.532909726301856,
@@ -5791,7 +5791,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 40.717252946846436,
      "Lmedia_por_texel": 42.57835386035047,
      "Lp05": 23.034403965539447,
@@ -5817,7 +5817,7 @@
      "metal_ef": 0.3044705098039216,
      "rough_ef": 0.5134086274509804
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 26.10939980422473,
      "Lmedia_por_texel": 28.743124603283224,
      "Lp05": 7.407413905558832,
@@ -5843,7 +5843,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 27.173520292505053,
      "Lmedia_por_texel": 29.582320042427565,
      "Lp05": 9.595018610379629,
@@ -5869,7 +5869,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 39.88395195601248,
      "Lmedia_por_texel": 41.72377941086356,
      "Lp05": 22.649376061004318,
@@ -5895,7 +5895,7 @@
      "metal_ef": 0.3044705098039216,
      "rough_ef": 0.5134086274509804
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 26.264632470221493,
      "Lmedia_por_texel": 28.34214361145433,
      "Lp05": 7.489472512459653,
@@ -5921,7 +5921,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 32.57702339120689,
      "Lmedia_por_texel": 34.59643252864601,
      "Lp05": 14.338670026647204,
@@ -5947,7 +5947,7 @@
      "metal_ef": 0.5535827450980393,
      "rough_ef": 0.5134086274509804
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 48.03666969660636,
      "Lmedia_por_texel": 49.53372420027735,
      "Lp05": 29.98050588663377,
@@ -5973,7 +5973,7 @@
      "metal_ef": 0.3044705098039216,
      "rough_ef": 0.5134086274509804
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 28.496919451721084,
      "Lmedia_por_texel": 31.62482993369934,
      "Lp05": 10.078136847664634,
@@ -6009,7 +6009,7 @@
    "texRoughMedia": 0.28835137254901966,
    "texMetalFrac05": 0.28,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 30.305585365723854,
      "Lmedia_por_texel": 33.87505238020168,
      "Lp05": 14.968577000434639,
@@ -6035,7 +6035,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 39.25049035429675,
      "Lmedia_por_texel": 41.79341211187353,
      "Lp05": 22.504984819592096,
@@ -6061,7 +6061,7 @@
      "metal_ef": 0.16448149019607844,
      "rough_ef": 0.28835137254901966
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 27.37840045854273,
      "Lmedia_por_texel": 31.4526625032509,
      "Lp05": 12.47178920922746,
@@ -6087,7 +6087,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 23.55092309482438,
      "Lmedia_por_texel": 27.837787058112195,
      "Lp05": 9.238784004952468,
@@ -6113,7 +6113,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 32.58853414952842,
      "Lmedia_por_texel": 35.738989949388014,
      "Lp05": 16.354427765426955,
@@ -6139,7 +6139,7 @@
      "metal_ef": 0.16448149019607844,
      "rough_ef": 0.28835137254901966
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 24.824056988961356,
      "Lmedia_por_texel": 27.8174220320796,
      "Lp05": 9.296970361005801,
@@ -6165,7 +6165,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 20.860782118347476,
      "Lmedia_por_texel": 25.182213571538036,
      "Lp05": 8.835519914386094,
@@ -6191,7 +6191,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 30.044810575561517,
      "Lmedia_por_texel": 33.3015122641952,
      "Lp05": 15.003762215264171,
@@ -6217,7 +6217,7 @@
      "metal_ef": 0.16448149019607844,
      "rough_ef": 0.28835137254901966
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 20.109889772327964,
      "Lmedia_por_texel": 22.601849060934736,
      "Lp05": 7.869407011241658,
@@ -6243,7 +6243,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 20.41121204724665,
      "Lmedia_por_texel": 25.009514350361854,
      "Lp05": 7.548998794869967,
@@ -6269,7 +6269,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 29.055990195386897,
      "Lmedia_por_texel": 32.45620555293503,
      "Lp05": 14.001305236553364,
@@ -6295,7 +6295,7 @@
      "metal_ef": 0.16448149019607844,
      "rough_ef": 0.28835137254901966
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 20.224719113581312,
      "Lmedia_por_texel": 23.08372191453993,
      "Lp05": 7.019012312711687,
@@ -6321,7 +6321,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 25.847447327975768,
      "Lmedia_por_texel": 29.76236561759694,
      "Lp05": 12.294312448907824,
@@ -6347,7 +6347,7 @@
      "metal_ef": 0.2990572549019607,
      "rough_ef": 0.28835137254901966
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 36.72773682599906,
      "Lmedia_por_texel": 39.41298722672826,
      "Lp05": 20.47222978703227,
@@ -6373,7 +6373,7 @@
      "metal_ef": 0.16448149019607844,
      "rough_ef": 0.28835137254901966
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 23.921946854707542,
      "Lmedia_por_texel": 27.214182806847496,
      "Lp05": 11.008129260117212,
@@ -6409,7 +6409,7 @@
    "texRoughMedia": 0.32012235294117647,
    "texMetalFrac05": 0.0232,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 39.46310033716131,
      "Lmedia_por_texel": 41.67129331409371,
      "Lp05": 21.40270440020558,
@@ -6435,7 +6435,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 47.688594613072,
      "Lmedia_por_texel": 49.433578659480695,
      "Lp05": 27.873954095771474,
@@ -6461,7 +6461,7 @@
      "metal_ef": 0.04282580392156863,
      "rough_ef": 0.32012235294117647
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 34.68424243419308,
      "Lmedia_por_texel": 37.937374779194805,
      "Lp05": 16.294718414857165,
@@ -6487,7 +6487,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 32.44968836763478,
      "Lmedia_por_texel": 35.252967928944805,
      "Lp05": 14.972418195916223,
@@ -6513,7 +6513,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 41.14177880129275,
      "Lmedia_por_texel": 43.3793618136779,
      "Lp05": 21.329458915985718,
@@ -6539,7 +6539,7 @@
      "metal_ef": 0.04282580392156863,
      "rough_ef": 0.32012235294117647
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 35.55366442109463,
      "Lmedia_por_texel": 37.51229825583584,
      "Lp05": 16.990403709665017,
@@ -6565,7 +6565,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 28.866173651412137,
      "Lmedia_por_texel": 31.796969850776524,
      "Lp05": 13.152952824464727,
@@ -6591,7 +6591,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 38.46207129047829,
      "Lmedia_por_texel": 40.805107003966945,
      "Lp05": 19.444858287147213,
@@ -6617,7 +6617,7 @@
      "metal_ef": 0.04282580392156863,
      "rough_ef": 0.32012235294117647
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 28.508993659862178,
      "Lmedia_por_texel": 30.781446320144482,
      "Lp05": 11.046475115055,
@@ -6643,7 +6643,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 28.77258644054774,
      "Lmedia_por_texel": 31.738245193517294,
      "Lp05": 12.555558386383012,
@@ -6669,7 +6669,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 37.37259994882851,
      "Lmedia_por_texel": 39.76089907237849,
      "Lp05": 18.534016961957633,
@@ -6695,7 +6695,7 @@
      "metal_ef": 0.04282580392156863,
      "rough_ef": 0.32012235294117647
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 29.29918347540285,
      "Lmedia_por_texel": 31.225541117797174,
      "Lp05": 11.561758660540868,
@@ -6721,7 +6721,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 34.09349905809629,
      "Lmedia_por_texel": 36.61225643083843,
      "Lp05": 17.46237002266824,
@@ -6747,7 +6747,7 @@
      "metal_ef": 0.07786509803921567,
      "rough_ef": 0.32012235294117647
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 45.402360678017054,
      "Lmedia_por_texel": 47.27588974616772,
      "Lp05": 25.634921269331414,
@@ -6773,7 +6773,7 @@
      "metal_ef": 0.04282580392156863,
      "rough_ef": 0.32012235294117647
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 31.58193802966593,
      "Lmedia_por_texel": 34.00440975845563,
      "Lp05": 14.936445381133673,
@@ -6809,7 +6809,7 @@
    "texRoughMedia": 0.36523921568627454,
    "texMetalFrac05": 0.0048,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 32.4868126927701,
      "Lmedia_por_texel": 35.42790355864265,
      "Lp05": 18.509227517840117,
@@ -6835,7 +6835,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 39.838201078764456,
      "Lmedia_por_texel": 42.28928045353644,
      "Lp05": 24.51661033096878,
@@ -6861,7 +6861,7 @@
      "metal_ef": 0.02240203921568628,
      "rough_ef": 0.36523921568627454
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 28.628493214233547,
      "Lmedia_por_texel": 33.021175120284994,
      "Lp05": 14.421511468889005,
@@ -6887,7 +6887,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 25.621870696802095,
      "Lmedia_por_texel": 29.240603155808383,
      "Lp05": 12.45638333487247,
@@ -6913,7 +6913,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 33.18186689890678,
      "Lmedia_por_texel": 36.225064663331416,
      "Lp05": 18.316194564407752,
@@ -6939,7 +6939,7 @@
      "metal_ef": 0.02240203921568628,
      "rough_ef": 0.36523921568627454
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 27.097269036160615,
      "Lmedia_por_texel": 29.9442375524933,
      "Lp05": 14.802321891521458,
@@ -6965,7 +6965,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 22.443166063536726,
      "Lmedia_por_texel": 26.139170105326684,
      "Lp05": 11.032999258031875,
@@ -6991,7 +6991,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 30.559638539044805,
      "Lmedia_por_texel": 33.72004898645083,
      "Lp05": 16.737864598241565,
@@ -7017,7 +7017,7 @@
      "metal_ef": 0.02240203921568628,
      "rough_ef": 0.36523921568627454
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 21.5485631331228,
      "Lmedia_por_texel": 23.97372521914639,
      "Lp05": 9.20374969863611,
@@ -7043,7 +7043,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 22.143944772100166,
      "Lmedia_por_texel": 26.020875271127604,
      "Lp05": 10.436459781503753,
@@ -7069,7 +7069,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 29.516182015971786,
      "Lmedia_por_texel": 32.816935220888126,
      "Lp05": 16.03146607613788,
@@ -7095,7 +7095,7 @@
      "metal_ef": 0.02240203921568628,
      "rough_ef": 0.36523921568627454
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 21.854447092008115,
      "Lmedia_por_texel": 24.48539694576045,
      "Lp05": 9.298052264633252,
@@ -7121,7 +7121,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 27.571590268669564,
      "Lmedia_por_texel": 30.846514021217892,
      "Lp05": 15.06920232257282,
@@ -7147,7 +7147,7 @@
      "metal_ef": 0.04073098039215686,
      "rough_ef": 0.36523921568627454
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 37.43847924540659,
      "Lmedia_por_texel": 40.05342974629106,
      "Lp05": 22.719046219740974,
@@ -7173,7 +7173,7 @@
      "metal_ef": 0.02240203921568628,
      "rough_ef": 0.36523921568627454
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 25.00669318628934,
      "Lmedia_por_texel": 28.331967462794516,
      "Lp05": 12.832547806851757,
@@ -7209,7 +7209,7 @@
    "texRoughMedia": 0.3276627450980392,
    "texMetalFrac05": 0.5316,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 36.20740903631587,
      "Lmedia_por_texel": 39.16497509209074,
      "Lp05": 15.207314784053835,
@@ -7235,7 +7235,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 47.40284780888398,
      "Lmedia_por_texel": 49.41477202515693,
      "Lp05": 20.382108649464186,
@@ -7261,7 +7261,7 @@
      "metal_ef": 0.2754598431372549,
      "rough_ef": 0.3276627450980392
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 32.84366188355139,
      "Lmedia_por_texel": 36.870720027377494,
      "Lp05": 11.371982411981136,
@@ -7287,7 +7287,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 29.143858658971556,
      "Lmedia_por_texel": 32.748465315549296,
      "Lp05": 9.604082753192294,
@@ -7313,7 +7313,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 40.8548979890129,
      "Lmedia_por_texel": 43.3852143124975,
      "Lp05": 14.36117915736332,
@@ -7339,7 +7339,7 @@
      "metal_ef": 0.2754598431372549,
      "rough_ef": 0.3276627450980392
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 29.958865900935574,
      "Lmedia_por_texel": 33.135420545742704,
      "Lp05": 9.171867165941766,
@@ -7365,7 +7365,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 25.945109020061416,
      "Lmedia_por_texel": 29.596709759294683,
      "Lp05": 8.954650654173971,
@@ -7391,7 +7391,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 38.20258887075153,
      "Lmedia_por_texel": 40.83622088701269,
      "Lp05": 13.222088953916408,
@@ -7417,7 +7417,7 @@
      "metal_ef": 0.2754598431372549,
      "rough_ef": 0.3276627450980392
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 24.729219543398084,
      "Lmedia_por_texel": 27.172083480182454,
      "Lp05": 7.1915971686839315,
@@ -7443,7 +7443,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 25.738411016020848,
      "Lmedia_por_texel": 29.594080035703886,
      "Lp05": 7.420238016979035,
@@ -7469,7 +7469,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 37.14861449008981,
      "Lmedia_por_texel": 39.88252169530038,
      "Lp05": 11.956130701595931,
@@ -7495,7 +7495,7 @@
      "metal_ef": 0.2754598431372549,
      "rough_ef": 0.3276627450980392
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 25.110456956256225,
      "Lmedia_por_texel": 28.061315666184832,
      "Lp05": 6.533292006372476,
@@ -7521,7 +7521,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 31.39831284757904,
      "Lmedia_por_texel": 34.61319091325497,
      "Lp05": 12.242920465058887,
@@ -7547,7 +7547,7 @@
      "metal_ef": 0.5008360784313726,
      "rough_ef": 0.3276627450980392
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 45.04254447421875,
      "Lmedia_por_texel": 47.195807585938184,
      "Lp05": 18.212453494923565,
@@ -7573,7 +7573,7 @@
      "metal_ef": 0.2754598431372549,
      "rough_ef": 0.3276627450980392
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 28.854275412322536,
      "Lmedia_por_texel": 32.03264814401887,
      "Lp05": 10.122799625101386,
@@ -7609,7 +7609,7 @@
    "texRoughMedia": 0.41562352941176467,
    "texMetalFrac05": 0.742,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 40.51072105792706,
      "Lmedia_por_texel": 42.889668098421204,
      "Lp05": 21.275835861436825,
@@ -7635,7 +7635,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 53.8854258714219,
      "Lmedia_por_texel": 55.19483478430642,
      "Lp05": 38.00492296753282,
@@ -7661,7 +7661,7 @@
      "metal_ef": 0.38031788235294123,
      "rough_ef": 0.41562352941176467
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 35.94603446545171,
      "Lmedia_por_texel": 40.026557222464206,
      "Lp05": 17.266084509965104,
@@ -7687,7 +7687,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 33.118260970746455,
      "Lmedia_por_texel": 36.08117491138798,
      "Lp05": 14.609823661110347,
@@ -7713,7 +7713,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 47.199911697245525,
      "Lmedia_por_texel": 48.94367117018475,
      "Lp05": 30.836961762154615,
@@ -7739,7 +7739,7 @@
      "metal_ef": 0.38031788235294123,
      "rough_ef": 0.41562352941176467
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 33.69072186932813,
      "Lmedia_por_texel": 37.03797758763889,
      "Lp05": 12.484829436256923,
@@ -7765,7 +7765,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 29.47792774776508,
      "Lmedia_por_texel": 32.47488868650459,
      "Lp05": 13.08919863509374,
@@ -7791,7 +7791,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 44.58392756359764,
      "Lmedia_por_texel": 46.41218208790456,
      "Lp05": 28.39354030690255,
@@ -7817,7 +7817,7 @@
      "metal_ef": 0.38031788235294123,
      "rough_ef": 0.41562352941176467
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 27.928432772080427,
      "Lmedia_por_texel": 30.557229342183422,
      "Lp05": 10.871663018769823,
@@ -7843,7 +7843,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 29.76499668065363,
      "Lmedia_por_texel": 32.91472495342601,
      "Lp05": 12.573986469475443,
@@ -7869,7 +7869,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 43.876593216697046,
      "Lmedia_por_texel": 45.687537210227255,
      "Lp05": 28.318624773083847,
@@ -7895,7 +7895,7 @@
      "metal_ef": 0.38031788235294123,
      "rough_ef": 0.41562352941176467
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 28.720588313144642,
      "Lmedia_por_texel": 31.8505229930897,
      "Lp05": 11.009472273134445,
@@ -7921,7 +7921,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 35.32443230200378,
      "Lmedia_por_texel": 37.86605401779181,
      "Lp05": 17.67854834705161,
@@ -7947,7 +7947,7 @@
      "metal_ef": 0.6914870588235295,
      "rough_ef": 0.41562352941176467
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 51.858268953042,
      "Lmedia_por_texel": 53.292563230512116,
      "Lp05": 35.69232490636044,
@@ -7973,7 +7973,7 @@
      "metal_ef": 0.38031788235294123,
      "rough_ef": 0.41562352941176467
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 31.647037290801592,
      "Lmedia_por_texel": 34.78802452055306,
      "Lp05": 14.830727660691899,
@@ -8009,7 +8009,7 @@
    "texRoughMedia": 0.4084517647058824,
    "texMetalFrac05": 0.2916,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 41.10966893077548,
      "Lmedia_por_texel": 43.41895652171421,
      "Lp05": 17.330564212481455,
@@ -8035,7 +8035,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 50.498534758204826,
      "Lmedia_por_texel": 52.31927577863798,
      "Lp05": 23.061807221430577,
@@ -8061,7 +8061,7 @@
      "metal_ef": 0.1747921568627451,
      "rough_ef": 0.4084517647058824
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 36.24937911769088,
      "Lmedia_por_texel": 40.187706993311004,
      "Lp05": 12.526451271579134,
@@ -8087,7 +8087,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 34.029983121680104,
      "Lmedia_por_texel": 36.916217455495755,
      "Lp05": 11.3656422643678,
@@ -8113,7 +8113,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 44.01281103425051,
      "Lmedia_por_texel": 46.32679186643852,
      "Lp05": 16.737112614262273,
@@ -8139,7 +8139,7 @@
      "metal_ef": 0.1747921568627451,
      "rough_ef": 0.4084517647058824
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 35.50153767807616,
      "Lmedia_por_texel": 38.085035134479,
      "Lp05": 10.635217977668344,
@@ -8165,7 +8165,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 30.425453570285626,
      "Lmedia_por_texel": 33.342476981110345,
      "Lp05": 10.308698695259967,
@@ -8191,7 +8191,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 41.484458677158365,
      "Lmedia_por_texel": 43.8839266326179,
      "Lp05": 15.413326781838979,
@@ -8217,7 +8217,7 @@
      "metal_ef": 0.1747921568627451,
      "rough_ef": 0.4084517647058824
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 29.307389801256715,
      "Lmedia_por_texel": 31.803427052669374,
      "Lp05": 8.234607638940982,
@@ -8243,7 +8243,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 30.505904591896787,
      "Lmedia_por_texel": 33.52779259512132,
      "Lp05": 9.313549356358493,
@@ -8269,7 +8269,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 40.60672858657791,
      "Lmedia_por_texel": 43.07123905694049,
      "Lp05": 14.292994247480468,
@@ -8295,7 +8295,7 @@
      "metal_ef": 0.1747921568627451,
      "rough_ef": 0.4084517647058824
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 30.024555820034816,
      "Lmedia_por_texel": 32.39665353779323,
      "Lp05": 8.040188173678054,
@@ -8321,7 +8321,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 35.89962663811155,
      "Lmedia_por_texel": 38.42634318434462,
      "Lp05": 14.061628666245579,
@@ -8347,7 +8347,7 @@
      "metal_ef": 0.31780392156862747,
      "rough_ef": 0.4084517647058824
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 48.42423371961523,
      "Lmedia_por_texel": 50.381922197876165,
      "Lp05": 20.96997809649818,
@@ -8373,7 +8373,7 @@
      "metal_ef": 0.1747921568627451,
      "rough_ef": 0.4084517647058824
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 32.46312711462542,
      "Lmedia_por_texel": 35.418795771260115,
      "Lp05": 11.211776516123226,
@@ -8409,7 +8409,7 @@
    "texRoughMedia": 0.6615796078431373,
    "texMetalFrac05": 0.4668,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 33.99838257777628,
      "Lmedia_por_texel": 35.77933268918787,
      "Lp05": 15.88130792223108,
@@ -8435,7 +8435,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 45.67561600463556,
      "Lmedia_por_texel": 46.95297018897438,
      "Lp05": 29.905964192064147,
@@ -8461,7 +8461,7 @@
      "metal_ef": 0.25628792156862745,
      "rough_ef": 0.6615796078431373
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 29.106770468791172,
      "Lmedia_por_texel": 33.20235630503506,
      "Lp05": 10.736697855200823,
@@ -8487,7 +8487,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 26.99448101351304,
      "Lmedia_por_texel": 29.19228540204387,
      "Lp05": 10.199187303467845,
@@ -8513,7 +8513,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 39.00585251159822,
      "Lmedia_por_texel": 40.6835734470148,
      "Lp05": 23.10303046701776,
@@ -8539,7 +8539,7 @@
      "metal_ef": 0.25628792156862745,
      "rough_ef": 0.6615796078431373
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 27.655797980369556,
      "Lmedia_por_texel": 30.46499009961084,
      "Lp05": 6.518229779603876,
@@ -8565,7 +8565,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 23.7480703260305,
      "Lmedia_por_texel": 25.773682429735015,
      "Lp05": 9.276327098361723,
@@ -8591,7 +8591,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 36.702834079551124,
      "Lmedia_por_texel": 38.39264316071169,
      "Lp05": 21.19703192136886,
@@ -8617,7 +8617,7 @@
      "metal_ef": 0.25628792156862745,
      "rough_ef": 0.6615796078431373
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 23.11534394543185,
      "Lmedia_por_texel": 25.633129949936933,
      "Lp05": 6.846317657651534,
@@ -8643,7 +8643,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 24.034420343871798,
      "Lmedia_por_texel": 26.216049326977796,
      "Lp05": 8.02063744930608,
@@ -8669,7 +8669,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 36.21324745530789,
      "Lmedia_por_texel": 37.90182791136056,
      "Lp05": 20.791769249548025,
@@ -8695,7 +8695,7 @@
      "metal_ef": 0.25628792156862745,
      "rough_ef": 0.6615796078431373
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 23.38206930354392,
      "Lmedia_por_texel": 25.530790552317306,
      "Lp05": 6.235916273703964,
@@ -8721,7 +8721,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 29.000233071452648,
      "Lmedia_por_texel": 30.7829886265781,
      "Lp05": 12.907061386792233,
@@ -8747,7 +8747,7 @@
      "metal_ef": 0.4659780392156863,
      "rough_ef": 0.6615796078431373
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 44.0256193182344,
      "Lmedia_por_texel": 45.41891066098196,
      "Lp05": 27.95287593446725,
@@ -8773,7 +8773,7 @@
      "metal_ef": 0.25628792156862745,
      "rough_ef": 0.6615796078431373
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 25.10497364013117,
      "Lmedia_por_texel": 27.919955986463524,
      "Lp05": 9.225510656677528,
@@ -8809,7 +8809,7 @@
    "texRoughMedia": 0.36683921568627453,
    "texMetalFrac05": 0.6108,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 38.865188002549395,
      "Lmedia_por_texel": 41.32514849333437,
      "Lp05": 19.7117459947103,
@@ -8835,7 +8835,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 50.6638263424768,
      "Lmedia_por_texel": 52.198484915388,
      "Lp05": 32.96844877410796,
@@ -8861,7 +8861,7 @@
      "metal_ef": 0.296119137254902,
      "rough_ef": 0.36683921568627453
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 34.427415118168895,
      "Lmedia_por_texel": 38.38165692094991,
      "Lp05": 15.097077620159844,
@@ -8887,7 +8887,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 31.64363648084514,
      "Lmedia_por_texel": 34.71551432721716,
      "Lp05": 13.415848051680687,
@@ -8913,7 +8913,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 44.00045116862605,
      "Lmedia_por_texel": 46.00489948497104,
      "Lp05": 26.112092154147454,
@@ -8939,7 +8939,7 @@
      "metal_ef": 0.296119137254902,
      "rough_ef": 0.36683921568627453
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 33.07706245547721,
      "Lmedia_por_texel": 35.95290647868931,
      "Lp05": 11.924867476784058,
@@ -8965,7 +8965,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 28.205533429238624,
      "Lmedia_por_texel": 31.330532403155054,
      "Lp05": 11.937528399431443,
@@ -8991,7 +8991,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 41.40707777313824,
      "Lmedia_por_texel": 43.50484713055606,
      "Lp05": 24.037084918520357,
@@ -9017,7 +9017,7 @@
      "metal_ef": 0.296119137254902,
      "rough_ef": 0.36683921568627453
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 27.077282945613256,
      "Lmedia_por_texel": 29.556539181585876,
      "Lp05": 9.762927023433122,
@@ -9043,7 +9043,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 28.466287525951728,
      "Lmedia_por_texel": 31.690045750848046,
      "Lp05": 11.157667606743818,
@@ -9069,7 +9069,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 40.690174111637035,
      "Lmedia_por_texel": 42.79258325941891,
      "Lp05": 23.57933016455977,
@@ -9095,7 +9095,7 @@
      "metal_ef": 0.296119137254902,
      "rough_ef": 0.36683921568627453
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 28.08279209002824,
      "Lmedia_por_texel": 30.726836562383014,
      "Lp05": 9.750002744751168,
@@ -9121,7 +9121,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 33.76608012227918,
      "Lmedia_por_texel": 36.45587788651165,
      "Lp05": 16.163381683312743,
@@ -9147,7 +9147,7 @@
      "metal_ef": 0.5383984313725491,
      "rough_ef": 0.36683921568627453
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 48.58608134997147,
      "Lmedia_por_texel": 50.245166099201434,
      "Lp05": 30.852150295958495,
@@ -9173,7 +9173,7 @@
      "metal_ef": 0.296119137254902,
      "rough_ef": 0.36683921568627453
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 30.594407892000227,
      "Lmedia_por_texel": 33.58603836545157,
      "Lp05": 13.26665970830198,
@@ -9209,7 +9209,7 @@
    "texRoughMedia": 0.4065098039215686,
    "texMetalFrac05": 0.5196,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 41.07010457253679,
      "Lmedia_por_texel": 43.31406375877292,
      "Lp05": 16.849580869077634,
@@ -9235,7 +9235,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 52.491738499176,
      "Lmedia_por_texel": 53.94284914503933,
      "Lp05": 27.662300934850848,
@@ -9261,7 +9261,7 @@
      "metal_ef": 0.25834643137254903,
      "rough_ef": 0.4065098039215686
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 36.475416292068935,
      "Lmedia_por_texel": 40.111381469116935,
      "Lp05": 12.254755469907217,
@@ -9287,7 +9287,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 33.909506531114346,
      "Lmedia_por_texel": 36.69282890724582,
      "Lp05": 11.001648853952119,
@@ -9313,7 +9313,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 45.92678342678268,
      "Lmedia_por_texel": 47.81967082598448,
      "Lp05": 20.7636921621528,
@@ -9339,7 +9339,7 @@
      "metal_ef": 0.25834643137254903,
      "rough_ef": 0.4065098039215686
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 35.65927148388857,
      "Lmedia_por_texel": 38.26754633320986,
      "Lp05": 9.269646431182384,
@@ -9365,7 +9365,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 30.486264798778812,
      "Lmedia_por_texel": 33.26668161529858,
      "Lp05": 9.948573365455832,
@@ -9391,7 +9391,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 43.4461496543159,
      "Lmedia_por_texel": 45.41098076793432,
      "Lp05": 18.83847454947133,
@@ -9417,7 +9417,7 @@
      "metal_ef": 0.25834643137254903,
      "rough_ef": 0.4065098039215686
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 29.614285467856657,
      "Lmedia_por_texel": 32.01065597897203,
      "Lp05": 7.994379342232919,
@@ -9443,7 +9443,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 30.76238701140835,
      "Lmedia_por_texel": 33.650240614901485,
      "Lp05": 8.819652171917014,
@@ -9469,7 +9469,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 42.76033714042431,
      "Lmedia_por_texel": 44.73994570861506,
      "Lp05": 17.717502922306018,
@@ -9495,7 +9495,7 @@
      "metal_ef": 0.25834643137254903,
      "rough_ef": 0.4065098039215686
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 30.529205691833614,
      "Lmedia_por_texel": 32.900144849709214,
      "Lp05": 7.378478047015491,
@@ -9521,7 +9521,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 35.9746123241994,
      "Lmedia_por_texel": 38.384534197494304,
      "Lp05": 13.652029313237307,
@@ -9547,7 +9547,7 @@
      "metal_ef": 0.4697207843137255,
      "rough_ef": 0.4065098039215686
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 50.526959748657134,
      "Lmedia_por_texel": 52.09492749993356,
      "Lp05": 25.291503251997213,
@@ -9573,7 +9573,7 @@
      "metal_ef": 0.25834643137254903,
      "rough_ef": 0.4065098039215686
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 32.837267393902636,
      "Lmedia_por_texel": 35.56609375826006,
      "Lp05": 10.638051627714265,
@@ -9609,7 +9609,7 @@
    "texRoughMedia": 0.4665992156862745,
    "texMetalFrac05": 0.204,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 37.818152827104136,
      "Lmedia_por_texel": 40.01336977306116,
      "Lp05": 17.300066110051624,
@@ -9635,7 +9635,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 47.68603523104159,
      "Lmedia_por_texel": 49.43629237931374,
      "Lp05": 25.078311366562595,
@@ -9661,7 +9661,7 @@
      "metal_ef": 0.1820228235294118,
      "rough_ef": 0.4665992156862745
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 32.91057582877087,
      "Lmedia_por_texel": 36.979005891006146,
      "Lp05": 12.19157959960787,
@@ -9687,7 +9687,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 30.871543630320257,
      "Lmedia_por_texel": 33.592026992068156,
      "Lp05": 11.462746206765424,
@@ -9713,7 +9713,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 41.208592508194286,
      "Lmedia_por_texel": 43.43416063004826,
      "Lp05": 18.739058997007533,
@@ -9739,7 +9739,7 @@
      "metal_ef": 0.1820228235294118,
      "rough_ef": 0.4665992156862745
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 32.56756784953908,
      "Lmedia_por_texel": 35.005097878576635,
      "Lp05": 10.125465021578144,
@@ -9765,7 +9765,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 27.181050481068308,
      "Lmedia_por_texel": 29.87370942848851,
      "Lp05": 10.273567317166009,
@@ -9791,7 +9791,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 38.478303221279134,
      "Lmedia_por_texel": 40.785660355540585,
      "Lp05": 17.020670846592076,
@@ -9817,7 +9817,7 @@
      "metal_ef": 0.1820228235294118,
      "rough_ef": 0.4665992156862745
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 26.436908311473758,
      "Lmedia_por_texel": 28.918428129442596,
      "Lp05": 8.01240584054029,
@@ -9843,7 +9843,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 26.989647133998883,
      "Lmedia_por_texel": 29.781289376028976,
      "Lp05": 9.146936930843626,
@@ -9869,7 +9869,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 37.266484458740216,
      "Lmedia_por_texel": 39.628884711944686,
      "Lp05": 15.759209743896562,
@@ -9895,7 +9895,7 @@
      "metal_ef": 0.1820228235294118,
      "rough_ef": 0.4665992156862745
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 26.69243490763316,
      "Lmedia_por_texel": 28.76337864403304,
      "Lp05": 7.655134629368964,
@@ -9921,7 +9921,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 32.46072018195008,
      "Lmedia_por_texel": 34.83510967364308,
      "Lp05": 13.991991307366128,
@@ -9947,7 +9947,7 @@
      "metal_ef": 0.3309505882352941,
      "rough_ef": 0.4665992156862745
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 45.51495789149181,
      "Lmedia_por_texel": 47.40684491978898,
      "Lp05": 22.95415420455967,
@@ -9973,7 +9973,7 @@
      "metal_ef": 0.1820228235294118,
      "rough_ef": 0.4665992156862745
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 29.233563021255257,
      "Lmedia_por_texel": 32.145712727635775,
      "Lp05": 10.815374485313846,
@@ -10009,7 +10009,7 @@
    "texRoughMedia": 0.32817411764705884,
    "texMetalFrac05": 0.7624,
    "caminhos": {
-    "vm@awp_map": {
+    "vm@praca_poderes": {
      "Lmean": 29.31211438326412,
      "Lmedia_por_texel": 33.14188318413919,
      "Lp05": 13.728404653752538,
@@ -10035,7 +10035,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vmLegado@awp_map": {
+    "vmLegado@praca_poderes": {
      "Lmean": 41.64853005101043,
      "Lmedia_por_texel": 43.967525041755664,
      "Lp05": 22.98057539228006,
@@ -10061,7 +10061,7 @@
      "metal_ef": 0.3945410980392157,
      "rough_ef": 0.32817411764705884
     },
-    "chao@awp_map": {
+    "chao@praca_poderes": {
      "Lmean": 26.66972698719024,
      "Lmedia_por_texel": 31.385200910200506,
      "Lp05": 11.039768735133851,
@@ -10087,7 +10087,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vm@fy_pool_day": {
+    "vm@piscina_treta": {
      "Lmean": 22.551292146030512,
      "Lmedia_por_texel": 27.120355763792173,
      "Lp05": 8.250028594670912,
@@ -10113,7 +10113,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vmLegado@fy_pool_day": {
+    "vmLegado@piscina_treta": {
      "Lmean": 34.98790356267245,
      "Lmedia_por_texel": 37.892823290222886,
      "Lp05": 16.771652905985704,
@@ -10139,7 +10139,7 @@
      "metal_ef": 0.3945410980392157,
      "rough_ef": 0.32817411764705884
     },
-    "chao@fy_pool_day": {
+    "chao@piscina_treta": {
      "Lmean": 22.649002802295232,
      "Lmedia_por_texel": 26.556701167300698,
      "Lp05": 6.875402383934343,
@@ -10165,7 +10165,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vm@fy_havan": {
+    "vm@loja_h": {
      "Lmean": 19.919932664297118,
      "Lmedia_por_texel": 24.482027356020318,
      "Lp05": 8.056927236352323,
@@ -10191,7 +10191,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vmLegado@fy_havan": {
+    "vmLegado@loja_h": {
      "Lmean": 32.35914611541109,
      "Lmedia_por_texel": 35.37467365395752,
      "Lp05": 15.41358795225112,
@@ -10217,7 +10217,7 @@
      "metal_ef": 0.3945410980392157,
      "rough_ef": 0.32817411764705884
     },
-    "chao@fy_havan": {
+    "chao@loja_h": {
      "Lmean": 18.591130343638554,
      "Lmedia_por_texel": 21.164129687234645,
      "Lp05": 6.875003459514518,
@@ -10243,7 +10243,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vm@fy_ferrovelho": {
+    "vm@ferro_velho": {
      "Lmean": 19.450501735278706,
      "Lmedia_por_texel": 24.365507307492358,
      "Lp05": 6.586426671498567,
@@ -10269,7 +10269,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vmLegado@fy_ferrovelho": {
+    "vmLegado@ferro_velho": {
      "Lmean": 31.34152717246822,
      "Lmedia_por_texel": 34.471112884619664,
      "Lp05": 14.35671842987228,
@@ -10295,7 +10295,7 @@
      "metal_ef": 0.3945410980392157,
      "rough_ef": 0.32817411764705884
     },
-    "chao@fy_ferrovelho": {
+    "chao@ferro_velho": {
      "Lmean": 18.58520367642365,
      "Lmedia_por_texel": 22.1747464176489,
      "Lp05": 5.671806282191442,
@@ -10321,7 +10321,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vm@fy_quebrada": {
+    "vm@quebrada": {
      "Lmean": 25.009946050327372,
      "Lmedia_por_texel": 29.118849693502998,
      "Lp05": 11.280403079057514,
@@ -10347,7 +10347,7 @@
      "metal_ef": 0.7173474509803922,
      "rough_ef": 0.32817411764705884
     },
-    "vmLegado@fy_quebrada": {
+    "vmLegado@quebrada": {
      "Lmean": 39.19526456170012,
      "Lmedia_por_texel": 41.66106197631884,
      "Lp05": 20.857439342264534,
@@ -10373,7 +10373,7 @@
      "metal_ef": 0.3945410980392157,
      "rough_ef": 0.32817411764705884
     },
-    "chao@fy_quebrada": {
+    "chao@quebrada": {
      "Lmean": 22.737110692391376,
      "Lmedia_por_texel": 26.524279761301074,
      "Lp05": 9.617556027306946,

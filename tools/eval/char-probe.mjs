@@ -685,7 +685,7 @@ async function escalaDoMundo() {
         }
       };
       cena.traverse(conta);
-      // props do mapa (fy_havan/fy_ferrovelho declaram `props` fora do build)
+      // props do mapa (loja_h/ferro_velho declaram `props` fora do build)
       const props = MAPS[id].props;
       if (props) { const g2 = new THREE.Group(); try { (Array.isArray(props) ? props : [props]).forEach(() => {}); } catch { /* props é descritor, não cena */ } }
       c.triangulos = Math.round(c.triangulos);

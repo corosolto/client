@@ -49,7 +49,7 @@ const H_CARTAZ = 2.2;   // altura do cartaz do Piscinão — a régua de tamanho
    giradas do portão e em brasilia as empenas dos ministérios (GLB sem collider).
 
    LIMITE CONHECIDO: em node NENHUM GLB carrega, então os ministérios da Brasília
-   não existem e o awp_map mede 0 decalque aqui. As 16 peças dele só aparecem no
+   não existem e o praca_poderes mede 0 decalque aqui. As 16 peças dele só aparecem no
    navegador — capturar continua sendo obrigatório. */
 let total = 0, curtos = 0, semParede = 0;
 for (const [id, m] of Object.entries(MAPS)) {
