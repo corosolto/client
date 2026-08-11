@@ -165,16 +165,18 @@ Antes de acusar a página, o mapa ou o motor, pergunte se o instrumento estava o
 
 ### 8 · O cache-bump
 
-Mexeu em `public/js/*.js`? **Bump o `?v=` nos dois lados** — `public/js/version.js` e o import map
-de `src/pages/index.astro`. Sem isso o navegador serve o módulo velho e a correção não existe
-para quem joga.
+Mexeu em `public/js/**/*.js`? O `moduleCacheManifest()` precisa incluir o módulo publicado:
+ele deriva a revisão dos bytes e o import map anexa `?v=<versão>-<hash>` ao grafo inteiro.
+Não faça bump manual nem anuncie bancadas removidas por `prune-dist.mjs`. Rode
+`npm run eval:shaderbudget`; SB7 prova cobertura, mudança de conteúdo e fronteira de publicação.
 
 > **Caso real.** Um bump com a mensagem *"40 commits não chegavam ao navegador"*, e mais três no
 > mesmo dia 04/08. Reproduza a frequência:
 > `git log --format='%h %ad %s' --date=format:'%d/%m %H:%M' -- public/js/version.js`
 >
 > Na tela de seleção o mesmo laço mordeu de novo: o clamp já estava na árvore e o `?v=` não
-> tinha subido — o defeito "não consertou" era o arquivo velho sendo servido.
+> tinha subido — o defeito "não consertou" era o arquivo velho sendo servido. O manifesto por
+> conteúdo substituiu esse processo manual; BUG-48 acrescentou a fronteira do que é publicado.
 
 Isto tem primo: **o Chrome ignora `?v=` no banco de favicons.** Se o ícone não muda, é aba
 anônima ou limpar dados do site, não é arquivo para mexer.

@@ -80,6 +80,14 @@ const FORMA_CS = /['"`]((?:fy|de|aim|awp)_[a-z0-9_]+)['"`]/g;
 const SEM_VARREDURA = [
   'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico',
   'CHANGELOG.md', 'KNOWN-BUGS.md',
+  /* `public/docs` é SAÍDA DE BUILD do Docusaurus (`docs/` -> `npm run build:site`), com
+     nome de arquivo por hash. Policiar artefato em vez de fonte deixa a régua vermelha
+     toda vez que o bundle publicado ficar uma geração atrás de um rename — que foi
+     exatamente o que aconteceu ao mesclar a main: os `.md` de `docs/docs/` já estavam
+     certos e os bundles ainda carregavam os ids antigos. A FONTE daqueles bundles é
+     `docs/docs/*.md`, que continua sendo varrida; o artefato se conserta sozinho no
+     próximo build. Mesmo motivo de `dist/` já estar nesta lista. */
+  join('public', 'docs'),
   join('public', 'js', 'maps.js'),
   /* A PRÓPRIA RÉGUA. Ela precisa citar os ids antigos — em `IDS_ANTIGOS`, que é a lista
      contra a qual o M2 cobra cobertura, e no cabeçalho que explica o rename. Sem esta

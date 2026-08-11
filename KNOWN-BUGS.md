@@ -44,6 +44,30 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-48 · import map anunciava módulos removidos do deploy~~ · RESOLVIDO NO BUILD 11/08
+
+**Sintoma literal.** A issue #197 registrou `prod-watch: edge, banco ou schema de
+telemetria reprovou` nos deploys das versões alpha.79 e alpha.80.
+
+**Evidência antes.** `node tools/eval/prod-coherence.mjs https://www.csbrasil.online`
+sai 1 com **12 HTTP 404**. O manifesto contém 49 módulos, dos quais 12 são
+`editor/**`, enquanto `scripts/prune-dist.mjs` remove `dist/client/js/editor` e o
+espelho da Vercel antes de publicar.
+
+**Causa.** O manifesto recursivo de cache descreve todos os módulos de desenvolvimento,
+mas não respeita a fronteira do que o build efetivamente publica. O import map raiz então
+promete URLs válidas para arquivos deliberadamente podados.
+
+**Correção.** `moduleCacheManifest()` exclui a bancada `editor/`, que continua disponível em
+desenvolvimento mas não faz parte do site publicado. SB7 cruza o manifesto com os diretórios
+JavaScript podados para impedir que as duas listas voltem a divergir.
+
+**Medição:** manifesto **49 → 37 módulos**, anúncios `editor/**` **12 → 0**. Depois da poda,
+o import map construído anuncia 37 módulos e todos os 37 existem em `dist/client`. Os mutantes
+`cache-podado` e `cache-entry-site` recolocam uma bancada removida ou omitem o entrypoint do
+site e acendem exatamente SB7. A entrega em produção só
+fica comprovada quando `prod-coherence` sair verde contra o novo deploy.
+
 ### ~~BUG-47 · shader da urna excedia o limite mínimo do WebGL1~~ · RESOLVIDO 11/08
 
 **Evidência.** As issues #120 e #121 registraram `Statically used varyings do not fit
@@ -84,18 +108,20 @@ a cada frame. O [Three #31438](https://github.com/mrdoob/three.js/commit/b62351b
 corrigiu a mesma falha no r179.
 
 **Correção.** Foi portado apenas o fallback oficial `|| ''` nos quatro acessos; atualizar
-todo o Three removeria a compatibilidade WebGL1 que este jogo ainda precisa. Como `/vendor/`
-tem cache imutável por um ano, jogo, site e editor acrescentam a versão do pacote ao core;
-os 13 arnêses HTML usam o hash do conteúdo. Isso faz o patch chegar a navegadores que já
-tinham o r160 em cache e impede que diagnósticos manuais rodem um bundle antigo.
+todo o Three removeria a compatibilidade WebGL1 que este jogo ainda precisa. Jogo, site e
+editor acrescentam a versão do pacote ao core; os 13 arnêses HTML usam o hash do conteúdo.
+Addons sem URL própria revalidam na origem e `/vendor/` não recebe mais TTL forçado no edge.
+Isso faz o patch chegar a navegadores que já tinham o r160 em cache e evita misturar core e
+addons de revisões diferentes.
 
 **Limite.** A guarda preserva o diagnóstico e o loop, mas não torna um shader inválido válido.
 #115, #120, #121, #127 e #130 continuam sendo a família canônica de compilação/link.
 
 **Régua: `tools/eval/shader-log-check.mjs`** (`npm run eval:shaderlog`, em
 `check:fast` e `check:deploy`). SL1–SL3 executam as quatro expressões reais com `null` e texto;
-SL4 exige URL versionada e SL5 confere o hash dos arnêses quando `/vendor/` é imutável. Os mutantes `sem-guardas` e
-`sem-cache-bust` deixam a régua vermelha.
+SL4 exige URL versionada, SL5 confere o hash dos arnêses e SL6 exige revalidação imediata dos
+addons na Vercel e na regra Cloudflare. Os mutantes `sem-guardas`, `sem-cache-bust`,
+`addons-immutable` e `cloudflare-vendor` deixam a régua vermelha.
 
 ### ~~BUG-44 · Linux não consegue abrir o WebGL~~ · RESOLVIDO NO APP 11/08
 

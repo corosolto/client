@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 27.645 linhas em 34 arquivos | `cat public/js/*.js \| wc -l` |
+| Código do jogo | 27.625 linhas em 34 arquivos | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6.432** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.001 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -52,7 +52,7 @@ esta página envelhecia no primeiro commit — ver
 | Scripts do arnês | 155 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Scripts de pipeline | 46 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.80` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.81` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -242,13 +242,12 @@ regra da fronteira paga, e por que ela é dura, está em
 página só, para não haver duas versões da mesma fronteira.
 
 O que você precisa saber **antes de editar** é a consequência: o jogo é carregado pela
-página Astro via **import map com versão** (`src/pages/index.astro:97-123`).
+página Astro via **import map com versão e hash do conteúdo** (`src/pages/index.astro`).
 
-:::danger Bump do `?v=` nos dois lados
-`public/js/version.js:2-4` avisa, com todas as letras, que o mesmo `?v=` vai no
-import map do `index.astro`. Mexeu em `public/js/*.js` sem bumpar os dois lados, o
-navegador serve o módulo velho do cache — foi causa raiz de "correções que não
-chegavam ao usuário" por dias.
+:::danger Preserve o manifesto publicado
+`scripts/module-cache.mjs` deriva o hash dos módulos publicados sob `public/js/` e o import map
+aplica essa revisão ao grafo inteiro. Não faça bump manual e não inclua bancadas que
+`scripts/prune-dist.mjs` remove. `npm run eval:shaderbudget` (SB7) confere as duas propriedades.
 :::
 
 ## Comandos que você vai usar
