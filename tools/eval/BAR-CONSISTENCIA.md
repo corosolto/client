@@ -297,7 +297,7 @@ coberta por máscara/preto, ou se a mira desaparece, ou se a arma some do quadro
 que pulava" já foi diagnosticada uma vez neste projeto — não pode voltar.
 
 **C10 — ADS entra e sai sem teleporte.**
-*Método:* `tools/eval/g2r14-ads.mjs`. Transição completa em **≤120 ms**, e **nenhum frame
+*Método:* `tools/eval/aposentados/g2r14-ads.mjs`. Transição completa em **≤120 ms**, e **nenhum frame
 desloca o VM mais de 15% do trajeto total**. Um pulo de posição em 1 frame é FAIL mesmo que o
 estado final esteja certo.
 

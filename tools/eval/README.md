@@ -119,10 +119,11 @@ limiter anti-clip, `duckBus` sidechain, caps de bounce em ~80ms) e nos portões
 `g2r7b-smoke.mjs` · `g2r7b-sweep.mjs` · `g2r8-sweep.mjs` · `../g2r7-measure.mjs`
 → **superado** pelo `vm-mint-audit.mjs`, que mede em vez de varrer.
 
-**Rodada G2-R14 (OOM e ADS):**
-`g2r14-ads.mjs` · `g2r14-capture.mjs` · `g2r14-memprobe.mjs`
-→ o `memprobe` foi o que achou o OOM de 322 MB no boot; o problema morreu com a
-migração pros GLBs da Mint.
+**Aposentada — Rodada G2-R14 (OOM e ADS)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`g2r14-ads.mjs` · `g2r14-capture.mjs` · `g2r14-memprobe.mjs`. O `memprobe` foi o
+que achou o OOM de 322 MB no boot; o problema morreu com a migração pros GLBs da
+Mint, e o registro do episódio ficou no `CHANGELOG.md`.
 
 **Rodada G2-UI:**
 `g2ui-map-bot.mjs` · `g2ui-map-previews.mjs` · `g2ui-map-tp.mjs` ·
