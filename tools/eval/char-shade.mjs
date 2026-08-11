@@ -17,7 +17,7 @@
      • dL      — |L* do recorte − L* do anel de 20 px atrás dele| = o C1 do BAR §2.1,
                  alvo ≥ 20. É a régua de CLAREZA que motivou o piso existir.
 
-   uso: node tools/eval/char-shade.mjs [--map=fy_havan] [--out=/tmp/shade]
+   uso: node tools/eval/char-shade.mjs [--map=loja_h] [--out=/tmp/shade]
         [--variantes="nome=query;nome=query"]
    ============================================================================ */
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -25,7 +25,7 @@ import { chromium } from 'playwright';
 
 const ARG = (k, d) => { const a = process.argv.find((s) => s.startsWith(`--${k}=`)); return a ? a.slice(k.length + 3) : d; };
 const BASE = process.env.BASE || 'http://localhost:8123';
-const MAP = ARG('map', 'fy_havan');
+const MAP = ARG('map', 'loja_h');
 const OUT = ARG('out', '/tmp/charshade');
 const CHARS = ARG('chars', 'trapfunk,oakley,coach,emo,blackmetal,gotinha,padata,canarinho');
 const VARS = ARG('variantes', 'DEPOIS=;ANTES=&charalbreg=0').split(';').map((s) => {

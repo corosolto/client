@@ -11,11 +11,11 @@
    É a LIÇÃO 1 do `docs/LICOES.md` com o sinal trocado. Lá, uma régua premiava o defeito
    oposto ao que media. Aqui é pior e mais banal: o número existe, está certo, e não tem
    consequência. Custo de cena podia dobrar entre dois commits e todo portão do repo
-   continuaria verde — foi assim que `fy_havan` chegou a 4.347 calls e 3,65 M triângulos
+   continuaria verde — foi assim que `loja_h` chegou a 4.347 calls e 3,65 M triângulos
    antes de alguém olhar.
 
    E a sonda antiga tinha uma cegueira própria, consertada aqui junto: ela cobria 4 mapas.
-   O `fy_quebrada` — o mapa com mais arte urbana do jogo, o que mais tem a ganhar com um
+   O `quebrada` — o mapa com mais arte urbana do jogo, o que mais tem a ganhar com um
    teto — nunca foi medido. Ver `MAPAS` em `cena-tetos.mjs`.
 
    O QUE ELA MEDE (no navegador, com o Astro no ar, jogo em `live`)
@@ -41,7 +41,7 @@
      node tools/eval/cena-check.mjs                  # sobe o astro dev sozinho e reprova
      node tools/eval/cena-check.mjs --medir          # só mede e sugere teto (não reprova)
      node tools/eval/cena-check.mjs --mutante=estoura
-     node tools/eval/cena-check.mjs --mapa=fy_havan  # um mapa só
+     node tools/eval/cena-check.mjs --mapa=loja_h  # um mapa só
      BASE=https://www.csbrasil.online node tools/eval/cena-check.mjs
 
    EXIGE BROWSER, então fica FORA do `check` e do `check:fast` (que rodam sem browser),
@@ -230,7 +230,7 @@ try {
   let commit = null;
   try { commit = execSync('git rev-parse --short HEAD').toString().trim(); } catch { /* árvore sem git */ }
   /* RODADA DE MUTAÇÃO NÃO ESCREVE NO PROBE DE VERDADE. Descoberto na primeira execução do
-     `--mutante=estoura`: ele gravou 3.518 calls do fy_havan por cima da medição real de
+     `--mutante=estoura`: ele gravou 3.518 calls do loja_h por cima da medição real de
      307, e quem lesse o probe depois (a cláusula CENA do invariants, um humano no PR)
      veria uma regressão que não existe. Mutante é instrumento de teste da régua, não
      medição do jogo — vai para arquivo próprio, que é lixo descartável. */

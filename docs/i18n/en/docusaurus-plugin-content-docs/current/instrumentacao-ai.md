@@ -45,7 +45,7 @@ And the rule worth more than the three (`SKILL.md:18`):
 
 > What makes the difference here **is not the number of agents** — it is that every claim
 > carries a number and an `arquivo:linha`. A critique that says "improve the lighting" is
-> noise. One that says "22,7% of the pixels of `game-awp_map-169-a.png` are at L\* < 3 and the
+> noise. One that says "22,7% of the pixels of `game-praca_poderes-169-a.png` are at L\* < 3 and the
 > cause is `bloom.js:18` `power=1.25`" is work.
 
 ## The cycle, in order {#the-cycle-in-order}

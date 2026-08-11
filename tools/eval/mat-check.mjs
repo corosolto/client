@@ -139,7 +139,7 @@ function mutacoesDeMaterial(src, ancora, nLinhas, arquivo) {
    2. ORÇAMENTO DE LUZ POR CENA
    Soma de intensidades COM TIPO. Luz pontual com intensidade 0 (o pool de muzzle
    flash) não entra: ela não ilumina nada. Luz pontual do mapa (as 3 do teto do
-   fy_havan) entra numa coluna separada — ela é LOCAL (decay quadrático, alcance
+   loja_h) entra numa coluna separada — ela é LOCAL (decay quadrático, alcance
    finito) e não é comparável a uma direcional que banha a cena inteira; misturar
    as duas na mesma soma foi o que quase fez o havan parecer 56 unidades de luz. */
 function orcamento(scene) {
@@ -206,8 +206,8 @@ function superficiesLisas(scene) {
       /* TRANSLÚCIDO FICA DE FORA. A queixa do dono é "retângulo BRANCO GRANDE E LISO" — uma
          vidraça, uma claraboia ou um decalque de tinta é justamente o caso em que NÃO ter
          albedo é o certo (quem dá a cor é o que está atrás). Incluí-los enchia a TEX1 de
-         falso positivo: a claraboia do fy_pool_day (300 m², opacidade 0,35) e as 6 vitrines
-         do fy_havan não são placas sem textura, são vidro. */
+         falso positivo: a claraboia do piscina_treta (300 m², opacidade 0,35) e as 6 vitrines
+         do loja_h não são placas sem textura, são vidro. */
       if (m.transparent && m.opacity < 0.95) continue;
       o.getWorldScale(esc);
       const tri = maiorTriangulo(o.geometry, esc);
@@ -423,7 +423,7 @@ for (const mapId of Object.keys(MAPS)) {
   paths.push({
     id: `chao@${mapId}`, envMap: mapId,
     // a arma no chão é iluminada pelas luzes GLOBAIS do mapa; as pontuais do teto do
-    // fy_havan são locais e ficam de fora (ver `orcamento`)
+    // loja_h são locais e ficam de fora (ver `orcamento`)
     scene: { lights: oMapa.lights.filter((l) => l.type === 'DirectionalLight' || l.type === 'HemisphereLight' || l.type === 'AmbientLight') },
     ...base, metalFactor: mfDeclarado, roughFactor: rfDeclarado, envMapIntensity: 1, lightMul: 1,
   });

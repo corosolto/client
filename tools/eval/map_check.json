@@ -12,7 +12,7 @@
  },
  "mapas": [
   {
-   "map": "awp_map",
+   "map": "praca_poderes",
    "celulasAlcancadas": 216066,
    "amostrasChao": 13449,
    "observadores": 3327,
@@ -921,7 +921,7 @@
    "alturaTrianguloMin": 6.28
   },
   {
-   "map": "fy_pool_day",
+   "map": "piscina_treta",
    "celulasAlcancadas": 21391,
    "amostrasChao": 1344,
    "observadores": 336,
@@ -3724,7 +3724,7 @@
    "alturaTrianguloMin": 12
   },
   {
-   "map": "fy_havan",
+   "map": "loja_h",
    "celulasAlcancadas": 76599,
    "amostrasChao": 4516,
    "observadores": 1119,
@@ -4378,7 +4378,7 @@
    "alturaTrianguloMin": 32.8
   },
   {
-   "map": "fy_ferrovelho",
+   "map": "ferro_velho",
    "celulasAlcancadas": 54777,
    "amostrasChao": 3405,
    "observadores": 867,
@@ -5030,7 +5030,7 @@
    "alturaTrianguloMin": 6.84
   },
   {
-   "map": "fy_quebrada",
+   "map": "quebrada",
    "celulasAlcancadas": 43385,
    "amostrasChao": 2823,
    "observadores": 723,

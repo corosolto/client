@@ -668,7 +668,7 @@ function ui3(ctxCss) {
 /* ==========================================================================
    6. SIMULAÇÃO (UI2 e UI4) — o jogo REAL em node, via tools/eval/harness.mjs
    ========================================================================== */
-const MAPAS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho'];
+const MAPAS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho'];
 let ARVORE_HUD = null;   // preenchida no main, consumida por preparaDom()
 /* SEMENTES DA UI4: 1 por caso (5 mapas × 2 modos = 10 corridas de até 600 s simulados).
    Duas sementes dobrariam o tempo de parede pra ~2,5 min sem mudar o veredito: o defeito
@@ -702,7 +702,7 @@ async function fragmentosDoHud(H) {
     renderer: H.renderer, textures: H.textures, sfx: H.sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: H.PCHAR, playerTeam: 'E', playerFaction: 'E', enemyFaction: 'B',
-    nickname: 'SIM', mapId: 'fy_havan', ctf: true, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId: 'loja_h', ctf: true, testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g._ensureDolly = () => {};
   g.start ? g.start() : g._startRound();
@@ -722,7 +722,7 @@ async function fragmentosDoHud(H) {
 
   /* TEXTO REAL dos elementos que o JS preenche — a UI3 precisa da LARGURA, e a largura
      depende da string. Em vez de eu chutar "o nome de arma mais longo", teleporto o
-     jogador pra cima de CADA arma do armário do fy_pool_day (o mapa com mais pickups) e
+     jogador pra cima de CADA arma do armário do piscina_treta (o mapa com mais pickups) e
      deixo o _updatePickups escrever o texto. O que a régua mede é a string do jogo. */
   const textos = {};
   H.seedRandom(11);
@@ -730,7 +730,7 @@ async function fragmentosDoHud(H) {
     renderer: H.renderer, textures: H.textures, sfx: H.sfx,
     settings: { bots: 4, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: H.PCHAR, playerTeam: 'E', playerFaction: 'E', enemyFaction: 'B',
-    nickname: 'SIM', mapId: 'fy_pool_day', ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId: 'piscina_treta', ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g2._ensureDolly = () => {};
   g2.start ? g2.start() : g2._startRound();

@@ -1,5 +1,5 @@
 // ============================================================================
-// PISCINA DA TRETA — homenagem ao fy_pool_day do CS 1.6.
+// PISCINA DA TRETA — homenagem ao piscina_treta do CS 1.6.
 //
 // POR QUE ESTE ARQUIVO VOLTOU (31/07)
 // A versão temática "Piscinão de Ramos" (1.887 linhas, agora em map_piscinao_ramos.js)
@@ -19,7 +19,7 @@
 // registro de mapas. Se um dia for refeita com o espaço de jogo limpo, é só
 // registrar de volta em maps.js.
 // ============================================================================
-// fy_pool_day homage — the classic CS 1.6 "full weapons" map, rebuilt from the
+// piscina_treta homage — the classic CS 1.6 "full weapons" map, rebuilt from the
 // real map: a COMPACT INDOOR tiled swimming-pool hall. White-tile walls with a
 // navy accent band, white-tile floor, a big recessed cyan pool that dominates the
 // room, banks of metal lockers as cover, blue lounge chairs, a white diving board,
@@ -625,7 +625,7 @@ export function buildPoolDay(scene, T) {
        x =  0  → guarita do salva-vidas em z = ±18,5
      É isso que mata a visada axial de 47,8 m que a MAP2 mediu: a reta de um respawn ao outro
      atravessa o banco do PRÓPRIO time antes de sair do deck.
-     O escalonamento não é estética — é o defeito do depósito do fy_havan (KNOWN-BUGS /
+     O escalonamento não é estética — é o defeito do depósito do loja_h (KNOWN-BUGS /
      map-check §MAP2B): lá a exposição foi a 0,0% por EMPAREDAMENTO e o respawn virou uma
      fresta de 2,6 m. Aqui, no z do anteparo, sobram vãos de 3,3 m entre peças e o disco de
      5 m de cada spawn continua aberto. */
@@ -763,7 +763,7 @@ export function buildPoolDay(scene, T) {
      armário, pilastra, bloco de partida e mureta entram sem ninguém escrever
      coordenada. Ver `public/js/graffiti_pass.js` pro porquê de ser assado. */
   grafitar({
-    id: 'fy_pool_day',
+    id: 'piscina_treta',
     root, T, waypoints: nodes, seed: 7717, passo: 0.9, alcance: 9, cobre: 0.06, minLarg: 0.3,
     bandas: [
       /* CARTAZ DA COLEÇÃO (07/08). Reprovação: "tem diversos posters da minha coleção

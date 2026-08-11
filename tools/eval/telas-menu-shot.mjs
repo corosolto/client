@@ -28,7 +28,7 @@ await page.waitForTimeout(2500);
 await page.screenshot({ path: `${OUT}/x01_menu.png` });
 console.log('shot menu');
 
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=awp_map`, { waitUntil: 'domcontentloaded' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=praca_poderes`, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
 await page.waitForTimeout(1200);
 await page.evaluate(() => document.getElementById('pause-menu').classList.remove('hidden'));

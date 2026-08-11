@@ -7,10 +7,10 @@ sys.path.insert(0, '/root/csb/tools/eval')
 from tone_calib import (agx, agx_inv, srgb_to_lin, vignette, unfloor, R1, R1_SAT, STEP, lstar)
 
 NEW = {
-    'awp_map':       dict(exposure=1.74, floor=0.0045),
-    'fy_pool_day':   dict(exposure=2.18, floor=0.0034),
-    'fy_havan':      dict(exposure=1.32, floor=0.0053),
-    'fy_ferrovelho': dict(exposure=1.77, floor=0.0038),
+    'praca_poderes':       dict(exposure=1.74, floor=0.0045),
+    'piscina_treta':   dict(exposure=2.18, floor=0.0034),
+    'loja_h':      dict(exposure=1.32, floor=0.0053),
+    'ferro_velho': dict(exposure=1.77, floor=0.0038),
 }
 SAT_NEW = 1.12
 
@@ -35,9 +35,9 @@ def run(frame, mapid):
           f'L* med r2 {np.median(L):.1f} mean {L.mean():.1f}')
 
 
-for f, m in [('game-awp_map-169-c.png', 'awp_map'),
-             ('game-fy_ferrovelho-169-b.png', 'fy_ferrovelho'),
-             ('game-fy_havan-169-d.png', 'fy_havan'),
-             ('game-fy_pool_day-169-a.png', 'fy_pool_day'),
-             ('game-fy_pool_day-169-d.png', 'fy_pool_day')]:
+for f, m in [('game-praca_poderes-169-c.png', 'praca_poderes'),
+             ('game-ferro_velho-169-b.png', 'ferro_velho'),
+             ('game-loja_h-169-d.png', 'loja_h'),
+             ('game-piscina_treta-169-a.png', 'piscina_treta'),
+             ('game-piscina_treta-169-d.png', 'piscina_treta')]:
     run(f, m)

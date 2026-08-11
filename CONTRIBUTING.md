@@ -109,7 +109,7 @@ entra no jogo em T-pose.
 `public/js/maps.js` (`MAPS`). Colisores são AABBs declarados junto de cada mesh.
 Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
-> **Este espelho já foi esquecido, e nos dois sentidos.** A `fy_quebrada` entrou
+> **Este espelho já foi esquecido, e nos dois sentidos.** A `quebrada` entrou
 > no registro do jogo e não apareceu em `/mapas`, no `llms.txt` nem no JSON-LD; a
 > `praca_old` saiu do registro e continuou listada nos três. Um a mais e um a
 > menos: o **total** continuou 5, então nenhuma contagem acusou. Mapa entrou ou

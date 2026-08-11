@@ -993,7 +993,7 @@
    "porElemento": {
     "#pickup-hint": {
      "pior": 0.134,
-     "onde": "fy_pool_day/ctf/spawn",
+     "onde": "piscina_treta/ctf/spawn",
      "cobrado": true,
      "ok": true
     },
@@ -1005,7 +1005,7 @@
     },
     "#reload-note": {
      "pior": 0,
-     "onde": "awp_map/dm/spawn",
+     "onde": "praca_poderes/dm/spawn",
      "cobrado": true,
      "ok": true
     },
@@ -1017,13 +1017,13 @@
     },
     "#scoreboard": {
      "pior": 0.045,
-     "onde": "awp_map/ctf/spawn",
+     "onde": "praca_poderes/ctf/spawn",
      "cobrado": true,
      "ok": true
     },
     "#radio-menu": {
      "pior": 0,
-     "onde": "awp_map/dm/spawn",
+     "onde": "praca_poderes/dm/spawn",
      "cobrado": true,
      "ok": true
     },
@@ -1035,13 +1035,13 @@
     },
     "#mk-banner": {
      "pior": 0,
-     "onde": "awp_map/dm/spawn",
+     "onde": "praca_poderes/dm/spawn",
      "cobrado": true,
      "ok": true
     },
     "#killfeed": {
      "pior": 1,
-     "onde": "awp_map/dm/spawn",
+     "onde": "praca_poderes/dm/spawn",
      "cobrado": false,
      "ok": true
     }
@@ -1049,7 +1049,7 @@
    "falhas": [],
    "linhas": [
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "ctf": false,
      "cenario": "spawn",
      "alvo": 12,
@@ -1076,7 +1076,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "ctf": false,
      "cenario": "patrulha",
      "alvo": 12,
@@ -1116,7 +1116,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "ctf": true,
      "cenario": "spawn",
      "alvo": 3,
@@ -1142,7 +1142,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "ctf": true,
      "cenario": "patrulha",
      "alvo": 3,
@@ -1294,7 +1294,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "ctf": false,
      "cenario": "spawn",
      "alvo": 12,
@@ -1326,7 +1326,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "ctf": false,
      "cenario": "patrulha",
      "alvo": 12,
@@ -1356,7 +1356,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "ctf": true,
      "cenario": "spawn",
      "alvo": 3,
@@ -1397,7 +1397,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "ctf": true,
      "cenario": "patrulha",
      "alvo": 3,
@@ -1423,7 +1423,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "ctf": false,
      "cenario": "spawn",
      "alvo": 12,
@@ -1460,7 +1460,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "ctf": false,
      "cenario": "patrulha",
      "alvo": 12,
@@ -1493,7 +1493,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "ctf": true,
      "cenario": "spawn",
      "alvo": 3,
@@ -1517,7 +1517,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "ctf": true,
      "cenario": "patrulha",
      "alvo": 3,
@@ -1541,7 +1541,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "ctf": false,
      "cenario": "spawn",
      "alvo": 12,
@@ -1598,7 +1598,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "ctf": false,
      "cenario": "patrulha",
      "alvo": 12,
@@ -1624,7 +1624,7 @@
      "nLive": 5220
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "ctf": true,
      "cenario": "spawn",
      "alvo": 3,
@@ -1651,7 +1651,7 @@
      "nLive": 4798
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "ctf": true,
      "cenario": "patrulha",
      "alvo": 3,
@@ -1701,7 +1701,7 @@
    "ok": true,
    "casos": [
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "modo": "dm",
      "seed": 4242,
      "teto": 540,
@@ -1718,7 +1718,7 @@
      "ok": true
     },
     {
-     "mapId": "awp_map",
+     "mapId": "praca_poderes",
      "modo": "ctf",
      "seed": 4242,
      "teto": 500,
@@ -1769,7 +1769,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "modo": "dm",
      "seed": 4242,
      "teto": 540,
@@ -1786,7 +1786,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_pool_day",
+     "mapId": "piscina_treta",
      "modo": "ctf",
      "seed": 4242,
      "teto": 500,
@@ -1803,7 +1803,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "modo": "dm",
      "seed": 4242,
      "teto": 540,
@@ -1820,7 +1820,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_havan",
+     "mapId": "loja_h",
      "modo": "ctf",
      "seed": 4242,
      "teto": 500,
@@ -1837,7 +1837,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "modo": "dm",
      "seed": 4242,
      "teto": 540,
@@ -1854,7 +1854,7 @@
      "ok": true
     },
     {
-     "mapId": "fy_ferrovelho",
+     "mapId": "ferro_velho",
      "modo": "ctf",
      "seed": 4242,
      "teto": 500,

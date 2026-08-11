@@ -1,15 +1,15 @@
 {
-  "medidoEm": "2026-08-11T22:30:45.062Z",
-  "commit": "c36691d",
+  "medidoEm": "2026-08-11T22:51:15.580Z",
+  "commit": "797a478",
   "base": "http://localhost:4331",
   "frames": 10,
   "aquecimentoMs": 30000,
   "mutante": null,
   "mapas": [
     {
-      "mapa": "awp_map",
-      "calls": 311,
-      "tris": 653455,
+      "mapa": "praca_poderes",
+      "calls": 313,
+      "tris": 650663,
       "erros": [
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
@@ -49,13 +49,13 @@
       ],
       "textures": 541,
       "geometries": 513,
-      "fps": 138.1,
+      "fps": 134.2,
       "state": "live"
     },
     {
-      "mapa": "fy_pool_day",
-      "calls": 731,
-      "tris": 695021,
+      "mapa": "piscina_treta",
+      "calls": 750,
+      "tris": 746896,
       "erros": [
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
@@ -93,17 +93,17 @@
       "state": "live"
     },
     {
-      "mapa": "fy_havan",
-      "calls": 308,
-      "tris": 1217102,
+      "mapa": "loja_h",
+      "calls": 309,
+      "tris": 1206188,
       "erros": [
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
@@ -121,14 +121,14 @@
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)"
       ],
       "textures": 492,
-      "geometries": 827,
-      "fps": 113.9,
+      "geometries": 830,
+      "fps": 139.7,
       "state": "live"
     },
     {
-      "mapa": "fy_ferrovelho",
-      "calls": 526,
-      "tris": 989141,
+      "mapa": "ferro_velho",
+      "calls": 531,
+      "tris": 1002993,
       "erros": [
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
@@ -138,13 +138,13 @@
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
         "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
@@ -157,20 +157,20 @@
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)"
       ],
-      "textures": 579,
+      "textures": 580,
       "geometries": 1438,
-      "fps": 110.3,
+      "fps": 101.2,
       "state": "live"
     },
     {
-      "mapa": "fy_quebrada",
-      "calls": 1784,
-      "tris": 1559278,
+      "mapa": "quebrada",
+      "calls": 1853,
+      "tris": 1581674,
       "erros": [
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+        "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
-        "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
-        "[console] Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
         "[console] Failed to load resource: the server responded with a status of 404 (Not Found)",
@@ -240,7 +240,7 @@
       ],
       "textures": 572,
       "geometries": 2300,
-      "fps": 38,
+      "fps": 58.2,
       "state": "live"
     }
   ]

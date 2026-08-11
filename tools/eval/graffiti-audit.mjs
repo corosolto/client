@@ -40,15 +40,15 @@
    Uso:
      npm run eval:serve &
      node tools/eval/graffiti-audit.mjs                 # os 5 mapas
-     node tools/eval/graffiti-audit.mjs fy_quebrada
-     node tools/eval/graffiti-audit.mjs fy_quebrada --fotos 12
+     node tools/eval/graffiti-audit.mjs quebrada
+     node tools/eval/graffiti-audit.mjs quebrada --fotos 12
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
-const MAPAS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const MAPAS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 const argv = process.argv.slice(2);
 const ONLY = argv.find((a) => !a.startsWith('--'));
 const FOTOS = argv.includes('--fotos') ? (+argv[argv.indexOf('--fotos') + 1] || 8) : 0;

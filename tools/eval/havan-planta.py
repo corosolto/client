@@ -117,7 +117,7 @@ fig.text(0.548, 0.105,
          '  maior visada        36,9 m              →   0 m',
          color='#8ee0ab', fontsize=9.2, family='monospace', va='top')
 
-fig.suptitle('fy_havan — o respawn da loja subiu pro ANDAR DE CIMA, a escada virou escada, as bandeiras se espalharam\n'
+fig.suptitle('loja_h — o respawn da loja subiu pro ANDAR DE CIMA, a escada virou escada, as bandeiras se espalharam\n'
              'todos os números medidos em tools/eval/map-check.mjs (invariantes MAP1/MAP2/MAP3/CTF1)',
              color='#dfe6ee', fontsize=12.5, y=0.975)
 plt.savefig('/tmp/w3/tools/eval/havan-planta.png', facecolor=BG)

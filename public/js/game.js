@@ -90,7 +90,7 @@ const ROUND_TIME = 99, ROUNDS_TO_WIN = 3, RESPAWN_DELAY = 2.2, PICKUP_RESPAWN = 
    (src/pages/index.astro:503, "Vence quem ganhar 3 rounds"). Sem este teto o formato NÃO
    ERA melhor de 5: round EMPATADO não dá ponto pra ninguém (game.js:_endRound), então uma
    partida com muitos empates nunca chegava aos 3. Medido em tools/eval/ui-check.mjs (UI4):
-   fy_pool_day/DM rodou 5 rounds e 600 s simulados sem `matchEnd` (placar de rounds 1 × 2).
+   piscina_treta/DM rodou 5 rounds e 600 s simulados sem `matchEnd` (placar de rounds 1 × 2).
    Com o teto, a partida acaba na 5ª rodada valendo quem tem mais rounds (desempate: abates
    da partida inteira). Pior caso: 5 × (3 s de countdown + 99 s + 4 s de fim) = 530 s. */
 const ROUNDS_MAX = ROUNDS_TO_WIN * 2 - 1;
@@ -109,8 +109,8 @@ const ROUNDS_MAX = ROUNDS_TO_WIN * 2 - 1;
        (CTF_MATCH_TIME) que só aparece no HUD nos últimos CTF_CLOCK_SHOW segundos.
    PROCEDÊNCIA DOS NÚMEROS (medidos, não escolhidos — tools/eval/ui-check.mjs e a sonda
    de ritmo de captura sobre o harness, 5 mapas × 600 s simulados, semente 4242):
-     capturas por 99 s (os dois times somados): awp_map 3,1 · praca_old 3,1 ·
-     fy_pool_day 3,3 · fy_havan 1,5 · fy_ferrovelho 1,2.
+     capturas por 99 s (os dois times somados): praca_poderes 3,1 · praca_old 3,1 ·
+     piscina_treta 3,3 · loja_h 1,5 · ferro_velho 1,2.
    Com CTF_CAPS_TO_WIN = 2, o mapa MAIS LENTO medido (ferrovelho, 1,2/99 s repartidos
    entre 2 times) leva ~2 × 99/0,6 ≈ 330 s pra uma rodada, e é por isso que existe o teto
    de tempo de PARTIDA — sem ele o modo voltaria a não fechar. Melhor de 3 (e não de 5)
@@ -303,7 +303,7 @@ const RACK_RETA = QS.get('rackreta') === '1';
 
    NÃO É BUG — é esta regra, funcionando como escrita, e ela NÃO é específica de modo:
    dispara igual em rodadas e em CAPTURA. Reproduzida no navegador
-   (`tools/eval/crash-watch.mjs`, CTF fy_ferrovelho, amostra de 2 em 2 s):
+   (`tools/eval/crash-watch.mjs`, CTF ferro_velho, amostra de 2 em 2 s):
 
      t 25,7 s  hp 68   (hurtAt 22,1)
      t 30,3 s  hp 100  (hurtAt 22,1)   <- sem morrer, sem respawn, sem rodada nova
@@ -623,9 +623,9 @@ export class Game {
          08/2026. POR QUE: a crítica adversarial mediu o resultado do arrasto e ele falhou no
          próprio objetivo — 7 dos 8 pickups arrastados continuaram a 2,10-2,50 m da aresta
          mais próxima do grafo, ou seja, seguiram fora do alcance do A*. O `botsim.mjs` de
-         fy_pool_day saiu byte a byte IDÊNTICO com e sem o arrasto: mover não mudou nada no
+         piscina_treta saiu byte a byte IDÊNTICO com e sem o arrasto: mover não mudou nada no
          comportamento do bot, que era a justificativa inteira. E o custo foi real: quebrou a
-         simetria espelhada de fy_pool_day (moveu as 5 armas da parede leste e NENHUMA das 5
+         simetria espelhada de piscina_treta (moveu as 5 armas da parede leste e NENHUMA das 5
          espelhadas do oeste, por mera fase da grade de waypoints) e encostou a deagle a
          0,10 m do spawn P slot 0 (era 1,00 m). Se um pickup do mapa ficar mesmo fora do
          alcance, o conserto é NO MAPA (como o de map_havan.js:1207 desta rodada), não um
@@ -791,7 +791,7 @@ export class Game {
     this.vmScene.add(this.vm.root);
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
-         somava 7,60 unidades FIXAS, contra 2,60 (fy_ferrovelho) a 3,60 (awp_map) dos mapas:
+         somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
          a mesma arma recebia 2,1× a 2,9× mais luz na mão do que no chão, e é metade da queixa
          "na mão fica branca, no chão fica escura" (a outra metade era o clamp de metalness,
          ver `fixVmMaterials`). Um número fixo aqui também é frágil por construção: qualquer
@@ -803,7 +803,7 @@ export class Game {
          POR QUE 1,15 E NÃO 1,00: a arma na mão está sempre no primeiro plano e precisa ficar
          legível também quando o jogador está na sombra; 15% acima é o menor empurrão que
          mantém isso. Medido em tools/eval/mat_shade.py: com 1,15× a MESMA arma sai +3,8 L*
-         (awp_map) e +1,9 L* (fy_ferrovelho) em relação ao drop no chão, contra +14,7 / +13,2
+         (praca_poderes) e +1,9 L* (ferro_velho) em relação ao drop no chão, contra +14,7 / +13,2
          de antes. Kill-switch: ?vmlux=<k> força o multiplicador do rig, sem piso nem teto
          (?vmlux=1 reproduz as 7,60 unidades antigas em qualquer mapa — conferido); e
          ?vmmat=legacy volta o rig E o material de uma vez só. */
@@ -811,7 +811,7 @@ export class Game {
       /* game.js:818 — FATOR DE NÍVEL, agora MEDIDO em vez de argumentado. A rodada passada
          escolheu 1,15 ("a arma na mão precisa ficar legível na sombra") sem medir nada, e o
          preço apareceu na cromaticidade: com 1,15 a arma na mão fica +5,5 L* acima do drop
-         no awp_map, e no AgX (bloom.js, sat 1,12) mais luminância no MESMO albedo marrom sai
+         no praca_poderes, e no AgX (bloom.js, sat 1,12) mais luminância no MESMO albedo marrom sai
          como mais CROMA — é metade do "dourado" que o dono viu. Com 1,00 a arma na mão é a
          MESMA arma do chão, que é literalmente o que o MAT1 cobra. O MAT2 continua verde:
          a faixa dele é [0,80-1,40] e 1,00 está no meio. Kill-switch de sempre: ?vmlux=<k>. */
@@ -836,15 +836,15 @@ export class Game {
          declarou o caso resolvido porque o ΔL* mão−chão caiu de 15,5 pra 5,3. Errado
          pela metade: L* é só claridade. Medido agora com a* e b* (tools/eval/mat_shade.py
          ganhou `srgb_to_lab`, e o MAT1 ganhou o Δa*b*), com o rig FIXO de cores abaixo:
-             awp_map        AK  na mão C* 7,05 h 36,9°  |  no chão C* 3,47 h 27,3°  (2,03×)
-             awp_map        AKM na mão C*10,58          |  no chão C* 5,63          (1,88×)
-             fy_ferrovelho  AKM na mão C* 8,62          |  no chão C*13,15          (0,66×)
-         Ou seja: no awp_map a arma na mão fica DUAS VEZES mais saturada (e no matiz do
+             praca_poderes        AK  na mão C* 7,05 h 36,9°  |  no chão C* 3,47 h 27,3°  (2,03×)
+             praca_poderes        AKM na mão C*10,58          |  no chão C* 5,63          (1,88×)
+             ferro_velho  AKM na mão C* 8,62          |  no chão C*13,15          (0,66×)
+         Ou seja: no praca_poderes a arma na mão fica DUAS VEZES mais saturada (e no matiz do
          ouro, 30-55°); no ferro velho ela fica DESSATURADA. É o MESMO defeito nos dois
          sinais, e a causa não é o env map (o MAT2 já confere que a vmScene usa o MESMO
          `scene.environment` do mapa) — é ESTE rig: as 6 cores abaixo são CONSTANTES
-         enquanto o sol de cada mapa vai de #fff4e2 (awp_map, quase branco) a #ffc07a
-         (fy_ferrovelho, laranja de fim de tarde). O nível seguia o mapa; a COR não seguia.
+         enquanto o sol de cada mapa vai de #fff4e2 (praca_poderes, quase branco) a #ffc07a
+         (ferro_velho, laranja de fim de tarde). O nível seguia o mapa; a COR não seguia.
          CORREÇÃO: um ganho cromático por canal que faz a cor SOMADA do rig bater com a cor
          SOMADA das luzes do mapa, preservando (a) a forma do rig — as 5 direções e o
          contraste quente/frio entre elas, que foram calibrados e não são o defeito — e
@@ -1363,11 +1363,11 @@ export class Game {
 
        A MEDIDA (analítica, sem GPU: avalia o MeshStandardMaterial do three + AgX do bloom.js
        sobre os texels reais dos GLB, com as luzes medidas em runtime pelo harness):
-         ANTES  (metal 0,55 · 7,60 lux): a MESMA arma sai +14,7 L* na mão vs no chão (awp_map),
-                +13,2 L* no fy_ferrovelho. 26/26 armas acima de +8. É o "cromado".
-         DEPOIS (metal 1,0  · 1,15× o orçamento do mapa): +3,8 L* (awp_map) / +1,9 (ferrovelho).
+         ANTES  (metal 0,55 · 7,60 lux): a MESMA arma sai +14,7 L* na mão vs no chão (praca_poderes),
+                +13,2 L* no ferro_velho. 26/26 armas acima de +8. É o "cromado".
+         DEPOIS (metal 1,0  · 1,15× o orçamento do mapa): +3,8 L* (praca_poderes) / +1,9 (ferrovelho).
        E O MEDO DO PRETO, MEDIDO: com metalness de volta a 1,0 e o IBL presente, a fração de
-       amostra abaixo de L* 12 na 1ª pessoa fica em 2,5% (awp_map) — CONTRA 9% da MESMA arma
+       amostra abaixo de L* 12 na 1ª pessoa fica em 2,5% (praca_poderes) — CONTRA 9% da MESMA arma
        no chão, que é o caminho que o dono elogiou. Não escurece: converge para o chão.
 
        O CLAMP NÃO FOI DELETADO, FOI CONDICIONADO. Ele existia para um modo de falha real: SEM
@@ -1937,17 +1937,17 @@ export class Game {
       ['deagle', 'revolver38', 'pistol'],                        // sidearms
     ].map(row => row.filter(w => this._pickupAllowed(w)));
     /* ARMÁRIO DO SPAWN — POSIÇÃO MEDIDA CONTRA A GEOMETRIA DO MAPA (P3, 01/08).
-       BUG DO DONO (print 20:38, fy_ferrovelho): "as armas não dá pra pegar, a segunda
+       BUG DO DONO (print 20:38, ferro_velho): "as armas não dá pra pegar, a segunda
        fileira de armas nos mapas". A versão anterior (b7495ae) botou o rack no CHÃO, mas
        manteve DUAS decisões cegas que são a causa raiz, as duas MEDIDAS com a geometria
        real de cada mapa (colliders + bounds + _collide, o mesmo código que move o jogador):
 
        (1) A fileira 1 nascia a `sz + back*3,25` — 3,25 m ATRÁS do spawn — sem ninguém
            perguntar se existe 3,25 m de chão ali. Não existe:
-             fy_ferrovelho, time E: spawn z=33, limite andável z=35,12 (bounds 35,5 menos
+             ferro_velho, time E: spawn z=33, limite andável z=35,12 (bounds 35,5 menos
                o raio 0,38 do jogador). Fileira 0 em z=35,00 → 0,12 m dentro do alcance.
                Fileira 1 em z=36,25 → 1,13 m FORA do mundo, atrás da cerca.
-             fy_havan, time E: spawn z=55, limite 57,12. Fileira 0 em 57,00, fileira 1 em
+             loja_h, time E: spawn z=55, limite 57,12. Fileira 0 em 57,00, fileira 1 em
                58,25 — as 12 armas DENTRO da parede do fundo do estacionamento.
            Como o prompt só considerava a arma MAIS PRÓXIMA, do ponto mais colado possível
            (z=35,12) a fileira 0 estava a 0,12 m e a 1 a 1,13 m: a fileira 0 ganhava SEMPRE.
@@ -1955,7 +1955,7 @@ export class Game {
            conseguiam virar prompt nesses dois casos. Impegáveis, não "difíceis".
 
        (2) O x do rack era ABSOLUTO (centrado em x=0 do mundo), não no spawn do time. Em
-           fy_ferrovelho o time B nasce em x=-14..1 e em awp_map em x=-9: o rack nascia
+           ferro_velho o time B nasce em x=-14..1 e em praca_poderes em x=-9: o rack nascia
            deslocado 6 a 9 m de lado, o que enfiava 9 de 25 armas (ferrovelho B) e 8 de 25
            (havan B) DENTRO de colisores, e jogava a arma mais distante a 15,6 m do spawn.
 
@@ -1993,7 +1993,7 @@ export class Game {
       // (a) o rack segue o SPAWN: x do slot 0, que é onde o jogador nasce sempre
       // (`place(this.player, this.playerTeam, 0)` logo acima). Ancorar aqui, e não no x=0 do
       // mundo nem no centro do time, é o que põe o jogador NO MEIO do armário: com o antigo
-      // x=0 a arma mais distante ficava a 15,6 m do spawn em fy_ferrovelho B; agora ~7 m.
+      // x=0 a arma mais distante ficava a 15,6 m do spawn em ferro_velho B; agora ~7 m.
       const cx = spawns.length ? spawns[0].x : 0;
       // (b) quanto chão andável existe atrás do spawn? (0 = spawn colado na parede)
       const depth = this._walkDepth(cx, sz, back, 5.4);
@@ -2020,13 +2020,13 @@ export class Game {
              `_retaAndavel` (reta limpa spawn→arma) não é alcance, é VISADA: reprovava toda
              arma que exige contornar o próprio colisor do armário. Estrago medido do filtro:
                • moveu 52 das 202 armas (não as 17 que o commit alegava);
-               • fy_havan, time B, fileira 1 (12 armas): abriu um vão de 7,53 m entre
+               • loja_h, time B, fileira 1 (12 armas): abriu um vão de 7,53 m entre
                  vizinhas (era 1,15 m, o STEP) e esticou a fileira de 12,65 m para 17,88 m —
                  deixou de ser fileira;
-               • awp_map, time E: o centroide do armário afastou-se do spawn slot 0 de
+               • praca_poderes, time E: o centroide do armário afastou-se do spawn slot 0 de
                  2,89 m para 4,46 m, quebrando o objetivo declarado logo acima ("o jogador
                  nasce NO MEIO do armário");
-               • só 4 armas eram problema real (fy_ferrovelho B: lmg 4,18/22,25 m,
+               • só 4 armas eram problema real (ferro_velho B: lmg 4,18/22,25 m,
                  deagle 3,73/21,00 m, revolver38 3,60/19,75 m, pistol 3,84/18,75 m — em
                  reta / a pé pelo flood-fill), e mesmo essas 4 seguem ALCANÇÁVEIS (chão
                  alcançado a 0,10-0,16 m delas): caminhar não é andar em linha reta.
@@ -2100,7 +2100,7 @@ export class Game {
      `_checkPace()`, que abre com `if (!PACE ...) return` — e `PACE` é `?pace=1`,
      DESLIGADO por padrão. O `_updatePlayer` ainda chamava tudo sob `if (PACE)`.
 
-     Consequência medida numa partida normal de CAPTURA (crash-watch, fy_ferrovelho):
+     Consequência medida numa partida normal de CAPTURA (crash-watch, ferro_velho):
      o time B chegou a 3 capturas — o alvo — e a rodada 1 seguiu correndo. A rodada
      NUNCA fechava. O único fim possível era `ctfMatchLeft <= 0` aos 480 s, que dispara
      `_endRound()` e `_endMatch()` no MESMO frame, sem cronômetro na tela (o relógio só
@@ -3595,10 +3595,10 @@ export class Game {
      contorno da geometria". Foram medidos os três suspeitos (tools/eval/mat-check.mjs):
        · EXPOSIÇÃO: cinza médio 0,18 linear sai em L* 61-69 nos 5 mapas. Não é estouro.
        · NÉVOA: no pior caso (contraluz, fogFactor saturado) sai em L* 82,7-84,4 — mas ela só
-         satura depois de ~200 m (f = 0,35 a 100 m no awp_map). Não cobre a tela de perto.
+         satura depois de ~200 m (f = 0,35 a 100 m no praca_poderes). Não cobre a tela de perto.
        · FUMAÇA: sai em L* 80,8-86,5 E cobre a tela inteira (alfa acumulado 0,999 medido com
          a câmera dentro da nuvem, 14 dos 18 sprites cruzando o centro). Era ela.
-     A cor 0xcfd2d6 tinha radiância linear 0,642 contra 0,310 do CÉU MEDIDO do awp_map
+     A cor 0xcfd2d6 tinha radiância linear 0,642 contra 0,310 do CÉU MEDIDO do praca_poderes
      (bloom.js:145-153, cores que o r3_fog.py extraiu de frames reais). Fumaça 2,07× mais
      clara que o céu que a ilumina é IMPOSSÍVEL: albedo ≤ 1. Daí a regra, que não depende de
      gosto nem de exposição (o AgX é monotônico, então limitar a RADIÂNCIA limita o L*):
@@ -3606,12 +3606,12 @@ export class Game {
      E o sprite deixa de ser uma cor fixa para acompanhar o mapa — é o mesmo motivo pelo qual
      a luz do viewmodel passou a seguir o orçamento do mapa: consistência gráfica é o mapa e
      o efeito lerem a MESMA fonte, não dois números escritos à mão em lugares diferentes.
-     Kill-switch: ?smokealb=<0..1> (?smokealb=2.07 reproduz o branco antigo no awp_map). */
+     Kill-switch: ?smokealb=<0..1> (?smokealb=2.07 reproduz o branco antigo no praca_poderes). */
   _corDaFumaca() {
     if (this._smokeCol) return this._smokeCol;
     // `skyRadiance` devolve a radiância do céu DESTE mapa já em espaço linear de trabalho
     // (bloom.js), então multiplicar por escalar é escalar radiância. NÃO se usa `scene.fog`
-    // aqui de propósito: o fy_pool_day é salão fechado e não tem névoa, mas o céu dele foi
+    // aqui de propósito: o piscina_treta é salão fechado e não tem névoa, mas o céu dele foi
     // medido igual — a régua tem que valer nos 5, inclusive no que não tem névoa.
     const ceu = skyRadiance(this._mapId);
     const ov = parseFloat(QS.get('smokealb'));
@@ -3758,7 +3758,7 @@ export class Game {
     const mk = (id, label, x, z) => {
       /* ALTURA DA ZONA: era y ABSOLUTO (0,06 / 0,12) e não o chão LOCAL. Em mapa plano dá na
          mesma; em mapa com relevo o anel ATRAVESSA a geometria — foi o "anel rosa cortando o
-         pedestal da estátua" nos prints do dono no fy_havan (pedestal de 0,60 m, anel a 0,12).
+         pedestal da estátua" nos prints do dono no loja_h (pedestal de 0,60 m, anel a 0,12).
          Mesmo defeito de forma do `_dropWeapon` com TOP absoluto (ver pickup-check.mjs).
          Mastro e pano seguem o mesmo chão: bandeira fincada no ar é o mesmo bug uma altura
          acima. */
@@ -3799,7 +3799,7 @@ export class Game {
       /* (o `else` abaixo é o layout padrão de 3 bandeiras; o alvo da rodada é derivado
          da contagem DEPOIS deste if/else — ver o bloco ALVO logo após.) */
       /* 0,82 -> 0,42 do vetor spawn->centro. Com 0,82 a bandeira nascia a 18% do caminho, ou
-         seja COLADA no respawn: medido em tools/eval/map-check.mjs, 11,3 m no awp_map, 7,7 m
+         seja COLADA no respawn: medido em tools/eval/map-check.mjs, 11,3 m no praca_poderes, 7,7 m
          na praça e 3,9 m no piscinão — MENOS que o raio de captura (4,5 m) no piscinão, isto
          é, dava pra capturar de dentro do próprio spawn e o inimigo que chegasse pra retomar
          caía no meio dos que estavam renascendo. 0,42 põe as três a ≥ 12 m do spawn mais
@@ -4307,8 +4307,8 @@ export class Game {
      A crítica adversarial provou por flood-fill que reta limpa ⊄ alcançável: uma arma que
      exige contornar meio metro de colisor reprova aqui e é perfeitamente alcançável a pé.
      Usado como critério de colocação ele moveu 52 das 202 armas do armário e destruiu a
-     fileira (vão de 7,53 m em fy_havan B, centro do armário 3,72 m longe do spawn em
-     awp_map P). A pergunta certa — "existe célula andável alcançada a partir do spawn a
+     fileira (vão de 7,53 m em loja_h B, centro do armário 3,72 m longe do spawn em
+     praca_poderes P). A pergunta certa — "existe célula andável alcançada a partir do spawn a
      ≤ 1 m da arma?" — é respondida por flood-fill em tools/eval/pickup-check.mjs, fora do
      jogo. Mantido só pra reproduzir o A/B; não promova a padrão. */
   _retaAndavel(sx, sz, tx, tz, r = 0.42, degrau = 0.30) {
@@ -4330,7 +4330,7 @@ export class Game {
   }
   /* Quantos metros de chão ANDÁVEL existem a partir do spawn na direção `back`?
      É o que decide se o armário cabe todo atrás do spawn ou se uma fileira tem que ir pra
-     frente. Antes esse número era assumido (3,25 m) — e em fy_ferrovelho/fy_havan ele é 2,1. */
+     frente. Antes esse número era assumido (3,25 m) — e em ferro_velho/loja_h ele é 2,1. */
   _walkDepth(cx, sz, back, max = 5.4) {
     let d = 0;
     for (let t = 0.4; t <= max + 1e-6; t += 0.4) {
@@ -4708,9 +4708,9 @@ export class Game {
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
   }
-  // fy_pool_day ground weapons: anyone who runs over one grabs it (CS-1.6 style).
+  // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without
-  // pickups (e.g. awp_map). Called once per frame from update().
+  // pickups (e.g. praca_poderes). Called once per frame from update().
   _updatePickups() {
     const list = this.world.pickups || [];
     const p = this.player;
@@ -4718,7 +4718,7 @@ export class Game {
        O código antigo escolhia SÓ A MAIS PRÓXIMA num raio de 1,9 m. Com 25 armas em duas
        fileiras a 1,25 m uma da outra, a fileira da frente vencia a de trás em TODO ponto
        andável do mapa (medido: 0 de 12 armas da fileira 1 conseguiam prompt em
-       fy_ferrovelho P e fy_havan P). E mesmo onde dava, o prompt pulava entre vizinhas a
+       ferro_velho P e loja_h P). E mesmo onde dava, o prompt pulava entre vizinhas a
        cada passo — "adivinhar posição", exatamente o que o dono descreveu.
        Agora quem manda é a MIRA: projetamos a crosshair no plano das armas (um raycast de
        plano, 3 multiplicações) e ganha a arma mais perto do ponto onde você está olhando,
@@ -4785,7 +4785,7 @@ export class Game {
     if (selMesh && this._pkGlow !== selMesh) { this._pkGlow = selMesh; this._pkGlowY = selMesh.position.y; selMesh.position.y = this._pkGlowY + 0.10; }
     /* PROMPT DO [E] — DEFEITO 1 DO DONO (11 de 16 screenshots com a tarja no centro-baixo,
        por cima da arma). MEDIDO em tools/eval/ui-check.mjs (UI2, 5 mapas × 2 modos × 2
-       cenários × 90 s): 96,7% do tempo aceso no pior caso (fy_pool_day, jogador no spawn).
+       cenários × 90 s): 96,7% do tempo aceso no pior caso (piscina_treta, jogador no spawn).
        Não era "aparece demais": ele NUNCA APAGA enquanto houver uma arma no raio de 1,9 m —
        e o armário do spawn põe 25 armas exatamente onde o jogador nasce e renasce.
 
@@ -4805,8 +4805,8 @@ export class Game {
            possível — abaixo do teto de 25% da UI2 por construção. Sem isso o número ainda
            dependia do mapa: com o rack de 25 armas e o respawn de pickup de 8 s
            (PICKUP_RESPAWN), a arma selecionada troca sozinha e cada troca reacendia a
-           tarja; medido com só (a)+(b), fy_pool_day/CTF parado no spawn ainda dava 37,6% e
-           fy_ferrovelho andando dava 31,3%.
+           tarja; medido com só (a)+(b), piscina_treta/CTF parado no spawn ainda dava 37,6% e
+           ferro_velho andando dava 31,3%.
            Os relógios correm MESMO FORA DE ALCANCE, então voltar pra arma 14 s depois
            mostra o prompt de novo — o que se perde é a repetição em rajada, não o aviso. */
     const HINT_ON = 4, HINT_OFF = 14;
@@ -4902,7 +4902,7 @@ export class Game {
   }
   /* ASSENTA a arma no chão LOCAL — o único jeito que funciona pros 26 GLBs.
      DEFEITO QUE ISTO CONSERTA (game.js:4208 antigo): `mesh.position.set(x, y, z)` usava y
-     ABSOLUTO de mundo. Em mapa plano coincide com o chão; em fy_pool_day o fundo da piscina
+     ABSOLUTO de mundo. Em mapa plano coincide com o chão; em piscina_treta o fundo da piscina
      vale −1,5 m (map_piscina.js:267) e as duas contas divergem 1,6 m — e na praca_old, cujo
      chão vale 1,4 m, a arma nascia 1,3 m ENTERRADA (medido: vão −1,312).
      E "chão local + constante" também não serve: a arma é deitada de lado (roll π/2) e a
@@ -5261,7 +5261,7 @@ export class Game {
     // flanco no combate, pra o time ocupar os DOIS lados do mapa (não só a esquerda).
     if (b.laneX === undefined) {
       // CAUSA-RAIZ #1 do "andando de lado" (medido): a coluna era o literal x∈[-10.5,10.5],
-      // um número calibrado à mão para Brasília e aplicado aos QUATRO mapas. Em awp_map
+      // um número calibrado à mão para Brasília e aplicado aos QUATRO mapas. Em praca_poderes
       // (±45,5 m) e na Havan (±37,5 m) isso espremia os 8 bots num corredor central de 21 m
       // de largura: eles se encontravam o tempo todo, e a separação de boids (_botSeparation)
       // empurrava lateralmente sem parar — o zigzag que o dono vê. Agora a coluna sai dos
@@ -5872,7 +5872,7 @@ export class Game {
        (map_havan.js). Com ele o bot passa a poder andar no piso da loja sob a laje — só
        que o A* é um grafo de (x, z) SEM CAMADA: o nó embaixo da laje e o nó em cima dela
        são o MESMO ponto, então o bot desce sem plano nenhum e fica moendo lá embaixo.
-       Medido (`node tools/eval/botsim.mjs 60 fy_havan`, determinístico):
+       Medido (`node tools/eval/botsim.mjs 60 loja_h`, determinístico):
 
          bot COM camada:  latFlips 13,88 · fwdFlips 6,58 · stuck  8,98 % · eff 0,241
          bot SEM camada:  latFlips 11,10 · fwdFlips 7,23 · stuck  1,73 % · eff 0,226
@@ -6048,7 +6048,7 @@ export class Game {
   }
 
   /* ================= radar (CS-style) =================
-     ANTES: `strokeRect(H-26*sc, H-46*sc, 52*sc, 92*sc)` era a caixa do awp_map HARDCODED,
+     ANTES: `strokeRect(H-26*sc, H-46*sc, 52*sc, 92*sc)` era a caixa do praca_poderes HARDCODED,
      desenhada igual na Havan, no Piscinão e no Ferro Velho — o radar mostrava o mapa
      errado em 3 dos 4 mapas — e a escala fixa (1.42 px/m) fazia o jogador sumir do disco
      em mapa maior que ~52×92 m.

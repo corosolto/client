@@ -39,12 +39,12 @@
    a régua media contra a LISTA DE SÓLIDOS DECLARADOS (`colliders` / `caixaDeBox3`),
    e caixa declarada MENTE de três jeitos diferentes, todos medidos no navegador:
 
-     · **awp_map — 16 de 16 peças NO AR.** O ministério é um GLB sobre PILOTIS: o
+     · **praca_poderes — 16 de 16 peças NO AR.** O ministério é um GLB sobre PILOTIS: o
        térreo é vazado, com colunas. `caixaDeBox3(Box3.setFromObject(b))` é a caixa
        do prédio INTEIRO, então o vão aberto entra como "parede". Capturado: a peça
        flutua entre as colunas e dá pra ver o gramado através dela.
        (`scratchpad/shots/awp_map_01_25de25_*.png`)
-     · **fy_quebrada — 21 de 47 sem malha nenhuma atrás** e 3 TAPADAS, com sólido
+     · **quebrada — 21 de 47 sem malha nenhuma atrás** e 3 TAPADAS, com sólido
        a 1-5 cm NA FRENTE (a peça nasce do lado errado da parede: existe, é
        desenhada, e ninguém nunca vai ver).
      · vidro conta como parede — era um limite declarado desta régua.
@@ -299,7 +299,7 @@ export function medirParede(raizes, x, y, z, ry, w, h) {
        Antes, amostra sem parede era só `continue`: bastava UMA das nove achar
        parede para a peça nascer. Foi assim que o pixo do beco oeste ficou 100% no
        ar por cima do vão da porta — medido pela `graffiti-audit` e visto na foto
-       (`/tmp/graffiti-audit/fy_quebrada/00_vao100.png`): a peça atravessa a viga e
+       (`/tmp/graffiti-audit/quebrada/00_vao100.png`): a peça atravessa a viga e
        continua sobre o recuo da porta, com parede só numa ponta.
        3 de 9 é a folga que sobra: caixilho de janela e vão de porta abrem buraco
        legítimo no meio de um muro pichado, e reprovar por causa deles trocaria um

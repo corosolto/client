@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # Recalibracao de tom da RODADA 3 — mesma maquinaria do tone_calib.py, mas invertendo os
 # PNGs de /root/shots/r2 com os parametros que os geraram (tabela LOOKS da r2).
-# PORQUE: so dois mapas saem do lugar nesta rodada — awp_map (L* medio 36,4 contra alvo
-# 42-48; a laje de asfalto voltou a ser buraco preto) e fy_havan (2,30 % do frame em L* < 3,
+# PORQUE: so dois mapas saem do lugar nesta rodada — praca_poderes (L* medio 36,4 contra alvo
+# 42-48; a laje de asfalto voltou a ser buraco preto) e loja_h (2,30 % do frame em L* < 3,
 # limite 1,0 %). pool_day (45,2) e ferrovelho (39,9) ficam INTOCADOS de proposito.
 import sys, os, glob, json
 import numpy as np
@@ -12,14 +12,14 @@ import tone_calib as TC
 
 SHOTS = '/root/shots/r2'
 R2 = {
-    'awp_map':       dict(exposure=1.63, floor=0.0048, expAces=1.70),
-    'fy_pool_day':   dict(exposure=1.92, floor=0.0039, expAces=1.91),
-    'fy_havan':      dict(exposure=1.24, floor=0.0057, expAces=1.28),
-    'fy_ferrovelho': dict(exposure=1.66, floor=0.0041, expAces=1.76),
+    'praca_poderes':       dict(exposure=1.63, floor=0.0048, expAces=1.70),
+    'piscina_treta':   dict(exposure=1.92, floor=0.0039, expAces=1.91),
+    'loja_h':      dict(exposure=1.24, floor=0.0057, expAces=1.28),
+    'ferro_velho': dict(exposure=1.66, floor=0.0041, expAces=1.76),
 }
 SAT = 1.12
 # alvos desta rodada. awp sobe (estava 36,4); havan sobe pouco e sobretudo destrava o preto.
-TARGET_MEAN = {'awp_map': 45.0, 'fy_havan': 44.0}
+TARGET_MEAN = {'praca_poderes': 45.0, 'loja_h': 44.0}
 TARGET_BLK = 0.90     # % do frame em L* < 3 (regua: < 1,0 %)
 
 # reaproveita o inversor do tone_calib, mas com a tabela da r2

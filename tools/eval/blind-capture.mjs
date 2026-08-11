@@ -42,7 +42,7 @@ let errors = 0;
 page.on('console', m => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_pool_day`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }   // G2-R8: 'load' estourava 30s em swiftshader (preload pesado); domcontentloaded + retry como os demais captures
+  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }   // G2-R8: 'load' estourava 30s em swiftshader (preload pesado); domcontentloaded + retry como os demais captures
   catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });

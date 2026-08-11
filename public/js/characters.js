@@ -7,7 +7,7 @@ import { PALETA, num } from './paleta.js';
    CLAREZA COMPETITIVA DO PERSONAGEM  (critério C1 do BAR + A2 p/ personagens)
 
    PORQUÊ ISTO EXISTE: o baseline mediu ΔL* silhueta-vs-fundo = 10,8 em
-   fy_havan-169-b (alvo ≥ 20) e os bots não tinham NENHUMA sombra de contato —
+   loja_h-169-b (alvo ≥ 20) e os bots não tinham NENHUMA sombra de contato —
    liam como adesivo colado no chão. A régua não aceita "o mapa está bem
    iluminado" como resposta: ela exige um mecanismo ATIVO no personagem.
 

@@ -3,7 +3,7 @@
  "nota": "luzes e env MEDIDOS em runtime (harness.mjs); fatores lidos do chunk JSON dos GLB",
  "maps": [
   {
-   "map": "awp_map",
+   "map": "praca_poderes",
    "sun": {
     "pos": [
      90,
@@ -15,7 +15,7 @@
    }
   },
   {
-   "map": "fy_pool_day",
+   "map": "piscina_treta",
    "sun": {
     "pos": [
      10,
@@ -27,7 +27,7 @@
    }
   },
   {
-   "map": "fy_havan",
+   "map": "loja_h",
    "sun": {
     "pos": [
      18,
@@ -39,7 +39,7 @@
    }
   },
   {
-   "map": "fy_ferrovelho",
+   "map": "ferro_velho",
    "sun": {
     "pos": [
      -52,
@@ -51,7 +51,7 @@
    }
   },
   {
-   "map": "fy_quebrada",
+   "map": "quebrada",
    "sun": {
     "pos": [
      38,
@@ -65,8 +65,8 @@
  ],
  "paths": [
   {
-   "id": "vm@awp_map",
-   "envMap": "awp_map",
+   "id": "vm@praca_poderes",
+   "envMap": "praca_poderes",
    "scene": {
     "lights": [
      {
@@ -141,8 +141,8 @@
    "lightMul": 1
   },
   {
-   "id": "vmLegado@awp_map",
-   "envMap": "awp_map",
+   "id": "vmLegado@praca_poderes",
+   "envMap": "praca_poderes",
    "scene": {
     "lights": [
      {
@@ -217,8 +217,8 @@
    "lightMul": 2.0896
   },
   {
-   "id": "chao@awp_map",
-   "envMap": "awp_map",
+   "id": "chao@praca_poderes",
+   "envMap": "praca_poderes",
    "scene": {
     "lights": [
      {
@@ -263,8 +263,8 @@
    "lightMul": 1
   },
   {
-   "id": "vm@fy_pool_day",
-   "envMap": "fy_pool_day",
+   "id": "vm@piscina_treta",
+   "envMap": "piscina_treta",
    "scene": {
     "lights": [
      {
@@ -339,8 +339,8 @@
    "lightMul": 1
   },
   {
-   "id": "vmLegado@fy_pool_day",
-   "envMap": "fy_pool_day",
+   "id": "vmLegado@piscina_treta",
+   "envMap": "piscina_treta",
    "scene": {
     "lights": [
      {
@@ -415,8 +415,8 @@
    "lightMul": 2.1671
   },
   {
-   "id": "chao@fy_pool_day",
-   "envMap": "fy_pool_day",
+   "id": "chao@piscina_treta",
+   "envMap": "piscina_treta",
    "scene": {
     "lights": [
      {
@@ -461,8 +461,8 @@
    "lightMul": 1
   },
   {
-   "id": "vm@fy_havan",
-   "envMap": "fy_havan",
+   "id": "vm@loja_h",
+   "envMap": "loja_h",
    "scene": {
     "lights": [
      {
@@ -537,8 +537,8 @@
    "lightMul": 1
   },
   {
-   "id": "vmLegado@fy_havan",
-   "envMap": "fy_havan",
+   "id": "vmLegado@loja_h",
+   "envMap": "loja_h",
    "scene": {
     "lights": [
      {
@@ -613,8 +613,8 @@
    "lightMul": 2.6761
   },
   {
-   "id": "chao@fy_havan",
-   "envMap": "fy_havan",
+   "id": "chao@loja_h",
+   "envMap": "loja_h",
    "scene": {
     "lights": [
      {
@@ -649,8 +649,8 @@
    "lightMul": 1
   },
   {
-   "id": "vm@fy_ferrovelho",
-   "envMap": "fy_ferrovelho",
+   "id": "vm@ferro_velho",
+   "envMap": "ferro_velho",
    "scene": {
     "lights": [
      {
@@ -725,8 +725,8 @@
    "lightMul": 1
   },
   {
-   "id": "vmLegado@fy_ferrovelho",
-   "envMap": "fy_ferrovelho",
+   "id": "vmLegado@ferro_velho",
+   "envMap": "ferro_velho",
    "scene": {
     "lights": [
      {
@@ -801,8 +801,8 @@
    "lightMul": 2.3617
   },
   {
-   "id": "chao@fy_ferrovelho",
-   "envMap": "fy_ferrovelho",
+   "id": "chao@ferro_velho",
+   "envMap": "ferro_velho",
    "scene": {
     "lights": [
      {
@@ -837,8 +837,8 @@
    "lightMul": 1
   },
   {
-   "id": "vm@fy_quebrada",
-   "envMap": "fy_quebrada",
+   "id": "vm@quebrada",
+   "envMap": "quebrada",
    "scene": {
     "lights": [
      {
@@ -913,8 +913,8 @@
    "lightMul": 1
   },
   {
-   "id": "vmLegado@fy_quebrada",
-   "envMap": "fy_quebrada",
+   "id": "vmLegado@quebrada",
+   "envMap": "quebrada",
    "scene": {
     "lights": [
      {
@@ -989,8 +989,8 @@
    "lightMul": 3.0658
   },
   {
-   "id": "chao@fy_quebrada",
-   "envMap": "fy_quebrada",
+   "id": "chao@quebrada",
+   "envMap": "quebrada",
    "scene": {
     "lights": [
      {

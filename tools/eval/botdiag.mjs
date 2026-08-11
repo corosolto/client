@@ -377,7 +377,7 @@ function runMap(mapId, textures, seed) {
 }
 
 const textures = initTextures();
-const ids = ONLY === 'all' ? ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho'] : [ONLY];
+const ids = ONLY === 'all' ? ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho'] : [ONLY];
 const SEEDS = (process.env.SIM_SEEDS || '12345,777,4242').split(',').map(Number);
 const out = [];
 for (const id of ids) {

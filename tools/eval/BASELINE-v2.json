@@ -1136,7 +1136,7 @@
   "corrida60s": {
    "porMapa": [
     {
-     "map": "awp_map",
+     "map": "praca_poderes",
      "bots": 7,
      "tCondS": 49.567,
      "tiros": 45.333,
@@ -1150,7 +1150,7 @@
      "motivos": {}
     },
     {
-     "map": "fy_pool_day",
+     "map": "piscina_treta",
      "bots": 7,
      "tCondS": 11.733,
      "tiros": 6.667,
@@ -1164,7 +1164,7 @@
      "motivos": {}
     },
     {
-     "map": "fy_havan",
+     "map": "loja_h",
      "bots": 7,
      "tCondS": 12.767,
      "tiros": 8,
@@ -1178,7 +1178,7 @@
      "motivos": {}
     },
     {
-     "map": "fy_ferrovelho",
+     "map": "ferro_velho",
      "bots": 7,
      "tCondS": 56.133,
      "tiros": 44.667,
@@ -1215,7 +1215,7 @@
   "corrida180s": {
    "porMapa": [
     {
-     "map": "awp_map",
+     "map": "praca_poderes",
      "bots": 7,
      "tCondS": 128.067,
      "tiros": 110.667,
@@ -1235,7 +1235,7 @@
      }
     },
     {
-     "map": "fy_pool_day",
+     "map": "piscina_treta",
      "bots": 7,
      "tCondS": 36,
      "tiros": 19.333,
@@ -1249,7 +1249,7 @@
      "motivos": {}
     },
     {
-     "map": "fy_havan",
+     "map": "loja_h",
      "bots": 7,
      "tCondS": 81.767,
      "tiros": 59,
@@ -1263,7 +1263,7 @@
      "motivos": {}
     },
     {
-     "map": "fy_ferrovelho",
+     "map": "ferro_velho",
      "bots": 7,
      "tCondS": 153.367,
      "tiros": 121.333,
@@ -1305,10 +1305,10 @@
     180
    ],
    "mapas": [
-    "awp_map",
-    "fy_pool_day",
-    "fy_havan",
-    "fy_ferrovelho"
+    "praca_poderes",
+    "piscina_treta",
+    "loja_h",
+    "ferro_velho"
    ],
    "sementes": [
     12345,

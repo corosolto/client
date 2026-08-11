@@ -69,7 +69,7 @@ continua sobre o vão da porta**, com parede só numa ponta.
 **Quando o número não move depois de um conserto que deveria movê-lo, pare de
 raciocinar e olhe.** Toda régua visual deveria ter um `--fotos N`.
 
-→ `node tools/eval/graffiti-audit.mjs fy_quebrada --fotos 8`
+→ `node tools/eval/graffiti-audit.mjs quebrada --fotos 8`
 
 ## 5. Falha silenciosa é a classe de defeito mais cara desta base
 

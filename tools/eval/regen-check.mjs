@@ -3,7 +3,7 @@
    O dono vetou a regeneração fora de combate em 05/08. Ela não era bug: era a regra
    `REGEN` (game.js), CoD-style, ligada por padrão desde 31/07 e invisível — sem ícone,
    som, vinheta ou linha de configuração. Reproduzida no navegador antes do conserto
-   (`tools/eval/crash-watch.mjs`, CTF fy_ferrovelho): hp 68 -> 100 em 4,6 s, com o
+   (`tools/eval/crash-watch.mjs`, CTF ferro_velho): hp 68 -> 100 em 4,6 s, com o
    jogador vivo, sem respawn e sem rodada nova.
 
    Esta régua garante as duas metades do veto:
@@ -45,7 +45,7 @@ if (MUT === 'semkill') fonte = fonte.replace(/const REGEN = QS\.get\('regen'\) =
 
 /* ── REGEN2: ANDA o motor ─────────────────────────────────────────────────────────── */
 const textures = initTextures();
-const g = bootGame('fy_ferrovelho', { textures, ctf: false, seed: 4242 });
+const g = bootGame('ferro_velho', { textures, ctf: false, seed: 4242 });
 // mutação `ligado` reproduz o estado vetado dentro do motor já carregado
 if (MUT === 'ligado') {
   const P = g.player;

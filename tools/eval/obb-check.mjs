@@ -51,7 +51,7 @@ const OBRIGATORIOS = {
   // ry efetivo do ônibus = placement (0,55) + correção do corpo torto (PEGADA_BUS.ryCorr,
   // 0,3263). A 4ª passada do BUG-21 (06/08) mediu o corpo ~20° fora da caixa do GLB —
   // o inventário tem que cobrar o colisor NO EIXO DO CORPO, não no da caixa.
-  awp_map: [{ nome: 'ônibus', cx: 2.5, cz: -4, ry: 0.8763 }],
+  praca_poderes: [{ nome: 'ônibus', cx: 2.5, cz: -4, ry: 0.8763 }],
 };
 
 const T = initTextures();

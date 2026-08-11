@@ -155,7 +155,7 @@ export function buildBrasilia(scene, T) {
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = LOWQ ? 1 : 8;
     /* PBR DE SUPERFÍCIE — este é o ÚNICO ponto por onde passa toda textura local deste mapa,
        então registrar aqui cobre o mapa inteiro numa linha (ver `lam` logo acima e
-       textures.js `registerDetail`). Antes desta rodada o awp_map — que é o mapa PADRÃO —
+       textures.js `registerDetail`). Antes desta rodada o praca_poderes — que é o mapa PADRÃO —
        tinha 41 materiais com albedo e ZERO normalMap/roughnessMap: cada superfície era cor
        chapada, sem reagir ao sol nem ao env map, e era um dos "três níveis de acabamento na
        mesma tela" que o dono descreveu.
@@ -1641,7 +1641,7 @@ export function buildBrasilia(scene, T) {
   // borda. A cor bege fixa (0xd6ccae) era a outra metade do problema — o céu MEDIDO logo
   // acima daquela silhueta é azul-acinzentado, não poeira; agora a base é o azul medido e a
   // poeira quente aparece só de contraluz (ver AERIAL no bloom.js). ?nofog=1 / ?fog2=0.
-  if (QP.get('nofog') !== '1') scene.fog = SKY2 ? makeAerialFog('awp_map') : new THREE.Fog(0xbfd8ee, 100, 260);
+  if (QP.get('nofog') !== '1') scene.fog = SKY2 ? makeAerialFog('praca_poderes') : new THREE.Fog(0xbfd8ee, 100, 260);
   const sunSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.sunSprite, transparent: true, fog: false, depthWrite: false }));
   sunSpr.position.set(170, 118, -75); sunSpr.scale.setScalar(58); root.add(sunSpr);
   // Céu de seca: pouquíssima nuvem, e alta/rala. Nuvem gorda de verão mata a leitura.
@@ -1783,7 +1783,7 @@ export function buildBrasilia(scene, T) {
      Pool com peso em PROTESTO (lambe, stencil, cartaz), que é a escrita real desta
      praça — tag de bairro em Brasília leria como outro mapa. */
   grafitar({
-    id: 'awp_map',
+    id: 'praca_poderes',
     root, T, waypoints: nodes, seed: 3311, passo: 1.1, alcance: 9, cobre: 0.06, minLarg: 0.35,
     bandas: [
       /* CARTAZ DA COLEÇÃO (07/08). Reprovação: "tem diversos posters da minha coleção

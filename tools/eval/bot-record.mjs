@@ -34,7 +34,7 @@ const { sense } = await import(`${JS}/botbrain/sense.js`);
 
 const SECS = parseFloat(process.argv[2] || '60');
 const ONLY = process.argv[3] || 'all';
-const MAPS_ALL = ['dust2', 'awp_map', 'fy_havan', 'piscinao'];
+const MAPS_ALL = ['dust2', 'praca_poderes', 'loja_h', 'piscinao'];
 const MAPS = ONLY === 'all' ? MAPS_ALL : [ONLY];
 const SEEDS = [1, 2, 3];
 

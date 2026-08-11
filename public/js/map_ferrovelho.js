@@ -1,4 +1,4 @@
-// Ferro Velho do Zé (fy_ferrovelho) — CTF 4 bandeiras, v2 LABIRINTO. P spawna no PORTÃO (sul),
+// Ferro Velho do Zé (ferro_velho) — CTF 4 bandeiras, v2 LABIRINTO. P spawna no PORTÃO (sul),
 // B no GALPÃO (norte). O pátio é um labirinto de MUROS DE CARROS EMPILHADOS (wall_of_cars) e
 // fileiras de carros prensados (crushed_classic) — scans reais texturizados, corredores ≥5m.
 // 4 bandeiras: portão, beco oeste, pátio leste, galpão. Contrato buildWorld + A*.
@@ -1723,7 +1723,7 @@ export function buildFerroVelho(scene, T) {
      (-46,20,32), olhar na direção dele devolve o âmbar de fim de tarde do mapa; olhar de
      costas devolve azul. É exatamente o que a atmosfera faz e é o que dá o topo/fundo que
      a cor fixa não dava. ?nofog=1 / ?fog2=0 / ?fogd=NN. */
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_ferrovelho');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('ferro_velho');
   /* POEIRA EM SUSPENSÃO — o pó do pátio pegando o sol rasante. Points com sprite macio,
      additive, sem depthWrite; estático (o mapa não tem hook de update) mas em 3 camadas de
      altura, o que já dá volume. ?dust=0 desliga; em 'low' não entra. */
@@ -1751,7 +1751,7 @@ export function buildFerroVelho(scene, T) {
      mas o defeito de raiz é outro: god ray é efeito de recinto fechado (feixe cortando
      poeira dentro de um galpão). Num pátio a céu aberto ao meio-dia não há nada na frente
      pra ocluir o cone, então ele lê como uma CUNHA TRANSLÚCIDA atravessando o quadro —
-     confirmado pelo dono em jogo e visível em /root/shots/r3b/game-fy_ferrovelho-32-b.png,
+     confirmado pelo dono em jogo e visível em /root/shots/r3b/game-ferro_velho-32-b.png,
      mesmo depois do fix de direção. Régua nova (BAR-CONSISTENCIA §5): efeito que o jogador
      percebe como bug vale menos que a beleza que ele adiciona. Volta se um dia o mapa
      ganhar um galpão coberto de verdade. */
@@ -1851,7 +1851,7 @@ export function buildFerroVelho(scene, T) {
      Ferro velho é o lugar mais bombardeado que existe na vida real — muro de fundo de
      pátio é a superfície preferida de quem pinta, justamente porque ninguém reclama. */
   grafitar({
-    id: 'fy_ferrovelho',
+    id: 'ferro_velho',
     root, T, waypoints: nodes, seed: 8123, passo: 0.95, alcance: 9, cobre: 0.06, minLarg: 0.32,
     /* NEM LATARIA NEM MATO (dono, 07/08: "não faz sentido grafite nos carros e na
        grama, só nas paredes em volta mesmo e no escritório"). Ferro velho de verdade

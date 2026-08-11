@@ -30,16 +30,16 @@ const QP = () => new URLSearchParams(location.search);
 /* ================================================================
    LOOK POR MAPA — exposição e piso de ambiente
    Os 4 mapas dividiam a MESMA exposição, e eles não têm nada a ver um com o outro
-   (Brasília meio-dia vs. Ferro Velho fim de tarde). Medição do crítico: awp_map com
+   (Brasília meio-dia vs. Ferro Velho fim de tarde). Medição do crítico: praca_poderes com
    L* médio 8.5 e 22.7 % dos pixels abaixo de L* 3 — o mapa mais escuro leva a maior
    exposição. `floor` é um piso ADITIVO SUAVE em luz linear (bounce/GI que o jogo não
    simula): em hdr=0 vale `floor`, e some sozinho conforme hdr cresce — não achata highlight.
    Override pra tuning do lead: ?exp=1.7&floor=0.014
    ================================================================ */
 // RECALIBRAÇÃO R8 — a R7 calibrou olhando o frame MAIS ESCURO de cada mapa e inverteu a
-// ordem de exposição entre eles: o awp_map tinha um frame de spawn bugado (L* 8,4) que não
+// ordem de exposição entre eles: o praca_poderes tinha um frame de spawn bugado (L* 8,4) que não
 // era exposição, era bug — e a média real do mapa era 25,9. Resultado medido nos 32 frames
-// da r1: awp_map 50,3 (estourado) e o Piscinão — praia, céu aberto, meio-dia — virou o mais
+// da r1: praca_poderes 50,3 (estourado) e o Piscinão — praia, céu aberto, meio-dia — virou o mais
 // ESCURO dos quatro com 40,5. Além disso o piso 0.016/0.013 matou o preto: 0,00 % do frame
 // abaixo de L* 3 em TODOS os mapas (o alvo era < 1 %, não zero) e p1 subindo pra 13-20.
 //
@@ -48,29 +48,29 @@ const QP = () => new URLSearchParams(location.search);
 // invertidos analiticamente — o round-trip bate a média medida com erro < 0,1 L*), recupera o
 // HDR linear da cena e resolve exposição + piso pra bater dois alvos ao mesmo tempo:
 //   exposição -> L* médio alvo do mapa   |   piso -> ~1 % dos pixels abaixo de L* 3.
-// Previsão (média dos 8 frames): pool_day 48,1 > havan 46,0 > awp_map 44,1 > ferrovelho 42,0,
+// Previsão (média dos 8 frames): pool_day 48,1 > havan 46,0 > praca_poderes 44,1 > ferrovelho 42,0,
 // com p1 ≈ 3 e blk 0,86-1,03 % em todos. `expAces` é só o fallback de ?lowtone=0.
 //
 // AJUSTE R9 — SÓ DOIS MAPAS SE MEXEM. Medição dos 8 frames de cada mapa em /root/shots/r2
 // (frame inteiro, sem máscara): pool_day 45,20 e ferrovelho 39,86 estão no alvo ou na borda
 // e ficam INTOCADOS. Os outros dois saíram do lugar:
-//   • awp_map  L* médio 36,36 (alvo 42-48) — a laje de asfalto de awp-169-a mede L* 15,0
+//   • praca_poderes  L* médio 36,36 (alvo 42-48) — a laje de asfalto de awp-169-a mede L* 15,0
 //     com mínimo 0,8: voltou a ser buraco preto. Exposição 1,63 -> 2,40.
-//   • fy_havan 2,295 % do frame em L* < 3 (limite 1,0 %) — o asfalto do estacionamento
+//   • loja_h 2,295 % do frame em L* < 3 (limite 1,0 %) — o asfalto do estacionamento
 //     estava ESMAGADO, não escuro. Aqui o remédio é o PISO, não a exposição: com
 //     floor·exposure ≈ 0,0090 o pixel mais escuro possível cai em L* ≈ 4,2 (acima do 3)
 //     em vez de 3,04, que era exatamente em cima da linha. Exposição 1,24 -> 1,50.
 // Ambos resolvidos por `tools/eval/tone_r3.py`, que inverte ESTE composite em cima dos PNGs
 // da r2 (round-trip bate a média medida com erro < 0,02 L* e o %blk com erro < 0,02 pp).
-// Previsão: awp_map 36,4 -> 42,3 com blk 0,00 % e p1 5,0;  havan 40,4 -> 43,6 com blk
+// Previsão: praca_poderes 36,4 -> 42,3 com blk 0,00 % e p1 5,0;  havan 40,4 -> 43,6 com blk
 // 2,26 % -> 0,00 % e p1 2,6 -> 4,0.
 const LOOKS = {
-  awp_map:       { exposure: 2.40, floor: 0.0042, expAces: 2.61 },   // Brasília, meio-dia seco
-  fy_pool_day:   { exposure: 1.92, floor: 0.0039, expAces: 1.91 },   // Piscinão: TEM que ser o mais claro
-  fy_havan:      { exposure: 1.50, floor: 0.0060, expAces: 1.59 },
-  fy_ferrovelho: { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
+  praca_poderes:       { exposure: 2.40, floor: 0.0042, expAces: 2.61 },   // Brasília, meio-dia seco
+  piscina_treta:   { exposure: 1.92, floor: 0.0039, expAces: 1.91 },   // Piscinão: TEM que ser o mais claro
+  loja_h:      { exposure: 1.50, floor: 0.0060, expAces: 1.59 },
+  ferro_velho: { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
 };
-// id desconhecido cai no awp_map em maps.js (DEFAULT_MAP) — o look padrão tem que ser o
+// id desconhecido cai no praca_poderes em maps.js (DEFAULT_MAP) — o look padrão tem que ser o
 // MESMO, senão o mapa que roda e a curva que é aplicada divergem.
 const DEFAULT_LOOK = { exposure: 2.40, floor: 0.0042, expAces: 2.61 };
 // saturação do AgX (uLook.z). A R7 baixou 1.05→1.02 E empurrou a exposição pro ombro do AgX,
@@ -108,12 +108,12 @@ function currentLook() {
 const AERIAL = {
   //                 densidade   cor-base medida do céu    direção do sol (posição da
   //                             logo acima da silhueta     DirectionalLight do mapa)
-  awp_map:       { d: 0.0066, color: 0x7d9cbb, sun: [90, 62, -40], dir: 0.90 },
-  fy_pool_day:   { d: 0.0078, color: 0x93b9df, sun: [14, 76, -9],  dir: 0.85 },
-  fy_havan:      { d: 0.0088, color: 0xa3c4e5, sun: [18, 55, 20],  dir: 0.80 },
-  fy_ferrovelho: { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
+  praca_poderes:       { d: 0.0066, color: 0x7d9cbb, sun: [90, 62, -40], dir: 0.90 },
+  piscina_treta:   { d: 0.0078, color: 0x93b9df, sun: [14, 76, -9],  dir: 0.85 },
+  loja_h:      { d: 0.0088, color: 0xa3c4e5, sun: [18, 55, 20],  dir: 0.80 },
+  ferro_velho: { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
 };
-const AERIAL_DEFAULT = AERIAL.awp_map;
+const AERIAL_DEFAULT = AERIAL.praca_poderes;
 
 // TypedArray permanece compartilhado por `cloneUniforms`: xyz é o sol no mundo e w sua força.
 const _fogSun = new Float32Array([0, 1, 0, 0]);
@@ -203,7 +203,7 @@ patchFogChunks();
    da silhueta, inverte o composite (AgX + piso + vinheta + exposição) e devolve a radiância
    linear MEDIDA. Fica exportada porque mais de um efeito precisa saber "qual é o brilho do
    céu deste mapa" e não só a névoa: hoje a fumaça de granada (game.js `_corDaFumaca`), que
-   estava com radiância 0,64 contra 0,32 do céu do awp_map — 2× mais clara que a luz que a
+   estava com radiância 0,64 contra 0,32 do céu do praca_poderes — 2× mais clara que a luz que a
    ilumina, que é o "a tela lava pra branco" do dono. Uma fonte só, medida, para os dois.
    `new THREE.Color(hex)` converte sRGB -> linear de trabalho, então o retorno já é radiância. */
 export function skyRadiance(mapId) {

@@ -18,10 +18,10 @@ from tone_calib import agx_inv, srgb_to_lin, lin_to_srgb, unfloor, vignette
 
 # parametros que geraram /root/shots/r2 (tabela LOOKS do bloom.js na r2)
 R2 = {
-    'awp_map':       dict(exposure=1.63, floor=0.0048),
-    'fy_pool_day':   dict(exposure=1.92, floor=0.0039),
-    'fy_havan':      dict(exposure=1.24, floor=0.0057),
-    'fy_ferrovelho': dict(exposure=1.66, floor=0.0041),
+    'praca_poderes':       dict(exposure=1.63, floor=0.0048),
+    'piscina_treta':   dict(exposure=1.92, floor=0.0039),
+    'loja_h':      dict(exposure=1.24, floor=0.0057),
+    'ferro_velho': dict(exposure=1.66, floor=0.0041),
 }
 R2_SAT = 1.12
 BAND = 14      # linhas de ceu logo acima da silhueta

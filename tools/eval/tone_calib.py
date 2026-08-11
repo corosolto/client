@@ -105,10 +105,10 @@ def lstar_from_srgb(s):
 
 # ---- parametros do r1 (o que gerou os PNGs) ----
 R1 = {
-    'awp_map':       dict(exposure=2.00, floor=0.016),
-    'fy_pool_day':   dict(exposure=1.10, floor=0.013),
-    'fy_havan':      dict(exposure=1.45, floor=0.010),
-    'fy_ferrovelho': dict(exposure=1.55, floor=0.012),
+    'praca_poderes':       dict(exposure=2.00, floor=0.016),
+    'piscina_treta':   dict(exposure=1.10, floor=0.013),
+    'loja_h':      dict(exposure=1.45, floor=0.010),
+    'ferro_velho': dict(exposure=1.55, floor=0.012),
 }
 R1_SAT = 1.02
 VIGN = 0.14
@@ -198,8 +198,8 @@ def thin(pack, n, seed=7):
 
 
 def main():
-    maps = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho']
-    targets = {'awp_map': 44.0, 'fy_pool_day': 48.0, 'fy_havan': 46.0, 'fy_ferrovelho': 42.0}
+    maps = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho']
+    targets = {'praca_poderes': 44.0, 'piscina_treta': 48.0, 'loja_h': 46.0, 'ferro_velho': 42.0}
     sat_new = 1.12
     res = {}
     for m in maps:

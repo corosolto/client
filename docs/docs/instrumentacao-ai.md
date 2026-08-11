@@ -42,7 +42,7 @@ E a regra que vale mais que as três (`SKILL.md:18`):
 
 > O que faz a diferença aqui **não é o número de agentes** — é que cada afirmação
 > carregue um número e um `arquivo:linha`. Uma crítica que diz "melhore a iluminação" é
-> ruído. Uma que diz "22,7% dos pixels de `game-awp_map-169-a.png` estão em L\* < 3 e a
+> ruído. Uma que diz "22,7% dos pixels de `game-praca_poderes-169-a.png` estão em L\* < 3 e a
 > causa é `bloom.js:18` `power=1.25`" é trabalho.
 
 ## O ciclo, em ordem

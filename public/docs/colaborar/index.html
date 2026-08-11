@@ -87,7 +87,7 @@ vermelha, o PR não entra. Se você <strong>consertou</strong> uma vermelha, dig
 no <code>KNOWN-BUGS.md</code>). Isso não é licença para piorar: o compromisso é <em>&quot;a sua mudança não
 acrescenta vermelho&quot;</em>.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="3-números-com-arquivolinha">3. Números, com <code>arquivo:linha</code><a href="#3-números-com-arquivolinha" class="hash-link" aria-label="Link direto para 3-números-com-arquivolinha" title="Link direto para 3-números-com-arquivolinha">​</a></h3>
-<p>A afirmação &quot;melhorei a iluminação&quot; não é revisável. &quot;O chão do <code>awp_map</code> estava 8 pontos
+<p>A afirmação &quot;melhorei a iluminação&quot; não é revisável. &quot;O chão do <code>praca_poderes</code> estava 8 pontos
 de L* acima das paredes, causa em <code>map_brasilia.js:NNN</code>, corrigido para X&quot; é. Essa
 exigência não é estilo — é o que permite que a próxima rodada confira o seu trabalho.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="4-uma-frente-por-pr">4. Uma frente por PR<a href="#4-uma-frente-por-pr" class="hash-link" aria-label="Link direto para 4. Uma frente por PR" title="Link direto para 4. Uma frente por PR">​</a></h3>
@@ -178,7 +178,7 @@ conteúdo como dado do
 contribuição de maior alavancagem do projeto.</p>
 <p>O registro, gerado do <code>MAPS</code> de <code>public/js/maps.js</code>:</p>
 <!-- -->
-<table><thead><tr><th>Id</th><th>Nome no menu</th><th>Abre em</th><th>Arquivo em <code>public/js/</code></th><th style="text-align:right">Linhas</th></tr></thead><tbody><tr><td><code>awp_map</code></td><td>Praça dos Três Poderes</td><td>rodadas</td><td><code>map_brasilia.js</code></td><td style="text-align:right">1.830</td></tr><tr><td><code>fy_pool_day</code></td><td>Piscina da Treta</td><td>rodadas</td><td><code>map_piscina.js</code></td><td style="text-align:right">810</td></tr><tr><td><code>fy_havan</code></td><td>Loja H (Estacionamento)</td><td><strong>captura</strong></td><td><code>map_havan.js</code></td><td style="text-align:right">1.920</td></tr><tr><td><code>fy_ferrovelho</code></td><td>Ferro Velho do Zé</td><td><strong>captura</strong></td><td><code>map_ferrovelho.js</code></td><td style="text-align:right">1.888</td></tr><tr><td><code>fy_quebrada</code></td><td>Quebrada (Rua do Baile)</td><td><strong>captura</strong></td><td><code>map_quebrada.js</code></td><td style="text-align:right">1.599</td></tr></tbody></table>
+<table><thead><tr><th>Id</th><th>Nome no menu</th><th>Abre em</th><th>Arquivo em <code>public/js/</code></th><th style="text-align:right">Linhas</th></tr></thead><tbody><tr><td><code>praca_poderes</code></td><td>Praça dos Três Poderes</td><td>rodadas</td><td><code>map_brasilia.js</code></td><td style="text-align:right">1.830</td></tr><tr><td><code>piscina_treta</code></td><td>Piscina da Treta</td><td>rodadas</td><td><code>map_piscina.js</code></td><td style="text-align:right">810</td></tr><tr><td><code>loja_h</code></td><td>Loja H (Estacionamento)</td><td><strong>captura</strong></td><td><code>map_havan.js</code></td><td style="text-align:right">1.920</td></tr><tr><td><code>ferro_velho</code></td><td>Ferro Velho do Zé</td><td><strong>captura</strong></td><td><code>map_ferrovelho.js</code></td><td style="text-align:right">1.888</td></tr><tr><td><code>quebrada</code></td><td>Quebrada (Rua do Baile)</td><td><strong>captura</strong></td><td><code>map_quebrada.js</code></td><td style="text-align:right">1.599</td></tr></tbody></table>
 <p><strong>5 mapas registrados</strong> — 2 abrem em rodadas e 3 em captura. <code>ctfMode</code> <strong>abre</strong> o mapa em captura, não prende: o jogador troca no menu (é a <code>MOD1</code>). Há 6 arquivos <code>map_*.js</code> em <code>public/js/</code> — arquivo no disco <strong>não</strong> implica mapa jogável.</p>
 <blockquote>
 <p>Bloco gerado por <code>node tools/gen-docs.mjs</code>. Fonte: <code>objeto MAPS de public/js/maps.js</code></p>
@@ -219,7 +219,7 @@ ela.</li>
 <li><strong>Rode <code>node tools/eval/pickup-check.mjs</code></strong> (alimenta a <code>VM14</code>): todo pickup precisa
 ser alcançável <strong>a pé</strong>, por flood-fill de conectividade real em grade de 0,25 m
 semeado nos spawns dos dois times. Já aconteceu de armas caírem dentro da piscina do
-<code>fy_pool_day</code> com o quality gate marcando vão <strong>0,0000 — VERDE</strong>.</li>
+<code>piscina_treta</code> com o quality gate marcando vão <strong>0,0000 — VERDE</strong>.</li>
 <li><strong>Rode <code>node tools/eval/botsim.mjs 60 &lt;mapId&gt;</code></strong>: os bots precisam navegar o seu mapa
 sem travar (<code>BOT3</code> stuck ≤ 4%), sem andar de lado (<code>BOT1</code>) e sem girar parados (<code>BOT2</code>).
 Waypoint desconexo é o defeito mais comum de mapa novo, e já quebrou PRs antes

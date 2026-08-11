@@ -30,7 +30,7 @@ export const DESC_SHORT =
   'com cinco facções e 44 personagens originais.';
 
 export const DESC_LONG =
-  'Jogo FPS gratuito de navegador: arena de sniper estilo awp_map do CS 1.6 numa Brasília ' +
+  'Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília ' +
   'fictícia e satírica. Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros, ' +
   '5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação, sem cadastro.';
 

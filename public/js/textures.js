@@ -91,8 +91,8 @@ function withDetail(t, src, strength = 2.2, lo = 0.55, hi = 0.98) {
    praca_old (map.js:20-28) tinha normal+roughness — 70 e 70. Os outros quatro tinham ZERO,
    e ligar o `detailFor` no `lam()` deles não resolvia: as texturas deles não passam por
    AQUI, são canvas LOCAIS de cada map_*.js (muroTex, acmTex, noiseTex...), então não estão
-   nos WeakMaps e o `detailFor` devolvia null para 100% delas (medido: awp_map 41 materiais
-   com map e 0 candidatos, fy_havan 47 e 0).
+   nos WeakMaps e o `detailFor` devolvia null para 100% delas (medido: praca_poderes 41 materiais
+   com map e 0 candidatos, loja_h 47 e 0).
    Ou seja o caminho certo existia mas terminava numa parede. Esta função é a porta: quem
    gera um canvas fora daqui registra o par normal+roughness derivado dele e passa a ser
    atendido pelo MESMO `detailFor`. Um caminho só, um kill-switch só (?detail=0), um gate de
@@ -106,7 +106,7 @@ export function registerDetail(t, canvas, strength = 2.2, lo = 0.55, hi = 0.98) 
    Os mapas seguem a regra "UM canvas por imagem; variação de escala vem de `clone()`"
    (map_havan.js:341), então a MAIORIA dos materiais recebe um CLONE da textura registrada,
    com outro `repeat`. O WeakMap é indexado pela textura, e o clone é outro objeto: medido,
-   o fy_havan ficou com 5 normalMaps de 47 materiais com albedo — o resto caía aqui e saía
+   o loja_h ficou com 5 normalMaps de 47 materiais com albedo — o resto caía aqui e saía
    null. A busca por `source` fecha esse buraco.
    E o clone do DERIVADO não é opcional: o normal/roughness precisa do MESMO `repeat` do
    albedo, senão o relevo tila numa escala diferente da textura e fica pior do que não ter.

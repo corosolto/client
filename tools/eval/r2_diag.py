@@ -98,7 +98,7 @@ def agua():
     # Lamina d'agua: recorte ESTRITO = maior componente azul/ciano abaixo do horizonte,
     # com area minima; exclui bandeirola, azulejo isolado e ceu refletido em vidro.
     print('=== LAMINA D\'AGUA (maior componente azul abaixo de 0.42H, >=0.8% do frame) ===')
-    for mp in ['fy_pool_day']:
+    for mp in ['piscina_treta']:
         for rd in ROUNDS:
             H_, S_, L_, A_ = [], [], [], []
             for vw in VIEWS:
@@ -140,8 +140,8 @@ if __name__ == '__main__':
     if which in ('all', 'flat'):
         os.makedirs('/root/shots/diag', exist_ok=True)
         for rd in ROUNDS:
-            for mp, vw, p in [('awp_map', '169', 'c'), ('fy_havan', '169', 'a'),
-                              ('fy_ferrovelho', '169', 'a'), ('fy_pool_day', '169', 'd')]:
+            for mp, vw, p in [('praca_poderes', '169', 'c'), ('loja_h', '169', 'a'),
+                              ('ferro_velho', '169', 'a'), ('piscina_treta', '169', 'd')]:
                 o = f'/root/shots/diag/flat-{rd}-{mp}-{vw}-{p}.png'
                 info = flat_map(rd, mp, vw, p, o)
                 print(f'{rd:5s} {mp:14s}{vw}-{p}  top3 manchas chapadas:',

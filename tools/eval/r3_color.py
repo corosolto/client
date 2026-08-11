@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
-MAPS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho']
+MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho']
 VIEWS = ['169', '32']
 POS = ['a', 'b', 'c', 'd']
 
@@ -165,7 +165,7 @@ def run(root, label):
             agg['agua_L'] = float(np.mean([r['agua_L'] for r in aw]))
             agg['agua_n'] = len(aw)
         out[mp] = agg
-    fp = ferro_patch(f'{root}/game-fy_ferrovelho-169-d.png')
+    fp = ferro_patch(f'{root}/game-ferro_velho-169-d.png')
     if fp:
         out['_ferro_patch_169d'] = fp
     print(f'--- {label} ({root}) ---')

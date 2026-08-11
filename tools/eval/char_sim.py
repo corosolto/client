@@ -19,10 +19,10 @@ from scipy import ndimage
 LUMW = T.LUMW
 
 # composite: r1 = o que gerou /root/shots/r1 ; r2 = LOOKS atuais do bloom.js
-R1 = {'fy_ferrovelho': dict(exposure=1.55, floor=0.012, sat=1.02),
-      'fy_pool_day':   dict(exposure=1.10, floor=0.013, sat=1.02)}
-R2 = {'fy_ferrovelho': dict(exposure=1.66, floor=0.0041, sat=1.12),
-      'fy_pool_day':   dict(exposure=1.92, floor=0.0039, sat=1.12)}
+R1 = {'ferro_velho': dict(exposure=1.55, floor=0.012, sat=1.02),
+      'piscina_treta':   dict(exposure=1.10, floor=0.013, sat=1.02)}
+R2 = {'ferro_velho': dict(exposure=1.66, floor=0.0041, sat=1.12),
+      'piscina_treta':   dict(exposure=1.92, floor=0.0039, sat=1.12)}
 
 
 def unvignette_at(x, y, w, h):
@@ -138,8 +138,8 @@ def run(mapid, frame, box, mode, dist, name, amb=1.0, sun=1.65):
 
 if __name__ == '__main__':
     # ferro velho: hemi 1.0 + IBL -> ambiente difuso medido ~1.0; sol 1.65
-    run('fy_ferrovelho', 'fy_ferrovelho-169-b', (780, 495, 890, 740), 'auto', 20, 'doutora (jaleco + calca teal)')
-    run('fy_ferrovelho', 'fy_ferrovelho-169-b', (690, 445, 775, 610), 'auto', 34, 'bot camisa roxa')
+    run('ferro_velho', 'ferro_velho-169-b', (780, 495, 890, 740), 'auto', 20, 'doutora (jaleco + calca teal)')
+    run('ferro_velho', 'ferro_velho-169-b', (690, 445, 775, 610), 'auto', 34, 'bot camisa roxa')
     # piscinao: hemi 0.52 + IBL de ceu claro -> ambiente ~1.0; sol 2.6
-    run('fy_pool_day', 'fy_pool_day-169-d', (1180, 470, 1420, 900), 'auto', 8, 'bot piscinao (bone do r1)',
+    run('piscina_treta', 'piscina_treta-169-d', (1180, 470, 1420, 900), 'auto', 8, 'bot piscinao (bone do r1)',
         amb=1.0, sun=2.6)

@@ -19,7 +19,7 @@ from PIL import Image
 # ~15 cm em pixels. O perfil que o critico publicou tinha 9 amostras de parede antes do
 # degrau, entao a escala de trabalho e ~0,6 px/cm nessa distancia. 10 px e a leitura direta.
 WIN = 10
-MAPS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho']
+MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho']
 
 
 def lstar(rgb01):

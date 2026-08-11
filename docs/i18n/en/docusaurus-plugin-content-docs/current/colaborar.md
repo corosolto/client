@@ -153,7 +153,7 @@ adds no red"*.
 
 ### 3. Numbers, with `arquivo:linha` {#3-numbers-with-file-line}
 
-The claim "I improved the lighting" is not reviewable. "The `awp_map` floor was 8 points
+The claim "I improved the lighting" is not reviewable. "The `praca_poderes` floor was 8 points
 of L\* above the walls, cause at `map_brasilia.js:NNN`, fixed to X" is. This
 requirement is not style — it is what allows the next round to check your work.
 
@@ -251,11 +251,11 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `fy_pool_day` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
-| `fy_havan` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,920 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,920 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
 
 **5 registered maps** - 2 open in rounds and 3 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 6 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
@@ -295,7 +295,7 @@ To add a map in today's format:
 4. **Run `node tools/eval/pickup-check.mjs`** (it feeds `VM14`): every pickup must
    be reachable **on foot**, by flood-fill of real connectivity on a 0,25 m grid
    seeded at the spawns of both teams. It has already happened that weapons fell into the pool of
-   `fy_pool_day` with the gate reporting a gap of **0,0000 — GREEN**.
+   `piscina_treta` with the gate reporting a gap of **0,0000 — GREEN**.
 5. **Run `node tools/eval/botsim.mjs 60 <mapId>`**: the bots must navigate your map
    without getting stuck (`BOT3` stuck ≤ 4%), without walking sideways (`BOT1`) and without spinning in place (`BOT2`).
    A disconnected waypoint is the most common defect of a new map, and it has broken PRs before

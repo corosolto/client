@@ -120,7 +120,7 @@
   --sh-text:0 1px 3px rgba(0,0,0,.85);
   /* Contorno, não só sombra: um blur de 2px em preto .95 encosta no glifo e vira a
      "cor de fundo" real do texto. Sobre areia do Piscinão (L*~78) ou parede branca do
-     awp_map a sombra difusa antiga não movia a agulha — o halo colado move. */
+     praca_poderes a sombra difusa antiga não movia a agulha — o halo colado move. */
   --sh-hud:0 0 2px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.55);
   --scrim:rgba(var(--bg-900-rgb),.82);
 
@@ -133,7 +133,7 @@
 
   /* ---- mira: fora do sistema de cor, configurável em CONFIGURAÇÕES ----
      PADRÃO = CIANO, não branco. Medição na janela 44×42 px em volta da mira:
-     branco #e9f1f3 no awp_map (parede branca) deu 1,28:1 — a mira SOME. O ciano
+     branco #e9f1f3 no praca_poderes (parede branca) deu 1,28:1 — a mira SOME. O ciano
      é o único matiz que nenhuma superfície dos 4 mapas ocupa (concreto, areia,
      ferrugem, asfalto, céu), então ele não compete com o cenário em NENHUM deles.
      O contorno preto (abaixo) cobre o caso oposto, fundo escuro. */
@@ -571,7 +571,7 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    sete), então uma amostra alta demais abre um vazio do tamanho dela na coluna da
    esquerda. Aqui a altura da amostra é o que define o fôlego das duas colunas. */
 .set-preview{min-height:min(34vh,240px);border:1px solid var(--line);clip-path:var(--cut);
-  background:var(--bg-800) url('/img/map-previews/fy_quebrada.jpg') center/cover no-repeat}
+  background:var(--bg-800) url('/img/map-previews/quebrada.jpg') center/cover no-repeat}
 /* barra de ação com fio em cima e o CTA à direita, como o rodapé da referência */
 .set-actions{display:flex;justify-content:flex-end;gap:var(--s-3);
   padding-top:var(--s-4);border-top:1px solid var(--line)}
@@ -654,7 +654,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 
    O QUE ESTAVA AQUI e por que sai: um scrim de canto (dois radial-gradient .84 → 0)
    escurecendo a ZONA do HUD, porque no Piscinão o "100" cai sobre areia clara
-   (RGB 214,196,164, o pior fundo dos 4 mapas) e no awp_map o relógio cai sobre parede
+   (RGB 214,196,164, o pior fundo dos 4 mapas) e no praca_poderes o relógio cai sobre parede
    branca. Sem ele, medido na época: "100" dava 1,49:1 e o rótulo 1,14:1.
 
    O QUE SUBSTITUI: contorno no GLIFO em vez de caixa atrás dele — é como todo FPS
@@ -780,7 +780,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
 .ts-b{color:#a9f0b6;border-right:3px solid var(--team-b)}
 /* A plaquinha do bloco central saiu junto: era rgba .72 + chanfro pra segurar o "1:39"
-   (branco) sobre a parede branca do awp_map, onde dava ~1,1:1. Quem segura agora é o
+   (branco) sobre a parede branca do praca_poderes, onde dava ~1,1:1. Quem segura agora é o
    contorno do glifo (--sh-hud + text-stroke). O padding vertical FICA: ele entra na soma
    de altura documentada acima, que é o que mantém o #ctf-hud fora do "RODADA 1". */
 #hud-mid{text-align:center;padding:1px var(--s-3) 2px}
@@ -1719,7 +1719,7 @@ html[data-ui="legacy"] .cs-vignette{
    Três defeitos no print, três correções:
    (a) "escondidas" -> a chapa era translúcida (.7) sobre foto clara. Agora é .92 +
        borda amarela + contorno escuro: o glifo tem fundo próprio, então lê sobre
-       areia do Piscinão, céu do awp_map ou concreto do Havan igualmente.
+       areia do Piscinão, céu do praca_poderes ou concreto do Havan igualmente.
    (b) "no meio da moldura" -> ficavam em top:44% DENTRO da arte, disputando com a
        imagem. Agora cavalgam a borda (metade fora, metade dentro) na altura média.
    (c) alvo pequeno -> 28×42 (1176px²) vira 48×66 (3168px²), ~2,7× a área de clique.
@@ -1753,7 +1753,7 @@ html[data-ui="legacy"] .cs-vignette{
 
 /* ---- 2) A MOLDURA: vinheta que ANCORA o nome + friso amarelo ----
    O nome do mapa flutuava sobre a foto com só um text-shadow. Sobre céu claro do
-   awp_map isso é cinza-sobre-branco. A vinheta agora fecha quase opaca na base (a
+   praca_poderes isso é cinza-sobre-branco. A vinheta agora fecha quase opaca na base (a
    faixa onde o nome mora) e abre no meio (onde a arte tem que aparecer). */
 .pane-match .map-picker::after{
   background:linear-gradient(0deg,

@@ -15,7 +15,7 @@ O Gauntlet resolve isso com três regras que valem mais que qualquer instrução
 2. **Quem constrói nunca dá a nota.** O crítico é outro agente, com contexto limpo, que só vê o pixel — nunca a justificativa do builder.
 3. **O loop não tem número fixo de rodadas.** Ele para quando você para, não quando o agente se declara satisfeito.
 
-O que faz a diferença aqui **não é o número de agentes** — é que cada afirmação carregue um número e um `arquivo:linha`. Uma crítica que diz "melhore a iluminação" é ruído. Uma que diz "22,7% dos pixels de `game-awp_map-169-a.png` estão em L\* < 3 e a causa é `bloom.js:18` `power=1.25`" é trabalho.
+O que faz a diferença aqui **não é o número de agentes** — é que cada afirmação carregue um número e um `arquivo:linha`. Uma crítica que diz "melhore a iluminação" é ruído. Uma que diz "22,7% dos pixels de `game-praca_poderes-169-a.png` estão em L\* < 3 e a causa é `bloom.js:18` `power=1.25`" é trabalho.
 
 ## Antes de qualquer coisa
 

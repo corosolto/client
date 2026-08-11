@@ -397,7 +397,7 @@ precisam de especialista, cada um com a medição, o critério e **o que já foi
 - **VM18/VM20** — 12 armas com espessura abaixo do piso medido no CS 1.6 (shotgun 0,269 ·
   carbine 0,296 · sks 0,343 contra piso 0,427). **Já refutado com número:** duas buscas em
   grade (768 e 1280 pontos) e a hipótese de escorço (`vm-orto.mjs`). É malha, não parâmetro.
-- **`fy_pool_day` em MeshLambert**, que não aceita normalMap. Precisa de alguém que **meça**
+- **`piscina_treta` em MeshLambert**, que não aceita normalMap. Precisa de alguém que **meça**
   o custo de converter para Standard em máquina fraca.
 
 ## T29. Discord
@@ -435,7 +435,7 @@ Placar real do portão e o que ficou de fora, com motivo. Deve estar registrado:
 - VM18/VM20 — precisa de malha nova
 - postura do coach quântico (36,0°) e do dollynho (66,9°) contra mediana 86,5° do elenco
 - BOT8 — bot com linha de visão > 1,5 s sem atirar
-- `fy_pool_day` sem normal/roughness (MeshLambert)
+- `piscina_treta` sem normal/roughness (MeshLambert)
 - destino do cliente Godot (382 arquivos versionados)
 - multiplayer — é v3
 - refatorar `game.js` (6.525 linhas, 26% do código) — depois do release, com portão verde

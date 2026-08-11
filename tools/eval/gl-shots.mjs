@@ -54,11 +54,11 @@ async function menuShots() {
 
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const MAPS = [
-  ['awp_map', 'P,mst'],
-  ['fy_pool_day', 'P,mst'],
-  ['fy_havan', 'B,bozo'],
-  ['fy_ferrovelho', 'B,bozo'],
-  ['fy_quebrada', 'B,sertanejo'],
+  ['praca_poderes', 'P,mst'],
+  ['piscina_treta', 'P,mst'],
+  ['loja_h', 'B,bozo'],
+  ['ferro_velho', 'B,bozo'],
+  ['quebrada', 'B,sertanejo'],
 ];
 
 async function gameShots() {

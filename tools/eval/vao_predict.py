@@ -15,10 +15,10 @@ import numpy as np
 
 # ---- constantes copiadas de public/js/bloom.js (COMPOSITE / LOOKS) ----
 LOOKS = {
-    'awp_map':       (1.63, 0.0048),
-    'fy_pool_day':   (1.92, 0.0039),
-    'fy_havan':      (1.24, 0.0057),
-    'fy_ferrovelho': (1.66, 0.0041),
+    'praca_poderes':       (1.63, 0.0048),
+    'piscina_treta':   (1.92, 0.0039),
+    'loja_h':      (1.24, 0.0057),
+    'ferro_velho': (1.66, 0.0041),
 }
 SAT = 1.12
 REC2020_FROM_SRGB = np.array([[0.6274, 0.3293, 0.0433],
@@ -128,11 +128,11 @@ if __name__ == '__main__':
     DS = [0.30, 0.25, 0.20, 0.15, 0.10, 0.05, 0.00]   # distancia da parede (m)
     print('PARADE (m):                         ' + '  '.join(f'{h:5.2f}' for h in HS))
     print('--- LADO DA PAREDE (multiplicador de albedo por faixa) ---')
-    for mapid, L0, name in [('awp_map', 78.0, 'awp concreto claro L*78'),
-                            ('awp_map', 60.0, 'awp concreto medio L*60'),
-                            ('fy_havan', 72.0, 'havan muro L*72'),
-                            ('fy_ferrovelho', 45.0, 'ferro zinco L*45'),
-                            ('fy_pool_day', 66.0, 'pool muro L*66')]:
+    for mapid, L0, name in [('praca_poderes', 78.0, 'awp concreto claro L*78'),
+                            ('praca_poderes', 60.0, 'awp concreto medio L*60'),
+                            ('loja_h', 72.0, 'havan muro L*72'),
+                            ('ferro_velho', 45.0, 'ferro zinco L*45'),
+                            ('piscina_treta', 66.0, 'pool muro L*66')]:
         ks = [k_at(h) for h in HS]
         p = profile(mapid, L0, ks, name)
         d15 = p[3] - p[-1]
@@ -141,11 +141,11 @@ if __name__ == '__main__':
     print()
     print('DISTANCIA (m):                      ' + '  '.join(f'{d:5.2f}' for d in DS))
     print('--- LADO DO CHAO (saia de contato, alpha por vertice) ---')
-    for mapid, L0, name in [('awp_map', 62.0, 'awp calcada clara L*62'),
-                            ('awp_map', 22.0, 'awp asfalto escuro L*22'),
-                            ('fy_havan', 38.0, 'havan asfalto L*38'),
-                            ('fy_ferrovelho', 48.0, 'ferro terra batida L*48'),
-                            ('fy_pool_day', 70.0, 'pool areia clara L*70')]:
+    for mapid, L0, name in [('praca_poderes', 62.0, 'awp calcada clara L*62'),
+                            ('praca_poderes', 22.0, 'awp asfalto escuro L*22'),
+                            ('loja_h', 38.0, 'havan asfalto L*38'),
+                            ('ferro_velho', 48.0, 'ferro terra batida L*48'),
+                            ('piscina_treta', 70.0, 'pool areia clara L*70')]:
         ks = [1.0 - alpha_at(d) for d in DS]
         p = profile(mapid, L0, ks, name)
         d15 = p[3] - p[-1]

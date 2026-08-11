@@ -6,7 +6,7 @@
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const MAP = process.argv[2] || 'awp_map';
+const MAP = process.argv[2] || 'praca_poderes';
 const PREFIX = process.argv[3] || '/tmp/gauntlet/g2r6-bots-br';
 const SECS = parseFloat(process.argv[4] || '45');
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
