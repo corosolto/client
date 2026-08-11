@@ -113,11 +113,15 @@ limiter anti-clip, `duckBus` sidechain, caps de bounce em ~80ms) e nos portões
 `g2r6-blackband.mjs` · `g2r6-bots.mjs` · `g2r6-bots2.mjs` · `g2r6-capture.mjs` ·
 `g2r6-pose-tune.mjs` · `g2r6-switch-capture.mjs` · `g2r6-switch2.mjs`
 
-**Rodada G2-R7 / R7b / R8 (framing e boca do cano):**
-`g2r7-aksweep.mjs` · `g2r7-capture.mjs` · `g2r7-mzmarks.mjs` · `g2r7-mzprobe.mjs` ·
-`g2r7-orbit.mjs` · `g2r7-smoke.mjs` · `g2r7b-capture.mjs` · `g2r7b-mzmarks.mjs` ·
-`g2r7b-smoke.mjs` · `g2r7b-sweep.mjs` · `g2r8-sweep.mjs` · `../g2r7-measure.mjs`
-→ **superado** pelo `vm-mint-audit.mjs`, que mede em vez de varrer.
+**Aposentada — Rodada G2-R7 / R7b / R8 (framing e boca do cano)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`g2r7-aksweep.mjs` · `g2r7-capture.mjs` · `g2r7-mzprobe.mjs` · `g2r7-orbit.mjs` ·
+`g2r7-smoke.mjs` · `g2r7b-capture.mjs` · `g2r7b-mzmarks.mjs` · `g2r7b-smoke.mjs` ·
+`g2r7b-sweep.mjs` · `g2r8-sweep.mjs`. Superadas pelo `vm-mint-audit.mjs`, que mede
+em vez de varrer — é lá que o framing e a boca do cano viraram portão.
+**Ficam onde estão** (não são obsoletos: `vmattach.js` os cita como proveniência
+das offsets do viewmodel): `g2r7-mzmarks.mjs` (vmattach.js:18) e
+`../g2r7-measure.mjs` em `tools/` (vmattach.js:15/20/27).
 
 **Rodada G2-R14 (OOM e ADS):**
 `g2r14-ads.mjs` · `g2r14-capture.mjs` · `g2r14-memprobe.mjs`
