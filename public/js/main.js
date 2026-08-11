@@ -5,7 +5,7 @@ import { CHARACTERS, buildCharacter, charWeapon, setCharacterRendererCapabilitie
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
-import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId } from './maps.js';
+import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS } from './game.js';
@@ -104,8 +104,8 @@ const sfxReady = sfx.loadManifest();
 
 /* ---------------- selected map ---------------- */
 const urlMap = new URLSearchParams(location.search).get('map');
-let currentMap = resolveMapId(urlMap || settings.map);
-settings.map = currentMap;
+let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings.mapPinned });
+settings.map = currentMap; saveSettings();   // sem save a rotação não avança na próxima visita
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
 // Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
@@ -1151,7 +1151,7 @@ let mapIdx = Math.max(0, MAP_IDS.indexOf(currentMap));
 function gotoMap(i) {
   mapIdx = (i + MAP_IDS.length) % MAP_IDS.length;
   currentMap = resolveMapId(MAP_IDS[mapIdx]);
-  settings.map = currentMap; saveSettings();
+  settings.map = currentMap; settings.mapPinned = true; saveSettings();   // escolha explícita sai da rotação
   mapNameEl.textContent = MAPS[currentMap].name;
   setMapThumb();
   // troca de mapa aplica o PADRÃO do mapa (Loja H/Ferro Velho abrem em CTF, o resto em rounds)

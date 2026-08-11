@@ -91,3 +91,16 @@ export function resolveMapId(id) {
   if (antigo && MAPS[antigo]) return antigo;
   return DEFAULT_MAP;
 }
+
+export function nextMapId(id) {
+  return MAP_IDS[(MAP_IDS.indexOf(resolveMapId(id)) + 1) % MAP_IDS.length];
+}
+
+/* Rotação da sugestão inicial (pedido do dono: menos awp_map, mais exposição dos
+   outros mapas): link ?map= manda sempre; quem escolheu no carrossel (pin) fica
+   no escolhido; quem nunca escolheu recebe o próximo da fila a cada visita. */
+export function mapaDaSessao({ urlMap, savedMap, pinned } = {}) {
+  if (urlMap) return resolveMapId(urlMap);
+  if (pinned) return resolveMapId(savedMap);
+  return nextMapId(savedMap);
+}

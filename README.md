@@ -30,7 +30,7 @@ sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 27.625 linhas em 34 arquivos | `cat public/js/*.js \| wc -l` |
+| Código do jogo | 27.638 linhas em 34 arquivos | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6.432** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.001 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
