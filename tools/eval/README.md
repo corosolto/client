@@ -129,8 +129,11 @@ migração pros GLBs da Mint.
 `g2ui-map-walk.mjs` · `g2ui-probe.mjs` · `g2ui-verify.mjs` ·
 `g2-capture.mjs` · `g2-tune.mjs` · `../g2-gunspace.mjs` · `../g2-maskprobe.mjs`
 
-**Menus P1 (3 gerações):**
-`p1-menu.mjs` · `p1-menu2.mjs` · `p1-menu3.mjs` · `p1-game.mjs` · `p0-armas.mjs`
+**Aposentada — Menus P1 (3 gerações) + P0** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`p1-menu.mjs` · `p1-menu2.mjs` · `p1-menu3.mjs` · `p1-game.mjs` · `p0-armas.mjs`.
+Capturas das telas de menu e da tela de armas de gerações antigas; a UI atual e
+o que essas rodadas decidiram vivem no site/`main.js` e no `CHANGELOG.md`.
 
 **Rodadas R7x (feel):**
 `r7-feel-capture.mjs` · `r75-capture.mjs` · `r76-capture.mjs` · `r77-capture.mjs`
