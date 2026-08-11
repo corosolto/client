@@ -104,43 +104,7 @@ function currentLook() {
   };
 }
 
-/* ================================================================
-   PERSPECTIVA AÉREA — FogExp2 radial + cor de névoa dependente da direção do olhar
-   ================================================================
-   O DEFEITO (medido nas três rodadas): a razão de contraste local LONGE/PERTO era 1,13-2,42
-   nos quatro mapas — o FUNDO do frame com MAIS microcontraste que o primeiro plano, que é o
-   inverso exato do que a atmosfera faz. Somado a isso, em awp-169-a havia uma BORDA DURA de
-   terreno distante (o plano de chão de 420 × 460 m acaba a ~220 m e a névoa linear só tinha
-   apagado 43 % dele naquele ponto: uma parede de neblina com aresta).
-   Três correções, todas aqui pra valerem nos quatro mapas de uma vez:
-
-   (1) `THREE.Fog` linear -> `THREE.FogExp2`. A névoa linear é ZERO até `near` e depois sobe
-       em rampa: ou ela vela a lane de tiro, ou não chega a apagar o fim do mapa. A
-       exponencial ao quadrado é ~0 nos primeiros 30 m (f < 4 %) e satura sozinha depois de
-       200-300 m — que é exatamente o perfil da atmosfera real e o que mata a borda dura.
-
-   (2) DISTÂNCIA RADIAL em vez de profundidade planar. O three usa `-mvPosition.z`, então
-       um pixel no canto do frame (que está mais LONGE que o do centro, para o mesmo z de
-       view) recebia MENOS névoa — é a "parede de névoa" curva que aparece quando se gira a
-       câmera. Aqui vFogPosV carrega a posição de view inteira e a distância é `length()`.
-
-   (3) COR DA NÉVOA POR DIREÇÃO DO OLHAR. Espalhamento de Mie é fortemente para a frente:
-       olhando NA direção do sol a névoa é clara e quente (o "glow" de contraluz); olhando
-       de costas ela é escura e azul. Uma cor fixa é o que fazia o horizonte do Ferro Velho
-       (fog 0xd9b98c, bege) brigar com o céu azul medido logo acima da silhueta (0xa5c5e5) —
-       e é a briga que desenha a aresta. As duas pontas são DERIVADAS de `fog.color` em luz
-       linear (não são duas cores soltas que alguém tem que manter em sincronia).
-
-   As cores-base de cada mapa NÃO foram escolhidas no olho: `tools/eval/r3_fog.py` recorta,
-   nos 8 frames de cada mapa, as 14 linhas de céu imediatamente acima da silhueta, inverte
-   este composite inteiro (AgX + piso + vinheta + exposição) e devolve a radiância linear
-   medida. Onde o terreno encontra o céu, névoa e céu passam a ter o MESMO valor.
-
-   Kill-switches: `?fog2=0` (volta ao fog linear de antes, por mapa) · `?nofog=1` (sem
-   névoa nenhuma, já existia) · `?fogd=0.008` (densidade manual, p/ A/B do capturador).
-   Degradação: em quality 'low' a componente direcional é desligada (uFogSun.w = 0), o que
-   remove ~12 ALU/fragmento e faz o shader cair no `fogColor` puro — a névoa continua lá.
-*/
+// Fog radial usa a cor de céu medida por `tools/eval/r3_fog.py`; `?fog2=0` restaura o fog nativo.
 const AERIAL = {
   //                 densidade   cor-base medida do céu    direção do sol (posição da
   //                             logo acima da silhueta     DirectionalLight do mapa)
@@ -151,19 +115,26 @@ const AERIAL = {
 };
 const AERIAL_DEFAULT = AERIAL.awp_map;
 
-// Uniform COMPARTILHADO por todos os materiais. Float32Array de propósito: `cloneUniforms`
-// do three clona Color/Vector/Matrix mas passa TypedArray por REFERÊNCIA — então um único
-// array aqui chega em cada material sem varredura nem sincronia por frame. xyz = direção
-// do sol em MUNDO, w = força do termo direcional (0 desliga o bloco inteiro no shader).
+// TypedArray permanece compartilhado por `cloneUniforms`: xyz é o sol no mundo e w sua força.
 const _fogSun = new Float32Array([0, 1, 0, 0]);
 
-// mesma matemática do FogExp2 do three, só que sobre a distância RADIAL (ver (2) acima)
-const FOG_VERT_PARS = '#ifdef USE_FOG\n\tvarying vec3 vFogPosV;\n#endif';
-const FOG_VERT = '#ifdef USE_FOG\n\tvFogPosV = mvPosition.xyz;\n#endif';
+// Shaders iluminados já carregam vViewPosition; reutilizá-lo preserva o piso WebGL1 de 8 varyings.
+const FOG_VERT_PARS = `#ifdef USE_FOG
+	#if !defined( STANDARD ) && !defined( LAMBERT ) && !defined( PHONG ) && !defined( TOON ) && !defined( MATCAP )
+		varying vec3 vFogPosV;
+	#endif
+#endif`;
+const FOG_VERT = `#ifdef USE_FOG
+	#if !defined( STANDARD ) && !defined( LAMBERT ) && !defined( PHONG ) && !defined( TOON ) && !defined( MATCAP )
+		vFogPosV = mvPosition.xyz;
+	#endif
+#endif`;
 const FOG_FRAG_PARS = `#ifdef USE_FOG
 	uniform vec3 fogColor;
 	uniform vec4 uFogSun;
-	varying vec3 vFogPosV;
+	#if !defined( STANDARD ) && !defined( LAMBERT ) && !defined( PHONG ) && !defined( TOON ) && !defined( MATCAP )
+		varying vec3 vFogPosV;
+	#endif
 	#ifdef FOG_EXP2
 		uniform float fogDensity;
 	#else
@@ -172,7 +143,12 @@ const FOG_FRAG_PARS = `#ifdef USE_FOG
 	#endif
 #endif`;
 const FOG_FRAG = `#ifdef USE_FOG
-	float owfD = length( vFogPosV );
+	#if defined( STANDARD ) || defined( LAMBERT ) || defined( PHONG ) || defined( TOON ) || defined( MATCAP )
+		vec3 owfFogPosV = -vViewPosition;
+	#else
+		vec3 owfFogPosV = vFogPosV;
+	#endif
+	float owfD = length( owfFogPosV );
 	#ifdef FOG_EXP2
 		float fogFactor = 1.0 - exp( - fogDensity * fogDensity * owfD * owfD );
 	#else
@@ -183,7 +159,7 @@ const FOG_FRAG = `#ifdef USE_FOG
 	// ou ?fog2=0. Nesse caso o bloco inteiro some e sobra o fog de cor fixa: fail-safe.
 	if ( uFogSun.w > 0.001 ) {
 		vec3 owfS = normalize( ( viewMatrix * vec4( uFogSun.xyz, 0.0 ) ).xyz );
-		float owfA = smoothstep( -0.35, 0.90, dot( normalize( vFogPosV ), owfS ) );
+		float owfA = smoothstep( -0.35, 0.90, dot( normalize( owfFogPosV ), owfS ) );
 		// contraluz: mais claro e mais quente (Mie para a frente); de costas: mais escuro e azul
 		vec3 owfHot = min( fogColor * vec3( 2.30, 1.35, 0.72 ) + vec3( 0.045, 0.022, 0.006 ), vec3( 2.0 ) );
 		vec3 owfCold = fogColor * vec3( 0.80, 0.92, 1.12 );

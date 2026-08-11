@@ -44,6 +44,34 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-47 · shader da urna excedia o limite mínimo do WebGL1~~ · RESOLVIDO 11/08
+
+**Evidência.** As issues #120 e #121 registraram `Statically used varyings do not fit
+within packing limits` no WebGL1. A urna do mapa Brasília conserva tangente e usa textura
+base, normal, metálico/rugosidade, oclusão e emissivo; o GLTFLoader separa o mapa combinado em
+`metalnessMap` e `roughnessMap`. Com uma sombra direcional, o shader real ocupava **9 vetores**,
+acima dos **8 vetores mínimos** do GLSL ES 1.00.
+
+**Causa.** O fog radial acrescentava `vFogPosV`, embora os materiais iluminados já transportem
+a mesma posição em `vViewPosition`. O triplanar de Brasília também carregava posição e normal
+em dois varyings próprios, reduzindo a margem de outros materiais WebGL1.
+
+**Correção.** O fog iluminado deriva a posição de `vViewPosition`, preservando o varying
+próprio apenas nos shaders que não o possuem. O triplanar reconstrói posição e normal no mundo
+a partir de `vViewPosition`, `vNormal` e `viewMatrix`. A aparência e os fallbacks WebGL1 são
+mantidos; não foi feito upgrade do Three porque as versões novas removem WebGL1.
+
+**Medição:** urna **9/8 → 8/8 vetores**; triplanar **2 → 0 varyings próprios**. A régua
+`tools/eval/shader-budget-check.mjs` (`npm run eval:shaderbudget`, em `check:fast` e
+`check:deploy`) lê o GLB e o loader reais. Os mutantes `fog-separado` e `tri-separado`
+reintroduzem cada custo e deixam SB2/SB3 e SB4 vermelhas, respectivamente.
+Um compile real no Chrome/SwiftShader com contexto WebGL1 gerou os dois programas sem erro GL.
+
+**Limite.** O hardware Linux do relato não foi acessado. Esta correção resolve a causa exata
+de #120/#121; #115, #127 e #130 permanecem abertos porque seus logs não identificam o mesmo
+programa. O shader crítico fica exatamente no piso mínimo, então novos mapas devem continuar
+reutilizando varyings ou aplicar o perfil seguro.
+
 ### ~~BUG-45 · log WebGL nulo derrubava o loop de render~~ · RESOLVIDO 11/08
 
 **Evidência.** As issues #108 (alpha.41, Safari) e #169 (alpha.57, Chrome) terminavam

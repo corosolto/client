@@ -248,7 +248,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.845 |
+| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
 | `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.920 |
 | `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |

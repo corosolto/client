@@ -435,38 +435,23 @@ export function buildBrasilia(scene, T) {
     return c;
   }
 
-  /* ---------------- TRIPLANAR: o conserto de raiz do B6 ---------------- */
-  // Os landmarks são GLB do Mint com UV desconhecido (e às vezes degenerado), e as caixas
-  // procedurais são BoxGeometry, onde uma face de 13 × 11 m recebe UM tile esticado. Nos dois
-  // casos o resultado é o mesmo: parede branca lisa. Projetar a textura pelo MUNDO (triplanar)
-  // resolve os dois de uma vez e ainda garante texel density constante (B3) em qualquer
-  // superfície, inclusive nas inclinadas do Panteão. `?tri=0` volta ao mapeamento por UV.
+  // A projeção no mundo mantém densidade constante em GLBs e caixas; `?tri=0` usa os UVs.
   const TRI = QP.get('tri') !== '0';
   function triplanar(mat, tex, scale) {
     mat.map = tex;   // fallback por UV se o patch de shader for desligado
     if (!TRI) return mat;
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uTriScale = { value: scale };
-      sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vTriP;\nvarying vec3 vTriN;')
-        .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
-  vec4 triWP = vec4( transformed, 1.0 );
-  vec3 triON = objectNormal;
-  #ifdef USE_INSTANCING
-    triWP = instanceMatrix * triWP;
-    triON = mat3( instanceMatrix ) * triON;
-  #endif
-  triWP = modelMatrix * triWP;
-  vTriP = triWP.xyz;
-  vTriN = normalize( mat3( modelMatrix ) * triON );`);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float uTriScale;\nvarying vec3 vTriP;\nvarying vec3 vTriN;\nfloat gTriL;')
+        .replace('#include <common>', '#include <common>\nuniform float uTriScale;\nfloat gTriL;')
         .replace('#include <map_fragment>', `
-  vec3 triW = pow( abs( vTriN ), vec3( 4.0 ) );
+  vec3 triP = cameraPosition - ( vec4( vViewPosition, 0.0 ) * viewMatrix ).xyz;
+  vec3 triN = inverseTransformDirection( vNormal, viewMatrix );
+  vec3 triW = pow( abs( triN ), vec3( 4.0 ) );
   triW /= max( 1e-4, triW.x + triW.y + triW.z );
-  vec4 triC = texture2D( map, vTriP.zy * uTriScale ) * triW.x
-            + texture2D( map, vTriP.xz * uTriScale ) * triW.y
-            + texture2D( map, vTriP.xy * uTriScale ) * triW.z;
+  vec4 triC = texture2D( map, triP.zy * uTriScale ) * triW.x
+            + texture2D( map, triP.xz * uTriScale ) * triW.y
+            + texture2D( map, triP.xy * uTriScale ) * triW.z;
   gTriL = triC.g;
   diffuseColor *= triC;`)
         // O hotspot especular chapado morre aqui: a rugosidade passa a variar com a sujeira.
