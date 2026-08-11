@@ -17,14 +17,12 @@ PR (`.github/workflows/ci.yml`).
 
 {/* BEGIN:GERADO:invariantes — não edite à mão, rode `npm run docs` */}
 
-- `tools/eval/invariants.mjs`: **2.187 lines**, **61 declared invariant identifiers** (`put()`), of which **27** have a declared `skip()` path.
-- The entire harness is **150 scripts** in `tools/eval/` (`.mjs` + `.py`), plus **43 pipeline scripts** in `tools/`.
-- How many invariants run as **critical** in a given execution **is not derivable from the source**: it depends on which inputs exist on the machine (the viewmodel auditor's JSON, a GLB, a folder of anims). That number only comes out by running the gate — and its place is the header of `KNOWN-BUGS.md`, updated with real output.
-
-Reproduce:
+- `tools/eval/invariants.mjs`: **2,209 lines**, **62 declared invariant identifiers**, with **27** declared `skip()` paths.
+- The harness contains **171 scripts** in `tools/eval/`, plus **46 pipeline scripts** in `tools/`.
+- The number of critical checks in one run depends on the inputs present on that machine; dated results belong in `KNOWN-BUGS.md`.
 
 ```bash
-grep -o "put('[A-Z0-9_]*'"  tools/eval/invariants.mjs | sort -u | wc -l
+grep -o "put('[A-Z0-9_]*'" tools/eval/invariants.mjs | sort -u | wc -l
 grep -o "skip('[A-Z0-9_]*'" tools/eval/invariants.mjs | sort -u | wc -l
 ```
 
@@ -394,4 +392,4 @@ node tools/eval/invariants.mjs --json    # machine-readable output
 npm run check                            # syntax + gate + vm + recoil + bots
 ```
 
-Today's real output, with what is green and what is red: [Measured state](./estado.md).
+Current production, data, and debt sources: [Current state](./status).

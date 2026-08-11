@@ -73,7 +73,9 @@ jobs:
             const p = 'public/js/version.js';
             fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/VERSION = '[^']*'/, \"VERSION = '$V'\"));
           "
+          node scripts/sync-changelog.mjs
           node tools/gen-docs.mjs
+          (cd docs && npm ci && npm run build:site)
           # gen-arch também: o ARCH.md embute a versão do jogo no cabeçalho gerado, e sem
           # regenerá-lo aqui o arch:check reprova o PR SEGUINTE (caso real 08/08: o bump
           # do alpha.38 deixou o ARCH.md em alpha.37 e o PR #94 nasceu vermelho). Os dois
@@ -83,7 +85,7 @@ jobs:
             echo "::error::tag $NEW já existe no remoto — bump manual necessário."
             exit 1
           fi
-          git add package.json package-lock.json public/js/version.js README.md docs/ tools/eval/ARCH.md
+          git add package.json package-lock.json public/js/version.js CHANGELOG.md README.md AGENTS.md STATUS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
           git commit -s -m "chore(release): $NEW"
           # Tag ANOTADA + push explícito do ref. `--follow-tags` só sobe tag anotada, e
           # `git tag` sem `-a` cria tag LEVE: o alpha.38 (08/08) nasceu leve, ficou só no

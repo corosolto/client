@@ -8,7 +8,9 @@
 > Aqui ficam a direção, o recorte da v2 e o registro do que foi substituído — que é
 > justamente o que um plano não guarda.
 >
-> Revisado em **2026-08-05**, contra `v2/alpha` e `origin/main`, com medição própria. Todo
+> **Baseline histórico de 2026-08-05.** A análise de divergência entre `v2/alpha` e
+> `origin/main` abaixo explica decisões daquele momento; não é o backlog nem o estado
+> atual. Para prioridade use as issues abertas, e para estado use `STATUS.md`. Todo
 > número desta página traz o comando que o reproduz.
 
 ---

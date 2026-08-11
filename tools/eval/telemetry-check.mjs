@@ -19,6 +19,7 @@
      · TL6  partida envia eventId, versão e FACÇÃO, não lado E/B
      · TL7  cidade usa RPC atômica, sem read-modify-write em submit-match
      · TL8  /api/health existe e o prod-watch consulta a rota
+     · TL10 /mapa agrega as cinco facções a partir dos eventos de partida
 
    MUTAÇÃO (prova que morde):
      --mutante=sem-match    remove o endpoint /api/match do main.js in-memory → TL1 vermelha
@@ -26,6 +27,7 @@
      --mutante=sem-arma     remove o hook _wperf do game.js → TL3 vermelha
      --mutante=sem-sessao   remove sessionId do cliente → TL5 vermelha
      --mutante=sem-saude    remove /api/health do prod-watch → TL8 vermelha
+     --mutante=mapa-dois     remove a fonte de facções do mapa → TL10 vermelha
 
    Uso: node tools/eval/telemetry-check.mjs [--mutante=sem-match|sem-funil|sem-arma]
    ============================================================================ */
@@ -42,6 +44,7 @@ let telemetryRoute = read('src/pages/api/telemetry.ts');
 let submitRoute = read('src/pages/api/submit-match.ts');
 let registerRoute = read('src/pages/api/register.ts');
 let prodWatch = read('.github/workflows/prod-watch.yml');
+let liveMap = read('src/pages/mapa.astro');
 
 /* MUTAÇÃO in-memory: simula o defeito sem tocar no disco (o contrário seria o
  * portão verde com a mutação colada, que é exatamente o que a lei 3 reprova). */
@@ -51,6 +54,7 @@ if (MUT === 'sem-arma')   game = game.replaceAll('this._wperf[weap]', '/* removi
 if (MUT === 'sem-sessao') main = main.replaceAll('sessionId', 'sessaoRemovida');
 if (MUT === 'sem-saude')  prodWatch = prodWatch.replaceAll('/api/health', '/api/REMOVIDO');
 if (MUT === 'sem-uid')    main = main.replaceAll('uid: getAnonId()', 'uid: null');
+if (MUT === 'mapa-dois')  liveMap = liveMap.replaceAll("from('match_events')", "from('stats')");
 
 const falhas = [];
 
@@ -101,8 +105,12 @@ if (!submitComUid || !submitRoute.includes("{ uid }") || !registerRoute.includes
 if (/logInternalError\([^\n]+\{[^\n]*nick/.test(submitRoute + registerRoute))
   falhas.push('TL9 log interno voltou a expor nick');
 
+// TL10 - o mapa público usa a dimensão de facção e renderiza o catálogo canônico completo.
+if (!liveMap.includes("from('match_events')") || !liveMap.includes('FACCOES.map') || !/urbanas:\s*'U'/.test(liveMap) || !/palhacos:\s*'C'/.test(liveMap) || !/funkeiros:\s*'F'/.test(liveMap))
+  falhas.push('TL10 /mapa não agrega as cinco facções da telemetria');
+
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m TL1–TL9 ingestão wired, idempotente, atômica e monitorada');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m TL1–TL10 ingestão wired, idempotente, atômica e monitorada');
 
 // prova que a mutação morde: se veio --mutante e NÃO acendeu, o portão é cego.
 if (MUT && !falhas.length) {

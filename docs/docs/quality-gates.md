@@ -390,4 +390,4 @@ node tools/eval/invariants.mjs --json    # saída pra máquina
 npm run check                            # syntax + quality gate + vm + coice + bots
 ```
 
-Saída real de hoje, com o que está verde e o que está vermelho: [Estado medido](./estado.md).
+Fontes atuais de produção, dados e dívida conhecida: [Estado atual](./estado.md).

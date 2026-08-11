@@ -44,7 +44,7 @@ const versoes: Versao[] = [];
 let atual: { versao: string; data: string; linhas: string[] } | null = null;
 
 for (const raw of md.split('\n')) {
-  const h2 = raw.match(/^##\s+\[?([^\]\s]+)\]?\s*(?: - |-)?\s*(.*)$/);
+  const h2 = raw.match(/^##\s+\[?([^\]\s]+)\]?\s*(?:\u2014|-)?\s*(.*)$/);
   if (h2) {
     if (atual) versoes.push({ versao: atual.versao, data: atual.data, html: render(atual.linhas) });
     atual = { versao: h2[1], data: h2[2].trim(), linhas: [] };

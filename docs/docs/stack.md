@@ -101,7 +101,7 @@ ao browser "pro client ligar OAuth/storage", mas nenhum cliente chegou a usar, e
 foi removida (issue #41). Se OAuth entrar na mesa, ela volta — com rate limit.
 
 **O ranking está desligado hoje** (`RANKING_ON` em `src/lib/site.ts`) e foi trocado por
-telemetria anônima. É flag, não remoção — detalhes em [Estado medido](./estado.md).
+telemetria anônima. É flag, não remoção — detalhes em [Estado atual](./estado.md).
 
 :::note Nada disso é obrigatório pra rodar o jogo
 Sem as variáveis do Supabase o site sobe igual: as rotas de ranking respondem

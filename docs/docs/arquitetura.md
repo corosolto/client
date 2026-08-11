@@ -217,7 +217,7 @@ quer migrar isso para JSON com loader único, para que uma contribuição de con
 *"abre um JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
 
 Se você quer o trabalho de maior alavancagem no projeto inteiro, é esse. Ver
-[Estado medido](./estado.md).
+[Estado atual](./estado.md).
 
 ## O que é gerado, e o que não é
 

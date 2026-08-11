@@ -44,11 +44,31 @@ const SECO = flag('seco');
 const VERM = '\x1b[31m', VERDE = '\x1b[32m', CYAN = '\x1b[36m', AMAR = '\x1b[33m', OFF = '\x1b[0m';
 const morre = (m) => { console.error(`\n${VERM}release abortado${OFF}  ${m}\n`); process.exit(1); };
 const sh = (c) => execSync(c, { encoding: 'utf8' }).trim();
+const roda = (cmd, args) => {
+  const r = spawnSync(cmd, args, { stdio: 'inherit' });
+  if (r.error || r.status !== 0) throw new Error(`${cmd} ${args.join(' ')} falhou`);
+};
+const ARQUIVOS_RELEASE = [
+  'package.json', 'package-lock.json', 'public/js/version.js', 'CHANGELOG.md',
+  'README.md', 'AGENTS.md', 'STATUS.md', 'docs', 'public/docs',
+  'tools/eval/ARCH.md', 'tools/eval/README.md',
+];
+const desfazRelease = (headAntes, tag) => {
+  const headAtual = sh('git rev-parse HEAD');
+  const dropTag = spawnSync('git', ['update-ref', '-d', `refs/tags/${tag}`], { stdio: 'inherit' });
+  const rewind = headAtual === headAntes
+    ? { status: 0 }
+    : spawnSync('git', ['update-ref', 'HEAD', headAntes, headAtual], { stdio: 'inherit' });
+  const restore = spawnSync('git', ['restore', '--staged', '--worktree', '--', ...ARQUIVOS_RELEASE], { stdio: 'inherit' });
+  const clean = spawnSync('git', ['clean', '-fd', '--', ...ARQUIVOS_RELEASE], { stdio: 'inherit' });
+  if (dropTag.status !== 0 || rewind.status !== 0 || restore.status !== 0 || clean.status !== 0) {
+    console.error(`${VERM}rollback incompleto; confira git status antes de tentar novamente.${OFF}`);
+  }
+};
 
 /* ---------- 1. a árvore tem que estar limpa ---------- */
 const sujo = sh('git status --porcelain')
-  .split('\n').filter(Boolean)
-  .filter((l) => !l.startsWith('??'));          // arquivo não rastreado não entra no release
+  .split('\n').filter(Boolean);
 if (sujo.length && !SECO) {
   morre(`há ${sujo.length} arquivo(s) modificado(s). Commite ou guarde antes:\n  `
     + sujo.slice(0, 8).map((l) => l.trim()).join('\n  '));
@@ -86,44 +106,38 @@ if (linha[1] !== atual) {
     + 'já estavam fora de sincronia; os dois vão para a versão nova.');
 }
 
-/* ---------- 4. CHANGELOG ---------- */
-const CL = 'CHANGELOG.md';
-const clTxt = readFileSync(CL, 'utf8');
-const hoje = sh('date +%Y-%m-%d');
-const jaTem = clTxt.includes(`## [${nova}]`);
-const primeira = clTxt.indexOf('\n## [');
-if (primeira < 0) morre(`não achei nenhuma seção '## [' no ${CL}.`);
-const secao = `\n## [${nova}] — ${hoje}\n\n`
-  + `> ESCREVA AQUI o que mudou, e o PORQUÊ junto do quê — é a regra da casa, e é o\n`
-  + `> que o job \`release\` do ci.yml publica como nota do GitHub Release.\n`
-  + `> Sem esta seção, a tag sai com "Ver commits abaixo.".\n\n`
-  + `### Mudado\n- \n`;
-
 if (SECO) {
   console.log(`  package.json      ${atual} -> ${nova}`);
   console.log(`  ${VERSAO_JS}  ${linha[1]} -> ${nova}`);
-  console.log(`  ${CL}      ${jaTem ? 'seção já existe, mantida' : 'nova seção aberta'}`);
+  console.log('  CHANGELOG.md      seção sincronizada com a nova versão');
   console.log(`  git commit + git tag v${nova}`);
   console.log(`\n${AMAR}seco: nada foi escrito.${OFF}\n`);
   process.exit(0);
 }
 
-writeFileSync('package.json', pkgTxt.replace(`"version": "${atual}"`, `"version": "${nova}"`));
-writeFileSync(VERSAO_JS, vTxt.replace(linha[0], `export const VERSION = '${nova}';`));
-if (!jaTem) writeFileSync(CL, clTxt.slice(0, primeira) + secao + clTxt.slice(primeira + 1));
+const headAntes = sh('git rev-parse HEAD');
+try {
+  roda('npm', ['version', nova, '--no-git-tag-version']);
+  writeFileSync(VERSAO_JS, vTxt.replace(linha[0], `export const VERSION = '${nova}';`));
+  roda('node', ['scripts/sync-changelog.mjs']);
 
-/* ---------- 5. os blocos gerados sabem a versão ---------- */
-spawnSync('node', ['tools/gen-docs.mjs'], { stdio: 'inherit' });
+  /* ---------- 5. os blocos gerados sabem a versão ---------- */
+  roda('node', ['tools/gen-docs.mjs']);
+  roda('node', ['tools/gen-arch.mjs']);
+  roda('npm', ['--prefix', 'docs', 'ci']);
+  roda('npm', ['--prefix', 'docs', 'run', 'build:site']);
 
-/* ---------- 6. commit + tag, sem push ---------- */
-spawnSync('git', ['add', 'package.json', VERSAO_JS, CL, 'README.md', 'AGENTS.md', 'docs'], { stdio: 'inherit' });
-spawnSync('git', ['commit', '-m', `release: ${nova}`], { stdio: 'inherit' });
-spawnSync('git', ['tag', `v${nova}`], { stdio: 'inherit' });
+  /* ---------- 6. commit + tag; toda a transação volta ao HEAD inicial se falhar ---------- */
+  roda('git', ['add', ...ARQUIVOS_RELEASE]);
+  roda('git', ['commit', '-s', '-m', `release: ${nova}`]);
+  roda('git', ['tag', '-a', `v${nova}`, '-m', `v${nova}`]);
+} catch (erro) {
+  desfazRelease(headAntes, `v${nova}`);
+  morre(erro instanceof Error ? erro.message : String(erro));
+}
 
 console.log(`\n${VERDE}pronto.${OFF} commit e tag \`v${nova}\` criados LOCALMENTE.\n`);
-if (!jaTem) console.log(`  ${AMAR}1.${OFF} escreva a seção do CHANGELOG (ela está com o placeholder) e emende:`);
-if (!jaTem) console.log('     git add CHANGELOG.md && git commit --amend --no-edit && git tag -f v' + nova);
-console.log(`  ${AMAR}2.${OFF} publique quando quiser:`);
+console.log(`  ${AMAR}1.${OFF} publique quando quiser:`);
 console.log(`     git push origin main && git push origin v${nova}\n`);
 console.log(`  A tag dispara o job \`release\` do ci.yml, que cria o GitHub Release a partir`);
 console.log(`  do CHANGELOG. Ela NÃO deploya: a produção sai da \`main\` pela integração Git`);

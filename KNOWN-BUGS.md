@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado: **2026-08-04**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-11**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatados, ainda não reproduzidos*.
 >

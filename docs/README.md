@@ -3,7 +3,7 @@
 Aplicação **separada** do site Astro da raiz. Tem o próprio `package.json` e o próprio
 `node_modules`. Nada aqui é importado pelo jogo nem pelo site principal.
 
-Conteúdo: instrumentação de IA, processos, quality gates, arquitetura, estado medido e
+Conteúdo: instrumentação de IA, processos, quality gates, arquitetura, estado atual e
 como colaborar. Tudo escrito contra o código, com `arquivo:linha` conferido.
 
 ```
@@ -29,10 +29,9 @@ docs/
     quality-gates.md      invariantes, as 2 leis da casa, teste de mutação da régua
     arquitetura.md        ARCH gerado + faixas de linha disjuntas + o que é gerado aqui
     colaborar.md          setup, portão, o que um PR precisa, boas primeiras tarefas
-    licenca.md            o que vale hoje, a AGPL decidida e não aplicada, e a separação
+    licenca.md            o que vale hoje, a AGPL aplicada, e a separação
                           código × arte paga × marca
-    estado.md             saída REAL do portão + dívidas declaradas (a DIREÇÃO não mora
-                          aqui: é o ../ROADMAP.md)
+    estado.md             fontes vivas de produção, dados e dívidas; sem placar colado
   issues/                 as good-first-issues, uma por arquivo (README.md indexa)
   historico/              prompts e handoffs antigos — arquivo morto, não é doc viva
   INDICE.md               índice dos .md soltos desta pasta

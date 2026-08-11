@@ -43,7 +43,7 @@ não enumerada à mão:
 | badge + seção de licenças | `README.md` | linhas 3, 381, 387, 388 (+1)  |
 | termo que o contribuidor aceita | `CONTRIBUTING.md` | linhas 183, 186, 189  |
 | rodapé do site | `src/layouts/Layout.astro` | linha 598  |
-| JSON-LD do jogo | `src/pages/index.astro` | linha 412  |
+| JSON-LD do jogo | `src/pages/index.astro` | linha 394  |
 | página `/sobre` | `src/pages/sobre.astro` | linhas 121, 124, 133  |
 | `llms.txt` (resposta para LLM) | `public/llms.txt` | linhas 9, 46  |
 | rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |

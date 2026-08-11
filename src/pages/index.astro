@@ -1,22 +1,5 @@
 ---
-/* ============================================================================
-   O `?v=` DO IMPORT MAP SAI DE UMA FONTE SÓ (07/08)
-   ----------------------------------------------------------------------------
-   Ele era 26 literais escritos à mão, e a versão vive em outros dois lugares
-   (`package.json` e `public/js/version.js`). Três fontes que precisam concordar,
-   nenhum mecanismo garantindo - e o `version.js` já avisava por escrito:
-
-     "bump dos dois lados juntos, senão o navegador serve módulos JS velhos do
-      cache - causa raiz de 'correções que não chegavam ao usuário' por dias"
-
-   Pior desde que se passou a commitar direto na `main`: o `versao-bumpada` do
-   `pr-gates` só dispara em `pull_request`, então push direto passa por fora dele.
-   Esquecer o bump deixou de ser um risco e virou o caminho padrão.
-
-   Agora a lista é UMA e a versão vem do `package.json`. Módulo novo entra em
-   `MODULOS` e já nasce com cache-bust; esquecer o bump deixa de ser possível,
-   em vez de virar mais um item de checklist.
-   ============================================================================ */
+/* O import map usa a versão do package.json como cache-bust único. */
 import pkg from '../../package.json';
 
 const V = pkg.version;
@@ -61,8 +44,7 @@ const IMPORTMAP = JSON.stringify({
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<!-- Deve rodar antes dos módulos para capturar falhas de boot; detalhes técnicos só
-     aparecem com ?debug=1. Contexto e limites: KNOWN-BUGS.md, BUG-42. -->
+<!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
 <script is:inline>
 (function(){
   var TETO_SESSAO = 10;      // no máximo 10 erros DISTINTOS por carregamento de página
@@ -450,19 +432,11 @@ const IMPORTMAP = JSON.stringify({
   ]
 }
 </script>
-<!-- Favicon do jogo. Era um SVG inline (barras cianas genéricas) e link declarado SEMPRE
-     ganha do /favicon.ico implícito - por isso o ícone novo não aparecia na aba, e NÃO era
-     cache. O .ico tem 3 entradas com recorte por tamanho (16 = cabeça do canarinho, 32 = com
-     peito e cano da pistola, 48 = busto): corpo inteiro a 16 px vira mancha amarela, medido.
-     Gerado por tools/eval/canarinho-icon.mjs a partir do GLB real. -->
+<!-- O ICO tem recortes próprios por tamanho; regenere com tools/eval/canarinho-icon.mjs. -->
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href={`/style.css?v=${V}`}>
-<!-- Cache-bust por módulo. Entraram nesta lista (07/08) o `graffiti_pass`/`graffiti_layout`
-     e, de quebra, o `map_quebrada`/`map_decals`, que estavam faltando desde que nasceram.
-     Sem o `?v=`, quem já jogou fica com o módulo em cache e vê o mapa NOVO com o grafite
-     VELHO - e o layout do grafite guarda coordenada de parede, então a divergência não é
-     cosmética: é peça colada onde a parede não está mais. -->
+<!-- Todo módulo local precisa passar pelo import map versionado. -->
 <script type="importmap" is:inline set:html={IMPORTMAP}></script>
 </head>
 <body>
@@ -494,7 +468,7 @@ const IMPORTMAP = JSON.stringify({
   </div>
 </div>
 
-<!-- Exiba apenas quando uma tentativa explícita de abrir a arena falhar (BUG-42). -->
+<!-- Exiba apenas quando uma tentativa explícita de abrir a arena falhar. -->
 <div id="launch-error" class="hidden" role="alertdialog" aria-modal="true" aria-labelledby="launch-error-title">
   <div class="launch-error-card">
     <div class="launch-error-kicker">A TRETA DEU UMA PAUSA</div>

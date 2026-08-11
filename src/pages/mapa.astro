@@ -2,19 +2,21 @@
 import Layout from '../layouts/Layout.astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { FACCOES } from '../data/jogo';
 
 export const prerender = false;
 
-// Esta página faz QUATRO queries (online_now, count de players, stats inteira,
-// city_daily inteira) e não tinha cache nenhum: cada visita e cada rastreio
-// pagava as quatro. 60 s de CDN não atrasa um mapa de presença.
+// Presença tolera 60 s de cache e evita repetir as consultas em cada visita.
 Astro.response.headers.set(
   'cache-control',
   'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
 );
 
+const factionCode: Record<string, string> = { E: 'E', B: 'B', urbanas: 'U', palhacos: 'C', funkeiros: 'F' };
 let online: any[] = [], cities: any[] = [], configured = !!supabaseAdmin;
 let totals = { players: 0, matches: 0, kills: 0, mp: 0, mb: 0 };
+let factionSource: 'telemetry' | 'legacy' = 'telemetry';
+let factionCounts = FACCOES.map(f => ({ ...f, code: factionCode[f.id], matches: 0, pct: 0 }));
 if (supabaseAdmin) {
   const { data: on } = await supabaseAdmin.from('online_now').select('*');
   online = on ?? [];
@@ -25,7 +27,16 @@ if (supabaseAdmin) {
     totals.matches += r.matches; totals.kills += r.kills;
     totals.mp += r.matches_p; totals.mb += r.matches_b;
   }
-  // histórico TOTAL por cidade (todas as datas) + jogadores por cidade (presence)
+  const fq = await Promise.all(factionCounts.map(f =>
+    supabaseAdmin!.from('match_events').select('*', { count: 'exact', head: true }).eq('faction', f.code),
+  ));
+  if (fq.some(r => r.error) || !fq.some(r => (r.count ?? 0) > 0)) {
+    factionSource = 'legacy';
+    factionCounts = factionCounts.map(f => ({ ...f, matches: f.code === 'E' ? totals.mp : f.code === 'B' ? totals.mb : 0 }));
+  } else {
+    factionCounts = factionCounts.map((f, i) => ({ ...f, matches: fq[i].count ?? 0 }));
+  }
+  // Agrega o histórico total e a presença por cidade.
   const { data: cd } = await supabaseAdmin.from('city_daily').select('*');
   const agg = new Map<string, any>();
   for (const r of cd ?? []) {
@@ -42,8 +53,8 @@ if (supabaseAdmin) {
   cities = [...agg.values()].sort((a, b) => b.matches - a.matches)
     .map(c => ({ ...c, players: [...c.players].sort() }));
 }
-const sideTotal = Math.max(1, totals.mp + totals.mb);
-const pctP = Math.round((totals.mp / sideTotal) * 100), pctB = 100 - pctP;
+const factionTotal = factionCounts.reduce((sum, f) => sum + f.matches, 0);
+factionCounts = factionCounts.map(f => ({ ...f, pct: factionTotal ? Math.round((f.matches / factionTotal) * 100) : 0 }));
 const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.filter(c => c.lat && c.lon) };
 ---
 <Layout
@@ -83,28 +94,29 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
       <span><b style="color:var(--yellow);font-size:20px">{totals.players}</b> jogadores</span>
       <span><b style="color:var(--yellow);font-size:20px">{totals.matches}</b> partidas</span>
       <span><b style="color:var(--yellow);font-size:20px">{totals.kills}</b> kills</span>
-      {/* ESTA BARRA MEDE 2 DAS 5 FACÇÕES. A tabela `stats` só tem `matches_p` e
-          `matches_b`; Tribos Urbanas, Palhaços e Funkeiros não têm coluna e caem em
-          nulo (o `submit_match` aceita `p_team` só como 'P'|'B'). Enquanto isso não
-          for corrigido no RPC, a barra é uma proporção ENTRE os dois times,
-          não uma divisão do total - e é isso que o rótulo agora diz. */}
-      <span style="flex:1;min-width:220px">
-        <span style="color:#ff6b6b">{pctP}% Time E</span> × <span style="color:#7de08f">{pctB}% Time B</span>
-        <span style="display:block;font-size:11px;color:var(--bone-dim);margin-top:2px">
-          só entre estas duas facções - Tribos Urbanas, Palhaços e Funkeiros ainda não são contados
-        </span>
-        <span style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:4px;border:1px solid #3a3325">
-          <span style={`width:${pctP}%;background:#e03232`}></span>
-          <span style={`width:${pctB}%;background:#1faa4d`}></span>
-        </span>
-      </span>
     </div>
   )}
+  {configured && (
+    <section class="faction-stats" aria-labelledby="faction-title">
+      <div class="faction-head">
+        <h2 id="faction-title">Partidas por facção</h2>
+        <span>{factionTotal} com facção identificada</span>
+      </div>
+      <div class="faction-grid">
+        {factionCounts.map(f => (
+          <div class="faction-row">
+            <div><strong style={`color:${f.cor}`}>{f.nome}</strong><span>{f.matches} · {f.pct}%</span></div>
+            <span class="faction-track"><span style={`width:${f.pct}%;background:${f.cor}`}></span></span>
+          </div>
+        ))}
+      </div>
+      <p>{factionSource === 'telemetry'
+        ? 'Contagem anônima de partidas registradas, separada do ranking de jogadores.'
+        : 'O histórico por facção ainda está indisponível no banco; os números E/B acima são o legado do ranking.'}</p>
+    </section>
+  )}
   <p><strong style="color:#7de08f">{online.length}</strong> jogadores online agora · em amarelo, o histórico total de partidas por cidade (localização aproximada, nível cidade - sem IP).</p>
-  {/* COBERTURA DECLARADA: o registro, o heartbeat e o submit-match só acontecem para
-      quem digitou um nick (`public/js/main.js`, `if (nick && …)`). Quem entra e joga
-      sem nick é invisível aqui. Dizer "quem está jogando agora" sem essa ressalva
-      transforma uma amostra enviesada em número absoluto. */}
+  {/* Presença nominal cobre somente jogadores registrados. */}
   <p style="font-size:12px;color:var(--bone-dim);margin-top:-6px">
     Conta só quem escolheu um nick - jogar sem nick não registra presença.
   </p>
@@ -112,10 +124,7 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
   <div id="map" style="height:520px;border-radius:10px;border:1px solid #3a3325;background:#10130c"></div>
   <script src="/vendor/leaflet/leaflet.js" is:inline></script>
   <script is:inline define:vars={{ mapData }}>
-    // ESCAPA antes de montar HTML de popup. `nick` e `city` vêm do banco (o nick
-    // é escolhido pelo jogador no registro, sem filtro de caracteres) e caíam
-    // direto num innerHTML do Leaflet. O limite de 14 caracteres do nick torna
-    // um payload difícil, não impossível - e o custo de escapar é zero.
+    // Dados do banco precisam ser escapados antes de entrar no HTML do Leaflet.
     const esc = (s) => String(s ?? '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -129,11 +138,7 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
         radius: 6 + 18 * (c.matches / maxM), color: '#ffd23f', weight: 2,
         fillColor: '#ffd23f', fillOpacity: 0.25,
       }).addTo(map);
-      /* O nome da cidade era `permanent: true` - 40+ etiquetas amarelas empilhadas sobre o
-         Sudeste, ilegíveis, escondendo justamente os círculos que elas rotulavam. Decisão do
-         dono (04/08): o mapa não precisa do label; a cidade aparece no CLIQUE. O tooltip fica
-         só no hover (custo zero, ajuda quem varre o mapa com o mouse) e o popup do clique
-         continua sendo a informação completa. */
+      // Tooltip só no hover para não cobrir marcadores próximos.
       m.bindTooltip(`${esc(c.city)} · ${c.matches}`, { direction: 'top', offset: [0, -8], className: 'map-tip' });
       // popup do CLIQUE: cidade, totais e lista de jogadores
       const shown = c.players.slice(0, 12).map(esc), more = c.players.length - shown.length;
@@ -149,3 +154,13 @@ const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.fil
     }
   </script>
 </Layout>
+
+<style>
+  .faction-stats{margin:18px 0 22px;padding:16px;border:1px solid #3a3325;background:rgba(16,19,12,.72)}
+  .faction-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
+  .faction-head h2{margin:0;font-size:16px}.faction-head>span,.faction-stats>p{font:11px Consolas,monospace;color:var(--bone-dim)}
+  .faction-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 16px}
+  .faction-row>div{display:flex;justify-content:space-between;gap:10px;font:12px Consolas,monospace}.faction-row>div span{color:var(--bone-dim)}
+  .faction-track{display:block;height:6px;margin-top:5px;border:1px solid #3a3325;background:#0b0d08;overflow:hidden}
+  .faction-track>span{display:block;height:100%;min-width:0}.faction-stats>p{margin:12px 0 0}
+</style>

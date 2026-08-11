@@ -8,14 +8,56 @@
 > 2.0.0           beta rodando em produção sem P0 novo
 > ```
 >
-> **O jogo está em `2.0.0-alpha.4`.** Prerelease do semver ordena sozinho
-> (`alpha` < `beta` < release), então `npm version prerelease` cuida do bump.
+<!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
+
+**O jogo está em `2.0.0-alpha.69`.** Prerelease do semver ordena sozinho
+(`alpha` < `beta` < release), e o fluxo automático cuida do bump.
+
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
+
+<!-- END:GERADO:versao_atual -->
 >
 > **Renumeração:** as entradas abaixo marcadas `[3.x]` foram publicadas como `2.0.0-alpha.N`
 > — o contador tinha saltado de `1.15.0` para `3.1.0` sem nenhum release no meio, e **nenhuma
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.69] — 2026-08-11
+
+> Saldo agrupado das versões `alpha.33` a `alpha.69`. A partir daqui o release automático
+> abre uma seção para toda versão publicada, e `docs:check` reprova se o topo divergir do jogo.
+
+### Corrigido - abertura e recuperação do jogo
+- O botão JOGAR deixou de ficar inerte por erro de inicialização; falhas de abertura agora
+  voltam ao menu com mensagem amigável, tentativa de novo e erro preservado no console.
+- O watchdog passou a separar navegação do carregamento 3D, reduzindo falsos timeouts em
+  desktop e celular sem esconder travamentos reais.
+- UUIDs anônimos ganharam compatibilidade com navegadores sem `crypto.randomUUID`, sem cair
+  em identificadores previsíveis.
+
+### Adicionado - telemetria e operação
+- Eventos anônimos de partida, funil, aquisição e performance passaram a registrar mapa,
+  modo, personagem, arma, resultado e as cinco facções; `/api/health` e o monitor de
+  produção tornam falhas de ingestão visíveis.
+- Erros públicos de API deixaram de expor detalhes internos; o diagnóstico usa UID anônimo,
+  enquanto cooldown e mensagens úteis continuam chegando ao jogador.
+- O pipeline ganhou triagem de issues e PRs, previews controlados, smoke de produção,
+  ratchet de dívidas, mutation testing e commits automáticos assinados via DCO.
+
+### Adicionado - jogo, HUD e ferramentas
+- HUD mobile em retrato, menu de armas no modo `?vmlab=1`, tabela comparativa das 26 armas
+  e editor unificado de viewmodel/mapa com alinhamento, recuo e teste no jogo.
+- O boot passou a carregar animações mescladas e wallpapers WebP, reduzindo centenas de
+  requests; bancadas e viewmodels de laboratório ficam fora do pacote publicado.
+- Cartazes tiveram proporção validada, grafites órfãos passaram a reprovar o build e as
+  gerações antigas de probes de áudio foram aposentadas.
+
+### Mudado - releases e documentação
+- Releases automáticos preservam créditos nativos do GitHub, usam tags anotadas e assinam
+  o commit do bot com DCO. O Graphify passou a documentar dependências e zonas de conflito.
+- Textos públicos deixaram de usar travessão e a documentação gerada acompanha versão,
+  arquitetura, colaboradores e contagens do código.
 
 ## [2.0.0-alpha.32] — 2026-08-07
 
