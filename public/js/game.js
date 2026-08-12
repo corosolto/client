@@ -4600,9 +4600,8 @@ export class Game {
       for (const k of Object.keys(p.ammo)) {
         const am = p.ammo[k], wm = WEAPONS[k].mag;
         if (am.mag < wm && am.res > 0) { const need = wm - am.mag, take = Math.min(need, am.res); am.mag += take; am.res -= take; }
-        /* a reserva volta a cheia DEPOIS de servir o pente, e não antes: assim o resto do
-           jogo (o portão de recarga, o HUD, o `util` do bot) continua lendo um número normal
-           e nenhum deles precisa saber que existe modo infinito. */
+        // depois de servir o pente, não antes: portão de recarga, HUD e `util` do bot
+        // seguem lendo número normal e nenhum precisa saber que existe modo infinito.
         if (inf) am.res = WEAPONS[k].reserve;
       }
       this.el.reloadNote.classList.add('hidden');
@@ -4881,19 +4880,8 @@ export class Game {
       'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
     return pool[(Math.random() * pool.length) | 0];
   }
-  /* RESERVA INFINITA NOS MODOS DE ARMA ÚNICA (pedido do dono: "quando o usuário escolhe um
-     tipo de arma só como AWP, ele tem a arma com tiro sem ser infinito — ele pode recarregar
-     a arma mas tem que ter tiro infinito").
-
-     Por que o modo restrito PRECISA disto e o 'all' não: em SÓ AWP o `_pickupAllowed` derruba
-     todo pickup que não é AWP, e o `_botWeapon` faz todo bot nascer de AWP. Ou seja, a única
-     munição do mapa é a das 25 balas com que você nasceu — gastou, acabou a partida pra você,
-     porque não há o que catar do chão. No modo 'all' o mapa é uma feira de armas e reserva
-     vazia é convite pra trocar de arma, que é a decisão que o modo existe pra provocar.
-
-     A RECARGA CONTINUA: o que fica infinito é a RESERVA, não o pente. Você ainda para 3,1 s
-     de ferrolho na AWP a cada 5 tiros — o custo de tempo, que é o que equilibra a arma, está
-     intacto. O que sai é só a contagem regressiva pro fim do jogo. */
+  // Modo restrito não tem pickup de outra arma no mapa, então reserva finita = partida
+  // acabada quando zera. Fica infinita a RESERVA, não o pente: a recarga segue cobrando.
   _municaoInfinita() { return this._wpnMode() !== 'all'; }
   _pickupAllowed(w) {
     const mode = this._wpnMode();
@@ -6302,8 +6290,7 @@ export class Game {
       const weapon = slot.weapon && WEAPONS[slot.weapon];
       const active = slot.weapon === p.weapon;
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
-      // '∞' e não o número: a reserva do modo restrito volta a cheia toda recarga, então
-      // imprimir '25' seria um contador que nunca anda — o jogador leria como bug.
+      // '∞' e não o número: reserva que volta a cheia toda recarga lê-se como contador travado
       const res = this._municaoInfinita() ? '∞' : ammo?.res;
       const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${res}` : ''));
       const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' ? 'NADE' : weapon?.short);
