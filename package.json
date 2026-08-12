@@ -28,6 +28,8 @@
     "//eval:release": "Release preserva nome/créditos, DCO, docs e um único deploy automático pela main; o CLI fica manual. Mutantes: nome-antigo|semcreditos|semdco|semdocs|semrollback|deploy-duplo.",
     "eval:release": "node tools/eval/release-check.mjs",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
+    "//eval:drop": "procedência de DROP_TTL/DROP_MAX: acúmulo de armas no chão em regime",
+    "eval:drop": "node tools/eval/drop-check.mjs",
     "//eval:prune": "KEEP_FPVM preserva só models/fpvm; as bancadas continuam podadas dos dois destinos publicados. --mutante=early-exit prova a restrição.",
     "eval:prune": "node tools/eval/prune-check.mjs",
     "//eval:vminspect": "O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.",

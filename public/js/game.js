@@ -86,11 +86,8 @@ const VM_MAT_LEGACY = QS.get('vmmat') === 'legacy';
 // round) olhando pra esplanada vazia. Menos espera + spawn escolhido por segurança
 // (_pickSpawn) encurta o caminho de volta pra briga sem virar respawn de arena.
 const ROUND_TIME = 99, ROUNDS_TO_WIN = 3, RESPAWN_DELAY = 2.2, PICKUP_RESPAWN = 8, SPAWN_PROT = 2;
-/* Travas do drop de arma na morte (ver `_kill`). Os números saem do ritmo da partida:
-   RESPAWN_DELAY é 2,2 s, então 25 s é tempo de a arma sobreviver a uma troca de posição
-   inteira e ainda ser catável por quem chegou depois — sem virar cenário permanente. O teto
-   de 12 é ~1,5× o número de mortes simultâneas plausíveis num 4v4. */
-const DROP_TTL = 25, DROP_MAX = 12;
+// Prazo e teto do drop de morte; procedência dos dois números em tools/eval/drop-check.mjs.
+const DROP_TTL = 18, DROP_MAX = 12;
 /* TETO DE RODADAS — "melhor de 5", que é o que o índice já promete ao jogador
    (src/pages/index.astro:503, "Vence quem ganhar 3 rounds"). Sem este teto o formato NÃO
    ERA melhor de 5: round EMPATADO não dá ponto pra ninguém (game.js:_endRound), então uma
@@ -2929,28 +2926,8 @@ export class Game {
     ent._killT = this.time;
     ent.alive = false; ent.hp = 0; ent.deaths++;
     ent.respawnAt = this.time + RESPAWN_DELAY;
-    /* DROP DE ARMA NA MORTE — e o histórico disto importa.
-
-       Isto já existiu e foi RETIRADO a pedido do dono: "o arsenal completo já está no
-       respawn, então drops pelo mapa viravam lixo espalhado — nada de arma jogada no chão".
-       Volta agora por pedido novo do mesmo dono: "outra coisa que os FPS têm: quando um
-       jogador morre, a arma dele cai no chão".
-
-       Os dois pedidos são compatíveis, porque a reclamação nunca foi do drop em si: foi do
-       ACÚMULO. Numa partida de 10 minutos com respawn a cada 5 s, o drop sem prazo vira um
-       tapete de armas que não interessa a ninguém (todo mundo renasce armado). Então o drop
-       volta com as duas travas que faltavam da outra vez:
-
-         PRAZO   `DROP_TTL` — a arma some sozinha. É o que separa "arma do cara que acabou
-                 de morrer aqui" (informação de combate: alguém caiu neste corredor) de
-                 "lixo de 10 minutos atrás" (ruído).
-         TETO    `DROP_MAX` — no máximo N drops de morte vivos ao mesmo tempo; o mais velho
-                 sai pra dar lugar ao mais novo. Segura o pior caso (chacina num corredor)
-                 sem depender do prazo ter vencido.
-
-       FACA NÃO DROPA: todo mundo já nasce com faca, então o drop seria um pickup que não
-       muda nada — lixo pela definição do próprio pedido antigo. (A versão retirada trocava
-       faca por AWP, o que dava arma melhor a quem morreu de faca.) */
+    // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
+    // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
     if (ent.weapon && ent.weapon !== 'knife' && this._pickupAllowed(ent.weapon)) {
       this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon, false, 0.01, this.time + DROP_TTL);
     }
@@ -4872,8 +4849,7 @@ export class Game {
     // PLAYER — bots leave them alone (otherwise they hoover the spawn line on round 1).
     for (let i = this.drops.length - 1; i >= 0; i--) {
       const pk = this.drops[i];
-      // PRAZO antes de qualquer outra coisa: arma vencida some mesmo que um bot esteja em
-      // cima dela neste quadro. Sem prazo (rack, troca de arma do jogador) nunca vence.
+      // prazo antes da coleta: arma vencida some mesmo com bot em cima dela neste quadro
       if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
@@ -4963,21 +4939,22 @@ export class Game {
     mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
     this.scene.add(mesh);
     this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, expiraEm });
-    /* TETO dos drops de morte: o mais velho sai pra dar lugar ao mais novo. Só conta quem
-       tem prazo — o rack de spawn e os drops de troca de arma do jogador não entram na
-       fila e não são despejados por ela. */
+    // só quem tem prazo entra na fila do teto: rack de spawn e troca de arma nunca são despejados
     if (expiraEm) {
       const comPrazo = [];
       for (let i = 0; i < this.drops.length; i++) if (this.drops[i].expiraEm) comPrazo.push(i);
       for (let k = 0; k < comPrazo.length - DROP_MAX; k++) this._sumirDrop(comPrazo[k] - k);
     }
   }
-  // tira um drop da cena e da lista. Índice, porque quem chama já está varrendo a lista.
   _sumirDrop(i) {
     const d = this.drops[i];
     if (!d) return;
     d.mesh?.removeFromParent();
     this.drops.splice(i, 1);
+    // `nearPickup` guarda ÍNDICE, e ele desliza quando a lista encolhe: sem isto o E entre
+    // dois quadros entregava a arma vencida e removia o drop que herdou o índice.
+    const np = this.nearPickup;
+    if (np && np.dropIdx >= 0) { if (np.pk === d) this.nearPickup = null; else if (np.dropIdx > i) np.dropIdx--; }
   }
   /* SPAWN POR SEGURANÇA (não sorteado): dos 4 pontos do time, escolhe o que está mais longe
      do inimigo vivo mais próximo E sem linha de visão pra ele. O sorteio puro colocava o

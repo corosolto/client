@@ -36,6 +36,8 @@ jobs:
         run: npm run eval:error-origin
       - name: UUID compatível com navegadores antigos
         run: npm run eval:uuid
+      - name: Acúmulo de armas no chão tem teto
+        run: npm run eval:drop
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
 
