@@ -306,8 +306,17 @@ export function buildMansao(scene, T) {
   const louca=new THREE.Group(); propVivo(louca,'louca-cozinha'); louca.position.set(-6.8,1.04,-10); root.add(louca);
   for(const x of [-.3,0,.3]) { const copo=new THREE.Mesh(new THREE.CylinderGeometry(.075,.06,.28,10),lam({color:0xbad5d8,transparent:true,opacity:.7,roughness:.18})); copo.position.set(x,.14,0); louca.add(copo); }
   const vaso=new THREE.Group(); propVivo(vaso,'vaso-interno'); vaso.position.set(-11.8,0,-3.7); root.add(vaso);
+  // MAP1 "corpo dentro de sólido": em (-11,5, -3,5) a sonda achava 0,859 m de geometria
+  // visível. Medido antes de mexer — ZERO colisor cobrindo o ponto e `_collide` empurrando
+  // 0,0000 m: o corpo do jogador ficava DENTRO do pote. O pote é CERÂMICA, volume rígido;
+  // marcá-lo `nonSolidSurface` seria mentir pra régua e manter o defeito. O certo é o que
+  // os vasos do deck (linha ~580) e os troncos de árvore já fazem aqui: colisor de verdade.
   const pote=new THREE.Mesh(new THREE.CylinderGeometry(.28,.36,.5,12),lam({color:0x9b6b4a,roughness:.9})); pote.position.y=.25; vaso.add(pote);
-  for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); vaso.add(folha); }
+  col(-12.1,-11.5,0,.5,-4.0,-3.4);
+  // As FOLHAS, ao contrário do pote, são folhagem atravessável — é o que todo o resto do
+  // paisagismo deste arquivo já declara (garden-cluster, garden-mass, palmeira, folhagem
+  // instanciada, forração). Estavam sem a marca por esquecimento, não por decisão.
+  for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); folha.userData.nonSolidSurface=true; vaso.add(folha); }
   // Luz quente local impede que a cobertura do mezanino transforme os móveis em
   // silhuetas pretas; sem sombra dinâmica, o custo em mobile é pequeno.
   for (const [x,z] of [[-8,-9],[3,1],[9,-10],[-5,4]]) {
@@ -454,6 +463,12 @@ export function buildMansao(scene, T) {
     }
     const miolo = new THREE.Mesh(new THREE.SphereGeometry(.22, 9, 6), lam({ color: c, roughness: .9 }));
     miolo.position.y = .32; g.add(miolo);
+    // MAP1: a bromélia é a MESMA construção do `garden-cluster` (cones de folha sem
+    // colisor), mas nasceu sem a marca que o cluster tem. Resultado: a sonda vertical
+    // lia 0,43-0,64 m de "sólido" em cima do jogador em 72 células de 0,25 m — três dos
+    // cinco pontos reprovados eram só a fase da grade de 1 m caindo aqui. A marca é a
+    // verdade medida: não há colisor nenhum, o corpo atravessa a folhagem.
+    g.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
     g.position.set(x, 0, z); root.add(g);
   }
   // Duas palmeiras assimétricas enquadram a fachada; folhas alongadas têm três
@@ -480,7 +495,14 @@ export function buildMansao(scene, T) {
     const banana=new THREE.Group(); banana.position.set(bx,0,bz); banana.rotation.y=ry;
     banana.userData.mansaoFeature='tropical-3d';
     for(let i=0;i<7;i++){ const a=-1.1+i*.36, folha=new THREE.Mesh(new THREE.SphereGeometry(.52,9,5),lam({color:i%2?0x4b8b45:0x35783c,roughness:1})); folha.scale.set(.28,.08,2.25); folha.rotation.set(-.55,a,0); folha.position.set(Math.sin(a)*.55,1.45+i*.12,Math.cos(a)*.55); banana.add(folha); }
-    const caule=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,1.45,8),lam({color:0x6f8744,roughness:1})); caule.position.y=.72; banana.add(caule); root.add(banana);
+    const caule=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,1.45,8),lam({color:0x6f8744,roughness:1})); caule.position.y=.72; banana.add(caule);
+    // MAP1: era a PIOR penetração do mapa inteiro (1,384 m em (11,5, 26,5)) e a única
+    // acima de 1 m nos dez mapas. Bananeira é `tropical-3d`, a mesma taxonomia da palmeira
+    // e da folhagem instanciada — que já declaram tronco E folha como atravessáveis. O
+    // pseudocaule da bananeira não é cover (as árvores de tronco lenhoso é que levam
+    // `col()` na linha ~442); ficar sem a marca era divergência de plantio, não decisão.
+    banana.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    root.add(banana);
   }
   // Encosta verde lateral em dois planos de profundidade: o horizonte deixa de
   // terminar numa linha oceânica reta, sem bloquear o eixo central de combate.

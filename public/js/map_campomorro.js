@@ -31,6 +31,31 @@ const LANES = [
 
 const GALPAO = { x0: 22, x1: 34, z0: -26, z1: -16, y: 1 };
 
+/* TOPOGRAFIA — por que este bloco existe.
+   O dono jogou e disse "o do campinho tambem sem topografia". A medição deu razão
+   a ele: `tools/eval/relevo-check.mjs` acusava 1,08 m de amplitude na área andável,
+   com 97,2% dela dentro de ±0,25 m da mediana. A malha de terreno (PlaneGeometry
+   72×120 mais abaixo) já existia, mas a função de altura devolvia só três valores
+   — 0, −0,08 (campo) e 1 (galpão) — então a malha desenhava um plano.
+
+   O campo de várzea É nivelado: ele é um platô cortado no morro, e continua plano.
+   O relevo mora FORA do retângulo do campo e cresce com a distância até o corte:
+   flanco alto a OESTE (a arquibancada natural), subida média ao NORTE até o baile
+   — que já morava 1 m acima — e encostas fracas ao sul e leste, a baixada.
+
+   `encosta` amortece a subida junto ao rim, onde vivem as oito rampas e o grafo de rota,
+   e a acelera lá no alto. Com estas taxas o gradiente máximo fica em ~0,37: abaixo
+   dos ~0,48 que o `segClear` deste arquivo tolera por amostra e muito abaixo do
+   step-up de 0,55 m do jogador (game.js:~4672) — ninguém escala parede sem querer,
+   e o A* continua ligando o anel inteiro. Nada desce abaixo de FIELD_Y, porque a
+   VM14 exige chão ≥ −0,10 m sob todo pickup. */
+const encosta = (d) => (d <= 0 ? 0 : d * d / (d + 5));
+const morroBase = (x, z) => FIELD_Y
+  + 0.34 * encosta(-x - FIELD_X)
+  + 0.20 * encosta(-z - FIELD_Z)
+  + 0.11 * encosta(z - FIELD_Z)
+  + 0.07 * encosta(x - FIELD_X);
+
 export const CAMPOMORRO_PROPS = [
   'arquibancada', 'junkyard_container', 'caixa_som_baile', 'stall',
   'fav_house', 'pilha_pneus', 'moto_cg', 'fusca',
@@ -40,8 +65,11 @@ function laneHeight(x, z) {
   for (const l of LANES) {
     const u = x * l.dx + z * l.dz;
     const v = -x * l.dz + z * l.dx;
+    // A boca do campo agora DESCE do morro até o platô. Interpolar contra a cota real
+    // do terreno (e não contra o antigo zero fixo) mantém a rampa contínua nas duas
+    // pontas: sem degrau na entrada e sem degrau na saída, em qualquer das oito bocas.
     if (u >= l.r0 && u <= l.r0 + RAMP_L && Math.abs(v) <= RAMP_W / 2)
-      return FIELD_Y + (u - l.r0) / RAMP_L * -FIELD_Y;
+      return FIELD_Y + (morroBase(x, z) - FIELD_Y) * ((u - l.r0) / RAMP_L);
   }
   return null;
 }
@@ -117,6 +145,24 @@ export function buildCampoMorro(scene, T = {}) {
     external(MAT.baile, '/img/textures/campomorro_streetart_baile.webp', 1.5, 1);
   } else MAT.baile = MAT.wall;
 
+  /* Superfície GRANDE precisa de material próprio. `BoxGeometry` dá UV 0→1 por face,
+     então uma muralha de 60 × 5,7 m com a mesma repetição de um caixote cai para ~3
+     px/m — foi assim que a TEXEL2 deste mapa saltou de 31,4% para 48,9% de área abaixo
+     de 64 px/m quando a borda ficou alta e as lajes de fundo entraram. O clone divide o
+     mesmo bitmap (a `Source` do three é compartilhada) e só troca a repetição, portanto
+     não custa upload novo nem mexe na textura que os outros mapas usam. */
+  const repetido = (base, rx, ry) => {
+    const m = lam({ color: base.color.getHex(), roughness: base.roughness, metalness: base.metalness });
+    if (base.map) {
+      const t = base.map.clone();
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.needsUpdate = true;
+      m.map = t; m.needsUpdate = true;
+    }
+    return m;
+  };
+  MAT.muralha = repetido(MAT.concrete, 20, 3);
+  MAT.morroFundo = repetido(MAT.wall, 3, 2);
+
   const addBox = (w, h, d, mat, x, y, z, opts = {}) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y + h / 2, z);
@@ -132,44 +178,53 @@ export function buildCampoMorro(scene, T = {}) {
 
   // A geometria de jogo continua sendo a caixa sólida; estes planos rasos dão escala e
   // direção às construções sem criar quinas ou obstáculos novos.
-  const fachadaCasa = (x, z, w, d, h, seed = 0) => {
+  // `base` é a cota do terreno sob a casa. Sem ela, com o morro ligado, porta e janela
+  // ficariam meio metro no ar no flanco oeste e enterradas na baixada.
+  const fachadaCasa = (x, z, w, d, h, seed = 0, base = 0) => {
     const eixoX = Math.abs(x) > Math.abs(z), lado = eixoX ? Math.sign(x || 1) : Math.sign(z || 1);
     if (eixoX) {
       const fx = x - lado * (w / 2 + 0.035);
-      addBox(0.07, 1.95, 0.86, MAT.door, fx, 0.04, z + (seed % 2 ? -d * 0.22 : d * 0.22), { collide: false, cast: false });
-      addBox(0.06, 0.82, 1.12, MAT.glass, fx - lado * 0.01, 1.35, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false, cast: false });
-      addBox(0.58, 0.08, 1.45, MAT.roof, fx - lado * 0.28, 2.4, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false });
+      addBox(0.07, 1.95, 0.86, MAT.door, fx, base + 0.04, z + (seed % 2 ? -d * 0.22 : d * 0.22), { collide: false, cast: false });
+      addBox(0.06, 0.82, 1.12, MAT.glass, fx - lado * 0.01, base + 1.35, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false, cast: false });
+      addBox(0.58, 0.08, 1.45, MAT.roof, fx - lado * 0.28, base + 2.4, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false });
     } else {
       const fz = z - lado * (d / 2 + 0.035);
-      addBox(0.86, 1.95, 0.07, MAT.door, x + (seed % 2 ? -w * 0.22 : w * 0.22), 0.04, fz, { collide: false, cast: false });
-      addBox(1.12, 0.82, 0.06, MAT.glass, x + (seed % 2 ? w * 0.18 : -w * 0.18), 1.35, fz - lado * 0.01, { collide: false, cast: false });
-      addBox(1.45, 0.08, 0.58, MAT.roof, x + (seed % 2 ? w * 0.18 : -w * 0.18), 2.4, fz - lado * 0.28, { collide: false });
+      addBox(0.86, 1.95, 0.07, MAT.door, x + (seed % 2 ? -w * 0.22 : w * 0.22), base + 0.04, fz, { collide: false, cast: false });
+      addBox(1.12, 0.82, 0.06, MAT.glass, x + (seed % 2 ? w * 0.18 : -w * 0.18), base + 1.35, fz - lado * 0.01, { collide: false, cast: false });
+      addBox(1.45, 0.08, 0.58, MAT.roof, x + (seed % 2 ? w * 0.18 : -w * 0.18), base + 2.4, fz - lado * 0.28, { collide: false });
     }
-    addBox(w + 0.28, 0.11, d + 0.28, seed % 3 ? MAT.roof : MAT.concrete, x, h, z, { collide: false });
-    if (seed % 3 === 0) addBox(w * 0.46, 0.85, d * 0.42, MAT.wall, x + w * 0.12, h + 0.1, z - d * 0.16, { collide: false });
+    addBox(w + 0.28, 0.11, d + 0.28, seed % 3 ? MAT.roof : MAT.concrete, x, base + h, z, { collide: false });
+    if (seed % 3 === 0) addBox(w * 0.46, 0.85, d * 0.42, MAT.wall, x + w * 0.12, base + h + 0.1, z - d * 0.16, { collide: false });
     // Chapa inclinada, remendo de reboco e conduíte tiram a leitura de prefab repetido.
     const telha = new THREE.Mesh(new THREE.BoxGeometry(w + 0.42, 0.08, d * 0.58), MAT.roof);
-    telha.position.set(x, h + 0.22, z + (seed % 2 ? -d * 0.18 : d * 0.18));
+    telha.position.set(x, base + h + 0.22, z + (seed % 2 ? -d * 0.18 : d * 0.18));
     telha.rotation.z = (seed % 2 ? -1 : 1) * (0.035 + (seed % 3) * 0.018);
     telha.castShadow = telha.receiveShadow = true; root.add(telha);
     if (eixoX) {
       const fx = x - lado * (w / 2 + 0.045);
-      addBox(0.045, 0.62, 1.45, MAT.steelRust, fx - lado * 0.01, 0.72 + (seed % 3) * 0.3, z, { collide: false, cast: false });
-      addBox(0.035, 2.5, 0.035, MAT.steel, fx - lado * 0.03, 0.15, z - d * 0.32, { collide: false, cast: false });
+      addBox(0.045, 0.62, 1.45, MAT.steelRust, fx - lado * 0.01, base + 0.72 + (seed % 3) * 0.3, z, { collide: false, cast: false });
+      addBox(0.035, 2.5, 0.035, MAT.steel, fx - lado * 0.03, base + 0.15, z - d * 0.32, { collide: false, cast: false });
     } else {
       const fz = z - lado * (d / 2 + 0.045);
-      addBox(1.45, 0.62, 0.045, MAT.steelRust, x, 0.72 + (seed % 3) * 0.3, fz - lado * 0.01, { collide: false, cast: false });
-      addBox(0.035, 2.5, 0.035, MAT.steel, x - w * 0.32, 0.15, fz - lado * 0.03, { collide: false, cast: false });
+      addBox(1.45, 0.62, 0.045, MAT.steelRust, x, base + 0.72 + (seed % 3) * 0.3, fz - lado * 0.01, { collide: false, cast: false });
+      addBox(0.035, 2.5, 0.035, MAT.steel, x - w * 0.32, base + 0.15, fz - lado * 0.03, { collide: false, cast: false });
     }
   };
 
+  // O galpão continua sendo um PLATÔ CORTADO na encosta (é o que se faz com uma laje
+  // de 12 × 10 m num morro, e os três pilares de aço já contavam essa história). As duas
+  // rampas de acesso passam a interpolar contra a cota do morro em vez de contra zero.
+  const rampaGalpao = (x, z, t) => {
+    const m = morroBase(x, z);
+    return m + (GALPAO.y - m) * t;
+  };
   const groundHeightAt = (x, z) => {
     if (x >= GALPAO.x0 && x <= GALPAO.x1 && z >= GALPAO.z0 && z <= GALPAO.z1) return GALPAO.y;
-    if (x >= 18 && x <= GALPAO.x0 && z >= -21.8 && z <= -18.2) return (x - 18) / (GALPAO.x0 - 18);
-    if (x >= 26.2 && x <= 29.8 && z >= GALPAO.z1 && z <= -12) return (-12 - z) / (-12 - GALPAO.z1);
+    if (x >= 18 && x <= GALPAO.x0 && z >= -21.8 && z <= -18.2) return rampaGalpao(x, z, (x - 18) / (GALPAO.x0 - 18));
+    if (x >= 26.2 && x <= 29.8 && z >= GALPAO.z1 && z <= -12) return rampaGalpao(x, z, (-12 - z) / (-12 - GALPAO.z1));
     if (Math.abs(x) <= FIELD_X && Math.abs(z) <= FIELD_Z) return FIELD_Y;
     const h = laneHeight(x, z);
-    return h === null ? 0 : h;
+    return h === null ? morroBase(x, z) : h;
   };
 
   // Uma malha de altura evita quatro contas divergentes para campo, rampas e galpao.
@@ -181,9 +236,21 @@ export function buildCampoMorro(scene, T = {}) {
   terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; root.add(terrain);
 
   // Ruas periféricas: material diferente do campo deixa o bowl legível de relance.
-  for (const [w, d, x, z] of [[68, 4.2, 0, -27.4], [68, 4.2, 0, 27.4], [4.2, 50, -33.2, 0], [4.2, 50, 33.2, 0]]) {
-    const rua = new THREE.Mesh(new THREE.PlaneGeometry(w, d), MAT.asphalt);
-    rua.rotation.x = -Math.PI / 2; rua.position.set(x, 0.025, z); rua.receiveShadow = true; root.add(rua);
+  // Com o morro, a rua tem que SUBIR junto — um plano reto a 0,025 m ficaria enterrado
+  // no flanco oeste e flutuando na baixada, então ela é deslocada pela mesma cota.
+  // As duas ruas do lado do baile PARAM no galpão. Deitadas no plano elas passavam por
+  // baixo da laje; subindo com a encosta elas passariam 1,27 m ACIMA do piso do galpão e
+  // a MAP1 acusou 12 pontos de corpo dentro de geometria visível lá dentro. Rua que
+  // morre na esquina do barracão é o que existe no morro, e o quarteirão fica legível.
+  for (const [w, d, x, z] of [[56, 4.2, -6, -27.4], [68, 4.2, 0, 27.4], [4.2, 50, -33.2, 0], [4.2, 38, 33.2, 6]]) {
+    const geo = new THREE.PlaneGeometry(w, d, Math.round(w / 2), Math.round(d / 2));
+    const p = geo.attributes.position;
+    // `morroBase` e não `groundHeightAt`: a rua acompanha a encosta natural e não sobe
+    // no platô do galpão, que ela margeia — senão apareceria um degrau sob a parede norte.
+    for (let i = 0; i < p.count; i++) p.setZ(i, morroBase(x + p.getX(i), z - p.getY(i)) + 0.025);
+    p.needsUpdate = true; geo.computeVertexNormals();
+    const rua = new THREE.Mesh(geo, MAT.asphalt);
+    rua.rotation.x = -Math.PI / 2; rua.position.set(x, 0, z); rua.receiveShadow = true; root.add(rua);
   }
   // Cal gasto, ainda legível: dá escala imediata ao bowl sem criar qualquer obstáculo.
   const cal = lam({ color: 0xd5d0b9, roughness: 1, transparent: true, opacity: 0.68 });
@@ -228,24 +295,27 @@ export function buildCampoMorro(scene, T = {}) {
   bancoReservas.userData.fieldBench = 'reservas-sudeste';
 
   // Alambrado e estrutura povoam as bordas sem transformar o campo aberto em labirinto.
+  // Poste, barra e tela assentam na COTA LOCAL: no rim do campo o morro ainda vale
+  // quase FIELD_Y, mas o alambrado oeste já pega o começo da subida.
   for (const x of [-17, -12, -7, -2, 3, 8, 13, 18]) {
-    addBox(0.12, 2.2, 0.12, MAT.steel, x, 0, -13.8);
-    addBox(0.12, 2.2, 0.12, MAT.steel, x, 0, 13.8);
+    addBox(0.12, 2.2, 0.12, MAT.steel, x, groundHeightAt(x, -13.8), -13.8);
+    addBox(0.12, 2.2, 0.12, MAT.steel, x, groundHeightAt(x, 13.8), 13.8);
   }
   for (const z of [-10, -6, -2, 4, 8]) {
-    addBox(0.12, 2.2, 0.12, MAT.steel, -21.4, 0, z);
-    addBox(0.12, 2.2, 0.12, MAT.steel, 21.4, 0, z);
+    addBox(0.12, 2.2, 0.12, MAT.steel, -21.4, groundHeightAt(-21.4, z), z);
+    addBox(0.12, 2.2, 0.12, MAT.steel, 21.4, groundHeightAt(21.4, z), z);
   }
   // Alambrado remendado: barras de alturas e materiais alternados, com vãos preservados.
   for (const z of [-13.8, 13.8]) for (const [a, b, rust] of [
     [-19.5, -15.3, 1], [-13.8, -8.5, 0], [-6.5, -1.1, 1], [1.2, 6.2, 0], [8.1, 13.1, 1], [14.7, 19.5, 0],
   ]) {
-    const y = rust ? 0.72 : 1.08;
+    const g = groundHeightAt((a + b) / 2, z), y = g + (rust ? 0.72 : 1.08);
     addBox(b - a, 0.07, 0.06, rust ? MAT.steelRust : MAT.steel, (a + b) / 2, y, z, { collide: false, cast: false });
-    if (!rust) addBox(b - a, 0.05, 0.05, MAT.steel, (a + b) / 2, 1.82, z, { collide: false, cast: false });
+    if (!rust) addBox(b - a, 0.05, 0.05, MAT.steel, (a + b) / 2, g + 1.82, z, { collide: false, cast: false });
   }
   for (const x of [-21.4, 21.4]) for (const [a, b, rust] of [[-11.2, -7.2, 0], [-5.2, -1.2, 1], [1.1, 5.2, 0], [6.9, 11.2, 1]]) {
-    addBox(0.06, 0.07, b - a, rust ? MAT.steelRust : MAT.steel, x, rust ? 0.78 : 1.2, (a + b) / 2, { collide: false, cast: false });
+    const g = groundHeightAt(x, (a + b) / 2);
+    addBox(0.06, 0.07, b - a, rust ? MAT.steelRust : MAT.steel, x, g + (rust ? 0.78 : 1.2), (a + b) / 2, { collide: false, cast: false });
   }
   // Uma única LineSegments desenha tela torta e remendada; os postes físicos continuam sendo
   // a colisão. Diagonais incompletas evitam o alambrado perfeito de estádio novo.
@@ -253,13 +323,14 @@ export function buildCampoMorro(scene, T = {}) {
     const pts = [];
     const fio = (x0, y0, z0, x1, y1, z1) => pts.push(x0, y0, z0, x1, y1, z1);
     for (const z of [-13.8, 13.8]) for (let x = -19; x < 19; x += 2.1) {
-      const h = 1.45 + ((Math.round(x * 10) & 3) * 0.16);
+      const h = 1.45 + ((Math.round(x * 10) & 3) * 0.16), g = groundHeightAt(x, z), g2 = groundHeightAt(x + 2, z);
       if (Math.abs(x) < 2.8 || (x > 9.5 && x < 15.5)) continue;
-      fio(x, 0.1, z, x + 2.0, h, z); fio(x + 0.1, h, z, x + 1.8, 0.18, z);
+      fio(x, g + 0.1, z, x + 2.0, g2 + h, z); fio(x + 0.1, g + h, z, x + 1.8, g2 + 0.18, z);
     }
     for (const x of [-21.4, 21.4]) for (let z = -10.5; z < 10.5; z += 2.2) {
       if (Math.abs(z) < 2.8) continue;
-      fio(x, 0.12, z, x, 1.65, z + 2.0); fio(x, 1.58, z, x, 0.2, z + 1.9);
+      const g = groundHeightAt(x, z), g2 = groundHeightAt(x, z + 2);
+      fio(x, g + 0.12, z, x, g2 + 1.65, z + 2.0); fio(x, g + 1.58, z, x, g2 + 0.2, z + 1.9);
     }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
     const tela = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x4b514f, transparent: true, opacity: 0.68, fog: true }));
@@ -272,33 +343,42 @@ export function buildCampoMorro(scene, T = {}) {
     m.visible = !usaGLB;
     return m;
   };
-  prop('arquibancada', { x: -7, y: 0, z: 20, targetH: 3.2, ry: Math.PI }, [12, 3.2, 3.5]);
-  prop('junkyard_container', { x: 18, y: 0, z: 18, targetH: 2.7, ry: Math.PI / 2 }, [5.8, 2.7, 2.5]);
-  prop('stall', { x: -27, y: 0, z: -8, targetH: 2.7, ry: Math.PI / 2 }, [3.5, 2.7, 2.8]);
-  prop('fusca', { x: 28, y: 0, z: 8, targetH: 1.5, ry: 0 }, [1.9, 1.5, 4]);
-  prop('moto_cg', { x: -27, y: 0, z: 21, targetH: 1.3, ry: 0.4 }, [0.9, 1.3, 2]);
+  // Todo prop de rua passa a nascer na cota do terreno: com o morro, `y: 0` deixaria
+  // o fusca enterrado na baixada e a moto voando no flanco oeste.
+  prop('arquibancada', { x: -7, y: groundHeightAt(-7, 20), z: 20, targetH: 3.2, ry: Math.PI }, [12, 3.2, 3.5]);
+  prop('junkyard_container', { x: 18, y: groundHeightAt(18, 18), z: 18, targetH: 2.7, ry: Math.PI / 2 }, [5.8, 2.7, 2.5]);
+  prop('stall', { x: -27, y: groundHeightAt(-27, -8), z: -8, targetH: 2.7, ry: Math.PI / 2 }, [3.5, 2.7, 2.8]);
+  prop('fusca', { x: 28, y: groundHeightAt(28, 8), z: 8, targetH: 1.5, ry: 0 }, [1.9, 1.5, 4]);
+  prop('moto_cg', { x: -27, y: groundHeightAt(-27, 21), z: 21, targetH: 1.3, ry: 0.4 }, [0.9, 1.3, 2]);
 
   // Arquibancada de um lado só, assentada numa base antiga e irregular acima da rua.
-  addBox(11.8, 0.55, 3.3, MAT.concrete, -7, 0, 20, { collide: false });
+  const gArq = groundHeightAt(-7, 20);
+  addBox(11.8, 0.55, 3.3, MAT.concrete, -7, gArq, 20, { collide: false });
   for (let i = 0; i < 3; i++)
-    addBox(11.4 - i * 0.5, 0.34 + i * 0.28, 0.18, MAT.concrete, -7, 0, 18.36 + i * 0.08, { collide: false });
+    addBox(11.4 - i * 0.5, 0.34 + i * 0.28, 0.18, MAT.concrete, -7, groundHeightAt(-7, 18.36 + i * 0.08), 18.36 + i * 0.08, { collide: false });
 
   // Fachadas do beco oeste quebram a visada antes da entrada do campo.
   const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 21], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
   for (let i = 0; i < CASAS.length; i++) {
-    const [x, z] = CASAS[i], h = 3.6 + ((x + z) & 1), w = 5.5, d = 4.5;
-    addBox(w, h, d, MAT.wall, x, 0, z);
-    fachadaCasa(x, z, w, d, h, i);
+    const [x, z] = CASAS[i], base = groundHeightAt(x, z), w = 5.5, d = 4.5;
+    // Casa de morro ganha laje: quem está no alto do flanco cresce mais um pavimento.
+    // É o que faz a encosta LER como favela empilhada em vez de fileira de blocos.
+    const h = 3.6 + ((x + z) & 1) + (base > 2 ? 2.7 : 0);
+    addBox(w, h, d, MAT.wall, x, base, z);
+    fachadaCasa(x, z, w, d, h, i, base);
     if (i % 4 === 1) {
       const tanque = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.66, 1.15, 12), MAT.proxy);
-      tanque.position.set(x + (i % 2 ? 1.25 : -1.25), h + 0.66, z); tanque.castShadow = true; root.add(tanque);
+      tanque.position.set(x + (i % 2 ? 1.25 : -1.25), base + h + 0.66, z); tanque.castShadow = true; root.add(tanque);
     }
   }
   for (const [x, z] of [[-24, 12], [-16, 18], [5, 18], [27, 14], [29, 1], [16, -19], [4, -22], [-18, -18], [-29, -15]])
-    addBox(1.8, 1.1, 1.4, MAT.concrete, x, 0, z);
-  addBox(0.35, 3, 7, MAT.wall, -24, 0, 10.5);
+    addBox(1.8, 1.1, 1.4, MAT.concrete, x, groundHeightAt(x, z), z);
+  addBox(0.35, 3, 7, MAT.wall, -24, groundHeightAt(-24, 10.5), 10.5);
 
-  // Galpao +1 m. As paredes oeste e sul deixam, respectivamente, uma saida por rampa.
+  // Galpao na cota +1 m. Ele NÃO acompanha a encosta: é laje cortada no morro, e por
+  // isso todas as alturas daqui para baixo continuam medidas a partir de GALPAO.y — o
+  // contrato de spawn/luz/saída do campo-contract-check depende disso ficar parado.
+  // As paredes oeste e sul deixam, respectivamente, uma saida por rampa.
   addBox(12, 0.18, 10, MAT.concrete, 28, 0.82, -21, { collide: false });
   // Piso próprio + iluminação local: o galpão não pode depender do sol atravessar o teto.
   // A revisão em 3:2 media teto, paredão e piso quase no mesmo preto.
@@ -333,8 +413,13 @@ export function buildCampoMorro(scene, T = {}) {
     agua.position.set(x, 4.78, -21); agua.rotation.z = rz; agua.castShadow = true; agua.receiveShadow = true;
     root.add(agua);
   }
-  for (const [x, z] of [[21.85, -25.7], [34.15, -25.7], [34.15, -16.3]])
-    addBox(0.32, 4.35, 0.32, MAT.steelRust, x, 0, z, { collide: false });
+  // Pilares do galpão: com a encosta, cada um nasce na SUA cota e o topo continua no
+  // mesmo lugar — no canto nordeste o morro já chegou perto da laje, e é assim que
+  // um galpão de morro se apoia: quase no chão de um lado, em estaca do outro.
+  for (const [x, z] of [[21.85, -25.7], [34.15, -25.7], [34.15, -16.3]]) {
+    const g = morroBase(x, z);
+    addBox(0.32, Math.max(0.7, 4.35 - g), 0.32, MAT.steelRust, x, g, z, { collide: false });
+  }
   // Marquise e letreiro enfatizam que este volume pertence ao baile e está acima do campo.
   addBox(8.4, 0.18, 1.35, MAT.steelRust, 28, 3.55, -15.55, { collide: false });
   addBox(6.8, 0.85, 0.08, MAT.baile, 28, 2.35, -15.29, { collide: false, cast: false });
@@ -372,7 +457,7 @@ export function buildCampoMorro(scene, T = {}) {
     [-31, -26], [-21, -25], [-16, -26], [-12, -18], [-7, -26], [-3, -18],
     [3, -26], [9, -18], [-31, 26], [-16, 18], [3, 26], [12, 18], [16, 26],
     [22, 26], [28, 26], [32, 17], [8, -11], [8, 11],
-  ]) addBox(1.5, 1.05, 1.3, MAT.concrete, x, 0, z);
+  ]) addBox(1.5, 1.05, 1.3, MAT.concrete, x, groundHeightAt(x, z), z);
 
   // Cinco bocas estreitas e distintas. Os montantes assentam nos taludes já sólidos; as
   // vergas ficam acima do peito, portanto a seção navegável e os AABBs continuam intactos.
@@ -398,25 +483,59 @@ export function buildCampoMorro(scene, T = {}) {
   addBox(5.7, 0.3, 0.58, MAT.roof, 12.5, 2.62, -FIELD_Z, { collide: false });
   addBox(2.8, 0.64, 0.06, MAT.baile, 12.5, 2.86, -FIELD_Z + 0.26, { collide: false, cast: false });
 
+  /* GUARDA DA BORDA + fachadas do anel. A muralha era UMA caixa de 60 m com base em
+     y = 0; sobre a encosta ela ficaria enterrada 4 m no flanco oeste, ou seja, sem
+     guarda nenhuma (é exatamente o que a MAP6 caça). Agora ela é seccionada junto com
+     as fachadas: cada trecho assenta na cota MÍNIMA do seu pedaço e tem altura
+     suficiente para sobrar 3 m acima da cota MÁXIMA, e os trechos se sobrepõem, então
+     não existe fresta entre eles. */
+  const guardaBorda = (x, z, w, d) => {
+    let min = Infinity, max = -Infinity;
+    for (let t = -0.5; t <= 0.5001; t += 0.02) {
+      const g = morroBase(x + (d > w ? 0 : w * t), z + (d > w ? d * t : 0));
+      min = Math.min(min, g); max = Math.max(max, g);
+    }
+    addBox(w, (max - min) + 3, d, MAT.muralha, x, min, z);
+  };
   for (const sx of [-HALF_X, HALF_X]) {
-    addBox(0.5, 3, HALF_Z * 2, MAT.concrete, sx, 0, 0);
+    guardaBorda(sx, 0, 0.5, HALF_Z * 2);
     for (let z = -26; z <= 26; z += 6.5) {
-      const i = Math.round((z + 26) / 6.5), h = 3.2 + (i % 3) * 0.72;
-      addBox(0.12, h, 5.9, i % 2 ? MAT.wall : MAT.baile, sx - Math.sign(sx) * 0.31, 0, z, { collide: false });
-      addBox(0.38, 0.1, 6.15, MAT.roof, sx - Math.sign(sx) * 0.25, h, z, { collide: false });
-      addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, 1.25 + (i % 2) * 0.42, z - 1.25, { collide: false, cast: false });
-      addBox(0.05, 1.92, 0.82, MAT.door, sx - Math.sign(sx) * 0.39, 0.02, z + 1.45, { collide: false, cast: false });
+      const i = Math.round((z + 26) / 6.5), base = morroBase(sx, z), h = 3.2 + (i % 3) * 0.72;
+      addBox(0.12, h, 5.9, i % 2 ? MAT.wall : MAT.baile, sx - Math.sign(sx) * 0.31, base, z, { collide: false });
+      addBox(0.38, 0.1, 6.15, MAT.roof, sx - Math.sign(sx) * 0.25, base + h, z, { collide: false });
+      addBox(0.05, 0.82, 1.15, MAT.glass, sx - Math.sign(sx) * 0.39, base + 1.25 + (i % 2) * 0.42, z - 1.25, { collide: false, cast: false });
+      addBox(0.05, 1.92, 0.82, MAT.door, sx - Math.sign(sx) * 0.39, base + 0.02, z + 1.45, { collide: false, cast: false });
     }
   }
   for (const sz of [-HALF_Z, HALF_Z]) {
-    addBox(HALF_X * 2, 3, 0.5, MAT.concrete, 0, 0, sz);
+    guardaBorda(0, sz, HALF_X * 2, 0.5);
     for (let x = -31.5; x <= 31.5; x += 7) {
-      const i = Math.round((x + 31.5) / 7), h = 3.0 + ((i + (sz > 0 ? 1 : 0)) % 4) * 0.55;
-      addBox(6.4, h, 0.12, i % 3 ? MAT.wall : MAT.concrete, x, 0, sz - Math.sign(sz) * 0.31, { collide: false });
-      addBox(6.65, 0.1, 0.38, MAT.roof, x, h, sz - Math.sign(sz) * 0.25, { collide: false });
-      addBox(1.08, 0.78, 0.05, MAT.glass, x - 1.4, 1.25 + (i % 2) * 0.38, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
-      addBox(0.84, 1.92, 0.05, MAT.door, x + 1.45, 0.02, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
+      const i = Math.round((x + 31.5) / 7), base = morroBase(x, sz), h = 3.0 + ((i + (sz > 0 ? 1 : 0)) % 4) * 0.55;
+      addBox(6.4, h, 0.12, i % 3 ? MAT.wall : MAT.concrete, x, base, sz - Math.sign(sz) * 0.31, { collide: false });
+      addBox(6.65, 0.1, 0.38, MAT.roof, x, base + h, sz - Math.sign(sz) * 0.25, { collide: false });
+      addBox(1.08, 0.78, 0.05, MAT.glass, x - 1.4, base + 1.25 + (i % 2) * 0.38, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
+      addBox(0.84, 1.92, 0.05, MAT.door, x + 1.45, base + 0.02, sz - Math.sign(sz) * 0.39, { collide: false, cast: false });
     }
+  }
+
+  /* SILHUETA DO MORRO. Medida antes: topo 8,33 m, contra 12,22 m do fy_escadao — o
+     mapa não tinha nada acima da linha do olho e por isso lia como campo em galpão.
+     Estas lajes empilhadas ficam ALÉM da muralha (fora de `bounds`), no flanco alto:
+     não tocam navegação nem colisão, custam pouco desenho e são o que se vê de dentro
+     do campo — a favela continuando morro acima depois do muro. */
+  for (const [x, z, andares] of [
+    [-40, -6, 3], [-40.5, 8, 2], [-39.5, -20, 3], [-44, -2, 3], [-44.5, 14, 2],
+    [-43, -26, 4], [-38, 22, 2], [-48, 6, 4], [-47, -14, 4], [-33, -35, 3], [-19, -36, 2], [-6, -37, 3],
+  ]) {
+    let y = morroBase(x, z);
+    for (let a = 0; a < andares; a++) {
+      const w = 6.2 - a * 0.9, d = 5.4 - a * 0.8, alt = 3.3 - a * 0.25;
+      const laje = addBox(w, alt, d, MAT.morroFundo,
+        x + (a % 2 ? 0.7 : -0.6), y, z + (a % 2 ? -0.5 : 0.6), { collide: false, cast: false });
+      laje.receiveShadow = false;
+      y += alt;
+    }
+    addBox(1.5, 0.16, 1.5, MAT.roof, x, y, z, { collide: false, cast: false });
   }
 
   const blocked = (x, z, inf = 0.38, y = groundHeightAt(x, z)) => {
@@ -444,10 +563,16 @@ export function buildCampoMorro(scene, T = {}) {
   linha(-27, -17, 18, -17, 2); linha(-27, 17, 27, 17, 2);
   linha(-27, -17, -27, 17, 2); linha(27, -10, 27, 17, 2);
 
+  /* 8 amostras num salto de até 4,6 m davam 0,575 m entre pontos: numa ladeira de 35%
+     isso vira 0,20 m de degrau aparente e o limite de 0,28 m ficava a um fio de recusar
+     rotas perfeitamente andáveis. 16 amostras (0,29 m entre pontos) medem RESSALTO, que
+     é o que o teste sempre quis dizer, e não a inclinação — o desnível seco de uma laje
+     continua reprovando, e o `blocked` de cada amostra fica mais rigoroso, não menos. */
+  const SEG_AMOSTRAS = 16;
   const segClear = (a, b) => {
     let h = groundHeightAt(a.x, a.z);
-    for (let i = 1; i <= 8; i++) {
-      const t = i / 8, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+    for (let i = 1; i <= SEG_AMOSTRAS; i++) {
+      const t = i / SEG_AMOSTRAS, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
       const nh = groundHeightAt(x, z);
       if (Math.abs(nh - h) > 0.28 || blocked(x, z, 0.28, nh)) return false;
       h = nh;

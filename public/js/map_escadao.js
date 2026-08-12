@@ -50,9 +50,18 @@ const BW = { x0: -15, x1: -9 };   // beco oeste
 const BE = { x0: 9,   x1: 15 };   // beco leste
 // escada do beco: sobe de y=0 a y=RISE
 const B_STAIR = { z0: 11 - RUN, z1: 11 };
+// Laje de chegada da escada do beco (a "boca" de cima do lance).
+const CHEGADA_D = 2.2;
+// PLATAFORMA DE CONEXÃO beco -> patamar 1. Ia só de P1.z0 a P1.z1, e a laje de chegada do beco
+// morria 1,2 m antes dela: sobrava uma fresta de 0,62 m em x=±9 — menos que o diâmetro do corpo
+// (raio 0,42 m). Resultado medido pela régua escadao-rota: a escada do beco leste terminava
+// numa laje de 7 m² sem saída e a própria plataforma de conexão (com a bandeira PATAMAR 1 em
+// cima) era uma ilha inalcançável. Agora a conexão desce até a testa da chegada do beco, o que
+// abre uma frente de 2,2 m entre as duas lajes na mesma cota (y = RISE).
+const CONEX = { z0: B_STAIR.z0 - CHEGADA_D, z1: P1.z1 };
 // Continuação física do flanco oeste: P1 -> P2 -> mirante, 12 m afastada do eixo central.
 const AUX_X = -12, AUX_W = 3;
-const AUX_F2 = { z0: B_STAIR.z0 - 2.2 - RUN, z1: B_STAIR.z0 - 2.2 };
+const AUX_F2 = { z0: CONEX.z0 - RUN, z1: CONEX.z0 };
 const AUX_P2 = { z0: P2.z0, z1: AUX_F2.z0 };
 const AUX_F3 = { z0: TOP_Z, z1: AUX_P2.z0 };
 
@@ -336,12 +345,24 @@ export function buildEscadao(scene, T) {
   buildLanding(P2.z0, P2.z1, RISE * 2);
   buildFlight(F3, RISE * 2, MAT_AZ);
 
-  // muros laterais dos patamares (proteção + bloqueio de visão)
+  // Muros laterais dos patamares (proteção + bloqueio de visão).
+  // O muro do PATAMAR 1 corria os 4 m inteiros e era ele que selava o patamar das duas
+  // plataformas de conexão — a escada do beco leste morria numa laje de 7 m² e a bandeira
+  // PATAMAR 1 ficava numa ilha. Agora ele é partido em dois trechos com um VÃO de 2 m no
+  // meio: a rota beco → conexão → patamar 1 que o mapa sempre declarou passa a existir de
+  // verdade. O muro do PATAMAR 2 continua inteiro: ali fora não há laje nenhuma, é queda
+  // de 4 m para a rua, e o muro é a guarda.
+  const VAO_P1 = 2.0;
   for (const [pz0, pz1, py] of [[P1.z0, P1.z1, RISE], [P2.z0, P2.z1, RISE * 2]]) {
+    const trechos = py === RISE
+      ? [[pz0, (pz0 + pz1) / 2 - VAO_P1 / 2], [(pz0 + pz1) / 2 + VAO_P1 / 2, pz1]]
+      : [[pz0, pz1]];
     for (const sx of [X0 - 0.65, X1 + 0.65]) {
-      addBox(0.3, 1.5, pz1 - pz0, MAT_AZ_LONG, sx, py, (pz0 + pz1) / 2);
-      addBox(0.38, 0.06, pz1 - pz0 + 0.08, AZ_CAPS[((sx > 0 ? 1 : 3) + (py > RISE ? 0 : 1)) % AZ_CAPS.length],
-        sx, py + 1.5, (pz0 + pz1) / 2, { collide: false, cast: false, skirt: false });
+      for (const [tz0, tz1] of trechos) {
+        addBox(0.3, 1.5, tz1 - tz0, MAT_AZ_LONG, sx, py, (tz0 + tz1) / 2);
+        addBox(0.38, 0.06, tz1 - tz0 + 0.08, AZ_CAPS[((sx > 0 ? 1 : 3) + (py > RISE ? 0 : 1)) % AZ_CAPS.length],
+          sx, py + 1.5, (tz0 + tz1) / 2, { collide: false, cast: false, skirt: false });
+      }
     }
   }
 
@@ -368,7 +389,7 @@ export function buildEscadao(scene, T) {
     // escada do beco
     buildBecoStair(cx, B_STAIR.z1, 0, RISE);
     // Patamar de chegada: a escada termina numa laje legível antes de virar para o centro.
-    const chegadaD = 2.2, chegadaZ = B_STAIR.z0 - chegadaD / 2;
+    const chegadaD = CHEGADA_D, chegadaZ = B_STAIR.z0 - chegadaD / 2;
     addFloor(bx1 - bx0, chegadaD, cx, chegadaZ, MAT.concrete, RISE + 0.01);
     addBox(bx1 - bx0, 0.12, chegadaD, MAT.concreteDark, cx, RISE - 0.12, chegadaZ);
     if (dir > 0) {
@@ -380,11 +401,15 @@ export function buildEscadao(scene, T) {
     // plataforma de conexão beco → patamar 1 (y=RISE)
     const inner = dir > 0 ? bx1 : bx0, alvo = dir > 0 ? X0 : X1;
     const pw = Math.abs(alvo - inner), pcx = (alvo + inner) / 2;
-    addFloor(pw, 4.5, pcx, (P1.z0 + P1.z1) / 2, MAT.concrete, RISE + 0.01);
-    addBox(pw, 0.12, 4.5, lam({ color: 0x909088 }), pcx, RISE - 0.12, (P1.z0 + P1.z1) / 2);
-    // As duas bordas de queda ficam fechadas; o acesso continua aberto pela chegada do beco
-    // e pela boca do patamar central.
-    for (const z of [(P1.z0 + P1.z1) / 2 - 2.25, (P1.z0 + P1.z1) / 2 + 2.25])
+    // A laje agora vai de CONEX.z0 (testa da chegada do beco) a CONEX.z1 (fundo do patamar 1):
+    // encosta na laje do beco em toda a frente de 2,2 m, em vez de parar 1,2 m antes dela.
+    const pd = CONEX.z1 - CONEX.z0, pcz = (CONEX.z0 + CONEX.z1) / 2;
+    addFloor(pw, pd, pcx, pcz, MAT.concrete, RISE + 0.01);
+    addBox(pw, 0.12, pd, lam({ color: 0x909088 }), pcx, RISE - 0.12, pcz);
+    // As duas bordas de queda (2,04 m) ficam fechadas por mureta — MAP6 exige guarda em toda
+    // borda alcançável com queda ≥ 2 m. O acesso continua aberto pela chegada do beco (x=±9)
+    // e pelo vão da mureta do patamar central.
+    for (const z of [CONEX.z0 + 0.11, CONEX.z1 - 0.11])
       addBox(pw, 1.05, 0.22, MAT_AZ_LONG, pcx, RISE, z);
     addBox(0.42, 0.12, 2.2, AZ_CAPS[dir > 0 ? 0 : 2], inner, RISE + 0.04, chegadaZ, { collide: false, cast: false, skirt: false });
     // muros das paredes do beco (casas de um e outro lado)
@@ -503,6 +528,41 @@ export function buildEscadao(scene, T) {
   // BLOQUEIO CENTRAL: prédio entre a escada e o spawn (corta a linha de visão do escadão)
   casa(-5, 22, 4, 5, 4, 1);
   casa(5, 22, 4, 5, 4, 0);
+
+  /* ---------- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E) ----------
+     O dono: "dá pra ver o andar do respawn de cima". Medido pela régua escadao-rota:
+     205 pontos altos liam o spawn E, 134 deles no mirante inteiro. A causa é simples e não
+     tinha nada de exótico: o escadão é uma calha aberta que desce 6,12 m em linha reta até a
+     rua, e o parapeito do mirante tem 1,20 m — abaixo dos 1,62 m do olho. Quem está em cima
+     olha POR CIMA da própria mureta e enxerga a rua inteira lá embaixo.
+
+     Não dá pra fechar isso na origem sem emparedar o mirante, e mover o spawn era exatamente
+     o erro do BUG-32 (esconde o defeito e ele volta no próximo mapa com plataforma). O que
+     resolve é atravessar a calha: todas essas visadas passam por z ≈ 15,5 numa faixa estreita
+     de altura (≈ 2,4 m a 3,7 m), porque convergem nos 4 slots do spawn, que ocupam menos de
+     5 m em x. Uma laje sobre pilotis nessa cota corta a faixa inteira e deixa a passagem a pé
+     livre por baixo — que é como uma favela resolve isso na vida real (casa sobre a rua).
+
+     A laje NÃO é piso: `groundHeightAt` não a conhece, então ninguém sobe nela e ela não vira
+     plataforma sem saída (a cláusula 1 da régua checaria). Ela é massa e occluder. */
+  {
+    const LAJE_Z = 15.5, LAJE_D = 2.6, LAJE_W = 17.2, LAJE_Y = 2.35, LAJE_H = 0.40;
+    const marca = (m) => { m.userData.escadaoAbrigo = true; return m; };
+    // pilotis: 4 pilares deixam 7,2 m de vão central e 4,1 m de cada lado — a rua continua
+    // larga o bastante para o spawn sair sem funil.
+    for (const px of [-8.2, -3.6, 3.6, 8.2])
+      marca(addBox(0.5, LAJE_Y, 0.5, MAT.concreteDark, px, 0, LAJE_Z));
+    marca(addBox(LAJE_W, LAJE_H, LAJE_D, MAT.concrete, 0, LAJE_Y, LAJE_Z));
+    // Mureta nas duas testas: é ela que pega as visadas mais altas (as de quem está na
+    // beirada do mirante, que chegam aqui a ~3,7 m).
+    for (const dz of [-1, 1])
+      marca(addBox(LAJE_W, 1.25, 0.25, PAREDES[1], 0, LAJE_Y + LAJE_H, LAJE_Z + dz * (LAJE_D / 2 - 0.125)));
+    marca(addBox(LAJE_W + 0.4, 0.10, LAJE_D + 0.3, MAT_ZINCO, 0, LAJE_Y + LAJE_H + 1.25, LAJE_Z));
+    // Fachada rasa nas duas testas: janelas impedem que a mureta leia como caixa lisa.
+    for (const dz of [-1, 1]) for (const jx of [-6.2, -1.4, 1.4, 6.2])
+      addBox(0.9, 0.7, 0.06, MAT_VIDRO, jx, LAJE_Y + LAJE_H + 0.3,
+        LAJE_Z + dz * (LAJE_D / 2 + 0.04), { collide: false, cast: false, skirt: false });
+  }
   // mesas do bar
   for (const [mx, mz] of [[-9, 29], [-7, 30]]) propAt('mesa_guardasol', mx, mz, 2.3, 1.2, 1.2, lam({ color: 0xcca060 }));
   // carros
@@ -616,10 +676,12 @@ export function buildEscadao(scene, T) {
     }
     if (z >= P2.z0 && z <= P2.z1 && x >= X0 - 0.5 && x <= X1 + 0.5) return RISE * 2;
     if (inBeco(x) && z >= B_STAIR.z0 && z <= B_STAIR.z1) return becoRampHeight(z);
-    if (inBeco(x) && z >= B_STAIR.z0 - 2.2 && z < B_STAIR.z0) return RISE;
+    if (inBeco(x) && z >= CONEX.z0 && z < B_STAIR.z0) return RISE;
+    // A conexão vai até a testa da chegada do beco (CONEX.z0), não só até P1.z0: é isso que
+    // dá frente comum de 2,2 m entre a laje do beco e a plataforma, na mesma cota.
+    if (inConexao(x) && z >= CONEX.z0 && z <= CONEX.z1) return RISE;
     if (z >= P1.z0 && z <= P1.z1) {
-      // patamar 1: a própria laje OU a plataforma de conexão do beco
-      if (inConexao(x) || (x >= X0 && x <= X1)) return RISE;
+      if (x >= X0 && x <= X1) return RISE;   // patamar 1 propriamente dito
       return 0;
     }
     if (x >= X0 && x <= X1) {
@@ -659,12 +721,21 @@ export function buildEscadao(scene, T) {
   // patamares: cruzeta de um lado ao outro
   linha(-2.5, P1.z1, 2.5, P1.z0, 1.2);
   linha(-2.5, P2.z1, 2.5, P2.z0, 1.2);
-  // beco oeste: escada própria + conexão ao patamar 1
-  linha(-12, 14, -12, B_STAIR.z0, 1.0);   // escada do beco
-  linha(-12, B_STAIR.z0, X0, (P1.z0 + P1.z1) / 2, 1.2);   // conexão beco → patamar 1
-  // beco leste
-  linha(12, 14, 12, B_STAIR.z0, 1.0);
-  linha(12, B_STAIR.z0, X1, (P1.z0 + P1.z1) / 2, 1.2);
+  // becos: escada própria + conexão ao patamar 1.
+  // A reta antiga beco → patamar 1 cortava o muro do beco (x=±9) e o muro do patamar, e por
+  // isso `blocked` derrubava os nós do meio: os bots nunca tiveram essa rota. Agora ela é uma
+  // cotovelada que segue a geometria real — desce a laje de chegada, atravessa a frente comum
+  // em z≈6,2 (única cota onde as duas lajes se encostam) e entra pelo vão da mureta do patamar.
+  const CONEX_Z = CONEX.z0 + 0.9, P1_MEIO = (P1.z0 + P1.z1) / 2;
+  const rotaBeco = (bx, mx, alvo) => {
+    linha(bx, 14, bx, B_STAIR.z0, 1.0);          // escada do beco
+    linha(bx, B_STAIR.z0, bx, CONEX_Z, 0.8);     // laje de chegada
+    linha(bx, CONEX_Z, mx, CONEX_Z, 1.2);        // frente comum (passa por x=±9)
+    linha(mx, CONEX_Z, mx, P1_MEIO, 1.2);        // plataforma de conexão
+    linha(mx, P1_MEIO, alvo, P1_MEIO, 1.2);      // vão da mureta → patamar 1
+  };
+  rotaBeco(-12, -6, X0);
+  rotaBeco(12, 6, X1);   // beco leste
   // base
   for (const bz of [20, 26, 32, 37]) linha(-15, bz, 15, bz, 3.0);
   // topo
