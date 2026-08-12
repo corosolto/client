@@ -141,6 +141,23 @@ for (const id of alvos) {
        6× mais longe, mandrake fica em ruins/1e4 17,9 contra 24,9 do limpo — MELHOR. */
     if (mut === 'ik' && m.ctrl.ikL) m.ctrl.ikL.fore.set(-m.ctrl.ikL.fore.x, m.ctrl.ikL.fore.y - 0.9, m.ctrl.ikL.fore.z - 1.4);
     if (mut === 'semik') m.ctrl.ikL = null;   // DIAGNÓSTICO (não é mutação): quanto do balão é do CCD?
+    /* ABLAÇÕES — DIAGNÓSTICO, não mutação. Elas MELHORAM o número de propósito, para
+       responder "quanto do balão é CÓDIGO e quanto é ASSET". Por isso não passam pelo
+       teto congelado (que só vale para mutante que PIORA). Cada uma devolve um pedaço da
+       pose de runtime para a pose de rest, copiando a rotação local do gêmeo de referência
+       — que é o MESMO skeletonClone do mesmo template, então a cópia é exata.
+         semcurl  = desfaz o `rotation.x += curl` dos ossos de dedo (glbchars.js:753-766)
+         semtudo  = semik + semcurl, ou seja, TODO o código de pose de runtime desligado.
+                    O que sobrar aqui é clipe + skin, e clipe+skin só regeração/re-rig resolve. */
+    if (mut === 'semtudo') m.ctrl.ikL = null;
+    /* semtrans — A ABLAÇÃO QUE IMPORTA. Os clipes são COMPARTILHADOS e a trilha de
+       POSIÇÃO do Hips está autorada em CENTÍMETROS (os rigs bons têm 170 unidades de
+       altura). Seis personagens foram exportados em METROS (1,70 de altura), então o
+       mesmo balanço de quadril de ~3 cm vira ~3 METROS neles. Medido: o Hips desloca
+       1,74x a altura do próprio corpo nos 6 piores contra 0,018x nos elogiados.
+       Esta ablação devolve a POSIÇÃO de cada osso à de rest (a rotação fica intocada) e
+       responde: quanto do balão é essa translação em unidade errada? */
+    if (mut === 'semtrans') m.ctrl.semtrans = true;
     if (mut === 'curl') m.group.traverse((o) => { if (o.isBone && /^Curl_/.test(o.name)) o.rotation.x += 2.2; });
     /* mut=skin — devolve EXATAMENTE o off-by-one que o 88144c4 consertou: a carne do
        antebraço volta a obedecer ao punho. Se a régua não ficar vermelha aqui, ela não
@@ -174,10 +191,48 @@ for (const id of alvos) {
     const cenaRef = new THREE.Scene(); cenaRef.add(ref.group); cenaRef.updateMatrixWorld(true);
     const refMeshes = []; ref.group.traverse((o) => { if (o.isSkinnedMesh) refMeshes.push(o); });
 
+    // Ossos do gêmeo de rest, por nome: é a régua de "quanto este osso girou de verdade".
+    const ossoRef = new Map();
+    ref.group.traverse((o) => { if (o.isBone && !ossoRef.has(o.name)) ossoRef.set(o.name, o); });
+
+    /* ABLAÇÃO semcurl/semtudo: devolve os ossos de dedo à rotação de rest.
+       PROVA DE QUE MORDE: conta quantos ossos reverteu e de quantos graus. Ablação que
+       não mexe em nada "exonera o código" de graça — foi exatamente o que aconteceu na
+       primeira tentativa, quando o contador estava na SEGUNDA passada (depois desta já
+       ter zerado tudo) e reportava 0 ossos num personagem com curl de 0,35 rad aplicado.
+       Se vier [0, 0] num rig que TEM Curl_*, o resultado não exonera nada: a ablação não rodou. */
+    let semcurlDesfez = null;
+    if (mut === 'semcurl' || mut === 'semtudo') {
+      let n = 0, maxG = 0;
+      m.group.traverse((o) => {
+        if (!o.isBone || !/^Curl_/.test(o.name) || !ossoRef.has(o.name)) return;
+        const alvo = ossoRef.get(o.name).quaternion;
+        const g = 2 * Math.acos(Math.min(1, Math.abs(o.quaternion.dot(alvo)))) * 180 / Math.PI;
+        if (g > 0.01) { n++; maxG = Math.max(maxG, g); }
+        o.quaternion.copy(alvo);
+      });
+      semcurlDesfez = [n, +maxG.toFixed(1)];
+    }
+
     // MESMO settle do loop do preview (main.js:1527: ctrl.update(dt, 0, false, 0)).
     const scene = new THREE.Scene();
     scene.add(m.group);
-    for (let i = 0; i < 60; i++) m.ctrl.update(1 / 60, 0, false, 0);
+    for (let i = 0; i < 60; i++) {
+      m.ctrl.update(1 / 60, 0, false, 0);
+      // POSIÇÃO de volta pra rest, todo quadro (o mixer reescreve a cada update).
+      // Só a translação: a rotação do clipe continua valendo, senão isto viraria
+      // "medir a pose de bind" e provaria nada.
+      if (mut === 'semtrans') {
+        m.group.traverse((o) => { if (o.isBone && ossoRef.has(o.name)) o.position.copy(ossoRef.get(o.name).position); });
+      }
+    }
+    if (mut === 'semcurl' || mut === 'semtudo') {
+      // o mixer NÃO tem trilha para Curl_*, mas reafirmamos após o settle por segurança.
+      m.group.traverse((o) => {
+        if (o.isBone && /^Curl_/.test(o.name) && ossoRef.has(o.name)) o.quaternion.copy(ossoRef.get(o.name).quaternion);
+      });
+      m.group.traverse((o) => { if (o.isSkinnedMesh) o.skeleton.update(); });
+    }
     scene.updateMatrixWorld(true);
 
     const meshes = [];
@@ -257,7 +312,24 @@ for (const id of alvos) {
       pct25: +((100 * acima(0.25)) / rs.length).toFixed(2),
       ruins1e4: +((1e4 * acima(1.0)) / rs.length).toFixed(1),
       ruinsPorOsso: Object.entries(boneHits).sort((a, b) => b[1] - a[1]).slice(0, 8),
+      semcurlDesfez,
     };
+    /* QUANTO O OSSO GIROU DE VERDADE — o número que separa CÓDIGO de ASSET.
+       Um osso que girou 8° e é dono de 649 arestas rasgadas não tem problema de pose:
+       tem problema de PESO (a carne dele não é dele). Um osso que girou 90° tem problema
+       de pose, e pose é código/clipe. Sem esta coluna, "Head domina" não decide nada. */
+    {
+      const osso = new Map();
+      m.group.traverse((o) => { if (o.isBone && !osso.has(o.name)) osso.set(o.name, o); });
+      result.girouGraus = result.ruinsPorOsso.map(([nome]) => {
+        const a = osso.get(nome), b = ossoRef.get(nome);
+        if (!a || !b) return [nome, null];
+        const loc = +(2 * Math.acos(Math.min(1, Math.abs(a.quaternion.dot(b.quaternion)))) * 180 / Math.PI).toFixed(1);
+        const qa = a.getWorldQuaternion(new THREE.Quaternion()), qb = b.getWorldQuaternion(new THREE.Quaternion());
+        const mun = +(2 * Math.acos(Math.min(1, Math.abs(qa.dot(qb)))) * 180 / Math.PI).toFixed(1);
+        return [nome, loc, mun];
+      });
+    }
     if (diagnostico) result.ruinsArestas = badEdges.sort((a, b) => b.ratio - a.ratio).slice(0, 256);
     if (foto) {
       document.body.replaceChildren();
@@ -322,7 +394,8 @@ let teto = {
    TAMBÉM as referências, o teto sobe junto e a régua continua verde enquanto o jogo
    inteiro derrete. Com `--mutate` o teto vem da última execução limpa (o JSON), então
    estragar de propósito tem que ficar vermelho — inclusive nas referências. */
-if (MUT && MUT !== 'semik') {
+const ABLACOES = new Set(['semik', 'semcurl', 'semtudo', 'semtrans']);   // diagnósticos que MELHORAM: teto vivo
+if (MUT && !ABLACOES.has(MUT)) {
   const prev = JSON.parse(fs.readFileSync('tools/eval/select_inflate.json', 'utf8'));
   if (prev.mutante) { console.error('ERRO: select_inflate.json é de uma execução MUTANTE. Rode limpo primeiro.'); process.exit(2); }
   teto = prev.teto;
@@ -335,7 +408,8 @@ if (SO_REF || refs.length) {
 }
 if (DIAG) {
   for (const r of out.filter((x) => !x.erro)) {
-    console.log('   diag ' + r.id + ': ' + (r.ruinsPorOsso || []).map(([bone, n]) => `${bone}=${n}`).join(', '));
+    const girou = new Map((r.girouGraus || []).map(([nome, loc, mun]) => [nome, `${loc}°/${mun}°`]));
+    console.log('   diag ' + r.id + ': ' + (r.ruinsPorOsso || []).map(([bone, n]) => `${bone}=${n}(${girou.get(bone) ?? '?'})`).join(', '));
   }
 }
 if (SO_REF) process.exit(0);
@@ -358,6 +432,10 @@ for (const r of out) {
     String(r.max).padStart(8), String(r.pct25).padStart(6), String(r.ruins1e4).padStart(10));
 }
 console.log(`\nREPROVADOS: ${reprovados}/${out.length}`);
+if (out.some((r) => r.semcurlDesfez)) {
+  console.log('ablação semcurl (ossos revertidos, maior giro desfeito):');
+  for (const r of out) if (r.semcurlDesfez) console.log('   ' + r.id.padEnd(14) + r.semcurlDesfez[0] + ' ossos, máx ' + r.semcurlDesfez[1] + '°');
+}
 // execução mutante NÃO sobrescreve o baseline: senão o teto congelado vira o do mutante
 if (!MUT) {
   fs.writeFileSync('tools/eval/select_inflate.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, refs: REFS, folga: FOLGA, teto, personagens: out }, null, 1));

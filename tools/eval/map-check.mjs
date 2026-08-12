@@ -48,6 +48,10 @@ const MUTANTE_SUPERFICIE_SOLIDA = process.argv.includes('--mutante=superficie-so
 const MUTANTE_SEM_GUARDA_ANDAR = process.argv.includes('--mutante=sem-guarda-andar');
 const MUTANTE_DESVIO_ESCADA = process.argv.includes('--mutante=desvio-escada');
 const MUTANTE_ROTA_UNICA = process.argv.includes('--mutante=rota-unica');
+/* MUTANTE penetracao-injetada: prova que a sonda do MAP1 mede MAGNITUDE, não só presença,
+   e que `nonSolidSurface` não virou passe livre — o bloco injetado NÃO leva a marca. */
+const MUTANTE_PENETRACAO = process.argv.includes('--mutante=penetracao-injetada');
+const PEN_INJETADA = 0.90;   // acima do degrau (0,30) e abaixo do peito (1,40): "dentro", não "submerso"
 const SEED = 12345;
 
 /* ---- constantes de corpo/andabilidade: as MESMAS do pickup-check.mjs, e pelo mesmo
@@ -170,6 +174,21 @@ for (const mapId of MAP_IDS) {
   g.scene.updateMatrixWorld(true);
   W.root.updateMatrixWorld(true);
   const gh = typeof W.groundHeightAt === 'function' ? W.groundHeightAt : () => 0;
+  /* MUTANTE penetracao-injetada — a régua tem que DISTINGUIR "penetração de 1,384 m" de
+     zero, senão ela não presta. Injeta no 1º spawn de cada time o caso do dono em
+     laboratório: um bloco VISÍVEL, SEM colisor (o pedestal do `collide:false`) e SEM a
+     marca `nonSolidSurface`, com o topo exatamente a PEN_INJETADA acima do chão local.
+     Se o MAP1 não devolver essa penetração em TODO mapa, a sonda não mede magnitude. */
+  if (MUTANTE_PENETRACAO) {
+    for (const ss of Object.values(W.spawns || {})) {
+      const s = ss && ss[0]; if (!s) continue;
+      const cubo = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6),
+        new THREE.MeshBasicMaterial({ color: 0xff00ff }));
+      cubo.position.set(s.x, gh(s.x, s.z) + PEN_INJETADA - 0.3, s.z);
+      W.root.add(cubo);
+    }
+    W.root.updateMatrixWorld(true);
+  }
   const B = W.bounds;
   const ray = new THREE.Raycaster();
   ray.camera = g.camera;   // sprites (fumaça/ícone) precisam de câmera pra raycast — ver filtro abaixo
@@ -796,6 +815,28 @@ if (rotasInsuficientes.length > 0) {
 }
 if (!MUTANTE_SEM_GUARDA_ANDAR && bordasAltasAbertas > 0) {
   console.error(`MAP6 FALHA: ${bordasAltasAbertas} borda(s) alcançável(is) com queda ≥ ${QUEDA_ANDAR} m sem guarda; o jogador pode cair sob uma laje.`);
+  process.exitCode = 1;
+}
+/* MAP1 SÓ IMPRIMIA. Até 12/08/2026 o critério que o dono relatou primeiro ("os jogadores
+   estão SUBMERSOS EMBAIXO DA ESTÁTUA") era o único sem cláusula de reprovação: `map-check`
+   saía 0 com 5 pontos de corpo dentro de sólido no fy_mansao. Régua que não morde não é
+   régua. O teto é ZERO e não precisa de lista de dívida: medido em 12/08, os outros NOVE
+   mapas já estão em zero — o fy_mansao era o único fora. */
+const dentroTotal = mapas.reduce((a, m) => a + (m.corpoDentroDeSolido || 0), 0);
+if (!MUTANTE_SUPERFICIE_SOLIDA && !MUTANTE_PENETRACAO && dentroTotal > 0) {
+  const quais = mapas.filter((m) => (m.corpoDentroDeSolido || 0) > 0)
+    .map((m) => `${m.map}(${m.corpoDentroDeSolido} ponto(s), pior ${m.piorPenetracao} m)`);
+  console.error(`MAP1 FALHA: ${dentroTotal} ponto(s) andável(is) com o corpo dentro de geometria visível: ${quais.join(', ')}`);
+  process.exitCode = 1;
+}
+if (MUTANTE_PENETRACAO) {
+  const cegos = mapas.filter((m) => !(m.dentroTodos || []).some((d) =>
+    String(d.tipo).startsWith('spawn') && Math.abs(d.pen - PEN_INJETADA) <= 0.02));
+  if (cegos.length === 0) {
+    console.error(`MUTANTE penetracao-injetada mordido: os ${mapas.length} mapas acusaram a penetração de ${PEN_INJETADA} m no spawn`);
+  } else {
+    console.error(`MUTANTE penetracao-injetada SOBREVIVEU em ${cegos.length} mapa(s): ${cegos.map((m) => `${m.map}(pior ${m.piorPenetracao})`).join(', ')}`);
+  }
   process.exitCode = 1;
 }
 if (MUTANTE_SUPERFICIE_SOLIDA) {

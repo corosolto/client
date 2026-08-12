@@ -20,6 +20,10 @@ com código 1 em falha crítica.
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
 | `vm-kick-sim.mjs` | Coice do viewmodel: near plane + pitch em rajada. Prova que a coronha não atravessa a lente no pico. | `vm_kick_sim.json` |
 | `botsim.mjs` | Navegação dos bots: 60 s × 5 mapas com sementes fixas. Roda a classe `Game` de verdade com os mapas de verdade. | `npm run eval:bots` |
+| `texel-check.mjs` | **Densidade de texel (px/m) dos 10 mapas**, mediana ponderada por ÁREA, contra a banda 64–512 do BAR §1.8 e a dispersão de 1,5× da BAR-CONSISTENCIA §3.1. Sobe os mapas reais e resolve no disco a textura que o `TextureLoader` não carrega em node. TEXEL6 é a cláusula irmã: vigia se o conserto de densidade borrou textura marcada `ClampToEdge`. | `node tools/eval/texel-check.mjs [--json]` → `texel_check.json` |
+| `texel-tetos.mjs` | Os limiares de densidade em UM lugar (BAR §1.8 / §3.1). Importado pelo check; `TEXEL_ALVO` é conferido contra `ALVO_PXM` do `public/js/vao.js` em tempo de execução, então os dois não podem divergir calados. | — |
+| `texel-mutantes.mjs` | O teste do teste: injeta de volta cada defeito de densidade (UV fixa, tile gigante, anisotropia 1, canvas pequeno) e exige que a cláusula certa fique vermelha. Morre se o mutante não casar. | `node tools/eval/texel-mutantes.mjs` |
+| `texel-custo.mjs` | O PREÇO da nitidez, **no Chrome real** (custo não se mede no stub): draw calls, triângulos, objetos de textura, programas e heap por mapa, em A/B contra um baseline. | `node tools/eval/texel-custo.mjs --saida=x.json [--contra=y.json]` |
 | `release-check.mjs` | Release usa o nome CSBR e as notas nativas do GitHub, que preservam PRs e contribuidores. | `npm run eval:release` |
 | `error-provenance-check.mjs` | Preserva erro externo no console/banco sem atribuí-lo ao jogo ou abrir issue automática. | `npm run eval:error-origin` |
 | `shader-budget-check.mjs` | Deriva do GLB real o orçamento de varyings da urna e protege fog/triplanar no piso WebGL1. | `npm run eval:shaderbudget` |
@@ -42,6 +46,7 @@ com código 1 em falha crítica.
 | `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade e ≥2 rotas CTF separadas por 6 m (`--mutante=rota-unica` prova o portão). |
 | `map-source-check.mjs` | Procedência por SHA e uso efetivo dos materiais/céus dos mapas novos (`--mutante=hash-falso` e `asset-desligado`). |
 | `campo-contract-check.mjs` | Assimetria campo×galpão, convergência, visadas, cover, abertura `field-mouth` e iluminação declarada do interior. |
+| `relevo-check.mjs` | Cota do chão na área ANDÁVEL (alagamento pelo `_freeSpot` real): amplitude, fração plana, declive, subida contínua a pé e silhueta. Só o `fy_campomorro` tem contrato; os demais saem informativos. Mutantes: `terreno-plano`, `silhueta-rasa`, `degrau-unico`. |
 | `lajes-rooftop-check.mjs` + `lajes-gap-check.mjs` | Detalhe cultural, vãos nas malhas e bordas/linhas que tornam os saltos legíveis no frame. |
 | `mansao-water-check.mjs` | Água não entrável e composição de carros genéricos, jardim tropical e interior mobiliado. |
 | `corrego-contract-check.mjs` + `escadao-contract-check.mjs` | Lentidão, escala/anatomia da fauna do Córrego e flancos/caveirão do Escadão, com mutantes por cláusula. |

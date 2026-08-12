@@ -28,6 +28,12 @@ const BASE = process.env.BASE || 'http://localhost:8123';
 const MAP = ARG('map', 'loja_h');
 const OUT = ARG('out', '/tmp/charshade');
 const CHARS = ARG('chars', 'trapfunk,oakley,coach,emo,blackmetal,gotinha,padata,canarinho');
+/* A bancada cai em `spawns.P || spawns.B` e a loja_h NÃO TEM P: a fila nascia no
+   B, que fica encostado na parede, e os 8 recortes saíam vazios — depois disso a
+   mediana de um array vazio explodia num TypeError. Ou seja: o C11 estava MORTO,
+   não frouxo. Régua que morre no meio parece falha de ambiente e é ignorada; por
+   isso o spawn agora é explícito e o fim do relatório recusa passar sem leitura. */
+const SPAWN = ARG('spawn', 'E');
 const VARS = ARG('variantes', 'DEPOIS=;ANTES=&charalbreg=0').split(';').map((s) => {
   const i = s.indexOf('='); return { nome: s.slice(0, i), q: s.slice(i + 1) };
 });
@@ -119,7 +125,7 @@ for (const v of VARS) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
   page.on('pageerror', (e) => console.error('[pageerror]', v.nome, e.message));
   page.on('console', (m) => { if (m.type() === 'error') console.error('[console]', v.nome, m.text()); });
-  const url = `${BASE}/charlineup.html?map=${MAP}&chars=${encodeURIComponent(CHARS)}&w=1600&h=900&ao=1${v.q}`;
+  const url = `${BASE}/charlineup.html?map=${MAP}&spawn=${SPAWN}&chars=${encodeURIComponent(CHARS)}&w=1600&h=900&ao=1${v.q}`;
   await page.goto(url, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction('window.LINEUP && window.LINEUP.ready', null, { timeout: 180000 });
   await page.waitForTimeout(1200);
@@ -147,6 +153,9 @@ for (let i = 0; i < res[nomes[0]].length; i++) {
 console.log('-'.repeat(16 + nomes.length * 34));
 for (const n of nomes) {
   const ok = res[n].filter((r) => !r.erro);
+  // Sem UM recorte a régua não sabe medir, e não saber custa o mesmo que estar
+  // errado: fala alto e sai 1 em vez de estourar num TypeError de mediana vazia.
+  if (!ok.length) { console.error(`C11 [${n}]: NENHUM recorte — a fila não apareceu na tela (spawn dentro de parede?). Régua não mediu nada.`); process.exit(1); }
   const md = (k) => { const a = ok.map((r) => r[k]).sort((x, y) => x - y); return a[(a.length / 2) | 0]; };
   const c1 = ok.filter((r) => r.dL != null && r.dL < 20);
   console.log(`${n.padEnd(9)}  mediana: L* ${md('Lmed').toFixed(1)}  sd ${md('sd').toFixed(1)}  C* ${md('C').toFixed(1)}  dL* ${md('dL').toFixed(1)}`
