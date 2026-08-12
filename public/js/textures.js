@@ -2,15 +2,99 @@
 import * as THREE from 'three';
 
 function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+/* ANISOTROPIA — o buraco de 12 anos desta fábrica.
+   `tex()` produz TODO chão procedural do jogo, e nunca atribuía `anisotropy`. O default do
+   three é 1, ou seja filtragem trilinear pura: a textura vista em ângulo RASANTE (que num
+   FPS é o chão, o tempo todo, do horizonte até os pés) tem os mipmaps escolhidos pelo eixo
+   de maior compressão e vira papa a partir de uns 6-8 m. Medido antes do conserto pela
+   cláusula TEXEL4 do tools/eval/texel-check.mjs: 118 superfícies horizontais só no
+   fy_quebrada, 125 no ferro_velho, em 9 dos 10 mapas.
+   8 é o valor: `getMaxAnisotropy()` devolve 16 em qualquer GPU de notebook com WebGL2 desde
+   2015, e o ganho de 8 para 16 já não se vê no piso a 1280×720. Em `quality: 'low'` cai
+   para 4, que é onde a banda de memória começa a importar mais que a nitidez do horizonte.
+   O espelho destes números mora em tools/eval/texel-tetos.mjs (ANISO_ALVO / ANISO_MIN).
+   Kill-switch: `?texel=0` volta a 1, junto com o resto da escala de texel. */
+const _texQS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
+const TEXEL_ON = _texQS.get('texel') !== '0';
+const ANISO_TEX = !TEXEL_ON ? 1 : (_texQS.get('q') === 'low' ? 4 : 8);
+
 function tex(c, repeat = 1, ry = null) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.magFilter = THREE.NearestFilter;           // retro CS 1.6 pixel look
+  /* NearestFilter fica: é decisão travada de direção de arte ("retro CS 1.6 pixel look",
+     art-direction v2), e o defeito que ela causava — texel de 12 cm ampliado — some
+     sozinho quando o texel passa de 12 cm para ~0,8 cm. Trocar por Linear aqui seria
+     mudar o look do jogo inteiro a reboque de um conserto de densidade. */
+  t.magFilter = THREE.NearestFilter;
   t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.anisotropy = ANISO_TEX;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeat, ry === null ? repeat : ry);
   return t;
 }
+
+/* ===========================================================================
+   TILE PURO — a declaração "o CONTEÚDO desta textura não tem leitura".
+   ---------------------------------------------------------------------------
+   POR QUE ELA PRECISA EXISTIR, e por que ela mora AQUI e não no vao.js:
+   a escala de UV das caixas (vao.js `aoBoxGeo`) tem uma guarda chamada MIN_TILES:
+   abaixo de 2 voltas inteiras a face fica com a UV original, porque RECORTAR uma
+   textura DESENHADA que tila — a caixa dos Correios com o "C" azul, a peça de
+   grafite com a palavra escrita — mostra um pedaço da letra e estraga o desenho.
+   A guarda está certa para essas. Mas ela vale hoje para TODA textura, e a família
+   de chão/estrutura (concreto, asfalto, terra, mato) não tem desenho nenhum: é
+   ruído, mancha e trinca distribuídos uniformemente. Recortar uma janela de 3% de
+   um canvas de ruído dá OUTRO ruído com a mesma estatística — não há o que estragar.
+
+   O PREÇO DE NÃO DECLARAR ISSO, medido (tools/eval/texel-check.mjs, cláusula TEXEL3b):
+   com `repeat` alto (T.dirt está em 17) o tile de mundo vale 68 m, então NENHUMA caixa
+   chega às 2 voltas; todas caem no ramo do TETO_PXM e param, coladas, em exatamente
+   512,0 px/m. No fy_quebrada isso é 4,6× a mediana de 112 — dois níveis de detalhe na
+   mesma tela, que é justamente o defeito que a BAR-CONSISTENCIA §3.1 proíbe. Ou seja:
+   a guarda que protege o desenho estava produzindo o defeito no que não é desenho.
+
+   ISTO NÃO É AFROUXAR TETO. O teto continua onde está para todo mundo; o que muda é
+   que SEIS texturas NOMEADAS aqui declaram que podem ser recortadas, e elas passam a
+   acertar o ALVO_PXM em vez de encostar no teto. Quem não declara continua protegido —
+   inclusive toda textura que nasce fora deste arquivo, cujo conteúdo eu não conheço.
+   Custo: zero. `userData` é um objeto JS que já existe em toda Texture do three.
+   =========================================================================== */
+function puro(t) {
+  if (Array.isArray(t)) { t.forEach(puro); return t; }
+  if (t) t.userData.tilePuro = true;
+  return t;
+}
+
+/* ===========================================================================
+   METROS POR TILE — o `repeat` do CHÃO deixa de ser um número solto.
+   ---------------------------------------------------------------------------
+   As caixas (60% das malhas dos mapas) foram consertadas na GEOMETRIA, em
+   vao.js `aoBoxGeo`: a UV passou a saber o tamanho do mundo, e a densidade delas é
+   `ALVO_PXM` por construção, qualquer que seja o `repeat` daqui — a conta de lá divide
+   por ele de propósito. O CHÃO, não: ele é `PlaneGeometry` criado dentro de cada
+   `map_*.js`, com UV 0→1, e a única alavanca que alcança os 10 mapas de uma vez é o
+   `repeat` gravado aqui, na textura compartilhada.
+
+   Isso tem um limite honesto e ele está escrito aqui em vez de escondido: um `repeat`
+   por textura não pode acertar chões de tamanhos diferentes. As extensões MEDIDAS
+   (tools/eval, os 10 mapas, superfície por superfície) são:
+       dirt ....... 94, 73, 66, 54, 28 m
+       grass ...... 158, 38, 38, 31, 31 m      (o de 158 m é 25 000 dos 29 700 m² totais)
+       asphalt .... 127, 31, 25, 24, 17, 17, 14, 14 m
+   Os valores abaixo são escolhidos para que TODAS essas extensões caiam dentro da banda
+   64-512 px/m da BAR §1.8 — não para que todas acertem 128. Acertar 128 em cada chão
+   exige `repeat` por superfície, que só existe editando os `map_*.js`; quando isso for
+   feito, a convenção é `repeat = extensão / METROS_POR_TILE`.
+
+   O CANVAS sobe de 256² para 512² só no chão (`CHAO_PX`). É o que permite `repeat`
+   moderado em vez de tiling visível: dobrar o canvas dobra a densidade sem repetir mais
+   o desenho. Custo medido: 3 texturas × (512²−256²) × 4 B × 1,33 de mipmap ≈ 3 MB de
+   VRAM no total, e o boot gera 3 canvas maiores. Fora do chão o canvas continua 256²,
+   porque lá a densidade já vem da UV da caixa e canvas maior seria pagar por nada.
+   =========================================================================== */
+const CHAO_PX = 512;
+
 /* ================================================================
    DETALHE DE SUPERFÍCIE (R7 — crítica: "materiais chapados, tiling visível")
    O mundo inteiro era cor+albedo puro: `grep normalMap public/js/*.js` só achava o
@@ -115,6 +199,17 @@ export function registerDetail(t, canvas, strength = 2.2, lo = 0.55, hi = 0.98) 
    mesmos WeakMaps). */
 export function detailFor(t) {
   if (!t) return null;
+  /* ANISOTROPIA TAMBÉM PARA A TEXTURA QUE NÃO NASCEU AQUI.
+     A fábrica `tex()` só alcança o pacote `T`. Quatro mapas montam canvas próprio
+     (map_ferrovelho, map_lajes, map_corrego, map_mansao) e ficavam com anisotropy 1:
+     125, 140, 121 e 74 superfícies horizontais, medidas pela cláusula TEXEL4. Mas TODOS
+     eles passam a textura por aqui para ganhar normal/rough — `detailFor` é o gargalo
+     comum, e é a única alavanca dentro deste arquivo que chega nos 10 mapas.
+     Só sobe quem está no DEFAULT (1): um mapa que escolheu 4 de propósito
+     (map_ferrovelho.js:370) continua com 4, porque sobrescrever escolha alheia é como se
+     perde a confiança de quem trabalha no mesmo repositório.
+     Custo: zero — `anisotropy` é estado de sampler, não upload. */
+  if (TEXEL_ON && t.anisotropy <= 1) t.anisotropy = ANISO_TEX;
   let n = NORMALS.get(t), r = ROUGHS.get(t);
   if (!n && !r && t.source && BY_SOURCE.has(t.source)) {
     const d = BY_SOURCE.get(t.source);
@@ -325,42 +420,106 @@ export function initTextures() {
     // do mesmo 1024 num piso de 180 m liam como xadrez)
     macro(x, 1024, 1024, 7, ['rgba(120,110,95,0.20)', 'rgba(70,64,56,0.16)', 'rgba(150,142,128,0.14)']);
   }
-  T.ground = withDetail(tex(gc, 10, 10), gc, 2.6, 0.60, 0.98);
+  T.ground = puro(withDetail(tex(gc, 10, 10), gc, 2.6, 0.60, 0.98));
 
-  { const c = concreteBase(); T.concrete = withDetail(tex(c, 1, 1), c, 2.4, 0.58, 0.97); }
-  { const c = concreteBase(256, 256, '#6f6a62', '#57534c'); T.concreteDark = withDetail(tex(c, 1, 1), c, 2.4, 0.60, 0.98); }
+  /* T.concrete FICA em 256² de propósito, e a conta que justifica isso está aqui porque
+     ela é contraintuitiva: este é o pior candidato do pacote a `repeat`/canvas global.
+     Medido (tools/eval, os 10 mapas, superfície por superfície): 10 097 m² vestem
+     T.concrete, e 6 908 deles são o fy_campomorro — mapa que NÃO usa `aoBoxGeo`
+     (`grep -c aoBoxGeo public/js/map_campomorro.js` = 0), então nenhuma caixa dele tem
+     UV normalizada e a família inteira sai espalhada de 28 a 314 px/m. São 11× de
+     amplitude DENTRO de uma textura só; a banda 64-512 da BAR §1.8 tem 8×. Não existe
+     multiplicador global K que caiba: o K que tira o piso de 28 do vermelho (K≈2,3)
+     joga o topo de 314 para 722, acima do teto. O mesmo vale para o piso de 7,26 px/m
+     do fy_escadao (1 244 m², `addFloor` de 36 × 35 m com a textura compartilhada e
+     `repeat` 1): ele pede K≈17, que estouraria tudo o mais.
+     Ou seja: esses dois mapas precisam de `aoBoxGeo`/`repeat` POR SUPERFÍCIE dentro do
+     próprio map_*.js — não há alavanca honesta daqui. Deixar 256² é a decisão de não
+     trocar um mapa vermelho por três. */
+  { const c = concreteBase(); T.concrete = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.58, 0.97)); }
+  { /* T.concreteDark SOBE para 512² — e aqui a conta fecha, ao contrário do T.concrete.
+       Medido: 25 479 m² vestem esta textura, e 17 280 deles são UMA superfície: o piso de
+       36 × 240 m do praca_poderes, `PlaneGeometry` com `repeat` 4 × 80, a 49,3 px/m. É
+       sozinha 76% da área abaixo do piso daquele mapa. Plano não passa por `aoBoxGeo`
+       (a UV dele nasce 0→1 dentro do map_*.js), então canvas é a ÚNICA alavanca que o
+       alcança daqui — e ela é segura porque as caixas que usam esta mesma textura têm a
+       UV escalada (fy_escadao 100%, fy_quebrada 94%) e a conta do vao.js divide o canvas
+       fora: elas continuam em 128 px/m exatos, dobrando o canvas ou não.
+       POR QUE 512 E NÃO 1024: as outras superfícies não-escaladas da família também
+       dobram. Em 512 elas ficam em 98 (praça), 356 e 450 (piscina) — todas dentro da
+       banda. Em 1024 a piscina iria a 712 e 900, ACIMA do teto de 512: o conserto de um
+       mapa viraria defeito em outro. 512 é o maior K que não quebra ninguém.
+       Custo medido em tools/eval/texel-custo.mjs: a textura e seus dois derivados
+       (normal + roughness, gerados do mesmo canvas) passam de 256² para 512². */
+    /* Gated pelo TEXEL_ON como o `repeat` da terra e do mato: `?texel=0` tem que devolver
+       o comportamento antigo INTEIRO, senão o A/B de captura mede meia mudança.
+       (Dívida herdada e NÃO consertada aqui: o `CHAO_PX` acima não é gated, então
+       `?texel=0` ainda deixa asfalto/terra/mato em canvas 512².) */
+    const CD_PX = TEXEL_ON ? 512 : 256;
+    const c = concreteBase(CD_PX, CD_PX, '#6f6a62', '#57534c');
+    T.concreteDark = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.60, 0.98));
+  }
 
-  { // asphalt for central lane
-    const c = canvas(256, 256), x = c.getContext('2d');
-    x.fillStyle = '#5c5a58'; x.fillRect(0, 0, 256, 256);
-    noiseOver(x, 256, 256, 0.3, ['#4c4a48', '#6b6967', '#413f3d']);
+  { /* asphalt for central lane — CHÃO: canvas 512² (era 256²).
+       Extensões medidas: 127, 31, 25, 24, 17, 17, 14, 14 m, que davam 80, 33, 41, 43, 61,
+       61, 71, 71 px/m — sete das oito abaixo do piso de 64. Só dobrar o canvas dobra todas
+       (160, 66, 82, 86, 122, 122, 142, 142) e leva a família inteira para dentro da banda,
+       sem repetir o desenho mais vezes: por isso o `repeat` fica em 4. */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = '#5c5a58'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.3, ['#4c4a48', '#6b6967', '#413f3d']);
     // 2ª oitava fina: o asfalto tinha sd de luminância ~1.7 (alvo do crítico: > 2 em
     // qualquer região que ocupe > 5 % do frame)
-    noiseOver(x, 256, 256, 0.18, ['#6f6d6b', '#3a3836']);
-    stains(x, 256, 256, 4, 'rgba(30,28,26,0.3)');
-    macro(x, 256, 256, 5, ['rgba(150,148,146,0.13)', 'rgba(25,24,23,0.16)']);
-    T.asphalt = withDetail(tex(c, 4, 4), c, 2.0, 0.66, 0.99);
+    noiseOver(x, P, P, 0.18, ['#6f6d6b', '#3a3836']);
+    stains(x, P, P, 4, 'rgba(30,28,26,0.3)');
+    macro(x, P, P, 5, ['rgba(150,148,146,0.13)', 'rgba(25,24,23,0.16)']);
+    T.asphalt = puro(withDetail(tex(c, 4, 4), c, 2.0, 0.66, 0.99));
   }
   { /* dirt (MST camp) — R3: base #8a6b48 tinha S 0,478. Terra é a superfície mais EXTENSA
        onde ela aparece, e croma de albedo multiplica croma de luz (todos os mapas têm sol
        quente): 0,478 no albedo vira 0,65+ na tela e sozinha estoura o teto de 5 % de C2.
        Alvo do gabarito para textura base de terra/areia/asfalto: S 0,20-0,30. Aqui: 0,26,
        matiz 31° intacto — é o hue que diz "terra brasileira", não a saturação. */
-    const c = canvas(256, 256), x = c.getContext('2d');
-    x.fillStyle = TEX_SAT_HOT ? '#8a6b48' : '#8a7866'; x.fillRect(0, 0, 256, 256);
-    noiseOver(x, 256, 256, 0.35, TEX_SAT_HOT ? ['#75583a', '#9c7d56', '#63482e'] : ['#756654', '#9c8e7c', '#63584a']);
-    macro(x, 256, 256, 5, TEX_SAT_HOT ? ['rgba(60,44,26,0.22)', 'rgba(170,140,100,0.16)'] : ['rgba(60,50,38,0.22)', 'rgba(170,152,128,0.16)']);
-    T.dirt = withDetail(tex(c, 3, 3), c, 3.0, 0.80, 1.0);
+    /* CHÃO: canvas 512² (era 256²) e repeat 17 (era 3). A terra era a PIOR superfície do
+       jogo — 22 151 m² a 8-27 px/m, o chão do fy_quebrada a 8,18 px/m contra os 628 px/m
+       da parede de tijolo a doze metros. Extensões medidas: 94, 73, 66, 54, 28 m; com
+       512 px e repeat 17 elas viram 93, 119, 132, 161, 311 px/m — as cinco dentro da
+       banda 64-512 da BAR §1.8, e as duas maiores (que são o chão que o jogador pisa)
+       em cima do alvo de 128. Repeat 17 e não 26 (= 53,7 m / 2,0 m) porque o canvas
+       dobrou: o tile passa a valer 4,0 m de mundo, não 2,0.
+       17 É TETO, E O TETO NÃO É DA TERRA — medido varrendo 20/23/24/26 nos 10 mapas.
+       Subir daqui melhora o fy_quebrada (mediana 112 -> 131, e a TEXEL3b dele fecha em 26)
+       mas ACENDE duas cláusulas novas: a dispersão do fy_escadao vai de 1,27x para 1,79x e
+       a do fy_campomorro de 1,42x para 1,88x, as duas acima do 1,5x da BAR-CONSISTENCIA
+       §3.1. O motivo é que nesses dois a MEDIANA não sobe junto: ela é fixada por
+       superfície que NÃO passa por `aoBoxGeo` (o piso de 36 x 35 m do escadão a 7,3 px/m;
+       as caixas de concreto do campomorro a 28 px/m, mapa com zero chamadas de aoBoxGeo),
+       então subir o chão só afasta o p95 da mediana. Trocar uma vermelha por duas é pior.
+       Quando esses dois mapas tiverem `repeat`/UV por superfície, este número pode ir para
+       ~24, que é onde a mediana do quebrada encosta no ALVO_PXM. */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = TEX_SAT_HOT ? '#8a6b48' : '#8a7866'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.35, TEX_SAT_HOT ? ['#75583a', '#9c7d56', '#63482e'] : ['#756654', '#9c8e7c', '#63584a']);
+    macro(x, P, P, 5, TEX_SAT_HOT ? ['rgba(60,44,26,0.22)', 'rgba(170,140,100,0.16)'] : ['rgba(60,50,38,0.22)', 'rgba(170,152,128,0.16)']);
+    T.dirt = puro(withDetail(tex(c, TEXEL_ON ? 17 : 3, TEXEL_ON ? 17 : 3), c, 3.0, 0.80, 1.0));
   }
   { /* grass patches — R3: base #5f7d3a tinha S 0,536. Mato é o único verde do cenário e
        precisa contrastar com a terra, mas esse contraste vem do MATIZ (85° contra 31°),
        não do croma. S 0,32: fica acima do teto de terra (é vegetação viva) e ainda assim
        longe de 0,55, que fica reservado a bandeira/placa/barril/cone. */
-    const c = canvas(128, 128), x = c.getContext('2d');
-    x.fillStyle = TEX_SAT_HOT ? '#5f7d3a' : '#677d55'; x.fillRect(0, 0, 128, 128);
-    noiseOver(x, 128, 128, 0.4, TEX_SAT_HOT ? ['#4c682e', '#73924a', '#87a355'] : ['#556848', '#7b9265', '#8ea37a']);
-    macro(x, 128, 128, 4, TEX_SAT_HOT ? ['rgba(40,58,24,0.24)', 'rgba(140,160,90,0.14)'] : ['rgba(46,58,38,0.24)', 'rgba(148,160,124,0.14)']);
-    T.grass = withDetail(tex(c, 2, 2), c, 2.4, 0.80, 1.0);
+    /* CHÃO: canvas 512² (era 128², o menor do pacote) e repeat 30 (era 2). O mato tem a
+       distribuição mais torta do jogo: cinco superfícies de 158, 38, 38, 31 e 31 m, e a
+       de 158 m sozinha é 25 000 dos 29 700 m² — ela É o gramado do jogo, as outras são
+       canteiros. Por isso o alvo de 128 px/m foi mirado NELA (512 × 30 / 158 = 97 px/m);
+       os canteiros sobem para 404-495 px/m, que ainda cabe embaixo do teto de 512. */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = TEX_SAT_HOT ? '#5f7d3a' : '#677d55'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.4, TEX_SAT_HOT ? ['#4c682e', '#73924a', '#87a355'] : ['#556848', '#7b9265', '#8ea37a']);
+    macro(x, P, P, 4, TEX_SAT_HOT ? ['rgba(40,58,24,0.24)', 'rgba(140,160,90,0.14)'] : ['rgba(46,58,38,0.24)', 'rgba(148,160,124,0.14)']);
+    T.grass = puro(withDetail(tex(c, TEXEL_ON ? 30 : 2, TEXEL_ON ? 30 : 2), c, 2.4, 0.80, 1.0));
   }
   { // Caixa dos Correios (SEDEX) — papelão com a faixa amarela e o "C" azul
     const correiosBox = (label, sub) => {

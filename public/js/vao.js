@@ -35,6 +35,154 @@ const _only = _qp.get('vao');
 export const VAO_BANDS = VAO_ON && _only !== 'skirt';
 export const VAO_SKIRT = VAO_ON && _only !== 'band';
 
+/* ===========================================================================
+   ESCALA DE TEXEL — a UV da caixa passa a saber o tamanho do mundo.
+   ---------------------------------------------------------------------------
+   O DEFEITO, medido antes do conserto (tools/eval/texel-check.mjs, os 10 mapas):
+   `aoBoxGeo` criava `BoxGeometry(w,h,d,1,segs,1)` e mexia SÓ em `uv.setY` para as
+   bandas de AO. Um muro de 36 m e um engradado de 0,6 m recebiam UV 0→1 IDÊNTICOS,
+   e como o `repeat` mora na textura COMPARTILHADA (textures.js), os dois ficavam com
+   a mesma quantidade de texels. Números do fy_quebrada:
+       chão .............. 8,18 px/m   (256 px × repeat 3 sobre 94 m)
+       parede de tijolo .. 628  px/m
+       dispersão ......... 10,3×  contra o portão de 1,5× da BAR-CONSISTENCIA §3.1
+   52% da área estrutural do mapa abaixo dos 64 px/m que a BAR §1.8 chama de piso.
+
+   O CONSERTO, e por que ele é de graça:
+   a UV vai para a GEOMETRIA, não para a textura. Escalar `map.repeat` por superfície
+   exigiria `map.clone()` por caixa — 1.608 objetos de textura novos só nas caixas, num
+   projeto que JÁ TEVE crash de OOM. Escalando a UV que já existe na BoxGeometry o custo
+   é ZERO textura nova, ZERO material novo, ZERO draw call nova: os mesmos 24 vértices,
+   com outros números no atributo `uv`. Medido em tools/eval/texel-custo.mjs.
+
+   A CONTA. Queremos que UMA volta da textura ocupe sempre a mesma quantidade de
+   metros de MUNDO, de modo que a densidade final seja constante:
+       tile(m)   = pixels_efetivos / ALVO_PXM        (pixels_efetivos = canvas × repeat)
+       spanUV    = extensão_da_face(m) / tile
+       densidade = pixels_efetivos × spanUV / extensão = pixels_efetivos / tile = ALVO_PXM
+   Ou seja: dividir pelo `repeat` que já está na textura é o que faz a conta ser
+   INDEPENDENTE do valor que cada mapa escolheu. Sem isso, uma textura local com
+   repeat 3 sairia a 3× a densidade do concreto e a dispersão continuaria vermelha —
+   trocaríamos um defeito por outro.
+
+   AS DUAS GUARDAS (as duas formas de este conserto virar um defeito novo):
+
+   (a) `ClampToEdgeWrapping` é a declaração "ESTA TEXTURA NÃO TILA". Não é acidente:
+       os mapas a escrevem à mão em mural, placa e faixa (map_ferrovelho.js:178,
+       map_lajes.js:110, map_piscinao_ramos.js:312 e mais 15 lugares). Fora da volta
+       o WebGL repete a ÚLTIMA COLUNA DE TEXELS pelo resto da face, e o mural vira
+       borrão esticado. Medido: 38 das 1.608 caixas com textura (2,4%) estão nesse
+       caso, quase todas painéis finos de 0,04 × 1,5 × 4 m. A cláusula TEXEL6 da régua
+       existe só para vigiar esta guarda.
+
+   (b) MIN_TILES: abaixo de 2 voltas inteiras a face fica com a UV original. Uma caixa
+       menor que o tile mostraria só um RECORTE da textura, e recorte estraga arte
+       desenhada que tila (a caixa dos Correios, o grafite de 512 px). Com o corte em
+       2 voltas, engradado de 1,6 m e peça de grafite de 4,1 m ficam intactos, e muro
+       de 36 m e laje de 20 m entram no conserto — que é onde o defeito vive.
+
+   POR QUE O `map.image` PODE FALTAR: textura carregada por `TextureLoader` ainda não
+   resolveu no primeiro frame. Nesse caso não escalamos — errar para o lado do estado
+   de hoje é melhor que escalar por um palpite de resolução.
+
+   KILL-SWITCH: `?texel=0` devolve o comportamento antigo inteiro, para A/B de captura
+   e para socorro em produção sem deploy.
+   =========================================================================== */
+export const TEXEL_ON = _qp.get('texel') !== '0';
+/* 128 px/m: o exemplo literal da BAR-CONSISTENCIA §3.1 ("uma densidade de texel para o
+   mapa inteiro, declarada por mapa (ex.: 128 px/m)") e o teto da faixa de fundo da
+   BAR §1.8 — o menor valor que não é borrão em lugar nenhum. Subir daqui custa canvas
+   maior, que é CPU de boot e heap. O espelho deste número mora em
+   tools/eval/texel-tetos.mjs e a régua MORRE se os dois divergirem. */
+export const ALVO_PXM = 128;
+/* Teto de hero prop da BAR §1.8 (512-1024 px/m). Uma caixa MENOR que um tile fica, sem
+   conserto, com a textura inteira espremida no seu tamanho: medido, um parafuso de 0,13 m
+   com canvas de 512 px dá 3.940 px/m, e o fy_lajes chegou a 5.130. Não é nitidez — é
+   desperdício que estoura a dispersão da BAR-CONSISTENCIA §3.1 e mostra um nível de
+   detalhe que não existe em mais lugar nenhum da tela. Quando a densidade natural passa
+   deste teto, a UV é RECORTADA o mínimo necessário para encostar nele. Recorte só acontece
+   abaixo de uma volta inteira, ou seja, só em prop menor que o tile — arte desenhada que
+   tila (a caixa dos Correios a 1,6 m, o grafite de 4,1 m) fica de fora nos dois lados. */
+export const TETO_PXM = 512;
+const MIN_TILES = 2;
+
+/* Handoff entre `aoBoxGeo` e `aoMat`. POR QUE ele existe em vez de um argumento:
+   a escala de UV precisa do MATERIAL (resolução do canvas, `repeat` e, sobretudo, o
+   `wrapS` que declara se a textura tila), e o material só aparece uma linha depois,
+   em `aoMat(mat)`. Os 9 mapas que usam `aoBoxGeo` escrevem exatamente este par:
+       const geo = aoBoxGeo(w, h, d, {...});
+       const m   = new THREE.Mesh(geo, aoMat(mat));
+   Mudar a assinatura de `aoBoxGeo` exigiria editar os 9 arquivos de mapa, que estão
+   em outras mãos nesta rodada. O handoff é de UMA posição e é consumido na primeira
+   chamada de `aoMat`; se ninguém consumir, a próxima caixa o sobrescreve e nada
+   acontece — a UV simplesmente fica como estava. `geo.userData.texelEscalada` torna
+   a operação idempotente, então uma chamada dupla não escala duas vezes. */
+let _pendente = null;
+
+/* O fator de UV de UM eixo de UMA face.
+     r     voltas de textura que o alvo pediria (extensão / tile)
+     px    pixels efetivos do eixo (canvas × repeat)
+     ext   extensão de mundo do eixo, em metros
+     puro  a textura DECLAROU que seu conteúdo é ruído (textures.js `puro()`)
+   Quatro regimes, e o terceiro é a guarda (b):
+     r >= MIN_TILES ...... a face cabe 2+ voltas: escala e acerta ALVO_PXM na mosca
+     puro ................ ruído sem leitura: recortar não estraga nada, então acerta
+                           ALVO_PXM também abaixo de uma volta (ver o bloco TILE PURO
+                           em textures.js). SEM isto, `repeat` alto empurra toda caixa
+                           para o ramo do teto e ela para colada em 512,0 px/m —
+                           medido no fy_quebrada: 4,6× a mediana, TEXEL3b vermelha.
+     natural > TETO_PXM .. prop menor que o tile e denso demais: recorta até o teto
+     resto ............... deixa como está — arte desenhada não é cortada nem tilada */
+function fator(r, px, ext, puro) {
+  if (r >= MIN_TILES) return r;
+  if (puro) return r;
+  const natural = px / ext;                       // densidade se a UV ficar 0→1
+  if (natural > TETO_PXM) return TETO_PXM * ext / px;
+  return 1;
+}
+
+function escalaUVporMundo(geo, w, h, d, mat) {
+  if (!TEXEL_ON || !geo || geo.userData.texelEscalada) return false;
+  const t = mat && mat.map;
+  if (!t || !t.image || !t.image.width || !t.image.height) return false;
+  // guarda (a): o autor do mapa declarou que esta textura não tila
+  if (t.wrapS !== THREE.RepeatWrapping || t.wrapT !== THREE.RepeatWrapping) return false;
+  const uv = geo.attributes.uv, idx = geo.index;
+  if (!uv || !idx || !geo.groups.length) return false;
+
+  const pxU = t.image.width * (t.repeat ? t.repeat.x : 1);
+  const pxV = t.image.height * (t.repeat ? t.repeat.y : 1);
+  if (!(pxU > 0) || !(pxV > 0)) return false;
+  const tileU = pxU / ALVO_PXM, tileV = pxV / ALVO_PXM;   // metros por volta de UV
+
+  /* Extensão de mundo (u, v) de cada par de faces, na ordem em que a BoxGeometry monta
+     os planos: +X, -X, +Y, -Y, +Z, -Z. Lateral em X percorre `d` no u e `h` no v;
+     tampa em Y percorre `w` e `d`; lateral em Z percorre `w` e `h`. Indexado pelo
+     `materialIndex` do grupo, e não pela ordem do array, para não depender da ordem
+     interna do three continuar a mesma. */
+  const EXT = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  const visto = new Uint8Array(uv.count);   // o índice repete vértice entre os 2 triângulos
+  const ehPuro = !!(t.userData && t.userData.tilePuro);
+  let mudou = false;
+  for (const gp of geo.groups) {
+    const e = EXT[gp.materialIndex | 0];
+    if (!e) continue;
+    const fu = fator(e[0] / tileU, pxU, e[0], ehPuro);
+    const fv = fator(e[1] / tileV, pxV, e[1], ehPuro);
+    if (fu === 1 && fv === 1) continue;
+    const fim = gp.start + gp.count;
+    for (let k = gp.start; k < fim; k++) {
+      const vi = idx.getX(k);
+      if (visto[vi]) continue;
+      visto[vi] = 1;
+      uv.setXY(vi, uv.getX(vi) * fu, uv.getY(vi) * fv);
+    }
+    mudou = true;
+  }
+  if (mudou) { uv.needsUpdate = true; geo.userData.texelEscalada = true; }
+  return mudou;
+}
+
 /* ---------------------------------------------------------------------------
    CALIBRAÇÃO DOS MULTIPLICADORES — feita por INVERSÃO NUMÉRICA do pipeline real,
    não a olho. Script: tools/eval/vao_predict.py (replica o COMPOSITE do bloom.js —
@@ -117,6 +265,9 @@ export function aoBoxGeo(w, h, d, opts = {}) {
   }
   pos.needsUpdate = true; uv.needsUpdate = true;
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  /* deixa a caixa "pendurada" para a próxima chamada de aoMat, que é quem enxerga o
+     material e portanto a resolução, o `repeat` e o `wrapS` da textura */
+  _pendente = TEXEL_ON ? { geo, w, h, d } : null;
   return geo;
 }
 
@@ -138,6 +289,16 @@ export function aoMatFactory() {
     return a;
   };
   return (m) => {
+    /* consome o handoff de aoBoxGeo ANTES de clonar: a UV é da geometria, não do
+       material, então quem escala é a caixa que acabou de nascer. Um array de
+       materiais (caixa com face diferente por lado) escala pela primeira face que
+       tenha mapa — as 6 faces do mesmo prop usam a mesma família de textura nesta
+       base, e escalar por face exigiria um handoff por grupo, que é complexidade
+       sem defeito medido para justificá-la. */
+    const p = _pendente;
+    _pendente = null;
+    if (p) escalaUVporMundo(p.geo, p.w, p.h, p.d, Array.isArray(m) ? m.find((x) => x && x.map) : m);
+
     if (Array.isArray(m)) {
       let a = cache.get(m);
       if (!a) { a = m.map(one); cache.set(m, a); }
