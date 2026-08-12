@@ -605,7 +605,18 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    // modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
+    /* modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
+
+       `removeFromParent()` E NÃO `this.scene.remove(mesh)`: o molde lowpoly da arma é
+       criado pelo mapa com `root.add(g)` (map_piscina.js:552, map_piscinao_ramos.js:2126),
+       ou seja, o pai dele é o GRUPO `root` do mapa, não a cena. E `Object3D.remove(x)` do
+       three só desliga quando `x.parent === this` — com o pai errado ele é um no-op MUDO,
+       sem exceção e sem aviso no console.
+
+       O estrago era visível na Piscina da Treta: o molde lowpoly continuava no chão da
+       lateral da piscina e o GLB era somado POR CIMA dele (duas armas no mesmo ponto). O
+       mesmo no-op também furava o filtro de modo de armas do `else` — no modo SÓ AWP as
+       caixinhas das armas proibidas seguiam desenhadas, só que sem pickup por trás. */
     if (this.world.pickups) {
       const keep = [];
       for (const pk of this.world.pickups) {
@@ -615,10 +626,10 @@ export class Game {
             // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
             rw.rotation.set(0, pk.mesh.rotation.y || Math.random() * 6.28, 0.12);
             rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
-            this.scene.remove(pk.mesh); this.scene.add(rw); pk.mesh = rw;
+            pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
           }
           keep.push(pk);
-        } else if (pk.mesh) this.scene.remove(pk.mesh);
+        } else if (pk.mesh) pk.mesh.removeFromParent();
       }
       this.world.pickups = keep;
       /* AQUI ficava `_puxarPickupsProGrafo()` (commit 5f8b5a5), REVERTIDO E REMOVIDO em
