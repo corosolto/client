@@ -989,9 +989,12 @@ const IMPORTMAP = JSON.stringify({
        `tr.tb` - quem separa nas duas colunas é o CSS (`tbody` vira grade de 2 colunas com
        `grid-auto-flow:row dense` e cada `tr` fixa a sua coluna pela classe de time). Assim a
        tela nova NÃO exige tocar em `game.js`.
-       O thead real fica só pra leitor de tela (game.js liga/desliga o #sb-cap-h por id, e
-       essa é a única fonte de verdade do CTF); os rótulos VISÍVEIS são as duas .sb-head
-       abaixo, que espelham o estado do CAP. por `:has()` no CSS. -->
+       O thead real NÃO é mais só pra leitor de tela: ele é o rótulo visível das colunas.
+       Esta nota dizia que os rótulos visíveis eram duas `.sb-head` espelhadas por `:has()`
+       - e não eram: o `_showScoreboard` passou a emitir `.sb-col`, aquelas regras deixaram
+       de casar com qualquer coisa e as colunas de número chegavam à tela SEM rótulo. Agora
+       o `<thead>` que o game.js já escreve é a fonte única pro olho e pro leitor de tela, e
+       o CTF entra sozinho junto com o `<td>` de CAP. Ver `public/style.css`, PLACAR. -->
   <div id="scoreboard" class="hidden">
     <h3>CORO SOLTO - PLACAR</h3>
     <!-- Duas colunas, uma por time, com o brasão da facção no topo (referência
@@ -1022,9 +1025,14 @@ const IMPORTMAP = JSON.stringify({
      linha no meio ("9 kills de r"). O conteúdo de #match-stats é escrito pelo game.js. -->
 <!-- RESULTADO (tela 09 da referência). A referência NÃO é uma coluna centrada: é uma
      coluna de conteúdo ANCORADA À ESQUERDA (título, sub, cartão de estatística, ações) com
-     a metade direita reservada pra arte do vencedor. O #me-hero é essa metade - hoje ela é
-     campo atmosférico, porque o retrato do personagem só existe em runtime (glbchars) e
-     quem saberia qual é é o game.js. Ver relatório: falta um gancho lá pra preencher. -->
+     a metade direita reservada pra arte do vencedor. A `.me-hero` NÃO é mais essa metade:
+     enquanto ela foi uma COLUNA da grade sem retrato pra pôr dentro, ela desenhava 38,5 %
+     do quadro em preto com um fio visível na borda esquerda - medido em 1536x1024. Virou
+     camada de quadro cheio (cena desfocada + scrim + moldura) atrás da coluna de conteúdo,
+     que é o mesmo movimento do bloco 1 nas telas 03/04/05. O retrato do vencedor continua
+     sendo o preenchimento certo e continua dependendo do runtime (o game.js sabe o
+     `playerDef.id` no _endMatch, e /img/chars/<id>.webp existe pros 44): isso é gancho a
+     decidir, não dívida deste arquivo. Ver relatório. -->
 <div id="match-end" class="screen hidden">
   <div class="me-wrap">
     <div class="me-col">

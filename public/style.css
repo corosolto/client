@@ -1087,7 +1087,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    parte tag e número em pesos diferentes; aqui os dois moram no MESMO <b>, então o par
    inteiro cresce e ganha a cor do time — a hierarquia vem do TAMANHO (fs-800 contra
    fs-100 do rótulo = razão 4,7, dentro da faixa 3,3-5,0 medida na referência). */
-#scoreboard h3,#scoreboard .sb-heads,#scoreboard table{width:min(1280px,100%)}
+#scoreboard h3,#scoreboard table{width:min(1280px,100%)}
 #scoreboard h3{display:flex;flex-direction:column;align-items:center;gap:var(--s-2);
   margin-bottom:var(--s-5);text-transform:uppercase;flex:0 0 auto}
 #scoreboard h3 .sb-label{letter-spacing:var(--tr-4);font-weight:700;color:var(--ink-300);font-size:var(--fs-200)}
@@ -1099,31 +1099,52 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #scoreboard h3 .sb-score b.tp{color:#ff8a8a}
 #scoreboard h3 .sb-score b.tb{color:#b79bff}   /* violeta do time B na referência (134,94,178) */
 
-/* Grade compartilhada pelos rótulos e pelas linhas. Os dois cabeçalhos visíveis e cada
-   <tr> são grades INDEPENDENTES, então nenhuma coluna pode ser `auto` (largura de conteúdo
-   divergiria entre esquerda e direita e os rótulos sairiam do lugar): todas são fracionárias
-   ou em `em`. O CTF acrescenta CAP. — o estado real mora no #sb-cap-h, que o game.js liga
-   e desliga por id; o `:has()` abaixo espelha isso nos rótulos duplicados sem tocar em JS. */
-/* A coluna PERSONAGEM sai da GRADE (fica só no <thead> pro leitor de tela): pra bot,
-   `c.name` e `c.def.name` são a MESMA string, então ela era duplicata em 7 de 8 linhas —
-   era ela que fazia a linha parecer poluída ao lado da referência, que mostra retrato +
-   nome e mais nada de texto. */
+/* Grade compartilhada pelo cabeçalho e pelas linhas. O <thead> e cada <tr> são grades
+   INDEPENDENTES, então nenhuma coluna pode ser `auto` (largura de conteúdo divergiria
+   entre esquerda e direita e os rótulos sairiam do lugar): todas são fracionárias ou
+   em `em`. O CTF acrescenta CAP. pelo `.sb-col.ctf` que o game.js põe na coluna — o par
+   `<th>`/`<td>` nasce junto lá, então cabeçalho e linha não têm como divergir. */
+/* A coluna PERSONAGEM sai da GRADE: pra bot, `c.name` e `c.def.name` são a MESMA string,
+   então ela era duplicata em 7 de 8 linhas — era ela que fazia a linha parecer poluída ao
+   lado da referência, que mostra retrato + nome e mais nada de texto. CONTINUA fora, e
+   agora com o número que faltava pra decisão: a ÚNICA linha em que as duas strings
+   diferem é a do jogador (sonda a 1536×1024: `.sb-n` = "VOCÊ ★", `.sb-p` = "Líder do
+   MST"), e o game.js já marca essa linha com `class="me"`. O que impede de mostrar só
+   nela não é falta de gancho, é a ALTURA: a 1280×720 a linha tem 37,4 px (--sb-rh =
+   5,2vh) e o apelido sozinho já ocupa 30 px — não cabe uma segunda linha, e pôr as duas
+   strings na MESMA pista as faz colidir quando o apelido é longo. Alargar a pista do
+   nome só nesta linha desalinharia os números dela em relação às vizinhas, que é
+   justamente o que a grade de pistas fixas existe pra impedir. */
 #scoreboard{--sbc:minmax(0,1fr) 2.8em 2.8em;--sb-gap:clamp(var(--s-5),3.4vw,64px);
   --sb-rh:clamp(32px,5.2vh,54px);--sb-rg:5px}
 #scoreboard:has(#sb-cap-h:not(.hidden)){--sbc:minmax(0,1fr) 2.8em 2.8em 3.6em}
 #scoreboard:has(#sb-cap-h.hidden) .sb-cap{display:none}
-#scoreboard .sb-head span:nth-child(2),#scoreboard td:nth-child(2){display:none}
-#scoreboard .sb-heads{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--sb-gap);flex:0 0 auto}
-#scoreboard .sb-head{display:grid;grid-template-columns:var(--sbc);align-items:end;gap:0 var(--s-4);
-  font-size:var(--fs-200);letter-spacing:var(--tr-2);color:var(--ink-300);font-weight:700;
-  text-transform:uppercase;padding:0 var(--s-4) var(--s-2)}
-#scoreboard .sb-head span:nth-child(n+3){text-align:right}
+/* RÓTULO DAS COLUNAS DE NÚMERO — o defeito era CSS MORTO, não falta de espaço.
+   O `_showScoreboard` passou a emitir `.sb-col > .sb-chead + table`, e as regras
+   `.sb-heads`/`.sb-head` que moravam AQUI esperavam uma marcação que o game.js não
+   emite mais: elas nunca casaram com nada. Sobrou o <thead> real, recortado em 1×1 px
+   pro leitor de tela. Medido no navegador a 1536×1024: as duas colunas de número
+   (K em x 597,9 · M em x 669,9 · 56 px cada · corpo 25,6 px) chegavam à tela SEM UM
+   RÓTULO SEQUER — o jogador lia "0  0" e adivinhava qual era qual.
+   Em vez de ressuscitar um segundo jogo de rótulos, o <thead> REAL vira o rótulo
+   visível. Ele já traz JOGADOR/PERSONAGEM/K/M na ordem certa, já acompanha o CTF
+   sozinho (o game.js acrescenta o <th> CAP. no mesmo lugar que o <td>), e vira UMA
+   fonte de verdade pro olho e pro leitor de tela — antes eram duas, e a visível
+   não existia. O <th> PERSONAGEM some junto com o <td> (regra abaixo): assim a
+   tabela para de anunciar 4 cabeçalhos pra 3 células, que era o estado de hoje. */
+#scoreboard td:nth-child(2),#scoreboard th:nth-child(2){display:none}
 /* SEM `width:100%` aqui: a largura vem da regra de teto (min(1000px,100%)) que a .sb-heads
    também usa. Um `width:100%` neste bloco vinha DEPOIS e a sobrescrevia — os rótulos ficavam
    numa grade de 1000px e as faixas numa de 1414px, e as colunas saíam do lugar. */
 #scoreboard table{display:block;font-size:var(--fs-500);font-weight:700;
   flex:0 1 auto;min-height:0;overflow:auto;margin-top:var(--s-2)}
-#scoreboard thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}  /* só p/ leitor de tela */
+#scoreboard thead{display:block}
+/* `text-align:left` explícito: <th> nasce centrado, e centrado ele flutuava no meio da
+   pista do nome em vez de assentar em cima dos apelidos. O mesmo corte por posição das
+   células (`n+3` à direita) vale aqui e nas linhas, senão rótulo e número divergem. */
+#scoreboard th{font-size:var(--fs-100);font-weight:700;letter-spacing:var(--tr-3);
+  color:var(--ink-300);text-transform:uppercase;white-space:nowrap;text-align:left}
+#scoreboard th:nth-child(n+3){text-align:right}
 /* DUAS COLUNAS SEM MEXER NO game.js: ele emite uma lista única de <tr class="tp|tb">.
    `dense` é obrigatório — sem ele uma sequência tp,tp,tb,tb deixa buraco e desalinha as
    colunas (o cursor de auto-placement não volta pra trás). */
@@ -1176,7 +1197,16 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #scoreboard .sb-col.tp .sb-chead{color:#ff8a8a}
 #scoreboard .sb-col.tb .sb-chead{color:#b79bff}
 #scoreboard .sb-col table{display:block;width:100%;flex:0 1 auto;min-height:0;overflow:auto;margin-top:0}
-#scoreboard .sb-col thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+/* O cabeçalho é a MESMA grade das linhas (mesmas pistas, mesmo padding lateral), e não
+   uma grade paralela: é o que garante que o K caia em cima da coluna de K e não "quase".
+   Por isso as pistas são repetidas literalmente aqui, como em `.sb-col tbody tr` logo
+   abaixo — a --sbc do #scoreboard vale pra grade única antiga, que estas regras
+   neutralizam. O fio embaixo assenta o rótulo na tabela em vez de deixá-lo boiando. */
+#scoreboard .sb-col thead{display:block;flex:0 0 auto}
+#scoreboard .sb-col thead tr{display:grid;grid-template-columns:minmax(0,1fr) 2.8em 2.8em;
+  align-items:end;gap:0 var(--s-4);padding:0 var(--s-4) calc(var(--s-2) - 1px);
+  border-left:3px solid transparent;border-bottom:1px solid var(--line)}
+#scoreboard .sb-col.ctf thead tr{grid-template-columns:minmax(0,1fr) 2.8em 2.8em 3.6em}
 #scoreboard .sb-col tbody{display:grid;grid-template-columns:1fr;grid-auto-rows:var(--sb-rh);
   row-gap:var(--sb-rg);align-content:start;background:none}
 #scoreboard .sb-col tbody tr{grid-column:auto;display:grid;
@@ -1211,22 +1241,80 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    O verde não estava na paleta (o token de vitória era --yellow, e amarelo é o papel de
    OBJETIVO no sistema). --vitoria abaixo é o pixel medido, mantido como token pra não
    voltar hex solto ao arquivo. */
-#match-end{justify-content:stretch;align-items:stretch;padding:0}
-#match-end::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--lambe);opacity:.6}
-.me-wrap{position:relative;gap:0;display:grid;grid-template-columns:minmax(0,clamp(420px,46%,720px)) minmax(0,1fr);
+/* ---- A METADE DIREITA DEIXA DE SER COLUNA E VIRA CAMPO ------------------------------
+   MEDIDO (sonda no navegador, 1536×1024, partida encerrada 1 × 3): o .me-hero ocupava
+   x 742,2-1536 por 762,9 px de altura = 605,7 kpx², 38,5 % do quadro, desenhando NADA.
+   E o pior nem era o vazio: o `linear-gradient(90deg, bg-900 .9 → 0)` dele era mais
+   ESCURO que a tela atrás, então a borda esquerda da caixa desenhava um fio vertical
+   visível em x=742. A tela não lia "espaçosa", lia "painel que não carregou".
+   Acabamento não conserta isso, porque o defeito é de composição: a grade repartia o
+   quadro por FRAÇÃO e só tinha conteúdo pra uma das frações. Então a fração some.
+   O caminho é o mesmo que o bloco 1 já usou nas telas 03/04/05 (style.css:2053), onde
+   essa mesma metade desperdiçada foi curada NÃO preenchendo a metade, e sim soltando a
+   arte em quadro cheio atrás de tudo: `#char-select::before` com scale(1.08) + blur +
+   brightness baixo, `::after` de scrim, conteúdo por cima com z próprio.
+   Aqui: .me-wrap vira coluna ÚNICA (a caixa de conteúdo mantém a medida da referência,
+   0,043-0,451 do quadro, anotada no bloco de medição logo acima, porque ela foi medida
+   em pixel e continua certa: o que muda é só o que nunca foi medido) e o
+   .me-hero sai da grade pra virar camada de quadro cheio. Sem coluna, não há borda; sem
+   borda, o lado direito lê como respiro de cartaz e não como buraco.
+   O retrato do vencedor continua sendo o preenchimento CERTO dessa área, e continua
+   dependendo do runtime (game.js:_endMatch conhece `playerDef.id`, e /img/chars/<id>.webp
+   existe pros 44). Isso é decisão do dono, não deste arquivo - ver relatório. */
+/* overflow:hidden é obrigatório aqui: o .me-hero abaixo é escalado em 8 % e a .screen é
+   `position:fixed;inset:0` SEM recorte — sem isto a camada sangra pra fora do quadro. */
+#match-end{justify-content:stretch;align-items:stretch;padding:0;overflow:hidden}
+/* Empilhamento do quadro, de trás pra frente: 0 arte · 1 scrim+vinheta · 1 lambe+moldura
+   (pinta depois do ::before por ordem de árvore) · 2 conteúdo. Tudo abaixo do conteúdo,
+   como era antes — o texto não muda de fundo por causa da textura. */
+#match-end::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(var(--bg-900-rgb),.95) 0%,rgba(var(--bg-900-rgb),.88) 34%,
+                          rgba(var(--bg-900-rgb),.46) 62%,rgba(var(--bg-900-rgb),.32) 100%),
+    radial-gradient(58% 70% at 62% 46%,rgba(var(--bg-700-rgb),.55) 0%,rgba(var(--bg-900-rgb),0) 72%),
+    radial-gradient(96% 86% at 50% 46%,rgba(0,0,0,0) 46%,rgba(var(--bg-900-rgb),.72) 100%)}
+/* Lambe + cantoneiras de visor (mesma receita do painel de mapa, style.css:2025). Sem a
+   moldura o lado direito volta a não ter estrutura nenhuma: é ela que faz o respiro ler
+   como decisão de cartaz, e não como sobra. O `--cm` é a distância da quina. */
+#match-end::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  --cm:clamp(14px,1.6vw,26px);background:var(--lambe),
+    linear-gradient(var(--br-faixa),var(--br-faixa)) var(--cm) var(--cm)/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) var(--cm) var(--cm)/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) calc(100% - var(--cm)) var(--cm)/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) calc(100% - var(--cm)) var(--cm)/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) var(--cm) calc(100% - var(--cm))/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) var(--cm) calc(100% - var(--cm))/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) calc(100% - var(--cm)) calc(100% - var(--cm))/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) calc(100% - var(--cm)) calc(100% - var(--cm))/2px 26px no-repeat;
+  opacity:.72}
+.me-wrap{position:relative;gap:0;display:grid;grid-template-columns:minmax(0,clamp(420px,46%,720px));
   align-items:stretch;width:100%;height:100%;padding:10% 0 7% 4.3%}
 /* Ritmo da referência: título/sub/cartão empilhados no terço de cima com respiro CONSTANTE,
    e as ações ancoradas no rodapé da coluna (`margin-top:auto`). `space-between` puro abria um
    vão morto entre o sub e o cartão quando a partida rende só 3 linhas de estatística. */
-.me-col{display:flex;flex-direction:column;align-items:stretch;
+.me-col{position:relative;z-index:2;display:flex;flex-direction:column;align-items:stretch;
   gap:clamp(var(--s-5),3.4vh,var(--s-7));min-width:0}
 .me-actions{margin-top:auto}
-/* Campo atmosférico onde mora a arte do vencedor na referência. Sem o retrato ele existe
-   pra segurar a composição em duas metades — sem ele o conteúdo à esquerda lê como
-   desalinhado, e não como ancorado. */
-.me-hero{position:relative;align-self:stretch;pointer-events:none;
-  background:radial-gradient(58% 70% at 62% 46%,rgba(var(--bg-700-rgb),.85) 0%,rgba(var(--bg-900-rgb),0) 72%),
-             linear-gradient(90deg,rgba(var(--bg-900-rgb),.9) 0%,rgba(var(--bg-900-rgb),0) 26%)}
+/* RÉGUA DE TINTA VERTICAL. A coluna também tinha vão medido dentro dela: o cartão fecha
+   em y 614 e o CTA só abre em y 852 (1536×1024) — 238 px sem nada entre os dois. O vão é
+   do RITMO da referência (ações ancoradas no rodapé) e por isso fica; o que faltava era
+   dizer que os três blocos são o MESMO bloco. A régua faz isso: acesa no trecho do
+   veredito, desbotando pra baixo, ela costura título → cartão → CTA num eixo só e explica
+   o alinhamento à esquerda. Mora na calha de 66 px que o padding do .me-wrap já abria. */
+.me-col::before{content:"";position:absolute;top:0;bottom:0;left:calc(-1 * var(--s-4));
+  width:4px;pointer-events:none;
+  background:linear-gradient(180deg,var(--br-faixa) 0 26%,rgba(255,201,63,.16) 26% 100%)}
+/* CAMPO DE QUADRO CHEIO (era coluna; ver o bloco acima). Mesma receita das telas de fluxo:
+   cena desfocada e rebaixada + scrim + vinheta que ancora. A arte é o /img/select-bg.png,
+   que já é o fallback declarado do --wall nas telas 03/04/05 (style.css:2057) — imagem
+   estática de propósito: nada aqui pode depender de dado de runtime.
+   O scale(1.08) é o mesmo truque de lá: blur em camada `inset:0` chupa a borda, e o
+   excedente de 8 % cobre o rombo.
+   O `filter` de uma camada vale pros pseudos DELA, então o .me-hero carrega SÓ a foto:
+   scrim e moldura moram em camadas irmãs, senão sairiam desfocados e escalados junto. */
+.me-hero{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url('/img/select-bg.png') center/cover no-repeat;
+  transform:scale(1.08);filter:blur(9px) saturate(.4) brightness(.26)}
 .me-verdict{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-2);text-align:left}
 #match-title{font-size:clamp(46px,12vh,132px);font-weight:700;letter-spacing:clamp(2px,.4vw,7px);
   text-transform:uppercase;line-height:var(--lh-tight);
