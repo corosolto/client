@@ -39,7 +39,25 @@ const allProps = [...new Set([...GLOBAL_PROPS, ...(MAPS[MAP].props || [])])];
 window.MAPEVAL = {
   ready:false,
   view(from, look){ cam.position.set(...from); cam.lookAt(...look); renderer.render(scene,cam); },
+  cam, renderer,
+  /* POSE DE JOGADOR (yaw/pitch em rad, ordem YXZ) — o MESMO contrato de câmera do
+     game.js:4713. `view(from,look)` não serve para procurar enquadramento: lookAt
+     não diz "para onde o jogador está virado", e é exatamente esse o eixo que a
+     captura precisa declarar. `fov` entra porque o mapview nasceu com 55 e o jogo
+     joga em outro — enquadrar aqui com lente diferente da do jogo é escolher pose
+     no escuro. Usado por tools/eval/gl-poses.mjs --scout. */
+  pose(x, y, z, yaw, pitch, fov){
+    if (fov && Math.abs(cam.fov - fov) > 0.01){ cam.fov = fov; cam.updateProjectionMatrix(); }
+    cam.rotation.order = 'YXZ';
+    cam.position.set(x, y, z);
+    cam.rotation.set(pitch || 0, yaw || 0, 0);
+    cam.updateMatrixWorld(true);
+    renderer.render(scene, cam);
+  },
 };
+// `?hud=0` tira o texto de diagnóstico do canto: ele é DOM por cima do canvas e
+// qualquer medida de pixel feita neste quadro o contaria como parte do mapa.
+if (qp.get('hud') === '0') hud.style.display = 'none';
 
 (async ()=>{
   const T = initTextures();
