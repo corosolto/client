@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-07T22:59:14.764Z",
+ "gerado": "2026-08-12T04:01:28.273Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -366,18 +366,18 @@
  ],
  "caminhos": {
   "vm": {
-   "linha": 1393,
+   "linha": 1386,
    "fonte": "(obj) => obj.traverse((o) => { if (!o.isMesh || !o.material) return; if (!VM_MAT_LEGACY && temEnv) return; // MAT1: mesmo GLB, mesmo material, nos 3 caminhos o.material = o.material.clone(); if ('meta",
    "metalFactor": 1,
    "roughFactor": 1,
    "envMapIntensity": 1
   },
   "chao_pickup": {
-   "linha": 629,
+   "linha": 616,
    "mutacoes": []
   },
   "chao_drop": {
-   "linha": 4818,
+   "linha": 4956,
    "mutacoes": []
   },
   "tp_mount": {
@@ -532,14 +532,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.995,
+    "opacidadeSprite": 0.999,
     "escalaSprite": [
-     3.44,
-     4.98
+     3.06,
+     5.1
     ],
     "spritesCobrindoCentro": 13,
-    "alfaAcumuladoCentro": 0.9938,
-    "maiorAlfaSprite": 0.646,
+    "alfaAcumuladoCentro": 0.9958,
+    "maiorAlfaSprite": 0.569,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -815,14 +815,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#81a3c4",
-    "opacidadeSprite": 0.973,
+    "opacidadeSprite": 0.972,
     "escalaSprite": [
-     3.02,
-     5.08
+     3.08,
+     5.12
     ],
-    "spritesCobrindoCentro": 11,
-    "alfaAcumuladoCentro": 0.993,
-    "maiorAlfaSprite": 0.586,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9997,
+    "maiorAlfaSprite": 0.771,
     "radianciaFumaca": 0.3467,
     "radianciaCeu": 0.4623,
     "razaoFumacaCeu": 0.75,
@@ -1039,14 +1039,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#8facca",
-    "opacidadeSprite": 0.993,
+    "opacidadeSprite": 0.998,
     "escalaSprite": [
-     3.16,
-     5.04
+     3.06,
+     5.16
     ],
-    "spritesCobrindoCentro": 11,
-    "alfaAcumuladoCentro": 0.9983,
-    "maiorAlfaSprite": 0.753,
+    "spritesCobrindoCentro": 10,
+    "alfaAcumuladoCentro": 0.9977,
+    "maiorAlfaSprite": 0.686,
     "radianciaFumaca": 0.3969,
     "radianciaCeu": 0.5292,
     "razaoFumacaCeu": 0.75,
@@ -1200,13 +1200,13 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#91adca",
-    "opacidadeSprite": 0.986,
+    "opacidadeSprite": 0.994,
     "escalaSprite": [
-     3.34,
-     5.14
+     3.18,
+     5
     ],
-    "spritesCobrindoCentro": 12,
-    "alfaAcumuladoCentro": 0.9948,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9986,
     "maiorAlfaSprite": 0.697,
     "radianciaFumaca": 0.4019,
     "radianciaCeu": 0.5359,
@@ -1388,14 +1388,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.99,
+    "opacidadeSprite": 0.997,
     "escalaSprite": [
-     3.02,
-     5.18
+     3,
+     5.14
     ],
-    "spritesCobrindoCentro": 6,
-    "alfaAcumuladoCentro": 0.9831,
-    "maiorAlfaSprite": 0.799,
+    "spritesCobrindoCentro": 9,
+    "alfaAcumuladoCentro": 0.8964,
+    "maiorAlfaSprite": 0.415,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -1415,7 +1415,7 @@
   }
  ],
  "shade": {
-  "gerado": "2026-08-07T22:59:14.764Z",
+  "gerado": "2026-08-12T04:01:28.273Z",
   "armas": [
    {
     "arma": "ak",

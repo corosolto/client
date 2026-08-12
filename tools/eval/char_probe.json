@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-07T22:57:01.884Z",
+ "gerado": "2026-08-12T04:00:27.064Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 44,
@@ -71,13 +71,13 @@
   "porMapa": [
    {
     "mapa": "praca_poderes",
-    "materiais": 104,
-    "map": 89,
+    "materiais": 102,
+    "map": 87,
     "normalMap": 16,
     "roughnessMap": 16,
     "aoMap": 0,
-    "meshes": 176,
-    "triangulos": 3713
+    "meshes": 174,
+    "triangulos": 3709
    },
    {
     "mapa": "piscina_treta",
@@ -91,12 +91,12 @@
    },
    {
     "mapa": "loja_h",
-    "materiais": 250,
-    "map": 83,
+    "materiais": 249,
+    "map": 82,
     "normalMap": 18,
     "roughnessMap": 18,
     "aoMap": 0,
-    "meshes": 397,
+    "meshes": 396,
     "triangulos": 18374
    },
    {
@@ -107,7 +107,7 @@
     "roughnessMap": 9,
     "aoMap": 0,
     "meshes": 689,
-    "triangulos": 22914
+    "triangulos": 22912
    },
    {
     "mapa": "quebrada",
@@ -117,12 +117,12 @@
     "roughnessMap": 10,
     "aoMap": 0,
     "meshes": 1629,
-    "triangulos": 25932
+    "triangulos": 25928
    }
   ],
   "total": {
-   "materiais": 1075,
-   "map": 709,
+   "materiais": 1072,
+   "map": 706,
    "normalMap": 53,
    "roughnessMap": 53,
    "aoMap": 0
