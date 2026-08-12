@@ -1,18 +1,14 @@
 /* ui-antes.mjs — fotografa as telas do fluxo de menu como elas estão HOJE.
    Serve de "antes" para o redesenho; o g2ui-verify não passa do gate de clique da splash.
    Uso: BASE=http://localhost:4399 node tools/eval/ui-antes.mjs   (saída em /tmp/ui-antes) */
-import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { abreChrome } from './lib/browser.mjs';
 
 const OUT = process.env.OUT || '/tmp/ui-antes';
 const BASE = process.env.BASE || 'http://localhost:4399';
 mkdirSync(OUT, { recursive: true });
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
 
-const browser = await chromium.launch({ executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' });
+const browser = await abreChrome();
 const W = +(process.env.W || 1536), H = +(process.env.H || 1024);
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 page.on('pageerror', (e) => console.log('  [erro de página]', e.message));

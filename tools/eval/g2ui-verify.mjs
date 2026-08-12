@@ -4,19 +4,14 @@
 //   05 pause → SAIR PRO MENU → 06 home limpa (fluxo!) · 07 killfeed com ícones novos
 // Falha (exit 1) em qualquer erro de console/pageerror ou assert quebrado.
 // Uso: node tools/eval/g2ui-verify.mjs
-import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { pathToFileURL } from 'node:url';
+import { abreChrome } from './lib/browser.mjs';
 
 const OUT = '/tmp/gauntlet';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
 
 mkdirSync(OUT, { recursive: true });
-const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+const browser = await abreChrome({
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
 });
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
