@@ -86,6 +86,11 @@ const VM_MAT_LEGACY = QS.get('vmmat') === 'legacy';
 // round) olhando pra esplanada vazia. Menos espera + spawn escolhido por segurança
 // (_pickSpawn) encurta o caminho de volta pra briga sem virar respawn de arena.
 const ROUND_TIME = 99, ROUNDS_TO_WIN = 3, RESPAWN_DELAY = 2.2, PICKUP_RESPAWN = 8, SPAWN_PROT = 2;
+/* Travas do drop de arma na morte (ver `_kill`). Os números saem do ritmo da partida:
+   RESPAWN_DELAY é 2,2 s, então 25 s é tempo de a arma sobreviver a uma troca de posição
+   inteira e ainda ser catável por quem chegou depois — sem virar cenário permanente. O teto
+   de 12 é ~1,5× o número de mortes simultâneas plausíveis num 4v4. */
+const DROP_TTL = 25, DROP_MAX = 12;
 /* TETO DE RODADAS — "melhor de 5", que é o que o índice já promete ao jogador
    (src/pages/index.astro:503, "Vence quem ganhar 3 rounds"). Sem este teto o formato NÃO
    ERA melhor de 5: round EMPATADO não dá ponto pra ninguém (game.js:_endRound), então uma
@@ -1671,7 +1676,7 @@ export class Game {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
         // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário)
-        if (dropIdx >= 0 && !pk.rack) { this.scene.remove(pk.mesh); this.drops.splice(dropIdx, 1); }
+        if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
         this.nearPickup = null;
       }
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
@@ -2924,9 +2929,31 @@ export class Game {
     ent._killT = this.time;
     ent.alive = false; ent.hp = 0; ent.deaths++;
     ent.respawnAt = this.time + RESPAWN_DELAY;
-    // Sem drop de arma onde morreu: o arsenal completo já está no respawn, então drops
-    // pelo mapa viravam lixo espalhado (pedido do usuário: nada de arma jogada no chão).
-    // this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon === 'knife' ? 'awp' : ent.weapon);
+    /* DROP DE ARMA NA MORTE — e o histórico disto importa.
+
+       Isto já existiu e foi RETIRADO a pedido do dono: "o arsenal completo já está no
+       respawn, então drops pelo mapa viravam lixo espalhado — nada de arma jogada no chão".
+       Volta agora por pedido novo do mesmo dono: "outra coisa que os FPS têm: quando um
+       jogador morre, a arma dele cai no chão".
+
+       Os dois pedidos são compatíveis, porque a reclamação nunca foi do drop em si: foi do
+       ACÚMULO. Numa partida de 10 minutos com respawn a cada 5 s, o drop sem prazo vira um
+       tapete de armas que não interessa a ninguém (todo mundo renasce armado). Então o drop
+       volta com as duas travas que faltavam da outra vez:
+
+         PRAZO   `DROP_TTL` — a arma some sozinha. É o que separa "arma do cara que acabou
+                 de morrer aqui" (informação de combate: alguém caiu neste corredor) de
+                 "lixo de 10 minutos atrás" (ruído).
+         TETO    `DROP_MAX` — no máximo N drops de morte vivos ao mesmo tempo; o mais velho
+                 sai pra dar lugar ao mais novo. Segura o pior caso (chacina num corredor)
+                 sem depender do prazo ter vencido.
+
+       FACA NÃO DROPA: todo mundo já nasce com faca, então o drop seria um pickup que não
+       muda nada — lixo pela definição do próprio pedido antigo. (A versão retirada trocava
+       faca por AWP, o que dava arma melhor a quem morreu de faca.) */
+    if (ent.weapon && ent.weapon !== 'knife' && this._pickupAllowed(ent.weapon)) {
+      this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon, false, 0.01, this.time + DROP_TTL);
+    }
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
       this.sfx.voice(this._voiceKey(attacker.team));   // killer's side celebrates (meme audio)
@@ -4845,11 +4872,14 @@ export class Game {
     // PLAYER — bots leave them alone (otherwise they hoover the spawn line on round 1).
     for (let i = this.drops.length - 1; i >= 0; i--) {
       const pk = this.drops[i];
+      // PRAZO antes de qualquer outra coisa: arma vencida some mesmo que um bot esteja em
+      // cima dela neste quadro. Sem prazo (rack, troca de arma do jogador) nunca vence.
+      if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
         if (!b.alive) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
-        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this.scene.remove(pk.mesh); this.drops.splice(i, 1); break; }
+        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this._sumirDrop(i); break; }
       }
     }
   }
@@ -4922,7 +4952,7 @@ export class Game {
     return mesh.position.y;
   }
   // CS: morto larga a arma no chão
-  _dropWeapon(x, z, weapon, rack = false, folga = 0.01) {
+  _dropWeapon(x, z, weapon, rack = false, folga = 0.01, expiraEm = 0) {
     const mesh = weaponModel(weapon) || buildRifle();  // real GLB on the ground
     // lay it FLAT on its side (roll 90° about the barrel) so it rests on the ground
     // instead of standing on its belly. Rack drops (spawn weapon rows) get an aligned
@@ -4932,7 +4962,22 @@ export class Game {
     this._assentarNoChao(mesh, x, z, folga);
     mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
     this.scene.add(mesh);
-    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack });
+    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, expiraEm });
+    /* TETO dos drops de morte: o mais velho sai pra dar lugar ao mais novo. Só conta quem
+       tem prazo — o rack de spawn e os drops de troca de arma do jogador não entram na
+       fila e não são despejados por ela. */
+    if (expiraEm) {
+      const comPrazo = [];
+      for (let i = 0; i < this.drops.length; i++) if (this.drops[i].expiraEm) comPrazo.push(i);
+      for (let k = 0; k < comPrazo.length - DROP_MAX; k++) this._sumirDrop(comPrazo[k] - k);
+    }
+  }
+  // tira um drop da cena e da lista. Índice, porque quem chama já está varrendo a lista.
+  _sumirDrop(i) {
+    const d = this.drops[i];
+    if (!d) return;
+    d.mesh?.removeFromParent();
+    this.drops.splice(i, 1);
   }
   /* SPAWN POR SEGURANÇA (não sorteado): dos 4 pontos do time, escolhe o que está mais longe
      do inimigo vivo mais próximo E sem linha de visão pra ele. O sorteio puro colocava o
