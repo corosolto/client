@@ -107,9 +107,13 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
-**Commit de agente leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`) — é o que
-sustenta o "cada commit diz qual" do README. A convenção completa mora em
-`CONTRIBUTING.md`.
+**Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
+`Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
+digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
+`AGENTE="Claude Code (Opus 5)"` tem precedência quando você quer nomear o modelo.
+O `commit-msg` **recusa** commit sem o trailer e commit acima de 15 arquivos ou
+800 linhas sem um `Commit-grande:` dizendo por quê. A convenção completa, com a
+medição que comprou o teto, mora em `CONTRIBUTING.md`.
 
 ---
 

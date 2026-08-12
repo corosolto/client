@@ -226,20 +226,55 @@ Se ainda não instalou as dependências, assine manualmente:
 git commit -s -m "feat: minha mudança"
 ```
 
-### Commit de agente leva nome
+### Quem escreveu o commit
 
 Este repositório é **AI generated e AI friendly**: boa parte do código é escrita
-por agentes de IA, e todo commit feito ou co-escrito por um agente leva o
-trailer `Agent:` com o nome dele — é o que sustenta o "cada commit diz qual" do
-README:
+por agentes de IA, e **todo** commit diz quem o escreveu no trailer `Agent:` —
+é o que sustenta o "cada commit diz qual" do README. Humano commitando sozinho
+leva `Agent: humano`; o campo nunca fica vazio, porque campo opcional envelhece
+para vazio (a convenção nasceu escrita em três arquivos e, 200 commits depois,
+não estava em **nenhum** deles).
+
+Você não precisa digitar: o `.githooks/prepare-commit-msg` preenche sozinho,
+lendo a assinatura do ambiente (`CLAUDECODE`, `KIMI_*`, `CODEX_*`, `OPENCODE*`,
+`CURSOR_TRACE_ID`, `AI_AGENT`). Para dizer o modelo junto — que raramente está no
+ambiente — exporte `AGENTE`, que tem precedência sobre a detecção:
 
 ```bash
-git commit -s -m "fix: minha correção" --trailer "Agent: Kimi Code"
+export AGENTE="Claude Code (Opus 5)"
+git commit -s -m "fix: minha correção"      # trailer entra sozinho
+git commit -s -m "fix: x" --trailer "Agent: Kimi Code"   # ou explícito
 ```
 
-Humano commitando sozinho não precisa do trailer. Agente commitando em nome de
-humano mantém o `Signed-off-by` de quem assina e acrescenta o `Agent:` de quem
-escreveu.
+Agente commitando em nome de humano mantém o `Signed-off-by` de quem assina e
+acrescenta o `Agent:` de quem escreveu. O `.githooks/commit-msg` recusa commit
+sem o trailer, e o portão `Check trailer Agent` do CI cobre o que o hook não
+alcança: clone sem `npm run setup`, `--no-verify` e commit pela interface do
+GitHub.
+
+### Commit grande pede motivo
+
+Commit pequeno é o que torna revisão, `git bisect` e reversão baratos, e é a
+primeira coisa que se perde quando um agente trabalha por horas sem parar. O
+`.githooks/commit-msg` recusa commit acima de **15 arquivos ou 800 linhas**,
+ignorando arquivo gerado (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
+`STATUS.md`, `tools/eval/ARCH.md`, `docs/i18n/`, `graphify-out/`,
+`public/js/version.js`) e commit de release.
+
+O teto não é opinião: em **343 commits** não-release da `main`, a mediana é de
+**3 arquivos e 86 linhas** e o p90 é **13 arquivos e 785 linhas**. O teto fica
+logo acima do p90 — ele morde os 10% maiores, não o trabalho normal.
+
+Quando o commit grande é o certo (mover uma pasta, regenerar um acervo, aplicar
+um rename), diga por quê e siga:
+
+```bash
+git commit -s --trailer "Commit-grande: git mv da pasta fpvm, sem mudança de conteúdo"
+```
+
+Rebase, merge, cherry-pick e revert não são medidos de novo: o commit já passou
+pelo teto uma vez, e cobrar duas transforma conflito resolvido em commit
+reprovado.
 
 ## Reportando bugs
 
