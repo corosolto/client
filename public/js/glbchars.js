@@ -39,14 +39,18 @@ export const GLB_CHARS = new Set([
   // os outros 8 são GLBs Mint riggados offline (tools/rig-from-donor.mjs, esqueleto do mst)
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
-  // Mítico (6ª facção). GLBs gerados no Mint MCP (mint.gg), ~1MB cada, formato GLB PBR.
+  // Mítico (6ª facção). Os três raws Meshy foram removidos; o elenco volta a
+  // apontar somente para malhas PBR. Bandeirante usa rig Meshy provisório, ainda em revisão.
   'mariabonita', 'saci', 'lampiao', 'lobisomem', 'bandeirante', 'cuca', 'curupira', 'boto', 'zumbi',
+  // Novas facções — fatias verticais da spec 0002; a facção só fica ready com 8/8.
+  'camera-roxa', 'microfonildo', 'programador-virado', 'designer-ux', 'lenda-lanhouse', 'motoca-cachorro-loko', 'doidinho-bairro',
+  'profeta-calcada',
 ]);
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
 // Exportado para a select-mount.mjs: nesses, MÃO-L não se aplica (é decisão, não defeito).
-export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho']);
+export const IK_L_SKIP = new Set(['dollynho', 'gotinha', 'et', 'canarinho', 'cuca']);
 
 const STATES = ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'crouchwalk', 'jump'];
 // Clipes OPCIONAIS: 1 mão (pistolas) + andando atirando. Se o arquivo não existir,
@@ -113,6 +117,22 @@ const _num3 = (s, d) => { const p = (s || '').split(',').map(Number); return p.l
 const GUN_POS = _num3(qp.get('gunpos'), [0.02, 0.02, 0.04]);
 const GUN_ROT = _num3(qp.get('gunrot'), [90, 0, 0]).map((d) => d * Math.PI / 180);
 const GUN_SCALE = parseFloat(qp.get('guns')) || 1.0;
+const LOBI_HAND_R = _num3(qp.get('lobirh'), [0, 0, 0]).map((d) => d * Math.PI / 180);
+const LOBI_HAND_L = _num3(qp.get('lobilh'), [0, 0, 0]).map((d) => d * Math.PI / 180);
+const LOBI_CURL_Q = parseFloat(qp.get('lobcurl'));
+const LOBI_CURL = Number.isFinite(LOBI_CURL_Q) ? LOBI_CURL_Q : 0.7;
+const LOBI_CURL_R = _num3(qp.get('lobcurlr'), [LOBI_CURL, 0, 0]);
+const LOBI_CURL_L = _num3(qp.get('lobcurll'), [LOBI_CURL, 0, 0]);
+// Estes três rigs Meshy nasceram com as palmas completamente planas. A correção combina
+// cadeia de duas falanges (finger-curl.mjs --chain) e compactação distal. Motoca/Doidinho
+// precisam 0,65 rad; no Programador essa rotação estourava P99=0,890 e 80,3 arestas/10k.
+// A mão dele já nasce mais fechada: 0,20 mantém a pegada e volta a P99=0,630 / 21,0.
+// A/B e régua: tools/eval/*grip_curl_ab.png + select-mount/select-inflate.
+const CHAR_GRIP_CURL = new Map([
+  ['programador-virado', 0.20],
+  ['motoca-cachorro-loko', 0.65],
+  ['doidinho-bairro', 0.65],
+]);
 // Armas que precisam de +180° só na 3ª pessoa (mount). VAZIO desde 04/08: o flip da p90
 // era da época de outro GLB; o modelo atual já nasce com o cano em +Z e o flip a deixava
 // de coronha pra frente (visto pelo dono na tela de seleção; A/B por figura no scratchpad
@@ -137,6 +157,14 @@ const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
+// BUG-47: a P90 tem 0,52 m e, no porte global de 4°, projetava só 0,110 m no
+// enquadramento 3:2 do capturador — abaixo dos 0,178 m da M4 aprovada. A malha raw já
+// contém carregador superior e arcos bullpup; o defeito era a apresentação quase de
+// topo. Este yaw é só do mount visual do Doidinho (roster, escala e balística intactos).
+// `?tpcarry=pitch,yaw` continua sendo o override explícito global para A/B.
+const TP_CHAR_CARRY_YAW = new Map([
+  ['doidinho-bairro', -18],
+]);
 const TP_CLEAR = parseFloat(qp.get('tpclear')) || 0.06;   // folga mínima entre o grip e a superfície do corpo (m)
 // O empurrão só entra quando a palma está ENTERRADA de verdade. Medido: humano típico
 // tem a palma 3-10 cm dentro do volume do quadril na pose de idle (braço encostado no
@@ -365,6 +393,9 @@ export function buildCharacterModel(def, opts = {}) {
   const template = _base.get(def.id);
   if (!template || !_clips) return null;
   const withWeapon = opts.weapon !== false; // menu showcase passes weapon:false
+  // A ficha do Bandeirante pede mosquete sem óptica. A arma competitiva continua sendo
+  // `mosin`; só o modelo de corpo/seleção troca, sem inventar balística ou slot novo.
+  const weaponId = def.id === 'bandeirante' ? 'mosquete' : (opts.weaponId || 'awp');
 
   const model = skeletonClone(template);
 
@@ -385,6 +416,17 @@ export function buildCharacterModel(def, opts = {}) {
   const rimCol = charRimColor(def);
   model.traverse((o) => {
     if (!o.isMesh) return;
+    /* PROP RÍGIDO NUNCA ABSORVE TIRO (Profeta da Calçada, 12/08) — o hitscan do
+       game.js raycasta o grupo INTEIRO do bot (intersectObjects(enemyGroups, true),
+       game.js _fireHitscan), então uma malha não-skinnada pendurada em socket
+       (placas de papelão, case) viraria hitbox de graça e alargaria o alvo
+       competitivo — a spec 0002 §8 veda: "partes decorativas não alteram alcance
+       de tiro". Mesmo mecanismo da sombra de contato (characters.js:
+       `m.raycast = () => {}` — "NUNCA absorve tiro"). No-op no resto do elenco:
+       medido em 12/08 com gltf-transform, nenhum outro GLB de
+       public/models/characters tem mesh não-skinnado. Prova:
+       tools/eval/asset-evidence/profeta-calcada/hitbox-probe-{red,green}.json. */
+    if (!o.isSkinnedMesh) o.raycast = () => {};
     o.castShadow = true;
     // receiveShadow: sem isto a sombra do sol NUNCA escurecia o personagem — parte do
     // motivo de ele ler como adesivo. Quem impede que essa sombra o faça SUMIR é o piso
@@ -429,11 +471,11 @@ export function buildCharacterModel(def, opts = {}) {
   model.traverse((o) => { if (o.isBone && !rforeBone && /right.?forearm|r_forearm/i.test(o.name)) rforeBone = o; });
   if (!handBone) model.traverse((o) => { if (o.isBone && !handBone && /hand/i.test(o.name)) handBone = o; });
   if (handBone && withWeapon) {
-    const gun = weaponModel(opts.weaponId || 'awp') || buildRifle();
+    const gun = weaponModel(weaponId) || buildRifle();
     // Flip de 180° SÓ na 3ª pessoa p/ armas que ficam de costas no mount (o cano +Z da
     // weaponModel não bate com a mão nesses casos). O FP tem seu próprio ajuste (vmRotY),
     // então corrigimos aqui sem tocar no viewmodel já validado. (P90: usuário viu ao contrário.)
-    if (TP_FLIP_Y.has(opts.weaponId)) gun.rotateY(Math.PI);
+    if (TP_FLIP_Y.has(weaponId)) gun.rotateY(Math.PI);
     gunObj = gun;
     // Measure the weapon's authored (real-world) size in its own space, before parenting.
     gun.updateMatrixWorld(true);
@@ -471,7 +513,7 @@ export function buildCharacterModel(def, opts = {}) {
   const ctrl = new CharController(mixer, actions, group, headBone, head, def.id, model);
   ctrl.shadow = shadow;   // antes do settle loop abaixo (ctrl.update já a atualiza)
   // Arma de 1 mão (pistol/deagle/revolver38/knife): usa idle1h/walk1h quando carregados.
-  ctrl.oneHanded = !!(opts.weaponId && ONE_HANDED.has(opts.weaponId));
+  ctrl.oneHanded = ONE_HANDED.has(weaponId);
 
   if (handBone && withWeapon) {
     // A pose tem que estar ASSENTADA antes de medir qualquer coisa: o mixer acabou de
@@ -496,7 +538,11 @@ export function buildCharacterModel(def, opts = {}) {
        measurePalmLocal, que perdia os vértices dos dedos na média da palma.
        Agora: junta TODOS os ossos com esse nome e prefere os que têm peso de skin. */
     const curlsR = [], curlsL = [];
-    model.traverse((o) => { if (o.isBone) { if (o.name === 'Curl_R') curlsR.push(o); if (o.name === 'Curl_L') curlsL.push(o); } });
+    model.traverse((o) => {
+      if (!o.isBone) return;
+      if (o.name === 'Curl_R' || o.name === 'Curl_R_Tip') curlsR.push(o);
+      if (o.name === 'Curl_L' || o.name === 'Curl_L_Tip') curlsL.push(o);
+    });
     const comPeso = (lista) => {
       if (lista.length < 2) return lista;
       let sk = null;
@@ -526,10 +572,13 @@ export function buildCharacterModel(def, opts = {}) {
       // medidos por vértice, probe-muzzle 05/08) com pitch pra baixo — sem isso o revólver
       // do bonzo aponta ~35° pro céu. No jogo o porte funcional fica intocado: bot mira
       // pra onde olha (funcional > identidade). A/B: scratchpad sel_now × sel_fix.
-      const cd = opts.preview ? (ONE_HANDED.has(opts.weaponId) ? [4, 26] : [-14, 40]) : null;
+      const cd = opts.preview ? (ONE_HANDED.has(weaponId) ? [4, 26] : [-14, 40]) : null;
+      const charCarryYaw = _tpc.length === 2 && !isNaN(_tpc[1])
+        ? TP_CARRY_YAW
+        : (TP_CHAR_CARRY_YAW.get(def.id) ?? 4) * Math.PI / 180;
       const carry = new THREE.Quaternion().setFromEuler(cd
         ? new THREE.Euler(cd[0] * Math.PI / 180, cd[1] * Math.PI / 180, 0, 'YXZ')
-        : new THREE.Euler(TP_CARRY_PITCH, TP_CARRY_YAW, 0, 'YXZ'));
+        : new THREE.Euler(TP_CARRY_PITCH, charCarryYaw, 0, 'YXZ'));
       const bodyQ = model.getWorldQuaternion(new THREE.Quaternion());
       const desired = bodyQ.multiply(carry);
       const handQ = handBone.getWorldQuaternion(new THREE.Quaternion());
@@ -551,7 +600,12 @@ export function buildCharacterModel(def, opts = {}) {
          Kill-switch: ?tpmountlive=0 volta ao comportamento congelado. */
       let rArmBone = null;
       model.traverse((o) => { if (o.isBone && !rArmBone && o.name === 'RightArm') rArmBone = o; });
-      if (TP_MOUNT_LIVE) ctrl.tpMount = { mount, handBone, model, carry, palmLocal: null, rArm: rArmBone, rFore: rforeBone };
+      if (TP_MOUNT_LIVE) ctrl.tpMount = {
+        mount, handBone, model, carry, palmLocal: null, rArm: rArmBone, rFore: rforeBone,
+        handAdjust: def.id === 'lobisomem'
+          ? new THREE.Quaternion().setFromEuler(new THREE.Euler(...LOBI_HAND_R))
+          : null,
+      };
       // 2) POSIÇÃO: no centro medido da PALMA, não na origem do osso (que é o PULSO).
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
@@ -591,7 +645,7 @@ export function buildCharacterModel(def, opts = {}) {
     }
     // Grip curl: close the fingers onto the grip (the auto-skinned curl bones).
     // Two-handed weapons curl both hands; one-handed only the grip (right) hand.
-    const twoHanded = !ONE_HANDED.has(opts.weaponId || 'awp');
+    const twoHanded = !ONE_HANDED.has(weaponId);
     /* CURL DOS DEDOS: era 0,5 rad CRAVADO nas duas mãos, para as 26 armas.
        O curl é o quanto os dedos fecham em volta do PUNHO da arma, então o valor certo é
        função da GROSSURA do que a mão agarra — um punho de pistola e o guarda-mão de uma
@@ -599,7 +653,8 @@ export function buildCharacterModel(def, opts = {}) {
        fina ou os dedos atravessam a arma grossa; nos dois casos lê como "mão solta".
        Aqui o ângulo sai da própria arma: `gripPoints` dá o ponto do guarda-mão e o
        weaponModel dá a caixa, então a espessura no grip é MEDIDA e não tabelada.
-       Faixa 0,35-0,80 rad: abaixo disso a mão não fecha, acima os dedos entram na palma.
+       Faixa geral 0,35-0,80 rad: abaixo disso a mão não fecha, acima pode entrar na palma.
+       Rigs com bind excepcional usam CHAR_GRIP_CURL, medido por A/B servido.
        RESSALVA HONESTA: sem os GLB de personagem nesta árvore não deu pra conferir o
        resultado em imagem. A faixa é conservadora e contém o 0,5 antigo, então o pior
        caso é ficar igual ao que já estava. */
@@ -612,10 +667,24 @@ export function buildCharacterModel(def, opts = {}) {
       // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
       return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
     };
-    const curl = gunObj ? curlPara(gunObj) : 0.5;
+    const curl = def.id === 'lobisomem'
+      ? LOBI_CURL
+      : (CHAR_GRIP_CURL.get(def.id) ?? (gunObj ? curlPara(gunObj) : 0.5));
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
-    for (const b of curlRs) b.rotation.x += curl;
-    if (twoHanded) for (const b of curlLs) b.rotation.x += curl;
+    for (const b of curlRs) {
+      if (def.id === 'lobisomem') {
+        b.rotation.x += LOBI_CURL_R[0];
+        b.rotation.y += LOBI_CURL_R[1];
+        b.rotation.z += LOBI_CURL_R[2];
+      } else b.rotation.x += curl;
+    }
+    if (twoHanded) for (const b of curlLs) {
+      if (def.id === 'lobisomem') {
+        b.rotation.x += LOBI_CURL_L[0];
+        b.rotation.y += LOBI_CURL_L[1];
+        b.rotation.z += LOBI_CURL_L[2];
+      } else b.rotation.x += curl;
+    }
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já
@@ -623,8 +692,18 @@ export function buildCharacterModel(def, opts = {}) {
     if (twoHanded && lhandBone) {
       let lArm = null, lFore = null;
       model.traverse(o => { if (o.isBone) { if (o.name === 'LeftArm') lArm = o; if (o.name === 'LeftForeArm') lFore = o; } });
-      const gp = gripPoints(opts.weaponId || 'awp');
-      if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
+      const gp = gripPoints(weaponId);
+      if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) {
+        const fore = gp.fore.clone();
+        if (def.id === 'lobisomem') fore.y -= 0.03;
+        ctrl.ikL = {
+          chain: [lArm, lFore], end: lhandBone,
+          endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore,
+          handAdjust: def.id === 'lobisomem'
+            ? new THREE.Quaternion().setFromEuler(new THREE.Euler(...LOBI_HAND_L))
+            : null,
+        };
+      }
     }
   }
   return { group, parts: { head }, isGLB: true, mixer, ctrl };
@@ -795,6 +874,18 @@ class CharController {
     // em osso e a conta aqui depende da matriz de mundo já resolvida.
     if (this.tpMount && !this.dead) {
       const t = this.tpMount;
+      /* Ajuste de empunhadura sem arrastar a arma num arco em torno do pulso.
+         O mount e filho da mao: girar o osso diretamente tambem gira o vetor local que
+         leva do pulso ate a palma. Guardamos a ancora mundial antes do ajuste e
+         recalculamos a posicao local do mount depois dele; assim so a mao muda de pose. */
+      if (t.handAdjust) {
+        t.handBone.updateWorldMatrix(true, false);
+        _v.copy(t.palmLocal || t.mount.position);
+        t.handBone.localToWorld(_v);
+        t.handBone.quaternion.multiply(t.handAdjust);
+        t.handBone.updateWorldMatrix(true, false);
+        t.mount.position.copy(t.handBone.worldToLocal(_v));
+      }
       t.handBone.updateWorldMatrix(true, false);
       t.model.getWorldQuaternion(_gq);
       _wq.copy(_gq).multiply(t.carry);                  // orientação desejada do cano (mundo)
@@ -811,13 +902,17 @@ class CharController {
       // converge no quadro seguinte — o assentamento da seleção roda 60 quadros.
       if (t.palmLocal && t.rArm && t.rFore && TP_FRONT_MIN > -Infinity
           && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
-        _v.copy(t.palmLocal);
+        // Com handAdjust, mount.position ja contem a compensacao que preserva a ancora
+        // mundial. Medir/solver pelo palmLocal antigo reintroduziria o arco que acabamos
+        // de remover e empurraria a arma para a frente a cada quadro.
+        const anchorLocal = t.handAdjust ? t.mount.position : t.palmLocal;
+        _v.copy(anchorLocal);
         t.handBone.localToWorld(_v);
         t.model.worldToLocal(_v);
         if (_v.z < TP_FRONT_MIN) {
           _v.z = TP_FRONT_MIN;
           t.model.localToWorld(_v);
-          solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: t.palmLocal });
+          solveCCDIK([t.rArm, t.rFore], t.handBone, _v, { iterations: 6, endOffset: anchorLocal });
           t.handBone.updateWorldMatrix(true, false);
           t.model.getWorldQuaternion(_gq);
           _wq.copy(_gq).multiply(t.carry);
@@ -834,6 +929,7 @@ class CharController {
       _ikTgt.copy(ik.fore);
       ik.gun.localToWorld(_ikTgt);
       solveCCDIK(ik.chain, ik.end, _ikTgt, { iterations: 8, endOffset: ik.endOffset });
+      if (ik.handAdjust) ik.end.quaternion.multiply(ik.handAdjust);
     }
   }
 }

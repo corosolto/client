@@ -1,5 +1,6 @@
 // 8 fictional satirical archetypes — procedural low-poly meshes.
 import * as THREE from 'three';
+import { factionColor } from './factions.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CLAREZA COMPETITIVA DO PERSONAGEM  (critério C1 do BAR + A2 p/ personagens)
@@ -105,9 +106,8 @@ export const CHAR_FX = {
 // `E` (não `P`) e `C` (07/08): o rename Time E deixou esta tabela para trás e os palhaços
 // nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dá erro — dá contorno BRANCO, que
 // parece decisão de arte. Régua: `tools/eval/faccao-paleta-check.mjs`.
-const TEAM_RIM = { E: 0xff5555, B: 0x55dd66, U: 0x4aa3ff, C: 0xff6ec7, F: 0xffc233, M: 0x9d4edd };
 export function charRimColor(def) {
-  const c = new THREE.Color(TEAM_RIM[(def && def.team) || 'E'] || 0xffffff);
+  const c = new THREE.Color(factionColor((def && def.team) || 'E'));
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }
 
@@ -359,6 +359,11 @@ export function applyCharFX(mat, rimColor) {
 // (Na R1 esse emissivo é que segurava o croma alto: o personagem era literalmente
 // o albedo cru na tela. Bonito de cor, zero volume — e a régua cobrou volume.)
 export function upgradeCharMaterial(src, rimColor) {
+  // Acessório rígido pode declarar este prefixo no material do GLB. O shader de
+  // personagem acrescenta piso de albedo, SSS e rim de facção; isso é correto para
+  // pele/roupa, mas transformava o capacete preto do Motoca em salmão. O prefixo é
+  // um contrato genérico do asset, não uma exceção por personagem.
+  const hardSurface = /^CS_HARD_/i.test(src.name || '');
   const m = new THREE.MeshStandardMaterial({
     map: src.map || null,
     color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
@@ -392,7 +397,7 @@ export function upgradeCharMaterial(src, rimColor) {
   // Se a injeção estiver desligada (?charfx=0) o clamp não existe: devolve um resto
   // de emissivo pro personagem não afundar em preto na sombra. Degradação segura.
   if (!CHAR_FX.on) { m.emissive = new THREE.Color(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.10; }
-  return applyCharFX(m, rimColor);
+  return hardSurface ? m : applyCharFX(m, rimColor);
 }
 
 /* ── SOMBRA DE CONTATO ──────────────────────────────────────────────────────
@@ -599,13 +604,13 @@ export const CHARACTERS = [
     blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
     pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
   { id: 'lobisomem', team: 'M', tribe: 'mitico', name: 'Lobisomem',
-    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo-guará acorda na sexta-feira à meia-noite.',
+    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.',
     pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
   { id: 'bandeirante', team: 'M', tribe: 'mitico', name: 'Bandeirante',
     blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.',
     pal: { skin: 0xc09070, shirt: 0x4a3a2a, pants: 0x3a2a1a, hair: 0x4a3a2a, boots: 0x2a1a0a } },
   { id: 'boto', team: 'M', tribe: 'mitico', name: 'Boto Cor de Rosa',
-    blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.',
+    blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.',
     pal: { skin: 0xffaaaa, shirt: 0xffffff, pants: 0xffffff, hair: 0x6a4a3a, boots: 0xffffff } },
   { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
     blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
@@ -616,6 +621,33 @@ export const CHARACTERS = [
   { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
     blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
     pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
+
+  // ── NOVAS FACÇÕES — fatias verticais da spec 0002. A facção permanece `ready:false`
+  // até os oito integrantes existirem; cadastrar aqui permite validar o caminho real.
+  { id: 'camera-roxa', team: 'T', tribe: 'tv', name: 'Câmera Roxa',
+    blurb: 'Robô de estúdio com lente única e rig no ombro. A transmissão começou.',
+    pal: { skin: 0x272331, shirt: 0x6325a8, pants: 0x24172f, hair: 0x31d9ff, boots: 0x16131c } },
+  { id: 'microfonildo', team: 'T', tribe: 'tv', name: 'Microfonildo',
+    blurb: 'Criatura felpuda com fones e boom dorsal. Som rodando!',
+    pal: { skin: 0xc28b25, shirt: 0xd9a42f, pants: 0x795019, hair: 0xe2b33f, boots: 0x224f56 } },
+  { id: 'programador-virado', team: 'N', tribe: 'nerdolas', name: 'Programador Virado',
+    blurb: 'Moletom, olheiras e teclado nas costas. Só mais um commit.',
+    pal: { skin: 0xa88068, shirt: 0x303039, pants: 0x56515f, hair: 0x3a302d, boots: 0xe8e3d8 } },
+  { id: 'designer-ux', team: 'N', tribe: 'nerdolas', name: 'Designer de UX',
+    blurb: 'Roupa preta, tablet e leque de cores. Esse fluxo precisa de combate.',
+    pal: { skin: 0x86543f, shirt: 0x071329, pants: 0x071329, hair: 0x100b12, boots: 0x071021 } },
+  { id: 'lenda-lanhouse', team: 'N', tribe: 'nerdolas', name: 'Lenda da Lan House',
+    blurb: 'Headset antigo, fichas e mouse de bolinha. Reserva a máquina oito.',
+    pal: { skin: 0xa9775f, shirt: 0x5474a8, pants: 0x626a69, hair: 0x352e2b, boots: 0xd8d7ca } },
+  { id: 'motoca-cachorro-loko', team: 'R', tribe: 'profissionais', name: 'Motoca Cachorro Loko',
+    blurb: 'Capacete, refletivo e bag térmica. Endereço confirmado.',
+    pal: { skin: 0x78503c, shirt: 0xe5aa32, pants: 0x34383d, hair: 0x171719, boots: 0x292a2d } },
+  { id: 'doidinho-bairro', team: 'O', tribe: 'noias', name: 'Doidinho do Bairro',
+    blurb: 'Camadas incompatíveis e invenções nas costas. Hoje eu tô calibrado!',
+    pal: { skin: 0xb98966, shirt: 0xf18d5a, pants: 0x3f887f, hair: 0x3d332d, boots: 0x3b9990 } },
+  { id: 'profeta-calcada', team: 'O', tribe: 'noias', name: 'Profeta da Calçada',
+    blurb: 'Placas de papelão com previsões absurdas e case de feira. Já aconteceu semana que vem.',
+    pal: { skin: 0xc89168, shirt: 0x2a3040, pants: 0x23282e, hair: 0x1c1a18, boots: 0x3a3f45 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -631,8 +663,14 @@ export const CHAR_WEAPON = {
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   // Time Mítico
-  mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'pistol',
+  mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'shotgun',
   bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
+  // TV — fatia vertical
+  'camera-roxa': 'm4', 'microfonildo': 'm4',
+  // Novas facções — fatias verticais da spec 0002
+  'programador-virado': 'm4', 'designer-ux': 'm4', 'lenda-lanhouse': 'm4',
+  'motoca-cachorro-loko': 'm4', 'doidinho-bairro': 'p90',
+  'profeta-calcada': 'm4',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 
@@ -807,7 +845,7 @@ export function buildCharacter(def) {
   /* `E` (era `P`, rename de 06/08) e `C` explícito: sem o ramo, a facção cai no ELSE e sai
      azul de Tribos Urbanas — o time do jogador usava braçadeira azul e os palhaços também.
      O else continua sendo o U, de propósito, e é isso que a régua declara. */
-  const band = def.team === 'E' ? 0xe03232 : def.team === 'B' ? 0x1faa4d : def.team === 'F' ? 0xffc233 : def.team === 'C' ? 0xc23a86 : def.team === 'M' ? 0x7b2cbf : 0x4aa3ff;
+  const band = Number.parseInt(factionColor(def.team, true).slice(1), 16);
   parts.armL.add(marcaAdereco(box(D.bracoW + 0.02, 0.08, D.bracoD + 0.02, band, 0, -bracoLen * 0.24, 0)));
 
   addAccessories(def, parts, torsoW);
@@ -1098,4 +1136,3 @@ export function poseCharacter(parts, phase, moving, t) {
   parts.head.rotation.z = Math.sin(t * 1.7) * 0.02;
   parts.head.rotation.x = Math.sin(t * 1.3) * 0.02;
 }
-

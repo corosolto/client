@@ -41,8 +41,10 @@ const MANIFEST = join(AUDIO, 'manifest.json');
 const CHECK = process.argv.includes('--check');
 
 // facção em disco -> letra de time usada pelo jogo (game.js/characters.js)
-const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F' };
+const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F',
+  nerdolas: 'N', profissionais: 'R', noias: 'O', tv: 'T' };
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
+const VOICE_LINES = join(ROOT, 'content', 'voice-lines.json');
 
 // Preservados do manifest atual: cada entrada aqui é uma escolha (qual tiro é da AWP),
 // não um pool. Regenerar do disco trocaria som de arma por ordem alfabética.
@@ -83,6 +85,24 @@ out.voice = {}; out.round = {};
 for (const [dir, team] of Object.entries(FACTIONS)) {
   out.voice[team] = take(listAudio(join(AUDIO, dir, 'ingame')));
   out.round[team] = take(listAudio(join(AUDIO, dir, 'round')));
+}
+
+// ── voz por personagem: a pasta continua sendo a verdade; o texto versionado alimenta
+// a legenda da seleção e a auditoria de licença/provedor sem viajar dentro do MP3.
+out.characterVoice = {}; out.characterVoiceText = {};
+if (existsSync(VOICE_LINES)) {
+  const voiceSource = JSON.parse(readFileSync(VOICE_LINES, 'utf8'));
+  for (const [id, character] of Object.entries(voiceSource.characters || {}).sort(([a], [b]) => a.localeCompare(b))) {
+    out.characterVoice[id] = {};
+    for (const event of ['select', 'kill', 'radio']) {
+      const files = take(listAudio(join(AUDIO, 'characters', id, event)));
+      out.characterVoice[id][event] = files;
+    }
+    for (const line of character.lines || []) {
+      const url = line.output?.file;
+      if (url && line.text) out.characterVoiceText[url] = line.text;
+    }
+  }
 }
 
 // ── curados: vêm do manifest anterior, intocados ────────────────────────────

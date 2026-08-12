@@ -1,0 +1,75 @@
+{
+  "provider": "openrouter",
+  "model": "anthropic/claude-opus-5",
+  "id": "gen-1786475135-K5WjrOKcQbV3zrKKxUpp",
+  "createdAt": "2026-08-11T19:07:27.233Z",
+  "promptFile": "tmp/pilots-alpha60-review-prompt.txt",
+  "promptSha256": "12bdc759bc3fc535ec32e84d107a31051bbfafeb1a330a8f33cdd4c749b1b9d2",
+  "images": [
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/programador-virado-close.png",
+      "sha256": "2318a5e2b2b1ff6d85a0cd4bff051a376570e4900699e07b647fa96c11f2095d"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/programador-virado-medium.png",
+      "sha256": "3f23e23cb739ccd80fb16ea19dbd9d5413c20225203a216ddf88b6ebc545dd19"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/programador-virado-grip.png",
+      "sha256": "9145543cba1c625890a556ed087ad27d634b8694c95ca98e65dab83670d25538"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/programador-virado-walk.png",
+      "sha256": "3bf6be11d112476d849b0f60a030350c846438439c3a8bd59b425b8990a62b1a"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/programador-virado-crouch.png",
+      "sha256": "f3d0f5068a2a82c01130ca9164bbddcb08eae9711b9338af2ddda0e51ad44c8c"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/doidinho-bairro-close.png",
+      "sha256": "eb190051e8a9a8ff694bc7b6ad435344b25cbe3178da33e952abeb42c356ba28"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/doidinho-bairro-medium.png",
+      "sha256": "40bcb9dfc11752e7a1f30e93277122c6d8f5b2058f6154b419be4bcc4325e8a5"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/doidinho-bairro-grip.png",
+      "sha256": "8c543623a2dd16611f3094e5d6f3c75e386d46f87490f29305d465129baf8a6b"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/doidinho-bairro-walk.png",
+      "sha256": "bd7db315cee3b33332d791ba8e7303f075d2ec15e0d29e68717db6979bfe2d99"
+    },
+    {
+      "path": "/tmp/pilot-game-evidence-alpha60/doidinho-bairro-crouch.png",
+      "sha256": "4f1dad343f13d2c1fe674bdc6ad8830aabb99736b55efd3e377caa2e26451348"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 21199,
+    "completion_tokens": 6542,
+    "total_tokens": 27741,
+    "cost": 0.269545,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.269545,
+      "upstream_inference_prompt_cost": 0.105995,
+      "upstream_inference_completions_cost": 0.16355
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1376,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "finishReason": "stop",
+  "review": "# CS BRASIL — asset-review adversarial · lote `pilot-game-evidence-alpha60`\n\nBase do julgamento: só os 10 PNGs anexados. Nenhum receipt, changelog ou intenção considerado.\n\n---\n\n## 1) PROGRAMADOR VIRADO — **REPROVADO**\n\n### O que passa (registrado para não ser reaberto)\n- **Arma canônica (M4): PASSA.** `programador-virado-grip.png` é a única imagem em que a arma é lida com clareza: receiver preto com trilho superior, carregador reto inclinado à frente do punho, handguard, massa de mira dianteira e cano reto curto. Silhueta compatível com M4/AR-15. Sem madeira, sem cano longo de rifle de ferrolho.\n- **Contato da mão traseira: PASSA.** Em `grip` e `crouch` há massa de tom de pele fechada sobre o punho da arma, com o antebraço alinhado ao eixo do gatilho. Não é mão em ar.\n- **Visual de programador cansado: PASSA.** `close` e `grip`: olheiras, barba rala, cabelo desarrumado, moletom cinza-azul com capuz, calça xadrez de pijama, tênis surrado. Teclado amarrado às costas legível já em `medium`. Leitura de \"virado\" ok.\n- **Vetos: PASSA.** Nada de pessoa real reconhecível, nada de gore, nada de logo licenciado no personagem.\n\n### O que reprova\n**(a) Props de assinatura não ancorados — falha de consistência entre estados (critério explícito).**\n- `programador-virado-walk.png`: a caneca está **solta no ar**, à direita do torso, com vão visível de fundo entre o corpo e o prop. Não há alça, mosquetão, cordão ou mão fazendo contato. É prop flutuante, não caneca carregada.\n- `programador-virado-crouch.png`: a mesma caneca aparece agora na altura do quadril/coxa, também sem ponto de fixação visível, e o blob branco-e-vermelho (mouse) atravessa a região do peito/moletom.\n- `programador-virado-close.png` / `grip.png`: caneca e mouse aparecem colados no meio do peito, ocupando a linha de visão do abdômen e **cobrindo exatamente a região onde a mão de apoio deveria aparecer**.\n- Resultado: a posição dos dois props de assinatura muda de peito → ar lateral → quadril entre os cinco estados. Isso é inconsistência de estado estável, não animação de balanço: em `walk` o prop está descolado da malha.\n\n**(b) Mão de apoio não verificável em nenhum dos cinco estados.**\nO requisito é literal: mãos não podem segurar ar. A mão traseira está provada, mas a **dianteira/de apoio no handguard não é visível em nenhuma imagem** — em `close` e `grip` a caneca/mouse ocluem a área; em `medium` a arma é um traço escuro; em `walk` e `crouch` o antebraço dianteiro se perde contra o moletom. Com o requisito sendo pixel-provado, \"não consegui ver\" conta contra o asset, não a favor.\n\n### Correção mínima\n1. Parentear caneca e mouse a sockets rígidos com contato visível (mosquetão no cordão do moletom / bolso lateral), fora da linha central do peito, e reexportar os 5 estados provando posição idêntica em `close`, `walk` e `crouch`.\n2. Refotografar `grip` com ~30° de rotação do modelo (ou câmera 3/4 pelo lado da arma) até que os **dedos da mão de apoio sobre o handguard** apareçam sem oclusão.\nNada além disso é exigido — a M4 em si está aprovada.\n\n---\n\n## 2) DOIDINHO DO BAIRRO — **REPROVADO**\n\n### O que passa\n- **Visual respeitoso e original: PASSA.** `doidinho-bairro-grip.png`: chapéu bucket verde, óculos redondos, colete/jaqueta patchwork laranja-turquesa-roxo, calça cargo remendada, tênis coloridos díspares. Rosto sorridente, digno, sem caricatura de deficiência. **Zero estigma médico**: nenhuma camisa de força, pulseira hospitalar, cartela de comprimido, tarja ou referência clínica em qualquer dos cinco frames. Nenhuma pessoa real reconhecível, nenhum gore.\n- **Roupa incompatível colorida: PASSA.** Cores brigam entre si de forma proposital e a leitura se mantém em `medium`, onde ele é o único ponto saturado da cena — silhueta a média distância é excelente, melhor que a do Programador.\n- **Gambiarra brasileira na mochila: PASSA marginalmente.** `close` e `grip`: bombona/galão verde amarrado, cordas e arame amarelo enrolados, alça improvisada, objeto branco preso com fita. Lê como gambiarra. Ressalva registrada: o blob branco com ponto vermelho é ambíguo (balão? bexiga? garrafa?) e é **o mesmo blob branco-e-vermelho que aparece no peito do Programador** — reuso de prop genérico enfraquece a assinatura, mas isso sozinho não reprovaria.\n\n### O que reprova\n**Arma canônica: a P90 não existe nos pixels como P90.**\n- `doidinho-bairro-medium.png`: a arma é **invisível**. À distância de gameplay não há nenhuma silhueta de arma separável do corpo — apenas um pequeno adensamento escuro nas mãos. Comparação direta na mesma distância e mesmo enquadramento: em `programador-virado-medium.png` o cano da M4 se projeta claramente acima da linha do ombro. O requisito é \"P90 compacta **visível**\"; aqui a arma não é lida.\n- `doidinho-bairro-grip.png` (a imagem que deveria ser a prova definitiva): o que as mãos seguram é um aglomerado escuro curto, sem nenhum dos marcadores canônicos da P90 — **sem carregador superior longitudinal, sem carcaça bullpup ribada, sem o arco/hoop do punho dianteiro, sem cano curto saindo à frente**. A leitura mais próxima é \"pistola grande / blob\", não P90.\n- `doidinho-bairro-close.png` e `crouch.png` confirmam: massa escura amorfa na altura da cintura, comprimento total menor que o antebraço.\n- Nota a favor do asset, para ser justo: o veto específico **não** foi violado — não é rifle longo nem coronha de madeira em nenhum frame. Mas \"não é rifle longo\" não satisfaz \"é P90\". O requisito é positivo e não foi cumprido.\n\nConsequência secundária: com a arma ilegível, o **contato das mãos também não é verificável**. Em `grip` as duas mãos se fecham sobre o mesmo blob sem que se identifique punho, guarda-mato ou handguard — não é possível afirmar que não seguram ar.\n\n### Correção mínima\n1. Substituir/remodelar a arma por uma P90 com os três marcadores obrigatórios legíveis em `grip`: carregador horizontal sobre a carcaça, corpo bullpup com trilho superior, punho dianteiro em arco fechado — e provar que a mão dianteira envolve o arco.\n2. Ajustar escala/pose para que o corpo da P90 **rompa a silhueta do torso** em `medium` (arma projetada à frente do peito, não recolhida na cintura), de modo que a arma seja identificável a média distância no 3:2 servido.\n\n---\n\n## Observações transversais (não alteram os vetos acima)\n- **Brasilidade do conjunto: forte.** Ônibus pichado, grafite \"ZICA\", bandeirinhas de festa junina, barraca de eletrônicos, pilhas de pneu, poste com fiação. Os personagens pertencem à cena; nenhum é reprovado por brasilidade.\n- **Risco de copyright fora do escopo desta review, mas registrado:** o pôster de figura amarela recorrente na lateral do ônibus e o menino de bermuda vermelha no baú do caminhão (`programador-virado-medium.png`, `doidinho-bairro-medium.png`) têm cheiro de derivação de propriedade de terceiros. Isso é asset de mapa, não de personagem — abrir ticket separado; não influenciou nenhum dos dois veredictos.\n- **Ambos os HUDs mostram `PT-38 \"APITO\"` no canto e prompts de pickup (`PEGAR FAMAS`, `PEGAR P90`)**, ou seja, a arma exibida no modelo **não** é confirmada por HUD em nenhum caso. Portanto a arma canônica precisa ser provada 100% pela malha — como cobrei acima.\n\n**Placar: 0 aprovados / 2 reprovados.** O Programador está a duas correções cosméticas do APROVADO; o Doidinho precisa de remodelagem de arma antes de voltar."
+}

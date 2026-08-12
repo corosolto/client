@@ -12,6 +12,7 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
+import { setMapSky } from './map_sky.js';
 
 const HALF_X = 38, HALF_Z = 58;
 // Carros do estacionamento (ids otimizados em public/models/props). Forte cara BR.
@@ -605,7 +606,19 @@ export function buildHavan(scene, T) {
   // z < -6 = dentro da loja (SF): vai pro lote sem sombra.
   const gprop = (id, x, z, h, ry = 0, y = 0) => {
     if (BATCH) return (z < -6 ? PROPS_LOJA : PROPS).add(id, { x, y, z, targetH: h, ry });
-    const o = placeProp(id, { x, y, z, targetH: h, ry }); if (o) root.add(o); return !!o;
+    const o = placeProp(id, { x, y, z, targetH: h, ry });
+    if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
+    return !!o;
+  };
+  const coverMat = new THREE.MeshBasicMaterial();
+  const carCover = (x, z, hw, hd, h) => {
+    colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
+    // O PropBatch nasce depois como InstancedMesh visual; a caixa mantém hitscan, LOS e
+    // colisão no mesmo volume. Fica fora da cena (zero draw), mas na lista de raycast.
+    const proxy = new THREE.Mesh(new THREE.BoxGeometry(hw * 2, h, hd * 2), coverMat);
+    proxy.position.set(x, h / 2, z); proxy.updateMatrixWorld(true);
+    proxy.userData.coverProxy = proxy.userData.proxyGLB = true;
+    occluders.push(proxy);   // fora da cena: zero draw call; OM1 valida contra o GLB visível
   };
   // fallback enquanto o GLB não carrega (ou falha): mini-carro colorido por hash do id —
   // substitui a caixa preta que fazia o estacionamento parecer quebrado no menu/loading.
@@ -662,6 +675,18 @@ export function buildHavan(scene, T) {
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.1), lam({ color: 0x20242a, metalness: 0.45, roughness: 0.18, envMapIntensity: 2.2 }));   // vidro do carro
     cabin.position.set(0, 1.05, -0.2); cabin.castShadow = true; g.add(cabin);
     g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
+  }
+
+  // ===== entorno não jogável =====
+  // Sem este avental o pátio terminava num retângulo suspenso sobre o céu. A faixa de terra
+  // e o acostamento ficam 8-12 cm abaixo do mapa, sem collider, occluder ou waypoint: mudam
+  // somente o horizonte aéreo e dão contexto de loja de rodovia à Casa Branca cenográfica.
+  {
+    const grass = lam({ map: reTile(T.grass, 52, 42), color: 0xa6a56f, roughness: 1 });
+    const road = lam({ map: reTile(T.asphalt, 34, 46), color: 0x8b8b86, roughness: 0.98 });
+    addFloor(154, 162, -10, 3, grass, -0.12);
+    addFloor(104, 154, 0, 3, road, -0.08);
+    addFloor(16, 74, -70, 16, MAT.curb, -0.10);
   }
 
   // ===== chão: estacionamento (z>-6) + loja (z<-6) =====
@@ -1472,7 +1497,7 @@ export function buildHavan(scene, T) {
     const id = carPool[ci % carPool.length]; ci++;
     const ry = (z > 28 ? 0 : Math.PI) + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;   // fileiras retas, quase alinhadas
     placeCar(id, x, z, ry);
-    colliders.push({ minX: x - 1.2, maxX: x + 1.2, minY: 0, maxY: 1.4, minZ: z - 2.2, maxZ: z + 2.2 });  // collider do carro
+    carCover(x, z, 1.2, 2.2, 1.4);
   }
   /* MAIS CARROS NO PÁTIO (pedido do dono: "enchemos o estacionamento de mais carros ...
      assim o mapa fica mais preenchido e utilizável"). +14 carros, net +12 (duas vagas do
@@ -1492,7 +1517,7 @@ export function buildHavan(scene, T) {
     const id = carPool[ci++ % carPool.length];
     const ry = Math.PI + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;
     placeCar(id, xc, zc, ry);
-    colliders.push({ minX: xc - 1.2, maxX: xc + 1.2, minY: 0, maxY: 1.4, minZ: zc - 2.2, maxZ: zc + 2.2 });
+    carCover(xc, zc, 1.2, 2.2, 1.4);
   }
   /* Os 6 das faixas laterais entram ENCOSTADOS no muro (nariz pra parede) e com colisor
      QUADRADO de 4,4 × 4,4 m. Não é preguiça: o `ry` de cada carro leva o `RY_FIX` DO MODELO
@@ -1506,7 +1531,7 @@ export function buildHavan(scene, T) {
     if (LOWQ && ((xc + zc) % 7 < 3)) continue;
     const id = carPool[ci++ % carPool.length];
     placeCar(id, xc, zc, (xc < 0 ? -Math.PI / 2 : Math.PI / 2) + (RY_FIX[id] || 0));
-    colliders.push({ minX: xc - 2.2, maxX: xc + 2.2, minY: 0, maxY: 1.4, minZ: zc - 2.2, maxZ: zc + 2.2 });
+    carCover(xc, zc, 2.2, 2.2, 1.4);
   }
   // CARROS NA FAIXA CENTRAL (G2-R14B, pedido do dono): pares escalonados no corredor
   // x∈[-7,7] entre o spawn do estacionamento e a loja — quebram a lane aberta de tiro.
@@ -1516,12 +1541,12 @@ export function buildHavan(scene, T) {
     const id = carPool[ci++ % carPool.length];
     const ry = (cz > 28 ? 0 : Math.PI) + (RY_FIX[id] || 0) + (Math.random() - 0.5) * 0.12;
     placeCar(id, cx, cz, ry);
-    colliders.push({ minX: cx - 1.2, maxX: cx + 1.2, minY: 0, maxY: 1.4, minZ: cz - 2.2, maxZ: cz + 2.2 });
+    carCover(cx, cz, 1.2, 2.2, 1.4);
   }
   // ônibus urbanos no fundo do estacionamento (marco + cover grande)
   for (const bx of [-28, 28]) {
     if (!gprop('onibus_urbano', bx, 50, 2.8, 0.05)) addBox(2.9, 2.8, 7.6, MAT.trim, bx, 0, 50);
-    colliders.push({ minX: bx - 1.5, maxX: bx + 1.5, minY: 0, maxY: 2.8, minZ: 46.1, maxZ: 53.9 });
+    carCover(bx, 50, 1.5, 3.9, 2.8);
   }
   // POSTES DE LUZ — antes eram addBox(0.4,4,0.4) cinza puro: a tal "coluna solta flutuando
   // no meio do estacionamento" da crítica era isto (um paralelepípedo sem luminária, sem
@@ -1582,7 +1607,7 @@ export function buildHavan(scene, T) {
   // CONTRASTE SOL x INTERIOR: o sol era 0xffffff e a fluorescente 0xfff0dd (quente) — as
   // duas iguais, sem troca de temperatura na porta. Agora sol QUENTE de meio-dia brasileiro
   // + rebote do asfalto quente vindo de baixo, contra a fluorescente FRIA lá dentro.
-  scene.background = T.sky || new THREE.Color(0x9fb8cc);
+  setMapSky(scene, T, '/img/textures/sky_havan.webp', 0x9fb8cc);
   /* NÉVOA R9: linear 85→210 era o mesmo que NÃO TER névoa — o estacionamento inteiro cabe
      dentro dos primeiros 85 m, então nenhum pixel do mapa jogável recebia um grama de haze
      e o muro do fundo lia com o MESMO microcontraste do meio-fio a 3 m. Agora FogExp2
@@ -1784,7 +1809,7 @@ export function buildHavan(scene, T) {
   for (const [cx, cz, cry] of [[-6, 50.5, 0.1], [6, 50.5, -0.1], [-14.5, 50.5, 0.06], [14.5, 50.5, -0.06], [0, 44.5, 0.04]]) {
     const id = carPool[ci++ % carPool.length];
     placeCar(id, cx, cz, Math.PI + cry);
-    colliders.push({ minX: cx - 1.2, maxX: cx + 1.2, minY: 0, maxY: 1.4, minZ: cz - 2.2, maxZ: cz + 2.2 });
+    carCover(cx, cz, 1.2, 2.2, 1.4);
   }
   // 3 bandeiras: estacionamento, estátua, gôndolas (corredor central da loja)
   /* 3 bandeiras — DISTRIBUÍDAS, não enfileiradas. As três estavam em x=0: a mesma reta que

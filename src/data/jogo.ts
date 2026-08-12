@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** 5 arenas jogáveis — a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas jogáveis — a ordem é a do registro (public/js/maps.js, objeto MAPS). */
 export const MAPAS: Mapa[] = [
   {
     id: 'awp_map', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -197,6 +197,22 @@ export const MAPAS: Mapa[] = [
       'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
       'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
       'norte é mais alto — é a posição de sniper do mapa.',
+  },
+  {
+    id: 'fy_corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Duas margens de palafitas separadas por água poluída e três pontes muito diferentes.',
+    detalhe: 'Mapa de travessia e risco: o córrego corre abaixo das margens, com trechos alagados nas pontas, ' +
+      'pontes de madeira no meio e casas sobre pilotis. A margem leste e a oeste têm rotas próprias entre ' +
+      'palafitas, lixo, motos e barracas; atravessar cedo encurta o ataque, mas expõe o jogador de lado. ' +
+      'Pixação paulistana, zinco, madeira úmida e o céu cinzento separam visualmente este mapa dos morros do Rio.',
+  },
+  {
+    id: 'fy_mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Mansão modernista entre jardim tropical e piscina infinita, com interior e mezanino jogáveis.',
+    detalhe: 'O time invasor nasce no portão e avança por um jardim geométrico até garagem, hall, sala e cozinha. ' +
+      'O defensor ocupa o deck e a piscina diante do oceano. O mezanino a 4,5 m é alcançado por uma escada real ' +
+      'e abre linhas verticais sobre o interior; biombos, móveis e paisagismo dividem as visadas sem transformar ' +
+      'a casa em corredor. O horizonte do Joá mostra mar, costão e maciço sob luz dourada.',
   },
 ];
 
@@ -276,9 +292,9 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.' },
   { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.' },
   { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!' },
-  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo-guará acorda na sexta-feira à meia-noite.' },
+  { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.' },
   { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.' },
-  { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'O sedutor do Amazonas. De dia é golfinho rosa, de noite é homem de terno branco e chapéu.' },
+  { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.' },
   { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.' },
   { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — dorme com o medo.' },
   { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },

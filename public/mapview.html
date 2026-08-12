@@ -34,7 +34,7 @@ const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
 // união dos props globais (main.js MAP_PROPS) + props por-mapa (Havan/Ferro Velho)
 const GLOBAL_PROPS = ['congresso','catedral','ministerio','palacio','justica','tires','stall','tent','bus','drinkstand','urna','towner',
   'quiosque','skate_ramp','lifeguard_tower','guarda_sol','arquibancada'];
-const allProps = [...new Set([...GLOBAL_PROPS, ...Object.values(MAPS).flatMap(m => m.props || [])])];
+const allProps = [...new Set([...GLOBAL_PROPS, ...(MAPS[MAP].props || [])])];
 
 window.MAPEVAL = {
   ready:false,
@@ -50,9 +50,24 @@ window.MAPEVAL = {
   window.__world = { spawns: world.spawns, bounds: world.bounds, ctf: world.ctfPoints, nodes: world.waypoints.nodes.length };
   window.__scene = scene;
   window.__gworld = world;   // colliders/waypoints/findPath p/ checagens de LOS e conectividade
-  cam.position.set(0, 80, 60); cam.lookAt(0, 0, 0); renderer.render(scene, cam);
+  // Captura reproduzível na altura do jogador: ?from=x,y,z&look=x,y,z.
+  // Sem parâmetros mantém a vista aérea histórica usada pelas réguas existentes.
+  const xyz = (key, fallback) => {
+    const v = (qp.get(key) || '').split(',').map(Number);
+    return v.length === 3 && v.every(Number.isFinite) ? v : fallback;
+  };
+  const from = xyz('from', [0, 80, 60]), look = xyz('look', [0, 0, 0]);
+  cam.position.set(...from); cam.lookAt(...look); renderer.render(scene, cam);
   hud.textContent = `${MAP} loaded · ${world.waypoints.nodes.length} waypoints`;
   window.MAPEVAL.ready = true;
+  // TextureLoader/GLTFLoader concluem depois do primeiro frame. Sem redesenhar,
+  // o auditor captura o fallback preto/cinza e mede um mapa diferente do jogo.
+  let frames = 0;
+  const redrawWhileLoading = () => {
+    renderer.render(scene, cam);
+    if (++frames < 360) requestAnimationFrame(redrawWhileLoading);
+  };
+  requestAnimationFrame(redrawWhileLoading);
 })().catch(e => { hud.textContent = 'ERR ' + (e && e.message); console.error(e); });
 </script>
 </body>

@@ -1,0 +1,1267 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-11T20:26:31.036Z",
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "aspect": "3:2"
+  },
+  "mapOrder": [
+    "fy_escadao",
+    "fy_campomorro",
+    "fy_lajes",
+    "fy_corrego",
+    "fy_mansao"
+  ],
+  "shots": [
+    {
+      "map": "fy_escadao",
+      "name": "bottom-up",
+      "from": [
+        0,
+        2.2,
+        27
+      ],
+      "look": [
+        0,
+        4.2,
+        -5
+      ],
+      "proves": "tres lances monumentais vistos da base",
+      "file": "tools/eval/asset-evidence/maps/fy_escadao/bottom-up.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/azulejo.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/escadao_streetart_azulejo.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_escadao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_dagua.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "0334f514e85412a7ab4fcf67125561988a6d39417dd008a846d7f2e569e698e9",
+      "cameraSha256": "cb70fa3e6ede85523ed81ed2be87f9fa7e6a25d723523786902a393c6e71c11a",
+      "imageSha256": "234fa751cbfc57660623a78dc4aa74bd2bf5f5222044d36055d858a5ec7edbd5",
+      "errors": []
+    },
+    {
+      "map": "fy_escadao",
+      "name": "top-down",
+      "from": [
+        0,
+        14,
+        -15
+      ],
+      "look": [
+        0,
+        2.2,
+        18
+      ],
+      "proves": "desnivel completo e rua da base vistos do mirante",
+      "file": "tools/eval/asset-evidence/maps/fy_escadao/top-down.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/azulejo.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/escadao_streetart_azulejo.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_escadao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_dagua.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "0334f514e85412a7ab4fcf67125561988a6d39417dd008a846d7f2e569e698e9",
+      "cameraSha256": "13797cad1cd0beae05998fe799d8230bfee7c58c85f4c1073eb28369d90752b9",
+      "imageSha256": "1bf11361bbf91339f929937a0b3189b6e2b4947e4458a68ac3f34a56c780c6e0",
+      "errors": []
+    },
+    {
+      "map": "fy_escadao",
+      "name": "caveirao",
+      "from": [
+        4.5,
+        7.2,
+        5.5
+      ],
+      "look": [
+        -2.2,
+        5.25,
+        0.54
+      ],
+      "proves": "casco monovolume, frente inclinada, para-lamas e torre baixa do caveirao",
+      "file": "tools/eval/asset-evidence/maps/fy_escadao/caveirao.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/azulejo.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/escadao_streetart_azulejo.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_escadao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_dagua.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "0334f514e85412a7ab4fcf67125561988a6d39417dd008a846d7f2e569e698e9",
+      "cameraSha256": "09c231ece41936d6618dcce282592a8cbe51cf2455afb1c92658ab2eb95a55b6",
+      "imageSha256": "742df713948731261555c9f2848d3f78111013808d0d9c303338e86d3dafd488",
+      "errors": []
+    },
+    {
+      "map": "fy_campomorro",
+      "name": "field-mouth",
+      "from": [
+        -23,
+        1.45,
+        0
+      ],
+      "look": [
+        0,
+        1,
+        0
+      ],
+      "proves": "campo, traves, alambrado e arquibancada enquadrados pela boca oeste",
+      "file": "tools/eval/asset-evidence/maps/fy_campomorro/field-mouth.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/campomorro_streetart_baile.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_campomorro.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arquibancada.glb",
+        "public/models/props/caixa_som_baile.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/junkyard_container.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb"
+      ],
+      "sourceSha256": "9e7a5c78c29afb8e5cf3df07a937737f222a3f9281dd2c107f07301a1eee79f3",
+      "cameraSha256": "61b3f93e1a582dca2327073ee9253f36918ab0732df511149e2a8783ba4906cc",
+      "imageSha256": "9a6e1750a564e55bf037931f214d3ee138d2a64e49bf8a51b3c0fde8e67dfe80",
+      "errors": []
+    },
+    {
+      "map": "fy_campomorro",
+      "name": "field-eye",
+      "from": [
+        -4,
+        1.57,
+        5
+      ],
+      "look": [
+        18,
+        1.57,
+        -2
+      ],
+      "proves": "leitura do campo, redes e marcos na altura de olhos 1,65 m acima da varzea",
+      "file": "tools/eval/asset-evidence/maps/fy_campomorro/field-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/campomorro_streetart_baile.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_campomorro.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arquibancada.glb",
+        "public/models/props/caixa_som_baile.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/junkyard_container.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb"
+      ],
+      "sourceSha256": "9e7a5c78c29afb8e5cf3df07a937737f222a3f9281dd2c107f07301a1eee79f3",
+      "cameraSha256": "63ac3db52349e8160659b8f6d4f8812372943cdc4b7e3ec475e2be02d68df522",
+      "imageSha256": "061dc97da84c47cb8e3de4fc77ec8236cfe70546865af552a75a5875551b45c9",
+      "errors": []
+    },
+    {
+      "map": "fy_campomorro",
+      "name": "galpao-interior",
+      "from": [
+        32,
+        2.7,
+        -24
+      ],
+      "look": [
+        24,
+        1.5,
+        -18
+      ],
+      "proves": "interior jogavel do galpao, paredao e duas saidas",
+      "file": "tools/eval/asset-evidence/maps/fy_campomorro/galpao-interior.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/campomorro_streetart_baile.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_campomorro.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arquibancada.glb",
+        "public/models/props/caixa_som_baile.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/junkyard_container.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb"
+      ],
+      "sourceSha256": "9e7a5c78c29afb8e5cf3df07a937737f222a3f9281dd2c107f07301a1eee79f3",
+      "cameraSha256": "ac126bb72c51342e8d82838fbc72126f7f3607fdc97d7cbea496344e1aa9ada5",
+      "imageSha256": "5007dbfe0e7cf437ee5097ea4c962a5ee05c449f83514627317b72d0a845b17b",
+      "errors": []
+    },
+    {
+      "map": "fy_campomorro",
+      "name": "galpao-eye",
+      "from": [
+        30.5,
+        2.65,
+        -23.5
+      ],
+      "look": [
+        22,
+        2.65,
+        -20.5
+      ],
+      "proves": "piso, forro, fill e batentes a 1,65 m acima do piso do galpao",
+      "file": "tools/eval/asset-evidence/maps/fy_campomorro/galpao-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/campomorro_streetart_baile.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_campomorro.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arquibancada.glb",
+        "public/models/props/caixa_som_baile.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/junkyard_container.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb"
+      ],
+      "sourceSha256": "9e7a5c78c29afb8e5cf3df07a937737f222a3f9281dd2c107f07301a1eee79f3",
+      "cameraSha256": "fe17448ba5ffee06b961bfeebdeb58d94490a88a8c26abb0519b484a9f447e42",
+      "imageSha256": "8be6b118921a38a369938d32fe6442cfbaf92605c1a6ae405be1c05d80afe87b",
+      "errors": []
+    },
+    {
+      "map": "fy_campomorro",
+      "name": "field-overview",
+      "from": [
+        0,
+        18,
+        28
+      ],
+      "look": [
+        0,
+        -0.2,
+        -4
+      ],
+      "proves": "convergencia dos becos para o campo central",
+      "file": "tools/eval/asset-evidence/maps/fy_campomorro/field-overview.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/campomorro_streetart_baile.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_campomorro.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arquibancada.glb",
+        "public/models/props/caixa_som_baile.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/junkyard_container.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb"
+      ],
+      "sourceSha256": "9e7a5c78c29afb8e5cf3df07a937737f222a3f9281dd2c107f07301a1eee79f3",
+      "cameraSha256": "ccbe43eee2fe11397efd089a452caef9c8e9785c242660fdc23f27e842991267",
+      "imageSha256": "4dbf79b78a294c2f5c4d79824c82c8400a7478724ba7ec25976807d94a017f62",
+      "errors": []
+    },
+    {
+      "map": "fy_lajes",
+      "name": "roof-eye",
+      "from": [
+        0,
+        6.65,
+        -22
+      ],
+      "look": [
+        -7,
+        4.9,
+        20
+      ],
+      "proves": "cores por ala e bordas transponiveis a 1,65 m sobre a laje central de 5 m",
+      "file": "tools/eval/asset-evidence/maps/fy_lajes/roof-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/lajes_streetart_mural.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_lajes.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "435686a8252e4c3d9e488af921da24bd62a3fe58bb010e0d2ef6ce15d076321c",
+      "cameraSha256": "87c8448d7ef038526ccf882b08fa4d4604a04c29e78f00aa3b168773bba895ee",
+      "imageSha256": "3ce799d42f077065b42e7e05e5596b6ec9a121e58cfd23e44a8d9f0b1555413f",
+      "errors": []
+    },
+    {
+      "map": "fy_lajes",
+      "name": "roof-route",
+      "from": [
+        0,
+        9,
+        -11
+      ],
+      "look": [
+        0,
+        4,
+        20
+      ],
+      "proves": "rota jogavel sobre telhados, caixas, antenas e varais",
+      "file": "tools/eval/asset-evidence/maps/fy_lajes/roof-route.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/lajes_streetart_mural.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_lajes.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "435686a8252e4c3d9e488af921da24bd62a3fe58bb010e0d2ef6ce15d076321c",
+      "cameraSha256": "82feb433ce349f22b65cd68e89bf7cc68f520641962f062dceccd7e270f60ef6",
+      "imageSha256": "2d071ce25887e4f6005ce5e9682284c37cb691d78bf5dc6222dc9dbf904ba1ee",
+      "errors": []
+    },
+    {
+      "map": "fy_lajes",
+      "name": "layer-overview",
+      "from": [
+        0,
+        22,
+        34
+      ],
+      "look": [
+        0,
+        2.5,
+        -5
+      ],
+      "proves": "duas camadas e skyline variado",
+      "file": "tools/eval/asset-evidence/maps/fy_lajes/layer-overview.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/lajes_streetart_mural.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_lajes.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "435686a8252e4c3d9e488af921da24bd62a3fe58bb010e0d2ef6ce15d076321c",
+      "cameraSha256": "ff807c5d8d794f379484b307d8a636158184b977369b9c2e804525fa35d35d86",
+      "imageSha256": "a30eb848b1c76452a7411baf33701be6791190ededd1431f6bd1ddd5a85995dc",
+      "errors": []
+    },
+    {
+      "map": "fy_lajes",
+      "name": "jump-link",
+      "from": [
+        -7,
+        7,
+        12
+      ],
+      "look": [
+        -7,
+        4.65,
+        20
+      ],
+      "proves": "ilha sul de perfil e seus dois vaos medidos de 1,50 m",
+      "file": "tools/eval/asset-evidence/maps/fy_lajes/jump-link.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/favela_wall.webp",
+        "public/img/textures/lajes_streetart_mural.webp",
+        "public/img/textures/sky_rj.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_lajes.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "435686a8252e4c3d9e488af921da24bd62a3fe58bb010e0d2ef6ce15d076321c",
+      "cameraSha256": "12ea9e4d1c30c6ea6f2dc83fbaaa3856ac9927af1e7280990fcd458f82869dc7",
+      "imageSha256": "36575ded7132ccc93ff19087648010ae4b8b1d8ed6ea5f2cf54feaa1e9ed46f6",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "bridge-eye",
+      "from": [
+        -12,
+        1.65,
+        -18
+      ],
+      "look": [
+        0,
+        0.55,
+        -22
+      ],
+      "proves": "canal e tablado assentado vistos a 1,65 m da margem",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/bridge-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "12dba4517e8cc2abb3d859b457e5dc017dd4ea0ffa6e41e9ac6153d28da75d41",
+      "imageSha256": "69ebb5cadc7b579c1604ae89dd4d0fdb10a6317913e264906cdbe59e3d89becf",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "water-bridge",
+      "from": [
+        -12,
+        7,
+        -5
+      ],
+      "look": [
+        0,
+        -0.2,
+        0
+      ],
+      "proves": "agua poluida e ponte central dominando a rota",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/water-bridge.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "9ec0cbddcdc3464c1c461d8545c14d65f705a40f0a46461179045bfc483b7fbe",
+      "imageSha256": "8ac4c164261335299a6aea3486e9b1846b79ae00f726ed771ff4c7872f357801",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "animals",
+      "from": [
+        -4,
+        5,
+        -15
+      ],
+      "look": [
+        0.8,
+        -0.1,
+        -7
+      ],
+      "proves": "jacare decorativo reduzido no canal, sem bloquear a passagem",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/animals.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "7eee3426b3687a82c4f783c500decb90796a6e889c9c1bf932932f6325d08b10",
+      "imageSha256": "790c40173bd0ee0bb6116a4f79ee1b6241d7d4ed2bab373adcb8df26147dde3d",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "capivara",
+      "from": [
+        -8.2,
+        1.65,
+        -38
+      ],
+      "look": [
+        -5.2,
+        0.55,
+        -38
+      ],
+      "proves": "perfil da capivara a 1,65 m: corpo arredondado, cabeca larga e romba, quatro patas curtas apoiadas e folga dos pneus",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/capivara.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "5a8a983964bdab5502c4df5ee2bfd32fe4a5b3935690d54a5df4e3191dc11ac2",
+      "imageSha256": "4caadcac644259acdd13081bca7023dfc2fe1a8345ccda59e35a3c46fa2badbb",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "rats",
+      "from": [
+        -15.35,
+        0.48,
+        -2.45
+      ],
+      "look": [
+        -17.08,
+        0.06,
+        -2.35
+      ],
+      "proves": "trio estabilizado na captura e visto pelo lado livre: corpos, orelhas, patas e caudas na frente da manilha/lixo",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/rats.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "8c7643221e63e7e27a9107b46b72c99018e8d57fe0dfee0dafa585fcd7a32e8f",
+      "imageSha256": "d8e81b71b8880e47b6b9c8bb610b8eeb529e7824946f5c1dd065f44b848bed51",
+      "errors": []
+    },
+    {
+      "map": "fy_corrego",
+      "name": "canal-overview",
+      "from": [
+        18,
+        19,
+        32
+      ],
+      "look": [
+        0,
+        0,
+        0
+      ],
+      "proves": "canal continuo, tres travessias e palafitas",
+      "file": "tools/eval/asset-evidence/maps/fy_corrego/canal-overview.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/asphalt_br.webp",
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/corrego_streetart_pixo.webp",
+        "public/img/textures/dirt_field.webp",
+        "public/img/textures/sky_sp.webp",
+        "public/img/textures/tex_agua_poluida.webp",
+        "public/img/textures/tex_madeira.webp",
+        "public/img/textures/tex_zinco.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_corrego.js",
+        "public/js/map_decals.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_som.glb",
+        "public/models/props/dumpster.glb",
+        "public/models/props/fav_house.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/pilha_pneus.glb",
+        "public/models/props/stall.glb",
+        "public/models/props/tires.glb"
+      ],
+      "sourceSha256": "da42fa556119ec4933b710ec39a687306b9ec4cf20fa7141f73fc02fef41031c",
+      "cameraSha256": "601aaced5041cef7d318367ccd41411ac426f249616aca6d6c0bcea4c04d2c7a",
+      "imageSha256": "feaecc264bb7a61723de43b55ebf43fe7c51178e70eb52751bc3eaea6aca72bf",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "garden-eye",
+      "from": [
+        3,
+        1.65,
+        27.2
+      ],
+      "look": [
+        0,
+        1.5,
+        8
+      ],
+      "proves": "maciços tropicais assimetricos e pergolado ancorado vistos a 1,65 m dentro do jardim",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/garden-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "2ab1cb4a73d37b81752fd3c5b8b756381103d8f6682ff51d51f891a2049a9224",
+      "imageSha256": "20505ed7d94cfd2e7a0115e6e9b2dea1b679e0cbfbcc1af302a58d12a39bf28d",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "cars-front-close",
+      "from": [
+        0,
+        1.55,
+        16.4
+      ],
+      "look": [
+        0,
+        0.68,
+        11
+      ],
+      "proves": "rodas dianteiras, vidros, grades e tres silhuetas esportivas originais em close",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/cars-front-close.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "f49c55e2ddc0048e9e7b80dc04fd63e4fc3ee3a57df30499c079a769190d5c81",
+      "imageSha256": "38662a489ab658cacf15c66a2d66eec71a5415712afb3be57103a7ca37a796fd",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "facade-garden",
+      "from": [
+        0,
+        6,
+        38
+      ],
+      "look": [
+        -1.4,
+        2.2,
+        2
+      ],
+      "proves": "jardim tropical assimetrico, espelho deslocado e fachada modernista",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/facade-garden.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "30d8e51cc5ddde754636b7422f4df12b872733766eb92110f45559d49b431ccd",
+      "imageSha256": "8b54f0c1d781dcc4135ed8f26e282b553738484b9877b0940684290b8916488d",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "interior",
+      "from": [
+        11.5,
+        2.4,
+        4.8
+      ],
+      "look": [
+        -4,
+        1.1,
+        -7.5
+      ],
+      "proves": "dois grupos de estar, piso de placas grandes, divisoria e mezanino jogaveis",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/interior.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "981b87817a89259c66165d3cb40775869d95113c174fd1f531f46bd67df551be",
+      "imageSha256": "e68fa323dfa9344a874903154aea064d6bbaca37f240989bd113840bf36c199c",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "gourmet-eye",
+      "from": [
+        -13.2,
+        1.65,
+        -8.15
+      ],
+      "look": [
+        -8,
+        1.05,
+        -10
+      ],
+      "proves": "ilha gourmet inteira vista de dentro da cozinha, sem parede/escada no primeiro plano: bancada, cooktop, cuba, torneira, tres banquetas e pendentes",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/gourmet-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "d1e3da057655e966056928cbbb3faf50e8e336dbb7b45d726c51ecddeffdc052",
+      "imageSha256": "d41b3f98fe28ed58a9a9af71922372501425cca48f5ca69e1680582c029bbc40",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "theater-eye",
+      "from": [
+        4.2,
+        1.65,
+        -7.2
+      ],
+      "look": [
+        9,
+        1.1,
+        -13.8
+      ],
+      "proves": "home theater com tela, console, quatro recliners e paineis acusticos",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/theater-eye.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "95c9473fb54cf029bfad50696126c1a736848ab62452336afb14c76bc5805ab6",
+      "imageSha256": "8e4d05c911eefe955d5ba7acc4787cdb97dd8c3f3840ec5ad43472817eabe88e",
+      "errors": []
+    },
+    {
+      "map": "fy_mansao",
+      "name": "infinity-pool",
+      "from": [
+        0,
+        4.2,
+        -19
+      ],
+      "look": [
+        0,
+        0.2,
+        -44
+      ],
+      "proves": "piscina infinita alinhada ao oceano do panorama original",
+      "file": "tools/eval/asset-evidence/maps/fy_mansao/infinity-pool.png",
+      "viewport": {
+        "width": 1536,
+        "height": 1024,
+        "aspect": "3:2"
+      },
+      "sourceFiles": [
+        "public/img/textures/concrete_br.webp",
+        "public/img/textures/mansao_streetart_marble.webp",
+        "public/img/textures/sky_joa.webp",
+        "public/img/textures/tex_deck.webp",
+        "public/img/textures/tex_garden.webp",
+        "public/js/bloom.js",
+        "public/js/graffiti_layout.js",
+        "public/js/graffiti_pass.js",
+        "public/js/map_decals.js",
+        "public/js/map_mansao.js",
+        "public/js/map_sky.js",
+        "public/js/mapprops.js",
+        "public/js/textures.js",
+        "public/mapview.html",
+        "public/models/props/guarda_sol.glb",
+        "public/models/props/mesa_guardasol.glb"
+      ],
+      "sourceSha256": "c56225bed13669b8c6b6844a8073688800fe1ad2221f7677be03cee0ff1222f9",
+      "cameraSha256": "e1e32a596ee49ffba3575b24b285beabc432385ea5fbecf851f50806cefe1484",
+      "imageSha256": "a8ce1244359dd3e5232aa874861cb02cac46ac1e08eb9af8d507e860f88f34b8",
+      "errors": []
+    }
+  ]
+}

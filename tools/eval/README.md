@@ -1,7 +1,7 @@
 # `tools/eval/` — o arnês de medição
 
-133 arquivos, e nenhum deles tinha uma linha de documentação. Este catálogo
-existe pra que ninguém precise abrir 89 `.mjs` pra descobrir qual mede o quê —
+Este diretório cresceu sem catálogo. Esta página existe para que ninguém precise
+abrir cada `.mjs` para descobrir qual mede o quê —
 e pra que os **geracionais aposentados** parem de ser reabertos por engano.
 
 > **Regra deste diretório:** o que roda no CI e os arquivos `.md`/`.json`
@@ -37,7 +37,22 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede |
 |---|---|
-| `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade. |
+| `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade e ≥2 rotas CTF separadas por 6 m (`--mutante=rota-unica` prova o portão). |
+| `map-source-check.mjs` | Procedência por SHA e uso efetivo dos materiais/céus dos mapas novos (`--mutante=hash-falso` e `asset-desligado`). |
+| `campo-contract-check.mjs` | Assimetria campo×galpão, convergência, visadas, cover, abertura `field-mouth` e iluminação declarada do interior. |
+| `lajes-rooftop-check.mjs` + `lajes-gap-check.mjs` | Detalhe cultural, vãos nas malhas e bordas/linhas que tornam os saltos legíveis no frame. |
+| `mansao-water-check.mjs` | Água não entrável e composição de carros genéricos, jardim tropical e interior mobiliado. |
+| `corrego-contract-check.mjs` + `escadao-contract-check.mjs` | Lentidão, escala/anatomia da fauna do Córrego e flancos/caveirão do Escadão, com mutantes por cláusula. |
+| `map-evidence-contract-check.mjs` | Falha fechado se PNG, fonte, GLB, câmera ou viewport 3:2 divergir do manifest. A recaptura é `npm run capture:map-evidence`; `--plan` não abre browser. |
+| `char-thumbnail-contract-check.mjs` | Arma canônica, SHA e dimensão 360×463 dos thumbnails dos pilotos registrados (`--mutante=arma-trocada`). |
+| `char-hard-surface-check.mjs` | Materiais rígidos do Motoca, forma frontal e contrato de casca full-face contínua com visor único; mutantes recompõem lâmina, halo, aro e peças empilhadas. |
+| `camera-grip-evidence-check.mjs` | SHA de Câmera/M4, walk/crouch e contato das duas mãos nos anchors da evidência Blender (`--mutante=arma-deslocada`). |
+| `pilot-system-check.mjs` | Caneca/teclado do Programador; M4 do Designer; P90/gambiarra do Doidinho; cadastro, M4, pacote animado e sockets Hips/Spine01 dos props da Lenda. Mutantes causais por defeito. |
+| `pilot-grip-evidence-check.mjs` | Recibos Blender do Programador/Designer/Lenda com M4 e Doidinho com P90: SHA, sockets, duas mãos em walk/crouch/3/4 e mutante visual real de arma deslocada. |
+| `motoca-visual-check.mjs` | Máscara Blender 360×463 mede casca full-face/visor único, abertura/continuidade do capacete e corpo/suporte/brilho do telefone; mutantes de projeção. |
+| `mint-asset-integrity-check.mjs` | Compara o GLB final ao `finalSha256` do registro Mint/Tripo/Meshy (`--mutante=sha-trocado`). |
+| `gltf-validator-check.mjs` | Validador oficial Khronos nos artefatos finais tipados como `model/gltf-binary`; a enumeração é compartilhada com integridade (`--mutante=cabecalho` e `--mutante=inclui-imagem`). |
+| `character-voice-contract-check.mjs` | Oito falas por slice, hooks por personagem, fallback e gerador seguro (`--mutante=fala-longa`). |
 | `mode-check.mjs` | Rounds × CTF: o modo abre e termina em todos os mapas. |
 | `ctf-verify.mjs` | Bandeiras alcançáveis a partir dos dois spawns. |
 | `fv-verify.mjs` | Específico do Ferro Velho (A*/waypoints/LOS com o cânion BECO OESTE). |
@@ -47,6 +62,7 @@ com código 1 em falha crítica.
 | `bot-routes.mjs`, `botdiag.mjs` | Diagnóstico de rota e de estado dos bots (complementam o `botsim`). |
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `loadout-test.mjs` | Loadout por personagem/facção. |
+| `vertical-slice-abilities-check.mjs` | Mecânicas executáveis dos três slices: Stack Trace com LOS, carga/ping de rota do Motoca e interação de objetivo do Doidinho, incluindo mutantes. `npm run eval:slice-abilities` |
 
 ## 4. Viewmodel e rig — a família mais densa
 
@@ -61,6 +77,8 @@ com código 1 em falha crítica.
 | `fparms-capture.mjs` | Captura dos braços de 1ª pessoa. |
 | `mount-capture.mjs` | Captura do ponto de mount. |
 | `weapon-capture.mjs` | Captura arma a arma. |
+| `select-mount.mjs` | Contato e orientação da arma no caminho real da seleção; usa o shell mínimo de personagem do `serve.mjs`. |
+| `select-inflate.mjs` | Deformação da skin depois de animação, curl e IK da seleção; `--fotos[=dir]` renderiza a pose medida e `--diagnose` atribui arestas ruins ao osso dominante. |
 | `char-probe.mjs`, `char_probe.py`, `char_sim.py` | Sondas de personagem (proporção, escala, palma). |
 | `mixamo-capture.mjs`, `mixamo-measure.mjs` | Clipes do pack Mixamo. |
 

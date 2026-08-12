@@ -11,9 +11,17 @@ mkdirSync(OUT, { recursive: true });
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
+/* GPU=1 troca o SwiftShader pelo backend nativo. O padrão continua software porque é o que
+   roda no container do CI e é o que mantém a captura comparável entre máquinas. Mas o dono
+   joga numa GPU de verdade: quando o objetivo é JULGAR o visual (e não comparar número com
+   corrida antiga), software rendering mente — ele achata o que a Metal desenha e leva ~4-6
+   min por mapa, o que na prática fez ninguém rodar a bateria completa. */
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN,
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio', '--no-sandbox'],
+  args: [
+    ...(process.env.GPU === '1' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
+    '--headless=new', '--mute-audio', '--no-sandbox',
+  ],
 });
 const log = [];
 const metrics = [];
@@ -53,12 +61,22 @@ async function menuShots() {
 }
 
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
+/* A lista tem que ser o REGISTRO INTEIRO de public/js/maps.js. Ela ficou em 5 enquanto o
+   jogo foi para 10, e por isso os 5 mapas novos (escadao, campomorro, lajes, corrego,
+   mansao) entraram sem NUNCA passar por uma captura — foi assim que eles chegaram na tela
+   do dono em 12/08 chapados e injogáveis. Mapa que não é fotografado não é medido, e o que
+   não é medido regride calado. Mapa novo no registro = linha nova aqui, obrigatória. */
 const MAPS = [
   ['awp_map', 'P,mst'],
   ['fy_pool_day', 'P,mst'],
   ['fy_havan', 'B,bozo'],
   ['fy_ferrovelho', 'B,bozo'],
   ['fy_quebrada', 'B,sertanejo'],
+  ['fy_escadao', 'B,sertanejo'],
+  ['fy_campomorro', 'B,sertanejo'],
+  ['fy_lajes', 'B,sertanejo'],
+  ['fy_corrego', 'B,sertanejo'],
+  ['fy_mansao', 'B,sertanejo'],
 ];
 
 async function gameShots() {

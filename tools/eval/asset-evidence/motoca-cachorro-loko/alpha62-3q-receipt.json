@@ -1,0 +1,11 @@
+{
+  "source": "/Users/ruben/game/public/models/characters/motoca-cachorro-loko.glb",
+  "sha256": "e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b",
+  "blender": "5.2.0 LTS",
+  "method": "Blender EEVEE, câmera 58 mm, três ângulos 3/4; sem browser",
+  "renders": [
+    "/Users/ruben/game/tools/eval/asset-evidence/motoca-cachorro-loko/alpha62-3q-renders/motoca-cachorro-loko-front-left-3q.png",
+    "/Users/ruben/game/tools/eval/asset-evidence/motoca-cachorro-loko/alpha62-3q-renders/motoca-cachorro-loko-front-right-3q.png",
+    "/Users/ruben/game/tools/eval/asset-evidence/motoca-cachorro-loko/alpha62-3q-renders/motoca-cachorro-loko-back-right-3q.png"
+  ]
+}

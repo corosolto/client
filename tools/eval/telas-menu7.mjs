@@ -13,8 +13,11 @@ import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const OUT = process.env.OUT || '/tmp/telas7';
-const BASE = process.env.BASE || 'http://localhost:4321';
+/* 127.0.0.1 evita cair num servidor IPv6 de outro projeto que também use :4321. */
+const BASE = process.env.BASE || 'http://127.0.0.1:4321';
+const LANG = process.env.LANG_UI || 'pt';
 const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
+const MOBILE = process.env.MOBILE === '1';
 const want = (id) => !ONLY || ONLY.has(id);
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -37,8 +40,21 @@ const shot = async (name) => {
 };
 
 /* ---------- 01..04 + 07: fluxo de menu ---------- */
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'domcontentloaded' });
-await page.click('#boot-splash').catch(() => {});
+/* debug=1 libera o menu em viewport móvel; o ensaio do fallback precisa do boot normal. */
+await page.goto(`${BASE}/?${MOBILE ? '' : 'debug=1&'}lang=${LANG}`, { waitUntil: 'domcontentloaded' });
+/* O clique antes de `_splash.ready` é ignorado de propósito pelo jogo. Esperar o convite
+   visível mede o estado real e evita o falso timeout que deixava a splash presa. */
+await page.waitForSelector('#splash-enter:not(.hidden)', { timeout: 120000 });
+/* A splash pode sair entre o estado pronto e a actionability do Playwright (o gesto de
+   teclado do próprio runner também a libera). Nesse caso, a próxima espera é a prova. */
+await page.click('#boot-splash', { timeout: 5000 }).catch(() => {});
+if (MOBILE) {
+  await page.waitForSelector('#mobile-warning:not(.hidden)', { timeout: 60000 });
+  await page.waitForTimeout(400);
+  await shot('00_mobile');
+  await browser.close();
+  process.exit(0);
+}
 await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 60000 });
 await page.waitForTimeout(2500);
 if (want('01')) await shot('01_menu');
@@ -76,13 +92,11 @@ if (want('02') || want('03')) {
   await page.waitForTimeout(900);
   if (want('02')) await shot('02_faccao');
 
-  /* 03 ESCOLHA DO PERSONAGEM — escolhe lado, depois adversário, cai no char-select */
+  /* 03 ESCOLHA DO PERSONAGEM — o fluxo vigente é lado -> personagem -> adversário.
+     A versão antiga do arnês ainda clicava #btn-team-p/#btn-team-b, IDs removidos quando
+     a seleção passou a vir do registro de facções; ela não capturava mais o jogo real. */
   if (want('03')) {
-    await page.click('#btn-team-p');
-    await page.waitForTimeout(800);
-    // 2º passo: adversário (mesma tela, data-step=enemy)
-    const step = await page.getAttribute('#team-select', 'data-step').catch(() => null);
-    if (step === 'enemy') { await page.click('#btn-team-b'); await page.waitForTimeout(900); }
+    await page.click('.team-card[data-ready="1"]:not([aria-disabled="true"])');
     await page.waitForSelector('#char-select:not(.hidden)', { timeout: 20000 });
     await page.waitForTimeout(2500);
     await shot('03_personagem');
@@ -91,12 +105,13 @@ if (want('02') || want('03')) {
 
 /* ---------- 05 HUD + 06 PAUSA: exigem partida viva ---------- */
 if (want('05') || want('06')) {
-  await page.goto(`${BASE}/?debug=1&auto=P,mst&map=awp_map`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/?debug=1&lang=${LANG}&auto=P,mst&map=awp_map`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 240000 });
   await page.waitForTimeout(2000);
   if (want('05')) await shot('05_hud');
   if (want('06')) {
-    await page.evaluate(() => document.getElementById('pause-menu').classList.remove('hidden'));
+    /* Caminho de produção: setPaused aciona guarda de clique + onPauseChange + chrome. */
+    await page.evaluate(() => window.__game.setPaused(true));
     await page.waitForTimeout(500);
     await shot('06_pausa');
   }

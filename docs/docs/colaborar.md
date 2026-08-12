@@ -248,13 +248,18 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.845 |
+| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
 | `fy_pool_day` | Piscina da Treta | rodadas | `—` | — |
-| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.920 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
+| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
+| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
+| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 769 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 518 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes.js` | 690 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 639 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 681 |
 
-**5 mapas registrados** — 2 abrem em rodadas e 3 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 6 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 11 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

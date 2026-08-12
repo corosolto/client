@@ -82,7 +82,11 @@ const BASE = process.env.BASE || 'http://localhost:8123';
 const args = process.argv.slice(2);
 const MUT = (args.find((a) => a.startsWith('--mutate')) || '').split('=')[1] || null;
 const SO_REF = args.includes('--ref');
+const DIAG = args.includes('--diagnose');
 const IDS = (args.find((a) => !a.startsWith('-')) || '').split(',').filter(Boolean);
+const FOTO_ARG = args.find((a) => a === '--fotos' || a.startsWith('--fotos='));
+const FOTO_DIR = FOTO_ARG ? (FOTO_ARG.split('=')[1] || '/tmp/select-inflate-fotos') : null;
+if (FOTO_DIR) fs.mkdirSync(FOTO_DIR, { recursive: true });
 
 /* Referências do dono, textualmente: "compare com o pagodeiro e o mandrake, que ele
    elogia". Os tetos saem daqui e de mais lugar nenhum. */
@@ -99,12 +103,10 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 640, height: 640 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
-// 120 s e não os 30 s padrão: o `load` espera a playlist inteira de audio/menu-music/
-// (só existe completa nesta máquina, BUG-19) e passa de 30 s com a máquina carregada
-// (astro dev do dono + Chrome + retarget rodando junto). Medido em 04/08: o único
-// request pendente no estouro era menu-music/m20.mp3. Timeout de harness, não teto.
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'load', timeout: 120000 });
-await page.waitForTimeout(1500);
+// Esta sonda nao mede menu. O shell virtual do serve.mjs contem apenas o import map;
+// depender de `index.astro` fazia a playlist do menu (BUG-19) bloquear a medicao por
+// 120 s antes de qualquer personagem. Cada GLB segue aguardado no preload abaixo.
+await page.goto(`${BASE}/eval-character.html?debug=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
 const alvos = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js');
@@ -114,19 +116,19 @@ const alvos = IDS.length ? IDS : await page.evaluate(async () => {
 
 const out = [];
 for (const id of alvos) {
-  const r = await page.evaluate(async ([cid, mut]) => {
+  const r = await page.evaluate(async ([cid, mut, foto, diagnostico]) => {
     const THREE = await import('three');
     const G = await import('./js/glbchars.js');
     const C = await import('./js/characters.js');
     const def = C.CHARACTERS.find((c) => c.id === cid);
-    if (!def) return null;
+    if (!def) return { id: cid, erro: 'sem definição de personagem' };
     await G.preloadCharacterAssets([cid]);
-    if (!G.hasModel(cid)) return null;
+    if (!G.hasModel(cid)) return { id: cid, erro: 'sem GLB carregado' };
 
     // EXATAMENTE o que main.js:355 (pvSetChar) monta na tela de seleção.
     const wid = C.charWeapon(cid);
     const m = G.buildCharacterModel(def, { weaponId: wid });
-    if (!m) return null;
+    if (!m) return { id: cid, erro: 'buildCharacterModel retornou null' };
 
     /* MUTAÇÕES — cada uma reintroduz uma das causas reais que esta régua tem que pegar.
        Se a régua não ficar vermelha com elas, ela não existe (corolário do HANDOFF). */
@@ -182,11 +184,15 @@ for (const id of alvos) {
     m.group.traverse((o) => { if (o.isSkinnedMesh) meshes.push(o); });
     if (meshes.length !== refMeshes.length) return { id: cid, erro: 'malhas divergem' };
     const rs = [];
+    const badEdges = [];
+    const boneHits = {};
     const vb = new THREE.Vector3(), vp = new THREE.Vector3();
     for (let mi = 0; mi < meshes.length; mi++) {
       const sm = meshes[mi], sr = refMeshes[mi];
       sm.skeleton.update(); sr.skeleton.update();
       const pos = sm.geometry.attributes.position;
+      const skinIndex = sm.geometry.attributes.skinIndex;
+      const skinWeight = sm.geometry.attributes.skinWeight;
       const N = pos.count;
       const bx = new Float32Array(N * 3), px = new Float32Array(N * 3);
       for (let i = 0; i < N; i++) {
@@ -208,31 +214,105 @@ for (const id of alvos) {
           vistas.add(key);
           const L0 = d(bx, x, y); if (L0 < 1e-6) continue;
           const L = d(px, x, y);
-          rs.push((L >= L0 ? L / L0 : L0 / Math.max(L, 1e-9)) - 1);
+          const ratio = (L >= L0 ? L / L0 : L0 / Math.max(L, 1e-9)) - 1;
+          rs.push(ratio);
+          if (ratio > 1 && skinIndex && skinWeight) {
+            const get = ['getX', 'getY', 'getZ', 'getW'];
+            for (const vi of [x, y]) {
+              let melhorK = 0, melhorPeso = -1;
+              for (let k = 0; k < 4; k++) {
+                const peso = skinWeight[get[k]](vi);
+                if (peso > melhorPeso) { melhorPeso = peso; melhorK = k; }
+              }
+              const bone = sm.skeleton.bones[skinIndex[get[melhorK]](vi)]?.name || '(sem osso)';
+              boneHits[bone] = (boneHits[bone] || 0) + 1;
+            }
+            if (diagnostico) {
+              const dominante = (vi) => {
+                const get = ['getX', 'getY', 'getZ', 'getW'];
+                let melhorK = 0, melhorPeso = -1;
+                for (let ki = 0; ki < 4; ki++) {
+                  const peso = skinWeight[get[ki]](vi);
+                  if (peso > melhorPeso) { melhorPeso = peso; melhorK = ki; }
+                }
+                return {
+                  bone: sm.skeleton.bones[skinIndex[get[melhorK]](vi)]?.name || '(sem osso)',
+                  weight: +melhorPeso.toFixed(4),
+                };
+              };
+              badEdges.push({ mesh: mi, a: x, b: y, l0: +L0.toFixed(7), l: +L.toFixed(7), ratio: +ratio.toFixed(3), da: dominante(x), db: dominante(y) });
+            }
+          }
         }
       }
     }
-    if (!rs.length) return null;
+    if (!rs.length) return { id: cid, erro: 'nenhuma aresta skinned mensurável' };
     rs.sort((a, b) => a - b);
     const q = (f) => rs[Math.min(rs.length - 1, Math.floor(rs.length * f))];
     const acima = (t) => rs.reduce((n, r) => n + (r > t ? 1 : 0), 0);
-    return {
+    const result = {
       id: cid, arma: wid, oneHanded: !!m.ctrl.oneHanded, ik: !!m.ctrl.ikL, arestas: rs.length,
       p95: +q(0.95).toFixed(3), p99: +q(0.99).toFixed(3), p999: +q(0.999).toFixed(3),
       max: +rs[rs.length - 1].toFixed(2),
       pct25: +((100 * acima(0.25)) / rs.length).toFixed(2),
       ruins1e4: +((1e4 * acima(1.0)) / rs.length).toFixed(1),
+      ruinsPorOsso: Object.entries(boneHits).sort((a, b) => b[1] - a[1]).slice(0, 8),
     };
-  }, [id, MUT]);
+    if (diagnostico) result.ruinsArestas = badEdges.sort((a, b) => b.ratio - a.ratio).slice(0, 256);
+    if (foto) {
+      document.body.replaceChildren();
+      document.body.style.margin = '0';
+      document.body.style.background = '#17191d';
+      const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+      renderer.setSize(640, 640);
+      renderer.setPixelRatio(1);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      renderer.domElement.dataset.selectInflate = cid;
+      document.body.appendChild(renderer.domElement);
+      scene.background = new THREE.Color(0x17191d);
+      scene.add(new THREE.HemisphereLight(0xdde8ff, 0x4a3528, 2.1));
+      const key = new THREE.DirectionalLight(0xffffff, 3.0);
+      key.position.set(3, 5, 4);
+      scene.add(key);
+      const rim = new THREE.DirectionalLight(0x88aaff, 1.5);
+      rim.position.set(-4, 3, -3);
+      scene.add(rim);
+      const box = new THREE.Box3().setFromObject(m.group);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      const radius = Math.max(size.x, size.y, size.z);
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(8, 8),
+        new THREE.MeshStandardMaterial({ color: 0x30343b, roughness: 0.95, metalness: 0 }),
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = 0;
+      scene.add(floor);
+      const camera = new THREE.PerspectiveCamera(32, 1, 0.01, 100);
+      const target = new THREE.Vector3(center.x, 0.86, center.z);
+      camera.position.copy(target).add(new THREE.Vector3(0.38, 0.04, 1).normalize().multiplyScalar(radius * 2.05));
+      camera.lookAt(target);
+      renderer.render(scene, camera);
+    }
+    return result;
+  }, [id, MUT, !!FOTO_DIR, DIAG]);
   if (r) out.push(r);
   else console.error('sem modelo:', id);
+  if (r && FOTO_DIR) {
+    await page.locator(`canvas[data-select-inflate="${id}"]`).screenshot({ path: `${FOTO_DIR}/${id}${MUT ? `-${MUT}` : ''}.png` });
+    console.log('foto:', `${FOTO_DIR}/${id}${MUT ? `-${MUT}` : ''}.png`);
+  }
 }
 await browser.close();
 
 // ── tetos, medidos nos elogiados nesta MESMA execução ──────────────────────────────
-const refs = out.filter((r) => REFS.includes(r.id));
-if (!refs.length) {
-  console.error('AVISO: nenhuma referência (' + REFS.join(', ') + ') nesta execução — sem teto para comparar.');
+const refs = out.filter((r) => REFS.includes(r.id) && !r.erro);
+if (!MUT && refs.length !== REFS.length) {
+  const ausentes = REFS.filter((id) => !refs.some((r) => r.id === id));
+  console.error('ERRO: referências ausentes (' + ausentes.join(', ') + '); sem elas os tetos viram null e a régua não mede.');
+  process.exit(2);
 }
 let teto = {
   p99: refs.length ? +(Math.max(...refs.map((r) => r.p99)) * FOLGA).toFixed(3) : null,
@@ -253,13 +333,23 @@ if (SO_REF || refs.length) {
   for (const r of refs) console.log('   ref ' + r.id.padEnd(12) + ' p99=' + r.p99 + '  ruins/1e4=' + r.ruins1e4);
   console.log('   -> p99 <= ' + teto.p99 + ' e ruins/1e4 <= ' + teto.ruins1e4);
 }
+if (DIAG) {
+  for (const r of out.filter((x) => !x.erro)) {
+    console.log('   diag ' + r.id + ': ' + (r.ruinsPorOsso || []).map(([bone, n]) => `${bone}=${n}`).join(', '));
+  }
+}
 if (SO_REF) process.exit(0);
 
 console.log('\n=== BALÃO NO CAMINHO DA TELA DE SELEÇÃO' + (MUT ? '  [MUTANTE: ' + MUT + ']' : '') + ' ===');
 console.log('id'.padEnd(15), 'arma'.padEnd(10), 'IK', 'P95'.padStart(7), 'P99'.padStart(7), 'P99.9'.padStart(7), 'máx'.padStart(8), '%>25'.padStart(6), 'ruins/1e4'.padStart(10));
-out.sort((a, b) => b.ruins1e4 - a.ruins1e4);
+out.sort((a, b) => (b.ruins1e4 ?? -Infinity) - (a.ruins1e4 ?? -Infinity));
 let reprovados = 0;
 for (const r of out) {
+  if (r.erro) {
+    reprovados++;
+    console.log('✗ ' + r.id.padEnd(13) + ' ERRO: ' + r.erro);
+    continue;
+  }
   const ruim = teto.p99 != null && (r.p99 > teto.p99 || r.ruins1e4 > teto.ruins1e4);
   if (ruim) reprovados++;
   console.log(

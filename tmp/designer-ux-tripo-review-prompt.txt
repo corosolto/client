@@ -1,0 +1,5 @@
+Você é o crítico adversarial da skill asset-review do CS BRASIL e não construiu este asset. Compare o concept original e o turnaround Blender do GLB bruto. Ficha: Designer de UX da facção Nerdolas; roupa preta, óculos, tablet e leque de cores; personalidade calma/crítica. A silhueta brasileira deve incluir garrafa térmica de pressão reconhecível, sem marca. Corpo humanoide completo em A-pose, mãos/pés livres; tablet e leque precisam ficar abaixo da zona normal de M4/ADS; garrafa atrás do ombro, não fundida à mão. Sem pessoa real, copyright, gore, texto ou logo.
+
+O bruto Tripo ainda não está rigado nem otimizado; tem uma malha, um material, 29.437 triângulos e três texturas 4096². Isso pode ser corrigido depois, mas anatomia, props fundidos/interseções e fidelidade visual podem bloquear antes do rig.
+
+Dê APROVADO ou REPROVADO para avançar ao rig/otimização. Liste divergências visíveis concept→3D, brasilidade, silhueta a distância, risco para braços/arma/ADS, anatomia/pose, vetos e correção mínima. Não use a justificativa do builder.

@@ -1,5 +1,5 @@
 /* ============================================================================
-   gen-graffiti-layout.mjs — ASSA A COLOCAÇÃO DO GRAFITE DOS 5 MAPAS.
+   gen-graffiti-layout.mjs — ASSA A COLOCAÇÃO DO GRAFITE DOS MAPAS.
    ----------------------------------------------------------------------------
    POR QUE ASSAR (a conta que decidiu)
 
@@ -26,7 +26,7 @@
 
    Uso:
      npm run eval:serve &
-     node tools/gen-graffiti-layout.mjs            # os 5
+     node tools/gen-graffiti-layout.mjs            # todos
      node tools/gen-graffiti-layout.mjs fy_quebrada
    ============================================================================ */
 import { execSync } from 'node:child_process';
@@ -35,7 +35,10 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
-const MAPAS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const MAPAS = [
+  'awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada',
+  'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
+];
 const ONLY = process.argv[2];
 
 const gRoot = execSync('npm root -g').toString().trim();

@@ -13,6 +13,7 @@ import { VERSION } from './version.js';
 import { LANG, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
+import { FACTIONS, factionName } from './factions.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
@@ -85,6 +86,14 @@ sfx.onDuck = (amt, hold) => {
   m.volume = MENU_MUSIC_VOL * amt;
   setTimeout(() => { if (menuMusic && !musicFade && !menuMusic.paused) menuMusic.volume = MENU_MUSIC_VOL; }, hold * 1000 + 220);
 };
+sfx.onCharacterVoice = ({ characterId, event, text }) => {
+  if (event !== 'select') return;
+  const caption = $('char-voice-caption');
+  if (!caption) return;
+  const character = CHARACTERS.find((entry) => entry.id === characterId);
+  caption.textContent = text ? `${character?.name || characterId}: “${text}”` : '';
+  caption.classList.toggle('show', !!text);
+};
 const sfxReady = sfx.loadManifest();
 
 /* ---------------- selected map ---------------- */
@@ -144,13 +153,62 @@ function rebuildMenuBackdrop() {
   menuScene = new THREE.Scene();
   MAPS[currentMap].build(menuScene, textures);
 }
+function menuProps(id) {
+  return [...MAP_PROPS, ...((MAPS[id] && MAPS[id].props) || [])];
+}
+let _menuLoadSeq = 0;
+function loadMenuBackdrop() {
+  const id = currentMap, seq = ++_menuLoadSeq;
+  return preloadMapProps(menuProps(id)).then(() => {
+    // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
+    // a cena nova; a próxima chamada tem seu próprio preload e sequência.
+    if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
+  });
+}
 // The first backdrop is built before props load; rebuild once they're ready so the
 // menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
+loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
 
 /* ---------------- screens ---------------- */
+const CINE_SCREEN_META = Object.freeze({
+  'mobile-warning': { section: 'ACESSO', step: 'DESKTOP RECOMENDADO', progress: 4 },
+  'main-menu': { section: 'ABERTURA', step: 'ESCOLHA A TRETA', progress: 12 },
+  'map-screen': { section: 'PREPARAÇÃO', step: '01 · O PALCO', progress: 26 },
+  'team-select': { section: 'ESCALAÇÃO', step: '02 · O SEU LADO', progress: 44 },
+  'char-select': { section: 'ESCALAÇÃO', step: '03 · O PERSONAGEM', progress: 62 },
+  'settings-panel': { section: 'SISTEMA', step: 'AJUSTE A ARENA', progress: 18 },
+  'howto-panel': { section: 'ARQUIVO', step: 'MANUAL DE CAMPO', progress: 18 },
+  'ranking-panel': { section: 'ARQUIVO', step: 'PLACAR DA RUA', progress: 18 },
+  'feedback-panel': { section: 'CANAL ABERTO', step: 'MANDE O PAPO', progress: 18 },
+  'pause-menu': { section: 'INTERVALO', step: 'A TRETA ESPERA', progress: 76 },
+  'match-end': { section: 'DESFECHO', step: 'FIM DE RODADA', progress: 100 },
+});
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'pause-menu', 'match-end'];
+function applyCinematicScreen(id) {
+  if (!id || !CINE_SCREEN_META[id]) {
+    delete document.body.dataset.cineScreen;
+    return;
+  }
+  const meta = { ...CINE_SCREEN_META[id] };
+  if (id === 'main-menu' && document.getElementById('menu-setup')?.classList.contains('open')) {
+    const profile = document.getElementById('menu-setup')?.dataset.step === 'profile';
+    meta.section = profile ? 'IDENTIDADE' : 'PREPARAÇÃO';
+    meta.step = profile ? 'SEU PERFIL' : '01 · A PARTIDA';
+    meta.progress = profile ? 20 : 26;
+  }
+  if (id === 'team-select' && document.getElementById('team-select')?.dataset.step === 'enemy') {
+    meta.section = 'CONFRONTO'; meta.step = '04 · O ADVERSÁRIO'; meta.progress = 82;
+  }
+  document.body.dataset.cineScreen = id;
+  const section = document.getElementById('cine-section');
+  const step = document.getElementById('cine-step');
+  const progress = document.getElementById('cine-progress');
+  if (section) section.textContent = meta.section;
+  if (step) step.textContent = meta.step;
+  if (progress) progress.style.width = `${meta.progress}%`;
+}
 function show(id) {
+  applyCinematicScreen(id);
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   // ao navegar pra qualquer tela, fecha o painel de setup do menu CS (não fica aberto after)
@@ -589,7 +647,10 @@ async function startGame(team, charId, enemyFaction) {
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = () => resetConfirms();
+  game.onPauseChange = (paused) => {
+    resetConfirms();
+    applyCinematicScreen(paused ? 'pause-menu' : null);
+  };
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -737,6 +798,7 @@ function setSetupStep(step) {
     if (st) st.textContent = matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA';
     if (tt) tt.textContent = setupTitle;
   }
+  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -933,6 +995,7 @@ function gotoMap(i) {
   if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   rebuildMenuBackdrop();
+  loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
 }
 function stepMap(dir) { ui.click(); gotoMap(mapIdx + dir); }
@@ -1054,26 +1117,64 @@ const stripStep = (dir) => {
   const i = Math.max(0, rows.findIndex(r => r.classList.contains('sel')));
   const next = rows[(i + dir + rows.length) % rows.length];
   next.click();
-  next.scrollIntoView({ block: 'nearest' });
+  next.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 };
 $('strip-up').onclick = () => { ui.click(); stripStep(-1); };
 $('strip-down').onclick = () => { ui.click(); stripStep(1); };
-// Contador de elenco nos cards de facção ("8 PERSONAGENS" — referência telas/02)
-for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
-  const n = CHARACTERS.filter(c => c.team === f.toUpperCase()).length;
-  const card = $('btn-team-' + f);
-  if (!card) continue;
+// Cards vêm do registro único; facção sem roster aprovado aparece no
+// catálogo, mas não abre o fallback procedural que o dono reprovou como Roblox.
+const factionCards = [...document.querySelectorAll('.team-card[data-faction]')];
+/* BUG-42: o catálogo de pôsteres virou índice + um único hero editorial. A seleção
+   continua vindo dos mesmos botões/registro; esta função só projeta a linha focada no
+   palco, sem duplicar regra de disponibilidade nem de roster. */
+function presentFaction(card) {
+  if (!card || card.classList.contains('faction-excluded')) return;
+  const hero = $('faction-hero'); if (!hero) return;
+  const name = card.querySelector('.team-name')?.textContent?.trim() || '—';
+  const slogan = card.querySelector('.team-slogan')?.textContent?.trim() || '—';
+  const ready = card.dataset.ready === '1';
+  const count = CHARACTERS.filter(c => c.team === card.dataset.faction).length;
+  hero.style.setProperty('--hero-art', card.style.getPropertyValue('--art'));
+  hero.style.setProperty('--hero-color', card.style.getPropertyValue('--tc'));
+  hero.style.setProperty('--hero-rgb', card.style.getPropertyValue('--tc-rgb'));
+  const crest = $('fh-crest'); if (crest) { crest.src = card.querySelector('.team-crest')?.src || ''; crest.alt = `Brasão ${name}`; }
+  $('fh-name').textContent = name;
+  $('fh-slogan').textContent = slogan;
+  $('fh-desc').textContent = card.dataset.description || '';
+  $('fh-status').textContent = ready && count ? `${count} PERSONAGENS // ABRIR ELENCO` : 'ELENCO 3D EM PRODUÇÃO';
+  hero.dataset.ready = ready && count ? '1' : '0';
+  for (const item of factionCards) item.classList.toggle('is-preview', item === card);
+}
+for (const card of factionCards) {
+  const fac = card.dataset.faction;
+  const n = CHARACTERS.filter(c => c.team === fac).length;
   const chip = document.createElement('span');
   chip.className = 'team-count';
-  chip.textContent = `${n} PERSONAGENS`;
+  chip.textContent = n ? `${n} PERSONAGENS` : 'INDISPONÍVEL';
   card.appendChild(chip);
+  const ready = card.dataset.ready === '1' && n > 0;
+  card.setAttribute('aria-disabled', String(!ready));
+  card.addEventListener('focus', () => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); presentFaction(card); });
+  card.addEventListener('mouseenter', () => presentFaction(card));
+  card.onclick = () => {
+    if (!ready) { ui.back(); return; }
+    sfx.uiClick(); pickTeam(fac);
+  };
 }
-$('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
-$('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
-$('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
-$('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
-$('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
-$('btn-team-m') && ($('btn-team-m').onclick = () => { sfx.uiClick(); pickTeam('M'); });
+presentFaction(factionCards.find(card => card.dataset.ready === '1') || factionCards[0]);
+if ($('fh-status')) $('fh-status').onclick = () => {
+  const card = factionCards.find(item => item.classList.contains('is-preview'));
+  if (card) card.click();
+};
+for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
+  const button = $(id);
+  if (!button) continue;
+  button.onclick = () => {
+    ui.click();
+    const rail = document.querySelector('.team-row');
+    rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
+  };
+}
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -1164,31 +1265,31 @@ $('char-confirm').onclick = () => {
   }
 };
 
-// Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
+// Esconde/mostra o card da sua facção na tela de adversário; os demais continuam juntos.
 function setEnemyPickMode(on, myFaction) {
-  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
-    const b = $('btn-team-' + f);
-    if (b) b.classList.toggle('hidden', !!(on && f.toUpperCase() === myFaction));
-  }
+  for (const card of factionCards)
+    card.classList.toggle('faction-excluded', !!(on && card.dataset.faction === myFaction));
+  presentFaction(factionCards.find(card => !card.classList.contains('faction-excluded') && card.dataset.ready === '1') ||
+    factionCards.find(card => !card.classList.contains('faction-excluded')));
 }
 /* A MESMA tela serve dois passos e precisa DIZER qual é. Antes o único sinal era o
    título trocado por querySelector em 4 lugares diferentes do arquivo — e o 2º passo
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS', M: 'MÍTICO' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
   if (step === 'enemy') {
     if (st) st.textContent = 'PASSO 4 · O ADVERSÁRIO';
     if (tt) tt.textContent = 'QUEM VAI LEVAR O CORO?';
-    if (hint) hint.textContent = `Você fecha com ${FACTION_NAME[myFaction] || 'os seus'}. Aponte quem vai encarar do outro lado.`;
+    if (hint) hint.textContent = `Você fecha com ${factionName(myFaction) || 'os seus'}. Aponte quem vai encarar do outro lado.`;
   } else {
     if (st) st.textContent = 'PASSO 2 · O SEU LADO';
     if (tt) tt.textContent = 'ESCOLHA SEU LADO DA TRETA';
     if (hint) hint.textContent = 'Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.';
   }
+  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -1352,6 +1453,7 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
+  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   const st = loadStats();
@@ -1459,8 +1561,8 @@ let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
   teamPreviewsDone = true;
-  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F'], ['btn-team-m', 'M']]) {
-    const box = document.querySelector(`#${btn} .team-chars`);
+  for (const fac of FACTIONS.map((f) => f.id)) {
+    const box = document.querySelector(`.team-card[data-faction="${fac}"] .team-chars`);
     if (!box) continue;
     const chars = CHARACTERS.filter(c => c.team === fac && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
@@ -1488,10 +1590,8 @@ function pickTeam(faction) {
   currentFaction = faction;
   currentTeam = faction === 'B' ? 'B' : 'E';
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
-  for (const f of ['e', 'b', 'u', 'c', 'f', 'm']) {
-    const b = $('btn-team-' + f);
-    if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
-  }
+  for (const card of factionCards)
+    card.setAttribute('aria-pressed', String(card.dataset.faction === faction));
   const chars = CHARACTERS.filter(c => c.team === faction);   // roster da facção escolhida
   // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
   // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
@@ -1514,8 +1614,8 @@ function pickTeam(faction) {
         const rows = [...list.children];
         const k = rows.indexOf(row);
         let n = -1;
-        if (e.key === 'ArrowDown') n = (k + 1) % rows.length;
-        else if (e.key === 'ArrowUp') n = (k - 1 + rows.length) % rows.length;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') n = (k + 1) % rows.length;
+        else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') n = (k - 1 + rows.length) % rows.length;
         if (n < 0) return;
         e.preventDefault(); rows[n].focus(); rows[n].click();
       };
@@ -1579,6 +1679,9 @@ function selectChar(c, row) {
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = c.blurb;
   renderCharAttrs(c);
+  sfxReady.then(() => {
+    if (selChar?.id === c.id) sfx.characterVoice(c.id, 'select', { fallbackFaction: c.team, interrupt: true });
+  });
 }
 
 /* ---------------- settings wiring ---------------- */
@@ -1739,6 +1842,6 @@ document.querySelector('.footnote').textContent =
 { const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
 show(isMobile && !testMode ? 'mobile-warning' : 'main-menu');
 if (testMode && params.get('auto')) {
-  const [team, char] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id);
+  const [team, char, enemyFaction] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id, enemyFaction || undefined);
 }

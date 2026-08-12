@@ -90,6 +90,24 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
+  // Voz original por personagem. Se o pacote ainda não trouxe aquele arquivo, usa o
+  // pool da facção sem quebrar menu/partida. `interrupt` serve à seleção: trocar de linha
+  // corta a anterior; kills respeitam o cooldown global para oito bots não se sobreporem.
+  characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
+    if (!this.speechEnabled) return false;
+    const now = performance.now();
+    if (event === 'kill' && now - this._lastVoice < 3500) return false;
+    const own = this.pack?.characterVoice?.[characterId]?.[event];
+    const f = this._pick(own?.length ? own : this.pack?.voice?.[fallbackFaction]);
+    if (!f) return false;
+    if (interrupt && this._characterAudio) this._characterAudio.pause();
+    const audio = this._sample(f);
+    if (!audio) return false;
+    this._characterAudio = audio; this._lastVoice = now;
+    const text = this.pack?.characterVoiceText?.[f] || null;
+    if (this.onCharacterVoice) { try { this.onCharacterVoice({ characterId, event, text, file: f }); } catch {} }
+    return true;
+  }
   /* SOM DE FIM DE ROUND — com teto e com fim.
      Regra do dono (04/08), depois de uma faixa do Mc Magrinho de 188 s atravessar DOIS
      rounds: "nenhum som de final de round pode ficar mais de 5 segs após o round acabar,

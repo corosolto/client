@@ -7,12 +7,14 @@
 import Layout from '../layouts/Layout.astro';
 import { CONTROLES, MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { FACTIONS } from '../../public/js/factions.js';
 
 const nCtf = MAPAS.filter(m => m.ctf).length;
 const nRounds = MAPAS.length - nCtf;
 const CTF_NOMES = MAPAS.filter(m => m.ctf).map(m => m.nome);
-const porExtenso = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+const porExtenso = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+const faccoesProntas = FACTIONS.filter((f) => f.ready);
 
 // Nomes de mapa são marca própria (aparecem assim no menu do jogo): ficam em PT.
 const PASSOS = [
@@ -21,7 +23,7 @@ const PASSOS = [
   { nome: 'Pick a nick',
     texto: 'The nick is 2 to 14 characters and stays saved in your browser: it’s the name shown on the match scoreboard and in kill announcements. Not required to play.' },
   { nome: 'Pick a faction and a character',
-    texto: 'Five factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 44 characters in total, and they all play exactly the same — your pick is style, not advantage.' },
+    texto: `${FACTIONS.length} factions in the catalogue, ${faccoesProntas.length} already playable: ${faccoesProntas.map((f) => f.name).join(', ')}. Every character uses the same competitive base — your pick is style, not advantage.` },
   { nome: 'Pick the map and the mode',
     texto: `${cap(porExtenso[MAPAS.length])} arenas: ${MAPAS.map(m => m.nome).join(', ')}. ${cap(porExtenso[nRounds])} open in rounds and ${porExtenso[nCtf]} in Capture the Flag, but you can switch any map’s mode before starting. Team size is yours too: from 1v1 up to 8v8, with 4v4 as the default.` },
   { nome: 'Aim, crouch, shoot',
@@ -44,7 +46,7 @@ const FAQ: [string, string][] = [
   ['Can I play with friends?',
    'Not yet: right now every match is against bots. Multiplayer is the project’s next big front.'],
   ['Does the game take a political side?',
-   'No. It’s light satire distributed equally to all sides, with no gore and no hate, and 100% fictional characters. Two of the five factions (Urban Tribes and Funkeiros) aren’t even political.'],
+   'No. It’s light satire distributed equally to all sides, with no gore and no hate, and 100% fictional characters. Urban Tribes, Funkeiros, Mythics and the new cultural factions are not political sides.'],
 ];
 
 // CONTROLES vem do dataset PT; aqui só a coluna "ação" é traduzida (a tecla é a mesma).

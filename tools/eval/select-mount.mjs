@@ -17,6 +17,12 @@
      dMaoL     idem mão esquerda, SÓ para arma de 2 mãos (oneHanded=false).
      apoioY    SÓ para 1 mão: altura da mão esquerda ACIMA do quadril (m). "Mão no ar"
                do bonzo = apoio levantado sem função.
+     dedoP90   extensão P90 dos vértices distais a partir do pivô Curl_*_Tip, no bind.
+               Para os três rigs Meshy que nasceram com mãos planas, a compactação
+               distal reduz ~0,19 m para 0,08–0,10 m e fecha a pegada servida.
+               Referência visual versionada:
+               tools/eval/char_grip_curl_ab.png; reprodução:
+               node tools/finger-curl-sweep.mjs <id> shotgun /tmp/curl front.
 
    TETO COM PROCEDÊNCIA (mesma regra do select-inflate): o pior dos personagens que o
    dono NÃO flagrou e usa como bons — mandrake (2 mãos), padati e raul (1 mão) — com 25%
@@ -27,8 +33,11 @@
                      vazio consertou) -> canoZ inverte nos portadores de p90, VERMELHO.
      --mutate=tras   desloca o mount 0,35 m para -Z (arma atrás, o defeito do coach
                      pré-re-rig) -> frenteZ despenca, VERMELHO em todos.
+     --mutate=dedos  desfaz matematicamente a compactação distal e zera Curl_L/R ->
+                     reabre as mãos dos rigs Meshy e reprova GRIP-FINGER.
 
-   uso: node tools/eval/select-mount.mjs [ids] [--ref] [--mutate=flip|tras]
+   uso: node tools/eval/select-mount.mjs [ids] [--ref] [--mutate=flip|tras|dedos] [--out=arquivo.json]
+   --out persiste tanto o verde quanto o mutante vermelho na pasta de evidência do asset.
 */
 import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -36,9 +45,11 @@ import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
 const MUT = (args.find((a) => a.startsWith('--mutate')) || '').split('=')[1] || null;
+const EVIDENCE_OUT = (args.find((a) => a.startsWith('--out=')) || '').slice('--out='.length) || null;
 const SO_REF = args.includes('--ref');
 const IDS = (args.find((a) => !a.startsWith('-')) || '').split(',').filter(Boolean);
 const BASE = process.env.BASE || 'http://localhost:8123';
+const EXTRA = process.env.EXTRA ? `&${process.env.EXTRA.replace(/^&/, '')}` : '';
 
 /* Elogiados/não-flagrados que ancoram o teto. O dono flagrou explicitamente:
    jozo, trapfunk, coach (atrás); cadequinha, palhacomal, bonzo, pagodeiro (grip);
@@ -47,6 +58,17 @@ const BASE = process.env.BASE || 'http://localhost:8123';
 const REFS_2H = ['mandrake'];
 const REFS_1H = ['padati', 'raul'];
 const FOLGA = 1.25;
+// Teto com procedência visual: A/B 360×463 do Programador sem compactação dá mão
+// completamente espalmada e dedoP90=0,189 m; compactado dá punho fechado e 0,081 m.
+// Motoca/Doidinho aprovados medem 0,087/0,103 m. Os tetos 0,105/0,12 preservam 21%/16%
+// de folga e ainda separam os mutantes abertos em 0,111/0,132 m. Figuras:
+// programador_grip_curl_ab.png e
+// char_grip_curl_ab.png. A mutação abaixo volta à geometria aberta, não apenas à constante.
+const FINGER_EXTENT_MAX = new Map([
+  ['programador-virado', 0.12],
+  ['motoca-cachorro-loko', 0.105],
+  ['doidinho-bairro', 0.12],
+]);
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -57,9 +79,10 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 320, height: 320 } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
-// mesmo timeout largo do select-inflate: o `load` espera a playlist do menu (BUG-19)
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'load', timeout: 120000 });
-await page.waitForTimeout(1500);
+// Esta sonda nao mede menu. O shell virtual do serve.mjs contem apenas o import map;
+// depender de `index.astro` fazia a playlist do menu (BUG-19) bloquear a medicao por
+// 120 s antes de qualquer personagem. Cada GLB segue aguardado no preload abaixo.
+await page.goto(`${BASE}/eval-character.html?debug=1${EXTRA}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 
 const alvos = IDS.length ? IDS : await page.evaluate(async () => {
   const C = await import('./js/characters.js');
@@ -74,12 +97,12 @@ for (const id of alvos) {
     const G = await import('./js/glbchars.js');
     const C = await import('./js/characters.js');
     const def = C.CHARACTERS.find((c) => c.id === cid);
-    if (!def) return null;
+    if (!def) return { id: cid, erro: 'sem definição de personagem' };
     await G.preloadCharacterAssets([cid]);
-    if (!G.hasModel(cid)) return null;
+    if (!G.hasModel(cid)) return { id: cid, erro: 'sem GLB carregado' };
     const wid = C.charWeapon(cid);
     const m = G.buildCharacterModel(def, { weaponId: wid });
-    if (!m) return null;
+    if (!m) return { id: cid, erro: 'buildCharacterModel retornou null' };
     const scene = new THREE.Scene(); scene.add(m.group);
     for (let i = 0; i < 60; i++) m.ctrl.update(1 / 60, 0, false, 0);
     scene.updateMatrixWorld(true);
@@ -90,6 +113,44 @@ for (const id of alvos) {
     if (mut === 'tras') {
       const off = new THREE.Vector3(0, 0, -0.35).applyQuaternion(tp.model.getWorldQuaternion(new THREE.Quaternion()));
       gun.position.add(gun.parent.worldToLocal(gun.getWorldPosition(new THREE.Vector3()).add(off)).sub(gun.position));
+      scene.updateMatrixWorld(true);
+    }
+    if (mut === 'dedos') {
+      tp.model.traverse((o) => {
+        if (o.isBone && /^Curl_[LR]/.test(o.name)) o.rotation.set(0, 0, 0);
+        if (!o.isSkinnedMesh) return;
+        const pos = o.geometry.attributes.position;
+        const joints = o.geometry.attributes.skinIndex;
+        const weights = o.geometry.attributes.skinWeight;
+        if (!pos || !joints || !weights) return;
+        const tips = new Map();
+        o.skeleton.bones.forEach((bone, index) => {
+          if (/^Curl_[LR]_Tip$/.test(bone.name)) {
+            const bind = o.skeleton.boneInverses[index].clone().invert();
+            tips.set(index, new THREE.Vector3().setFromMatrixPosition(bind));
+          }
+        });
+        const p = new THREE.Vector3();
+        const get = ['getX', 'getY', 'getZ', 'getW'];
+        for (let i = 0; i < pos.count; i++) {
+          let pivot = null, influence = 0;
+          for (let k = 0; k < 4; k++) {
+            const candidate = tips.get(joints[get[k]](i));
+            const weight = weights[get[k]](i);
+            if (candidate && weight > influence) { pivot = candidate; influence = weight; }
+          }
+          if (!pivot || influence <= 1e-6) continue;
+          p.fromBufferAttribute(pos, i);
+          // Inversa exata de compact-curl-tips fator 0,45:
+          // p' = pivot + (1 - w*(1-fator)) * (p-pivot).
+          const scale = 1 - influence * (1 - 0.45);
+          p.sub(pivot).divideScalar(scale).add(pivot);
+          pos.setXYZ(i, p.x, p.y, p.z);
+        }
+        pos.needsUpdate = true;
+        o.geometry.computeBoundingBox();
+        o.geometry.computeBoundingSphere();
+      });
       scene.updateMatrixWorld(true);
     }
     const model = tp.model;
@@ -135,6 +196,39 @@ for (const id of alvos) {
     }
     const mL = toM(maoL.getWorldPosition(new THREE.Vector3()));
     const mH = toM(hips.getWorldPosition(new THREE.Vector3()));
+    const curls = [];
+    const fingerExtents = [];
+    model.traverse((o) => {
+      if (o.isBone && /^Curl_[LR]/.test(o.name)) curls.push(Math.hypot(o.rotation.x, o.rotation.y, o.rotation.z));
+      if (!o.isSkinnedMesh) return;
+      const pos = o.geometry.attributes.position;
+      const joints = o.geometry.attributes.skinIndex;
+      const weights = o.geometry.attributes.skinWeight;
+      if (!pos || !joints || !weights) return;
+      const tips = new Map();
+      o.skeleton.bones.forEach((bone, index) => {
+        if (/^Curl_[LR]_Tip$/.test(bone.name)) {
+          tips.set(index, new THREE.Vector3().setFromMatrixPosition(o.skeleton.boneInverses[index].clone().invert()));
+        }
+      });
+      const p = new THREE.Vector3();
+      const get = ['getX', 'getY', 'getZ', 'getW'];
+      for (let i = 0; i < pos.count; i++) {
+        let pivot = null, influence = 0;
+        for (let k = 0; k < 4; k++) {
+          const candidate = tips.get(joints[get[k]](i));
+          const weight = weights[get[k]](i);
+          if (candidate && weight > influence) { pivot = candidate; influence = weight; }
+        }
+        if (!pivot || influence <= 1e-6) continue;
+        p.fromBufferAttribute(pos, i);
+        fingerExtents.push(p.distanceTo(pivot));
+      }
+    });
+    fingerExtents.sort((a, b) => a - b);
+    const fingerP90 = fingerExtents.length
+      ? fingerExtents[Math.floor((fingerExtents.length - 1) * 0.90)]
+      : null;
     return {
       id: cid, arma: wid, oneHanded: !!m.ctrl.oneHanded,
       mascote,
@@ -144,6 +238,8 @@ for (const id of alvos) {
       dMaoR: +dist(maoR).toFixed(3),
       dMaoL: dL,
       apoioY: +(mL.y - mH.y).toFixed(3),
+      gripCurl: curls.length ? +Math.min(...curls).toFixed(3) : null,
+      fingerP90: fingerP90 == null ? null : +fingerP90.toFixed(3),
     };
   }, [id, MUT]);
   if (r) out.push(r);
@@ -151,11 +247,16 @@ for (const id of alvos) {
 await browser.close();
 
 const byId = Object.fromEntries(out.map((r) => [r.id, r]));
-const pior = (ids, campo, fn) => Math.max(...ids.filter((i) => byId[i]).map((i) => fn(byId[i][campo])));
+const pior = (ids, campo, fn) => Math.max(...ids.filter((i) => byId[i] && !byId[i].erro).map((i) => fn(byId[i][campo])));
 /* Teto por métrica = pior valor entre os elogiados × folga (ou ÷ folga quando a métrica
    é "quanto maior melhor"). frenteZ e canoZ: mínimo aceitável = pior elogiado ÷ folga.
    dMao*: máximo = pior elogiado × folga. apoioY: máximo = pior elogiado(1h) × folga. */
-const refs = [...REFS_2H, ...REFS_1H].filter((i) => byId[i]);
+const refs = [...REFS_2H, ...REFS_1H].filter((i) => byId[i] && !byId[i].erro);
+if (!MUT && refs.length !== REFS_2H.length + REFS_1H.length) {
+  const ausentes = [...REFS_2H, ...REFS_1H].filter((i) => !byId[i] || byId[i].erro);
+  console.error(`ERRO: referências ausentes (${ausentes.join(', ')}); sem elas os tetos viram null e a régua não mede.`);
+  process.exit(2);
+}
 /* Com --mutate o teto vem CONGELADO da última execução limpa (mesma regra do
    select-inflate): o mutante desloca os refs junto e senão a barra desce com ele. */
 const congelado = MUT ? JSON.parse((await import('node:fs')).readFileSync('tools/eval/select_mount.json', 'utf8')).teto : null;
@@ -180,22 +281,34 @@ const falha = (r) => {
   if (r.dMaoR > teto.dMaoRmax) f.push('MÃO-R');
   if (!r.oneHanded && r.dMaoL != null && r.dMaoL > teto.dMaoLmax) f.push('MÃO-L');
   if (r.oneHanded && r.apoioY > teto.apoioYmax) f.push('APOIO-NO-AR');
+  const fingerMax = FINGER_EXTENT_MAX.get(r.id);
+  if (fingerMax != null && !(r.fingerP90 <= fingerMax)) f.push('GRIP-FINGER');
   return f;
 };
 console.log('\n=== ARMA NO CORPO — CAMINHO DA TELA DE SELEÇÃO ===');
 console.log('teto:', JSON.stringify(teto), MUT ? `(mutante=${MUT})` : '');
-console.log('id              arma      1h   frenteZ  canoZ  dMaoR  dMaoL  apoioY  veredito');
+console.log('id              arma      1h   frenteZ  canoZ  dMaoR  dMaoL  apoioY  curl dedoP90 veredito');
 let reprovados = 0;
+const resultados = [];
 for (const r of out.sort((a, b) => (falha(b).length - falha(a).length) || a.id.localeCompare(b.id))) {
-  if (r.erro) { console.log(`  ${r.id.padEnd(14)} ERRO: ${r.erro}`); continue; }
+  if (r.erro) { reprovados++; resultados.push({ ...r, falhas: ['ERRO'] }); console.log(`✗ ${r.id.padEnd(14)} ERRO: ${r.erro}`); continue; }
   const f = falha(r);
+  resultados.push({ ...r, falhas: f });
   if (f.length) reprovados++;
-  console.log(`${f.length ? '✗' : ' '} ${r.id.padEnd(14)}${r.arma.padEnd(10)}${r.oneHanded ? '1h' : '2h'}  ${String(r.frenteZ).padStart(7)} ${String(r.canoZ).padStart(6)} ${String(r.dMaoR).padStart(6)} ${String(r.dMaoL).padStart(6)} ${String(r.apoioY).padStart(7)}  ${f.join(',') || 'ok'}`);
+  console.log(`${f.length ? '✗' : ' '} ${r.id.padEnd(14)}${r.arma.padEnd(10)}${r.oneHanded ? '1h' : '2h'}  ${String(r.frenteZ).padStart(7)} ${String(r.canoZ).padStart(6)} ${String(r.dMaoR).padStart(6)} ${String(r.dMaoL).padStart(6)} ${String(r.apoioY).padStart(7)} ${String(r.gripCurl).padStart(5)} ${String(r.fingerP90).padStart(7)}  ${f.join(',') || 'ok'}`);
 }
 console.log(`\nREPROVADOS: ${reprovados}/${out.length}`);
+if (EVIDENCE_OUT) {
+  writeFileSync(EVIDENCE_OUT, JSON.stringify({
+    gerado: new Date().toISOString(), mutante: MUT, teto,
+    personagens: resultados, reprovados,
+  }, null, 2));
+  console.log(`-> ${EVIDENCE_OUT}`);
+}
 if (!MUT) {
   writeFileSync('tools/eval/select_mount.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, teto, personagens: out }, null, 1));
   console.log('-> tools/eval/select_mount.json');
 } else {
   console.log('(mutante: JSON limpo preservado)');
 }
+process.exitCode = reprovados > 0 ? 1 : 0;

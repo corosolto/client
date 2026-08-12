@@ -464,13 +464,11 @@ export function initTextures() {
     poster('#2b4d8f', '#fff', ['CANDIDATO', 'FICTÍCIO', 'PROMETO NADA']),
   ];
 
-  // --- real poster art (public/posters) — curated satirical posters for the map walls.
-  // [file, aspect w/h]. Priority first (DOLLYNHO + New Project), then the rest.
+  // --- poster art (public/posters) — curated satirical posters for the map walls.
+  // [file, aspect w/h]. Personagens e marcas protegidas não entram neste pool.
   const POSTER_FILES = [
-    ['ashtar.png', 0.5625, 1.35], ['ashtar.png', 0.5625, 1.35],
-    ['ashtar-meme.jpg', 0.98, 1.2],   // o MEME original — o dono mandou voltar ('estava bom tb')
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
-    ['DOLLYNHO.png', 0.5625], ['New Project (1).png', 0.5625],
+    ['New Project (1).png', 0.5625],
     ['New Project (2).png', 0.5625], ['New Project (3).png', 0.5625],
     ['25c9112229edfcfbb1eae4137ecc151a.jpg', 0.6],
     ['26268061ca13b4dc4a871c1163cbeb6d.jpg', 1.0],
@@ -746,6 +744,7 @@ export function initTextures() {
   DECAL_FILES.push(
     ['or-graf-treta.png', 1.99, 'peca', 0],
     ['or-graf-coro.png', 2.163, 'peca', 0],
+    ['or-mitico-mural.png', 1.0, 'peca', 0],
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
     ['or-stencil-pomba.png', 1.181, 'ilustracao', 0],
     // homenagens póstumas a ídolos da música BR (07/08) — versão SOLTA (alpha) pros
@@ -759,30 +758,10 @@ export function initTextures() {
     ['or-hom-yuka.png', 1.059, 'peca', 0],
     ['or-hom-chico.png', 0.906, 'peca', 0],
   );
-  /* GALERIA DE HOMENAGENS do quebrada (versão tijolo, opaca) — lazy igual aos decals:
-     8 jpg de 1408×768 só devem baixar quando o quebrada monta a galeria. */
-  /* ── OS `or-hom-*.png` SAÍRAM DOS POOLS (07/08) ────────────────────────────
-     Reprovação do dono: "as homenagens aos outros artistas ficaram muito pequenas e
-     só no mapa piscina" e "o do chorão está com um fundo branco".
-
-     As duas coisas eram o MESMO arquivo. A homenagem existia em duas formas: estes
-     murais de tijolo (`or-mural-*.jpg`, grandes, certos) e uns recortes `or-hom-*.png`
-     que entravam nos pools de tag — ou seja, sorteados contra 15 outras artes e do
-     tamanho de um adesivo. E MEDIDO nos 8: `or-hom-chorao.png` e `or-hom-rita-lee.png`
-     têm fundo 100% OPACO (quina 239,239,240) — o recorte falhou quando eles foram
-     gerados, e na parede aquilo desenha um retângulo cinza-claro com um adesivo no
-     meio. Era literalmente o "fundo branco".
-
-     Tentar re-recortar não resolve: o fundo é um gradiente de estúdio, não uma cor
-     chapada — flood fill da borda tira 2/3 e deixa o miolo (conferido).
-     Então a homenagem passa a existir SÓ como mural, que é a forma que o dono
-     aprovou ("o grafite do sabotage ficou demais"), agora em 5,4 × 2,8 m e nos 5
-     mapas via `pendurarMurais`. Os PNG ficam no disco, intactos, sem pool.        */
-  const MURAIS_HOM = ['chorao', 'champignon', 'tim-maia', 'rita-lee', 'raul', 'sabotage', 'yuka', 'chico'];
-  /* A ORDEM É CONTRATO: `T.muraisHom[i]` é o artista `T.muraisHomNomes[i]`. Os 5 mapas
-     pendem essas telas pelo nome (`mural:homenagem-<artista>`), e o layout assado do
-     grafite guarda o NOME, não o índice — se a lista fosse copiada em cada mapa, mexer
-     nela renomearia mural em silêncio num mapa e não no outro. */
+  /* Galeria desativada por contrato editorial: os mapas não geram arte de pessoa
+     real. Os arquivos históricos permanecem no disco por enquanto, fora de todos
+     os pools; o portão GRAFFITI-EDITORIAL impede a reintrodução no jogo. */
+  const MURAIS_HOM = [];
   T.muraisHomNomes = MURAIS_HOM.map((n) => 'homenagem-' + n);
   T.muraisHom = [];
   MURAIS_HOM.forEach((n, i) => {

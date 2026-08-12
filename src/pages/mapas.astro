@@ -61,7 +61,7 @@ const jsonld = [
   {/* og:image própria, gerada em runtime por /api/og/mapas.png (issue #33) —
       antes caía na og-image.png genérica, igual pra todo o site. */}
   ogImage={abs('/api/og/mapas.png')}
-  ogImageAlt={`Card com as 5 arenas do ${BRAND_FULL}`}
+  ogImageAlt={`Card com as ${MAPAS.length} arenas do ${BRAND_FULL}`}
   title={`Mapas — as ${MAPAS.length} arenas | ${BRAND_FULL}`}
   description={`As ${MAPAS.length} arenas do ${BRAND_FULL}: ${MAPAS.map(m => m.nome).join(', ')} — layout, modo e como jogar cada uma.`}
   jsonld={jsonld}

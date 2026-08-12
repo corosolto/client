@@ -10,6 +10,7 @@ const OUT = process.argv[2] || '/tmp/selectframes';
 const LIST = (process.argv[3] || 'esquerdomacho,mst').split(',');
 const TEAM = process.argv[4] || 'E';
 const BASE = process.env.BASE || 'http://localhost:8123';
+const EXTRA = process.env.EXTRA ? `&${process.env.EXTRA.replace(/^&/, '')}` : '';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
@@ -19,17 +20,21 @@ const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
 });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+// Ruben revisa em 3:2; capturar em 16:10 escondia/alterava justamente o contato das mãos.
+const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 page.on('pageerror', e => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1`, { waitUntil: 'load' });
+await page.addInitScript(() => localStorage.setItem('awpbr_nick', 'EVAL'));
+await page.goto(`${BASE}/?debug=1${EXTRA}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
 await page.addStyleTag({ content: 'astro-dev-toolbar{display:none!important}' });
-await page.waitForSelector('#nick-input', { timeout: 30000 });
-await page.fill('#nick-input', 'EVAL');
+await page.waitForSelector('#splash-enter:not(.hidden)', { timeout: 30000 });
+await page.keyboard.press('Enter');
+await page.waitForSelector('#boot-splash', { state: 'detached', timeout: 5000 });
+await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 30000 });
+await page.click('.cs-item[data-act="ctf"]');
+await page.waitForSelector('#menu-setup.open', { timeout: 5000 });
 await page.click('#btn-jogar');
-// 5 facções hoje (P/B/U/C/F) — o ternário antigo só sabia P e B, então capturar
-// palhaço ou funkeiro clicava no time errado e a lista vinha vazia.
-await page.click(`#btn-team-${TEAM.toLowerCase()}`);
-await page.waitForSelector('#char-select:not(.hidden)', { timeout: 15000 });
+await page.click(`.team-card[data-faction="${TEAM}"]`);
+await page.waitForFunction(() => !document.getElementById('char-select')?.classList.contains('hidden'), null, { timeout: 15000 });
 // espera os GLBs carregarem e os thumbs trocarem
 await page.waitForTimeout(5000);
 

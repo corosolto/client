@@ -13,6 +13,7 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
+import { setMapSky } from './map_sky.js';
 
 // kill-switches (padrão do projeto): ?nofog=1 sem névoa, ?rays=0 sem god rays,
 // ?dust=0 sem poeira em suspensão, ?mato=0 sem vegetação invasora.
@@ -572,7 +573,11 @@ export function buildFerroVelho(scene, T) {
     return m;
   }
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); };
-  const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) root.add(o); return !!o; };
+  const gprop = (id, x, z, h, ry = 0) => {
+    const o = placeProp(id, { x, z, targetH: h, ry });
+    if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
+    return !!o;
+  };
   /* Variação de painel (crítico gauntlet: "mesmo módulo repetido") + ESTÁGIO DE FERRUGEM.
      Os GLB de carcaça já vêm com map próprio, então não dá pra trocar a textura sem perder
      o scan — o que dá é puxar a COR do material para o alvo do estágio (lerp) e mexer em
@@ -609,9 +614,16 @@ export function buildFerroVelho(scene, T) {
     });
     return o;
   };
-  const gpropV = (id, x, z, h, ry = 0) => { const flip = _pv % 2 ? Math.PI : 0; const o = placeProp(id, { x, z, targetH: h, ry: ry + flip }); if (o) { vary(o); root.add(o); } return !!o; };
+  const gpropV = (id, x, z, h, ry = 0) => { const flip = _pv % 2 ? Math.PI : 0; const o = placeProp(id, { x, z, targetH: h, ry: ry + flip }); if (o) { vary(o); root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); } return !!o; };
   // collider AABB por footprint (props só entram em ry 0 ou π/2, então o AABB é exato)
-  const collide = (x, z, hw, hd, h) => colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
+  const coverMat = new THREE.MeshBasicMaterial();
+  const collide = (x, z, hw, hd, h) => {
+    colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
+    const proxy = new THREE.Mesh(new THREE.BoxGeometry(hw * 2, h, hd * 2), coverMat);
+    proxy.position.set(x, h / 2, z); proxy.updateMatrixWorld(true);
+    proxy.userData.coverProxy = proxy.userData.proxyGLB = true;
+    occluders.push(proxy);   // fora da cena: não renderiza, mas hitscan/LOS testam a malha
+  };
 
   /* ===================== DECALQUE DE RUA (public/img/decals) =====================
      Pedido do dono (04/08): aplicar os recortes de `public/img/decals` "na textura de todos
@@ -709,12 +721,10 @@ export function buildFerroVelho(scene, T) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(360, 360), lam({ map: apron, color: 0xc0ab8c }));
     m.rotation.x = -Math.PI / 2; m.position.set(0, -0.08, 0); root.add(m);
   }
-  // ===== chão de terra + poças de óleo =====
+  // ===== chão de terra =====
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt);
-  for (const [x, z, r] of [[-8, 12, 2.4], [10, -6, 1.8], [-16, -14, 2.0], [6, 24, 1.5], [18, 12, 2.2], [-24, 26, 1.7]]) {
-    const p = new THREE.Mesh(new THREE.CircleGeometry(r, 20), MAT.oil);
-    p.rotation.x = -Math.PI / 2; p.position.set(x, 0.02, z); root.add(p);
-  }
+  // As seis poças CircleGeometry antigas liam como discos pretos perfeitos. As manchas
+  // orgânicas texturizadas do passe de sujeira abaixo já cobrem esta função sem repetição.
   // trilhas de pneu na terra (crítico gauntlet: "chão sem vida") — pares de faixas escuras
   {
     const trackMat = new THREE.MeshBasicMaterial({ color: 0x2a241c, transparent: true, opacity: 0.35 });
@@ -1131,6 +1141,8 @@ export function buildFerroVelho(scene, T) {
       for (const sx of [-0.24, 0.24]) part(g, new THREE.BoxGeometry(0.05, 0.05, 1.5), wood, sx, 0.62, -0.45, 0, 0.35);
       part(g, new THREE.CylinderGeometry(0.2, 0.2, 0.1, 10), tireMat, 0, 0.2, 0.62, 0, 0, Math.PI / 2);
       g.position.set(bx, 0, bz); g.rotation.y = ry; root.add(g);
+      // A cuba chega a 0,89 m: sem pegada o jogador atravessava o carrinho inteiro.
+      collide(bx, bz, 0.72, 0.82, 0.95);
     };
     barrow(3.2, -30.4, 0.6);
     /* BATERIAS empilhadas (terminais esverdeados de sulfato) + ROLOS DE FIO DE COBRE —
@@ -1262,9 +1274,9 @@ export function buildFerroVelho(scene, T) {
         const m = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6 + drnd() * 0.5, 8), scrapMat);
         m.rotation.z = Math.PI / 2; m.rotation.y = drnd() * 6.3; m.position.set(x + drnd() - 0.5, 0.06, z + drnd() - 0.5);
         m.castShadow = true; root.add(m);
-      } else {                    // bloco de motor
-        const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.32, 0.34), lam({ color: 0x1f1d1b, metalness: 0.75, roughness: 0.26, envMapIntensity: 1.8 }));
-        m.position.set(x + drnd() - 0.5, 0.16, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
+      } else {                    // bloco de motor baixo: atravessável como um degrau
+        const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.28, 0.34), lam({ color: 0x1f1d1b, metalness: 0.75, roughness: 0.26, envMapIntensity: 1.8 }));
+        m.position.set(x + drnd() - 0.5, 0.14, z + drnd() - 0.5); m.rotation.y = drnd() * 6.3; m.castShadow = true; root.add(m);
       }
     }
     // peças grandes: portas/capôs apoiados nas pilhas + parachoques no chão
@@ -1703,7 +1715,7 @@ export function buildFerroVelho(scene, T) {
      O sol saiu de (-24,48,30) — ~55° de elevação, sombra curta, meio-dia disfarçado — para
      ~22° de elevação: a sombra fica ~2,5× mais longa e é ELA que desenha os corredores
      entre as pilhas. Cor mais quente e âmbar; o hemi ganha bounce quente do chão de terra. */
-  scene.background = T.sky || new THREE.Color(0xc8b49a);
+  setMapSky(scene, T, '/img/textures/sky_ferrovelho.webp', 0xc8b49a);
   // Sol de FIM DE TARDE (08/2026 — clima da referência BECO OESTE): mais baixo (sombras
   // longas atravessando o pátio) e mais quente; hemi acompanha. Era 0xffd39a em (-46,20,32).
   const hemi = new THREE.HemisphereLight(0xffdfb0, 0x5a4530, 0.95); scene.add(hemi);

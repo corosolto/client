@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-05T01:13:28.642Z",
+ "gerado": "2026-08-11T03:05:17.464Z",
  "mutante": null,
  "refs": [
   "mandrake",
@@ -7,61 +7,212 @@
  ],
  "folga": 1.25,
  "teto": {
-  "p99": null,
-  "ruins1e4": null
+  "p99": 0.675,
+  "ruins1e4": 23.6
  },
  "personagens": [
   {
-   "id": "coach",
-   "arma": "scar",
+   "id": "mandrake",
+   "arma": "ak",
    "oneHanded": false,
    "ik": true,
-   "arestas": 10657,
-   "p95": 0.235,
-   "p99": 0.605,
-   "p999": 1.396,
-   "max": 10.29,
-   "pct25": 4.4,
-   "ruins1e4": 19.7
+   "arestas": 10035,
+   "p95": 0.233,
+   "p99": 0.54,
+   "p999": 1.19,
+   "max": 3.43,
+   "pct25": 4.48,
+   "ruins1e4": 18.9,
+   "ruinsPorOsso": [
+    [
+     "LeftForeArm",
+     14
+    ],
+    [
+     "LeftHand",
+     8
+    ],
+    [
+     "RightArm",
+     4
+    ],
+    [
+     "LeftShoulder",
+     4
+    ],
+    [
+     "LeftArm",
+     4
+    ],
+    [
+     "LeftUpLeg",
+     3
+    ],
+    [
+     "RightUpLeg",
+     1
+    ]
+   ]
   },
   {
-   "id": "dollynho",
+   "id": "programador-virado",
+   "arma": "m4",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 24933,
+   "p95": 0.285,
+   "p99": 0.6,
+   "p999": 1.214,
+   "max": 2.9,
+   "pct25": 6.28,
+   "ruins1e4": 18.4,
+   "ruinsPorOsso": [
+    [
+     "LeftArm",
+     34
+    ],
+    [
+     "Hips",
+     21
+    ],
+    [
+     "Curl_L_Tip",
+     10
+    ],
+    [
+     "LeftForeArm",
+     7
+    ],
+    [
+     "Curl_R_Tip",
+     5
+    ],
+    [
+     "RightForeArm",
+     4
+    ],
+    [
+     "RightArm",
+     3
+    ],
+    [
+     "Head",
+     3
+    ]
+   ]
+  },
+  {
+   "id": "pagodeiro",
+   "arma": "pistol",
+   "oneHanded": true,
+   "ik": false,
+   "arestas": 10580,
+   "p95": 0.19,
+   "p99": 0.399,
+   "p999": 1.12,
+   "max": 1.93,
+   "pct25": 2.98,
+   "ruins1e4": 10.4,
+   "ruinsPorOsso": [
+    [
+     "LeftArm",
+     8
+    ],
+    [
+     "RightArm",
+     4
+    ],
+    [
+     "LeftForeArm",
+     4
+    ],
+    [
+     "RightForeArm",
+     2
+    ],
+    [
+     "LeftUpLeg",
+     2
+    ],
+    [
+     "LeftLeg",
+     2
+    ]
+   ]
+  },
+  {
+   "id": "motoca-cachorro-loko",
+   "arma": "m4",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 21236,
+   "p95": 0.32,
+   "p99": 0.647,
+   "p999": 0.982,
+   "max": 2.22,
+   "pct25": 8.23,
+   "ruins1e4": 7.5,
+   "ruinsPorOsso": [
+    [
+     "RightHand",
+     10
+    ],
+    [
+     "Hips",
+     8
+    ],
+    [
+     "Curl_R_Tip",
+     6
+    ],
+    [
+     "LeftArm",
+     5
+    ],
+    [
+     "LeftHand",
+     2
+    ],
+    [
+     "LeftForeArm",
+     1
+    ]
+   ]
+  },
+  {
+   "id": "doidinho-bairro",
    "arma": "p90",
    "oneHanded": false,
-   "ik": false,
-   "arestas": 7582,
-   "p95": 0.259,
-   "p99": 0.579,
-   "p999": 1.412,
-   "max": 1.82,
-   "pct25": 5.25,
-   "ruins1e4": 17.1
-  },
-  {
-   "id": "trapfunk",
-   "arma": "scar",
-   "oneHanded": false,
    "ik": true,
-   "arestas": 10270,
-   "p95": 0.181,
-   "p99": 0.398,
-   "p999": 1.429,
-   "max": 3.16,
-   "pct25": 2.84,
-   "ruins1e4": 14.6
-  },
-  {
-   "id": "jozo",
-   "arma": "shotgun",
-   "oneHanded": false,
-   "ik": true,
-   "arestas": 10670,
-   "p95": 0.224,
-   "p99": 0.53,
-   "p999": 1.172,
-   "max": 2.82,
-   "pct25": 4.37,
-   "ruins1e4": 14.1
+   "arestas": 22580,
+   "p95": 0.205,
+   "p99": 0.486,
+   "p999": 0.936,
+   "max": 1.85,
+   "pct25": 3.65,
+   "ruins1e4": 4.9,
+   "ruinsPorOsso": [
+    [
+     "Curl_R_Tip",
+     7
+    ],
+    [
+     "LeftHand",
+     6
+    ],
+    [
+     "Curl_L_Tip",
+     4
+    ],
+    [
+     "RightHand",
+     3
+    ],
+    [
+     "LeftArm",
+     2
+    ]
+   ]
   }
  ]
 }

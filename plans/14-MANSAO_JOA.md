@@ -1,18 +1,17 @@
 <!-- spec:mapa -->
 # 14 — Mansão Joá
 
-Mansão de ultra-luxo no Joá, Rio de Janeiro — inspirada nas residências de alto padrão
-com paisagismo de Burle Marx. **cs_mansion brasileiro**: um time invade pela entrada
-(portão, jardim); o outro defende da piscina/terraço com vista pro mar. Arquitetura
-modernista: paredes de vidro, concreto aparente, mármore, jardim geométrico.
+Mansão de ultra-luxo no Joá, Rio de Janeiro, com paisagismo modernista tropical
+original. Um time invade pela entrada (portão, jardim); o outro defende da
+piscina/terraço com vista pro mar. Arquitetura modernista: paredes de vidro,
+concreto aparente, mármore e jardim geométrico.
 
 ## Local real
 
 Joá, Rio de Janeiro — estreito entre São Conrado e Barra. Vista para o oceano, montanhas
-verdes ao fundo. Mansão modernista com jardim de Burle Marx (Roberto Burle Marx, †1994,
-domínio público): azulejos geométricos, bromélias, pedras irregulares, espelho d'água,
-palmeiras-nativas. Piscina infinita na borda do penhasco. Heliponto. Garagem aberta com
-carros esportivos.
+verdes ao fundo. Mansão modernista com paisagismo tropical original: azulejos
+geométricos, bromélias, pedras irregulares, espelho d'água e palmeiras nativas.
+Piscina infinita na borda do penhasco. Heliponto. Garagem aberta com carros esportivos.
 
 ## Layout
 
@@ -21,7 +20,7 @@ carros esportivos.
   theater (poltronas), mezanino parcial (escritório, vista pro hall).
 - **Piscina e terraço:** deck de madeira com piscina infinita (não entrável — colisor
   na borda), espreguiçadeiras, mesa de jantar externa. Vista oceânica de tirar o fôlego.
-- **Jardim (Burle Marx):** caminhos de pedra irregulares, espelho d'água retangular,
+- **Jardim modernista tropical:** caminhos de pedra irregulares, espelho d'água retangular,
   canteiros geométricos com bromélias, palmeiras. O jardim é o caminho de aproximação
   do time invasor — cobertura em árvores e muretas baixas.
 - **Garagem:** aberta, 3 vagas com carros esportivos. Conecta o portão ao hall.
@@ -47,8 +46,10 @@ carros esportivos.
 
 ## Referências
 
-- Arquitetura modernista brasileira (Burle Marx †1994 — domínio público).
-- cs_mansion (CS 1.6 / CS:GO) — layout de invasão de mansão.
+- Tipologia de residência modernista brasileira no Joá: vidro, concreto,
+  integração interior-exterior e paisagismo tropical original.
+- Arquétipo genérico de invasão/defesa de residência, sem copiar layout, marca ou
+  asset de outro jogo.
 
 ## Régua de aceite
 

@@ -1,0 +1,7 @@
+Você é o crítico adversarial da skill asset-review do CS BRASIL. Você não construiu estes personagens. Julgue somente os dez pixels 3:2 anexados; cinco estados estáveis por personagem.
+
+Dê APROVADO ou REPROVADO separadamente:
+- Câmera Roxa: robô original de estúdio, cabeça/lente profissional grande, carcaça roxa, módulos de câmera, luz de gravação; deve segurar M4 visível e plausível. O close antigo tinha um grande bloco preto sob as mãos ocultando arma/pegada; verifique se desapareceu e se ambas as mãos realmente encontram a M4.
+- Motoca Cachorro Loko: entregador brasileiro, jaqueta amarela refletiva, bag térmica vermelho-laranja, telefone no peito, capacete integral preto com viseira levantada; deve segurar M4 visível. O defeito antigo era uma queixeira/aro preto horizontal enorme atravessando rosto/pescoço e visor como lâmina/cinta; verifique frontal e estados.
+
+Avalie fidelidade, arma canônica, contato das duas mãos, silhueta/distância, brasilidade, consistência close/medium/grip/walk/crouch e vetos (pessoa real, copyright, gore, logo/texto). Cite a imagem que prova cada conclusão e correção mínima de qualquer reprovação. Não aceite ID/receipt/intenção no lugar dos pixels.

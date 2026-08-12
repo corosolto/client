@@ -20,6 +20,8 @@ const qp = new URLSearchParams(location.search);
 const CHAR = qp.get('char') || 'mst';
 const WEAPON = qp.get('w') || 'awp';
 const hud = document.getElementById('hud');
+const CLEAN = qp.get('clean') === '1';
+if (CLEAN) hud.style.display = 'none';
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(innerWidth, innerHeight);
@@ -37,37 +39,51 @@ else { cam.position.set(3.4, 1.3, 0); cam.lookAt(0, 1.05, 0); }
 
 scene.add(new THREE.HemisphereLight(0xbcd3ff, 0x3a3320, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3,6,4); scene.add(key);
-scene.add(new THREE.GridHelper(10, 20, 0x445, 0x334));
+if (!CLEAN) scene.add(new THREE.GridHelper(10, 20, 0x445, 0x334));
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(10,10), new THREE.MeshStandardMaterial({color:0x2a2f38}));
 floor.rotation.x = -Math.PI/2; scene.add(floor);
 
 // Reference arrow = world +Z = the direction the character faces. Gun barrel should match.
 const fwd = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,1.15,0), 1.4, 0x00ff00, 0.12, 0.07);
-scene.add(fwd);
+if (!CLEAN) scene.add(fwd);
 
 await preloadCharacterAssets([CHAR]);
 const def = CHARACTERS.find(c => c.id === CHAR) || { id: CHAR, team:'P' };
 const built = buildCharacterModel(def, { weapon:true, weaponId: WEAPON });
 if (!built || !built.group) { hud.textContent = 'sem modelo '+CHAR; throw new Error('no model'); }
 scene.add(built.group);
+window.MOUNT_CTRL = built.ctrl || null; // diagnóstico do arnês: estado/tempo da ação real
 
 const PLAY = qp.get('play'); // 'walk'|'run'|'idle' -> animate continuously for video capture
 if (PLAY) {
   const state = PLAY;
-  if (built.ctrl && built.ctrl._to) built.ctrl._to(state);
+  if (built.ctrl) {
+    if (state === 'shoot' && built.ctrl.shoot) built.ctrl.shoot();
+    else if (state === 'death' && built.ctrl.die) built.ctrl.die();
+    else if (state === 'jump' && built.ctrl.jump) built.ctrl.jump();
+    else if ((state === 'crouch' || state === 'crouchwalk') && built.ctrl.setCrouch) built.ctrl.setCrouch(true);
+    else if (built.ctrl._to) built.ctrl._to(state);
+  }
   const ts = parseFloat(qp.get('ts')) || 1;
   if (built.ctrl && built.ctrl.actions && built.ctrl.actions[state]) built.ctrl.actions[state].timeScale = ts;
   const orbit = qp.get('orbit') === '1';
   let last = performance.now();
   hud.textContent = `char=${CHAR} weapon=${WEAPON} play=${state} ts=${ts}`;
   const SPD = parseFloat(qp.get('spd')) || (state==='run' ? 1.9 : 1.0);
-  window.STEP = (dt)=>{ if(built.ctrl) built.ctrl.update(dt, 1, false, SPD, false); built.group.updateMatrixWorld(true); };
+  window.STEP = (dt)=>{
+    if (built.ctrl) {
+      const moving = ['walk','run','walk1h','walkfire','crouchwalk'].includes(state) ? 1 : 0;
+      built.ctrl.update(dt, moving, state === 'shoot', moving ? SPD : 0, false);
+    }
+    built.group.updateMatrixWorld(true);
+  };
+  window.RENDER = ()=>renderer.render(scene, cam);
   (function loop(now){
     const dt = Math.min(0.05, (now-last)/1000); last = now;
     window.STEP(dt);
     if (orbit) { const a = now*0.0004; cam.position.set(Math.sin(a)*3.4, 1.35, Math.cos(a)*3.4); cam.lookAt(0,1.0,0); }
-    renderer.render(scene, cam);
-    requestAnimationFrame(loop);
+    window.RENDER();
+    if (qp.get('manual') !== '1') requestAnimationFrame(loop);
   })(last);
   window.MOUNT_READY = true;
 } else {

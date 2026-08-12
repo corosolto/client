@@ -77,17 +77,16 @@ Regra editorial: cada personagem tem **uma mecânica própria** — ninguém é 
 - **Nota:** personagem vilão por definição histórica — entra como o cara que o
   time tolera porque é útil, não como herói. Tom deliberado do dono.
 
-## 7. Macunaíma — o coringa
+## 7. Boto Cor de Rosa — o pistoleiro do rio
 
-- **Visual:** o herói sem nenhum caráter — roupas remendadas de várias regiões,
-  expressão de preguiça, rede de armar no ombro. Domínio público (Mário de
-  Andrade, †1945).
-- **Papel:** suporte imprevisível.
-- **Arma:** o que estiver no chão — bônus com armas pegas.
-- **Mecânica:** "Preguiça" — pode se deitar na rede (deploy) virando torre de
-  tiro estável; ao sair da rede ganha velocidade curta. Frases de eliminação
-  preguiçosas ("Ai, que preguiça...").
-- **Nota:** o personagem satírico por definição — casa com o tom do jogo.
+- **Visual:** o golfinho amazônico rosa, sem forma humana, com silhueta aquática
+  imediatamente legível e adaptação de suporte para a arma.
+- **Papel:** duelista de curta e média distância.
+- **Arma:** Deagle.
+- **Mecânica:** "Encanto do Rio" — o primeiro disparo depois de sair de cobertura
+  reduz por um instante a precisão do inimigo atingido.
+- **Nota:** o modelo precisa continuar sendo um boto. Terno branco e homem de
+  chapéu descaracterizam a silhueta pedida para o jogo.
 
 ## 8. Cuca — a bruxa
 
@@ -120,6 +119,8 @@ Regra editorial: cada personagem tem **uma mecânica própria** — ninguém é 
 - **Lobisomem vs. Cuca:** o lobo fareja através da zona da poção.
 - **Zumbi vs. Bandeirante:** o confronto histórico real — barks especiais quando
   um elimina o outro.
+- **Boto vs. Saci:** deslocamento imprevisível do rio contra deslocamento por
+  redemoinho.
 
 ## Próximos passos
 

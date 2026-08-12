@@ -33,6 +33,7 @@
            spawn mais próximo e maior linha de tiro limpa até a bandeira.
 
    Uso:  node tools/eval/map-check.mjs [mapId|all]     (escreve map_check.json)
+         node tools/eval/map-check.mjs <mapId> --mutante=rota-unica
    ============================================================================ */
 import path from 'node:path';
 import { writeFileSync } from 'node:fs';
@@ -41,6 +42,12 @@ import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ONLY = process.argv[2] || 'all';
+// O nome antigo fica como alias porque já aparece em comandos de auditoria registrados.
+const MUTANTE_SUPERFICIE_SOLIDA = process.argv.includes('--mutante=superficie-solida') ||
+  process.argv.includes('--mutante=agua-solida');
+const MUTANTE_SEM_GUARDA_ANDAR = process.argv.includes('--mutante=sem-guarda-andar');
+const MUTANTE_DESVIO_ESCADA = process.argv.includes('--mutante=desvio-escada');
+const MUTANTE_ROTA_UNICA = process.argv.includes('--mutante=rota-unica');
 const SEED = 12345;
 
 /* ---- constantes de corpo/andabilidade: as MESMAS do pickup-check.mjs, e pelo mesmo
@@ -127,8 +134,19 @@ const QUAD_FRAC = 0.35;         // densidade mínima = 35% da mediana dos quadra
 const QUAD_ESPAC = 7.0;         // espaçamento médio máximo entre props do quadrante (m)
 const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como rotas diferentes
 
+/* ---- MAP6: borda de andar alto não pode despejar o jogador sob a laje.
+   Caso real (screenshot do dono, 09/08/2026): no mirante do fy_escadao, a câmera apareceu
+   sob o piso vendo bots, pickups e caixas suspensos. A causa imediata era a câmera de morte
+   descendo até y global 0,5; a geometria também tinha bordas com queda de 14,28 m sem guarda.
+   A régua irmã mede a geometria: toda transição alcançável com queda >= 2 m precisa empurrar
+   o corpo na altura do piso superior. Dois metros vêm do próprio corpo jogável (olho 1,62 m):
+   acima disso não é degrau nem queda tática, é passagem para o avesso da camada.
+   `--mutante=sem-guarda-andar` ignora os colliders e prova que a sonda encontra as bordas. */
+const QUEDA_ANDAR = 2.0;
+
 const textures = initTextures();
-const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : [ONLY];
+const MAPAS_NOVOS = ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : [ONLY];
 const down = new THREE.Vector3(0, -1, 0);
 
 const mapas = [];
@@ -159,7 +177,11 @@ for (const mapId of MAP_IDS) {
      sprite de poeira não significa que o corpo do jogador está dentro de coisa nenhuma.
      Sem este filtro o awp_map derruba o arnês (Sprite.raycast exige câmera) e, pior,
      contaria fumaça como chão. */
-  const solido = (h) => h.object && h.object.isMesh && !h.object.isSprite;
+  // Água, manchas e folhagem de superfície continuam em `root` para descarte do mapa, mas
+  // não podem virar teto na sonda vertical. O mutante reativa todas as superfícies marcadas:
+  // `node tools/eval/map-check.mjs <mapa> --mutante=superficie-solida` deve reprovar.
+  const solido = (h) => h.object && h.object.isMesh && !h.object.isSprite &&
+    (MUTANTE_SUPERFICIE_SOLIDA || !h.object.userData?.nonSolidSurface);
   const primeiroSolido = (hits) => { for (const h of hits) if (solido(h)) return h; return null; };
 
   /* ================= grade de andabilidade (idêntica à do pickup-check) ================= */
@@ -173,8 +195,11 @@ for (const mapId of MAP_IDS) {
     const k = gid(i, j);
     if (andavelCache[k] < 0) {
       const x = GX(i), z = GZ(j), p = { x, y: gh(x, z), z };
-      g._collide(p, R_BODY);
-      andavelCache[k] = (Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6) ? 1 : 0;
+      if (MUTANTE_SEM_GUARDA_ANDAR) andavelCache[k] = 1;
+      else {
+        g._collide(p, R_BODY);
+        andavelCache[k] = (Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6) ? 1 : 0;
+      }
     }
     return andavelCache[k] === 1;
   };
@@ -212,6 +237,26 @@ for (const mapId of MAP_IDS) {
     }
   }
   const celulasAlcancadas = alcancado.reduce((a, v) => a + v, 0);
+
+  /* ================= MAP6 — borda alta sem guarda ================= */
+  const bordasSemGuarda = [];
+  for (let i = 0; i < nGx; i++) for (let j = 0; j < nGz; j++) {
+    if (!alcancado[gid(i, j)]) continue;
+    const y0 = altura(i, j);
+    for (const [di, dj] of [[1, 0], [0, 1]]) {
+      const a = i + di, b = j + dj;
+      if (a >= nGx || b >= nGz) continue;
+      const y1 = altura(a, b), queda = Math.abs(y1 - y0);
+      if (queda < QUEDA_ANDAR) continue;
+      const altoI = y0 >= y1 ? i : a, altoJ = y0 >= y1 ? j : b;
+      if (!alcancado[gid(altoI, altoJ)]) continue;
+      const baixoI = y0 >= y1 ? a : i, baixoJ = y0 >= y1 ? b : j;
+      const x = GX(baixoI), z = GZ(baixoJ), p = { x, y: Math.max(y0, y1), z };
+      if (!MUTANTE_SEM_GUARDA_ANDAR) g._collide(p, R_BODY);
+      if (Math.hypot(p.x - x, p.z - z) <= 0.02 && bordasSemGuarda.length < 64)
+        bordasSemGuarda.push({ x: +GX(altoI).toFixed(2), z: +GZ(altoJ).toFixed(2), queda: +queda.toFixed(2) });
+    }
+  }
 
   /* ================= MAP1 — corpo dentro de sólido =================
      Sonda VERTICAL: um raio que sai da altura do peito e desce até o chão local. Se ele
@@ -355,7 +400,8 @@ for (const mapId of MAP_IDS) {
     let desvio = 0;
     for (const f of uteis) {
       const zm = (f.z0 + f.z1) / 2;
-      desvio = Math.max(desvio, Math.abs(gh(cx, zm) - f.y));
+      const chaoAndavel = gh(cx, zm) + (MUTANTE_DESVIO_ESCADA ? 0.20 : 0);
+      desvio = Math.max(desvio, Math.abs(chaoAndavel - f.y));
     }
     escadas.push({
       nome: st.nome || 'escada', x0: st.x0, x1: st.x1, z0, z1,
@@ -605,6 +651,9 @@ for (const mapId of MAP_IDS) {
             const pA = nodes[from], pB = nodes[to];
             for (let i2 = 0; i2 < nodes.length; i2++) {
               if (i2 === from || i2 === to) continue;
+              // Mutante da régua: depois da primeira rota, elimina fisicamente todo o
+              // miolo do grafo. Se CTF2 não ficar vermelho, o portão mede só o log.
+              if (MUTANTE_ROTA_UNICA) { bloq[i2] = 1; continue; }
               if (Math.hypot(nodes[i2].x - pA.x, nodes[i2].z - pA.z) <= RAIO_PONTA) continue;
               if (Math.hypot(nodes[i2].x - pB.x, nodes[i2].z - pB.z) <= RAIO_PONTA) continue;
               for (const c2 of cam) {
@@ -677,6 +726,8 @@ for (const mapId of MAP_IDS) {
     piorRazaoProp: quadrantes.length ? +Math.min(...quadrantes.map((q) => q.razaoProp)).toFixed(2) : 1,
     piorRazaoWp: quadrantes.length ? +Math.min(...quadrantes.map((q) => q.razaoWp)).toFixed(2) : 1,
     piorEspacamento: quadrantes.length ? +Math.max(...quadrantes.map((q) => q.espacamento)).toFixed(2) : 0,
+    // MAP6
+    bordasSemGuarda,
     rotasSpawnBandeira: rotas, piorRotas: rotas.length ? Math.min(...rotas.map((r) => r.rotas)) : 0,
     // CTF1
     bandeiras, alturaTrianguloMin: +alturaTrianguloMin.toFixed(2),
@@ -692,6 +743,7 @@ const saida = {
     map3: `NBR 9077: espelho ${ESPELHO}, piso ${PISO_D}, 2h+p ${BLONDEL}, largura ≥ ${LARG_MIN} m, inclinação ${INCLIN}°`,
     map4: `occluder com malha visível a ≤ ${TOL_MALHA} m (tolerância declarada); reprova acima de ${FRAC_MALHA * 100}% da face lateral sem malha`,
     map5: `espaçamento médio entre props ≤ ${QUAD_ESPAC} m E densidade de prop/waypoint ≥ ${QUAD_FRAC} × a mediana do próprio mapa (grade ${QUAD_N}×${QUAD_N}, só quadrante com ≥ ${QUAD_MIN_AND} m² andáveis)`,
+    map6: `toda borda alcançável com queda ≥ ${QUEDA_ANDAR} m empurra o corpo na altura do piso superior`,
     ctf1: 'altura mínima do triângulo das bandeiras, distância ao spawn mais próximo, maior linha de tiro limpa',
     ctf2: `rotas separadas por ≥ ${SEP_ROTA} m entre cada spawn e cada bandeira`,
   },
@@ -713,9 +765,55 @@ for (const m of mapas) {
     m.occluderSemMalha.slice(0, 4).map((o) => `${(o.frac * 100).toFixed(0)}% vazio até y ${o.alturaPior} m em [${o.caixa.join(' ')}]`).join(' · '));
   console.log(`${''.padEnd(15)} MAP5 pior espaçamento ${m.piorEspacamento} m [≤${QUAD_ESPAC}] · pior razão prop ${m.piorRazaoProp}× / wp ${m.piorRazaoWp}× da mediana [≥${QUAD_FRAC}] em ${m.quadrantes.length} quadrantes | ` +
     m.quadrantes.filter((q) => q.razaoProp < QUAD_FRAC || q.razaoWp < QUAD_FRAC || q.espacamento > QUAD_ESPAC).map((q) => `q${q.q}(x${q.x0} z${q.z0}) esp ${q.espacamento} m prop ${q.razaoProp}× wp ${q.razaoWp}×`).join(' · '));
+  console.log(`${''.padEnd(15)} MAP6 ${m.bordasSemGuarda.length} borda(s) de andar alto sem guarda | ` +
+    m.bordasSemGuarda.slice(0, 6).map((b) => `[${b.x},${b.z}] queda ${b.queda} m`).join(' · '));
   console.log(`${''.padEnd(15)} CTF1 alturaTriangulo ${m.alturaTrianguloMin} m | ` +
     m.bandeiras.map((b) => `${b.id} d${b.distSpawn}m linha ${b.maiorLinhaTiro}m`).join(' | '));
   console.log(`${''.padEnd(15)} CTF2 mínimo ${m.piorRotas} rota(s) separada(s) | ` +
     m.rotasSpawnBandeira.map((r) => `${r.time}→${r.bandeira} ${r.rotas}`).join(' · '));
 }
 console.log(`MAPCHECK dentro ${mapas.reduce((a, m) => a + (m.corpoDentroDeSolido || 0), 0)} | submersos ${mapas.reduce((a, m) => a + (m.submersosAcimaDoPeito || 0), 0)}`);
+const bordasAltasAbertas = mapas.reduce((n, m) => n + (m.bordasSemGuarda?.length || 0), 0);
+const rotasInsuficientes = mapas.flatMap((m) => (m.rotasSpawnBandeira || [])
+  .filter((r) => r.rotas < 2)
+  .map((r) => `${m.map}/${r.time}→${r.bandeira}(${r.rotas})`));
+const escadasFora = mapas.flatMap((m) => (m.escadas || []).filter((e) =>
+  !e.okEspelho || !e.okPiso || !e.okBlondel || !e.okLargura || !e.okInclinacao || !e.okDesvio)
+  .map((e) => `${m.map}/${e.nome}`));
+if (escadasFora.length > 0) {
+  console.error(`MAP3 FALHA: ${escadasFora.length} escada(s) fora do contrato medido: ${escadasFora.join(', ')}`);
+  process.exitCode = 1;
+} else if (MUTANTE_DESVIO_ESCADA) {
+  console.error('MUTANTE desvio-escada sobreviveu: a divergência injetada não foi medida');
+  process.exitCode = 1;
+}
+if (rotasInsuficientes.length > 0) {
+  console.error(`CTF2 FALHA: ${rotasInsuficientes.length} par(es) spawn↔bandeira sem 2 rotas separadas: ${rotasInsuficientes.join(', ')}`);
+  process.exitCode = 1;
+} else if (MUTANTE_ROTA_UNICA) {
+  console.error('MUTANTE rota-unica sobreviveu: a segunda faixa eliminada não foi medida');
+  process.exitCode = 1;
+}
+if (!MUTANTE_SEM_GUARDA_ANDAR && bordasAltasAbertas > 0) {
+  console.error(`MAP6 FALHA: ${bordasAltasAbertas} borda(s) alcançável(is) com queda ≥ ${QUEDA_ANDAR} m sem guarda; o jogador pode cair sob uma laje.`);
+  process.exitCode = 1;
+}
+if (MUTANTE_SUPERFICIE_SOLIDA) {
+  const falsosSolidos = mapas.reduce((n, m) => n + (m.corpoDentroDeSolido || 0), 0);
+  if (falsosSolidos > 0) {
+    console.error(`MUTANTE superficie-solida mordido: ${falsosSolidos} falso(s) sólido(s)`);
+    process.exitCode = 1;
+  } else {
+    console.error('MUTANTE superficie-solida sobreviveu: nenhuma marca nonSolidSurface foi exercitada');
+  }
+}
+if (MUTANTE_SEM_GUARDA_ANDAR) {
+  const abertas = mapas.reduce((n, m) => n + (m.bordasSemGuarda?.length || 0), 0);
+  if (abertas > 0) {
+    console.error(`MUTANTE sem-guarda-andar mordido: ${abertas} borda(s) alta(s) abertas`);
+    process.exitCode = 1;
+  } else {
+    console.error('MUTANTE sem-guarda-andar sobreviveu: nenhuma borda alta foi exercitada');
+    process.exitCode = 1;
+  }
+}

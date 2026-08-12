@@ -29,7 +29,7 @@ const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
 page.on('pageerror', e => console.error('[pageerror]', e.message.slice(0, 300)));
 await page.addInitScript(() => localStorage.setItem('awpbr_nick', 'ZÉ DO AWP'));
 
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=awp_map`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&lang=pt&auto=E,mst&map=awp_map`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
 await page.waitForTimeout(1500);
 
@@ -39,12 +39,12 @@ await page.waitForTimeout(1500);
 await page.evaluate(() => {
   const g = window.__game;
   const k = [12, 8, 6, 5, 3, 1, 0], a = [2, 1, 3, 2, 1, 1, 0], d = [3, 4, 4, 5, 6, 6, 7];
-  const byTeam = { P: 0, B: 0 };
+  const byTeam = { E: 0, B: 0 };
   for (const c of g.combatants) {
     const i = Math.min(byTeam[c.team]++, 6);
     c.kills = k[i]; c.deaths = d[i]; c.assists = a[i];
   }
-  g.roundNum = 4; g.roundsWon = { P: 2, B: 1 };
+  g.roundNum = 4; g.roundsWon = { E: 2, B: 1 };
   g._resultadoDaRodada('PALHAÇOS LEVARAM O ROUND', 'ELIMINARAM O TIME INTEIRO');
   document.getElementById('hud').classList.add('sb-on');
 });
@@ -57,28 +57,27 @@ await page.evaluate(() => {
   const g = window.__game;
   g._showScoreboard(false);
   g.player.kills = 24; g.player.deaths = 8;
-  g.roundsWon = { P: 3, B: 1 };
+  g.roundsWon = { E: 3, B: 1 };
   g._endMatch();
 });
 await page.waitForTimeout(1400);
 await page.screenshot({ path: `${OUT}/09_resultado.png` });
 console.log('shot 09 resultado');
 
-/* ---- 08b PLACAR NO CTF ---- a coluna CAP. só existe no CTF e o game.js liga/desliga o
-   #sb-cap-h por id; o CSS espelha isso nos rótulos duplicados com :has(). Se essa captura
-   sair com CAP. sem número (ou número sem rótulo), o espelho quebrou. */
+/* ---- 08b PLACAR NO CTF ---- o DOM vigente cria duas `.sb-col.ctf`; cada linha ganha a
+   quinta célula CAP. O arnês antigo ainda procurava #sb-cap-h, removido junto da tabela
+   única, e por isso quebrava depois de já ter gravado 08/09. */
 const ctf = await page.evaluate(() => {
   const g = window.__game;
   document.getElementById('match-end').classList.add('hidden');   // a tela 09 é .screen z-40 e taparia o placar
   g.ctf = true;   /* o modo CTF não vem por query; o que o placar lê é este campo */
   let i = 0; for (const c of g.combatants) { c.kills = 9 - i; c.deaths = i; c.captures = (i % 3); i++; }
-  g.roundNum = 3; g.roundsWon = { P: 1, B: 1 };
+  g.roundNum = 3; g.roundsWon = { E: 1, B: 1 };
   g._showScoreboard(true);
-  const head = document.querySelector('.sb-head .sb-cap');
-  return { ctf: g.ctf, capHVisible: !document.getElementById('sb-cap-h').classList.contains('hidden'),
-           capLabelShown: head ? getComputedStyle(head).display !== 'none' : null,
-           cols: getComputedStyle(document.querySelector('#sb-body tr')).gridTemplateColumns,
-           tds: document.querySelectorAll('#sb-body tr:first-child td').length };
+  const first = document.querySelector('#sb-cols .sb-col.ctf tbody tr');
+  return { ctf: g.ctf, ctfCols: document.querySelectorAll('#sb-cols .sb-col.ctf').length,
+           grid: first ? getComputedStyle(first).gridTemplateColumns : null,
+           tds: first?.querySelectorAll('td').length || 0 };
 });
 console.log('ctf:', JSON.stringify(ctf));
 await page.waitForTimeout(500);
@@ -94,7 +93,9 @@ const over = await page.evaluate(() => {
   const g = window.__game;
   document.getElementById('match-end').classList.remove('hidden');
   const r = (el) => { const b = el.getBoundingClientRect(); return [b.left < -1, b.right > innerWidth + 1, b.bottom > innerHeight + 1]; };
-  return { matchWrap: r(document.querySelector('.me-wrap')), stats: r(document.getElementById('match-stats')),
+  /* .me-wrap é a moldura full-bleed e pode exceder 1 px durante a animação da própria
+     screen; o que pode cortar conteúdo é a coluna editorial, não o bleed decorativo. */
+  return { matchContent: r(document.querySelector('.me-col')), stats: r(document.getElementById('match-stats')),
            actions: r(document.querySelector('.me-actions')),
            docOverflowX: document.documentElement.scrollWidth > innerWidth };
 });

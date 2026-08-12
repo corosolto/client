@@ -10,6 +10,7 @@ import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por di
 import { detailFor, registerDetail } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
+import { setMapSky } from './map_sky.js';
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -227,7 +228,7 @@ export function buildBrasilia(scene, T) {
   // Asfalto claro estourado de sol (BAR: "cinza-claro esbranquiçado, faixas desgastadas").
   function asfaltoTex() {
     const c = cvs(256, 256), x = c.getContext('2d');
-    x.fillStyle = '#6e6c68'; x.fillRect(0, 0, 256, 256);
+    x.fillStyle = '#8d8982'; x.fillRect(0, 0, 256, 256);
     for (let i = 0; i < 5000; i++) {
       x.fillStyle = `rgba(${170 + Math.random() * 60 | 0},${168 + Math.random() * 55 | 0},${160 + Math.random() * 50 | 0},${Math.random() * 0.22})`;
       x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
@@ -510,10 +511,10 @@ export function buildBrasilia(scene, T) {
     // vidro fumê dos ministérios. metalness BAIXA de propósito: vidro é dielétrico. Com metalness 0.7 sobre uma cor
     // quase preta o F0 cairia pra 0,03 e o reflexo do sol sumiria de novo — o brilho de
     // fachada de vidro vem do Fresnel (F->1 na rasante), não de tratar vidro como metal.
-    vidroFume: lam({ color: 0x2b3237, roughness: 0.20, metalness: 0.10, envMapIntensity: 2.4 }),
+    vidroFume: lam({ color: 0x56636b, roughness: 0.26, metalness: 0.08, envMapIntensity: 2.0 }),
     aco: lam({ color: 0x9aa0a6, roughness: 0.32, metalness: 0.85, envMapIntensity: 1.8 }),
     pintBranca: lam({ color: 0xdedbd2, roughness: 0.7 }),
-    asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95 }),
+    asfalto: lam({ map: ctex(asfaltoTex(), 8, 40), roughness: 0.95, emissive: 0x282521, emissiveIntensity: 0.48 }),
     // lâmina d'água do espelho: 0.06 = espelho perfeito de uma fonte pontual = ponto
     // invisível. 0.24 abre o rastro de sol na água (o "glitter path") pra vários pixels.
     agua: lam({ color: 0x2f6ea0, roughness: 0.24, metalness: 0.55, envMapIntensity: 2.2, transparent: true, opacity: 0.88 }),
@@ -794,10 +795,9 @@ export function buildBrasilia(scene, T) {
       // jardim, essa sim com parapeito e leitura clara. Excesso é o problema, não falta.
       const b = placeProp('palacio', { x: px, z: PAL_Z, targetH: PAL_H, ry, y: PL + 0.16 });
       if (b) {
-        // Este GLB é UMA malha com UM material branco liso: a 10 m de altura por ~35 m de
-        // lado ele vira uma parede chapada. O revestimento de concreto de forma (triplanar)
-        // resolve o material; a IDENTIDADE quem devolve é o bloco logo abaixo.
-        dressGLB(b, MAT.concBranco);
+        // O Palácio Mint já traz albedo, normal e metallic/roughness. Não revestir a malha
+        // inteira com um material procedural: isso apaga o asset profissional e o reduz a
+        // uma caixa branca/escura. Os volumes abaixo complementam a silhueta sem substituir PBR.
         root.add(b); occluders.push(b);
         b.updateMatrixWorld(true);
         const bb2 = new THREE.Box3().setFromObject(b);
@@ -817,7 +817,11 @@ export function buildBrasilia(scene, T) {
                 no meio e afina de novo ao encontrar a laje (era um tronco de cone de 8 lados);
              4. a RAMPA, que é a assinatura do Planalto.
            `?planalto=old` volta ao brise antigo. */
-        const NEWPAL = QP.get('planalto') !== 'old';
+        // A/B visual: `mint` preserva o landmark autoral sem a releitura procedural.
+        // `enhanced` e `old` ficam disponíveis para provar, na mesma câmera, quanto
+        // cada sobreposição se afasta do asset aprovado.
+        const PALMODE = QP.get('planalto') || 'enhanced';
+        const NEWPAL = PALMODE === 'enhanced';
         if (BIG && DETAIL > 0 && NEWPAL) {
           const y0 = bb2.min.y, y1 = bb2.max.y, HH = Math.max(2, y1 - y0);
           const x0 = bb2.min.x, x1 = bb2.max.x, z0 = bb2.min.z, z1 = bb2.max.z;
@@ -867,7 +871,7 @@ export function buildBrasilia(scene, T) {
           guard.position.set(0, 0.39, -1.16); rmp.add(guard);   // guarda-corpo só na face de fora
         }
         // brise antigo (só com `?planalto=old`, para A/B)
-        if (BIG && DETAIL > 0 && !NEWPAL) {
+        if (BIG && DETAIL > 0 && PALMODE === 'old') {
           const y0 = bb2.min.y, y1 = bb2.max.y, HH = Math.max(2, y1 - y0);
           const x0 = bb2.min.x, x1 = bb2.max.x, z0 = bb2.min.z, z1 = bb2.max.z;
           const W = x1 - x0, D = z1 - z0;
@@ -1123,7 +1127,8 @@ export function buildBrasilia(scene, T) {
       const emb = new THREE.Mesh(new THREE.BoxGeometry(15.6, 0.42, 12.6), MAT.granitoPreto);
       emb.position.y = 0.21; g.add(emb);
       g.traverse(o => { if (o.isMesh) { o.castShadow = !LOWQ; o.receiveShadow = true; } });
-      col(px - 7, px + 7, 0, 12, pz - 6, pz + 6);
+      // A pegada acompanha o embasamento visível de 15,6 × 12,6 m, não só as asas.
+      col(px - 7.8, px + 7.8, 0, 12, pz - 6.3, pz + 6.3);
       /* PAREDE INVISÍVEL CORRIGIDA (map_brasilia.js:1042, invariante MAP4). Era
          `occBox(14, 12, 12, …)`: um bloco maciço de 14 × 12 × 12 m em cima de um edifício
          que é DUAS chapas de 0,90 m inclinadas e um bico. Medido: 100% da superfície dessa
@@ -1519,7 +1524,10 @@ export function buildBrasilia(scene, T) {
       if ((DETAIL === 2 || bz2 > 0) && freeSpot(bx2, bz2, 0.8)) { bins.push({ x: bx2, y: 0.5, z: bz2 }); col(bx2 - 0.4, bx2 + 0.4, 0, 1, bz2 - 0.4, bz2 + 0.4); }
     addInst(new THREE.CylinderGeometry(0.38, 0.30, 1.0, 8), lam({ color: 0x3f4a3f, roughness: 0.7 }), bins, { occlude: false });
     for (const [cx2, cz2] of [[3, -8], [4.2, -9], [-3, 12], [-4.2, 13], [1, 30], [10, -34], [-10, 42], [2.4, -52]])
-      if ((DETAIL === 2 || cx2 > 0) && freeSpot(cx2, cz2, 0.6)) cones.push({ x: cx2, y: 0.35, z: cz2 });
+      if ((DETAIL === 2 || cx2 > 0) && freeSpot(cx2, cz2, 0.6)) {
+        cones.push({ x: cx2, y: 0.35, z: cz2 });
+        col(cx2 - 0.28, cx2 + 0.28, 0, 0.7, cz2 - 0.28, cz2 + 0.28);
+      }
     addInst(new THREE.ConeGeometry(0.28, 0.7, 7), lam({ color: 0xd8501e, roughness: 0.8 }), cones, { shadow: false });
     for (const [vx, vz] of [[9.5, 40], [-9.5, 40], [9.5, -12], [-9.5, -12], [9.5, 56], [-9.5, 56]])
       if (freeSpot(vx, vz, 1.1)) { vasos.push({ x: vx, y: 0.35, z: vz }); col(vx - 0.7, vx + 0.7, 0, 0.7, vz - 0.7, vz + 0.7); }
@@ -1602,7 +1610,8 @@ export function buildBrasilia(scene, T) {
         const s = onRoad ? 1.6 + h2 * 3.4 : 1.0 + h2 * 2.6;
         decals.push({ x, y: onRoad ? 0.055 : 0.045, z: (h2 - 0.5) * 210, rx: -Math.PI / 2, ry: h3 * 3.1, sx: s, sy: s * (0.6 + h * 0.8) });
       }
-      addInst(new THREE.PlaneGeometry(1, 1), MAT.mancha, decals, { shadow: false });
+      const manchas = addInst(new THREE.PlaneGeometry(1, 1), MAT.mancha, decals, { shadow: false });
+      if (manchas) manchas.userData.nonSolidSurface = true;
 
       // BANCO de concreto do mobiliário urbano dos anos 60 (bloco maciço sobre dois apoios).
       // Cobertura baixa de verdade nas laterais, longe do miolo do duelo.
@@ -1646,7 +1655,9 @@ export function buildBrasilia(scene, T) {
     const sk = new THREE.CanvasTexture(c);
     sk.colorSpace = THREE.SRGBColorSpace;
     sk.wrapS = sk.wrapT = THREE.ClampToEdgeWrapping;
-    scene.background = sk;
+    // No browser, a placa fotográfica prolonga o cerrado e a silhueta baixa da cidade.
+    // O canvas acima continua sendo fallback determinístico do harness node.
+    setMapSky(scene, { sky: sk }, '/img/textures/sky_brasilia.webp', sk);
   } else scene.background = T.sky;
   // FOG: continua valendo que no Planalto o ar é seco e os primeiros metros não têm haze —
   // o que muda é a CURVA. A névoa linear (near 130 / far 360) só tinha apagado 43 % do
@@ -1670,7 +1681,7 @@ export function buildBrasilia(scene, T) {
   // e quente-neutro, e sobretudo penumbra ESTREITA (radius 3 -> 1). O sol fica a ~33° de
   // elevação: sombra longa (≈1,6× a altura) atravessando a lane, que é o que dá volume ao
   // vazio da praça. O env map (IBL, do agente de gráficos) preenche o resto do ambiente.
-  const hemi = new THREE.HemisphereLight(0xbdd8f5, SKY2 ? 0xa08a5c : 0x8a7f63, SKY2 ? 0.30 : 0.42);
+  const hemi = new THREE.HemisphereLight(0xbdd8f5, SKY2 ? 0xa08a5c : 0x8a7f63, SKY2 ? 0.52 : 0.48);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(SKY2 ? 0xfff4e2 : 0xfff1d8, SKY2 ? 3.1 : 2.5);
   if (SKY2) sun.position.set(90, 62, -40); else sun.position.set(38, 58, -14);
@@ -1686,7 +1697,7 @@ export function buildBrasilia(scene, T) {
   sun.shadow.radius = SKY2 ? 1 : 3;   // sol duro do cerrado = penumbra estreita
   scene.add(sun);
   // Rebote: no cerrado seco o rebote dominante vem do CHÃO (palha/laterita), não do céu.
-  const fill = new THREE.DirectionalLight(SKY2 ? 0xc9b98f : 0xaecbe8, SKY2 ? 0.20 : 0.35);
+  const fill = new THREE.DirectionalLight(SKY2 ? 0xd8c9a3 : 0xaecbe8, SKY2 ? 0.42 : 0.38);
   fill.position.set(-32, 22, 28); scene.add(fill);
 
   /* ---------------- ground height (flat) ---------------- */

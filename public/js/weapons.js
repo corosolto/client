@@ -11,6 +11,9 @@ export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pisto
   'm92', 'akm', 'g3', 'revolver38', 'md97', 'carbine', 'm400', 'mosin', 'rem700',
   'lmg', 'scar', 'tavor', 'famas', 'uzi', 'p90',
   'svd', 'g3sg1', 'sks'];   // snipers semi-auto (reusam o modelo de outra arma via MODEL_ALIAS)
+// Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
+// o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
+const DISPLAY_MODEL_IDS = ['mosquete'];
 
 // Snipers semi-auto novas reaproveitam a MALHA de uma arma existente (sem asset novo):
 // SVD←SCAR, G3SG1←G3, SKS←carabina. weaponModel/preload usam este alias.
@@ -90,6 +93,8 @@ const CFG = {
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
   m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
+  // Tripo v3.1: o eixo autoral é -Y; -90° em X leva o cano para +Z. Uso só em 3ª pessoa.
+  mosquete:  { len: 1.45, rot: [-90, 0, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
@@ -232,7 +237,7 @@ function buildMag(id) {
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
 export async function preloadWeapons() {
-  await Promise.all(WEAPON_IDS.map(async (id) => {
+  await Promise.all([...WEAPON_IDS, ...DISPLAY_MODEL_IDS].map(async (id) => {
     const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
     if (_cache.has(src)) return;
     try { const g = await loadGLB(`models/weapons/${src}.glb?v=${VERSION}`); _cache.set(src, g.scene); }

@@ -90,10 +90,12 @@ function validaMapa(md, arq) {
   return erros;
 }
 
-function validaArquivo(arq) {
+function validaArquivo(arq, exigeMarcador = false) {
   const md = readFileSync(arq, 'utf8');
   const m = md.slice(0, 400).match(MARCADOR);
-  if (!m) return []; // não é spec — plano comum, fora da jurisdição desta régua
+  if (!m) return exigeMarcador
+    ? [`${arq}: arquivo pedido explicitamente sem <!-- spec:time --> ou <!-- spec:mapa -->`]
+    : []; // plano comum varrido em diretório, fora da jurisdição desta régua
   return m[1] === 'time' ? validaTime(md, arq) : validaMapa(md, arq);
 }
 
@@ -189,9 +191,9 @@ if (cmd === 'new') {
 } else if (cmd === 'check') {
   if (args[0] === '--mutante') { mutante(); process.exit(0); }
   const alvos = args.flatMap((a) =>
-    a.endsWith('.md') ? [a]
-      : readdirSync(a).filter((f) => f.endsWith('.md')).map((f) => join(a, f)));
-  const erros = alvos.flatMap(validaArquivo);
+    a.endsWith('.md') ? [{ arq: a, exigeMarcador: true }]
+      : readdirSync(a).filter((f) => f.endsWith('.md')).map((f) => ({ arq: join(a, f), exigeMarcador: false })));
+  const erros = alvos.flatMap(({ arq, exigeMarcador }) => validaArquivo(arq, exigeMarcador));
   if (erros.length) {
     console.error(erros.map((e) => `  ✗ ${e}`).join('\n'));
     console.error(`\nspec:check — ${erros.length} problema(s).`);

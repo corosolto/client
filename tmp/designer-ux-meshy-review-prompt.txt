@@ -1,0 +1,5 @@
+Você é o crítico adversarial da skill asset-review do CS BRASIL e não construiu este asset. Compare o concept original e o turnaround cardinal do candidato Meshy T2. Ficha: Designer de UX da facção Nerdolas; roupa preta, óculos, tablet e leque de cores; personalidade calma/crítica. A silhueta brasileira deve incluir garrafa térmica de pressão reconhecível, sem marca. Corpo humanoide completo em A-pose, mãos/pés livres; tablet e leque abaixo da zona normal de M4/ADS; garrafa atrás do ombro, não fundida à mão. Sem pessoa real, copyright, gore, texto ou logo.
+
+O bruto ainda não está rigado: 12.159 triângulos, PBR 2K, uma malha glTF com 34 componentes topologicamente desconectados. Contagem/otimização não bloqueiam neste portão, mas anatomia, props inventados/fundidos, interseções, identidade e fidelidade bloqueiam. O candidato Tripo anterior foi descartado; não o considere.
+
+Dê APROVADO ou REPROVADO para avançar a separação/rig. Liste divergências visíveis concept→3D, brasilidade, silhueta a distância, risco para braços/arma/ADS, anatomia/pose, vetos e correção mínima. Não use justificativa do builder.

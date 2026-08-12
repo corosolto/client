@@ -30,20 +30,20 @@ sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 26.912 linhas em 31 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.195** linhas | `wc -l public/js/game.js` |
-| `main.js` | 1.743 linhas | `wc -l public/js/main.js` |
-| Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
-| GLBs de personagem | 45 | `ls public/models/characters/*.glb \| wc -l` |
-| Props em GLB | 108 | `ls public/models/props/*.glb \| wc -l` |
+| Código do jogo | 30.856 linhas em 38 arquivos | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6.370** linhas | `wc -l public/js/game.js` |
+| `main.js` | 1.847 linhas | `wc -l public/js/main.js` |
+| Armas com GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
+| GLBs de personagem | 62 | `ls public/models/characters/*.glb \| wc -l` |
+| Props em GLB | 109 | `ls public/models/props/*.glb \| wc -l` |
 | Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
-| Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 5 | objeto `MAPS` de `maps.js` |
+| Personagens jogáveis | 61, em 10 facções | array `CHARACTERS` de `characters.js` |
+| Mapas no registro | 10 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 12 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 166 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
-| Scripts de pipeline | 47 | `ls tools/*.mjs \| wc -l` |
+| Scripts do arnês | 206 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Scripts de pipeline | 61 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.38` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.66` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -85,7 +85,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 31 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 38 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.3` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -96,7 +96,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **101** importam Playwright, **37** importam gltf-transform e **4** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **111** importam Playwright, **47** importam gltf-transform e **4** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -192,10 +192,10 @@ está lá. Use `npm run dev`.
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check spec:check skills:check
 ```
 
-`package.json` tem **60 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **95 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -242,8 +242,8 @@ dobrar de tamanho.
 
 | Regra | Valor | Constante |
 |---|---|---|
-| Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
-| Mapas no menu | 5 — 2 abrem em rodadas, **3 em captura** | `MAPS` / `ctfMode` |
+| Facções · personagens | 10 · 61 (B 9 · C 9 · E 8 · F 9 · M 9 · N 3 · O 2 · R 1 · T 2 · U 9) | `CHARACTERS` |
+| Mapas no menu | 10 — 2 abrem em rodadas, **8 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -270,13 +270,18 @@ Os mapas registrados, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.845 |
+| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
 | `fy_pool_day` | Piscina da Treta | rodadas | `—` | — |
-| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.920 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
+| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
+| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
+| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 769 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 518 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes.js` | 690 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 639 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 681 |
 
-**5 mapas registrados** — 2 abrem em rodadas e 3 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 6 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 11 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

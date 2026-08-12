@@ -44,6 +44,54 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-40 · Míticos deformados, semanticamente errados e sem grip funcional — ABERTO 10/08
+
+**Sintoma (do dono, com 49 capturas da tela real):** *"TEM Varios problemas nos
+personagens, o boto ta com as maos esquisitas nenhum segura as maos dieito na arma,
+varios tao com formato de balao um bug antigo"*. Nas figuras, Boto é um homem de terno
+com mãos alongadas em vez do golfinho rosa; Lobisomem é um homem comum; Cuca tem a malha
+rasgada; armas flutuam, atravessam mãos ou ficam presas fora da pegada em vários membros
+do time. A descrição antiga de lobo-guará foi explicitamente revogada pelo dono: a
+referência válida é o lobo preto, forte e dentuço em `references/mitico/lobisomem/`.
+Prévia Mint nova aprovada em 10/08: *"agora sim o lobisomen ficou top"*; o GLB foi
+integrado e passou pela captura do runtime, mas a frente Mítica continua aberta pelos
+outros personagens e pelos portões descritos abaixo.
+
+**Evidência automática inicial:** `node tools/eval/mythic-character-check.mjs` mede
+9/9 GLB e 9/9 PBR, mas só 8/9 com skin; `bandeirante` tem zero skins. O resultado prova
+também que a régua vigente está incompleta: ela aprova identidade visual errada e não
+mede o grip que aparece na seleção.
+
+**Régua antes do conserto:** `tools/eval/mythic-character-check.mjs` para arquivo/skin/PBR;
+`tools/eval/select-inflate.mjs` para deformação GPU no caminho da seleção;
+`tools/eval/select-mount.mjs` para montagem da arma no mesmo caminho. Falta acrescentar
+uma sonda de identidade/proveniência e provar as mutações antes de trocar os assets.
+
+**Lobisomem, estado medido em 10/08.** O auditor do Blender
+(`tools/blender-character-audit.py`) confirma skin nativa e bind com os pés no chão; a
+`Icosphere` vista pelo importador foi refutada como hipótese — é helper do Blender e não
+existe na cena glTF. No caminho real da seleção, `select-mount` passa a shotgun nas duas
+mãos; o mutante `--mutate=tras` reprova o contato da mão de apoio. A captura nova da
+`select-inflate --fotos` mostrou outro defeito que o enquadramento antigo escondia: o
+plano `y=0` cortava as duas pernas porque os cinco clipes afundavam o corpo (pior caso
+medido: `-0,2692 m`). O gerador de `foot-offsets.json` agora aceita acima do teto **só**
+os pares do Lobisomem conferidos em imagem; `npm run feet:check` sai 0 e
+`--mutante=semverificados` sai 1 recolocando os cinco na lista de suspeitos. A revisão
+adversarial aprovou o item de engine depois do A/B: antes não havia patas; depois, patas,
+dedos e garras aparecem inteiros sobre o piso.
+
+**Ainda não está verde por decreto.** `select-inflate` mede `32,6` arestas ruins/10 mil
+contra teto `23,6`, embora a figura posada não mostre o antigo formato de balão; a hipótese
+de morfologia foi localizada com `--diagnose`: as arestas que dobram se concentram em
+`Head`, `LeftHand` e `Curl_R/L`; perna, quadril e torso não aparecem entre os oito ossos
+dominantes. Isso refuta balão corporal, mas ainda não autoriza exceção sem uma referência
+monstruosa aprovada. A revisão adversarial também reprovou a
+brasilidade: a silhueta lê como lobisomem de fantasia genérico, e
+`references/mitico/lobisomem/` ainda não tem `FONTE.md`. Não afrouxar o teto nem inventar
+adereço sem decisão do dono.
+
+---
+
 ### BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro
 
 **Evidência (08/08, ~03:14, print do jogador + curl).** Boot morto em
@@ -602,6 +650,135 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-47 · Doidinho: P90 vira blob/pistola e desaparece no medium — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a P90 não existe nos pixels como P90"* e
+*"em `medium` a arma é invisível"*. No `grip`, o crítico não encontrou carregador superior
+longitudinal, corpo bullpup/trilho, arco fechado do punho dianteiro nem contato verificável da
+mão dianteira.
+
+**Palpite refutado:** a P90 raw não estava ausente nem remodelada como pistola. O Blender mostra
+carregador superior e dois arcos; o GLB preserva os spans desses marcadores. O caminho real usava
+o porte funcional de `4°`, quase na direção da câmera do capturador: os `0,52 m` projetavam só
+`0,110 m`, enquanto a M4 aprovada no mesmo quadro projetava `0,178 m`.
+
+**Correção mínima:** somente o mount visual de `doidinho-bairro` usa yaw `-18°`; roster, GLB,
+escala e balística permanecem intactos. A projeção medida sobe para `0,292 m`. A prova Blender
+3/4/walk/crouch mostra carregador, corpo bullpup, dois arcos e mão dianteira no arco.
+
+**Régua:** `npm run eval:pilot-system` mede marcadores, projeção contra a M4 aprovada, ID e
+contato da mão; `npm run eval:pilot-grip` recalcula SHA e distâncias Blender. Seis mutantes
+causais ficam vermelhos. Evidência em `tools/eval/asset-evidence/doidinho-bairro/grip/`.
+Sem browser nesta passada: o arquivo está pronto para recaptura, não autoaprovado.
+
+**Bloqueador adicional do segundo crítico limpo:** P90, rig, clipes e roupa passaram, mas a
+gambiarra grande e branca no ombro leu como disco placeholder. A extensão da régua ficou
+vermelha antes do passe (`luma 1,000`, `0,203×0,397 m`, centro lateral `0,113 m`).
+`tools/blender-doidinho-meter-prop.py` compactou só a gambiarra em `0,72×`, levou-a ao centro
+traseiro da mochila e retexturizou carcaça teal + aro cobre + dial escuro + seletor vermelho.
+Depois: luma `0,165`, chroma `0,180`, projeção `0,101×0,262 m`, centro `0,065 m` e frente
+`-0,042 m`. Os mutantes `doidinho-disco-branco` e `doidinho-prop-ombro` ficam vermelhos.
+
+### BUG-46 · Programador: caneca/mouse mudam peito→ar→quadril e ocultam a mão de apoio — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a mesma caneca aparece agora na altura do
+quadril/coxa, também sem ponto de fixação visível"* e *"caneca e mouse aparecem colados no meio
+do peito, ocupando [...] exatamente a região onde a mão de apoio deveria aparecer"*. A M4 e a
+mão traseira foram aprovadas e não devem ser reabertas.
+
+**Causa medida:** caneca, mouse, trackball e cabo estavam no plano frontal e pesados em
+`Spine02`, portanto orbitavam com o peito e cobriam a mão de apoio. A primeira execução de
+`eval:pilot-system` ficou vermelha: frente `+0,243 m` e `0%` dos vértices rigidamente em Hips.
+
+**Correção mínima:** `tools/blender-programador-prop-sockets.py` move somente esses props para
+o quadril lateral/traseiro e atribui seus vértices a `Hips:1`. Depois: frente máxima
+`-0,027 m` e `100%` de `2.396` vértices rígidos. A M4, teclado, corpo e rig ficaram fora da
+seleção. A figura Blender 3/4 mostra a mão dianteira no handguard; o A/B desloca só a arma.
+
+**Régua:** `npm run eval:pilot-system` + `npm run eval:pilot-grip`; mutantes `prop-peito`,
+`prop-solto` e `arma-deslocada` ficam vermelhos. Recibo, backup e figuras em
+`tools/eval/asset-evidence/programador-virado/`. Sem browser nesta passada: aguarda recaptura
+e nota externa.
+
+### BUG-45 · Motoca: capacete ainda lê como blob/lâmina e telefone como slab — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Palavras do reporte:** *"pixel reprovou queixeira como lâmina preta horizontal/projeção
+frontal apesar HARD verde."*
+
+**Reprodução antes do conserto:** `npm run eval:charhard` passa 7/7 porque HARD4 mede apenas
+a largura da faixa frontal. No GLB servido, a ponta projetada da queixeira tem razão frontal
+largura/altura 3,10; a vista frontal do Blender mostra a placa preta atravessando o queixo.
+O preto não é erro de shader: o material `CS_HARD_` e o albedo quase preto já passam HARD1–3.
+Régua nova deve medir forma/projeção frontal e ficar vermelha antes de remodelar o capacete.
+
+**Antes × depois medido:** HARD8 entrou primeiro e reprovou o canônico em `3,10:1`.
+`tools/blender-motoca-front-profile.py` selecionou somente 127 vértices da ponta frontal do
+material `CS_HARD_Motofrete_Helmet_Black`, compactou X em `0,52×` e recuou Y em 4 mm; bag,
+telefone, demais materiais e rig não foram tocados. O canônico novo mede `1,61:1`, largura
+frontal `0,051 m`, mantém casco `0,240 m`, aro `0,255 m` e visor em chroma `0,007`.
+Recibo: `tools/eval/asset-evidence/motoca-cachorro-loko/front-profile-receipt.json`;
+antes/depois e vistas Blender ficam no mesmo diretório.
+
+**Régua e mutação:** `npm run eval:charhard` passa HARD1–HARD8. O mutante
+`--mutante=queixeira-frontal-lamina` amplia apenas a projeção medida e reprova HARD8; os cinco
+mutantes anteriores também reprovam suas cláusulas próprias (inclusive
+`queixeira-lamina`, recalibrado para recompor os ~0,30 m depois da compactação). Khronos valida
+o GLB com zero erros e a integridade confere o SHA
+`56011f4a77d4d5726c32c8257de39db36c7b8121a7b7ba2d86076b4c6957f9ce`.
+
+**Reaberto por nota externa limpa:** a primeira compactação passou HARD8, mas os pixels ainda
+mostraram *"placa cinza chapada"*, *"massa preta amorfa envolvendo mandíbula/nuca"* e telefone
+como *"retângulo ciano chapado"*. Isso provou que razão geométrica isolada continuava cega.
+
+**Segunda régua, antes do segundo conserto:** a máscara frontal Blender `360×463` passou a
+medir abertura facial, continuidade da silhueta e corpo/suporte/tela do telefone. O estado
+anterior ficou vermelho por não ter peças explícitas de shell/chin/hinge/mount e por tela com
+luma `0,655`. `tools/blender-motoca-rebuild-helmet-phone.py` removeu somente os triângulos
+antigos desses artefatos e criou calota contínua, queixeira espessa em U, viseira levantada
+ligada por dobradiças e telefone escuro menor com tela fraca, berço e correia. Bag, jaqueta,
+M4, corpo e rig ficaram fora da seleção.
+
+**Depois medido:** abertura facial `65,6%`, maior componente do casco/queixeira `100%`,
+silhueta do capacete `63×143 px` no frame de prova, corpo/suporte do telefone `91,5%` dos
+pixels e luma da tela `0,030`. `npm run eval:charhard` passa 8/8; `eval:motoca-visual` passa
+8/8. Os seis mutantes geométricos anteriores e três novos (`casco-fechado`,
+`casco-rompido`, `telefone-slab`) ficam vermelhos. Recibo, backup, máscara e vistas Blender
+estão em `tools/eval/asset-evidence/motoca-cachorro-loko/`.
+
+**Limite declarado:** as figuras offline foram olhadas pelo builder, não aprovadas por ele.
+A correção só fecha visualmente depois da recaptura do runtime e de nova nota adversarial.
+
+### BUG-41 · Time Mítico aparece como caixas ou T-pose na seleção
+
+**Palavras de quem reportou** (Ruben, screenshot 09/08): *"tem varios personagens que
+estao low poly ainda e os mapas tambem. esta ruim. especialmente esse time de miticos"*.
+
+**Evidência visual.** Com Lampião selecionado, o palco 3D mostra cabeça, tronco e membros
+como paralelepípedos; a arma também é procedural. A lista lateral mistura esse fallback
+com miniaturas detalhadas em T-pose, portanto o defeito não é direção de arte uniforme.
+
+**Censo antes do conserto.** Os nove arquivos existiam, mas `GLB_CHARS` cadastrava só seis.
+Todos os seis Mint tinham material PBR e `0 skins`; Lampião, Lobisomem e Zumbi eram raws sem
+normal, UV, material ou textura, com centenas de milhares de triângulos. Ativá-los como
+estavam só trocaria caixa por malha branca/preta pesada.
+
+**Estado medido depois da recuperação (09/08).** `GLB_CHARS` cadastra `9/9`; todos têm PBR
+e ficam entre 4,4k e 5,0k triângulos. O rig de doador retirou o fallback cúbico de oito:
+`8/9` têm skin. O Bandeirante permanece sem skin e sem arma animada, então o portão continua
+vermelho. A captura de 09/08 também reprovava o conteúdo que a contagem não enxerga:
+Boto ainda é um homem de terno em vez do golfinho rosa pedido,
+Lobisomem era humano e a arma da Cuca cruzava o torso. Esses assets exigiam nova
+geração/rig no Mint; o Lobisomem já foi substituído pelo lobo preto
+aprovado, mas permanece com as pendências de régua/proveniência do BUG-40. Meshy está
+vetado porque seus GLBs já renderizaram
+pretos e sem anexo de arma neste loader. O MCP Mint desta máquina ainda não oferece escopo
+de escrita, portanto isso não está resolvido.
+
+**Régua:** `npm run eval:mitico` (`tools/eval/mythic-character-check.mjs`). Cobra `9/9`
+cadastrados, com skin, PBR completo e orçamento de `2,5k–40k` triângulos. Mutações:
+`--mutante=fallback|semrig|sempbr`. Estado atual: `9/9 GLB · 8/9 rig · 9/9 PBR`, vermelho
+em `bandeirante: 0 skins`.
+
 ### ~~BUG-34 · O botão JOGAR estava INERTE em produção — o jogo não abria~~ · RESOLVIDO 07/08
 
 **Como apareceu.** Não foi reportado: caiu no colo enquanto se media outra coisa. A régua das
@@ -1000,6 +1177,110 @@ medidos:
 tipografia sem olhar overflow já quebrou tela antes). As 9 telas foram capturadas em
 Chrome headless a 1536×1024 (3:2, o enquadramento do dono) e medidas com o mesmo `ref-ui.py`
 apontado para as capturas.
+
+### ~~BUG-42 · "a UI continua a mesma de sempre"~~ · RESOLVIDO 11/08
+
+**Sintoma (palavras do dono, olhando o QA da alpha.58):** *"eu vi seu teste de QA da UI e
+ela continua a mesma de sempre"*.
+
+**Reproduzido, e não é cache.** As capturas julgadas mostram o chrome `CORO SOLTO //
+TRANSMISSÃO` e a versão `alpha.58`, portanto carregaram o CSS e o módulo novos. Mesmo assim,
+o fluxo preserva as composições antigas: menu em coluna à esquerda, facções em cartões,
+personagem em filmstrip vertical + ficha + preview, mapa em cabeçalho + foto + strip e
+configurações no mesmo painel tabulado. O diff confirma a causa: a rodada acrescentou a
+classe `.cine-surface` às telas, 164 linhas de CSS decorativo e um chrome persistente, mas
+não substituiu a estrutura dos fluxos principais.
+
+**Falha da régua:** `tools/eval/cinematic-ui-contract-check.mjs` mede presença de chrome,
+metadados de capítulo, superfície, foco e movimento reduzido. Todas podem ficar verdes sobre
+a mesma composição antiga; portanto o portão respondeu "cinematográfica" quando só provou
+"tem decoração cinematográfica". O APROVADO visual anterior fica retirado.
+
+**Ordem do conserto:** primeiro uma régua estrutural que fique vermelha neste estado e uma
+mutação que restaure uma composição antiga; depois substituir de fato as composições do
+menu, facção, personagem, mapa e configurações; por fim capturar novamente em 3:2 e entregar
+as imagens a um crítico sem contexto. Não afrouxar o BUG-05: contraste, margem, legibilidade
+e navegação continuam valendo dentro da nova estrutura.
+
+**Fechado por composição e captura.** O menu virou deck cinematográfico; setup ganhou
+briefing; facções mostram a grade inteira sem rolagem e com adversário estável; personagem
+usa palco+dossiê+rail; mapa ficou full-bleed; configurações ocupam o quadro como sistema.
+A régua estrutural fica verde e os mutantes `composicao-antiga` e `faccao-rolavel`
+derrubam somente suas cláusulas. Um crítico sem contexto aprovou as capturas finais em
+3:2, inclusive a passagem adicional em 1280×720. A evidência persistente mora em
+`tools/eval/asset-evidence/ui-cinematic/`; não voltar a usar os contatos temporários da
+alpha.58 como baseline visual.
+
+### ~~BUG-43 · Quatro mapas novos passaram os contratos e falharam no pixel~~ · RESOLVIDO 11/08
+
+**Sintoma (asset-review independente, 17 PNGs em 1536×1024):** Campo tem
+*"teto, piso e paredão quase no mesmo preto"* no galpão; Lajes tem vãos que leem como
+*"placa escura contínua"* e um decal reconhecível como Rick Sánchez; Córrego tem capivara
+em *"escala sofá/carro"* intersectando pneus e só dois ratos legíveis como ovais; Mansão
+tem jardim/interior pobres e três carros reconhecíveis como Mustang, DeLorean e BMW.
+
+**Evidência:** `tools/eval/asset-evidence/maps/fy_campomorro/galpao-interior.png`,
+`fy_lajes/{jump-link,roof-route}.png`, `fy_corrego/{capivara,rats}.png` e
+`fy_mansao/{facade-garden,interior}.png`. O `eval:map-evidence` estava verde porque mede
+frescor, câmera e integridade dos arquivos — não iluminação, silhueta, composição ou veto
+editorial.
+
+**Régua antes do conserto:** estender os contratos de Campo, Lajes, Córrego e Mansão com
+marcadores da cena real e mutantes nomeados; estender `graffiti-editorial-check.mjs` para
+os identificadores protegidos. **Correção mecânica em 11/08:** contratos verdes e todos os
+mutantes mordidos; Campo preserva 92% na `field-mouth`, Córrego mede capivara ≤1,85 m e
+ratos de 12–15 cm, Lajes mede 8/8 bordas + 3/3 rotas, Mansão mede 3 carros genéricos,
+8 bromélias, 2 palmeiras e o interior. **Continua aberto até a recaptura 3:2 e o novo
+asset-review independente**; essa etapa pertence ao agente único de browser.
+
+**Reaberto pelo pixel externo (alpha.60).** Um Claude Opus 5 via OpenRouter recebeu apenas
+o contato 3:2 e as perguntas editoriais, sem justificativa do builder; recibo literal em
+`tmp/map-alpha60-openrouter-review.json`. Reprovou 4/4: no Campo o piso era *"uma cor cinza
+uniforme sem textura"* e as faixas laranja pareciam flutuar; em Lajes ainda leu
+marinheiro/Popeye, Fusca/VW e pousos sem borda frontal; no Córrego a capivara leu urso/hamster,
+os ratos eram clones e o pôster religioso/vulgar permaneceu; na Mansão os carros estavam
+distantes, a cunha vermelha lembrava Countach/Testarossa, o jardim parecia catálogo simétrico
+e o interior continuava blockout. As novas cláusulas precisam reprovar exatamente esses
+estados e seus mutantes antes da segunda correção; evidência fresca e nova nota externa são
+obrigatórias para fechar.
+
+**Reaberto novamente pelo mesmo crítico limpo (alpha.61).** No Córrego, escala e folga dos
+pneus passaram, mas a capivara ainda era *"corpo elipsoide + 4 cilindros finos + cabeça que
+é uma caixa"*; ratos continuaram blobs sem apoio/contexto e o córrego leu como quadra na
+mesma cota. Na Mansão, as marcas reais saíram, mas o close revelou carros sem leitura de
+roda/vidro/grade, a ilha continuou ambígua, o pergolado flutuava e água/jardim seguiam
+chapados. As cláusulas novas medem a geometria servida (não só o marcador): junta e membros
+da capivara, paredes de profundidade e contexto dos ratos; peças frontais e três famílias
+de carro, distribuição real dos maciços, pilares/vigas, cozinha funcional e home theater.
+O bug permanece aberto até recaptura seletiva 3:2 e outra nota externa.
+
+**QA de evidência camera2:** a ilha gourmet finalmente ficou inteira, mas o frame dos
+ratos provou que dois animais nasciam dentro dos próprios sacos de lixo e a animação por
+`performance.now()` mudava a pose entre máquinas. A régua nova mede interseção real de
+`Box3`; o trio foi afastado apenas para a faixa livre junto da mesma manilha e fica estável
+quando `mapview` abre com `?capture=<sha>`. O mutante `ratos-sob-lixo` restaura as posições
+reprovadas e fica vermelho. Como o fonte de Córrego mudou, os seis frames dele precisam de
+recaptura; Mansão não deve ser recapturada nesta passagem.
+
+**Terceiro crítico limpo, após a recaptura:** ratos, canal, jacaré, carros, lounge,
+gourmet e theater passaram, mas a capivara ainda leu porco/tapir; a ponte norte era uma
+prancha uniforme; `ashtar-meme.jpg` expôs um retrato reconhecível de Vladimir Putin; o
+jardim da Mansão permaneceu axial/raro e a piscina transparente mostrava o gramado sob a
+água. As réguas novas ficaram vermelhas nesses cinco estados. A correção troca a capivara
+por corpo de cilindro com tampas arredondadas, cabeça/focinho rombos e patas curtas; separa
+a ponte em tábuas empenadas com lacunas; retira `ashtar*.{jpg,png}` do pool; cria três
+maciços tropicais densos e uma cuba opaca acima do gramado. Mutantes: `capivara-tapir`,
+`ponte-prancha`, `putin`, `jardim-raro` e `piscina-sem-cuba`. Continua sem aprovação até
+recaptura integral ligada aos novos SHAs e outro crítico limpo.
+
+**Fechado pelo pixel, não pelo contrato.** A última captura integral ficou ligada aos
+fontes e câmeras atuais; o mutante de `camera-drift` continuou vermelho. O crítico final
+sem contexto aprovou Campo, Lajes e Escadão e, numa passagem focal separada, aprovou a
+capivara com quatro apoios distintos no chão, a ponte sem rosto/pessoa real e a piscina
+com cuba opaca contínua, sem jardim visível sob a lâmina. Os mutantes finais
+`capivara-dois-apoios`, `rostos-carecas` e `piscina-cuba-curta` restauram exatamente os
+três pixels interceptados na última rodada e ficam vermelhos. Evidência canônica:
+`tools/eval/asset-evidence/maps/manifest.json` e os PNGs de `fy_corrego`/`fy_mansao`.
 
 ### ~~BUG-06 · Alvo de capturas do CTF não deriva do número de bandeiras~~ · RESOLVIDO 05/08
 
@@ -1459,6 +1740,58 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 ---
 
 ## P2 — infra, repo e deploy
+
+### ~~BUG-44 · `eval:gltf-validator` tenta abrir concepts WebP do `mint-assets` como glTF~~ · RESOLVIDO 11/08
+
+**Palavras do reporte:** *"`eval:gltf-validator` tenta abrir concepts WebP do mint-assets
+como glTF."*
+
+**Reprodução antes do conserto:** `npm run eval:gltf-validator` selecionava toda entrada com
+`processing.finalSha256`; tentava entregar quatro WebP ao Khronos e saía 1, embora os seis GLB
+registrados tenham zero erros. Régua: o próprio `tools/eval/gltf-validator-check.mjs` ainda
+não distingue o tipo do artefato. O conserto não pode remover concepts do registro nem
+afrouxar a validação dos GLB.
+
+**Causa raiz e conserto:** `finalSha256` descreve integridade, não formato. Os dois gates
+usavam essa propriedade para enumerar assets, e o Khronos inferia glTF por posição na lista.
+Cada artefato final agora declara `artifactType`; `final-asset-registry.mjs` valida o tipo
+contra `files[0]` e fornece a mesma enumeração para integridade e Khronos. Integridade segue
+cobrando concepts e modelos; Khronos seleciona apenas `model/gltf-binary`.
+
+**Antes × depois:** antes, quatro WebP falhavam e os seis GLB passavam; depois,
+`npm run eval:asset-integrity` confere os onze artefatos finais e
+`npm run eval:gltf-validator` confere os seis GLB, com zero erros. Mutações:
+`--mutante=inclui-imagem` recoloca os WebP no escopo e sai 1; `--mutante=cabecalho`
+corrompe o primeiro GLB e sai 1. Custo declarado: todo novo artefato com hash final precisa
+de tipo explícito; tipo ausente ou extensão divergente falha fechado.
+
+### ~~BUG-40 · `npm run dev` não abre outra porta quando já existe um servidor~~ · RESOLVIDO 09/08
+
+**Palavras de quem reportou** (Ruben, 09/08): *"precisamos por um fix na hora de rodar
+dev que se a porta tiver usendo usado ele serve de outra porta"*.
+
+**Reprodução antes do conserto.** Com o Astro do próprio projeto vivo em `:4321`,
+`npm run dev` encerra com código 0 e imprime apenas `Dev server already running at
+http://127.0.0.1:4321`; nenhuma segunda URL é criada. A porta estava ocupada por PID vivo,
+portanto não era lock órfão.
+
+**Causa raiz.** O Astro 7 detecta este ambiente de agente e daemoniza automaticamente. O
+processo em background consulta `.astro/dev.json` antes de o Vite tentar abrir o socket;
+ao encontrar lock vivo, encerrava com código 0. Portanto a capacidade nativa do Vite de
+avançar `4321 -> 4322` nunca chegava a rodar.
+
+**Conserto.** `scripts/dev.mjs` inicia o CLI Astro em foreground com `--ignore-lock`. É um
+lançador Node, em vez de `VAR=valor` no script npm, para continuar funcionando no Windows.
+O Vite segue escolhendo a porta: no caso real, com `4321` ocupada, anunciou e serviu
+`http://localhost:4322/`. A instância extra fica deliberadamente fora do lock do Astro e é
+encerrada por `Ctrl+C`; `astro dev stop` continua controlando só a instância original.
+
+**Régua:** `npm run eval:devport` (`tools/eval/dev-port-check.mjs`). Planta lock vivo e
+socket ocupado num projeto Astro temporário, executa o `scripts.dev` real e exige uma URL
+em outra porta. Antes: saída 1, nenhuma segunda URL. Depois: porta ocupada `58402` ->
+servidor `58403`, saída 0. Mutação `--mutante=semlock`: saída 1 e mensagem do Astro dizendo
+apenas que o servidor do lock já estava vivo. A régua entra no `check:fast` antes dos
+portões que podem cortar a corrente.
 
 ### BUG-12 · `issues/` tem 2,5 GB fora do git e fora do `.gitignore`
 

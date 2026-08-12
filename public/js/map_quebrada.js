@@ -23,6 +23,7 @@ import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura 
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
+import { setMapSky } from './map_sky.js';
 
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -196,15 +197,20 @@ export function buildQuebrada(scene, T) {
   }
 
   /* ===================== CÉU / LUZ ===================== */
-  scene.background = T.sky || new THREE.Color(0xb9c6d2);
+  setMapSky(scene, T, '/img/textures/sky_quebrada.webp', 0xb9c6d2);
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_quebrada');
-  const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd9a8, 1.5); sun.position.set(38, 30, -22); sun.castShadow = true;
+  const hemi = new THREE.HemisphereLight(0xeeeef0, 0x544f48, 0.9); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffefd8, 1.65); sun.position.set(38, 30, -22); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 160; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
+
+  /* TERREIRO VIZINHO — cenário sem física, rebaixado 12 cm. O chão jogável acabava em
+     x=±28/z=±47 e revelava uma borda retangular contra o céu; este avental prolonga a terra
+     da comunidade até o horizonte próximo sem criar rota, collider ou occluder. */
+  addFloor(76, 116, 0, 0, MAT.dirt, -0.13);
 
   // chão base: terra/laje batida sob tudo (a rua, a praça e o campinho pintam por cima)
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
@@ -732,9 +738,26 @@ export function buildQuebrada(scene, T) {
     const circ = new THREE.Mesh(new THREE.RingGeometry(4.3, 4.55, 32), cal);
     circ.rotation.x = -Math.PI / 2; circ.position.set(0, 0.02, 37); root.add(circ);
   }
-  const MAT_MURO = lam({ map: T.concrete, color: 0x9a9184, roughness: 0.97 });
+  const MAT_MURO = lam({ map: T.concrete, color: 0xb5aa99, emissive: 0x25180d, emissiveIntensity: 0.45, roughness: 0.97 });
   for (const [mx0, mx1] of [[-22, -15], [-9, 9], [15, 22]])
     addBox(mx1 - mx0, 2.2, 0.34, MAT_MURO, (mx0 + mx1) / 2, 0, 28);
+  // Da linha do spawn, o anteparo central lia como um bloco preto sem saída. Os dois
+  // painéis deixam explícitos os portões laterais que já existem e mantêm a proteção MAP2.
+  const rotaMuro = (lado) => {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 192;
+    const x = c.getContext('2d');
+    x.fillStyle = lado < 0 ? '#0d5266' : '#a94122'; x.fillRect(0, 0, c.width, c.height);
+    x.strokeStyle = '#f2c94c'; x.lineWidth = 14; x.strokeRect(10, 10, 492, 172);
+    x.fillStyle = '#f7e7b1'; x.textAlign = 'center'; x.font = '900 60px Impact,sans-serif';
+    x.fillText(lado < 0 ? '← BECO' : 'BECO →', 256, 118);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.MeshBasicMaterial({ map: t });
+  };
+  for (const lado of [-1, 1]) {
+    const placa = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 1.55), rotaMuro(lado));
+    placa.position.set(lado * 5.2, 1.12, 28.19); root.add(placa);
+  }
+  addBox(18.4, 0.16, 0.42, lam({ color: 0xe0b632, emissive: 0x4a3000, emissiveIntensity: 0.35 }), 0, 2.2, 28, { collide: false, cast: false });
   // TRAVES — dois postes e um travessão por gol. O poste é fino (0,14 m) e não esconde
   // ninguém, mas é peça de cobertura pra MAP5 e referência de leitura do campo.
   const MAT_TRAVE = lam({ color: 0xe6e2d6, roughness: 0.8 });

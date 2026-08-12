@@ -1,9 +1,16 @@
 {
- "gerado": "2026-08-07T22:57:01.884Z",
+ "gerado": "2026-08-12T00:12:33.779Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
  "teto": 0.08,
+ "excecoesVerificadas": [
+  "lobisomem/idle",
+  "lobisomem/walk",
+  "lobisomem/run",
+  "lobisomem/shoot",
+  "lobisomem/crouch"
+ ],
  "offsets": {
   "esquerdomacho": {
    "walk": 0.0281,
@@ -227,6 +234,108 @@
    "walk": 0.034,
    "run": 0.0179,
    "crouch": 0.021
+  },
+  "mariabonita": {
+   "idle": -0.0236,
+   "walk": -0.0421,
+   "run": -0.033,
+   "shoot": -0.0303,
+   "crouch": -0.0411
+  },
+  "saci": {
+   "idle": -0.0247,
+   "shoot": -0.0402
+  },
+  "lampiao": {
+   "idle": -0.0227,
+   "walk": -0.0494,
+   "run": -0.0326,
+   "shoot": -0.0305,
+   "crouch": -0.041
+  },
+  "lobisomem": {
+   "idle": 0.2374,
+   "walk": 0.2659,
+   "run": 0.2692,
+   "shoot": 0.2227,
+   "crouch": 0.1385
+  },
+  "bandeirante": {
+   "walk": 0.0338,
+   "run": 0.0231,
+   "crouch": 0.0503
+  },
+  "boto": {
+   "idle": -0.0233,
+   "walk": -0.0492,
+   "run": -0.0331,
+   "shoot": -0.0302,
+   "crouch": -0.0449
+  },
+  "zumbi": {
+   "idle": -0.0225,
+   "walk": -0.0507,
+   "run": -0.0323,
+   "shoot": -0.0306,
+   "crouch": -0.0422
+  },
+  "cuca": {
+   "idle": -0.0248,
+   "shoot": -0.0304
+  },
+  "curupira": {
+   "idle": -0.0241,
+   "walk": 0.0462,
+   "run": 0.0494,
+   "shoot": -0.0306,
+   "crouch": -0.0397
+  },
+  "camera-roxa": {
+   "walk": 0.0694,
+   "run": -0.0645,
+   "shoot": -0.0348,
+   "crouch": -0.0309
+  },
+  "microfonildo": {
+   "idle": -0.023,
+   "walk": 0.0699,
+   "run": 0.0322,
+   "shoot": -0.0249,
+   "crouch": 0.0369
+  },
+  "programador-virado": {
+   "walk": 0.0321,
+   "run": 0.0138
+  },
+  "designer-ux": {
+   "idle": -0.0246,
+   "walk": -0.0431,
+   "run": -0.0252,
+   "shoot": -0.0287,
+   "crouch": 0.0217
+  },
+  "lenda-lanhouse": {
+   "idle": -0.0228,
+   "walk": 0.0488,
+   "run": -0.0249,
+   "shoot": -0.0298
+  },
+  "motoca-cachorro-loko": {
+   "idle": -0.0134,
+   "walk": -0.0471,
+   "run": -0.0353,
+   "shoot": -0.0143
+  },
+  "doidinho-bairro": {
+   "idle": -0.0209,
+   "walk": -0.0424,
+   "run": -0.0608,
+   "shoot": -0.0138,
+   "crouch": 0.0107
+  },
+  "profeta-calcada": {
+   "walk": -0.0278,
+   "run": -0.0242
   }
  },
  "suspeitos": [
@@ -236,9 +345,24 @@
    "desvio": -0.4328
   },
   {
+   "id": "cuca",
+   "pose": "run",
+   "desvio": -0.4184
+  },
+  {
    "id": "canarinho",
    "pose": "crouch",
    "desvio": -0.3669
+  },
+  {
+   "id": "cuca",
+   "pose": "walk",
+   "desvio": -0.2435
+  },
+  {
+   "id": "cuca",
+   "pose": "crouch",
+   "desvio": -0.1631
   },
   {
    "id": "ancap",
@@ -259,6 +383,21 @@
    "id": "ancap",
    "pose": "walk",
    "desvio": -0.1308
+  },
+  {
+   "id": "saci",
+   "pose": "crouch",
+   "desvio": 0.128
+  },
+  {
+   "id": "saci",
+   "pose": "run",
+   "desvio": 0.1257
+  },
+  {
+   "id": "saci",
+   "pose": "walk",
+   "desvio": 0.1116
   },
   {
    "id": "ancap",

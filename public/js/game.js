@@ -12,6 +12,7 @@ import { skyRadiance } from './bloom.js';
 import { RecoilAxis, ViewModelRig } from './springs.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { frase, tr } from './i18n.js';   // EN por camada — o crash 'frase is not defined' de 06/08 foi este import faltando
+import { factionColor, factionInk, factionName, factionTag } from './factions.js';
 
 export const WEAPONS = {
   awp:    { name: 'AWP "DELIBERADOR"', short: 'AWP', dmg: 400, mag: 5, reserve: 25, rate: 1.7, reload: 3.1, spreadHip: 0.075, spreadScope: 0.0008, recoil: 0.055, scope: true },
@@ -308,7 +309,6 @@ const RACK_RETA = QS.get('rackreta') === '1';
    A simetria é parte do desenho: vale pra jogador E bots — meia regeneração faria o bot
    virar esponja. Régua: invariante REGEN de `tools/eval/regen-check.mjs`. */
 const REGEN = QS.get('regen') === '1', REGEN_DELAY = 6, REGEN_RATE = 22;
-const TEAM_LABEL = { E: 'TIME E', B: 'TIME B' };
 const RADIO = {
   z: { title: 'COMANDOS', items: ['Bora, bora, bora!', 'Cobre eu!', 'Recua, recua!'] },
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
@@ -1835,13 +1835,136 @@ export class Game {
     const cat = RADIO[this.radioOpen];
     const item = cat.items[n - 1];
     if (!item) return;
-    this.sfx.radioVoice(this._voiceKey(this.playerTeam));
+    // O primeiro comando é também um ping de ROTA. Ele desenha só o caminho já
+    // percorrido — nunca posição inimiga — e dá ao Motoca um uso concreto para a carga.
+    const routeSecs = this.radioOpen === 'z' && n === 1 ? this._routePing() : 0;
+    this.sfx.characterVoice(this.playerCharId, 'radio', { fallbackFaction: this._voiceKey(this.playerTeam), interrupt: true });
     const log = document.createElement('div');
     log.className = 'radio-line';
-    log.textContent = `${this.player.name} (${tr('RÁDIO')}): ${item}`;
+    log.textContent = `${this.player.name} (${tr('RÁDIO')}): ${item}` +
+      (routeSecs ? ` · ROTA ${routeSecs.toFixed(0)}s` : '');
     this.el.radioLog.appendChild(log);
     setTimeout(() => log.remove(), 4200);
     while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
+  }
+
+  /* ================= mecânicas das vertical slices =================
+     Helpers pequenos e testáveis: a ficha vive no motor sem espalhar condicionais de
+     personagem por dano, movimento, rádio e CTF. Nenhum deles altera dano ou velocidade. */
+  _abilityNotice(text, life = 3200) {
+    if (!this.el?.radioLog) return;
+    const log = document.createElement('div');
+    log.className = 'radio-line ability-line';
+    log.textContent = text;
+    this.el.radioLog.appendChild(log);
+    setTimeout(() => log.remove(), life);
+    while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
+  }
+
+  _resetSliceAbilities() {
+    const p = this.player;
+    p._motocaRun = 0; p._motocaPingReady = false;
+    p._pieceReady = this.playerCharId === 'doidinho-bairro'; p._pieceObjectiveId = null;
+    p._routeTrail = [{ x: p.pos.x, z: p.pos.z }];
+    p._stackBearing = null; p._stackUntil = 0;
+    this._stackTraceEvent = null;
+  }
+
+  _stackTrace(attacker) {
+    const p = this.player;
+    if (this.playerCharId !== 'programador-virado' || !p.alive || p.hp <= 0 || !attacker?.alive || !attacker.pos) return false;
+    const from = p.pos.clone(); from.y += 1.35;
+    const to = attacker.pos.clone(); to.y += 1.35;
+    // Agressor atrás de parede/fumaça não vira informação de time. Granadas podem causar
+    // dano sem LOS, por isso esta guarda não é redundante com o hitscan.
+    if (!this._losClear(from, to)) return false;
+    const STEP = Math.PI / 4;
+    const raw = Math.atan2(attacker.pos.x - p.pos.x, attacker.pos.z - p.pos.z);
+    const bearing = Math.round(raw / STEP) * STEP;   // oitante, nunca coordenada
+    const until = this.time + 1.2;
+    let allies = 0;
+    for (const b of this.bots) {
+      if (!b.alive || b.team !== p.team || b.pos.distanceTo(p.pos) > 24) continue;
+      b._stackBearing = bearing; b._stackUntil = until;
+      // Utilidade real sem telepatia: amplia por 1,2 s a sonda normal de percepção; o bot
+      // ainda precisa confirmar LOS antes de adquirir/atirar e não recebe o alvo.
+      b.alertUntil = Math.max(b.alertUntil || 0, until);
+      allies++;
+    }
+    const names = ['N', 'NE', 'L', 'SE', 'S', 'SO', 'O', 'NO'];
+    const oct = ((Math.round(bearing / STEP) % 8) + 8) % 8;
+    this._stackTraceEvent = { bearing, until, allies };
+    if (allies) this._abilityNotice(`STACK TRACE · ameaça a ${names[oct]} · ${allies} aliado${allies > 1 ? 's' : ''}`, 1200);
+    return allies > 0;
+  }
+
+  _updateMotocaCharge(dt, running) {
+    const p = this.player;
+    if (this.playerCharId !== 'motoca-cachorro-loko' || p._motocaPingReady) return;
+    p._motocaRun = running ? (p._motocaRun || 0) + dt : 0;
+    if (p._motocaRun + 1e-6 >= 3) {
+      p._motocaRun = 3; p._motocaPingReady = true;
+      this._abilityNotice('ROTA CONFIRMADA · próximo ping +1s');
+    }
+  }
+
+  _recordRoutePoint(moving) {
+    const p = this.player;
+    p._routeTrail = p._routeTrail || [];
+    if (!moving) return;
+    const last = p._routeTrail[p._routeTrail.length - 1];
+    if (!last || Math.hypot(p.pos.x - last.x, p.pos.z - last.z) >= 0.65) {
+      p._routeTrail.push({ x: p.pos.x, z: p.pos.z });
+      if (p._routeTrail.length > 14) p._routeTrail.shift();
+    }
+  }
+
+  _routePing() {
+    const p = this.player;
+    const bonus = this.playerCharId === 'motoca-cachorro-loko' && p._motocaPingReady ? 1 : 0;
+    const duration = 2 + bonus;
+    if (bonus) { p._motocaPingReady = false; p._motocaRun = 0; }
+    const pts = (p._routeTrail?.length ? p._routeTrail : [{ x: p.pos.x, z: p.pos.z }]).slice(-10);
+    const group = new THREE.Group();
+    const geo = new THREE.RingGeometry(0.12, 0.21, 12);
+    const mat = new THREE.MeshBasicMaterial({
+      color: this._teamColor(p.team), transparent: true, opacity: 0.82,
+      depthWrite: false, side: THREE.DoubleSide,
+    });
+    for (const q of pts) {
+      const ring = new THREE.Mesh(geo, mat);
+      const y = (this.world.groundHeightAt ? this.world.groundHeightAt(q.x, q.z) : 0) + 0.055;
+      ring.position.set(q.x, y, q.z); ring.rotation.x = -Math.PI / 2; group.add(ring);
+    }
+    group.userData.until = this.time + duration; group.userData.life = duration;
+    this.scene.add(group);
+    this._routePings = this._routePings || []; this._routePings.push(group);
+    return duration;
+  }
+
+  _tickRoutePings() {
+    for (let i = (this._routePings || []).length - 1; i >= 0; i--) {
+      const g = this._routePings[i], left = g.userData.until - this.time;
+      const opacity = Math.max(0, Math.min(0.82, left / Math.max(0.01, g.userData.life)));
+      for (const m of g.children) if (m.material) m.material.opacity = opacity;
+      if (left > 0) continue;
+      this.scene.remove(g);
+      const first = g.children[0]; first?.geometry?.dispose?.(); first?.material?.dispose?.();
+      this._routePings.splice(i, 1);
+    }
+  }
+
+  _objectiveInteractionMultiplier(pt, solo) {
+    const p = this.player;
+    const inside = p.alive && solo === p.team &&
+      (p.pos.x - pt.x) ** 2 + (p.pos.z - pt.z) ** 2 <= pt.r * pt.r;
+    if (p._pieceObjectiveId === pt.id && !inside) p._pieceObjectiveId = null;
+    if (this.playerCharId !== 'doidinho-bairro' || !inside) return 1;
+    if (p._pieceObjectiveId === pt.id) return 1.25;
+    if (!p._pieceReady) return 1;
+    p._pieceReady = false; p._pieceObjectiveId = pt.id;
+    this._abilityNotice('TEM UMA PEÇA PRA ISSO · objetivo 20% mais rápido');
+    return 1.25;   // tempo ×0,8 exige taxa ×(1/0,8), não ×1,20
   }
 
   /* ================= flow ================= */
@@ -1911,9 +2034,10 @@ export class Game {
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
       return s;
     };
-    place(this.player, this.playerTeam, 0);
-    this.player.yaw = this.playerTeam === 'E' ? Math.PI : 0;
+    const playerSpawn = place(this.player, this.playerTeam, 0);
+    this.player.yaw = this._spawnYaw(playerSpawn, this.playerTeam, false);
     this.player.pitch = 0; this.player.vel.set(0, 0, 0); this.player.crouchF = 0;
+    this._resetSliceAbilities();
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
     this.player.smokes = 5; this.player.frags = 1; this._updateSmokeHud();   // 5 fumaças + 1 frag por round
@@ -2095,8 +2219,8 @@ export class Game {
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
     for (const b of this.bots) {
-      place(b, b.team, slots[b.team]++);
-      b.yaw = b.team === 'E' ? 0 : Math.PI;   // mesh forward is +Z
+      const botSpawn = place(b, b.team, slots[b.team]++);
+      b.yaw = this._spawnYaw(botSpawn, b.team, true);   // mesh forward is +Z
       b.target = null; b.path = null; b.repathAt = 0;
       b.mesh.group.rotation.set(0, b.yaw, 0);
       b.mesh.group.position.copy(b.pos);
@@ -2410,7 +2534,7 @@ export class Game {
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
-      swapBot.yaw = oldTeam === 'E' ? 0 : Math.PI;
+      swapBot.yaw = this._spawnYaw(s, oldTeam, true);
       swapBot.mesh.group.rotation.set(0, swapBot.yaw, 0);
       swapBot.mesh.group.position.copy(swapBot.pos);
       swapBot.mesh.group.visible = true;
@@ -2418,7 +2542,7 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
-    p.yaw = newTeam === 'E' ? Math.PI : 0; p.pitch = 0; p.hp = 100;
+    p.yaw = this._spawnYaw(s, newTeam, false); p.pitch = 0; p.hp = 100;
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
     this.sfx.uiClick();
@@ -2817,6 +2941,7 @@ export class Game {
     if (!ent.alive || this.state !== 'live') return;
     if (this.time < (ent.protUntil || 0)) return;   // spawn protection: zero dano (e sem hitmarker) enquanto protegido
     ent.hp -= dmg;
+    if (ent.isPlayer && ent.hp > 0) this._stackTrace(attacker);
     if (ent.isPlayer) {
       this.el.vignette.style.opacity = 0.9;
       setTimeout(() => this.el.vignette.style.opacity = 0, 130);
@@ -2871,7 +2996,7 @@ export class Game {
     // this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon === 'knife' ? 'awp' : ent.weapon);
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
-      this.sfx.voice(this._voiceKey(attacker.team));   // killer's side celebrates (meme audio)
+      this.sfx.characterVoice(attacker.def?.id, 'kill', { fallbackFaction: this._voiceKey(attacker.team) });
       if (attacker.isPlayer) {
         this.sfx.killConfirm();
         if (head) { this.sfx.general('headshot'); attacker.headshots++; }
@@ -3343,7 +3468,8 @@ export class Game {
         this._vmFlashLight.intensity = f.peak * (1 - k) * (1 - k);
       } else if (this._vmFlashLight.intensity !== 0) this._vmFlashLight.intensity = 0;
     }
-  }
+    this._tickRoutePings();
+    }
 
   _ejectCasing() {
     if (this.player.weapon === 'knife') return;
@@ -3625,14 +3751,7 @@ export class Game {
   // Urbanas; senão P vermelho / B verde. `dark` = tom mais escuro (pano da bandeira).
   _teamColor(side, dark = false) {
     if (this._mirror(side)) return dark ? '#6a2fb5' : '#a05cff';   // MIRROR (mesma facção) -> inimigo roxo
-    const f = this._factionOf(side);
-    if (f === 'U') return dark ? '#2f7fe0' : '#4aa3ff';            // Tribos azul
-    if (f === 'E') return dark ? '#e03232' : '#ff5555';            // Time E vermelho
-    if (f === 'B') return dark ? '#1faa4d' : '#55dd66';            // Time B verde
-    if (f === 'C') return dark ? '#c23a86' : '#ff6ec7';            // Palhaços rosa-circo
-    if (f === 'F') return dark ? '#c79a12' : '#ffc233';            // Funkeiros ouro
-    if (f === 'M') return dark ? '#5e35b1' : '#9d4edd';            // Mítico roxo
-    return dark ? '#aaaaaa' : '#999999';
+    return factionColor(this._factionOf(side), dark);
   }
   /* TINTA CLARA DO TIME — só pra TEXTO sobre chip tingido (killfeed). Por que existe:
      o chip do killfeed é `background:${cor}2e` (a própria cor do time a 18%) com o texto
@@ -3644,16 +3763,15 @@ export class Game {
      Mantém a leitura "vermelho = time-e / verde = time-b" e passa a 5,9-9,1:1. */
   _teamInk(side) {
     if (this._mirror(side)) return '#cbaaff';
-    const f = this._factionOf(side);
-    return ({ U: '#a8cdff', E: '#ff9a9a', B: '#a9f0b6', C: '#ffb3e0', F: '#ffd98a', M: '#d0a3f0' })[f] || '#d6d6d6';
+    return factionInk(this._factionOf(side));
   }
   // Pack de vozes/round por FACÇÃO: o lado do jogador usa 'U' (Tribos) quando a facção é Tribos
   // Urbanas; senão o lado (P/B). O inimigo é sempre político. Corrige "Tribos usa voz de Time E".
   // Facção que ocupa um LADO físico (P/B): lado do jogador = playerFaction, o outro = enemyFaction.
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
-  _teamName(side) { const f = this._factionOf(side); return f === 'U' ? 'TRIBOS URBANAS' : f === 'C' ? 'PALHAÇOS' : f === 'F' ? 'FUNKEIROS' : f === 'M' ? 'MÍTICO' : (TEAM_LABEL[f] || f); }
-  _teamTag(side) { const f = this._factionOf(side); return f === 'U' ? 'TRB' : f === 'C' ? 'PLH' : f === 'F' ? 'FNK' : f === 'M' ? 'MIT' : f === 'E' ? 'TME' : 'TMB'; }
+  _teamName(side) { return factionName(this._factionOf(side)); }
+  _teamTag(side) { return factionTag(this._factionOf(side)); }
   _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }   // inimigo = mesma facção
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
@@ -3814,10 +3932,12 @@ export class Game {
       pt.capTeam = solo;   // time que está capturando agora (pra cor da barra no HUD)
       pt.contested = np > 0 && nb > 0;
       if (solo && solo !== pt.owner) {
-        const crew = Math.min(2, 1 + 0.35 * ((solo === 'E' ? np : nb) - 1));   // 2º e 3º corpo aceleram
+        let crew = Math.min(2, 1 + 0.35 * ((solo === 'E' ? np : nb) - 1));   // 2º e 3º corpo aceleram
+        crew *= this._objectiveInteractionMultiplier(pt, solo);
         pt.prog += (dt * crew) / (pt.owner ? CAP_STEAL : CAP_NEUTRAL);
         if (pt.prog >= 1) {
           pt.owner = solo; pt.prog = 0;
+          if (this.player._pieceObjectiveId === pt.id) this.player._pieceObjectiveId = null;
           this.sfx.captureSound && this.sfx.captureSound(this._factionOf(solo));   // captura: pool de som por facção (palhaços = pasta própria)
           // credita a captura: +1 pro time e +1 pra cada combatente do time DENTRO do anel
           this.ctfCaps[solo] = (this.ctfCaps[solo] || 0) + 1;
@@ -3830,6 +3950,7 @@ export class Game {
           this._updateCtfHud();
         }
       } else if (!solo) {
+        this._objectiveInteractionMultiplier(pt, solo);   // encerra interação abandonada/contestada
         // CONTESTADO (os dois times no anel) CONGELA o progresso — é o momento de tensão do
         // modo; só decai quando o anel fica vazio ou o dono retoma sozinho.
         if (!pt.contested) pt.prog = Math.max(0, pt.prog - dt / (CAP_NEUTRAL * DECAY));
@@ -4376,7 +4497,13 @@ export class Game {
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
       if (left <= 0) this._respawnPlayer();
-      this.camera.position.y = Math.max(0.5, this.camera.position.y - dt * 2);
+      // Em mapa multinível, 0,5 global atravessa a laje do andar alto e revela o avesso
+      // do mapa (caso real: mirante do Escadão a 14,28 m). A queda da câmera termina meio
+      // metro acima do piso LOCAL em que o corpo morreu, nunca no zero do mundo.
+      const deathFloor = (this.world.groundHeightAt
+        ? this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y)
+        : 0) + 0.5;
+      this.camera.position.y = Math.max(deathFloor, this.camera.position.y - dt * 2);
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
     }
@@ -4499,6 +4626,9 @@ export class Game {
     this.camera.rotation.set(p.pitch + p.recoilP, p.yaw, 0);
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
+    const running = moving && !p.scoped && p.crouchF < 0.2 && slowMul === 1 && sp >= maxSp * 0.88;
+    this._updateMotocaCharge(dt, running);
+    this._recordRoutePoint(moving);
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
@@ -4924,6 +5054,11 @@ export class Game {
   _spawnY(x, z) {
     return this.world && this.world.groundHeightAt ? this.world.groundHeightAt(x, z) : 0;
   }
+  _spawnYaw(spawn, team, bot = false) {
+    if (spawn && Number.isFinite(spawn.yaw)) return spawn.yaw;
+    // Compatibilidade com mapa antigo sem yaw: preserva as convenções anteriores.
+    return team === 'E' ? (bot ? 0 : Math.PI) : (bot ? Math.PI : 0);
+  }
   _pickSpawn(team) {
     const list = this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
@@ -4960,7 +5095,7 @@ export class Game {
     p._lifeDmg = 0;
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
-    p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;
+    p.yaw = this._spawnYaw(s, p.team, false); p.pitch = 0;
     // top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP)
     if (p.primary && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
     if (p.secondary && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
@@ -5006,7 +5141,7 @@ export class Game {
     this.el.radioLog.appendChild(log);
     setTimeout(() => log.remove(), 3600);
     while (this.el.radioLog.children.length > 3) this.el.radioLog.firstChild.remove();
-    try { this.sfx.radioVoice(this._voiceKey(b.team)); } catch {}
+    try { this.sfx.characterVoice(b.def?.id, 'radio', { fallbackFaction: this._voiceKey(b.team) }); } catch {}
   }
   /* ===================== MARCADOR DE TIME (halo + chevron) =====================
      Dono: "ia ser legal se tivesse um halo no chão, ou uma seta em cima deles mostrando que
@@ -5126,7 +5261,7 @@ export class Game {
         b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
         b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
         b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
-        b.target = null; b.path = null; b.yaw = b.team === 'E' ? 0 : Math.PI;
+        b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
         b.laneX = undefined; b.roamUntil = 0;   // re-sorteia a coluna A CADA VIDA -> rotas variam (não "sempre a mesma")
         b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;   // limpa estado de rota/juke da vida anterior (G2-R6A)
         // rumo suavizado e turno de duelo também são estado de vida: nascer com o _hdg da

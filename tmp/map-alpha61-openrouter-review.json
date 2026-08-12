@@ -1,0 +1,91 @@
+{
+  "provider": "openrouter",
+  "model": "anthropic/claude-opus-5",
+  "id": "gen-1786476117-ir1TiXMLrovatQiixXH8",
+  "createdAt": "2026-08-11T19:26:13.162Z",
+  "promptFile": "tmp/map-alpha60-review-prompt.txt",
+  "promptSha256": "8126eb150af52cf39baf05f41c60ef86961582825d027157051008d8672d4c4b",
+  "images": [
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_campomorro/field-eye.png",
+      "sha256": "7e75a295251e7541a29e0b80643968de28bc738bb238662159a470eac5bf5ead"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_campomorro/galpao-eye.png",
+      "sha256": "253443c089e9476bfd5c6cce415fc8b2dcf67e5e09308efcd478acbc964c2e10"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_campomorro/galpao-interior.png",
+      "sha256": "f5b0b3663527cc8cca3016964b06a0f20fda750fae005e884022a58f72ae3ff7"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_lajes/roof-eye.png",
+      "sha256": "3ce799d42f077065b42e7e05e5596b6ec9a121e58cfd23e44a8d9f0b1555413f"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_lajes/roof-route.png",
+      "sha256": "6cd88a3acf03691e4273ae7739663c3da477ca5761fd483d24906695fab66392"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_lajes/jump-link.png",
+      "sha256": "844853f41fed7b898d03523b07e562f73d70788585c7152931c581b436410258"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_lajes/layer-overview.png",
+      "sha256": "569654ba694a50ee4e291aaa9fb662e32c78b4cc74b9bcbd0355ea640514158b"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_corrego/capivara.png",
+      "sha256": "761e5c06f516c46f4fd4548e6476254516bc5db78f9b292aa8e9f29dc5ec276a"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_corrego/rats.png",
+      "sha256": "ee2cd81926426a58bc83620c3f18eff069fcf695783152e73ad15e07228ce9a4"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_corrego/bridge-eye.png",
+      "sha256": "4a1252898ea54a72d941bc58777a28484263a8683c4ab3c3729489543539ee21"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_mansao/cars-front-close.png",
+      "sha256": "cb14e24e306edf61af35d0da30c54278d94a4935a7dd8a447cf9959fb49bad12"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_mansao/garden-eye.png",
+      "sha256": "94fceb99505e0fff5cad0072043548fbac6cb2040982f6b229e86f4a9e20709b"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_mansao/facade-garden.png",
+      "sha256": "43d3bbec4d810c53a9d87f038af59013d5e5d8741fddbe2ea9fa3b979f23446e"
+    },
+    {
+      "path": "tools/eval/asset-evidence/maps/fy_mansao/interior.png",
+      "sha256": "8a8533054b84033b0be1883da979e8736621ac68737986e58bc112d1e8b67f3d"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 29631,
+    "completion_tokens": 16060,
+    "total_tokens": 45691,
+    "cost": 0.549655,
+    "is_byok": false,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "audio_tokens": 0,
+      "video_tokens": 0
+    },
+    "cost_details": {
+      "upstream_inference_cost": 0.549655,
+      "upstream_inference_prompt_cost": 0.148155,
+      "upstream_inference_completions_cost": 0.4015
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 5093,
+      "image_tokens": 0,
+      "audio_tokens": 0
+    }
+  },
+  "finishReason": "stop",
+  "review": "# CS BRASIL — Revisão adversarial de mapas (asset-review)\n\nFormato: 3:2 confirmado (todas as capturas 1536×1024). Julgo só os pixels enviados. Não há métrica nem descrição de builder aqui para me convencer; onde a evidência não prova, eu marco como não provado.\n\n---\n\n## fy_campomorro — **REPROVADO**\n\n**O que eu realmente vejo**\n- `field-eye.png`: campo de terra batida vermelha com linhas brancas (círculo central + retas), trave central com rede quadriculada (~730–980 px, 470–580), placar preto (~800–940, 410–450), tabuleta verde baixa (~540–640, 530–570), pórtico de madeira com dois conjuntos de três anéis amarelos (~150–350, 375–510) e um anel perimetral de painéis de muro **todos da mesma altura e com a mesma textura de cartazes/pichação repetida**. O campo, isolado, é reconhecível: terra + linhas + trave leem à distância.\n- `galpao-eye.png`: pilha de caixas de som (3 níveis, alto-falantes com cones visíveis), um vão de porta com vista externa, pilha de 4 pneus à direita, piso xadrez cinza, teto verde-escuro poligonal.\n- `galpao-interior.png`: dois vãos abertos (esquerda e direita), a mesma pilha de som, barras laranja chapadas colando no teto (~0–460, 255–300 e ~1150–1290, 265–290).\n\n**Falhas bloqueantes**\n1. **Interior não é legível na foto que deveria provar isso.** Em `galpao-eye.png` o terço esquerdo, o canto direito e o teto colapsam em preto; a pilha de som virou silhueta chapada (perde-se o volume das caixas que aparece em `galpao-interior.png`); não se lê a forma da sala nem quantas saídas existem. Legibilidade a olho de jogador é o requisito — falhou no shot de olho.\n2. **Material das paredes internas ilegível:** blobs vermelhos repetidos em grade regular nas duas fotos internas. Não lê como tijolo, compensado nem madeira; lê como textura em tiling errado.\n3. **As barras laranja junto ao teto** (`galpao-interior.png`) não leem como luminária nem como abertura — leem como plano emissivo/light-leak. Se a intenção era \"abertura\", ela está falhando; se era luz, falta corpo de luminária.\n4. **Sem sombra de contato sob a pilha de som** nas duas fotos → objeto parece colado/flutuando no piso.\n5. **Navegação:** o perímetro é um anel de painéis de mesma altura e mesma textura; só o pórtico e a trave servem de marco. Girando 90°, o jogador não tem como saber de que lado do campo está.\n6. **Risco de veículo reconhecível não descartado:** silhueta clara ao fundo direito de `field-eye.png` (~1130–1240, 505–550) tem teto abaulado e capô caído — leitura de Fusca/Beetle é plausível. Não posso aprovar com esse risco em aberto e sem um close.\n\n**Correção mínima**\n- Subir ambiente/hemisférico interno ~2–3× e pôr uma luz de área no vão para revelar cantos e teto; re-tirar o shot de olho no mesmo ponto.\n- Trocar a textura de parede por prancha/bloco com escala de 1 tile ≈ 1 m.\n- Converter as barras laranja em janela basculante com moldura (ou remover e abrir um vão real).\n- Adicionar sombra/AO de contato sob a pilha de som e trocar o xadrez de escritório por piso de cimento queimado.\n- Diferenciar 2 dos 4 lados do muro (altura ou cor de base) para criar orientação.\n- Close do veículo ao fundo; se for silhueta arredondada tipo Beetle, substituir por sedã caixote genérico.\n\n---\n\n## fy_lajes — **REPROVADO**\n\n**O que eu realmente vejo**\n- `roof-eye.png` (a foto que testa distância de jogo): **zero bordas amarelas visíveis**. Primeiro plano = duas placas verde-escuras quase pretas formando um \"V\" com um triângulo de piso claro entre elas; não se lê se é vão passável, degrau ou parede. Caixas escuras sem textura à direita. Único elemento informativo é o grafite \"NULO\" verde ao longe.\n- `roof-route.png` e `layer-overview.png`: aí sim as bordas amarelas dos vãos leem muito bem, e o desenho de 3+ corredores/lajes é claro — **mas são câmeras elevadas de dev, não altura de jogo**.\n- `jump-link.png`: uma plataforma com borda amarela grossa lê corretamente a média distância. Isso é uma prova válida, e a única.\n\n**Falhas bloqueantes**\n1. **A borda amarela não sobrevive de perfil.** Ela está pintada só no topo do vão; na `roof-eye.png` o jogador está no plano da laje e não vê nada. Requisito não cumprido no enquadramento certo.\n2. **Repetição de tags destrói landmark.** Em `layer-overview.png` conto \"NULO\" 4+ vezes, \"VAGO\" 3+, \"ZICA\" 3+, \"SOMA\" 2+, em faces diferentes; o mesmo par de olhos brancos + boca preta com dentes se repete em ≥6 faces (`jump-link.png` topo, `roof-route.png` esquerda e direita). Nenhuma laje tem identidade visual própria — pior para navegação do que não ter grafite.\n3. **Escala dos decals errada:** bocas/olhos de 2–3 m em parapeito lêem como sticker colado, não como pichação (pichação real é monocromática, alongada e acompanha a superfície).\n4. **Decal de personagem — não é Rick, mas há dois riscos abertos:** a cara recorrente de olhos ovais + boca com dentes lê como boneco de grafite genérico, não vejo Rick e Morty. Porém: (a) o cartaz com **figura amarela humanoide de corpo inteiro** (`roof-route.png` ~1180–1260, 780–840; repetido em `layer-overview.png`) é o maior risco de personagem protegido e está ilegível para eu descartar; (b) a estampa do Sagrado Coração em verde que aparece no set (`fy_corrego/capivara.png`) é arte devocional de terceiros. Sem close, não libero.\n5. **Contraste geral:** parapeitos verde-escuro/preto contra piso bege e céu claro; em `roof-eye.png` a cena é quase sem informação de leitura de rota.\n\n**Correção mínima**\n- Dobrar a faixa amarela 10–15 cm sobre a **face vertical** do parapeito de cada vão, para ela aparecer de perfil na altura do olho.\n- Três famílias de cor/material de laje (uma por rota) e limite de 1 aparição por tag por rota.\n- Reduzir bocas/olhos a ≤1 m e aumentar a proporção de pixação vertical monocromática.\n- Substituir a figura amarela e a estampa religiosa por arte própria; reenviar close de ambos.\n- Reenviar `roof-eye` do mesmo ponto **depois** da borda dobrada, mais um eye-level que enquadre as três rotas.\n\n---\n\n## fy_corrego — **REPROVADO**\n\n**O que eu realmente vejo**\n- `capivara.png`: corpo elipsoide marrom + 4 cilindros finos como pernas + a cabeça que é uma **caixa** de marrom mais escuro, com duas esferinhas de orelha em cima e um cilindro de focinho apontado para baixo (~800–870, 495–590). A caixa penetra a elipsoide com aresta dura e desalinhada. Escala: ~1 m de corpo contra pneu de ~0,6 m — **plausível, isso passa**. Não intersecta a pilha de pneus — **isso também passa**.\n- `rats.png`: três ratos no cimento (~620–870, 455–575).\n- `bridge-eye.png`: barracos de madeira, fiação cortando o céu, pichação, cartazes \"GENTILEZA GERA GENTILEZA\", \"ARTE DE RUA\", \"COISAS BOAS ACONTECEM\".\n\n**Falhas bloqueantes**\n1. **A capivara não lê como capivara.** A cabeça-caixa em cor diferente, encaixada de través no lombo, lê como engradado preso no bicho. Capivara tem cabeça-cunha contínua com o corpo. Escala e pneus estão OK, a leitura não.\n2. **Os três ratos leem como blobs com gravetos, não como ratos anatômicos.** Não há orelha legível em nenhum dos três; as patas são palitos destacados apontando para os lados; dois corpos parecem afundados no plano do chão (o da esquerda, ~620–700, 505–550, lê como mancha/atropelado). Requisito é explícito e não foi cumprido em nenhum dos três.\n3. **Contexto errado:** os ratos formam um trio no meio de uma esplanada de cimento limpa, sem lixo, tubo ou canto que justifique — leem como detrito de cena.\n4. **O córrego não lê como água nem como canal.** Em `bridge-eye.png` é uma faixa verde-oliva chapada com retângulos e uma elipse creme pintados (~880–1310, 560–620), na mesma cota do chão — lê como quadra pintada. Em `capivara.png` a mesma faixa está preta com listras. Inconsistente entre as duas fotos e sem profundidade.\n5. **Nenhuma sombra de contato** na capivara nem nos ratos.\n6. **Monotonia marrom** (madeira, telhado, chão, terra) reduz clareza de silhueta a média distância; só as tags coloridas quebram.\n\n**Correção mínima**\n- Capivara: cabeça como cunha contínua no mesmo material do corpo, orelhas ovais achatadas na nuca, focinho horizontal; soldar/mesclar a junção; ativar sombra.\n- Ratos: corpo em gota, 2 orelhas circulares visíveis do lado, cauda em curva contínua saindo do quadril, patas curtas **sob** o corpo; apoiar em canto com saco de lixo/manilha, não em trio no pátio; reenviar close a ~1,5 m.\n- Canal: rebaixar 0,3–0,5 m com paredes laterais, água com material escuro translúcido + faixa de limo nas bordas; usar o mesmo material nas duas capturas.\n\n**Ponto positivo real:** brasilidade é a mais forte do lote (referência ao Gentileza, pixação, fiação, barraco de tábua). O problema é execução de props e do canal, não de repertório. Atenção: revisar o cartaz devocional verde com texto vulgar — arte de terceiro + tom que não cabe no alvo.\n\n---\n\n## fy_mansao — **REPROVADO** (é o mais próximo de passar do lote)\n\n**O que eu realmente vejo**\n- `facade-garden.png`: composição simétrica boa e legivelmente brasileira — brise vertical de madeira, laje fina em cantiléver, espelho d'água com pedras hexagonais, gramado com pisos, heliconias/folhagens vermelhas e amarelas, duas árvores de copa redonda flanqueando, mar ao fundo. Isso cumpre \"jardim tropical e fachada com composição\".\n- `garden-eye.png`: três carros (vermelho, azul, cinza) leem como carros baixo-poli à média distância, com rodas cilíndricas e faróis bege.\n- `cars-front-close.png`: o carro azul é uma pilha de 3 caixas; **nenhuma roda visível de frente**, sem para-brisa/vidro, sem grade, faróis = dois retângulos bege chapados na altura do para-choque (~570–980, 620–680).\n- `interior.png`: sofá cinza com almofadas, tapete marrom, abajur de cone alto, escada com zigue-zague preto, divisória de brise de madeira, clarabóia, painéis de mármore, piso xadrez cinza, vista mar com guarda-sóis.\n\n**Checagem de marca:** os carros são genéricos, **não** leem como Mustang, DeLorean nem BMW. Esse item passa. O problema é o oposto: passaram de genéricos para não-carros.\n\n**Falhas bloqueantes**\n1. **`cars-front-close.png` prova que o carro não lê como carro de perto:** sem rodas dianteiras visíveis, sem vidro, sem grade. Abaixo da barra CS 1.6, onde os veículos tinham roda, vidro e grade.\n2. **Vigas flutuando sobre a cobertura:** duas placas escuras acima da laje com folga contra o céu em `facade-garden.png` (~480–1050, 392–420) — leem como pergolado desancorado/artefato.\n3. **Espelho d'água/piscina cyan chapado**, sem transparência nem reflexo, com hexágonos cinza flutuando por cima — lê como plástico pintado, é o elo mais fraco de uma cena que no resto está boa.\n4. **Interior: \"ilha\" não se lê.** O plano marrom escuro no canto inferior esquerdo é ambíguo e cortado pelo enquadramento; não há bancada, cuba, banqueta nem eletrodoméstico identificável. Estar, divisória e luz passam; ilha não está provada.\n5. **Placeholder compartilhado:** o piso xadrez cinza do interior da mansão é o **mesmo padrão** do galpão de favela em `fy_campomorro` — quebra a diferença de classe entre os mapas e lê como material provisório.\n6. Detalhe: os dois blocos laranja/bege sobre o encosto do sofá parecem objetos flutuando, não livros apoiados.\n7. Gramado com xadrez mecânico grama/piso e flores amarelas como cruzes chapadas.\n\n**Correção mínima**\n- Carros: expor 2 cilindros de roda ultrapassando a carroceria à frente, faixa preta de vidro no topo da cabine, retângulo escuro de grade entre os faróis e subir os faróis para ~2/3 da altura do capô; reenviar o mesmo close.\n- Ancorar as vigas do pergolado (pilares ou ligação até a laje).\n- Água: material translúcido escuro + faixa clara de borda; assentar as pedras hexagonais com sombra.\n- Modelar a ilha: bancada de ~2,4 m, 3 banquetas, cuba e torneira visíveis; reenviar shot que enquadre a ilha inteira.\n- Piso interno: laje contínua de grande formato (não o xadrez do galpão); mover os \"livros\" para mesa lateral.\n\n---\n\n## Transversal\n\n- **Brasilidade:** corrego > lajes > mansao > campomorro. Corrego e lajes acertam repertório de rua; mansao acerta modernismo brasileiro (brise, laje fina, jardim). Campomorro tem o campo de várzea certo, mas o galpão interno não tem nada de brasileiro legível — é caixa escura com xadrez de escritório.\n- **Clareza de navegação:** pior em lajes (tags idênticas repetidas em todas as faces, bordas invisíveis na altura do olho) e campomorro (anel de muro homogêneo). Melhor em mansao (fachada assimétrica, brise só de um lado, piscina como eixo).\n- **Distância de jogo:** as três provas mais fortes do lote são `facade-garden.png`, `jump-link.png` e `field-eye.png`. As três provas mais fracas são `roof-eye.png` (sem informação de rota), `galpao-eye.png` (subexposto) e `rats.png` (assunto ocupa ~3% do quadro).\n- **Lacunas de evidência que preciso no reenvio:** campo de fy_campomorro do lado oposto e close do veículo ao fundo; eye-level de fy_lajes com as três rotas no mesmo quadro após a borda dobrada, mais close dos dois decals suspeitos; capivara de perfil e rato a ~1,5 m em fy_corrego; lateral do carro e ilha da cozinha em fy_mansao.\n\n**Nenhum dos quatro mapas está aprovado.** Nenhuma reprovação aqui depende de opinião de estilo: cada uma aponta um pixel específico (subexposição, borda ausente de perfil, cabeça-caixa, roda ausente, viga flutuante) e tem correção barata."
+}

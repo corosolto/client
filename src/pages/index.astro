@@ -18,10 +18,12 @@
    em vez de virar mais um item de checklist.
    ============================================================================ */
 import pkg from '../../package.json';
+import { FACTIONS } from '../../public/js/factions.js';
 
 const V = pkg.version;
 const MODULOS = [
   "main.js",
+  "factions.js",
   "game.js",
   "glbchars.js",
   "weapons.js",
@@ -33,6 +35,11 @@ const MODULOS = [
   "map_havan.js",
   "map_ferrovelho.js",
   "map_quebrada.js",
+  "map_escadao.js",
+  "map_campomorro.js",
+  "map_lajes.js",
+  "map_corrego.js",
+  "map_mansao.js",
   "map_decals.js",
   "graffiti_pass.js",
   "graffiti_layout.js",
@@ -372,8 +379,18 @@ const IMPORTMAP = JSON.stringify({
   </div>
 </div>
 
+<!-- Moldura persistente do fluxo: muda de capítulo/progresso, mas não muda de idioma.
+     É decorativa (aria-hidden) porque os títulos reais continuam dentro de cada tela. -->
+<div id="cine-chrome" aria-hidden="true">
+  <div class="cine-broadcast"><i></i><span>CORO SOLTO</span><b>// TRANSMISSÃO</b></div>
+  <div class="cine-chapter"><small id="cine-section">ABERTURA</small><span id="cine-step">PRONTO PRA TRETA</span></div>
+  <div class="cine-stepbar"><i id="cine-progress"></i></div>
+  <i class="cine-corner cine-corner-tl"></i><i class="cine-corner cine-corner-tr"></i>
+  <i class="cine-corner cine-corner-bl"></i><i class="cine-corner cine-corner-br"></i>
+</div>
+
 <!-- Mobile fallback -->
-<div id="mobile-warning" class="screen hidden">
+<div id="mobile-warning" class="screen cine-surface hidden">
   <div class="panel center-panel">
     <h1>CORO SOLTO: TRETA SUPREMA</h1>
     <p class="big">🖱️⌨️ Este jogo foi feito para <b>desktop</b> (mouse + teclado).</p>
@@ -383,27 +400,35 @@ const IMPORTMAP = JSON.stringify({
 </div>
 
 <!-- Main menu -->
-<div id="main-menu" class="screen cs-screen">
+<div id="main-menu" class="screen cs-screen cine-surface">
   <div class="cs-wallpaper"></div>
   <div class="cs-vignette"></div>
   <div class="scanlines"></div>
 
-  <div class="cs-left">
-    <!-- logo removido: os wallpapers (wall-1..4) já trazem o logo do jogo -->
-    <!-- nav com roving tabindex: setas ↑↓ movem, Enter/Espaço confirma (main.js).
-         aria-current marca o item que abriu o painel — antes nada dizia de onde
-         o setup tinha vindo. -->
+  <section class="home-broadcast" data-ui-layout="home-broadcast" aria-labelledby="home-title">
+    <header class="home-title-block">
+      <span class="home-season">TEMPORADA 02 // BRASIL EM DISPUTA</span>
+      <h1 id="home-title">ESCOLHA SUA<br><em>PRÓXIMA TRETA</em></h1>
+      <p>Dois modos. Um país inteiro de histórias, mapas e coros.</p>
+    </header>
+    <!-- A árvore agora separa a decisão principal dos serviços: não é mais uma lista
+         vertical em que JOGAR e CONFIGURAÇÕES têm o mesmo peso. Os ids/data-act ficam
+         estáveis para preservar teclado, som e roteamento em main.js. -->
     <nav class="cs-menu" id="cs-menu" aria-label="Menu principal">
-      <div class="cs-menu-label">// ESCOLHA A TRETA</div>
-      <button class="cs-item" data-act="sp"    type="button"><span class="cs-tick">▸</span>SINGLE PLAYER</button>
-      <button class="cs-item" data-act="ctf"   type="button"><span class="cs-tick">▸</span>CAPTURE THE FLAG</button>
-      <button class="cs-item" data-act="config" type="button"><span class="cs-tick">▸</span>CONFIGURAÇÕES</button>
-      <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
-      <!-- MAPA saiu do menu (o mapa se escolhe dentro de SINGLE PLAYER / CTF); no
-           lugar entrou FEEDBACK (pedido do dono, 07/08), que alimenta a lista da
-           futura newsletter — ver /api/feedback e supabase/migrations/013. -->
-      <button class="cs-item" data-act="feedback" type="button"><span class="cs-tick">▸</span>FEEDBACK</button>
-      <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>SOBRE O JOGO</button>
+      <div class="home-mode-deck">
+        <button class="cs-item home-mode-card" data-act="sp" type="button">
+          <span class="home-mode-no">01</span><span class="home-mode-copy"><b>ROUNDS</b><small>SINGLE PLAYER · MELHOR DE 5</small></span><span class="cs-tick">JOGAR ▸</span>
+        </button>
+        <button class="cs-item home-mode-card" data-act="ctf" type="button">
+          <span class="home-mode-no">02</span><span class="home-mode-copy"><b>CAPTURA</b><small>BANDEIRAS · MELHOR DE 3</small></span><span class="cs-tick">JOGAR ▸</span>
+        </button>
+      </div>
+      <div class="home-service-strip" aria-label="Serviços e arquivo">
+        <button class="cs-item" data-act="config" type="button">CONFIGURAÇÕES</button>
+        <button class="cs-item" data-act="ranking" type="button">RANKING</button>
+        <button class="cs-item" data-act="feedback" type="button">FEEDBACK</button>
+        <button class="cs-item" data-act="sobre" type="button">DOSSIÊ DO JOGO</button>
+      </div>
     </nav>
     <!-- plate do jogador: nível/XP derivados dos stats locais (mesma fonte do RANKING).
          Clique abre o passo de perfil do setup. -->
@@ -430,20 +455,21 @@ const IMPORTMAP = JSON.stringify({
         <a href="/changelog" target="_blank">Changelog</a>
         <a href="/sobre" target="_blank">Sobre</a>
       </div>
-  </div>
+  </section>
 
   <!-- PAINEL DE SETUP — dois PASSOS no mesmo painel (data-step).
        PASSO 1 = A PARTIDA: o mapa é o protagonista (cartaz grande, nome, modo, bots).
        O nick saiu daqui a pedido do dono: perfil virou um passo próprio, aberto pelo
        botão PERFIL. Dois passos no MESMO container pra não duplicar a máquina de
        estados do menu (closeSetup / ESC / clique fora / :has(.cs-setup.open)). -->
-  <div id="menu-setup" class="cs-setup" data-step="match">
+  <div id="menu-setup" class="mission-cut cs-setup" data-ui-layout="mission-cut" data-step="match">
     <div class="cs-setup-head"><small id="setup-step">PASSO 1 · A PARTIDA</small><span id="setup-title">SINGLE PLAYER</span></div>
 
     <!-- ---------- PASSO 1: A PARTIDA ---------- -->
     <section class="setup-pane pane-match">
       <!-- O cartaz do mapa é a tela inteira do passo: arte grande, nome grande e a
            ficha da partida (modo · bots · armas) LIDA EM CIMA DA ARTE, não num form. -->
+      <div class="mission-visual">
       <div class="map-picker">
         <img id="map-thumb" src="/img/map-previews/awp_map.jpg" alt="preview do mapa">
         <button id="map-mode" type="button" title="Clique pra trocar entre ROUNDS e CAPTURE THE FLAG">ROUNDS</button>
@@ -460,6 +486,14 @@ const IMPORTMAP = JSON.stringify({
           <span id="map-name">—</span>
           <span id="map-meta"></span>
         </div>
+      </div>
+      </div>
+      <aside class="mission-console" aria-label="Configuração da partida">
+      <div class="mission-brief">
+        <small>ORDEM DE PARTIDA // 01</small>
+        <b>MONTE O CONFRONTO</b>
+        <p>Feche o arsenal e a formação. Facção, personagem e adversário entram nos próximos cortes.</p>
+        <span>MAPA ✓ &nbsp; FACÇÃO 02 &nbsp; PERSONAGEM 03</span>
       </div>
       <div class="match-opts">
         <label class="map-label">ARMAS
@@ -481,6 +515,7 @@ const IMPORTMAP = JSON.stringify({
         </button>
         <button id="btn-jogar" class="btn btn-big">▶ JOGAR</button>
       </div>
+      </aside>
     </section>
 
     <!-- ---------- PASSO À PARTE: O PERFIL ---------- -->
@@ -517,7 +552,7 @@ const IMPORTMAP = JSON.stringify({
 
 <!-- Map screen (escolha de mapa em tela cheia) — abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
-<div id="map-screen" class="screen hidden">
+<div id="map-screen" class="screen cine-surface hidden" data-ui-layout="map-broadcast">
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
   <div class="ms-scrim"></div>
   <!-- chrome persistente (referência telas/04): jogador no topo, VOLTAR embaixo à esquerda -->
@@ -528,7 +563,7 @@ const IMPORTMAP = JSON.stringify({
       <span class="pp-level" id="ms-top-level">NÍVEL 1</span>
     </div>
   </div>
-  <header class="ms-head">
+  <header class="ms-head map-story">
     <small>O PALCO DA TRETA</small>
     <h2 id="ms-name" class="ms-name">—</h2>
     <p id="ms-meta" class="ms-meta"></p>
@@ -536,7 +571,7 @@ const IMPORTMAP = JSON.stringify({
   </header>
   <button id="ms-prev" class="map-arrow ms-arrow ms-arrow-l" type="button" aria-label="mapa anterior">‹</button>
   <button id="ms-next" class="map-arrow ms-arrow ms-arrow-r" type="button" aria-label="próximo mapa">›</button>
-  <div class="ms-strip" id="ms-strip"></div>
+  <div class="ms-strip map-reel" id="ms-strip"></div>
   <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
   <div class="ms-actions">
     <button id="ms-continue" class="btn btn-big" type="button">CONTINUAR ▶</button>
@@ -548,79 +583,45 @@ const IMPORTMAP = JSON.stringify({
      "escolher o seu lado" (side) e "escolher o adversário" (enemy). O lugar da arte por
      time já existe: .team-art consome --art (ver style.css) e, enquanto o arquivo não
      existir, o degradê da facção continua sendo o fundo — sem ícone de imagem quebrada. -->
-<div id="team-select" class="screen hidden" data-step="side">
-  <header class="ts-head">
-    <small id="team-step">PASSO 2 · O SEU LADO</small>
-    <h2 class="screen-title" id="team-title">ESCOLHA SEU LADO DA TRETA</h2>
-    <p class="ts-hint" id="team-hint">Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.</p>
-  </header>
-  <div class="team-row">
-    <button id="btn-team-e" class="team-card team-e">
-      <img class="team-crest" src="/img/brasoes/e.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">TIME E</span>
-        <span class="team-slogan">"A treta se faz na praça!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Esquerdomacho · Líder do Sindicato · Líder do MST · Doutora do SUS · Jovem Místico</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
-    <button id="btn-team-b" class="team-card team-b">
-      <img class="team-crest" src="/img/brasoes/b.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">TIME B</span>
-        <span class="team-slogan">"A treta se faz na rodovia!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zilá · Coach Quântico</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
-    <button id="btn-team-u" class="team-card team-u">
-      <img class="team-crest" src="/img/brasoes/u.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">TRIBOS URBANAS</span>
-        <span class="team-slogan">"A treta se faz na quebrada!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Emo · Black Metal · Metaleiro · Punk · Skatista · Clubber · Rapper · Rasta · Pagodeiro</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
-    <button id="btn-team-c" class="team-card team-c">
-      <img class="team-crest" src="/img/brasoes/c.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">PALHAÇOS</span>
-        <span class="team-slogan">"A treta se faz no picadeiro!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Bonzo · Palhaço do Mal · Jozo · Adjim · Esbirro · Titica · Padati · Padata · Cadequinha</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
-    <button id="btn-team-f" class="team-card team-f">
-      <img class="team-crest" src="/img/brasoes/f.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">FUNKEIROS</span>
-        <span class="team-slogan">"A treta se faz no bailão!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Mandrake · Raul da Franja · Oakley · Cria RJ · Chave SP · Funk Raiz · Trap Funk · Fluxo · Ostentação</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
-    <button id="btn-team-m" class="team-card team-m">
-      <img class="team-crest" src="/img/brasoes/m.png" alt="">
-      <span class="team-art" aria-hidden="true"></span>
-      <span class="team-plate">
-        <span class="team-name">MÍTICO</span>
-        <span class="team-slogan">"A treta atravessa os séculos!"</span>
-      </span>
-      <span class="team-chars" aria-hidden="true"></span>
-      <span class="team-desc">Maria Bonita · Saci-Pererê · Lampião · Lobisomem · Bandeirante · Boto Cor de Rosa · Zumbi dos Palmares · Cuca · Curupira</span>
-      <span class="team-cta" aria-hidden="true"></span>
-    </button>
+<div id="team-select" class="screen cine-surface hidden" data-step="side">
+  <div class="faction-editorial" data-ui-layout="faction-editorial">
+    <aside class="faction-index" aria-label="Índice de facções">
+      <div class="faction-index-label"><small>ARQUIVO 02</small><b>ESCOLHA O CORO</b></div>
+      <button id="team-prev" class="team-rail-arrow team-rail-prev" type="button" aria-label="facção anterior">⌃</button>
+      <div class="team-row">
+      {FACTIONS.map((f, index) => (
+        <button class={`team-card team-${f.id.toLowerCase()}`} data-faction={f.id} data-faction-index={index}
+          data-ready={f.ready ? '1' : '0'} data-description={f.description} style={`--tc:${f.color};--tc-rgb:${f.rgb};--tc-bg:${f.bg};--art:url('/img/faccoes/${f.art}.webp')`}>
+          <span class="faction-index-no">{String(index + 1).padStart(2, '0')}</span>
+          <img class="team-crest" src={`/img/brasoes/${f.crest}.png`} alt="">
+          <span class="team-art" aria-hidden="true"></span>
+          <span class="team-plate">
+            <span class="team-name">{f.name}</span>
+            <span class="team-slogan">“{f.slogan}”</span>
+          </span>
+          <span class="team-chars" aria-hidden="true"></span>
+          {!f.ready && <span class="team-production">EM PRODUÇÃO</span>}
+        </button>
+      ))}
+      </div>
+      <button id="team-next" class="team-rail-arrow team-rail-next" type="button" aria-label="próxima facção">⌄</button>
+    </aside>
+    <article class="faction-hero" id="faction-hero" aria-live="polite">
+      <span class="faction-hero-art" aria-hidden="true"></span>
+      <div class="faction-hero-copy">
+        <header class="ts-head">
+          <small id="team-step">PASSO 2 · O SEU LADO</small>
+          <h2 class="screen-title" id="team-title">ESCOLHA SEU LADO DA TRETA</h2>
+          <p class="ts-hint" id="team-hint">Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.</p>
+        </header>
+        <img id="fh-crest" class="faction-hero-crest" alt="">
+        <small class="faction-hero-kicker">DOSSIÊ DE FACÇÃO</small>
+        <h3 id="fh-name">—</h3>
+        <p id="fh-slogan" class="faction-hero-slogan">—</p>
+        <p id="fh-desc" class="faction-hero-desc">—</p>
+        <button id="fh-status" class="faction-hero-status" type="button">SELECIONE UM CORO</button>
+      </div>
+    </article>
   </div>
   <button id="team-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
@@ -629,23 +630,23 @@ const IMPORTMAP = JSON.stringify({
      avatares à esquerda, ficha no meio (nome/raridade/especialidade/atributos/CTA) e
      preview 3D GIGANTE à direita, com GIRAR/ZOOM de verdade (drag + wheel no main.js).
      O corpo continua elástico (flex:1 + min-height:0) — a lição do bug 3:2 se mantém. -->
-<div id="char-select" class="screen hidden">
+<div id="char-select" class="screen cine-surface hidden">
   <header class="ts-head">
     <small>PASSO 3 · O PERSONAGEM</small>
     <h2 class="screen-title">ESCOLHA SEU PERSONAGEM</h2>
   </header>
-  <div class="char-stage">
-    <div class="char-filmstrip">
-      <button id="strip-up" class="strip-arrow" type="button" aria-label="personagem anterior">⌃</button>
-      <div id="char-list" class="char-list" role="listbox" aria-label="Personagens"></div>
-      <button id="strip-down" class="strip-arrow" type="button" aria-label="próximo personagem">⌄</button>
+  <div class="cast-stage" data-ui-layout="cast-stage">
+    <div class="cast-avatar char-preview-box">
+      <canvas id="char-preview" width="640" height="640"></canvas>
+      <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
     </div>
-    <div class="char-sheet">
+    <aside class="cast-dossier char-sheet">
       <div class="char-info-head">
         <div id="char-info-name">—</div>
         <span id="char-rarity" class="rarity">COMUM</span>
       </div>
       <div id="char-info-blurb">—</div>
+      <div id="char-voice-caption" role="status" aria-live="polite"></div>
       <div class="char-spec">
         <small>ESPECIALIDADE</small>
         <b id="char-spec-name">—</b>
@@ -656,26 +657,28 @@ const IMPORTMAP = JSON.stringify({
         <div id="char-attrs"></div>
       </div>
       <button id="char-confirm" class="btn btn-big">USAR PERSONAGEM</button>
-    </div>
-    <div class="char-preview-box">
-      <canvas id="char-preview" width="640" height="640"></canvas>
-      <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
-    </div>
+    </aside>
+    <nav class="cast-rail" aria-label="Elenco da facção">
+      <button id="strip-up" class="strip-arrow" type="button" aria-label="personagem anterior">‹</button>
+      <div id="char-list" class="char-list" role="listbox" aria-label="Personagens"></div>
+      <button id="strip-down" class="strip-arrow" type="button" aria-label="próximo personagem">›</button>
+    </nav>
   </div>
   <button id="char-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
 
 <!-- Settings — abas por categoria (padrão CS2/Valorant). Os IDs dos inputs NÃO mudam:
      toda a persistência/wiring do main.js continua valendo. -->
-<div id="settings-panel" class="screen hidden">
-  <h2 class="screen-title">CONFIGURAÇÕES</h2>
-  <div class="panel settings-wrap">
-    <div class="set-tabs" role="tablist" aria-label="Categorias de configuração">
+<div id="settings-panel" class="screen cine-surface hidden">
+  <div class="settings-cockpit" data-ui-layout="settings-cockpit">
+    <header class="settings-title"><small>SISTEMA // 07</small><h2 class="screen-title">CONFIGURAÇÕES</h2></header>
+    <div class="settings-nav set-tabs" role="tablist" aria-label="Categorias de configuração">
       <button class="set-tab active" data-tab="video" role="tab" aria-selected="true">VÍDEO</button>
       <button class="set-tab" data-tab="audio" role="tab" aria-selected="false">ÁUDIO</button>
       <button class="set-tab" data-tab="mouse" role="tab" aria-selected="false">MOUSE</button>
       <button class="set-tab" data-tab="interface" role="tab" aria-selected="false">INTERFACE</button>
     </div>
+    <div class="settings-workbench">
     <!-- DUAS COLUNAS (referência telas/07): lista de ajustes à esquerda, painel de
          pré-visualização à direita. Os .set-pane continuam sendo filhos diretos de um
          container que o main.js varre por `.set-pane` + data-pane — só mudou onde esse
@@ -728,6 +731,12 @@ const IMPORTMAP = JSON.stringify({
         </select>
       </label>
     </div>
+    <aside class="settings-readout" aria-label="Resumo do sistema">
+      <small>PERFIL DE EXIBIÇÃO</small>
+      <b>ARENA NO NAVEGADOR</b>
+      <p>As alterações são aplicadas à partida e ficam salvas neste navegador.</p>
+      <span>DESKTOP &nbsp;·&nbsp; WEBGL &nbsp;·&nbsp; ÁUDIO ESPACIAL</span>
+    </aside>
     </div>
     <!-- painel de amostra: é uma captura real de mapa do jogo (a mesma família de
          imagem que a referência usa), decorativa e fora da ordem de foco -->
@@ -736,11 +745,12 @@ const IMPORTMAP = JSON.stringify({
     <div class="set-actions">
       <button id="settings-back" class="btn btn-big settings-save">SALVAR &amp; VOLTAR</button>
     </div>
+    </div>
   </div>
 </div>
 
 <!-- Ranking (local + global quando o Supabase estiver ligado) -->
-<div id="ranking-panel" class="screen hidden">
+<div id="ranking-panel" class="screen cine-surface hidden">
   <div class="panel center-panel">
     <h2>RANKING</h2>
     <div id="rank-local" class="rank-stats"></div>
@@ -753,7 +763,7 @@ const IMPORTMAP = JSON.stringify({
 
 <!-- Feedback (substituiu o MAPA no menu, 07/08). Email + consentimento são
      obrigatórios: a tabela feedback é a semente da newsletter (migration 013). -->
-<div id="feedback-panel" class="screen hidden">
+<div id="feedback-panel" class="screen cine-surface hidden">
   <div class="panel center-panel">
     <h2>FEEDBACK</h2>
     <p class="fb-note">Conta o que curtiu, o que quebrou, o que falta. Vai direto pro dono do jogo.</p>
@@ -768,7 +778,7 @@ const IMPORTMAP = JSON.stringify({
 </div>
 
 <!-- How to play -->
-<div id="howto-panel" class="screen hidden">
+<div id="howto-panel" class="screen cine-surface hidden">
   <div class="panel center-panel">
     <h2>COMO JOGAR</h2>
     <div class="howto-grid">
@@ -869,7 +879,7 @@ const IMPORTMAP = JSON.stringify({
 
 <!-- Pause — mesma linguagem das telas de fluxo (régua de tinta + chanfro) e fundo
      translúcido: a partida continua visível atrás (o canvas pausado segue renderizando). -->
-<div id="pause-menu" class="screen hidden">
+<div id="pause-menu" class="screen cine-surface hidden">
   <h2 class="screen-title">PAUSA NA TRETA</h2>
   <div class="pause-actions panel">
     <button id="btn-resume" class="btn btn-big">CONTINUAR</button>
@@ -891,7 +901,7 @@ const IMPORTMAP = JSON.stringify({
      a metade direita reservada pra arte do vencedor. O #me-hero é essa metade — hoje ela é
      campo atmosférico, porque o retrato do personagem só existe em runtime (glbchars) e
      quem saberia qual é é o game.js. Ver relatório: falta um gancho lá pra preencher. -->
-<div id="match-end" class="screen hidden">
+<div id="match-end" class="screen cine-surface hidden">
   <div class="me-wrap">
     <div class="me-col">
       <div class="me-verdict">

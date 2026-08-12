@@ -37,6 +37,7 @@
      Minúscula também serve (normaliza), e qualquer outra coisa devolve `null`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import * as THREE from 'three';
+import { FACTIONS, factionColor } from './factions.js';
 
 /* PALETA DO TIME — espelha `Game._teamColor()` (`public/js/game.js`, bloco "Capture the
    Flag"): P vermelho, B verde, U azul, C rosa-circo, F ouro. É espelho declarado, pelo
@@ -50,12 +51,12 @@ import * as THREE from 'three';
    a bandeira do time do jogador ficava sem cor E sem brasão, os dois de uma vez, que foi
    como o defeito chegou: *"quando captura bandeira não pinta de vermelho e nem põe o
    brasão"*. Régua: `tools/eval/faccao-paleta-check.mjs`. */
-const COR_TIME = { E: '#ff5555', B: '#55dd66', U: '#4aa3ff', C: '#ff6ec7', F: '#ffc233', M: '#9d4edd' };
+const COR_TIME = Object.fromEntries(FACTIONS.map((f) => [f.id, factionColor(f.id)]));
 
 /* Só estas cinco têm brasão. Facção fora da lista devolve `null` de propósito: é o sinal
    combinado com o chamador para ele manter o pano que já desenhava. */
 // E: arquivo renomeado p.png->e.png no rename Time E (06/08)
-const BRASAO = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f', M: 'm' };
+const BRASAO = Object.fromEntries(FACTIONS.map((f) => [f.id, f.crest]));
 
 const W = 512, H = 320;          // 1,6:1 — a mesma proporção do pano que o jogo já usava
 const EMB = 0.74;                // altura do brasão como fração da altura do pano

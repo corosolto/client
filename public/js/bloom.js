@@ -69,6 +69,12 @@ const LOOKS = {
   fy_pool_day:   { exposure: 1.92, floor: 0.0039, expAces: 1.91 },   // Piscinão: TEM que ser o mais claro
   fy_havan:      { exposure: 1.50, floor: 0.0060, expAces: 1.59 },
   fy_ferrovelho: { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
+  fy_quebrada:   { exposure: 1.58, floor: 0.0046, expAces: 1.68 },   // Rio, rua do baile ao entardecer
+  fy_escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },   // Rio, escadaria em golden hour
+  fy_campomorro: { exposure: 1.60, floor: 0.0048, expAces: 1.70 },   // várzea aberta, terra quente
+  fy_lajes:      { exposure: 1.55, floor: 0.0047, expAces: 1.65 },   // lajes claras, sombras de beco
+  fy_corrego:    { exposure: 1.42, floor: 0.0054, expAces: 1.52 },   // SP cinzenta, água e zinco escuros
+  fy_mansao:     { exposure: 1.36, floor: 0.0043, expAces: 1.46 },   // Joá dourado, mármore e oceano
 };
 // id desconhecido cai no awp_map em maps.js (DEFAULT_MAP) — o look padrão tem que ser o
 // MESMO, senão o mapa que roda e a curva que é aplicada divergem.
@@ -148,6 +154,12 @@ const AERIAL = {
   fy_pool_day:   { d: 0.0078, color: 0x93b9df, sun: [14, 76, -9],  dir: 0.85 },
   fy_havan:      { d: 0.0088, color: 0xa3c4e5, sun: [18, 55, 20],  dir: 0.80 },
   fy_ferrovelho: { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
+  fy_quebrada:   { d: 0.0084, color: 0xb58f78, sun: [38, 30, -22], dir: 0.82 },
+  fy_escadao:    { d: 0.0080, color: 0xb9977f, sun: [25, 40, 20], dir: 0.86 },
+  fy_campomorro: { d: 0.0082, color: 0xb48b70, sun: [28, 38, 18], dir: 0.84 },
+  fy_lajes:      { d: 0.0085, color: 0xb18f79, sun: [25, 45, 15], dir: 0.84 },
+  fy_corrego:    { d: 0.0102, color: 0x9d7768, sun: [20, 35, 15], dir: 0.72 },
+  fy_mansao:     { d: 0.0068, color: 0xc4a77e, sun: [30, 32, 24], dir: 0.94 },
 };
 const AERIAL_DEFAULT = AERIAL.awp_map;
 
