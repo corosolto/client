@@ -88,6 +88,11 @@ jobs:
             "${{ github.event.pull_request.base.sha }}" \
             "${{ github.event.pull_request.head.sha }}" > /tmp/dco.json
           python3 scripts/ci/dco_check.py < /tmp/dco.json
+      # A régua se prova antes de medir o PR: sem isto, portão quebrado passa calado.
+      - name: Autoteste da régua do Agent
+        run: python3 scripts/ci/agente_check.py --selftest
+      - name: Check trailer Agent
+        run: python3 scripts/ci/agente_check.py < /tmp/dco.json
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
