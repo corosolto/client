@@ -28,6 +28,8 @@
     "//eval:release": "Release preserva nome/créditos, DCO, docs e um único deploy automático pela main; o CLI fica manual. Mutantes: nome-antigo|semcreditos|semdco|semdocs|semrollback|deploy-duplo.",
     "eval:release": "node tools/eval/release-check.mjs",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
+    "//eval:ui": "Régua de UI do HUD (UI1 contraste · UI2 poluição · UI3 área morta · UI4 ritmo · UI5 paleta). Estava ÓRFÃ: o arquivo existia desde 03/08 e não era chamado por nenhum script nem workflow — 'régua escrita e não pendurada é régua que não roda', a mesma lição do eval:faccao. FORA DO `check` DE PROPÓSITO, por dois motivos: a UI4 é dívida conhecida (ritmo de partida, em game.js, não CSS) e reprovaria a suíte toda; e UI2/UI4 BOOTAM o jogo em 5 mapas × 2 modos × 90 s, o que é passo de pré-deploy, não de laço de edição. Para o laço rápido use um portão só: `node tools/eval/ui-check.mjs UI1`. Mutantes: ui1_so_borrao|ui1_sem_contorno|ui1_killfeed_tint|ui5_fundo_azul|ui4_* — `MUT=<nome> node tools/eval/ui-check.mjs <portão>` tem que sair VERMELHO.",
+    "eval:ui": "node tools/eval/ui-check.mjs all",
     "//eval:drop": "procedência de DROP_TTL/DROP_MAX: acúmulo de armas no chão em regime",
     "eval:drop": "node tools/eval/drop-check.mjs",
     "//eval:escala": "procedência da escala dos veículos do estacionamento: bbox real do glb contra ficha de fábrica",

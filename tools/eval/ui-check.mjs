@@ -367,6 +367,66 @@ function alfaScrim(_fx, _fy) {
   return 0;
 }
 
+/** Quebra uma lista CSS nas vírgulas de TOPO. `rgba(0,0,0,.95)` tem vírgulas dentro e
+    `split(',')` as trataria como separador de camada. */
+function virgulasDeTopo(txt) {
+  const fora = [];
+  let nivel = 0, atual = '';
+  for (const ch of txt) {
+    if (ch === '(') nivel++;
+    else if (ch === ')') nivel--;
+    if (ch === ',' && nivel === 0) { fora.push(atual); atual = ''; continue; }
+    atual += ch;
+  }
+  if (atual.trim()) fora.push(atual);
+  return fora.map(s => s.trim()).filter(Boolean);
+}
+
+/** Alfa de uma cor CSS. Só interessa preto-ish: cama é tinta escura sob glifo claro. */
+function alfaDaCor(txt) {
+  const m = txt.match(/rgba?\(([^)]*)\)/);
+  if (m) {
+    const p = m[1].split(',').map(s => parseFloat(s.trim()));
+    const [r, g, b] = p;
+    const a = p.length > 3 ? p[3] : 1;
+    // cama clara não é cama: só credita tinta escura (média dos canais < 96 de 255)
+    if ((r + g + b) / 3 > 96) return 0;
+    return Number.isFinite(a) ? a : 1;
+  }
+  if (/^#0{3,8}$/.test(txt.trim())) return 1;   // #000 / #000000
+  if (/\bblack\b/.test(txt)) return 1;
+  return 0;
+}
+
+/** ALFA DA CAMA DE TINTA rente ao glifo, pelo lado MAIS FRACO do anel.
+    Ver o bloco longo em `fundoEfetivo` para o porquê de cada regra. */
+function alfaDaCama(textShadow, textStroke) {
+  // 8 vizinhos: N, S, L, O e as quatro diagonais
+  const DIRS = [[0, -1], [0, 1], [1, 0], [-1, 0], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+  const acc = DIRS.map(() => 0);
+  const soma = (i, a) => { acc[i] = 1 - (1 - acc[i]) * (1 - a); };   // camadas compõem
+
+  for (const camada of virgulasDeTopo(textShadow)) {
+    if (/^none$/i.test(camada)) continue;
+    const a0 = alfaDaCor(camada);
+    if (a0 <= 0) continue;
+    const nums = (camada.replace(/rgba?\([^)]*\)/, ' ').match(/-?[\d.]+px|(?<![\w.])-?[\d.]+(?![\w.%])/g) || [])
+      .map(s => parseFloat(s));
+    const [dx = 0, dy = 0, blur = 0] = nums;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) continue;          // regra 1: só quem abraça
+    const a = a0 / (1 + Math.max(0, blur));                          // regra 2: borrão espalha
+    if (dx === 0 && dy === 0) { DIRS.forEach((_, i) => soma(i, a)); continue; }
+    DIRS.forEach(([ux, uy], i) => { if (Math.sign(dx) === ux && Math.sign(dy) === uy) soma(i, a); });
+  }
+
+  // text-stroke: anel uniforme, todas as direções. `3px rgba(0,0,0,.92)`
+  const larg = parseFloat((textStroke.match(/-?[\d.]+px/) || ['0'])[0]);
+  const aStroke = alfaDaCor(textStroke);
+  if (larg >= 1 && aStroke > 0) DIRS.forEach((_, i) => soma(i, aStroke));
+
+  return Math.min(...acc);                                           // regra 3: o lado mais fraco
+}
+
 /** Fundo EFETIVO atrás do texto de um nó: cena pior caso -> scrim de canto -> fundos
     dos ancestrais -> fundo do próprio elemento. `contorno` some o halo do --sh-hud. */
 function fundoEfetivo(no, comp, ctx, { contorno = true } = {}) {
@@ -383,15 +443,46 @@ function fundoEfetivo(no, comp, ctx, { contorno = true } = {}) {
     const b = parseCor((c['background'] || c['background-color'] || '').split(/\s+(?=url|linear|radial|repeating)/)[0]);
     if (b && (b[3] ?? 1) > 0) bg = sobre(b, bg);
   }
-  /* CONTORNO DE TEXTO = FUNDO REAL DO GLIFO. Não é licença poética minha: está escrito
-     em public/style.css:63-66 — "um blur de 2px em preto .95 encosta no glifo e vira a
-     'cor de fundo' real do texto". O --sh-hud é `0 0 2px rgba(0,0,0,.95)` + 2 camadas.
-     Sem esse crédito TODO HUD de TODO FPS reprova (texto claro sobre cena clara), e a
-     régua vira inútil. COM ele, o que reprova é o que o contorno NÃO cobre: fundo de
-     elemento translúcido demais atrás de OBJETO GRÁFICO (a barra de captura) e texto
-     apagado por `opacity` de grupo (que apaga o contorno junto). */
-  const ts = comp['text-shadow'] || '';
-  if (contorno && /rgba\(0,\s*0,\s*0,\s*\.9[0-9]?\)/.test(ts) && /0 0 2px/.test(ts)) bg = sobre([0, 0, 0, 0.95], bg);
+  /* CONTORNO DE TEXTO = FUNDO REAL DO GLIFO. Não é licença poética: está escrito em
+     public/style.css:63-66 — "um blur de 2px em preto .95 encosta no glifo e vira a
+     'cor de fundo' real do texto". Sem esse crédito TODO HUD de TODO FPS reprova (texto
+     claro sobre cena clara) e a régua vira inútil.
+
+     O CRÉDITO ERA CONCEDIDO POR CASAMENTO DE SUBSTRING, E ISSO ERA UM BURACO. A linha
+     anterior era:
+
+         if (/rgba\(0,\s*0,\s*0,\s*\.9[0-9]?\)/.test(ts) && /0 0 2px/.test(ts))
+           bg = sobre([0,0,0,0.95], bg);
+
+     Ou seja: achou os dois pedaços de texto no valor -> credita fundo PRETO TOTALMENTE
+     OPACO. Alfa real, largura e cobertura do anel não entravam na conta. Um fio de 1,5px
+     a 50% pontuava igual a uma chapa sólida.
+     Custo medido disso: a UI1 passava com 0 de 62 elementos abaixo do mínimo sobre um CSS
+     cujas capturas estão ilegíveis (timer 2,23:1, vida 1,40:1, barra 1,07:1 no Piscinão).
+     O DEFEITO SOBREVIVEU PORQUE A RÉGUA DIZIA QUE ESTAVA BOM - que é a única forma de
+     falha que interessa num portão.
+
+     O MODELO NOVO mede o que o olho vê: quanta tinta preta existe RENTE ao glifo, e em
+     quantos lados. Três decisões, cada uma com motivo:
+
+     1. SÓ CAMADA QUE ABRAÇA CONTA. Deslocamento > 1px é sombra projetada, não cama: ela
+        cai longe da letra e o cenário volta a encostar no glifo. `max(|dx|,|dy|) <= 1`.
+     2. BORRÃO ESPALHA, NÃO CONSTRÓI. Uma camada com blur r reparte a mesma tinta num anel
+        mais largo, então o pico rente ao glifo cai. Atenuação `1/(1+r)`: r=0 entrega alfa
+        cheio, r=2 entrega um terço, r=10 entrega ~9%. É a curva mais simples que respeita
+        a direção certa; não é modelo gaussiano e não finge ser. Ela vale como PISO -
+        superestimar o crédito é o erro que criou este bug.
+     3. O ANEL VALE PELO LADO MAIS FRACO. Sombra deslocada só pinta o lado pra onde aponta;
+        é por lá que o cenário entra. O crédito é o MÍNIMO das 8 direções, não a média:
+        média deixaria um anel aberto de um lado passar por anel fechado.
+
+     `-webkit-text-stroke` ENTRA NA CONTA, e não entrava antes: é anel uniforme de verdade,
+     em todas as direções. Ignorá-lo fazia a régua cobrar duas vezes de quem já tinha
+     resolvido o problema pelo caminho mais direto. */
+  if (contorno) {
+    const a = alfaDaCama(comp['text-shadow'] || '', comp['-webkit-text-stroke'] || '');
+    if (a > 0) bg = sobre([0, 0, 0, a], bg);
+  }
   return bg;
 }
 
@@ -1058,13 +1149,47 @@ const MUTACOES = {
     css: (c) => c.replace('--bg-900-rgb:9,7,4;      --bg-800-rgb:20,16,8;    --bg-700-rgb:28,24,18;',
       '--bg-900-rgb:5,8,11;     --bg-800-rgb:10,17,22;   --bg-700-rgb:16,26,33;'),
   },
-  ui1_ctf_scrim_fraco: {
-    portao: 'UI1', o_que: 'volta o fundo da faixa de CTF pro .55 de antes (defeito 2 do dono)',
-    css: (c) => c.replace(/(#ctf-hud\{[^}]*background:)rgba\(var\(--bg-900-rgb\),\.92\)/, '$1rgba(var(--bg-900-rgb),.55)'),
-  },
+  /* APOSENTADA — e a aposentadoria fica registrada em vez de a linha sumir.
+     `ui1_ctf_scrim_fraco` devolvia o `#ctf-hud{background:...92}` pro .55 de antes. Esse
+     `background` NÃO EXISTE MAIS: saiu a pedido do dono em 06/08 ("tirar o bg e deixar
+     transparente"), e quem segura o contraste da barra de captura hoje é o poço escuro
+     montado INLINE no `_updateCtfHud` do game.js. O sistema de mutação só sabe remendar
+     texto de CSS, então não há como escrever esta prova aqui.
+     Conferido: ela já saía com `não casou com nada` em 7222a16, antes do bloco 1 - ou
+     seja, a suíte vinha rodando com uma mutação morta, que é uma régua dizendo "provei"
+     sem ter provado.
+
+     TENTEI SUBSTITUÍ-LA POR UMA DA BARRA DE VIDA E NÃO CONSEGUI - fica o registro, porque
+     a tentativa expõe um BURACO REAL DE COBERTURA desta régua:
+     a barra de vida foi o pior número do HUD nas capturas do bloco 2 (1,07:1 sobre o
+     azulejo do Piscinão), e nenhuma cláusula daqui pega isso. A (c) só roda sobre os
+     fragmentos que o game.js monta em runtime (faixa de CTF, killfeed); a (d) mede
+     `#hp-fill × #hp-bar`, isto é, preenchimento contra TRILHO - que passa fácil. O que
+     ninguém mede é a barra contra a CENA, e com a vida cheia o preenchimento cobre o
+     trilho inteiro, então quem encosta no cenário é o âmbar.
+     Escrevi a mutação (voltar o fundo pro .8) e ela passa VERDE: o fio de 1px da borda
+     sozinho satisfaz a conta de 3:1 do WCAG, ainda que seja imperceptível nesse tamanho.
+     Fechar isso direito exige modelo de ESPESSURA - contraste de fio fino não vale o mesmo
+     que contraste de área - e isso é mudança de modelo, não remendo de mutação. Fica
+     declarado aqui em vez de virar mutação de mentira. */
   ui1_sem_contorno: {
     portao: 'UI1', o_que: 'apaga o contorno --sh-hud: tudo que depende do halo tem que cair',
     css: (c) => c.replace(/--sh-hud:[^;]+;/, '--sh-hud:none;'),
+  },
+  /* A MUTAÇÃO QUE PROVA O MODELO DE DOSE, e a razão de ele existir. Devolve o --sh-hud
+     só-de-borrões de antes do bloco 2 — o valor cujas capturas estão ilegíveis sobre o
+     azulejo do Piscinão (timer 2,23:1, rótulo VIDA 1,26:1).
+     ELA PASSAVA VERDE NO MODELO ANTIGO: o crédito era casamento de substring, e este valor
+     casa `/0 0 2px/` E `/rgba(0,0,0,.95)/` — então a régua creditava fundo preto OPACO e
+     não via defeito nenhum. Com alfa × cobertura de perímetro a mesma string entrega 0,35
+     de cama, e os rótulos pequenos (que não têm text-stroke pra segurar) caem.
+     Se um dia esta mutação voltar a passar VERDE, o crédito virou substring de novo. */
+  ui1_so_borrao: {
+    portao: 'UI1', o_que: 'devolve o --sh-hud só-de-borrões de antes do bloco 2 (passava verde na régua antiga)',
+    css: (c) => c.replace(
+      /--sh-hud:[^;]+;/,
+      '--sh-hud:0 0 2px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.55);',
+    ),
   },
   ui1_killfeed_tint: {
     portao: 'UI1', o_que: 'volta o killfeed "VOCÊ matou/morreu" pro tingimento translúcido de antes',
