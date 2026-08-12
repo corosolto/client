@@ -71,7 +71,7 @@ const fakeHud = () => {
   };
 };
 
-function run(vmlab, player) {
+function run(vmlab, player, infinita = false) {
   if (!updateSrc) return { erro: '_updateWeaponHud() ausente em game.js' };
   const hud = fakeHud();
   const ctx = {
@@ -79,6 +79,7 @@ function run(vmlab, player) {
     el: { weaponHud: hud },
     _weaponHudSig: '',
     _wpnIcon: () => '<svg></svg>',
+    _municaoInfinita: () => infinita,
   };
   // eslint-disable-next-line no-new-func
   const execute = new Function('ctx', 'VMLAB', 'WEAPONS', `
@@ -111,6 +112,7 @@ const seco = { weapon: 'pistol', primary: 'ak', secondary: 'pistol', smokes: 0, 
 const desligado = run(false, completo);
 const ligado = run(true, completo);
 const semGranada = run(true, seco);
+const infinito = run(true, completo, true);
 
 const resultados = [
   {
@@ -136,6 +138,15 @@ const resultados = [
     desc: 'sem vmlab o menu continua escondido',
     ok: !desligado.erro && desligado.hidden && desligado.html === '',
     evid: desligado.erro || `hidden=${desligado.hidden} html=${desligado.html.length} bytes`,
+  },
+  /* HUD5 — no modo de arma única a reserva é infinita, e o menu tem que DIZER isso. Sem esta
+     cláusula o slot imprimia `30/90` num número que nunca anda, que o jogador lê como bug. */
+  {
+    id: 'HUD5',
+    desc: 'reserva infinita imprime 30/∞ no slot, e o modo normal segue imprimindo 30/90',
+    ok: !infinito.erro && /30\/∞/.test(infinito.html) && !/30\/90/.test(infinito.html)
+        && !ligado.erro && /30\/90/.test(ligado.html) && !/∞/.test(ligado.html),
+    evid: infinito.erro || `infinito=${(infinito.html.match(/\d+\/[\d∞]+/g) || []).join(',')} normal=${(ligado.html.match(/\d+\/[\d∞]+/g) || []).join(',')}`,
   },
 ];
 

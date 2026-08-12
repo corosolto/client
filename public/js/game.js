@@ -4868,7 +4868,9 @@ export class Game {
      regra de arma amarrada a um id de mapa e o mapa não existe mais. Nenhum mapa vivo força
      AWP-only — quem escolhe é o menu. */
   _wpnMode() {
-    return this.settings.wpnMode || 'all';
+    // `?.` porque o HUD de loadout agora lê o modo, e há caminho (vmlab) que monta o Game
+    // sem `settings`: sem a guarda o render do menu estoura e o HUD1 fica vermelho.
+    return this.settings?.wpnMode || 'all';
   }
   _botWeapon() {
     // Give bots varied weapons that match the weapon mode, so ground drops aren't all AWP.
