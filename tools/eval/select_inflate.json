@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-12T15:27:45.453Z",
+ "gerado": "2026-08-12T16:04:00.504Z",
  "mutante": null,
  "refs": [
   "mandrake",
@@ -286,88 +286,88 @@
    "arma": "shotgun",
    "oneHanded": false,
    "ik": false,
-   "arestas": 10951,
-   "p95": 0.655,
-   "p99": 7.794,
-   "p999": 29.064,
-   "max": 48.37,
-   "pct25": 6.76,
-   "ruins1e4": 381.7,
+   "arestas": 10985,
+   "p95": 0.44,
+   "p99": 3.588,
+   "p999": 12.412,
+   "max": 33.66,
+   "pct25": 6.73,
+   "ruins1e4": 309.5,
    "ruinsPorOsso": [
     [
-     "headfront",
-     204
+     "Head",
+     145
     ],
     [
-     "RightUpLeg",
-     106
+     "LeftShoulder",
+     131
     ],
     [
-     "RightArm",
-     65
-    ],
-    [
-     "Spine02",
-     65
+     "RightShoulder",
+     93
     ],
     [
      "LeftArm",
-     65
+     82
     ],
     [
-     "LeftUpLeg",
-     62
+     "RightArm",
+     67
     ],
     [
-     "RightForeArm",
-     51
+     "Hips",
+     55
     ],
     [
-     "LeftForeArm",
-     50
+     "RightFoot",
+     18
+    ],
+    [
+     "LeftFoot",
+     18
     ]
    ],
    "semcurlDesfez": null,
    "girouGraus": [
     [
-     "headfront",
-     0,
-     3.7
+     "Head",
+     43,
+     45.8
     ],
     [
-     "RightUpLeg",
-     28.8,
-     64.2
+     "LeftShoulder",
+     16.3,
+     63
     ],
     [
-     "RightArm",
-     71.2,
-     58.8
-    ],
-    [
-     "Spine02",
-     6.2,
-     50.8
+     "RightShoulder",
+     11.5,
+     36.7
     ],
     [
      "LeftArm",
-     68.2,
-     98.7
+     53.4,
+     69.3
     ],
     [
-     "LeftUpLeg",
-     45.8,
-     17
+     "RightArm",
+     48.6,
+     63.5
     ],
     [
-     "RightForeArm",
-     81.5,
-     95.6
+     "Hips",
+     45.1,
+     45.1
     ],
     [
-     "LeftForeArm",
-     52.3,
-     142.3
+     "RightFoot",
+     13.3,
+     35.1
+    ],
+    [
+     "LeftFoot",
+     14.1,
+     12.3
     ]
    ]
   },

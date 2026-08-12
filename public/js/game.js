@@ -290,6 +290,50 @@ const MOVE_MUL = {
 };
 const WALK_MUL = 0.52;            // Shift: 52% da velocidade, sem som de passo
 const MOVE2 = QS.get('move') !== '0';
+/* DEGRAU do corpo. Estava declarado DENTRO do `_updatePlayer` e o mantle precisa do mesmo
+   número — duplicar seria o instrumento discordando de si (é 0,55 que separa "degrau" de
+   "beirada", e os dois lados dessa fronteira têm que ler a MESMA constante). */
+const STEP_H = 0.55;
+/* ===================== MANTLING — SUBIR EM BEIRADA COM AS MÃOS =====================
+   Relato do dono, jogando o Córrego reconstruído (nota 6/10, era 2/10):
+     "uma vez q o cara cai no corrego e dificil sair porque ele nao pula em cima dos objetos"
+
+   O canal do Córrego ganhou profundidade REAL (piso em −1,75 m, paredes verticais). O corpo
+   só subia STEP_H = 0,55 m, então a melhoria virou ARMADILHA: medido pelo
+   `tools/eval/mantle-check.mjs`, 78 das 122 células de fundo de queda do canal NÃO TINHAM
+   VOLTA A PÉ NENHUMA, e as que tinham custavam até 12,5 m de caminhada (2,6 s) — dentro de
+   um corredor de 5,24 m de largura onde a linha do olho (1,62 m) fica ABAIXO da borda
+   (1,75 m) e o jogador literalmente não vê para onde ir.
+
+   DE ONDE VÊM OS NÚMEROS (todos medidos nos 10 mapas, nenhum redondo por gosto):
+
+   · MANTLE_H = 1,95 m — teto da subida. É 5 cm acima da beirada de escala humana MAIS ALTA
+     que os 10 mapas têm (1,90 m: fundo do canal -> tablado da ponte do Córrego). Histograma
+     completo no cabeçalho do mantle-check. Acima disso nada muda: as 64 subidas medidas
+     entre 1,95 e 3,00 m e as 725 acima de 3,00 m (laje de prédio, mirante, muralha)
+     continuam exatamente como estão hoje.
+   · A subida é medida a partir do CHÃO SOB O CORPO, não de `pos.y`. É isto que fecha o
+     exploit clássico do mantle: pular antes de escalar somaria o ápice do pulo (0,61 m) ao
+     teto e daria 2,56 m de alcance, o bastante para encadear até telhado. Com a medida
+     tirada do chão, pular não estende nada.
+   · MANTLE_D0 = 0,58 m — primeiro ponto de sonda à frente. O `_collide` mantém o corpo
+     0,38 m afastado da parede; a sonda começa 0,20 m ADIANTE da própria pele.
+   · MANTLE_ALC = 1,50 m — braço estendido a partir do centro do corpo.
+   · MANTLE_APOIO = 0,50 m — profundidade mínima de apoio no topo. Maior que o raio do
+     corpo (0,38): o corpo tem que caber inteiro em cima, senão a beirada é fio de navalha e
+     o mantle entrega o jogador a uma queda.
+
+   KILL-SWITCH: `?mantle=0` devolve o jogo ao comportamento anterior, byte a byte (o
+   `_mantleTarget` passa a responder null e o bloco de escalada nunca arma). */
+const MANTLE = QS.get('mantle') !== '0';
+const MANTLE_H = 1.95;
+const MANTLE_D0 = 0.58;
+const MANTLE_ALC = 1.50;
+const MANTLE_APOIO = 0.50;
+/* MANTLE_GRID = 0,75 m — passo da grade de alcance (ver `_mantleAlcance`). Menor que o
+   DIÂMETRO do corpo (0,76 m): a inundação não escorre por uma fresta por onde o corpo não
+   passaria. Maior que isso e ela vazaria; muito menor e custa tempo à toa. */
+const MANTLE_GRID = 0.75;
 /* KILL-SWITCH DO ARMÁRIO DO SPAWN (P3, 01/08). `?rack=old` traz de volta o layout cego
    (2 fileiras fixas a 2,0/3,25 m atrás do spawn, x absoluto) E a seleção antiga (só a arma
    mais próxima em 1,9 m) — os dois juntos são o bug que o dono reportou às 20:38, e ficam
@@ -4445,6 +4489,148 @@ export class Game {
     pos.x += ex * cs + ez * sn;
     pos.z += -ex * sn + ez * cs;
   }
+  /* MAPA DE ALCANCE A PÉ — a trava que impede o mantle de virar exploit.
+     -------------------------------------------------------------------------------------
+     Mantling é a forma clássica de o jogador sair do mapa, e NENHUMA regra local resolve
+     isso: "esta beirada é legítima?" é uma pergunta GLOBAL (a superfície de cima já era
+     alcançável?), e uma sonda de 1,5 m não tem como respondê-la. Foi o que a régua mostrou
+     com número: com o mantle solto, `mantle-check` acusou 3.855 células novas no fy_lajes e
+     481 na fy_mansao, e nenhuma delas por um teto alto demais — as subidas culpadas eram de
+     0,75 m, 0,90 m, 1,59 m, 1,62 m e 1,80 m, TODAS confortavelmente dentro de qualquer teto
+     que ainda resolvesse o canal do Córrego (1,75 m). Não existe altura que separe as duas.
+
+     O que a mesma medição revelou, e vale registrar porque NÃO é defeito deste conserto:
+     no fy_lajes as LAJES não são alcançáveis a pé hoje — 0 de 2.915 células a 3,50 m, 0 de
+     93 a 4,25 m, e a escada termina em 2,76 m, 68 cm abaixo do telhado. Num mapa chamado
+     "Lajes". O mantle solto "consertaria" isso de graça, só que só para o JOGADOR: o A* dos
+     bots não tem camada de mantle (decisão registrada — com camada, 5x mais bot travado).
+     Ou seja, seria meio mapa que só um lado usa. Isso é decisão de dono, não de conserto de
+     movimento, então aqui o mantle fica FORA dessas superfícies e o defeito continua
+     visível e medido em vez de ser encoberto.
+
+     A trava: o pouso só vale sobre chão que a CAMINHADA já alcança. Uma inundação a partir
+     dos spawns, com a regra de degrau do próprio motor, roda UMA vez por mapa e só quando
+     alguém tenta escalar de verdade (mapa sem beirada nunca paga: praça, piscina, ferro
+     velho e quebrada não têm nenhuma). Com ela, "o mantle não abre território" deixa de ser
+     esperança e passa a ser verdade por construção — e a régua continua conferindo, porque
+     ela chama este mesmo `_mantleTarget`.
+
+     CUSTO MEDIDO (node, os mesmos mapas do jogo): a inundação custa 14 ms no fy_escadao,
+     17 ms no fy_corrego e nas fy_lajes, 26 ms no fy_campomorro e 41 ms na loja_h — UMA vez,
+     na primeira escalada da partida. A praça dos Três Poderes custaria 167 ms e NUNCA paga:
+     ela não tem uma beirada de escala humana, então `_mantleTarget` desiste antes de chegar
+     aqui. O `_mantleTarget` em si custa 0,5 a 3,4 MICROssegundos por chamada (uma passada de
+     `_collide`), e só roda em quadro com tecla de movimento. */
+  _mantleAlcance() {
+    if (this._mAlc) return this._mAlc;
+    const W = this.world, B = W.bounds, G = MANTLE_GRID;
+    const nx = Math.max(1, Math.floor((B.maxX - B.minX) / G));
+    const nz = Math.max(1, Math.floor((B.maxZ - B.minZ) / G));
+    const alt = new Float32Array(nx * nz).fill(NaN);
+    const p = new THREE.Vector3();
+    /* PONTO REPRESENTATIVO, não o centro: a célula tem 0,75 m e o centro pode cair no único
+       ponto ruim de uma escada. Medido no fy_lajes: o beiral da laje é um colisor de
+       y 3,38–3,50 e o corpo só o limpa a partir da cota 3,20; num degrau de 25 cm o centro
+       caiu em 3,10 e a escada inteira aparecia interrompida. Sem este desvio o mantle
+       recusava 4 beiradas legítimas (campo do morro, lajes, mansão) por achar que o topo
+       era ilha. */
+    for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
+      const cx = B.minX + (i + 0.5) * G, cz = B.minZ + (k + 0.5) * G;
+      for (const [ox, oz] of [[0, 0], [0.25, 0], [-0.25, 0], [0, 0.25], [0, -0.25]]) {
+        const x = cx + ox, z = cz + oz, y = W.groundHeightAt(x, z, 1e3);
+        p.set(x, y, z); this._collide(p, 0.38);
+        if (Math.abs(p.x - x) < 1e-3 && Math.abs(p.z - z) < 1e-3) { alt[i * nz + k] = y; break; }
+      }
+    }
+    const vis = new Uint8Array(nx * nz), fila = [];
+    for (const lista of Object.values(W.spawns || {})) for (const s of (lista || [])) {
+      const i = Math.round((s.x - B.minX) / G - 0.5), k = Math.round((s.z - B.minZ) / G - 0.5);
+      if (i < 0 || i >= nx || k < 0 || k >= nz) continue;
+      const c = i * nz + k;
+      if (!Number.isNaN(alt[c]) && !vis[c]) { vis[c] = 1; fila.push(c); }
+    }
+    for (let h = 0; h < fila.length; h++) {
+      const c = fila[h], i = (c / nz) | 0, k = c % nz;
+      for (const [di, dk] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const j = i + di, l = k + dk;
+        if (j < 0 || j >= nx || l < 0 || l >= nz) continue;
+        const d = j * nz + l;
+        if (vis[d] || Number.isNaN(alt[d])) continue;
+        /* MESMA regra do corpo: descer é de graça, subir só até o degrau — mas conferida
+           ao LONGO do trecho, e não só nas duas pontas. Uma grade que compara só os centros
+           ALIASA escada: no fy_lajes o degrau de 3,27 m cai entre dois centros, a diferença
+           entre as pontas vira 0,74 m e a laje inteira passa por inalcançável. O motor anda
+           em passos de ~8 cm por quadro e nunca dá esse salto; aqui a amostragem a cada
+           1/3 de célula reproduz isso. */
+        const ax0 = B.minX + (i + 0.5) * G, az0 = B.minZ + (k + 0.5) * G;
+        let y = alt[c], ok = true;
+        for (let s = 1; s <= 3; s++) {
+          const sx = ax0 + di * G * (s / 3), sz = az0 + dk * G * (s / 3);
+          const sy = W.groundHeightAt(sx, sz, y + STEP_H);
+          if (sy - y > STEP_H) { ok = false; break; }
+          y = sy;
+        }
+        if (ok) { vis[d] = 1; fila.push(d); }
+      }
+    }
+    this._mAlc = { nx, nz, G, minX: B.minX, minZ: B.minZ, alt, vis };
+    return this._mAlc;
+  }
+  /* O ponto (x, z) na cota `y` é chão que a caminhada já alcança? Olha a vizinhança de uma
+     célula porque a grade é grossa de propósito; a cota tem que BATER (dentro do degrau),
+     senão um beco alcançável a 1 m de distância aprovaria a laje que está 3,5 m acima. */
+  _mantleAlcancavel(x, z, y) {
+    const M = this._mantleAlcance();
+    const i0 = Math.round((x - M.minX) / M.G - 0.5), k0 = Math.round((z - M.minZ) / M.G - 0.5);
+    for (let i = i0 - 1; i <= i0 + 1; i++) for (let k = k0 - 1; k <= k0 + 1; k++) {
+      if (i < 0 || i >= M.nx || k < 0 || k >= M.nz) continue;
+      const c = i * M.nz + k;
+      if (M.vis[c] && Math.abs(M.alt[c] - y) <= STEP_H) return true;
+    }
+    return false;
+  }
+  /* ALVO DE MANTLE: existe beirada escalável à frente? Devolve o PONTO DE POUSO
+     `{x, y, z}` ou null. Ver o bloco MANTLING no topo do módulo para de onde vêm os
+     números. Esta é a ÚNICA autoridade sobre a decisão — o `tools/eval/mantle-check.mjs`
+     chama este método em vez de reimplementar a regra, senão a régua mediria a régua.
+
+     A varredura para no PRIMEIRO ponto andável à frente e responde uma de três coisas:
+       · está até STEP_H acima  -> não é beirada, é chão: o `tryAxis` já resolve  -> null
+       · está acima do teto     -> é parede/prédio: continua sendo parede            -> null
+       · está no meio           -> é beirada: devolve o pouso, com apoio conferido
+
+     `groundHeightAt` é consultado com o Y de referência do TETO, não com `pos.y`: em mapa
+     multinível (Havan, Lajes) é isso que faz o mapa devolver a camada que este corpo
+     alcança, e não o topo sempre. Mapa sem camadas ignora o argumento. */
+  _mantleTarget(pos, dx, dz) {
+    if (!MANTLE) return null;
+    const W = this.world;
+    if (!W || typeof W.groundHeightAt !== 'function') return null;   // degradação segura
+    const n = Math.hypot(dx, dz);
+    if (!(n > 1e-4)) return null;
+    dx /= n; dz /= n;
+    const chao = W.groundHeightAt(pos.x, pos.z, pos.y);
+    const teto = chao + MANTLE_H;
+    const p = new THREE.Vector3();
+    for (let d = MANTLE_D0; d <= MANTLE_ALC + 1e-6; d += 0.25) {
+      const px = pos.x + dx * d, pz = pos.z + dz * d;
+      const py = W.groundHeightAt(px, pz, teto + 0.5);
+      p.set(px, py, pz); this._collide(p, 0.38);
+      if (Math.abs(p.x - px) > 1e-3 || Math.abs(p.z - pz) > 1e-3) continue;   // dentro de sólido: segue procurando
+      if (py <= chao + STEP_H) return null;    // chão contínuo à frente: não há beirada
+      if (py > teto) return null;              // alto demais: continua sendo parede
+      // APOIO: a superfície tem que continuar plana MANTLE_APOIO adiante, senão o corpo
+      // não cabe em cima e o mantle estaria entregando o jogador a uma queda.
+      const ax = px + dx * MANTLE_APOIO, az = pz + dz * MANTLE_APOIO;
+      const ay = W.groundHeightAt(ax, az, py + 0.5);
+      if (Math.abs(ay - py) > STEP_H) return null;
+      p.set(ax, ay, az); this._collide(p, 0.38);
+      if (Math.abs(p.x - ax) > 1e-3 || Math.abs(p.z - az) > 1e-3) return null;
+      if (!this._mantleAlcancavel(ax, az, ay)) return null;   // território novo: ver _mantleAlcance
+      return { x: ax, y: ay, z: az };
+    }
+    return null;
+  }
   /* PONTO ANDÁVEL MAIS PRÓXIMO (usado pelo armário do spawn).
      Empurra (x,z) pra fora de qualquer colisor/limite usando a MESMA física do jogador —
      se o _collide não mexe no ponto, o jogador consegue ficar em pé nele; é essa a
@@ -4580,6 +4766,9 @@ export class Game {
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
+      /* Morrer APAGA a escalada em curso. Sem isto ela retomaria depois do respawn e
+         teleportaria o corpo novo para a beirada onde o corpo velho morreu. */
+      p.mantle = null;
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
@@ -4671,7 +4860,7 @@ export class Game {
     // o corpo só era realinhado no snap de gravidade do frame seguinte — subir meio-fio/degrau
     // "engasgava"). Acima disso é parede: além de bloquear, ZERA a velocidade daquele eixo,
     // senão o jogador segue acelerando contra o degrau e a arma treme parada no obstáculo.
-    const STEP_H = 0.55;
+    /* STEP_H mora no topo do módulo desde o mantle: é a MESMA fronteira degrau/beirada. */
     const tryAxis = (dx, dz, ax) => {
       const nx = p.pos.x + dx, nz = p.pos.z + dz;
       const g = this.world.groundHeightAt(nx, nz, p.pos.y);
@@ -4688,6 +4877,50 @@ export class Game {
       if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
+    /* ── MANTLING ─────────────────────────────────────────────────────────────────────
+       DEPOIS da física de propósito, e não no lugar dela. Durante a escalada este bloco
+       SOBRESCREVE `p.pos` inteiro, então tudo que a física fez naquele frame é descartado.
+       É isso que evita repetir o BUG-32: o `_collide` filtra colisor por altura
+       (`pos.y + 1.5 > c.minY && pos.y + 0.3 < c.maxY`) e, no meio da subida, o corpo está
+       DENTRO da faixa da parede — ele seria empurrado de lado todo frame. Como a posição é
+       reescrita logo em seguida, esse empurrão nunca chega ao jogador. Reordenar este
+       bloco para ANTES da física reintroduz o defeito.
+
+       TRAJETÓRIA EM L: sobe primeiro (até u = 0,62), avança depois (a partir de u = 0,35).
+       Elas se sobrepõem entre 0,35 e 0,62, que é o que dá a leitura de "puxar o corpo por
+       cima da quina" em vez de deslizar na diagonal atravessando a face da beirada.
+
+       DURAÇÃO = 0,22 + 0,13 × subida (s). Não é constante porque escalar 0,60 m e escalar
+       1,95 m não são o mesmo esforço: dá 0,30 s no degrau alto e 0,47 s na parede do canal.
+       O teto de velocidade vertical fica em 1,95 / 0,47 = 4,1 m/s, ABAIXO dos 5,0 m/s do
+       impulso de pulo — escalar nunca é mais rápido que pular, então isto não vira técnica
+       de movimento para ganhar duelo.
+
+       NÃO CANCELA AO TOMAR DANO, e a decisão é deliberada: cancelar devolveria o jogador ao
+       fundo do buraco, que é exatamente a frustração que este conserto existe para tirar.
+       O custo da escalada é o tempo parado e exposto. O jogador MORTO no meio da subida tem
+       a escalada apagada no início do `_updatePlayer` (senão ela retomaria depois do
+       respawn e teleportaria o corpo para a beirada antiga).
+
+       Dispara SOZINHO, andando contra a beirada — sem tecla nova. Um FPS de navegador não
+       tem onde ensinar tecla nova, e o dono relatou o problema como "ele não sobe", não
+       como "falta um botão". Espaço continua sendo só pulo. */
+    if (p.mantle) {
+      const m = p.mantle;
+      m.t += dt;
+      const u = Math.min(1, m.t / m.dur);
+      const uy = Math.min(1, u / 0.62), uxz = Math.max(0, (u - 0.35) / 0.65);
+      p.pos.set(m.x0 + (m.x1 - m.x0) * uxz, m.y0 + (m.y1 - m.y0) * uy, m.z0 + (m.z1 - m.z0) * uxz);
+      p.vel.set(0, 0, 0); p.grounded = false;
+      if (u >= 1) { p.pos.set(m.x1, m.y1, m.z1); p.grounded = true; p.mantle = null; }
+    } else if (MANTLE && (ix || iz)) {
+      const alvo = this._mantleTarget(p.pos, wx, wz);
+      if (alvo) {
+        const sobe = alvo.y - this.world.groundHeightAt(p.pos.x, p.pos.z, p.pos.y);
+        p.mantle = { t: 0, dur: 0.22 + 0.13 * sobe, x0: p.pos.x, y0: p.pos.y, z0: p.pos.z, x1: alvo.x, y1: alvo.y, z1: alvo.z };
+        this.sfx.jump();
+      }
+    }
     // auto-fire (ak/m4/mp5) enquanto o botão está segurado
     if (WEAPONS[p.weapon].auto && this.mouseDown0 && p.alive) this._tryShoot();
     this.bloom = Math.max(0, (this.bloom || 0) - dt * 1.8);

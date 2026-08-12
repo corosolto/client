@@ -50,6 +50,7 @@ com código 1 em falha crítica.
 | `lajes-rooftop-check.mjs` + `lajes-gap-check.mjs` | Detalhe cultural, vãos nas malhas e bordas/linhas que tornam os saltos legíveis no frame. |
 | `mansao-water-check.mjs` | Água não entrável e composição de carros genéricos, jardim tropical e interior mobiliado. |
 | `corrego-contract-check.mjs` + `escadao-contract-check.mjs` | Lentidão, escala/anatomia da fauna do Córrego e flancos/caveirão do Escadão, com mutantes por cláusula. |
+| `mantle-check.mjs` | **Subir em beirada (mantling), nos 10 mapas.** MNT1 toda queda de mão única de escala humana é reversível a pé em ≤ 2 s; MNT2 toda beirada com apoio no topo é escalável, verificado **andando o `_updatePlayer`**; MNT3 o mantle não abre **nenhuma** célula nova — sem esta cláusula o conserto vira exploit. Node puro, ~4 s. O A/B é `SIM_QS='?mantle=0'` (o mesmo kill-switch do jogo). Mutantes: `beirada-baixa`, `beirada-alta`, `canal-fechado`. `npm run eval:mantle` |
 | `map-evidence-contract-check.mjs` | Falha fechado se PNG, fonte, GLB, câmera ou viewport 3:2 divergir do manifest. A recaptura é `npm run capture:map-evidence`; `--plan` não abre browser. |
 | `char-thumbnail-contract-check.mjs` | Arma canônica, SHA e dimensão 360×463 dos thumbnails dos pilotos registrados (`--mutante=arma-trocada`). |
 | `char-hard-surface-check.mjs` | Materiais rígidos do Motoca, forma frontal e contrato de casca full-face contínua com visor único; mutantes recompõem lâmina, halo, aro e peças empilhadas. |
