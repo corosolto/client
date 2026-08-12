@@ -16,33 +16,63 @@ import sys
 AGENT_RE = re.compile(r"^Agent:[ \t]*\S", re.IGNORECASE | re.MULTILINE)
 
 
-def faltando(log: str) -> list[str]:
-    ausentes = []
-    for chunk in log.split("==END==\n"):
-        if not chunk.strip():
-            continue
-        parts = chunk.split("\x00", 2)
-        if len(parts) < 2:
-            continue
-        sha, body = parts[0].strip(), parts[1]
-        if not AGENT_RE.search(body):
-            ausentes.append(sha)
-    return ausentes
+def faltando(commits: list[tuple[str, str]]) -> list[str]:
+    return [sha for sha, body in commits if not AGENT_RE.search(body)]
+
+
+def commits_do_intervalo(base: str, head: str) -> list[tuple[str, str]]:
+    """Um `git show` por sha, em vez de um log com sentinela de texto.
+
+    Sentinela no meio de log é acidente esperando acontecer: corpo de commit que
+    termine na linha do separador parte o registro e desgruda o trailer do sha
+    (greptile, PR #207). Sha vem de uma lista, e o corpo de cada um é pedido
+    separado — não existe delimitador para colidir.
+    """
+    shas = subprocess.check_output(
+        ["git", "log", "--format=%H", f"{base}..{head}"], text=True
+    ).split()
+    return [
+        (sha, subprocess.check_output(["git", "show", "-s", "--format=%B", sha], text=True))
+        for sha in shas
+    ]
+
+
+MEDIR_AWK = "scripts/medir-commit.awk"
+
+
+def medir(numstat: str) -> tuple[int, int]:
+    saida = subprocess.run(
+        ["awk", "-f", MEDIR_AWK], input=numstat, capture_output=True, text=True, check=True
+    ).stdout.split()
+    return int(saida[0]), int(saida[1])
 
 
 def selftest() -> int:
-    casos = [
-        ("com trailer", "abc\x00fix: x\n\nAgent: Kimi Code\n\x00==END==\n", []),
-        ("sem trailer", "def\x00fix: x\n\nSigned-off-by: a <b>\n\x00==END==\n", ["def"]),
-        ("trailer vazio", "fed\x00fix: x\n\nAgent:\n\x00==END==\n", ["fed"]),
-        ("humano vale", "cba\x00fix: x\n\nAgent: humano\n\x00==END==\n", []),
+    trailer = [
+        ("com trailer", [("abc", "fix: x\n\nAgent: Kimi Code\n")], []),
+        ("sem trailer", [("def", "fix: x\n\nSigned-off-by: a <b>\n")], ["def"]),
+        ("trailer vazio", [("fed", "fix: x\n\nAgent:\n")], ["fed"]),
+        ("humano vale", [("cba", "fix: x\n\nAgent: humano\n")], []),
+        # o corpo abaixo derrubava a versão com sentinela de texto
+        ("corpo com ==END==", [("777", "fix: x\n\n==END==\n\nAgent: Codex\n")], []),
+    ]
+    medicao = [
+        ("gerado não conta", "1\t0\tpublic/docs/x.html\n2\t3\tsrc/a.js\n", (1, 5)),
+        ("só gerado zera", "9\t9\tCHANGELOG.md\n4\t0\tdocs/i18n/en/x.md\n", (0, 0)),
+        ("binário conta arquivo, não linha", "-\t-\tpublic/img/a.png\n1\t1\tsrc/b.js\n", (2, 2)),
+        ("caminho parecido não escapa", "5\t5\tpublic/docsx/y.js\n", (1, 10)),
     ]
     erros = 0
-    for nome, log, esperado in casos:
-        obtido = faltando(log)
+    for nome, commits, esperado in trailer:
+        obtido = faltando(commits)
         ok = obtido == esperado
         erros += 0 if ok else 1
-        print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: {obtido}")
+        print(f"  {'ok  ' if ok else 'FALHOU'} trailer/{nome}: {obtido}")
+    for nome, numstat, esperado in medicao:
+        obtido = medir(numstat)
+        ok = obtido == esperado
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} teto/{nome}: {obtido} (esperado {esperado})")
     return 0 if not erros else 1
 
 
@@ -50,11 +80,7 @@ def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
     payload = json.load(sys.stdin)
-    log = subprocess.check_output(
-        ["git", "log", "--format=%H%x00%B%x00==END==", f"{payload['baseRefOid']}..{payload['headRefOid']}"],
-        text=True,
-    )
-    ausentes = faltando(log)
+    ausentes = faltando(commits_do_intervalo(payload["baseRefOid"], payload["headRefOid"]))
     print(json.dumps({"ok": not ausentes, "sem_agent": ausentes}))
     if ausentes:
         print(

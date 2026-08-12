@@ -261,9 +261,24 @@ ignorando arquivo gerado (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
 `STATUS.md`, `tools/eval/ARCH.md`, `docs/i18n/`, `graphify-out/`,
 `public/js/version.js`) e commit de release.
 
-O teto não é opinião: em **343 commits** não-release da `main`, a mediana é de
-**3 arquivos e 86 linhas** e o p90 é **13 arquivos e 785 linhas**. O teto fica
-logo acima do p90 — ele morde os 10% maiores, não o trabalho normal.
+O teto não é opinião, e o comando que o reproduz é este — rode antes de propor
+outro número:
+
+```bash
+git log --no-merges -400 --format='%H%x00%s' --numstat |
+  python3 scripts/medir-historico.py
+#   342 commits não-release, sem arquivo gerado
+#     p50:  3 arquivos,   83 linhas
+#     p75:  7 arquivos,  272 linhas
+#     p90: 14 arquivos,  785 linhas   <- o teto fica logo acima
+#     p95: 20 arquivos, 1451 linhas
+```
+
+Medido em 12/08/2026 nos 400 commits mais recentes da `main`. O teto morde os
+10% maiores, não o trabalho normal. A lista de arquivo gerado é a mesma do
+`scripts/medir-commit.awk`, que é quem o hook usa — uma fonte só, exercitada por
+fixture no `agente_check.py --selftest` (o filtro já nasceu quebrado uma vez, com
+um `^` no meio da linha que nunca casava).
 
 Quando o commit grande é o certo (mover uma pasta, regenerar um acervo, aplicar
 um rename), diga por quê e siga:

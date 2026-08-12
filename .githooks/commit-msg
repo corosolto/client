@@ -1,21 +1,15 @@
 #!/bin/sh
 set -eu
 
-# Duas recusas, as duas com escape explícito e nenhuma que dependa de lembrar:
-#   1. commit sem `Agent:` — o prepare-commit-msg preenche sozinho, então chegar aqui
-#      sem o trailer significa que alguém apagou ou que o hook não está instalado;
-#   2. commit grande demais sem `Commit-grande:` dizendo por quê.
-# O porquê de cada uma está no CONTRIBUTING.md, seção "Quem escreveu o commit".
+# Recusa commit sem `Agent:` e commit grande sem `Commit-grande:`. O porquê de cada
+# uma, o teto e o comando que o reproduz estão no CONTRIBUTING.md, "Quem escreveu o
+# commit" e "Commit grande pede motivo".
 
 mensagem=$1
+AQUI=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
-# Teto medido em 343 commits não-release da main (agosto/2026), ignorando arquivo
-# gerado: mediana 3 arquivos e 86 linhas, p90 13 arquivos e 785 linhas. O teto fica
-# logo acima do p90 — ele morde os 10% maiores, não o trabalho normal.
 TETO_ARQUIVOS=15
 TETO_LINHAS=800
-
-GERADOS='^(public/docs/|graphify-out/|docs/i18n/|package-lock\.json|CHANGELOG\.md|STATUS\.md|tools/eval/ARCH\.md|public/js/version\.js)'
 
 if ! grep -Eqi '^Agent:[[:space:]]*[^[:space:]]' "$mensagem"; then
   echo "commit-msg: falta o trailer 'Agent:' (quem escreveu — nome do agente ou 'humano')." >&2
@@ -37,9 +31,7 @@ esac
 
 grep -Eqi '^Commit-grande:[[:space:]]*[^[:space:]]' "$mensagem" && exit 0
 
-medida=$(git diff --cached --numstat -- . 2>/dev/null | grep -Ev "	$GERADOS" | awk '
-  $1 != "-" { arquivos++; linhas += $1 + $2 }
-  END { print arquivos + 0, linhas + 0 }')
+medida=$(git diff --cached --numstat -- . 2>/dev/null | awk -f "$AQUI/../scripts/medir-commit.awk")
 arquivos=${medida% *}
 linhas=${medida#* }
 
