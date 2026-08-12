@@ -57,6 +57,19 @@ export const CHAR_FX = {
   recv:    _cqp.get('charrecv') !== '0' && !_lowQ,     // personagem RECEBE a sombra do sol (off em low)
   mats:    _cqp.get('charmat') !== '0',                // kill-switch da correção do material do GLB
   low:     _lowQ,
+  /* ── INSTRUMENTOS DE MEDIÇÃO (padrão = comportamento de hoje, byte a byte) ──
+     O `roughness: 0.86` e o bloco CS_REGION eram os dois únicos números do
+     acabamento SEM alavanca: não dava para medir a contribuição deles na tela,
+     só argumentar. Régua que não consegue variar a entrada não consegue provar
+     causa, e foi assim que o conserto de PBR do camera-roxa (24× no material)
+     virou 12% na tela sem ninguém saber de quem era a culpa.
+     `charrough` = a constante de rugosidade; `charregion=0` remove o bloco que
+     REESCREVE a rugosidade a partir do albedo; `charprobe=rough` faz o shader
+     cuspir a rugosidade EFETIVA como cor (é a única forma de ler o valor que o
+     BRDF de fato usou — do arquivo até o pixel ele passa por 3 reescritas). */
+  rough:   _cnum('charrough', 0.86),                   // constante de rugosidade do material de personagem
+  region:  _cqp.get('charregion') !== '0',             // kill-switch da rugosidade por região (CS_REGION)
+  probe:   _cqp.get('charprobe') || '',                // 'rough' = cospe roughnessFactor como cor (só medição)
   // ── clamp de ambiente: unidades de IRRADIÂNCIA do three (useLegacyLights=false),
   // não de cor final. O ambiente difuso real medido nos mapas (hemi 0.52 no piscinão a
   // 1.0 no ferro velho, mais o IBL do PMREM) dá ~1,0. 1.85 é portanto uma decisão de
@@ -72,9 +85,42 @@ export const CHAR_FX = {
   floorIrr: _cnum('charfloor', 1.15),                  // piso de irradiância indireta (perto)
   floorFar: _cnum('charfloorfar', 1.55),               // piso a 45 m+ (era 3.0 = fantasma branco distante)
   ceilIrr:  _cnum('charceil', 4.5),                    // teto: céu HDR não pode estourar o personagem
-  albMin:   _cnum('charalbmin', 0.09),                 // valor mínimo do albedo, por ESCALA (matiz/S intactos)
+  /* 0,09 -> 0,045. MEDIDO na tela (tools/eval/char-plastico.mjs), 9 personagens
+     cobrindo a distribuição de rugosidade do elenco, em DOIS mapas:
+
+                       loja_h            fy_corrego
+       albMin      Lsd    dL*         Lsd    dL*
+       0,090     12,51    8,63       13,82    6,5     <- valor anterior
+       0,065       (o valor adotado; medição no fim deste bloco)
+       0,045     12,91    9,64          -      -
+       0,000     13,17   10,17       14,79    8,9
+
+     O piso foi escrito para comprar CLAREZA (C1: dL* da silhueta contra o anel de
+     fundo, alvo >= 20) ao preço de um pouco de contraste interno. Medido, ele NÃO
+     compra: piora as duas coisas ao mesmo tempo. O motivo é geométrico e não
+     estava previsto — na loja_h e no córrego o fundo (concreto, asfalto) é MAIS
+     CLARO que o personagem (L* ~53 contra ~43), então levantar o albedo do
+     personagem escuro o empurra PARA CIMA, na direção do fundo, e come a
+     separação. O comentário do bloco cita "dL* = 10,8, alvo >= 20" como a dor que
+     o piso veio curar; com o piso em 0,09 o dL* médio destes 9 é 8,63 — ABAIXO do
+     baseline que ele deveria ter consertado.
+     Nenhum personagem piora de Lsd nem de dL* ao baixar o piso (o único que cede é
+     o lampião, dL* 0,7 -> 0,1, que já era ruído longe do alvo).
+     PARA ONDE FOI, E POR QUE NÃO FOI A ZERO: quem manda no limite é a régua
+     VIZINHA, não o gosto. O C10a (char-floor.mjs) cobra perda de contraste <= 10%
+     por personagem medida na TEXTURA, e ela reprova abaixo de 0,065 — o pior caso
+     regional é lobisomem 7,9% em 0,075, 8,9% em 0,065, 11,1% em 0,055 e 12,8% em
+     0,045. A relação NÃO é monótona e isso não estava previsto: abaixar o piso
+     levanta MENOS regiões, e com só uma parte das regiões levantada a razão ENTRE
+     regiões sofre mais do que quando todas sobem juntas. Então 0,065 é o menor
+     valor que segura as duas réguas ao mesmo tempo, e afrouxar o teto do C10 para
+     descer mais seria mudar a régua para caber no conserto.
+     O piso também segue sendo a rede de segurança do canto escuro: os dois mapas
+     medidos são de DIA. `?charalbmin=0` fecha a diferença para quem quiser o A/B. */
+  albMin:   _cnum('charalbmin', 0.065),               // valor mínimo do albedo, por ESCALA (matiz/S intactos)
   /* PISO DE ALBEDO NA BANDA BAIXA, não no texel (C10 / char-floor.mjs).
-     `albMin` é 0,09 LINEAR — que é sRGB 0,332 = byte 85 = L* 36, um CINZA MÉDIO, não
+     `albMin` é 0,045 LINEAR (era 0,09; ver a tabela medida logo acima) — que é sRGB
+     0,240 = byte 61 = L* 25, e o 0,09 antigo era sRGB 0,332 = byte 85 = L* 36, não
      um "preto levantado". Aplicado por texel (`max(V, albMin)`) ele é um DEGRAU: todo
      texel abaixo do ponto sai com o MESMO valor. Medido nas texturas reais dos 45 GLB:
      94,1 % do albedo do trapfunk está abaixo do piso, 90,4 % do palhaço mal, 86,6 % do
@@ -302,6 +348,18 @@ const CS_SSS = `
 const CS_END = `	}
 `;
 
+/* ── SONDA DE RUGOSIDADE EFETIVA (?charprobe=rough) ─────────────────────────
+   Injetada DEPOIS de <dithering_fragment>, que é o último chunk do main(): o
+   valor sai cru, sem tonemap e sem conversão de espaço de cor, então o byte
+   lido da tela é `roughnessFactor * 255` exato. É a ÚNICA leitura honesta da
+   rugosidade que o BRDF usou: entre o arquivo e o pixel ela é reescrita três
+   vezes (constante do material, roughnessMap, e CS_REGION a partir do albedo),
+   e medir qualquer um dos três degraus isolado mede a declaração, não a tela.
+   Custo zero quando desligada: o bloco nem entra no fonte. */
+const CS_PROBE_ROUGH = `
+	gl_FragColor = vec4(vec3(roughnessFactor), 1.0);
+`;
+
 let _hasTextureLod = false;
 export function setCharacterRendererCapabilities(renderer) {
   _hasTextureLod = renderer?.capabilities?.isWebGL2 === true;
@@ -335,7 +393,9 @@ export function applyCharFX(mat, rimColor) {
     // não existe é instrução que não custa — e o kill-switch fica sendo prova de que
     // o clamp é a causa, não um palpite (o A/B vira "com bloco" x "sem bloco").
     let f = CS_PARS + shader.fragmentShader
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n' + CS_REGION)
+      // ?charregion=0 REMOVE o bloco (não zera): mesma doutrina do charclamp — o A/B
+      // vira "com bloco" × "sem bloco", que é prova de causa e não palpite.
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>' + (CHAR_FX.region ? '\n' + CS_REGION : ''))
       .replace('#include <opaque_fragment>',
         (CHAR_FX.low ? CS_CLARITY_LOW : CS_CLARITY) + (CHAR_FX.low ? '' : CS_SSS) + CS_END + '\n#include <opaque_fragment>');
     if (clampOn) {
@@ -345,6 +405,7 @@ export function applyCharFX(mat, rimColor) {
         .replace('#include <lights_fragment_end>',
           CS_AMB.replace('CS_AMB_FILL', CHAR_FX.ambChroma ? CS_FILL_CROMA : CS_FILL_BRANCO) + '\n#include <lights_fragment_end>');
     }
+    if (CHAR_FX.probe === 'rough') f = f.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n' + CS_PROBE_ROUGH);
     shader.fragmentShader = f;
   };
   // Sem chave própria o three pode reaproveitar o programa de um material SEM a
@@ -352,7 +413,11 @@ export function applyCharFX(mat, rimColor) {
   // propósito: todos os personagens compartilham UM programa, só os uniforms mudam.
   // O sufixo muda com a variante do FONTE (low corta SSS+banda fina; charclamp=0
   // corta albedo+ambiente) — se não mudasse, o three serviria o programa errado.
-  mat.customProgramCacheKey = () => 'csCharFx4' + (CHAR_FX.low ? 'L' : 'H') + (clampOn ? 'C' : 'c') + (regOn ? 'R' : 'r') + (CHAR_FX.ambChroma ? 'K' : 'k');
+  mat.customProgramCacheKey = () => 'csCharFx4' + (CHAR_FX.low ? 'L' : 'H') + (clampOn ? 'C' : 'c') + (regOn ? 'R' : 'r') + (CHAR_FX.ambChroma ? 'K' : 'k')
+    // A chave TEM que enxergar os dois blocos novos: os dois mudam o FONTE, e chave
+    // que não muda faz o three servir o programa do outro lado do A/B — a medição
+    // sairia idêntica e a conclusão seria "não tem efeito" por bug de cache.
+    + (CHAR_FX.region ? 'G' : 'g') + (CHAR_FX.probe === 'rough' ? 'P' : 'p');
   mat.needsUpdate = true;
   return mat;
 }
@@ -377,7 +442,9 @@ export function upgradeCharMaterial(src, rimColor) {
     map: src.map || null,
     color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
     metalness: 0.0,
-    roughness: 0.86,
+    // Era o literal 0.86. Virou alavanca (`?charrough=`) com o MESMO padrão para
+    // que o número tenha antes/depois medido em vez de defesa por comentário.
+    roughness: CHAR_FX.rough,
     side: src.side,
     transparent: !!src.transparent,
     alphaTest: src.alphaTest || 0,
@@ -639,6 +706,17 @@ export const CHARACTERS = [
   { id: 'microfonildo', team: 'T', tribe: 'tv', name: 'Microfonildo',
     blurb: 'Criatura felpuda com fones e boom dorsal. Som rodando!',
     pal: { skin: 0xc28b25, shirt: 0xd9a42f, pants: 0x795019, hair: 0xe2b33f, boots: 0x224f56 } },
+  /* GIL BOMES — repórter policial. Entra em 12/08 e é o PRIMEIRO humano fotorrealista
+     da facção, que até aqui era só bicho e objeto personificados (ver a arte em
+     public/img/faccoes/tv.webp). Isso é DIVERGÊNCIA DE DIREÇÃO conhecida, não descuido:
+     o dono pediu "real pra todas as facções" em 12/08, e ou os outros cinco vêm atrás
+     ou este volta a ser estilizado. Enquanto os dois estilos convivem, a facção lê
+     inconsistente — e a BAR-CONSISTENCIA.md põe consistência acima de fidelidade.
+     A `pal` abaixo é fallback procedural (usada quando o GLB não carrega) e segue a
+     camisa estampada vermelho-bordô, que é a marca dele. */
+  { id: 'gilbomes', team: 'T', tribe: 'tv', name: 'Gil Bomes',
+    blurb: 'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.',
+    pal: { skin: 0xc99a76, shirt: 0x7b1f2b, pants: 0x1c1b22, hair: 0x241a14, boots: 0x14110f } },
   { id: 'programador-virado', team: 'N', tribe: 'nerdolas', name: 'Programador Virado',
     blurb: 'Moletom, olheiras e teclado nas costas. Só mais um commit.',
     pal: { skin: 0xa88068, shirt: 0x303039, pants: 0x56515f, hair: 0x3a302d, boots: 0xe8e3d8 } },
@@ -675,7 +753,7 @@ export const CHAR_WEAPON = {
   mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'shotgun',
   bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
   // TV — fatia vertical
-  'camera-roxa': 'm4', 'microfonildo': 'm4',
+  'camera-roxa': 'm4', 'microfonildo': 'm4', 'gilbomes': 'm4',
   // Novas facções — fatias verticais da spec 0002
   'programador-virado': 'm4', 'designer-ux': 'm4', 'lenda-lanhouse': 'm4',
   'motoca-cachorro-loko': 'm4', 'doidinho-bairro': 'p90',

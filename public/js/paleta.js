@@ -34,10 +34,27 @@
    (`0xff5555`) chama `num()`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
+/* ── DE ONDE VÊM OS HEXES, E POR QUE NÃO SÃO IMPORTADOS ─────────────────────────
+   A cor de cada facção é decisão editorial e mora no REGISTRO DO ELENCO,
+   `public/js/factions.js` (`color` / `dark` / `ink` de cada entrada de `FACTIONS`).
+   Este arquivo NÃO importa de lá: ele é importado por `game.js` e o bloco acima explica
+   o porquê — import aqui é aresta a mais no grafo e risco de ciclo no boot.
+
+   Então os valores abaixo são CÓPIA declarada, hex a hex, de `factions.js`:
+
+       PALETA[X].base    ==  FACTIONS[X].color
+       PALETA[X].escura  ==  FACTIONS[X].dark
+       PALETA[X].palida  ==  FACTIONS[X].ink
+
+   Cópia sem régua é o defeito de 07/08 esperando a vez. Por isso a igualdade acima é
+   COBRADA: `tools/eval/faccao-paleta-check.mjs`, cláusula F4, compara os dois arquivos
+   hex a hex e reprova na primeira divergência. Se você mudar cor aqui sem mudar no
+   registro (ou vice-versa), o portão fica vermelho antes de o dono achar jogando. */
+
 /* As facções que têm cor própria, na ordem em que o elenco as declara.
    Facção fora desta lista cai no NEUTRO, nunca em `undefined` — foi o `undefined` que
    apagou a bandeira em 07/08. */
-export const FACCOES = ['E', 'B', 'U', 'C', 'F'];
+export const FACCOES = ['E', 'B', 'U', 'C', 'F', 'M', 'N', 'R', 'O', 'T'];
 
 /* Três tons por facção, e cada um existe por um motivo medido:
 
@@ -49,6 +66,11 @@ export const FACCOES = ['E', 'B', 'U', 'C', 'F'];
                morreu" — abaixo dos 4,5:1 da WCAG 1.4.3, medido em `ui-check.mjs` (UI1).
                A versão pálida passa a 5,9-9,1:1 e mantém a leitura "vermelho = time-e".
 
+   O alvo do `palida` é NUMÉRICO, não estético: >= 4,5:1 contra o chip. Quem acrescenta
+   facção não escolhe o tom "que parece claro o bastante" — mede. A cláusula F3 de
+   `faccao-paleta-check.mjs` mede as dez, contra os TRÊS fundos de linha que o killfeed
+   declara em `style.css` (`.kf-row`, `.me-atk`, `.me-vic`), e cobra o pior dos três.
+
    Os valores são exatamente os que já estavam espalhados: nenhum pixel muda ao unificar. */
 export const PALETA = {
   E: { base: '#ff5555', escura: '#e03232', palida: '#ff9a9a' },   // Time E vermelho
@@ -56,6 +78,17 @@ export const PALETA = {
   U: { base: '#4aa3ff', escura: '#2f7fe0', palida: '#a8cdff' },   // Tribos azul
   C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
   F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro
+
+  /* As cinco de baixo entraram em 12/08, quando o elenco passou de 5 para 10 facções e
+     17 personagens estavam saindo CINZA pelo NEUTRO — indistinguíveis entre si no anel,
+     no radar e no killfeed. Nenhuma cor foi inventada aqui: as três de cada linha são as
+     `color`/`dark`/`ink` que `factions.js` já declarava para a facção. Ver o bloco
+     "DE ONDE VÊM OS HEXES" acima e a cláusula F4 da régua. */
+  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },   // Míticos roxo-folclore
+  N: { base: '#3f8cff', escura: '#2452b8', palida: '#b6d4ff' },   // Nerdolas azul-monitor
+  R: { base: '#ff8c32', escura: '#bd5520', palida: '#ffd0ad' },   // Profissionais do Corre laranja
+  O: { base: '#a6e22e', escura: '#638f17', palida: '#d8ff8e' },   // Noias verde-limão
+  T: { base: '#31d9ff', escura: '#157eaa', palida: '#b3f3ff' },   // TV ciano-broadcast
 };
 
 /* ESPELHO — inimigo da MESMA facção do jogador. Não é cor de facção: é o roxo que existe
