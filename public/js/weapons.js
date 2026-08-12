@@ -93,8 +93,14 @@ const CFG = {
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
   m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
-  // Tripo v3.1: o eixo autoral é -Y; -90° em X leva o cano para +Z. Uso só em 3ª pessoa.
-  mosquete:  { len: 1.45, rot: [-90, 0, 0], gripZ: 0.68 },
+  /* mosquete rot [-90,0,0] -> [0,0,0] (RÉGUA DE ESCALA, 12/08). O comentário anterior dizia
+     que "o eixo autoral é -Y", e ISSO ESTAVA ERRADO: medido no GLB, o mosquete já nasce com
+     o cano no eixo Z (dz 0,982 · dy 0,176 · dx 0,139 — o maior eixo É Z, como nas outras 26).
+     O -90° em X jogava o cano para Y e deixava a SEÇÃO TRANSVERSAL (0,176 m) no eixo Z, que
+     é justamente por onde weaponModel() normaliza: ele pedia escala 8,2× (batendo no teto 8)
+     e servia uma coluna de madeira de 7,856 m no meio da tela do jogador em vez de 1,45 m.
+     Régua: tools/eval/weapon-scale-check.mjs (mutante `rot` devolve este defeito). */
+  mosquete:  { len: 1.45, rot: [0, 0, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
@@ -325,7 +331,16 @@ export function weaponModel(id) {
   wrap.add(model);
   wrap.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(wrap);
-  const zlen = (box.max.z - box.min.z) || 1;
+  /* NORMALIZAÇÃO PELO MAIOR EIXO, não só por Z (12/08). Normalizar por Z assumia que o `rot`
+     da tabela já tinha posto o cano em +Z; quando um `rot` erra o eixo (foi o caso do
+     mosquete, rot [-90,0,0]), a conta passa a medir a SEÇÃO TRANSVERSAL e o divisor
+     despenca — a arma explode até o teto de 8×. Com o maior eixo, um `rot` errado continua
+     errado (a arma fica TORTA, e é a régua de orientação que pega isso), mas nunca vira
+     gigante: nenhum eixo passa de `len`. É NO-OP nos 27 modelos de hoje — em todos eles o
+     maior eixo já É Z — e existe como piso para o próximo `rot` mal medido.
+     Régua: tools/eval/weapon-scale-check.mjs (invariante B; mutante `zlen`/`ambos`). */
+  const dx = box.max.x - box.min.x, dy = box.max.y - box.min.y, dz = box.max.z - box.min.z;
+  const zlen = Math.max(dx, dy, dz) || 1;
   const s = Math.min(8, Math.max(0.05, cfg.len / zlen)); // guard against a bad bbox → giant gun
   wrap.scale.setScalar(s);
   // shift so the grip point (gripZ along the barrel) sits at the origin

@@ -403,9 +403,32 @@ export function buildCharacterModel(def, opts = {}) {
   // Update world matrices first so the bounding box reflects the real transforms.
   model.updateMatrixWorld(true);
   const bbox = new THREE.Box3().setFromObject(model);
-  const h = bbox.max.y - bbox.min.y || 1;
+
+  /* ESTATURA É ANATÔMICA, NÃO É BBOX (régua: tools/eval/char-escala-check.mjs).
+     `Box3.setFromObject` engloba moicano, chapéu, boné, bico e antena, então
+     normalizar por ele DESCONTA O ADEREÇO DO CORPO: todo mundo terminava com 1,72 m
+     de caixa e com corpos de tamanhos diferentes. Medido nos 61 antes deste bloco:
+     a estatura anatômica (pé -> topo do crânio) variava de 1,509 (`punk`, 21 cm de
+     moicano) a 1,731 (`dollynho`) — 22 cm de amplitude num elenco que deveria ter
+     zero. O `punk` andava 19 cm mais baixo que o resto do elenco para caber o cabelo
+     dentro do orçamento de altura.
+     O marco é o osso `head_end` (topo do crânio), CONFERIDO em 62/62 dos GLB. O pé
+     continua saindo do bbox: o adereço sobra em cima, nunca embaixo — e é do bbox que
+     vem o assentamento no chão, que já está certo e não se mexe.
+     Fallback: rig sem `head_end` volta ao bbox e AVISA, em vez de escalar por um
+     `undefined` silencioso. */
+  let cranioRaw = null;
+  model.traverse((o) => {
+    if (cranioRaw === null && o.isBone && /^(mixamorig)?head_?end$/i.test(o.name)) {
+      cranioRaw = o.getWorldPosition(new THREE.Vector3()).y;
+    }
+  });
+  const hBbox = bbox.max.y - bbox.min.y || 1;
+  let h = hBbox;
+  if (cranioRaw !== null && cranioRaw - bbox.min.y > 1e-3) h = cranioRaw - bbox.min.y;
+  else console.warn(`[glbchars] ${def.id}: sem osso head_end utilizável — estatura caiu no bbox (adereço entra na conta).`);
   const s = TARGET_HEIGHT / h;
-  if (qp.get('chartune')) console.log(`[glbchars] ${def.id} rawH=${h.toFixed(3)} min.y=${bbox.min.y.toFixed(3)} scale=${s.toFixed(3)}`);
+  if (qp.get('chartune')) console.log(`[glbchars] ${def.id} rawH=${h.toFixed(3)} bboxH=${hBbox.toFixed(3)} adereco=${(hBbox - h).toFixed(3)} min.y=${bbox.min.y.toFixed(3)} scale=${s.toFixed(3)}`);
   model.scale.setScalar(s);
   model.position.y = -bbox.min.y * s;
   model.rotation.y = FACING_OFFSET;
@@ -456,11 +479,67 @@ export function buildCharacterModel(def, opts = {}) {
   // Head hitbox: an invisible (unrendered) but raycastable box tracked to the head bone
   // each frame, so headshots stay accurate through the animation.
   let headBone = null;
-  model.traverse((o) => { if (o.isBone && !headBone && /head/i.test(o.name)) headBone = o; });
+  model.traverse((o) => { if (o.isBone && !headBone && /^(mixamorig)?head$/i.test(o.name)) headBone = o; });
+  if (!headBone) model.traverse((o) => { if (o.isBone && !headBone && /head/i.test(o.name)) headBone = o; });
+
+  /* A CAIXA DE HEADSHOT É DO CRÂNIO DESTE PERSONAGEM (régua: char-escala-check.mjs).
+     Ela era `BoxGeometry(0.26, 0.30, 0.26)` para os 62, centrada no osso `Head`.
+     Como o elenco vai de crânio de 14,2% da estatura (`fluxo`) a 41,8% (`gotinha`),
+     uma caixa constante media coisas diferentes em cada um. Medido antes deste bloco:
+     `gotinha` tinha 32% do crânio valendo headshot (68% da cabeça dele não registrava
+     tiro) contra 100% do `punk` — 3,1× de injustiça competitiva. E, no outro sentido,
+     a metade de baixo da caixa caía no PESCOÇO: 27% da caixa fora da cabeça em boa
+     parte do elenco, ou seja, headshot de graça em tiro de ombro.
+     As duas causas são a mesma: a caixa não sabia onde a cabeça começa nem onde acaba.
+     Agora ela sai de `neck` -> `head_end`, que existem em 62/62 dos GLB:
+       altura = crânio - pescoço          (a cabeça inteira, nem mais nem menos)
+       largura = 0,747 × altura           (ANCORADA NA MEDIANA DO ELENCO, não na razão
+                                           da caixa velha. A mediana de `crânio-pescoço`
+                                           medida nos 61 é 0,348 m; 0,747 × 0,348 = 0,26,
+                                           que é EXATAMENTE a largura que o jogo já tinha
+                                           calibrado. Assim o personagem mediano sai com
+                                           a mesma largura de hoje e só os extremos se
+                                           movem. A razão "natural" 0,26/0,30 = 0,867
+                                           parecia mais óbvia e foi medida: deixava a
+                                           caixa do mediano 16% mais larga, ou seja, um
+                                           buff global de headshot de brinde, que
+                                           cláusula nenhuma pedia. Se o elenco mudar de
+                                           tamanho típico, esta âncora precisa ser
+                                           remedida — `node tools/eval/char-escala-check.mjs`
+                                           imprime a mediana de caixaH.)
+       centro = meio de [pescoço, crânio] (a caixa velha era centrada no osso `Head`,
+                                           que fica na BASE do crânio — daí o pescoço
+                                           entrar e o alto da cabeça ficar de fora)
+     O deslocamento vertical vai em `userData.csHeadOffY` e é reaplicado todo quadro
+     pelo CharController, junto com o rastreio do osso.
+     ATENÇÃO, ISTO É BALANCEAMENTO: cabeça grande virou alvo grande. É a correção
+     justa (o alvo passa a ser do tamanho do que se vê), mas personagem de cabeçorra
+     passa a morrer mais rápido do que morria. Tabela do antes/depois por personagem:
+     `node tools/eval/char-escala-check.mjs`. */
+  let caixaH = 0.30, caixaW = 0.26, headOffY = 0;
+  if (headBone) {
+    group.updateMatrixWorld(true);
+    const pego = (re) => {
+      let b = null;
+      model.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; });
+      return b ? group.worldToLocal(b.getWorldPosition(new THREE.Vector3())).y : null;
+    };
+    const yCranio = pego(/^(mixamorig)?head_?end$/i);
+    const yPescoco = pego(/^(mixamorig)?neck$/i);
+    const yOlho = group.worldToLocal(headBone.getWorldPosition(new THREE.Vector3())).y;
+    if (yCranio !== null && yPescoco !== null && yCranio - yPescoco > 1e-3) {
+      caixaH = yCranio - yPescoco;
+      caixaW = caixaH * 0.747;
+      headOffY = (yCranio + yPescoco) / 2 - yOlho;
+    } else {
+      console.warn(`[glbchars] ${def.id}: sem neck/head_end utilizáveis — hitbox de cabeça caiu no tamanho fixo antigo (headshot injusto neste personagem).`);
+    }
+  }
   const head = new THREE.Mesh(
-    new THREE.BoxGeometry(0.26, 0.30, 0.26),
+    new THREE.BoxGeometry(caixaW, caixaH, caixaW),
     new THREE.MeshBasicMaterial({ visible: false }),
   );
+  head.userData.csHeadOffY = headOffY;
   group.add(head);
 
   // Rifle in the right hand: a scale-compensated mount parented to the hand bone so
@@ -852,6 +931,10 @@ class CharController {
     if (this.headBone) {
       this.group.updateMatrixWorld(true);
       this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
+      // O osso `Head` fica na BASE do crânio; a caixa é do crânio INTEIRO e por isso
+      // sobe até o meio de [pescoço, head_end]. Deslocamento medido uma vez, na
+      // construção (buildCharacterModel), porque é geometria do rig e não muda com a pose.
+      this.head.position.y += this.head.userData.csHeadOffY || 0;
     }
     // Sombra de contato: reage ao estado do corpo. No pulo ela ABRE e desbota (penumbra
     // que cresce com a distância do contato, critério A4); agachado ela FECHA e escurece

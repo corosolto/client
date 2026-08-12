@@ -34,25 +34,72 @@ async function renderIndex() {
       ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}`])),
     },
   });
-  return src
-    .replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
-    .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}"`);
+  /* Substituição GENÉRICA de atributo com template literal: `attr={`...${V}...`}`
+     vira `attr="..."`. Antes daqui havia uma regra por atributo, e só duas: o
+     importmap e o `href` do style.css.
+
+     O preço de ser por-atributo, pago em 12/08: o merge da main trouxe o conserto
+     do BUG-39 — o `?v=` amarrado ao `pkg.version` — e com ele
+     `src={`/js/main.js?v=${V}`}` no lugar de um `?v=` fixo. Esse padrão não estava
+     na lista, então o atributo saía como TEXTO LITERAL, o navegador pedia
+     `/%7B%60/js/main.js?v=${V}%60%7D`, tomava 404, e o jogo parava em "CARREGANDO
+     ARENA…" com `window.__game` inexistente. Em captura headless isso aparece como
+     `waitForFunction: Timeout 900000ms` — 15 min por mapa, e o log acusa o MAPA.
+     Perdemos uma bateria inteira "descobrindo" que os mapas novos não bootavam,
+     quando nenhum mapa bootava e a culpa era deste renderizador.
+
+     LIMITE DECLARADO: isto não é o Astro. Expressão que depende de escopo de
+     runtime — `${f.crest}` dentro de um `.map()`, por exemplo — não tem como ser
+     resolvida aqui e continua vazando. São imagens decorativas (brasão), não
+     fatais para o boot; se algum dia uma delas for, o caminho é usar o Astro de
+     verdade, não engordar este regex. */
+  const attrs = (s) => s.replace(/(\w[\w:-]*)=\{`([^`]*)`\}/g, (todo, attr, corpo) => {
+    if (/\$\{(?!V\})/.test(corpo)) return todo; // depende de runtime: deixa como está
+    return `${attr}="${corpo.replaceAll('${V}', V)}"`;
+  });
+  return attrs(
+    src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`),
+  );
 }
 
+/* ORDEM IMPORTA: o corpo é produzido ANTES de qualquer writeHead.
+   O defeito que isto conserta (medido em 12/08): a rota `/` fazia
+   `res.writeHead(200)` e SÓ DEPOIS `await renderIndex()`. Quando o render
+   falhava — `index.astro` com marcador de conflito, ou o frontmatter mudando de
+   forma, que o cabeçalho deste arquivo já avisa que acontece — o `catch` tentava
+   `res.writeHead(404)` sobre cabeçalho já enviado. Isso lança
+   ERR_HTTP_HEADERS_SENT DENTRO de um handler async, ninguém captura, e o
+   PROCESSO INTEIRO morre.
+
+   O preço disso não foi uma requisição perdida: foi a bateria de captura toda.
+   Em 12/08 o servidor caiu no meio do `fy_quebrada` e os 5 mapas seguintes
+   (escadao, campomorro, lajes, corrego, mansao) saíram com
+   ERR_CONNECTION_REFUSED — justamente os 5 que o dono relatou como piores e que
+   ninguém tinha frame para julgar. Servidor de arnês que morre falsifica a
+   medição em silêncio: o log fica cheio de "fatal" que parece defeito do jogo. */
 http.createServer(async (req, res) => {
   try {
-    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-    if (p === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(await renderIndex()); }
-    if (p === '/eval-character.html') {
-      res.writeHead(200, { 'content-type': 'text/html' });
-      return res.end(CHARACTER_EVAL_SHELL);
+    const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    let body, type;
+    if (p === '/') { body = await renderIndex(); type = 'text/html'; }
+    else if (p === '/eval-character.html') { body = CHARACTER_EVAL_SHELL; type = 'text/html'; }
+    else {
+      const file = normalize(join(ROOT, p));
+      if (!file.startsWith(ROOT)) throw new Error('path');
+      body = await readFile(file);
+      type = MIME[extname(file)] || 'application/octet-stream';
     }
-    const file = normalize(join(ROOT, p));
-    if (!file.startsWith(ROOT)) throw new Error('path');
-    const data = await readFile(file);
-    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream' });
-    res.end(data);
-  } catch {
+    res.writeHead(200, { 'content-type': type });
+    res.end(body);
+  } catch (e) {
+    // `headersSent` é o guarda-costas: se por qualquer caminho novo o cabeçalho
+    // já tiver saído, derrube só ESTA conexão em vez de o processo.
+    if (res.headersSent) { res.destroy(); return; }
     res.writeHead(404); res.end('404');
   }
 }).listen(PORT, () => console.log(`eval server -> http://localhost:${PORT}`));
+
+/* Rede de segurança final. Uma bateria de captura leva mais de uma hora; perder
+   isso porque um socket morreu não paga. Nenhum destes derruba o servidor. */
+process.on('uncaughtException', (e) => console.error('[serve] exceção ignorada:', e.message));
+process.on('unhandledRejection', (e) => console.error('[serve] rejeição ignorada:', e?.message || e));
