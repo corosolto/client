@@ -41,9 +41,9 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 27,722 lines in 34 files | `cat public/js/*.js \| wc -l` |
+| Game code | 27,725 lines in 34 files | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6,467** lines | `wc -l public/js/game.js` |
-| `main.js` | 2,013 lines | `wc -l public/js/main.js` |
+| `main.js` | 2,016 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
 | Character GLBs | 45 | `ls public/models/characters/*.glb \| wc -l` |
 | Props in GLB | 108 | `ls public/models/props/*.glb \| wc -l` |

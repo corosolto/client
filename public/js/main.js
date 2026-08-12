@@ -1285,13 +1285,16 @@ document.querySelectorAll('.set-tab').forEach(tab => {
 $('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => { ui.back(); show('team-select'); };
+// Conta as colunas pelo TRACK do grid, não por divisão de largura: dividir clientWidth pela
+// largura do ladrilho ignora o gap e erra por um sempre que a grade fica cheia.
+const gradeCols = (list) => getComputedStyle(list).gridTemplateColumns.split(/\s+/).filter(Boolean).length || 1;
 // Setas do topo/base da grade: andam uma LINHA inteira, que é o que ⌃⌄ prometem numa grade
 // (andar um vizinho seria ‹ ›). Sem clamp elas dariam a volta e pareceriam pular pro fim.
 const stripStep = (dir) => {
   const rows = [...document.querySelectorAll('.char-row')];
   if (!rows.length) return;
   const list = $('char-list');
-  const cols = Math.max(1, Math.round(list.clientWidth / (rows[0].offsetWidth || 76)));
+  const cols = gradeCols(list);
   const i = Math.max(0, rows.findIndex(r => r.classList.contains('sel')));
   const next = rows[Math.min(rows.length - 1, Math.max(0, i + dir * cols))];
   next.click();
@@ -1760,7 +1763,7 @@ function pickTeam(faction) {
       row.onkeydown = (e) => {
         const rows = [...list.children];
         const k = rows.indexOf(row);
-        const cols = Math.max(1, Math.round(list.clientWidth / (rows[0]?.offsetWidth || 76)));
+        const cols = gradeCols(list);
         let n = -1;
         if (e.key === 'ArrowRight') n = (k + 1) % rows.length;
         else if (e.key === 'ArrowLeft') n = (k - 1 + rows.length) % rows.length;

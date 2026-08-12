@@ -466,13 +466,19 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    A grade é elástica (flex:1 + min-height:0) — a lição do bug 3:2 vale pros 3 filhos. */
 /* Três zonas do padrão de seleção: GRADE (navegar) · HERÓI (o model) · FICHA (inspecionar).
    A ordem do DOM é grade/ficha/herói, então o herói é posto na coluna 2 por grid-column. */
-.char-stage{display:grid;grid-template-columns:minmax(280px,320px) minmax(0,1fr) minmax(300px,360px);
+/* Coluna da grade com largura FIXA (era minmax elástico): com auto-fill, largura elástica
+   fazia a contagem de colunas oscilar entre 3 e 4 conforme a sobra e a barra de rolagem. */
+.char-stage{display:grid;grid-template-columns:320px minmax(0,1fr) minmax(300px,360px);
   gap:var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1500px,96vw)}
 .char-sheet{grid-column:3}
 .char-preview-box{grid-column:2;grid-row:1}
 .char-filmstrip{display:flex;flex-direction:column;gap:var(--s-2);min-height:0}
-.char-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));
-  gap:var(--s-2);align-content:start;min-height:0;overflow-y:auto;
+/* 3 colunas FIXAS, não auto-fill: a contagem não pode depender de sobra nem de barra de
+   rolagem, senão a mesma tela abre ora com 3 ora com 4 e parece outro menu.
+   `align-items:start` é obrigatório: item de grid nasce `stretch`, e stretch define altura
+   explícita, que ANULA o aspect-ratio do ladrilho e o deixa retangular em linha alta. */
+.char-list{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:var(--s-2);align-content:start;align-items:start;min-height:0;overflow-y:auto;
   overscroll-behavior:contain;padding-right:var(--s-2);
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .char-list::-webkit-scrollbar{width:6px}
