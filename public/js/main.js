@@ -307,7 +307,7 @@ let settingsReturn = 'main-menu';
 let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause, pelo menu volta pro menu
 
 /* ---------------- 3D character preview ---------------- */
-let pv = null, pvDrag = null;
+let pv = null, pvDrag = null, pvSway = 0;
 const portraitUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
 function showStaticPreview(def) {
   const canvas = $('char-preview'), image = $('char-preview-static'), hints = document.querySelector('.pv-hints');
@@ -341,7 +341,7 @@ function ensurePreview() {
     canvas.setPointerCapture(e.pointerId);
   });
   canvas.addEventListener('pointermove', e => {
-    if (pvDrag && pv.model) pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012;
+    if (pvDrag && pv.model) pv.baseYaw = pv.model.rotation.y = pvDrag.yaw + (e.clientX - pvDrag.x) * 0.012;
   });
   canvas.addEventListener('pointerup', () => { pvDrag = null; });
   canvas.addEventListener('wheel', e => {
@@ -400,6 +400,8 @@ function snapThumb(obj, fallbackUrl) {
 }
 // Each character shows off a weapon that fits their vibe (not everyone with an AK).
 // CHAR_WEAPON/charWeapon live in characters.js, shared with game.js (initial loadout).
+// Três quartos virado pra câmera (que está em +Z), o enquadramento de vitrine.
+const PREVIEW_YAW = 0.32;
 let pvToken = 0;
 function pvSetChar(def) {
   if (staticPreviews) { showStaticPreview(def); return; }
@@ -411,7 +413,7 @@ function pvSetChar(def) {
     if (p.model) p.scene.remove(p.model);
     p.mixer = null; p.ctrl = null;
     p.model = buildCharacter(def).group;
-    p.model.rotation.y = 0.4;
+    p.model.rotation.y = p.baseYaw = 0.4;
     p.scene.add(p.model);
   };
   // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
@@ -430,7 +432,7 @@ function pvSetChar(def) {
       if (p.model) p.scene.remove(p.model);
       // Somente o GLB real marca o canvas para web-assets.spec.js.
       $('char-preview').dataset.glb = '1';
-      m.group.rotation.y = 0.4;
+      m.group.rotation.y = p.baseYaw = PREVIEW_YAW;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
       p.scene.add(m.group);
     }).catch(() => { if (my === pvToken) showBox(); });
@@ -1689,7 +1691,7 @@ function glbThumb(def) {
   if (!hasModel(def.id)) return null;
   const m = buildCharacterModel(def, { weapon: false });
   if (!m) return null;
-  m.group.rotation.y = 0.5;
+  m.group.rotation.y = PREVIEW_YAW;
   for (let i = 0; i < 42; i++) m.mixer.update(1 / 60); // settle into the idle pose
   return snapThumb(m.group, portraitUrl(def));
 }
@@ -1981,7 +1983,9 @@ function loop() {
     renderer.render(menuScene, menuCam);
   }
   if (csOpen && pv && pv.model) {
-    if (!pvDrag) pv.model.rotation.y += dt * 0.9;   // giro automático pausa enquanto arrasta
+    // Balanço curto em torno do yaw base no lugar do giro de 360°: o turntable antigo
+    // deixava o personagem de costas metade do tempo. Arrastar continua livre.
+    if (!pvDrag) { pvSway += dt; pv.model.rotation.y = (pv.baseYaw || 0) + Math.sin(pvSway * 0.6) * 0.22; }
     // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
     if (pv.ctrl) pv.ctrl.update(dt, 0, false, 0); else if (pv.mixer) pv.mixer.update(dt);
     pv.r.render(pv.scene, pv.cam);

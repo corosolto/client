@@ -512,6 +512,8 @@ const IMPORTMAP = JSON.stringify({
   <div class="cs-wallpaper"></div>
   <div class="cs-vignette"></div>
   <div class="scanlines"></div>
+  <!-- camada de cinema: grão de filme, vinheta e tarja. Puramente decorativa. -->
+  <div class="cine-fx" aria-hidden="true"></div>
 
   <div class="cs-left">
     <!-- logo removido: os wallpapers (wall-1..4) já trazem o logo do jogo -->
@@ -650,6 +652,7 @@ const IMPORTMAP = JSON.stringify({
 <div id="map-screen" class="screen hidden">
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
   <div class="ms-scrim"></div>
+  <div class="cine-fx cine-fx-bars" aria-hidden="true"></div>
   <!-- chrome persistente (referência telas/04): jogador no topo, VOLTAR embaixo à esquerda -->
   <div class="ms-top">
     <div class="ms-top-player">
@@ -679,6 +682,7 @@ const IMPORTMAP = JSON.stringify({
      time já existe: .team-art consome --art (ver style.css) e, enquanto o arquivo não
      existir, o degradê da facção continua sendo o fundo - sem ícone de imagem quebrada. -->
 <div id="team-select" class="screen hidden" data-step="side">
+  <div class="cine-fx" aria-hidden="true"></div>
   <header class="ts-head">
     <small id="team-step">PASSO 2 · O SEU LADO</small>
     <h2 class="screen-title" id="team-title">ESCOLHA SEU LADO DA TRETA</h2>
@@ -749,6 +753,7 @@ const IMPORTMAP = JSON.stringify({
      preview 3D GIGANTE à direita, com GIRAR/ZOOM de verdade (drag + wheel no main.js).
      O corpo continua elástico (flex:1 + min-height:0) - a lição do bug 3:2 se mantém. -->
 <div id="char-select" class="screen hidden">
+  <div class="cine-fx" aria-hidden="true"></div>
   <header class="ts-head">
     <small>PASSO 3 · O PERSONAGEM</small>
     <h2 class="screen-title">ESCOLHA SEU PERSONAGEM</h2>

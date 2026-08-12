@@ -1872,3 +1872,135 @@ html[data-ui="legacy"] .cs-vignette{
   #scoreboard table{font-size:12px}
   #scoreboard th,#scoreboard td{padding-left:6px;padding-right:6px}
 }
+
+/* ============ BLOCO 1 - ACABAMENTO DE CINEMA (menu, mapa, faccao, personagem) ============
+   Cartaz de cinema por cima das telas de fluxo: grao de filme, vinheta, tarja e moldura.
+   Tudo decorativo e pointer-events:none, entao nada aqui intercepta clique ou foco. */
+:root{
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23g)'/%3E%3C/svg%3E");
+  --cine-bar:22px;
+}
+
+/* Emulsao: mora no topo (z 30) porque grao de filme e a pelicula, nao o cenario. */
+.cine-fx{position:absolute;inset:0;z-index:30;pointer-events:none}
+.cine-fx::before{content:"";position:absolute;inset:0;
+  background:var(--grain) 0 0/120px 120px repeat;opacity:.05;mix-blend-mode:overlay}
+/* Moldura de cartaz: fio escuro rente a borda + queda de luz nos quatro cantos. */
+.cine-fx::after{content:"";position:absolute;inset:0;
+  box-shadow:inset 0 0 0 1px rgba(var(--bg-900-rgb),.6),inset 0 0 120px 20px rgba(var(--bg-900-rgb),.42)}
+/* Letterbox duro so na tela de mapa, a mais "projecao" das quatro. */
+.cine-fx-bars::before{top:var(--cine-bar);bottom:var(--cine-bar)}
+.cine-fx-bars{background:linear-gradient(180deg,
+  var(--br-asfalto) 0 var(--cine-bar),rgba(0,0,0,0) var(--cine-bar) calc(100% - var(--cine-bar)),
+  var(--br-asfalto) calc(100% - var(--cine-bar)) 100%)}
+
+/* ---------- 01 MENU: o wallpaper vira placa de cartaz ---------- */
+/* Respiro lento na arte (sem cortar nada: o zoom parte de 1). Desligado em reduced-motion. */
+.cs-wallpaper{animation:cine-breath 38s ease-in-out infinite alternate;transform-origin:32% 55%}
+@keyframes cine-breath{from{transform:scale(1)}to{transform:scale(1.055)}}
+/* Vinheta mais funda nos cantos: a coluna de texto ganha piso e o canarinho ganha foco. */
+.cs-vignette{background:
+  radial-gradient(118% 82% at 62% 46%,rgba(0,0,0,0) 30%,rgba(var(--bg-900-rgb),.34) 68%,rgba(var(--bg-900-rgb),.80) 100%),
+  linear-gradient(0deg,rgba(var(--bg-900-rgb),.92) 0%,rgba(var(--bg-900-rgb),0) 46%),
+  linear-gradient(90deg,rgba(var(--bg-900-rgb),.80) 0%,rgba(var(--bg-900-rgb),.34) 30%,rgba(var(--bg-900-rgb),0) 56%),
+  var(--lambe)}
+/* Faixa de obra no lugar do fio liso: a lista passa a ler como tapume, nao como menu web. */
+.cs-menu::before{width:6px;background:var(--hazard);opacity:.9}
+.cs-menu-label{color:var(--br-faixa);opacity:.95}
+.cs-item{font-size:clamp(19px,1.85vw,27px);padding-block:calc(var(--s-2) + 1px)}
+/* Item ativo com ponta chanfrada: vira tarja pregada, nao retangulo cheio. */
+.cs-item[aria-current="true"],
+.cs-menu:not(:has(.cs-item[aria-current="true"])) .cs-item:first-of-type{
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%);
+  box-shadow:0 6px 22px rgba(0,0,0,.55)}
+
+/* ---------- 02 MAPA: painel projetado, com letterbox e cantoneiras ---------- */
+.ms-top{top:var(--cine-bar);padding-top:10px}
+/* Os botoes de baixo NAO sobem: em 720px de altura isso empurrava o RESUME por cima
+   dos rotulos da faixa de mapas, e a barra de 22px passa longe deles. */
+/* Moldura do painel de arte: borda quente, sombra funda e leve escurecimento nas bordas. */
+.ms-bg{border-color:rgba(var(--bg-900-rgb),.9);
+  box-shadow:0 24px 60px rgba(0,0,0,.62),inset 0 0 0 1px rgba(240,240,237,.10)}
+.ms-scrim{background:
+  linear-gradient(90deg,rgba(var(--bg-900-rgb),.94) 0%,rgba(var(--bg-900-rgb),.30) 22%,rgba(var(--bg-900-rgb),0) 58%),
+  linear-gradient(180deg,rgba(var(--bg-900-rgb),0) 62%,rgba(var(--bg-900-rgb),.66) 100%),
+  radial-gradient(96% 86% at 50% 46%,rgba(0,0,0,0) 52%,rgba(var(--bg-900-rgb),.55) 100%)}
+/* Cantoneiras de visor sobre o painel, ancoradas na MESMA caixa da foto (tokens --ms-art-*). */
+#map-screen .ms-scrim::after{content:"";position:absolute;inset:10px;pointer-events:none;
+  background:
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 0 0/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 0 0/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 100% 0/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 100% 0/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 0 100%/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 0 100%/2px 26px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 100% 100%/26px 2px no-repeat,
+    linear-gradient(var(--br-faixa),var(--br-faixa)) 100% 100%/2px 26px no-repeat;
+  opacity:.8}
+.ms-head small{color:var(--br-faixa);position:relative;padding-left:26px}
+.ms-head small::before{content:"";position:absolute;left:0;top:50%;width:18px;height:2px;
+  background:var(--br-faixa);transform:translateY(-50%)}
+/* Sem mexer no corpo da fonte: o teto de 48px existe pra "PRACA DOS TRES PODERES"
+   caber em UMA linha (ver o comentario da regra original). Peso vem da regua e da sombra. */
+.ms-name{text-shadow:0 6px 26px rgba(0,0,0,.72)}
+.ms-name::after{width:120px;height:4px}
+/* Rail de obra na coluna do texto, ecoando a faixa do menu principal. */
+.ms-head{padding-left:calc(8vw - 26px)}
+.ms-head::before{content:"";position:absolute;left:calc(8vw - 52px);top:12%;bottom:12%;
+  width:5px;background:var(--hazard);opacity:.5}
+.ms-thumb{width:158px}
+.ms-thumb img{height:84px;transition:filter var(--t) var(--ease)}
+.ms-thumb:not(.on) img{filter:grayscale(.55) brightness(.72)}
+.ms-thumb.on{box-shadow:0 10px 26px rgba(0,0,0,.6),inset 0 0 0 1px var(--br-faixa)}
+
+/* ---------- 03/04 FACCAO e PERSONAGEM: arte de fundo vira cenario desfocado ---------- */
+/* A arte sai do background do proprio screen e vira camada: assim da pra desfocar ela
+   sem borrar o conteudo. O --wall continua vindo do main.js e o pseudo herda. */
+#team-select,#char-select{background-image:none;background-color:var(--bg-900)}
+#team-select::before,#char-select::before{content:"";position:absolute;inset:0;z-index:0;
+  pointer-events:none;background:var(--wall,url('/img/select-bg.png')) center/cover no-repeat;
+  transform:scale(1.08);filter:blur(7px) saturate(.45) brightness(.30)}
+#team-select::after,#char-select::after{content:"";position:absolute;inset:0;z-index:1;
+  pointer-events:none;background:
+    radial-gradient(72% 60% at 50% 48%,rgba(0,0,0,0) 26%,rgba(var(--bg-900-rgb),.62) 100%),
+    linear-gradient(180deg,rgba(var(--bg-900-rgb),.88) 0%,rgba(var(--bg-900-rgb),.30) 32%,
+      rgba(var(--bg-900-rgb),.55) 72%,rgba(var(--bg-900-rgb),.95) 100%)}
+/* O conteudo precisa de z proprio pra subir acima das duas camadas acima. */
+#team-select>.ts-head,#team-select>.team-row,
+#char-select>.ts-head,#char-select>.char-stage{position:relative;z-index:2}
+.ts-head small{color:var(--br-faixa)}
+.screen-title{text-shadow:0 6px 30px rgba(0,0,0,.75)}
+
+/* Placas de faccao: sombra de cartaz e realce mais firme na escolhida. */
+.team-card{box-shadow:0 18px 44px rgba(0,0,0,.55)}
+.team-card:hover,.team-card:focus-visible{transform:translateY(-6px)}
+.team-card.on,.team-card[aria-selected="true"]{box-shadow:0 22px 56px rgba(0,0,0,.7),
+  inset 0 0 0 2px var(--br-faixa),0 0 32px rgba(255,201,63,.16)}
+
+/* ---------- 05 PERSONAGEM: palco com luz, e o palhaco do wallpaper vira moldura ---------- */
+/* Poca de luz atras do model. Fica no box (z 0) e o canvas sobe pra z 1. */
+.char-preview-box::before{content:"";position:absolute;left:50%;bottom:6%;z-index:0;
+  transform:translateX(-50%);width:min(92%,660px);height:82%;pointer-events:none;
+  background:
+    radial-gradient(52% 58% at 50% 44%,rgba(255,201,63,.15),rgba(255,201,63,0) 72%),
+    radial-gradient(38% 12% at 50% 99%,rgba(0,0,0,.85),rgba(0,0,0,0) 100%)}
+/* Canvas sem fundo proprio: so assim o drop-shadow segue a silhueta e nao o retangulo. */
+#char-preview{position:relative;z-index:1;background:none;
+  filter:drop-shadow(0 0 26px rgba(255,201,63,.26)) drop-shadow(0 10px 22px rgba(0,0,0,.62))}
+.pv-hints{position:relative;z-index:1}
+.char-sheet{box-shadow:0 20px 52px rgba(0,0,0,.6)}
+.char-list .char-item.on,.char-list .char-item[aria-selected="true"]{
+  box-shadow:0 0 0 2px var(--br-faixa),0 8px 22px rgba(0,0,0,.55)}
+
+@media(prefers-reduced-motion:reduce){
+  .cs-wallpaper{animation:none}
+}
+
+/* Lado esquerdo do palco leva scrim extra: e onde moram filmstrip e ficha, e o logo
+   do wallpaper vazava por tras deles. */
+#char-select::after{background:
+  linear-gradient(90deg,rgba(var(--bg-900-rgb),.95) 0%,rgba(var(--bg-900-rgb),.72) 30%,
+    rgba(var(--bg-900-rgb),.18) 52%,rgba(var(--bg-900-rgb),.34) 100%),
+  radial-gradient(56% 62% at 68% 56%,rgba(0,0,0,0) 24%,rgba(var(--bg-900-rgb),.58) 100%),
+  linear-gradient(180deg,rgba(var(--bg-900-rgb),.90) 0%,rgba(var(--bg-900-rgb),.24) 30%,
+    rgba(var(--bg-900-rgb),.52) 74%,rgba(var(--bg-900-rgb),.94) 100%)}
