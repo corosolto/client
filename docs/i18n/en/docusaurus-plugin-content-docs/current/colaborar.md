@@ -29,7 +29,7 @@ people and an automated gate.
 :::note The block above counts the BRANCH, and the project is bigger than it
 `main` has a fourth contributor that this working branch does not contain — 13 commits
 of a desktop client, merged in July. Who, how much, and why this matters for any
-licensing decision is in [License, art, and brand](./licenca.md).
+licensing decision is in `CONTRIBUTING.md` (license section and surfaces).
 :::
 
 This is relevant to you in two opposite ways. The bad one: if your PR gets stuck, it can
@@ -396,9 +396,9 @@ the right harness, or marking it as "harness to be written", is a 15-minute PR.
 3. Run `npm run check`. Paste the output into the PR.
 4. Small PR, one front, description with numbers and `arquivo:linha`.
 5. **By contributing you license under whatever license the `LICENSE` states at the moment of your
-   PR.** What it is today, what is decided and not yet applied, and who needs to
-   agree for the change to happen: **[License, art, and brand](./licenca.md)**. If this
-   is decisive for you, read that page before writing the first line.
+   PR.** What it is today and which files must change together in a swap: the license
+   section of `CONTRIBUTING.md`. If this
+   is decisive for you, read it before writing the first line.
 
 Reporting a bug: what happened, what you expected, steps to reproduce, browser/OS and a
 screenshot of the console (F12). And if the bug is behavioral, it will become an invariant — that is

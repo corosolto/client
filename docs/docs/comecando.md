@@ -303,8 +303,8 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    de primeira contribuição** já escritas em
    [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (com um
    `abrir-issues.sh` pronto — elas ainda não foram abertas no GitHub).
-6. **[Licença, arte e marca](./licenca.md)** — sob que licença você contribui, o que está
-   decidido e ainda não aplicado, e por que arte paga não mora no repositório público.
+6. **Licença** — o `LICENSE` na raiz declara (hoje AGPL-3.0); as superfícies que
+   repetem o nome e mudam junto estão no `CONTRIBUTING.md`.
 7. **[Estado atual](./estado.md)** — fontes vivas de produção, dados e dívida conhecida
    desde a última medição colada.
 

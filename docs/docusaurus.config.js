@@ -26,7 +26,6 @@ const L = {
   colaborar: EN ? '/contributing' : '/colaborar',
   instrumentacao: EN ? '/ai-instrumentation' : '/instrumentacao-ai',
   qualityGates: '/quality-gates',
-  licenca: EN ? '/license' : '/licenca',
 };
 
 /** @type {import('@docusaurus/types').Config} */
@@ -143,7 +142,6 @@ const config = {
           {
             title: 'Projeto',
             items: [
-              { label: 'Licença, arte e marca', to: L.licenca },
               { label: 'GitHub', href: 'https://github.com/rubenmarcus/csbrasil' },
               { label: 'Issues', href: 'https://github.com/rubenmarcus/csbrasil/issues' },
             ],
@@ -153,8 +151,8 @@ const config = {
         // arquivo é uma das 8 superfícies que precisam mudar JUNTO quando a licença mudar —
         // e era a única que NENHUMA das duas listas escritas à mão (README e plans/08 §3)
         // lembrava. Superfície que não repete o nome é uma a menos para esquecer; quem quer
-        // a resposta clica no link acima, que aponta para a fonte gerada do `LICENSE`.
-        copyright: 'CORO SOLTO: Treta Suprema — código aberto; a licença vigente está na página "Licença, arte e marca". Sátira ficcional.',
+        // a resposta lê o `LICENSE` na raiz do repositório.
+        copyright: 'CORO SOLTO: Treta Suprema — código aberto; a licença vigente está no arquivo LICENSE do repositório. Sátira ficcional.',
       },
       prism: {
         additionalLanguages: ['bash', 'json', 'diff'],

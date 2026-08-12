@@ -305,8 +305,8 @@ The sidebar order **is** the reading order, and each page delivers one thing:
    **first-contribution tasks** already written in
    [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (with a
    ready-made `abrir-issues.sh` — they have not been opened on GitHub yet).
-6. **[License, art, and brand](./licenca.md)** — under which license you contribute, what
-   is decided and not yet applied, and why paid art does not live in the public repository.
+6. **License** — the repo-root `LICENSE` declares it (AGPL-3.0 today); the surfaces
+   that repeat its name and must change together are listed in `CONTRIBUTING.md`.
 7. **[Current state](./status)** — live sources for production health, data coverage, and debt
    since the last pasted measurement.
 

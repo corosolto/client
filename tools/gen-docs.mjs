@@ -398,20 +398,9 @@ function medir() {
     /* A doc em inglês (`docs/i18n/en/`) é tradução À MÃO, e os blocos GERADOS dela são cópia
        humana do bloco em português: `npm run docs` não reescreve nenhum deles. Foi por aí que
        a rota `/license` seguiu publicando "the code is under the MIT License" enquanto o
-       `LICENSE` já era AGPL. Gerar os dois idiomas pede um gerador bilíngue (issue #54); o
-       que dá para fazer hoje, barato, é proibir a tradução de CONTRADIZER o `LICENSE` —
-       o bloco `licenca` em inglês tem que nomear a licença vigente. */
-    /* A varredura EN lá embaixo pega a tradução que DECLARA a licença errada. Esta pega o
-       caso mudo, que aquela não vê: um bloco que não nomeia licença NENHUMA ("the code is
-       open source"). Silêncio não é verde — é a mesma regra do `null` do gerador. */
-    traducaoMuda: (() => {
-      const arq = 'docs/i18n/en/docusaurus-plugin-content-docs/current/licenca.md';
-      if (!existe(arq) || !casada) return null;
-      const bloco = /BEGIN:GERADO:licenca\b[\s\S]*?END:GERADO:licenca\b/.exec(ler(arq));
-      if (!bloco) return `${arq} não tem o bloco GERADO:licenca`;
-      return LICENCAS_CONHECIDAS.some((l) => l.mencao.test(bloco[0]))
-        ? null : `${arq} tem o bloco GERADO:licenca sem nomear licença nenhuma`;
-    })(),
+       `LICENSE` já era AGPL. Gerar os dois idiomas pede um gerador bilíngue (issue #54).
+       A página de licença saiu do site de docs em 12/08/2026; a tabela de superfícies
+       mora no `CONTRIBUTING.md`. */
     /* Sem crase aqui dentro: o rodapé já embrulha este texto em crase, e crase aninhada
        vira markdown quebrado nas duas pontas (GitHub e Docusaurus). */
     cmdNome: 'título lido do texto do LICENSE, conferido contra o campo license do package.json',
@@ -666,7 +655,7 @@ const BLOCOS = {
      tem os 13 commits do William Oliveira — a doc anunciava 3 pessoas num repositório que
      tem 4, apagando um contribuidor de terceiro da própria página que fala de contribuir.
      A frase agora diz qual histórico foi medido; a diferença entre branches está em
-     `docs/docs/licenca.md`, com o comando que a reproduz. */
+     `docs/LICENCA.md`, com o comando que a reproduz. */
   pessoas: (f) => [
     `**${f.pessoas.humanos} identidades de autoria humana** assinam commit no histórico ` +
     `**desta branch**: ${f.pessoas.nomes.map((n) => `\`${n}\``).join(', ')}. O resto dos commits é assinado por agentes de IA. ` +
@@ -838,8 +827,8 @@ const COLOCACAO = {
   stack: ['README.md', 'docs/docs/stack.md'],
   assets: ['docs/docs/stack.md'],
   skills: ['docs/docs/stack.md'],
-  licenca: ['README.md', 'docs/docs/licenca.md'],
-  licenca_pontos: ['docs/docs/licenca.md'],
+  licenca: ['README.md'],
+  licenca_pontos: ['CONTRIBUTING.md'],
   arquivos: ['docs/docs/arquitetura.md'],
   ponteiros: ['docs/docs/arquitetura.md'],
   invariantes: ['docs/docs/quality-gates.md'],
@@ -974,8 +963,6 @@ if (!fatos.licenca.atual)
   inconsistencias.push(`LICENSE não casa com nenhuma licença conhecida (cabeçalho lido: '${fatos.licenca.cabecalho || '(vazio)'}') — acrescente o nome em LICENCAS_CONHECIDAS, em tools/gen-docs.mjs`);
 else if (!fatos.licenca.concordam)
   inconsistencias.push(`LICENSE diz '${fatos.licenca.atual}' e package.json diz '${fatos.licenca.pacote}'`);
-if (fatos.licenca.traducaoMuda)
-  inconsistencias.push(`${fatos.licenca.traducaoMuda} (sync à mão — issue #54)`);
 
 if (process.argv.includes('--check')) {
   const erros = [];

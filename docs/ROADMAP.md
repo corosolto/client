@@ -28,7 +28,7 @@ Quatro coisas ficam decididas por essa frase, e vale escrevê-las separadas:
 2. **Monetização é agosto/setembro**, depois de o jogo se espalhar — não é escopo do release.
 3. **"Proteção de arte autoral" entra AGORA**, porque é a única peça da monetização que fica
    **irreversível** se for feita depois. Ver
-   [Licença, arte e marca](docs/licenca.md).
+   [Licença, arte e marca](LICENCA.md).
 4. **Docs para devs e SDKs** é entrega, não documentação de apoio: é o que transforma
    contribuição em algo que não depende do dono explicar.
 
@@ -178,7 +178,7 @@ decisão nova:
 | **Arquitetura de dois clientes** com `shared/*.json` | fonte da verdade compartilhada entre web e Godot | **nunca começou** (`ls shared` → não existe). A direção "conteúdo como dado" sobrevive; o contrato entre engines não é escopo enquanto o Godot estiver do outro lado da divergência |
 | **Multiplayer com servidor autoritativo** | Fase 3, "salas via WebRTC num servidor autoritativo leve" | **contraditado por decisão posterior**: WebRTC **P2P**, com o servidor criado pelo próprio usuário. O `plans/03` defende o contrário no próprio título — ele precisa ser **reescrito**, não seguido |
 | **Ranking global sempre ligado** | Fase 3/4 | **desligado hoje** (`RANKING_ON`), trocado por telemetria anônima. Volta em duas categorias: SP no release, MP na v2.1 — e **partida P2P não pode submeter no `submit_match`** |
-| **Licença permissiva** (`plans/06 §1.2`) | recomendada por causa de Steamworks e crédito de IA | **revertida**: decisão registrada de migrar para AGPL-3.0, ainda não aplicada — [Licença, arte e marca](docs/licenca.md) |
+| **Licença permissiva** (`plans/06 §1.2`) | recomendada por causa de Steamworks e crédito de IA | **revertida**: decisão registrada de migrar para AGPL-3.0, ainda não aplicada — [Licença, arte e marca](LICENCA.md) |
 | **Cliente Godot** | trilha paralela a começar quando a Fase 2 existir | **existe e está mesclado na `main`** — ver a seção acima |
 | Fix do Vercel Analytics, `/mapa` com tabela | Fase 4 | `/mapa` existe; o resto entra no degrau 9. **Não re-verificado** nesta revisão |
 
@@ -192,4 +192,4 @@ decisão nova:
 | o estado medido do portão | [Estado medido](docs/estado.md) e [`KNOWN-BUGS.md`](../KNOWN-BUGS.md) |
 | a ordem de trabalho de hoje | [`PROMPT.md`](../PROMPT.md) |
 | ideias soltas, não priorizadas | [`IDEAS.md`](IDEAS.md) |
-| licença, arte paga e marca | [Licença, arte e marca](docs/licenca.md) |
+| licença, arte paga e marca | [Licença, arte e marca](LICENCA.md) |

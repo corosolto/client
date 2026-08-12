@@ -28,9 +28,9 @@ const SLUG_PAIRS = [
   ['/stack', '/stack'],
   ['/instrumentacao-ai', '/ai-instrumentation'],
   ['/quality-gates', '/quality-gates'],
+  ['/botbrain', '/botbrain'],
   ['/arquitetura', '/architecture'],
   ['/colaborar', '/contributing'],
-  ['/licenca', '/license'],
   ['/estado', '/status'],
 ];
 

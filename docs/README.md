@@ -29,12 +29,13 @@ docs/
     quality-gates.md      invariantes, as 2 leis da casa, teste de mutação da régua
     arquitetura.md        ARCH gerado + faixas de linha disjuntas + o que é gerado aqui
     colaborar.md          setup, portão, o que um PR precisa, boas primeiras tarefas
-    licenca.md            o que vale hoje, a AGPL aplicada, e a separação
-                          código × arte paga × marca
     estado.md             fontes vivas de produção, dados e dívidas; sem placar colado
   issues/                 as good-first-issues, uma por arquivo (README.md indexa)
   historico/              prompts e handoffs antigos — arquivo morto, não é doc viva
   INDICE.md               índice dos .md soltos desta pasta
+  LICENCA.md              as decisões de licença, arte paga e marca — fora do site de
+                          propósito: quem declara é o LICENSE, e a tabela de superfícies
+                          é gerada no CONTRIBUTING.md
   seguranca.md ROADMAP.md QUALITY.md IDEAS.md TRIBOS-URBANAS.md ASSETS-PROMPTS.md
 ```
 

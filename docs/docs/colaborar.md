@@ -26,7 +26,7 @@ pessoas e um quality gate automatizado.
 :::note O bloco acima conta a BRANCH, e o projeto é maior que ela
 A `main` tem um quarto contribuidor que esta branch de trabalho não contém — 13 commits
 de um cliente desktop, mesclados em julho. Quem, quanto e por que isso importa para
-qualquer decisão de licença está em [Licença, arte e marca](./licenca.md).
+qualquer decisão de licença está no `CONTRIBUTING.md` (seção de licença e superfícies).
 :::
 
 Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, pode
@@ -393,9 +393,9 @@ o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
 3. Rode `npm run check`. Cole a saída no PR.
 4. PR pequeno, uma frente, descrição com números e `arquivo:linha`.
 5. **Ao contribuir você licencia sob a licença que o `LICENSE` disser no momento do seu
-   PR.** Qual é ela hoje, o que está decidido e ainda não aplicado, e quem precisa
-   concordar para a mudança acontecer: **[Licença, arte e marca](./licenca.md)**. Se isso
-   for decisivo pra você, leia aquela página antes de escrever a primeira linha.
+   PR.** Qual é ela hoje e quais arquivos mudam junto numa troca: a seção de licença do
+   `CONTRIBUTING.md`. Se isso
+   for decisivo pra você, leia lá antes de escrever a primeira linha.
 
 Reportando bug: o que aconteceu, o que esperava, passos pra reproduzir, navegador/SO e
 print do console (F12). E se o bug for de comportamento, ele vai virar invariante — é
