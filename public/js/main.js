@@ -1285,12 +1285,15 @@ document.querySelectorAll('.set-tab').forEach(tab => {
 $('mobile-ok').onclick = () => { sfx.uiClick(); show('main-menu'); };
 $('team-back').onclick = () => { ui.back(); pickingEnemy = false; setEnemyPickMode(false); setTeamStep('side'); show('main-menu'); };
 $('char-back').onclick = () => { ui.back(); show('team-select'); };
-// Setas do filmstrip: movem a SELEÇÃO (não só o scroll) e garantem a linha visível.
+// Setas do topo/base da grade: andam uma LINHA inteira, que é o que ⌃⌄ prometem numa grade
+// (andar um vizinho seria ‹ ›). Sem clamp elas dariam a volta e pareceriam pular pro fim.
 const stripStep = (dir) => {
   const rows = [...document.querySelectorAll('.char-row')];
   if (!rows.length) return;
+  const list = $('char-list');
+  const cols = Math.max(1, Math.round(list.clientWidth / (rows[0].offsetWidth || 76)));
   const i = Math.max(0, rows.findIndex(r => r.classList.contains('sel')));
-  const next = rows[(i + dir + rows.length) % rows.length];
+  const next = rows[Math.min(rows.length - 1, Math.max(0, i + dir * cols))];
   next.click();
   next.scrollIntoView({ block: 'nearest' });
 };
@@ -1752,14 +1755,18 @@ function pickTeam(faction) {
       row.type = 'button'; row.setAttribute('role', 'option'); row.setAttribute('aria-selected', 'false');
       row.innerHTML = `<img src="${thumb0}" alt="${c.name}"><span>${c.name}</span>`;
       row.onmouseenter = () => ui.hover();
-      // teclado: ↑↓ percorrem o roster e já trocam o preview (era só mouse)
+      // teclado 2D: numa GRADE, ↑↓ tem que pular uma linha inteira, não um vizinho. O número
+      // de colunas é lido do layout (auto-fill), então isto acompanha o redimensionamento.
       row.onkeydown = (e) => {
         const rows = [...list.children];
         const k = rows.indexOf(row);
+        const cols = Math.max(1, Math.round(list.clientWidth / (rows[0]?.offsetWidth || 76)));
         let n = -1;
-        if (e.key === 'ArrowDown') n = (k + 1) % rows.length;
-        else if (e.key === 'ArrowUp') n = (k - 1 + rows.length) % rows.length;
-        if (n < 0) return;
+        if (e.key === 'ArrowRight') n = (k + 1) % rows.length;
+        else if (e.key === 'ArrowLeft') n = (k - 1 + rows.length) % rows.length;
+        else if (e.key === 'ArrowDown') n = Math.min(k + cols, rows.length - 1);
+        else if (e.key === 'ArrowUp') n = Math.max(k - cols, 0);
+        if (n < 0 || n === k) return;
         e.preventDefault(); rows[n].focus(); rows[n].click();
       };
       row.onclick = () => { ui.click(); selectChar(c, row); };

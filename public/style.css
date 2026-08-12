@@ -464,24 +464,34 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 #char-select{justify-content:flex-start;gap:var(--s-4);padding:clamp(56px,7vh,88px) var(--s-5) var(--s-5)}
 /* Layout da referência (telas/03): filmstrip de avatares | ficha | preview gigante.
    A grade é elástica (flex:1 + min-height:0) — a lição do bug 3:2 vale pros 3 filhos. */
-.char-stage{display:grid;grid-template-columns:96px minmax(280px,360px) 1fr;gap:var(--s-5);
-  align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
+/* Três zonas do padrão de seleção: GRADE (navegar) · HERÓI (o model) · FICHA (inspecionar).
+   A ordem do DOM é grade/ficha/herói, então o herói é posto na coluna 2 por grid-column. */
+.char-stage{display:grid;grid-template-columns:minmax(280px,320px) minmax(0,1fr) minmax(300px,360px);
+  gap:var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1500px,96vw)}
+.char-sheet{grid-column:3}
+.char-preview-box{grid-column:2;grid-row:1}
 .char-filmstrip{display:flex;flex-direction:column;gap:var(--s-2);min-height:0}
-.char-list{display:flex;flex-direction:column;gap:var(--s-2);min-height:0;overflow-y:auto;
-  overscroll-behavior:contain;padding-right:2px;
+.char-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));
+  gap:var(--s-2);align-content:start;min-height:0;overflow-y:auto;
+  overscroll-behavior:contain;padding-right:var(--s-2);
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
 .char-list::-webkit-scrollbar{width:6px}
 .char-list::-webkit-scrollbar-thumb{background:var(--line-2)}
 /* filmstrip: avatar quadrado; o nome fica só pra leitor de tela (a ficha diz quem é).
    A miniatura continua sendo o retrato 128² do main.js — aqui exibido a 76 px. */
-.char-row{position:relative;display:block;width:76px;height:76px;flex:0 0 76px;padding:0;cursor:pointer;
+/* Ladrilho quadrado de grade. Sem largura fixa: quem dimensiona é a coluna do grid, então
+   a mesma regra serve de 3 a 6 colunas conforme a janela. */
+.char-row{position:relative;display:block;width:100%;aspect-ratio:1;padding:0;cursor:pointer;
   background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);clip-path:var(--cut-sm);
-  transition:border-color var(--t) var(--ease),transform var(--t) var(--ease)}
+  transition:border-color var(--t) var(--ease),transform var(--t) var(--ease),box-shadow var(--t) var(--ease)}
 .char-row img{width:100%;height:100%;display:block;object-fit:cover}
 .char-row span{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.char-row:hover,.char-row:focus-visible{border-color:var(--line-2);transform:translateX(3px)}
+/* translateX virou scale: numa grade o deslocamento lateral empurra o ladrilho pra debaixo
+   do vizinho, e a leitura de "qual está sob o cursor" se perde. */
+.char-row:hover,.char-row:focus-visible{border-color:var(--line-2);transform:scale(1.06);z-index:1}
 /* SELECIONADO: amarelo da faixa (era ciano do sistema — ciano é foco, não escolha) */
-.char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);box-shadow:inset 3px 0 0 var(--br-faixa)}
+.char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);
+  box-shadow:0 0 0 1px var(--br-faixa),0 6px 18px rgba(0,0,0,.55);transform:scale(1.04);z-index:2}
 .strip-arrow{background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);color:var(--ink-300);cursor:pointer;
   font-size:14px;line-height:1;padding:6px 0;clip-path:var(--cut-sm);
   transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
