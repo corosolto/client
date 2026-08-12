@@ -56,6 +56,10 @@ jobs:
         run: npm run docs:check
       - name: ARCH.md gerado está em dia
         run: npm run arch:check
+      # Precisa de rede, por isso NÃO entra no check:deploy (que roda dentro do
+      # build da Vercel). Vulnerabilidade nova em dep de produção reprova aqui.
+      - name: Dependência de produção sem vulnerabilidade nova
+        run: npm run eval:deps
       - name: Manifesto de wallpapers está em dia
         run: npm run media:check
       - name: Texto público sem travessão
