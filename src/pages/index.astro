@@ -317,8 +317,12 @@ const IMPORTMAP = JSON.stringify({
           partes.push(a && a.message ? a.message : String(a));
         }
         var m = partes.join(' ');
-        showDebug('console', m, (arguments[0] && arguments[0].stack) || null);
-        reporta('console', m, null, (arguments[0] && arguments[0].stack) || null);
+        var pilha = (arguments[0] && arguments[0].stack) || null;
+        // mesma guarda dos outros dois caminhos: extensão que loga não abre overlay
+        // nem come a cota de dez envios do jogo (KNOWN-BUGS.md, BUG-51).
+        var interna = origemDoJogo(null, pilha, m);
+        if (interna) showDebug('console', m, pilha);
+        reporta('console', m, null, pilha, !interna);
       }catch(_){}
     };
   }catch(_){}

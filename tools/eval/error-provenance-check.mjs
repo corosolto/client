@@ -7,7 +7,7 @@ const mutants = [
   'sem-extensao', 'sem-cross-origin', 'filtro-amplo',
   'sem-api', 'sem-early-return',
   'sem-workflow', 'abre-externo',
-  'sem-cliente', 'cliente-mensagem-url', 'sem-teto-externo', 'debug-externo',
+  'sem-cliente', 'cliente-mensagem-url', 'sem-teto-externo', 'debug-externo', 'console-sem-origem',
   'cache-antes-origem',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
@@ -58,6 +58,11 @@ if (mutant === 'sem-teto-externo') page = mutate(page,
 if (mutant === 'debug-externo') page = mutate(page,
   "if (interna) showDebug('error'",
   "showDebug('error'");
+/* O console foi o terceiro caminho e o único sem a guarda: extensão que chama
+   console.error abria overlay e comia a cota interna (greptile, PR #202). */
+if (mutant === 'console-sem-origem') page = mutate(page,
+  "reporta('console', m, null, pilha, !interna)",
+  "reporta('console', m, null, pilha)");
 if (mutant === 'cache-antes-origem') helperSource = mutate(helperSource,
   "if (isExternalCrash(payload, ownOrigin)) return 'externo';\n  if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';",
   "if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';\n  if (isExternalCrash(payload, ownOrigin)) return 'externo';");
@@ -161,7 +166,9 @@ const clientWired = /origemDoJogo\(e\.filename, e\.error && e\.error\.stack, Str
   && /reporta\('error', msg, loc, e\.error && e\.error\.stack, !interna\)/.test(page)
   && /reporta\('promise', \(r && r\.message\) \|\| String\(r\), null, r && r\.stack, !interna\)/.test(page)
   && /if \(interna\) showDebug\('error'/.test(page)
-  && /if \(interna\) showDebug\('promise'/.test(page);
+  && /if \(interna\) showDebug\('promise'/.test(page)
+  && /if \(interna\) showDebug\('console'/.test(page)
+  && /reporta\('console', m, null, pilha, !interna\)/.test(page);
 
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
@@ -182,6 +189,7 @@ const mutantClause = {
   'sem-api': 'EP4', 'sem-early-return': 'EP4',
   'sem-workflow': 'EP5', 'abre-externo': 'EP5',
   'sem-cliente': 'EP6', 'cliente-mensagem-url': 'EP6', 'sem-teto-externo': 'EP6', 'debug-externo': 'EP6',
+  'console-sem-origem': 'EP6',
   'cache-antes-origem': 'EP7',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
