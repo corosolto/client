@@ -22,12 +22,11 @@ commit diz qual escreveu (trailer `Agent:`, convenção em `CONTRIBUTING.md`):
 [![Meshy](https://img.shields.io/badge/rig-Meshy-00c4b3)](https://www.meshy.ai)
 [![mint.gg](https://img.shields.io/badge/3D-mint.gg-8a2be2)](https://mint.gg)
 
-![CORO SOLTO: Treta Suprema — arena de sniper estilo CS 1.6 numa Brasília fictícia](public/og-image.jpg)
+![CORO SOLTO: Treta Suprema — FPS satírico de navegador com facções brasileiras](public/og-image.jpg)
 
-**FPS gratuito de navegador em Three.js**: arena de sniper estilo CS 1.6
-(`praca_poderes`) numa Brasília fictícia e satírica. Facções, personagens originais,
-mapas, arsenal, bots, rounds e Capture the Flag. Sem download, sem instalação,
-sem cadastro.
+**FPS gratuito de navegador em Three.js**: 5 facções brasileiras caricatas, 44
+personagens originais, 5 mapas satíricos e 26 armas — rounds e Capture the Flag
+contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 <!-- BEGIN:GERADO:numeros — não edite à mão, rode `npm run docs` -->
 

@@ -1,8 +1,9 @@
 # CORO SOLTO: Treta Suprema
 
-> FPS gratuito de navegador, estilo Counter-Strike 1.6, feito em Three.js.
-> Arena de sniper satírica numa Brasília fictícia. Roda em qualquer navegador
-> de desktop: sem download, sem instalação, sem cadastro, sem custo.
+> FPS gratuito de navegador, feito em Three.js. 5 facções brasileiras
+> caricatas, 44 personagens, 5 mapas e 26 armas — rounds e Capture the Flag
+> contra bots. Roda em qualquer navegador de desktop: sem download, sem
+> instalação, sem cadastro, sem custo.
 > O jogo já se chamou **CS BRASIL** — é o mesmo jogo, e o domínio segue o mesmo.
 
 Site: https://www.csbrasil.online
@@ -11,8 +12,9 @@ Código: https://github.com/rubenmarcus/csbrasil (AGPL-3.0)
 ## O que é, em uma frase
 
 Um jogo de tiro em primeira pessoa que roda direto na aba do navegador, em que
-cinco facções brasileiras caricatas se enfrentam numa reinterpretação do mapa
-`praca_poderes` do CS 1.6 ambientada em Brasília.
+cinco facções brasileiras caricatas se enfrentam em rounds e Capture the Flag.
+O mapa de estreia nasceu como reinterpretação do `awp_map` do CS 1.6 ambientada
+em Brasília; hoje são 5 mapas originais.
 
 ## Fatos verificáveis (use estes números)
 
