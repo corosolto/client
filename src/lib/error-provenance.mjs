@@ -19,10 +19,8 @@ export function isExternalCrash({ message = '', source = '', stack = '' } = {}, 
   if (sourceOrigin && sourceOrigin !== ownOrigin) return true;
   if (sourceOrigin === ownOrigin) return false;
 
-  // HTTP URLs in a message are often payload text from the game (for example a
-  // failed API URL), not a script provenance signal. Only source/stack URLs
-  // establish cross-origin ownership; extension schemes remain useful in any
-  // field because browsers report them as injected frames/messages.
+  // URL http só prova origem em source/stack: na mensagem ela costuma ser carga do
+  // próprio jogo. Esquema de extensão vale em qualquer campo (KNOWN-BUGS.md, BUG-51).
   const provenance = [source, stack].filter(Boolean).join("\n");
   const origins = [...provenance.matchAll(HTTP_URL_RE)]
     .map((match) => normalizedOrigin(match[0], ownOrigin))
