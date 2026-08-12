@@ -120,8 +120,45 @@
   --sh-text:0 1px 3px rgba(0,0,0,.85);
   /* Contorno, não só sombra: um blur de 2px em preto .95 encosta no glifo e vira a
      "cor de fundo" real do texto. Sobre areia do Piscinão (L*~78) ou parede branca do
-     praca_poderes a sombra difusa antiga não movia a agulha — o halo colado move. */
-  --sh-hud:0 0 2px rgba(0,0,0,.95),0 1px 3px rgba(0,0,0,.9),0 0 10px rgba(0,0,0,.55);
+     praca_poderes a sombra difusa antiga não movia a agulha — o halo colado move.
+
+     REDOSADO PRO AZULEJO (BLOCO 2). O halo acima ainda era feito só de BORRÕES, e borrão
+     ESPALHA a tinta em vez de construir cama. Medido nas capturas desta branch sobre o
+     piso do Piscinão (/tmp/ui-b2-1536/06-hud.png, piso cru L=0,418), comparando o pico do
+     glifo com a mediana do leito imediato:
+         timer 1:37 ......... 2,23:1      100 (vida) ......... 1,40:1
+         RODADA 1/5 ......... 1,78:1      TME 0 .............. 1,38:1
+         TMB 0 .............. 1,78:1      rótulo VIDA ........ 1,26:1
+         AK-47 "BATE-ESTACA"  2,56:1      barra de vida ...... 1,07:1
+     No MESMO quadro, os dois únicos elementos com chapa escura davam 8,19:1 (hint [E]) e
+     8,87:1 (killfeed). Ou seja: o mecanismo não estava errado, a dose estava — o leito
+     ficava em L=0,35..0,61, quase o piso cru. O anel de baixo é de raio ZERO em 8 direções:
+     raio zero não espalha, então ele fecha 1px OPACO em volta do glifo. Anel translúcido
+     herda a cena; foi exatamente por isso que .5 e os borrões falharam sobre branco.
+
+     POR QUE ANEL E NÃO SCRIM DE VOLTA: anel só põe tinta ONDE JÁ EXISTE GLIFO — o mapa
+     continua aparecendo entre as letras, e em mapa ESCURO o anel é preto sobre escuro,
+     isto é, invisível. Custo ~0 onde não precisa. Scrim cobraria oclusão em todo mapa, e
+     ainda por cima cobraria de graça: `alfaScrim` da régua foi zerado quando o scrim saiu
+     (ui-check.mjs), então gradiente novo escureceria o jogo por ZERO crédito medido.
+
+     SOMBRA NÃO PINTA POR CIMA DO GLIFO, só atrás. É o que deixa o anel descer até o rótulo
+     de 12px sem repetir o problema anotado em :870 (lá o traço de 3px comia a letra).
+
+     NÃO APAGUE A CAMADA `0 0 2px rgba(0,0,0,.95)`. Ela é o halo de contato que amacia a
+     passagem do anel duro pra cena (sem ela o texto fica com cara de adesivo recortado) —
+     E é a ASSINATURA QUE A RÉGUA PROCURA: ui-check.mjs:394 só concede o crédito de contorno
+     se o text-shadow casar `/0 0 2px/` E `/rgba\(0,0,0,\.9x\)/`. É casamento de SUBSTRING
+     do valor antigo, não medição do anel. Quem "limpar" essa camada derruba a UI1 inteira
+     pra ~1,03:1 sem ter mexido em um pixel do render (foi o que aconteceu no primeiro
+     rascunho deste bloco). O valor abaixo é SUPERCONJUNTO do antigo: as três camadas
+     originais continuam lá, o anel de raio zero entrou por cima. */
+  --sh-hud:
+    1px 0 0 rgba(0,0,0,.95), -1px 0 0 rgba(0,0,0,.95),
+    0 1px 0 rgba(0,0,0,.95), 0 -1px 0 rgba(0,0,0,.95),
+    1px 1px 0 rgba(0,0,0,.88), -1px 1px 0 rgba(0,0,0,.88),
+    1px -1px 0 rgba(0,0,0,.88), -1px -1px 0 rgba(0,0,0,.88),
+    0 0 2px rgba(0,0,0,.95), 0 1px 3px rgba(0,0,0,.9), 0 0 10px rgba(0,0,0,.55);
   --scrim:rgba(var(--bg-900-rgb),.82);
 
   /* ---- estados ---- */
@@ -690,8 +727,14 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 
    `#pickup-hint` e `#respawn-overlay` MANTÊM fundo próprio: são avisos passageiros, não
    o HUD permanente de que o dono falou. */
-/* contorno forte só nos ALGARISMOS grandes — é onde a leitura acontece a 2m da tela */
-#hp-num,#ammo,#round-time{paint-order:stroke fill;-webkit-text-stroke:3px rgba(0,0,0,.5)}
+/* contorno forte só nos ALGARISMOS grandes — é onde a leitura acontece a 2m da tela.
+   A LARGURA NÃO MUDA (3px), a OPACIDADE sim (.5 -> .92). O que reprovava sobre azulejo era
+   o anel deixar o piso passar através dele: .5 de preto sobre o piso medido (L=0,418) para
+   em L=0,13, e o "100" entregou 1,40:1. Opaco, o leito vai a ~L=0,02 e o mesmo algarismo
+   passa dos 3:1 de texto grande com folga. Mexer na LARGURA seria caro à toa: a soma de
+   altura do bloco superior está conferida linha a linha em :779 e depende dessa geometria.
+   `paint-order:stroke fill` continua sendo o que impede o traço de comer o algarismo. */
+#hp-num,#ammo,#round-time{paint-order:stroke fill;-webkit-text-stroke:3px rgba(0,0,0,.92)}
 #radar{position:absolute;top:36px;left:68px;opacity:.92;border-radius:50%;
   box-shadow:0 0 0 1px rgba(120,220,220,.10),0 2px 10px rgba(0,0,0,.45)}
 #radio-log{position:absolute;top:194px;left:68px;font-size:13px;color:var(--cs);text-shadow:var(--sh-hud)}
@@ -774,7 +817,12 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #prot-badge{position:absolute;left:68px;bottom:108px;
   font-weight:700;font-size:var(--fs-200);letter-spacing:var(--tr-2);color:var(--am);
   text-shadow:var(--sh-hud);pointer-events:none}
-#prot-badge svg{vertical-align:-2px;margin-right:5px}   /* inline: flex separava o "3" do "s" */
+/* O ESCUDO É SVG, e SVG não recebe text-shadow — o anel do --sh-hud passa longe dele. Ele é
+   `fill:currentColor`, ou seja, âmbar (--am #f3b958, L=0,548) contra o azulejo (L=0,418):
+   1,25:1, um símbolo que simplesmente não existe sobre piso claro. `drop-shadow` contorna a
+   silhueta real do ícone — mesmo recurso que o #dmg-dir já usa logo abaixo. */
+#prot-badge svg{vertical-align:-2px;margin-right:5px;   /* inline: flex separava o "3" do "s" */
+  filter:drop-shadow(0 0 1px rgba(0,0,0,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 /* --- BLOCO SUPERIOR: altura DETERMINÍSTICA ---------------------------------
    O bug da barra de CTF sobre "RODADA 1" era aritmética de caixa: #round-time
    não tinha line-height, então o Rajdhani em `normal` (~1.55em) empurrava o
@@ -793,8 +841,23 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    que segura o contraste sobre parede branca agora que não há mais fundo. */
 .team-score{font-size:var(--fs-300);font-weight:700;letter-spacing:var(--tr-2);line-height:var(--lh-snug);
   padding:var(--s-1) var(--s-3);text-shadow:var(--sh-hud)}
-.ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
-.ts-b{color:#a9f0b6;border-right:3px solid var(--team-b)}
+/* O TRILHO É OBJETO GRÁFICO, e objeto gráfico não recebe crédito de contorno da UI1 — o
+   --sh-hud do texto acima não alcança a tarja. Medido sobre o azulejo (L=0,418): o trilho
+   vermelho (#e03232, L=0,150) dava 2,34:1 e o VERDE (#1faa4d, L=0,296) dava 1,35:1, isto é,
+   sumia por completo — que é o que se vê no "TMB 0" da captura. As duas cores de time foram
+   escolhidas contra fundo ESCURO, onde elas são as claras da dupla; sobre branco elas viram
+   as escuras, e a marca de time deixa de existir.
+   A aresta preta de 1px de cada lado resolve sem tocar na cor do time (a identidade é a
+   MATIZ, e ela fica): o par externo sai de `box-shadow` normal, o interno de `inset`, que é
+   o único jeito de pintar rente ao trilho sem embrulhar o chip num wrapper novo — e wrapper
+   novo aqui custaria id, que é o que não se mexe. Nada de `filter` porque ele pegaria o
+   texto junto e dobraria a sombra do glifo.
+   Contas: trilho contra aresta = 4,0:1 (vermelho) e 6,9:1 (verde); aresta contra azulejo =
+   9,4:1. Passa dos dois lados. */
+.ts-p{color:#ff9a9a;border-left:3px solid var(--team-e);
+  box-shadow:-1px 0 0 rgba(0,0,0,.9), inset 1px 0 0 rgba(0,0,0,.9)}
+.ts-b{color:#a9f0b6;border-right:3px solid var(--team-b);
+  box-shadow:1px 0 0 rgba(0,0,0,.9), inset -1px 0 0 rgba(0,0,0,.9)}
 /* A plaquinha do bloco central saiu junto: era rgba .72 + chanfro pra segurar o "1:39"
    (branco) sobre a parede branca do praca_poderes, onde dava ~1,1:1. Quem segura agora é o
    contorno do glifo (--sh-hud + text-stroke). O padding vertical FICA: ele entra na soma
@@ -876,7 +939,24 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 /* A BARRA MANTÉM FUNDO DE PROPÓSITO: barra é OBJETO GRÁFICO e a UI1 não dá crédito de
    contorno pra objeto gráfico — sem trilho próprio não existe barra. Preenchimento em
    âmbar como na referência; o vermelho continua reservado pro alarme. */
-#hp-bar{width:200px;height:6px;background:rgba(var(--bg-900-rgb),.8);border:1px solid var(--line);overflow:hidden;margin-top:var(--s-1);clip-path:var(--cut-sm)}
+/* A BARRA FOI O PIOR NÚMERO DO HUD: 1,07:1 medido sobre o piso do Piscinão — pior que
+   qualquer texto, e ela é OBJETO GRÁFICO ESSENCIAL, que a UI1 exige >=3:1 e à qual não dá
+   crédito nenhum de contorno (ui-check.mjs:480). Três coisas somavam pra isso:
+     1. com 100 de vida o preenchimento cobre a barra inteira, então o trilho escuro NÃO
+        aparece — quem encosta no cenário é o âmbar (#ffc93f, L=0,632) contra o azulejo
+        (L=0,418). Dá 1,4:1 e some. O trilho só salvava barra pela metade.
+     2. `--line` (#34302b) em 1px é aresta de tela escura; sobre branco, 1px de cinza-terra
+        não registra a separação.
+     3. o fundo em .8 era TINGIMENTO, não fundo — a mesma lição que o killfeed pagou em
+        :845, onde .82 -> .92 foi o que devolveu leitura.
+   A aresta é feita com `filter:drop-shadow` e NÃO com `box-shadow` de propósito: `clip-path`
+   recorta box-shadow (o anel sumiria), enquanto o filtro roda DEPOIS do recorte e acompanha
+   o chanfro. Assim a barra ganha ~2px de aresta preta sem crescer 1px de altura — a caixa
+   não muda, e o `#prot-badge` logo acima (bottom:108px) não precisa ser reconferido.
+   Contas: âmbar contra a aresta = 13,6:1; a aresta contra o azulejo = 8,0:1. Passa dos dois
+   lados, que é o que "objeto gráfico legível" quer dizer aqui. */
+#hp-bar{width:200px;height:6px;background:rgba(var(--bg-900-rgb),.92);border:1px solid rgba(0,0,0,.9);overflow:hidden;margin-top:var(--s-1);clip-path:var(--cut-sm);
+  filter:drop-shadow(0 0 1px rgba(0,0,0,.85)) drop-shadow(0 1px 2px rgba(0,0,0,.55))}
 #hp-fill{height:100%;width:100%;background:var(--br-faixa);transition:width var(--t),background var(--t-fast)}
 #hp-fill.low{background:var(--crit)}
 #weapon-hud{position:absolute;right:48px;bottom:168px;display:flex;flex-direction:column;
