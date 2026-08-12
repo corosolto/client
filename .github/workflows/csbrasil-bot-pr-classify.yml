@@ -85,6 +85,7 @@ jobs:
       - name: Gate on Greptile presence
         run: |
           gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-greptile.json
+          python3 scripts/ci/greptile_gate.py --selftest
           python3 scripts/ci/greptile_gate.py < /tmp/pr-greptile.json > /tmp/pr-greptile-labels.json
       - name: Apply labels
         run: |

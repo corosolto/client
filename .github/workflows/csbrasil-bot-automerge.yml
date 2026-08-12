@@ -48,7 +48,11 @@ jobs:
       - name: Fetch PR status
         run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files > /tmp/automerge.json
       - name: Check eligibility
-        run: python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
+        # O autoteste roda ANTES da decisão: este script mescla sem humano no
+        # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
+        run: |
+          python3 scripts/ci/check_automerge.py --selftest
+          python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
       - name: Merge when eligible
         run: |
           python3 - <<'PY'

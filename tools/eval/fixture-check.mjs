@@ -33,10 +33,7 @@ const base = arg('base') || 'origin/main';
 /* Dívida herdada: script de decisão que nasceu sem fixture. A lista só encolhe.
    Quem tocar num destes escreve o `--selftest` no mesmo PR. */
 const SEM_FIXTURE = new Set([
-  'scripts/ci/check_automerge.py',
-  'scripts/ci/dco_check.py',
   'scripts/ci/ensure_labels.py',
-  'scripts/ci/greptile_gate.py',
   'scripts/ci/issue_review.py',
   'scripts/ci/issue_sweep.py',
   'scripts/ci/issue_triage.py',
