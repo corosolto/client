@@ -44,8 +44,23 @@ export const GLB_CHARS = new Set([
   'mariabonita', 'saci', 'lampiao', 'lobisomem', 'bandeirante', 'cuca', 'curupira', 'boto', 'zumbi',
   // Novas facções — fatias verticais da spec 0002; a facção só fica ready com 8/8.
   'camera-roxa', 'microfonildo', 'programador-virado', 'designer-ux', 'lenda-lanhouse', 'motoca-cachorro-loko', 'doidinho-bairro',
-  'profeta-calcada',
+  'profeta-calcada', 'gilbomes',
 ]);
+
+/* ESTE SET É MANTIDO À MÃO, E ISSO JÁ CUSTOU CARO — TRÊS VEZES EM 12/08.
+   Personagem que entra no `characters.js` e esquece de entrar AQUI não carrega o GLB
+   (cai no procedural) e, pior, some das réguas: a `select-inflate.mjs:114` filtra o
+   elenco por `GLB_CHARS`, então o personagem novo não é medido e nasce invisível para
+   o portão. Foi exatamente o que aconteceu com o `gilbomes`, acrescentado ao roster e
+   ao mapa de armas e esquecido aqui.
+
+   É o mesmo modo de falha do `gl-shots.mjs` (lista de mapas fixa em 5 enquanto o jogo
+   foi a 10, e os 5 novos nunca foram fotografados) e do `g2ui-map-previews.mjs`. Lista
+   à mão paralela a um registro é dívida que cobra juros em silêncio.
+
+   O CONSERTO DE VERDADE é uma cláusula de build que case `characters.js` × este Set ×
+   os arquivos em `public/models/characters/` e reprove divergência — este módulo roda no
+   navegador e não pode ler o disco, então tem que ser portão, não runtime. Anotado. */
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
