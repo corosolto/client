@@ -41,9 +41,9 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 27,638 lines in 34 files | `cat public/js/*.js \| wc -l` |
+| Game code | 27,639 lines in 34 files | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6,432** lines | `wc -l public/js/game.js` |
-| `main.js` | 2,001 lines | `wc -l public/js/main.js` |
+| `main.js` | 2,002 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
 | Character GLBs | 45 | `ls public/models/characters/*.glb \| wc -l` |
 | Props in GLB | 108 | `ls public/models/props/*.glb \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 5 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 14 | `ls public/*.html \| wc -l` |
-| Harness scripts | 157 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Harness scripts | 158 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Pipeline scripts | 46 | `ls tools/*.mjs \| wc -l` |
 | Written entry tasks | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
 | Version | `2.0.0-alpha.83` | `public/js/version.js` and `package.json` (match) |
@@ -271,7 +271,7 @@ And the two gates, with the exact list of what each one runs — straight from `
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters
 ```
 
 `package.json` has **82 scripts**. Keys prefixed with `//` explain why the adjacent command exists.
