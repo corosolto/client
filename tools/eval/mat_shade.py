@@ -342,7 +342,7 @@ def shade(mat, scene, env, n_normals=24, metal_factor=1.0, rough_factor=1.0, env
         elif lt['type'] == 'HemisphereLight':
             L_hemi.append((hex_to_linear(lt['color']), hex_to_linear(lt.get('ground', '#000000')), lt['intensity'] * light_mul))
         # PointLight com intensidade 0 (pool de muzzle flash) não entra; os pontos
-        # acesos do fy_havan são locais e não iluminam a arma na mão -> fora da conta.
+        # acesos do loja_h são locais e não iluminam a arma na mão -> fora da conta.
 
     out_lum = np.zeros((rough.size,), dtype=np.float64)
     out_rgb = np.zeros((rough.size, 3), dtype=np.float64)

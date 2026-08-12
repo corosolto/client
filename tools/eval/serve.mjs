@@ -1,15 +1,11 @@
 // Zero-dep static server for the eval harness: serves public/, and maps "/" to the
 // Astro page source so the game runs without fighting astro dev.
-// ATENÇÃO (07/08, commit 2a85ebc): o index.astro deixou de ser HTML literal — o `?v=`
-// e o import map viram template Astro (`set:html={IMPORTMAP}`, `?v=${V}`, com V lido do
-// package.json). Servir o fonte cru quebrava TODA ferramenta de browser do arnês
-// ("Failed to resolve module specifier three"). Aqui os dois pontos de template são
-// renderizados na mão: o MODULOS é extraído do frontmatter e o V do package.json —
-// se o frontmatter mudar de forma, ESTE bloco precisa acompanhar.
+// Espelha o import map e o hash de módulos do index.astro para o arnês local.
 // Usage: node tools/eval/serve.mjs [port]
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 
 const PORT = parseInt(process.argv[2] || '8123', 10);
 const ROOT = 'public';
@@ -24,38 +20,49 @@ const CHARACTER_EVAL_SHELL = `<!doctype html>
 async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
-  const m = src.match(/const MODULOS = \[([\s\S]*?)\];/);
-  if (!m) throw new Error('serve.mjs: MODULOS não achado no frontmatter do index.astro');
-  const modulos = [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+  const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
   const importmap = JSON.stringify({
     imports: {
       three: './vendor/three.module.js',
       'three/addons/': './vendor/addons/',
-      ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}`])),
+      ...Object.fromEntries(modulos.map((mod) => [`./js/${mod}`, `./js/${mod}?v=${V}-${JS_REV}`])),
     },
   });
-  /* Substituição GENÉRICA de atributo com template literal: `attr={`...${V}...`}`
-     vira `attr="..."`. Antes daqui havia uma regra por atributo, e só duas: o
-     importmap e o `href` do style.css.
+  /* Substituição GENÉRICA de atributo com template literal: `attr={`...`}` vira
+     `attr="..."`, resolvendo as variáveis que este renderizador conhece.
 
-     O preço de ser por-atributo, pago em 12/08: o merge da main trouxe o conserto
-     do BUG-39 — o `?v=` amarrado ao `pkg.version` — e com ele
-     `src={`/js/main.js?v=${V}`}` no lugar de um `?v=` fixo. Esse padrão não estava
-     na lista, então o atributo saía como TEXTO LITERAL, o navegador pedia
-     `/%7B%60/js/main.js?v=${V}%60%7D`, tomava 404, e o jogo parava em "CARREGANDO
-     ARENA…" com `window.__game` inexistente. Em captura headless isso aparece como
-     `waitForFunction: Timeout 900000ms` — 15 min por mapa, e o log acusa o MAPA.
-     Perdemos uma bateria inteira "descobrindo" que os mapas novos não bootavam,
-     quando nenhum mapa bootava e a culpa era deste renderizador.
+     As DUAS metades desta função nasceram do mesmo defeito, cada lado consertando
+     por um caminho, e o merge de 12/08 ficou com as duas de propósito:
+
+     - A `main` acrescentou `JS_REV` (hash de revisão dos módulos) e uma regra
+       `.replace` para o `src` do main.js. É o conserto do BUG-39: `?v=` amarrado à
+       versão + revisão, para o edge não montar a página com módulos de deploys
+       diferentes. ISSO FICA — o mecanismo é dela.
+     - A branch trocou as regras POR ATRIBUTO por esta varredura genérica. É o
+       conserto do defeito que a abordagem por-atributo cria: quando o `index.astro`
+       ganha um atributo novo com template literal, ele sai como TEXTO LITERAL, o
+       navegador pede `/%7B%60/js/main.js...%60%7D`, toma 404, e o jogo trava em
+       "CARREGANDO ARENA…" sem `window.__game`. Em captura headless isso vira
+       `waitForFunction: Timeout 900000ms` e o log acusa o MAPA — perdemos uma
+       bateria inteira "descobrindo" que os mapas novos não bootavam, quando
+       NENHUM mapa bootava e a culpa era deste renderizador.
+
+     Ficar só com a regra da main devolveria a fragilidade. Ficar só com a varredura
+     genérica DERRUBARIA O BOOT, porque o guarda dela rejeitava `${JS_REV}`. Por isso
+     as variáveis conhecidas são uma TABELA: acrescentar variável nova ao
+     index.astro é acrescentar uma linha aqui, e o que não estiver na tabela é
+     deixado intacto em vez de virar texto quebrado.
 
      LIMITE DECLARADO: isto não é o Astro. Expressão que depende de escopo de
-     runtime — `${f.crest}` dentro de um `.map()`, por exemplo — não tem como ser
-     resolvida aqui e continua vazando. São imagens decorativas (brasão), não
-     fatais para o boot; se algum dia uma delas for, o caminho é usar o Astro de
-     verdade, não engordar este regex. */
+     runtime — `${f.crest}` dentro de um `.map()` — não tem como ser resolvida aqui
+     e continua vazando de propósito. São imagens decorativas (brasão), não fatais
+     para o boot; se um dia uma delas for, o caminho é usar o Astro de verdade, não
+     engordar este regex. */
+  const VARS = { V, JS_REV };
   const attrs = (s) => s.replace(/(\w[\w:-]*)=\{`([^`]*)`\}/g, (todo, attr, corpo) => {
-    if (/\$\{(?!V\})/.test(corpo)) return todo; // depende de runtime: deixa como está
-    return `${attr}="${corpo.replaceAll('${V}', V)}"`;
+    const resolvido = corpo.replace(/\$\{(\w+)\}/g, (m, nome) => (nome in VARS ? VARS[nome] : m));
+    // sobrou `${...}` = depende de escopo de runtime: devolve intacto, não quebrado.
+    return /\$\{/.test(resolvido) ? todo : `${attr}="${resolvido}"`;
   });
   return attrs(
     src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`),

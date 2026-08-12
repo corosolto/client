@@ -32,8 +32,12 @@ jobs:
         run: npm run syntax
       - name: Telemetria wired, idempotente, atômica e monitorada
         run: npm run eval:telemetry
+      - name: Proveniência de erros externos
+        run: npm run eval:error-origin
       - name: UUID compatível com navegadores antigos
         run: npm run eval:uuid
+      - name: Orçamento de shader WebGL1
+        run: npm run eval:shaderbudget
 
       # O ARCH.md (índice por linha + tabela de conflito) é GERADO. Escrito à
       # mão ele desatualiza no primeiro commit, e uma tabela de conflito com

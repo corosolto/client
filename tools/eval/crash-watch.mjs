@@ -14,7 +14,7 @@ import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const SECS = parseFloat(process.argv[2] || '300');
-const MAP = process.argv.find(a => a.startsWith('fy_') || a.startsWith('awp')) || 'fy_ferrovelho';
+const MAP = process.argv.find(a => a.startsWith('fy_') || a.startsWith('awp')) || 'ferro_velho';
 const CTF = !process.argv.includes('--rounds');
 const BASE = process.env.BASE || 'http://localhost:8123';
 

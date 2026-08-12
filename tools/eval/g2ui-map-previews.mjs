@@ -29,22 +29,22 @@ const SHOT = 900;               // captura maior e reduz: antialias de graça
 // Pontos de vista escolhidos a olho depois da varredura de calibração.
 // pos = [x, y, z] em metros nos PÉS do jogador (o olho fica ~1,6 m acima); yaw 0 = +Z.
 // Extents reais medidos por `g.world.bounds` (04/08):
-//   awp_map  X ±35,0  Z -76..84   | fy_pool_day  X ±16,5  Z ±24,5
-//   fy_havan X ±37,5  Z ±57,5     | fy_ferrovelho X ±31,5  Z ±35,5
+//   praca_poderes  X ±35,0  Z -76..84   | piscina_treta  X ±16,5  Z ±24,5
+//   loja_h X ±37,5  Z ±57,5     | ferro_velho X ±31,5  Z ±35,5
 // `yaw` é o quadro ESCOLHIDO (o que virou o .jpg versionado em 04/08); a varredura de
 // calibração ignora esse campo e passa a lista de yaws da linha de comando.
 const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   // Esplanada em perspectiva, ministérios dos dois lados, Catedral no fundo do eixo.
-  awp_map:      { pos: [0, 8.0, 30], pitch: -0.10, yaw:  0.3 },
+  praca_poderes:      { pos: [0, 8.0, 30], pitch: -0.10, yaw:  0.3 },
   // Piscina inteira no quadro com o trampolim em primeiro plano e os cartazes na parede.
-  fy_pool_day:  { pos: [0, 3.5, 18], pitch: -0.16, yaw:  0.0 },
+  piscina_treta:  { pos: [0, 3.5, 18], pitch: -0.16, yaw:  0.0 },
   // Estátua centrada com a fachada LOJA H atrás e o estacionamento cheio na frente.
-  fy_havan:     { pos: [0, 3.0, 44], pitch: -0.12, yaw:  0.6 },
+  loja_h:     { pos: [0, 3.0, 44], pitch: -0.12, yaw:  0.6 },
   // Pilhas de carro + guindaste + rotatória: o "cânion" e a profundidade do pátio.
-  fy_ferrovelho:{ pos: [0, 5.0, 12], pitch: -0.15, yaw: -0.6 },
+  ferro_velho:{ pos: [0, 5.0, 12], pitch: -0.15, yaw: -0.6 },
   // Rua inteira do campinho até a rotunda do baile, comércio dos dois lados, faixa na
   // frente. Câmera alta e pitch fundo porque a -0,17 metade do cartaz era céu.
-  fy_quebrada:  { pos: [0, 8.0, 30], pitch: -0.30, yaw:  0.0 },
+  quebrada:  { pos: [0, 8.0, 30], pitch: -0.30, yaw:  0.0 },
 };
 const NOPOSE = process.env.NOPOSE === '1';   // captura do spawn, sem pino de posição
 const TAG = process.env.TAG || '';
@@ -63,7 +63,7 @@ if (process.argv[2] === '--write') {
 }
 
 /* ---------------- modo captura ---------------- */
-const LIST = (process.argv[2] || 'awp_map,fy_pool_day,fy_havan,fy_ferrovelho,fy_quebrada').split(',');
+const LIST = (process.argv[2] || 'praca_poderes,piscina_treta,loja_h,ferro_velho,quebrada').split(',');
 const YAWS = (process.argv[3] || '-2.4,-1.8,-1.2,-0.6,0,0.6,1.2,1.8,2.4,3.0').split(',').map(Number);
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

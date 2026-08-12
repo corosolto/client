@@ -75,7 +75,7 @@ await page.screenshot({ path: `${OUT}/g2ui-04-char.png` });
 console.log('shot 04 char');
 
 /* ---------- 05/06 pause → SAIR PRO MENU → home ---------- */
-await page.goto(`${BASE}/?debug=1&auto=E,mst&map=fy_pool_day`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=E,mst&map=piscina_treta`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
 await page.waitForTimeout(600);
 await page.evaluate(() => {
@@ -103,7 +103,7 @@ await page.screenshot({ path: `${OUT}/g2ui-06-home.png` });
 console.log('shot 06 home');
 
 /* ---------- 07 killfeed com ícones novos ---------- */
-await page.goto(`${BASE}/?debug=1&auto=E,mst&map=fy_pool_day`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=E,mst&map=piscina_treta`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
 await page.evaluate(() => {
   const g = window.__game;

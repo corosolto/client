@@ -29,7 +29,7 @@ const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
 page.on('pageerror', e => console.error('[pageerror]', e.message.slice(0, 300)));
 await page.addInitScript(() => localStorage.setItem('awpbr_nick', 'ZÉ DO AWP'));
 
-await page.goto(`${BASE}/?debug=1&lang=pt&auto=E,mst&map=awp_map`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&lang=pt&auto=E,mst&map=praca_poderes`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
 await page.waitForTimeout(1500);
 

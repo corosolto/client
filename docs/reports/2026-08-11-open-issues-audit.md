@@ -37,7 +37,7 @@ alpha.73 ou posterior, com as ações anteriores, volta imediatamente para P0.
 
 | Issues | Diagnóstico | Ação |
 |---|---|---|
-| #51 | **Válida e estrutural.** O arnês headless não atualiza `matrixWorld`; a linha de visão dos bots pode medir colisores na origem. `botsim all` também omite `fy_quebrada`. | Corrigir `harness` e `botsim`, derivar a lista do catálogo canônico, recalibrar baselines e rodar todos os mapas. |
+| #51 | **Válida e estrutural.** O arnês headless não atualiza `matrixWorld`; a linha de visão dos bots pode medir colisores na origem. `botsim all` também omite `quebrada`. | Corrigir `harness` e `botsim`, derivar a lista do catálogo canônico, recalibrar baselines e rodar todos os mapas. |
 | #49, #50, #52, #55 | **Válidas.** Proporções/personagens, pés, palmas, espessura de 12 armas e mãos sem rig de dedos continuam dívidas medidas. | Tratar como duas frentes de assets: personagens/rig e viewmodels; não tentar mascarar malha com parâmetros de câmera. |
 | #71 | **Válida em produção.** O acervo baixado é ignorado pelo Git e a produção fica apenas com a pequena coleção original. | Produzir e versionar arte original suficiente, atualizar pools e medir cobertura no navegador. |
 | #82, #83 | **Válidas e relacionadas.** Há smoke Playwright, mas ele não prova frescor do layout nem roda `eval:grafite`/`eval:select`. | Criar um gate de navegador seletivo por paths, com hash dos insumos do layout e artefatos visuais na falha. |

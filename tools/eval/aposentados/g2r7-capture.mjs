@@ -1,6 +1,6 @@
 // G2-R7 — captura comparativa da AK-herói Tripo vs AK atual (classe rifle + kit).
 // Uso: node tools/eval/aposentados/g2r7-capture.mjs <prefixo> [WxH] [extraQS]
-// Captura em fy_pool_day (outdoor claro): hip full-frame, flash na boca, crop das mãos.
+// Captura em piscina_treta (outdoor claro): hip full-frame, flash na boca, crop das mãos.
 // Sai com código 2 se houver QUALQUER erro de console/pageerror.
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -25,7 +25,7 @@ let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[page-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst${XQS}`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }
+  try { await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst${XQS}`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }
   catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });

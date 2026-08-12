@@ -42,8 +42,8 @@ não enumerada à mão:
 | licença canônica | `LICENSE` | linhas 1, 10, 42, 63 (+7)  |
 | badge + seção de licenças | `README.md` | linhas 3, 386, 392, 393 (+1)  |
 | termo que o contribuidor aceita | `CONTRIBUTING.md` | linhas 183, 186, 189  |
-| rodapé do site | `src/layouts/Layout.astro` | linha 601  |
-| JSON-LD do jogo | `src/pages/index.astro` | linha 411  |
+| rodapé do site | `src/layouts/Layout.astro` | linha 610  |
+| JSON-LD do jogo | `src/pages/index.astro` | linha 413  |
 | página `/sobre` | `src/pages/sobre.astro` | linhas 121, 124, 133  |
 | `llms.txt` (resposta para LLM) | `public/llms.txt` | linhas 9, 46  |
 | rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |
@@ -119,7 +119,7 @@ com trabalho mesclado**:
 
 | Quem | O que entrou | Onde |
 |---|---|---|
-| `daltonfontes` | o mapa `fy_pool_day` ("Piscinão da Treta"), 1 commit | está nesta branch |
+| `daltonfontes` | o mapa `piscina_treta` ("Piscinão da Treta"), 1 commit | está nesta branch |
 | **William Oliveira** (`@woliveiras`) | o **cliente Godot desktop**, 13 commits, PR #14 mesclado em 18/07/2026 | **`main` — não está nesta branch** |
 
 :::caution O `git shortlog` da branch de trabalho NÃO enumera os contribuidores do projeto

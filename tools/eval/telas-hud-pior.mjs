@@ -2,19 +2,19 @@
 
    O scrim de canto do #hud saiu (pedido do dono: "o placar e as informações embaixo não
    precisam de background"). Quem segura o contraste agora é o contorno no glifo. Uma
-   captura no awp_map não prova nada disso: o que motivou o scrim foi a AREIA DO PISCINÃO,
+   captura no praca_poderes não prova nada disso: o que motivou o scrim foi a AREIA DO PISCINÃO,
    RGB (214,196,164) — o fundo mais claro dos 4 mapas, anotado em style.css. Então a
    prova tem que ser tirada lá, com a câmera baixada pra encher a tela de areia.
 
    Uso: BASE=http://localhost:4321 node tools/eval/telas-hud-pior.mjs
-        MAP=fy_pool_day PITCH=0.5 ... */
+        MAP=piscina_treta PITCH=0.5 ... */
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const OUT = process.env.OUT || '/tmp/telas7/hud';
 const BASE = process.env.BASE || 'http://localhost:4321';
-const MAP = process.env.MAP || 'fy_pool_day';
+const MAP = process.env.MAP || 'piscina_treta';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;

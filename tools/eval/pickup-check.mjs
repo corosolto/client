@@ -10,7 +10,7 @@
    próximo com `_freeSpot`, que resolve COLISÃO no plano XZ — e só. A ALTURA sai de
    `_dropWeapon(x, z, w, true, TOP)` com TOP = 0,12 ABSOLUTO (game.js:1826 e 4336):
    um número de mundo, não `groundHeightAt(x,z) + 0,12`. Em mapa plano os dois são a
-   mesma coisa e ninguém nota. Em fy_pool_day o chão da piscina vale −1,5 m
+   mesma coisa e ninguém nota. Em piscina_treta o chão da piscina vale −1,5 m
    (map_piscina.js:267 -> poolDepth) e as duas contas divergem por 1,6 m.
    Resultado medido: armas do armário caem DENTRO da piscina, e o grafo de navegação
    daquele mapa nem sequer tem waypoint lá — map_piscina.js:281 só cria nó onde
@@ -127,9 +127,9 @@ for (const mapId of MAP_IDS) {
   };
 
   /* CONTROLE DE RESOLUÇÃO DO GRAFO — sem isto o número de (a) é ilegível.
-     O grafo é uma GRADE: STEP 4,4 m em awp_map/praca_old (map_brasilia.js:1358,
+     O grafo é uma GRADE: STEP 4,4 m em praca_poderes/praca_old (map_brasilia.js:1358,
      map.js:334) e 3,4 m nos outros três. Numa grade de passo S o pior ponto andável
-     do mundo já fica S/√2 do nó mais próximo — 3,11 m em awp_map. Ou seja: o raio de
+     do mundo já fica S/√2 do nó mais próximo — 3,11 m em praca_poderes. Ou seja: o raio de
      3 m sozinho reprova pontos PERFEITAMENTE alcançáveis nos mapas de grade grossa.
      Então medimos o MESMO raio nos PONTOS DE SPAWN, que são por definição lugares que
      o jogo considera bons: se o spawn também está a > 3 m de todo nó, o vermelho de
@@ -147,7 +147,7 @@ for (const mapId of MAP_IDS) {
               O grafo é uma grade de passo 3,4-4,4 m, então o pior ponto perfeitamente
               andável do mundo já nasce a S/√2 = 3,11 m do nó mais próximo: acusava 74
               falsos-positivos das 202 armas de armário. Pior ainda, ele nem olha se o nó
-              está na MESMA componente conexa: em fy_havan o grafo TEM nós dentro do bolsão
+              está na MESMA componente conexa: em loja_h o grafo TEM nós dentro do bolsão
               atrás do colisor {x −28..28, z −42,5..−41,5} (map_havan.js:1207), numa
               componente que nenhum spawn alcança — e o critério dava VERDE nas 2 armas de lá.
        (a-v2) "existe reta andável do spawn até a arma" (commit 5f8b5a5, revertido).

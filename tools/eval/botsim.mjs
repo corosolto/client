@@ -257,7 +257,7 @@ function runMap(mapId, textures, seed) {
 }
 
 const textures = initTextures();
-const ids = ONLY === 'all' ? ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho'] : [ONLY];
+const ids = ONLY === 'all' ? ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho'] : [ONLY];
 /* 9 SEMENTES, NÃO 3 — e o motivo é medido, não estético.
    `THREE.generateUUID` consome 4 `Math.random()` por Texture criada (three.module.js:318).
    Como o botsim monkeypatcha `Math.random` com um xorshift semeado pra ser determinístico,

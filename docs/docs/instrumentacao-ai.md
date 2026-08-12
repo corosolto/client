@@ -42,7 +42,7 @@ E a regra que vale mais que as três (`SKILL.md:18`):
 
 > O que faz a diferença aqui **não é o número de agentes** — é que cada afirmação
 > carregue um número e um `arquivo:linha`. Uma crítica que diz "melhore a iluminação" é
-> ruído. Uma que diz "22,7% dos pixels de `game-awp_map-169-a.png` estão em L\* < 3 e a
+> ruído. Uma que diz "22,7% dos pixels de `game-praca_poderes-169-a.png` estão em L\* < 3 e a
 > causa é `bloom.js:18` `power=1.25`" é trabalho.
 
 ## O ciclo, em ordem
@@ -172,7 +172,7 @@ declarada do projeto — trate como tal.
 | Orientação de arma medida no olho | Sempre medição objetiva (`weapontest.html`, `weapon-capture.mjs`) |
 | Preload de todas as viewmodels | Foi o crash "Aw Snap" (OOM). Hoje é lazy-load. Não desfaça |
 | Calibrar exposição pelo frame mais escuro | Uma rodada fez isso e inverteu a ordem entre mapas: o Piscinão, mapa de praia, virou o mais escuro. Calibre pela média dos 8 frames |
-| Mexer em `.js` sem bumpar o `?v=` | O import map do `index.astro` serve módulo velho do cache. Já custou dias de "correção que não chegava" |
+| Módulo publicado fora do manifesto de cache | A URL não muda com os bytes, ou o import map anuncia arquivo podado. SB7 confere grafo, conteúdo e fronteira de publicação |
 | `//` em CSS | Não é comentário. O parser engole o bloco seguinte. Já matou um `@keyframes` inteiro |
 | Duas capturas headless em paralelo | Derruba o boot e falsifica a medição |
 

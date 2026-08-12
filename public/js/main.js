@@ -1237,10 +1237,10 @@ $('map-next').onclick = () => stepMap(1);
    Abre pelo cartaz do mapa no setup. Lê o MESMO estado do carrossel (currentMap/mapIdx) —
    trocar aqui troca lá, e vice-versa. CONTINUAR segue o fluxo normal (nick → facção). */
 const MAP_DESC = {
-  awp_map: 'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.',
-  fy_pool_day: 'Salão fechado, eco de tiro e briga de faca no raso. Quem controla a borda controla o round.',
-  fy_havan: 'Estacionamento de megastore: corredores de vaga, mezanino de sniper e a estátua te olhando atirar.',
-  fy_ferrovelho: 'Um ferro velho gigantesco onde tudo pode ser arma e toda sombra pode esconder um traira.',
+  praca_poderes: 'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.',
+  piscina_treta: 'Salão fechado, eco de tiro e briga de faca no raso. Quem controla a borda controla o round.',
+  loja_h: 'Estacionamento de megastore: corredores de vaga, mezanino de sniper e a estátua te olhando atirar.',
+  ferro_velho: 'Um ferro velho gigantesco onde tudo pode ser arma e toda sombra pode esconder um traira.',
 };
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
@@ -1944,7 +1944,7 @@ qualEl.onchange = () => { settings.quality = qualEl.value; saveSettings(); if (g
 // Cor da mira: a mira sai do sistema de cor do HUD (ciano = sistema, âmbar = objetivo,
 // vermelho = crítico) e passa a ser escolha do jogador — puro CSS var, sem custo por frame.
 // PADRÃO = CIANO, não branco. O branco foi medido em 1,28:1 contra a parede clara do
-// awp_map (janela de 44×42 px em volta da mira) — invisível. O ciano é o único matiz que
+// praca_poderes (janela de 44×42 px em volta da mira) — invisível. O ciano é o único matiz que
 // nenhum dos 4 cenários ocupa. Mantido em UM lugar só (XHAIR_DEF) pra não divergir do CSS.
 const XHAIR_DEF = '#4fe8e0';
 const xhairEl = $('set-xhair');

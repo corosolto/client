@@ -1,4 +1,4 @@
-// Piscinão de Ramos — balneário público BR ao ar livre (fy_pool_day). Baseado no real: uma
+// Piscinão de Ramos — balneário público BR ao ar livre (piscina_treta). Baseado no real: uma
 // LAGOA grande central anelada por AREIA, com instalações ao redor (quiosques, quadra de
 // vôlei + arquibancada) que viram COVER e CORREDORES. Maior e seccionado (não só aberto):
 // corredores de proteção nos respawns e nas laterais. Mesmo contrato buildWorld do map.js.
@@ -24,7 +24,7 @@ const WALL_H = 3.4;                // muro-perímetro baixo, open-air (céu aber
 const R2_BLUES = new URLSearchParams(location.search).get('poolsat') === '1';
 
 /* ---------- texturas procedurais inline ---------- */
-/* MEMO DE TEXTURA (rodada 3) — MEDIDO: 578 texturas no fy_pool_day. Boa parte é a MESMA
+/* MEMO DE TEXTURA (rodada 3) — MEDIDO: 578 texturas no piscina_treta. Boa parte é a MESMA
    imagem gerada de novo: `concreteTex(1,2)` aparece em 3 materiais, `bandTex(8)` nasce
    duas vezes (um por lado do corredor), `stripeTex('#a85130',61)` idem, e cada uma dessas
    chamadas rasteriza um canvas inteiro sob SwiftShader — que é onde o tempo de carga vai.
@@ -2025,7 +2025,7 @@ export function buildPoolDay(scene, T) {
   // mesmo contraste do morro no fundo — sem gradiente não há profundidade. A exponencial
   // dá 3,7 % a 25 m, 27 % a 72 m (a lane spawn↔spawn) e 85 % a 175 m: o alvo continua legível
   // e o fundo finalmente recua. Cor-base = azul do céu MEDIDO logo acima da favela.
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_pool_day');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('piscina_treta');
   // disco solar + nuvens (sprites) — "dia de sol de bairro", não box bege (crítico R6)
   {
     const sunSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.sunSprite, transparent: true, fog: false, depthWrite: false }));

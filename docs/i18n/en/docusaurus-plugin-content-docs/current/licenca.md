@@ -119,7 +119,7 @@ contributors with merged work**:
 
 | Who | What came in | Where |
 |---|---|---|
-| `daltonfontes` | the `fy_pool_day` map ("Piscinão da Treta"), 1 commit | is on this branch |
+| `daltonfontes` | the `piscina_treta` map ("Piscinão da Treta"), 1 commit | is on this branch |
 | **William Oliveira** (`@woliveiras`) | the **Godot desktop client**, 13 commits, PR #14 merged on 18/07/2026 | **`main` — not on this branch** |
 
 :::caution The working branch's `git shortlog` does NOT enumerate the project's contributors

@@ -1,53 +1,20 @@
 ---
-/* O import map usa a versão do package.json como cache-bust único. */
+/* Módulos crus precisam mudar de URL no mesmo build em que o conteúdo muda. */
+import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 import pkg from '../../package.json';
 import { FACTIONS } from '../../public/js/factions.js';
 
 const V = pkg.version;
-const MODULOS = [
-  "main.js",
-  "factions.js",
-  "game.js",
-  "glbchars.js",
-  "weapons.js",
-  "characters.js",
-  "audio.js",
-  "maps.js",
-  "map_brasilia.js",
-  "map_piscina.js",
-  "map_havan.js",
-  "map_ferrovelho.js",
-  "map_quebrada.js",
-  "map_escadao.js",
-  "map_campomorro.js",
-  "map_lajes.js",
-  "map_corrego.js",
-  "map_mansao.js",
-  "map_decals.js",
-  "graffiti_pass.js",
-  "graffiti_layout.js",
-  "mapprops.js",
-  "fparms.js",
-  "vmattach.js",
-  "stylize.js",
-  "bloom.js",
-  "gpuparticles.js",
-  "textures.js",
-  "glcontext.js",
-  "version.js",
-  "i18n.js",
-  "handik.js",
-  "springs.js",
-  "botbrain/brain.js",
-  "botbrain/features.js",
-  "botbrain/recorder.js",
-  "botbrain/sense.js"
-];
+/* A lista à mão saiu daqui (BUG-39): `moduleCacheManifest()` varre `public/js` inteiro,
+   então mapa novo entra no import map sozinho — os 5 mapas que esta branch acrescentou
+   inclusive. O `revision` é o hash do CONTEÚDO dos módulos: sem ele, `?v=` só mudava
+   quando `pkg.version` mudava e o edge servia JS velho. */
+const { modules: MODULOS, revision: JS_REV } = moduleCacheManifest();
 const IMPORTMAP = JSON.stringify({
   imports: {
     three: `./vendor/three.module.js?v=${V}`,
     'three/addons/': './vendor/addons/',
-    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}`])),
+    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}-${JS_REV}`])),
   },
 });
 ---
@@ -59,9 +26,10 @@ const IMPORTMAP = JSON.stringify({
 <script is:inline>
 (function(){
   var TETO_SESSAO = 10;      // no máximo 10 erros DISTINTOS por carregamento de página
+  var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -130,14 +98,20 @@ const IMPORTMAP = JSON.stringify({
     return c;
   }
 
-  function reporta(kind, msg, source, stack){
+  function reporta(kind, msg, source, stack, externa){
     if (reportando) return null;                           // guarda de laço
     try{
       var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
       if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
       if (!enviados[fp]) {
-        if (nEnviados >= TETO_SESSAO) return null;
-        enviados[fp] = 1; nEnviados++;
+        if (externa) {
+          if (nExternos >= TETO_EXTERNO) return null;
+          nExternos++;
+        } else {
+          if (nEnviados >= TETO_SESSAO) return null;
+          nEnviados++;
+        }
+        enviados[fp] = 1;
       }
       reportando = true;
       var c = contexto();
@@ -163,10 +137,32 @@ const IMPORTMAP = JSON.stringify({
     var msg = String((r && r.message) || r || '');
     return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
   }
-  function origemDoJogo(source){
-    if (!source) return true;
-    if (/^(chrome|moz|safari-web)-extension:\/\//i.test(source)) return false;
-    try { return new URL(source, location.href).origin === location.origin; } catch(_) { return true; }
+  /* URL http só prova origem em source/stack; na mensagem ela é payload do
+     jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
+     qualquer campo: o navegador reporta frame injetado até na mensagem (#157). */
+  function origemDoJogo(source, stack, mensagem){
+    var sourceText = String(source || '');
+    var extensao = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
+    if (extensao.test(sourceText)) return false;
+    var propria = location.origin;
+    if (sourceText && /^https?:\/\//i.test(sourceText)) {
+      try {
+        if (new URL(sourceText, location.href).origin !== propria) return false;
+        return true;
+      } catch(_) {}
+    }
+    var prova = sourceText + '\n' + String(stack || '');
+    var urls = prova.match(/https?:\/\/[^\s)'"<>]+/gi) || [];
+    var viuPropria = false, viuExterna = false;
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        if (new URL(urls[i], location.href).origin === propria) viuPropria = true;
+        else viuExterna = true;
+      } catch(_) {}
+    }
+    if (viuPropria) return true;
+    if (extensao.test(prova + '\n' + String(mensagem || ''))) return false;
+    return !viuExterna;
   }
 
   function ligaFalha(){
@@ -260,24 +256,26 @@ const IMPORTMAP = JSON.stringify({
   window.addEventListener('error', function(e){
     var loc = e.filename ? (e.filename + ':' + e.lineno + ':' + e.colno) : '';
     var msg = (e.message || e.error || '?');
+    var interna = origemDoJogo(e.filename, e.error && e.error.stack, String(msg));
     if (consoleErroNativo) {
       try { consoleErroNativo('Erro global não tratado', e.error || msg); } catch(_) {}
     }
     // A factory já registrou a falha final; o throw apenas interrompe o módulo sem renderer.
     if (window.__semWebgl && /sem_webgl/.test(String(msg))) return;
-    showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
-    reporta('error', msg, loc, e.error && e.error.stack);
-    if (!window.__CS_MAIN_READY__ && origemDoJogo(loc)) erroDoBoot = e.error || new Error(String(msg));
-    if (lancamento.ativo && origemDoJogo(loc)) lancamento.fail(e.error || new Error(String(msg)), loc);
+    if (interna) showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
+    reporta('error', msg, loc, e.error && e.error.stack, !interna);
+    if (!window.__CS_MAIN_READY__ && interna) erroDoBoot = e.error || new Error(String(msg));
+    if (lancamento.ativo && interna) lancamento.fail(e.error || new Error(String(msg)), loc);
   });
   window.addEventListener('unhandledrejection', function(e){
     var r = e.reason;
+    var interna = origemDoJogo(null, r && r.stack, String((r && r.message) || r || ''));
     if (consoleErroNativo) {
       try { consoleErroNativo('Promise rejeitada sem tratamento', r); } catch(_) {}
     }
-    showDebug('promise', (r && r.message) || String(r), r && r.stack);
-    reporta('promise', (r && r.message) || String(r), null, r && r.stack);
-    if (lancamento.ativo && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
+    if (interna) showDebug('promise', (r && r.message) || String(r), r && r.stack);
+    reporta('promise', (r && r.message) || String(r), null, r && r.stack, !interna);
+    if (lancamento.ativo && interna && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
   });
 
   /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam
@@ -324,8 +322,12 @@ const IMPORTMAP = JSON.stringify({
           partes.push(a && a.message ? a.message : String(a));
         }
         var m = partes.join(' ');
-        showDebug('console', m, (arguments[0] && arguments[0].stack) || null);
-        reporta('console', m, null, (arguments[0] && arguments[0].stack) || null);
+        var pilha = (arguments[0] && arguments[0].stack) || null;
+        // mesma guarda dos outros dois caminhos: extensão que loga não abre overlay
+        // nem come a cota de dez envios do jogo (KNOWN-BUGS.md, BUG-51).
+        var interna = origemDoJogo(null, pilha, m);
+        if (interna) showDebug('console', m, pilha);
+        reporta('console', m, null, pilha, !interna);
       }catch(_){}
     };
   }catch(_){}
@@ -333,7 +335,7 @@ const IMPORTMAP = JSON.stringify({
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
-<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo awp_map do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
+<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo praca_poderes do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
 <meta name="author" content="CORO SOLTO contributors">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -399,7 +401,7 @@ const IMPORTMAP = JSON.stringify({
       "alternateName": ["CORO SOLTO", "CS BRASIL", "CS BRASIL: Treta Suprema"],
       "url": "https://www.csbrasil.online/",
       "image": "https://www.csbrasil.online/og-image.jpg",
-      "description": "FPS de navegador gratuito e satírico: arena de sniper estilo CS 1.6 (awp_map) numa Brasília fictícia. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag.",
+      "description": "FPS de navegador gratuito e satírico: arena de sniper estilo CS 1.6 (praca_poderes) numa Brasília fictícia. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag.",
       "genre": ["Shooter", "FPS", "Comédia", "Sátira"],
       "gamePlatform": ["Web Browser", "Desktop"],
       "applicationCategory": "GameApplication",
@@ -431,7 +433,7 @@ const IMPORTMAP = JSON.stringify({
   "@id": "https://www.csbrasil.online/#faq",
   "mainEntity": [
     { "@type": "Question", "name": "O que é CORO SOLTO: Treta Suprema?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: arena de sniper estilo awp_map do CS 1.6 ambientada numa Brasília fictícia e satírica. Tem 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
+      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: arena de sniper estilo praca_poderes do CS 1.6 ambientada numa Brasília fictícia e satírica. Tem 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
     { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
       "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
     { "@type": "Question", "name": "Quais são os controles?",
@@ -594,7 +596,7 @@ const IMPORTMAP = JSON.stringify({
            ficha da partida (modo · bots · armas) LIDA EM CIMA DA ARTE, não num form. -->
       <div class="mission-visual">
       <div class="map-picker">
-        <img id="map-thumb" src="/img/map-previews/awp_map.jpg" alt="preview do mapa">
+        <img id="map-thumb" src="/img/map-previews/praca_poderes.jpg" alt="preview do mapa">
         <button id="map-mode" type="button" title="Clique pra trocar entre ROUNDS e CAPTURE THE FLAG">ROUNDS</button>
         <span id="map-dots" aria-hidden="true"></span>
         <!-- Setas do carrossel: `title` além do aria-label porque o dono reprovou duas
@@ -852,7 +854,7 @@ const IMPORTMAP = JSON.stringify({
       <!-- A mira sai do sistema de cor do HUD: quem escolhe é o jogador (CS2/Valorant). -->
       <label class="set-row">Cor da mira
         <!-- Ciano é o PADRÃO e por isso vem primeiro: é o único matiz que nenhum cenário
-             dos 4 mapas ocupa. "Branca" desceu porque some na parede do awp_map (1,28:1). -->
+             dos 4 mapas ocupa. "Branca" desceu porque some na parede do praca_poderes (1,28:1). -->
         <select id="set-xhair">
           <option value="#4fe8e0">Ciano (padrão)</option>
           <option value="#46e08a">Verde</option>
@@ -1072,6 +1074,6 @@ const IMPORTMAP = JSON.stringify({
   }
 </script>
 
-<script type="module" src={`/js/main.js?v=${V}`} is:inline></script>
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-// R7.5 tuning/capture — cena OUTDOOR CLARA (fy_pool_day). Stepping manual 16ms.
+// R7.5 tuning/capture — cena OUTDOOR CLARA (piscina_treta). Stepping manual 16ms.
 // A) flash compacto na boca do VM  B) sweep de poses ADS rifle  C) frame de kill.
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -7,7 +7,7 @@ import { mkdirSync } from 'node:fs';
 const OUT = '/tmp/gauntlet';
 mkdirSync(OUT, { recursive: true });
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';   // 127.0.0.1: Chrome headless enforcava no IPv6 de 'localhost'
-const MAP = process.env.MAP || 'fy_pool_day';
+const MAP = process.env.MAP || 'piscina_treta';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;

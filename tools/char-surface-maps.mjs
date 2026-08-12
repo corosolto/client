@@ -1,7 +1,7 @@
 /* char-surface-maps.mjs — dá normal + roughness aos personagens que só têm albedo.
    ═══════════════════════════════════════════════════════════════════════════════════
    O DEFEITO (invariante CHR5B, aviso): 27 dos 44 personagens com ZERO mapa de
-   superfície, contra 18 normalMaps no melhor mapa do mundo (fy_havan). É literalmente
+   superfície, contra 18 normalMaps no melhor mapa do mundo (loja_h). É literalmente
    o "três níveis de acabamento na mesma tela" que o dono descreveu, e ele piora
    conforme os cenários sobem de qualidade.
 

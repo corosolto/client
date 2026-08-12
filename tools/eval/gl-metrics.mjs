@@ -16,10 +16,10 @@ const browser = await chromium.launch({
 });
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : null;
 const MAPS = [
-  ['awp_map', 'P,mst'],
-  ['fy_pool_day', 'P,mst'],
-  ['fy_havan', 'B,bozo'],
-  ['fy_ferrovelho', 'B,bozo'],
+  ['praca_poderes', 'P,mst'],
+  ['piscina_treta', 'P,mst'],
+  ['loja_h', 'B,bozo'],
+  ['ferro_velho', 'B,bozo'],
 ].filter(x => !ONLY || ONLY.includes(x[0]));
 
 const out = [];

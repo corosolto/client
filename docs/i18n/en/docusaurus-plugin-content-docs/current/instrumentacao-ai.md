@@ -45,7 +45,7 @@ And the rule worth more than the three (`SKILL.md:18`):
 
 > What makes the difference here **is not the number of agents** — it is that every claim
 > carries a number and an `arquivo:linha`. A critique that says "improve the lighting" is
-> noise. One that says "22,7% of the pixels of `game-awp_map-169-a.png` are at L\* < 3 and the
+> noise. One that says "22,7% of the pixels of `game-praca_poderes-169-a.png` are at L\* < 3 and the
 > cause is `bloom.js:18` `power=1.25`" is work.
 
 ## The cycle, in order {#the-cycle-in-order}
@@ -175,7 +175,7 @@ memory of the project — treat them as such.
 | Weapon orientation measured by eye | Always objective measurement (`weapontest.html`, `weapon-capture.mjs`) |
 | Preloading all viewmodels | It was the "Aw Snap" crash (OOM). Today it is lazy-load. Do not undo it |
 | Calibrating exposure by the darkest frame | One round did that and inverted the order across maps: the Piscinão, a beach map, became the darkest. Calibrate by the average of the 8 frames |
-| Touching `.js` without bumping the `?v=` | The `index.astro` import map serves a stale module from cache. It has already cost days of "the fix that never arrived" |
+| A published module missing from the cache manifest | Its URL does not change with its bytes, or the import map advertises a pruned file. SB7 checks the graph, content, and publication boundary |
 | `//` in CSS | It is not a comment. The parser swallows the next block. It has already killed an entire `@keyframes` |
 | Two headless captures in parallel | Takes down the boot and falsifies the measurement |
 

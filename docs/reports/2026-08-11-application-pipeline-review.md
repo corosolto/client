@@ -77,7 +77,7 @@ da partida; aumentar um número global apenas desloca o falso positivo.
 #51 documenta 92/92 occluders com `matrixWorld` desatualizada em um mapa headless. Isso
 contamina linha de visão e qualquer baseline derivado dela. Corrigir o arnês vem antes de
 otimizar navegação com base nesses números. Além disso, `botsim all` lista quatro mapas
-manualmente e omite `fy_quebrada`, embora o workflow descreva cobertura dos cinco mapas.
+manualmente e omite `quebrada`, embora o workflow descreva cobertura dos cinco mapas.
 O conjunto deve ser derivado do catálogo canônico e os baselines recalibrados depois da
 correção das matrizes.
 
@@ -176,7 +176,7 @@ staging e pré-release.
 - telemetria TL1-TL10: verde; o mutante que remove as cinco facções deixa TL10 vermelho;
 - viewmodels, invariantes, recoil e bots: nenhuma falha crítica nova; 40/53 críticas
   verdes e as 13 dívidas existentes permanecem no ratchet. A execução de bots cobriu os
-  quatro mapas hoje enumerados pelo script e revelou a omissão de `fy_quebrada`;
+  quatro mapas hoje enumerados pelo script e revelou a omissão de `quebrada`;
 - `check:fast`: 23/24 passos verdes nesta worktree. `audio:check` não pôde validar
   porque os arquivos de áudio são ignorados pelo Git e não estão no checkout isolado;
 - `docs:check`, `arch:check` e `git diff --check`: verdes;

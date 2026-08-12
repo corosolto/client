@@ -38,7 +38,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 // mortes do inimigo / total. Barra FUNCIONAL (não "empata com o roteiro"): a rede tem que
 // causar uma fatia real de mortes. Bootstrap clone fica ~0.20-0.25; mutação zerada → ~0.
 const SHARE_MIN = 0.15;
-const MAPS = ['dust2', 'awp_map', 'fy_havan', 'piscinao'];
+const MAPS = ['dust2', 'praca_poderes', 'loja_h', 'piscinao'];
 const SEEDS = [1, 2, 3];
 
 const h = await initHarness();

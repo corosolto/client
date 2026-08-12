@@ -12,7 +12,7 @@ const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefin
 const _base = new Map(); // id -> template scene
 
 /* ===================== CUSTO DE CENA (rodada 3) =====================
-   MEDIDO em /root/shots/r2/_metrics-draw.json: fy_havan 4.347 draw calls e 3,65 M
+   MEDIDO em /root/shots/r2/_metrics-draw.json: loja_h 4.347 draw calls e 3,65 M
    triangulos, contra um teto de regua de 300-800 calls e 500 k tris. Duas causas
    dominantes, as duas resolvidas aqui e nao no mapa:
 

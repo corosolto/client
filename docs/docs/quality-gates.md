@@ -14,8 +14,8 @@ PR (`.github/workflows/ci.yml`).
 
 {/* BEGIN:GERADO:invariantes — não edite à mão, rode `npm run docs` */}
 
-- `tools/eval/invariants.mjs`: **2.215 linhas**, **62 identificadores de invariante declarados** (`put()`), dos quais **27** têm caminho de `skip()` declarado.
-- O arnês inteiro são **191 scripts** em `tools/eval/` (`.mjs` + `.py`), mais **62 scripts** de pipeline em `tools/`.
+- `tools/eval/invariants.mjs`: **2.275 linhas**, **65 identificadores de invariante declarados** (`put()`), dos quais **28** têm caminho de `skip()` declarado.
+- O arnês inteiro são **199 scripts** em `tools/eval/` (`.mjs` + `.py`), mais **62 scripts** de pipeline em `tools/`.
 - Quantas invariantes rodam como **críticas** numa execução **não é derivável do fonte**: depende de qual insumo existe na máquina (o JSON do auditor de viewmodel, um GLB, uma pasta de anims). Esse número só sai rodando o quality gate — e o lugar dele é o cabeçalho do `KNOWN-BUGS.md`, atualizado com saída real.
 
 Reproduza:
@@ -373,6 +373,11 @@ Checklist, na ordem:
 | Medir o vão contra o chão local errado | pickup dentro da piscina reportava vão **0,0000 — VERDE** (`pickup-check.mjs:20-23`) |
 | "waypoint ≤ 3 m" como proxy de alcance | 74 falsos-positivos e verde em bolsão fechado (`pickup-check.mjs:34-42`) |
 | Piso sem teto | "boca ≥ 0,66" aceita a boca em 0,95 (arma no porão) — foi assim que chegamos a 0,816 (`invariants.mjs:432-434`) |
+| Medir num mundo onde o defeito não pode acontecer | `eval:site` cobre `/ranking` e **checa corpo**, e passou um dia inteiro verde com a página servindo **200 com 0 bytes** em produção: ele sobe um `astro dev` local, onde `public/js` existe e o `ENOENT` não ocorre (BUG-49) |
+| Aceitar status como prova de página viva | o mesmo BUG-49: `status === 200` chamava de saudável uma casca vazia. Corpo agora é cobrado por **tamanho** |
+| Número medido que ninguém reprova | `gl-metrics.mjs` media calls/triângulos desde a rodada 3 e nenhuma cláusula lia o resultado; o teto só existia como prosa num comentário. o estacionamento da Loja H (`loja_h`) chegou a 4.347 calls antes de alguém olhar |
+| Policiar artefato em vez de fonte | `mapa-id-check` varria `public/docs/` (saída do Docusaurus) e ficava vermelha quando o bundle publicado estava uma geração atrás de um rename — vermelho sem defeito |
+| Régua que se acusa | a mesma: ela precisa citar os ids antigos para cobrá-los, e se varria a si mesma. Nove ocorrências, todas dela |
 
 ## Esta página é a doutrina. O passo a passo é uma skill
 
@@ -382,12 +387,35 @@ o que **não** foi verificado — está em `.claude/skills/bug-hunt/SKILL.md`, c
 que comprou cada regra. Ela é escrita para agente **e** para gente, e aponta de volta para
 esta página em vez de repeti-la.
 
+## Portões que NÃO cabem no `check`, e por quê
+
+Três réguas exigem insumo que o portão rápido não tem — navegador, ou o build pronto. Elas
+ficam de fora de propósito e são passo de pré-deploy, junto do `eval:boot`. Cada uma nasceu
+de um defeito que os portões existentes não podiam ver:
+
+| Comando | O que mede | O buraco que fechou |
+|---|---|---|
+| `npm run eval:ssr` | toda página `prerender = false` entrega **corpo**, medido no artefato do build, entrando no diretório da função (o cwd de produção) | `/mapa`, `/ranking` e `/u/*` serviram **200 com 0 bytes** por um dia. O `eval:site` mede um `astro dev` local, onde o defeito não pode acontecer |
+| `npm run eval:cena` | teto de draw calls e triângulos por frame, **por mapa** | o número era medido desde a rodada 3 e ninguém reprovava. Descobriu que o mapa da Quebrada custa 1.8 k calls e roda a metade do fps dos outros |
+| `npm run eval:mapid` | nenhum id no estilo Counter-Strike sobrevive, todo id antigo resolve, e toda prévia existe em disco | renomear id sem renomear a imagem deixa cartaz quebrado no menu: 404 no navegador, **nada** no build |
+
+O teto do `eval:cena` mora em `tools/eval/cena-tetos.mjs`, importado tanto pela régua de
+navegador quanto pelas cláusulas `CENA` do `invariants.mjs` — um limiar, dois leitores. Dois
+números para o mesmo conceito é o instrumento discordando de si, e isso já custou uma rodada
+inteira aqui.
+
 ## Rodar o quality gate
 
 ```bash
 node tools/eval/invariants.mjs           # tudo que roda sem browser
 node tools/eval/invariants.mjs --json    # saída pra máquina
 npm run check                            # syntax + quality gate + vm + coice + bots
+npm run check:fast                       # segundos — rode este primeiro, sempre
+
+# pré-deploy: exigem navegador ou build, e por isso ficam fora dos de cima
+npm run eval:boot                        # o jogo ABRE?
+npm run build && npm run eval:ssr        # página SSR entrega corpo?
+npm run eval:cena                        # custo de cena dentro do teto?
 ```
 
 Fontes atuais de produção, dados e dívida conhecida: [Estado atual](./estado.md).

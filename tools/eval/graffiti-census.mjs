@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    POR QUE ESTA RÉGUA EXISTE E POR QUE A `decal-probe` NÃO BASTAVA
 
-   A `decal-probe` roda em node e diz "fy_quebrada: 334 decalques". O dono andou
+   A `decal-probe` roda em node e diz "quebrada: 334 decalques". O dono andou
    pelo mapa e disse "tem 10-15% de arte urbana". As duas coisas são verdade ao
    mesmo tempo, e a diferença é o instrumento:
 
@@ -38,7 +38,7 @@
    Uso:
      npm run eval:serve &                       # precisa do servidor no ar
      node tools/eval/graffiti-census.mjs        # os 5 mapas
-     node tools/eval/graffiti-census.mjs fy_quebrada
+     node tools/eval/graffiti-census.mjs quebrada
      JSON=1 node ...                            # despeja o JSON cru
    ============================================================================ */
 import { execSync } from 'node:child_process';
@@ -47,7 +47,7 @@ import { writeFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const ONLY = process.argv[2];
-const MAPS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada'];
 /* As metas do dono (07/08), em cobertura de placa de parede. Quebrada e Piscina são
    "os mapas mais degradados" e vão a 90%; Brasília é cidade oficial e vai a 60%;
    Loja H e Ferro Velho são pátio murado — a meta vale pro muro, que é quase tudo
@@ -58,7 +58,7 @@ const MAPS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrad
    CONTINUAM contando como placa de parede aqui, porque elas são parede que o jogador
    vê. Cobrar 85 delas seria a régua brigando com o pedido do dono. */
 // Pisos medidos nas três faixas; aumente-os quando a cobertura melhorar.
-const META = { awp_map: 35, fy_pool_day: 76, fy_havan: 43, fy_ferrovelho: 46, fy_quebrada: 67 };
+const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 43, ferro_velho: 46, quebrada: 67 };
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

@@ -85,11 +85,11 @@ def probe(path, box, mode='auto', tag='', dump=None):
 
 # caixas conferidas a olho nos PNGs (x0,y0,x1,y1)
 CASES = [
-    ('r1', 'fy_ferrovelho-169-b', (780, 495, 890, 740), 'auto', 'doutora jaleco+calca teal'),
-    ('r1', 'fy_ferrovelho-169-b', (690, 445, 775, 610), 'auto', 'bot camisa roxa'),
-    ('r2', 'fy_ferrovelho-169-b', (285, 445, 415, 700), 'ghost', 'fantasma esq (chapeu rosa)'),
-    ('r2', 'fy_ferrovelho-169-b', (700, 470, 800, 620), 'ghost', 'fantasma dir'),
-    ('r2', 'fy_pool_day-169-d', (0, 460, 155, 840), 'ghost', 'fantasma piscinao'),
+    ('r1', 'ferro_velho-169-b', (780, 495, 890, 740), 'auto', 'doutora jaleco+calca teal'),
+    ('r1', 'ferro_velho-169-b', (690, 445, 775, 610), 'auto', 'bot camisa roxa'),
+    ('r2', 'ferro_velho-169-b', (285, 445, 415, 700), 'ghost', 'fantasma esq (chapeu rosa)'),
+    ('r2', 'ferro_velho-169-b', (700, 470, 800, 620), 'ghost', 'fantasma dir'),
+    ('r2', 'piscina_treta-169-d', (0, 460, 155, 840), 'ghost', 'fantasma piscinao'),
 ]
 
 if __name__ == '__main__':

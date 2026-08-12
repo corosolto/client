@@ -5,7 +5,7 @@
    Defeito do dono, jogando: *"o respawn do time dentro da loja, eles começam embaixo do
    mezanino e do nada sobem, isso tá esquisito."*
 
-   MEDIDO antes do conserto (este script, cláusula SPAWN-1, fy_havan / time B — o time que
+   MEDIDO antes do conserto (este script, cláusula SPAWN-1, loja_h / time B — o time que
    nasce no depósito do mezanino, y de projeto 3,40 m):
      BOT  B0..B3  y(frame 0) = 0,00  ->  y(frame 1) = 3,40   salto de 3,40 m em UM quadro
      PLAYER B0..B3 y(frame 0) = 0,00 -> y(frame 30) = 0,00   nasce no piso ERRADO (térreo)
@@ -32,7 +32,7 @@
    que mediria a régua e não o jogo.
 
    uso: node tools/eval/spawn-settle-check.mjs [--mutante=y0]
-     y0  devolve o defeito (spawn em y literal 0) -> vermelha no fy_havan
+     y0  devolve o defeito (spawn em y literal 0) -> vermelha no loja_h
    ═══════════════════════════════════════════════════════════════════════════════════ */
 import fs from 'node:fs';
 import { bootGame, MAPS, initTextures } from './harness.mjs';

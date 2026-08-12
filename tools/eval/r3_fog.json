@@ -1,5 +1,5 @@
 {
- "awp_map": {
+ "praca_poderes": {
   "lin": [
    0.7656,
    0.6706,
@@ -8,7 +8,7 @@
   "hex": "0xe3d6be",
   "px": 3458
  },
- "fy_pool_day": {
+ "piscina_treta": {
   "lin": [
    0.2927,
    0.4827,
@@ -17,7 +17,7 @@
   "hex": "0x93b9df",
   "px": 81064
  },
- "fy_havan": {
+ "loja_h": {
   "lin": [
    0.3648,
    0.5503,
@@ -26,7 +26,7 @@
   "hex": "0xa3c4e5",
   "px": 134638
  },
- "fy_ferrovelho": {
+ "ferro_velho": {
   "lin": [
    0.3762,
    0.5613,

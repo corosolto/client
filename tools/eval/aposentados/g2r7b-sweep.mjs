@@ -39,7 +39,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: W, height: H } });
 page.on('pageerror', (e) => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForFunction((w) => {
   const g = window.__game, m = g.vm.staticVms && g.vm.staticVms[w];

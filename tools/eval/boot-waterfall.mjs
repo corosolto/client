@@ -38,7 +38,7 @@ async function pass(page, cdp, cold) {
   cdp.on('Network.loadingFinished', onEnd);
   await cdp.send('Network.setCacheDisabled', { cacheDisabled: cold });
   const t0 = Date.now();
-  await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_pool_day`, { waitUntil: 'load', timeout: 120000 });
+  await page.goto(`${BASE}/?debug=1&auto=P,mst&map=piscina_treta`, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 120000 });
   const liveMs = Date.now() - t0;
   // deixa a poeira baixar: assets que chegam DEPOIS do live (lazy) também contam na conta

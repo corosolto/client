@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutant && !['sem-guardas', 'sem-cache-bust'].includes(mutant)) {
+if (mutant && !['sem-guardas', 'sem-cache-bust', 'addons-immutable', 'cloudflare-vendor'].includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
 
@@ -16,6 +16,7 @@ const productFiles = [
   'src/pages/editor.astro',
 ];
 let productSources = productFiles.map((file) => [file, readFileSync(file, 'utf8')]);
+let cloudflareSetup = readFileSync('scripts/cloudflare-setup.sh', 'utf8');
 let harnessSources = readdirSync('public')
   .filter((file) => file.endsWith('.html'))
   .map((file) => [`public/${file}`, readFileSync(`public/${file}`, 'utf8')])
@@ -30,6 +31,20 @@ if (mutant === 'sem-guardas') {
 if (mutant === 'sem-cache-bust') {
   productSources = productSources.map(([file, source]) => [file, source.replace('?v=${V}', '')]);
   harnessSources = harnessSources.map(([file, source]) => [file, source.replace(/\?h=[a-f0-9]+/, '')]);
+}
+let vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+if (mutant === 'addons-immutable') {
+  const route = vercel.headers?.find((item) => item.source === '/vendor/(.*)');
+  const header = route?.headers?.find((item) => item.key.toLowerCase() === 'cache-control');
+  if (header) header.value = 'public, max-age=31536000, immutable';
+}
+if (mutant === 'cloudflare-vendor') {
+  const before = cloudflareSetup;
+  cloudflareSetup = cloudflareSetup.replace(
+    'starts_with(http.request.uri.path, \\"/js/\\")',
+    'starts_with(http.request.uri.path, \\"/vendor/\\") or starts_with(http.request.uri.path, \\"/js/\\")',
+  );
+  if (cloudflareSetup === before) throw new Error('MUTANTE NAO APLICOU: cloudflare-vendor');
 }
 
 const failures = [];
@@ -67,21 +82,24 @@ for (const [, variable, expression] of assignments) {
   }
 }
 
-const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
 const vendorRoute = vercel.headers?.find((route) => route.source === '/vendor/(.*)');
 const vendorCache = vendorRoute?.headers?.find((header) => header.key.toLowerCase() === 'cache-control')?.value || '';
 const immutableVendor = /(?:^|,)\s*immutable(?:\s*,|$)/i.test(vendorCache);
-if (immutableVendor) {
-  for (const [file, source] of productSources) {
-    if (!/["'`]\/?\.??\/vendor\/three\.module\.js\?v=\$\{V\}["'`]/.test(source)) {
-      failures.push(`SL4 ${file} não versiona o Three com cache imutável`);
-    }
+for (const [file, source] of productSources) {
+  if (!/["'`]\/?\.??\/vendor\/three\.module\.js\?v=\$\{V\}["'`]/.test(source)) {
+    failures.push(`SL4 ${file} não versiona o core do Three`);
   }
-  for (const [file, source] of harnessSources) {
-    if (!source.includes(`./vendor/three.module.js?h=${vendorHash}`)) {
-      failures.push(`SL5 ${file} não usa o hash atual do Three (${vendorHash})`);
-    }
+}
+for (const [file, source] of harnessSources) {
+  if (!source.includes(`./vendor/three.module.js?h=${vendorHash}`)) {
+    failures.push(`SL5 ${file} não usa o hash atual do Three (${vendorHash})`);
   }
+}
+const maxAge = vendorCache.match(/(?:^|,)\s*max-age\s*=\s*(\d+)/i);
+const revalidatesNow = /(?:^|,)\s*no-cache(?:\s*,|$)/i.test(vendorCache)
+  || (maxAge && Number(maxAge[1]) === 0);
+if (immutableVendor || !revalidatesNow || cloudflareSetup.includes('starts_with(http.request.uri.path, \\"/vendor/\\")')) {
+  failures.push('SL6 addons do Three sem URL própria precisam revalidar no servidor');
 }
 
 if (mutant && !failures.length) failures.push(`mutação ${mutant} não foi detectada`);

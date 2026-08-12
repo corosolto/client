@@ -1,4 +1,4 @@
-// QUEBRADA (fy_quebrada) — spec literal do dono (HANDOFF A0.10): uma RUA RETA E COMPRIDA com
+// QUEBRADA (quebrada) — spec literal do dono (HANDOFF A0.10): uma RUA RETA E COMPRIDA com
 // rotunda do BAILE numa ponta (2 carros tunados + caixas de som) e CAMPINHO DE TERRA na outra
 // (respawn do outro time); ônibus parado com ponto, bar brasileiro com cadeira de plástico na
 // calçada, barricadas, casas majoritariamente de BARRACO, comércio (adega, açaí, sorveteria,
@@ -198,7 +198,7 @@ export function buildQuebrada(scene, T) {
 
   /* ===================== CÉU / LUZ ===================== */
   setMapSky(scene, T, '/img/textures/sky_quebrada.webp', 0xb9c6d2);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_quebrada');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('quebrada');
   const hemi = new THREE.HemisphereLight(0xeeeef0, 0x544f48, 0.9); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffefd8, 1.65); sun.position.set(38, 30, -22); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
@@ -1578,7 +1578,7 @@ export function buildQuebrada(scene, T) {
      as vagas escolhidas a dedo (porta de aço, muro do baile, travessa do campinho)
      e agora quase todas sobrevivem, porque a passada não depende delas. */
   grafitar({
-    id: 'fy_quebrada',
+    id: 'quebrada',
     root, T, waypoints: nodes, seed: 4021, passo: 0.72, alcance: 9, cobre: 0.06, minLarg: 0.3,
     /* HOMENAGENS: peça de primeira classe, 5,4 × 2,8 m (eram 3,9 × 2,0 numa vaga
        fixa que o navegador reprovava), na melhor parede medida de cada região. */

@@ -23,7 +23,7 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.argv[2] || '/root/shots/p0';
 const WLIST = (process.argv[3] || 'ak,awp,mp5,uzi,p90,deagle,revolver38,md97,svd,sks,knife').split(',');
 
-const MAP = process.env.MAP || 'fy_ferrovelho';
+const MAP = process.env.MAP || 'ferro_velho';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const ASPECTS = { '169': [1600, 900], '32': [1500, 1000] };
 const MAX_TRY = 3;

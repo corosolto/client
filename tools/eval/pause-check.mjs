@@ -86,7 +86,7 @@ if (MUTANTE === 'automenu') MAIN_JS += '\nsetTimeout(quitToMenu, 1000); // MUTAN
    pointer lock (é o gatilho real do defeito), dispara o `_plc` de produção e
    entrega ao `_md` de produção os mesmos alvos que o browser entregaria. */
 const textures = initTextures();
-const g = bootGame('awp_map', { textures });
+const g = bootGame('praca_poderes', { textures });
 g.testMode = false;                 // testMode desliga a pausa por perda de lock
 g.state = 'live';
 g._requestLock = () => { g.__pediuLock = (g.__pediuLock || 0) + 1; };   // não há canvas de verdade aqui

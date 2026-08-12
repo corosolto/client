@@ -2,7 +2,7 @@
 // POR QUE existe (em vez de reusar gl-shots.mjs): (a) sob SwiftShader o screenshot
 // estoura o timeout padrão e derruba o processo, levando junto os alvos seguintes;
 // (b) esta rodada precisa de PROVAS numéricas específicas — o jogador não cair fora
-// do mundo em fy_pool_day e o armário estar em cima de mesa ATRÁS do spawn — que
+// do mundo em piscina_treta e o armário estar em cima de mesa ATRÁS do spawn — que
 // nenhuma captura de tela sozinha demonstra.
 // Uso: node tools/eval/aposentados/p1-game.mjs <outDir> [alvo1,alvo2...]
 //   alvo = <mapa>@<aspecto>, aspecto = 169 | 32
@@ -13,8 +13,8 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.argv[2] || '/root/shots/p1';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const ASPECTS = { '169': [1600, 900], '32': [1500, 1000] };
-const AUTO = { awp_map: 'P,mst', fy_pool_day: 'P,mst', fy_havan: 'B,bozo', fy_ferrovelho: 'B,bozo' };
-const TARGETS = (process.argv[3] || 'awp_map@169,awp_map@32,fy_pool_day@169,fy_havan@169').split(',');
+const AUTO = { praca_poderes: 'P,mst', piscina_treta: 'P,mst', loja_h: 'B,bozo', ferro_velho: 'B,bozo' };
+const TARGETS = (process.argv[3] || 'praca_poderes@169,praca_poderes@32,piscina_treta@169,loja_h@169').split(',');
 
 mkdirSync(OUT, { recursive: true });
 const gRoot = execSync('npm root -g').toString().trim();

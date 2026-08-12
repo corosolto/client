@@ -2,7 +2,7 @@
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
-const URLQ = process.argv[2] || '/?debug=1&auto=P,mst&map=awp_map';
+const URLQ = process.argv[2] || '/?debug=1&auto=P,mst&map=praca_poderes';
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;

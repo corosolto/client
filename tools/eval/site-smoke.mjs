@@ -85,9 +85,23 @@ const CONTRATO = [
       return null;
     } },
 
-  ...['/como-jogar', '/mapas', '/armas', '/personagens', '/sobre', '/changelog'].map((rota) => ({
-    rota, esperado: '200',
-    checa: ({ status }) => (status === 200 ? null : `status ${status}`),
+  /* `/mapa` (singular, o mapa AO VIVO) entrou em 12/08. Ele não estava nesta lista, e a
+     página passou um dia devolvendo 200 com 0 bytes sem nenhum portão reclamar — o dono
+     achou jogando. `/mapas` (plural, a listagem) estava e continua.
+
+     E o corpo é cobrado por TAMANHO, não só por status: era exatamente 200 com casca
+     vazia, então `status === 200` teria passado verde no defeito que motivou a inclusão.
+     Vale dizer o limite desta cláusula aqui: este arnês mede o `astro dev` local, onde
+     `public/js` existe e o defeito não pode acontecer. Quem mede o artefato publicado é
+     `npm run eval:ssr`. Esta linha pega a próxima página que quebrar por outro motivo;
+     ela não teria pego aquela. */
+  ...['/como-jogar', '/mapas', '/mapa', '/armas', '/personagens', '/sobre', '/changelog'].map((rota) => ({
+    rota, esperado: '200 + corpo não vazio',
+    checa: ({ status, corpo }) => {
+      if (status !== 200) return `status ${status}`;
+      if ((corpo || '').length < 500) return `200 com corpo de ${(corpo || '').length} bytes — casca vazia`;
+      return null;
+    },
   })),
 
   { rota: '/sitemap.xml', esperado: `200 + XML válido + >= ${XML_LOC_MIN} <loc>`,

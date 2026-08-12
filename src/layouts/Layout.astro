@@ -40,10 +40,19 @@ import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs
 import pkg from '../../package.json';
 
 const V = pkg.version;
+/* O manifesto vem INJETADO pelo build (`vite.define` em astro.config.mjs), não de uma
+   leitura de disco aqui. A chamada a `moduleCacheManifest()` neste ponto rodava em toda
+   renderização, e nas três páginas `prerender = false` ela roda dentro da função da
+   Vercel - que não empacota `public/js`. O `ENOENT` estourava DEPOIS do streaming ter
+   mandado o 200, e o jogador recebia corpo vazio com status saudável. Motivo completo e
+   a régua: bloco `MANIFESTO DE CACHE` em astro.config.mjs. */
+declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
+const { modules: JS_MODULES, revision: JS_REV } = __MANIFESTO_JS__;
 const THREE_IMPORTMAP = JSON.stringify({
   imports: {
     three: `/vendor/three.module.js?v=${V}`,
     'three/addons/': '/vendor/addons/',
+    ...Object.fromEntries(JS_MODULES.map((module) => [`/js/${module}`, `/js/${module}?v=${V}-${JS_REV}`])),
   },
 });
 
@@ -542,7 +551,7 @@ body>footer a:hover{color:var(--amber)}
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 <div id="bg-overlay"></div>
 <div id="bg-scan"></div>
-<script type="module" src="/js/site-bg.js"></script>
+<script type="module" src={`/js/site-bg.js?v=${V}-${JS_REV}`}></script>
 <header>
   {/* MARCA: logo + canarinho, que é o pedido do dono e é personagem do elenco.
 

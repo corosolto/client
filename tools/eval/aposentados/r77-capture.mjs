@@ -21,7 +21,7 @@ let errors = 0;
 page.on('console', m => { if (m.type() === 'error') { errors++; console.error('[page-err]', m.text()); } });
 page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&map=fy_pool_day&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }
+  try { await page.goto(`${BASE}/?debug=1&map=piscina_treta&auto=P,mst`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; }
   catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });

@@ -20,7 +20,7 @@ const page = await browser.newPage({ viewport: { width: VW, height: VH } });
 let errors = 0;
 page.on('console', m => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); });
-await page.goto(`${BASE}/?debug=1&auto=B,sindicato&map=fy_pool_day`, { waitUntil: 'domcontentloaded', timeout: 120000 });   // sindicato = shotgun de fábrica
+await page.goto(`${BASE}/?debug=1&auto=B,sindicato&map=piscina_treta`, { waitUntil: 'domcontentloaded', timeout: 120000 });   // sindicato = shotgun de fábrica
 await page.waitForFunction(() => !!window.__game, null, { timeout: 180000 });
 await page.waitForFunction(() => { const g = window.__game; if (g.state === 'countdown') g.time += 0.5; return g.state === 'live'; }, null, { timeout: 60000, polling: 200 });
 await page.waitForTimeout(800);

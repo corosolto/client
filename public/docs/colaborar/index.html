@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.6.3">
 <title data-rh="true">Como colaborar | CORO SOLTO — Docs do Dev</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://www.csbrasil.online/docs/img/og-image.jpg"><meta data-rh="true" name="twitter:image" content="https://www.csbrasil.online/docs/img/og-image.jpg"><meta data-rh="true" property="og:url" content="https://www.csbrasil.online/docs/colaborar"><meta data-rh="true" property="og:locale" content="pt"><meta data-rh="true" property="og:locale:alternate" content="en"><meta data-rh="true" name="docusaurus_locale" content="pt"><meta data-rh="true" name="docsearch:language" content="pt"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Como colaborar | CORO SOLTO — Docs do Dev"><meta data-rh="true" name="description" content="Setup, como rodar o quality gate, o que um PR precisa, como adicionar arma / personagem / mapa, e as boas primeiras tarefas."><meta data-rh="true" property="og:description" content="Setup, como rodar o quality gate, o que um PR precisa, como adicionar arma / personagem / mapa, e as boas primeiras tarefas."><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://www.csbrasil.online/docs/colaborar"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/colaborar" hreflang="pt"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/en/colaborar" hreflang="en"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/colaborar" hreflang="x-default"><link rel="stylesheet" href="/docs/assets/css/styles.7925f6bd.css">
-<script src="/docs/assets/js/runtime~main.4fb3d722.js" defer="defer"></script>
+<script src="/docs/assets/js/runtime~main.bf97b561.js" defer="defer"></script>
 <script src="/docs/assets/js/main.9fa64020.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -12,7 +12,7 @@
 <p>O número abaixo não é retórica, e não é escrito à mão: sai de <code>git shortlog -sn --no-merges</code> descontando os autores que são agentes de IA (que assinam como <code>Claude</code> /
 <code>Claude (gauntlet …)</code>).</p>
 <!-- -->
-<p><strong>8 identidades de autoria humana</strong> assinam commit no histórico <strong>desta branch</strong>: <code>ruben-cytonic</code>, <code>Emerson Garrido</code>, <code>Ruben Marcus</code>, <code>William Oliveira</code>, <code>Juan Versolato Lopes</code>, <code>matheusgb</code>, <code>Ruben</code>, <code>daltonfontes</code>. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém <strong>não aparece aqui</strong>.</p>
+<p><strong>8 identidades de autoria humana</strong> assinam commit no histórico <strong>desta branch</strong>: <code>ruben-cytonic</code>, <code>Emerson Garrido</code>, <code>Ruben Marcus</code>, <code>William Oliveira</code>, <code>Juan Versolato Lopes</code>, <code>Ruben</code>, <code>matheusgb</code>, <code>daltonfontes</code>. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém <strong>não aparece aqui</strong>.</p>
 <blockquote>
 <p>Bloco gerado por <code>node tools/gen-docs.mjs</code>. Fonte: <code>git shortlog -sn --no-merges (descontando autores que são agentes)</code></p>
 </blockquote>
@@ -87,7 +87,7 @@ vermelha, o PR não entra. Se você <strong>consertou</strong> uma vermelha, dig
 no <code>KNOWN-BUGS.md</code>). Isso não é licença para piorar: o compromisso é <em>&quot;a sua mudança não
 acrescenta vermelho&quot;</em>.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="3-números-com-arquivolinha">3. Números, com <code>arquivo:linha</code><a href="#3-números-com-arquivolinha" class="hash-link" aria-label="Link direto para 3-números-com-arquivolinha" title="Link direto para 3-números-com-arquivolinha">​</a></h3>
-<p>A afirmação &quot;melhorei a iluminação&quot; não é revisável. &quot;O chão do <code>awp_map</code> estava 8 pontos
+<p>A afirmação &quot;melhorei a iluminação&quot; não é revisável. &quot;O chão do <code>praca_poderes</code> estava 8 pontos
 de L* acima das paredes, causa em <code>map_brasilia.js:NNN</code>, corrigido para X&quot; é. Essa
 exigência não é estilo — é o que permite que a próxima rodada confira o seu trabalho.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="4-uma-frente-por-pr">4. Uma frente por PR<a href="#4-uma-frente-por-pr" class="hash-link" aria-label="Link direto para 4. Uma frente por PR" title="Link direto para 4. Uma frente por PR">​</a></h3>
@@ -150,7 +150,7 @@ de invariantes se cruza vazio e por quanto</strong>.</li>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="como-adicionar-um-personagem">Como adicionar um personagem<a href="#como-adicionar-um-personagem" class="hash-link" aria-label="Link direto para Como adicionar um personagem" title="Link direto para Como adicionar um personagem">​</a></h2>
 <p>45 GLBs em <code>public/models/characters/</code>, 44 medidos pelo <code>char-probe.mjs</code>.</p>
 <ol>
-<li><strong>GLB com rig</strong>, na bind pose, pés no chão. <code>CHR3</code> exige <code>|base da bbox| ≤ 0,01 m</code> na
+<li><strong>GLB com rig</strong>, na bind pose, pés no chão. <code>CHR3</code> exige <code>|base da bbox|  ≤ 0,01 m</code> na
 bind pose <strong>e em cada clipe</strong> — o sinal separa dois defeitos: <code>y &lt; 0</code> é pé dentro do
 chão, <code>y &gt; 0</code> é boneco no ar.</li>
 <li><strong>Declare</strong> em <code>public/js/characters.js</code> / <code>public/js/glbchars.js</code>.</li>
@@ -178,7 +178,7 @@ conteúdo como dado do
 contribuição de maior alavancagem do projeto.</p>
 <p>O registro, gerado do <code>MAPS</code> de <code>public/js/maps.js</code>:</p>
 <!-- -->
-<table><thead><tr><th>Id</th><th>Nome no menu</th><th>Abre em</th><th>Arquivo em <code>public/js/</code></th><th style="text-align:right">Linhas</th></tr></thead><tbody><tr><td><code>awp_map</code></td><td>Praça dos Três Poderes</td><td>rodadas</td><td><code>map_brasilia.js</code></td><td style="text-align:right">1.845</td></tr><tr><td><code>fy_pool_day</code></td><td>Piscina da Treta</td><td>rodadas</td><td><code>map_piscina.js</code></td><td style="text-align:right">810</td></tr><tr><td><code>fy_havan</code></td><td>Loja H (Estacionamento)</td><td><strong>captura</strong></td><td><code>map_havan.js</code></td><td style="text-align:right">1.920</td></tr><tr><td><code>fy_ferrovelho</code></td><td>Ferro Velho do Zé</td><td><strong>captura</strong></td><td><code>map_ferrovelho.js</code></td><td style="text-align:right">1.888</td></tr><tr><td><code>fy_quebrada</code></td><td>Quebrada (Rua do Baile)</td><td><strong>captura</strong></td><td><code>map_quebrada.js</code></td><td style="text-align:right">1.599</td></tr></tbody></table>
+<table><thead><tr><th>Id</th><th>Nome no menu</th><th>Abre em</th><th>Arquivo em <code>public/js/</code></th><th style="text-align:right">Linhas</th></tr></thead><tbody><tr><td><code>praca_poderes</code></td><td>Praça dos Três Poderes</td><td>rodadas</td><td><code>map_brasilia.js</code></td><td style="text-align:right">1.830</td></tr><tr><td><code>piscina_treta</code></td><td>Piscina da Treta</td><td>rodadas</td><td><code>map_piscina.js</code></td><td style="text-align:right">810</td></tr><tr><td><code>loja_h</code></td><td>Loja H (Estacionamento)</td><td><strong>captura</strong></td><td><code>map_havan.js</code></td><td style="text-align:right">1.920</td></tr><tr><td><code>ferro_velho</code></td><td>Ferro Velho do Zé</td><td><strong>captura</strong></td><td><code>map_ferrovelho.js</code></td><td style="text-align:right">1.888</td></tr><tr><td><code>quebrada</code></td><td>Quebrada (Rua do Baile)</td><td><strong>captura</strong></td><td><code>map_quebrada.js</code></td><td style="text-align:right">1.599</td></tr></tbody></table>
 <p><strong>5 mapas registrados</strong> — 2 abrem em rodadas e 3 em captura. <code>ctfMode</code> <strong>abre</strong> o mapa em captura, não prende: o jogador troca no menu (é a <code>MOD1</code>). Há 6 arquivos <code>map_*.js</code> em <code>public/js/</code> — arquivo no disco <strong>não</strong> implica mapa jogável.</p>
 <blockquote>
 <p>Bloco gerado por <code>node tools/gen-docs.mjs</code>. Fonte: <code>objeto MAPS de public/js/maps.js</code></p>
@@ -219,7 +219,7 @@ ela.</li>
 <li><strong>Rode <code>node tools/eval/pickup-check.mjs</code></strong> (alimenta a <code>VM14</code>): todo pickup precisa
 ser alcançável <strong>a pé</strong>, por flood-fill de conectividade real em grade de 0,25 m
 semeado nos spawns dos dois times. Já aconteceu de armas caírem dentro da piscina do
-<code>fy_pool_day</code> com o quality gate marcando vão <strong>0,0000 — VERDE</strong>.</li>
+<code>piscina_treta</code> com o quality gate marcando vão <strong>0,0000 — VERDE</strong>.</li>
 <li><strong>Rode <code>node tools/eval/botsim.mjs 60 &lt;mapId&gt;</code></strong>: os bots precisam navegar o seu mapa
 sem travar (<code>BOT3</code> stuck ≤ 4%), sem andar de lado (<code>BOT1</code>) e sem girar parados (<code>BOT2</code>).
 Waypoint desconexo é o defeito mais comum de mapa novo, e já quebrou PRs antes

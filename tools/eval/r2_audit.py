@@ -9,7 +9,7 @@ from PIL import Image
 from scipy import ndimage
 
 ROUNDS = ['base', 'r1', 'r2']
-MAPS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho']
+MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho']
 VIEWS = ['169', '32']
 POS = ['a', 'b', 'c', 'd']
 
@@ -218,7 +218,7 @@ def main():
         print()
 
     print('=== FRAMES CITADOS NO BRIEF ===')
-    for key in ['awp_map|169|c']:
+    for key in ['praca_poderes|169|c']:
         for rd in ROUNDS:
             v = out.get(f'{rd}|{key}')
             if v:

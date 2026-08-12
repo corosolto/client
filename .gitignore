@@ -157,6 +157,12 @@ graphify-out/cache/
 graphify-out/manifest.json
 graphify-out/.graphify_root
 graphify-out/.graphify_analysis.json
+graphify-out/.graphify_labels.json
+graphify-out/.graphify_labels.json.sig
+graphify-out/20??-??-??/
 
 # BOTBRAIN: dataset bootstrap (regenerável via bot:record, grande)
 tools/eval/data/
+
+# probe de rodada MUTANTE do eval:cena — instrumento de teste da régua, não medição do jogo
+tools/eval/cena_probe.mutante-*.json

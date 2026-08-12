@@ -41,9 +41,9 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 40 arquivos `.js`, 31.472 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `public/` | o **jogo** | 41 arquivos `.js`, 31.715 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
 | `src/` | o **site** | 18 páginas `.astro`, 19 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 191 scripts em `tools/eval/`, 62 em `tools/` | node puro: sobe o jogo real sem browser |
+| `tools/` | o **arnês** | 199 scripts em `tools/eval/`, 62 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
@@ -56,9 +56,9 @@ conservadorismo: é o que permite `tools/eval/harness.mjs` subir a classe `Game`
 puro em segundos — que é o que faz o quality gate existir. Um bundler no meio quebraria a régua
 junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adicione CDN.
 
-**Mexeu em `public/js/*.js`? Bump o `?v=` nos dois lados** — `public/js/version.js` e o
-import map de `src/pages/index.astro`. Sem isso o browser serve o módulo velho do cache, e
-isso já custou dias de "correção que não chegava ao usuário".
+**Mexeu em `public/js/*.js`? Preserve o cache-bust por conteúdo** — o import map de
+`src/pages/index.astro` e o arnês usam o manifesto recursivo de `scripts/module-cache.mjs`.
+`public/js/version.js` continua sincronizado com `package.json` pelo release.
 
 O porquê completo de cada regra da fronteira está em
 [`docs/docs/stack.md`](docs/docs/stack.md).
@@ -144,10 +144,10 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:webgl eval:shaderlog eval:botbrain eval:prune eval:vminspect eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
 ```
 
-`package.json` tem **116 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **121 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

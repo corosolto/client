@@ -22,7 +22,7 @@ Construído em par com agentes de IA — cada commit diz qual:
 ![CORO SOLTO: Treta Suprema — arena de sniper estilo CS 1.6 numa Brasília fictícia](public/og-image.jpg)
 
 **FPS gratuito de navegador em Three.js**: arena de sniper estilo CS 1.6
-(`awp_map`) numa Brasília fictícia e satírica. Facções, personagens originais,
+(`praca_poderes`) numa Brasília fictícia e satírica. Facções, personagens originais,
 mapas, arsenal, bots, rounds e Capture the Flag. Sem download, sem instalação,
 sem cadastro.
 
@@ -30,8 +30,8 @@ sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 31.472 linhas em 40 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.613** linhas | `wc -l public/js/game.js` |
+| Código do jogo | 31.715 linhas em 41 arquivos | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6.623** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.105 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
 | GLBs de personagem | 62 | `ls public/models/characters/*.glb \| wc -l` |
@@ -39,11 +39,11 @@ sem cadastro.
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 61, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 10 | objeto `MAPS` de `maps.js` |
-| Arnêses visuais em HTML | 13 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 191 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Arnêses visuais em HTML | 14 | `ls public/*.html \| wc -l` |
+| Scripts do arnês | 199 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Scripts de pipeline | 62 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.79` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.83` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -85,7 +85,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 40 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 41 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.3` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -96,7 +96,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **111** importam Playwright, **47** importam gltf-transform e **4** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **114** importam Playwright, **47** importam gltf-transform e **4** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -192,10 +192,10 @@ está lá. Use `npm run dev`.
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:webgl eval:shaderlog eval:botbrain eval:prune eval:vminspect eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
 ```
 
-`package.json` tem **116 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **121 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -313,11 +313,11 @@ Os mapas registrados, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
-| `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
-| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.841 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 769 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 518 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes.js` | 690 |

@@ -6,11 +6,11 @@
    vitória tem que ser as 4. tem que ser todas sempre."*
 
    MEDIDO antes do conserto (este mesmo script, cláusula CTF-W1):
-     awp_map        bandeiras 3 (layout padrão)   alvo 3   ok
-     fy_pool_day    bandeiras 3 (layout padrão)   alvo 3   ok
-     fy_havan       bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
-     fy_ferrovelho  bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
-     fy_quebrada    bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
+     praca_poderes        bandeiras 3 (layout padrão)   alvo 3   ok
+     piscina_treta    bandeiras 3 (layout padrão)   alvo 3   ok
+     loja_h       bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
+     ferro_velho  bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
+     quebrada    bandeiras 4 (world.ctfPoints) alvo 3   FALTAM 1
 
    A causa era uma CONSTANTE: `this.capsToWin = this.ctf ? CTF_CAPS_TO_WIN : Infinity`
    (CTF_CAPS_TO_WIN = 3), escrita quando TODO mapa tinha 3 bandeiras. Quando a Havan, o

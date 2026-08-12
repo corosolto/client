@@ -44,6 +44,160 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### BUG-51 · erro de extensão ou beacon virava bug do jogo
+
+**Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
+`chrome-extension://` ou `moz-extension://` na origem, stack ou mensagem. #142 e #144
+apontam integralmente para `static.cloudflareinsights.com`; os offsets correspondem às
+chamadas `Array.prototype.at()` do beacon Cloudflare em navegador antigo. Mesmo assim, as
+sete ocorrências foram classificadas como `codigo` e abriram issues `crash-auto`.
+
+**Causa.** O cliente preserva e envia todo erro, mas usa a proveniência apenas para decidir
+parte do watchdog. A API despacha toda primeira ocorrência e o workflow trata qualquer coisa
+que não seja cache inconsistente como código do jogo.
+
+**Régua.** `tools/eval/error-provenance-check.mjs` deve executar o classificador real e
+provar: esquema de extensão e URL cross-origin são externos; same-origin e sinais opacos não
+são descartados; a API grava antes de filtrar o dispatch; o workflow não abre issue externa;
+e o cliente não atribui erro externo ao lançamento. Mutantes cobrem cada fronteira.
+
+**Revisão adversarial (11/08, três leituras independentes).** Quatro furos achados no
+primeiro desenho, todos fechados e guardados por fixture ou mutante:
+
+1. `CACHE_SPLIT_RE` tinha precedência sobre a proveniência: erro de extensão com
+   mensagem de import dinâmico virava `cache-split` e podia acionar purge do
+   Cloudflare. Proveniência agora vence (EP7 + mutante `cache-antes-origem`).
+2. URL externa só na **mensagem** era tratada como proveniência: uma promise do
+   próprio jogo rejeitada com texto ("falha ao carregar https://api…") calava o
+   watchdog. URL http só prova origem em `source`/`stack`; esquema de extensão
+   continua valendo na mensagem (#157). Vale no helper e no cliente (EP3 + EP6 +
+   mutante `cliente-mensagem-url`).
+3. Erros externos consumiam o teto de 10 envios da sessão: dez mensagens de
+   extensão impediam um erro real de chegar ao banco. Externo agora tem cota
+   própria de 3 (`TETO_EXTERNO`, mutante `sem-teto-externo`).
+4. Em `?debug=1`, erro externo ainda abria o `crash-overlay`. `showDebug` agora
+   só dispara para proveniência interna (mutante `debug-externo`).
+
+A régua também mentia: EP4/EP5/EP6 aprovavam mutações comportamentais (guarda sem
+`return`, `externo` como último OR da condição de issue, `origemDoJogo(){ return
+true; }`). EP4 exige early-return e dispatch único; EP5 recorta a condição
+inteira do step de issue; EP6 **executa** a `origemDoJogo` inline do cliente
+contra oito fixtures (mutantes `sem-early-return` e `abre-externo`).
+
+### ~~BUG-49 · toda página SSR servia 200 com corpo VAZIO em produção~~ · RESOLVIDO 12/08
+
+**Sintoma literal.** O dono, 12/08: *"a pagina mapa online (aovivo) esta quebrada"*.
+
+**Escopo real, maior que o relatado.** Não era só o `/mapa`. As TRÊS páginas
+`prerender = false` estavam assim, em produção E no preview:
+
+| rota | tipo | antes |
+|---|---|---:|
+| `/mapa` (ao vivo) | SSR | **200, 0 bytes** |
+| `/ranking` | SSR | **200, 0 bytes** |
+| `/u/<perfil>` | SSR | **200, 0 bytes** |
+| `/mapas`, `/armas` | estáticas | 200, 17-65 KB ✓ |
+| `/sitemap.xml`, `/api/*` | endpoints | 200, com corpo ✓ |
+
+**Evidência antes.** Chamando o handler construído direto no node, dentro do diretório da
+função (que é o cwd de produção):
+
+```
+/mapa      status=200  corpo=0 bytes  ENOENT: scandir '<func>/public/js'
+/ranking   status=200  corpo=0 bytes  ENOENT: scandir '<func>/public/js'
+/sitemap.xml  status=200  2005 bytes   ← idêntico ao que produção servia
+```
+
+**Causa.** `3e5b0ea` (#194, 11/08 23:23) pôs `moduleCacheManifest()` no escopo do módulo
+de `src/layouts/Layout.astro`, ou seja, em toda renderização de página. Ele faz
+`readdirSync('public/js')` relativo ao cwd. Para página estática isso roda no BUILD, onde
+o diretório existe. Para página SSR roda dentro da função da Vercel, que não empacota
+`public/js`. E como o Astro faz STREAMING, o 200 e os headers já tinham saído quando o
+`ENOENT` estourou: o resultado não é 500, é 200 com casca vazia. Status sozinho chamava
+aquilo de saudável, e por isso durou um dia no ar.
+
+**Refutados, com medição.** (a) o rename de ids de mapa do #200 — produção roda a `main`,
+sem ele, e quebrava igual; (b) timeout de função — produção respondia em **0,1 s**, e
+estouro daria 10-60 s; (c) a poda do `prune-dist.mjs` — ela só remove `dev.html` e
+`models/fpvm`; (d) Cloudflare — o domínio da Vercel, sem CDN na frente, falhava idêntico.
+
+**Conserto.** `astro.config.mjs` calcula o manifesto UMA vez e injeta como constante via
+`vite.define`; `Layout.astro` consome `__MANIFESTO_JS__`. Nenhuma página lê disco em
+tempo de requisição, então a classe inteira morre — não sobra caminho em que página
+dependa de arquivo que a função não empacotou. Estática e SSR passam a servir a mesma
+revisão.
+
+**Depois.** `/mapa` 15.353 bytes · `/ranking` 11.423 · `/u/exemplo` 10.081.
+
+**Por que nenhum portão pegou, e o que mudou.** O `eval:site` cobre `/ranking` e checa
+corpo — e passou o tempo todo, porque sobe um `astro dev` LOCAL, onde `public/js` existe:
+media um mundo onde o defeito não pode acontecer (LIÇÃO 3). O `/mapa` tinha ainda a
+cegueira trivial de nunca ter estado na lista de rotas dele.
+
+- régua nova: `npm run eval:ssr` (`tools/eval/ssr-render-check.mjs`) — mede o ARTEFATO do
+  build, entrando no diretório da função. `--mutante=corpo-vazio|lanca` provam que morde;
+  `--mutante=sem-publicjs` ficou VERDE de propósito e virou asserção de que a leitura de
+  disco em tempo de renderização continua morta.
+- `eval:site` passou a cobrar TAMANHO de corpo, não só status, e ganhou `/mapa`: 13 → 14
+  rotas.
+
+**Custo declarado.** O manifesto passa a ser congelado quando a config do Astro carrega.
+Em `astro dev`, acrescentar ou editar módulo em `public/js` só muda a revisão depois de
+reiniciar o servidor — antes recalculava a cada renderização. Build e produção não são
+afetados, porque lá a config carrega uma vez por build de qualquer jeito.
+
+### ~~BUG-48 · import map anunciava módulos removidos do deploy~~ · RESOLVIDO NO BUILD 11/08
+
+**Sintoma literal.** A issue #197 registrou `prod-watch: edge, banco ou schema de
+telemetria reprovou` nos deploys das versões alpha.79 e alpha.80.
+
+**Evidência antes.** `node tools/eval/prod-coherence.mjs https://www.csbrasil.online`
+sai 1 com **12 HTTP 404**. O manifesto contém 49 módulos, dos quais 12 são
+`editor/**`, enquanto `scripts/prune-dist.mjs` remove `dist/client/js/editor` e o
+espelho da Vercel antes de publicar.
+
+**Causa.** O manifesto recursivo de cache descreve todos os módulos de desenvolvimento,
+mas não respeita a fronteira do que o build efetivamente publica. O import map raiz então
+promete URLs válidas para arquivos deliberadamente podados.
+
+**Correção.** `moduleCacheManifest()` exclui a bancada `editor/`, que continua disponível em
+desenvolvimento mas não faz parte do site publicado. SB7 cruza o manifesto com os diretórios
+JavaScript podados para impedir que as duas listas voltem a divergir.
+
+**Medição:** manifesto **49 → 37 módulos**, anúncios `editor/**` **12 → 0**. Depois da poda,
+o import map construído anuncia 37 módulos e todos os 37 existem em `dist/client`. Os mutantes
+`cache-podado` e `cache-entry-site` recolocam uma bancada removida ou omitem o entrypoint do
+site e acendem exatamente SB7. A entrega em produção só
+fica comprovada quando `prod-coherence` sair verde contra o novo deploy.
+
+### ~~BUG-47 · shader da urna excedia o limite mínimo do WebGL1~~ · RESOLVIDO 11/08
+
+**Evidência.** As issues #120 e #121 registraram `Statically used varyings do not fit
+within packing limits` no WebGL1. A urna do mapa Brasília conserva tangente e usa textura
+base, normal, metálico/rugosidade, oclusão e emissivo; o GLTFLoader separa o mapa combinado em
+`metalnessMap` e `roughnessMap`. Com uma sombra direcional, o shader real ocupava **9 vetores**,
+acima dos **8 vetores mínimos** do GLSL ES 1.00.
+
+**Causa.** O fog radial acrescentava `vFogPosV`, embora os materiais iluminados já transportem
+a mesma posição em `vViewPosition`. O triplanar de Brasília também carregava posição e normal
+em dois varyings próprios, reduzindo a margem de outros materiais WebGL1.
+
+**Correção.** O fog iluminado deriva a posição de `vViewPosition`, preservando o varying
+próprio apenas nos shaders que não o possuem. O triplanar reconstrói posição e normal no mundo
+a partir de `vViewPosition`, `vNormal` e `viewMatrix`. A aparência e os fallbacks WebGL1 são
+mantidos; não foi feito upgrade do Three porque as versões novas removem WebGL1.
+
+**Medição:** urna **9/8 → 8/8 vetores**; triplanar **2 → 0 varyings próprios**. A régua
+`tools/eval/shader-budget-check.mjs` (`npm run eval:shaderbudget`, em `check:fast` e
+`check:deploy`) lê todas as primitivas, materiais, instancing e sombras reais. Os mutantes cobrem o fog,
+triplanar, instalação dos chunks e evolução de cor, clearcoat, anisotropia e luzes do asset.
+Um compile real no Chrome/SwiftShader com contexto WebGL1 gerou os dois programas sem erro GL.
+
+**Limite.** O hardware Linux do relato não foi acessado. Esta correção resolve a causa exata
+de #120/#121; #115, #127 e #130 permanecem abertos porque seus logs não identificam o mesmo
+programa. O shader crítico fica exatamente no piso mínimo, então novos mapas devem continuar
+reutilizando varyings ou aplicar o perfil seguro.
+
 ### BUG-40 · Míticos deformados, semanticamente errados e sem grip funcional — ABERTO 10/08
 
 **Sintoma (do dono, com 49 capturas da tela real):** *"TEM Varios problemas nos
@@ -90,6 +244,7 @@ brasilidade: a silhueta lê como lobisomem de fantasia genérico, e
 `references/mitico/lobisomem/` ainda não tem `FONTE.md`. Não afrouxar o teto nem inventar
 adereço sem decisão do dono.
 
+
 ### ~~BUG-45 · log WebGL nulo derrubava o loop de render~~ · RESOLVIDO 11/08
 
 **Evidência.** As issues #108 (alpha.41, Safari) e #169 (alpha.57, Chrome) terminavam
@@ -102,18 +257,20 @@ a cada frame. O [Three #31438](https://github.com/mrdoob/three.js/commit/b62351b
 corrigiu a mesma falha no r179.
 
 **Correção.** Foi portado apenas o fallback oficial `|| ''` nos quatro acessos; atualizar
-todo o Three removeria a compatibilidade WebGL1 que este jogo ainda precisa. Como `/vendor/`
-tem cache imutável por um ano, jogo, site e editor acrescentam a versão do pacote ao core;
-os 13 arnêses HTML usam o hash do conteúdo. Isso faz o patch chegar a navegadores que já
-tinham o r160 em cache e impede que diagnósticos manuais rodem um bundle antigo.
+todo o Three removeria a compatibilidade WebGL1 que este jogo ainda precisa. Jogo, site e
+editor acrescentam a versão do pacote ao core; os 13 arnêses HTML usam o hash do conteúdo.
+Addons sem URL própria revalidam na origem e `/vendor/` não recebe mais TTL forçado no edge.
+Isso faz o patch chegar a navegadores que já tinham o r160 em cache e evita misturar core e
+addons de revisões diferentes.
 
 **Limite.** A guarda preserva o diagnóstico e o loop, mas não torna um shader inválido válido.
 #115, #120, #121, #127 e #130 continuam sendo a família canônica de compilação/link.
 
 **Régua: `tools/eval/shader-log-check.mjs`** (`npm run eval:shaderlog`, em
 `check:fast` e `check:deploy`). SL1–SL3 executam as quatro expressões reais com `null` e texto;
-SL4 exige URL versionada e SL5 confere o hash dos arnêses quando `/vendor/` é imutável. Os mutantes `sem-guardas` e
-`sem-cache-bust` deixam a régua vermelha.
+SL4 exige URL versionada, SL5 confere o hash dos arnêses e SL6 exige revalidação imediata dos
+addons na Vercel e na regra Cloudflare. Os mutantes `sem-guardas`, `sem-cache-bust`,
+`addons-immutable` e `cloudflare-vendor` deixam a régua vermelha.
 
 ### ~~BUG-44 · Linux não consegue abrir o WebGL~~ · RESOLVIDO NO APP 11/08
 

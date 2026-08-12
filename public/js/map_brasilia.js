@@ -156,7 +156,7 @@ export function buildBrasilia(scene, T) {
     t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = LOWQ ? 1 : 8;
     /* PBR DE SUPERFÍCIE — este é o ÚNICO ponto por onde passa toda textura local deste mapa,
        então registrar aqui cobre o mapa inteiro numa linha (ver `lam` logo acima e
-       textures.js `registerDetail`). Antes desta rodada o awp_map — que é o mapa PADRÃO —
+       textures.js `registerDetail`). Antes desta rodada o praca_poderes — que é o mapa PADRÃO —
        tinha 41 materiais com albedo e ZERO normalMap/roughnessMap: cada superfície era cor
        chapada, sem reagir ao sol nem ao env map, e era um dos "três níveis de acabamento na
        mesma tela" que o dono descreveu.
@@ -436,38 +436,23 @@ export function buildBrasilia(scene, T) {
     return c;
   }
 
-  /* ---------------- TRIPLANAR: o conserto de raiz do B6 ---------------- */
-  // Os landmarks são GLB do Mint com UV desconhecido (e às vezes degenerado), e as caixas
-  // procedurais são BoxGeometry, onde uma face de 13 × 11 m recebe UM tile esticado. Nos dois
-  // casos o resultado é o mesmo: parede branca lisa. Projetar a textura pelo MUNDO (triplanar)
-  // resolve os dois de uma vez e ainda garante texel density constante (B3) em qualquer
-  // superfície, inclusive nas inclinadas do Panteão. `?tri=0` volta ao mapeamento por UV.
+  // A projeção no mundo mantém densidade constante em GLBs e caixas; `?tri=0` usa os UVs.
   const TRI = QP.get('tri') !== '0';
   function triplanar(mat, tex, scale) {
     mat.map = tex;   // fallback por UV se o patch de shader for desligado
     if (!TRI) return mat;
     mat.onBeforeCompile = (sh) => {
       sh.uniforms.uTriScale = { value: scale };
-      sh.vertexShader = sh.vertexShader
-        .replace('#include <common>', '#include <common>\nvarying vec3 vTriP;\nvarying vec3 vTriN;')
-        .replace('#include <worldpos_vertex>', `#include <worldpos_vertex>
-  vec4 triWP = vec4( transformed, 1.0 );
-  vec3 triON = objectNormal;
-  #ifdef USE_INSTANCING
-    triWP = instanceMatrix * triWP;
-    triON = mat3( instanceMatrix ) * triON;
-  #endif
-  triWP = modelMatrix * triWP;
-  vTriP = triWP.xyz;
-  vTriN = normalize( mat3( modelMatrix ) * triON );`);
       sh.fragmentShader = sh.fragmentShader
-        .replace('#include <common>', '#include <common>\nuniform float uTriScale;\nvarying vec3 vTriP;\nvarying vec3 vTriN;\nfloat gTriL;')
+        .replace('#include <common>', '#include <common>\nuniform float uTriScale;\nfloat gTriL;')
         .replace('#include <map_fragment>', `
-  vec3 triW = pow( abs( vTriN ), vec3( 4.0 ) );
+  vec3 triP = cameraPosition - ( vec4( vViewPosition, 0.0 ) * viewMatrix ).xyz;
+  vec3 triN = inverseTransformDirection( vNormal, viewMatrix );
+  vec3 triW = pow( abs( triN ), vec3( 4.0 ) );
   triW /= max( 1e-4, triW.x + triW.y + triW.z );
-  vec4 triC = texture2D( map, vTriP.zy * uTriScale ) * triW.x
-            + texture2D( map, vTriP.xz * uTriScale ) * triW.y
-            + texture2D( map, vTriP.xy * uTriScale ) * triW.z;
+  vec4 triC = texture2D( map, triP.zy * uTriScale ) * triW.x
+            + texture2D( map, triP.xz * uTriScale ) * triW.y
+            + texture2D( map, triP.xy * uTriScale ) * triW.z;
   gTriL = triC.g;
   diffuseColor *= triC;`)
         // O hotspot especular chapado morre aqui: a rugosidade passa a variar com a sujeira.
@@ -1667,7 +1652,7 @@ export function buildBrasilia(scene, T) {
   // borda. A cor bege fixa (0xd6ccae) era a outra metade do problema — o céu MEDIDO logo
   // acima daquela silhueta é azul-acinzentado, não poeira; agora a base é o azul medido e a
   // poeira quente aparece só de contraluz (ver AERIAL no bloom.js). ?nofog=1 / ?fog2=0.
-  if (QP.get('nofog') !== '1') scene.fog = SKY2 ? makeAerialFog('awp_map') : new THREE.Fog(0xbfd8ee, 100, 260);
+  if (QP.get('nofog') !== '1') scene.fog = SKY2 ? makeAerialFog('praca_poderes') : new THREE.Fog(0xbfd8ee, 100, 260);
   const sunSpr = new THREE.Sprite(new THREE.SpriteMaterial({ map: T.sunSprite, transparent: true, fog: false, depthWrite: false }));
   sunSpr.position.set(170, 118, -75); sunSpr.scale.setScalar(58); root.add(sunSpr);
   // Céu de seca: pouquíssima nuvem, e alta/rala. Nuvem gorda de verão mata a leitura.
@@ -1809,7 +1794,7 @@ export function buildBrasilia(scene, T) {
      Pool com peso em PROTESTO (lambe, stencil, cartaz), que é a escrita real desta
      praça — tag de bairro em Brasília leria como outro mapa. */
   grafitar({
-    id: 'awp_map',
+    id: 'praca_poderes',
     root, T, waypoints: nodes, seed: 3311, passo: 1.1, alcance: 9, cobre: 0.06, minLarg: 0.35,
     bandas: [
       /* CARTAZ DA COLEÇÃO (07/08). Reprovação: "tem diversos posters da minha coleção

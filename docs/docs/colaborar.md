@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**6 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `William Oliveira`, `Juan Versolato Lopes`, `Ruben`, `Ruben Marcus`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**8 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `Ruben`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -150,7 +150,7 @@ acrescenta vermelho"*.
 
 ### 3. Números, com `arquivo:linha`
 
-A afirmação "melhorei a iluminação" não é revisável. "O chão do `awp_map` estava 8 pontos
+A afirmação "melhorei a iluminação" não é revisável. "O chão do `praca_poderes` estava 8 pontos
 de L\* acima das paredes, causa em `map_brasilia.js:NNN`, corrigido para X" é. Essa
 exigência não é estilo — é o que permite que a próxima rodada confira o seu trabalho.
 
@@ -248,11 +248,11 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
-| `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
-| `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
-| `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
-| `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.841 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 769 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 518 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes.js` | 690 |
@@ -297,7 +297,7 @@ Para adicionar um mapa no formato de hoje:
 4. **Rode `node tools/eval/pickup-check.mjs`** (alimenta a `VM14`): todo pickup precisa
    ser alcançável **a pé**, por flood-fill de conectividade real em grade de 0,25 m
    semeado nos spawns dos dois times. Já aconteceu de armas caírem dentro da piscina do
-   `fy_pool_day` com o quality gate marcando vão **0,0000 — VERDE**.
+   `piscina_treta` com o quality gate marcando vão **0,0000 — VERDE**.
 5. **Rode `node tools/eval/botsim.mjs 60 <mapId>`**: os bots precisam navegar o seu mapa
    sem travar (`BOT3` stuck ≤ 4%), sem andar de lado (`BOT1`) e sem girar parados (`BOT2`).
    Waypoint desconexo é o defeito mais comum de mapa novo, e já quebrou PRs antes

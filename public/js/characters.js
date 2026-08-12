@@ -1,12 +1,16 @@
 // 8 fictional satirical archetypes — procedural low-poly meshes.
 import * as THREE from 'three';
-import { factionColor } from './factions.js';
+// cor de facção: UMA origem, a mesma de game.js e brasoes.js — o registro do elenco.
+// (A main tinha posto essa origem em `paleta.js`, que só cobre as 5 primeiras facções;
+//  `factions.js` tem os mesmos hexes e cobre o elenco inteiro, Míticos incluídos.)
+import { faction, factionColor } from './factions.js';
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CLAREZA COMPETITIVA DO PERSONAGEM  (critério C1 do BAR + A2 p/ personagens)
 
    PORQUÊ ISTO EXISTE: o baseline mediu ΔL* silhueta-vs-fundo = 10,8 em
-   fy_havan-169-b (alvo ≥ 20) e os bots não tinham NENHUMA sombra de contato —
+   loja_h-169-b (alvo ≥ 20) e os bots não tinham NENHUMA sombra de contato —
    liam como adesivo colado no chão. A régua não aceita "o mapa está bem
    iluminado" como resposta: ela exige um mecanismo ATIVO no personagem.
 
@@ -103,11 +107,28 @@ export const CHAR_FX = {
 // 0.35 (era 0.45 na R2): com o piso agora multiplicativo o rim voltou a ser o único
 // termo aditivo do personagem, e cada ponto que ele anda na direção do branco é croma
 // que ele TIRA do boneco. Medido no char_sim: 0.45 custava ~1,5 de C* sem ganhar ΔL*.
-// `E` (não `P`) e `C` (07/08): o rename Time E deixou esta tabela para trás e os palhaços
-// nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dá erro — dá contorno BRANCO, que
-// parece decisão de arte. Régua: `tools/eval/faccao-paleta-check.mjs`.
+/* Braçadeira: qual TOM cada facção usa. Os hexes vêm do registro (`factions.js`); o que
+   fica aqui é só a escolha de tom, que não é uniforme (ver o bloco no ponto de uso, em
+   `buildCharacter`). Facção desconhecida cai no base de U, que é o `else` que a régua F1
+   declara. A comparação continua no `team` CRU, como a main escreveu, para não mudar tom
+   de ninguém: quem chama já passa a letra maiúscula. */
+function bracadeiraDaFaccao(team) {
+  const f = faction(team);
+  if (!f) return factionColor('U');
+  return (team === 'F' || team === 'U') ? f.color : f.dark;
+}
+
+// A tabela literal saiu daqui (07/08): o rename Time E a deixou para trás e os palhaços
+// nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dava erro — dava contorno BRANCO,
+// que parece decisão de arte. Agora a cor vem do registro do elenco, a mesma que a
+// bandeira e o `_teamColor` usam, e facção nova entra nas três de uma vez.
+// O `|| 0xffffff` continua: facção desconhecida cai em BRANCO como sempre caiu, e não no
+// cinza do NEUTRO. Unificar origem não é hora de mudar pixel — se o branco for defeito,
+// é conserto com régua própria. Por isso lê a entrada do registro direto, e não
+// `factionColor()`, que já devolve o cinza do neutro no lugar do branco.
 export function charRimColor(def) {
-  const c = new THREE.Color(factionColor((def && def.team) || 'E'));
+  const f = faction((def && def.team) || 'E');
+  const c = new THREE.Color(f ? f.color : 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }
 
@@ -832,8 +853,18 @@ export function buildCharacter(def) {
   // team armband
   /* `E` (era `P`, rename de 06/08) e `C` explícito: sem o ramo, a facção cai no ELSE e sai
      azul de Tribos Urbanas — o time do jogador usava braçadeira azul e os palhaços também.
-     O else continua sendo o U, de propósito, e é isso que a régua declara. */
-  const band = Number.parseInt(factionColor(def.team, true).slice(1), 16);
+     O else continua sendo o U, de propósito, e é isso que a régua declara.
+
+     ATENÇÃO AO TOM, e ele está PRESERVADO como estava: E, B e C usam o tom ESCURO da
+     facção; F e U usam o tom BASE (0xffc233 e 0x4aa3ff, não 0xc79a12 e 0x2f7fe0). Não sei
+     dizer se foi decisão de arte ou resíduo do mesmo rename — os dois que fogem do padrão
+     são justamente as facções adicionadas depois. Unificar a ORIGEM da cor não é hora de
+     mudar pixel, então a mistura continua explícita aqui em vez de virar `.escura` para
+     todo mundo. Se for para padronizar, é mudança visual com A/B próprio.
+
+     As facções do elenco que NÃO estão nesse `if` (M, N, R, O, T) caem no tom escuro,
+     que é o padrão da maioria — antes deste merge elas caíam no azul de Tribos. */
+  const band = Number.parseInt(bracadeiraDaFaccao(def.team).slice(1), 16);
   parts.armL.add(marcaAdereco(box(D.bracoW + 0.02, 0.08, D.bracoD + 0.02, band, 0, -bracoLen * 0.24, 0)));
 
   addAccessories(def, parts, torsoW);

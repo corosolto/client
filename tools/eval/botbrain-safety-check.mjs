@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
 const read = (file) => readFileSync(file, 'utf8');
@@ -12,11 +13,12 @@ let compose = read('docker-compose.botbrain.yml');
 let trainer = read('tools/eval/bot-train.mjs');
 let brain = read('public/js/botbrain/brain.js');
 let sense = read('public/js/botbrain/sense.js');
+let cachedModules = moduleCacheManifest().modules;
 
 if (mutant === 'anonimo') api = api.replace('resolvePlayerIdentity', 'resolveAnonymousIdentity');
 else if (mutant === 'ctf') game = game.replace('(!this.ctf || b.target)', 'true');
 else if (mutant === 'optout') main = main.replace("localStorage.getItem(TRAIN_CONSENT_KEY) === '1'", "localStorage.getItem(TRAIN_CONSENT_KEY) !== '0'");
-else if (mutant === 'cache') page = page.replace('"botbrain/brain.js",', '');
+else if (mutant === 'cache') cachedModules = cachedModules.filter((module) => module !== 'botbrain/brain.js');
 else if (mutant === 'root') docker = docker.replace('USER node', '');
 else if (mutant === 'poison') trainer = trainer.replace('MAX_BATCHES_PER_PLAYER', 'UNLIMITED_BATCHES_PER_PLAYER');
 else if (mutant === 'localsink') {
@@ -41,7 +43,7 @@ if (!/api\('\/api\/train-frames',\s*\{\s*uid:\s*getAnonId\(\),\s*token:\s*getTok
 if (!game.includes('(!this.ctf || b.target)'))
   failures.push('BB5 bot neural ignora objetivo quando está sem alvo no CTF');
 for (const module of ['brain.js', 'features.js', 'recorder.js', 'sense.js']) {
-  if (!page.includes(`"botbrain/${module}"`)) failures.push(`BB6 ${module} não passa pelo cache-bust do import map`);
+  if (!cachedModules.includes(`botbrain/${module}`)) failures.push(`BB6 ${module} não passa pelo cache-bust do import map`);
 }
 if (!brain.includes("weights.bin") && !brain.includes('${wpath}?v=${version}'))
   failures.push('BB6 pesos do modelo não recebem a versão do release');

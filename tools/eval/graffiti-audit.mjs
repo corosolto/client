@@ -39,9 +39,9 @@
 
    Uso:
      npm run eval:serve &
-     node tools/eval/graffiti-audit.mjs                 # os 5 mapas
-     node tools/eval/graffiti-audit.mjs fy_quebrada
-     node tools/eval/graffiti-audit.mjs fy_quebrada --fotos 12
+     node tools/eval/graffiti-audit.mjs                 # todos os mapas
+     node tools/eval/graffiti-audit.mjs quebrada
+     node tools/eval/graffiti-audit.mjs quebrada --fotos 12
    ============================================================================ */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
@@ -49,7 +49,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const MAPAS = [
-  'awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada',
+  'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
   'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
 ];
 const argv = process.argv.slice(2);
