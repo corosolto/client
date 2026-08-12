@@ -874,8 +874,11 @@ const IMPORTMAP = JSON.stringify({
 
 <!-- Ranking (local + global quando o Supabase estiver ligado) -->
 <div id="ranking-panel" class="screen hidden">
+  <!-- título FORA do painel, como nas telas 03/05/07 e no menu de pausa: é a composição
+       da casa (régua de tinta embaixo do nome, painel logo abaixo). Estava dentro, num
+       h2 sem classe de 24px, e por isso estes painéis liam como de outro jogo. -->
+  <h2 class="screen-title">RANKING</h2>
   <div class="panel center-panel">
-    <h2>RANKING</h2>
     <div id="rank-local" class="rank-stats"></div>
     <div id="rank-global"></div>
     <p class="rank-note">Estes stats ficam <strong>neste navegador</strong>. O ranking global está
@@ -887,23 +890,28 @@ const IMPORTMAP = JSON.stringify({
 <!-- Feedback (substituiu o MAPA no menu, 07/08). Email + consentimento são
      obrigatórios: a tabela feedback é a semente da newsletter (migration 013). -->
 <div id="feedback-panel" class="screen hidden">
+  <h2 class="screen-title">FEEDBACK</h2>
   <div class="panel center-panel">
-    <h2>FEEDBACK</h2>
     <p class="fb-note">Conta o que curtiu, o que quebrou, o que falta. Vai direto pro dono do jogo.</p>
     <textarea id="fb-msg" maxlength="2000" rows="5" placeholder="escreve aqui o teu feedback…"></textarea>
     <input id="fb-email" type="email" maxlength="254" autocomplete="email" placeholder="teu email">
     <label class="fb-consent"><input type="checkbox" id="fb-news">
       <span>Aceito receber novidades do jogo por email (newsletter)</span></label>
     <p id="fb-status" class="fb-status" aria-live="polite"></p>
-    <button id="fb-send" class="btn">ENVIAR</button>
-    <button id="fb-back" class="btn">VOLTAR</button>
+    <!-- os dois botões numa fila só (wrapper novo, sem id): empilhados eles gastavam 114px
+         de altura e liam como duas opções de mesmo peso. A fila com fio em cima é o mesmo
+         rodapé do .set-actions, e o ENVIAR é o âmbar cheio da tela de fim de partida. -->
+    <div class="fb-actions">
+      <button id="fb-send" class="btn">ENVIAR</button>
+      <button id="fb-back" class="btn">VOLTAR</button>
+    </div>
   </div>
 </div>
 
 <!-- How to play -->
 <div id="howto-panel" class="screen hidden">
+  <h2 class="screen-title">COMO JOGAR</h2>
   <div class="panel center-panel">
-    <h2>COMO JOGAR</h2>
     <div class="howto-grid">
       <span>W A S D</span><span>Mover</span>
       <span>MOUSE</span><span>Mirar</span>

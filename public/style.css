@@ -249,9 +249,14 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    pausa não podem mais divergir do resultado. As razões de contraste são as que a UI1 já
    mediu pro `.btn-cta`, porque são literalmente as mesmas duas cores. */
 .btn-big{font-size:var(--fs-600);padding:var(--s-4) var(--s-8)}
-.btn-big,.btn-cta{background:var(--br-faixa);border-color:var(--br-faixa);color:var(--bg-900)}
+/* #fb-send entra aqui (e não numa regra própria): ENVIAR é a ação que compromete do painel
+   de feedback, e a casa tem UM jeito de dizer isso — âmbar cheio com texto escuro, do lado
+   do fantasma que só volta, igual ao rodapé da tela de fim de partida. Estavam os dois
+   fantasmas empilhados, sem hierarquia nenhuma. */
+.btn-big,.btn-cta,#fb-send{background:var(--br-faixa);border-color:var(--br-faixa);color:var(--bg-900)}
 .btn-big:hover,.btn-big:focus-visible,
-.btn-cta:hover,.btn-cta:focus-visible{background:var(--am);border-color:var(--am);color:var(--bg-900)}
+.btn-cta:hover,.btn-cta:focus-visible,
+#fb-send:hover,#fb-send:focus-visible{background:var(--am);border-color:var(--am);color:var(--bg-900)}
 .btn-back{position:absolute;top:26px;left:26px;font-size:13px;padding:9px 20px;z-index:5}
 .menu-buttons{display:flex;flex-direction:column;gap:16px;align-items:center;z-index:1;width:min(760px,95vw)}
 .profile-card{width:100%;background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);
@@ -344,6 +349,13 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
   cursor:pointer;text-align:left}
 .fb-consent input{width:18px;height:18px;flex:0 0 auto;accent-color:var(--yellow)}
 .fb-status{font-family:var(--mono);font-size:13px;color:var(--ink2);min-height:1.2em}
+/* enquanto não tem recado, não ocupa lugar: medido vazio com 0px de largura e 16px de
+   altura, mais os dois espaçamentos em volta — um buraco permanente no meio do formulário
+   pra guardar um texto que só aparece depois de enviar (o mesmo defeito de reservar
+   espaço pra conteúdo que não existe que o painel de config tinha).
+   Altura zero e NÃO `display:none`: o nó é `aria-live` e precisa continuar renderizado
+   pro leitor de tela anunciar o recado quando o main.js escrever nele. */
+#fb-status:empty{position:absolute;min-height:0;height:0;margin:0;padding:0;overflow:hidden}
 .fb-status.erro{color:var(--red)}
 #rank-global{width:100%;border-top:1px solid var(--line);padding-top:12px}
 #rank-global h3{font-size:14px;letter-spacing:2px;color:var(--cs);margin-bottom:8px}
@@ -616,19 +628,40 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    atravessam a largura, os ajustes ocupam a coluna esquerda e uma amostra do jogo mora
    na direita. O painel antigo tinha 560px com UMA linha dentro e ~600px de vazio
    embaixo — a captura mostrava um cartãozinho perdido no meio de uma tela preta. */
-.settings-wrap{display:flex;flex-direction:column;gap:var(--s-5);width:min(1120px,94vw);align-items:stretch;text-align:left}
-.set-cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:var(--s-6);align-items:start}
-.set-list{min-width:0}
+/* UM PAINEL, UMA GRADE — a amostra parou de mandar na altura da coluna de ajustes.
+   Medido nas capturas de 1536x1024 e 1280x720: a aba VÍDEO tem duas linhas (116px de
+   lista) e a amostra reservava 240px, então sobravam 124px de buraco embaixo dos
+   controles — 52% da faixa de conteúdo era vazio. Encolher a amostra foi a tentativa
+   anterior (320 -> 240, comentário antigo aqui) e não resolveu: o buraco acompanha a
+   diferença entre as duas colunas, seja ela qual for.
+   Agora o painel inteiro é uma grade de áreas: a barra de ação DESCE pra dentro da
+   coluna esquerda (fica junto dos controles que ela salva, e não debaixo de uma foto) e
+   a amostra atravessa as duas filas. O vazio fecha por construção em qualquer aba.
+   `display:contents` no .set-cols: os filhos viram itens desta grade sem mexer no HTML —
+   o main.js continua varrendo `.set-pane` por dentro do .set-list, no mesmo lugar. */
+.settings-wrap{display:grid;width:min(1120px,94vw);text-align:left;
+  grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+  grid-template-areas:"abas abas" "lista amostra" "acoes amostra";
+  grid-template-rows:auto 1fr auto;column-gap:var(--s-6);row-gap:var(--s-5)}
+.set-tabs{grid-area:abas}
+.set-cols{display:contents}
+.set-list{grid-area:lista;min-width:0}
+.set-preview{grid-area:amostra}
+.set-actions{grid-area:acoes}
 /* amostra: captura real de mapa do jogo, do mesmo naipe da imagem da referência */
-/* 240px e não 320: a aba VÍDEO do jogo tem UMA linha de ajuste (a referência desenha
-   sete), então uma amostra alta demais abre um vazio do tamanho dela na coluna da
-   esquerda. Aqui a altura da amostra é o que define o fôlego das duas colunas. */
-.set-preview{min-height:min(34vh,240px);border:1px solid var(--line);clip-path:var(--cut);
+/* 220px é a altura em que a coluna esquerda (lista de 110px + fio + barra de ação de
+   81px) EMPATA com a amostra: acima disso volta a sobrar buraco na esquerda, abaixo a
+   amostra vira tira. A imagem é 640x640, então a caixa de 430x220 mostra 51% da altura
+   dela — bem acima do mínimo de leitura que a gente usa pra recorte (~25%). */
+.set-preview{min-height:min(30vh,220px);border:1px solid var(--line);clip-path:var(--cut);
+  position:relative;
   background:var(--bg-800) url('/img/map-previews/quebrada.jpg') center/cover no-repeat}
 /* barra de ação com fio em cima e o CTA à direita, como o rodapé da referência */
-.set-actions{display:flex;justify-content:flex-end;gap:var(--s-3);
+.set-actions{display:flex;justify-content:flex-end;gap:var(--s-3);align-items:end;
   padding-top:var(--s-4);border-top:1px solid var(--line)}
-@media(max-width:900px){.set-cols{grid-template-columns:minmax(0,1fr)}.set-preview{display:none}}
+@media(max-width:900px){
+  .settings-wrap{grid-template-columns:minmax(0,1fr);grid-template-areas:"abas" "lista" "acoes"}
+  .set-preview{display:none}}
 .set-tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
 .set-tab{flex:1;font-family:var(--font);font-weight:700;font-size:var(--fs-200);letter-spacing:var(--tr-2);
   color:var(--ink-300);background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer;
@@ -683,9 +716,18 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #pause-menu .footnote kbd{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
   color:var(--ink-200);background:rgba(var(--bg-700-rgb),.9);border:1px solid var(--line-2);
   padding:3px 8px;clip-path:var(--cut-sm)}
-.howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
+/* DUAS DUPLAS POR FILA, contagem FIXA (nada de auto-fit: coluna elástica já abriu a mesma
+   tela ora com 3 ora com 4 colunas, commit 8b2aca0). Motivo medido: com uma dupla por fila
+   a grade ficava com 276px dentro de 542px de painel — uma fita estreita no meio de uma
+   caixa larga — e as 13 filas levavam o painel a 646px, 89,7% da altura da tela em 1280x720,
+   a um parágrafo de estourar. Em 7 filas o painel cai pra ~500px e a grade ocupa a largura
+   que tem. Abaixo de 620px de painel volta pra uma dupla por fila, senão a descrição
+   ("Agachar (mira mais estável)") quebra em duas linhas. */
+.howto-grid{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);
+  gap:var(--s-3) var(--s-4);font-size:var(--fs-200);width:100%;align-items:center;
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
+@media(max-width:700px){.howto-grid{grid-template-columns:auto minmax(0,1fr)}}
 
 /* ---------- HUD ---------- */
 /* MARGENS DO HUD — desvio 2 do BUG-05, medido e não achado. `ref-ui.py` dá, no consenso
@@ -2188,3 +2230,96 @@ html[data-ui="legacy"] .cs-vignette{
   radial-gradient(56% 62% at 68% 56%,rgba(0,0,0,0) 24%,rgba(var(--bg-900-rgb),.58) 100%),
   linear-gradient(180deg,rgba(var(--bg-900-rgb),.90) 0%,rgba(var(--bg-900-rgb),.24) 30%,
     rgba(var(--bg-900-rgb),.52) 74%,rgba(var(--bg-900-rgb),.94) 100%)}
+
+/* =========================================================================
+   BLOCO 2 - OS QUATRO PAINEIS SECUNDARIOS (config, ranking, feedback, como jogar)
+   =========================================================================
+   Medido nas capturas de /tmp/ui-b2-1536 e /tmp/ui-b2-720 e conferido com regua de
+   getBoundingClientRect no navegador. O que estas telas tinham em comum:
+     - painel boiando em chapa preta lisa (linear-gradient(#141008,#090704)), enquanto
+       facção, personagem e fim de partida ja tinham cenario desfocado atras. Por isso
+       liam como se fossem de outro jogo;
+     - titulo dentro do painel, num h2 sem classe de 24px e SEM a regua de tinta, contra
+       os 40px + regua de 120x3 das telas de fluxo (o h2 subiu pra fora do painel no
+       index.astro; aqui so vem o acabamento);
+     - tres caixas de larguras diferentes saindo do mesmo menu (41,7% / 31,5% / 41,7%).
+   ========================================================================= */
+
+/* ---------- FUNDO: cenario desfocado no menu, vidro fosco em partida ----------
+   DOIS CONTEXTOS, porque estes painéis abrem do menu E de dentro da partida (pause):
+     - no menu nao existe cena viva atras, entao entra a mesma receita do BLOCO 1
+       (arte em camada propria, desfocada, com vinheta que ancora). A imagem e a captura
+       de mapa que a amostra do config ja carrega: 47 KB, zero arquivo novo na folha, e e
+       cenario de verdade do jogo, que e o que a linguagem promete;
+     - em partida, trocar a arena por uma foto de outro lugar quebraria a continuidade de
+       quem acabou de apertar ESC. Entao a camada para de pintar e passa a DESFOCAR o que
+       ja esta atras (a partida congelada), com o mesmo veu .78 do #pause-menu.
+   O `body:has(#hud:not(.hidden))` le o estado que o main.js ja mantem na classe .hidden
+   (o #hud so perde .hidden quando a partida sobe), mesma manobra do menu de pausa: zero
+   linha de JS nova, e funciona nos dois caminhos de abertura. */
+#settings-panel,#ranking-panel,#feedback-panel,#howto-panel{
+  background-image:none;background-color:var(--bg-900)}
+#settings-panel::before,#ranking-panel::before,#feedback-panel::before,#howto-panel::before{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url('/img/map-previews/quebrada.jpg') center/cover no-repeat;
+  transform:scale(1.08);filter:blur(7px) saturate(.45) brightness(.30)}
+#settings-panel::after,#ranking-panel::after,#feedback-panel::after,#howto-panel::after{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:
+    radial-gradient(72% 60% at 50% 48%,rgba(0,0,0,0) 26%,rgba(var(--bg-900-rgb),.62) 100%),
+    linear-gradient(180deg,rgba(var(--bg-900-rgb),.88) 0%,rgba(var(--bg-900-rgb),.30) 32%,
+      rgba(var(--bg-900-rgb),.55) 72%,rgba(var(--bg-900-rgb),.95) 100%)}
+/* o conteudo precisa de z proprio pra subir acima das duas camadas */
+#settings-panel>h2,#settings-panel>.panel,#ranking-panel>h2,#ranking-panel>.panel,
+#feedback-panel>h2,#feedback-panel>.panel,#howto-panel>h2,#howto-panel>.panel{
+  position:relative;z-index:2}
+body:has(#hud:not(.hidden)) :is(#settings-panel,#ranking-panel,#feedback-panel,#howto-panel){
+  background-color:transparent}
+body:has(#hud:not(.hidden)) :is(#settings-panel,#ranking-panel,#feedback-panel,#howto-panel)::before{
+  background:rgba(var(--bg-900-rgb),.78);transform:none;filter:none;
+  backdrop-filter:blur(7px) saturate(.55) brightness(.72)}
+/* com a partida atras, a vinheta de baixo so precisa segurar o titulo: o veu .78 acima ja
+   fez o trabalho pesado, e empilhar o gradiente inteiro deixaria a cena preta de novo. */
+body:has(#hud:not(.hidden)) :is(#settings-panel,#ranking-panel,#feedback-panel,#howto-panel)::after{
+  background:radial-gradient(76% 64% at 50% 46%,rgba(0,0,0,0) 30%,rgba(var(--bg-900-rgb),.42) 100%)}
+
+/* ---------- A MESMA CAIXA NOS TRES PAINEIS CENTRAIS ----------
+   Eram 640 / 484 / 640 de largura porque o .center-panel so tinha max-width e encolhia no
+   conteudo: tres cartoes de tamanhos diferentes saindo do mesmo menu. Largura fixa (nada
+   de dimensao elastica) e o conteudo que se vira dentro dela. */
+#ranking-panel .center-panel,#feedback-panel .center-panel,#howto-panel .center-panel{
+  width:min(640px,92vw)}
+/* COMO JOGAR e o unico com TABELA dentro: com os 48px de folga lateral do .panel sobravam
+   542px de conteudo e a dupla mais larga ("CTRL ou C / Agachar (mira mais estavel)")
+   quebrava em duas linhas, o que desalinhava as filas. 32px de folga dao 574px e nenhuma
+   celula quebra - medido celula a celula, nenhuma passa de uma linha. */
+#howto-panel .center-panel{padding-left:var(--s-6);padding-right:var(--s-6)}
+
+/* ---------- RANKING: os numeros viram bloco medido ----------
+   A grade nascia com 350px dentro de 542px de painel (o .center-panel centraliza no eixo
+   cruzado, entao a grade encolhia no conteudo) e os numeros ficavam apertados no meio
+   enquanto o texto embaixo ia de ponta a ponta. Agora ocupa a largura toda e cada numero
+   ganha chapa propria, do mesmo naipe das linhas de placar da tela de fim de partida. */
+.rank-stats{width:100%;gap:var(--s-2)}
+.rank-stats>div{background:rgba(var(--bg-700-rgb),.55);border:1px solid var(--line);
+  clip-path:var(--cut-sm);padding:var(--s-3) var(--s-2);text-align:center;
+  font-size:12px;letter-spacing:var(--tr-2);color:var(--ink-300)}
+.rank-stats b{margin-bottom:2px}
+/* a primeira celula e o nick (grid-column:1/-1 vem inline do main.js): e cabecalho, nao
+   estatistica, entao nao leva chapa. */
+.rank-stats>div:first-child{background:none;border:0;padding:0 0 var(--s-2)}
+
+/* ---------- FEEDBACK: rodape em fila, com fio, igual ao do config ---------- */
+.fb-actions{display:flex;justify-content:flex-end;gap:var(--s-3);width:100%;
+  margin-top:var(--s-2);padding-top:var(--s-4);border-top:1px solid var(--line)}
+
+/* ---------- CONFIG: a amostra diz o que ela e ----------
+   Sem rotulo, a foto podia ser qualquer coisa - o jogador nao tinha como saber que esta
+   olhando uma arena do jogo. A plaquinha e o mesmo vocabulario da placa de nome da tela
+   de mapa (mono, caixa alta, chapa opaca).
+   O texto e o NOME PROPRIO do mapa de proposito: o i18n.js traduz por casamento exato de
+   string PT varrida no boot e nao alcança conteudo de CSS, entao qualquer palavra comum
+   aqui ficaria em portugues pra quem joga em ingles. "QUEBRADA" e igual nos dois. */
+.set-preview::after{content:"QUEBRADA";position:absolute;left:10px;bottom:10px;
+  font-family:var(--mono);font-size:11px;letter-spacing:var(--tr-4);color:var(--br-faixa);
+  background:rgba(var(--bg-900-rgb),.86);border:1px solid var(--line);
+  padding:5px 10px;clip-path:var(--cut-sm)}
