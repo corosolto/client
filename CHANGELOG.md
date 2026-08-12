@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.92`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.93`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,24 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.93] — 2026-08-12
+
+### Mudado
+- fix(ui): bloco 2 — HUD, placar, fim de partida e os quatro painéis (#216)
+- fix(ui): o HUD permanente sumia em mapa claro (anel opaco no glifo; sem devolver
+  o scrim que o dono mandou tirar)
+- fix(ui): fim de partida deixava 38% da tela desenhando nada, com emenda visível
+- fix(ui): placar ganhou os rótulos das colunas (JOGADOR / K / M / CAP.)
+- fix(ui): painéis de config, ranking, feedback e como jogar entraram na linguagem
+  do bloco 1 (cenário desfocado, título com régua de tinta, caixa medida)
+
+### Corrigido
+- fix(eval): a régua UI1 creditava chapa opaca por casamento de substring, e por
+  isso passava verde sobre um HUD ilegível. Agora mede alfa × cobertura do anel
+- fix(eval): as réguas de captura só rodavam em macOS com Playwright global
+- fix(eval): `ui-antes` fotografava a árvore errada em silêncio quando outro
+  worktree ocupava a porta, e fotografava em inglês
 
 ## [2.0.0-alpha.92] — 2026-08-12
 
