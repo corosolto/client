@@ -38,6 +38,8 @@ jobs:
         run: npm run eval:uuid
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
+      - name: Veículos do estacionamento em escala de fábrica
+        run: npm run eval:escala
       - name: Orçamento de shader WebGL1
         run: npm run eval:shaderbudget
 

@@ -33,38 +33,15 @@ export const HAVAN_PROPS = [
   // v3: mobília da loja Mint (gôndolas cheias, caixas, eletro, roupas)
   'gondola_mercado', 'gondola_eletro', 'arara_roupas', 'caixa_cobranca', 'painel_tvs', 'manequim',
 ];
-/* `car_a` saiu da frota: a bbox dele é 0,12 × 0,21 × 0,18 — MAIS ALTO QUE COMPRIDO, o que
-   nenhum carro é. O modelo está torto na origem, então não existe escala que o deixe certo:
-   pela altura ele saía com 1,33 m de comprimento (carrinho), pela ficha sairia com 2,70 m de
-   altura (guarita). Era o pior erro do mapa nas duas contas. Não é perda de conteúdo: `car_a`
-   é placeholder genérico, e o pátio tem 40 outros modelos. Reentra quando o .glb for
-   corrigido — é só voltar o id para esta lista e dar a ele uma linha no CAR_DIM. */
+// `car_a` fora da frota: bbox mais ALTA que comprida, então nenhuma escala o deixa certo
+// (ver a régua). Reentra corrigindo o .glb, tirando-o daqui e dando-lhe linha no CAR_DIM.
 const CARS = HAVAN_PROPS.filter(id => !['statue_liberty', 'shopping_cart', 'onibus_urbano', 'car_a',
   'gondola_mercado', 'gondola_eletro', 'arara_roupas', 'caixa_cobranca', 'painel_tvs', 'manequim'].includes(id));
 // modelos Mint BR com o comprimento no eixo X — giram 90° pra alinhar na vaga
 const RY_FIX = { brasilia_vw: Math.PI / 2, saveiro: Math.PI / 2, moto_cg: Math.PI / 2 };
 
-/* ===== FICHA TÉCNICA DOS VEÍCULOS: [comprimento, altura] em metros =====
-   Defeito de origem: "no mapa da Havan a moto está maior em escala que os outros carros".
-
-   O estacionamento normalizava TODO veículo para `targetH: 1.55` — altura fixa. Normalizar
-   é obrigatório (os GLBs chegam em escalas de origem incompatíveis: uns em cubo unitário,
-   uns em centímetro, o s600 em ~500 unidades); o erro foi normalizar pela ALTURA.
-
-   Altura sozinha é a régua errada para uma FROTA, porque a razão altura/comprimento é justo
-   o que mais varia entre veículos — 0,53 numa CG contra 0,30 num Opala. Com altura-alvo
-   única, cada modelo sai multiplicado por um fator diferente, e quem tem a menor razão paga
-   o maior aumento. A moto era exatamente esse extremo:
-
-     moto_cg  ->  2,59 × 1,55 m   contra 2,02 × 1,08 de fábrica   = 36% de erro, o PIOR do mapa
-     picanto  ->  2,62 m de comprimento contra 3,60               = vira carrinho de rolimã
-     charger  ->  5,89 m contra 5,28                              = esticado
-
-   Medido nos 41 .glb contra esta tabela (erro = média do erro de comprimento e de altura):
-   targetH fixo dá 10,3% médio; média geométrica de comprimento e altura dá 3,8%. É por isso
-   que aqui vão as DUAS medidas e o `placeProp` casa as duas (ver `targetLen` lá).
-
-   Fora da tabela cai no padrão de sedã. Reff: ficha de fábrica de cada modelo. */
+/* Ficha de fábrica [comprimento, altura] em metros — é a REFERÊNCIA da escala dos veículos,
+   conferida por tools/eval/escala-veiculo-check.mjs. Fora da tabela cai no padrão de sedã. */
 const CAR_DIM = {
   moto_cg: [2.02, 1.08],
   fusca: [4.03, 1.50], '1968_volkswagen_beetle': [4.03, 1.50], old_vw_bug: [4.03, 1.50],
@@ -708,8 +685,7 @@ export function buildHavan(scene, T) {
   };
   function fallbackCar(id, x, z, ry) {
     let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
-    /* o fallback também segue a ficha: sem isto uma moto sem GLB reaparecia como uma caixa
-       de 4,20 × 1,50 m, que é o mesmo defeito de escala voltando por outro caminho. */
+    // o fallback segue a ficha: senão a moto sem GLB volta como caixa de 4,20 m
     const [cl, calt] = carDim(id);
     const kl = cl / CAR_DIM_PADRAO[0], ka = calt / CAR_DIM_PADRAO[1];
     const g = new THREE.Group();

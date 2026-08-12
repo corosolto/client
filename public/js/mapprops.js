@@ -43,20 +43,8 @@ export function hasProp(id) { return _base.has(id); }
 // Clone a prop, normalized so its height == targetH (metres), feet at y (default 0),
 // centred on (x,z) and yawed by ry. Returns the Object3D, or null if not loaded.
 //
-// `targetLen` (metros, o maior eixo horizontal) liga a normalização por FICHA TÉCNICA: a
-// escala passa a ser a média geométrica entre bater o comprimento e bater a altura, em vez
-// de bater a altura e deixar o comprimento cair onde cair.
-//
-// Serve para acervo de veículo, onde altura sozinha é a régua errada: a razão
-// altura/comprimento é justo o que mais varia entre eles (0,53 numa moto, 0,30 num sedã),
-// então uma altura-alvo única multiplica cada modelo por um fator diferente. Medido nos 41
-// veículos do Havan contra ficha de fábrica (erro = média do erro de comprimento e altura):
-//
-//     targetH 1,55 fixo .......... 10,3% de erro médio, pior caso moto_cg com 36%
-//     só comprimento .............  4,1%, pior caso 22%
-//     média geométrica ...........  3,8%, pior caso 18%   <- este
-//
-// Nenhum chamador antigo muda: sem `targetLen` o caminho é o targetH de sempre.
+// `targetLen` casa comprimento E altura pela média geométrica, em vez de só a altura; sem
+// ele nada muda. Por que altura sozinha erra numa frota: tools/eval/escala-veiculo-check.mjs.
 export function placeProp(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 0, ry = 0 } = {}) {
   const tpl = _base.get(id);
   if (!tpl) return null;

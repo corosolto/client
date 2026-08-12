@@ -30,6 +30,8 @@
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
     "//eval:drop": "procedência de DROP_TTL/DROP_MAX: acúmulo de armas no chão em regime",
     "eval:drop": "node tools/eval/drop-check.mjs",
+    "//eval:escala": "procedência da escala dos veículos do estacionamento: bbox real do glb contra ficha de fábrica",
+    "eval:escala": "node tools/eval/escala-veiculo-check.mjs",
     "//eval:prune": "KEEP_FPVM preserva só models/fpvm; as bancadas continuam podadas dos dois destinos publicados. --mutante=early-exit prova a restrição.",
     "eval:prune": "node tools/eval/prune-check.mjs",
     "//eval:vminspect": "O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.",
