@@ -261,24 +261,30 @@ ignorando arquivo gerado (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
 `STATUS.md`, `tools/eval/ARCH.md`, `docs/i18n/`, `graphify-out/`,
 `public/js/version.js`) e commit de release.
 
-O teto não é opinião, e o comando que o reproduz é este — rode antes de propor
-outro número:
+O teto não é opinião. Ele é uma **observação datada e ancorada num commit**, e é
+por isso que o comando abaixo devolve o mesmo resultado hoje e daqui a um ano:
 
 ```bash
-git log --no-merges -400 --format='%H%x00%s' --numstat |
+git log --no-merges -400 --format='%H%x00%s' --numstat 7b20e46 |
   python3 scripts/medir-historico.py
-#   342 commits não-release, sem arquivo gerado
-#     p50:  3 arquivos,   83 linhas
-#     p75:  7 arquivos,  272 linhas
-#     p90: 14 arquivos,  785 linhas   <- o teto fica logo acima
-#     p95: 20 arquivos, 1451 linhas
+#   340 commits não-release, sem arquivo gerado
+#     p50:  3 arquivos,   89 linhas
+#     p75:  8 arquivos,  276 linhas
+#     p90: 15 arquivos,  845 linhas   <- é onde o teto fica
+#     p95: 21 arquivos, 1736 linhas
 ```
 
-Medido em 12/08/2026 nos 400 commits mais recentes da `main`. O teto morde os
-10% maiores, não o trabalho normal. A lista de arquivo gerado é a mesma do
-`scripts/medir-commit.awk`, que é quem o hook usa — uma fonte só, exercitada por
-fixture no `agente_check.py --selftest` (o filtro já nasceu quebrado uma vez, com
-um `^` no meio da linha que nunca casava).
+**Isto não é um bloco gerado, e a decisão é deliberada.** A primeira versão desta
+seção foi gerada pelo `gen-docs`, e a medição mudava a cada commit — inclusive o
+commit que a regenerava. Percentil de janela móvel não é um fato sobre o estado
+do repositório, como "34 arquivos, 27.639 linhas"; é uma **observação histórica**,
+e observação se ancora, não se persegue. O que a lei 2 da casa cobra é
+reprodutibilidade, e a âncora `7b20e46` dá exatamente isso.
+
+Vale reancorar quando o perfil de trabalho mudar de verdade — não a cada PR. A
+lista de arquivo gerado é a mesma do `scripts/medir-commit.awk`, que é quem o
+hook usa, exercitada por fixture no `agente_check.py --selftest` (o filtro já
+nasceu quebrado uma vez, com um `^` no meio da linha que nunca casava).
 
 Quando o commit grande é o certo (mover uma pasta, regenerar um acervo, aplicar
 um rename), diga por quê e siga:
