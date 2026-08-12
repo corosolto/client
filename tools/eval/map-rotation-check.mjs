@@ -18,9 +18,11 @@
    conferida no fonte.
 
    Mutantes: sem-rotacao (volta a abrir sempre no mapa salvo) acende ROT3;
-   ignora-escolha (pisa a escolha do jogador) acende ROT2.
+   ignora-escolha (pisa a escolha do jogador) acende ROT2; salva-link (grava o mapa
+   do link por cima do pin) acende ROT6.
 
-   Uso: node tools/eval/map-rotation-check.mjs [--mutante=sem-rotacao|ignora-escolha]
+   Uso: node tools/eval/map-rotation-check.mjs
+        [--mutante=sem-rotacao|ignora-escolha|salva-link]
    ============================================================================ */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -33,7 +35,7 @@ const MAPSRC = readFileSync(path.join(ROOT, 'public', 'js', 'maps.js'), 'utf8');
 const MAINSRC = readFileSync(path.join(ROOT, 'public', 'js', 'main.js'), 'utf8');
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
-if (mutant && !['sem-rotacao', 'ignora-escolha'].includes(mutant)) {
+if (mutant && !['sem-rotacao', 'ignora-escolha', 'salva-link'].includes(mutant)) {
   throw new Error(`mutante desconhecido: ${mutant}`);
 }
 
@@ -78,12 +80,16 @@ if (mutant === 'ignora-escolha' && sessaoSrc) {
 
 const MAP_IDS = Object.keys(MAPS);
 const DEFAULT_MAP = MAPSRC.match(/export const DEFAULT_MAP = '([^']+)'/)?.[1];
+// resolveMapId lê a tabela de nomes antigos (#200): sem ela no escopo, ROT4 acusaria o
+// próprio arnês em vez do jogo. Ausência é vermelha, não objeto vazio.
+const aliasSrc = /export const ALIAS_MAPA = \{[^}]*\};/.exec(MAPSRC)?.[0];
+if (!aliasSrc) failures.push('ROT0 ALIAS_MAPA não encontrado no maps.js');
 let fns = null;
 if (!failures.length) {
   try {
     fns = Function(
       'MAPS', 'MAP_IDS', 'DEFAULT_MAP',
-      `${resolveSrc}\n${nextSrc}\n${sessaoSrc}\nreturn { resolveMapId, nextMapId, mapaDaSessao };`.replaceAll('export function', 'function'),
+      `${aliasSrc}\n${resolveSrc}\n${nextSrc}\n${sessaoSrc}\nreturn { resolveMapId, nextMapId, mapaDaSessao };`.replaceAll('export const', 'const').replaceAll('export function', 'function'),
     )(Object.fromEntries(MAP_IDS.map((id) => [id, true])), MAP_IDS, DEFAULT_MAP);
   } catch (error) {
     failures.push(`ROT0 funções não avaliam: ${error.message}`);
@@ -129,6 +135,15 @@ if (fns) {
 const rot5 = /mapaDaSessao\(\{ urlMap, savedMap: settings\.map, pinned: settings\.mapPinned \}\)/.test(MAINSRC)
   && /settings\.mapPinned = true;/.test(MAINSRC);
 if (!rot5) failures.push('ROT5 main.js não usa mapaDaSessao ou o carrossel não grava mapPinned');
+
+// ROT6 — o save existe só para a rotação avançar. Sem a guarda `!urlMap` ele grava o mapa
+// do link por cima do pin, e a visita seguinte abre nele como se fosse escolha do jogador.
+const fonteMenu = mutant === 'salva-link'
+  ? MAINSRC.replace(/if \(!urlMap\) \{ settings\.map = currentMap; saveSettings\(\); \}/,
+                    'settings.map = currentMap; saveSettings();')
+  : MAINSRC;
+const rot6 = /if \(!urlMap\) \{ settings\.map = currentMap; saveSettings\(\); \}/.test(fonteMenu);
+if (!rot6) failures.push('ROT6 main.js grava o mapa do ?map= por cima da escolha fixada do jogador');
 
 for (const failure of failures) console.error(`  \x1b[31m✗\x1b[0m ${failure}`);
 if (failures.length) {

@@ -105,7 +105,8 @@ const sfxReady = sfx.loadManifest();
 /* ---------------- selected map ---------------- */
 const urlMap = new URLSearchParams(location.search).get('map');
 let currentMap = mapaDaSessao({ urlMap, savedMap: settings.map, pinned: settings.mapPinned });
-settings.map = currentMap; saveSettings();   // sem save a rotação não avança na próxima visita
+// sem save a rotação não avança; com ?map= o save pisaria a escolha fixada do jogador
+if (!urlMap) { settings.map = currentMap; saveSettings(); }
 
 /* ---------------- menu backdrop (orbiting map) ---------------- */
 // Mint building/statue GLBs used by the Brasília map (loaded once, cloned per placement).
