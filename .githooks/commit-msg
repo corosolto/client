@@ -1,0 +1,51 @@
+#!/bin/sh
+set -eu
+
+# Duas recusas, as duas com escape explícito e nenhuma que dependa de lembrar:
+#   1. commit sem `Agent:` — o prepare-commit-msg preenche sozinho, então chegar aqui
+#      sem o trailer significa que alguém apagou ou que o hook não está instalado;
+#   2. commit grande demais sem `Commit-grande:` dizendo por quê.
+# O porquê de cada uma está no CONTRIBUTING.md, seção "Quem escreveu o commit".
+
+mensagem=$1
+
+# Teto medido em 343 commits não-release da main (agosto/2026), ignorando arquivo
+# gerado: mediana 3 arquivos e 86 linhas, p90 13 arquivos e 785 linhas. O teto fica
+# logo acima do p90 — ele morde os 10% maiores, não o trabalho normal.
+TETO_ARQUIVOS=15
+TETO_LINHAS=800
+
+GERADOS='^(public/docs/|graphify-out/|docs/i18n/|package-lock\.json|CHANGELOG\.md|STATUS\.md|tools/eval/ARCH\.md|public/js/version\.js)'
+
+if ! grep -Eqi '^Agent:[[:space:]]*[^[:space:]]' "$mensagem"; then
+  echo "commit-msg: falta o trailer 'Agent:' (quem escreveu — nome do agente ou 'humano')." >&2
+  echo "  O hook .githooks/prepare-commit-msg preenche sozinho: rode 'npm run setup'," >&2
+  echo "  ou commite com --trailer \"Agent: <nome>\". Ver CONTRIBUTING.md." >&2
+  exit 1
+fi
+
+# Rebase, merge, cherry-pick e revert reescrevem commit que já passou pelo teto uma
+# vez; cobrar de novo transformaria conflito resolvido em commit reprovado.
+gitdir=$(git rev-parse --git-dir)
+for estado in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+  [ -e "$gitdir/$estado" ] && exit 0
+done
+
+case $(head -n 1 "$mensagem") in
+  'chore(release):'*) exit 0 ;;
+esac
+
+grep -Eqi '^Commit-grande:[[:space:]]*[^[:space:]]' "$mensagem" && exit 0
+
+medida=$(git diff --cached --numstat -- . 2>/dev/null | grep -Ev "	$GERADOS" | awk '
+  $1 != "-" { arquivos++; linhas += $1 + $2 }
+  END { print arquivos + 0, linhas + 0 }')
+arquivos=${medida% *}
+linhas=${medida#* }
+
+if [ "$arquivos" -gt "$TETO_ARQUIVOS" ] || [ "$linhas" -gt "$TETO_LINHAS" ]; then
+  echo "commit-msg: commit grande — $arquivos arquivo(s) e $linhas linha(s) fora de arquivo gerado." >&2
+  echo "  Teto: $TETO_ARQUIVOS arquivos ou $TETO_LINHAS linhas (p90 medido da main)." >&2
+  echo "  Divida em commits menores, ou justifique com --trailer \"Commit-grande: <motivo>\"." >&2
+  exit 1
+fi
