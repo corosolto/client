@@ -23,6 +23,12 @@ async function renderIndex() {
     },
   });
   return src
+    /* De QUAL árvore este HTML saiu. Existe porque worktrees irmãos compartilham quase
+       todos os ids do index.astro: com um serve.mjs de outro checkout já na porta, o
+       script de captura conecta, fotografa 18 telas do repo errado e não reclama - as
+       fotos saem bonitas e falsas. Este marcador é o que o ui-antes confere antes de
+       gastar dez minutos de browser. Nunca chega em produção: só o harness renderiza aqui. */
+    .replace(/<head>/, `<head><meta name="eval-cwd" content="${process.cwd()}">`)
     .replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
     .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}"`)
     .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`);
