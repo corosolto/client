@@ -1,16 +1,8 @@
 name: csbrasil-bot-pr-classify
 
 on:
-  # `pull_request_target` dispara no PUSH — e o CodeRabbit comenta DEPOIS do push. Com
-  # só esses gatilhos o rotulador rodava antes de existir comentário, não achava nada
-  # e nunca mais rodava: era estruturalmente cego para o que devia detectar. Medido na
-  # PR #240, que fechou com 4 fios do revisor abertos e NENHUMA etiqueta.
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
-  pull_request_review:
-    types: [submitted, dismissed]
-  pull_request_review_comment:
-    types: [created]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -24,10 +16,30 @@ permissions:
   issues: write
 
 jobs:
-  classify:
+  bot-token:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
+          fi
+
+  classify:
+    needs: bot-token
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: needs.bot-token.outputs.available == 'true'
     env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
       DESIRED_BASE_BRANCH: ${{ vars.PR_DEFAULT_BASE_BRANCH || 'staging' }}
     steps:
@@ -36,7 +48,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-coderabbit-resolution coderabbit-resolved
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-greptile-resolution greptile-resolved
       - name: Fetch PR metadata
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Route PR and set assignee
@@ -70,18 +82,18 @@ jobs:
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Classify PR
         run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
-      - name: Gate on CodeRabbit presence
+      - name: Gate on Greptile presence
         run: |
-          gh pr view "$PR_NUMBER" --json comments,reviews,statusCheckRollup > /tmp/pr-coderabbit.json
-          python3 scripts/ci/coderabbit_gate.py < /tmp/pr-coderabbit.json > /tmp/pr-coderabbit-labels.json
+          gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-greptile.json
+          python3 scripts/ci/greptile_gate.py < /tmp/pr-greptile.json > /tmp/pr-greptile-labels.json
       - name: Apply labels
         run: |
           python3 - <<'PY'
           import json, os, subprocess
           data = json.load(open('/tmp/pr-labels.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
-          add = sorted(set(data.get('labels_add', []) + coderabbit.get('labels_add', [])))
-          remove = sorted(set(data.get('labels_remove', []) + coderabbit.get('labels_remove', [])))
+          greptile = json.load(open('/tmp/pr-greptile-labels.json'))
+          add = sorted(set(data.get('labels_add', []) + greptile.get('labels_add', [])))
+          remove = sorted(set(data.get('labels_remove', []) + greptile.get('labels_remove', [])))
           if add:
               subprocess.run(['gh', 'pr', 'edit', os.environ['PR_NUMBER'], '--add-label', ','.join(add)], check=True)
           if remove:
@@ -94,11 +106,11 @@ jobs:
           pr = json.load(open('/tmp/pr.json'))
           labels = json.load(open('/tmp/pr-labels.json'))
           route = json.load(open('/tmp/pr-route.json'))
-          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          greptile = json.load(open('/tmp/pr-greptile-labels.json'))
           payload = {
               'files': pr.get('files', []),
               'changedFiles': pr.get('changedFiles', 0),
-              'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
+              'labels_add': sorted(set(labels.get('labels_add', []) + greptile.get('labels_add', []))),
               'baseRefName': pr.get('baseRefName'),
               'author_login': ((pr.get('author') or {}).get('login')),
               'add_assignee': route.get('add_assignee'),
@@ -111,15 +123,11 @@ jobs:
           import json, os, subprocess
           marker = '## csbrasil-bot classification'
           comments = json.loads(subprocess.check_output([
-              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments",
-              '--paginate',
+              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments"
           ], text=True))
           body = open('/tmp/pr-comment.md').read()
-          # Match by marker in body, accepting both 'csbrasil-bot' and 'github-actions[bot]'
-          # (fallback when CSBRASIL_BOT_TOKEN is not configured uses GITHUB_TOKEN)
-          bot_logins = {'csbrasil-bot', 'github-actions[bot]'}
           for c in comments:
-              if c.get('user', {}).get('login') in bot_logins and marker in c.get('body', ''):
+              if c.get('user', {}).get('login') == 'csbrasil-bot' and marker in c.get('body', ''):
                   subprocess.run(['gh', 'api', f"repos/${{ github.repository }}/issues/comments/{c['id']}", '-X', 'PATCH', '-f', f'body={body}'], check=True)
                   raise SystemExit(0)
           subprocess.run(['gh', 'pr', 'comment', os.environ['PR_NUMBER'], '--body-file', '/tmp/pr-comment.md'], check=True)

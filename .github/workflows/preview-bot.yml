@@ -16,6 +16,7 @@ jobs:
       github.event.pull_request.head.repo.full_name != github.repository &&
       github.event.action != 'labeled'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: revoga aprovação quando o SHA muda
         if: github.event.action == 'synchronize'
@@ -48,6 +49,7 @@ jobs:
       github.event.action == 'labeled' &&
       github.event.label.name == 'preview-autorizado'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: preview-forks
     steps:
       - name: confirma mantenedor, label e SHA aprovado

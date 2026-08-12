@@ -17,6 +17,7 @@ permissions:
 jobs:
   bot-token:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       available: ${{ steps.check.outputs.available }}
     steps:
@@ -34,6 +35,7 @@ jobs:
   automerge:
     needs: bot-token
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: needs.bot-token.outputs.available == 'true'
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
