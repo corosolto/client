@@ -1,13 +1,8 @@
 #!/bin/sh
 set -eu
 
-# Roda o check:deploy ANTES do push. Não é zelo: numa única sessão de agosto/2026,
-# quatro pushes seguidos abriram CI vermelho em portão que roda em 15 s na máquina
-# (docs:check duas vezes, arch:check e eval:shaderlog). O portão existia; ninguém
-# rodava. Escape: PULAR_PORTAO=1 git push, e o CI continua sendo a rede de baixo.
-#
-# check:deploy e não check:fast de propósito: 16 passos determinísticos, sem browser
-# e sem rede, contra 33. Portão que demora vira portão que se contorna.
+# Roda o check:deploy antes do push; PULAR_PORTAO=1 escapa e o CI segue cobrando.
+# Por que este portão e não o check:fast: CONTRIBUTING.md, "Antes de abrir o PR".
 
 if [ -n "${PULAR_PORTAO:-}" ]; then
   echo "pre-push: portão pulado por PULAR_PORTAO=1 — o CI ainda vai cobrar." >&2

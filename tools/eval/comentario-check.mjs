@@ -20,16 +20,18 @@
    Cláusulas: CM1 bloco de comentário novo com mais de 2 linhas; CM2 comentário
    novo sem uma palavra portuguesa e com marca de inglês.
 
-   Mutantes: bloco-longo e comentario-ingles injetam a violação e devem acender.
+   Mutantes: bloco-longo, comentario-ingles e cauda-longa (`//` depois de código,
+   o furo que o greptile achou no PR #209) injetam a violação e devem acender.
 
    Uso: node tools/eval/comentario-check.mjs [--base=origin/main]
-        [--mutante=bloco-longo|comentario-ingles]
+        [--mutante=bloco-longo|comentario-ingles|cauda-longa]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
+import { relatarBaseAusente, resolverBase } from './base-ref.mjs';
 
 const arg = (nome) => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
-if (mutante && !['bloco-longo', 'comentario-ingles'].includes(mutante)) {
+if (mutante && !['bloco-longo', 'comentario-ingles', 'cauda-longa'].includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
 const base = arg('base') || 'origin/main';
@@ -42,19 +44,28 @@ const INGLES = /\b(the|this|that|when|which|because|should|would|with|from|does|
 const PORTUGUES = /\b(o|a|os|as|de|do|da|que|não|é|por|para|com|quando|porque|sem|já|pra|no|na|um|uma|em|se)\b/i;
 
 function diff() {
-  try {
-    return execFileSync('git', ['diff', '--unified=0', `${base}...HEAD`, '--', 'public/js', 'src'], { encoding: 'utf8' });
-  } catch {
-    return '';
-  }
+  /* Sem try/catch de conveniência: falha do git aqui virava diff vazio, e diff
+     vazio virava verde. Se explodir, explode alto. */
+  return execFileSync('git', ['diff', '--unified=0', `${base}...HEAD`, '--', 'public/js', 'src'],
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
 
 /* Linha ACRESCENTADA que abre ou continua comentário. Não é parser de JS: régua que
    precisa de AST para medir estilo custa mais do que o defeito que ela pega. */
-const abreBloco = (t) => /^\s*\/\*/.test(t);
-const fechaBloco = (t) => /\*\//.test(t);
+const abreBloco = (t) => /^\s*(\{\s*)?\/\*/.test(t);
+const fechaBloco = (t) => /\*\/\s*\}?\s*$|\*\//.test(t);
 const ehLinha = (t) => /^\s*\/\//.test(t);
 const ehCorpo = (t) => /^\s*\*/.test(t);
+/* `//` DEPOIS de código também é comentário, e era o furo mais fácil de explorar:
+   `const x = 1; // narrativa de quatro linhas…` passava batido. `://` de URL não
+   conta, e nem `//` dentro de aspas. */
+const trailing = (t) => {
+  const semTexto = t.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, '""');
+  const i = semTexto.search(/(^|[^:])\/\//);
+  if (i < 0) return null;
+  const corte = semTexto.indexOf('//', i);
+  return corte > 0 ? t.slice(corte).trim() : null;
+};
 
 function blocos(texto) {
   const achados = [];
@@ -74,15 +85,28 @@ function blocos(texto) {
       if (fechaBloco(t)) atual.aberto = false;
       continue;
     }
+    const cauda = trailing(t);
+    if (cauda) {
+      if (!atual) atual = { arquivo, linhas: [], aberto: false };
+      atual.linhas.push(cauda);
+      continue;
+    }
     fecha();
   }
   fecha();
   return achados;
 }
 
+const resolucao = resolverBase(base);
+if (!resolucao.ok) process.exit(relatarBaseAusente('COMENTARIO', resolucao));
+
 let texto = diff();
 if (mutante === 'bloco-longo') {
   texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,4 @@\n+// uma linha do mutante\n+// segunda linha do mutante\n+// terceira linha do mutante\n';
+}
+/* Cobre o furo do `//` depois de código, que o greptile achou no PR #209. */
+if (mutante === 'cauda-longa') {
+  texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,3 @@\n+const a = 1; // primeira linha da narrativa\n+const b = 2; // segunda linha da narrativa\n+const c = 3; // terceira linha da narrativa\n';
 }
 if (mutante === 'comentario-ingles') {
   texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,1 @@\n+// this comment is written in english and should be flagged\n';
