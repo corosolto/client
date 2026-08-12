@@ -41,8 +41,8 @@ jobs:
     env:
       CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22 }
 
       # Purge pós-deploy ANTES do probe: medir o edge velho acusaria o deploy
@@ -62,14 +62,25 @@ jobs:
         id: probe
         run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
 
-      - name: edge incoerente → dispara prod-crash
+      - name: probe do banco e schema de telemetria
+        run: |
+          node --input-type=module - <<'NODE'
+          const response = await fetch('https://www.csbrasil.online/api/health');
+          const body = await response.json().catch(() => ({}));
+          console.log(JSON.stringify(body));
+          if (!response.ok || body.database !== true || body.telemetrySchema !== true || body.fresh !== true) {
+            process.exit(1);
+          }
+          NODE
+
+      - name: produção inconsistente → dispara prod-crash
         if: failure()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api repos/{owner}/{repo}/dispatches -X POST \
             -f event_type=prod-crash \
-            -F 'client_payload[fingerprint]=edge-incoerente' \
-            -F 'client_payload[message]=prod-watch: prod-coherence.mjs reprovou o edge' \
+            -F 'client_payload[fingerprint]=producao-inconsistente' \
+            -F 'client_payload[message]=prod-watch: edge, banco ou schema de telemetria reprovou' \
             -F 'client_payload[source]=prod-watch.yml' \
             -F 'client_payload[version]=desconhecida'

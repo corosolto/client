@@ -1,14 +1,14 @@
 ---
-// /como-jogar — a página que responde pergunta.
+// /como-jogar - a página que responde pergunta.
 //
 // Ganhou HowTo + FAQPage no JSON-LD. Motivo: "como jogar X" é a pergunta que
 // mais chega por assistente de IA, e HowTo/FAQPage é o formato que esses
 // crawlers conseguem citar direto.
 //
-// PASSAGEM DE VERDADE (04/08/2026) — dado estruturado que mente é pior que
+// PASSAGEM DE VERDADE (04/08/2026) - dado estruturado que mente é pior que
 // dado ausente, porque o assistente REPETE. Esta página prometia, em 9 lugares
 // (título, descrição, sub, 2 passos do HowTo, 2 perguntas do FAQPage, a lista
-// de regras e o link), um "ranking global" que está DESLIGADO — `RANKING_ON`
+// de regras e o link), um "ranking global" que está DESLIGADO - `RANKING_ON`
 // é `false` em src/lib/site.ts, e `/ranking` responde 200 com aviso + noindex.
 // A home já tinha sido corrigida; esta ficou. Junto vieram três números
 // conferidos contra `public/js/game.js:76` e `:752`:
@@ -17,11 +17,11 @@
 //   · a partida é melhor de 5 (`ROUNDS_MAX = ROUNDS_TO_WIN*2-1`), não "3 rounds"
 //     soltos: 3 rounds VENCEM, e a 5ª rodada é o teto que evita partida eterna.
 //
-// PASSAGEM DE VERDADE (05/08/2026) — o passo 4 e a regra de CTF diziam "cinco
+// PASSAGEM DE VERDADE (05/08/2026) - o passo 4 e a regra de CTF diziam "cinco
 // arenas, três em rounds e duas em Capture the Flag". O número TOTAL continua 5,
 // mas a divisão virou 2×3 quando a `fy_quebrada` entrou no registro e a
 // `praca_old` saiu (ver o cabeçalho de src/data/jogo.ts). Os dois números agora
-// são CONTADOS de `MAPAS[].ctf` — digitar a divisão à mão é o que a quebrou.
+// são CONTADOS de `MAPAS[].ctf` - digitar a divisão à mão é o que a quebrou.
 import Layout from '../layouts/Layout.astro';
 import { CONTROLES, MAPAS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
@@ -35,17 +35,17 @@ const faccoesProntas = FACTIONS.filter((f) => f.ready);
 
 const PASSOS = [
   { nome: 'Abra o jogo no navegador de desktop',
-    texto: 'Entre em www.csbrasil.online no Chrome, Edge ou Firefox. Não tem download, instalação nem cadastro — a arena carrega na própria aba.' },
+    texto: 'Entre em www.csbrasil.online no Chrome, Edge ou Firefox. Não tem download, instalação nem cadastro - a arena carrega na própria aba.' },
   { nome: 'Escolha um nick',
     texto: 'O nick tem de 2 a 14 caracteres e fica salvo no navegador: é o nome que aparece no placar da partida e nos anúncios de abate. Não é obrigatório para jogar.' },
   { nome: 'Escolha a facção e o personagem',
-    texto: `${FACTIONS.length} facções no catálogo, com ${faccoesProntas.length} já jogáveis: ${faccoesProntas.map((f) => f.name).join(', ')}. Todos os personagens jogam sob a mesma base competitiva — a escolha é de estilo, não de vantagem.` },
+    texto: `${FACTIONS.length} facções no catálogo, com ${faccoesProntas.length} já jogáveis: ${faccoesProntas.map((f) => f.name).join(', ')}. Todos os personagens jogam sob a mesma base competitiva - a escolha é de estilo, não de vantagem.` },
   { nome: 'Escolha o mapa e o modo',
     texto: `${porExtenso[MAPAS.length][0].toUpperCase()}${porExtenso[MAPAS.length].slice(1)} arenas: ${MAPAS.map(m => m.nome).join(', ')}. ${porExtenso[nRounds][0].toUpperCase()}${porExtenso[nRounds].slice(1)} abrem em rounds e ${porExtenso[nCtf]} em Capture the Flag, mas dá pra trocar o modo de qualquer mapa antes de começar. O tamanho dos times também é seu: de 1 contra 1 até 8 contra 8, com 4 contra 4 como padrão.` },
   { nome: 'Mire, agache, atire',
-    texto: 'WASD move, mouse mira, clique esquerdo atira e clique direito abre a luneta. Agachar com Ctrl (ou C) deixa a mira bem mais estável — é a diferença entre acertar e errar com a AWP sem luneta.' },
+    texto: 'WASD move, mouse mira, clique esquerdo atira e clique direito abre a luneta. Agachar com Ctrl (ou C) deixa a mira bem mais estável - é a diferença entre acertar e errar com a AWP sem luneta.' },
   { nome: 'Ganhe o round',
-    texto: 'Round de 1 minuto e 39 segundos; leva o round o time com mais abates quando o relógio zera. Três rounds vencem a partida, e a quinta rodada é o teto — se ninguém chegar a três, ganha quem tiver mais rounds.' },
+    texto: 'Round de 1 minuto e 39 segundos; leva o round o time com mais abates quando o relógio zera. Três rounds vencem a partida, e a quinta rodada é o teto - se ninguém chegar a três, ganha quem tiver mais rounds.' },
 ];
 
 const FAQ: [string, string][] = [
@@ -54,9 +54,9 @@ const FAQ: [string, string][] = [
   ['Quais são os controles?',
    'WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, 1/2/3 trocam primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar.'],
   ['Como funciona um round?',
-   'O padrão é 4 contra 4 — você e 3 bots aliados contra 4 bots inimigos — com respawn de 2,2 segundos. Cada round dura 1 minuto e 39 segundos e leva o round quem tiver mais abates no fim do relógio. Três rounds vencem a partida, com a quinta rodada como teto. No menu dá pra mudar o tamanho dos times de 1 a 8 por lado.'],
+   'O padrão é 4 contra 4 - você e 3 bots aliados contra 4 bots inimigos - com respawn de 2,2 segundos. Cada round dura 1 minuto e 39 segundos e leva o round quem tiver mais abates no fim do relógio. Três rounds vencem a partida, com a quinta rodada como teto. No menu dá pra mudar o tamanho dos times de 1 a 8 por lado.'],
   ['Tem ranking global?',
-   'Ainda não. O jogo está em alpha e o ranking global está desligado até o placar ser confiável — publicar classificação que dá pra forjar seria publicar número errado. Os seus stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo.'],
+   'Ainda não. O jogo está em alpha e o ranking global está desligado até o placar ser confiável - publicar classificação que dá pra forjar seria publicar número errado. Os seus stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo.'],
   ['Funciona no celular?',
    'O jogo foi feito para desktop, com mouse e teclado. Em tela de toque aparece um aviso recomendando jogar no computador.'],
   ['Dá pra jogar com amigos?',
@@ -98,7 +98,7 @@ const jsonld = [
 ];
 ---
 <Layout
-  title={`Como jogar — controles e regras | ${BRAND_FULL}`}
+  title={`Como jogar - controles e regras | ${BRAND_FULL}`}
   description={`Guia do ${BRAND_FULL}: 6 passos do primeiro clique ao primeiro round, tabela de controles, regras de round e de Capture the Flag, e as dúvidas mais comuns.`}
   jsonld={jsonld}
   h1="Como jogar"
@@ -106,12 +106,12 @@ const jsonld = [
   heroImg="/img/map-previews/fy_quebrada.jpg"
   heroPos="70%">
   {/* RESPOSTA CURTA E FACTUAL NO TOPO. É o parágrafo que um assistente de IA
-      cita inteiro quando alguém pergunta "como jogar CORO SOLTO" — por isso ele
+      cita inteiro quando alguém pergunta "como jogar CORO SOLTO" - por isso ele
       vem antes de qualquer navegação, responde a pergunta sozinho e usa os
       mesmos números do JSON-LD logo abaixo. */}
   <Fragment slot="sub">
     <strong>Resposta curta:</strong> abra <strong>www.csbrasil.online</strong> num navegador de
-    desktop, clique para travar o mouse e jogue — não tem download, instalação nem cadastro.{' '}
+    desktop, clique para travar o mouse e jogue - não tem download, instalação nem cadastro.{' '}
     <strong>WASD</strong> move, o <strong>mouse</strong> mira, o <strong>clique esquerdo</strong>{' '}
     atira e o <strong>direito</strong> abre a luneta. Cada round dura <strong>1:39</strong>, o
     padrão é <strong>4 contra 4</strong> contra bots e <strong>3 rounds vencem</strong> a partida.
@@ -144,7 +144,7 @@ const jsonld = [
 
   <h2>Regras</h2>
   <ul>
-    <li><strong>Formato:</strong> 4×4 por padrão — você mais 3 bots aliados contra 4 bots inimigos —
+    <li><strong>Formato:</strong> 4×4 por padrão - você mais 3 bots aliados contra 4 bots inimigos -
       com respawn de 2,2 s. No menu o time vai de 1 a 8 por lado.</li>
     <li><strong>Round:</strong> 1:39. Leva o round o time com mais abates quando o relógio zera;
       3 rounds vencem a partida, e a 5ª rodada é o teto.</li>
@@ -162,7 +162,7 @@ const jsonld = [
     <li>O radar mostra aliados sempre, e inimigos por 1,6 s quando eles atiram. Barulho é informação.</li>
     <li>Na Praça dos Três Poderes, a urna quebrada do meio é a melhor cobertura do mid.</li>
     <li>Correndo (Shift) você faz barulho e perde precisão. Ande normal quando estiver cruzando ângulo.</li>
-    <li>Com a faca na mão você se move mais rápido — serve pra rotacionar, não só pra humilhar.</li>
+    <li>Com a faca na mão você se move mais rápido - serve pra rotacionar, não só pra humilhar.</li>
   </ul>
 
   <h2>Perguntas frequentes</h2>
@@ -174,7 +174,7 @@ const jsonld = [
   ))}
 
   <div class="cta-row">
-    <a class="btn-cta" href="/">▶ Jogar agora — grátis</a>
+    <a class="btn-cta" href="/">▶ Jogar agora - grátis</a>
     <a class="btn-cta btn-2" href="/mapas">Ver as arenas</a>
   </div>
 </Layout>

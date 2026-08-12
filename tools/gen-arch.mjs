@@ -34,11 +34,11 @@ const END = '<!-- END:GERADO -->';
    Ao mover/renomear um método, atualize aqui — o script avisa se um símbolo sumir. */
 const FRENTES = {
   'ARMAS / VIEWMODEL': {
-    arquivos: ['public/js/vmattach.js', 'public/js/springs.js', 'public/js/weapons.js', 'public/js/fparms.js', 'public/js/handik.js'],
+    arquivos: ['public/js/vmattach.js', 'public/js/springs.js', 'public/js/weapons.js', 'public/js/fparms.js', 'public/js/handik.js', 'public/js/recoil.js', 'public/js/vmlab.js'],
     simbolos: ['_buildViewModels', '_vmFrame', '_applyVmVisibility',
       '_switchWeapon', '_startReload', '_scope', '_zoomFov', '_tryShoot', '_fireHitscan', '_meleeHit',
       '_muzzleWorld', '_flash', '_tracer', '_ejectCasing', '_shotRecoil', '_installRecoil'],
-    consts: ['WEAPONS', 'STATIC_CLASS', 'VM_FOV_DEFAULT', 'VM_OFF', 'REC_DEG', 'VM_KNOB', 'GUNFEEL'],
+    consts: ['WEAPONS', 'STATIC_CLASS', 'VM_FOV_DEFAULT', 'VM_OFF', 'VM_KNOB', 'GUNFEEL'],   // REC_DEG movido p/ recoil.js (indexado por arquivo)
   },
   'BOTS / JOGABILIDADE': {
     arquivos: [],

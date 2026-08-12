@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+mensagem=$1
+nome=$(git config user.name)
+email=$(git config user.email)
+
+if [ -z "$nome" ] || [ -z "$email" ]; then
+  echo "Configure git user.name e user.email antes de commitar." >&2
+  exit 1
+fi
+
+trailer="Signed-off-by: $nome <$email>"
+grep -Fqx "$trailer" "$mensagem" || git interpret-trailers --in-place --trailer "$trailer" "$mensagem"

@@ -106,7 +106,7 @@ Paródia fictícia, sem logos/nomes reais. Asset IDs Mint em geração (31/jul�
 
 ---
 
-## 🎤 Time dos Funkeiros (5ª facção — gerado via Mint 02/ago, integrado na 3.3.0)
+## 🎤 Time dos Funkeiros (5ª facção - gerado via Mint em 02/08, integrado antes da linha alpha atual)
 
 `team:'F'` + `tribe:'funkeiros'`. Raul/Oakley/Cria RJ/Chave regerados com as referências
 de `references/funkeiros/`; Pagodeiro (slot dos Tribos) é novo; Mandrake = antigo

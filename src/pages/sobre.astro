@@ -1,5 +1,5 @@
 ---
-// /sobre — a página institucional, e a ÚNICA dona do nó VideoGame.
+// /sobre - a página institucional, e a ÚNICA dona do nó VideoGame.
 //
 // O QUE ESTAVA ERRADO: esta página e a home emitiam, cada uma, um JSON-LD
 // `VideoGame` com a MESMA `url` e SEM `@id`. Dois nós idênticos e anônimos
@@ -34,11 +34,11 @@ const jsonld = [
 ];
 ---
 {/* A meta description NÃO é a DESC_LONG: ela tem 261 caracteres, e o snippet
-    do Google fica em torno de 155-160 — o resto é cortado e não ajuda ninguém.
+    do Google fica em torno de 155-160 - o resto é cortado e não ajuda ninguém.
     A DESC_LONG continua sendo a `description` do nó AboutPage no JSON-LD, onde
     tamanho não é problema e detalhe é bem-vindo. */}
 <Layout
-  title={`Sobre — FPS grátis de navegador estilo CS 1.6 | ${BRAND_FULL}`}
+  title={`Sobre - FPS grátis de navegador estilo CS 1.6 | ${BRAND_FULL}`}
   description={`O que é o ${BRAND_FULL}: FPS gratuito de navegador estilo CS 1.6, satírico e brasileiro, com ${PERSONAGENS.length} personagens, ${MAPAS.length} mapas e ${ARMAS.length} armas. Sem instalação.`}
   jsonld={jsonld}
   h1="Arena sniper estilo CS 1.6, versão Brasil"
@@ -52,7 +52,7 @@ const jsonld = [
     rounds, CTF, headshots e multikills estilo Unreal Tournament.
   </Fragment>
 
-  {/* A ARTE DE ANÚNCIO SAIU DAQUI. O que estava no topo era a `og-image.png` —
+  {/* A ARTE DE ANÚNCIO SAIU DAQUI. O que estava no topo era a `og-image.png` -
       343 KB de cartão de compartilhamento, feito para aparecer no WhatsApp e no
       X, não dentro da página. No lugar entram as CINCO arenas de verdade: mesma
       função (mostrar o jogo), informação real, e cada miniatura leva à página
@@ -70,7 +70,7 @@ const jsonld = [
   </div>
 
   <div class="cta-row">
-    <a class="btn-cta" href="/">▶ Jogar agora — grátis</a>
+    <a class="btn-cta" href="/">▶ Jogar agora - grátis</a>
     <a class="btn-cta btn-2" href="/como-jogar">Como jogar</a>
   </div>
   <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Roda no navegador de desktop. Sem instalação, sem cadastro.</p>
@@ -86,7 +86,7 @@ const jsonld = [
   <h2>O nome</h2>
   <p>
     O jogo se chama <strong>{BRAND_FULL}</strong>. Ele nasceu como
-    <strong> {BRAND_ALT}</strong> e muita gente ainda procura por esse nome — por isso o domínio
+    <strong> {BRAND_ALT}</strong> e muita gente ainda procura por esse nome - por isso o domínio
     continua o mesmo e o nome antigo segue registrado como nome alternativo. É o mesmo jogo.
   </p>
 
@@ -106,11 +106,11 @@ const jsonld = [
     <p>Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve.
       Counter-Strike é marca da Valve Corporation.</p></details>
   <details><summary><strong>O jogo tem lado político?</strong></summary>
-    <p>Não. É sátira leve distribuída igualmente para todos os lados — sem gore, sem ódio,
+    <p>Não. É sátira leve distribuída igualmente para todos os lados - sem gore, sem ódio,
       celebrando a cultura brasileira.</p></details>
   <details><summary><strong>Tem ranking global?</strong></summary>
     <p>Ainda não. O jogo está em <strong>alpha</strong> e o ranking global está desligado até o
-      placar ser confiável — o modelo atual é forjável, e classificação forjável é número errado
+      placar ser confiável - o modelo atual é forjável, e classificação forjável é número errado
       publicado. Os seus stats de partida ficam salvos no navegador e aparecem no menu RANKING do
       jogo. Quando voltar, cada jogador ganha de novo a página pública em{' '}
       <code>/u/&lt;id&gt;/&lt;nick&gt;</code>, com badge PNG gerada na hora.</p></details>
@@ -118,12 +118,12 @@ const jsonld = [
     <p>Ainda não. Hoje todas as partidas são contra bots, de 1 a 8 por lado (4 contra 4 é o
       padrão). O multiplayer é a próxima grande frente do projeto.</p></details>
 
-  {/* LICENÇA: AGPL-3.0 desde 07/08/2026 (o degrau 3 do plans/08 rodou — LICENSE,
+  {/* LICENÇA: AGPL-3.0 desde 07/08/2026 (o degrau 3 do plans/08 rodou - LICENSE,
       README, CONTRIBUTING, llms.txt e JSON-LD trocaram no MESMO commit).
       Contribuições anteriores entraram sob MIT (compatível: seguem MIT dentro
       do conjunto AGPL).
 
-      LINK DAS TAREFAS: apontava para `tree/main/docs/issues`, que dá 404 —
+      LINK DAS TAREFAS: apontava para `tree/main/docs/issues`, que dá 404 -
       `docs/` inteiro nunca foi commitado e `docs/issues/` ainda por cima casava
       com o padrão `issues/` do .gitignore da raiz. Enquanto as 15 issues não
       estiverem abertas no GitHub, o link honesto é a própria aba de issues do
@@ -133,7 +133,7 @@ const jsonld = [
     Código aberto sob licença AGPL-3.0 (menos o pacote de áudio, que tem direitos incertos e fica fora
     do repositório). Contribuições são bem-vindas:{' '}
     <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">github.com/rubenmarcus/csbrasil</a>{' '}
-    — e as tarefas boas pra primeira contribuição ficam em
+ - e as tarefas boas pra primeira contribuição ficam em
     <a href="https://github.com/rubenmarcus/csbrasil/issues" rel="noopener"> issues</a>.
   </p>
 </Layout>

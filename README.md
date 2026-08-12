@@ -30,20 +30,20 @@ sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 30.856 linhas em 38 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.370** linhas | `wc -l public/js/game.js` |
-| `main.js` | 1.847 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 31.472 linhas em 40 arquivos | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6.613** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.105 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
 | GLBs de personagem | 62 | `ls public/models/characters/*.glb \| wc -l` |
 | Props em GLB | 109 | `ls public/models/props/*.glb \| wc -l` |
-| Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
+| Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 61, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 10 | objeto `MAPS` de `maps.js` |
-| Arnêses visuais em HTML | 12 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 206 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
-| Scripts de pipeline | 61 | `ls tools/*.mjs \| wc -l` |
+| Arnêses visuais em HTML | 13 | `ls public/*.html \| wc -l` |
+| Scripts do arnês | 191 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Scripts de pipeline | 62 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.66` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.79` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -85,7 +85,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 38 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 40 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.3` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -192,10 +192,10 @@ está lá. Use `npm run dev`.
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:webgl eval:shaderlog eval:botbrain eval:prune eval:vminspect eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters spec:check skills:check
 ```
 
-`package.json` tem **95 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **116 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -217,6 +217,49 @@ dobrar de tamanho.
 > `npm run check` lê GLBs de `public/models/`. Numa árvore sem os assets
 > baixados, `eval:invariants` e `eval:vm` falham com `ENOENT` — é ambiente, não
 > regressão.
+
+## Knowledge graph com Graphify
+
+O repo agora inclui integração project-scoped do [Graphify](https://github.com/Graphify-Labs/graphify)
+para múltiplos adapters:
+
+- Claude Code
+- Codex
+- OpenCode
+- Kimi
+- adapters compatíveis com `agent skills` via `.agents/`
+
+Arquivos principais:
+
+- `AGENTS.md` e `CLAUDE.md`: instruções de uso do grafo
+- `.codex/`, `.claude/`, `.opencode/`, `.kimi/`, `.agents/`: skills/config por adapter
+- `graphify-out/graph.json`: grafo consultável
+- `graphify-out/GRAPH_REPORT.md`: resumo navegável
+- `graphify-out/graph.html`: visualização local do grafo
+
+Build inicial do grafo:
+
+- foi gerado em modo `code-only`, local e determinístico
+- inclui SQL (`supabase/schema.sql` e migrations)
+- não usa API externa
+
+Atualizar depois de mudanças de código:
+
+```bash
+./scripts/graphify update .
+./scripts/graphify cluster-only . --graph ./graphify-out/graph.json --no-label
+```
+
+Regenerar do zero:
+
+```bash
+./scripts/graphify extract . --code-only --out . --force
+./scripts/graphify cluster-only . --graph ./graphify-out/graph.json --no-label
+```
+
+Observação: a versão atual do Graphify extrai este repo muito bem em JS/TS/SQL, mas ainda
+reporta parsing parcial em arquivos `.astro`. Isso é limitação do extrator atual, não do
+projeto.
 
 ## Controles
 
@@ -271,7 +314,7 @@ Os mapas registrados, e em que modo cada um abre:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
-| `fy_pool_day` | Piscina da Treta | rodadas | `—` | — |
+| `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
 | `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
 | `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
 | `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |

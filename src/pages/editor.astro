@@ -1,0 +1,158 @@
+---
+// MODO EDITOR (dev) - rota /editor. Ferramenta de bancada para o dono/equipe:
+// réplica do jogo em módulos (public/js/editor/) importando as MESMAS libs do
+// game (weaponModel, buildCharacterModel, Sfx). NÃO é rota de jogador.
+//
+// POR QUE AINDA ASSIM TEM IMPORT MAP: os módulos do editor importam o `three`
+// e as libs do jogo (weapons.js/characters.js/glbchars.js/audio.js), e o jogo
+// resolve `three` por import map - sem ele o editor nem carrega. A versão vem
+// do package.json (fonte única), igual ao index.astro, pra não divergir do
+// cache do jogo (BUG-39).
+import pkg from '../../package.json';
+
+const V = pkg.version;
+const MODULOS = [
+  "weapons.js",
+  "characters.js",
+  "glbchars.js",
+  "audio.js",
+  "textures.js",
+  "mapprops.js",
+  "version.js",
+];
+const IMPORTMAP = JSON.stringify({
+  imports: {
+    three: `./vendor/three.module.js?v=${V}`,
+    'three/addons/': './vendor/addons/',
+    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}`])),
+  },
+});
+---
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>modo editor - bancada do CORO SOLTO</title>
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<script type="importmap" is:inline set:html={IMPORTMAP}></script>
+<style>
+  :root{--sb:308px}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#12151b;font-family:'ST Mono',Consolas,monospace;color:#cfe}
+  input[type=range]{accent-color:#2fbf71}
+
+  /* ── SIDEBAR ──────────────────────────────────────────────────────────────── */
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sb);z-index:10;background:#0e1116;border-right:1px solid #2a3340;
+    display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:12px;font-size:13px}
+  #sidebar::-webkit-scrollbar{width:9px}
+  #sidebar::-webkit-scrollbar-thumb{background:#2a3340;border-radius:5px}
+  #devtabs{display:flex;gap:5px;position:sticky;top:-12px;background:#0e1116;padding-top:2px;z-index:2}
+  #devtabs button{flex:1;font-family:inherit;font-size:12px;background:#1b2029;color:#9fb;border:1px solid #2a3340;border-radius:7px;padding:9px 6px;cursor:pointer;transition:background .12s,color .12s}
+  #devtabs button:hover{border-color:#3a4658}
+  #devtabs button.on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+  .side{display:flex;flex-direction:column;gap:11px}
+  .side[hidden]{display:none}
+
+  .grp{display:flex;flex-direction:column;gap:8px;background:#131820;border:1px solid #222c38;border-radius:9px;padding:10px 11px}
+  .cap{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7fd}
+  .cap .muted{color:#5f6f7e;font-weight:400;letter-spacing:.3px;text-transform:none}
+
+  .ctl{display:grid;grid-template-columns:74px 1fr 46px;align-items:center;gap:8px}
+  .ctl>span{font-size:12px;color:#aeb9c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .grp#fxEfeito .ctl,.grp#fxFogo .ctl,.grp#fxRecuo .ctl{grid-template-columns:92px 1fr 42px}
+  .ctl input[type=range]{width:100%;min-width:0}
+  .num{width:48px;font-family:inherit;font-size:12px;background:#0b0e12;color:#7fe;border:1px solid #2a3340;border-radius:5px;padding:3px 4px;text-align:right}
+  .num:focus{outline:none;border-color:#2fbf71}
+
+  #wlist{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto}
+  button[data-w].done{border-color:#3f7d5b;color:#8fe0b3}
+  button[data-w].on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+
+  .side select{flex:1;font-family:inherit;font-size:13px;background:#1b2029;color:#cfe;border:1px solid #2a3340;border-radius:6px;padding:6px 8px}
+  .row{display:flex;gap:6px}
+  .row>*{flex:1}
+  .btn{font-family:inherit;font-size:12px;background:#1b2029;color:#cfe;border:1px solid #2a3340;border-radius:6px;padding:8px 6px;cursor:pointer;transition:background .1s,border-color .1s}
+  .btn:hover{border-color:#3a4658;background:#212936}
+  .btn.primary{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+  .btn.primary:hover{background:#37d07e}
+  .seg{display:flex;border:1px solid #2a3340;border-radius:7px;overflow:hidden}
+  .seg button{flex:1;font-family:inherit;font-size:12px;background:#1b2029;color:#cfe;border:0;padding:7px 8px;cursor:pointer}
+  .seg button.on{background:#2fbf71;color:#042012;font-weight:700}
+  .vals{font-size:11px;color:#9fb;word-break:break-all;user-select:all;white-space:pre-wrap;background:#0b0e12;border:1px solid #222c38;border-radius:6px;padding:6px 7px;display:none}
+  .vals:not(:empty){display:block}
+  .chips{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto}
+  .chips button{font-family:inherit;font-size:11px;background:#1b2029;color:#9fb;border:1px solid #2a3340;border-radius:5px;padding:4px 7px;cursor:pointer;transition:background .1s}
+  .chips button:hover{border-color:#3a4658}
+  .chips button.done{border-color:#3f7d5b;color:#8fe0b3}
+  .chips button.on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+
+  /* ── PALCO 3D ─────────────────────────────────────────────────────────────── */
+  #stage{position:fixed;left:var(--sb);top:0;right:0;bottom:0;overflow:hidden;background:#12151b}
+  #host-editor{position:absolute;inset:0}
+  #host-editor canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  #host-map{position:absolute;inset:0;display:none}
+  #host-map canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  #host-align{position:absolute;inset:0;display:none}
+  #host-align canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  .ov{position:absolute;inset:0;pointer-events:none}
+  #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+  #cross::before,#cross::after{content:"";position:absolute;background:#7fe;opacity:.85}
+  #cross::before{width:2px;height:14px;left:-1px;top:-7px}
+  #cross::after{height:2px;width:14px;top:-1px;left:-7px}
+  #hitmark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);opacity:0;transition:opacity .08s}
+  #hitmark::before,#hitmark::after{content:"";position:absolute;background:#f55}
+  #hitmark::before{width:3px;height:16px;left:-1.5px;top:-8px}
+  #hitmark::after{height:3px;width:16px;top:-1.5px;left:-8px}
+  #reticle{position:absolute;inset:0;display:none}
+  #reticle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:60vmin;height:60vmin;filter:drop-shadow(0 0 1px rgba(255,255,255,.85))}
+  #scope{position:absolute;inset:0;display:none;background:radial-gradient(circle at 50% 50%, transparent 0 30%, #000 31%, #000 100%)}
+  .hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:12px;color:#89a;background:rgba(10,12,16,.7);padding:6px 12px;border-radius:6px;white-space:nowrap}
+  .hint b{color:#7fd}
+  .ammo{position:absolute;right:16px;bottom:14px;font-size:22px;letter-spacing:1px;color:#cfe;background:rgba(10,12,16,.6);padding:5px 12px;border-radius:7px;min-width:96px;text-align:center}
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <div id="devtabs">
+    <button data-tab="editor" class="on">Viewmodel</button>
+    <button data-tab="map">Mapa</button>
+    <button data-tab="align">Alinhamento</button>
+  </div>
+  <div class="side" id="side-editor">
+    <!-- o painel (panels/vm-panel.js) monta os grupos aqui -->
+  </div>
+  <div class="side" id="side-map" hidden>
+    <!-- o painel (panels/map-panel.js) monta a paleta e o export aqui -->
+  </div>
+  <div class="side" id="side-align" hidden>
+    <!-- o painel (panels/align-panel.js) monta os controles aqui -->
+  </div>
+</div>
+
+<div id="stage">
+  <div id="host-editor"></div>
+  <div class="ov" id="ov-editor">
+    <div id="cross"></div>
+    <div id="hitmark"></div>
+    <div id="reticle"></div>
+    <div id="scope"></div>
+    <div id="ammo" class="ammo"></div>
+    <div class="hint">clique na cena pra jogar · atire nos bots · botão direito mira · <b>R</b> recarrega/repõe</div>
+  </div>
+  <div id="host-map"></div>
+  <div id="host-align"></div>
+</div>
+
+<script type="module" is:inline>
+import { mountEditor } from './js/editor/editor.js?v=${V}';
+mountEditor(document.body).catch((e) => {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:auto 12px 12px 320px;background:#7a1e1e;color:#fff;font:12px monospace;padding:10px 14px;border-radius:6px;white-space:pre-wrap;z-index:99';
+  el.textContent = 'editor não montou: ' + (e && e.message ? e.message : e);
+  document.body.appendChild(el);
+});
+</script>
+</body>
+</html>

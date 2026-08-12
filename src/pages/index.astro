@@ -1,22 +1,5 @@
 ---
-/* ============================================================================
-   O `?v=` DO IMPORT MAP SAI DE UMA FONTE SÓ (07/08)
-   ----------------------------------------------------------------------------
-   Ele era 26 literais escritos à mão, e a versão vive em outros dois lugares
-   (`package.json` e `public/js/version.js`). Três fontes que precisam concordar,
-   nenhum mecanismo garantindo — e o `version.js` já avisava por escrito:
-
-     "bump dos dois lados juntos, senão o navegador serve módulos JS velhos do
-      cache — causa raiz de 'correções que não chegavam ao usuário' por dias"
-
-   Pior desde que se passou a commitar direto na `main`: o `versao-bumpada` do
-   `pr-gates` só dispara em `pull_request`, então push direto passa por fora dele.
-   Esquecer o bump deixou de ser um risco e virou o caminho padrão.
-
-   Agora a lista é UMA e a versão vem do `package.json`. Módulo novo entra em
-   `MODULOS` e já nasce com cache-bust; esquecer o bump deixa de ser possível,
-   em vez de virar mais um item de checklist.
-   ============================================================================ */
+/* O import map usa a versão do package.json como cache-bust único. */
 import pkg from '../../package.json';
 import { FACTIONS } from '../../public/js/factions.js';
 
@@ -54,11 +37,15 @@ const MODULOS = [
   "version.js",
   "i18n.js",
   "handik.js",
-  "springs.js"
+  "springs.js",
+  "botbrain/brain.js",
+  "botbrain/features.js",
+  "botbrain/recorder.js",
+  "botbrain/sense.js"
 ];
 const IMPORTMAP = JSON.stringify({
   imports: {
-    three: './vendor/three.module.js',
+    three: `./vendor/three.module.js?v=${V}`,
     'three/addons/': './vendor/addons/',
     ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}`])),
   },
@@ -68,26 +55,21 @@ const IMPORTMAP = JSON.stringify({
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<!-- Captura de crash: mostra o erro NA TELA **e reporta** para /api/jserror.
-     O overlay existia e não bastava: em 07/08 o botão JOGAR ficou INERTE em produção
-     (BUG-34, TDZ no main.js) e o banner vermelho pintou na tela de alguém e MORREU ALI,
-     porque não ia para lugar nenhum. Site respondendo 200, build passando, check:fast
-     verde. Erro no navegador de quem joga é o único sinal que portão nenhum alcança.
-     Script clássico inline roda ANTES dos módulos (deferidos), então pega até erro em
-     tempo de execução dos módulos — que foi exatamente o caso do BUG-34.
-     Crash de GPU/renderer não dispara 'error' — pra esse caso use ?bloom=0. -->
+<!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
 <script is:inline>
 (function(){
   var TETO_SESSAO = 10;      // no máximo 10 erros DISTINTOS por carregamento de página
   var MIGALHAS = 20;         // últimas ações guardadas
-  var enviados = {}, nEnviados = 0, migalhas = [], reportando = false;
+  var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+  var enviados = {}, corpos = {}, nEnviados = 0, migalhas = [], reportando = false;
+  var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
+  var inicio = Date.now();
+  var consoleErroNativo = null;
+  try { consoleErroNativo = console.error && console.error.bind(console); } catch(_) {}
 
-  function show(kind, msg, extra){
-    /* SEM WEBGL O OVERLAY SE CALA. `glcontext.js` marca `__semWebgl` quando nenhum degrau
-       criou contexto, e nesse caso o jogador JÁ está lendo uma explicação em português —
-       empilhar `three.module.js:28672` por cima dela não informa, atrapalha. O erro
-       continua sendo REPORTADO (a chamada de `reporta` não passa por aqui): o que se
-       suprime é o banner, não o dado. */
+  function showDebug(kind, msg, extra){
+    if (!DEBUG) return;
+    // O fallback WebGL já explica a falha; só o banner é suprimido, não o relatório.
     if (window.__semWebgl) return;
     try{
       var el = document.getElementById('crash-overlay');
@@ -97,13 +79,13 @@ const IMPORTMAP = JSON.stringify({
         el.onclick = function(){ el.remove(); };
         (document.body || document.documentElement).appendChild(el);
       }
-      el.textContent = '⚠ CRASH (' + kind + '): ' + msg + (extra ? ('\n\n' + extra) : '') + '\n\n(clique pra fechar — tire um print e me mande)';
+      el.textContent = 'DEBUG (' + kind + '): ' + msg + (extra ? ('\n\n' + extra) : '') + '\n\n(clique para fechar)';
     }catch(_){}
   }
 
   /* Agrupa igual ao banco (migration 015): mensagem + origem viram uma chave, e o
      UPSERT lá vira `hits`. Sem isto, um erro dentro do requestAnimationFrame manda
-     60 linhas por segundo. FNV-1a de 32 bits — não é criptografia, é balde. */
+     60 linhas por segundo. FNV-1a de 32 bits - não é criptografia, é balde. */
   function digital(s){
     var h = 2166136261;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
@@ -124,7 +106,7 @@ const IMPORTMAP = JSON.stringify({
   function contexto(){
     var c = { version: versao(), route: location.pathname, breadcrumbs: migalhas.slice() };
     try{
-      // 'cs_anon' é a MESMA chave do `ANON_KEY` de main.js:403 — sem isso o erro não
+      // 'cs_anon' é a MESMA chave do `ANON_KEY` de main.js:403 - sem isso o erro não
       // cruza com a telemetria do mesmo navegador, que é metade da utilidade.
       var a = localStorage.getItem('cs_anon');
       if (a) c.anonId = a;
@@ -133,7 +115,7 @@ const IMPORTMAP = JSON.stringify({
       var g = window.__game;
       if (g) {
         // `_mapId` (game.js:620) e NÃO `mapId`: o construtor recebe `mapId` e guarda
-        // resolvido no campo com underscore. Ler o nome errado dá `undefined` calado —
+        // resolvido no campo com underscore. Ler o nome errado dá `undefined` calado -
         // o erro chegaria sem mapa e ninguém desconfiaria da coluna vazia.
         c.map = g._mapId || null;
         c.mode = g.ctf ? 'ctf' : 'rounds';
@@ -149,11 +131,14 @@ const IMPORTMAP = JSON.stringify({
   }
 
   function reporta(kind, msg, source, stack){
-    if (reportando || nEnviados >= TETO_SESSAO) return;   // guarda de laço + teto
+    if (reportando) return null;                           // guarda de laço
     try{
       var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
-      if (enviados[fp]) return;                            // 1 envio por erro distinto
-      enviados[fp] = 1; nEnviados++;
+      if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
+      if (!enviados[fp]) {
+        if (nEnviados >= TETO_SESSAO) return null;
+        enviados[fp] = 1; nEnviados++;
+      }
       reportando = true;
       var c = contexto();
       c.fingerprint = fp; c.kind = kind;
@@ -161,16 +146,104 @@ const IMPORTMAP = JSON.stringify({
       c.source = source || null;
       c.stack = stack ? String(stack).slice(0, 4000) : null;
       var corpo = JSON.stringify(c);
+      corpos[fp] = corpo;
       /* sendBeacon sobrevive à aba fechando, que é justamente quando o jogador some
-         depois de um crash. Sem ele, o erro que mata a página não chega nunca. */
+         depois de um crash. O clique manual usa fetch para poder confirmar o envio. */
       if (!(navigator.sendBeacon && navigator.sendBeacon('/api/jserror', new Blob([corpo], {type:'application/json'}))))
         fetch('/api/jserror', { method:'POST', headers:{'content-type':'application/json'}, body: corpo, keepalive: true }).catch(function(){});
+      reportando = false;
+      return { fp: fp, corpo: corpo };
     }catch(_){ /* coletor NUNCA atrapalha o jogo */ }
     reportando = false;
+    return null;
   }
 
+  function erroIgnoravel(r){
+    var nome = r && r.name;
+    var msg = String((r && r.message) || r || '');
+    return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
+  }
+  function origemDoJogo(source){
+    if (!source) return true;
+    if (/^(chrome|moz|safari-web)-extension:\/\//i.test(source)) return false;
+    try { return new URL(source, location.href).origin === location.origin; } catch(_) { return true; }
+  }
+
+  function ligaFalha(){
+    var el = document.getElementById('launch-error');
+    if (!el || el.dataset.ready) return el;
+    el.dataset.ready = '1';
+    var retry = document.getElementById('launch-error-retry');
+    var send = document.getElementById('launch-error-report');
+    var status = document.getElementById('launch-error-status');
+    if (retry) retry.onclick = function(){ location.reload(); };
+    if (send) send.onclick = function(){
+      send.disabled = true;
+      send.textContent = 'ENVIANDO…';
+      var envio;
+      try {
+        var corpo = relatorioFalha;
+        envio = corpo
+          ? fetch('/api/jserror', { method:'POST', headers:{'content-type':'application/json'}, body: corpo, keepalive: true })
+              .then(function(r){ return r.ok; }, function(){ return false; })
+          : Promise.resolve(false);
+      } catch(_) { envio = Promise.resolve(false); }
+      envio.then(function(ok){
+        send.textContent = ok ? 'RELATÓRIO ENVIADO ✓' : 'TENTAR ENVIAR DE NOVO';
+        send.disabled = !!ok;
+        if (status) status.textContent = ok ? 'Valeu. Isso ajuda a gente a corrigir mais rápido.' : 'Não deu para enviar agora. Você ainda pode tentar novamente.';
+      });
+    };
+    return el;
+  }
+
+  function mostraFalha(dados){
+    var el = ligaFalha();
+    if (!el) { falhaPendente = dados; return; }
+    var code = document.getElementById('launch-error-code');
+    if (code) code.textContent = dados.fp ? ('CÓDIGO ' + dados.fp.toUpperCase()) : 'RELATÓRIO LOCAL';
+    el.classList.remove('hidden');
+    try { document.getElementById('launch-error-retry').focus(); } catch(_){}
+  }
+
+  var lancamento = {
+    ativo: false, etapa: null, timer: null,
+    begin: function(etapa, timeout, concluiu){
+      if (this.timer) clearTimeout(this.timer);
+      this.ativo = true; this.etapa = etapa;
+      var self = this;
+      this.timer = setTimeout(function(){
+        if (concluiu && concluiu()) { self.ready(etapa); return; }
+        self.fail(new Error('tempo limite ao abrir ' + etapa), 'launch-watchdog');
+      }, timeout || 12000);
+    },
+    ready: function(etapa){
+      if (etapa && this.etapa && etapa !== this.etapa) return;
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null; this.ativo = false; this.etapa = null;
+    },
+    fail: function(err, source){
+      var etapa = this.etapa || 'a arena';
+      this.ready();
+      var msg = (err && err.message) || String(err || 'falha desconhecida');
+      var stack = err && err.stack;
+      if (/watchdog$/.test(source || '') && consoleErroNativo) {
+        try { consoleErroNativo('Falha ao abrir ' + etapa, err); } catch(_) {}
+      }
+      var registro = reporta('error', 'Falha ao abrir ' + etapa + ': ' + msg, source || 'launch', stack);
+      relatorioFalha = registro && registro.corpo;
+      mostraFalha({ fp: registro && registro.fp });
+    }
+  };
+  window.__gameLaunch = lancamento;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    ligaFalha();
+    if (falhaPendente) { var f = falhaPendente; falhaPendente = null; mostraFalha(f); }
+  });
+
   /* Migalhas: o que o jogador FEZ, nunca o que ele ESCREVEU. Clique em elemento com id
-     ou em botão cobre o menu inteiro sem precisar instrumentar main.js linha a linha —
+     ou em botão cobre o menu inteiro sem precisar instrumentar main.js linha a linha -
      e a regra "só rótulo, nunca conteúdo" está escrita na migration 015. */
   function migalha(txt){
     migalhas.push(new Date().toISOString().slice(11, 19) + ' ' + String(txt).slice(0, 120));
@@ -187,23 +260,63 @@ const IMPORTMAP = JSON.stringify({
   window.addEventListener('error', function(e){
     var loc = e.filename ? (e.filename + ':' + e.lineno + ':' + e.colno) : '';
     var msg = (e.message || e.error || '?');
-    show('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
+    if (consoleErroNativo) {
+      try { consoleErroNativo('Erro global não tratado', e.error || msg); } catch(_) {}
+    }
+    // A factory já registrou a falha final; o throw apenas interrompe o módulo sem renderer.
+    if (window.__semWebgl && /sem_webgl/.test(String(msg))) return;
+    showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
     reporta('error', msg, loc, e.error && e.error.stack);
+    if (!window.__CS_MAIN_READY__ && origemDoJogo(loc)) erroDoBoot = e.error || new Error(String(msg));
+    if (lancamento.ativo && origemDoJogo(loc)) lancamento.fail(e.error || new Error(String(msg)), loc);
   });
   window.addEventListener('unhandledrejection', function(e){
     var r = e.reason;
-    show('promise', (r && r.message) || String(r), r && r.stack);
+    if (consoleErroNativo) {
+      try { consoleErroNativo('Promise rejeitada sem tratamento', r); } catch(_) {}
+    }
+    showDebug('promise', (r && r.message) || String(r), r && r.stack);
     reporta('promise', (r && r.message) || String(r), null, r && r.stack);
+    if (lancamento.ativo && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
   });
 
-  /* console.error NÃO ganha overlay de propósito: nem todo console.error é crash, e
-     tapar a tela do jogador com aviso de textura faltando seria pior que o aviso. Ele
-     é reportado (o dono pediu "trackear console errors") e agrupado igual aos outros.
+  /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam
+     vários). A tela amigável nasce só de uma ação que prometia avançar e não avançou. */
+  window.addEventListener('pointerdown', function(e){
+    try{
+      var alvo = e.target && e.target.closest ? e.target.closest('#boot-splash,#btn-jogar') : null;
+      if (!alvo) return;
+      if (alvo.id === 'boot-splash') {
+        var prompt = document.getElementById('splash-enter');
+        var pronto = prompt && !prompt.classList.contains('hidden');
+        if (!window.__CS_MAIN_READY__ && (erroDoBoot || Date.now() - inicio > 22000)) {
+          lancamento.fail(erroDoBoot || new Error('carregamento inicial não respondeu'), 'boot-watchdog');
+        } else if (window.__CS_MAIN_READY__ || pronto) {
+          lancamento.begin('entrada', 3000, function(){
+            var splash = document.getElementById('boot-splash');
+            return !splash || splash.classList.contains('gone');
+          });
+        }
+      } else {
+        lancamento.begin('menu', 3000, function(){
+          var menu = document.getElementById('main-menu');
+          var setup = document.getElementById('menu-setup');
+          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile');
+        });
+      }
+    }catch(_){}
+  }, true);
+
+  /* console.error só ganha overlay em ?debug=1: nem todo console.error é crash, e
+     tapar a tela do jogador com aviso de textura faltando seria pior que o aviso. Sem a
+     flag ele apenas é reportado e agrupado igual aos outros.
      O original é chamado PRIMEIRO: se o relatório explodir, o log dele não se perde. */
   try{
-    var orig = console.error;
+    var orig = consoleErroNativo || console.error;
     console.error = function(){
       try{ orig.apply(console, arguments); }catch(_){}
+      // Tentativas WebGL continuam no console, mas só a falha final vira relatório.
+      if (window.__webglTentativa) return;
       try{
         var partes = [];
         for (var i = 0; i < arguments.length && i < 4; i++) {
@@ -211,6 +324,7 @@ const IMPORTMAP = JSON.stringify({
           partes.push(a && a.message ? a.message : String(a));
         }
         var m = partes.join(' ');
+        showDebug('console', m, (arguments[0] && arguments[0].stack) || null);
         reporta('console', m, null, (arguments[0] && arguments[0].stack) || null);
       }catch(_){}
     };
@@ -218,18 +332,18 @@ const IMPORTMAP = JSON.stringify({
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CORO SOLTO: Treta Suprema — FPS grátis de navegador (ex-CS BRASIL)</title>
-<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo awp_map do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação — jogue no desktop.">
+<title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
+<meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo awp_map do CS 1.6 numa Brasília fictícia e satírica. 5 facções, 44 personagens originais, 5 mapas, 26 armas, bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
 <meta name="author" content="CORO SOLTO contributors">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#090704">
 <!-- CANONICAL COM www: a produção responde em www.csbrasil.online. Este link
      estava no host sem www e brigava com o canonical das outras páginas
-     (que sai de astro.config.mjs) — dois hosts, sinal diluído. -->
+     (que sai de astro.config.mjs) - dois hosts, sinal diluído. -->
 <link rel="canonical" href="https://www.csbrasil.online/">
 <!-- HREFLANG. Repetido aqui porque esta página tem <head> PRÓPRIO e não passa
-     pelo Layout.astro — a home é o jogo, não uma página de conteúdo. Deixar de
+     pelo Layout.astro - a home é o jogo, não uma página de conteúdo. Deixar de
      fora justamente a URL mais importante do site é o tipo de buraco que só
      aparece quando alguém compara página por página.
      Mesmo host e mesma forma do canonical acima. Ver Layout.astro pro porquê
@@ -239,23 +353,23 @@ const IMPORTMAP = JSON.stringify({
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CORO SOLTO: Treta Suprema">
-<meta property="og:title" content="CORO SOLTO: Treta Suprema — FPS grátis de navegador">
+<meta property="og:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
 <meta property="og:description" content="Arena de sniper estilo CS 1.6 numa Brasília fictícia: 5 facções, 44 personagens, AWP, bots, rounds e muita treta. Jogue grátis no navegador.">
 <meta property="og:url" content="https://www.csbrasil.online/">
 <meta property="og:image" content="https://www.csbrasil.online/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="CORO SOLTO: Treta Suprema — arena de sniper estilo CS 1.6 numa Brasília fictícia">
+<meta property="og:image:alt" content="CORO SOLTO: Treta Suprema - arena de sniper estilo CS 1.6 numa Brasília fictícia">
 <meta property="og:locale" content="pt_BR">
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CORO SOLTO: Treta Suprema — FPS grátis de navegador">
+<meta name="twitter:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
 <meta name="twitter:description" content="Arena de sniper estilo CS 1.6 numa Brasília fictícia. 5 facções, 44 personagens. Jogue grátis no navegador.">
 <meta name="twitter:image" content="https://www.csbrasil.online/og-image.jpg">
-<meta name="twitter:image:alt" content="CORO SOLTO: Treta Suprema — arena de sniper estilo CS 1.6 numa Brasília fictícia">
+<meta name="twitter:image:alt" content="CORO SOLTO: Treta Suprema - arena de sniper estilo CS 1.6 numa Brasília fictícia">
 <!-- JSON-LD: UM nó VideoGame no site inteiro, e ele mora AQUI.
      Antes, index.astro e sobre.astro emitiam cada um um VideoGame com a MESMA
-     url e SEM @id — dois nós anônimos idênticos, que é o caso clássico de
+     url e SEM @id - dois nós anônimos idênticos, que é o caso clássico de
      falha de deduplicação: o crawler não sabe se é uma entidade ou duas.
      Agora o nó canônico tem @id estável (…/#game) e vive na home, que é a url
      do próprio jogo; /sobre e as outras páginas só REFERENCIAM esse @id.
@@ -276,7 +390,7 @@ const IMPORTMAP = JSON.stringify({
       "logo": "https://www.csbrasil.online/og-image.jpg" },
     { "@type": "WebPage", "@id": "https://www.csbrasil.online/#webpage",
       "url": "https://www.csbrasil.online/",
-      "name": "CORO SOLTO: Treta Suprema — FPS grátis de navegador (ex-CS BRASIL)",
+      "name": "CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)",
       "isPartOf": { "@id": "https://www.csbrasil.online/#website" },
       "primaryImageOfPage": { "@type": "ImageObject", "url": "https://www.csbrasil.online/og-image.jpg", "width": 1200, "height": 630 },
       "mainEntity": { "@id": "https://www.csbrasil.online/#game" } },
@@ -335,23 +449,15 @@ const IMPORTMAP = JSON.stringify({
   ]
 }
 </script>
-<!-- Favicon do jogo. Era um SVG inline (barras cianas genéricas) e link declarado SEMPRE
-     ganha do /favicon.ico implícito — por isso o ícone novo não aparecia na aba, e NÃO era
-     cache. O .ico tem 3 entradas com recorte por tamanho (16 = cabeça do canarinho, 32 = com
-     peito e cano da pistola, 48 = busto): corpo inteiro a 16 px vira mancha amarela, medido.
-     Gerado por tools/eval/canarinho-icon.mjs a partir do GLB real. -->
+<!-- O ICO tem recortes próprios por tamanho; regenere com tools/eval/canarinho-icon.mjs. -->
 <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href={`/style.css?v=${V}`}>
-<!-- Cache-bust por módulo. Entraram nesta lista (07/08) o `graffiti_pass`/`graffiti_layout`
-     e, de quebra, o `map_quebrada`/`map_decals`, que estavam faltando desde que nasceram.
-     Sem o `?v=`, quem já jogou fica com o módulo em cache e vê o mapa NOVO com o grafite
-     VELHO — e o layout do grafite guarda coordenada de parede, então a divergência não é
-     cosmética: é peça colada onde a parede não está mais. -->
+<!-- Todo módulo local precisa passar pelo import map versionado. -->
 <script type="importmap" is:inline set:html={IMPORTMAP}></script>
 </head>
 <body>
-<h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) — jogo FPS gratuito de navegador, Time E × Time B</h1>
+<h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) - jogo FPS gratuito de navegador, Time E × Time B</h1>
 
 <!-- SPLASH DE BOOT: cobre o load inicial (nada de cena parcial/"minecraft" visível) e
      destrava o áudio COM SOM no 1º gesto (política de autoplay do browser exige gesto;
@@ -369,7 +475,7 @@ const IMPORTMAP = JSON.stringify({
 </div>
 
 <!-- LOADING de partida/personagens: overlay opaco com barra real (THREE.LoadingManager)
-     — enquanto os GLBs entram, NADA da cena montando fica visível -->
+ - enquanto os GLBs entram, NADA da cena montando fica visível -->
 <div id="load-overlay" class="hidden">
   <div class="lo-box">
     <div class="lo-title">CORO SOLTO<span>// TRETA SUPREMA</span></div>
@@ -387,6 +493,21 @@ const IMPORTMAP = JSON.stringify({
   <div class="cine-stepbar"><i id="cine-progress"></i></div>
   <i class="cine-corner cine-corner-tl"></i><i class="cine-corner cine-corner-tr"></i>
   <i class="cine-corner cine-corner-bl"></i><i class="cine-corner cine-corner-br"></i>
+</div>
+
+<!-- Exiba apenas quando uma tentativa explícita de abrir a arena falhar. -->
+<div id="launch-error" class="hidden" role="alertdialog" aria-modal="true" aria-labelledby="launch-error-title">
+  <div class="launch-error-card">
+    <div class="launch-error-kicker">A TRETA DEU UMA PAUSA</div>
+    <h2 id="launch-error-title">A ARENA NÃO ABRIU</h2>
+    <p>Alguma coisa travou durante o carregamento. O erro já foi registrado automaticamente, sem pedir senha.</p>
+    <div id="launch-error-code" class="launch-error-code">RELATÓRIO LOCAL</div>
+    <div class="launch-error-actions">
+      <button id="launch-error-retry" class="btn btn-big" type="button">TENTAR DE NOVO</button>
+      <button id="launch-error-report" class="btn" type="button">REPORTAR ERRO</button>
+    </div>
+    <p id="launch-error-status" class="launch-error-status" aria-live="polite">Se quiser, confirme o envio pelo botão acima.</p>
+  </div>
 </div>
 
 <!-- Mobile fallback -->
@@ -423,6 +544,8 @@ const IMPORTMAP = JSON.stringify({
           <span class="home-mode-no">02</span><span class="home-mode-copy"><b>CAPTURA</b><small>BANDEIRAS · MELHOR DE 3</small></span><span class="cs-tick">JOGAR ▸</span>
         </button>
       </div>
+      <!-- FEEDBACK (pedido do dono, 07/08) alimenta a lista da futura newsletter -
+           ver /api/feedback e supabase/migrations/013. -->
       <div class="home-service-strip" aria-label="Serviços e arquivo">
         <button class="cs-item" data-act="config" type="button">CONFIGURAÇÕES</button>
         <button class="cs-item" data-act="ranking" type="button">RANKING</button>
@@ -457,7 +580,7 @@ const IMPORTMAP = JSON.stringify({
       </div>
   </section>
 
-  <!-- PAINEL DE SETUP — dois PASSOS no mesmo painel (data-step).
+  <!-- PAINEL DE SETUP - dois PASSOS no mesmo painel (data-step).
        PASSO 1 = A PARTIDA: o mapa é o protagonista (cartaz grande, nome, modo, bots).
        O nick saiu daqui a pedido do dono: perfil virou um passo próprio, aberto pelo
        botão PERFIL. Dois passos no MESMO container pra não duplicar a máquina de
@@ -483,7 +606,7 @@ const IMPORTMAP = JSON.stringify({
         </div>
         <div class="map-side">
           <span class="map-kicker">O PALCO DA TRETA</span>
-          <span id="map-name">—</span>
+          <span id="map-name"> - </span>
           <span id="map-meta"></span>
         </div>
       </div>
@@ -503,17 +626,22 @@ const IMPORTMAP = JSON.stringify({
           </div>
         </label>
         <label class="map-label">BOTS / LADO
-          <select id="bots-select"></select>
+          <div class="dd" id="bots-dd">
+            <button class="dd-btn" id="bots-dd-btn" type="button"><span id="bots-dd-label"></span><span class="dd-arrow">▾</span></button>
+            <div class="dd-list hidden" id="bots-dd-list"></div>
+          </div>
         </label>
         <!-- Dificuldade agora é RANDÔMICA por bot (50% ruins / 20% médios / 20% bons /
-             10% muito bons) — seletor removido. -->
+             10% muito bons) - seletor removido. -->
       </div>
       <div class="cs-setup-actions">
-        <button id="setup-back" class="btn btn-back" type="button">◀ VOLTAR</button>
         <button id="btn-profile" class="btn btn-profile" type="button">
-          <small>SEU PERFIL</small><span id="profile-name">SEM NICK</span>
+          <span id="profile-name">SEM NICK</span>
         </button>
-        <button id="btn-jogar" class="btn btn-big">▶ JOGAR</button>
+        <div class="cs-setup-row">
+          <button id="setup-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+          <button id="btn-jogar" class="btn btn-big">▶ JOGAR</button>
+        </div>
       </div>
       </aside>
     </section>
@@ -534,7 +662,7 @@ const IMPORTMAP = JSON.stringify({
           <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
           <span id="avatar-note"></span>
         </div>
-        <p class="pc-note">É esse nome que aparece no killfeed. Escolha com carinho — a treta é pública.</p>
+        <p class="pc-note">É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.</p>
       </div>
       <div class="cs-setup-actions">
         <button id="profile-back" class="btn btn-back" type="button">◀ VOLTAR</button>
@@ -550,7 +678,7 @@ const IMPORTMAP = JSON.stringify({
   </div>
 </div>
 
-<!-- Map screen (escolha de mapa em tela cheia) — abre pelo cartaz do mapa no setup.
+<!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
 <div id="map-screen" class="screen cine-surface hidden" data-ui-layout="map-broadcast">
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
@@ -565,7 +693,7 @@ const IMPORTMAP = JSON.stringify({
   </div>
   <header class="ms-head map-story">
     <small>O PALCO DA TRETA</small>
-    <h2 id="ms-name" class="ms-name">—</h2>
+    <h2 id="ms-name" class="ms-name"> - </h2>
     <p id="ms-meta" class="ms-meta"></p>
     <p id="ms-desc" class="ms-desc"></p>
   </header>
@@ -578,11 +706,11 @@ const IMPORTMAP = JSON.stringify({
   </div>
 </div>
 
-<!-- Team selection — duas faces claras: cada facção é uma PLACA (arte + cor + slogan +
+<!-- Team selection - duas faces claras: cada facção é uma PLACA (arte + cor + slogan +
      elenco), não um card de formulário. `data-step` troca a leitura da MESMA tela entre
      "escolher o seu lado" (side) e "escolher o adversário" (enemy). O lugar da arte por
      time já existe: .team-art consome --art (ver style.css) e, enquanto o arquivo não
-     existir, o degradê da facção continua sendo o fundo — sem ícone de imagem quebrada. -->
+     existir, o degradê da facção continua sendo o fundo - sem ícone de imagem quebrada. -->
 <div id="team-select" class="screen cine-surface hidden" data-step="side">
   <div class="faction-editorial" data-ui-layout="faction-editorial">
     <aside class="faction-index" aria-label="Índice de facções">
@@ -616,9 +744,9 @@ const IMPORTMAP = JSON.stringify({
         </header>
         <img id="fh-crest" class="faction-hero-crest" alt="">
         <small class="faction-hero-kicker">DOSSIÊ DE FACÇÃO</small>
-        <h3 id="fh-name">—</h3>
-        <p id="fh-slogan" class="faction-hero-slogan">—</p>
-        <p id="fh-desc" class="faction-hero-desc">—</p>
+        <h3 id="fh-name"> - </h3>
+        <p id="fh-slogan" class="faction-hero-slogan"> - </p>
+        <p id="fh-desc" class="faction-hero-desc"> - </p>
         <button id="fh-status" class="faction-hero-status" type="button">SELECIONE UM CORO</button>
       </div>
     </article>
@@ -626,10 +754,10 @@ const IMPORTMAP = JSON.stringify({
   <button id="team-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
 
-<!-- Character selection — layout da referência (references/telas/03): filmstrip de
+<!-- Character selection - layout da referência (references/telas/03): filmstrip de
      avatares à esquerda, ficha no meio (nome/raridade/especialidade/atributos/CTA) e
      preview 3D GIGANTE à direita, com GIRAR/ZOOM de verdade (drag + wheel no main.js).
-     O corpo continua elástico (flex:1 + min-height:0) — a lição do bug 3:2 se mantém. -->
+     O corpo continua elástico (flex:1 + min-height:0) - a lição do bug 3:2 se mantém. -->
 <div id="char-select" class="screen cine-surface hidden">
   <header class="ts-head">
     <small>PASSO 3 · O PERSONAGEM</small>
@@ -638,19 +766,22 @@ const IMPORTMAP = JSON.stringify({
   <div class="cast-stage" data-ui-layout="cast-stage">
     <div class="cast-avatar char-preview-box">
       <canvas id="char-preview" width="640" height="640"></canvas>
+      {/* Retrato estático: quando o WebGL do preview não sobe (Linux/driver), o
+          main.js esconde o canvas e mostra esta imagem - sem ele a ficha fica vazia. */}
+      <img id="char-preview-static" class="hidden" src="" alt="">
       <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
     </div>
     <aside class="cast-dossier char-sheet">
       <div class="char-info-head">
-        <div id="char-info-name">—</div>
+        <div id="char-info-name"> - </div>
         <span id="char-rarity" class="rarity">COMUM</span>
       </div>
-      <div id="char-info-blurb">—</div>
+      <div id="char-info-blurb"> - </div>
       <div id="char-voice-caption" role="status" aria-live="polite"></div>
       <div class="char-spec">
         <small>ESPECIALIDADE</small>
-        <b id="char-spec-name">—</b>
-        <p id="char-spec-desc">—</p>
+        <b id="char-spec-name"> - </b>
+        <p id="char-spec-desc"> - </p>
       </div>
       <div class="char-attrs-block">
         <small>ATRIBUTOS</small>
@@ -667,7 +798,7 @@ const IMPORTMAP = JSON.stringify({
   <button id="char-back" class="btn btn-back">◀ VOLTAR</button>
 </div>
 
-<!-- Settings — abas por categoria (padrão CS2/Valorant). Os IDs dos inputs NÃO mudam:
+<!-- Settings - abas por categoria (padrão CS2/Valorant). Os IDs dos inputs NÃO mudam:
      toda a persistência/wiring do main.js continua valendo. -->
 <div id="settings-panel" class="screen cine-surface hidden">
   <div class="settings-cockpit" data-ui-layout="settings-cockpit">
@@ -677,11 +808,12 @@ const IMPORTMAP = JSON.stringify({
       <button class="set-tab" data-tab="audio" role="tab" aria-selected="false">ÁUDIO</button>
       <button class="set-tab" data-tab="mouse" role="tab" aria-selected="false">MOUSE</button>
       <button class="set-tab" data-tab="interface" role="tab" aria-selected="false">INTERFACE</button>
+      <button class="set-tab" data-tab="privacidade" role="tab" aria-selected="false">PRIVACIDADE</button>
     </div>
     <div class="settings-workbench">
     <!-- DUAS COLUNAS (referência telas/07): lista de ajustes à esquerda, painel de
          pré-visualização à direita. Os .set-pane continuam sendo filhos diretos de um
-         container que o main.js varre por `.set-pane` + data-pane — só mudou onde esse
+         container que o main.js varre por `.set-pane` + data-pane - só mudou onde esse
          container mora, então o wiring de abas continua intacto. -->
     <div class="set-cols">
     <div class="set-list">
@@ -731,6 +863,13 @@ const IMPORTMAP = JSON.stringify({
         </select>
       </label>
     </div>
+    <!-- BOTBRAIN: consentimento de coleta (LGPD). Aba própria, não em "interface". -->
+    <div class="set-pane hidden" data-pane="privacidade" role="tabpanel">
+      <label class="set-row">Ajudar a treinar os bots
+        <input id="set-training" type="checkbox">
+      </label>
+      <p>Com sua autorização, o jogo envia como você anda, mira e atira para treinar os bots. O lote usa seu identificador técnico de jogador; o IP não é armazenado. Você pode desligar quando quiser.</p>
+    </div>
     <aside class="settings-readout" aria-label="Resumo do sistema">
       <small>PERFIL DE EXIBIÇÃO</small>
       <b>ARENA NO NAVEGADOR</b>
@@ -756,7 +895,7 @@ const IMPORTMAP = JSON.stringify({
     <div id="rank-local" class="rank-stats"></div>
     <div id="rank-global"></div>
     <p class="rank-note">Estes stats ficam <strong>neste navegador</strong>. O ranking global está
-    desligado enquanto o jogo está em alpha — volta quando o placar for confiável.</p>
+    desligado enquanto o jogo está em alpha - volta quando o placar for confiável.</p>
     <button id="ranking-back" class="btn">VOLTAR</button>
   </div>
 </div>
@@ -796,8 +935,8 @@ const IMPORTMAP = JSON.stringify({
       <span>TAB</span><span>Placar</span>
       <span>ESC</span><span>Pausar</span>
     </div>
-    <!-- index.astro:502 — O TEXTO TEM QUE DIZER O FORMATO DE CADA MODO, E OS DOIS SÃO
-         DIFERENTES DE PROPÓSITO (o dono: "o captura estava com cronometragem — isso não
+    <!-- index.astro:502 - O TEXTO TEM QUE DIZER O FORMATO DE CADA MODO, E OS DOIS SÃO
+         DIFERENTES DE PROPÓSITO (o dono: "o captura estava com cronometragem - isso não
          acontece em CTF"). Números casados com game.js:76 e game.js:104-108; se um mudar
          sem o outro, o portão UI4 do tools/eval/ui-check.mjs acusa a partida que não fecha
          ou o cronômetro que não devia existir. -->
@@ -843,6 +982,7 @@ const IMPORTMAP = JSON.stringify({
     <div id="hp-row"><span id="hp-num">100</span></div>
     <div id="hp-bar"><div id="hp-fill"></div></div>
   </div>
+  <div id="weapon-hud" class="hidden" aria-label="Armas e utilitários"></div>
   <div id="hud-bottom-right">
     <div id="weapon-name">AWP "DELIBERADOR"</div>
     <div id="ammo"><span id="ammo-mag">5</span><span class="ammo-sep">|</span><span id="ammo-reserve">25</span></div>
@@ -862,14 +1002,14 @@ const IMPORTMAP = JSON.stringify({
   </div>
   <!-- PLACAR (tela 08 da referência). Estrutura: duas colunas de time LADO A LADO, não uma
        tabela única. O `game.js` continua escrevendo uma lista só em #sb-body, com `tr.tp` /
-       `tr.tb` — quem separa nas duas colunas é o CSS (`tbody` vira grade de 2 colunas com
+       `tr.tb` - quem separa nas duas colunas é o CSS (`tbody` vira grade de 2 colunas com
        `grid-auto-flow:row dense` e cada `tr` fixa a sua coluna pela classe de time). Assim a
        tela nova NÃO exige tocar em `game.js`.
        O thead real fica só pra leitor de tela (game.js liga/desliga o #sb-cap-h por id, e
        essa é a única fonte de verdade do CTF); os rótulos VISÍVEIS são as duas .sb-head
        abaixo, que espelham o estado do CAP. por `:has()` no CSS. -->
   <div id="scoreboard" class="hidden">
-    <h3>CORO SOLTO — PLACAR</h3>
+    <h3>CORO SOLTO - PLACAR</h3>
     <!-- Duas colunas, uma por time, com o brasão da facção no topo (referência
          08_placar, pedido do dono 07/08). O JS preenche #sb-cols. -->
     <div class="sb-cols" id="sb-cols"></div>
@@ -877,7 +1017,7 @@ const IMPORTMAP = JSON.stringify({
   </div>
 </div>
 
-<!-- Pause — mesma linguagem das telas de fluxo (régua de tinta + chanfro) e fundo
+<!-- Pause - mesma linguagem das telas de fluxo (régua de tinta + chanfro) e fundo
      translúcido: a partida continua visível atrás (o canvas pausado segue renderizando). -->
 <div id="pause-menu" class="screen cine-surface hidden">
   <h2 class="screen-title">PAUSA NA TRETA</h2>
@@ -893,12 +1033,12 @@ const IMPORTMAP = JSON.stringify({
   <div class="footnote"><kbd>ESC</kbd> CONTINUAR</div>
 </div>
 
-<!-- Match end — veredito, placar e o desempenho DO JOGADOR em três blocos separados.
+<!-- Match end - veredito, placar e o desempenho DO JOGADOR em três blocos separados.
      Antes era um painel só: o título, uma frase longa e três números soltos que quebravam
      linha no meio ("9 kills de r"). O conteúdo de #match-stats é escrito pelo game.js. -->
 <!-- RESULTADO (tela 09 da referência). A referência NÃO é uma coluna centrada: é uma
      coluna de conteúdo ANCORADA À ESQUERDA (título, sub, cartão de estatística, ações) com
-     a metade direita reservada pra arte do vencedor. O #me-hero é essa metade — hoje ela é
+     a metade direita reservada pra arte do vencedor. O #me-hero é essa metade - hoje ela é
      campo atmosférico, porque o retrato do personagem só existe em runtime (glbchars) e
      quem saberia qual é é o game.js. Ver relatório: falta um gancho lá pra preencher. -->
 <div id="match-end" class="screen cine-surface hidden">
@@ -920,7 +1060,7 @@ const IMPORTMAP = JSON.stringify({
 
 <div id="game-container"></div>
 
-<!-- Vercel Web Analytics + Speed Insights (static HTML — sem pacote npm).
+<!-- Vercel Web Analytics + Speed Insights (static HTML - sem pacote npm).
      Só carrega fora de localhost. Ative no dashboard: Analytics → Enable. -->
 <script is:inline>
   if (!/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname)) {
@@ -932,6 +1072,6 @@ const IMPORTMAP = JSON.stringify({
   }
 </script>
 
-<script type="module" src="/js/main.js" is:inline></script>
+<script type="module" src={`/js/main.js?v=${V}`} is:inline></script>
 </body>
 </html>

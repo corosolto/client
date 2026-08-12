@@ -18,6 +18,7 @@ const sidebars = {
     'stack',
     'instrumentacao-ai',
     'quality-gates',
+    'botbrain',
     'arquitetura',
     'colaborar',
     'licenca',

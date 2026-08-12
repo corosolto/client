@@ -1,12 +1,14 @@
 <!doctype html>
 <html><head><meta charset="utf-8"><title>vm inspect</title>
 <style>html,body{margin:0;height:100%;background:#223}</style>
-<script type="importmap">{ "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/addons/" } }</script>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js?h=ba5e961f35ac", "three/addons/": "./vendor/addons/" } }</script>
 </head><body><script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const qp = new URLSearchParams(location.search);
-const SRC = qp.get('src') || 'models/fpvm/arms_pistol.glb';
+// O padrão precisa ser um modelo de arma publicado. `models/fpvm` foi removido e
+// `models/fparms/arms.glb` é o corpo do doador (pernas/botas), não um viewmodel.
+const SRC = qp.get('src') || 'models/weapons/pistol.glb';
 const ATT = qp.get('att');   // debug de attachments: ?att=kind,cls (ex: att=carryhandle,rifle)
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);

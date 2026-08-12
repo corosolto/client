@@ -1,7 +1,7 @@
 ---
-// /maps — GÊMEA EM INGLÊS do /mapas (mesmo desenho de /characters, gêmea do
+// /maps - GÊMEA EM INGLÊS do /mapas (mesmo desenho de /characters, gêmea do
 // /personagens). Mesmo dataset (src/data/jogo.ts); nomes/resumos/detalhes
-// traduzidos AQUI por overlay — o PT continua a fonte. Expressões de sabor
+// traduzidos AQUI por overlay - o PT continua a fonte. Expressões de sabor
 // (quebrada, baile, paredão, boteco, adega) ficam em PT, como em /characters.
 // Redirecionamento por idioma: cada página manda pro par quando o idioma
 // resolvido não bate (mesmas regras do public/js/i18n.js).
@@ -16,12 +16,12 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
     detalhe: 'A reinterpretation of CS 1.6’s awp_map, Brasília edition. Two tall platforms face each ' +
       'other, and mid is dominated by a giant cracked electronic voting machine that works as central ' +
       'cover. Around it: a boteco, a pastel stand, a protest camp and the silhouette of Congress on ' +
-      'the horizon. This is the map where the AWP rules — long angles, short cover, and nowhere ' +
+      'the horizon. This is the map where the AWP rules - long angles, short cover, and nowhere ' +
       'truly safe.',
   },
   fy_pool_day: {
     nome: 'Fight Pool',
-    resumo: 'Indoor hall with a pool in the middle — the Brazilian fy_pool_day.',
+    resumo: 'Indoor hall with a pool in the middle - the Brazilian fy_pool_day.',
     detalhe: 'Indoor arena, no sky, with the sunken pool splitting the map into two levels. ' +
       'Close, vertical combat: whoever controls the edge controls the round. ' +
       'It’s where the shotgun and the SMGs finally beat the AWP.',
@@ -31,7 +31,7 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
     resumo: 'Megastore parking lot with a statue, shopping carts and cars re-drawn every match.',
     detalhe: 'Asphalt and concrete, with rows of cars that CHANGE every match ' +
       '(the selection is seeded at random), so cover is never the same twice. ' +
-      'Opens in Capture the Flag because the geometry was designed around the flags — ' +
+      'Opens in Capture the Flag because the geometry was designed around the flags - ' +
       'but you can switch to rounds in the menu.',
   },
   fy_ferrovelho: {
@@ -45,10 +45,10 @@ const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> 
     nome: 'Quebrada (Baile Street)',
     resumo: 'A long straight outskirts street, with the baile rotunda at one end and the dirt pitch at the other.',
     detalhe: 'The newest map, and the only one that’s a STREET: asphalt down the axis, sidewalk on ' +
-      'both sides, shacks and quebrada shops around — adega, açaí, ice cream parlor, diner, furniture. ' +
+      'both sides, shacks and quebrada shops around - adega, açaí, ice cream parlor, diner, furniture. ' +
       'At one end the baile square, with tuned cars and a paredão of speakers; at the other, the ' +
       'dirt pitch. In between: a parked bus with a bus stop, a bar with plastic chairs on the ' +
-      'sidewalk and barricades. The two back alleys aren’t decoration — they’re the alternate route ' +
+      'sidewalk and barricades. The two back alleys aren’t decoration - they’re the alternate route ' +
       'that keeps the street from becoming a sniper corridor. Four flags: dirt pitch, corner bar, ' +
       'bus stop and baile square.',
   },
@@ -121,8 +121,8 @@ const jsonld = [
 <Layout
   ogImage={abs('/api/og/mapas.png')}
   ogImageAlt={`Card with the ${MAPAS.length} arenas of ${BRAND_FULL}`}
-  title={`Maps — the ${MAPAS.length} arenas | ${BRAND_FULL}`}
-  description={`The ${MAPAS.length} arenas of ${BRAND_FULL}: ${MAPAS.map(m => en(m.id).nome).join(', ')} — layout, mode and how to play each one.`}
+  title={`Maps - the ${MAPAS.length} arenas | ${BRAND_FULL}`}
+  description={`The ${MAPAS.length} arenas of ${BRAND_FULL}: ${MAPAS.map(m => en(m.id).nome).join(', ')} - layout, mode and how to play each one.`}
   jsonld={jsonld}
   h1="Maps"
   kicker={`${MAPAS.length} arenas · rounds and CTF`}
@@ -132,7 +132,7 @@ const jsonld = [
       literal entre `}` e `{` é engolido. */}
   <Fragment slot="sub">
     {MAPAS.length} playable arenas.{' '}{nRounds}{' '}{plural(nRounds, 'opens', 'open')} in rounds and
-    {' '}{nCtf}{' '}{plural(nCtf, 'opens', 'open')} in Capture the Flag — but none of them locks the mode:
+    {' '}{nCtf}{' '}{plural(nCtf, 'opens', 'open')} in Capture the Flag - but none of them locks the mode:
     you can play any map in any mode from the menu before the match.
   </Fragment>
 
@@ -177,7 +177,7 @@ const jsonld = [
       respawn. 1:39 rounds; the team with the most kills when the clock hits zero takes the round;
       3 rounds win the match, and the 5th round is the cap.</li>
     <li><strong>Capture the Flag:</strong> four flags spread across the arena. The geometry of the
-      H Store, the Junkyard and the Quebrada was designed around them — that’s why those three open
+      H Store, the Junkyard and the Quebrada was designed around them - that’s why those three open
       in CTF. In CTF the round ends by capture, not by the clock.</li>
     <li>The map is drawn or picked on the selection screen, before the match starts.</li>
   </ul>

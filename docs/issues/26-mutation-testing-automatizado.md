@@ -29,11 +29,16 @@ alavancagem do bloco.
 
 ## Critério de aceite
 
-- [ ] Rodando hoje, acha pelo menos os buracos já documentados (`knifeRot`, pose de ADS,
+- [x] Rodando hoje, acha pelo menos os buracos já documentados (`knifeRot`, pose de ADS,
       escala por arma). **Se não achar, o catálogo está incompleto** — esse é o teste do teste.
-- [ ] Interromper no meio não deixa arquivo modificado (`git status` limpo)
-- [ ] Relatório separa "matou" de "sobreviveu", com o nome da régua em cada linha
-- [ ] Adicionar um mutante novo não exige tocar no motor
+- [x] Interromper no meio não deixa arquivo modificado (`git status` limpo)
+- [x] Relatório separa "matou" de "sobreviveu", com o nome da régua em cada linha
+- [x] Adicionar um mutante novo não exige tocar no motor
+
+Prova real (08/2026): `npm run eval:mutate` → `aud1-kniferot MATOU · aud1-pose-ads-pistol
+MATOU · aud1-escala-por-arma MATOU` + `OK: 3 mutantes MATARAM a régua`. Interrupção: rodar
+`node tools/eval/mutate.mjs --demo-interrompe` e `kill -INT` no meio deixa `public/` intacto
+(`git status --porcelain -- public/` vazio).
 
 ## Arquivos
 

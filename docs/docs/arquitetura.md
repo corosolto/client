@@ -62,15 +62,15 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 6.370 |
-| `public/js/main.js` | 1.847 |
-| `public/js/characters.js` | 1.138 |
+| `public/js/game.js` | 6.613 |
+| `public/js/main.js` | 2.105 |
+| `public/js/characters.js` | 1.126 |
 | `public/js/glbchars.js` | 935 |
 | `public/js/vmattach.js` | 628 |
 | `public/js/weapons.js` | 349 |
 | `public/js/springs.js` | 260 |
 
-Total de `public/js/`: **30.856 linhas em 38 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **31.472 linhas em 40 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``wc -l public/js/*.js``
 
@@ -217,7 +217,7 @@ quer migrar isso para JSON com loader único, para que uma contribuição de con
 *"abre um JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
 
 Se você quer o trabalho de maior alavancagem no projeto inteiro, é esse. Ver
-[Estado medido](./estado.md).
+[Estado atual](./estado.md).
 
 ## O que é gerado, e o que não é
 

@@ -4,7 +4,7 @@
 // As páginas /armas, /mapas e /personagens são SEO orgânico barato: texto real
 // sobre coisas que as pessoas procuram por nome ("mapa ferro velho", "AWP",
 // "personagens"). Mas o site é Astro/SSR e o jogo é vanilla ES modules que
-// importa `three` — dá pra importar public/js/game.js daqui sem arrastar o
+// importa `three` - dá pra importar public/js/game.js daqui sem arrastar o
 // Three.js inteiro pro build do servidor.
 //
 // Então: FONTE DA VERDADE continua sendo o jogo. Este arquivo é uma CÓPIA de
@@ -16,7 +16,7 @@
 //   PERSONAGENS <- public/js/characters.js, arrays de roster (id/team/tribe/name/blurb)
 //
 // Extraído do código em 2026-08-03 (44 personagens, 5 facções, 5 mapas, 26 armas).
-// Reconferido em 2026-08-05 — e a lista de MAPAS estava errada por DOIS motivos
+// Reconferido em 2026-08-05 - e a lista de MAPAS estava errada por DOIS motivos
 // que se anulavam na contagem e por isso ninguém tinha visto:
 //   · `praca_old` ("Praça (clássico)") SAIU do registro (`public/js/maps.js:11-20`,
 //     pedido literal do dono: "vamos apagar praça clássica"; o `map.js` foi apagado
@@ -26,16 +26,16 @@
 // Um mapa a menos e um a mais: o total continuou 5 e o texto continuou mentindo.
 // Efeito colateral que também estava errado por causa disso: o default de modo.
 // Com `ctfMode: true` em fy_havan, fy_ferrovelho e fy_quebrada, hoje são
-// 2 arenas em rounds e 3 em CTF — as páginas diziam "três em rounds e duas em CTF".
+// 2 arenas em rounds e 3 em CTF - as páginas diziam "três em rounds e duas em CTF".
 
 export interface Arma {
   id: string; nome: string; curto: string; classe: string;
   dano: number; pente: number; reserva: number; cadencia: number; nota: string;
 }
 
-/** 26 armas — `dano` é por projétil; a M3 dispara 9 bagos de 14. */
+/** 26 armas - `dano` é por projétil; a M3 dispara 9 bagos de 14. */
 export const ARMAS: Arma[] = [
-  { id: 'awp', nome: 'AWP "DELIBERADOR"', curto: 'AWP', classe: 'Sniper', dano: 400, pente: 5, reserva: 25, cadencia: 1.7, nota: 'Mata com um tiro em qualquer lugar do corpo. É a arma que define a arena — e a que mais castiga quem atira correndo.' },
+  { id: 'awp', nome: 'AWP "DELIBERADOR"', curto: 'AWP', classe: 'Sniper', dano: 400, pente: 5, reserva: 25, cadencia: 1.7, nota: 'Mata com um tiro em qualquer lugar do corpo. É a arma que define a arena - e a que mais castiga quem atira correndo.' },
   { id: 'mosin', nome: 'MOSIN "VOVÓ RUSSA"', curto: 'MOSIN', classe: 'Sniper', dano: 120, pente: 5, reserva: 25, cadencia: 1.5, nota: 'Ferrolho lento, dano brutal. Perdoa menos que a AWP e recompensa mais o agachado.' },
   { id: 'rem700', nome: 'REM 700 "CAÇADOR"', curto: 'REM', classe: 'Sniper', dano: 130, pente: 5, reserva: 25, cadencia: 1.5, nota: 'A irmã civil da Mosin: mesmo ritmo, um tiquinho mais de dano.' },
   { id: 'svd', nome: 'SVD "VODKA"', curto: 'SVD', classe: 'Sniper semi-auto', dano: 62, pente: 10, reserva: 40, cadencia: 0.28, nota: 'Semi-automática: dois tiros derrubam, e você não perde a mira entre eles.' },
@@ -47,12 +47,12 @@ export const ARMAS: Arma[] = [
   { id: 'g3', nome: 'HK G3 "FRITZ"', curto: 'G3', classe: 'Fuzil de batalha', dano: 37, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Pente curto, tiro que dói. Fuzil de quem conta os tiros.' },
   { id: 'md97', nome: 'MD97 "FUZIL DA PÁTRIA"', curto: 'MD97', classe: 'Fuzil de batalha', dano: 38, pente: 20, reserva: 80, cadencia: 0.12, nota: 'O fuzil brasileiro do arsenal. O maior dano por tiro entre os automáticos.' },
   { id: 'm400', nome: 'M400 "MIRA FINA"', curto: 'M400', classe: 'Fuzil de batalha', dano: 40, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Dano de fuzil de batalha com estabilidade de M4.' },
-  { id: 'scar', nome: 'SCAR "PAGA-PAU"', curto: 'SCAR', classe: 'Fuzil de batalha', dano: 37, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Equilibrada até demais — a que menos surpreende, pro bem e pro mal.' },
+  { id: 'scar', nome: 'SCAR "PAGA-PAU"', curto: 'SCAR', classe: 'Fuzil de batalha', dano: 37, pente: 20, reserva: 80, cadencia: 0.11, nota: 'Equilibrada até demais - a que menos surpreende, pro bem e pro mal.' },
   { id: 'm92', nome: 'ZASTAVA M92 "IOGUSLAVO"', curto: 'M92', classe: 'Carabina', dano: 32, pente: 30, reserva: 90, cadencia: 0.1, nota: 'AK serrada. Curta, gorda na tela e boa de corredor.' },
   { id: 'tavor', nome: 'TAVOR "CURTINHO"', curto: 'TAVOR', classe: 'Bullpup', dano: 32, pente: 30, reserva: 90, cadencia: 0.09, nota: 'Bullpup: cano de fuzil num corpo de SMG. Boa em espaço apertado.' },
   { id: 'famas', nome: 'FAMAS "BAGUETE"', curto: 'FAMAS', classe: 'Bullpup', dano: 29, pente: 25, reserva: 90, cadencia: 0.075, nota: 'Cadência altíssima e pente curto. Erra pouco quem controla a rajada.' },
   { id: 'carbine', nome: 'CARABINA "PAPO DE PEÃO"', curto: 'CARB', classe: 'Carabina de alavanca', dano: 42, pente: 10, reserva: 40, cadencia: 0.5, nota: 'Alavanca lenta, dano alto. A arma mais roceira e mais satisfatória do jogo.' },
-  { id: 'lmg', nome: 'METRALHA "TRETA PESADA"', curto: 'LMG', classe: 'Metralhadora', dano: 31, pente: 100, reserva: 200, cadencia: 0.085, nota: '100 tiros sem recarregar. Trava corredor inteiro — se você aguentar o peso.' },
+  { id: 'lmg', nome: 'METRALHA "TRETA PESADA"', curto: 'LMG', classe: 'Metralhadora', dano: 31, pente: 100, reserva: 200, cadencia: 0.085, nota: '100 tiros sem recarregar. Trava corredor inteiro - se você aguentar o peso.' },
   { id: 'mp5', nome: 'MP5 "VASSOURA"', curto: 'MP5', classe: 'SMG', dano: 26, pente: 30, reserva: 120, cadencia: 0.075, nota: 'A SMG de referência: previsível, precisa, sem drama.' },
   { id: 'uzi', nome: 'UZI "RÁ-TÁ-TÁ"', curto: 'UZI', classe: 'SMG', dano: 25, pente: 25, reserva: 100, cadencia: 0.07, nota: 'Cospe o pente em 1,7 s. Perto funciona, longe é fogo de artifício.' },
   { id: 'p90', nome: 'P90 "CHINELÃO"', curto: 'P90', classe: 'SMG', dano: 23, pente: 50, reserva: 100, cadencia: 0.065, nota: '50 tiros e a cadência mais alta do arsenal. Dano por tiro é o preço.' },
@@ -60,7 +60,7 @@ export const ARMAS: Arma[] = [
   { id: 'deagle', nome: 'DEAGLE "MARTELO"', curto: 'DE', classe: 'Pistola', dano: 53, pente: 7, reserva: 35, cadencia: 0.28, nota: 'Pistola que mata em 2. Headshot resolve round.' },
   { id: 'revolver38', nome: 'REVÓLVER .38 "TROVÃO"', curto: '.38', classe: 'Pistola', dano: 46, pente: 6, reserva: 24, cadencia: 0.36, nota: 'Seis tiros, muito barulho e nenhuma pressa.' },
   { id: 'pistol', nome: 'PT-38 "APITO"', curto: 'PT-38', classe: 'Pistola', dano: 34, pente: 12, reserva: 48, cadencia: 0.24, nota: 'A secundária padrão. Mata em 3 e te tira de aperto quando a primária seca.' },
-  { id: 'knife', nome: 'FACA "CONVERSA FIADA"', curto: 'FACA', classe: 'Corpo a corpo', dano: 55, pente: 0, reserva: 0, cadencia: 0.55, nota: 'Alcance de 2,4 m. Anda mais rápido com ela na mão — e humilha mais também.' },
+  { id: 'knife', nome: 'FACA "CONVERSA FIADA"', curto: 'FACA', classe: 'Corpo a corpo', dano: 55, pente: 0, reserva: 0, cadencia: 0.55, nota: 'Alcance de 2,4 m. Anda mais rápido com ela na mão - e humilha mais também.' },
 ];
 
 export interface Arremesso {
@@ -69,23 +69,23 @@ export interface Arremesso {
   quantidade: number;
   /** Segundos entre o arremesso e o estouro. */
   fusivel: number;
-  /** Raio de efeito em metros — dano no caso da frag, nuvem no caso da fumaça. */
+  /** Raio de efeito em metros - dano no caso da frag, nuvem no caso da fumaça. */
   raio: number;
   efeito: string; nota: string;
 }
 
-/* AS DUAS DE ARREMESSO — e por que elas não entram em `ARMAS`.
+/* AS DUAS DE ARREMESSO - e por que elas não entram em `ARMAS`.
  *
  * O jogo tem granada e fumaça desde sempre (`_spawnGrenade`, `_explodeFrag`,
  * `_updateGrenades` em `public/js/game.js`) e o HUD as mostra em toda partida
  * ("💨 5  🧨 1", `#smoke-count`, `src/pages/index.astro`). /armas listava as 26 armas de
- * FOGO e ignorava as duas jogáveis de arremesso — a página prometia "o arsenal" e
+ * FOGO e ignorava as duas jogáveis de arremesso - a página prometia "o arsenal" e
  * entregava parte dele.
  *
  * Elas ficam num array PRÓPRIO de propósito. `ARMAS.length` é a origem do "26" em título,
  * meta description, kicker, JSON-LD e nos espelhos de máquina; empurrar as duas para
  * dentro de `ARMAS` viraria "28 armas" em todo lugar e passaria a contar fumaça como arma
- * de fogo — além de quebrar as colunas da tabela (granada não tem pente, reserva nem
+ * de fogo - além de quebrar as colunas da tabela (granada não tem pente, reserva nem
  * cadência). São coisas diferentes, então são listas diferentes.
  *
  * TODO número abaixo foi lido do motor, com arquivo:linha. Nada aqui é estimativa. */
@@ -99,7 +99,7 @@ export const ARREMESSO: Arremesso[] = [
     // tecla       game.js:1986 (`Digit4`) e 1988 (`KeyG`, atalho legado)
     quantidade: 5, fusivel: 2.2, raio: 4.0,
     efeito: 'Nuvem que bloqueia linha de visão por 13 s',
-    nota: 'Cinco por rodada — é a granada que você tem de sobra. Corta ângulo de sniper, cobre travessia '
+    nota: 'Cinco por rodada - é a granada que você tem de sobra. Corta ângulo de sniper, cobre travessia '
       + 'e tapa a bandeira no CTF. A cor da nuvem é o céu do mapa multiplicado por 0,75, então ela nunca '
       + 'lava a tela pra branco.',
   },
@@ -114,13 +114,13 @@ export const ARREMESSO: Arremesso[] = [
     efeito: 'Até 95 de dano no epicentro, caindo a zero na borda',
     nota: 'UMA por rodada. O dano cai linearmente com a distância: 95 em cima, ~47 na metade do raio, '
       + 'zero na borda. Não acerta o próprio time, e o fusível curto (1,5 s) significa que ela estoura '
-      + 'quase onde cai — jogar por cima de cobertura é o uso, não arremessar longe.',
+      + 'quase onde cai - jogar por cima de cobertura é o uso, não arremessar longe.',
   },
 ];
 
 export interface Mapa {
   id: string; nome: string; modo: string; resumo: string; detalhe: string;
-  /** `ctfMode: true` no registro do jogo — a arena ABRE em Capture the Flag.
+  /** `ctfMode: true` no registro do jogo - a arena ABRE em Capture the Flag.
    *  Não é trava: qualquer mapa aceita qualquer modo pelo menu. Existe como
    *  BOOLEANO (e não como texto dentro de `modo`) porque as páginas precisavam
    *  contar "quantas abrem em rounds e quantas em CTF", e contar essa frase à mão
@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** Arenas jogáveis — a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
 export const MAPAS: Mapa[] = [
   {
     id: 'awp_map', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -136,11 +136,11 @@ export const MAPAS: Mapa[] = [
     detalhe: 'Reinterpretação do awp_map do CS 1.6 em versão Brasília. Duas plataformas altas se encaram, ' +
       'e o mid é dominado por uma urna eletrônica gigante e rachada que serve de cobertura central. ' +
       'Em volta: boteco, carrinho de pastel, acampamento e a silhueta do Congresso no horizonte. ' +
-      'É o mapa em que a AWP manda — ângulo longo, cobertura curta e nenhum lugar realmente seguro.',
+      'É o mapa em que a AWP manda - ângulo longo, cobertura curta e nenhum lugar realmente seguro.',
   },
   {
     id: 'fy_pool_day', nome: 'Piscina da Treta', modo: 'Rounds', ctf: false,
-    resumo: 'Salão fechado com piscina no meio — o fy_pool_day brasileiro.',
+    resumo: 'Salão fechado com piscina no meio - o fy_pool_day brasileiro.',
     detalhe: 'Arena interna, sem céu, com a piscina rebaixada partindo o mapa em dois níveis. ' +
       'Combate curto e vertical: quem controla a borda controla o round. ' +
       'É onde a escopeta e as SMGs finalmente ganham da AWP.',
@@ -150,7 +150,7 @@ export const MAPAS: Mapa[] = [
     resumo: 'Estacionamento de megaloja com estátua, carrinhos e carros sorteados por partida.',
     detalhe: 'Mapa de asfalto e concreto, com fileiras de carros que MUDAM a cada partida ' +
       '(a seleção é sorteada por semente), então a cobertura nunca é a mesma duas vezes. ' +
-      'Abre em Capture the Flag porque a geometria foi desenhada em volta das bandeiras — ' +
+      'Abre em Capture the Flag porque a geometria foi desenhada em volta das bandeiras - ' +
       'mas dá pra trocar pra rounds no menu.',
   },
   {
@@ -164,10 +164,10 @@ export const MAPAS: Mapa[] = [
     id: 'fy_quebrada', nome: 'Quebrada (Rua do Baile)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Uma rua reta e comprida de periferia, com a rotunda do baile numa ponta e o campinho de terra na outra.',
     detalhe: 'O mapa mais novo, e o único que é uma RUA: asfalto no eixo, calçada dos dois lados, ' +
-      'barracos e comércio de quebrada em volta — adega, açaí, sorveteria, lanchonete, móveis. ' +
+      'barracos e comércio de quebrada em volta - adega, açaí, sorveteria, lanchonete, móveis. ' +
       'Numa ponta a praça do baile, com carros tunados e paredão de caixa de som; na outra, o ' +
       'campinho de terra. Pelo meio: ônibus parado com ponto, bar com cadeira de plástico na ' +
-      'calçada e barricadas. As duas vielas do fundo não são enfeite — são a rota alternativa que ' +
+      'calçada e barricadas. As duas vielas do fundo não são enfeite - são a rota alternativa que ' +
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
@@ -175,28 +175,28 @@ export const MAPAS: Mapa[] = [
     id: 'fy_escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Comunidade cortada por uma escadaria monumental de azulejo colorido, com caveirão no patamar central.',
     detalhe: 'O mapa de verticalidade pura: um time nasce na rua lá embaixo (bar, mercadinho, carros), ' +
-      'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão — três lances ' +
+      'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão - três lances ' +
       'de escada com patamares de barricada e um caveirão atravessado no meio da subida. Dois becos laterais ' +
       'sobem por trás das casas e dão rota de flanco sem expor na escada. Cada patamar é um andar de combate: ' +
       'você só enxerga o próximo lance, nunca o escadão inteiro.',
   },
   {
     id: 'fy_campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Campo de várzea no centro de uma comunidade — todos os becos convergem pra ele.',
+    resumo: 'Campo de várzea no centro de uma comunidade - todos os becos convergem pra ele.',
     detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
       'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
-      'Quatro becos descem do morro e desembocam em bordas diferentes do campo — cada um é uma rota ' +
+      'Quatro becos descem do morro e desembocam em bordas diferentes do campo - cada um é uma rota ' +
       'de flanco separada. O campo tem traves, alambrado derrubado, container e arquibancada de cimento. ' +
       'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
   },
   {
     id: 'fy_lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
-    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo — a luta pela vertical.',
+    resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo - a luta pela vertical.',
     detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
-      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas — cada uma é um ' +
+      'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas - cada uma é um ' +
       'ponto de estrangulamento contestável dos dois lados. As lajes têm caixas d\'água e muretas ' +
       'como cover; os becos têm carros, caçambas e motos encostadas. Prédio central da fileira ' +
-      'norte é mais alto — é a posição de sniper do mapa.',
+      'norte é mais alto - é a posição de sniper do mapa.',
   },
   {
     id: 'fy_corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
@@ -220,17 +220,17 @@ export interface Personagem { faccao: string; nome: string; blurb: string; }
 
 /* As CORES saem de `public/style.css:384-392` (`.team-p/-b/-u/-c/-f`, variável `--tc`),
    que é o que o jogador vê na tela de seleção. Elas estavam próximas mas diferentes
-   (#ff8080 × #ff6b6b, #9dff9d × #7de08f, #c8a8ff × #c79bff, #ff9de0 × #ff8ad1) — perto
+   (#ff8080 × #ff6b6b, #9dff9d × #7de08f, #c8a8ff × #c79bff, #ff9de0 × #ff8ad1) - perto
    o bastante pra ninguém notar e longe o bastante pra não ser a mesma marca. Só o
    amarelo dos funkeiros já batia.
 
-   Os LEMAS são copiados do jogo — `src/pages/index.astro`, `span.team-slogan` das
+   Os LEMAS são copiados do jogo - `src/pages/index.astro`, `span.team-slogan` das
    5 team-cards. Três dos cinco divergiam ("A treta se faz na rua!" × "na quebrada!",
    "A treta é um circo!" × "se faz no picadeiro!", "A treta é no fluxo!" × "se faz no
    bailão!"), e o /personagens publicava a versão que ninguém vê na tela. Regra da casa:
    se divergir, o JOGO está certo e este arquivo está velho. */
 export const FACCOES: { id: string; nome: string; lema: string; cor: string; nota: string }[] = [
-  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Oito arquétipos de esquerda caricata — nenhum deles é uma pessoa real.' },
+  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
   { id: 'B', nome: 'Time B', lema: 'A treta se faz na rodovia!', cor: '#7de08f', nota: 'O time verde. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
@@ -245,13 +245,13 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'mst', faccao: 'E', nome: 'Líder do MST', blurb: 'Do campo pra arena. Bandeira na mochila, bota no barro e tiro certeiro de enxada.' },
   { id: 'doutora', faccao: 'E', nome: 'Doutora do SUS', blurb: 'Jaleco, estetoscópio e plantão de 24h. Receita tiro certeiro, na veia.' },
   { id: 'mistico', faccao: 'E', nome: 'Jovem Místico', blurb: 'Faixa na testa, cristal no peito e aura calibrada. Só atira quando Mercúrio permite.' },
-  { id: 'gotinha', faccao: 'E', nome: 'Zé da Gotinha', blurb: 'Mascote da saúde. Imuniza a treta com dose de reforço — e ainda pega o SUS de graça.' },
+  { id: 'gotinha', faccao: 'E', nome: 'Zé da Gotinha', blurb: 'Mascote da saúde. Imuniza a treta com dose de reforço - e ainda pega o SUS de graça.' },
   { id: 'hipster', faccao: 'E', nome: 'Hipster Alternativo', blurb: 'Moicano colorido e camiseta de banda que você não conhece. Já jogava isso antes de ser mainstream.' },
   { id: 'et', faccao: 'E', nome: 'ET de Varginha', blurb: 'Veio de longe pra treta. Abduz a direita e some no mato de Minas.' },
 
   { id: 'caminhoneiro', faccao: 'B', nome: 'Caminhoneiro', blurb: 'Camisa do Brasil, luva de estrada e 40h de BR na semana. Freia pra ninguém.' },
   { id: 'sertanejo', faccao: 'B', nome: 'Cantor Sertanejo', blurb: 'Chapéu de cowboy, fivela de ouro e violão nas costas. Moda de viola em dose dupla.' },
-  { id: 'coach', faccao: 'B', nome: 'Coach Quântico', blurb: 'Blazer, headset e 47 técnicas de manifestação. Já venceu antes de começar — no quântico.' },
+  { id: 'coach', faccao: 'B', nome: 'Coach Quântico', blurb: 'Blazer, headset e 47 técnicas de manifestação. Já venceu antes de começar - no quântico.' },
   { id: 'farialimer', faccao: 'B', nome: 'Faria Limer', blurb: 'Colete, sapatênis e planilha de day trade. Compra na baixa, atira na alta.' },
   { id: 'bombado', faccao: 'B', nome: 'Bombado da Academia', blurb: 'Peitoral gigante, perna de palito. Pulou o leg day pra treinar o gatilho.' },
   { id: 'dollynho', faccao: 'B', nome: 'Dollynho', blurb: 'Mascote do guaraná polêmico. Efervescente, gelado e sempre do contra.' },
@@ -270,13 +270,13 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'pagodeiro', faccao: 'urbanas', nome: 'Pagodeiro', blurb: 'Platinado, roupa toda branca e corrente de ouro. Canta o hit e acerta o tiro no refrão.' },
 
   { id: 'bonzo', faccao: 'palhacos', nome: 'Bonzo', blurb: 'Do picadeiro pra praça. Nariz vermelho, sapatão marrom e risada de quem arma o circo.' },
-  { id: 'palhacomal', faccao: 'palhacos', nome: 'Palhaço do Mal', blurb: 'Riso que gela a espinha. Sai do picadeiro direto pro pesadelo — e ainda cobra ingresso.' },
+  { id: 'palhacomal', faccao: 'palhacos', nome: 'Palhaço do Mal', blurb: 'Riso que gela a espinha. Sai do picadeiro direto pro pesadelo - e ainda cobra ingresso.' },
   { id: 'jozo', faccao: 'palhacos', nome: 'Jozo', blurb: 'Mascote de lanche pirata. Fritou o juízo no óleo e agora só serve treta com batata.' },
   { id: 'adjim', faccao: 'palhacos', nome: 'Adjim', blurb: 'Espirra, ri e atira. Metade da dupla que faz a criançada chorar de rir (e de medo).' },
   { id: 'esbirro', faccao: 'palhacos', nome: 'Esbirro', blurb: 'A outra metade da dupla. Buzina no gatilho e resenha no recuo.' },
   { id: 'titica', faccao: 'palhacos', nome: 'Titica', blurb: 'Do circo pro Congresso e do Congresso pra arena, sempre no bom humor e no gatilho leve.' },
   { id: 'padati', faccao: 'palhacos', nome: 'Padati', blurb: 'Um da dupla mais colorida do picadeiro. Cambalhota, buzina e mira infantil.' },
-  { id: 'padata', faccao: 'palhacos', nome: 'Padata', blurb: 'O outro da dupla. Se um erra, o outro acerta — geralmente na risada.' },
+  { id: 'padata', faccao: 'palhacos', nome: 'Padata', blurb: 'O outro da dupla. Se um erra, o outro acerta - geralmente na risada.' },
   { id: 'cadequinha', faccao: 'palhacos', nome: 'Cadequinha', blurb: 'Clássico dos clássicos. Cartola, xadrez e uma gargalhada que atravessa gerações.' },
 
   { id: 'mandrake', faccao: 'funkeiros', nome: 'Mandrake', blurb: 'Boné, Juliet vermelho e corrente de ouro. Ostenta e domina na quebrada.' },
@@ -289,14 +289,14 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'fluxo', faccao: 'funkeiros', nome: 'Fluxo', blurb: 'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.' },
   { id: 'ostentacao', faccao: 'funkeiros', nome: 'Ostentação', blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.' },
 
-  { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.' },
-  { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.' },
-  { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!' },
+  { id: 'mariabonita', faccao: 'mitico', nome: 'Maria Bonita', blurb: 'Cangaceira de precisão. Parou, mirou, acertou - a rainha do primeiro tiro.' },
+  { id: 'saci', faccao: 'mitico', nome: 'Saci-Pererê', blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some - o gorro vermelho é hitbox.' },
+  { id: 'lampiao', faccao: 'mitico', nome: 'Lampião', blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz - Virgem Maria!' },
   { id: 'lobisomem', faccao: 'mitico', nome: 'Lobisomem', blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.' },
-  { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.' },
+  { id: 'bandeirante', faccao: 'mitico', nome: 'Bandeirante', blurb: 'Caçador de pegadas. Vê onde o inimigo pisou - o vilão que o time tolera.' },
   { id: 'boto', faccao: 'mitico', nome: 'Boto Cor de Rosa', blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.' },
   { id: 'zumbi', faccao: 'mitico', nome: 'Zumbi dos Palmares', blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.' },
-  { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — dorme com o medo.' },
+  { id: 'cuca', faccao: 'mitico', nome: 'Cuca', blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada - dorme com o medo.' },
   { id: 'curupira', faccao: 'mitico', nome: 'Curupira', blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.' },
 ];
 
@@ -307,7 +307,7 @@ export const CONTROLES: Controle[] = [
   { tecla: 'W A S D', acao: 'Mover' },
   { tecla: 'Mouse', acao: 'Mirar' },
   { tecla: 'Shift', acao: 'Correr' },
-  { tecla: 'Ctrl ou C', acao: 'Agachar — deixa a mira bem mais estável' },
+  { tecla: 'Ctrl ou C', acao: 'Agachar - deixa a mira bem mais estável' },
   { tecla: 'Espaço', acao: 'Pular' },
   { tecla: 'Clique esquerdo', acao: 'Atirar' },
   { tecla: 'Clique direito', acao: 'Luneta (armas com mira) / ADS' },

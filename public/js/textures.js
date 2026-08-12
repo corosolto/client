@@ -465,7 +465,9 @@ export function initTextures() {
   ];
 
   // --- poster art (public/posters) — curated satirical posters for the map walls.
-  // [file, aspect w/h]. Personagens e marcas protegidas não entram neste pool.
+  // [file, aspect w/h]. Prioritários primeiro, depois o resto. Personagens e marcas
+  // protegidas não entram neste pool.
+  // Reproduz dimensões, aspecto real e desvio: node tools/eval/poster-aspect-check.mjs --json
   const POSTER_FILES = [
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
     ['New Project (1).png', 0.5625],
@@ -474,16 +476,16 @@ export function initTextures() {
     ['26268061ca13b4dc4a871c1163cbeb6d.jpg', 1.0],
     ['3300c39038dd97ad6a20342038c008b0.jpg', 1.0],
     ['78c38b895431ac393f96036507060be1.jpg', 0.708],
-    ['51edbafcf2eebbb2dc157f66bb1a2d66.jpg', 0.72],
-    ['574381edb80801aaff5e9a1cdd88bc4b.jpg', 0.72],
-    ['6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg', 0.72],
+    ['51edbafcf2eebbb2dc157f66bb1a2d66.jpg', 1.019],  // #79: era 0.72 (577×566, arte esticada)
+    ['574381edb80801aaff5e9a1cdd88bc4b.jpg', 0.844],  // #79: era 0.72 (735×871)
+    ['6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg', 1.338],  // #79: era 0.72 (570×426, é paisagem)
     ['82f8dcbb0547719bfc4dbb27aed9f583.jpg', 0.72],
-    ['8445c0ca193d22b4d6a9af66409b0dda.jpg', 0.72],
+    ['8445c0ca193d22b4d6a9af66409b0dda.jpg', 0.851],  // #79: era 0.72 (681×800)
     ['dafac3c979a935aea80adb8b90f6ef1b.jpg', 0.72],
-    ['dc58fe69ac56037026f1bf6181b7f71c.jpg', 0.72],
+    ['dc58fe69ac56037026f1bf6181b7f71c.jpg', 0.667],  // #79: era 0.72 (736×1104)
     ['eabfe479653f0e9c94a618858e8667bc.jpg', 0.72],
     ['f0deec032dd1777bc681179fb74a29b0.jpg', 0.72],
-    ['images.png', 0.9],
+    ['images.png', 0.695],  // #79: era 0.9 (187×269)
     // originais OpenRouter 07/08 (obra própria, versionados — ver bloco or-* dos decals)
     ['or-baile.jpg', 0.605], ['or-compro-ouro.jpg', 0.423],
     ['or-quebrada-vive.jpg', 0.522], ['or-show-funk.jpg', 0.644],

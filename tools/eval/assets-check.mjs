@@ -41,18 +41,28 @@
    No `buildCommand` da Vercel, ENTRE os fetches e o `npm run build` — antes de gastar
    o build, e depois de tudo que ela cobra existir. Localmente: `npm run assert:assets`.
 
-   ── A MUTAÇÃO QUE PROVA (aceite do T1) ─────────────────────────────────────
+   ── AS MUTAÇÕES QUE PROVAM ─────────────────────────────────────────────────
        AUDIO_PACK_URL=https://example.invalid/nada.zip bash scripts/fetch-audio.sh
    com `public/audio` vazio: o curl falha, o fallback copia o exemplo, e ESTA régua
    reprova com "62 caminhos, piso 250". Sem ela, o build passava verde.
+
+   Issue #77: `node tools/eval/assets-check.mjs --mutante=grafite-orfa` tira em
+   memória um nome usado pelo layout e exige que a contagem de peças fique vermelha.
    ============================================================================ */
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { initTextures } from './harness.mjs';
+import { GRAFITE } from '../../public/js/graffiti_layout.js';
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
 const MANIFEST = 'public/audio/manifest.json';
 const DIR_DECALS = 'public/img/decals';
+const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
+
+if (mutante && mutante !== 'grafite-orfa') {
+  console.error(`mutante desconhecido: ${mutante}`);
+  process.exit(2);
+}
 
 const erros = [], avisos = [];
 
@@ -96,8 +106,11 @@ if (!existsSync(MANIFEST)) {
 }
 
 /* -------------------------------- DECALQUES -------------------------------- */
-try {
-  const T = initTextures();
+let T;
+try { T = initTextures(); } catch (e) {
+  erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
+}
+if (T) try {
   const files = T.decalFiles || [];
   if (!files.length) {
     erros.push('decalques: `T.decalFiles` veio vazio — textures.js não expôs a lista.');
@@ -126,6 +139,57 @@ try {
   }
 } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
+}
+
+/* Issue #77: todo nome do layout gerado precisa continuar no pacote do jogo.
+   A resolução de `poster:` é a mesma de graffiti_pass.js. */
+if (T) {
+  const decal = new Set(T.decalFiles || []);
+  const poster = new Set(T.posterFiles || []);
+  if (mutante === 'grafite-orfa') {
+    const nome = Object.values(GRAFITE)
+      .flatMap((dados) => dados.arquivos || [])
+      .find((arquivo) => !arquivo.startsWith('poster:') && decal.has(arquivo));
+    if (!nome) {
+      erros.push('MUTANTE NÃO APLICOU: nenhum decalque do layout existe no pacote.');
+    } else {
+      decal.delete(nome);
+    }
+  }
+
+  const nomesOrfaos = new Set();
+  const referenciasOrfas = new Map();
+  let totalPecas = 0;
+  for (const [mapa, dados] of Object.entries(GRAFITE)) {
+    const arq = dados.arquivos || [];
+    const sem = new Set();
+    for (const f of arq) {
+      const ok = f.startsWith('poster:') ? poster.has(f.slice(7)) : decal.has(f);
+      if (!ok) sem.add(f);
+    }
+    if (!sem.size) continue;
+    for (const nome of sem) {
+      nomesOrfaos.add(nome);
+      referenciasOrfas.set(`${mapa}\0${nome}`, { mapa, nome, pecas: 0 });
+    }
+    for (const [a] of (dados.pecas || [])) {
+      const nome = arq[a];
+      if (nome !== undefined && sem.has(nome)) {
+        referenciasOrfas.get(`${mapa}\0${nome}`).pecas++;
+        totalPecas++;
+      }
+    }
+  }
+  if (referenciasOrfas.size) {
+    const ex = [...referenciasOrfas.values()].slice(0, 4)
+      .map((o) => `${o.mapa}:${o.nome} (=${o.pecas} peças)`).join(', ');
+    erros.push(`grafite layout: ${nomesOrfaos.size} nome(s) saíram do pacote em `
+      + `${referenciasOrfas.size} referência(s) mapa:nome = ${totalPecas} peça(s) `
+      + `que sumiriam da parede (ex.: ${ex}) — `
+      + 'regenere com `npm run grafite`.');
+  } else {
+    avisos.push(`grafite layout ok: todos os nomes citados existem no pacote.`);
+  }
 }
 
 /* --------------------------------- veredito -------------------------------- */

@@ -1,5 +1,5 @@
 ---
-// /u/<id>/<nick> — perfil público do jogador.
+// /u/<id>/<nick> - perfil público do jogador.
 //
 // ESTA É A PÁGINA QUE ESCALA. Todo o resto do site tem 9 URLs; esta tem uma por
 // jogador, cada uma com título, descrição e imagem próprios. Três correções:
@@ -10,7 +10,7 @@
 // 2. JSON-LD ProfilePage + Person. Um perfil sem dado estruturado é só uma
 //    página com números; com ProfilePage o crawler entende que é o perfil de
 //    ALGUÉM, e as stats viram propriedades legíveis.
-// 3. `og:type=profile` já existia e é ótimo — agora com `profile:username`,
+// 3. `og:type=profile` já existia e é ótimo - agora com `profile:username`,
 //    `og:image:alt`, e o /sitemap.xml listando estas URLs, que fecha o ciclo.
 import Layout from '../../layouts/Layout.astro';
 import { supabaseAdmin } from '../../lib/supabase';
@@ -32,7 +32,7 @@ const parts = (Astro.params.path || '').split('/').filter(Boolean);
 let p: any = null, configured = !!supabaseAdmin;
 
 /* Perfis desligam junto com o ranking (src/lib/site.ts). Mesmo raciocínio da
-   /ranking: 200 + noindex, não 404 — estas URLs estão indexadas, são o que a
+   /ranking: 200 + noindex, não 404 - estas URLs estão indexadas, são o que a
    badge PNG referencia nas redes, e vão voltar. Sem a consulta ao banco, `p`
    fica null e o template cai no aviso. */
 if (RANKING_ON && supabaseAdmin) {
@@ -62,7 +62,7 @@ const tempo = p ? displayTime(p) : '0min';
 const [ladoLabel, ladoCor] = p ? sideOf(p.matches_p, p.matches_b) : ['NEUTRO', '#ffd23f'];
 const badgeUrl = abs(`/api/badge/${pid}.png`);
 const pageUrl = abs(`/u/${pid}/${encodeURIComponent(nick)}`);
-const title = `${nick} — ${p ? `${p.kills} kills, K/D ${kd}` : 'perfil'} | ${BRAND_FULL}`;
+const title = `${nick} - ${p ? `${p.kills} kills, K/D ${kd}` : 'perfil'} | ${BRAND_FULL}`;
 const desc = p
   ? `${nick} no ${BRAND_FULL}: ${p.kills} kills, K/D ${kd}, ${p.wins > 0 ? p.wins : 'nenhuma'} vitória(s), ${p.headshots} headshots e ${tempo} de arena em ${p.matches} partidas.`
   : 'Perfil de jogador';
@@ -77,7 +77,7 @@ const jsonld = p ? [
     '@type': 'ProfilePage',
     '@id': pageUrl + '#profile',
     url: pageUrl,
-    name: `${nick} — perfil de jogador`,
+    name: `${nick} - perfil de jogador`,
     dateModified: p.updated_at ?? undefined,
     isPartOf: { '@id': WEBSITE_ID },
     about: {
@@ -105,7 +105,7 @@ const jsonld = p ? [
 ---
 {/* og:image:width/height vêm por PROP, não pelo slot: desde que o Layout passou
     a emitir as duas (1200×630 por padrão), repetir 840×440 aqui produziria a
-    mesma propriedade duas vezes no <head> — e o scraper fica com a primeira. */}
+    mesma propriedade duas vezes no <head> - e o scraper fica com a primeira. */}
 <Layout title={title} description={desc} ogImage={badgeUrl} ogType="profile"
         ogImageWidth={840} ogImageHeight={440}
         noindex={!RANKING_ON}
@@ -119,7 +119,7 @@ const jsonld = p ? [
     <div class="panel">
       <h1>Perfis desligados por enquanto</h1>
       <p>O jogo está em <strong>alpha</strong> e o ranking saiu do ar até o placar ser
-      confiável — as páginas de jogador foram junto. Este endereço continua sendo o seu:
+      confiável - as páginas de jogador foram junto. Este endereço continua sendo o seu:
       quando voltar, é aqui.</p>
       <p><a href="/mapa">quem está jogando agora</a> · <a href="/changelog">o que mudou</a> ·
       <a href="/">▶ JOGAR</a></p>
@@ -165,7 +165,7 @@ const jsonld = p ? [
         <div><b>{p.deaths}</b><span>mortes</span></div>
         <div><b>{p.headshots}</b><span>headshots</span></div>
         <div><b>{p.matches}</b><span>partidas</span></div>
-        <div><b>{p.wins > 0 ? p.wins : "—"}</b><span>vitórias</span></div>
+        <div><b>{p.wins > 0 ? p.wins : " - "}</b><span>vitórias</span></div>
         <div><b>{p.rounds}</b><span>rounds</span></div>
         <div><b>{p.best_streak}×</b><span>melhor sequência</span></div>
         <div><b>{tempo}</b><span>tempo de arena</span></div>

@@ -1,7 +1,7 @@
 ---
-// /weapons — GÊMEA EM INGLÊS do /armas (pedido do dono, 06/08: usuário em EN
+// /weapons - GÊMEA EM INGLÊS do /armas (pedido do dono, 06/08: usuário em EN
 // cai na versão EN). Mesmo dataset (src/data/jogo.ts); classes, notas e textos
-// das granadas traduzidos AQUI por overlay — o PT continua a fonte. Os NOMES
+// das granadas traduzidos AQUI por overlay - o PT continua a fonte. Os NOMES
 // das armas ('AWP "DELIBERADOR"' etc.) são marca própria e ficam em PT, como
 // characters.astro fez com os personagens. Redirecionamento por idioma: cada
 // página manda pro par quando o idioma resolvido não bate (mesmas regras do
@@ -10,7 +10,7 @@ import Layout from '../layouts/Layout.astro';
 import { ARMAS, ARREMESSO } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
-// As classes viram os títulos das seções (h2) e entram no JSON-LD — por isso
+// As classes viram os títulos das seções (h2) e entram no JSON-LD - por isso
 // precisam de overlay, ao contrário dos nomes de arma, que ficam como estão.
 const CLASSE_EN: Record<string, string> = {
   'Sniper': 'Sniper',
@@ -27,7 +27,7 @@ const CLASSE_EN: Record<string, string> = {
   'Corpo a corpo': 'Melee',
 };
 const NOTA_EN: Record<string, string> = {
-  awp: 'One-shot kill anywhere on the body. It is the weapon that defines the arena — and the one that punishes shooting on the move the hardest.',
+  awp: 'One-shot kill anywhere on the body. It is the weapon that defines the arena - and the one that punishes shooting on the move the hardest.',
   mosin: 'Slow bolt, brutal damage. Less forgiving than the AWP, and it rewards the crouched shot more.',
   rem700: 'The Mosin’s civilian sister: same pace, a hair more damage.',
   svd: 'Semi-auto: two shots drop a target, and you never lose your sight picture between them.',
@@ -39,12 +39,12 @@ const NOTA_EN: Record<string, string> = {
   g3: 'Short mag, painful hits. A rifle for those who count their shots.',
   md97: 'The Brazilian rifle of the arsenal. The highest damage per shot among the automatics.',
   m400: 'Battle-rifle damage with M4 stability.',
-  scar: 'Balanced to a fault — the least surprising gun, for better and for worse.',
+  scar: 'Balanced to a fault - the least surprising gun, for better and for worse.',
   m92: 'A sawed-off AK. Short, fat on screen, and great in corridors.',
   tavor: 'Bullpup: rifle barrel in an SMG body. Great in tight spaces.',
   famas: 'Very high fire rate, short mag. Misses little in the hands of someone who controls the burst.',
   carbine: 'Slow lever, high damage. The most backwoods and most satisfying gun in the game.',
-  lmg: '100 rounds without reloading. Locks down a whole corridor — if you can carry the weight.',
+  lmg: '100 rounds without reloading. Locks down a whole corridor - if you can carry the weight.',
   mp5: 'The reference SMG: predictable, accurate, no drama.',
   uzi: 'Spits the mag in 1.7 s. Up close it works; at range it is fireworks.',
   p90: '50 rounds and the highest fire rate in the arsenal. Damage per shot is the price.',
@@ -52,13 +52,13 @@ const NOTA_EN: Record<string, string> = {
   deagle: 'A pistol that kills in 2. A headshot settles the round.',
   revolver38: 'Six shots, plenty of noise, and no hurry at all.',
   pistol: 'The standard sidearm. Kills in 3 and gets you out of a pinch when the primary runs dry.',
-  knife: '2.4 m reach. You move faster with it in hand — and it humiliates more, too.',
+  knife: '2.4 m reach. You move faster with it in hand - and it humiliates more, too.',
 };
 const THROW_EN: Record<string, { nome: string; efeito: string; nota: string }> = {
   smoke: {
     nome: 'SMOKE',
     efeito: 'Cloud that blocks line of sight for 13 s',
-    nota: 'Five per round — it is the grenade you have to spare. Cuts sniper angles, covers crossings '
+    nota: 'Five per round - it is the grenade you have to spare. Cuts sniper angles, covers crossings '
       + 'and smothers the flag in CTF. The cloud’s color is the map’s sky multiplied by 0.75, so it never '
       + 'washes the screen to white.',
   },
@@ -67,7 +67,7 @@ const THROW_EN: Record<string, { nome: string; efeito: string; nota: string }> =
     efeito: 'Up to 95 damage at the epicenter, falling to zero at the edge',
     nota: 'ONE per round. Damage falls linearly with distance: 95 on top of it, ~47 at half radius, '
       + 'zero at the edge. It does not hit your own team, and the short fuse (1.5 s) means it pops '
-      + 'almost where it lands — lobbing it over cover is the play, not throwing it far.',
+      + 'almost where it lands - lobbing it over cover is the play, not throwing it far.',
   },
 };
 
@@ -123,8 +123,8 @@ const jsonld = [
 <Layout
   ogImage={abs('/api/og/armas.png')}
   ogImageAlt={`Card with the ${BRAND_FULL} arsenal`}
-  title={`Weapons — all ${ARMAS.length} in the arsenal | ${BRAND_FULL}`}
-  description={`Every one of the ${ARMAS.length} weapons in ${BRAND_FULL}: AWP, AK-47, M4A1, MD97, Mosin, shotgun, SMGs and knife — with image, damage, mag, reserve and fire rate for each, plus the ${ARREMESSO.length} grenades.`}
+  title={`Weapons - all ${ARMAS.length} in the arsenal | ${BRAND_FULL}`}
+  description={`Every one of the ${ARMAS.length} weapons in ${BRAND_FULL}: AWP, AK-47, M4A1, MD97, Mosin, shotgun, SMGs and knife - with image, damage, mag, reserve and fire rate for each, plus the ${ARREMESSO.length} grenades.`}
   jsonld={jsonld}
   h1="Arsenal"
   kicker={`${ARMAS.length} weapons · ${classes.length} classes · ${ARREMESSO.length} throwables`}
@@ -132,22 +132,22 @@ const jsonld = [
   heroPos="66%">
   <Fragment slot="sub">
     {ARMAS.length} playable weapons across {classes.length} classes. The numbers below are the same
-    ones the game uses in a match — damage per projectile, magazine size, reserve ammo and the delay
+    ones the game uses in a match - damage per projectile, magazine size, reserve ammo and the delay
     between shots in seconds. Swap weapons with <code>1</code> (primary), <code>2</code> (pistol) and
-    <code>3</code> (knife) — and the two throwable grenades on <code>4</code> (smoke) and
+    <code>3</code> (knife) - and the two throwable grenades on <code>4</code> (smoke) and
     <code>5</code> (frag).
   </Fragment>
 
   <div class="panel">
     <strong style="color:var(--amber)">How to read the table.</strong>
     <p style="margin-top:6px">
-      <b>DAMAGE</b> is per projectile that hits the body — headshots multiply, and the M3 fires 9
+      <b>DAMAGE</b> is per projectile that hits the body - headshots multiply, and the M3 fires 9
       pellets of {ARMAS.find(a => a.id === 'shotgun')?.dano} per shot. <b>DELAY</b> is the time between
       shots: lower is faster. The AWP kills with one shot anywhere on the body; it is the only weapon
       in the game with that property, and it is what sets the pace of the arena.
     </p>
     <p style="margin-top:6px">
-      <b>THE IMAGES ARE THE GAME'S MODELS</b>, rendered from the same 3D file that loads in a match —
+      <b>THE IMAGES ARE THE GAME'S MODELS</b>, rendered from the same 3D file that loads in a match -
       not illustrations. All of them were shot with the same camera and the same box, so one gun's
       size against another is the real size: the knife is that tiny thing next to the Mosin because
       it is 4.9× smaller.
@@ -179,8 +179,8 @@ const jsonld = [
                       decoding="async">
                     <strong>{a.nome}</strong></td>
                   <td class="num">{a.dano}{a.id === 'shotgun' ? ' ×9' : ''}</td>
-                  <td class="num">{a.pente || '—'}</td>
-                  <td class="num">{a.reserva || '—'}</td>
+                  <td class="num">{a.pente || ' - '}</td>
+                  <td class="num">{a.reserva || ' - '}</td>
                   <td class="num">{a.cadencia}</td>
                 </tr>
                 <tr>
@@ -261,12 +261,12 @@ const jsonld = [
 
 <style>
   /* Mesma decisão de layout do /armas: a miniatura vive empilhada na PRIMEIRA
-     coluna, acima do nome, para não empurrar o scroll horizontal do celular —
+     coluna, acima do nome, para não empurrar o scroll horizontal do celular -
      e para as 26 miniaturas alinhadas denunciarem qualquer arma fora do ângulo
      do catálogo na hora. */
   .wshot{display:block;width:180px;height:69px;max-width:100%;margin:0 0 2px -6px}
   /* 180×69 exibido a partir de um arquivo 360×138: 2× de densidade, que é o que mantém
-     o cano — 2 px de espessura — sem serrilha em tela retina. `width`/`height` no HTML
+     o cano - 2 px de espessura - sem serrilha em tela retina. `width`/`height` no HTML
      reservam a caixa antes do byte chegar. */
   td:has(> .wshot){padding-top:10px;min-width:196px}
 </style>

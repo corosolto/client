@@ -1,8 +1,8 @@
-// GET /sitemap-<n>.xml — uma página do sitemap, quando o conteúdo passa de
+// GET /sitemap-<n>.xml - uma página do sitemap, quando o conteúdo passa de
 // POR_PAGINA URLs e /sitemap.xml vira índice.
 //
 // SÓ EXISTE PRA O MODO ÍNDICE. Enquanto o total couber numa página, /sitemap.xml
-// responde o <urlset> inteiro e nada aponta pra cá — mas a rota fica de pé de
+// responde o <urlset> inteiro e nada aponta pra cá - mas a rota fica de pé de
 // qualquer jeito, porque um índice que aponta pra 404 é pior que não ter índice,
 // e a transição entre os dois modos acontece sozinha quando o ranking liga e o
 // nº de jogadores cresce.

@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 38 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 40 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.3` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -96,12 +96,16 @@ A segurança não vem de esconder a `anon` key — ela é pública por design. V
 *policies*, dos grants por coluna e do rate limit contado no Postgres
 (`src/lib/ratelimit.ts` + RPC `rl_take`), não em memória de lambda.
 
+Identidade de jogador usa UID estável para selecionar a conta e token para
+autenticar a sessão; nick é atributo de exibição. Clientes e bancos antigos têm
+fallback temporário por `nick + token`, documentado em `docs/seguranca.md`.
+
 Hoje a `anon` key **não sai do servidor**: existia um `GET /api/config` que a entregava
 ao browser "pro client ligar OAuth/storage", mas nenhum cliente chegou a usar, e a rota
 foi removida (issue #41). Se OAuth entrar na mesa, ela volta — com rate limit.
 
 **O ranking está desligado hoje** (`RANKING_ON` em `src/lib/site.ts`) e foi trocado por
-telemetria anônima. É flag, não remoção — detalhes em [Estado medido](./estado.md).
+telemetria anônima. É flag, não remoção — detalhes em [Estado atual](./estado.md).
 
 :::note Nada disso é obrigatório pra rodar o jogo
 Sem as variáveis do Supabase o site sobe igual: as rotas de ranking respondem
@@ -243,8 +247,8 @@ de trabalhar. Elas vivem em `.agents/skills/`, e `.claude/skills/` são symlinks
 | Contagem | Quanto | O que significa |
 |---|---:|---|
 | Declaradas no `skills-lock.json` | 39 | com `source`, `skillPath` e `computedHash` — skill de terceiro que mudar de conteúdo é detectável |
-| Versionadas (chegam em quem clona) | 9 | `git ls-files .agents/skills` |
-| …dessas, com `SKILL.md` no git | 9 | é o que um clone limpo consegue ler |
+| Versionadas (chegam em quem clona) | 10 | `git ls-files .agents/skills` |
+| …dessas, com `SKILL.md` no git | 10 | é o que um clone limpo consegue ler |
 
 **As contagens divergem de propósito, e a diferença é o fato:** a maioria das skills é de terceiro, fixada por hash no lock e baixada sob demanda. Quem clonar o repositório recebe o lock inteiro e só uma parte do conteúdo. Publicar só uma das contagens esconderia exatamente o que o contribuidor precisa saber.
 

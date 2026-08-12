@@ -1,5 +1,5 @@
 // Charset permitido no nick. Espelho EXATO do check `players_nick_charset` no
-// banco (a fonte da verdade) — ver docs/seguranca.md §8. Existe aqui pra
+// banco (a fonte da verdade) - ver docs/seguranca.md §8. Existe aqui pra
 // devolver erro legível em vez de deixar o Postgres responder um 409 genérico
 // de constraint violada.
 //
@@ -17,7 +17,7 @@
 //               justamente porque isso passava.
 //
 // CUSTO CONHECIDO: rejeita acento. `José` não registra, `Jose` sim. Para um
-// público brasileiro isso é decisão de produto, não de segurança — a issue #40
+// público brasileiro isso é decisão de produto, não de segurança - a issue #40
 // propôs este charset e é o que está implementado. Aceitar `À-ÿ` é trocar a
 // classe aqui e no check do banco, juntos, sempre.
 export const NICK_RE = /^[A-Za-z0-9_.\-]{2,14}$/;

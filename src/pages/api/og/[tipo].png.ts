@@ -1,15 +1,15 @@
-// GET /api/og/<tipo>.png — og:image própria de /mapas, /armas e /personagens.
+// GET /api/og/<tipo>.png - og:image própria de /mapas, /armas e /personagens.
 //
 // POR QUE: as três caíam na og-image.png genérica. Um card que diz "5 ARENAS" e
 // lista os nomes converte muito mais que a mesma arte pra todo o site.
 //
 // REAPROVEITA A MÁQUINA DA BADGE, sem dependência nova: resvg-wasm + a DejaVu
 // embutida em src/lib/font-data.ts. O SVG em si mora em src/lib/og-card.ts, pra
-// ser renderizável em node puro — ver o comentário de lá e tools/eval/og-check.mjs.
+// ser renderizável em node puro - ver o comentário de lá e tools/eval/og-check.mjs.
 //
 // O FALLBACK DO WASM É O MESMO DA BADGE, e existe pelo mesmo motivo: se
 // /wasm/resvg.wasm não estiver publicado, lê o binário do node_modules. Uma
-// og:image que devolve 500 não aparece como erro pra ninguém — o card só fica
+// og:image que devolve 500 não aparece como erro pra ninguém - o card só fica
 // sem imagem, e isso passa meses sem ser notado.
 import type { APIRoute } from 'astro';
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
@@ -25,9 +25,9 @@ function init(req: Request) {
     try {
       const r = await fetch(new URL('/wasm/resvg.wasm', req.url));
       if (r.ok) return await initWasm(await r.arrayBuffer());
-      console.warn('[og] /wasm/resvg.wasm devolveu', r.status, '— usando o node_modules');
+      console.warn('[og] /wasm/resvg.wasm devolveu', r.status, ' - usando o node_modules');
     } catch (e) {
-      console.warn('[og] fetch do wasm falhou — usando o node_modules:', e);
+      console.warn('[og] fetch do wasm falhou - usando o node_modules:', e);
     }
     const { readFileSync } = await import('node:fs');
     const { createRequire } = await import('node:module');

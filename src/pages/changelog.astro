@@ -1,10 +1,10 @@
 ---
-// /changelog — o CHANGELOG.md renderizado como página.
+// /changelog - o CHANGELOG.md renderizado como página.
 //
 // O arquivo é lido do disco em BUILD TIME (a página é estática), então nenhuma
 // dependência de markdown entra no bundle e nenhum request extra acontece em
 // produção. O renderizador abaixo cobre exatamente o subconjunto de Markdown que
-// o CHANGELOG usa hoje — headings, listas, negrito, itálico, código e link —
+// o CHANGELOG usa hoje - headings, listas, negrito, itálico, código e link -
 // e ESCAPA HTML antes de qualquer coisa, então conteúdo do arquivo nunca vira
 // marcação executável. Não é um parser de Markdown de propósito: instalar `marked`
 // exigiria rede, e o ganho seria zero pro que este arquivo precisa.
@@ -16,8 +16,8 @@ import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
    O que quebrava: no build, esta página vira um chunk em
    `dist/server/.prerender/chunks/changelog_*.mjs`. `import.meta.url` passa a apontar
-   para ALI, então a URL relativa resolvia para `dist/server/CHANGELOG.md` — que não
-   existe — e o prerender morria com ENOENT, derrubando o build inteiro:
+   para ALI, então a URL relativa resolvia para `dist/server/CHANGELOG.md` - que não
+   existe - e o prerender morria com ENOENT, derrubando o build inteiro:
 
      [ERROR] ENOENT: no such file or directory, open '.../dist/server/CHANGELOG.md'
 
@@ -44,7 +44,7 @@ const versoes: Versao[] = [];
 let atual: { versao: string; data: string; linhas: string[] } | null = null;
 
 for (const raw of md.split('\n')) {
-  const h2 = raw.match(/^##\s+\[?([^\]\s]+)\]?\s*(?:—|-)?\s*(.*)$/);
+  const h2 = raw.match(/^##\s+\[?([^\]\s]+)\]?\s*(?:\u2014|-)?\s*(.*)$/);
   if (h2) {
     if (atual) versoes.push({ versao: atual.versao, data: atual.data, html: render(atual.linhas) });
     atual = { versao: h2[1], data: h2[2].trim(), linhas: [] };
@@ -100,7 +100,7 @@ const jsonld = [
 ];
 ---
 <Layout
-  title={`Changelog — o que mudou (v${atualVer}) | ${BRAND_FULL}`}
+  title={`Changelog - o que mudou (v${atualVer}) | ${BRAND_FULL}`}
   description={`Histórico de versões do ${BRAND_FULL}: novas facções, mapas, armas, ajustes de viewmodel, bots e correções, versão por versão.`}
   jsonld={jsonld}
   h1="Changelog"
@@ -109,12 +109,12 @@ const jsonld = [
   heroPos="46%">
   <Fragment slot="sub">
     Tudo que mudou, versão por versão. A versão em produção é a <strong>v{atualVer}</strong>.
-    O arquivo completo vive em <code>CHANGELOG.md</code> no repositório — esta página é ele,
+    O arquivo completo vive em <code>CHANGELOG.md</code> no repositório - esta página é ele,
     renderizado.
   </Fragment>
 
   {/* Campo de busca: o conteúdo dentro de um <details> FECHADO é invisível pro
-      Ctrl+F do navegador — é o problema que a issue #44 aponta no bônus. O filtro
+      Ctrl+F do navegador - é o problema que a issue #44 aponta no bônus. O filtro
       abaixo procura no texto de TODAS as versões, abre as que casam e esconde as
       que não. Sem JS ele não aparece (o <input> é inserido pelo script), então
       nada se perde. */}

@@ -1,23 +1,6 @@
-# ⚠️ CAMINHO MANUAL / FALLBACK desde 08/08. Os segredos VERCEL_TOKEN / VERCEL_ORG_ID /
-#    VERCEL_PROJECT_ID JÁ ESTÃO cadastrados no repositório (07/08), então este workflow
-#    FUNCIONA via dispatch: `gh workflow run deploy-prod.yml -f tag=vX`.
-#    Mas o caminho vigente de publicação é outro, por decisão do dono (08/08):
-#      · produção publica no MERGE (auto-deploy da Vercel na `main`, vercel.json ligado);
-#      · bump + tag + GitHub Release saem automáticos a cada push na main (release.yml).
-#    Este arquivo fica de pé para o dia em que o auto-deploy for desligado de novo
-#    (aí é `main: false` no vercel.json + este workflow como porta de produção).
-#
-# Histórico (06-07/08): produção SÓ por release foi tentada; o auto-deploy da main chegou
-# a ficar desligado. O caminho `tag -> job release do ci.yml -> Release publicado ->
-# este workflow` NUNCA funcionou, e a v2.0.0-alpha.32 provou: o CI da tag passou, o
-# Release saiu, e este workflow não disparou. A causa é regra do GitHub, não bug do
-# arquivo — evento gerado com o `GITHUB_TOKEN` **não cria run de workflow**, é a
-# proteção contra recursão. (O release.yml contorna isso criando o Release no mesmo
-# workflow que empurra a tag.)
+# Fallback manual: produção normal publica a main pela integração Git da Vercel.
 name: deploy-prod
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -25,21 +8,24 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
 jobs:
   prod:
-    # No dispatch não existe `github.event.release`; a tag vem do input.
-    if: >-
-      startsWith(github.event.release.tag_name, 'v') ||
-      startsWith(github.event.inputs.tag, 'v')
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.event.release.tag_name || github.event.inputs.tag }}
-      - uses: actions/setup-node@v4
+          ref: refs/tags/${{ github.event.inputs.tag }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22 }
-      - run: npm i -g vercel@latest
+      - run: npm i -g vercel@58.9.0
       - name: build e deploy de produção
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}

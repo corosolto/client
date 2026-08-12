@@ -1,7 +1,7 @@
 // Boot, menus, settings, logo, main loop.
 import * as THREE from 'three';
 import { initTextures } from './textures.js';
-import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
+import { CHARACTERS, buildCharacter, charWeapon, setCharacterRendererCapabilities } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
@@ -19,8 +19,15 @@ import { FACTIONS, factionName } from './factions.js';
 const SETTINGS_KEY = 'awpbr_settings';
 const settings = Object.assign({ sens: 1, vol: 0.7, quality: 'med', speech: true, map: DEFAULT_MAP, wpnMode: 'all', bots: 4, difficulty: 'normal' },
   JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'));
-const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+let preferredQuality = null;
+const saveSettings = () => localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+  ...settings,
+  quality: preferredQuality ?? settings.quality,
+}));
 const NICK_KEY = 'awpbr_nick';
+// A coleta de jogadas exige consentimento explícito e persistente.
+const TRAIN_CONSENT_KEY = 'csbr_training_consent';
+const trainingEnabled = () => { try { return localStorage.getItem(TRAIN_CONSENT_KEY) === '1'; } catch { return false; } };
 const SOCIAL_KEY = 'awpbr_social';
 const STATS_KEY = 'awpbr_stats';   // declarado no bloco de storage: syncPlayState→renderPlayerPlate→loadStats roda ANTES da definição antiga (TDZ)
 
@@ -30,23 +37,20 @@ const STATS_KEY = 'awpbr_stats';   // declarado no bloco de storage: syncPlaySta
 import { applyNoPostTone } from './bloom.js';
 import { criaRenderer, avisaSemWebgl } from './glcontext.js';
 const container = document.getElementById('game-container');
-/* SEM WEBGL O MÓDULO NÃO PODE MORRER AQUI — 07/08, relatado por jogador em Arch Linux
-   com Firefox e Brave (Mesa/llvmpipe, `BindToCurrentSequence failed`). A construção é
-   TOPO DE MÓDULO: a exceção matava a avaliação inteira de `main.js` e o menu ficava
-   inerte — a MESMA classe do BUG-34, causa diferente. E o pedido era o mais exigente
-   possível (`high-performance` + MSAA), que em Linux híbrido é justamente o que falha.
-   A escada de degradação e o porquê de cada degrau moram no `glcontext.js`. */
-const renderer = criaRenderer();
+const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
+const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
 if (!renderer) {
   avisaSemWebgl('WebGL indisponível neste navegador/driver');
-  /* A exceção continua: sem renderer não há o que ligar, e seguir daqui só produziria
-     uma cascata de `null.setSize is not a function` que esconde a causa real. O que
-     mudou é que o jogador já está lendo uma explicação — e o `__semWebgl` cala o
-     overlay vermelho, que aqui só empilharia stack por cima da mensagem. */
   throw new Error('sem_webgl');
 }
+const COMPAT_MODE = SAFE_MODE || renderer.__csWebgl?.degraded === true;
+if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'; }
+const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
+let staticPreviews = COMPAT_MODE && !ASSET_CHECK;
+setCharacterRendererCapabilities(renderer);
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
+renderer.setPixelRatio(COMPAT_MODE ? 0.75 : 1);
+renderer.shadowMap.enabled = !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
 // tonemap quando o alvo é null) e quem faz a curva é o AgX do bloom.js — deixamos
@@ -56,13 +60,24 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 container.appendChild(renderer.domElement);
+let contextLossTimer = null;
+renderer.domElement.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  clearTimeout(contextLossTimer);
+  contextLossTimer = setTimeout(() => window.__gameLaunch?.fail(new Error('contexto WebGL perdido'), 'webgl-context-lost'), 1500);
+});
+renderer.domElement.addEventListener('webglcontextrestored', () => {
+  clearTimeout(contextLossTimer);
+  contextLossTimer = null;
+  console.warn('[webgl] contexto restaurado');
+});
 // bloom leve (FASE 4) — ligado por padrão, pulado na qualidade 'low' ou com ?bloom=0
 // (escape hatch p/ GPUs/extensões que derrubam a aba — suspeita do "jogo fechar sozinho")
 {
   const _qp = new URLSearchParams(location.search);
-  const _bloomOn = settings.quality !== 'low' && _qp.get('bloom') !== '0';
+  const _bloomOn = !COMPAT_MODE && settings.quality !== 'low' && _qp.get('bloom') !== '0';
   // pipeline estilizado (cel+contorno) atrás de ?style=1 — prova de conceito reversível.
-  if (_qp.get('style') === '1') enableStylize(renderer, { bloom: _bloomOn, quality: settings.quality });
+  if (!COMPAT_MODE && _qp.get('style') === '1') enableStylize(renderer, { bloom: _bloomOn, quality: settings.quality });
   else if (_bloomOn) {
     enableLightBloom(renderer, { quality: settings.quality });
     if (_qp.get('post') !== 'output') renderer.toneMapping = THREE.NoToneMapping;   // AgX manda
@@ -222,12 +237,9 @@ const $ = id => document.getElementById(id);
 /* Wallpapers rotativos (wall-1..9): 1 por tela no fluxo home→setup→lado→personagem, sem
    repetir; o offset rotaciona a cada acesso (localStorage) pra variar entre visitas.
 
-   ESTAS LISTAS SÃO HARDCODED E JÁ ENGOLIRAM ARTE NOVA EM SILÊNCIO: o dono jogou wall-9.png e
-   loading-6.png na pasta em 04/08 e nenhum dos dois aparecia, porque o array parava em 8 e em
-   5 (mesmo defeito de MENU_TRACKS abaixo, que ignora a 27ª faixa). Página estática não lista
-   diretório pelo browser, então o conserto de verdade é um manifesto GERADO em build
-   (`tools/` → `public/img/walls.json`) e lido daqui com fallback. Ver KNOWN-BUGS.md BUG-08.
-   Enquanto isso: ARQUIVO NOVO NA PASTA = ENTRADA NOVA AQUI.
+   Estes arrays são fallback do primeiro quadro. A fonte de verdade é
+   public/img/walls.json, gerado por `npm run media` a partir do disco. O manifesto
+   recalcula a rotação quando chega; falha de rede mantém este fallback.
 
    Servidos em .webp desde 07/08: os PNG de 2–2,6 MB viraram ~250 KB (ffmpeg libwebp q85,
    comparado lado a lado antes da troca — texto do cartaz e grão idênticos). Os .png ficam
@@ -235,10 +247,15 @@ const $ = id => document.getElementById(id);
 const WALLS = ['/img/wall-1.webp', '/img/wall-2.webp', '/img/wall-3.webp', '/img/wall-4.webp',
   '/img/wall-5.webp', '/img/wall-6.webp', '/img/wall-7.webp', '/img/wall-8.webp',
   '/img/wall-9.webp'];
-let _wallK = 0;
-try { _wallK = (parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1) % WALLS.length; localStorage.setItem('cs_wallK', String(_wallK)); } catch {}
+let _wallVisit = 0;
+try {
+  _wallVisit = parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1;
+  if (!Number.isFinite(_wallVisit)) _wallVisit = 0;
+  localStorage.setItem('cs_wallK', String(_wallVisit));
+} catch {}
+let _wallK = _wallVisit % WALLS.length;
 const wallUrl = (i) => `url('${WALLS[(_wallK + i) % WALLS.length]}')`;
-const HOME_WALL = wallUrl(0), SETUP_WALL = wallUrl(1), TEAM_WALL = wallUrl(2), CHAR_WALL = wallUrl(3);
+let HOME_WALL = wallUrl(0), SETUP_WALL = wallUrl(1), TEAM_WALL = wallUrl(2), CHAR_WALL = wallUrl(3);
 // loading-1..6: wallpaper rotativo SÓ da splash inicial (a msg "clique pra começar" fica por cima).
 // O overlay de carregamento de MAPA usa os wall-* (mesmo fluxo rotativo) — ver showLoading/_loadWallI.
 // Hardcoded pelo mesmo motivo (e com o mesmo defeito) do WALLS acima — ver KNOWN-BUGS.md BUG-08.
@@ -246,6 +263,20 @@ const LOADING_WALLS = ['/img/loading-1.webp', '/img/loading-2.webp', '/img/loadi
   '/img/loading-4.webp', '/img/loading-5.webp', '/img/loading-6.webp'];
 let _loadWallI = 4;
 { const bs = document.getElementById('boot-splash'); if (bs) bs.style.backgroundImage = `url('${LOADING_WALLS[_wallK % LOADING_WALLS.length]}')`; }
+fetch(`/img/walls.json?v=${VERSION}`)
+  .then((response) => (response.ok ? response.json() : null))
+  .then((manifest) => {
+    if (!manifest) return;
+    if (Array.isArray(manifest.walls) && manifest.walls.length) WALLS.splice(0, WALLS.length, ...manifest.walls);
+    if (Array.isArray(manifest.loading) && manifest.loading.length) LOADING_WALLS.splice(0, LOADING_WALLS.length, ...manifest.loading);
+    _wallK = _wallVisit % WALLS.length;
+    HOME_WALL = wallUrl(0); SETUP_WALL = wallUrl(1); TEAM_WALL = wallUrl(2); CHAR_WALL = wallUrl(3);
+    applyHomeWall();
+    const team = $('team-select'); if (team) team.style.setProperty('--wall', TEAM_WALL);
+    const character = $('char-select'); if (character) character.style.setProperty('--wall', CHAR_WALL);
+    const splash = $('boot-splash'); if (splash) splash.style.backgroundImage = `url('${LOADING_WALLS[_wallK % LOADING_WALLS.length]}')`;
+  })
+  .catch(() => {});
 function applyHomeWall() { const w = document.querySelector('#main-menu .cs-wallpaper'); if (w) w.style.backgroundImage = HOME_WALL; }
 function applySetupWall() { const w = document.querySelector('#main-menu .cs-wallpaper'); if (w) w.style.backgroundImage = SETUP_WALL; }
 applyHomeWall();
@@ -316,6 +347,7 @@ function dismissSplash() {
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
   sp.classList.add('gone');
+  window.__gameLaunch?.ready('entrada');
   setTimeout(() => sp.remove(), 480);
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
@@ -333,10 +365,19 @@ let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause,
 
 /* ---------------- 3D character preview ---------------- */
 let pv = null, pvDrag = null;
+const portraitUrl = (def) => `/img/chars/${def.id}.webp?v=${VERSION}`;
+function showStaticPreview(def) {
+  const canvas = $('char-preview'), image = $('char-preview-static'), hints = document.querySelector('.pv-hints');
+  if (canvas) canvas.classList.add('hidden');
+  if (image) { image.src = portraitUrl(def); image.alt = def.name; image.classList.remove('hidden'); }
+  if (hints) hints.classList.add('hidden');
+}
 function ensurePreview() {
+  if (staticPreviews) return null;
   if (pv) return pv;
   const canvas = $('char-preview');
-  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const r = criaRenderer({ canvas, alpha: true }, { optional: true });
+  if (!r) { staticPreviews = true; return null; }
   // 640² de backing pro preview GIGANTE da tela nova (era 400² pra 380 CSS px).
   // O downscale continua dando borda limpa em qualquer tamanho de exibição.
   r.setSize(640, 640, false);
@@ -396,8 +437,9 @@ function thumbCam() {
   _thumbCam = c;
   return c;
 }
-function snapThumb(obj) {
+function snapThumb(obj, fallbackUrl) {
   const p = ensurePreview();
+  if (!p) return fallbackUrl;
   const prevVis = p.model ? p.model.visible : false;
   if (p.model) p.model.visible = false;
   if (p.disc) p.disc.visible = false;   // o disco entra no quadro do retrato e só rouba contraste
@@ -417,7 +459,9 @@ function snapThumb(obj) {
 // CHAR_WEAPON/charWeapon live in characters.js, shared with game.js (initial loadout).
 let pvToken = 0;
 function pvSetChar(def) {
+  if (staticPreviews) { showStaticPreview(def); return; }
   const p = ensurePreview();
+  if (!p) { showStaticPreview(def); return; }
   // Swap to the real rigged GLB (idle) once loaded, if this is still the selection.
   const my = ++pvToken;
   const showBox = () => {   // procedural fallback (only when there's no GLB at all)
@@ -427,6 +471,8 @@ function pvSetChar(def) {
     p.model.rotation.y = 0.4;
     p.scene.add(p.model);
   };
+  // ?nav=1 mantém o preview procedural; web-assets.spec.js cobre o GLB real.
+  if (navOnly) { showBox(); return; }
   if (GLB_CHARS.has(def.id)) {
     // Keep the PREVIOUS model visible while the real GLB streams in — never flash the
     // blocky placeholder for a character that has a real model (the pop-in bug).
@@ -439,6 +485,8 @@ function pvSetChar(def) {
       const m = hasModel(def.id) ? buildCharacterModel(def, { weaponId: charWeapon(def.id), preview: true }) : null;
       if (!m) { showBox(); return; }
       if (p.model) p.scene.remove(p.model);
+      // Somente o GLB real marca o canvas para web-assets.spec.js.
+      $('char-preview').dataset.glb = '1';
       m.group.rotation.y = 0.4;
       p.model = m.group; p.mixer = m.mixer; p.ctrl = m.ctrl;
       p.scene.add(m.group);
@@ -448,12 +496,13 @@ function pvSetChar(def) {
   }
 }
 function pvThumb(def) {
+  if (staticPreviews) return portraitUrl(def);
   // Box-only thumbnail (tiny icon) — never triggers a GLB load.
   // Passa pelo MESMO snapThumb do GLB: antes esta versão ainda destruía o preview
   // grande (p.model = null) e gravava com outro enquadramento — duas miniaturas com
   // duas aparências na mesma lista é exatamente o tipo de inconsistência que o dono vê.
   const box = buildCharacter(def).group; box.rotation.y = 0.55;
-  return snapThumb(box);
+  return snapThumb(box, portraitUrl(def));
 }
 
 /* ---------------- game lifecycle ---------------- */
@@ -478,10 +527,27 @@ let submitted = true;   // stats da partida atual já enviados?
    sendBeacon porque isto costuma sair junto com o fim da partida ou com a aba
    fechando — `fetch` normal é cancelado no unload, sendBeacon não. */
 const ANON_KEY = 'cs_anon';
+const SESSION_KEY = 'cs_session';
+function clientUuid() {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === 'function') return c.randomUUID();
+  if (typeof c?.getRandomValues !== 'function') throw new Error('Web Crypto indisponível');
+  const bytes = new Uint8Array(16);
+  c.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(value => value.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 function getAnonId() {
   let a = localStorage.getItem(ANON_KEY);
-  if (!a) { a = crypto.randomUUID(); localStorage.setItem(ANON_KEY, a); }
+  if (!a) { a = clientUuid(); localStorage.setItem(ANON_KEY, a); }
   return a;
+}
+function getSessionId() {
+  let s = sessionStorage.getItem(SESSION_KEY);
+  if (!s) { s = clientUuid(); sessionStorage.setItem(SESSION_KEY, s); }
+  return s;
 }
 let telemetrySent = true;
 function sendTelemetry() {
@@ -501,7 +567,7 @@ function sendTelemetry() {
     if (!navigator.sendBeacon('/api/telemetry', blob)) api('/api/telemetry', payload);
   } catch { try { api('/api/telemetry', payload); } catch {} }
 }
-let registeredNick = ''; // nick usado no registro da sessão (token está atrelado a ele)
+let registeredNick = ''; // nick canônico devolvido pelo registro do UID
 let rankingBloqueado = ''; // erro do register da sessão (nick de outro dono, charset…) — vira aviso claro no fim da partida
 let heartbeatOff = false;
 
@@ -557,6 +623,118 @@ function _pingPresenca() {
     if (!navigator.sendBeacon('/api/presence', blob)) api('/api/presence', JSON.parse(payload));
   } catch { /* presença nunca atrapalha o jogador */ }
 }
+
+/* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
+ * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
+ * evento) e passam a morar no NOSSO Postgres, lidos pelo painel admin. Mesma regra das
+ * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
+ * Ver supabase/migrations/016-019 e /api/{match,funnel,perf,acquisition}. */
+// FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
+function _funnel(step) {
+  if (testMode) return;
+  try {
+    navigator.sendBeacon('/api/funnel', new Blob([
+      JSON.stringify({ step, sessionId: getSessionId() }),
+    ], { type: 'application/json' }));
+  } catch { /* fail-silent */ }
+}
+// AQUISIÇÃO (019): 1x por navegador. referrer vira host (URL inteira pode carregar query
+// sensível); UTM e ?ref= lidos da URL de entrada. first-touch-wins no servidor.
+let _acqSent = false;
+async function _sendAcquisition() {
+  if (testMode || _acqSent) return;
+  try { if (localStorage.getItem('cs_acq')) { _acqSent = true; return; } } catch {}
+  const u = new URLSearchParams(location.search);
+  const payload = {
+    anonId: getAnonId(),
+    referrer: document.referrer || null,
+    utmSource: u.get('utm_source'), utmMedium: u.get('utm_medium'), utmCampaign: u.get('utm_campaign'),
+    ref: u.get('ref'), landing: location.pathname,
+  };
+  try {
+    /* fetch + keepalive, e NÃO sendBeacon: aqui a RESPOSTA importa. sendBeacon
+       não devolve resposta — marcar cs_acq sem saber se o servidor gravou
+       aposentava a 1ª aquisição para sempre num 503/stored:false (P1 da review,
+       PR #92). keepalive mantém a entrega mesmo se a aba fechar no meio. */
+    const resp = await fetch('/api/acquisition', {
+      method: 'POST', keepalive: true,
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const dados = await resp.json().catch(() => null);
+    if (!resp.ok || !dados || dados.stored !== true) return; // próxima visita retenta
+    try { localStorage.setItem('cs_acq', '1'); } catch {}
+    _acqSent = true;
+  } catch { /* fail-silent */ }
+}
+// PERF (018): 1x por sessão, depois do boot. boot_ms = performance.now() no fim do módulo;
+// fps = contagem de frames em 1s de rAF; dispositivo = tier aproximado (nada fino pra não
+// virar fingerprint). Renderer GPU sai de um canvas descartável (não do renderer do jogo).
+let _perfSent = false;
+function _sendPerf() {
+  if (testMode || _perfSent) return;
+  _perfSent = true;
+  const bootMs = Math.round(performance.now());
+  let frames = 0; const t0 = performance.now();
+  const tick = () => { frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
+  requestAnimationFrame(tick);
+}
+function _perfFinish(bootMs, frames) {
+  let rendererStr = null;
+  try {
+    const gl = renderer.getContext();
+    const dbg = gl && gl.getExtension('WEBGL_debug_renderer_info');
+    rendererStr = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : null;
+  } catch { /* GPU info é melhor-esforço */ }
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const payload = {
+    anonId: getAnonId(), version: VERSION,
+    fps: frames, bootMs,
+    cores: navigator.hardwareConcurrency || null,
+    memoryGb: navigator.deviceMemory || null,
+    renderer: rendererStr,
+    dpr: window.devicePixelRatio || null,
+    vw: window.innerWidth, vh: window.innerHeight,
+    connection: conn?.effectiveType || null,
+    quality: settings.quality || null,
+  };
+  try { navigator.sendBeacon('/api/perf', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+}
+// MATCH EVENT (016): evento RICO por partida (anônimo), carrega arma/personagem/placar/
+// resultado. Complementa o submit-match (só registrado) e a telemetria agregada (012).
+// _wperf vem do game.js (abates por arma, zerado por partida no construtor).
+let _matchEventSent = false;
+let _matchEventId = null;
+function sendMatchEvent(result) {
+  if (_matchEventSent || testMode || !game) return;
+  _matchEventSent = true;
+  game._flushTraining?.();   // BOTBRAIN: envia o resto dos frames ao sair/abandonar (idempotente)
+  const g = game, p = g.player, wk = g._wperf || {};
+  const top = Object.entries(wk).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+  const payload = {
+    anonId: getAnonId(),
+    sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
+    character: currentChar, team: g.playerTeam,
+    faction: g.playerFaction || currentFaction,
+    result: result || 'quit',
+    kills: p.kills || 0, deaths: p.deaths || 0, headshots: p.headshots || 0,
+    bestStreak: g.mk?.best || 0,
+    rounds: (g.roundsWon?.E || 0) + (g.roundsWon?.B || 0),
+    seconds: Math.round(g.time || 0),
+    topWeapon: top, weaponKills: wk, botCount: g.bots?.length || 0,
+    nick: registeredNick || null,
+  };
+  try { navigator.sendBeacon('/api/match', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+}
+function sendTrainingFrames(blob) {
+  if (testMode || !blob || !registeredNick || !trainingEnabled()) return;
+  try {
+    api('/api/train-frames', {
+      uid: getAnonId(), token: getToken(), ...blob,
+    });
+  } catch { /* coleta nunca interrompe a partida */ }
+}
 /* AS CHAMADAS MORAM DEPOIS DO `const testMode` — e isto não é estilo, é o que fazia o jogo
    não abrir (07/08, medido em produção). `_pingPresenca` lê `testMode` na primeira linha;
    `const` não é hoisted como `var`: chamar a função ANTES da linha 498 lança
@@ -579,6 +757,8 @@ _refreshOnline();
 setInterval(_refreshOnline, 60000);
 const params = new URLSearchParams(location.search);
 const testMode = params.get('debug') === '1';
+// ?nav=1 isola transições de tela; web-assets.spec.js cobre preload e render 3D.
+const navOnly = params.get('nav') === '1';
 
 /* Presença: as chamadas descem para CÁ, depois de `testMode` existir (ver o comentário na
    linha em que elas moravam). O intervalo e o comportamento são os mesmos — o que muda é
@@ -586,7 +766,34 @@ const testMode = params.get('debug') === '1';
 _pingPresenca();
 setInterval(_pingPresenca, 45_000);
 
+/* Telemetria nova (feat/telemetria) — dispara UMA vez na carga, depois de `testMode`
+   existir (mesma lição do BUG-34: estas leem testMode na 1ª linha). */
+_sendAcquisition();   // aquisição 1x por navegador (019)
+_funnel('land');      // funil: chegou (017)
+_sendPerf();          // perf de cliente 1x por sessão (018)
+// funil 'menu': 1ª interação real (teclado ou mouse) — separa "olhou e foi" de "usou".
+let _menuFuneled = false;
+const _menuOnce = () => { if (_menuFuneled) return; _menuFuneled = true; _funnel('menu'); removeEventListener('pointerdown', _menuOnce); removeEventListener('keydown', _menuOnce); };
+addEventListener('pointerdown', _menuOnce);
+addEventListener('keydown', _menuOnce);
+
 async function startGame(team, charId, enemyFaction) {
+  window.__gameLaunch?.begin('partida', 60000);
+  try {
+    await _startGame(team, charId, enemyFaction);
+    window.__gameLaunch?.ready('partida');
+  } catch (e) {
+    try { hideLoading(); } catch {}
+    try { if (game) game.dispose(); } catch {}
+    game = null; window.__game = null;
+    try { if (document.pointerLockElement) document.exitPointerLock(); } catch {}
+    try { if (document.fullscreenElement) document.exitFullscreen()?.catch?.(() => {}); } catch {}
+    try { show('main-menu'); } catch {}
+    console.error('falha ao abrir a partida', e);
+    window.__gameLaunch?.fail(e, 'main.js:startGame');
+  }
+}
+async function _startGame(team, charId, enemyFaction) {
   if (isMobile && !testMode) { show('mobile-warning'); return; }
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
   // default = oposto político. Mesma facção dos dois lados = mirror (inimigo roxo no HUD).
@@ -625,11 +832,13 @@ async function startGame(team, charId, enemyFaction) {
   // sorteia os carros da Havan desta partida ANTES do preload (seleção = props do mapa)
   setHavanCarSeed((Math.random() * 1e9) | 0);
   try {
-    await Promise.all([
-      preloadCharacterAssets([...GLB_CHARS]),
-      preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
-      preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
-    ]);
+    if (!navOnly) {
+      await Promise.all([
+        preloadCharacterAssets([...GLB_CHARS]),
+        preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
+        preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
+      ]);
+    }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
@@ -638,10 +847,15 @@ async function startGame(team, charId, enemyFaction) {
     nickname: $('nick-input').value, testMode,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     onMatchEnd: recordMatchStats,
+    recordTraining: trainingEnabled(),
+    onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
+  _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
+  _matchEventId = clientUuid(); // idempotência no banco se o beacon for repetido
+  _funnel('match_start');    // funil: começou a jogar (017)
   retryPending();
   armSwitchHook();
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
@@ -666,15 +880,22 @@ async function startGame(team, charId, enemyFaction) {
   const nick = $('nick-input').value.trim();
   registeredNick = nick; heartbeatOff = false; rankingBloqueado = '';
   if (nick && !testMode) {
-    /* O ERRO DO REGISTER IMPORTA (06/08, print do dono: "⚠ stats não enviados: token
-       inválido" na tela de vitória). Causa: cada preview da Vercel é um domínio novo,
-       com localStorage novo → token novo; o nick já existe no banco com o token VELHO,
-       o register falha em silêncio aqui, e TODA partida terminava no 403 críptico.
-       A resposta agora fica guardada e o aviso do fim da partida diz o porquê. */
     api('/api/register', {
       nick, token: getToken(),
+      uid: getAnonId(),
       socials: socials.filter(s => s.handle),
-    }).then((reg) => { if (reg && reg.error) rankingBloqueado = String(reg.error); });
+    }).then((reg) => {
+      if (!reg) return;
+      if (reg.error) { rankingBloqueado = String(reg.message || reg.error); return; }
+      if (typeof reg.nick === 'string' && reg.nick) {
+        registeredNick = reg.nick;
+        if (nickEl.value.trim() !== reg.nick) {
+          nickEl.value = reg.nick;
+          localStorage.setItem(NICK_KEY, reg.nick);
+          updateAvatarVisibility(); renderPlayerPlate();
+        }
+      }
+    });
   }
   /* `mode` faltava, e sem ele metade da pergunta não tem resposta: dá para saber QUE MAPA
      as pessoas escolhem, não SE escolhem captura ou rodadas. O `match_end` manda os quatro
@@ -700,10 +921,14 @@ function quitToMenu() {
      saída DELIBERADA pelo menu; a diferença entre ele e o `game_start` continua sendo a
      soma de "fechou a aba" com "travou". */
   try {
-    if (game) window.va?.('event', { name: 'match_abandon', data: {
-      map: game._mapId, mode: game.ctf ? 'ctf' : 'rounds',
-      character: game.playerCharId, seconds: Math.round(game.time || 0),
-    } });
+    if (game) {
+      window.va?.('event', { name: 'match_abandon', data: {
+        map: game._mapId, mode: game.ctf ? 'ctf' : 'rounds',
+        character: game.playerCharId, seconds: Math.round(game.time || 0),
+      } });
+      sendMatchEvent('quit');   // evento rico: abandonou pelo menu (feat/telemetria, 016)
+      _funnel('quit');           // funil: saiu deliberado (017)
+    }
   } catch {}
   switchMode = false;   // never carry an in-match team-switch into the menu
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
@@ -720,11 +945,11 @@ function quitToMenu() {
 /* ---------------- heartbeat (presença/mapa) ---------------- */
 setInterval(async () => {
   if (!game || !registeredNick || testMode || heartbeatOff) return;
-  const res = await api('/api/heartbeat', { nick: registeredNick, token: getToken() });
-  if (res && res.error) heartbeatOff = true;   // token inválido etc. — para de martelar
+  const res = await api('/api/heartbeat', { uid: getAnonId(), nick: registeredNick, token: getToken() });
+  if (res && res.error) heartbeatOff = true;
 }, 30_000);
 
-/* ---------------- avatar upload (sem login — validado por nick+token) ---------------- */
+/* ---------------- avatar upload (UID seleciona; token autentica) ---------------- */
 $('avatar-btn').onclick = () => $('avatar-file').click();
 $('avatar-file').onchange = async e => {
   const f = e.target.files[0];
@@ -738,7 +963,7 @@ $('avatar-file').onchange = async e => {
     const s = Math.min(bmp.width, bmp.height);
     x.drawImage(bmp, (bmp.width - s) / 2, (bmp.height - s) / 2, s, s, 0, 0, 128, 128);
     const dataUrl = c.toDataURL('image/png');
-    const res = await api('/api/avatar', { nick, token: getToken(), image: dataUrl });
+    const res = await api('/api/avatar', { uid: getAnonId(), nick, token: getToken(), image: dataUrl });
     $('avatar-note').textContent = res && res.ok ? 'foto atualizada! ✓' : 'falhou: ' + (res?.error || 'sem conexão');
   } catch { $('avatar-note').textContent = 'falhou — tente outra imagem'; }
   e.target.value = '';
@@ -903,6 +1128,7 @@ $('btn-jogar').onclick = () => {
     // nesta tela, então um shake num campo invisível não diria nada a ninguém)
     nickEl.placeholder = 'SEM NOME NÃO TEM CORO!';
     openProfileStep(true);
+    window.__gameLaunch?.ready('menu');
     nickEl.classList.add('invalid');
     setTimeout(() => nickEl.classList.remove('invalid'), 1500);
     return;   // sem nick, sem treta
@@ -910,6 +1136,7 @@ $('btn-jogar').onclick = () => {
   sfx.uiClick();
   setTeamStep('side');
   show('team-select');
+  window.__gameLaunch?.ready('menu');
   ensureTeamPreviews();   // thumbnails 3D dos times (async, cacheia no card)
 };
 $('btn-ranking').onclick = () => { sfx.uiClick(); showRanking(); };
@@ -1066,18 +1293,26 @@ function wpnLabel(id) {
 wpnDdList.innerHTML = WPN_MODES.map(m =>
   `<button class="dd-item" data-id="${m.id}" type="button">${WPN_ICONS[m.id]}<span>${tr(m.label)}</span></button>`).join('');
 wpnLabel(wpnSel.value);
-wpnDdBtn.onclick = e => { e.stopPropagation(); wpnDdList.classList.toggle('hidden'); wpnDdBtn.classList.toggle('open'); };
+wpnDdBtn.onclick = e => { e.stopPropagation(); botsDdList?.classList.add('hidden'); botsDdBtn?.classList.remove('open'); wpnDdList.classList.toggle('hidden'); wpnDdBtn.classList.toggle('open'); };
 document.addEventListener('click', () => { wpnDdList.classList.add('hidden'); wpnDdBtn.classList.remove('open'); });
 wpnDdList.querySelectorAll('.dd-item').forEach(b => b.onclick = () => {
   settings.wpnMode = b.dataset.id; saveSettings();
   wpnLabel(settings.wpnMode); setMapMeta(); sfx.uiClick();
 });
-// bots-per-side + difficulty selectors (custom match)
-const botsSel = $('bots-select');
-if (botsSel) {
-  [2, 3, 4, 5, 6, 7, 8].forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = `${n} vs ${n}`; botsSel.appendChild(o); });
-  botsSel.value = settings.bots || 4;
-  botsSel.onchange = () => { settings.bots = +botsSel.value; saveSettings(); setMapMeta(); sfx.uiClick(); };
+// bots-per-side: dropdown custom (mesma cara do de armas — o <select> nativo abria o
+// menu default do navegador, fora do estilo do resto do setup)
+const botsDdBtn = $('bots-dd-btn'), botsDdList = $('bots-dd-list'), botsDdLabel = $('bots-dd-label');
+if (botsDdBtn && botsDdList && botsDdLabel) {
+  const botsLabel = n => { botsDdLabel.innerHTML = `<span class="dd-cur"><span>${n} vs ${n}</span></span>`; };
+  botsDdList.innerHTML = [2, 3, 4, 5, 6, 7, 8].map(n =>
+    `<button class="dd-item" data-n="${n}" type="button"><span>${n} vs ${n}</span></button>`).join('');
+  botsLabel(settings.bots || 4);
+  botsDdBtn.onclick = e => { e.stopPropagation(); wpnDdList.classList.add('hidden'); wpnDdBtn.classList.remove('open'); botsDdList.classList.toggle('hidden'); botsDdBtn.classList.toggle('open'); };
+  document.addEventListener('click', () => { botsDdList.classList.add('hidden'); botsDdBtn.classList.remove('open'); });
+  botsDdList.querySelectorAll('.dd-item').forEach(b => b.onclick = () => {
+    settings.bots = +b.dataset.n; saveSettings();
+    botsLabel(settings.bots); setMapMeta(); sfx.uiClick();
+  });
 }
 const diffSel = $('diff-select');
 if (diffSel) {
@@ -1354,7 +1589,7 @@ renderSocials();
 const TOKEN_KEY = 'awpbr_token';
 function getToken() {
   let t = localStorage.getItem(TOKEN_KEY);
-  if (!t) { t = crypto.randomUUID(); localStorage.setItem(TOKEN_KEY, t); }
+  if (!t) { t = clientUuid(); localStorage.setItem(TOKEN_KEY, t); }
   return t;
 }
 async function api(path, body) {
@@ -1363,7 +1598,7 @@ async function api(path, body) {
       ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
       : undefined);
     const j = await r.json().catch(() => ({}));
-    return r.ok ? j : { error: j.error || `http_${r.status}` };
+    return r.ok ? j : { error: j.error || `http_${r.status}`, message: j.message };
   } catch { return null; }
 }
 function submitNote(msg) {
@@ -1376,13 +1611,9 @@ function submitNote(msg) {
     el.appendChild(d);
   }
 }
-/* Traduz o erro cru do RPC pra algo que o jogador entende e pode agir em cima.
-   "token inválido" = o nick já existe no banco com OUTRO token (outro navegador,
-   outra aba de preview da Vercel, localStorage limpo). Se o register da sessão já
-   tinha acusado (rankingBloqueado), essa é a explicação quase certa. */
 function traduErroSubmit(msg) {
-  if (/token|inválid|nick/i.test(msg) || rankingBloqueado)
-    return 'esse nick já está registrado em outro navegador — troca o nick no PERFIL pra gravar no ranking';
+  if (/identity|identidade|token|uid/i.test(msg) || rankingBloqueado)
+    return rankingBloqueado || 'não foi possível recuperar seu jogador; recarregue e tente de novo';
   return msg;
 }
 
@@ -1405,13 +1636,15 @@ function partialPayload() {
      dominação e fechar a aba manda `rounds: 1` com `seconds` de poucas dezenas. Sem o
      modo, o servidor aplicava o piso do ABATE (80 s/rodada) e recusava. */
   return {
-    nick, token: getToken(), won: false, kills: p.kills, deaths: p.deaths,
+    uid: getAnonId(), nick, token: getToken(), won: false, kills: p.kills, deaths: p.deaths,
     headshots: p.headshots || 0, bestStreak: g.mk.best || 0, rounds, team: g.playerTeam,
+    faction: g.playerFaction || currentFaction,
     seconds: Math.round(g.time), character: currentChar, mode: matchMode,
   };
 }
 addEventListener('beforeunload', (e) => {
   sendTelemetry();   // aba fechando no meio da partida ainda conta como tempo jogado
+  if (emPartida()) { sendMatchEvent('quit'); _funnel('quit'); }   // feat/telemetria
   const pl = partialPayload();
   if (pl) navigator.sendBeacon('/api/submit-match', new Blob([JSON.stringify(pl)], { type: 'application/json' }));
   /* SEGUNDA CAMADA CONTRA O CTRL+W (relato do Daniel Diniz: *"quando fica muito tempo com
@@ -1430,9 +1663,14 @@ addEventListener('beforeunload', (e) => {
 
 /* ---------------- fila de reenvio (rate limit do servidor) ---------------- */
 const PENDING_KEY = 'awpbr_pending_submit';
+function isSubmitCooldown(res) {
+  const error = typeof res?.error === 'string' ? res.error : '';
+  const message = typeof res?.message === 'string' ? res.message : '';
+  return error === 'submit_cooldown' || /aguarde/i.test(error) || /aguarde/i.test(message);
+}
 async function submitGlobal(pl) {
   const res = await api('/api/submit-match', pl);
-  if (res?.error && /aguarde/i.test(res.error)) {
+  if (isSubmitCooldown(res)) {
     localStorage.setItem(PENDING_KEY, JSON.stringify(pl));
     setTimeout(retryPending, 95_000);   // reenvia sozinho quando a janela abrir
   }
@@ -1443,7 +1681,7 @@ async function retryPending() {
   if (!raw) return;
   const res = await api('/api/submit-match', JSON.parse(raw));
   if (res && !res.error) localStorage.removeItem(PENDING_KEY);
-  else if (res?.error && /aguarde/i.test(res.error)) setTimeout(retryPending, 95_000);
+  else if (isSubmitCooldown(res)) setTimeout(retryPending, 95_000);
 }
 
 /* ---------------- local stats (espelhados pro ranking global) ----------------
@@ -1456,6 +1694,8 @@ async function recordMatchStats(s) {
   applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
+  sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
+  _funnel('match_end');                        // funil: terminou (017)
   const st = loadStats();
   st.matches++; if (s.won) st.wins++;
   st.kills += s.kills; st.deaths += s.deaths; st.headshots += s.headshots;
@@ -1467,13 +1707,13 @@ async function recordMatchStats(s) {
   const nick = registeredNick || (nickEl.value || '').trim();
   if (nick && !testMode) {
     const res = await submitGlobal({
-      nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
+      uid: getAnonId(), nick, token: getToken(), won: s.won, kills: s.kills, deaths: s.deaths,
       headshots: s.headshots, bestStreak: s.bestStreak,
-      rounds: s.roundsP + s.roundsB, team: s.team, seconds: s.seconds || 0,
+      rounds: s.roundsP + s.roundsB, team: s.team, faction: currentFaction, seconds: s.seconds || 0,
       character: s.character, mode: matchMode,
     });
     if (!res) submitNote('ranking global indisponível');
-    else if (res.error) submitNote(traduErroSubmit(res.error));
+    else if (res.error) submitNote(res.message || traduErroSubmit(res.error));
   }
   renderPlayerPlate();   // XP/nível do card do menu sobem junto com os stats
 }
@@ -1547,12 +1787,13 @@ async function renderGlobal(nick) {
 
 // GLB idle thumbnail (no weapon), rendered off the shared preview renderer.
 function glbThumb(def) {
+  if (staticPreviews) return portraitUrl(def);
   if (!hasModel(def.id)) return null;
   const m = buildCharacterModel(def, { weapon: false });
   if (!m) return null;
   m.group.rotation.y = 0.5;
   for (let i = 0; i < 42; i++) m.mixer.update(1 / 60); // settle into the idle pose
-  return snapThumb(m.group);
+  return snapThumb(m.group, portraitUrl(def));
 }
 /* ---------------- previews 3D dos times nos cards (pedido do dono: "uma imagem
    preview dos models, tipo um time") — renderiza 4 GLBs reais de cada facção no
@@ -1568,7 +1809,8 @@ function ensureTeamPreviews() {
     if (!chars.length) continue;
     box.innerHTML = chars.map(() => '<span class="tc-slot"></span>').join('');
     const slots = [...box.children];
-    preloadCharacterAssets(chars.map(c => c.id)).then(() => {
+    const ready = staticPreviews ? Promise.resolve() : preloadCharacterAssets(chars.map(c => c.id));
+    ready.then(() => {
       chars.forEach((c, i) => {
         const url = glbThumb(c);
         if (url && slots[i]) slots[i].innerHTML = `<img src="${url}" alt="${c.name}" title="${c.name}">`;
@@ -1593,10 +1835,9 @@ function pickTeam(faction) {
   for (const card of factionCards)
     card.setAttribute('aria-pressed', String(card.dataset.faction === faction));
   const chars = CHARACTERS.filter(c => c.team === faction);   // roster da facção escolhida
-  // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
-  // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
-  showLoading('CARREGANDO PERSONAGENS…');
-  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(() => {
+  // ?nav=1 pula o preload 3D do roster (lento) — thumbnails caem no fallback pvThumb, que
+  // nunca dispara GLB. A transição #char-select é o que o smoke de navegação quer provar.
+  const mountCharList = () => {
     hideLoading();
     const list = $('char-list');
     list.innerHTML = '';
@@ -1626,7 +1867,12 @@ function pickTeam(faction) {
     // seleciona DEPOIS de gerar todos os thumbs — senão o preview fica com o último
     if (firstRow) selectChar(chars[0], firstRow);
     show('char-select');
-  });
+  };
+  if (navOnly || staticPreviews) { mountCharList(); return; }
+  // LOADING REAL da seleção de personagem: os GLBs do roster entram ANTES da tela abrir —
+  // nada de thumbnails de caixa montando aos poucos (o "minecraft" que o dono viu)
+  showLoading('CARREGANDO PERSONAGENS…');
+  preloadCharacterAssets(chars.map(c => c.id)).catch(() => {}).then(mountCharList);
 }
 /* Ficha do personagem (tela de seleção): raridade + atributos derivados da arma inicial
    (charWeapon) e de um hash estável do id. É FLAVOR de apresentação no estilo CS2/Valorant —
@@ -1687,6 +1933,7 @@ function selectChar(c, row) {
 /* ---------------- settings wiring ---------------- */
 const sensEl = $('set-sens'), volEl = $('set-vol'), qualEl = $('set-quality');
 sensEl.value = settings.sens; volEl.value = settings.vol; qualEl.value = settings.quality;
+if (COMPAT_MODE) { qualEl.disabled = true; qualEl.title = 'Modo compatibilidade usa qualidade baixa nesta sessão'; }
 const updLabels = () => {
   $('set-sens-val').textContent = Number(settings.sens).toFixed(1);
   $('set-vol-val').textContent = Math.round(settings.vol * 100) + '%';
@@ -1718,6 +1965,15 @@ speechEl.onchange = () => {
   saveSettings();
   if (game?.el?.hudSpeech) game.el.hudSpeech.textContent = settings.speech ? '🔊' : '🔇';
 };
+// Consentimento da coleta persiste separado das preferências visuais.
+const trainEl = $('set-training');
+if (trainEl) {
+  trainEl.checked = trainingEnabled();
+  trainEl.onchange = () => {
+    try { localStorage.setItem(TRAIN_CONSENT_KEY, trainEl.checked ? '1' : '0'); } catch { /* paciência */ }
+    if (game) game._recordEnabled = trainEl.checked && !testMode && !!game._recorder;
+  };
+}
 updLabels();
 
 /* ---------------- logo ---------------- */
@@ -1841,6 +2097,8 @@ document.querySelector('.footnote').textContent =
   `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
 { const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
 show(isMobile && !testMode ? 'mobile-warning' : 'main-menu');
+window.__CS_MAIN_READY__ = true;
+window.__gameLaunch?.ready('boot');
 if (testMode && params.get('auto')) {
   const [team, char, enemyFaction] = params.get('auto').split(',');
   startGame(team || 'E', char || CHARACTERS[0].id, enemyFaction || undefined);

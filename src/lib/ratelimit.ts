@@ -8,7 +8,7 @@
 //   - logo, N requests paralelos = N orçamentos independentes, e uma pausa
 //     entre rajadas já basta pra cair numa instância zerada.
 // O único limite durável que o projeto tinha era o do RPC submit_match, e ele
-// só cobre o submit — /api/register, /api/heartbeat e /api/avatar ficavam nus.
+// só cobre o submit - /api/register, /api/heartbeat e /api/avatar ficavam nus.
 //
 // A ALTERNATIVA SEM INFRA NOVA é a que está aqui: um bucket contado numa tabela
 // do Postgres que o projeto JÁ tem. Custo de 1 upsert por chamada, em índice
@@ -17,7 +17,7 @@
 // FAIL-OPEN, DE PROPÓSITO: se o RPC não existir (banco ainda sem a migration
 // 011) ou o banco estiver fora, a função libera. Um rate limit que derruba o
 // registro do jogo inteiro quando o banco tosse é pior que o problema que
-// resolve — as validações de verdade (token, tetos, consistência física)
+// resolve - as validações de verdade (token, tetos, consistência física)
 // continuam no RPC submit_match e não dependem disto.
 import type { SupabaseClient } from '@supabase/supabase-js';
 

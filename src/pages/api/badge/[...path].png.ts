@@ -1,4 +1,4 @@
-// GET /api/badge/<id|nick>.png — badge com stats.
+// GET /api/badge/<id|nick>.png - badge com stats.
 // Render: resvg-wasm (binário único servido de /wasm/) + fonte DejaVu embutida.
 // Avatar: foto → unavatar(X) → personagem do jogo (SVG) → inicial.
 import type { APIRoute } from 'astro';
@@ -18,7 +18,7 @@ const fontBuffers = [Buffer.from(FONT_BOLD_B64, 'base64')];
 let wasmReady: Promise<unknown> | null = null;
 
 // O wasm vem de /wasm/resvg.wasm, que `scripts/copy-wasm.mjs` põe lá no build.
-// FALLBACK: se o arquivo não estiver publicado (era o caso até esta release —
+// FALLBACK: se o arquivo não estiver publicado (era o caso até esta release -
 // `public/wasm/` nunca esteve no git nem era gerado por nada, então num deploy
 // limpo esta rota devolvia 500 e TODA página /u/* ficava sem og:image), lemos o
 // binário direto do pacote instalado. Duas fontes independentes pro mesmo byte:
@@ -29,9 +29,9 @@ function init(req: Request) {
     try {
       const r = await fetch(new URL('/wasm/resvg.wasm', req.url));
       if (r.ok) return await initWasm(await r.arrayBuffer());
-      console.warn('[badge] /wasm/resvg.wasm devolveu', r.status, '— usando o node_modules');
+      console.warn('[badge] /wasm/resvg.wasm devolveu', r.status, ' - usando o node_modules');
     } catch (e) {
-      console.warn('[badge] fetch do wasm falhou — usando o node_modules:', e);
+      console.warn('[badge] fetch do wasm falhou - usando o node_modules:', e);
     }
     const { readFileSync } = await import('node:fs');
     const { createRequire } = await import('node:module');
@@ -49,7 +49,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 // ANTI-SSRF: o fetch cru que morava aqui aceitava qualquer URL vinda do banco
 // (players.avatar_url e o link social são escritos pelo próprio usuário em
-// /api/register) — dava pra apontar pra 169.254.169.254, 127.0.0.1 ou 10.x e
+// /api/register) - dava pra apontar pra 169.254.169.254, 127.0.0.1 ou 10.x e
 // usar a badge pública como sonda da rede interna. `fetchAvatar` só sai pra
 // https em host de avatar conhecido, revalida cada redirect e limita bytes.
 // Ver src/lib/safe-url.ts.
@@ -75,7 +75,7 @@ function badgeSvg(p: any, avatarUri: string | null, charId: string | null): stri
   const cName = charName(charId);
 
   const cells: [string, string][] = [
-    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : '—'], ['K/D', kd],
+    ['PARTIDAS', String(p.matches)], ['VITÓRIAS', p.wins > 0 ? String(p.wins) : ' - '], ['K/D', kd],
     ['KILLS', String(p.kills)], ['MORTES', String(p.deaths)], ['HEADSHOTS', String(p.headshots)],
     ['SEQUÊNCIA', `${p.best_streak}×`], ['ROUNDS', String(p.rounds)], ['TEMPO', displayTime(p)],
   ];
@@ -115,7 +115,7 @@ export const GET: APIRoute = async (ctx) => {
      Esta rota roda `resvg-wasm` A CADA REQUISIÇÃO e aceita QUALQUER nick no
      caminho, então o cache por URL não protege: quem varia o nick gera trabalho
      novo toda vez. E o `cache-control` só tinha `max-age` (navegador), sem
-     `s-maxage` — a CDN não guardava nada e todo hit chegava na função.
+     `s-maxage` - a CDN não guardava nada e todo hit chegava na função.
      60/min por IP é folgado pro uso real (a badge é embutida em README e perfil,
      um hit por visita) e corta a varredura. Mesmo helper das outras rotas. */
   const ip = ctx.request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';

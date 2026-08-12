@@ -12,7 +12,7 @@ ordem.
 
 | # | Arquivo | Por quê |
 |---|---|---|
-| 1 | [`../STATUS.md`](../STATUS.md) | **Comece aqui.** O estado de hoje, em ≤100 linhas: o que existe, o que está aberto, qual é a régua. |
+| 1 | [`../STATUS.md`](../STATUS.md) | **Comece aqui.** Resumo gerado, fontes vivas, comandos de publicação e riscos atuais. |
 | 2 | [`../README.md`](../README.md) | O que é o projeto, como rodar, onde fica cada coisa. |
 | 3 | [`docs/stack.md`](docs/stack.md) | **Com o que isso é feito.** Three.js/WebGL sem build, Astro/Vercel, Supabase, geração de asset (mint.gg, Tripo3D, Meshy, OpenRouter), Playwright, gltf-transform, as skills e o gauntlet loop. |
 | 4 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Como abrir um PR que passa. |
@@ -48,6 +48,8 @@ ordem.
 | [`ASSETS-PROMPTS.md`](ASSETS-PROMPTS.md) | Prompts usados pra gerar os assets 3D (Mint/Tripo). Pipeline de asset. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | O que mudou, versão por versão. Também renderizado em `/changelog`. |
 | [`../SECURITY.md`](../SECURITY.md) | Política de reporte de vulnerabilidade. |
+| [`reports/2026-08-11-open-issues-audit.md`](reports/2026-08-11-open-issues-audit.md) | Triagem das 71 issues abertas, ranking e grupos de duplicatas. |
+| [`reports/2026-08-11-application-pipeline-review.md`](reports/2026-08-11-application-pipeline-review.md) | Revisão da aplicação, APIs, arquitetura, dependências e CI/CD. |
 
 ### 5. Histórico ([`historico/`](historico/))
 

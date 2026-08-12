@@ -1,0 +1,11 @@
+.git
+.github
+.vercel
+dist
+node_modules
+docs/node_modules
+tools/eval/data
+graphify-out
+.env
+.env.*
+npm-debug.log*

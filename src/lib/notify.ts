@@ -1,12 +1,12 @@
-// Notificação por email via formsubmit.co — sem SDK, sem chave, um POST.
+// Notificação por email via formsubmit.co - sem SDK, sem chave, um POST.
 //
 // POR QUE ISTO EXISTE (issue #85, achado do dono em 07/08): ele enviou um feedback
-// pelo menu do jogo e não recebeu nada — porque não havia nada para receber. A rota
+// pelo menu do jogo e não recebeu nada - porque não havia nada para receber. A rota
 // `/api/feedback` só inseria na tabela `feedback` e acabava ali. O email que o
 // jogador digita é o DELE (semente da newsletter, com consentimento em coluna
 // própria), não um destinatário.
 //
-// PROVEDOR: formsubmit.co. Escolhido porque é POST direto — nenhuma dependência
+// PROVEDOR: formsubmit.co. Escolhido porque é POST direto - nenhuma dependência
 // nova, nenhuma chave para guardar e girar, e o repositório é público. O endpoint
 // `/ajax/` responde JSON; o normal responde HTML de redirect e não serve para rota.
 //
@@ -25,14 +25,14 @@ export function notificacaoConfigurada(): boolean {
 }
 
 /* Manda e **nunca** deixa a falha subir. Quem chama já gravou o dado no banco antes
-   — se o provedor cair, o jogador continua vendo `{ok:true}` e o feedback está
+ - se o provedor cair, o jogador continua vendo `{ok:true}` e o feedback está
    salvo. Trocar uma perda (a notificação) por outra pior (o dado) seria o oposto do
    que esta função serve. Por isso ela devolve boolean e não lança. */
 export async function notificar(assunto: string, campos: Record<string, unknown>): Promise<boolean> {
   if (!DESTINO) {
     if (!avisou) {
       avisou = true;
-      console.info('[notify] FEEDBACK_TO não configurado — feedback só vai para o banco.');
+      console.info('[notify] FEEDBACK_TO não configurado - feedback só vai para o banco.');
     }
     return false;
   }

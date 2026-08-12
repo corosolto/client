@@ -40,17 +40,17 @@ não enumerada à mão:
 | Superfície | Arquivo | Onde diz `AGPL-3.0` |
 |---|---|---|
 | licença canônica | `LICENSE` | linhas 1, 10, 42, 63 (+7)  |
-| badge + seção de licenças | `README.md` | linhas 3, 343, 349, 350 (+1)  |
-| termo que o contribuidor aceita | `CONTRIBUTING.md` | linhas 176, 179, 182  |
-| rodapé do site | `src/layouts/Layout.astro` | linha 598  |
-| JSON-LD do jogo | `src/pages/index.astro` | linha 297  |
+| badge + seção de licenças | `README.md` | linhas 3, 386, 392, 393 (+1)  |
+| termo que o contribuidor aceita | `CONTRIBUTING.md` | linhas 183, 186, 189  |
+| rodapé do site | `src/layouts/Layout.astro` | linha 601  |
+| JSON-LD do jogo | `src/pages/index.astro` | linha 411  |
 | página `/sobre` | `src/pages/sobre.astro` | linhas 121, 124, 133  |
 | `llms.txt` (resposta para LLM) | `public/llms.txt` | linhas 9, 46  |
 | rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |
 
 **26 ocorrências** de `AGPL-3.0` em **7** das 8 superfícies declaradas. Trocar a licença é mudar **todas elas no mesmo commit**: metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.
 
-**Outros nomes de licença citados nessas superfícies:** `MIT` em `README.md` (linhas 349, 350, 351, 355), `MIT` em `CONTRIBUTING.md` (linhas 179, 180, 181), `MIT` em `src/pages/sobre.astro` (linha 123), `MIT` em `public/llms.txt` (linha 47), `MIT` em `docs/docusaurus.config.js` (linha 152). Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. A regra continua a mesma: **só o `LICENSE` declara**, e hoje ele diz `AGPL-3.0`.
+**Outros nomes de licença citados nessas superfícies:** `MIT` em `README.md` (linhas 392, 393, 394, 398), `MIT` em `CONTRIBUTING.md` (linhas 186, 187, 188), `MIT` em `src/pages/sobre.astro` (linha 123), `MIT` em `public/llms.txt` (linha 47), `MIT` em `docs/docusaurus.config.js` (linha 152). Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. A regra continua a mesma: **só o `LICENSE` declara**, e hoje ele diz `AGPL-3.0`.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep -n dos nomes de licença conhecidos, nas superfícies declaradas em tools/gen-docs.mjs`
 

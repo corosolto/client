@@ -5,7 +5,7 @@
 // coronha ATRAVES do near plane (0.01 m) — e ele nao tinha regua. Aqui a cadeia inteira e
 // reexecutada em node:
 //
-//   REC_DEG[w] (game.js)                 -> grau de kick vertical declarado por arma
+//   REC_DEG[w] (recoil.js)               -> grau de kick vertical declarado por arma
 //   vmAmp = min(CAP, BASE + REC_DEG*MUL) -> amplitude do kick do VM  (game.js _tryShoot)
 //   kickMul = 0.5 se STATIC_CLASS==pistol
 //   vm.recoil = RecoilAxis(f, d, tau, share)  (game.js, springs.js)
@@ -33,6 +33,7 @@ import { RecoilAxis } from '../../public/js/springs.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const G = fs.readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
+const RJS = fs.readFileSync(path.join(ROOT, 'public/js/recoil.js'), 'utf8');
 const WJS = fs.readFileSync(path.join(ROOT, 'public/js/weapons.js'), 'utf8');
 
 const die = (m) => { throw new Error('vm-kick-sim: ' + m); };
@@ -73,12 +74,13 @@ const GAIN_ROT_Y = +grab(/rotation\.y\s*=\s*ks\s*\*\s*k\s*\*\s*([\d.]+)/, 'ganho
 // então o regex ancora no ganho de k, que é o que esta régua mede.
 const GAIN_ROT_Z = +grab(/rotation\.z\s*=\s*(?:[^;\n]*?\+\s*)?ks\s*\*\s*k\s*\*\s*([\d.]+)/, 'ganho k na rotacao Z')[1];
 
-/* ---------- 4) REC_DEG (game.js 228-234) ---------- */
+/* ---------- 4) REC_DEG (recoil.js) ---------- */
 function loadRecDeg() {
-  const i = G.indexOf('const REC_DEG = {');
+  const marcador = 'export const REC_DEG = {';
+  const i = RJS.indexOf(marcador);
   if (i < 0) die('REC_DEG nao encontrado');
-  const j = G.indexOf('\n};', i);
-  const body = G.slice(i + 'const REC_DEG = '.length, j + 2);
+  const j = RJS.indexOf('\n};', i);
+  const body = RJS.slice(i + 'export const REC_DEG = '.length, j + 2);
   // eslint-disable-next-line no-new-func
   return new Function('return ' + body)();
 }

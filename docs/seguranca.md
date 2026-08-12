@@ -413,3 +413,32 @@ A migration 011 é **compatível pra frente e pra trás** com o código: o site
 funciona com ela aplicada ou não. O `rl_take` faz fail-open se o RPC não
 existir. Isso é de propósito — dá pra aplicar SQL e deploy em ordens diferentes
 sem janela de erro.
+
+---
+
+## 9. Identidade por UID — nick deixa de autenticar
+
+**Problema.** Registro e submissão selecionavam o jogador por `nick + token`.
+Quando o token local mudava, o mesmo navegador recebia “nick já está em uso” no
+registro e “token inválido” ao terminar a partida. O nick, que é atributo de
+exibição, acabava funcionando como chave de identidade.
+
+**Contrato novo.** O UUID anônimo estável do navegador seleciona o jogador e o
+token autentica a sessão. No registro, o UID também é a credencial de recuperação
+que permite renovar esse token, por isso não pode entrar em views públicas,
+ranking, perfil ou logs de resposta. O nick canônico vem do servidor e pode ser
+usado em stats, presença e perfil sem participar da busca de credenciais.
+
+No registro, um UID já conhecido recupera o mesmo jogador e renova o token. Para
+uma conta antiga, a primeira chamada ainda pode provar `nick + token` uma vez e
+associar o UID. Contas antigas cujo token foi perdido e que não têm associação
+inequívoca na aquisição não são tomadas automaticamente: isso preserva o dono do
+nick.
+
+As rotas mantêm compatibilidade temporária quando a coluna/RPC de UID ainda não
+chegou ao banco ou quando um cliente antigo não envia UID. A migration privada é
+idempotente e pode entrar antes ou depois do deploy.
+
+**Régua:** `npm run eval:identity`. Os mutantes `semuid-client`, `nick-auth` e
+`semcanonical` provam, respectivamente, transporte, autenticação UID-first e uso
+do nick canônico.

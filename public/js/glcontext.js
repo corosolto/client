@@ -1,108 +1,128 @@
-/* glcontext.js — CRIAR O CONTEXTO WEBGL DO JEITO MENOS EXIGENTE QUE FUNCIONAR.
-   ═══════════════════════════════════════════════════════════════════════════════════
-   O RELATO QUE COMPROU ESTE ARQUIVO (07/08/2026)
-
-   Jogador em Arch Linux + Wayland, Firefox e Brave, GPU NVIDIA discreta:
-
-     THREE.WebGLRenderer: A WebGL context could not be created.
-     VENDOR = 0x10de, GL_RENDERER = ANGLE (Mesa, llvmpipe (LLVM 22.1.8, 256 bits)),
-     ErrorMessage = BindToCurrentSequence failed
-
-   Leia com atenção, porque o diagnóstico está na linha: o `VENDOR` é NVIDIA, mas o
-   `GL_RENDERER` **já é llvmpipe** — o navegador tinha desistido do hardware e caído para
-   software, e falhou mesmo assim. Isso é máquina/driver dele, não código nosso.
-
-   MAS O PEDIDO ERA NOSSO, E ERA O MAIS EXIGENTE POSSÍVEL:
-
-     new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
-
-   Duas opções, dois modos de falha conhecidos em Linux:
-     · `powerPreference: 'high-performance'` pede explicitamente a GPU discreta. Em
-       máquina híbrida (Optimus, PRIME, Wayland com NVIDIA) isso escolhe um dispositivo
-       que pode falhar em ligar, enquanto o padrão do navegador teria escolhido o que
-       funciona.
-     · `antialias: true` pede MSAA, que é alocação a mais no momento de criar o contexto
-       — a primeira coisa a falhar quando a memória do driver está no limite ou o
-       caminho é software.
-
-   Então a régua é: **degrade o pedido antes de desistir**. Cada degrau abaixo é uma
-   mitigação com motivo, não tentativa aleatória, e o que funcionou é anunciado no evento
-   `webgl_degradado` — sem isso a gente conserta às cegas da próxima vez.
-
-   O QUE ESTE MÓDULO NÃO FAZ: prometer que vai funcionar. Se todos os degraus falharem
-   ele devolve `null`, e **quem chama decide** — o jogo mostra mensagem que o jogador
-   entende, o fundo decorativo do site simplesmente não desenha. Essa distinção é o
-   ponto: fundo 3D que derruba a página /sobre é defeito pior que fundo ausente.
-   ═══════════════════════════════════════════════════════════════════════════════════ */
+/* Cria um único renderer pelo pedido menos restritivo que funcionar. A ordem e a
+   metadata são contrato de compatibilidade; a cronologia vive no KNOWN-BUGS.md. */
 import * as THREE from 'three';
 
-/* Os degraus, do mais exigente ao mais humilde. `rotulo` entra na telemetria: saber que
-   um jogador só entra com `sem-msaa` é informação, e é a única forma de descobrir que
-   uma opção nossa estava barrando gente. */
-const DEGRAUS = [
-  { rotulo: 'alto-desempenho', extra: { antialias: true, powerPreference: 'high-performance' } },
-  { rotulo: 'padrao',          extra: { antialias: true } },
-  { rotulo: 'sem-msaa',        extra: { antialias: false } },
-  { rotulo: 'minimo',          extra: { antialias: false, powerPreference: 'low-power', failIfMajorPerformanceCaveat: false } },
+const TIERS = [
+  { rotulo: 'padrao', attrs: { antialias: true, powerPreference: 'default', stencil: true } },
+  { rotulo: 'sem-msaa', attrs: { antialias: false, powerPreference: 'default', stencil: true } },
+  { rotulo: 'economia', attrs: { antialias: false, powerPreference: 'low-power', stencil: false } },
+  { rotulo: 'alto-desempenho', attrs: { antialias: false, powerPreference: 'high-performance', stencil: false } },
 ];
 
-/**
- * Cria um WebGLRenderer descendo os degraus até um funcionar.
- * @param {object} base opções fixas do chamador (canvas, alpha, …) — nunca degradadas
- * @returns {THREE.WebGLRenderer|null} `null` quando NENHUM degrau funcionou
- */
-export function criaRenderer(base = {}) {
+const SOFTWARE_RE = /llvmpipe|softpipe|swiftshader|software raster/i;
+
+function rendererName(gl) {
+  try {
+    const debug = gl.getExtension('WEBGL_debug_renderer_info');
+    return String(debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) || '');
+  } catch { return ''; }
+}
+
+function lose(gl) {
+  try { gl.getExtension('WEBGL_lose_context')?.loseContext(); } catch {}
+}
+
+/** @returns {THREE.WebGLRenderer|null} */
+export function criaRenderer(base = {}, options = {}) {
+  const compatibility = options.compatibility === true;
+  const names = compatibility ? ['webgl', 'experimental-webgl', 'webgl2'] : ['webgl2', 'webgl', 'experimental-webgl'];
+  const tiers = compatibility ? TIERS.slice(1) : TIERS;
+  const suppliedCanvas = base.canvas || null;
+  const fixed = { ...base };
+  delete fixed.canvas;
+  delete fixed.context;
+  const reasons = [];
   let ultimoErro = null;
-  for (const d of DEGRAUS) {
-    try {
-      const r = new THREE.WebGLRenderer({ ...base, ...d.extra });
-      /* Só é notícia quando NÃO foi o primeiro degrau: contexto criado no primeiro é o
-         caminho de todo mundo e não precisa render evento nenhum. */
-      if (d !== DEGRAUS[0]) {
+
+  tentativas: for (const tier of tiers) {
+    for (const name of names) {
+      const canvas = suppliedCanvas || document.createElement('canvas');
+      const attrs = {
+        alpha: fixed.alpha ?? false,
+        depth: fixed.depth ?? true,
+        premultipliedAlpha: fixed.premultipliedAlpha ?? true,
+        preserveDrawingBuffer: fixed.preserveDrawingBuffer ?? false,
+        failIfMajorPerformanceCaveat: false,
+        ...tier.attrs,
+      };
+      try {
+        canvas.addEventListener('webglcontextcreationerror', (event) => {
+          if (event.statusMessage) reasons.push(`${name}/${tier.rotulo}: ${event.statusMessage}`);
+        }, { once: true });
+        const gl = canvas.getContext(name, attrs);
+        if (!gl) continue;
+
+        let renderer;
         try {
-          window.va?.('event', { name: 'webgl_degradado', data: { degrau: d.rotulo } });
-          console.warn(`[webgl] contexto criado no degrau "${d.rotulo}" — o pedido cheio falhou`);
-        } catch (_) { /* telemetria nunca atrapalha */ }
+          window.__webglTentativa = true;
+          const Renderer = name === 'webgl2' ? THREE.WebGLRenderer : THREE.WebGL1Renderer;
+          renderer = new Renderer({ ...fixed, ...attrs, canvas, context: gl });
+        } catch (error) {
+          ultimoErro = error;
+          reasons.push(`${name}/${tier.rotulo}: ${error?.message || error}`);
+          lose(gl);
+          if (suppliedCanvas) break tentativas;
+          continue;
+        } finally {
+          window.__webglTentativa = false;
+        }
+
+        const gpu = rendererName(gl);
+        const metadata = Object.freeze({
+          api: name === 'webgl2' ? 'webgl2' : 'webgl',
+          tier: tier.rotulo,
+          software: SOFTWARE_RE.test(gpu),
+          renderer: gpu.slice(0, 120),
+          degraded: compatibility || tier.rotulo !== 'padrao' || name !== 'webgl2' || SOFTWARE_RE.test(gpu),
+        });
+        renderer.__csWebgl = metadata;
+        if (!options.optional) {
+          window.__csWebgl = metadata;
+          window.__semWebgl = false;
+        }
+        if (metadata.degraded && !options.optional) {
+          try {
+            window.va?.('event', { name: 'webgl_degradado', data: { api: metadata.api, tier: metadata.tier, software: metadata.software } });
+            console.warn(`[webgl] ${metadata.api}/${metadata.tier}${metadata.software ? ' (software)' : ''}`);
+          } catch {}
+        }
+        return renderer;
+      } catch (error) {
+        ultimoErro = error;
+        reasons.push(`${name}/${tier.rotulo}: ${error?.message || error}`);
       }
-      return r;
-    } catch (e) {
-      ultimoErro = e;
-      /* three já loga o motivo detalhado do navegador (VENDOR, GL_RENDERER, ErrorMessage);
-         repetir aqui só encheria o console de quem vai ler o relato do jogador. */
     }
   }
+
+  const detail = reasons.slice(-4).join(' | ') || ultimoErro?.message || String(ultimoErro || 'contexto recusado');
+  if (options.optional) {
+    console.warn(`webgl opcional indisponível · ${detail}`);
+    return null;
+  }
+  window.__semWebgl = true;
   try {
-    /* A MARCA SOBE AQUI, e não só no painel: o overlay vermelho de `index.astro` se cala
-       quando ela existe. Sem isso, a página /sobre de quem não tem WebGL ganhava um
-       stack trace por cima do conteúdo por causa de um fundo DECORATIVO — barulho que
-       ensina o jogador a ignorar aviso, que é o oposto do que o overlay existe pra fazer. */
-    window.__semWebgl = true;
-    window.va?.('event', { name: 'sem_webgl', data: { ua: String(navigator.userAgent).slice(0, 120) } });
-    /* `console.error` é capturado pelo coletor de `index.astro` e agrupado por
-       fingerprint — é assim que a gente descobre QUANTOS Rafaéis existem, em vez de
-       saber de um porque ele mandou mensagem. */
-    console.error('sem_webgl: nenhum dos ' + DEGRAUS.length + ' degraus criou contexto · ' + ((ultimoErro && ultimoErro.message) || ultimoErro));
-  } catch (_) {}
+    window.va?.('event', { name: 'sem_webgl', data: { detail: detail.slice(0, 120) } });
+    console.error(`sem_webgl: nenhum contexto foi criado · ${detail}`);
+  } catch {}
   return null;
 }
 
-/* Painel para o caso em que o 3D é O PRODUTO (o jogo). Fora daqui — fundo do site,
-   preview — a resposta certa é não desenhar e seguir a vida. */
+/* Sem contexto não existe fallback gráfico dentro da página; o CTA muda a ordem e o
+   custo da próxima tentativa, e o diagnóstico nativo continua no console. */
 export function avisaSemWebgl(erro) {
   try {
-    window.__semWebgl = true;   // o overlay de crash do index.astro se cala com isto
+    window.__semWebgl = true;
+    const current = new URL(location.href);
+    current.searchParams.set('safe', '1');
     const el = document.createElement('div');
     el.id = 'sem-webgl';
     el.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;padding:8vw;background:#090704;color:#f4efe6;font:16px/1.6 system-ui,sans-serif;text-align:center';
-    el.innerHTML = '<div style="max-width:46rem">'
-      + '<h1 style="font-size:1.6rem;margin:0 0 1rem">Seu navegador não conseguiu abrir o 3D</h1>'
-      + '<p style="margin:0 0 1rem">O jogo precisa de <strong>WebGL</strong>, e o navegador não conseguiu criar o contexto gráfico nesta máquina. '
-      + 'Quase sempre é driver de vídeo ou aceleração por hardware desligada — não é a sua internet, e não é o servidor.</p>'
-      + '<p style="margin:0 0 1rem;opacity:.85">O que costuma resolver: ligar a <em>aceleração de hardware</em> nas configurações do navegador; '
-      + 'atualizar o driver de vídeo; testar outro navegador. No Linux com GPU NVIDIA, driver desatualizado ou sessão Wayland sem o driver certo é a causa mais comum. '
-      + 'Para conferir o que o seu navegador suporta: <a style="color:#ffc233" href="https://get.webgl.org/" rel="noopener">get.webgl.org</a>.</p>'
-      + '<p style="margin:0;opacity:.6;font-size:.85em">Detalhe técnico: ' + String((erro && erro.message) || erro || 'contexto não criado').slice(0, 200) + '</p>'
-      + '</div>';
+    el.innerHTML = '<div style="max-width:46rem"><h1 style="font-size:1.6rem;margin:0 0 1rem">Seu navegador não conseguiu abrir o 3D</h1>'
+      + '<p style="margin:0 0 1rem">O jogo precisa de <strong>WebGL</strong>. Atualize o driver de vídeo, ligue a aceleração por hardware ou teste outro navegador.</p>'
+      + (new URLSearchParams(location.search).get('safe') === '1' ? '' : `<p><a style="display:inline-block;background:#ffc233;color:#090704;padding:.8rem 1.2rem;font-weight:800;text-decoration:none" href="${current.href}">TENTAR MODO COMPATIBILIDADE</a></p>`)
+      + '<p style="margin:1rem 0"><a style="color:#ffc233" href="https://get.webgl.org/" rel="noopener">Testar WebGL neste navegador</a></p>'
+      + '<p style="margin:0;opacity:.6;font-size:.85em">Detalhe técnico: <span data-webgl-detail></span></p></div>';
+    el.querySelector('[data-webgl-detail]').textContent = String(erro?.message || erro || 'contexto não criado').slice(0, 200);
     (document.body || document.documentElement).appendChild(el);
-  } catch (_) { /* se nem isso der, o overlay de crash ainda mostra alguma coisa */ }
+  } catch {}
 }

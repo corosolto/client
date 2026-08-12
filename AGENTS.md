@@ -41,9 +41,9 @@ algo está errado e o quality gate está verde, o defeito é do quality gate.
 
 | Zona | O que é | Tamanho medido | Regra |
 |---|---|---|---|
-| `public/` | o **jogo** | 38 arquivos `.js`, 30.856 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
-| `src/` | o **site** | 17 páginas `.astro`, 13 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
-| `tools/` | o **arnês** | 206 scripts em `tools/eval/`, 61 em `tools/` | node puro: sobe o jogo real sem browser |
+| `public/` | o **jogo** | 40 arquivos `.js`, 31.472 linhas · Three.js `r160` vendorizado | ES modules servidos crus, **zero build**, sem dependência de runtime |
+| `src/` | o **site** | 18 páginas `.astro`, 19 rotas `/api` · Astro `^7.1.1` | framework é bem-vindo; `service_role` só no servidor |
+| `tools/` | o **arnês** | 191 scripts em `tools/eval/`, 62 em `tools/` | node puro: sobe o jogo real sem browser |
 
 **Não existe `public/index.html`.** O HTML do jogo é `src/pages/index.astro`, servido na rota `/`. Servir `public/` estaticamente entrega os arnêses visuais, **não o jogo** — é a pegadinha que custa a primeira hora de todo mundo.
 
@@ -67,9 +67,13 @@ O porquê completo de cada regra da fronteira está em
 
 ## As leis da casa
 
-Não são estilo. Cada uma custou dias, e cada uma está documentada no código com o caso real
-que a gerou — os casos completos estão em
+Não são estilo. Cada uma custou dias; os casos completos estão em
 [`docs/docs/quality-gates.md`](docs/docs/quality-gates.md).
+
+**Comentários no código têm orçamento quase zero.** Não narre o que a linha faz nem cole o
+histórico da investigação. Só comente uma invariante, compatibilidade ou risco que os nomes não
+consigam expressar, em no máximo duas linhas, apontando para a issue ou doc quando precisar de
+contexto. Evidência, antes/depois e cronologia ficam em `KNOWN-BUGS.md` ou `docs/`.
 
 **1 · Régua antes do conserto.** Escreva a medição, prove que ela **reprova** o estado atual,
 só então conserte. Intenção que não vira invariante é otimizada para fora: uma rodada levou o
@@ -140,10 +144,10 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:webgl eval:shaderlog eval:botbrain eval:prune eval:vminspect eval:charhard eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters spec:check skills:check
 ```
 
-`package.json` tem **95 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **116 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -230,3 +234,25 @@ já tinha o dobro; corrigir à mão dura exatamente um commit.
 
 E o resto — o porquê, a decisão, o caso que gerou a regra — é conhecimento humano, mora em
 **um** arquivo só, e os outros apontam para ele.
+
+## graphify
+
+Este projeto mantém um knowledge graph em `graphify-out/`, com relações entre arquivos,
+clusters e nós centrais da base.
+
+Quando o usuário pedir `/graphify`, use o skill/config instalado do adapter antes de seguir.
+
+Regras:
+
+- Para perguntas sobre a base, rode `graphify query "<pergunta>"` quando `graphify-out/graph.json`
+  existir. Use `graphify path "<A>" "<B>"` para relações e `graphify explain "<conceito>"`
+  para conceitos focados.
+- Arquivos sujos em `graphify-out/` são esperados depois de hooks ou updates incrementais.
+  Isso não é motivo para pular Graphify; só pule se a tarefa for justamente depurar saída
+  stale/incorreta do grafo, ou se o usuário pedir explicitamente para não usar.
+- Se `graphify-out/wiki/index.md` existir, use-o para navegação ampla antes de sair
+  abrindo fonte cru.
+- Leia `graphify-out/GRAPH_REPORT.md` só para revisão ampla de arquitetura ou quando
+  `query/path/explain` não trouxerem contexto suficiente.
+- Depois de mexer em código, rode `graphify update .` para manter o grafo atual
+  (AST-only, sem custo de API).

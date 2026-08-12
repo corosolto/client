@@ -38,10 +38,10 @@ jobs:
   bump-tag-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with: { fetch-depth: 0 }
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22 }
 
       # Defesa contra o dia em que alguém trocar GITHUB_TOKEN por PAT (aí o push do bot
@@ -73,7 +73,9 @@ jobs:
             const p = 'public/js/version.js';
             fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/VERSION = '[^']*'/, \"VERSION = '$V'\"));
           "
+          node scripts/sync-changelog.mjs
           node tools/gen-docs.mjs
+          (cd docs && npm ci && npm run build:site)
           # gen-arch também: o ARCH.md embute a versão do jogo no cabeçalho gerado, e sem
           # regenerá-lo aqui o arch:check reprova o PR SEGUINTE (caso real 08/08: o bump
           # do alpha.38 deixou o ARCH.md em alpha.37 e o PR #94 nasceu vermelho). Os dois
@@ -83,8 +85,8 @@ jobs:
             echo "::error::tag $NEW já existe no remoto — bump manual necessário."
             exit 1
           fi
-          git add package.json package-lock.json public/js/version.js README.md docs/ tools/eval/ARCH.md
-          git commit -m "chore(release): $NEW"
+          git add package.json package-lock.json public/js/version.js CHANGELOG.md README.md AGENTS.md STATUS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
+          git commit -s -m "chore(release): $NEW"
           # Tag ANOTADA + push explícito do ref. `--follow-tags` só sobe tag anotada, e
           # `git tag` sem `-a` cria tag LEVE: o alpha.38 (08/08) nasceu leve, ficou só no
           # runner, e o `gh release create` abortou com "tag exists locally but has not
@@ -106,9 +108,10 @@ jobs:
           TAG=$(git describe --tags --exact-match HEAD)
           T=${TAG#v}
           awk "/^## \[$T\]/{f=1;next}/^## \[/{f=0}f" CHANGELOG.md > release-body.md
-          # Sem seção no CHANGELOG pra esta versão? Notas = commits desde a tag anterior.
-          if [ ! -s release-body.md ]; then
-            PREV=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || true)
-            git log --oneline ${PREV:+$PREV..}$TAG > release-body.md
+          EXTRA=()
+          if [ -s release-body.md ]; then
+            EXTRA=(--notes "$(cat release-body.md)")
           fi
-          gh release create "$TAG" --notes-file release-body.md --title "CORO SOLTO $TAG"
+          # As notas nativas ligam PRs e contribuidores às contas GitHub. O fallback
+          # antigo (`git log --oneline`) apagou esse crédito no alpha.47 (BUG-40).
+          gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"

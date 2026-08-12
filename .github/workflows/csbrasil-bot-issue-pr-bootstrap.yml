@@ -1,0 +1,104 @@
+name: csbrasil-bot-issue-pr-bootstrap
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  bot-token:
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
+          fi
+
+  bootstrap:
+    needs: bot-token
+    if: >
+      needs.bot-token.outputs.available == 'true' &&
+      github.event.issue.pull_request == null &&
+      startsWith(github.event.comment.body, '/bot-fix') &&
+      contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          fetch-depth: 0
+      - name: Ensure bot-fixable label exists
+        run: python3 scripts/ci/ensure_labels.py bot-fixable
+      - name: Fetch issue
+        run: gh issue view "$ISSUE_NUMBER" --json number,title,body,labels,url > /tmp/issue.json
+      - name: Guard issue eligibility
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          issue = json.load(open('/tmp/issue.json'))
+          labels = {l['name'] for l in issue.get('labels', [])}
+          if 'bot-fixable' not in labels:
+              print('issue is not labeled bot-fixable')
+              sys.exit(1)
+          PY
+      - name: Skip if PR already exists for this issue
+        run: |
+          if gh pr list --state open --search "#${ISSUE_NUMBER}" --json number --jq 'length' | grep -qv '^0$'; then
+            gh issue comment "$ISSUE_NUMBER" --body "Já existe PR aberta referenciando esta issue. Bootstrap cancelado."
+            exit 0
+          fi
+      - name: Create bootstrap branch and empty commit
+        run: |
+          branch="bot/issue-${ISSUE_NUMBER}"
+          git config user.name "csbrasil-bot"
+          git config user.email "csbrasil-bot@users.noreply.github.com"
+          git checkout -B "$branch" origin/main
+          git commit --allow-empty -s -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}"
+          git push -u origin "$branch" --force
+          echo "BRANCH=$branch" >> "$GITHUB_ENV"
+      - name: Open draft PR
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          issue = json.load(open('/tmp/issue.json'))
+          title = f"bot: bootstrap fix for #{issue['number']} {issue['title']}"
+          body = f"""## Summary
+          - bootstrap PR aberta pelo csbrasil-bot a partir da issue #{issue['number']}
+          - issue: {issue['url']}
+
+          ## Context
+          {issue.get('body') or '(sem descrição)'}
+
+          ## Notes
+          - PR draft inicial; implementação ainda precisa ser adicionada
+          - aberta apenas para issues etiquetadas `bot-fixable`
+          """
+          subprocess.run([
+              'gh', 'pr', 'create',
+              '--base', 'main',
+              '--head', os.environ['BRANCH'],
+              '--title', title,
+              '--body', body,
+              '--draft',
+          ], check=True)
+          subprocess.run([
+              'gh', 'issue', 'comment', str(issue['number']),
+              '--body', f"Draft PR bootstrap aberta a partir desta issue na branch `{os.environ['BRANCH']}`."
+          ], check=True)
+          PY

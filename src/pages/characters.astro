@@ -1,15 +1,15 @@
 ---
-// /characters — GÊMEA EM INGLÊS do /personagens (pedido do dono, 06/08: usuário em EN
+// /characters - GÊMEA EM INGLÊS do /personagens (pedido do dono, 06/08: usuário em EN
 // cai na versão EN). Mesmo dataset (src/data/jogo.ts); nomes/lemas/blurbs traduzidos
-// AQUI por overlay — o PT continua a fonte. Redirecionamento por idioma: cada página
+// AQUI por overlay - o PT continua a fonte. Redirecionamento por idioma: cada página
 // manda pro par quando o idioma resolvido não bate (mesmas regras do public/js/i18n.js).
 import Layout from '../layouts/Layout.astro';
 import { FACCOES, PERSONAGENS } from '../data/jogo';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 
 const FAC_EN: Record<string, { nome: string; lema: string; nota: string }> = {
-  E: { nome: 'Team E', lema: 'The fight is at the square!', nota: 'The red team of the arena. Eight caricature left-wing archetypes — none of them a real person.' },
-  B: { nome: 'Team B', lema: 'The fight is on the highway!', nota: 'The green-and-yellow team. Eight caricature right-wing archetypes — none of them a real person.' },
+  E: { nome: 'Team E', lema: 'The fight is at the square!', nota: 'The red team of the arena. Eight caricature left-wing archetypes - none of them a real person.' },
+  B: { nome: 'Team B', lema: 'The fight is on the highway!', nota: 'The green-and-yellow team. Eight caricature right-wing archetypes - none of them a real person.' },
   urbanas: { nome: 'Urban Tribes', lema: 'The fight is in the hood!', nota: 'Nine urban tribes with zero politics: they join the fight for the style.' },
   palhacos: { nome: 'Clowns', lema: 'The fight is at the circus ring!', nota: 'Nine circus clowns. Honk honk, bang bang.' },
   funkeiros: { nome: 'Funkeiros', lema: 'The fight is at the baile!', nota: 'Nine baile funk archetypes straight from the paredão.' },
@@ -21,7 +21,7 @@ const BLURB_EN: Record<string, string> = {
   mst: 'From the countryside to the arena. Flag on the backpack, boots in the mud, dead-eye aim.',
   doutora: 'Lab coat, stethoscope and a 24h shift. Prescribes precise shots, straight to the vein.',
   mistico: 'Headband, crystal on the chest, calibrated aura. Only shoots when Mercury allows.',
-  gotinha: 'Public-health mascot. Immunizes the fight with a booster dose — free of charge.',
+  gotinha: 'Public-health mascot. Immunizes the fight with a booster dose - free of charge.',
   hipster: 'Colorful mohawk and a band shirt you don’t know. Played this before it was mainstream.',
   et: 'Came from far away for the fight. Abducts the enemy and vanishes into the Minas woods.',
   caminhoneiro: 'Horn, diesel and a windshield full of stickers. Blocks the lane and the crossfire.',
@@ -31,17 +31,17 @@ const BLURB_EN: Record<string, string> = {
   coach: 'Quantum coach. Manifests the victory and invoices you for the mindset.',
   ancap: 'Yellow-and-black armband. Privatizes the flag and taxes nobody.',
   canarinho: 'The angriest mascot in the stands. Chirps, then shoots.',
-  proerd: 'Says no to everything — except winning the round.',
+  proerd: 'Says no to everything - except winning the round.',
   dollynho: 'Green soda-bottle mascot. Effervescent, ice cold, always on the counter.',
   bonzo: 'The classic clown of Sunday TV, now with a revolver.',
   palhacomal: 'The evil clown of your nightmares. The tattoo came to life.',
   jozo: 'A scruffy fast-food-parody clown. Yellow patches, a big G, zero polish.',
   adjim: 'Half of a sneeze duo. The other half is right behind you.',
-  esbirro: 'The other half. Bless you — bang.',
+  esbirro: 'The other half. Bless you - bang.',
   titica: 'Firefighter cap, patchwork shirt, chaos incarnate.',
   padati: 'Tiny cap, giant grin. One of a legendary pair.',
   padata: 'The other tiny cap. Together they own the ring.',
-  cadequinha: 'Red top hat and checkered suit — old-school circus royalty.',
+  cadequinha: 'Red top hat and checkered suit - old-school circus royalty.',
   emo: 'The fringe covers one eye. The other one aims.',
   blackmetal: 'Corpse paint and blast beats. Grim, frostbitten, accurate.',
   metaleiro: 'Denim, patches and a riff for every kill.',
@@ -73,8 +73,8 @@ const slug = (nome: string) => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toL
 const jsonld = [{ '@id': GAME_ID }];
 ---
 <Layout
-  title={`Characters — all ${total} | ${BRAND_FULL}`}
-  description={`All ${total} playable characters of ${BRAND_FULL} across ${FACCOES.length} factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 100% fictional archetypes — no real people.`}
+  title={`Characters - all ${total} | ${BRAND_FULL}`}
+  description={`All ${total} playable characters of ${BRAND_FULL} across ${FACCOES.length} factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 100% fictional archetypes - no real people.`}
   jsonld={jsonld}
   h1="Characters"
   kicker={`${total} characters · ${FACCOES.length} factions`}
@@ -85,7 +85,7 @@ const jsonld = [{ '@id': GAME_ID }];
     <link rel="alternate" hreflang="en" href={abs('/characters')} />
   </Fragment>
   <Fragment slot="sub">
-    {total} playable archetypes in {FACCOES.length} factions, all 100% fictional and original —
+    {total} playable archetypes in {FACCOES.length} factions, all 100% fictional and original -
     no real person was consulted (or spared). Each one has its own silhouette, props and style,
     modeled in 3D. <strong>Your pick is style, not advantage:</strong> everyone plays exactly the same.
   </Fragment>
@@ -119,7 +119,7 @@ const jsonld = [{ '@id': GAME_ID }];
         {g.elenco.map(p => (
           <article class="pcard">
             {p.id && <img class="pfoto" src={`/img/chars/${p.id}.webp`} width="180" height="231"
-              loading="lazy" decoding="async" alt={`${p.nome} — ${BRAND_FULL} character`} />}
+              loading="lazy" decoding="async" alt={`${p.nome} - ${BRAND_FULL} character`} />}
             <strong>{p.nome}</strong>
             <p>{(p.id && BLURB_EN[p.id]) || p.blurb}</p>
           </article>
@@ -131,7 +131,7 @@ const jsonld = [{ '@id': GAME_ID }];
   <h2>About the cast</h2>
   <p>
     Two of the five factions have nothing political about them: <strong>Urban Tribes</strong> and
-    <strong> Funkeiros</strong> — they join the fight for the style and play whichever side they
+    <strong> Funkeiros</strong> - they join the fight for the style and play whichever side they
     want. No character depicts a real person, living or dead. They are archetypes, and the mockery
     is evenly distributed.
   </p>

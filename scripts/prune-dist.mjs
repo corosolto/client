@@ -37,9 +37,21 @@ import path from 'node:path';
 /* Lista fechada e literal. Poda dirigida por padrão (glob, regex) num script que
    roda `rmSync(recursive)` é como se apaga a pasta errada — o alvo tem que ser
    legível numa olhada. */
+const KEEP_FPVM = process.env.KEEP_FPVM === '1';
 const ALVOS = [
-  'dist/client/models/fpvm',
-  '.vercel/output/static/models/fpvm',
+  ...(KEEP_FPVM ? [] : [
+    'dist/client/models/fpvm',
+    '.vercel/output/static/models/fpvm',
+  ]),
+  // Bancadas locais não fazem parte do site publicado.
+  'dist/client/dev.html',
+  '.vercel/output/static/dev.html',
+  'dist/client/editor',
+  '.vercel/output/static/editor',
+  'dist/client/js/editor',
+  '.vercel/output/static/js/editor',
+  'dist/client/img/reticle-pu.png',
+  '.vercel/output/static/img/reticle-pu.png',
 ];
 
 function tamanho(dir) {
@@ -52,21 +64,21 @@ function tamanho(dir) {
 }
 const mb = (b) => (b / 1024 / 1024).toFixed(1) + ' MB';
 
-if (process.env.KEEP_FPVM === '1') {
+if (KEEP_FPVM) {
   console.log('  poda: KEEP_FPVM=1 — models/fpvm mantido no publicado.');
-  process.exit(0);
 }
 
 let total = 0, podados = 0;
 for (const alvo of ALVOS) {
   if (!existsSync(alvo)) continue;
-  const b = tamanho(alvo);
+  const st = statSync(alvo);
+  const b = st.isDirectory() ? tamanho(alvo) : st.size;   // ALVOS tem pasta (fpvm) E arquivo (bancadas)
   rmSync(alvo, { recursive: true, force: true });
   total += b; podados++;
   console.log(`  poda: ${alvo} (${mb(b)})`);
 }
 if (!podados) {
-  console.log('  poda: nada a podar (models/fpvm não está no build).');
+  console.log('  poda: nada a podar.');
 } else {
-  console.log(`  poda: ${mb(total)} fora do publicado. \`?tripovm=1\` e \`?tvm=1\` só valem em dev.`);
+  console.log(`  poda: ${mb(total)} fora do publicado.`);
 }

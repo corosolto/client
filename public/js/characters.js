@@ -281,17 +281,10 @@ const CS_SSS = `
 const CS_END = `	}
 `;
 
-/* Sonda de WebGL2, uma vez por carga. Um canvas 1×1 descartado é mais barato que um
-   shader que não compila: em WebGL1 `textureLod` não existe no GLSL ES 1.0 e o
-   personagem inteiro sumiria (material com erro de compilação não desenha). */
-const _hasTextureLod = (() => {
-  try {
-    const c = document.createElement('canvas'); c.width = c.height = 1;
-    const gl = c.getContext('webgl2');
-    if (gl) { const e = gl.getExtension('WEBGL_lose_context'); if (e) e.loseContext(); }
-    return !!gl;
-  } catch { return false; }
-})();
+let _hasTextureLod = false;
+export function setCharacterRendererCapabilities(renderer) {
+  _hasTextureLod = renderer?.capabilities?.isWebGL2 === true;
+}
 
 // Instala a injeção num MeshStandardMaterial de personagem. Idempotente.
 export function applyCharFX(mat, rimColor) {
@@ -312,12 +305,7 @@ export function applyCharFX(mat, rimColor) {
     csSat:      { value: CHAR_FX.sat },
     csSss:      { value: CHAR_FX.sss },
   };
-  // `textureLod` só existe no GLSL ES 3.0 que o three emite em contexto WebGL2. Em
-  // WebGL1 o bloco regional NÃO PODE nem ser injetado (é erro de compilação, não perda
-  // de qualidade), então o piso volta a ser o degrau por texel. A decisão tem que ser a
-  // MESMA aqui e no customProgramCacheKey abaixo — se divergir, o three serve um programa
-  // compilado com o outro fonte. Por isso a sonda é module-level e não vem do renderer,
-  // que só chega em onBeforeCompile, depois da chave já ter sido calculada.
+  // WebGL1 não compila textureLod; a capacidade vem do renderer que realmente abriu.
   const regOn = clampOn && CHAR_FX.albReg && _hasTextureLod;
   mat.userData.csUniforms = u;   // tuning ao vivo sem recompilar
   mat.onBeforeCompile = (shader) => {

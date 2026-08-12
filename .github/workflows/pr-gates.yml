@@ -14,7 +14,7 @@ jobs:
   versao-bumpada:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - name: package.json e version.js têm que concordar
         run: |
           HEAD=$(node -pe 'require("./package.json").version')
@@ -24,3 +24,14 @@ jobs:
             echo "::error::package.json ($HEAD) e public/js/version.js ($VJS) divergem — o ?v= do import map serve módulo velho quando isso acontece."
             exit 1
           fi
+
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: KNOWN-RED só cresce com justificativa
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node tools/eval/ratchet-check.mjs

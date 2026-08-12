@@ -1,4 +1,4 @@
-// GET /sitemap.xml — sitemap DINÂMICO.
+// GET /sitemap.xml - sitemap DINÂMICO.
 //
 // ESTA ROTA NUNCA TINHA SIDO SERVIDA. Havia um `public/sitemap.xml` estático,
 // de 17/07, com 4 URLs e host SEM `www`. Como o `.vercel/output/config.json`
@@ -13,13 +13,13 @@
 //   0                                        ← 4 URLs, todas no host errado
 //
 // Efeito colateral medido: `aeo.js check https://www.csbrasil.online` rastreou
-// **4 páginas** — porque o sitemap só entregava 4. O arquivo estático foi
+// **4 páginas** - porque o sitemap só entregava 4. O arquivo estático foi
 // removido; a partir daqui o sitemap é este.
 //
 // POR QUE NÃO `@astrojs/sitemap`
 // (a) a integration não está instalada e esta máquina não tem rede pra
 //     `npm install`; (b) mais importante: ela só enxerga rotas conhecidas em
-// build time, e o conteúdo que escala aqui é `/u/<id>/<nick>` — uma página por
+// build time, e o conteúdo que escala aqui é `/u/<id>/<nick>` - uma página por
 // jogador, criada em runtime. Um sitemap que lista 8 páginas fixas e ignora os
 // perfis deixa de fora exatamente o que faz o site crescer.
 //
@@ -45,7 +45,7 @@ export const prerender = false;
 // (ranking.astro, u/[...path].astro), e listar em sitemap uma URL que a própria
 // página manda não indexar é mandar dois sinais opostos pro mesmo crawler. A
 // documentação do Google é explícita: "don't include noindex URLs in your
-// sitemap" — https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
+// sitemap" - https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
 // Quando `RANKING_ON` voltar a true, as duas voltam sozinhas.
 export const STATIC: [string, string, string][] = [
   ['/',            '1.0', 'daily'],
@@ -70,7 +70,7 @@ export const GET: APIRoute = async () => {
   }));
 
   /* QUANTOS PERFIS EXISTEM. Precisa saber ANTES de decidir entre urlset e
-     índice, e um `count` com `head: true` não traz linha nenhuma — é bem mais
+     índice, e um `count` com `head: true` não traz linha nenhuma - é bem mais
      barato que puxar 5.000 registros só pra contar. */
   let totalPerfis = 0;
   if (RANKING_ON && supabaseAdmin) {
@@ -83,7 +83,7 @@ export const GET: APIRoute = async () => {
 
   const total = fixas.length + totalPerfis;
 
-  /* MODO ÍNDICE. Só quando o conteúdo passa de uma página — ver o comentário de
+  /* MODO ÍNDICE. Só quando o conteúdo passa de uma página - ver o comentário de
      estratégia em src/lib/sitemap.ts. Abaixo do teto, a resposta é idêntica à
      de antes desta mudança. */
   if (total > POR_PAGINA) {

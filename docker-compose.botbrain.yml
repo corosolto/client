@@ -1,0 +1,39 @@
+# BOTBRAIN — ambiente local: jogar/coletar (game) + treinar (train), sem montar Supabase.
+#
+#   docker compose -f docker-compose.botbrain.yml up game        # sobe o jogo em :4321
+#     → abra http://localhost:4321/?botbrain=1  (bots dirigidos pela rede)
+#     → autorize a coleta em Privacidade; os frames caem em tools/eval/data/collected.ndjson
+#
+#   docker compose -f docker-compose.botbrain.yml run --rm train # treina com o que houver
+#     → gera public/models/bot-brain/ (recarregue o jogo pra usar o modelo novo)
+#
+# O node_modules do container é isolado (volume anônimo) porque os binários nativos
+# (sharp, tfjs-node) são de Linux — os do seu Mac não servem dentro do container.
+services:
+  game:
+    build:
+      context: .
+      dockerfile: docker/botbrain.Dockerfile
+    ports:
+      - "127.0.0.1:4321:4321"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    # sem SUPABASE_URL/KEY → o sink limitado grava somente a partir do loopback
+
+  train:
+    build:
+      context: .
+      dockerfile: docker/botbrain.Dockerfile
+    profiles: ["train"]     # não sobe no `up`; roda só via `run --rm train`
+    volumes:
+      - .:/app
+      - /app/node_modules
+    # Instala a dependência pesada só no volume do container, sem alterar o lockfile.
+    command: >
+      sh -c "npm install --no-save --package-lock=false @tensorflow/tfjs-node --no-audit --no-fund &&
+             ([ -f tools/eval/data/bootstrap.ndjson ] || node tools/eval/bot-record.mjs 60 all) &&
+             node tools/eval/bot-train.mjs --epochs=40 &&
+             node tools/eval/bot-brain-check.mjs"

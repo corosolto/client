@@ -1,19 +1,10 @@
-# cs-brasil-ai-bot — PREVIEW SEGURO PARA PR DE FORK (pedido do dono, 06/08).
-#
-# POR QUE EXISTE: a Vercel não builda PR de fork (certo — build de estranho com segredo é
-# furo). Este bot AVALIA o diff SEM fazer checkout do código do fork (só a API de diff) e,
-# se o PR for de baixo risco, aplica o label `preview-autorizado` + comenta o veredito.
-# O deploy do preview roda num segundo job, GATED pelo label e pelo environment
-# `preview-forks` (proteja com required reviewer se quiser mão humana no meio).
-#
-# SEGURANÇA (não relaxar): o job de avaliação usa pull_request_target e NUNCA pode dar
-# checkout no código do PR nem rodar nada dele. A heurística é ALLOWLIST: qualquer toque
-# em workflow/scripts/deps/api reprova. O hook de IA (avaliar o conteúdo com um modelo)
-# entra depois no mesmo lugar — a decisão continua sendo só um label.
+# Código de fork só recebe segredos depois de um mantenedor aprovar o SHA atual.
+# Todo push revoga o label; a próxima revisão precisa aplicá-lo novamente.
 name: preview-bot
+
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   pull-requests: write
@@ -21,10 +12,20 @@ permissions:
 
 jobs:
   avaliar:
-    if: github.event.pull_request.head.repo.full_name != github.repository
+    if: >-
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      github.event.action != 'labeled'
     runs-on: ubuntu-latest
     steps:
-      - name: avalia o diff pela API (sem checkout do fork)
+      - name: revoga aprovação quando o SHA muda
+        if: github.event.action == 'synchronize'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: gh pr edit "$PR" --repo "$REPO" --remove-label "preview-autorizado" 2>/dev/null || true
+
+      - name: classifica o diff sem executar código do fork
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
@@ -32,43 +33,58 @@ jobs:
         run: |
           gh api "repos/$REPO/pulls/$PR/files" --paginate \
             --jq '.[] | .filename + " +" + (.additions|tostring) + " -" + (.deletions|tostring)' > /tmp/arquivos.txt
-          cat /tmp/arquivos.txt
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
           PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
-          echo "linhas=$TOTAL arquivos_sensiveis=$PERIGO"
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
-            gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: este PR toca área sensível (workflows/deps/api/deploy) ou é grande demais ($TOTAL linhas) — preview automático NEGADO. Um mantenedor pode liberar aplicando o label \`preview-autorizado\` manualmente."
-            exit 0
+            TEXTO="área sensível ou diff grande; revisão manual obrigatória"
+          else
+            TEXTO="candidato a preview; um mantenedor deve revisar o SHA e aplicar o label"
           fi
-          gh pr edit "$PR" --repo "$REPO" --add-label "preview-autorizado"
-          gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: diff de baixo risco ($TOTAL linhas, sem arquivo sensível) — label \`preview-autorizado\` aplicado; o preview sobe no job seguinte. Regras: CONTRIBUTING.md."
+          gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO \`preview-autorizado\`."
 
   preview:
-    needs: avaliar
-    if: contains(github.event.pull_request.labels.*.name, 'preview-autorizado') || success()
+    if: >-
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'preview-autorizado'
     runs-on: ubuntu-latest
     environment: preview-forks
     steps:
-      - name: só continua com o label
+      - name: confirma mantenedor, label e SHA aprovado
         env:
           GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          EVENT_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          TEM=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels" --jq '[.[].name] | index("preview-autorizado") != null')
-          [ "$TEM" = "true" ] || { echo "sem label — nada a fazer"; exit 0; }
-      - uses: actions/checkout@v4
+          PERMISSION=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq .permission 2>/dev/null || echo none)
+          case "$PERMISSION" in admin|maintain|write) ;; *) echo "ator sem permissão de mantenedor"; exit 1 ;; esac
+          API_SHA=$(gh api "repos/$REPO/pulls/$PR" --jq .head.sha)
+          [ "$API_SHA" = "$EVENT_SHA" ]
+          gh api "repos/$REPO/issues/$PR/labels" --jq 'any(.[]; .name == "preview-autorizado")' | grep -qx true
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.event.pull_request.head.sha }}   # código do FORK: roda SÓ aqui, com environment gated
-      - uses: actions/setup-node@v4
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22 }
-      - run: npm i -g vercel@latest
-      - name: preview na Vercel
+      - run: npm i -g vercel@58.9.0
+      - name: publica preview
+        id: deploy
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
           vercel build --token "$VERCEL_TOKEN"
           URL=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN")
-          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body "🤖 **cs-brasil-ai-bot**: preview no ar → $URL"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+      - name: comenta URL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body "🤖 **cs-brasil-ai-bot**: preview no ar → ${{ steps.deploy.outputs.url }}"

@@ -243,8 +243,9 @@ não é motivo para forçar um conserto. São três casos, e cada um tem saída 
 **3 · Refute o palpite óbvio.** Meça-o e escreva o resultado negativo na entrada. É o passo que
 mais economiza tempo e o mais pulado.
 
-**4 · Conserte na causa, não no sintoma.** Comentário em português no código com a causa raiz e
-o número medido — é o padrão desta base e é o que sobrevive ao próximo handoff.
+**4 · Conserte na causa, não no sintoma.** O antes/depois e a causa raiz ficam na entrada do
+`KNOWN-BUGS.md`. No código, prefira nomes claros; se uma invariante não couber neles, use no
+máximo duas linhas e aponte para a entrada, sem copiar a investigação.
 
 **5 · Mute a régua.** Reintroduza o defeito e exija vermelho na cláusula certa. Sem isso o passo
 2 não vale.

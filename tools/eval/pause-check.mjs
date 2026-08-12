@@ -40,11 +40,10 @@
              mutação: `pauseArmed(){ return false; }` → vermelha
      PAUSA4  clique no BOTÃO (painel armado) NÃO retoma — o menu tem que funcionar
              mutação: `_pauseBackdrop(){ return true; }` → vermelha
-     PAUSA5  nenhum caminho AUTOMÁTICO pro menu: todo chamador de `quitToMenu()` e
-             todo `show('main-menu')` de main.js está dentro de um handler de clique
-             (ou do ESC do próprio menu). Esta é a cláusula que reprova o defeito
-             voltando por outra porta — um `setTimeout(quitToMenu)`, um `onerror`
-             que "recupera" pro menu, um `_endMatch` que sai da partida.
+     PAUSA5  nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo: todo chamador de
+             `quitToMenu()` e todo `show('main-menu')` está num handler deliberado. A
+             única exceção é a fronteira de `startGame`, antes de existir partida
+             utilizável, que limpa uma abertura quebrada e entrega o BUG-42 ao modal.
              mutação: `setTimeout(quitToMenu, 1000)` em qualquer lugar → vermelha
      PAUSA6  as duas ações destrutivas exigem DOIS toques com intervalo mínimo
              (um clique só nunca tira o jogador da partida; e uma rajada de cliques
@@ -54,6 +53,7 @@
 
    USO
      node tools/eval/pause-check.mjs          # cláusulas 1-6 (node puro, ~5 s)
+     node tools/eval/pause-check.mjs --mutante=automenu
      node tools/eval/pause-check.mjs --geo    # + a medição de geometria (Chromium)
                                               #   precisa de `node tools/eval/serve.mjs 8123`
    Sai 1 se qualquer cláusula falhar.
@@ -67,13 +67,19 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const JSON_OUT = process.argv.includes('--json');
 const GEO = process.argv.includes('--geo');
+const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+if (MUTANTE && MUTANTE !== 'automenu') {
+  console.error(`mutante desconhecido: ${MUTANTE}`);
+  process.exit(1);
+}
 
 const out = [];
 const put = (id, desc, ok, evid) => out.push({ id, desc, ok, evid });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const GAME_JS = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
-const MAIN_JS = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
+let MAIN_JS = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
+if (MUTANTE === 'automenu') MAIN_JS += '\nsetTimeout(quitToMenu, 1000); // MUTANTE PAUSA5\n';
 
 /* ---------- 1-4: COMPORTAMENTO, na classe Game de verdade -------------------
    Nada de ler declaração de constante: a régua DIRIGE o jogo. Ela derruba o
@@ -118,11 +124,11 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   pausadoAntes === true && g.paused === true,
   `pausadoAntes=${pausadoAntes} pausadoDepois=${g.paused}`);
 
-/* ---------- 5: nenhum caminho AUTOMÁTICO pro menu --------------------------
+/* ---------- 5: nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo ----
    Toda linha de main.js que chama `quitToMenu()` ou `show('main-menu')` tem que estar
    num handler de clique (`.onclick`/`addEventListener('click'`) ou no handler de ESC do
-   próprio menu. Um `setTimeout(quitToMenu, …)`, um `catch` que "recupera" pro menu ou um
-   fim de partida que sai sozinho reprovam aqui. */
+   próprio menu. A exceção é o catch delimitado de `startGame`: ele desfaz uma partida
+   que não terminou de abrir e aciona o modal do BUG-42. */
 {
   const linhas = MAIN_JS.split('\n');
   /* O CORPO de quitToMenu() é isento — quem decide são os chamadores dela, e eles passam
@@ -132,6 +138,12 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   const ini = linhas.findIndex((l) => /^\s*function quitToMenu\s*\(/.test(l));
   let fim = -1;
   if (ini >= 0) for (let j = ini + 1; j < linhas.length; j++) if (/^\}/.test(linhas[j])) { fim = j; break; }
+  const startIni = linhas.findIndex((l) => /^async function startGame\s*\(/.test(l));
+  const startFim = linhas.findIndex((l, i) => i > startIni && /^async function _startGame\s*\(/.test(l));
+  const startBloco = startIni >= 0 && startFim > startIni ? linhas.slice(startIni, startFim).join('\n') : '';
+  const fronteiraDeAbertura = /__gameLaunch\?\.begin/.test(startBloco)
+    && /catch\s*\(/.test(startBloco) && /game = null/.test(startBloco)
+    && /__gameLaunch\?\.fail/.test(startBloco);
   const suspeitas = [];
   for (let i = 0; i < linhas.length; i++) {
     const L = linhas[i];
@@ -145,6 +157,7 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
     // dentro do corpo de quitToMenu, só o `show` é isento; uma CHAMADA a quitToMenu ali
     // dentro seria recursão e continua sendo suspeita
     if (!chamada && ini >= 0 && i > ini && i < fim) continue;
+    if (!chamada && fronteiraDeAbertura && i > startIni && i < startFim) continue;
     // contexto: o handler pode abrir algumas linhas acima (onclick de bloco)
     const ctx = linhas.slice(Math.max(0, i - 8), i + 1).join('\n');
     const porClique = /\.onclick\s*=|addEventListener\(\s*['"]click['"]|addEventListener\(\s*['"]keydown['"]|needsConfirm\(/.test(ctx);
@@ -152,8 +165,8 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   }
   // o boot (`show(isMobile ? … : 'main-menu')`) é legítimo: não há partida nenhuma ainda
   const reais = suspeitas.filter((s) => !/isMobile/.test(s));
-  put('PAUSA5', 'nenhum caminho AUTOMÁTICO pro menu principal (todo retorno é clique do jogador)',
-    reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só onclick/keydown do menu');
+  put('PAUSA5', 'nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo',
+    reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só ação deliberada ou catch delimitado de startGame');
 }
 
 /* ---------- 6: um clique só nunca destrói a partida ------------------------

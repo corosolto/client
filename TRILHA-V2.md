@@ -114,6 +114,13 @@ patch → qual régua deveria ficar vermelha). O script aplica, roda, restaura, 
 **Aceite.** Rodando hoje, ele acha pelo menos os buracos já conhecidos e documentados
 (`knifeRot`, pose de ADS, escala por arma). Se não achar, o catálogo está incompleto.
 
+**Feito (issue #86, 08/2026).** `tools/eval/mutate.mjs` + catálogo declarativo
+`tools/eval/mutantes.json`: `npm run eval:mutate` aplica cada mutante, roda a régua alvo
+(`AUD1`) e restaura em `finally` — SIGINT/SIGTERM restauram via handler, provado com
+`--demo-interrompe` (git fica limpo). Catálogo atual: 3/3 mutantes MATAM a AUD1
+(`knifeRot`, `_adsPose.pistol`, escala por arma) — os três buracos documentados mordem.
+Mutante novo = edit só no JSON, zero mudança no motor.
+
 ## T5. Skill `regua` — irmã do `bug-hunt`
 
 **Por quê.** `.claude/skills/bug-hunt` já codifica *"bug que o dono reporta vira invariante

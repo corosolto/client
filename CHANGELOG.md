@@ -8,14 +8,116 @@
 > 2.0.0           beta rodando em produção sem P0 novo
 > ```
 >
-> **O jogo está em `2.0.0-alpha.4`.** Prerelease do semver ordena sozinho
-> (`alpha` < `beta` < release), então `npm version prerelease` cuida do bump.
+<!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
+
+**O jogo está em `2.0.0-alpha.79`.** Prerelease do semver ordena sozinho
+(`alpha` < `beta` < release), e o fluxo automático cuida do bump.
+
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
+
+<!-- END:GERADO:versao_atual -->
 >
 > **Renumeração:** as entradas abaixo marcadas `[3.x]` foram publicadas como `2.0.0-alpha.N`
 > — o contador tinha saltado de `1.15.0` para `3.1.0` sem nenhum release no meio, e **nenhuma
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.79] — 2026-08-11
+
+### Mudado
+- fix(ci): keep production deploy fallback manual (#193)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.79).
+
+## [2.0.0-alpha.78] — 2026-08-11
+
+### Mudado
+- fix(three): tolerate null shader logs (#192)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.78).
+
+## [2.0.0-alpha.77] — 2026-08-11
+
+### Mudado
+- fix(webgl): ampliar compatibilidade no Linux (#191)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.77).
+
+## [2.0.0-alpha.76] — 2026-08-11
+
+### Mudado
+- fix(webgl): add Linux compatibility mode
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.76).
+
+## [2.0.0-alpha.75] — 2026-08-11
+
+### Mudado
+- fix(site): restore live counts for all five factions
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.75).
+
+## [2.0.0-alpha.74] — 2026-08-11
+
+### Mudado
+- feat(botbrain): bots com rede neural que aprende com jogadores
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.74).
+
+## [2.0.0-alpha.73] — 2026-08-11
+
+### Mudado
+- chore(eval): aposenta 5 famílias de evals obsoletos (G2-R6/R7/R8/R14, R7x, P1/P0) (#43)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.73).
+
+## [2.0.0-alpha.72] — 2026-08-11
+
+### Mudado
+- fix(eval): censo de grafite mede em 3 alturas, não só na do olho (#76)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.72).
+
+## [2.0.0-alpha.71] — 2026-08-11
+
+### Mudado
+- fix(identity): migrar autenticação de jogador para UID
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.71).
+
+## [2.0.0-alpha.70] — 2026-08-11
+
+### Mudado
+- docs: atualiza estado e audita backlog
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.70).
+
+## [2.0.0-alpha.69] — 2026-08-11
+
+> Saldo agrupado das versões `alpha.33` a `alpha.69`. A partir daqui o release automático
+> abre uma seção para toda versão publicada, e `docs:check` reprova se o topo divergir do jogo.
+
+### Corrigido - abertura e recuperação do jogo
+- O botão JOGAR deixou de ficar inerte por erro de inicialização; falhas de abertura agora
+  voltam ao menu com mensagem amigável, tentativa de novo e erro preservado no console.
+- O watchdog passou a separar navegação do carregamento 3D, reduzindo falsos timeouts em
+  desktop e celular sem esconder travamentos reais.
+- UUIDs anônimos ganharam compatibilidade com navegadores sem `crypto.randomUUID`, sem cair
+  em identificadores previsíveis.
+
+### Adicionado - telemetria e operação
+- Eventos anônimos de partida, funil, aquisição e performance passaram a registrar mapa,
+  modo, personagem, arma, resultado e as cinco facções; `/api/health` e o monitor de
+  produção tornam falhas de ingestão visíveis.
+- Erros públicos de API deixaram de expor detalhes internos; o diagnóstico usa UID anônimo,
+  enquanto cooldown e mensagens úteis continuam chegando ao jogador.
+- O pipeline ganhou triagem de issues e PRs, previews controlados, smoke de produção,
+  ratchet de dívidas, mutation testing e commits automáticos assinados via DCO.
+
+### Adicionado - jogo, HUD e ferramentas
+- HUD mobile em retrato, menu de armas no modo `?vmlab=1`, tabela comparativa das 26 armas
+  e editor unificado de viewmodel/mapa com alinhamento, recuo e teste no jogo.
+- O boot passou a carregar animações mescladas e wallpapers WebP, reduzindo centenas de
+  requests; bancadas e viewmodels de laboratório ficam fora do pacote publicado.
+- Cartazes tiveram proporção validada, grafites órfãos passaram a reprovar o build e as
+  gerações antigas de probes de áudio foram aposentadas.
+
+### Mudado - releases e documentação
+- Releases automáticos preservam créditos nativos do GitHub, usam tags anotadas e assinam
+  o commit do bot com DCO. O Graphify passou a documentar dependências e zonas de conflito.
+- Textos públicos deixaram de usar travessão e a documentação gerada acompanha versão,
+  arquitetura, colaboradores e contagens do código.
 
 ## [2.0.0-alpha.32] — 2026-08-07
 

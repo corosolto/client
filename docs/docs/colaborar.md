@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**7 pessoas** assinam commit no histórico **desta branch**: `ruben-cytonic`, `William Oliveira`, `Juan Versolato Lopes`, `CS BRASIL Bot`, `Ruben`, `daltonfontes`, `github-actions[bot]`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**6 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `William Oliveira`, `Juan Versolato Lopes`, `Ruben`, `Ruben Marcus`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -144,7 +144,7 @@ em silêncio uma decisão estética que nenhuma invariante codificava. Caso comp
 Cole a saída de `node tools/eval/invariants.mjs` antes e depois. Se alguma crítica ficou
 vermelha, o PR não entra. Se você **consertou** uma vermelha, diga qual e mostre.
 
-O quality gate está vermelho hoje ([veja quais](./estado.md), e a lista viva com causa raiz está
+O estado do quality gate deve ser medido ([veja como](./estado.md)); a lista viva com causa raiz está
 no `KNOWN-BUGS.md`). Isso não é licença para piorar: o compromisso é *"a sua mudança não
 acrescenta vermelho"*.
 
@@ -249,7 +249,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `awp_map` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.856 |
-| `fy_pool_day` | Piscina da Treta | rodadas | `—` | — |
+| `fy_pool_day` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
 | `fy_havan` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
 | `fy_ferrovelho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
 | `fy_quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
@@ -270,7 +270,7 @@ Dois avisos que custam tempo se você não souber:
 - **`praca_old` ("Praça (clássico)") NÃO existe mais.** Saiu do registro e o
   `public/js/map.js` foi apagado junto (pedido literal do dono: *"vamos apagar praça
   clássica"*). Se você encontrar `praca_old` numa saída de régua, essa saída é anterior à
-  remoção — é o caso da tabela colada em [Estado medido](./estado.md).
+  remoção — é o caso do histórico explicado em [Estado atual](./estado.md).
 - **`map_piscinao_ramos.js` existe no disco e NÃO está no registro** (é a versão "Piscinão",
   fora do menu). Arquivo de mapa em `public/js/` não implica mapa jogável; quem decide é
   o objeto `MAPS`.

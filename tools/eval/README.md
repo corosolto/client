@@ -21,6 +21,7 @@ com código 1 em falha crítica.
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
 | `vm-kick-sim.mjs` | Coice do viewmodel: near plane + pitch em rajada. Prova que a coronha não atravessa a lente no pico. | `vm_kick_sim.json` |
 | `botsim.mjs` | Navegação dos bots: 60 s × 5 mapas com sementes fixas. Roda a classe `Game` de verdade com os mapas de verdade. | `npm run eval:bots` |
+| `release-check.mjs` | Release usa o nome CSBR e as notas nativas do GitHub, que preservam PRs e contribuidores. | `npm run eval:release` |
 | `../gen-arch.mjs` | (fora deste diretório) Gera e valida o `ARCH.md`. `--check` reprova se estiver desatualizado. | `npm run arch` |
 
 ## 2. Documentos — leitura, não execução
@@ -119,35 +120,54 @@ conhecimento deles já está ou nos portões da §1, ou nos comentários de caus
 raiz dentro do `weapons.js`/`game.js`, ou no `CHANGELOG.md`. Ficam versionados
 porque reproduzem medições históricas — não porque alguém deva rodá-los.
 
-**Sondas de áudio (5 gerações, mesma pergunta):**
-`audio-probe.mjs` · `audio-probe2.mjs` · `audio-probe3.mjs` · `audio-probe4.mjs` · `audio-probe5.mjs`
-→ o que sobreviveu está no manifest e no fallback sintetizado.
+**Aposentados** (movidos para `tools/eval/aposentados/`, fora do `grep` de
+quem busca no arnês ativo): as 5 gerações de `audio-probe*.mjs` (sondas da
+rodada 4 — grafo WebAudio, eco, duck, pan/PropDelay). O que cada uma media
+sobreviveu nos comentários de causa raiz do `audio.js` (master chain com
+limiter anti-clip, `duckBus` sidechain, caps de bounce em ~80ms) e nos portões
+`audio:check`/`assert:assets` — nenhuma delas é mais execução de portão.
 
-**Rodada G2-R6 (pose e troca de arma):**
+**Aposentada — Rodada G2-R6 (pose e troca de arma)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
 `g2r6-blackband.mjs` · `g2r6-bots.mjs` · `g2r6-bots2.mjs` · `g2r6-capture.mjs` ·
-`g2r6-pose-tune.mjs` · `g2r6-switch-capture.mjs` · `g2r6-switch2.mjs`
+`g2r6-pose-tune.mjs` · `g2r6-switch-capture.mjs` · `g2r6-switch2.mjs`. O que
+mediram sobreviveu: a pose e o framing da arma nos comentários de causa raiz do
+`weapons.js`/`game.js`; o critério de troca (holster→draw, nunca duas armas no
+quadro) no `BAR-CONSISTENCIA.md` §C14; e `g2r6-bots2` foi o predecessor do
+`botsim.mjs`, que o substituiu (ver o cabeçalho do `botsim.mjs`).
 
-**Rodada G2-R7 / R7b / R8 (framing e boca do cano):**
-`g2r7-aksweep.mjs` · `g2r7-capture.mjs` · `g2r7-mzmarks.mjs` · `g2r7-mzprobe.mjs` ·
-`g2r7-orbit.mjs` · `g2r7-smoke.mjs` · `g2r7b-capture.mjs` · `g2r7b-mzmarks.mjs` ·
-`g2r7b-smoke.mjs` · `g2r7b-sweep.mjs` · `g2r8-sweep.mjs` · `../g2r7-measure.mjs`
-→ **superado** pelo `vm-mint-audit.mjs`, que mede em vez de varrer.
+**Aposentada — Rodada G2-R7 / R7b / R8 (framing e boca do cano)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`g2r7-aksweep.mjs` · `g2r7-capture.mjs` · `g2r7-mzprobe.mjs` · `g2r7-orbit.mjs` ·
+`g2r7-smoke.mjs` · `g2r7b-capture.mjs` · `g2r7b-mzmarks.mjs` · `g2r7b-smoke.mjs` ·
+`g2r7b-sweep.mjs` · `g2r8-sweep.mjs`. Superadas pelo `vm-mint-audit.mjs`, que mede
+em vez de varrer — é lá que o framing e a boca do cano viraram portão.
+**Ficam onde estão** (não são obsoletos: `vmattach.js` os cita como proveniência
+das offsets do viewmodel): `g2r7-mzmarks.mjs` (vmattach.js:18) e
+`../g2r7-measure.mjs` em `tools/` (vmattach.js:15/20/27).
 
-**Rodada G2-R14 (OOM e ADS):**
-`g2r14-ads.mjs` · `g2r14-capture.mjs` · `g2r14-memprobe.mjs`
-→ o `memprobe` foi o que achou o OOM de 322 MB no boot; o problema morreu com a
-migração pros GLBs da Mint.
+**Aposentada — Rodada G2-R14 (OOM e ADS)** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`g2r14-ads.mjs` · `g2r14-capture.mjs` · `g2r14-memprobe.mjs`. O `memprobe` foi o
+que achou o OOM de 322 MB no boot; o problema morreu com a migração pros GLBs da
+Mint, e o registro do episódio ficou no `CHANGELOG.md`.
 
 **Rodada G2-UI:**
 `g2ui-map-bot.mjs` · `g2ui-map-previews.mjs` · `g2ui-map-tp.mjs` ·
 `g2ui-map-walk.mjs` · `g2ui-probe.mjs` · `g2ui-verify.mjs` ·
 `g2-capture.mjs` · `g2-tune.mjs` · `../g2-gunspace.mjs` · `../g2-maskprobe.mjs`
 
-**Menus P1 (3 gerações):**
-`p1-menu.mjs` · `p1-menu2.mjs` · `p1-menu3.mjs` · `p1-game.mjs` · `p0-armas.mjs`
+**Aposentada — Menus P1 (3 gerações) + P0** (movida para
+`tools/eval/aposentados/` em 2026-08-11, issue #43):
+`p1-menu.mjs` · `p1-menu2.mjs` · `p1-menu3.mjs` · `p1-game.mjs` · `p0-armas.mjs`.
+Capturas das telas de menu e da tela de armas de gerações antigas; a UI atual e
+o que essas rodadas decidiram vivem no site/`main.js` e no `CHANGELOG.md`.
 
-**Rodadas R7x (feel):**
-`r7-feel-capture.mjs` · `r75-capture.mjs` · `r76-capture.mjs` · `r77-capture.mjs`
+**Aposentada — Rodadas R7x (feel)** (movida para `tools/eval/aposentados/` em
+2026-08-11, issue #43):
+`r7-feel-capture.mjs` · `r75-capture.mjs` · `r76-capture.mjs` · `r77-capture.mjs`.
+Eram capturas de tuning de game feel; o que decidiram sobreviveu nos comentários
+de causa raiz do `game.js`/`springs.js` e no `CHANGELOG.md`.
 
 **Look Quake 4** (o projeto escolheu o look CS 1.6 na v3.2.0):
 `vm-quake-capture.mjs` · `vm-quake-scen.mjs` · `vm_quake_measure.py`

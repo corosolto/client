@@ -1,5 +1,5 @@
 ---
-// /personagens — o elenco inteiro.
+// /personagens - o elenco inteiro.
 //
 // A versão anterior listava 8 personagens em 2 facções e afirmava "dezoito
 // arquétipos" no primeiro parágrafo. O jogo hoje tem 44 personagens em 5
@@ -8,7 +8,7 @@
 // na página é o tipo de coisa que um assistente de IA repete como fato.
 //
 // VISUAL (05/08/2026). Eram 44 caixas de texto idênticas, empilhadas, sem uma
-// única imagem — num site cujo assunto é um elenco em 3D. As placas de facção
+// única imagem - num site cujo assunto é um elenco em 3D. As placas de facção
 // (`public/img/team-*.webp`) foram renderizadas dos GLB reais em 04/08 e nunca
 // tinham sido usadas em lugar nenhum.
 //
@@ -26,12 +26,12 @@ const total = PERSONAGENS.length;
 /* O `id` da facção (`P`, `B`, `urbanas`…) não é o nome do arquivo da placa, e
    não dá pra derivar um do outro: `P` → `petistas`, `B` → `bolsonaristas`.
    O mapa fica explícito aqui para que uma facção nova sem arte apareça como
-   ausente — e não como a arte errada de outro time. */
+   ausente - e não como a arte errada de outro time. */
 const PLACA: Record<string, string> = {
   E: 'time-e', B: 'time-b', urbanas: 'tribos',
   palhacos: 'palhacos', funkeiros: 'funkeiros',
 };
-/* /img/faccoes/: a key-art nova (06/08) gerada fiel aos GLBs — substitui as placas team-*. */
+/* /img/faccoes/: a key-art nova (06/08) gerada fiel aos GLBs - substitui as placas team-*. */
 const placa = (id: string) => (PLACA[id] ? `/img/faccoes/${PLACA[id]}.webp` : null);
 const slug = (nome: string) =>
   nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -61,11 +61,11 @@ const jsonld = [
 ];
 ---
 <Layout
-  {/* og:image própria, gerada em runtime por /api/og/personagens.png (issue #33) —
+  {/* og:image própria, gerada em runtime por /api/og/personagens.png (issue #33) -
       antes caía na og-image.png genérica, igual pra todo o site. */}
   ogImage={abs('/api/og/personagens.png')}
   ogImageAlt={`Card com o elenco do ${BRAND_FULL}`}
-  title={`Personagens — os ${total} do elenco | ${BRAND_FULL}`}
+  title={`Personagens - os ${total} do elenco | ${BRAND_FULL}`}
   description={`Os ${total} personagens jogáveis do ${BRAND_FULL} em ${FACCOES.length} facções: Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros. Arquétipos 100% fictícios, sem pessoas reais.`}
   jsonld={jsonld}
   h1="Personagens"
@@ -77,7 +77,7 @@ const jsonld = [
     <link rel="alternate" hreflang="en" href={abs('/characters')} />
   </Fragment>
   <Fragment slot="sub">
-    {total} arquétipos jogáveis em {FACCOES.length} facções, todos 100% fictícios e originais —
+    {total} arquétipos jogáveis em {FACCOES.length} facções, todos 100% fictícios e originais -
     nenhuma pessoa real foi consultada (ou poupada). Cada um tem silhueta, acessórios e estilo
     próprios, modelados em 3D. <strong>A escolha é de estilo, não de vantagem:</strong> todos jogam
     exatamente igual.
@@ -97,7 +97,7 @@ const jsonld = [
       {/* PLACA EM RETRATO, e não faixa larga. As placas são 640×1601 (0,4:1):
           num bloco largo e baixo o `cover` amplia 1,6× e sobra um close de olho
           e boca. Em 210×230 o recorte mostra o time inteiro da cintura pra
-          cima — que é o enquadramento da tela 02 do jogo. */}
+          cima - que é o enquadramento da tela 02 do jogo. */}
       <header class="fhead">
         {placa(g.id) && (
           <div class="fplate">
@@ -110,7 +110,7 @@ const jsonld = [
             {g.elenco.length} personagens</p>
           <h2 id={slug(g.nome)} style={`color:${g.cor}`}>
             {/* Link pra página própria da facção (/faccoes/<id>). O <h2> continua
-                sendo o título da seção aqui — o link é o caminho pro recorte, não
+                sendo o título da seção aqui - o link é o caminho pro recorte, não
                 uma navegação escondida. */}
             <a href={`/faccoes/${g.id}`} style={`color:${g.cor};text-decoration:none`}>{g.nome}</a>
           </h2>
@@ -125,7 +125,7 @@ const jsonld = [
         {g.elenco.map(p => (
           <article class="pcard">
             {p.id && <img class="pfoto" src={`/img/chars/${p.id}.webp`} width="180" height="231"
-              loading="lazy" decoding="async" alt={`${p.nome} — personagem do ${BRAND_FULL}`} />}
+              loading="lazy" decoding="async" alt={`${p.nome} - personagem do ${BRAND_FULL}`} />}
             <strong>{p.nome}</strong>
             <p>{p.blurb}</p>
           </article>
@@ -139,7 +139,7 @@ const jsonld = [
     Duas das cinco facções não têm nada de político: <strong>Tribos Urbanas</strong> (emo, punk,
     metaleiro, skatista, rapper, rasta, clubber, black metal, pagodeiro) e
     <strong> Funkeiros</strong>. Elas entram na treta pelo estilo, e jogam do lado que quiserem.
-    Nenhum personagem representa pessoa real, viva ou morta — são arquétipos, e a zoeira é
+    Nenhum personagem representa pessoa real, viva ou morta - são arquétipos, e a zoeira é
     distribuída igualmente.
   </p>
 

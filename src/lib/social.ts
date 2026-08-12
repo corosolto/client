@@ -2,7 +2,7 @@
 
 // normaliza URLs sociais de qualquer formato: handle cru, @handle, url parcial
 // ("x.com/foo"), url completa, e o bug do prefixo duplicado
-// ("linkedin.com/in/https://www.linkedin.com/in/foo") — pega sempre a última ocorrência.
+// ("linkedin.com/in/https://www.linkedin.com/in/foo") - pega sempre a última ocorrência.
 export function normalizeSocialUrl(s?: string | null): string | null {
   if (!s) return null;
   const v = s.trim();
@@ -75,7 +75,7 @@ export function twitterHandle(s?: string | null): string | null {
   return m ? m[1] : null;
 }
 
-// avatar por rede social — X via unavatar.io, GitHub direto (oficial).
+// avatar por rede social - X via unavatar.io, GitHub direto (oficial).
 // Instagram/LinkedIn/TikTok não têm fetch público: aí o usuário faz upload.
 export function socialAvatar(s?: string | null): string | null {
   if (!s) return null;

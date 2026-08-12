@@ -297,7 +297,7 @@ coberta por máscara/preto, ou se a mira desaparece, ou se a arma some do quadro
 que pulava" já foi diagnosticada uma vez neste projeto — não pode voltar.
 
 **C10 — ADS entra e sai sem teleporte.**
-*Método:* `tools/eval/g2r14-ads.mjs`. Transição completa em **≤120 ms**, e **nenhum frame
+*Método:* `tools/eval/aposentados/g2r14-ads.mjs`. Transição completa em **≤120 ms**, e **nenhum frame
 desloca o VM mais de 15% do trajeto total**. Um pulo de posição em 1 frame é FAIL mesmo que o
 estado final esteja certo.
 
@@ -320,7 +320,7 @@ frame em que a animação termina**, nem antes nem depois. *Método:* log de tem
 Diferença **≤ 50 ms**.
 
 **C14 — Troca de arma tem holster e draw.**
-*Método:* `tools/eval/g2r6-switch-capture.mjs`. Nenhum frame com **duas armas visíveis**;
+*Método:* `tools/eval/aposentados/g2r6-switch-capture.mjs`. Nenhum frame com **duas armas visíveis**;
 nenhum frame com **nenhuma arma**; a arma nova entra pela borda inferior do quadro (como em
 Halo/CS), não materializa na posição final.
 

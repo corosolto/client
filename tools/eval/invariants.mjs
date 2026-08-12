@@ -1004,7 +1004,8 @@ function runNode(script, env = {}, args = []) {
     // pitch/yaw/roll saem da tabela por CLASSE (t.pitch/t.yaw/t.roll), não de literais
     vmPitch: !!argsRotVm && /\bt\.pitch\b/.test(gsrc) && /\bpit\b/.test(argsRotVm[0]),
     vmYaw: !!argsRotVm && /\bt\.yaw\b/.test(gsrc) && /\byaw\b/.test(argsRotVm[1]),
-    vmRoll: !!argsRotVm && /\bt\.roll\b/.test(argsRotVm[2]),
+    vmRoll: !!argsRotVm && /\brol\b/.test(argsRotVm[2])
+      && /const\s+rol\s*=.*\bVM_KNOB\.roll\b.*\bt\.roll\b/.test(gsrc),
     // e o ADS chama a rampa nos eixos X e Y (o Z, o roll, fica de fora de propósito)
     vmAdsRotChamado: !!argsRotAds && /\bvmAdsRot\s*\(/.test(argsRotAds[0]) && /\bvmAdsRot\s*\(/.test(argsRotAds[1]),
     /* AS DUAS ETAPAS DA POSE DE MIRA (RODADA DA LEGIBILIDADE). O vm-mint-audit passou a
@@ -2164,7 +2165,21 @@ function runNode(script, env = {}, args = []) {
   }
 }
 
-// ── 9. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ────────────
+// ── 9. HUD EXPERIMENTAL ─────────────────────────────────────────────────────
+// BUG-43: o protótipo do menu de armas existia apenas em dev.html, podado da
+// produção. A régua executa o método real com e sem ?vmlab=1.
+{
+  const out = runNode('vmlab-hud-check.mjs', {}, ['--json']);
+  let audit = null;
+  try { audit = JSON.parse(out); } catch {}
+  const itens = audit?.resultados || [];
+  const falhasHud = itens.filter((item) => !item.ok);
+  put('HUD1', '?vmlab=1 materializa o menu de armas do loadout no HUD real',
+    itens.length === 4 && falhasHud.length === 0,
+    itens.length ? itens.map((item) => `${item.id}:${item.ok ? 'ok' : item.evid}`).join(' · ') : out.trim());
+}
+
+// ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────
 skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — use tools/eval/motion.mjs');
 skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — use tools/eval/motion.mjs');
 skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — use tools/eval/motion.mjs');

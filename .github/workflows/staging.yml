@@ -1,0 +1,52 @@
+name: staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+jobs:
+  staging-config:
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          STAGING_URL: ${{ secrets.STAGING_URL }}
+        run: |
+          if [ -n "$STAGING_URL" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "STAGING_URL is not configured; skipping staging verification."
+          fi
+
+  verify-staging:
+    needs: staging-config
+    runs-on: ubuntu-latest
+    if: needs.staging-config.outputs.available == 'true'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Probe staging
+        run: curl -fsS "${{ secrets.STAGING_URL }}" >/dev/null
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke against staging
+        env:
+          BASE_URL: ${{ secrets.STAGING_URL }}
+        run: npx playwright test --config=playwright.smoke.config.mjs tests/smoke/web-smoke.spec.js --reporter=list --trace=on --output=test-results
+      - name: Upload staging smoke artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: staging-smoke-artifacts
+          path: |
+            test-results
+          if-no-files-found: ignore

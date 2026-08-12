@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado: **2026-08-04**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-11**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatados, ainda não reproduzidos*.
 >
@@ -89,6 +89,110 @@ monstruosa aprovada. A revisão adversarial também reprovou a
 brasilidade: a silhueta lê como lobisomem de fantasia genérico, e
 `references/mitico/lobisomem/` ainda não tem `FONTE.md`. Não afrouxar o teto nem inventar
 adereço sem decisão do dono.
+
+### ~~BUG-45 · log WebGL nulo derrubava o loop de render~~ · RESOLVIDO 11/08
+
+**Evidência.** As issues #108 (alpha.41, Safari) e #169 (alpha.57, Chrome) terminavam
+em `getShaderInfoLog(...).trim()` e `getProgramInfoLog(...).trim()` dentro do Three r160.
+Um GL falso retornando `null` reproduz o mesmo `TypeError` nos quatro acessos do bundle.
+
+**Causa.** A especificação WebGL permite `DOMString?` nesses dois métodos, mas o bundle
+assumia string. O diagnóstico secundário escondia o erro original do shader e podia se repetir
+a cada frame. O [Three #31438](https://github.com/mrdoob/three.js/commit/b62351b66fe5c44fd5612e051034c734abed2104)
+corrigiu a mesma falha no r179.
+
+**Correção.** Foi portado apenas o fallback oficial `|| ''` nos quatro acessos; atualizar
+todo o Three removeria a compatibilidade WebGL1 que este jogo ainda precisa. Como `/vendor/`
+tem cache imutável por um ano, jogo, site e editor acrescentam a versão do pacote ao core;
+os 13 arnêses HTML usam o hash do conteúdo. Isso faz o patch chegar a navegadores que já
+tinham o r160 em cache e impede que diagnósticos manuais rodem um bundle antigo.
+
+**Limite.** A guarda preserva o diagnóstico e o loop, mas não torna um shader inválido válido.
+#115, #120, #121, #127 e #130 continuam sendo a família canônica de compilação/link.
+
+**Régua: `tools/eval/shader-log-check.mjs`** (`npm run eval:shaderlog`, em
+`check:fast` e `check:deploy`). SL1–SL3 executam as quatro expressões reais com `null` e texto;
+SL4 exige URL versionada e SL5 confere o hash dos arnêses quando `/vendor/` é imutável. Os mutantes `sem-guardas` e
+`sem-cache-bust` deixam a régua vermelha.
+
+### ~~BUG-44 · Linux não consegue abrir o WebGL~~ · RESOLVIDO NO APP 11/08
+
+**Sintoma (do dono):** *"ok tem um erro de webgl, meu colega tem linux e nao consegue rodar, tem como consertar isso?"*
+
+**Causa raiz confirmada.** `public/js/glcontext.js` começava por `high-performance` com
+MSAA, a combinação mais frágil em Linux híbrido, e cada tentativa do Three virava
+`console.error`/issue antes do próximo degrau. Mesmo depois do boot, `main.js` abria um
+segundo renderer no preview e outro contexto para performance; #129 prova a falha na seleção.
+
+**Reprodução e medição** (`npm run eval:webgl`):
+
+| | antes | depois |
+|---|---:|---:|
+| cláusulas WebGL vermelhas | 7 | 0 |
+| contextos descartáveis no boot | 2 | 0 |
+| erros canônicos numa falha total | 3 classes | 1 |
+
+**Descartado com medição:** não faltava WebGL1. O Three r160 já tentava
+WebGL2, WebGL1 e `experimental-webgl`; repetir a mesma chamada não alcançaria outro driver.
+A #181 isolada também não prova falha total: ela tem só o erro provisório, sem o
+`sem_webgl` que acompanha as falhas fatais antigas.
+
+**Correção.** A factory sonda contexto padrão primeiro, degrada MSAA/GPU e passa o contexto
+real ao Three. `?safe=1` prioriza WebGL1, força qualidade baixa só na sessão e usa os 44
+retratos estáticos sem renderer secundário. Capacidade de shader e telemetria reutilizam o
+contexto principal; perda persistente de contexto abre recuperação acionável; fundos 3D
+decorativos falham sem derrubar a página.
+
+**Custo declarado.** WebGL1, llvmpipe e modo seguro usam DPR 0,75, sem bloom/sombras e sem
+preview 3D giratório. Isso compra alcance com qualidade visual menor. Se o navegador não
+criar nem WebGL1, JavaScript não consegue substituir o driver: o painel orienta driver,
+aceleração e outro navegador. O hardware Linux do colega não foi acessado nesta medição.
+
+**Régua: `tools/eval/webgl-compat-check.mjs`** (`npm run eval:webgl`, no `check:fast` e
+`check:deploy`). Dez cláusulas e nove mutações: `alto-primeiro`, `sem-webgl1`,
+`erro-provisorio`, `contexto-extra`, `fundo-fatal`, `sem-context-loss`,
+`qualidade-persistida`, `canvas-reusado` e `preview-null` acendem WG1-WG10.
+
+### ~~BUG-42 · Erro bruto na abertura não dava saída para o jogador~~ · RESOLVIDO 10/08
+
+**Como aparecia.** O coletor global de `src/pages/index.astro` usava a mesma tarja vermelha
+para telemetria, diagnóstico e mensagem ao jogador. Qualquer `error` ou promise rejeitada
+expunha mensagem e stack, mas não oferecia nova tentativa nem confirmação de envio. Uma exceção
+durante `startGame()` também não tinha fronteira própria para limpar loading, jogo parcial,
+pointer lock e tela cheia antes de voltar ao menu.
+
+**Causa raiz.** O código sabia registrar a falha, mas não sabia distinguir três perguntas:
+*o erro deve ser coletado?*, *um debugger pediu o detalhe?* e *uma ação explícita do jogador
+deixou de avançar?* O primeiro `show()` respondia “sim” às três. Além disso, `startGame()`
+executava a abertura inteira sem `try/catch`, então não existia dono para recuperar estado.
+
+**Régua no navegador real:** `npm run eval:boot` (`tools/eval/boot-check.mjs`), viewport
+1200×800. Ela injeta uma exceção no início de `_startGame`, sem editar o arquivo em disco.
+
+| cláusula | antes/mutação | depois |
+|---|---|---|
+| volta ao menu com loading fechado | sem dono da recuperação | sim |
+| modal amigável e dentro da tela | **não** (`--mutante=sem-amigavel`) | sim |
+| mensagem/stack técnica no modo normal | **vaza** (`--mutante=vaza-detalhe`) | não |
+| relatório automático + confirmação manual | botão não confirma | **2 automáticos + 1 confirmação** |
+| painel técnico com `?debug=1` | sim | sim |
+
+As duas mutações saem 1 na cláusula B3; `sem-amigavel` também derruba B4, e
+`vaza-detalhe` prova o risco adicional: a tarja técnica fica acima do modal e bloqueia o botão
+de relatório. A captura servida pode ser regenerada com
+`npm run eval:boot -- --foto=/tmp/coro-solto-launch-error-1200x800.png`.
+
+**Conserto.** `src/pages/index.astro` separa coleta silenciosa, painel de `?debug=1` e modal
+acionável; o modal guarda o corpo exato ligado ao código mostrado, para o botão não reenviar um
+erro anterior. `public/js/main.js` tornou a abertura uma fronteira de erro, desfaz estado parcial
+e marca o fim do boot. Watchdogs cobrem entrada, menu e partida que ficam pendurados sem lançar.
+`public/style.css` serve o modal responsivo no topo da UI.
+
+**Custo declarado / limite.** O watchdog da partida espera até 60 s para não acusar conexão
+lenta como crash. Travamento do processo de GPU/aba inteira não executa JavaScript e continua
+fora do alcance; o fallback operacional permanece `?bloom=0`. O botão TENTAR DE NOVO recarrega
+a página inteira, preservando simplicidade em vez de tentar retomar um renderer possivelmente
+corrompido.
 
 ---
 
@@ -285,8 +389,8 @@ quatro acusaram código inocente):
 ### ~~BUG-29 · "o jogo tá reiniciando do nada, estava num CTF no ferro velho do Zé"~~ · RESOLVIDO 05/08
 
 **NÃO era o BUG-00 de volta.** O menu de pausa continua consertado: `pause-check.mjs`
-passa 6/6 e a `PAUSA5` (nenhum caminho automático pro menu) segue verde. É defeito novo,
-e é **do modo CAPTURA**.
+passa 6/6 e a `PAUSA5` (nenhum caminho automático tira uma partida ativa do jogo) segue
+verde. É defeito novo, e é **do modo CAPTURA**.
 
 **Causa raiz — confirmada.** O bloco de doutrina do modo (`game.js:84-104`) declara que
 *"a RODADA fecha por ALVO DE CAPTURAS (`CTF_CAPS_TO_WIN`) ou por dominação — **nunca por
@@ -546,9 +650,9 @@ sempre em 5 rodadas / 530,7 s, sem transição espúria. `dispose()` só é cham
 
 **Régua: `tools/eval/pause-check.mjs`** (node puro, ~5 s, no `check:fast` e no quality gate como
 invariante `PAUSA`). 6 cláusulas, **7 mutações medidas, todas fazem a cláusula certa ficar
-vermelha** — inclusive `PAUSA5`, que reprova qualquer caminho automático novo (um
-`setTimeout(quitToMenu, 1000)` deixa o quality gate vermelho). Duas armadilhas achadas escrevendo
-a própria régua e consertadas: a isenção do corpo de `quitToMenu` era por "tem `function
+vermelha** — inclusive `PAUSA5`, que reprova caminho automático novo fora da fronteira
+delimitada de abertura (um `setTimeout(quitToMenu, 1000)` deixa o quality gate vermelho).
+Duas armadilhas achadas escrevendo a própria régua e consertadas: a isenção do corpo de `quitToMenu` era por "tem `function
 quitToMenu` por perto" (passava verde com a mutação colada logo abaixo da função) e a busca
 era por `quitToMenu(` (não pegava `setTimeout(quitToMenu, …)`, que é justamente como se
 cria um caminho automático sem escrever parênteses).
@@ -778,6 +882,46 @@ de escrita, portanto isso não está resolvido.
 cadastrados, com skin, PBR completo e orçamento de `2,5k–40k` triângulos. Mutações:
 `--mutante=fallback|semrig|sempbr`. Estado atual: `9/9 GLB · 8/9 rig · 9/9 PBR`, vermelho
 em `bandeirante: 0 skins`.
+
+### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
+
+**Sintoma (do dono):** *"o menu de hud nao esta mostrando com vmlab=1 em producao"*.
+
+**Reprodução em produção (10/08):** abrir `https://www.csbrasil.online/?vmlab=1`.
+O parâmetro chega como `vmlab=1`, mas o DOM publicado contém **zero** elemento
+`#weapon-hud`/`#wephud` e nenhum script cujo `src` contenha `vmlab`.
+
+**Causa raiz - confirmada.** O HUD de slots do #131 nasceu como um mock sobreposto à aba
+"Testar no jogo" de `public/dev.html` (commits `78cf645`, `76f730d` e `10270bd`), com a
+própria mensagem de commit dizendo que ainda precisaria ser levado ao HUD real. O #154
+extraiu somente a bancada local e, corretamente, manteve `dev.html` fora do build publicado.
+Na `main`, `src/pages/index.astro` não declara o menu de armas e `public/js/game.js` não lê
+`vmlab`; portanto a query string não tem como materializar o protótipo em produção.
+
+**Régua:** `tools/eval/vmlab-hud-check.mjs` (`npm run eval:vmlabhud`). Mede o método de
+produção em três estados de loadout e exige que `vmlab=0` continue sem o menu. Mutação:
+`--mutante=semflag` reintroduz a ausência sob `vmlab=1` e tem que deixar a cláusula HUD2
+vermelha.
+
+**Correção.** O host `#weapon-hud` foi promovido para `src/pages/index.astro` e o método
+`_updateWeaponHud()` passou a desenhar, no HUD real, os slots presentes no loadout vivo:
+primária, secundária, faca, fumaça e frag. O caminho é estritamente experimental: sem
+`?vmlab=1`, o elemento permanece escondido e vazio. A régua também entrou em
+`check:deploy`, para que a Vercel não possa publicar novamente um artefato sem esse HUD.
+
+**Antes/depois medido.** Antes da correção: **0/4** cláusulas verdes e nenhum host no
+artefato publicado. Depois: **4/4** — slots `1,2,3,4,5` no loadout completo, `1,2,3` sem
+granadas, exatamente um slot ativo e menu vazio/escondido sem a flag. A mutação
+`--mutante=semflag` derruba HUD2 e HUD3, provando que a régua morde.
+
+**Visual real do build.** Em `1536×1024` (3:2), o painel mediu `270×194 px` em
+`x=1218, y=662`; em `1280×720` (16:9), mediu `270×194 px` em `x=962, y=358`, com
+**0 px de sobreposição** sobre o bloco de munição. Os cinco slots, ícones, munição e faixa
+ativa ficaram legíveis nas duas proporções.
+
+**Crédito/proveniência.** A direção visual vem do protótipo de Emerson Garrido no #131
+(commits `78cf645`, `76f730d` e `10270bd`). A correção preserva esse crédito no commit e
+no PR; ela promove apenas o menu de armas, sem trazer de volta o pacote inteiro do #131.
 
 ### ~~BUG-34 · O botão JOGAR estava INERTE em produção — o jogo não abria~~ · RESOLVIDO 07/08
 
@@ -1793,6 +1937,24 @@ servidor `58403`, saída 0. Mutação `--mutante=semlock`: saída 1 e mensagem d
 apenas que o servidor do lock já estava vivo. A régua entra no `check:fast` antes dos
 portões que podem cortar a corrente.
 
+### ~~BUG-46 · Todo release abria um deploy de produção vermelho e redundante~~ · RESOLVIDO 11/08
+
+**Evidência.** Os releases alpha.75, alpha.77 e alpha.78 dispararam `deploy-prod.yml` e
+falharam no primeiro `vercel pull` com `Could not retrieve Project Settings`. Ao mesmo tempo,
+a integração Git da Vercel publicou cada push de `main` com sucesso; a alpha.78 foi medida
+em produção com health verde e import map atualizado.
+
+**Causa.** `vercel.json` declara `deploymentEnabled.main: true`, mas o workflow descrito como
+fallback manual também escutava `release.published`. Cada release criava um segundo caminho
+automático dependente de credenciais CLI que não recuperam o projeto.
+
+**Correção.** A integração Git permanece como único caminho automático. O workflow CLI
+continua disponível por `workflow_dispatch` com tag explícita, sem marcar releases saudáveis
+como falhos. A autenticação do fallback continua sendo validada somente quando ele é invocado.
+
+**Régua: `tools/eval/release-check.mjs`** (`npm run eval:release`). RLS6 exige auto-deploy
+da `main`, dispatch manual e ausência do gatilho de release; `--mutante=deploy-duplo` fica vermelho.
+
 ### BUG-12 · `issues/` tem 2,5 GB fora do git e fora do `.gitignore`
 
 `du -sh issues` → **2,5 GB**; `git ls-files issues | wc -l` → **0**. Não está versionado nem
@@ -1935,6 +2097,44 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatados, ainda não reproduzidos
+
+- **BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**
+  O cliente chamava o método diretamente ao criar `cs_anon` e `awpbr_token`; quando
+  `crypto` existia sem `randomUUID`, `getAnonId()` lançava antes do primeiro ping.
+  `npm run eval:uuid` reproduz esse ambiente e exige UUID v4 nos caminhos nativo,
+  `getRandomValues` e sem Web Crypto (este último reprova em vez de gerar token
+  previsível com `Math.random`). Medição: **0/3 → 3/3**; a mutação
+  `--mutante=chamada-direta` devolve o erro.
+
+- **~~BUG-40 · Release atribui ao bot uma contribuição externa e usa o nome antigo~~ ·
+  RESOLVIDO 09/08.** Palavras do dono: *"o nosso bot deu squash merge e tirou a
+  contribuicao do emerson garrido. isso é errado"* · *"queriamos todos RELEASES
+  renomeados pra CSBR"*.
+
+  **Reprodução.** Não houve squash: os PRs #118 e #119 tinham merge commit com o commit
+  reconstruído como segundo pai. O defeito estava nesses dois commits: Ruben era o autor
+  principal e o trailer `Co-authored-by` do Emerson usava
+  `emersongarridohotmail.com.br@MacBook-Pro-de-Emerson.local`, e-mail que nenhuma conta do
+  GitHub pode verificar. Antes, **0 dos 2** trailers ligavam a `@EmersonGarrido`.
+
+  **Conserto histórico.** Os dois trailers agora usam o noreply oficial
+  `7999450+EmersonGarrido@users.noreply.github.com`; **2 dos 2** são associáveis. A
+  reescrita foi atômica e com lease, e `git diff` entre as árvores finais antes/depois deu
+  vazio: só os trailers e os hashes descendentes mudaram. `main` passou de `2cd8a4b` para
+  `fc8e431`; as tags alpha.46/47 foram movidas junto. As notas desses dois releases citam
+  explicitamente `@EmersonGarrido` e os PRs #118/#119. Releases de versão medidos em 09/08:
+  **47 de 47** titulados `CSBR <tag>`; os pacotes de áudio/decalque mantêm nomes próprios.
+
+  **Conserto futuro e régua.** Os dois caminhos de criação agora usam
+  `gh release create --generate-notes --title "CSBR …"`; as notas nativas do GitHub incluem
+  PRs e contribuidores. `npm run eval:release`: RLS1 **0/2 → 2/2**, RLS2 **0/2 → 2/2**.
+  Mutações `--mutante=nome-antigo` e `--mutante=semcreditos`: a cláusula correspondente
+  cai para **1/2** e o comando sai 1.
+
+  **Custo declarado / não verificado.** Seis hashes mudaram e os dois merge commits
+  reconstruídos perderam a assinatura `Verified` do GitHub. O GitHub documenta que o
+  gráfico de contribuidores pode levar até 24 h para refletir uma reescrita; as notas dos
+  releases e os trailers já são verificáveis imediatamente.
 
 - **BUG-37 · Tarja vermelha de CRASH por um erro que não é crash.** Print do dono, 07/08,
   com o menu de pausa aberto (`RESUME ▶` no canto):
