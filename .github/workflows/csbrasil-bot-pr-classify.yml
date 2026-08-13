@@ -24,28 +24,10 @@ permissions:
   issues: write
 
 jobs:
-  bot-token:
-    runs-on: ubuntu-latest
-    outputs:
-      available: ${{ steps.check.outputs.available }}
-    steps:
-      - id: check
-        env:
-          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
-        run: |
-          if [ -n "$BOT_TOKEN" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
-          fi
-
   classify:
-    needs: bot-token
     runs-on: ubuntu-latest
-    if: needs.bot-token.outputs.available == 'true'
     env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
       PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
       DESIRED_BASE_BRANCH: ${{ vars.PR_DEFAULT_BASE_BRANCH || 'staging' }}
     steps:
