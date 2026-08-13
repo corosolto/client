@@ -5,7 +5,7 @@
 // manda pro par quando o idioma resolvido não bate (mesmas regras do public/js/i18n.js).
 import Layout from '../layouts/Layout.astro';
 import { FACCOES, PERSONAGENS } from '../data/jogo';
-import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { BRAND_FULL, GAME_ID } from '../lib/site';
 
 const FAC_EN: Record<string, { nome: string; lema: string; nota: string }> = {
   E: { nome: 'Team E', lema: 'The fight is at the square!', nota: 'The red team of the arena. Eight caricature left-wing archetypes - none of them a real person.' },
@@ -79,10 +79,6 @@ const jsonld = [{ '@id': GAME_ID }];
   kicker={`${total} characters · ${FACCOES.length} factions`}
   heroImg={placa('palhacos')}
   heroPos="64%">
-  <Fragment slot="head">
-    <link rel="alternate" hreflang="pt-BR" href={abs('/personagens')} />
-    <link rel="alternate" hreflang="en" href={abs('/characters')} />
-  </Fragment>
   <Fragment slot="sub">
     {total} playable archetypes in {FACCOES.length} factions, all 100% fictional and original -
     no real person was consulted (or spared). Each one has its own silhouette, props and style,

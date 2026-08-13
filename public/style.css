@@ -1686,11 +1686,8 @@ html[data-ui="legacy"] .cs-vignette{
 .menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:1px dotted var(--line-2)}
 .menu-footer a:hover{color:var(--am)}
 .menu-footer .mf-online{color:var(--verde,#7dc98f);font-weight:700}
-/* REDES: `flex-basis:100%` força linha própria dentro do mesmo flex-wrap, que é
-   o jeito de ficar EMBAIXO dos links sem tirar o bloco do rodapé fixo. O
-   `justify-content` é herdado do pai, então em retrato ele acompanha a virada
-   para a esquerda de graça. Sem borda pontilhada: `.menu-footer a` desenha uma
-   por baixo dos ícones se não zerar aqui. */
+/* `flex-basis:100%` dá linha própria sem sair do flex-wrap do rodapé; `border-bottom:0`
+   é obrigatório porque `.menu-footer a` traça pontilhado por baixo dos ícones. */
 .menu-footer .mf-social{flex-basis:100%;display:flex;gap:10px;align-items:center;
   justify-content:inherit;margin-top:2px}
 .menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;

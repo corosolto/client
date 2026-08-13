@@ -105,12 +105,9 @@ const temSub = Astro.slots.has('sub');
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = new URL(path, Astro.site ?? SITE).toString();
 
-// PARES PT<->EN. Cada rota EN é uma página própria (how-to-play.astro etc.), não
-// uma tradução server-side da PT - por isso o par é uma tabela fixa, não um
-// prefixo de idioma. Serve pra emitir hreflang recíproco (abaixo) e pro link
-// estático PT/EN no rodapé, que é o que faz o Googlebot achar as páginas EN -
-// hoje a troca de idioma é só JS client-side (nav, ver função de idioma mais
-// abaixo), e um link que só existe depois de rodar JS não é descoberto por crawl.
+// Tabela fixa porque cada rota EN é uma página própria, não um prefixo de idioma.
+// Alimenta o hreflang recíproco e o link PT/EN estático do rodapé (a troca por JS
+// não é descoberta por crawl).
 const PT_EN_PAIRS: [string, string][] = [
   ['/como-jogar', '/how-to-play'],
   ['/personagens', '/characters'],
@@ -195,18 +192,8 @@ const NAV: [string, string][] = [
 <title>{title}</title>
 <meta name="description" content={description}>
 <link rel="canonical" href={canonical}>
-{/* HREFLANG. Declara explicitamente que o site é pt-BR e só. `x-default` aponta
-    pro mesmo destino: é o alvo pra quem não casa com nenhum idioma declarado, e
-    sem ele o buscador escolhe sozinho qual versão mostrar a esse público.
-    As duas linhas apontam pro canonical, ou seja, sempre o host com `www` e sem
-    barra final - mesmo motivo do canonical acima: apex e www são a MESMA página,
-    e emitir hreflang com host divergente reintroduz a diluição que o canonical
-    acabou de resolver.
-    Auto-referência é obrigatória pelo protocolo: toda página do conjunto tem que
-    listar a si mesma, senão o Google ignora o grupo inteiro. Como aqui o
-    conjunto é de um idioma só, a auto-referência é o conjunto completo.
-    Quando as páginas EN entrarem, isto vira um map de idioma -> href e cada
-    página passa a listar as duas. */}
+{/* Fonte ÚNICA do hreflang - página nenhuma declara alternate por conta própria.
+    Auto-referência é obrigatória e as URLs vêm do canonical (www, sem barra final). */}
 <link rel="alternate" hreflang="pt-BR" href={hreflangPt}>
 {hreflangEn && <link rel="alternate" hreflang="en" href={hreflangEn}>}
 <link rel="alternate" hreflang="x-default" href={hreflangPt}>
@@ -521,12 +508,8 @@ body>footer a{color:var(--amber-dim);text-decoration:none}
 body>footer a:hover{color:var(--amber)}
 .foot-logo{height:52px;width:auto;margin-bottom:12px;opacity:.85}
 
-/* REDES: fica DEPOIS da linha de links de texto de propósito. O rodapé já é uma
-   escada de prioridade (marca > navegação > licença); os ícones entram como o
-   degrau de "vem falar com a gente", não competindo com o texto pela mesma
-   leitura. Alvo de 34px porque abaixo de 32 vira alvo de toque ruim no celular,
-   que é a maioria do público. `currentColor` no fill deixa o hover valer para
-   caixa e desenho de uma vez só. */
+/* Alvo de 34px: abaixo de 32 o toque no celular falha, e celular é a maioria do
+   público. `currentColor` no fill faz o hover valer para caixa e desenho de uma vez. */
 .foot-social{display:flex;gap:12px;justify-content:center;align-items:center;margin-top:14px}
 .foot-social a{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;
   border:1px solid var(--line);border-radius:8px;color:var(--bone-dim)}
@@ -650,11 +633,8 @@ body>footer a:hover{color:var(--amber)}
       <>{' · '}<a href={pairedPt} hreflang="pt-BR" lang="pt-BR">Português</a></>
     )}
   </div>
-  {/* Ícones inline, sem fonte de ícone e sem sprite externo: a CSP desta base é
-      `default-src 'self'` e qualquer CDN de ícone morreria no console. SVG no
-      HTML também não custa requisição nem provoca layout shift.
-      `aria-label` no <a> + `aria-hidden` no <svg>: o leitor de tela anuncia o
-      destino uma vez, não duas. */}
+  {/* SVG inline, não fonte nem sprite de CDN: a CSP desta base é `default-src 'self'`.
+      `aria-label` no <a> + `aria-hidden` no <svg> = leitor anuncia o destino uma vez. */}
   <div class="foot-social">
     <a href={DISCORD_URL} rel="noopener" aria-label="Discord do CORO SOLTO">
       <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.198.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
