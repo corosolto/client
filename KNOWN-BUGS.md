@@ -1311,6 +1311,52 @@ o visual em jogo (posição do arco na borda, painel de morte) não foi conferid
 28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
 ordem de operandos do defeito original e derruba 28/28 casos.
 
+### ~~BUG-53 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+
+**Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
+**0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
+células peladas tinham `z ≥ 0` — fora da zona limpa declarada (`z ≤ −6,4`), ou seja lacuna
+real, não decisão de arte.
+
+**Palpite refutado:** "é o StaticBatch `havan-deco` com normal/matriz de instância" (classe
+do `5da7fc0`) — refutado por leitura: o batch é `Mesh` mesclada com geometria assada em
+mundo (`mapprops.js:135-151`), sem `instanceId`. Também foi refutada em campo a banda de
+altura 5,0–8,0 espelhando a quebrada: 51,9% contra 51,7% sem ela — ruído.
+
+**Causa medida** (sonda `tools/eval/probe-grafite.mjs`, 102 âncoras na fachada): a pele
+greco-romana (banners z=−4,1 · cornija z=−3,8) flutua 1,3–1,7 m à frente da parede
+(z=−5,5) e três filtros da passada a tornavam impintável —
+1. os olhos de descoberta paravam em 3,1 m: a cornija (5,0–5,55) **nunca virava âncora**
+   (`graffiti_pass.js:267`);
+2. `_alturaParede` sondava a base só a 1,0 m: por baixo do banner (que começa a 1,9) não
+   há nada → teto=1,2 → `semTeto` em qualquer banda alta (16 âncoras de banner assim);
+3. `_temChao` reprova o que sobrasse: banner e cornija têm ar embaixo por construção.
+E a régua media a pele enquanto a tinta estava na parede atrás: 16 peças com topo a 5,0 m
+em z≈−5,44, invisíveis ao censo porque a placa fica a 1,4 m do plano da arte e o limite é
+0,6 (`graffiti-census.mjs` PERTO).
+
+**Correção:** âncora passa a guardar a altura do acerto (`olho`); `_alturaParede` cai pra
+altura do acerto quando a sonda de 1,0 m falha; olhos de descoberta configuráveis
+(`olhos`, e a Loja H usa `[1.55, 3.1, 5.25]`); `exigeChao` ganha versão por banda; banda
+2,5–5,2 da loja_h com `exigeChao: false` e `larg: 1.5` (o banner tem 1,9 e a auditoria
+amostra os cantos — com 1,8 sobravam 5 cm de margem e 3/15 amostras caíam fora); banda
+nova de cornija (`y0 5,0–5,6`, pixo fino).
+
+**Prova com controle e mutação:** rebake do controle (sem a correção) = 45,1% · 20,6% ·
+0/90 — é também a prova de que a régua morde: sem o olho de 5,25 m a faixa de 5,0 m volta
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m) na branch original; na
+árvore da main (com o filtro de âncora baixa do #260, que tira a tinta de caixa
+procedural do 1,6 m) o rebake mede **49,4% · 28% · 54,4%**. Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 49 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
+cornija e peças entre colunas, nada no ar nos ângulos de jogador.
+
+**O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
+peça mas a largura útil limita; e o delta de +6 no-ar não foi isolado peça a peça
+(reshuffle da passada mistura a amostra).
+
+
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
 
 **Sintoma (do dono):** *"o menu de hud nao esta mostrando com vmlab=1 em producao"*.

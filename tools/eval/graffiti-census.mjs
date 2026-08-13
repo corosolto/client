@@ -58,7 +58,10 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
    CONTINUAM contando como placa de parede aqui, porque elas são parede que o jogador
    vê. Cobrar 85 delas seria a régua brigando com o pedido do dono. */
 // Pisos medidos nas três faixas; aumente-os quando a cobertura melhorar.
-const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 43, ferro_velho: 46, quebrada: 67 };
+// loja_h 43→49 em 13/08: medido 49,4% (1,6 m 62,7 · 3,2 m 28 · 5,0 m 54,4) depois da
+// fachada greco-romana virar pintável, já com o filtro de âncora baixa do #260 (que
+// tirou da conta a tinta em caixa procedural — o 1,6 m era 87,8% antes dele).
+const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 49, ferro_velho: 46, quebrada: 67 };
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);

@@ -41,6 +41,7 @@ com código 1 em falha crítica.
 | Arquivo | O que mede |
 |---|---|
 | `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade. |
+| `probe-grafite.mjs` | Sonda descartável da passada viva de grafite: abre `mapview?grafite=vivo` e despeja âncoras (com `__grafiteDebug`), contadores de recusa e superfícies por mapa. Diagnóstico, não é régua. |
 | `mode-check.mjs` | Rounds × CTF: o modo abre e termina em todos os mapas. |
 | `ctf-verify.mjs` | Bandeiras alcançáveis a partir dos dois spawns. |
 | `fv-verify.mjs` | Específico do Ferro Velho (A*/waypoints/LOS com o cânion BECO OESTE). |
