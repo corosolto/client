@@ -114,6 +114,8 @@
     "eval:select:mutate": "node tools/eval/select-inflate.mjs mandrake,pagodeiro --mutate=skin",
     "//assert:assets": "REPROVA O BUILD se o pacote de áudio/decalques não chegou inteiro ou se o layout gerado cita arte que saiu do pacote. Os fetches falham em silêncio; e, sem o contrato inverso da issue #77, peças somem da parede com só um console.warn. Roda no buildCommand da Vercel entre os fetches e o build. Mutações: AUDIO_PACK_URL inválida com public/audio vazio; `node tools/eval/assets-check.mjs --mutante=grafite-orfa`.",
     "assert:assets": "node tools/eval/assets-check.mjs",
+    "//strip:decalbg": "Alpha-key do branco dos decals de grafite (alfabeto-*.png etc.) depois do fetch-decals.sh. Fundo da folha virava retângulo branco atrás da letra em prod (13/08). Limiar alto (≥248) pra não comer conteúdo claro; STRIP_DECAL_BG=0 pula. Roda no buildCommand da Vercel.",
+    "strip:decalbg": "node tools/strip-decal-bg.mjs",
     "eval:serve": "node tools/eval/serve.mjs 8123",
     "//grafite": "ASSA a colocação do grafite dos 5 mapas. Roda a passada de graffiti_pass.js NO NAVEGADOR (único lugar onde os GLB existem) e congela o resultado em public/js/graffiti_layout.js. Exige `npm run eval:serve` no ar. REGERE depois de mexer em geometria de mapa, pool de decalque ou bandas — layout velho vira peça no lugar errado, e quem cobra isso é o eval:grafite.",
     "grafite": "node tools/gen-graffiti-layout.mjs",

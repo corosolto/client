@@ -32,7 +32,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 28.452 linhas em 36 arquivos | `cat public/js/*.js \| wc -l` |
+| Código do jogo | 28.456 linhas em 36 arquivos | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6.471** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.027 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -43,7 +43,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Mapas no registro | 6 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 14 | `ls public/*.html \| wc -l` |
 | Scripts do arnês | 169 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
-| Scripts de pipeline | 47 | `ls tools/*.mjs \| wc -l` |
+| Scripts de pipeline | 48 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
 | Versão | `2.0.0-alpha.110` | `public/js/version.js` e `package.json` (batem) |
 
@@ -197,7 +197,7 @@ npm run check        # npm run syntax && npm run audio:check && npm run eval:med
 npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:medianet eval:posters eval:grafitelayout
 ```
 
-`package.json` tem **92 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **93 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

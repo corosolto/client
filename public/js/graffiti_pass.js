@@ -301,6 +301,10 @@ export function pintarParedes(opts) {
   const perto = _grade(alvos, 3);
   for (const A of ancoras.values()) A.teto = _alturaParede(perto(A.x, A.z), rc, A);
   tempo.teto = Math.round(_ms() - _t); _t = _ms();
+  // Caixa/dumpster não é parede: exige _alturaParede ≥ 1,8 m (pessoa em pé; crate ~1,2 m, muro ≥ 2 m — medido por _alturaParede).
+  // Reproduz: eval:grafite (conta peças antes/depois do corte).
+  const MIN_ALT_PAREDE = 1.8;
+  for (const [k, A] of ancoras) if ((A.teto || 0) < MIN_ALT_PAREDE) ancoras.delete(k);
 
   /* ── 2. PINTAR ────────────────────────────────────────────────────────────
      Ordem determinística por hash da célula (não pela ordem de descoberta, que
