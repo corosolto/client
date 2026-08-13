@@ -1,14 +1,5 @@
-// ============================================================================
-// ATACADÃO DA TRETA — galpão de atacado (paródia), estilo Loja H (Havan).
-//
-// DOIS AMBIENTES, como o fy_havan: ESTACIONAMENTO aberto ao SUL (Time E nasce fora, entre
-// os carros nas vagas) e a LOJA fechada ao NORTE (Time B nasce dentro, no meio das gôndolas).
-// A FACHADA de vidro no meio (z = ZF) tem PORTAS DE VERDADE (vãos de ENTRADA e SAÍDA) — os
-// times se cruzam passando por elas. A "treta" é o preço: placas de promoção absurda.
-//
-// Gôndolas = props gondola_mercado/eletro reais (gprop, fallback caixa, colisor sempre).
-// Mesmo contrato de build(scene, T). Colisão só AABB (sem colisor girado). A* pelos corredores.
-// ============================================================================
+// Atacadão da Treta: galpão de atacado (paródia) com estacionamento ao sul (spawn E) e loja
+// fechada ao norte (spawn B). Colisão só AABB. Mesmo contrato de build(scene, T) da Loja H.
 import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -80,12 +71,10 @@ export function buildAtacadao(scene, T) {
   };
   const wX = HALF_X - 0.5;
 
-  /* ---------------- pisos: loja (concreto) + estacionamento (asfalto) ---------------- */
   scene.background = new THREE.Color(0xdfe6ec); scene.fog = null;
   addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2);       // loja
   addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2);    // estacionamento
 
-  /* ---------------- LOJA fechada (norte): paredes altas + teto + pilares ---------------- */
   addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN);                          // parede norte
   for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);  // laterais (loja)
   addBox(HALF_X * 2, 0.4, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // teto
@@ -93,10 +82,7 @@ export function buildAtacadao(scene, T) {
   for (let z = ZF + 3; z <= ZN; z += 6) addBox(HALF_X * 2, 0.3, 0.3, MAT.metal, 0, WALL_H - 0.4, z, { collide: false, cast: false });   // vigas
   for (const px of [-18, 18]) for (const pz of [2, 14, 26]) { addBox(0.7, WALL_H, 0.7, MAT.pilar, px, 0, pz); addBox(0.9, 0.5, 0.9, MAT.pilarBase, px, 0, pz, { collide: false }); }
 
-  /* ---------------- FACHADA (z=ZF): PORTAS DE VERDADE (ENTRADA/SAÍDA) + vitrine ----------------
-     A parede é feita de segmentos deixando DOIS vãos livres do chão até 3 m (dá pra passar):
-       ENTRADA em x ∈ [-15,-9] · SAÍDA em x ∈ [9,15]. O resto é vidro/placa. Verga acima do vão
-     (minY=3) fecha o tiro por cima mas NÃO barra o player (nem o waypoint). */
+  // A verga (minY=3) sobre os vãos das portas não pode virar colisor: barra o tiro, não o player.
   {
     const gaps = [[-15, -9], [9, 15]];
     let xc = -wX;
@@ -115,7 +101,6 @@ export function buildAtacadao(scene, T) {
   // parede de fundo (norte) também com o letreiro
   signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'ABERTO ATÉ A TRETA ACABAR', 900, 180), 0, 5.6, ZN - 0.5, Math.PI);
 
-  /* ---------------- GÔNDOLAS (loja): bloco central 5 fileiras + laterais (estilo Havan) ---------------- */
   const PLACA_CORR = ['MERCEARIA', 'BEBIDAS', 'LIMPEZA', 'HORTIFRÚTI', 'BAZAR'];
   for (let r = 0; r < 5; r++) {
     const z = 3 + r * 6;                                                          // fileiras z = 3,9,15,21,27
@@ -125,7 +110,6 @@ export function buildAtacadao(scene, T) {
   }
   for (const sx of [-1, 1]) for (const z of [4, 10, 16, 22, 28]) shelfUnit(sx > 0 ? 'gondola_mercado' : 'gondola_eletro', sx * 15, z);   // fileiras laterais
 
-  /* ---------------- CAIXAS (logo dentro da fachada) + carrinhos ---------------- */
   for (const cx of [-12, -6, 0, 6, 12]) {
     addBox(1.4, 1.0, 2.6, MAT.caixa, cx, 0, ZF + 4);
     addBox(2.4, 0.06, 0.5, MAT.esteira, cx, 1.0, ZF + 5.4, { collide: false });
@@ -133,7 +117,6 @@ export function buildAtacadao(scene, T) {
   }
   for (const [cx, cz] of [[-9, ZF + 2], [3, ZF + 2.5], [10, ZF + 1.5]]) prop('shopping_cart', cx, cz, 1.0, (cx * 7) % 3, 0.5, 0.6, 0.9);
 
-  /* ---------------- SEÇÕES nas paredes da loja ---------------- */
   prop('painel_tvs', -22, 12, 2.2, Math.PI / 2, 1.2, 0.4, 2.2);
   prop('gondola_eletro', -22, 18, 2.0, Math.PI / 2, 1.4, 0.6, 2.0);
   for (const az of [8, 16, 24]) prop('arara_roupas', 22, az, 1.9, -Math.PI / 2, 0.9, 0.6, 1.8);
@@ -141,16 +124,12 @@ export function buildAtacadao(scene, T) {
   for (const [cx, cz] of [[-22, 28], [22, 30]]) prop('cooler', cx, cz, 1.3, 0, 0.8, 0.6, 1.2);
   prop('pilha_pneus', 22, 2, 1.5, 0, 1.0, 1.0, 1.4);
 
-  /* ---------------- DOCA (cantos do fundo norte, longe do spawn B): pallets + dumpster ---------------- */
   for (const [dx, dz] of [[-21, 28], [-21, 24], [21, 28]]) { addBox(1.6, 1.5, 1.6, PROD[(Math.abs(dx) | 0) % PROD.length], dx, 0, dz); addBox(1.7, 0.2, 1.7, MAT.metal, dx, 0, dz, { collide: false }); }
   prop('dumpster', 21, 24, 1.7, 0, 1.4, 1.0, 1.6);
 
-  /* ---------------- promoção absurda (a treta do preço) ---------------- */
   const promo = ['LEVE 3 PAGUE 5', 'ARROZ R$ 49,90', 'SÓ HOJE: MAIS CARO', 'FEIJÃO A OURO'];
   promo.forEach((t, i) => { const px = [-16, 16, -16, 16][i], pz = [8, 8, 22, 22][i]; addBox(0.1, 1.6, 0.1, MAT.metal, px, 0, pz, { collide: false }); signMesh(2.4, 1.0, signTex('#e0b83a', '#c0392b', t, '', 512, 220), px, 2.2, pz, Math.PI / 2); });
 
-  /* ---------------- ESTACIONAMENTO (sul, ABERTO, jogável) — Time E nasce aqui ----------------
-     Muros baixos O/L/S (2,4 m), vagas demarcadas, carros (cover), ENTRADA/SAÍDA na rua ao sul. */
   for (const sx of [-1, 1]) addBox(0.6, PARK_H, ZF - ZS, MAT.muro, sx * wX, 0, (ZS + ZF) / 2);   // muros laterais baixos
   // muro do fundo com VÃOS de ENTRADA (x∈[-14,-8]) e SAÍDA (x∈[8,14]): a saída de carro pra rua
   { const gaps = [[-14, -8], [8, 14]]; let xc = -wX; for (const [g0, g1] of gaps) { if (g0 > xc) addBox(g0 - xc, PARK_H, 0.6, MAT.muro, (xc + g0) / 2, 0, ZS); xc = g1; } if (wX > xc) addBox(wX - xc, PARK_H, 0.6, MAT.muro, (xc + wX) / 2, 0, ZS); }
@@ -173,9 +152,7 @@ export function buildAtacadao(scene, T) {
     signMesh(5.4, 1.3, signTex('#1f5fbf', '#ffffff', txt, sub, 640, 200), sx * 11, 3.4, ZS + 1.5, 0);
   }
 
-  /* ---------------- ENTORNO (bairro + prédios + trânsito) — só backdrop, complementa a visão ----------------
-     Tudo fora dos bounds e sem colisor: o player não alcança, mas VÊ um bairro em volta (por cima dos
-     muros baixos do estacionamento e pelos vãos), não o void. */
+  // Entorno é backdrop: fica fora dos bounds e sem colisor, o player vê mas não alcança.
   {
     const casas = ['fav_house', 'fav_modular', 'fav_brasileira', 'fachada_comercio'];
     let hi = 0;
@@ -195,7 +172,6 @@ export function buildAtacadao(scene, T) {
     for (let x = -30; x <= 30; x += 6.5) prop(ruaCars[ri++ % ruaCars.length], x, ZS - 9 + (ri % 2 ? 3.2 : -3.2), 1.6, (ri % 2) ? Math.PI / 2 : -Math.PI / 2, 0, 0, 0);
   }
 
-  /* ---------------- ARMAS NO CHÃO (pickups) ---------------- */
   const GM = { black: lam({ color: 0x1b1d21 }), steel: lam({ color: 0x9aa0a6 }), wood: lam({ color: 0x7a5326 }), tan: lam({ color: 0xb39a63 }), green: lam({ color: 0x16432a }) };
   const gbox = (w, h, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
   const gcyl = (r, len, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), mat); m.rotation.x = Math.PI / 2; m.position.set(x, y, z); return m; };
@@ -221,7 +197,6 @@ export function buildAtacadao(scene, T) {
   // disputadas na fachada (a porta)
   place('ak', -12, ZF - 1, 0); place('m4', 12, ZF - 1, 0);
 
-  /* ---------------- luz (galpão claro + pátio) ---------------- */
   const hemi = new THREE.HemisphereLight(0xf2f7fb, 0xc0c6cc, 1.25); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffffff, 1.15);
   sun.position.set(-12, 42, -20); sun.castShadow = true;
@@ -233,7 +208,6 @@ export function buildAtacadao(scene, T) {
   const groundHeightAt = () => 0;
   const slowAt = () => false;
 
-  /* ---------------- waypoints (loja + estacionamento, conectados pelas portas) ---------------- */
   const nodes = [], adj = [];
   const STEP = 3.2;
   const B = { minX: -HALF_X + 2, maxX: HALF_X - 2, minZ: ZS + 2, maxZ: ZN - 2 };
@@ -249,7 +223,6 @@ export function buildAtacadao(scene, T) {
     return [fromIdx];
   }
 
-  /* ---------------- pixação/cartazes ---------------- */
   const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-selvagem.png', 'or-graf-treta.png', 'or-graf-coro.png']);
   const D_BOMBA = decalIds(T, ['peca-bolha.png', 'alfabeto-bolha.png', 'alfabeto-grosso-01.png', 'tag-flop.png']);
   grafitar({
@@ -262,7 +235,6 @@ export function buildAtacadao(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 71, separacao: 18 },
   });
 
-  /* ---------------- spawns: E no ESTACIONAMENTO (sul) / B na LOJA (norte) + CTF ---------------- */
   const spawns = {
     E: [-8, -2, 4, 10].map(x => ({ x, z: ZS + 5, yaw: 0 })),      // estacionamento, olhando pra loja
     B: [-8, -2, 4, 10].map(x => ({ x, z: ZN - 4, yaw: Math.PI })), // loja, olhando pra fachada
@@ -273,7 +245,7 @@ export function buildAtacadao(scene, T) {
     ctfPoints: [
       { id: 'E', label: 'ESTACIONAMENTO', x: -8, z: ZS + 12 },
       { id: 'MID', label: 'PORTA', x: 10, z: ZF - 2 },
-      { id: 'B', label: 'DOCA', x: -8, z: ZN - 6 },
+      { id: 'B', label: 'DOCA', x: -8, z: ZN - 9 },   // corredor entre fileiras; ZN-6 caía dentro da gôndola
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: ZS + 1, maxZ: ZN - 1 },
