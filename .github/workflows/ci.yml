@@ -38,6 +38,10 @@ jobs:
         run: npm run eval:uuid
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
+      # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
+      # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Todo mapa devolve o que o game.js consome
+        run: npm run eval:mapcontrato
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1
