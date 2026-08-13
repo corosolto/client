@@ -36,31 +36,27 @@ const CONSUMIDO = [
 
 const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
 
-/* DÍVIDA DECLARADA DE CONEXIDADE — mesmo desenho do `cena-tetos.mjs`: o número sai da
-   medição, não de escolha, e serve de trava contra piorar. Estes dois mapas já estão
-   em produção com o grafo partido; a régua nasceu depois deles e não pode reprovar o
-   que já roda, mas também não vai abençoar. Mapa FORA desta lista tem de ser conexo.
+/* Teto de nós INALCANÇÁVEIS por mapa. Contar alcançados deixaria a dívida crescer:
+   mapa que ganha nós ilhados mantendo o componente atual passaria. Mapa fora da
+   lista tem de ser conexo. Ver docs/quality-gates.md. */
+const ILHADOS_MAX = { loja_h: 491, ferro_velho: 15 };
 
-   Medido em 13/08 na alpha.95 (`node tools/eval/map-contrato-check.mjs`). Baixar o
-   número é conserto e deve vir com a lista atualizada; subir é regressão e reprova. */
-const CONEXIDADE_DIVIDA = {
-  loja_h: 143,        // de 634 nós — 77% do grafo inalcançável a partir do nó 0
-  ferro_velho: 281,   // de 296 nós — 15 ilhados
-};
-
-/* Conexidade: BFS do nó 0, mesmo critério da validatePlan de map_json.js. */
+/* BFS do nó 0, mesmo critério da validatePlan de map_json.js. Linha de adjacência
+   não-array é defeito e não lista vazia: o jogo itera sobre ela e lança. */
 function alcance(nodes, adj) {
   const visto = new Uint8Array(nodes.length);
   const fila = [0];
   visto[0] = 1;
   let n = 1;
+  const malformadas = [];
   while (fila.length) {
     const i = fila.pop();
-    for (const j of (Array.isArray(adj[i]) ? adj[i] : [])) {
+    if (!Array.isArray(adj[i])) { malformadas.push(i); continue; }
+    for (const j of adj[i]) {
       if (Number.isInteger(j) && j >= 0 && j < nodes.length && !visto[j]) { visto[j] = 1; n++; fila.push(j); }
     }
   }
-  return n;
+  return { n, malformadas };
 }
 
 async function medir(id, buildFn) {
@@ -94,13 +90,17 @@ async function medir(id, buildFn) {
 
     /* MC2: o caminho é consumido como ÍNDICE de nodes (game.js:4306). Entrada fora da
        faixa, não-inteira ou undefined faz o bot ler waypoint inexistente. */
-    const i = W.nearestWaypoint(0, 0);
-    const p = W.findPath(i, Math.min(nodes.length - 1, i + 1));
-    const chamavel = Number.isInteger(i) && i >= 0 && i < nodes.length
-      && Array.isArray(p) && p.length > 0
-      && p.every((n) => Number.isInteger(n) && n >= 0 && n < nodes.length);
+    let chamavel, rotaErro = null;
+    try {
+      const i = W.nearestWaypoint(0, 0);
+      const p = W.findPath(i, Math.min(nodes.length - 1, i + 1));
+      chamavel = Number.isInteger(i) && i >= 0 && i < nodes.length
+        && Array.isArray(p) && p.length > 0
+        && p.every((n) => Number.isInteger(n) && n >= 0 && n < nodes.length);
+    } catch (e) { chamavel = false; rotaErro = String((e && e.message) || e); }
 
-    return { id, faltando: [], opcionais, nos: nodes.length, arestas, chamavel, alcancados: alcance(nodes, adj) };
+    const { n: alcancados, malformadas } = alcance(nodes, adj);
+    return { id, faltando: [], opcionais, nos: nodes.length, arestas, chamavel, rotaErro, alcancados, malformadas };
   } catch (e) {
     return { id, erro: String((e && e.message) || e) };
   }
@@ -118,12 +118,10 @@ if (EXTRA) {
   linhas.push(await medir(`extra:${b[0]}`, b[1]));
 }
 
-const mc1 = linhas.filter((r) => r.erro || r.faltando?.length);
+const mc1 = linhas.filter((r) => r.erro || r.faltando?.length || r.malformadas?.length);
 const mc2 = linhas.filter((r) => r.chamavel === false);
-const divida = (r) => CONEXIDADE_DIVIDA[r.id];
-/* Reprova se: mapa sem dívida declarada não é conexo, OU mapa com dívida piorou. */
-const mc3 = linhas.filter((r) => r.nos != null && r.alcancados !== r.nos
-  && !(divida(r) != null && r.alcancados >= divida(r)));
+const ilhados = (r) => r.nos - r.alcancados;
+const mc3 = linhas.filter((r) => r.nos != null && ilhados(r) > (ILHADOS_MAX[r.id] ?? 0));
 
 if (JSONOUT) {
   console.log(JSON.stringify({ mapas: linhas, mutante: MUTANTE || null }, null, 1));
@@ -137,16 +135,18 @@ if (JSONOUT) {
       continue;
     }
     const opt = r.opcionais.length ? `  (sem ${r.opcionais.map((o) => o.chave).join('/')} — opcional)` : '';
-    const d = CONEXIDADE_DIVIDA[r.id];
-    const conexo = r.alcancados === r.nos ? 'conexo'
-      : (d != null && r.alcancados >= d) ? `partido ${r.alcancados}/${r.nos} (dívida declarada)`
-      : `PARTIDO ${r.alcancados}/${r.nos}`;
-    console.log(`  ${r.chamavel && !mc3.includes(r) ? 'ok' : ' x'} ${r.id.padEnd(16)} ${String(r.nos).padStart(4)} nós · ${String(r.arestas).padStart(5)} arestas · rota ${r.chamavel ? 'ok' : 'FALHA'} · ${conexo}${opt}`);
+    const il = r.nos - r.alcancados;
+    const teto = ILHADOS_MAX[r.id] ?? 0;
+    const conexo = il === 0 ? 'conexo'
+      : il <= teto ? `${il} ilhados (teto ${teto})`
+      : `${il} ILHADOS > teto ${teto}`;
+    if (r.malformadas.length) console.log(`  x ${r.id.padEnd(16)} adj não-array em ${r.malformadas.length} linha(s): ${r.malformadas.slice(0, 5).join(', ')}`);
+    console.log(`  ${r.chamavel && !mc3.includes(r) ? 'ok' : ' x'} ${r.id.padEnd(16)} ${String(r.nos).padStart(4)} nós · ${String(r.arestas).padStart(5)} arestas · rota ${r.chamavel ? 'ok' : `FALHA${r.rotaErro ? ` (${r.rotaErro.slice(0, 40)})` : ''}`} · ${conexo}${opt}`);
   }
   console.log('');
   console.log(`  MC1 contrato completo        ${mc1.length ? `FALHA — ${mc1.map((r) => r.id).join(', ')}` : 'PASSA'}`);
-  console.log(`  MC2 rota indexa nós válidos  ${mc2.length ? `FALHA — ${mc2.map((r) => r.id).join(', ')}` : 'PASSA'}`);
-  console.log(`  MC3 grafo conexo             ${mc3.length ? `FALHA — ${mc3.map((r) => `${r.id} ${r.alcancados}/${r.nos}`).join(', ')}` : `PASSA (${Object.keys(CONEXIDADE_DIVIDA).length} com dívida declarada)`}`);
+  console.log(`  MC2 rota indexa nós válidos  ${mc2.length ? `FALHA — ${mc2.map((r) => `${r.id}${r.rotaErro ? ` (lançou)` : ''}`).join(', ')}` : 'PASSA'}`);
+  console.log(`  MC3 grafo conexo             ${mc3.length ? `FALHA — ${mc3.map((r) => `${r.id} ${r.nos - r.alcancados} ilhados > ${ILHADOS_MAX[r.id] ?? 0}`).join(', ')}` : `PASSA (${Object.keys(ILHADOS_MAX).length} com teto de ilhados)`}`);
 }
 
 process.exit(mc1.length + mc2.length + mc3.length ? 1 : 0);
