@@ -22,12 +22,12 @@ t0=$(date +%s)
 
 echo "pre-push: portões locais (~4 s; PREPUSH=0 pula)"
 
-# Trailer `Agent:` nos commits que ESTÃO SUBINDO. O commit-msg já cobra, mas ele não
-# roda em rebase, cherry-pick, amend com -F, nem em clone sem `npm run setup`.
+# Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
+# clone sem `npm run setup`.
 while read -r _local_ref local_sha _remote_ref remote_sha; do
   [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
   if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
-    intervalo=$(git rev-list --max-count=50 "$local_sha" --not --remotes="$remoto")
+    intervalo=$(git rev-list "$local_sha" --not --remotes="$remoto")
   else
     intervalo=$(git rev-list "$remote_sha..$local_sha")
   fi

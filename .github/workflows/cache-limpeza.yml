@@ -1,16 +1,6 @@
-# Cache do Actions tem teto de 10 GB por repositório, e passar dele faz o GitHub
-# despejar por LRU — o cache do `main` é expulso por lixo de PR morta e o build fica
-# lento EM SILÊNCIO, sem erro nenhum.
-#
-# Medido em 13/08: 99 caches, 9,97 GB (99,7% da cota). Composição: 61 de PR já fechada
-# (6,3 GB) e 29 no `main` (2,7 GB). Os do `main` acumulam porque `cache: npm` chaveia
-# pelo hash do `package-lock.json` e TODO release bumpa a versão dentro dele — cada
-# release cria um cache novo que nunca mais será reusado. Limpeza manual levou a 12
-# caches / 1,2 GB.
-#
-# Este workflow evita a volta: apaga o cache de PR ao fechar, e semanalmente poda o
-# excedente do `main` guardando os 3 mais recentes (o mais novo serve de restore-key
-# para as PRs; os antigos são só peso).
+# Teto de 10 GB por repositório: passar dele faz o GitHub despejar por LRU, e o build
+# fica lento sem erro. Guarda os 3 caches mais recentes do main (o mais novo serve de
+# restore-key às PRs) e descarta o resto. Ver docs/quality-gates.md.
 name: cache-limpeza
 
 on:
@@ -36,7 +26,7 @@ jobs:
           REF: refs/pull/${{ github.event.pull_request.number }}/merge
         run: |
           set -euo pipefail
-          ids=$(gh api "repos/$REPO/actions/caches?per_page=100" \
+          ids=$(gh api --paginate "repos/$REPO/actions/caches?per_page=100" \
                 --jq ".actions_caches[] | select(.ref==\"$REF\") | .id")
           n=0
           for id in $ids; do gh api -X DELETE "repos/$REPO/actions/caches/$id" && n=$((n+1)); done
@@ -51,13 +41,13 @@ jobs:
           set -euo pipefail
           antes=$(gh api "repos/$REPO/actions/cache/usage" --jq '.active_caches_size_in_bytes')
           # Ordena por último acesso e descarta do 4º em diante.
-          ids=$(gh api "repos/$REPO/actions/caches?per_page=100&sort=last_accessed_at&direction=desc" \
+          ids=$(gh api --paginate "repos/$REPO/actions/caches?per_page=100&sort=last_accessed_at&direction=desc" \
                 --jq '[.actions_caches[] | select(.ref=="refs/heads/main")] | .[3:] | .[].id')
           n=0
           for id in $ids; do gh api -X DELETE "repos/$REPO/actions/caches/$id" && n=$((n+1)); done
           # Órfãos: ref de PR que já não está aberta.
           abertas=$(gh pr list --repo "$REPO" --state open --limit 200 --json number --jq '[.[].number] | join(" ")')
-          for linha in $(gh api "repos/$REPO/actions/caches?per_page=100" --jq '.actions_caches[] | "\(.id):\(.ref)"'); do
+          for linha in $(gh api --paginate "repos/$REPO/actions/caches?per_page=100" --jq '.actions_caches[] | "\(.id):\(.ref)"'); do
             id=${linha%%:*}; ref=${linha#*:}
             case "$ref" in refs/pull/*) num=$(echo "$ref" | tr -dc '0-9');;
                            *) continue;; esac
