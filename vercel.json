@@ -1,6 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "bash scripts/fetch-audio.sh && bash scripts/fetch-decals.sh && npm run strip:decalbg && npm run assert:assets && npm run check:deploy && npm run build",
+  "redirects": [
+    {
+      "source": "/discord",
+      "destination": "https://discord.gg/MJq7Csam",
+      "permanent": false
+    },
+    {
+      "source": "/telegram",
+      "destination": "https://t.me/corosolto",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

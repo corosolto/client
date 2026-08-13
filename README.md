@@ -7,6 +7,8 @@
 [![three.js](https://img.shields.io/badge/jogo-three.js%20r160-000000?logo=three.js)](https://threejs.org)
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
 [![vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel)](https://vercel.com)
+[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/MJq7Csam)
+[![Telegram](https://img.shields.io/badge/Telegram-entrar-26A5E4?logo=telegram&logoColor=white)](https://t.me/corosolto)
 
 **AI generated & AI friendly** — construído em par com agentes de IA, e cada
 commit diz qual escreveu (trailer `Agent:`, convenção em `CONTRIBUTING.md`):
@@ -400,4 +402,4 @@ O código está sob **AGPL-3.0** (GNU Affero General Public License, versão 3) 
 - Paródia independente, sem afiliação com a Valve. Counter-Strike é marca da
   Valve Corporation.
 
-*Sátira política fictícia. Feito para rir, não para brigar.*
+*Feito para rir, não para brigar.*

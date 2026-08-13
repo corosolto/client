@@ -43,6 +43,16 @@ export const WEBSITE_ID = `${SITE}/#website`;
 
 export const abs = (path = '/') => new URL(path, SITE).toString();
 
+/* REDES SOCIAIS: URL EXTERNA aqui, não o atalho `/discord` e `/telegram`.
+   Os atalhos existem (redirect em `vercel.json`) e são o que se cola no chat,
+   mas eles só resolvem NA VERCEL. O rodapé é servido também no `astro dev`, no
+   build do itch.io e dentro do iframe da CrazyGames - nesses três o atalho é
+   404. Link externo funciona nos quatro. Se o convite mudar, mude AQUI e no
+   `redirects` do `vercel.json` (os dois, no mesmo commit). */
+export const DISCORD_URL = 'https://discord.gg/MJq7Csam';
+export const TELEGRAM_URL = 'https://t.me/corosolto';
+export const GITHUB_URL = 'https://github.com/rubenmarcus/csbrasil';
+
 /* ===========================================================================
    RANKING: DESLIGADO (decisão do dono, 04/08/2026)
    ===========================================================================
