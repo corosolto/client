@@ -41,17 +41,21 @@ const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
    lista tem de ser conexo. Ver docs/quality-gates.md. */
 const ILHADOS_MAX = { loja_h: 491, ferro_velho: 15 };
 
-/* BFS do nó 0, mesmo critério da validatePlan de map_json.js. Linha de adjacência
-   não-array é defeito e não lista vazia: o jogo itera sobre ela e lança. */
+/* BFS do nó 0, mesmo critério da validatePlan de map_json.js.
+   A varredura de linha malformada é SEPARADA da BFS de propósito: dentro dela, nó de
+   componente que o nó 0 não alcança nunca seria visitado, e o `adj` quebrado dele
+   passaria — até um bot chegar lá e o jogo lançar. */
 function alcance(nodes, adj) {
+  const malformadas = [];
+  for (let i = 0; i < nodes.length; i++) if (!Array.isArray(adj[i])) malformadas.push(i);
+
   const visto = new Uint8Array(nodes.length);
   const fila = [0];
   visto[0] = 1;
   let n = 1;
-  const malformadas = [];
   while (fila.length) {
     const i = fila.pop();
-    if (!Array.isArray(adj[i])) { malformadas.push(i); continue; }
+    if (!Array.isArray(adj[i])) continue;
     for (const j of adj[i]) {
       if (Number.isInteger(j) && j >= 0 && j < nodes.length && !visto[j]) { visto[j] = 1; n++; fila.push(j); }
     }
