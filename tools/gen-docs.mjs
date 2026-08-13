@@ -480,10 +480,9 @@ const BLOCOS = {
   licenca_pontos: (f) => [
     `| Superfície | Arquivo | Onde diz \`${f.licenca.atual || '?'}\` |`,
     '|---|---|---|',
-    /* Contagem, não número de linha. O número desloca quando alguém insere qualquer linha
-       acima dele, e o bloco gerado reprova o `docs:check` de PR que não chegou perto de
-       licença (foi o que segurou a #221). A régua afirma que a superfície NOMEIA a licença;
-       a contagem preserva isso inteiro e não depende de onde o texto caiu no arquivo. */
+    /* Contagem, não número de linha: o número desloca a cada inserção acima e desatualiza
+       o bloco sozinho. A régua afirma que a superfície NOMEIA a licença — e isso não
+       depende de onde o texto caiu no arquivo. */
     ...f.licenca.superficies.map((s) => `| ${s.rotulo} | \`${s.arquivo}\` | ${
       !s.existe ? '**arquivo não existe**'
         : s.linhas.length ? `${s.linhas.length}×`
