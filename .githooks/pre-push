@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Roda ANTES do push o que hoje só falha depois: no CI, ou na revisão.
+#
+# O QUE ELE EVITA, E O QUE NÃO EVITA
+# Evita a ida-e-volta MECÂNICA: bloco gerado desatualizado, ARCH.md velho, travessão em
+# src/, sintaxe, contrato de mapa, trailer `Agent:` faltando. Foi essa classe que deixou
+# `pr-fast` vermelho em toda PR aberta por um dia inteiro.
+#
+# NÃO evita comentário de revisor de IA. Greptile aponta julgamento — cláusula que
+# promete mais do que mede, caminho não validado, história de investigação colada no
+# código. Script local não substitui isso, e prometer que substitui seria a mesma
+# mentira que a régua que não morde. O que fecha esse lado é bloquear merge com fio
+# aberto (ver docs/quality-gates.md), não um hook.
+#
+# Pular: `git push --no-verify` (ou PREPUSH=0). Custa ~4 s.
+set -uo pipefail
+[ "${PREPUSH:-1}" = "0" ] && exit 0
+
+remoto="$1"
+falhas=()
+t0=$(date +%s)
+
+echo "pre-push: portões locais (~4 s; PREPUSH=0 pula)"
+
+# Trailer `Agent:` nos commits que ESTÃO SUBINDO. O commit-msg já cobra, mas ele não
+# roda em rebase, cherry-pick, amend com -F, nem em clone sem `npm run setup`.
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    intervalo=$(git rev-list --max-count=50 "$local_sha" --not --remotes="$remoto")
+  else
+    intervalo=$(git rev-list "$remote_sha..$local_sha")
+  fi
+  for sha in $intervalo; do
+    if ! git show -s --format='%B' "$sha" | grep -Eqi '^Agent:[[:space:]]*[^[:space:]]'; then
+      falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
+    fi
+  done
+done
+
+# package.json e version.js têm que concordar (o portão versao-bumpada cobra isso).
+if [ -f package.json ] && [ -f public/js/version.js ]; then
+  pj=$(node -pe 'require("./package.json").version' 2>/dev/null)
+  vj=$(grep -o "VERSION = '[^']*'" public/js/version.js 2>/dev/null | cut -d"'" -f2)
+  [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
+fi
+
+for portao in syntax docs:check arch:check travessao:check eval:mapcontrato; do
+  if ! npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
+    falhas+=("$portao — $(grep -m1 -E '✗|FALHA|error' /tmp/prepush-$$.log | cut -c1-90)")
+  fi
+done
+rm -f /tmp/prepush-$$.log
+
+if [ ${#falhas[@]} -gt 0 ]; then
+  echo ""
+  echo "  PUSH BLOQUEADO — ${#falhas[@]} portão(ões) reprovando:"
+  for f in "${falhas[@]}"; do echo "    x $f"; done
+  echo ""
+  echo "  docs/ARCH desatualizado:  npm run docs && node tools/gen-arch.mjs"
+  echo "  trailer faltando:         git commit --amend --trailer 'Agent: <nome>'"
+  echo "  pular mesmo assim:        git push --no-verify"
+  exit 1
+fi
+
+echo "pre-push: ok ($(( $(date +%s) - t0 ))s)"
+exit 0
