@@ -41,8 +41,8 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 27,929 lines in 35 files | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6,467** lines | `wc -l public/js/game.js` |
+| Game code | 27,933 lines in 35 files | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6,471** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,002 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
 | Character GLBs | 45 | `ls public/models/characters/*.glb \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 5 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 14 | `ls public/*.html \| wc -l` |
-| Harness scripts | 167 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Harness scripts | 168 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Pipeline scripts | 47 | `ls tools/*.mjs \| wc -l` |
 | Written entry tasks | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
 | Version | `2.0.0-alpha.99` | `public/js/version.js` and `package.json` (match) |

@@ -91,6 +91,8 @@
     "eval:mutate": "node tools/eval/mutate.mjs",
     "//eval:vmlabhud": "O menu de armas do protótipo do #131 precisa existir no HUD real quando ?vmlab=1 e continuar ausente sem a flag. Nasceu do relato do dono em produção (BUG-43). Executa _updateWeaponHud de game.js em três estados; --mutante=semflag reintroduz a ausência.",
     "eval:vmlabhud": "node tools/eval/vmlab-hud-check.mjs",
+    "//eval:dmgdir": "O arco de dano na borda da tela (_dmgArc) tem que apontar pro atacante, não pro lado oposto. Nasceu do relato do dono (BUG-52): tiro na frente desenhava o arco embaixo (COSTAS). Executa _dmgArc de game.js com o atacante nas 4 direções cardeais em 7 yaws da vítima; --mutante=ordem-trocada reintroduz a troca de operandos do atan2.",
+    "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",
     "//bot:record": "BOTBRAIN: gera o dataset bootstrap (estado→ação) gravando os bots roteirizados no botsim — o professor da rede enquanto não há dado de jogador. Uso: [segundos] [mapId|all].",
     "bot:record": "node tools/eval/bot-record.mjs",
     "//bot:train": "BOTBRAIN: treina o MLP com o dataset bootstrap e/ou o Supabase (--from-supabase), exportando public/models/bot-brain/. REQUER tfjs-node local (npm i -D @tensorflow/tfjs-node) — é nativa pesada, fora das deps do projeto. Uso: [--epochs=40] [--data=...].",

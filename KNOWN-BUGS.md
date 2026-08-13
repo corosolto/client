@@ -885,15 +885,56 @@ mudar.
 
 ## P1 — o jogador vê
 
-### ~~BUG-52 · "o sensor de tiro está ao contrário, quando atiram na frente é nas costas"~~ · RESOLVIDO 13/08
+### ~~BUG-52 · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
 
-**Feedback (12/08, guilhermeraulino2704):** *"O sensor de tiro está ao contrário, quando atiram na frente da que é nas costas"*.
+**Sintoma (do dono):** *"O jogo está mostrando o dano recebido (e o texto do dano) em uma
+posição 180 graus além da esperada. Ou seja, se eu tomo na frente, aparece que eu tomei nas
+costas. Este código marcado foi colocado em outra seção, mas não resolveu."* — apontando pro
+comentário de `_noteHit` (`public/js/game.js:4358-4363`).
 
-**Causa raiz — confirmada por medição.** A câmera usa `rotation.order='YXZ'` (`game.js:602`), então olha `(-sin yaw, -cos yaw)` — yaw=0 encarando **-Z**. O indicador `_dmgArc` (`game.js:3035`) calculava `rel = atan2(dx,dz) - yaw`, que é a convenção do **mesh** (frente +Z, bearing=yaw). O jogador enfrenta bearing `yaw+π`, não `yaw` → **defasagem de 180°**: quem atira pela frente caía no rodapé da tela (posição de costas). Provado em node (direção da câmera × fórmula): frente → rel=±π (baixo); costas → rel=0 (topo).
+**Causa raiz — confirmada.** Existem DOIS lugares que calculam a direção do atacante
+relativa à vítima, e só um tinha o sinal certo. `_noteHit()` (o painel de texto "MORTO
+POR"/"veio DA SUA FRENTE") já estava correto: `atan2(p.pos.x - by.pos.x, p.pos.z -
+by.pos.z) - p.yaw` — vítima menos atacante. Mas o indicador que o jogador vê primeiro, o
+arco vermelho na borda da tela (`_dmgArc()`, chamado de `_damage()` só quando
+`ent.isPlayer`), reimplementava a MESMA conta com os operandos TROCADOS:
+`atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw`
+(`public/js/game.js:3035`, antes do conserto). Trocar a ordem do subtraendo nega o vetor, e
+negar um vetor soma exatamente π ao resultado do `atan2` — os 180° que o dono via. O mesmo
+operando trocado também existia no indicador antigo por trás do kill-switch `?dmgdir=0`
+(`public/js/game.js:2991`).
 
-**Correção.** `- Math.PI` nas DUAS path do `_dmgArc`: `game.js:3035` (arcos, principal) e `game.js:2991` (fallback `?dmgdir=0`). Frente volta ao topo, costas ao rodapé, laterais ao lado certo.
+**Reprodução:** `node tools/eval/dmgdir-check.mjs` contra o `game.js` de antes do conserto.
 
-**Régua:** `tools/eval/dmg-dir-check.mjs` (`npm run eval:dmgdir`, no `check:fast`). Extrai a fórmula real do `game.js`, testa as 4 direções cardinais contra a frente da câmera e exige a correção de π no fonte (DD5). `--mutante=sem-pi` devolve o defeito e acende DD1/DD2 (16 vermelhas).
+**O que foi DESCARTADO com medição, não com palpite:** o próprio dono já tinha apontado o
+comentário de `_noteHit` como tentativa anterior que não resolveu. Derivar a álgebra do
+`atan2` (convenção de yaw da câmera, forward=(-sin,-cos), ver comentário em
+`_updatePlayer`) e alimentar o resultado de volta no código mostrou que a fórmula de
+`_noteHit` já estava certa — o palpite de "reverter mais um sinal ali" teria sido
+inútil, porque o defeito não morava naquele método. Morava no `_dmgArc`, uma
+reimplementação irmã que ninguém tinha olhado.
+
+**Medido antes do conserto** (`node tools/eval/dmgdir-check.mjs`, 4 direções cardeais × 7
+yaws da vítima = 28 casos, ângulo real escrito em `transform: rotate(...)` do elemento do
+arco):
+
+| | antes | depois |
+|---|---|---|
+| casos com o arco no lado certo (FRENTE=topo, COSTAS=embaixo, DIREITA/ESQUERDA corretos) | 0/28 | 28/28 |
+| desvio de FRENTE e COSTAS | exatamente π (180°) em todos os 28 casos | 0 |
+
+**Correção.** `public/js/game.js:3035` (arco moderno) e `:2991` (fallback `?dmgdir=0`):
+`ent.pos - attacker.pos`, não `attacker.pos - ent.pos`, igualando a ordem que `_noteHit`
+já usava.
+
+**Custo declarado, medido:** nenhum — a mudança troca dois operandos de subtração, sem
+custo de desempenho. Não testado no navegador (browser): a régua exercita `_dmgArc` de
+produção via extração de método (mesma técnica de `ctfhud-check.mjs`), não a rota `/` real;
+o visual em jogo (posição do arco na borda, painel de morte) não foi conferido a olho.
+
+**Régua: `tools/eval/dmgdir-check.mjs`** (`npm run eval:dmgdir`, no `check:fast`).
+28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
+ordem de operandos do defeito original e derruba 28/28 casos.
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
 

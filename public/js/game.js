@@ -2988,7 +2988,7 @@ export class Game {
     if (QS.get('dmgdir') === '0') {
       const el = this.el.dmgDir;
       if (!el) return;
-      const rel0 = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw - Math.PI;
+      const rel0 = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
       el.style.transform = `rotate(${rel0.toFixed(3)}rad)`;
       el.style.opacity = 0.95;
       clearTimeout(this._dmgDirT);
@@ -3032,7 +3032,9 @@ export class Game {
     }
     // raio: 42% da menor dimensão -> o arco encosta na borda em qualquer aspecto (16:9 e 3:2)
     const R = Math.min(innerWidth, innerHeight) * 0.42;
-    const rel = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw - Math.PI;
+    // ent - attacker (BUG-52): câmera YXZ olha forward=(-sin,-cos); a ordem inversa negava o
+    // vetor e somava π — tiro na cara desenhava o arco embaixo (costas).
+    const rel = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
     // CSS gira no sentido horário com Y pra baixo; o mundo mede yaw anti-horário: por isso o
     // sinal negativo. 0 rad = atacante bem à frente = arco no topo da tela. Confere nas 4
     // direções: frente=topo, direita=direita, costas=embaixo, esquerda=esquerda.
@@ -4355,7 +4357,9 @@ export class Game {
      dentro do overlay de respawn que já existia. ?killcam=0 desliga tudo. */
   _noteHit(by, weap, dmg, head, dist) {
     const p = this.player;
-    let rel = Math.atan2(by.pos.x - p.pos.x, by.pos.z - p.pos.z) - p.yaw;
+    // p - by (BUG-52): mesma convenção da câmera que _dmgArc — sem isso, rel saía 180°
+    // fora e a frente virava "PELAS COSTAS" no HUD.
+    let rel = Math.atan2(p.pos.x - by.pos.x, p.pos.z - by.pos.z) - p.yaw;
     while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2;
     p._lifeDmg = (p._lifeDmg || 0) + dmg;
     // QUADRANTE em vez de só "frente/costas": o dono precisa saber PRA ONDE olhar da próxima
