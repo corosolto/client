@@ -177,6 +177,7 @@
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
     "dejavu-fonts-ttf": "^2.37.3",
+    "js-yaml": "4.3.1",
     "sharp": "^0.35.3"
   },
   "private": true,
@@ -190,5 +191,8 @@
     "aeo.js": "^0.0.16",
     "meshoptimizer": "^1.2.0",
     "playwright": "^1.62.1"
+  },
+  "overrides": {
+    "js-yaml": "4.3.1"
   }
 }
