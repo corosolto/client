@@ -110,7 +110,7 @@ export function buildAtacadao(scene, T) {
   }
   for (const sx of [-1, 1]) for (const z of [4, 10, 16, 22, 28]) shelfUnit(sx > 0 ? 'gondola_mercado' : 'gondola_eletro', sx * 15, z);   // fileiras laterais
 
-  for (const cx of [-7.5, -3.75, 0, 3.75, 7.5]) {   // caixas fora do alinhamento das portas (±12) — senão funilava p/ 1 rota só (CTF2)
+  for (const cx of [-7.5, -3.75, 3.75, 7.5]) {   // caixas fora das portas (±12) E do vão central (x=0) — senão bloqueia a 2ª rota (CTF2)
     addBox(1.4, 1.0, 2.6, MAT.caixa, cx, 0, ZF + 4);
     addBox(2.4, 0.06, 0.5, MAT.esteira, cx, 1.0, ZF + 5.4, { collide: false });
     signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', '99', 260, 360), cx + 0.9, 2.2, ZF + 5.2, 0);
