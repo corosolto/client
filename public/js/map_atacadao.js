@@ -238,7 +238,7 @@ export function buildAtacadao(scene, T) {
   });
 
   const spawns = {
-    E: [-14, -6, 6, 14].map(x => ({ x, z: ZS + 5, yaw: 0 })),     // estacionamento, olhando pra loja
+    E: [6, 14, -6, -14].map(x => ({ x, z: ZS + 5, yaw: 0 })),     // estacionamento, olhando pra loja
     B: [-8, -2, 4, 10].map(x => ({ x, z: ZN - 4, yaw: Math.PI })), // loja, olhando pra fachada
   };
 
