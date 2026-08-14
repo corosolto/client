@@ -84,7 +84,7 @@ export function buildAtacadao(scene, T) {
 
   // A verga (minY=3) sobre os vãos das portas não pode virar colisor: barra o tiro, não o player.
   {
-    const gaps = [[-15, -9], [9, 15]];
+    const gaps = [[-15, -9], [-3, 3], [9, 15]];   // 3 vãos: esq, CENTRO (libera 2ª rota CTF2 pelo corredor central), dir
     let xc = -wX;
     for (const [g0, g1] of gaps) {
       if (g0 > xc) { addBox(g0 - xc, 2.6, 0.6, MAT.parede, (xc + g0) / 2, 0, ZF); addBox(g0 - xc, WALL_H - 2.6, 0.12, MAT.vidro, (xc + g0) / 2, 2.6, ZF, { collide: false }); }
