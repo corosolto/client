@@ -1671,6 +1671,8 @@ export class Game {
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
       if (e.code === 'Digit3') this._switchWeapon('knife');
+      if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
+        this._switchWeapon(this.player.lastInv);   // #261: lastinv - Q alterna as duas últimas
       if (e.code === 'KeyE' && this.nearPickup) {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
@@ -2505,6 +2507,7 @@ export class Game {
   _switchWeapon(w) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
+    if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
     if (w !== 'knife' && !p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     // GUNFEEL: deploy por CLASSE (era 0.28 fixo p/ as 26 armas — a AWP sacava tão rápido
     // quanto a faca). Estes segundos alimentam DUAS coisas: `p.drawUntil` (trava do tiro) e
@@ -2512,6 +2515,7 @@ export class Game {
     // rx -1,05 no início do arco) — antes era uma rampa linear dividida por 0,28 fixo.
     const DEPLOY = { knife: 0.25, pistol: 0.34, smg: 0.38, rifle: 0.42, shotgun: 0.42, awp: 0.45 };
     const _dcls = BALL_CLASS[w] === 'smg' ? 'smg' : (STATIC_CLASS[w] || 'rifle');
+    p.lastInv = p.weapon;   // #261: Q alterna entre as duas últimas (lastinv do CS)
     p.weapon = w; p.reloadUntil = 0; p.drawUntil = this.time + (GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28);
     p.sprayI = 0; p.lastShotAt = -9;   // rajada nova: padrão de recuo recomeça do tiro 1
     // remember the slot so 1/2 recall the LAST weapon of that kind (primary vs sidearm)
@@ -4902,16 +4906,17 @@ export class Game {
     const w = pk.weapon;                           // qualquer arma de WEAPONS
     if (!WEAPONS[w]) return false;
     if (isPlayer) {
+      if (who.weapon === w) return false;   // #264: mesma arma na mão não recarrega - reload existe p/ isso
       if (!who.ammo[w]) who.ammo[w] = { mag: 0, res: 0 };
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
-      if (who.weapon !== w) {
+      {
         const oldW = who.weapon;                   // arma que estava na mão
         this._switchWeapon(w); this.sfx.reloadEnd();
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);
-      } else this.sfx.uiClick();                   // mesma arma = só munição
+      }
     } else {
       who.weapon = w === 'knife' ? 'awp' : w;      // bot grabs it
     }
@@ -5032,9 +5037,16 @@ export class Game {
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;
-    // top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP)
-    if (p.primary && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
-    if (p.secondary && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
+    // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
+    // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
+    if (p.primary && this._pickupAllowed(p.primary) && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
+    if (p.secondary && this._pickupAllowed(p.secondary) && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    if (!this._pickupAllowed(p.weapon)) {
+      const mode = this._wpnMode();
+      const volta = mode === 'awp' ? 'awp' : (p.secondary || 'pistol');
+      if (WEAPONS[volta] && this._pickupAllowed(volta)) this._switchWeapon(volta);
+    }
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
