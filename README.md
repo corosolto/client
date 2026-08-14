@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 28.714 linhas em 37 arquivos | `cat public/js/*.js \| wc -l` |
+| Código do jogo | 28.716 linhas em 37 arquivos | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6.471** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.027 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -323,7 +323,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 253 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
 
 **7 mapas registrados** — 2 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 9 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

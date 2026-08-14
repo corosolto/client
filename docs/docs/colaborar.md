@@ -254,7 +254,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 253 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
 
 **7 mapas registrados** — 2 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 9 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

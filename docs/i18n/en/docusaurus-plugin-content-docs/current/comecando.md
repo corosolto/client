@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 28,714 lines in 37 files | `cat public/js/*.js \| wc -l` |
+| Game code | 28,716 lines in 37 files | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6,471** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,027 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -229,7 +229,7 @@ The maps registered today, and which mode each one opens in:
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 253 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
 
 **7 registered maps** - 2 open in rounds and 5 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 9 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 

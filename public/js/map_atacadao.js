@@ -42,10 +42,10 @@ export function buildAtacadao(scene, T) {
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
   const tex = (k, fallback) => (T && T[k]) ? { map: T[k] } : { color: fallback };
   const MAT = {
-    piso: lam({ color: 0xcfd3d8 }), parede: lam(tex('concrete', 0xb9bdc2)), metal: lam({ color: 0x9aa0a6 }),
-    pilar: lam({ color: 0xdfe3e7 }), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
+    piso: lam(tex('concrete', 0xcfd3d8)), parede: lam(tex('concrete', 0xb9bdc2)), metal: lam({ color: 0x9aa0a6 }),
+    pilar: lam(tex('concrete', 0xdfe3e7)), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
     caixa: lam({ color: 0x2e6f9e }), esteira: lam({ color: 0x2a2d31 }), faixa: lam({ color: 0xe0b83a }),
-    asfalto: lam(tex('asphalt', 0x2b2e33)), muro: lam({ color: 0xc2b8a6 }), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
+    asfalto: lam(tex('asphalt', 0x2b2e33)), muro: lam(tex('concrete', 0xc2b8a6)), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
     predio: lam({ color: 0xa7a29a }), janela: lam({ color: 0x35404e }), faixaRua: lam({ color: 0xd8b83a }),
   };
   const PROD = [lam({ color: 0xd23b3b }), lam({ color: 0xe0b83a }), lam({ color: 0x2e8b57 }), lam({ color: 0x2e6f9e }), lam({ color: 0xe86a1e }), lam({ color: 0xe8e2d4 })];
@@ -110,7 +110,7 @@ export function buildAtacadao(scene, T) {
   }
   for (const sx of [-1, 1]) for (const z of [4, 10, 16, 22, 28]) shelfUnit(sx > 0 ? 'gondola_mercado' : 'gondola_eletro', sx * 15, z);   // fileiras laterais
 
-  for (const cx of [-12, -6, 0, 6, 12]) {
+  for (const cx of [-7.5, -3.75, 0, 3.75, 7.5]) {   // caixas fora do alinhamento das portas (±12) — senão funilava p/ 1 rota só (CTF2)
     addBox(1.4, 1.0, 2.6, MAT.caixa, cx, 0, ZF + 4);
     addBox(2.4, 0.06, 0.5, MAT.esteira, cx, 1.0, ZF + 5.4, { collide: false });
     signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', '99', 260, 360), cx + 0.9, 2.2, ZF + 5.2, 0);
@@ -190,8 +190,10 @@ export function buildAtacadao(scene, T) {
   }
   const place = (kind, x, z, yaw = 0) => { const mesh = buildGun(kind, x, z, yaw); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh }); };
   const ARSENAL = ['awp', 'ak', 'm4', 'shotgun', 'mp5', 'deagle', 'pistol'];
-  // Time E (estacionamento): perto do spawn, entre os carros
-  ARSENAL.forEach((k, i) => place(k, -9 + i * 3, ZS + 7, 0));
+  // Time E (estacionamento): perto do spawn, entre os carros. x pula [-2,2] (estrutura
+  // do fundo do estacionamento — colisor x[-1.6..1.6] z[-45..-33]; x=0 enterrava o shotgun).
+  const EX = [-12, -9, -6, -3, 3, 6, 9];
+  ARSENAL.forEach((k, i) => place(k, EX[i], ZS + 7, 0));
   // Time B (loja): perto do fundo
   ARSENAL.forEach((k, i) => place(k, -9 + i * 3, ZN - 4, Math.PI));
   // disputadas na fachada (a porta)
