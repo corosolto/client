@@ -292,9 +292,18 @@ const IMPORTMAP = JSON.stringify({
       if (alvo.id === 'boot-splash') {
         var prompt = document.getElementById('splash-enter');
         var pronto = prompt && !prompt.classList.contains('hidden');
-        if (!window.__CS_MAIN_READY__ && (erroDoBoot || Date.now() - inicio > 22000)) {
-          lancamento.fail(erroDoBoot || new Error('carregamento inicial não respondeu'), 'boot-watchdog');
-        } else if (window.__CS_MAIN_READY__ || pronto) {
+        if (!window.__CS_MAIN_READY__) {
+          if (erroDoBoot || window.__CS_MAIN_FAILED) {
+            lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou (verifique a conexão)'), 'boot-watchdog');
+          } else if (!window.__CS_MAIN_LOADED) {
+            /* Rede lenta (#265): failsafe abre a splash antes do main.js chegar; clicar
+               não é defeito. Informa e espera, sem virar crash-auto. */
+            var st = document.getElementById('boot-status');
+            if (st) st.textContent = 'CONEXÃO LENTA - AINDA BAIXANDO O JOGO…';
+          } else if (Date.now() - inicio > 22000) {
+            lancamento.fail(new Error('carregamento inicial não respondeu'), 'boot-watchdog');
+          }
+        } else if (pronto) {
           lancamento.begin('entrada', 3000, function(){
             var splash = document.getElementById('boot-splash');
             return !splash || splash.classList.contains('gone');
@@ -1072,6 +1081,6 @@ const IMPORTMAP = JSON.stringify({
   }
 </script>
 
-<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline></script>
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"></script>
 </body>
 </html>
