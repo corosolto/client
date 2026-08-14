@@ -1,10 +1,10 @@
 name: csbrasil-bot-pr-classify
 
 on:
-  # `pull_request_target` dispara no PUSH — e o Greptile comenta DEPOIS do push. Com
+  # `pull_request_target` dispara no PUSH — e o CodeRabbit comenta DEPOIS do push. Com
   # só esses gatilhos o rotulador rodava antes de existir comentário, não achava nada
   # e nunca mais rodava: era estruturalmente cego para o que devia detectar. Medido na
-  # PR #240, que fechou com 4 fios do Greptile abertos e NENHUMA etiqueta.
+  # PR #240, que fechou com 4 fios do revisor abertos e NENHUMA etiqueta.
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review]
   pull_request_review:
@@ -36,7 +36,7 @@ jobs:
         with:
           python-version: '3.13'
       - name: Ensure labels exist
-        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-greptile-resolution greptile-resolved
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-coderabbit-resolution coderabbit-resolved
       - name: Fetch PR metadata
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Route PR and set assignee
@@ -70,18 +70,18 @@ jobs:
         run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
       - name: Classify PR
         run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
-      - name: Gate on Greptile presence
+      - name: Gate on CodeRabbit presence
         run: |
-          gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-greptile.json
-          python3 scripts/ci/greptile_gate.py < /tmp/pr-greptile.json > /tmp/pr-greptile-labels.json
+          gh pr view "$PR_NUMBER" --json comments,statusCheckRollup > /tmp/pr-coderabbit.json
+          python3 scripts/ci/coderabbit_gate.py < /tmp/pr-coderabbit.json > /tmp/pr-coderabbit-labels.json
       - name: Apply labels
         run: |
           python3 - <<'PY'
           import json, os, subprocess
           data = json.load(open('/tmp/pr-labels.json'))
-          greptile = json.load(open('/tmp/pr-greptile-labels.json'))
-          add = sorted(set(data.get('labels_add', []) + greptile.get('labels_add', [])))
-          remove = sorted(set(data.get('labels_remove', []) + greptile.get('labels_remove', [])))
+          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          add = sorted(set(data.get('labels_add', []) + coderabbit.get('labels_add', [])))
+          remove = sorted(set(data.get('labels_remove', []) + coderabbit.get('labels_remove', [])))
           if add:
               subprocess.run(['gh', 'pr', 'edit', os.environ['PR_NUMBER'], '--add-label', ','.join(add)], check=True)
           if remove:
@@ -94,11 +94,11 @@ jobs:
           pr = json.load(open('/tmp/pr.json'))
           labels = json.load(open('/tmp/pr-labels.json'))
           route = json.load(open('/tmp/pr-route.json'))
-          greptile = json.load(open('/tmp/pr-greptile-labels.json'))
+          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
           payload = {
               'files': pr.get('files', []),
               'changedFiles': pr.get('changedFiles', 0),
-              'labels_add': sorted(set(labels.get('labels_add', []) + greptile.get('labels_add', []))),
+              'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
               'baseRefName': pr.get('baseRefName'),
               'author_login': ((pr.get('author') or {}).get('login')),
               'add_assignee': route.get('add_assignee'),
