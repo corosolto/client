@@ -1,27 +1,64 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+# Roda ANTES do push o que hoje só falha depois: no CI, ou na revisão.
+#
+# O QUE ELE EVITA, E O QUE NÃO EVITA
+# Evita a ida-e-volta MECÂNICA: bloco gerado desatualizado, ARCH.md velho, travessão em
+# src/, sintaxe, contrato de mapa, trailer `Agent:` faltando. Foi essa classe que deixou
+# `pr-fast` vermelho em toda PR aberta por um dia inteiro.
+#
+# NÃO evita comentário de revisor de IA. Greptile aponta julgamento — cláusula que
+# promete mais do que mede, caminho não validado, história de investigação colada no
+# código. Script local não substitui isso, e prometer que substitui seria a mesma
+# mentira que a régua que não morde. O que fecha esse lado é bloquear merge com fio
+# aberto (ver docs/quality-gates.md), não um hook.
+#
+# Pular: `git push --no-verify` (ou PREPUSH=0). O check:deploy domina o custo (~1 min).
+set -uo pipefail
+[ "${PREPUSH:-1}" = "0" ] && exit 0
 
-# Roda o check:deploy antes do push; PULAR_PORTAO=1 escapa e o CI segue cobrando.
-# Por que este portão e não o check:fast: CONTRIBUTING.md, "Antes de abrir o PR".
+remoto="$1"
+falhas=()
+t0=$(date +%s)
 
-if [ -n "${PULAR_PORTAO:-}" ]; then
-  echo "pre-push: portão pulado por PULAR_PORTAO=1 — o CI ainda vai cobrar." >&2
-  exit 0
-fi
+echo "pre-push: portões locais (syntax/docs/arch/travessão/mapcontrato via check:deploy; PREPUSH=0 pula)"
 
-# Push que só apaga branch remota não tem nada para medir.
-tem_commit=0
-while read -r _local_ref local_sha _remote_ref _remote_sha; do
-  [ "$local_sha" = "0000000000000000000000000000000000000000" ] || tem_commit=1
+# Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
+# clone sem `npm run setup`. Merge que traz a main injeta história alheia no
+# intervalo — `--not --remotes` só cobra o que o remoto AINDA não tem.
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  intervalo=$(git rev-list "$local_sha" --not --remotes="$remoto")
+  for sha in $intervalo; do
+    if ! git show -s --format='%B' "$sha" | grep -Eqi '^Agent:[[:space:]]*[^[:space:]]'; then
+      falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
+    fi
+  done
 done
-[ "$tem_commit" = "1" ] || exit 0
 
-echo "pre-push: rodando check:deploy (PULAR_PORTAO=1 pula)..."
-if npm run --silent check:deploy; then
-  exit 0
+# package.json e version.js têm que concordar (o portão versao-bumpada cobra isso).
+if [ -f package.json ] && [ -f public/js/version.js ]; then
+  pj=$(node -pe 'require("./package.json").version' 2>/dev/null)
+  vj=$(grep -o "VERSION = '[^']*'" public/js/version.js 2>/dev/null | cut -d"'" -f2)
+  [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
 fi
 
-echo "" >&2
-echo "pre-push: portão vermelho — o push parou aqui em vez de no CI." >&2
-echo "  Conserte, ou 'PULAR_PORTAO=1 git push' se você sabe por quê." >&2
-exit 1
+for portao in eval:mapcontrato check:deploy; do
+  if ! npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
+    falhas+=("$portao — $(grep -m1 -E '✗|FALHA|error' /tmp/prepush-$$.log | cut -c1-90)")
+  fi
+done
+rm -f /tmp/prepush-$$.log
+
+if [ ${#falhas[@]} -gt 0 ]; then
+  echo ""
+  echo "  PUSH BLOQUEADO — ${#falhas[@]} portão(ões) reprovando:"
+  for f in "${falhas[@]}"; do echo "    x $f"; done
+  echo ""
+  echo "  docs/ARCH desatualizado:  npm run docs && node tools/gen-arch.mjs"
+  echo "  trailer faltando:         git commit --amend --trailer 'Agent: <nome>'"
+  echo "  pular mesmo assim:        git push --no-verify"
+  exit 1
+fi
+
+echo "pre-push: ok ($(( $(date +%s) - t0 ))s)"
+exit 0
