@@ -209,7 +209,14 @@ const IMPORTMAP = JSON.stringify({
       this.ativo = true; this.etapa = etapa;
       var self = this;
       this.timer = setTimeout(function(){
-        if (concluiu && concluiu()) { self.ready(etapa); return; }
+        if (concluiu) {
+          var v = concluiu();
+          /* #241: 'rede-lenta' = ainda há PROGRESSO real (ex.: GLBs chegando), só que
+             devagar. Renova o watchdog em vez de falhar; travamento de verdade é
+             progresso PARADO até o teto, e aí o fail vem igual. */
+          if (v === 'rede-lenta') { self.begin(etapa, timeout, concluiu); return; }
+          if (v) { self.ready(etapa); return; }
+        }
         self.fail(new Error('tempo limite ao abrir ' + etapa), 'launch-watchdog');
       }, timeout || 12000);
     },

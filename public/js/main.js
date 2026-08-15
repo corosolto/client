@@ -746,7 +746,15 @@ addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
 async function startGame(team, charId, enemyFaction) {
-  window.__gameLaunch?.begin('partida', 60000);
+  /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
+     (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
+     renova enquanto há movimento e só falha se o progresso PARAR — travamento
+     de verdade continua sendo pego. */
+  let _wp = _lstat.loaded;
+  window.__gameLaunch?.begin('partida', 60000, function () {
+    if (_lstat.loaded > _wp) { _wp = _lstat.loaded; return 'rede-lenta'; }
+    return !!(window.__game && window.__game.state === 'live');
+  });
   try {
     await _startGame(team, charId, enemyFaction);
     window.__gameLaunch?.ready('partida');
