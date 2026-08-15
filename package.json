@@ -151,6 +151,8 @@
     "eval:grafite": "node tools/eval/graffiti-census.mjs",
     "//eval:grafite:ar": "A régua IRMÃ da cobertura, e ela existe porque cobertura é cega pro defeito oposto: peça flutuando não derruba o número, ela MELHORA (cobre a placa de trás). Mede peça a peça — vão atrás, tapada na frente, sobreposta. Exige navegador e `npm run eval:serve` no ar. `--fotos N` fotografa as piores: quando o número não move depois de um conserto que deveria movê-lo, é a foto que resolve.",
     "eval:grafite:ar": "node tools/eval/graffiti-audit.mjs",
+    "//check:web": "O PORTÃO LENTO, o de NAVEGADOR — o que o `check` de node é cego para medir. eval:grafite e eval:select abrem os mapas/personagens num Chrome de verdade (onde os GLB existem) e cobram cobertura de parede pintada e a silhueta da tela de seleção; foi essa classe que deixou 238 decalques morrerem calados (a decal-probe em node jurava 334 peças). FORA do `check`/`check:fast` DE PROPÓSITO: SwiftShader roda ~0,3 FPS e cada mapa custa minutos, então este grupo é o job separado `portao-browser.yml` (só na main e em PR que toque mapa/personagem), nunca a corrente rápida. EXIGE `npm run eval:serve` no ar e CHROME_BIN apontando pro Chromium do Playwright. runner.mjs roda os dois mesmo que o primeiro caia — número diz que caiu, e a foto do eval:grafite:ar diz por quê.",
+    "check:web": "node tools/eval/runner.mjs eval:grafite eval:select",
     "audio": "node tools/gen-audio-manifest.mjs",
     "audio:check": "node tools/gen-audio-manifest.mjs --check",
     "feet": "node tools/gen-foot-offsets.mjs",
