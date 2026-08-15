@@ -413,7 +413,45 @@ passava na asserção de nome — furo achado pelo próprio mutante `sem-teto`) 
 solto por frame proibido. Mutantes `--mutante=clamp-frame` (3 vermelhas) e
 `--mutante=sem-teto` (1) executados.
 
+### ~~BUG-54 · "kills além do fisicamente possível" numa partida de captura legítima~~ · CONSERTO PRONTO 15/08, migration 024 PENDENTE de aplicação (issue #116)
+
+**Palavras de quem reportou** (issue #116): *"A partida terminou normalmente, mas as stats
+não foram enviadas e apareceu a mensagem: 'stats não enviados: kills além do fisicamente
+possível'. No final da partida eu estava com 95 kills e 6 mortes."*
+
+**Causa raiz.** A cláusula (a) do `submit_match` (`~/db-privado/supabase/schema.sql`)
+exigia `p_kills ≤ 45 * p_rounds`. O comentário dizia *"respawn de 2,5s => teto teórico
+~40/round"* — premissa do modo **ABATE**, onde a rodada É uma janela de 99 s. No
+**CAPTURA** a partida inteira são **2 rodadas** (`CTF_ROUNDS_TO_WIN`, `game.js:114`), então
+o teto dava **90 kills na partida** — numa modalidade sem janela de tempo, com respawn
+contínuo por até ~960 s. É o mesmo defeito de premissa do BUG-35/#87 (migration 015), um
+ramo acima: lá o piso de TEMPO, aqui o teto de KILLS. E igualmente chamava `_flag()` antes
+de recusar — **três partidas boas de captura escondiam o jogador do ranking**.
+
+**O número novo não é palpite** — é a física do jogo: no CAPTURA o limitante é o
+`RESPAWN_DELAY = 2,2 s` (`game.js:88`): para matar de novo, um inimigo tem que renascer.
+Teto honesto: `greatest(45 * rounds, floor(seconds / 2.2))` — o ramo por rodada continua
+amarrando partida de abate de relógio travado.
+
+| caso | teto antigo (45×rounds) | teto novo | veredito |
+|---|---|---|---|
+| reportado (#116): 95 kills · 2 rodadas · 480 s | 90 → **RECUSAVA** | greatest(90, 218) = 218 | passa |
+| trainer: 150 kills · 30 s | 90 → recusava | greatest(90, 13) = 90 | continua recusado |
+| cliente velho (seconds=0) | 90 | greatest(90, 0) = 90 | idêntico a hoje |
+
+**Régua.** Cláusula **SG6** do `tools/eval/submit-guard-check.mjs` (lê o SQL de
+`~/db-privado/`, o mesmo princípio das SG4/SG5: a fonte é o banco, não uma cópia em JS).
+Vermelha no estado antigo (4 reprovações: caso #116 recusado nos 3 arquivos + `_flag` na
+cláusula); verde depois; `--mutante=kills45` devolve o mundo antigo e acende nos 3.
+
+**Falta aplicar.** `~/db-privado/supabase/migrations/024_submit_guard_kills.sql` (o
+`schema.sql` e o espelho `opcional/012` já estão atualizados nesta máquina). Aplicar em
+staging → produção pela ordem do `~/db-privado/COMO-MIGRAR.md`. Falsos positivos já
+dados pelo caminho antigo: se um jogador reportar sumir do ranking com 3+ partidas de
+captura recusadas, conferir `players.flagged_count` na mão.
+
 ### ~~BUG-35 · "partida rápida demais pra ser verdade" numa partida legítima~~ · RESOLVIDO 07/08 (issue #87)
+
 
 
 **Palavras de quem reportou** (maurodesouza, issue #87): *"Durante uma partida no modo
