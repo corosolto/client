@@ -18,6 +18,10 @@ const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
    do jogo SEMPRE carrega filename ou stack same-origin — por isso o corte só
    vale quando não há nenhum dos dois (ver isOpaqueNoise). */
 const OPAQUE_RE = /uncaught exception: undefined|illegal character\s+U\+[0-9a-f]{2,6}|^script error\.?$|^network error$/i;
+/* sem_webgl: o jogo DETECTOU que o browser não tem WebGL (driver desligado/bloqueado)
+   e já exibiu o painel amigável (BUG-44). É ambiente do jogador, não defeito de código —
+   não abre issue (#277/#276/#274: 3 issues automáticas pela mesma causa num dia). */
+const AMBIENTE_RE = /^sem_webgl:/i;
 
 const normalizedOrigin = (value, base) => {
   if (!value) return null;
@@ -63,6 +67,7 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   const evidence = [payload.message, payload.source, payload.stack].filter(Boolean).join(' ');
   if (isExternalCrash(payload, ownOrigin)) return 'externo';
   if (isOpaqueNoise(payload)) return 'externo';
+  if (AMBIENTE_RE.test(String(payload.message || ''))) return 'externo';
   if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';
   if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';
   return 'codigo';

@@ -9,7 +9,7 @@ const mutants = [
   'sem-workflow', 'abre-externo',
   'sem-cliente', 'cliente-mensagem-url', 'sem-teto-externo', 'debug-externo', 'console-sem-origem',
   'cache-antes-origem', 'sem-recuperavel', 'sem-opaco', 'opaco-sem-guarda',
-  'sem-vercel-helper', 'sem-vercel-cliente',
+  'sem-vercel-helper', 'sem-vercel-cliente', 'sem-webgl',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -79,6 +79,9 @@ if (mutant === 'sem-recuperavel') helperSource = mutate(helperSource,
 if (mutant === 'sem-opaco') helperSource = mutate(helperSource,
   'return OPAQUE_RE.test(String(message).trim());',
   'return false;');
+if (mutant === 'sem-webgl') helperSource = mutate(helperSource,
+  "if (AMBIENTE_RE.test(String(payload.message || ''))) return 'externo';",
+  'if (false) return false;');
 if (mutant === 'opaco-sem-guarda') helperSource = mutate(helperSource,
   'if (source || stack) return false;',
   'if (false) return false;');
@@ -107,6 +110,12 @@ const crossOriginFixtures = [
 const vendorFixtures = [
   { source: `${own}/_vercel/insights/script.js:1:2317`, message: "Cannot assign to read only property 'pushState' of object '#<History>'" },
   { stack: `TypeError\n    at ${own}/_vercel/speed-insights/script.js:1:12505`, message: "Cannot assign to read only property 'pushState'" },
+];
+/* #277/#276/#274: sem_webgl é o jogo DETECTANDO browser sem WebGL (painel amigável do
+   BUG-44 já tratou). É ambiente do jogador — mesmo same-origin, não é defeito de código. */
+const ambienteFixtures = [
+  { source: `${own}/js/glcontext.js:105:1`, message: 'sem_webgl: nenhum contexto foi criado · experimental-webgl/economia: Could not create a WebGL context, VENDOR = 0x8086' },
+  { source: `${own}/js/glcontext.js:105:1`, message: 'sem_webgl: nenhum contexto foi criado · webgl2/economia: WebGL is currently disabled.' },
 ];
 const internalFixtures = [
   { source: `${own}/js/game.js:1:2`, stack: `${own}/js/main.js:3:4`, message: 'boom' },
@@ -240,6 +249,9 @@ const checks = [
   ['EP10', vendorFixtures.every((fixture) => classify(fixture) === 'externo')
     && classify({ source: `${own}/js/game.js:1:2`, message: 'boom' }) === 'codigo'
     && vendorBehavior, 'bundles /_vercel/ da Vercel são externos no helper e no cliente; /js/ do jogo continua acionável'],
+  ['EP11', ambienteFixtures.every((fixture) => classify(fixture) === 'externo')
+    && classify({ source: `${own}/js/glcontext.js:105:1`, message: 'outra falha qualquer de contexto' }) === 'codigo',
+    'sem_webgl é ambiente (browser sem WebGL, painel do BUG-44 já tratou): externo, sem issue; falha de contexto FORA da assinatura continua acionável'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -250,7 +262,7 @@ const mutantClause = {
   'sem-workflow': 'EP5', 'abre-externo': 'EP5',
   'sem-cliente': 'EP6', 'cliente-mensagem-url': 'EP6', 'sem-teto-externo': 'EP6', 'debug-externo': 'EP6',
   'console-sem-origem': 'EP6',
-  'cache-antes-origem': 'EP7',
+  'cache-antes-origem': 'EP7', 'sem-webgl': 'EP11',
   'sem-recuperavel': 'EP8',
   'sem-opaco': 'EP9', 'opaco-sem-guarda': 'EP9',
   'sem-vercel-helper': 'EP10', 'sem-vercel-cliente': 'EP10',
