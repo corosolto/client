@@ -547,6 +547,7 @@ const IMPORTMAP = JSON.stringify({
            lugar entrou FEEDBACK (pedido do dono, 07/08), que alimenta a lista da
            futura newsletter - ver /api/feedback e supabase/migrations/013. -->
       <button class="cs-item" data-act="feedback" type="button"><span class="cs-tick">▸</span>FEEDBACK</button>
+      <button class="cs-item" data-act="apoie" type="button"><span class="cs-tick">▸</span>APOIE O JOGO</button>
       <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>SOBRE O JOGO</button>
     </nav>
     <!-- plate do jogador: nível/XP derivados dos stats locais (mesma fonte do RANKING).
@@ -922,6 +923,22 @@ const IMPORTMAP = JSON.stringify({
     <p id="fb-status" class="fb-status" aria-live="polite"></p>
     <button id="fb-send" class="btn">ENVIAR</button>
     <button id="fb-back" class="btn">VOLTAR</button>
+  </div>
+</div>
+
+<!-- Apoio ao projeto. O idioma é uma sugestão, não uma barreira: a pessoa pode trocar
+     entre MeApoia/Pix e a plataforma internacional. -->
+<div id="support-panel" class="screen hidden">
+  <div class="panel center-panel support-panel">
+    <h2>APOIE O JOGO</h2>
+    <p class="fb-note">O CORO SOLTO ainda está em alpha. Se você curte a ideia, qualquer apoio ajuda a pagar servidor, domínio e as próximas melhorias.</p>
+    <div class="support-choice" role="group" aria-label="Escolha sua região">
+      <button id="support-br" class="btn support-region" type="button">SOU DO BRASIL</button>
+      <button id="support-intl" class="btn support-region" type="button">FORA DO BRASIL</button>
+    </div>
+    <p id="support-region-note" class="support-note"></p>
+    <a id="support-link" class="btn support-primary" href="/apoie" target="_blank" rel="noopener">ABRIR PÁGINA DE APOIO</a>
+    <button id="support-back" class="btn" type="button">VOLTAR</button>
   </div>
 </div>
 

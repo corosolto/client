@@ -49,6 +49,12 @@ export const DISCORD_URL = '/discord';
 export const TELEGRAM_URL = '/telegram';
 export const GITHUB_URL = 'https://github.com/rubenmarcus/csbrasil';
 
+// Apoio: o endereço da campanha brasileira entra depois que ela for criada no MeApoia.
+// Os fallbacks deixam a página utilizável no primeiro deploy e podem ser trocados só por
+// variáveis públicas, sem espalhar URL de plataforma pelo jogo.
+export const SUPPORT_URL_BR = import.meta.env.PUBLIC_SUPPORT_URL_BR || 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online';
+export const SUPPORT_URL_INTL = import.meta.env.PUBLIC_SUPPORT_URL_INTL || 'https://ko-fi.com';
+
 /* ===========================================================================
    RANKING: DESLIGADO (decisão do dono, 04/08/2026)
    ===========================================================================

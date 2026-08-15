@@ -1,0 +1,50 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
+
+const title = `Apoie o ${BRAND_FULL}`;
+---
+
+<Layout title={title} h1="APOIE O JOGO" kicker="APOIO · COMUNIDADE" heroImg="/img/map-previews/praca_poderes.jpg">
+  <Fragment slot="sub">
+    O jogo é gratuito e ainda está em alpha. Se você quer ajudar a manter o projeto vivo,
+    pode contribuir com qualquer valor.
+  </Fragment>
+
+  <section class="support-page" aria-labelledby="support-title">
+    <div class="support-lead">
+      <p class="eyebrow">META INICIAL</p>
+      <h2 id="support-title">Ajude a pagar o próximo passo</h2>
+      <p>Servidor, domínio, ferramentas e tempo de desenvolvimento. O apoio não compra vantagem dentro do jogo: ele ajuda o jogo a continuar gratuito.</p>
+    </div>
+    <div class="support-grid">
+      <article class="support-card">
+        <p class="eyebrow">BRASIL · PIX</p>
+        <h2>MeApoia</h2>
+        <p>Para apoiar pelo Pix, abra a campanha brasileira. O endereço abaixo ficará apontado para a campanha assim que ela for criada.</p>
+        <a class="support-cta" href={SUPPORT_URL_BR} target="_blank" rel="noopener">ABRIR ME APOIA ↗</a>
+      </article>
+      <article class="support-card">
+        <p class="eyebrow">OUTROS PAÍSES</p>
+        <h2>International support</h2>
+        <p>Para quem está fora do Brasil, usamos uma página internacional configurável, sem exigir Pix.</p>
+        <a class="support-cta" href={SUPPORT_URL_INTL} target="_blank" rel="noopener">OPEN SUPPORT ↗</a>
+      </article>
+    </div>
+    <p class="support-small">Quer ajudar sem dinheiro? Jogar, enviar feedback e compartilhar o jogo também ajudam muito.</p>
+  </section>
+
+  <style>
+    .support-page { display:grid; gap:24px; }
+    .support-lead { max-width:700px; }
+    .support-lead h2 { margin:0 0 10px; color:var(--bone); }
+    .support-lead p:not(.eyebrow), .support-card p:not(.eyebrow), .support-small { color:var(--bone-dim); line-height:1.7; }
+    .eyebrow { color:var(--amber); font:700 11px/1.2 var(--mono); letter-spacing:2px; }
+    .support-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+    .support-card { border:1px solid var(--line); border-left:3px solid var(--amber); padding:22px; background:rgba(20,24,20,.64); }
+    .support-card h2 { margin:4px 0 8px; color:var(--bone); }
+    .support-cta { display:inline-block; margin-top:10px; padding:12px 16px; background:var(--amber); color:#17150d; font-weight:800; letter-spacing:1px; text-decoration:none; }
+    .support-small { margin:0; font-size:13px; }
+    @media (max-width:640px) { .support-grid { grid-template-columns:1fr; } }
+  </style>
+</Layout>

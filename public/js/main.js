@@ -165,7 +165,7 @@ function rebuildMenuBackdrop() {
 preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'pause-menu', 'match-end'];
+const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
@@ -1007,6 +1007,7 @@ csItems.forEach((it) => {
       case 'ctf':   openSetup('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
       case 'feedback': markCurrent('feedback'); show('feedback-panel'); break;
+      case 'apoie': markCurrent('apoie'); showSupport(); break;
       case 'config': markCurrent('config'); show('settings-panel'); break;
       case 'ranking': markCurrent('ranking'); showRanking(); break;
       case 'sobre': markCurrent('sobre'); howtoReturn = 'main-menu'; show('howto-panel'); break;
@@ -1108,6 +1109,26 @@ $('ranking-back').onclick = () => { ui.back(); markCurrent(null); show('main-men
 /* FEEDBACK: email + consentimento obrigatórios ANTES de enviar — a tabela é a
    semente da newsletter (migration 013), então não entra linha sem os dois. */
 $('fb-back').onclick = () => { ui.back(); markCurrent(null); show('main-menu'); };
+$('support-back').onclick = () => { ui.back(); markCurrent(null); show('main-menu'); };
+const supportLink = $('support-link');
+const supportNote = $('support-region-note');
+const SUPPORT_URL_BR = 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online';
+const SUPPORT_URL_INTL = 'https://ko-fi.com';
+function showSupport(region) {
+  const browserLocale = String(navigator.language || '').toLowerCase();
+  const timezone = String(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+  const br = region ? region === 'br' : browserLocale === 'pt-br' || timezone === 'America/Sao_Paulo';
+  supportLink.href = br ? SUPPORT_URL_BR : SUPPORT_URL_INTL;
+  supportLink.textContent = br ? 'ABRIR ME APOIA' : 'OPEN INTERNATIONAL SUPPORT';
+  supportNote.textContent = br
+    ? 'Você será levado ao MeApoia. O Pix da campanha fica na página de apoio.'
+    : 'You will be taken to the international support page. Choose the option that works in your country.';
+  $('support-br').classList.toggle('active', br);
+  $('support-intl').classList.toggle('active', !br);
+  show('support-panel');
+}
+$('support-br').onclick = () => showSupport('br');
+$('support-intl').onclick = () => showSupport('intl');
 $('fb-send').onclick = async () => {
   ui.click();
   const msg = $('fb-msg').value.trim(), email = $('fb-email').value.trim();

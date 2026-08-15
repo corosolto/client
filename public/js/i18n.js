@@ -34,6 +34,7 @@ const DICT = {
   'CONFIGURAÇÕES': 'SETTINGS',
   'RANKING': 'LEADERBOARD',
   'MAPA': 'MAP',
+  'APOIE O JOGO': 'SUPPORT THE GAME',
   'SOBRE O JOGO': 'ABOUT THE GAME',
   // painel de feedback (substituiu o MAPA no menu, 07/08)
   'FEEDBACK': 'FEEDBACK',

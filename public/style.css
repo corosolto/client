@@ -633,6 +633,12 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
+.support-panel{max-width:560px}
+.support-choice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.support-region{font-size:12px!important;padding:10px 14px!important}
+.support-region.active{border-color:var(--yellow);color:var(--yellow)}
+.support-primary{display:block;text-decoration:none;text-align:center;margin:12px 0}
+.support-note{min-height:34px;color:var(--ink3);font-size:12px;line-height:1.5}
 
 /* ---------- HUD ---------- */
 /* MARGENS DO HUD — desvio 2 do BUG-05, medido e não achado. `ref-ui.py` dá, no consenso
