@@ -41,9 +41,9 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 29,655 lines in 39 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 29,670 lines in 39 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6,560** lines | `wc -l public/js/game.js` |
-| `main.js` | 2,512 lines | `wc -l public/js/main.js` |
+| `main.js` | 2,527 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props in GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -100,7 +100,7 @@ and `/api/leaderboard` responds `{disabled:true}`.
 How many invariants pass **is not derivable from the code** — it is the result of a run,
 and it even depends on which inputs exist on the machine. That is why that scoreboard is
 not repeated here: it lives in the header of
-[`KNOWN-BUGS.md`](https://github.com/corosolto/client/blob/main/KNOWN-BUGS.md), pasted
+[`KNOWN-BUGS.md`](https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md), pasted
 from a real run, with the list of red ones, root cause, and `arquivo:linha` for each one.
 That is the file maintained day by day.
 
@@ -117,7 +117,7 @@ npm run eval:vm && node tools/eval/invariants.mjs --json   # 10-12 min
 ## Run it in 3 commands {#run-in-3-commands}
 
 ```bash
-git clone https://github.com/corosolto/client.git && cd csbrasil
+git clone https://github.com/rubenmarcus/csbrasil.git && cd csbrasil
 npm install
 npm run dev          # opens http://localhost:4321 — this page IS the game
 ```
@@ -305,7 +305,7 @@ The sidebar order **is** the reading order, and each page delivers one thing:
    colliding, and the conflict table. Read it before touching `game.js`.
 5. **[How to contribute](./colaborar.md)** — what a PR needs to get in, and the
    **first-contribution tasks** already written in
-   [`docs/issues/`](https://github.com/corosolto/client/tree/main/docs/issues) (with a
+   [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (with a
    ready-made `abrir-issues.sh` — they have not been opened on GitHub yet).
 6. **License** — the repo-root `LICENSE` declares it (AGPL-3.0 today); the surfaces
    that repeat its name and must change together are listed in `CONTRIBUTING.md`.
@@ -313,6 +313,6 @@ The sidebar order **is** the reading order, and each page delivers one thing:
    since the last pasted measurement.
 
 Where the project is **going** is not in this documentation: it is
-[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md), and the
+[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md), and the
 executable plan is
-[`plans/08`](https://github.com/corosolto/client/blob/main/plans/08-RELEASE-PROFISSIONAL.md).
+[`plans/08`](https://github.com/rubenmarcus/csbrasil/blob/main/plans/08-RELEASE-PROFISSIONAL.md).

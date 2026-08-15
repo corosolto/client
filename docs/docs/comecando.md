@@ -39,9 +39,9 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 29.655 linhas em 39 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 29.670 linhas em 39 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6.560** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.512 linhas | `wc -l public/js/main.js` |
+| `main.js` | 2.527 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -98,7 +98,7 @@ e `/api/leaderboard` responde `{disabled:true}`.
 Quantas invariantes passam **não é derivável do código** — é o resultado de uma execução,
 e depende até de qual insumo existe na máquina. Por isso esse placar não é repetido aqui:
 ele mora no cabeçalho de
-[`KNOWN-BUGS.md`](https://github.com/corosolto/client/blob/main/KNOWN-BUGS.md), colado
+[`KNOWN-BUGS.md`](https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md), colado
 de uma execução real, com a lista das vermelhas, causa raiz e `arquivo:linha` de cada uma.
 É esse arquivo que é mantido dia a dia.
 
@@ -115,7 +115,7 @@ npm run eval:vm && node tools/eval/invariants.mjs --json   # 10-12 min
 ## Rodar em 3 comandos
 
 ```bash
-git clone https://github.com/corosolto/client.git && cd csbrasil
+git clone https://github.com/rubenmarcus/csbrasil.git && cd csbrasil
 npm install
 npm run dev          # abre em http://localhost:4321 — essa página JÁ É o jogo
 ```
@@ -303,7 +303,7 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    colidir, e a tabela de conflito. Leia antes de tocar em `game.js`.
 5. **[Como colaborar](./colaborar.md)** — o que um PR precisa pra entrar, e as **tarefas
    de primeira contribuição** já escritas em
-   [`docs/issues/`](https://github.com/corosolto/client/tree/main/docs/issues) (com um
+   [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (com um
    `abrir-issues.sh` pronto — elas ainda não foram abertas no GitHub).
 6. **Licença** — o `LICENSE` na raiz declara (hoje AGPL-3.0); as superfícies que
    repetem o nome e mudam junto estão no `CONTRIBUTING.md`.
@@ -311,6 +311,6 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    desde a última medição colada.
 
 Para onde o projeto **vai** não está nesta documentação: é o
-[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md), e o
+[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md), e o
 plano executável é o
-[`plans/08`](https://github.com/corosolto/client/blob/main/plans/08-RELEASE-PROFISSIONAL.md).
+[`plans/08`](https://github.com/rubenmarcus/csbrasil/blob/main/plans/08-RELEASE-PROFISSIONAL.md).
