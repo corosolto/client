@@ -14,8 +14,9 @@
    SEM_FIXTURE e essa lista **só pode encolher** — tocar num script legado é o
    momento de escrever a fixture dele, e o portão cobra ali.
 
-   Mutantes: lista-cresce (finge script legado novo) e selftest-quebrado
-   (finge que o autoteste reprova).
+    Mutantes: sem-fixture (toca script da dívida sem fixture - FX1), selftest-quebrado
+    (finge que o autoteste reprova - FX2) e lista-cresce (dispensa sintética entra na
+    SEM_FIXTURE - FX3).
 
    Uso: node tools/eval/fixture-check.mjs [--base=origin/main]
         [--mutante=lista-cresce|selftest-quebrado]
@@ -26,7 +27,7 @@ import { relatarBaseAusente, resolverBase } from './base-ref.mjs';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
-if (mutante && !['lista-cresce', 'selftest-quebrado'].includes(mutante)) {
+if (mutante && !['lista-cresce', 'selftest-quebrado', 'sem-fixture'].includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
 const base = arg('base') || 'origin/main';
@@ -54,10 +55,12 @@ if (!resolucao.ok) process.exit(relatarBaseAusente('FIXTURE', resolucao));
 
 let tocados = git(['diff', '--name-only', `${base}...HEAD`]).split('\n')
   .filter((f) => /^scripts\/ci\/.+\.py$/.test(f) && existsSync(f));
-if (mutante === 'lista-cresce') tocados = ['scripts/ci/pr_route.py'];
+if (mutante === 'lista-cresce') SEM_FIXTURE.add('scripts/ci/fantasma.py');
 /* O mutante do FX2 aponta para um script que TEM fixture: sem isso ele cairia no
    FX1 e a cláusula do autoteste quebrado nunca seria exercitada. */
 if (mutante === 'selftest-quebrado') tocados = ['scripts/ci/agente_check.py'];
+/* FX1 puro: tocar num script da dívida SEM ter escrito a fixture dele. */
+if (mutante === 'sem-fixture') tocados = ['scripts/ci/pr_route.py'];
 
 const falhas = [];
 for (const arquivo of tocados) {
@@ -81,13 +84,23 @@ const ESTE = 'tools/eval/fixture-check.mjs';
 let existiaNaBase = true;
 try { execFileSync('git', ['cat-file', '-e', `${base}:${ESTE}`], { stdio: 'ignore' }); } catch { existiaNaBase = false; }
 const naBase = existiaNaBase ? git(['show', `${base}:${ESTE}`]) : '';
-if (existiaNaBase && !naBase) {
-  falhas.push(`FX0 a lista de dispensa existe em \`${base}\` mas não pôde ser lida — sem ela não dá para saber se cresceu`);
+let daBase;
+if (existiaNaBase && naBase) {
+  daBase = new Set([...naBase.matchAll(/'(scripts\/ci\/[^']+)'/g)].map((m) => m[1]));
 } else if (existiaNaBase) {
-  const daBase = new Set([...naBase.matchAll(/'(scripts\/ci\/[^']+)'/g)].map((m) => m[1]));
-  const novas = [...SEM_FIXTURE].filter((a) => !daBase.has(a));
-  if (novas.length) falhas.push(`FX3 a lista SEM_FIXTURE ganhou dispensa: ${novas.join(', ')} — ela só encolhe`);
+  falhas.push(`FX0 a lista de dispensa existe em \`${base}\` mas não pôde ser lida — sem ela não dá para saber se cresceu`);
+  daBase = new Set();
+} else {
+  /* Este arquivo é NOVO na base: não há lista anterior para ler. A dívida
+     herdada é DERIVADA - todo script de ci da base que já não tinha --selftest.
+     Sem isso, FX3 ficava cego justamente no PR que cria a régua. */
+  daBase = new Set();
+  for (const f of git(['ls-tree', '-r', '--name-only', base, 'scripts/ci/']).split('\n').filter((f) => f.endsWith('.py'))) {
+    if (!/--selftest/.test(git(['show', `${base}:${f}`]))) daBase.add(f);
+  }
 }
+const novas = [...SEM_FIXTURE].filter((a) => !daBase.has(a));
+if (novas.length) falhas.push(`FX3 a lista SEM_FIXTURE ganhou dispensa: ${novas.join(', ')} — ela só encolhe`);
 
 for (const f of falhas) console.error(`  \x1b[31m✗\x1b[0m ${f}`);
 if (falhas.length) {

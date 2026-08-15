@@ -30,7 +30,7 @@ export function relatarBaseAusente(nome, { raso, base }) {
     console.log(`\x1b[33m${nome} NÃO MEDIDO: clone raso, sem \`${base}\` para comparar. Vale no clone completo (CI de PR e máquina).\x1b[0m`);
     return 0;
   }
-  console.error(`  \x1b[31m✗\x1b[0m ${nome}0 base \`${base}\` não existe num clone completo — régua sem insumo não pode passar calada`);
+  console.error(`  \x1b[31m✗\x1b[0m ${nome}0: base \`${base}\` não existe num clone completo — régua sem insumo não pode passar calada`);
   console.error(`\x1b[31m${nome} 1 VERMELHA\x1b[0m`);
   return 1;
 }

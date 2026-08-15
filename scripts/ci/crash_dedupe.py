@@ -59,15 +59,16 @@ def find_duplicate(current: dict, others: list[dict]) -> dict | None:
     current_classe = classify(current["title"])
     current_norm = normalize(current["title"])
 
-    # Canônica da classe: a issue ABERTA mais antiga (menor número). Fechar em
-    # direção à mais antiga preserva a discussão que já existe.
+    # Canônica da classe: a issue ABERTA mais antiga (menor número), INCLUINDO a
+    # atual. Se a atual É a canônica, não há para onde apontar - marcar a canônica
+    # de duplicata de uma mais nova é o resultado errado (CodeRabbit, PR #209).
     if current_classe:
         mesma_classe = sorted(
             (i for i in others
-             if i["number"] != current_num and classify(i["title"]) == current_classe),
+             if classify(i["title"]) == current_classe),
             key=lambda i: i["number"],
         )
-        if mesma_classe:
+        if mesma_classe and mesma_classe[0]["number"] != current_num:
             alvo = mesma_classe[0]
             return {
                 "number": alvo["number"],
@@ -115,9 +116,8 @@ def selftest() -> int:
     outras = [{"number": n, "title": t, "url": f"u{n}"} for n, t in reais.items()]
 
     casos = [
-        # a canônica é a ABERTA mais antiga da classe, e é por isso que o alvo é #128
         ("webgl vendor x context loss", 206, 128, "webgl-sem-contexto"),
-        ("webgl renderer entra na mesma classe", 128, 196, "webgl-sem-contexto"),
+        ("a canônica da classe não aponta pra mais nova", 128, None, None),
         ("shader NÃO cai em webgl", 130, None, None),
         ("gltf agrupa com gltf", 114, 113, "gltf-textura"),
         ("autoplay e mídia abortada são a mesma classe", 122, 117, "midia-bloqueada"),

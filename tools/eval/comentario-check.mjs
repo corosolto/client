@@ -39,9 +39,11 @@ const base = arg('base') || 'origin/main';
 const TETO_LINHAS = 2;
 const ZONAS = /^(public\/js\/|src\/)/;
 /* Marca de inglês só conta quando NENHUMA palavra portuguesa aparece: comentário
-   misto ("o cache do fallback") é normal e não é violação de idioma. */
+   misto ("o cache do fallback") é normal e não é violação de idioma. `a` e `no`
+   ficam de FORA de propósito: são palavras inglesas também, e bastavam para
+   desligar a cláusula num comentário todo em inglês (CodeRabbit, PR #209). */
 const INGLES = /\b(the|this|that|when|which|because|should|would|with|from|does|has|are|is)\b/i;
-const PORTUGUES = /\b(o|a|os|as|de|do|da|que|não|é|por|para|com|quando|porque|sem|já|pra|no|na|um|uma|em|se)\b/i;
+const PORTUGUES = /\b(o|os|as|de|do|da|que|não|é|por|para|com|quando|porque|sem|já|pra|na|um|uma|em|se)\b/i;
 
 function diff() {
   /* Sem try/catch de conveniência: falha do git aqui virava diff vazio, e diff
@@ -60,7 +62,9 @@ const ehCorpo = (t) => /^\s*\*/.test(t);
    `const x = 1; // narrativa de quatro linhas…` passava batido. `://` de URL não
    conta, e nem `//` dentro de aspas. */
 const trailing = (t) => {
-  const semTexto = t.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, '""');
+  /* Substituição PRESERVA o comprimento: índice achado na linha sem literais
+     vale na original. Encolher deslocava o corte para dentro do código. */
+  const semTexto = t.replace(/'[^']*'|"[^"]*"|`[^`]*`/g, (m) => 'x'.repeat(m.length));
   const i = semTexto.search(/(^|[^:])\/\//);
   if (i < 0) return null;
   const corte = semTexto.indexOf('//', i);
@@ -109,7 +113,9 @@ if (mutante === 'cauda-longa') {
   texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,3 @@\n+const a = 1; // primeira linha da narrativa\n+const b = 2; // segunda linha da narrativa\n+const c = 3; // terceira linha da narrativa\n';
 }
 if (mutante === 'comentario-ingles') {
-  texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,1 @@\n+// this comment is written in english and should be flagged\n';
+  /* O ` a ` no meio é o furo do regex de português: com `a` na lista de marcas
+     PT, esta linha passava verde (CodeRabbit, PR #209). */
+  texto += '\n+++ b/src/mutante.ts\n@@ -0,0 +1,1 @@\n+// this is a comment written in english and should be flagged\n';
 }
 
 const falhas = [];
