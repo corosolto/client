@@ -11,7 +11,7 @@
       "source": "opusgamelabs/game-creator",
       "sourceType": "github",
       "skillPath": "skills/game-3d-assets/SKILL.md",
-      "computedHash": "a86170227cd6267a477700ac0e5b9b7bc65c8fb0f0bbfd9c7c39dece494241a7"
+      "computedHash": "58aaf824a372e3dfd6848a62bf4628578c123370f3ef2248d18683d7fdd2e668"
     },
     "game-assets": {
       "source": "PlayableIntelligence/game-creator",
@@ -119,19 +119,19 @@
       "source": "majidmanzarpour/threejs-game-skills",
       "sourceType": "github",
       "skillPath": "skills/threejs-3d-generator/SKILL.md",
-      "computedHash": "800996cfc45ceb7d4e8f8114495236c84332afa34a0abaf1436ee46e0dc6b333"
+      "computedHash": "92746536d34ae16d05cb25bce9d121aabde735f02d30ec2e0634668dfb9af942"
     },
     "threejs-3d-graphics": {
       "source": "omer-metin/skills-for-antigravity",
       "sourceType": "github",
       "skillPath": "skills/threejs-3d-graphics/SKILL.md",
-      "computedHash": "3ff01b0e46925f84d0d2a709f945c8205d30178dc87cac66bb6c26946b41d7e3"
+      "computedHash": "5ca1ef4a1713cb8c29b3b1e83fa5f9c609cc74850db404f477268b4d9cbf2e2a"
     },
     "threejs-aaa-graphics-builder": {
       "source": "majidmanzarpour/threejs-game-skills",
       "sourceType": "github",
       "skillPath": "skills/threejs-aaa-graphics-builder/SKILL.md",
-      "computedHash": "fd1bd5c64b5dc5fa4e09907d2c42234466b2b9db9489ad259242d3eaba4b3af2"
+      "computedHash": "62a66c3d9cf382b15d73bf8cb198df9b557449b4e1c1d7d6f40489df41e4c9de"
     },
     "threejs-animation": {
       "source": "cloudai-x/threejs-skills",
@@ -155,13 +155,13 @@
       "source": "majidmanzarpour/threejs-game-skills",
       "sourceType": "github",
       "skillPath": "skills/threejs-game-director/SKILL.md",
-      "computedHash": "276e89aa25dc550a63271ccb36c4384bc82beb0620600ad44eaaaac1c7ef2552"
+      "computedHash": "3f6fa121bb38be935c585de5e8fb7754304171b6969d89e47f4ecb32baaec894"
     },
     "threejs-gameplay-systems": {
       "source": "majidmanzarpour/threejs-game-skills",
       "sourceType": "github",
       "skillPath": "skills/threejs-gameplay-systems/SKILL.md",
-      "computedHash": "9f1275a869afdc4ecb3b1eaeab2e89fb8debadbc15256087a9181a0c10dfffe7"
+      "computedHash": "b907ece2e2f37f5a8c4ba4f8586c104a000522952f6e5737c3ffca5ea2c194f9"
     },
     "threejs-geometry": {
       "source": "cloudai-x/threejs-skills",
@@ -173,7 +173,7 @@
       "source": "gamedev-skills/awesome-gamedev-agent-skills",
       "sourceType": "github",
       "skillPath": "skills/web-engines/threejs-gltf-loading/SKILL.md",
-      "computedHash": "c80645c5841ebc8862580d4c9255a7ceacdbeee4a7d387deb33abd0d7a9cb986"
+      "computedHash": "96557dd1e6672c1d6e20c84d08caa4dfbe44ce696893e7ed372cda0907b6cab0"
     },
     "threejs-interaction": {
       "source": "cloudai-x/threejs-skills",
@@ -203,7 +203,7 @@
       "source": "gamedev-skills/awesome-gamedev-agent-skills",
       "sourceType": "github",
       "skillPath": "skills/web-engines/threejs-materials-lighting/SKILL.md",
-      "computedHash": "8addf2e45ddb5569ac0433990f5d9a9ea3dcf3706c0e92af6e63ace0c8b764b9"
+      "computedHash": "af60eeaee0de87f14d88ab9868fe8a30b94fd7622f09b7a1d3f9afcc5942bff9"
     },
     "threejs-postprocessing": {
       "source": "cloudai-x/threejs-skills",
@@ -215,7 +215,7 @@
       "source": "gamedev-skills/awesome-gamedev-agent-skills",
       "sourceType": "github",
       "skillPath": "skills/web-engines/threejs-scene-setup/SKILL.md",
-      "computedHash": "0515a36b717c19b7bd4d6dd7fe6bc691c69133852aecddd1307ec260a4b294e8"
+      "computedHash": "10dfe26ff12936323b2575d08519fc7e38cc47f8da83bc6e122a00fa24e73d17"
     },
     "threejs-shaders": {
       "source": "cloudai-x/threejs-skills",

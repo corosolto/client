@@ -29,23 +29,49 @@
      V=1 node tools/eval/decal-probe.mjs [mapId] # + uma linha por peça
    ============================================================================ */
 import { THREE, MAPS, initTextures } from './harness.mjs';
-import { paredeAtras } from '../../public/js/map_decals.js';
+import { paredeAtras, medirParede } from '../../public/js/map_decals.js';
 
 const T = initTextures();
 const ONLY = process.argv[2];
 const VERBOSE = process.env.V === '1';
 const H_CARTAZ = 2.2;   // altura do cartaz do Piscinão — a régua de tamanho do dono
 
-/* ── PAREDE ATRÁS (04/08) ───────────────────────────────────────────────────────
+/* ── PAREDE ATRÁS (04/08, reconciliada 12/08 — issue #75) ────────────────────────
    Reprovação literal do dono: "os graffites que colocaste, colocaste em lugares
    que não são parede". Esta régua repete, DEPOIS de construído, o mesmo raycast
    que os mapas rodam ANTES de desenhar — de propósito com a MESMA função
    (`public/js/map_decals.js`), pra não haver duas medidas discordando por causa do
-   instrumento. Se alguém tirar a chamada de dentro de um `decal()`, a peça errada
-   nasce e ESTA contagem sobe; é a mutação que faz a régua morder.
+   instrumento. Se um decalque não tem parede atrás por NENHUM critério da casa, a
+   contagem sobe; é a mutação que faz a régua morder.
+
+   ── POR QUE DUAS FUNÇÕES E NÃO UMA (issue #75) ──────────────────────────────────
+   A 1ª versão media TODO mapa só com `paredeAtras` — o que estava certo enquanto
+   TODO `decal()` validava com `paredeAtras`. Mas a Quebrada evoluiu (06/08): o
+   `decal()` dela valida com `medirParede` (acha a face VISÍVEL do barraco GLB) e
+   AINDA MOVE a peça `recuo` metros até colar nela. `paredeAtras` (25 raios, plano de
+   25 cm, alcance 0,8 m) é mais DURO que `medirParede` (3×3 amostras, tolera 3 de 9
+   vazias pra vão de porta/janela, degrau até 0,6 m) — então re-medir com `paredeAtras`
+   uma peça que nasceu e foi colada por `medirParede` reprovava 92 peças LEGÍTIMAS,
+   concentradas nas vielas de x=±21 (barraco baixo, peça no topo do muro, micro-recuo).
+   Era a régua acusando a peça por causa do instrumento, não do jogo.
+
+   O conserto NÃO é trocar uma função pela outra: se a Quebrada passasse a medir só
+   com `medirParede`, o Piscinão (que valida com `paredeAtras` e NÃO move a peça)
+   ganharia 6 falsos positivos no sentido inverso. O conserto é perguntar pelas MESMAS
+   réguas que a casa usa pra construir: uma peça TEM parede se QUALQUER uma delas acha
+   sólido atrás —
+     · `paredeAtras(solids)`   — o raycast contra os sólidos DECLARADOS do mapa
+       (malha `[root]` em piscina/havan/quebrada; caixas giradas no ferrovelho);
+     · `paredeAtras(colliders)` — o mesmo, mas contra as CAIXAS AABB, que pegam a peça
+       alta encostada num muro-caixa de 2,2 m (o topo escapa da amostra de malha, a
+       caixa não);
+     · `medirParede([root])`   — a face VISÍVEL, com a tolerância de vão que a Quebrada
+       exige (é literalmente a função que o `decal()` dela rodou pra criar a peça).
+   Peça no ar de verdade (nenhuma parede em 1,2 m) falha as três e continua acusada —
+   a mutação segue mordendo. Cola um decalque a 5 m do nada e a contagem sobe.
 
    `decalSolids` sai do `buildWorld` e é declaração, não geometria nova: em havan,
-   pool_day e quebrada ele É o `colliders`; em ferrovelho leva as duas folhas
+   pool_day e quebrada ele É o `[root]`; em ferrovelho leva as duas folhas
    giradas do portão e em brasilia as empenas dos ministérios (GLB sem collider).
 
    LIMITE CONHECIDO: em node NENHUM GLB carrega, então os ministérios da Brasília
@@ -58,6 +84,12 @@ for (const [id, m] of Object.entries(MAPS)) {
   const W = m.build(scene, T);
   const files = new Map(), linhas = [], soltas = [];
   const solids = W.decalSolids || W.colliders || [];
+  const boxes = W.colliders || [];
+  // TEM parede atrás por QUALQUER régua da casa? (ver docstring — reconciliação #75)
+  const temParede = (x, y, z, ry, w, h) =>
+    paredeAtras(solids, x, y, z, ry, w, h)
+    || paredeAtras(boxes, x, y, z, ry, w, h)
+    || medirParede([W.root], x, y, z, ry, w, h) !== null;
   let n = 0, menor = Infinity, maior = 0;
   /* ── AS PEÇAS DA PASSADA NÃO SÃO MEDIDAS AQUI, E ISSO É DE PROPÓSITO (07/08) ──
      A passada de grafite (`public/js/graffiti_pass.js`) resolve a colocação NO
@@ -80,7 +112,7 @@ for (const [id, m] of Object.entries(MAPS)) {
     n++; files.set(f, (files.get(f) || 0) + 1);
     menor = Math.min(menor, h); maior = Math.max(maior, h);
     const p = o.getWorldPosition(new THREE.Vector3());
-    if (!paredeAtras(solids, p.x, p.y, p.z, o.rotation.y, w, h)) {
+    if (!temParede(p.x, p.y, p.z, o.rotation.y, w, h)) {
       soltas.push(`    SEM PAREDE  ${w.toFixed(2)} × ${h.toFixed(2)} m  ry=${o.rotation.y.toFixed(2)}  `
         + `(${p.x.toFixed(2)}, ${p.y.toFixed(2)}, ${p.z.toFixed(2)})  ${f}`);
     }

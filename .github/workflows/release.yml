@@ -93,7 +93,24 @@ jobs:
           # been pushed" (reproduzido em repo bare local: tag leve + --follow-tags = nada
           # no remoto). O ls-remote final é a régua que prova que a tag subiu de verdade.
           git tag -a "$NEW" -m "$NEW"
-          git push origin main "refs/tags/$NEW"
+          # --atomic: OS DOIS REFS SOBEM OU NENHUM SOBE.
+          #
+          # Sem ele, um `git push` com dois refspecs sobe cada um por conta própria. Foi
+          # exatamente assim que a esteira travou em 12/08: entre o `pull --rebase` acima e
+          # este push, outro merge entrou na main; o ref `main` foi REJEITADO por
+          # não-fast-forward e o ref da TAG subiu do mesmo jeito. Resultado medido:
+          # v2.0.0-alpha.92 e v2.0.0-alpha.93 existiam no remoto e NENHUMA das duas estava
+          # na história da main, com o package.json parado no .92.
+          #
+          # E isso não se cura sozinho — piora: todo release seguinte calcula 92+1=93, acha
+          # a tag órfã, e sai pelo `ls-remote` acima com "bump manual necessário". Como é
+          # ESTE passo que regenera os blocos de docs, o `docs:check` do ci.yml ficou
+          # vermelho em todo commit da main junto. Uma causa, dois workflows parados.
+          #
+          # Com --atomic, main rejeitada = tag não sobe, o job falha limpo, e a próxima
+          # execução refaz o mesmo número de versão. A corrida volta a ser retentável em
+          # vez de terminal.
+          git push --atomic origin main "refs/tags/$NEW"
           git ls-remote --exit-code origin "refs/tags/$NEW" > /dev/null
 
       - name: GitHub Release

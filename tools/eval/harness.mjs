@@ -169,5 +169,15 @@ export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4 
   g._ensureDolly = () => {};        // a câmera de fim de round cria um WebGLRenderer — não existe aqui
   g.killsToWin = Infinity;
   g.start ? g.start() : g._startRound();
+  /* MATRIZES DE MUNDO: no browser o WebGLRenderer.render() chama scene.updateMatrixWorld() a
+     cada quadro; no harness NÃO há renderer, então ninguém atualiza e o Raycaster do three
+     (que assume matrizes prontas) enxerga cada occluder na posição LOCAL — empilhados na
+     ORIGEM com matrixWorld identidade. Medido no piscina_treta: 92/92 occluders na origem
+     (o build do decalque atualiza 78 de raspão, sobram 14), praca_poderes 66/66, ferro_velho
+     100/100. Toda métrica de bot que depende de linha de visão (`_losClear` faz raycast
+     contra `world.occluders`, game.js:5044) estava medida contra geometria na origem — régua
+     verde de graça. Occluder é estático: uma passada aqui, depois do build, basta. */
+  g.scene.updateMatrixWorld(true);
+  g.world.root.updateMatrixWorld(true);
   return g;
 }

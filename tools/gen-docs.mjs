@@ -271,7 +271,8 @@ function medir() {
      histórico completo, ele continua mordendo. */
   f.raso = sh('git', ['rev-parse', '--is-shallow-repository']).trim() === 'true';
   const short = sh('git', ['shortlog', '-sn', '--no-merges', 'HEAD']).trim().split('\n').filter(Boolean);
-  const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean);
+  const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean)
+    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome));   // shortlog deixa empates de count em ordem instável → determinismo
   const ehAgente = (n) => /^claude\b/i.test(n) || /^(codex|kimi|gpt|cursor|devin)\b/i.test(n) || /bot\b/i.test(n) || /^github-actions/i.test(n);
   const humanos = autores.filter((a) => !ehAgente(a.nome));
   f.pessoas = {
@@ -480,12 +481,12 @@ const BLOCOS = {
   licenca_pontos: (f) => [
     `| Superfície | Arquivo | Onde diz \`${f.licenca.atual || '?'}\` |`,
     '|---|---|---|',
-    /* Teto de 4 linhas por superfície: o corpo do `LICENSE` nomeia a própria licença onze
-       vezes, e uma célula com onze números não informa mais que uma com quatro — informa
-       menos, porque ninguém lê. O total honesto vai no `+N` e na contagem abaixo da tabela. */
+    /* Contagem, não número de linha: o número desloca a cada inserção acima e desatualiza
+       o bloco sozinho. A régua afirma que a superfície NOMEIA a licença — e isso não
+       depende de onde o texto caiu no arquivo. */
     ...f.licenca.superficies.map((s) => `| ${s.rotulo} | \`${s.arquivo}\` | ${
       !s.existe ? '**arquivo não existe**'
-        : s.linhas.length ? `linha${s.linhas.length > 1 ? 's' : ''} ${s.linhas.slice(0, 4).join(', ')}${s.linhas.length > 4 ? ` (+${s.linhas.length - 4})` : ''}`
+        : s.linhas.length ? `${s.linhas.length}×`
           : '— (não nomeia a licença)'}  |`),
     '',
     `**${f.licenca.superficies.reduce((a, s) => a + s.linhas.length, 0)} ocorrências** de ` +
@@ -494,7 +495,7 @@ const BLOCOS = {
     'metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.',
     '',
     f.licenca.outrasMencoes.length
-      ? `**Outros nomes de licença citados nessas superfícies:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` em \`${m.arquivo}\` (linha${m.linhas.length > 1 ? 's' : ''} ${m.linhas.join(', ')})`).join(', ')}. ` +
+      ? `**Outros nomes de licença citados nessas superfícies:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` em \`${m.arquivo}\` (${m.linhas.length}×)`).join(', ')}. ` +
         'Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. ' +
         `A regra continua a mesma: **só o \`LICENSE\` declara**, e hoje ele diz \`${f.licenca.atual}\`.`
       : 'Nenhuma superfície cita outro nome de licença.',

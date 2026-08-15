@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.93`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.119`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -23,29 +23,173 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## [2.0.0-alpha.93] — 2026-08-12
+## [2.0.0-alpha.119] — 2026-08-14
 
 ### Mudado
-- fix(ui): bloco 2 — HUD, placar, fim de partida e os quatro painéis (#216)
-- fix(ui): o HUD permanente sumia em mapa claro (anel opaco no glifo; sem devolver
-  o scrim que o dono mandou tirar)
-- fix(ui): fim de partida deixava 38% da tela desenhando nada, com emenda visível
-- fix(ui): placar ganhou os rótulos das colunas (JOGADOR / K / M / CAP.)
-- fix(ui): painéis de config, ranking, feedback e como jogar entraram na linguagem
-  do bloco 1 (cenário desfocado, título com régua de tinta, caixa medida)
+- feat(ci): CodeRabbit no lugar do Greptile como revisor de PR (#272)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.119).
 
-### Corrigido
-- fix(eval): a régua UI1 creditava chapa opaca por casamento de substring, e por
-  isso passava verde sobre um HUD ilegível. Agora mede alfa × cobertura do anel
-- fix(eval): as réguas de captura só rodavam em macOS com Playwright global
-- fix(eval): `ui-antes` fotografava a árvore errada em silêncio quando outro
-  worktree ocupava a porta, e fotografava em inglês
+## [2.0.0-alpha.118] — 2026-08-14
+
+### Mudado
+- fix(gameplay): modo arma-única fecha slots, pickup não recarrega, lastinv (Q) (#279)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.118).
+
+## [2.0.0-alpha.117] — 2026-08-14
+
+### Mudado
+- fix(boot): watchdog distingue rede lenta de travamento (#265) (#278)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.117).
+
+## [2.0.0-alpha.116] — 2026-08-14
+
+### Mudado
+- feat(mapa): Atacadão da Treta (8º mapa) — supersedes #253 (#271)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.116).
+
+## [2.0.0-alpha.115] — 2026-08-14
+
+### Mudado
+- fix(eval): mat_shade guard de numpy — build de fork PR volta a passar
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.115).
+
+## [2.0.0-alpha.114] — 2026-08-14
+
+### Mudado
+- fix(api): client Supabase com timeout no fetch — acaba com os 504 de 300s (#269)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.114).
+
+## [2.0.0-alpha.113] — 2026-08-14
+
+### Mudado
+- feat(site): redes sociais no rodapé, atalhos /discord e /telegram, e SEO/GSC pendente (#263)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.113).
+
+## [2.0.0-alpha.112] — 2026-08-14
+
+### Mudado
+- fix(mapa): adiciona preview do Posto da Treta (sumiu no merge do #250) (#255)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.112).
+
+## [2.0.0-alpha.111] — 2026-08-13
+
+### Mudado
+- fix(grafite): placement pula caixa procedural + tool tira fundo branco do decal (#260)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.111).
+
+## [2.0.0-alpha.110] — 2026-08-13
+
+### Mudado
+- chore(release): v2.0.0-alpha.109
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.110).
+
+## [2.0.0-alpha.109] — 2026-08-13
+
+### Mudado
+- fix: música de menu vira pool do manifesto de áudio (#225)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.109).
+
+## [2.0.0-alpha.108] — 2026-08-13
+
+### Mudado
+- fix(grafite): reassa o layout — loja_h volta de 39,7% para 51,8% (#254)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.108).
+
+## [2.0.0-alpha.107] — 2026-08-13
+
+### Mudado
+- feat(mapa): adiciona Posto da Treta (6º mapa) — #250 (#250)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.107).
+
+## [2.0.0-alpha.106] — 2026-08-13
+
+### Mudado
+- feat(portões): régua que casa tag, main e versão (#252)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.106).
+
+## [2.0.0-alpha.105] — 2026-08-13
+
+### Mudado
+- fix(eval): char-floor skipa CHR8 graciosamente quando magick falta (build fork PR)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.105).
+
+## [2.0.0-alpha.104] — 2026-08-13
+
+### Mudado
+- fix(build): error-console preserva a exceção antes do guard Script-error (#251)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.104).
+
+## [2.0.0-alpha.103] — 2026-08-13
+
+### Mudado
+- fix: marcador de registro de tiro na hud (#248)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.103).
+
+## [2.0.0-alpha.102] — 2026-08-13
+
+### Mudado
+- fix: trata bundles /_vercel/ como terceiro na proveniência de crash (#229)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.102).
+
+## [2.0.0-alpha.101] — 2026-08-13
+
+### Mudado
+- fix(telemetria): descarta "Script error." cross-origin opaco no coletor de crash (#221)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.101).
+
+## [2.0.0-alpha.100] — 2026-08-13
+
+### Mudado
+- fix(hud): indicador de dano aponta pra onde o tiro veio (BUG-52)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.100).
+
+## [2.0.0-alpha.99] — 2026-08-13
+
+### Mudado
+- chore: remove a rota /editor do build público (bancada WIP com problemas) (#220)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.99).
+
+## [2.0.0-alpha.98] — 2026-08-13
+
+### Mudado
+- fix(eval): mapa-id ignora .worktrees e isenta atribuição histórica da LICENCA
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.98).
+
+## [2.0.0-alpha.97] — 2026-08-13
+
+### Mudado
+- fix(eval): os 4 apontamentos do Greptile na régua de contrato — e um defeito real que o MC3 achou (#242)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.97).
+
+## [2.0.0-alpha.96] — 2026-08-13
+
+### Mudado
+- feat(portões): pre-push roda o CI antes do push, e o cache para de raspar o teto (#243)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.96).
+
+## [2.0.0-alpha.95] — 2026-08-13
+
+### Mudado
+- test(eval): contrato de mapa vira régua — o que o game.js consome (#240)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.95).
+
+## [2.0.0-alpha.94] — 2026-08-13
+
+### Mudado
+- fix(release): push atômico de commit+tag — destrava pr-fast e release (#239)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.94).
+
+## [2.0.0-alpha.93] — 2026-08-13
+
+### Mudado
+- feat(seguranca): verifica hashes do skills-lock.json na instalação (#230)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.93).
 
 ## [2.0.0-alpha.92] — 2026-08-12
 
 ### Mudado
-- feat(ui): bloco 1 cinematográfico — menu, mapa, facção e personagem (#216)
-- fix(ui): preview do personagem para de girar 360° e assume pose de vitrine
+- fix(eval): reconcilia decal-probe com o medirParede da Quebrada (#75) (#231)
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.92).
 
 ## [2.0.0-alpha.91] — 2026-08-12
 

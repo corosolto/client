@@ -127,6 +127,7 @@ tools/eval/.cache/
 # (cada uma com seu .git), não conteúdo do projeto. Commitar aninharia repo e
 # inflaria o clone em ~1 GB. O `git worktree list` é a fonte da verdade delas.
 .claude/worktrees/
+.worktrees/
 
 # Material de REFERÊNCIA/instrução de IA — imagens e vídeos de terceiros (CS 1.6,
 # Valorant) e prompts internos. Decisão do dono (05/08): fica FORA do repo público;

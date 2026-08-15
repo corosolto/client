@@ -233,15 +233,40 @@ applyHomeWall();
 // ATENÇÃO: use uma faixa CC0/licenciada — NÃO usar música protegida (ex.: YouTube/MPB) no
 // build público (risco de copyright, igual aos sons da Valve a trocar).
 const MENU_MUSIC_VOL = 0.3;
-// Trilhas do menu (public/audio/menu-music/m01..m15 — trims de ~105s normalizados via ffmpeg,
+// Trilhas do menu (public/audio/menu-music/mNN.mp3 — trims de ~105s normalizados via ffmpeg,
 // ver HANDOFF). Uma aleatória POR VISITA ao menu; troca a cada partida/retorno.
+//
+// Este array é só o FALLBACK do primeiro quadro: a fonte de verdade é a pasta, via
+// audio/manifest.json (chave `menuMusic`). Falha de rede mantém o fallback.
 const MENU_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
-let menuMusic = null, musicArmed = false, musicFade = null;
+fetch(`/audio/manifest.json?v=${VERSION}`)
+  .then((response) => (response.ok ? response.json() : null))
+  .then((manifest) => {
+    const list = manifest && Array.isArray(manifest.menuMusic) ? manifest.menuMusic : null;
+    if (!list || !list.length) return;
+    // manifest grava caminho relativo (`audio/...`); a URL do <Audio> é absoluta (`/audio/...`).
+    const novas = list.map((u) => (u.startsWith('/') ? u : `/${u}`));
+    if (novas.join('|') === MENU_TRACKS.join('|')) return;
+    MENU_TRACKS.splice(0, MENU_TRACKS.length, ...novas);
+    // O boot chama startMenuMusic() antes desta promessa resolver e _ensureMusic cacheia o
+    // <Audio> pra sempre — sem soltar o cache, a lista da pasta nunca escolhe faixa.
+    tracksTrocadas = true;
+    // Mudo ainda: dá pra trocar agora. Com som tocando não — a troca fica pendente e o
+    // _ensureMusic pega na próxima visita ao menu, que é quando a faixa muda de qualquer jeito.
+    if (!musicArmed) startMenuMusic();
+  })
+  .catch(() => {});
+let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
 function _ensureMusic() {
-  if (menuMusic) return menuMusic;
+  if (menuMusic && !tracksTrocadas) return menuMusic;
+  if (menuMusic) { menuMusic.pause(); menuMusic = null; }
+  tracksTrocadas = false;
   { const _mi = (Math.random() * MENU_TRACKS.length) | 0;
-    menuMusic = new Audio(MENU_TRACKS[_mi]);
-    _pick('musica', `m${String(_mi + 1).padStart(2, '0')}`); }
+    const _url = MENU_TRACKS[_mi];
+    menuMusic = new Audio(_url);
+    // rótulo vem do NOME do arquivo, não do índice: com lista vinda da pasta o índice pode
+    // não casar mais com o número da faixa (some uma no meio e o telemetry mentiria).
+    _pick('musica', _url.match(/([^/]+)\.\w+$/)?.[1] || `m${String(_mi + 1).padStart(2, '0')}`); }
   menuMusic.loop = true; menuMusic.volume = MENU_MUSIC_VOL;
   window.__mm = menuMusic;   // hook de debug/teste (estado da música do menu)
   return menuMusic;

@@ -43,6 +43,12 @@ export const WEBSITE_ID = `${SITE}/#website`;
 
 export const abs = (path = '/') => new URL(path, SITE).toString();
 
+/* URL externa, não o atalho `/discord`: o atalho só resolve na Vercel, e o rodapé
+   também é servido no dev, no itch.io e na CrazyGames. Mude aqui e em `vercel.json`. */
+export const DISCORD_URL = '/discord';
+export const TELEGRAM_URL = '/telegram';
+export const GITHUB_URL = 'https://github.com/rubenmarcus/csbrasil';
+
 /* ===========================================================================
    RANKING: DESLIGADO (decisão do dono, 04/08/2026)
    ===========================================================================

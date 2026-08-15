@@ -1671,6 +1671,8 @@ export class Game {
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
       if (e.code === 'Digit3') this._switchWeapon('knife');
+      if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
+        this._switchWeapon(this.player.lastInv);   // #261: lastinv - Q alterna as duas últimas
       if (e.code === 'KeyE' && this.nearPickup) {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
@@ -2505,6 +2507,7 @@ export class Game {
   _switchWeapon(w) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
+    if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
     if (w !== 'knife' && !p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     // GUNFEEL: deploy por CLASSE (era 0.28 fixo p/ as 26 armas — a AWP sacava tão rápido
     // quanto a faca). Estes segundos alimentam DUAS coisas: `p.drawUntil` (trava do tiro) e
@@ -2512,6 +2515,7 @@ export class Game {
     // rx -1,05 no início do arco) — antes era uma rampa linear dividida por 0,28 fixo.
     const DEPLOY = { knife: 0.25, pistol: 0.34, smg: 0.38, rifle: 0.42, shotgun: 0.42, awp: 0.45 };
     const _dcls = BALL_CLASS[w] === 'smg' ? 'smg' : (STATIC_CLASS[w] || 'rifle');
+    p.lastInv = p.weapon;   // #261: Q alterna entre as duas últimas (lastinv do CS)
     p.weapon = w; p.reloadUntil = 0; p.drawUntil = this.time + (GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28);
     p.sprayI = 0; p.lastShotAt = -9;   // rajada nova: padrão de recuo recomeça do tiro 1
     // remember the slot so 1/2 recall the LAST weapon of that kind (primary vs sidearm)
@@ -2988,7 +2992,7 @@ export class Game {
     if (QS.get('dmgdir') === '0') {
       const el = this.el.dmgDir;
       if (!el) return;
-      const rel0 = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw;
+      const rel0 = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
       el.style.transform = `rotate(${rel0.toFixed(3)}rad)`;
       el.style.opacity = 0.95;
       clearTimeout(this._dmgDirT);
@@ -3032,7 +3036,9 @@ export class Game {
     }
     // raio: 42% da menor dimensão -> o arco encosta na borda em qualquer aspecto (16:9 e 3:2)
     const R = Math.min(innerWidth, innerHeight) * 0.42;
-    const rel = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw;
+    // ent - attacker (BUG-52): câmera YXZ olha forward=(-sin,-cos); a ordem inversa negava o
+    // vetor e somava π — tiro na cara desenhava o arco embaixo (costas).
+    const rel = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
     // CSS gira no sentido horário com Y pra baixo; o mundo mede yaw anti-horário: por isso o
     // sinal negativo. 0 rad = atacante bem à frente = arco no topo da tela. Confere nas 4
     // direções: frente=topo, direita=direita, costas=embaixo, esquerda=esquerda.
@@ -4355,7 +4361,9 @@ export class Game {
      dentro do overlay de respawn que já existia. ?killcam=0 desliga tudo. */
   _noteHit(by, weap, dmg, head, dist) {
     const p = this.player;
-    let rel = Math.atan2(by.pos.x - p.pos.x, by.pos.z - p.pos.z) - p.yaw;
+    // p - by (BUG-52): mesma convenção da câmera que _dmgArc — sem isso, rel saía 180°
+    // fora e a frente virava "PELAS COSTAS" no HUD.
+    let rel = Math.atan2(p.pos.x - by.pos.x, p.pos.z - by.pos.z) - p.yaw;
     while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2;
     p._lifeDmg = (p._lifeDmg || 0) + dmg;
     // QUADRANTE em vez de só "frente/costas": o dono precisa saber PRA ONDE olhar da próxima
@@ -4898,16 +4906,17 @@ export class Game {
     const w = pk.weapon;                           // qualquer arma de WEAPONS
     if (!WEAPONS[w]) return false;
     if (isPlayer) {
+      if (who.weapon === w) return false;   // #264: mesma arma na mão não recarrega - reload existe p/ isso
       if (!who.ammo[w]) who.ammo[w] = { mag: 0, res: 0 };
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
-      if (who.weapon !== w) {
+      {
         const oldW = who.weapon;                   // arma que estava na mão
         this._switchWeapon(w); this.sfx.reloadEnd();
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);
-      } else this.sfx.uiClick();                   // mesma arma = só munição
+      }
     } else {
       who.weapon = w === 'knife' ? 'awp' : w;      // bot grabs it
     }
@@ -5028,9 +5037,16 @@ export class Game {
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;
-    // top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP)
-    if (p.primary && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
-    if (p.secondary && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
+    // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
+    // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
+    if (p.primary && this._pickupAllowed(p.primary) && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
+    if (p.secondary && this._pickupAllowed(p.secondary) && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    if (!this._pickupAllowed(p.weapon)) {
+      const mode = this._wpnMode();
+      const volta = mode === 'awp' ? 'awp' : (p.secondary || 'pistol');
+      if (WEAPONS[volta] && this._pickupAllowed(volta)) this._switchWeapon(volta);
+    }
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();

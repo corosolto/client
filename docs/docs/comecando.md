@@ -39,20 +39,20 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 27.725 linhas em 34 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.467** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.016 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 28.742 linhas em 37 arquivos | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6.483** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.041 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
 | GLBs de personagem | 45 | `ls public/models/characters/*.glb \| wc -l` |
 | Props em GLB | 108 | `ls public/models/props/*.glb \| wc -l` |
 | Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 5 | objeto `MAPS` de `maps.js` |
+| Mapas no registro | 7 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 14 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 161 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
-| Scripts de pipeline | 46 | `ls tools/*.mjs \| wc -l` |
+| Scripts do arnês | 170 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Scripts de pipeline | 48 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.93` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.119` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -66,7 +66,7 @@ E as regras de partida que mais mudam de lugar, todas lidas das constantes de
 | Regra | Valor | Constante |
 |---|---|---|
 | Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
-| Mapas no menu | 5 — 2 abrem em rodadas, **3 em captura** | `MAPS` / `ctfMode` |
+| Mapas no menu | 7 — 2 abrem em rodadas, **5 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -226,8 +226,10 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.952 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
 
-**5 mapas registrados** — 2 abrem em rodadas e 3 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 6 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**7 mapas registrados** — 2 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 9 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -268,11 +270,11 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 {/* BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` */}
 
 ```bash
-npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters
+npm run check        # npm run syntax && npm run audio:check && npm run eval:medianet && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:medianet eval:posters eval:grafitelayout
 ```
 
-`package.json` tem **85 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **93 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

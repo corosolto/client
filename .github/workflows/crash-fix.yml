@@ -16,6 +16,9 @@
 #     pega da issue. NENHUM commit na main sai daqui.
 #   · externo (extensão ou script cross-origin): preservado na telemetria bruta,
 #     mas encerra sem issue porque não pertence ao jogo.
+#   · recuperável (aviso do carregador do three: "Couldn't load texture" — textura
+#     embutida que não decodifica em navegador minoritário): o modelo carrega sem o
+#     mapa, o jogo não trava. Fica na telemetria, mas não dispara nem abre issue.
 #
 # SECRETS: CF_API_TOKEN (Zone → Cache Purge) — sem ele o purge é pulado e a
 # classe cache-split cai direto no probe (que já falha e vira issue).

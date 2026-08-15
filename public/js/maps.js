@@ -4,6 +4,8 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
+import { buildPosto, POSTO_PROPS } from './map_posto.js';
+import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -52,6 +54,14 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
+  // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
+  // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
+  // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
+  posto_treta: { name: 'Posto da Treta', build: buildPosto, props: POSTO_PROPS, ctfMode: true },
+  // Galpão de atacado estilo Loja H: LOJA fechada (Time B) + ESTACIONAMENTO aberto (Time E) ligados
+  // por portas de verdade na fachada. Gôndolas reais (gondola_mercado/eletro), caixas, doca, e um
+  // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
+  atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';

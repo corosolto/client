@@ -14,7 +14,6 @@ let vendor = vendorOriginal;
 const productFiles = [
   'src/pages/index.astro',
   'src/layouts/Layout.astro',
-  'src/pages/editor.astro',
 ];
 let productSources = productFiles.map((file) => [file, readFileSync(file, 'utf8')]);
 let cloudflareSetup = readFileSync('scripts/cloudflare-setup.sh', 'utf8');

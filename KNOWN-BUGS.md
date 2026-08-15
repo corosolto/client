@@ -84,6 +84,21 @@ true; }`). EP4 exige early-return e dispatch único; EP5 recorta a condição
 inteira do step de issue; EP6 **executa** a `origemDoJogo` inline do cliente
 contra oito fixtures (mutantes `sem-early-return` e `abre-externo`).
 
+**Adendo (12/08, issues #218 e #219 · alpha.91).** Fingerprints `3c3f1990` e
+`96362080`: `TypeError: Cannot assign to read only property 'pushState' of object
+'#<History>'`, com origem e stack inteiramente em `/_vercel/speed-insights/script.js`
+e `/_vercel/insights/script.js`. São os bundles que a Vercel injeta (Web Analytics e
+Speed Insights): eles reescrevem `history.pushState` para rastrear navegação SPA, e
+o `=` estoura quando o `pushState` está travado como read-only por extensão de
+privacidade ou webview de app. O código é de terceiro — não temos como consertar o
+script da Vercel nem destravar o `pushState` — mas o crash abriu issue `crash-auto`
+porque `/_vercel/` é servido do **próprio domínio**, e a régua original dizia
+"same-origin não é descartado". A proveniência agora reconhece `/_vercel/` como
+terceiro mesmo sendo same-origin, no helper (`VENDOR_RE`) e no cliente (`vendor`),
+provado em `source` e em `stack`. EP8 executa o classificador real e a `origemDoJogo`
+inline contra o par de fixtures das duas issues e confirma que `/js/` do jogo segue
+`codigo`; mutantes `sem-vercel-helper` e `sem-vercel-cliente` guardam cada lado.
+
 ### ~~BUG-50 · WeakMap do Three derrubava o loop quando createFramebuffer falhava~~ · RESOLVIDO 12/08 (issue #171)
 
 **Evidência antes.** Issue #171 (fingerprint `b598fe98`, alpha.57): `TypeError:
@@ -884,6 +899,57 @@ mudar.
 ---
 
 ## P1 — o jogador vê
+
+### ~~BUG-52 · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
+
+**Sintoma (do dono):** *"O jogo está mostrando o dano recebido (e o texto do dano) em uma
+posição 180 graus além da esperada. Ou seja, se eu tomo na frente, aparece que eu tomei nas
+costas. Este código marcado foi colocado em outra seção, mas não resolveu."* — apontando pro
+comentário de `_noteHit` (`public/js/game.js:4358-4363`).
+
+**Causa raiz — confirmada.** Existem DOIS lugares que calculam a direção do atacante
+relativa à vítima, e só um tinha o sinal certo. `_noteHit()` (o painel de texto "MORTO
+POR"/"veio DA SUA FRENTE") já estava correto: `atan2(p.pos.x - by.pos.x, p.pos.z -
+by.pos.z) - p.yaw` — vítima menos atacante. Mas o indicador que o jogador vê primeiro, o
+arco vermelho na borda da tela (`_dmgArc()`, chamado de `_damage()` só quando
+`ent.isPlayer`), reimplementava a MESMA conta com os operandos TROCADOS:
+`atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw`
+(`public/js/game.js:3035`, antes do conserto). Trocar a ordem do subtraendo nega o vetor, e
+negar um vetor soma exatamente π ao resultado do `atan2` — os 180° que o dono via. O mesmo
+operando trocado também existia no indicador antigo por trás do kill-switch `?dmgdir=0`
+(`public/js/game.js:2991`).
+
+**Reprodução:** `node tools/eval/dmgdir-check.mjs` contra o `game.js` de antes do conserto.
+
+**O que foi DESCARTADO com medição, não com palpite:** o próprio dono já tinha apontado o
+comentário de `_noteHit` como tentativa anterior que não resolveu. Derivar a álgebra do
+`atan2` (convenção de yaw da câmera, forward=(-sin,-cos), ver comentário em
+`_updatePlayer`) e alimentar o resultado de volta no código mostrou que a fórmula de
+`_noteHit` já estava certa — o palpite de "reverter mais um sinal ali" teria sido
+inútil, porque o defeito não morava naquele método. Morava no `_dmgArc`, uma
+reimplementação irmã que ninguém tinha olhado.
+
+**Medido antes do conserto** (`node tools/eval/dmgdir-check.mjs`, 4 direções cardeais × 7
+yaws da vítima = 28 casos, ângulo real escrito em `transform: rotate(...)` do elemento do
+arco):
+
+| | antes | depois |
+|---|---|---|
+| casos com o arco no lado certo (FRENTE=topo, COSTAS=embaixo, DIREITA/ESQUERDA corretos) | 0/28 | 28/28 |
+| desvio de FRENTE e COSTAS | exatamente π (180°) em todos os 28 casos | 0 |
+
+**Correção.** `public/js/game.js:3035` (arco moderno) e `:2991` (fallback `?dmgdir=0`):
+`ent.pos - attacker.pos`, não `attacker.pos - ent.pos`, igualando a ordem que `_noteHit`
+já usava.
+
+**Custo declarado, medido:** nenhum — a mudança troca dois operandos de subtração, sem
+custo de desempenho. Não testado no navegador (browser): a régua exercita `_dmgArc` de
+produção via extração de método (mesma técnica de `ctfhud-check.mjs`), não a rota `/` real;
+o visual em jogo (posição do arco na borda, painel de morte) não foi conferido a olho.
+
+**Régua: `tools/eval/dmgdir-check.mjs`** (`npm run eval:dmgdir`, no `check:fast`).
+28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
+ordem de operandos do defeito original e derruba 28/28 casos.
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
 

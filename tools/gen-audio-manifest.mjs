@@ -108,6 +108,13 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
 // arquivo novo, e quem for implementar o player encontra a lista pronta.
 out.soundtrack = take(listAudio(join(AUDIO, 'soundtrack')));
 
+// ── música de menu ──────────────────────────────────────────────────────────
+// Loop das telas de menu (public/audio/menu-music/mNN.mp3). Caiu na MESMA armadilha das
+// outras listas: main.js trazia `Array.from({ length: 26 })` e a faixa nova na pasta sumia
+// calada (issue #47). Agora a pasta manda — main.js lê `menuMusic` daqui com fallback pra
+// lista antiga, e o `--check` cobra a 27ª faixa no dia em que ela entrar.
+out.menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
+
 /* ── TETO DE DURAÇÃO DA VOZ IN-GAME ─────────────────────────────────────────
    Regra do dono (04/08): fala de `ingame/` tem no máximo **8 s**. Ela toca por cima do
    jogo — uma linha de 28 s (era o caso do "coe rapaziada" dos funkeiros, contra 5,8 s do
@@ -172,7 +179,7 @@ console.log(`AUDIO  ${total} arquivos no disco · ${total - orphans.length} alca
 for (const [k, v] of Object.entries(byFolder).sort((a, b) => b[1] - a[1])) console.log(`  órfãos ${String(v).padStart(3)}  ${k}/`);
 console.log(`  voice ${Object.entries(out.voice).map(([t, a]) => t + ':' + a.length).join(' ')}`);
 console.log(`  round ${Object.entries(out.round).map(([t, a]) => t + ':' + a.length).join(' ')}`);
-console.log(`  capture ${out.capture.length} · soundtrack ${out.soundtrack.length}`);
+console.log(`  capture ${out.capture.length} · soundtrack ${out.soundtrack.length} · menuMusic ${out.menuMusic.length}`);
 if (longas === null) console.log('  (ffprobe ausente — teto de 8 s da voz in-game NÃO foi verificado)');
 else if (longas.length) {
   console.log(`  ⚠ ${longas.length} fala(s) de ingame acima de ${LIMITE_INGAME}s (tocam por cima do jogo):`);

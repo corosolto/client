@@ -38,6 +38,10 @@ jobs:
         run: npm run eval:uuid
       - name: Acúmulo de armas no chão tem teto
         run: npm run eval:drop
+      # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
+      # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Todo mapa devolve o que o game.js consome
+        run: npm run eval:mapcontrato
       - name: Veículos do estacionamento em escala de fábrica
         run: npm run eval:escala
       - name: Orçamento de shader WebGL1
@@ -55,6 +59,10 @@ jobs:
         run: npm run media:check
       - name: Texto público sem travessão
         run: npm run travessao:check
+      # Hash das skills de terceiros confere com o skills-lock.json (issue #42):
+      # lock que ninguém verifica não detecta conteúdo trocado depois de travado.
+      - name: Skills de terceiros conferem com o lock
+        run: npm run verify:skills
 
       # O auditor de VM escreve o JSON consumido pelas invariantes; a ordem é contrato.
       - name: Enquadramento do viewmodel por arma (26 armas, GLB real)

@@ -1912,6 +1912,13 @@ html[data-ui="legacy"] .cs-vignette{
 .menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:1px dotted var(--line-2)}
 .menu-footer a:hover{color:var(--am)}
 .menu-footer .mf-online{color:var(--verde,#7dc98f);font-weight:700}
+/* `flex-basis:100%` dá linha própria sem sair do flex-wrap do rodapé; `border-bottom:0`
+   é obrigatório porque `.menu-footer a` traça pontilhado por baixo dos ícones. */
+.menu-footer .mf-social{flex-basis:100%;display:flex;gap:10px;align-items:center;
+  justify-content:inherit;margin-top:2px}
+.menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;
+  align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
+.menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
 
 /* ---- MENU EM CELULAR RETRATO (print do dono, 07/08: logo cortado no meio e o
    rodapé atropelando o último item). O logo é PINTADO no wallpaper 16:9; com

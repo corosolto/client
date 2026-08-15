@@ -20,7 +20,7 @@ from `package.json`, `docs/package.json` and the vendored Three.js itself.
 | Layer | Tool | Version |
 |---|---|---|
 | 3D engine (WebGL) | **Three.js**, vendored | `r160` |
-| Game | vanilla ES modules, **zero build** | 34 files |
+| Game | vanilla ES modules, **zero build** | 37 files |
 | Site | **Astro** with SSR | `^7.1.1` |
 | Hosting | **Vercel** adapter | `^11.0.3` |
 | Database | **managed Postgres** (RLS; private schema) | `^2.110.7` |
