@@ -1113,7 +1113,7 @@ $('support-back').onclick = () => { ui.back(); markCurrent(null); show('main-men
 const supportLink = $('support-link');
 const supportNote = $('support-region-note');
 const SUPPORT_URL_BR = 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online';
-const SUPPORT_URL_INTL = 'https://ko-fi.com';
+const SUPPORT_URL_INTL = 'https://ko-fi.com/corosolto';
 function showSupport(region) {
   const browserLocale = String(navigator.language || '').toLowerCase();
   const timezone = String(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
