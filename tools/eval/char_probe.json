@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T03:26:44.444Z",
+ "gerado": "2026-08-15T02:59:35.579Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 44,
@@ -130,6 +130,16 @@
     "triangulos": 2814
    },
    {
+    "mapa": "upa_24h",
+    "materiais": 93,
+    "map": 55,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 442,
+    "triangulos": 5240
+   },
+   {
     "mapa": "atacadao_treta",
     "materiais": 99,
     "map": 76,
@@ -141,8 +151,8 @@
    }
   ],
   "total": {
-   "materiais": 1295,
-   "map": 877,
+   "materiais": 1388,
+   "map": 932,
    "normalMap": 53,
    "roughnessMap": 53,
    "aoMap": 0
