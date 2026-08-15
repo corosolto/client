@@ -9,7 +9,7 @@
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 6484 | 228 |
+| `public/js/game.js` | 6496 | 228 |
 | `public/js/main.js` | 2039 | 183 |
 | `public/js/glbchars.js` | 838 | 60 |
 | `public/js/characters.js` | 1076 | 42 |
@@ -19,11 +19,11 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3010 linhas (46% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3022 linhas (47% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
-| 797 | 5184 | `_updateBot()` | ⚠️ candidato a extração |
+| 809 | 5184 | `_updateBot()` | ⚠️ candidato a extração |
 | 543 | 575 | `constructor()` | 🔴 append-only |
 | 310 | 4422 | `_updatePlayer()` | ⚠️ candidato a extração |
 | 248 | 1877 | `_resetPositions()` |  |
@@ -34,9 +34,9 @@ Os 15 maiores somam **3010 linhas (46% do arquivo)**. Método grande = PR irrevi
 | 83 | 2655 | `_tryShoot()` |  |
 | 79 | 2991 | `_dmgArc()` |  |
 | 76 | 4171 | `_updateCtfHud()` |  |
-| 71 | 5994 | `_updateBotNN()` |  |
-| 67 | 6381 | `update()` | 🔴 append-only |
-| 66 | 6147 | `_updateRadar()` |  |
+| 71 | 6006 | `_updateBotNN()` |  |
+| 67 | 6393 | `update()` | 🔴 append-only |
+| 66 | 6159 | `_updateRadar()` |  |
 | 64 | 2927 | `_kill()` |  |
 
 ## Tabela de CONFLITO — resolvida para as linhas de hoje
@@ -48,19 +48,19 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 | Frente | Faixas em `game.js` | Arquivos exclusivos |
 |---|---|---|
 | **ARMAS / VIEWMODEL** | `25–73` `336–336` `364–458` `485–506` `1207–1605` `2420–2425` `2507–2590` `2609–2802` `3206–3229` `3277–3339` `3405–3421` | `public/js/vmattach.js` `public/js/springs.js` `public/js/weapons.js` `public/js/fparms.js` `public/js/handik.js` `public/js/recoil.js` `public/js/vmlab.js` |
-| **BOTS / JOGABILIDADE** | `190–193` `244–244` `270–281` `548–559` `2888–2990` `3710–3765` `3928–4164` `4247–4269` `4422–4731` `5056–5073` `5155–5980` | — |
+| **BOTS / JOGABILIDADE** | `190–193` `244–244` `270–281` `548–559` `2888–2990` `3710–3765` `3928–4164` `4247–4269` `4422–4731` `5056–5073` `5155–5992` | — |
 | **MAPAS / MUNDO** | `1153–1206` `1877–2124` `3766–3905` `4732–4879` | `public/js/maps.js` `public/js/mapprops.js` `public/js/map_brasilia.js` `public/js/map_havan.js` `public/js/map_piscina.js` `public/js/map_piscinao_ramos.js` `public/js/map_ferrovelho.js` |
 | **GRÁFICOS / FX** | `1606–1648` `2356–2368` `3230–3268` `3350–3404` | `public/js/bloom.js` `public/js/textures.js` `public/js/vao.js` `public/js/stylize.js` `public/js/gpuparticles.js` |
-| **UI / HUD / MENU** | `1118–1152` `2316–2334` `2350–2355` `2369–2375` `2991–3205` `6147–6212` `6243–6286` `6322–6380` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
+| **UI / HUD / MENU** | `1118–1152` `2316–2334` `2350–2355` `2369–2375` `2991–3205` `6159–6224` `6255–6298` `6334–6392` | `public/js/main.js` `public/style.css` `src/pages/index.astro` |
 | **ÁUDIO** | — | `public/js/audio.js` |
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 6381–6447 · `_dom()` 1118–1152 · `constructor()` 575–1117
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 6393–6459 · `_dom()` 1118–1152 · `constructor()` 575–1117
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3712 de 6484 linhas (57%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3724 de 6496 linhas (57%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
@@ -247,19 +247,19 @@ Cobertura: **3712 de 6484 linhas (57%)** do `game.js` têm dono declarado. O res
 | 5155 | `_botEye()` | 1 |
 | 5156 | `_enemyOf()` | 8 |
 | 5164 | `_duelToken()` | 20 |
-| 5184 | `_updateBot()` | 797 |
-| 5981 | `_flushTraining()` | 13 |
-| 5994 | `_updateBotNN()` | 71 |
-| 6065 | `_botShootNN()` | 44 |
-| 6109 | `_radarFoot()` | 38 |
-| 6147 | `_updateRadar()` | 66 |
-| 6213 | `_banner()` | 26 |
-| 6239 | `_resultadoDaRodada()` | 4 |
-| 6243 | `_showScoreboard()` | 44 |
-| 6287 | `_updateWeaponHud()` | 35 |
-| 6322 | `_updateHud()` | 59 |
-| 6381 | `update()` | 67 |
-| 6448 | `dispose()` | 36 |
+| 5184 | `_updateBot()` | 809 |
+| 5993 | `_flushTraining()` | 13 |
+| 6006 | `_updateBotNN()` | 71 |
+| 6077 | `_botShootNN()` | 44 |
+| 6121 | `_radarFoot()` | 38 |
+| 6159 | `_updateRadar()` | 66 |
+| 6225 | `_banner()` | 26 |
+| 6251 | `_resultadoDaRodada()` | 4 |
+| 6255 | `_showScoreboard()` | 44 |
+| 6299 | `_updateWeaponHud()` | 35 |
+| 6334 | `_updateHud()` | 59 |
+| 6393 | `update()` | 67 |
+| 6460 | `dispose()` | 36 |
 
 </details>
 

@@ -39,8 +39,8 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 28.739 linhas em 37 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.483** linhas | `wc -l public/js/game.js` |
+| Código do jogo | 28.751 linhas em 37 arquivos | `cat public/js/*.js \| wc -l` |
+| `game.js` | **6.495** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.038 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `ls public/models/weapons/*.glb \| wc -l` |
 | GLBs de personagem | 45 | `ls public/models/characters/*.glb \| wc -l` |

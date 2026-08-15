@@ -5302,7 +5302,19 @@ export class Game {
         // PERDA DE TRACKING: sumiu de vista, a mira "solta" o alvo. Reaparecendo, o bot tem
         // que reconquistar a precisão (é o que dá valor a quebrar linha de visão / peek).
         b.aimErr = Math.min(0.26, (b.aimErr || 0) + 0.045);   // por tick de think (~0.16s)
-        if (this.time - b._lostAt > 1.2) { b.target = null; b._losLost = false; b._lostAt = 0; }
+        // #281: FUMAÇA não é "alvo sumiu" — ele continua lá atrás. Com o grace comum de
+        // 1.2s o bot largava o alvo, virava roam ("barata tonta") e inimigos se cruzavam
+        // no meio da nuvem sem nunca re-engatar. Enquanto uma nuvem OPACA bloqueia o
+        // segmento, o grace estica p/ 4s: segura a direção e re-engata assim que abre.
+        // O gate de tiro (_losLost) continua fechado — não atira no que não vê.
+        let grace = 1.2;
+        for (const s of this._smokes) {
+          if (!s._opaque) continue;
+          const ab = b.target.pos.clone().sub(b.pos);
+          const t = Math.max(0, Math.min(1, s.center.clone().sub(b.pos).dot(ab) / (ab.lengthSq() || 1)));
+          if (b.pos.clone().addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) { grace = 4.0; break; }
+        }
+        if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
 
