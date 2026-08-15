@@ -2452,6 +2452,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   antes de mostrar `#team-select`. UIR39 passa e o mutante que remove o `await` fica vermelho;
   o browser abre a facção diretamente sem espaço vazio nem skeleton.
 
+### ~~BUG-55 · painel "FPS P50" media jank de boot vendido como FPS de jogo~~ · RESOLVIDO 15/08
+
+**Sintoma, nas palavras do dono** (print do painel de desempenho, 15/08): *"FPS P50 1 ·
+média 4 · 98% dos jogadores abaixo de 30 FPS"* — e um jogador relatando *"travando com lag"*.
+
+**Causa raiz.** `_sendPerf()` (`main.js`) rodava no **topo do módulo**, na carga da página:
+a janela de 1 s de rAF abria no primeiro segundo de vida, com a main thread parseando JS e
+compilando shader. Thread ocupada não roda rAF — a contagem media **quanto o boot engasgou**,
+não a partida. P50 1 FPS é o esperado nesse instrumento; o painel rotulava como "FPS".
+
+**Conserto** (`main.js` + `api/perf.ts`): a janela passa a abrir **~4 s após
+`state === 'live'`** (em partida, fora do pico de compile). As três colunas ficam honestas
+sem migration: `fps` = partida · `bootMs` = tempo até **jogável** (antes media fim de parse)
+· `loadMs` = carga do módulo (o ex-bootMs — coluna que existia morta na RPC `track_perf`).
+**Número histórico não é comparável** com o novo: a série antiga mede boot.
+
+**Régua.** TL11 do `tools/eval/telemetry-check.mjs` (três laços: espera por live, descanso
+pós-live, loadMs no payload). Mutação `--mutante=perf-no-live` devolve a medição na carga
+e acende. O lag relatado pelo jogador **não foi refutado** — com fps de jogo + connection +
+quality na mesma amostra, a próxima leitura do painel separa máquina fraca de rede lenta.
+
 - **BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**
   O cliente chamava o método diretamente ao criar `cs_anon` e `awpbr_token`; quando
   `crypto` existia sem `randomUUID`, `getAnonId()` lançava antes do primeiro ping.

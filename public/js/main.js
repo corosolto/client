@@ -810,14 +810,29 @@ async function _sendAcquisition() {
     _acqSent = true;
   } catch { /* fail-silent */ }
 }
-// PERF (018): 1x por sessão, depois do boot. boot_ms = performance.now() no fim do módulo;
-// fps = contagem de frames em 1s de rAF; dispositivo = tier aproximado (nada fino pra não
-// virar fingerprint). Renderer GPU sai de um canvas descartável (não do renderer do jogo).
+// PERF (018): 1x por sessão, EM PARTIDA. fps = contagem de frames em 1s de rAF
+// ~4s após o state==='live' (fora da janela de compile de shader); bootMs = tempo
+// até JOGÁVEL; loadMs = carga do módulo (o que bootMs media antes — sinal mantido).
+// Até 15/08 a janela de fps media o 1º segundo de vida da página: main thread
+// parseando JS e compilando shader não roda rAF, e o painel vendia esse jank de
+// BOOT como "FPS P50" (98% < 30 FPS no print do dono) — número que media outra coisa.
 let _perfSent = false;
+const _perfLoadMs = Math.round(performance.now());
 function _sendPerf() {
   if (testMode || _perfSent) return;
   _perfSent = true;
-  const bootMs = Math.round(performance.now());
+  const aguardaLive = () => {
+    const g = window.__game;
+    if (!g || g.state !== 'live') {
+      if (performance.now() - _perfLoadMs < 120000) setTimeout(aguardaLive, 250);
+      return;
+    }
+    const bootMs = Math.round(performance.now());
+    setTimeout(() => _perfMedeFps(bootMs), 4000);
+  };
+  aguardaLive();
+}
+function _perfMedeFps(bootMs) {
   let frames = 0; const t0 = performance.now();
   const tick = () => { frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
   requestAnimationFrame(tick);
@@ -832,7 +847,7 @@ function _perfFinish(bootMs, frames) {
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
     anonId: getAnonId(), version: VERSION,
-    fps: frames, bootMs,
+    fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
