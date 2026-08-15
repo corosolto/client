@@ -1740,7 +1740,7 @@ export class Game {
       // parecer luneta: você acompanha o alvo em vez de varrer o mapa com meio centímetro.
       const s = this.settings.sens * 0.0021 * (this.player.scoped ? Math.max(0.28, this.camera.fov / 70) : 1);
       this.player.yaw -= e.movementX * s;
-      this.player.pitch -= e.movementY * s;
+      this.player.pitch -= e.movementY * s * (this.settings.invY ? -1 : 1);   // #280: inverter eixo vertical
       this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
       // viewmodel sway: saiu daqui (BUG-04). Quem produz o sway agora é o ViewModelRig, a
       // partir do Δyaw/Δpitch REAL do quadro — que já embute a sensibilidade e não depende
