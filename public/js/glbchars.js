@@ -44,6 +44,7 @@ export const GLB_CHARS = new Set([
 
 const CHAR_MODEL_SOURCE = Object.freeze({ musculoso: 'bombado' });
 const CHAR_GRIP_OFFSET = Object.freeze({ musculoso: new THREE.Vector3(0, -0.095, 0.015) });
+const MUSCULOSO_GRIP_CURL = 0.75;
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -623,6 +624,10 @@ export function buildCharacterModel(def, opts = {}) {
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += curl;
+    if (def.id === 'musculoso') {
+      for (const b of curlRs) b.rotation.z += MUSCULOSO_GRIP_CURL;
+      for (const b of curlLs) b.rotation.z -= MUSCULOSO_GRIP_CURL;
+    }
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já

@@ -1,5 +1,5 @@
 {
-  "mediaSha256": "ac71bbc29e611b3dba7fbbf2c3c798d40f310a4e48512e29eb7e621b87a8c6fd",
+  "mediaSha256": "f5648c49127995c1f43477b27aa2227f38bf7cd1a0297bc0ab06e2b9cc345ec8",
   "weaponMapSha256": "d6606fdb3e36c5493a6f16049f77f83054321a00c7513869173f62fd5b2222d6",
   "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; o Musculoso preserva o porte atlético, não carrega adereço nas costas e apoia a AK nas duas mãos, e as demais classes de arma continuam distinguíveis. Os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"

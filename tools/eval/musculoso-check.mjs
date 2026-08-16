@@ -28,6 +28,7 @@ expect(/c\.attrs\?\./.test(main) && /c\.rarity/.test(main), 'MUSC8 ficha honra a
 expect(/id: 'musculoso', faccao: 'E', nome: 'Musculoso'/.test(site), 'MUSC9 espelho público sincronizado');
 expect(!/zumbibombado|Zumbi Bombado|zombieGymKit/.test(characters + glbchars + site), 'MUSC10 identidade antiga e halter removidos');
 expect(/CHAR_GRIP_OFFSET[\s\S]*musculoso/.test(glbchars), 'MUSC11 correção de pegada específica registrada');
+expect(/MUSCULOSO_GRIP_CURL/.test(glbchars), 'MUSC12 dedos fecham sobre os pontos de apoio da arma');
 
 if (failures.length) {
   for (const failure of failures) console.error(`MUSC FALHA — ${failure}`);
