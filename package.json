@@ -38,7 +38,7 @@
     "eval:mapjson": "node tools/eval/mapjson-check.mjs",
     "//eval:mapcontrato": "Todo mapa DO REGISTRO devolve o que o game.js CONSOME. Irma da eval:mapjson, que valida um spec JSON antes do build: esta valida o registro inteiro, inclusive os mapas escritos a mao. A lista de chaves nao e opiniao — obrigatorio = o jogo desreferencia SEM guarda (waypoints game.js:4157, nearestWaypoint :4292, findPath :4298); opcional = ha guarda com fallback (slowAt, groundHeightAt). Mutacao: --mutante=sem-waypoints. Mapa ainda nao registrado: --extra=arquivo.js",
     "eval:mapcontrato": "node tools/eval/map-contrato-check.mjs",
-    "//eval:parquewheel": "A roda-gigante gira em torno do cubo, sem orbitar pela base. Relato do dono: 'deve rodar no mesmo local, igual roda gigante de verdade'. Mede pivô→aro e deriva do centro; --mutante=pivo-base restaura os 12 m de erro.",
+    "//eval:parquewheel": "A roda-gigante gira em torno do cubo; assentos não invadem lateral, base nem aro. Mede pivô, deriva e folgas durante a animação; mutantes: pivo-base|lateral-verde|altura-baixa|aro-no-assento.",
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "//eval:vminspect": "O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
