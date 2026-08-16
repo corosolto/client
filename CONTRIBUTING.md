@@ -89,7 +89,7 @@ errado.)
 
 ### Adicionar um personagem
 
-O pipeline tem 6 passos e nenhum deles é opcional:
+O pipeline tem 7 passos e nenhum deles é opcional:
 
 ```
 tools/rig-from-donor.mjs    esqueleto de um doador + auto-skin (GLBs da Mint vêm sem rig)
@@ -98,10 +98,11 @@ tools/optimize-tribos.mjs   redução de malha e textura
 tools/retarget-glb.mjs      11 clipes de animação em models/anims/<id>/
 tools/check-clip.mjs        valida: 0 ossos faltando, durações e root motion iguais ao pack
 registry em 3 arquivos      public/js/characters.js · manifest de áudio · src/data/jogo.ts
+npm run rig:check           valida esqueleto, skin weights, clips e AnimationMixer do elenco
 ```
 
-Rode `check-clip.mjs` **antes** de commitar: personagem sem clipe validado
-entra no jogo em T-pose.
+Rode `check-clip.mjs` e `npm run rig:check` **antes** de commitar: personagem sem clipe
+validado entra no jogo em T-pose; peso ou cadeia quebrada deforma a malha em runtime.
 
 ### Adicionar um mapa
 

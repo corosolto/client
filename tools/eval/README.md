@@ -55,6 +55,7 @@ com código 1 em falha crítica.
 
 | Arquivo | O que faz |
 |---|---|
+| `character-rig-check.mjs` | Esqueleto humanoide, skin weights, compatibilidade dos clips e avanço do `AnimationMixer` dos personagens GLB (`npm run rig:check`). |
 | `vmrig-test.mjs` | Rig do viewmodel a 240 Hz, em node puro. |
 | `vm-frame-check.mjs` | Enquadramento por frame. |
 | `vm-orto.mjs` | Área de tela ocupada pela arma (a métrica de "arma gigante"). |
