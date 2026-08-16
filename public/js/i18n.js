@@ -72,7 +72,15 @@ const DICT = {
   'O PALCO DA TRETA': 'THE STAGE',
   // map screen (abas de categoria — tela 04 do redesign)
   'ESCOLHA DO MAPA': 'PICK THE MAP',
-  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES', 'COMUNIDADE': 'COMMUNITY',
+  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES', 'COMUNIDADE': 'COMMUNITY', 'AI': 'AI',
+  'OFICIAL': 'OFFICIAL', 'por': 'by',
+  // descrições de categoria da tela de mapas (a chave é o texto PT exato do CAT_DESC)
+  'O acervo inteiro: oficial e comunidade, arena e cidade.': 'The whole roster: official and community, arena and city.',
+  'Combate fechado e simétrico — o duelo de angulação clássico.': 'Tight, symmetric combat — the classic angle duel.',
+  'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.': 'Rooftop verticality, alley and shade: who owns the high ground runs the round.',
+  'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.': 'Brazilian landmarks at treta scale: concrete, sidewalk and straight lines.',
+  'Autoria da comunidade — o crachá de cada mapa diz quem fez.': 'Community-made maps — each badge says who built it.',
+  'Construídos pelos agentes de IA da casa.': 'Built by the house AI agents.',
   'ESCOLHA SEU LADO DA TRETA': 'PICK YOUR SIDE',
   'QUEM VAI LEVAR O CORO?': "WHO'S GETTING THE BOOT?",
   'ESCOLHA SEU PERSONAGEM': 'PICK YOUR CHARACTER',

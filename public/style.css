@@ -1834,7 +1834,17 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-cat{font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 10px;border:1px solid}
 .ms-cat[data-cat="FAVELA"]{color:#e0762a;border-color:rgba(224,118,42,.5)}
 .ms-cat[data-cat="ARENA"]{color:#8b8c92;border-color:rgba(139,140,146,.5)}
-.ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}
+.ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}.ms-cat[data-cat="COMUNIDADE"]{color:#2e9ed8;border-color:rgba(46,158,216,.5)}
+.ms-cat[data-cat="AI"]{color:#d8c02e;border-color:rgba(216,192,46,.5)}
+.ms-cat-desc{position:absolute;z-index:2;top:88px;left:32px;max-width:520px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91;pointer-events:none}
+.ms-authors{position:absolute;z-index:2;top:112px;left:32px;display:flex;gap:8px;flex-wrap:wrap}
+.ms-author{padding:5px 12px;font:600 11px/1 var(--aaa-font-body);letter-spacing:2px;color:#5c5d63;background:rgba(16,16,20,.7);border:1px solid #2a2b31;border-radius:999px;cursor:pointer;text-transform:uppercase}
+.ms-author:hover,.ms-author:focus-visible{color:#ecebe6}
+.ms-author.on{color:#2e9ed8;border-color:#2e9ed8}
+.ms-byline{margin:10px 0 0;font:400 13px/1 var(--aaa-font-body);letter-spacing:.6px;color:#8a8b91}
+.ms-byline strong{color:#b9babf;font-weight:600}
+.ms-badge-oficial{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#b4d92e;border:1px solid rgba(180,217,46,.5);border-radius:3px;text-transform:uppercase}
+.ms-badge-comunidade{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#2e9ed8;border:1px solid rgba(46,158,216,.5);border-radius:3px;text-transform:uppercase}
 .ms-count{font-family:var(--font);font-weight:600;font-size:12px;letter-spacing:2px;color:#5c5d63}
 .ms-name{font-family:var(--aaa-font-display);font-weight:400;font-size:72px;
   line-height:.9;letter-spacing:1px;text-transform:uppercase;color:var(--ink-100);

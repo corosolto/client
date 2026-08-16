@@ -82,6 +82,9 @@ const alvoPorMutante = {
   'troca-m-abre-pausa': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
+  'sem-autoria': 'UIR43',
+  'filtro-autor-morto': 'UIR43',
+  'sem-badge-oficial': 'UIR43',
 };
 if (MUTANTE && !alvoPorMutante[MUTANTE]) {
   console.error(`mutante desconhecido: ${MUTANTE}`);
@@ -207,9 +210,18 @@ main = muta('mapa-navega-global', main,
 css = muta('mapa-strip-fixa', css,
   'grid-template-columns:repeat(var(--map-count),minmax(0,196px))',
   'grid-template-columns:repeat(var(--map-count),196px)');
+main = muta('sem-autoria', main,
+  "const byline = $('ms-byline');",
+  "const byline = null;");
+main = muta('filtro-autor-morto', main,
+  "&& (mapCategory !== 'COMUNIDADE' || mapAutorFiltro === 'TODOS' || autorDe(id) === mapAutorFiltro)",
+  "&& (mapCategory !== 'COMUNIDADE' || true)");
+main = muta('sem-badge-oficial', main,
+  "(oficialDe(currentMap) ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`",
+  "(false ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`");
 main = muta('mapa-categoria-errada', main,
-  "piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE',",
-  "piscina_treta: 'CIDADES', posto_treta: 'COMUNIDADE', atacadao_treta: 'CIDADES',");
+  "piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],",
+  "piscina_treta: ['CIDADES'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['CIDADES'],");
 astro = muta('mapa-sem-navegacao', astro,
   '<button id="ms-prev" class="ms-arrow"',
   '<button id="ms-prev-mutado" class="ms-arrow"');
@@ -557,10 +569,21 @@ const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(func
   && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);
 const strip = (css.match(/\.ms-strip\{([^}]*)\}/) || [])[1] || '';
 const fundoMapa = (css.match(/\.ms-bg\{([^}]*)\}/) || [])[1] || '';
+const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
+  && /const MAP_DATA = \{/.test(main)
+  && /const AUTOR_CASA = 'Ruben Marcus';/.test(main)
+  && /const byline = \$\('ms-byline'\);/.test(funcMap)
+  && /\$\{autorDe\(currentMap\)\}<\/strong> · \$\{MAP_DATA\[currentMap\] \|\| ''\}/.test(funcMap)
+  && /ms-badge-oficial/.test(funcMap)
+  && /ms-badge-comunidade/.test(funcMap)
+  && /id="ms-authors" class="ms-authors"/.test(astro)
+  && /ms-author\$\{a === mapAutorFiltro \? ' on' : ''\}/.test(funcMap)
+  && /data-autor="\$\{a\}"/.test(funcMap);
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
-  && /ferro_velho: 'ARENA', quebrada: 'FAVELA'/.test(main)
-  && /piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE'/.test(main)
-  && /function visibleMapIds\(\) \{[\s\S]{0,140}return mapCategory === 'TODOS' \? MAP_IDS : MAP_IDS\.filter\(\(id\) => MAP_CAT\[id\] === mapCategory\)/.test(main)
+  && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
+  && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
+  && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
+  && /function visibleMapIds\(\) \{[\s\S]{0,220}catsDe\(id\)\.includes\(mapCategory\)[\s\S]{0,120}mapAutorFiltro === 'TODOS' \|\| autorDe\(id\) === mapAutorFiltro/.test(main)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
@@ -905,6 +928,8 @@ const resultados = [
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
     'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
+  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE, com filtro por autor', autoriaNaFicha,
+    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; chips de autor em COMUNIDADE'],
 ];
 
 for (const [id, desc, ok, evid] of resultados) console.log(`${ok ? '✓' : '✗'} ${id} · ${desc}\n  ${evid}`);
