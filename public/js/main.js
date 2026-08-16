@@ -64,15 +64,36 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.25;
 container.appendChild(renderer.domElement);
 let contextLossTimer = null;
+let contextRetryTimers = [];
+let contextLostCount = 0;
 renderer.domElement.addEventListener('webglcontextlost', (event) => {
   event.preventDefault();
   clearTimeout(contextLossTimer);
-  contextLossTimer = setTimeout(() => window.__gameLaunch?.fail(new Error('contexto WebGL perdido'), 'webgl-context-lost'), 1500);
+  for (const t of contextRetryTimers) clearTimeout(t);
+  contextRetryTimers = [];
+  contextLostCount++;
+  console.warn(`[webgl] contexto perdido (recuperação ${contextLostCount})`);
+  // 16a22c40 (#297): browser mata o contexto sob pressão de GPU (comum ao ABRIR a
+  // arena — 53 personagens + mapa sobem juntos). O restore espontâneo raramente
+  // chega em 1,5 s; o Three tem forceContextRestore() pra PEDIR a volta. Pedimos
+  // em progressão (0,5 s → 1,5 s → 4 s) e o fatal só vem se nada voltou em 8 s.
+  const delays = [500, 1500, 4000];
+  delays.forEach((ms, i) => {
+    contextRetryTimers.push(setTimeout(() => {
+      try { renderer.forceContextRestore(); } catch (_) { /* ainda perdido */ }
+    }, ms));
+  });
+  contextLossTimer = setTimeout(() => window.__gameLaunch?.fail(new Error('contexto WebGL perdido'), 'webgl-context-lost'), 8000);
 });
 renderer.domElement.addEventListener('webglcontextrestored', () => {
   clearTimeout(contextLossTimer);
+  for (const t of contextRetryTimers) clearTimeout(t);
+  contextRetryTimers = [];
   contextLossTimer = null;
   console.warn('[webgl] contexto restaurado');
+  // pós-restore os render targets do composer/bloom nasceram mortos: um resize
+  // força a recriação dos mesmos (mesmo caminho de uma mudança de janela)
+  try { dispatchEvent(new Event('resize')); } catch (_) {}
 });
 // bloom leve (FASE 4) — ligado por padrão, pulado na qualidade 'low' ou com ?bloom=0
 // (escape hatch p/ GPUs/extensões que derrubam a aba — suspeita do "jogo fechar sozinho")
