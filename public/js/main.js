@@ -1502,10 +1502,10 @@ const MAP_DESC = {
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
 };
 const MAP_CAT = {
-  praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
-  ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
-  atacadao_treta: 'CIDADES',
-  parque_treta: 'ARENA',
+  praca_poderes: 'CIDADES', loja_h: 'CIDADES',
+  ferro_velho: 'ARENA', quebrada: 'FAVELA',
+  piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE',
+  parque_treta: 'COMUNIDADE',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
