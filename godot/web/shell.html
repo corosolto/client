@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
+  <title>CS BRASIL: Treta Suprema — FPS grátis de navegador estilo CS 1.6</title>
+  <meta name="description" content="Jogo FPS gratuito de navegador: arena de sniper estilo CS 1.6 numa Brasília fictícia e satírica. Petistas × Bolsonaristas, 8 personagens, bots, rounds, placar e rádio. Jogue no desktop.">
+  <meta name="keywords" content="cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo sátira política, treta suprema, jogo web godot">
+  <meta name="author" content="CS BRASIL contributors">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0c0e11">
+  <link rel="canonical" href="https://csbrasil.online/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CS BRASIL: Treta Suprema">
+  <meta property="og:title" content="CS BRASIL: Treta Suprema — FPS grátis de navegador">
+  <meta property="og:description" content="Arena de sniper estilo CS 1.6 numa Brasília fictícia: Petistas × Bolsonaristas, AWP, bots, rounds e muita treta. Jogue grátis no navegador.">
+  <meta property="og:url" content="https://csbrasil.online/">
+  <meta property="og:image" content="https://csbrasil.online/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="pt_BR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CS BRASIL: Treta Suprema — FPS grátis de navegador">
+  <meta name="twitter:description" content="Arena de sniper estilo CS 1.6 numa Brasília fictícia. Petistas × Bolsonaristas. Jogue grátis no navegador.">
+  <meta name="twitter:image" content="https://csbrasil.online/og-image.png">
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"VideoGame","name":"CS BRASIL: Treta Suprema","alternateName":"CS BRASIL","url":"https://csbrasil.online/","image":"https://csbrasil.online/og-image.png","description":"FPS de navegador gratuito e satírico em uma Brasília fictícia, com Petistas × Bolsonaristas, 8 personagens originais, bots, rounds e placar.","genre":["Shooter","FPS","Comédia","Sátira"],"gamePlatform":["Web Browser","Desktop"],"applicationCategory":"Game","operatingSystem":"Chrome, Edge ou Firefox desktop","playMode":"SinglePlayer","inLanguage":"pt-BR","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"}}
+  </script>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"O que é CS BRASIL: Treta Suprema?","acceptedAnswer":{"@type":"Answer","text":"Um jogo FPS gratuito que roda no navegador, com arena de sniper, dois times satíricos, oito personagens originais, bots, rounds e placar."}},{"@type":"Question","name":"Preciso instalar ou pagar algo?","acceptedAnswer":{"@type":"Answer","text":"Não. O jogo é gratuito e roda direto em Chrome, Edge ou Firefox no desktop."}},{"@type":"Question","name":"Quais são os controles?","acceptedAnswer":{"@type":"Answer","text":"WASD move, mouse mira, clique atira, Shift corre, Ctrl agacha, Espaço pula, R recarrega, 1/2/3 troca armas, Z/X/C abre o rádio e Tab mostra o placar."}},{"@type":"Question","name":"É um jogo oficial da Valve ou do Counter-Strike?","acceptedAnswer":{"@type":"Answer","text":"Não. É uma paródia independente sem afiliação com a Valve."}}]}
+  </script>
+  <style>
+    html, body, #canvas { margin: 0; padding: 0; border: 0; width: 100%; height: 100%; }
+    body { color: white; background: #05070b; overflow: hidden; touch-action: none; }
+    #canvas { display: block; }
+    #canvas:focus { outline: none; }
+    .crawler-copy { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    #status { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem; background: radial-gradient(circle, #172131, #05070b 65%); font: 700 16px system-ui, sans-serif; color: #ffd23f; }
+    #status progress { width: min(420px, 70vw); accent-color: #e03232; }
+    #status-notice { max-width: 42rem; padding: 1rem; color: #fff; text-align: center; white-space: pre-line; }
+  </style>
+  $GODOT_HEAD_INCLUDE
+</head>
+<body>
+  <main class="crawler-copy">
+    <h1>CS BRASIL: Treta Suprema — jogo FPS gratuito de navegador</h1>
+    <p>FPS 4×4 para Chrome, Edge e Firefox desktop, com gráficos procedurais, oito personagens originais, bots, AWP, pistola, faca, rounds, placar e rádio.</p>
+    <h2>Como jogar</h2>
+    <p>Use WASD e mouse. Shift corre, Ctrl agacha, Espaço pula, R recarrega, 1/2/3 troca armas, Z/X/C abre o rádio e Tab mostra o placar.</p>
+  </main>
+  <canvas id="canvas">Seu navegador não suporta canvas.</canvas>
+  <noscript>O CS BRASIL precisa de JavaScript e WebGL 2. Use Chrome, Edge ou Firefox em um computador.</noscript>
+  <div id="status">
+    <strong>CARREGANDO A TRETA…</strong>
+    <progress id="status-progress"></progress>
+    <div id="status-notice"></div>
+  </div>
+  <script>
+    window.__csbrasilAnalyticsEvents = [];
+    window.csbrasilTrack = function (name, data) {
+      window.__csbrasilAnalyticsEvents.push({ name: name, data: data || {} });
+      try { window.va && window.va('event', { name: name, data: data || {} }); } catch (_) {}
+    };
+    if (!/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname)) {
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+      ['/_vercel/insights/script.js', '/_vercel/speed-insights/script.js'].forEach(function (src) {
+        var script = document.createElement('script'); script.defer = true; script.src = src; document.head.appendChild(script);
+      });
+    }
+  </script>
+  <script src="$GODOT_URL"></script>
+  <script>
+    const engine = new Engine($GODOT_CONFIG);
+    const status = document.getElementById('status');
+    const progress = document.getElementById('status-progress');
+    const notice = document.getElementById('status-notice');
+    engine.startGame({
+      onProgress: function (current, total) {
+        if (current > 0 && total > 0) { progress.value = current; progress.max = total; }
+        else { progress.removeAttribute('value'); progress.removeAttribute('max'); }
+      }
+    }).then(function () { status.remove(); }).catch(function (error) {
+      console.error(error); progress.hidden = true;
+      notice.textContent = 'Não foi possível iniciar o jogo. Confirme WebGL 2 e tente recarregar.\n' + (error && error.message || error);
+    });
+  </script>
+</body>
+</html>

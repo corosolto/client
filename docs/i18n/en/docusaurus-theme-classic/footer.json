@@ -1,0 +1,46 @@
+{
+  "link.title.Comece por aqui": {
+    "message": "Start here",
+    "description": "The title of the footer links column with title=Comece por aqui in the footer"
+  },
+  "link.title.A régua": {
+    "message": "The ruler (quality gate)",
+    "description": "The title of the footer links column with title=A régua in the footer"
+  },
+  "link.title.Projeto": {
+    "message": "Project",
+    "description": "The title of the footer links column with title=Projeto in the footer"
+  },
+  "link.item.label.Começando": {
+    "message": "Getting started",
+    "description": "The label of footer link with label=Começando linking to /"
+  },
+  "link.item.label.Como colaborar": {
+    "message": "How to contribute",
+    "description": "The label of footer link with label=Como colaborar linking to /colaborar"
+  },
+  "link.item.label.Instrumentação de IA": {
+    "message": "AI instrumentation",
+    "description": "The label of footer link with label=Instrumentação de IA linking to /instrumentacao-ai"
+  },
+  "link.item.label.O portão (quality gates)": {
+    "message": "The gate (quality gates)",
+    "description": "The label of footer link with label=O portão (quality gates) linking to /quality-gates"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/rubenmarcus/csbrasil"
+  },
+  "link.item.label.Issues": {
+    "message": "Issues",
+    "description": "The label of footer link with label=Issues linking to https://github.com/rubenmarcus/csbrasil/issues"
+  },
+  "copyright": {
+    "message": "CORO SOLTO: Treta Suprema — open source; the current license is on the \"License, art and trademark\" page. Fictional satire.",
+    "description": "The footer copyright"
+  },
+  "logo.alt": {
+    "message": "CORO SOLTO: Treta Suprema",
+    "description": "The alt text of footer logo"
+  }
+}

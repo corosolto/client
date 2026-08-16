@@ -1,0 +1,994 @@
+<!doctype html>
+<!-- MODO DEV (dev-only, não linkado do jogo, PODADO do build de produção — ver
+     scripts/prune-dist.mjs). SIDEBAR à esquerda (abas + controles) e o palco 3D à direita.
+     Abas:
+       · Editor de viewmodel — SÓ a arma presa na câmera (estilo do jogo): 26 armas,
+         sliders de quadril/mirado por arma, tiro (flash+tracer+recuo+áudio), bots pra
+         mirar, quadril × mira de ferro/luneta. Persiste no navegador (localStorage).
+       · Personagem + arma — cena isolada (chão + personagem + arma) com órbita de mouse
+         pra conferir alinhamento/mecânica de cada GLB (o cano segue a seta +Z).
+     Reaproveita weaponModel/buildCharacterModel — a mesma verdade do jogo. Print: Cmd+Shift+4. -->
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>modo dev — bancada de viewmodel</title>
+<style>
+  :root{--sb:308px}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#12151b;font-family:'ST Mono',Consolas,monospace;color:#cfe}
+  input[type=range]{accent-color:#2fbf71}
+
+  /* ── SIDEBAR ──────────────────────────────────────────────────────────────── */
+  #sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sb);z-index:10;background:#0e1116;border-right:1px solid #2a3340;
+    display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:12px;font-size:13px}
+  #sidebar::-webkit-scrollbar{width:9px}
+  #sidebar::-webkit-scrollbar-thumb{background:#2a3340;border-radius:5px}
+  #devtabs{display:flex;gap:5px;position:sticky;top:-12px;background:#0e1116;padding-top:2px;z-index:2}
+  #devtabs button{flex:1;font-family:inherit;font-size:12px;background:#1b2029;color:#9fb;border:1px solid #2a3340;border-radius:7px;padding:9px 6px;cursor:pointer;transition:background .12s,color .12s}
+  #devtabs button:hover{border-color:#3a4658}
+  #devtabs button.on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+  .side{display:flex;flex-direction:column;gap:11px}
+  .side[hidden]{display:none}
+
+  /* seções em cartão */
+  .grp{display:flex;flex-direction:column;gap:8px;background:#131820;border:1px solid #222c38;border-radius:9px;padding:10px 11px}
+  .cap{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7fd}
+  .cap .muted{color:#5f6f7e;font-weight:400;letter-spacing:.3px;text-transform:none}
+
+  /* controle: rótulo + slider + input numérico */
+  .ctl{display:grid;grid-template-columns:74px 1fr 46px;align-items:center;gap:8px}
+  .ctl>span{font-size:12px;color:#aeb9c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #fxTiro .ctl,#fxLuz .ctl,#recEd .ctl{grid-template-columns:92px 1fr 48px}
+  #gcfg .ctl,#gfx .ctl{grid-template-columns:112px 1fr 56px}
+  #host-game iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  /* preview do HUD de armas (estilo CS) sobreposto ao jogo real */
+  #wephud{position:absolute;right:16px;bottom:168px;z-index:6;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+  #wephud .slot{display:flex;align-items:center;gap:10px;background:rgba(10,12,16,.55);border:1px solid #2a3340;border-left:3px solid #3a4658;border-radius:7px;padding:7px 13px 7px 9px;min-width:184px;color:#9fb}
+  #wephud .slot.on{background:rgba(47,191,113,.18);border-color:#2fbf71;border-left-color:#2fbf71;color:#eafff2}
+  #wephud .slot .k{font-size:13px;color:#7fd;min-width:14px;text-align:center;opacity:.75}
+  #wephud .slot.on .k{color:#2fbf71;opacity:1}
+  #wephud .slot .ic{width:48px;height:20px;display:flex;align-items:center;justify-content:flex-end}
+  #wephud .slot .ic svg{width:100%;height:100%;fill:currentColor}
+  #wephud .slot .nm{flex:1;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+  #wephud .slot .am{font-size:12px;color:#7fe;font-variant-numeric:tabular-nums}
+  /* preview da LOJA (estilo CS) — abre no B */
+  #buymenu{position:absolute;inset:0;z-index:8;display:none;align-items:center;justify-content:center;background:rgba(6,8,11,.78);pointer-events:auto}
+  #buymenu .bm-panel{background:rgba(10,13,17,.95);border:1px solid #2a3340;border-radius:12px;padding:16px 20px 18px;max-height:94%;overflow:auto}
+  #buymenu .bm-title{text-align:center;color:#7fd;font-size:14px;letter-spacing:4px;text-transform:uppercase;font-weight:700}
+  #buymenu .bm-sub{text-align:center;color:#89a;font-size:11px;letter-spacing:1px;margin:4px 0 14px}
+  #buymenu .bm-sub b{color:#2fbf71}
+  #buymenu .cols{display:flex;gap:12px;align-items:flex-start}
+  #buymenu .col{display:flex;flex-direction:column;gap:7px;width:188px}
+  #buymenu .col h4{margin:0 0 2px;font-size:12px;color:#7fd;letter-spacing:1.5px;text-transform:uppercase;display:flex;gap:8px;align-items:center}
+  #buymenu .col h4 .cn{background:#1b2029;border:1px solid #2a3340;border-radius:5px;padding:1px 7px;color:#cfe}
+  #buymenu .col.sel h4{color:#2fbf71}
+  #buymenu .col.sel h4 .cn{background:#2fbf71;border-color:#2fbf71;color:#042012}
+  #buymenu .card{background:rgba(28,34,43,.9);border:1px solid #2a3340;border-radius:8px;padding:6px 9px 5px;cursor:pointer;transition:border-color .1s,background .1s}
+  #buymenu .card:hover{border-color:#2fbf71;background:rgba(47,191,113,.15)}
+  #buymenu .card .ct{display:flex;align-items:center;gap:7px;font-size:11px}
+  #buymenu .card .ct .n{min-width:14px;text-align:center;color:#7fd;opacity:.7}
+  #buymenu .card .ct .nm{flex:1;color:#dfe8ef;text-transform:uppercase;letter-spacing:.4px}
+  #buymenu .card .ct .pr{color:#7fe;opacity:.6}
+  #buymenu .card .ic{height:28px;display:flex;align-items:center;justify-content:center;margin-top:3px}
+  #buymenu .card .ic svg{height:22px;width:auto;fill:#c7d3de}
+  #buymenu .card:hover .ic svg{fill:#eafff2}
+  #buymenu .card.empty{background:rgba(20,24,30,.4);border-style:solid;border-color:#232c38;cursor:default;pointer-events:none;min-height:56px}
+  #buymenu .bm-hint{text-align:center;margin-top:14px;color:#89a;font-size:11px}
+  .ctl input[type=range]{width:100%;min-width:0}
+  .num{width:48px;font-family:inherit;font-size:12px;background:#0b0e12;color:#7fe;border:1px solid #2a3340;border-radius:5px;padding:3px 4px;text-align:right}
+  .num:focus{outline:none;border-color:#2fbf71}
+
+  /* lista de armas (chips) */
+  #wlist{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto}
+  #wlist button{font-family:inherit;font-size:11px;background:#1b2029;color:#9fb;border:1px solid #2a3340;border-radius:5px;padding:4px 7px;cursor:pointer;transition:background .1s}
+  #wlist button:hover{border-color:#3a4658}
+  #wlist button.done{border-color:#3f7d5b;color:#8fe0b3}
+  #wlist button.on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+
+  /* selects, botões, segmentado */
+  .side select{flex:1;font-family:inherit;font-size:13px;background:#1b2029;color:#cfe;border:1px solid #2a3340;border-radius:6px;padding:6px 8px}
+  .side label{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .side label.chk{justify-content:flex-start;gap:7px;font-size:12px;color:#aeb9c4;cursor:pointer}
+  .row{display:flex;gap:6px}
+  .row>*{flex:1}
+  .btn{font-family:inherit;font-size:12px;background:#1b2029;color:#cfe;border:1px solid #2a3340;border-radius:6px;padding:8px 6px;cursor:pointer;transition:background .1s,border-color .1s}
+  .btn:hover{border-color:#3a4658;background:#212936}
+  .btn.primary{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+  .btn.primary:hover{background:#37d07e}
+  .seg{display:flex}
+  .seg button{flex:1;font-family:inherit;font-size:12px;background:#1b2029;color:#cfe;border:1px solid #2a3340;padding:7px 8px;cursor:pointer;border-radius:0}
+  .seg button:first-child{border-radius:6px 0 0 6px}
+  .seg button:last-child{border-radius:0 6px 6px 0}
+  .seg button.on{background:#2fbf71;border-color:#2fbf71;color:#042012;font-weight:700}
+  #vals,#gvals{font-size:11px;color:#9fb;word-break:break-all;user-select:all;white-space:pre-wrap;max-height:110px;overflow:auto;background:#0b0e12;border:1px solid #222c38;border-radius:6px;padding:6px 7px;display:none}
+  #vals:not(:empty),#gvals:not(:empty){display:block}
+  #cfg{white-space:pre;font-size:12px;color:#9fb;line-height:1.6}
+
+  /* ajuda em acordeão */
+  details.help{background:#131820;border:1px solid #222c38;border-radius:9px;padding:0 11px}
+  details.help summary{cursor:pointer;list-style:none;padding:10px 0;font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7fd}
+  details.help summary::-webkit-details-marker{display:none}
+  details.help summary::after{content:"▾";float:right;color:#5f6f7e}
+  details.help[open] summary::after{content:"▴"}
+  .leg{padding-bottom:11px;font-size:11px;color:#9fb;line-height:1.7}
+  .leg b{color:#7fd}
+
+  /* ── PALCO 3D (à direita da sidebar) ──────────────────────────────────────── */
+  #stage{position:fixed;left:var(--sb);top:0;right:0;bottom:0;overflow:hidden;background:#12151b}
+  .host{position:absolute;inset:0}
+  .host[hidden]{display:none}
+  .host canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
+  .ov{position:absolute;inset:0;pointer-events:none}
+  .ov[hidden]{display:none}
+  #cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+  #cross::before,#cross::after{content:"";position:absolute;background:#7fe;opacity:.85}
+  #cross::before{width:2px;height:14px;left:-1px;top:-7px}
+  #cross::after{height:2px;width:14px;top:-1px;left:-7px}
+  #hitmark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);opacity:0;transition:opacity .08s}
+  #hitmark::before,#hitmark::after{content:"";position:absolute;background:#f55}
+  #hitmark::before{width:3px;height:16px;left:-1.5px;top:-8px}
+  #hitmark::after{height:3px;width:16px;top:-1.5px;left:-8px}
+  #reticle{position:absolute;inset:0;display:none}
+  #reticle svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:60vmin;height:60vmin;filter:drop-shadow(0 0 1px rgba(255,255,255,.85))}
+  #reticle .pu-wrap{position:absolute;inset:0}
+  #reticle .pu-vig{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, transparent 0 40vmin, #000 40vmin)}   /* preto em volta do anel (tubo da luneta) */
+  #reticle img.ret-pu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84vmin;height:84vmin;object-fit:contain;filter:drop-shadow(0 0 2px rgba(255,255,255,.55))}
+  #scope{position:absolute;inset:0;display:none;background:radial-gradient(circle at 50% 50%, transparent 0 30%, #000 31%, #000 100%)}
+  .hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:12px;color:#89a;background:rgba(10,12,16,.7);padding:6px 12px;border-radius:6px;white-space:nowrap}
+  .hint b{color:#7fd}
+  .ammo{position:absolute;right:16px;bottom:14px;font-size:22px;letter-spacing:1px;color:#cfe;background:rgba(10,12,16,.6);padding:5px 12px;border-radius:7px;min-width:96px;text-align:center}
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="sidebar">
+  <div id="devtabs">
+    <button data-tool="editor" class="on">Viewmodel</button>
+    <button data-tool="cena">Personagem</button>
+    <button data-tool="game">Testar no jogo</button>
+  </div>
+
+  <div class="side" id="side-editor">
+    <div class="grp">
+      <div class="cap">Arma <span class="muted" id="tcount"></span></div>
+      <div id="wlist"></div>
+    </div>
+    <div class="grp">
+      <div class="cap">Modo</div>
+      <div class="seg" id="mode"><button data-m="hip" class="on">Quadril</button><button data-m="ads">Mirado</button></div>
+    </div>
+    <div class="grp">
+      <div class="cap">Câmera</div>
+      <div class="ctl"><span>FOV</span><input type="range" id="fov" min="30" max="100" value="55"><input class="num" type="number" id="fov_n" min="30" max="100"></div>
+      <div class="ctl"><span>Tamanho</span><input type="range" id="sz" min="20" max="100" value="56"><input class="num" type="number" id="sz_n" min="20" max="100"></div>
+    </div>
+    <div class="grp">
+      <div class="cap">Posição</div>
+      <div class="ctl"><span>X</span><input type="range" id="wx" min="-40" max="40" value="5"><input class="num" type="number" id="wx_n" min="-40" max="40"></div>
+      <div class="ctl"><span>Y</span><input type="range" id="wy" min="-40" max="10" value="-12"><input class="num" type="number" id="wy_n" min="-40" max="10"></div>
+      <div class="ctl"><span>Z</span><input type="range" id="wz" min="-70" max="-16" value="-27"><input class="num" type="number" id="wz_n" min="-70" max="-16"></div>
+    </div>
+    <div class="grp">
+      <div class="cap">Rotação</div>
+      <div class="ctl"><span>pitch</span><input type="range" id="rx" min="-30" max="30" value="-8"><input class="num" type="number" id="rx_n" min="-30" max="30"></div>
+      <div class="ctl"><span>yaw</span><input type="range" id="ry" min="-30" max="30" value="7"><input class="num" type="number" id="ry_n" min="-30" max="30"></div>
+      <div class="ctl"><span>inclinação</span><input type="range" id="wt" min="-30" max="30" value="10"><input class="num" type="number" id="wt_n" min="-30" max="30"></div>
+    </div>
+    <div class="grp"><div class="cap">Recuo <span class="muted" id="recEdCls">real (jogo)</span></div><div id="recEd"></div></div>
+    <div class="grp"><div class="cap">Efeito do tiro <span class="muted">FX</span></div><div id="fxTiro"></div></div>
+    <div class="grp"><div class="cap">Fogo / luz <span class="muted">FX</span></div><div id="fxLuz"></div></div>
+    <div class="grp">
+      <div class="cap">Ações</div>
+      <button id="play" class="btn primary">▶ testar na cena</button>
+      <div class="row"><button id="cop" class="btn">📋 copiar arma</button><button id="rst" class="btn">↺ resetar</button></div>
+      <div class="row"><button id="exp" class="btn">exportar tudo</button><button id="cfx" class="btn">📋 copiar FX</button></div>
+      <div id="vals"></div>
+    </div>
+    <details class="help">
+      <summary>Controles</summary>
+      <div class="leg">
+        <b>WASD</b> andar · <b>Shift</b> correr · <b>Ctrl</b> abaixar<br>
+        <b>Espaço</b> pular · <b>ESQ</b> atirar · <b>DIR</b> mirar<br>
+        clique trava o mouse · <b>Esc</b> solta · <b>R</b> repõe bots
+      </div>
+    </details>
+  </div>
+
+  <div class="side" id="side-cena" hidden>
+    <div class="grp">
+      <div class="cap">Visualização</div>
+      <div class="seg" id="mode2">
+        <button data-mode="char" class="on">Personagem</button>
+        <button data-mode="gun">Só a arma</button>
+      </div>
+      <label>Arma <select id="wsel"></select></label>
+      <label id="crow">Personagem <select id="csel"></select></label>
+    </div>
+    <div class="grp">
+      <div class="cap">Girar 90° (só a arma)</div>
+      <div class="row"><button class="btn" data-axis="0">X</button><button class="btn" data-axis="1">Y</button><button class="btn" data-axis="2">Z</button><button class="btn" id="rreset">zerar</button></div>
+      <button id="shot" class="btn">📷 baixar PNG</button>
+    </div>
+    <div class="grp">
+      <div class="cap">Config da arma</div>
+      <div id="cfg"></div>
+    </div>
+  </div>
+
+  <div class="side" id="side-game" hidden>
+    <div class="grp">
+      <div class="cap">Jogo real <span class="muted" id="gstatus">carregando…</span></div>
+      <label>Personagem <select id="gchar"></select></label>
+      <label>Arma <select id="gwep"></select></label>
+      <label class="chk"><input type="checkbox" id="gvmlab" checked> viewmodel afinado (minhas poses)</label>
+      <label class="chk"><input type="checkbox" id="ghud" checked> preview do HUD de armas (CS)</label>
+      <button id="gbuy" class="btn">🛒 abrir loja (tecla B)</button>
+    </div>
+    <div class="grp"><div class="cap">Config da arma <span class="muted">real</span></div><div id="gcfg"></div></div>
+    <div class="grp"><div class="cap">Recuo <span class="muted" id="grecls">real</span></div><div id="grec"></div></div>
+    <div class="grp"><div class="cap">FX <span class="muted">global ×</span></div><div id="gfx"></div></div>
+    <div class="grp">
+      <div class="cap">Ações</div>
+      <button id="gcopy" class="btn">📋 copiar config</button>
+      <div id="gvals"></div>
+    </div>
+    <div class="leg">Clica na cena pra jogar/atirar · <b>Esc</b> solta o mouse pra ajustar · os sliders editam o <b>jogo real</b> ao vivo.</div>
+  </div>
+</div>
+
+<div id="stage">
+  <div class="host" id="host-editor"></div>
+  <div class="host" id="host-cena" hidden></div>
+  <div class="ov" id="ov-editor">
+    <div id="cross"></div>
+    <div id="hitmark"></div>
+    <div id="reticle"></div>
+    <div id="scope"></div>
+    <div id="ammo" class="ammo"></div>
+    <div class="hint">clique na cena pra jogar · atire nos bots · botão direito mira · <b>R</b> recarrega/repõe</div>
+  </div>
+  <div class="ov" id="ov-cena" hidden>
+    <div class="hint">arrasta = girar · scroll = zoom · o cano deve seguir a seta VERDE (+Z)</div>
+  </div>
+  <div class="host" id="host-game" hidden></div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+import { CHARACTERS } from './js/characters.js';
+import { preloadWeapons, weaponModel, WEAPON_IDS, weaponCFG } from './js/weapons.js';
+import { Sfx } from './js/audio.js';
+import { REC_DEG, RECOIL_CLASS, RECOIL_PATTERN, RECOIL_PARAMS, REC, buildRecoilPattern, vmKickAmp } from './js/recoil.js';   // recuo REAL do jogo
+
+await preloadWeapons();
+
+// ============================================================================
+// FERRAMENTA 1 — EDITOR DE VIEWMODEL (só a arma presa na câmera)
+//   side = painel na sidebar · host = onde vai o canvas · ov = overlays (mira/hint)
+// ============================================================================
+function initEditor(side, host, ov) {
+  const $ = (id) => side.querySelector('#' + id);
+  const elCross = ov.querySelector('#cross'), elHit = ov.querySelector('#hitmark');
+  const elRet = ov.querySelector('#reticle'), elScope = ov.querySelector('#scope'), elAmmo = ov.querySelector('#ammo');
+  const SCOPED = new Set(['awp', 'svd', 'g3sg1', 'sks', 'mosin', 'rem700', 'm400']);
+  const NO_ALIGN = new Set(['pistol']);   // mira de ferro posicionada à mão (sem auto-alinhar)
+  const POSE_FIXED = {   // poses gravadas no código (fonte da verdade p/ o jogo)
+    pistol: {
+      hip: { fov: 50, sz: 43, wx: 5, wy: -10, wz: -22, rx: 0, ry: 1, wt: 3 },
+      ads: { fov: 30, sz: 89, wx: 1, wy: -10, wz: -22, rx: 0, ry: 1, wt: 3 },
+    },
+  };
+  const RATE = { awp: 900, mosin: 1000, rem700: 900, deagle: 260, pistol: 200, knife: 400 };
+  // pente por arma (aprox. do jogo) — dá fim à rajada: acaba → recarrega → o recuo volta.
+  const MAG = { awp: 5, mosin: 5, rem700: 5, sks: 10, m400: 20, svd: 10, g3sg1: 20, deagle: 7, revolver38: 6, pistol: 12, shotgun: 7, carbine: 10, g3: 20, md97: 20, m92: 30, akm: 30, scar: 20, tavor: 30, famas: 25, uzi: 25, p90: 50, lmg: 100, knife: 0 };
+  const magOf = (id) => MAG[id] ?? 30;   // fallback fuzil
+  // ── FX / RECUO (playground): valores globais afináveis ao vivo. Persistem no navegador.
+  // Portáveis pro engine depois (é a mesma ideia das poses). Unidades: ver .cap de cada um.
+  const FXDEF = {
+    flashSize: { min: 10, max: 140, val: 55, cap: 'flash tam.' },     // ×0.01 (m) do sprite de boca
+    flashLife: { min: 20, max: 220, val: 60, cap: 'flash dur.' },     // ms
+    sparks: { min: 0, max: 20, val: 7, cap: 'faíscas' },              // qtd por tiro
+    trThick: { min: 1, max: 8, val: 3, cap: 'tracer esp.' },          // mult. da grossura
+    trOpacity: { min: 0, max: 100, val: 90, cap: 'tracer opac.' },    // %
+    lightInt: { min: 0, max: 24, val: 8, cap: 'luz forte' },          // intensidade
+    warmth: { min: 0, max: 100, val: 60, cap: 'luz calor' },          // 0=frio(branco) 100=quente(laranja)
+    lightLife: { min: 20, max: 220, val: 55, cap: 'luz dur.' },       // ms
+  };
+  const FXGROUPS = { fxTiro: ['flashSize', 'flashLife', 'sparks', 'trThick', 'trOpacity'], fxLuz: ['lightInt', 'warmth', 'lightLife'] };
+  // RECUO REAL (dados de recoil.js): editar aqui muda o recuo do editor NA HORA (é o mesmo
+  // modelo do jogo). força por arma + padrão da classe + timing global.
+  const RECED = {
+    recDeg: { min: 0, max: 6, step: 0.05, cap: 'força (graus)' },
+    up: { min: 0, max: 1, step: 0.02, cap: 'subida meio' },
+    cauda: { min: 0, max: 1, step: 0.02, cap: 'subida fim' },
+    left: { min: 0, max: 1, step: 0.02, cap: 'p/ esquerda' },
+    right: { min: 0, max: 1, step: 0.02, cap: 'p/ direita' },
+    wig: { min: 0, max: 1, step: 0.02, cap: 'aleatório' },
+    recover: { min: 0.03, max: 1, step: 0.01, cap: 'recuperação s' },
+    hold: { min: 0, max: 1, step: 0.02, cap: 'segura s' },
+    perm: { min: 0, max: 1, step: 0.02, cap: 'permanente' },
+  };
+  const FX = {}; for (const k in FXDEF) FX[k] = FXDEF[k].val;
+  try { Object.assign(FX, JSON.parse(localStorage.getItem('devFX') || '{}')); } catch {}
+  function saveFX() { try { localStorage.setItem('devFX', JSON.stringify(FX)); } catch {} }
+  const CD = new THREE.Color(0xfff2e0), CW = new THREE.Color(0xffab55);
+  const warm = () => CD.clone().lerp(CW, FX.warmth / 100);
+  const sfx = new Sfx();
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+  host.appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x12151b);
+  scene.add(new THREE.HemisphereLight(0xbcd3ff, 0x30281c, 1.15));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.7); dl.position.set(3, 6, 4); scene.add(dl);
+  const fl = new THREE.DirectionalLight(0xafd0ff, 0.5); fl.position.set(-4, 2, -3); scene.add(fl);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: 0x232833, roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; scene.add(floor); scene.add(new THREE.GridHelper(120, 240, 0x39485c, 0x232b36));
+  for (let i = 0; i < 12; i++) { const s = 0.6 + (i % 4) * 0.5; const box = new THREE.Mesh(new THREE.BoxGeometry(s, s * 2, s), new THREE.MeshStandardMaterial({ color: 0x3a4658 })); box.position.set(Math.cos(i) * (7 + i), s, Math.sin(i * 1.7) * (7 + i)); scene.add(box); }
+  const cam = new THREE.PerspectiveCamera(80, 1, 0.05, 400);
+  cam.rotation.order = 'YXZ'; scene.add(cam);
+  const vmScene = new THREE.Scene();
+  const vmCam = new THREE.PerspectiveCamera(80, 1, 0.001, 10);
+  vmScene.add(new THREE.HemisphereLight(0xdfe8ff, 0x30281c, 1.2));
+  const vmDL = new THREE.DirectionalLight(0xffffff, 1.5); vmDL.position.set(0.4, 0.6, 1); vmScene.add(vmDL);
+
+  const flash = new THREE.PointLight(0xffe08a, 0, 10, 2); scene.add(flash);
+  const tracerGeo = new THREE.CylinderGeometry(0.01, 0.01, 1, 5, 1, true);
+  const tracers = [];
+  function tracer(from, to) { const m = new THREE.Mesh(tracerGeo, new THREE.MeshBasicMaterial({ color: 0xfff3d6, transparent: true, opacity: FX.trOpacity / 100, blending: THREE.AdditiveBlending, depthWrite: false })); const d = new THREE.Vector3().subVectors(to, from); const len = d.length(); m.position.copy(from).addScaledVector(d, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.clone().normalize()); m.scale.set(FX.trThick, len, FX.trThick); m.userData.t = 0.09; scene.add(m); tracers.push(m); }
+
+  const wsel = { value: 'ak' };
+  let mag = 0, reloading = false, reloadEnd = 0;   // munição do pente + recarga
+  function updateAmmo() { const cap = magOf(wsel.value); elAmmo.textContent = cap <= 0 ? '∞' : (reloading ? 'RECARREGANDO…' : mag + ' / ' + cap); }
+  const tuned = new Set();
+  const wlist = $('wlist');
+  function updateCount() { const t = $('tcount'); if (t) t.textContent = `${tuned.size}/${WEAPON_IDS.length} afinadas`; }
+  function renderList() {
+    wlist.innerHTML = WEAPON_IDS.map((id) => `<button data-w="${id}" class="${id === wsel.value ? 'on' : ''} ${tuned.has(id) ? 'done' : ''}" title="${tuned.has(id) ? 'afinada' : 'no padrão'}">${id}</button>`).join('');
+    wlist.querySelectorAll('button').forEach((b) => (b.onclick = () => selectWeapon(b.dataset.w)));
+    updateCount();
+  }
+  function selectWeapon(id) { wsel.value = id; mag = magOf(id); reloading = false; buildVM(); loadSliders(); renderList(); updateAmmo(); if (typeof loadRec === 'function') loadRec(); if (typeof setReticle === 'function') setReticle(); }
+
+  // retículos da luneta: mil-dot (padrão) e PU (mosin russa: 3 postes + ponta em seta, topo aberto)
+  const PU_RETICLE = new Set(['mosin']);
+  const MILDOT = (() => {
+    const V = 400, C = 200, L = [];
+    const ln = (x1, y1, x2, y2, w) => L.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${w}"/>`);
+    ln(C, 34, C, 366, 1.4); ln(34, C, 366, C, 1.4);
+    for (let i = 1; i * 13 <= 150; i++) { const d = i * 13, mj = i % 4 === 0, t = mj ? 8 : 4.5, w = mj ? 1.4 : 1; ln(C - t, C - d, C + t, C - d, w); ln(C - t, C + d, C + t, C + d, w); ln(C - d, C - t, C - d, C + t, w); ln(C + d, C - t, C + d, C + t, w); }
+    const cap = 12; ln(C - cap, 50, C + cap, 50, 2.2); ln(C - cap, 350, C + cap, 350, 2.2); ln(50, C - cap, 50, C + cap, 2.2); ln(350, C - cap, 350, C + cap, 2.2);
+    return `<svg viewBox="0 0 ${V} ${V}"><g stroke="#0a0a0a" fill="none">${L.join('')}</g></svg>`;
+  })();
+  const PUSVG = '<div class="pu-wrap"><div class="pu-vig"></div><img class="ret-pu" src="./img/reticle-pu.png" alt=""></div>';   // imagem PU + preto em volta
+  function setReticle() { elRet.innerHTML = PU_RETICLE.has(wsel.value) ? PUSVG : MILDOT; }
+  setReticle();
+
+  let running = false, raf = 0;
+  const keys = {};
+  const look = { yaw: Math.PI, pitch: 0 };
+  // RECUO REAL (dados de recoil.js — mesmo modelo do jogo): view-punch que serpenteia/aleatório/recupera
+  let gTime = 0, rSpray = 0, rLast = -9, wkick = 0;
+  const rp = { ty: 0, tx: 0, y: 0, x: 0, sh: 0 };
+  const PISTOLISH = new Set(['pistol', 'deagle', 'revolver38']);
+  let locked = false, aiming = false, shootHeld = false, lastShot = 0, jumpQueued = false;
+  addEventListener('keydown', (e) => { if (!running) return; keys[e.code] = true; if (e.code === 'Space') { jumpQueued = true; e.preventDefault(); } if (e.code === 'KeyR') { mag = magOf(wsel.value); reloading = false; updateAmmo(); spawnBots(); } });
+  addEventListener('keyup', (e) => { if (!running) return; keys[e.code] = false; });
+  renderer.domElement.addEventListener('click', () => { if (!running) return; if (!locked) { renderer.domElement.requestPointerLock(); sfx.ensure && sfx.ensure(); } });
+  document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === renderer.domElement; });
+  addEventListener('mousemove', (e) => { if (!running || !locked) return; look.yaw -= e.movementX * 0.0022; look.pitch = Math.max(-1.4, Math.min(1.4, look.pitch - e.movementY * 0.0022)); });
+  addEventListener('mousedown', (e) => { if (!running || !locked) return; if (e.button === 0) shootHeld = true; if (e.button === 2) aiming = true; });
+  addEventListener('mouseup', (e) => { if (!running) return; if (e.button === 0) shootHeld = false; if (e.button === 2) aiming = false; });
+  addEventListener('contextmenu', (e) => { if (running) e.preventDefault(); });
+
+  const vm = new THREE.Group(); vmScene.add(vm);
+  let gun = null;
+  function buildVM() {
+    if (gun) { vm.remove(gun); gun = null; }
+    const wm = weaponModel(wsel.value);
+    if (wm) { wm.rotation.y = Math.PI; gun = wm; vm.add(gun); }   // +Z(cano) -> -Z(frente)
+  }
+  function adsAligned() {
+    const met = gun && gun.userData && gun.userData.metrics;
+    if (!met || !met.sight) return null;
+    const A = curPose().ads;
+    const R = Math.PI / 180, S = A.sz * 0.01;
+    const p = met.sight.clone().divideScalar(met.norm || 1)
+      .applyEuler(new THREE.Euler(0, Math.PI, 0)).multiplyScalar(S)
+      .applyEuler(new THREE.Euler(A.rx * R, A.ry * R, A.wt * R));
+    const Z = A.wz * 0.01;
+    return new THREE.Vector3(-p.x + A.wx * 0.01, -p.y + A.wy * 0.01, Z - p.z);
+  }
+
+  // sprites/luz de boca + faíscas NA CENA DO VM (ficam na arma, em 1ª pessoa)
+  function makeGlow() {
+    const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d');
+    const rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(0.35, 'rgba(255,220,150,.85)'); rg.addColorStop(1, 'rgba(255,180,80,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c);
+  }
+  const glowTex = makeGlow();
+  const mzSpr = () => new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 }));
+  const mzFlash = mzSpr(); mzFlash.visible = false; vmScene.add(mzFlash); let mzT = 0;
+  const vmFlashL = new THREE.PointLight(0xffd9a0, 0, 3, 2); vmScene.add(vmFlashL); let vmFlashT = 0;
+  const sparkPool = [], sparksA = [];
+  for (let i = 0; i < 28; i++) { const s = mzSpr(); s.visible = false; vmScene.add(s); sparkPool.push(s); }
+  function muzzleVM() {
+    const met = gun && gun.userData && gun.userData.metrics;
+    vm.updateMatrixWorld(true);
+    if (met && met.muzzle) return gun.localToWorld(met.muzzle.clone().divideScalar(met.norm || 1));
+    return vm.localToWorld(new THREE.Vector3(0, 0, -0.3));
+  }
+
+  const SLIDERS = ['fov', 'sz', 'wx', 'wy', 'wz', 'rx', 'ry', 'wt'];
+  const BASE = {
+    hip: { fov: 55, sz: 67, wx: 5, wy: -10, wz: -21, rx: 0, ry: 1, wt: 3 },
+    ads: { fov: 47, sz: 68, wx: 0, wy: 1, wz: -25, rx: 0, ry: 0, wt: 0 },
+  };
+  const AK_LEN = 0.88;
+  const POSE = {};
+  function defaultPose(id) {
+    const len = (weaponCFG(id) && weaponCFG(id).len) || AK_LEN;
+    const k = Math.max(0.45, Math.min(1, AK_LEN / len));
+    const sc = (b) => Math.round(Math.max(20, Math.min(100, b * k)));
+    return { hip: { ...BASE.hip, sz: sc(BASE.hip.sz) }, ads: { ...BASE.ads, sz: sc(BASE.ads.sz) } };
+  }
+  function curPose() { const id = wsel.value; if (!POSE[id]) POSE[id] = defaultPose(id); return POSE[id]; }
+  let mode = 'hip';
+  const STORE = 'bancadaViewmodel';   // MESMA chave das bancadas antigas — não perde o afinado
+  function save() { try { localStorage.setItem(STORE, JSON.stringify({ pose: POSE, tuned: [...tuned] })); } catch {} }
+  try { const d = JSON.parse(localStorage.getItem(STORE) || '{}'); if (d.pose) Object.assign(POSE, d.pose); (d.tuned || []).forEach((x) => tuned.add(x)); } catch {}
+  for (const [id, f] of Object.entries(POSE_FIXED)) { if (!POSE[id]) POSE[id] = defaultPose(id); if (f.hip) POSE[id].hip = { ...f.hip }; if (f.ads) POSE[id].ads = { ...f.ads }; tuned.add(id); }
+  function syncVals() { for (const id of SLIDERS) { const n = $(id + '_n'); if (n) n.value = $(id).value; } }
+  function loadSliders() { const p = curPose()[mode]; for (const id of SLIDERS) $(id).value = p[id]; syncVals(); }
+  function setVal(id, v) {
+    const r = $(id); v = Math.max(+r.min, Math.min(+r.max, Math.round(v)));
+    r.value = v; $(id + '_n').value = v; curPose()[mode][id] = v;
+    const was = tuned.has(wsel.value); tuned.add(wsel.value); save();
+    if (!was) renderList(); else updateCount();
+  }
+  for (const id of SLIDERS) {
+    $(id).addEventListener('input', () => setVal(id, +$(id).value));
+    $(id + '_n').addEventListener('input', () => { const n = $(id + '_n'); if (n.value !== '' && !isNaN(+n.value)) setVal(id, +n.value); });
+  }
+  side.querySelectorAll('#mode button').forEach((b) => (b.onclick = () => { mode = b.dataset.m; side.querySelectorAll('#mode button').forEach((x) => x.classList.toggle('on', x === b)); loadSliders(); }));
+  // controles de FX (gerados): rótulo + slider + número, sincronizados; salvam no navegador
+  for (const gid in FXGROUPS) {
+    $(gid).innerHTML = FXGROUPS[gid].map((k) => { const d = FXDEF[k]; return `<div class="ctl"><span title="${d.cap}">${d.cap}</span><input type="range" id="fx_${k}" min="${d.min}" max="${d.max}" value="${FX[k]}"><input class="num" type="number" id="fx_${k}_n" min="${d.min}" max="${d.max}" value="${FX[k]}"></div>`; }).join('');
+  }
+  for (const k in FXDEF) {
+    const r = $('fx_' + k), n = $('fx_' + k + '_n');
+    const setf = (v) => { v = Math.max(+r.min, Math.min(+r.max, Math.round(v))); FX[k] = v; r.value = v; n.value = v; saveFX(); };
+    r.addEventListener('input', () => setf(+r.value));
+    n.addEventListener('input', () => { if (n.value !== '' && !isNaN(+n.value)) setf(+n.value); });
+  }
+  // RECUO REAL: os controles editam recoil.js (REC_DEG/RECOIL_PARAMS/REC) — muda o recuo do editor na hora
+  $('recEd').innerHTML = Object.entries(RECED).map(([k, d]) => `<div class="ctl"><span title="${d.cap}">${d.cap}</span><input type="range" id="rc_${k}" min="${d.min}" max="${d.max}" step="${d.step}"><input class="num" type="number" id="rc_${k}_n" min="${d.min}" max="${d.max}" step="${d.step}"></div>`).join('');
+  const RCMAP = { up: 'mid', cauda: 'tail', left: 'left', right: 'right', wig: 'wig' };
+  function recGet() {
+    const w = wsel.value, cls = RECOIL_CLASS[w] || 'semi', P = RECOIL_PARAMS[cls] || {};
+    return { recDeg: REC_DEG[w] ?? 1.4, up: P.mid ?? 0.42, cauda: P.tail ?? 0.2, left: P.left ?? 0.56, right: P.right ?? 0.68, wig: P.wig ?? 0.3, recover: REC.tau, hold: REC.hold, perm: REC.perm };
+  }
+  function recSet(k, v) {
+    const w = wsel.value, cls = RECOIL_CLASS[w] || 'semi';
+    if (k === 'recDeg') REC_DEG[w] = v;
+    else if (k === 'recover') REC.tau = v;
+    else if (k === 'hold') REC.hold = v;
+    else if (k === 'perm') REC.perm = v;
+    else { const P = RECOIL_PARAMS[cls] || (RECOIL_PARAMS[cls] = {}); P[RCMAP[k]] = v; RECOIL_PATTERN[cls] = buildRecoilPattern(P); }
+  }
+  function loadRec() { const t = recGet(); for (const k in RECED) { const r = $('rc_' + k); if (r) { r.value = t[k]; $('rc_' + k + '_n').value = t[k]; } } const cl = $('recEdCls'); if (cl) cl.textContent = `real · classe ${RECOIL_CLASS[wsel.value] || 'semi'}`; }
+  for (const k in RECED) {
+    const r = $('rc_' + k), n = $('rc_' + k + '_n');
+    const set = (v) => { v = Math.max(+r.min, Math.min(+r.max, v)); r.value = v; n.value = v; recSet(k, v); };
+    r.addEventListener('input', () => set(+r.value));
+    n.addEventListener('input', () => { if (n.value !== '' && !isNaN(+n.value)) set(+n.value); });
+  }
+  loadRec();
+  const fmt = (o) => SLIDERS.map((k) => `${k}=${o[k]}`).join(' ');
+  $('play').onclick = () => { renderer.domElement.requestPointerLock(); sfx.ensure && sfx.ensure(); };
+  $('cop').onclick = () => {
+    const id = wsel.value, P = curPose();
+    const str = `${id} QUADRIL ${fmt(P.hip)}\n${id} MIRADO  ${fmt(P.ads)}`;
+    $('vals').textContent = str;
+    try { navigator.clipboard.writeText(str); $('cop').textContent = '✓ copiado!'; setTimeout(() => $('cop').textContent = '📋 copiar', 1200); } catch {}
+  };
+  $('exp').onclick = () => {
+    const ids = [...tuned].sort();
+    const str = ids.length ? ids.map((id) => `${id} QUADRIL ${fmt(POSE[id].hip)}\n${id} MIRADO  ${fmt(POSE[id].ads)}`).join('\n') : '(nenhuma arma ajustada ainda)';
+    $('vals').textContent = str;
+    try { navigator.clipboard.writeText(str); $('exp').textContent = '✓ copiado!'; setTimeout(() => $('exp').textContent = 'exportar tudo', 1200); } catch {}
+  };
+  $('cfx').onclick = () => {
+    const t = recGet(), w = wsel.value, cls = RECOIL_CLASS[w] || 'semi';
+    const rec = `${w} RECUO(classe ${cls}) recDeg=${t.recDeg} up=${t.up} cauda=${t.cauda} left=${t.left} right=${t.right} wig=${t.wig} recover=${t.recover} hold=${t.hold} perm=${t.perm}`;
+    const fx = 'FX ' + Object.keys(FXDEF).map((k) => `${k}=${FX[k]}`).join(' ');
+    const str = rec + '\n' + fx;
+    $('vals').textContent = str;
+    try { navigator.clipboard.writeText(str); $('cfx').textContent = '✓ copiado!'; setTimeout(() => $('cfx').textContent = '📋 copiar FX', 1200); } catch {}
+  };
+  $('rst').onclick = () => { delete POSE[wsel.value]; tuned.delete(wsel.value); loadSliders(); renderList(); save(); };
+  renderList();
+  loadSliders();
+
+  const bots = [];
+  const SPOTS = [[5, 12], [-4, 14], [8, 9], [-9, 11], [0, 18]];
+  let botsReady = false;
+  async function spawnBots() {
+    for (const b of bots) scene.remove(b.group); bots.length = 0;
+    const enemy = CHARACTERS.filter((c) => c.team === 'B'); const pool = enemy.length ? enemy : CHARACTERS;
+    for (let i = 0; i < SPOTS.length; i++) {
+      const d = pool[i % pool.length]; await preloadCharacterAssets([d.id]);
+      const bm = buildCharacterModel(d, { weapon: true, weaponId: 'ak' }); if (!bm || !bm.group) continue;
+      if (bm.ctrl && bm.ctrl._to) bm.ctrl._to('idle'); for (let k = 0; k < 6; k++) bm.ctrl && bm.ctrl.update(1 / 30, 0, false, 0);
+      bm.group.position.set(SPOTS[i][0], 0, SPOTS[i][1]); bm.group.rotation.y = Math.PI;
+      scene.add(bm.group); bots.push({ group: bm.group, ctrl: bm.ctrl, hp: 3, dead: false, tRespawn: 0 });
+    }
+  }
+
+  const ray = new THREE.Raycaster();
+  function isDesc(o, r) { let p = o; while (p) { if (p === r) return true; p = p.parent; } return false; }
+  let hitT = 0;
+  function hitmark() { elHit.style.opacity = '1'; hitT = 0.12; }
+  function fireShot() {
+    const w = wsel.value;
+    sfx.shotWeapon && sfx.shotWeapon(w, 0, 0.9);
+    // 3 · RECUO REAL (mesmo modelo do jogo: padrão da classe + REC_DEG + timing — tudo de recoil.js)
+    if (gTime - rLast > REC.hold) rSpray = 0;
+    const pat = RECOIL_PATTERN[RECOIL_CLASS[w] || 'semi'];
+    const [px, py] = pat[Math.min(29, rSpray)];
+    const g = (REC_DEG[w] ?? 1.4) * (Math.PI / 180) * (aiming ? 0.68 : 1);
+    const vy = g * py * (1 + (Math.random() - 0.5) * 0.6);
+    const hx = g * px * (1 + (Math.random() - 0.5) * 0.6);
+    rp.ty += vy * (1 - REC.perm); rp.tx += hx * (1 - REC.perm);
+    look.pitch = Math.max(-1.4, Math.min(1.4, look.pitch + vy * REC.perm));   // deriva PERMANENTE na mira (corrige com o mouse)
+    look.yaw -= hx * REC.perm;
+    rLast = gTime; rp.sh = Math.min(0.013, rp.sh + g * 0.16); rSpray++;
+    wkick = Math.min(0.14, wkick + vmKickAmp(w, { scoped: aiming, pistol: PISTOLISH.has(w) }) * 0.03);   // kick da arma (animação do tiro)
+    const dir = new THREE.Vector3(); cam.getWorldDirection(dir);
+    const wMuzzle = cam.position.clone().addScaledVector(dir, 0.6).add(new THREE.Vector3(0, -0.05, 0));
+    const col = warm();
+    // 2 · FOGO/LUZ — luz no mundo (ilumina a cena) + luz no vm (ilumina a arma)
+    flash.position.copy(wMuzzle); flash.color.copy(col); flash.intensity = FX.lightInt;
+    const mz = muzzleVM();
+    vmFlashL.position.copy(mz); vmFlashL.color.copy(col); vmFlashL.intensity = FX.lightInt; vmFlashT = FX.lightLife / 1000;
+    // 1 · EFEITO DO TIRO — sprite de flash na boca + faíscas
+    mzFlash.position.copy(mz); mzFlash.material.color.copy(col); mzFlash.material.rotation = Math.random() * Math.PI * 2;
+    mzFlash.material.opacity = 1; mzFlash.scale.setScalar(FX.flashSize / 100); mzFlash.visible = true; mzT = FX.flashLife / 1000;
+    const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(vm.quaternion);
+    for (let i = 0; i < FX.sparks; i++) {
+      const s = sparkPool.pop(); if (!s) break;
+      s.position.copy(mz); s.material.color.copy(col); s.material.opacity = 1; s.scale.setScalar(0.015 + Math.random() * 0.02); s.visible = true;
+      const v = fwd.clone().multiplyScalar(1.4 + Math.random() * 2.2).add(new THREE.Vector3((Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 2.4));
+      sparksA.push({ s, v, t: 0.1 + Math.random() * 0.06 });
+    }
+    ray.set(cam.position, dir);
+    const alive = bots.filter((b) => !b.dead);
+    const hits = ray.intersectObjects(alive.map((b) => b.group), true);
+    let end = cam.position.clone().addScaledVector(dir, 60);
+    if (hits.length) { end = hits[0].point; const b = alive.find((x) => isDesc(hits[0].object, x.group)); if (b) { b.hp--; hitmark(); if (b.hp <= 0) { b.dead = true; b.tRespawn = 2.2; if (b.ctrl && b.ctrl._to) b.ctrl._to('death'); } } }
+    tracer(wMuzzle, end);
+  }
+
+  let pos = new THREE.Vector3(0, 0, 0), vy = 0, grounded = true, bob = 0, adsT = 0;
+  let last = performance.now();
+  function fit() {
+    const w = host.clientWidth || 1, h = host.clientHeight || 1;
+    renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+  }
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const fwd = new THREE.Vector3(-Math.sin(look.yaw), 0, -Math.cos(look.yaw));
+    const right = new THREE.Vector3(Math.cos(look.yaw), 0, -Math.sin(look.yaw));
+    const mv = new THREE.Vector3();
+    if (keys['KeyW']) mv.add(fwd); if (keys['KeyS']) mv.sub(fwd);
+    if (keys['KeyD']) mv.add(right); if (keys['KeyA']) mv.sub(right);
+    const moving = mv.lengthSq() > 0;
+    const crouch = !!keys['ControlLeft'] || !!keys['ControlRight'];
+    const run = (!!keys['ShiftLeft'] || !!keys['ShiftRight']) && !crouch;
+    const speed = crouch ? 2.2 : (run ? 6.0 : 3.9);
+    if (moving) { mv.normalize().multiplyScalar(speed * dt); pos.add(mv); }
+    if (jumpQueued && grounded && !crouch) { vy = 4.2; grounded = false; } jumpQueued = false;
+    if (!grounded) { vy -= 12 * dt; pos.y += vy * dt; if (pos.y <= 0) { pos.y = 0; vy = 0; grounded = true; } }
+    bob += moving ? dt * (run ? 12 : 8) : 0;
+    const eyeH = (crouch ? 1.1 : 1.6);
+    cam.position.set(pos.x, pos.y + eyeH, pos.z);   // rotação da câmera é aplicada DEPOIS do tiro (ver abaixo)
+    for (const b of bots) { if (b.dead) { b.tRespawn -= dt; if (b.tRespawn <= 0) { b.dead = false; b.hp = 3; if (b.ctrl && b.ctrl._to) b.ctrl._to('idle'); } } b.ctrl && b.ctrl.update(dt, 0, false, 0); }
+    const rate = RATE[wsel.value] || 105, cap = magOf(wsel.value);
+    if (reloading && now >= reloadEnd) { mag = cap; reloading = false; updateAmmo(); }
+    if (shootHeld && !reloading && now - lastShot > rate) {
+      if (cap > 0 && mag <= 0) { reloading = true; reloadEnd = now + 1100; updateAmmo(); }   // pente vazio → recarrega
+      else { fireShot(); if (cap > 0) { mag--; updateAmmo(); } lastShot = now; if (SCOPED.has(wsel.value) || wsel.value === 'deagle') shootHeld = false; }
+    }
+    gTime += dt;
+    // view-punch REAL (mesma matemática do game.js): segura na rajada, recupera com mola tau, sobe com rise
+    if (gTime - rLast > REC.hold) { const k = Math.exp(-dt / REC.tau); rp.ty *= k; rp.tx *= k; }
+    const rr = Math.min(1, dt / REC.rise);
+    rp.y += (rp.ty - rp.y) * rr; rp.x += (rp.tx - rp.x) * rr;
+    rp.sh = Math.max(0, rp.sh - dt * 9);
+    wkick *= Math.pow(0.02, dt);   // kick da arma recupera
+    const punchP = rp.y + rp.sh * Math.sin(gTime * 78), punchY = rp.x;   // view-punch: pitch (com shake) e yaw
+    flash.intensity *= Math.pow(0.00001, dt); if (flash.intensity < 0.05) flash.intensity = 0;
+    if (mzT > 0) { mzT -= dt; mzFlash.material.opacity = Math.max(0, mzT / (FX.flashLife / 1000)); if (mzT <= 0) mzFlash.visible = false; }
+    if (vmFlashT > 0) { vmFlashT -= dt; vmFlashL.intensity = FX.lightInt * Math.max(0, vmFlashT / (FX.lightLife / 1000)); if (vmFlashT <= 0) vmFlashL.intensity = 0; }
+    for (let i = sparksA.length - 1; i >= 0; i--) { const sp = sparksA[i]; sp.t -= dt; sp.s.position.addScaledVector(sp.v, dt); sp.s.material.opacity = Math.max(0, sp.t / 0.14); if (sp.t <= 0) { sp.s.visible = false; sparkPool.push(sp.s); sparksA.splice(i, 1); } }
+    for (let i = tracers.length - 1; i >= 0; i--) { const t = tracers[i]; t.userData.t -= dt; t.material.opacity = Math.max(0, t.userData.t / 0.09) * (FX.trOpacity / 100); if (t.userData.t <= 0) { scene.remove(t); tracers.splice(i, 1); } }
+    if (hitT > 0) { hitT -= dt; if (hitT <= 0) elHit.style.opacity = '0'; }
+    // MIRA em sync com a ARMA: recuo aplicado na câmera aqui (depois do tiro/integração deste frame)
+    cam.rotation.set(look.pitch + punchP, look.yaw + punchY, 0);
+    const scoped = SCOPED.has(wsel.value);
+    const showAds = (aiming || mode === 'ads');
+    const scopeAds = showAds && scoped;
+    const target = (showAds && !scoped) ? 1 : 0;
+    adsT += (target - adsT) * Math.min(1, dt * 14);
+    const CP = curPose();
+    const hp = [CP.hip.wx * 0.01, CP.hip.wy * 0.01, CP.hip.wz * 0.01];
+    const al = NO_ALIGN.has(wsel.value) ? null : adsAligned();
+    const ap = al ? [al.x, al.y, al.z] : [CP.ads.wx * 0.01, CP.ads.wy * 0.01, CP.ads.wz * 0.01];
+    const L = (a, b) => a + (b - a) * adsT;
+    vm.position.set(L(hp[0], ap[0]), L(hp[1], ap[1]), L(hp[2], ap[2]));
+    vm.position.z += wkick;                    // tranco: a arma recua PRA TRÁS (em direção ao olho)
+    vm.position.y += wkick * 0.4;              // e sobe um pouco
+    vm.scale.setScalar(L(CP.hip.sz, CP.ads.sz) * 0.01);
+    const R = Math.PI / 180;
+    // cano acompanha o view-punch (sobe com o pitch, tilta com o yaw) — mesma direção da mira
+    vm.rotation.set(L(CP.hip.rx, CP.ads.rx) * R + punchP * 0.5, L(CP.hip.ry, CP.ads.ry) * R + punchY * 0.4, L(CP.hip.wt, CP.ads.wt) * R);
+    vm.position.x += Math.sin(bob) * 0.006 * (1 - adsT);
+    vm.position.y += Math.abs(Math.cos(bob)) * 0.004 * (1 - adsT);
+    vm.visible = !scopeAds;
+    const wantFov = scopeAds ? CP.hip.fov * 0.35 : L(CP.hip.fov, CP.ads.fov);
+    cam.fov += (wantFov - cam.fov) * Math.min(1, dt * 12); cam.updateProjectionMatrix();
+    vmCam.fov = cam.fov; vmCam.aspect = cam.aspect; vmCam.rotation.set(0, 0, 0); vmCam.updateProjectionMatrix();   // VM cam fixa: quem se mexe é a ARMA (senão o coice faz a arma "descer")
+    elScope.style.display = (scopeAds && !PU_RETICLE.has(wsel.value)) ? 'block' : 'none';   // mosin: a imagem PU já tem o anel
+    elRet.style.display = scopeAds ? 'block' : 'none';
+    elCross.style.display = scopeAds ? 'none' : 'block';
+    renderer.render(scene, cam);
+    renderer.autoClear = false; renderer.clearDepth(); renderer.render(vmScene, vmCam); renderer.autoClear = true;
+    raf = requestAnimationFrame(frame);
+  }
+  addEventListener('resize', () => { if (running) fit(); });
+
+  buildVM();
+  mag = magOf(wsel.value); updateAmmo();
+  return {
+    start() { if (running) return; running = true; fit(); if (!botsReady) { botsReady = true; spawnBots(); } last = performance.now(); raf = requestAnimationFrame(frame); },
+    stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; if (document.pointerLockElement === renderer.domElement) document.exitPointerLock(); },
+  };
+}
+
+// ============================================================================
+// FERRAMENTA 2 — PERSONAGEM + ARMA (cena isolada com órbita)
+// ============================================================================
+function initCena(side, host) {
+  const $ = (id) => side.querySelector('#' + id);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+  host.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x12151b);
+  scene.add(new THREE.HemisphereLight(0xbcd3ff, 0x30281c, 1.15));
+  const key = new THREE.DirectionalLight(0xffffff, 1.7); key.position.set(3, 6, 4); scene.add(key);
+  const fill = new THREE.DirectionalLight(0xafd0ff, 0.5); fill.position.set(-4, 2, -3); scene.add(fill);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), new THREE.MeshStandardMaterial({ color: 0x232833, roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  scene.add(new THREE.GridHelper(20, 40, 0x39485c, 0x232b36));
+
+  const cam = new THREE.PerspectiveCamera(42, 1, 0.02, 200);
+  const orbit = { target: new THREE.Vector3(0, 1.05, 0), theta: 0.6, phi: 1.25, r: 3.4 };
+  function applyCam() {
+    const { target: t, theta, phi, r } = orbit;
+    cam.position.set(
+      t.x + r * Math.sin(phi) * Math.sin(theta),
+      t.y + r * Math.cos(phi),
+      t.z + r * Math.sin(phi) * Math.cos(theta));
+    cam.lookAt(t);
+  }
+  let running = false, raf = 0, drag = null;
+  renderer.domElement.addEventListener('pointerdown', (e) => { if (running) drag = { x: e.clientX, y: e.clientY }; });
+  addEventListener('pointerup', () => { drag = null; });
+  addEventListener('pointermove', (e) => {
+    if (!running || !drag) return;
+    orbit.theta -= (e.clientX - drag.x) * 0.008;
+    orbit.phi = Math.max(0.15, Math.min(Math.PI - 0.15, orbit.phi - (e.clientY - drag.y) * 0.008));
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  renderer.domElement.addEventListener('wheel', (e) => {
+    if (!running) return;
+    e.preventDefault();
+    orbit.r = Math.max(0.4, Math.min(12, orbit.r + e.deltaY * 0.002));
+  }, { passive: false });
+
+  const qp = new URLSearchParams(location.search);
+  let mode = qp.get('mode') || 'char';
+  let weaponId = qp.get('w') || 'ak';
+  let charId = qp.get('char') || 'mst';
+  const delta = [0, 0, 0];
+  let current = null;
+
+  const wsel = $('wsel');
+  wsel.innerHTML = WEAPON_IDS.map((id) => `<option value="${id}">${id}</option>`).join('');
+  wsel.value = weaponId;
+  const csel = $('csel');
+  csel.innerHTML = CHARACTERS.map((c) => `<option value="${c.id}">${c.id}</option>`).join('');
+  csel.value = charId;
+
+  function clearCurrent() { if (current) { scene.remove(current); current = null; } }
+  function arrow(dir, len, color) {
+    return new THREE.ArrowHelper(new THREE.Vector3(...dir), new THREE.Vector3(0, 1.05, 0), len, color, len * 0.14, len * 0.08);
+  }
+  async function buildGun() {
+    clearCurrent();
+    const g = new THREE.Group();
+    g.add(arrow([0, 0, 1], 0.9, 0x00ff44));
+    g.add(arrow([0, 0, -1], 0.55, 0xff3344));
+    const wm = weaponModel(weaponId);
+    if (wm) { wm.position.set(0, 1.05, 0); wm.rotation.set(delta[0] * Math.PI / 180, delta[1] * Math.PI / 180, delta[2] * Math.PI / 180); g.add(wm); }
+    scene.add(g); current = g;
+    orbit.target.set(0, 1.05, 0);
+    refreshCfg();
+  }
+  async function buildChar() {
+    clearCurrent();
+    await preloadCharacterAssets([charId]);
+    const def = CHARACTERS.find((c) => c.id === charId) || { id: charId, team: 'E' };
+    const built = buildCharacterModel(def, { weapon: true, weaponId });
+    if (built && built.group) {
+      if (built.ctrl && built.ctrl._to) built.ctrl._to('idle');
+      for (let i = 0; i < 12; i++) if (built.ctrl) built.ctrl.update(1 / 30, 0, false, 0);
+      built.group.updateMatrixWorld(true);
+      scene.add(built.group); current = built.group;
+    }
+    scene.add(arrowChar());
+    orbit.target.set(0, 1.05, 0);
+    refreshCfg();
+  }
+  let _charArrow = null;
+  function arrowChar() { if (_charArrow) scene.remove(_charArrow); _charArrow = arrow([0, 0, 1], 1.3, 0x00ff44); return _charArrow; }
+
+  function refreshCfg() {
+    const c = weaponCFG(weaponId) || {};
+    $('cfg').textContent =
+      `arma: ${weaponId}\n` +
+      `rot CFG: [${(c.rot || []).join(', ')}]\n` +
+      `len: ${c.len}  gripZ: ${c.gripZ}\n` +
+      `vm: ${c.vm ?? 1}\n` +
+      (mode === 'gun' ? `giro extra: [${delta.join(', ')}]` : `(modo personagem)`);
+  }
+  async function rebuild() { if (mode === 'gun') await buildGun(); else await buildChar(); }
+
+  side.querySelectorAll('#mode2 button').forEach((b) => b.onclick = async () => {
+    mode = b.dataset.mode;
+    side.querySelectorAll('#mode2 button').forEach((x) => x.classList.toggle('on', x === b));
+    $('crow').style.display = mode === 'char' ? '' : 'none';
+    await rebuild();
+  });
+  wsel.onchange = async () => { weaponId = wsel.value; await rebuild(); };
+  csel.onchange = async () => { charId = csel.value; await rebuild(); };
+  side.querySelectorAll('[data-axis]').forEach((b) => b.onclick = async () => {
+    const a = +b.dataset.axis; delta[a] = (delta[a] + 90) % 360; if (mode === 'gun') await buildGun();
+  });
+  $('rreset').onclick = async () => { delta[0] = delta[1] = delta[2] = 0; if (mode === 'gun') await buildGun(); };
+  $('shot').onclick = () => {
+    renderer.render(scene, cam);
+    const a = document.createElement('a');
+    a.download = `bancada-${mode}-${weaponId}${mode === 'char' ? '-' + charId : ''}.png`;
+    a.href = renderer.domElement.toDataURL('image/png'); a.click();
+  };
+  function fit() { const w = host.clientWidth || 1, h = host.clientHeight || 1; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  addEventListener('resize', () => { if (running) fit(); });
+
+  $('crow').style.display = mode === 'char' ? '' : 'none';
+  side.querySelectorAll('#mode2 button').forEach((x) => x.classList.toggle('on', x.dataset.mode === mode));
+  rebuild();
+  function loop() { if (!running) return; applyCam(); renderer.render(scene, cam); raf = requestAnimationFrame(loop); }
+  return {
+    start() { if (running) return; running = true; fit(); raf = requestAnimationFrame(loop); },
+    stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = 0; },
+  };
+}
+
+// ============================================================================
+// FERRAMENTA 3 — TESTAR NO JOGO (réplica: roda o JOGO REAL num iframe e edita as
+//   configs de produção ao vivo via window.__game._tune / _fxSet). O que você
+//   testa É o jogo — nada reimplementado. "copiar config" exporta pra eu gravar.
+// ============================================================================
+function initGame(side, host) {
+  const $ = (id) => side.querySelector('#' + id);
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('allow', 'fullscreen'); host.appendChild(iframe);
+  const G = () => { try { return iframe.contentWindow.__game; } catch { return null; } };
+  let cur = 'ak', started = false;
+  // ── PREVIEW do HUD de armas (estilo CS): slots 1/2/3/4 com ícone + número, lendo o loadout real
+  const hud = document.createElement('div'); hud.id = 'wephud'; host.appendChild(hud);
+  const PIST = new Set(['pistol', 'deagle', 'revolver38']);
+  const ICON = {
+    rifle: '<svg viewBox="0 0 48 18"><rect x="2" y="7" width="34" height="4"/><rect x="34" y="6.5" width="12" height="2"/><rect x="11" y="11" width="5" height="6"/><rect x="2" y="6" width="4" height="6"/></svg>',
+    pistol: '<svg viewBox="0 0 32 20"><rect x="4" y="4" width="22" height="5"/><rect x="8" y="9" width="7" height="9"/></svg>',
+    knife: '<svg viewBox="0 0 40 16"><path d="M2 8 L26 3 L30 8 L26 10 Z"/><rect x="30" y="6" width="8" height="4"/></svg>',
+    nade: '<svg viewBox="0 0 20 20"><circle cx="10" cy="12" r="6"/><rect x="8" y="2" width="4" height="4"/></svg>',
+  };
+  const catOf = (w) => (w === 'knife' ? 'knife' : (PIST.has(w) ? 'pistol' : 'rifle'));
+  function updateHud() {
+    const g = G();
+    if (!g || !g.player || !($('ghud') && $('ghud').checked)) { hud.style.display = 'none'; return; }
+    hud.style.display = 'flex';
+    const p = g.player, slots = [];
+    if (p.primary) slots.push({ k: 1, w: p.primary });
+    slots.push({ k: 2, w: p.secondary || 'pistol' });
+    slots.push({ k: 3, w: 'knife' });
+    if (p.smokes > 0) slots.push({ k: 4, w: 'nade', nm: 'fumaça', count: p.smokes });   // tecla 4 (lança na hora)
+    if (p.frags > 0) slots.push({ k: 5, w: 'nade', nm: 'frag', count: p.frags });        // tecla 5
+    hud.innerHTML = slots.map((s) => {
+      const on = s.w === p.weapon;
+      const cat = s.w === 'nade' ? 'nade' : catOf(s.w);
+      const nm = s.nm || s.w.toUpperCase();
+      const a = p.ammo && p.ammo[s.w];
+      const am = s.count != null ? ('×' + s.count) : (s.w === 'knife' ? '' : (a ? `${a.mag}/${a.res}` : ''));
+      return `<div class="slot ${on ? 'on' : ''}"><span class="k">${s.k}</span><span class="ic">${ICON[cat]}</span><span class="nm">${nm}</span><span class="am">${am}</span></div>`;
+    }).join('');
+  }
+  setInterval(updateHud, 250);
+  // ── PREVIEW da LOJA (estilo CS): abre no B, categorias + teclas de atalho ──
+  const buy = document.createElement('div'); buy.id = 'buymenu'; host.appendChild(buy);
+  const CATS = [
+    { t: 'Pistolas', w: ['pistol', 'deagle', 'revolver38'] },
+    { t: 'SMG', w: ['mp5', 'uzi', 'p90'] },
+    { t: 'Rifles', w: ['ak', 'akm', 'm4', 'm92', 'scar', 'famas', 'tavor', 'carbine', 'g3', 'md97'] },
+    { t: 'Snipers', w: ['awp', 'mosin', 'rem700', 'm400', 'svd', 'g3sg1', 'sks'] },
+    { t: 'Pesadas', w: ['shotgun', 'lmg'] },
+    { t: 'Granadas', w: ['nade_smoke', 'nade_frag'] },
+  ];
+  const labelOf = (id) => (id === 'nade_smoke' ? 'fumaça' : (id === 'nade_frag' ? 'frag' : id.toUpperCase()));
+  const SHOP_ICON = {
+    pistol: '<svg viewBox="0 0 40 24"><rect x="4" y="5" width="26" height="6"/><rect x="9" y="11" width="8" height="11"/></svg>',
+    smg: '<svg viewBox="0 0 46 22"><rect x="4" y="6" width="26" height="5"/><rect x="30" y="5" width="9" height="2"/><rect x="10" y="11" width="6" height="9"/><rect x="4" y="5" width="4" height="7"/></svg>',
+    rifle: '<svg viewBox="0 0 54 20"><rect x="2" y="8" width="40" height="4"/><rect x="42" y="8.5" width="10" height="2"/><rect x="14" y="12" width="6" height="7"/><rect x="2" y="7" width="4" height="7"/></svg>',
+    sniper: '<svg viewBox="0 0 58 20"><rect x="2" y="9" width="46" height="3"/><rect x="48" y="9.5" width="8" height="2"/><rect x="20" y="5" width="14" height="3"/><rect x="6" y="8" width="4" height="7"/><rect x="16" y="12" width="5" height="6"/></svg>',
+    shotgun: '<svg viewBox="0 0 54 18"><rect x="2" y="7" width="44" height="3"/><rect x="2" y="10.5" width="32" height="2"/><rect x="9" y="6" width="5" height="8"/></svg>',
+    lmg: '<svg viewBox="0 0 54 24"><rect x="2" y="7" width="40" height="4"/><rect x="42" y="8" width="10" height="2"/><rect x="15" y="11" width="13" height="9"/><rect x="2" y="6" width="5" height="8"/></svg>',
+    nade: '<svg viewBox="0 0 22 24"><circle cx="11" cy="14" r="7"/><rect x="9" y="3" width="4" height="5"/></svg>',
+  };
+  function iconFor(id) {
+    if (id === 'nade_smoke' || id === 'nade_frag') return SHOP_ICON.nade;
+    if (['pistol', 'deagle', 'revolver38'].includes(id)) return SHOP_ICON.pistol;
+    if (['mp5', 'uzi', 'p90'].includes(id)) return SHOP_ICON.smg;
+    if (['awp', 'mosin', 'rem700', 'm400', 'svd', 'g3sg1', 'sks'].includes(id)) return SHOP_ICON.sniper;
+    if (id === 'shotgun') return SHOP_ICON.shotgun;
+    if (id === 'lmg') return SHOP_ICON.lmg;
+    return SHOP_ICON.rifle;
+  }
+  let buyOpen = false, buyCol = 0;
+  function buildBuy() {
+    const maxL = Math.max(...CATS.map((c) => c.w.length));
+    buy.innerHTML =
+      '<div class="bm-panel"><div class="bm-title">Loja</div>' +
+      '<div class="bm-sub"><b>B</b> abre/fecha · número escolhe a categoria e depois o item · Esc fecha</div>' +
+      '<div class="cols">' +
+      CATS.map((c, ci) => {
+        const cards = c.w.map((id, ii) => `<div class="card" data-id="${id}"><div class="ct"><span class="n">${ii + 1}</span><span class="nm">${labelOf(id)}</span><span class="pr">$—</span></div><div class="ic">${iconFor(id)}</div></div>`).join('');
+        const pad = Array(Math.max(0, maxL - c.w.length)).fill('<div class="card empty"></div>').join('');
+        return `<div class="col ${buyCol === ci + 1 ? 'sel' : ''}"><h4><span class="cn">${ci + 1}</span>${c.t}</h4>${cards}${pad}</div>`;
+      }).join('') +
+      '</div>' +
+      '<div class="bm-hint">sem dinheiro por enquanto — comprar = equipa a arma (grátis). pronto pra ter preço depois.</div></div>';
+    buy.querySelectorAll('.card[data-id]').forEach((el) => (el.onclick = () => buyItem(el.dataset.id)));
+  }
+  function buyItem(id) {
+    const g = G(); if (!g || !g.player) return;
+    if (id === 'nade_smoke') { g.player.smokes = (g.player.smokes | 0) + 1; g._updateSmokeHud && g._updateSmokeHud(); }
+    else if (id === 'nade_frag') { g.player.frags = (g.player.frags | 0) + 1; g._updateSmokeHud && g._updateSmokeHud(); }
+    else if (g._switchWeapon) { g._switchWeapon(id); if (g.player) g.player.drawUntil = 0; }
+    closeBuy();
+  }
+  function openBuy() { buyOpen = true; buyCol = 0; buildBuy(); buy.style.display = 'flex'; try { iframe.contentWindow.document.exitPointerLock && iframe.contentWindow.document.exitPointerLock(); } catch {} }
+  function closeBuy() { buyOpen = false; buy.style.display = 'none'; }
+  function navDigit(d) {
+    if (buyCol === 0) { if (d >= 1 && d <= CATS.length) { buyCol = d; buildBuy(); } }
+    else { const col = CATS[buyCol - 1]; if (col && d >= 1 && d <= col.w.length) buyItem(col.w[d - 1]); }
+  }
+  function onBuyKey(e) {   // captura ANTES do jogo (capture=true) e barra a propagação p/ ele não trocar arma
+    if (host.hidden) return;
+    if (e.code === 'KeyB') { buyOpen ? closeBuy() : openBuy(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (!buyOpen) return;
+    if (e.code === 'Escape') { closeBuy(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+    const m = /^Digit([1-9])$/.exec(e.code);
+    if (m) { navDigit(+m[1]); e.preventDefault(); e.stopImmediatePropagation(); }
+  }
+  addEventListener('keydown', onBuyKey, true);   // parent (mouse solto / menu aberto)
+  $('gbuy').onclick = () => (buyOpen ? closeBuy() : openBuy());
+  // parâmetros REAIS por arma (WEAPONS/REC_DEG) + FX (multiplicadores globais)
+  // config da arma (WEAPONS[w])
+  const CFG = {
+    rpm: { min: 60, max: 1200, step: 10, cap: 'cadência RPM' },
+    spreadHip: { min: 0, max: 0.15, step: 0.002, cap: 'spread quadril' },
+    spreadScope: { min: 0, max: 0.03, step: 0.0005, cap: 'spread mira' },
+    dmg: { min: 1, max: 400, step: 1, cap: 'dano' },
+    mag: { min: 1, max: 120, step: 1, cap: 'pente' },
+  };
+  // RECUO REAL: força por arma (REC_DEG) + padrão da classe (RECOIL_PATTERN) + timing global (REC)
+  const REC = {
+    recDeg: { min: 0, max: 6, step: 0.05, cap: 'força (graus)' },
+    up: { min: 0, max: 1, step: 0.02, cap: 'subida meio' },
+    cauda: { min: 0, max: 1, step: 0.02, cap: 'subida fim' },
+    left: { min: 0, max: 1, step: 0.02, cap: 'p/ esquerda' },
+    right: { min: 0, max: 1, step: 0.02, cap: 'p/ direita' },
+    wig: { min: 0, max: 1, step: 0.02, cap: 'aleatório' },
+    recover: { min: 0.03, max: 1, step: 0.01, cap: 'recuperação s' },
+    hold: { min: 0, max: 1, step: 0.02, cap: 'segura s' },
+    perm: { min: 0, max: 1, step: 0.02, cap: 'permanente' },
+  };
+  const FXC = { light: { min: 0, max: 3, step: 0.1, cap: 'luz ×' }, flash: { min: 0, max: 3, step: 0.1, cap: 'flash ×' }, spark: { min: 0, max: 3, step: 0.1, cap: 'faíscas ×' } };
+  const CFGREC = { ...CFG, ...REC };   // ambos são aplicados via _tune
+  const row = (id, d) => `<div class="ctl"><span title="${d.cap}">${d.cap}</span><input type="range" id="${id}" min="${d.min}" max="${d.max}" step="${d.step}"><input class="num" type="number" id="${id}_n" min="${d.min}" max="${d.max}" step="${d.step}"></div>`;
+  $('gcfg').innerHTML = Object.entries(CFG).map(([k, d]) => row('c_' + k, d)).join('');
+  $('grec').innerHTML = Object.entries(REC).map(([k, d]) => row('c_' + k, d)).join('');
+  $('gfx').innerHTML = Object.entries(FXC).map(([k, d]) => row('f_' + k, d)).join('');
+  $('gchar').innerHTML = CHARACTERS.map((c) => `<option value="${c.id}">${c.id}</option>`).join(''); $('gchar').value = 'mst';
+  $('gwep').innerHTML = WEAPON_IDS.map((id) => `<option value="${id}">${id}</option>`).join(''); $('gwep').value = cur;
+
+  function loadCfg() { const g = G(); if (!g || !g._tuneGet) return; const t = g._tuneGet(cur); for (const k in CFGREC) { const r = $('c_' + k); if (r) { r.value = t[k]; $('c_' + k + '_n').value = t[k]; } } const cl = $('grecls'); if (cl) cl.textContent = `real · classe ${t.cls}`; }
+  function loadFx() { const g = G(); if (!g || !g._tuneGet) return; const fx = g._tuneGet(cur).fx || {}; for (const k in FXC) { $('f_' + k).value = fx[k]; $('f_' + k + '_n').value = fx[k]; } }
+  for (const k in CFGREC) {
+    const r = $('c_' + k), n = $('c_' + k + '_n');
+    const set = (v) => { v = Math.max(+r.min, Math.min(+r.max, v)); r.value = v; n.value = v; const g = G(); if (g && g._tune) g._tune(cur, { [k]: +v }); };
+    r.addEventListener('input', () => set(+r.value));
+    n.addEventListener('input', () => { if (n.value !== '' && !isNaN(+n.value)) set(+n.value); });
+  }
+  for (const k in FXC) {
+    const r = $('f_' + k), n = $('f_' + k + '_n');
+    const set = (v) => { v = Math.max(+r.min, Math.min(+r.max, v)); r.value = v; n.value = v; const g = G(); if (g && g._fxSet) g._fxSet({ [k]: +v }); };
+    r.addEventListener('input', () => set(+r.value));
+    n.addEventListener('input', () => { if (n.value !== '' && !isNaN(+n.value)) set(+n.value); });
+  }
+  $('gwep').onchange = () => { cur = $('gwep').value; const g = G(); if (g && g._switchWeapon) { g._switchWeapon(cur); if (g.player) g.player.drawUntil = 0; } loadCfg(); };
+  $('gchar').onchange = () => boot();
+  $('gvmlab').onchange = () => boot();
+  $('gcopy').onclick = () => {
+    const g = G(); if (!g || !g._tuneGet) return;
+    const t = g._tuneGet(cur);
+    const out = `${cur} recDeg=${t.recDeg} rpm=${t.rpm} spreadHip=${t.spreadHip} spreadScope=${t.spreadScope} dmg=${t.dmg} mag=${t.mag}\nRECUO(classe ${t.cls}) up=${t.up} cauda=${t.cauda} left=${t.left} right=${t.right} wig=${t.wig} recover=${t.recover} hold=${t.hold} perm=${t.perm}\nFX light=${t.fx.light} flash=${t.fx.flash} spark=${t.fx.spark}`;
+    $('gvals').textContent = out;
+    try { navigator.clipboard.writeText(out); $('gcopy').textContent = '✓ copiado!'; setTimeout(() => $('gcopy').textContent = '📋 copiar config', 1200); } catch {}
+  };
+  function waitLive() {
+    const t0 = performance.now();
+    (function poll() {
+      const g = G();
+      if (g && g.state === 'live') { $('gstatus').textContent = 'pronto · edite ao vivo'; g._switchWeapon(cur); if (g.player) g.player.drawUntil = 0; loadCfg(); loadFx(); try { iframe.contentWindow.addEventListener('keydown', onBuyKey, true); } catch {} return; }
+      if (performance.now() - t0 > 60000) { $('gstatus').textContent = 'demorou (recarregue)'; return; }
+      setTimeout(poll, 250);
+    })();
+  }
+  function boot() { $('gstatus').textContent = 'carregando o jogo…'; const vl = ($('gvmlab') && $('gvmlab').checked) ? '&vmlab=1' : ''; iframe.src = `/?debug=1&auto=P,${$('gchar').value}${vl}`; waitLive(); }
+  return { start() { if (!started) { started = true; boot(); } }, stop() { /* deixa o jogo rodando no iframe */ } };
+}
+
+// ── abas ────────────────────────────────────────────────────────────────────
+const sideEd = document.getElementById('side-editor'), hostEd = document.getElementById('host-editor'), ovEd = document.getElementById('ov-editor');
+const sideCn = document.getElementById('side-cena'), hostCn = document.getElementById('host-cena'), ovCn = document.getElementById('ov-cena');
+const sideGm = document.getElementById('side-game'), hostGm = document.getElementById('host-game');
+const TOOLS = {
+  editor: { side: sideEd, host: hostEd, ov: ovEd, inst: initEditor(sideEd, hostEd, ovEd) },
+  cena: { side: sideCn, host: hostCn, ov: ovCn, inst: null, make: () => initCena(sideCn, hostCn) },
+  game: { side: sideGm, host: hostGm, ov: null, inst: null, make: () => initGame(sideGm, hostGm) },
+};
+let currentName = 'editor';
+TOOLS.editor.inst.start();
+function activate(name) {
+  if (name === currentName || !TOOLS[name]) return;
+  const prev = TOOLS[currentName]; if (prev.inst) prev.inst.stop();
+  document.querySelectorAll('#devtabs button').forEach((b) => b.classList.toggle('on', b.dataset.tool === name));
+  for (const key in TOOLS) { const t = TOOLS[key], on = key === name; t.side.hidden = !on; t.host.hidden = !on; if (t.ov) t.ov.hidden = !on; }
+  const next = TOOLS[name]; if (!next.inst && next.make) next.inst = next.make();
+  next.inst.start();
+  currentName = name;
+}
+document.querySelectorAll('#devtabs button').forEach((b) => (b.onclick = () => activate(b.dataset.tool)));
+</script>
+</body>
+</html>

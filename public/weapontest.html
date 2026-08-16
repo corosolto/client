@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>weapon orientation test</title>
+<style>html,body{margin:0;height:100%;background:#22262e;overflow:hidden}#hud{position:fixed;left:8px;top:8px;font:13px monospace;color:#9fe;white-space:pre;z-index:9}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">…</div>
+<script type="module">
+import * as THREE from 'three';
+import { preloadWeapons, weaponModel, WEAPON_IDS } from './js/weapons.js';
+
+const qp = new URLSearchParams(location.search);
+const W = qp.get('w') || 'ak';
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x22262e);
+const cam = new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 0.01, 100);
+// side view (+X): +Z points LEFT (green/muzzle should point left), -Z right (red/stock).
+cam.position.set(2.4, 0.35, 0); cam.lookAt(0, 0, 0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.3));
+const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(2,3,1); scene.add(key);
+scene.add(new THREE.GridHelper(4, 8, 0x445, 0x334));
+
+// reference arrows at the grip origin: GREEN +Z = where the muzzle MUST point; RED -Z = stock.
+scene.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,0,0), 0.8, 0x00ff44, 0.09, 0.05));
+scene.add(new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 0.5, 0xff3344, 0.07, 0.04));
+
+await preloadWeapons();
+const wm = weaponModel(W);
+if (!wm) { hud.textContent = 'sem modelo ' + W; throw new Error('no model '+W); }
+scene.add(wm);
+
+// Objective muzzle hint: the barrel tip is THIN, the buttstock is BULKY. Measure the XY
+// cross-sectional spread of the slab near each Z end; the muzzle is the THINNER end.
+// (My eye kept misreading small/dark renders — this removes the guesswork.)
+function muzzleHint(obj){
+  obj.updateMatrixWorld(true);
+  const pts = [], v = new THREE.Vector3();
+  obj.traverse(o => {
+    if (!o.isMesh || !o.geometry || !o.geometry.attributes.position) return;
+    const pos = o.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i); o.localToWorld(v); pts.push([v.x, v.y, v.z]); }
+  });
+  let zmin = Infinity, zmax = -Infinity;
+  for (const p of pts) { if (p[2] < zmin) zmin = p[2]; if (p[2] > zmax) zmax = p[2]; }
+  const len = (zmax - zmin) || 1, f = 0.16;
+  const tip = [], tail = [];
+  for (const p of pts) { if (p[2] > zmax - f * len) tip.push(p); else if (p[2] < zmin + f * len) tail.push(p); }
+  const spread = a => { let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9; for (const p of a){ if(p[0]<x0)x0=p[0]; if(p[0]>x1)x1=p[0]; if(p[1]<y0)y0=p[1]; if(p[1]>y1)y1=p[1]; } return Math.max(x1-x0, y1-y0); };
+  const rTip = spread(tip), rTail = spread(tail);
+  return { rTip: +rTip.toFixed(3), rTail: +rTail.toFixed(3), muzzleAt: rTip < rTail ? '+Z' : '-Z', ok: rTip < rTail };
+}
+window.WT_HINT = muzzleHint(wm);
+hud.textContent = `${W}  muzzleAt=${window.WT_HINT.muzzleAt} ${window.WT_HINT.ok ? 'OK' : 'INVERTIDA?'}\nverde(+Z)=cano deve apontar AQUI\nvermelho(-Z)=coronha`;
+renderer.render(scene, cam);
+window.WT_READY = true;
+</script>
+</body>
+</html>

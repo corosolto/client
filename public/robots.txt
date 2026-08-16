@@ -1,0 +1,67 @@
+# CORO SOLTO: Treta Suprema (ex-CS BRASIL)
+# https://www.csbrasil.online
+#
+# SEM LINHA EM BRANCO DENTRO DE UM GRUPO. Pela RFC 9309 a linha vazia não
+# encerra o grupo (só uma nova linha `User-agent` ou o fim do arquivo), e o
+# Google segue isso — mas parser simples existe, e mais de um deles zera o
+# agente corrente ao ver linha vazia (o da lib aeo.js, por exemplo:
+# core/remote-crawl.ts, `if (line === '') currentAgents = []`). Nesses parsers
+# um `Disallow:` depois de linha vazia fica órfão e some. Comentário não zera
+# nada em parser nenhum — então os grupos abaixo são contíguos e a separação
+# visual é feita com `#`.
+User-agent: *
+Allow: /
+# Rotas de máquina: não têm conteúdo pra indexar e cada rastreio delas custa
+# uma chamada ao Supabase ou um render de PNG.
+Disallow: /api/
+# Páginas de laboratório do harness (existem no deploy, não são produto).
+Disallow: /eval.html
+Disallow: /mapeval.html
+Disallow: /mapview.html
+Disallow: /modelviewer.html
+Disallow: /botview.html
+Disallow: /weapontest.html
+Disallow: /weaponeval.html
+Disallow: /fveval.html
+Disallow: /vm-inspect.html
+Disallow: /iktest.html
+Disallow: /mounttest.html
+
+# Crawlers de IA são BEM-VINDOS: as respostas de assistente são hoje um canal
+# de descoberta tão relevante quanto a busca clássica, e o conteúdo aqui é
+# público de qualquer jeito. Ver /llms.txt e /llms-full.txt.
+#
+# AS MESMAS PROIBIÇÕES ESTÃO REPETIDAS AQUI, E NÃO É REDUNDÂNCIA.
+# Pela RFC 9309 §2.2.1 um rastreador obedece SÓ ao grupo mais específico que
+# casa com o nome dele — as regras do grupo `*` NÃO se somam. Como este arquivo
+# abria um grupo próprio pra GPTBot, ClaudeBot, PerplexityBot e Google-Extended
+# contendo apenas `Allow: /`, esses quatro eram justamente os únicos
+# rastreadores LIBERADOS a varrer `/api/` e as onze telas de laboratório. O
+# "seja bem-vindo" estava desfazendo o bloqueio pra quem ele queria receber.
+# https://www.rfc-editor.org/rfc/rfc9309.html#name-the-user-agent-line
+# Várias linhas `User-agent` seguidas formam UM grupo — mesma seção da RFC.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+Disallow: /eval.html
+Disallow: /mapeval.html
+Disallow: /mapview.html
+Disallow: /modelviewer.html
+Disallow: /botview.html
+Disallow: /weapontest.html
+Disallow: /weaponeval.html
+Disallow: /fveval.html
+Disallow: /vm-inspect.html
+Disallow: /iktest.html
+Disallow: /mounttest.html
+
+Sitemap: https://www.csbrasil.online/sitemap.xml
+Sitemap: https://www.csbrasil.online/docs/sitemap.xml

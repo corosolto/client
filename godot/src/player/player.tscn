@@ -1,0 +1,59 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://src/combat/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://src/weapons/hitscan_weapon.gd" id="3_weapon"]
+[ext_resource type="Resource" path="res://src/weapons/definitions/awp.tres" id="4_awp"]
+[ext_resource type="Script" path="res://src/weapons/weapon_inventory.gd" id="5_inventory"]
+[ext_resource type="Resource" path="res://src/weapons/definitions/pistol.tres" id="6_pistol"]
+[ext_resource type="Script" path="res://src/weapons/melee_weapon.gd" id="7_melee"]
+[ext_resource type="Resource" path="res://src/weapons/definitions/knife.tres" id="8_knife"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
+radius = 0.38
+height = 1.8
+
+[sub_resource type="Environment" id="Environment_player"]
+background_mode = 1
+background_color = Color(0.72, 0.56, 0.45, 1)
+ambient_light_source = 3
+ambient_light_color = Color(1, 0.84, 0.68, 1)
+ambient_light_energy = 0.72
+
+[node name="Player" type="CharacterBody3D"]
+floor_max_angle = 0.802851
+floor_snap_length = 0.55
+script = ExtResource("1_player")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.9, 0)
+shape = SubResource("CapsuleShape_player")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.62, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+current = true
+fov = 70.0
+near = 0.08
+far = 400.0
+environment = SubResource("Environment_player")
+
+[node name="Inventory" type="Node3D" parent="CameraPivot/Camera3D"]
+script = ExtResource("5_inventory")
+
+[node name="AWP" type="Node3D" parent="CameraPivot/Camera3D/Inventory"]
+script = ExtResource("3_weapon")
+definition = ExtResource("4_awp")
+
+[node name="Pistol" type="Node3D" parent="CameraPivot/Camera3D/Inventory"]
+script = ExtResource("3_weapon")
+definition = ExtResource("6_pistol")
+spread_seed = 2026
+
+[node name="Knife" type="Node3D" parent="CameraPivot/Camera3D/Inventory"]
+script = ExtResource("7_melee")
+definition = ExtResource("8_knife")

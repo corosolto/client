@@ -1,0 +1,122 @@
+name: csbrasil-bot-pr-classify
+
+on:
+  # `pull_request_target` dispara no PUSH — e o CodeRabbit comenta DEPOIS do push. Com
+  # só esses gatilhos o rotulador rodava antes de existir comentário, não achava nada
+  # e nunca mais rodava: era estruturalmente cego para o que devia detectar. Medido na
+  # PR #240, que fechou com 4 fios do revisor abertos e NENHUMA etiqueta.
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+  pull_request_review_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to classify
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      DESIRED_BASE_BRANCH: ${{ vars.PR_DEFAULT_BASE_BRANCH || 'staging' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Ensure labels exist
+        run: python3 scripts/ci/ensure_labels.py safe-automerge needs-staging needs-human-gameplay needs-human-backend target:main target:staging target:release needs-coderabbit-resolution coderabbit-resolved
+      - name: Fetch PR metadata
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+      - name: Route PR and set assignee
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          pr = json.load(open('/tmp/pr.json'))
+          payload = {'pr': pr, 'desired_base': '${{ env.DESIRED_BASE_BRANCH }}'}
+          pathlib.Path('/tmp/pr-route-input.json').write_text(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_route.py < /tmp/pr-route-input.json > /tmp/pr-route.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          route = json.load(open('/tmp/pr-route.json'))
+          pr_number = os.environ['PR_NUMBER']
+          if route.get('retarget_to'):
+              exists = subprocess.run(
+                  ['git', 'ls-remote', '--exit-code', '--heads', 'origin', route['retarget_to']],
+                  stdout=subprocess.DEVNULL,
+                  stderr=subprocess.DEVNULL,
+              )
+              if exists.returncode == 0:
+                  subprocess.run(['gh', 'pr', 'edit', pr_number, '--base', route['retarget_to']], check=True)
+              else:
+                  route['retarget_to'] = None
+                  open('/tmp/pr-route.json', 'w').write(json.dumps(route))
+          if route.get('add_assignee'):
+              subprocess.run(['gh', 'pr', 'edit', pr_number, '--add-assignee', route['add_assignee']], check=True)
+          PY
+      - name: Refresh PR metadata after routing
+        run: gh pr view "$PR_NUMBER" --json files,additions,deletions,changedFiles,baseRefName,author,assignees > /tmp/pr.json
+      - name: Classify PR
+        run: python3 scripts/ci/pr_classify.py < /tmp/pr.json > /tmp/pr-labels.json
+      - name: Gate on CodeRabbit presence
+        run: |
+          gh pr view "$PR_NUMBER" --json comments,reviews,statusCheckRollup > /tmp/pr-coderabbit.json
+          python3 scripts/ci/coderabbit_gate.py < /tmp/pr-coderabbit.json > /tmp/pr-coderabbit-labels.json
+      - name: Apply labels
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          data = json.load(open('/tmp/pr-labels.json'))
+          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          add = sorted(set(data.get('labels_add', []) + coderabbit.get('labels_add', [])))
+          remove = sorted(set(data.get('labels_remove', []) + coderabbit.get('labels_remove', [])))
+          if add:
+              subprocess.run(['gh', 'pr', 'edit', os.environ['PR_NUMBER'], '--add-label', ','.join(add)], check=True)
+          if remove:
+              subprocess.run(['gh', 'pr', 'edit', os.environ['PR_NUMBER'], '--remove-label', ','.join(remove)], check=True)
+          PY
+      - name: Update bot classification comment
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, pathlib
+          pr = json.load(open('/tmp/pr.json'))
+          labels = json.load(open('/tmp/pr-labels.json'))
+          route = json.load(open('/tmp/pr-route.json'))
+          coderabbit = json.load(open('/tmp/pr-coderabbit-labels.json'))
+          payload = {
+              'files': pr.get('files', []),
+              'changedFiles': pr.get('changedFiles', 0),
+              'labels_add': sorted(set(labels.get('labels_add', []) + coderabbit.get('labels_add', []))),
+              'baseRefName': pr.get('baseRefName'),
+              'author_login': ((pr.get('author') or {}).get('login')),
+              'add_assignee': route.get('add_assignee'),
+              'retarget_to': route.get('retarget_to'),
+          }
+          pathlib.Path('/tmp/pr-comment-payload.json').write_text(json.dumps(payload))
+          PY
+          python3 scripts/ci/pr_comment.py < /tmp/pr-comment-payload.json > /tmp/pr-comment.md
+          python3 - <<'PY'
+          import json, os, subprocess
+          marker = '## csbrasil-bot classification'
+          comments = json.loads(subprocess.check_output([
+              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments"
+          ], text=True))
+          body = open('/tmp/pr-comment.md').read()
+          for c in comments:
+              if c.get('user', {}).get('login') == 'csbrasil-bot' and marker in c.get('body', ''):
+                  subprocess.run(['gh', 'api', f"repos/${{ github.repository }}/issues/comments/{c['id']}", '-X', 'PATCH', '-f', f'body={body}'], check=True)
+                  raise SystemExit(0)
+          subprocess.run(['gh', 'pr', 'comment', os.environ['PR_NUMBER'], '--body-file', '/tmp/pr-comment.md'], check=True)
+          PY

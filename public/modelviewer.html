@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- DEV-ONLY model/animation viewer for validating Mint GLB characters. Not linked from the game. -->
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>CS BRASIL — model viewer (dev)</title>
+<style>html,body{margin:0;height:100%;background:#20242b;overflow:hidden}#hud{position:fixed;top:8px;left:8px;font:14px monospace;color:#7CFC00;text-shadow:0 1px 2px #000}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">loading…</div>
+<script type="module">
+import * as THREE from 'three';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+
+const qp = new URLSearchParams(location.search);
+const id = qp.get('id') || 'mst';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x20242b);
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 1.1, 3.4);
+camera.lookAt(0, 0.95, 0);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444455, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(2, 4, 3); scene.add(sun);
+const grid = new THREE.GridHelper(6, 12, 0x445, 0x334); scene.add(grid);
+
+const hud = document.getElementById('hud');
+let mesh = null;
+const clock = new THREE.Clock();
+
+const STATES = ['idle', 'walk', 'run', 'shoot', 'death'];
+let stateIdx = 0;
+
+window.__setState = (name) => {
+  if (!mesh) return;
+  const c = mesh.ctrl;
+  c.dead = false; c.shooting = false; c.cur = null;
+  if (name === 'shoot') { c._to('idle'); c.shoot(); }
+  else if (name === 'death') c.die();
+  else c._to(name);
+  hud.textContent = `${id} — ${name}`;
+};
+
+(async () => {
+  await preloadCharacterAssets([id]);
+  mesh = buildCharacterModel({ id }, { weaponId: qp.get('wpn') || 'awp' });
+  if (!mesh) { hud.textContent = 'NO MODEL for ' + id; return; }
+  scene.add(mesh.group);
+  window.__mesh = mesh;
+  window.__ready = true;
+  window.__setState('idle');
+})();
+
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (mesh) {
+    // keep locomotion states looping without overriding shoot/death
+    const c = mesh.ctrl;
+    if (!c.dead && !c.shooting) c.mixer.update(dt);
+    else c.mixer.update(dt);
+    mesh.group.rotation.y += dt * 0.0; // static; rotate via ?spin
+    if (qp.get('spin')) mesh.group.rotation.y += dt * 0.6;
+  }
+  renderer.render(scene, camera);
+});
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>

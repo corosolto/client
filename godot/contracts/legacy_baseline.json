@@ -1,0 +1,74 @@
+{
+  "engine": {
+    "version": "4.7.1",
+    "renderer": "gl_compatibility",
+    "web_threads": false
+  },
+  "match": {
+    "team_size": 4,
+    "round_seconds": 99,
+    "rounds_to_win": 3,
+    "respawn_seconds": 2.5,
+    "countdown_seconds": 3.0,
+    "friendly_fire": false
+  },
+  "movement": {
+    "walk_speed": 4.7,
+    "sprint_speed": 6.6,
+    "scoped_speed_multiplier": 0.5,
+    "crouched_speed_multiplier": 0.5,
+    "ground_acceleration": 42.0,
+    "air_acceleration": 8.0,
+    "ground_friction": 9.0,
+    "jump_velocity": 5.4,
+    "gravity": 14.5,
+    "standing_eye_height": 1.62,
+    "crouch_eye_drop": 0.52,
+    "crouch_transition_rate": 7.0,
+    "maximum_step_height": 0.55,
+    "collision_radius": 0.38,
+    "base_fov": 70.0,
+    "sprint_fov": 76.0,
+    "scope_fov": 24.0
+  },
+  "weapons": {
+    "awp": {
+      "damage": 400,
+      "magazine": 5,
+      "reserve": 25,
+      "fire_interval": 1.7,
+      "reload_seconds": 3.1,
+      "hip_spread": 0.075,
+      "scope_spread": 0.0008,
+      "recoil": 0.055,
+      "scope": true
+    },
+    "pistol": {
+      "damage": 34,
+      "magazine": 12,
+      "reserve": 48,
+      "fire_interval": 0.24,
+      "reload_seconds": 1.6,
+      "hip_spread": 0.02,
+      "recoil": 0.014,
+      "scope": false
+    },
+    "knife": {
+      "damage": 55,
+      "fire_interval": 0.55,
+      "range": 2.4,
+      "recoil": 0.02,
+      "scope": false
+    }
+  },
+  "bots": {
+    "speed": 3.3,
+    "eye_height": 1.5,
+    "think_interval": 0.16,
+    "shot_damage_to_player": 42,
+    "shot_interval_minimum": 2.1,
+    "shot_interval_maximum": 3.5,
+    "skill_minimum": 0.85,
+    "skill_maximum": 1.2
+  }
+}

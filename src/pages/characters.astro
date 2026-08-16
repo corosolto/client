@@ -1,0 +1,165 @@
+---
+// /characters - GÊMEA EM INGLÊS do /personagens (pedido do dono, 06/08: usuário em EN
+// cai na versão EN). Mesmo dataset (src/data/jogo.ts); nomes/lemas/blurbs traduzidos
+// AQUI por overlay - o PT continua a fonte. Redirecionamento por idioma: cada página
+// manda pro par quando o idioma resolvido não bate (mesmas regras do public/js/i18n.js).
+import Layout from '../layouts/Layout.astro';
+import { FACCOES, PERSONAGENS } from '../data/jogo';
+import { BRAND_FULL, GAME_ID } from '../lib/site';
+
+const FAC_EN: Record<string, { nome: string; lema: string; nota: string }> = {
+  E: { nome: 'Team E', lema: 'The fight is at the square!', nota: 'The red team of the arena. Eight caricature left-wing archetypes - none of them a real person.' },
+  B: { nome: 'Team B', lema: 'The fight is on the highway!', nota: 'The green-and-yellow team. Eight caricature right-wing archetypes - none of them a real person.' },
+  urbanas: { nome: 'Urban Tribes', lema: 'The fight is in the hood!', nota: 'Nine urban tribes with zero politics: they join the fight for the style.' },
+  palhacos: { nome: 'Clowns', lema: 'The fight is at the circus ring!', nota: 'Nine circus clowns. Honk honk, bang bang.' },
+  funkeiros: { nome: 'Funkeiros', lema: 'The fight is at the baile!', nota: 'Nine baile funk archetypes straight from the paredão.' },
+};
+const BLURB_EN: Record<string, string> = {
+  esquerdomacho: 'Beard, tote bag and 47 pins. Academic aim: analyzes the fight before shooting.',
+  sindicato: 'Red cap, assembly vest and a megaphone. Calls a fire strike every round.',
+  mst: 'From the countryside to the arena. Flag on the backpack, boots in the mud, dead-eye aim.',
+  doutora: 'Lab coat, stethoscope and a 24h shift. Prescribes precise shots, straight to the vein.',
+  mistico: 'Headband, crystal on the chest, calibrated aura. Only shoots when Mercury allows.',
+  gotinha: 'Public-health mascot. Immunizes the fight with a booster dose - free of charge.',
+  hipster: 'Colorful mohawk and a band shirt you don’t know. Played this before it was mainstream.',
+  et: 'Came from far away for the fight. Abducts the enemy and vanishes into the Minas woods.',
+  caminhoneiro: 'Horn, diesel and a windshield full of stickers. Blocks the lane and the crossfire.',
+  farialimer: 'Vest, metrics and OKRs. Monetizes every kill and calls it synergy.',
+  sertanejo: 'Hat, belt buckle and heartbreak. Sings about the fight, then wins it.',
+  bombado: 'Never skips leg day, never skips a fight. Pre-workout in the veins.',
+  coach: 'Quantum coach. Manifests the victory and invoices you for the mindset.',
+  ancap: 'Yellow-and-black armband. Privatizes the flag and taxes nobody.',
+  canarinho: 'The angriest mascot in the stands. Chirps, then shoots.',
+  proerd: 'Says no to everything - except winning the round.',
+  dollynho: 'Green soda-bottle mascot. Effervescent, ice cold, always on the counter.',
+  bonzo: 'The classic clown of Sunday TV, now with a revolver.',
+  palhacomal: 'The evil clown of your nightmares. The tattoo came to life.',
+  jozo: 'A scruffy fast-food-parody clown. Yellow patches, a big G, zero polish.',
+  adjim: 'Half of a sneeze duo. The other half is right behind you.',
+  esbirro: 'The other half. Bless you - bang.',
+  titica: 'Firefighter cap, patchwork shirt, chaos incarnate.',
+  padati: 'Tiny cap, giant grin. One of a legendary pair.',
+  padata: 'The other tiny cap. Together they own the ring.',
+  cadequinha: 'Red top hat and checkered suit - old-school circus royalty.',
+  emo: 'The fringe covers one eye. The other one aims.',
+  blackmetal: 'Corpse paint and blast beats. Grim, frostbitten, accurate.',
+  metaleiro: 'Denim, patches and a riff for every kill.',
+  punk: 'Mohawk up, system down.',
+  skatista: 'Kickflips into the fight. Bails never.',
+  clubber: 'Neon, glitter and 174 BPM of trigger discipline.',
+  rapper: 'Bars and headshots. Both punchlines land.',
+  reggae: 'Positive vibrations, negative K/D for the enemy.',
+  pagodeiro: 'Pandeiro in the backpack, aim in the soul.',
+  mandrake: 'Cap, Juliet shades and a gold chain. Style dominates the quebrada.',
+  raul: 'The sugar fringe. Navy polo, gold chains, flip-flops of war.',
+  oakley: 'Wrap-around shades indoors. Especially indoors.',
+  criarj: 'Rio-raised, corner-sharp, camera-ready.',
+  chave: 'São Paulo flow, key to every door.',
+  funkraiz: 'Old-school funk. The original paredão.',
+  trapfunk: 'Autotune in the war cry, 808 in the chest. Trap in double dose.',
+  fluxo: 'Lives where the crowd is thickest. The fight IS the flow.',
+  ostentacao: 'Gold, motors and bass. Wins loud.',
+};
+const grupos = FACCOES.map(f => ({
+  ...f,
+  en: FAC_EN[f.id] || { nome: f.nome, lema: f.lema, nota: f.nota },
+  elenco: PERSONAGENS.filter(p => p.faccao === f.id),
+}));
+const total = PERSONAGENS.length;
+const PLACA: Record<string, string> = { E: 'time-e', B: 'time-b', urbanas: 'tribos', palhacos: 'palhacos', funkeiros: 'funkeiros' };
+const placa = (id: string) => (PLACA[id] ? `/img/faccoes/${PLACA[id]}.webp` : null);
+const slug = (nome: string) => nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const jsonld = [{ '@id': GAME_ID }];
+---
+<Layout
+  title={`Characters - all ${total} | ${BRAND_FULL}`}
+  description={`All ${total} playable characters of ${BRAND_FULL} across ${FACCOES.length} factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 100% fictional archetypes - no real people.`}
+  jsonld={jsonld}
+  h1="Characters"
+  kicker={`${total} characters · ${FACCOES.length} factions`}
+  heroImg={placa('palhacos')}
+  heroPos="64%">
+  <Fragment slot="sub">
+    {total} playable archetypes in {FACCOES.length} factions, all 100% fictional and original -
+    no real person was consulted (or spared). Each one has its own silhouette, props and style,
+    modeled in 3D. <strong>Your pick is style, not advantage:</strong> everyone plays exactly the same.
+  </Fragment>
+
+  <nav class="tstat" aria-label="Factions">
+    {grupos.map(g => (
+      <a href={`#${slug(g.en.nome)}`} style={`--fc:${g.cor}`}>
+        <b style={`color:${g.cor}`}>{g.elenco.length}</b><span>{g.en.nome}</span>
+      </a>
+    ))}
+  </nav>
+
+  {grupos.map((g, i) => (
+    <section class="faccao" style={`--fc:${g.cor}`}>
+      <header class="fhead">
+        {placa(g.id) && (
+          <div class="fplate">
+            <img src={placa(g.id)} width="640" height="1601" loading="lazy" decoding="async"
+                 alt={`${g.en.nome} faction characters in ${BRAND_FULL}`}>
+          </div>
+        )}
+        <div class="fmeta">
+          <p class="meta"><b>Faction {String(i + 1).padStart(2, '0')}</b><i>·</i>
+            {g.elenco.length} characters</p>
+          <h2 id={slug(g.en.nome)} style={`color:${g.cor}`}>{g.en.nome}</h2>
+          <p class="fmotto">“{g.en.lema}”</p>
+          <p class="fnota">{g.en.nota}</p>
+        </div>
+      </header>
+      <div class="grid roster">
+        {g.elenco.map(p => (
+          <article class="pcard">
+            {p.id && <img class="pfoto" src={`/img/chars/${p.id}.webp`} width="180" height="231"
+              loading="lazy" decoding="async" alt={`${p.nome} - ${BRAND_FULL} character`} />}
+            <strong>{p.nome}</strong>
+            <p>{(p.id && BLURB_EN[p.id]) || p.blurb}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  ))}
+
+  <h2>About the cast</h2>
+  <p>
+    Two of the five factions have nothing political about them: <strong>Urban Tribes</strong> and
+    <strong> Funkeiros</strong> - they join the fight for the style and play whichever side they
+    want. No character depicts a real person, living or dead. They are archetypes, and the mockery
+    is evenly distributed.
+  </p>
+
+  <div class="cta-row">
+    <a class="btn-cta" href="/?lang=en">▶ Pick yours</a>
+    <a class="btn-cta btn-2" href="/mapas">See the arenas</a>
+  </div>
+</Layout>
+
+<script>
+  // idioma resolvido = ?lang > localStorage > navigator (mesmas regras do i18n.js do jogo);
+  // quem chega aqui em pt vai pra /personagens (e o par faz o inverso).
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'pt') location.replace('/personagens');
+  } catch { /* storage bloqueado: fica onde está */ }
+</script>
+
+<style>
+  .faccao{margin:44px 0 0}
+  .fhead{display:flex;overflow:hidden;background:var(--panel-2);
+    border:1px solid var(--line);border-left:3px solid var(--fc)}
+  .fplate{flex:0 0 210px;max-height:230px}
+  .fplate img{width:100%;height:100%;object-fit:cover;object-position:top}
+  .fmeta{padding:16px 20px}
+  .fmotto{color:var(--fc);font-style:italic;margin:4px 0}
+  .fnota{color:var(--ink-300)}
+  .pcard{text-align:center}
+  .pfoto{width:100%;max-width:180px;aspect-ratio:7/9;object-fit:cover;object-position:top;
+    border-radius:6px;border:1px solid var(--line-2,#333);margin:0 auto 8px;display:block;
+    background:#1c1a20}
+</style>

@@ -1,0 +1,116 @@
+{
+  "registryVersion": 1,
+  "assetRoot": "public/models/characters",
+  "assets": {
+    "bozo": {
+      "files": [
+        "public/models/characters/bozo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75fkrm2j1yyyf6tka5zmb99d8b15y0",
+        "chatUrl": "https://mint.gg/chat/ph7ayd0zemw2qzgxdssjhq2nkh8b1k98",
+        "displayName": "Red Wing Clown (v1)",
+        "notes": "v1 shipped — rig Meshy compatível, anims OK. v2 semi-real (ks77tampj9a7ga8kwas1kfams58b0jnv) veio com rig quebrado (A-pose) e foi descartado; raws em /tmp/bozo-v2-raw.glb."
+      }
+    },
+    "canarinho": {
+      "files": [
+        "public/models/characters/canarinho.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75jx39ypybs5hdvy34ej7fzh8b0cey",
+        "chatUrl": "https://mint.gg/chat/ph7amtaa6jc8bxf0wwsd70m9t58b0kcf",
+        "animationBatchId": "w577yjh3ypmh3v8m8kj6j94j018b04jw",
+        "displayName": "Crested Canary Striker (v2 semi-real)",
+        "notes": "v2 shipped. v1 (ks7acwqj31393mw93gxmszzfz18b1jmj) no histórico do chat; raw /tmp/canarinho-rigged-raw.glb."
+      },
+      "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
+    },
+    "proerd": {
+      "files": [
+        "public/models/characters/proerd.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks76jjngk5k8zpata2gaanbbns8b04wk",
+        "chatUrl": "https://mint.gg/chat/ph7ck93xmx6f615je4c95t95bd8b036w",
+        "animationBatchId": "w572044nc1wjf3whbhtpzshhcs8b1mbf",
+        "displayName": "Proerd Mane Lion (v2 camisa preta)",
+        "notes": "v2 shipped. v1 camisa branca (ks7c0tp5f9r4fnn3gz706jjwgx8b02mf) no histórico; raw /tmp/proerd-rigged-v2-raw.glb."
+      },
+      "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
+    },
+    "ferro_velho_pack": {
+      "files": [
+        "public/models/props/muro_carros.glb",
+        "public/models/props/fileira_carros.glb",
+        "public/models/props/monte_carros.glb",
+        "public/models/props/guindaste.glb",
+        "public/models/props/prensa_carros.glb",
+        "public/models/props/pilha_pneus.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th7cgpxf57s7twyjcj093qgryd8bad0k",
+        "chatUrl": "https://mint.gg/chat/ph71r1m6b16360w76zqqcrgv0x8bac0z",
+        "displayName": "Ferro Velho — pilhas e máquinas",
+        "notes": "6 itens estilizados (muro/fileira/monte de carros esmagados, guindaste, prensa, pneus). Substituem os photoscans Sketchfab (wall_of_cars 16MB, crushed_classic 13MB) — pack inteiro otimizado ≈ 1.7MB."
+      }
+    },
+    "havan_loja_pack": {
+      "files": [
+        "public/models/props/gondola_mercado.glb",
+        "public/models/props/gondola_eletro.glb",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_cobranca.glb",
+        "public/models/props/painel_tvs.glb",
+        "public/models/props/manequim.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th740djrzedmygcxze9g6gm77n8bakz8",
+        "chatUrl": "https://mint.gg/chat/ph77wh2w8c51eshb7qe6mragpx8ba18w",
+        "displayName": "Havan — loja de departamentos",
+        "notes": "6 itens (gôndolas cheias mercado/eletro, arara, caixa de cobrança, painel de TVs, manequim). Enchem a loja que era caixas cinzas."
+      }
+    },
+    "carros_br_pack": {
+      "files": [
+        "public/models/props/kombi.glb",
+        "public/models/props/opala.glb",
+        "public/models/props/chevette.glb",
+        "public/models/props/brasilia_vw.glb",
+        "public/models/props/saveiro.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/onibus_urbano.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th79jvsrbgpr605gj2sf5p1f3x8bazc0",
+        "chatUrl": "https://mint.gg/chat/ph781r8fzxtc9stms7adfke76h8ba9ec",
+        "displayName": "Carros brasileiros clássicos",
+        "notes": "8 veículos BR estilizados a pedido do dono (look mais brasileiro). Sempre entram na seleção da Havan (MINT_BR em map_havan.js)."
+      }
+    },
+    "piscinao_pack": {
+      "files": [
+        "public/models/props/churrasqueira.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/cooler.glb",
+        "public/models/props/boia.glb",
+        "public/models/props/placa_piscina.glb",
+        "public/models/props/caixa_som.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th7eg134zfrsmpzg4tb3rwr3b18ba3jb",
+        "chatUrl": "https://mint.gg/chat/ph73qfvhgzbtsvr2ezgrvzwswx8bbm9p",
+        "displayName": "Piscinão de Ramos — props",
+        "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "title": {
+    "message": "CORO SOLTO · Docs",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Canarinho — CORO SOLTO's mascot",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentação": {
+    "message": "Documentation",
+    "description": "Navbar item with label Documentação"
+  },
+  "item.label.Jogar": {
+    "message": "Play",
+    "description": "Navbar item with label Jogar"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

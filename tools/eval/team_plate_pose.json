@@ -1,0 +1,423 @@
+{
+ "gerado": "2026-08-04T19:55:28.946Z",
+ "pose": {
+  "braco": 58,
+  "cotovelo": 18,
+  "bracoFrente": 8,
+  "antebracoDentro": 10,
+  "ombroFrac": 0
+ },
+ "refs": [
+  "mandrake",
+  "pagodeiro"
+ ],
+ "folga": 1.25,
+ "teto": {
+  "p99": 0.761,
+  "ruins1e4": 55.8
+ },
+ "tetoLocal": {
+  "p99": 0.396,
+  "ruins1e4": 7.5
+ },
+ "personagens": [
+  {
+   "id": "padati",
+   "arestas": 8041,
+   "p99": 0.714,
+   "p999": 1.657,
+   "max": 3.58,
+   "ruins1e4": 46,
+   "ajuste": null
+  },
+  {
+   "id": "palhacomal",
+   "arestas": 8282,
+   "p99": 0.665,
+   "p999": 1.563,
+   "max": 3.26,
+   "ruins1e4": 45.9,
+   "ajuste": {
+    "braco": 45
+   }
+  },
+  {
+   "id": "trapfunk",
+   "arestas": 10252,
+   "p99": 0.694,
+   "p999": 2.387,
+   "max": 6.43,
+   "ruins1e4": 41.9,
+   "ajuste": null
+  },
+  {
+   "id": "fluxo",
+   "arestas": 10842,
+   "p99": 0.596,
+   "p999": 1.986,
+   "max": 6.42,
+   "ruins1e4": 41.5,
+   "ajuste": null
+  },
+  {
+   "id": "esbirro",
+   "arestas": 8250,
+   "p99": 0.49,
+   "p999": 1.517,
+   "max": 3.41,
+   "ruins1e4": 35.2,
+   "ajuste": null
+  },
+  {
+   "id": "ostentacao",
+   "arestas": 10702,
+   "p99": 0.416,
+   "p999": 2.122,
+   "max": 3.58,
+   "ruins1e4": 30.8,
+   "ajuste": null
+  },
+  {
+   "id": "chave",
+   "arestas": 10003,
+   "p99": 0.501,
+   "p999": 1.258,
+   "max": 1.57,
+   "ruins1e4": 30,
+   "ajuste": null
+  },
+  {
+   "id": "adjim",
+   "arestas": 10925,
+   "p99": 0.492,
+   "p999": 1.816,
+   "max": 3.97,
+   "ruins1e4": 29.3,
+   "ajuste": null
+  },
+  {
+   "id": "oakley",
+   "arestas": 10331,
+   "p99": 0.52,
+   "p999": 1.466,
+   "max": 3.34,
+   "ruins1e4": 29,
+   "ajuste": null
+  },
+  {
+   "id": "jozo",
+   "arestas": 10667,
+   "p99": 0.4,
+   "p999": 1.654,
+   "max": 2.73,
+   "ruins1e4": 23.4,
+   "ajuste": null
+  },
+  {
+   "id": "hipster",
+   "arestas": 10122,
+   "p99": 0.271,
+   "p999": 1.737,
+   "max": 2.62,
+   "ruins1e4": 21.7,
+   "ajuste": null
+  },
+  {
+   "id": "bonzo",
+   "arestas": 10124,
+   "p99": 0.339,
+   "p999": 1.513,
+   "max": 1.94,
+   "ruins1e4": 19.8,
+   "ajuste": null
+  },
+  {
+   "id": "funkraiz",
+   "arestas": 10488,
+   "p99": 0.373,
+   "p999": 1.213,
+   "max": 1.41,
+   "ruins1e4": 18.1,
+   "ajuste": null
+  },
+  {
+   "id": "criarj",
+   "arestas": 10411,
+   "p99": 0.32,
+   "p999": 1.251,
+   "max": 16.55,
+   "ruins1e4": 17.3,
+   "ajuste": null
+  },
+  {
+   "id": "cadequinha",
+   "arestas": 10875,
+   "p99": 0.354,
+   "p999": 1.33,
+   "max": 3.91,
+   "ruins1e4": 14.7,
+   "ajuste": null
+  },
+  {
+   "id": "canarinho",
+   "arestas": 10529,
+   "p99": 0.25,
+   "p999": 1.373,
+   "max": 4.34,
+   "ruins1e4": 13.3,
+   "ajuste": null
+  },
+  {
+   "id": "gotinha",
+   "arestas": 8063,
+   "p99": 0.248,
+   "p999": 1.017,
+   "max": 3.23,
+   "ruins1e4": 12.4,
+   "ajuste": null
+  },
+  {
+   "id": "reggae",
+   "arestas": 10772,
+   "p99": 0.191,
+   "p999": 1.333,
+   "max": 6.83,
+   "ruins1e4": 12.1,
+   "ajuste": null
+  },
+  {
+   "id": "esquerdomacho",
+   "arestas": 10885,
+   "p99": 0.195,
+   "p999": 1.016,
+   "max": 3.45,
+   "ruins1e4": 11,
+   "ajuste": null
+  },
+  {
+   "id": "rapper",
+   "arestas": 10170,
+   "p99": 0.16,
+   "p999": 1.912,
+   "max": 4.26,
+   "ruins1e4": 10.8,
+   "ajuste": null
+  },
+  {
+   "id": "skatista",
+   "arestas": 10277,
+   "p99": 0.17,
+   "p999": 1.061,
+   "max": 2.75,
+   "ruins1e4": 10.7,
+   "ajuste": null
+  },
+  {
+   "id": "raul",
+   "arestas": 10206,
+   "p99": 0.297,
+   "p999": 0.97,
+   "max": 2.68,
+   "ruins1e4": 9.8,
+   "ajuste": null
+  },
+  {
+   "id": "clubber",
+   "arestas": 10774,
+   "p99": 0.168,
+   "p999": 0.947,
+   "max": 2.69,
+   "ruins1e4": 7.4,
+   "ajuste": null
+  },
+  {
+   "id": "sertanejo",
+   "arestas": 9777,
+   "p99": 0.161,
+   "p999": 0.567,
+   "max": 2.29,
+   "ruins1e4": 7.2,
+   "ajuste": null
+  },
+  {
+   "id": "sindicato",
+   "arestas": 10653,
+   "p99": 0.222,
+   "p999": 0.852,
+   "max": 1.59,
+   "ruins1e4": 6.6,
+   "ajuste": null
+  },
+  {
+   "id": "proerd",
+   "arestas": 10560,
+   "p99": 0.194,
+   "p999": 0.783,
+   "max": 4.39,
+   "ruins1e4": 6.6,
+   "ajuste": null
+  },
+  {
+   "id": "doutora",
+   "arestas": 10820,
+   "p99": 0.127,
+   "p999": 0.705,
+   "max": 3.73,
+   "ruins1e4": 6.5,
+   "ajuste": null
+  },
+  {
+   "id": "mistico",
+   "arestas": 10754,
+   "p99": 0.167,
+   "p999": 0.628,
+   "max": 3.81,
+   "ruins1e4": 6.5,
+   "ajuste": null
+  },
+  {
+   "id": "padata",
+   "arestas": 8204,
+   "p99": 0.351,
+   "p999": 0.776,
+   "max": 3.47,
+   "ruins1e4": 6.1,
+   "ajuste": null
+  },
+  {
+   "id": "mandrake",
+   "arestas": 10035,
+   "p99": 0.168,
+   "p999": 0.816,
+   "max": 1.25,
+   "ruins1e4": 6,
+   "ajuste": null
+  },
+  {
+   "id": "emo",
+   "arestas": 10221,
+   "p99": 0.125,
+   "p999": 0.81,
+   "max": 3.9,
+   "ruins1e4": 5.9,
+   "ajuste": null
+  },
+  {
+   "id": "bombado",
+   "arestas": 10089,
+   "p99": 0.28,
+   "p999": 0.813,
+   "max": 2,
+   "ruins1e4": 4,
+   "ajuste": null
+  },
+  {
+   "id": "farialimer",
+   "arestas": 10384,
+   "p99": 0.154,
+   "p999": 0.687,
+   "max": 2.62,
+   "ruins1e4": 3.9,
+   "ajuste": null
+  },
+  {
+   "id": "et",
+   "arestas": 8232,
+   "p99": 0.177,
+   "p999": 0.541,
+   "max": 1.61,
+   "ruins1e4": 3.6,
+   "ajuste": null
+  },
+  {
+   "id": "titica",
+   "arestas": 10445,
+   "p99": 0.302,
+   "p999": 0.718,
+   "max": 1.78,
+   "ruins1e4": 2.9,
+   "ajuste": null
+  },
+  {
+   "id": "punk",
+   "arestas": 12271,
+   "p99": 0.162,
+   "p999": 0.358,
+   "max": 1.65,
+   "ruins1e4": 2.4,
+   "ajuste": null
+  },
+  {
+   "id": "ancap",
+   "arestas": 9784,
+   "p99": 0.24,
+   "p999": 0.615,
+   "max": 1.04,
+   "ruins1e4": 1,
+   "ajuste": null
+  },
+  {
+   "id": "blackmetal",
+   "arestas": 10361,
+   "p99": 0.158,
+   "p999": 0.639,
+   "max": 1.08,
+   "ruins1e4": 1,
+   "ajuste": null
+  },
+  {
+   "id": "mst",
+   "arestas": 10559,
+   "p99": 0.197,
+   "p999": 0.681,
+   "max": 1.04,
+   "ruins1e4": 0.9,
+   "ajuste": null
+  },
+  {
+   "id": "caminhoneiro",
+   "arestas": 10734,
+   "p99": 0.138,
+   "p999": 0.445,
+   "max": 0.91,
+   "ruins1e4": 0,
+   "ajuste": null
+  },
+  {
+   "id": "coach",
+   "arestas": 10658,
+   "p99": 0.06,
+   "p999": 0.155,
+   "max": 0.21,
+   "ruins1e4": 0,
+   "ajuste": null
+  },
+  {
+   "id": "dollynho",
+   "arestas": 7581,
+   "p99": 0.112,
+   "p999": 0.629,
+   "max": 0.71,
+   "ruins1e4": 0,
+   "ajuste": null
+  },
+  {
+   "id": "metaleiro",
+   "arestas": 10594,
+   "p99": 0.178,
+   "p999": 0.446,
+   "max": 0.75,
+   "ruins1e4": 0,
+   "ajuste": null
+  },
+  {
+   "id": "pagodeiro",
+   "arestas": 10544,
+   "p99": 0.317,
+   "p999": 0.719,
+   "max": 0.97,
+   "ruins1e4": 0,
+   "ajuste": null
+  }
+ ]
+}

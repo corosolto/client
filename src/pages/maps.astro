@@ -1,0 +1,163 @@
+---
+// /maps - GÊMEA EM INGLÊS do /mapas (mesmo desenho de /characters, gêmea do
+// /personagens). Mesmo dataset (src/data/jogo.ts); nomes/resumos/detalhes
+// traduzidos AQUI por overlay - o PT continua a fonte. Expressões de sabor
+// (quebrada, baile, paredão, boteco, adega) ficam em PT, como em /characters.
+// Redirecionamento por idioma: cada página manda pro par quando o idioma
+// resolvido não bate (mesmas regras do public/js/i18n.js).
+import Layout from '../layouts/Layout.astro';
+import { MAPAS } from '../data/jogo';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+
+const MAP_EN: Record<string, { nome: string; resumo: string; detalhe: string }> = {
+  praca_poderes: {
+    nome: 'Three Powers Plaza',
+    resumo: 'The main arena: a fictional Brasília with a giant cracked voting machine in the middle.',
+    detalhe: 'A reinterpretation of CS 1.6’s praca_poderes, Brasília edition. Two tall platforms face each ' +
+      'other, and mid is dominated by a giant cracked electronic voting machine that works as central ' +
+      'cover. Around it: a boteco, a pastel stand, a protest camp and the silhouette of Congress on ' +
+      'the horizon. This is the map where the AWP rules - long angles, short cover, and nowhere ' +
+      'truly safe.',
+  },
+  piscina_treta: {
+    nome: 'Fight Pool',
+    resumo: 'Indoor hall with a pool in the middle - the Brazilian piscina_treta.',
+    detalhe: 'Indoor arena, no sky, with the sunken pool splitting the map into two levels. ' +
+      'Close, vertical combat: whoever controls the edge controls the round. ' +
+      'It’s where the shotgun and the SMGs finally beat the AWP.',
+  },
+  loja_h: {
+    nome: 'H Store (Parking Lot)',
+    resumo: 'Megastore parking lot with a statue, shopping carts and cars re-drawn every match.',
+    detalhe: 'Asphalt and concrete, with rows of cars that CHANGE every match ' +
+      '(the selection is seeded at random), so cover is never the same twice. ' +
+      'Opens in Capture the Flag because the geometry was designed around the flags - ' +
+      'but you can switch to rounds in the menu.',
+  },
+  ferro_velho: {
+    nome: 'Zé’s Junkyard',
+    resumo: 'A junkyard at sunset, with the stacked-car canyon of the WEST ALLEY.',
+    detalhe: 'Piles of cars form real walls. The west flank is the WEST ALLEY: a straight canyon ' +
+      'of double car walls, with two side exits into the core and a hanging sign at the south mouth. ' +
+      'Low, warm light, long shadows. Four flags, all reachable from both spawns.',
+  },
+  quebrada: {
+    nome: 'Quebrada (Baile Street)',
+    resumo: 'A long straight outskirts street, with the baile rotunda at one end and the dirt pitch at the other.',
+    detalhe: 'The newest map, and the only one that’s a STREET: asphalt down the axis, sidewalk on ' +
+      'both sides, shacks and quebrada shops around - adega, açaí, ice cream parlor, diner, furniture. ' +
+      'At one end the baile square, with tuned cars and a paredão of speakers; at the other, the ' +
+      'dirt pitch. In between: a parked bus with a bus stop, a bar with plastic chairs on the ' +
+      'sidewalk and barricades. The two back alleys aren’t decoration - they’re the alternate route ' +
+      'that keeps the street from becoming a sniper corridor. Four flags: dirt pitch, corner bar, ' +
+      'bus stop and baile square.',
+  },
+};
+const en = (id: string) => MAP_EN[id];
+
+const nCtf = MAPAS.filter(m => m.ctf).length;
+const nRounds = MAPAS.length - nCtf;
+const plural = (n: number, um: string, muitos: string) => (n === 1 ? um : muitos);
+
+/* Mesma regra do /mapas: a captura casa pelo id do mapa, nunca por lista à mão. */
+const preview = (id: string) => `/img/map-previews/${id}.jpg`;
+const [destaque, ...resto] = MAPAS;
+
+const jsonld = [
+  {
+    '@type': 'ItemList',
+    '@id': abs('/maps') + '#lista',
+    name: `${BRAND_FULL} maps`,
+    numberOfItems: MAPAS.length,
+    itemListElement: MAPAS.map((m, i) => ({
+      '@type': 'ListItem', position: i + 1, name: en(m.id).nome, description: en(m.id).resumo,
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Maps', item: abs('/maps') },
+    ],
+  },
+  { '@id': GAME_ID },
+];
+---
+<Layout
+  ogImage={abs('/api/og/mapas.png')}
+  ogImageAlt={`Card with the 5 arenas of ${BRAND_FULL}`}
+  title={`Maps - the ${MAPAS.length} arenas | ${BRAND_FULL}`}
+  description={`The ${MAPAS.length} arenas of ${BRAND_FULL}: ${MAPAS.map(m => en(m.id).nome).join(', ')} - layout, mode and how to play each one.`}
+  jsonld={jsonld}
+  h1="Maps"
+  kicker={`${MAPAS.length} arenas · rounds and CTF`}
+  heroImg={preview('ferro_velho')}
+  heroPos="62%">
+  {/* `{' '}` explícito entre expressões: dentro de um <Fragment slot>, o espaço
+      literal entre `}` e `{` é engolido. */}
+  <Fragment slot="sub">
+    {MAPAS.length} playable arenas.{' '}{nRounds}{' '}{plural(nRounds, 'opens', 'open')} in rounds and
+    {' '}{nCtf}{' '}{plural(nCtf, 'opens', 'open')} in Capture the Flag - but none of them locks the mode:
+    you can play any map in any mode from the menu before the match.
+  </Fragment>
+
+  <article class="card wide">
+    <div class="fig">
+      <img src={preview(destaque.id)} width="640" height="640" alt={`Aerial view of the ${en(destaque.id).nome} arena`} loading="eager" decoding="async">
+    </div>
+    <div class="card-body">
+      <h2 class="map-nome">{en(destaque.id).nome}</h2>
+      <p class="meta">
+        <b>4v4</b><i>·</i>{destaque.ctf ? 'CTF' : 'Rounds'}<i>·</i>
+        {destaque.ctf ? '4 flags' : '1:39 per round'}<i>·</i><code>{destaque.id}</code>
+      </p>
+      <p class="lead">{en(destaque.id).resumo}</p>
+      <p>{en(destaque.id).detalhe}</p>
+    </div>
+  </article>
+
+  <div class="grid cards">
+    {resto.map(m => (
+      <article class="card">
+        <div class="fig">
+          <img src={preview(m.id)} width="640" height="640" alt={`Aerial view of the ${en(m.id).nome} arena`} loading="lazy" decoding="async">
+
+        </div>
+        <div class="card-body">
+          <h3 class="map-nome">{en(m.id).nome}</h3>
+          <p class="meta">
+            <b>4v4</b><i>·</i>{m.ctf ? 'CTF' : 'Rounds'}<i>·</i>
+            {m.ctf ? '4 flags' : '1:39 per round'}<i>·</i><code>{m.id}</code>
+          </p>
+          <p class="lead">{en(m.id).resumo}</p>
+          <p>{en(m.id).detalhe}</p>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <h2>Rounds or CTF</h2>
+  <ul>
+    <li><strong>Rounds:</strong> 4v4 by default (the menu goes from 1 to 8 per side), with a 2.2 s
+      respawn. 1:39 rounds; the team with the most kills when the clock hits zero takes the round;
+      3 rounds win the match, and the 5th round is the cap.</li>
+    <li><strong>Capture the Flag:</strong> four flags spread across the arena. The geometry of the
+      H Store, the Junkyard and the Quebrada was designed around them - that’s why those three open
+      in CTF. In CTF the round ends by capture, not by the clock.</li>
+    <li>The map is drawn or picked on the selection screen, before the match starts.</li>
+  </ul>
+
+  <p style="margin-top:26px"><a class="btn-play" style="margin-left:0;display:inline-block" href="/?lang=en">▶ Enter the arena</a></p>
+</Layout>
+
+<script>
+  // idioma resolvido = ?lang > localStorage > navigator (mesmas regras do i18n.js do jogo);
+  // quem chega aqui em pt vai pra /mapas (e o par faz o inverso).
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'pt') location.replace('/mapas');
+  } catch { /* storage bloqueado: fica onde está */ }
+</script>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>vm inspect</title>
+<style>html,body{margin:0;height:100%;background:#223}</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }</script>
+</head><body><script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const qp = new URLSearchParams(location.search);
+// O padrão precisa ser um modelo de arma publicado. `models/fpvm` foi removido e
+// `models/fparms/arms.glb` é o corpo do doador (pernas/botas), não um viewmodel.
+const SRC = qp.get('src') || 'models/weapons/pistol.glb';
+const ATT = qp.get('att');   // debug de attachments: ?att=kind,cls (ex: att=carryhandle,rifle)
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight); document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x2a3440);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.4));
+const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(2, 4, 3); scene.add(dl);
+const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 50);
+new GLTFLoader().load(SRC, async (g) => {
+  scene.add(g.scene);
+  window.__vm = g.scene;
+  window.VIEW = (x, y, z) => { cam.position.set(x, y, z); cam.lookAt(0, 0, 0); renderer.render(scene, cam); };
+  if (ATT) {
+    const [kinds, cls] = ATT.split(',');
+    const { buildVmAttachment } = await import('./js/vmattach.js');
+    for (const kind of kinds.split(/[+ ]+/)) g.scene.add(buildVmAttachment(cls || 'rifle', kind));
+  }
+  // ?pose=rifle|pistol|shotgun|awp|knife: aplica o transform de classe do game.js e
+  // coloca a câmera na origem olhando -Z (= vmCamera) — reproduz o framing in-game.
+  const POSE = qp.get('pose');
+  if (POSE) {
+    const T = {
+      rifle: [0.45, [2.709, -0.903, 2.984], [0.15, -0.08, -0.47]],
+      pistol: [0.28, [0, -Math.PI / 2, 0], [0.16, -0.1, -0.22]],
+      shotgun: [0.38, [2.869, -0.654, 3.036], [0.21, -0.12, -0.46]],
+      awp: [0.42, [-0.12, 0.30, 0], [0.14, -0.16, -0.38]],
+      knife: [0.32, [-0.15, 0.55, 0.2], [0.15, -0.1, -0.14]],
+    }[POSE];
+    if (T) {
+      g.scene.scale.setScalar(T[0]); g.scene.rotation.set(...T[1]); g.scene.position.set(...T[2]);
+      cam.position.set(0, 0, 0); cam.lookAt(0, 0, -1);
+      cam.fov = 70; cam.updateProjectionMatrix();
+      renderer.render(scene, cam); document.title = 'vm ready';
+      return;
+    }
+  }
+  const TEX = qp.get('tex');
+  const finish = () => {
+    const v = (qp.get('view') || '0,0.5,1.6').split(',').map(Number);
+    window.VIEW(v[0], v[1], v[2]);
+    document.title = 'vm ready';
+  };
+  if (TEX) new THREE.TextureLoader().load(TEX, (t) => {
+    t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    g.scene.traverse((o) => { if (o.isMesh && o.material) { o.material = o.material.clone(); o.material.map = t; o.material.color.multiplyScalar(1.5); } });
+    finish();
+  }, undefined, finish);
+  else finish();
+});
+</script></body></html>

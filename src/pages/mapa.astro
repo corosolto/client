@@ -1,0 +1,166 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { supabaseAdmin } from '../lib/supabase';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { FACCOES } from '../data/jogo';
+
+export const prerender = false;
+
+// Presença tolera 60 s de cache e evita repetir as consultas em cada visita.
+Astro.response.headers.set(
+  'cache-control',
+  'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+);
+
+const factionCode: Record<string, string> = { E: 'E', B: 'B', urbanas: 'U', palhacos: 'C', funkeiros: 'F' };
+let online: any[] = [], cities: any[] = [], configured = !!supabaseAdmin;
+let totals = { players: 0, matches: 0, kills: 0, mp: 0, mb: 0 };
+let factionSource: 'telemetry' | 'legacy' = 'telemetry';
+let factionCounts = FACCOES.map(f => ({ ...f, code: factionCode[f.id], matches: 0, pct: 0 }));
+if (supabaseAdmin) {
+  const { data: on } = await supabaseAdmin.from('online_now').select('*');
+  online = on ?? [];
+  const { count } = await supabaseAdmin.from('players').select('*', { count: 'exact', head: true });
+  totals.players = count ?? 0;
+  const { data: st } = await supabaseAdmin.from('stats').select('matches,kills,matches_p,matches_b');
+  for (const r of st ?? []) {
+    totals.matches += r.matches; totals.kills += r.kills;
+    totals.mp += r.matches_p; totals.mb += r.matches_b;
+  }
+  const fq = await Promise.all(factionCounts.map(f =>
+    supabaseAdmin!.from('match_event').select('*', { count: 'exact', head: true }).eq('faction', f.code),
+  ));
+  if (fq.some(r => r.error) || !fq.some(r => (r.count ?? 0) > 0)) {
+    factionSource = 'legacy';
+    factionCounts = factionCounts.map(f => ({ ...f, matches: f.code === 'E' ? totals.mp : f.code === 'B' ? totals.mb : 0 }));
+  } else {
+    factionCounts = factionCounts.map((f, i) => ({ ...f, matches: fq[i].count ?? 0 }));
+  }
+  // Agrega o histórico total e a presença por cidade.
+  const { data: cd } = await supabaseAdmin.from('city_daily').select('*');
+  const agg = new Map<string, any>();
+  for (const r of cd ?? []) {
+    const cur = agg.get(r.city) || { city: r.city, country: r.country, matches: 0, rounds: 0, players: new Set<string>(), lat: null, lon: null };
+    cur.matches += r.matches; cur.rounds += r.rounds ?? 0; agg.set(r.city, cur);
+  }
+  const { data: pres } = await supabaseAdmin.from('presence').select('nick,city,country,lat,lon').not('city', 'is', null);
+  for (const p of pres ?? []) {
+    const cur = agg.get(p.city) || { city: p.city, country: p.country, matches: 0, rounds: 0, players: new Set<string>(), lat: null, lon: null };
+    cur.players.add(p.nick);
+    if (!cur.lat && p.lat) { cur.lat = p.lat; cur.lon = p.lon; }
+    agg.set(p.city, cur);
+  }
+  cities = [...agg.values()].sort((a, b) => b.matches - a.matches)
+    .map(c => ({ ...c, players: [...c.players].sort() }));
+}
+const factionTotal = factionCounts.reduce((sum, f) => sum + f.matches, 0);
+factionCounts = factionCounts.map(f => ({ ...f, pct: factionTotal ? Math.round((f.matches / factionTotal) * 100) : 0 }));
+const mapData = { online: online.filter(o => o.lat && o.lon), cities: cities.filter(c => c.lat && c.lon) };
+---
+<Layout
+  title={`Mapa da treta ao vivo - quem está jogando agora | ${BRAND_FULL}`}
+  description={`Jogadores online agora e partidas por cidade no ${BRAND_FULL}. Localização aproximada, nível cidade - nenhum IP é exibido.`}
+  jsonld={[{ '@id': GAME_ID }, {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Mapa ao vivo', item: abs('/mapa') },
+    ],
+  }]}
+  h1="Mapa da treta"
+  kicker="Ao vivo · quem está jogando agora"
+  heroImg="/img/map-previews/quebrada.jpg"
+  heroPos="40%">
+  <Fragment slot="sub">
+    Onde a treta está acontecendo agora, cidade por cidade. A localização é aproximada e no nível
+    de cidade - nenhum IP aparece aqui.
+  </Fragment>
+  <!-- Leaflet 1.9.4 (BSD-2-Clause) vendorizado em public/vendor/leaflet/ - origem:
+       https://unpkg.com/leaflet@1.9.4/dist/ . Vendorizado pelo mesmo motivo do
+       Three.js: era o ÚNICO host externo em script-src/style-src da CSP, e a
+       exceção valia pro site todo, não só pra esta página. Ao atualizar, troque
+       os arquivos e a versão aqui. -->
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" slot="head">
+  <style slot="head">
+    .map-tip{background:rgba(8,12,8,.88)!important;border:1px solid #4a5a2a!important;color:#d8e0b0!important;
+      font:10px Consolas,monospace;padding:1px 6px;box-shadow:none!important}
+    .map-tip:before{display:none}
+    .map-pop .leaflet-popup-content-wrapper{background:#10130c;color:#d8e0b0;border:1px solid #4a5a2a;font-family:Consolas,monospace;font-size:12px}
+    .map-pop .leaflet-popup-tip{background:#10130c;border:1px solid #4a5a2a}
+    .map-pop a{color:#b8d94a}
+  </style>
+  {configured && (
+    <div style="display:flex;gap:22px;flex-wrap:wrap;font-family:Consolas,monospace;font-size:14px;color:#c9bfa4;margin-bottom:10px">
+      <span><b style="color:var(--yellow);font-size:20px">{totals.players}</b> jogadores</span>
+      <span><b style="color:var(--yellow);font-size:20px">{totals.matches}</b> partidas</span>
+      <span><b style="color:var(--yellow);font-size:20px">{totals.kills}</b> kills</span>
+    </div>
+  )}
+  {configured && (
+    <section class="faction-stats" aria-labelledby="faction-title">
+      <div class="faction-head">
+        <h2 id="faction-title">Partidas por facção</h2>
+        <span>{factionTotal} com facção identificada</span>
+      </div>
+      <div class="faction-grid">
+        {factionCounts.map(f => (
+          <div class="faction-row">
+            <div><strong style={`color:${f.cor}`}>{f.nome}</strong><span>{f.matches} · {f.pct}%</span></div>
+            <span class="faction-track"><span style={`width:${f.pct}%;background:${f.cor}`}></span></span>
+          </div>
+        ))}
+      </div>
+      <p>{factionSource === 'telemetry'
+        ? 'Contagem anônima de partidas registradas, separada do ranking de jogadores.'
+        : 'O histórico por facção ainda está indisponível no banco; os números E/B acima são o legado do ranking.'}</p>
+    </section>
+  )}
+  <p><strong style="color:#7de08f">{online.length}</strong> jogadores online agora · em amarelo, o histórico total de partidas por cidade (localização aproximada, nível cidade - sem IP).</p>
+  {/* Presença nominal cobre somente jogadores registrados. */}
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:-6px">
+    Conta só quem escolheu um nick - jogar sem nick não registra presença.
+  </p>
+  {!configured && <p>Mapa ainda não configurado.</p>}
+  <div id="map" style="height:520px;border-radius:10px;border:1px solid #3a3325;background:#10130c"></div>
+  <script src="/vendor/leaflet/leaflet.js" is:inline></script>
+  <script is:inline define:vars={{ mapData }}>
+    // Dados do banco precisam ser escapados antes de entrar no HTML do Leaflet.
+    const esc = (s) => String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const map = L.map('map', { scrollWheelZoom: true }).setView([-14.5, -52.5], 4);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', {
+      maxZoom: 12, attribution: '&copy; OpenStreetMap &copy; CARTO',
+    }).addTo(map);
+    const maxM = Math.max(1, ...mapData.cities.map(c => c.matches));
+    for (const c of mapData.cities) {
+      const m = L.circleMarker([c.lat, c.lon], {
+        radius: 6 + 18 * (c.matches / maxM), color: '#ffd23f', weight: 2,
+        fillColor: '#ffd23f', fillOpacity: 0.25,
+      }).addTo(map);
+      // Tooltip só no hover para não cobrir marcadores próximos.
+      m.bindTooltip(`${esc(c.city)} · ${c.matches}`, { direction: 'top', offset: [0, -8], className: 'map-tip' });
+      // popup do CLIQUE: cidade, totais e lista de jogadores
+      const shown = c.players.slice(0, 12).map(esc), more = c.players.length - shown.length;
+      const plist = c.players.length
+        ? `<br><b>${c.players.length} jogador${c.players.length > 1 ? 'es' : ''}:</b> ${shown.join(', ')}${more > 0 ? ` +${more}` : ''}`
+        : '';
+      m.bindPopup(`<b>${esc(c.city)}</b><br>${c.matches} partidas · ${c.rounds} rounds (histórico)${plist}`, { className: 'map-pop' });
+    }
+    for (const o of mapData.online) {
+      L.circleMarker([o.lat, o.lon], {
+        radius: 5, color: '#9dff9d', weight: 2, fillColor: '#9dff9d', fillOpacity: 0.9,
+      }).addTo(map).bindPopup(`<b>${esc(o.nick)}</b> online agora${o.city ? ' · ' + esc(o.city) : ''}`);
+    }
+  </script>
+</Layout>
+
+<style>
+  .faction-stats{margin:18px 0 22px;padding:16px;border:1px solid #3a3325;background:rgba(16,19,12,.72)}
+  .faction-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px}
+  .faction-head h2{margin:0;font-size:16px}.faction-head>span,.faction-stats>p{font:11px Consolas,monospace;color:var(--bone-dim)}
+  .faction-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 16px}
+  .faction-row>div{display:flex;justify-content:space-between;gap:10px;font:12px Consolas,monospace}.faction-row>div span{color:var(--bone-dim)}
+  .faction-track{display:block;height:6px;margin-top:5px;border:1px solid #3a3325;background:#0b0d08;overflow:hidden}
+  .faction-track>span{display:block;height:100%;min-width:0}.faction-stats>p{margin:12px 0 0}
+</style>

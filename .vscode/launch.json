@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GDScript Godot",
+      "type": "godot",
+      "request": "launch",
+      "project": "${workspaceFolder}/godot",
+      "port": 6007,
+      "debugServer": 6006
+    }
+  ]
+}
+

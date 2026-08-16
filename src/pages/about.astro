@@ -1,0 +1,139 @@
+---
+// /about - GÊMEA EM INGLÊS do /sobre (pedido do dono, 06/08: usuário em EN cai
+// na versão EN). Mesma estrutura da PT; textos traduzidos aqui por overlay - o
+// PT continua a fonte dos dados (src/data/jogo.ts). O nó VideoGame continua
+// morando na home: esta página só REFERENCIA o GAME_ID, igual a irmã PT.
+// Redirecionamento por idioma: cada página manda pro par quando o idioma
+// resolvido não bate (mesmas regras do public/js/i18n.js).
+import Layout from '../layouts/Layout.astro';
+import { ARMAS, MAPAS, PERSONAGENS, FACCOES } from '../data/jogo';
+import { BRAND_FULL, BRAND_ALT, GAME_ID, abs } from '../lib/site';
+
+// overlay EN: a DESC_LONG oficial é PT e mora em src/lib/site.ts; aqui a
+// tradução fica local, como os overlays de characters.astro.
+const DESC_LONG_EN =
+  'Free browser FPS game: a CS 1.6 praca_poderes-style sniper arena set in a fictional, ' +
+  'satirical Brasília. Team E, Team B, Urban Tribes, Clowns and Funkeiros, ' +
+  '5 maps, 26 weapons, bots, rounds, CTF, scoreboard and voice radio. No install, no sign-up.';
+const FAC_NOME_EN: Record<string, string> = {
+  E: 'Team E', B: 'Team B', urbanas: 'Urban Tribes', palhacos: 'Clowns', funkeiros: 'Funkeiros',
+};
+
+const jsonld = [
+  {
+    '@type': 'AboutPage',
+    '@id': abs('/about') + '#about',
+    url: abs('/about'),
+    name: `About ${BRAND_FULL}`,
+    description: DESC_LONG_EN,
+    mainEntity: { '@id': GAME_ID },
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'About', item: abs('/about') },
+    ],
+  },
+];
+---
+<Layout
+  title={`About - free CS 1.6-style browser FPS | ${BRAND_FULL}`}
+  description={`What ${BRAND_FULL} is: a free CS 1.6-style browser FPS, satirical and Brazilian, with ${PERSONAGENS.length} characters, ${MAPAS.length} maps and ${ARMAS.length} weapons. No installation.`}
+  jsonld={jsonld}
+  h1="CS 1.6-style sniper arena, Brazil edition"
+  kicker="About the game"
+  heroImg="/img/map-previews/praca_poderes.jpg"
+  heroPos="52%">
+  <Fragment slot="sub">
+    Team E × Team B in a fictional, satirical Brasília: a giant broken ballot box in the
+    middle of the arena, a corner bar, pastel, a campsite and Congress on the horizon.
+    {PERSONAGENS.length} original characters in {FACCOES.length} factions, {MAPAS.length} maps,
+    {ARMAS.length} weapons, bots, rounds, CTF, headshots and Unreal Tournament-style multikills.
+  </Fragment>
+
+  <div class="galeria">
+    {MAPAS.map(m => (
+      <a class="fig" href="/maps" aria-label={`Arena ${m.nome}`}>
+        <img src={`/img/map-previews/${m.id}.jpg`} width="640" height="640" loading="lazy"
+             decoding="async" alt={`Aerial view of the ${m.nome} arena`}>
+        <span class="fig-tag">{m.nome.replace(/\s*\(.*\)\s*$/, '')}</span>
+      </a>
+    ))}
+  </div>
+
+  <div class="cta-row">
+    <a class="btn-cta" href="/?lang=en">▶ Play now - free</a>
+    <a class="btn-cta btn-2" href="/how-to-play">How to play</a>
+  </div>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Runs in a desktop browser. No installation, no sign-up.</p>
+
+  <div class="tstat" style="margin-top:26px">
+    <div><b>{PERSONAGENS.length}</b><span>characters</span></div>
+    <div><b>{FACCOES.length}</b><span>factions</span></div>
+    <div><b>{MAPAS.length}</b><span>maps</span></div>
+    <div><b>{ARMAS.length}</b><span>weapons</span></div>
+    <div><b>0</b><span>real people</span></div>
+  </div>
+
+  <h2>The name</h2>
+  <p>
+    The game is called <strong>{BRAND_FULL}</strong>. It was born as
+    <strong> {BRAND_ALT}</strong> and a lot of people still search for that name - that's why the
+    domain stays the same and the old name remains registered as an alternate name. Same game.
+  </p>
+
+  <h2>Frequently asked questions</h2>
+  <details open><summary><strong>What is {BRAND_FULL}?</strong></summary>
+    <p>A free FPS game that runs in the browser: a CS 1.6 praca_poderes-style sniper arena set in a
+      fictional, satirical Brasília, with {FACCOES.length} factions,{' '}
+      {PERSONAGENS.length} original characters, {MAPAS.length} maps, {ARMAS.length} weapons, bots,
+      a round system and Capture the Flag.</p></details>
+  <details><summary><strong>Do I need to install or pay anything?</strong></summary>
+    <p>No. It's 100% free and runs straight in your desktop browser (Chrome, Edge or Firefox), with
+      no download, no installation and no sign-up.</p></details>
+  <details><summary><strong>What are the factions?</strong></summary>
+    <p>{FACCOES.map(f => FAC_NOME_EN[f.id] || f.nome).join(', ')}. Two of them have nothing to do
+      with politics. Every character is a fictional, original archetype - no real people.</p></details>
+  <details><summary><strong>Is this an official Valve or Counter-Strike game?</strong></summary>
+    <p>No. It's an independent fan-made parody, with no affiliation with Valve whatsoever.
+      Counter-Strike is a trademark of Valve Corporation.</p></details>
+  <details><summary><strong>Does the game take a political side?</strong></summary>
+    <p>No. It's light satire handed out equally to every side - no gore, no hate,
+      celebrating Brazilian culture.</p></details>
+  <details><summary><strong>Is there a global ranking?</strong></summary>
+    <p>Not yet. The game is in <strong>alpha</strong> and the global ranking is switched off until
+      the scoreboard is trustworthy - the current model is forgeable, and a forgeable leaderboard
+      is a wrong number published. Your match stats are saved in the browser and show up in the
+      game's RANKING menu. When it comes back, every player gets their public page at{' '}
+      <code>/u/&lt;id&gt;/&lt;nick&gt;</code> again, with a PNG badge generated on the fly.</p></details>
+  <details><summary><strong>Can I play with other people?</strong></summary>
+    <p>Not yet. Today every match is against bots, from 1 to 8 per side (4v4 is the default).
+      Multiplayer is the project's next big front.</p></details>
+
+  {/* LICENÇA: AGPL-3.0 desde 07/08/2026, igual a página PT. Esta ressalva dizia
+      "MIT HOJE, AGPL decidida mas NÃO aplicada" e continuou dizendo DEPOIS que a
+      migração rodou - a troca das 8 superfícies pegou os arquivos PT e passou ao
+      largo do gêmeo EN. Resultado: /about em inglês declarou MIT num repositório
+      AGPL até 07/08, e quem achou foi o dono, não o portão. Ver docs/LICENCA.md. */}
+  <h2>Open source</h2>
+  <p>
+    Open source under the GNU AGPL-3.0 license (except the audio pack, which has uncertain rights
+    and stays out of the repository). Contributions made before 07/08/2026 came in under MIT,
+    which is compatible: they stay MIT inside the AGPL whole. Contributions are welcome:{' '}
+    <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">github.com/rubenmarcus/csbrasil</a>{' '}
+ - and the good first-contribution tasks live in
+    <a href="https://github.com/rubenmarcus/csbrasil/issues" rel="noopener"> issues</a>.
+  </p>
+</Layout>
+
+<script>
+  // espelho do /sobre: usuário em pt cai na gêmea PT (mesmas regras do i18n.js)
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'pt') location.replace('/sobre');
+  } catch { /* fica */ }
+</script>

@@ -1,0 +1,19 @@
+Leaflet 1.9.4 — vendorizado (issue #38)
+
+Origem:  https://unpkg.com/leaflet@1.9.4/dist/
+Licença: BSD-2-Clause (https://github.com/Leaflet/Leaflet/blob/v1.9.4/LICENSE)
+
+Arquivos:
+  leaflet.js              bundle de produção
+  leaflet.css             estilos
+  images/layers.png       \
+  images/layers-2x.png     > referenciados pelo CSS. /mapa não usa o controle de
+  images/marker-icon.png  /  camadas nem L.marker (só circleMarker), mas vão
+                             junto pra o CSS não pedir 404 se alguém usar.
+
+POR QUE vendorizado, e não CDN: era o único host externo em script-src/style-src
+da CSP inteira, e a exceção valia pro site todo — não só pra /mapa. Mesmo motivo
+do Three.js em public/vendor/. Ver docs/seguranca.md §5.
+
+Ao atualizar: troque os arquivos, atualize a versão aqui e no comentário de
+src/pages/mapa.astro. Confira que /mapa sobe com terceiros bloqueados.

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>clima — explorador de névoa e sol</title>
+<!--
+  ARNÊS DE CLIMA — PARA ACHAR, NÃO PARA DECIDIR.
+  ═══════════════════════════════════════════════════════════════════════════════════
+  A tabela `AERIAL` de `public/js/bloom.js` não foi escolhida no olho: `tools/eval/r3_fog.py`
+  recorta, nos 8 frames de cada mapa, as 14 linhas de céu logo acima da silhueta, inverte o
+  composite (AgX + piso + vinheta + exposição) e devolve a radiância linear MEDIDA. É por
+  isso que a fumaça de granada e a névoa concordam sobre "qual é o brilho do céu deste mapa":
+  saem da mesma fonte medida.
+
+  Este arnês NÃO substitui aquilo, e não pode. Ele resolve o outro lado do problema: hoje não
+  existe jeito de PROCURAR um clima. Para comparar duas noites é preciso editar `bloom.js`,
+  recarregar, e comparar de memória — e memória de cor é ruim em segundos.
+
+  O CONTRATO, e ele importa mais que o código abaixo:
+
+    · o que sai daqui é CANDIDATO. Um número que agradou no slider não entra em `AERIAL`
+      por ter agradado.
+    · o caminho para ships continua sendo o mesmo: gerar frames com o candidato e passar
+      por `tools/eval/r3_fog.py`, que é quem tem autoridade sobre a radiância do céu.
+    · sem essa regra este arnês vira a porta dos fundos do "escolhido no olho" que a tabela
+      hoje evita — e a fumaça volta a discordar do céu, que foi o defeito "a tela lava pra
+      branco" que o dono relatou.
+
+  USO   /clima.html?map=loja_h     (qualquer id de `MAPS`)
+  ═══════════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  html,body{margin:0;height:100%;background:#0b0f14;overflow:hidden;font:12px/1.45 ui-monospace,monospace;color:#dfe7ef}
+  canvas{display:block}
+  #painel{position:fixed;right:0;top:0;bottom:0;width:290px;background:#11171fee;border-left:1px solid #2a3440;padding:10px 12px;overflow:auto;z-index:9}
+  #painel h1{font-size:12px;margin:0 0 2px;letter-spacing:.06em;text-transform:uppercase;color:#8fb7e0}
+  #painel .sub{color:#7d8b99;margin:0 0 10px}
+  .lin{margin:9px 0}
+  .lin label{display:flex;justify-content:space-between;gap:8px;color:#a9b7c5}
+  .lin label b{color:#dfe7ef;font-weight:600}
+  input[type=range]{width:100%;margin:3px 0 0}
+  input[type=color]{width:100%;height:26px;background:none;border:1px solid #2a3440;padding:0}
+  .grupo{border-top:1px solid #232c36;margin-top:12px;padding-top:6px}
+  button{width:100%;padding:7px;margin-top:8px;border:1px solid #35424f;color:#dfe7ef;font:inherit;cursor:pointer;background:#1d2530}
+  button:hover{background:#26313e}
+  #saida{white-space:pre-wrap;word-break:break-all;background:#0b1016;border:1px solid #232c36;padding:7px;margin-top:8px;color:#9fe0b0;font-size:11px}
+  #aviso{margin-top:12px;padding:7px;border:1px solid #4a3a1c;background:#1d1710;color:#d8b26a;font-size:11px}
+  #hud{position:fixed;left:8px;top:8px;color:#cfe0f0;text-shadow:0 1px 2px #000;z-index:9}
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">carregando…</div>
+<div id="painel">
+  <h1>Clima</h1>
+  <p class="sub" id="mapa">—</p>
+
+  <div class="lin"><label>densidade <b id="v-d">—</b></label><input type="range" id="s-d" min="0" max="0.03" step="0.0001"></div>
+  <div class="lin"><label>cor da névoa / céu</label><input type="color" id="s-color"></div>
+  <div class="lin"><label>direcional <b id="v-dir">—</b></label><input type="range" id="s-dir" min="0" max="1.5" step="0.01"></div>
+
+  <div class="grupo">
+    <div class="lin"><label>sol · x <b id="v-sx">—</b></label><input type="range" id="s-sx" min="-120" max="120" step="1"></div>
+    <div class="lin"><label>sol · y <b id="v-sy">—</b></label><input type="range" id="s-sy" min="2" max="120" step="1"></div>
+    <div class="lin"><label>sol · z <b id="v-sz">—</b></label><input type="range" id="s-sz" min="-120" max="120" step="1"></div>
+  </div>
+
+  <div class="grupo">
+    <div class="lin"><label>exposição <b id="v-exp">—</b></label><input type="range" id="s-exp" min="0.4" max="3" step="0.01"></div>
+  </div>
+
+  <button id="reset">voltar ao valor de AERIAL</button>
+  <button id="copiar">copiar linha de AERIAL</button>
+  <div id="saida">—</div>
+
+  <div id="aviso">
+    Isto é um <b>candidato</b>. Nada entra em <code>bloom.js</code> sem passar por
+    <code>tools/eval/r3_fog.py</code>, que é quem mede a radiância do céu a partir de frames
+    reais. Slider não é medição.
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { initTextures } from './js/textures.js';
+import { MAPS, resolveMapId } from './js/maps.js';
+import { preloadMapProps } from './js/mapprops.js';
+import { AERIAL_TABELA, makeAerialFog } from './js/bloom.js';
+
+/* ÓRBITA À MÃO, e não `three/addons/controls/OrbitControls.js`: `public/vendor/addons/`
+   tem loaders, postprocessing, shaders e utils — controls NÃO. Um import de módulo que
+   dá 404 não lança `pageerror`: ele mata o script inteiro em silêncio, e o arnês fica
+   preso em "carregando…" sem dizer por quê (foi assim que este arquivo falhou na primeira
+   execução). Vendorizar um arquivo do three para um arnês de clima é peso que não se paga;
+   20 linhas de arrasto resolvem, sem dependência nova em `public/`. */
+function orbita(cam, alvo, dom) {
+  let raio = 26, theta = 0, phi = 0.95, arrasto = false, px = 0, py = 0;
+  dom.addEventListener('pointerdown', (e) => { arrasto = true; px = e.clientX; py = e.clientY; });
+  addEventListener('pointerup', () => { arrasto = false; });
+  addEventListener('pointermove', (e) => {
+    if (!arrasto) return;
+    theta -= (e.clientX - px) * 0.005;
+    phi = Math.max(0.06, Math.min(1.54, phi - (e.clientY - py) * 0.005));
+    px = e.clientX; py = e.clientY;
+  });
+  dom.addEventListener('wheel', (e) => { e.preventDefault(); raio = Math.max(3, Math.min(300, raio * (1 + Math.sign(e.deltaY) * 0.1))); }, { passive: false });
+  return {
+    update() {
+      cam.position.set(
+        alvo.x + raio * Math.cos(phi) * Math.sin(theta),
+        alvo.y + raio * Math.sin(phi),
+        alvo.z + raio * Math.cos(phi) * Math.cos(theta),
+      );
+      cam.lookAt(alvo);
+    },
+  };
+}
+
+const qp = new URLSearchParams(location.search);
+const MAP = resolveMapId(qp.get('map'));
+window.__mapId = MAP;
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth - 290, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(60, (innerWidth - 290) / innerHeight, 0.1, 2000);
+cam.position.set(0, 12, 26);
+const alvo = new THREE.Vector3(0, 2, 0);
+const orb = orbita(cam, alvo, renderer.domElement);
+
+/* O SOL DO ARNÊS. O jogo monta a luz dentro do build de cada mapa; aqui existe uma
+   direcional própria, movida pelos mesmos três números que a névoa direcional usa, para
+   que mexer no `sun` mude a cena e não só o termo de névoa. Não é o mesmo objeto que o
+   jogo usa — e é por isso que o que sai daqui é candidato, não veredito. */
+const sol = new THREE.DirectionalLight(0xffffff, 2.2);
+sol.castShadow = true;
+scene.add(sol, new THREE.HemisphereLight(0x9fb8d0, 0x2a2a26, 0.55));
+
+/* padrão do mapa = o que a tabela diz. `AERIAL_TABELA` não tem entrada para todo mapa
+   (o default é o praca_poderes), então a leitura passa pelo mesmo fallback do bloom.js. */
+const BASE = AERIAL_TABELA[MAP] || AERIAL_TABELA.praca_poderes;
+const hex = (n) => '#' + n.toString(16).padStart(6, '0');
+const estado = () => ({ d: BASE.d, color: BASE.color, sun: [...BASE.sun], dir: BASE.dir, exp: 1.0 });
+let E = estado();
+
+const el = (id) => document.getElementById(id);
+const S = { d: el('s-d'), color: el('s-color'), dir: el('s-dir'), sx: el('s-sx'), sy: el('s-sy'), sz: el('s-sz'), exp: el('s-exp') };
+
+function paraControles() {
+  S.d.value = E.d; S.color.value = hex(E.color); S.dir.value = E.dir;
+  S.sx.value = E.sun[0]; S.sy.value = E.sun[1]; S.sz.value = E.sun[2]; S.exp.value = E.exp;
+  aplica();
+}
+function dosControles() {
+  E = {
+    d: +S.d.value,
+    color: parseInt(S.color.value.slice(1), 16),
+    dir: +S.dir.value,
+    sun: [+S.sx.value, +S.sy.value, +S.sz.value],
+    exp: +S.exp.value,
+  };
+  aplica();
+}
+function aplica() {
+  el('v-d').textContent = E.d.toFixed(4);
+  el('v-dir').textContent = (+E.dir).toFixed(2);
+  el('v-sx').textContent = E.sun[0]; el('v-sy').textContent = E.sun[1]; el('v-sz').textContent = E.sun[2];
+  el('v-exp').textContent = (+E.exp).toFixed(2);
+  // a névoa vem de bloom.js com override — nenhuma reimplementação aqui, de propósito
+  scene.fog = makeAerialFog(MAP, { d: E.d, color: E.color, sun: E.sun, dir: E.dir });
+  scene.background = new THREE.Color(E.color);
+  sol.position.set(E.sun[0], E.sun[1], E.sun[2]);
+  renderer.toneMappingExposure = E.exp;
+  el('saida').textContent = linha();
+}
+function linha() {
+  const s = E.sun.map((n) => Math.round(n)).join(', ');
+  return `${MAP}: { d: ${(+E.d).toFixed(4)}, color: 0x${E.color.toString(16).padStart(6, '0')}, sun: [${s}], dir: ${(+E.dir).toFixed(2)} },`;
+}
+for (const k in S) S[k].addEventListener('input', dosControles);
+el('reset').onclick = () => { E = estado(); paraControles(); };
+el('copiar').onclick = async () => {
+  try { await navigator.clipboard.writeText(linha()); el('copiar').textContent = 'copiado — agora meça no r3_fog.py'; }
+  catch { el('copiar').textContent = 'copie do quadro abaixo'; }
+  setTimeout(() => { el('copiar').textContent = 'copiar linha de AERIAL'; }, 2600);
+};
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth - 290, innerHeight);
+  cam.aspect = (innerWidth - 290) / innerHeight; cam.updateProjectionMatrix();
+});
+
+(async () => {
+  const T = initTextures();
+  const def = MAPS[MAP];
+  const props = (def.props && (typeof def.props === 'function' ? def.props() : def.props)) || [];
+  await preloadMapProps(props.map ? props.map((p) => p.id || p) : []);
+  const world = def.build(scene, T);
+  const sp = (world.spawns && world.spawns[0]) || { x: 0, z: 0 };
+  alvo.set(sp.x, 2, sp.z);
+  el('mapa').textContent = `${MAP} · valores de partida vindos de AERIAL`;
+  paraControles();
+  hud.textContent = `${MAP} — arraste para orbitar`;
+  renderer.setAnimationLoop(() => { orb.update(); renderer.render(scene, cam); });
+})().catch((e) => { hud.textContent = 'ERR ' + (e && e.message); console.error(e); });
+</script>
+</body>
+</html>

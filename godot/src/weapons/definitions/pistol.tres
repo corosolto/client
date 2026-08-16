@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+weapon_id = &"pistol"
+display_name = "PT-38"
+damage = 34
+magazine_capacity = 12
+reserve_capacity = 48
+fire_interval = 0.24
+reload_seconds = 1.6
+hip_spread = 0.02
+scope_spread = 0.0
+recoil = 0.014
+range = 400.0
+supports_scope = false
+draw_delay = 0.35

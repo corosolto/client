@@ -1,0 +1,198 @@
+{
+ "ferro_velho": {
+  "pecas": 1275,
+  "arquivos": 58,
+  "murais": 8,
+  "hMin": 0.45,
+  "hMax": 2.8,
+  "hMed": 1.1,
+  "placas": 842,
+  "pintadas": 806,
+  "pelados": [
+   [
+    "Mesh",
+    14
+   ],
+   [
+    "Muro_de_carros_esmagados_1",
+    13
+   ],
+   [
+    "Guindaste_com_eletroímã_1",
+    5
+   ],
+   [
+    "Mesh[inst]",
+    4
+   ]
+  ],
+  "amostraPelada": [
+   {
+    "x": -29.1,
+    "y": 1.6,
+    "z": -33.1,
+    "ry": -1.96,
+    "quem": "Mesh"
+   },
+   {
+    "x": -29,
+    "y": 1.6,
+    "z": -32.9,
+    "ry": -0.39,
+    "quem": "Mesh"
+   },
+   {
+    "x": -27.2,
+    "y": 1.6,
+    "z": 10.8,
+    "ry": 0.05,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -27.5,
+    "y": 1.6,
+    "z": 23.1,
+    "ry": -2.65,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -28.7,
+    "y": 1.6,
+    "z": 27.5,
+    "ry": -1.14,
+    "quem": "Mesh[inst]"
+   },
+   {
+    "x": -28.9,
+    "y": 1.6,
+    "z": -33,
+    "ry": 1.96,
+    "quem": "Mesh"
+   },
+   {
+    "x": -28.9,
+    "y": 1.6,
+    "z": -32.9,
+    "ry": 1.18,
+    "quem": "Mesh"
+   },
+   {
+    "x": -19.5,
+    "y": 1.6,
+    "z": -22.3,
+    "ry": -1.73,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -26.4,
+    "y": 1.6,
+    "z": -3.2,
+    "ry": 0.02,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -19.5,
+    "y": 1.6,
+    "z": 8.7,
+    "ry": -1.53,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -19.2,
+    "y": 1.6,
+    "z": 16.4,
+    "ry": 0.05,
+    "quem": "Muro_de_carros_esmagados_1"
+   },
+   {
+    "x": -19.5,
+    "y": 1.6,
+    "z": 25.3,
+    "ry": -1.73,
+    "quem": "Muro_de_carros_esmagados_1"
+   }
+  ],
+  "cobertura": 95.7,
+  "peladas": [
+   {
+    "xz": "24,-8",
+    "t": 5,
+    "p": 1,
+    "pct": 20
+   },
+   {
+    "xz": "24,0",
+    "t": 4,
+    "p": 2,
+    "pct": 50
+   },
+   {
+    "xz": "8,-32",
+    "t": 9,
+    "p": 5,
+    "pct": 56
+   }
+  ],
+  "usados": [
+   "decal:cartaz-medo.png",
+   "decal:dont-overthink.png",
+   "decal:gratidao-sol.png",
+   "decal:meio-ano.png",
+   "decal:or-graf-coro.png",
+   "decal:or-graf-treta.png",
+   "decal:or-stencil-capivara.png",
+   "decal:or-stencil-pomba.png",
+   "decal:peca-bolha.png",
+   "decal:personagem-muro.png",
+   "decal:personagens-graffiti-01.png",
+   "decal:personagens-graffiti-02.png",
+   "decal:personagens-graffiti-03.png",
+   "decal:personagens-graffiti-04.png",
+   "decal:personagens-graffiti-05.png",
+   "decal:personagens-graffiti-06.png",
+   "decal:personagens-graffiti-07.png",
+   "decal:poster:25c9112229edfcfbb1eae4137ecc151a.jpg",
+   "decal:poster:26268061ca13b4dc4a871c1163cbeb6d.jpg",
+   "decal:poster:3300c39038dd97ad6a20342038c008b0.jpg",
+   "decal:poster:51edbafcf2eebbb2dc157f66bb1a2d66.jpg",
+   "decal:poster:574381edb80801aaff5e9a1cdd88bc4b.jpg",
+   "decal:poster:6f2bbbe03a6c5a16af15fe12ebea0d6c.jpg",
+   "decal:poster:78c38b895431ac393f96036507060be1.jpg",
+   "decal:poster:82f8dcbb0547719bfc4dbb27aed9f583.jpg",
+   "decal:poster:8445c0ca193d22b4d6a9af66409b0dda.jpg",
+   "decal:poster:DOLLYNHO.png",
+   "decal:poster:New Project (1).png",
+   "decal:poster:New Project (2).png",
+   "decal:poster:New Project (3).png",
+   "decal:poster:ashtar-meme.jpg",
+   "decal:poster:ashtar.png",
+   "decal:poster:dafac3c979a935aea80adb8b90f6ef1b.jpg",
+   "decal:poster:dc58fe69ac56037026f1bf6181b7f71c.jpg",
+   "decal:poster:despisque-leao.jpg",
+   "decal:poster:eabfe479653f0e9c94a618858e8667bc.jpg",
+   "decal:poster:f0deec032dd1777bc681179fb74a29b0.jpg",
+   "decal:poster:images.png",
+   "decal:poster:or-baile.jpg",
+   "decal:poster:or-compro-ouro.jpg",
+   "decal:poster:or-quebrada-vive.jpg",
+   "decal:poster:or-show-funk.jpg",
+   "decal:tag-fina.png",
+   "decal:tag-flop.png",
+   "decal:tag-larga.png",
+   "decal:tag-money.png",
+   "decal:tag-pingo.png",
+   "decal:tag-selvagem.png",
+   "decal:tags-treino-02.png",
+   "decal:tags-treino-05.png",
+   "mural:homenagem-champignon",
+   "mural:homenagem-chico",
+   "mural:homenagem-chorao",
+   "mural:homenagem-raul",
+   "mural:homenagem-rita-lee",
+   "mural:homenagem-sabotage",
+   "mural:homenagem-tim-maia",
+   "mural:homenagem-yuka"
+  ],
+  "waypoints": 296
+ }
+}

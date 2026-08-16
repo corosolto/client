@@ -1,0 +1,1198 @@
+---
+import pkg from '../../package.json';
+import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
+
+export const prerender = false;
+const V = pkg.version;
+const EN_GEO_COUNTRIES = new Set([
+  'US', 'GB', 'UK', 'AD', 'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY', 'CZ', 'DE', 'DK',
+  'EE', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD',
+  'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'RO', 'RS', 'RU', 'SE', 'SI', 'SK', 'SM', 'TR',
+  'UA', 'VA', 'XK',
+]);
+const GEO_COUNTRY = (Astro.request.headers.get('x-vercel-ip-country')
+  || Astro.request.headers.get('cf-ipcountry') || '').toUpperCase();
+const GEO_LANG = EN_GEO_COUNTRIES.has(GEO_COUNTRY) ? 'en' : 'pt';
+declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
+const { modules: MODULOS, revision: JS_REV } = __MANIFESTO_JS__;
+const IMPORTMAP = JSON.stringify({
+  imports: {
+    three: `./vendor/three.module.js?v=${V}`,
+    'three/addons/': './vendor/addons/',
+    ...Object.fromEntries(MODULOS.map((m) => [`./js/${m}`, `./js/${m}?v=${V}-${JS_REV}`])),
+  },
+});
+---
+<!DOCTYPE html>
+<html lang={GEO_LANG === 'en' ? 'en' : 'pt-BR'} data-geo-lang={GEO_LANG}>
+<head>
+<meta charset="UTF-8">
+<!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
+<script is:inline define:vars={{ SUPPORT_URL_BR, SUPPORT_URL_INTL }}>
+/* URLs de apoio já RESOLVIDAS pelo servidor (env da Vercel pode sobrescrever).
+   O jogo é zero-build e não lê import.meta.env: sem isto, um override de
+   PUBLIC_SUPPORT_URL_* mudava o /apoie e não o menu do jogo (CodeRabbit, PR #284). */
+window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
+</script>
+<script is:inline>
+(function(){
+  var TETO_SESSAO = 10;      /* no máximo 10 erros DISTINTOS por carregamento de página */
+  var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
+  var MIGALHAS = 20;         // últimas ações guardadas
+  var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, migalhas = [], reportando = false;
+  var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
+  var inicio = Date.now();
+  var consoleErroNativo = null;
+  try { consoleErroNativo = console.error && console.error.bind(console); } catch(_) {}
+
+  function showDebug(kind, msg, extra){
+    if (!DEBUG) return;
+    // O fallback WebGL já explica a falha; só o banner é suprimido, não o relatório.
+    if (window.__semWebgl) return;
+    try{
+      var el = document.getElementById('crash-overlay');
+      if(!el){
+        el = document.createElement('div'); el.id = 'crash-overlay';
+        el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:auto;z-index:2147483647;background:rgba(120,0,0,.94);color:#fff;font:12px/1.45 ui-monospace,Menlo,monospace;padding:10px 14px;white-space:pre-wrap;border-top:2px solid #ff5252';
+        el.onclick = function(){ el.remove(); };
+        (document.body || document.documentElement).appendChild(el);
+      }
+      el.textContent = 'DEBUG (' + kind + '): ' + msg + (extra ? ('\n\n' + extra) : '') + '\n\n(clique para fechar)';
+    }catch(_){}
+  }
+
+  /* Agrupa igual ao banco (migration 015): mensagem + origem viram uma chave, e o
+     UPSERT lá vira `hits`. Sem isto, um erro dentro do requestAnimationFrame manda
+     60 linhas por segundo. FNV-1a de 32 bits - não é criptografia, é balde. */
+  function digital(s){
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
+
+  /* A versão sai do `?v=` do próprio HTML: ela já está aqui, já sobe junto no bump dos
+     dois lados, e assim não há terceiro lugar para esquecer de atualizar. */
+  function versao(){
+    try{
+      var l = document.querySelector('link[rel=stylesheet][href*="?v="]');
+      return l ? (l.getAttribute('href').split('?v=')[1] || null) : null;
+    }catch(_){ return null; }
+  }
+
+  /* Contexto de partida do `window.__game` (main.js:556 já o expõe). Tudo em try:
+     ler contexto NUNCA pode ser o que derruba o relatório do erro de verdade. */
+  function contexto(){
+    var c = { version: versao(), route: location.pathname, breadcrumbs: migalhas.slice() };
+    try{
+      // 'cs_anon' é a MESMA chave do `ANON_KEY` de main.js:403 - sem isso o erro não
+      // cruza com a telemetria do mesmo navegador, que é metade da utilidade.
+      var a = localStorage.getItem('cs_anon');
+      if (a) c.anonId = a;
+    }catch(_){}
+    try{
+      var g = window.__game;
+      if (g) {
+        // `_mapId` (game.js:620) e NÃO `mapId`: o construtor recebe `mapId` e guarda
+        // resolvido no campo com underscore. Ler o nome errado dá `undefined` calado -
+        // o erro chegaria sem mapa e ninguém desconfiaria da coluna vazia.
+        c.map = g._mapId || null;
+        c.mode = g.ctf ? 'ctf' : 'rounds';
+        c.faction = g.playerFaction || null;
+        c.matchSecs = Math.round(g.time || 0);
+        c.nick = g.nickname || null;
+      } else {
+        var n = document.getElementById('nick-input');
+        if (n && n.value) c.nick = n.value.slice(0, 40);
+      }
+    }catch(_){}
+    return c;
+  }
+
+  function reporta(kind, msg, source, stack, externa){
+    if (reportando) return null;                           // guarda de laço
+    try{
+      var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
+      if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
+      if (!enviados[fp]) {
+        if (externa) {
+          if (nExternos >= TETO_EXTERNO) return null;
+          nExternos++;
+        } else {
+          if (nEnviados >= TETO_SESSAO) return null;
+          nEnviados++;
+        }
+        enviados[fp] = 1;
+      }
+      reportando = true;
+      var c = contexto();
+      c.fingerprint = fp; c.kind = kind;
+      c.message = String(msg || '?').slice(0, 500);
+      c.source = source || null;
+      c.stack = stack ? String(stack).slice(0, 4000) : null;
+      var corpo = JSON.stringify(c);
+      corpos[fp] = corpo;
+      /* sendBeacon sobrevive à aba fechando, que é justamente quando o jogador some
+         depois de um crash. O clique manual usa fetch para poder confirmar o envio. */
+      if (!(navigator.sendBeacon && navigator.sendBeacon('/api/jserror', new Blob([corpo], {type:'application/json'}))))
+        fetch('/api/jserror', { method:'POST', headers:{'content-type':'application/json'}, body: corpo, keepalive: true }).catch(function(){});
+      reportando = false;
+      return { fp: fp, corpo: corpo };
+    }catch(_){ /* coletor NUNCA atrapalha o jogo */ }
+    reportando = false;
+    return null;
+  }
+
+  function erroIgnoravel(r){
+    var nome = r && r.name;
+    var msg = String((r && r.message) || r || '');
+    return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
+  }
+  /* URL http só prova origem em source/stack; na mensagem ela é payload do
+     jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
+     qualquer campo: o navegador reporta frame injetado até na mensagem (#157). */
+  function origemDoJogo(source, stack, mensagem){
+    var sourceText = String(source || '');
+    var extensao = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
+    // /_vercel/ é bundle da Vercel (analytics/speed-insights): same-origin, mas
+    // código de terceiro. Crash dele (ex. pushState read-only, #218/#219) não é jogo.
+    var vendor = /\/_vercel\//i;
+    if (extensao.test(sourceText)) return false;
+    if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return false;
+    var propria = location.origin;
+    if (sourceText && /^https?:\/\//i.test(sourceText)) {
+      try {
+        if (new URL(sourceText, location.href).origin !== propria) return false;
+        return true;
+      } catch(_) {}
+    }
+    var prova = sourceText + '\n' + String(stack || '');
+    var urls = prova.match(/https?:\/\/[^\s)'"<>]+/gi) || [];
+    var viuPropria = false, viuExterna = false;
+    for (var i = 0; i < urls.length; i++) {
+      try {
+        if (new URL(urls[i], location.href).origin === propria) viuPropria = true;
+        else viuExterna = true;
+      } catch(_) {}
+    }
+    if (viuPropria) return true;
+    if (extensao.test(prova + '\n' + String(mensagem || ''))) return false;
+    return !viuExterna;
+  }
+
+  function ligaFalha(){
+    var el = document.getElementById('launch-error');
+    if (!el || el.dataset.ready) return el;
+    el.dataset.ready = '1';
+    var retry = document.getElementById('launch-error-retry');
+    var send = document.getElementById('launch-error-report');
+    var status = document.getElementById('launch-error-status');
+    if (retry) retry.onclick = function(){ location.reload(); };
+    if (send) send.onclick = function(){
+      send.disabled = true;
+      send.textContent = 'ENVIANDO…';
+      var envio;
+      try {
+        var corpo = relatorioFalha;
+        envio = corpo
+          ? fetch('/api/jserror', { method:'POST', headers:{'content-type':'application/json'}, body: corpo, keepalive: true })
+              .then(function(r){ return r.ok; }, function(){ return false; })
+          : Promise.resolve(false);
+      } catch(_) { envio = Promise.resolve(false); }
+      envio.then(function(ok){
+        send.textContent = ok ? 'RELATÓRIO ENVIADO ✓' : 'TENTAR ENVIAR DE NOVO';
+        send.disabled = !!ok;
+        if (status) status.textContent = ok ? 'Valeu. Isso ajuda a gente a corrigir mais rápido.' : 'Não deu para enviar agora. Você ainda pode tentar novamente.';
+      });
+    };
+    return el;
+  }
+
+  function mostraFalha(dados){
+    var el = ligaFalha();
+    if (!el) { falhaPendente = dados; return; }
+    var code = document.getElementById('launch-error-code');
+    if (code) code.textContent = dados.fp ? ('CÓDIGO ' + dados.fp.toUpperCase()) : 'RELATÓRIO LOCAL';
+    el.classList.remove('hidden');
+    try { document.getElementById('launch-error-retry').focus(); } catch(_){}
+  }
+
+  var lancamento = {
+    ativo: false, etapa: null, timer: null,
+    begin: function(etapa, timeout, concluiu){
+      if (this.timer) clearTimeout(this.timer);
+      this.ativo = true; this.etapa = etapa;
+      var self = this;
+      this.timer = setTimeout(function(){
+        if (concluiu) {
+          var v = concluiu();
+          /* #241: 'rede-lenta' = ainda há PROGRESSO real (ex.: GLBs chegando), só que
+             devagar. Renova o watchdog em vez de falhar; travamento de verdade é
+             progresso PARADO até o teto, e aí o fail vem igual. */
+          if (v === 'rede-lenta') { self.begin(etapa, timeout, concluiu); return; }
+          if (v) { self.ready(etapa); return; }
+        }
+        self.fail(new Error('tempo limite ao abrir ' + etapa), 'launch-watchdog');
+      }, timeout || 12000);
+    },
+    ready: function(etapa){
+      if (etapa && this.etapa && etapa !== this.etapa) return;
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null; this.ativo = false; this.etapa = null;
+    },
+    fail: function(err, source){
+      var etapa = this.etapa || 'a arena';
+      this.ready();
+      var msg = (err && err.message) || String(err || 'falha desconhecida');
+      var stack = err && err.stack;
+      if (/watchdog$/.test(source || '') && consoleErroNativo) {
+        try { consoleErroNativo('Falha ao abrir ' + etapa, err); } catch(_) {}
+      }
+      var registro = reporta('error', 'Falha ao abrir ' + etapa + ': ' + msg, source || 'launch', stack);
+      relatorioFalha = registro && registro.corpo;
+      mostraFalha({ fp: registro && registro.fp });
+    }
+  };
+  window.__gameLaunch = lancamento;
+
+  document.addEventListener('DOMContentLoaded', function(){
+    ligaFalha();
+    if (falhaPendente) { var f = falhaPendente; falhaPendente = null; mostraFalha(f); }
+  });
+
+  /* Migalhas: o que o jogador FEZ, nunca o que ele ESCREVEU. Clique em elemento com id
+     ou em botão cobre o menu inteiro sem precisar instrumentar main.js linha a linha -
+     e a regra "só rótulo, nunca conteúdo" está escrita na migration 015. */
+  function migalha(txt){
+    migalhas.push(new Date().toISOString().slice(11, 19) + ' ' + String(txt).slice(0, 120));
+    if (migalhas.length > MIGALHAS) migalhas.shift();
+  }
+  window.__migalha = migalha;   // hook para quem quiser marcar passo de jogo
+  document.addEventListener('click', function(e){
+    try{
+      var t = e.target && e.target.closest ? e.target.closest('button,[id],a') : null;
+      if (t) migalha('clique ' + (t.id ? '#' + t.id : t.tagName.toLowerCase()));
+    }catch(_){}
+  }, true);
+
+  window.addEventListener('error', function(e){
+    var loc = e.filename ? (e.filename + ':' + e.lineno + ':' + e.colno) : '';
+    var msg = (e.message || e.error || '?');
+    if (consoleErroNativo) {
+      try { consoleErroNativo('Erro global não tratado', e.error || msg); } catch(_) {}
+    }
+    /* "Script error." sem filename e sem stack é o erro cross-origin opaco que o
+       browser mascara (extensão ou script de terceiro sem CORS). Como todo código
+       do jogo é same-origin (/js, /vendor), ele nunca é nosso: descartar evita lotar
+       o js_error e abrir issue automática vazia (#136). */
+    if (!e.filename && !(e.error && e.error.stack) && /^script error/i.test(String(msg))) return;
+    var interna = origemDoJogo(e.filename, e.error && e.error.stack, String(msg));
+    // A factory já registrou a falha final; o throw apenas interrompe o módulo sem renderer.
+    if (window.__semWebgl && /sem_webgl/.test(String(msg))) return;
+    if (interna) showDebug('error', msg + (loc ? ('  @ ' + loc) : ''), e.error && e.error.stack);
+    reporta('error', msg, loc, e.error && e.error.stack, !interna);
+    if (!window.__CS_MAIN_READY__ && interna) erroDoBoot = e.error || new Error(String(msg));
+    if (lancamento.ativo && interna) lancamento.fail(e.error || new Error(String(msg)), loc);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e.reason;
+    var interna = origemDoJogo(null, r && r.stack, String((r && r.message) || r || ''));
+    if (consoleErroNativo) {
+      try { consoleErroNativo('Promise rejeitada sem tratamento', r); } catch(_) {}
+    }
+    if (interna) showDebug('promise', (r && r.message) || String(r), r && r.stack);
+    reporta('promise', (r && r.message) || String(r), null, r && r.stack, !interna);
+    if (lancamento.ativo && interna && !erroIgnoravel(r)) lancamento.fail(r instanceof Error ? r : new Error(String(r)), 'promise');
+  });
+
+  /* Um erro global sozinho não prova que o jogo parou (extensões de carteira injetam
+     vários). A tela amigável nasce só de uma ação que prometia avançar e não avançou. */
+  window.addEventListener('pointerdown', function(e){
+    try{
+      var alvo = e.target && e.target.closest ? e.target.closest('#boot-splash,#btn-jogar') : null;
+      if (!alvo) return;
+      if (alvo.id === 'boot-splash') {
+        var prompt = document.getElementById('splash-enter');
+        var pronto = prompt && !prompt.classList.contains('hidden');
+        if (!window.__CS_MAIN_READY__) {
+          if (erroDoBoot || window.__CS_MAIN_FAILED) {
+            lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou (verifique a conexão)'), 'boot-watchdog');
+          } else if (!window.__CS_MAIN_LOADED) {
+            /* Rede lenta (#265): failsafe abre a splash antes do main.js chegar; clicar
+               não é defeito. Informa e espera, sem virar crash-auto. */
+            var st = document.getElementById('boot-status');
+            if (st) st.textContent = 'CONEXÃO LENTA - AINDA BAIXANDO O JOGO…';
+          } else if (Date.now() - inicio > 22000) {
+            lancamento.fail(new Error('carregamento inicial não respondeu'), 'boot-watchdog');
+          }
+        } else if (pronto) {
+          lancamento.begin('entrada', 3000, function(){
+            var splash = document.getElementById('boot-splash');
+            return !splash || splash.classList.contains('gone');
+          });
+        }
+      } else {
+        lancamento.begin('menu', 3000, function(){
+          var menu = document.getElementById('main-menu');
+          var setup = document.getElementById('menu-setup');
+          return !!(menu && menu.classList.contains('hidden')) || !!(setup && setup.dataset.step === 'profile');
+        });
+      }
+    }catch(_){}
+  }, true);
+
+  /* console.error só ganha overlay em ?debug=1: nem todo console.error é crash, e
+     tapar a tela do jogador com aviso de textura faltando seria pior que o aviso. Sem a
+     flag ele apenas é reportado e agrupado igual aos outros.
+     O original é chamado PRIMEIRO: se o relatório explodir, o log dele não se perde. */
+  try{
+    var orig = consoleErroNativo || console.error;
+    console.error = function(){
+      try{ orig.apply(console, arguments); }catch(_){}
+      // Tentativas WebGL continuam no console, mas só a falha final vira relatório.
+      if (window.__webglTentativa) return;
+      try{
+        var partes = [];
+        for (var i = 0; i < arguments.length && i < 4; i++) {
+          var a = arguments[i];
+          partes.push(a && a.message ? a.message : String(a));
+        }
+        var m = partes.join(' ');
+        var pilha = (arguments[0] && arguments[0].stack) || null;
+        // mesma guarda dos outros dois caminhos: extensão que loga não abre overlay
+        // nem come a cota de dez envios do jogo (KNOWN-BUGS.md, BUG-51).
+        var interna = origemDoJogo(null, pilha, m);
+        if (interna) showDebug('console', m, pilha);
+        reporta('console', m, null, pilha, !interna);
+      }catch(_){}
+    };
+  }catch(_){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
+<meta name="description" content="Jogo FPS gratuito de navegador: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas satíricos e 26 armas - bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
+<meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
+<meta name="author" content="CORO SOLTO contributors">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#090704">
+<!-- CANONICAL COM www: a produção responde em www.csbrasil.online. Este link
+     estava no host sem www e brigava com o canonical das outras páginas
+     (que sai de astro.config.mjs) - dois hosts, sinal diluído. -->
+<link rel="canonical" href="https://www.csbrasil.online/">
+<!-- HREFLANG. Repetido aqui porque esta página tem <head> PRÓPRIO e não passa
+     pelo Layout.astro - a home é o jogo, não uma página de conteúdo. Deixar de
+     fora justamente a URL mais importante do site é o tipo de buraco que só
+     aparece quando alguém compara página por página.
+     Mesmo host e mesma forma do canonical acima. Ver Layout.astro pro porquê
+     de `x-default` e da auto-referência. -->
+<link rel="alternate" hreflang="pt-BR" href="https://www.csbrasil.online/">
+<link rel="alternate" hreflang="x-default" href="https://www.csbrasil.online/">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CORO SOLTO: Treta Suprema">
+<meta property="og:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
+<meta property="og:description" content="FPS satírico de navegador com 5 facções brasileiras: 44 personagens, 5 mapas, 26 armas, bots, rounds e muita treta. Jogue grátis no navegador.">
+<meta property="og:url" content="https://www.csbrasil.online/">
+<meta property="og:image" content="https://www.csbrasil.online/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CORO SOLTO: Treta Suprema - FPS satírico de navegador com facções brasileiras">
+<meta property="og:locale" content="pt_BR">
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CORO SOLTO: Treta Suprema - FPS grátis de navegador">
+<meta name="twitter:description" content="FPS satírico de navegador com 5 facções brasileiras: 44 personagens, 5 mapas, 26 armas. Jogue grátis no navegador.">
+<meta name="twitter:image" content="https://www.csbrasil.online/og-image.jpg">
+<meta name="twitter:image:alt" content="CORO SOLTO: Treta Suprema - FPS satírico de navegador com facções brasileiras">
+<!-- JSON-LD: UM nó VideoGame no site inteiro, e ele mora AQUI.
+     Antes, index.astro e sobre.astro emitiam cada um um VideoGame com a MESMA
+     url e SEM @id - dois nós anônimos idênticos, que é o caso clássico de
+     falha de deduplicação: o crawler não sabe se é uma entidade ou duas.
+     Agora o nó canônico tem @id estável (…/#game) e vive na home, que é a url
+     do próprio jogo; /sobre e as outras páginas só REFERENCIAM esse @id.
+     Uma entidade, um dono. (a fonte dos textos é src/lib/site.ts) -->
+<script type="application/ld+json" is:inline>
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebSite", "@id": "https://www.csbrasil.online/#website",
+      "url": "https://www.csbrasil.online/",
+      "name": "CORO SOLTO: Treta Suprema",
+      "alternateName": ["CORO SOLTO", "CS BRASIL", "CS BRASIL: Treta Suprema"],
+      "inLanguage": "pt-BR",
+      "publisher": { "@id": "https://www.csbrasil.online/#org" } },
+    { "@type": "Organization", "@id": "https://www.csbrasil.online/#org",
+      "name": "CORO SOLTO contributors",
+      "url": "https://www.csbrasil.online/",
+      "logo": "https://www.csbrasil.online/og-image.jpg" },
+    { "@type": "WebPage", "@id": "https://www.csbrasil.online/#webpage",
+      "url": "https://www.csbrasil.online/",
+      "name": "CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)",
+      "isPartOf": { "@id": "https://www.csbrasil.online/#website" },
+      "primaryImageOfPage": { "@type": "ImageObject", "url": "https://www.csbrasil.online/og-image.jpg", "width": 1200, "height": 630 },
+      "mainEntity": { "@id": "https://www.csbrasil.online/#game" } },
+    { "@type": "VideoGame", "@id": "https://www.csbrasil.online/#game",
+      "name": "CORO SOLTO: Treta Suprema",
+      "alternateName": ["CORO SOLTO", "CS BRASIL", "CS BRASIL: Treta Suprema"],
+      "url": "https://www.csbrasil.online/",
+      "image": "https://www.csbrasil.online/og-image.jpg",
+      "description": "FPS de navegador gratuito e satírico: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas, 26 armas, bots, rounds e Capture the Flag - de uma Brasília fictícia ao ferro velho.",
+      "genre": ["Shooter", "FPS", "Comédia", "Sátira"],
+      "gamePlatform": ["Web Browser", "Desktop"],
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Qualquer navegador de desktop",
+      "playMode": "SinglePlayer",
+      "inLanguage": "pt-BR",
+      "isAccessibleForFree": true,
+      "isFamilyFriendly": true,
+      "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL",
+                  "availability": "https://schema.org/InStock",
+                  "url": "https://www.csbrasil.online/" },
+      "author": { "@id": "https://www.csbrasil.online/#org" },
+      "publisher": { "@id": "https://www.csbrasil.online/#org" },
+      "gameLocation": [
+        { "@type": "Place", "name": "Praça dos Três Poderes" },
+        { "@type": "Place", "name": "Praça (clássico)" },
+        { "@type": "Place", "name": "Piscina da Treta" },
+        { "@type": "Place", "name": "Loja H (Estacionamento)" },
+        { "@type": "Place", "name": "Ferro Velho do Zé" }
+      ] }
+  ]
+}
+</script>
+<script type="application/ld+json" is:inline>
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://www.csbrasil.online/#faq",
+  "mainEntity": [
+    { "@type": "Question", "name": "O que é CORO SOLTO: Treta Suprema?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Um jogo FPS gratuito que roda no navegador: 5 facções (Time E, Time B, Tribos Urbanas, Palhaços e Funkeiros), 44 personagens originais, 5 mapas satíricos, 26 armas, bots, sistema de rounds e Capture the Flag. O jogo já se chamou CS BRASIL." } },
+    { "@type": "Question", "name": "Preciso instalar ou pagar algo?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Não. O jogo é 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem download, sem instalação e sem cadastro." } },
+    { "@type": "Question", "name": "Quais são os controles?",
+      "acceptedAnswer": { "@type": "Answer", "text": "WASD move, mouse mira, clique esquerdo atira, clique direito abre a luneta, Ctrl (ou C) agacha e melhora a mira, Shift corre, Espaço pula, R recarrega, as teclas 1/2/3 trocam entre primária, pistola e faca, Z/X/V abrem os comandos de voz, M troca de time e Tab mostra o placar." } },
+    { "@type": "Question", "name": "Quais são as facções e os personagens?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Cinco facções fictícias e satíricas, com 44 personagens no total: Time E (8), Time B (9), Tribos Urbanas (9), Palhaços (9) e Funkeiros (9). Tribos Urbanas e Funkeiros não têm nada de política. Todos são arquétipos originais, sem pessoas reais, e todos jogam exatamente igual." } },
+    { "@type": "Question", "name": "Quais mapas o jogo tem?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Cinco arenas: Praça dos Três Poderes (a Brasília fictícia, com a urna gigante quebrada no mid), Praça clássica, Piscina da Treta, Loja H (estacionamento) e Ferro Velho do Zé. As duas últimas abrem em Capture the Flag, mas qualquer mapa aceita qualquer modo." } },
+    { "@type": "Question", "name": "Tem ranking global?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Ainda não. O jogo está em alpha e o ranking global está desligado até o placar ser confiável. Seus stats de partida ficam salvos no seu navegador e aparecem no menu RANKING do jogo." } },
+    { "@type": "Question", "name": "É um jogo oficial da Valve ou do Counter-Strike?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve. Counter-Strike é marca da Valve Corporation." } },
+    { "@type": "Question", "name": "Funciona no celular?",
+      "acceptedAnswer": { "@type": "Answer", "text": "O jogo foi feito para desktop com mouse e teclado. Em telas de toque um aviso recomenda jogar no computador." } }
+  ]
+}
+</script>
+<!-- O ICO tem recortes próprios por tamanho; regenere com tools/eval/canarinho-icon.mjs. -->
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="stylesheet" href={`/style.css?v=${V}`}>
+<!-- Todo módulo local precisa passar pelo import map versionado. -->
+<script type="importmap" is:inline set:html={IMPORTMAP}></script>
+</head>
+<body>
+<h1 class="sr-only">CORO SOLTO: Treta Suprema (ex-CS BRASIL) - jogo FPS gratuito de navegador, Time E × Time B</h1>
+
+<!-- SPLASH DE BOOT: cobre o load inicial (nada de cena parcial/"minecraft" visível) e
+     destrava o áudio COM SOM no 1º gesto (política de autoplay do browser exige gesto;
+     a splash transforma essa exigência em ritual de entrada). O menu carrega por baixo
+     e já aparece pronto quando a splash sai. -->
+<div id="boot-splash" style="position:fixed;inset:0;z-index:200;background-color:#141216">
+  <div class="splash-frame">
+    <canvas id="splash-logo" width="900" height="360"></canvas>
+    <div class="splash-sub">ARENA DE SNIPER · PET × BOL × TRIBOS</div>
+    <div id="splash-character-stage" aria-hidden="true">
+      <canvas id="load-character-3d"></canvas>
+    </div>
+    <div class="splash-bar"><div id="boot-bar-fill"></div></div>
+    <div class="splash-status"><span id="boot-status">CARREGANDO ARENA…</span><span id="boot-pct">0%</span></div>
+    <div id="splash-enter" class="hidden">CLIQUE OU PRESSIONE QUALQUER TECLA</div>
+  </div>
+  <div class="splash-ver" id="splash-ver"></div>
+</div>
+
+<!-- LOADING de partida/personagens: overlay opaco com barra real (THREE.LoadingManager)
+ - enquanto os GLBs entram, NADA da cena montando fica visível -->
+<div id="load-overlay" class="hidden">
+  <div id="load-kicker">CARREGANDO MAPA</div>
+  <div id="load-versus" class="hidden"><span id="load-vs-a"></span><i>VS</i><span id="load-vs-b"></span></div>
+  <div class="lo-box">
+    <div id="load-map" aria-hidden="true"></div>
+    <div id="load-meta"></div>
+    <div id="load-label">CARREGANDO…</div>
+    <div class="splash-bar lo-bar"><div id="load-bar-fill"></div></div>
+    <div class="splash-status"><span id="load-status">CARREGANDO MODELOS 3D…</span><span id="load-pct">0%</span></div>
+    <!-- DICA rotativa (tela 00B do redesign). Tem função além de decorar: o load de
+         mapa leva alguns segundos e uma tela que só mostra porcentagem parece
+         travada. Uma linha que muda prova que o jogo está vivo. -->
+    <div class="lo-tip"><b>DICA</b><span id="load-tip"></span></div>
+  </div>
+  <div id="load-character-stage" aria-hidden="true">
+    <span id="load-character-action">CORRIDA</span>
+  </div>
+</div>
+
+<!-- Exiba apenas quando uma tentativa explícita de abrir a arena falhar. -->
+<div id="launch-error" class="hidden" role="alertdialog" aria-modal="true" aria-labelledby="launch-error-title">
+  <div class="launch-error-card">
+    <div class="launch-error-kicker">A TRETA DEU UMA PAUSA</div>
+    <h2 id="launch-error-title">A ARENA NÃO ABRIU</h2>
+    <p>Alguma coisa travou durante o carregamento. O erro já foi registrado automaticamente, sem pedir senha.</p>
+    <div id="launch-error-code" class="launch-error-code">RELATÓRIO LOCAL</div>
+    <div class="launch-error-actions">
+      <button id="launch-error-retry" class="btn btn-big" type="button">TENTAR DE NOVO</button>
+      <button id="launch-error-report" class="btn" type="button">REPORTAR ERRO</button>
+    </div>
+    <p id="launch-error-status" class="launch-error-status" aria-live="polite">Se quiser, confirme o envio pelo botão acima.</p>
+  </div>
+</div>
+
+<!-- Mobile fallback -->
+<div id="mobile-warning" class="screen hidden">
+  <div class="panel center-panel">
+    <h1>CORO SOLTO: TRETA SUPREMA</h1>
+    <p class="big">Este jogo foi feito para <b>desktop</b> (mouse + teclado).</p>
+    <p>Jogar num PC ou notebook é <b>recomendado</b>. No celular a treta não flui.</p>
+    <button id="mobile-ok" class="btn">ENTENDI</button>
+  </div>
+</div>
+
+<!-- Main menu -->
+<div id="main-menu" class="screen cs-screen">
+  <div class="cs-wallpaper"></div>
+  <div class="cs-vignette"></div>
+  <div class="scanlines"></div>
+
+  <!-- Chips do topo-direito (redesign, tela 01). São ROTAS REAIS do site, não
+       decoração: as mesmas três já existiam soterradas na fileira de 10 links do
+       rodapé. Aqui elas ganham o peso que o desenho pede, e o rodapé segue
+       inteiro - nenhuma informação saiu de lugar, uma ganhou destaque.
+       A seta é U+2197, glifo geométrico: o redesign proíbe emoji. -->
+  <nav class="aaa-links" aria-label="Links do jogo">
+    <a href="/ranking" target="_blank" rel="noopener">RANKING GLOBAL <span aria-hidden="true">↗</span></a>
+    <a href="/mapa" target="_blank" rel="noopener">MAPA DA TRETA <span aria-hidden="true">↗</span></a>
+    <a href="/sobre" target="_blank" rel="noopener">SOBRE <span aria-hidden="true">↗</span></a>
+  </nav>
+
+  <div class="cs-left">
+    <!-- logo removido: os wallpapers (wall-1..4) já trazem o logo do jogo -->
+    <!-- nav com roving tabindex: setas ↑↓ movem, Enter/Espaço confirma (main.js).
+         aria-current marca o item que abriu o painel - antes nada dizia de onde
+         o setup tinha vindo. -->
+    <!-- Lista de 4 do redesign (JOGAR / RANKING / COMO JOGAR / CONFIGURAÇÕES). Os DOIS
+         modos não cabiam como irmãos sem virar 5 itens, então JOGAR abre um submenu e
+         os data-act `sp`/`ctf` seguem intocados - o switch do main.js:980 não muda.
+         SOBRE O JOGO virou COMO JOGAR só no rótulo: `sobre` já abria o #howto-panel,
+         ou seja, esse item sempre FOI o "como jogar" do handoff.
+         FEEDBACK desceu pro rodapé (segue vivo, ver /api/feedback e migration 013). -->
+    <nav class="cs-menu aaa-nav" id="cs-menu" aria-label="Menu principal">
+      <div class="cs-menu-label">// ESCOLHA A TRETA</div>
+      <button class="cs-item" data-act="jogar" type="button"
+              aria-expanded="false" aria-controls="cs-modos"><span class="cs-tick">▸</span>JOGAR</button>
+      <div class="cs-sub" id="cs-modos" hidden>
+        <button class="cs-item cs-sub-item" data-act="sp"  type="button"><span class="cs-tick">▸</span>MATA-MATA</button>
+        <button class="cs-item cs-sub-item" data-act="ctf" type="button"><span class="cs-tick">▸</span>CAPTURE A BANDEIRA</button>
+      </div>
+      <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
+      <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>COMO JOGAR</button>
+      <button class="cs-item" data-act="config" type="button"><span class="cs-tick">▸</span>CONFIGURAÇÕES</button>
+      <button class="cs-item" data-act="feedback" type="button"><span class="cs-tick">▸</span>ENVIE SEU FEEDBACK</button>
+      <button class="cs-item" data-act="apoie" type="button"><span class="cs-tick">▸</span>APOIE O JOGO</button>
+    </nav>
+    <!-- plate do jogador: nível/XP derivados dos stats locais (mesma fonte do RANKING).
+         Clique abre o passo de perfil do setup. -->
+    <!-- nível/XP FORA por enquanto (pedido do dono 06/08); DOM fica pro main.js não quebrar -->
+  <!-- BARRA INFERIOR do redesign (tela 01): chip de perfil + as duas escolhas da
+       partida. Os dois botões de ARMAS e MAPA não são controles novos - são espelho
+       do que já se escolhe no setup (#wpn-dd-label, #map-name), e clicar leva
+       exatamente pra lá. O desenho quer a escolha VISÍVEL no menu; o jogo continua
+       com um lugar só onde ela muda de verdade.
+       NÍVEL/XP seguem no DOM e ocultos (pedido do dono 06/08, reconfirmado nesta
+       rodada): o main.js escreve neles sem guarda, tirar quebraria o boot. -->
+  <div class="aaa-bottombar" id="menu-bottombar">
+    <button class="player-plate aaa-profile" id="player-plate" type="button" data-empty="1" title="Abrir seu perfil">
+      <span class="pp-avatar" id="pp-avatar">CS</span>
+      <span class="pp-info">
+        <span class="pp-nick" id="pp-nick">SEM NICK</span>
+        <span class="pp-sub" id="pp-sub">EDITAR PERFIL</span>
+        <span class="pp-level" id="pp-level" hidden>NÍVEL 1</span>
+        <span class="xp-bar" hidden><i id="xp-fill"></i></span>
+        <span class="xp-num" id="xp-num" hidden>0 / 2.000 XP</span>
+      </span>
+    </button>
+    <button class="aaa-dd" id="mf-armas" type="button" title="Escolher as armas da partida">
+      <span class="label">ARMAS</span>
+      <span class="value" id="mf-armas-val">TODAS <span class="caret" aria-hidden="true">▼</span></span>
+    </button>
+    <button class="aaa-dd" id="mf-mapa" type="button" title="Escolher o mapa da partida">
+      <span class="label">MAPA</span>
+      <span class="value" id="mf-mapa-val">- <span class="caret" aria-hidden="true">▼</span></span>
+    </button>
+  </div>
+    <div class="menu-footer">
+        <span class="mf-online" id="mf-online" hidden><span id="mf-online-n">0</span> online</span>
+        <a href="https://github.com/rubenmarcus/csbrasil" target="_blank" rel="noopener">GitHub</a>
+        <a href="/docs/" target="_blank">Docs</a>
+        <a href="https://github.com/rubenmarcus/csbrasil/issues" target="_blank" rel="noopener">Issues</a>
+        <a href="/armas" target="_blank">Armas</a>
+        <a href="/personagens" target="_blank">Personagens</a>
+        <a href="/mapas" target="_blank">Mapas</a>
+        <a href="/como-jogar" target="_blank">Como jogar</a>
+        <a href="/changelog" target="_blank">Changelog</a>
+        <a href="/sobre" target="_blank">Sobre</a>
+        <!-- FEEDBACK saiu da lista principal (o redesign fecha o menu em 4 itens) e
+             desceu pra cá. É <button> e não <a> porque abre painel interno, não rota. -->
+        <button type="button" id="mf-feedback" class="mf-link">Feedback</button>
+        <div class="mf-social">
+          <a href={DISCORD_URL} target="_blank" rel="noopener" aria-label="Discord do CORO SOLTO">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.198.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+          </a>
+          <a href={TELEGRAM_URL} target="_blank" rel="noopener" aria-label="Telegram do CORO SOLTO">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          </a>
+          <a href={GITHUB_URL} target="_blank" rel="noopener" aria-label="Código no GitHub">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          </a>
+        </div>
+      </div>
+    <span class="menu-version" id="mf-ver"></span>
+  </div>
+
+  <!-- PAINEL DE SETUP - dois PASSOS no mesmo painel (data-step).
+       PASSO 1 = A PARTIDA: o mapa é o protagonista (cartaz grande, nome, modo, bots).
+       O nick saiu daqui a pedido do dono: perfil virou um passo próprio, aberto pelo
+       botão PERFIL. Dois passos no MESMO container pra não duplicar a máquina de
+       estados do menu (closeSetup / ESC / clique fora / :has(.cs-setup.open)). -->
+  <div id="menu-setup" class="cs-setup" data-step="match">
+    <div class="cs-setup-head"><small id="setup-step">PASSO 1 · A PARTIDA</small><span id="setup-title">MATA-MATA</span></div>
+
+    <!-- ---------- PASSO 1: A PARTIDA ---------- -->
+    <section class="setup-pane pane-match">
+      <!-- O cartaz do mapa é a tela inteira do passo: arte grande, nome grande e a
+           ficha da partida (modo · bots · armas) LIDA EM CIMA DA ARTE, não num form. -->
+      <div class="map-picker">
+        <img id="map-thumb" src="/img/map-previews/praca_poderes.jpg" alt="preview do mapa">
+        <button id="map-mode" type="button" title="Clique pra trocar entre ROUNDS e CAPTURE THE FLAG">ROUNDS</button>
+        <span id="map-dots" aria-hidden="true"></span>
+        <!-- Setas do carrossel: `title` além do aria-label porque o dono reprovou duas
+             vezes por elas não parecerem clicáveis. O aria-label só fala com leitor de
+             tela; o title dá a dica no mouse. Ids e handlers intocados (main.js:806). -->
+        <div class="map-arrows">
+          <button id="map-prev" class="map-arrow" type="button" aria-label="mapa anterior" title="Mapa anterior">‹</button>
+          <button id="map-next" class="map-arrow" type="button" aria-label="próximo mapa" title="Próximo mapa">›</button>
+        </div>
+        <div class="map-side">
+          <span class="map-kicker">O PALCO DA TRETA</span>
+          <span id="map-name"> - </span>
+          <span id="map-meta"></span>
+        </div>
+      </div>
+      <div class="match-opts">
+        <label class="map-label">ARMAS
+          <div class="dd" id="wpn-dd">
+            <button class="dd-btn" id="wpn-dd-btn" type="button"><span id="wpn-dd-label"></span><span class="dd-arrow">▾</span></button>
+            <div class="dd-list hidden" id="wpn-dd-list"></div>
+          </div>
+        </label>
+        <label class="map-label">BOTS / LADO
+          <div class="dd" id="bots-dd">
+            <button class="dd-btn" id="bots-dd-btn" type="button"><span id="bots-dd-label"></span><span class="dd-arrow">▾</span></button>
+            <div class="dd-list hidden" id="bots-dd-list"></div>
+          </div>
+        </label>
+        <!-- Dificuldade agora é RANDÔMICA por bot (50% ruins / 20% médios / 20% bons /
+             10% muito bons) - seletor removido. -->
+      </div>
+      <div class="cs-setup-actions">
+        <button id="btn-profile" class="btn btn-profile" type="button">
+          <span id="profile-name">SEM NICK</span>
+        </button>
+        <div class="cs-setup-row">
+          <button id="setup-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+          <button id="btn-jogar" class="btn btn-big">▶ JOGAR</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PASSO À PARTE: O PERFIL ---------- -->
+    <section class="setup-pane pane-profile">
+      <div class="profile-card">
+        <div class="pc-title">NOME NA CAMISA</div>
+        <label class="map-label" for="nick-input">SEU NICK
+          <input id="nick-input" maxlength="14" placeholder="ex: Zé do AWP" autocomplete="off">
+        </label>
+        <div class="map-label">REDES SOCIAIS (OPCIONAL)
+          <div id="social-list"></div>
+          <button id="social-add" class="btn-ghost" type="button">+ REDE SOCIAL</button>
+        </div>
+        <div id="avatar-row" class="hidden">
+          <button id="avatar-btn" class="btn-ghost">+ FOTO DE PERFIL</button>
+          <input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
+          <span id="avatar-note"></span>
+        </div>
+        <p class="pc-note">É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.</p>
+      </div>
+      <div class="cs-setup-actions">
+        <button id="profile-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+        <button id="profile-ok" class="btn btn-big" type="button">TÁ ANOTADO</button>
+      </div>
+    </section>
+  </div>
+  <!-- botões legados (ainda referenciados pelo main.js; roteados pelo menu CS acima) -->
+  <div class="side-actions hidden">
+    <button id="btn-ranking" class="btn btn-side">RANKING</button>
+    <button id="btn-howto" class="btn btn-side">COMO JOGAR</button>
+    <button id="btn-settings" class="btn btn-side">CONFIG.</button>
+  </div>
+</div>
+
+<!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
+     Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
+<div id="map-screen" class="screen hidden">
+  <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
+  <div class="ms-scrim"></div>
+  <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
+  <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
+    <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
+    <button class="ms-tab" data-cat="ARENA" type="button" role="tab" aria-selected="false">ARENA</button>
+    <button class="ms-tab" data-cat="FAVELA" type="button" role="tab" aria-selected="false">FAVELA</button>
+    <button class="ms-tab" data-cat="CIDADES" type="button" role="tab" aria-selected="false">CIDADES</button>
+  </div>
+  <header class="ms-head">
+    <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span></div>
+    <h2 id="ms-name" class="ms-name"> - </h2>
+    <p id="ms-meta" class="ms-meta"></p>
+    <p id="ms-desc" class="ms-desc"></p>
+    <div id="ms-match-options" class="ms-match-options" aria-label="Opções da partida">
+      <label><span>ARMAS</span>
+        <select id="ms-wpn-mode">
+          <option value="all">TODAS</option><option value="pistols">SÓ PISTOLAS</option>
+          <option value="knife">SÓ FACA</option><option value="awp">SÓ AWP</option>
+        </select>
+      </label>
+      <label><span>JOGADORES</span>
+        <select id="ms-players">
+          <option value="2">2 × 2</option><option value="3">3 × 3</option>
+          <option value="4">4 × 4</option><option value="5">5 × 5</option>
+          <option value="6">6 × 6</option><option value="7">7 × 7</option>
+          <option value="8">8 × 8</option>
+        </select>
+      </label>
+      <label><span>Nº DE ROUNDS</span>
+        <select id="ms-rounds">
+          <option value="1">1</option><option value="3">3</option>
+          <option value="5">5</option><option value="7">7</option>
+        </select>
+      </label>
+    </div>
+  </header>
+  <div class="ms-carousel">
+    <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">‹</button>
+    <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
+    <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">›</button>
+  </div>
+  <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
+  <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+  <div class="ms-actions">
+    <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>
+  </div>
+</div>
+
+<!-- Team selection - duas faces claras: cada facção é uma PLACA (arte + cor + slogan +
+     elenco), não um card de formulário. `data-step` troca a leitura da MESMA tela entre
+     "escolher o seu lado" (side) e "escolher o adversário" (enemy). O lugar da arte por
+     time já existe: .team-art consome --art (ver style.css) e, enquanto o arquivo não
+     existir, o degradê da facção continua sendo o fundo - sem ícone de imagem quebrada. -->
+<div id="team-select" class="screen hidden" data-step="side">
+  <header class="ts-head">
+    <small id="team-step">PASSO 2 · O SEU LADO</small>
+    <h2 class="screen-title" id="team-title">ESCOLHA SEU LADO DA TRETA</h2>
+    <p class="ts-hint" id="team-hint">Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.</p>
+  </header>
+  <div class="team-row">
+    <button id="btn-team-e" class="team-card team-e">
+      <img class="team-crest" src="/img/brasoes/e.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TIME E</span>
+        <span class="team-slogan">"A treta se faz na praça!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Esquerdomacho · Líder do Sindicato · Líder do MST · Doutora do SUS · Jovem Místico</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-b" class="team-card team-b">
+      <img class="team-crest" src="/img/brasoes/b.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TIME B</span>
+        <span class="team-slogan">"A treta se faz na rodovia!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Caminhoneiro · Influencer de Dubai · Cantor Sertanejo · Tia Zilá · Coach Quântico</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-u" class="team-card team-u">
+      <img class="team-crest" src="/img/brasoes/u.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">TRIBOS URBANAS</span>
+        <span class="team-slogan">"A treta se faz na quebrada!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Emo · Black Metal · Metaleiro · Punk · Skatista · Clubber · Rapper · Rasta · Pagodeiro</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-c" class="team-card team-c">
+      <img class="team-crest" src="/img/brasoes/c.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">PALHAÇOS</span>
+        <span class="team-slogan">"A treta se faz no picadeiro!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Bonzo · Palhaço do Mal · Jozo · Adjim · Esbirro · Titica · Padati · Padata · Cadequinha</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+    <button id="btn-team-f" class="team-card team-f">
+      <img class="team-crest" src="/img/brasoes/f.png" alt="">
+      <span class="team-art" aria-hidden="true"></span>
+      <span class="team-plate">
+        <span class="team-name">FUNKEIROS</span>
+        <span class="team-slogan">"A treta se faz no bailão!"</span>
+      </span>
+      <span class="team-chars" aria-hidden="true"></span>
+      <span class="team-desc">Mandrake · Raul da Franja · Oakley · Cria RJ · Chave SP · Funk Raiz · Trap Funk · Fluxo · Ostentação</span>
+      <span class="team-cta" aria-hidden="true"></span>
+    </button>
+  </div>
+  <button id="team-back" class="btn btn-back">◀ VOLTAR</button>
+</div>
+
+<!-- Character selection: ficha + preview formam as duas colunas; o elenco inteiro
+     percorre o rodapé em uma faixa horizontal. -->
+<div id="char-select" class="screen hidden">
+  <header class="ts-head">
+    <small>PASSO 3 · O PERSONAGEM</small>
+    <h2 class="screen-title">ESCOLHA SEU PERSONAGEM</h2>
+  </header>
+  <div class="char-stage">
+    <div class="char-filmstrip">
+      <button id="strip-up" class="strip-arrow" type="button" aria-label="personagem anterior">‹</button>
+      <div id="char-list" class="char-list" role="listbox" aria-label="Personagens"></div>
+      <button id="strip-down" class="strip-arrow" type="button" aria-label="próximo personagem">›</button>
+    </div>
+    <div class="char-sheet">
+      <div id="char-faction-tag" class="char-faction-tag"> - </div>
+      <div class="char-info-head">
+        <div id="char-info-name"> - </div>
+        <span id="char-rarity" class="rarity">COMUM</span>
+      </div>
+      <div id="char-info-blurb"> - </div>
+      <div class="char-spec">
+        <small>ESPECIALIDADE</small>
+        <b id="char-spec-name"> - </b>
+        <p id="char-spec-desc"> - </p>
+      </div>
+      <div class="char-attrs-block">
+        <small>ATRIBUTOS</small>
+        <div id="char-attrs"></div>
+      </div>
+      <button id="char-confirm" class="btn btn-big">USAR PERSONAGEM</button>
+    </div>
+    <div class="char-preview-box">
+      <canvas id="char-preview" width="640" height="640"></canvas>
+      <img id="char-preview-static" class="hidden" src="" alt="">
+      <video id="char-preview-video" class="hidden" muted loop playsinline></video>
+      <div class="pv-hints"><span>ARRASTE · GIRAR</span><span>SCROLL · ZOOM</span></div>
+    </div>
+  </div>
+  <button id="char-back" class="btn btn-back">◀ VOLTAR</button>
+</div>
+
+<!-- Settings - abas por categoria (padrão CS2/Valorant). Os IDs dos inputs NÃO mudam:
+     toda a persistência/wiring do main.js continua valendo. -->
+<div id="settings-panel" class="screen hidden" data-active-tab="video">
+  <div class="panel settings-wrap">
+    <div class="set-head">
+      <h2>CONFIGURAÇÕES</h2>
+      <button id="settings-close" class="set-close" type="button"><kbd>ESC</kbd> FECHAR</button>
+    </div>
+    <div class="set-tabs" role="tablist" aria-label="Categorias de configuração">
+      <button class="set-tab active" data-tab="video" role="tab" aria-selected="true">VÍDEO</button>
+      <button class="set-tab" data-tab="audio" role="tab" aria-selected="false">ÁUDIO</button>
+      <button class="set-tab" data-tab="gameplay" role="tab" aria-selected="false">JOGABILIDADE</button>
+      <button class="set-tab" data-tab="controls" role="tab" aria-selected="false">CONTROLES</button>
+    </div>
+    <div class="set-cols">
+      <div class="set-list" role="tabpanel">
+      <label class="set-row" data-section="video">QUALIDADE GRÁFICA
+        <select id="set-quality">
+          <option value="low">Batata (rápido)</option>
+          <option value="med" selected>Média</option>
+          <option value="high">Padrão ouro</option>
+        </select>
+      </label>
+      <label class="set-row" data-section="controls">SENSIBILIDADE DO MOUSE
+        <span class="set-range"><input id="set-sens" type="range" min="0.2" max="3" step="0.1" value="1"><b id="set-sens-val">1.0</b></span>
+      </label>
+      <label class="set-row" data-section="controls">INVERTER EIXO VERTICAL
+        <span class="set-toggle"><input id="set-invert-y" type="checkbox"><b>LIGADO</b><i>DESLIGADO</i></span>
+      </label>
+      <label class="set-row" data-section="audio">VOLUME GERAL
+        <span class="set-range"><input id="set-vol" type="range" min="0" max="1" step="0.05" value="0.7"><b id="set-vol-val">70%</b></span>
+      </label>
+      <label class="set-row" data-section="audio">FALAS DOS MEMES
+        <span class="set-toggle"><input id="set-speech" type="checkbox" checked><b>LIGADO</b><i>DESLIGADO</i></span>
+      </label>
+      <label class="set-row set-extra" data-section="gameplay">IDIOMA
+        <select id="set-lang">
+          <option value="auto" selected>Automático (país)</option>
+          <option value="pt">Português</option>
+          <option value="en">Inglês</option>
+        </select>
+      </label>
+      <label class="set-row set-extra" data-section="gameplay">COR DA MIRA
+        <select id="set-xhair">
+          <option value="#4fe8e0">Ciano (padrão)</option>
+          <option value="#46e08a">Verde</option>
+          <option value="#ffc93f">Amarela</option>
+          <option value="#ff4d4d">Vermelha</option>
+          <option value="#ff5cf0">Magenta</option>
+          <option value="#e9f1f3">Branca</option>
+        </select>
+      </label>
+      <label class="set-row set-extra" data-section="gameplay">AJUDAR A TREINAR OS BOTS
+        <span class="set-toggle"><input id="set-training" type="checkbox"><b>LIGADO</b><i>DESLIGADO</i></span>
+      </label>
+      <p class="set-note">“Padrão ouro” liga sombras e neblina. Em notebook de reunião, escolha “Batata”.</p>
+      </div>
+      <aside class="set-preview-wrap" aria-hidden="true">
+        <div class="set-preview"></div>
+        <div class="set-preview-caption">PRÉVIA · FERRO VELHO DO ZÉ · PADRÃO OURO</div>
+      </aside>
+    </div>
+    <div class="set-actions">
+      <button id="settings-restore" class="set-secondary" type="button">RESTAURAR PADRÃO</button>
+      <div>
+        <button id="settings-apply" class="set-apply" type="button"><span>APLICAR</span></button>
+        <button id="settings-back" class="set-save" type="button"><span>SALVAR</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ranking (local + global quando o Supabase estiver ligado) -->
+<div id="ranking-panel" class="screen hidden">
+  <div class="panel center-panel">
+    <h2>RANKING</h2>
+    <div id="rank-local" class="rank-stats"></div>
+    <div id="rank-global"></div>
+    <p class="rank-note">Estes stats ficam <strong>neste navegador</strong>. O ranking global está
+    desligado enquanto o jogo está em alpha - volta quando o placar for confiável.</p>
+    <button id="ranking-back" class="btn">VOLTAR</button>
+  </div>
+</div>
+
+<!-- Feedback (substituiu o MAPA no menu, 07/08). Email + consentimento são
+     obrigatórios: a tabela feedback é a semente da newsletter (migration 013). -->
+<div id="feedback-panel" class="screen hidden">
+  <div class="panel center-panel">
+    <h2>FEEDBACK</h2>
+    <p class="fb-note">Conta o que curtiu, o que quebrou, o que falta. Vai direto pro dono do jogo.</p>
+    <textarea id="fb-msg" maxlength="2000" rows="5" placeholder="escreve aqui o teu feedback…"></textarea>
+    <input id="fb-email" type="email" maxlength="254" autocomplete="email" placeholder="teu email">
+    <label class="fb-consent"><input type="checkbox" id="fb-news">
+      <span>Aceito receber novidades do jogo por email (newsletter)</span></label>
+    <p id="fb-status" class="fb-status" aria-live="polite"></p>
+    <button id="fb-send" class="btn">ENVIAR</button>
+    <button id="fb-back" class="btn">VOLTAR</button>
+  </div>
+</div>
+
+<!-- Apoio ao projeto. O idioma é uma sugestão, não uma barreira: a pessoa pode trocar
+     entre MeApoia/Pix e a plataforma internacional. -->
+<div id="support-panel" class="screen hidden">
+  <div class="panel center-panel support-panel">
+    <h2>APOIE O JOGO</h2>
+    <p class="fb-note">O CORO SOLTO ainda está em alpha. Se você curte a ideia, qualquer apoio ajuda a pagar servidor, domínio e as próximas melhorias.</p>
+    <div class="support-choice" role="group" aria-label="Escolha sua região">
+      <button id="support-br" class="btn support-region" type="button" aria-pressed="true">🇧🇷 SOU DO BRASIL</button>
+      <button id="support-intl" class="btn support-region" type="button" aria-pressed="false">🌐 FORA DO BRASIL</button>
+    </div>
+    <p id="support-region-note" class="support-note"></p>
+    <a id="support-link" class="btn support-primary" href="/apoie" target="_blank" rel="noopener">ABRIR PÁGINA DE APOIO</a>
+    <button id="support-back" class="btn" type="button">VOLTAR</button>
+  </div>
+</div>
+
+<!-- How to play -->
+<div id="howto-panel" class="screen hidden">
+  <div class="panel center-panel">
+    <h2>COMO JOGAR</h2>
+    <div class="howto-grid">
+      <span>W A S D</span><span>Mover</span>
+      <span>MOUSE</span><span>Mirar</span>
+      <span>SHIFT</span><span>Correr</span>
+      <span>CTRL ou C</span><span>Agachar (mira mais estável)</span>
+      <span>ESPAÇO</span><span>Pular</span>
+      <span>CLIQUE ESQ.</span><span>Atirar</span>
+      <span>CLIQUE DIR.</span><span>Mira telescópica (AWP)</span>
+      <span>R</span><span>Recarregar</span>
+      <span>1 / 2 / 3</span><span>AWP / Pistola / Faca</span>
+      <span>Z / X / V</span><span>Comandos de voz (rádio)</span>
+      <span>M</span><span>Trocar de time</span>
+      <span>TAB</span><span>Placar</span>
+      <span>ESC</span><span>Pausar</span>
+    </div>
+    <!-- index.astro:502 - O TEXTO TEM QUE DIZER O FORMATO DE CADA MODO, E OS DOIS SÃO
+         DIFERENTES DE PROPÓSITO (o dono: "o captura estava com cronometragem - isso não
+         acontece em CTF"). Números casados com game.js:76 e game.js:104-108; se um mudar
+         sem o outro, o portão UI4 do tools/eval/ui-check.mjs acusa a partida que não fecha
+         ou o cronômetro que não devia existir. -->
+    <p><b>MATA-MATA</b> com respawn: cada round dura 1:39 ou fecha quando um time chega no alvo de abates; o time com mais kills leva o round. Por padrão, vence quem ganhar 3 rounds (melhor de 5); o teto pode ser escolhido na tela de mapas.</p>
+    <p><b>CAPTURA</b> não tem cronômetro de round: a rodada acaba quando um time captura 3 bandeiras (ou domina todas de uma vez). Vence quem ganhar 2 rodadas (melhor de 3). A partida tem um limite de 8 minutos, que só aparece no HUD no último minuto.</p>
+    <button id="howto-back" class="btn">VOLTAR</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="hud-actions">
+    <button id="hud-speech" title="Liga/desliga as falas (memes)">🔊</button>
+    <!-- engrenagem SVG (emoji renderiza colorido, com métrica própria e diferente em cada SO) -->
+    <button id="hud-settings" title="Configurações" aria-label="Configurações"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6.6 0h2.8l.35 2.05 1.35.78 1.9-.83 1.4 2.42-1.55 1.37v1.56l1.55 1.37-1.4 2.42-1.9-.83-1.35.78L9.4 16H6.6l-.35-2.05-1.35-.78-1.9.83-1.4-2.42 1.55-1.37V8.65L1.6 7.28 3 4.86l1.9.83 1.35-.78zM10.6 8a2.6 2.6 0 1 0-5.2 0 2.6 2.6 0 0 0 5.2 0z"/></svg></button>
+  </div>
+  <canvas id="radar" width="150" height="150"></canvas>
+  <div id="radio-log"></div>
+  <div id="radio-menu" class="hidden"></div>
+  <div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
+  <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+  <div id="dmg-numbers"></div>
+  <div id="scope-overlay">
+    <div class="scope-circle"></div>
+    <div class="scope-line h"></div>
+    <div class="scope-line v"></div>
+  </div>
+  <div id="damage-vignette"></div>
+  <div id="dmg-dir"></div>
+  <div id="mk-banner"></div>
+  <div id="prot-badge" class="hidden"><svg viewBox="0 0 14 14" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M7 .6 12.3 2.9v4.2c0 3.1-2.2 5.6-5.3 6.3-3.1-.7-5.3-3.2-5.3-6.3V2.9z"/></svg> PROTEGIDO <span id="prot-count">3</span>s</div>
+  <div id="hud-top">
+    <!-- BRASÃO no lugar da sigla (tela 05 do redesign). A sigla continua no DOM
+         como texto só-para-leitor: o brasão diz o time para quem vê, e quem usa
+         leitor de tela não pode ficar com "0" sem dono. `data-f` é escrito pelo
+         game.js só quando a facção MUDA - a arte vem do CSS, então o laço de
+         quadro não toca em imagem nenhuma. -->
+    <div id="score-e" class="team-score ts-p">
+      <i class="ts-crest" id="crest-e" aria-hidden="true"></i><span class="so-leitor" id="sigla-e">PET</span><b>0</b>
+    </div>
+    <div id="hud-mid">
+      <div id="round-time">1:39</div>
+      <!-- rounds VENCIDOS - dado diferente do kills das plaquetas ao lado, por isso
+           esta linha não é redundante e não sai. -->
+      <div id="rounds-row">RODADA 1 · PET 0 × 0 BOL</div>
+    </div>
+    <div id="score-b" class="team-score ts-b">
+      <i class="ts-crest" id="crest-b" aria-hidden="true"></i><span class="so-leitor" id="sigla-b">BOL</span><b>0</b>
+    </div>
+  </div>
+  <div id="ctf-hud" class="hidden"></div>
+  <div id="killfeed"></div>
+  <div id="hud-bottom-left">
+    <div id="hp-row"><span id="hp-num">100</span></div>
+    <div id="hp-bar"><div id="hp-fill"></div></div>
+  </div>
+  <div id="weapon-hud" class="hidden" aria-label="Armas e utilitários"></div>
+  <div id="hud-bottom-right">
+    <img id="ammo-weapon-art" src="/img/weapons/awp.webp" alt="">
+    <div id="ammo"><span id="ammo-mag">5</span><span class="ammo-sep">/</span><span id="ammo-reserve">25</span></div>
+    <div id="ammo-bars" aria-hidden="true"></div>
+    <div id="weapon-name">AWP "DELIBERADOR"</div>
+    <div id="smoke-count" title="Fumaça (tecla 4)  ·  Frag (tecla 5)">💨 5   🧨 1</div>
+    <div id="reload-note" class="hidden">RECARREGANDO…</div>
+  </div>
+  <div id="hud-shortcuts"><span>Z/X/V RÁDIO</span><span>TAB PLACAR</span><span>M TROCAR DE TIME</span></div>
+  <div id="round-banner" class="hidden"><div id="banner-title"></div><div class="banner-rule"></div><div id="banner-sub"></div></div>
+  <div id="lock-hint" class="hidden">
+    <div class="lh-title"><svg viewBox="0 0 12 17" width="13" height="18" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M6 0a6 6 0 0 1 6 6v5a6 6 0 0 1-12 0V6a6 6 0 0 1 6-6zm.9 3.2h-1.8v3.1h1.8z"/></svg> CLIQUE PARA ATIVAR A MIRA</div>
+    <div class="lh-sub">Se o navegador bloquear, clique de novo. Em iframe/preview, abra o jogo em aba própria.</div>
+  </div>
+  <div id="pickup-hint" class="hidden"></div>
+  <div id="respawn-overlay" class="hidden">
+    <div class="rip"><svg viewBox="0 0 14 13" width="34" height="32" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M7 .8C4 .8 1.8 3 1.8 5.9c0 1.6.8 3 2 3.8v2.5h1.5v-1.6h1.1v1.6h1.2v-1.6h1.1v1.6h1.5V9.7c1.2-.8 2-2.2 2-3.8C13.2 3 11 .8 7 .8zM4.9 7.5c-.8 0-1.5-.6-1.5-1.4s.7-1.4 1.5-1.4 1.5.6 1.5 1.4-.6 1.4-1.5 1.4zM9.1 7.5c-.8 0-1.5-.6-1.5-1.4s.7-1.4 1.5-1.4 1.5.6 1.5 1.4-.7 1.4-1.5 1.4z"/></svg> ELIMINADO</div>
+    <div>Respawn em <span id="respawn-count">3</span>s…</div>
+    <div class="rip-sub">A treta continua sem você. Por enquanto.</div>
+  </div>
+  <!-- PLACAR (tela 08 da referência). Duas colunas de time lado a lado, cada uma com
+       cabeçalho visual alinhado às colunas K/M/CAP. e thead equivalente para leitor de tela. -->
+  <div id="scoreboard" class="hidden">
+    <div class="sb-center">
+      <h3>CORO SOLTO - PLACAR</h3>
+      <!-- Duas colunas, uma por time, com o brasão da facção no topo (referência
+           08_placar, pedido do dono 07/08). O JS preenche #sb-cols. -->
+      <div class="sb-cols" id="sb-cols"></div>
+    </div>
+    <div class="sb-foot"><span><b>TAB</b> SEGURAR PARA VER</span><span><b>MOUSE 2</b> ATIVAR CURSOR</span></div>
+  </div>
+</div>
+
+<!-- Pause - mesma linguagem das telas de fluxo (régua de tinta + chanfro) e fundo
+     translúcido: a partida continua visível atrás (o canvas pausado segue renderizando). -->
+<div id="pause-menu" class="screen hidden">
+  <h2 class="screen-title">PAUSA NA TRETA</h2>
+  <div class="pause-actions panel">
+    <button id="btn-resume" class="btn btn-big">CONTINUAR</button>
+    <button id="btn-pause-settings" class="btn">CONFIGURAÇÕES</button>
+    <button id="btn-pause-controls" class="btn">CONTROLES</button>
+    <button id="btn-restart" class="btn">REINICIAR PARTIDA</button>
+    <button id="btn-quit" class="btn">SAIR PRO MENU</button>
+  </div>
+  <!-- a tecla vira <kbd> pra virar cápsula, como na referência telas/06 (lá "ESC" é um
+       chip desenhado, não texto corrido) -->
+  <div class="footnote"><kbd>ESC</kbd> CONTINUAR</div>
+</div>
+
+<!-- Match end - veredito, placar e o desempenho DO JOGADOR em três blocos separados.
+     Antes era um painel só: o título, uma frase longa e três números soltos que quebravam
+     linha no meio ("9 kills de r"). O conteúdo de #match-stats é escrito pelo game.js. -->
+<!-- RESULTADO: conteúdo à esquerda e arte estática do personagem escolhido à direita. -->
+<div id="match-end" class="screen hidden">
+  <div class="me-wrap">
+    <div class="me-col">
+      <div class="me-verdict">
+        <h1 id="match-title">VITÓRIA</h1>
+        <p id="match-sub" class="big"></p>
+      </div>
+      <div id="match-stats"></div>
+      <div class="me-actions">
+        <button id="btn-again" class="btn btn-big btn-cta">JOGAR NOVAMENTE</button>
+        <button id="btn-menu" class="btn">VOLTAR AO MENU</button>
+      </div>
+    </div>
+    <!-- game.js aponta `--me-art` para vitória ou derrota do personagem escolhido. -->
+    <div class="me-hero" id="me-hero" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div id="game-container"></div>
+
+<!-- Vercel Web Analytics + Speed Insights (static HTML - sem pacote npm).
+     Só carrega fora de localhost. Ative no dashboard: Analytics → Enable. -->
+<script is:inline>
+  if (!/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname)) {
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    var _s1 = document.createElement('script'); _s1.defer = true;
+    _s1.src = '/_vercel/insights/script.js'; document.head.appendChild(_s1);
+    var _s2 = document.createElement('script'); _s2.defer = true;
+    _s2.src = '/_vercel/speed-insights/script.js'; document.head.appendChild(_s2);
+  }
+</script>
+
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"></script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Godot: Editor",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/godot.sh",
+      "args": ["--editor", "--path", "${workspaceFolder}/godot"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Run",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/godot.sh",
+      "args": ["--path", "${workspaceFolder}/godot"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Test",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/godot.sh",
+      "args": [
+        "--headless",
+        "--path",
+        "${workspaceFolder}/godot",
+        "-s",
+        "addons/gut/gut_cmdln.gd",
+        "-gdir=res://tests",
+        "-ginclude_subdirs",
+        "-gexit",
+        "-gdisable_colors"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Export Web",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/export-godot-web.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Serve Web",
+      "type": "process",
+      "command": "${workspaceFolder}/scripts/serve-godot-web.sh",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Test Web",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:web"],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Godot: Test Web Performance",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:web:performance"],
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

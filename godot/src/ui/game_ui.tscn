@@ -1,0 +1,348 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/game_ui.gd" id="1_ui"]
+
+[node name="GameUI" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ui")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.025, 0.018, 0.9)
+
+[node name="MainMenu" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="MainMenu"]
+custom_minimum_size = Vector2(560, 600)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="MainMenu/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="MainMenu/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 54
+text = "CS BRASIL"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="MainMenu/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.3, 0.25, 1)
+theme_override_font_sizes/font_size = 28
+text = "TRETA SUPREMA"
+horizontal_alignment = 1
+
+[node name="Nickname" type="LineEdit" parent="MainMenu/Panel/Content"]
+custom_minimum_size = Vector2(420, 48)
+layout_mode = 2
+max_length = 14
+placeholder_text = "SEU NICK"
+alignment = 1
+
+[node name="Play" type="Button" parent="MainMenu/Panel/Content"]
+custom_minimum_size = Vector2(420, 58)
+layout_mode = 2
+text = "JOGAR"
+
+[node name="HowTo" type="Button" parent="MainMenu/Panel/Content"]
+layout_mode = 2
+text = "COMO JOGAR"
+
+[node name="Settings" type="Button" parent="MainMenu/Panel/Content"]
+layout_mode = 2
+text = "CONFIGURAÇÕES"
+
+[node name="Footnote" type="Label" parent="MainMenu/Panel/Content"]
+layout_mode = 2
+text = "Sátira política fictícia · Chrome/Edge e Firefox desktop"
+horizontal_alignment = 1
+
+[node name="TeamSelect" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="TeamSelect"]
+custom_minimum_size = Vector2(760, 430)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="TeamSelect/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="Title" type="Label" parent="TeamSelect/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "ESCOLHA SEU LADO DA TRETA"
+horizontal_alignment = 1
+
+[node name="Petistas" type="Button" parent="TeamSelect/Panel/Content"]
+custom_minimum_size = Vector2(600, 70)
+layout_mode = 2
+text = "PETISTAS · A treta se faz na praça!"
+
+[node name="Bolsonaristas" type="Button" parent="TeamSelect/Panel/Content"]
+custom_minimum_size = Vector2(600, 70)
+layout_mode = 2
+text = "BOLSONARISTAS · A treta se faz na rodovia!"
+
+[node name="Back" type="Button" parent="TeamSelect/Panel/Content"]
+layout_mode = 2
+text = "VOLTAR"
+
+[node name="CharacterSelect" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CharacterSelect"]
+custom_minimum_size = Vector2(720, 680)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="CharacterSelect/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="CharacterSelect/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "ESCOLHA SEU PERSONAGEM"
+horizontal_alignment = 1
+
+[node name="CharacterOptions" type="OptionButton" parent="CharacterSelect/Panel/Content"]
+layout_mode = 2
+
+[node name="Preview" type="SubViewportContainer" parent="CharacterSelect/Panel/Content"]
+custom_minimum_size = Vector2(420, 390)
+layout_mode = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="CharacterSelect/Panel/Content/Preview"]
+transparent_bg = true
+size = Vector2i(420, 390)
+render_target_update_mode = 4
+
+[node name="PreviewWorld" type="Node3D" parent="CharacterSelect/Panel/Content/Preview/SubViewport"]
+
+[node name="Camera3D" type="Camera3D" parent="CharacterSelect/Panel/Content/Preview/SubViewport"]
+current = true
+fov = 34.0
+
+[node name="KeyLight" type="DirectionalLight3D" parent="CharacterSelect/Panel/Content/Preview/SubViewport"]
+rotation_degrees = Vector3(-45, -30, 0)
+light_color = Color(1, 0.85, 0.68, 1)
+light_energy = 1.6
+
+[node name="CharacterName" type="Label" parent="CharacterSelect/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 21
+text = "—"
+horizontal_alignment = 1
+
+[node name="Confirm" type="Button" parent="CharacterSelect/Panel/Content"]
+layout_mode = 2
+text = "USAR PERSONAGEM"
+
+[node name="Back" type="Button" parent="CharacterSelect/Panel/Content"]
+layout_mode = 2
+text = "VOLTAR"
+
+[node name="Settings" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Settings"]
+custom_minimum_size = Vector2(600, 520)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Settings/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Title" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "CONFIGURAÇÕES"
+horizontal_alignment = 1
+
+[node name="SensitivityLabel" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "Sensibilidade do mouse"
+
+[node name="Sensitivity" type="HSlider" parent="Settings/Panel/Content"]
+layout_mode = 2
+min_value = 0.2
+max_value = 3.0
+step = 0.1
+value = 1.0
+
+[node name="SensitivityValue" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "1.0"
+
+[node name="VolumeLabel" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "Volume"
+
+[node name="Volume" type="HSlider" parent="Settings/Panel/Content"]
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 0.7
+
+[node name="VolumeValue" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "70%"
+
+[node name="QualityLabel" type="Label" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "Qualidade gráfica"
+
+[node name="Quality" type="OptionButton" parent="Settings/Panel/Content"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="Settings/Panel/Content"]
+layout_mode = 2
+text = "SALVAR E VOLTAR"
+
+[node name="HowTo" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="HowTo"]
+custom_minimum_size = Vector2(720, 600)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="HowTo/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Title" type="Label" parent="HowTo/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "COMO JOGAR"
+horizontal_alignment = 1
+
+[node name="Instructions" type="Label" parent="HowTo/Panel/Content"]
+layout_mode = 2
+text = "WASD · mover     MOUSE · mirar\nSHIFT · correr     CTRL · agachar     ESPAÇO · pular\nCLIQUE ESQ. · atirar     CLIQUE DIR. · scope\nR · recarregar     1/2/3 · armas\nZ/X/C · rádio     TAB · placar     ESC · pausar\n\nRounds de 1:39 · vence quem ganhar 3 rounds"
+horizontal_alignment = 1
+
+[node name="Back" type="Button" parent="HowTo/Panel/Content"]
+layout_mode = 2
+text = "VOLTAR"
+
+[node name="Pause" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Pause"]
+custom_minimum_size = Vector2(520, 420)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="Pause/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="Pause/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "PAUSA NA TRETA"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Pause/Panel/Content"]
+layout_mode = 2
+text = "CONTINUAR"
+
+[node name="Settings" type="Button" parent="Pause/Panel/Content"]
+layout_mode = 2
+text = "CONFIGURAÇÕES"
+
+[node name="Quit" type="Button" parent="Pause/Panel/Content"]
+layout_mode = 2
+text = "SAIR PRO MENU"
+
+[node name="MatchEnd" type="CenterContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="MatchEnd"]
+custom_minimum_size = Vector2(620, 450)
+layout_mode = 2
+
+[node name="Content" type="VBoxContainer" parent="MatchEnd/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="MatchEnd/Panel/Content"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "PETISTAS VENCERAM!"
+horizontal_alignment = 1
+
+[node name="Summary" type="Label" parent="MatchEnd/Panel/Content"]
+layout_mode = 2
+text = "A treta terminou. Por enquanto."
+horizontal_alignment = 1
+
+[node name="Rematch" type="Button" parent="MatchEnd/Panel/Content"]
+layout_mode = 2
+text = "REVANCHE"
+
+[node name="Menu" type="Button" parent="MatchEnd/Panel/Content"]
+layout_mode = 2
+text = "MENU PRINCIPAL"

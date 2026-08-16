@@ -1,0 +1,177 @@
+# ── Dependências e build ────────────────────────────────────────────────────
+# sem barra de propósito: `node_modules/` só casa DIRETÓRIO — symlink node_modules
+# (worktree compartilhando deps) passava batido e foi commitado sem querer (13/08)
+node_modules
+dist/
+.astro/
+.vercel/
+*.tsbuildinfo
+
+# ── Segredos ────────────────────────────────────────────────────────────────
+# NUNCA commite .env: ele carrega a SUPABASE_SERVICE_ROLE_KEY, que ignora RLS.
+# O modelo público é .env.example.
+.env
+.env.*
+!.env.example
+
+# ── Áudio ───────────────────────────────────────────────────────────────────
+# Vozes e memes têm direitos incertos; o repositório público leva só o código.
+# Recupere com `npm run fetch-audio`. O manifest de exemplo é versionado.
+public/audio/
+!public/audio/manifest.example.json
+
+# ── Skills de terceiros ─────────────────────────────────────────────────────
+# 13 MB de skills de terceiros (incluindo 8 GIFs de demonstração, 3,2 MB o
+# maior) que eram versionadas junto do produto. Elas são declaradas em
+# skills-lock.json, com SHA-256 por skill — o lock é a fonte da verdade, e é ele
+# que deve reinstalá-las. Manter o conteúdo no git dobrava o tamanho do clone e
+# não dava nenhuma garantia extra (nada verificava o hash — ver docs/issues/12).
+.agents/skills/
+
+# ── Artefato de build ───────────────────────────────────────────────────────
+# `scripts/copy-wasm.mjs` copia o resvg.wasm do node_modules pra cá em todo
+# build. É binário derivado de dependência: não versione.
+public/wasm/
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ── Pastas de transferência entre máquinas (nunca são produto) ───────────────
+.xfer/
+xferwork/
+.b64tmp/
+_xfer/
+_to_delete/
+--help/
+
+# ── Saída de harness e capturas ─────────────────────────────────────────────
+# Os JSON de contrato (vm_mint_audit.json, vm_kick_sim.json…) SÃO versionados
+# de propósito — ver tools/eval/README.md §1. O que não vai é imagem/vídeo de
+# rodada, que é gerado a cada execução.
+tools/eval/out/
+tools/eval/*.mp4
+tools/eval/*.webm
+/*.png
+/*.jpg
+!public/**/*.png
+!tools/eval/havan-planta.png
+
+# ── Material de trabalho que fica SÓ na máquina do dono ─────────────────────
+# Decisão de 04/08: a construção é local, então referência visual não sobe.
+#
+# `references/` são as telas-alvo da UI, plantas e frames de referência. Ficam
+# fora do git de propósito — quem clonar não tem o alvo da UI, e é assim que
+# tem que ser por enquanto. Os NÚMEROS medidos delas continuam versionados em
+# `tools/eval/ref_ui.json` e `ref_viewmodel.json`: é o contrato que sobrevive.
+#
+# `issues/` são 2,5 GB de captura de rodada. Nunca esteve versionado; só não
+# estava ignorado, e por isso poluía todo `git status`.
+references/
+# BARRA INICIAL OBRIGATÓRIA AQUI. Padrão do gitignore: `issues/` sem barra
+# inicial casa com um diretório `issues` em QUALQUER nível — e por isso ele
+# estava engolindo `docs/issues/`, as 15 good-first-issues escritas pro
+# contribuidor novo. Efeito medido: `git add -A --dry-run docs` listava 31
+# arquivos e NENHUM deles era issue; o link "docs/issues" do README, do
+# /sobre e do llms.txt apontava para 404 no GitHub. `/issues/` casa só com o
+# diretório da RAIZ, que é o acervo de 2,5 GB que a regra queria ignorar.
+/issues/
+
+# `public/audio/` já está ignorado lá em cima (linha 18). O que mudou em 04/08: os 20
+# arquivos que ainda estavam VERSIONADOS lá dentro (os 16 sons CC0, o LEIA-ME e o
+# manifest.default.json) foram destrackeados — decisão do dono, "essa pasta audio tem que
+# estar no gitignore e só no meu repo local, assim como references".
+#
+# CONSEQUÊNCIA QUE PRECISA FICAR ESCRITA: com isso o `audio-pack.zip` vira a ÚNICA fonte de
+# áudio para qualquer clone e para o deploy (o `vercel.json` roda `fetch-audio.sh` antes do
+# build). Se o pacote não contiver os sons CC0 de arma e um manifest, produção fica sem tiro
+# real e sem voz — o jogo cai no SFX sintetizado e ninguém vê erro nenhum. Ver BUG-19.
+#
+# `manifest.example.json` FICA versionado de propósito: não é áudio, é o fallback que o
+# `fetch-audio.sh` copia quando o pacote não traz manifest. Sem ele o build fica sem rede
+# de segurança.
+
+# ── Decalques de graffiti (derivados de references/) ────────────────────────
+# `public/img/decals/` sai do recorte automático de `references/graffiti/` — acervo de
+# INSPIRAÇÃO baixado da web, não biblioteca licenciada (ver KNOWN-BUGS.md · BUG-23). Mesma
+# regra do `public/audio/` acima e pelo mesmo motivo: o repositório é PÚBLICO, e asset com
+# procedência incerta entra em commit, build e deploy antes de alguém revisar.
+# O que fica versionado é o CÓDIGO que reproduz os PNGs: `tools/gen-graffiti-decals.mjs`,
+# que também mantém a lista `DECAL_FILES` dentro do `public/js/textures.js`.
+# CONSEQUÊNCIA A NÃO ESQUECER: quem clonar não tem os PNGs, e `T.decals` vira 179 caminhos
+# que dão 404. Quem for usar decalque em mapa precisa tolerar textura ausente.
+# (conteúdo com `/*` e não o diretório: diretório ignorado não aceita exceção `!`)
+public/img/decals/*
+# EXCEÇÃO (07/08): decalques `or-*` são OBRA PRÓPRIA, gerados via OpenRouter
+# (tools/gen-image.mjs) — sem problema de procedência, então versionam e chegam
+# ao deploy de produção (que builda do git puro e não tem o acervo de references/).
+!public/img/decals/or-*.png
+
+# ── Sistema operacional e editor ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+!.vscode/extensions.json
+
+# cache do vocabulário schema.org baixado por tools/eval/jsonld-validate.mjs
+# (1,5 MB, reproduzível com --refresh; não é fonte, é cache)
+tools/eval/.cache/
+
+# Config local do Claude Code (permissões por máquina — não vai pro repo público)
+.claude/settings.local.json
+
+# Worktrees do Claude Code dentro do workspace — são árvores de trabalho separadas
+# (cada uma com seu .git), não conteúdo do projeto. Commitar aninharia repo e
+# inflaria o clone em ~1 GB. O `git worktree list` é a fonte da verdade delas.
+.claude/worktrees/
+.worktrees/
+
+# Material de REFERÊNCIA/instrução de IA — imagens e vídeos de terceiros (CS 1.6,
+# Valorant) e prompts internos. Decisão do dono (05/08): fica FORA do repo público;
+# o que valer a pena vira página em docs/ depois.
+/1st player/
+/scenario-ref/
+/prompts/
+/prev-*.webp
+/audio-pack.zip
+
+# SQL de ofuscação de schema — entregue pronto e NÃO aplicado; publicar o mapa
+# de ofuscação anularia a ofuscação. Fica local até decisão do dono.
+/supabase/opcional/
+
+# ── Cliente Godot (veio da main, PR #14) ────────────────────────────────────
+godot/.godot/
+.godot-ci/
+test-results/
+playwright-report/
+
+# Banco de dados — FORA do repo público (decisão do dono, 06/08: "não quero revelar
+# nossa db tão fácil"). Fonte da verdade: ~/db-privado/ na máquina dele (schema,
+# migrations e runbook COMO-MIGRAR.md). O runtime só precisa das envs da Vercel.
+/supabase/
+.vercel
+.env*
+graphify-out/cache/
+graphify-out/manifest.json
+graphify-out/.graphify_root
+graphify-out/.graphify_analysis.json
+graphify-out/.graphify_labels.json
+graphify-out/.graphify_labels.json.sig
+graphify-out/20??-??-??/
+
+# BOTBRAIN: dataset bootstrap (regenerável via bot:record, grande)
+tools/eval/data/
+
+# probe de rodada MUTANTE do eval:cena — instrumento de teste da régua, não medição do jogo
+tools/eval/cena_probe.mutante-*.json
+
+# Material-FONTE dos retratos (renders do ChatGPT, ~2 MB cada). É insumo do
+# pipeline de arte, não asset do jogo: o que o jogador baixa são os .webp e .webm
+# derivados em public/img/entrada, public/img/resultado e public/video/. Sem esta
+# regra o repo ganharia 97 MB e o deploy publicaria todos eles.
+public/img/chars/molde/

@@ -1,0 +1,134 @@
+# Release automático a cada push na main (pedido do dono, 08/08): o BOT é o dono do
+# bump de versão — o portão `versao-bumpada` do pr-gates.yml virou só checagem de
+# consistência, nenhum PR precisa mais bumpa à mão.
+#
+# O que este workflow faz, em ordem:
+#   1. bump alpha.N -> alpha.N+1 (npm version atualiza package.json E package-lock.json)
+#      + public/js/version.js + blocos gerados de docs (a versão mora em bloco gerado
+#      do README/comecando — sem rodar o gen-docs aqui, o docs:check do PR seguinte
+#      reprova). gen-docs é node puro, não precisa de npm ci.
+#   2. commit "chore(release): vX" + tag vX + push.
+#   3. GitHub Release com as notas do CHANGELOG (mesma extração do job release do ci.yml).
+#
+# POR QUE TUDO NUM WORKFLOW SÓ (e não "tag dispara ci.yml que cria o Release que dispara
+# o deploy-prod.yml"): evento criado com o GITHUB_TOKEN **não dispara workflow novo** —
+# é a proteção anti-recursão do GitHub. O caso alpha.32 está documentado no cabeçalho do
+# deploy-prod.yml. A mesma regra trabalha A FAVOR aqui: o push do bot não re-dispara nem
+# este workflow nem o build do ci.yml — não existe loop. (A Vercel tem webhook próprio e
+# VAI buildar o commit de bump: 2 deploys por merge, inofensivo, o último fica valendo.)
+#
+# Deploy de produção NÃO passa por aqui: decisão do dono (08/08) é manter o auto-deploy
+# da Vercel na main. O deploy-prod.yml continua existindo como caminho manual por tag
+# (gh workflow run deploy-prod.yml -f tag=vX) caso o auto-deploy seja desligado de novo.
+name: release
+on:
+  push:
+    branches: [main]
+
+# Dois merges quase juntos: serializa em vez de correr. O rebase no passo de bump cobre
+# a janela residual (main andou entre o evento e a execução).
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  bump-tag-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: { fetch-depth: 0 }
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: { node-version: 22 }
+
+      # Defesa contra o dia em que alguém trocar GITHUB_TOKEN por PAT (aí o push do bot
+      # dispararia este workflow de novo): commit do próprio bot não entra.
+      - name: pula se o commit já é do bot de release
+        id: guard
+        run: |
+          if git log -1 --format=%s | grep -q '^chore(release):'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: bump da versão + docs gerados + tag
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          set -e
+          # Autoria do bump: assina como csbrasil-deploy-bot quando a conta máquina
+          # estiver configurada (variável BOT_GIT_EMAIL com o noreply dela); sem ela,
+          # cai no github-actions[bot] de sempre. O avatar do passarinho só aparece se
+          # o e-mail bater com uma conta real — bot "de mentira" não tem foto.
+          git config user.name "csbrasil-deploy-bot"
+          git config user.email "${{ secrets.BOT_GIT_EMAIL || vars.BOT_GIT_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com' }}"
+          # Rebase ANTES do commit: se a main andou desde o evento, a tag fica no commit
+          # certo (tagar antes do rebase deixaria a tag órfã do push).
+          git pull --rebase origin main
+          NEW=$(npm version prerelease --no-git-tag-version)
+          V=${NEW#v}
+          node -e "
+            const fs = require('fs');
+            const p = 'public/js/version.js';
+            fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/VERSION = '[^']*'/, \"VERSION = '$V'\"));
+          "
+          node scripts/sync-changelog.mjs
+          node tools/gen-docs.mjs
+          (cd docs && npm ci && npm run build:site)
+          # gen-arch também: o ARCH.md embute a versão do jogo no cabeçalho gerado, e sem
+          # regenerá-lo aqui o arch:check reprova o PR SEGUINTE (caso real 08/08: o bump
+          # do alpha.38 deixou o ARCH.md em alpha.37 e o PR #94 nasceu vermelho). Os dois
+          # geradores são node puro, não precisam de npm ci.
+          node tools/gen-arch.mjs
+          if git ls-remote --exit-code --tags origin "$NEW" > /dev/null 2>&1; then
+            echo "::error::tag $NEW já existe no remoto — bump manual necessário."
+            exit 1
+          fi
+          git add package.json package-lock.json public/js/version.js CHANGELOG.md README.md AGENTS.md STATUS.md docs/ public/docs/ tools/eval/ARCH.md tools/eval/README.md
+          git commit -s -m "chore(release): $NEW"
+          # Tag ANOTADA + push explícito do ref. `--follow-tags` só sobe tag anotada, e
+          # `git tag` sem `-a` cria tag LEVE: o alpha.38 (08/08) nasceu leve, ficou só no
+          # runner, e o `gh release create` abortou com "tag exists locally but has not
+          # been pushed" (reproduzido em repo bare local: tag leve + --follow-tags = nada
+          # no remoto). O ls-remote final é a régua que prova que a tag subiu de verdade.
+          git tag -a "$NEW" -m "$NEW"
+          # --atomic: OS DOIS REFS SOBEM OU NENHUM SOBE.
+          #
+          # Sem ele, um `git push` com dois refspecs sobe cada um por conta própria. Foi
+          # exatamente assim que a esteira travou em 12/08: entre o `pull --rebase` acima e
+          # este push, outro merge entrou na main; o ref `main` foi REJEITADO por
+          # não-fast-forward e o ref da TAG subiu do mesmo jeito. Resultado medido:
+          # v2.0.0-alpha.92 e v2.0.0-alpha.93 existiam no remoto e NENHUMA das duas estava
+          # na história da main, com o package.json parado no .92.
+          #
+          # E isso não se cura sozinho — piora: todo release seguinte calcula 92+1=93, acha
+          # a tag órfã, e sai pelo `ls-remote` acima com "bump manual necessário". Como é
+          # ESTE passo que regenera os blocos de docs, o `docs:check` do ci.yml ficou
+          # vermelho em todo commit da main junto. Uma causa, dois workflows parados.
+          #
+          # Com --atomic, main rejeitada = tag não sobe, o job falha limpo, e a próxima
+          # execução refaz o mesmo número de versão. A corrida volta a ser retentável em
+          # vez de terminal.
+          git push --atomic origin main "refs/tags/$NEW"
+          git ls-remote --exit-code origin "refs/tags/$NEW" > /dev/null
+
+      - name: GitHub Release
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          # RELEASE_TOKEN (PAT da conta csbrasil-deploy-bot) faz o Release sair com
+          # nome+foto dela; sem o secret, GITHUB_TOKEN e o autor vira github-actions[bot].
+          # A proteção anti-recursão do GitHub NÃO vale para PAT — o guard
+          # "chore(release)" lá em cima é o que impede o loop (caso previsto no topo).
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(git describe --tags --exact-match HEAD)
+          T=${TAG#v}
+          awk "/^## \[$T\]/{f=1;next}/^## \[/{f=0}f" CHANGELOG.md > release-body.md
+          EXTRA=()
+          if [ -s release-body.md ]; then
+            EXTRA=(--notes "$(cat release-body.md)")
+          fi
+          # As notas nativas ligam PRs e contribuidores às contas GitHub. O fallback
+          # antigo (`git log --oneline`) apagou esse crédito no alpha.47 (BUG-40).
+          gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"

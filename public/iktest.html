@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IK test — mão de apoio</title>
+<style>html,body{margin:0;height:100%;background:#20242b;overflow:hidden}#hud{position:fixed;left:8px;top:8px;font:12px monospace;color:#9fe;white-space:pre;z-index:9}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">carregando…</div>
+<script type="module">
+import * as THREE from 'three';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+import { weaponModel } from './js/weapons.js';
+import { CHARACTERS } from './js/characters.js';
+import { solveCCDIK } from './js/handik.js';
+
+const qp = new URLSearchParams(location.search);
+const num = (k, d) => { const v = parseFloat(qp.get(k)); return Number.isFinite(v) ? v : d; };
+const CHAR = qp.get('char') || 'mst';
+const DEBUG = qp.get('debug') === '1';
+const hud = document.getElementById('hud');
+
+// Support-hand reach forward of the trigger grip, in real meters along the barrel.
+// 0 = one-handed weapon (no support hand → no IK).
+const FOREGRIP = {
+  pistol:0, deagle:0, revolver38:0, knife:0,
+  mp5:0.12, uzi:0.12, p90:0.13, tavor:0.14, famas:0.15,
+  ak:0.20, akm:0.20, m92:0.18, g3:0.24, m4:0.20, scar:0.20, carbine:0.21, md97:0.22,
+  shotgun:0.22, lmg:0.24,
+  awp:0.28, mosin:0.30, rem700:0.28, m400:0.26,
+};
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x20242b);
+const cam = new THREE.PerspectiveCamera(38, innerWidth/innerHeight, 0.05, 100);
+const CAMD = num('cam', 5.0); // gameplay distance (bots seen from afar, not extreme close-up)
+cam.position.set(CAMD*0.55, 1.5, CAMD*0.83); cam.lookAt(0, 1.0, 0);
+
+scene.add(new THREE.HemisphereLight(0xbcd3ff, 0x3a3320, 1.0));
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
+key.position.set(3, 6, 4); key.castShadow = true; scene.add(key);
+const grid = new THREE.GridHelper(10, 20, 0x445, 0x334); scene.add(grid);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(10,10), new THREE.MeshStandardMaterial({color:0x2a2f38}));
+floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
+
+// markers
+const mkT = new THREE.Mesh(new THREE.SphereGeometry(0.025,12,12), new THREE.MeshBasicMaterial({color:0xff3355}));
+const mkH = new THREE.Mesh(new THREE.SphereGeometry(0.02,12,12), new THREE.MeshBasicMaterial({color:0x33ff88}));
+mkT.visible = mkH.visible = DEBUG; scene.add(mkT); scene.add(mkH);
+
+let turntable = new THREE.Group(); scene.add(turntable);
+let built = null, holder = null, gun = null, curWeapon = null, anim = 'idle', yaw = 0;
+let rarm=null, rfore=null, rhand=null, larm=null, lfore=null, lhand=null, chest=null;
+
+// weapon-holder placement in character-local space (tunable live via query for fast iteration)
+const HP = {
+  x: num('gx', 0.06),   // right(+)/left(-)
+  y: num('gy', 1.14),   // height (chest, not chin)
+  z: num('gz', 0.24),   // forward from body
+  ry: num('gry', 0) * Math.PI/180,
+  rx: num('grx', -6) * Math.PI/180, // slight downward "ready" tilt
+};
+// wrist orientation: OFF by default (forcing open palms to face the barrel looks like praying hands)
+const WRIST = qp.get('wrist') === '1';
+const WOFF = new THREE.Euler(num('wox',0)*Math.PI/180, num('woy',-90)*Math.PI/180, num('woz',0)*Math.PI/180);
+// which way the model faces: +Z or -Z (weaponModel barrel is +Z). Flip via ?fwd=-1
+const FWD = parseFloat(qp.get('fwd')) || 1;
+
+function findBone(root, re){ let b=null; root.traverse(o=>{ if(!b && o.isBone && re.test(o.name)) b=o; }); return b; }
+
+function mountChar(weaponId){
+  if (built) turntable.remove(built.group);
+  const def = CHARACTERS.find(c => c.id === CHAR) || { id: CHAR, team:'P' };
+  built = buildCharacterModel(def, { weapon:false }); // no hand-mount; we place our own holder
+  if (!built) { hud.textContent = 'sem modelo pra '+CHAR; return; }
+  turntable.add(built.group);
+  rarm  = findBone(built.group, /right.?arm(?!.*fore)|r_arm/i) || findBone(built.group, /\bRightArm\b/);
+  rfore = findBone(built.group, /right.?forearm|r_forearm/i);
+  rhand = findBone(built.group, /right.?hand|r_hand/i);
+  larm  = findBone(built.group, /left.?arm(?!.*fore)|l_arm/i) || findBone(built.group, /\bLeftArm\b/);
+  lfore = findBone(built.group, /left.?forearm|l_forearm/i);
+  lhand = findBone(built.group, /left.?hand|l_hand/i);
+  chest = findBone(built.group, /spine02|spine01|spine|chest/i);
+  // weapon holder parented to the chest bone so it bobs with the torso; oriented to aim forward
+  holder = new THREE.Group();
+  (chest || built.group).add(holder);
+  gun = weaponModel(weaponId);
+  if (gun) holder.add(gun);
+  curWeapon = weaponId;
+  placeHolder();
+}
+
+// place holder in the character ROOT's local frame (stable), converting through the chest bone
+const _m = new THREE.Matrix4(), _pos = new THREE.Vector3(), _quat = new THREE.Quaternion(), _scl = new THREE.Vector3();
+function placeHolder(){
+  if (!holder || !built) return;
+  built.group.updateWorldMatrix(true, true);
+  // desired holder world transform = character-root offset, barrel along root forward
+  const rootPos = built.group.getWorldPosition(new THREE.Vector3());
+  const rootQuat = built.group.getWorldQuaternion(new THREE.Quaternion());
+  const local = new THREE.Vector3(HP.x, HP.y, HP.z * FWD).applyQuaternion(rootQuat);
+  const wPos = rootPos.clone().add(local);
+  const wQuat = rootQuat.clone().multiply(new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(HP.rx, HP.ry + (FWD<0?Math.PI:0), 0)));
+  // express that world transform in the holder parent's local space
+  const parent = holder.parent; parent.updateWorldMatrix(true, false);
+  const pInv = parent.matrixWorld.clone().invert();
+  _m.compose(wPos, wQuat, new THREE.Vector3(1,1,1)).premultiply(pInv);
+  _m.decompose(_pos, _quat, _scl);
+  holder.position.copy(_pos); holder.quaternion.copy(_quat); holder.scale.copy(_scl);
+}
+
+const _tp = new THREE.Vector3();
+function ikHandTo(localOffset, chainA, chainB, endBone, marker){
+  if (!chainA || !chainB || !endBone || !holder) return;
+  holder.updateWorldMatrix(true, false);
+  _tp.copy(localOffset); holder.localToWorld(_tp);
+  if (marker) marker.position.copy(_tp);
+  solveCCDIK([chainA, chainB], endBone, _tp, { iterations: 12, maxStep: 0.5 });
+}
+
+// orient the wrist so the hand aligns with the barrel (open hand lies along the gun)
+const _hp = new THREE.Vector3(), _fwd2 = new THREE.Vector3(), _up2 = new THREE.Vector3(),
+  _lm = new THREE.Matrix4(), _wq2 = new THREE.Quaternion(), _pwq2 = new THREE.Quaternion(), _off2 = new THREE.Quaternion();
+function orientWrist(bone, barrel, gunUp){
+  if (!bone) return;
+  bone.getWorldPosition(_hp);
+  _lm.lookAt(_hp, _hp.clone().add(barrel), gunUp); // -Z toward barrel
+  _wq2.setFromRotationMatrix(_lm).multiply(_off2.setFromEuler(WOFF));
+  bone.parent.getWorldQuaternion(_pwq2).invert();
+  bone.quaternion.copy(_pwq2).multiply(_wq2).normalize();
+  bone.updateWorldMatrix(false, true);
+}
+
+const _gq = new THREE.Quaternion();
+function applyIK(){
+  placeHolder();
+  const reach = FOREGRIP[curWeapon] ?? 0.18;
+  holder.updateWorldMatrix(true, false);
+  holder.getWorldQuaternion(_gq);
+  _fwd2.set(0,0,1).applyQuaternion(_gq).normalize();  // barrel dir
+  _up2.set(0,1,0).applyQuaternion(_gq).normalize();   // gun up
+  // right hand → trigger grip (holder origin), then wrist along barrel
+  ikHandTo(new THREE.Vector3(0, 0, 0), rarm, rfore, rhand, mkH);
+  if (WRIST) orientWrist(rhand, _fwd2, _up2);
+  // left hand → foregrip (forward along barrel), only for two-handed weapons
+  if (reach > 0){ ikHandTo(new THREE.Vector3(0, -0.03, reach), larm, lfore, lhand, mkT); if (WRIST) orientWrist(lhand, _fwd2, _up2); }
+}
+
+function step(dt){
+  if (built && built.ctrl) {
+    const moving = anim === 'idle' ? 0 : 1;
+    const hasTarget = anim === 'walk';
+    const speed = anim === 'run' ? 3.2 : anim === 'walk' ? 1.45 : 0;
+    built.ctrl.update(dt, moving, hasTarget, speed);
+  }
+  turntable.rotation.y = yaw;
+  applyIK();
+  renderer.render(scene, cam);
+}
+
+// ---- driver API ----
+window.HARNESS = {
+  ready:false,
+  step(dt){ step(dt ?? 1/30); },
+  setWeapon(id){ mountChar(id); step(0); },
+  setAnim(a){ anim = a; },
+  setYaw(y){ yaw = y; },
+  info(){ return { char:CHAR, weapon:curWeapon, anim, hasGun:!!gun, hasArm:!!(larm&&lfore&&lhand) }; },
+  // Find the walk-cycle frame where the feet are CLOSEST together and lowest (the
+  // "passing pose" — right for a neutral standing idle, no lifted trailing foot).
+  measurePassing(name){
+    if(!built||!built.ctrl) return { error:'no char' };
+    const act = built.ctrl.actions[name]; if(!act) return { error:'no action' };
+    const clip = act.getClip ? act.getClip() : act._clip; const dur = clip.duration;
+    built.mixer.stopAllAction();
+    act.reset(); act.enabled=true; act.setEffectiveTimeScale(1); act.setEffectiveWeight(1);
+    act.setLoop(THREE.LoopRepeat, Infinity); act.play();
+    const L = findBone(built.group, /lefttoe|toebase/i) || findBone(built.group, /left.?foot|l_foot/i) || findBone(built.group, /foot/i);
+    const R = findBone(built.group, /righttoe|toebase/i) || findBone(built.group, /right.?foot|r_foot/i) || findBone(built.group, /foot/i);
+    if(!L||!R) return { error:'no foot bones' };
+    const N=120, dt=dur/N, pl=new THREE.Vector3(), pr=new THREE.Vector3();
+    let best=null;
+    built.mixer.update(0);
+    for(let i=0;i<=N;i++){
+      built.group.updateWorldMatrix(true,true);
+      L.getWorldPosition(pl); R.getWorldPosition(pr);
+      const sep = Math.hypot(pl.x-pr.x, pl.z-pr.z);
+      const lift = Math.max(pl.y, pr.y);      // both feet low = grounded passing pose
+      const score = sep + lift*2;
+      if(!best || score < best.score) best = { t:+(i*dt).toFixed(3), sep:+sep.toFixed(3), lift:+lift.toFixed(3), score:+score.toFixed(3) };
+      built.mixer.update(dt);
+    }
+    return best;
+  },
+  // Measure a locomotion clip's real stride: how far a foot bone travels (peak-to-peak)
+  // along the facing axis per clip loop, and the natural ground speed that plants it.
+  measureStride(name){
+    if(!built||!built.ctrl) return { error:'no char' };
+    const act = built.ctrl.actions[name];
+    if(!act) return { error:'no action', have:Object.keys(built.ctrl.actions) };
+    const clip = act.getClip ? act.getClip() : act._clip;
+    const dur = clip.duration;
+    built.mixer.stopAllAction();
+    act.reset(); act.enabled=true; act.setEffectiveTimeScale(1); act.setEffectiveWeight(1);
+    act.setLoop(THREE.LoopRepeat, Infinity); act.play();
+    const toe = findBone(built.group, /lefttoe|toebase/i) || findBone(built.group, /left.?foot|l_foot/i) || findBone(built.group, /foot/i);
+    if(!toe) return { error:'no foot bone' };
+    const N=48, dt=dur/N, p=new THREE.Vector3();
+    let minX=1e9,maxX=-1e9,minZ=1e9,maxZ=-1e9;
+    built.mixer.update(0);
+    for(let i=0;i<=N;i++){ built.group.updateWorldMatrix(true,true); toe.getWorldPosition(p);
+      minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minZ=Math.min(minZ,p.z);maxZ=Math.max(maxZ,p.z); built.mixer.update(dt); }
+    const sX=maxX-minX, sZ=maxZ-minZ, stride=Math.max(sX,sZ);
+    // natural body speed to plant = stride covered over the stance (~half the loop)
+    return { clip:name, duration:+dur.toFixed(3), strideX:+sX.toFixed(3), strideZ:+sZ.toFixed(3),
+      stride:+stride.toFixed(3), naturalSpeed_full:+(stride/dur).toFixed(3), naturalSpeed_stance:+(2*stride/dur).toFixed(3) };
+  },
+  // Precise plant speed: the foot's backward ground speed WHILE it is low (planted).
+  // Set the clip's ref to this and feet stop sliding (ref == vFoot => zero slip).
+  measureStanceSpeed(name){
+    if(!built||!built.ctrl) return { error:'no char' };
+    const act = built.ctrl.actions[name]; if(!act) return { error:'no action' };
+    const clip = act.getClip ? act.getClip() : act._clip; const dur = clip.duration;
+    built.mixer.stopAllAction();
+    act.reset(); act.enabled=true; act.setEffectiveTimeScale(1); act.setEffectiveWeight(1);
+    act.setLoop(THREE.LoopRepeat, Infinity); act.play();
+    const toe = findBone(built.group, /lefttoe|toebase/i) || findBone(built.group, /left.?foot|l_foot/i) || findBone(built.group, /foot/i);
+    if(!toe) return { error:'no foot bone' };
+    const N=96, dt=dur/N, p=new THREE.Vector3(); const xs=[],zs=[],ys=[];
+    built.mixer.update(0);
+    for(let i=0;i<=N;i++){ built.group.updateWorldMatrix(true,true); toe.getWorldPosition(p); xs.push(p.x); zs.push(p.z); ys.push(p.y); built.mixer.update(dt); }
+    const rng=a=>Math.max(...a)-Math.min(...a);
+    const axis = rng(xs) > rng(zs) ? xs : zs;               // dominant travel axis
+    const ymin=Math.min(...ys), ymax=Math.max(...ys), thr=ymin+(ymax-ymin)*0.4; // planted = foot low
+    let backTravel=0, lowTime=0;
+    for(let i=1;i<=N;i++){ if(ys[i]<thr && ys[i-1]<thr){ lowTime+=dt; const d=Math.abs(axis[i-1]-axis[i]); backTravel+=d; } }
+    return { clip:name, vFoot:+(backTravel/Math.max(lowTime,1e-3)).toFixed(3), lowFrac:+(lowTime/dur).toFixed(2), axis: rng(xs)>rng(zs)?'X':'Z' };
+  },
+};
+
+(async () => {
+  await preloadCharacterAssets([CHAR]);
+  mountChar(qp.get('w') || 'ak');
+  step(0);
+  window.HARNESS.ready = true;
+  hud.textContent = JSON.stringify(window.HARNESS.info());
+  // stand-alone auto-run when opened in a normal browser (not the capture driver)
+  if (!qp.has('driven')) {
+    let last = performance.now();
+    (function loop(t){ const dt=Math.min(0.05,(t-last)/1000); last=t; yaw += dt*0.6; step(dt); requestAnimationFrame(loop); })(performance.now());
+  }
+})();
+</script>
+</body>
+</html>

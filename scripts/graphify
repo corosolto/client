@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if command -v graphify >/dev/null 2>&1; then
+  exec graphify "$@"
+fi
+
+if command -v uv >/dev/null 2>&1; then
+  exec uv tool run --from graphifyy graphify "$@"
+fi
+
+echo "graphify não encontrado. Instale com: uv tool install 'graphifyy[sql]'" >&2
+exit 127

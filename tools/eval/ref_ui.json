@@ -1,0 +1,3140 @@
+{
+ "gerado": "2026-08-03T22:01:52.627820Z",
+ "fonte": {
+  "telas": [
+   "01_menu_principal.png",
+   "02_escolha_faccao.png",
+   "03_escolha_personagem.png",
+   "04_escolha_mapa.png",
+   "05_hud_ingame.png",
+   "06_menu_pausa.png",
+   "07_configuracoes.png",
+   "08_placar.png",
+   "09_resultado_partida.png"
+  ],
+  "hudHD": "da0914a2-612f-429f-bc4a-d265d8232e7a.png",
+  "nota": "os 9 PNGs sao recortes de um contact sheet e carregam legenda ambar; a faixa descartada esta em cada tela no campo `rotulo`"
+ },
+ "telas": {
+  "01_menu_principal": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 20,
+    "fracAltura": 0.0587
+   },
+   "paleta": [
+    {
+     "hex": "#080a05",
+     "hexNucleo": "#11130b",
+     "Lnucleo": 5.6,
+     "Cnucleo": 4.4,
+     "share": 0.5980929736024845,
+     "L": 2.5,
+     "C": 2.1,
+     "h": 121.9,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#1d2213",
+     "hexNucleo": "#2c2e1c",
+     "Lnucleo": 18.4,
+     "Cnucleo": 12.3,
+     "share": 0.2027853260869565,
+     "L": 12.3,
+     "C": 10.9,
+     "h": 120.8,
+     "papel": "painel"
+    },
+    {
+     "hex": "#344722",
+     "hexNucleo": "#465d32",
+     "Lnucleo": 36.6,
+     "Cnucleo": 27.9,
+     "share": 0.08574340062111802,
+     "L": 27.7,
+     "C": 24.8,
+     "h": 127.2,
+     "papel": null
+    },
+    {
+     "hex": "#684724",
+     "hexNucleo": "#92683d",
+     "Lnucleo": 47.4,
+     "Cnucleo": 33.1,
+     "share": 0.037072981366459624,
+     "L": 33.0,
+     "C": 28.4,
+     "h": 68.1,
+     "papel": null
+    },
+    {
+     "hex": "#688a46",
+     "hexNucleo": "#98b768",
+     "Lnucleo": 70.5,
+     "Cnucleo": 43.8,
+     "share": 0.0328513198757764,
+     "L": 53.7,
+     "C": 40.7,
+     "h": 126.7,
+     "papel": null
+    },
+    {
+     "hex": "#d39c17",
+     "hexNucleo": "#e9af1f",
+     "Lnucleo": 74.9,
+     "Cnucleo": 73.7,
+     "share": 0.020137810559006212,
+     "L": 67.9,
+     "C": 69.1,
+     "h": 81.5,
+     "papel": "acento"
+    },
+    {
+     "hex": "#d0d1c9",
+     "hexNucleo": "#fafaf2",
+     "Lnucleo": 98.1,
+     "Cnucleo": 4.3,
+     "share": 0.014508928571428572,
+     "L": 83.5,
+     "C": 4.4,
+     "h": 115.9,
+     "papel": "tinta_alta"
+    },
+    {
+     "hex": "#b11409",
+     "hexNucleo": "#ca170a",
+     "Lnucleo": 43.0,
+     "Cnucleo": 83.9,
+     "share": 0.008807259316770186,
+     "L": 37.5,
+     "C": 75.3,
+     "h": 39.4,
+     "papel": "time_quente"
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 44,
+     "y1": 58,
+     "x0": 47,
+     "x1": 145,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 6,
+     "largFrac": 0.1934,
+     "centroXFrac": 0.1875
+    },
+    {
+     "y0": 52,
+     "y1": 65,
+     "x0": 42,
+     "x1": 179,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 4,
+     "largFrac": 0.2695,
+     "centroXFrac": 0.2158
+    },
+    {
+     "y0": 64,
+     "y1": 80,
+     "x0": 50,
+     "x1": 249,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 6,
+     "largFrac": 0.3906,
+     "centroXFrac": 0.292
+    },
+    {
+     "y0": 80,
+     "y1": 125,
+     "x0": 48,
+     "x1": 287,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 32,
+     "largFrac": 0.4688,
+     "centroXFrac": 0.3271
+    },
+    {
+     "y0": 81,
+     "y1": 83,
+     "x0": 362,
+     "x1": 375,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0273,
+     "centroXFrac": 0.7197
+    },
+    {
+     "y0": 101,
+     "y1": 106,
+     "x0": 306,
+     "x1": 319,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.0273,
+     "centroXFrac": 0.6104
+    },
+    {
+     "y0": 114,
+     "y1": 125,
+     "x0": 337,
+     "x1": 503,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 5,
+     "largFrac": 0.3262,
+     "centroXFrac": 0.8203
+    },
+    {
+     "y0": 121,
+     "y1": 132,
+     "x0": 105,
+     "x1": 143,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.0762,
+     "centroXFrac": 0.2422
+    },
+    {
+     "y0": 122,
+     "y1": 134,
+     "x0": 301,
+     "x1": 329,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.0566,
+     "centroXFrac": 0.6152
+    },
+    {
+     "y0": 129,
+     "y1": 159,
+     "x0": 139,
+     "x1": 452,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 26,
+     "largFrac": 0.6133,
+     "centroXFrac": 0.5771
+    },
+    {
+     "y0": 147,
+     "y1": 169,
+     "x0": 16,
+     "x1": 142,
+     "alt": 16,
+     "altFrac": 0.0469,
+     "nGlifos": 2,
+     "largFrac": 0.248,
+     "centroXFrac": 0.1543
+    },
+    {
+     "y0": 158,
+     "y1": 168,
+     "x0": 243,
+     "x1": 295,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 3,
+     "largFrac": 0.1035,
+     "centroXFrac": 0.5254
+    },
+    {
+     "y0": 159,
+     "y1": 166,
+     "x0": 398,
+     "x1": 420,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 2,
+     "largFrac": 0.0449,
+     "centroXFrac": 0.7988
+    },
+    {
+     "y0": 166,
+     "y1": 198,
+     "x0": 40,
+     "x1": 278,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 23,
+     "largFrac": 0.4668,
+     "centroXFrac": 0.3105
+    },
+    {
+     "y0": 176,
+     "y1": 179,
+     "x0": 401,
+     "x1": 416,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0312,
+     "centroXFrac": 0.7979
+    },
+    {
+     "y0": 192,
+     "y1": 204,
+     "x0": 295,
+     "x1": 349,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 5,
+     "largFrac": 0.1074,
+     "centroXFrac": 0.6289
+    },
+    {
+     "y0": 196,
+     "y1": 206,
+     "x0": 40,
+     "x1": 353,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 3,
+     "largFrac": 0.6133,
+     "centroXFrac": 0.3838
+    },
+    {
+     "y0": 204,
+     "y1": 218,
+     "x0": 196,
+     "x1": 336,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 11,
+     "largFrac": 0.2754,
+     "centroXFrac": 0.5195
+    },
+    {
+     "y0": 206,
+     "y1": 212,
+     "x0": 324,
+     "x1": 413,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.1758,
+     "centroXFrac": 0.7197
+    },
+    {
+     "y0": 210,
+     "y1": 219,
+     "x0": 180,
+     "x1": 192,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 2,
+     "largFrac": 0.0254,
+     "centroXFrac": 0.3633
+    },
+    {
+     "y0": 218,
+     "y1": 234,
+     "x0": 40,
+     "x1": 379,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 21,
+     "largFrac": 0.6641,
+     "centroXFrac": 0.4092
+    },
+    {
+     "y0": 224,
+     "y1": 230,
+     "x0": 386,
+     "x1": 496,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.2168,
+     "centroXFrac": 0.8613
+    },
+    {
+     "y0": 230,
+     "y1": 246,
+     "x0": 174,
+     "x1": 283,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 12,
+     "largFrac": 0.2148,
+     "centroXFrac": 0.4463
+    },
+    {
+     "y0": 236,
+     "y1": 267,
+     "x0": 211,
+     "x1": 456,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 30,
+     "largFrac": 0.4805,
+     "centroXFrac": 0.6514
+    },
+    {
+     "y0": 263,
+     "y1": 285,
+     "x0": 242,
+     "x1": 450,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 4,
+     "largFrac": 0.4082,
+     "centroXFrac": 0.6758
+    },
+    {
+     "y0": 283,
+     "y1": 293,
+     "x0": 40,
+     "x1": 464,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 6,
+     "largFrac": 0.8301,
+     "centroXFrac": 0.4922
+    },
+    {
+     "y0": 294,
+     "y1": 301,
+     "x0": 20,
+     "x1": 253,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.457,
+     "centroXFrac": 0.2666
+    },
+    {
+     "y0": 304,
+     "y1": 309,
+     "x0": 246,
+     "x1": 317,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.1406,
+     "centroXFrac": 0.5498
+    },
+    {
+     "y0": 309,
+     "y1": 322,
+     "x0": 244,
+     "x1": 468,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 3,
+     "largFrac": 0.4395,
+     "centroXFrac": 0.6953
+    },
+    {
+     "y0": 325,
+     "y1": 337,
+     "x0": 36,
+     "x1": 105,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 3,
+     "largFrac": 0.1367,
+     "centroXFrac": 0.1377
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 4,
+    "maiorPx": 16,
+    "menorFrac": 0.0117,
+    "maiorFrac": 0.0469,
+    "razao": 4.0,
+    "passoListaPx": 11,
+    "passoListaFrac": 0.0323,
+    "passoSobreCorpo": 2.75,
+    "nBandas": 30
+   },
+   "densidade": {
+    "scrimFrac": 0.5852,
+    "tintaFrac": 0.051
+   },
+   "margens": {
+    "topoFrac": 0.0592,
+    "baseFrac": 0.0,
+    "esqFrac": 0.0312,
+    "dirFrac": 0.0312
+   }
+  },
+  "02_escolha_faccao": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 20,
+    "fracAltura": 0.0587
+   },
+   "paleta": [
+    {
+     "hex": "#11100e",
+     "hexNucleo": "#1e1c19",
+     "Lnucleo": 10.5,
+     "Cnucleo": 2.9,
+     "share": 0.6300223214285714,
+     "L": 4.7,
+     "C": 0.9,
+     "h": 80.6,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#4a3b1a",
+     "hexNucleo": "#5f4e23",
+     "Lnucleo": 33.9,
+     "Cnucleo": 27.6,
+     "share": 0.10197496118012422,
+     "L": 25.9,
+     "C": 22.9,
+     "h": 85.9,
+     "papel": null
+    },
+    {
+     "hex": "#3c1210",
+     "hexNucleo": "#551f18",
+     "Lnucleo": 19.9,
+     "Cnucleo": 30.0,
+     "share": 0.1015139751552795,
+     "L": 12.0,
+     "C": 23.8,
+     "h": 29.6,
+     "papel": null
+    },
+    {
+     "hex": "#2b2032",
+     "hexNucleo": "#403245",
+     "Lnucleo": 23.0,
+     "Cnucleo": 14.2,
+     "share": 0.07249611801242237,
+     "L": 14.4,
+     "C": 13.6,
+     "h": 314.7,
+     "papel": "painel"
+    },
+    {
+     "hex": "#67625c",
+     "hexNucleo": "#8b857c",
+     "Lnucleo": 55.8,
+     "Cnucleo": 5.8,
+     "share": 0.03503493788819876,
+     "L": 41.8,
+     "C": 4.5,
+     "h": 78.6,
+     "papel": null
+    },
+    {
+     "hex": "#8f5e2d",
+     "hexNucleo": "#ac7f47",
+     "Lnucleo": 56.5,
+     "Cnucleo": 38.6,
+     "share": 0.029551630434782608,
+     "L": 44.2,
+     "C": 38.5,
+     "h": 67.1,
+     "papel": "acento"
+    },
+    {
+     "hex": "#d2cfcb",
+     "hexNucleo": "#fbfbfa",
+     "Lnucleo": 98.6,
+     "Cnucleo": 0.3,
+     "share": 0.016110248447204968,
+     "L": 83.2,
+     "C": 2.2,
+     "h": 84.0,
+     "papel": "tinta_alta"
+    },
+    {
+     "hex": "#d4a71f",
+     "hexNucleo": "#f6cd20",
+     "Lnucleo": 83.8,
+     "Cnucleo": 80.4,
+     "share": 0.01329580745341615,
+     "L": 70.7,
+     "C": 68.7,
+     "h": 86.3,
+     "papel": null
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 45,
+     "y1": 53,
+     "x0": 450,
+     "x1": 489,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.0781,
+     "centroXFrac": 0.917
+    },
+    {
+     "y0": 53,
+     "y1": 69,
+     "x0": 171,
+     "x1": 310,
+     "alt": 11,
+     "altFrac": 0.0323,
+     "nGlifos": 3,
+     "largFrac": 0.2734,
+     "centroXFrac": 0.4697
+    },
+    {
+     "y0": 74,
+     "y1": 82,
+     "x0": 150,
+     "x1": 291,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 12,
+     "largFrac": 0.2773,
+     "centroXFrac": 0.4307
+    },
+    {
+     "y0": 74,
+     "y1": 80,
+     "x0": 293,
+     "x1": 329,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 4,
+     "largFrac": 0.0723,
+     "centroXFrac": 0.6074
+    },
+    {
+     "y0": 120,
+     "y1": 122,
+     "x0": 67,
+     "x1": 78,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0234,
+     "centroXFrac": 0.1416
+    },
+    {
+     "y0": 120,
+     "y1": 124,
+     "x0": 196,
+     "x1": 316,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 3,
+     "largFrac": 0.2363,
+     "centroXFrac": 0.5
+    },
+    {
+     "y0": 120,
+     "y1": 125,
+     "x0": 422,
+     "x1": 449,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 3,
+     "largFrac": 0.0547,
+     "centroXFrac": 0.8506
+    },
+    {
+     "y0": 130,
+     "y1": 144,
+     "x0": 46,
+     "x1": 467,
+     "alt": 12,
+     "altFrac": 0.0352,
+     "nGlifos": 5,
+     "largFrac": 0.8242,
+     "centroXFrac": 0.501
+    },
+    {
+     "y0": 148,
+     "y1": 156,
+     "x0": 38,
+     "x1": 228,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 3,
+     "largFrac": 0.373,
+     "centroXFrac": 0.2598
+    },
+    {
+     "y0": 174,
+     "y1": 265,
+     "x0": 16,
+     "x1": 491,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 163,
+     "largFrac": 0.9297,
+     "centroXFrac": 0.4951
+    },
+    {
+     "y0": 221,
+     "y1": 251,
+     "x0": 151,
+     "x1": 319,
+     "alt": 19,
+     "altFrac": 0.0557,
+     "nGlifos": 3,
+     "largFrac": 0.3301,
+     "centroXFrac": 0.459
+    },
+    {
+     "y0": 250,
+     "y1": 268,
+     "x0": 81,
+     "x1": 249,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 4,
+     "largFrac": 0.3301,
+     "centroXFrac": 0.3223
+    },
+    {
+     "y0": 267,
+     "y1": 271,
+     "x0": 223,
+     "x1": 477,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 4,
+     "largFrac": 0.498,
+     "centroXFrac": 0.6836
+    },
+    {
+     "y0": 271,
+     "y1": 274,
+     "x0": 97,
+     "x1": 159,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.123,
+     "centroXFrac": 0.25
+    },
+    {
+     "y0": 271,
+     "y1": 280,
+     "x0": 224,
+     "x1": 282,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 2,
+     "largFrac": 0.1152,
+     "centroXFrac": 0.4941
+    },
+    {
+     "y0": 280,
+     "y1": 292,
+     "x0": 291,
+     "x1": 411,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 3,
+     "largFrac": 0.2363,
+     "centroXFrac": 0.6855
+    },
+    {
+     "y0": 291,
+     "y1": 297,
+     "x0": 286,
+     "x1": 387,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.1992,
+     "centroXFrac": 0.6572
+    },
+    {
+     "y0": 292,
+     "y1": 296,
+     "x0": 425,
+     "x1": 440,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.0312,
+     "centroXFrac": 0.8447
+    },
+    {
+     "y0": 328,
+     "y1": 335,
+     "x0": 46,
+     "x1": 99,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.1055,
+     "centroXFrac": 0.1416
+    },
+    {
+     "y0": 328,
+     "y1": 335,
+     "x0": 165,
+     "x1": 219,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 2,
+     "largFrac": 0.1074,
+     "centroXFrac": 0.375
+    },
+    {
+     "y0": 328,
+     "y1": 335,
+     "x0": 284,
+     "x1": 338,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.1074,
+     "centroXFrac": 0.6074
+    },
+    {
+     "y0": 328,
+     "y1": 335,
+     "x0": 409,
+     "x1": 463,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.1074,
+     "centroXFrac": 0.8516
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 5,
+    "maiorPx": 19,
+    "menorFrac": 0.0147,
+    "maiorFrac": 0.0557,
+    "razao": 3.8,
+    "passoListaPx": 0,
+    "passoListaFrac": null,
+    "passoSobreCorpo": null,
+    "nBandas": 22
+   },
+   "densidade": {
+    "scrimFrac": 0.6144,
+    "tintaFrac": 0.0656
+   },
+   "margens": {
+    "topoFrac": 0.081,
+    "baseFrac": 0.0,
+    "esqFrac": 0.0449,
+    "dirFrac": 0.0254
+   }
+  },
+  "03_escolha_personagem": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 85,
+    "fracAltura": 0.2493
+   },
+   "paleta": [
+    {
+     "hex": "#0d0d0d",
+     "hexNucleo": "#141515",
+     "Lnucleo": 6.7,
+     "Cnucleo": 0.4,
+     "share": 0.766571044921875,
+     "L": 3.7,
+     "C": 0.1,
+     "h": 243.8,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#38322c",
+     "hexNucleo": "#4e443d",
+     "Lnucleo": 29.8,
+     "Cnucleo": 6.5,
+     "share": 0.060333251953125,
+     "L": 21.1,
+     "C": 4.7,
+     "h": 72.2,
+     "papel": "painel"
+    },
+    {
+     "hex": "#30110b",
+     "hexNucleo": "#3f2115",
+     "Lnucleo": 16.6,
+     "Cnucleo": 19.4,
+     "share": 0.050933837890625,
+     "L": 9.5,
+     "C": 18.0,
+     "h": 33.6,
+     "papel": null
+    },
+    {
+     "hex": "#6e5024",
+     "hexNucleo": "#8f6e34",
+     "Lnucleo": 48.5,
+     "Cnucleo": 37.2,
+     "share": 0.036376953125,
+     "L": 36.4,
+     "C": 31.5,
+     "h": 76.2,
+     "papel": "acento"
+    },
+    {
+     "hex": "#7e7266",
+     "hexNucleo": "#a29a8e",
+     "Lnucleo": 63.9,
+     "Cnucleo": 7.5,
+     "share": 0.036224365234375,
+     "L": 48.9,
+     "C": 8.6,
+     "h": 74.4,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#5c140e",
+     "hexNucleo": "#75261a",
+     "Lnucleo": 27.5,
+     "Cnucleo": 42.9,
+     "share": 0.02435302734375,
+     "L": 19.3,
+     "C": 39.2,
+     "h": 35.6,
+     "papel": null
+    },
+    {
+     "hex": "#dda41d",
+     "hexNucleo": "#edb220",
+     "Lnucleo": 76.1,
+     "Cnucleo": 74.4,
+     "share": 0.021728515625,
+     "L": 70.8,
+     "C": 70.4,
+     "h": 81.7,
+     "papel": null
+    },
+    {
+     "hex": "#5b3a7e",
+     "hexNucleo": "#654989",
+     "Lnucleo": 36.7,
+     "Cnucleo": 40.7,
+     "share": 0.00347900390625,
+     "L": 31.3,
+     "C": 44.0,
+     "h": 311.0,
+     "papel": "time_frio"
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 85,
+     "y1": 111,
+     "x0": 39,
+     "x1": 134,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 12,
+     "largFrac": 0.1875,
+     "centroXFrac": 0.1689
+    },
+    {
+     "y0": 85,
+     "y1": 104,
+     "x0": 331,
+     "x1": 386,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 10,
+     "largFrac": 0.1094,
+     "centroXFrac": 0.7002
+    },
+    {
+     "y0": 85,
+     "y1": 91,
+     "x0": 369,
+     "x1": 385,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.0332,
+     "centroXFrac": 0.7363
+    },
+    {
+     "y0": 99,
+     "y1": 126,
+     "x0": 103,
+     "x1": 347,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 11,
+     "largFrac": 0.4785,
+     "centroXFrac": 0.4395
+    },
+    {
+     "y0": 124,
+     "y1": 145,
+     "x0": 41,
+     "x1": 307,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 10,
+     "largFrac": 0.5215,
+     "centroXFrac": 0.3398
+    },
+    {
+     "y0": 135,
+     "y1": 139,
+     "x0": 321,
+     "x1": 343,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.0449,
+     "centroXFrac": 0.6484
+    },
+    {
+     "y0": 137,
+     "y1": 166,
+     "x0": 46,
+     "x1": 422,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 18,
+     "largFrac": 0.7363,
+     "centroXFrac": 0.457
+    },
+    {
+     "y0": 166,
+     "y1": 193,
+     "x0": 37,
+     "x1": 428,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 16,
+     "largFrac": 0.7656,
+     "centroXFrac": 0.4541
+    },
+    {
+     "y0": 188,
+     "y1": 207,
+     "x0": 64,
+     "x1": 435,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 11,
+     "largFrac": 0.7266,
+     "centroXFrac": 0.4873
+    },
+    {
+     "y0": 207,
+     "y1": 234,
+     "x0": 43,
+     "x1": 437,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 22,
+     "largFrac": 0.7715,
+     "centroXFrac": 0.4688
+    },
+    {
+     "y0": 237,
+     "y1": 252,
+     "x0": 48,
+     "x1": 436,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 7,
+     "largFrac": 0.7598,
+     "centroXFrac": 0.4727
+    },
+    {
+     "y0": 261,
+     "y1": 287,
+     "x0": 41,
+     "x1": 205,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 11,
+     "largFrac": 0.3223,
+     "centroXFrac": 0.2402
+    },
+    {
+     "y0": 263,
+     "y1": 275,
+     "x0": 419,
+     "x1": 436,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.0352,
+     "centroXFrac": 0.835
+    },
+    {
+     "y0": 320,
+     "y1": 340,
+     "x0": 102,
+     "x1": 239,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 3,
+     "largFrac": 0.2695,
+     "centroXFrac": 0.333
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 5,
+    "maiorPx": 9,
+    "menorFrac": 0.0147,
+    "maiorFrac": 0.0264,
+    "razao": 1.8,
+    "passoListaPx": 22,
+    "passoListaFrac": 0.0645,
+    "passoSobreCorpo": 4.4,
+    "nBandas": 14
+   },
+   "densidade": {
+    "scrimFrac": 0.6799,
+    "tintaFrac": 0.0449
+   },
+   "margens": {
+    "topoFrac": 0.0,
+    "baseFrac": 0.0039,
+    "esqFrac": 0.043,
+    "dirFrac": 0.1465
+   }
+  },
+  "04_escolha_mapa": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 55,
+    "fracAltura": 0.1613
+   },
+   "paleta": [
+    {
+     "hex": "#090a0a",
+     "hexNucleo": "#121212",
+     "Lnucleo": 5.6,
+     "Cnucleo": 0.3,
+     "share": 0.46331402972027974,
+     "L": 2.6,
+     "C": 0.2,
+     "h": 236.3,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#232323",
+     "hexNucleo": "#2b2f31",
+     "Lnucleo": 19.1,
+     "Cnucleo": 2.3,
+     "share": 0.18097137237762237,
+     "L": 13.8,
+     "C": 0.4,
+     "h": 163.0,
+     "papel": "painel"
+    },
+    {
+     "hex": "#6f787c",
+     "hexNucleo": "#888c8c",
+     "Lnucleo": 57.9,
+     "Cnucleo": 1.5,
+     "share": 0.12830528846153846,
+     "L": 49.8,
+     "C": 4.2,
+     "h": 240.0,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#434d53",
+     "hexNucleo": "#525d65",
+     "Lnucleo": 38.9,
+     "Cnucleo": 6.4,
+     "share": 0.12259615384615384,
+     "L": 32.0,
+     "C": 5.6,
+     "h": 246.5,
+     "papel": null
+    },
+    {
+     "hex": "#403629",
+     "hexNucleo": "#4f4536",
+     "Lnucleo": 29.9,
+     "Cnucleo": 10.5,
+     "share": 0.055261145104895104,
+     "L": 23.2,
+     "C": 9.6,
+     "h": 75.8,
+     "papel": null
+    },
+    {
+     "hex": "#d49d19",
+     "hexNucleo": "#e4ab17",
+     "Lnucleo": 73.2,
+     "Cnucleo": 73.8,
+     "share": 0.017946896853146852,
+     "L": 68.2,
+     "C": 68.9,
+     "h": 81.7,
+     "papel": "acento"
+    },
+    {
+     "hex": "#715a39",
+     "hexNucleo": "#8d754f",
+     "Lnucleo": 50.6,
+     "Cnucleo": 24.7,
+     "share": 0.017455201048951048,
+     "L": 39.6,
+     "C": 22.9,
+     "h": 77.8,
+     "papel": null
+    },
+    {
+     "hex": "#d1c2b1",
+     "hexNucleo": "#fafaf9",
+     "Lnucleo": 98.2,
+     "Cnucleo": 0.7,
+     "share": 0.014149912587412588,
+     "L": 79.2,
+     "C": 10.8,
+     "h": 75.4,
+     "papel": "tinta_alta"
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 75,
+     "y1": 93,
+     "x0": 27,
+     "x1": 207,
+     "alt": 15,
+     "altFrac": 0.044,
+     "nGlifos": 8,
+     "largFrac": 0.3535,
+     "centroXFrac": 0.2285
+    },
+    {
+     "y0": 100,
+     "y1": 130,
+     "x0": 27,
+     "x1": 436,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 29,
+     "largFrac": 0.8008,
+     "centroXFrac": 0.4521
+    },
+    {
+     "y0": 125,
+     "y1": 157,
+     "x0": 27,
+     "x1": 494,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 21,
+     "largFrac": 0.9141,
+     "centroXFrac": 0.5088
+    },
+    {
+     "y0": 161,
+     "y1": 170,
+     "x0": 27,
+     "x1": 125,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 3,
+     "largFrac": 0.1934,
+     "centroXFrac": 0.1484
+    },
+    {
+     "y0": 173,
+     "y1": 182,
+     "x0": 27,
+     "x1": 60,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 2,
+     "largFrac": 0.0664,
+     "centroXFrac": 0.085
+    },
+    {
+     "y0": 215,
+     "y1": 245,
+     "x0": 27,
+     "x1": 454,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 39,
+     "largFrac": 0.8359,
+     "centroXFrac": 0.4697
+    },
+    {
+     "y0": 221,
+     "y1": 235,
+     "x0": 445,
+     "x1": 494,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 4,
+     "largFrac": 0.0977,
+     "centroXFrac": 0.917
+    },
+    {
+     "y0": 239,
+     "y1": 255,
+     "x0": 94,
+     "x1": 498,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 11,
+     "largFrac": 0.791,
+     "centroXFrac": 0.5781
+    },
+    {
+     "y0": 255,
+     "y1": 261,
+     "x0": 279,
+     "x1": 345,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.1309,
+     "centroXFrac": 0.6094
+    },
+    {
+     "y0": 275,
+     "y1": 283,
+     "x0": 52,
+     "x1": 199,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 4,
+     "largFrac": 0.2891,
+     "centroXFrac": 0.2451
+    },
+    {
+     "y0": 276,
+     "y1": 283,
+     "x0": 230,
+     "x1": 288,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 2,
+     "largFrac": 0.1152,
+     "centroXFrac": 0.5059
+    },
+    {
+     "y0": 276,
+     "y1": 283,
+     "x0": 317,
+     "x1": 457,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 2,
+     "largFrac": 0.2754,
+     "centroXFrac": 0.7559
+    },
+    {
+     "y0": 311,
+     "y1": 334,
+     "x0": 47,
+     "x1": 491,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 3,
+     "largFrac": 0.8691,
+     "centroXFrac": 0.5254
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 4,
+    "maiorPx": 15,
+    "menorFrac": 0.0117,
+    "maiorFrac": 0.044,
+    "razao": 3.75,
+    "passoListaPx": 12,
+    "passoListaFrac": 0.0352,
+    "passoSobreCorpo": 3.0,
+    "nBandas": 13
+   },
+   "densidade": {
+    "scrimFrac": 0.5293,
+    "tintaFrac": 0.0561
+   },
+   "margens": {
+    "topoFrac": 0.0699,
+    "baseFrac": 0.0245,
+    "esqFrac": 0.043,
+    "dirFrac": 0.002
+   }
+  },
+  "05_hud_ingame": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 55,
+    "fracAltura": 0.1613
+   },
+   "paleta": [
+    {
+     "hex": "#171412",
+     "hexNucleo": "#1f1c18",
+     "Lnucleo": 10.3,
+     "Cnucleo": 3.4,
+     "share": 0.36841673951048953,
+     "L": 6.6,
+     "C": 1.8,
+     "h": 68.8,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#35291f",
+     "hexNucleo": "#42352a",
+     "Lnucleo": 23.4,
+     "Cnucleo": 9.8,
+     "share": 0.17400568181818182,
+     "L": 17.7,
+     "C": 9.3,
+     "h": 65.2,
+     "papel": "painel"
+    },
+    {
+     "hex": "#27282a",
+     "hexNucleo": "#2f3437",
+     "Lnucleo": 21.2,
+     "Cnucleo": 3.1,
+     "share": 0.15723339160839161,
+     "L": 16.2,
+     "C": 1.1,
+     "h": 241.4,
+     "papel": null
+    },
+    {
+     "hex": "#434d54",
+     "hexNucleo": "#525e65",
+     "Lnucleo": 39.1,
+     "Cnucleo": 6.3,
+     "share": 0.155430506993007,
+     "L": 32.0,
+     "C": 5.9,
+     "h": 248.6,
+     "papel": null
+    },
+    {
+     "hex": "#604831",
+     "hexNucleo": "#75583c",
+     "Lnucleo": 39.9,
+     "Cnucleo": 22.4,
+     "share": 0.08459899475524475,
+     "L": 32.5,
+     "C": 18.9,
+     "h": 66.8,
+     "papel": null
+    },
+    {
+     "hex": "#7c8081",
+     "hexNucleo": "#a7a7a4",
+     "Lnucleo": 68.5,
+     "Cnucleo": 1.5,
+     "share": 0.05553430944055944,
+     "L": 53.1,
+     "C": 1.7,
+     "h": 221.4,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#c59223",
+     "hexNucleo": "#efb927",
+     "Lnucleo": 77.9,
+     "Cnucleo": 74.0,
+     "share": 0.003414554195804196,
+     "L": 63.8,
+     "C": 61.9,
+     "h": 81.2,
+     "papel": "acento"
+    },
+    {
+     "hex": "#684d88",
+     "hexNucleo": "#9975b8",
+     "Lnucleo": 54.9,
+     "Cnucleo": 40.6,
+     "share": 0.0013658216783216783,
+     "L": 38.0,
+     "C": 37.7,
+     "h": 309.8,
+     "papel": "time_frio"
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 59,
+     "y1": 82,
+     "x0": 55,
+     "x1": 336,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 10,
+     "largFrac": 0.5508,
+     "centroXFrac": 0.3818
+    },
+    {
+     "y0": 108,
+     "y1": 114,
+     "x0": 34,
+     "x1": 93,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 6,
+     "largFrac": 0.1172,
+     "centroXFrac": 0.124
+    },
+    {
+     "y0": 138,
+     "y1": 145,
+     "x0": 135,
+     "x1": 144,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.0195,
+     "centroXFrac": 0.2725
+    },
+    {
+     "y0": 143,
+     "y1": 165,
+     "x0": 38,
+     "x1": 313,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 15,
+     "largFrac": 0.5391,
+     "centroXFrac": 0.3428
+    },
+    {
+     "y0": 154,
+     "y1": 180,
+     "x0": 130,
+     "x1": 385,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 24,
+     "largFrac": 0.5,
+     "centroXFrac": 0.5029
+    },
+    {
+     "y0": 177,
+     "y1": 186,
+     "x0": 157,
+     "x1": 419,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 5,
+     "largFrac": 0.5137,
+     "centroXFrac": 0.5625
+    },
+    {
+     "y0": 185,
+     "y1": 190,
+     "x0": 256,
+     "x1": 353,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.1914,
+     "centroXFrac": 0.5947
+    },
+    {
+     "y0": 190,
+     "y1": 193,
+     "x0": 224,
+     "x1": 330,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.209,
+     "centroXFrac": 0.541
+    },
+    {
+     "y0": 193,
+     "y1": 202,
+     "x0": 248,
+     "x1": 374,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 5,
+     "largFrac": 0.248,
+     "centroXFrac": 0.6074
+    },
+    {
+     "y0": 208,
+     "y1": 216,
+     "x0": 195,
+     "x1": 403,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 4,
+     "largFrac": 0.4082,
+     "centroXFrac": 0.584
+    },
+    {
+     "y0": 218,
+     "y1": 225,
+     "x0": 317,
+     "x1": 327,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 2,
+     "largFrac": 0.0215,
+     "centroXFrac": 0.6289
+    },
+    {
+     "y0": 222,
+     "y1": 229,
+     "x0": 327,
+     "x1": 439,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 5,
+     "largFrac": 0.2207,
+     "centroXFrac": 0.748
+    },
+    {
+     "y0": 237,
+     "y1": 241,
+     "x0": 426,
+     "x1": 473,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0938,
+     "centroXFrac": 0.8779
+    },
+    {
+     "y0": 297,
+     "y1": 321,
+     "x0": 24,
+     "x1": 276,
+     "alt": 20,
+     "altFrac": 0.0587,
+     "nGlifos": 5,
+     "largFrac": 0.4941,
+     "centroXFrac": 0.293
+    },
+    {
+     "y0": 298,
+     "y1": 315,
+     "x0": 390,
+     "x1": 476,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 6,
+     "largFrac": 0.1699,
+     "centroXFrac": 0.8457
+    },
+    {
+     "y0": 319,
+     "y1": 329,
+     "x0": 24,
+     "x1": 477,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 5,
+     "largFrac": 0.8867,
+     "centroXFrac": 0.4893
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 4,
+    "maiorPx": 20,
+    "menorFrac": 0.0117,
+    "maiorFrac": 0.0587,
+    "razao": 5.0,
+    "passoListaPx": 11,
+    "passoListaFrac": 0.0323,
+    "passoSobreCorpo": 2.75,
+    "nBandas": 16
+   },
+   "densidade": {
+    "scrimFrac": 0.5935,
+    "tintaFrac": 0.0309
+   },
+   "margens": {
+    "topoFrac": 0.014,
+    "baseFrac": 0.042,
+    "esqFrac": 0.0469,
+    "dirFrac": 0.0703
+   }
+  },
+  "06_menu_pausa": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 55,
+    "fracAltura": 0.1613
+   },
+   "paleta": [
+    {
+     "hex": "#0a0a09",
+     "hexNucleo": "#0d0e0e",
+     "Lnucleo": 3.8,
+     "Cnucleo": 0.4,
+     "share": 0.4979512674825175,
+     "L": 2.6,
+     "C": 0.1,
+     "h": 103.5,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#120f0c",
+     "hexNucleo": "#15120f",
+     "Lnucleo": 5.6,
+     "Cnucleo": 1.9,
+     "share": 0.27887347027972026,
+     "L": 4.4,
+     "C": 1.6,
+     "h": 69.2,
+     "papel": null
+    },
+    {
+     "hex": "#191919",
+     "hexNucleo": "#1e1e1d",
+     "Lnucleo": 11.2,
+     "Cnucleo": 0.6,
+     "share": 0.13095498251748253,
+     "L": 8.8,
+     "C": 0.4,
+     "h": 144.4,
+     "papel": null
+    },
+    {
+     "hex": "#1c1711",
+     "hexNucleo": "#231e18",
+     "Lnucleo": 11.6,
+     "Cnucleo": 5.3,
+     "share": 0.06066979895104895,
+     "L": 8.0,
+     "C": 4.6,
+     "h": 67.6,
+     "papel": null
+    },
+    {
+     "hex": "#e2a81f",
+     "hexNucleo": "#f0b724",
+     "Lnucleo": 77.5,
+     "Cnucleo": 74.8,
+     "share": 0.01808347902097902,
+     "L": 72.4,
+     "C": 71.4,
+     "h": 81.8,
+     "papel": "acento"
+    },
+    {
+     "hex": "#cecfcf",
+     "hexNucleo": "#f1f2f2",
+     "Lnucleo": 95.5,
+     "Cnucleo": 0.4,
+     "share": 0.006118881118881119,
+     "L": 82.9,
+     "C": 0.4,
+     "h": 221.4,
+     "papel": "tinta_alta"
+    },
+    {
+     "hex": "#69521d",
+     "hexNucleo": "#8f6b22",
+     "Lnucleo": 47.6,
+     "Cnucleo": 44.7,
+     "share": 0.0038243006993006995,
+     "L": 36.2,
+     "C": 33.8,
+     "h": 83.7,
+     "papel": null
+    },
+    {
+     "hex": "#69696a",
+     "hexNucleo": "#8a8b8b",
+     "Lnucleo": 57.7,
+     "Cnucleo": 0.5,
+     "share": 0.00352381993006993,
+     "L": 44.4,
+     "C": 0.4,
+     "h": 289.4,
+     "papel": null
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 144,
+     "y1": 169,
+     "x0": 178,
+     "x1": 298,
+     "alt": 18,
+     "altFrac": 0.0528,
+     "nGlifos": 2,
+     "largFrac": 0.2363,
+     "centroXFrac": 0.4648
+    },
+    {
+     "y0": 235,
+     "y1": 244,
+     "x0": 191,
+     "x1": 285,
+     "alt": 10,
+     "altFrac": 0.0293,
+     "nGlifos": 2,
+     "largFrac": 0.1855,
+     "centroXFrac": 0.4648
+    },
+    {
+     "y0": 262,
+     "y1": 271,
+     "x0": 194,
+     "x1": 281,
+     "alt": 10,
+     "altFrac": 0.0293,
+     "nGlifos": 3,
+     "largFrac": 0.1719,
+     "centroXFrac": 0.4639
+    },
+    {
+     "y0": 324,
+     "y1": 331,
+     "x0": 21,
+     "x1": 63,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.084,
+     "centroXFrac": 0.082
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 10,
+    "maiorPx": 18,
+    "menorFrac": 0.0293,
+    "maiorFrac": 0.0528,
+    "razao": 1.8,
+    "passoListaPx": 27,
+    "passoListaFrac": 0.0792,
+    "passoSobreCorpo": 2.7,
+    "nBandas": 4
+   },
+   "densidade": {
+    "scrimFrac": 0.9298,
+    "tintaFrac": 0.023
+   },
+   "margens": {
+    "topoFrac": 0.2098,
+    "baseFrac": 0.035,
+    "esqFrac": 0.041,
+    "dirFrac": 0.418
+   }
+  },
+  "07_configuracoes": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 65,
+    "fracAltura": 0.1906
+   },
+   "paleta": [
+    {
+     "hex": "#0b0d0f",
+     "hexNucleo": "#101315",
+     "Lnucleo": 5.8,
+     "Cnucleo": 1.6,
+     "share": 0.6997282608695652,
+     "L": 3.6,
+     "C": 1.1,
+     "h": 244.9,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#21201c",
+     "hexNucleo": "#2a2824",
+     "Lnucleo": 16.1,
+     "Cnucleo": 3.0,
+     "share": 0.09222146739130435,
+     "L": 12.1,
+     "C": 2.4,
+     "h": 87.9,
+     "papel": "painel"
+    },
+    {
+     "hex": "#3f3931",
+     "hexNucleo": "#4a4741",
+     "Lnucleo": 30.2,
+     "Cnucleo": 4.1,
+     "share": 0.05454596920289855,
+     "L": 24.4,
+     "C": 5.9,
+     "h": 78.3,
+     "papel": null
+    },
+    {
+     "hex": "#52616a",
+     "hexNucleo": "#616f79",
+     "Lnucleo": 46.1,
+     "Cnucleo": 7.8,
+     "share": 0.04891304347826087,
+     "L": 40.1,
+     "C": 7.8,
+     "h": 246.1,
+     "papel": null
+    },
+    {
+     "hex": "#7e878b",
+     "hexNucleo": "#989c9d",
+     "Lnucleo": 64.2,
+     "Cnucleo": 1.6,
+     "share": 0.0474411231884058,
+     "L": 55.6,
+     "C": 4.1,
+     "h": 237.1,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#645039",
+     "hexNucleo": "#78644c",
+     "Lnucleo": 43.6,
+     "Cnucleo": 17.0,
+     "share": 0.03238224637681159,
+     "L": 35.4,
+     "C": 17.3,
+     "h": 72.8,
+     "papel": null
+    },
+    {
+     "hex": "#e0a51b",
+     "hexNucleo": "#e9af1f",
+     "Lnucleo": 74.9,
+     "Cnucleo": 73.7,
+     "share": 0.021569293478260868,
+     "L": 71.5,
+     "C": 71.6,
+     "h": 81.1,
+     "papel": "acento"
+    },
+    {
+     "hex": "#926c1d",
+     "hexNucleo": "#b28426",
+     "Lnucleo": 58.1,
+     "Cnucleo": 54.9,
+     "share": 0.0031985960144927535,
+     "L": 48.3,
+     "C": 47.6,
+     "h": 81.3,
+     "papel": null
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 79,
+     "y1": 89,
+     "x0": 32,
+     "x1": 110,
+     "alt": 10,
+     "altFrac": 0.0293,
+     "nGlifos": 2,
+     "largFrac": 0.1543,
+     "centroXFrac": 0.1387
+    },
+    {
+     "y0": 99,
+     "y1": 114,
+     "x0": 32,
+     "x1": 281,
+     "alt": 10,
+     "altFrac": 0.0293,
+     "nGlifos": 4,
+     "largFrac": 0.4883,
+     "centroXFrac": 0.3057
+    },
+    {
+     "y0": 119,
+     "y1": 123,
+     "x0": 444,
+     "x1": 468,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.0488,
+     "centroXFrac": 0.8906
+    },
+    {
+     "y0": 129,
+     "y1": 137,
+     "x0": 32,
+     "x1": 76,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 2,
+     "largFrac": 0.0879,
+     "centroXFrac": 0.1055
+    },
+    {
+     "y0": 150,
+     "y1": 164,
+     "x0": 32,
+     "x1": 437,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 7,
+     "largFrac": 0.793,
+     "centroXFrac": 0.458
+    },
+    {
+     "y0": 164,
+     "y1": 169,
+     "x0": 284,
+     "x1": 379,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 4,
+     "largFrac": 0.1875,
+     "centroXFrac": 0.6475
+    },
+    {
+     "y0": 164,
+     "y1": 167,
+     "x0": 441,
+     "x1": 453,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0254,
+     "centroXFrac": 0.873
+    },
+    {
+     "y0": 173,
+     "y1": 200,
+     "x0": 32,
+     "x1": 449,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 21,
+     "largFrac": 0.8164,
+     "centroXFrac": 0.4697
+    },
+    {
+     "y0": 197,
+     "y1": 215,
+     "x0": 33,
+     "x1": 499,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 9,
+     "largFrac": 0.9121,
+     "centroXFrac": 0.5195
+    },
+    {
+     "y0": 220,
+     "y1": 231,
+     "x0": 33,
+     "x1": 359,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 4,
+     "largFrac": 0.6387,
+     "centroXFrac": 0.3828
+    },
+    {
+     "y0": 243,
+     "y1": 246,
+     "x0": 426,
+     "x1": 471,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0898,
+     "centroXFrac": 0.876
+    },
+    {
+     "y0": 279,
+     "y1": 305,
+     "x0": 44,
+     "x1": 491,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 6,
+     "largFrac": 0.875,
+     "centroXFrac": 0.5225
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 3,
+    "maiorPx": 10,
+    "menorFrac": 0.0088,
+    "maiorFrac": 0.0293,
+    "razao": 3.33,
+    "passoListaPx": 20,
+    "passoListaFrac": 0.0587,
+    "passoSobreCorpo": 6.67,
+    "nBandas": 12
+   },
+   "densidade": {
+    "scrimFrac": 0.6635,
+    "tintaFrac": 0.0395
+   },
+   "margens": {
+    "topoFrac": 0.029,
+    "baseFrac": 0.1304,
+    "esqFrac": 0.0625,
+    "dirFrac": 0.0254
+   }
+  },
+  "08_placar": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 31,
+    "fracAltura": 0.0909
+   },
+   "paleta": [
+    {
+     "hex": "#060708",
+     "hexNucleo": "#090a0b",
+     "Lnucleo": 2.8,
+     "Cnucleo": 0.4,
+     "share": 0.39984879032258064,
+     "L": 1.8,
+     "C": 0.4,
+     "h": 258.0,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#100f12",
+     "hexNucleo": "#161417",
+     "Lnucleo": 6.7,
+     "Cnucleo": 2.0,
+     "share": 0.1849798387096774,
+     "L": 4.6,
+     "C": 1.3,
+     "h": 303.6,
+     "papel": null
+    },
+    {
+     "hex": "#211728",
+     "hexNucleo": "#2d1e37",
+     "Lnucleo": 14.2,
+     "Cnucleo": 19.0,
+     "share": 0.171875,
+     "L": 9.5,
+     "C": 13.8,
+     "h": 313.4,
+     "papel": null
+    },
+    {
+     "hex": "#331211",
+     "hexNucleo": "#3d1615",
+     "Lnucleo": 13.5,
+     "Cnucleo": 21.6,
+     "share": 0.1229586693548387,
+     "L": 10.2,
+     "C": 18.6,
+     "h": 26.2,
+     "papel": null
+    },
+    {
+     "hex": "#521817",
+     "hexNucleo": "#65201c",
+     "Lnucleo": 23.2,
+     "Cnucleo": 36.6,
+     "share": 0.06791834677419355,
+     "L": 17.8,
+     "C": 31.1,
+     "h": 30.1,
+     "papel": null
+    },
+    {
+     "hex": "#8a7b79",
+     "hexNucleo": "#a39592",
+     "Lnucleo": 62.9,
+     "Cnucleo": 5.9,
+     "share": 0.020010080645161292,
+     "L": 53.0,
+     "C": 6.0,
+     "h": 34.9,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#574857",
+     "hexNucleo": "#6e5a75",
+     "Lnucleo": 41.1,
+     "Cnucleo": 18.1,
+     "share": 0.01645665322580645,
+     "L": 32.6,
+     "C": 11.2,
+     "h": 325.6,
+     "papel": "painel"
+    },
+    {
+     "hex": "#cac4c4",
+     "hexNucleo": "#ebeaea",
+     "Lnucleo": 92.7,
+     "Cnucleo": 0.6,
+     "share": 0.015952620967741936,
+     "L": 79.5,
+     "C": 2.3,
+     "h": 7.5,
+     "papel": "tinta_alta"
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 42,
+     "y1": 50,
+     "x0": 235,
+     "x1": 287,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.1035,
+     "centroXFrac": 0.5098
+    },
+    {
+     "y0": 55,
+     "y1": 66,
+     "x0": 214,
+     "x1": 484,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 8,
+     "largFrac": 0.5293,
+     "centroXFrac": 0.6816
+    },
+    {
+     "y0": 63,
+     "y1": 84,
+     "x0": 86,
+     "x1": 487,
+     "alt": 11,
+     "altFrac": 0.0323,
+     "nGlifos": 11,
+     "largFrac": 0.7852,
+     "centroXFrac": 0.5596
+    },
+    {
+     "y0": 102,
+     "y1": 110,
+     "x0": 140,
+     "x1": 312,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 6,
+     "largFrac": 0.3379,
+     "centroXFrac": 0.4414
+    },
+    {
+     "y0": 102,
+     "y1": 110,
+     "x0": 386,
+     "x1": 497,
+     "alt": 7,
+     "altFrac": 0.0205,
+     "nGlifos": 5,
+     "largFrac": 0.2188,
+     "centroXFrac": 0.8623
+    },
+    {
+     "y0": 120,
+     "y1": 131,
+     "x0": 30,
+     "x1": 247,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 8,
+     "largFrac": 0.4258,
+     "centroXFrac": 0.2705
+    },
+    {
+     "y0": 120,
+     "y1": 124,
+     "x0": 279,
+     "x1": 284,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.0117,
+     "centroXFrac": 0.5498
+    },
+    {
+     "y0": 123,
+     "y1": 130,
+     "x0": 279,
+     "x1": 325,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 3,
+     "largFrac": 0.0918,
+     "centroXFrac": 0.5898
+    },
+    {
+     "y0": 123,
+     "y1": 130,
+     "x0": 386,
+     "x1": 493,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 5,
+     "largFrac": 0.2109,
+     "centroXFrac": 0.8584
+    },
+    {
+     "y0": 140,
+     "y1": 151,
+     "x0": 28,
+     "x1": 74,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 3,
+     "largFrac": 0.0918,
+     "centroXFrac": 0.0996
+    },
+    {
+     "y0": 140,
+     "y1": 154,
+     "x0": 31,
+     "x1": 352,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 11,
+     "largFrac": 0.6289,
+     "centroXFrac": 0.374
+    },
+    {
+     "y0": 143,
+     "y1": 151,
+     "x0": 386,
+     "x1": 493,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 5,
+     "largFrac": 0.2109,
+     "centroXFrac": 0.8584
+    },
+    {
+     "y0": 161,
+     "y1": 173,
+     "x0": 27,
+     "x1": 492,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 19,
+     "largFrac": 0.9102,
+     "centroXFrac": 0.5068
+    },
+    {
+     "y0": 180,
+     "y1": 193,
+     "x0": 30,
+     "x1": 493,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 19,
+     "largFrac": 0.9062,
+     "centroXFrac": 0.5107
+    },
+    {
+     "y0": 201,
+     "y1": 214,
+     "x0": 28,
+     "x1": 81,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 4,
+     "largFrac": 0.1055,
+     "centroXFrac": 0.1064
+    },
+    {
+     "y0": 202,
+     "y1": 212,
+     "x0": 140,
+     "x1": 323,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 7,
+     "largFrac": 0.3594,
+     "centroXFrac": 0.4521
+    },
+    {
+     "y0": 204,
+     "y1": 212,
+     "x0": 386,
+     "x1": 493,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 5,
+     "largFrac": 0.2109,
+     "centroXFrac": 0.8584
+    },
+    {
+     "y0": 221,
+     "y1": 234,
+     "x0": 28,
+     "x1": 75,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 8,
+     "largFrac": 0.0938,
+     "centroXFrac": 0.1006
+    },
+    {
+     "y0": 223,
+     "y1": 234,
+     "x0": 140,
+     "x1": 334,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 9,
+     "largFrac": 0.3809,
+     "centroXFrac": 0.4629
+    },
+    {
+     "y0": 224,
+     "y1": 232,
+     "x0": 386,
+     "x1": 493,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 5,
+     "largFrac": 0.2109,
+     "centroXFrac": 0.8584
+    },
+    {
+     "y0": 243,
+     "y1": 252,
+     "x0": 30,
+     "x1": 337,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 9,
+     "largFrac": 0.6016,
+     "centroXFrac": 0.3584
+    },
+    {
+     "y0": 244,
+     "y1": 252,
+     "x0": 386,
+     "x1": 493,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 5,
+     "largFrac": 0.2109,
+     "centroXFrac": 0.8584
+    },
+    {
+     "y0": 296,
+     "y1": 303,
+     "x0": 201,
+     "x1": 303,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 5,
+     "largFrac": 0.2012,
+     "centroXFrac": 0.4922
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 8,
+    "maiorPx": 11,
+    "menorFrac": 0.0235,
+    "maiorFrac": 0.0323,
+    "razao": 1.38,
+    "passoListaPx": 3,
+    "passoListaFrac": 0.0088,
+    "passoSobreCorpo": 0.38,
+    "nBandas": 23
+   },
+   "densidade": {
+    "scrimFrac": 0.7679,
+    "tintaFrac": 0.0635
+   },
+   "margens": {
+    "topoFrac": 0.0387,
+    "baseFrac": 0.1226,
+    "esqFrac": 0.0547,
+    "dirFrac": 0.0312
+   }
+  },
+  "09_resultado_partida": {
+   "px": [
+    512,
+    341
+   ],
+   "aspecto": 1.501,
+   "rotulo": {
+    "descartadoAteY": 30,
+    "fracAltura": 0.088
+   },
+   "paleta": [
+    {
+     "hex": "#0d0f0d",
+     "hexNucleo": "#151814",
+     "Lnucleo": 7.6,
+     "Cnucleo": 2.9,
+     "share": 0.7666516426282052,
+     "L": 4.2,
+     "C": 1.5,
+     "h": 140.4,
+     "papel": "fundo"
+    },
+    {
+     "hex": "#33332b",
+     "hexNucleo": "#4e4b43",
+     "Lnucleo": 32.0,
+     "Cnucleo": 5.3,
+     "share": 0.07356770833333333,
+     "L": 20.9,
+     "C": 5.2,
+     "h": 104.5,
+     "papel": "painel"
+    },
+    {
+     "hex": "#4f1b11",
+     "hexNucleo": "#6d2b19",
+     "Lnucleo": 26.8,
+     "Cnucleo": 38.2,
+     "share": 0.041090745192307696,
+     "L": 17.8,
+     "C": 30.3,
+     "h": 38.7,
+     "papel": null
+    },
+    {
+     "hex": "#0e2a15",
+     "hexNucleo": "#133b1b",
+     "Lnucleo": 21.5,
+     "Cnucleo": 27.6,
+     "share": 0.035481770833333336,
+     "L": 14.5,
+     "C": 20.0,
+     "h": 146.7,
+     "papel": null
+    },
+    {
+     "hex": "#785b29",
+     "hexNucleo": "#977839",
+     "Lnucleo": 52.1,
+     "Cnucleo": 38.8,
+     "share": 0.03342848557692308,
+     "L": 40.7,
+     "C": 33.4,
+     "h": 80.1,
+     "papel": "acento"
+    },
+    {
+     "hex": "#9f988d",
+     "hexNucleo": "#d4d3cd",
+     "Lnucleo": 84.3,
+     "Cnucleo": 3.1,
+     "share": 0.01978165064102564,
+     "L": 63.1,
+     "C": 6.8,
+     "h": 87.5,
+     "papel": "tinta_media"
+    },
+    {
+     "hex": "#d9a019",
+     "hexNucleo": "#e7ae1c",
+     "Lnucleo": 74.4,
+     "Cnucleo": 73.7,
+     "share": 0.015775240384615384,
+     "L": 69.4,
+     "C": 70.1,
+     "h": 81.5,
+     "papel": null
+    },
+    {
+     "hex": "#359037",
+     "hexNucleo": "#3b9f3d",
+     "Lnucleo": 58.0,
+     "Cnucleo": 64.3,
+     "share": 0.01422275641025641,
+     "L": 53.1,
+     "C": 59.6,
+     "h": 139.6,
+     "papel": null
+    }
+   ],
+   "bandasTexto": [
+    {
+     "y0": 30,
+     "y1": 91,
+     "x0": 49,
+     "x1": 358,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 68,
+     "largFrac": 0.6055,
+     "centroXFrac": 0.3975
+    },
+    {
+     "y0": 58,
+     "y1": 91,
+     "x0": 122,
+     "x1": 335,
+     "alt": 25,
+     "altFrac": 0.0733,
+     "nGlifos": 3,
+     "largFrac": 0.418,
+     "centroXFrac": 0.4463
+    },
+    {
+     "y0": 96,
+     "y1": 122,
+     "x0": 48,
+     "x1": 289,
+     "alt": 10,
+     "altFrac": 0.0293,
+     "nGlifos": 10,
+     "largFrac": 0.4727,
+     "centroXFrac": 0.3291
+    },
+    {
+     "y0": 121,
+     "y1": 126,
+     "x0": 264,
+     "x1": 314,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.0996,
+     "centroXFrac": 0.5645
+    },
+    {
+     "y0": 124,
+     "y1": 131,
+     "x0": 355,
+     "x1": 371,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 3,
+     "largFrac": 0.0332,
+     "centroXFrac": 0.709
+    },
+    {
+     "y0": 131,
+     "y1": 153,
+     "x0": 33,
+     "x1": 399,
+     "alt": 5,
+     "altFrac": 0.0147,
+     "nGlifos": 10,
+     "largFrac": 0.7168,
+     "centroXFrac": 0.4219
+    },
+    {
+     "y0": 146,
+     "y1": 170,
+     "x0": 34,
+     "x1": 404,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 11,
+     "largFrac": 0.7246,
+     "centroXFrac": 0.4277
+    },
+    {
+     "y0": 174,
+     "y1": 179,
+     "x0": 210,
+     "x1": 235,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 2,
+     "largFrac": 0.0508,
+     "centroXFrac": 0.4346
+    },
+    {
+     "y0": 174,
+     "y1": 203,
+     "x0": 33,
+     "x1": 416,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 15,
+     "largFrac": 0.75,
+     "centroXFrac": 0.4385
+    },
+    {
+     "y0": 203,
+     "y1": 212,
+     "x0": 276,
+     "x1": 417,
+     "alt": 4,
+     "altFrac": 0.0117,
+     "nGlifos": 5,
+     "largFrac": 0.2773,
+     "centroXFrac": 0.6768
+    },
+    {
+     "y0": 211,
+     "y1": 235,
+     "x0": 33,
+     "x1": 417,
+     "alt": 6,
+     "altFrac": 0.0176,
+     "nGlifos": 12,
+     "largFrac": 0.752,
+     "centroXFrac": 0.4395
+    },
+    {
+     "y0": 236,
+     "y1": 239,
+     "x0": 393,
+     "x1": 406,
+     "alt": 3,
+     "altFrac": 0.0088,
+     "nGlifos": 2,
+     "largFrac": 0.0273,
+     "centroXFrac": 0.7803
+    },
+    {
+     "y0": 251,
+     "y1": 259,
+     "x0": 33,
+     "x1": 67,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.0684,
+     "centroXFrac": 0.0977
+    },
+    {
+     "y0": 269,
+     "y1": 276,
+     "x0": 198,
+     "x1": 260,
+     "alt": 8,
+     "altFrac": 0.0235,
+     "nGlifos": 2,
+     "largFrac": 0.123,
+     "centroXFrac": 0.4473
+    },
+    {
+     "y0": 290,
+     "y1": 314,
+     "x0": 24,
+     "x1": 233,
+     "alt": 9,
+     "altFrac": 0.0264,
+     "nGlifos": 6,
+     "largFrac": 0.4102,
+     "centroXFrac": 0.251
+    }
+   ],
+   "escalaTipo": {
+    "menorPx": 4,
+    "maiorPx": 10,
+    "menorFrac": 0.0117,
+    "maiorFrac": 0.0293,
+    "razao": 2.5,
+    "passoListaPx": 18,
+    "passoListaFrac": 0.0528,
+    "passoSobreCorpo": 4.5,
+    "nBandas": 14
+   },
+   "densidade": {
+    "scrimFrac": 0.7296,
+    "tintaFrac": 0.0433
+   },
+   "margens": {
+    "topoFrac": 0.0,
+    "baseFrac": 0.0868,
+    "esqFrac": 0.0488,
+    "dirFrac": 0.1855
+   }
+  }
+ },
+ "hud": {
+  "px": [
+   1672,
+   941
+  ],
+  "aspecto": 1.777,
+  "ancoras": {
+   "topo_centro": {
+    "detector": "relativo",
+    "gomos": 1,
+    "preench": 0.584,
+    "caixaFrac": [
+     0.3535,
+     0.0351,
+     0.6459,
+     0.1052
+    ],
+    "largFrac": 0.2931,
+    "altFrac": 0.0712,
+    "centroXFrac": 0.4997,
+    "margemBordaFrac": 0.0351,
+    "degrauBordaL": {
+     "topo": 15.3,
+     "base": 2.8,
+     "esq": 14.8,
+     "dir": 9.7
+    },
+    "degrauMin": 2.8,
+    "degrauMediana": 12.2,
+    "confiavel": true
+   },
+   "topo_direita": {
+    "detector": "absoluto",
+    "gomos": 1,
+    "preench": 0.481,
+    "caixaFrac": [
+     0.7219,
+     0.0043,
+     0.997,
+     0.1148
+    ],
+    "largFrac": 0.2757,
+    "altFrac": 0.1116,
+    "centroXFrac": 0.8594,
+    "margemBordaFrac": 0.003,
+    "degrauBordaL": {
+     "topo": -0.6,
+     "base": -7.0,
+     "esq": 0.2,
+     "dir": -0.1
+    },
+    "degrauMin": -7.0,
+    "degrauMediana": -0.3,
+    "confiavel": false
+   },
+   "inferior_esq": {
+    "detector": "relativo",
+    "gomos": 2,
+    "preench": 0.483,
+    "caixaFrac": [
+     0.052,
+     0.9086,
+     0.1639,
+     0.9394
+    ],
+    "largFrac": 0.1124,
+    "altFrac": 0.0319,
+    "centroXFrac": 0.108,
+    "margemBordaFrac": 0.052,
+    "degrauBordaL": {
+     "topo": 25.4,
+     "base": 4.6,
+     "esq": 5.5,
+     "dir": 1.1
+    },
+    "degrauMin": 1.1,
+    "degrauMediana": 5.0,
+    "confiavel": true
+   },
+   "inferior_centro": {
+    "detector": "absoluto",
+    "gomos": 1,
+    "preench": 0.484,
+    "caixaFrac": [
+     0.4504,
+     0.8236,
+     0.6465,
+     0.9947
+    ],
+    "largFrac": 0.1968,
+    "altFrac": 0.1722,
+    "centroXFrac": 0.5484,
+    "margemBordaFrac": 0.0053,
+    "degrauBordaL": {
+     "topo": 5.3,
+     "base": -0.9,
+     "esq": -4.1,
+     "dir": 0.6
+    },
+    "degrauMin": -4.1,
+    "degrauMediana": -0.2,
+    "confiavel": false
+   },
+   "inferior_dir": {
+    "detector": "absoluto",
+    "gomos": 1,
+    "preench": 0.455,
+    "caixaFrac": [
+     0.7972,
+     0.8034,
+     0.997,
+     0.9416
+    ],
+    "largFrac": 0.2004,
+    "altFrac": 0.1392,
+    "centroXFrac": 0.8971,
+    "margemBordaFrac": 0.003,
+    "degrauBordaL": {
+     "topo": -0.3,
+     "base": 3.9,
+     "esq": 6.1,
+     "dir": -0.4
+    },
+    "degrauMin": -0.4,
+    "degrauMediana": 1.8,
+    "confiavel": false
+   }
+  },
+  "paleta": [
+   {
+    "hex": "#120e0a",
+    "hexNucleo": "#1c1612",
+    "Lnucleo": 7.8,
+    "Cnucleo": 4.1,
+    "share": 0.2830342670593338,
+    "L": 4.1,
+    "C": 2.3,
+    "h": 58.1,
+    "papel": "fundo"
+   },
+   {
+    "hex": "#2e2620",
+    "hexNucleo": "#363331",
+    "Lnucleo": 21.5,
+    "Cnucleo": 2.2,
+    "share": 0.2090838527041527,
+    "L": 15.8,
+    "C": 5.6,
+    "h": 63.3,
+    "papel": "painel"
+   },
+   {
+    "hex": "#4f3523",
+    "hexNucleo": "#644934",
+    "Lnucleo": 33.5,
+    "Cnucleo": 18.9,
+    "share": 0.1472159441134169,
+    "L": 24.8,
+    "C": 18.7,
+    "h": 60.1,
+    "papel": null
+   },
+   {
+    "hex": "#8d6643",
+    "hexNucleo": "#b2875a",
+    "Lnucleo": 59.6,
+    "Cnucleo": 32.3,
+    "share": 0.09223112572198251,
+    "L": 46.5,
+    "C": 28.1,
+    "h": 66.4,
+    "papel": null
+   },
+   {
+    "hex": "#758ca5",
+    "hexNucleo": "#829db6",
+    "Lnucleo": 63.4,
+    "Cnucleo": 16.4,
+    "share": 0.08634111818825195,
+    "L": 57.4,
+    "C": 15.9,
+    "h": 260.7,
+    "papel": "tinta_media"
+   },
+   {
+    "hex": "#9fadba",
+    "hexNucleo": "#aec0ce",
+    "Lnucleo": 76.7,
+    "Cnucleo": 9.9,
+    "share": 0.07114809487934616,
+    "L": 70.0,
+    "C": 8.7,
+    "h": 254.9,
+    "papel": null
+   },
+   {
+    "hex": "#555e6a",
+    "hexNucleo": "#6f7379",
+    "Lnucleo": 48.2,
+    "Cnucleo": 3.8,
+    "share": 0.06837431226171724,
+    "L": 39.6,
+    "C": 8.2,
+    "h": 265.5,
+    "papel": null
+   },
+   {
+    "hex": "#d5d6d8",
+    "hexNucleo": "#ededed",
+    "Lnucleo": 93.7,
+    "Cnucleo": 0.2,
+    "share": 0.042571285071798734,
+    "L": 85.7,
+    "C": 1.0,
+    "h": 260.2,
+    "papel": "tinta_alta"
+   }
+  ],
+  "densidade": {
+   "scrimFrac": 0.4167,
+   "tintaFrac": 0.0322
+  }
+ },
+ "consenso": {
+  "acento": {
+   "hex": "#a47826",
+   "hexNucleo": "#be9033",
+   "Lnucleo": 62.5,
+   "Cnucleo": 54.1,
+   "n": 8,
+   "L": 53.4,
+   "C": 50.0,
+   "h": 78.8,
+   "amostras": [
+    "#d39c17",
+    "#8f5e2d",
+    "#6e5024",
+    "#d49d19",
+    "#c59223",
+    "#e2a81f",
+    "#e0a51b",
+    "#785b29"
+   ]
+  },
+  "fundo": {
+   "hex": "#0d0d0c",
+   "hexNucleo": "#141513",
+   "Lnucleo": 6.6,
+   "Cnucleo": 1.2,
+   "n": 9,
+   "L": 3.6,
+   "C": 0.5,
+   "h": 127.4,
+   "amostras": [
+    "#080a05",
+    "#11100e",
+    "#0d0d0d",
+    "#090a0a",
+    "#171412",
+    "#0a0a09",
+    "#0b0d0f",
+    "#060708",
+    "#0d0f0d"
+   ]
+  },
+  "painel": {
+   "hex": "#2a2621",
+   "hexNucleo": "#38342e",
+   "Lnucleo": 22.0,
+   "Cnucleo": 4.3,
+   "n": 8,
+   "L": 15.5,
+   "C": 4.0,
+   "h": 85.5,
+   "amostras": [
+    "#1d2213",
+    "#2b2032",
+    "#38322c",
+    "#232323",
+    "#35291f",
+    "#21201c",
+    "#574857",
+    "#33332b"
+   ]
+  },
+  "tinta_alta": {
+   "hex": "#cfcac4",
+   "hexNucleo": "#f6f6f3",
+   "Lnucleo": 96.7,
+   "Cnucleo": 1.1,
+   "n": 5,
+   "L": 81.6,
+   "C": 3.8,
+   "h": 79.9,
+   "amostras": [
+    "#d0d1c9",
+    "#d2cfcb",
+    "#d1c2b1",
+    "#cecfcf",
+    "#cac4c4"
+   ]
+  },
+  "tinta_media": {
+   "hex": "#7b7d7d",
+   "hexNucleo": "#9a9a98",
+   "Lnucleo": 63.5,
+   "Cnucleo": 1.3,
+   "n": 6,
+   "L": 52.3,
+   "C": 1.1,
+   "h": 206.0,
+   "amostras": [
+    "#7e7266",
+    "#6f787c",
+    "#7c8081",
+    "#7e878b",
+    "#8a7b79",
+    "#9f988d"
+   ]
+  },
+  "time_quente": {
+   "hex": "#b11409",
+   "hexNucleo": "#ca170a",
+   "Lnucleo": 43.1,
+   "Cnucleo": 83.9,
+   "n": 1,
+   "L": 37.6,
+   "C": 75.6,
+   "h": 39.4,
+   "amostras": [
+    "#b11409"
+   ]
+  },
+  "time_frio": {
+   "hex": "#5f3f81",
+   "hexNucleo": "#735596",
+   "Lnucleo": 41.8,
+   "Cnucleo": 40.6,
+   "n": 2,
+   "L": 33.1,
+   "C": 42.3,
+   "h": 310.9,
+   "amostras": [
+    "#5b3a7e",
+    "#684d88"
+   ]
+  },
+  "tipografia": {
+   "corpoFracMediana": 0.0117,
+   "tituloFracMediana": 0.044,
+   "razaoMediana": 3.33,
+   "passoSobreCorpoMediana": 2.88
+  },
+  "margens": {
+   "esqFracMediana": 0.0449,
+   "dirFracMediana": 0.0312,
+   "baseFracMediana": 0.035,
+   "minima": 0.0
+  },
+  "densidade": {
+   "scrimFracMediana": 0.6635,
+   "tintaFracMediana": 0.0449,
+   "tintaFracHud": 0.0322
+  }
+ }
+}

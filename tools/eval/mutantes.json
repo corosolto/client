@@ -1,0 +1,42 @@
+{
+  "prepara": {
+    "comando": "node tools/eval/vm-mint-audit.mjs",
+    "artefatos": [
+      "tools/eval/char_probe.json",
+      "tools/eval/map_check.json",
+      "tools/eval/mat_check.json",
+      "tools/eval/mat_scenes.json",
+      "tools/eval/mat_shade.json",
+      "tools/eval/pickup_check.json",
+      "tools/eval/vm_kick_sim.json",
+      "tools/eval/vm_mint_audit.json"
+    ]
+  },
+  "regua": {
+    "comando": "node tools/eval/invariants.mjs --json",
+    "alvo": "AUD1"
+  },
+  "mutantes": [
+    {
+      "id": "aud1-kniferot",
+      "o_que": "faca volta a 0,0,0 — o bug histórico era a faca ser medida (e renderizada) como arma reta. AUD1 refaz a boca da faca com F.knifeRot lido do vmattach.js vivo; sem knifeRot a boca esperada diverge do viewSpace.boca gravado.",
+      "arquivo": "public/js/vmattach.js",
+      "de": "knifeRot: [0.45, 0.90, -0.30],",
+      "para": "knifeRot: [0, 0, 0], /* MUTAÇÃO aud1-kniferot */"
+    },
+    {
+      "id": "aud1-pose-ads-pistol",
+      "o_que": "_adsPose.pistol deslocada do JSON — AUD1 lê _adsPose do game.js vivo e exige pior Δ(grip,boca) no ADS <= 0.004 de tela. 16 cm de recuo (z: -0.2) divergem do ads.gripTela gravado.",
+      "arquivo": "public/js/game.js",
+      "de": "pistol: { x: -0.06, y: 0.0175, z: -0.035, s: 1, rx: 0, ry: 0 },",
+      "para": "pistol: { x: -0.06, y: 0.0175, z: -0.2, s: 1, rx: 0, ry: 0 }, /* MUTAÇÃO aud1-pose-ads-pistol */"
+    },
+    {
+      "id": "aud1-escala-por-arma",
+      "o_que": "weaponCFG(id).vm removida do multiplyScalar — a etapa vmEscala exige que game.js multiplique vmScale×vm POR ARMA. Sem o termo, o auditor mede uma arma de outro tamanho que a desenhada (buraco do 20/22).",
+      "arquivo": "public/js/game.js",
+      "de": "rw.scale.multiplyScalar(VM_FRAME.vmScale * (weaponCFG(id).vm ?? 1));",
+      "para": "rw.scale.multiplyScalar(VM_FRAME.vmScale); /* MUTAÇÃO aud1-escala-por-arma */"
+    }
+  ]
+}

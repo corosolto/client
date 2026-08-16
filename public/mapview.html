@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>mapview — eval genérico de mapa</title>
+<style>html,body{margin:0;height:100%;background:#8fb7e0;overflow:hidden}#hud{position:fixed;left:6px;top:6px;font:11px monospace;color:#012;z-index:9}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">…</div>
+<script type="module">
+import * as THREE from 'three';
+import { initTextures } from './js/textures.js';
+import { MAPS, resolveMapId } from './js/maps.js';
+import { preloadMapProps } from './js/mapprops.js';
+
+const qp = new URLSearchParams(location.search);
+const MAP = resolveMapId(qp.get('map'));
+// `?grafite=vivo` faz o mapa RODAR a passada de grafite (segundos) em vez de aplicar
+// o layout assado. É como o tools/gen-graffiti-layout.mjs colhe a colocação.
+if (qp.get('grafite') === 'vivo') window.__grafiteLive = true;
+window.__mapId = MAP;   // a régua de grafite lê a zona limpa do layout por este id
+const W = innerWidth, H = innerHeight;
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
+
+// união dos props globais (main.js MAP_PROPS) + props por-mapa (Havan/Ferro Velho)
+const GLOBAL_PROPS = ['congresso','catedral','ministerio','palacio','justica','tires','stall','tent','bus','drinkstand','urna','towner',
+  'quiosque','skate_ramp','lifeguard_tower','guarda_sol','arquibancada'];
+const allProps = [...new Set([...GLOBAL_PROPS, ...Object.values(MAPS).flatMap(m => m.props || [])])];
+
+window.MAPEVAL = {
+  ready:false,
+  view(from, look){ cam.position.set(...from); cam.lookAt(...look); renderer.render(scene,cam); },
+};
+
+(async ()=>{
+  const T = initTextures();
+  await preloadMapProps(allProps);
+  const _tb = performance.now();
+  const world = MAPS[MAP].build(scene, T);
+  window.__buildMs = Math.round(performance.now() - _tb);   // custo total do build, p/ régua de tempo
+  window.__world = { spawns: world.spawns, bounds: world.bounds, ctf: world.ctfPoints, nodes: world.waypoints.nodes.length };
+  window.__scene = scene;
+  window.__gworld = world;   // colliders/waypoints/findPath p/ checagens de LOS e conectividade
+  cam.position.set(0, 80, 60); cam.lookAt(0, 0, 0); renderer.render(scene, cam);
+  hud.textContent = `${MAP} loaded · ${world.waypoints.nodes.length} waypoints`;
+  window.MAPEVAL.ready = true;
+})().catch(e => { hud.textContent = 'ERR ' + (e && e.message); console.error(e); });
+</script>
+</body>
+</html>

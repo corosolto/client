@@ -1,0 +1,150 @@
+---
+// /sobre - a página institucional, e a ÚNICA dona do nó VideoGame.
+//
+// O QUE ESTAVA ERRADO: esta página e a home emitiam, cada uma, um JSON-LD
+// `VideoGame` com a MESMA `url` e SEM `@id`. Dois nós idênticos e anônimos
+// apontando pra mesma URL é exatamente o caso que confunde a deduplicação dos
+// crawlers: eles não sabem se é uma entidade ou duas.
+// AGORA: o nó canônico do jogo mora na HOME (a url do jogo é `/`), com `@id`
+// estável (`GAME_ID`), e esta página só REFERENCIA esse @id, sem redeclarar
+// nada. Uma entidade, um dono.
+//
+// A FAQ também tinha número errado ("18 personagens" num parágrafo e "8" na
+// lista); os números agora saem de src/data/jogo.ts, copiado do código do jogo.
+import Layout from '../layouts/Layout.astro';
+import { ARMAS, MAPAS, PERSONAGENS, FACCOES } from '../data/jogo';
+import { BRAND_FULL, BRAND_ALT, DESC_LONG, GAME_ID, abs } from '../lib/site';
+
+const jsonld = [
+  {
+    '@type': 'AboutPage',
+    '@id': abs('/sobre') + '#about',
+    url: abs('/sobre'),
+    name: `Sobre o ${BRAND_FULL}`,
+    description: DESC_LONG,
+    mainEntity: { '@id': GAME_ID },
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Sobre', item: abs('/sobre') },
+    ],
+  },
+];
+---
+{/* A meta description NÃO é a DESC_LONG: ela tem 261 caracteres, e o snippet
+    do Google fica em torno de 155-160 - o resto é cortado e não ajuda ninguém.
+    A DESC_LONG continua sendo a `description` do nó AboutPage no JSON-LD, onde
+    tamanho não é problema e detalhe é bem-vindo. */}
+<Layout
+  title={`Sobre - FPS grátis de navegador estilo CS 1.6 | ${BRAND_FULL}`}
+  description={`O que é o ${BRAND_FULL}: FPS gratuito de navegador estilo CS 1.6, satírico e brasileiro, com ${PERSONAGENS.length} personagens, ${MAPAS.length} mapas e ${ARMAS.length} armas. Sem instalação.`}
+  jsonld={jsonld}
+  h1="Arena sniper estilo CS 1.6, versão Brasil"
+  kicker="Sobre o jogo"
+  heroImg="/img/map-previews/praca_poderes.jpg"
+  heroPos="52%">
+  <Fragment slot="sub">
+    Time E × Time B numa Brasília fictícia e satírica: urna gigante quebrada no meio da
+    arena, boteco, pastel, acampamento e o Congresso no horizonte. {PERSONAGENS.length} personagens
+    originais em {FACCOES.length} facções, {MAPAS.length} mapas, {ARMAS.length} armas, bots,
+    rounds, CTF, headshots e multikills estilo Unreal Tournament.
+  </Fragment>
+
+  {/* A ARTE DE ANÚNCIO SAIU DAQUI. O que estava no topo era a `og-image.png` -
+      343 KB de cartão de compartilhamento, feito para aparecer no WhatsApp e no
+      X, não dentro da página. No lugar entram as CINCO arenas de verdade: mesma
+      função (mostrar o jogo), informação real, e cada miniatura leva à página
+      que a descreve. */}
+  <div class="galeria">
+    {MAPAS.map(m => (
+      <a class="fig" href="/mapas" aria-label={`Arena ${m.nome}`}>
+        <img src={`/img/map-previews/${m.id}.jpg`} width="640" height="640" loading="lazy"
+             decoding="async" alt={`Vista aérea da arena ${m.nome}`}>
+        {/* miniatura de 178 px não comporta "Loja H (Estacionamento)": o
+            parêntese é o que sobra, então ele sai aqui em vez de virar "…". */}
+        <span class="fig-tag">{m.nome.replace(/\s*\(.*\)\s*$/, '')}</span>
+      </a>
+    ))}
+  </div>
+
+  <div class="cta-row">
+    <a class="btn-cta" href="/">▶ Jogar agora - grátis</a>
+    <a class="btn-cta btn-2" href="/como-jogar">Como jogar</a>
+  </div>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Roda no navegador de desktop. Sem instalação, sem cadastro.</p>
+
+  <div class="tstat" style="margin-top:26px">
+    <div><b>{PERSONAGENS.length}</b><span>personagens</span></div>
+    <div><b>{FACCOES.length}</b><span>facções</span></div>
+    <div><b>{MAPAS.length}</b><span>mapas</span></div>
+    <div><b>{ARMAS.length}</b><span>armas</span></div>
+    <div><b>0</b><span>pessoas reais</span></div>
+  </div>
+
+  <h2>O nome</h2>
+  <p>
+    O jogo se chama <strong>{BRAND_FULL}</strong>. Ele nasceu como
+    <strong> {BRAND_ALT}</strong> e muita gente ainda procura por esse nome - por isso o domínio
+    continua o mesmo e o nome antigo segue registrado como nome alternativo. É o mesmo jogo.
+  </p>
+
+  <h2>Perguntas frequentes</h2>
+  <details open><summary><strong>O que é {BRAND_FULL}?</strong></summary>
+    <p>Um jogo FPS gratuito que roda no navegador: arena de sniper estilo praca_poderes do CS 1.6,
+      ambientada numa Brasília fictícia e satírica, com {FACCOES.length} facções,{' '}
+      {PERSONAGENS.length} personagens originais, {MAPAS.length} mapas, {ARMAS.length} armas, bots,
+      sistema de rounds e Capture the Flag.</p></details>
+  <details><summary><strong>Preciso instalar ou pagar algo?</strong></summary>
+    <p>Não. É 100% gratuito e roda direto no navegador de desktop (Chrome, Edge ou Firefox), sem
+      download, sem instalação e sem cadastro.</p></details>
+  <details><summary><strong>Quais são as facções?</strong></summary>
+    <p>{FACCOES.map(f => f.nome).join(', ')}. Duas delas não têm nada de política. Todos os
+      personagens são arquétipos fictícios e originais, sem pessoas reais.</p></details>
+  <details><summary><strong>É um jogo oficial da Valve ou do Counter-Strike?</strong></summary>
+    <p>Não. É uma paródia independente feita por fãs, sem qualquer afiliação com a Valve.
+      Counter-Strike é marca da Valve Corporation.</p></details>
+  <details><summary><strong>O jogo tem lado político?</strong></summary>
+    <p>Não. É sátira leve distribuída igualmente para todos os lados - sem gore, sem ódio,
+      celebrando a cultura brasileira.</p></details>
+  <details><summary><strong>Tem ranking global?</strong></summary>
+    <p>Ainda não. O jogo está em <strong>alpha</strong> e o ranking global está desligado até o
+      placar ser confiável - o modelo atual é forjável, e classificação forjável é número errado
+      publicado. Os seus stats de partida ficam salvos no navegador e aparecem no menu RANKING do
+      jogo. Quando voltar, cada jogador ganha de novo a página pública em{' '}
+      <code>/u/&lt;id&gt;/&lt;nick&gt;</code>, com badge PNG gerada na hora.</p></details>
+  <details><summary><strong>Dá pra jogar com outras pessoas?</strong></summary>
+    <p>Ainda não. Hoje todas as partidas são contra bots, de 1 a 8 por lado (4 contra 4 é o
+      padrão). O multiplayer é a próxima grande frente do projeto.</p></details>
+
+  {/* LICENÇA: AGPL-3.0 desde 07/08/2026 (o degrau 3 do plans/08 rodou - LICENSE,
+      README, CONTRIBUTING, llms.txt e JSON-LD trocaram no MESMO commit).
+      Contribuições anteriores entraram sob MIT (compatível: seguem MIT dentro
+      do conjunto AGPL).
+
+      LINK DAS TAREFAS: apontava para `tree/main/docs/issues`, que dá 404 -
+      `docs/` inteiro nunca foi commitado e `docs/issues/` ainda por cima casava
+      com o padrão `issues/` do .gitignore da raiz. Enquanto as 15 issues não
+      estiverem abertas no GitHub, o link honesto é a própria aba de issues do
+      repositório: ela existe. Link quebrado é pior que link ausente. */}
+  <h2>Open source</h2>
+  <p>
+    Código aberto sob licença AGPL-3.0 (menos o pacote de áudio, que tem direitos incertos e fica fora
+    do repositório). Contribuições são bem-vindas:{' '}
+    <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">github.com/rubenmarcus/csbrasil</a>{' '}
+ - e as tarefas boas pra primeira contribuição ficam em
+    <a href="https://github.com/rubenmarcus/csbrasil/issues" rel="noopener"> issues</a>.
+  </p>
+</Layout>
+
+<script>
+  // espelho do /about: usuário em EN cai na gêmea (mesmas regras do i18n.js)
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'en') location.replace('/about');
+  } catch { /* fica */ }
+</script>

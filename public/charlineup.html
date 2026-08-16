@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>char lineup — cor e iluminação do elenco, na cena do jogo</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<script type="module">
+/* ============================================================================
+   charlineup.html — N personagens LADO A LADO, na MESMA cena, com o MESMO
+   composite do jogo.
+   ----------------------------------------------------------------------------
+   POR QUE NÃO O mounttest.html: aquele tem HemisphereLight 1.1 chapada, sem IBL,
+   sem AgX e sem vinheta. Cor de personagem medida ali não é a cor que o dono vê.
+   Aqui a cena é o MAPA DE VERDADE (MAPS[id].build -> mesmo sol, mesma hemisférica,
+   mesma névoa), o IBL é o MESMO gradiente HDR do game.js (_buildEnv, replicado
+   abaixo com o comentário apontando a origem) e o composite é o bloom.js
+   (enableLightBloom), que é o único caminho de tonemap que o jogo usa.
+   Tudo o que muda entre um shot e outro é o QUERY, que é lido pelo CHAR_FX —
+   então o A/B é o mesmo binário com uma flag, não duas builds.
+
+   query: ?map=loja_h&chars=a,b,c&w=1600&h=900  (+ qualquer flag de CHAR_FX)
+   API p/ o playwright: window.LINEUP = { ready, ids, so(i), todos(), fundo() }
+   ============================================================================ */
+import * as THREE from 'three';
+import { MAPS, resolveMapId } from './js/maps.js';
+import { initTextures } from './js/textures.js';
+import { CHARACTERS } from './js/characters.js';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+import { enableLightBloom } from './js/bloom.js';
+
+const qp = new URLSearchParams(location.search);
+const MAPID = resolveMapId(qp.get('map') || 'loja_h');
+const IDS = (qp.get('chars') || 'trapfunk,oakley,coach,emo,blackmetal,gotinha,padata,canarinho').split(',').filter(Boolean);
+const W = +(qp.get('w') || 1600), H = +(qp.get('h') || 900);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, W / H, 0.08, 400);
+const textures = initTextures();
+const world = MAPS[MAPID].build(scene, textures);
+
+/* IBL — CÓPIA FIEL de game.js `_buildEnv()`. Sem isto o `iblIrradiance` é zero e o
+   piso de irradiância dispara muito mais do que dispara no jogo: a medição diria
+   que o piso é mais forte do que ele é. */
+(function buildEnv() {
+  const W2 = 512, H2 = 256;
+  const sun = world.sun;
+  const sd = new THREE.Vector3(0.35, 0.75, -0.25);
+  if (sun && sun.position && sun.position.lengthSq() > 0.001) sd.copy(sun.position).normalize();
+  const sc = new THREE.Color(sun ? sun.color.getHex() : 0xffe8c8);
+  const sunI = Math.min(3.2, Math.max(0.6, sun ? sun.intensity : 1.6));
+  const skyE = 0.62 + 0.14 * sunI;
+  const zen = [0.075, 0.16, 0.36], hor = [0.55, 0.62, 0.72], gnd = [0.085, 0.078, 0.066];
+  const data = new Float32Array(W2 * H2 * 4);
+  for (let j = 0; j < H2; j++) {
+    const v = (j + 0.5) / H2, phi = (v - 0.5) * Math.PI;
+    const sy = Math.sin(phi), cy = Math.cos(phi);
+    for (let i = 0; i < W2; i++) {
+      const u = (i + 0.5) / W2, th = (u - 0.5) * Math.PI * 2;
+      const dx = cy * Math.cos(th), dz = cy * Math.sin(th);
+      const cosS = dx * sd.x + sy * sd.y + dz * sd.z;
+      let r, g2, b;
+      if (sy >= 0) {
+        const t = Math.pow(1 - sy, 5);
+        r = zen[0] + (hor[0] - zen[0]) * t; g2 = zen[1] + (hor[1] - zen[1]) * t; b = zen[2] + (hor[2] - zen[2]) * t;
+        const mie = Math.pow(Math.max(cosS, 0), 6) * 0.45 + Math.pow(Math.max(cosS, 0), 48) * 1.1;
+        r += mie * sc.r; g2 += mie * sc.g * 0.92; b += mie * sc.b * 0.72;
+        if (cosS > 0.99965) { r += 55 * sc.r; g2 += 55 * sc.g; b += 55 * sc.b; }
+      } else {
+        const t = Math.pow(1 + sy, 8);
+        r = gnd[0] * (1 + 3.2 * t); g2 = gnd[1] * (1 + 3.0 * t); b = gnd[2] * (1 + 2.6 * t);
+      }
+      const o = (j * W2 + i) * 4;
+      data[o] = r * skyE; data[o + 1] = g2 * skyE; data[o + 2] = b * skyE; data[o + 3] = 1;
+    }
+  }
+  const tex = new THREE.DataTexture(data, W2, H2, THREE.RGBAFormat, THREE.FloatType);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.colorSpace = THREE.LinearSRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.needsUpdate = true;
+  const pmrem = new THREE.PMREMGenerator(renderer); pmrem.compileEquirectangularShader();
+  scene.environment = pmrem.fromEquirectangular(tex).texture;
+  tex.dispose(); pmrem.dispose();
+})();
+
+await preloadCharacterAssets(IDS);
+
+/* Fila reta num ponto aberto do mapa, todos virados para a câmera e à MESMA
+   distância dela (o rim e o piso variam com a distância — enfileirar em
+   profundidade mediria mecanismo diferente por personagem). */
+const PASSO = 1.35;
+/* Ponto: o spawn do time P do próprio mapa — é chão jogável por definição, e é
+   onde o dono vê o elenco no começo de todo round. `?xz=x,z` força outro ponto. */
+const TIME = qp.get('spawn') || 'P';
+const sp = (world.spawns && (world.spawns[TIME] || world.spawns.P || world.spawns.B || [])[0]) || { x: 0, z: 0 };
+const BASE = (qp.get('xz') || '').includes(',') ? qp.get('xz').split(',').map(Number) : [sp.x, sp.z];
+const grupos = [];
+for (let i = 0; i < IDS.length; i++) {
+  const def = CHARACTERS.find((c) => c.id === IDS[i]) || { id: IDS[i], team: 'P' };
+  const built = buildCharacterModel(def, { weapon: false });
+  if (!built || !built.group) { console.warn('sem modelo', IDS[i]); grupos.push(null); continue; }
+  // -(i - meio): a câmera olha para +Z, então o +X do mundo cai na ESQUERDA da tela.
+  // Sem o sinal a fila aparece espelhada e a coluna da tabela não bate com a imagem.
+  const x = BASE[0] - (i - (IDS.length - 1) / 2) * PASSO;
+  const z = BASE[1];
+  const y = world.groundHeightAt ? world.groundHeightAt(x, z, 0) : 0;
+  built.group.position.set(x, y, z);
+  built.group.rotation.y = Math.PI;          // +Z é a frente do personagem; a câmera está em -Z
+  if (built.ctrl && built.ctrl._to) built.ctrl._to('idle');
+  for (let k = 0; k < 30; k++) if (built.ctrl) built.ctrl.update(1 / 30, 0, false, 0);
+  built.group.updateMatrixWorld(true);
+  scene.add(built.group);
+  grupos.push(built.group);
+}
+const yBase = world.groundHeightAt ? world.groundHeightAt(BASE[0], BASE[1], 0) : 0;
+const DIST = parseFloat(qp.get('dist')) || 12.5;
+camera.position.set(BASE[0], yBase + 1.45, BASE[1] - DIST);
+camera.lookAt(BASE[0], yBase + 1.05, BASE[1]);
+
+/* O raw ANTES do enableLightBloom: as máscaras têm que sair de um render
+   DETERMINÍSTICO. O composite tem grão animado (uLens.w = tempo), então dois
+   frames compositados NUNCA são iguais e a diferença "personagem × fundo" daria
+   a tela inteira — foi exatamente o que aconteceu na primeira versão desta
+   régua (dL* = 0,0 para os 8, com o recorte comendo o mapa todo). */
+const rawRender = renderer.render.bind(renderer);
+enableLightBloom(renderer, { quality: qp.get('q') || 'med' });
+
+const ver = (f) => { for (let k = 0; k < grupos.length; k++) if (grupos[k]) grupos[k].visible = f(k); };
+window.LINEUP = {
+  ready: true, ids: IDS, w: W, h: H,
+  onde: { base: BASE, yBase, cam: camera.position.toArray(), spawns: Object.keys(world.spawns || {}) },
+  // COR: frame compositado (AgX + piso + vinheta) — é o pixel que o dono vê.
+  todos() { ver(() => true); renderer.render(scene, camera); },
+  fundo() { ver(() => false); renderer.render(scene, camera); },
+  // RECORTE: render cru, sem composite e sem grão — só para saber QUAIS pixels
+  // são de cada personagem.
+  cruFundo() { ver(() => false); rawRender(scene, camera); },
+  cruSo(i) { ver((k) => k === i); rawRender(scene, camera); },
+};
+window.LINEUP.todos();
+</script>
+</body>
+</html>

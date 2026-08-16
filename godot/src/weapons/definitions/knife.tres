@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+weapon_id = &"knife"
+display_name = "FACA"
+damage = 55
+magazine_capacity = 0
+reserve_capacity = 0
+fire_interval = 0.55
+reload_seconds = 0.0
+hip_spread = 0.0
+scope_spread = 0.0
+recoil = 0.02
+range = 2.4
+supports_scope = false
+draw_delay = 0.35
+melee = true

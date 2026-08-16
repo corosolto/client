@@ -1,0 +1,140 @@
+---
+// /mapas - página de conteúdo indexável das arenas.
+// Mesmo racional de /armas: nome de mapa é busca própria ("ferro velho",
+// "piscina da treta") e o texto só existia dentro do JS do jogo.
+//
+// PASSAGEM DE VERDADE (05/08/2026). Três coisas mentiam aqui, e as três vinham
+// de texto escrito à mão em vez de derivado do dado:
+//   · a lista de arenas (a "Praça (clássico)" saiu do jogo, a Quebrada entrou -
+//     ver o cabeçalho de src/data/jogo.ts);
+//   · "Três abrem em rounds e duas em CTF" - é 2 e 3 desde que a Quebrada entrou.
+//     Agora os dois números são CONTADOS de `MAPAS[].ctf`, não digitados;
+//   · "respawn de 2,5 s" - `public/js/game.js:76` diz `RESPAWN_DELAY = 2.2`, e a
+//     /como-jogar já tinha sido corrigida em 04/08. Esta ficou pra trás.
+// Junto: "4×4" não é fixo, é o PADRÃO (`settings.bots`, public/js/main.js:18,
+// aceita de 1 a 8 por lado).
+//
+// VISUAL (05/08/2026). A página era cinco caixas de texto e nada mais, num site
+// sobre um jogo em 3D. As capturas JÁ EXISTIAM em `public/img/map-previews/`,
+// uma por `id` de mapa, e ninguém as usava. Agora cada arena entra com a arte
+// dela; a primeira ocupa a largura toda com imagem à esquerda e texto à direita,
+// que é o desenho de `references/telas/04_escolha_mapa.png`.
+//
+// A LINHA `.meta` também vem de lá: naquela tela ela é `8v8 · ROUNDS · 15 MIN ·
+// DIA`. Aqui os campos são derivados do dado (`m.ctf`, `m.id`), nunca digitados
+// - foi digitar à mão que quebrou os números desta página duas vezes.
+import Layout from '../layouts/Layout.astro';
+import { MAPAS } from '../data/jogo';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+
+const nCtf = MAPAS.filter(m => m.ctf).length;
+const nRounds = MAPAS.length - nCtf;
+const plural = (n: number, um: string, muitos: string) => (n === 1 ? um : muitos);
+
+/* A captura de cada arena tem o nome do PRÓPRIO id do mapa. Casar por id (e não
+   por uma lista escrita à mão) é o que faz um mapa novo já entrar com arte, ou
+   entrar sem arte de forma visível, em vez de silenciosamente errada. */
+const preview = (id: string) => `/img/map-previews/${id}.jpg`;
+const [destaque, ...resto] = MAPAS;
+
+const jsonld = [
+  {
+    '@type': 'ItemList',
+    '@id': abs('/mapas') + '#lista',
+    name: `Mapas do ${BRAND_FULL}`,
+    numberOfItems: MAPAS.length,
+    itemListElement: MAPAS.map((m, i) => ({
+      '@type': 'ListItem', position: i + 1, name: m.nome, description: m.resumo,
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Mapas', item: abs('/mapas') },
+    ],
+  },
+  { '@id': GAME_ID },
+];
+---
+<Layout
+  {/* og:image própria, gerada em runtime por /api/og/mapas.png (issue #33) -
+      antes caía na og-image.png genérica, igual pra todo o site. */}
+  ogImage={abs('/api/og/mapas.png')}
+  ogImageAlt={`Card com as 5 arenas do ${BRAND_FULL}`}
+  title={`Mapas - as ${MAPAS.length} arenas | ${BRAND_FULL}`}
+  description={`As ${MAPAS.length} arenas do ${BRAND_FULL}: ${MAPAS.map(m => m.nome).join(', ')} - layout, modo e como jogar cada uma.`}
+  jsonld={jsonld}
+  h1="Mapas"
+  kicker={`${MAPAS.length} arenas · rounds e CTF`}
+  heroImg={preview('ferro_velho')}
+  heroPos="62%">
+  {/* `{' '}` explícito entre expressões: dentro de um <Fragment slot>, o espaço
+      literal entre `}` e `{` é engolido e sai "2abrem". */}
+  <Fragment slot="sub">
+    {MAPAS.length} arenas jogáveis.{' '}{nRounds}{' '}{plural(nRounds, 'abre', 'abrem')} em rounds e
+    {' '}{nCtf}{' '}{plural(nCtf, 'abre', 'abrem')} em Capture the Flag - mas nenhuma trava o modo:
+    dá pra jogar qualquer mapa em qualquer modo pelo menu antes da partida.
+  </Fragment>
+
+  {/* ARENA DE ABERTURA: imagem à esquerda, texto à direita - o enquadramento da
+      tela de escolha de mapa do jogo. As outras quatro entram na grade. */}
+  <article class="card wide">
+    <div class="fig">
+      <img src={preview(destaque.id)} width="640" height="640" alt={`Vista aérea da arena ${destaque.nome}`} loading="eager" decoding="async">
+    </div>
+    <div class="card-body">
+      <h2 class="map-nome">{destaque.nome}</h2>
+      <p class="meta">
+        <b>4v4</b><i>·</i>{destaque.ctf ? 'CTF' : 'Rounds'}<i>·</i>
+        {destaque.ctf ? '4 bandeiras' : '1:39 por round'}<i>·</i><code>{destaque.id}</code>
+      </p>
+      <p class="lead">{destaque.resumo}</p>
+      <p>{destaque.detalhe}</p>
+    </div>
+  </article>
+
+  <div class="grid cards">
+    {resto.map(m => (
+      <article class="card">
+        <div class="fig">
+          <img src={preview(m.id)} width="640" height="640" alt={`Vista aérea da arena ${m.nome}`} loading="lazy" decoding="async">
+
+        </div>
+        <div class="card-body">
+          <h3 class="map-nome">{m.nome}</h3>
+          <p class="meta">
+            <b>4v4</b><i>·</i>{m.ctf ? 'CTF' : 'Rounds'}<i>·</i>
+            {m.ctf ? '4 bandeiras' : '1:39 por round'}<i>·</i><code>{m.id}</code>
+          </p>
+          <p class="lead">{m.resumo}</p>
+          <p>{m.detalhe}</p>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <h2>Rounds ou CTF</h2>
+  <ul>
+    <li><strong>Rounds:</strong> 4×4 por padrão (o menu vai de 1 a 8 por lado), com respawn de
+      2,2 s. Round de 1:39; leva o round o time com mais abates quando o relógio zera; 3 rounds
+      vencem a partida, e a 5ª rodada é o teto.</li>
+    <li><strong>Capture the Flag:</strong> quatro bandeiras espalhadas pela arena. A geometria da
+      Loja H, do Ferro Velho e da Quebrada foi desenhada em volta delas - por isso os três abrem
+      em CTF. Em CTF a rodada acaba por captura, não por relógio.</li>
+    <li>O mapa é sorteado ou escolhido na tela de seleção, antes de começar.</li>
+  </ul>
+
+  <p style="margin-top:26px"><a class="btn-play" style="margin-left:0;display:inline-block" href="/">▶ Entrar na arena</a></p>
+</Layout>
+
+<script>
+  // espelho do /maps: usuário em EN cai na gêmea (mesmas regras do i18n.js)
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'en') location.replace('/maps');
+  } catch { /* fica */ }
+</script>

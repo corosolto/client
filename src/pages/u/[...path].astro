@@ -1,0 +1,196 @@
+---
+// /u/<id>/<nick> - perfil público do jogador.
+//
+// ESTA É A PÁGINA QUE ESCALA. Todo o resto do site tem 9 URLs; esta tem uma por
+// jogador, cada uma com título, descrição e imagem próprios. Três correções:
+//
+// 1. CACHE. Era `prerender=false` sem Cache-Control: cada crawler que passasse
+//    por um perfil abria uma query no Supabase. Perfil muda no máximo a cada
+//    partida, então 120 s de CDN não atrasa nada e derruba a carga.
+// 2. JSON-LD ProfilePage + Person. Um perfil sem dado estruturado é só uma
+//    página com números; com ProfilePage o crawler entende que é o perfil de
+//    ALGUÉM, e as stats viram propriedades legíveis.
+// 3. `og:type=profile` já existia e é ótimo - agora com `profile:username`,
+//    `og:image:alt`, e o /sitemap.xml listando estas URLs, que fecha o ciclo.
+import Layout from '../../layouts/Layout.astro';
+import { supabaseAdmin } from '../../lib/supabase';
+import { displayTime } from '../../lib/fmt';
+import { normalizeSocialUrl, socialAvatar, socialNet, NET_INFO, netIcon } from '../../lib/social';
+import { CHARS, charSvg } from '../../lib/charsvg';
+import { sideOf } from '../../lib/side';
+import { BRAND_FULL, GAME_ID, WEBSITE_ID, abs, RANKING_ON } from '../../lib/site';
+
+export const prerender = false;
+
+Astro.response.headers.set(
+  'cache-control',
+  'public, max-age=0, s-maxage=120, stale-while-revalidate=600',
+);
+
+// canônico: /u/<id>/<nick> · legado: /u/<nick> → redirect 301
+const parts = (Astro.params.path || '').split('/').filter(Boolean);
+let p: any = null, configured = !!supabaseAdmin;
+
+/* Perfis desligam junto com o ranking (src/lib/site.ts). Mesmo raciocínio da
+   /ranking: 200 + noindex, não 404 - estas URLs estão indexadas, são o que a
+   badge PNG referencia nas redes, e vão voltar. Sem a consulta ao banco, `p`
+   fica null e o template cai no aviso. */
+if (RANKING_ON && supabaseAdmin) {
+  if (parts.length === 2) {
+    const { data } = await supabaseAdmin
+      .from('stats').select('*, players!inner(id, nick, social_link, socials, avatar_url)')
+      .eq('players.id', parts[0]).maybeSingle();
+    p = data;
+    if (p) {
+      const real = p.players.nick;
+      if (decodeURIComponent(parts[1]).toLowerCase() !== real.toLowerCase())
+        return Astro.redirect(`/u/${p.players.id}/${encodeURIComponent(real)}`, 301);
+    }
+  } else if (parts.length === 1) {
+    const { data } = await supabaseAdmin
+      .from('players').select('id, nick')
+      .eq('nick', decodeURIComponent(parts[0]).slice(0, 14)).maybeSingle();
+    if (data) return Astro.redirect(`/u/${data.id}/${encodeURIComponent(data.nick)}`, 301);
+  }
+}
+if (configured && !p) return Astro.redirect('/ranking', 302);
+
+const nick = p?.players?.nick ?? parts.join('/') ?? '';
+const pid = p?.players?.id ?? '';
+const kd = p ? (p.deaths ? (p.kills / p.deaths).toFixed(2) : String(p.kills)) : '0';
+const tempo = p ? displayTime(p) : '0min';
+const [ladoLabel, ladoCor] = p ? sideOf(p.matches_p, p.matches_b) : ['NEUTRO', '#ffd23f'];
+const badgeUrl = abs(`/api/badge/${pid}.png`);
+const pageUrl = abs(`/u/${pid}/${encodeURIComponent(nick)}`);
+const title = `${nick} - ${p ? `${p.kills} kills, K/D ${kd}` : 'perfil'} | ${BRAND_FULL}`;
+const desc = p
+  ? `${nick} no ${BRAND_FULL}: ${p.kills} kills, K/D ${kd}, ${p.wins > 0 ? p.wins : 'nenhuma'} vitória(s), ${p.headshots} headshots e ${tempo} de arena em ${p.matches} partidas.`
+  : 'Perfil de jogador';
+
+const socials: any[] = p
+  ? (p.players.socials?.length ? p.players.socials
+     : (p.players.social_link ? [{ net: socialNet(p.players.social_link), url: p.players.social_link }] : []))
+  : [];
+
+const jsonld = p ? [
+  {
+    '@type': 'ProfilePage',
+    '@id': pageUrl + '#profile',
+    url: pageUrl,
+    name: `${nick} - perfil de jogador`,
+    dateModified: p.updated_at ?? undefined,
+    isPartOf: { '@id': WEBSITE_ID },
+    about: {
+      '@type': 'Person',
+      '@id': pageUrl + '#person',
+      name: nick,
+      url: pageUrl,
+      image: badgeUrl,
+      description: desc,
+      sameAs: socials.map(s => normalizeSocialUrl(s.url)).filter(Boolean),
+    },
+    mainEntity: { '@id': pageUrl + '#person' },
+    primaryImageOfPage: { '@type': 'ImageObject', url: badgeUrl, width: 840, height: 440 },
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Ranking', item: abs('/ranking') },
+      { '@type': 'ListItem', position: 3, name: nick, item: pageUrl },
+    ],
+  },
+  { '@id': GAME_ID },
+] : [];
+---
+{/* og:image:width/height vêm por PROP, não pelo slot: desde que o Layout passou
+    a emitir as duas (1200×630 por padrão), repetir 840×440 aqui produziria a
+    mesma propriedade duas vezes no <head> - e o scraper fica com a primeira. */}
+<Layout title={title} description={desc} ogImage={badgeUrl} ogType="profile"
+        ogImageWidth={840} ogImageHeight={440}
+        noindex={!RANKING_ON}
+        ogImageAlt={`Badge de ${nick} no ${BRAND_FULL}: ${p ? p.kills : 0} kills, K/D ${kd}`}
+        jsonld={jsonld}>
+  <Fragment slot="head">
+    {p && <meta property="profile:username" content={nick} />}
+  </Fragment>
+
+  {!RANKING_ON && (
+    <div class="panel">
+      <h1>Perfis desligados por enquanto</h1>
+      <p>O jogo está em <strong>alpha</strong> e o ranking saiu do ar até o placar ser
+      confiável - as páginas de jogador foram junto. Este endereço continua sendo o seu:
+      quando voltar, é aqui.</p>
+      <p><a href="/mapa">quem está jogando agora</a> · <a href="/changelog">o que mudou</a> ·
+      <a href="/">▶ JOGAR</a></p>
+    </div>
+  )}
+  {RANKING_ON && !configured && (<><h1>{nick}</h1><p>Ranking ainda não configurado.</p></>)}
+
+  {p && (
+    <>
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        {(() => {
+          const av = p.players.avatar_url || socialAvatar(p.players.social_link);
+          if (av) return <img src={av} alt={`Avatar de ${nick}`} width="76" height="76" style="border:2px solid var(--line-hi);object-fit:cover">;
+          if (p.last_character && CHARS[p.last_character]) {
+            return (
+              <svg width="76" height="76" viewBox="688 36 120 120" aria-hidden="true" style="border:2px solid var(--line-hi);background:#12100a">
+                <Fragment set:html={charSvg(p.last_character, ladoCor, 'cav-head')} />
+              </svg>
+            );
+          }
+          return <div style="width:76px;height:76px;border:2px solid var(--line-hi);background:#12100a;display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--amber)">{p.nick[0].toUpperCase()}</div>;
+        })()}
+        <div>
+          <h1 style="margin-bottom:6px">{nick}</h1>
+          <span class="chip" style={`color:${ladoCor};border-color:${ladoCor}`}>{ladoLabel}</span>
+          <span class="chip" style="margin-left:6px">{p.matches_p}P × {p.matches_b}B</span>
+          {socials.map(s => {
+            const net = s.net || socialNet(s.url), info = NET_INFO[net] || NET_INFO.site;
+            return (
+              <a href={normalizeSocialUrl(s.url)} target="_blank" rel="noopener nofollow" title={info.label}
+                 aria-label={`${nick} no ${info.label}`}
+                 style={`display:inline-block;margin-left:8px;vertical-align:-4px;color:${info.color};text-decoration:none`}
+                 set:html={netIcon(net, 19)} />
+            );
+          })}
+        </div>
+      </div>
+
+      <h2>Placar</h2>
+      <div class="tstat">
+        <div><b>{p.kills}</b><span>kills</span></div>
+        <div><b>{kd}</b><span>K/D</span></div>
+        <div><b>{p.deaths}</b><span>mortes</span></div>
+        <div><b>{p.headshots}</b><span>headshots</span></div>
+        <div><b>{p.matches}</b><span>partidas</span></div>
+        <div><b>{p.wins > 0 ? p.wins : " - "}</b><span>vitórias</span></div>
+        <div><b>{p.rounds}</b><span>rounds</span></div>
+        <div><b>{p.best_streak}×</b><span>melhor sequência</span></div>
+        <div><b>{tempo}</b><span>tempo de arena</span></div>
+      </div>
+
+      <h2>Badge</h2>
+      <img src={`/api/badge/${pid}.png`} alt={`Badge de ${nick} no ${BRAND_FULL} com ${p.kills} kills e K/D ${kd}`}
+           width="840" height="440" loading="lazy"
+           style="width:100%;max-width:840px;border:1px solid var(--line)">
+      <p style="font-size:12px;color:var(--bone-dim);margin-top:6px">
+        Gerada na hora, a cada acesso. Ao colar o link deste perfil numa rede social, ela aparece
+        sozinha no card.
+      </p>
+
+      <h2>Compartilhar</h2>
+      <p style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn-play" style="margin-left:0;text-decoration:none" target="_blank" rel="noopener"
+           href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Meu placar no ${BRAND_FULL}: ${p.kills} kills, K/D ${kd}, ${p.headshots} headshots. E aí, aguenta a treta?`)}&url=${encodeURIComponent(pageUrl)}`}>
+          Postar no X</a>
+        <button class="btn-play" type="button" style="margin-left:0;border:1px solid var(--amber);cursor:pointer"
+                data-url={pageUrl}
+                onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>this.textContent='Link copiado!')">
+          Copiar link</button>
+        <a class="btn-play" style="margin-left:0;background:transparent;color:var(--amber)!important;text-decoration:none" href="/ranking">Ver ranking</a>
+      </p>
+    </>
+  )}
+</Layout>

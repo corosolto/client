@@ -1,0 +1,340 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/main/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://src/match/movement_match.tscn" id="2_match"]
+[ext_resource type="PackedScene" path="res://src/ui/game_ui.tscn" id="3_ui"]
+[ext_resource type="Script" path="res://src/ui/radar_control.gd" id="4_radar"]
+[ext_resource type="Script" path="res://src/audio/audio_service.gd" id="5_audio"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="AudioService" type="Node" parent="."]
+script = ExtResource("5_audio")
+
+[node name="WorldHost" type="Node3D" parent="."]
+
+[node name="Match" parent="WorldHost" instance=ExtResource("2_match")]
+
+[node name="GuiHost" type="CanvasLayer" parent="."]
+
+[node name="CurrentScreen" parent="GuiHost" instance=ExtResource("3_ui")]
+
+[node name="BootPanel" type="ColorRect" parent="GuiHost"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[node name="Title" type="Label" parent="GuiHost/BootPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -342.0
+offset_right = 240.0
+offset_bottom = -288.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8235, 0.2471, 1)
+theme_override_font_sizes/font_size = 40
+text = "CS BRASIL"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="GuiHost/BootPanel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -286.0
+offset_right = 300.0
+offset_bottom = -252.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.7059, 0.7569, 0.8196, 1)
+theme_override_font_sizes/font_size = 18
+text = "CLIQUE PARA CAPTURAR O MOUSE · WASD PARA MOVER"
+horizontal_alignment = 1
+
+[node name="Crosshair" type="Label" parent="GuiHost"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -12.0
+offset_top = -17.0
+offset_right = 12.0
+offset_bottom = 17.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 24
+text = "+"
+horizontal_alignment = 1
+
+[node name="HUD" type="Control" parent="GuiHost"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Health" type="Label" parent="GuiHost/HUD"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 658.0
+offset_right = 180.0
+offset_bottom = 704.0
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_font_sizes/font_size = 24
+text = "VIDA 100"
+
+[node name="Radar" type="Control" parent="GuiHost/HUD"]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 0
+offset_left = 18.0
+offset_top = 18.0
+offset_right = 168.0
+offset_bottom = 168.0
+mouse_filter = 2
+script = ExtResource("4_radar")
+
+[node name="Ammo" type="Label" parent="GuiHost/HUD"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -205.0
+offset_top = -62.0
+offset_right = -28.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_font_sizes/font_size = 24
+text = "AWP 5 / 25"
+horizontal_alignment = 2
+
+[node name="Respawn" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = 82.0
+offset_right = 220.0
+offset_bottom = 122.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8235, 0.2471, 1)
+theme_override_font_sizes/font_size = 20
+text = "INIMIGO REAPARECE EM 2.5"
+horizontal_alignment = 1
+
+[node name="RoundTimer" type="Label" parent="GuiHost/HUD"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -65.0
+offset_top = 18.0
+offset_right = 65.0
+offset_bottom = 54.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.8235, 0.2471, 1)
+theme_override_font_sizes/font_size = 25
+text = "1:39"
+horizontal_alignment = 1
+
+[node name="TeamScore" type="Label" parent="GuiHost/HUD"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 54.0
+offset_right = 180.0
+offset_bottom = 84.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.94, 0.94, 0.94, 1)
+theme_override_font_sizes/font_size = 18
+text = "P 0 (0)  ×  (0) 0 B"
+horizontal_alignment = 1
+
+[node name="Killfeed" type="Label" parent="GuiHost/HUD"]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -440.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = 62.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.92)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 2
+
+[node name="Scoreboard" type="ColorRect" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -290.0
+offset_top = -250.0
+offset_right = 290.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.035, 0.05, 0.92)
+
+[node name="Rows" type="Label" parent="GuiHost/HUD/Scoreboard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 34.0
+offset_top = 26.0
+offset_right = -34.0
+offset_bottom = -26.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.96, 1)
+theme_override_font_sizes/font_size = 19
+text = "JOGADOR                 K/D"
+
+[node name="ScopeOverlay" type="ColorRect" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.38)
+
+[node name="DamageVignette" type="ColorRect" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.75, 0.02, 0.02, 0.28)
+
+[node name="Hitmarker" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -24.0
+offset_top = -28.0
+offset_right = 24.0
+offset_bottom = 28.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "×"
+horizontal_alignment = 1
+
+[node name="RoundBanner" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -160.0
+offset_right = 300.0
+offset_bottom = -100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.8235, 0.2471, 1)
+theme_override_font_sizes/font_size = 30
+text = "ROUND 1"
+horizontal_alignment = 1
+
+[node name="Multikill" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -240.0
+offset_right = 220.0
+offset_bottom = -180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.25, 0.2, 1)
+theme_override_font_sizes/font_size = 34
+text = "DUPLO!"
+horizontal_alignment = 1
+
+[node name="DeathOverlay" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = 70.0
+offset_right = 260.0
+offset_bottom = 125.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 24
+text = "ELIMINADO · RESPAWN EM 2.5"
+horizontal_alignment = 1
+
+[node name="RadioMenu" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 0
+offset_left = 28.0
+offset_top = 190.0
+offset_right = 330.0
+offset_bottom = 320.0
+theme_override_colors/font_color = Color(1, 0.8235, 0.2471, 1)
+theme_override_font_sizes/font_size = 17
+text = "COMANDOS\n1. Bora, bora, bora!"
+
+[node name="RadioLog" type="Label" parent="GuiHost/HUD"]
+visible = false
+layout_mode = 0
+offset_left = 28.0
+offset_top = 610.0
+offset_right = 560.0
+offset_bottom = 642.0
+theme_override_colors/font_color = Color(0.5, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "Jogador (RÁDIO): Recebido!"

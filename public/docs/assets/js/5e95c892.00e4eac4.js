@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkcoro_solto_docs||=[]).push([[647],{7121(s,e,r){r.r(e),r.d(e,{default:()=>d});r(6540);var o=r(4164),c=r(7559),a=r(1003),t=r(2831),u=r(8080),l=r(4848);function d(s){return(0,l.jsx)(a.e3,{className:(0,o.A)(c.G.wrapper.docsPages),children:(0,l.jsx)(u.A,{children:(0,t.v)(s.route.routes)})})}}}]);

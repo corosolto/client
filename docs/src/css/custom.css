@@ -1,0 +1,165 @@
+/* PALETA — casada com o jogo, e a procedência de cada valor está aqui.
+ *
+ * Até 05/08/2026 esta folha declarava "paleta puxada do HUD: ciano sobre quase-preto"
+ * e usava `--ifm-background-color:#060b0f`. Esse azul-quase-preto é EXATAMENTE o defeito
+ * que o BUG-05 fechou no jogo: os tokens `--bg-*` eram azuis (h ≈ 253°) contra o
+ * marrom-neutro medido nas telas de referência (h 84-129°). O jogo corrigiu; a doc tinha
+ * ficado com a versão velha e parecia de outro produto.
+ *
+ * Fontes dos valores abaixo (lidos, não escolhidos no olho):
+ *   public/style.css   --bg-900 #090704 · --bg-800 #141008 · --bg-700 #1c1812
+ *                      --line #34302b · --ink-100 #f0f0ed · --ink-200 #d3d3d1
+ *                      --am #f3b958 (âmbar: objetivo/identidade) · --sys #39d6e0 (sistema)
+ *   src/layouts/Layout.astro  --cs / --amber #e8b34b sobre --bg #0a0a08
+ *
+ * Âmbar é a cor de IDENTIDADE nos dois (jogo e site), então é ela a `primary` daqui.
+ * O ciano `--sys` continua existindo, no papel que ele tem no jogo: sistema/aviso — aqui,
+ * as admonitions `note`/`info`.
+ *
+ * Contraste conferido (WCAG, fórmula de luminância relativa):
+ *   claro  #8a5f0f sobre #ffffff = 5,64:1   (AA para texto normal)
+ *   escuro #f3b958 sobre #090704 = 11,39:1
+ * Trocar qualquer um destes dois sem refazer a conta é como afrouxar teto de invariante.
+ */
+
+:root {
+  --ifm-color-primary: #8a5f0f;
+  --ifm-color-primary-dark: #734f0d;
+  --ifm-color-primary-darker: #6a490c;
+  --ifm-color-primary-darkest: #452f08;
+  --ifm-color-primary-light: #a16f12;
+  --ifm-color-primary-lighter: #aa7513;
+  --ifm-color-primary-lightest: #cf8e17;
+  --ifm-code-font-size: 92%;
+  --ifm-font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Tokens locais da doc, derivados do jogo. Usados pelo cabeçalho da home. */
+  --cs-am: #8a5f0f;
+  --cs-sys: #12707a;
+  /* O banner do canarinho tem fundo PRETO próprio (é um WebP, não um PNG recortado).
+     No tema claro, uma moldura creme em volta de um retângulo preto lê como erro de
+     recorte — então a moldura é escura nos dois temas, e o conjunto lê como um adesivo. */
+  --cs-hero-bg: #1c1812;
+  --cs-hero-line: #34302b;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #f3b958;
+  --ifm-color-primary-dark: #f1af40;
+  --ifm-color-primary-darker: #f1ab37;
+  --ifm-color-primary-darkest: #ed9b11;
+  --ifm-color-primary-light: #f5c370;
+  --ifm-color-primary-lighter: #f5c779;
+  --ifm-color-primary-lightest: #f8d79f;
+  --ifm-background-color: #090704;        /* public/style.css --bg-900 */
+  --ifm-background-surface-color: #141008; /* public/style.css --bg-800 */
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --cs-am: #f3b958;
+  --cs-sys: #39d6e0;
+  --cs-hero-bg: #1c1812;                  /* public/style.css --bg-700 */
+  --cs-hero-line: #34302b;                /* public/style.css --line */
+}
+
+/* Ícone do canarinho na navbar: 32 px é a altura padrão do tema e é o que mantém a
+   navbar na mesma altura das outras páginas. Sem `filter`: o mascote é colorido de
+   propósito e escurecê-lo no tema claro o descaracteriza. */
+.navbar__logo {
+  height: 2rem;
+}
+
+/* Rodapé: o `style:'dark'` do tema traz um azul-acinzentado (#303846) que é o MESMO
+   desvio de matiz que o BUG-05 corrigiu no jogo — no tema claro ele aparecia como uma
+   faixa azul embaixo de uma página inteira em marrom-neutro. Fixado no `--bg-800` do
+   jogo (`public/style.css`), nos dois temas. */
+.footer--dark {
+  --ifm-footer-background-color: #141008;
+  --ifm-footer-color: #d3d3d1;
+  --ifm-footer-link-color: #d3d3d1;
+  --ifm-footer-title-color: #f0f0ed;
+}
+
+.footer__logo {
+  max-width: 180px;
+  margin-top: 0.5rem;
+}
+
+/* ── Cabeçalho da home ────────────────────────────────────────────────────────
+   Uma imagem só: o banner do canarinho girando (604×240, 24 quadros WebP), que já
+   traz o letreiro. `aspect-ratio` fixo porque sem ele a página SALTA quando os 24
+   quadros terminam de baixar — e o salto acontece exatamente em conexão de celular,
+   que é a audiência. Conferido a 390×844. */
+.cs-hero {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 2rem;
+  padding: 0.75rem;
+  border: 1px solid var(--cs-hero-line);
+  border-radius: 10px;
+  background: var(--cs-hero-bg);
+}
+
+.cs-hero__bird {
+  width: 604px;
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 604 / 240;
+}
+
+/* Tabela de números: a doc é cheia de medida, e medida se lê em coluna alinhada. */
+.markdown table td:not(:first-child),
+.markdown table th:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+}
+
+.markdown table {
+  display: table;
+  width: 100%;
+}
+
+/* Em tela estreita, a linha acima é o que quebra a página: `display:table` faz a tabela
+   empurrar o documento inteiro em vez de rolar dentro de si. MEDIDO a 390×844 na página
+   `/estado`: `document.scrollWidth - clientWidth` = 217 px de overflow horizontal, com a
+   tabela de `Leitura do vermelho` (570 px) num viewport de 390. Abaixo do breakpoint do
+   tema (996 px) a tabela volta a ser bloco rolável. Teto: 0 px de overflow do documento.
+   A audiência é BR e mobile — esta régua é a que mais gente vê. */
+@media (max-width: 996px) {
+  .markdown table {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* Conteúdo largo em celular: rola DENTRO do próprio bloco em vez de estourar a página.
+   MEDIDO antes de escrever: a 390×844 a página `/estado` empurrava o documento
+   217 px para fora (`document.scrollWidth - clientWidth`), por causa das tabelas de
+   `Leitura do vermelho`. Teto: 0 px de overflow horizontal do documento, nas 3 páginas
+   capturadas. */
+.markdown > table,
+.markdown .table-wrapper {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+/* `main` e a coluna do doc precisam poder encolher; sem `min-width:0` um filho largo
+   (tabela ou <pre>) estica o flex/grid pai e o overflow volta pela porta dos fundos. */
+.main-wrapper,
+main,
+.markdown {
+  min-width: 0;
+}
+
+/* Bloco de saída de terminal colada de verdade — precisa caber sem quebrar linha. */
+.markdown pre code {
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+/* Citação de arquivo:linha aparece o tempo todo; deixa ela legível e discreta. */
+.markdown code {
+  border: 1px solid rgba(127, 127, 127, 0.25);
+}

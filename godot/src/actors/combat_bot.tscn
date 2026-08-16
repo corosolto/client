@@ -1,0 +1,66 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/actors/combat_bot.gd" id="1_bot"]
+[ext_resource type="Script" path="res://src/combat/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://src/combat/hitbox.gd" id="3_hitbox"]
+[ext_resource type="Script" path="res://src/weapons/hitscan_weapon.gd" id="4_weapon"]
+[ext_resource type="Resource" path="res://src/weapons/definitions/bot_awp.tres" id="5_awp"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_body"]
+radius = 0.35
+height = 1.4
+
+[sub_resource type="SphereShape3D" id="SphereShape_head"]
+radius = 0.25
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.35
+height = 1.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_head"]
+radius = 0.25
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="Material_bot"]
+albedo_color = Color(0.78, 0.16, 0.13, 1)
+roughness = 0.82
+
+[node name="CombatBot" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_bot")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("2_health")
+
+[node name="BodyCollision" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.7, 0)
+shape = SubResource("CapsuleShape_body")
+
+[node name="AWP" type="Node3D" parent="."]
+script = ExtResource("4_weapon")
+definition = ExtResource("5_awp")
+spread_seed = 7331
+
+[node name="HeadHitbox" type="Area3D" parent="."]
+position = Vector3(0, 1.55, 0)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_hitbox")
+hit_zone = &"head"
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape_head")
+
+[node name="Visuals" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0, 0.7, 0)
+mesh = SubResource("CapsuleMesh_body")
+material_override = SubResource("Material_bot")
+
+[node name="Head" type="MeshInstance3D" parent="Visuals"]
+position = Vector3(0, 1.55, 0)
+mesh = SubResource("SphereMesh_head")
+material_override = SubResource("Material_bot")

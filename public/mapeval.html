@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>map eval — landmarks</title>
+<style>html,body{margin:0;height:100%;background:#8fb7e0;overflow:hidden}#hud{position:fixed;left:6px;top:6px;font:11px monospace;color:#012;z-index:9}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">…</div>
+<script type="module">
+import * as THREE from 'three';
+import { initTextures } from './js/textures.js';
+import { buildBrasilia } from './js/map_brasilia.js';
+import { preloadMapProps } from './js/mapprops.js';
+
+const qp = new URLSearchParams(location.search);
+const W = innerWidth, H = innerHeight;
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fb7e0);
+const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
+scene.add(new THREE.HemisphereLight(0xdfeeff, 0x554433, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.7); sun.position.set(40,80,30); scene.add(sun);
+
+function setCam(from, look){ cam.position.set(from[0],from[1],from[2]); cam.lookAt(look[0],look[1],look[2]); }
+
+window.MAPEVAL = {
+  ready:false,
+  view(from, look){ setCam(from, look); renderer.render(scene,cam); },
+};
+
+(async ()=>{
+  console.log('STEP initTextures');
+  const T = initTextures();
+  console.log('STEP preload start');
+  await preloadMapProps(['congresso','catedral','ministerio','palacio','justica','tires','stall','tent','bus','drinkstand','urna','towner']);
+  console.log('STEP preload done');
+  const world = buildBrasilia(scene, T);
+  console.log('STEP build done');
+  try {
+    window.__congresso = null;
+    scene.traverse(o=>{ if(!window.__congresso && o.position && Math.abs(o.position.z-62)<0.5 && Math.abs(o.position.x)<0.5 && o.children && o.children.length) window.__congresso = o; });
+    window.MAPEVAL.setCongressoRY = (r)=>{ if(window.__congresso){ window.__congresso.rotation.y = r; renderer.render(scene,cam); } return !!window.__congresso; };
+    setCam([40,30,10],[0,4,20]); renderer.render(scene,cam);
+    window.__world = { spawns: world && world.spawns, bounds: world && world.bounds };
+    window.__scene = scene;
+    hud.textContent = 'map loaded';
+    window.MAPEVAL.ready = true;
+    console.log('STEP ready set');
+  } catch(e){ console.log('TAIL ERR', e && e.message, e && e.stack); hud.textContent = 'ERR '+(e&&e.message); }
+})();
+</script>
+</body>
+</html>

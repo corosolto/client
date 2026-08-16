@@ -1,0 +1,184 @@
+{
+ "metodo": "segmentacao por cor + maior componente conexa; ver docstring",
+ "refs": [
+  {
+   "ref": "CS 1.6 — AK47 (de_dust)",
+   "arquivo": "cs16_ak_dust.jpg",
+   "tamanho": [
+    535,
+    335
+   ],
+   "aspecto": 1.597,
+   "areaPct": 9.76,
+   "bordaEsq": 0.564,
+   "topo": 0.487,
+   "baseVisivel": 0.997,
+   "boca": [
+    0.564,
+    0.513
+   ],
+   "anguloEixoGraus": 28.0,
+   "cruzaBordaDireita": true,
+   "cruzaBordaInferior": true,
+   "grip": [
+    0.776,
+    1.0
+   ],
+   "gripPx": [
+    415,
+    335
+   ],
+   "gripDentroDoQuadro": false,
+   "gripComo": "coluna do gatilho (x 0,776 — logo atrás do poço do carregador, que a máscara mostra em x 0,674-0,766) na BORDA INFERIOR: a silhueta é cortada em y 0,997 nessa coluna e a mão de tiro não aparece. PISO, não medida.",
+   "buracoAbaixoDoCentro": [
+    0.931,
+    0.868,
+    324
+   ],
+   "legibilidade": {
+    "eixoGripBoca": 0.592,
+    "frenteVisivel": 1.01,
+    "trasVisivel": 0.338,
+    "compVisivel": 1.348,
+    "espessura": 1.045,
+    "gordura": 0.775
+   }
+  },
+  {
+   "ref": "CS 1.6 — M4A1 (de_dust2)",
+   "arquivo": "cs16_m4_dust.jpg",
+   "tamanho": [
+    619,
+    495
+   ],
+   "aspecto": 1.251,
+   "areaPct": 9.78,
+   "bordaEsq": 0.565,
+   "topo": 0.586,
+   "baseVisivel": 0.998,
+   "boca": [
+    0.569,
+    0.598
+   ],
+   "anguloEixoGraus": 34.8,
+   "cruzaBordaDireita": true,
+   "cruzaBordaInferior": true,
+   "grip": [
+    0.727,
+    0.915
+   ],
+   "gripPx": [
+    450,
+    453
+   ],
+   "gripDentroDoQuadro": true,
+   "gripComo": "centro do buraco do guarda-mato, achado por busca de buracos na própria máscara (maior buraco abaixo do centróide: 359 px, centro 0,728/0,916).",
+   "buracoAbaixoDoCentro": [
+    0.728,
+    0.916,
+    359
+   ],
+   "legibilidade": {
+    "eixoGripBoca": 0.374,
+    "frenteVisivel": 1.0,
+    "trasVisivel": 0.669,
+    "compVisivel": 1.669,
+    "espessura": 1.142,
+    "gordura": 0.684
+   }
+  },
+  {
+   "ref": "Valorant — Vandal (Ascent)",
+   "arquivo": "valorant_vandal.jpg",
+   "tamanho": [
+    2560,
+    1440
+   ],
+   "aspecto": 1.778,
+   "areaPct": 13.09,
+   "bordaEsq": 0.52,
+   "topo": 0.5,
+   "baseVisivel": 0.999,
+   "boca": [
+    0.648,
+    0.587
+   ],
+   "anguloEixoGraus": 4.6,
+   "cruzaBordaDireita": true,
+   "cruzaBordaInferior": true,
+   "grip": [
+    0.86,
+    1.0
+   ],
+   "gripPx": [
+    2202,
+    1440
+   ],
+   "gripDentroDoQuadro": false,
+   "gripComo": "a mão de tiro não aparece no quadro; o receiver preenche a quina inferior direita e sai pelas DUAS bordas (base 0,999). Coluna x 0,860. PISO, não medida.",
+   "buracoAbaixoDoCentro": [
+    0.57,
+    0.931,
+    1202
+   ],
+   "legibilidade": {
+    "eixoGripBoca": 0.559,
+    "frenteVisivel": 1.0,
+    "trasVisivel": 0.298,
+    "compVisivel": 1.298,
+    "espessura": 1.23,
+    "gordura": 0.948
+   }
+  }
+ ],
+ "faixas": {
+  "areaPct": [
+   9.76,
+   13.09
+  ],
+  "bordaEsq": [
+   0.52,
+   0.565
+  ],
+  "bocaX": [
+   0.564,
+   0.648
+  ],
+  "bocaY": [
+   0.513,
+   0.598
+  ],
+  "anguloEixoGraus": [
+   4.6,
+   34.8
+  ],
+  "cruzaBordaDireita": true,
+  "gripY": [
+   0.915,
+   1.0
+  ],
+  "gripYMedidoDentroDoQuadro": [
+   0.915,
+   0.915
+  ],
+  "gripForaDoQuadro": 2,
+  "frenteVisivel": [
+   1.0,
+   1.01
+  ],
+  "trasVisivel": [
+   0.298,
+   0.669
+  ],
+  "gordura": [
+   0.684,
+   0.948
+  ]
+ },
+ "ressalvas": [
+  "AK: a maior parte da coronha e do guarda-mao de MADEIRA fica fora da mascara (cor perto da areia). areaPct 9,76 e PISO, nao valor exato.",
+  "GRIP: so a M4A1 tem o grip DENTRO do quadro (0,916, centro do guarda-mato achado por busca de buracos). Na AK e na Vandal a arma e cortada pela borda de baixo na coluna do gatilho e a mao de tiro nao aparece: os y 1,000 sao PISO. Ou seja: no CS 1.6 e no Valorant a mao que segura a arma esta NA BORDA OU FORA DA TELA. Ver os PNGs /tmp/refgrip_*.png (--masks).",
+  "anguloEixoGraus e o eixo da MASSA (PCA), nao a linha do cano, e depende do aspecto do frame. Nao comparar direto com anguloCanoGraus do vm-mint-audit.",
+  "LEGIBILIDADE (VM18): na AK e na Vandal o grip e PISO, entao o eixo grip->boca e um piso e a `gordura` das duas e um TETO. O PISO da faixa (0,685) sai da M4A1, o unico frame com o grip medido DENTRO do quadro — de proposito, e o numero mais conservador dos tres."
+ ]
+}

@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-colaborar" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.6.3">
+<title data-rh="true">How to contribute | CORO SOLTO — Docs do Dev</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://www.csbrasil.online/docs/en/img/og-image.jpg"><meta data-rh="true" name="twitter:image" content="https://www.csbrasil.online/docs/en/img/og-image.jpg"><meta data-rh="true" property="og:url" content="https://www.csbrasil.online/docs/en/contributing"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" property="og:locale:alternate" content="pt"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="How to contribute | CORO SOLTO — Docs do Dev"><meta data-rh="true" name="description" content="Setup, how to run the gate, what a PR needs, how to add a weapon / character / map, and the good first tasks."><meta data-rh="true" property="og:description" content="Setup, how to run the gate, what a PR needs, how to add a weapon / character / map, and the good first tasks."><link data-rh="true" rel="icon" href="/docs/en/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://www.csbrasil.online/docs/en/contributing"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/contributing" hreflang="pt"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/en/contributing" hreflang="en"><link data-rh="true" rel="alternate" href="https://www.csbrasil.online/docs/contributing" hreflang="x-default"><link rel="stylesheet" href="/docs/en/assets/css/styles.7925f6bd.css">
+<script src="/docs/en/assets/js/runtime~main.2b9d705d.js" defer="defer"></script>
+<script src="/docs/en/assets/js/main.caf50761.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();null!==e?t(e):window.matchMedia("(prefers-color-scheme: dark)").matches?t("dark"):window.matchMedia("(prefers-color-scheme: light)").matches?t("light"):t("dark")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/en/"><div class="navbar__logo"><img src="/docs/en/img/canarinho-icone.webp" alt="Canarinho — CORO SOLTO&#x27;s mascot" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/docs/en/img/canarinho-icone.webp" alt="Canarinho — CORO SOLTO&#x27;s mascot" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">CORO SOLTO · Docs</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/en/">Documentation</a></div><div class="navbar__items navbar__items--right"><div class="navbar__item dropdown dropdown--hoverable dropdown--right"><a href="#" aria-haspopup="true" aria-expanded="false" role="button" class="navbar__link"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" class="iconLanguage_DSK9"><path fill="currentColor" d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>English</a><ul class="dropdown__menu"><li><a href="/docs/colaborar" target="_self" rel="noopener noreferrer" class="dropdown__link" lang="pt">Português</a></li><li><a href="/docs/en/contributing" target="_self" rel="noopener noreferrer" class="dropdown__link dropdown__link--active" lang="en">English</a></li></ul></div><a href="https://csbrasil.online/" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">Play<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><a href="https://github.com/rubenmarcus/csbrasil" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently dark mode)" aria-label="Switch between dark and light mode (currently dark mode)" aria-live="polite" aria-pressed="true"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/">Getting started</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/stack">Stack and tools</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/ai-instrumentation">AI instrumentation</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/quality-gates">The gate (quality gates)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/botbrain">BotBrain</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/architecture">Architecture</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/docs/en/contributing">How to contribute</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/en/status">Current state</a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs" itemscope="" itemtype="https://schema.org/BreadcrumbList"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/docs/en/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li itemscope="" itemprop="itemListElement" itemtype="https://schema.org/ListItem" class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link" itemprop="name">How to contribute</span><meta itemprop="position" content="1"></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown">
+<header><h1>How to contribute</h1></header>
+<p>The number below is not rhetoric, and it is not hand-written: it comes from <code>git shortlog -sn --no-merges</code> minus the authors that are AI agents (which sign as <code>Claude</code> /
+<code>Claude (gauntlet …)</code>).</p>
+<!-- -->
+<p><strong>9 human author identities</strong> sign commits in this branch: <code>ruben-cytonic</code>, <code>Emerson Garrido</code>, <code>rubenmarcus</code>, <code>Ruben</code>, <code>Ruben Marcus</code>, <code>William Oliveira</code>, <code>Juan Versolato Lopes</code>, <code>matheusgb</code>, <code>daltonfontes</code>. Automated identities are excluded. A Git author name is not necessarily one unique person.</p>
+<blockquote>
+<p>Block generated by <code>node tools/gen-docs.mjs</code>. Source: <code>git shortlog -sn --no-merges (descontando autores que são agentes)</code></p>
+</blockquote>
+<!-- -->
+<p>There is no team, there is no community, there is no reviewer queue — there are these
+people and an automated gate.</p>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>The block above counts the BRANCH, and the project is bigger than it</div><div class="admonitionContent_BuS1"><p><code>main</code> has a fourth contributor that this working branch does not contain — 13 commits
+of a desktop client, merged in July. Who, how much, and why this matters for any
+licensing decision is in <code>CONTRIBUTING.md</code> (license section and surfaces).</p></div></div>
+<p>This is relevant to you in two opposite ways. The bad one: if your PR gets stuck, it can
+take a while. The good one: <strong>almost the entire ruler (quality gate) is machine.</strong> <code>npm run check</code> gives
+you the same verdict the maintainer would, before you open the PR, without waiting for
+anyone. The barrier is low <strong>on purpose</strong> — it is one of the principles that do not change in
+<a href="https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener noreferrer"><code>docs/ROADMAP.md</code></a>.
+But the ruler is not.</p>
+<p>One-sentence summary: <strong>bring the number.</strong> A PR that changes visible behavior and brings
+neither a new invariant nor the reason it does not need one will come back with a question.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="setup">Setup<a href="#setup" class="hash-link" aria-label="Direct link to Setup" title="Direct link to Setup">​</a></h2>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token function" style="color:rgb(130, 170, 255)">git</span><span class="token plain"> clone https://github.com/rubenmarcus/csbrasil.git </span><span class="token operator" style="color:rgb(137, 221, 255)">&amp;&amp;</span><span class="token plain"> </span><span class="token builtin class-name" style="color:rgb(255, 203, 107)">cd</span><span class="token plain"> csbrasil</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">npm</span><span class="token plain"> </span><span class="token function" style="color:rgb(130, 170, 255)">install</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">npm</span><span class="token plain"> run dev          </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># http://localhost:4321 — the root route IS the game</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Optional:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token function" style="color:rgb(130, 170, 255)">npm</span><span class="token plain"> run fetch-audio  </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># audio pack (without it: synthesized sounds)</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Requirements: Node 22 (it is what the CI uses, <code>.github/workflows/ci.yml:14</code>) and Python 3 for
+part of the harness (<code>ref-measure.py</code>, <code>char_probe.py</code>, <code>mat_shade.py</code> — they use numpy and PIL).</p>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>Serving <code>public/</code> does NOT run the game</div><div class="admonitionContent_BuS1"><p>There is no <code>public/index.html</code>: the game&#x27;s HTML is <code>src/pages/index.astro</code>, at the root route.
+Use <code>npm run dev</code>. Details and proof in
+<a href="/docs/en/#the-first-hour-gotcha">Getting started</a>.</p></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="running-the-gate">Running the gate<a href="#running-the-gate" class="hash-link" aria-label="Direct link to Running the gate" title="Direct link to Running the gate">​</a></h2>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token function" style="color:rgb(130, 170, 255)">npm</span><span class="token plain"> run eval:vm                          </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># MANDATORY FIRST — see the warning below</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/invariants.mjs           </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># the whole gate</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/invariants.mjs </span><span class="token parameter variable" style="color:rgb(191, 199, 213)">--json</span><span class="token plain">    </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># machine-readable output</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">npm</span><span class="token plain"> run check                            </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># syntax + vm + gate + recoil + bots</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<div class="theme-admonition theme-admonition-danger admonition_xJq3 alert alert--danger"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M5.05.31c.81 2.17.41 3.38-.52 4.31C3.55 5.67 1.98 6.45.9 7.98c-1.45 2.05-1.7 6.53 3.53 7.7-2.2-1.16-2.67-4.52-.3-6.61-.61 2.03.53 3.33 1.94 2.86 1.39-.47 2.3.53 2.27 1.67-.02.78-.31 1.44-1.13 1.81 3.42-.59 4.78-3.42 4.78-5.56 0-2.84-2.53-3.22-1.25-5.61-1.52.13-2.03 1.13-1.89 2.75.09 1.08-1.02 1.8-1.86 1.33-.67-.41-.66-1.19-.06-1.78C8.18 5.31 8.68 2.45 5.05.32L5.03.3l.02.01z"></path></svg></span><code>eval:vm</code> runs BEFORE <code>invariants.mjs</code>. Always.</div><div class="admonitionContent_BuS1"><p>The viewmodel invariants (VM1–VM19) <strong>read</strong> <code>tools/eval/vm_mint_audit.json</code>, which is what
+<code>eval:vm</code> <strong>writes</strong>. Running the invariants with that JSON stale measures yesterday&#x27;s
+viewmodel and <strong>invents reds</strong>: on 04/08/2026 the JSON was at <code>V0=80°</code> against <code>game.js</code>
+at <code>V0=42°</code>, and VM5 flagged <strong>26/26 weapons out</strong>; after <code>npm run eval:vm</code>, <strong>3/26</strong>.
+VM1 dropped from 26/26 to 2/26 and VM9 went green.</p><p>The order of <code>npm run check</code> has already been fixed (<code>package.json</code>) — the care is for when
+you call <code>node tools/eval/invariants.mjs</code> by hand. Details: BUG-02 in
+<a href="https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md" target="_blank" rel="noopener noreferrer"><code>KNOWN-BUGS.md</code></a>.</p></div></div>
+<p>Real cost: on a 2-CPU machine, <strong>about 10 minutes</strong>. It boots the real game five
+times (once per map), runs 60 s of bot simulation per map and audits every weapon GLB.
+Run it before opening the PR, not after receiving the review.</p>
+<p>Individual harnesses, for when you want to iterate fast on a single front:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/vm-mint-audit.mjs      </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># viewmodel framing (the whole arsenal)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/vm-solve.mjs           </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># does a feasible point exist for the VM invariants?</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/vm-solve.mjs </span><span class="token parameter variable" style="color:rgb(191, 199, 213)">--atual</span><span class="token plain">    </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># only the margins of the current config (instant)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/botsim.mjs </span><span class="token number" style="color:rgb(247, 140, 108)">60</span><span class="token plain"> all      </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># bot navigation, all maps, fixed seeds</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/char-probe.mjs         </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># characters (C1..C6)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/map-check.mjs all      </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># map geometry (MAP1-MAP3, CTF1)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/mat-check.mjs          </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># material/light/fog/texture</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/pickup-check.mjs       </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># is every pickup reachable?</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/ui-check.mjs           </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># UI1 contrast · UI2 clutter · UI3 dead area · UI4 rhythm</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="mutate-before-claiming">Before saying you fixed it: mutate<a href="#mutate-before-claiming" class="hash-link" aria-label="Direct link to Before saying you fixed it: mutate" title="Direct link to Before saying you fixed it: mutate">​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token assign-left variable" style="color:rgb(191, 199, 213)">MUT</span><span class="token operator" style="color:rgb(137, 221, 255)">=</span><span class="token plain">ui1_ctf_scrim_fraco </span><span class="token function" style="color:rgb(130, 170, 255)">node</span><span class="token plain"> tools/eval/ui-check.mjs   </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># expects UI1 to go RED</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Undo your own fix and check that the gate <strong>goes red</strong>. If it stays green,
+what you measured is not what you fixed. It is the most expensive lesson in this repository and it
+has a whole page: <a href="/docs/en/quality-gates#mutation-test">Mutation test</a>.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="bug-fix-pr">If your PR is a bug fix<a href="#bug-fix-pr" class="hash-link" aria-label="Direct link to If your PR is a bug fix" title="Direct link to If your PR is a bug fix">​</a></h3>
+<p>Use the <code>bug-hunt</code> skill (<code>.claude/skills/bug-hunt/SKILL.md</code>). It is the step-by-step of this
+doctrine applied to defects — with the real case that bought each rule, the template for the
+<code>KNOWN-BUGS.md</code> entry and the one for the final report, including how to declare what you did <strong>not</strong>
+verify. It works for agents and for people.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-a-pr-needs">What a PR needs<a href="#what-a-pr-needs" class="hash-link" aria-label="Direct link to What a PR needs" title="Direct link to What a PR needs">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="1-new-invariant">1. A new invariant — or the reason it doesn&#x27;t need one<a href="#1-new-invariant" class="hash-link" aria-label="Direct link to 1. A new invariant — or the reason it doesn&#x27;t need one" title="Direct link to 1. A new invariant — or the reason it doesn&#x27;t need one">​</a></h3>
+<p>This is the rule that defines the project. Every PR that changes <strong>observable behavior</strong> brings
+one of two things:</p>
+<ul>
+<li><strong>A new invariant</strong> in <code>tools/eval/invariants.mjs</code>, with a ceiling that has provenance
+(reference file + measured pixel + script that reproduces it), or</li>
+<li><strong>One sentence in the PR description</strong> saying why it does not need one. Valid reasons: &quot;it is
+already covered by invariant X&quot; (say which), &quot;it is a refactor with no observable change — the
+gate gives the same score before and after&quot; (paste both), &quot;it is pure content (text,
+asset) with no game rule attached&quot;.</li>
+</ul>
+<p>Invalid reason: &quot;I tested it manually and it looked good&quot;.</p>
+<p>Why: <strong>intent that does not become an invariant gets optimized away</strong>. One round took the
+gate from 16/21 to 19/21 without loosening a single ceiling, and was rejected, because it
+silently destroyed an aesthetic decision that no invariant encoded. Full case in
+<a href="/docs/en/quality-gates#law-1">The gate</a>.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="2-gate-cannot-get-worse">2. The gate cannot get worse<a href="#2-gate-cannot-get-worse" class="hash-link" aria-label="Direct link to 2. The gate cannot get worse" title="Direct link to 2. The gate cannot get worse">​</a></h3>
+<p>Paste the output of <code>node tools/eval/invariants.mjs</code> before and after. If any critical one went
+red, the PR does not go in. If you <strong>fixed</strong> a red one, say which and show it.</p>
+<p>The gate is red today (<a href="/docs/en/status">see which ones</a>, and the living list with root causes is
+in <code>KNOWN-BUGS.md</code>). That is not a license to make it worse: the commitment is <em>&quot;your change
+adds no red&quot;</em>.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="3-numbers-with-file-line">3. Numbers, with <code>arquivo:linha</code><a href="#3-numbers-with-file-line" class="hash-link" aria-label="Direct link to 3-numbers-with-file-line" title="Direct link to 3-numbers-with-file-line">​</a></h3>
+<p>The claim &quot;I improved the lighting&quot; is not reviewable. &quot;The <code>praca_poderes</code> floor was 8 points
+of L* above the walls, cause at <code>map_brasilia.js:NNN</code>, fixed to X&quot; is. This
+requirement is not style — it is what allows the next round to check your work.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="4-one-front-per-pr">4. One front per PR<a href="#4-one-front-per-pr" class="hash-link" aria-label="Direct link to 4. One front per PR" title="Direct link to 4. One front per PR">​</a></h3>
+<p>Consult the conflict table (<a href="/docs/en/architecture#conflict-table">Architecture</a>). A
+PR that touches weapons + UI + map is three hidden PRs, and will collide with three fronts. In
+<code>game.js</code>, edit by section; never overwrite the whole file.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="5-repo-hygiene">5. Repository hygiene<a href="#5-repo-hygiene" class="hash-link" aria-label="Direct link to 5. Repository hygiene" title="Direct link to 5. Repository hygiene">​</a></h3>
+<ul>
+<li><code>node --check</code> on every file in <code>public/js/</code> that you edited (the CI does this first,
+<code>.github/workflows/ci.yml:19-20</code>).</li>
+<li>Comments <strong>in Portuguese explaining the why</strong>, not the what. It is the repo&#x27;s culture and it is
+what survives the next handoff.</li>
+<li><strong>Never delete a provenance comment</strong> in a cleanup PR. That long paragraph
+explaining where the number 0,513 came from is what keeps the next round from repeating three
+lost days.</li>
+<li>Touched <code>public/js/*.js</code>? <strong>Bump the <code>?v=</code> on both sides</strong> — <code>public/js/version.js</code> and the
+import map of <code>src/pages/index.astro</code>. It has already cost days of &quot;fixes that never arrived&quot;.</li>
+<li>Touched <code>public/js/*.js</code>, <code>maps.js</code>, <code>characters.js</code>, or a dependency?
+<strong>Run <code>npm run docs</code></strong> and commit it along. <code>docs:check</code> is in <code>check:fast</code> and will
+fail — it takes less than a second and is what keeps the doc from lying again.</li>
+<li>No copyrighted assets. No committed <code>service_role</code> key.</li>
+<li>No runtime dependency in the game. Three.js is vendored; the game has to run by
+dragging the folder onto a static host.</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="6-editorial-line">6. Editorial line<a href="#6-editorial-line" class="hash-link" aria-label="Direct link to 6. Editorial line" title="Direct link to 6. Editorial line">​</a></h3>
+<p>From <code>CONTRIBUTING.md:7-16</code>: the game has no political side (both teams have the same
+mechanics), does not incite hatred, does not use real people — only original archetypes, no gore.
+Contributions that violate this are rejected. It is not bureaucracy: it is what protects the project
+from takedowns and from becoming something else.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-add-a-weapon">How to add a weapon<a href="#how-to-add-a-weapon" class="hash-link" aria-label="Direct link to How to add a weapon" title="Direct link to How to add a weapon">​</a></h2>
+<p>The pipeline is data-driven from the GLB. Weapon GLBs live in <code>public/models/weapons/</code>
+(the count is in the generated block of <a href="/docs/en/">Getting started</a>).</p>
+<ol>
+<li><strong>Put the GLB</strong> at <code>public/models/weapons/&lt;id&gt;.glb</code>. Geometry only — the material comes
+from the pipeline (<code>MAT1</code> requires <code>metallicFactor 1 / roughnessFactor 1</code> with a
+metallicRoughness map, which is the standard for all the current ones).</li>
+<li><strong>Declare the weapon</strong> in <code>public/js/weapons.js</code>. The fields the gate reads:<!-- -->
+<ul>
+<li><code>len</code> — length in meters. <strong><code>ARM4</code> fails above 1,25 m</strong> outside bolt-action
+snipers. It is the field that normalizes scale; it is not decoration.</li>
+<li><code>gripZ</code> — fraction of the length, counted <strong>from the muzzle</strong>, where the grip sits
+(ak/m4 use 0,62 — it lands on the trigger guard). It is what anchors the hand.</li>
+<li><code>vm</code> — mesh scale multiplier in the viewmodel. It exists because the <code>m92</code> hit
+14,50% against VM18b&#x27;s measured ceiling of 13,09%.</li>
+<li><code>scope: true</code> <strong>requires</strong> <code>spreadScope</code> declared — that is <code>ARM1</code>, and it exists because
+of the &quot;sniper without zoom&quot;.</li>
+</ul>
+</li>
+<li><strong>Run the auditor:</strong> <code>node tools/eval/vm-mint-audit.mjs</code>. It opens the GLB with its own
+parser, projects the viewmodel in both aspects and writes <code>tools/eval/vm_mint_audit.json</code>.
+<strong>That JSON is versioned</strong> — without it, VM1–VM6/VM9/VM10 become SKIPPED, which is a gate
+green by absence of data (<code>.github/workflows/ci.yml:24-27</code>).</li>
+<li><strong>Run the gate.</strong> You will face VM1, VM3, VM5, VM9, VM12, VM16, VM18, VM18b,
+VM19 — nine framing invariants, all with a range measured on a reference frame. If it
+does not close, use <code>node tools/eval/vm-solve.mjs</code> instead of tuning by eye:
+it reads the ceilings from <code>invariants.mjs</code> itself and says whether a feasible point exists, or <strong>which pair
+of invariants intersects empty and by how much</strong>.</li>
+<li><strong>Commit the updated <code>vm_mint_audit.json</code></strong> along with the rest.</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-add-a-character">How to add a character<a href="#how-to-add-a-character" class="hash-link" aria-label="Direct link to How to add a character" title="Direct link to How to add a character">​</a></h2>
+<p>45 GLBs in <code>public/models/characters/</code>, 44 measured by <code>char-probe.mjs</code>.</p>
+<ol>
+<li><strong>GLB with a rig</strong>, in bind pose, feet on the ground. <code>CHR3</code> requires <code>|bbox base| ≤ 0,01 m</code> in the
+bind pose <strong>and in every clip</strong> — the sign separates two defects: <code>y &lt; 0</code> is feet inside the
+ground, <code>y &gt; 0</code> is a character floating in the air.</li>
+<li><strong>Declare it</strong> in <code>public/js/characters.js</code> / <code>public/js/glbchars.js</code>.</li>
+<li><strong>Run <code>node tools/eval/char-probe.mjs</code>.</strong> What it will demand:<!-- -->
+<ul>
+<li><code>CHR1</code> — anthropometric proportion and &quot;balloon&quot; index. Today it <strong>is red for the
+entire cast</strong>, so you are not the one who broke it; but do not make it worse.</li>
+<li><code>CHR2</code> — body height within half a head hitbox (dispersion ≤ 0,15 m). Measured
+<strong>without accessories</strong>: hat/hair/pole inflate the bbox and make the GLB path (the CHR2 evidence itself points at <code>glbchars.js:319-322</code>)
+shrink the body.</li>
+<li><code>CHR4</code> — no palm born buried inside the body.</li>
+<li><code>CHR5</code>/<code>CHR5B</code> — finish (normal + roughness + AO). CHR5B <strong>went green on
+04/08</strong>: it was the &quot;three finish levels on the same screen&quot; that the owner described, with a
+good part of the cast lacking any surface map, and today there are zero characters without one.
+A new character <strong>without</strong> normal + roughness reopens the red — bring the maps.</li>
+<li><code>CHR6</code> — no pair with the same silhouette (IoU ≤ 0,98).</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-add-a-map">How to add a map<a href="#how-to-add-a-map" class="hash-link" aria-label="Direct link to How to add a map" title="Direct link to How to add a map">​</a></h2>
+<p>Today maps are <strong>code</strong>, not data: every <code>map_*.js</code> is geometry declared by hand, and the
+biggest ones rival the system modules in size. Migrating this to JSON is the Phase 2
+content-as-data of
+<a href="https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener noreferrer"><code>docs/ROADMAP.md</code></a>, and it is the
+highest-leverage contribution in the project.</p>
+<p>The registry, generated from the <code>MAPS</code> of <code>public/js/maps.js</code>:</p>
+<!-- -->
+<table><thead><tr><th>Id</th><th>Menu name</th><th>Opens in</th><th>File in <code>public/js/</code></th><th style="text-align:right">Lines</th></tr></thead><tbody><tr><td><code>praca_poderes</code></td><td>Praça dos Três Poderes</td><td>rounds</td><td><code>map_brasilia.js</code></td><td style="text-align:right">1,830</td></tr><tr><td><code>piscina_treta</code></td><td>Piscina da Treta</td><td>rounds</td><td><code>map_piscina.js</code></td><td style="text-align:right">810</td></tr><tr><td><code>loja_h</code></td><td>Loja H (Estacionamento)</td><td><strong>capture</strong></td><td><code>map_havan.js</code></td><td style="text-align:right">1,952</td></tr><tr><td><code>ferro_velho</code></td><td>Ferro Velho do Zé</td><td><strong>capture</strong></td><td><code>map_ferrovelho.js</code></td><td style="text-align:right">1,888</td></tr><tr><td><code>quebrada</code></td><td>Quebrada (Rua do Baile)</td><td><strong>capture</strong></td><td><code>map_quebrada.js</code></td><td style="text-align:right">1,599</td></tr><tr><td><code>posto_treta</code></td><td>Posto da Treta</td><td><strong>capture</strong></td><td><code>map_posto.js</code></td><td style="text-align:right">489</td></tr><tr><td><code>atacadao_treta</code></td><td>Atacadão da Treta</td><td><strong>capture</strong></td><td><code>map_atacadao.js</code></td><td style="text-align:right">255</td></tr></tbody></table>
+<p><strong>7 registered maps</strong> - 2 open in rounds and 5 in capture. <code>ctfMode</code> sets the initial mode; it does not lock it. There are 9 <code>map_*.js</code> files on disk, so a file alone does <strong>not</strong> make a map playable.</p>
+<blockquote>
+<p>Block generated by <code>node tools/gen-docs.mjs</code>. Source: <code>objeto MAPS de public/js/maps.js</code></p>
+</blockquote>
+<!-- -->
+<p>Two warnings that cost time if you do not know them:</p>
+<ul>
+<li><strong><code>praca_old</code> (&quot;Praça (clássico)&quot;) NO longer exists.</strong> It left the registry and
+<code>public/js/map.js</code> was deleted along with it (the owner&#x27;s literal request: <em>&quot;let&#x27;s delete
+classic praça&quot;</em>). If you find <code>praca_old</code> in a ruler output, that output predates the
+removal — it is the case of the table pasted in <a href="/docs/en/status">Current state</a>.</li>
+<li><strong><code>map_piscinao_ramos.js</code> exists on disk and is NOT in the registry</strong> (it is the &quot;Piscinão&quot;
+version, out of the menu). A map file in <code>public/js/</code> does not imply a playable map; what decides is
+the <code>MAPS</code> object.</li>
+</ul>
+<p>To add a map in today&#x27;s format:</p>
+<ol>
+<li><strong>Create <code>public/js/map_&lt;name&gt;.js</code></strong> exporting a <code>build&lt;Name&gt;()</code> function. Use
+<code>map_piscina.js</code> as a reference — it is the smallest of the registered ones (the table above has
+each one&#x27;s size).</li>
+<li><strong>Register it in <code>public/js/maps.js:8-36</code></strong> — display name, <code>build</code>, and <code>ctfMode: true</code> if
+the geometry was drawn around flags. <code>ctfMode</code> <strong>opens</strong> the map in capture;
+it does not lock it. <code>ctfOnly</code> no longer <strong>exists</strong>: <code>MOD1</code> fails any map that forces the
+mode. The player chooses.</li>
+<li><strong>Run <code>node tools/eval/map-check.mjs &lt;mapId&gt;</code>.</strong> What it measures, all by raycast
+against the real world:<!-- -->
+<ul>
+<li><code>MAP1</code> — no spawn and no walkable floor with the body inside solid geometry.
+Ceiling = a 0,30 m step (above that it is not &quot;stepping over&quot;, it is &quot;being inside&quot;).</li>
+<li><code>MAP2</code> — each team spawns entirely on the same floor; respawn not visible from outside (measured with
+the game&#x27;s <strong>own</strong> <code>_losClear</code>, the same function that decides whether the bot shoots you).</li>
+<li><code>MAP3</code> — stairs within NBR 9077 / Blondel (riser 16–18 cm, tread 25–32 cm,
+2h+p 63–65 cm, width ≥ 1,20 m) <strong>and</strong> the navigation graph + the flood-fill climb up
+them.</li>
+<li><code>CTF1</code> — flags not collinear, ≥ 2 rays from the nearest spawn, none buried.</li>
+</ul>
+</li>
+<li><strong>Run <code>node tools/eval/pickup-check.mjs</code></strong> (it feeds <code>VM14</code>): every pickup must
+be reachable <strong>on foot</strong>, by flood-fill of real connectivity on a 0,25 m grid
+seeded at the spawns of both teams. It has already happened that weapons fell into the pool of
+<code>piscina_treta</code> with the gate reporting a gap of <strong>0,0000 — GREEN</strong>.</li>
+<li><strong>Run <code>node tools/eval/botsim.mjs 60 &lt;mapId&gt;</code></strong>: the bots must navigate your map
+without getting stuck (<code>BOT3</code> stuck ≤ 4%), without walking sideways (<code>BOT1</code>) and without spinning in place (<code>BOT2</code>).
+A disconnected waypoint is the most common defect of a new map, and it has broken PRs before
+(it is the defect the &quot;content as data&quot; direction exists to kill).</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="good-first-tasks">Good first tasks<a href="#good-first-tasks" class="hash-link" aria-label="Direct link to Good first tasks" title="Direct link to Good first tasks">​</a></h2>
+<p>Ordered by (impact ÷ effort). All are real, verified in this tree, and none
+requires understanding the whole game.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="very-good-first-pr">Very good for the first PR<a href="#very-good-first-pr" class="hash-link" aria-label="Direct link to Very good for the first PR" title="Direct link to Very good for the first PR">​</a></h3>
+<p>The entry tasks live in <strong><a href="https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues" target="_blank" rel="noopener noreferrer"><code>docs/issues/</code></a></strong>,
+one per file, each with context, what to do, acceptance criteria and which files
+to touch. The <code>README.md</code> there indexes by available time (30 min / 1 h / 2-3 h) and by area
+(SEO, UI, backend, CI). <strong>None of them requires touching <code>public/js/*.js</code></strong>, on purpose:
+it is the code where the gameplay agents work in parallel and where the conflict table
+of <code>tools/eval/ARCH.md</code> rules.</p>
+<div class="theme-admonition theme-admonition-caution admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>They are NOT open on GitHub yet</div><div class="admonitionContent_BuS1"><p>They exist as files, not as issues. There is a ready-made script —
+<code>docs/issues/abrir-issues.sh</code>, with <a href="https://cli.github.com/" target="_blank" rel="noopener noreferrer"><code>gh</code></a> authenticated:</p><div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token function" style="color:rgb(130, 170, 255)">bash</span><span class="token plain"> docs/issues/abrir-issues.sh --dry-run   </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># prints title + labels, opens nothing</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">bash</span><span class="token plain"> docs/issues/abrir-issues.sh </span><span class="token parameter variable" style="color:rgb(191, 199, 213)">--labels</span><span class="token plain">    </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># creates the 8 labels in use</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token function" style="color:rgb(130, 170, 255)">bash</span><span class="token plain"> docs/issues/abrir-issues.sh             </span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic"># opens the 15</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div><p>It is idempotent (it looks for an issue with the same title before creating one) and <strong>has never been
+run</strong>: the repository belongs to the owner and opening an issue is an irreversible action under his name.
+In other words, if you look for the tasks in the Issues tab, you will not find them — read the <code>.md</code> files.</p></div></div>
+<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>This list once had five items, and four were done</div><div class="admonitionContent_BuS1"><p>It told you to fix the <code>README.md</code> (done), add <code>arch</code>/<code>arch:check</code> to the
+<code>package.json</code> (they exist today), regenerate the <code>ARCH.md</code> and make the <code>tp-mount-probe</code> skip
+when <code>public/models/anims/</code> was missing — a folder that <strong>is versioned today</strong> (438 files
+in <code>git ls-files public/models/anims</code>). A doc that tells you to do what has already been done burns
+someone&#x27;s first contribution; that is why the list became a pointer to <code>docs/issues/</code>,
+which is maintained.</p><p>The only item from the old list that <strong>still stands</strong>: the message of invariants
+PX1–PX4 tells you to use <code>tools/eval/motion.mjs</code>, which does not exist (<code>ls</code> confirms). Pointing to
+the right harness, or marking it as &quot;harness to be written&quot;, is a 15-minute PR.</p></div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="real-work-still-accessible">Real work, still accessible<a href="#real-work-still-accessible" class="hash-link" aria-label="Direct link to Real work, still accessible" title="Direct link to Real work, still accessible">​</a></h3>
+<ol>
+<li>
+<p><strong>VM12 and VM1 on the specific weapons.</strong> VM12 fails on 5 of 52 measurements (worst <code>famas</code>@3:2
+at 0,660 against the 0,62 ceiling); VM1 on 2 of 26 (<code>famas</code>, <code>uzi</code>). They are per-weapon fixes,
+with a measured range and <code>vm-solve.mjs</code> available to prove feasibility. <em>Front:
+ARMAS/VIEWMODEL.</em></p>
+</li>
+<li>
+<p><strong>BOT8 — bot with line of sight and not shooting.</strong> It is the cheapest debt on the list, and the
+root cause is already found: <code>game.js:5361</code> evaluates <code>const hasTurn = … this._duelToken(b)</code>
+<strong>every frame</strong>, before any &quot;can shoot&quot; gate — and <code>_duelToken</code> does not consult,
+it <strong>reserves</strong> the token. A bot that is reloading or has no firing line steals one of the 2 tokens and
+holds it; the others cross the field of view without firing. The fix is to move the call
+inside the <code>if</code>. Measured in the last recorded run: <strong>4 episodes, maximum silence
+4,23 s</strong> — and note that it <strong>got worse</strong> since the baseline&#x27;s 2,7 / 3,03 s, which makes
+it also a good A/B. <em>Front: BOTS/JOGABILIDADE. Details: BUG-03.</em></p>
+</li>
+<li>
+<p><strong>Characters: proportion (CHR1) and surface maps.</strong> Beware of stale doc here: the
+<strong>CHR5B went GREEN</strong> on 04/08 (the 27 of 44 characters without a surface map went to
+<strong>0 of 44</strong>), so that specific item <strong>has already been done</strong> — do not redo it. What is still
+red is CHR1/CHR3/CHR4, and the underlying cause is rig, not runtime (BUG-10). Read the
+KNOWN-BUGS before picking it up. <em>Front: PERSONAGENS.</em></p>
+</li>
+<li>
+<p><strong><code>setTimeout</code> not cleared in <code>dispose()</code></strong> — a leak between matches, pointed out in
+<code>RELATORIO-ANALISE.md:134</code>. <strong>The line numbers in that report are stale</strong> (the
+<code>game.js</code> has moved ~1.000 lines since then); find the current ones with
+<code>grep -n setTimeout public/js/game.js</code> and check which ones survive <code>dispose()</code>. A good
+hygiene PR with a measurable effect on the heap. <em>Front: red zone <code>constructor</code>/<code>update</code>
+— coordinate first.</em></p>
+</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="high-value-needs-conversation">High value, needs a conversation first<a href="#high-value-needs-conversation" class="hash-link" aria-label="Direct link to High value, needs a conversation first" title="Direct link to High value, needs a conversation first">​</a></h3>
+<ol start="5">
+<li>
+<p><strong>Extract <code>_updateBot()</code> (772 lines).</strong> Marked as an extraction candidate by the
+generated index itself. It needs prior agreement on the partition, because the region is
+contested.</p>
+</li>
+<li>
+<p><strong>Maps as JSON (Phase 2).</strong> Geometry, colliders, occluders, spawns, pickups and
+waypoints as data, with a single loader and <strong>waypoints validated by test</strong>. It is what
+turns &quot;risky code PR&quot; into &quot;open a JSON&quot;. Open an issue first.</p>
+</li>
+<li>
+<p><strong>A nightly CI job with a browser</strong> to unblock PX1–PX4. Four pixel invariants
+have been skipped since forever.</p>
+</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="process">Process<a href="#process" class="hash-link" aria-label="Direct link to Process" title="Direct link to Process">​</a></h2>
+<ol>
+<li>Big feature? <strong>Open an issue first</strong> (see <code>IDEAS.md</code>).</li>
+<li>Fork + branch <strong><code>v2/&lt;subject&gt;</code></strong> — <code>v2/multiplayer</code>, <code>v2/audio</code>, <code>v2/ui-hud</code>. The prefix
+is the release cycle (top of <code>CHANGELOG.md</code>), and the convention was born from a concrete
+problem: on 04/08 the working branch was still called <code>feat/evio-feel</code> — the name of a
+July feature — with <strong>143 commits</strong> of different subjects piled up. A name that does not
+say what the branch is becomes a dumping ground. (Source: <code>CONTRIBUTING.md</code>.)</li>
+<li>Run <code>npm run check</code>. Paste the output into the PR.</li>
+<li>Small PR, one front, description with numbers and <code>arquivo:linha</code>.</li>
+<li><strong>By contributing you license under whatever license the <code>LICENSE</code> states at the moment of your
+PR.</strong> What it is today and which files must change together in a swap: the license
+section of <code>CONTRIBUTING.md</code>. If this
+is decisive for you, read it before writing the first line.</li>
+</ol>
+<p>Reporting a bug: what happened, what you expected, steps to reproduce, browser/OS and a
+screenshot of the console (F12). And if the bug is behavioral, it will become an invariant — that is
+how it never comes back (<code>tools/eval/invariants.mjs:20-21</code>).</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col"><a href="https://github.com/rubenmarcus/csbrasil/tree/main/docs/docs/colaborar.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="pagination-nav docusaurus-mt-lg" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/en/architecture"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Architecture</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/en/status"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Current state</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#setup" class="table-of-contents__link toc-highlight">Setup</a></li><li><a href="#running-the-gate" class="table-of-contents__link toc-highlight">Running the gate</a><ul><li><a href="#mutate-before-claiming" class="table-of-contents__link toc-highlight">Before saying you fixed it: mutate</a></li><li><a href="#bug-fix-pr" class="table-of-contents__link toc-highlight">If your PR is a bug fix</a></li></ul></li><li><a href="#what-a-pr-needs" class="table-of-contents__link toc-highlight">What a PR needs</a><ul><li><a href="#1-new-invariant" class="table-of-contents__link toc-highlight">1. A new invariant — or the reason it doesn&#39;t need one</a></li><li><a href="#2-gate-cannot-get-worse" class="table-of-contents__link toc-highlight">2. The gate cannot get worse</a></li><li><a href="#3-numbers-with-file-line" class="table-of-contents__link toc-highlight">3. Numbers, with <code>arquivo:linha</code></a></li><li><a href="#4-one-front-per-pr" class="table-of-contents__link toc-highlight">4. One front per PR</a></li><li><a href="#5-repo-hygiene" class="table-of-contents__link toc-highlight">5. Repository hygiene</a></li><li><a href="#6-editorial-line" class="table-of-contents__link toc-highlight">6. Editorial line</a></li></ul></li><li><a href="#how-to-add-a-weapon" class="table-of-contents__link toc-highlight">How to add a weapon</a></li><li><a href="#how-to-add-a-character" class="table-of-contents__link toc-highlight">How to add a character</a></li><li><a href="#how-to-add-a-map" class="table-of-contents__link toc-highlight">How to add a map</a></li><li><a href="#good-first-tasks" class="table-of-contents__link toc-highlight">Good first tasks</a><ul><li><a href="#very-good-first-pr" class="table-of-contents__link toc-highlight">Very good for the first PR</a></li><li><a href="#real-work-still-accessible" class="table-of-contents__link toc-highlight">Real work, still accessible</a></li><li><a href="#high-value-needs-conversation" class="table-of-contents__link toc-highlight">High value, needs a conversation first</a></li></ul></li><li><a href="#process" class="table-of-contents__link toc-highlight">Process</a></li></ul></div></div></div></div></main></div></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="col footer__col"><div class="footer__title">Start here</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/en/">Getting started</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/en/contributing">How to contribute</a></li></ul></div><div class="col footer__col"><div class="footer__title">The ruler (quality gate)</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/en/ai-instrumentation">AI instrumentation</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/en/quality-gates">The gate (quality gates)</a></li></ul></div><div class="col footer__col"><div class="footer__title">Project</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/rubenmarcus/csbrasil" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li><li class="footer__item"><a href="https://github.com/rubenmarcus/csbrasil/issues" target="_blank" rel="noopener noreferrer" class="footer__link-item">Issues<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="margin-bottom--sm"><a href="https://csbrasil.online/" rel="noopener noreferrer" class="footerLogoLink_BH7S"><img src="/docs/en/img/logo-coro-solto.png" alt="CORO SOLTO: Treta Suprema" class="footer__logo themedComponent_mlkZ themedComponent--light_NVdE" width="200" height="162"><img src="/docs/en/img/logo-coro-solto.png" alt="CORO SOLTO: Treta Suprema" class="footer__logo themedComponent_mlkZ themedComponent--dark_xIcU" width="200" height="162"></a></div><div class="footer__copyright">CORO SOLTO: Treta Suprema — open source; the current license is on the "License, art and trademark" page. Fictional satire.</div></div></div></footer></div>
+</body>
+</html>

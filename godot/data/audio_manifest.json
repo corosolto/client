@@ -1,0 +1,16 @@
+{
+  "voice": {
+    "P": ["audio/petista/ingame/lula-e-neymar-47.mp3", "audio/petista/ingame/lula-esquece-o-pai-ta-estourado.mp3", "audio/petista/ingame/lula-ze-gotinha.mp3", "audio/petista/ingame/pense-no-lula.mp3", "audio/petista/ingame/setembro-vai-entrar-o-grosso-lula.mp3"],
+    "B": ["audio/bolsonaro/ingame/bolsonaro-acabou-porra.mp3", "audio/bolsonaro/ingame/bolsonaro-jacare.mp3", "audio/bolsonaro/ingame/bolsonaro-popcorn-and-ice-cream.mp3", "audio/bolsonaro/ingame/cana_doce.mp3", "audio/bolsonaro/ingame/chega-de-frescura-e-mimimi.mp3", "audio/bolsonaro/ingame/como-e-bom-o-socialismo-bolsonaro-alto.mp3"]
+  },
+  "round": {
+    "P": ["audio/petista/round/ta-na-hora-do-jair-ja-ir-embora.mp3"],
+    "B": ["audio/bolsonaro/round/nos-vai-descer-vai-descer-hd-completo.mp3"]
+  },
+  "general": {
+    "doublekill": ["audio/game/ut-double-kill.mp3"], "triplekill": ["audio/game/ut-triple-kill.mp3"], "multikill": ["audio/game/ut-multi-kill.mp3"], "megakill": ["audio/game/ut-mega-kill.mp3"], "killingspree": ["audio/game/ut-killing-spree.mp3"], "godlike": ["audio/game/ut-godlike.mp3"], "headshot": ["audio/game/headshot-02.mp3"]
+  },
+  "cs": {
+    "awp": ["audio/game/awp-cs-1-6.mp3"], "pistol": ["audio/game/usp_unsil-1.wav"], "reload": ["audio/game/awp_clipout.wav"], "scope": ["audio/game/awp-zoom-sound-effect-cs-go_P7m17g5.mp3"], "roundstart": ["audio/game/weapon-gun-pickup-sound-half-life-counter-strike.mp3"], "knife": ["audio/game/knife_slash1.wav", "audio/game/knife_slash2.wav"], "knifehit": ["audio/game/knife_hit1.wav", "audio/game/knife_hit2.wav", "audio/game/knife_hit3.wav", "audio/game/knife_hit4.wav", "audio/game/knife_stab.wav"], "knifedeploy": ["audio/game/knife_deploy1.wav"]
+  }
+}

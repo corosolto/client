@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://src/arena/minimal_arena.tscn" id="1_arena"]
+[ext_resource type="PackedScene" path="res://src/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://src/match/combat_match.gd" id="3_match"]
+[ext_resource type="Script" path="res://src/match/round_controller.gd" id="4_rounds"]
+
+[node name="Match" type="Node3D"]
+
+[node name="Arena" parent="." instance=ExtResource("1_arena")]
+
+[node name="Actors" type="Node3D" parent="."]
+
+[node name="Player" parent="Actors" instance=ExtResource("2_player")]
+position = Vector3(-9, 1.5, -42)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="Bots" type="Node3D" parent="Actors"]
+
+[node name="Effects" type="Node3D" parent="."]
+
+[node name="MatchController" type="Node" parent="."]
+script = ExtResource("3_match")
+
+[node name="RoundController" type="Node" parent="."]
+script = ExtResource("4_rounds")

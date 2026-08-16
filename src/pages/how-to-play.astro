@@ -1,0 +1,190 @@
+---
+// /how-to-play - GÊMEA EM INGLÊS do /como-jogar (pedido do dono, 06/08: usuário em EN
+// cai na versão EN). Mesmo dataset (src/data/jogo.ts); passos/FAQ/controles traduzidos
+// AQUI por overlay - o PT continua a fonte, e os números de round/respawn/times vêm
+// dos mesmos textos conferidos contra public/js/game.js. Redirecionamento por idioma:
+// cada página manda pro par quando o idioma resolvido não bate (regras do i18n.js).
+import Layout from '../layouts/Layout.astro';
+import { CONTROLES, MAPAS } from '../data/jogo';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+
+const nCtf = MAPAS.filter(m => m.ctf).length;
+const nRounds = MAPAS.length - nCtf;
+const CTF_NOMES = MAPAS.filter(m => m.ctf).map(m => m.nome);
+const porExtenso = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'];
+const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+
+// Nomes de mapa são marca própria (aparecem assim no menu do jogo): ficam em PT.
+const PASSOS = [
+  { nome: 'Open the game in a desktop browser',
+    texto: 'Go to www.csbrasil.online on Chrome, Edge or Firefox. No download, no install, no signup - the arena loads right in the tab.' },
+  { nome: 'Pick a nick',
+    texto: 'The nick is 2 to 14 characters and stays saved in your browser: it’s the name shown on the match scoreboard and in kill announcements. Not required to play.' },
+  { nome: 'Pick a faction and a character',
+    texto: 'Five factions: Team E, Team B, Urban Tribes, Clowns and Funkeiros. 44 characters in total, and they all play exactly the same - your pick is style, not advantage.' },
+  { nome: 'Pick the map and the mode',
+    texto: `${cap(porExtenso[MAPAS.length])} arenas: ${MAPAS.map(m => m.nome).join(', ')}. ${cap(porExtenso[nRounds])} open in rounds and ${porExtenso[nCtf]} in Capture the Flag, but you can switch any map’s mode before starting. Team size is yours too: from 1v1 up to 8v8, with 4v4 as the default.` },
+  { nome: 'Aim, crouch, shoot',
+    texto: 'WASD moves, the mouse aims, left click shoots and right click opens the scope. Crouching with Ctrl (or C) makes your aim much steadier - it’s the difference between hitting and missing with a no-scope AWP.' },
+  { nome: 'Win the round',
+    texto: 'Rounds last 1 minute and 39 seconds; the team with more kills when the clock hits zero takes the round. Three rounds win the match, and the fifth round is the cap - if nobody reaches three, whoever has more rounds wins.' },
+];
+
+const FAQ: [string, string][] = [
+  ['Do I need to install or pay for anything?',
+   'No. The game is 100% free and runs straight in a desktop browser (Chrome, Edge or Firefox), with no download, no install and no signup.'],
+  ['What are the controls?',
+   'WASD moves, mouse aims, left click shoots, right click opens the scope, Ctrl (or C) crouches and steadies your aim, Shift runs, Space jumps, R reloads, 1/2/3 switch between primary, pistol and knife, Z/X/V open the voice commands, M switches teams and Tab shows the scoreboard.'],
+  ['How does a round work?',
+   'The default is 4v4 - you and 3 allied bots against 4 enemy bots - with a 2.2-second respawn. Each round lasts 1 minute and 39 seconds, and the team with more kills when the clock ends takes it. Three rounds win the match, with the fifth round as the cap. In the menu you can change team size from 1 to 8 per side.'],
+  ['Is there a global ranking?',
+   'Not yet. The game is in alpha and the global ranking is off until the scoreboard is trustworthy - publishing a leaderboard that can be forged would be publishing wrong numbers. Your match stats stay saved in your browser and show up in the game’s RANKING menu.'],
+  ['Does it work on mobile?',
+   'The game was made for desktop, with mouse and keyboard. On a touchscreen you’ll see a notice recommending you play on a computer.'],
+  ['Can I play with friends?',
+   'Not yet: right now every match is against bots. Multiplayer is the project’s next big front.'],
+  ['Does the game take a political side?',
+   'No. It’s light satire distributed equally to all sides, with no gore and no hate, and 100% fictional characters. Two of the five factions (Urban Tribes and Funkeiros) aren’t even political.'],
+];
+
+// CONTROLES vem do dataset PT; aqui só a coluna "ação" é traduzida (a tecla é a mesma).
+const CONTROLES_EN: Record<string, string> = {
+  'W A S D': 'Move',
+  Mouse: 'Aim',
+  Shift: 'Run',
+  'Ctrl ou C': 'Crouch - makes your aim much steadier',
+  'Espaço': 'Jump',
+  'Clique esquerdo': 'Shoot',
+  'Clique direito': 'Scope (weapons with sights) / ADS',
+  R: 'Reload',
+  '1 / 2 / 3': 'Primary / pistol / knife',
+  'Z / X / V': 'Voice commands (CS-style radio)',
+  M: 'Switch teams at any time',
+  Tab: 'Scoreboard',
+  Esc: 'Pause',
+};
+
+const jsonld = [
+  {
+    '@type': 'HowTo',
+    '@id': abs('/how-to-play') + '#howto',
+    name: `How to play ${BRAND_FULL}`,
+    description: 'From the first click to the first round won, in 6 steps.',
+    totalTime: 'PT5M',
+    estimatedCost: { '@type': 'MonetaryAmount', currency: 'USD', value: '0' },
+    tool: [{ '@type': 'HowToTool', name: 'Desktop browser (Chrome, Edge or Firefox)' }],
+    step: PASSOS.map((p, i) => ({
+      '@type': 'HowToStep', position: i + 1, name: p.nome, text: p.texto,
+      url: abs('/how-to-play') + '#step-' + (i + 1),
+    })),
+    about: { '@id': GAME_ID },
+  },
+  {
+    '@type': 'FAQPage',
+    '@id': abs('/how-to-play') + '#faq',
+    mainEntity: FAQ.map(([q, a]) => ({
+      '@type': 'Question', name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'How to play', item: abs('/how-to-play') },
+    ],
+  },
+];
+---
+<Layout
+  title={`How to play - controls and rules | ${BRAND_FULL}`}
+  description={`${BRAND_FULL} guide: 6 steps from the first click to the first round, the controls table, round and Capture the Flag rules, and the most common questions.`}
+  jsonld={jsonld}
+  h1="How to play"
+  kicker="6 steps · free · no install"
+  heroImg="/img/map-previews/quebrada.jpg"
+  heroPos="70%">
+  {/* RESPOSTA CURTA E FACTUAL NO TOPO - mesmo desenho da página PT: é o
+      parágrafo que um assistente de IA cita inteiro, então ele responde a
+      pergunta sozinho e usa os mesmos números do JSON-LD. */}
+  <Fragment slot="sub">
+    <strong>Short answer:</strong> open <strong>www.csbrasil.online</strong> in a desktop
+    browser, click to lock the mouse and play - no download, install or signup.{' '}
+    <strong>WASD</strong> moves, the <strong>mouse</strong> aims, <strong>left click</strong>{' '}
+    shoots and <strong>right click</strong> opens the scope. Each round lasts <strong>1:39</strong>,
+    the default is <strong>4v4</strong> against bots and <strong>3 rounds win</strong> the match.
+  </Fragment>
+
+  <h2>In 6 steps</h2>
+  <ol style="list-style:none;padding-left:0">
+    {PASSOS.map((p, i) => (
+      <li id={`step-${i + 1}`} class="panel" style="margin:10px 0">
+        <h3 style="margin:0"><span style="color:var(--amber-dim)">{String(i + 1).padStart(2, '0')} ·</span> {p.nome}</h3>
+        <p style="margin-top:6px">{p.texto}</p>
+      </li>
+    ))}
+  </ol>
+
+  <h2>Controls</h2>
+  <div class="tw">
+    <table>
+      <thead><tr><th scope="col">Key</th><th scope="col">Action</th></tr></thead>
+      <tbody>
+        {CONTROLES.map(c => (
+          <tr>
+            <td style="color:var(--amber);white-space:nowrap;font-weight:bold">{c.tecla}</td>
+            <td>{CONTROLES_EN[c.tecla] || c.acao}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Rules</h2>
+  <ul>
+    <li><strong>Format:</strong> 4v4 by default - you plus 3 allied bots against 4 enemy bots -
+      with a 2.2 s respawn. In the menu, team size goes from 1 to 8 per side.</li>
+    <li><strong>Round:</strong> 1:39. The team with more kills when the clock hits zero takes the round;
+      3 rounds win the match, and the 5th round is the cap.</li>
+    <li><strong>Capture the Flag:</strong> four flags. It’s the default on {CTF_NOMES.join(', ')}.
+      Any map accepts any mode. In CTF the round ends by capture, not by the clock.</li>
+    <li><strong>AWP:</strong> kills with one shot anywhere on the body. It’s the only weapon in the game with that property.</li>
+    <li><strong>Multikill:</strong> 2 to 6+ kills in a row trigger Unreal Tournament-style announcements; 5 kills without dying is a <em>killing spree</em>.</li>
+    <li><strong>Scoreboard:</strong> your match stats stay saved in your browser and show up in the game’s
+      RANKING menu. The global ranking between players is off while the game is in alpha.</li>
+  </ul>
+
+  <h2>Tips that change the outcome</h2>
+  <ul>
+    <li>The no-scope AWP is inaccurate on purpose: shoot <strong>standing still and crouched</strong>, or open the scope with the right button.</li>
+    <li>The radar always shows allies, and enemies for 1.6 s when they fire. Noise is information.</li>
+    <li>In Praça dos Três Poderes, the giant cracked voting machine in the middle is the best mid cover.</li>
+    <li>Running (Shift) makes noise and costs you accuracy. Walk when you’re crossing an angle.</li>
+    <li>With the knife out you move faster - it’s for rotating, not just for humiliating.</li>
+  </ul>
+
+  <h2>Frequently asked questions</h2>
+  {FAQ.map(([q, a]) => (
+    <details>
+      <summary><strong>{q}</strong></summary>
+      <p>{a}</p>
+    </details>
+  ))}
+
+  <div class="cta-row">
+    <a class="btn-cta" href="/?lang=en">▶ Play now - free</a>
+    <a class="btn-cta btn-2" href="/maps">See the arenas</a>
+  </div>
+</Layout>
+
+<script>
+  // idioma resolvido = ?lang > localStorage > navigator (mesmas regras do i18n.js do jogo);
+  // quem chega aqui em pt vai pra /como-jogar (e o par faz o inverso).
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'pt') location.replace('/como-jogar');
+  } catch { /* storage bloqueado: fica onde está */ }
+</script>

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/weapons/weapon_definition.gd" id="1_definition"]
+
+[resource]
+script = ExtResource("1_definition")
+weapon_id = &"awp"
+display_name = "AWP"
+damage = 400
+magazine_capacity = 5
+reserve_capacity = 25
+fire_interval = 1.7
+reload_seconds = 3.1
+hip_spread = 0.075
+scope_spread = 0.0008
+recoil = 0.055
+range = 400.0
+supports_scope = true

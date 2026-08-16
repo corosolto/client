@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>char video — frames do modelo REAL, para avatar e tela de resultado</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<script type="module">
+/* ============================================================================
+   charvideo.html — UM personagem, animado, frame a frame, para virar VÍDEO.
+   ----------------------------------------------------------------------------
+   POR QUE ESTE ARQUIVO EXISTE
+   ---------------------------
+   O pedido era "vídeo 100% igual ao modelo". Modelo generativo não entrega isso:
+   ele inventa outro personagem. O único jeito de o vídeo ser o personagem é o
+   vídeo SER o personagem — então aqui os frames saem do MESMO buildCharacterModel()
+   que o jogo usa, com o MESMO rig e os MESMOS clipes.
+
+   POR QUE NÃO O charlineup.html: aquele é régua de COR do elenco — 8 personagens
+   enfileirados, um render por chamada, sem avançar o tempo. Aqui é o oposto:
+   UM personagem, enquadrado, e o tempo anda de dt em dt para virar sequência.
+   O que os dois compartilham (cena do mapa real, IBL copiado do _buildEnv do
+   game.js, composite do bloom.js) está replicado igual, de propósito: fidelidade
+   de luz é o que separa "render do modelo" de "boneco chapado".
+
+   OS DOIS FUNDOS, E POR QUE DOIS
+   ------------------------------
+   ?bg=cena  — mapa + composite (AgX, bloom, vinheta). É o pixel que o jogador vê.
+               Serve para a tela de resultado e para o slot da tela de entrada,
+               onde o personagem aparece DENTRO do mundo.
+   ?bg=alpha — sem mapa, PNG com transparência. Serve para avatar e para o rail
+               de 64×64, onde o personagem tem de assentar sobre o painel da UI.
+               A plataforma de luz continua a MESMA (o world é construído e só
+               os meshes do cenário ficam invisíveis) — trocar o fundo não pode
+               trocar a iluminação, senão o avatar não é o mesmo personagem do jogo.
+
+   API p/ o playwright: window.CHARVID = { ready, id, w, h, pose(s), reset(), step(dt), grab() }
+
+   query: ?id=mandrake&bg=alpha&w=512&h=512&shot=busto&fps=30&pose=idle
+          &map=loja_h&dist=&fov=&yaw=&spin=  (spin = graus por segundo)
+   ============================================================================ */
+import * as THREE from 'three';
+import { MAPS, resolveMapId } from './js/maps.js';
+import { initTextures } from './js/textures.js';
+import { CHARACTERS } from './js/characters.js';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+import { enableLightBloom } from './js/bloom.js';
+
+const qp = new URLSearchParams(location.search);
+const ID = qp.get('id') || 'mandrake';
+const MAPID = resolveMapId(qp.get('map') || 'loja_h');
+const BG = (qp.get('bg') || 'cena').toLowerCase();       // 'cena' | 'alpha'
+const ALPHA = BG === 'alpha';
+const W = +(qp.get('w') || (ALPHA ? 512 : 1280));
+const H = +(qp.get('h') || (ALPHA ? 512 : 720));
+const FPS = +(qp.get('fps') || 30);
+const POSE0 = qp.get('pose') || 'idle';
+const SHOT = (qp.get('shot') || (ALPHA ? 'busto' : 'corpo')).toLowerCase();
+const SPIN = parseFloat(qp.get('spin') || '0');           // graus/segundo (turntable)
+const YAW0 = parseFloat(qp.get('yaw') || '0');            // graus, giro inicial
+
+/* Só a abertura é fixa; a distância e o alvo saem da caixa do personagem, mais
+   abaixo (o elenco não tem a mesma altura — ver o comentário lá). */
+const FOV = parseFloat(qp.get('fov')) || (SHOT === 'busto' ? 30 : 34);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  preserveDrawingBuffer: true,   // sem isto o toDataURL sai preto: o buffer já foi trocado
+  alpha: ALPHA,
+});
+renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+if (ALPHA) renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(FOV, W / H, 0.05, 400);
+const textures = initTextures();
+const world = MAPS[MAPID].build(scene, textures);
+
+/* IBL — CÓPIA FIEL de game.js `_buildEnv()`, igual ao charlineup.html. Sem isto o
+   iblIrradiance é zero e o personagem sai com o piso de luz errado: seria outro
+   personagem, com o mesmo rig. */
+(function buildEnv() {
+  const W2 = 512, H2 = 256;
+  const sun = world.sun;
+  const sd = new THREE.Vector3(0.35, 0.75, -0.25);
+  if (sun && sun.position && sun.position.lengthSq() > 0.001) sd.copy(sun.position).normalize();
+  const sc = new THREE.Color(sun ? sun.color.getHex() : 0xffe8c8);
+  const sunI = Math.min(3.2, Math.max(0.6, sun ? sun.intensity : 1.6));
+  const skyE = 0.62 + 0.14 * sunI;
+  const zen = [0.075, 0.16, 0.36], hor = [0.55, 0.62, 0.72], gnd = [0.085, 0.078, 0.066];
+  const data = new Float32Array(W2 * H2 * 4);
+  for (let j = 0; j < H2; j++) {
+    const v = (j + 0.5) / H2, phi = (v - 0.5) * Math.PI;
+    const sy = Math.sin(phi), cy = Math.cos(phi);
+    for (let i = 0; i < W2; i++) {
+      const u = (i + 0.5) / W2, th = (u - 0.5) * Math.PI * 2;
+      const dx = cy * Math.cos(th), dz = cy * Math.sin(th);
+      const cosS = dx * sd.x + sy * sd.y + dz * sd.z;
+      let r, g2, b;
+      if (sy >= 0) {
+        const t = Math.pow(1 - sy, 5);
+        r = zen[0] + (hor[0] - zen[0]) * t; g2 = zen[1] + (hor[1] - zen[1]) * t; b = zen[2] + (hor[2] - zen[2]) * t;
+        const mie = Math.pow(Math.max(cosS, 0), 6) * 0.45 + Math.pow(Math.max(cosS, 0), 48) * 1.1;
+        r += mie * sc.r; g2 += mie * sc.g * 0.92; b += mie * sc.b * 0.72;
+        if (cosS > 0.99965) { r += 55 * sc.r; g2 += 55 * sc.g; b += 55 * sc.b; }
+      } else {
+        const t = Math.pow(1 + sy, 8);
+        r = gnd[0] * (1 + 3.2 * t); g2 = gnd[1] * (1 + 3.0 * t); b = gnd[2] * (1 + 2.6 * t);
+      }
+      const o = (j * W2 + i) * 4;
+      data[o] = r * skyE; data[o + 1] = g2 * skyE; data[o + 2] = b * skyE; data[o + 3] = 1;
+    }
+  }
+  const tex = new THREE.DataTexture(data, W2, H2, THREE.RGBAFormat, THREE.FloatType);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.colorSpace = THREE.LinearSRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.needsUpdate = true;
+  const pmrem = new THREE.PMREMGenerator(renderer); pmrem.compileEquirectangularShader();
+  scene.environment = pmrem.fromEquirectangular(tex).texture;
+  tex.dispose(); pmrem.dispose();
+})();
+
+/* O cenário é construído SEMPRE (é ele que traz sol, hemisférica e névoa na
+   intensidade do jogo) e só some da imagem no modo alpha. Guardo a lista para
+   apagar depois de adicionar o personagem — assim o que fica visível é só ele. */
+const doCenario = [];
+scene.traverse((o) => { if (o.isMesh || o.isPoints || o.isSprite) doCenario.push(o); });
+
+await preloadCharacterAssets([ID]);
+
+const def = CHARACTERS.find((c) => c.id === ID) || { id: ID, team: 'P' };
+const built = buildCharacterModel(def, { weapon: false });
+if (!built || !built.group) throw new Error('sem modelo para ' + ID);
+
+/* Mesmo ponto do charlineup: o spawn do time P do mapa é chão jogável por
+   definição — o personagem não fica flutuando nem enterrado. */
+const sp = (world.spawns && (world.spawns.P || world.spawns.B || [])[0]) || { x: 0, z: 0 };
+const gy = world.groundHeightAt ? world.groundHeightAt(sp.x, sp.z, 0) : 0;
+built.group.position.set(sp.x, gy, sp.z);
+built.group.rotation.y = Math.PI + THREE.MathUtils.degToRad(YAW0);  // +Z é a frente; câmera em -Z
+scene.add(built.group);
+
+if (ALPHA) {
+  for (const o of doCenario) o.visible = false;
+  scene.background = null;
+  scene.fog = null;
+}
+
+/* ENQUADRAMENTO POR CAIXA DO PERSONAGEM, e não por distância fixa.
+   O elenco NÃO tem a mesma altura: com a câmera parada numa distância fixa, o
+   Mandrake preenchia o quadro e a doutora aparecia pequena e distante. Isso não é
+   só feio — quando o quadro vira referência para o modelo de imagem, referência
+   pequena é pouca informação, e o que falta de pixel o modelo preenche inventando
+   (foi assim que o palhaço perdeu as ombreiras de espinho).
+   Aqui a caixa manda: mede-se o personagem e a câmera recua o quanto for preciso
+   para a fatia pedida ocupar a altura do quadro. `--dist`/`--alvoy` continuam
+   vencendo, para quando alguém quiser enquadrar na mão. */
+const caixa = new THREE.Box3().setFromObject(built.group);
+const alturaPers = Math.max(0.1, caixa.max.y - caixa.min.y);
+/* Fatia da altura total que cada plano mostra, e onde ela é centrada. Os números
+   vieram de olhar o resultado nos 44, não de teoria. */
+const PLANO = SHOT === 'busto'
+  ? { fatia: 0.42, centro: 0.84 }   // cabeça + ombros
+  : { fatia: 1.16, centro: 0.52 };  // corpo inteiro com folga
+const alvoAuto = caixa.min.y + alturaPers * PLANO.centro;
+const distAuto = (alturaPers * PLANO.fatia / 2) / Math.tan((FOV * Math.PI / 180) / 2);
+
+const ALVO = parseFloat(qp.get('alvoy')) || (alvoAuto - gy);
+const D = parseFloat(qp.get('dist')) || distAuto;
+
+camera.position.set(sp.x, gy + ALVO, sp.z - D);
+camera.lookAt(sp.x, gy + ALVO, sp.z);
+
+/* No modo cena o composite do jogo entra por cima (AgX + bloom + vinheta) — é o
+   que faz o render parecer o jogo. No modo alpha ele NÃO pode entrar: o composer
+   desenha num alvo opaco e comeria a transparência. Ali o tonemap é o mesmo
+   ACESFilmic que o game.js:2271 usa no caminho sem composer. */
+if (ALPHA) {
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+} else {
+  enableLightBloom(renderer, { quality: qp.get('q') || 'high' });
+}
+
+const ctrl = built.ctrl || null;
+let t = 0;
+
+function aplicaPose(s) { if (ctrl && ctrl._to) ctrl._to(s); }
+function avanca(dt) {
+  if (ctrl) ctrl.update(dt, 0, false, 0);
+  if (SPIN) built.group.rotation.y = Math.PI + THREE.MathUtils.degToRad(YAW0 + SPIN * t);
+  built.group.updateMatrixWorld(true);
+}
+
+aplicaPose(POSE0);
+/* Aquecimento: o mesmo laço de 30 quadros do charlineup.html. Um clipe recém-
+   ligado começa na pose de bind (braços em T) e leva alguns quadros para assentar.
+   Capturar antes disso põe um frame de boneco de vitrine no início do vídeo. */
+for (let k = 0; k < 30; k++) avanca(1 / FPS);
+renderer.render(scene, camera);
+
+window.CHARVID = {
+  ready: true, id: ID, w: W, h: H, fps: FPS, bg: BG, shot: SHOT,
+  poses: ['idle', 'walk', 'run', 'shoot', 'death', 'crouch', 'jump'],
+  pose(s) { aplicaPose(s); },
+  reset() { t = 0; for (let k = 0; k < 30; k++) avanca(1 / FPS); renderer.render(scene, camera); },
+  step(dt) { const d = dt || 1 / FPS; t += d; avanca(d); renderer.render(scene, camera); return t; },
+  grab() { return renderer.domElement.toDataURL('image/png'); },
+};
+</script>
+</body>
+</html>

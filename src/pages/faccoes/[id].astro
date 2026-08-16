@@ -1,0 +1,122 @@
+---
+// /faccoes/<id> - uma página por facção.
+//
+// POR QUE EXISTE: /personagens lista as 5 facções e os 44 personagens numa URL
+// só. "tribos urbanas jogo", "funkeiros jogo brasileiro" e "palhaços" são buscas
+// DIFERENTES, e hoje competem entre si dentro da mesma página - nenhuma delas
+// tem um <title> ou uma <meta description> que fale só dela.
+//
+// A FONTE DOS DADOS é src/data/jogo.ts, mesma de /personagens. Nada é digitado
+// duas vezes aqui: se um personagem entrar no jogo, ele aparece na facção dele
+// sem ninguém editar este arquivo.
+//
+// O SLUG DA URL É O `id` DA FACÇÃO, e dois deles são letra única: `P` e `B`.
+// /faccoes/P é feio mas é o que casa com o dado e com o resto do código (o jogo
+// usa 'P'/'B' em toda parte, inclusive em stats.matches_p). Trocar por
+// /faccoes/petistas exigiria um mapa id->slug e o inverso, e um erro nesse mapa
+// dá 404 silencioso. Se o dono quiser as URLs bonitas, o lugar é aqui e o mapa
+// tem que morar junto do PLACA, que já tem o mesmo problema.
+import Layout from '../../layouts/Layout.astro';
+import { FACCOES, PERSONAGENS } from '../../data/jogo';
+import { BRAND_FULL, GAME_ID, abs } from '../../lib/site';
+
+export function getStaticPaths() {
+  return FACCOES.map((f) => ({ params: { id: f.id }, props: { faccao: f } }));
+}
+
+const { faccao } = Astro.props;
+const elenco = PERSONAGENS.filter((p) => p.faccao === faccao.id);
+const outras = FACCOES.filter((f) => f.id !== faccao.id);
+const url = abs(`/faccoes/${faccao.id}`);
+
+/* Mesmo mapa de /personagens, e pelo mesmo motivo: `P` -> `petistas` não é
+   derivável de `P`. Duplicado de propósito em vez de exportado - são 5 linhas, e
+   um import cruzado entre duas páginas por uma tabela de nome de arquivo é pior
+   de achar do que a duplicação. Se virar 3 lugares, aí vai pro data/jogo.ts. */
+const PLACA: Record<string, string> = {
+  P: 'petistas', B: 'bolsonaristas', urbanas: 'tribos',
+  palhacos: 'palhacos', funkeiros: 'funkeiros',
+};
+const placa = PLACA[faccao.id] ? `/img/team-${PLACA[faccao.id]}.webp` : null;
+
+const jsonld = [
+  {
+    '@type': 'ItemList',
+    '@id': url + '#lista',
+    name: `Personagens da facção ${faccao.nome}`,
+    description: faccao.nota,
+    numberOfItems: elenco.length,
+    itemListElement: elenco.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1, name: p.nome,
+      item: {
+        '@type': 'Person', name: p.nome, description: p.blurb,
+        additionalType: 'https://schema.org/FictionalCharacter',
+      },
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Personagens', item: abs('/personagens') },
+      { '@type': 'ListItem', position: 3, name: faccao.nome, item: url },
+    ],
+  },
+  { '@id': GAME_ID },
+];
+---
+<Layout
+  title={`${faccao.nome} - os ${elenco.length} personagens da facção | ${BRAND_FULL}`}
+  description={`${faccao.nota} Conheça os ${elenco.length} personagens jogáveis da facção ${faccao.nome} no ${BRAND_FULL}, com o lema “${faccao.lema}”.`}
+  jsonld={jsonld}
+  h1={faccao.nome}
+  kicker={`facção · ${elenco.length} personagens`}
+  heroImg="/img/map-previews/praca_poderes.jpg"
+  heroPos="52%">
+  <Fragment slot="sub">
+    “{faccao.lema}” - {faccao.nota}
+  </Fragment>
+
+  <p class="meta"><b>{elenco.length} personagens</b><i>·</i>facção {faccao.nome}<i>·</i>
+    <a href="/personagens">ver as {FACCOES.length} facções</a></p>
+
+  {placa && (
+    <div class="fig" style="margin:18px 0">
+      <img src={placa} width="640" height="1601" loading="lazy" decoding="async"
+           alt={`Os ${elenco.length} personagens da facção ${faccao.nome} no ${BRAND_FULL}`}>
+      <span class="fig-tag" style={`background:${faccao.cor};color:#141008`}>{faccao.nome}</span>
+    </div>
+  )}
+
+  <h2>O elenco</h2>
+  <div class="grid" style={`--fc:${faccao.cor}`}>
+    {elenco.map((p) => (
+      <article class="pcard">
+        <strong>{p.nome}</strong>
+        <p>{p.blurb}</p>
+      </article>
+    ))}
+  </div>
+
+  <h2>As outras facções</h2>
+  <p>
+    {outras.map((f, i) => (
+      <Fragment>
+        <a href={`/faccoes/${f.id}`} style={`color:${f.cor}`}>{f.nome}</a>{i < outras.length - 1 ? ' · ' : ''}
+      </Fragment>
+    ))}
+  </p>
+  <p style="margin-top:10px">
+    Todas as {FACCOES.length} numa página só: <a href="/personagens">personagens</a>.
+    Nenhum personagem representa pessoa real - são arquétipos, e a zoeira é distribuída
+    igualmente. <a href="/">▶ JOGAR</a>
+  </p>
+</Layout>
+
+<style>
+  .pcard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--fc);
+    padding:12px 14px}
+  .pcard:hover{background:var(--panel-2);border-color:var(--line-hi)}
+  .pcard strong{color:var(--ink);letter-spacing:1px;font-size:13px;display:block}
+  .pcard p{margin-top:5px;font-size:12.5px;line-height:1.55}
+</style>

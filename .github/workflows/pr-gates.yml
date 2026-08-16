@@ -1,0 +1,37 @@
+# Portão de PR para a main:
+#   package.json e public/js/version.js têm que CONCORDAR — a armadilha do ?v= está
+#   documentada no version.js ("correção que não chega ao usuário" por dias).
+#   O BUMP em si não é mais exigido do PR desde 08/08: o release.yml bumpa, taga e
+#   publica o GitHub Release sozinho a cada push na main. (Antes disso este portão
+#   exigia "versão diferente da main" — e reprovava mecanicamente toda vez que dois
+#   trabalhos paralelos pisavam na mesma versão, ex.: PR #91.)
+name: pr-gates
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  versao-bumpada:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: package.json e version.js têm que concordar
+        run: |
+          HEAD=$(node -pe 'require("./package.json").version')
+          VJS=$(grep -o "VERSION = '[^']*'" public/js/version.js | cut -d"'" -f2)
+          echo "package.json=$HEAD  version.js=$VJS"
+          if [ "$VJS" != "$HEAD" ]; then
+            echo "::error::package.json ($HEAD) e public/js/version.js ($VJS) divergem — o ?v= do import map serve módulo velho quando isso acontece."
+            exit 1
+          fi
+
+  ratchet:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: KNOWN-RED só cresce com justificativa
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node tools/eval/ratchet-check.mjs

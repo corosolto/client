@@ -1,0 +1,32 @@
+{
+  "id": "arena_json",
+  "name": "Arena (JSON)",
+  "bounds": { "x": 20, "z": 20 },
+  "floor": { "color": "#3a3f45" },
+  "walls": { "height": 4, "thickness": 0.5, "color": "#5b6169" },
+  "boxes": [
+    { "w": 3, "h": 2, "d": 3, "x": -7, "z": -7, "color": "#7a8089" },
+    { "w": 3, "h": 2, "d": 3, "x": 7, "z": 7, "color": "#7a8089" },
+    { "w": 2, "h": 1.4, "d": 6, "x": 0, "z": 0, "color": "#6b7178" }
+  ],
+  "spawns": {
+    "E": [
+      { "x": -16, "z": -16, "yaw": 0 },
+      { "x": -16, "z": -12, "yaw": 0 }
+    ],
+    "B": [
+      { "x": 16, "z": 16, "yaw": 3.14159 },
+      { "x": 16, "z": 12, "yaw": 3.14159 }
+    ]
+  },
+  "ctf": [
+    { "id": "E", "label": "BASE LESTE", "x": -16, "z": 0 },
+    { "id": "MID", "label": "CENTRO", "x": 8, "z": -8 },
+    { "id": "B", "label": "BASE OESTE", "x": 16, "z": 0 }
+  ],
+  "pickups": [
+    { "weapon": "rifle", "x": 0, "z": 8 },
+    { "weapon": "smg", "x": 0, "z": -8 }
+  ],
+  "waypoints": { "step": 3.4, "inset": 2 }
+}

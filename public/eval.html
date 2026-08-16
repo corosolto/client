@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>eval — medição de personagem</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#hud{position:fixed;left:6px;top:6px;font:11px monospace;color:#6f6;white-space:pre;z-index:9;text-shadow:0 0 3px #000}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">…</div>
+<script type="module">
+import * as THREE from 'three';
+import { preloadCharacterAssets, buildCharacterModel } from './js/glbchars.js';
+import { CHARACTERS } from './js/characters.js';
+
+const qp = new URLSearchParams(location.search);
+const CHAR = qp.get('char') || 'mst';
+const W = +(qp.get('w')||900), H = +(qp.get('h')||900);
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+renderer.setSize(W, H); renderer.setClearColor(0x000000, 0); // transparent for silhouette
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(35, W/H, 0.05, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x556, 1.15));
+const dir = new THREE.DirectionalLight(0xffffff, 1.5); dir.position.set(3,6,4); scene.add(dir);
+
+const REQUIRED_BONES = ['Hips','Spine','Head','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftHand','RightHand','LeftUpLeg','RightUpLeg','LeftFoot','RightFoot'];
+
+let built=null, group=null, bbox=new THREE.Box3(), size=new THREE.Vector3(), center=new THREE.Vector3();
+
+function load(){
+  const def = CHARACTERS.find(c=>c.id===CHAR) || { id:CHAR, team:'P' };
+  built = buildCharacterModel(def, { weapon:false });
+  if(!built){ hud.textContent='sem modelo: '+CHAR; return false; }
+  group = built.group; scene.add(group);
+  // settle into the idle pose (bind pose is a T-pose → wrong silhouette/bbox)
+  if (built.ctrl) for (let i=0;i<30;i++) built.ctrl.update(1/30, 0, false, 0);
+  else if (built.mixer) built.mixer.update(1.0);
+  // drop the model to the ground so feet sit at y=0 (matches in-game placement)
+  group.updateWorldMatrix(true,true);
+  bbox.setFromObject(group); group.position.y -= bbox.min.y;
+  group.updateWorldMatrix(true,true);
+  bbox.setFromObject(group); bbox.getSize(size); bbox.getCenter(center);
+  return true;
+}
+
+const ANGLES = {
+  front:[0,0,1], q34:[0.8,0,0.9], side:[1,0,0.02], back:[0,0,-1], low:[0.7,-0.5,0.9], top:[0.15,1.2,0.55],
+};
+function setAngle(name){
+  const a = ANGLES[name] || ANGLES.front;
+  const h = Math.max(size.y, 0.1);
+  const dist = (h*1.12)/2 / Math.tan((cam.fov*Math.PI/180)/2) + 0.15;
+  const v = new THREE.Vector3(a[0],a[1],a[2]).normalize().multiplyScalar(dist);
+  const look = new THREE.Vector3(center.x, bbox.min.y + h*0.55, center.z);
+  cam.position.copy(look).add(v); cam.lookAt(look);
+}
+
+function boneWorldY(re){ let y=null; group.traverse(o=>{ if(o.isBone && re.test(o.name)){ const p=new THREE.Vector3(); o.getWorldPosition(p); if(y===null||p.y>y) y=p.y; }}); return y; }
+function boneNames(){ const s=new Set(); group.traverse(o=>{ if(o.isBone) s.add(o.name); }); return [...s]; }
+
+function measure(){
+  group.updateWorldMatrix(true,true);
+  bbox.setFromObject(group); bbox.getSize(size); bbox.getCenter(center);
+  const height = size.y;
+  const topY = bbox.max.y, feetY = bbox.min.y;
+  const neckY = boneWorldY(/neck/i) ?? boneWorldY(/head/i);
+  const headSpan = (neckY!=null) ? (topY - neckY) : null;
+  const headUnits = headSpan ? +(height/headSpan).toFixed(2) : null;
+  // rig
+  const names = boneNames();
+  const missing = REQUIRED_BONES.filter(rb => !names.some(n => n.toLowerCase().includes(rb.toLowerCase())));
+  let hasNaN=false; group.traverse(o=>{ if(o.isBone){ const p=o.position; if(!(isFinite(p.x)&&isFinite(p.y)&&isFinite(p.z))) hasNaN=true; }});
+  // tris + textures
+  let tris=0; const texset=new Map();
+  group.traverse(o=>{ if(o.isMesh && o.geometry){ const g=o.geometry; tris += g.index? g.index.count/3 : (g.attributes.position? g.attributes.position.count/3:0);
+    const m=o.material; (Array.isArray(m)?m:[m]).forEach(mm=>{ if(mm&&mm.map&&mm.map.image){ const im=mm.map.image; texset.set(mm.map.uuid,{w:im.width||im.videoWidth||0,h:im.height||im.videoHeight||0}); } }); }});
+  const textures=[...texset.values()];
+  const maxTex = textures.reduce((a,t)=>Math.max(a,t.w,t.h),0);
+  // silhouette (transparent render already set); read alpha coverage at front
+  setAngle('front'); renderer.render(scene,cam);
+  const gl=renderer.getContext(); const px=new Uint8Array(W*H*4); gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  let minx=W,miny=H,maxx=0,maxy=0,cnt=0;
+  const rmin=new Int16Array(H).fill(W), rmax=new Int16Array(H).fill(-1);
+  for(let y=0;y<H;y+=2)for(let x=0;x<W;x+=2){ const a=px[(y*W+x)*4+3]; if(a>20){ cnt++; if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y; if(x<rmin[y])rmin[y]=x; if(x>rmax[y])rmax[y]=x; }}
+  const bw=Math.max(1,maxx-minx), bh=Math.max(1,maxy-miny);
+  const fill=+(cnt/((bw*bh)/4)).toFixed(3); const aspect=+(bh/bw).toFixed(2);
+  // mesh-based head size: max width in top 16% band (head) vs widest band around shoulders (18-42%)
+  const rowW=(y0,y1)=>{ let mx=0; for(let y=Math.floor(y0);y<=Math.ceil(y1);y++){ if(rmax[y]>=0){ const w=rmax[y]-rmin[y]; if(w>mx)mx=w; } } return mx; };
+  const headW=rowW(miny, miny+0.16*bh), shoulderW=Math.max(1,rowW(miny+0.18*bh, miny+0.42*bh));
+  const headWidthRatio=+(headW/shoulderW).toFixed(2); // big head >~0.85, normal ~0.55-0.8
+  const r = {
+    char:CHAR, height:+height.toFixed(3), feetY:+feetY.toFixed(3),
+    headUnits, // INFO ONLY: bone-based, ~constant across the shared rig — not a gate
+    headWidthRatio, // INFO ONLY: silhouette head-width proxy — PROVEN UNRELIABLE (tall heads/hair confound it), judge via contact sheet
+    tris:Math.round(tris), textures, maxTex, missingBones:missing, hasNaN,
+    silhouette:{ fill, aspect },
+    gates: { // only objectively reliable gates
+      silhouette: aspect>=1.4 && aspect<=2.6 && fill>=0.20 && fill<=0.70, // standing-figure shape sanity
+      tris: Math.round(tris) <= 40000,
+      texture: maxTex>0 && maxTex<=1024,
+      rig: missing.length===0 && !hasNaN,
+    },
+  };
+  return r;
+}
+
+window.EVAL = {
+  ready:false,
+  setAngle(n){ setAngle(n); renderer.render(scene,cam); },
+  measure,
+  info(){ return { char:CHAR, loaded:!!group }; },
+};
+
+(async ()=>{
+  await preloadCharacterAssets([CHAR]);
+  if(!load()) return;
+  const m = measure();
+  window.__report = m;
+  hud.textContent = CHAR+'\n'+JSON.stringify(m.gates,null,1);
+  window.EVAL.ready=true;
+})();
+</script>
+</body>
+</html>

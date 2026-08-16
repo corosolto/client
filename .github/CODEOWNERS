@@ -1,0 +1,9 @@
+* @rubenmarcus
+
+public/js/game.js @rubenmarcus
+public/js/map*.js @rubenmarcus
+public/js/characters.js @rubenmarcus
+public/style.css @rubenmarcus
+src/pages/api/ @rubenmarcus
+supabase/ @rubenmarcus
+.github/workflows/ @rubenmarcus

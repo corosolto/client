@@ -1,0 +1,129 @@
+name: pr-fast
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+concurrency:
+  group: pr-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Python CI scripts syntax
+        run: python3 -m py_compile scripts/ci/*.py
+      - name: Bash scripts syntax
+        run: bash -n scripts/*.sh
+      - name: Fronteira de confiança dos workflows
+        run: python3 scripts/ci/workflow_security_check.py --selftest
+      - name: Contrato do release (nome, créditos e DCO do bot)
+        run: npm run eval:release
+      - name: Syntax check do jogo (public/js)
+        run: npm run syntax
+      - name: Telemetria wired, idempotente, atômica e monitorada
+        run: npm run eval:telemetry
+      - name: Proveniência de erros externos
+        run: npm run eval:error-origin
+      - name: UUID compatível com navegadores antigos
+        run: npm run eval:uuid
+      - name: Acúmulo de armas no chão tem teto
+        run: npm run eval:drop
+      # Pendurar a régua só no `check:fast` a faria rodar na máquina de quem lembra
+      # de rodar, e NÃO no portão: este job lista cada `npm run eval:*` explicitamente.
+      - name: Todo mapa devolve o que o game.js consome
+        run: npm run eval:mapcontrato
+      - name: Veículos do estacionamento em escala de fábrica
+        run: npm run eval:escala
+      - name: Orçamento de shader WebGL1
+        run: npm run eval:shaderbudget
+
+      # O ARCH.md (índice por linha + tabela de conflito) é GERADO. Escrito à
+      # mão ele desatualiza no primeiro commit, e uma tabela de conflito com
+      # linha errada é pior que não ter tabela: dois agentes acham que estão em
+      # regiões diferentes e não estão.
+      - name: Documentação gerada está em dia
+        run: npm run docs:check
+      - name: ARCH.md gerado está em dia
+        run: npm run arch:check
+      - name: Manifesto de wallpapers está em dia
+        run: npm run media:check
+      - name: Texto público sem travessão
+        run: npm run travessao:check
+      # Hash das skills de terceiros confere com o skills-lock.json (issue #42):
+      # lock que ninguém verifica não detecta conteúdo trocado depois de travado.
+      - name: Skills de terceiros conferem com o lock
+        run: npm run verify:skills
+
+      # O auditor de VM escreve o JSON consumido pelas invariantes; a ordem é contrato.
+      - name: Enquadramento do viewmodel por arma (26 armas, GLB real)
+        run: node tools/eval/vm-mint-audit.mjs
+      - name: Invariantes (portão — falha crítica reprova o PR)
+        run: node tools/eval/invariants.mjs
+      - name: Coice do viewmodel (near plane + pitch em rajada)
+        run: node tools/eval/vm-kick-sim.mjs
+      - name: Navegação dos bots (60 s × 5 mapas, sementes fixas)
+        run: node tools/eval/botsim.mjs 60 all
+
+      - name: Astro build
+        run: npm run build
+
+      # PORTÃO DO SITE. `astro build` verde não prova nada sobre as rotas:
+      # /ranking pode dar 500, /sitemap.xml pode sair vazio e o build passa em
+      # todos os casos. Roda DEPOIS do build porque o arnês sobe o `astro dev`,
+      # que precisa das deps instaladas — e checa o caminho de degradação SEM
+      # Supabase, que é exatamente o estado do CI.
+      - name: Smoke do site (13 rotas, contrato + JSON-LD)
+        run: node tools/eval/site-smoke.mjs
+  dco:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Check Signed-off-by
+        run: |
+          printf '{"baseRefOid":"%s","headRefOid":"%s"}' \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" > /tmp/dco.json
+          python3 scripts/ci/dco_check.py < /tmp/dco.json
+      # A régua se prova antes de medir o PR: sem isto, portão quebrado passa calado.
+      - name: Autoteste da régua do Agent
+        run: python3 scripts/ci/agente_check.py --selftest
+      - name: Check trailer Agent
+        run: python3 scripts/ci/agente_check.py < /tmp/dco.json
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Extrair notas do CHANGELOG
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          awk "/^## \\[$TAG\\]/{f=1;next}/^## \\[/{f=0}f" CHANGELOG.md > release-body.md
+      - name: Criar GitHub Release
+        run: |
+          EXTRA=()
+          if [ -s release-body.md ]; then
+            EXTRA=(--notes "$(cat release-body.md)")
+          fi
+          gh release create "${{ github.ref_name }}" --generate-notes "${EXTRA[@]}" --title "CSBR ${{ github.ref_name }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

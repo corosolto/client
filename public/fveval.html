@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>ferro velho eval — beco oeste</title>
+<style>html,body{margin:0;height:100%;background:#8fb7e0;overflow:hidden}#hud{position:fixed;left:6px;top:6px;font:11px monospace;color:#012;z-index:9}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">…</div>
+<script type="module">
+import * as THREE from 'three';
+import { initTextures } from './js/textures.js';
+import { buildFerroVelho, FERRO_PROPS } from './js/map_ferrovelho.js';
+import { preloadMapProps } from './js/mapprops.js';
+
+const W = innerWidth, H = innerHeight;
+const hud = document.getElementById('hud');
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fb7e0);
+const cam = new THREE.PerspectiveCamera(70, W/H, 0.1, 2000);
+scene.add(new THREE.HemisphereLight(0xdfeeff, 0x554433, 1.1));
+
+window.MAPEVAL = {
+  ready:false,
+  view(from, look){ cam.position.set(...from); cam.lookAt(...look); renderer.render(scene,cam); },
+  stats(){ return { calls: renderer.info.render.calls, tris: renderer.info.render.triangles }; },
+};
+
+(async ()=>{
+  try {
+    const T = initTextures();
+    await preloadMapProps(FERRO_PROPS);
+    const world = buildFerroVelho(scene, T);
+    window.__world = world;
+    window.__scene = scene;
+    window.MAPEVAL.view([0, 26, 34], [0, 0, 0]);
+    hud.textContent = 'map loaded';
+    window.MAPEVAL.ready = true;
+  } catch(e){ console.log('TAIL ERR', e && e.message, e && e.stack); hud.textContent = 'ERR '+(e&&e.message); }
+})();
+</script>
+</body>
+</html>

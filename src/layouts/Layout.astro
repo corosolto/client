@@ -1,0 +1,690 @@
+---
+// Shell de todas as páginas do site (o JOGO tem head próprio, em index.astro).
+//
+// LINGUAGEM VISUAL: veio de references/telas/ (9 capturas do menu, HUD e placar
+// do jogo). O que foi copiado de lá, e não inventado aqui:
+//   - fundo quase preto esverdeado + vinheta radial (menu principal)
+//   - âmbar #e8b34b como ÚNICA cor de ação; texto em osso #d8cfae
+//   - item selecionado = barra âmbar sólida com texto escuro (menu principal)
+//   - painéis com filete de 1px e barra de acento à esquerda (placar)
+//   - números grandes em âmbar com rótulo pequeno em cinza (HUD: vida/munição)
+//   - maiúsculas com letter-spacing largo em tudo que é rótulo
+// O objetivo é o site parecer a mesma coisa que o jogo, não um site sobre o jogo.
+//
+// PASSAGEM DE VISUAL (05/08/2026) - o dono: "o design das telas estáticas não
+// está bom… precisamos refazer o visual frontend". Quatro coisas faltavam, e
+// todas as quatro têm origem medida em `references/telas/`:
+//
+//  1. MARCA. O topo era um lockup de TEXTO com um ▰ vermelho. `public/logo.png`
+//     (651×526, RGBA) existia no repo e não era usado por NINGUÉM. Agora ele é
+//     o topo, junto com o canarinho animado - que é personagem do jogo
+//     (`src/data/jogo.ts`, facção B) e não enfeite.
+//  2. IMAGEM. Nenhuma página interna tinha uma única imagem do jogo, sendo que
+//     `public/img/map-previews/*.jpg` (5) e `public/img/team-*.webp` (5) já
+//     estavam prontos. Toda página agora abre com uma faixa (.phead) que usa
+//     uma delas como fundo graduado.
+//  3. ABERTURA DE PÁGINA. `h1` + `.sub` eram texto solto no topo do <main>.
+//     Viraram um bloco só, com a ETIQUETA ÂMBAR de canto que a referência usa em
+//     TODAS as telas ("01. MENU PRINCIPAL", "04. ESCOLHA DO MAPA") - ver o canto
+//     superior esquerdo de references/telas/01,02,04.
+//  4. LINHA DE META. `8v8 · ROUNDS · 15 MIN · DIA` (tela 04) virou `.meta`, e a
+//     etiqueta âmbar sobre a arte do mapa ("FERRO VELHO DO ZÉ", mesma tela)
+//     virou `.fig-tag`. São os dois motivos que fazem um card do site parecer um
+//     card do jogo em vez de um card de documentação.
+//
+// PESO: esta passagem NÃO adiciona nenhum arquivo binário. Todas as imagens
+// usadas já estavam versionadas (ver `public/` = 350,9 MB contra teto de 250 -
+// plans/08 §1.1). O canarinho do topo sai pelo WebP animado de 96 KB, não pelo
+// GIF de 368 KB - mesmo conteúdo, 24 quadros, 26% do peso.
+import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
+import pkg from '../../package.json';
+
+const V = pkg.version;
+/* O manifesto vem INJETADO pelo build (`vite.define` em astro.config.mjs), não de uma
+   leitura de disco aqui. A chamada a `moduleCacheManifest()` neste ponto rodava em toda
+   renderização, e nas três páginas `prerender = false` ela roda dentro da função da
+   Vercel - que não empacota `public/js`. O `ENOENT` estourava DEPOIS do streaming ter
+   mandado o 200, e o jogador recebia corpo vazio com status saudável. Motivo completo e
+   a régua: bloco `MANIFESTO DE CACHE` em astro.config.mjs. */
+declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
+const { modules: JS_MODULES, revision: JS_REV } = __MANIFESTO_JS__;
+const THREE_IMPORTMAP = JSON.stringify({
+  imports: {
+    three: `/vendor/three.module.js?v=${V}`,
+    'three/addons/': '/vendor/addons/',
+    ...Object.fromEntries(JS_MODULES.map((module) => [`/js/${module}`, `/js/${module}?v=${V}-${JS_REV}`])),
+  },
+});
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  /** dimensões da og:image. Sem elas o card fica em branco no primeiro
+   *  compartilhamento, enquanto o crawler da rede não baixou a imagem -
+   *  https://developers.facebook.com/docs/sharing/webmasters/images */
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogType?: string;
+  /** nós JSON-LD extras da página (ItemList, HowTo, ProfilePage…) */
+  jsonld?: unknown[];
+  noindex?: boolean;
+  /* ---- abertura de página (.phead). Ver o bloco 3 do comentário do topo. ----
+     `h1` fica AQUI e não no slot pra garantir que as 8 páginas abram do mesmo
+     jeito: uma etiqueta, um título, um parágrafo. O texto rico da chamada entra
+     pelo slot `sub`, porque metade das páginas usa <strong> dentro dele. */
+  h1?: string;
+  /** etiqueta âmbar do canto, no formato da referência: "05 ARENAS · CTF E ROUNDS" */
+  kicker?: string;
+  /** imagem DO JOGO usada como fundo da faixa de abertura */
+  heroImg?: string;
+  /** foco vertical do recorte do fundo (padrão 58%, que evita o céu estourado) */
+  heroPos?: string;
+}
+const {
+  title,
+  description = DESC_SHORT,
+  ogImage = abs('/og-image.jpg'),
+  ogImageAlt = `${BRAND_FULL} - FPS satírico de navegador com facções brasileiras`,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
+  ogType = 'website',
+  jsonld = [],
+  noindex = false,
+  h1,
+  kicker,
+  heroImg,
+  heroPos = '58%',
+} = Astro.props;
+const temSub = Astro.slots.has('sub');
+
+// CANONICAL: normaliza a barra final. Sem isso, /ranking e /ranking/ emitem dois
+// canonicals diferentes e o buscador trata como duas páginas - o mesmo tipo de
+// diluição que o host sem `www` causava (ver astro.config.mjs).
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const canonical = new URL(path, Astro.site ?? SITE).toString();
+
+// Tabela fixa porque cada rota EN é uma página própria, não um prefixo de idioma.
+// Alimenta o hreflang recíproco e o link PT/EN estático do rodapé (a troca por JS
+// não é descoberta por crawl).
+const PT_EN_PAIRS: [string, string][] = [
+  ['/como-jogar', '/how-to-play'],
+  ['/personagens', '/characters'],
+  ['/mapas', '/maps'],
+  ['/armas', '/weapons'],
+  ['/sobre', '/about'],
+];
+const ptToEn = new Map(PT_EN_PAIRS);
+const enToPt = new Map(PT_EN_PAIRS.map(([pt, en]) => [en, pt]));
+const pairedEn = ptToEn.get(path);
+const pairedPt = enToPt.get(path);
+const hreflangPt = pairedPt ? new URL(pairedPt, Astro.site ?? SITE).toString() : canonical;
+const hreflangEn = pairedEn ? new URL(pairedEn, Astro.site ?? SITE).toString() : pairedPt ? canonical : null;
+
+// JSON-LD de site: emitido UMA vez, aqui, com @id estável. As páginas que
+// precisam de nó próprio passam por `jsonld` e referenciam o jogo por @id em
+// vez de repetir o objeto VideoGame inteiro - era o que sobre.astro fazia, e
+// dois nós VideoGame com a mesma url e sem @id confundem a deduplicação.
+const baseGraph = [
+  { '@type': 'WebSite', '@id': WEBSITE_ID, url: SITE + '/', name: BRAND_FULL,
+    alternateName: [BRAND, BRAND_ALT], inLanguage: 'pt-BR',
+    publisher: { '@id': ORG_ID } },
+  /* `logo` é a MARCA ISOLADA, não o cartão de compartilhamento. Apontava para
+     `og-image.jpg` - que é paisagem 1200×630 com texto e cena - e schema.org
+     pede a marca (https://schema.org/logo). `/logo.png` é o lockup em PNG com
+     alfa, 651×526, e é o mesmo arquivo que o topo do site usa. */
+  { '@type': 'Organization', '@id': ORG_ID, name: `${BRAND} contributors`,
+    url: SITE + '/', logo: abs('/logo.png') },
+];
+
+/* NÓ DE PÁGINA (WebPage).
+   Faltava: as páginas emitiam ItemList, HowTo, AboutPage e BreadcrumbList, mas
+   nenhum nó dizendo "esta URL é uma página, e ela pertence a este site". Sem
+   ele o grafo tem entidades soltas sem dono, e `mainEntityOfPage` não tem em
+   que ancorar. schema.org: WebPage é o tipo do próprio documento
+   (https://schema.org/WebPage).
+
+   NÃO emitimos se a página já trouxe um nó do próprio tipo dela - AboutPage
+   (/sobre) e ProfilePage (/u/*) SÃO subtipos de WebPage, e dois nós de página
+   pra mesma URL é o mesmo defeito de deduplicação que os dois `VideoGame`
+   causavam antes do `@id` estável. FAQPage fica FORA desta lista de propósito:
+   em /como-jogar ela é uma seção da página (`#faq`), não o documento. */
+const PAGE_NODE_TYPES = new Set([
+  'WebPage', 'AboutPage', 'ProfilePage', 'CollectionPage', 'ItemPage',
+  'QAPage', 'ContactPage', 'SearchResultsPage',
+]);
+const hasOwnPageNode = (jsonld as { '@type'?: string | string[] }[]).some((n) => {
+  const t = n?.['@type'];
+  return Array.isArray(t) ? t.some((x) => PAGE_NODE_TYPES.has(x)) : !!t && PAGE_NODE_TYPES.has(t);
+});
+const pageGraph = hasOwnPageNode ? [] : [{
+  '@type': 'WebPage',
+  '@id': canonical + '#webpage',
+  url: canonical,
+  name: title,
+  description,
+  inLanguage: 'pt-BR',
+  isPartOf: { '@id': WEBSITE_ID },
+  primaryImageOfPage: {
+    '@type': 'ImageObject', url: ogImage,
+    width: ogImageWidth, height: ogImageHeight,
+  },
+}];
+
+// O /ranking sai do nav enquanto RANKING_ON for false (src/lib/site.ts). A página
+// continua respondendo - só deixa de ser oferecida, pra ninguém clicar num aviso.
+const NAV: [string, string][] = [
+  ...(RANKING_ON ? [['/ranking', 'RANKING'] as [string, string]] : []),
+  ['/personagens', 'PERSONAGENS'],
+  ['/mapas', 'MAPAS'],
+  ['/armas', 'ARMAS'],
+  ['/como-jogar', 'COMO JOGAR'],
+  ['/mapa', 'AO VIVO'],
+  ['/sobre', 'SOBRE'],
+];
+---
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title}</title>
+<meta name="description" content={description}>
+<link rel="canonical" href={canonical}>
+{/* Fonte ÚNICA do hreflang - página nenhuma declara alternate por conta própria.
+    Auto-referência é obrigatória e as URLs vêm do canonical (www, sem barra final). */}
+<link rel="alternate" hreflang="pt-BR" href={hreflangPt}>
+{hreflangEn && <link rel="alternate" hreflang="en" href={hreflangEn}>}
+<link rel="alternate" hreflang="x-default" href={hreflangPt}>
+{noindex && <meta name="robots" content="noindex, follow">}
+{import.meta.env.GOOGLE_SITE_VERIFICATION && (
+  <meta name="google-site-verification" content={import.meta.env.GOOGLE_SITE_VERIFICATION}>
+)}
+<meta name="theme-color" content="#0a0a08">
+<meta property="og:type" content={ogType}>
+<meta property="og:site_name" content={BRAND_FULL}>
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:url" content={canonical}>
+<meta property="og:image" content={ogImage}>
+<meta property="og:image:width" content={String(ogImageWidth)}>
+<meta property="og:image:height" content={String(ogImageHeight)}>
+<meta property="og:image:alt" content={ogImageAlt}>
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content={title}>
+<meta name="twitter:description" content={description}>
+<meta name="twitter:image" content={ogImage}>
+<meta name="twitter:image:alt" content={ogImageAlt}>
+{/* O favicon TEM que ser declarado aqui. Antes havia um <link rel="icon"> com um
+    SVG em data: URI (uma mira improvisada), e link declarado sempre ganha do
+    `/favicon.ico` implícito - por isso o ícone de marca não aparecia na aba
+    mesmo depois de o arquivo entrar no repo. */}
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- O fundo 3D usa addons; o core versionado evita cache imutável entre releases. -->
+<script type="importmap" is:inline set:html={THREE_IMPORTMAP}></script>
+<!-- Espelhos em texto puro pros crawlers de resposta. `/llms.txt` é a proposta
+     de llmstxt.org; `/llms-full.txt`, `/docs.json` e `/ai-index.json` e os
+     espelhos `.md` são gerados no build (scripts/aeo.mjs, via aeo.js).
+     HIPÓTESE, não fato: NÃO existe especificação que obrigue crawler nenhum a
+     ler `rel="alternate" type="text/plain"` - nenhuma documentação de Google,
+     OpenAI ou Anthropic promete isso hoje. As tags custam 4 linhas e tornam os
+     arquivos descobríveis a partir do HTML; o ganho é declaradamente aposta. -->
+<link rel="alternate" type="text/plain" href={abs('/llms.txt')} title="Resumo do site em texto (llms.txt)">
+<link rel="alternate" type="text/plain" href={abs('/llms-full.txt')} title="Conteúdo completo em texto">
+<link rel="alternate" type="application/json" href={abs('/ai-index.json')} title="Índice do site para IA">
+<script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': [...baseGraph, ...pageGraph, ...jsonld] })} />
+<slot name="head" />
+<style is:global>
+:root{
+  /* paleta lida das capturas em references/telas/ */
+  --amber:#e8b34b; --amber-dim:#9c7f45; --amber-soft:rgba(232,179,75,.09);
+  --amber-hi:#ffd479;
+  --bone:#d8cfae; --bone-dim:#8f866d;
+  --ink:#f2ead8;      /* títulos - o branco-osso da referência */
+  --bg:#0a0a08; --panel:rgba(18,16,10,.78); --panel-2:rgba(24,21,13,.9);
+  --line:#3a3018; --line-hi:#5c4a22;
+  --red:#e03232; --green:#1faa4d; --purple:#a07bd6;
+  --yellow:#e8b34b;   /* alias legado usado por páginas antigas */
+  --dark:#0a0a08; --cs:#e8b34b;
+  /* as três cores do logo (medidas em public/logo.png): CORO branco, SOLTO
+     amarelo, TRETA vermelho. Só aparecem no fio da marca, em nenhum texto. */
+  --br-white:#f0efe9; --br-yellow:#f5c518; --br-red:#e5121c;
+  --mono:"Lucida Console",Monaco,Consolas,"Courier New",monospace;
+  --topo:66px;        /* altura do topo fixo - usada pelo scroll-margin das âncoras */
+}
+*{margin:0;padding:0;box-sizing:border-box;border-radius:0!important}
+html{background:var(--bg);scroll-behavior:smooth}
+body{background:transparent;color:var(--bone);font-family:var(--mono);line-height:1.65;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--amber)}
+img{max-width:100%}
+/* FOCO. A regra anterior era `:where(a,button,summary,input,select)`, que tem
+   duas limitações: `:where()` zera a especificidade (qualquer regra com peso
+   sobrescreve) e a lista deixa de fora textarea, [tabindex], [contenteditable]
+   e o <main> que o skip link foca. O seletor universal cobre tudo o que o
+   navegador considerar focável, agora e depois. */
+:focus-visible{outline:2px solid var(--amber-hi);outline-offset:2px}
+/* O <main> recebe foco por programa (skip link) e o anel nele não informa nada
+ - o que o leitor precisa é que o cursor foi pro conteúdo, e isso o
+   tabindex="-1" já resolve. */
+main:focus-visible{outline:none}
+
+/* SKIP LINK. Primeiro focável da página: o <header> sticky tem 8 links de
+   navegação antes do conteúdo, e sem isto quem usa teclado ou leitor de tela
+   atravessa os 8 em TODA página. Fora da tela até receber foco - nunca
+   `display:none`, que o tiraria da ordem de tabulação e o tornaria inútil. */
+.skip{position:absolute;left:-9999px;top:0;z-index:100;
+  background:var(--amber);color:#141008;font-weight:bold;letter-spacing:1px;
+  padding:10px 18px;text-decoration:none;border:1px solid var(--amber-hi)}
+.skip:focus{left:8px;top:8px}
+
+/* ---- fundo 3D + vinheta (mesma composição do menu principal) ----
+   A vinheta abriu de .72 para .60 no centro: com .72 o mundo 3D que o
+   `site-bg.js` desenha (o mesmo `buildBrasilia` do menu) ficava invisível e o
+   site parecia preto liso. O brilho âmbar do topo é o mesmo halo do céu da
+   tela 01. As bordas continuam em .96 - é ali que mora o texto. */
+#bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#bg-overlay{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 0%,rgba(232,179,75,.10) 0%,transparent 70%),
+    radial-gradient(ellipse at 50% 26%,rgba(10,10,8,.60) 0%,rgba(10,10,8,.96) 100%)}
+#bg-scan{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.085;
+  background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.8) 2px 4px)}
+body>header,main,body>footer{position:relative;z-index:2}
+/* o topo fixo cobriria o começo do conteúdo depois do salto do skip link */
+main{scroll-margin-top:var(--topo)}
+
+/* ============================ TOPO ============================
+   Marca = logo.png + canarinho. O canarinho é RECORTADO do banner de header por
+   CSS: o arquivo é 604×240 com logo à esquerda e passarinho à direita, e o
+   passarinho ocupa x 288-586 / y 0-236 (medido quadro a quadro nos 24 frames do
+   GIF; a barra âmbar de y 237-239 fica de fora do recorte de propósito).
+   Uma variável --bh comanda os dois: mudar a altura reposiciona tudo junto. */
+body>header{display:flex;align-items:center;gap:16px;padding:0 20px;min-height:var(--topo);
+  background:linear-gradient(180deg,rgba(8,7,4,.98),rgba(8,7,4,.90));
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;
+  flex-wrap:wrap;backdrop-filter:blur(6px)}
+/* filete âmbar na base - o mesmo que o banner do canarinho já traz desenhado e
+   o mesmo que separa faixa de conteúdo no HUD. */
+body>header:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;
+  background:linear-gradient(90deg,var(--amber) 0%,rgba(232,179,75,.35) 46%,transparent 100%)}
+.brand{display:flex;align-items:center;gap:6px;text-decoration:none;flex:none}
+.brand-logo{height:56px;width:auto;display:block;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+.brand-bird{--bh:60px;position:relative;display:block;flex:none;
+  height:var(--bh);width:calc(var(--bh) * 298 / 236);overflow:hidden;
+  -webkit-mask-image:radial-gradient(ellipse 78% 86% at 52% 50%,#000 62%,transparent 100%);
+          mask-image:radial-gradient(ellipse 78% 86% at 52% 50%,#000 62%,transparent 100%)}
+.brand-bird img{position:absolute;top:0;left:calc(var(--bh) * -288 / 236);max-width:none;
+  width:calc(var(--bh) * 604 / 236);height:calc(var(--bh) * 240 / 236)}
+nav{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+nav a{color:var(--bone-dim);text-decoration:none;font-size:11px;letter-spacing:2px;
+  padding:6px 2px;border-bottom:2px solid transparent;transition:color .12s;white-space:nowrap}
+nav a:hover{color:var(--amber)}
+nav a[aria-current="page"]{color:var(--amber);border-bottom-color:var(--amber)}
+/* CTA: cheio, texto escuro - é assim que a referência marca a ação primária
+   (tela 04 "CONTINUAR", tela 09). Contorno é sempre secundário. */
+.btn-play{margin-left:auto;background:var(--amber);color:#141008!important;font-weight:bold;
+  letter-spacing:2px;padding:10px 22px;border:1px solid var(--amber);text-decoration:none;
+  font-size:12px;white-space:nowrap;flex:none;
+  box-shadow:0 0 0 1px rgba(0,0,0,.5),0 6px 18px rgba(232,179,75,.16);
+  transition:background .12s,color .12s,box-shadow .12s}
+.btn-play:hover,.btn-play:focus-visible{background:var(--amber-hi);
+  box-shadow:0 0 0 1px rgba(0,0,0,.5),0 6px 22px rgba(232,179,75,.34)}
+
+/* ---- CTA dentro do conteúdo ----
+   Existe separado do `.btn-play` do topo porque o do topo é `white-space:nowrap`
+   e `margin-left:auto` - as páginas o reusavam com `style=` inline e, com um
+   rótulo longo ("▶ Jogar agora - grátis"), ele estourava 13 px pra fora da tela
+   em 390 px de largura. Era o único overflow horizontal do site. */
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:32px 0 0}
+.btn-cta{display:inline-block;background:var(--amber);color:#141008;font-weight:bold;
+  letter-spacing:2px;padding:12px 24px;border:1px solid var(--amber);text-decoration:none;
+  font-size:13px;max-width:100%;
+  box-shadow:0 6px 18px rgba(232,179,75,.16);transition:background .12s,box-shadow .12s,color .12s}
+.btn-cta:hover,.btn-cta:focus-visible{background:var(--amber-hi);
+  box-shadow:0 6px 22px rgba(232,179,75,.34)}
+/* secundário = contorno. A referência nunca usa dois botões cheios na mesma tela. */
+.btn-cta.btn-2{background:none;color:var(--amber);border-color:var(--line-hi);box-shadow:none}
+.btn-cta.btn-2:hover{background:var(--amber-soft);border-color:var(--amber);color:var(--amber)}
+
+/* ---- tipografia ---- */
+main{max-width:1040px;margin:0 auto;padding:26px 20px 64px}
+h1{font-weight:bold;letter-spacing:4px;color:var(--ink);font-size:32px;line-height:1.1;
+  margin-bottom:10px;text-transform:uppercase;text-shadow:0 2px 14px rgba(0,0,0,.8)}
+.sub{color:var(--bone);font-size:14px;max-width:66ch}
+h2{color:var(--amber);letter-spacing:3px;font-size:14px;margin:38px 0 14px;text-transform:uppercase;
+  border-bottom:1px solid var(--line);padding-bottom:7px;scroll-margin-top:calc(var(--topo) + 12px)}
+h3{color:var(--ink);letter-spacing:2px;font-size:13px;margin:18px 0 6px;text-transform:uppercase}
+p,li{color:#bdb49a;font-size:14px}
+ul,ol{padding-left:20px}
+li{margin:5px 0}
+code{color:var(--amber);background:rgba(232,179,75,.07);padding:1px 5px}
+hr{border:0;border-top:1px solid var(--line);margin:28px 0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* =================== ABERTURA DE PÁGINA (.phead) ===================
+   A etiqueta âmbar de canto com texto escuro é literal da referência: ela abre
+   TODAS as telas do jogo ("01. MENU PRINCIPAL", "02. ESCOLHA SUA FACÇÃO",
+   "04. ESCOLHA DO MAPA"), sempre no canto superior esquerdo.
+   O fundo é uma captura do jogo, graduada para caber na paleta: os previews de
+   mapa são de DIA, com céu azul estourado, e entrariam como um buraco claro no
+   meio de um site quase preto. `sepia` + `saturate` puxam pro âmbar, o scrim
+   diagonal devolve o contraste do lado do texto. */
+.phead{position:relative;overflow:hidden;margin:0 0 30px;padding:36px 26px 26px;
+  border:1px solid var(--line);border-left:3px solid var(--amber);background:var(--panel-2);
+  min-height:210px;display:flex;align-items:flex-end}
+/* A ARTE OCUPA SÓ A METADE DIREITA, e não o fundo inteiro.
+   Motivo medido: as capturas de arena são 640×640. Esticadas por trás de uma
+   faixa de 1000×186 elas viram um recorte 5,4:1 - ampliação de 1,6× num
+   pedacinho da imagem, que sai borrado e ilegível (foi o que a primeira versão
+   fez). Num bloco de 480×210 o recorte é 2,3:1 e a arena se reconhece.
+   Como benefício, o texto fica sobre painel liso: a máscara zera a arte antes
+   de 78% da largura, então não existe texto sobre foto e o contraste do osso
+   #d8cfae contra #0a0a08 continua sendo o do resto do site (~11:1). */
+.phead-art{position:absolute;right:0;top:0;bottom:0;width:48%;z-index:0;
+  background:
+    linear-gradient(0deg,rgba(10,10,8,.92) 0%,rgba(10,10,8,.12) 44%,transparent 72%),
+    var(--hero,none) center var(--heropos,58%)/cover;
+  filter:sepia(.38) saturate(.8) contrast(1.06) brightness(.92);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 55%);
+          mask-image:linear-gradient(90deg,transparent 0%,#000 55%)}
+.phead-in{position:relative;z-index:2;width:100%;max-width:60%}
+.phead .sub{max-width:56ch}
+/* páginas sem captura (changelog, ranking): a faixa continua, só encolhe */
+.phead.semarte{min-height:0;padding:32px 26px 22px}
+.phead.semarte .phead-in{max-width:100%}
+.kicker{position:absolute;top:0;left:0;z-index:3;background:var(--amber);color:#171106;
+  font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;
+  padding:4px 12px 4px 14px;max-width:calc(100% - 20px);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phead .sub{margin-top:2px}
+
+/* ---- painéis (filete + barra de acento à esquerda, como no placar) ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);
+  padding:14px 18px;margin:12px 0}
+.grid{display:grid;gap:12px}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+
+/* =================== CARDS COM ARTE DO JOGO ===================
+   `.card` é o painel do site quando ele tem imagem. `.fig` é a moldura: mesma
+   graduação da .phead, cantos em âmbar (o mesmo L que o HUD desenha em volta da
+   mira) e a ETIQUETA INCLINADA com o nome - que é o adesivo âmbar sobre a arte
+   do mapa em references/telas/04_escolha_mapa.png. */
+.card{display:flex;flex-direction:column;background:var(--panel);
+  border:1px solid var(--line);border-top:3px solid var(--amber);
+  transition:border-color .14s,transform .14s,box-shadow .14s}
+.card:hover{border-color:var(--line-hi);transform:translateY(-2px);
+  box-shadow:0 10px 26px rgba(0,0,0,.5)}
+.card-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.card-body>p{margin:0}
+.fig{position:relative;display:block;overflow:hidden;background:#0d0c07;
+  aspect-ratio:16/10;border-bottom:1px solid var(--line)}
+.fig img{width:100%;height:100%;object-fit:cover;display:block;
+  filter:sepia(.34) saturate(.82) contrast(1.06) brightness(.78);
+  transition:transform .5s ease,filter .3s}
+.card:hover .fig img{transform:scale(1.045);filter:sepia(.2) saturate(.95) contrast(1.06) brightness(.9)}
+.fig:after{content:"";position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(0deg,rgba(10,10,8,.92) 0%,rgba(10,10,8,.15) 46%,transparent 72%)}
+/* cantos em L, como a mira do HUD */
+.fig:before{content:"";position:absolute;z-index:2;inset:8px;pointer-events:none;
+  background:
+    linear-gradient(var(--amber),var(--amber)) 0 0/12px 1px no-repeat,
+    linear-gradient(var(--amber),var(--amber)) 0 0/1px 12px no-repeat,
+    linear-gradient(var(--amber),var(--amber)) 100% 100%/12px 1px no-repeat,
+    linear-gradient(var(--amber),var(--amber)) 100% 100%/1px 12px no-repeat;
+  opacity:.65}
+/* Nome do mapa no PAINEL, em amarelo (pedido do dono 06/08 - o chip sobre a foto saiu) */
+.map-nome{color:var(--amber);font-size:20px;letter-spacing:2px;text-transform:uppercase;margin:0 0 6px}
+.fig-tag{position:absolute;z-index:3;left:0;bottom:12px;background:var(--amber);color:#171106;
+  font-size:11px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;
+  padding:4px 14px 4px 12px;max-width:92%;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+
+/* card largo: arte à esquerda, texto à direita - o enquadramento da tela 04 */
+.card.wide{flex-direction:row;align-items:stretch;margin:0 0 14px}
+.card.wide .fig{flex:0 0 44%;aspect-ratio:auto;min-height:230px;
+  border-bottom:0;border-right:1px solid var(--line)}
+.card.wide .card-body{padding:18px 22px;justify-content:center}
+.grid.cards{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+/* primeira frase do card: mais clara e um ponto maior que o corpo */
+.lead{color:var(--bone)!important;font-size:15px}
+
+/* galeria de miniaturas: a tira de mapas do rodapé da tela 04 */
+.galeria{display:grid;gap:10px;margin:22px 0 0;
+  grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.galeria .fig{aspect-ratio:4/3;border:1px solid var(--line);text-decoration:none;
+  transition:border-color .14s}
+.galeria .fig:hover{border-color:var(--amber)}
+.galeria .fig-tag{font-size:9.5px;letter-spacing:1px;padding:3px 10px 3px 8px;bottom:8px}
+.galeria .fig:before{inset:6px}
+
+/* linha de meta: `8v8 · ROUNDS · 15 MIN · DIA` da tela 04 */
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;
+  color:var(--bone-dim);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+.meta i{font-style:normal;color:var(--amber-dim)}
+.meta b{color:var(--amber);font-weight:bold}
+.meta code{background:none;padding:0;color:var(--bone-dim);letter-spacing:1px}
+
+/* ---- tiles de número (HUD: vida/munição) ---- */
+.tstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tstat>div{border:1px solid var(--line);background:var(--panel);padding:10px 12px}
+.tstat b{color:var(--amber);font-size:24px;display:block;line-height:1.15}
+.tstat span{color:var(--bone-dim);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+
+/* ---- tabelas (placar) ---- */
+.tw{overflow-x:auto;border:1px solid var(--line);background:rgba(12,11,7,.55)}
+table{border-collapse:collapse;width:100%}
+.tw table{min-width:640px}
+th{color:var(--bone-dim);font-size:10px;letter-spacing:2px;text-align:left;text-transform:uppercase;
+  padding:9px 10px;border-bottom:1px solid var(--line-hi);background:rgba(8,7,4,.92)}
+td{padding:8px 10px;border-bottom:1px solid #1e1a0e;font-size:13px}
+tbody tr:hover td{background:var(--amber-soft)}
+tbody tr.top td{color:#f2ead8}
+tbody tr.top td:first-child{color:var(--amber);font-weight:bold}
+.num{font-variant-numeric:tabular-nums;text-align:right}
+
+/* ---- chips (a pílula de contorno da tela 03: "ÉPICO") ---- */
+.chip{display:inline-block;font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  border:1px solid var(--line-hi);padding:2px 8px;color:var(--bone-dim);white-space:nowrap}
+.chip.on{border-color:var(--amber);color:var(--amber)}
+
+details{margin-bottom:8px;border:1px solid var(--line);padding:10px 14px;background:var(--panel)}
+details[open]{border-left:3px solid var(--amber)}
+summary{cursor:pointer;color:var(--amber);letter-spacing:1px;font-size:13px}
+summary::marker{color:var(--amber-dim)}
+details p{margin-top:8px}
+
+input,select,button,textarea{font-family:inherit}
+
+body>footer{border-top:1px solid var(--line);padding:28px 22px;text-align:center;color:var(--bone-dim);
+  font-size:11px;letter-spacing:1px;line-height:1.9;background:rgba(8,7,4,.82)}
+body>footer a{color:var(--amber-dim);text-decoration:none}
+body>footer a:hover{color:var(--amber)}
+.foot-logo{height:52px;width:auto;margin-bottom:12px;opacity:.85}
+
+/* Ícones sociais TOP-RIGHT (no header, ao lado do JOGAR). Sem borda: o header já
+   é escuro, a leitura vem do ícone. 28 px = toque no mobile. */
+.head-social{display:flex;gap:4px;align-items:center;margin-left:4px}
+.head-social a{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;color:var(--bone-dim)}
+.head-social a:hover{color:var(--amber)}
+.head-social svg{width:18px;height:18px;fill:currentColor;display:block}
+
+/* ============================ RESPONSIVO ============================
+   O público é brasileiro e majoritariamente de celular, então o corte de 860px
+   não é "degradação": é o segundo desenho. A nav vira uma faixa de rolagem
+   horizontal PRÓPRIA (não quebra em 3 linhas nem empurra o conteúdo pra baixo),
+   e o documento continua sem rolagem horizontal - quem rola é a faixa. */
+@media (max-width:860px){
+  :root{--topo:56px}
+  body>header{gap:10px;padding:0 12px}
+  .brand-logo{height:34px}
+  .brand-bird{--bh:38px}
+  .btn-play{padding:8px 14px;font-size:11px;letter-spacing:1.5px}
+  nav{order:3;width:100%;flex-wrap:nowrap;overflow-x:auto;gap:16px;
+    padding:0 12px 6px;margin:0 -12px;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 0 92%,transparent 100%);
+            mask-image:linear-gradient(90deg,#000 0 92%,transparent 100%)}
+  nav::-webkit-scrollbar{display:none}
+  nav a{padding:2px 0 6px}
+  main{padding:18px 14px 48px}
+  h1{font-size:23px;letter-spacing:2px}
+  /* No celular a faixa vira COLUNA: a arte é uma tira no topo, com a etiqueta
+     âmbar por cima dela (que é exatamente como a referência abre cada tela), e
+     o texto embaixo, em painel liso. Espremer arte e texto lado a lado em 390px
+     não deixaria nem um nem outro legível. */
+  .phead{display:block;padding:0;min-height:0;margin-bottom:22px}
+  .phead-art{position:relative;width:100%;height:132px;
+    -webkit-mask-image:none;mask-image:none}
+  .phead-in{max-width:100%;padding:16px 16px 18px}
+  .phead.semarte{padding:0}
+  .phead.semarte .phead-in{padding:26px 16px 18px}
+  .sub{font-size:13.5px}
+  .grid.c2,.grid.c3,.grid.cards{grid-template-columns:1fr}
+  .card.wide{flex-direction:column}
+  .card.wide .fig{flex:none;aspect-ratio:16/10;min-height:0;
+    border-right:0;border-bottom:1px solid var(--line)}
+  .card.wide .card-body{padding:14px 16px 16px}
+  .fig-tag{font-size:10px;padding:3px 11px 3px 10px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  #bg-canvas{display:none}
+  *,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+  /* o <picture> troca o banner animado pelo PNG quadrado e recortado do
+     canarinho: aqui o recorte de sprite sai de cena e a imagem passa a caber
+     inteira na caixa. */
+  .brand-bird{width:var(--bh);mask-image:none;-webkit-mask-image:none}
+  .brand-bird img{position:static;width:100%;height:100%;object-fit:contain}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+<div id="bg-overlay"></div>
+<div id="bg-scan"></div>
+<script type="module" src={`/js/site-bg.js?v=${V}-${JS_REV}`}></script>
+<header>
+  {/* MARCA: logo + canarinho, que é o pedido do dono e é personagem do elenco.
+
+      O <picture> resolve peso E acessibilidade, nessa ordem - em <picture> o
+      primeiro <source> que casa é o que vale:
+        1. prefers-reduced-motion → `canarinho-pistola.png`, PARADO. Um GIF em
+           laço no topo de toda página é exatamente o que essa preferência pede
+           para não existir.
+        2. WebP animado, 96 KB, 24 quadros - mesmo conteúdo do GIF por 26% do
+           peso. É o caminho de 97% dos navegadores.
+        3. <img> GIF, 368 KB: só para quem não decodifica WebP animado. */}
+  <a class="brand" href="/" aria-label={`${BRAND_FULL} - página inicial`}>
+    <img class="brand-logo" src="/logo.png" width="651" height="526" alt={BRAND_FULL}>
+    <picture class="brand-bird" aria-hidden="true">
+      <source media="(prefers-reduced-motion: reduce)" srcset="/img/canarinho-pistola.png">
+      <source type="image/webp" srcset="/img/canarinho-header.webp">
+      <img src="/img/canarinho-header.gif" width="604" height="240" alt="" loading="eager" decoding="async">
+    </picture>
+  </a>
+  <nav aria-label="Navegação principal">
+    {NAV.map(([href, label]) => (
+      <a href={href} aria-current={path === href ? 'page' : undefined}>{label}</a>
+    ))}
+    <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">GITHUB</a>
+  </nav>
+  {/* O jogo é a rota `/`, e ele é o produto: o link pra ele é botão cheio, nunca
+      um item de texto igual aos outros. É a hierarquia da referência. */}
+  <a class="btn-play" href="/">▶ JOGAR</a>
+  <nav class="head-social" aria-label="Redes sociais">
+    <a href={DISCORD_URL} rel="noopener" aria-label="Discord do CORO SOLTO">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.198.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg>
+    </a>
+    <a href={TELEGRAM_URL} rel="noopener" aria-label="Telegram do CORO SOLTO">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+    </a>
+    <a href={GITHUB_URL} rel="noopener" aria-label="Código no GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    </a>
+  </nav>
+</header>
+<main id="conteudo" tabindex="-1">
+  {h1 && (
+    <section class:list={['phead', { semarte: !heroImg }]}>
+      {heroImg && <div class="phead-art" style={`--hero:url('${heroImg}');--heropos:${heroPos}`}></div>}
+      {kicker && <span class="kicker">{kicker}</span>}
+      <div class="phead-in">
+        <h1>{h1}</h1>
+        {temSub && <p class="sub"><slot name="sub" /></p>}
+      </div>
+    </section>
+  )}
+  <slot />
+</main>
+<footer>
+  <a href="/" aria-label={`${BRAND_FULL} - página inicial`}>
+    <img class="foot-logo" src="/logo.png" width="651" height="526" alt="" loading="lazy">
+  </a>
+  <div><strong style="color:var(--bone)">{BRAND_FULL}</strong> · FPS de navegador, grátis e sem instalação</div>
+  <div>
+    {/* separadores com `{' · '}` explícito: o espaço literal entre `·` e a
+        próxima tag some na compilação e sai "Como jogar ·Changelog". */}
+    <a href="/como-jogar">Como jogar</a>
+    {RANKING_ON && <>{' · '}<a href="/ranking">Ranking</a></>}
+    {' · '}<a href="/changelog">Changelog</a>
+    {' · '}<a href="/sobre">Sobre</a>
+    {' · '}<a href={GITHUB_URL} rel="noopener">Código (AGPL-3.0)</a>
+    {pairedEn && (
+      <>{' · '}<a href={pairedEn} hreflang="en" lang="en">English</a></>
+    )}
+    {pairedPt && (
+      <>{' · '}<a href={pairedPt} hreflang="pt-BR" lang="pt-BR">Português</a></>
+    )}
+  </div>
+</footer>
+<script>
+  /* NAV + RODAPÉ em EN (mesma régua de idioma das páginas gêmeas e do jogo:
+     ?lang= > localStorage cs_lang > navigator.language). As gêmeas EN existem
+     para personagens/mapas/armas/como-jogar/sobre - rótulo e href trocam juntos.
+     /mapa e /changelog continuam só PT (issue #54) e ficam com o rótulo em PT
+     DE PROPÓSITO: avisa que a página de destino é PT antes do clique. */
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'en') {
+      document.documentElement.lang = 'en';
+      // [href PT] -> [href EN, rótulo no nav (caps), rótulo no rodapé]
+      const GEMEA = {
+        '/personagens': ['/characters', 'CHARACTERS', 'Characters'],
+        '/mapas': ['/maps', 'MAPS', 'Maps'],
+        '/armas': ['/weapons', 'WEAPONS', 'Weapons'],
+        '/como-jogar': ['/how-to-play', 'HOW TO PLAY', 'How to play'],
+        '/sobre': ['/about', 'ABOUT', 'About'],
+      };
+      document.querySelectorAll('header nav a').forEach((a) => {
+        const g = GEMEA[a.getAttribute('href')];
+        if (g) { a.setAttribute('href', g[0]); a.textContent = g[1]; }
+      });
+      document.querySelectorAll('footer a').forEach((a) => {
+        const g = GEMEA[a.getAttribute('href')];
+        if (g) { a.setAttribute('href', g[0]); a.textContent = g[2]; }
+      });
+      const jogar = document.querySelector('.btn-play');
+      if (jogar) { jogar.setAttribute('href', '/?lang=en'); jogar.textContent = '▶ PLAY'; }
+      // as 3 linhas de prosa do rodapé: troca o texto inteiro quando acha o marcador PT
+      document.querySelectorAll('footer div').forEach((d) => {
+        const t = d.textContent;
+        if (t.includes('FPS de navegador, grátis e sem instalação'))
+          d.textContent = t.replace('FPS de navegador, grátis e sem instalação', 'Browser FPS, free, no install');
+        else if (t.includes('Paródia independente'))
+          d.textContent = 'Independent parody, not affiliated with Valve. Counter-Strike is a Valve Corporation trademark.';
+      });
+    }
+  } catch { /* storage bloqueado: fica PT */ }
+</script>
+</body>
+</html>

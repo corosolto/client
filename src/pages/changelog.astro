@@ -1,0 +1,241 @@
+---
+// /changelog - o CHANGELOG.md renderizado como página.
+//
+// O arquivo é lido do disco em BUILD TIME (a página é estática), então nenhuma
+// dependência de markdown entra no bundle e nenhum request extra acontece em
+// produção. O renderizador abaixo cobre exatamente o subconjunto de Markdown que
+// o CHANGELOG usa hoje - headings, listas, negrito, itálico, código e link -
+// e ESCAPA HTML antes de qualquer coisa, então conteúdo do arquivo nunca vira
+// marcação executável. Não é um parser de Markdown de propósito: instalar `marked`
+// exigiria rede, e o ganho seria zero pro que este arquivo precisa.
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+
+/* `?raw` (Vite) e NÃO `readFileSync(new URL('../../CHANGELOG.md', import.meta.url))`.
+   Os dois parecem "ler em build time", mas só este é.
+
+   O que quebrava: no build, esta página vira um chunk em
+   `dist/server/.prerender/chunks/changelog_*.mjs`. `import.meta.url` passa a apontar
+   para ALI, então a URL relativa resolvia para `dist/server/CHANGELOG.md` - que não
+   existe - e o prerender morria com ENOENT, derrubando o build inteiro:
+
+     [ERROR] ENOENT: no such file or directory, open '.../dist/server/CHANGELOG.md'
+
+   Ninguém tinha visto porque `npm run build` nunca havia rodado nesta árvore
+   (era o item B1 do HANDOFF). Com `?raw` o conteúdo é embutido no bundle pelo Vite:
+   não há caminho para resolver em runtime, e o deploy não depende de o .md estar lá. */
+import md from '../../CHANGELOG.md?raw';
+
+const esc = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// inline: `code`, **negrito**, _itálico_, [texto](url)
+function inline(s: string): string {
+  return esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^\w*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
+}
+
+interface Versao { versao: string; data: string; html: string }
+
+const versoes: Versao[] = [];
+let atual: { versao: string; data: string; linhas: string[] } | null = null;
+
+for (const raw of md.split('\n')) {
+  const h2 = raw.match(/^##\s+\[?([^\]\s]+)\]?\s*(?:\u2014|-)?\s*(.*)$/);
+  if (h2) {
+    if (atual) versoes.push({ versao: atual.versao, data: atual.data, html: render(atual.linhas) });
+    atual = { versao: h2[1], data: h2[2].trim(), linhas: [] };
+    continue;
+  }
+  if (atual) atual.linhas.push(raw);
+}
+if (atual) versoes.push({ versao: atual.versao, data: atual.data, html: render(atual.linhas) });
+
+function render(linhas: string[]): string {
+  const out: string[] = [];
+  let emLista = false;
+  const fechaLista = () => { if (emLista) { out.push('</ul>'); emLista = false; } };
+  for (const l of linhas) {
+    const h3 = l.match(/^###\s+(.*)$/);
+    if (h3) { fechaLista(); out.push(`<h3>${inline(h3[1])}</h3>`); continue; }
+    const li = l.match(/^\s*[-*]\s+(.*)$/);
+    if (li) {
+      if (!emLista) { out.push('<ul>'); emLista = true; }
+      out.push(`<li>${inline(li[1])}</li>`);
+      continue;
+    }
+    if (!l.trim()) { fechaLista(); continue; }
+    // continuação de item de lista (o CHANGELOG quebra linha dentro do bullet)
+    if (emLista) { out[out.length - 1] = out[out.length - 1].replace(/<\/li>$/, ' ' + inline(l.trim()) + '</li>'); continue; }
+    out.push(`<p>${inline(l.trim())}</p>`);
+  }
+  fechaLista();
+  return out.join('\n');
+}
+
+const recentes = versoes.slice(0, 12);
+const atualVer = versoes[0]?.versao ?? '';
+
+const jsonld = [
+  {
+    '@type': 'ItemList',
+    '@id': abs('/changelog') + '#lista',
+    name: `Histórico de versões do ${BRAND_FULL}`,
+    numberOfItems: recentes.length,
+    itemListElement: recentes.map((v, i) => ({
+      '@type': 'ListItem', position: i + 1, name: `v${v.versao}`,
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Changelog', item: abs('/changelog') },
+    ],
+  },
+  { '@id': GAME_ID, softwareVersion: atualVer },
+];
+---
+<Layout
+  title={`Changelog - o que mudou (v${atualVer}) | ${BRAND_FULL}`}
+  description={`Histórico de versões do ${BRAND_FULL}: novas facções, mapas, armas, ajustes de viewmodel, bots e correções, versão por versão.`}
+  jsonld={jsonld}
+  h1="Changelog"
+  kicker={`versão em produção · v${atualVer}`}
+  heroImg="/img/map-previews/piscina_treta.jpg"
+  heroPos="46%">
+  <Fragment slot="sub">
+    Tudo que mudou, versão por versão. A versão em produção é a <strong>v{atualVer}</strong>.
+    O arquivo completo vive em <code>CHANGELOG.md</code> no repositório - esta página é ele,
+    renderizado.
+  </Fragment>
+
+  {/* Campo de busca: o conteúdo dentro de um <details> FECHADO é invisível pro
+      Ctrl+F do navegador - é o problema que a issue #44 aponta no bônus. O filtro
+      abaixo procura no texto de TODAS as versões, abre as que casam e esconde as
+      que não. Sem JS ele não aparece (o <input> é inserido pelo script), então
+      nada se perde. */}
+  <div id="cl-busca-slot"></div>
+
+  {recentes.map((v, i) => (
+    /* id por versão = permalink. `v` na frente porque id não pode começar com
+       dígito em HTML4 e ferramenta antiga ainda tropeça nisso. */
+    <details id={`v${v.versao}`} open={i < 3} data-versao={v.versao}>
+      <summary>
+        <strong>v{v.versao}</strong>
+        {v.data && <span style="color:var(--bone-dim);font-size:11px;letter-spacing:2px"> · {v.data}</span>}
+        {/* Âncora REAL, não botão: sem JS ela ainda leva o navegador até a versão
+            certa (o <summary> é visível mesmo com o <details> fechado). O JS
+            transforma o clique em "copia o link" sem sair da página. */}
+        <a class="cl-perma" href={`#v${v.versao}`} title={`Link permanente para a v${v.versao}`}
+           aria-label={`Copiar link permanente da versão ${v.versao}`}>#</a>
+      </summary>
+      <div class="cl" set:html={v.html} />
+    </details>
+  ))}
+
+  {versoes.length > recentes.length && (
+    <p style="margin-top:18px">
+      Versões anteriores à v{recentes[recentes.length - 1].versao} estão no
+      <a href="https://github.com/rubenmarcus/csbrasil/blob/main/CHANGELOG.md" rel="noopener"> CHANGELOG.md</a>.
+    </p>
+  )}
+</Layout>
+
+<style is:global>
+/* o topo fixo cobriria a versão depois do salto pelo hash */
+#main details[id^="v"]{scroll-margin-top:calc(var(--topo) + 12px)}
+.cl-perma{margin-left:8px;color:var(--bone-dim);text-decoration:none;font-weight:bold;
+  opacity:0;transition:opacity .12s}
+summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{opacity:1}
+.cl-perma.copiado{color:var(--amber);opacity:1}
+#cl-busca{width:100%;max-width:340px;margin-bottom:16px;background:var(--panel-2);
+  border:1px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:12px;
+  padding:8px 10px}
+#cl-busca::placeholder{color:var(--bone-dim)}
+.cl-vazio{color:var(--bone-dim);font-size:13px;margin-bottom:16px}
+.cl h3{margin:16px 0 6px;color:var(--amber);font-size:12px}
+.cl ul{margin:4px 0 4px 4px}
+.cl li{font-size:13px;line-height:1.55}
+.cl p{font-size:13px;margin:6px 0}
+</style>
+
+<script is:inline>
+(function () {
+  var versoes = Array.prototype.slice.call(document.querySelectorAll('details[data-versao]'));
+  if (!versoes.length) return;
+
+  /* ---- hash -> abre e rola até a versão ----
+     getElementById e NÃO querySelector: os ids têm ponto ("v2.0.0-alpha.21") e
+     num seletor CSS o ponto vira classe. Escapar daria na mesma, mas
+     getElementById não precisa. */
+  function abrePeloHash() {
+    var h = location.hash.replace(/^#/, '');
+    if (!h) return;
+    var el = document.getElementById(h);
+    if (!el || el.tagName !== 'DETAILS') return;
+    el.open = true;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  abrePeloHash();
+  addEventListener('hashchange', abrePeloHash);
+
+  /* ---- o # copia o link permanente ----
+     preventDefault + stopPropagation porque o <a> vive dentro do <summary>, e
+     clique em summary alterna o <details>: sem isso, copiar o link FECHARIA a
+     versão que a pessoa acabou de abrir. */
+  versoes.forEach(function (d) {
+    var a = d.querySelector('.cl-perma');
+    if (!a) return;
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url = location.origin + location.pathname + '#' + d.id;
+      history.replaceState(null, '', '#' + d.id);
+      d.open = true;
+      var antes = a.textContent;
+      function ok() { a.textContent = 'copiado'; a.classList.add('copiado');
+        setTimeout(function () { a.textContent = antes; a.classList.remove('copiado'); }, 1400); }
+      // clipboard.writeText exige contexto seguro (https/localhost); em http
+      // simples ele nem existe, então mostramos a URL pra copiar à mão.
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(ok, function () { prompt('Copie o link:', url); });
+      } else { prompt('Copie o link:', url); }
+    });
+  });
+
+  /* ---- busca ----
+     Injetada por JS de propósito: um campo de filtro que não filtra (JS off) é
+     pior que campo nenhum. */
+  var slot = document.getElementById('cl-busca-slot');
+  if (!slot) return;
+  var input = document.createElement('input');
+  input.type = 'search'; input.id = 'cl-busca';
+  input.placeholder = 'filtrar versões… (ex: bots, viewmodel, 3.3)';
+  input.setAttribute('aria-label', 'Filtrar versões do changelog por texto');
+  var vazio = document.createElement('p');
+  vazio.className = 'cl-vazio'; vazio.hidden = true;
+  slot.appendChild(input); slot.appendChild(vazio);
+
+  var textos = versoes.map(function (d) {
+    return (d.getAttribute('data-versao') + ' ' + (d.textContent || '')).toLowerCase();
+  });
+  var abertoAntes = versoes.map(function (d) { return d.open; });
+
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var achou = 0;
+    versoes.forEach(function (d, i) {
+      if (!q) { d.hidden = false; d.open = abertoAntes[i]; achou++; return; }
+      var casa = textos[i].indexOf(q) !== -1;
+      d.hidden = !casa;
+      if (casa) { d.open = true; achou++; }
+    });
+    vazio.hidden = !q || achou > 0;
+    if (!vazio.hidden) vazio.textContent = 'Nenhuma versão menciona "' + input.value.trim() + '".';
+  });
+})();
+</script>

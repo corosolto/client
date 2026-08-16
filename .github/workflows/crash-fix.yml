@@ -1,0 +1,128 @@
+# crash-fix — quem ATENDE o repository_dispatch `prod-crash`.
+#
+# Disparado por duas fontes:
+#   · /api/jserror (src/pages/api/jserror.ts) — 1ª ocorrência de cada
+#     fingerprint de erro no navegador de quem joga;
+#   · prod-watch.yml — quando o probe de coerência do edge reprova.
+#
+# O QUE ELE FAZ, POR CLASSE (sem IA no CI — decisão do dono, 08/08):
+#   · cache-split ("does not provide an export", módulo 404, probe vermelho):
+#     remediação determinística = purge do edge Cloudflare + re-probe. A origem
+#     Vercel é imutável por deploy; o mix venenoso mora no cache. Se o probe
+#     fecha verde depois do purge, o incidente se encerrou sozinho.
+#   · código (qualquer outro erro): abre issue `crash-auto` com fingerprint,
+#     stack e versão, DEDUPLICADA por fingerprint. Corrigir código não é
+#     determinístico e a casa proíbe conserto sem régua — humano/agente local
+#     pega da issue. NENHUM commit na main sai daqui.
+#   · externo (extensão ou script cross-origin): preservado na telemetria bruta,
+#     mas encerra sem issue porque não pertence ao jogo.
+#   · recuperável (aviso do carregador do three: "Couldn't load texture" — textura
+#     embutida que não decodifica em navegador minoritário): o modelo carrega sem o
+#     mapa, o jogo não trava. Fica na telemetria, mas não dispara nem abre issue.
+#
+# SECRETS: CF_API_TOKEN (Zone → Cache Purge) — sem ele o purge é pulado e a
+# classe cache-split cai direto no probe (que já falha e vira issue).
+name: crash-fix
+on:
+  repository_dispatch:
+    types: [prod-crash]
+
+permissions:
+  contents: read
+  issues: write
+
+# Um atendimento por fingerprint: o segundo dispatch do mesmo erro espera o
+# primeiro terminar em vez de correr em paralelo (a coluna dispatched_at da
+# migration 020 já torna segundo dispatch raro).
+concurrency:
+  group: prod-crash-${{ github.event.client_payload.fingerprint }}
+  cancel-in-progress: false
+
+jobs:
+  atende:
+    runs-on: ubuntu-latest
+    env:
+      # no env DO JOB: `if` de step não enxerga o env do próprio step
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: { node-version: 22 }
+
+      - name: classifica o crash
+        id: cls
+        env:
+          MSG: ${{ github.event.client_payload.message }}
+          SRC: ${{ github.event.client_payload.source }}
+          STK: ${{ github.event.client_payload.stack }}
+          ORIGIN: ${{ github.event.client_payload.origin }}
+        run: node scripts/classify-crash.mjs >> "$GITHUB_OUTPUT"
+
+      - name: erro externo — preservado sem issue
+        if: steps.cls.outputs.classe == 'externo'
+        run: echo "origem externa confirmada; a linha bruta permanece na telemetria."
+
+      - name: purge do edge Cloudflare (classe cache-split)
+        if: steps.cls.outputs.classe == 'cache-split' && env.CF_API_TOKEN != ''
+        run: |
+          ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
+          curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
+          sleep 5   # o purge é assíncrono no edge
+
+      - name: re-probe do edge (classe cache-split)
+        id: reprobe
+        if: steps.cls.outputs.classe == 'cache-split'
+        run: node tools/eval/prod-coherence.mjs https://www.csbrasil.online
+
+      - name: remediado sozinho — encerra sem issue
+        if: steps.cls.outputs.classe == 'cache-split' && steps.reprobe.outcome == 'success'
+        run: echo "cache-split remediado com purge; edge coerente. Nada a corrigir no repo."
+
+      - name: issue deduplicada (bug de código, ou cache-split que o purge não resolveu)
+        # always() é OBRIGATÓRIO aqui: sem status function, o GitHub faz AND
+        # implícito com success() — e com o re-probe vermelho o job já está em
+        # falha, então a issue (o único registro persistente) nunca era criada.
+        if: >-
+          always() &&
+          (steps.cls.outputs.classe == 'codigo' ||
+          (steps.cls.outputs.classe == 'cache-split' && steps.reprobe.outcome == 'failure'))
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FP: ${{ github.event.client_payload.fingerprint }}
+          MSG: ${{ github.event.client_payload.message }}
+          SRC: ${{ github.event.client_payload.source }}
+          STK: ${{ github.event.client_payload.stack }}
+          VER: ${{ github.event.client_payload.version }}
+          CLASSE: ${{ steps.cls.outputs.classe }}
+        run: |
+          gh label create crash-auto --color B60205 --description "crash de produção reportado por /api/jserror ou prod-watch" --force
+          EXISTENTE=$(gh issue list --label crash-auto --state open --search "$FP" --json number --jq '.[0].number // empty')
+          CORPO=$(cat <<EOF
+          **Fingerprint:** \`$FP\`
+          **Classe:** $CLASSE
+          **Versão do jogo:** $VER
+          **Origem:** $SRC
+
+          **Mensagem:**
+          \`\`\`
+          $MSG
+          \`\`\`
+
+          **Stack:**
+          \`\`\`
+          $STK
+          \`\`\`
+
+          _Aberta pelo crash-fix.yml (repository_dispatch prod-crash). Linha completa na tabela \`js_error\` do Supabase._
+          EOF
+          )
+          if [ -n "$EXISTENTE" ]; then
+            gh issue comment "$EXISTENTE" --body "Nova ocorrência escalada (versão $VER). $MSG"
+            echo "issue #$EXISTENTE já existia — comentada, não duplicada."
+          else
+            gh issue create --label crash-auto --title "crash em produção: $MSG" --body "$CORPO"
+          fi

@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/arena/minimal_arena.gd" id="1_arena"]
+
+[node name="MinimalArena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Decor" type="Node3D" parent="."]
+
+[node name="Skyline" type="Node3D" parent="."]
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-55, -35, 0)
+light_color = Color(1, 0.9, 0.76, 1)
+light_energy = 1.15
+shadow_enabled = true

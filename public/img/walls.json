@@ -1,0 +1,21 @@
+{
+  "walls": [
+    "/img/wall-1.webp",
+    "/img/wall-2.webp",
+    "/img/wall-3.webp",
+    "/img/wall-4.webp",
+    "/img/wall-5.webp",
+    "/img/wall-6.webp",
+    "/img/wall-7.webp",
+    "/img/wall-8.webp",
+    "/img/wall-9.webp"
+  ],
+  "loading": [
+    "/img/loading-1.webp",
+    "/img/loading-2.webp",
+    "/img/loading-3.webp",
+    "/img/loading-4.webp",
+    "/img/loading-5.webp",
+    "/img/loading-6.webp"
+  ]
+}

@@ -1,0 +1,1402 @@
+{
+ "versao": "BASELINE-v2",
+ "gerado": "2026-08-02T18:56:54.352Z",
+ "commitBase": "0a19b7d (baseline)",
+ "como": {
+  "enquadramento": "node tools/eval/vm-mint-audit.mjs   (recuoZ + trava nearX + VM_OFF + V0 lidos do codigo)",
+  "coice": "node tools/eval/vm-kick-sim.mjs --json",
+  "bot": "SIM_SHOOTGATE=1 node tools/eval/botdiag.mjs <segundos> all",
+  "invariantes": "node tools/eval/invariants.mjs",
+  "frameCheck": "node tools/eval/vm-frame-check.mjs"
+ },
+ "lente": {
+  "V0deg": 80,
+  "halfTanH": 1.4917,
+  "vmOff": [
+   0.03,
+   -0.23,
+   0
+  ]
+ },
+ "tuningVM": {
+  "recuoZ": 1.1,
+  "nearX": 1.05,
+  "tanBarrel": 0.3,
+  "vmScale": 0.72,
+  "tanH": 0.67,
+  "adsPullZ": 0.02
+ },
+ "coiceFonte": {
+  "recoilAxis": {
+   "freq": 11,
+   "damping": 0.5,
+   "residualTau": 0.28,
+   "residualShare": 0.3
+  },
+  "vmAmp": {
+   "cap": 1.7,
+   "base": 0.42,
+   "fallback": 1.4,
+   "mul": 0.3,
+   "scoped": 0.7
+  },
+  "kickMulPistola": 0.5,
+  "ganhos": {
+   "rotX": 0.22,
+   "rotY": 0.05,
+   "rotZ": 0.06,
+   "posY": 0.045,
+   "posZ": 0.15
+  },
+  "dt": 0.008333333333333333,
+  "tiros": 30,
+  "nearPlane": 0.01,
+  "coronhaDe": "tools/eval/vm_mint_audit.json (coronhaZ / escalaVM*|bboxMin.z|)"
+ },
+ "enquadramento": {
+  "armas": {
+   "awp": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.75,
+      0.966
+     ],
+     "3:2": [
+      0.75,
+      0.893
+     ]
+    },
+    "gripDeltaY": 0.073,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.215,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.66,
+     "3:2": 3
+    },
+    "bordaEsq": 0.615
+   },
+   "ak": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.748,
+      0.946
+     ],
+     "3:2": [
+      0.748,
+      0.876
+     ]
+    },
+    "gripDeltaY": 0.07,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.18,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.13,
+     "3:2": 3.52
+    },
+    "bordaEsq": 0.626
+   },
+   "m4": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.75,
+      0.961
+     ],
+     "3:2": [
+      0.75,
+      0.889
+     ]
+    },
+    "gripDeltaY": 0.072,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.172,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.69,
+     "3:2": 4.08
+    },
+    "bordaEsq": 0.628
+   },
+   "mp5": {
+    "classe": "smg",
+    "gripTela": {
+     "16:9": [
+      0.753,
+      1.013
+     ],
+     "3:2": [
+      0.753,
+      0.933
+     ]
+    },
+    "gripDeltaY": 0.08,
+    "gripForaDaTela": {
+     "16:9": true,
+     "3:2": false
+    },
+    "coronhaZ": -0.149,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.67,
+     "3:2": 3.3
+    },
+    "bordaEsq": 0.644
+   },
+   "shotgun": {
+    "classe": "shotgun",
+    "gripTela": {
+     "16:9": [
+      0.745,
+      0.892
+     ],
+     "3:2": [
+      0.745,
+      0.831
+     ]
+    },
+    "gripDeltaY": 0.061,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.215,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.57,
+     "3:2": 3.01
+    },
+    "bordaEsq": 0.629
+   },
+   "deagle": {
+    "classe": "pistol",
+    "gripTela": {
+     "16:9": [
+      0.76,
+      1.103
+     ],
+     "3:2": [
+      0.76,
+      1.009
+     ]
+    },
+    "gripDeltaY": 0.094,
+    "gripForaDaTela": {
+     "16:9": true,
+     "3:2": true
+    },
+    "coronhaZ": -0.219,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 1.31,
+     "3:2": 1.98
+    },
+    "bordaEsq": 0.662
+   },
+   "pistol": {
+    "classe": "pistol",
+    "gripTela": {
+     "16:9": [
+      0.76,
+      1.103
+     ],
+     "3:2": [
+      0.76,
+      1.009
+     ]
+    },
+    "gripDeltaY": 0.094,
+    "gripForaDaTela": {
+     "16:9": true,
+     "3:2": true
+    },
+    "coronhaZ": -0.228,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 1.4,
+     "3:2": 2.23
+    },
+    "bordaEsq": 0.672
+   },
+   "knife": {
+    "classe": "knife",
+    "gripTela": {
+     "16:9": [
+      0.764,
+      1.161
+     ],
+     "3:2": [
+      0.764,
+      1.058
+     ]
+    },
+    "gripDeltaY": 0.103,
+    "gripForaDaTela": {
+     "16:9": true,
+     "3:2": true
+    },
+    "coronhaZ": -0.167,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 0.27,
+     "3:2": 0.5
+    },
+    "bordaEsq": 0.675
+   },
+   "m92": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.748,
+      0.942
+     ],
+     "3:2": [
+      0.748,
+      0.873
+     ]
+    },
+    "gripDeltaY": 0.069,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.206,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 4.08,
+     "3:2": 5.09
+    },
+    "bordaEsq": 0.631
+   },
+   "g3": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.745,
+      0.897
+     ],
+     "3:2": [
+      0.745,
+      0.835
+     ]
+    },
+    "gripDeltaY": 0.062,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.211,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.05,
+     "3:2": 3.43
+    },
+    "bordaEsq": 0.637
+   },
+   "akm": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.748,
+      0.946
+     ],
+     "3:2": [
+      0.748,
+      0.876
+     ]
+    },
+    "gripDeltaY": 0.07,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.18,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.13,
+     "3:2": 3.35
+    },
+    "bordaEsq": 0.625
+   },
+   "revolver38": {
+    "classe": "pistol",
+    "gripTela": {
+     "16:9": [
+      0.76,
+      1.103
+     ],
+     "3:2": [
+      0.76,
+      1.009
+     ]
+    },
+    "gripDeltaY": 0.094,
+    "gripForaDaTela": {
+     "16:9": true,
+     "3:2": true
+    },
+    "coronhaZ": -0.229,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 1.06,
+     "3:2": 1.61
+    },
+    "bordaEsq": 0.679
+   },
+   "md97": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.747,
+      0.93
+     ],
+     "3:2": [
+      0.747,
+      0.863
+     ]
+    },
+    "gripDeltaY": 0.067,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.189,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.47,
+     "3:2": 2.95
+    },
+    "bordaEsq": 0.623
+   },
+   "carbine": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.745,
+      0.898
+     ],
+     "3:2": [
+      0.745,
+      0.836
+     ]
+    },
+    "gripDeltaY": 0.062,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.211,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.14,
+     "3:2": 2.53
+    },
+    "bordaEsq": 0.63
+   },
+   "m400": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.75,
+      0.966
+     ],
+     "3:2": [
+      0.75,
+      0.893
+     ]
+    },
+    "gripDeltaY": 0.073,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.182,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.23,
+     "3:2": 4.02
+    },
+    "bordaEsq": 0.626
+   },
+   "mosin": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.75,
+      0.966
+     ],
+     "3:2": [
+      0.75,
+      0.893
+     ]
+    },
+    "gripDeltaY": 0.073,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.176,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.44,
+     "3:2": 2.59
+    },
+    "bordaEsq": 0.614
+   },
+   "rem700": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.75,
+      0.966
+     ],
+     "3:2": [
+      0.75,
+      0.893
+     ]
+    },
+    "gripDeltaY": 0.073,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.176,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.71,
+     "3:2": 2.91
+    },
+    "bordaEsq": 0.613
+   },
+   "lmg": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.749,
+      0.947
+     ],
+     "3:2": [
+      0.749,
+      0.877
+     ]
+    },
+    "gripDeltaY": 0.07,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.179,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.45,
+     "3:2": 4.2
+    },
+    "bordaEsq": 0.637
+   },
+   "scar": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.748,
+      0.938
+     ],
+     "3:2": [
+      0.748,
+      0.87
+     ]
+    },
+    "gripDeltaY": 0.068,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.184,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 4.05,
+     "3:2": 4.5
+    },
+    "bordaEsq": 0.63
+   },
+   "tavor": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.747,
+      0.922
+     ],
+     "3:2": [
+      0.747,
+      0.856
+     ]
+    },
+    "gripDeltaY": 0.066,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.194,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.08,
+     "3:2": 3.69
+    },
+    "bordaEsq": 0.65
+   },
+   "famas": {
+    "classe": "rifle",
+    "gripTela": {
+     "16:9": [
+      0.746,
+      0.906
+     ],
+     "3:2": [
+      0.746,
+      0.843
+     ]
+    },
+    "gripDeltaY": 0.063,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.205,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.93,
+     "3:2": 3.54
+    },
+    "bordaEsq": 0.651
+   },
+   "uzi": {
+    "classe": "smg",
+    "gripTela": {
+     "16:9": [
+      0.752,
+      0.991
+     ],
+     "3:2": [
+      0.752,
+      0.914
+     ]
+    },
+    "gripDeltaY": 0.077,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.267,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.21,
+     "3:2": 2.94
+    },
+    "bordaEsq": 0.679
+   },
+   "p90": {
+    "classe": "smg",
+    "gripTela": {
+     "16:9": [
+      0.752,
+      0.991
+     ],
+     "3:2": [
+      0.752,
+      0.914
+     ]
+    },
+    "gripDeltaY": 0.077,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.201,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.28,
+     "3:2": 3.1
+    },
+    "bordaEsq": 0.656
+   },
+   "svd": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.749,
+      0.949
+     ],
+     "3:2": [
+      0.749,
+      0.879
+     ]
+    },
+    "gripDeltaY": 0.07,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.178,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.72,
+     "3:2": 3.19
+    },
+    "bordaEsq": 0.623
+   },
+   "g3sg1": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.745,
+      0.892
+     ],
+     "3:2": [
+      0.745,
+      0.831
+     ]
+    },
+    "gripDeltaY": 0.061,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.215,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 3.2,
+     "3:2": 3.79
+    },
+    "bordaEsq": 0.633
+   },
+   "sks": {
+    "classe": "sniper",
+    "gripTela": {
+     "16:9": [
+      0.748,
+      0.934
+     ],
+     "3:2": [
+      0.748,
+      0.866
+     ]
+    },
+    "gripDeltaY": 0.068,
+    "gripForaDaTela": {
+     "16:9": false,
+     "3:2": false
+    },
+    "coronhaZ": -0.187,
+    "anguloCanoGraus": 16.7,
+    "areaPct": {
+     "16:9": 2.32,
+     "3:2": 2.7
+    },
+    "bordaEsq": 0.628
+   }
+  },
+  "resumo": {
+   "anguloCanoGrausTodas": 16.7,
+   "gripXtodas": "0.745-0.764 da largura (constante por construcao: gx = Zg*tanH)",
+   "gripYmin169": 0.892,
+   "gripYmax169": 1.161,
+   "gripYmin32": 0.831,
+   "gripYmax32": 1.058,
+   "gripDeltaYmax": 0.103,
+   "armasComGripForaDaTela169": [
+    "mp5",
+    "deagle",
+    "pistol",
+    "knife",
+    "revolver38"
+   ],
+   "armasComGripForaDaTela32": [
+    "deagle",
+    "pistol",
+    "knife",
+    "revolver38"
+   ],
+   "coronhaZmin": -0.267,
+   "coronhaZmax": -0.149,
+   "areaPct169": [
+    0.27,
+    4.08
+   ],
+   "reprovacoesDoAuditor": 91
+  }
+ },
+ "coice": {
+  "armas": {
+   "awp": {
+    "rate": 1.7,
+    "recDeg": 4.9,
+    "vmAmp": 1.7,
+    "kPico1Tiro": 1.461,
+    "kPicoRajada": 1.462,
+    "kSustentado": 1.462,
+    "pitchMaxGraus": 18.43,
+    "pullZmax": 0.219,
+    "coronhaBack": 0.181,
+    "coronhaZrepouso": -0.215,
+    "coronhaZpico": 0.004,
+    "atravessaNear": true
+   },
+   "mosin": {
+    "rate": 1.5,
+    "recDeg": 4.7,
+    "vmAmp": 1.7,
+    "kPico1Tiro": 1.461,
+    "kPicoRajada": 1.464,
+    "kSustentado": 1.464,
+    "pitchMaxGraus": 18.45,
+    "pullZmax": 0.22,
+    "coronhaBack": 0.22,
+    "coronhaZrepouso": -0.176,
+    "coronhaZpico": 0.044,
+    "atravessaNear": true
+   },
+   "rem700": {
+    "rate": 1.5,
+    "recDeg": 4.8,
+    "vmAmp": 1.7,
+    "kPico1Tiro": 1.461,
+    "kPicoRajada": 1.464,
+    "kSustentado": 1.464,
+    "pitchMaxGraus": 18.45,
+    "pullZmax": 0.22,
+    "coronhaBack": 0.22,
+    "coronhaZrepouso": -0.176,
+    "coronhaZpico": 0.044,
+    "atravessaNear": true
+   },
+   "shotgun": {
+    "rate": 0.9,
+    "recDeg": 3.4,
+    "vmAmp": 1.44,
+    "kPico1Tiro": 1.238,
+    "kPicoRajada": 1.255,
+    "kSustentado": 1.255,
+    "pitchMaxGraus": 15.82,
+    "pullZmax": 0.188,
+    "coronhaBack": 0.288,
+    "coronhaZrepouso": -0.215,
+    "coronhaZpico": -0.027,
+    "atravessaNear": false
+   },
+   "md97": {
+    "rate": 0.12,
+    "recDeg": 1.65,
+    "vmAmp": 0.915,
+    "kPico1Tiro": 0.787,
+    "kPicoRajada": 1.26,
+    "kSustentado": 1.26,
+    "pitchMaxGraus": 15.89,
+    "pullZmax": 0.189,
+    "coronhaBack": 0.253,
+    "coronhaZrepouso": -0.189,
+    "coronhaZpico": 0,
+    "atravessaNear": true
+   },
+   "m400": {
+    "rate": 0.11,
+    "recDeg": 1.5,
+    "vmAmp": 0.87,
+    "kPico1Tiro": 0.748,
+    "kPicoRajada": 1.241,
+    "kSustentado": 1.241,
+    "pitchMaxGraus": 15.64,
+    "pullZmax": 0.186,
+    "coronhaBack": 0.214,
+    "coronhaZrepouso": -0.182,
+    "coronhaZpico": 0.004,
+    "atravessaNear": true
+   },
+   "svd": {
+    "rate": 0.28,
+    "recDeg": 1.9,
+    "vmAmp": 0.99,
+    "kPico1Tiro": 0.851,
+    "kPicoRajada": 1.016,
+    "kSustentado": 1.016,
+    "pitchMaxGraus": 12.8,
+    "pullZmax": 0.152,
+    "coronhaBack": 0.238,
+    "coronhaZrepouso": -0.178,
+    "coronhaZpico": -0.026,
+    "atravessaNear": false
+   },
+   "g3sg1": {
+    "rate": 0.22,
+    "recDeg": 1.7,
+    "vmAmp": 0.93,
+    "kPico1Tiro": 0.799,
+    "kPicoRajada": 1.019,
+    "kSustentado": 1.019,
+    "pitchMaxGraus": 12.84,
+    "pullZmax": 0.153,
+    "coronhaBack": 0.288,
+    "coronhaZrepouso": -0.215,
+    "coronhaZpico": -0.062,
+    "atravessaNear": false
+   },
+   "sks": {
+    "rate": 0.18,
+    "recDeg": 1.5,
+    "vmAmp": 0.87,
+    "kPico1Tiro": 0.748,
+    "kPicoRajada": 1.022,
+    "kSustentado": 1.022,
+    "pitchMaxGraus": 12.88,
+    "pullZmax": 0.153,
+    "coronhaBack": 0.25,
+    "coronhaZrepouso": -0.187,
+    "coronhaZpico": -0.034,
+    "atravessaNear": false
+   },
+   "carbine": {
+    "rate": 0.5,
+    "recDeg": 1.9,
+    "vmAmp": 0.99,
+    "kPico1Tiro": 0.851,
+    "kPicoRajada": 0.909,
+    "kSustentado": 0.907,
+    "pitchMaxGraus": 11.46,
+    "pullZmax": 0.136,
+    "coronhaBack": 0.282,
+    "coronhaZrepouso": -0.211,
+    "coronhaZpico": -0.075,
+    "atravessaNear": false
+   },
+   "ak": {
+    "rate": 0.1,
+    "recDeg": 1.6,
+    "vmAmp": 0.9,
+    "kPico1Tiro": 0.774,
+    "kPicoRajada": 1.356,
+    "kSustentado": 1.339,
+    "pitchMaxGraus": 17.09,
+    "pullZmax": 0.203,
+    "coronhaBack": 0.24,
+    "coronhaZrepouso": -0.18,
+    "coronhaZpico": 0.023,
+    "atravessaNear": true
+   },
+   "akm": {
+    "rate": 0.105,
+    "recDeg": 1.72,
+    "vmAmp": 0.936,
+    "kPico1Tiro": 0.805,
+    "kPicoRajada": 1.389,
+    "kSustentado": 1.389,
+    "pitchMaxGraus": 17.51,
+    "pullZmax": 0.208,
+    "coronhaBack": 0.24,
+    "coronhaZrepouso": -0.18,
+    "coronhaZpico": 0.028,
+    "atravessaNear": true
+   },
+   "m92": {
+    "rate": 0.1,
+    "recDeg": 1.5,
+    "vmAmp": 0.87,
+    "kPico1Tiro": 0.748,
+    "kPicoRajada": 1.311,
+    "kSustentado": 1.294,
+    "pitchMaxGraus": 16.52,
+    "pullZmax": 0.197,
+    "coronhaBack": 0.219,
+    "coronhaZrepouso": -0.206,
+    "coronhaZpico": -0.009,
+    "atravessaNear": true
+   },
+   "g3": {
+    "rate": 0.11,
+    "recDeg": 1.75,
+    "vmAmp": 0.945,
+    "kPico1Tiro": 0.812,
+    "kPicoRajada": 1.348,
+    "kSustentado": 1.348,
+    "pitchMaxGraus": 16.99,
+    "pullZmax": 0.202,
+    "coronhaBack": 0.283,
+    "coronhaZrepouso": -0.211,
+    "coronhaZpico": -0.009,
+    "atravessaNear": true
+   },
+   "scar": {
+    "rate": 0.11,
+    "recDeg": 1.45,
+    "vmAmp": 0.855,
+    "kPico1Tiro": 0.735,
+    "kPicoRajada": 1.22,
+    "kSustentado": 1.219,
+    "pitchMaxGraus": 15.37,
+    "pullZmax": 0.183,
+    "coronhaBack": 0.246,
+    "coronhaZrepouso": -0.184,
+    "coronhaZpico": -0.001,
+    "atravessaNear": true
+   },
+   "m4": {
+    "rate": 0.09,
+    "recDeg": 1.35,
+    "vmAmp": 0.825,
+    "kPico1Tiro": 0.709,
+    "kPicoRajada": 1.341,
+    "kSustentado": 1.34,
+    "pitchMaxGraus": 16.91,
+    "pullZmax": 0.201,
+    "coronhaBack": 0.23,
+    "coronhaZrepouso": -0.172,
+    "coronhaZpico": 0.029,
+    "atravessaNear": true
+   },
+   "tavor": {
+    "rate": 0.09,
+    "recDeg": 1.3,
+    "vmAmp": 0.81,
+    "kPico1Tiro": 0.696,
+    "kPicoRajada": 1.317,
+    "kSustentado": 1.316,
+    "pitchMaxGraus": 16.6,
+    "pullZmax": 0.198,
+    "coronhaBack": 0.259,
+    "coronhaZrepouso": -0.194,
+    "coronhaZpico": 0.004,
+    "atravessaNear": true
+   },
+   "famas": {
+    "rate": 0.075,
+    "recDeg": 1.25,
+    "vmAmp": 0.795,
+    "kPico1Tiro": 0.683,
+    "kPicoRajada": 1.374,
+    "kSustentado": 1.362,
+    "pitchMaxGraus": 17.32,
+    "pullZmax": 0.206,
+    "coronhaBack": 0.274,
+    "coronhaZrepouso": -0.205,
+    "coronhaZpico": 0.001,
+    "atravessaNear": true
+   },
+   "lmg": {
+    "rate": 0.085,
+    "recDeg": 1.5,
+    "vmAmp": 0.87,
+    "kPico1Tiro": 0.748,
+    "kPicoRajada": 1.415,
+    "kSustentado": 1.414,
+    "pitchMaxGraus": 17.83,
+    "pullZmax": 0.212,
+    "coronhaBack": 0.239,
+    "coronhaZrepouso": -0.179,
+    "coronhaZpico": 0.033,
+    "atravessaNear": true
+   },
+   "mp5": {
+    "rate": 0.075,
+    "recDeg": 0.95,
+    "vmAmp": 0.705,
+    "kPico1Tiro": 0.606,
+    "kPicoRajada": 1.219,
+    "kSustentado": 1.208,
+    "pitchMaxGraus": 15.36,
+    "pullZmax": 0.183,
+    "coronhaBack": 0.199,
+    "coronhaZrepouso": -0.149,
+    "coronhaZpico": 0.034,
+    "atravessaNear": true
+   },
+   "uzi": {
+    "rate": 0.07,
+    "recDeg": 0.9,
+    "vmAmp": 0.69,
+    "kPico1Tiro": 0.593,
+    "kPicoRajada": 1.246,
+    "kSustentado": 1.243,
+    "pitchMaxGraus": 15.7,
+    "pullZmax": 0.187,
+    "coronhaBack": 0.102,
+    "coronhaZrepouso": -0.267,
+    "coronhaZpico": -0.08,
+    "atravessaNear": false
+   },
+   "p90": {
+    "rate": 0.065,
+    "recDeg": 0.85,
+    "vmAmp": 0.675,
+    "kPico1Tiro": 0.58,
+    "kPicoRajada": 1.295,
+    "kSustentado": 1.289,
+    "pitchMaxGraus": 16.32,
+    "pullZmax": 0.194,
+    "coronhaBack": 0.168,
+    "coronhaZrepouso": -0.201,
+    "coronhaZpico": -0.007,
+    "atravessaNear": true
+   },
+   "deagle": {
+    "rate": 0.28,
+    "recDeg": 2.3,
+    "vmAmp": 1.11,
+    "kPico1Tiro": 0.477,
+    "kPicoRajada": 0.569,
+    "kSustentado": 0.569,
+    "pitchMaxGraus": 7.18,
+    "pullZmax": 0.085,
+    "coronhaBack": 0.065,
+    "coronhaZrepouso": -0.219,
+    "coronhaZpico": -0.134,
+    "atravessaNear": false
+   },
+   "revolver38": {
+    "rate": 0.36,
+    "recDeg": 2,
+    "vmAmp": 1.02,
+    "kPico1Tiro": 0.438,
+    "kPicoRajada": 0.493,
+    "kSustentado": 0.493,
+    "pitchMaxGraus": 6.22,
+    "pullZmax": 0.074,
+    "coronhaBack": 0.055,
+    "coronhaZrepouso": -0.229,
+    "coronhaZpico": -0.155,
+    "atravessaNear": false
+   },
+   "pistol": {
+    "rate": 0.24,
+    "recDeg": 1.15,
+    "vmAmp": 0.765,
+    "kPico1Tiro": 0.329,
+    "kPicoRajada": 0.41,
+    "kSustentado": 0.41,
+    "pitchMaxGraus": 5.17,
+    "pullZmax": 0.062,
+    "coronhaBack": 0.056,
+    "coronhaZrepouso": -0.228,
+    "coronhaZpico": -0.166,
+    "atravessaNear": false
+   },
+   "knife": {
+    "rate": 0.55,
+    "recDeg": 0.5,
+    "vmAmp": 0.57,
+    "kPico1Tiro": 0.49,
+    "kPicoRajada": 0.517,
+    "kSustentado": 0.516,
+    "pitchMaxGraus": 6.52,
+    "pullZmax": 0.078,
+    "coronhaBack": 0.086,
+    "coronhaZrepouso": -0.167,
+    "coronhaZpico": -0.089,
+    "atravessaNear": false
+   }
+  },
+  "resumo": {
+   "armas": 26,
+   "atravessamNear": 16,
+   "pitchMaxGraus": 18.45,
+   "pitchMedioGraus": 14.51,
+   "pitchAK": 17.09,
+   "coronhaPicoAK": 0.023,
+   "armasQueAtravessamNear": [
+    "awp",
+    "mosin",
+    "rem700",
+    "md97",
+    "m400",
+    "ak",
+    "akm",
+    "m92",
+    "g3",
+    "scar",
+    "m4",
+    "tavor",
+    "famas",
+    "lmg",
+    "mp5",
+    "p90"
+   ],
+   "reprovacoes": 38
+  }
+ },
+ "bot": {
+  "metrica": "viu-e-nao-atirou: tempo com (target==jogador && LOS livre && inRange) x tiros; episodio mudo = >1.5 s sem disparar",
+  "corrida60s": {
+   "porMapa": [
+    {
+     "map": "praca_poderes",
+     "bots": 7,
+     "tCondS": 49.567,
+     "tiros": 45.333,
+     "tirosPorSegCond": 0.837,
+     "episodios": 8,
+     "epiMudos": 0,
+     "epiMudosPorMin": 0,
+     "pctTempoMudo": 0,
+     "maiorMudoS": 0,
+     "motivoTop": "-",
+     "motivos": {}
+    },
+    {
+     "map": "piscina_treta",
+     "bots": 7,
+     "tCondS": 11.733,
+     "tiros": 6.667,
+     "tirosPorSegCond": 0.19,
+     "episodios": 2.667,
+     "epiMudos": 0,
+     "epiMudosPorMin": 0,
+     "pctTempoMudo": 0,
+     "maiorMudoS": 0,
+     "motivoTop": "-",
+     "motivos": {}
+    },
+    {
+     "map": "loja_h",
+     "bots": 7,
+     "tCondS": 12.767,
+     "tiros": 8,
+     "tirosPorSegCond": 0.635,
+     "episodios": 7.667,
+     "epiMudos": 0,
+     "epiMudosPorMin": 0,
+     "pctTempoMudo": 0,
+     "maiorMudoS": 0,
+     "motivoTop": "-",
+     "motivos": {}
+    },
+    {
+     "map": "ferro_velho",
+     "bots": 7,
+     "tCondS": 56.133,
+     "tiros": 44.667,
+     "tirosPorSegCond": 0.823,
+     "episodios": 18.333,
+     "epiMudos": 0.333,
+     "epiMudosPorMin": 0.333,
+     "pctTempoMudo": 1,
+     "maiorMudoS": 1.73,
+     "motivoTop": "focusUntil 28%",
+     "motivos": {
+      "focusUntil": 28,
+      "hasTurn": 28,
+      "nextShotAt": 21,
+      "reactAt": 20,
+      "|dy|>0.3": 4
+     }
+    }
+   ],
+   "resumo": [
+    "SHOOTGATE (>1.5s vendo o jogador SEM atirar) | episodios mudos 0.3 | /min/mapa 0.08 | tempo em condicao 130s | % do tempo mudo 1.3% | maior silencio 1.73s | tiros/s em condicao 0.804",
+    "MOTIVOS focusUntil 28% | hasTurn 28% | nextShotAt 21% | reactAt 20% | |dy|>0.3 4%"
+   ],
+   "episodiosMudosTotal": 0.333,
+   "tempoCondS": 130.2,
+   "motivos": {
+    "focusUntil": 28,
+    "hasTurn": 28,
+    "nextShotAt": 21,
+    "reactAt": 20,
+    "|dy|>0.3": 4
+   }
+  },
+  "corrida180s": {
+   "porMapa": [
+    {
+     "map": "praca_poderes",
+     "bots": 7,
+     "tCondS": 128.067,
+     "tiros": 110.667,
+     "tirosPorSegCond": 0.794,
+     "episodios": 26.667,
+     "epiMudos": 1,
+     "epiMudosPorMin": 0.333,
+     "pctTempoMudo": 2.7,
+     "maiorMudoS": 4.63,
+     "motivoTop": "hasTurn 53%",
+     "motivos": {
+      "hasTurn": 53,
+      "focusUntil": 23,
+      "reactAt": 12,
+      "nextShotAt": 10,
+      "|dy|>0.3": 1
+     }
+    },
+    {
+     "map": "piscina_treta",
+     "bots": 7,
+     "tCondS": 36,
+     "tiros": 19.333,
+     "tirosPorSegCond": 0.414,
+     "episodios": 14.333,
+     "epiMudos": 0,
+     "epiMudosPorMin": 0,
+     "pctTempoMudo": 0,
+     "maiorMudoS": 0,
+     "motivoTop": "-",
+     "motivos": {}
+    },
+    {
+     "map": "loja_h",
+     "bots": 7,
+     "tCondS": 81.767,
+     "tiros": 59,
+     "tirosPorSegCond": 0.643,
+     "episodios": 26.333,
+     "epiMudos": 0,
+     "epiMudosPorMin": 0,
+     "pctTempoMudo": 0,
+     "maiorMudoS": 0,
+     "motivoTop": "-",
+     "motivos": {}
+    },
+    {
+     "map": "ferro_velho",
+     "bots": 7,
+     "tCondS": 153.367,
+     "tiros": 121.333,
+     "tirosPorSegCond": 0.825,
+     "episodios": 45.333,
+     "epiMudos": 0.667,
+     "epiMudosPorMin": 0.22,
+     "pctTempoMudo": 0.8,
+     "maiorMudoS": 2,
+     "motivoTop": "focusUntil 26%",
+     "motivos": {
+      "focusUntil": 26,
+      "hasTurn": 22,
+      "reactAt": 19,
+      "reloadUntil": 18,
+      "nextShotAt": 12,
+      "|dy|>0.3": 3
+     }
+    }
+   ],
+   "resumo": [
+    "SHOOTGATE (>1.5s vendo o jogador SEM atirar) | episodios mudos 1.7 | /min/mapa 0.14 | tempo em condicao 399s | % do tempo mudo 3.6% | maior silencio 4.63s | tiros/s em condicao 0.777",
+    "MOTIVOS hasTurn 38% | focusUntil 24% | reactAt 15% | nextShotAt 11% | reloadUntil 9% | |dy|>0.3 2%"
+   ],
+   "episodiosMudosTotal": 1.667,
+   "tempoCondS": 399.201,
+   "motivos": {
+    "hasTurn": 38,
+    "focusUntil": 25,
+    "reactAt": 16,
+    "nextShotAt": 11,
+    "reloadUntil": 9,
+    "|dy|>0.3": 2
+   }
+  },
+  "parametros": {
+   "segundos": [
+    60,
+    180
+   ],
+   "mapas": [
+    "praca_poderes",
+    "piscina_treta",
+    "loja_h",
+    "ferro_velho"
+   ],
+   "sementes": [
+    12345,
+    777,
+    4242
+   ],
+   "bots": 7,
+   "limiarMudoS": 1.5
+  }
+ },
+ "invariantes": {
+  "total": 29,
+  "quebradas": [
+   {
+    "id": "VM3",
+    "desc": "ângulo do cano ≤ 16° em todas as armas",
+    "evid": "máx 16.7°",
+    "sev": "crit"
+   },
+   {
+    "id": "VM5",
+    "desc": "área da arma na tela entre 3% e 14%",
+    "evid": "0.3% a 4.1%",
+    "sev": "crit"
+   },
+   {
+    "id": "VM7",
+    "desc": "grip no MESMO ponto vertical em 16:9 e 3:2 (Δ ≤ 0,03) e dentro da tela",
+    "evid": "Δy máx 0.103 | grip 16:9 mais baixo 1.161 da altura",
+    "sev": "crit"
+   },
+   {
+    "id": "VM8",
+    "desc": "a coronha NÃO cruza o near plane no pico do coice",
+    "evid": "16/26 armas cruzam (pior 0.044)",
+    "sev": "crit"
+   },
+   {
+    "id": "VM9",
+    "desc": "pitch do viewmodel no pico ≤ 8° (o REC_DEG declarado é ≤ 4,9°)",
+    "evid": "máx 18.4° (mosin)",
+    "sev": "crit"
+   },
+   {
+    "id": "BOT1",
+    "desc": "bot não fica indo de lado (latFlips ≤ 12/min)",
+    "evid": "13.9/min",
+    "sev": "warn"
+   }
+  ],
+  "passam": [
+   "SYN",
+   "VM1",
+   "VM2",
+   "VM4",
+   "VM6",
+   "RIG",
+   "TPM1",
+   "BOT2",
+   "BOT3",
+   "BOT4",
+   "BOT5",
+   "BOT6",
+   "BOT7",
+   "ARM1",
+   "ARM2",
+   "ARM4",
+   "ARM5",
+   "ESP1",
+   "MOD1"
+  ],
+  "puladas": [
+   {
+    "id": "PX1",
+    "porque": "exige browser — use tools/eval/motion.mjs"
+   },
+   {
+    "id": "PX2",
+    "porque": "exige browser — use tools/eval/motion.mjs"
+   },
+   {
+    "id": "PX3",
+    "porque": "exige browser/traço — use tools/eval/motion.mjs"
+   },
+   {
+    "id": "PX4",
+    "porque": "exige browser"
+   }
+  ]
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "gerado": "2026-08-05T01:13:28.642Z",
+ "mutante": null,
+ "refs": [
+  "mandrake",
+  "pagodeiro"
+ ],
+ "folga": 1.25,
+ "teto": {
+  "p99": null,
+  "ruins1e4": null
+ },
+ "personagens": [
+  {
+   "id": "coach",
+   "arma": "scar",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 10657,
+   "p95": 0.235,
+   "p99": 0.605,
+   "p999": 1.396,
+   "max": 10.29,
+   "pct25": 4.4,
+   "ruins1e4": 19.7
+  },
+  {
+   "id": "dollynho",
+   "arma": "p90",
+   "oneHanded": false,
+   "ik": false,
+   "arestas": 7582,
+   "p95": 0.259,
+   "p99": 0.579,
+   "p999": 1.412,
+   "max": 1.82,
+   "pct25": 5.25,
+   "ruins1e4": 17.1
+  },
+  {
+   "id": "trapfunk",
+   "arma": "scar",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 10270,
+   "p95": 0.181,
+   "p99": 0.398,
+   "p999": 1.429,
+   "max": 3.16,
+   "pct25": 2.84,
+   "ruins1e4": 14.6
+  },
+  {
+   "id": "jozo",
+   "arma": "shotgun",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 10670,
+   "p95": 0.224,
+   "p99": 0.53,
+   "p999": 1.172,
+   "max": 2.82,
+   "pct25": 4.37,
+   "ruins1e4": 14.1
+  }
+ ]
+}

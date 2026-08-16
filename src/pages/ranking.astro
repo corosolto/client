@@ -1,0 +1,223 @@
+---
+// /ranking - leaderboard global (SSR).
+//
+// DUAS CORREÇÕES ESTRUTURAIS AQUI:
+//
+// 1. CACHE. A página é `prerender=false` e não mandava NENHUM Cache-Control.
+//    Resultado: cada visita e cada rastreio de crawler viravam um
+//    `select *` de até 500 linhas no Supabase. Com `s-maxage=60` +
+//    `stale-while-revalidate`, o CDN da Vercel serve a mesma resposta pra todo
+//    mundo por 1 minuto e o banco vê 1 query por minuto em vez de 1 por visita.
+//    60 s é curto o bastante pra ninguém reclamar de ranking "velho".
+//
+// 2. JSON-LD `ItemList`. Um ranking sem dado estruturado é, pro crawler, uma
+//    tabela qualquer. Com ItemList + posição, ele entende que é uma
+//    classificação - e é isso que um assistente de IA precisa pra responder
+//    "quem é o melhor jogador de CORO SOLTO".
+import Layout from '../layouts/Layout.astro';
+import { supabaseAdmin } from '../lib/supabase';
+import { displayTime } from '../lib/fmt';
+import { normalizeSocialUrl, socialAvatar, socialNet, NET_INFO, netIcon } from '../lib/social';
+import { CHARS, charSvg } from '../lib/charsvg';
+import { sideOf } from '../lib/side';
+import { BRAND_FULL, GAME_ID, abs, RANKING_ON } from '../lib/site';
+
+export const prerender = false;
+
+Astro.response.headers.set(
+  'cache-control',
+  'public, max-age=0, s-maxage=60, stale-while-revalidate=300',
+);
+
+/* RANKING DESLIGADO (src/lib/site.ts). A página responde 200 com aviso + noindex, e
+   NÃO 404: a URL está indexada e vai voltar - 404 joga fora o histórico de busca dela,
+   e um 410 seria mentira, porque não foi removida. `noindex, follow` tira a página do
+   índice enquanto o conteúdo não existe, sem cortar os links que passam por ela.
+   Quando religar, é só `RANKING_ON = true`: nada aqui embaixo mudou. */
+let players: any[] = [], configured = !!supabaseAdmin;
+if (RANKING_ON && supabaseAdmin) {
+  const { data } = await supabaseAdmin.from('leaderboard').select('*');
+  players = data ?? [];
+}
+const PAGE_SIZE = 25;
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1', 10) || 1);
+const totalPages = Math.max(1, Math.ceil(players.length / PAGE_SIZE));
+const curPage = Math.min(page, totalPages);
+const offset = (curPage - 1) * PAGE_SIZE;
+const rows = players.slice(offset, offset + PAGE_SIZE);
+
+const totKills = players.reduce((s, p) => s + (p.kills || 0), 0);
+const totMatches = players.reduce((s, p) => s + (p.matches || 0), 0);
+const totHs = players.reduce((s, p) => s + (p.headshots || 0), 0);
+
+/* Título e descrição também mentiam com RANKING_ON=false: prometiam
+   "leaderboard global … atualiza a cada partida" numa página que só mostra um
+   aviso. `noindex` tira do índice de BUSCA, mas NÃO impede que um crawler de IA
+   leia e cite - a página segue `Allow` no robots.txt de propósito, porque a
+   resposta certa pra "qual é o ranking de CORO SOLTO?" é "não tem por enquanto",
+   e é melhor que a IA leia isso do que invente. */
+const pageTitle = !RANKING_ON
+  ? `Ranking global - desligado durante o alpha | ${BRAND_FULL}`
+  : curPage > 1
+    ? `Ranking global - página ${curPage} | ${BRAND_FULL}`
+    : `Ranking global - os maiores abatedores | ${BRAND_FULL}`;
+const pageDesc = !RANKING_ON
+  ? `O ranking global do ${BRAND_FULL} está desligado enquanto o jogo está em alpha: o placar ainda é forjável, e publicar classificação forjável é publicar número errado. Volta no mesmo endereço.`
+  : players.length
+    ? `Leaderboard global do ${BRAND_FULL}: ${players.length} jogadores, ${totKills.toLocaleString('pt-BR')} kills e ${totMatches.toLocaleString('pt-BR')} partidas. Atualiza a cada partida.`
+    : `Leaderboard global do ${BRAND_FULL}: os maiores abatedores da arena Treta Suprema.`;
+
+const jsonld = (RANKING_ON && rows.length) ? [
+  {
+    '@type': 'ItemList',
+    '@id': abs('/ranking') + '#lista',
+    name: `Ranking global do ${BRAND_FULL}`,
+    description: 'Classificação dos jogadores por número de kills.',
+    itemListOrder: 'https://schema.org/ItemListOrderDescending',
+    numberOfItems: players.length,
+    itemListElement: rows.map((p, i) => ({
+      '@type': 'ListItem',
+      position: offset + i + 1,
+      url: p.id ? abs(`/u/${p.id}/${encodeURIComponent(p.nick)}`) : undefined,
+      item: {
+        '@type': 'Person',
+        name: p.nick,
+        url: p.id ? abs(`/u/${p.id}/${encodeURIComponent(p.nick)}`) : undefined,
+        description: `${p.kills} kills · K/D ${p.kd} · ${p.headshots} headshots em ${p.matches} partidas`,
+      },
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Ranking', item: abs('/ranking') },
+    ],
+  },
+  { '@id': GAME_ID },
+] : [];
+---
+<Layout
+  title={pageTitle}
+  description={pageDesc}
+  noindex={!RANKING_ON || curPage > 1}
+  jsonld={jsonld}
+  h1="Ranking global"
+  kicker={RANKING_ON ? 'classificado por kills' : 'desligado durante o alpha'}
+  heroImg="/img/map-previews/loja_h.jpg"
+  heroPos="50%">
+  {RANKING_ON && <Fragment slot="sub">
+    Classificado por kills. Atualiza ao fim de cada partida - jogue uma e o seu nome entra aqui.
+  </Fragment>}
+  {!RANKING_ON && <Fragment slot="sub">
+    O placar entre jogadores está fora do ar enquanto o jogo é alpha. Os seus números de partida
+    continuam salvos no navegador e aparecem no menu RANKING do jogo.
+  </Fragment>}
+
+  {!RANKING_ON && (
+    <div class="panel">
+      <p><strong>O ranking está desligado por enquanto.</strong></p>
+      <p>O jogo está em <strong>alpha</strong>. Enquanto o placar não for confiável, publicar
+      classificação é publicar número errado - então ele sai do ar em vez de mentir. Volta no
+      mesmo endereço, com os perfis junto.</p>
+      <p>Enquanto isso: <a href="/mapa">quem está jogando agora</a> ·
+      <a href="/changelog">o que mudou</a> · <a href="/">▶ JOGAR</a></p>
+    </div>
+  )}
+
+  {RANKING_ON && !configured && <div class="panel"><p>Ranking ainda não configurado (envs do Supabase pendentes).</p></div>}
+
+  {RANKING_ON && configured && players.length === 0 && (
+    <div class="panel">
+      <p>Ainda ninguém na arena. Seja o primeiro a cravar seu nome na treta: <a href="/">▶ JOGAR</a></p>
+    </div>
+  )}
+
+  {players.length > 0 && (
+    <>
+      <div class="tstat" style="margin-bottom:18px">
+        <div><b>{players.length}</b><span>jogadores</span></div>
+        <div><b>{totMatches.toLocaleString('pt-BR')}</b><span>partidas</span></div>
+        <div><b>{totKills.toLocaleString('pt-BR')}</b><span>kills</span></div>
+        <div><b>{totHs.toLocaleString('pt-BR')}</b><span>headshots</span></div>
+      </div>
+
+      <div class="tw">
+        <table>
+          <caption class="sr-only">Ranking global de jogadores, ordenado por kills</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th><th scope="col">Jogador</th>
+              <th scope="col" class="num">Part.</th><th scope="col" class="num">Vit.</th>
+              <th scope="col" class="num">K/D</th><th scope="col" class="num">Kills</th>
+              <th scope="col" class="num">Mortes</th><th scope="col" class="num">HS</th>
+              <th scope="col" class="num">Seq.</th><th scope="col" class="num">Tempo</th>
+              <th scope="col">Lado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((p, i) => {
+              const pos = offset + i + 1;
+              return (
+                <tr class={pos <= 3 ? 'top' : undefined}>
+                  <td class="num" style="text-align:left">{pos}</td>
+                  <td>
+                    {(() => {
+                      const av = p.avatar_url || socialAvatar(p.social_link);
+                      if (av) return <img src={av} alt="" width="24" height="24" loading="lazy" style="border-radius:50%!important;vertical-align:-6px;margin-right:6px;object-fit:cover">;
+                      if (p.last_character && CHARS[p.last_character]) {
+                        const [, sc] = sideOf(p.matches_p, p.matches_b);
+                        return (
+                          <svg width="24" height="24" viewBox="688 36 120 120" aria-hidden="true" style="vertical-align:-5px;margin-right:6px;border-radius:50%!important">
+                            <Fragment set:html={charSvg(p.last_character, sc, `cav-r${i}`)} />
+                          </svg>
+                        );
+                      }
+                      return null;
+                    })()}
+                    <a href={p.id ? `/u/${p.id}/${encodeURIComponent(p.nick)}` : `/u/${encodeURIComponent(p.nick)}`} style="color:inherit;text-decoration:none;border-bottom:1px solid var(--line-hi)">{p.nick}</a>
+                    {(p.socials?.length ? p.socials : (p.social_link ? [{ net: socialNet(p.social_link), url: p.social_link }] : [])).map((s: any) => {
+                      const net = s.net || socialNet(s.url), info = NET_INFO[net] || NET_INFO.site;
+                      return (
+                        <a href={normalizeSocialUrl(s.url)} target="_blank" rel="noopener nofollow" title={info.label}
+                           aria-label={`${p.nick} no ${info.label}`}
+                           style={`display:inline-block;margin-left:6px;vertical-align:-3px;color:${info.color};text-decoration:none`}
+                           set:html={netIcon(net, 15)} />
+                      );
+                    })}
+                  </td>
+                  <td class="num">{p.matches}</td>
+                  <td class="num">{p.wins > 0 ? p.wins : " - "}</td>
+                  <td class="num" style="color:var(--amber)">{p.kd}</td>
+                  <td class="num">{p.kills}</td>
+                  <td class="num">{p.deaths}</td>
+                  <td class="num">{p.headshots}</td>
+                  <td class="num">{p.best_streak}×</td>
+                  <td class="num">{displayTime(p)}</td>
+                  <td style="white-space:nowrap">
+                    <span style="color:#ff8080">{p.matches_p}P</span> · <span style="color:#9dff9d">{p.matches_b}B</span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <nav aria-label="Paginação do ranking"
+           style="display:flex;gap:14px;justify-content:center;margin-top:18px;font-size:12px;align-items:center;letter-spacing:1px">
+        {curPage > 1 && <a rel="prev" href={`/ranking?page=${curPage - 1}`}>← ANTERIOR</a>}
+        <span style="color:var(--bone-dim)">PÁGINA {curPage}/{totalPages} · {players.length} JOGADORES</span>
+        {curPage < totalPages && <a rel="next" href={`/ranking?page=${curPage + 1}`}>PRÓXIMA →</a>}
+      </nav>
+
+      <div class="panel" style="margin-top:26px">
+        <p>
+          Seu perfil público fica em <code>/u/&lt;seu-nick&gt;</code>, com uma
+          <strong> badge PNG gerada na hora</strong> - cole o link no X, no Discord ou no WhatsApp e
+          a badge aparece sozinha no card. <a href="/">Jogue uma partida</a> pra entrar na lista.
+        </p>
+      </div>
+    </>
+  )}
+</Layout>

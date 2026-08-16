@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>weapon eval</title>
+<style>body{margin:0;background:#222;color:#eee;font:12px monospace}#hud{position:fixed;top:4px;left:8px;z-index:2}</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+</script>
+</head>
+<body>
+<div id="hud">carregando…</div>
+<script type="module">
+import * as THREE from 'three';
+import { WEAPON_IDS, weaponModel, preloadWeapons } from './js/weapons.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x2a2e35);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 1.3));
+const dir = new THREE.DirectionalLight(0xffffff, 1.6); dir.position.set(2, 4, 3); scene.add(dir);
+
+await preloadWeapons();
+const report = [];
+const COLS = 6, SP = 1.6;
+WEAPON_IDS.forEach((id, i) => {
+  const g = weaponModel(id);
+  if (!g) { report.push({ id, error: 'no model' }); return; }
+  const x = (i % COLS) * SP - (COLS - 1) * SP / 2;
+  const z = Math.floor(i / COLS) * -SP;
+  g.position.set(x, 0.5, z);
+  scene.add(g);
+  // bbox in world: a gun must be LONG along Z (barrel axis) and SHORT along X/Y
+  g.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(g), s = new THREE.Vector3(); bb.getSize(s);
+  // muzzle direction: the barrel end is THINNER than the stock end. Bin vertices by Z
+  // and compare the cross-section area (X*Y extents) of the +Z tip vs the -Z tip.
+  const NB = 10, bins = [];
+  for (let b = 0; b < NB; b++) bins.push({ minx: 1e9, maxx: -1e9, miny: 1e9, maxy: -1e9 });
+  const v = new THREE.Vector3();
+  g.traverse(m => {
+    if (!m.isMesh || !m.geometry?.attributes?.position) return;
+    const pos = m.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i += 4) {
+      v.fromBufferAttribute(pos, i); m.localToWorld(v);
+      const bi = Math.max(0, Math.min(NB - 1, Math.floor((v.z - bb.min.z) / Math.max(1e-6, s.z) * NB)));
+      const B = bins[bi];
+      B.minx = Math.min(B.minx, v.x); B.maxx = Math.max(B.maxx, v.x);
+      B.miny = Math.min(B.miny, v.y); B.maxy = Math.max(B.maxy, v.y);
+    }
+  });
+  const area = B => (B.maxx > B.minx ? (B.maxx - B.minx) * (B.maxy - B.miny) : 0);
+  const tipF = (area(bins[NB - 1]) + area(bins[NB - 2])) / 2, tipB = (area(bins[0]) + area(bins[1])) / 2;
+  const muzzleDir = tipF <= tipB ? '+Z' : '-Z';   // thinner tip = muzzle
+  // ground marker + Z-forward arrow so orientation is visible
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(x, 0.02, z), 0.7, 0x00ff00, 0.12, 0.06);
+  scene.add(arrow);
+  report.push({ id, x: +s.x.toFixed(2), y: +s.y.toFixed(2), z: +s.z.toFixed(2), longAxisOK: s.z >= s.x && s.z >= s.y, muzzleDir });
+});
+
+const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 100);
+cam.position.set(0, 4.2, 6.5); cam.lookAt(0, 0.3, -2);
+renderer.render(scene, cam);
+window.__report = report;
+window.WEVAL = {
+  ready: true, report,
+  view(px, py, pz, tx, ty, tz) { cam.position.set(px, py, pz); cam.lookAt(tx, ty, tz); renderer.render(scene, cam); },
+};
+document.getElementById('hud').textContent = 'weapon eval — ' + report.filter(r => r.longAxisOK).length + '/' + report.length + ' eixo Z ok';
+console.log(JSON.stringify(report));
+</script>
+</body>
+</html>
