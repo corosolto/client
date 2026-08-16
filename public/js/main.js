@@ -1486,9 +1486,9 @@ const MAP_DESC = {
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
 };
 const MAP_CAT = {
-  praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
-  ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
-  atacadao_treta: 'CIDADES',
+  praca_poderes: 'CIDADES', loja_h: 'CIDADES',
+  ferro_velho: 'ARENA', quebrada: 'FAVELA',
+  piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
