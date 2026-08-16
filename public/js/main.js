@@ -653,7 +653,7 @@ let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTE
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
-/* ---------------- TELEMETRIA ANÔNIMA (ver supabase/migrations/012) ----------------
+/* ---------------- TELEMETRIA ANÔNIMA (contrato em tools/eval/telemetry-check) --------------
    O ranking está desligado (src/lib/site.ts, RANKING_ON) mas a MEDIÇÃO não: o dono
    quer saber quanto tempo se joga e em que mapa.
 
@@ -769,9 +769,9 @@ function _pingPresenca() {
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
  * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
- * evento) e passam a morar no NOSSO Postgres, lidos pelo painel admin. Mesma regra das
+ * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
  * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
- * Ver supabase/migrations/016-019 e /api/{match,funnel,perf,acquisition}. */
+ * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (testMode) return;

@@ -70,7 +70,7 @@ import { BRAND_FULL, RANKING_ON } from '../lib/site';
   // O GATILHO É MAIS LARGO QUE O `/u/` QUE A ISSUE PEDIU, e por um motivo
   // medido: `/u/<qualquer-coisa>` NÃO chega nesta página. A rota catch-all
   // src/pages/u/[...path].astro casa com tudo sob /u/ e responde 200 - 302 pra
-  // /ranking quando o Supabase está configurado, ou uma casca de perfil vazia
+  // /ranking quando o ranking está configurado, ou uma casca de perfil vazia
   // quando não. Testado: /u, /u/, /u/naoexiste e /u/abc/def devolvem todos 200.
   // Se a dica só olhasse '/u/', ela nunca apareceria pra ninguém.
   // Então cobrimos quem DE FATO cai aqui procurando jogador: /perfil/…,
