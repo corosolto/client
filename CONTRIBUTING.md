@@ -98,11 +98,12 @@ tools/optimize-tribos.mjs   redução de malha e textura
 tools/retarget-glb.mjs      11 clipes de animação em models/anims/<id>/
 tools/check-clip.mjs        valida: 0 ossos faltando, durações e root motion iguais ao pack
 registry em 3 arquivos      public/js/characters.js · manifest de áudio · src/data/jogo.ts
-npm run rig:check           valida esqueleto, skin weights, clips e AnimationMixer do elenco
+npm run rig:check && npm run rig:motion:check  valida skin, clips, mixer e transições
 ```
 
-Rode `check-clip.mjs` e `npm run rig:check` **antes** de commitar: personagem sem clipe
-validado entra no jogo em T-pose; peso ou cadeia quebrada deforma a malha em runtime.
+Rode `check-clip.mjs`, `npm run rig:check` e `npm run rig:motion:check` **antes** de
+commitar: personagem sem clipe validado entra no jogo em T-pose; peso, cadeia ou
+transição quebrada deforma a malha em runtime.
 
 ### Adicionar um mapa
 

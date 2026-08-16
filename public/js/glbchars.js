@@ -21,6 +21,7 @@ import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
 import { solveCCDIK } from './handik.js';
+import { dampRigValue, syncLocomotionPhase } from './character_motion.js';
 
 // Character ids that have a real model under public/models/characters/<id>.glb.
 export const GLB_CHARS = new Set([
@@ -629,6 +630,7 @@ export function buildCharacterModel(def, opts = {}) {
 }
 
 const FADE = 0.16;
+const FOOT_RESPONSE = 14;
 
 class CharController {
   constructor(mixer, actions, group, headBone, head, charId, model) {
@@ -639,6 +641,7 @@ class CharController {
        alinhamento de bind que já estava certo em todos os 44. */
     this.charId = charId; this.model = model || null;
     this._footBase = model ? model.position.y : 0;
+    this._footTarget = this._footBase;
     this.cur = null; this.dead = false; this.shooting = false; this.crouch = false; this.jumping = false;
     this.shadow = null; this._airK = 0;   // sombra de contato + fator "está no ar" (0..1, suavizado)
     this.oneHanded = false; // arma de 1 mão: idle/walk trocam p/ idle1h/walk1h (setado em buildCharacterModel)
@@ -653,15 +656,17 @@ class CharController {
   _to(name, once = false) {
     const a = this.actions[name];
     if (!a || this.cur === a) return;
+    const previous = this.cur, previousName = this.curName;
     a.reset();
+    syncLocomotionPhase(previous, a, previousName, name);
     a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
     a.clampWhenFinished = once;
     a.enabled = true; a.fadeIn(FADE); a.play();
-    if (this.cur) this.cur.fadeOut(FADE);
+    if (previous) previous.fadeOut(FADE);
     this.cur = a;
     this.curName = name;   // nome do estado atual — o clamp de frente do mount lê daqui
     // pé no chão: o offset do clipe que ENTRA (ver footOffset)
-    if (this.model) this.model.position.y = this._footBase + footOffset(this.charId, name);
+    this._footTarget = this._footBase + footOffset(this.charId, name);
   }
 
   setCrouch(v) { this.crouch = !!v; }
@@ -745,6 +750,7 @@ class CharController {
       if (this.actions.crouchwalk) this.actions.crouchwalk.timeScale = rate(CROUCH_REF);
     }
     this.mixer.update(dt);
+    if (this.model) this.model.position.y = dampRigValue(this.model.position.y, this._footTarget, dt, FOOT_RESPONSE);
     // Pitch da cabeça em MALHA FECHADA (substitui o HEAD_UP fixo, que ACUMULAVA rotação
     // quando o mixer parava de escrever o osso — ex.: idle.glb com duração zero, que
     // dobrava a cabeça do personagem na tela de seleção). Mede o pitch real do olhar
