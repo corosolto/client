@@ -3,6 +3,8 @@
   "punkAvatarSha256": "cb642e6968b6d45e07425874cf8827a407bd464d0f29ae1b7ac51010e39841e3",
   "gotinhaAvatarSha256": "1743f2dff0ccd39a3f7be9ee1fde376694cf75cd1a5ad08c54fc2cd87cf637a3",
   "avatarReference": "public/video/chars/{punk,gotinha}.webm@1.0s",
+  "musculosoAvatarSha256": "60fae637dd946bd1340b46c55204eeeaf13b0f3f0bdd148ff04144439dddada0",
+  "musculosoAvatarReference": "public/mounttest.html?char=musculoso&weapon=0&view=front&shot=busto",
   "reviewedAt": "2026-08-16",
-  "review": "Os 45 personagens do elenco atual foram comparados à seleção e aos GLBs: corpo inteiro, alpha limpo, folga superior/inferior e identidade preservada. O Musculoso foi conferido contra a Doutora do SUS, com porte atlético, costas livres e a mesma M4 apoiada nas duas mãos; nenhuma pessoa real foi usada."
+  "review": "Os 45 personagens do elenco atual foram comparados à seleção e aos GLBs: corpo inteiro, alpha limpo, folga superior/inferior e identidade preservada. O Musculoso foi conferido contra a Doutora do SUS, com a mesma M4 apoiada nas duas mãos; seu avatar usa busto frontal sem arma. Nenhuma pessoa real foi usada."
 }

@@ -31,7 +31,9 @@ scene.background = new THREE.Color(0x20242b);
 const cam = new THREE.PerspectiveCamera(40, innerWidth/innerHeight, 0.05, 100);
 // view angle via query: side (default, pure +X profile — +Z points LEFT), front (+Z at camera), tq (3/4).
 const VIEW = qp.get('view') || 'side';
-if (VIEW === 'front') { cam.position.set(0, 1.3, 3.4); cam.lookAt(0, 1.05, 0); }
+const SHOT = qp.get('shot') || 'corpo';
+if (VIEW === 'front' && SHOT === 'busto') { cam.position.set(0, 1.34, 1.55); cam.lookAt(0, 1.30, 0); }
+else if (VIEW === 'front') { cam.position.set(0, 1.3, 3.4); cam.lookAt(0, 1.05, 0); }
 else if (VIEW === 'tq') { cam.position.set(1.6, 1.5, 2.6); cam.lookAt(0, 1.0, 0); }
 else { cam.position.set(3.4, 1.3, 0); cam.lookAt(0, 1.05, 0); }
 
@@ -50,7 +52,7 @@ if (!CLEAN) scene.add(fwd);
 
 await preloadCharacterAssets([CHAR]);
 const def = CHARACTERS.find(c => c.id === CHAR) || { id: CHAR, team:'P' };
-const built = buildCharacterModel(def, { weapon:true, weaponId: WEAPON });
+const built = buildCharacterModel(def, { weapon: qp.get('weapon') !== '0', weaponId: WEAPON });
 if (!built || !built.group) { hud.textContent = 'sem modelo '+CHAR; throw new Error('no model'); }
 scene.add(built.group);
 
