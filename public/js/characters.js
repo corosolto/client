@@ -593,7 +593,7 @@ export const CHAR_WEAPON = {
   esquerdomacho: 'pistol', sindicato: 'shotgun', mst: 'ak', doutora: 'm4', mistico: 'mp5',
   caminhoneiro: 'md97', sertanejo: 'revolver38',
   coach: 'scar', gotinha: 'mp5', farialimer: 'm4', bombado: 'lmg', hipster: 'uzi',
-  musculoso: 'ak',
+  musculoso: 'm4',
   dollynho: 'p90', et: 'awp', ancap: 'mosin',
   bonzo: 'revolver38', canarinho: 'deagle', proerd: 'md97',
   palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',

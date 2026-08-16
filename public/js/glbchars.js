@@ -43,8 +43,7 @@ export const GLB_CHARS = new Set([
 ]);
 
 const CHAR_MODEL_SOURCE = Object.freeze({ musculoso: 'bombado' });
-const CHAR_GRIP_OFFSET = Object.freeze({ musculoso: new THREE.Vector3(0, -0.095, 0.015) });
-const MUSCULOSO_GRIP_CURL = 0.75;
+const CHAR_GRIP_REFERENCE = Object.freeze({ musculoso: 'doutora' });
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -562,8 +561,6 @@ export function buildCharacterModel(def, opts = {}) {
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
       const palmW = handBone.localToWorld(palmLocal.clone());
-      const gripOffset = CHAR_GRIP_OFFSET[def.id];
-      if (gripOffset) palmW.add(gripOffset.clone().applyQuaternion(model.getWorldQuaternion(new THREE.Quaternion())));
       // 3) FOLGA: se a palma nasce dentro da silhueta do corpo, empurra a arma pra fora
       // na medida exata (Dollynho: 25 cm dentro da garrafa; humano típico: 0).
       const palmM = model.worldToLocal(palmW.clone());
@@ -599,7 +596,8 @@ export function buildCharacterModel(def, opts = {}) {
     }
     // Grip curl: close the fingers onto the grip (the auto-skinned curl bones).
     // Two-handed weapons curl both hands; one-handed only the grip (right) hand.
-    const twoHanded = !ONE_HANDED.has(opts.weaponId || 'awp');
+    const gripWeaponId = CHAR_GRIP_REFERENCE[def.id] === 'doutora' ? 'm4' : (opts.weaponId || 'awp');
+    const twoHanded = !ONE_HANDED.has(gripWeaponId);
     /* CURL DOS DEDOS: era 0,5 rad CRAVADO nas duas mãos, para as 26 armas.
        O curl é o quanto os dedos fecham em volta do PUNHO da arma, então o valor certo é
        função da GROSSURA do que a mão agarra — um punho de pistola e o guarda-mão de uma
@@ -620,14 +618,10 @@ export function buildCharacterModel(def, opts = {}) {
       // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
       return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
     };
-    const curl = def.id === 'musculoso' ? 0.80 : (gunObj ? curlPara(gunObj) : 0.5);
+    const curl = gunObj ? curlPara(gunObj) : 0.5;
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += curl;
-    if (def.id === 'musculoso') {
-      for (const b of curlRs) b.rotation.z += MUSCULOSO_GRIP_CURL;
-      for (const b of curlLs) b.rotation.z -= MUSCULOSO_GRIP_CURL;
-    }
     // IK da mão de apoio (FASE 2): em armas de 2 mãos, o CharController trava a palma L
     // no guarda-mão depois de cada mixer.update — vale pra idle/walk dos bots E pro
     // preview da tela de seleção (mesmo ctrl.update). Posicional apenas: os clipes já
@@ -635,7 +629,7 @@ export function buildCharacterModel(def, opts = {}) {
     if (twoHanded && lhandBone) {
       let lArm = null, lFore = null;
       model.traverse(o => { if (o.isBone) { if (o.name === 'LeftArm') lArm = o; if (o.name === 'LeftForeArm') lFore = o; } });
-      const gp = gripPoints(opts.weaponId || 'awp');
+      const gp = gripPoints(gripWeaponId);
       if (lArm && lFore && gp.fore && gunObj && !IK_L_SKIP.has(def.id)) ctrl.ikL = { chain: [lArm, lFore], end: lhandBone, endOffset: measurePalmLocal(model, lhandBone, curlLs), gun: gunObj, fore: gp.fore.clone() };
     }
   }

@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "f5648c49127995c1f43477b27aa2227f38bf7cd1a0297bc0ab06e2b9cc345ec8",
-  "weaponMapSha256": "d6606fdb3e36c5493a6f16049f77f83054321a00c7513869173f62fd5b2222d6",
-  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; o Musculoso preserva o porte atlético, não carrega adereço nas costas e apoia a AK nas duas mãos, e as demais classes de arma continuam distinguíveis. Os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
+  "mediaSha256": "389f0805a1724decf5aee72068d53447ea8f7e06b0985a57a473593fda06b93f",
+  "weaponMapSha256": "cd1b0f3cf5c6b9e11265cdcd35ac9a540e17df2ce53e00490e4b640004dbd7f7",
+  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; o Musculoso preserva o porte atlético, não carrega adereço nas costas e replica a pegada da Doutora do SUS com a M4 apoiada nas duas mãos. As demais classes de arma continuam distinguíveis e correspondem ao mapa CHAR_WEAPON.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }

@@ -21,14 +21,14 @@ expect(muscular.includes("team: 'E'"), 'MUSC1 cadastro jogável no Time E');
 expect(muscular.includes("name: 'Musculoso'"), 'MUSC2 nome público');
 expect(muscular.includes("rarity: 'raro'"), 'MUSC3 raridade explícita RARO');
 expect(muscular.includes('attrs: { vida: 3, velocidade: 3, precisao: 3, meme: 3 }'), 'MUSC4 atributos iguais à média arredondada 3/3/3/3');
-expect(/musculoso:\s*'ak'/.test(characters), 'MUSC5 arma inicial registrada');
+expect(/musculoso:\s*'m4'/.test(characters), 'MUSC5 usa a mesma arma da Doutora do SUS');
 expect(/GLB_CHARS[\s\S]*?'musculoso'/.test(glbchars), 'MUSC6 modelo incluído no preload');
 expect(/musculoso:\s*'bombado'/.test(glbchars), 'MUSC7 fonte GLB doadora declarada');
 expect(/c\.attrs\?\./.test(main) && /c\.rarity/.test(main), 'MUSC8 ficha honra atributos e raridade autorados');
 expect(/id: 'musculoso', faccao: 'E', nome: 'Musculoso'/.test(site), 'MUSC9 espelho público sincronizado');
 expect(!/zumbibombado|Zumbi Bombado|zombieGymKit/.test(characters + glbchars + site), 'MUSC10 identidade antiga e halter removidos');
-expect(/CHAR_GRIP_OFFSET[\s\S]*musculoso/.test(glbchars), 'MUSC11 correção de pegada específica registrada');
-expect(/MUSCULOSO_GRIP_CURL/.test(glbchars), 'MUSC12 dedos fecham sobre os pontos de apoio da arma');
+expect(/CHAR_GRIP_REFERENCE[\s\S]*musculoso:\s*'doutora'/.test(glbchars), 'MUSC11 perfil de pegada referencia a Doutora do SUS');
+expect(!/MUSCULOSO_GRIP_CURL/.test(glbchars), 'MUSC12 usa o fechamento padrão da referência');
 
 if (failures.length) {
   for (const failure of failures) console.error(`MUSC FALHA — ${failure}`);
