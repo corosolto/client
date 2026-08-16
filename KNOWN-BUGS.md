@@ -2371,6 +2371,66 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-71 · janelas ainda têm vidro e cartazes não flexionam “perigoso”~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"As janelas devem ser totalmente de madeira, janelas abertas e fechadas,
+  e os cartazes os textos devem ter perigoso se for homem ou perigosa pra mulher, e os valores
+  das recompensas devem ser diferentes"*. Antes, as 24 janelas ainda tinham painel âmbar,
+  nenhum estado aberto/fechado era declarado e `PERIGOSO` era literal para os oito retratos.
+  Agora são **12 abertas + 12 fechadas**, todas com folhas de madeira; as abertas revelam o vão
+  escuro e as fechadas usam duas folhas com travessas. Os cartazes medem **4 PERIGOSA + 4
+  PERIGOSO**, e as oito recompensas já distintas agora são contrato explícito (**8/8 valores
+  únicos**). Régua: `npm run eval:velhooeste`, `OESTE14`; mutantes `--mutante=todas-fechadas`,
+  `--mutante=perigoso-unico` e `--mutante=recompensa-repetida`. Custo declarado: 84 peças de
+  janela contra 72 na versão anterior, ainda compartilhando geometrias e materiais existentes;
+  nenhum asset ou download novo.
+
+- **~~BUG-70 · janelas não parecem do Velho Oeste e cartazes não flexionam o gênero~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"As janelas devem ser de velho oeste e os pistoleiros procurados se for
+  mulher apresente PROCURADA e se for homem PROCURADO"*. Antes havia **24** caixas verdes,
+  nenhuma janela western e nenhum cartaz declarava gênero. Agora as 24 janelas usam textura
+  compartilhada de vidro âmbar com moldura/cruzetas e duas venezianas de madeira; não resta
+  vidro verde nas fachadas. A ordem dos nomes acompanha os retratos do atlas, com **4
+  PROCURADA** e **4 PROCURADO**. Régua: `npm run eval:velhooeste`, `OESTE13`; mutantes
+  `--mutante=genero-unico` e `--mutante=janela-verde`. Custo declarado: cada janela passou
+  de uma para três malhas (72 no total), compartilhando uma textura procedural de 256×256;
+  não há asset ou requisição adicional.
+
+- **~~BUG-69 · cartazes de procurados sem retrato e atrás das janelas verdes~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"Os cartazes dos procurados nao estao com foto e estao por baixo do
+  objeto verde, gere personagens procurados"*. A captura mostrou que o desenho procedural
+  era apenas uma silhueta e a medição geométrica confirmou **0/8** cartazes livres das janelas
+  verdes. Agora um atlas original gerado com oito pistoleiros fictícios alimenta os oito
+  retratos, cada um recortado em seu cartaz, e as peças ficam em painéis próprios de madeira
+  ao longo da rua: **8/8** fora do vidro. Régua: `npm run eval:velhooeste`, `OESTE12`;
+  mutantes `--mutante=sem-retratos` e `--mutante=cartaz-sobre-janela`. Custo declarado:
+  156 KB de imagem JPEG, oito canvases de 384×512 e oito carregamentos da mesma URL, que o
+  cache do navegador reutiliza. Arte original, sem pessoa real, marca, gore ou copyright.
+
+- **~~BUG-68 · proteção de madeira das casas do Velho Oeste não impede passagem~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"a madeira que protege a frente das casas esta deixando o personagem
+  entrar, ou seja nao esta detectando colisao e impedindo"*. A reprodução com `Game._collide`
+  encontrou **0/8** grades de varanda registradas em `world.colliders`: elas eram criadas com
+  `collide: false`. Agora as oito fachadas originais e as quatro casas menores têm uma AABB
+  fina coincidente com a madeira, e **12/8** pontos medidos deslocam o corpo real. O palpite
+  óbvio de usar a caixa visual rotacionada foi refutado no primeiro pós-teste: ela invadia a
+  rua e deixou cinco nós de navegação ilhados; a caixa final acompanha apenas a espessura da
+  grade e o grafo voltou a ficar conexo. `OESTE10` guarda ainda o adensamento solicitado, de
+  8 para 12 casas e de 4 para 8 obstáculos. Régua: `npm run eval:velhooeste`; mutantes
+  `--mutante=sem-colisao-varanda` e `--mutante=centro-aberto`. Custo declarado: quatro casas,
+  quatro colisores de cobertura e doze testes AABB de varanda adicionais por personagem a
+  cada frame; o mapa perdeu 26 nós livres, mas preservou a rota entre bases e conectividade.
+
+- **~~BUG-67 · personagens atravessavam obstáculos móveis do Velho Oeste~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"Faça com que os personagens nao passem por dentro dos obstaculos"*.
+  A sonda com `Game._collide` provou que bebedouro, caixas de dinamite, amarra-cavalos e
+  barricada já bloqueavam os dois eixos; o defeito real eram as três tumbleweeds, cuja
+  animação movia apenas a malha. Antes, **0/3** tinham colisor em `world.colliders`. Cada
+  tumbleweed agora mantém uma AABB dinâmica sincronizada com sua posição; `OESTE8` confirma
+  que **3/3** deslocam o corpo pela colisão real do jogo, e `--mutante=sem-colisao-movel`
+  deixa a cláusula vermelha. Régua: `npm run eval:velhooeste`. Custo declarado: três testes
+  AABB adicionais por personagem a cada frame e possíveis desvios locais dos bots; a malha
+  de navegação não mudou.
+
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:

@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** 5 arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas jogáveis - a ordem acompanha o registro em public/js/maps.js. */
 export const MAPAS: Mapa[] = [
   {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -170,6 +170,14 @@ export const MAPAS: Mapa[] = [
       'calçada e barricadas. As duas vielas do fundo não são enfeite - são a rota alternativa que ' +
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
+  },
+  {
+    id: 'velho_oeste', nome: 'Velho Oeste da Treta', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Cidade de pistoleiros ao pôr do sol, com saloon, carroças, cactos e plantas rolantes.',
+    detalhe: 'A rua principal oferece duelo de longa distância, com carroças, barris e fardos de feno como cobertura. ' +
+      'As passarelas diante das casas de madeira criam rotas laterais junto ao saloon, banco, cadeia e estábulo. ' +
+      'Tumbleweeds atravessam a poeira levadas pelo vento sem bloquear o jogador. Três bandeiras marcam o saloon, ' +
+      'o miolo da rua e o estábulo.',
   },
 ];
 
