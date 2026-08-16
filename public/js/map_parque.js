@@ -3,6 +3,9 @@ import * as THREE from 'three';
 
 const HALF_X = 32;
 const HALF_Z = 42;
+const WHEEL_X = -19;
+const WHEEL_Y = 14.5;
+const WHEEL_FRAME_Z = -1.2;
 
 export function buildParque(scene, T) {
   const colliders = [];
@@ -249,21 +252,21 @@ export function buildParque(scene, T) {
 
   // Roda-gigante no flanco oeste; estrutura visual fica fora do corredor jogável.
   {
-    const wheel = new THREE.Group(); wheel.name = 'roda-gigante'; wheel.position.set(-25, 12, 0); root.add(wheel); animated.wheel = wheel;
+    const wheel = new THREE.Group(); wheel.name = 'roda-gigante'; wheel.position.set(WHEEL_X, WHEEL_Y, 0); root.add(wheel); animated.wheel = wheel;
     const rimMat = MAT.white, hubMat = MAT.yellow;
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(10, 0.32, 8, 48), rimMat); rim.name = 'roda-aro'; wheel.add(rim);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(10, 0.32, 8, 48), rimMat); rim.name = 'roda-aro'; rim.position.z = WHEEL_FRAME_Z; wheel.add(rim);
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.4, 12), hubMat); hub.name = 'roda-cubo'; hub.rotation.x = Math.PI / 2; wheel.add(hub);
     for (let i = 0; i < 10; i++) {
       const a = i * Math.PI / 5, x = Math.cos(a) * 10, y = 12 + Math.sin(a) * 10;
       const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 10, 6), MAT.white);
-      spoke.position.set(x / 2, (y - 12) / 2, 0); spoke.rotation.z = a - Math.PI / 2; wheel.add(spoke);
+      spoke.position.set(x / 2, (y - 12) / 2, WHEEL_FRAME_Z); spoke.rotation.z = a - Math.PI / 2; wheel.add(spoke);
       const hanger = new THREE.Group(); hanger.name = `roda-cadeira-${i}`; hanger.position.set(x, y - 12, 0); wheel.add(hanger);
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), MAT.dark); arm.position.y = -0.9; hanger.add(arm);
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.4, 1.5), COLORS[i % COLORS.length]); cabin.position.y = -2.1; hanger.add(cabin);
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.4, 1.5), COLORS[i % COLORS.length]); cabin.name = `roda-cabine-${i}`; cabin.position.y = -2.1; hanger.add(cabin);
       animated.cabins.push({ hanger, phase: a });
     }
-    for (const sx of [-1, 1]) addTube([new THREE.Vector3(-25, 0.2, sx * 2.2), new THREE.Vector3(-25, 12, 0)], 0.28, MAT.dark, 10);
-    addBox(6.5, 1.5, 3.8, MAT.blue, -25, 0, 0); // cobertura jogável sob a atração
+    for (const sx of [-1, 1]) addTube([new THREE.Vector3(WHEEL_X, 0.2, sx * 2.2), new THREE.Vector3(WHEEL_X, WHEEL_Y, 0)], 0.28, MAT.dark, 10);
+    const wheelBase = addBox(6.5, 1.5, 3.8, MAT.blue, WHEEL_X, 0, 0); wheelBase.name = 'roda-base'; // cobertura jogável sob a atração
   }
 
   // Castelo inflável no flanco leste: silhueta grande e cover fragmentado.

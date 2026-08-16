@@ -2532,6 +2532,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   Régua: `npm run eval:parquewheel`; `--mutante=pivo-base` restaura os dois números antigos e
   reprova. Custo declarado: nenhum colisor, waypoint ou rota mudou; só os volumes visuais da roda.
 
+- **~~BUG-63 · "Mova a roda gigante mais pra esquerda pois esta pegando na lateral do mapa, que parece uma grama verde"~~ · RESOLVIDO 16/08.**
+  A roda, as cabines, a base e os suportes foram movidos juntos 6 m para dentro da arena.
+  A menor folga do volume animado para a lateral verde foi de **-5,546 → 0,454 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=lateral-verde` restaura a posição antiga,
+  devolve **-5,546 m** e reprova RODA3. Custo declarado: a cobertura jogável sob a atração e
+  seu colisor também se deslocaram 6 m; armas, spawns, bandeiras e limites do mapa não mudaram.
+
+- **~~BUG-64 · "Aumente a altura da Roda Gigante pois os assentos estao pegando na base"~~ · RESOLVIDO 16/08.**
+  O eixo e o topo dos suportes subiram **12,0 → 14,5 m**. Em uma volta completa, a menor
+  folga dos assentos para o topo da base foi de **-2,339 → 0,161 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=altura-baixa` restaura 12 m, devolve
+  **-2,339 m** e reprova RODA4. Custo declarado: a silhueta da atração ficou 2,5 m mais alta;
+  base, colisor, raio, velocidade, armas, spawns e rotas não mudaram.
+
+- **~~BUG-65 · "Ajustes pois os assentos estao pegando no circulo da roda gigante"~~ · RESOLVIDO 16/08.**
+  O aro e os raios foram recuados 1,2 m para um plano estrutural atrás das cabines. A folga
+  em profundidade entre cabines e aro foi de **-1,070 → 0,130 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=aro-no-assento` restaura o mesmo plano,
+  devolve **-1,070 m** e reprova RODA5. Custo declarado: aro e raios ficaram 1,2 m atrás do
+  cubo; altura, raio, cabines, base, colisores, velocidade, armas, spawns e rotas não mudaram.
+
 - **"E vice-versa" do BUG-01** — partida de CTF *sem* a faixa de bandeiras no HUD. O caminho
   `this.ctf → _initCTF → _updateCtfHud` sempre desconde, então o mecanismo não é o mesmo do
   BUG-01. Precisa de mapa + modo + se houve recarga de página.
