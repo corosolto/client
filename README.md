@@ -1,8 +1,8 @@
 # CORO SOLTO: Treta Suprema
 
 [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![CI](https://github.com/rubenmarcus/csbrasil/actions/workflows/ci.yml/badge.svg?branch=v2%2Falpha-release)](https://github.com/rubenmarcus/csbrasil/actions/workflows/ci.yml)
-[![pr-gates](https://github.com/rubenmarcus/csbrasil/actions/workflows/pr-gates.yml/badge.svg)](https://github.com/rubenmarcus/csbrasil/actions/workflows/pr-gates.yml)
+[![CI](https://github.com/corosolto/client/actions/workflows/ci.yml/badge.svg?branch=v2%2Falpha-release)](https://github.com/corosolto/client/actions/workflows/ci.yml)
+[![pr-gates](https://github.com/corosolto/client/actions/workflows/pr-gates.yml/badge.svg)](https://github.com/corosolto/client/actions/workflows/pr-gates.yml)
 [![astro](https://img.shields.io/badge/site-astro-ff5d01?logo=astro)](https://astro.build)
 [![three.js](https://img.shields.io/badge/jogo-three.js%20r160-000000?logo=three.js)](https://threejs.org)
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
@@ -172,7 +172,7 @@ precisa rodar em CI lê o JSON, nunca o PNG.
 **O site completo** (é o modo que você quer — inclui o jogo):
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional: sem envs, o ranking responde 503 e o resto roda

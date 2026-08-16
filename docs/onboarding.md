@@ -3,7 +3,7 @@
 ## Local setup
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 npm run dev

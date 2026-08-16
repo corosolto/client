@@ -4,7 +4,7 @@
 > a ordem e o porquê. O detalhe de execução mora em [`TRILHA-V2.md`](TRILHA-V2.md)
 > (T1–T32, com critério de aceite por tarefa) e nos planos por frente em
 > [`PLANS/`](PLANS/). Defeito aberto é [`KNOWN-BUGS.md`](KNOWN-BUGS.md); tarefa de
-> entrada pra contribuidor é [issue no GitHub](https://github.com/rubenmarcus/csbrasil/issues)
+> entrada pra contribuidor é [issue no GitHub](https://github.com/corosolto/client/issues)
 > + [`docs/issues/`](docs/issues/). Quando um item daqui fechar, ele sai daqui —
 > histórico é o git, não este arquivo.
 
@@ -75,7 +75,7 @@ T1, T2 e T3 entregues e provados. O que ficou de pé:
 ## Como contribuir
 
 Comece por [`CONTRIBUTING.md`](CONTRIBUTING.md) e pelas
-[issues abertas](https://github.com/rubenmarcus/csbrasil/issues) — cada uma tem
+[issues abertas](https://github.com/corosolto/client/issues) — cada uma tem
 arquivo, linha e critério de aceite. As de entrada estão espelhadas em
 [`docs/issues/`](docs/issues/). Regras que não se negociam:
 régua antes do conserto, mutação que prova a régua, nenhuma crítica verde vira

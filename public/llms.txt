@@ -7,7 +7,7 @@
 > O jogo já se chamou **CS BRASIL** — é o mesmo jogo, e o domínio segue o mesmo.
 
 Site: https://www.csbrasil.online
-Código: https://github.com/rubenmarcus/csbrasil (AGPL-3.0)
+Código: https://github.com/corosolto/client (AGPL-3.0)
 
 ## O que é, em uma frase
 

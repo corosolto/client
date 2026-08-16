@@ -33,7 +33,7 @@ Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, 
 demorar. A boa: **quase toda a régua é máquina.** `npm run check` te dá o mesmo veredito
 que o mantenedor daria, antes de você abrir o PR, sem esperar ninguém. A barreira é baixa
 **de propósito** — é um dos princípios que não mudam do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md).
+[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md).
 Mas a régua não é.
 
 Resumo em uma frase: **traga o número.** Um PR que muda comportamento visível e não traz
@@ -42,7 +42,7 @@ nem uma invariante nova nem a razão de não precisar de uma vai voltar com uma 
 ## Setup
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git && cd csbrasil
+git clone https://github.com/corosolto/client.git && cd csbrasil
 npm install
 npm run dev          # http://localhost:4321 — a rota raiz JÁ É o jogo
 ```
@@ -80,7 +80,7 @@ A VM1 caiu de 26/26 para 2/26 e a VM9 ficou verde.
 
 A ordem do `npm run check` já foi corrigida (`package.json`) — o cuidado é para quando
 você chamar `node tools/eval/invariants.mjs` na mão. Detalhe: BUG-02 do
-[`KNOWN-BUGS.md`](https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md).
+[`KNOWN-BUGS.md`](https://github.com/corosolto/client/blob/main/KNOWN-BUGS.md).
 :::
 
 Custo real: numa máquina de 2 CPUs, **cerca de 10 minutos**. Ele sobe o jogo real cinco
@@ -239,7 +239,7 @@ O pipeline é data-driven a partir do GLB. Os GLBs de arma vivem em `public/mode
 Hoje mapas são **código**, não dado: cada `map_*.js` é geometria declarada à mão, e os
 maiores rivalizam em tamanho com os módulos de sistema. Migrar isso para JSON é a Fase 2
 conteúdo como dado do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md), e é a
+[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md), e é a
 contribuição de maior alavancagem do projeto.
 
 O registro, gerado do `MAPS` de `public/js/maps.js`:
@@ -307,7 +307,7 @@ exige entender o jogo inteiro.
 
 ### Muito boas para o primeiro PR
 
-As tarefas de entrada moram em **[`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues)**,
+As tarefas de entrada moram em **[`docs/issues/`](https://github.com/corosolto/client/tree/main/docs/issues)**,
 uma por arquivo, cada uma com contexto, o que fazer, critério de aceite e quais arquivos
 tocar. O `README.md` de lá indexa por tempo disponível (30 min / 1 h / 2-3 h) e por área
 (SEO, UI, backend, CI). **Nenhuma delas exige tocar em `public/js/*.js`**, de propósito:

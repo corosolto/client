@@ -212,7 +212,7 @@ com a portabilidade.
 Hoje mapas, armas e personagens são **código**: cada `map_*.js` é geometria declarada à
 mão, e os maiores deles rivalizam em tamanho com os módulos de sistema. A direção
 "conteúdo como dado" do
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md)
+[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md)
 quer migrar isso para JSON com loader único, para que uma contribuição de conteúdo seja
 *"abre um JSON e cria conteúdo"* em vez de *"um PR de código hand-coded arriscado"*.
 

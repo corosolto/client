@@ -98,7 +98,7 @@ e `/api/leaderboard` responde `{disabled:true}`.
 Quantas invariantes passam **não é derivável do código** — é o resultado de uma execução,
 e depende até de qual insumo existe na máquina. Por isso esse placar não é repetido aqui:
 ele mora no cabeçalho de
-[`KNOWN-BUGS.md`](https://github.com/rubenmarcus/csbrasil/blob/main/KNOWN-BUGS.md), colado
+[`KNOWN-BUGS.md`](https://github.com/corosolto/client/blob/main/KNOWN-BUGS.md), colado
 de uma execução real, com a lista das vermelhas, causa raiz e `arquivo:linha` de cada uma.
 É esse arquivo que é mantido dia a dia.
 
@@ -115,7 +115,7 @@ npm run eval:vm && node tools/eval/invariants.mjs --json   # 10-12 min
 ## Rodar em 3 comandos
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git && cd csbrasil
+git clone https://github.com/corosolto/client.git && cd csbrasil
 npm install
 npm run dev          # abre em http://localhost:4321 — essa página JÁ É o jogo
 ```
@@ -271,10 +271,10 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:medianet && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check
 ```
 
-`package.json` tem **105 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **106 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -303,7 +303,7 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    colidir, e a tabela de conflito. Leia antes de tocar em `game.js`.
 5. **[Como colaborar](./colaborar.md)** — o que um PR precisa pra entrar, e as **tarefas
    de primeira contribuição** já escritas em
-   [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (com um
+   [`docs/issues/`](https://github.com/corosolto/client/tree/main/docs/issues) (com um
    `abrir-issues.sh` pronto — elas ainda não foram abertas no GitHub).
 6. **Licença** — o `LICENSE` na raiz declara (hoje AGPL-3.0); as superfícies que
    repetem o nome e mudam junto estão no `CONTRIBUTING.md`.
@@ -311,6 +311,6 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    desde a última medição colada.
 
 Para onde o projeto **vai** não está nesta documentação: é o
-[`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md), e o
+[`docs/ROADMAP.md`](https://github.com/corosolto/client/blob/main/docs/ROADMAP.md), e o
 plano executável é o
-[`plans/08`](https://github.com/rubenmarcus/csbrasil/blob/main/plans/08-RELEASE-PROFISSIONAL.md).
+[`plans/08`](https://github.com/corosolto/client/blob/main/plans/08-RELEASE-PROFISSIONAL.md).

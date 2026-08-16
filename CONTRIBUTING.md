@@ -46,7 +46,7 @@ critério de aceite.
 ## Rodando localmente
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional — sem envs, o ranking responde 503 e o resto roda
