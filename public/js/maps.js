@@ -8,6 +8,7 @@ import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 import { buildParque } from './map_parque.js';
 import { buildVelhoOeste } from './map_velho_oeste.js';
+import { buildPenitenciaria } from './map_penitenciaria.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -66,6 +67,7 @@ export const MAPS = {
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
   velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
+  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
