@@ -1485,12 +1485,14 @@ const MAP_DESC = {
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
+  velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
 };
 const MAP_CAT = {
   praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
   ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
   atacadao_treta: 'CIDADES',
   parque_treta: 'ARENA',
+  velho_oeste: 'ARENA',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
