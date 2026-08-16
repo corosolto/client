@@ -1500,6 +1500,8 @@ const MAP_DESC = {
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
+  velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  penitenciaria: 'Rebelião no pátio: celas abertas, quadra de cimento, guaritas e obstáculos policiais entre três rotas de confronto.',
 };
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
  * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
@@ -1510,16 +1512,20 @@ const MAP_CATS = {
   ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
   piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
   parque_treta: ['ARENA', 'COMUNIDADE'],
+  velho_oeste: ['ARENA', 'COMUNIDADE'],
+  penitenciaria: ['ARENA', 'COMUNIDADE'],
 };
 const MAP_AUTOR = {
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
   ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Ruben Marcus',
   piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
+  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
 };
 const MAP_DATA = {
   praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
   quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
   piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
+  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
 };
 const CAT_DESC = {
   TODOS: 'O acervo inteiro: oficial e comunidade, arena e cidade.',
