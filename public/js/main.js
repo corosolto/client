@@ -1490,7 +1490,7 @@ const MAP_CAT = {
   praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
   ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
   atacadao_treta: 'CIDADES',
-  parque_treta: 'ARENA',
+  parque_treta: 'COMUNIDADE',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
