@@ -23,6 +23,9 @@ import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepç
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 
 import { WEAPONS } from './data/weapons.js';
+// Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
+// autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
+export { WEAPONS };
 /* ===================== RITMO / MOVIMENTO (kill-switches) =====================
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
