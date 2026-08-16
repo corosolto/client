@@ -1501,15 +1501,46 @@ const MAP_DESC = {
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
   parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
 };
-const MAP_CAT = {
-  praca_poderes: 'CIDADES', loja_h: 'CIDADES',
-  ferro_velho: 'ARENA', quebrada: 'FAVELA',
-  piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE',
-  parque_treta: 'COMUNIDADE',
+/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
+ * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
+ * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
+ * arquivo do mapa); OFICIAL é o autor da casa. */
+const MAP_CATS = {
+  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
+  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
+  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
+  parque_treta: ['ARENA', 'COMUNIDADE'],
 };
+const MAP_AUTOR = {
+  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
+  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Ruben Marcus',
+  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
+};
+const MAP_DATA = {
+  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
+  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
+  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
+};
+const CAT_DESC = {
+  TODOS: 'O acervo inteiro: oficial e comunidade, arena e cidade.',
+  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
+  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
+  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
+  COMUNIDADE: 'Autoria da comunidade — o crachá de cada mapa diz quem fez.',
+  AI: 'Construídos pelos agentes de IA da casa.',
+};
+const AUTOR_CASA = 'Ruben Marcus';
+const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
+const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
+const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
 let mapCategory = 'TODOS';
+let mapAutorFiltro = 'TODOS';
+function autoresDeComunidade() {
+  return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
+}
 function visibleMapIds() {
-  return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);
+  return MAP_IDS.filter((id) => (mapCategory === 'TODOS' || catsDe(id).includes(mapCategory))
+    && (mapCategory !== 'COMUNIDADE' || mapAutorFiltro === 'TODOS' || autorDe(id) === mapAutorFiltro));
 }
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
@@ -1521,9 +1552,24 @@ function renderMapScreen() {
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
   $('ms-desc').textContent = tr(MAP_DESC[currentMap] || '');
   syncMapOptions();
-  const cat = MAP_CAT[currentMap] || 'ARENA';
+  const cats = catsDe(currentMap);
   const catEl = $('ms-cat');
-  catEl.textContent = tr(cat); catEl.dataset.cat = cat;
+  catEl.innerHTML = cats.map((c) => `<span data-cat="${c}">${tr(c)}</span>`).join('<span class="ms-sep">·</span>');
+  const byline = $('ms-byline');
+  if (byline) byline.innerHTML = `${tr('por')} <strong>${autorDe(currentMap)}</strong> · ${MAP_DATA[currentMap] || ''}` +
+    (oficialDe(currentMap) ? ` <span class="ms-badge-oficial">${tr('OFICIAL')}</span>` : ` <span class="ms-badge-comunidade">${tr('COMUNIDADE')}</span>`);
+  const desc = $('ms-cat-desc');
+  if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
+  const autores = $('ms-authors');
+  if (autores) {
+    const emComunidade = mapCategory === 'COMUNIDADE';
+    autores.hidden = !emComunidade;
+    if (emComunidade) autores.innerHTML = ['TODOS', ...autoresDeComunidade()].map((a) =>
+      `<button class="ms-author${a === mapAutorFiltro ? ' on' : ''}" data-autor="${a}" type="button">${tr(a) || a}</button>`).join('');
+    autores.querySelectorAll('.ms-author').forEach((b) => {
+      b.onclick = () => { ui.click(); mapAutorFiltro = b.dataset.autor; renderMapScreen(); };
+    });
+  }
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
   const shown = visibleMapIds();
   $('ms-strip').style.setProperty('--map-count', shown.length);
@@ -1531,7 +1577,7 @@ function renderMapScreen() {
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
       `<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
-      `<span class="ms-thumb-cat" data-cat="${MAP_CAT[id] || 'ARENA'}">${tr(MAP_CAT[id] || 'ARENA')}</span></span>` +
+      `<span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span></span>` +
       `${id === currentMap ? '<i class="ms-diamond" aria-hidden="true"></i>' : ''}</button>`).join('');
   document.querySelectorAll('.ms-tab').forEach((tab) => {
     const on = tab.dataset.cat === mapCategory;
@@ -1556,8 +1602,8 @@ $('ms-next').onclick = () => stepMap(1, visibleMapIds());
 document.querySelectorAll('.ms-tab').forEach((tab) => {
   tab.onclick = () => {
     ui.click(); mapCategory = tab.dataset.cat || 'TODOS';
-    const first = MAP_IDS.find((id) => mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory);
-    if (first && !MAP_IDS.some((id) => id === currentMap && (mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory))) gotoMap(MAP_IDS.indexOf(first));
+    const first = visibleMapIds()[0];
+    if (first && !visibleMapIds().includes(currentMap)) gotoMap(MAP_IDS.indexOf(first));
     else renderMapScreen();
   };
 });
