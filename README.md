@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 30.059 linhas em 40 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 30.062 linhas em 40 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6.561** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.514 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -44,7 +44,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 8 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 177 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 178 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 54 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.136` | `public/js/version.js` e `package.json` (batem) |
@@ -324,7 +324,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 399 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
 
 **8 mapas registrados** — 2 abrem em rodadas e 6 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 10 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
