@@ -62,7 +62,7 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 6.560 |
+| `public/js/game.js` | 6.520 |
 | `public/js/main.js` | 2.527 |
 | `public/js/characters.js` | 1.068 |
 | `public/js/glbchars.js` | 837 |
@@ -70,7 +70,7 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 | `public/js/weapons.js` | 344 |
 | `public/js/springs.js` | 260 |
 
-Total de `public/js/`: **29.670 linhas em 39 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **29.630 linhas em 39 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 
@@ -243,16 +243,13 @@ otimizado para fora.** Um gerador que ninguém é obrigado a rodar desatualiza e
 e aí a documentação volta a mentir com a aparência de rigor — que é pior do que mentir sem
 ela.
 
-:::danger Onde você põe o quality gate novo na corrente importa
-O `check:fast` é uma corrente de `&&`: o primeiro erro corta o resto. O `arch:check` está
-vermelho há dias, então **todo quality gate colocado depois dele nasce morto** — roda zero vezes
-e ninguém percebe, porque a saída para antes. Foi exatamente o que aconteceu na primeira
-versão do `docs:check`, e é o mesmo modo de falha do BUG-02 (o quality gate medindo o viewmodel
-de ontem porque o `&&` cortava antes de o JSON ser regenerado).
+:::note O runner não esconde o próximo quality gate
+O `check:fast` passa todos os scripts a `tools/eval/runner.mjs`. Cada passo roda mesmo quando
+o anterior fica vermelho; o placar agregado decide o código de saída no fim. Isso substituiu a
+antiga corrente de `&&`, que deixou o primeiro `docs:check` e o refresh do BUG-02 sem executar.
 
-Por isso o `docs:check` vem **antes** do `arch:check` no `package.json`, com o motivo
-escrito na chave `//check:fast`. Quando o `ARCH.md` for regenerado e o `arch:check` voltar
-a verde, a ordem deixa de importar; até lá, importa.
+A ordem continua explícita no `package.json` para tornar o diagnóstico legível, mas não define
+mais quais gates chegam a rodar.
 :::
 
 Colar um bloco novo é escrever o marcador e rodar `npm run docs`:
