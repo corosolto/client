@@ -28,6 +28,9 @@ export function buildPenitenciaria(scene) {
     if (mode === 'concrete') {
       for (let i = 0; i < 700; i++) { const a = .025 + rand() * .08; ctx.fillStyle = rand() > .5 ? `rgba(255,255,255,${a})` : `rgba(15,20,22,${a})`; ctx.fillRect(rand() * 128, rand() * 128, 1 + rand() * 3, 1 + rand() * 2); }
       ctx.strokeStyle = detail; ctx.globalAlpha = .25; for (let y = 32; y < 128; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(128, y); ctx.stroke(); }
+      ctx.globalAlpha = .42; ctx.lineWidth = .8;
+      for (let i = 0; i < 9; i++) { let x = rand()*128, y = rand()*128; ctx.beginPath(); ctx.moveTo(x,y); for (let j=0;j<4;j++){x+=rand()*18-9;y+=rand()*15;ctx.lineTo(x,y);} ctx.stroke(); }
+      ctx.globalAlpha = .12; for (let i=0;i<18;i++){ctx.fillStyle=rand()>.5?'#28332c':'#141716';ctx.beginPath();ctx.ellipse(rand()*128,rand()*128,3+rand()*13,1+rand()*5,rand()*Math.PI,0,Math.PI*2);ctx.fill();}
     } else if (mode === 'metal') {
       const gradient = ctx.createLinearGradient(0, 0, 128, 0); gradient.addColorStop(0, base); gradient.addColorStop(.45, detail); gradient.addColorStop(.55, base); gradient.addColorStop(1, detail); ctx.fillStyle = gradient; ctx.fillRect(0, 0, 128, 128);
       for (let i = 0; i < 90; i++) { ctx.fillStyle = `rgba(92,45,23,${.08 + rand() * .2})`; ctx.fillRect(rand() * 128, rand() * 128, 1 + rand() * 8, 1 + rand() * 3); }
@@ -40,14 +43,14 @@ export function buildPenitenciaria(scene) {
   const tex = {
     concrete: proceduralTexture('penitenciaria-concreto', '#777b78', '#343936', 'concrete', 6),
     darkConcrete: proceduralTexture('penitenciaria-concreto-escuro', '#343a3b', '#15191a', 'concrete', 5),
-    court: proceduralTexture('penitenciaria-quadra-gasta', '#706747', '#403b29', 'dirt', 7),
+    yard: proceduralTexture('penitenciaria-patio-concreto-gasto', '#555957', '#262a29', 'concrete', 8),
     steel: proceduralTexture('penitenciaria-aco-enferrujado', '#565d5e', '#8b6b49', 'metal', 3),
   };
   const MAT = {
-    concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, color: 0xb8bbb5, roughness: .95 }),
-    darkConcrete: new THREE.MeshStandardMaterial({ map: tex.darkConcrete, color: 0x747b7b, roughness: .98 }),
-    court: new THREE.MeshStandardMaterial({ map: tex.court, color: 0x8f865e, roughness: 1 }),
-    steel: new THREE.MeshStandardMaterial({ map: tex.steel, color: 0x8a9292, metalness: .72, roughness: .5 }),
+    concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .045, color: 0xb8bbb5, roughness: .93 }),
+    darkConcrete: new THREE.MeshStandardMaterial({ map: tex.darkConcrete, bumpMap: tex.darkConcrete, bumpScale: .035, color: 0x747b7b, roughness: .97 }),
+    yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x8b8f89, roughness: 1 }),
+    steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x8a9292, metalness: .72, roughness: .5 }),
     rust: new THREE.MeshStandardMaterial({ color: 0x714529, metalness: .42, roughness: .82 }),
     white: new THREE.MeshStandardMaterial({ color: 0xe6e2cf, roughness: .75 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xe5a92f, roughness: .7 }),
@@ -127,18 +130,13 @@ export function buildPenitenciaria(scene) {
   }
   [-30,-20,-10,10,20,30].forEach((z, i) => { cell(-1, i, z); cell(1, i, z); });
 
-  // Quadra desgastada ocupa o centro; marcações são decalques sem colisão.
-  const court = new THREE.Mesh(new THREE.PlaneGeometry(24, 31), MAT.court); court.name = 'penitenciaria-quadra'; court.rotation.x = -Math.PI/2; court.position.y = .018; court.receiveShadow = true; root.add(court);
-  for (const x of [-12,12]) addBox(.12, .025, 31, MAT.white, x, .02, 0, { collide: false, cast: false });
-  for (const z of [-15.5,0,15.5]) addBox(24, .025, .12, MAT.white, 0, .02, z, { collide: false, cast: false });
-  const circle = new THREE.Mesh(new THREE.RingGeometry(3.2, 3.32, 40), MAT.white); circle.rotation.x = -Math.PI/2; circle.position.y = .03; root.add(circle);
-  function goal(index, z, facing) {
-    const group = new THREE.Group(); group.name = `penitenciaria-gol-${index}`; root.add(group);
-    for (const x of [-3,3]) addBox(.14, 2.3, .14, MAT.white, x, 0, z, { collide: false });
-    addBox(6.15, .14, .14, MAT.white, 0, 2.2, z, { collide: false });
-    for (let x=-3;x<=3;x+=.6) addBox(.025,2.15,.025,MAT.white,x,0,z+facing*.8,{collide:false,cast:false});
+  // Pátio bruto: concreto remendado, manchas de umidade e drenagem, sem marcação esportiva.
+  const yard = new THREE.Mesh(new THREE.PlaneGeometry(35, 43), MAT.yard); yard.name = 'penitenciaria-patio'; yard.rotation.x = -Math.PI/2; yard.position.y = .018; yard.receiveShadow = true; root.add(yard);
+  for (const [x,z,sx,sz] of [[-11,-14,4,1.8],[9,-12,5,2.4],[-13,10,3,5],[11,14,5,2],[-2,17,7,1.4]]) {
+    const stain = new THREE.Mesh(new THREE.CircleGeometry(1,18), new THREE.MeshBasicMaterial({color:0x252c27,transparent:true,opacity:.2,depthWrite:false}));
+    stain.scale.set(sx,sz,1); stain.rotation.x=-Math.PI/2; stain.position.set(x,.032,z); root.add(stain);
   }
-  goal(0,-15,1); goal(1,15,-1);
+  for (const z of [-18,18]) { addBox(29,.055,.22,MAT.steel,0,.02,z,{collide:false,cast:false}); for(let x=-13;x<=13;x+=1.1)addBox(.06,.065,1.1,MAT.black,x,.025,z,{collide:false,cast:false}); }
 
   function ammoCrate(index, x, z, ry=0) {
     const group = new THREE.Group(); group.name = `penitenciaria-caixa-municao-${index}`; root.add(group);
@@ -147,6 +145,25 @@ export function buildPenitenciaria(scene) {
     for (const dx of [-.65,0,.65]) addBox(.08,.7,1.65,MAT.black,x+dx*Math.cos(ry),.27,z-dx*Math.sin(ry),{ry,collide:false});
   }
   [[-8,-7,.2],[8,-7,-.2],[-8,7,-.15],[8,7,.15],[-16,0,1.57],[16,0,1.57]].forEach((p,i)=>ammoCrate(i,...p));
+
+  function centerObstacle(index, kind, x, z, ry=0) {
+    const marker = new THREE.Group(); marker.name = `penitenciaria-obstaculo-centro-${index}-${kind}`; marker.position.set(x,0,z); root.add(marker);
+    if (kind === 'barreira') {
+      addBox(4.2,1.25,.75,MAT.concrete,x,0,z,{ry,tag:`centro-${index}`});
+      addBox(3.7,.16,.82,MAT.yellow,x,1.04,z,{ry,collide:false});
+      for(const side of [-1,1]) addBox(.55,.3,1.25,MAT.darkConcrete,x+side*Math.cos(ry)*1.65,.02,z-side*Math.sin(ry)*1.65,{ry});
+    } else if (kind === 'barris') {
+      for(const [dx,dz] of [[-.7,0],[.7,0],[0,.75]]) { addCylinder(.48,1.35,MAT.rust,x+dx,0,z+dz,{collide:true,tag:`centro-${index}`,segments:16}); addCylinder(.5,.06,MAT.steel,x+dx,1.28,z+dz,{segments:16}); }
+    } else if (kind === 'gaiola') {
+      addBox(3.1,.25,2.1,MAT.steel,x,0,z,{ry,tag:`centro-${index}`});
+      for(const dx of [-1.4,1.4])for(const dz of [-.9,.9])addBox(.12,1.65,.12,MAT.steel,x+dx*Math.cos(ry)+dz*Math.sin(ry),.2,z-dx*Math.sin(ry)+dz*Math.cos(ry),{collide:false});
+      addBox(3.1,.12,2.1,MAT.steel,x,1.72,z,{ry,collide:false}); addBox(2.5,.75,1.5,MAT.white,x,.27,z,{ry,collide:false});
+    } else {
+      addBox(3.5,.35,2.2,MAT.rust,x,0,z,{ry,tag:`centro-${index}`});
+      addBox(2.8,.8,1.8,MAT.darkConcrete,x,.35,z,{ry}); addBox(2.3,.65,1.5,MAT.concrete,x,.95,z,{ry});
+    }
+  }
+  [['barreira',-12,-16,.15],['barris',11,-16,0],['gaiola',-14,-2,-.2],['entulho',13,1,.25],['barreira',-11,16,-.18],['barris',12,16,0],['gaiola',-3,-13,.12],['entulho',4,13,-.2],['barreira',-2,7,1.45],['gaiola',3,-6,1.5]].forEach((p,i)=>centerObstacle(i,...p));
 
   function policeCar(x,z,ry) {
     const group = new THREE.Group(); group.name = 'penitenciaria-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
@@ -201,6 +218,6 @@ export function buildPenitenciaria(scene) {
   function findPath(fromIdx,toIdx){if(fromIdx===toIdx)return[toIdx];const prev=new Int16Array(nodes.length).fill(-1),queue=[fromIdx];prev[fromIdx]=fromIdx;while(queue.length){const n=queue.shift();for(const next of adj[n])if(prev[next]<0){prev[next]=n;if(next===toIdx){const path=[next];let p=n;while(p!==fromIdx){path.unshift(p);p=prev[p];}path.unshift(fromIdx);return path;}queue.push(next);}}return[fromIdx];}
   return {root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
-    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'QUADRA',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
+    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
 }

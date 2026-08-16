@@ -21,13 +21,16 @@ const towers = named('penitenciaria-guarita-');
 const fences = named('penitenciaria-cerca-');
 const dynamite = named('penitenciaria-dinamite-');
 const policeCars = named('penitenciaria-carro-policia');
+const centerObstacles = named('penitenciaria-obstaculo-centro-');
 if (mutante === 'fecha-celas') cells.length = 0;
 if (mutante === 'sem-guaritas') towers.length = 0;
 if (mutante === 'sem-obstaculos') { ammo.length = 0; policeCars.length = 0; }
+if (mutante === 'centro-aberto') centerObstacles.length = 0;
 
 const themeOk = cells.length >= 8 && benches.length >= 4 && bags.length >= 2
   && towers.length === 4 && fences.length >= 4 && dynamite.length >= 2 && policeCars.length >= 1;
-const courtOk = named('penitenciaria-quadra').length === 1 && named('penitenciaria-gol-').length === 2;
+const yardOk = named('penitenciaria-patio').length === 1
+  && named('penitenciaria-quadra').length === 0 && named('penitenciaria-gol-').length === 0;
 const cellsOpen = cells.length >= 8 && cells.every(cell => {
   const { doorwayX, doorwayZ, insideX, insideZ } = cell.userData;
   const blocked = (x, z) => world.colliders.some(c => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < 1.7 && c.maxY > .1);
@@ -45,6 +48,8 @@ const obstaclesBlock = collisionObjects.length >= 5 && collisionObjects.every(ob
 });
 const centerWeapons = world.pickups?.filter(p => Math.abs(p.x) <= 12 && Math.abs(p.z) <= 12) || [];
 const arsenalOk = centerWeapons.length >= 7 && new Set(centerWeapons.map(p => p.kind)).size >= 6;
+const centerDensityOk = centerObstacles.length >= 8 && centerObstacles.every(object =>
+  Math.abs(object.position.x) <= 18 && Math.abs(object.position.z) <= 22);
 const nodes = world.waypoints?.nodes || [];
 const from = world.nearestWaypoint(world.spawns.E[0].x, world.spawns.E[0].z);
 const to = world.nearestWaypoint(world.spawns.B[0].x, world.spawns.B[0].z);
@@ -55,6 +60,6 @@ const ctfOk = world.ctfPoints?.length === 3 && world.spawns?.E?.length === 4 && 
 console.log(`PEN1 ${themeOk ? 'PASSA' : 'FALHA'} — ${cells.length} celas · ${benches.length} bancos · ${towers.length} guaritas · ${fences.length} cercas`);
 console.log(`PEN2 ${cellsOpen ? 'PASSA' : 'FALHA'} — ${cells.length} celas com porta e interior transitáveis`);
 console.log(`PEN3 ${obstaclesBlock ? 'PASSA' : 'FALHA'} — ${ammo.length} caixas de munição + ${policeCars.length} carro policial com colisão`);
-console.log(`PEN4 ${courtOk && arsenalOk ? 'PASSA' : 'FALHA'} — quadra com 2 gols · ${centerWeapons.length} armas no miolo`);
+console.log(`PEN4 ${yardOk && arsenalOk && centerDensityOk ? 'PASSA' : 'FALHA'} — pátio sem campo · ${centerObstacles.length} obstáculos · ${centerWeapons.length} armas no miolo`);
 console.log(`PEN5 ${routesOk && ctfOk ? 'PASSA' : 'FALHA'} — ${nodes.length} nós · rota ${path.length} passos · 3 pontos CTF`);
-process.exit(themeOk && cellsOpen && obstaclesBlock && courtOk && arsenalOk && routesOk && ctfOk ? 0 : 1);
+process.exit(themeOk && cellsOpen && obstaclesBlock && yardOk && arsenalOk && centerDensityOk && routesOk && ctfOk ? 0 : 1);
