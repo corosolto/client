@@ -9,8 +9,8 @@
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 6521 | 229 |
-| `public/js/main.js` | 2528 | 232 |
+| `public/js/game.js` | 6522 | 229 |
+| `public/js/main.js` | 2530 | 232 |
 | `public/js/glbchars.js` | 838 | 60 |
 | `public/js/characters.js` | 1069 | 40 |
 | `public/js/vmattach.js` | 629 | 4 |
@@ -19,7 +19,7 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3042 linhas (47% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3043 linhas (47% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
@@ -36,7 +36,7 @@ Os 15 maiores somam **3042 linhas (47% do arquivo)**. Método grande = PR irrevi
 | 79 | 2966 | `_dmgArc()` |  |
 | 76 | 4170 | `_updateCtfHud()` |  |
 | 71 | 6005 | `_updateBotNN()` |  |
-| 70 | 6415 | `update()` | 🔴 append-only |
+| 71 | 6415 | `update()` | 🔴 append-only |
 | 64 | 2902 | `_kill()` |  |
 
 ## Tabela de CONFLITO — resolvida para as linhas de hoje
@@ -56,11 +56,11 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 6415–6484 · `_dom()` 1080–1122 · `constructor()` 534–1079
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 6415–6485 · `_dom()` 1080–1122 · `constructor()` 534–1079
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3706 de 6521 linhas (57%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3706 de 6522 linhas (57%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
@@ -259,8 +259,8 @@ Cobertura: **3706 de 6521 linhas (57%)** do `game.js` têm dono declarado. O res
 | 6252 | `_showScoreboard()` | 48 |
 | 6300 | `_updateWeaponHud()` | 35 |
 | 6335 | `_updateHud()` | 80 |
-| 6415 | `update()` | 70 |
-| 6485 | `dispose()` | 36 |
+| 6415 | `update()` | 71 |
+| 6486 | `dispose()` | 36 |
 
 </details>
 

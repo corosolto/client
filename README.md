@@ -34,17 +34,17 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 29.657 linhas em 39 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **6.520** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.527 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 30.061 linhas em 40 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **6.521** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.529 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 7 | objeto `MAPS` de `maps.js` |
+| Mapas no registro | 8 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 180 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 181 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 54 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.141` | `public/js/version.js` e `package.json` (batem) |
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 39 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 40 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.3` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -279,7 +279,7 @@ projeto.
 | Regra | Valor | Constante |
 |---|---|---|
 | Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
-| Mapas no menu | 7 — 2 abrem em rodadas, **5 em captura** | `MAPS` / `ctfMode` |
+| Mapas no menu | 8 — 2 abrem em rodadas, **6 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -313,8 +313,9 @@ Os mapas registrados, e em que modo cada um abre:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 399 |
 
-**7 mapas registrados** — 2 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 9 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**8 mapas registrados** — 2 abrem em rodadas e 6 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 10 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

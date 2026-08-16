@@ -2630,6 +2630,13 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   se a mira trava com QUALQUER tecla de movimento ou só com W. Perguntar antes de medir —
   sem isso a régua nasce medindo a coisa errada.
 
+- **~~BUG-62 · "A roda gigante deve rodar no mesmo local, igual roda gigante de verdade"~~ · RESOLVIDO 16/08.**
+  O grupo girava na base, 12 m abaixo do cubo: o centro do aro derivava 8,791 m por rotação
+  medida. O pivô agora coincide com o cubo e aro, raios e cabines usam coordenadas locais:
+  distância pivô→aro **12,000 → 0,000 m** e deriva **8,791 → 0,000 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=pivo-base` restaura os dois números antigos e
+  reprova. Custo declarado: nenhum colisor, waypoint ou rota mudou; só os volumes visuais da roda.
+
 - **"E vice-versa" do BUG-01** — partida de CTF *sem* a faixa de bandeiras no HUD. O caminho
   `this.ctf → _initCTF → _updateCtfHud` sempre desconde, então o mecanismo não é o mesmo do
   BUG-01. Precisa de mapa + modo + se houve recarga de página.

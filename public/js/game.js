@@ -6479,6 +6479,7 @@ export class Game {
       r.autoClear = true;
     }
     this._tickDolly(dt);
+    this.world.update?.(dt, this.time);
   }
 
   /* ================= teardown ================= */

@@ -1499,11 +1499,13 @@ const MAP_DESC = {
   quebrada: 'Rua de baile: muros baixos, beco cego e o paredão marcando o compasso do round.',
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
+  parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
 };
 const MAP_CAT = {
   praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
   ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
   atacadao_treta: 'CIDADES',
+  parque_treta: 'ARENA',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
