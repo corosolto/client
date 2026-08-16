@@ -28,7 +28,7 @@ export const GLB_CHARS = new Set([
   'caminhoneiro', 'sertanejo', 'coach',
   'gotinha', 'farialimer',
   'bombado', 'hipster', 'dollynho', 'et', 'ancap',
-  'zumbibombado',
+  'musculoso',
   'bonzo', 'canarinho', 'proerd',
   // Palhaços (4ª facção). bonzo (ex-bozo) veio da Mint; os 8 abaixo foram rigados offline
   // (tools/rig-from-donor.mjs: esqueleto do mst transplantado + auto-skin por proximidade),
@@ -42,7 +42,8 @@ export const GLB_CHARS = new Set([
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
 ]);
 
-const CHAR_MODEL_SOURCE = Object.freeze({ zumbibombado: 'bombado' });
+const CHAR_MODEL_SOURCE = Object.freeze({ musculoso: 'bombado' });
+const CHAR_GRIP_OFFSET = Object.freeze({ musculoso: new THREE.Vector3(0, -0.095, 0.015) });
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -360,31 +361,6 @@ const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THRE
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3();
 
-function zombieGymKit() {
-  const group = new THREE.Group();
-  const material = (color, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness });
-  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.72, 10), material(0xb7bec5, 0.8));
-  bar.rotation.z = Math.PI / 2;
-  const plates = [-0.34, -0.29, 0.29, 0.34].map((x, index) => {
-    const radius = index % 2 ? 0.105 : 0.14;
-    const plate = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.045, 14), material(index % 2 ? 0x71855d : 0x22262b, 0.5));
-    plate.rotation.z = Math.PI / 2;
-    plate.position.x = x;
-    return plate;
-  });
-  group.add(bar, ...plates);
-  group.position.set(0, 1.34, -0.22);
-  group.rotation.set(0.12, 0, -0.10);
-  group.traverse((o) => {
-    if (!o.isMesh) return;
-    o.castShadow = true;
-    o.receiveShadow = CHAR_FX.recv;
-    o.userData.noHit = true;
-    o.raycast = () => {};
-  });
-  return group;
-}
-
 // Build a bot mesh from a loaded GLB. Returns an object shaped like buildCharacter()'s
 // result ({ group, parts }) plus animation control (isGLB, mixer, ctrl). Returns null
 // if the character has no model loaded.
@@ -425,21 +401,11 @@ export function buildCharacterModel(def, opts = {}) {
       o.material = Array.isArray(o.material)
         ? o.material.map((m) => upgradeCharMaterial(m, rimCol))
         : upgradeCharMaterial(o.material, rimCol);
-    } else if (def.id === 'zumbibombado') {
-      o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
-    }
-    if (def.id === 'zumbibombado') {
-      const materials = Array.isArray(o.material) ? o.material : [o.material];
-      materials.forEach((m) => {
-        m.color?.set(0x6f945f);
-        m.emissive?.set(0x10180d);
-      });
     }
   });
 
   const group = new THREE.Group();
   group.add(model);
-  if (def.id === 'zumbibombado') group.add(zombieGymKit());
 
   // Sombra de contato (A2). Ancorada no GRUPO, não no modelo: game.js crava
   // `g.position.y = world.groundHeightAt(x,z)` TODO quadro (game.js:3791-3792), ou
@@ -595,6 +561,8 @@ export function buildCharacterModel(def, opts = {}) {
       // É a diferença entre "a mão segura a arma" e "a arma flutua perto da mão" (C7).
       const palmLocal = measurePalmLocal(model, handBone, curlRs);
       const palmW = handBone.localToWorld(palmLocal.clone());
+      const gripOffset = CHAR_GRIP_OFFSET[def.id];
+      if (gripOffset) palmW.add(gripOffset.clone().applyQuaternion(model.getWorldQuaternion(new THREE.Quaternion())));
       // 3) FOLGA: se a palma nasce dentro da silhueta do corpo, empurra a arma pra fora
       // na medida exata (Dollynho: 25 cm dentro da garrafa; humano típico: 0).
       const palmM = model.worldToLocal(palmW.clone());
@@ -651,7 +619,7 @@ export function buildCharacterModel(def, opts = {}) {
       // mão humana fecha ~0,8 rad em volta de 3 cm e ~0,35 rad em volta de 9 cm
       return Math.max(0.35, Math.min(0.80, 0.80 - (esp - 0.03) * (0.45 / 0.06)));
     };
-    const curl = gunObj ? curlPara(gunObj) : 0.5;
+    const curl = def.id === 'musculoso' ? 0.80 : (gunObj ? curlPara(gunObj) : 0.5);
     // fecha TODOS os ossos de curl com peso (nos 18 rigs transplantados eles vêm em par)
     for (const b of curlRs) b.rotation.x += curl;
     if (twoHanded) for (const b of curlLs) b.rotation.x += curl;

@@ -203,7 +203,7 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'mistico', faccao: 'E', nome: 'Jovem Místico', blurb: 'Faixa na testa, cristal no peito e aura calibrada. Só atira quando Mercúrio permite.' },
   { id: 'gotinha', faccao: 'E', nome: 'Zé da Gotinha', blurb: 'Mascote da saúde. Imuniza a treta com dose de reforço - e ainda pega o SUS de graça.' },
   { id: 'hipster', faccao: 'E', nome: 'Hipster Alternativo', blurb: 'Moicano colorido e camiseta de banda que você não conhece. Já jogava isso antes de ser mainstream.' },
-  { id: 'zumbibombado', faccao: 'E', nome: 'Zumbi Bombado', blurb: 'Saiu do leg day direto do além. Levanta peso, levanta da cova e corre atrás do cardio inimigo.' },
+  { id: 'musculoso', faccao: 'E', nome: 'Musculoso', blurb: 'Treinou braço até a manga pedir arrego. Firma o fuzil no peito e transforma cada round em série.' },
   { id: 'et', faccao: 'E', nome: 'ET de Varginha', blurb: 'Veio de longe pra treta. Abduz a direita e some no mato de Minas.' },
 
   { id: 'caminhoneiro', faccao: 'B', nome: 'Caminhoneiro', blurb: 'Camisa do Brasil, luva de estrada e 40h de BR na semana. Freia pra ninguém.' },

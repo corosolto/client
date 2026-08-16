@@ -1,6 +1,6 @@
 {
-  "mediaSha256": "fb83ebcc868f1cd55ae48f22f13ed26bac9d2d81276301fdc2f6cedf48d68ee1",
-  "weaponMapSha256": "9171293222fd9c907b634aa3c16f555cd442e71d8e357714b90207ac860880e6",
-  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; o Zumbi Bombado preserva o porte musculoso, a pele esverdeada, a barra com anilhas e a AK, e as demais classes de arma continuam distinguíveis. Os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
+  "mediaSha256": "ac71bbc29e611b3dba7fbbf2c3c798d40f310a4e48512e29eb7e621b87a8c6fd",
+  "weaponMapSha256": "d6606fdb3e36c5493a6f16049f77f83054321a00c7513869173f62fd5b2222d6",
+  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; o Musculoso preserva o porte atlético, não carrega adereço nas costas e apoia a AK nas duas mãos, e as demais classes de arma continuam distinguíveis. Os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
   "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
 }
