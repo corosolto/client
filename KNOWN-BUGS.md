@@ -391,7 +391,30 @@ manhã do incidente, com o site quebrado, ele saía 1 citando `CONFIRM_MAX_MS`. 
 
 ---
 
+### ~~BUG-56 · jogo em câmera lenta quando o FPS cai~~ · RESOLVIDO 16/08 (issue #295)
+
+**Relato:** jogadores percebendo o jogo em câmera lenta com FPS baixo.
+
+**Causa raiz.** O loop entregava `Math.min(0.05, clock.getDelta())` (`main.js`) — o clamp
+de 50 ms era teto **por frame**. Em cadência sustentada abaixo de 20 FPS, cada frame real
+de 100 ms entregava só 50 ms à simulação: partida, round, recarga, respawn e bots andavam
+na metade do relógio de parede. (O clamp é um bom teto **por passo** — passos gigantes
+estouram colisão e IA — mas como teto por frame ele descartava tempo real em silêncio.)
+
+**Conserto.** O loop fatia o delta real em passos de ≤ 50 ms, chamando `game.update` por
+fatia (mesma semântica por passo de sempre), com teto de 4 fatias por frame — guard de
+espiral da morte: máquina que não acompanha descarta o excesso em vez de acumular dívida.
+Só a última fatia renderiza (`update(dt, render)`) — multi-render em FPS baixo gastaria
+GPU exatamente quando ela já sofre. Em 60 FPS nada muda: 1 passo de ~16 ms por frame.
+
+**Régua.** `tools/eval/sim-clock-check.mjs` (`eval:simclock`, no `check:fast`): SC1 fatio
+do delta real · SC2 teto **com valor lido da declaração** (nome existindo com `1e9`
+passava na asserção de nome — furo achado pelo próprio mutante `sem-teto`) · SC3 clamp
+solto por frame proibido. Mutantes `--mutante=clamp-frame` (3 vermelhas) e
+`--mutante=sem-teto` (1) executados.
+
 ### ~~BUG-35 · "partida rápida demais pra ser verdade" numa partida legítima~~ · RESOLVIDO 07/08 (issue #87)
+
 
 **Palavras de quem reportou** (maurodesouza, issue #87): *"Durante uma partida no modo
 Captura de Bandeira, recebi a mensagem `stats não enviados: partida rápida demais pra ser

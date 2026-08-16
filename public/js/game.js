@@ -6452,7 +6452,7 @@ export class Game {
   }
 
   /* ================= main update ================= */
-  update(dt) {
+  update(dt, render = true) {
     if (this.paused) return;
     this.time += dt;
     if (this.state === 'countdown' && this.time >= this.stateUntil) {
@@ -6506,6 +6506,9 @@ export class Game {
       this.el.lockHint.classList.toggle('hidden',
         this.testMode || this.paused || !!document.pointerLockElement ||
         (this.state !== 'live' && this.state !== 'countdown'));
+    /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
+       passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
+    if (!render) return;
     this.renderer.render(this.scene, this.camera);
     // VM overlay SEM pós (quality low / ?bloom=0): o composer não existe, então desenha
     // a vmScene por cima do mundo aqui (com pós, o RenderPass do bloom.js já faz isso).

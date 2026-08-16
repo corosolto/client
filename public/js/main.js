@@ -2362,23 +2362,36 @@ addEventListener('resize', () => {
 });
 const clock = new THREE.Clock();
 let menuAngle = 0;
+/* #295: o clamp de 50 ms é teto POR PASSO, não por frame. Como teto por frame ele
+   descartava metade do tempo real abaixo de 20 FPS e o jogo virava câmera lenta.
+   Fatia o frame em passos de ≤ 50 ms (mesma semântica por passo) com teto de
+   fatias — máquina que não acompanha descarta o excesso em vez de acumular
+   dívida (espiral da morte). */
+const PASSO_TETO = 4;
 function loop() {
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05, clock.getDelta());
-  loadingStage.update(dt);
+  const dtReal = clock.getDelta();
+  loadingStage.update(Math.min(0.05, dtReal));
   const csOpen = !$('char-select').classList.contains('hidden');
   // A troca com M pausa a partida; o preview 3D visível continua animando nesse estado.
   if (game && !csOpen) {
-    game.update(dt);
+    let resto = dtReal;
+    for (let n = 0; n < PASSO_TETO && resto > 1e-6; n++) {
+      const passo = Math.min(0.05, resto);
+      resto -= passo;
+      game.update(passo, resto <= 1e-6);   // só o último passo desenha (multi-render em FPS baixo seria espiral)
+    }
   } else if (!game) {
-    menuAngle += dt * 0.07;
+    menuAngle += Math.min(0.05, dtReal) * 0.07;
     menuCam.position.set(Math.sin(menuAngle) * 34, 17 + Math.sin(menuAngle * 0.6) * 4, Math.cos(menuAngle) * 34);
     menuCam.lookAt(0, 1, 0);
     renderer.render(menuScene, menuCam);
   }
   if (csOpen && pv && pv.model && !previewVideoVisible()) {
+    const pvDt = Math.min(0.05, dtReal);
+    if (!pvDrag) pv.model.rotation.y += pvDt * 0.9;   // giro automático pausa enquanto arrasta
     // ctrl.update (idle + IK da mão de apoio) quando há GLB; mixer cru só no fallback box
-    if (pv.ctrl) pv.ctrl.update(dt, 0, false, 0); else if (pv.mixer) pv.mixer.update(dt);
+    if (pv.ctrl) pv.ctrl.update(pvDt, 0, false, 0); else if (pv.mixer) pv.mixer.update(pvDt);
     pv.r.render(pv.scene, pv.cam);
   }
 }
