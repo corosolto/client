@@ -208,8 +208,8 @@ css = muta('mapa-strip-fixa', css,
   'grid-template-columns:repeat(var(--map-count),minmax(0,196px))',
   'grid-template-columns:repeat(var(--map-count),196px)');
 main = muta('mapa-categoria-errada', main,
-  "ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',",
-  "ferro_velho: 'FAVELA', quebrada: 'FAVELA', posto_treta: 'CIDADES',");
+  "piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE',",
+  "piscina_treta: 'CIDADES', posto_treta: 'COMUNIDADE', atacadao_treta: 'CIDADES',");
 astro = muta('mapa-sem-navegacao', astro,
   '<button id="ms-prev" class="ms-arrow"',
   '<button id="ms-prev-mutado" class="ms-arrow"');
@@ -558,8 +558,8 @@ const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(func
 const strip = (css.match(/\.ms-strip\{([^}]*)\}/) || [])[1] || '';
 const fundoMapa = (css.match(/\.ms-bg\{([^}]*)\}/) || [])[1] || '';
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
-  && /ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA'/.test(main)
-  && /atacadao_treta: 'CIDADES'/.test(main)
+  && /ferro_velho: 'ARENA', quebrada: 'FAVELA'/.test(main)
+  && /piscina_treta: 'COMUNIDADE', posto_treta: 'COMUNIDADE', atacadao_treta: 'COMUNIDADE'/.test(main)
   && /function visibleMapIds\(\) \{[\s\S]{0,140}return mapCategory === 'TODOS' \? MAP_IDS : MAP_IDS\.filter\(\(id\) => MAP_CAT\[id\] === mapCategory\)/.test(main)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
