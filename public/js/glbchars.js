@@ -28,6 +28,7 @@ export const GLB_CHARS = new Set([
   'caminhoneiro', 'sertanejo', 'coach',
   'gotinha', 'farialimer',
   'bombado', 'hipster', 'dollynho', 'et', 'ancap',
+  'zumbibombado',
   'bonzo', 'canarinho', 'proerd',
   // Palhaços (4ª facção). bonzo (ex-bozo) veio da Mint; os 8 abaixo foram rigados offline
   // (tools/rig-from-donor.mjs: esqueleto do mst transplantado + auto-skin por proximidade),
@@ -40,6 +41,8 @@ export const GLB_CHARS = new Set([
   // com clips retargetados em models/anims/<id>/ (tools/retarget-glb.mjs).
   'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
 ]);
+
+const CHAR_MODEL_SOURCE = Object.freeze({ zumbibombado: 'bombado' });
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -314,7 +317,8 @@ export async function preloadCharacterAssets(ids) {
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
   await Promise.all(wanted.map(async (id) => {
     try {
-      const g = await loadGLB(`models/characters/${id}.glb?v=${VERSION}`);
+      const sourceId = CHAR_MODEL_SOURCE[id] || id;
+      const g = await loadGLB(`models/characters/${sourceId}.glb?v=${VERSION}`);
       _base.set(id, g.scene);
     } catch (e) { console.warn('model load failed', id, e); }
     // Clipes retargetados POR PERSONAGEM (models/anims/<id>/): cada rig do Meshy tem
@@ -356,6 +360,31 @@ const _gq = new THREE.Quaternion(), _wq = new THREE.Quaternion(), _pq = new THRE
 const _right = new THREE.Vector3();
 const _ikTgt = new THREE.Vector3();
 
+function zombieGymKit() {
+  const group = new THREE.Group();
+  const material = (color, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness });
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.72, 10), material(0xb7bec5, 0.8));
+  bar.rotation.z = Math.PI / 2;
+  const plates = [-0.34, -0.29, 0.29, 0.34].map((x, index) => {
+    const radius = index % 2 ? 0.105 : 0.14;
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 0.045, 14), material(index % 2 ? 0x71855d : 0x22262b, 0.5));
+    plate.rotation.z = Math.PI / 2;
+    plate.position.x = x;
+    return plate;
+  });
+  group.add(bar, ...plates);
+  group.position.set(0, 1.34, -0.22);
+  group.rotation.set(0.12, 0, -0.10);
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = CHAR_FX.recv;
+    o.userData.noHit = true;
+    o.raycast = () => {};
+  });
+  return group;
+}
+
 // Build a bot mesh from a loaded GLB. Returns an object shaped like buildCharacter()'s
 // result ({ group, parts }) plus animation control (isGLB, mixer, ctrl). Returns null
 // if the character has no model loaded.
@@ -391,14 +420,26 @@ export function buildCharacterModel(def, opts = {}) {
     // jaleco branco (era esse o bug do "fantasma" da R2). Off em quality low e ?charrecv=0.
     o.receiveShadow = CHAR_FX.recv;
     o.frustumCulled = false;
-    if (!CHAR_FX.mats || !o.material) return;
-    o.material = Array.isArray(o.material)
-      ? o.material.map((m) => upgradeCharMaterial(m, rimCol))
-      : upgradeCharMaterial(o.material, rimCol);
+    if (!o.material) return;
+    if (CHAR_FX.mats) {
+      o.material = Array.isArray(o.material)
+        ? o.material.map((m) => upgradeCharMaterial(m, rimCol))
+        : upgradeCharMaterial(o.material, rimCol);
+    } else if (def.id === 'zumbibombado') {
+      o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone();
+    }
+    if (def.id === 'zumbibombado') {
+      const materials = Array.isArray(o.material) ? o.material : [o.material];
+      materials.forEach((m) => {
+        m.color?.set(0x6f945f);
+        m.emissive?.set(0x10180d);
+      });
+    }
   });
 
   const group = new THREE.Group();
   group.add(model);
+  if (def.id === 'zumbibombado') group.add(zombieGymKit());
 
   // Sombra de contato (A2). Ancorada no GRUPO, não no modelo: game.js crava
   // `g.position.y = world.groundHeightAt(x,z)` TODO quadro (game.js:3791-3792), ou

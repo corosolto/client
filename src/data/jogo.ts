@@ -187,7 +187,7 @@ export interface Personagem { faccao: string; nome: string; blurb: string; }
    bailão!"), e o /personagens publicava a versão que ninguém vê na tela. Regra da casa:
    se divergir, o JOGO está certo e este arquivo está velho. */
 export const FACCOES: { id: string; nome: string; lema: string; cor: string; nota: string }[] = [
-  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Oito arquétipos de esquerda caricata - nenhum deles é uma pessoa real.' },
+  { id: 'E', nome: 'Time E', lema: 'A treta se faz na praça!', cor: '#ff6b6b', nota: 'O time vermelho da arena. Nove arquétipos fictícios e caricatos - nenhum deles é uma pessoa real.' },
   { id: 'B', nome: 'Time B', lema: 'A treta se faz na rodovia!', cor: '#7de08f', nota: 'O time verde. Nove arquétipos de direita caricata, com a mesma dose de zoeira dos adversários.' },
   { id: 'urbanas', nome: 'Tribos Urbanas', lema: 'A treta se faz na quebrada!', cor: '#c79bff', nota: 'Facção sem lado político: emo, punk, metaleiro, skatista, rapper e companhia. Entra na treta pelo estilo.' },
   { id: 'palhacos', nome: 'Palhaços', lema: 'A treta se faz no picadeiro!', cor: '#ff8ad1', nota: 'O picadeiro invadiu a arena. Nove palhaços, do clássico de cartola ao que dá medo de verdade.' },
@@ -203,6 +203,7 @@ export const PERSONAGENS: Personagem[] = [
   { id: 'mistico', faccao: 'E', nome: 'Jovem Místico', blurb: 'Faixa na testa, cristal no peito e aura calibrada. Só atira quando Mercúrio permite.' },
   { id: 'gotinha', faccao: 'E', nome: 'Zé da Gotinha', blurb: 'Mascote da saúde. Imuniza a treta com dose de reforço - e ainda pega o SUS de graça.' },
   { id: 'hipster', faccao: 'E', nome: 'Hipster Alternativo', blurb: 'Moicano colorido e camiseta de banda que você não conhece. Já jogava isso antes de ser mainstream.' },
+  { id: 'zumbibombado', faccao: 'E', nome: 'Zumbi Bombado', blurb: 'Saiu do leg day direto do além. Levanta peso, levanta da cova e corre atrás do cardio inimigo.' },
   { id: 'et', faccao: 'E', nome: 'ET de Varginha', blurb: 'Veio de longe pra treta. Abduz a direita e some no mato de Minas.' },
 
   { id: 'caminhoneiro', faccao: 'B', nome: 'Caminhoneiro', blurb: 'Camisa do Brasil, luva de estrada e 40h de BR na semana. Freia pra ninguém.' },

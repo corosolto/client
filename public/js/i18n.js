@@ -198,6 +198,8 @@ const DICT = {
     'Mirrored shades and a razor-sharp fade. In the flow, the bullet does the running.',
   'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.':
     'Chain, ring and a gleaming watch. If you are going to shoot, do it in style.',
+  'Saiu do leg day direto do além. Levanta peso, levanta da cova e corre atrás do cardio inimigo.':
+    'Left leg day straight for the afterlife. Raises weights, rises from the grave and chases enemy cardio.',
   'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS',

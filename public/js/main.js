@@ -2207,9 +2207,14 @@ const RARITIES = [['COMUM', 'var(--ink-300)'], ['RARO', 'var(--sys)'], ['ÉPICO'
 function renderCharAttrs(c) {
   let h = 0; for (const ch of c.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const wpn = charWeapon(c.id);
-  const [vida, velo, prec] = ATTR_BY_WPN[wpn] || [3, 3, 3];
-  const meme = 1 + (h % 5);
-  const r = h % 10, tier = r < 5 ? 0 : r < 8 ? 1 : r < 9 ? 2 : 3;   // 50% comum / 30% raro / 10% épico / 10% lendário
+  const base = ATTR_BY_WPN[wpn] || [3, 3, 3];
+  const vida = c.attrs?.vida ?? base[0];
+  const velo = c.attrs?.velocidade ?? base[1];
+  const prec = c.attrs?.precisao ?? base[2];
+  const meme = c.attrs?.meme ?? (1 + (h % 5));
+  const r = h % 10;
+  const derivedTier = r < 5 ? 0 : r < 8 ? 1 : r < 9 ? 2 : 3;   // 50% comum / 30% raro / 10% épico / 10% lendário
+  const tier = ({ comum: 0, raro: 1, epico: 2, lendario: 3 })[c.rarity] ?? derivedTier;
   const rEl = $('char-rarity');
   rEl.textContent = tr(RARITIES[tier][0]);
   rEl.style.color = RARITIES[tier][1];
