@@ -111,11 +111,15 @@ jobs:
           import json, os, subprocess
           marker = '## csbrasil-bot classification'
           comments = json.loads(subprocess.check_output([
-              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments"
+              'gh', 'api', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments",
+              '--paginate',
           ], text=True))
           body = open('/tmp/pr-comment.md').read()
+          # Match by marker in body, accepting both 'csbrasil-bot' and 'github-actions[bot]'
+          # (fallback when CSBRASIL_BOT_TOKEN is not configured uses GITHUB_TOKEN)
+          bot_logins = {'csbrasil-bot', 'github-actions[bot]'}
           for c in comments:
-              if c.get('user', {}).get('login') == 'csbrasil-bot' and marker in c.get('body', ''):
+              if c.get('user', {}).get('login') in bot_logins and marker in c.get('body', ''):
                   subprocess.run(['gh', 'api', f"repos/${{ github.repository }}/issues/comments/{c['id']}", '-X', 'PATCH', '-f', f'body={body}'], check=True)
                   raise SystemExit(0)
           subprocess.run(['gh', 'pr', 'comment', os.environ['PR_NUMBER'], '--body-file', '/tmp/pr-comment.md'], check=True)
