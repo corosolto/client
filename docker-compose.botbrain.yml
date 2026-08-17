@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: docker/botbrain.Dockerfile
     ports:
-      - "127.0.0.1:4321:4321"
+      - "127.0.0.1:${PORT:-4321}:${PORT:-4321}"
     volumes:
       - .:/app
       - /app/node_modules

@@ -14,7 +14,7 @@
     "//prepare": "Ativa o hook nativo que acrescenta Signed-off-by com user.name/user.email em todo commit. Evita DCO vermelho por esquecimento sem trazer Husky; preserva core.hooksPath preexistente e mantém o CI como portão para clones sem o hook.",
     "prepare": "node scripts/install-git-hooks.mjs",
     "copy-wasm": "node scripts/copy-wasm.mjs",
-    "preview": "python3 -m http.server 4321 -d dist/client",
+    "preview": "python3 -m http.server ${PORT:-4321} -d dist/client",
     "fetch-audio": "bash scripts/fetch-audio.sh",
     "arch": "node tools/gen-arch.mjs",
     "arch:check": "node tools/gen-arch.mjs --check",
