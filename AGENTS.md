@@ -113,7 +113,8 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 |---|---|---|
 | o estado de hoje, em ≤100 linhas | [`STATUS.md`](STATUS.md) | comece por aqui |
 | contexto, leis e o que fazer em ordem | [`HANDOFF.md`](HANDOFF.md) | auto-contido, assume que você não viu nada |
-| **defeitos com evidência** | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) | `arquivo:linha`, régua e reprodução por bug — **e o placar real do quality gate** |
+| **defeitos com evidência** | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) | `arquivo:linha`, régua e reprodução por bug |
+|| **placar do quality gate** | [`QUALITY-SCORE.md`](QUALITY-SCORE.md) | resumo sintético; histórico e evidências em `KNOWN-BUGS.md` |
 | a ordem de trabalho de uma sessão | [`PROMPT.md`](PROMPT.md) | o que atacar primeiro, e por quê |
 | **índice símbolo→linha do `game.js`** e a tabela de conflito | [`tools/eval/ARCH.md`](tools/eval/ARCH.md) | **GERADO** (`npm run arch`) — leia **antes** de tocar em `game.js` |
 | o que cada script do arnês mede | [`tools/eval/README.md`](tools/eval/README.md) | inclui quais estão obsoletos |
