@@ -23,7 +23,7 @@ else if (mutant === 'root') docker = docker.replace('USER node', '');
 else if (mutant === 'poison') trainer = trainer.replace('MAX_BATCHES_PER_PLAYER', 'UNLIMITED_BATCHES_PER_PLAYER');
 else if (mutant === 'localsink') {
   api = api.replaceAll('MAX_LOCAL_FILE_BYTES', 'UNLIMITED_LOCAL_FILE_BYTES');
-  compose = compose.replace('127.0.0.1:4321:4321', '4321:4321');
+  compose = compose.replace('127.0.0.1:', '');
 }
 else if (mutant === 'stale') sense = sense.replace('else if (!best) mem.target = null;', '');
 else if (mutant) throw new Error(`mutante desconhecido: ${mutant}`);
@@ -53,7 +53,7 @@ if (!trainer.includes('MAX_BATCHES_PER_PLAYER') || !trainer.includes('player_id'
 if (!api.includes('MAX_REQUEST_BYTES') || !api.includes('MAX_LOCAL_FILE_BYTES')
     || !api.includes('sanitizeMeta') || !api.includes('localRateLimit') || !api.includes('validLocalOrigin'))
   failures.push('BB9 sink local não limita corpo, metadados, taxa e quota em disco');
-if (!compose.includes('127.0.0.1:4321:4321'))
+if (!compose.includes('127.0.0.1:') || compose.includes('0.0.0.0:'))
   failures.push('BB9 serviço local expõe o sink de treino fora do loopback');
 if (!sense.includes('else if (!best) mem.target = null;'))
   failures.push('BB10 memória neural conserva alvo morto ou fora do grace');
