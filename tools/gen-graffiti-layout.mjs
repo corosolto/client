@@ -40,6 +40,7 @@ const MAPAS = [
   'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
 ];
 const ONLY = process.argv[2];
+const semPassada = [];
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -73,7 +74,15 @@ for (const id of MAPAS) {
   await page.waitForFunction('window.MAPEVAL && window.MAPEVAL.ready===true', null, { timeout: 300000 });
   const g = await page.evaluate(() => window.__grafite || null);
   await page.close();
-  if (!g || !g.pass || !g.pass.layout) { console.log(`  ${id}: sem passada (mapa ainda não ligado)`); continue; }
+  if (!g || !g.pass || !g.pass.layout) {
+    /* Sem passada o `anterior[id]` ficaria congelado para sempre: a Mansão rodou
+       meses com 18 peças de um pixo vetado porque o mapa parou de chamar
+       `grafitar` e ninguém percebeu. Fóssil se apaga, e o erro sobe alto. */
+    delete anterior[id];
+    semPassada.push(id);
+    console.log(`  ${id}: SEM PASSADA — o mapa não chama grafitar(); entrada velha apagada`);
+    continue;
+  }
   anterior[id] = {
     arquivos: g.pass.layout.arquivos, pecas: g.pass.layout.pecas,
     murais: (g.hom && g.hom.layout) || [],
@@ -83,6 +92,32 @@ for (const id of MAPAS) {
        reprova pra sempre uma coisa que está certa de propósito. */
     ...(g.pass.layout.limpo ? { limpo: g.pass.layout.limpo } : {}),
   };
+  /* Filtro de sobreposição, mesma regra da graffiti-audit (plano ±0,35 m, fração >
+     0,12): a passada às vezes ancora em face diagonal de canto (a peça de 15/08 no
+     vão pinçado do lajes, ry=1,12 sobre o anexo) e o par nasce sobreposto. A régua
+     cobra — então a limpeza é no assado, não no teto. Corta a peça menor do par. */
+  {
+    const P = anterior[id].pecas;
+    let cortou = 0, mudou = true;
+    while (mudou) {
+      mudou = false;
+      for (let i = 0; i < P.length && !mudou; i++) for (let j = i + 1; j < P.length && !mudou; j++) {
+        const a = P[i], b = P[j];
+        if (Math.abs(Math.cos(b[4] - a[4])) < 0.9) continue;
+        const anx = Math.sin(a[4]), anz = Math.cos(a[4]), ax = Math.cos(a[4]), az = -Math.sin(a[4]);
+        const dx = b[1] - a[1], dy = b[2] - a[2], dz = b[3] - a[3];
+        if (Math.abs(dx * anx + dz * anz) > 0.35) continue;
+        const du = Math.abs(dx * ax + dz * az), dv = Math.abs(dy);
+        const ou = (a[5] + b[5]) / 2 - du, ov = (a[6] + b[6]) / 2 - dv;
+        if (ou <= 0 || ov <= 0) continue;
+        if ((ou * ov) / Math.min(a[5] * a[6], b[5] * b[6]) > 0.12) {
+          P.splice(a[5] * a[6] < b[5] * b[6] ? i : j, 1);
+          cortou++; mudou = true;
+        }
+      }
+    }
+    if (cortou) console.log(`  ${id}: ${cortou} peça(s) sobreposta(s) cortada(s) no assado`);
+  }
   console.log(`  ${id}: ${anterior[id].pecas.length} peças · ${anterior[id].arquivos.length} arquivos · `
     + `${anterior[id].murais.length} murais · ${g.ms} ms de passada`);
 }
@@ -110,3 +145,7 @@ const cabecalho = `/* ==========================================================
 export const GRAFITE = `;
 writeFileSync(SAIDA, cabecalho + JSON.stringify(anterior) + ';\n');
 console.log(`-> ${SAIDA}  (${total} peças, ${(JSON.stringify(anterior).length / 1024).toFixed(0)} KB)`);
+if (semPassada.length) {
+  console.error(`SEM PASSADA: ${semPassada.join(', ')} — o arquivo foi gravado sem fóssil, mas o mapa precisa chamar grafitar()`);
+  process.exit(1);
+}

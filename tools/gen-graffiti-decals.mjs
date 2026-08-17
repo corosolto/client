@@ -100,6 +100,7 @@ const RUINS = {
  * carrega e o mapa usa pra escolher (não dá pra pôr alfabeto onde cabia peça).
  * tipo: alfabeto | tag | peca | ilustracao | cartaz                                */
 const ROTULOS = {
+  'mint-pixo-lajes-01.png': ['pixo-lajes-01', 'peca'],
   '01a5764956a230e010d5dcd5c0a0e7cf.jpg': ['palhaco-bobo', 'ilustracao'],
   '09fd82cb4fab24ef663cdbb5441cc191.jpg': ['personagens-graffiti', 'ilustracao'],
   '17b43f09a66d9d221194224ec61ab8c0.jpg': ['olhos-bocas', 'ilustracao'],
@@ -153,6 +154,7 @@ const ROTULOS = {
  * palhaço). Aqui a decisão vira manual — sai UM recorte, a peça inteira.
  * Cada nome desta lista entrou depois de aparecer errado na folha de contato. */
 const INTEIRO = new Set([
+  'mint-pixo-lajes-01.png',
   '01a5764956a230e010d5dcd5c0a0e7cf.jpg', '1a426c23e35f6096b2b3cbc2b7179100.jpg',
   '874137d3b37e53212e560a12b220958b.jpg', 'b4c71057db0952fef9cc4377383f94b4.jpg',
   'add6ded7b6fa1d53be002710ce3e42cb.jpg', '630b720c21fd6685ad13606cd5ce3919.jpg',

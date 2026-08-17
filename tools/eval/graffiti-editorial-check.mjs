@@ -15,6 +15,7 @@
     --mutante=pessoa     injeta uma homenagem real no layout
     --mutante=rick       injeta o decal que leu como personagem protegido em Lajes
     --mutante=carros     injeta os IDs de três carros protegidos na Mansão
+    --mutante=morte      injeta o pixo MORTE no layout assado da Mansão
 */
 import { readFileSync } from 'node:fs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
@@ -43,6 +44,7 @@ if (substituiCorrego) layouts.fy_corrego.arquivos = layouts.fy_corrego.arquivos
 
 if (MUT === 'dollynho') layouts.fy_campomorro.arquivos.push('poster:DOLLYNHO.png');
 if (MUT === 'pessoa') layouts.fy_mansao.murais.push(['homenagem-pessoa-real', 0, 2, 0, 0, 5.4, 2.8]);
+if (MUT === 'morte') layouts.fy_mansao.arquivos.push('folha-pixaca-01.png');
 if (MUT === 'rick') layouts.fy_lajes.arquivos.push('folha-person-01.png');
 if (MUT === 'popeye') layouts.fy_lajes.arquivos.push('personagens-graffiti-01.png');
 if (MUT === 'religioso-vulgar') layouts.fy_corrego.arquivos.push('poster:despisque-leao.jpg');
@@ -66,6 +68,11 @@ for (const id of NOVOS) {
   if (!layout) { falhas.push(`${id}: layout ausente`); continue; }
   const protegidos = (layout.arquivos || []).filter((nome) => /DOLLYNHO/i.test(nome));
   const pessoas = (layout.murais || []).filter((mural) => /^homenagem-/i.test(String(mural?.[0])));
+  /* O veto do MORTE na Mansão vale para o ASSADO também: a fonte foi limpa em
+     12/08 mas o layout fóssil seguiu com 18 peças do pixo até 14/08, porque o
+     gerador preservava entrada de mapa sem passada. */
+  const morteAssado = id === 'fy_mansao'
+    ? (layout.arquivos || []).filter((nome) => nome === 'folha-pixaca-01.png') : [];
   const personagensProtegidos = id === 'fy_lajes'
     ? (layout.arquivos || []).filter((nome) => ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'].includes(nome)) : [];
   const religiososVulgares = id === 'fy_corrego'
@@ -76,6 +83,7 @@ for (const id of NOVOS) {
     ? (layout.arquivos || []).filter((nome) => ['personagens-graffiti-02.png','personagens-graffiti-03.png'].includes(nome)) : [];
   if (protegidos.length) falhas.push(`${id}: ${protegidos.join(', ')}`);
   if (pessoas.length) falhas.push(`${id}: ${pessoas.map((m) => m[0]).join(', ')}`);
+  if (morteAssado.length) falhas.push(`${id}: pixo MORTE assado no layout (folha-pixaca-01.png)`);
   if (personagensProtegidos.length) falhas.push(`${id}: ${personagensProtegidos.join(', ')} lê como personagem protegido`);
   if (religiososVulgares.length) falhas.push(`${id}: ${religiososVulgares.join(', ')} tem teor religioso/vulgar vetado`);
   if (pessoasReais.length) falhas.push(`${id}: ${pessoasReais.join(', ')} contém retrato reconhecível de pessoa real`);

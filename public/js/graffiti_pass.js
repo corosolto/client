@@ -179,7 +179,7 @@ const NAO_PINTA = new RegExp([
   'vidro|glass|window|janela',            // vidro: cartaz em vidro foi a reclamação nº 1
   'agua|water|pool_water',
   'flag|bandeira|placa_|sign|tela|screen|led|farol|light|lamp',
-  'decal:|mural:|sky|ceu',
+  'decal:|mural:|faixa:|sky|ceu',
   /* ── LONA NÃO É PAREDE (07/08, os 12 prints do dono) ──────────────────────────
      "alguns estão renderizados no ar, e não em prédios de verdade". Medido na
      Quebrada: 15 peças na tenda de cúpula, 3 no guarda-sol do boteco, 3 na
@@ -190,6 +190,10 @@ const NAO_PINTA = new RegExp([
   'tent|tenda|barraca|umbrella|guarda_sol|sombrinha',
   'stall|banca|toldo|awning|canopy|marquise|lona|tarp',
   'arquibancada|bleacher|palco|stage',
+  /* platibanda de laje e guarda de tábua (lajes, 14/08): a peça nessa faixa estreita
+     fica recortada contra o céu e lê como tinta no ar cortando o vão — o dono mediu
+     nos prints. Pinta-se o corpo da parede, não a borda do telhado. */
+  'platibanda|guarda_tabua',
 ].join('|'), 'i');
 
 function _pintavel(o) {
@@ -201,6 +205,26 @@ function _pintavel(o) {
   const teste = (m) => m && m.visible !== false
     && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9));
   return Array.isArray(o.material) ? o.material.some(teste) : teste(o.material);
+}
+
+/* TUDO QUE O JOGADOR VÊ, opaco, inclusive o que não se pinta. É a lista da pergunta
+   INVERTIDA ("o que está na frente do plano?"): porta orgulhosa, marquise, letreiro
+   e pele de fachada saem de `alvos` pelo nome (`NAO_PINTA`), então a sonda de trás
+   as atravessa e a peça nascia atrás delas — desenhada e invisível (a "tapada" da
+   graffiti-audit). O predicado é o MESMO dos `opacos` da régua. */
+function _oclusores(root) {
+  const out = [];
+  root.traverse((o) => {
+    if (!o.isMesh || !o.visible || !o.material || !o.geometry) return;
+    const n = String(o.name);
+    if (n.startsWith('decal:') || n.startsWith('mural:')) return;
+    let vis = true;
+    o.traverseAncestors((a) => { if (!a.visible) vis = false; });
+    if (!vis) return;
+    const m = Array.isArray(o.material) ? o.material[0] : o.material;
+    if (m && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9))) out.push(o);
+  });
+  return out;
 }
 
 /* ============================================================================
@@ -221,7 +245,7 @@ export function pintarParedes(opts) {
     root, T, waypoints, bandas,
     alcance = 7, passo = 2.2, raios = 16, cobre = 0.25,
     excluir = null, limpo = null, evitar = null, seed = 1, maxLarg = 5.2, minLarg = 0.45,
-    exigeChao = true, ocupado = null,
+    exigeChao = true, ocupado = null, olhos = null,
   } = opts;
   /* ZONA LIMPA — parede que o dono quer SEM tinta, declarada em coordenada.
      Nasceu da Loja H (07/08): "pode tirar os graffitis de dentro da loja, pode deixar
@@ -251,7 +275,9 @@ export function pintarParedes(opts) {
   /* ── 1. ÂNCORAS ───────────────────────────────────────────────────────────
      Duas alturas de olho e não uma: a 1,55 m o raio acha o muro e o armário; a
      3,10 m ele acha a empena ACIMA do armário, que da altura do olho está tapada
-     e é justamente a parte alta que ficava pelada. */
+     e é justamente a parte alta que ficava pelada. `olhos` no cfg adiciona faixas
+     (a Loja H precisa de 5,25 m pra cornija da fachada virar âncora). */
+  const OLHOS = olhos || [1.55, 3.1];
   const rc = new THREE.Raycaster(); rc.far = alcance;
   const o3 = new THREE.Vector3(), d3 = new THREE.Vector3();
   const ancoras = new Map();
@@ -262,7 +288,7 @@ export function pintarParedes(opts) {
   const longe = _grade(alvos, Math.max(12, Math.ceil(alcance * 1.5)));
   for (const wp of waypoints) {
     const vizWp = longe(wp.x, wp.z);
-    for (const eye of [1.55, 3.1]) {
+    for (const eye of OLHOS) {
       for (let a = 0; a < raios; a++) {
         const ang = (a / raios) * Math.PI * 2 + (mix32(a * 7 + seed) % 100) / 3000;
         rc.set(o3.set(wp.x, (wp.y || 0) + eye, wp.z),
@@ -281,7 +307,7 @@ export function pintarParedes(opts) {
         if (_naZona(h.point.x, h.point.z)) continue;
         if (evitar && evitar.test(_cadeia(h.object))) continue;
         if (excluir && excluir(h.point.x, h.point.y, h.point.z, nw, h.object)) continue;
-        ancoras.set(k, { x: h.point.x, z: h.point.z, ry, teto: 0, quem: _cadeia(h.object) });
+        ancoras.set(k, { x: h.point.x, z: h.point.z, ry, teto: 0, olho: h.point.y, quem: _cadeia(h.object) });
       }
     }
   }
@@ -299,8 +325,13 @@ export function pintarParedes(opts) {
   /* Grade FINA (3 m) pro encaixe: os raios dele têm 0,85 m, então 3 células de 3 m
      já sobram. Célula menor = lista menor por consulta = o `pintar` sai de 10,4 s. */
   const perto = _grade(alvos, 3);
+  const pertoFrente = _grade(_oclusores(root), 3);
   for (const A of ancoras.values()) A.teto = _alturaParede(perto(A.x, A.z), rc, A);
   tempo.teto = Math.round(_ms() - _t); _t = _ms();
+  const _dbg = (typeof window !== 'undefined' && window.__grafiteDebug)
+    ? [...ancoras.values()]
+      .map((A) => ({ x: +A.x.toFixed(2), z: +A.z.toFixed(2), teto: +A.teto.toFixed(2), quem: A.quem.slice(0, 40) }))
+    : null;
 
   /* ── 2. PINTAR ────────────────────────────────────────────────────────────
      Ordem determinística por hash da célula (não pela ordem de descoberta, que
@@ -325,7 +356,7 @@ export function pintarParedes(opts) {
   root.traverse((o) => {
     if (!o.isMesh) return;
     const n = String(o.name);
-    if (!n.startsWith('decal:') && !n.startsWith('mural:')) return;
+    if (!n.startsWith('decal:') && !n.startsWith('mural:') && !n.startsWith('faixa:')) return;
     const g = o.geometry && o.geometry.parameters;
     if (!g || !g.width) return;                       // malha junta de outra passada
     o.updateMatrixWorld(true);
@@ -345,7 +376,7 @@ export function pintarParedes(opts) {
 
   for (const [, A] of lista) {
     const antes = n;
-    const amostra = _amostrador(perto(A.x, A.z), rc, A);
+    const amostra = _amostrador(perto(A.x, A.z), rc, A, pertoFrente(A.x, A.z));
     for (const B of bandas) {
       if (!B.pool || !B.pool.length) continue;
       // a banda só existe se o raio ACHOU parede na altura dela: âncora de muro de
@@ -387,7 +418,7 @@ export function pintarParedes(opts) {
         const ax = A.x + Math.cos(A.ry) * du, az = A.z - Math.sin(A.ry) * du;
         const px = ax - Math.sin(A.ry) * recuo, pz = az - Math.cos(A.ry) * recuo;
         if (_cobreDemais(postas, px, yc, pz, A.ry, w, h, cobre)) { rec.cobria++; continue; }
-        if (exigeChao && !_temChao(amostra, du, w, yc - h / 2)) { rec.noAr++; continue; }
+        if (exigeChao && B.exigeChao !== false && !_temChao(amostra, du, w, yc - h / 2)) { rec.noAr++; continue; }
         postas.push({ i, cartaz, x: px, y: yc, z: pz, ry: A.ry, hw: w / 2, hh: h / 2, quem: A.quem });
         const g = new THREE.PlaneGeometry(w, h);
         g.rotateY(A.ry); g.translate(px, yc, pz);
@@ -432,6 +463,7 @@ export function pintarParedes(opts) {
       const k = (String(p.quem || '').match(/[A-Za-z_]{4,}/g) || ['?']).slice(0, 2).join('/');
       a[k] = (a[k] || 0) + 1; return a;
     }, {})).sort((x, y) => y[1] - x[1]).slice(0, 18), vazias,
+    ...(_dbg ? { ancDetalhe: _dbg } : {}),
   };
 }
 
@@ -506,8 +538,9 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
    embaixo de muro pichado, e reprovar por causa de uma porta seria trocar um defeito
    por outro. Custa quase nada: o amostrador é cacheado por âncora.
 
-   `exigeChao: false` existe para o caso que ainda não apareceu — parede suspensa que
-   o mapa QUEIRA pichada. Nenhum mapa usa hoje. */
+   `exigeChao: false` (global ou por banda) é pra pele suspensa que o mapa QUEIRA
+   pichada — a fachada greco-romana da Loja H (banner e cornija têm ar embaixo por
+   construção). A régua irmã (`graffiti-audit`) continua cobrando parede atrás. */
 function _temChao(amostra, du, w, yBase) {
   if (yBase <= 0.9) return true;                 // já nasce rente ao chão
   let colunas = 0;
@@ -651,6 +684,7 @@ export function pendurarMurais(opts) {
      e `_larguraParede` até onde ela corre sem degrau. Nota = área livre; empate
      desempata pelo hash, pra ficar determinístico. */
   const perto = _grade(alvos);
+  const pertoFrente = _grade(_oclusores(root), 3);
   const notas = [];
   for (const A of cand.values()) {
     const viz = perto(A.x, A.z);
@@ -671,7 +705,7 @@ export function pendurarMurais(opts) {
     const yc = Math.min(1.15 + h / 2, c.hP - h / 2 - 0.35);
     /* Mural pairando é pior que tag pairando — ele é grande e o olho vai nele. Mesma
        regra de chão da passada (ver `_temChao`). */
-    const am = _amostrador(perto(c.A.x, c.A.z), rc, c.A);
+    const am = _amostrador(perto(c.A.x, c.A.z), rc, c.A, pertoFrente(c.A.x, c.A.z));
     const rec = _encaixar(null, rc, c.A, yc, w, h, am);
     if (rec === null) continue;
     if (!_temChao(am, 0, w, yc - h / 2)) continue;
@@ -707,35 +741,63 @@ export function pendurarMurais(opts) {
       JÁ ESTÁ na superfície. Procurar a face 1,5 m antes dela é refazer, pior, um
       trabalho que já está feito.
 
-   Então este teste só confirma o que a âncora promete: 3 × 3 amostras no quad, raio
-   nascendo 0,30 m à frente (menos que meio beco), profundidade medida em relação ao
-   plano da âncora. Aceita se ≥ 7 das 9 acharem parede — vão de porta e caixilho de
-   janela abrem buraco legítimo no meio de um muro pichado — e se a variação de
-   profundidade for ≤ 0,28 m, que é o que separa uma parede de duas.
-   Devolve o recuo (3 cm à frente da face mais orgulhosa), igual o `medirParede`. */
+   Então este teste só confirma o que a âncora promete: as MESMAS 15 amostras da
+   `graffiti-audit` no quad (5 × 3), raio nascendo 0,30 m à frente (menos que meio
+   beco), profundidade medida em relação ao plano da âncora. Aceita se ≥ 13 das 15
+   acharem parede — vão de porta e caixilho de janela abrem buraco legítimo no meio
+   de um muro pichado — e se a variação de profundidade for ≤ `planura`, que é o que
+   separa uma parede de duas. E pergunta o que está NA FRENTE: qualquer amostra com
+   superfície opaca orgulhosa do plano reprova (a "tapada" da régua — porta,
+   marquise, letreiro, pele de fachada, todas invisíveis pra sonda de trás porque
+   saem de `alvos` pelo nome). Devolve o recuo (3 cm à frente da face mais
+   orgulhosa), igual o `medirParede`. */
 const _ea = new THREE.Vector3(), _ed = new THREE.Vector3();
+
+/* As 15 posições de amostra do quad — as MESMAS da `graffiti-audit`, com a mesma
+   folga (2 vazias de 15). Antes a passada amostrava 9 pontos em posições próprias:
+   aprovava o que a régua reprovava, e o "no ar" não descia depois de consertos que
+   deveriam tê-lo derrubado. Duas réguas com pontos e limiares diferentes medindo a
+   mesma coisa é o instrumento discordando de si mesmo. */
+const AMOSTRAS_15 = [];
+for (const _su of [-0.45, -0.22, 0, 0.22, 0.45]) {
+  for (const _sv of [-0.4, 0, 0.4]) AMOSTRAS_15.push([_su, _sv]);
+}
 
 /* CACHE DE AMOSTRA POR ÂNCORA. A mesma âncora é testada até 12 vezes (4 bandas × 3
    tamanhos), e as quinas de um quad de 2,0 m caem quase em cima das de um de 1,5 m.
-   Guardando a profundidade por ponto arredondado a 25 cm, o 2º teste em diante quase
-   não atira raio. Medido na Quebrada: mesmas 818 peças, fase `pintar` de 4,3 s
-   para 1,5 s. O arredondamento desloca a amostra no máximo 12 cm — menos que a
-   tolerância de planura (28 cm), então não muda veredito. */
-function _amostrador(alvos, rc, A) {
+   A chave é o ponto EXATO: qualquer arredondamento desloca a amostra da posição que
+   a `graffiti-audit` mede, e a passada aprova o que a régua reprova — a 1/4 de
+   metro colapsava as 5 colunas da grade em 3 para peça miúda, e a 1/16 ainda
+   deixou ~60 peças residuais de vão 0,2 (13/08, medido nos 10 mapas). */
+function _amostrador(alvos, rc, A, frente) {
   const nx = Math.sin(A.ry), nz = Math.cos(A.ry);
   const ux = Math.cos(A.ry), uz = -Math.sin(A.ry);
   const FRENTE = 0.30, cache = new Map();
-  return (u, v) => {
-    const qu = Math.round(u * 4) / 4, qv = Math.round(v * 4) / 4, k = qu + ':' + qv;
+  const amostra = (u, v) => {
+    const k = u + ':' + v;
     if (cache.has(k)) return cache.get(k);
     rc.far = FRENTE + 0.55;
-    rc.set(_ea.set(A.x + ux * qu + nx * FRENTE, qv, A.z + uz * qu + nz * FRENTE),
+    rc.set(_ea.set(A.x + ux * u + nx * FRENTE, v, A.z + uz * u + nz * FRENTE),
       _ed.set(-nx, 0, -nz).normalize());
     let d = null;
     for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 1e-3) { d = x.distance - FRENTE; break; }
     cache.set(k, d);
     return d;
   };
+  /* SONDA DO LADO DE CÁ: o primeiro oclusor opaco À FRENTE DA PEÇA — não da âncora.
+     A peça pode nascer RECUADA do plano da âncora (parede em reentrância), e um
+     raio ancorado no plano não enxerga o que ficou entre os dois (medido 13/08 no
+     Ferro Velho: oclusor 4,6 cm à frente da peça, invisível da âncora). Mesmo raio
+     da régua: de 2 cm à frente da peça, 0,25 m para fora. Sem cache — o recuo muda
+     a cada tentativa. */
+  amostra.frente = !frente ? null : (u, v, recuo) => {
+    rc.far = 0.25;
+    rc.set(_ea.set(A.x + ux * u + nx * (0.02 - recuo), v, A.z + uz * u + nz * (0.02 - recuo)),
+      _ed.set(nx, 0, nz).normalize());
+    for (const x of rc.intersectObjects(frente, false)) if (x.distance > 1e-3) return x.distance;
+    return null;
+  };
+  return amostra;
 }
 
 function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28) {
@@ -744,35 +806,30 @@ function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28) {
   const FRENTE = 0.30;
   let dmin = Infinity, dmax = -Infinity, achou = 0;
   if (amostra) {
-    /* 9 AMOSTRAS, NÃO 5 — porque as minhas duas réguas discordavam (07/08). A
-       passada aceitava 1 vazia de 5 (20% de buraco) e a `graffiti-audit` reprova
-       acima de 2 de 15 (13%). Peça aprovada aqui nascia reprovada lá, e o "no ar"
-       ficou parado em ~690 depois de dois consertos que deveriam ter derrubado o
-       número. Duas réguas com limiar diferente medindo a mesma coisa é o instrumento
-       discordando de si — o defeito que esta casa mais paga caro.
-       9 pontos cobrem quinas, meios de borda e centro. Custa o dobro de amostra, e é
-       offline: quem paga é o `npm run grafite`, não o jogador. */
-    for (const [su, sv] of [[0, 0],
-      [-0.44, -0.44], [0, -0.44], [0.44, -0.44],
-      [-0.44, 0], [0.44, 0],
-      [-0.44, 0.44], [0, 0.44], [0.44, 0.44]]) {
+    for (const [su, sv] of AMOSTRAS_15) {
       const prof = amostra(du + su * w, yc + sv * h);
       if (prof === null) continue;
       if (prof < dmin) dmin = prof;
       if (prof > dmax) dmax = prof;
       achou++;
     }
-    /* 1 vazia é a folga do caixilho de janela e do vão de porta — buraco legítimo em
-       muro pichado. A banda de tag miúda (`planura` folgada) aceita 2, porque chapa
-       ondulada e quina de contêiner sempre furam uma amostra. */
-    if (achou < (planura > 0.4 ? 7 : 8)) return null;
+    /* 2 vazias de 15: a folga exata da régua, pro vão de porta e pro caixilho de
+       janela — buraco legítimo em muro pichado. */
+    if (achou < 13) return null;
     if (dmax - dmin > planura) return null;
-    return dmin - 0.03;
+    const recuo = dmin - 0.03;
+    /* TAPADA: qualquer oclusor opaco nos 0,25 m à frente da peça — a mesma pergunta
+       da `graffiti-audit`, nos mesmos pontos. Uma amostra coberta já lê como erro de
+       render: qualquer uma reprova, e o deslize tenta a vaga ao lado. */
+    if (amostra.frente) {
+      for (const [su, sv] of AMOSTRAS_15) {
+        if (amostra.frente(du + su * w, yc + sv * h, recuo) !== null) return null;
+      }
+    }
+    return recuo;
   }
-  /* 5 amostras (centro + 4 quinas) e não 9: cada amostra é um `intersectObjects` e
-     a passada faz ~6.400 encaixes por mapa. Medido na Quebrada, as 4 do meio das
-     bordas não mudaram NENHUM veredito (mesmas 818 peças) e custavam 44% do tempo
-     da fase. Quina é onde a parede acaba — é lá que o degrau aparece. */
+  /* 5 amostras (centro + 4 quinas): quina é onde a parede acaba — é lá que o degrau
+     aparece. Sem folga nenhuma: uma vazia já é ponta pendurada. */
   for (const [su, sv] of [[0, 0], [-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]]) {
     const px = A.x + ux * su * w, py = yc + sv * h, pz = A.z + uz * su * w;
     rc.far = FRENTE + 0.55;
@@ -785,7 +842,7 @@ function _encaixar(alvos, rc, A, yc, w, h, amostra, du = 0, planura = 0.28) {
     if (prof > dmax) dmax = prof;
     achou++;
   }
-  if (achou < 4) return null;                  // buraco demais: não é parede, é vão
+  if (achou < 5) return null;                  // buraco demais: não é parede, é vão
   if (dmax - dmin > 0.28) return null;         // duas paredes em degrau, não uma
   return dmin - 0.03;                          // 3 cm à frente da face mais orgulhosa
 }
@@ -822,12 +879,19 @@ function _alturaParede(alvos, rc, A) {
   const nx = Math.sin(A.ry), nz = Math.cos(A.ry);
   const bx = A.x + nx * 0.6, bz = A.z + nz * 0.6;
   rc.far = 1.4;
-  rc.set(_pa.set(bx, 1.0, bz), _pd.set(-nx, 0, -nz).normalize());
-  let base = null;
-  for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { base = x.distance; break; }
+  /* Pele suspensa (banner, cornija): a sonda de base a 1,0 m passa POR BAIXO dela e
+     devolveria teto 1,2 — mas a âncora existe porque um raio BATEU nela na altura
+     `olho`. Base cai pra altura do acerto antes de desistir (Loja H, 13/08: 16
+     âncoras de banner com teto 1,2 e fachada pelada acima de 2,8 m). */
+  let y0 = 1.0, base = null;
+  for (const yb of (A.olho > 1.4 ? [1.0, A.olho] : [1.0])) {
+    rc.set(_pa.set(bx, yb, bz), _pd.set(-nx, 0, -nz).normalize());
+    for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { base = x.distance; break; }
+    if (base !== null) { y0 = yb; break; }
+  }
   if (base === null) return 1.2;
-  let topo = 1.0;
-  for (let y = 1.4; y <= 8.2; y += 0.4) {
+  let topo = y0;
+  for (let y = y0 + 0.4; y <= 8.2; y += 0.4) {
     rc.set(_pa.set(bx, y, bz), _pd.set(-nx, 0, -nz).normalize());
     let d = null;
     for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { d = x.distance; break; }

@@ -19,6 +19,11 @@ em vez de atribuir a imagem a uma API que não foi usada.
   graffiti mural on brick and falling plaster, original fictional cultural figure,
   paint drips and weathering, flat albedo, 512x512." SHA-256
   `2cfba9f721e7a5dca720df8718291a002108537c54d59e4424d871112efeb197`.
+- `decals/pixo-lajes-01.png`: peça de pixo original gerada no Mint para o Lajes;
+  fonte local `references/graffiti/mint-pixo-lajes-01.png`, recortada pelo fluxo
+  reproduzível de `tools/gen-graffiti-decals.mjs`. O identificador remoto e o prompt
+  não foram preservados; essa lacuna de recibo permanece explícita, sem atribuição
+  inventada. SHA-256 `5a46e2a1799a83fdc3f699a049dd9ccd03543ecfdca004d35dee8b8149fe6381`.
 - `textures/corrego_streetart_pixo.webp`: "Seamless tileable Sao Paulo pixacao,
   tall illegible black painted letters on dirty concrete, dripping paint, no logo
   or readable slogan, flat albedo, 512x512." SHA-256
@@ -27,6 +32,31 @@ em vez de atribuir a imagem a uma API que não foi usada.
   restrained gold veining, polished surface, flat albedo, no object or baked light,
   512x512." SHA-256
   `dcf0093a84fc76987556975304a6ca960637e6b5b4edba0a0c4d005ff0b94c70`.
+
+## Kit PBR CC0 (ambientCG, 14/08 — A/B `?kit=pbr` do lajes)
+
+Baixados de https://ambientcg.com (licença CC0), pacote `1K-JPG`, convertidos para
+webp sem reamostragem (`cwebp` q82 cor, q90 normalGL, q85 roughness). Convenção:
+`pbr_<id>_{color,normal,rough}.webp`; o normal é o `NormalGL` do pacote.
+
+- `Bricks051` (tijolo) — color `447faaa80f192c99d5c25742d57619a23244769b937a18d62794a1a76377cd01`,
+  normal `49a68dc451434d48d614fdd2f4aaa715e007504602581e2eb50dd6766f0c696b`,
+  rough `de131b558f11feea9b4165d6631e5797cfb8619da4c067127b42aa9cdcd7f3fa`.
+- `PaintedPlaster017` (reboco pintado) — color `e4a897f82ca5824f7f062dce47c4eb0581c7e84dbdd90e7cb4b1007e25b8e73a`,
+  normal `df76d79a66a7a9ef3fdd987f5c7eb79a2eb4100a153ab4939bd846be29774c87`,
+  rough `8dea7d058ad67a85e98d17e9cd4aae06402022380dab9559d0687765e3857e70`.
+- `Concrete046` (concreto) — color `49c24afba9457d1d9ab6d9d3ed518d0a34ec13e67b05e0056ec16870d25dc414`,
+  normal `c798039b4503eb622c88538712ca1e9649b31afd2a356d38712158708867eedd`,
+  rough `1786f195e274c3ac56edf01d729d1d7e1a6c00543bc17dfca4828e5e582fb928`.
+- `Asphalt033` (asfalto) — color `aa9475a218b619323b59fc1087c3a7de4eb6bd5824381ca1d87a2477cefd1746`,
+  normal `b2f251f6116b9cdea70dd227aab5e5b69d4ed78c91beb430fca8ace1b83e865e`,
+  rough `bf5e01c0ee81b5a2a156f9e4d9c5dab99d410e823c490767acb2564eb7a7f805`.
+- `CorrugatedSteel009` (zinco) — color `ba6b9f6f628647a017c5da78cd9b0977039bafa46544ed56648bb2b84efe0bf0`,
+  normal `53111523a647c30a94ad503dcb4c7f4735b24ee6a9c8de30f1885753a11e39a8`,
+  rough `4f17968fcea963eba1fe7a629a2b91aa49ae1a6bde8cc87e5bed06f1a0098ca8`.
+- `Ground054` (terra) — color `54fc19e5329060f0d865b0ceb46b65693eb93e46c48b95f3cb7a27c0d20f0fde`,
+  normal `af15889664ef8da7c06c6eded5b3f3d2225f75ff9d8bd1981e1eb46a59f84eda`,
+  rough `4b61cde9a6af65b4da18574e7322578d1c4c77b207272c2ebb37ade253737d73`.
 
 ## Time Mítico
 
@@ -61,6 +91,30 @@ o elenco ocupa a metade inferior e o topo permanece livre para nome e lema em HT
 Os quatro brasões `brasoes/{n,r,o,t}.png` foram gerados na mesma sessão, sem
 referência externa: D20+cursor, relógio+ferramentas, roda+fio de cobre e CRT+antena,
 respectivamente. São PNGs com alfa, sem texto e sem marca externa.
+
+## Bloco cerâmico do Lajes
+
+- `textures/lajes_tijolo_baiano_color.webp` e
+  `textures/lajes_tijolo_baiano_normal.webp`: textura autoral gerada pelo ImageGen
+  integrado do Codex em 2026-08-15, sem imagem externa de referência. A fonte está
+  preservada em `references/mapas/world/lajes-tijolo-baiano-source.png`; SHA-256 da
+  fonte `9a20cbb570590a4263678ed92e844f447839e7f93511d42b1cf9b6fefe35ebbf`, do albedo
+  servido `3295caaec2ff8516efbbed9b01b387e01c019999bd7d124ab8213f7e72322c60` e do normal
+  derivado localmente `70974b4b3b30b00b65aa9b793c4212fbd853ca5362ed0e21340ddce2dac6d219`.
+  Prompt final: "Perfectly tileable square texture of an unfinished wall built from
+  Brazilian hollow ceramic masonry blocks (tijolo baiano). ALL intact blocks are
+  laid normally and show their long ribbed side face toward the camera in staggered
+  courses. Only two or three chipped or broken blocks in the entire tile reveal a
+  few dark internal hollow cells through damaged clay; never rotate intact blocks
+  to show their end face. Straight-on orthographic surface scan, edge-to-edge
+  seamless repetition on all four sides, uniform real-world scale, no perspective,
+  no focal composition. Flat diffuse overcast capture, uniform exposure, no
+  directional or cast shadows, PBR albedo capture. Varied burnt orange, terracotta
+  and dusty red clay; rough irregular cement-grey mortar joints; restrained grime.
+  Porous ribbed clay, chipped edges, imperfect hand-applied mortar, subtle
+  construction dust. Every intact brick is a long rectangular side face; at most
+  10 percent visibly broken; no alternating end-on blocks; no plaster; no graffiti;
+  no objects; no people; no text; no watermark; no vignette; no dramatic lighting."
 
 ## Horizontes dos mapas originais
 
@@ -111,7 +165,8 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   Output only the panorama."
 - `textures/sky_joa.webp` — source `exec-96737cf4-2c4d-408b-83b8-6cbf1297d1cb`,
   SHA-256 do PNG `0de83ba0cf362c1f8575887db6cf49f227ee227389d7d6257900e8935624887b`,
-  SHA-256 final `872bb146ae5e0c57127f28c48efbab26937644e2571588c6217b3b025c6c2ea9`.
+  SHA-256 final `c8da24302739aa588524efd57107831aebcad94392a22fe12335b01a3d40a7fa`
+  (regerado em 8c5cfad, 12/08, para fechar a costura de wrap; hash anterior `872bb146…`).
   Prompt: "Create a seamless equirectangular 2:1 environment panorama for a
   stylized-realistic browser FPS set at a fictional ultra-modern coastal house on a
   tropical Brazilian hillside. Upper 72% is a clear warm late-afternoon sky with

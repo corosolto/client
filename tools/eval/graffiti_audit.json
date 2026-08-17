@@ -1,76 +1,121 @@
 {
- "quebrada": {
-  "total": 973,
-  "noAr": 102,
-  "tapadas": 11,
-  "sobrepostas": 14,
+ "praca_poderes": {
+  "total": 352,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 0,
+  "piores": [],
+  "piorSobrepor": []
+ },
+ "piscina_treta": {
+  "total": 355,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 2,
+  "piores": [],
+  "piorSobrepor": [
+   {
+    "x": -16.9,
+    "y": 3.4,
+    "z": 6,
+    "frac": 0.14,
+    "a": "mural:eternamente",
+    "b": "decal:tag-money.png"
+   },
+   {
+    "x": -16.9,
+    "y": 3.4,
+    "z": 6,
+    "frac": 0.12,
+    "a": "mural:eternamente",
+    "b": "decal:or-stencil-capivara.png"
+   }
+  ]
+ },
+ "loja_h": {
+  "total": 290,
+  "noAr": 1,
+  "tapadas": 0,
+  "sobrepostas": 3,
   "piores": [
    {
-    "x": -16.7,
-    "y": 2.51,
-    "z": -10.5,
-    "ry": -1.57,
-    "w": 2.9,
-    "h": 1.58,
-    "vao": 1,
-    "tapada": 0.27,
-    "quem": "mural:eternamente"
-   },
-   {
-    "x": 16.82,
-    "y": 1.5,
-    "z": -40.6,
-    "ry": -1.57,
-    "w": 0.84,
-    "h": 1.5,
-    "vao": 0,
-    "tapada": 1,
-    "quem": "poster:ashtar.png"
-   },
-   {
-    "x": 16.11,
-    "y": 3.3,
-    "z": 19.87,
+    "x": -12.78,
+    "y": 3.85,
+    "z": -4.07,
     "ry": 0,
-    "w": 1.33,
-    "h": 1.9,
-    "vao": 0,
-    "tapada": 1,
-    "quem": "personagem-muro.png"
+    "w": 1.5,
+    "h": 1.12,
+    "vao": 0.2,
+    "tapada": 0,
+    "quem": "tag-money.png"
+   }
+  ],
+  "piorSobrepor": [
+   {
+    "x": 37.9,
+    "y": 1.3,
+    "z": 26,
+    "frac": 0.93,
+    "a": "decal:tag-larga.png",
+    "b": "decal:tag-fina.png"
    },
    {
-    "x": 20.1,
-    "y": 2.51,
-    "z": 10.65,
-    "ry": 1.57,
-    "w": 2.9,
-    "h": 1.58,
-    "vao": 1,
-    "tapada": 0,
-    "quem": "mural:leste-vive"
+    "x": 37.9,
+    "y": 1.3,
+    "z": 42,
+    "frac": 0.73,
+    "a": "decal:tag-money.png",
+    "b": "decal:tags-treino-02.png"
    },
    {
-    "x": 20.1,
-    "y": 2.51,
-    "z": 10.65,
-    "ry": -1.57,
-    "w": 2.9,
-    "h": 1.58,
-    "vao": 1,
-    "tapada": 0,
-    "quem": "mural:leste-vive"
+    "x": 37.9,
+    "y": 1.3,
+    "z": 10,
+    "frac": 0.53,
+    "a": "decal:tags-treino-02.png",
+    "b": "decal:tag-larga.png"
+   }
+  ]
+ },
+ "ferro_velho": {
+  "total": 516,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 3,
+  "piores": [],
+  "piorSobrepor": [
+   {
+    "x": 15.9,
+    "y": 1.2,
+    "z": -34.1,
+    "frac": 0.97,
+    "a": "tag-money.png",
+    "b": "or-graf-treta.png"
    },
    {
-    "x": 0,
-    "y": 1.1,
-    "z": 27.91,
-    "ry": 3.14,
-    "w": 1.95,
-    "h": 1.5,
-    "vao": 1,
-    "tapada": 0,
-    "quem": "decal:tag-flop.png"
+    "x": -30.7,
+    "y": 1.6,
+    "z": -30.6,
+    "frac": 0.56,
+    "a": "tags-treino-02.png",
+    "b": "poster:25c9112229edfcfbb1eae4137ecc151a.jpg"
    },
+   {
+    "x": 28,
+    "y": 1.4,
+    "z": -23.8,
+    "frac": 0.17,
+    "a": "or-graf-treta.png",
+    "b": "tag-selvagem.png"
+   }
+  ]
+ },
+ "quebrada": {
+  "total": 976,
+  "noAr": 3,
+  "tapadas": 1,
+  "sobrepostas": 10,
+  "piores": [
    {
     "x": -12.46,
     "y": 0.9,
@@ -83,193 +128,6 @@
     "quem": "decal:folha-lambes.png"
    },
    {
-    "x": 0,
-    "y": 0,
-    "z": 0,
-    "ry": 0,
-    "w": 1.29,
-    "h": 1.5,
-    "vao": 1,
-    "tapada": 0,
-    "quem": "decal:poster:despisque-leao.jpg"
-   },
-   {
-    "x": -12.37,
-    "y": 0.97,
-    "z": 13.47,
-    "ry": 1.57,
-    "w": 0.49,
-    "h": 1.15,
-    "vao": 0,
-    "tapada": 0.93,
-    "quem": "poster:or-compro-ouro.jpg"
-   },
-   {
-    "x": -13.1,
-    "y": 1.5,
-    "z": -19.35,
-    "ry": 0,
-    "w": 1.08,
-    "h": 1.5,
-    "vao": 0,
-    "tapada": 0.87,
-    "quem": "poster:574381edb80801aaff5e9a1cdd88bc4b.jpg"
-   },
-   {
-    "x": 14.32,
-    "y": 1.3,
-    "z": 19.81,
-    "ry": 3.14,
-    "w": 3.6,
-    "h": 1.98,
-    "vao": 0,
-    "tapada": 0.8,
-    "quem": "folha-throwu-05.png"
-   },
-   {
-    "x": -17.52,
-    "y": 1.3,
-    "z": 0.89,
-    "ry": 0,
-    "w": 2.09,
-    "h": 1.5,
-    "vao": 0.4,
-    "tapada": 0.4,
-    "quem": "folha-pixaca-04.png"
-   },
-   {
-    "x": -4.21,
-    "y": 3.3,
-    "z": -42.54,
-    "ry": 0,
-    "w": 1.9,
-    "h": 1.9,
-    "vao": 0.47,
-    "tapada": 0.33,
-    "quem": "or-stencil-capivara.png"
-   },
-   {
-    "x": 23.78,
-    "y": 1.3,
-    "z": 27.19,
-    "ry": -0.79,
-    "w": 0.78,
-    "h": 1.1,
-    "vao": 0.4,
-    "tapada": 0.4,
-    "quem": "pra-gringo.png"
-   },
-   {
-    "x": -1.25,
-    "y": 0.96,
-    "z": -42.66,
-    "ry": 1.57,
-    "w": 0.45,
-    "h": 0.38,
-    "vao": 0.2,
-    "tapada": 0.6,
-    "quem": "or-stencil-pomba.png"
-   },
-   {
-    "x": -22.13,
-    "y": 1.3,
-    "z": 27.19,
-    "ry": -0.79,
-    "w": 0.82,
-    "h": 0.6,
-    "vao": 0.4,
-    "tapada": 0.4,
-    "quem": "folha-pixaca-05.png"
-   },
-   {
-    "x": -2.31,
-    "y": 3.3,
-    "z": -42.54,
-    "ry": 0,
-    "w": 1.96,
-    "h": 1.9,
-    "vao": 0.47,
-    "tapada": 0.27,
-    "quem": "folha-person-04.png"
-   },
-   {
-    "x": -16.7,
-    "y": 2.51,
-    "z": -10.5,
-    "ry": 1.57,
-    "w": 2.9,
-    "h": 1.58,
-    "vao": 0.73,
-    "tapada": 0,
-    "quem": "mural:eternamente"
-   },
-   {
-    "x": 5.22,
-    "y": 1.3,
-    "z": -42.34,
-    "ry": 0,
-    "w": 2.01,
-    "h": 1.1,
-    "vao": 0.67,
-    "tapada": 0,
-    "quem": "folha-throwu-04.png"
-   },
-   {
-    "x": 14.32,
-    "y": 5.05,
-    "z": 19.81,
-    "ry": 3.14,
-    "w": 1.16,
-    "h": 1,
-    "vao": 0,
-    "tapada": 0.67,
-    "quem": "personagens-graffiti-05.png"
-   },
-   {
-    "x": -12.5,
-    "y": 3.3,
-    "z": 22.44,
-    "ry": -1.57,
-    "w": 4.11,
-    "h": 1.9,
-    "vao": 0.13,
-    "tapada": 0.53,
-    "quem": "or-graf-coro.png"
-   },
-   {
-    "x": 24.31,
-    "y": 2.85,
-    "z": 38.15,
-    "ry": 0,
-    "w": 1.52,
-    "h": 1.4,
-    "vao": 0.33,
-    "tapada": 0.33,
-    "quem": "caras-cartoon-08.png"
-   },
-   {
-    "x": -12.21,
-    "y": 1.2,
-    "z": -8.98,
-    "ry": -1.57,
-    "w": 2,
-    "h": 1.5,
-    "vao": 0,
-    "tapada": 0.6,
-    "quem": "tag-money.png"
-   },
-   {
-    "x": -12.5,
-    "y": 1.3,
-    "z": 21.94,
-    "ry": -1.57,
-    "w": 3.6,
-    "h": 1.92,
-    "vao": 0,
-    "tapada": 0.6,
-    "quem": "folha-stenci.png"
-   },
-   {
     "x": 15,
     "y": 1.05,
     "z": 27.62,
@@ -279,83 +137,6 @@
     "vao": 0.6,
     "tapada": 0,
     "quem": "decal:folha-pixaca-01.png"
-   },
-   {
-    "x": -20.51,
-    "y": 0.9,
-    "z": 15.47,
-    "ry": 0,
-    "w": 0.37,
-    "h": 0.5,
-    "vao": 0.53,
-    "tapada": 0,
-    "quem": "coelho-rosa.png"
-   },
-   {
-    "x": 25.96,
-    "y": 0.8,
-    "z": 20.59,
-    "ry": -1.57,
-    "w": 1.05,
-    "h": 0.7,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "tag-pingo.png"
-   },
-   {
-    "x": 20.37,
-    "y": 0.9,
-    "z": -36.4,
-    "ry": 3.14,
-    "w": 0.75,
-    "h": 0.5,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "tag-pingo.png"
-   },
-   {
-    "x": 24.9,
-    "y": 1.6,
-    "z": 21.92,
-    "ry": -1.57,
-    "w": 0.52,
-    "h": 0.7,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "coelho-rosa.png"
-   },
-   {
-    "x": -13.13,
-    "y": 0.9,
-    "z": 3.69,
-    "ry": 3.14,
-    "w": 0.75,
-    "h": 0.5,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "tag-fina.png"
-   },
-   {
-    "x": 13.12,
-    "y": 0.9,
-    "z": -39.81,
-    "ry": 0,
-    "w": 0.37,
-    "h": 0.5,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "coelho-rosa.png"
-   },
-   {
-    "x": 16.9,
-    "y": 1.6,
-    "z": -36.4,
-    "ry": 3.14,
-    "w": 0.36,
-    "h": 0.95,
-    "vao": 0.4,
-    "tapada": 0,
-    "quem": "tags-treino-06.png"
    },
    {
     "x": -9,
@@ -378,83 +159,9 @@
     "vao": 0.4,
     "tapada": 0,
     "quem": "decal:folha-stenci.png"
-   },
-   {
-    "x": -6.4,
-    "y": 1.6,
-    "z": -9.46,
-    "ry": 1.61,
-    "w": 1.37,
-    "h": 0.95,
-    "vao": 0.27,
-    "tapada": 0.07,
-    "quem": "tag-selvagem.png"
-   },
-   {
-    "x": 23.89,
-    "y": 0.68,
-    "z": 26.95,
-    "ry": 3.14,
-    "w": 1.27,
-    "h": 0.95,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "tag-money.png"
-   },
-   {
-    "x": 25.77,
-    "y": 1.6,
-    "z": 16.38,
-    "ry": 0,
-    "w": 0.4,
-    "h": 0.5,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "tags-treino-02.png"
-   },
-   {
-    "x": -15.36,
-    "y": 3.05,
-    "z": -32.51,
-    "ry": -1.57,
-    "w": 1.99,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "or-graf-treta.png"
-   },
-   {
-    "x": -17.08,
-    "y": 0.9,
-    "z": -9.59,
-    "ry": -3.14,
-    "w": 0.66,
-    "h": 0.5,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "tags-treino-05.png"
-   },
-   {
-    "x": -23.95,
-    "y": 0.75,
-    "z": 28.43,
-    "ry": 1.57,
-    "w": 0.96,
-    "h": 0.8,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-06.png"
    }
   ],
   "piorSobrepor": [
-   {
-    "x": 0,
-    "y": 1.1,
-    "z": 27.6,
-    "frac": 1.73,
-    "a": "mural:homenagem-4",
-    "b": "decal:tag-flop.png"
-   },
    {
     "x": -12.4,
     "y": 1,
@@ -462,22 +169,6 @@
     "frac": 1.02,
     "a": "decal:personagens-graffiti-04.png",
     "b": "decal:folha-lambes.png"
-   },
-   {
-    "x": -16.7,
-    "y": 2.5,
-    "z": -10.5,
-    "frac": 1,
-    "a": "mural:eternamente",
-    "b": "mural:eternamente"
-   },
-   {
-    "x": 20.1,
-    "y": 2.5,
-    "z": 10.7,
-    "frac": 1,
-    "a": "mural:leste-vive",
-    "b": "mural:leste-vive"
    },
    {
     "x": 12.4,
@@ -512,14 +203,6 @@
     "b": "decal:or-graf-coro.png"
    },
    {
-    "x": 0,
-    "y": 1.1,
-    "z": 27.6,
-    "frac": 0.54,
-    "a": "mural:homenagem-4",
-    "b": "decal:folha-person-04.png"
-   },
-   {
     "x": -12.4,
     "y": 1,
     "z": -22.5,
@@ -542,456 +225,75 @@
     "frac": 0.31,
     "a": "decal:personagens-graffiti-04.png",
     "b": "decal:folha-lambes.png"
+   },
+   {
+    "x": 18.5,
+    "y": 1.1,
+    "z": 27.7,
+    "frac": 0.31,
+    "a": "decal:tag-larga.png",
+    "b": "decal:folha-pixaca-06.png"
+   },
+   {
+    "x": 12.3,
+    "y": 1,
+    "z": 7,
+    "frac": 0.28,
+    "a": "decal:folha-lambes.png",
+    "b": "decal:folha-throwu-06.png"
    }
   ]
  },
+ "fy_escadao": {
+  "total": 419,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 0,
+  "piores": [],
+  "piorSobrepor": []
+ },
+ "fy_campomorro": {
+  "total": 55,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 0,
+  "piores": [],
+  "piorSobrepor": []
+ },
+ "fy_lajes": {
+  "total": 97,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 0,
+  "piores": [],
+  "piorSobrepor": []
+ },
  "fy_corrego": {
-  "total": 404,
-  "noAr": 72,
+  "total": 336,
+  "noAr": 1,
   "tapadas": 0,
   "sobrepostas": 0,
   "piores": [
    {
-    "x": -18.06,
-    "y": 3.05,
-    "z": -10.27,
-    "ry": 3.14,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.47,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": 10.53,
-    "y": 2.65,
-    "z": 13.35,
+    "x": 6.68,
+    "y": 1.25,
+    "z": 10.44,
     "ry": 1.57,
-    "w": 0.7,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagem-muro.png"
-   },
-   {
-    "x": -19.75,
-    "y": 2.65,
-    "z": 39.72,
-    "ry": 3.14,
-    "w": 1.08,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-08.png"
-   },
-   {
-    "x": -18.53,
-    "y": 2.65,
-    "z": -8.92,
-    "ry": -1.57,
-    "w": 0.91,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-02.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": 9.6,
-    "ry": 1.57,
-    "w": 1,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "or-mitico-mural.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -6.33,
-    "ry": 1.57,
-    "w": 0.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-05.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -34.81,
-    "ry": -1.57,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -14.86,
-    "ry": 1.57,
-    "w": 1.08,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-08.png"
-   },
-   {
-    "x": 5.8,
-    "y": 2.65,
-    "z": 39.72,
-    "ry": 3.14,
-    "w": 0.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-05.png"
-   },
-   {
-    "x": -1.12,
-    "y": 2.65,
-    "z": 39.72,
-    "ry": 3.14,
-    "w": 1.01,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-01.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -36.75,
-    "ry": -1.57,
-    "w": 1.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-05.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 36.73,
-    "ry": -1.57,
-    "w": 1.42,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagens-graffiti-01.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -14.41,
-    "ry": -1.57,
-    "w": 1,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "or-mitico-mural.png"
-   },
-   {
-    "x": -8.3,
-    "y": 2.65,
-    "z": 9.97,
-    "ry": 3.14,
-    "w": 1.89,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-03.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": 0.47,
-    "ry": 1.57,
-    "w": 1.42,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagens-graffiti-01.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -2.03,
-    "ry": -1.57,
-    "w": 0.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-05.png"
-   },
-   {
-    "x": 16.48,
-    "y": 2.65,
-    "z": 27.97,
-    "ry": 3.14,
-    "w": 1,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "or-mitico-mural.png"
-   },
-   {
-    "x": 20.53,
-    "y": 2.65,
-    "z": 31.42,
-    "ry": 1.57,
-    "w": 0.9,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-03.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 38.08,
-    "ry": -1.57,
-    "w": 0.77,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagens-graffiti-03.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": 26.6,
-    "ry": 1.57,
-    "w": 1,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "or-mitico-mural.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -29.43,
-    "ry": 1.57,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": 2.8,
-    "ry": 1.57,
-    "w": 0.77,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagens-graffiti-03.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -31.86,
-    "ry": 1.57,
-    "w": 1.89,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-03.png"
-   },
-   {
-    "x": 8.69,
-    "y": 2.65,
-    "z": -19.97,
-    "ry": 0,
-    "w": 1.86,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-02.png"
-   },
-   {
-    "x": 9.2,
-    "y": 2.65,
-    "z": 39.72,
-    "ry": 3.14,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -25.06,
-    "ry": 1.57,
-    "w": 1.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-05.png"
-   },
-   {
-    "x": -20.53,
-    "y": 2.65,
-    "z": 28.52,
-    "ry": -1.57,
-    "w": 0.82,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-05.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -24.16,
-    "ry": -1.57,
-    "w": 1.86,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-01.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 35.37,
-    "ry": -1.57,
-    "w": 0.7,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagem-muro.png"
-   },
-   {
-    "x": -3.46,
-    "y": 2.65,
-    "z": -39.72,
-    "ry": 0,
-    "w": 0.91,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-02.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": -6.89,
-    "ry": -1.57,
-    "w": 0.91,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "caras-cartoon-02.png"
-   },
-   {
-    "x": -7.47,
-    "y": 2.65,
-    "z": -21.41,
-    "ry": 1.57,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 14.28,
-    "ry": -1.57,
-    "w": 1.89,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-03.png"
-   },
-   {
-    "x": -6.07,
-    "y": 0.85,
-    "z": -23.07,
-    "ry": 1.53,
-    "w": 0.73,
+    "w": 0.69,
     "h": 0.6,
-    "vao": 0.33,
+    "vao": 0.2,
     "tapada": 0,
-    "quem": "folha-pixaca-02.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 25.8,
-    "ry": -1.57,
-    "w": 0.83,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "personagens-graffiti-02.png"
-   },
-   {
-    "x": 23.72,
-    "y": 2.65,
-    "z": 4.08,
-    "ry": -1.57,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": -6.59,
-    "y": 3.3,
-    "z": -34.11,
-    "ry": 3.14,
-    "w": 2.55,
-    "h": 1.4,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-05.png"
-   },
-   {
-    "x": -23.72,
-    "y": 2.65,
-    "z": -8.06,
-    "ry": 1.57,
-    "w": 1.01,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-01.png"
-   },
-   {
-    "x": 1.04,
-    "y": 2.65,
-    "z": -39.72,
-    "ry": 0,
-    "w": 0.79,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-person-02.png"
-   },
-   {
-    "x": 12.53,
-    "y": 2.65,
-    "z": -20.89,
-    "ry": 1.57,
-    "w": 1.83,
-    "h": 1,
-    "vao": 0.33,
-    "tapada": 0,
-    "quem": "folha-throwu-04.png"
+    "quem": "folha-pixaca-01.png"
    }
   ],
+  "piorSobrepor": []
+ },
+ "fy_mansao": {
+  "total": 15,
+  "noAr": 0,
+  "tapadas": 0,
+  "sobrepostas": 0,
+  "piores": [],
   "piorSobrepor": []
  }
 }

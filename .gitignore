@@ -106,6 +106,8 @@ public/img/decals/*
 # (tools/gen-image.mjs) — sem problema de procedência, então versionam e chegam
 # ao deploy de produção (que builda do git puro e não tem o acervo de references/).
 !public/img/decals/or-*.png
+# Peça autoral do Lajes, gerada no Mint e registrada por hash em public/img/FONTE.md.
+!public/img/decals/pixo-lajes-01.png
 
 # ── Sistema operacional e editor ────────────────────────────────────────────
 .DS_Store
@@ -166,3 +168,7 @@ tools/eval/data/
 
 # probe de rodada MUTANTE do eval:cena — instrumento de teste da régua, não medição do jogo
 tools/eval/cena_probe.mutante-*.json
+
+# Rascunho de post de divulgação (LinkedIn/X). Texto pessoal, não é doc do projeto:
+# fica na árvore para editar no editor, mas nunca entra no repo público.
+/posts-linkedin-twitter.md
