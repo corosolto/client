@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 30,726 lines in 42 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 30,748 lines in 42 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6,561** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,518 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -232,7 +232,7 @@ The maps registered today, and which mode each one opens in:
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
 | `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 223 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 245 |
 
 **10 registered maps** - 2 open in rounds and 8 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 12 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
