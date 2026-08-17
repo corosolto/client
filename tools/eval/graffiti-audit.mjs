@@ -73,12 +73,13 @@ const VAO_MAX = 2 / 15, LIMITE_SOBREPOR = 0.12;
    select-inflate). A régua estrita é zero no-ar e zero sobreposição; enquanto a dívida
    real não zera, o teto trava o placar no último medido e qualquer piora reprova.
    Medido abaixo do teto? Baixe o número — a própria régua imprime pedindo.
-   Valores da medição de 14/08/2026 (pós BUG-53, rebake mansão/quebrada/piscina): */
+   Valores da medição de 14/08/2026 (pós BUG-53, rebake mansão/quebrada/piscina);
+   ferro_velho baixado para 0/0 na medição de 17/08 (rebake pós-sonda de oclusores): */
 const TETO = {
   praca_poderes: { noAr: 0, sobre: 0 },
   piscina_treta: { noAr: 0, sobre: 2 },
   loja_h: { noAr: 1, sobre: 3 },
-  ferro_velho: { noAr: 0, sobre: 3 },
+  ferro_velho: { noAr: 0, sobre: 0 },
   quebrada: { noAr: 3, sobre: 10 },
   fy_escadao: { noAr: 0, sobre: 0 },
   fy_campomorro: { noAr: 0, sobre: 0 },

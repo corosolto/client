@@ -78,37 +78,12 @@
   ]
  },
  "ferro_velho": {
-  "total": 516,
+  "total": 513,
   "noAr": 0,
   "tapadas": 0,
-  "sobrepostas": 3,
+  "sobrepostas": 0,
   "piores": [],
-  "piorSobrepor": [
-   {
-    "x": 15.9,
-    "y": 1.2,
-    "z": -34.1,
-    "frac": 0.97,
-    "a": "tag-money.png",
-    "b": "or-graf-treta.png"
-   },
-   {
-    "x": -30.7,
-    "y": 1.6,
-    "z": -30.6,
-    "frac": 0.56,
-    "a": "tags-treino-02.png",
-    "b": "poster:25c9112229edfcfbb1eae4137ecc151a.jpg"
-   },
-   {
-    "x": 28,
-    "y": 1.4,
-    "z": -23.8,
-    "frac": 0.17,
-    "a": "or-graf-treta.png",
-    "b": "tag-selvagem.png"
-   }
-  ]
+  "piorSobrepor": []
  },
  "quebrada": {
   "total": 976,
@@ -261,7 +236,7 @@
   "piorSobrepor": []
  },
  "fy_lajes": {
-  "total": 97,
+  "total": 50,
   "noAr": 0,
   "tapadas": 0,
   "sobrepostas": 0,

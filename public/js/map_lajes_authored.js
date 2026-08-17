@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { placeProp, PropBatch } from './mapprops.js';
 import { makeAerialFog } from './bloom.js';
+import { decalIds } from './map_decals.js';
+import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -1154,6 +1156,22 @@ export function buildLajes(scene, T) {
     ['shotgun', -11.2, -10], ['deagle', 11.2, -10], ['ak', -11.2, 2], ['m4', 11.2, 2],
     ['mp5', -11.2, 18], ['shotgun', 10.2, 18.3], ['deagle', -2, 34], ['m400', 2, 34],
   ]) placeWeapon(kind, x, z);
+
+  const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);
+  const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-money.png']);
+  grafitar({
+    id: 'fy_lajes', root, T, waypoints: nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
+    limpo: mapStairs,
+    murais: {
+      texturas: [T.decals[D_LAJES[0]]],
+      nomes: ['pixo-lajes-01.png'], seed: 71, separacao: 20,
+      larg: 4.2, alt: 2.2, minLarg: 3.2,
+    },
+    bandas: [
+      { y0: 0.4, y1: 2.5, larg: 1.55, alturas: [0.9, 0.65, 0.45], chance: 9,
+        pool: D_TAG },
+    ],
+  });
 
   const ambience = createFavelaAmbience(root, {
     map: 'fy_lajes', low: LOWQ,

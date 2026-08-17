@@ -909,17 +909,9 @@ export function initTextures() {
     ['or-mitico-mural.png', 1.0, 'peca', 0],
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
     ['or-stencil-pomba.png', 1.181, 'ilustracao', 0],
-    // homenagens póstumas a ídolos da música BR (07/08) — versão SOLTA (alpha) pros
-    // mapas que não são o quebrada; a versão de tijolo vira mural em or-mural-*.jpg
-    ['or-hom-chorao.png', 1.49, 'peca', 0],
-    ['or-hom-champignon.png', 1.07, 'peca', 0],
-    ['or-hom-tim-maia.png', 1.411, 'peca', 0],
-    ['or-hom-rita-lee.png', 1.49, 'peca', 0],
-    ['or-hom-raul.png', 1.63, 'peca', 0],
-    ['or-hom-sabotage.png', 1.466, 'peca', 0],
-    ['or-hom-yuka.png', 1.059, 'peca', 0],
-    ['or-hom-chico.png', 0.906, 'peca', 0],
   );
+  /* As homenagens or-hom-* (pessoa real) saíram do pool E do disco em 17/08 —
+     contrato editorial; o portão GRAFFITI-EDITORIAL impede a reintrodução. */
   /* Galeria desativada por contrato editorial: os mapas não geram arte de pessoa
      real. Os arquivos históricos permanecem no disco por enquanto, fora de todos
      os pools; o portão GRAFFITI-EDITORIAL impede a reintrodução no jogo. */
