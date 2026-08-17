@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-08-16T16:29:38.642213+00:00",
+  "nodes": {
+    "public_js_game_game_firehitscan": {
+      "code_fingerprint": "1c1e2c17c43ab1301dc51786c02f6fb30fc5aed73f88e672050c2c5da5fa3bfb",
+      "label": "._fireHitscan()",
+      "last": "2026-08-15T23:26:38.606511+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:26:38.606511+00:00",
+          "outcome": "useful",
+          "q": "Como integrar ambiência viva com ratos, pombas, reação a tiros e traçantes em fy_lajes, fy_corrego e fy_escadao, reaproveitando loaders e sistemas existentes sem sobrecarregar o hot path?"
+        }
+      ],
+      "score": 0.983719858,
+      "source_file": "public/js/game.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "public_js_game_game_tracer": {
+      "code_fingerprint": "1c1e2c17c43ab1301dc51786c02f6fb30fc5aed73f88e672050c2c5da5fa3bfb",
+      "label": "._tracer()",
+      "last": "2026-08-15T23:26:38.606511+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:26:38.606511+00:00",
+          "outcome": "useful",
+          "q": "Como integrar ambiência viva com ratos, pombas, reação a tiros e traçantes em fy_lajes, fy_corrego e fy_escadao, reaproveitando loaders e sistemas existentes sem sobrecarregar o hot path?"
+        }
+      ],
+      "score": 0.983719858,
+      "source_file": "public/js/game.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "public_js_game_game_updatefx": {
+      "code_fingerprint": "1c1e2c17c43ab1301dc51786c02f6fb30fc5aed73f88e672050c2c5da5fa3bfb",
+      "label": "._updateFx()",
+      "last": "2026-08-15T23:26:38.606511+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:26:38.606511+00:00",
+          "outcome": "useful",
+          "q": "Como integrar ambiência viva com ratos, pombas, reação a tiros e traçantes em fy_lajes, fy_corrego e fy_escadao, reaproveitando loaders e sistemas existentes sem sobrecarregar o hot path?"
+        }
+      ],
+      "score": 0.983719858,
+      "source_file": "public/js/game.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "public_vendor_addons_loaders_gltfloader_gltfloader": {
+      "code_fingerprint": "d073b438e6a07e1359741dd5d6c76c953420cc0d4fd84eb1bdde94315540e6a3",
+      "label": "GLTFLoader",
+      "last": "2026-08-15T23:26:38.606511+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:26:38.606511+00:00",
+          "outcome": "useful",
+          "q": "Como integrar ambiência viva com ratos, pombas, reação a tiros e traçantes em fy_lajes, fy_corrego e fy_escadao, reaproveitando loaders e sistemas existentes sem sobrecarregar o hot path?"
+        }
+      ],
+      "score": 0.983719858,
+      "source_file": "public/vendor/addons/loaders/GLTFLoader.js",
+      "status": "tentative",
+      "uses": 1
+    },
+    "tools_eval_corrego_contract_check": {
+      "code_fingerprint": "b4e3778ff0de5e8cf1ae3e135da2d0177e19dc461833ec48bb1f7ce4eee37574",
+      "label": "corrego-contract-check.mjs",
+      "last": "2026-08-15T23:26:38.606511+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-15T23:26:38.606511+00:00",
+          "outcome": "useful",
+          "q": "Como integrar ambiência viva com ratos, pombas, reação a tiros e traçantes em fy_lajes, fy_corrego e fy_escadao, reaproveitando loaders e sistemas existentes sem sobrecarregar o hot path?"
+        }
+      ],
+      "score": 0.983719858,
+      "source_file": "tools/eval/corrego-contract-check.mjs",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

@@ -911,6 +911,161 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
+
+**Sintoma literal do dono, após jogar a R18:** *"a textura e de favela, mas o mapa nao,
+ainda parece um monte de caixa amontuada sem nexo nenhum"*; *"a ideia era o mapa ser de
+sinper e todo mundo jogar de lages, mas tb poder cair por becos apertados"*; *"as escadas
+estao esdruxulas, nenhuma favela tem escada assim"*. Na rodada seguinte ele explicitou que
+o fluxo entre lajes precisa de acessos de madeira e de um pulo mais alto.
+
+**Reprodução:** screenshots 3:2 do teste do dono em 16/08 mostram os dois spawns no chão,
+um corredor central de 7,2 m, três ilhas superiores sem rede contínua e três lances retos
+de 30 degraus tratados como objetos soltos. A régua antiga ficou verde porque contava três
+acessos, três escadas e detalhe cultural; ela não media qual camada domina a travessia nem
+a largura e o encaixe urbano do caminho inferior.
+
+**Referências e regra:** `references/favela/lajes-rio/FONTE.md` registra becos publicados
+de 0,8–1,5 m, rede local proposta de 2 m, usos sociais da laje e a gramática de navegação
+vertical do guia oficial de Favela. A tradução jogável está em `plans/10-LAJES.md`.
+
+**Régua vigente:** `eval:lajes-spatial` reprovou o estado recebido em 6/6 cláusulas e
+agora mede no `Game` real: spawns a 5,20 m, duas rotas superiores independentes, caminho
+curto 100% acima de 4 m, becos p50 1,81 m/p90 1,86 m, três escadas de dois lances e ápice
+local de 0,806 m contra 0,586 m no controle. Os mutantes `spawn-beco`, `rota-unica`,
+`beco-avenida`, `escada-reta` e `pulo-global` ficam vermelhos. `eval:lajes-gap` mede as
+13 passarelas na `Box3`; `map-check fy_lajes` confirma dez níveis alcançáveis pelo corpo
+e pelo A*, zero penetração e zero borda alta aberta.
+
+**Estado:** corrigido em arquivo, aguardando o teste visual/jogável do dono. As seis
+capturas 3:2 vigentes estão em `tools/eval/asset-evidence/maps/fy_lajes/`; o bug não fecha
+por placar nem por nota de quem construiu.
+
+**Teste do dono, R26 em 16/08 — visual aprovado, gameplay reaberto:** *"visualmente o
+mapa está incrivel. esta muito proximo do que queriamos"*. Essa aprovação preserva a
+direção de arquitetura, materiais, fiação, pipas, pombos e ratos. No mesmo teste ele
+reportou quatro bloqueadores: *"o mapa ta em boxes procedurais eu atiro pra frente e bate
+tiros no ar"*; *"tem um ponto que eu ficava caindo pra cima da laje de novo e depois no
+chao tem um bug ali"*; *"nao da pra saber os limites do mapa"*; e o fluxo entre a rota de
+lajes e o ataque inferior ficou confuso. Evidência: screenshots 3:2 em
+`/Users/ruben/Desktop/screenshots/Screenshot 2026-08-16 at 17.* (2).png`.
+
+**Leitura do fonte, ainda sem régua de reprodução:** `map_lajes_authored.js:128-137`
+coloca toda caixa invisível `MAT.proxy` também em `world.occluders`, e
+`game.js:2923-2928` atira contra essa lista; portanto portas, janelas e recortes visuais
+dos GLB continuam sólidos para a bala. `map_lajes_authored.js:321-337` ignora o `yRef`
+que `_updatePlayer` passa em `game.js:4857-4882`, então uma consulta feita por quem está
+abaixo ainda pode devolver a laje de 5,20 m. Os limites físicos terminam em x ±15,5 / z
+−39..39, mas o casario visível continua fora deles (`map_lajes_authored.js:491-511`),
+criando caminho que parece aberto e termina no clamp invisível. As caixas independentes
+dos segmentos de beco (`:194-219`) também podem se sobrepor nos retornos; localizar os
+pares exatos em que isso bloqueia a passagem ainda depende de um probe caminhando com o
+`_collide` real.
+
+**Régua ausente que impede consertar por palpite:** falta um gate que (1) compare o
+primeiro hit dos proxies com a superfície visível carregada no navegador; (2) caminhe o
+térreo com `_collide` e `groundHeightAt(..., yRef=0)`; (3) mute a camada para reproduzir
+o salto térreo→laje; e (4) prove que todo limite aparente tem fechamento físico visível.
+Os portões atuais medem o grafo declarado, não esses quatro comportamentos.
+
+**Rodada R27 (16/08, noite) — réguas escritas, estado vermelho medido, conserto em
+andamento nesta mesma árvore (não commitado):**
+
+- **Régua de bala (browser):** `npm run eval:occluders` sonda raios dos waypoints a
+  0,5/1,3/1,62 m comparando o primeiro hit de `world.occluders` com a primeira malha
+  VISÍVEL. Estado recebido: **977 raios tiro-no-ar em fy_lajes (33%)** e vermelho nos
+  10 mapas (ferro_velho 36,3%, loja_h 17,5%, quebrada 18,6%, praca 38 grupos-letra-morta
+  + escadão 34). Mutantes `occluder-invisivel|proxy-inflado|grupo-sem-raycast|vao-fechado`
+  aplicam e ficam vermelhos.
+- **Régua de circuito (node):** `npm run eval:lajes-circuito` — o térreo tinha **14
+  componentes conexos** e os pés das três escadas em três ilhas; `groundHeightAt`
+  ignorava o `yRef` (sob tábua/mirante devolvia 5,20 m para quem estava no chão e o
+  snap de gravidade teleportava o corpo para cima — o "caindo pra cima da laje" do dono,
+  reproduzido em harness). Mutantes `ignora-yref|ramal-fechado|rota-inferior-partida`.
+- **Conserto em Lajes:** occluder = malha visível (casas instanciadas do PropBatch entram
+  em `occluders`; corpo dos blocos vira collider puro; muros de beco/escada/perímetro
+  agora são malha visível); `groundHeightAt(x,z,yRef)` multinível pela regra da Havan;
+  mirantes viraram pilotis com túnel andável de 2,1 m; esquinas por mitra de muros
+  (fim da caixa independente por trecho); muro de perímetro visível nos 4 lados; faixas
+  de fachada do chão à laje em cada bloco (empilhamento); fascia/remendos nas bordas;
+  caixas d'água com variação preta/azul + PVC; cachorro caramelo (Quaternius CC0 tingido)
+  no circuito inferior. Resultado medido: **tiro-no-ar 977→0, atravessa-parede→0**,
+  circuito 96-97% contíguo, LS1-LS6 e LC1-LC5 verdes com os 8 mutantes mordendo.
+- **Fecha só com o dono:** a rodada de capturas 3:2 e o crítico adversarial estão na
+  evidência (`tools/eval/asset-evidence/maps/fy_lajes/`); o teste jogável é dele.
+
+### ~~BUG-52 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+
+**Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
+**0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
+células peladas tinham `z ≥ 0` — fora da zona limpa declarada (`z ≤ −6,4`), ou seja lacuna
+real, não decisão de arte.
+
+**Palpite refutado:** "é o StaticBatch `havan-deco` com normal/matriz de instância" (classe
+do `5da7fc0`) — refutado por leitura: o batch é `Mesh` mesclada com geometria assada em
+mundo (`mapprops.js:135-151`), sem `instanceId`. Também foi refutada em campo a banda de
+altura 5,0–8,0 espelhando a quebrada: 51,9% contra 51,7% sem ela — ruído.
+
+**Causa medida** (sonda `tools/eval/probe-grafite.mjs`, 102 âncoras na fachada): a pele
+greco-romana (banners z=−4,1 · cornija z=−3,8) flutua 1,3–1,7 m à frente da parede
+(z=−5,5) e três filtros da passada a tornavam impintável —
+1. os olhos de descoberta paravam em 3,1 m: a cornija (5,0–5,55) **nunca virava âncora**
+   (`graffiti_pass.js:267`);
+2. `_alturaParede` sondava a base só a 1,0 m: por baixo do banner (que começa a 1,9) não
+   há nada → teto=1,2 → `semTeto` em qualquer banda alta (16 âncoras de banner assim);
+3. `_temChao` reprova o que sobrasse: banner e cornija têm ar embaixo por construção.
+E a régua media a pele enquanto a tinta estava na parede atrás: 16 peças com topo a 5,0 m
+em z≈−5,44, invisíveis ao censo porque a placa fica a 1,4 m do plano da arte e o limite é
+0,6 (`graffiti-census.mjs` PERTO).
+
+**Correção:** âncora passa a guardar a altura do acerto (`olho`); `_alturaParede` cai pra
+altura do acerto quando a sonda de 1,0 m falha; olhos de descoberta configuráveis
+(`olhos`, e a Loja H usa `[1.55, 3.1, 5.25]`); `exigeChao` ganha versão por banda; banda
+2,5–5,2 da loja_h com `exigeChao: false` e `larg: 1.5` (o banner tem 1,9 e a auditoria
+amostra os cantos — com 1,8 sobravam 5 cm de margem e 3/15 amostras caíam fora); banda
+nova de cornija (`y0 5,0–5,6`, pixo fino).
+
+**Prova com controle e mutação:** rebake do controle (sem a correção) = 45,1% · 20,6% ·
+0/90 — é também a prova de que a régua morde: sem o olho de 5,25 m a faixa de 5,0 m volta
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m). Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 50 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
+cornija e peças entre colunas, nada no ar nos ângulos de jogador.
+
+**O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
+peça mas a largura útil limita; e o delta de +6 no-ar não foi isolado peça a peça
+(reshuffle da passada mistura a amostra).
+
+### ~~BUG-53 · Mansão: 18 peças de pixo MORTE fósseis no layout, e duas réguas que liam ausência como saúde~~ · RESOLVIDO 14/08
+
+**Sintoma (medido):** `graffiti-audit` reportava `OK fy_mansao 0 peças` — verde com zero
+peças medidas. Atrás disso: `map_mansao.js` importava `grafitar` mas **nunca chamava**
+(o chamado original, `c3ede3e`, foi removido quando o pool tinha `folha-pixaca-01.png`,
+o pixo que lê "MORTE"), e o `gen-graffiti-layout.mjs`, ao não achar passada, **mantinha
+a entrada anterior** — então o layout assado seguiu com 18 peças do pixo vetado,
+meses depois da fonte limpa, invisível para o `grafite-editorial` (que só media o MORTE
+na fonte, não no assado).
+
+**Causa (a mesma classe, três instrumentos):** degradação calada. O gerador preservava
+fóssil (`continue` silencioso), a auditoria lia `0 peças` como OK, e o editorial não
+medeia o assado da mansão. Qualquer um dos três sozinho teria denunciado; os três juntos
+deixaram o veto editorial valendo só no papel.
+
+**Correção:** (1) `map_mansao.js` volta a chamar `grafitar` com pool sem o pixo-01
+(`folha-pixaca-03/04/05`, mesma banda e chance do chamado original); (2) o gerador agora
+**apaga a entrada** de mapa sem passada e sai com código 1 listando os mapas
+(`sem passada` vira erro alto, não aviso); (3) a auditoria marca RUIM qualquer mapa com
+**0 peças medidas** — ausência nunca mais lê como saúde; (4) o editorial mede o MORTE no
+layout assado da mansão, com mutante `--mutante=morte` que reprova (prova de que morde:
+exit 1 no mutante, exit 0 no real após o rebake — 15 peças, pool limpo).
+
+**Bônus medido na mesma rodada:** as faixas de pano penduradas em arame na Quebrada
+("ETERNAMENTE", "DA LESTE VIVE") eram nomeadas `mural:` e a auditoria as cobrava como
+arte de parede — 100% no ar por construção (é pano no arame, decisão de arte de 06/08).
+Renomeadas para `faixa:` (`map_quebrada.js:1199`), com `faixa` incluída no `NAO_PINTA`
+e na varredura de vagas ocupadas da passada.
+
 ### BUG-47 · Doidinho: P90 vira blob/pistola e desaparece no medium — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
 
 **Sintoma (laudo externo limpo, 0/2):** *"a P90 não existe nos pixels como P90"* e
@@ -1961,6 +2116,27 @@ voltou a funcionar — GLB novo 531 KB com texturas restauradas via `rig-tex-res
 
 **Medido depois:** `select-mount` **0/44**; `select-inflate` nos 4: 0/4, com o trapfunk
 MELHOR que antes (21,4 → 14,6 ruins/1e4). A/B por figura na página da rodada.
+
+#### BUG-25 (5º ciclo) · re-rig dos 10 piores via `rig-meshy.mjs` — 1 verde, 3 melhores, 6 sem caminho (13/08)
+
+Fila dos 10 piores do `select-inflate` (JSON de 12/08, 23/62 reprovados) submetida a
+**rig novo do Meshy sobre a MESMA malha** (`tools/rig-meshy.mjs` — 5 créditos/personagem,
+esqueleto de 24 juntas idêntico ao das referências mandrake/pagodeiro, texturas
+restauradas por `rig-tex-restore`, otimização textura-only 1024/webp). Teto da régua:
+p99 ≤ 0,675 · ruins/1e4 ≤ 23,6.
+
+| destino | quem | número |
+|---|---|---|
+| **verde** | boto | p99 9,90 → **0,611** · ruins 778 → **21,6** |
+| melhorou, segue vermelho | curupira 4,70→0,598/32,1 · mariabonita 2,55→0,731/47,5 · lampiao 1,64→1,121/121,5 | ablação `semik` não move: é peso de pele, não IK |
+| **revertido** (rig novo PIOR) | cuca 310→1040 ruins · gilbomes 57→373 · esbirro 44→87 | auto-rig piora o que já estava perto do teto |
+| **revertido** (rig novo pior NO OLHO) | saci 4,29/607 → 1,34/189 no número, mas a perna virou fita torcida na figura | foto ganha de raciocínio: número melhor, imagem pior |
+| não rigável por este caminho | profeta-calcada (Meshy 422 "pose estimation failed") · programador-virado (7 materiais, fora do padrão Mint de 1; o restore interno do `rig-meshy` aborta) | precisam de outra rota (pose/malha primeiro) |
+
+**Lição da rodada:** re-rig automático é alavanca grande só para rig catastrófico
+(p99 > ~2); abaixo disso ele troca um skin ruim por outro e pode piorar — medir e OLHAR
+cada um, não rodar em lote cego. Placar da régua: **23/62 → 22/62** (baseline completo
+re-escrito em `tools/eval/select_inflate.json`).
 
 ### ~~BUG-32 · "mapa ctf na piscina ta com bandeiras com nome do patio brasilia"~~ · RESOLVIDO 06/08
 

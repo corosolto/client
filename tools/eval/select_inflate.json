@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-12T16:04:00.504Z",
+ "gerado": "2026-08-13T18:49:57.748Z",
  "mutante": null,
  "refs": [
   "mandrake",
@@ -11,186 +11,6 @@
   "ruins1e4": 23.6
  },
  "personagens": [
-  {
-   "id": "boto",
-   "arma": "deagle",
-   "oneHanded": true,
-   "ik": false,
-   "arestas": 10638,
-   "p95": 2.271,
-   "p99": 9.897,
-   "p999": 18.027,
-   "max": 25.01,
-   "pct25": 17.05,
-   "ruins1e4": 778.3,
-   "ruinsPorOsso": [
-    [
-     "LeftForeArm",
-     467
-    ],
-    [
-     "RightForeArm",
-     401
-    ],
-    [
-     "LeftHand",
-     339
-    ],
-    [
-     "RightHand",
-     329
-    ],
-    [
-     "LeftShoulder",
-     38
-    ],
-    [
-     "Head",
-     21
-    ],
-    [
-     "LeftArm",
-     21
-    ],
-    [
-     "RightArm",
-     16
-    ]
-   ],
-   "semcurlDesfez": null,
-   "girouGraus": [
-    [
-     "LeftForeArm",
-     82.1,
-     175.9
-    ],
-    [
-     "RightForeArm",
-     30.5,
-     96.5
-    ],
-    [
-     "LeftHand",
-     66.2,
-     155.3
-    ],
-    [
-     "RightHand",
-     56.2,
-     109
-    ],
-    [
-     "LeftShoulder",
-     10.7,
-     54.2
-    ],
-    [
-     "Head",
-     42.6,
-     3.7
-    ],
-    [
-     "LeftArm",
-     69.5,
-     109.7
-    ],
-    [
-     "RightArm",
-     119.7,
-     71.3
-    ]
-   ]
-  },
-  {
-   "id": "curupira",
-   "arma": "mp5",
-   "oneHanded": false,
-   "ik": true,
-   "arestas": 8404,
-   "p95": 1.424,
-   "p99": 4.704,
-   "p999": 13.959,
-   "max": 55.19,
-   "pct25": 20.2,
-   "ruins1e4": 690.1,
-   "ruinsPorOsso": [
-    [
-     "LeftForeArm",
-     189
-    ],
-    [
-     "LeftHand",
-     160
-    ],
-    [
-     "RightHand",
-     150
-    ],
-    [
-     "Head",
-     109
-    ],
-    [
-     "LeftShoulder",
-     93
-    ],
-    [
-     "RightForeArm",
-     92
-    ],
-    [
-     "LeftArm",
-     90
-    ],
-    [
-     "RightArm",
-     87
-    ]
-   ],
-   "semcurlDesfez": null,
-   "girouGraus": [
-    [
-     "LeftForeArm",
-     48.9,
-     163.7
-    ],
-    [
-     "LeftHand",
-     106.5,
-     172.8
-    ],
-    [
-     "RightHand",
-     54.7,
-     135.2
-    ],
-    [
-     "Head",
-     42.6,
-     3.7
-    ],
-    [
-     "LeftShoulder",
-     5.2,
-     43.7
-    ],
-    [
-     "RightForeArm",
-     62.7,
-     98.8
-    ],
-    [
-     "LeftArm",
-     85.5,
-     117.4
-    ],
-    [
-     "RightArm",
-     89.5,
-     60
-    ]
-   ]
-  },
   {
    "id": "saci",
    "arma": "mp5",
@@ -372,186 +192,6 @@
    ]
   },
   {
-   "id": "mariabonita",
-   "arma": "awp",
-   "oneHanded": false,
-   "ik": true,
-   "arestas": 10484,
-   "p95": 0.529,
-   "p99": 2.554,
-   "p999": 11.92,
-   "max": 18.72,
-   "pct25": 11.05,
-   "ruins1e4": 246.1,
-   "ruinsPorOsso": [
-    [
-     "Head",
-     361
-    ],
-    [
-     "LeftForeArm",
-     52
-    ],
-    [
-     "RightArm",
-     20
-    ],
-    [
-     "Hips",
-     12
-    ],
-    [
-     "RightForeArm",
-     12
-    ],
-    [
-     "Spine02",
-     12
-    ],
-    [
-     "LeftUpLeg",
-     9
-    ],
-    [
-     "LeftArm",
-     9
-    ]
-   ],
-   "semcurlDesfez": null,
-   "girouGraus": [
-    [
-     "Head",
-     42.6,
-     3.7
-    ],
-    [
-     "LeftForeArm",
-     32,
-     146.7
-    ],
-    [
-     "RightArm",
-     89.5,
-     60
-    ],
-    [
-     "Hips",
-     44.7,
-     44.7
-    ],
-    [
-     "RightForeArm",
-     62.7,
-     98.8
-    ],
-    [
-     "Spine02",
-     6.2,
-     50.8
-    ],
-    [
-     "LeftUpLeg",
-     45.8,
-     17
-    ],
-    [
-     "LeftArm",
-     84.3,
-     118
-    ]
-   ]
-  },
-  {
-   "id": "lampiao",
-   "arma": "m4",
-   "oneHanded": false,
-   "ik": true,
-   "arestas": 11106,
-   "p95": 0.571,
-   "p99": 1.636,
-   "p999": 4.934,
-   "max": 10.8,
-   "pct25": 13.29,
-   "ruins1e4": 220.6,
-   "ruinsPorOsso": [
-    [
-     "Head",
-     209
-    ],
-    [
-     "LeftArm",
-     74
-    ],
-    [
-     "Hips",
-     72
-    ],
-    [
-     "RightArm",
-     64
-    ],
-    [
-     "LeftShoulder",
-     23
-    ],
-    [
-     "RightShoulder",
-     19
-    ],
-    [
-     "LeftForeArm",
-     12
-    ],
-    [
-     "neck",
-     7
-    ]
-   ],
-   "semcurlDesfez": null,
-   "girouGraus": [
-    [
-     "Head",
-     42.6,
-     3.7
-    ],
-    [
-     "LeftArm",
-     81.6,
-     113.8
-    ],
-    [
-     "Hips",
-     44.7,
-     44.7
-    ],
-    [
-     "RightArm",
-     78.3,
-     57.6
-    ],
-    [
-     "LeftShoulder",
-     5.2,
-     43.7
-    ],
-    [
-     "RightShoulder",
-     9.1,
-     56.2
-    ],
-    [
-     "LeftForeArm",
-     44.6,
-     153.2
-    ],
-    [
-     "neck",
-     8.1,
-     44.7
-    ]
-   ]
-  },
-  {
    "id": "profeta-calcada",
    "arma": "m4",
    "oneHanded": false,
@@ -638,6 +278,96 @@
      "Head",
      42.6,
      3.7
+    ]
+   ]
+  },
+  {
+   "id": "lampiao",
+   "arma": "m4",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 11109,
+   "p95": 0.528,
+   "p99": 1.121,
+   "p999": 5.789,
+   "max": 6.37,
+   "pct25": 18.98,
+   "ruins1e4": 121.5,
+   "ruinsPorOsso": [
+    [
+     "Head",
+     69
+    ],
+    [
+     "LeftArm",
+     30
+    ],
+    [
+     "RightArm",
+     28
+    ],
+    [
+     "Spine02",
+     25
+    ],
+    [
+     "Hips",
+     22
+    ],
+    [
+     "LeftForeArm",
+     20
+    ],
+    [
+     "LeftHand",
+     18
+    ],
+    [
+     "LeftShoulder",
+     16
+    ]
+   ],
+   "semcurlDesfez": null,
+   "girouGraus": [
+    [
+     "Head",
+     47.3,
+     9.7
+    ],
+    [
+     "LeftArm",
+     60.7,
+     96
+    ],
+    [
+     "RightArm",
+     77.8,
+     51
+    ],
+    [
+     "Spine02",
+     121.1,
+     53
+    ],
+    [
+     "Hips",
+     78.9,
+     78.9
+    ],
+    [
+     "LeftForeArm",
+     45.2,
+     136.4
+    ],
+    [
+     "LeftHand",
+     105,
+     175.9
+    ],
+    [
+     "LeftShoulder",
+     21.2,
+     48.8
     ]
    ]
   },
@@ -818,6 +548,96 @@
      "RightForeArm",
      73,
      69.5
+    ]
+   ]
+  },
+  {
+   "id": "mariabonita",
+   "arma": "awp",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 10530,
+   "p95": 0.398,
+   "p99": 0.731,
+   "p999": 4.545,
+   "max": 8.53,
+   "pct25": 10.81,
+   "ruins1e4": 47.5,
+   "ruinsPorOsso": [
+    [
+     "Spine02",
+     17
+    ],
+    [
+     "RightUpLeg",
+     16
+    ],
+    [
+     "LeftUpLeg",
+     15
+    ],
+    [
+     "Hips",
+     13
+    ],
+    [
+     "Head",
+     12
+    ],
+    [
+     "RightForeArm",
+     11
+    ],
+    [
+     "RightArm",
+     9
+    ],
+    [
+     "LeftArm",
+     6
+    ]
+   ],
+   "semcurlDesfez": null,
+   "girouGraus": [
+    [
+     "Spine02",
+     115.5,
+     54.6
+    ],
+    [
+     "RightUpLeg",
+     96.7,
+     65.9
+    ],
+    [
+     "LeftUpLeg",
+     74.2,
+     21.2
+    ],
+    [
+     "Hips",
+     73.6,
+     73.6
+    ],
+    [
+     "Head",
+     52.3,
+     17.6
+    ],
+    [
+     "RightForeArm",
+     83,
+     74
+    ],
+    [
+     "RightArm",
+     23.6,
+     29.1
+    ],
+    [
+     "LeftArm",
+     31.1,
+     54.2
     ]
    ]
   },
@@ -1475,6 +1295,96 @@
      "RightShoulder",
      11.3,
      57.9
+    ]
+   ]
+  },
+  {
+   "id": "curupira",
+   "arma": "mp5",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 8404,
+   "p95": 0.295,
+   "p99": 0.598,
+   "p999": 1.596,
+   "max": 6.01,
+   "pct25": 6.53,
+   "ruins1e4": 32.1,
+   "ruinsPorOsso": [
+    [
+     "Hips",
+     15
+    ],
+    [
+     "LeftUpLeg",
+     10
+    ],
+    [
+     "RightArm",
+     5
+    ],
+    [
+     "LeftArm",
+     4
+    ],
+    [
+     "LeftForeArm",
+     4
+    ],
+    [
+     "RightForeArm",
+     3
+    ],
+    [
+     "LeftShoulder",
+     3
+    ],
+    [
+     "RightUpLeg",
+     2
+    ]
+   ],
+   "semcurlDesfez": null,
+   "girouGraus": [
+    [
+     "Hips",
+     59.4,
+     59.4
+    ],
+    [
+     "LeftUpLeg",
+     74.2,
+     25.1
+    ],
+    [
+     "RightArm",
+     70.5,
+     57
+    ],
+    [
+     "LeftArm",
+     65.3,
+     98.7
+    ],
+    [
+     "LeftForeArm",
+     55.5,
+     150.8
+    ],
+    [
+     "RightForeArm",
+     70.9,
+     92.3
+    ],
+    [
+     "LeftShoulder",
+     20.3,
+     49.6
+    ],
+    [
+     "RightUpLeg",
+     74.8,
+     66.9
     ]
    ]
   },
@@ -2222,6 +2132,96 @@
      "RightShoulder",
      9,
      56.2
+    ]
+   ]
+  },
+  {
+   "id": "boto",
+   "arma": "deagle",
+   "oneHanded": true,
+   "ik": false,
+   "arestas": 10638,
+   "p95": 0.292,
+   "p99": 0.611,
+   "p999": 1.299,
+   "max": 3.52,
+   "pct25": 7.19,
+   "ruins1e4": 21.6,
+   "ruinsPorOsso": [
+    [
+     "Hips",
+     10
+    ],
+    [
+     "LeftArm",
+     10
+    ],
+    [
+     "LeftForeArm",
+     9
+    ],
+    [
+     "LeftUpLeg",
+     7
+    ],
+    [
+     "Head",
+     4
+    ],
+    [
+     "RightForeArm",
+     2
+    ],
+    [
+     "RightArm",
+     2
+    ],
+    [
+     "RightUpLeg",
+     1
+    ]
+   ],
+   "semcurlDesfez": null,
+   "girouGraus": [
+    [
+     "Hips",
+     58.6,
+     58.6
+    ],
+    [
+     "LeftArm",
+     66.2,
+     70.6
+    ],
+    [
+     "LeftForeArm",
+     88,
+     156
+    ],
+    [
+     "LeftUpLeg",
+     72,
+     22.9
+    ],
+    [
+     "Head",
+     47,
+     12
+    ],
+    [
+     "RightForeArm",
+     38.2,
+     88.4
+    ],
+    [
+     "RightArm",
+     84.2,
+     71.6
+    ],
+    [
+     "RightUpLeg",
+     74,
+     66.6
     ]
    ]
   },

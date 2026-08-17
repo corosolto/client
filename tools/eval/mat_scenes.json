@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-12T03:57:56.647Z",
+ "gerado": "2026-08-16T23:33:54.599Z",
  "nota": "luzes e env MEDIDOS em runtime (harness.mjs); fatores lidos do chunk JSON dos GLB",
  "maps": [
   {
@@ -95,7 +95,7 @@
      15
     ],
     "color": "#ffd9a8",
-    "intensity": 1.65
+    "intensity": 1.75
    }
   },
   {
@@ -1467,8 +1467,8 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.128,
-      "color": "#ffe3b0",
+      "intensity": 1.278,
+      "color": "#ffe5b4",
       "pos": [
        -0.45,
        0.75,
@@ -1477,8 +1477,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.268,
-      "color": "#a2c4eb",
+      "intensity": 0.308,
+      "color": "#a1c4ee",
       "pos": [
        0.6,
        -0.15,
@@ -1487,8 +1487,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.084,
-      "color": "#acc8eb",
+      "intensity": 0.096,
+      "color": "#abc8ee",
       "pos": [
        0.55,
        0.35,
@@ -1497,8 +1497,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.564,
-      "color": "#ffd397",
+      "intensity": 0.639,
+      "color": "#ffd49a",
       "pos": [
        0.2,
        0.35,
@@ -1507,8 +1507,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.3,
-      "color": "#ffb46d",
+      "intensity": 0.34,
+      "color": "#ffb56f",
       "pos": [
        -0.2,
        -0.86,
@@ -1517,8 +1517,8 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.302,
-      "color": "#92b6eb",
+      "intensity": 0.347,
+      "color": "#91b6ee",
       "pos": [
        0,
        1,
@@ -1543,8 +1543,8 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.128,
-      "color": "#ffe3b0",
+      "intensity": 1.278,
+      "color": "#ffe5b4",
       "pos": [
        -0.45,
        0.75,
@@ -1553,8 +1553,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.268,
-      "color": "#a2c4eb",
+      "intensity": 0.308,
+      "color": "#a1c4ee",
       "pos": [
        0.6,
        -0.15,
@@ -1563,8 +1563,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.084,
-      "color": "#acc8eb",
+      "intensity": 0.096,
+      "color": "#abc8ee",
       "pos": [
        0.55,
        0.35,
@@ -1573,8 +1573,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.564,
-      "color": "#ffd397",
+      "intensity": 0.639,
+      "color": "#ffd49a",
       "pos": [
        0.2,
        0.35,
@@ -1583,8 +1583,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.3,
-      "color": "#ffb46d",
+      "intensity": 0.34,
+      "color": "#ffb56f",
       "pos": [
        -0.2,
        -0.86,
@@ -1593,8 +1593,8 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.302,
-      "color": "#92b6eb",
+      "intensity": 0.347,
+      "color": "#91b6ee",
       "pos": [
        0,
        1,
@@ -1610,7 +1610,7 @@
    "metalFactor": 0.55,
    "roughFactor": 1,
    "envMapIntensity": 1.2,
-   "lightMul": 2.8723
+   "lightMul": 2.5258
   },
   {
    "id": "chao@fy_lajes",
@@ -1619,18 +1619,18 @@
     "lights": [
      {
       "type": "HemisphereLight",
-      "intensity": 0.9,
+      "intensity": 1.18,
       "color": "#dfe6ee",
       "pos": [
        0,
        1,
        0
       ],
-      "ground": "#54483c"
+      "ground": "#635648"
      },
      {
       "type": "DirectionalLight",
-      "intensity": 1.65,
+      "intensity": 1.75,
       "color": "#ffd9a8",
       "pos": [
        25,

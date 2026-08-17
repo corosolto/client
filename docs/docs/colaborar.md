@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**8 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `Ruben`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**8 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `Ruben`, `matheusgb`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -249,17 +249,17 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.841 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 850 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.945 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 857 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.957 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
-| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 769 |
-| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 518 |
-| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes.js` | 690 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 639 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 681 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 855 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 643 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.082 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.504 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 705 |
 
-**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 11 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 12 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

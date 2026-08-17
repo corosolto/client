@@ -28,6 +28,7 @@ com código 1 em falha crítica.
 | `error-provenance-check.mjs` | Preserva erro externo no console/banco sem atribuí-lo ao jogo ou abrir issue automática. | `npm run eval:error-origin` |
 | `shader-budget-check.mjs` | Deriva do GLB real o orçamento de varyings da urna e protege fog/triplanar no piso WebGL1. | `npm run eval:shaderbudget` |
 | `../gen-arch.mjs` | (fora deste diretório) Gera e valida o `ARCH.md`. `--check` reprova se estiver desatualizado. | `npm run arch` |
+| `gen-asset-pbr-check.mjs` | Impede o Meshy de baixar a etapa `preview` sem textura como artefato final; cobra `refine`, PBR e textura 2K. | `npm run eval:asset-gen` |
 
 ## 2. Documentos — leitura, não execução
 
@@ -44,10 +45,12 @@ com código 1 em falha crítica.
 | Arquivo | O que mede |
 |---|---|
 | `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade e ≥2 rotas CTF separadas por 6 m (`--mutante=rota-unica` prova o portão). |
+| `probe-grafite.mjs` | Sonda descartável da passada viva de grafite: abre `mapview?grafite=vivo` e despeja âncoras (com `__grafiteDebug`), contadores de recusa e superfícies por mapa. Diagnóstico, não é régua. |
 | `map-source-check.mjs` | Procedência por SHA e uso efetivo dos materiais/céus dos mapas novos (`--mutante=hash-falso` e `asset-desligado`). |
 | `campo-contract-check.mjs` | Assimetria campo×galpão, convergência, visadas, cover, abertura `field-mouth` e iluminação declarada do interior. |
 | `relevo-check.mjs` | Cota do chão na área ANDÁVEL (alagamento pelo `_freeSpot` real): amplitude, fração plana, declive, subida contínua a pé e silhueta. Só o `fy_campomorro` tem contrato; os demais saem informativos. Mutantes: `terreno-plano`, `silhueta-rasa`, `degrau-unico`. |
 | `lajes-rooftop-check.mjs` + `lajes-gap-check.mjs` | Detalhe cultural, vãos nas malhas e bordas/linhas que tornam os saltos legíveis no frame. |
+| `ambience-check.mjs` | Abre os GLBs reais de rato/pombo em `fy_lajes`, `fy_corrego` e `fy_escadao`; mede determinismo, reação a tiro pelo `Game`, degradação LOWQ, custo e largura/duração do traçante. `--fotos` captura 3:2; mutantes por cláusula. |
 | `mansao-water-check.mjs` | Água não entrável e composição de carros genéricos, jardim tropical e interior mobiliado. |
 | `corrego-contract-check.mjs` + `escadao-contract-check.mjs` | Lentidão, escala/anatomia da fauna do Córrego e flancos/caveirão do Escadão, com mutantes por cláusula. |
 | `mantle-check.mjs` | **Subir em beirada (mantling), nos 10 mapas.** MNT1 toda queda de mão única de escala humana é reversível a pé em ≤ 2 s; MNT2 toda beirada com apoio no topo é escalável, verificado **andando o `_updatePlayer`**; MNT3 o mantle não abre **nenhuma** célula nova — sem esta cláusula o conserto vira exploit. Node puro, ~4 s. O A/B é `SIM_QS='?mantle=0'` (o mesmo kill-switch do jogo). Mutantes: `beirada-baixa`, `beirada-alta`, `canal-fechado`. `npm run eval:mantle` |
