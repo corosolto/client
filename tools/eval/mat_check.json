@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T23:33:54.599Z",
+ "gerado": "2026-08-17T12:27:11.803Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -2629,14 +2629,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#9b7d6a",
-    "opacidadeSprite": 0.977,
+    "opacidadeSprite": 0.996,
     "escalaSprite": [
-     3.06,
-     5.02
+     3.22,
+     5.04
     ],
-    "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9983,
-    "maiorAlfaSprite": 0.773,
+    "spritesCobrindoCentro": 8,
+    "alfaAcumuladoCentro": 0.9488,
+    "maiorAlfaSprite": 0.55,
     "radianciaFumaca": 0.2278,
     "radianciaCeu": 0.3037,
     "razaoFumacaCeu": 0.75,
@@ -3167,7 +3167,7 @@
   }
  ],
  "shade": {
-  "gerado": "2026-08-16T23:33:54.599Z",
+  "gerado": "2026-08-17T12:27:11.803Z",
   "armas": [
    {
     "arma": "ak",

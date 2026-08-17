@@ -15,17 +15,19 @@
 **Quality gate na data deste arquivo** (`node tools/eval/invariants.mjs`, ~10-12 min):
 
 ```
-CRÍTICAS: 39/52 passam  ← VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19,
-                          BOT8, CHR1, CHR3, CHR4, TEX1 VERMELHAS
-AVISOS:   VM15 fora do alvo
+CRÍTICAS: 42/55 passam  ← nenhuma falha nova
+DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8, CHR1, CHR3,
+          CHR4, CTF1 (KNOWN-RED.json — não reprovam, mas continuam devidas)
+AVISOS:   VM15, BOT2, CHR5B fora do alvo
 PULADAS:  4 (exigem browser ou arnês ausente)
 ```
 
-Colado de uma execução real de **05/08** (`npm run check`, que roda `eval:vm` antes das
-invariantes — ver BUG-02). **Continuam 13 vermelhas**, e continuam todas de viewmodel,
-personagem e textura: o total foi de 49 para 52 porque entraram invariantes novas, e os
-nomes mudaram (VM5/VM18b viraram VM9/VM20). Nada da rodada de captura/spawn de 05/08
-(BUG-06, BUG-32) aparece aqui — as duas réguas novas moram no `check:fast`.
+Colado de uma execução real de **17/08** (`npm run check`, que roda `eval:vm` antes das
+invariantes — ver BUG-02). **Zero vermelhas reprovando**: as 13 antigas viraram dívida
+declarada em `KNOWN-RED.json` (continuam devidas, não reprovam), TEX1 ficou VERDE (as 10
+superfícies do fy_quebrada ganharam albedo) e a VM14 saiu do vermelho em 17/08 quando as
+duas armas do fundo do canal do corrego subiram para as cabeceiras das pontes. Na mesma
+rodada a wave 3 do BUG-54 fechou: `eval:occluders` 0/0/0 nos 10 mapas.
 
 Duas reprovações do `check:fast` que **não são defeito de código de jogo** e que cortam a
 corrente de `&&` se ficarem no meio dela: `anims:check` (BUG-15, `public/models/anims/`
@@ -993,6 +995,16 @@ andamento nesta mesma árvore (não commitado):**
   circuito 96-97% contíguo, LS1-LS6 e LC1-LC5 verdes com os 8 mutantes mordendo.
 - **Fecha só com o dono:** a rodada de capturas 3:2 e o crítico adversarial estão na
   evidência (`tools/eval/asset-evidence/maps/fy_lajes/`); o teste jogável é dele.
+
+**Rodada de 17/08 — wave 3 fechada e commitada:** `eval:occluders` **VERDE 0/0/0 nos 10
+mapas**. fy_mansao 123+35→0 (vidro sai de occluders, carros/brises/ripados/pote entram),
+fy_campomorro 64→0 (o TERRENO do morro passa a parar bala; ruas, portas salientes,
+arquibancada e traves idem), fy_corrego 2→0, piscina_treta 1→0, quebrada já media 0.
+Padrão novo nos addBox dos 4 mapas: `opts.bala` registra occluder visível sem colisor
+próprio. VM14 saiu do vermelho (as 2 armas do fundo do canal do corrego subiram para as
+cabeceiras das pontes). O grafite do fy_lajes voltou (a chamada morreu na troca de builder
+— audit 0 no ar/0 tapadas) e `eval:ambience` rodou pela primeira vez com o cachorro,
+13/13. Segue aguardando o teste jogável do dono.
 
 ### ~~BUG-52 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
 

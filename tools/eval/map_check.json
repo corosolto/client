@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T23:33:52.717Z",
+ "gerado": "2026-08-17T12:27:09.902Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -843,7 +843,7 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 108,
+   "occMedidos": 109,
    "occPulados": 0,
    "fracSemMalha": 0.0023,
    "quadrantes": [
@@ -1142,7 +1142,7 @@
      "z": 0,
      "distSpawn": 21.21,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 34.1,
+     "maiorLinhaTiro": 33.5,
      "chao": 0,
      "penetracao": 0
     },
@@ -2596,7 +2596,7 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1096,
+     "fracMedia": 0.088,
      "maiorVisada": 70
     },
     {
@@ -2614,8 +2614,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 629,
-     "obsVendo": 72,
-     "frac": 0.1145,
+     "obsVendo": 67,
+     "frac": 0.1065,
      "maiorVisada": 70
     },
     {
@@ -2624,8 +2624,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 620,
-     "obsVendo": 39,
-     "frac": 0.0629,
+     "obsVendo": 33,
+     "frac": 0.0532,
      "maiorVisada": 44.4
     },
     {
@@ -2634,8 +2634,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 607,
-     "obsVendo": 48,
-     "frac": 0.0791,
+     "obsVendo": 44,
+     "frac": 0.0725,
      "maiorVisada": 41.9
     },
     {
@@ -2644,8 +2644,8 @@
      "z": -42.5,
      "chao": 0,
      "obsLonge": 593,
-     "obsVendo": 108,
-     "frac": 0.1821,
+     "obsVendo": 71,
+     "frac": 0.1197,
      "maiorVisada": 61.3
     },
     {
@@ -2776,7 +2776,7 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 411,
+   "occMedidos": 433,
    "occPulados": 0,
    "fracSemMalha": 0.0037,
    "quadrantes": [
@@ -3102,7 +3102,7 @@
      "z": 6,
      "distSpawn": 34.86,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 56.3,
+     "maiorLinhaTiro": 52.9,
      "chao": 0,
      "penetracao": 0.02
     },
@@ -3924,15 +3924,15 @@
      "team": "E",
      "chaoMin": -0.08,
      "chaoMax": -0.08,
-     "fracMedia": 0.642,
+     "fracMedia": 0.6413,
      "maiorVisada": 44.1
     },
     {
      "team": "B",
      "chaoMin": 1,
      "chaoMax": 1,
-     "fracMedia": 0.1658,
-     "maiorVisada": 77.8
+     "fracMedia": 0.1497,
+     "maiorVisada": 73.8
     }
    ],
    "exposicaoPorSpawn": [
@@ -3942,8 +3942,8 @@
      "z": -3,
      "chao": -0.08,
      "obsLonge": 377,
-     "obsVendo": 243,
-     "frac": 0.6446,
+     "obsVendo": 242,
+     "frac": 0.6419,
      "maiorVisada": 44.1
     },
     {
@@ -3982,8 +3982,8 @@
      "z": -22,
      "chao": 1,
      "obsLonge": 641,
-     "obsVendo": 60,
-     "frac": 0.0936,
+     "obsVendo": 56,
+     "frac": 0.0874,
      "maiorVisada": 53.8
     },
     {
@@ -3992,8 +3992,8 @@
      "z": -22,
      "chao": 1,
      "obsLonge": 655,
-     "obsVendo": 95,
-     "frac": 0.145,
+     "obsVendo": 91,
+     "frac": 0.1389,
      "maiorVisada": 62.3
     },
     {
@@ -4002,8 +4002,8 @@
      "z": -19,
      "chao": 1,
      "obsLonge": 622,
-     "obsVendo": 108,
-     "frac": 0.1736,
+     "obsVendo": 98,
+     "frac": 0.1576,
      "maiorVisada": 58.7
     },
     {
@@ -4012,9 +4012,9 @@
      "z": -19,
      "chao": 1,
      "obsLonge": 637,
-     "obsVendo": 160,
-     "frac": 0.2512,
-     "maiorVisada": 77.8
+     "obsVendo": 137,
+     "frac": 0.2151,
+     "maiorVisada": 73.8
     }
    ],
    "salaDoSpawn": [
@@ -4111,9 +4111,9 @@
     }
    ],
    "occluderSemMalha": [],
-   "occMedidos": 92,
+   "occMedidos": 118,
    "occPulados": 7,
-   "fracSemMalha": 0.0053,
+   "fracSemMalha": 0.005,
    "quadrantes": [
     {
      "q": "0,0",
@@ -4436,7 +4436,7 @@
      "z": 7,
      "distSpawn": 12.53,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 58.7,
+     "maiorLinhaTiro": 54.4,
      "chao": -0.08,
      "penetracao": 0
     },
@@ -5150,7 +5150,7 @@
      "x": 21,
      "z": -5,
      "chao": 0,
-     "penetracao": 0.13
+     "penetracao": 0.01
     },
     {
      "team": "E",
@@ -5185,7 +5185,7 @@
      "x": -21,
      "z": 15,
      "chao": 0,
-     "penetracao": 0.13
+     "penetracao": 0
     },
     {
      "team": "B",
@@ -5200,15 +5200,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.3629,
-     "maiorVisada": 77.2
+     "fracMedia": 0.2921,
+     "maiorVisada": 76.4
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.3529,
-     "maiorVisada": 81.8
+     "fracMedia": 0.2732,
+     "maiorVisada": 77
     }
    ],
    "exposicaoPorSpawn": [
@@ -5218,8 +5218,8 @@
      "z": -25,
      "chao": 0,
      "obsLonge": 534,
-     "obsVendo": 201,
-     "frac": 0.3764,
+     "obsVendo": 153,
+     "frac": 0.2865,
      "maiorVisada": 76.4
     },
     {
@@ -5228,8 +5228,8 @@
      "z": -5,
      "chao": 0,
      "obsLonge": 476,
-     "obsVendo": 174,
-     "frac": 0.3655,
+     "obsVendo": 151,
+     "frac": 0.3172,
      "maiorVisada": 56.8
     },
     {
@@ -5238,8 +5238,8 @@
      "z": 15,
      "chao": 0,
      "obsLonge": 480,
-     "obsVendo": 219,
-     "frac": 0.4562,
+     "obsVendo": 178,
+     "frac": 0.3708,
      "maiorVisada": 53.2
     },
     {
@@ -5248,9 +5248,9 @@
      "z": 35,
      "chao": 0,
      "obsLonge": 552,
-     "obsVendo": 140,
-     "frac": 0.2536,
-     "maiorVisada": 77.2
+     "obsVendo": 107,
+     "frac": 0.1938,
+     "maiorVisada": 75.6
     },
     {
      "team": "B",
@@ -5258,8 +5258,8 @@
      "z": -25,
      "chao": 0,
      "obsLonge": 538,
-     "obsVendo": 200,
-     "frac": 0.3717,
+     "obsVendo": 156,
+     "frac": 0.29,
      "maiorVisada": 77
     },
     {
@@ -5268,8 +5268,8 @@
      "z": -5,
      "chao": 0,
      "obsLonge": 494,
-     "obsVendo": 153,
-     "frac": 0.3097,
+     "obsVendo": 120,
+     "frac": 0.2429,
      "maiorVisada": 49.9
     },
     {
@@ -5278,8 +5278,8 @@
      "z": 15,
      "chao": 0,
      "obsLonge": 480,
-     "obsVendo": 158,
-     "frac": 0.3292,
+     "obsVendo": 107,
+     "frac": 0.2229,
      "maiorVisada": 52.5
     },
     {
@@ -5288,9 +5288,9 @@
      "z": 35,
      "chao": 0,
      "obsLonge": 546,
-     "obsVendo": 219,
-     "frac": 0.4011,
-     "maiorVisada": 81.8
+     "obsVendo": 184,
+     "frac": 0.337,
+     "maiorVisada": 76.7
     }
    ],
    "salaDoSpawn": [
@@ -5379,50 +5379,10 @@
    "piorArea": 49.9,
    "escadas": [],
    "travessia": [],
-   "occluderSemMalha": [
-    {
-     "frac": 0.5,
-     "amostras": 4,
-     "alturaPior": 0.2,
-     "caixa": [
-      -6,
-      0,
-      -0.9,
-      6,
-      0.2,
-      0.9
-     ]
-    },
-    {
-     "frac": 0.25,
-     "amostras": 4,
-     "alturaPior": 0.2,
-     "caixa": [
-      -6,
-      0,
-      -23.5,
-      6,
-      0.2,
-      -20.5
-     ]
-    },
-    {
-     "frac": 0.25,
-     "amostras": 4,
-     "alturaPior": 0.2,
-     "caixa": [
-      -6,
-      0,
-      20.5,
-      6,
-      0.2,
-      23.5
-     ]
-    }
-   ],
-   "occMedidos": 62,
-   "occPulados": 0,
-   "fracSemMalha": 0.0045,
+   "occluderSemMalha": [],
+   "occMedidos": 108,
+   "occPulados": 62,
+   "fracSemMalha": 0.0042,
    "quadrantes": [
     {
      "q": "0,0",
@@ -5729,7 +5689,7 @@
      "timeSpawn": "B",
      "maiorLinhaTiro": 64.6,
      "chao": 0,
-     "penetracao": 0.13
+     "penetracao": 0.01
     },
     {
      "id": "C",
@@ -5760,7 +5720,7 @@
      "z": -22,
      "distSpawn": 17.26,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 64.2,
+     "maiorLinhaTiro": 61.2,
      "chao": 0.15,
      "penetracao": 0.067
     }
@@ -5840,15 +5800,15 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.0663,
+     "fracMedia": 0.1109,
      "maiorVisada": 66.6
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1163,
-     "maiorVisada": 57.6
+     "fracMedia": 0.1081,
+     "maiorVisada": 58.2
     }
    ],
    "exposicaoPorSpawn": [
@@ -5858,8 +5818,8 @@
      "z": 32,
      "chao": 0,
      "obsLonge": 374,
-     "obsVendo": 33,
-     "frac": 0.0882,
+     "obsVendo": 77,
+     "frac": 0.2059,
      "maiorVisada": 66.1
     },
     {
@@ -5878,8 +5838,8 @@
      "z": 32,
      "chao": 0,
      "obsLonge": 362,
-     "obsVendo": 16,
-     "frac": 0.0442,
+     "obsVendo": 42,
+     "frac": 0.116,
      "maiorVisada": 43
     },
     {
@@ -5888,8 +5848,8 @@
      "z": 32,
      "chao": 0,
      "obsLonge": 370,
-     "obsVendo": 43,
-     "frac": 0.1162,
+     "obsVendo": 39,
+     "frac": 0.1054,
      "maiorVisada": 66.6
     },
     {
@@ -5898,8 +5858,8 @@
      "z": -22,
      "chao": 0,
      "obsLonge": 333,
-     "obsVendo": 63,
-     "frac": 0.1892,
+     "obsVendo": 50,
+     "frac": 0.1502,
      "maiorVisada": 57.6
     },
     {
@@ -5908,8 +5868,8 @@
      "z": -22,
      "chao": 0,
      "obsLonge": 315,
-     "obsVendo": 49,
-     "frac": 0.1556,
+     "obsVendo": 47,
+     "frac": 0.1492,
      "maiorVisada": 56.8
     },
     {
@@ -5918,9 +5878,9 @@
      "z": -22,
      "chao": 0,
      "obsLonge": 316,
-     "obsVendo": 34,
-     "frac": 0.1076,
-     "maiorVisada": 54.5
+     "obsVendo": 28,
+     "frac": 0.0886,
+     "maiorVisada": 56.5
     },
     {
      "team": "B",
@@ -5928,9 +5888,9 @@
      "z": -22,
      "chao": 0,
      "obsLonge": 316,
-     "obsVendo": 4,
-     "frac": 0.0127,
-     "maiorVisada": 29.6
+     "obsVendo": 14,
+     "frac": 0.0443,
+     "maiorVisada": 58.2
     }
    ],
    "salaDoSpawn": [
@@ -6069,9 +6029,9 @@
    ],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 152,
+   "occMedidos": 315,
    "occPulados": 0,
-   "fracSemMalha": 0.0016,
+   "fracSemMalha": 0.0012,
    "quadrantes": [
     {
      "q": "0,0",
@@ -6379,9 +6339,9 @@
      "z": 28,
      "distSpawn": 6.8,
      "timeSpawn": "E",
-     "maiorLinhaTiro": 36.9,
+     "maiorLinhaTiro": 43.2,
      "chao": 0,
-     "penetracao": 0.13
+     "penetracao": 0
     },
     {
      "id": "E",
@@ -6390,7 +6350,7 @@
      "z": 2,
      "distSpawn": 24.62,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 31.4,
+     "maiorLinhaTiro": 44.6,
      "chao": 0,
      "penetracao": 0.02
     },
@@ -6412,7 +6372,7 @@
      "z": -25,
      "distSpawn": 6.26,
      "timeSpawn": "B",
-     "maiorLinhaTiro": 42.5,
+     "maiorLinhaTiro": 52.2,
      "chao": 0,
      "penetracao": 1.238
     }

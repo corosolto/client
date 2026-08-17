@@ -39,7 +39,7 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 35.984 linhas em 45 arquivos | `cat public/js/*.js \| wc -l` |
+| Código do jogo | 36.159 linhas em 45 arquivos | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6.862** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.110 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -49,7 +49,7 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 10 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 14 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 226 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Scripts do arnês | 227 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Scripts de pipeline | 63 | `ls tools/*.mjs \| wc -l` |
 | Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
 | Versão | `2.0.0-alpha.83` | `public/js/version.js` e `package.json` (batem) |
@@ -221,16 +221,16 @@ Os mapas registrados hoje, e em que modo cada um abre:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.841 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 857 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.957 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.900 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.622 |
-| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 855 |
-| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 643 |
-| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.082 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.504 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 705 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.815 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 858 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.969 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.904 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.634 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 658 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.521 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 717 |
 
 **10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 12 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 

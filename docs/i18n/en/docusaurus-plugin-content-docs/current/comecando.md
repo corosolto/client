@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 35,984 lines in 45 files | `cat public/js/*.js \| wc -l` |
+| Game code | 36,159 lines in 45 files | `cat public/js/*.js \| wc -l` |
 | `game.js` | **6,862** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,110 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
@@ -51,7 +51,7 @@ this page was aging at the very first commit — see
 | Playable characters | 62, in 10 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 10 | `MAPS` object in `maps.js` |
 | Visual harnesses in HTML | 14 | `ls public/*.html \| wc -l` |
-| Harness scripts | 226 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
+| Harness scripts | 227 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
 | Pipeline scripts | 63 | `ls tools/*.mjs \| wc -l` |
 | Written entry tasks | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
 | Version | `2.0.0-alpha.83` | `public/js/version.js` and `package.json` (match) |
@@ -223,16 +223,16 @@ The maps registered today, and which mode each one opens in:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,841 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 857 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,957 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,900 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,622 |
-| `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 855 |
-| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 643 |
-| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,082 |
-| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,504 |
-| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 705 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,815 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 858 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,969 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,904 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,634 |
+| `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 868 |
+| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 658 |
+| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,205 |
+| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,521 |
+| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 717 |
 
 **10 registered maps** - 2 open in rounds and 8 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 12 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
