@@ -40,11 +40,32 @@ export function buildPenitenciaria(scene) {
     const texture = new THREE.CanvasTexture(canvas); texture.name = name; texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(repeatX, repeatY); texture.anisotropy = 8; return texture;
   }
+  function ammoCrateTexture() {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+    gradient.addColorStop(0, '#58613d'); gradient.addColorStop(.52, '#73764b'); gradient.addColorStop(1, '#353d2a');
+    ctx.fillStyle = gradient; ctx.fillRect(0, 0, 256, 256);
+    let seed = 1977; const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    ctx.fillStyle = 'rgba(20,25,16,.32)';
+    for (let i=0;i<170;i++) ctx.fillRect(rand()*256,rand()*256,1+rand()*9,1+rand()*3);
+    ctx.strokeStyle = '#242a1c'; ctx.lineWidth = 11; ctx.strokeRect(8,8,240,240);
+    ctx.strokeStyle = '#a39d6a'; ctx.lineWidth = 3; ctx.strokeRect(20,20,216,216);
+    for (const y of [52,204]) { ctx.fillStyle='#252b1d'; ctx.fillRect(0,y,256,10); ctx.fillStyle='rgba(190,182,116,.45)'; ctx.fillRect(0,y+2,256,2); }
+    ctx.fillStyle='rgba(25,29,20,.78)'; ctx.fillRect(31,82,194,96);
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#d6cc86';
+    ctx.font='900 38px Arial,sans-serif'; ctx.fillText('MUNIÇÃO',128,112);
+    ctx.font='bold 17px Arial,sans-serif'; ctx.fillText('7.62 MM · 120 CART.',128,151);
+    for (const x of [48,208]) { ctx.fillStyle='#b39943'; ctx.fillRect(x-5,188,10,29); ctx.fillStyle='#d5bf68'; ctx.beginPath(); ctx.arc(x,188,5,Math.PI,0); ctx.fill(); }
+    const texture = new THREE.CanvasTexture(canvas); texture.name='penitenciaria-caixa-municao'; texture.colorSpace=THREE.SRGBColorSpace;
+    texture.wrapS=texture.wrapT=THREE.RepeatWrapping; texture.anisotropy=8; return texture;
+  }
   const tex = {
     concrete: proceduralTexture('penitenciaria-concreto', '#777b78', '#343936', 'concrete', 6),
     darkConcrete: proceduralTexture('penitenciaria-concreto-escuro', '#343a3b', '#15191a', 'concrete', 5),
     yard: proceduralTexture('penitenciaria-patio-concreto-gasto', '#555957', '#262a29', 'concrete', 8),
     steel: proceduralTexture('penitenciaria-aco-enferrujado', '#565d5e', '#8b6b49', 'metal', 3),
+    ammo: ammoCrateTexture(),
   };
   const MAT = {
     concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .045, color: 0xb8bbb5, roughness: .93 }),
@@ -60,6 +81,7 @@ export function buildPenitenciaria(scene) {
     glass: new THREE.MeshPhysicalMaterial({ color: 0x8fb2c0, roughness: .2, metalness: .1, transparent: true, opacity: .68 }),
     rubber: new THREE.MeshStandardMaterial({ color: 0x17191a, roughness: .96 }),
     grass: new THREE.MeshStandardMaterial({ color: 0x52643c, roughness: 1 }),
+    ammo: new THREE.MeshStandardMaterial({ map: tex.ammo, bumpMap: tex.ammo, bumpScale: .035, color: 0xffffff, roughness: .76, metalness: .18 }),
   };
   function addBox(w, h, d, material, x, y, z, opts = {}) {
     const mesh = new THREE.Mesh(boxGeo(w, h, d), material); mesh.position.set(x, y + h / 2, z);
@@ -140,7 +162,7 @@ export function buildPenitenciaria(scene) {
 
   function ammoCrate(index, x, z, ry=0) {
     const group = new THREE.Group(); group.name = `penitenciaria-caixa-municao-${index}`; root.add(group);
-    const body = addBox(2.2, 1.25, 1.55, MAT.yellow, x, 0, z, { ry, tag: `municao-${index}` }); group.userData.collider = body.userData.collider;
+    const body = addBox(2.2, 1.25, 1.55, MAT.ammo, x, 0, z, { ry, tag: `municao-${index}` }); group.userData.collider = body.userData.collider;
     for (const y of [.18,.92]) addBox(2.28,.1,1.63,MAT.steel,x,y,z,{ry,collide:false});
     for (const dx of [-.65,0,.65]) addBox(.08,.7,1.65,MAT.black,x+dx*Math.cos(ry),.27,z-dx*Math.sin(ry),{ry,collide:false});
   }
