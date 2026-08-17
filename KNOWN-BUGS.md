@@ -913,6 +913,54 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-55 · Escala dos barracos/models errada no Lajes e no Córrego — ABERTO 17/08
+
+**Sintoma literal do dono (teste de 17/08):** lajes — *"o melhor em textura. mas barracos
+e model estao com escala errada"*; córrego — *"melhor em questao de mapa, mas mesmo erro
+de escala, e sem muito detalhes"*.
+
+**Régua: nenhuma ainda.** A candidata: medir a razão entre a altura do barraco/porta no
+GLB posicionado e a referência humana (porta 2,00–2,20 m, pé-direito de barraco 2,4–2,8 m
+— `references/favela/lajes-rio/FONTE.md` tem o cálculo de largura; estender para altura).
+O harness já resolve bounding box por prop (`asset-integrity`), falta a cláusula de
+escala relativa ao jogador (1,70 m de olho). Escrever a régua ANTES de reescalar.
+
+### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — ABERTO 17/08
+
+**Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
+todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
+
+**Direção dada pelo dono:** carros GLB existentes no acervo substituem os `carroGenerico`
+procedurais; jardim e casa ganham models gerados no Mint. A régua visual candidata é a
+mesma família da `lajes-visual` (o dono declarou o lajes como régua de favela — ver
+BUG-58).
+
+### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
+
+**Sintoma literal do dono:** *"ele tem ambiencia real coisa que nenhum dos outros mapas
+tem, horizonte, animais, animacoes no ceu, precismoa disso em todos os mapas"*. Também:
+córrego — *"precisa gerar jacare no mintgg e a capivara, pode usar glbs de mesa de bar"*;
+lajes — *"falta colocar uns cachorro caramelo e mais animais como ratos"*.
+
+**Régua: parcial.** `eval:ambience` (AM1-AM10) cobre fy_lajes/fy_corrego/fy_escadao.
+Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambience`
+declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
+por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
+
+### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
+
+**Sintoma literal do dono:** *"mapa esta muito labirintico e confuso apesar que os becos
+estao reais"*; *"talvez deixar becos e escadas, melhorar a escalas dos barracos de favela,
+e simplificar o mapa, nao fazer tao grande"*; e a consagração: *"o lajes e a regua de
+favela visualmente ... e o mais bonito de todos"*. Campinho: *"otimo como mapa, precisa
+ser estruturado visualmente como o lajes"*.
+
+**Leitura:** manter becos/escadas (reais), reduzir a extensão total e o número de
+ramais; a decisão de arte do lajes vira o padrão dos mapas de favela. A régua de
+circuito (LC1-LC6) já mede conectividade — falta um teto de COMPLEXIDADE (nº de ramais /
+área total / decisões por travessia) medido contra o que o dono aprovar na versão
+simplificada.
+
 ### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
 
 **Sintoma literal do dono, após jogar a R18:** *"a textura e de favela, mas o mapa nao,
