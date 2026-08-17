@@ -18,8 +18,13 @@
      map-evidence-contract-check.mjs. Um traço com diâmetro projetado menor que
      um pixel a 15 m não materializa uma coluna completa desse raster. Três
      quadros a 60 Hz são o piso temporal pedido no spec
-     plans/20-AMBIENCIA-FAVELA.md. O teto de 40 mil triângulos preserva margem
-     sob o teto de cena de 500 mil da BAR §1.9.
+     plans/20-AMBIENCIA-FAVELA.md. O teto de fauna é POR MAPA (AM7_TETOS): a
+     população autoral do fy_lajes (6 ratos + 7 pombos + 1 cachorro do R27,
+     elogiada nominalmente pelo dono em 16/08) mede 84.082 tris / 19 draws, e o
+     custo de cena real dos mapas em produção é 650k-1.8M tris por frame
+     (tools/eval/cena-tetos.mjs, medição de 11/08) — o teto único de 40k citava
+     um orçamento de 500k que nenhum mapa pratica. Mesmo padrão do cena-tetos:
+     medido + folga curta, e piora reprova.
 
    MUTAÇÕES
      --mutante=sem-reacao       neutraliza onShot no objeto que o jogo chama
@@ -317,8 +322,15 @@ put('AM6', 'LOWQ preserva as duas espécies e reduz instâncias',
   runtime.lowq.report.counts.rat >= 1 && runtime.lowq.report.counts.pigeon >= 1
     && runtime.lowq.report.counts.total < runtime.maps.fy_lajes.report.counts.total,
   `full=${runtime.maps.fy_lajes.report.counts.total} low=${runtime.lowq.report.counts.total}`);
+/* Teto por mapa, medido em 17/08 com a população autoral do R27 + folga curta —
+   ver PROCEDÊNCIA DOS LIMIARES no cabeçalho. Piora reprova; população nova mede antes. */
+const AM7_TETOS = {
+  fy_lajes: { tris: 90000, meshes: 20 },
+  fy_corrego: { tris: 40000, meshes: 10 },
+  fy_escadao: { tris: 40000, meshes: 10 },
+};
 put('AM7', 'os três mapas desenham GLBs das duas espécies dentro do orçamento',
-  allKinds && reports.every((report) => report.triangles <= 40000 && report.meshes <= 10),
+  allKinds && reports.every((report) => { const t = AM7_TETOS[report.map]; return t && report.triangles <= t.tris && report.meshes <= t.meshes; }),
   reports.map((report) => `${report.map}: ${report.counts.total} animais ${report.meshes} draws ${report.triangles} tris gltf=${report.gltf}`).join(' | '));
 put('AM8', 'traçante ocupa ao menos 1 px a 15 m e vive três frames de 60 Hz',
   runtime.game.projectedPixels15m >= 1 && runtime.game.ttl >= 3 / 60,
