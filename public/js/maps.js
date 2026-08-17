@@ -4,10 +4,10 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
-import { buildEscadao, ESCADAO_PROPS } from './map_escadao.js';
+import { buildEscadao, ESCADAO_PROPS, ESCADAO_AMBIENCE } from './map_escadao.js';
 import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
-import { buildLajes, LAJES_PROPS } from './map_lajes.js';
-import { buildCorrego, CORREGO_PROPS } from './map_corrego.js';
+import { buildLajes, LAJES_PROPS, LAJES_AMBIENCE } from './map_lajes_authored.js';
+import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
 import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
@@ -72,10 +72,10 @@ export const MAPS = {
      réguas e os JSON de evidência —, e ela precisa de régua que case registro × LOOKS ×
      AERIAL × GRAFITE. De carona num merge, é como se planta quebra silenciosa. Alias não
      é preciso: nenhum destes 5 foi publicado. */
-  fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS,    ctfMode: true },
+  fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   fy_campomorro: { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
-  fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS,      ctfMode: true },
-  fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS,    ctfMode: true },
+  fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
+  fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
   fy_mansao:     { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);

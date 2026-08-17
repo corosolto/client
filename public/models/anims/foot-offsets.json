@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-12T00:12:33.779Z",
+ "gerado": "2026-08-12T16:29:39.780Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -280,8 +280,9 @@
    "crouch": -0.0422
   },
   "cuca": {
-   "idle": -0.0248,
-   "shoot": -0.0304
+   "idle": 0.0724,
+   "walk": 0.0791,
+   "shoot": 0.0782
   },
   "curupira": {
    "idle": -0.0241,
@@ -302,6 +303,9 @@
    "run": 0.0322,
    "shoot": -0.0249,
    "crouch": 0.0369
+  },
+  "gilbomes": {
+   "idle": -0.0772
   },
   "programador-virado": {
    "walk": 0.0321,
@@ -345,24 +349,19 @@
    "desvio": -0.4328
   },
   {
-   "id": "cuca",
-   "pose": "run",
-   "desvio": -0.4184
-  },
-  {
    "id": "canarinho",
    "pose": "crouch",
    "desvio": -0.3669
   },
   {
    "id": "cuca",
-   "pose": "walk",
-   "desvio": -0.2435
+   "pose": "crouch",
+   "desvio": -0.2687
   },
   {
-   "id": "cuca",
-   "pose": "crouch",
-   "desvio": -0.1631
+   "id": "gilbomes",
+   "pose": "walk",
+   "desvio": 0.1619
   },
   {
    "id": "ancap",
@@ -375,6 +374,11 @@
    "desvio": -0.1382
   },
   {
+   "id": "gilbomes",
+   "pose": "run",
+   "desvio": 0.1374
+  },
+  {
    "id": "esbirro",
    "pose": "run",
    "desvio": -0.1342
@@ -383,6 +387,11 @@
    "id": "ancap",
    "pose": "walk",
    "desvio": -0.1308
+  },
+  {
+   "id": "gilbomes",
+   "pose": "crouch",
+   "desvio": 0.1281
   },
   {
    "id": "saci",
@@ -405,9 +414,19 @@
    "desvio": -0.1086
   },
   {
+   "id": "gilbomes",
+   "pose": "shoot",
+   "desvio": 0.0982
+  },
+  {
    "id": "dollynho",
    "pose": "crouch",
    "desvio": -0.0981
+  },
+  {
+   "id": "cuca",
+   "pose": "run",
+   "desvio": -0.083
   }
  ]
 }

@@ -28,7 +28,9 @@ if (mutante === 'caveirao-perfeito') {
   const caixa = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), new THREE.MeshBasicMaterial());
   caixa.position.copy(protegido); game.scene.add(caixa); world.occluders.push(caixa); game.scene.updateMatrixWorld(true);
 }
-const observadores = [olhos(-4, 8), olhos(4, 8), olhos(0, -20)];
+const observadores = [olhos(-4, 8), olhos(4, 8), olhos(0, -12)];
+// topo em z=-12: de z=-20 a visada passa 5 cm POR BAIXO do nariz do último degrau (occluder
+// desde o BUG-54) — só media "limpa" atravessando o piso. A exposição real começa em z≥-15.
 const angulosAbertos = observadores.filter((origem) => game._losClear(origem, protegido)).length;
 
 let landmark = null;

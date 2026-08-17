@@ -121,10 +121,51 @@ UI_RECTS = [
     (0.50, 0.42, 1.00, 1.00),   # VIEWMODEL (medido no quebrada-169-a)
 ]
 
+# ── PERFIS ──────────────────────────────────────────────────────────────────
+#  Quadro de OUTRO jogo tambem tem HUD e viewmodel, e pela mesma razao eles nao
+#  sao ambiente. Cada fonte tem o seu perfil, e todos moram AQUI: um retangulo
+#  copiado para um segundo arquivo e' a LICAO 2 esperando acontecer.
+#
+#  `plantao`: 10 quadros de "Plantao Online" (FPS de celular), preparados por
+#  `tools/eval/ref-world.py`. Os retangulos foram medidos DESENHANDO a mascara
+#  sobre o quadro e olhando — dois erros so' apareceram na figura: o banner
+#  "CAVEIRAO" nao fica colado no topo (comeca em y~0,04) e a barra de titulo do
+#  YouTube e' OVERLAY dentro do video, entao o recorte da caixa de conteudo nao
+#  a remove. `frac_util` resultante: 0,55-0,61, na mesma ordem dos 0,53 do
+#  perfil `corosolto`.
+#
+#  NAO EXISTE PERFIL `arma`, E E' DECISAO: dos 7 quadros aproveitaveis do Arma
+#  Reforger, 5 tem o viewmodel em posicao diferente (ora a direita, ora ao
+#  centro, ora a esquerda). Uma caixa generosa o bastante para cobrir os cinco
+#  comeria mais da metade do quadro, e sobrariam 2 quadros limpos — que nao sao
+#  corpus. Os quadros do Arma servem de VOCABULARIO (que elemento existe), nao
+#  de medida de superficie.
+UI_PERFIS = {
+    'corosolto': UI_RECTS,
+    'plantao': [
+        # a barra de titulo do YouTube NAO entra aqui: ela e' removida no
+        # recorte de `ref-world.py`, e tem de ser, senao ela bloqueia a
+        # `mascara_ceu` (que exige ceu ligado ao topo do quadro).
+        (0.34, 0.000, 0.66, 0.095),   # banner "CAVEIRAO" do modo
+        (0.00, 0.600, 0.24, 1.000),   # joystick + silhueta de arma + municao
+        (0.80, 0.780, 1.00, 1.000),   # botoes do player + miniatura
+        (0.00, 0.940, 1.00, 1.000),   # barra de progresso do player
+        # VIEWMODEL. Comeca em x=0,22 e nao em 0,33 porque em `plantao_18` o
+        # jogador segura um radio com a mao esquerda, que vazava pela esquerda.
+        # Custa area nos outros 9 quadros e e' assim de proposito: no mesmo
+        # espirito do perfil `corosolto`, faltar mascara custa a validade do
+        # numero, sobrar mascara custa area de medida.
+        (0.22, 0.450, 0.72, 1.000),
+    ],
+}
 
-def mascara_ui(h: int, w: int) -> np.ndarray:
+
+def mascara_ui(h: int, w: int, perfil: str = 'corosolto') -> np.ndarray:
+    rects = UI_PERFIS.get(perfil)
+    if rects is None:
+        raise ValueError(f'perfil de UI desconhecido: {perfil!r} (tenho {sorted(UI_PERFIS)})')
     m = np.zeros((h, w), bool)
-    for x0, y0, x1, y1 in UI_RECTS:
+    for x0, y0, x1, y1 in rects:
         m[int(y0 * h):int(math.ceil(y1 * h)), int(x0 * w):int(math.ceil(x1 * w))] = True
     return m
 
@@ -500,7 +541,9 @@ def d6_superficie(L: np.ndarray, ceu: np.ndarray) -> dict:
 
 
 # ============================================================================
-def descrever(caminho: str, escala: str = 'a', ui: bool = False) -> dict:
+def descrever(caminho: str, escala: str = 'a', ui='') -> dict:
+    # `ui` aceita bool (compatibilidade: True == 'corosolto') ou nome de perfil.
+    perfil = 'corosolto' if ui is True else (ui or '')
     cfg = ESCALAS[escala]
     im = _abrir(caminho)
     nat = np.asarray(im, dtype=np.float64) / 255.0
@@ -519,7 +562,7 @@ def descrever(caminho: str, escala: str = 'a', ui: bool = False) -> dict:
     # 1,00 — um achado que parecia forte e era, em boa parte, "o nosso frame tem
     # HUD e a foto nao". Os dois entram juntos no que se DESCARTA (`valido`),
     # mas a fracao de ceu e' medida sobre a area NAO coberta pelo HUD.
-    sobrep = mascara_ui(*L.shape) if ui else np.zeros_like(ceu)
+    sobrep = mascara_ui(*L.shape, perfil) if perfil else np.zeros_like(ceu)
     valido = ~(ceu | sobrep)
 
     out = {'arquivo': caminho, 'escala': escala,
@@ -618,10 +661,14 @@ def main():
         json.dump(mutar(args[1], args[2]), sys.stdout)
         return
     escala = 'a'
-    ui = '--ui' in sys.argv
+    # `--ui` sozinho continua significando o perfil do CORO SOLTO, byte a byte
+    # como antes. `--ui=plantao` escolhe outro perfil de UI_PERFIS.
+    ui = 'corosolto' if '--ui' in sys.argv else ''
     for a in sys.argv[1:]:
         if a.startswith('--escala='):
             escala = a.split('=', 1)[1]
+        elif a.startswith('--ui='):
+            ui = a.split('=', 1)[1]
     saida = []
     for c in args:
         try:

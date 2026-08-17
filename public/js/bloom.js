@@ -109,6 +109,10 @@ function currentLook() {
     expAces: isFinite(exp) ? exp : base.expAces,
   };
 }
+/* O mapview não tem composer: sem isto ele renderizava NoToneMapping/exposição 1,0 e
+   toda captura de revisão saía ~1 stop mais escura que o jogo — a "sombra esmagada"
+   que se caçava no mapa morava no instrumento. */
+export function lookAtual() { return currentLook(); }
 
 // Fog radial usa a cor de céu medida por `tools/eval/r3_fog.py`; `?fog2=0` restaura o fog nativo.
 const AERIAL = {

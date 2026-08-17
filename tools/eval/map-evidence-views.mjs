@@ -25,10 +25,12 @@ export const MAP_EVIDENCE_SHOTS = Object.freeze({
     { name: 'field-overview', from: [0, 18, 28], look: [0, -0.2, -4], proves: 'convergencia dos becos para o campo central' },
   ],
   fy_lajes: [
-    { name: 'roof-eye', from: [0, 6.65, -22], look: [-7, 4.9, 20], proves: 'cores por ala e bordas transponiveis a 1,65 m sobre a laje central de 5 m' },
-    { name: 'roof-route', from: [0, 9, -11], look: [0, 4, 20], proves: 'rota jogavel sobre telhados, caixas, antenas e varais' },
-    { name: 'layer-overview', from: [0, 22, 34], look: [0, 2.5, -5], proves: 'duas camadas e skyline variado' },
-    { name: 'jump-link', from: [-7, 7, 12], look: [-7, 4.65, 20], proves: 'ilha sul de perfil e seus dois vaos medidos de 1,50 m' },
+    { name: 'spawn-sul', from: [0, 6.85, 32.3], look: [0, 5.35, 24], proves: 'spawn sul nasce na laje e enquadra as duas saidas de madeira oeste e leste' },
+    { name: 'spawn-norte', from: [0, 6.85, -32.3], look: [0, 5.35, -24], proves: 'spawn norte nasce na laje e enquadra as duas saidas de madeira oeste e leste' },
+    { name: 'escadaria', from: [5.35, 13, -7.9], look: [5.35, 1.8, -7.9], proves: 'Escadaria encaixada entre fachadas, com dois lances, giro e patamar vistos de cima' },
+    { name: 'beco-varal', from: [-2, 1.65, 17], look: [-1.9, 1.15, 12.2], proves: 'Beco do Varal estreito, com drenagem no piso, fachadas proximas e GLB de referencia' },
+    { name: 'laje-caixa', from: [-11.7, 6.85, -21], look: [-10.5, 5.6, -26], proves: 'Laje da Caixa ocupada, reservatorio, antena, parapeto e tábua ancorada' },
+    { name: 'overview', from: [28, 24, 34], look: [0, 4.2, -4], proves: 'duas rotas superiores continuas, miolo denso e beco inferior sinuoso' },
   ],
   fy_corrego: [
     { name: 'bridge-eye', from: [-12, 1.65, -18], look: [0, .55, -22], proves: 'canal e tablado assentado vistos a 1,65 m da margem' },

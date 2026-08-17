@@ -882,6 +882,7 @@ export function initTextures() {
     ['personagens-graffiti-05.png', 1.159, 'ilustracao', 1],
     ['personagens-graffiti-06.png', 0.879, 'ilustracao', 1],
     ['personagens-graffiti-07.png', 1.121, 'ilustracao', 0],
+    ['pixo-lajes-01.png', 0.563, 'peca', 0],
     ['pra-gringo.png', 0.707, 'cartaz', 1],
     ['tag-fina.png', 1.5, 'tag', 0],
     ['tag-flop.png', 1.299, 'tag', 0],

@@ -380,6 +380,7 @@ const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multik
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
    armas de uma vez — se algo ficar ruim em produção o dono tem o A/B na querystring. */
 const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
+const TRACER_STYLE = Object.freeze({ radius: .0115, travel: .044, fade: .014, segment: 1.45 });
 const D2R = Math.PI / 180;
 // Recoil compartilhado pelo jogo e pelas bancadas vive em recoil.js.
 // Queda de dano por distância: hoje o raycast vai a 200 m com dano constante (P90 a 40 m
@@ -1076,7 +1077,7 @@ export class Game {
     // tracer mesh pool (shared unit geometry + material; reused, never disposed per shot).
     // Estilo Claude-of-Duty (fx/tracers.js): rastro FINO branco-quente que VIAJA da boca ao
     // alvo e some em ~50-60ms — projétil passando, não "raio laser" amarelo persistente.
-    this._tracerGeo = new THREE.CylinderGeometry(0.0035, 0.0035, 1, 5, 1, true);   // fino (era 0.0065 — "lightsaber branca" em cena clara)
+    this._tracerGeo = new THREE.CylinderGeometry(TRACER_STYLE.radius, TRACER_STYLE.radius, 1, 5, 1, true);
     this._tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff3d6, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
     this._tracerPool = [];
     // Pose de ADS (iron-sight) POR CLASSE (R7.5): delta aplicado ao vm.root conforme adsF
@@ -2963,6 +2964,7 @@ export class Game {
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
     }
+    this.world.ambience?.onShot(from, end);
     if (byPlayer && tracer) {
       const muzzle = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle');
       this._tracer(muzzle, end);
@@ -3410,13 +3412,14 @@ export class Game {
     t.a = (t.a || new THREE.Vector3()).copy(a);
     t.dir = (t.dir || new THREE.Vector3()).copy(b).sub(a).normalize();
     t.dist = len;
-    // GUNFEEL: mais curto e mais rápido (CS). Era 2.0 m em 50 ms; agora 1.2 m em 32 ms — a
-    // bala lê como bala, não como traço luminoso pendurado no ar.
-    t.v = len / (GUNFEEL ? 0.032 : 0.05);
-    t.seg = Math.min(len, GUNFEEL ? 1.2 : 2.0);
+    // Segmento curto e viajante: cobre pixels suficientes para ler como bala, sem
+    // permanecer no quadro como um laser contínuo.
+    t.v = len / (GUNFEEL ? TRACER_STYLE.travel : 0.05);
+    t.seg = Math.min(len, GUNFEEL ? TRACER_STYLE.segment : 2.0);
     t.t = 0;
-    t.ttl = (GUNFEEL ? 0.032 : 0.05) + 0.012;   // viagem + fade final — sem persistência
-    m.material.opacity = GUNFEEL ? 0.75 : 0.9;
+    t.life = (GUNFEEL ? TRACER_STYLE.travel + TRACER_STYLE.fade : 0.062);
+    t.ttl = t.life;
+    m.material.opacity = GUNFEEL ? 0.92 : 0.9;
     m.position.copy(a);
     m.scale.set(1, 0.01, 1);
     m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), t.dir);
@@ -3547,13 +3550,13 @@ export class Game {
     for (let i = this.tracers.length - 1; i >= 0; i--) {
       const t = this.tracers[i];
       t.t += dt; t.ttl -= dt;
-      // segmento viajante: cabeça avança a t.v, cauda segue t.seg atrás; fade nos últimos 50ms
+      // segmento viajante: cabeça avança a t.v, cauda segue t.seg atrás; fade pela vida total
       const head = Math.min(t.dist, t.v * t.t);
       const tail = Math.max(0, head - t.seg);
       const vis = Math.max(0.01, head - tail);
       t.m.scale.y = vis;
       t.m.position.copy(t.a).addScaledVector(t.dir, tail + vis * 0.5);
-      t.m.material.opacity = 0.9 * Math.max(0, 1 - t.t / t.ttl);   // fade ao longo do trajeto
+      t.m.material.opacity = 0.92 * Math.max(0, 1 - t.t / t.life);
       if (t.ttl <= 0) { this.scene.remove(t.m); this._tracerPool.push(t); this.tracers.splice(i, 1); }
     }
     // cápsulas: gravidade + quica no chão + gira; encolhe e some no fim.
@@ -4847,7 +4850,7 @@ export class Game {
     if (this.keys.Space && !this._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     this._spaceHeld = !!this.keys.Space;
     if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
-      p.vel.y = 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();   // apex ~0.61m (CoD)
+      p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
     }
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
     // integrate with step-limit so platform fronts block
@@ -6457,6 +6460,7 @@ export class Game {
     const hw = this.ray.intersectObjects(this.world.occluders, false)[0];
     if (hw && hw.distance < tdist - 0.4) hit = false;   // parede na frente: bala morre lá
     const end = hit ? teye : (hw ? hw.point : from.clone().add(dir.clone().multiplyScalar(120)));
+    this.world.ambience?.onShot(from, end);
     if (hit) {
       let dmg = (Wb.dmg || 30) * (Wb.pellets ? Math.min(Wb.pellets, 6) * 0.55 : 1);
       const fo = DMG_FALLOFF[bcls];
@@ -6815,6 +6819,7 @@ export class Game {
       r.autoClear = true;
     }
     this._tickDolly(dt);
+    this.world.ambience?.update(dt, this.player.pos);
   }
 
   /* ================= teardown ================= */
@@ -6850,6 +6855,7 @@ export class Game {
     this.el.scoreboard.classList.add('hidden');
     this.el.vignette.style.opacity = 0;
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
+    this.world.ambience?.dispose();
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }

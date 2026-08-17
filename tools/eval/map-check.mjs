@@ -47,6 +47,7 @@ const MUTANTE_SUPERFICIE_SOLIDA = process.argv.includes('--mutante=superficie-so
   process.argv.includes('--mutante=agua-solida');
 const MUTANTE_SEM_GUARDA_ANDAR = process.argv.includes('--mutante=sem-guarda-andar');
 const MUTANTE_DESVIO_ESCADA = process.argv.includes('--mutante=desvio-escada');
+const MUTANTE_TRAVESSIA = process.argv.includes('--mutante=travessia-falsa');
 const MUTANTE_ROTA_UNICA = process.argv.includes('--mutante=rota-unica');
 /* MUTANTE penetracao-injetada: prova que a sonda do MAP1 mede MAGNITUDE, não só presença,
    e que `nonSolidSurface` não virou passe livre — o bloco injetado NÃO leva a marca. */
@@ -61,6 +62,7 @@ const R_BODY = 0.38;     // raio do corpo
 const DEGRAU = 0.30;     // desnível que se sobe andando
 const OLHO = 1.62;       // altura do olho (game.js: `const eye = 1.62 - ...`)
 const PEITO = 1.40;      // altura do peito — acima disto o jogador está SUBMERSO, não "com o pé dentro"
+const CEL_NIVEL_MIN = Math.ceil(Math.PI * R_BODY * R_BODY / (STEP_G * STEP_G));
 
 /* ---- MAP2: o que conta como "de fora" e o teto de exposição.
    25 m é a distância em que uma AWP/M400 mata em 1 tiro sem o alvo ter tempo de reagir
@@ -462,6 +464,7 @@ for (const mapId of MAP_IDS) {
         ok = p.length > 0 && p[p.length - 1] === b && b !== a;
       }
     }
+    if (MUTANTE_TRAVESSIA && travessia.length === 0) { cel = 0; ok = false; }
     travessia.push({ nivel: lv.nome || 'nivel', celulasAlcancadas: cel, waypointsNoNivel: nós, aEstrelaChega: ok });
   }
 
@@ -799,11 +802,22 @@ const rotasInsuficientes = mapas.flatMap((m) => (m.rotasSpawnBandeira || [])
 const escadasFora = mapas.flatMap((m) => (m.escadas || []).filter((e) =>
   !e.okEspelho || !e.okPiso || !e.okBlondel || !e.okLargura || !e.okInclinacao || !e.okDesvio)
   .map((e) => `${m.map}/${e.nome}`));
+const niveisInacessiveis = mapas.flatMap((m) => (m.travessia || []).filter((t) =>
+  t.celulasAlcancadas < CEL_NIVEL_MIN || !t.aEstrelaChega)
+  .map((t) => `${m.map}/${t.nivel}(${t.celulasAlcancadas} células, A* ${t.aEstrelaChega ? 'ok' : 'falha'})`));
 if (escadasFora.length > 0) {
   console.error(`MAP3 FALHA: ${escadasFora.length} escada(s) fora do contrato medido: ${escadasFora.join(', ')}`);
   process.exitCode = 1;
 } else if (MUTANTE_DESVIO_ESCADA) {
   console.error('MUTANTE desvio-escada sobreviveu: a divergência injetada não foi medida');
+  process.exitCode = 1;
+}
+if (niveisInacessiveis.length > 0) {
+  console.error(`MAP3 TRAVESSIA FALHA: ${niveisInacessiveis.length} nível(is) declarado(s) sem espaço alcançável para um corpo (${CEL_NIVEL_MIN} células) ou sem rota A*: ${niveisInacessiveis.join(', ')}`);
+  if (MUTANTE_TRAVESSIA) console.error('MUTANTE travessia-falsa mordido: o nível injetado como inacessível ficou vermelho');
+  process.exitCode = 1;
+} else if (MUTANTE_TRAVESSIA) {
+  console.error('MUTANTE travessia-falsa sobreviveu: zerar a travessia não mudou o portão');
   process.exitCode = 1;
 }
 if (rotasInsuficientes.length > 0) {

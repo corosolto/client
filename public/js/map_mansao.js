@@ -84,7 +84,12 @@ export function buildMansao(scene, T) {
   function propComFallback(id, x, z, h, ry, fallback) {
     const proxy = fallback();
     const obj = GLB_ON && hasProp(id) ? placeProp(id, { x, z, targetH: h, ry }) : null;
-    if (obj) { proxy.visible = false; root.add(obj); }
+    if (obj) {
+      proxy.visible = false; root.add(obj);
+      // a bala testa a malha visível: proxy sai de occluders (corpo fica no collider), GLB entra
+      const pi = occluders.indexOf(proxy); if (pi >= 0) occluders.splice(pi, 1);
+      obj.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
+    }
     return obj;
   }
 
@@ -444,6 +449,7 @@ export function buildMansao(scene, T) {
   });
   for (const [tx, tz, h] of [[-12.8,19.2,3.7],[10.7,21.4,4.3],[-15.2,27.1,4.8],[13.1,29.6,3.9],[-8.7,33.1,4.2]]) {
     const tronco=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,h,9),lam({color:0x63482f,roughness:1})); tronco.position.set(tx,h/2,tz); root.add(tronco);
+    occluders.push(tronco);   // tronco visível dentro do próprio colisor: a bala para nele
     for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
       const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55 * s, 1), (ox + oz) > 0 ? folhaB : folhaA);
       copa.scale.set(1.05, .78, .94); copa.position.set(tx + ox, h + .1 + oy, tz + oz); copa.castShadow = true; root.add(copa);
@@ -679,7 +685,7 @@ export function buildMansao(scene, T) {
 
   /* ARSENAL */
   const gmat = lam({ color: 0x20242a });
-  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
+  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.userData.nonSolidSurface = true; m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
   place('ak', 9, 1);       place('m4', -8, -4);
   place('awp', 0, -11);    place('shotgun', 8, -10);
   place('mp5', -8, 31);    place('deagle', 10, 28);
@@ -690,8 +696,10 @@ export function buildMansao(scene, T) {
   PB.build(root);
   SKIRT.build(root);
 
-  // A mansão não usa o pixo assado que lia “MORTE” repetido na fachada. A arte
-  // original fica nos objetos/quadros autorais do interior e no paisagismo 3D.
+  /* Pixo no muro externo, sem o folha-pixaca-01 ("MORTE" — veto editorial da mansão,
+     cobrado no eval:grafite-editorial). */
+  const D_PIXO_M = decalIds(T, ['folha-pixaca-03.png', 'folha-pixaca-04.png', 'folha-pixaca-05.png']);
+  grafitar({ id: 'fy_mansao', root, T, waypoints: nodes, seed: 14000, passo: 1.0, alcance: 4, cobre: 0.01, minLarg: 0.3, bandas: [{ y0: 0.3, y1: 1.5, larg: 1.5, alturas: [0.8], chance: 5, pool: D_PIXO_M }] });
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,

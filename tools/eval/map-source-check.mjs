@@ -4,7 +4,8 @@
 
    Mutantes:
    - hash-falso: muda o hash medido e precisa reprovar a procedencia;
-   - asset-desligado: remove logicamente a textura do Campo e precisa reprovar o uso.
+   - asset-desligado: remove logicamente a textura do Campo e precisa reprovar o uso;
+   - ceu-fotografico: religa o panorama nas Lajes e precisa reprovar o contrato procedural.
 */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -16,7 +17,7 @@ const files = [
 ];
 const fonte = readFileSync('public/img/FONTE.md', 'utf8');
 const mutante = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['hash-falso', 'asset-desligado']);
+const conhecidos = new Set(['hash-falso', 'asset-desligado', 'ceu-fotografico']);
 if (mutante && !conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 let falhas = 0;
 for (let i = 0; i < files.length; i++) {
@@ -33,7 +34,7 @@ for (let i = 0; i < files.length; i++) {
 const usos = {
   'map_escadao.js': ['escadao_streetart_azulejo.webp', 'sky_rj.webp'],
   'map_campomorro.js': ['campomorro_streetart_baile.webp', 'sky_rj.webp'],
-  'map_lajes.js': ['lajes_streetart_mural.webp', 'sky_rj.webp'],
+  'map_lajes.js': ['lajes_streetart_mural.webp'],
   'map_corrego.js': ['corrego_streetart_pixo.webp', 'sky_sp.webp'],
   'map_mansao.js': ['mansao_streetart_marble.webp', 'sky_joa.webp'],
 };
@@ -44,10 +45,21 @@ for (const [mapa, assets] of Object.entries(usos)) {
     src = src.replace('campomorro_streetart_baile.webp', 'campomorro_asset_desligado.webp');
     if (src === antes) throw new Error('MUTANTE asset-desligado nao aplicou');
   }
+  if (mutante === 'ceu-fotografico' && mapa === 'map_lajes.js') {
+    const antes = src;
+    src = src.replace('\n  setLajesSky(scene);', "\n  setMapSky(scene, T, '/img/textures/sky_rj.webp', 0xb9c6d2);");
+    if (src === antes) throw new Error('MUTANTE ceu-fotografico nao aplicou');
+  }
   const ausentes = assets.filter((asset) => !src.includes(`/img/textures/${asset}`));
-  const ok = ausentes.length === 0;
-  if (!ok) falhas += ausentes.length;
-  console.log(`${ok ? '✓' : '✗'} ${mapa} usa ${assets.join(' + ')}${ausentes.length ? ` (faltando ${ausentes.join(', ')})` : ''}`);
+  const lajesProcedural = mapa !== 'map_lajes.js' || (
+    src.includes('\n  setLajesSky(scene);')
+    && src.includes('\n  makeHorizon(scene,')
+    && !src.includes("'/img/textures/sky_rj.webp'")
+  );
+  const ok = ausentes.length === 0 && lajesProcedural;
+  if (!ok) falhas += Math.max(1, ausentes.length);
+  const ceu = mapa === 'map_lajes.js' ? ' + céu/morros procedurais' : '';
+  console.log(`${ok ? '✓' : '✗'} ${mapa} usa ${assets.join(' + ')}${ceu}${ausentes.length ? ` (faltando ${ausentes.join(', ')})` : ''}`);
 }
 
 if (falhas) {

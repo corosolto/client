@@ -18,11 +18,13 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 24, HALF_Z = 40;
+export const CORREGO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 const CORREGO_W = 10;         // eixo largo o bastante para dominar a leitura aérea e em FPS
 const CORREGO_X0 = -CORREGO_W / 2, CORREGO_X1 = CORREGO_W / 2;
 
@@ -199,9 +201,6 @@ export function buildCorrego(scene, T) {
   const matPupila = lam({ color: 0x080806 });
   const matOlhoEscuro = lam({ color: 0x15100d });
   const matFocinhoCap = lam({ color: 0x211b17, roughness: .8 });
-  const matOrelhaRato = lam({ color: 0xa77a72, roughness: 1 });
-  const matSombraRato = lam({ color: 0x161410, transparent: true, opacity: .38, depthWrite: false });
-  const matPeloRato = [lam({ color: 0x373431, roughness: 1 }), lam({ color: 0x55463c, roughness: 1 })];
 
   /* ── ALVENARIA: O VOCABULÁRIO QUE FALTAVA ───────────────────────────────────
      Achado desta rodada, e ele explica sozinho metade do "barracos genéricos" do
@@ -404,6 +403,10 @@ export function buildCorrego(scene, T) {
     if (!o) return proxy;
     proxy.visible = false; // collider/LOS continuam idênticos no A/B procedural.
     root.add(o);
+    /* Bala bate na malha visível: o proxy fica só com o corpo (collider) e o GLB
+       assume o occluder — proxy 0,2-0,3 m mais gordo que o GLB era o tiro-no-ar medido. */
+    const pi = occluders.indexOf(proxy); if (pi >= 0) occluders.splice(pi, 1);
+    o.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
     return proxy;
   }
 
@@ -706,72 +709,15 @@ export function buildCorrego(scene, T) {
     }
     root.add(contexto);
   }
-  // Ratos decorativos perto do lixo; pequenos, sem collider e fora da leitura de cover.
-  let ratIndex = 0;
-  for (const [rx, rz, rr] of [[-16.95,-2.25,.2],[-16.95,-2.85,-.4],[-17.35,-1.95,.7],[17.5,16.6,1.1]]) {
-    const rato = new THREE.Group();
-    const albedoId = ratIndex % 2 ? 'castanho' : 'cinza';
-    const poseId = ratIndex % 2 ? 'fareja' : 'corre';
-    const mat = matPeloRato[ratIndex % 2];
-    const corpo = new THREE.Mesh(new THREE.SphereGeometry(.065, 9, 6), mat);
-    corpo.scale.set(.5, .43, 1.12); corpo.position.y=.01; corpo.userData.faunaPart = 'body'; rato.add(corpo);
-    const cabeca = new THREE.Mesh(new THREE.ConeGeometry(.038,.085,8), mat);
-    cabeca.rotation.x=-Math.PI/2; cabeca.position.set(ratIndex % 2 ? .012 : 0,ratIndex % 2 ? .024 : .01,.088); cabeca.userData.faunaPart = 'head'; rato.add(cabeca);
-    for (const ex of [-.026, .026]) {
-      const ear = new THREE.Mesh(new THREE.SphereGeometry(.021, 7, 5), matOrelhaRato);
-      ear.scale.set(1, .36, 1); ear.position.set(ex, .052, .066); ear.userData.faunaPart = 'ear'; rato.add(ear);
-    }
-    // Pata de rato em caixa era 15% da área do bicho (a régua cobra ≤ 12%): num
-    // corpo de 13 cm o paralelepípedo é grande o bastante para virar a silhueta.
-    // Cilindro afunilado dá o mesmo apoio com contorno de perna.
-    for (const [lx, lz] of [[-.035,-.04],[.035,-.04],[-.032,.045],[.032,.045]]) {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(.0065,.010,.036,6), mat);
-      leg.rotation.z = lx < 0 ? .18 : -.18;
-      leg.position.set(lx,-.033,lz); leg.userData.faunaPart = 'leg'; rato.add(leg);
-    }
-    const pontosCauda = ratIndex % 2
-      ? [[0,-.01,-.06],[-.03,-.015,-.11],[-.055,-.008,-.16],[-.025,0,-.205]]
-      : [[0,-.01,-.06],[.035,-.018,-.11],[.06,-.01,-.16],[.025,0,-.205]];
-    for (let i=0;i<3;i++) {
-      const curva = new THREE.CatmullRomCurve3(pontosCauda.slice(i,i+2).map((p)=>new THREE.Vector3(...p)));
-      const cauda = new THREE.Mesh(new THREE.TubeGeometry(curva,3,[.0065,.0045,.0025][i],4,false),mat);
-      cauda.userData.faunaPart = 'curved-tail'; rato.add(cauda);
-    }
-    const sombraRato=new THREE.Mesh(new THREE.CircleGeometry(.09,12),matSombraRato);
-    sombraRato.rotation.x=-Math.PI/2; sombraRato.position.y=-.048; sombraRato.scale.set(.55,1.2,1); sombraRato.userData.nonSolidSurface=true; rato.add(sombraRato);
-    rato.position.set(rx, .052, rz); rato.rotation.y = rr;
-    rato.userData.fauna = 'rato';
-    rato.userData.bodyLength = .142;
-    rato.userData.bodyAspect = 2.05;
-    rato.userData.taperedTail = true;
-    rato.userData.poseId = poseId;
-    rato.userData.albedoId = albedoId;
-    rato.userData.nonCollider = true;
-    rato.userData.motion = 'deterministic-run-idle';
-    rato.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
-    // 3,2 s de corrida circular curta + 1,8 s de idle. A trajetória depende apenas
-    // do tempo e do índice, não de aleatoriedade nem de estado global do jogo.
-    const phase = ratIndex++ * 1.17;
-    corpo.onBeforeRender = () => {
-      // O capturador abre mapview com `?capture=<sha>`: nele a fauna permanece na
-      // pose inicial autorada, para o frame não depender do relógio da máquina.
-      if (QP.has('capture')) return;
-      const t = ((typeof performance !== 'undefined' ? performance.now() : 0) / 1000 + phase) % 5;
-      if (t >= 3.2) return;
-      const a = t / 3.2 * Math.PI * 2;
-      rato.position.set(rx + Math.cos(a) * .18, .052, rz + Math.sin(a) * .12);
-      rato.rotation.y = -a;
-    };
-    root.add(rato);
-  }
-
   /* ===================== PONTES DE MADEIRA =====================
      3 pontes cruzando o córrego. Cada uma é um tablado de madeira a y=0.1. */
   function ponte(z, largura = 3, comGuarda = false) {
     // Colisão contínua invisível mantém a rota justa; a malha servida são tábuas
-    // independentes com lacunas, empeno e desalinhamento.
+    // independentes com lacunas, empeno e desalinhamento. O tablado é colisor de CORPO
+    // apenas — occluder são as tábuas (a bala enxerga as lacunas que o olho enxerga).
     const matMadeira = TEX.wall || lam({ color: 0x8a6a4a, roughness: 0.9 });
-    const tablado = addBox(CORREGO_W + 2, .18, largura, new THREE.MeshBasicMaterial({visible:false}), 0, 0, z,{skirt:false});
+    const tablado = addBox(CORREGO_W + 2, .18, largura, new THREE.MeshBasicMaterial({visible:false}), 0, 0, z,{skirt:false,collide:false});
+    colRot(0, z, (CORREGO_W + 2) / 2, largura / 2, 0, .18, 0);
     tablado.userData.bridgeReadable = `ponte-${z}`; tablado.userData.grounded = true;
     tablado.userData.corregoBridgeCollider=z===-22?'norte':`ponte-${z}`;
     let i=0;
@@ -780,6 +726,7 @@ export function buildCorrego(scene, T) {
       const y=.035+(i%3)*.022, dz=((i%4)-1.5)*.065, d=largura-.16-(i%3)*.09;
       const board=addBox(.64,.16,d,matMadeira,bx,y,z+dz,{collide:false,skirt:false,ry:(i%2?1:-1)*.012});
       board.userData.corregoBridgeBoard=z===-22?'norte':`ponte-${z}`;
+      occluders.push(board);
     }
     // Estaca e guarda-corpo são madeira bruta como o tablado; antes eram cor pura,
     // e `lam()` dentro do laço criava um material novo por peça (6 e 2 materiais).
@@ -1475,7 +1422,7 @@ export function buildCorrego(scene, T) {
 
   /* ===================== ARSENAL ===================== */
   const gmat = lam({ color: 0x20242a });
-  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
+  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.userData.nonSolidSurface = true; m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
   // margem leste
   /* O arsenal MUDOU DE EIXO junto com a planta: os x antigos (8, 10, 12, 15, 18)
      caíam onde agora há fileira A (6,8-12,4) e fileira B (14,2-19). Arma dentro de
@@ -1493,6 +1440,9 @@ export function buildCorrego(scene, T) {
   place('mp5', 0, -22);     place('mp5', 0, 22);
   place('m400', 1.4, -11);  place('awp', -1.4, 17);
 
+  /* PB (carros) e IB (caixas instanciadas) viram occluders: são a malha visível com
+     colisor — sem isto a bala atravessava carro e palafita que o corpo respeita. */
+  const _antesBatch = new Set(root.children);
   PB.build(root);
   SKIRT.build(root);
   /* LOTE ESTÁTICO — toda a alvenaria vira ~1 malha por material (ver o custo medido
@@ -1501,6 +1451,11 @@ export function buildCorrego(scene, T) {
      superfície de verdade porque a malha mesclada tem os mesmos triângulos. */
   for (const m of SB.build(root)) occluders.push(m);
   IB.build(root);
+  for (const c of root.children) if (!_antesBatch.has(c) && c.isInstancedMesh) {
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.every((m) => m && m.transparent && (m.opacity === undefined || m.opacity < 0.9))) continue;   // vidro de GLB não é superfície (mesma doutrina do gate)
+    occluders.push(c);
+  }
 
   /* ===================== GRAFFITI ===================== */
   const D_PIXO = decalIds(T, ['folha-pixaca-01.png', 'folha-pixaca-02.png', 'folha-pixaca-03.png', 'folha-pixaca-04.png', 'folha-pixaca-05.png']);
@@ -1540,10 +1495,24 @@ export function buildCorrego(scene, T) {
     ],
   });
 
+  const ambience = createFavelaAmbience(root, {
+    map: 'fy_corrego', low: LOWQ,
+    rats: [
+      { pos: [-16.95, groundHeightAt(-16.95, -2.25), -2.25], to: [-16.45, groundHeightAt(-16.45, -1.55), -1.55], phase: .2 },
+      { pos: [-16.95, groundHeightAt(-16.95, -2.85), -2.85], to: [-17.55, groundHeightAt(-17.55, -3.35), -3.35], phase: 1.37 },
+      { pos: [-17.35, groundHeightAt(-17.35, -1.95), -1.95], to: [-18.05, groundHeightAt(-18.05, -1.5), -1.5], phase: 2.54 },
+      { pos: [17.5, groundHeightAt(17.5, 16.6), 16.6], to: [18.25, groundHeightAt(18.25, 17.4), 17.4], phase: 3.2 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
+      { mode: 'flight', pos: [-8, 7.4, -5], radius: [4.7, 3.4], phase: 1.3 },
+    ],
+  });
+
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };

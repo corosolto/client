@@ -340,7 +340,12 @@ export function buildCampoMorro(scene, T = {}) {
   const prop = (id, p, box) => {
     const usaGLB = QP.get('glb') !== '0' && PB.add(id, p);
     const m = addBox(box[0], box[1], box[2], MAT.proxy, p.x, p.y || 0, p.z, { proxy: id });
-    m.visible = !usaGLB;
+    /* BUG-54: GLB na tela = proxy sai de `occluders` (a bala testa a malha visível do
+       lote, que entra no build abaixo); o AABB continua valendo para o corpo. */
+    if (usaGLB) {
+      m.visible = false;
+      const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1);
+    }
     return m;
   };
   // Todo prop de rua passa a nascer na cota do terreno: com o morro, `y: 0` deixaria
@@ -623,7 +628,15 @@ export function buildCampoMorro(scene, T = {}) {
     ['akm', -15, -20], ['shotgun', -29, -18], ['deagle', 19, 15], ['m4', -19, 16],
   ].forEach(p => placePickup(...p));
 
+  const preLote = new Set(root.children);
   PB.build(root);
+  /* O lote nasce InstancedMesh visível e fora de `occluders`: sem isto a bala atravessa
+     o prop que o corpo respeita (BUG-54, cláusula atravessa-parede). Vidro fica de fora. */
+  for (const c of root.children) {
+    if (preLote.has(c) || !c.isInstancedMesh) continue;
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
+  }
   const D_PIXO = decalIds(T, ['folha-pixaca-02.png', 'folha-pixaca-03.png']);
   const D_MURAL = decalIds(T, ['or-mitico-mural.png', 'personagem-muro.png']);
   grafitar({

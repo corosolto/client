@@ -396,13 +396,20 @@ export function buildPoolDay(scene, T) {
       const a = T.decalAspects[i] || 1;
       let h = alt, w = alt * a;
       if (w > larg) { w = larg; h = larg / a; }    // encolhe inteiro; NUNCA estica
+      /* lambe em cima de lambe no MESMO plano lê como bug (audit: 29 pares > 50% em
+         14/08): mesma parede, retângulos se mordendo → a vaga já tem dona, pula. */
+      const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
+      const yc = y0 + h / 2, sc = x * lx + z * lz, dc = x * nx + z * nz;
+      if (_usados.some((u) => Math.abs(u.d - dc) < 0.3
+        && Math.abs(u.s - sc) < (u.w + w) / 2 - 0.02
+        && Math.abs(u.y - yc) < (u.h + h) / 2 - 0.02)) return null;
       // parede atrás ANTES de desenhar (map_decals.js) — sem sólido, não vira tinta
       /* `[root]` e não `colliders`: o critério mede a MALHA DESENHADA (map_decals.js). A
          lista de caixas declarava parede onde havia vão de piloti e onde havia vidro —
          as 72 peças daqui passam nos dois critérios, e é isso que prova que o novo não
          mata peça boa: medido antes 72, depois 72. */
       if (!paredeAtras([root], x, y0 + h / 2, z, ry, w, h)) return null;
-      _usados.push({ i, x, z });
+      _usados.push({ i, x, z, w, h, y: yc, s: sc, d: dc });
       let m = _dmat.get(i);
       if (!m) {
         m = new THREE.MeshLambertMaterial({
@@ -651,6 +658,7 @@ export function buildPoolDay(scene, T) {
     for (const cz of [-9, -4.5, 4.5, 9]) {
       addBox(0.85, 0.25, 1.9, MAT.chair, sx * 11.4, 0.2, cz);
       const back = addBox(0.85, 0.85, 0.2, MAT.chair, sx * 11.4, 0.2, cz - 0.85, { collide: false }); back.rotation.x = -0.5;
+      occluders.push(back);   // encosto visível DENTRO do colisor da base: a bala tem que parar nele
     }
   }
 

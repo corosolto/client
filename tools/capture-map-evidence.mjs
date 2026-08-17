@@ -21,7 +21,7 @@ const propNames = existsSync('public/models/props')
   ? readdirSync('public/models/props').filter((name) => name.endsWith('.glb'))
   : [];
 const sourceFiles = (map) => {
-  const mapFile = `public/js/map_${map.slice(3)}.js`;
+  const mapFile = map === 'fy_lajes' ? 'public/js/map_lajes_authored.js' : `public/js/map_${map.slice(3)}.js`;
   const src = readFileSync(mapFile, 'utf8');
   const textureFiles = [...src.matchAll(/["']\/(img\/textures\/[^"']+)["']/g)]
     .map((match) => `public/${match[1]}`)

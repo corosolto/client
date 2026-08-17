@@ -6,7 +6,7 @@ import { FACTIONS } from '../../public/js/factions.js';
 
 const V = pkg.version;
 /* A lista à mão saiu daqui (BUG-39): `moduleCacheManifest()` varre `public/js` inteiro,
-   então mapa novo entra no import map sozinho — os 5 mapas que esta branch acrescentou
+   então mapa novo entra no import map sozinho - os 5 mapas que esta branch acrescentou
    inclusive. O `revision` é o hash do CONTEÚDO dos módulos: sem ele, `?v=` só mudava
    quando `pkg.version` mudava e o edge servia JS velho. */
 const { modules: MODULOS, revision: JS_REV } = moduleCacheManifest();

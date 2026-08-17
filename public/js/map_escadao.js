@@ -20,11 +20,13 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 18, HALF_Z = 40;
+export const ESCADAO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 
 export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua'];
@@ -215,13 +217,19 @@ export function buildEscadao(scene, T) {
       m.material = Array.isArray(m.material) ? m.material.map((a) => a.clone()) : m.material.clone();
       for (const a of (Array.isArray(m.material) ? m.material : [m.material])) if (a.color) a.color.multiplyScalar(0.18);
     });
-    root.add(o); occluders.push(o);
+    root.add(o);
+    // GLB é Group e o raycast de bala/LOS é NÃO-recursivo: quem segura a bala são as
+    // malhas filhas — occluder = malha visível (BUG-54), não a caixa do propAt.
+    o.traverse((m) => { if (m.isMesh) occluders.push(m); });
     return o;
   };
   const propAt = (id, x, z, targetH, w, d, mat, ry = 0, y = 0) => {
     const proxy = addBox(w, targetH, d, mat, x, y, z, { ry });
     const o = gprop(id, x, y, z, targetH, ry);
-    if (o) proxy.visible = false;
+    if (o) {
+      proxy.visible = false;
+      occluders.splice(occluders.indexOf(proxy), 1);   // corpo continua na caixa; bala bate na malha
+    }
     return o;
   };
 
@@ -283,8 +291,9 @@ export function buildEscadao(scene, T) {
       const zc = z1 - (k - 0.5) * ESC.piso;
       const zNariz = z1 - (k - 1) * ESC.piso;
       const pisoMat = k % 4 === 0 ? AZ_CAPS[(k / 4 + Math.round(yBase / RISE)) % AZ_CAPS.length] : mat;
-      addBox(ESC.larg, 0.06, ESC.piso, pisoMat, 0, yTop - 0.06, zc, { collide: false });
-      addBox(ESC.larg, ESC.espelho, 0.04, MAT_AZ_LONG, 0, yTop - ESC.espelho, zNariz, { collide: false });
+      // degrau é massa visível na faixa do collider do muro: vira occluder (BUG-54)
+      occluders.push(addBox(ESC.larg, 0.06, ESC.piso, pisoMat, 0, yTop - 0.06, zc, { collide: false }));
+      occluders.push(addBox(ESC.larg, ESC.espelho, 0.04, MAT_AZ_LONG, 0, yTop - ESC.espelho, zNariz, { collide: false }));
     }
     // O AABB contínuo preserva o bloqueio físico anterior; visualmente, o paredão alto é
     // substituído por muretas que acompanham a subida em módulos de quatro degraus.
@@ -293,9 +302,10 @@ export function buildEscadao(scene, T) {
       for (let k = 0; k < ESC.n; k += 4) {
         const n = Math.min(4, ESC.n - k), d = n * ESC.piso + 0.05;
         const z = z1 - (k + n / 2) * ESC.piso;
-        addBox(0.28, 1.08, d, MAT_AZ_LONG, sx, yBase + (k + 1) * ESC.espelho, z, { collide: false, skirt: false });
-        addBox(0.34, 0.055, d + 0.04, AZ_CAPS[(k / 4 + Math.round(yBase / RISE)) % AZ_CAPS.length],
-          sx, yBase + (k + 1) * ESC.espelho + 1.08, z, { collide: false, cast: false, skirt: false });
+        // face visível dentro do collider do muro: vira occluder (BUG-54)
+        occluders.push(addBox(0.28, 1.08, d, MAT_AZ_LONG, sx, yBase + (k + 1) * ESC.espelho, z, { collide: false, skirt: false }));
+        occluders.push(addBox(0.34, 0.055, d + 0.04, AZ_CAPS[(k / 4 + Math.round(yBase / RISE)) % AZ_CAPS.length],
+          sx, yBase + (k + 1) * ESC.espelho + 1.08, z, { collide: false, cast: false, skirt: false }));
       }
     }
     solids.push({ x0: X0 - 0.5, x1: X0, z0, z1 });
@@ -314,8 +324,8 @@ export function buildEscadao(scene, T) {
     const w = 3.0, n = Math.round((yTop - yBase) / ESC.espelho), p = (B_STAIR.z1 - B_STAIR.z0) / n;
     for (let k = 1; k <= n; k++) {
       const y = yBase + k * ESC.espelho, z = z1 - (k - 0.5) * p;
-      addBox(w, 0.06, p, MAT.concrete, xCenter, y - 0.06, z, { collide: false });
-      addBox(w, ESC.espelho, 0.04, MAT.concrete, xCenter, y - ESC.espelho, z1 - (k - 1) * p, { collide: false });
+      occluders.push(addBox(w, 0.06, p, MAT.concrete, xCenter, y - 0.06, z, { collide: false }));
+      occluders.push(addBox(w, ESC.espelho, 0.04, MAT.concrete, xCenter, y - ESC.espelho, z1 - (k - 1) * p, { collide: false }));
     }
   }
 
@@ -326,8 +336,8 @@ export function buildEscadao(scene, T) {
       const yTop = yBase + k * ESC.espelho;
       const zc = flight.z1 - (k - 0.5) * ESC.piso;
       const zNariz = flight.z1 - (k - 1) * ESC.piso;
-      addBox(AUX_W, 0.06, ESC.piso, MAT.concrete, AUX_X, yTop - 0.06, zc, { collide: false });
-      addBox(AUX_W, ESC.espelho, 0.04, MAT_AZ_LONG, AUX_X, yTop - ESC.espelho, zNariz, { collide: false });
+      occluders.push(addBox(AUX_W, 0.06, ESC.piso, MAT.concrete, AUX_X, yTop - 0.06, zc, { collide: false }));
+      occluders.push(addBox(AUX_W, ESC.espelho, 0.04, MAT_AZ_LONG, AUX_X, yTop - ESC.espelho, zNariz, { collide: false }));
     }
     for (const sx of [AUX_X - AUX_W / 2 - 0.15, AUX_X + AUX_W / 2 + 0.15]) {
       for (let k = 0; k < ESC.n; k += 4) {
@@ -370,7 +380,8 @@ export function buildEscadao(scene, T) {
   function corrimao(z0, z1, yBase) {
     for (const sx of [X0, X1])
       for (let i = 0; i <= ESC.n; i++)
-        addBox(0.04, 1.0, 0.04, lam({ color: 0x3a3a3a, metalness: 0.6, roughness: 0.4 }), sx, yBase + i * ESC.espelho, z1 - i * ESC.piso, { collide: false, skirt: false });
+        // idem: poste visível na faixa do collider lateral
+        occluders.push(addBox(0.04, 1.0, 0.04, lam({ color: 0x3a3a3a, metalness: 0.6, roughness: 0.4 }), sx, yBase + i * ESC.espelho, z1 - i * ESC.piso, { collide: false, skirt: false }));
   }
   corrimao(F1.z0, F1.z1, 0);
   corrimao(F2.z0, F2.z1, RISE);
@@ -470,7 +481,7 @@ export function buildEscadao(scene, T) {
     const hullGeo = new THREE.BufferGeometry();
     hullGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     hullGeo.setIndex(indices); hullGeo.computeVertexNormals();
-    const hull = new THREE.Mesh(hullGeo, blindado); hull.castShadow = hull.receiveShadow = true; caveirao.add(hull); occluders.push(hull);
+    const hull = new THREE.Mesh(hullGeo, blindado); hull.castShadow = hull.receiveShadow = true; caveirao.add(hull);
     // Para-lamas salientes e entre-eixos curto vendem veículo blindado, não baú.
     const pneu = lam({ color: 0x0b0b0b, roughness: 0.96 });
     for (const [wx, wz] of [[-1.25,-1.08],[1.15,-1.08],[-1.25,1.08],[1.15,1.08]]) {
@@ -505,6 +516,8 @@ export function buildEscadao(scene, T) {
     teto.position.set(-.55,2.18,0); teto.castShadow = true; caveirao.add(teto);
     const torre = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.66, 0.52, 10), blindado);
     torre.position.set(-.55,2.7,0); torre.castShadow = true; caveirao.add(torre);
+    // todas as peças visíveis seguram a bala (BUG-54), não só o casco
+    caveirao.traverse((m) => { if (m.isMesh) occluders.push(m); });
   }
 
   /* ===================== BARRICADAS ===================== */
@@ -628,7 +641,8 @@ export function buildEscadao(scene, T) {
     // pintados, alturas variadas e telhas recortam a borda como uma fileira de fachadas.
     for (let z = -18; z <= 18; z += 6) {
       const i = Math.round((z + 18) / 6), h = 3.2 + (i % 3) * 0.85;
-      addBox(0.42, h, 5.55, PAREDES[(i + (sx > 0 ? 1 : 0)) % PAREDES.length], sx, 0, z, { collide: false });
+      // dentro do collider da contenção: a face visível tem que parar a bala (BUG-54)
+      occluders.push(addBox(0.42, h, 5.55, PAREDES[(i + (sx > 0 ? 1 : 0)) % PAREDES.length], sx, 0, z, { collide: false }));
       addBox(0.62, 0.1, 5.75, MAT_ZINCO, sx, h, z, { collide: false, skirt: false });
       addBox(0.05, 0.82, 1.05, MAT_VIDRO, sx - Math.sign(sx) * 0.24, 1.42, z - 1.25, { collide: false, cast: false, skirt: false });
       addBox(0.05, 1.92, 0.86, MAT_PORTA, sx - Math.sign(sx) * 0.24, 0.04, z + 1.35, { collide: false, cast: false, skirt: false });
@@ -642,7 +656,8 @@ export function buildEscadao(scene, T) {
   col(-HALF_X - 0.5, HALF_X + 0.5, 0, H_TOP + 2, -HALF_Z - 0.25, -HALF_Z + 0.25);
   for (let x = -15; x <= 15; x += 6) {
     const h = H_TOP + 0.8 + ((x + 15) / 6 % 2) * 1.2;
-    addBox(5.6, h, 0.42, PAREDES[Math.abs(x / 3) % PAREDES.length], x, 0, -HALF_Z, { collide: false });
+    // idem: face visível dentro do collider do fundo vira occluder (BUG-54)
+    occluders.push(addBox(5.6, h, 0.42, PAREDES[Math.abs(x / 3) % PAREDES.length], x, 0, -HALF_Z, { collide: false }));
     addBox(5.8, 0.1, 0.62, MAT_ZINCO, x, h, -HALF_Z, { collide: false, skirt: false });
   }
   addBox(HALF_X * 2 + 1, 2, 0.5, MAT.concrete, 0, 0, HALF_Z);
@@ -785,7 +800,7 @@ export function buildEscadao(scene, T) {
 
   /* ===================== ARSENAL NO CHÃO ===================== */
   const gmat = lam({ color: 0x20242a });
-  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
+  const place = (kind, x, z) => { const y = groundHeightAt(x, z); const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.userData.nonSolidSurface = true; m.position.set(x, y + 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
   place('ak', 6, 30);       place('shotgun', -9, 32);
   place('mp5', 10, 36);     place('deagle', -10, 38);
   place('m4', 1.5, (P1.z0 + P1.z1) / 2); place('shotgun', 1.5, (P2.z0 + P2.z1) / 2);
@@ -821,8 +836,21 @@ export function buildEscadao(scene, T) {
     ],
   });
 
+  const ambience = createFavelaAmbience(root, {
+    map: 'fy_escadao', low: LOWQ,
+    rats: [
+      { pos: [8.2, groundHeightAt(8.2, 34), 34], to: [9.35, groundHeightAt(9.35, 32.8), 32.8], phase: .45 },
+      { pos: [-9.4, groundHeightAt(-9.4, 22.5), 22.5], to: [-8.3, groundHeightAt(-8.3, 21.3), 21.3], phase: 1.7 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-2, groundHeightAt(-2, -36), -36], phase: .8 },
+      { mode: 'flight', pos: [0, H_TOP + 6.2, -18], radius: [4.8, 3.4], phase: 1.1 },
+      { mode: 'flight', pos: [-10, 7.2, 12], radius: [3.8, 3.1], phase: 2.9 },
+    ],
+  });
+
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: [
       // Inclui um piso da chegada inferior: ele é a superfície antes do primeiro dos 12

@@ -5,6 +5,7 @@ import { CHARACTERS, buildCharacter, charWeapon, setCharacterRendererCapabilitie
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
+import { preloadAmbientLife } from './ambientlife.js';
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId } from './maps.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { Sfx } from './audio.js';
@@ -174,7 +175,10 @@ function menuProps(id) {
 let _menuLoadSeq = 0;
 function loadMenuBackdrop() {
   const id = currentMap, seq = ++_menuLoadSeq;
-  return preloadMapProps(menuProps(id)).then(() => {
+  return Promise.all([
+    preloadMapProps(menuProps(id)),
+    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
+  ]).then(() => {
     // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
     // a cena nova; a próxima chamada tem seu próprio preload e sequência.
     if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
@@ -836,6 +840,7 @@ async function _startGame(team, charId, enemyFaction) {
       await Promise.all([
         preloadCharacterAssets([...GLB_CHARS]),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
+        preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }

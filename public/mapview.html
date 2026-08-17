@@ -15,6 +15,8 @@ import * as THREE from 'three';
 import { initTextures } from './js/textures.js';
 import { MAPS, resolveMapId } from './js/maps.js';
 import { preloadMapProps } from './js/mapprops.js';
+import { preloadAmbientLife } from './js/ambientlife.js';
+import { lookAtual } from './js/bloom.js';
 
 const qp = new URLSearchParams(location.search);
 const MAP = resolveMapId(qp.get('map'));
@@ -27,6 +29,9 @@ const hud = document.getElementById('hud');
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+// a mesma curva e exposição do jogo (bloom.js LOOKS), senão a captura mede outro jogo
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = lookAtual().expAces;
 document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
@@ -61,7 +66,10 @@ if (qp.get('hud') === '0') hud.style.display = 'none';
 
 (async ()=>{
   const T = initTextures();
-  await preloadMapProps(allProps);
+  await Promise.all([
+    preloadMapProps(allProps),
+    preloadAmbientLife(MAPS[MAP].ambience || []),
+  ]);
   const _tb = performance.now();
   const world = MAPS[MAP].build(scene, T);
   window.__buildMs = Math.round(performance.now() - _tb);   // custo total do build, p/ régua de tempo
@@ -81,7 +89,10 @@ if (qp.get('hud') === '0') hud.style.display = 'none';
   // TextureLoader/GLTFLoader concluem depois do primeiro frame. Sem redesenhar,
   // o auditor captura o fallback preto/cinza e mede um mapa diferente do jogo.
   let frames = 0;
+  let lastFrame = performance.now();
   const redrawWhileLoading = () => {
+    const now = performance.now(), dt = Math.min(.05, (now - lastFrame) / 1000); lastFrame = now;
+    if (!qp.has('capture') && world.ambience && !world.ambience.paused) world.ambience.update(dt, null);
     renderer.render(scene, cam);
     if (++frames < 360) requestAnimationFrame(redrawWhileLoading);
   };

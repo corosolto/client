@@ -610,15 +610,11 @@ export function buildHavan(scene, T) {
     if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
     return !!o;
   };
-  const coverMat = new THREE.MeshBasicMaterial();
+  // SÓ corpo (AABB): a bala é da malha visível do carro (InstancedMesh do PropBatch,
+  // empurrada em `occluders` no build lá embaixo) — caixa inteira cobria o vão entre
+  // rodas e matava a bala no ar (BUG-54).
   const carCover = (x, z, hw, hd, h) => {
     colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
-    // O PropBatch nasce depois como InstancedMesh visual; a caixa mantém hitscan, LOS e
-    // colisão no mesmo volume. Fica fora da cena (zero draw), mas na lista de raycast.
-    const proxy = new THREE.Mesh(new THREE.BoxGeometry(hw * 2, h, hd * 2), coverMat);
-    proxy.position.set(x, h / 2, z); proxy.updateMatrixWorld(true);
-    proxy.userData.coverProxy = proxy.userData.proxyGLB = true;
-    occluders.push(proxy);   // fora da cena: zero draw call; OM1 valida contra o GLB visível
   };
   // fallback enquanto o GLB não carrega (ou falha): mini-carro colorido por hash do id —
   // substitui a caixa preta que fazia o estacionamento parecer quebrado no menu/loading.
@@ -666,6 +662,7 @@ export function buildHavan(scene, T) {
     const o = placeProp(id, { x, y: 0, z, targetH: 1.55, ry });
     if (!o) { fallbackCar(id, x, z, ry); return; }
     paintBR(o); root.add(o);
+    o.traverse((m) => { if (m.isMesh) occluders.push(m); });
   };
   function fallbackCar(id, x, z, ry) {
     let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
@@ -675,6 +672,7 @@ export function buildHavan(scene, T) {
     const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.1), lam({ color: 0x20242a, metalness: 0.45, roughness: 0.18, envMapIntensity: 2.2 }));   // vidro do carro
     cabin.position.set(0, 1.05, -0.2); cabin.castShadow = true; g.add(cabin);
     g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
+    g.traverse((m) => { if (m.isMesh) occluders.push(m); });
   }
 
   // ===== entorno não jogável =====
@@ -790,8 +788,9 @@ export function buildHavan(scene, T) {
       const b = new THREE.Mesh(subUV(new THREE.PlaneGeometry(1.9, 2.9), i * 0.25, 0.25), bannerMat);
       b.position.set(sx * bx, 3.35, SF + 1.9); b.castShadow = true; deco(b);
     });
-    // CORNIJA corrida no topo, avançando da parede até cobrir a colunata
-    addBox(2 * HALF_X + 1, 0.55, 2.3, plaster, 0, 5.0, SF + 1.05, { collide: false });
+    // CORNIJA corrida no topo, avançando da parede até cobrir a colunata.
+    // SÓLIDA: a parede para em y=5 e o raio a 5,02 via a cornija e não achava occluder (BUG-54).
+    addBox(2 * HALF_X + 1, 0.55, 2.3, plaster, 0, 5.0, SF + 1.05);
     addBox(2 * HALF_X + 1, 0.2, 1.6, plaster, 0, 5.55, SF + 0.7, { collide: false });   // filete superior
     // DENTÍCULOS sob a cornija: 1 InstancedMesh p/ ~150 blocos (1 draw call) — é o detalhe
     // que faz a cornija ler como cornija e não como laje. Só em quality >= med.
@@ -1141,9 +1140,8 @@ export function buildHavan(scene, T) {
        spawn) e um colisor em cima dela empurraria as armas, que foi como a rodada do
        "critério de alcance a pé" esticou uma fileira de 12,65 m para 17,88 m. */
     for (const [cxp, zc] of [[-3.6, DEP_Z - 0.45], [3.6, DEP_Z - 0.45]]) {
-      addBox(1.4, 0.14, 1.2, MAT.rack, cxp, MZ.h, zc, { collide: false });
-      addBox(1.3, 0.76, 1.1, MAT.goods, cxp, MZ.h + 0.14, zc, { collide: false });
-      colliders.push({ minX: cxp - 0.7, maxX: cxp + 0.7, minY: MZ.h, maxY: MZ.h + 0.9, minZ: zc - 0.6, maxZ: zc + 0.6 });
+      addBox(1.4, 0.14, 1.2, MAT.rack, cxp, MZ.h, zc);
+      addBox(1.3, 0.76, 1.1, MAT.goods, cxp, MZ.h + 0.14, zc);
     }
   }
   /* DEGRAUS: PISO + ESPELHO separados, com o topo de cada piso em MÚLTIPLO EXATO do espelho.
@@ -1175,19 +1173,21 @@ export function buildHavan(scene, T) {
       // ela vira um segundo patamar e a régua MAP3 lê 35 degraus de 10 cm em vez de 20 de 17.
       addBox(ESC.larg, 0.012, 0.04, antid, cx, yTop - 0.010, zNariz - 0.03, { collide: false, cast: false });
     }
-    // viga lateral (limão) + corrimão: caixas INCLINADAS, então vão como malha própria
+    // viga lateral (limão) + corrimão: caixas INCLINADAS, então vão como malha própria.
+    // São occluders: a régua de raios via a viga/corrimão dentro do colisor da escada e a
+    // bala passava direto (merge estático continua fora de occluders — ver :1122).
     const ang = Math.atan2(MZ.h, R.z1 - R.z0);                       // 30,4°
     const comp = Math.hypot(MZ.h, R.z1 - R.z0);
     for (const sx of [R.x0 + 0.05, R.x1 - 0.05]) {
       const lm = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.42, comp), limao);
       lm.position.set(sx, ESC.espelho / 2 + MZ.h / 2 - 0.16, (R.z0 + R.z1) / 2); lm.rotation.x = ang;
-      lm.castShadow = true; deco(lm);
+      lm.castShadow = true; root.add(lm); occluders.push(lm);
       const cr = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, comp + 0.24), MAT.steel);
       cr.position.set(sx, ESC.espelho / 2 + MZ.h / 2 + 0.95, (R.z0 + R.z1) / 2); cr.rotation.x = ang;
-      cr.castShadow = true; deco(cr);
+      cr.castShadow = true; root.add(cr); occluders.push(cr);
       for (let k = 1; k < ESC.n; k += 4) {                           // montantes do corrimão
         const y = ESC.espelho * k;
-        addBox(0.05, 0.95, 0.05, MAT.steel, sx, y, R.z1 - (k - 0.5) * ESC.piso, { collide: false });
+        occluders.push(addBox(0.05, 0.95, 0.05, MAT.steel, sx, y, R.z1 - (k - 0.5) * ESC.piso, { collide: false, batch: false }));
       }
     }
     /* COLISOR da escada: o corrimão é INCLINADO e um colisor AABB inclinado não existe —
@@ -1366,12 +1366,13 @@ export function buildHavan(scene, T) {
     // todo objeto apoiado precisa de escurecimento encostado no chão) e volta a ler como
     // peça solta. O plinto é o mesmo concreto do rufo, 20 cm mais largo que o fuste.
     for (let pz = SF + 4; pz < wZ; pz += PSTEP) for (const sx of [-1, 1]) {
-      addBox(0.5, 3.1, 0.9, pil, sx * (HALF_X - 0.1), 0, pz, { collide: false });
+      // fuste é occluder (sem colisor: a pilastra é alvenaria, mas o corpo desliza no muro)
+      occluders.push(addBox(0.5, 3.1, 0.9, pil, sx * (HALF_X - 0.1), 0, pz, { collide: false, batch: false }));
       addBox(0.75, 0.18, 1.15, cap, sx * (HALF_X - 0.1), 3.1, pz, { collide: false });
       addBox(0.66, 0.3, 1.06, cap, sx * (HALF_X - 0.1), 0, pz, { collide: false, cast: false });
     }
     for (let px = -HALF_X + 4; px <= HALF_X - 4; px += PSTEP) {
-      addBox(0.9, 3.1, 0.5, pil, px, 0, wZ - 0.4, { collide: false });
+      occluders.push(addBox(0.9, 3.1, 0.5, pil, px, 0, wZ - 0.4, { collide: false, batch: false }));
       addBox(1.15, 0.18, 0.75, cap, px, 3.1, wZ - 0.4, { collide: false });
       addBox(1.06, 0.3, 0.66, cap, px, 0, wZ - 0.4, { collide: false, cast: false });
     }
@@ -1468,8 +1469,10 @@ export function buildHavan(scene, T) {
   if (DECO_HI) carts.push([-15.5, 15, 1.9], [33, 29, 0.5], [-3.5, 47, 2.2], [20, 55, 1.1]);
   for (const [cx, cz, cry] of carts) gprop('shopping_cart', cx, cz, 1.0, cry);
   if (DECO) for (const [bx, bz] of [[-8.5, 30], [8.5, 42]]) {   // baia: dois trilhos + placa
-    for (const sx of [-1, 1]) addBox(0.12, 1.1, 5, MAT.steel, bx + sx * 1.3, 0, bz, { collide: false });
-    addBox(2.8, 0.12, 0.12, MAT.steel, bx, 1.1, bz - 2.4, { collide: false });
+    // trilhos SÓLIDOS: a régua viu a ponta do trilho dentro do colisor do carro vizinho
+    // sem occluder nenhum — e o corpo atravessava a baia (mesmo defeito do pedestal).
+    for (const sx of [-1, 1]) addBox(0.12, 1.1, 5, MAT.steel, bx + sx * 1.3, 0, bz);
+    addBox(2.8, 0.12, 0.12, MAT.steel, bx, 1.1, bz - 2.4);
   }
   // CARROS: grade de vagas nos dois lados, contornando a estátua e o caminho central.
   // Usa a SELEÇÃO da partida (12 modelos leves sorteados por seed — ver havanCarSelection).
@@ -1890,8 +1893,17 @@ export function buildHavan(scene, T) {
      e sai da mesma forma que os planos individuais saíam. */
   DECO_BATCH.build(root);
   PAINT_BATCH.build(root);
+  const preProps = new Set(root.children);
   PROPS.build(root);
   PROPS_LOJA.build(root);
+  // O lote nasce InstancedMesh em root mas fora de `occluders`: sem isto a bala
+  // atravessava gôndola/carro que o corpo respeita (BUG-54, cláusula atravessa-parede).
+  // Transparente (vidro) fica de fora — mesmo teste de superfície da régua.
+  for (const c of root.children) {
+    if (preProps.has(c) || !c.isInstancedMesh) continue;
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
+  }
 
   /* ═══ PASSADA DE GRAFITE (07/08) ══════════════════════════════════════════
      Pedido literal do dono: "na loja h seria em todo estacionamento no muro e na
@@ -1902,6 +1914,9 @@ export function buildHavan(scene, T) {
   grafitar({
     id: 'loja_h',
     root, T, waypoints: nodes, seed: 5501, passo: 1.0, alcance: 9, cobre: 0.06, minLarg: 0.32,
+    /* O olho de 5,25 m existe pra cornija (y 5,0–5,55): sem ele a fachada greco-romana
+       nunca vira âncora acima de 3,1 m e o censo media 0/90 placas pintadas a 5,0 m. */
+    olhos: [1.55, 3.1, 5.25],
     /* SÓ DO LADO DE FORA (dono, 07/08: "pode tirar os graffitis de dentro da loja,
        pode deixar só na parte de fora que ficou boa"). O interior da loja é z < -6;
        74% das peças do mapa estavam lá dentro, e 7 dos 8 murais de homenagem também.
@@ -1920,8 +1935,17 @@ export function buildHavan(scene, T) {
         pool: (T.posterFiles || []).map((_, i) => i) },
       { y0: 0.35, y1: 2.6, larg: 3.6, alturas: [2.1, 1.55, 1.1, 0.8],
         pool: D_TAG.concat(D_MURAL) },
-      { y0: 2.5, y1: 5.2, larg: 4.8, alturas: [2.3, 1.6, 1.1],
+      { y0: 2.5, y1: 5.2, larg: 1.5, alturas: [2.3, 1.6, 1.1],
+        /* A pele da fachada (banner 1,9–4,8 m) tem ar embaixo por construção — o
+           encaixe já garante a peça inteira EM cima da pele, e a audit cobra parede.
+           larg 1,5: o banner tem 1,9 e a audit amostra os cantos do quad — com 1,8
+           sobravam 5 cm de margem e 3/15 amostras caíam fora (vao 0,2 em 13/08). */
+        exigeChao: false,
         pool: D_MURAL.concat(D_TAG) },
+      /* CORNIJA (y 5,0–5,55): faixa de 0,55 m — só pixo fino cabe. É a placa que o
+         censo mede a 5,0 m; sem esta banda a faixa fica 0/90 pra sempre. */
+      { y0: 5.0, y1: 5.6, larg: 2.4, alturas: [0.4, 0.3], exigeChao: false,
+        pool: D_TAG },
       { y0: 0.35, y1: 3.0, larg: 1.6, alturas: [0.9, 0.65, 0.45], planura: 0.5,
         pool: D_TAG },
     ],
