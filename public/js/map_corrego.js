@@ -1438,7 +1438,9 @@ export function buildCorrego(scene, T) {
   place('m400', -21.0, 15);  place('deagle', -5.9, -28);
   // pontes e fundo do canal
   place('mp5', 0, -22);     place('mp5', 0, 22);
-  place('m400', 1.4, -11);  place('awp', -1.4, 17);
+  /* VM14: no fundo do canal (-1,75 m) a cláusula abaixoDoPiso reprovava as duas.
+     Ficam nas cabeceiras das pontes, coladas na descida — o motivo de descer continua. */
+  place('m400', 2.2, -22);  place('awp', -2.2, 22);
 
   /* PB (carros) e IB (caixas instanciadas) viram occluders: são a malha visível com
      colisor — sem isto a bala atravessava carro e palafita que o corpo respeita. */
