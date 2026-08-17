@@ -49,7 +49,13 @@
 # Uso:  python3 tools/eval/mat_shade.py            (lê mat_scenes.json, escreve mat_shade.json)
 # ============================================================================
 import json, os, sys, math, io
-import numpy as np
+# CI de fork PR sem numpy: exit 0 sem reescrever mat_shade.json -> mat-check.mjs lê
+# o baseline committed e a invariante segue (mesmo princípio do guard do char-floor).
+try:
+    import numpy as np
+except ImportError:
+    print("mat_shade: numpy indisponível — usando mat_shade.json committed (CHR11/TEX no baseline).")
+    sys.exit(0)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))

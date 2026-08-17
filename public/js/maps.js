@@ -9,6 +9,13 @@ import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
 import { buildLajes, LAJES_PROPS, LAJES_AMBIENCE } from './map_lajes_authored.js';
 import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
 import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
+import { buildObras, OBRAS_PROPS } from './map_obras.js';
+import { buildPosto, POSTO_PROPS } from './map_posto.js';
+import { buildUpa, UPA_PROPS } from './map_upa.js';
+import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
+import { buildParque } from './map_parque.js';
+import { buildVelhoOeste } from './map_velho_oeste.js';
+import { buildPenitenciaria } from './map_penitenciaria.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -77,6 +84,27 @@ export const MAPS = {
   fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
   fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
   fy_mansao:     { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
+  // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
+  // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
+  // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
+  posto_treta: { name: 'Posto da Treta', build: buildPosto, props: POSTO_PROPS, ctfMode: true },
+  // UPA 24h: pronto-socorro lotado, mapa 100% INTERNO (prédio fechado, sem céu). Salas de verdade
+  // — recepção/espera, triagem, consultórios, raio-x, farmácia, enfermaria e emergência — ligadas
+  // por corredor central em cruz com portas de vidro. Piso com faixas de sinalização coloridas
+  // levando a cada setor e aparelhos médicos procedurais (monitores, respirador, crash cart, O2).
+  // Cheio de canto pra se esconder. A treta é a fila eterna: "SENHA 999 · ESPERA 8H".
+  upa_24h: { name: 'UPA 24h da Treta', build: buildUpa, props: UPA_PROPS, ctfMode: true },
+  // Canteiro de obra da prefeitura que nunca acaba: TERRENO ONDULADO com buracos de escavação
+  // (groundHeightAt), estrutura meio-construída no centro, tapumes, andaimes, guindaste, entulho.
+  // Simétrico em z=0. A treta é o "desvio de dinheiro público".
+  obras_prefeitura: { name: 'Obras da Prefeitura', build: buildObras, props: OBRAS_PROPS, ctfMode: true },
+  // Galpão de atacado estilo Loja H: LOJA fechada (Time B) + ESTACIONAMENTO aberto (Time E) ligados
+  // por portas de verdade na fachada. Gôndolas reais (gondola_mercado/eletro), caixas, doca, e um
+  // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
+  atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
+  parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
+  velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
+  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
@@ -115,4 +143,17 @@ export function resolveMapId(id) {
   const antigo = ALIAS_MAPA[id];
   if (antigo && MAPS[antigo]) return antigo;
   return DEFAULT_MAP;
+}
+
+export function nextMapId(id) {
+  return MAP_IDS[(MAP_IDS.indexOf(resolveMapId(id)) + 1) % MAP_IDS.length];
+}
+
+/* Rotação da sugestão inicial (pedido do dono: menos awp_map, mais exposição dos
+   outros mapas): link ?map= manda sempre; quem escolheu no carrossel (pin) fica
+   no escolhido; quem nunca escolheu recebe o próximo da fila a cada visita. */
+export function mapaDaSessao({ urlMap, savedMap, pinned } = {}) {
+  if (urlMap) return resolveMapId(urlMap);
+  if (pinned) return resolveMapId(savedMap);
+  return nextMapId(savedMap);
 }

@@ -55,6 +55,11 @@ const ROOT = path.resolve(new URL('../../', import.meta.url).pathname);
 const CHARDIR = path.join(ROOT, 'public/models/characters');
 const TMP = fs.mkdtempSync('/tmp/charfloor-');
 
+// Sem ImageMagick 7 (CI de fork PR sem `magick`): não há veredito, o invariants skipa CHR8.
+// Sem este guard o execFileSync('magick') lança ENOENT e derruba o build inteiro.
+try { execFileSync('magick', ['-version'], { stdio: 'ignore' }); }
+catch { console.log('char-floor: magick indisponível — CHR8 fica skipado (ImageMagick 7 ausente neste ambiente).'); process.exit(0); }
+
 const ARG = (k, d) => {
   const a = process.argv.find((s) => s.startsWith(`--${k}=`));
   return a ? a.slice(k.length + 3) : d;

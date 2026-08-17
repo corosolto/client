@@ -38,7 +38,7 @@ const FRENTES = {
     simbolos: ['_buildViewModels', '_vmFrame', '_applyVmVisibility',
       '_switchWeapon', '_startReload', '_scope', '_zoomFov', '_tryShoot', '_fireHitscan', '_meleeHit',
       '_muzzleWorld', '_flash', '_tracer', '_ejectCasing', '_shotRecoil', '_installRecoil'],
-    consts: ['WEAPONS', 'STATIC_CLASS', 'VM_FOV_DEFAULT', 'VM_OFF', 'VM_KNOB', 'GUNFEEL'],   // REC_DEG movido p/ recoil.js (indexado por arquivo)
+    consts: ['STATIC_CLASS', 'VM_FOV_DEFAULT', 'VM_OFF', 'VM_KNOB', 'GUNFEEL'],   // WEAPONS extraído p/ data/weapons.js (#305); REC_DEG movido p/ recoil.js (indexado por arquivo)
   },
   'BOTS / JOGABILIDADE': {
     arquivos: [],

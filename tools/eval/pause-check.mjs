@@ -43,7 +43,8 @@
      PAUSA5  nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo: todo chamador de
              `quitToMenu()` e todo `show('main-menu')` está num handler deliberado. A
              única exceção é a fronteira de `startGame`, antes de existir partida
-             utilizável, que limpa uma abertura quebrada e entrega o BUG-42 ao modal.
+             utilizável, que limpa uma abertura quebrada e entrega o BUG-42 ao modal;
+             `?tela=menu` também só escolhe a tela inicial de uma inspeção explícita.
              mutação: `setTimeout(quitToMenu, 1000)` em qualquer lugar → vermelha
      PAUSA6  as duas ações destrutivas exigem DOIS toques com intervalo mínimo
              (um clique só nunca tira o jogador da partida; e uma rajada de cliques
@@ -144,6 +145,13 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   const fronteiraDeAbertura = /__gameLaunch\?\.begin/.test(startBloco)
     && /catch\s*\(/.test(startBloco) && /game = null/.test(startBloco)
     && /__gameLaunch\?\.fail/.test(startBloco);
+  const inspectIni = linhas.findIndex((l) => /^async function openInspectionScreen\s*\(/.test(l));
+  let inspectFim = -1;
+  if (inspectIni >= 0) for (let j = inspectIni + 1; j < linhas.length; j++) if (/^\}/.test(linhas[j])) { inspectFim = j; break; }
+  const inspectBloco = inspectIni >= 0 && inspectFim > inspectIni ? linhas.slice(inspectIni, inspectFim + 1).join('\n') : '';
+  const inspecaoExplicita = /const inspectionScreen = resolveInspectionScreen\(params\)/.test(MAIN_JS)
+    && /if \(inspectionScreen\) \{[\s\S]{0,120}openInspectionScreen\(inspectionScreen\)/.test(MAIN_JS)
+    && /target\.screen === 'menu'/.test(inspectBloco);
   const suspeitas = [];
   for (let i = 0; i < linhas.length; i++) {
     const L = linhas[i];
@@ -158,6 +166,7 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
     // dentro seria recursão e continua sendo suspeita
     if (!chamada && ini >= 0 && i > ini && i < fim) continue;
     if (!chamada && fronteiraDeAbertura && i > startIni && i < startFim) continue;
+    if (!chamada && inspecaoExplicita && i > inspectIni && i < inspectFim) continue;
     // contexto: o handler pode abrir algumas linhas acima (onclick de bloco)
     const ctx = linhas.slice(Math.max(0, i - 8), i + 1).join('\n');
     const porClique = /\.onclick\s*=|addEventListener\(\s*['"]click['"]|addEventListener\(\s*['"]keydown['"]|needsConfirm\(/.test(ctx);
@@ -166,7 +175,7 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
   // o boot (`show(isMobile ? … : 'main-menu')`) é legítimo: não há partida nenhuma ainda
   const reais = suspeitas.filter((s) => !/isMobile/.test(s));
   put('PAUSA5', 'nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo',
-    reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só ação deliberada ou catch delimitado de startGame');
+    reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só ação deliberada, inspeção inicial explícita ou catch delimitado de startGame');
 }
 
 /* ---------- 6: um clique só nunca destrói a partida ------------------------

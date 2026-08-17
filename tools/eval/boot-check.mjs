@@ -265,19 +265,22 @@ try {
     console.log(`   ${b6 ? 'PASSA' : 'FALHA'}\n`);
 
     const watchdogsAntes = relatorios.filter((r) => r.source === 'launch-watchdog').length;
+    await page.close();
     const jornada = await context.newPage();
     await jornada.goto(`${BASE}/?nav=1`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await jornada.locator('#splash-enter:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
+    await jornada.locator('.cs-item[data-act="jogar"]').click();
+    await jornada.locator('#cs-modos:not([hidden])').waitFor();
     await jornada.locator('.cs-item[data-act="sp"]').click();
     await jornada.evaluate(() => {
       const nick = document.getElementById('nick-input');
       nick.value = 'BOOT_CHECK';
       nick.dispatchEvent(new Event('input', { bubbles: true }));
     });
-    await jornada.locator('#btn-jogar').click();
+    await jornada.locator('#ms-continue').click();
     await jornada.locator('#btn-team-c').click();
     await jornada.locator('#char-select:not(.hidden)').waitFor({ timeout: 120000 });
     await jornada.waitForTimeout(3100);

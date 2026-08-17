@@ -6,10 +6,10 @@ cd "$(dirname "$0")/.."
 
 # URL do zip do pacote. Configure pela env AUDIO_PACK_URL ou edite aqui
 # (ex.: asset de GitHub Release, ou URL privada de R2/S3 para deploys).
-# v2 (06/08): pacote COMPLETO — vozes/rounds/SFX/menu/ingame, 193 MB — com nomes
-# hasheados (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
+# Pacote completo — vozes/rounds/SFX/menu/ingame — com nomes hasheados
+# (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
 # (produção servia o pack de julho e todo som novo dava 404).
-URL="${AUDIO_PACK_URL:-https://github.com/rubenmarcus/csbrasil/releases/download/audio-pack-v4/audio-pack.zip}"
+URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v6/audio-pack.zip}"
 DEST="public/audio"
 
 if [ -f "$DEST/manifest.json" ]; then

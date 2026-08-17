@@ -64,3 +64,4 @@ Disallow: /iktest.html
 Disallow: /mounttest.html
 
 Sitemap: https://www.csbrasil.online/sitemap.xml
+Sitemap: https://www.csbrasil.online/docs/sitemap.xml

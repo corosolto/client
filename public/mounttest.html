@@ -6,7 +6,7 @@
 <title>mount test — arma pra frente?</title>
 <style>html,body{margin:0;height:100%;background:#20242b;overflow:hidden}#hud{position:fixed;left:8px;top:8px;font:12px monospace;color:#9fe;white-space:pre;z-index:9}</style>
 <script type="importmap">
-{ "imports": { "three": "./vendor/three.module.js?h=ba5e961f35ac", "three/addons/": "./vendor/addons/" } }
+{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
 </script>
 </head>
 <body>
@@ -39,9 +39,12 @@ else { cam.position.set(3.4, 1.3, 0); cam.lookAt(0, 1.05, 0); }
 
 scene.add(new THREE.HemisphereLight(0xbcd3ff, 0x3a3320, 1.1));
 const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3,6,4); scene.add(key);
+const CLEAN = qp.get('clean') === '1';   // fundo preto liso, sem chão/grade/seta (captura de sprite)
+if (CLEAN) document.getElementById('hud').style.display = 'none';
+if (CLEAN) scene.background = new THREE.Color(0x050506);
 if (!CLEAN) scene.add(new THREE.GridHelper(10, 20, 0x445, 0x334));
 const floor = new THREE.Mesh(new THREE.PlaneGeometry(10,10), new THREE.MeshStandardMaterial({color:0x2a2f38}));
-floor.rotation.x = -Math.PI/2; scene.add(floor);
+floor.rotation.x = -Math.PI/2; if (!CLEAN) scene.add(floor);
 
 // Reference arrow = world +Z = the direction the character faces. Gun barrel should match.
 const fwd = new THREE.ArrowHelper(new THREE.Vector3(0,0,1), new THREE.Vector3(0,1.15,0), 1.4, 0x00ff00, 0.12, 0.07);
@@ -55,29 +58,44 @@ scene.add(built.group);
 window.MOUNT_CTRL = built.ctrl || null; // diagnóstico do arnês: estado/tempo da ação real
 
 const PLAY = qp.get('play'); // 'walk'|'run'|'idle' -> animate continuously for video capture
+const resizeMount = () => {
+  cam.aspect = innerWidth / innerHeight;
+  cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  if (!PLAY) renderer.render(scene, cam);
+};
+addEventListener('resize', resizeMount);
 if (PLAY) {
-  const state = PLAY;
-  if (built.ctrl) {
-    if (state === 'shoot' && built.ctrl.shoot) built.ctrl.shoot();
-    else if (state === 'death' && built.ctrl.die) built.ctrl.die();
-    else if (state === 'jump' && built.ctrl.jump) built.ctrl.jump();
-    else if ((state === 'crouch' || state === 'crouchwalk') && built.ctrl.setCrouch) built.ctrl.setCrouch(true);
-    else if (built.ctrl._to) built.ctrl._to(state);
-  }
+  let state = PLAY;
+  let replayTimer = 0;
   const ts = parseFloat(qp.get('ts')) || 1;
-  if (built.ctrl && built.ctrl.actions && built.ctrl.actions[state]) built.ctrl.actions[state].timeScale = ts;
   const orbit = qp.get('orbit') === '1';
   let last = performance.now();
-  hud.textContent = `char=${CHAR} weapon=${WEAPON} play=${state} ts=${ts}`;
   const SPD = parseFloat(qp.get('spd')) || (state==='run' ? 1.9 : 1.0);
-  window.STEP = (dt)=>{
-    if (built.ctrl) {
-      const moving = ['walk','run','walk1h','walkfire','crouchwalk'].includes(state) ? 1 : 0;
-      built.ctrl.update(dt, moving, state === 'shoot', moving ? SPD : 0, false);
-    }
-    built.group.updateMatrixWorld(true);
-  };
   window.RENDER = ()=>renderer.render(scene, cam);
+  let MOV = 0;
+  window.MOUNT_SET_PLAY = (next) => {
+    state = next;
+    clearInterval(replayTimer);
+    if (built.ctrl) {
+      built.ctrl.revive();
+      if (state === 'death') built.ctrl.die();
+      else if (state === 'jump') {
+        built.ctrl.jump();
+        replayTimer = setInterval(() => built.ctrl.jump(), 1400);
+      } else if (state === 'shoot') {
+        built.ctrl.shoot();
+        replayTimer = setInterval(() => { built.ctrl.shooting = false; built.ctrl.shoot(); }, 900);
+      } else if ((state === 'crouch' || state === 'crouchwalk') && built.ctrl.setCrouch) built.ctrl.setCrouch(true);
+      else if (built.ctrl._to) built.ctrl._to(state);
+      if (built.ctrl.actions && built.ctrl.actions[state]) built.ctrl.actions[state].timeScale = ts;
+    }
+    MOV = (state==='run' || state==='walk' || state==='walkfire') ? 1 : 0;
+    hud.textContent = `char=${CHAR} weapon=${WEAPON} play=${state} ts=${ts}`;
+  };
+  window.MOUNT_SET_PLAY(state);
+  window.STEP = (dt)=>{ if(built.ctrl) built.ctrl.update(dt, MOV, false, SPD, false); built.group.updateMatrixWorld(true); };
+>>>>>>> origin/main
   (function loop(now){
     const dt = Math.min(0.05, (now-last)/1000); last = now;
     window.STEP(dt);
@@ -94,7 +112,6 @@ if (PLAY) {
   hud.textContent = `char=${CHAR} weapon=${WEAPON}\nseta verde = +Z (frente)\ncano deve apontar junto`;
   renderer.render(scene, cam);
   window.MOUNT_READY = true;
-  addEventListener('resize', ()=>{ cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); renderer.render(scene,cam); });
 }
 </script>
 </body>

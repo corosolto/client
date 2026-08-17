@@ -3,6 +3,12 @@
 @font-face{font-family:'Rajdhani';src:url('/fonts/rajdhani-600.woff2') format('woff2');font-weight:600;font-display:swap}
 @font-face{font-family:'Rajdhani';src:url('/fonts/rajdhani-700.woff2') format('woff2');font-weight:700;font-display:swap}
 @font-face{font-family:'ST Mono';src:url('/fonts/share-tech-mono.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'Bebas Neue';src:url('/fonts/bebasneue-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url('/fonts/barlowcondensed-400.woff2') format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url('/fonts/barlowcondensed-500.woff2') format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url('/fonts/barlowcondensed-500italic.woff2') format('woff2');font-weight:500;font-style:italic;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url('/fonts/barlowcondensed-600.woff2') format('woff2');font-weight:600;font-display:swap}
+@font-face{font-family:'Barlow Condensed';src:url('/fonts/barlowcondensed-700.woff2') format('woff2');font-weight:700;font-display:swap}
 
 /* =========================================================================
    SISTEMA DE DESIGN — "CORO SOLTO"
@@ -92,19 +98,19 @@
   --ok:#46e08a;
 
   /* ---- identidade BR (sinaleiro / lambe-lambe / caminhão) ---- */
-  --br-sinal:#e2402c;  --br-faixa:#ffc93f;  --br-verde:#1faa4d;
+  --br-sinal:#e2402c;  --br-faixa:#b4d92e;  --br-verde:#1faa4d;
+  --br-faixa-legacy:#ffc93f;   /* valor pré-redesign, restaurado em html[data-ui="legacy"] */
   /* --br-asfalto e a listra escura do sinaleiro entravam na mesma armadilha do BUG-05:
      eram azuis (#12171a h 245° / #0d1418 h 246°) coladas em cima de superfícies que
      agora são quentes. Reescritas com o MESMO L* e o matiz da família (#191610 L* 7,4). */
   --br-cal:#f2efe6;    --br-asfalto:#191610;
-  --hazard:repeating-linear-gradient(135deg,var(--br-faixa) 0 7px,var(--br-asfalto) 7px 14px);
   /* fundo do CTA: era #141810, o único dark que já nascera quente (h 130°). Mantido o L*
      e alinhado ao matiz do âmbar que ele carrega em cima. */
   --cta-bg:#181307;
   --lambe:repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,rgba(0,0,0,0) 1px 3px);
 
   /* ---- times ---- */
-  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0;
+  --team-e:#e03232; --team-b:#1faa4d; --team-u:#7b2ff7; --team-c:#e83aa0; --team-f:#ffd23f;
 
   /* ---- espaçamento (escala de 4) ---- */
   --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px; --s-8:64px;
@@ -149,6 +155,147 @@
   --font:'Rajdhani',"Arial Narrow",Arial,sans-serif;
   --mono:'ST Mono',Consolas,monospace;
 }
+
+/* =========================================================================
+   REDESIGN AAA — tokens novos, adicionados sem tocar nos de cima.
+   Por quê: a paleta acima veio de medição pixel a pixel sobre referência
+   própria (ref-ui.py) e alimenta o gate UI5; reescrevê-la quebraria essa
+   calibração. O redesign entra como uma CAMADA NOVA de tokens + classes
+   utilitárias (.aaa-*), consumida tela por tela. O rollback de cada tela
+   entra em `html[data-ui="legacy"]` conforme cada fase é aplicada.
+   ========================================================================= */
+:root{
+  --aaa-font-display:'Bebas Neue',var(--font);
+  --aaa-font-body:'Barlow Condensed',var(--font);
+  --aaa-lime:#b4d92e; --aaa-lime-light:#cfe84a; --aaa-lime-ink:#131313;
+  --aaa-glow:0 0 28px rgba(180,217,46,.45);
+  --aaa-panel:#131418; --aaa-panel-2:#101014;
+  --aaa-cut-lg:polygon(0 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%);
+  --aaa-cut-sm:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+  --aaa-skew:skewX(-8deg); --aaa-unskew:skewX(8deg);
+}
+/* --br-faixa é o token único que carrega a marca em ~70 lugares (HUD, scoreboard,
+   pause, settings, splash, char-select) — por isso o redesign entra AQUI, na raiz,
+   em vez de reescrever cada regra: uma troca de token, o jogo inteiro muda de cor. */
+html[data-ui="legacy"]{--br-faixa:var(--br-faixa-legacy)}
+.aaa-kicker{
+  font:600 var(--fs-100)/1 var(--aaa-font-body);letter-spacing:var(--tr-4);
+  text-transform:uppercase;color:var(--ink-300)
+}
+.aaa-cta{
+  display:inline-flex;transform:var(--aaa-skew);
+  background:linear-gradient(180deg,var(--aaa-lime-light),var(--aaa-lime));
+  clip-path:var(--aaa-cut-sm);border:0;cursor:pointer;
+  transition:box-shadow var(--t) var(--ease)
+}
+.aaa-cta:hover,.aaa-cta:focus-visible{box-shadow:var(--aaa-glow)}
+/* O afundar de 1px do :active mora em `:where(.btn,.cs-item,…):active` lá embaixo
+   (style.css:234). `:where()` não soma especificidade, então aquela regra vale
+   (0,1,0) — EMPATE com `.aaa-cta`, e ela vence por vir depois. No primeiro botão
+   que tiver as duas classes, `transform:translateY(1px)` substituiria o skew e o
+   CTA desentortaria ao ser pressionado. Reescrever os dois juntos, em (0,2,0). */
+.aaa-cta:active{transform:var(--aaa-skew) translateY(1px)}
+.aaa-cta>*{
+  display:inline-block;transform:var(--aaa-unskew);
+  /* 400 e não 700: Bebas Neue só existe em Regular (um único @font-face, linha 6).
+     Pedir 700 não deixa mais forte — faz o browser ENGROSSAR o contorno sozinho, e
+     o borrão aparece justamente no tamanho grande, que é onde esta fonte trabalha. */
+  font:400 var(--fs-500)/1 var(--aaa-font-display);letter-spacing:var(--tr-3);
+  text-transform:uppercase;color:var(--aaa-lime-ink);padding:14px 28px
+}
+.aaa-card-cut{clip-path:var(--aaa-cut-sm);border-radius:0}
+
+/* ---- submenu de modos (JOGAR ▸ ABATE / CAPTURE A BANDEIRA) ----
+   Recuo de 14px + filete à esquerda: o submenu tem de ler como SEGUNDO NÍVEL sem
+   repetir a placa do acento, que é reservada ao item ativo da lista principal. */
+/* `.cs-menu` na frente de tudo aqui é PROPOSITAL, não estilo: o bloco `.cs-item` /
+   `.cs-tick` mora ~1200 linhas ABAIXO deste ponto do arquivo, então com a mesma
+   especificidade quem ganha é ele. Subir para (0,3,1) faz a regra valer sem
+   depender da ordem — e sem ter de espalhar o redesign no meio do CSS antigo. */
+.cs-menu .cs-sub{display:flex;flex-direction:column;margin:2px 0 2px 14px;
+  border-left:1px solid rgba(236,235,230,.14)}
+.cs-menu .cs-sub[hidden]{display:none}
+.cs-menu .cs-sub-item{font-size:var(--fs-300);padding-top:8px;padding-bottom:8px;opacity:.92}
+.cs-menu .cs-sub-item:hover,.cs-menu .cs-sub-item:focus-visible{opacity:1}
+/* O ▸ do JOGAR gira quando abre — é o único aviso de que ali tem mais coisa. */
+.cs-menu .cs-item.is-open .cs-tick{transform:rotate(90deg);width:22px;opacity:1;margin-right:6px}
+
+/* ---- chips de link do topo-direito (tela 01 do redesign) ----
+   z-index 4 porque a coluna da esquerda e o setup vivem em 3; sem isto os chips
+   somem atrás do painel quando o setup abre. */
+.aaa-links{position:absolute;top:20px;right:24px;display:flex;gap:8px;z-index:4}
+.aaa-links a{
+  border:1px solid rgba(236,235,230,.16);background:rgba(10,10,12,.55);
+  padding:7px 14px;cursor:pointer;color:var(--ink-300);text-decoration:none;
+  font:600 12px/1 var(--aaa-font-body);letter-spacing:2px;text-transform:uppercase;
+  transition:border-color var(--t) var(--ease),color var(--t) var(--ease)}
+.aaa-links a:hover,.aaa-links a:focus-visible{border-color:var(--aaa-lime);color:var(--ink-100)}
+.aaa-links a span{opacity:.6;margin-left:2px}
+/* Numa tela baixa os chips brigam com o topo do wallpaper; abaixo de 900px de
+   largura eles saem — os mesmos três links seguem no rodapé, então nada se perde. */
+@media (max-width:900px){.aaa-links{display:none}}
+
+/* ---- barra inferior do menu (tela 01 do redesign) ----
+   Tudo aqui é escrito como `.aaa-bottombar X` (0,2,0) de propósito: `.player-plate`
+   já tem bloco próprio ~1200 linhas abaixo, e com a mesma especificidade venceria
+   pela ordem. Mesmo motivo do bloco do `.cs-menu` acima. */
+/* NO FLUXO, e não `position:absolute` como no protótipo. A `.cs-left` é absoluta,
+   ancorada embaixo e de altura automática: com a barra fora do fluxo ela caía DENTRO
+   do intervalo da lista (medido: coluna 498→737, barra 643→709) e cobria COMO JOGAR
+   e CONFIGURAÇÕES. No fluxo, a coluna cresce para cima sozinha e a barra assenta
+   embaixo da lista — sem número mágico para desencontrar quando a lista mudar. */
+.aaa-bottombar{display:flex;gap:12px;align-items:stretch;margin-top:18px;z-index:4}
+#menu-bottombar .aaa-profile{
+  display:flex;align-items:center;gap:12px;background:rgba(13,14,17,.85);
+  border:1px solid var(--line);padding:10px 16px;cursor:pointer;border-radius:0;
+  width:auto;text-align:left;transition:border-color var(--t) var(--ease)}
+#menu-bottombar .aaa-profile:hover,#menu-bottombar .aaa-profile:focus-visible{border-color:var(--aaa-lime)}
+#menu-bottombar .pp-avatar{
+  width:44px;height:44px;flex:0 0 44px;border:1px solid var(--aaa-lime);border-radius:0;
+  background:var(--aaa-panel-2);display:flex;align-items:center;justify-content:center;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  font:700 15px/1 var(--aaa-font-body);letter-spacing:1px;color:var(--ink-100)}
+#menu-bottombar .pp-info{display:flex;flex-direction:column;gap:1px;align-items:flex-start}
+#menu-bottombar .pp-nick{font:700 16px/1.1 var(--aaa-font-body);letter-spacing:2px;color:var(--ink-100)}
+#menu-bottombar .pp-sub{font:600 11px/1.1 var(--font);color:var(--ink-300);letter-spacing:.5px}
+
+#menu-bottombar .aaa-dd{
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  background:rgba(13,14,17,.85);border:1px solid var(--line);padding:8px 16px;
+  cursor:pointer;border-radius:0;text-align:left;
+  transition:border-color var(--t) var(--ease)}
+#menu-bottombar .aaa-dd:hover,#menu-bottombar .aaa-dd:focus-visible{border-color:var(--aaa-lime)}
+#menu-bottombar .aaa-dd .label{font:700 10px/1 var(--aaa-font-body);letter-spacing:3px;color:var(--ink-300)}
+/* nowrap é obrigatório: "AWP + PISTOLA + FACA" quebrava em duas linhas e
+   desalinhava a altura dos três blocos da barra. */
+#menu-bottombar .aaa-dd .value{
+  white-space:nowrap;font:600 14px/1.2 var(--aaa-font-body);letter-spacing:1px;color:var(--ink-100)}
+#menu-bottombar .aaa-dd .caret{color:var(--ink-300);font-size:10px;margin-left:4px}
+/* Numa tela estreita a barra encavala a lista de menu; some e nada se perde,
+   porque as mesmas escolhas continuam dentro do setup. */
+@media (max-width:900px),(max-height:620px){.aaa-bottombar{display:none}}
+
+#boot-splash .splash-frame,#boot-splash .splash-ver{position:relative;z-index:1}
+
+/* ---- DICA do carregamento (tela 00B) ----
+   min-height fixa: sem ela, dicas de comprimentos diferentes mudam a altura da
+   caixa a cada 5 s e a barra de progresso "pula" — o defeito clássico de texto
+   rotativo em layout de fluxo. */
+.lo-tip{display:flex;align-items:baseline;gap:10px;margin-top:var(--s-3);
+  min-height:34px;max-width:520px}
+.lo-tip b{flex:0 0 auto;font:700 10px/1 var(--aaa-font-body);letter-spacing:3px;
+  color:var(--aaa-lime)}
+.lo-tip span{font:500 13px/1.35 var(--aaa-font-body);letter-spacing:.4px;color:var(--ink-200)}
+
+/* Botão de FEEDBACK no rodapé: <button> tem UA style próprio, então precisa ser
+   zerado para assentar na fileira de <a> sem pular um pixel de baseline. */
+.menu-footer .mf-link{appearance:none;background:none;border:0;padding:0;cursor:pointer;
+  font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit}
+.aaa-scanlines{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,#000 3px 4px);
+  opacity:.05;mix-blend-mode:overlay
+}
 *{margin:0;padding:0;box-sizing:border-box;user-select:none}
 html,body{width:100%;height:100%;overflow:hidden;background:var(--dark)}
 body{font-family:var(--font);font-weight:600;color:var(--ink1)}
@@ -157,7 +304,7 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 /* ---------- ESTADOS GLOBAIS (antes o jogo inteiro era inoperável no teclado) ----------
    Um FPS de PC navega 100% no teclado; sem anel de foco não dá pra saber onde se está. */
 :where(button,a,select,input,textarea,[tabindex]):focus-visible{
-  outline:var(--focus-ring);outline-offset:var(--focus-off);border-radius:var(--r-1)}
+  outline:var(--focus-ring);outline-offset:var(--focus-off);border-radius:0}
 :where(button,a,select,input,textarea,[tabindex]):focus:not(:focus-visible){outline:none}
 :where(.btn,.cs-item,.map-arrow,.char-row,.dd-item,.corner-btn):active{transform:translateY(1px)}
 :where(button,.btn)[disabled]{opacity:var(--op-disabled);filter:saturate(.3);cursor:not-allowed;pointer-events:none}
@@ -175,13 +322,13 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 .screen{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
   background:linear-gradient(180deg,var(--bg-800),var(--bg-900))}
 .scanlines{display:none}   /* morto na v2 */
-.screen-title{font-size:var(--fs-700);font-weight:700;letter-spacing:var(--tr-6);color:var(--ink-100);
+.screen-title{font-family:var(--aaa-font-display);font-size:var(--fs-700);font-weight:700;letter-spacing:var(--tr-6);color:var(--ink-100);
   text-transform:uppercase;position:relative;padding-bottom:var(--s-3)}
+html[data-ui="legacy"] .screen-title{font-family:var(--font)}
 .screen-title::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);
   width:120px;height:3px;background:linear-gradient(90deg,var(--br-sinal),var(--br-faixa))}   /* régua de tinta: assinatura da marca em toda tela de fluxo */
 .panel{background:var(--panel);border:1px solid var(--line);padding:var(--s-6) var(--s-7);clip-path:var(--cut);
   box-shadow:var(--sh-2);position:relative}
-.panel::before{content:"";position:absolute;left:0;top:14px;width:4px;height:52px;background:var(--hazard)}   /* top:0 caía dentro do canto chanfrado do clip-path */
 .center-panel{display:flex;flex-direction:column;gap:18px;align-items:center;max-width:640px;text-align:center}
 .big{font-size:18px}
 .footnote{position:absolute;bottom:18px;font-size:12px;font-weight:600;letter-spacing:2px;color:var(--ink3)}
@@ -211,10 +358,14 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    em vez de ganhar uma cópia — existe UM lugar onde "CTA preenchido" mora, então menu e
    pausa não podem mais divergir do resultado. As razões de contraste são as que a UI1 já
    mediu pro `.btn-cta`, porque são literalmente as mesmas duas cores. */
-.btn-big{font-size:var(--fs-600);padding:var(--s-4) var(--s-8)}
-.btn-big,.btn-cta{background:var(--br-faixa);border-color:var(--br-faixa);color:var(--bg-900)}
+.btn-big{font-size:var(--fs-600);padding:var(--s-4) var(--s-8);font-family:var(--aaa-font-display);letter-spacing:var(--tr-4)}
+.btn-big,.btn-cta{background:linear-gradient(180deg,var(--aaa-lime-light),var(--aaa-lime));border-color:var(--aaa-lime);color:var(--aaa-lime-ink)}
 .btn-big:hover,.btn-big:focus-visible,
-.btn-cta:hover,.btn-cta:focus-visible{background:var(--am);border-color:var(--am);color:var(--bg-900)}
+.btn-cta:hover,.btn-cta:focus-visible{background:var(--aaa-lime-light);border-color:var(--aaa-lime-light);color:var(--aaa-lime-ink);box-shadow:var(--aaa-glow)}
+html[data-ui="legacy"] .btn-big{font-family:var(--font);letter-spacing:var(--tr-3)}
+html[data-ui="legacy"] .btn-big,html[data-ui="legacy"] .btn-cta{background:var(--br-faixa);border-color:var(--br-faixa);color:var(--bg-900)}
+html[data-ui="legacy"] .btn-big:hover,html[data-ui="legacy"] .btn-big:focus-visible,
+html[data-ui="legacy"] .btn-cta:hover,html[data-ui="legacy"] .btn-cta:focus-visible{background:var(--am);border-color:var(--am);color:var(--bg-900);box-shadow:none}
 .btn-back{position:absolute;top:26px;left:26px;font-size:13px;padding:9px 20px;z-index:5}
 .menu-buttons{display:flex;flex-direction:column;gap:16px;align-items:center;z-index:1;width:min(760px,95vw)}
 .profile-card{width:100%;background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);
@@ -272,7 +423,7 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 #map-select{font-family:var(--mono);font-size:14px;letter-spacing:1px;text-align:center;
   background:var(--bg-800);border:1px solid var(--line);color:var(--cs);padding:10px 12px;outline:none;cursor:pointer;width:100%}
 .btn-ghost{font-family:var(--mono);font-size:12px;letter-spacing:1px;cursor:pointer;width:100%;
-  background:transparent;border:1px dashed var(--line);color:var(--ink3);padding:10px}
+  background:transparent;border:1px solid var(--line);color:var(--ink3);padding:10px}
 .btn-ghost:hover,.btn-ghost:focus-visible{border-color:var(--cs);color:var(--cs)}
 #avatar-note{font-size:12px;color:var(--cs);min-height:13px}
 .menu-secondary{display:flex;gap:10px;width:100%}
@@ -282,7 +433,8 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
   transition:background var(--t) var(--ease),color var(--t) var(--ease),opacity var(--t) var(--ease)}
 /* Sem nick, JOGAR é ESTADO desabilitado — não um shake depois do clique. */
 #btn-jogar[aria-disabled="true"]{opacity:var(--op-disabled);filter:saturate(.25);cursor:not-allowed}
-#btn-jogar[aria-disabled="true"]:hover{background:var(--br-faixa);color:var(--bg-900)}
+#btn-jogar[aria-disabled="true"]:hover{background:var(--aaa-lime);color:var(--aaa-lime-ink)}
+html[data-ui="legacy"] #btn-jogar[aria-disabled="true"]:hover{background:var(--br-faixa);color:var(--bg-900)}
 #hud-actions{position:absolute;top:36px;right:48px;display:flex;gap:var(--s-2);z-index:25}
 #hud-actions button{width:32px;height:32px;border:1px solid var(--line);cursor:pointer;
   display:flex;align-items:center;justify-content:center;
@@ -320,15 +472,16 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 #auth-row .auth-btn{width:34px;height:34px;border:1px solid var(--line);background:var(--bg-800);color:var(--cs);font-weight:bold;font-size:14px;cursor:pointer}
 #auth-row .auth-btn:hover{border-color:var(--cs)}
 #auth-row .auth-chip{display:flex;align-items:center;gap:8px;color:var(--ink2);font-size:12px}
-#auth-row .auth-chip img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line)}
+#auth-row .auth-chip img{width:26px;height:26px;border-radius:0;border:1px solid var(--line)}
 #auth-row .auth-chip button{background:none;border:1px solid var(--line);color:var(--ink3);cursor:pointer;font-size:11px;padding:2px 8px}
 
 /* ---------- cabeçalho comum das telas de fluxo (lado / personagem) ----------
    Eyebrow + título + dica numa peça só: o jogador tem que saber EM QUE PASSO está sem
    ler o conteúdo. Mesma família do .cs-setup-head do menu — nenhum estilo novo. */
 .ts-head{display:flex;flex-direction:column;align-items:center;gap:var(--s-1);flex:0 0 auto}
-.ts-head small{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-4);
+.ts-head small{font-family:var(--aaa-font-body);font-weight:600;font-size:var(--fs-100);letter-spacing:var(--tr-4);
   color:var(--am);text-transform:uppercase}
+html[data-ui="legacy"] .ts-head small{font-family:var(--mono);font-weight:400;font-size:var(--fs-50)}
 .ts-hint{font-size:var(--fs-200);font-weight:500;letter-spacing:var(--tr-tight);color:var(--ink-300);
   max-width:64ch;text-align:center;margin-top:var(--s-1)}
 
@@ -465,32 +618,31 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 @media(max-height:820px){.team-name{font-size:clamp(11px,1vw,15px)}}
 
 /* ---------- character select ----------
-   A tela é uma COLUNA de altura cheia: header em cima, corpo elástico embaixo. A lista
-   ganha a altura que sobra (flex:1 + min-height:0) em vez de um max-height:66vh chutado
-   — era esse 66vh que cortava o último personagem no rodapé em janela 3:2. */
+   O corpo é elástico; a faixa inferior rola horizontalmente sem cortar o último avatar. */
 #char-select{justify-content:flex-start;gap:var(--s-4);padding:clamp(56px,7vh,88px) var(--s-5) var(--s-5)}
-/* Layout da referência (telas/03): filmstrip de avatares | ficha | preview gigante.
-   A grade é elástica (flex:1 + min-height:0) — a lição do bug 3:2 vale pros 3 filhos. */
-.char-stage{display:grid;grid-template-columns:96px minmax(280px,360px) 1fr;gap:var(--s-5);
-  align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
-.char-filmstrip{display:flex;flex-direction:column;gap:var(--s-2);min-height:0}
-.char-list{display:flex;flex-direction:column;gap:var(--s-2);min-height:0;overflow-y:auto;
-  overscroll-behavior:contain;padding-right:2px;
+/* Ficha + preview são as duas únicas colunas. O elenco ocupa uma segunda linha inteira. */
+.char-stage{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+  --char-thumb:114px;grid-template-rows:minmax(0,1fr) var(--char-thumb);grid-template-areas:"sheet preview" "rail rail";
+  gap:var(--s-4) var(--s-5);align-items:stretch;flex:1 1 auto;min-height:0;width:min(1280px,95vw)}
+.char-filmstrip{grid-area:rail;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:var(--s-2);min-width:0}
+.char-list{display:flex;flex:0 1 auto;flex-direction:row;gap:var(--s-2);min-width:0;width:max-content;
+  max-width:calc(100% - 104px);overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior:contain;padding-bottom:3px;
   scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
-.char-list::-webkit-scrollbar{width:6px}
+.char-list::-webkit-scrollbar{height:6px}
 .char-list::-webkit-scrollbar-thumb{background:var(--line-2)}
 /* filmstrip: avatar quadrado; o nome fica só pra leitor de tela (a ficha diz quem é).
    A miniatura continua sendo o retrato 128² do main.js — aqui exibido a 76 px. */
-.char-row{position:relative;display:block;width:76px;height:76px;flex:0 0 76px;padding:0;cursor:pointer;
+.char-row{position:relative;display:block;width:var(--char-thumb);height:var(--char-thumb);flex:0 0 var(--char-thumb);padding:0;cursor:pointer;
   background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);clip-path:var(--cut-sm);
   transition:border-color var(--t) var(--ease),transform var(--t) var(--ease)}
 .char-row img{width:100%;height:100%;display:block;object-fit:cover}
 .char-row span{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.char-row:hover,.char-row:focus-visible{border-color:var(--line-2);transform:translateX(3px)}
+.char-row:hover,.char-row:focus-visible{border-color:var(--line-2);transform:translateY(-3px)}
 /* SELECIONADO: amarelo da faixa (era ciano do sistema — ciano é foco, não escolha) */
-.char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);box-shadow:inset 3px 0 0 var(--br-faixa)}
+.char-row.sel,.char-row[aria-selected="true"]{border-color:var(--br-faixa);box-shadow:inset 0 3px 0 var(--br-faixa)}
 .strip-arrow{background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);color:var(--ink-300);cursor:pointer;
-  font-size:14px;line-height:1;padding:6px 0;clip-path:var(--cut-sm);
+  flex:0 0 44px;width:44px;height:var(--char-thumb);font-size:24px;line-height:1;padding:0;clip-path:var(--cut-sm);
   transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
 .strip-arrow:hover,.strip-arrow:focus-visible{color:var(--br-faixa);border-color:var(--br-faixa)}
 /* A FICHA ABRAÇA O CONTEÚDO (align-self:start) em vez de esticar até o rodapé do palco.
@@ -498,11 +650,10 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    painel antes do botão — buraco emoldurado, que é a pior versão de espaço em branco.
    Na referência a coluna do meio termina onde o conteúdo termina. O gap sobe pra s-4
    porque agora ele é o que dá o ritmo entre os blocos. */
-.char-sheet{align-self:start;max-height:100%;
+.char-sheet{grid-area:sheet;align-self:start;max-height:100%;
   display:flex;flex-direction:column;gap:var(--s-4);min-height:0;overflow-y:auto;
   background:rgba(var(--bg-800-rgb),.9);border:1px solid var(--line);padding:var(--s-5);clip-path:var(--cut);
   position:relative;text-align:left;scrollbar-width:thin}
-.char-sheet::before{content:"";position:absolute;left:0;top:0;width:4px;height:64px;background:var(--hazard)}
 /* nome e raridade EMPILHADOS: na referência o "ÉPICO" cai numa linha própria embaixo do
    "PALHAÇO DO MAL" — lado a lado a pastilha disputava a linha do título e apertava o nome */
 .char-info-head{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-2)}
@@ -511,8 +662,11 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 #char-info-blurb{font-size:var(--fs-200);font-weight:500;color:var(--ink-200);line-height:var(--lh-base)}
 #char-voice-caption{min-height:1.35em;font-size:var(--fs-100);font-weight:650;color:var(--sys);line-height:1.35;opacity:0;transition:opacity .16s ease}
 #char-voice-caption.show{opacity:1}
-.char-spec small,.char-attrs-block small{display:block;font-family:var(--mono);font-size:var(--fs-50);
+.char-spec small,.char-attrs-block small{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-3);color:var(--ink-300);text-transform:uppercase;margin-bottom:var(--s-1)}
+.char-spec small::before,.char-attrs-block small::before{content:"";display:block;flex:0 0 auto;
+  width:6px;height:6px;background:var(--aaa-lime);transform:rotate(45deg)}
+html[data-ui="legacy"] .char-spec small::before,html[data-ui="legacy"] .char-attrs-block small::before{display:none}
 .char-spec b{display:block;font-size:var(--fs-300);font-weight:700;letter-spacing:var(--tr-2);
   color:var(--br-faixa);text-transform:uppercase}
 .char-spec p{font-size:var(--fs-100);font-weight:500;color:var(--ink-200);line-height:var(--lh-base);margin-top:2px}
@@ -526,17 +680,27 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
    pro fundo da página. No jogo eram DUAS bordas concêntricas — a caixa e o canvas — e o
    boneco ficava pequeno dentro delas, parecendo item de inventário em vez de o retrato
    da tela. Tirando as duas o canvas ganha os 58→72vh e o personagem vira o assunto. */
-.char-preview-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-2);
-  min-width:0;min-height:0;position:relative;background:none;border:0;padding:0}
+.char-preview-box{grid-area:preview;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s-2);
+  min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;overflow:hidden}
 /* Canvas fluido: cresce com a janela (a altura aperta primeiro em 3:2). Backing 640². */
 #char-preview{flex:0 1 auto;cursor:grab;touch-action:none;
   background:
     radial-gradient(ellipse at 50% 30%,rgba(57,214,224,.10),rgba(0,0,0,0) 62%),
     radial-gradient(ellipse at 50% 100%,rgba(var(--bg-600-rgb),.55),rgba(var(--bg-900-rgb),0) 72%);
-  border:0;width:min(100%,72vh);height:auto;aspect-ratio:1}
+  border:0;width:auto;height:min(72vh,calc(100% - 28px));max-width:100%;max-height:calc(100% - 28px);aspect-ratio:1}
 #char-preview:active{cursor:grabbing}
-#char-preview-static{width:min(100%,72vh);height:min(100%,72vh);object-fit:contain;object-position:center bottom}
-.pv-hints{display:flex;gap:var(--s-5);font-family:var(--mono);font-size:var(--fs-50);
+#char-preview-static{width:auto;height:min(72vh,calc(100% - 28px));max-width:100%;max-height:calc(100% - 28px);object-fit:contain;object-position:center bottom;
+  -webkit-mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%);
+  mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%)}
+/* O loop de vídeo (640×854, do molde) toma o lugar do canvas: mais alto que largo,
+   ancorado embaixo como o retrato estático. `.has-video` esconde os dois rivais. */
+#char-preview-video{width:auto;max-width:100%;height:min(60vh,calc(100% - 28px));max-height:calc(100% - 28px);aspect-ratio:640/854;object-fit:contain;object-position:center bottom;
+  /* fade do preto do estúdio pro wallpaper da tela (pedido do dono, 14/08): as bordas
+     do vídeo dissolvem em máscara em vez de cortar em retângulo */
+  -webkit-mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%);
+  mask-image:radial-gradient(78% 92% at 50% 56%,#000 52%,transparent 96%)}
+.char-preview-box.has-video #char-preview,.char-preview-box.has-video #char-preview-static{display:none}
+.pv-hints{display:flex;flex:0 0 auto;min-height:20px;align-items:center;gap:var(--s-5);font-family:var(--mono);font-size:var(--fs-50);
   letter-spacing:var(--tr-2);color:var(--ink-300)}
 
 /* ---------- settings / howto ---------- */
@@ -601,6 +765,58 @@ body{font-family:var(--font);font-weight:600;color:var(--ink1)}
 .set-tabs{gap:var(--s-2)}
 .set-tab{flex:0 0 auto;padding:var(--s-2) var(--s-4)}
 
+#settings-panel{background:rgba(8,8,10,.58);backdrop-filter:blur(7px) brightness(.35);
+  font-family:var(--aaa-font-body);padding:0}
+html[data-inspect-screen="settings"] #settings-panel{background:linear-gradient(rgba(8,8,10,.72),rgba(8,8,10,.72)),url('/img/map-previews/ferro_velho.jpg') center/cover no-repeat}
+#settings-panel .settings-wrap{width:980px;max-width:calc(100vw - 48px);gap:0;padding:0;
+  background:rgba(16,17,20,.96);border:1px solid #2a2b31;clip-path:var(--aaa-cut-lg)}
+#settings-panel .settings-wrap::before{display:none}
+#settings-panel .set-head{display:flex;align-items:center;justify-content:space-between;padding:22px 32px 0}
+#settings-panel .set-head h2{margin:0;font:400 34px/1 var(--aaa-font-display);letter-spacing:2px;color:#ecebe6}
+#settings-panel .set-close{display:flex;align-items:center;gap:8px;background:none;border:0;color:#5c5d63;
+  font:600 12px/1 var(--aaa-font-body);letter-spacing:2px;cursor:pointer}
+#settings-panel .set-close kbd{font:700 10px/1 var(--font);border:1px solid #33343b;padding:2px 6px}
+#settings-panel .set-tabs{display:flex;gap:28px;border-bottom:1px solid #26272d;padding:8px 32px 0}
+#settings-panel .set-tab{flex:0 0 auto;padding:12px 2px;font:600 15px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63}
+#settings-panel .set-tab.active{font-weight:700;color:#b4d92e;border-bottom-color:#b4d92e}
+#settings-panel .set-cols{display:flex;gap:36px;padding:26px 32px;align-items:flex-start}
+#settings-panel .set-list{flex:1;display:flex;flex-direction:column;gap:18px;min-width:0}
+#settings-panel .set-row{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;padding:0;
+  background:transparent;border:0;color:#c9c9cc;font:600 15px/1.2 var(--aaa-font-body);letter-spacing:2px}
+#settings-panel .set-row:hover{background:transparent;color:#ecebe6}
+#settings-panel .set-row select{width:218px;min-width:190px;padding:9px 34px 9px 14px;background-color:#0d0e11;
+  border:1px solid #2a2b31;color:#b4d92e;font:700 14px/1 var(--aaa-font-body);letter-spacing:2px}
+#settings-panel .set-range{display:flex;align-items:center;gap:14px;flex:1;max-width:250px;color:#b4d92e}
+#settings-panel .set-range input{appearance:none;width:100%;height:4px;margin:0;background:linear-gradient(90deg,#b4d92e 0 var(--set-pct,50%),#26272d var(--set-pct,50%) 100%);border:0}
+#settings-panel .set-range input::-webkit-slider-thumb{appearance:none;width:13px;height:13px;background:#cfe84a;transform:rotate(45deg);border:0;border-radius:0}
+#settings-panel .set-range input::-moz-range-thumb{width:13px;height:13px;background:#cfe84a;transform:rotate(45deg);border:0;border-radius:0}
+#settings-panel .set-range b{width:36px;text-align:right;color:#b4d92e;font:700 16px/1 var(--font);letter-spacing:0}
+#settings-panel .set-toggle{display:flex;border:1px solid #2a2b31;color:#5c5d63}
+#settings-panel .set-toggle input{position:absolute;opacity:0;pointer-events:none}
+#settings-panel .set-toggle b,#settings-panel .set-toggle i{padding:7px 18px;font:600 12px/1 var(--aaa-font-body);letter-spacing:2px;font-style:normal}
+#settings-panel .set-toggle b{background:#b4d92e;color:#131313;font-weight:700}
+#settings-panel .set-toggle:has(input:not(:checked)) b{background:transparent;color:#5c5d63;font-weight:600}
+#settings-panel .set-toggle:has(input:not(:checked)) i{background:#b4d92e;color:#131313;font-weight:700}
+#settings-panel .set-note{margin:0;padding-left:12px;border-left:2px solid #26272d;color:#5c5d63;font-size:13px;line-height:1.5}
+#settings-panel .set-preview-wrap{width:360px;flex:0 0 360px;display:flex;flex-direction:column;gap:8px}
+#settings-panel .set-preview{width:360px;height:200px;min-height:0;border:1px solid #26272d;clip-path:none;
+  background:#101014 url('/img/map-previews/ferro_velho.jpg') center/cover no-repeat}
+#settings-panel .set-preview-caption{font:600 11px/1 var(--font);letter-spacing:2px;color:#5c5d63}
+#settings-panel[data-active-tab="video"] .set-extra{display:none}
+#settings-panel[data-active-tab="audio"] .set-row:not([data-section="audio"]),
+#settings-panel[data-active-tab="gameplay"] .set-row:not([data-section="gameplay"]),
+#settings-panel[data-active-tab="controls"] .set-row:not([data-section="controls"]){display:none}
+#settings-panel:not([data-active-tab="video"]) .set-note{display:none}
+#settings-panel .set-actions{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #26272d;padding:18px 32px 22px}
+#settings-panel .set-actions>div{display:flex;align-items:center;gap:12px}
+#settings-panel .set-secondary{border:1px solid #2a2b31;background:transparent;padding:9px 20px;color:#9a9ba1;
+  font:600 13px/1 var(--aaa-font-body);letter-spacing:2px;cursor:pointer}
+#settings-panel .set-apply,#settings-panel .set-save{transform:skewX(-8deg);padding:11px 30px;cursor:pointer;border:1px solid #33343b;background:#1a1b20}
+#settings-panel .set-save{padding:11px 34px;border:0;background:linear-gradient(180deg,#cfe84a,#b4d92e)}
+#settings-panel .set-apply span,#settings-panel .set-save span{display:block;transform:skewX(8deg);font:400 18px/1 var(--aaa-font-display);letter-spacing:2px;color:#ecebe6}
+#settings-panel .set-save span{color:#131313}
+@media(max-width:900px){#settings-panel .set-preview-wrap{display:none}#settings-panel .set-cols{padding:20px}.set-head{padding-left:20px;padding-right:20px}}
+
 /* ---------- pause ---------- */
 /* Fundo translúcido em vez do gradiente opaco de .screen: a partida pausada continua
    visível atrás (o canvas segue renderizando congelado) — o jogador não perde o contexto. */
@@ -642,6 +858,12 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
+.support-panel{max-width:560px}
+.support-choice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.support-region{font-size:12px!important;padding:10px 14px!important}
+.support-region.active{border-color:var(--yellow);color:var(--yellow)}
+.support-primary{display:block;text-decoration:none;text-align:center;margin:12px 0}
+.support-note{min-height:34px;color:var(--ink3);font-size:12px;line-height:1.5}
 
 /* ---------- HUD ---------- */
 /* MARGENS DO HUD — desvio 2 do BUG-05, medido e não achado. `ref-ui.py` dá, no consenso
@@ -685,11 +907,11 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    o HUD permanente de que o dono falou. */
 /* contorno forte só nos ALGARISMOS grandes — é onde a leitura acontece a 2m da tela */
 #hp-num,#ammo,#round-time{paint-order:stroke fill;-webkit-text-stroke:3px rgba(0,0,0,.5)}
-#radar{position:absolute;top:36px;left:68px;opacity:.92;border-radius:50%;
-  box-shadow:0 0 0 1px rgba(120,220,220,.10),0 2px 10px rgba(0,0,0,.45)}
-#radio-log{position:absolute;top:194px;left:68px;font-size:13px;color:var(--cs);text-shadow:var(--sh-hud)}
+#radar{position:absolute;top:16px;left:20px;opacity:.95;
+  box-shadow:0 2px 10px rgba(0,0,0,.45)}   /* quadrado com moldura desenhada no canvas (tela 05) */
+#radio-log{position:absolute;top:174px;left:20px;font-size:13px;color:var(--cs);text-shadow:var(--sh-hud)}
 .radio-line{animation:kfFade 4.2s forwards;margin-bottom:2px}
-#radio-menu{position:absolute;top:222px;left:68px;background:rgba(11,17,22,.92);border:1px solid var(--line);padding:10px 16px;min-width:220px}
+#radio-menu{position:absolute;top:198px;left:20px;background:rgba(11,17,22,.92);border:1px solid var(--line);padding:10px 16px;min-width:220px}
 .radio-title{color:var(--yellow);font-size:12px;letter-spacing:2px;margin-bottom:6px;border-bottom:1px solid var(--line);padding-bottom:4px}
 .radio-item{color:var(--cs);font-size:14px;padding:2px 0}
 /* Mira: FORA do sistema de cor (não é "sistema", nem "objetivo", nem "crítico").
@@ -780,7 +1002,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 /* UM BLOCO SÓ, não três chips soltos (referência 05_hud_ingame.png): lá o topo é uma
    peça contínua — tarja do time, placar, relógio, placar, tarja do time. Com gap s-5 os
    três pedaços boiavam separados por ~40px e nada dizia que eram o mesmo painel. */
-#hud-top{position:absolute;top:36px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:var(--s-2)}
+#hud-top{position:absolute;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:2px}
 /* SEM CAIXA (pedido do dono). O time continua legível por COR do texto + o trilho de 3px
    na borda externa, que é marca de time sem virar moldura. O contorno do --sh-hud é o
    que segura o contraste sobre parede branca agora que não há mais fundo. */
@@ -788,13 +1010,31 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
   padding:var(--s-1) var(--s-3);text-shadow:var(--sh-hud)}
 .ts-p{color:#ff9a9a;border-left:3px solid var(--team-e)}
 .ts-b{color:#a9f0b6;border-right:3px solid var(--team-b)}
-/* A plaquinha do bloco central saiu junto: era rgba .72 + chanfro pra segurar o "1:39"
-   (branco) sobre a parede branca do praca_poderes, onde dava ~1,1:1. Quem segura agora é o
-   contorno do glifo (--sh-hud + text-stroke). O padding vertical FICA: ele entra na soma
-   de altura documentada acima, que é o que mantém o #ctf-hud fora do "RODADA 1". */
-#hud-mid{text-align:center;padding:1px var(--s-3) 2px}
-#round-time{font-size:var(--fs-700);line-height:var(--lh-tight);font-weight:700;color:var(--ink-100);
-  font-family:var(--font);font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud)}
+
+/* Topo sem placa: o contorno dos glifos preserva a leitura sobre o cenário. */
+#hud-top .team-score{
+  display:flex;align-items:center;gap:8px;
+  background:transparent;border-radius:0}
+#hud-top .team-score b{font-family:var(--aaa-font-display);font-size:30px;font-weight:400;line-height:1;
+  paint-order:stroke fill;-webkit-text-stroke:1px rgba(0,0,0,.85)}
+/* A arte mora aqui e não no JS: assim o laço de quadro só troca um data-attribute,
+   sem tocar em <img> nem em style inline. */
+.ts-crest{
+  width:20px;height:20px;flex:0 0 20px;display:block;
+  background-size:contain;background-repeat:no-repeat;background-position:center}
+.ts-crest[data-f="b"]{background-image:url('/img/brasoes/b.png')}
+.ts-crest[data-f="c"]{background-image:url('/img/brasoes/c.png')}
+.ts-crest[data-f="e"]{background-image:url('/img/brasoes/e.png')}
+.ts-crest[data-f="f"]{background-image:url('/img/brasoes/f.png')}
+.ts-crest[data-f="u"]{background-image:url('/img/brasoes/u.png')}
+/* A sigla sai do olho mas NÃO do documento: o brasão diz o time para quem vê, e
+   quem usa leitor de tela não pode ficar com um "0" sem dono. */
+.so-leitor{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;border:0}
+#hud-mid{text-align:center;padding:1px var(--s-3) 2px;background:transparent}
+#round-time{font-size:var(--fs-700);line-height:var(--lh-tight);font-weight:700;color:var(--br-faixa);
+  font-family:var(--aaa-font-display);font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud);
+  paint-order:stroke fill;-webkit-text-stroke:1px rgba(0,0,0,.85)}
 /* CAPTURA: o maior tipo do topo mostra BANDEIRAS, não segundo. O `.ctf` sobrou de quando
    o modo tinha relógio e o relógio precisava encolher; hoje o #round-time do CTF já é o
    placar de bandeiras e usa o corpo cheio. A regra fica porque o kill-switch ?vmmat/?pace
@@ -828,7 +1068,8 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .kf-row{display:flex;align-items:center;gap:var(--s-2);background:rgba(var(--bg-900-rgb),.82);padding:5px var(--s-3);
   border-left:2px solid var(--line);clip-path:var(--cut-sm);animation:kfFade 4.5s forwards;
   text-shadow:var(--sh-text)}
-.kf-row .kf-n{font-weight:700;letter-spacing:var(--tr-tight);padding:1px 7px;border-radius:var(--r-1)}   /* bg/color inline: tint do time + texto na cor do time */
+.kf-row .kf-n{font-weight:700;letter-spacing:var(--tr-tight);padding:1px 7px;clip-path:var(--cut-sm)}   /* bg/color inline: tint do time + texto na cor do time */
+html[data-ui="legacy"] .kf-row .kf-n{clip-path:none;border-radius:var(--r-1)}
 .kf-row .kf-w{color:var(--ink-300);font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);text-transform:uppercase}
 .kf-row .kf-ic{color:var(--ink-100);opacity:1;flex:0 0 auto}   /* ícone da arma: branco cheio (era .95 sobre céu claro) */
 .kf-row .kf-skull{color:var(--am)}                              /* headshot = conquista → âmbar, não mais um branco igual ao resto */
@@ -888,15 +1129,20 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
   font-size:var(--fs-100);font-weight:700;letter-spacing:var(--tr-1);text-transform:uppercase}
 .weapon-amount{font-family:var(--mono);font-size:var(--fs-100);color:var(--cs);
   font-variant-numeric:tabular-nums;white-space:nowrap}
-/* MUNIÇÃO EM CIMA, NOME DA ARMA EMBAIXO (referência 05: "30 | 90" e só então "AK-47").
-   O DOM vem na ordem contrária e é escrito pelo game.js — `column-reverse` inverte a
-   leitura sem tocar em uma linha de JS, a mesma manobra que virou o placar da tela 08. */
 #hud-bottom-right{position:absolute;right:48px;bottom:36px;text-align:right;
-  display:flex;flex-direction:column-reverse;align-items:flex-end}
+  display:flex;flex-direction:column;align-items:flex-end}
+#ammo-weapon-art{display:none;width:min(220px,18vw);height:82px;object-fit:contain;object-position:right bottom;
+  filter:grayscale(1) brightness(2.1) contrast(1.25) drop-shadow(0 0 1px #fff) drop-shadow(0 2px 2px rgba(0,0,0,.95));
+  opacity:.96;pointer-events:none}
 #weapon-name{font-size:var(--fs-200);font-weight:700;letter-spacing:var(--tr-2);color:var(--ink-200);
   margin-bottom:var(--s-1);text-transform:uppercase;text-shadow:var(--sh-hud)}
-#ammo{font-size:var(--fs-800);line-height:var(--lh-tight);font-weight:700;color:var(--ink-100);
-  font-family:var(--font);font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud)}
+#ammo{font-family:var(--aaa-font-display);font-size:var(--fs-800);line-height:var(--lh-tight);font-weight:400;color:var(--ink-100);
+  font-variant-numeric:tabular-nums;text-shadow:var(--sh-hud)}
+#ammo-bars{display:grid;grid-template-columns:repeat(var(--ammo-bars,1),minmax(2px,4px));justify-content:end;
+  gap:2px;min-height:15px;margin:2px 0 var(--s-1)}
+#ammo-bars i{display:block;width:4px;height:14px;background:rgba(255,255,255,.18);box-shadow:0 1px 2px rgba(0,0,0,.85)}
+#ammo-bars i.on{background:var(--ink-100);box-shadow:0 0 5px rgba(255,255,255,.42)}
+#ammo-bars i.low{background:var(--crit)}
 #ammo-mag{transition:color var(--t-fast)}
 #ammo-mag.empty{color:var(--crit)}
 .ammo-sep{color:var(--ink-400);margin:0 var(--s-2);font-size:var(--fs-600)}
@@ -1000,68 +1246,30 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    parte tag e número em pesos diferentes; aqui os dois moram no MESMO <b>, então o par
    inteiro cresce e ganha a cor do time — a hierarquia vem do TAMANHO (fs-800 contra
    fs-100 do rótulo = razão 4,7, dentro da faixa 3,3-5,0 medida na referência). */
-#scoreboard h3,#scoreboard .sb-heads,#scoreboard table{width:min(1280px,100%)}
+#scoreboard h3,#scoreboard table{width:min(1280px,100%)}
 #scoreboard h3{display:flex;flex-direction:column;align-items:center;gap:var(--s-2);
   margin-bottom:var(--s-5);text-transform:uppercase;flex:0 0 auto}
 #scoreboard h3 .sb-label{letter-spacing:var(--tr-4);font-weight:700;color:var(--ink-300);font-size:var(--fs-200)}
 #scoreboard h3 .sb-score{display:flex;align-items:center;gap:clamp(var(--s-5),4vw,84px);
-  font-family:var(--font);font-weight:700;line-height:var(--lh-tight);
+  font-family:var(--aaa-font-display);font-weight:400;line-height:var(--lh-tight);
   font-size:clamp(38px,6vw,78px);font-variant-numeric:tabular-nums;letter-spacing:var(--tr-2)}
 #scoreboard h3 .sb-score i{font-style:normal;color:var(--ink-200);font-size:clamp(20px,3.6vh,40px);
   letter-spacing:var(--tr-3);align-self:center;font-weight:700}
 #scoreboard h3 .sb-score b.tp{color:#ff8a8a}
 #scoreboard h3 .sb-score b.tb{color:#b79bff}   /* violeta do time B na referência (134,94,178) */
 
-/* Grade compartilhada pelos rótulos e pelas linhas. Os dois cabeçalhos visíveis e cada
-   <tr> são grades INDEPENDENTES, então nenhuma coluna pode ser `auto` (largura de conteúdo
-   divergiria entre esquerda e direita e os rótulos sairiam do lugar): todas são fracionárias
-   ou em `em`. O CTF acrescenta CAP. — o estado real mora no #sb-cap-h, que o game.js liga
-   e desliga por id; o `:has()` abaixo espelha isso nos rótulos duplicados sem tocar em JS. */
-/* A coluna PERSONAGEM sai da GRADE (fica só no <thead> pro leitor de tela): pra bot,
-   `c.name` e `c.def.name` são a MESMA string, então ela era duplicata em 7 de 8 linhas —
-   era ela que fazia a linha parecer poluída ao lado da referência, que mostra retrato +
-   nome e mais nada de texto. */
-#scoreboard{--sbc:minmax(0,1fr) 2.8em 2.8em;--sb-gap:clamp(var(--s-5),3.4vw,64px);
+#scoreboard{--sb-gap:clamp(var(--s-5),3.4vw,64px);
   --sb-rh:clamp(32px,5.2vh,54px);--sb-rg:5px}
-#scoreboard:has(#sb-cap-h:not(.hidden)){--sbc:minmax(0,1fr) 2.8em 2.8em 3.6em}
-#scoreboard:has(#sb-cap-h.hidden) .sb-cap{display:none}
-#scoreboard .sb-head span:nth-child(2),#scoreboard td:nth-child(2){display:none}
-#scoreboard .sb-heads{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--sb-gap);flex:0 0 auto}
-#scoreboard .sb-head{display:grid;grid-template-columns:var(--sbc);align-items:end;gap:0 var(--s-4);
-  font-size:var(--fs-200);letter-spacing:var(--tr-2);color:var(--ink-300);font-weight:700;
-  text-transform:uppercase;padding:0 var(--s-4) var(--s-2)}
-#scoreboard .sb-head span:nth-child(n+3){text-align:right}
-/* SEM `width:100%` aqui: a largura vem da regra de teto (min(1000px,100%)) que a .sb-heads
-   também usa. Um `width:100%` neste bloco vinha DEPOIS e a sobrescrevia — os rótulos ficavam
-   numa grade de 1000px e as faixas numa de 1414px, e as colunas saíam do lugar. */
 #scoreboard table{display:block;font-size:var(--fs-500);font-weight:700;
   flex:0 1 auto;min-height:0;overflow:auto;margin-top:var(--s-2)}
 #scoreboard thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}  /* só p/ leitor de tela */
-/* DUAS COLUNAS SEM MEXER NO game.js: ele emite uma lista única de <tr class="tp|tb">.
-   `dense` é obrigatório — sem ele uma sequência tp,tp,tb,tb deixa buraco e desalinha as
-   colunas (o cursor de auto-placement não volta pra trás). */
-#scoreboard tbody{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:row dense;
-  grid-auto-rows:var(--sb-rh);column-gap:var(--sb-gap);row-gap:var(--sb-rg);align-content:start;
-  /* zebra + escurecimento vertical pintados NO FUNDO, e as faixas de time entram por cima
-     com alfa — é assim que a mesma cor de time dá dois tons por linha, como na referência,
-     sem precisar contar linhas POR TIME (o CSS não sabe fazer "nth de uma classe"). */
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.02) 0%,rgba(0,0,0,.30) 100%),
-    repeating-linear-gradient(180deg,
-      rgba(255,255,255,.07) 0 var(--sb-rh),
-      rgba(0,0,0,0) var(--sb-rh) calc((var(--sb-rh) + var(--sb-rg)) * 2))}
-#scoreboard tbody tr.tp{grid-column:1}
-#scoreboard tbody tr.tb{grid-column:2}
-#scoreboard tbody tr{display:grid;grid-template-columns:var(--sbc);align-items:center;gap:0 var(--s-4);
-  padding:0 var(--s-4);border-left:3px solid transparent}
+#scoreboard td:nth-child(2){display:none}
 #scoreboard td{display:block;color:var(--ink-100);letter-spacing:var(--tr-1);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard td:first-child{font-weight:700;text-transform:uppercase}
-#scoreboard td:nth-child(n+3){text-align:right;font-family:var(--font);font-weight:700;
+#scoreboard td:nth-child(n+3){text-align:center;font-family:var(--aaa-font-display);font-weight:400;
   font-size:clamp(18px,2.5vh,26px);font-variant-numeric:tabular-nums}
 /* Faixa TINGIDA pelo time, com alfa pra deixar a zebra do fundo aparecer. */
-#scoreboard tbody tr.tp{background:rgba(224,50,50,.22);border-left-color:rgba(224,50,50,.6)}
-#scoreboard tbody tr.tb{background:rgba(123,47,247,.24);border-left-color:rgba(123,47,247,.65)}
 #scoreboard tbody tr:hover{filter:brightness(1.25)}
 #scoreboard tr.me{box-shadow:inset 0 0 0 1px rgba(255,201,63,.45)}
 #scoreboard tr.me td:first-child{color:var(--br-faixa)}
@@ -1082,9 +1290,15 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    aqui (mesma especificidade, depois no arquivo). */
 #scoreboard .sb-cols{display:grid;grid-template-columns:1fr 1fr;column-gap:var(--sb-gap);
   width:min(1280px,100%);flex:0 1 auto;min-height:0}
-#scoreboard .sb-col{display:flex;flex-direction:column;min-height:0}
-#scoreboard .sb-chead{display:flex;align-items:center;gap:var(--s-3);padding:0 var(--s-4) var(--s-2);
-  font-weight:700;letter-spacing:var(--tr-2);font-size:var(--fs-400);text-transform:uppercase}
+#scoreboard .sb-col{--sb-grid:minmax(0,1fr) minmax(72px,5.4em) minmax(78px,6em);
+  display:flex;flex-direction:column;min-height:0}
+#scoreboard .sb-col.ctf{--sb-grid:minmax(0,1fr) minmax(72px,5.4em) minmax(78px,6em) 4.2em}
+#scoreboard .sb-chead{display:grid;grid-template-columns:var(--sb-grid);
+  align-items:center;gap:0 var(--s-4);padding:0 var(--s-4) var(--s-2);
+  font-weight:700;letter-spacing:var(--tr-2);font-size:var(--fs-200);text-transform:uppercase}
+#scoreboard .sb-chead>span:not(.sb-team){color:var(--ink-300);text-align:center}
+#scoreboard .sb-team{display:flex;align-items:center;gap:var(--s-3);min-width:0;font-size:var(--fs-400)}
+#scoreboard .sb-team b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scoreboard .sb-chead img{height:36px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
 #scoreboard .sb-col.tp .sb-chead{color:#ff8a8a}
 #scoreboard .sb-col.tb .sb-chead{color:#b79bff}
@@ -1093,14 +1307,56 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 #scoreboard .sb-col tbody{display:grid;grid-template-columns:1fr;grid-auto-rows:var(--sb-rh);
   row-gap:var(--sb-rg);align-content:start;background:none}
 #scoreboard .sb-col tbody tr{grid-column:auto;display:grid;
-  grid-template-columns:minmax(0,1fr) 2.8em 2.8em;align-items:center;gap:0 var(--s-4);
+  grid-template-columns:var(--sb-grid);align-items:center;gap:0 var(--s-4);
   padding:0 var(--s-4);border-left:3px solid transparent}
-#scoreboard .sb-col.ctf tbody tr{grid-template-columns:minmax(0,1fr) 2.8em 2.8em 3.6em}
 #scoreboard .sb-col.tp tbody tr{background:rgba(224,50,50,.22);border-left-color:rgba(224,50,50,.6)}
 #scoreboard .sb-col.tb tbody tr{background:rgba(123,47,247,.24);border-left-color:rgba(123,47,247,.65)}
 /* flex:0 0 auto porque o #scoreboard virou coluna flex: sem isso o canvas do mascote
    (kill-switch ?dolly=1) seria espremido pelo `flex-shrink` padrão. */
 #dollynho-dance{display:block;flex:0 0 auto;margin:12px auto 0;width:240px;height:190px}
+
+#scoreboard{position:absolute;inset:0;display:block;padding:0;overflow:hidden;
+  font-family:var(--aaa-font-body);background:radial-gradient(ellipse at 50% 40%,rgba(8,8,10,.5) 0%,rgba(8,8,10,.88) 100%);backdrop-filter:blur(5px) brightness(.32);box-shadow:none}
+#scoreboard h3{position:absolute;left:0;right:0;top:44px;width:auto;margin:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+#scoreboard h3 .sb-clock{font:600 13px/1 var(--font);letter-spacing:3px;color:#9a9ba1}
+#scoreboard h3 .sb-clock em{font-style:normal;color:#b4d92e}
+#scoreboard h3 .sb-score{display:flex;align-items:center;gap:26px;font-family:var(--aaa-font-display);font-weight:400;font-size:40px;line-height:1;letter-spacing:2px}
+#scoreboard h3 .sb-score b{display:flex;align-items:center;gap:14px;font:400 40px/1 var(--aaa-font-display);color:#ecebe6}
+#scoreboard .sb-score .sb-crest{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 3px 8px rgba(0,0,0,.65))}
+#scoreboard h3 .sb-score-num{font:700 44px/1 var(--font)}
+#scoreboard h3 .tp .sb-score-num{color:#e0762a}#scoreboard h3 .tb .sb-score-num{color:#8258d8}
+#scoreboard h3 .sb-vs{font:400 20px/1 var(--aaa-font-display);color:#5c5d63}
+#scoreboard h3 .sb-diamond{display:block;width:14px;height:14px;flex:0 0 14px;transform:rotate(45deg);font-size:0;background:#e0762a}
+#scoreboard h3 .tb .sb-diamond{background:#8258d8}
+#scoreboard h3 .sb-result,#scoreboard h3 .sb-result-sub{display:none}
+#scoreboard .sb-cols{position:absolute;left:64px;right:64px;top:190px;width:auto;display:grid;grid-template-columns:1fr 1fr;column-gap:32px;min-height:0}
+#scoreboard .sb-col{--sb-grid:minmax(0,1fr) 46px 46px 72px 52px;display:flex;flex-direction:column;
+  min-height:0;padding:6px 0;background:rgba(13,14,17,.88);border:1px solid #26272d}
+#scoreboard .sb-col.ctf{--sb-grid:minmax(0,1fr) 42px 42px 66px 48px 46px}
+#scoreboard .sb-col.tp{border-top:2px solid #e0762a}#scoreboard .sb-col.tb{border-top:2px solid #8258d8}
+#scoreboard .sb-chead{display:grid;grid-template-columns:var(--sb-grid);align-items:center;gap:0;padding:8px 0;
+  border-bottom:1px solid #26272d;font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63}
+#scoreboard .sb-chead>span{padding:0 10px;text-align:right;color:#5c5d63}
+#scoreboard .sb-chead .sb-team{text-align:left;padding-left:16px;font:700 11px/1 var(--aaa-font-body);color:#5c5d63}
+#scoreboard .sb-chead .sb-crest{width:24px;height:24px;object-fit:contain;flex:0 0 24px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
+#scoreboard .sb-col table{display:block;width:100%;margin:0;overflow:visible;font-family:var(--aaa-font-body)}
+#scoreboard .sb-col tbody{display:block;background:none}
+#scoreboard .sb-col tbody tr{display:grid;grid-template-columns:var(--sb-grid);align-items:center;gap:0;min-height:42px;padding:0;
+  background:transparent;border:0;border-left:2px solid transparent}
+#scoreboard .sb-col tbody tr.me{background:rgba(180,217,46,.07);border-left-color:#b4d92e;box-shadow:none}
+#scoreboard .sb-col td,#scoreboard .sb-col td:nth-child(2){display:block;padding:9px 10px;text-align:right;
+  color:#ecebe6;font:600 16px/1 var(--font);letter-spacing:0}
+#scoreboard .sb-col td:first-child{padding-left:16px;text-align:left;font:600 16px/1 var(--aaa-font-body);letter-spacing:1px;text-transform:none}
+#scoreboard .sb-col td.sb-points{color:#b4d92e;font-weight:700}
+#scoreboard .sb-col td.sb-ping{padding-right:16px;color:#5c5d63;font-size:14px}
+#scoreboard .sb-col td:nth-child(3){color:#9a9ba1}
+#scoreboard tbody tr:first-of-type::before{display:none}
+#scoreboard .sb-foot{position:absolute;left:50%;right:auto;bottom:32px;transform:translateX(-50%);display:flex;gap:18px;
+  font:600 12px/1 var(--font);letter-spacing:2px;color:#5c5d63}
+#scoreboard .sb-foot b{color:#9a9ba1}
+#scoreboard .sb-center{position:absolute;inset:0 64px;display:flex;flex-direction:column;justify-content:center;gap:48px}
+#scoreboard .sb-center>h3{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
+#scoreboard .sb-center>.sb-cols{position:static;left:auto;right:auto;top:auto;width:100%;margin:0}
 
 /* ---------- match end ----------
    Três blocos com hierarquia declarada, em vez de um painel único com tudo do mesmo
@@ -1126,24 +1382,28 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
    voltar hex solto ao arquivo. */
 #match-end{justify-content:stretch;align-items:stretch;padding:0}
 #match-end::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--lambe);opacity:.6}
-.me-wrap{position:relative;gap:0;display:grid;grid-template-columns:minmax(0,clamp(420px,46%,720px)) minmax(0,1fr);
+.me-wrap{position:relative;isolation:isolate;gap:0;display:grid;grid-template-columns:minmax(0,clamp(420px,46%,720px)) minmax(0,1fr);
   align-items:stretch;width:100%;height:100%;padding:10% 0 7% 4.3%}
 /* Ritmo da referência: título/sub/cartão empilhados no terço de cima com respiro CONSTANTE,
    e as ações ancoradas no rodapé da coluna (`margin-top:auto`). `space-between` puro abria um
    vão morto entre o sub e o cartão quando a partida rende só 3 linhas de estatística. */
-.me-col{display:flex;flex-direction:column;align-items:stretch;
+.me-col{position:relative;z-index:2;display:flex;flex-direction:column;align-items:stretch;
   gap:clamp(var(--s-5),3.4vh,var(--s-7));min-width:0}
 .me-actions{margin-top:auto}
-/* Campo atmosférico onde mora a arte do vencedor na referência. Sem o retrato ele existe
-   pra segurar a composição em duas metades — sem ele o conteúdo à esquerda lê como
-   desalinhado, e não como ancorado. */
-.me-hero{position:relative;align-self:stretch;pointer-events:none;
-  background:radial-gradient(58% 70% at 62% 46%,rgba(var(--bg-700-rgb),.85) 0%,rgba(var(--bg-900-rgb),0) 72%),
-             linear-gradient(90deg,rgba(var(--bg-900-rgb),.9) 0%,rgba(var(--bg-900-rgb),0) 26%)}
+/* O arquivo já é o recorte alpha do personagem inteiro. O palco começa depois da
+   coluna de dados e encosta a arte à direita sem cover, máscara ou janela fotográfica. */
+.me-hero{position:absolute;inset:2.5% 0 0 44%;z-index:1;pointer-events:none;overflow:visible;
+  background:var(--me-art,none) right bottom/contain no-repeat}
+#match-end.lose .me-hero{filter:saturate(.48) brightness(.72);opacity:.9}
 .me-verdict{display:flex;flex-direction:column;align-items:flex-start;gap:var(--s-2);text-align:left}
-#match-title{font-size:clamp(46px,12vh,132px);font-weight:700;letter-spacing:clamp(2px,.4vw,7px);
+/* peso 400: Bebas Neue só existe em Regular (@font-face único, linha 6). Pedir 700
+   fazia o browser engrossar o contorno sozinho — e este é o MAIOR texto do jogo
+   (até 132px), onde o borrão do falso negrito mais aparece. Mesmo defeito já
+   corrigido no `.aaa-cta`. */
+#match-title{font-family:var(--aaa-font-display);font-size:clamp(46px,12vh,132px);font-weight:400;letter-spacing:clamp(2px,.4vw,7px);
   text-transform:uppercase;line-height:var(--lh-tight);
   animation:matchTitleIn .55s cubic-bezier(.16,1,.3,1) both}
+html[data-ui="legacy"] #match-title{font-family:var(--font)}
 #match-end.win #match-title{color:var(--vitoria);text-shadow:0 0 40px rgba(73,168,70,.4)}
 #match-end.lose #match-title{color:var(--red);text-shadow:0 0 34px rgba(224,50,50,.3)}
 @keyframes matchTitleIn{0%{opacity:0;transform:scale(1.25);letter-spacing:34px}
@@ -1167,9 +1427,6 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
   font-size:clamp(13px,2vh,21px);font-weight:700;letter-spacing:var(--tr-2);
   text-transform:uppercase;color:var(--ink-300)}
 #match-stats > div + div{border-top:1px solid rgba(255,255,255,.07)}
-/* o main.js (submitNote) pendura um aviso de "stats não enviados" aqui — é um div SEM <b>,
-   e com `row-reverse` + `space-between` um item só encostaria na DIREITA. Volta pro fluxo. */
-#match-stats > div:not(:has(> b)){flex-direction:row;text-transform:none;letter-spacing:var(--tr-tight)}
 #match-stats > div > b{font-size:clamp(20px,3.3vh,36px);line-height:var(--lh-tight);
   color:var(--ink-100);font-variant-numeric:tabular-nums;letter-spacing:var(--tr-tight);
   white-space:nowrap}
@@ -1190,12 +1447,9 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 /* ink-300 e não ink-400: o sistema diz que ink-400 é régua decorativa, nunca texto */
 .mes-x{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--ink-300);
   flex:0 0 auto;text-transform:uppercase}
-/* SEU DESEMPENHO: o bloco do jogador é o único com trilho de sinaleiro — é o que ele
-   veio ver. Números tabulares e rótulo embaixo, nunca na mesma linha (era isso que
-   quebrava em "9 kills de r"). */
+/* SEU DESEMPENHO: números tabulares e rótulo embaixo, nunca na mesma linha. */
 .me-you{width:100%;background:var(--panel);border:1px solid var(--line);clip-path:var(--cut);
   padding:var(--s-4) var(--s-5);position:relative}
-.me-you::before{content:"";position:absolute;left:0;top:14px;width:4px;height:44px;background:var(--hazard)}
 .mey-h{display:block;font-size:var(--fs-100);font-weight:700;letter-spacing:var(--tr-3);
   color:var(--ink-300);text-transform:uppercase;margin-bottom:var(--s-3);text-align:center}
 .mey-h b{color:var(--br-faixa)}
@@ -1242,14 +1496,14 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 
 /* ============ MENU (Coro Solto) — wallpaper + lista de texto à esquerda ============ */
 #main-menu.cs-screen{display:block;padding:0;gap:0;overflow:hidden}
-/* ÂNCORA À ESQUERDA, não ao centro: os wall-* são 1672×941 (16:9) e o quadro do dono é
-   3:2, então `cover` escala pela ALTURA e sobra 284px de largura. Com `center` o corte
-   comia 142px de cada lado — e o logo do jogo está pintado colado na borda ESQUERDA do
-   wallpaper, então "CORO SOLTO" entrava em cena como "ORO OLTO" (conferido na captura
-   1536×1024). A referência 01_menu_principal.png mostra o logo INTEIRO dentro da coluna.
-   Ancorando à esquerda o corte inteiro (15,6%) vai pro lado direito, onde só há céu e
-   bandeira — o personagem da referência mora em ~65-90% da largura e continua no quadro. */
-.cs-wallpaper{position:absolute;inset:0;z-index:0;background:var(--bg-900) left center/cover no-repeat}
+.cs-wallpaper{position:absolute;inset:0;z-index:0;overflow:hidden;isolation:isolate;background:var(--bg-900)}
+.cs-wallpaper::before,.cs-wallpaper::after{content:"";position:absolute;pointer-events:none;background-image:var(--menu-wall);background-position:center;background-repeat:no-repeat}
+.cs-wallpaper::before{inset:-24px;z-index:0;background-size:cover;filter:blur(18px) brightness(.48) saturate(.72)}
+.cs-wallpaper::after{inset:0;z-index:1;background-size:contain}
+@media (min-aspect-ratio:37/25) and (max-aspect-ratio:38/25){
+  .cs-wallpaper::before,.cs-wallpaper::after{background-image:var(--menu-wall-3x2,var(--menu-wall))}
+  .cs-wallpaper::after{background-size:cover}
+}
 /* Scrim que NASCE na borda da tela e morre em nada (CS2/Valorant). O texto passa a
    depender do scrim, não de um card — por isso o painel de nav pode perder a caixa.
 
@@ -1290,12 +1544,10 @@ html[data-ui="legacy"] .cs-vignette{
   padding:var(--s-4) var(--s-8) var(--s-4) var(--s-4);border:0;
   background:linear-gradient(90deg,rgba(var(--bg-900-rgb),.92) 0%,rgba(var(--bg-900-rgb),.86) 60%,
              rgba(var(--bg-900-rgb),.60) 86%,rgba(var(--bg-900-rgb),0) 100%)}
-/* único elemento com aresta = o trilho. Faixa amarelo/preto de sinaleiro de rua:
-   é a identidade BR entrando por linguagem visual de via pública, não por bandeirinha. */
-.cs-menu::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--hazard)}
-.cs-menu-label{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-4);
+.cs-menu-label{font-family:var(--aaa-font-body);font-weight:600;font-size:var(--fs-100);letter-spacing:var(--tr-4);
   color:var(--ink-300);text-transform:uppercase;padding:0 0 var(--s-2) var(--s-3);margin-bottom:var(--s-1);
   border-bottom:1px solid rgba(255,255,255,.07)}
+html[data-ui="legacy"] .cs-menu-label{font-family:var(--mono);font-weight:400;font-size:var(--fs-50)}
 .cs-item{appearance:none;background:none;border:0;border-left:3px solid transparent;
   color:var(--ink-200);font-family:var(--font);font-weight:700;
   font-size:clamp(19px,2.7vh,27px);letter-spacing:var(--tr-3);text-transform:uppercase;text-align:left;
@@ -1323,10 +1575,17 @@ html[data-ui="legacy"] .cs-vignette{
    Quem tiver aria-current leva a barra; sem ninguém marcado ela mora na PRIMEIRA entrada
    (SINGLE PLAYER = o JOGAR da referência). O `:not(:has(...))` é o que garante UMA barra
    só — sem ele, abrir CONFIGURAÇÕES deixava duas barras cheias na tela ao mesmo tempo. */
+/* `> .cs-item` (filho DIRETO) e não descendente: desde que JOGAR abriu um submenu,
+   o primeiro botão de dentro de `.cs-sub` também casava `:first-of-type` e a tela
+   ficava com DUAS barras cheias — exatamente o defeito que o comentário acima diz
+   que o `:not(:has())` existe para impedir. */
 .cs-item[aria-current="true"],
-.cs-menu:not(:has(.cs-item[aria-current="true"])) .cs-item:first-of-type{
+.cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-item:first-of-type{
   color:var(--bg-900);background:var(--br-faixa);border-left-color:var(--br-faixa);
-  text-shadow:none}
+  text-shadow:none;clip-path:var(--cut-sm)}
+html[data-ui="legacy"] .cs-item[aria-current="true"],
+html[data-ui="legacy"] .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-item:first-of-type{
+  clip-path:none}
 .cs-item[aria-current="true"] .cs-tick,
 .cs-menu:not(:has(.cs-item[aria-current="true"])) .cs-item:first-of-type .cs-tick{
   width:22px;opacity:1;transform:none;margin-right:6px;color:var(--bg-900)}
@@ -1468,16 +1727,21 @@ html[data-ui="legacy"] .cs-vignette{
 /* splash agora fala a língua da key art: brilho quente (tinta/poeira), textura de papel
    colado — nada de glow ciano de terminal, que era a 2ª marca do jogo em 3 segundos */
 #boot-splash{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(180deg,var(--bg-800),var(--bg-900));
-  background-size:cover;background-position:center;background-repeat:no-repeat;
+  background-color:var(--bg-900);isolation:isolate;overflow:hidden;
   transition:opacity .45s ease;cursor:pointer}
-/* scrim escuro pra legibilidade da msg sobre o wallpaper loading-* (setado via JS) */
-#boot-splash::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(var(--bg-900-rgb),.5) 0%,rgba(var(--bg-900-rgb),.32) 45%,rgba(var(--bg-900-rgb),.84) 100%)}
+#boot-splash::before,#load-overlay::before{content:"";position:absolute;inset:-24px;z-index:0;pointer-events:none;
+  background-image:var(--loading-wall);background-size:cover;background-position:center;background-repeat:no-repeat;
+  filter:blur(18px) brightness(.5) saturate(.75)}
+#boot-splash::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(180deg,rgba(var(--bg-900-rgb),.5) 0%,rgba(var(--bg-900-rgb),.32) 45%,rgba(var(--bg-900-rgb),.84) 100%),var(--loading-wall);
+  background-size:cover,contain;background-position:center;background-repeat:no-repeat}
 /* o wallpaper loading-* já traz a marca CORO SOLTO — sem logo/subtítulo duplicado (pedido do dono) */
 #splash-logo,.splash-sub{display:none}
 #boot-splash.gone{opacity:0;pointer-events:none}
-.splash-frame{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 20px}
+.splash-frame{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 20px;z-index:2}
+#boot-splash .splash-frame{position:relative;z-index:2}
+#splash-character-stage{width:min(86px,18vw);height:min(144px,23vh);pointer-events:none;
+  filter:drop-shadow(0 28px 24px rgba(0,0,0,.58))}
 #splash-logo{width:min(560px,86vw);height:auto}
 .splash-sub{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-4);color:var(--ink-300)}
 .splash-bar{width:min(360px,72vw);height:6px;background:var(--bg-800);border:1px solid var(--line);
@@ -1486,29 +1750,41 @@ html[data-ui="legacy"] .cs-vignette{
   transition:width var(--t-slow) ease}
 .splash-status{width:min(360px,72vw);display:flex;justify-content:space-between;
   font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);color:var(--ink-300)}
-#splash-enter{margin-top:var(--s-5);font-family:var(--font);font-weight:700;font-size:var(--fs-500);
+#splash-enter{margin-top:var(--s-5);font-family:var(--aaa-font-display);font-weight:700;font-size:var(--fs-500);
   letter-spacing:var(--tr-4);color:var(--br-faixa);text-transform:uppercase;animation:splashPulse 1.1s ease-in-out infinite}
+html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 @keyframes splashPulse{0%,100%{opacity:1}50%{opacity:.35}}
-.splash-ver{position:absolute;right:18px;bottom:14px;font-family:var(--mono);font-size:11px;
+.splash-ver{position:absolute;right:18px;bottom:14px;z-index:2;font-family:var(--mono);font-size:11px;
   letter-spacing:2px;color:var(--ink3)}
 
 /* Loading de partida/personagens: overlay OPACO (a cena montando nunca aparece) */
-#load-overlay{position:fixed;inset:0;z-index:110;display:flex;align-items:flex-end;justify-content:flex-end;
-  background:linear-gradient(180deg,var(--bg-800),var(--bg-900));
-  background-size:cover;background-position:center;background-repeat:no-repeat}
-#load-overlay::before{content:"";position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(180deg,rgba(var(--bg-900-rgb),.22) 0%,rgba(var(--bg-900-rgb),.12) 55%,rgba(var(--bg-900-rgb),.72) 100%)}
-.lo-title{display:none}   /* loading limpo: só o wallpaper + o progresso num painel no canto */
-.lo-box{position:absolute;right:var(--s-5);bottom:var(--s-5);z-index:2;display:flex;flex-direction:column;
-  align-items:flex-end;text-align:right;gap:var(--s-2);padding:13px 17px;
-  background:rgba(var(--bg-900-rgb),.55);backdrop-filter:blur(3px);border:1px solid var(--line)}
-.lo-box .splash-bar,.lo-box .splash-status{width:min(300px,52vw)}
-.lo-title{font-family:var(--font);font-weight:700;font-size:var(--fs-800);letter-spacing:var(--tr-6);color:var(--ink-100);
-  text-transform:uppercase;line-height:var(--lh-tight);display:flex;flex-direction:column;align-items:center;gap:var(--s-1)}
-.lo-title span{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:5px;color:var(--br-faixa)}
+#load-overlay{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;
+  background-color:var(--bg-900);isolation:isolate;overflow:hidden}
+#load-overlay::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background-image:linear-gradient(180deg,rgba(var(--bg-900-rgb),.22) 0%,rgba(var(--bg-900-rgb),.12) 55%,rgba(var(--bg-900-rgb),.72) 100%),var(--loading-wall);
+  background-size:cover,contain;background-position:center;background-repeat:no-repeat}
+/* Tela 00B do redesign: a faixa de progresso ocupa o rodapé INTEIRO, alinhada à
+   esquerda, com o nome do mapa em tipografia grande acima dela — o mapa é o
+   protagonista da espera. O card no canto virou faixa. */
+.lo-box{align-self:stretch;z-index:2;display:flex;flex-direction:column;
+  align-items:flex-start;text-align:left;gap:var(--s-2);padding:0;margin:0 var(--s-6) var(--s-5);
+  background:none;border:0}
+#load-map{font-family:var(--font);font-weight:400;font-size:clamp(34px,6vw,76px);letter-spacing:var(--tr-3);
+  color:var(--ink-100);text-transform:uppercase;line-height:var(--lh-tight);text-shadow:3px 3px 0 rgba(0,0,0,.6)}
+#load-map:empty{display:none}
+/* Palco 3D: o modelo GLB do jogo e seu AnimationMixer ficam sobre o wallpaper sem placa. */
+#load-character-stage{position:absolute;right:clamp(18px,5vw,78px);bottom:78px;z-index:2;
+  width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;
+  filter:drop-shadow(0 28px 24px rgba(0,0,0,.58))}
+#load-character-3d{display:block;width:100%;height:100%;background:transparent}
+#load-character-action{position:absolute;right:8px;bottom:18px;padding:5px 9px;
+  border-left:3px solid var(--br-faixa);background:rgba(var(--bg-900-rgb),.72);
+  font:700 10px/1 var(--mono);letter-spacing:var(--tr-3);color:var(--ink-200);display:none}
+@media (max-width:820px){#load-character-stage{display:none}}
+.lo-box .splash-bar,.lo-box .splash-status{width:100%}
 #load-label{font-family:var(--mono);font-size:var(--fs-200);letter-spacing:var(--tr-3);color:var(--ink-200);text-transform:uppercase}
-.lo-bar{width:min(440px,78vw)}
-.lo-bar+.splash-status{width:min(440px,78vw)}
+.lo-bar{width:100%}
+.lo-bar+.splash-status{width:100%}
 
 /* Falha de abertura: modal central, curto e acionável. Erro bruto/stack nunca aparece
    aqui; quem está depurando usa ?debug=1 e recebe o painel técnico separado. */
@@ -1545,71 +1821,86 @@ html[data-ui="legacy"] .cs-vignette{
   .cs-item{letter-spacing:2px}
 }
 
-/* ============ MAP SCREEN (escolha de mapa em tela cheia — mockup tela 04) ============
-   Abre pelo cartaz do mapa no setup; lê o mesmo estado do carrossel. A arte do mapa é o
-   fundo da tela inteira; nome/ficha/descrição à esquerda, faixa de thumbs embaixo. */
-/* DUAS METADES, NÃO UM CARTAZ COM TEXTO POR CIMA (referência 04_escolha_mapa.png).
-   Medido na referência: a foto do mapa é um PAINEL fechado no alto à DIREITA (x 232-500
-   de 512, ou seja começa em 45% da largura) e o texto mora num campo escuro à esquerda.
-   No jogo a imagem estava `inset:0`, sangrando pela tela inteira, e a descrição caía em
-   cima do céu claro do Congresso — texto cinza sobre azul claro, ilegível na captura.
-
-   As quatro bordas do painel são token porque o scrim tem que ocupar EXATAMENTE a mesma
-   caixa: fossem dois conjuntos de números, uma mudança em um deixaria o degradê
-   desalinhado da foto. Mesma razão do --team-band-h da tela 02. */
-#map-screen{padding:0;justify-content:flex-start;align-items:stretch;background:var(--bg-900);
-  --ms-art-l:41%; --ms-art-r:min(4vw,52px);
-  --ms-art-t:clamp(84px,12vh,132px); --ms-art-b:clamp(238px,30vh,320px);
-  --ms-strip-b:104px}
-.ms-bg,.ms-scrim{position:absolute;inset:auto;
-  left:var(--ms-art-l);right:var(--ms-art-r);top:var(--ms-art-t);bottom:var(--ms-art-b);
-  width:auto;height:auto;overflow:hidden;clip-path:var(--cut)}
-.ms-bg{border:1px solid var(--line)}
+/* ============ MAP SCREEN ============ */
+#map-screen{padding:0;justify-content:flex-start;align-items:stretch;background:#08080a;
+  font-family:var(--aaa-font-body)}
+.ms-bg{position:absolute;inset:0;overflow:hidden;border:0;background:#101014}
 .ms-bg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-/* o scrim agora amacia a BORDA ESQUERDA da foto contra a coluna de texto (e o pé dela
-   contra a faixa de miniaturas), em vez de escurecer a tela toda */
-.ms-scrim{pointer-events:none;z-index:1;border:0;
-  background:
-    linear-gradient(90deg,rgba(var(--bg-900-rgb),.94) 0%,rgba(var(--bg-900-rgb),.30) 22%,rgba(var(--bg-900-rgb),0) 58%),
-    linear-gradient(180deg,rgba(var(--bg-900-rgb),0) 62%,rgba(var(--bg-900-rgb),.62) 100%)}
-/* A COLUNA DE TEXTO OCUPA A MESMA FAIXA VERTICAL DA FOTO, centrada nela: é isso que faz
-   as duas metades da referência lerem como um par. Em fluxo normal o texto grudava no
-   alto e sobravam ~440px de vazio embaixo dele, com a faixa de miniaturas lá longe. */
-.ms-head{position:absolute;z-index:1;left:0;width:var(--ms-art-l);
-  top:var(--ms-art-t);bottom:var(--ms-art-b);
-  display:flex;flex-direction:column;justify-content:center;
-  padding:0 var(--s-6) 0 8vw;text-align:left}
-.ms-head small{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-4);color:var(--br-faixa)}
-/* teto de 48px e não 60: com a coluna fechada em 41% da largura, "PRAÇA DOS TRÊS
-   PODERES" a 60px partia em TRÊS linhas (a referência tem o nome do mapa em UMA). */
-.ms-name{margin-top:6px;font-size:clamp(30px,3.4vw,48px);font-weight:700;letter-spacing:var(--tr-4);
-  text-transform:uppercase;color:var(--ink-100);line-height:var(--lh-tight);position:relative;padding-bottom:var(--s-3)}
-.ms-name::after{content:"";position:absolute;left:0;bottom:0;width:120px;height:3px;
-  background:linear-gradient(90deg,var(--br-sinal),var(--br-faixa))}   /* régua de tinta, alinhada à esquerda */
-.ms-meta{margin-top:var(--s-3);font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-2);color:var(--am)}
-.ms-desc{margin-top:var(--s-2);font-size:var(--fs-200);font-weight:500;color:var(--ink-200);max-width:52ch;line-height:var(--lh-base)}
-.ms-strip{position:absolute;left:50%;bottom:var(--ms-strip-b);transform:translateX(-50%);display:flex;gap:10px;z-index:1}
-.ms-thumb{width:148px;padding:0 0 6px;display:flex;flex-direction:column;gap:5px;cursor:pointer;
-  background:rgba(var(--bg-800-rgb),.85);border:1px solid var(--line);clip-path:var(--cut-sm);
-  font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--ink-300);text-transform:uppercase;
-  transition:border-color var(--t) var(--ease),color var(--t) var(--ease),transform var(--t) var(--ease)}
-.ms-thumb img{width:100%;height:76px;object-fit:cover;display:block}
-.ms-thumb span{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ms-thumb:hover,.ms-thumb:focus-visible{border-color:var(--sys);color:var(--ink-100)}
-.ms-thumb.on{border-color:var(--br-faixa);color:var(--br-faixa);transform:translateY(-4px)}
-/* Centralização por margin-top, NÃO por transform: o :active genérico de .map-arrow
-   (translateY(1px)) sobrescreveria o translateY(-50%) no mousedown e o botão pularia
-   33px pra baixo no meio do clique — o clique caía fora do botão (pego pelo harness). */
-/* AS SETAS LADEIAM A FAIXA, não o meio da tela (referência 04): elas comandam o
-   carrossel de miniaturas, e paradas em `top:44%` ficavam a 400px de distância do que
-   controlam — na captura sobravam boiando na altura do horizonte da foto. Ancoradas na
-   mesma base da faixa, com meia diferença de altura pra centralizar nela. */
-.ms-arrow{position:absolute;top:auto;bottom:calc(var(--ms-strip-b) + 18px);margin-top:0;
-  z-index:2;width:44px;height:64px;background:rgba(var(--bg-900-rgb),.7)}
-.ms-arrow-l{left:22px}
-.ms-arrow-r{right:22px}
-.ms-actions{position:absolute;right:min(5vw,64px);bottom:30px;z-index:2}
-@media(max-width:900px){.ms-strip{display:none}}   /* faixa de thumbs não cabe em tela estreita; as setas bastam */
+.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,rgba(8,8,10,.92) 0%,rgba(8,8,10,.7) 34%,transparent 62%),linear-gradient(0deg,rgba(8,8,10,.92) 0%,rgba(8,8,10,.5) 24%,transparent 44%),repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.05) 3px 4px)}
+.ms-kicker{position:absolute;z-index:2;left:32px;top:24px;
+  font-family:var(--aaa-font-body);font-weight:600;font-size:12px;letter-spacing:4px;
+  color:var(--br-faixa);text-transform:uppercase}
+.ms-tabs{position:absolute;z-index:2;top:60px;left:32px;display:flex;gap:24px}
+.ms-tab{padding:8px 2px;font:600 15px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63;
+  background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
+.ms-tab:hover,.ms-tab:focus-visible{color:#ecebe6}
+.ms-tab.on{font-weight:700;color:#b4d92e;border-bottom-color:#b4d92e}
+.ms-head{position:absolute;z-index:2;left:64px;top:130px;width:460px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:14px;text-align:left}
+.ms-tagrow{display:flex;align-items:center;justify-content:flex-start;gap:10px}
+.ms-cat{font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 10px;border:1px solid}
+.ms-cat[data-cat="FAVELA"]{color:#e0762a;border-color:rgba(224,118,42,.5)}
+.ms-cat[data-cat="ARENA"]{color:#8b8c92;border-color:rgba(139,140,146,.5)}
+.ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}.ms-cat[data-cat="COMUNIDADE"]{color:#2e9ed8;border-color:rgba(46,158,216,.5)}
+.ms-cat[data-cat="AI"]{color:#d8c02e;border-color:rgba(216,192,46,.5)}
+.ms-cat-desc{position:absolute;z-index:2;top:88px;left:32px;max-width:520px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91;pointer-events:none}
+.ms-authors{position:absolute;z-index:2;top:112px;left:32px;display:flex;gap:8px;flex-wrap:wrap}
+.ms-author{padding:5px 12px;font:600 11px/1 var(--aaa-font-body);letter-spacing:2px;color:#5c5d63;background:rgba(16,16,20,.7);border:1px solid #2a2b31;border-radius:999px;cursor:pointer;text-transform:uppercase}
+.ms-author:hover,.ms-author:focus-visible{color:#ecebe6}
+.ms-author.on{color:#2e9ed8;border-color:#2e9ed8}
+.ms-byline{margin:10px 0 0;font:400 13px/1 var(--aaa-font-body);letter-spacing:.6px;color:#8a8b91}
+.ms-byline strong{color:#b9babf;font-weight:600}
+.ms-badge-oficial{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#b4d92e;border:1px solid rgba(180,217,46,.5);border-radius:3px;text-transform:uppercase}
+.ms-badge-comunidade{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#2e9ed8;border:1px solid rgba(46,158,216,.5);border-radius:3px;text-transform:uppercase}
+.ms-count{font-family:var(--font);font-weight:600;font-size:12px;letter-spacing:2px;color:#5c5d63}
+.ms-name{font-family:var(--aaa-font-display);font-weight:400;font-size:72px;
+  line-height:.9;letter-spacing:1px;text-transform:uppercase;color:var(--ink-100);
+  text-shadow:3px 3px 0 rgba(0,0,0,.5)}
+.ms-meta{font-family:var(--font);font-weight:700;font-size:15px;letter-spacing:2px;color:var(--ink-100)}
+.ms-meta .ms-sep{color:var(--br-faixa);margin:0 10px}
+.ms-desc{font-size:16px;font-weight:400;color:#b9b9be;max-width:380px;line-height:1.5;text-shadow:var(--sh-hud)}
+.ms-match-options{display:flex;align-items:flex-end;gap:10px;margin-top:2px;padding:10px 12px;
+  background:rgba(10,10,12,.66);border-left:2px solid var(--br-faixa);backdrop-filter:blur(8px)}
+.ms-match-options label{display:flex;flex-direction:column;gap:5px;min-width:112px;
+  font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#8b8c92;text-transform:uppercase}
+.ms-match-options select{height:32px;padding:0 28px 0 9px;border:1px solid rgba(236,235,230,.2);border-radius:0;
+  background:#111216;color:#ecebe6;font:700 12px/1 var(--aaa-font-body);letter-spacing:1px;cursor:pointer}
+.ms-match-options select:focus{outline:1px solid var(--br-faixa);border-color:var(--br-faixa)}
+.ms-carousel{position:absolute;z-index:2;left:64px;right:64px;bottom:96px;height:124px;
+  display:flex;align-items:center;gap:14px}
+.ms-arrow{width:34px;height:124px;flex:0 0 34px;display:flex;align-items:center;justify-content:center;
+  background:rgba(13,14,17,.7);border:1px solid #26272d;color:#9a9ba1;font-size:16px;cursor:pointer}
+.ms-arrow:hover,.ms-arrow:focus-visible{border-color:#b4d92e;color:#ecebe6}
+.ms-viewport{flex:1;min-width:0;overflow:hidden}
+.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),minmax(0,196px));justify-content:center;gap:12px;width:100%;overflow:visible;scroll-behavior:smooth}
+.ms-thumb{position:relative;width:100%;min-width:0;padding:0;display:flex;flex-direction:column;cursor:pointer;
+  background:#101014;border:1px solid rgba(236,235,230,.12);opacity:.75;
+  font-family:var(--aaa-font-body);text-align:left;text-transform:uppercase;
+  transition:border-color var(--t) var(--ease),filter var(--t) var(--ease)}
+.ms-thumb:hover,.ms-thumb:focus-visible{filter:brightness(1.15)}
+.ms-thumb.on{border:2px solid #b4d92e;opacity:1;box-shadow:0 0 26px rgba(180,217,46,.3)}
+.ms-thumb-img{display:block;width:100%;height:96px;object-fit:cover}
+.ms-thumb-copy{display:flex;flex-direction:column;gap:1px;padding:6px 10px 8px;background:rgba(10,10,12,.85)}
+.ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-thumb.on .ms-thumb-name{color:#b4d92e}
+.ms-thumb-cat{font-weight:600;font-size:9px;letter-spacing:2px}
+.ms-thumb-cat[data-cat="FAVELA"]{color:#e0762a}
+.ms-thumb-cat[data-cat="ARENA"]{color:#8b8c92}
+.ms-thumb-cat[data-cat="CIDADES"]{color:#8258d8}
+.ms-diamond{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--br-faixa);transform:rotate(45deg)}
+.ms-dashes{position:absolute;z-index:2;left:0;right:0;bottom:74px;display:flex;justify-content:center;gap:6px}
+.ms-dashes i{width:18px;height:3px;background:#33343b}.ms-dashes i.on{background:#b4d92e}
+.ms-actions{position:absolute;right:64px;bottom:24px;z-index:2}
+#map-screen .ms-actions .btn-big{transform:skewX(-8deg);background:linear-gradient(180deg,#cfe84a,#b4d92e);padding:14px 52px;border:0}
+#map-screen .ms-actions .btn-big>*{display:block;transform:skewX(8deg);font:400 23px/1 var(--aaa-font-display);letter-spacing:3px;color:#131313;padding:0}
+@media(max-height:620px){
+  .ms-head{top:112px;gap:7px}
+  .ms-name{font-size:54px}
+  .ms-desc{display:none}
+  .ms-match-options{padding:7px 9px}.ms-match-options select{height:28px}
+}
 
 /* ============ CHAR ATTRS (ficha do personagem — mockup tela 03) ============ */
 /* RARIDADE = PASTILHA PREENCHIDA, e numa linha só dela (referência 03: o "ÉPICO" é um
@@ -1667,7 +1958,9 @@ html[data-ui="legacy"] .cs-vignette{
 .ms-top-player{display:flex;align-items:center;gap:10px;font-family:var(--font);font-weight:700;
   font-size:var(--fs-200);letter-spacing:var(--tr-2);color:var(--ink-100);text-transform:uppercase}
 .ms-top-player .pp-avatar{width:34px;height:34px;font-size:12px}
-#map-screen .btn-back{top:auto;bottom:30px;left:min(5vw,64px)}   /* referência: VOLTAR embaixo à esquerda */
+#map-screen .btn-back{top:auto;left:64px;bottom:28px;padding:10px 20px;
+  font:600 14px/1 var(--aaa-font-body);letter-spacing:2px;color:#c9c9cc;
+  background:rgba(10,10,12,.55);border:1px solid rgba(236,235,230,.18)}
 
 /* Brasão da facção no TOPO do card (pedido do dono, 06/08) + setas do seletor de mapa
    mais ÓBVIAS (mesmo pedido): as de 34px sumiam na moldura — viram alvo de 52px com
@@ -1688,15 +1981,26 @@ html[data-ui="legacy"] .cs-vignette{
   border:1px solid var(--line-2);color:var(--am)}
 .ms-arrow:hover{background:var(--am);color:#141216}
 /* rodapé do menu: online + links de dev (substitui a frase de sátira) */
-.menu-footer{position:fixed;right:min(4vw,42px);bottom:16px;z-index:60;
+.menu-footer{position:fixed;right:min(4vw,42px);bottom:48px;z-index:60;
   display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:flex-end;
   font-size:12px;color:var(--ink-300);text-align:right;max-width:min(70vw,760px)}
-.menu-footer .mf-ver{color:var(--ink-200);font-weight:700;letter-spacing:1px}
-.menu-footer .mf-online::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;
-  background:#4ade60;margin-right:5px;box-shadow:0 0 6px rgba(74,222,96,.8);vertical-align:baseline}
-.menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:1px dotted var(--line-2)}
+.menu-version{position:fixed;right:min(4vw,42px);bottom:14px;z-index:60;color:var(--ink-200);
+  font-size:12px;font-weight:700;letter-spacing:1px;text-align:right}
+/* Bolinha virou LOSANGO: o redesign proíbe raio, e o losango já é o sinal de
+   "isto está vivo/é você" em três outros lugares (você no radar, thumb do slider,
+   canto do card selecionado). Trocar por quadrado puro perderia essa rima. */
+.menu-footer .mf-online::before{content:"";display:inline-block;width:7px;height:7px;border-radius:0;
+  transform:rotate(45deg);background:#4ade60;margin-right:6px;box-shadow:0 0 6px rgba(74,222,96,.8);
+  vertical-align:baseline}
+.menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:0}
 .menu-footer a:hover{color:var(--am)}
 .menu-footer .mf-online{color:var(--verde,#7dc98f);font-weight:700}
+/* `flex-basis:100%` dá linha própria sem sair do flex-wrap do rodapé. */
+.menu-footer .mf-social{flex-basis:100%;display:flex;gap:10px;align-items:center;
+  justify-content:inherit;margin-top:2px}
+.menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;
+  align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
+.menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
 
 /* ---- MENU EM CELULAR RETRATO (print do dono, 07/08: logo cortado no meio e o
    rodapé atropelando o último item). O logo é PINTADO no wallpaper 16:9; com
@@ -1705,11 +2009,12 @@ html[data-ui="legacy"] .cs-vignette{
    o logo inteiro, resto em --bg-900), o menu desce pra baixo da faixa e o
    rodapé vira fluxo normal no fim da página em vez de fixed por cima do menu. */
 @media (max-width:640px) and (orientation:portrait){
-  .cs-wallpaper{background-size:100% auto;background-position:left top}
+  .cs-wallpaper::after{background-position:center top}
   .cs-left{position:static;padding:56vw var(--s-5) 0;bottom:auto;left:auto}
   #main-menu{display:block}
   .menu-footer{position:static;justify-content:flex-start;text-align:left;
     max-width:none;padding:18px var(--s-5) 24px}
+  .menu-version{position:static;display:block;padding:0 var(--s-5) 24px;text-align:right}
 }
 
 /* =========================================================================
@@ -2192,3 +2497,95 @@ body[data-cine-screen] #cine-chrome{opacity:1}
   #scoreboard table{font-size:12px}
   #scoreboard th,#scoreboard td{padding-left:6px;padding-right:6px}
 }
+
+/* ---------- INVENTÁRIO 1–5: silhuetas planas no canto direito ---------- */
+#weapon-hud{right:32px;left:auto;bottom:150px;top:auto;transform:none;
+  flex-direction:column;align-items:flex-end;gap:0;width:200px}
+.weapon-slot{display:grid;grid-template-columns:42px minmax(92px,1fr) 18px;align-items:center;
+  gap:6px;width:100%;min-height:42px;padding:1px 0;color:rgba(255,255,255,.82);
+  background:transparent;border:0;clip-path:none;opacity:.8}
+.weapon-slot.on{color:var(--am);background:transparent;opacity:1}
+.weapon-slot .weapon-label{display:none}
+.weapon-key{grid-column:3;grid-row:1;font-size:12px;color:currentColor;text-align:right}
+.weapon-icon{grid-column:2;grid-row:1;justify-content:flex-end;filter:drop-shadow(0 2px 2px rgba(0,0,0,.92))}
+.weapon-icon .kf-ic{width:92px;height:40px}
+.weapon-amount{grid-column:1;grid-row:1;font-size:11px;text-align:right;color:currentColor}
+@media(max-width:640px){
+  #weapon-hud{right:12px;bottom:104px;width:148px}
+  .weapon-slot{grid-template-columns:32px minmax(62px,1fr) 12px;min-height:32px}
+  .weapon-icon .kf-ic{width:62px;height:28px}
+}
+
+#hud{font-family:var(--aaa-font-body);font-weight:600}
+#radar{left:16px;top:16px;width:132px;height:132px;background:rgba(10,10,12,.55);border:1px solid rgba(236,235,230,.12);box-shadow:none}
+#hud-top{top:16px;gap:2px}
+#hud-top .team-score{min-height:42px;padding:7px 16px;background:transparent;border:0;color:#ecebe6!important}
+#hud-top .team-score b{font-family:var(--font);font-size:26px;font-weight:700}
+#hud-mid{min-height:42px;padding:7px 18px;background:transparent}
+#round-time{font-family:var(--font);font-size:24px;font-weight:700;color:#b4d92e;-webkit-text-stroke:0}
+#rounds-row{margin-top:2px;font-size:10px;letter-spacing:2px;color:#5c5d63;text-shadow:none}
+#killfeed{top:70px;right:16px;gap:3px;font-family:var(--aaa-font-body);font-size:14px}
+.kf-row{padding:5px 12px;background:rgba(10,10,12,.72);clip-path:none;border-left:0}
+.kf-weapon-2d{display:inline-flex;align-items:center;justify-content:center;width:42px;height:20px;color:var(--ink-100);flex:0 0 42px}
+.kf-weapon-mask{display:block;width:40px;height:18px;background:currentColor;
+  -webkit-mask:var(--weapon-mask) center/contain no-repeat;mask:var(--weapon-mask) center/contain no-repeat}
+.kf-weapon-2d:has(.kf-weapon-mask) .kf-fallback{display:none}
+#damage-vignette{box-shadow:inset 0 0 160px 50px rgba(200,30,24,.5)}
+#hud:has(#hp-num.low) #damage-vignette{opacity:1}
+#hud-bottom-left{left:20px;bottom:18px}
+#hp-row{gap:9px}
+#hp-num{font-size:42px;font-family:var(--font);font-weight:700;-webkit-text-stroke:0}
+#hp-num::after{display:inline;margin-left:9px;font:700 11px/1 var(--aaa-font-body);letter-spacing:3px;color:#9a9ba1}
+#hp-num.low::after{color:#e04c44}
+#hp-bar{width:190px;height:5px;margin-top:6px;border:0;clip-path:none;background:rgba(10,10,12,.7)}
+#hp-fill{background:#46c268}#hp-fill.low{background:#e04c44}
+#hud-bottom-right{right:20px;bottom:18px;gap:3px}
+#weapon-name{order:-1;margin:0;font-family:var(--aaa-font-body);font-size:11px;font-weight:700;letter-spacing:3px;color:#9a9ba1}
+#ammo{order:0;font-family:var(--font);font-size:42px;font-weight:700;-webkit-text-stroke:0}
+.ammo-sep{font-size:20px;margin:0 9px;color:#8b8c92}#ammo-reserve{font-size:20px;font-weight:600;color:#8b8c92}
+#ammo-bars{order:1;grid-template-columns:repeat(var(--ammo-bars,1),7px);gap:3px;min-height:13px;margin:0}
+#ammo-bars i{width:7px;height:13px;background:rgba(180,217,46,.22);box-shadow:none}
+#ammo-bars i.on{background:#b4d92e;box-shadow:none}#ammo-bars i.low{background:#e04c44}
+#smoke-count{display:none}
+#hud-shortcuts{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:16px;
+  font:600 11px/1 var(--font);letter-spacing:2px;color:rgba(139,140,146,.6)}
+#weapon-hud{right:20px;bottom:122px;width:150px}
+.weapon-slot{grid-template-columns:minmax(0,1fr) 18px;min-height:36px;width:100%;padding:0;gap:6px;color:rgba(236,235,230,.76);opacity:.76}
+.weapon-slot.on{color:#b4d92e;opacity:1}
+.weapon-key{grid-column:2;font:700 12px/1 var(--font)}
+.weapon-icon{grid-column:1;justify-content:flex-end;min-width:0;filter:drop-shadow(0 2px 2px rgba(0,0,0,.92))}
+.weapon-mask{display:block;width:112px;height:34px;background:currentColor;
+  -webkit-mask:var(--weapon-mask) center/contain no-repeat;mask:var(--weapon-mask) center/contain no-repeat}
+.weapon-icon:has(.weapon-mask) .weapon-fallback{display:none}
+.weapon-icon>.kf-ic{width:92px;height:32px}
+.weapon-amount{display:none}
+
+/* ---------- AJUSTES DO CRÍTICO (14/08) ---------- */
+/* O cabeçalho do mapa segue a caixa de 460px da referência 04. */
+.ms-head{width:460px}
+.ms-name{font-size:72px}
+/* #3 — valor numérico ao lado da barra de atributo */
+.attr{grid-template-columns:92px 1fr auto}
+.attr b{font-family:var(--font);font-weight:700;font-size:var(--fs-100);color:var(--ink-100);text-align:right}
+/* #8 — nome do personagem protagonista (referência 03) + rótulo da facção */
+.char-faction-tag{font-family:var(--aaa-font-body);font-weight:600;font-size:var(--fs-100);
+  letter-spacing:var(--tr-3);color:#e0762a;text-transform:uppercase}
+#char-info-name{font-family:var(--aaa-font-display);font-weight:400;font-size:clamp(28px,2.6vw,44px);letter-spacing:1px}
+html[data-ui="legacy"] #char-info-name{font-family:var(--font);font-weight:700}
+/* #11 — sub do banner legível contra céu claro */
+#banner-sub{text-shadow:var(--sh-hud)}
+
+/* ---------- LOADING 00B: kicker + confronto no topo, meta sob o nome (14/08) ---------- */
+#load-kicker{position:absolute;top:24px;left:32px;z-index:2;
+  font-family:var(--aaa-font-body);font-weight:600;font-size:12px;letter-spacing:4px;color:var(--br-faixa);text-transform:uppercase}
+#load-versus{position:absolute;top:20px;right:24px;z-index:2;display:flex;align-items:center;gap:12px;
+  background:rgba(10,10,12,.6);border:1px solid #26272d;padding:8px 16px;
+  font-family:var(--font);font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase}
+#load-versus i{font-style:normal;color:#5c5d63}
+#load-label{display:none}   /* o rótulo virou o #load-kicker no topo */
+#load-map{font-family:var(--aaa-font-display);font-weight:400}
+html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
+#load-meta{display:flex;align-items:center;font-family:var(--font);font-weight:700;font-size:15px;
+  letter-spacing:2px;color:#c9c9cc;text-transform:uppercase}
+#load-meta:empty{display:none}
+#load-meta .lo-sep{color:var(--br-faixa);margin:0 10px}

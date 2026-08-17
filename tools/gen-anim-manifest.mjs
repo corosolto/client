@@ -13,7 +13,7 @@
    índice; o `glbchars.js` lê antes de pedir. Clipe novo na pasta = um comando.
 
    POR QUE NÃO GERAR OS 88 CLIPES QUE FALTAM (a outra saída, MEDIDA E DESCARTADA)
-   `plans/02-BOTS-E-MODELS.md:285` prevê "B7: rodar retarget-glb.mjs para os Palhaços".
+   `docs/historico/plans/02-BOTS-E-MODELS.md:285` prevê "B7: rodar retarget-glb.mjs para os Palhaços".
    Rodado. O retarget é um NO-OP para essa família:
 
      desvio angular do clipe retargetado × pack compartilhado (walk, por osso, máximo)

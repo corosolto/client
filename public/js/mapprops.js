@@ -42,14 +42,18 @@ export function hasProp(id) { return _base.has(id); }
 
 // Clone a prop, normalized so its height == targetH (metres), feet at y (default 0),
 // centred on (x,z) and yawed by ry. Returns the Object3D, or null if not loaded.
-export function placeProp(id, { x = 0, y = 0, z = 0, targetH = 2.4, ry = 0 } = {}) {
+//
+// `targetLen` casa comprimento E altura pela média geométrica, em vez de só a altura; sem
+// ele nada muda. Por que altura sozinha erra numa frota: tools/eval/escala-veiculo-check.mjs.
+export function placeProp(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 0, ry = 0 } = {}) {
   const tpl = _base.get(id);
   if (!tpl) return null;
   const o = tpl.clone(true);
   o.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(o);
   const h = (box.max.y - box.min.y) || 1;
-  const s = targetH / h;
+  const len = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) || 1;
+  const s = targetLen ? Math.sqrt((targetLen / len) * (targetH / h)) : targetH / h;
   o.scale.setScalar(s);
   o.position.set(x, y - box.min.y * s, z);
   o.rotation.y = ry;
@@ -226,11 +230,11 @@ export class PropBatch {
   constructor(opts = {}) { this.opts = opts; this.bucket = opts.bucket || 0; this.by = new Map(); }
   /* Mesma assinatura de placeProp + `color` (hex) para pintura por instancia.
      Retorna false se o GLB nao carregou — o chamador cai no fallback dele, igual antes. */
-  add(id, { x = 0, y = 0, z = 0, targetH = 2.4, ry = 0, color = null } = {}) {
+  add(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 0, ry = 0, color = null } = {}) {
     if (!_base.has(id)) return false;
     let l = this.by.get(id);
     if (!l) { l = []; this.by.set(id, l); }
-    l.push({ x, y, z, targetH, ry, color });
+    l.push({ x, y, z, targetH, targetLen, ry, color });
     return true;
   }
   build(root) {
@@ -248,6 +252,7 @@ export class PropBatch {
       tpl.updateMatrixWorld(true);
       box.setFromObject(tpl);
       const th = (box.max.y - box.min.y) || 1, minY = box.min.y;
+      const tlen = Math.max(box.max.x - box.min.x, box.max.z - box.min.z) || 1;   // ver targetLen no placeProp
       // agrupa por bloco espacial para o frustum culling continuar valendo
       const buckets = new Map();
       for (const p of list) {
@@ -259,7 +264,7 @@ export class PropBatch {
         for (const part of parts) {
           const im = new THREE.InstancedMesh(part.geo, part.mat, items.length);
           items.forEach((p, i) => {
-            const s = p.targetH / th;
+            const s = p.targetLen ? Math.sqrt((p.targetLen / tlen) * (p.targetH / th)) : p.targetH / th;
             dummy.position.set(p.x, p.y - minY * s, p.z);
             dummy.rotation.set(0, p.ry, 0);
             dummy.scale.setScalar(s);

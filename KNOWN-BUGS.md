@@ -1,8 +1,8 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado revisado: **2026-08-11**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-17**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
-> *Relatados, ainda não reproduzidos*.
+> *Relatos recentes e resolução*.
 >
 > Regra da casa: bug que o dono reporta vira **invariante permanente** em
 > `tools/eval/invariants.mjs`. Enquanto não virar, fica aqui com o campo `Régua: nenhuma`.
@@ -12,7 +12,7 @@
 > entrada e o do relatório final estão em
 > `.claude/skills/bug-hunt/references/gabaritos.md`.
 
-**Quality gate na data deste arquivo** (`node tools/eval/invariants.mjs`, ~10-12 min):
+**Quality gate na data deste arquivo** (`npm run check`, com `eval:vm` antes das invariantes):
 
 ```
 CRÍTICAS: 42/55 passam  ← nenhuma falha nova
@@ -86,6 +86,42 @@ true; }`). EP4 exige early-return e dispatch único; EP5 recorta a condição
 inteira do step de issue; EP6 **executa** a `origemDoJogo` inline do cliente
 contra oito fixtures (mutantes `sem-early-return` e `abre-externo`).
 
+**Adendo (12/08, issues #218 e #219 · alpha.91).** Fingerprints `3c3f1990` e
+`96362080`: `TypeError: Cannot assign to read only property 'pushState' of object
+'#<History>'`, com origem e stack inteiramente em `/_vercel/speed-insights/script.js`
+e `/_vercel/insights/script.js`. São os bundles que a Vercel injeta (Web Analytics e
+Speed Insights): eles reescrevem `history.pushState` para rastrear navegação SPA, e
+o `=` estoura quando o `pushState` está travado como read-only por extensão de
+privacidade ou webview de app. O código é de terceiro — não temos como consertar o
+script da Vercel nem destravar o `pushState` — mas o crash abriu issue `crash-auto`
+porque `/_vercel/` é servido do **próprio domínio**, e a régua original dizia
+"same-origin não é descartado". A proveniência agora reconhece `/_vercel/` como
+terceiro mesmo sendo same-origin, no helper (`VENDOR_RE`) e no cliente (`vendor`),
+provado em `source` e em `stack`. EP8 executa o classificador real e a `origemDoJogo`
+inline contra o par de fixtures das duas issues e confirma que `/js/` do jogo segue
+`codigo`; mutantes `sem-vercel-helper` e `sem-vercel-cliente` guardam cada lado.
+
+### ~~BUG-50 · WeakMap do Three derrubava o loop quando createFramebuffer falhava~~ · RESOLVIDO 12/08 (issue #171)
+
+**Evidência antes.** Issue #171 (fingerprint `b598fe98`, alpha.57): `TypeError:
+WeakMap keys must be objects or non-registered symbols`, stack
+`drawBuffers@three.module.js:23160` ← `setRenderTarget` ← `RenderPass` do
+`EffectComposer` (bloom) ← `game.update`. Reproduzida ainda na alpha.81.
+
+**Causa.** `drawBuffers(renderTarget, framebuffer)` chama
+`currentDrawbuffers.set(framebuffer, …)` sem guarda. Quando `gl.createFramebuffer()`
+falha — pressão de memória GL ou perda de contexto síncrona — o framebuffer fica
+nulo, o `WeakMap.set` lança e o `requestAnimationFrame` morre no meio da partida.
+
+**Correção.** Guarda no vendor: framebuffer nulo retorna sem emitir drawBuffers.
+Os três caminhos normais (alvo simples, MRT, tela) continuam emitindo os mesmos
+buffers. Arnêses `public/*.html` receberam o hash novo do vendor (`?h=`).
+
+**Régua.** SL7 do `tools/eval/shader-log-check.mjs` extrai e executa a
+`drawBuffers` real do vendor: framebuffer nulo não pode lançar nem emitir, e os
+caminhos normais têm os buffers comparados byte a byte. Mutante `framebuffer-nulo`
+remove a guarda e acende a SL7.
+
 ### ~~BUG-49 · toda página SSR servia 200 com corpo VAZIO em produção~~ · RESOLVIDO 12/08
 
 **Sintoma literal.** O dono, 12/08: *"a pagina mapa online (aovivo) esta quebrada"*.
@@ -147,6 +183,27 @@ cegueira trivial de nunca ter estado na lista de rotas dele.
 Em `astro dev`, acrescentar ou editar módulo em `public/js` só muda a revisão depois de
 reiniciar o servidor — antes recalculava a cada renderização. Build e produção não são
 afetados, porque lá a config carrega uma vez por build de qualquer jeito.
+
+### ~~BUG-55 · a home reabriu a leitura de `public/js` dentro da função SSR~~ · RESOLVIDO 16/08
+
+**Evidência antes.** Depois do build da alpha.115, `npm run eval:ssr` deixou `/mapa`,
+`/ranking` e `/u/exemplo` verdes, mas `/` lançou `ENOENT: scandir
+.vercel/output/functions/_render.func/public/js`, devolveu 500 e corpo vazio. É uma
+recorrência parcial do BUG-49, agora restrita à home.
+
+**Causa.** O novo import map da home chamou `moduleCacheManifest()` diretamente no
+frontmatter de `src/pages/index.astro`. Como `export const prerender = false`, esse código
+roda a cada request dentro do pacote Vercel. O conserto anterior já injetava o manifesto
+no build para o layout, mas a nova tela contornou essa fronteira.
+
+**Correção.** A home consome a mesma constante `__MANIFESTO_JS__` injetada por
+`astro.config.mjs`; nenhuma página SSR lê `public/js` no request. SSR3 passa a varrer todas
+as fontes `prerender=false` e proíbe a chamada direta.
+
+**Depois e mutações.** Após rebuild, `/` devolve **200 e 64.583 bytes**; as quatro rotas
+passam SSR1–SSR3. `corpo-vazio`, `lanca` e `manifesto-no-request` deixam respectivamente
+SSR1, SSR2 e SSR3 vermelhas. **Custo:** nenhum request ou asset adicional; o manifesto
+continua congelado por build, exatamente como no BUG-49.
 
 ### ~~BUG-48 · import map anunciava módulos removidos do deploy~~ · RESOLVIDO NO BUILD 11/08
 
@@ -387,7 +444,68 @@ manhã do incidente, com o site quebrado, ele saía 1 citando `CONFIRM_MAX_MS`. 
 
 ---
 
+### ~~BUG-56 · jogo em câmera lenta quando o FPS cai~~ · RESOLVIDO 16/08 (issue #295)
+
+**Relato:** jogadores percebendo o jogo em câmera lenta com FPS baixo.
+
+**Causa raiz.** O loop entregava `Math.min(0.05, clock.getDelta())` (`main.js`) — o clamp
+de 50 ms era teto **por frame**. Em cadência sustentada abaixo de 20 FPS, cada frame real
+de 100 ms entregava só 50 ms à simulação: partida, round, recarga, respawn e bots andavam
+na metade do relógio de parede. (O clamp é um bom teto **por passo** — passos gigantes
+estouram colisão e IA — mas como teto por frame ele descartava tempo real em silêncio.)
+
+**Conserto.** O loop fatia o delta real em passos de ≤ 50 ms, chamando `game.update` por
+fatia (mesma semântica por passo de sempre), com teto de 4 fatias por frame — guard de
+espiral da morte: máquina que não acompanha descarta o excesso em vez de acumular dívida.
+Só a última fatia renderiza (`update(dt, render)`) — multi-render em FPS baixo gastaria
+GPU exatamente quando ela já sofre. Em 60 FPS nada muda: 1 passo de ~16 ms por frame.
+
+**Régua.** `tools/eval/sim-clock-check.mjs` (`eval:simclock`, no `check:fast`): SC1 fatio
+do delta real · SC2 teto **com valor lido da declaração** (nome existindo com `1e9`
+passava na asserção de nome — furo achado pelo próprio mutante `sem-teto`) · SC3 clamp
+solto por frame proibido. Mutantes `--mutante=clamp-frame` (3 vermelhas) e
+`--mutante=sem-teto` (1) executados.
+
+### ~~BUG-54 · "kills além do fisicamente possível" numa partida de captura legítima~~ · CONSERTO PRONTO 15/08, migration 024 PENDENTE de aplicação (issue #116)
+
+**Palavras de quem reportou** (issue #116): *"A partida terminou normalmente, mas as stats
+não foram enviadas e apareceu a mensagem: 'stats não enviados: kills além do fisicamente
+possível'. No final da partida eu estava com 95 kills e 6 mortes."*
+
+**Causa raiz.** A cláusula (a) do `submit_match` (`~/db-privado/supabase/schema.sql`)
+exigia `p_kills ≤ 45 * p_rounds`. O comentário dizia *"respawn de 2,5s => teto teórico
+~40/round"* — premissa do modo **ABATE**, onde a rodada É uma janela de 99 s. No
+**CAPTURA** a partida inteira são **2 rodadas** (`CTF_ROUNDS_TO_WIN`, `game.js:114`), então
+o teto dava **90 kills na partida** — numa modalidade sem janela de tempo, com respawn
+contínuo por até ~960 s. É o mesmo defeito de premissa do BUG-35/#87 (migration 015), um
+ramo acima: lá o piso de TEMPO, aqui o teto de KILLS. E igualmente chamava `_flag()` antes
+de recusar — **três partidas boas de captura escondiam o jogador do ranking**.
+
+**O número novo não é palpite** — é a física do jogo: no CAPTURA o limitante é o
+`RESPAWN_DELAY = 2,2 s` (`game.js:88`): para matar de novo, um inimigo tem que renascer.
+Teto honesto: `greatest(45 * rounds, floor(seconds / 2.2))` — o ramo por rodada continua
+amarrando partida de abate de relógio travado.
+
+| caso | teto antigo (45×rounds) | teto novo | veredito |
+|---|---|---|---|
+| reportado (#116): 95 kills · 2 rodadas · 480 s | 90 → **RECUSAVA** | greatest(90, 218) = 218 | passa |
+| trainer: 150 kills · 30 s | 90 → recusava | greatest(90, 13) = 90 | continua recusado |
+| cliente velho (seconds=0) | 90 | greatest(90, 0) = 90 | idêntico a hoje |
+
+**Régua.** Cláusula **SG6** do `tools/eval/submit-guard-check.mjs` (lê o SQL de
+`~/db-privado/`, o mesmo princípio das SG4/SG5: a fonte é o banco, não uma cópia em JS).
+Vermelha no estado antigo (4 reprovações: caso #116 recusado nos 3 arquivos + `_flag` na
+cláusula); verde depois; `--mutante=kills45` devolve o mundo antigo e acende nos 3.
+
+**Falta aplicar.** `~/db-privado/supabase/migrations/024_submit_guard_kills.sql` (o
+`schema.sql` e o espelho `opcional/012` já estão atualizados nesta máquina). Aplicar em
+staging → produção pela ordem do `~/db-privado/COMO-MIGRAR.md`. Falsos positivos já
+dados pelo caminho antigo: se um jogador reportar sumir do ranking com 3+ partidas de
+captura recusadas, conferir `players.flagged_count` na mão.
+
 ### ~~BUG-35 · "partida rápida demais pra ser verdade" numa partida legítima~~ · RESOLVIDO 07/08 (issue #87)
+
+
 
 **Palavras de quem reportou** (maurodesouza, issue #87): *"Durante uma partida no modo
 Captura de Bandeira, recebi a mensagem `stats não enviados: partida rápida demais pra ser
@@ -633,7 +751,7 @@ console, todos 404**, e **zero** `pageerror` / `unhandledrejection`. Todos em
 padata, padati, palhacomal, titica`) — os únicos 8 dos 44 sem pasta de clipe. 8 × 11 = 88.
 O `catch` vazio de `glbchars.js` engolia tudo, então o jogo funcionava e o console mentia.
 
-**Duas saídas; a primeira foi MEDIDA E DESCARTADA.** `plans/02-BOTS-E-MODELS.md:285`
+**Duas saídas; a primeira foi MEDIDA E DESCARTADA.** `docs/historico/plans/02-BOTS-E-MODELS.md:285`
 previa "B7: rodar `retarget-glb.mjs` para os Palhaços". Rodado — e o retarget é um
 **no-op** para essa família:
 
@@ -1055,6 +1173,344 @@ cabeceiras das pontes). O grafite do fy_lajes voltou (a chamada morreu na troca 
 13/13. Segue aguardando o teste jogável do dono.
 
 ### ~~BUG-52 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+> **Numeração em colisão (merge 17/08):** as entradas abaixo vieram da `main`, que
+> numerou BUG-52..57 em paralelo a esta branch. Os números da main foram mantidos
+> com o sufixo `(main)` — não confundir com os BUG-52..58 desta árvore.
+
+### ~~BUG-54 (main) · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
+
+**Evidência antes.** `BASE=http://localhost:4322 OUT=/tmp/bug292-before npm run
+eval:loadingwall` abriu splash e loading reais em 16:9/3:2, DPR 1/2, e reprovou as oito
+combinações. O splash computava `background-size: auto` com uma camada e, em 1920×1080,
+repetia uma faixa reconhecível do logo na borda direita. O loading computava uma camada
+`cover` e cortava o logo no enquadramento 3:2. O backing das capturas DPR 2 já estava correto
+(3840×2160 e 3072×2048), portanto a hipótese de canvas/resolução física baixa foi refutada.
+
+**Causa.** O `background:#141216` inline do splash zerava `size/repeat` da regra externa; no
+loading, uma única camada `cover` tentava simultaneamente preencher o quadro e preservar o
+assunto — duas exigências incompatíveis quando o aspecto da janela difere do arquivo.
+
+**Correção.** Splash e loading recebem a mesma arte por `--loading-wall` em dois planos: um
+`cover` ampliado, escurecido e desfocado preenche o quadro; um `contain` íntegro fica por
+cima com o scrim de leitura. Assim não há esticamento, corte do personagem/logo nem cópia
+reconhecível nas bordas.
+
+**Régua e mutação.** `tools/eval/loading-wallpaper-check.mjs` mede os dois pseudo-elementos,
+o quadro CSS e o PNG físico nas oito combinações e grava todas as capturas. UIR32 prende o
+uso da variável e a composição no fonte; `--mutante=loading-wall-cover-unico` troca o
+`contain` por `cover` e deixa UIR32 vermelha.
+
+**Evidência depois.** A mesma matriz ficou **8/8 verde**: arte `cover, contain`, fundo
+`cover blur(18px)` e dimensões físicas exatas em DPR 1/2. Foram olhadas as capturas
+`splash-16x9-dpr1.png` e `loading-3x2-dpr1.png`: assunto e logo inteiros, sem repetição; as
+sobras laterais são preenchimento escuro desfocado. **Custo:** a URL é baixada/decodificada
+uma vez, mas pintada em dois planos; não entrou asset nem request novo, apenas um segundo
+paint durante telas estáticas de espera.
+
+### BUG-53 (main) · O redesign novo tinha mídia completa, mas integração e régua continuam erradas
+
+**Décima revisão do dono (16/08):** a tela cheia de mapas ganhou opções de armas, jogadores
+e número de rounds sem esconder o catálogo. A escolha de 1/3/5/7 atravessa `main.js` e
+governa a condição real de fim em `Game`; Mata-Mata e Capture a Bandeira guardam escolhas
+independentes e preservam os padrões históricos de 5 e 3. UIR33 nasceu vermelha antes da
+integração e o mutante `opcoes-mapa-decorativas` prova a ligação de produção. O novo
+`eval:matchoptions` instancia o `Game` real em todos os oito pares modo/teto e o mutante
+`fixo` deixa 24 cláusulas vermelhas. A captura 1536×1024 foi olhada com SÓ AWP, 6×6 e
+MELHOR DE 7 visíveis no cabeçalho, sem colisão com as seis miniaturas.
+
+**Nona revisão do dono (16/08):** *"a tela de selecao de telas fosse a default quando ele
+seleciona abate ou capture a bandeira"*, *"abate tinha q ter outro nome"*, *"a tela de
+vitoria e derrota ainda esta cortando a imagem dos personagens, e a imagem do personagem
+nao se integra com o background"*, *"DIFICULDADE UNDEFINED [...] tirar esse label"*,
+*"o punk do tribos urbanas ta como avatar do hipster alternativo"* e *"o ze gotinha no
+avatar de selecao nao da pra ver muito bem"*. A mesma revisão pediu avatar aleatório do
+elenco enquanto não houver foto própria, upload de foto funcional, *"suporte ao jogo"* no
+menu e *"inverter o mouse vertical"* nas configurações. A reprodução encontrou contratos que
+o verde anterior não cobria: os casos `sp`/`ctf` chamavam somente `openSetup()` e deixavam
+a tela 04 escondida; a ficha anexava uma dificuldade sintética derivada de hash; Punk e
+Hipster tinham arquivos distintos, mas ambos usavam o mesmo vocabulário de moicano curto e
+camiseta, enquanto o vídeo do Punk real tem liberty spikes multicoloridos e jaqueta com
+tachas; e a máscara linear ainda confinava a arte final à coluna direita. O avatar do
+Gotinha também foi comparado ao vídeo real para preservar touca, cruz, olhos e silhueta em
+114 px. Na medição alpha de 0,2%–99,8%, `mst-vitoria.webp` deixava 13,28% do quadro vazio
+abaixo das botas e `mst-derrota.webp`, 10,55% — por isso o corpo parecia flutuar/cortado
+mesmo com `contain`. UIR19 passa a decodificar os pixels e medir as margens, e UIR26–UIR28
+cobrem respectivamente a entrada padrão pelo mapa, a ausência do label sem contrato e as
+identidades visuais auditadas de Punk/Gotinha. UIR29–UIR31 prendem o fallback estável com
+troca imediata após upload, a entrada de suporte pelo canal existente e o checkbox que
+chega ao `movementY` real. Cada cláusula ganha mutante no uso de produção antes da correção.
+
+**Oitava revisão do dono (16/08):** *"esses 2d das armas tem que mandar tambem na parte
+que um jogador mata o outro"* e *"o placar em cima nao precisa de bg black com opacity"*.
+O killfeed agora resolve o `short` da arma para o mesmo WebP publicado que alimenta os
+slots 1–5 e usa sua transparência como máscara monocromática; o SVG anterior fica apenas
+como fallback para itens sem imagem. O placar superior e o relógio passaram a flutuar sobre
+a cena, sem os três retângulos pretos. A primeira versão da UIR17 deu uma falsa verde porque
+lia uma declaração antiga transparente, ignorando a regra final opaca; a cláusula agora
+mede as declarações efetivas do bloco de redesign. UIR25 nasceu vermelha antes da integração,
+e os mutantes `killfeed-volta-svg` e `hud-score-volta-preto` derrubam respectivamente UIR25
+e UIR17. Na captura 1280×720, os fundos computados dos dois blocos foram
+`rgba(0, 0, 0, 0)`; a composição sem placas foi aprovada pelo dono. A captura de
+navegador também dispara um abate real e exige `ak.webp` visível no killfeed com o fallback
+oculto. A revisão adversarial encontrou ainda dois contratos falsamente verdes: `?tela=08`
+abria vitória apesar de 08 ser o placar, e as setas percorriam o catálogo global mesmo com
+a aba CIDADES ativa. O alias numérico agora abre o placar e o carrossel navega somente na
+lista filtrada; o browser confirma CIDADES de `praca_poderes` para `loja_h` mantendo um card
+selecionado. Os mutantes `oito-volta-vitoria` e `mapa-navega-global` mordem os dois usos reais.
+
+**Sétima revisão do dono (16/08):** *"04 · ESCOLHA DO MAPA e a principal que precisamos
+alterar, voce preciso enxergar tudo e deixar exatamente igual em fotes, elementos, cores"*;
+o mesmo pedido nomeou explicitamente `05 · HUD`, `07 · CONFIGURAÇÕES` e `08 · PLACAR` do
+arquivo `CORO SOLTO - Telas AAA.html`. A referência local foi lida como fonte de verdade:
+Barlow Condensed no corpo, Bebas Neue nos títulos, Rajdhani nos números; mapa com abas,
+ficha e carrossel visual; configurações em painel de 980 px com prévia 360×200; HUD com
+estado crítico; placar com cabeçalho superior e duas tabelas.
+UIR4, UIR17 e UIR22–UIR24 ficaram vermelhas antes das mudanças. A antiga UIR4 exigia
+justamente a faixa textual que o dono reprovou; agora exige miniaturas, abas, setas e
+paginação, e seus mutantes removem o uso de produção.
+
+As capturas reais em 1280×720 confirmaram a nova composição do mapa e o painel de
+configurações; `?tela=config` fixa a prévia em “Padrão ouro” para a comparação não depender
+do `localStorage`. `?tela=placar` mostrou `RODADA 4/5 · 1:32`, JOGADOR/K/D/SCORE/PING em
+duas colunas e revelou um defeito que a régua estática não via: `setPaused(true)` abria o
+menu de pausa por cima. O modo direto agora congela a partida sem acender esse menu e força
+o placar sem CAP., como na tela 08. `?tela=hud&vmlab=1&vida=23` mostrou mira ciano no centro,
+slots 1–5, número/barra vermelhos e a vinheta de 160×50 da tela 05; antes, a vida mudava para
+23 mas a vinheta permanecia com opacidade zero. A coluna de armas usa a silhueta alfa dos
+WebP já publicados como máscara 2D monocromática, sem placa e sem sombreado 3D.
+
+Loading, vitória e derrota foram recapturados no mesmo browser. `?tela=loading&time=B`
+mostrou TIME B × TIME E, canvas de 86 px junto à barra, rótulo de ação escondido e GLB
+orientado para o avanço. A vitória permaneceu inteira e dissolvida; a derrota ainda tinha
+um retângulo preto, então `mst-derrota.webp` também passou a 1024×1536 com alpha real. UIR19
+agora decodifica os dois estados, não só a vitória. `tools/eval/screen-query-browser.mjs`
+foi atualizado para medir carrossel visual, qualidade da configuração, vida baixa, placar,
+mira e máscaras 1–5. As mutações de mapa, fontes, painel, pausa sobre o placar, CTF extra,
+vinheta baixa, alpha dos dois resultados, porte e orientação do loading fizeram suas
+cláusulas alvo ficarem vermelhas.
+
+**Sexta revisão do dono (15/08):** a vitória ainda cortava o punho levantado e exibia o
+retângulo preto do arquivo como uma foto colada no layout; no loading do Time B, o personagem
+deveria ficar literalmente um quinto do porte e olhar para o sentido em que a barra avança.
+O defeito da vitória estava dentro do próprio `mst-vitoria.webp`: `contain` não poderia
+recuperar pixels que já não existiam e UIR19 lia apenas o CSS. A cláusula ficou vermelha com
+`alpha=false` antes da troca, passou a decodificar o cabeçalho VP8X/ALPH do WebP publicado e
+agora prende também o quadro vertical aprovado. A arte foi estendida para incluir punho,
+bandeira e botas, recebeu alpha real e foi recapturada pelo modo direto sem placa retangular.
+UIR21 ficou vermelha antes de reduzir o palco e inverter o yaw; a captura de
+`?tela=loading&time=B` confirmou Canarinho transparente, pequeno junto à barra e apontando
+para a direita. Os mutantes `resultado-sem-alpha`, `loading-volta-grande` e
+`loading-vira-esquerda` fazem as duas cláusulas voltarem a reprovar.
+
+**Quinta revisão do dono (15/08, corrige a interpretação):** as pranchas de Metal Slug
+eram referência de **vocabulário de movimento**, não pedido de sprite 2D: *"renderiza em
+3d mesmo"*. Por isso os corredores PNG da quarta rodada deixam de ser produção. O loading
+passa a renderizar um GLB real por facção em canvas transparente, com o mesmo
+`CharController`/`AnimationMixer` do jogo alternando corrida, postura pronta, tiro, agachado,
+deslocamento agachado, salto e tiro em movimento. A revisão adversarial mostrou que
+“MIRA” ainda era apenas `idle`; o rótulo virou “PRONTO” e a régua passou a observar o
+`AnimationAction` ativo, não o texto anunciado. O seletor abandona a grade duplicada:
+há uma única imagem full-bleed e seis escolhas textuais no rodapé. O modo de inspeção ganha
+`?tela=08|vitoria` e `?tela=09|derrota`, além dos aliases em inglês. Antes da correção,
+UIA5, UIA6, UIR4, UIR16, SQ1 e SQ5 ficaram vermelhas; os mutantes removem canvas, uma
+ação, uma facção, a composição nova, os aliases e a montagem do resultado.
+No browser em 1536×1024, o canvas do Gotinha produziu 44 amostras diferentes, percorreu
+o ciclo inteiro e expôs os sete clipes reais esperados, mantendo backing store 430×720
+com fundo transparente.
+A captura mostra o personagem sem placa sobre o wallpaper; a tela de mapa usa os 1.536 px
+do quadro e a faixa contém os seis mapas sem repetir miniaturas. O mesmo ensaio abriu os
+dois resultados e confirmou `vmlab=1`: mira ciano central, sidebar 1–5 vertical, cinco
+silhuetas SVG e um único slot ativo.
+
+**Quarta revisão do dono (15/08, reabre o defeito):** *"a tela de selecao de mapas ainda ta
+ruim"*; *"a animacao nao esta fluida, esta muito truncada"*; *"o hud 2d da arma esta muito
+3d"*; *"o gif do personagem andando, ta com fundo preto nao ta integrado ao layout"*; e
+*"eu queria um modo com query string pra avaliar tela por tela, sem precisar ir no fluxo
+todo"*. Emerson também pediu conferir *"o vmlab=1 com a mira ajustada"* e *"o menu 1 2 3 4
+5 no sidebar"*. A afirmação de resolvido abaixo permanece como histórico da rodada anterior,
+mas o portão verde não cobre estas propriedades; a régua precisa ser corrigida antes de uma
+nova mudança visual.
+
+**Evidência e correção da quarta revisão.** Os cinco PNGs publicados tinham 2.304×512 e
+o preto chegava a 71,68% da borda dos quadros; a animação tinha oito poses em 0,72 s
+(11,1 fps). UIA5 só exigia `alphaMin=0` e `alphaMax=255`, portanto uma faixa preta opaca
+com alguns pixels transparentes passava. UIR4 exigia justamente as duas rails gigantes
+reprovadas pelo dono, e UIR18 exigia o WebP detalhado da arma. As quatro cláusulas ficaram
+vermelhas antes do conserto. Agora cada facção mantém seu próprio corredor em uma folha de
+16 poses (4.608×512), a 20 fps; a régua mede a borda de cada quadro e encontrou no máximo
+2,84% de pixels não transparentes, abaixo do teto de 5% que permite a arma ultrapassar a
+lateral sem aceitar uma tarja inteira. O hash só foi atualizado depois de olhar as capturas
+3:2 do modo direto e do fluxo completo. O seletor virou catálogo compacto 2×3 à esquerda e
+preview delimitado à direita. O inventário 1–5 usa `_wpnIcon()` (SVG plano), volta à lateral
+direita e esconde o WebP 3D de `#ammo-weapon-art`.
+
+`public/js/screenquery.js` expõe o modo de inspeção sem atravessar o funil: `?tela=00..07`
+ou `?tela=splash|loading|menu|faccao|personagem|mapas|hud|pausa|config`, com `time`, `char`
+e `map` opcionais. `tools/eval/screen-query-browser.mjs` abriu mapas, loading e
+`?tela=hud&vmlab=1&time=E&char=mst` diretamente. Mediu seis mapas e um selecionado,
+12 posições distintas do corredor em 650 ms, viewmodel do laboratório visível, mira ciano
+centralizada e os cinco slots SVG empilhados no canto direito. O smoke sem atalho abriu
+ranking e voltou, percorreu facção → personagem → adversário e chegou ao HUD vivo. Ele
+também revelou que personagens de pistola acendiam os slots 1 e 2 ao mesmo tempo; HUD6
+ficou vermelho antes de `_updateWeaponHud()` limitar a marca ativa a um slot.
+
+**Evidência antes.** `npm run eval:redesign` em 15/08 deixou UIR1–UIR5 vermelhas, embora
+UIA1–UIA3 tenham conferido o elenco inteiro e todos os vídeos. A captura reproduzível
+`OUT=/tmp/ui-169 W=1366 H=768 ONLY=04 BASE=http://127.0.0.1:8123 node tools/eval/telas-menu7.mjs`
+mostra os cartões das pontas cortados; em 1536×1024 eles cabem.
+
+**Causas medidas.** `renderMapScreen()` escrevia texto dinâmico fora de `tr()`;
+`loop()` continuava chamando `pv.r.render` sob o vídeo e `show()` não pausava o decoder ao
+sair da tela (`public/js/main.js:1356`, `:2202` e `:236`); `.ms-thumb` tinha 196 px e
+`flex:none` (`public/style.css:1863`); o `DICT` declarava `PERSONAGENS` e `COMO JOGAR`
+duas vezes (`public/js/i18n.js:24`). O capturador também seguia o fluxo antigo
+(`#btn-team-p`, submenu fechado e `DOMContentLoaded` como proxy), portanto não chegava à
+tela de personagem. Na inspeção dos pixels, todos os vídeos publicados eram válidos, mas o
+gerador fixava `w=ak`: os loadouts não-AK mostravam arma diferente da declarada em
+`CHAR_WEAPON`.
+O placar CTF ganhou três números por linha, mas o cabeçalho visual ainda consultava o
+contrato removido `#sb-cap-h/.sb-head`; “CAP.” não aparecia e o capturador só imprimia o
+falso verde.
+
+**Correção e figura depois.** Texto dinâmico e chrome tardio passam por `tr()`/`frase()`,
+incluindo as fichas do elenco em inglês; `FACTION_NAME` cobre a chave real `E`. O preview
+3D voltou a ser o caminho normal, interativo e parado em três-quartos até o arraste; o vídeo
+é fallback sem WebGL e libera o decoder ao sair. A faixa usa flex shrink e o capturador mede os retângulos reais: seis
+cards de 196 px dentro de 1.312 px em 1536×1024; seis de 166 px dentro de 1.056 px em
+1280×720. Foram regenerados os clipes dos loadouts não-AK pelo personagem, arma e animação
+do jogo real. Vitória e derrota foram recapturadas depois de ligar o resize também durante
+`PLAY`: câmera, viewport e backing store agora são quadrados, em vez de um arquivo quadrado
+recortar silenciosamente o renderer 3:4. O placar agora cria K/M/CAP. no cabeçalho de cada time e o
+capturador reprova se os dois “CAP.” não estiverem visíveis. As pranchas finais foram
+olhadas nos dois aspectos; o smoke abriu ranking, voltou, percorreu facção → personagem →
+adversário e chegou ao HUD vivo sem `pageerror`.
+
+O crítico adversarial encontrou ainda falsos verdes. UIR5 só lia a primeira chave de cada
+linha e não via `JOGAR` repetido no meio de uma linha; UIA1/UIA2 provavam contêiner, não o
+conteúdo aprovado; `eval:select` não usava o `preview:true` da tela e imprimia reprovação com
+exit 0. As réguas agora leem toda chave literal, prendem o lote visualmente aprovado ao hash
+dos vídeos e do mapa `CHAR_WEAPON` em `tools/eval/char-native-audit.json`, medem o porte real
+da seleção e saem 1 quando um personagem reprova. Regenerar mídia sem nova inspeção deixa
+UIA4 vermelha. O gerador também aborta em `pageerror`, timeout ou resize incompleto, em vez
+de preservar artefato velho com sucesso falso.
+
+**Segunda revisão do dono.** A tela de mapas ainda era um herói grande com uma faixa de
+miniaturas; a seleção ainda tinha três colunas; a entrada trocava os wallpapers antigos por
+um vídeo; loading e resultado mantinham decoders decorativos; e o Canarinho publicado tinha
+um quadro horizontal pequeno com fundo opaco. A régua antiga aprovava todos esses estados. A composição agora
+mostra o catálogo inteiro numa grade única, põe ficha + preview em duas colunas e o elenco na
+faixa horizontal inferior, usa `loading-*` tanto na entrada quanto na espera do mapa e pinta
+vitória/derrota só com os pares estáticos do personagem escolhido. O Canarinho virou sprite
+PNG HD com alpha e animação CSS — nenhum decoder fica vivo por causa dele. As capturas
+foram olhadas em 1536×1024 e 1600×900; `telas-capture.mjs` também confirmou o resultado
+estático nos dois enquadramentos que já cobre.
+O crítico limpo encontrou um último desvio: trocar de personagem com `M` atualizava a
+malha jogável, mas não o `playerCharId` usado pela arte final. UIR15 foi deixada vermelha
+antes da correção; `_switchTeam()` agora sincroniza a identidade e o mutante que remove a
+sincronização volta a reprovar. UIA5 também decodifica o PNG e exige pixels transparentes
+e opacos, em vez de confiar apenas no tipo RGBA do cabeçalho. O lote estático aprovado
+e o sprite ficam presos aos hashes de `tools/eval/redesign-static-audit.json`; trocar qualquer
+arte exige uma nova inspeção visual. Nessa revisão, marcas reconhecíveis nas artes de Canarinho e Chave
+foram substituídas por símbolos fictícios sem mudar personagem, pose ou acabamento.
+
+**Terceira revisão do dono.** A captura em tela baixa mostrou a faixa de avatares
+encostando nos controles do preview; a captura do resultado mostrou braços cortados e uma
+emenda retangular entre foto e fundo. No fonte, os avatares mantinham o tamanho anterior, o mapa
+reservava a metade esquerda para a ficha, o placar abreviava K/M, e o topo do HUD tinha voltado
+a uma placa preta. UIR4, UIR7, UIR13 e UIR17–UIR20 ficaram vermelhas antes da correção.
+Agora o catálogo ocupa rails que mostram todos os mapas, o elenco usa miniaturas 1,5× numa faixa
+central com uma linha própria, e o preview respeita a altura restante. O placar escreve
+KILLS/MORTES por extenso sobre a mesma grade das linhas; o HUD superior é transparente e usa
+a tipografia do pause. A arma ativa ganhou render branco detalhado e pente segmentado ao lado
+da contagem. A arte final usa enquadramento integral e máscara horizontal para dissolver no
+fundo. Português é o fallback; inglês automático depende do país recebido pelo SSR, com
+Portugal e Espanha fora do conjunto inglês. O loading conserva o Canarinho na entrada e usa
+Zé da Gotinha, Canarinho, Black Metal, Bonzo ou Mandrake conforme a facção. As pranchas
+completas foram inspecionadas com passada alternada, arma nas duas mãos e alpha, e seus
+bytes aprovados ficaram presos ao hash estático.
+
+**Quarta revisão do dono (16/08).** *"essa tela de vitória/derrota eu já falei 20x,
+tem que arrumar: o personagem tem que aparecer por inteiro e, se possível, encostado no
+right; o bg integrado com ele como se fosse uma coisa só"*. A captura em 2048×1280 ainda
+mostra cabeça/mão e pés cortados e uma moldura retangular escura atrás da arte. A revisão
+anterior, portanto, não fechou o enquadramento servido.
+
+**Resolvido na quarta revisão.** A régua de pixels ficou vermelha em **87/88** artes: os
+arquivos quadrados opacos não tinham como revelar corpo inteiro com CSS. Os 44 personagens
+do elenco atual foram republicados em recorte alpha 1024×1536, sem inventar personagem; Punk
+e Sindicato foram conferidos nos próprios GLBs. UIR19 agora lê todos os pixels e exige folga
+superior/inferior, alinhamento à direita e pelo menos 72% do eixo vertical ocupado. A tela usa
+`contain`, sem máscara e sem retângulo; vitória e derrota em 1536×1024 mostram cabeça, mãos e
+botas inteiras. Os mutantes de `cover`, remoção do degradê e alpha ausente deixam UIR19
+vermelha. Custo: o lote de resultado passa a 7,2 MB; é carregado sob demanda, uma arte por
+fim de partida.
+
+**Régua.** A fonte única dos mutantes vigentes é `alvoPorMutante` em
+`tools/eval/redesign-check.mjs`; a documentação não repete essa lista. Para esta revisão,
+`loading-sem-canvas`, `loading-uma-acao`, `loading-uma-faccao` e `mapa-volta-grade`
+reprovaram suas cláusulas alvo. `tools/eval/screen-query-check.mjs` cobre aliases, chamada
+de boot, montagem de resultado, ordem E × B e consumo explícito de `target.map`; os mutantes
+correspondentes ficam declarados no próprio script. `tools/eval/screen-query-browser.mjs`
+observa um ciclo completo, compara o rótulo com o clipe ativo, abre um mapa diferente do
+default, testa vitória nos dois lados e mede `vmlab=1` com mira e sidebar. Os mutantes de
+sprite descritos nas revisões anteriores são históricos e deixaram de existir quando o
+loading passou a GLB ao vivo.
+`tools/eval/vmlab-hud-check.mjs --mutante=duplicado-ativo` protege a leitura de um único slot ativo.
+`tools/eval/select-mount.mjs --mutate=sem-preview` prova que o porte funcional não pode
+voltar a substituir a pose apresentada.
+
+### ~~BUG-52 (main) · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
+
+**Sintoma (do dono):** *"O jogo está mostrando o dano recebido (e o texto do dano) em uma
+posição 180 graus além da esperada. Ou seja, se eu tomo na frente, aparece que eu tomei nas
+costas. Este código marcado foi colocado em outra seção, mas não resolveu."* — apontando pro
+comentário de `_noteHit` (`public/js/game.js:4358-4363`).
+
+**Causa raiz — confirmada.** Existem DOIS lugares que calculam a direção do atacante
+relativa à vítima, e só um tinha o sinal certo. `_noteHit()` (o painel de texto "MORTO
+POR"/"veio DA SUA FRENTE") já estava correto: `atan2(p.pos.x - by.pos.x, p.pos.z -
+by.pos.z) - p.yaw` — vítima menos atacante. Mas o indicador que o jogador vê primeiro, o
+arco vermelho na borda da tela (`_dmgArc()`, chamado de `_damage()` só quando
+`ent.isPlayer`), reimplementava a MESMA conta com os operandos TROCADOS:
+`atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw`
+(`public/js/game.js:3035`, antes do conserto). Trocar a ordem do subtraendo nega o vetor, e
+negar um vetor soma exatamente π ao resultado do `atan2` — os 180° que o dono via. O mesmo
+operando trocado também existia no indicador antigo por trás do kill-switch `?dmgdir=0`
+(`public/js/game.js:2991`).
+
+**Reprodução:** `node tools/eval/dmgdir-check.mjs` contra o `game.js` de antes do conserto.
+
+**O que foi DESCARTADO com medição, não com palpite:** o próprio dono já tinha apontado o
+comentário de `_noteHit` como tentativa anterior que não resolveu. Derivar a álgebra do
+`atan2` (convenção de yaw da câmera, forward=(-sin,-cos), ver comentário em
+`_updatePlayer`) e alimentar o resultado de volta no código mostrou que a fórmula de
+`_noteHit` já estava certa — o palpite de "reverter mais um sinal ali" teria sido
+inútil, porque o defeito não morava naquele método. Morava no `_dmgArc`, uma
+reimplementação irmã que ninguém tinha olhado.
+
+**Medido antes do conserto** (`node tools/eval/dmgdir-check.mjs`, 4 direções cardeais × 7
+yaws da vítima = 28 casos, ângulo real escrito em `transform: rotate(...)` do elemento do
+arco):
+
+| | antes | depois |
+|---|---|---|
+| casos com o arco no lado certo (FRENTE=topo, COSTAS=embaixo, DIREITA/ESQUERDA corretos) | 0/28 | 28/28 |
+| desvio de FRENTE e COSTAS | exatamente π (180°) em todos os 28 casos | 0 |
+
+**Correção.** `public/js/game.js:3035` (arco moderno) e `:2991` (fallback `?dmgdir=0`):
+`ent.pos - attacker.pos`, não `attacker.pos - ent.pos`, igualando a ordem que `_noteHit`
+já usava.
+
+**Custo declarado, medido:** nenhum — a mudança troca dois operandos de subtração, sem
+custo de desempenho. Não testado no navegador (browser): a régua exercita `_dmgArc` de
+produção via extração de método (mesma técnica de `ctfhud-check.mjs`), não a rota `/` real;
+o visual em jogo (posição do arco na borda, painel de morte) não foi conferido a olho.
+
+**Régua: `tools/eval/dmgdir-check.mjs`** (`npm run eval:dmgdir`, no `check:fast`).
+28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
+ordem de operandos do defeito original e derruba 28/28 casos.
+
+### ~~BUG-53 (main) · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
 
 **Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
 **0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
@@ -1091,6 +1547,12 @@ a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m). Auditoria i
 reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
 (y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
 subiu 43 → 50 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m) na branch original; na
+árvore da main (com o filtro de âncora baixa do #260, que tira a tinta de caixa
+procedural do 1,6 m) o rebake mede **49,4% · 28% · 54,4%**. Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 49 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
 cornija e peças entre colunas, nada no ar nos ângulos de jogador.
 
 **O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
@@ -1254,6 +1716,7 @@ de escrita, portanto isso não está resolvido.
 cadastrados, com skin, PBR completo e orçamento de `2,5k–40k` triângulos. Mutações:
 `--mutante=fallback|semrig|sempbr`. Estado atual: `9/9 GLB · 8/9 rig · 9/9 PBR`, vermelho
 em `bandeirante: 0 skins`.
+
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
 
@@ -2329,6 +2792,42 @@ em outra porta. Antes: saída 1, nenhuma segunda URL. Depois: porta ocupada `584
 servidor `58403`, saída 0. Mutação `--mutante=semlock`: saída 1 e mensagem do Astro dizendo
 apenas que o servidor do lock já estava vivo. A régua entra no `check:fast` antes dos
 portões que podem cortar a corrente.
+### ~~BUG-57 (main) · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
+
+**Sintoma.** Deploys da Vercel falhando desde `ef0a392` (16/08 ~01:52) com
+`check:deploy` vermelho em `eval:redesign` — UIA6. A main ficou SEM publicar por
+~14h: os merges #300 (sim-clock) e #303 (fix WebGL `16a22c40`, o "arena não
+abriu" dos jogadores) estavam no git e fora do ar.
+
+**Causa raiz — a régua lia FORMATAÇÃO, não comportamento.** A UIA6 exigia o
+literal `loadingStage.update(dt)` no main.js. O rebase do #300 mudou a chamada
+para `update(Math.min(0.05, dtReal))` — correto e semântica idêntica pra cláusula
+(o loading continua sendo atualizado no loop) — e a regex deixou de casar.
+Família do BUG-02 (régua acoplada a detalhe que não é o comportamento cobrado):
+lá o JSON velho media o viewmodel de ontem; aqui a régua media a grafia de hoje.
+
+**Por que o CI do PR não pegou.** Pegou — mas o `check:fast` do CI roda SEM o
+`redesign-check` completo? Não: roda, e passou, porque o branch do #303 nasceu
+do #300 já com o texto novo E a régua velha só entrou no `check:deploy` da
+Vercel via `ef0a392` — que o CI do PR #303 (criado antes) não tinha. A janela:
+gate novo no deploy + regex frágil + rebase no caminho = ninguém viu até o
+push final. O `pr-fast` do merge-para-main roda contra a main NOVA só depois
+do merge — tarde demais.
+
+**Correção.** `redesign-check.mjs`: a cláusula passou a cobrar a CHAMADA
+(`loadingStage.update(`), não a grafia do argumento. Validado local: 47/47 + UIA6.
+
+**Régua.** A própria UIA6 agora existe e o `check:deploy` continua no
+buildCommand — deploy vermelho bloqueia publicação (é o desenho). O que muda é
+o que ela lê: comportamento, não formatação. Mutante da família: mudar a
+formatação da chamada NÃO pode acender a cláusula (testado ao vivo: o rebase do
+#300 foi o mutante involuntário e a régua nova fica verde).
+
+**Lição (a mesma do BUG-02, agora com custo de 14h de deploy):** cláusula que
+casa literal de código deve casar o MÍNIMO que expressa o comportamento. Antes
+de versionar regex de fonte no `check:deploy`, perguntar: "um rebase razoável
+mudaria este texto sem mudar o que eu quero garantir?" — se sim, a regex está
+errada.
 
 ### ~~BUG-46 · Todo release abria um deploy de produção vermelho e redundante~~ · RESOLVIDO 11/08
 
@@ -2382,11 +2881,13 @@ No mesmo build, `scripts/copy-wasm.mjs` rodou e gerou **`public/wasm/resvg.wasm`
 o arquivo que faltava para as páginas `/u/*` terem og:image. Os dois itens B1 do handoff
 fecharam juntos.
 
-### BUG-15 · `public/models/anims/` não é versionado
+### ~~BUG-15 · `public/models/anims/` não é versionado~~ · RESOLVIDO 16/08
 
-`git ls-files` devolve vazio para o caminho. `TPM1` falha em qualquer clone limpo e o CI fica
-vermelho por motivo que não é código. **Sem a pasta no deploy, todo personagem congela em
-T-pose** — e `glbchars.js:196-209` engole a falha em silêncio.
+O diagnóstico original era literal: `git ls-files` devolvia vazio e um clone limpo perdia
+as animações. Hoje os GLBs individuais, os pacotes mesclados e o índice estão versionados;
+`anims:check` e `anims:merge:check` passam no `check:fast`. A revisão do PR #301 encontrou
+que os dois ainda não rodavam no portão específico da Vercel. RLS7 agora exige ambos em
+`check:deploy`; o mutante `sem-anims-deploy` remove essa proteção e fica vermelho.
 
 ### BUG-16 · Migration de segurança pronta e não aplicada
 
@@ -2489,7 +2990,109 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ---
 
-## Relatados, ainda não reproduzidos
+## Relatos recentes e resolução
+
+- **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
+  ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
+  criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:
+  ele estava classificado dentro da pasta do Time B, mas o conteúdo continua sendo a voz
+  errada. A substituição escolhida vem do mesmo pool B e tem fonte nominal
+  `bolsonaro-acabou-porra.mp3` (`fc5bf11f5b8287f5`); os hashes SHA-1 do fonte e do asset
+  publicado são idênticos. Antes, `eval:charvoice` deixava VOICE10 e VOICE12 vermelhas;
+  depois, passa com o runtime e o deploy no `audio-pack-v6`. Os mutantes
+  `faria-volta-lula` e `pack-antigo` reacendem uma cláusula cada. Custo declarado: nenhum
+  áudio novo; só muda a reserva de um clipe que já pertencia ao pool B.
+
+- **~~BUG-65 · bordões da seleção pertenciam à posição, não ao personagem~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"o Faria Limer tá usando um áudio do Lula"*, *"o Clubber não pode ser
+  bomboclaat, tem que ser o ai delícia; o bomboclaat é o Rasta"* e *"o Funk Raiz é o coé,
+  rapaziada"*. `public/js/audio.js:102` usava o índice do avatar no elenco para buscar o
+  pool; no elenco Urbanas, por exemplo, o índice do Clubber apontava exatamente para
+  `bomboclaat`. A régua nasceu vermelha em **5 identidades**. Agora seis personagens têm
+  associação explícita, os demais pulam os arquivos reservados para não compartilhar fala,
+  e o pacote v5 acrescenta a vinheta de 8 s do Dollynho. `eval:charvoice` passa; os seis
+  mutantes passam a deixar ao menos uma cláusula vermelha, inclusive a troca Clubber↔Rasta.
+
+- **~~BUG-64 · wallpaper da home não preenche o 3:2 sem cortar e versão sai do canto~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"a tela inicial também não está com o wallpaper cheio e a versão do
+  jogo não está no canto direito"*. `cover` preenchia, mas cortava logo ou personagem dos
+  wallpapers 16:9; `contain` preservava a arte, mas deixava faixas visíveis no viewport 3:2.
+  Cada wallpaper ganhou uma variante 3:2 derivada exclusivamente da própria imagem: quadro
+  original inteiro no centro e extensão desfocada nas áreas novas. Em 1536×1024 a captura
+  mostra logo e personagem inteiros, sem faixa vazia; a versão fica fixa 14 px acima da borda
+  inferior e alinhada à direita. UIR32/UIR42 passam, os mutantes `menu-wall-sem-3x2` e
+  `versao-menu-volta-rodape` ficam vermelhos, e `menuwalls:check` liga fonte, receita e saída.
+
+- **~~BUG-63 · tela final tinha emenda colorida atrás do personagem~~ · RESOLVIDO 16/08.**
+  Palavras do dono: *"faltou só a parte do vitória estar preto igual o degradê final da
+  imagem à esquerda pra parecer uma tela só"*. Dois pseudo-elementos desenhavam um radial
+  verde e um gradiente restrito à metade direita. Ambos foram removidos: vitória e derrota
+  agora usam o mesmo preto contínuo atrás do recorte alfa inteiro. Capturas reais em
+  1536×1024 confirmam ausência de emenda; UIR41 passa e `resultado-emenda-volta` recoloca o
+  radial, deixando a cláusula vermelha.
+
+- **~~BUG-62 · shader dos personagens não compila no Chromium headless~~ · RESOLVIDO 16/08.** Descoberto pelo
+  smoke real em 16/08: `web-assets.spec.js` carregou o GLB e a ficha, mas o overlay de debug
+  bloqueou `#char-confirm` por 900 tentativas. A primeira correção trocou a amostragem por
+  `texture2DLodEXT` e deixou WG11 verde, mas a régua só reconhecia o nome da função. O smoke
+  Linux do PR #302 provou que a extensão estava desabilitada no renderer da vitrine; além
+  disso, a variante do material dependia da capacidade global do renderer principal. A
+  correção usa o bias nativo do fragment shader — `texture2D(map, vMapUv, csAlbLod)` — e não
+  compartilha capacidade entre renderers. WG11 agora recusa a extensão e o estado global; o
+  mutante `texture-lod-ext` devolve a extensão e deixa WG11 vermelha. O smoke também verifica o `crash-overlay`
+  antes de clicar, para uma regressão de shader falhar imediatamente em vez de aguardar o
+  timeout do botão.
+
+- **~~BUG-58 · trocar de time com M quebra a tela~~ · RESOLVIDO 16/08.** Palavras do dono:
+  *"o fluxo de trocar de time parece quebrado quando aperto m ele quebra a tela"*.
+  O smoke reproduziu o estado inválido: depois de `KeyM` e `pointerlockchange`, `#char-select`
+  estava visível **junto** com `#pause-menu` (`expected hidden, received visible`). A causa era
+  sair do pointer lock antes de marcar a pausa; o evento de perda abria uma segunda camada.
+  Agora a pausa ocorre primeiro, a seleção usa `enemyFaction` (não o lado físico), VOLTAR
+  restaura facção/time/personagem e `_switchTeam()` troca também as duas facções. O smoke
+  completo passa e `--mutante=troca-m-abre-pausa` deixa UIR40 vermelha.
+
+- **~~BUG-59 · opção de 5 rounds encerra a partida em 3~~ · RESOLVIDO 16/08.** Palavras do dono:
+  *"o jogo falava 5 rounds mas teve 3"*. A opção se
+  chama “Nº DE ROUNDS”, mas `_fimDaPartida()` encerrava ao atingir maioria. A nova régua
+  ficou vermelha em **8/8** combinações (1/3/5/7 × mata-mata/CTF). O contrato agora é literal:
+  5 selecionado = 5 rounds disputados; só o relógio global do CTF continua como rede de
+  segurança. `eval:matchoptions` passa e os mutantes `fixo` e `maioria` ficam vermelhos.
+
+- **~~BUG-60 · aviso interno do Supabase aparece na tela final~~ · RESOLVIDO 16/08.** Palavras do dono:
+  *"esses erros de supabase jamais devem aparecer no jogo"*. A captura
+  mostra `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` em vermelho dentro do placar final;
+  `submitNote()` anexava a mensagem técnica ao `#match-stats`. Ele agora registra somente
+  `console.warn('[ranking]', msg)`: não consulta DOM e não contém nomes de variáveis de
+  backend. UIR38 passa; `--mutante=backend-aviso-volta` recoloca o vazamento e fica vermelho.
+
+- **~~BUG-61 · seleção de facções abre com arte em branco~~ · RESOLVIDO 16/08.** Palavras do dono:
+  *"carregando a tela de facções, ela deve ser preloaded já as imagens das facções pra não
+  dar delay e espaço em branco"*. As cinco imagens CSS (403.008 bytes) agora começam a
+  carregar no boot; tanto o fluxo normal quanto `?tela=faccao` aguardam o mesmo `decode()`
+  antes de mostrar `#team-select`. UIR39 passa e o mutante que remove o `await` fica vermelho;
+  o browser abre a facção diretamente sem espaço vazio nem skeleton.
+
+### ~~BUG-55 · painel "FPS P50" media jank de boot vendido como FPS de jogo~~ · RESOLVIDO 15/08
+
+**Sintoma, nas palavras do dono** (print do painel de desempenho, 15/08): *"FPS P50 1 ·
+média 4 · 98% dos jogadores abaixo de 30 FPS"* — e um jogador relatando *"travando com lag"*.
+
+**Causa raiz.** `_sendPerf()` (`main.js`) rodava no **topo do módulo**, na carga da página:
+a janela de 1 s de rAF abria no primeiro segundo de vida, com a main thread parseando JS e
+compilando shader. Thread ocupada não roda rAF — a contagem media **quanto o boot engasgou**,
+não a partida. P50 1 FPS é o esperado nesse instrumento; o painel rotulava como "FPS".
+
+**Conserto** (`main.js` + `api/perf.ts`): a janela passa a abrir **~4 s após
+`state === 'live'`** (em partida, fora do pico de compile). As três colunas ficam honestas
+sem migration: `fps` = partida · `bootMs` = tempo até **jogável** (antes media fim de parse)
+· `loadMs` = carga do módulo (o ex-bootMs — coluna que existia morta na RPC `track_perf`).
+**Número histórico não é comparável** com o novo: a série antiga mede boot.
+
+**Régua.** TL11 do `tools/eval/telemetry-check.mjs` (três laços: espera por live, descanso
+pós-live, loadMs no payload). Mutação `--mutante=perf-no-live` devolve a medição na carga
+e acende. O lag relatado pelo jogador **não foi refutado** — com fps de jogo + connection +
+quality na mesma amostra, a próxima leitura do painel separa máquina fraca de rede lenta.
 
 - **BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**
   O cliente chamava o método diretamente ao criar `cs_anon` e `awpbr_token`; quando
@@ -2563,6 +3166,34 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   **O que NÃO foi verificado:** o sistema operacional dele, se estava em pointer lock, e
   se a mira trava com QUALQUER tecla de movimento ou só com W. Perguntar antes de medir —
   sem isso a régua nasce medindo a coisa errada.
+
+- **~~BUG-62 · "A roda gigante deve rodar no mesmo local, igual roda gigante de verdade"~~ · RESOLVIDO 16/08.**
+  O grupo girava na base, 12 m abaixo do cubo: o centro do aro derivava 8,791 m por rotação
+  medida. O pivô agora coincide com o cubo e aro, raios e cabines usam coordenadas locais:
+  distância pivô→aro **12,000 → 0,000 m** e deriva **8,791 → 0,000 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=pivo-base` restaura os dois números antigos e
+  reprova. Custo declarado: nenhum colisor, waypoint ou rota mudou; só os volumes visuais da roda.
+
+- **~~BUG-63 · "Mova a roda gigante mais pra esquerda pois esta pegando na lateral do mapa, que parece uma grama verde"~~ · RESOLVIDO 16/08.**
+  A roda, as cabines, a base e os suportes foram movidos juntos 6 m para dentro da arena.
+  A menor folga do volume animado para a lateral verde foi de **-5,546 → 0,454 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=lateral-verde` restaura a posição antiga,
+  devolve **-5,546 m** e reprova RODA3. Custo declarado: a cobertura jogável sob a atração e
+  seu colisor também se deslocaram 6 m; armas, spawns, bandeiras e limites do mapa não mudaram.
+
+- **~~BUG-64 · "Aumente a altura da Roda Gigante pois os assentos estao pegando na base"~~ · RESOLVIDO 16/08.**
+  O eixo e o topo dos suportes subiram **12,0 → 14,5 m**. Em uma volta completa, a menor
+  folga dos assentos para o topo da base foi de **-2,339 → 0,161 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=altura-baixa` restaura 12 m, devolve
+  **-2,339 m** e reprova RODA4. Custo declarado: a silhueta da atração ficou 2,5 m mais alta;
+  base, colisor, raio, velocidade, armas, spawns e rotas não mudaram.
+
+- **~~BUG-65 · "Ajustes pois os assentos estao pegando no circulo da roda gigante"~~ · RESOLVIDO 16/08.**
+  O aro e os raios foram recuados 1,2 m para um plano estrutural atrás das cabines. A folga
+  em profundidade entre cabines e aro foi de **-1,070 → 0,130 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=aro-no-assento` restaura o mesmo plano,
+  devolve **-1,070 m** e reprova RODA5. Custo declarado: aro e raios ficaram 1,2 m atrás do
+  cubo; altura, raio, cabines, base, colisores, velocidade, armas, spawns e rotas não mudaram.
 
 - **"E vice-versa" do BUG-01** — partida de CTF *sem* a faixa de bandeiras no HUD. O caminho
   `this.ctf → _initCTF → _updateCtfHud` sempre desconde, então o mecanismo não é o mesmo do

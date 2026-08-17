@@ -146,6 +146,15 @@ function runMap(mapId, textures, seed) {
   g._ensureDolly = () => {};        // a câmera de fim de round cria um WebGLRenderer — não existe aqui
   g.killsToWin = Infinity;          // sem alvo de abates: a amostra tem que durar a corrida inteira
   g.start ? g.start() : g._startRound();
+  /* MATRIZES DE MUNDO: sem renderer ninguém chama updateMatrixWorld, e o Raycaster do three
+     assume matrizes prontas — sem esta linha os occluders ficam empilhados na ORIGEM (matriz
+     identidade) e o `_losClear` dos bots (raycast contra `world.occluders`, game.js:5044) mede
+     linha de visão contra geometria fantasma. As métricas de navegação (latFlips/fwdFlips/
+     stuck/eff) dependiam dessa LOS: eram verde de graça. Occluder é estático — uma passada
+     aqui, depois do build, basta; e updateMatrixWorld NÃO consome Math.random, então o fluxo
+     determinístico semeado fica idêntico. */
+  g.scene.updateMatrixWorld(true);
+  g.world.root.updateMatrixWorld(true);
   if (DUEL) {
     /* MODO DUELO: o jogador fica NO MAPA, parado no spawn, sem atirar, e MORTAL. Mede o que
        o dono reclamou — "matam muito fácil" e "sempre na cabeça" — em números: tiros do bot,

@@ -159,16 +159,26 @@ export function seedRandom(seed) {
 
 /* Game com o round JÁ INICIADO: antes do _startRound não existem spawns aplicados nem
    armário montado, e medir ali seria medir o mapa vazio. */
-export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, playerCharId = PCHAR } = {}) {
+export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, playerCharId = PCHAR, roundsMax } = {}) {
   seedRandom(seed);
   const playerDef = CHARACTERS.find(c => c.id === playerCharId) || CHARACTERS.find(c => c.id === PCHAR);
   const g = new Game({
     renderer, textures, sfx, settings: { bots, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: playerDef.id, playerTeam: 'E', playerFaction: playerDef.team, enemyFaction: 'B',
-    nickname: 'SIM', mapId, ctf, testMode: true, onQuit() {}, onMatchEnd() {},
+    nickname: 'SIM', mapId, ctf, roundsMax, testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g._ensureDolly = () => {};        // a câmera de fim de round cria um WebGLRenderer — não existe aqui
   g.killsToWin = Infinity;
   g.start ? g.start() : g._startRound();
+  /* MATRIZES DE MUNDO: no browser o WebGLRenderer.render() chama scene.updateMatrixWorld() a
+     cada quadro; no harness NÃO há renderer, então ninguém atualiza e o Raycaster do three
+     (que assume matrizes prontas) enxerga cada occluder na posição LOCAL — empilhados na
+     ORIGEM com matrixWorld identidade. Medido no piscina_treta: 92/92 occluders na origem
+     (o build do decalque atualiza 78 de raspão, sobram 14), praca_poderes 66/66, ferro_velho
+     100/100. Toda métrica de bot que depende de linha de visão (`_losClear` faz raycast
+     contra `world.occluders`, game.js:5044) estava medida contra geometria na origem — régua
+     verde de graça. Occluder é estático: uma passada aqui, depois do build, basta. */
+  g.scene.updateMatrixWorld(true);
+  g.world.root.updateMatrixWorld(true);
   return g;
 }

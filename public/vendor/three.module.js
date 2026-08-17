@@ -14017,7 +14017,7 @@ var shadowmask_pars_fragment = "float getShadowMask() {\n\tfloat shadow = 1.0;\n
 
 var skinbase_vertex = "#ifdef USE_SKINNING\n\tmat4 boneMatX = getBoneMatrix( skinIndex.x );\n\tmat4 boneMatY = getBoneMatrix( skinIndex.y );\n\tmat4 boneMatZ = getBoneMatrix( skinIndex.z );\n\tmat4 boneMatW = getBoneMatrix( skinIndex.w );\n#endif";
 
-var skinning_pars_vertex = "#ifdef USE_SKINNING\n\tuniform mat4 bindMatrix;\n\tuniform mat4 bindMatrixInverse;\n\tuniform highp sampler2D boneTexture;\n\tmat4 getBoneMatrix( const in float i ) {\n\t\tint size = textureSize( boneTexture, 0 ).x;\n\t\tint j = int( i ) * 4;\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\tvec4 v1 = texelFetch( boneTexture, ivec2( x, y ), 0 );\n\t\tvec4 v2 = texelFetch( boneTexture, ivec2( x + 1, y ), 0 );\n\t\tvec4 v3 = texelFetch( boneTexture, ivec2( x + 2, y ), 0 );\n\t\tvec4 v4 = texelFetch( boneTexture, ivec2( x + 3, y ), 0 );\n\t\treturn mat4( v1, v2, v3, v4 );\n\t}\n#endif";
+var skinning_pars_vertex = "#ifdef USE_SKINNING\n\tuniform mat4 bindMatrix;\n\tuniform mat4 bindMatrixInverse;\n\tuniform highp sampler2D boneTexture;\n\tuniform float boneTextureSize;\n\tmat4 getBoneMatrix( const in float i ) {\n\t\t#if __VERSION__ >= 300\n\t\tint size = textureSize( boneTexture, 0 ).x;\n\t\tint j = int( i ) * 4;\n\t\tint x = j % size;\n\t\tint y = j / size;\n\t\tvec4 v1 = texelFetch( boneTexture, ivec2( x, y ), 0 );\n\t\tvec4 v2 = texelFetch( boneTexture, ivec2( x + 1, y ), 0 );\n\t\tvec4 v3 = texelFetch( boneTexture, ivec2( x + 2, y ), 0 );\n\t\tvec4 v4 = texelFetch( boneTexture, ivec2( x + 3, y ), 0 );\n\t\t#else\n\t\tfloat j = i * 4.0;\n\t\tfloat x = mod( j, boneTextureSize );\n\t\tfloat y = floor( j / boneTextureSize );\n\t\tfloat dx = 1.0 / boneTextureSize;\n\t\tfloat dy = 1.0 / boneTextureSize;\n\t\ty = dy * ( y + 0.5 );\n\t\tvec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );\n\t\tvec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );\n\t\tvec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );\n\t\tvec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );\n\t\t#endif\n\t\treturn mat4( v1, v2, v3, v4 );\n\t}\n#endif";
 
 var skinning_vertex = "#ifdef USE_SKINNING\n\tvec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );\n\tvec4 skinned = vec4( 0.0 );\n\tskinned += boneMatX * skinVertex * skinWeight.x;\n\tskinned += boneMatY * skinVertex * skinWeight.y;\n\tskinned += boneMatZ * skinVertex * skinWeight.z;\n\tskinned += boneMatW * skinVertex * skinWeight.w;\n\ttransformed = ( bindMatrixInverse * skinned ).xyz;\n#endif";
 
@@ -23161,6 +23161,9 @@ function WebGLState( gl, extensions, capabilities ) {
 
 			if ( drawBuffers === undefined ) {
 
+				// #171: createFramebuffer() pode falhar sob pressão/perda de contexto; sem a guarda o WeakMap.set lança e mata o loop
+				if ( framebuffer == null ) return;
+
 				drawBuffers = [];
 				currentDrawbuffers.set( framebuffer, drawBuffers );
 
@@ -30382,6 +30385,10 @@ class WebGLRenderer {
 						if ( skeleton.boneTexture === null ) skeleton.computeBoneTexture();
 
 						p_uniforms.setValue( _gl, 'boneTexture', skeleton.boneTexture, textures );
+						/* PATCH CSBR (#275): WebGL1 não tem textureSize/texelFetch; o chunk de
+						   skinning usa boneTextureSize (ver skinning_pars_vertex). setValue em
+						   uniform ausente é no-op, então programas sem skinning não quebram. */
+						p_uniforms.setValue( _gl, 'boneTextureSize', skeleton.boneTexture.image.width );
 
 					} else {
 

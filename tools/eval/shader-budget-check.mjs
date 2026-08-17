@@ -37,6 +37,7 @@ let brasilia = readFileSync('public/js/map_brasilia.js', 'utf8');
 let indexPage = readFileSync('src/pages/index.astro', 'utf8');
 let layoutPage = readFileSync('src/layouts/Layout.astro', 'utf8');
 let evalServer = readFileSync('tools/eval/serve.mjs', 'utf8');
+const astroConfig = readFileSync('astro.config.mjs', 'utf8');
 const pruneDist = readFileSync('scripts/prune-dist.mjs', 'utf8');
 const loader = readFileSync('public/vendor/addons/loaders/GLTFLoader.js', 'utf8');
 const urna = parseGlb('public/models/props/urna.glb');
@@ -338,8 +339,12 @@ const visitModule = (module) => {
   }
 };
 visitModule('main.js');
-const cacheContract = (source) => source.includes('moduleCacheManifest')
+const injectedCacheContract = (source) => source.includes('__MANIFESTO_JS__')
   && (source.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
+const buildCacheContract = /const MANIFESTO_JS = moduleCacheManifest\(\)/.test(astroConfig)
+  && /__MANIFESTO_JS__:\s*JSON\.stringify\(MANIFESTO_JS\)/.test(astroConfig);
+const evalCacheContract = evalServer.includes('moduleCacheManifest')
+  && (evalServer.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
 const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
   /['"](?:dist\/client|\.vercel\/output\/static)\/js\/([^'"]+)['"]/g,
 )].map((match) => `${match[1].replace(/\/$/, '')}/`))];
@@ -359,9 +364,10 @@ const expectedPublishedModules = filesOnDisk
   .sort();
 const publishedGraphComplete = cachedModules.length === expectedPublishedModules.length
   && expectedPublishedModules.every((module, index) => cachedModules[index] === module);
-const moduleCache = cacheContract(indexPage)
-  && cacheContract(layoutPage)
-  && cacheContract(evalServer)
+const moduleCache = buildCacheContract
+  && injectedCacheContract(indexPage)
+  && injectedCacheContract(layoutPage)
+  && evalCacheContract
   && [...reachableModules].every((module) => cachedModules.includes(module))
   && publishedModulesOnly
   && publishedGraphComplete

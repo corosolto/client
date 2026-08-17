@@ -1,18 +1,20 @@
 # CORO SOLTO: Treta Suprema
 
-> FPS gratuito de navegador, estilo Counter-Strike 1.6, feito em Three.js.
-> Arena de sniper satírica numa Brasília fictícia. Roda em qualquer navegador
-> de desktop: sem download, sem instalação, sem cadastro, sem custo.
+> FPS gratuito de navegador, feito em Three.js. 5 facções brasileiras
+> caricatas, 44 personagens, 5 mapas e 26 armas — rounds e Capture the Flag
+> contra bots. Roda em qualquer navegador de desktop: sem download, sem
+> instalação, sem cadastro, sem custo.
 > O jogo já se chamou **CS BRASIL** — é o mesmo jogo, e o domínio segue o mesmo.
 
 Site: https://www.csbrasil.online
-Código: https://github.com/rubenmarcus/csbrasil (AGPL-3.0)
+Código: https://github.com/corosolto/client (AGPL-3.0)
 
 ## O que é, em uma frase
 
 Um jogo de tiro em primeira pessoa que roda direto na aba do navegador, em que
-cinco facções brasileiras caricatas se enfrentam numa reinterpretação do mapa
-`praca_poderes` do CS 1.6 ambientada em Brasília.
+cinco facções brasileiras caricatas se enfrentam em rounds e Capture the Flag.
+O mapa de estreia nasceu como reinterpretação do `awp_map` do CS 1.6 ambientada
+em Brasília; hoje são 5 mapas originais.
 
 ## Fatos verificáveis (use estes números)
 
@@ -41,8 +43,8 @@ cinco facções brasileiras caricatas se enfrentam numa reinterpretação do map
   RANKING do jogo. As URLs `/ranking` e `/u/<id>/<nick>` continuam respondendo,
   com aviso e `noindex`, porque vão voltar no mesmo endereço.
 - **Tecnologia**: Three.js (vanilla, sem framework, sem build) para o jogo;
-  Astro com SSR na Vercel para o site; Supabase para telemetria e para o
-  ranking (que está desligado — ver acima).
+  Astro com SSR na Vercel para o site e para as rotas `/api/*` próprias
+  (telemetria e ranking — o ranking está desligado, ver acima).
 - **Licença**: **AGPL-3.0** desde 07/08/2026 (`LICENSE` na raiz). Contribuições
   anteriores à migração entraram sob MIT e seguem MIT dentro do conjunto.
   O pacote de áudio fica fora do repositório.
@@ -84,13 +86,16 @@ Tab mostra o placar · Esc pausa.
 
 ## Para contribuidores e agentes de código
 
+- O código é **AI generated & AI friendly**: escrito em par com agentes de IA
+  (Claude, Kimi, Codex/GPT, GLM), e cada commit identifica o autor pelo trailer
+  `Agent:`. Contribuições de agentes são bem-vindas e seguem `AGENTS.md`.
 - Ordem de leitura do repositório: `docs/README.md` → `STATUS.md` → `README.md`
   → `CONTRIBUTING.md`.
 - O jogo é `public/js/*.js` (vanilla ES modules, Three.js vendored, zero build).
   O índice por linha e a tabela de conflito ficam em `tools/eval/ARCH.md`, que é
   **gerado** por `node tools/gen-arch.mjs` — não edite o bloco gerado à mão.
-- O site é `src/` (Astro). As rotas `/api/*` usam a `service_role` do Supabase,
-  que nunca sai do servidor.
+- O site é `src/` (Astro). As rotas `/api/*` falam com o armazenamento só
+  pelo servidor — credencial nenhuma chega ao navegador.
 - Tarefas boas para começar: `docs/issues/` — 15 issues escritas, cada uma com
   contexto, critério de aceite e arquivos a tocar. **Elas ainda não foram
   abertas no GitHub**; até lá, o `.md` é a fonte.

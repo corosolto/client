@@ -107,6 +107,14 @@ onde registrar, em que ordem rodar o quality gate, e como reportar o que **não*
 Ela vale para agente e para gente. Como a `gauntlet-fps`, ela nasceu aqui e vive em
 `.claude/skills/` porque `.agents/skills/` é gitignored (skill de terceiro, fixada por hash).
 
+**Todo commit leva o trailer `Agent:`** (ex.: `Agent: Kimi Code`; humano leva
+`Agent: humano`) — é o que sustenta o "cada commit diz qual" do README. Você não
+digita: o `.githooks/prepare-commit-msg` preenche pela assinatura do ambiente, e
+`AGENTE="Claude Code (Opus 5)"` tem precedência quando você quer nomear o modelo.
+O `commit-msg` **recusa** commit sem o trailer e commit acima de 15 arquivos ou
+800 linhas sem um `Commit-grande:` dizendo por quê. A convenção completa, com a
+medição que comprou o teto, mora em `CONTRIBUTING.md`.
+
 ---
 
 ## Onde está cada coisa
@@ -117,13 +125,14 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 |---|---|---|
 | o estado de hoje, em ≤100 linhas | [`STATUS.md`](STATUS.md) | comece por aqui |
 | contexto, leis e o que fazer em ordem | [`HANDOFF.md`](HANDOFF.md) | auto-contido, assume que você não viu nada |
-| **defeitos com evidência** | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) | `arquivo:linha`, régua e reprodução por bug — **e o placar real do quality gate** |
+| **defeitos com evidência** | [`KNOWN-BUGS.md`](KNOWN-BUGS.md) | `arquivo:linha`, régua e reprodução por bug |
+|| **placar do quality gate** | [`QUALITY-SCORE.md`](QUALITY-SCORE.md) | resumo sintético; histórico e evidências em `KNOWN-BUGS.md` |
 | a ordem de trabalho de uma sessão | [`PROMPT.md`](PROMPT.md) | o que atacar primeiro, e por quê |
 | **índice símbolo→linha do `game.js`** e a tabela de conflito | [`tools/eval/ARCH.md`](tools/eval/ARCH.md) | **GERADO** (`npm run arch`) — leia **antes** de tocar em `game.js` |
 | o que cada script do arnês mede | [`tools/eval/README.md`](tools/eval/README.md) | inclui quais estão obsoletos |
 | a régua visual vigente | [`tools/eval/BAR-CONSISTENCIA.md`](tools/eval/BAR-CONSISTENCIA.md) | **tem precedência** sobre a `BAR.md` |
 | para onde o projeto vai | [`docs/ROADMAP.md`](docs/ROADMAP.md) | aponta para os planos, não os duplica |
-| o plano de release, degrau a degrau | [`plans/08-RELEASE-PROFISSIONAL.md`](plans/08-RELEASE-PROFISSIONAL.md) | com o corte defendido |
+| o plano de release, degrau a degrau | [`docs/historico/plans/08-RELEASE-PROFISSIONAL.md`](docs/historico/plans/08-RELEASE-PROFISSIONAL.md) | com o corte defendido |
 | como abrir um PR que passa | [`CONTRIBUTING.md`](CONTRIBUTING.md) | linha editorial, higiene, processo |
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
 | criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
@@ -131,7 +140,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |
-| licença, arte paga e marca | [`docs/docs/licenca.md`](docs/docs/licenca.md) | **o que vale hoje** e o que está decidido e pendente |
+| licença, arte paga e marca | [`docs/LICENCA.md`](docs/LICENCA.md) | as **decisões** e o porquê; quem declara é o `LICENSE`, e a tabela de superfícies vive no `CONTRIBUTING.md` |
 | fronteira de segurança do backend | [`docs/seguranca.md`](docs/seguranca.md) | leia antes de mexer em `/api/*` ou `supabase/` |
 | tarefas boas de primeira contribuição | [`docs/issues/`](docs/issues/) | uma por arquivo, com critério de aceite |
 | por que uma decisão antiga é como é | [`docs/historico/`](docs/historico/) | arquivo morto: **não** descreve o estado atual |
@@ -162,10 +171,10 @@ npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telem
 > corrigida — o cuidado é para quando você chamar `node tools/eval/invariants.mjs` na mão.
 > É o **BUG-02** do [`KNOWN-BUGS.md`](KNOWN-BUGS.md).
 
-A mesma armadilha tem uma segunda forma, e ela morde quem adiciona quality gate: **`check:fast` é
-uma corrente de `&&`, e o primeiro erro corta o resto.** Quality gate colocado depois de um passo
-que já está vermelho nasce morto — roda zero vezes e ninguém percebe. Leia a chave
-`//check:fast` do `package.json` antes de acrescentar um passo.
+O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles
+fica vermelho**, e o código de saída só é decidido no placar final. Isso evita que um defeito
+conhecido esconda um quality gate novo. Leia a chave `//check:fast` do `package.json` antes de
+acrescentar um passo.
 
 **O placar do quality gate não mora neste arquivo, e não deve morar em nenhum outro além de um.**
 Quantas invariantes passam **não é derivável do fonte** — depende de qual insumo existe na
@@ -234,25 +243,3 @@ já tinha o dobro; corrigir à mão dura exatamente um commit.
 
 E o resto — o porquê, a decisão, o caso que gerou a regra — é conhecimento humano, mora em
 **um** arquivo só, e os outros apontam para ele.
-
-## graphify
-
-Este projeto mantém um knowledge graph em `graphify-out/`, com relações entre arquivos,
-clusters e nós centrais da base.
-
-Quando o usuário pedir `/graphify`, use o skill/config instalado do adapter antes de seguir.
-
-Regras:
-
-- Para perguntas sobre a base, rode `graphify query "<pergunta>"` quando `graphify-out/graph.json`
-  existir. Use `graphify path "<A>" "<B>"` para relações e `graphify explain "<conceito>"`
-  para conceitos focados.
-- Arquivos sujos em `graphify-out/` são esperados depois de hooks ou updates incrementais.
-  Isso não é motivo para pular Graphify; só pule se a tarefa for justamente depurar saída
-  stale/incorreta do grafo, ou se o usuário pedir explicitamente para não usar.
-- Se `graphify-out/wiki/index.md` existir, use-o para navegação ampla antes de sair
-  abrindo fonte cru.
-- Leia `graphify-out/GRAPH_REPORT.md` só para revisão ampla de arquitetura ou quando
-  `query/path/explain` não trouxerem contexto suficiente.
-- Depois de mexer em código, rode `graphify update .` para manter o grafo atual
-  (AST-only, sem custo de API).

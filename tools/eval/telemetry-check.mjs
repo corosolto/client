@@ -20,6 +20,7 @@
      · TL7  cidade usa RPC atômica, sem read-modify-write em submit-match
      · TL8  /api/health existe e o prod-watch consulta a rota
      · TL10 /mapa agrega as cinco facções a partir dos eventos de partida
+   · TL11 perf mede FPS EM PARTIDA (pós-live, com descanso) e preserva loadMs
 
    MUTAÇÃO (prova que morde):
      --mutante=sem-match    remove o endpoint /api/match do main.js in-memory → TL1 vermelha
@@ -28,6 +29,7 @@
      --mutante=sem-sessao   remove sessionId do cliente → TL5 vermelha
      --mutante=sem-saude    remove /api/health do prod-watch → TL8 vermelha
      --mutante=mapa-dois     remove a fonte de facções do mapa → TL10 vermelha
+    --mutante=perf-no-live  mede fps na carga da página de novo → TL11 vermelha
 
    Uso: node tools/eval/telemetry-check.mjs [--mutante=sem-match|sem-funil|sem-arma]
    ============================================================================ */
@@ -55,6 +57,9 @@ if (MUT === 'sem-sessao') main = main.replaceAll('sessionId', 'sessaoRemovida');
 if (MUT === 'sem-saude')  prodWatch = prodWatch.replaceAll('/api/health', '/api/REMOVIDO');
 if (MUT === 'sem-uid')    main = main.replaceAll('uid: getAnonId()', 'uid: null');
 if (MUT === 'mapa-dois')  liveMap = liveMap.replaceAll("from('match_event')", "from('stats')");
+/* devolve o mundo em que o fps media o 1º segundo da página (jank de boot
+   vendido como FPS de jogo — o que o painel do dono mostrava em 15/08) */
+if (MUT === 'perf-no-live') main = main.replaceAll("setTimeout(() => _perfMedeFps(bootMs), 4000);", "_perfMedeFps(bootMs);");
 
 const falhas = [];
 
@@ -109,8 +114,21 @@ if (/logInternalError\([^\n]+\{[^\n]*nick/.test(submitRoute + registerRoute))
 if (!liveMap.includes("from('match_event')") || !liveMap.includes('FACCOES.map') || !/urbanas:\s*'U'/.test(liveMap) || !/palhacos:\s*'C'/.test(liveMap) || !/funkeiros:\s*'F'/.test(liveMap))
   falhas.push('TL10 /mapa não agrega as cinco facções da telemetria');
 
+// TL11 - o fps de /api/perf mede PARTIDA, não o parse da página (15/08: o painel
+// "FPS P50" do dono media jank de boot — 98% < 30 FPS — porque a janela de rAF
+// abria no 1º segundo de vida do módulo, com a main thread compilando shader).
+// Três laços: (a) a janela só abre depois de state==='live'; (b) há um descanso
+// entre o live e a medição (compile de shader sai da janela); (c) o sinal de
+// carga do módulo sobrevive em loadMs (coluna que já existia morta na RPC).
+if (!/state\s*!==\s*'live'/.test(main) || !main.includes('_perfMedeFps'))
+  falhas.push('TL11 perf sem espera por state===live — fps volta a medir jank de boot, não partida');
+if (!/setTimeout\(\(\)\s*=>\s*_perfMedeFps\(bootMs\),\s*4000\)/.test(main))
+  falhas.push('TL11 medição de fps sem descanso pós-live — janela ainda pega compile de shader');
+if (!main.includes('loadMs: _perfLoadMs'))
+  falhas.push('TL11 payload sem loadMs — o sinal de carga do módulo (ex-bootMs) se perde');
+
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m TL1–TL10 ingestão wired, idempotente, atômica e monitorada');
+if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m TL1–TL11 ingestão wired, idempotente, atômica e monitorada');
 
 // prova que a mutação morde: se veio --mutante e NÃO acendeu, o portão é cego.
 if (MUT && !falhas.length) {

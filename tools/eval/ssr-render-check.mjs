@@ -36,10 +36,13 @@
      SSR2 · nenhuma delas lança ao montar o corpo. `resp.text()` que estoura é a
             assinatura do erro pós-streaming, e sem cobrar isso a cláusula acima poderia
             passar por um corpo que nunca chega a ser lido.
+     SSR3 · página SSR não chama `moduleCacheManifest()` no request; o manifesto precisa
+            vir da constante que `astro.config.mjs` injeta durante o build.
 
    AS MUTAÇÕES, E POR QUE SÃO TRÊS
      --mutante=corpo-vazio    o handler passa a devolver 200 com corpo vazio  -> SSR1 vermelha
      --mutante=lanca          a leitura do corpo passa a lançar               -> SSR2 vermelha
+     --mutante=manifesto-no-request simula a chamada numa fonte SSR             -> SSR3 vermelha
      --mutante=sem-publicjs   esconde `public/js` do cwd da função, reproduzindo o pacote
                               que a Vercel monta.
 
@@ -102,6 +105,19 @@ const rotas = rotasSSR();
 console.log(`RÉGUA DE RENDERIZAÇÃO SSR${MUTANTE ? `  [MUTAÇÃO: ${MUTANTE}]` : ''}`);
 console.log(`${rotas.length} rota(s) com prerender=false: ${rotas.join(', ')}\n`);
 
+function arquivosSSR(dir = 'src/pages') {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...arquivosSSR(file));
+    else if (entry.name.endsWith('.astro') && /export const prerender = false/.test(readFileSync(file, 'utf8'))) out.push(file);
+  }
+  return out;
+}
+const fontesSSR = arquivosSSR();
+const manifestoNoRequest = fontesSSR.filter((file) => /moduleCacheManifest\s*\(/.test(readFileSync(file, 'utf8')));
+if (MUTANTE === 'manifesto-no-request') manifestoNoRequest.push('src/pages/index.astro [simulado]');
+
 /* O CWD É O EXPERIMENTO. Em produção a função roda com o cwd dentro do próprio pacote,
    onde `public/js` não existe. Rodar a medição da raiz do repo esconderia o defeito —
    que foi, palavra por palavra, o que o eval:site fez por um dia inteiro. */
@@ -154,8 +170,13 @@ if (!comErro.length) console.log('   nenhuma');
 else for (const l of comErro) console.log(`   ${l.rota.padEnd(12)} ${l.erro}`);
 console.log(`   ${ssr2 ? 'PASSA' : 'FALHA'}\n`);
 
-const passou = ssr1 && ssr2;
+const ssr3 = manifestoNoRequest.length === 0;
+console.log('SSR3 · nenhuma página SSR recalcula o manifesto de módulos durante o request');
+console.log(ssr3 ? '   nenhuma chamada' : `   chamada em: ${manifestoNoRequest.join(', ')}`);
+console.log(`   ${ssr3 ? 'PASSA' : 'FALHA'}\n`);
+
+const passou = ssr1 && ssr2 && ssr3;
 console.log(passou
   ? '✓ SSR  as páginas SSR entregam corpo no artefato que vai pro ar'
-  : '✗ SSR  PÁGINA SSR VAZIA — o jogador recebe 200 com corpo vazio, e status sozinho chama isso de saudável');
+  : '✗ SSR  ARTEFATO INSEGURO — corpo, stream ou manifesto em request violou o contrato');
 process.exit(passou ? 0 : 1);

@@ -14,7 +14,9 @@
      em index.astro. Exercita flag desligada, loadout completo e loadout sem granadas.
 
    MUTAÇÃO
-     --mutante=semflag força o ramo escondido sob vmlab=1; HUD2 precisa falhar.
+     --mutante=escondido força o ramo escondido; HUD2/3/4 precisam falhar.
+     --mutante=duplicado-ativo volta a acender dois slots quando arma 1 e 2 coincidem.
+     (14/08: o menu deixou de ser exclusivo do vmlab — ver HUD4.)
 
    Uso: node tools/eval/vmlab-hud-check.mjs [--mutante=semflag] [--json]
    ============================================================================ */
@@ -45,15 +47,26 @@ function method(name) {
 }
 
 let updateSrc = method('_updateWeaponHud');
-if (MUTANTE && MUTANTE !== 'semflag') {
+if (MUTANTE && !['escondido', 'duplicado-ativo'].includes(MUTANTE)) {
   console.error(`mutante desconhecido: ${MUTANTE}`);
   process.exit(2);
 }
-if (MUTANTE === 'semflag' && updateSrc) {
+if (MUTANTE === 'escondido' && updateSrc) {
   const antes = updateSrc;
-  updateSrc = updateSrc.replace('if (!VMLAB)', 'if (true)');
+  updateSrc = updateSrc.replace("hud.classList.remove('hidden');", "hud.classList.add('hidden');");
   if (updateSrc === antes) {
-    console.error('MUTAÇÃO IMPOSSÍVEL: guarda `if (!VMLAB)` não encontrada');
+    console.error('MUTAÇÃO IMPOSSÍVEL: `classList.remove(hidden)` não encontrada');
+    process.exit(2);
+  }
+}
+if (MUTANTE === 'duplicado-ativo' && updateSrc) {
+  const antes = updateSrc;
+  updateSrc = updateSrc.replace(
+    'const active = slot.weapon === p.weapon && !activeWeaponClaimed;',
+    'const active = slot.weapon === p.weapon;',
+  );
+  if (updateSrc === antes) {
+    console.error('MUTAÇÃO IMPOSSÍVEL: proteção de ativo duplicado não encontrada');
     process.exit(2);
   }
 }
@@ -71,7 +84,7 @@ const fakeHud = () => {
   };
 };
 
-function run(vmlab, player) {
+function run(vmlab, player, infinita = false) {
   if (!updateSrc) return { erro: '_updateWeaponHud() ausente em game.js' };
   const hud = fakeHud();
   const ctx = {
@@ -79,6 +92,7 @@ function run(vmlab, player) {
     el: { weaponHud: hud },
     _weaponHudSig: '',
     _wpnIcon: () => '<svg></svg>',
+    _municaoInfinita: () => infinita,
   };
   // eslint-disable-next-line no-new-func
   const execute = new Function('ctx', 'VMLAB', 'WEAPONS', `
@@ -111,6 +125,8 @@ const seco = { weapon: 'pistol', primary: 'ak', secondary: 'pistol', smokes: 0, 
 const desligado = run(false, completo);
 const ligado = run(true, completo);
 const semGranada = run(true, seco);
+const infinito = run(true, completo, true);
+const duplicado = run(true, { ...completo, weapon: 'pistol', primary: 'pistol', secondary: 'pistol' });
 
 const resultados = [
   {
@@ -131,11 +147,28 @@ const resultados = [
     ok: !semGranada.erro && !semGranada.hidden && semGranada.slots.join('') === '123' && semGranada.ativos === 1,
     evid: semGranada.erro || `hidden=${semGranada.hidden} slots=${semGranada.slots.join(',') || 'nenhum'} ativos=${semGranada.ativos}`,
   },
+  /* 14/08: a fileira de slots existe em JOGO NORMAL (tela 05 do redesign, centro-embaixo)
+     — o esconderijo fora do vmlab virou defeito. A régua agora morde no sentido contrário. */
   {
     id: 'HUD4',
-    desc: 'sem vmlab o menu continua escondido',
-    ok: !desligado.erro && desligado.hidden && desligado.html === '',
-    evid: desligado.erro || `hidden=${desligado.hidden} html=${desligado.html.length} bytes`,
+    desc: 'sem vmlab o menu de armas aparece com os mesmos slots (tela 05 do redesign)',
+    ok: !desligado.erro && !desligado.hidden && desligado.slots.join('') === '12345',
+    evid: desligado.erro || `hidden=${desligado.hidden} slots=${desligado.slots.join(',') || 'nenhum'}`,
+  },
+  /* HUD5 — no modo de arma única a reserva é infinita, e o menu tem que DIZER isso. Sem esta
+     cláusula o slot imprimia `30/90` num número que nunca anda, que o jogador lê como bug. */
+  {
+    id: 'HUD5',
+    desc: 'reserva infinita imprime 30/∞ no slot, e o modo normal segue imprimindo 30/90',
+    ok: !infinito.erro && /30\/∞/.test(infinito.html) && !/30\/90/.test(infinito.html)
+        && !ligado.erro && /30\/90/.test(ligado.html) && !/∞/.test(ligado.html),
+    evid: infinito.erro || `infinito=${(infinito.html.match(/\d+\/[\d∞]+/g) || []).join(',')} normal=${(ligado.html.match(/\d+\/[\d∞]+/g) || []).join(',')}`,
+  },
+  {
+    id: 'HUD6',
+    desc: 'arma repetida nos slots 1 e 2 acende somente um slot',
+    ok: !duplicado.erro && duplicado.slots.join('') === '12345' && duplicado.ativos === 1,
+    evid: duplicado.erro || `slots=${duplicado.slots.join(',') || 'nenhum'} ativos=${duplicado.ativos}`,
   },
 ];
 
@@ -147,8 +180,9 @@ else {
 
 const falhas = resultados.filter((item) => !item.ok);
 if (MUTANTE) {
-  if (falhas.some((item) => item.id === 'HUD2')) {
-    if (!JSON_OUT) console.log('\n✓ a régua MORDE: HUD2 ficou vermelha.');
+  const alvo = MUTANTE === 'duplicado-ativo' ? 'HUD6' : 'HUD2';
+  if (falhas.some((item) => item.id === alvo)) {
+    if (!JSON_OUT) console.log(`\n✓ a régua MORDE: ${alvo} ficou vermelha.`);
     process.exit(0);
   }
   if (!JSON_OUT) console.error('\n✗ RÉGUA CEGA: a mutação não derrubou HUD2.');

@@ -65,7 +65,7 @@ números medidos delas — é de lá que a régua tem que ler.
 
 ### 2 · Licença e documentos (bloqueia contribuição externa)
 
-Trocar para **AGPL** — decisão do dono, e **reverte** a recomendação de `plans/06 §1.2`, que
+Trocar para **AGPL** — decisão do dono, e **reverte** a recomendação de `docs/historico/plans/06 §1.2`, que
 argumentava MIT por causa do Steamworks SDK e dos programas de crédito de IA. Se você achar que
 a recomendação antiga tem mérito, **diga isso em uma frase e siga com AGPL**: a decisão é dele
 e já foi tomada.
@@ -107,7 +107,7 @@ lista de servidores) ou **por código** (só convidado entra).
 
 Não existe nenhum netcode no repo (`grep -rl "WebSocket\|geckos\|socket.io"` em `public/js/` e
 `src/` volta vazio) e o modelo hoje é client-authoritative, com o anti-cheat vivendo no RPC
-`submit_match`. Isto também **contradiz `plans/03`**, que assumia servidor autoritativo 4v4 —
+`submit_match`. Isto também **contradiz `docs/historico/plans/03`**, que assumia servidor autoritativo 4v4 —
 aquele plano precisa ser reescrito ou aposentado, não seguido em paralelo.
 
 **Entregue um plano antes de qualquer linha**, respondendo três coisas:

@@ -7,21 +7,25 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.argv[2] || '/root/shots/base';
 const SET = process.argv[3] || 'all';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
+const SWIFT = process.env.GL_SWIFTSHADER === '1';
+const chromeBin = process.env.CHROME_BIN ||
+  (process.platform === 'darwin'
+    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    : undefined);
 mkdirSync(OUT, { recursive: true });
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
-/* GPU=1 troca o SwiftShader pelo backend nativo. O padrão continua software porque é o que
-   roda no container do CI e é o que mantém a captura comparável entre máquinas. Mas o dono
-   joga numa GPU de verdade: quando o objetivo é JULGAR o visual (e não comparar número com
-   corrida antiga), software rendering mente — ele achata o que a Metal desenha e leva ~4-6
-   min por mapa, o que na prática fez ninguém rodar a bateria completa. */
+const args = ['--headless=new', '--mute-audio', '--no-sandbox'];
+if (SWIFT) args.push('--use-angle=swiftshader', '--enable-unsafe-swiftshader');
+if (process.env.GL_DISABLE_GPU !== '1') {
+  // Metal/WebGL real: não força software raster.
+} else {
+  args.push('--disable-gpu');
+}
 const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN,
-  args: [
-    ...(process.env.GPU === '1' ? [] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']),
-    '--headless=new', '--mute-audio', '--no-sandbox',
-  ],
+  executablePath: chromeBin,
+  args,
 });
 const log = [];
 const metrics = [];

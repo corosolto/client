@@ -46,7 +46,7 @@ critério de aceite.
 ## Rodando localmente
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional — sem envs, o ranking responde 503 e o resto roda
@@ -188,6 +188,54 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
    > compatível: elas seguem MIT dentro do conjunto, que é distribuído sob
    > AGPL-3.0. Se isso for decisivo pra você, pergunte antes de abrir o PR.
 
+## Quem conserta o quê (bots da casa)
+
+**`csbrasil-bot` é pipeline** (classificação, portões, deploy). **`estraga-codigo` é quem
+revisa e conserta** — o nome é ironia: ele existe pra *desestragar*. Divisão do dono
+(17/08): quem abriu o PR não precisa esperar humano pra ver um fio major virar conserto.
+
+Regras de atuação do `estraga-codigo` (o caso #310, 16/08, pagou a lição):
+
+1. **Nunca pusha em fork de contribuidor** — o "permission denied" do #310 não era falta
+   de permissão ajustável: push em fork só com convite de colaborador do dono do fork,
+   e isso não se pede a contribuidor casual.
+2. **Fix mora em branch do repo base**: `estraga-codigo/fix-<n>-<slug>` criada da head
+   do PR + commit de conserto. O autor do PR continua creditado (a branch preserva os
+   commits dele); o dono mergeia o PR original atualizado ou o da fix, como preferir.
+3. **Patch `git am` sempre no comentário** — quem prefere aplicar no próprio fork
+   aplica (é o que o `git am` preserva: autoria e mensagem).
+4. **Não mergeia o que consertou** — revisão adversarial é de outro par de olhos
+   (humano ou a esteira de portões).
+
+Permissões hoje: `write` no repo base (suficiente para 1-3). `maintain` (editar
+metadata de PR de terceiro) exige membro da org — pendente de convite pelo dono.
+
+### As superfícies da licença
+
+Estes arquivos **repetem o nome da licença** — uma troca de licença muda todos no
+mesmo commit (metade trocada é pior que nenhuma). A tabela é gerada:
+
+<!-- BEGIN:GERADO:licenca_pontos — não edite à mão, rode `npm run docs` -->
+
+| Superfície | Arquivo | Onde diz `AGPL-3.0` |
+|---|---|---|
+| licença canônica | `LICENSE` | 11×  |
+| badge + seção de licenças | `README.md` | 5×  |
+| termo que o contribuidor aceita | `CONTRIBUTING.md` | 6×  |
+| rodapé do site | `src/layouts/Layout.astro` | 1×  |
+| JSON-LD do jogo | `src/pages/index.astro` | 1×  |
+| página `/sobre` | `src/pages/sobre.astro` | 3×  |
+| `llms.txt` (resposta para LLM) | `public/llms.txt` | 2×  |
+| rodapé desta documentação | `docs/docusaurus.config.js` | — (não nomeia a licença)  |
+
+**29 ocorrências** de `AGPL-3.0` em **7** das 8 superfícies declaradas. Trocar a licença é mudar **todas elas no mesmo commit**: metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.
+
+**Outros nomes de licença citados nessas superfícies:** `MIT` em `README.md` (4×), `MIT` em `CONTRIBUTING.md` (4×), `MIT` em `src/pages/sobre.astro` (1×), `MIT` em `public/llms.txt` (1×), `MIT` em `docs/docusaurus.config.js` (1×). Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. A regra continua a mesma: **só o `LICENSE` declara**, e hoje ele diz `AGPL-3.0`.
+
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep -n dos nomes de licença conhecidos, nas superfícies declaradas em tools/gen-docs.mjs`
+
+<!-- END:GERADO:licenca_pontos -->
+
 O CI valida a presença de `Signed-off-by:` em cada commit do PR. Depois de
 `npm install` ou `npm run setup`, o hook versionado em `.githooks/` acrescenta
 automaticamente o nome e o email configurados no Git. Ao commitar, você confirma
@@ -199,6 +247,77 @@ Se ainda não instalou as dependências, assine manualmente:
 ```bash
 git commit -s -m "feat: minha mudança"
 ```
+
+### Quem escreveu o commit
+
+Este repositório é **AI generated e AI friendly**: boa parte do código é escrita
+por agentes de IA, e **todo** commit diz quem o escreveu no trailer `Agent:` —
+é o que sustenta o "cada commit diz qual" do README. Humano commitando sozinho
+leva `Agent: humano`; o campo nunca fica vazio, porque campo opcional envelhece
+para vazio (a convenção nasceu escrita em três arquivos e, 200 commits depois,
+não estava em **nenhum** deles).
+
+Você não precisa digitar: o `.githooks/prepare-commit-msg` preenche sozinho,
+lendo a assinatura do ambiente (`CLAUDECODE`, `KIMI_*`, `CODEX_*`, `OPENCODE*`,
+`CURSOR_TRACE_ID`, `AI_AGENT`). Para dizer o modelo junto — que raramente está no
+ambiente — exporte `AGENTE`, que tem precedência sobre a detecção:
+
+```bash
+export AGENTE="Claude Code (Opus 5)"
+git commit -s -m "fix: minha correção"      # trailer entra sozinho
+git commit -s -m "fix: x" --trailer "Agent: Kimi Code"   # ou explícito
+```
+
+Agente commitando em nome de humano mantém o `Signed-off-by` de quem assina e
+acrescenta o `Agent:` de quem escreveu. O `.githooks/commit-msg` recusa commit
+sem o trailer, e o portão `Check trailer Agent` do CI cobre o que o hook não
+alcança: clone sem `npm run setup`, `--no-verify` e commit pela interface do
+GitHub.
+
+### Commit grande pede motivo
+
+Commit pequeno é o que torna revisão, `git bisect` e reversão baratos, e é a
+primeira coisa que se perde quando um agente trabalha por horas sem parar. O
+`.githooks/commit-msg` recusa commit acima de **15 arquivos ou 800 linhas**,
+ignorando arquivo gerado (`public/docs/`, `CHANGELOG.md`, `package-lock.json`,
+`STATUS.md`, `tools/eval/ARCH.md`, `docs/i18n/`, `graphify-out/`,
+`public/js/version.js`) e commit de release.
+
+O teto não é opinião. Ele é uma **observação datada e ancorada num commit**, e é
+por isso que o comando abaixo devolve o mesmo resultado hoje e daqui a um ano:
+
+```bash
+git log --no-merges -400 --format='%H%x00%s' --numstat 7b20e46 |
+  python3 scripts/medir-historico.py
+#   340 commits não-release, sem arquivo gerado
+#     p50:  3 arquivos,   89 linhas
+#     p75:  8 arquivos,  276 linhas
+#     p90: 15 arquivos,  845 linhas   <- é onde o teto fica
+#     p95: 21 arquivos, 1736 linhas
+```
+
+**Isto não é um bloco gerado, e a decisão é deliberada.** A primeira versão desta
+seção foi gerada pelo `gen-docs`, e a medição mudava a cada commit — inclusive o
+commit que a regenerava. Percentil de janela móvel não é um fato sobre o estado
+do repositório, como "34 arquivos, 27.639 linhas"; é uma **observação histórica**,
+e observação se ancora, não se persegue. O que a lei 2 da casa cobra é
+reprodutibilidade, e a âncora `7b20e46` dá exatamente isso.
+
+Vale reancorar quando o perfil de trabalho mudar de verdade — não a cada PR. A
+lista de arquivo gerado é a mesma do `scripts/medir-commit.awk`, que é quem o
+hook usa, exercitada por fixture no `agente_check.py --selftest` (o filtro já
+nasceu quebrado uma vez, com um `^` no meio da linha que nunca casava).
+
+Quando o commit grande é o certo (mover uma pasta, regenerar um acervo, aplicar
+um rename), diga por quê e siga:
+
+```bash
+git commit -s --trailer "Commit-grande: git mv da pasta fpvm, sem mudança de conteúdo"
+```
+
+Rebase, merge, cherry-pick e revert não são medidos de novo: o commit já passou
+pelo teto uma vez, e cobrar duas transforma conflito resolvido em commit
+reprovado.
 
 ## Reportando bugs
 

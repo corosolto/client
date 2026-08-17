@@ -1,7 +1,7 @@
 # PROMPT — Análise completa do CS BRASIL (jogo + PRs abertos)
 
 > Cole o texto abaixo no outro worker (Claude). Ele assume que o worker roda
-> dentro do clone do repositório `rubenmarcus/csbrasil`.
+> dentro do clone do repositório `corosolto/client`.
 
 ---
 

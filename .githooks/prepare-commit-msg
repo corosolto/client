@@ -12,3 +12,18 @@ fi
 
 trailer="Signed-off-by: $nome <$email>"
 grep -Fqx "$trailer" "$mensagem" || git interpret-trailers --in-place --trailer "$trailer" "$mensagem"
+
+# Agent: quem escreveu o commit. Preenchido aqui para ninguém precisar lembrar; a
+# recusa por ausência é do commit-msg (CONTRIBUTING.md, "Quem escreveu o commit").
+if ! grep -Eqi '^Agent:[[:space:]]*[^[:space:]]' "$mensagem"; then
+  if [ -n "${AGENTE:-}" ]; then agente=$AGENTE
+  elif [ -n "${CLAUDECODE:-}" ] || [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then agente='Claude Code'
+  elif env | grep -q '^KIMI_'; then agente='Kimi Code'
+  elif env | grep -q '^CODEX_'; then agente='Codex'
+  elif env | grep -q '^OPENCODE'; then agente='OpenCode'
+  elif [ -n "${CURSOR_TRACE_ID:-}" ]; then agente='Cursor'
+  elif [ -n "${AI_AGENT:-}" ]; then agente=$AI_AGENT
+  else agente='humano'
+  fi
+  git interpret-trailers --in-place --trailer "Agent: $agente" "$mensagem"
+fi

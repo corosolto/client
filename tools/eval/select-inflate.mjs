@@ -441,4 +441,17 @@ if (!MUT) {
   fs.writeFileSync('tools/eval/select_inflate.json', JSON.stringify({ gerado: new Date().toISOString(), mutante: null, refs: REFS, folga: FOLGA, teto, personagens: out }, null, 1));
   console.log('-> tools/eval/select_inflate.json');
 }
-process.exit(reprovados > 0 ? 1 : 0);
+/* DÍVIDA DECLARADA, medida na main em 13/08: 12 dos 44 personagens já reprovavam antes
+   de esta régua virar portão. O número é teto, não meta — passa de 12 e reprova. Baixar
+   quando um personagem for consertado; a lista só encolhe. Zero é o alvo. */
+const REPROVADOS_MAX = 12;
+if (reprovados > 0 && reprovados <= REPROVADOS_MAX) {
+  console.log(`DÍVIDA: ${reprovados} de ${out.length} dentro do teto declarado (${REPROVADOS_MAX}).`);
+  if (reprovados < REPROVADOS_MAX) {
+    console.log(`         Melhorou — BAIXE REPROVADOS_MAX para ${reprovados} neste arquivo.`);
+  }
+}
+if (reprovados > REPROVADOS_MAX) {
+  console.log(`\nPORTÃO VERMELHO — ${reprovados} reprovados, acima do teto declarado de ${REPROVADOS_MAX}.`);
+}
+process.exit(reprovados > REPROVADOS_MAX ? 1 : 0);

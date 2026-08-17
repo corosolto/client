@@ -24,7 +24,7 @@ jobs:
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
+            echo "::warning title=Bot inerte::CSBRASIL_BOT_TOKEN nao configurado — este workflow esta pulando. Ele PRECISA de PAT: merge/push com o GITHUB_TOKEN padrao nao dispara os workflows a jusante, entao a PR entraria sem rodar os portoes."
           fi
 
   bootstrap:

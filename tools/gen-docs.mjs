@@ -57,7 +57,12 @@ const numEn = (n) => n.toLocaleString('en-US');
 const sh = (cmd, args) => {
   try { return execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf8' }); } catch { return ''; }
 };
-const glob = (dir, teste) => (existe(dir) ? readdirSync(R(dir)).filter(teste).sort() : []);
+const incluiLocais = process.argv.includes('--mutante=inclui-locais');
+const versionados = new Set(sh('git', ['ls-files', '--cached']).trim().split('\n').filter(Boolean));
+const entraNaMedicao = (p) => incluiLocais || versionados.has(p);
+const glob = (dir, teste) => (existe(dir)
+  ? readdirSync(R(dir)).filter((nome) => teste(nome) && entraNaMedicao(`${dir}/${nome}`)).sort()
+  : []);
 /* Varredura recursiva. `src/pages/` tem subpasta (`api/`, `u/`), e contar só o primeiro
    nível devolvia 10 páginas para um site que tem mais — número errado com cara de medido. */
 const globR = (dir, teste, acc = []) => {
@@ -65,7 +70,7 @@ const globR = (dir, teste, acc = []) => {
   for (const e of readdirSync(R(dir), { withFileTypes: true })) {
     const p = `${dir}/${e.name}`;
     if (e.isDirectory()) globR(p, teste, acc);
-    else if (teste(e.name)) acc.push(p);
+    else if (teste(e.name) && entraNaMedicao(p)) acc.push(p);
   }
   return acc.sort();
 };
@@ -89,7 +94,7 @@ function medir() {
     arquivos: js.length,
     linhas: js.reduce((a, x) => a + linhas(`public/js/${x}`), 0),
     porArquivo: Object.fromEntries(js.map((x) => [x, linhas(`public/js/${x}`)])),
-    cmd: 'cat public/js/*.js | wc -l · ls public/js/*.js | wc -l',
+    cmd: 'git ls-files public/js/*.js | xargs wc -l',
   };
 
   /* ---- versão: version.js e package.json TÊM que concordar ---- */
@@ -108,7 +113,7 @@ function medir() {
     personagens: glob('public/models/characters', (x) => x.endsWith('.glb')).length,
     props: glob('public/models/props', (x) => x.endsWith('.glb')).length,
     anims: (sh('git', ['ls-files', 'public/models/anims']).trim().split('\n').filter(Boolean)).length,
-    cmd: 'ls public/models/PASTA/*.glb | wc -l · git ls-files public/models/anims | wc -l',
+    cmd: 'git ls-files public/models/PASTA/*.glb public/models/anims',
   };
 
   /* ---- elenco: parseado do array CHARACTERS, não de um grep solto no arquivo inteiro
@@ -227,7 +232,7 @@ function medir() {
   /* ---- pipeline de asset: quem consome cada SDK, medido por grep ---- */
   const consomem = (padrao, dir) => {
     const out = sh('grep', ['-rl', padrao, dir]).trim().split('\n').filter(Boolean);
-    return out.filter((x) => x.endsWith('.mjs')).length;
+    return out.filter((x) => x.endsWith('.mjs') && entraNaMedicao(x)).length;
   };
   f.pipeline = {
     playwright: consomem('playwright', 'tools'),
@@ -241,7 +246,7 @@ function medir() {
       for (const x of a) kinds[x.source?.kind || '?'] = (kinds[x.source?.kind || '?'] || 0) + 1;
       return { total: a.length, kinds };
     })(),
-    cmd: 'grep -rl SDK tools/ | grep .mjs · mint-assets.json',
+    cmd: 'git grep -l SDK -- tools/ | grep .mjs · mint-assets.json',
   };
 
   /* ---- skills: o que vem no CLONE (git), não o que está no disco de alguém ---- */
@@ -276,7 +281,8 @@ function medir() {
      histórico completo, ele continua mordendo. */
   f.raso = sh('git', ['rev-parse', '--is-shallow-repository']).trim() === 'true';
   const short = sh('git', ['shortlog', '-sn', '--no-merges', 'HEAD']).trim().split('\n').filter(Boolean);
-  const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean);
+  const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean)
+    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome));   // shortlog deixa empates de count em ordem instável → determinismo
   const ehAgente = (n) => /^claude\b/i.test(n) || /^(codex|kimi|gpt|cursor|devin)\b/i.test(n) || /bot\b/i.test(n) || /^github-actions/i.test(n);
   const humanos = autores.filter((a) => !ehAgente(a.nome));
   f.pessoas = {
@@ -291,7 +297,7 @@ function medir() {
   f.supabase = {
     migrations: glob('supabase/migrations', (x) => x.endsWith('.sql')).length,
     opcionais: glob('supabase/opcional', (x) => x.endsWith('.sql')).length,
-    cmd: 'ls supabase/migrations/*.sql | wc -l',
+    cmd: 'git ls-files supabase/migrations/*.sql',
   };
   /* ---- o site, para a tabela de ZONAS: a fronteira public/ × src/ é a primeira coisa
          que um agente precisa saber, e ela tem tamanho medível dos dois lados ---- */
@@ -301,14 +307,14 @@ function medir() {
     /* A pegadinha que custa a primeira hora de todo mundo, medida em vez de afirmada:
        servir `public/` estaticamente NÃO roda o jogo, porque não há index.html ali. Se
        um dia alguém criar o arquivo, este bloco muda e a frase inverte sozinha. */
-    indexHtml: existe('public/index.html'),
-    cmd: "find src/pages -name '*.astro' | wc -l · find src/pages/api -name '*.ts' | wc -l · ls public/index.html",
+    indexHtml: existe('public/index.html') && entraNaMedicao('public/index.html'),
+    cmd: "git ls-files 'src/pages/**/*.astro' 'src/pages/api/*.ts' public/index.html",
   };
 
   /* ---- licença: o arquivo LICENSE é a verdade, e as SUPERFÍCIES são os lugares que
          repetem o nome dela e por isso mudam JUNTO com ela.
          Duas listas escritas à mão já enumeraram esses lugares (README.md e
-         `plans/08 §3`) e as duas esquecem o JSON-LD de `src/pages/index.astro` e o
+         `docs/historico/plans/08 §3`) e as duas esquecem o JSON-LD de `src/pages/index.astro` e o
          rodapé desta documentação. Lista à mão de onde a licença aparece tem o mesmo
          prazo de validade de qualquer outro número escrito à mão — por isso é medida. */
   /* POR QUE ISTO NÃO É MAIS `head -1 LICENSE` + regex de sigla — custou uma doc publicada
@@ -403,20 +409,9 @@ function medir() {
     /* A doc em inglês (`docs/i18n/en/`) é tradução À MÃO, e os blocos GERADOS dela são cópia
        humana do bloco em português: `npm run docs` não reescreve nenhum deles. Foi por aí que
        a rota `/license` seguiu publicando "the code is under the MIT License" enquanto o
-       `LICENSE` já era AGPL. Gerar os dois idiomas pede um gerador bilíngue (issue #54); o
-       que dá para fazer hoje, barato, é proibir a tradução de CONTRADIZER o `LICENSE` —
-       o bloco `licenca` em inglês tem que nomear a licença vigente. */
-    /* A varredura EN lá embaixo pega a tradução que DECLARA a licença errada. Esta pega o
-       caso mudo, que aquela não vê: um bloco que não nomeia licença NENHUMA ("the code is
-       open source"). Silêncio não é verde — é a mesma regra do `null` do gerador. */
-    traducaoMuda: (() => {
-      const arq = 'docs/i18n/en/docusaurus-plugin-content-docs/current/licenca.md';
-      if (!existe(arq) || !casada) return null;
-      const bloco = /BEGIN:GERADO:licenca\b[\s\S]*?END:GERADO:licenca\b/.exec(ler(arq));
-      if (!bloco) return `${arq} não tem o bloco GERADO:licenca`;
-      return LICENCAS_CONHECIDAS.some((l) => l.mencao.test(bloco[0]))
-        ? null : `${arq} tem o bloco GERADO:licenca sem nomear licença nenhuma`;
-    })(),
+       `LICENSE` já era AGPL. Gerar os dois idiomas pede um gerador bilíngue (issue #54).
+       A página de licença saiu do site de docs em 12/08/2026; a tabela de superfícies
+       mora no `CONTRIBUTING.md`. */
     /* Sem crase aqui dentro: o rodapé já embrulha este texto em crase, e crase aninhada
        vira markdown quebrado nas duas pontas (GitHub e Docusaurus). */
     cmdNome: 'título lido do texto do LICENSE, conferido contra o campo license do package.json',
@@ -454,19 +449,19 @@ const BLOCOS = {
   numeros: (f) => [
     '| O que | Quanto | Onde confere |',
     '|---|---:|---|',
-    `| Código do jogo | ${num(f.jogo.linhas)} linhas em ${f.jogo.arquivos} arquivos | \`cat public/js/*.js \\| wc -l\` |`,
+    `| Código do jogo | ${num(f.jogo.linhas)} linhas em ${f.jogo.arquivos} arquivos | \`git ls-files public/js/*.js \\| xargs wc -l\` |`,
     `| \`game.js\` | **${num(f.jogo.porArquivo['game.js'])}** linhas | \`wc -l public/js/game.js\` |`,
     `| \`main.js\` | ${num(f.jogo.porArquivo['main.js'])} linhas | \`wc -l public/js/main.js\` |`,
-    `| Armas com GLB | ${f.assets.armas} | \`ls public/models/weapons/*.glb \\| wc -l\` |`,
-    `| GLBs de personagem | ${f.assets.personagens} | \`ls public/models/characters/*.glb \\| wc -l\` |`,
-    `| Props em GLB | ${f.assets.props} | \`ls public/models/props/*.glb \\| wc -l\` |`,
+    `| Armas com GLB | ${f.assets.armas} | \`git ls-files 'public/models/weapons/*.glb' \\| wc -l\` |`,
+    `| GLBs de personagem | ${f.assets.personagens} | \`git ls-files 'public/models/characters/*.glb' \\| wc -l\` |`,
+    `| Props em GLB | ${f.assets.props} | \`git ls-files 'public/models/props/*.glb' \\| wc -l\` |`,
     `| Clipes de animação versionados | ${num(f.assets.anims)} | \`git ls-files public/models/anims \\| wc -l\` |`,
     `| Personagens jogáveis | ${f.elenco.total}, em ${f.elenco.faccoes} facções | array \`CHARACTERS\` de \`characters.js\` |`,
     `| Mapas no registro | ${f.mapas.total} | objeto \`MAPS\` de \`maps.js\` |`,
-    `| Arnêses visuais em HTML | ${f.portao.arnesesHtml} | \`ls public/*.html \\| wc -l\` |`,
-    `| Scripts do arnês | ${f.portao.scriptsEval} | \`ls tools/eval/*.mjs tools/eval/*.py \\| wc -l\` |`,
-    `| Scripts de pipeline | ${f.portao.scriptsTools} | \`ls tools/*.mjs \\| wc -l\` |`,
-    `| Tarefas de entrada escritas | ${f.issues.escritas} | \`ls docs/issues/[0-9]*.md \\| wc -l\` |`,
+    `| Arnêses visuais em HTML | ${f.portao.arnesesHtml} | \`git ls-files 'public/*.html' \\| wc -l\` |`,
+    `| Scripts do arnês | ${f.portao.scriptsEval} | \`git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \\| wc -l\` |`,
+    `| Scripts de pipeline | ${f.portao.scriptsTools} | \`git ls-files 'tools/*.mjs' \\| wc -l\` |`,
+    `| Tarefas de entrada escritas | ${f.issues.escritas} | \`git ls-files 'docs/issues/[0-9]*.md' \\| wc -l\` |`,
     `| Versão | \`${f.versao.jogo}\` | \`public/js/version.js\`${f.versao.concordam ? ' e `package.json` (batem)' : ' — **DIVERGE do `package.json`: `' + f.versao.pacote + '`**'} |`,
     rodape('o comando da coluna direita de cada linha'),
   ].join('\n'),
@@ -491,17 +486,17 @@ const BLOCOS = {
 
   /* AS SUPERFÍCIES DA LICENÇA — todo arquivo que REPETE o nome da licença e por isso muda
      JUNTO com ela. Duas listas escritas à mão já tentaram enumerar isto (README.md e
-     `plans/08 §3`) e as duas esquecem lugares reais. A lista de superfícies é decisão
+     `docs/historico/plans/08 §3`) e as duas esquecem lugares reais. A lista de superfícies é decisão
      humana (vive no topo deste script); ONDE cada uma nomeia a licença é medido. */
   licenca_pontos: (f) => [
     `| Superfície | Arquivo | Onde diz \`${f.licenca.atual || '?'}\` |`,
     '|---|---|---|',
-    /* Teto de 4 linhas por superfície: o corpo do `LICENSE` nomeia a própria licença onze
-       vezes, e uma célula com onze números não informa mais que uma com quatro — informa
-       menos, porque ninguém lê. O total honesto vai no `+N` e na contagem abaixo da tabela. */
+    /* Contagem, não número de linha: o número desloca a cada inserção acima e desatualiza
+       o bloco sozinho. A régua afirma que a superfície NOMEIA a licença — e isso não
+       depende de onde o texto caiu no arquivo. */
     ...f.licenca.superficies.map((s) => `| ${s.rotulo} | \`${s.arquivo}\` | ${
       !s.existe ? '**arquivo não existe**'
-        : s.linhas.length ? `linha${s.linhas.length > 1 ? 's' : ''} ${s.linhas.slice(0, 4).join(', ')}${s.linhas.length > 4 ? ` (+${s.linhas.length - 4})` : ''}`
+        : s.linhas.length ? `${s.linhas.length}×`
           : '— (não nomeia a licença)'}  |`),
     '',
     `**${f.licenca.superficies.reduce((a, s) => a + s.linhas.length, 0)} ocorrências** de ` +
@@ -510,7 +505,7 @@ const BLOCOS = {
     'metade trocada é pior que nenhuma, porque cada arquivo passa a responder uma coisa diferente para quem pergunta.',
     '',
     f.licenca.outrasMencoes.length
-      ? `**Outros nomes de licença citados nessas superfícies:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` em \`${m.arquivo}\` (linha${m.linhas.length > 1 ? 's' : ''} ${m.linhas.join(', ')})`).join(', ')}. ` +
+      ? `**Outros nomes de licença citados nessas superfícies:** ${f.licenca.outrasMencoes.map((m) => `\`${m.nome}\` em \`${m.arquivo}\` (${m.linhas.length}×)`).join(', ')}. ` +
         'Citar não é declarar — essas linhas são histórico da migração ou crédito a dependência de terceiro. ' +
         `A regra continua a mesma: **só o \`LICENSE\` declara**, e hoje ele diz \`${f.licenca.atual}\`.`
       : 'Nenhuma superfície cita outro nome de licença.',
@@ -564,7 +559,7 @@ const BLOCOS = {
       '',
       `Total de \`public/js/\`: **${num(f.jogo.linhas)} linhas em ${f.jogo.arquivos} arquivos**. ` +
       'O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).',
-      rodape('`wc -l public/js/*.js`'),
+      rodape('`git ls-files public/js/*.js | xargs wc -l`'),
     ].join('\n');
   },
 
@@ -675,7 +670,7 @@ const BLOCOS = {
      tem os 13 commits do William Oliveira — a doc anunciava 3 pessoas num repositório que
      tem 4, apagando um contribuidor de terceiro da própria página que fala de contribuir.
      A frase agora diz qual histórico foi medido; a diferença entre branches está em
-     `docs/docs/licenca.md`, com o comando que a reproduz. */
+     `docs/LICENCA.md`, com o comando que a reproduz. */
   pessoas: (f) => [
     `**${f.pessoas.humanos} identidades de autoria humana** assinam commit no histórico ` +
     `**desta branch**: ${f.pessoas.nomes.map((n) => `\`${n}\``).join(', ')}. O resto dos commits é assinado por agentes de IA. ` +
@@ -762,19 +757,19 @@ const rodapeEn = (cmd) => `\n> Block generated by \`node tools/gen-docs.mjs\`. S
 const BLOCOS_EN = {
   numeros: (f) => [
     '| What | How much | Where to check |', '|---|---:|---|',
-    `| Game code | ${numEn(f.jogo.linhas)} lines in ${f.jogo.arquivos} files | \`cat public/js/*.js \\| wc -l\` |`,
+    `| Game code | ${numEn(f.jogo.linhas)} lines in ${f.jogo.arquivos} files | \`git ls-files public/js/*.js \\| xargs wc -l\` |`,
     `| \`game.js\` | **${numEn(f.jogo.porArquivo['game.js'])}** lines | \`wc -l public/js/game.js\` |`,
     `| \`main.js\` | ${numEn(f.jogo.porArquivo['main.js'])} lines | \`wc -l public/js/main.js\` |`,
-    `| Weapons with GLB | ${f.assets.armas} | \`ls public/models/weapons/*.glb \\| wc -l\` |`,
-    `| Character GLBs | ${f.assets.personagens} | \`ls public/models/characters/*.glb \\| wc -l\` |`,
-    `| Props in GLB | ${f.assets.props} | \`ls public/models/props/*.glb \\| wc -l\` |`,
+    `| Weapons with GLB | ${f.assets.armas} | \`git ls-files 'public/models/weapons/*.glb' \\| wc -l\` |`,
+    `| Character GLBs | ${f.assets.personagens} | \`git ls-files 'public/models/characters/*.glb' \\| wc -l\` |`,
+    `| Props in GLB | ${f.assets.props} | \`git ls-files 'public/models/props/*.glb' \\| wc -l\` |`,
     `| Versioned animation clips | ${numEn(f.assets.anims)} | \`git ls-files public/models/anims \\| wc -l\` |`,
     `| Playable characters | ${f.elenco.total}, in ${f.elenco.faccoes} factions | \`CHARACTERS\` array in \`characters.js\` |`,
     `| Maps in the registry | ${f.mapas.total} | \`MAPS\` object in \`maps.js\` |`,
-    `| Visual harnesses in HTML | ${f.portao.arnesesHtml} | \`ls public/*.html \\| wc -l\` |`,
-    `| Harness scripts | ${f.portao.scriptsEval} | \`ls tools/eval/*.mjs tools/eval/*.py \\| wc -l\` |`,
-    `| Pipeline scripts | ${f.portao.scriptsTools} | \`ls tools/*.mjs \\| wc -l\` |`,
-    `| Written entry tasks | ${f.issues.escritas} | \`ls docs/issues/[0-9]*.md \\| wc -l\` |`,
+    `| Visual harnesses in HTML | ${f.portao.arnesesHtml} | \`git ls-files 'public/*.html' \\| wc -l\` |`,
+    `| Harness scripts | ${f.portao.scriptsEval} | \`git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \\| wc -l\` |`,
+    `| Pipeline scripts | ${f.portao.scriptsTools} | \`git ls-files 'tools/*.mjs' \\| wc -l\` |`,
+    `| Written entry tasks | ${f.issues.escritas} | \`git ls-files 'docs/issues/[0-9]*.md' \\| wc -l\` |`,
     `| Version | \`${f.versao.jogo}\` | \`public/js/version.js\` and \`package.json\` ${f.versao.concordam ? '(match)' : '**DIVERGE**'} |`,
     rodapeEn('the command in the right column of each row'),
   ].join('\n'),
@@ -842,13 +837,13 @@ const COLOCACAO = {
   numeros: ['README.md', 'docs/docs/comecando.md'],
   regras: ['README.md', 'docs/docs/comecando.md'],
   mapas: ['README.md', 'docs/docs/comecando.md', 'docs/docs/colaborar.md'],
-  scripts: ['README.md', 'docs/docs/comecando.md', 'AGENTS.md'],
-  zonas: ['AGENTS.md'],
+  scripts: ['ARCH.generated.md', 'docs/docs/comecando.md'],
+  zonas: ['ARCH.generated.md'],
   stack: ['README.md', 'docs/docs/stack.md'],
   assets: ['docs/docs/stack.md'],
   skills: ['docs/docs/stack.md'],
-  licenca: ['README.md', 'docs/docs/licenca.md'],
-  licenca_pontos: ['docs/docs/licenca.md'],
+  licenca: ['README.md'],
+  licenca_pontos: ['CONTRIBUTING.md'],
   arquivos: ['docs/docs/arquitetura.md'],
   ponteiros: ['docs/docs/arquitetura.md'],
   invariantes: ['docs/docs/quality-gates.md'],
@@ -983,8 +978,6 @@ if (!fatos.licenca.atual)
   inconsistencias.push(`LICENSE não casa com nenhuma licença conhecida (cabeçalho lido: '${fatos.licenca.cabecalho || '(vazio)'}') — acrescente o nome em LICENCAS_CONHECIDAS, em tools/gen-docs.mjs`);
 else if (!fatos.licenca.concordam)
   inconsistencias.push(`LICENSE diz '${fatos.licenca.atual}' e package.json diz '${fatos.licenca.pacote}'`);
-if (fatos.licenca.traducaoMuda)
-  inconsistencias.push(`${fatos.licenca.traducaoMuda} (sync à mão — issue #54)`);
 
 if (process.argv.includes('--check')) {
   const erros = [];

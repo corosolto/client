@@ -2,6 +2,7 @@
 // Astro page source so the game runs without fighting astro dev.
 // Espelha o import map e o hash de módulos do index.astro para o arnês local.
 // Usage: node tools/eval/serve.mjs [port]
+import { createHash } from 'node:crypto';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -21,6 +22,9 @@ async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
   const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
+  const CSS_REV = createHash('sha256')
+    .update(await readFile(join(ROOT, 'style.css')))
+    .digest('hex').slice(0, 12);
   const importmap = JSON.stringify({
     imports: {
       three: './vendor/three.module.js',
@@ -65,7 +69,11 @@ async function renderIndex() {
     return /\$\{/.test(resolvido) ? todo : `${attr}="${resolvido}"`;
   });
   return attrs(
-    src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`),
+    src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
+      /* CSS com hash de CONTEÚDO (regra da main, mantida ANTES da varredura genérica):
+         a versão do package.json não muda entre commits de trabalho e o navegador
+         servia style.css do cache — o JS novo chegava e o CSS não. */
+      .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`),
   );
 }
 

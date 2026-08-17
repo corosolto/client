@@ -1027,6 +1027,14 @@ if (process.argv.includes('--silhuetas')) {
 }
 
 const p = path.join(HERE, 'char_probe.json');
+if (fs.existsSync(p)) {
+  try {
+    const anterior = JSON.parse(fs.readFileSync(p, 'utf8'));
+    const semDataAnterior = { ...anterior, gerado: null };
+    const semDataAtual = { ...saida, gerado: null };
+    if (JSON.stringify(semDataAnterior) === JSON.stringify(semDataAtual)) saida.gerado = anterior.gerado;
+  } catch { /* JSON inválido é substituído pela medição nova */ }
+}
 fs.writeFileSync(p, JSON.stringify(saida, null, 1));
 
 if (SO_JSON) { console.log(JSON.stringify(saida, null, 1)); process.exit(0); }

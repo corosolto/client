@@ -8,7 +8,8 @@ const mutants = [
   'sem-api', 'sem-early-return',
   'sem-workflow', 'abre-externo',
   'sem-cliente', 'cliente-mensagem-url', 'sem-teto-externo', 'debug-externo', 'console-sem-origem',
-  'cache-antes-origem',
+  'cache-antes-origem', 'sem-recuperavel', 'sem-opaco', 'opaco-sem-guarda',
+  'sem-vercel-helper', 'sem-vercel-cliente', 'sem-webgl',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -63,15 +64,33 @@ if (mutant === 'debug-externo') page = mutate(page,
 if (mutant === 'console-sem-origem') page = mutate(page,
   "reporta('console', m, null, pilha, !interna)",
   "reporta('console', m, null, pilha)");
+if (mutant === 'sem-vercel-helper') helperSource = mutate(helperSource,
+  "if (VENDOR_RE.test(sourceText) || VENDOR_RE.test(String(stack || ''))) return true;",
+  "if (VENDOR_RE.test(sourceText) || VENDOR_RE.test(String(stack || ''))) return false;");
+if (mutant === 'sem-vercel-cliente') page = mutate(page,
+  "if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return false;",
+  "if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return true;");
 if (mutant === 'cache-antes-origem') helperSource = mutate(helperSource,
   "if (isExternalCrash(payload, ownOrigin)) return 'externo';\n  if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';",
   "if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';\n  if (isExternalCrash(payload, ownOrigin)) return 'externo';");
+if (mutant === 'sem-recuperavel') helperSource = mutate(helperSource,
+  "if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';",
+  "if (RECOVERABLE_RE.test(evidence)) return 'codigo';");
+if (mutant === 'sem-opaco') helperSource = mutate(helperSource,
+  'return OPAQUE_RE.test(String(message).trim());',
+  'return false;');
+if (mutant === 'sem-webgl') helperSource = mutate(helperSource,
+  "if (AMBIENTE_RE.test(String(payload.message || ''))) return 'externo';",
+  'if (false) return false;');
+if (mutant === 'opaco-sem-guarda') helperSource = mutate(helperSource,
+  'if (source || stack) return false;',
+  'if (false) return false;');
 
-let classifyCrash = null;
+let classifyCrash = null, shouldDispatchCrash = null;
 if (helperSource) {
   try {
     const encoded = Buffer.from(helperSource).toString('base64');
-    ({ classifyCrash } = await import(`data:text/javascript;base64,${encoded}`));
+    ({ classifyCrash, shouldDispatchCrash } = await import(`data:text/javascript;base64,${encoded}`));
   } catch { /* cláusulas abaixo ficam vermelhas */ }
 }
 const own = 'https://www.csbrasil.online';
@@ -86,13 +105,45 @@ const crossOriginFixtures = [
   { source: 'https://static.cloudflareinsights.com/beacon.min.js:1:136', message: 'at não existe' },
   { stack: 'Error\n at https://cdn.example.invalid/sdk.js:2:4', message: 'boom' },
 ];
+/* #218/#219: bundles da Vercel (analytics, speed-insights) são servidos do próprio
+   domínio em /_vercel/, mas o `pushState` read-only estoura DENTRO do código deles. */
+const vendorFixtures = [
+  { source: `${own}/_vercel/insights/script.js:1:2317`, message: "Cannot assign to read only property 'pushState' of object '#<History>'" },
+  { stack: `TypeError\n    at ${own}/_vercel/speed-insights/script.js:1:12505`, message: "Cannot assign to read only property 'pushState'" },
+];
+/* #277/#276/#274: sem_webgl é o jogo DETECTANDO browser sem WebGL (painel amigável do
+   BUG-44 já tratou). É ambiente do jogador — mesmo same-origin, não é defeito de código. */
+const ambienteFixtures = [
+  { source: `${own}/js/glcontext.js:105:1`, message: 'sem_webgl: nenhum contexto foi criado · experimental-webgl/economia: Could not create a WebGL context, VENDOR = 0x8086' },
+  { source: `${own}/js/glcontext.js:105:1`, message: 'sem_webgl: nenhum contexto foi criado · webgl2/economia: WebGL is currently disabled.' },
+];
 const internalFixtures = [
   { source: `${own}/js/game.js:1:2`, stack: `${own}/js/main.js:3:4`, message: 'boom' },
-  { source: '', stack: '', message: 'Script error.' },
-  { source: null, stack: null, message: 'uncaught exception: undefined' },
   { source: `${own}/js/main.js:1:2`, stack: 'Error at chrome-extension://abc/inpage.js:2:3', message: 'boom' },
   { source: '', stack: `Error at ${own}/js/main.js:3:4\n at chrome-extension://abc/inpage.js:2:3`, message: 'boom' },
   { message: 'falha ao carregar https://cdn.example.invalid/data' },
+  /* crash real do jogo cujo texto CONTÉM "undefined" mas carrega filename
+     same-origin: nenhum filtro de substring pode aposentá-lo (mutante filtro-amplo). */
+  { source: `${own}/js/game.js:1:2`, stack: '', message: "Cannot read properties of undefined (reading 'x')" },
+  /* sem pilha, sem source, mas a mensagem NÃO bate assinatura opaca conhecida:
+     ambíguo continua acionável, o corte opaco é estreito de propósito. */
+  { source: '', stack: '', message: 'TypeError: x is undefined' },
+];
+/* Sinais opacos de terceiro/extensão/resposta corrompida: sem pilha e sem
+   nome de arquivo do jogo, viram externo e não abrem issue (#109, #125, #126, #136). */
+const opaqueFixtures = [
+  { source: '', stack: '', message: 'Script error.' },
+  { source: '', stack: '', message: 'Script error' },
+  { source: null, stack: null, message: 'uncaught exception: undefined' },
+  { source: null, stack: null, message: 'SyntaxError: illegal character U+009E' },
+  { source: '', stack: '', message: 'network error' },
+];
+/* Aviso recuperável do carregador do three (issue #110): a textura embutida não
+   decodifica, o three loga com console.error mas o modelo carrega. Fica no banco,
+   não abre issue. Sem `source`/`stack` (o console.error do three não tem pilha). */
+const recoverableFixtures = [
+  { source: '', stack: '', message: "THREE.GLTFLoader: Couldn't load texture blob:https://www.csbrasil.online/bbaced98-44e1-4922-83b1-4564e004a737" },
+  { message: "THREE.GLTFLoader: Couldn't load texture models/characters/mst.glb" },
 ];
 const externalCacheFixtures = [
   { source: 'chrome-extension://abc/inpage.js:1:2', message: 'does not provide an export' },
@@ -156,6 +207,13 @@ const clientFixtures = [
 ];
 const clientBehavior = !!origemCliente
   && clientFixtures.every(([source, stack, mensagem, esperado]) => origemCliente(source, stack, mensagem) === esperado);
+/* Mesmo par de #218/#219 no cliente: /_vercel/ em source OU em stack não é jogo. */
+const vendorClientFixtures = [
+  [`${own}/_vercel/insights/script.js:1:2317`, '', "Cannot assign to read only property 'pushState'", false],
+  [null, `TypeError\n    at ${own}/_vercel/speed-insights/script.js:1:12505`, 'boom', false],
+];
+const vendorBehavior = !!origemCliente
+  && vendorClientFixtures.every(([source, stack, mensagem, esperado]) => origemCliente(source, stack, mensagem) === esperado);
 const clientWired = /origemDoJogo\(e\.filename, e\.error && e\.error\.stack, String\(msg\)\)/.test(page)
   && /origemDoJogo\(null, r && r\.stack, String\(\(r && r\.message\) \|\| r \|\| ''\)\)/.test(page)
   && /lancamento\.ativo && interna/.test(page)
@@ -173,13 +231,27 @@ const clientWired = /origemDoJogo\(e\.filename, e\.error && e\.error\.stack, Str
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
-  ['EP3', internalFixtures.every((fixture) => classify(fixture) === 'codigo'), 'same-origin e sinais opacos continuam acionáveis'],
+  ['EP3', internalFixtures.every((fixture) => classify(fixture) === 'codigo'), 'same-origin e mensagens sem assinatura opaca continuam acionáveis'],
+  ['EP9', opaqueFixtures.every((fixture) => classify(fixture) === 'externo')
+    && classify({ source: `${own}/js/main.js:1:1`, stack: '', message: 'uncaught exception: undefined' }) === 'codigo'
+    && classify({ source: '', stack: `at boom (${own}/js/game.js:9:9)`, message: 'Script error.' }) === 'codigo', 'assinatura opaca sem pilha e sem source é externa, mas filename/stack same-origin mantêm código'],
   ['EP7', externalCacheFixtures.every((fixture) => classify(fixture) === 'externo')
     && classify({ source: `${own}/js/main.js`, stack: 'at chrome-extension://abc/inpage.js', message: 'boom' }) === 'codigo'
     && classify({ message: 'prod-coherence reprovou' }) === 'cache-split', 'proveniência externa vence cache-split e origem própria vence evidência secundária'],
+  ['EP8', recoverableFixtures.every((fixture) => classify(fixture) === 'recuperavel')
+    && classify({ source: `${own}/js/game.js:1:2`, message: 'boom' }) === 'codigo'
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('recuperavel') === false
+    && shouldDispatchCrash('codigo') === true, 'aviso recuperável de textura fica na telemetria mas não vira bug do jogo'],
   ['EP4', apiWired, 'API grava o erro e o early-return externo é o único corte antes do dispatch único'],
   ['EP5', workflowWired, 'workflow classifica externo sem abrir issue, em nenhum OR da condição'],
   ['EP6', clientBehavior && clientWired, 'cliente executado: mensagem não é proveniência, overlay/cota de externo são separados'],
+  ['EP10', vendorFixtures.every((fixture) => classify(fixture) === 'externo')
+    && classify({ source: `${own}/js/game.js:1:2`, message: 'boom' }) === 'codigo'
+    && vendorBehavior, 'bundles /_vercel/ da Vercel são externos no helper e no cliente; /js/ do jogo continua acionável'],
+  ['EP11', ambienteFixtures.every((fixture) => classify(fixture) === 'externo')
+    && classify({ source: `${own}/js/glcontext.js:105:1`, message: 'outra falha qualquer de contexto' }) === 'codigo',
+    'sem_webgl é ambiente (browser sem WebGL, painel do BUG-44 já tratou): externo, sem issue; falha de contexto FORA da assinatura continua acionável'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -190,7 +262,10 @@ const mutantClause = {
   'sem-workflow': 'EP5', 'abre-externo': 'EP5',
   'sem-cliente': 'EP6', 'cliente-mensagem-url': 'EP6', 'sem-teto-externo': 'EP6', 'debug-externo': 'EP6',
   'console-sem-origem': 'EP6',
-  'cache-antes-origem': 'EP7',
+  'cache-antes-origem': 'EP7', 'sem-webgl': 'EP11',
+  'sem-recuperavel': 'EP8',
+  'sem-opaco': 'EP9', 'opaco-sem-guarda': 'EP9',
+  'sem-vercel-helper': 'EP10', 'sem-vercel-cliente': 'EP10',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);

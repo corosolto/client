@@ -26,7 +26,7 @@ pessoas e um quality gate automatizado.
 :::note O bloco acima conta a BRANCH, e o projeto é maior que ela
 A `main` tem um quarto contribuidor que esta branch de trabalho não contém — 13 commits
 de um cliente desktop, mesclados em julho. Quem, quanto e por que isso importa para
-qualquer decisão de licença está em [Licença, arte e marca](./licenca.md).
+qualquer decisão de licença está no `CONTRIBUTING.md` (seção de licença e superfícies).
 :::
 
 Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, pode
@@ -250,7 +250,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.815 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 858 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.969 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.001 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.904 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.634 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
@@ -258,8 +258,15 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
 | `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.521 |
 | `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 717 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 245 |
 
-**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 12 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -398,9 +405,9 @@ o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
 3. Rode `npm run check`. Cole a saída no PR.
 4. PR pequeno, uma frente, descrição com números e `arquivo:linha`.
 5. **Ao contribuir você licencia sob a licença que o `LICENSE` disser no momento do seu
-   PR.** Qual é ela hoje, o que está decidido e ainda não aplicado, e quem precisa
-   concordar para a mudança acontecer: **[Licença, arte e marca](./licenca.md)**. Se isso
-   for decisivo pra você, leia aquela página antes de escrever a primeira linha.
+   PR.** Qual é ela hoje e quais arquivos mudam junto numa troca: a seção de licença do
+   `CONTRIBUTING.md`. Se isso
+   for decisivo pra você, leia lá antes de escrever a primeira linha.
 
 Reportando bug: o que aconteceu, o que esperava, passos pra reproduzir, navegador/SO e
 print do console (F12). E se o bug for de comportamento, ele vai virar invariante — é

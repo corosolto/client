@@ -1,0 +1,60 @@
+{
+  "recipe": "3x2-v1",
+  "generatorSha256": "80cdef4d48deab4f72bb399ca8ec798fb55c00a45f181942a74045794ec624d6",
+  "files": {
+    "wall-1.webp": {
+      "sourceSha256": "afb9e86deb2dc5008394220959313b9d522a31df619dd15dbccc0573d32b1d45",
+      "outputSha256": "d4036be93e1f5584fde0bab6ec47a65fbf6af72038a2fe89e351e8d45da046e5",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-2.webp": {
+      "sourceSha256": "e2d2d31f3fc2195f5f5e52bb0ea302579e13714dc14f05f17ecb0e5fb6e88c2f",
+      "outputSha256": "5fc19d83b917ffcd6490213c13da241b25badf5d8050247d9eebdcb2f4456a5b",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-3.webp": {
+      "sourceSha256": "0c4a15ee80a6e067a95e019422baa63e21fee0ee9359e23bd435d27cfb482d71",
+      "outputSha256": "98efcf269766bed323745d5a2c4f2732f5f39de81184bbcd48c8e2c657971c33",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-4.webp": {
+      "sourceSha256": "433524025bc0a7b4be5538ad090edfc0f898efc202119ae1eb780d061211a556",
+      "outputSha256": "fe0ee59fbb73c3e93d3f09c4d82b91f540bf8c1179e740ec3bbf6e4a29fbca57",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-5.webp": {
+      "sourceSha256": "3a0c5e3953eebc92232eea3c01cb71e97bc2a97c722890198028e6b4afcb0176",
+      "outputSha256": "7c8336812b520370f5f5b483b9985a2b391e4516f266658299a6136db10e85d9",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-6.webp": {
+      "sourceSha256": "5f6dc03feb9af4dd2825992d7acf0553a145e622dd19962c6f220429a357a08e",
+      "outputSha256": "577b0cd1266cf8cd5aa74003af5e8c87ade1e85512850f272e98f4bc802c4424",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-7.webp": {
+      "sourceSha256": "2827d6d5995244cbcc0a71b174c7f71f541588b31da9fdcab0b8259d2704569e",
+      "outputSha256": "b112c3c20cbcf6274efc1175e1b3958b05889630e7467eec72bffe40b58eda50",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-8.webp": {
+      "sourceSha256": "5c201c4f93d348ba192d3da288a583b786dd907ee681155c66cbc9878d57230e",
+      "outputSha256": "af5ed16cf3d2475365f07c0666b5e4e98a259b0c340bcfab2212bcb90dcb4ed8",
+      "width": 1672,
+      "height": 1115
+    },
+    "wall-9.webp": {
+      "sourceSha256": "9430a9e8db1e5075b12ef9bf45ae4b0ee8425f8910b3f3e85fb3da25d7db7a45",
+      "outputSha256": "005d0329e1000766f1e7a743c7eb5a537846bb071d54da217a75a113de8f909b",
+      "width": 1672,
+      "height": 1115
+    }
+  }
+}

@@ -27,17 +27,13 @@
     "message": "The gate (quality gates)",
     "description": "The label of footer link with label=O portão (quality gates) linking to /quality-gates"
   },
-  "link.item.label.Licença, arte e marca": {
-    "message": "License, art and trademark",
-    "description": "The label of footer link with label=Licença, arte e marca linking to /licenca"
-  },
   "link.item.label.GitHub": {
     "message": "GitHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/rubenmarcus/csbrasil"
+    "description": "The label of footer link with label=GitHub linking to https://github.com/corosolto/client"
   },
   "link.item.label.Issues": {
     "message": "Issues",
-    "description": "The label of footer link with label=Issues linking to https://github.com/rubenmarcus/csbrasil/issues"
+    "description": "The label of footer link with label=Issues linking to https://github.com/corosolto/client/issues"
   },
   "copyright": {
     "message": "CORO SOLTO: Treta Suprema — open source; the current license is on the \"License, art and trademark\" page. Fictional satire.",

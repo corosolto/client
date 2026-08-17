@@ -27,50 +27,10 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 
-export const WEAPONS = {
-  awp:    { name: 'AWP "DELIBERADOR"', short: 'AWP', dmg: 400, mag: 5, reserve: 25, rate: 1.7, reload: 3.1, spreadHip: 0.075, spreadScope: 0.0008, recoil: 0.055, scope: true },
-  // dmg 33→36 (crítico de gunfeel): 33×3=99 deixava a arma-tema 1 HP de matar em 3 tiros —
-  // era a 12ª em TTK. Com 36 mata em 3 (TTK 0.200) e volta a ser a régua do arsenal.
-  ak:     { name: 'AK-47 "BATE-ESTACA"', short: 'AK', dmg: 36, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.024, recoil: 0.008, auto: true },
-  m4:     { name: 'M4A1 "REQUINTE"', short: 'M4', dmg: 31, mag: 30, reserve: 90, rate: 0.09, reload: 2.4, spreadHip: 0.02, recoil: 0.007, auto: true },
-  mp5:    { name: 'MP5 "VASSOURA"', short: 'MP5', dmg: 26, mag: 30, reserve: 120, rate: 0.075, reload: 2.2, spreadHip: 0.03, recoil: 0.005, auto: true },
-  // 8×12=96 não matava nem com o cartucho inteiro no peito (TTK 0.9s, pior arma do jogo).
-  // 9×14=126 = mata no contato, que é o contrato de uma pump.
-  shotgun:{ name: 'M3 "CONVERSA FIADA"', short: 'M3', dmg: 14, pellets: 9, mag: 7, reserve: 32, rate: 0.9, reload: 3.0, spreadHip: 0.06, recoil: 0.045 },
-  deagle: { name: 'DEAGLE "MARTELO"', short: 'DE', dmg: 53, mag: 7, reserve: 35, rate: 0.28, reload: 2.0, spreadHip: 0.012, recoil: 0.03 },
-  pistol: { name: 'PT-38 "APITO"', short: 'PT-38', dmg: 34, mag: 12, reserve: 48, rate: 0.24, reload: 1.6, spreadHip: 0.02, recoil: 0.014, scope: false },
-  knife:  { name: 'FACA "CONVERSA FIADA"', short: 'FACA', dmg: 55, rate: 0.55, range: 2.4, reload: 0, recoil: 0.02, scope: false },
-  // arsenal 2 (BR)
-  m92:       { name: 'ZASTAVA M92 "IOGUSLAVO"', short: 'M92', dmg: 32, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.026, recoil: 0.009, auto: true },
-  akm:       { name: 'AKM "KALASH DA VÉIA"', short: 'AKM', dmg: 34, mag: 30, reserve: 90, rate: 0.105, reload: 2.5, spreadHip: 0.025, recoil: 0.009, auto: true },   // 35→34: matava em 3 e ficava ACIMA da AK-47 sem contrapartida; agora 4 tiros (pesada e lenta, como o nome promete)
-  g3:        { name: 'HK G3 "FRITZ"', short: 'G3', dmg: 37, mag: 20, reserve: 80, rate: 0.11, reload: 2.6, spreadHip: 0.022, recoil: 0.013, auto: true },
-  revolver38:{ name: 'REVÓLVER .38 "TROVÃO"', short: '.38', dmg: 46, mag: 6, reserve: 24, rate: 0.36, reload: 2.4, spreadHip: 0.016, recoil: 0.03 },
-  md97:      { name: 'MD97 "FUZIL DA PÁTRIA"', short: 'MD97', dmg: 38, mag: 20, reserve: 80, rate: 0.12, reload: 2.6, spreadHip: 0.022, recoil: 0.012, auto: true },
-  carbine:   { name: 'CARABINA "PAPO DE PEÃO"', short: 'CARB', dmg: 42, mag: 10, reserve: 40, rate: 0.5, reload: 2.8, spreadHip: 0.02, recoil: 0.02 },
-  // G3-R1: scope VOLTA a true. O bug nunca foi "ter luneta" e sim a máscara entrar em 1 frame
-  // ainda no FOV 70 (tela quase toda preta = a "faixa preta" que o dono viu) somada a esconder
-  // arma E crosshair antes de ela existir. Agora a luneta é um overlay circular com fade curto
-  // amarrado ao progresso do zoom, e nem a arma nem a mira somem antes de a luneta estar opaca
-  // (ver _scope/_updatePlayer). Sniper sem zoom não parece jogo.
-  m400:      { name: 'M400 "MIRA FINA"', short: 'M400', dmg: 40, mag: 20, reserve: 80, rate: 0.11, reload: 2.4, spreadHip: 0.018, spreadScope: 0.004, recoil: 0.011, auto: true, scope: true },
-  mosin:     { name: 'MOSIN "VOVÓ RUSSA"', short: 'MOSIN', dmg: 120, mag: 5, reserve: 25, rate: 1.5, reload: 3.4, spreadHip: 0.08, spreadScope: 0.001, recoil: 0.05, scope: true },
-  rem700:    { name: 'REM 700 "CAÇADOR"', short: 'REM', dmg: 130, mag: 5, reserve: 25, rate: 1.5, reload: 3.2, spreadHip: 0.08, spreadScope: 0.0009, recoil: 0.05, scope: true },
-  // snipers SEMI-AUTO (estilo M400: luneta + tiro rápido) — dano/cadência entre a M400 e os ferrolhos.
-  // G3-R1: as 3 voltam a ter LUNETA (eram scope:false desde a G2-R6A). Ver o comentário da
-  // M400 acima: a luneta certa resolve a "faixa preta" — tirar o zoom da sniper não.
-  svd:       { name: 'SVD "VODKA"', short: 'SVD', dmg: 62, mag: 10, reserve: 40, rate: 0.28, reload: 3.0, spreadHip: 0.05, spreadScope: 0.0015, recoil: 0.03, auto: true, scope: true },
-  g3sg1:     { name: 'G3SG1 "FRITZ"', short: 'G3SG1', dmg: 55, mag: 20, reserve: 60, rate: 0.22, reload: 2.8, spreadHip: 0.045, spreadScope: 0.0016, recoil: 0.026, auto: true, scope: true },
-  sks:       { name: 'SKS "MILÍCIA"', short: 'SKS', dmg: 48, mag: 10, reserve: 50, rate: 0.18, reload: 2.6, spreadHip: 0.04, spreadScope: 0.002, recoil: 0.02, auto: true, scope: true },
-  // arsenal 3 (militar)
-  lmg:       { name: 'METRALHA "TRETA PESADA"', short: 'LMG', dmg: 31, mag: 100, reserve: 200, rate: 0.085, reload: 5.0, spreadHip: 0.04, recoil: 0.011, auto: true },
-  scar:      { name: 'SCAR "PAGA-PAU"', short: 'SCAR', dmg: 37, mag: 20, reserve: 80, rate: 0.11, reload: 2.5, spreadHip: 0.02, recoil: 0.01, auto: true },
-  tavor:     { name: 'TAVOR "CURTINHO"', short: 'TAVOR', dmg: 32, mag: 30, reserve: 90, rate: 0.09, reload: 2.3, spreadHip: 0.024, recoil: 0.008, auto: true },
-  // rate 0.06→0.075: a 1000 RPM full-auto ela era a MELHOR arma do jogo (TTK 0.180) com o
-  // 2º menor recuo. 800 RPM mantém o caráter "rajada rápida" sem apagar os rifles 7.62.
-  famas:     { name: 'FAMAS "BAGUETE"', short: 'FAMAS', dmg: 29, mag: 25, reserve: 90, rate: 0.075, reload: 2.4, spreadHip: 0.028, recoil: 0.006, auto: true },
-  uzi:       { name: 'UZI "RÁ-TÁ-TÁ"', short: 'UZI', dmg: 25, mag: 25, reserve: 100, rate: 0.07, reload: 2.1, spreadHip: 0.032, recoil: 0.006, auto: true },
-  p90:       { name: 'P90 "CHINELÃO"', short: 'P90', dmg: 23, mag: 50, reserve: 100, rate: 0.065, reload: 2.3, spreadHip: 0.03, recoil: 0.005, auto: true },
-};
+import { WEAPONS } from './data/weapons.js';
+// Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
+// autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
+export { WEAPONS };
 /* ===================== RITMO / MOVIMENTO (kill-switches) =====================
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
@@ -91,7 +51,9 @@ const VM_MAT_LEGACY = QS.get('vmmat') === 'legacy';
 // round) olhando pra esplanada vazia. Menos espera + spawn escolhido por segurança
 // (_pickSpawn) encurta o caminho de volta pra briga sem virar respawn de arena.
 const ROUND_TIME = 99, ROUNDS_TO_WIN = 3, RESPAWN_DELAY = 2.2, PICKUP_RESPAWN = 8, SPAWN_PROT = 2;
-/* TETO DE RODADAS — "melhor de 5", que é o que o índice já promete ao jogador
+// Prazo e teto do drop de morte; procedência dos dois números em tools/eval/drop-check.mjs.
+const DROP_TTL = 18, DROP_MAX = 12;
+/* TETO PADRÃO DE RODADAS — "melhor de 5", que é o que o índice promete inicialmente
    (src/pages/index.astro:503, "Vence quem ganhar 3 rounds"). Sem este teto o formato NÃO
    ERA melhor de 5: round EMPATADO não dá ponto pra ninguém (game.js:_endRound), então uma
    partida com muitos empates nunca chegava aos 3. Medido em tools/eval/ui-check.mjs (UI4):
@@ -118,9 +80,8 @@ const ROUNDS_MAX = ROUNDS_TO_WIN * 2 - 1;
      piscina_treta 3,3 · loja_h 1,5 · ferro_velho 1,2.
    Com CTF_CAPS_TO_WIN = 2, o mapa MAIS LENTO medido (ferrovelho, 1,2/99 s repartidos
    entre 2 times) leva ~2 × 99/0,6 ≈ 330 s pra uma rodada, e é por isso que existe o teto
-   de tempo de PARTIDA — sem ele o modo voltaria a não fechar. Melhor de 3 (e não de 5)
-   porque a rodada de captura é 2-3× mais longa que a de abate: 5 rodadas de captura não
-   cabem em partida nenhuma. */
+   de tempo de PARTIDA — sem ele o modo voltaria a não fechar. Melhor de 3 é o padrão
+   porque a rodada de captura é 2-3× mais longa; a tela de mapas permite outro teto. */
 /* FALLBACK, não regra: o alvo REAL da rodada é `this.ctfPts.length` — TODAS as bandeiras
    que o mapa tem —, derivado em `_initCTF` (ver o bloco ALVO DA RODADA lá). Este 3 só vale
    para o layout padrão (mapa que não declara `world.ctfPoints`), que tem exatamente 3
@@ -619,7 +580,7 @@ function rollBotSkill(mul = 1) {
 function botTier(skill) { return skill < 0.75 ? 'ruim' : skill < 1.05 ? 'medio' : skill < 1.4 ? 'bom' : 'muitobom'; }
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, testMode = false, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
     this._ctfOpt = ctf;
     this.renderer = renderer;
     this.sfx = sfx;
@@ -652,7 +613,9 @@ export class Game {
     this.world = MAPS[this._mapId].build(this.scene, textures);
     this._buildEnv();   // IBL: env map de gradiente dusk -> materiais PBR (Standard) ganham ambiente/reflexo
     this.flashTex = textures.flash;
-    // modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
+    /* modo de armas também muda o mapa: pickups fora do modo somem (e suas meshes)
+       `removeFromParent()` e NÃO `scene.remove()`: o mapa pendura a arma em `root`, e o
+       remove() do three é no-op mudo quando o objeto não é filho direto de quem chamou. */
     if (this.world.pickups) {
       const keep = [];
       for (const pk of this.world.pickups) {
@@ -662,10 +625,10 @@ export class Game {
             // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
             rw.rotation.set(0, pk.mesh.rotation.y || Math.random() * 6.28, 0.12);
             rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
-            this.scene.remove(pk.mesh); this.scene.add(rw); pk.mesh = rw;
+            pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
           }
           keep.push(pk);
-        } else if (pk.mesh) this.scene.remove(pk.mesh);
+        } else if (pk.mesh) pk.mesh.removeFromParent();
       }
       this.world.pickups = keep;
       /* AQUI ficava `_puxarPickupsProGrafo()` (commit 5f8b5a5), REVERTIDO E REMOVIDO em
@@ -1120,6 +1083,9 @@ export class Game {
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
     this.ctf = !!this._ctfOpt || (new URLSearchParams(location.search).get('ctf') === '1');   // menu (Capture the Flag) ou ?ctf=1
+    const requestedRounds = Number(roundsMax);
+    this._roundsMax = [1, 3, 5, 7].includes(requestedRounds) ? requestedRounds : (this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX);
+    this.roundsToWin = Math.floor(this._roundsMax / 2) + 1;
     this.ctfPts = [];
     this.ctfCaps = { E: 0, B: 0 };   // total de capturas de bandeira por time (cumulativo na partida)
     this._ctfRingGeo = new THREE.TorusGeometry(1, 0.045, 8, 48);   // anel FINO de contorno (era disco gordo)
@@ -1144,7 +1110,7 @@ export class Game {
        CTF usa; no modo de abate fica Infinity e nada o lê. Ele NÃO reinicia a cada
        rodada (é o que o diferencia do `timeLeft`) e só aparece no HUD nos últimos
        CTF_CLOCK_SHOW segundos — ver `_updateHud`. */
-    this.ctfMatchLeft = this.ctf ? CTF_MATCH_TIME : Infinity;
+    this.ctfMatchLeft = this.ctf ? CTF_MATCH_TIME * (this._roundsMax / CTF_ROUNDS_MAX) : Infinity;
     // alvo de capturas que fecha a RODADA no CTF (o equivalente do killsToWin do abate).
     // Valor PROVISÓRIO: o alvo de verdade é o nº de bandeiras do mapa e só pode ser sabido
     // depois que elas existem — `_initCTF` o sobrescreve com `ctfPts.length` a cada rodada.
@@ -1172,8 +1138,16 @@ export class Game {
       scope: $('scope-overlay'), vignette: $('damage-vignette'), dmgDir: $('dmg-dir'),
       hpFill: $('hp-fill'), hpNum: $('hp-num'), weaponName: $('weapon-name'),
       ammoMag: $('ammo-mag'), ammoRes: $('ammo-reserve'), reloadNote: $('reload-note'), smokeCount: $('smoke-count'),
+      ammoWeaponArt: $('ammo-weapon-art'), ammoBars: $('ammo-bars'),
       roundTime: $('round-time'), roundsRow: $('rounds-row'),
       scoreP: $('score-e'), scoreB: $('score-b'), killfeed: $('killfeed'), ctfHud: $('ctf-hud'),
+      /* Filhos cacheados: _updateHud roda por QUADRO. Antes ele montava a plaqueta
+         inteira com innerHTML; agora só escreve o número, e o brasão (data-f) só
+         muda quando a facção muda. Sem isto, pôr o brasão no HUD custaria um
+         reparse de HTML e uma imagem por quadro. */
+      scorePNum: $('score-e').querySelector('b'), scoreBNum: $('score-b').querySelector('b'),
+      crestP: $('crest-e'), crestB: $('crest-b'),
+      siglaP: $('sigla-e'), siglaB: $('sigla-b'),
       banner: $('round-banner'), bannerTitle: $('banner-title'), bannerSub: $('banner-sub'),
       respawn: $('respawn-overlay'), respawnCount: $('respawn-count'),
       prot: $('prot-badge'), protCount: $('prot-count'),
@@ -1721,11 +1695,13 @@ export class Game {
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
       if (e.code === 'Digit3') this._switchWeapon('knife');
+      if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
+        this._switchWeapon(this.player.lastInv);   // #261: lastinv - Q alterna as duas últimas
       if (e.code === 'KeyE' && this.nearPickup) {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
         // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário)
-        if (dropIdx >= 0 && !pk.rack) { this.scene.remove(pk.mesh); this.drops.splice(dropIdx, 1); }
+        if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
         this.nearPickup = null;
       }
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
@@ -1787,8 +1763,9 @@ export class Game {
       // ZOOM REAL (fov atual / 70), com piso em 0.28 pra não travar. É o que faz a luneta
       // parecer luneta: você acompanha o alvo em vez de varrer o mapa com meio centímetro.
       const s = this.settings.sens * 0.0021 * (this.player.scoped ? Math.max(0.28, this.camera.fov / 70) : 1);
+      const invertY = this.settings.invertY ? -1 : 1;
       this.player.yaw -= e.movementX * s;
-      this.player.pitch -= e.movementY * s;
+      this.player.pitch -= e.movementY * s * invertY;
       this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
       // viewmodel sway: saiu daqui (BUG-04). Quem produz o sway agora é o ViewModelRig, a
       // partir do Δyaw/Δpitch REAL do quadro — que já embute a sensibilidade e não depende
@@ -2361,18 +2338,11 @@ export class Game {
      gateado por `!this.ctf` (game.js:update), o que fazia o modo CAPTURA rodar pra sempre —
      rounds infinitos, nenhuma tela de fim, e o placar do topo subindo sem teto. */
   _fimDaPartida() {
-    /* game.js:2160 — DOIS FORMATOS, UMA CONDIÇÃO. O CAPTURA é melhor de 3 (rodada de
-       bandeira é 2-3× mais longa que rodada de abate — medido: 1,2 a 3,3 capturas por
-       99 s), e tem AINDA um teto de tempo de PARTIDA como rede de segurança. É esse teto
-       que garante a invariante UI4 "a partida FECHA" sem devolver cronômetro de round
-       pra cara do jogador. */
-    if (this.ctf)
-      return this.roundsWon.E >= CTF_ROUNDS_TO_WIN || this.roundsWon.B >= CTF_ROUNDS_TO_WIN
-        || this.roundNum >= CTF_ROUNDS_MAX || this.ctfMatchLeft <= 0;
-    return this.roundsWon.E >= ROUNDS_TO_WIN || this.roundsWon.B >= ROUNDS_TO_WIN || this.roundNum >= ROUNDS_MAX;
+    if (this.ctf) return this.roundNum >= this.roundsMax || this.ctfMatchLeft <= 0;
+    return this.roundNum >= this.roundsMax;
   }
   // teto de rodadas do modo em jogo — o HUD conta "RODADA n/N" com este número
-  get roundsMax() { return this.ctf ? CTF_ROUNDS_MAX : ROUNDS_MAX; }
+  get roundsMax() { return this._roundsMax; }
 
   _endMatch() {
     this.state = 'matchEnd';
@@ -2393,6 +2363,14 @@ export class Game {
       : frase('perdeu', this._teamName(winner));
     this.el.matchStats.innerHTML =
       frase('statsFim', this.roundsWon.E, this.roundsWon.B, this.player.kills, this.player.name, this.player.deaths);
+    /* Cada personagem tem duas artes estáticas: a tela mostra quem o jogador escolheu,
+       na pose correspondente ao resultado. UIA1 garante o par antes do deploy. */
+    const REP = { E: 'mst', B: 'bombado', U: 'metaleiro', C: 'bonzo', F: 'chave' };
+    const heroEl = this.el.meHero || (this.el.meHero = document.getElementById('me-hero'));
+    const rep = REP[this._factionOf(this.playerTeam)] || 'mst';
+    const pose = mine ? 'vitoria' : 'derrota';
+    const setHeroArt = (id) => { if (heroEl) heroEl.style.setProperty('--me-art', `url("/img/resultado/${id}-${pose}.webp")`); };
+    setHeroArt(this.playerCharId || rep);
     this.el.matchEnd.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
     /* MAPA, MODO, PERSONAGEM E DURAÇÃO ENTRAM AQUI (07/08) porque sem eles o `match_end`
@@ -2551,17 +2529,20 @@ export class Game {
   _switchTeam(charId) {
     if (!this.player.alive || (this.state !== 'live' && this.state !== 'countdown')) return;
     const p = this.player;
-    if (charId) { this.playerDef = byId(charId); p.def = this.playerDef; }   // personagem do novo lado
+    if (charId) { this.playerDef = byId(charId); this.playerCharId = charId; p.def = this.playerDef; }   // personagem do novo lado
     const oldTeam = this.playerTeam;
     const newTeam = oldTeam === 'E' ? 'B' : 'E';
+    const oldFaction = this.playerFaction;
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
+    this.playerFaction = this.enemyFaction;
+    this.enemyFaction = oldFaction;
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
     const candidates = this.bots.filter(b => b.team === newTeam);
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
-      const defs = CHARACTERS.filter(c => c.team === oldTeam && c.id !== p.def.id);
+      const defs = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
       const newDef = defs[(Math.random() * defs.length) | 0];
       swapBot.def = newDef; swapBot.name = newDef.name;
       this.scene.remove(swapBot.mesh.group);
@@ -2682,6 +2663,7 @@ export class Game {
   _switchWeapon(w) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
+    if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
     if (w !== 'knife' && !p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     // GUNFEEL: deploy por CLASSE (era 0.28 fixo p/ as 26 armas — a AWP sacava tão rápido
     // quanto a faca). Estes segundos alimentam DUAS coisas: `p.drawUntil` (trava do tiro) e
@@ -2689,6 +2671,7 @@ export class Game {
     // rx -1,05 no início do arco) — antes era uma rampa linear dividida por 0,28 fixo.
     const DEPLOY = { knife: 0.25, pistol: 0.34, smg: 0.38, rifle: 0.42, shotgun: 0.42, awp: 0.45 };
     const _dcls = BALL_CLASS[w] === 'smg' ? 'smg' : (STATIC_CLASS[w] || 'rifle');
+    p.lastInv = p.weapon;   // #261: Q alterna entre as duas últimas (lastinv do CS)
     p.weapon = w; p.reloadUntil = 0; p.drawUntil = this.time + (GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28);
     p.sprayI = 0; p.lastShotAt = -9;   // rajada nova: padrão de recuo recomeça do tiro 1
     // remember the slot so 1/2 recall the LAST weapon of that kind (primary vs sidearm)
@@ -3113,9 +3096,11 @@ export class Game {
       ent._switchTeam = attacker.team;
       this.arenaSwitched++;
     }
-    // Sem drop de arma onde morreu: o arsenal completo já está no respawn, então drops
-    // pelo mapa viravam lixo espalhado (pedido do usuário: nada de arma jogada no chão).
-    // this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon === 'knife' ? 'awp' : ent.weapon);
+    // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
+    // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
+    if (ent.weapon && ent.weapon !== 'knife' && this._pickupAllowed(ent.weapon)) {
+      this._dropWeapon(ent.pos.x, ent.pos.z, ent.weapon, false, 0.01, this.time + DROP_TTL);
+    }
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
       // Voz do assassino: characterVoice já cai no pool da facção (fallbackFaction) quando o
@@ -3192,7 +3177,7 @@ export class Game {
     if (QS.get('dmgdir') === '0') {
       const el = this.el.dmgDir;
       if (!el) return;
-      const rel0 = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw;
+      const rel0 = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
       el.style.transform = `rotate(${rel0.toFixed(3)}rad)`;
       el.style.opacity = 0.95;
       clearTimeout(this._dmgDirT);
@@ -3236,7 +3221,9 @@ export class Game {
     }
     // raio: 42% da menor dimensão -> o arco encosta na borda em qualquer aspecto (16:9 e 3:2)
     const R = Math.min(innerWidth, innerHeight) * 0.42;
-    const rel = Math.atan2(attacker.pos.x - ent.pos.x, attacker.pos.z - ent.pos.z) - ent.yaw;
+    // ent - attacker (BUG-52): câmera YXZ olha forward=(-sin,-cos); a ordem inversa negava o
+    // vetor e somava π — tiro na cara desenhava o arco embaixo (costas).
+    const rel = Math.atan2(ent.pos.x - attacker.pos.x, ent.pos.z - attacker.pos.z) - ent.yaw;
     // CSS gira no sentido horário com Y pra baixo; o mundo mede yaw anti-horário: por isso o
     // sinal negativo. 0 rad = atacante bem à frente = arco no topo da tela. Confere nas 4
     // direções: frente=topo, direita=direita, costas=embaixo, esquerda=esquerda.
@@ -3321,7 +3308,7 @@ export class Game {
       return `<span class="kf-n" style="background:${c}2e;color:${this._teamInk(e.team)}">${e.isPlayer ? tr('VOCÊ') : e.name}</span>`;
     };
     row.innerHTML = attacker && attacker !== victim
-      ? `${cn(attacker)}${head ? this._skullIcon() : ''}${this._wpnIcon(weap)}${cn(victim)}`
+      ? `${cn(attacker)}${head ? this._skullIcon() : ''}${this._killfeedWeaponIcon(weap)}${cn(victim)}`
       : `${cn(victim)}<span class="kf-w">tropeçou na treta</span>`;
     this.el.killfeed.prepend(row);
     setTimeout(() => row.remove(), 4600);
@@ -3333,6 +3320,12 @@ export class Game {
       + 'M4.9 7.5c-.8 0-1.5-.6-1.5-1.4S4.1 4.7 4.9 4.7s1.5.6 1.5 1.4-.6 1.4-1.5 1.4z'
       + 'M9.1 7.5c-.8 0-1.5-.6-1.5-1.4S8.3 4.7 9.1 4.7s1.5.6 1.5 1.4-.7 1.4-1.5 1.4z';
     return `<svg class="kf-ic kf-skull" viewBox="0 0 14 13" width="18" height="17"><path d="${d}" fill="currentColor" fill-rule="evenodd"/></svg>`;
+  }
+  _killfeedWeaponIcon(short) {
+    const id = Object.entries(WEAPONS).find(([, weapon]) => weapon.short === short)?.[0];
+    const fallback = this._wpnIcon(short);
+    if (!id) return fallback;
+    return `<span class="kf-weapon-2d"><i class="kf-weapon-mask" style="--weapon-mask:url('/img/weapons/${id}.webp')"></i><span class="kf-fallback">${fallback}</span></span>`;
   }
   // Ícone 2D da arma no killfeed (estilo CoD — o dono pediu silhuetas RECONHECÍVEIS
   // por arma, não só por classe). Recebe o `short` (AWP/AK/DE/M3/FACA…). ~14 desenhos
@@ -3904,8 +3897,28 @@ export class Game {
   // Facção que ocupa um LADO físico (P/B): lado do jogador = playerFaction, o outro = enemyFaction.
   _factionOf(side) { return side === this.playerTeam ? this.playerFaction : this.enemyFaction; }
   _voiceKey(side) { return this._factionOf(side); }   // pack de vozes/round por facção (P/B/U)
+  /* Registro de facções é a origem única de nome/sigla (10 facções) — o mapa fixo da
+     main cobria só 5. */
   _teamName(side) { return factionName(this._factionOf(side)); }
   _teamTag(side) { return factionTag(this._factionOf(side)); }
+
+  /* Uma plaqueta do HUD. Chamada por QUADRO, então tudo aqui é comparação barata:
+     o número só é escrito se mudou, e o brasão (data-f, arte no CSS) só quando a
+     facção muda — na prática, uma vez por partida. `slot` é o sufixo do cache
+     (scorePNum/crestP/siglaP) e `side` é o lado no modelo do jogo. */
+  _plaqueta(slot, side) {
+    const num = this.el['score' + slot + 'Num'];
+    const n = String(this.roundKills[side]);
+    if (num && num.textContent !== n) num.textContent = n;
+    /* minúscula porque o seletor de atributo do CSS é SENSÍVEL A CAIXA e os arquivos
+       são b/c/e/f/u.png — `data-f="U"` não casaria com `[data-f="u"]` e o brasão
+       simplesmente não apareceria, sem erro nenhum no console. */
+    const f = String(this._factionOf(side) || '').toLowerCase();
+    const crest = this.el['crest' + slot];
+    if (crest && crest.dataset.f !== f) crest.dataset.f = f;
+    const sig = this.el['sigla' + slot], tag = this._teamTag(side);
+    if (sig && sig.textContent !== tag) sig.textContent = tag;
+  }
   _mirror(side) { return side === this.enemyTeam && this.enemyFaction === this.playerFaction; }   // inimigo = mesma facção
   // Separação (boids): empurra o bot pra longe de colegas do mesmo time num raio curto, pra eles
   // NÃO andarem colados em fila indiana sobre o mesmo path. Peso ~inverso à distância.
@@ -4708,7 +4721,9 @@ export class Game {
      dentro do overlay de respawn que já existia. ?killcam=0 desliga tudo. */
   _noteHit(by, weap, dmg, head, dist) {
     const p = this.player;
-    let rel = Math.atan2(by.pos.x - p.pos.x, by.pos.z - p.pos.z) - p.yaw;
+    // p - by (BUG-52): mesma convenção da câmera que _dmgArc — sem isso, rel saía 180°
+    // fora e a frente virava "PELAS COSTAS" no HUD.
+    let rel = Math.atan2(p.pos.x - by.pos.x, p.pos.z - by.pos.z) - p.yaw;
     while (rel > Math.PI) rel -= Math.PI * 2; while (rel < -Math.PI) rel += Math.PI * 2;
     p._lifeDmg = (p._lifeDmg || 0) + dmg;
     // QUADRANTE em vez de só "frente/costas": o dono precisa saber PRA ONDE olhar da próxima
@@ -5007,9 +5022,13 @@ export class Game {
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {
       p.reloadUntil = 0;
+      const inf = this._municaoInfinita();   // modo de arma única: ver _municaoInfinita()
       for (const k of Object.keys(p.ammo)) {
         const am = p.ammo[k], wm = WEAPONS[k].mag;
         if (am.mag < wm && am.res > 0) { const need = wm - am.mag, take = Math.min(need, am.res); am.mag += take; am.res -= take; }
+        // depois de servir o pente, não antes: portão de recarga, HUD e `util` do bot
+        // seguem lendo número normal e nenhum precisa saber que existe modo infinito.
+        if (inf) am.res = WEAPONS[k].reserve;
       }
       this.el.reloadNote.classList.add('hidden');
       this.sfx.reloadEnd();
@@ -5260,11 +5279,13 @@ export class Game {
     // PLAYER — bots leave them alone (otherwise they hoover the spawn line on round 1).
     for (let i = this.drops.length - 1; i >= 0; i--) {
       const pk = this.drops[i];
+      // prazo antes da coleta: arma vencida some mesmo com bot em cima dela neste quadro
+      if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
         if (!b.alive) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
-        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this.scene.remove(pk.mesh); this.drops.splice(i, 1); break; }
+        if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this._sumirDrop(i); break; }
       }
     }
   }
@@ -5273,7 +5294,9 @@ export class Game {
      regra de arma amarrada a um id de mapa e o mapa não existe mais. Nenhum mapa vivo força
      AWP-only — quem escolhe é o menu. */
   _wpnMode() {
-    return this.settings.wpnMode || 'all';
+    // `?.` porque o HUD de loadout agora lê o modo, e há caminho (vmlab) que monta o Game
+    // sem `settings`: sem a guarda o render do menu estoura e o HUD1 fica vermelho.
+    return this.settings?.wpnMode || 'all';
   }
   _botWeapon() {
     // Give bots varied weapons that match the weapon mode, so ground drops aren't all AWP.
@@ -5285,6 +5308,9 @@ export class Game {
       'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
     return pool[(Math.random() * pool.length) | 0];
   }
+  // Modo restrito não tem pickup de outra arma no mapa, então reserva finita = partida
+  // acabada quando zera. Fica infinita a RESERVA, não o pente: a recarga segue cobrando.
+  _municaoInfinita() { return this._wpnMode() !== 'all'; }
   _pickupAllowed(w) {
     const mode = this._wpnMode();
     if (mode === 'pistols') return w === 'pistol' || w === 'deagle';
@@ -5296,16 +5322,17 @@ export class Game {
     const w = pk.weapon;                           // qualquer arma de WEAPONS
     if (!WEAPONS[w]) return false;
     if (isPlayer) {
+      if (who.weapon === w) return false;   // #264: mesma arma na mão não recarrega - reload existe p/ isso
       if (!who.ammo[w]) who.ammo[w] = { mag: 0, res: 0 };
       who.ammo[w].mag = WEAPONS[w].mag;
       who.ammo[w].res = WEAPONS[w].reserve;
-      if (who.weapon !== w) {
+      {
         const oldW = who.weapon;                   // arma que estava na mão
         this._switchWeapon(w); this.sfx.reloadEnd();
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);
-      } else this.sfx.uiClick();                   // mesma arma = só munição
+      }
     } else {
       who.weapon = w === 'knife' ? 'awp' : w;      // bot grabs it
     }
@@ -5337,7 +5364,7 @@ export class Game {
     return mesh.position.y;
   }
   // CS: morto larga a arma no chão
-  _dropWeapon(x, z, weapon, rack = false, folga = 0.01) {
+  _dropWeapon(x, z, weapon, rack = false, folga = 0.01, expiraEm = 0) {
     const mesh = weaponModel(weapon) || buildRifle();  // real GLB on the ground
     // lay it FLAT on its side (roll 90° about the barrel) so it rests on the ground
     // instead of standing on its belly. Rack drops (spawn weapon rows) get an aligned
@@ -5347,7 +5374,23 @@ export class Game {
     this._assentarNoChao(mesh, x, z, folga);
     mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
     this.scene.add(mesh);
-    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack });
+    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, expiraEm });
+    // só quem tem prazo entra na fila do teto: rack de spawn e troca de arma nunca são despejados
+    if (expiraEm) {
+      const comPrazo = [];
+      for (let i = 0; i < this.drops.length; i++) if (this.drops[i].expiraEm) comPrazo.push(i);
+      for (let k = 0; k < comPrazo.length - DROP_MAX; k++) this._sumirDrop(comPrazo[k] - k);
+    }
+  }
+  _sumirDrop(i) {
+    const d = this.drops[i];
+    if (!d) return;
+    d.mesh?.removeFromParent();
+    this.drops.splice(i, 1);
+    // `nearPickup` guarda ÍNDICE, e ele desliza quando a lista encolhe: sem isto o E entre
+    // dois quadros entregava a arma vencida e removia o drop que herdou o índice.
+    const np = this.nearPickup;
+    if (np && np.dropIdx >= 0) { if (np.pk === d) this.nearPickup = null; else if (np.dropIdx > i) np.dropIdx--; }
   }
   /* SPAWN POR SEGURANÇA (não sorteado): dos 4 pontos do time, escolhe o que está mais longe
      do inimigo vivo mais próximo E sem linha de visão pra ele. O sorteio puro colocava o
@@ -5420,9 +5463,16 @@ export class Game {
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = this._spawnYaw(s, p.team, false); p.pitch = 0;
-    // top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP)
-    if (p.primary && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
-    if (p.secondary && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
+    // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
+    // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
+    if (p.primary && this._pickupAllowed(p.primary) && p.ammo[p.primary]) p.ammo[p.primary] = { mag: WEAPONS[p.primary].mag, res: WEAPONS[p.primary].reserve };
+    if (p.secondary && this._pickupAllowed(p.secondary) && p.ammo[p.secondary]) p.ammo[p.secondary] = { mag: WEAPONS[p.secondary].mag, res: WEAPONS[p.secondary].reserve };
+    if (!this._pickupAllowed(p.weapon)) {
+      const mode = this._wpnMode();
+      const volta = mode === 'awp' ? 'awp' : (p.secondary || 'pistol');
+      if (WEAPONS[volta] && this._pickupAllowed(volta)) this._switchWeapon(volta);
+    }
     this.camera.rotation.z = 0;
     this.el.respawn.classList.add('hidden');
     this.sfx.respawn();
@@ -5680,7 +5730,19 @@ export class Game {
         // PERDA DE TRACKING: sumiu de vista, a mira "solta" o alvo. Reaparecendo, o bot tem
         // que reconquistar a precisão (é o que dá valor a quebrar linha de visão / peek).
         b.aimErr = Math.min(0.26, (b.aimErr || 0) + 0.045);   // por tick de think (~0.16s)
-        if (this.time - b._lostAt > 1.2) { b.target = null; b._losLost = false; b._lostAt = 0; }
+        // #281: FUMAÇA não é "alvo sumiu" — ele continua lá atrás. Com o grace comum de
+        // 1.2s o bot largava o alvo, virava roam ("barata tonta") e inimigos se cruzavam
+        // no meio da nuvem sem nunca re-engatar. Enquanto uma nuvem OPACA bloqueia o
+        // segmento, o grace estica p/ 4s: segura a direção e re-engata assim que abre.
+        // O gate de tiro (_losLost) continua fechado — não atira no que não vê.
+        let grace = 1.2;
+        for (const s of this._smokes) {
+          if (!s._opaque) continue;
+          const ab = b.target.pos.clone().sub(b.pos);
+          const t = Math.max(0, Math.min(1, s.center.clone().sub(b.pos).dot(ab) / (ab.lengthSq() || 1)));
+          if (b.pos.clone().addScaledVector(ab, t).distanceToSquared(s.center) <= s.radius * s.radius) { grace = 4.0; break; }
+        }
+        if (this.time - b._lostAt > grace) { b.target = null; b._losLost = false; b._lostAt = 0; }
       }
     }
 
@@ -6530,15 +6592,15 @@ export class Game {
     const fp = this._radarFoot(S);
     const sc = fp ? fp.sc : 1.42, ox = fp ? fp.cx : 0, oz = fp ? fp.cz : 0;
     x.clearRect(0, 0, S, S);
-    // fundo: disco escuro radial (referência CS2/Valorant) — opaco o bastante pra
-    // a geometria ciano ler bem mesmo com céu claro atrás
+    // fundo: painel QUADRADO escuro (tela 05 do redesign — o minimapa da referência é
+    // um bloco, não um disco). Opaco o bastante pra geometria ciano ler com céu claro atrás.
     const bg = x.createRadialGradient(H, H, 8, H, H, R);
-    bg.addColorStop(0, 'rgba(4,8,10,0.78)');
-    bg.addColorStop(1, 'rgba(0,0,0,0.62)');
+    bg.addColorStop(0, 'rgba(4,8,10,0.88)');
+    bg.addColorStop(1, 'rgba(0,0,0,0.74)');
     x.fillStyle = bg;
-    x.beginPath(); x.arc(H, H, R, 0, 7); x.fill();
+    x.fillRect(0, 0, S, S);
     x.save();
-    x.beginPath(); x.arc(H, H, R, 0, 7); x.clip();
+    x.beginPath(); x.rect(0, 0, S, S); x.clip();
     // planta REAL do mapa atual (blit do offscreen; norte fixo: mundo X→tela X, Z→tela Y)
     if (fp) x.drawImage(fp.img, 0, 0);
     // grade de referência bem sutil
@@ -6576,16 +6638,14 @@ export class Game {
     }
     x.shadowBlur = 0;
     x.restore();
-    // anel de borda duplo + ticks cardinais (norte fixo)
-    x.strokeStyle = 'rgba(120,220,220,0.45)'; x.lineWidth = 1.5;
-    x.beginPath(); x.arc(H, H, R + 1, 0, 7); x.stroke();
-    x.strokeStyle = 'rgba(120,220,220,0.14)'; x.lineWidth = 1;
-    x.beginPath(); x.arc(H, H, R - 5, 0, 7); x.stroke();
-    x.font = "700 9px Rajdhani, sans-serif"; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillStyle = 'rgba(190,240,240,0.95)';
-    x.fillText('N', H, 9);
-    x.fillStyle = 'rgba(120,220,220,0.55)';
-    x.fillText('E', S - 9, H); x.fillText('S', H, S - 9); x.fillText('W', 9, H);
+    // moldura + nome do mapa embaixo à esquerda (tela 05 do redesign: "BECO OESTE").
+    // Aqui é o NOME DO MAPA — região nomeada só existe no CTF, e fora dele a etiqueta
+    // tem que continuar dizendo algo verdadeiro.
+    x.strokeStyle = 'rgba(236,235,230,0.12)'; x.lineWidth = 1;
+    x.strokeRect(0.5, 0.5, S - 1, S - 1);
+    x.font = "600 10px Rajdhani, sans-serif"; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    x.fillStyle = 'rgba(139,140,146,0.95)';
+    x.fillText((MAPS[this._mapId].name || '').toUpperCase(), 8, S - 7);
   }
 
   /* ================= HUD ================= */
@@ -6621,13 +6681,16 @@ export class Game {
   }
   _showScoreboard(v) {
     if (v) {
-      // cabeçalho com placar do round em destaque (chips por time)
       const r = this._resultado;
+      const totalRounds = this._inspectionTotalRounds || this.roundsMax;
+      const clock = this.ctf ? Math.max(0, Math.ceil(this.ctfMatchLeft)) : Math.max(0, Math.ceil(this.timeLeft));
+      const clockText = `${Math.floor(clock / 60)}:${String(clock % 60).padStart(2, '0')}`;
+      const crest = (side) => String(this._factionOf(side) || 'E').toLowerCase();
       document.querySelector('#scoreboard h3').innerHTML =
         (r ? `<span class="sb-result">${r.titulo}</span><span class="sb-result-sub">${r.sub}</span>` : '') +
-        `<span class="sb-label">PLACAR · ROUND ${this.roundNum}</span>` +
-        `<span class="sb-score"><b class="tp">${this._teamTag('E')} ${this.roundsWon.E}</b>` +
-        `<i>×</i><b class="tb">${this.roundsWon.B} ${this._teamTag('B')}</b></span>`;
+        `<span class="sb-clock">RODADA ${this.roundNum}/${totalRounds} · <em>${clockText}</em></span>` +
+        `<span class="sb-score"><b class="tp"><img class="sb-crest" src="/img/brasoes/${crest('E')}.png" alt=""><span class="sb-team-name">${this._teamName('E')}</span><strong class="sb-score-num">${this.roundsWon.E}</strong></b>` +
+        `<span class="sb-vs">VS</span><b class="tb"><strong class="sb-score-num">${this.roundsWon.B}</strong><span class="sb-team-name">${this._teamName('B')}</span><img class="sb-crest" src="/img/brasoes/${crest('B')}.png" alt=""></b></span>`;
       // no CTF ordena por capturas (depois kills); senão por kills
       const rank = this.ctf ? (a, b) => (b.captures || 0) - (a.captures || 0) || b.kills - a.kills : (a, b) => b.kills - a.kills;
       /* DUAS COLUNAS COM BRASÃO (referência 08_placar, pedido do dono 07/08: "na tela de
@@ -6635,17 +6698,19 @@ export class Game {
          cada um"). O brasão é o MESMO arquivo que estampa a bandeira CTF (img/brasoes/),
          lido pela letra da facção que ocupa o lado — nunca pelo lado cru (a lição do
          _factionOf: lado 'B' ≠ facção 'B' por acidente de letra). */
-      const BRASAO_FILE = { E: 'e', B: 'b', U: 'u', C: 'c', F: 'f', M: 'm' };
+
       const coluna = (side) => {
-        const fac = this._factionOf(side);
-        const f = BRASAO_FILE[fac];
-        const linhas = [...this.combatants].filter(c => c.team === side).sort(rank).map(c =>
+        const linhas = [...this.combatants].filter(c => c.team === side).sort(rank).map((c, i) => {
+          const score = Math.max(0, c.kills * 100 + (c.captures || 0) * 250 - c.deaths * 20);
+          const ping = 12 + ((c.kills * 7 + c.deaths * 3 + i * 5) % 18);
+          return (
           `<tr${c.isPlayer ? ' class="me"' : ''}>
-            <td class="sb-n">${c.name}${c.isPlayer ? ' ★' : ''}</td><td class="sb-p">${c.def.name}</td>
-            <td>${c.kills}</td><td>${c.deaths}</td>${this.ctf ? `<td>${c.captures || 0}</td>` : ''}</tr>`).join('');
+            <td class="sb-n">${c.name}${c.isPlayer ? ' ★' : ''}</td><td>${c.kills}</td><td>${c.deaths}</td><td class="sb-points">${score}</td><td class="sb-ping">${ping}</td>${this.ctf ? `<td>${c.captures || 0}</td>` : ''}</tr>`
+          );
+        }).join('');
         return `<div class="sb-col ${side === 'E' ? 'tp' : 'tb'}${this.ctf ? ' ctf' : ''}">
-          <div class="sb-chead">${f ? `<img src="img/brasoes/${f}.png" alt="brasão ${this._teamName(side)}">` : ''}<span>${this._teamName(side)}</span></div>
-          <table><thead><tr><th>JOGADOR</th><th>PERSONAGEM</th><th>K</th><th>M</th>${this.ctf ? '<th>CAP.</th>' : ''}</tr></thead>
+          <div class="sb-chead"><span class="sb-team"><img class="sb-crest" src="/img/brasoes/${crest(side)}.png" alt=""><b>${tr('JOGADOR')}</b></span><span>K</span><span>D</span><span>SCORE</span><span>PING</span>${this.ctf ? '<span class="sb-cap">CAP.</span>' : ''}</div>
+          <table><thead><tr><th>${tr('JOGADOR')}</th><th>K</th><th>D</th><th>SCORE</th><th>PING</th>${this.ctf ? '<th>CAP.</th>' : ''}</tr></thead>
           <tbody>${linhas}</tbody></table></div>`;
       };
       document.getElementById('sb-cols').innerHTML = coluna('E') + coluna('B');
@@ -6666,11 +6731,6 @@ export class Game {
   _updateWeaponHud() {
     const hud = this.el.weaponHud;
     if (!hud) return;
-    if (!VMLAB) {
-      hud.classList.add('hidden');
-      if (this._weaponHudSig) { hud.innerHTML = ''; this._weaponHudSig = ''; }
-      return;
-    }
     const p = this.player;
     const slots = [];
     if (p.primary) slots.push({ key: 1, weapon: p.primary });
@@ -6685,31 +6745,62 @@ export class Game {
     }).join('|');
     if (signature === this._weaponHudSig && !hud.classList.contains('hidden')) return;
     this._weaponHudSig = signature;
+    let activeWeaponClaimed = false;
     hud.innerHTML = slots.map((slot) => {
       const weapon = slot.weapon && WEAPONS[slot.weapon];
-      const active = slot.weapon === p.weapon;
+      const active = slot.weapon === p.weapon && !activeWeaponClaimed;
+      if (active) activeWeaponClaimed = true;
       const ammo = slot.weapon && p.ammo?.[slot.weapon];
-      const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${ammo.res}` : ''));
+      // '∞' e não o número: reserva que volta a cheia toda recarga lê-se como contador travado
+      const res = this._municaoInfinita() ? '∞' : ammo?.res;
+      const amount = slot.count != null ? `×${slot.count}` : (slot.weapon === 'knife' ? '' : (ammo ? `${ammo.mag}/${res}` : ''));
       const icon = this._wpnIcon(slot.kind === 'frag' ? 'FRAG' : slot.kind === 'smoke' ? 'NADE' : weapon?.short);
+      const icon2d = slot.weapon
+        ? `<i class="weapon-mask" style="--weapon-mask:url('/img/weapons/${slot.weapon}.webp')"></i><span class="weapon-fallback">${icon}</span>`
+        : icon;
       const name = slot.name || weapon?.name || slot.weapon?.toUpperCase() || '';
-      return `<div class="weapon-slot${active ? ' on' : ''}" data-slot="${slot.key}"><span class="weapon-key">${slot.key}</span><span class="weapon-icon">${icon}</span><span class="weapon-label">${name}</span><span class="weapon-amount">${amount}</span></div>`;
+      return `<div class="weapon-slot${active ? ' on' : ''}" data-slot="${slot.key}"><span class="weapon-key">${slot.key}</span><span class="weapon-icon">${icon2d}</span><span class="weapon-label">${name}</span><span class="weapon-amount">${amount}</span></div>`;
     }).join('');
     hud.classList.remove('hidden');
   }
   _updateHud() {
     const p = this.player;
+    const weaponDef = WEAPONS[p.weapon];
     this._updateWeaponHud();
     this.el.hpNum.textContent = Math.max(0, Math.ceil(p.hp));
     this.el.hpFill.style.width = Math.max(0, p.hp) + '%';
     this.el.hpFill.classList.toggle('low', p.hp <= 35);
     this.el.hpNum.classList.toggle('low', p.hp <= 35);
+    if (this.el.ammoWeaponArt.dataset.weapon !== p.weapon) {
+      this.el.ammoWeaponArt.dataset.weapon = p.weapon;
+      this.el.ammoWeaponArt.src = `/img/weapons/${p.weapon}.webp`;
+      this.el.ammoWeaponArt.alt = weaponDef.name;
+    }
+    let mag = 0;
     if (p.weapon === 'knife') {
       this.el.ammoMag.textContent = '—'; this.el.ammoRes.textContent = '';
+      this.el.ammoMag.classList.remove('empty');
     } else {
       const a = p.ammo[p.weapon];
+      mag = a.mag;
       this.el.ammoMag.textContent = a.mag;
-      this.el.ammoRes.textContent = a.res;
+      this.el.ammoRes.textContent = this._municaoInfinita() ? '∞' : a.res;
       this.el.ammoMag.classList.toggle('empty', a.mag === 0);
+    }
+    const capacity = weaponDef.mag || 0;
+    const segments = Math.min(5, capacity);
+    const filled = capacity ? Math.round(segments * mag / capacity) : 0;
+    const barsSignature = `${p.weapon}:${mag}:${capacity}`;
+    if (this.el.ammoBars.dataset.signature !== barsSignature) {
+      this.el.ammoBars.dataset.signature = barsSignature;
+      this.el.ammoBars.style.setProperty('--ammo-bars', segments || 1);
+      if (typeof this.el.ammoBars.replaceChildren === 'function') {
+        this.el.ammoBars.replaceChildren(...Array.from({ length: segments }, (_, i) => {
+          const tick = document.createElement('i');
+          if (i < filled) tick.className = mag / capacity <= 0.25 ? 'on low' : 'on';
+          return tick;
+        }));
+      }
     }
     // HIERARQUIA DO TOPO: o elemento mais pesado tem que carregar a informação mais
     // importante. No CTF o round não tem tempo — mostrar '∞' a 32px fazia o MAIOR tipo do
@@ -6732,20 +6823,17 @@ export class Game {
       const fimProximo = restante <= CTF_CLOCK_SHOW;
       this.el.roundTime.classList.toggle('urgente', fimProximo);
       this.el.roundsRow.textContent =
-        `${frase('rodadaDe', this.roundNum, CTF_ROUNDS_MAX)} · ${frase('alvoBandeirasHud', alvo)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`
+        `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${frase('alvoBandeirasHud', alvo)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`
         + (fimProximo ? ` · FIM DA PARTIDA EM ${Math.floor(restante / 60)}:${String(restante % 60).padStart(2, '0')}` : '');
     } else {
       this.el.roundTime.classList.remove('ctf');
       const total = Math.max(0, Math.ceil(this.timeLeft));
       this.el.roundTime.textContent = `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
-      // linha secundária única sob o timer: rodada + placar de rounds por time
-      // "RODADA 2/5" em vez de "RODADA 2": o formato (melhor de 5) agora é garantido pelo
-      // ROUNDS_MAX, e um formato garantido que o HUD não conta é um formato que não existe.
+      // linha secundária única sob o timer: rodada/teto selecionado + placar por time
       this.el.roundsRow.textContent =
-        `${frase('rodadaDe', this.roundNum, ROUNDS_MAX)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
+        `${frase('rodadaDe', this.roundNum, this.roundsMax)} · ${this._teamTag('E')} ${this.roundsWon.E} × ${this.roundsWon.B} ${this._teamTag('B')}`;
     }
-    this.el.scoreP.innerHTML = `${this._teamTag('E')} <b>${this.roundKills.E}</b>`;
-    this.el.scoreB.innerHTML = `${this._teamTag('B')} <b>${this.roundKills.B}</b>`;
+    this._plaqueta('P', 'E'); this._plaqueta('B', 'B');
     this.el.scoreP.style.color = this._teamColor('E');   // lado do jogador Tribos fica AZUL
     this.el.scoreB.style.color = this._teamColor('B');
     // badge de spawn protection (issue #24)
@@ -6755,7 +6843,7 @@ export class Game {
   }
 
   /* ================= main update ================= */
-  update(dt) {
+  update(dt, render = true) {
     if (this.paused) return;
     this.time += dt;
     if (this.state === 'countdown' && this.time >= this.stateUntil) {
@@ -6809,6 +6897,9 @@ export class Game {
       this.el.lockHint.classList.toggle('hidden',
         this.testMode || this.paused || !!document.pointerLockElement ||
         (this.state !== 'live' && this.state !== 'countdown'));
+    /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
+       passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
+    if (!render) return;
     this.renderer.render(this.scene, this.camera);
     // VM overlay SEM pós (quality low / ?bloom=0): o composer não existe, então desenha
     // a vmScene por cima do mundo aqui (com pós, o RenderPass do bloom.js já faz isso).
@@ -6820,6 +6911,7 @@ export class Game {
     }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
+    this.world.update?.(dt, this.time);
   }
 
   /* ================= teardown ================= */

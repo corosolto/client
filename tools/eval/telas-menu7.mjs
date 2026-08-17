@@ -15,7 +15,10 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.env.OUT || '/tmp/telas7';
 /* 127.0.0.1 evita cair num servidor IPv6 de outro projeto que também use :4321. */
 const BASE = process.env.BASE || 'http://127.0.0.1:4321';
-const LANG = process.env.LANG_UI || 'pt';
+const LANG = process.env.LANG_UI || process.env.UI_LANG || 'pt';
+const UI_LANG = LANG;
+const SMOKE = process.env.SMOKE === '1';
+if (!['pt', 'en'].includes(UI_LANG)) throw new Error(`UI_LANG inválido: ${UI_LANG}`);
 const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
 const MOBILE = process.env.MOBILE === '1';
 const want = (id) => !ONLY || ONLY.has(id);
@@ -27,12 +30,19 @@ mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--headless=new', '--mute-audio'],
+  args: [
+    '--headless=new', '--mute-audio',
+    ...(process.env.GL === 'swiftshader' ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : []),
+  ],
 });
 const W = +(process.env.W || 1536), H = +(process.env.H || 1024);
 const page = await browser.newPage({ viewport: { width: W, height: H } });
-page.on('pageerror', (e) => console.error('[pageerror]', e.message.slice(0, 200)));
-await page.addInitScript(() => localStorage.setItem('awpbr_nick', 'ZÉ DO AWP'));
+const pageErrors = [];
+page.on('pageerror', (e) => { pageErrors.push(e.message); console.error('[pageerror]', e.message.slice(0, 200)); });
+await page.addInitScript((lang) => {
+  localStorage.setItem('awpbr_nick', 'ZÉ DO AWP');
+  localStorage.setItem('cs_lang', lang);
+}, UI_LANG);
 
 const shot = async (name) => {
   await page.screenshot({ path: `${OUT}/${name}.png` });
@@ -59,6 +69,14 @@ await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 60000 });
 await page.waitForTimeout(2500);
 if (want('01')) await shot('01_menu');
 
+if (SMOKE) {
+  await page.click('.cs-item[data-act="ranking"]');
+  await page.waitForSelector('#ranking-panel:not(.hidden)', { timeout: 10000 });
+  await page.click('#ranking-back');
+  await page.waitForSelector('#main-menu:not(.hidden)', { timeout: 10000 });
+  console.log('smoke ranking abriu e voltou');
+}
+
 /* 07 CONFIGURAÇÕES — pelo item do menu, para pegar o estado real de abas */
 if (want('07')) {
   await page.click('.cs-item[data-act="config"]');
@@ -69,25 +87,33 @@ if (want('07')) {
   await page.waitForTimeout(400);
 }
 
-/* abre o setup (PASSO 1) */
+/* PASSO 1: escolhe o modo; o catálogo completo de mapas é o PASSO 2 padrão. */
+await page.click('.cs-item[data-act="jogar"]');
+await page.waitForSelector('#cs-modos:not([hidden])', { timeout: 5000 });
 await page.click('.cs-item[data-act="sp"]');
+await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 10000 });
 await page.waitForTimeout(700);
 
-/* 04 ESCOLHA DO MAPA — o cartaz do mapa dentro do setup abre a tela cheia */
+/* 04 ESCOLHA DO MAPA — os seis mapas já aparecem após escolher o modo. */
 if (want('04')) {
-  await page.click('#map-thumb').catch(async () => { await page.click('.map-thumb'); });
-  await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 10000 });
   await page.waitForTimeout(900);
+  const faixa = await page.evaluate(() => {
+    const strip = document.getElementById('ms-strip')?.getBoundingClientRect();
+    const cards = [...document.querySelectorAll('#ms-strip .ms-thumb')].map((el) => {
+      const r = el.getBoundingClientRect();
+      return { id: el.dataset.id, left: r.left, right: r.right, width: r.width };
+    });
+    return { strip: strip && { left: strip.left, right: strip.right, width: strip.width }, cards };
+  });
+  const fora = faixa.cards.filter((c) => c.left < faixa.strip.left - 1 || c.right > faixa.strip.right + 1 || c.width <= 0);
+  console.log(`map-strip ${Math.round(faixa.strip.width)}px · cards ${faixa.cards.map((c) => Math.round(c.width)).join('/')}px`);
+  if (fora.length) throw new Error(`cards cortados na faixa: ${fora.map((c) => c.id).join(', ')}`);
   await shot('04_mapa');
-  await page.click('#ms-back');
-  await page.waitForTimeout(600);
-  await page.click('.cs-item[data-act="sp"]').catch(() => {});
-  await page.waitForTimeout(500);
 }
+await page.click('#ms-continue');
 
 /* 02 ESCOLHA DA FACÇÃO */
-if (want('02') || want('03')) {
-  await page.click('#btn-jogar');
+if (want('02') || want('03') || want('00B')) {
   await page.waitForSelector('#team-select:not(.hidden)', { timeout: 15000 });
   await page.waitForTimeout(900);
   if (want('02')) await shot('02_faccao');
@@ -99,7 +125,30 @@ if (want('02') || want('03')) {
     await page.click('.team-card[data-ready="1"]:not([aria-disabled="true"])');
     await page.waitForSelector('#char-select:not(.hidden)', { timeout: 20000 });
     await page.waitForTimeout(2500);
-    await shot('03_personagem');
+    if (want('03')) await shot('03_personagem');
+    await page.click('#char-confirm');
+    await page.waitForSelector('#team-select[data-step="enemy"]:not(.hidden)', { timeout: 10000 });
+    const passo4 = await page.locator('#team-step').textContent();
+    const dica4 = await page.locator('#team-hint').textContent();
+    const esperado = UI_LANG === 'en' ? 'STEP 4 · THE OPPONENT' : 'PASSO 4 · O ADVERSÁRIO';
+    if (passo4?.trim() !== esperado || !dica4?.trim()) throw new Error(`passo 4 inválido: ${passo4} · ${dica4}`);
+    console.log(`team-step ${passo4.trim()} · ${dica4.trim()}`);
+    if (want('00B') || SMOKE) {
+      await page.click('#btn-team-b');
+      if (want('00B')) {
+        const loadingHold = await page.addStyleTag({ content: '#load-overlay.hidden{display:flex!important}' });
+        await page.waitForSelector('#load-overlay', { state: 'visible', timeout: 10000 });
+        await page.waitForTimeout(120);
+        await shot('00B_loading');
+        await loadingHold.evaluate((node) => node.remove());
+      }
+    }
+    if (SMOKE) {
+      await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 240000 });
+      await page.waitForSelector('#hud:not(.hidden)', { timeout: 10000 });
+      await shot('smoke_hud');
+      console.log('smoke menu → ranking → facção → personagem → adversário → HUD vivo');
+    }
   }
 }
 
@@ -118,3 +167,4 @@ if (want('05') || want('06')) {
 }
 
 await browser.close();
+if (pageErrors.length) throw new Error(`${pageErrors.length} pageerror: ${pageErrors.join(' · ')}`);

@@ -13,7 +13,7 @@
  *
  * RLS6: release não dispara um segundo deploy; o fallback fica manual.
  *
- * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml.
+ * Mutações: --mutante=nome-antigo | semcreditos | semdco | semdocs | semrollback | deploy-duplo | deploy-yaml | sem-anims-deploy.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 
@@ -28,6 +28,7 @@ const workflowsProd = () => workflowSources
   .filter(([, source]) => /vercel\s+deploy[\s\S]{0,240}?--prod/.test(source))
   .map(([arquivo]) => arquivo);
 const vercel = JSON.parse(readFileSync('vercel.json', 'utf8'));
+const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 let scriptRelease = readFileSync('scripts/release.mjs', 'utf8');
 let comandos = arquivos.flatMap((arquivo) => readFileSync(arquivo, 'utf8')
   .split('\n')
@@ -74,9 +75,11 @@ const validaCaminhoProd = () => {
     && /^\s+ref:\s*refs\/tags\/\$\{\{\s*github\.event\.inputs\.tag\s*\}\}\s*$/m.test(workflowDeploy);
 };
 let caminhoProdUnico = validaCaminhoProd();
+let animacoesNoDeploy = /(?:^|\s)anims:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '')
+  && /(?:^|\s)anims:merge:check(?:\s|$)/.test(packageJson.scripts['check:deploy'] || '');
 
 if (mutante) {
-  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico]);
+  const antes = JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy]);
   if (mutante === 'nome-antigo') comandos[0].linha = comandos[0].linha.replace('"CSBR ', '"CORO SOLTO ');
   else if (mutante === 'semcreditos') comandos[0].linha = comandos[0].linha.replace(' --generate-notes', '');
   else if (mutante === 'semdco') {
@@ -95,8 +98,9 @@ if (mutante) {
     workflowSources.push(['segundo-deploy.yaml', 'steps:\n  - run: vercel deploy --prebuilt --prod']);
     caminhoProdUnico = validaCaminhoProd();
   }
+  else if (mutante === 'sem-anims-deploy') animacoesNoDeploy = false;
   else throw new Error(`mutante desconhecido: ${mutante}`);
-  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
+  if (JSON.stringify([comandos, commitsRelease, docsRelease, rollbackRelease, caminhoProdUnico, animacoesNoDeploy]) === antes) throw new Error(`MUTANTE NAO APLICOU: ${mutante}`);
 }
 
 const nomes = comandos.filter(({ linha }) => /--title "CSBR \$/.test(linha)).length;
@@ -105,7 +109,7 @@ const total = comandos.length;
 const dco = commitsRelease.filter(temDco).length;
 const totalCommits = commitsRelease.length;
 const docsOk = docsRelease.filter(Boolean).length;
-const ok = total > 0 && nomes === total && creditos === total && totalCommits > 0 && dco === totalCommits && docsOk === docsRelease.length && rollbackRelease && caminhoProdUnico;
+const ok = total > 0 && nomes === total && creditos === total && totalCommits > 0 && dco === totalCommits && docsOk === docsRelease.length && rollbackRelease && caminhoProdUnico && animacoesNoDeploy;
 
 console.log(`${nomes === total && total ? '✓' : '✗'} RLS1 título CSBR: ${nomes}/${total} caminhos`);
 console.log(`${creditos === total && total ? '✓' : '✗'} RLS2 notas com contribuidores: ${creditos}/${total} caminhos`);
@@ -113,6 +117,7 @@ console.log(`${dco === totalCommits && totalCommits ? '✓' : '✗'} RLS3 commit
 console.log(`${docsOk === docsRelease.length ? '✓' : '✗'} RLS4 site de docs reconstruído e versionado: ${docsOk}/${docsRelease.length} caminhos`);
 console.log(`${rollbackRelease ? '✓' : '✗'} RLS5 falha local restaura a árvore de trabalho`);
 console.log(`${caminhoProdUnico ? '✓' : '✗'} RLS6 produção tem um caminho automático e fallback manual`);
+console.log(`${animacoesNoDeploy ? '✓' : '✗'} RLS7 deploy valida manifesto e GLBs mesclados de animação`);
 if (!ok) {
   console.error('Release inválido: preserve créditos, DCO, docs e um único caminho automático de produção.');
   process.exit(1);

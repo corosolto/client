@@ -328,6 +328,10 @@ export function pintarParedes(opts) {
   const pertoFrente = _grade(_oclusores(root), 3);
   for (const A of ancoras.values()) A.teto = _alturaParede(perto(A.x, A.z), rc, A);
   tempo.teto = Math.round(_ms() - _t); _t = _ms();
+  // Caixa/dumpster não é parede: exige _alturaParede ≥ 1,8 m (pessoa em pé; crate ~1,2 m, muro ≥ 2 m — medido por _alturaParede).
+  // Reproduz: eval:grafite (conta peças antes/depois do corte).
+  const MIN_ALT_PAREDE = 1.8;
+  for (const [k, A] of ancoras) if ((A.teto || 0) < MIN_ALT_PAREDE) ancoras.delete(k);
   const _dbg = (typeof window !== 'undefined' && window.__grafiteDebug)
     ? [...ancoras.values()]
       .map((A) => ({ x: +A.x.toFixed(2), z: +A.z.toFixed(2), teto: +A.teto.toFixed(2), quem: A.quem.slice(0, 40) }))

@@ -1,0 +1,6 @@
+{
+  "mediaSha256": "8e8aaba909642c3edb1b77f2f19a1d0f099be76ca45c0b7f04864f1f395a140e",
+  "weaponMapSha256": "6fab0575d64a36516a26452444b1767b8cbdbbe3a659f04058772434b5d84ca5",
+  "review": "Quadros centrais de seleção, vitória e derrota foram comparados em pranchas; pistola, escopeta, submetralhadora, fuzil, metralhadora e rifles de precisão permanecem distinguíveis, os resultados ocupam o quadro quadrado sem o crop 3:4 e correspondem ao mapa CHAR_WEAPON.",
+  "regenerate": "BASE=http://127.0.0.1:8123 node tools/eval/char-native-vids.mjs"
+}

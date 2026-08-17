@@ -209,8 +209,13 @@ const AUDITAR = async ([vaoMax, limSobrepor]) => {
   };
 };
 
+// Mesmo padrão do census: CHROME_BIN dirige o Chromium do Playwright no CI/headless;
+// sem a variável, canal 'chrome' local. É o que faz as fotos de falha (--fotos) saírem
+// no portao-browser.yml sem depender do Chrome estável instalado no runner.
+const CHROME_BIN = process.env.CHROME_BIN;
 const browser = await chromium.launch({
-  channel: 'chrome', headless: true,
+  ...(CHROME_BIN ? { executablePath: CHROME_BIN } : { channel: 'chrome' }),
+  headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
 });
 

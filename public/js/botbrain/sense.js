@@ -1,6 +1,6 @@
 // Recorder e inferência compartilham esta percepção para manter o vetor idêntico.
 import * as THREE from 'three';
-import { WEAPONS } from '../game.js';
+import { WEAPONS } from '../data/weapons.js';
 
 const WALL_ANGLES = [0, Math.PI / 3, (2 * Math.PI) / 3, Math.PI, (4 * Math.PI) / 3, (5 * Math.PI) / 3];
 const WALL_FAR = 8; // alcance dos raios de parede (m); casa com FEATURE_SCALE.wall

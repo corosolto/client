@@ -39,20 +39,20 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 36.159 linhas em 45 arquivos | `cat public/js/*.js \| wc -l` |
-| `game.js` | **6.862** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.110 linhas | `wc -l public/js/main.js` |
-| Armas com GLB | 27 | `ls public/models/weapons/*.glb \| wc -l` |
-| GLBs de personagem | 63 | `ls public/models/characters/*.glb \| wc -l` |
-| Props em GLB | 125 | `ls public/models/props/*.glb \| wc -l` |
+| Código do jogo | 39.864 linhas em 55 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **6.954** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.697 linhas | `wc -l public/js/main.js` |
+| Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
+| GLBs de personagem | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| Props em GLB | 125 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 10 | objeto `MAPS` de `maps.js` |
-| Arnêses visuais em HTML | 14 | `ls public/*.html \| wc -l` |
-| Scripts do arnês | 227 | `ls tools/eval/*.mjs tools/eval/*.py \| wc -l` |
-| Scripts de pipeline | 63 | `ls tools/*.mjs \| wc -l` |
-| Tarefas de entrada escritas | 26 | `ls docs/issues/[0-9]*.md \| wc -l` |
-| Versão | `2.0.0-alpha.83` | `public/js/version.js` e `package.json` (batem) |
+| Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
+| Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
+| Scripts do arnês | 251 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 71 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
+| Versão | `2.0.0-alpha.147` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -66,7 +66,7 @@ E as regras de partida que mais mudam de lugar, todas lidas das constantes de
 | Regra | Valor | Constante |
 |---|---|---|
 | Facções · personagens | 10 · 62 (B 9 · C 9 · E 8 · F 9 · M 9 · N 3 · O 2 · R 1 · T 3 · U 9) | `CHARACTERS` |
-| Mapas no menu | 10 — 2 abrem em rodadas, **8 em captura** | `MAPS` / `ctfMode` |
+| Mapas no menu | 17 — 2 abrem em rodadas, **15 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -223,7 +223,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.815 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 858 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.969 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.001 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.904 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.634 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
@@ -231,8 +231,15 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
 | `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.521 |
 | `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 717 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 245 |
 
-**10 mapas registrados** — 2 abrem em rodadas e 8 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 12 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -273,11 +280,11 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 {/* BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` */}
 
 ```bash
-npm run check        # npm run syntax && npm run audio:check && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:ctflabels anims:check anims:merge:check walls:check media:check travessao:check eval:posters eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:mapcontrato eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
+npm run check        # npm run syntax && npm run audio:check && npm run eval:medianet && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
 ```
 
-`package.json` tem **133 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **160 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
@@ -308,8 +315,8 @@ A ordem da barra lateral **é** a ordem de leitura, e cada página entrega uma c
    de primeira contribuição** já escritas em
    [`docs/issues/`](https://github.com/rubenmarcus/csbrasil/tree/main/docs/issues) (com um
    `abrir-issues.sh` pronto — elas ainda não foram abertas no GitHub).
-6. **[Licença, arte e marca](./licenca.md)** — sob que licença você contribui, o que está
-   decidido e ainda não aplicado, e por que arte paga não mora no repositório público.
+6. **Licença** — o `LICENSE` na raiz declara (hoje AGPL-3.0); as superfícies que
+   repetem o nome e mudam junto estão no `CONTRIBUTING.md`.
 7. **[Estado atual](./estado.md)** — fontes vivas de produção, dados e dívida conhecida
    desde a última medição colada.
 

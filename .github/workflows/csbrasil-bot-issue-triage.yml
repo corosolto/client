@@ -15,28 +15,10 @@ permissions:
   issues: write
 
 jobs:
-  bot-token:
-    runs-on: ubuntu-latest
-    outputs:
-      available: ${{ steps.check.outputs.available }}
-    steps:
-      - id: check
-        env:
-          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
-        run: |
-          if [ -n "$BOT_TOKEN" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
-          fi
-
   triage:
-    needs: bot-token
     runs-on: ubuntu-latest
-    if: needs.bot-token.outputs.available == 'true'
     env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
       ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683

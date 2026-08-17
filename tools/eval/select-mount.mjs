@@ -35,8 +35,10 @@
                      pré-re-rig) -> frenteZ despenca, VERMELHO em todos.
      --mutate=dedos  desfaz matematicamente a compactação distal e zera Curl_L/R ->
                      reabre as mãos dos rigs Meshy e reprova GRIP-FINGER.
+     --mutate=sem-preview mede o porte funcional no lugar do porte de exibição e prova
+                     que a régua acompanha o mesmo `preview:true` usado por pvSetChar.
 
-   uso: node tools/eval/select-mount.mjs [ids] [--ref] [--mutate=flip|tras|dedos] [--out=arquivo.json]
+   uso: node tools/eval/select-mount.mjs [ids] [--ref] [--mutate=flip|tras|dedos|sem-preview] [--out=arquivo.json]
    --out persiste tanto o verde quanto o mutante vermelho na pasta de evidência do asset.
 */
 import { execSync } from 'node:child_process';
@@ -101,7 +103,7 @@ for (const id of alvos) {
     await G.preloadCharacterAssets([cid]);
     if (!G.hasModel(cid)) return { id: cid, erro: 'sem GLB carregado' };
     const wid = C.charWeapon(cid);
-    const m = G.buildCharacterModel(def, { weaponId: wid });
+    const m = G.buildCharacterModel(def, { weaponId: wid, preview: mut !== 'sem-preview' });
     if (!m) return { id: cid, erro: 'buildCharacterModel retornou null' };
     const scene = new THREE.Scene(); scene.add(m.group);
     for (let i = 0; i < 60; i++) m.ctrl.update(1 / 60, 0, false, 0);
@@ -297,7 +299,10 @@ for (const r of out.sort((a, b) => (falha(b).length - falha(a).length) || a.id.l
   if (f.length) reprovados++;
   console.log(`${f.length ? '✗' : ' '} ${r.id.padEnd(14)}${r.arma.padEnd(10)}${r.oneHanded ? '1h' : '2h'}  ${String(r.frenteZ).padStart(7)} ${String(r.canoZ).padStart(6)} ${String(r.dMaoR).padStart(6)} ${String(r.dMaoL).padStart(6)} ${String(r.apoioY).padStart(7)} ${String(r.gripCurl).padStart(5)} ${String(r.fingerP90).padStart(7)}  ${f.join(',') || 'ok'}`);
 }
-console.log(`\nREPROVADOS: ${reprovados}/${out.length}`);
+const ausentes = alvos.filter((id) => !out.some((r) => r.id === id));
+for (const id of ausentes) console.log(`✗ ${id.padEnd(14)} ERRO: sem medição`);
+reprovados += ausentes.length;
+console.log(`\nREPROVADOS: ${reprovados}/${alvos.length}`);
 if (EVIDENCE_OUT) {
   writeFileSync(EVIDENCE_OUT, JSON.stringify({
     gerado: new Date().toISOString(), mutante: MUT, teto,
@@ -311,4 +316,4 @@ if (!MUT) {
 } else {
   console.log('(mutante: JSON limpo preservado)');
 }
-process.exitCode = reprovados > 0 ? 1 : 0;
+process.exitCode = reprovados ? 1 : 0;

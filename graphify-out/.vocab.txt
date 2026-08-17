@@ -6,18 +6,25 @@ abertas
 aberto
 abertos
 abertura
+<<<<<<< HEAD
 abilities
 ability
 ablacoes
 about
 abre
+=======
+about
+>>>>>>> origin/main
 abria
 abrir
 abs
 absarc
 absellipse
 absolutos
+<<<<<<< HEAD
 acaba
+=======
+>>>>>>> origin/main
 acabamento
 acc
 accept
@@ -27,8 +34,11 @@ accessories
 accumulate
 aceita
 aceite
+<<<<<<< HEAD
 acentua
 acerta
+=======
+>>>>>>> origin/main
 aces
 acess
 acessibilidade
@@ -42,27 +52,39 @@ acima
 acm
 acontece
 acquisition
+<<<<<<< HEAD
 acrescenta
+=======
+>>>>>>> origin/main
 action
 activate
 active
 acumulam
+<<<<<<< HEAD
 acusa
 ada
 adapter
+=======
+ada
+adac
+>>>>>>> origin/main
 add
 added
 additive
 adds
 adere
 adereco
+<<<<<<< HEAD
 adiciona
+=======
+>>>>>>> origin/main
 adicionado
 adicionar
 aditivo
 admin
 ador
 ads
+<<<<<<< HEAD
 adulta
 advers
 adversariais
@@ -72,6 +94,14 @@ aeo
 aerial
 affordance
 afina
+=======
+advers
+adversariais
+adversarial
+aeo
+aerial
+affordance
+>>>>>>> origin/main
 after
 age
 agent
@@ -83,13 +113,19 @@ agora
 agpl
 agradecimento
 agua
+<<<<<<< HEAD
 aguarda
+=======
+>>>>>>> origin/main
 agx
 ainda
 ajuste
 aksweep
+<<<<<<< HEAD
 alagar
 alas
+=======
+>>>>>>> origin/main
 alastra
 alavanca
 alavancagem
@@ -97,20 +133,29 @@ alavancas
 alb
 albedo
 alcan
+<<<<<<< HEAD
 alcancavel
 alcance
+=======
+>>>>>>> origin/main
 alerta
 alertas
 alfa
 alfabeto
+<<<<<<< HEAD
 algumas
 alho
+=======
+>>>>>>> origin/main
 alias
 aliases
 align
 aligned
 alinhamento
+<<<<<<< HEAD
 alinhar
+=======
+>>>>>>> origin/main
 all
 alloc
 allocate
@@ -119,9 +164,12 @@ almost
 alpha
 already
 alt
+<<<<<<< HEAD
 alta
 altas
 alterar
+=======
+>>>>>>> origin/main
 alternate
 alternativa
 alternative
@@ -130,6 +178,7 @@ altura
 alturas
 alvo
 alvos
+<<<<<<< HEAD
 ambi
 ambience
 ambiencia
@@ -137,6 +186,10 @@ ambient
 ambiente
 ambientlife
 ambigua
+=======
+ambient
+ambiente
+>>>>>>> origin/main
 amento
 ammo
 amostra
@@ -149,7 +202,10 @@ analise
 analyser
 analytics
 analyze
+<<<<<<< HEAD
 anatomia
+=======
+>>>>>>> origin/main
 ancestors
 ancestrais
 anchors
@@ -157,6 +213,7 @@ ancora
 and
 anda
 andar
+<<<<<<< HEAD
 andaveis
 andavel
 anexos
@@ -165,6 +222,12 @@ angle
 angles
 angular
 angulo
+=======
+andavel
+ang
+angle
+angles
+>>>>>>> origin/main
 anim
 anima
 animador
@@ -172,16 +235,22 @@ animation
 animations
 animdir
 anims
+<<<<<<< HEAD
 aniso
 anisotropy
 annex
 anon
 answer
+=======
+anisotropy
+anon
+>>>>>>> origin/main
 anterior
 anteriores
 antes
 anti
 antifraude
+<<<<<<< HEAD
 antigos
 antropom
 anunciava
@@ -190,13 +259,22 @@ aos
 aparece
 aparecem
 apex
+=======
+antropom
+anunciava
+any
+aparecem
+>>>>>>> origin/main
 api
 aplic
 aplica
 aplicada
 aplicar
+<<<<<<< HEAD
 apoio
 apoios
+=======
+>>>>>>> origin/main
 apontar
 aposentada
 aposentar
@@ -204,7 +282,10 @@ app
 append
 application
 applied
+<<<<<<< HEAD
 applies
+=======
+>>>>>>> origin/main
 apply
 approach
 approx
@@ -213,8 +294,11 @@ aprendizados
 apresenta
 aprova
 aprovada
+<<<<<<< HEAD
 aprovadas
 aprovado
+=======
+>>>>>>> origin/main
 aproxima
 aproximadas
 aqui
@@ -224,10 +308,14 @@ architecture
 are
 area
 areas
+<<<<<<< HEAD
 arena
 arestas
 arg
 argamassa
+=======
+arg
+>>>>>>> origin/main
 args
 argv
 arm
@@ -240,13 +328,19 @@ arms
 arn
 arnes
 around
+<<<<<<< HEAD
 arq
+=======
+>>>>>>> origin/main
 arqueada
 arqueologia
 arquitetura
 arquivo
 arquivos
+<<<<<<< HEAD
 arr
+=======
+>>>>>>> origin/main
 array
 arrays
 arremesso
@@ -254,19 +348,28 @@ arrow
 arsenal
 art
 arte
+<<<<<<< HEAD
 artefato
 artefatos
 artifact
 artifacts
+=======
+>>>>>>> origin/main
 artista
 arvore
 asc
 asfalto
+<<<<<<< HEAD
 asp
 aspect
 aspecto
 aspects
 assada
+=======
+aspect
+aspecto
+aspects
+>>>>>>> origin/main
 assentar
 asser
 assert
@@ -277,13 +380,17 @@ assignments
 assina
 assinatura
 assume
+<<<<<<< HEAD
 assumido
+=======
+>>>>>>> origin/main
 ast
 astro
 astrojs
 async
 atalhos
 ataque
+<<<<<<< HEAD
 atibaia
 atira
 atirar
@@ -292,6 +399,13 @@ atlas
 atmospheric
 atomizar
 atr
+=======
+atira
+atirar
+ativas
+atmospheric
+atomizar
+>>>>>>> origin/main
 atras
 attach
 attachment
@@ -303,19 +417,30 @@ attrs
 atuais
 atual
 atualiza
+<<<<<<< HEAD
 auc
 audio
 audit
 audita
+=======
+audio
+audit
+>>>>>>> origin/main
 auditado
 auditar
 auditor
 auditoria
+<<<<<<< HEAD
 aus
 ausentes
 autentica
 autenticar
 authored
+=======
+ausentes
+autentica
+autenticar
+>>>>>>> origin/main
 authoring
 auto
 autom
@@ -325,10 +450,15 @@ automatizado
 automatizados
 automerge
 autoplay
+<<<<<<< HEAD
 autorada
 autoritativo
 autoteste
 aux
+=======
+autoritativo
+autoteste
+>>>>>>> origin/main
 avalia
 avaliar
 avatar
@@ -352,24 +482,35 @@ backend
 background
 backticks
 badge
+<<<<<<< HEAD
 baile
 bairro
+=======
+>>>>>>> origin/main
 baixa
 baixo
 bake
 bakeados
 bal
 balance
+<<<<<<< HEAD
 balcony
 ball
 balneario
 banco
 bancos
+=======
+ball
+banco
+>>>>>>> origin/main
 band
 banda
 bandas
 bandeira
+<<<<<<< HEAD
 bandeirante
+=======
+>>>>>>> origin/main
 bandeiras
 bands
 banner
@@ -377,7 +518,10 @@ bar
 baratas
 barato
 bare
+<<<<<<< HEAD
 barra
+=======
+>>>>>>> origin/main
 barrel
 barycoord
 base
@@ -387,26 +531,39 @@ basis
 batch
 batched
 bate
+<<<<<<< HEAD
 batedor
 baterias
+=======
+>>>>>>> origin/main
 bbox
 beach
 beacon
 because
 beco
 become
+<<<<<<< HEAD
+=======
+bed
+>>>>>>> origin/main
 beep
 before
 begin
 behavior
+<<<<<<< HEAD
 beira
+=======
+>>>>>>> origin/main
 below
 bem
 benchmark
 beta
 better
 bezier
+<<<<<<< HEAD
 bicho
+=======
+>>>>>>> origin/main
 biggest
 bin
 binary
@@ -419,6 +576,7 @@ bizarras
 blackband
 blade
 blend
+<<<<<<< HEAD
 blender
 blending
 blico
@@ -428,6 +586,12 @@ blob
 blocagem
 blocker
 blockout
+=======
+blending
+blicos
+blind
+blob
+>>>>>>> origin/main
 blocks
 bloco
 blocos
@@ -438,20 +602,29 @@ bloqueia
 blur
 blurb
 boas
+<<<<<<< HEAD
 bocas
+=======
+>>>>>>> origin/main
 body
 bold
 bolt
 bom
 bone
 bones
+<<<<<<< HEAD
 bonita
 bons
+=======
+>>>>>>> origin/main
 boolean
 booleana
 boost
 boot
+<<<<<<< HEAD
 boots
+=======
+>>>>>>> origin/main
 bootstrap
 borda
 bordas
@@ -460,7 +633,10 @@ botao
 botbrain
 botdiag
 botidx
+<<<<<<< HEAD
 boto
+=======
+>>>>>>> origin/main
 bots
 botsim
 boundary
@@ -468,12 +644,17 @@ bounding
 bounds
 box
 bra
+<<<<<<< HEAD
 bracadeira
 brain
 branca
 branch
 branches
 branco
+=======
+brain
+branch
+>>>>>>> origin/main
 brand
 bras
 brasao
@@ -486,9 +667,13 @@ brido
 browser
 browserslist
 bruto
+<<<<<<< HEAD
 bruxa
 btn
 buas
+=======
+btn
+>>>>>>> origin/main
 buckets
 budget
 budgeted
@@ -502,7 +687,10 @@ build
 builda
 builder
 builders
+<<<<<<< HEAD
 building
+=======
+>>>>>>> origin/main
 builds
 bullpups
 bump
@@ -517,11 +705,15 @@ bvio
 bytes
 cab
 cabe
+<<<<<<< HEAD
 cabem
 cable
 cables
 cache
 cachorro
+=======
+cache
+>>>>>>> origin/main
 cada
 cadeia
 cai
@@ -531,8 +723,11 @@ calado
 calculate
 calend
 calib
+<<<<<<< HEAD
 calibra
 calibradas
+=======
+>>>>>>> origin/main
 call
 callback
 calls
@@ -543,22 +738,31 @@ camera
 caminho
 caminhos
 campo
+<<<<<<< HEAD
 campomorro
+=======
+>>>>>>> origin/main
 campos
 can
 canais
 canal
 canarinho
 cancel
+<<<<<<< HEAD
 candidates
 candidato
 candidatos
 cands
 caneca
+=======
+candidatos
+cands
+>>>>>>> origin/main
 canelura
 cannot
 cano
 canopy
+<<<<<<< HEAD
 cantos
 canvas
 cap
@@ -571,19 +775,30 @@ capivara
 capsule
 captura
 capturar
+=======
+canvas
+cap
+capabilities
+capsule
+captura
+>>>>>>> origin/main
 capturas
 capture
 captured
 car
 cara
 caracteres
+<<<<<<< HEAD
 caralho
+=======
+>>>>>>> origin/main
 caras
 carbine
 card
 cards
 caro
 carrega
+<<<<<<< HEAD
 carregam
 carregar
 carregou
@@ -591,20 +806,32 @@ carreira
 carro
 carros
 carry
+=======
+carregar
+carregou
+carreira
+carros
+>>>>>>> origin/main
 cars
 cartazes
 cartesian
 casa
+<<<<<<< HEAD
 casario
 casca
 cascata
 case
 cases
+=======
+cascata
+case
+>>>>>>> origin/main
 casing
 caso
 casos
 casting
 cat
+<<<<<<< HEAD
 catalogo
 catmull
 cats
@@ -612,6 +839,11 @@ causa
 causais
 causal
 causalmente
+=======
+catmull
+cats
+causa
+>>>>>>> origin/main
 causas
 ccdik
 cdecdc
@@ -620,7 +852,10 @@ cega
 ceil
 ceiling
 cel
+<<<<<<< HEAD
 cells
+=======
+>>>>>>> origin/main
 cen
 cena
 censo
@@ -628,7 +863,10 @@ census
 center
 central
 centro
+<<<<<<< HEAD
 cer
+=======
+>>>>>>> origin/main
 certa
 ceu
 cfg
@@ -640,16 +878,22 @@ changelog
 changes
 channel
 chao
+<<<<<<< HEAD
 chapada
 chapados
+=======
+>>>>>>> origin/main
 char
 character
 characters
 chardir
+<<<<<<< HEAD
 charge
 charhard
 charpbr
 charplastico
+=======
+>>>>>>> origin/main
 chars
 charset
 charsvg
@@ -666,10 +910,15 @@ chegando
 chegarem
 cherry
 child
+<<<<<<< HEAD
 chin
 chips
 chk
 chroma
+=======
+chips
+chk
+>>>>>>> origin/main
 chrome
 chromium
 chunk
@@ -678,6 +927,7 @@ ciclo
 cie
 cielab
 cies
+<<<<<<< HEAD
 cilindro
 cima
 cinco
@@ -687,13 +937,22 @@ cintura
 cinza
 circle
 cita
+=======
+cima
+cinco
+cinza
+circle
+>>>>>>> origin/main
 citar
 cito
 city
 claiming
 clamp
 clamped
+<<<<<<< HEAD
 claquete
+=======
+>>>>>>> origin/main
 clareza
 claro
 class
@@ -705,8 +964,11 @@ classification
 classify
 claude
 clause
+<<<<<<< HEAD
 clauses
 clausula
+=======
+>>>>>>> origin/main
 clean
 cleanup
 clear
@@ -721,7 +983,10 @@ clipes
 clipping
 clips
 clock
+<<<<<<< HEAD
 clonados
+=======
+>>>>>>> origin/main
 clone
 close
 closed
@@ -730,15 +995,22 @@ cloudflare
 cls
 clsx
 cluster
+<<<<<<< HEAD
 clusters
+=======
+>>>>>>> origin/main
 cmp
 cnica
 cnicas
 cnico
 cnum
+<<<<<<< HEAD
 cob
 coberto
 cobertos
+=======
+coberto
+>>>>>>> origin/main
 cobertura
 cobra
 cobre
@@ -748,15 +1020,21 @@ codex
 coherence
 coisa
 coisas
+<<<<<<< HEAD
 col
+=======
+>>>>>>> origin/main
 cola
 colaborador
 colaborar
 colada
 colar
 coleta
+<<<<<<< HEAD
 colisao
 colisores
+=======
+>>>>>>> origin/main
 collect
 collide
 colocacao
@@ -765,25 +1043,36 @@ color
 colors
 cols
 column
+<<<<<<< HEAD
 columns
+=======
+>>>>>>> origin/main
 coluna
 com
 comando
 comandos
 combat
 combate
+<<<<<<< HEAD
 combatente
 combinada
 combinations
 come
 comeca
+=======
+combinations
+come
+>>>>>>> origin/main
 comecando
 comece
 coment
 comentando
 comentario
 comentarios
+<<<<<<< HEAD
 cometi
+=======
+>>>>>>> origin/main
 command
 commands
 comment
@@ -794,7 +1083,10 @@ common
 communities
 como
 comp
+<<<<<<< HEAD
 compact
+=======
+>>>>>>> origin/main
 comparativa
 compare
 compat
@@ -804,17 +1096,24 @@ competitiva
 compile
 completa
 completam
+<<<<<<< HEAD
 completar
+=======
+>>>>>>> origin/main
 completo
 component
 componente
 componentes
 components
+<<<<<<< HEAD
 componha
+=======
+>>>>>>> origin/main
 comportamento
 compose
 composer
 composite
+<<<<<<< HEAD
 composites
 compress
 compressed
@@ -822,6 +1121,12 @@ compression
 comprimento
 comprou
 comps
+=======
+compress
+compressed
+compression
+comprou
+>>>>>>> origin/main
 computa
 computador
 compute
@@ -829,8 +1134,11 @@ comum
 comunidade
 comunit
 conceito
+<<<<<<< HEAD
 concept
 concepts
+=======
+>>>>>>> origin/main
 conclu
 concorr
 concrete
@@ -838,19 +1146,28 @@ concretos
 condi
 cone
 conectado
+<<<<<<< HEAD
 conectados
+=======
+>>>>>>> origin/main
 cones
 conex
 conexa
 conexas
 confere
 conferido
+<<<<<<< HEAD
 conferidos
+=======
+>>>>>>> origin/main
 conferir
 confian
 confiar
 config
+<<<<<<< HEAD
 configs
+=======
+>>>>>>> origin/main
 configura
 configurada
 configured
@@ -863,18 +1180,26 @@ conflict
 conflitar
 conflito
 conflitos
+<<<<<<< HEAD
 congelada
+=======
+>>>>>>> origin/main
 conhecidas
 conhecido
 conhecidos
 conhecimento
 conjugate
+<<<<<<< HEAD
 conjunto
 connect
 connected
 connections
 consegue
 consenso
+=======
+connect
+consegue
+>>>>>>> origin/main
 consent
 consentimento
 consequ
@@ -882,11 +1207,17 @@ consequence
 consertar
 conserto
 consertou
+<<<<<<< HEAD
 conserva
 consist
 consistencia
 console
 consolida
+=======
+consist
+consistencia
+console
+>>>>>>> origin/main
 consolidar
 constante
 constants
@@ -900,7 +1231,10 @@ constructs
 construir
 construtores
 consume
+<<<<<<< HEAD
 consumido
+=======
+>>>>>>> origin/main
 cont
 conta
 contact
@@ -911,12 +1245,18 @@ conte
 content
 context
 contexto
+<<<<<<< HEAD
 contextualizados
+=======
+>>>>>>> origin/main
 contiguo
 continua
 continuam
 continuar
+<<<<<<< HEAD
 continuidade
+=======
+>>>>>>> origin/main
 contour
 contra
 contract
@@ -925,7 +1265,10 @@ contradizem
 contrast
 contraste
 contrato
+<<<<<<< HEAD
 contratos
+=======
+>>>>>>> origin/main
 contribu
 contribui
 contribuindo
@@ -941,6 +1284,7 @@ conven
 conversa
 conversation
 convert
+<<<<<<< HEAD
 converte
 convex
 cooldown
@@ -951,6 +1295,14 @@ coorte
 copia
 copied
 copies
+=======
+convex
+cooldown
+coordinate
+coords
+coorte
+copied
+>>>>>>> origin/main
 coplanar
 copy
 cor
@@ -960,9 +1312,13 @@ cores
 coro
 corol
 corpo
+<<<<<<< HEAD
 corpus
 corre
 corrego
+=======
+corre
+>>>>>>> origin/main
 correlated
 corrente
 correta
@@ -978,6 +1334,7 @@ cost
 costas
 costs
 costura
+<<<<<<< HEAD
 costuras
 cota
 cotas
@@ -986,6 +1343,9 @@ counter
 counts
 cov
 cover
+=======
+count
+>>>>>>> origin/main
 coverage
 cowork
 cqp
@@ -997,16 +1357,23 @@ credentials
 cresce
 crescer
 cria
+<<<<<<< HEAD
 criar
 crit
 critic
+=======
+crit
+>>>>>>> origin/main
 critics
 croma
 cromatico
 crop
 cross
 crouch
+<<<<<<< HEAD
 crouchwalk
+=======
+>>>>>>> origin/main
 crus
 cruza
 csbrasil
@@ -1023,19 +1390,28 @@ ctr
 ctrl
 ctrlw
 ctx
+<<<<<<< HEAD
 cuba
 cubas
 cube
 cubemap
 cubic
 cuca
+=======
+cube
+cubemap
+cubic
+>>>>>>> origin/main
 cuidado
 cuidados
 cull
 culpado
+<<<<<<< HEAD
 culturais
 cultural
 cunha
+=======
+>>>>>>> origin/main
 cur
 curado
 curated
@@ -1044,7 +1420,10 @@ curl
 current
 curta
 curto
+<<<<<<< HEAD
 curupira
+=======
+>>>>>>> origin/main
 curva
 curve
 custa
@@ -1053,11 +1432,16 @@ custo
 custom
 custou
 cycle
+<<<<<<< HEAD
 cyl
 cylinder
 cylindrical
 dab
 dac
+=======
+cylinder
+cylindrical
+>>>>>>> origin/main
 dado
 dados
 daily
@@ -1068,7 +1452,10 @@ dano
 dar
 dark
 das
+<<<<<<< HEAD
 dash
+=======
+>>>>>>> origin/main
 dashed
 data
 database
@@ -1084,7 +1471,11 @@ deactivate
 dead
 dearly
 death
+<<<<<<< HEAD
 deathcam
+=======
+deb
+>>>>>>> origin/main
 debaixo
 debt
 decal
@@ -1095,19 +1486,28 @@ decide
 decided
 decides
 decidir
+<<<<<<< HEAD
 decima
 decimate
+=======
+>>>>>>> origin/main
 decis
 declaracoes
 declarada
 declarado
 declarados
+<<<<<<< HEAD
 declive
+=======
+>>>>>>> origin/main
 decode
 decoder
 decompose
 decorate
+<<<<<<< HEAD
 decorativa
+=======
+>>>>>>> origin/main
 dedicada
 dedupe
 deep
@@ -1117,10 +1517,14 @@ defeito
 define
 defines
 defini
+<<<<<<< HEAD
 definicao
 definitions
 deformados
 deformar
+=======
+definitions
+>>>>>>> origin/main
 defs
 deg
 degraus
@@ -1128,20 +1532,29 @@ deinterleave
 deixa
 dejavu
 delay
+<<<<<<< HEAD
 dele
+=======
+>>>>>>> origin/main
 delete
 delta
 demais
 demo
 denormalize
 densa
+<<<<<<< HEAD
 densas
+=======
+>>>>>>> origin/main
 dense
 densidade
 density
 dentro
 depend
+<<<<<<< HEAD
 depende
+=======
+>>>>>>> origin/main
 dependencies
 dependency
 deploy
@@ -1151,6 +1564,7 @@ depth
 deriva
 derruba
 derrubava
+<<<<<<< HEAD
 desaparece
 desatualizado
 desbloqueio
@@ -1159,15 +1573,25 @@ desconectadas
 desconectados
 descrever
 describe
+=======
+desatualizado
+desbloqueio
+desc
+>>>>>>> origin/main
 description
 desempenho
 desempregado
 desenvolvedores
 desenvolvimento
+<<<<<<< HEAD
 desfa
 desfaz
 desfeito
 designer
+=======
+desfaz
+desfeito
+>>>>>>> origin/main
 desktop
 desligado
 desliza
@@ -1177,13 +1601,19 @@ dest
 desta
 deste
 destino
+<<<<<<< HEAD
 destinos
+=======
+>>>>>>> origin/main
 destravando
 destravar
 destroy
 desvio
 detail
+<<<<<<< HEAD
 details
+=======
+>>>>>>> origin/main
 detalhamento
 detalhe
 detalhes
@@ -1191,24 +1621,36 @@ detect
 detected
 detector
 detectores
+<<<<<<< HEAD
 determin
 determinant
 deterministicamente
 detune
 dev
 deve
+=======
+determinant
+detune
+dev
+>>>>>>> origin/main
 development
 devem
 devendo
 deveriam
 devolve
+<<<<<<< HEAD
 devport
 dez
+=======
+>>>>>>> origin/main
 dfg
 dia
 diag
 diagn
+<<<<<<< HEAD
 diagnostic
+=======
+>>>>>>> origin/main
 diagnosticado
 diagonal
 dias
@@ -1235,7 +1677,10 @@ directional
 directions
 directory
 dirs
+<<<<<<< HEAD
 dirt
+=======
+>>>>>>> origin/main
 disable
 disconnect
 discord
@@ -1245,10 +1690,15 @@ disjoint
 disjuntas
 disk
 dismiss
+<<<<<<< HEAD
 disp
 dispatch
 dispatcher
 dispersao
+=======
+dispatch
+dispatcher
+>>>>>>> origin/main
 display
 dispon
 dispose
@@ -1256,15 +1706,21 @@ disso
 dist
 distance
 distances
+<<<<<<< HEAD
 distancia
 distintos
+=======
+>>>>>>> origin/main
 distribui
 distribuicoes
 ditos
 diverg
 divergente
 divergir
+<<<<<<< HEAD
 divida
+=======
+>>>>>>> origin/main
 dividas
 divide
 dizer
@@ -1283,7 +1739,10 @@ docusaurus
 dodecahedron
 does
 doesn
+<<<<<<< HEAD
 doidinho
+=======
+>>>>>>> origin/main
 dois
 dolly
 dom
@@ -1294,15 +1753,21 @@ donor
 doors
 dos
 dot
+<<<<<<< HEAD
 double
 dourado
+=======
+>>>>>>> origin/main
 doutrina
 down
 download
 draco
 draw
 drawing
+<<<<<<< HEAD
 dress
+=======
+>>>>>>> origin/main
 drivers
 drop
 dropdown
@@ -1315,6 +1780,7 @@ dump
 dup
 duplica
 duplicado
+<<<<<<< HEAD
 duplicatas
 duplicate
 dura
@@ -1323,6 +1789,13 @@ duration
 eac
 eacc
 eaf
+=======
+duplicate
+dura
+duration
+eac
+eacc
+>>>>>>> origin/main
 ear
 earcut
 earlier
@@ -1330,16 +1803,26 @@ ebb
 ebe
 edge
 edges
+<<<<<<< HEAD
 edificios
 edit
 editor
 editoriais
 editorial
+=======
+edit
+editor
+editorial
+eec
+>>>>>>> origin/main
 efetivo
 eff
 effect
 effective
+<<<<<<< HEAD
 eixo
+=======
+>>>>>>> origin/main
 eject
 ela
 elapsed
@@ -1351,26 +1834,38 @@ elenco
 eles
 eliminate
 ellipse
+<<<<<<< HEAD
 ellipsoid
 embaixo
 emis
 emission
+=======
+embaixo
+emis
+>>>>>>> origin/main
 emissive
 empty
 enable
 enabled
 encaixam
 encaixar
+<<<<<<< HEAD
 encoded
 encoding
 encosta
 encostada
+=======
+encoding
+>>>>>>> origin/main
 end
 ended
 endings
 endpoints
 enemy
+<<<<<<< HEAD
 engine
+=======
+>>>>>>> origin/main
 engineering
 engines
 engrossar
@@ -1384,12 +1879,18 @@ entrada
 entradas
 entre
 entreg
+<<<<<<< HEAD
 entrega
 entregar
 entregue
 entregues
 entries
 entry
+=======
+entregar
+entregue
+entregues
+>>>>>>> origin/main
 env
 envelhecer
 environment
@@ -1398,7 +1899,10 @@ enxuto
 epochs
 equal
 equals
+<<<<<<< HEAD
 equipada
+=======
+>>>>>>> origin/main
 equirect
 equirectangular
 era
@@ -1412,6 +1916,7 @@ errors
 erros
 errs
 esc
+<<<<<<< HEAD
 escad
 escada
 escadao
@@ -1424,6 +1929,15 @@ escolha
 escolher
 escolhido
 esconde
+=======
+escada
+escala
+escalar
+escalation
+escolha
+escolher
+escolhido
+>>>>>>> origin/main
 escondendo
 esconder
 escondidos
@@ -1440,6 +1954,7 @@ escuro
 espa
 espacial
 espec
+<<<<<<< HEAD
 especies
 especifica
 espectro
@@ -1452,11 +1967,22 @@ esperados
 esperar
 esplanada
 esquadria
+=======
+especifica
+espelho
+espelhos
+esperado
+esperar
+esplanada
+>>>>>>> origin/main
 esquece
 esqueleto
 esquerdo
 esse
+<<<<<<< HEAD
 essenciais
+=======
+>>>>>>> origin/main
 est
 esta
 estacionamento
@@ -1474,9 +2000,12 @@ estilo
 estimate
 estragar
 estrat
+<<<<<<< HEAD
 estreita
 estreitas
 estreito
+=======
+>>>>>>> origin/main
 estrutura
 estudar
 euclidean
@@ -1486,29 +2015,44 @@ evals
 evaluate
 event
 eventos
+<<<<<<< HEAD
 events
+=======
+>>>>>>> origin/main
 every
 everyone
 everything
 evid
+<<<<<<< HEAD
 evidence
 evio
 evolu
 exact
+=======
+evio
+evolu
+>>>>>>> origin/main
 exata
 exatamente
 excedia
 exclude
 excluidos
+<<<<<<< HEAD
 exclusivo
+=======
+>>>>>>> origin/main
 execu
 execut
 executada
 executar
 executivo
+<<<<<<< HEAD
 exigido
 existe
 existentes
+=======
+existe
+>>>>>>> origin/main
 existing
 exists
 exit
@@ -1533,7 +2077,10 @@ extens
 extension
 extensions
 extenso
+<<<<<<< HEAD
 extent
+=======
+>>>>>>> origin/main
 extents
 externa
 external
@@ -1546,7 +2093,10 @@ extras
 extrude
 eye
 fac
+<<<<<<< HEAD
 facade
+=======
+>>>>>>> origin/main
 faccao
 faccoes
 face
@@ -1567,12 +2117,18 @@ failures
 faixa
 faixas
 fake
+<<<<<<< HEAD
 falas
 falha
 falharam
 falhas
 falkor
 fallback
+=======
+falha
+falhas
+falkor
+>>>>>>> origin/main
 falloff
 falsa
 falta
@@ -1581,13 +2137,18 @@ faltando
 faltar
 fam
 famas
+<<<<<<< HEAD
 families
 family
 fan
+=======
+family
+>>>>>>> origin/main
 far
 fase
 fases
 fast
+<<<<<<< HEAD
 fatia
 fatias
 fator
@@ -1596,10 +2157,20 @@ fatos
 fauna
 favela
 favelas
+=======
+fatias
+fatores
+fatos
+favela
+>>>>>>> origin/main
 faz
 fazem
 fazemos
 fazer
+<<<<<<< HEAD
+=======
+fcceba
+>>>>>>> origin/main
 feat
 feature
 features
@@ -1613,7 +2184,10 @@ feedback
 feel
 feet
 fego
+<<<<<<< HEAD
 feita
+=======
+>>>>>>> origin/main
 feitas
 feito
 ferramenta
@@ -1622,6 +2196,7 @@ ferramentas
 ferro
 ferrovelho
 fetch
+<<<<<<< HEAD
 fiadas
 fibonacci
 fibro
@@ -1635,13 +2210,24 @@ ficos
 ficou
 fidelidade
 fiel
+=======
+fibonacci
+fibro
+fica
+ficas
+ficos
+fidelidade
+>>>>>>> origin/main
 field
 fields
 fig
 figura
 fila
 file
+<<<<<<< HEAD
 fileira
+=======
+>>>>>>> origin/main
 files
 film
 filosofia
@@ -1651,9 +2237,12 @@ filtrada
 filtrar
 fim
 final
+<<<<<<< HEAD
 finaliza
 finalizar
 finalize
+=======
+>>>>>>> origin/main
 find
 finger
 fingers
@@ -1662,14 +2251,20 @@ fire
 firefox
 first
 fit
+<<<<<<< HEAD
 five
+=======
+>>>>>>> origin/main
 fix
 fixa
 fixado
 fixas
 fixed
+<<<<<<< HEAD
 fixes
 fixo
+=======
+>>>>>>> origin/main
 fixture
 fixtures
 flag
@@ -1681,12 +2276,18 @@ flesh
 flip
 float
 floating
+<<<<<<< HEAD
 flood
 floor
 flow
 flows
 flush
 flutua
+=======
+floor
+flow
+flush
+>>>>>>> origin/main
 fluxo
 fmpeg
 fmt
@@ -1707,7 +2308,10 @@ foot
 for
 fora
 foram
+<<<<<<< HEAD
 forbidden
+=======
+>>>>>>> origin/main
 force
 fore
 forma
@@ -1717,8 +2321,11 @@ formato
 formul
 forte
 foto
+<<<<<<< HEAD
 fotogr
 fotografia
+=======
+>>>>>>> origin/main
 fotos
 fov
 foveation
@@ -1747,13 +2354,17 @@ fresh
 fria
 from
 front
+<<<<<<< HEAD
 frontal
+=======
+>>>>>>> origin/main
 fronteira
 frustum
 full
 fullscreen
 fuma
 fumaca
+<<<<<<< HEAD
 func
 funciona
 funcionais
@@ -1762,15 +2373,27 @@ function
 functions
 fundo
 fundos
+=======
+funciona
+funcionais
+function
+functions
+fundo
+>>>>>>> origin/main
 funil
 funkeiros
 funnel
 futuro
+<<<<<<< HEAD
 fuzileiro
 fxdef
 fxgroups
 galpao
 gambiarra
+=======
+fxdef
+fxgroups
+>>>>>>> origin/main
 game
 gamedev
 gameplay
@@ -1785,11 +2408,17 @@ gates
 gatilhos
 gauntlet
 gcolors
+<<<<<<< HEAD
 gear
 geis
 gen
 general
 generaliza
+=======
+geis
+gen
+general
+>>>>>>> origin/main
 generate
 generated
 generation
@@ -1815,15 +2444,21 @@ gfx
 ggx
 ghost
 gia
+<<<<<<< HEAD
 gicas
 gido
 gidos
+=======
+>>>>>>> origin/main
 gif
 gigantes
 gil
 gina
 ginas
+<<<<<<< HEAD
 gira
+=======
+>>>>>>> origin/main
 girada
 girar
 giro
@@ -1831,7 +2466,10 @@ git
 gitignore
 glb
 glbchars
+<<<<<<< HEAD
 glbs
+=======
+>>>>>>> origin/main
 glcontext
 glob
 global
@@ -1848,7 +2486,10 @@ good
 gostar
 gotcha
 goto
+<<<<<<< HEAD
 gourmet
+=======
+>>>>>>> origin/main
 governan
 gpu
 gpuparticles
@@ -1864,7 +2505,10 @@ granada
 grande
 graph
 graphify
+<<<<<<< HEAD
 graus
+=======
+>>>>>>> origin/main
 grave
 grayscale
 green
@@ -1881,16 +2525,23 @@ grupo
 gsrc
 gua
 guard
+<<<<<<< HEAD
 guarda
 guardas
+=======
+>>>>>>> origin/main
 guardava
 guas
 gun
 gunshot
 gunspace
+<<<<<<< HEAD
 habitado
 hacker
 hairline
+=======
+hacker
+>>>>>>> origin/main
 half
 halo
 halt
@@ -1918,10 +2569,15 @@ headers
 headless
 health
 heartbeat
+<<<<<<< HEAD
 heat
 heavy
 height
 helmet
+=======
+heavy
+height
+>>>>>>> origin/main
 helper
 hemisphere
 her
@@ -1930,7 +2586,10 @@ herdada
 here
 hero
 heroes
+<<<<<<< HEAD
 heroi
+=======
+>>>>>>> origin/main
 heuristica
 hex
 hexof
@@ -1939,16 +2598,25 @@ hide
 hier
 high
 higiene
+<<<<<<< HEAD
 hinge
+=======
+>>>>>>> origin/main
 hint
 hints
 hips
 hist
+<<<<<<< HEAD
 histo
 historico
 history
 hit
 hitbox
+=======
+historico
+history
+hit
+>>>>>>> origin/main
 hitmark
 hitmarker
 hitscan
@@ -1967,6 +2635,7 @@ honrando
 hook
 hooks
 hora
+<<<<<<< HEAD
 horizon
 horizonte
 horizontes
@@ -1977,6 +2646,13 @@ hot
 hour
 house
 houses
+=======
+hospedagem
+host
+hosts
+hour
+house
+>>>>>>> origin/main
 how
 href
 hreflang
@@ -2004,7 +2680,10 @@ icosahedron
 ideas
 ideia
 ideias
+<<<<<<< HEAD
 idempotente
+=======
+>>>>>>> origin/main
 ident
 identidade
 identificada
@@ -2018,21 +2697,29 @@ ignorada
 ignorado
 ignorados
 igual
+<<<<<<< HEAD
 ilha
 ilhas
+=======
+>>>>>>> origin/main
 ilumina
 image
 imagem
 images
 imediata
 imediato
+<<<<<<< HEAD
 imediveis
 img
 imgs
+=======
+img
+>>>>>>> origin/main
 immutable
 impact
 impacto
 impec
+<<<<<<< HEAD
 implementa
 import
 importa
@@ -2049,6 +2736,18 @@ imprimir
 improvisador
 impulse
 inacessiveis
+=======
+import
+importa
+importado
+important
+importantes
+importmap
+imposs
+impress
+imprimir
+impulse
+>>>>>>> origin/main
 inactive
 incerto
 inclin
@@ -2056,7 +2755,10 @@ inclu
 include
 includes
 inconsistencias
+<<<<<<< HEAD
 incorporados
+=======
+>>>>>>> origin/main
 index
 indexados
 indexar
@@ -2068,7 +2770,10 @@ individuais
 inerte
 inflate
 info
+<<<<<<< HEAD
 informa
+=======
+>>>>>>> origin/main
 infra
 ingest
 inicial
@@ -2076,14 +2781,20 @@ inicio
 inimigo
 init
 initialize
+<<<<<<< HEAD
 injetar
+=======
+>>>>>>> origin/main
 ink
 inline
 inner
 input
 insert
 inside
+<<<<<<< HEAD
 inspe
+=======
+>>>>>>> origin/main
 inspect
 inst
 instala
@@ -2097,6 +2808,7 @@ instrumenta
 instrumentacao
 instrumentation
 instrumento
+<<<<<<< HEAD
 insuficientes
 insustent
 int
@@ -2110,12 +2822,21 @@ integrando
 integrar
 integration
 integre
+=======
+insustent
+int
+integra
+integrado
+integral
+integration
+>>>>>>> origin/main
 integrity
 inteira
 inteiro
 inten
 intention
 inter
+<<<<<<< HEAD
 interaction
 interconectado
 interessa
@@ -2126,6 +2847,14 @@ interleaved
 interna
 internal
 internos
+=======
+interconectado
+interessa
+interface
+interleave
+interleaved
+internal
+>>>>>>> origin/main
 interpolant
 interpolants
 interpolate
@@ -2144,7 +2873,10 @@ invariante
 invariantes
 invariants
 invent
+<<<<<<< HEAD
 inventario
+=======
+>>>>>>> origin/main
 inversa
 inverse
 inverses
@@ -2170,6 +2902,7 @@ items
 itera
 iterativa
 iterator
+<<<<<<< HEAD
 its
 itself
 janeiro
@@ -2180,6 +2913,13 @@ jeito
 joa
 job
 jobs
+=======
+itself
+janeiro
+janela
+jeito
+job
+>>>>>>> origin/main
 jog
 jogabilidade
 jogador
@@ -2187,15 +2927,23 @@ jogadores
 jogando
 jogar
 jogo
+<<<<<<< HEAD
 join
 joint
 joints
 jpeg
+=======
+joint
+joints
+>>>>>>> origin/main
 jread
 jserror
 json
 jsonld
+<<<<<<< HEAD
 jsonout
+=======
+>>>>>>> origin/main
 julho
 jump
 juncoes
@@ -2207,11 +2955,17 @@ justificar
 keep
 kernel
 key
+<<<<<<< HEAD
 keyboard
 keyframe
 keys
 keywords
 khronos
+=======
+keyframe
+keys
+keywords
+>>>>>>> origin/main
 kick
 kids
 kill
@@ -2238,6 +2992,7 @@ lacunas
 lado
 lados
 lagoon
+<<<<<<< HEAD
 laje
 lajes
 lam
@@ -2261,6 +3016,18 @@ larguras
 last
 lathe
 laudo
+=======
+lam
+lambert
+lan
+lancamento
+land
+lang
+largest
+largura
+last
+lathe
+>>>>>>> origin/main
 launch
 lava
 law
@@ -2268,9 +3035,13 @@ laws
 layer
 layers
 layout
+<<<<<<< HEAD
 layouts
 lazarov
 lbind
+=======
+lazarov
+>>>>>>> origin/main
 lcg
 leaderboard
 leaflet
@@ -2279,10 +3050,15 @@ leftmost
 leg
 legacy
 legado
+<<<<<<< HEAD
 legados
 legenda
 legibilidade
 legiveis
+=======
+legenda
+legibilidade
+>>>>>>> origin/main
 lei
 leia
 leis
@@ -2290,14 +3066,20 @@ leitura
 leituras
 len
 lend
+<<<<<<< HEAD
 lenda
+=======
+>>>>>>> origin/main
 length
 lengths
 lens
 ler
 lerp
 letreiro
+<<<<<<< HEAD
 letterbox
+=======
+>>>>>>> origin/main
 leva
 levantar
 levar
@@ -2305,7 +3087,10 @@ level
 levers
 lgpd
 lia
+<<<<<<< HEAD
 liam
+=======
+>>>>>>> origin/main
 lias
 lib
 liberdade
@@ -2314,20 +3099,30 @@ licenca
 license
 licoes
 lido
+<<<<<<< HEAD
 life
 lift
 ligacoes
+=======
+lift
+>>>>>>> origin/main
 ligada
 ligadas
 ligado
 light
+<<<<<<< HEAD
 lighting
 lightmap
+=======
+>>>>>>> origin/main
 lightmaps
 lights
 limiar
 limit
+<<<<<<< HEAD
 limita
+=======
+>>>>>>> origin/main
 limite
 limites
 limpeza
@@ -2345,13 +3140,17 @@ linux
 lisa
 lisas
 lise
+<<<<<<< HEAD
 liso
+=======
+>>>>>>> origin/main
 list
 lista
 listener
 lists
 live
 lives
+<<<<<<< HEAD
 livre
 lms
 load
@@ -2361,6 +3160,13 @@ loading
 loadout
 lobi
 lobisomem
+=======
+lms
+load
+loader
+loading
+loadout
+>>>>>>> origin/main
 locais
 local
 locale
@@ -2374,15 +3180,22 @@ locomotion
 lod
 log
 loja
+<<<<<<< HEAD
 loko
 long
 longa
 longas
 longe
+=======
+long
+longa
+longas
+>>>>>>> origin/main
 look
 looks
 loop
 loops
+<<<<<<< HEAD
 loose
 los
 lose
@@ -2391,6 +3204,12 @@ lote
 lotes
 low
 lower
+=======
+los
+lose
+loss
+low
+>>>>>>> origin/main
 lowq
 lpara
 lstar
@@ -2405,8 +3224,11 @@ luminosity
 lut
 luvas
 luz
+<<<<<<< HEAD
 luzes
 macr
+=======
+>>>>>>> origin/main
 macro
 mad
 madeira
@@ -2418,11 +3240,15 @@ maiores
 mais
 make
 malha
+<<<<<<< HEAD
 malhas
+=======
+>>>>>>> origin/main
 managed
 management
 manager
 manda
+<<<<<<< HEAD
 mandam
 manhattan
 manifest
@@ -2438,12 +3264,23 @@ mapanovo
 mapas
 mapcontrato
 mapid
+=======
+manhattan
+manifest
+manifesto
+manter
+manuten
+map
+mapa
+mapas
+>>>>>>> origin/main
 mapped
 mapping
 mapproject
 mapprops
 maps
 mapsrc
+<<<<<<< HEAD
 maptex
 mapview
 marca
@@ -2457,13 +3294,24 @@ margens
 maria
 mark
 markdown
+=======
+marca
+marcador
+marg
+margem
+margens
+mark
+>>>>>>> origin/main
 mas
 mascara
 mask
 maskprobe
 masks
 massa
+<<<<<<< HEAD
 massas
+=======
+>>>>>>> origin/main
 master
 mat
 matcap
@@ -2475,7 +3323,10 @@ materiais
 material
 materials
 math
+<<<<<<< HEAD
 matiz
+=======
+>>>>>>> origin/main
 matrices
 matrix
 matriz
@@ -2489,7 +3340,10 @@ mean
 means
 measure
 measured
+<<<<<<< HEAD
 mec
+=======
+>>>>>>> origin/main
 med
 mede
 medi
@@ -2499,14 +3353,20 @@ medida
 medidas
 medido
 medir
+<<<<<<< HEAD
 medira
 medium
 medivel
+=======
+>>>>>>> origin/main
 meio
 melee
 melhor
 melhorar
+<<<<<<< HEAD
 melhores
+=======
+>>>>>>> origin/main
 mem
 memo
 memory
@@ -2514,14 +3374,21 @@ memprobe
 menores
 menos
 mensagem
+<<<<<<< HEAD
 mensagens
+=======
+>>>>>>> origin/main
 mente
 mentem
 mentiras
 menu
+<<<<<<< HEAD
 menuprops
 meo
 mera
+=======
+meo
+>>>>>>> origin/main
 mercado
 merge
 mero
@@ -2538,10 +3405,15 @@ mesmo
 meta
 metade
 metal
+<<<<<<< HEAD
 meter
 method
 methods
 metodo
+=======
+method
+methods
+>>>>>>> origin/main
 metricas
 metrics
 metro
@@ -2551,8 +3423,11 @@ mexe
 mexer
 mezanino
 mico
+<<<<<<< HEAD
 micro
 microfonildo
+=======
+>>>>>>> origin/main
 middle
 midpoint
 migra
@@ -2561,7 +3436,10 @@ mikk
 milissegundos
 mime
 min
+<<<<<<< HEAD
 mina
+=======
+>>>>>>> origin/main
 mini
 minimum
 minist
@@ -2576,8 +3454,11 @@ mirror
 miss
 missing
 mit
+<<<<<<< HEAD
 mitico
 miticos
+=======
+>>>>>>> origin/main
 mitiga
 mix
 mixamo
@@ -2585,7 +3466,10 @@ mixer
 mjs
 mmul
 mobile
+<<<<<<< HEAD
 mobilidade
+=======
+>>>>>>> origin/main
 mode
 model
 modelo
@@ -2601,12 +3485,18 @@ module
 modules
 modulo
 modulos
+<<<<<<< HEAD
 molde
 moldura
 monetiza
 monitor
 mono
 monocultura
+=======
+monetiza
+monitor
+mono
+>>>>>>> origin/main
 monotona
 monta
 mora
@@ -2614,6 +3504,7 @@ morph
 morphed
 morphtargets
 morre
+<<<<<<< HEAD
 morro
 morros
 morta
@@ -2629,6 +3520,17 @@ motor
 mount
 mouse
 mouth
+=======
+morta
+morto
+mostrando
+motiva
+motivo
+motivos
+motor
+mount
+mouse
+>>>>>>> origin/main
 move
 movement
 mover
@@ -2644,7 +3546,10 @@ mudar
 mudaram
 mudo
 mudou
+<<<<<<< HEAD
 mug
+=======
+>>>>>>> origin/main
 muito
 muitos
 mul
@@ -2653,8 +3558,11 @@ multi
 multin
 multiplayer
 multiple
+<<<<<<< HEAD
 multiplicativa
 multiplier
+=======
+>>>>>>> origin/main
 multiply
 mundo
 murais
@@ -2674,7 +3582,10 @@ mutate
 mutation
 mute
 muzzle
+<<<<<<< HEAD
 mythic
+=======
+>>>>>>> origin/main
 mzmarks
 mzprobe
 nada
@@ -2683,22 +3594,32 @@ named
 names
 nao
 nas
+<<<<<<< HEAD
 nativa
 nativas
+=======
+>>>>>>> origin/main
 native
 nativo
 nativos
 natural
+<<<<<<< HEAD
 nav
 navbar
 navega
 navegador
 navegavel
+=======
+navbar
+navega
+navegador
+>>>>>>> origin/main
 ncia
 ncias
 ncio
 ncora
 ncoras
+<<<<<<< HEAD
 nculo
 ndarray
 ndice
@@ -2709,17 +3630,30 @@ need
 needs
 negate
 negocie
+=======
+ndice
+near
+need
+needs
+negate
+>>>>>>> origin/main
 nele
 nem
 nenhum
 neo
+<<<<<<< HEAD
 nerdolas
+=======
+>>>>>>> origin/main
 nesta
 neste
 net
 nets
 neurais
+<<<<<<< HEAD
 neutra
+=======
+>>>>>>> origin/main
 neutral
 neutro
 never
@@ -2728,7 +3662,10 @@ new
 news
 newsletters
 ngulo
+<<<<<<< HEAD
 ngulos
+=======
+>>>>>>> origin/main
 nibus
 nica
 nick
@@ -2740,24 +3677,36 @@ ninguem
 nio
 nion
 nisso
+<<<<<<< HEAD
 niveis
 nivel
 nobody
 node
 nodes
 noias
+=======
+nobody
+node
+nodes
+>>>>>>> origin/main
 noise
 nome
 nomes
 non
 norm
 normal
+<<<<<<< HEAD
 normaliza
+=======
+>>>>>>> origin/main
 normalizada
 normalize
 normalized
 normals
+<<<<<<< HEAD
 norte
+=======
+>>>>>>> origin/main
 nos
 nossa
 not
@@ -2765,7 +3714,10 @@ nota
 notas
 note
 notes
+<<<<<<< HEAD
 notice
+=======
+>>>>>>> origin/main
 notifica
 notificacao
 notificar
@@ -2777,7 +3729,10 @@ novo
 novos
 now
 npm
+<<<<<<< HEAD
 nrm
+=======
+>>>>>>> origin/main
 nulo
 num
 numa
@@ -2796,16 +3751,23 @@ object
 objective
 objects
 objetivo
+<<<<<<< HEAD
 obrigat
 obrigatoria
 obrigatorios
 observadores
+=======
+objeto
+obrigat
+obrigatorios
+>>>>>>> origin/main
 observar
 obsidian
 obsoletos
 occ
 occluder
 occlusion
+<<<<<<< HEAD
 oclusao
 oclusores
 octahedron
@@ -2815,17 +3777,28 @@ oeste
 off
 offbyone
 offline
+=======
+octahedron
+oeste
+off
+offbyone
+>>>>>>> origin/main
 offset
 offsets
 ofusca
 olhar
 olhe
 olho
+<<<<<<< HEAD
 olhos
 olive
 ombreira
 ombro
 ombros
+=======
+olive
+ombro
+>>>>>>> origin/main
 onboarding
 once
 onde
@@ -2833,11 +3806,16 @@ one
 online
 only
 oom
+<<<<<<< HEAD
 opaca
 opacos
 opaque
 opcional
 opcionalmente
+=======
+opaque
+opcional
+>>>>>>> origin/main
 open
 opencode
 opening
@@ -2862,6 +3840,7 @@ ordem
 ordena
 ordenadas
 order
+<<<<<<< HEAD
 orfaos
 org
 organiza
@@ -2874,19 +3853,34 @@ origin
 originais
 original
 origmaps
+=======
+org
+organiza
+orient
+orientation
+origem
+origin
+original
+>>>>>>> origin/main
 orphans
 orthographic
 orto
 osc
 oss
 osso
+<<<<<<< HEAD
 ossos
+=======
+>>>>>>> origin/main
 other
 otimiza
 otimizada
 ouro
 out
+<<<<<<< HEAD
 outcome
+=======
+>>>>>>> origin/main
 outgoing
 outp
 output
@@ -2909,7 +3903,10 @@ page
 pages
 pagina
 paginas
+<<<<<<< HEAD
 pagination
+=======
+>>>>>>> origin/main
 pai
 painel
 paint
@@ -2922,10 +3919,15 @@ palette
 palha
 palm
 palma
+<<<<<<< HEAD
 palmares
 palpite
 panel
 panels
+=======
+palpite
+panel
+>>>>>>> origin/main
 pano
 papeis
 papel
@@ -2937,7 +3939,10 @@ paralelo
 parallel
 parameter
 params
+<<<<<<< HEAD
 parapets
+=======
+>>>>>>> origin/main
 parciais
 parcial
 parcialmente
@@ -2964,11 +3969,16 @@ partitioned
 parts
 pass
 passa
+<<<<<<< HEAD
 passada
 passadas
 passar
 passaram
 passe
+=======
+passadas
+passar
+>>>>>>> origin/main
 passo
 passos
 passou
@@ -2993,17 +4003,23 @@ pega
 pegada
 pegadinha
 pegar
+<<<<<<< HEAD
 peito
 peitoril
 pela
 pelas
 pele
 peles
+=======
+pela
+pelas
+>>>>>>> origin/main
 pelo
 pend
 pendente
 pending
 pendurar
+<<<<<<< HEAD
 penetracao
 pensadas
 per
@@ -3014,12 +4030,21 @@ perda
 perdeu
 perdido
 perer
+=======
+per
+perda
+perdeu
+perdido
+>>>>>>> origin/main
 perf
 perfil
 perfis
 performance
 pergo
+<<<<<<< HEAD
 pergola
+=======
+>>>>>>> origin/main
 perguntas
 perguntou
 permanente
@@ -3035,11 +4060,17 @@ peso
 pesos
 pessoa
 pessoais
+<<<<<<< HEAD
 pessoas
 pgm
 phase
 philosophy
 phone
+=======
+pgm
+phase
+philosophy
+>>>>>>> origin/main
 phong
 physical
 pick
@@ -3049,6 +4080,7 @@ pickup
 pickups
 pida
 pido
+<<<<<<< HEAD
 pigeon
 pilot
 piloto
@@ -3057,12 +4089,19 @@ pilots
 ping
 pingpong
 pings
+=======
+ping
+pingpong
+>>>>>>> origin/main
 pinta
 pintar
 pintavel
 pior
 piorar
+<<<<<<< HEAD
 piores
+=======
+>>>>>>> origin/main
 pios
 pipe
 pipeline
@@ -3071,11 +4110,16 @@ piscina
 piscinao
 piso
 pistol
+<<<<<<< HEAD
 pistola
 pistoleiro
 pistols
 pitch
 piv
+=======
+pistols
+pitch
+>>>>>>> origin/main
 pix
 pixacao
 pixel
@@ -3086,17 +4130,26 @@ placa
 placar
 place
 plan
+<<<<<<< HEAD
 planar
 planas
 plane
 planes
 planks
+=======
+planas
+plane
+planes
+>>>>>>> origin/main
 plano
 plans
 plant
 planta
+<<<<<<< HEAD
 plantao
 plastico
+=======
+>>>>>>> origin/main
 plate
 platform
 plausiveis
@@ -3114,7 +4167,10 @@ plugins
 plural
 pmrem
 png
+<<<<<<< HEAD
 pngs
+=======
+>>>>>>> origin/main
 poda
 pode
 podem
@@ -3126,6 +4182,7 @@ points
 polar
 policy
 polimento
+<<<<<<< HEAD
 poll
 poly
 polygon
@@ -3134,6 +4191,12 @@ pombas
 ponte
 ponteiros
 pontes
+=======
+poly
+polygon
+polyhedron
+ponteiros
+>>>>>>> origin/main
 ponto
 pontos
 pool
@@ -3148,8 +4211,11 @@ porte
 portrait
 pos
 pose
+<<<<<<< HEAD
 posed
 poses
+=======
+>>>>>>> origin/main
 posi
 position
 positional
@@ -3164,15 +4230,23 @@ postura
 posturas
 posture
 potencialmente
+<<<<<<< HEAD
 poupa
 power
 pra
 praca
+=======
+power
+pra
+>>>>>>> origin/main
 practical
 praia
 prazo
 pre
+<<<<<<< HEAD
 precis
+=======
+>>>>>>> origin/main
 precisa
 precisam
 precisar
@@ -3180,13 +4254,19 @@ precision
 preciso
 precisou
 predict
+<<<<<<< HEAD
 predio
 preenchido
+=======
+>>>>>>> origin/main
 prefiltered
 prefiltro
 prefix
 prefixes
+<<<<<<< HEAD
 preflight
+=======
+>>>>>>> origin/main
 preload
 premia
 premultiply
@@ -3197,12 +4277,17 @@ prepare
 prerender
 presenca
 presence
+<<<<<<< HEAD
 present
 preservando
 preset
 presets
 preta
 pretendido
+=======
+preset
+presets
+>>>>>>> origin/main
 prever
 preview
 previews
@@ -3213,7 +4298,10 @@ primeira
 primeiras
 primeiro
 primitive
+<<<<<<< HEAD
 primitives
+=======
+>>>>>>> origin/main
 prims
 princ
 principal
@@ -3244,6 +4332,7 @@ produto
 produz
 professor
 profile
+<<<<<<< HEAD
 profissionais
 profissional
 profundas
@@ -3251,6 +4340,10 @@ profundidade
 profundidades
 program
 programador
+=======
+profissional
+program
+>>>>>>> origin/main
 programs
 proj
 proje
@@ -3262,7 +4355,10 @@ projetor
 prompt
 prompts
 pronta
+<<<<<<< HEAD
 prontas
+=======
+>>>>>>> origin/main
 pronto
 proof
 prop
@@ -3275,6 +4371,7 @@ proposta
 props
 prosa
 prose
+<<<<<<< HEAD
 protegido
 protocolo
 prova
@@ -3282,11 +4379,18 @@ provar
 provas
 prove
 provedor
+=======
+protocolo
+prova
+>>>>>>> origin/main
 provenance
 provider
 providers
 proximity
+<<<<<<< HEAD
 proximo
+=======
+>>>>>>> origin/main
 prune
 pruned
 pts
@@ -3302,13 +4406,17 @@ puderam
 puff
 pulado
 pull
+<<<<<<< HEAD
 pump
+=======
+>>>>>>> origin/main
 pure
 purge
 puro
 push
 put
 pwq
+<<<<<<< HEAD
 pxm
 qtl
 quad
@@ -3318,6 +4426,13 @@ quadril
 quadro
 quadros
 quais
+=======
+qtl
+quad
+quadratic
+quadro
+quadros
+>>>>>>> origin/main
 quake
 qual
 qualidade
@@ -3336,6 +4451,7 @@ quebra
 quebrada
 quebrado
 quebram
+<<<<<<< HEAD
 quebrar
 quebrava
 queda
@@ -3343,16 +4459,26 @@ queixeira
 quem
 quente
 quer
+=======
+quebrava
+queda
+quem
+quente
+>>>>>>> origin/main
 query
 quick
 quina
 quiosques
 quiser
 quit
+<<<<<<< HEAD
 quita
 quitadas
 quitados
 quote
+=======
+quitadas
+>>>>>>> origin/main
 rabbit
 racioc
 rad
@@ -3375,17 +4501,25 @@ ranking
 rankings
 raramente
 rarities
+<<<<<<< HEAD
 raro
 raster
 rasteriza
 rat
+=======
+raster
+rasteriza
+>>>>>>> origin/main
 ratchet
 rate
 ratelimit
 rates
 ratio
+<<<<<<< HEAD
 rato
 ratos
+=======
+>>>>>>> origin/main
 raw
 ray
 raycast
@@ -3399,6 +4533,7 @@ react
 read
 readme
 ready
+<<<<<<< HEAD
 reais
 real
 realista
@@ -3415,20 +4550,36 @@ recast
 recebem
 receipt
 receipts
+=======
+real
+realista
+realmente
+reason
+reboco
+rebuild
+rec
+recast
+>>>>>>> origin/main
 recentes
 recoil
 recomenda
 recomendada
 recomendado
+<<<<<<< HEAD
 recomendaria
 reconstr
 reconstru
+=======
+>>>>>>> origin/main
 record
 recorder
 records
 recorta
 recorte
+<<<<<<< HEAD
 recover
+=======
+>>>>>>> origin/main
 rect
 recuo
 recupera
@@ -3439,18 +4590,26 @@ red
 redact
 rede
 redes
+<<<<<<< HEAD
 redraw
 reduced
 redundante
 reduz
+=======
+redundante
+reescreve
+>>>>>>> origin/main
 ref
 refa
 refer
 reference
 references
+<<<<<<< HEAD
 referencia
 refina
 refine
+=======
+>>>>>>> origin/main
 reflect
 reflex
 refresh
@@ -3458,14 +4617,20 @@ refs
 refute
 reg
 regen
+<<<<<<< HEAD
 regenerar
+=======
+>>>>>>> origin/main
 regi
 regiao
 region
 regional
 register
+<<<<<<< HEAD
 registrada
 registrados
+=======
+>>>>>>> origin/main
 registro
 registros
 registry
@@ -3479,7 +4644,10 @@ reiniciando
 reiniciou
 rejeita
 rel
+<<<<<<< HEAD
 relacao
+=======
+>>>>>>> origin/main
 relat
 relatados
 relationships
@@ -3487,7 +4655,10 @@ relativa
 relatorio
 release
 releases
+<<<<<<< HEAD
 relevo
+=======
+>>>>>>> origin/main
 relitigar
 reload
 reloading
@@ -3498,6 +4669,7 @@ remove
 removed
 removida
 removidos
+<<<<<<< HEAD
 rename
 render
 renderer
@@ -3505,6 +4677,11 @@ renderiza
 renderizado
 renders
 renovam
+=======
+render
+renderer
+renderiza
+>>>>>>> origin/main
 reorder
 repeat
 repetidos
@@ -3512,10 +4689,15 @@ repetir
 repita
 replace
 replacer
+<<<<<<< HEAD
 replacing
 repo
 report
 reporta
+=======
+repo
+report
+>>>>>>> origin/main
 reportando
 reports
 repos
@@ -3525,23 +4707,35 @@ reprodu
 reproduzidos
 reproduzir
 reprova
+<<<<<<< HEAD
 reprovadas
 reprovados
 reprovam
 request
 requested
+=======
+reprovados
+reprovam
+request
+>>>>>>> origin/main
 require
 required
 requisi
 requisito
 requisitos
 res
+<<<<<<< HEAD
 reservas
+=======
+>>>>>>> origin/main
 reserved
 reset
 resize
 reskin
+<<<<<<< HEAD
 resolucao
+=======
+>>>>>>> origin/main
 resolve
 resolvida
 resolvido
@@ -3552,10 +4746,15 @@ response
 resposta
 rest
 restaura
+<<<<<<< HEAD
 restaurar
 resto
 restore
 restored
+=======
+resto
+restore
+>>>>>>> origin/main
 restri
 result
 resultado
@@ -3568,27 +4767,40 @@ ret
 reta
 retarget
 reten
+<<<<<<< HEAD
 retexturiza
+=======
+>>>>>>> origin/main
 reticle
 retry
 reverb
 reverse
+<<<<<<< HEAD
 reverso
+=======
+>>>>>>> origin/main
 revertida
 review
 revis
 revive
 revogado
+<<<<<<< HEAD
 rewrite
 rfc
 rgb
 ria
 rias
 rick
+=======
+rfc
+rgb
+ria
+>>>>>>> origin/main
 rico
 ricochet
 rifle
 rig
+<<<<<<< HEAD
 rigado
 rigados
 riggable
@@ -3599,6 +4811,10 @@ rigid
 rigidamente
 rigidificar
 rigidify
+=======
+riggable
+right
+>>>>>>> origin/main
 rim
 ring
 rio
@@ -3613,7 +4829,10 @@ rnd
 rng
 roadmap
 roam
+<<<<<<< HEAD
 roaming
+=======
+>>>>>>> origin/main
 rod
 roda
 rodada
@@ -3631,6 +4850,7 @@ rollback
 rolloff
 rollup
 rom
+<<<<<<< HEAD
 roof
 rooflet
 roofs
@@ -3642,6 +4862,12 @@ roster
 rosto
 rot
 rota
+=======
+root
+roots
+rosto
+rot
+>>>>>>> origin/main
 rotas
 rotate
 rotated
@@ -3655,13 +4881,17 @@ rough
 roughness
 roughs
 round
+<<<<<<< HEAD
 rounded
+=======
+>>>>>>> origin/main
 rounds
 route
 router
 routes
 row
 rows
+<<<<<<< HEAD
 roxa
 rpc
 rrego
@@ -3671,6 +4901,12 @@ rua
 rubric
 rugosidade
 ruido
+=======
+rpc
+rtc
+rubric
+rugosidade
+>>>>>>> origin/main
 ruim
 ruins
 ruler
@@ -3687,7 +4923,10 @@ sabe
 saber
 sabia
 sabota
+<<<<<<< HEAD
 saci
+=======
+>>>>>>> origin/main
 saem
 safari
 safe
@@ -3699,7 +4938,10 @@ sair
 saiu
 salva
 salvar
+<<<<<<< HEAD
 salvos
+=======
+>>>>>>> origin/main
 same
 sample
 samples
@@ -3712,7 +4954,10 @@ satura
 save
 say
 saying
+<<<<<<< HEAD
 scaffold
+=======
+>>>>>>> origin/main
 scalar
 scale
 scaled
@@ -3733,7 +4978,10 @@ scope
 scoped
 scopes
 scoreboard
+<<<<<<< HEAD
 scout
+=======
+>>>>>>> origin/main
 screen
 screens
 screenshot
@@ -3741,10 +4989,15 @@ screenshots
 scrim
 script
 scripts
+<<<<<<< HEAD
 seam
 seat
 seco
 secoes
+=======
+seat
+seco
+>>>>>>> origin/main
 secrets
 secs
 sector
@@ -3755,6 +5008,7 @@ seedar
 seeded
 seeds
 seeking
+<<<<<<< HEAD
 seen
 seg
 segment
@@ -3763,6 +5017,13 @@ segmentado
 segments
 segs
 seguir
+=======
+seg
+segment
+segmenta
+segments
+segs
+>>>>>>> origin/main
 segundos
 seguran
 seguranca
@@ -3773,12 +5034,18 @@ sel
 sele
 select
 selection
+<<<<<<< HEAD
 selector
+=======
+>>>>>>> origin/main
 selftest
 sem
 semanas
 semantic
+<<<<<<< HEAD
 semanticamente
+=======
+>>>>>>> origin/main
 semente
 sementes
 sempre
@@ -3800,12 +5067,18 @@ sequencialmente
 sequenciamento
 ser
 serialize
+<<<<<<< HEAD
 sertao
 serve
 served
 server
 servi
 servia
+=======
+serve
+server
+servi
+>>>>>>> origin/main
 service
 servida
 servidor
@@ -3813,7 +5086,10 @@ servindo
 sess
 session
 set
+<<<<<<< HEAD
 setores
+=======
+>>>>>>> origin/main
 setter
 settings
 settle
@@ -3823,7 +5099,10 @@ several
 severidade
 severity
 sfx
+<<<<<<< HEAD
 sha
+=======
+>>>>>>> origin/main
 shade
 shader
 shaderbudget
@@ -3840,11 +5119,15 @@ shear
 sheen
 sheet
 shell
+<<<<<<< HEAD
 shells
+=======
+>>>>>>> origin/main
 shift
 shim
 shoot
 short
+<<<<<<< HEAD
 shortest
 shot
 shotgun
@@ -3852,6 +5135,11 @@ shots
 should
 shoulder
 shoulders
+=======
+shot
+shotgun
+shots
+>>>>>>> origin/main
 show
 shuffled
 sica
@@ -3862,8 +5150,11 @@ sight
 sigma
 sigmoid
 sign
+<<<<<<< HEAD
 signature
 signatures
+=======
+>>>>>>> origin/main
 signed
 signs
 sil
@@ -3874,6 +5165,7 @@ silhueta
 sils
 sim
 simbolo
+<<<<<<< HEAD
 simetria
 simula
 simular
@@ -3881,38 +5173,62 @@ sinais
 sinal
 sincroniza
 sinergias
+=======
+simula
+sinais
+sinal
+sincroniza
+>>>>>>> origin/main
 single
 singles
 singular
 sintoma
 sistema
+<<<<<<< HEAD
 sistemas
 site
 sitemap
 sitio
 sito
 situa
+=======
+site
+sitemap
+sito
+>>>>>>> origin/main
 size
 sizes
 skel
 skeleton
 skeletons
+<<<<<<< HEAD
 skies
 skill
 skills
 skin
 skinnado
+=======
+skill
+skills
+skin
+>>>>>>> origin/main
 skinned
 skip
 skirt
 skull
 sky
+<<<<<<< HEAD
 slab
 sleep
 slerp
 slice
 slices
 slim
+=======
+sleep
+slerp
+slice
+>>>>>>> origin/main
 slug
 smg
 smith
@@ -3921,6 +5237,7 @@ smooth
 smootherstep
 smoothstep
 snap
+<<<<<<< HEAD
 snapshot
 sniper
 sobe
@@ -3938,6 +5255,19 @@ soft
 solta
 soltar
 soltas
+=======
+sniper
+sobe
+sobem
+sobrar
+sobre
+sobrescreve
+social
+socials
+soft
+solta
+soltar
+>>>>>>> origin/main
 solto
 solu
 solve
@@ -3945,7 +5275,10 @@ solves
 somam
 sombras
 somem
+<<<<<<< HEAD
 somente
+=======
+>>>>>>> origin/main
 sonda
 sort
 sorted
@@ -3957,10 +5290,14 @@ sozinho
 space
 spaced
 spaces
+<<<<<<< HEAD
 span
 spatial
 spawn
 spawnface
+=======
+spawn
+>>>>>>> origin/main
 spawns
 spec
 specify
@@ -3970,7 +5307,10 @@ speech
 speed
 sphere
 spherical
+<<<<<<< HEAD
 spine
+=======
+>>>>>>> origin/main
 splash
 spline
 split
@@ -3986,12 +5326,16 @@ src
 srgb
 srv
 ssao
+<<<<<<< HEAD
 sseis
+=======
+>>>>>>> origin/main
 ssimo
 ssr
 ssrf
 stable
 stack
+<<<<<<< HEAD
 stacked
 stage
 staging
@@ -4001,6 +5345,13 @@ staircase
 stance
 standard
 star
+=======
+stage
+staging
+stains
+stance
+standard
+>>>>>>> origin/main
 start
 state
 states
@@ -4013,15 +5364,21 @@ step
 steps
 stereo
 stico
+<<<<<<< HEAD
 sticos
 stigma
+=======
+>>>>>>> origin/main
 still
 stock
 stop
 store
 str
 stream
+<<<<<<< HEAD
 street
+=======
+>>>>>>> origin/main
 strength
 strict
 string
@@ -4030,35 +5387,49 @@ stripe
 structural
 structure
 structured
+<<<<<<< HEAD
 stt
+=======
+>>>>>>> origin/main
 stub
 studio
 style
 stylize
 sua
 suas
+<<<<<<< HEAD
 suave
 suaves
 suaviza
+=======
+suaves
+>>>>>>> origin/main
 sub
 subagents
 subamostra
 subclip
+<<<<<<< HEAD
 subcomandos
+=======
+>>>>>>> origin/main
 subcommands
 subestimado
 subir
 submit
 submitguard
 subscribe
+<<<<<<< HEAD
 substitui
 substituicoes
 sufixo
+=======
+>>>>>>> origin/main
 sugerida
 sujo
 sumidos
 summary
 sun
+<<<<<<< HEAD
 sup
 supabase
 super
@@ -4066,6 +5437,12 @@ superf
 superficie
 superficies
 suporte
+=======
+supabase
+super
+superf
+superficies
+>>>>>>> origin/main
 supply
 support
 supported
@@ -4086,9 +5463,12 @@ system
 tabela
 table
 tables
+<<<<<<< HEAD
 tablet
 tabua
 tabuas
+=======
+>>>>>>> origin/main
 tag
 take
 tam
@@ -4101,16 +5481,23 @@ tarefas
 target
 targeth
 targets
+<<<<<<< HEAD
 tarja
 task
 tasks
 tavor
 team
 teatro
+=======
+tasks
+tavor
+team
+>>>>>>> origin/main
 technical
 tecnologia
 tela
 telas
+<<<<<<< HEAD
 telefone
 telemetria
 telemetry
@@ -4129,6 +5516,18 @@ terceiros
 terracos
 terrain
 terreo
+=======
+telemetria
+telemetry
+tem
+temp
+template
+tempo
+tentativa
+ter
+terceiros
+ternario
+>>>>>>> origin/main
 test
 testado
 testar
@@ -4154,17 +5553,26 @@ the
 their
 them
 there
+<<<<<<< HEAD
 thermos
+=======
+>>>>>>> origin/main
 thin
 thing
 third
 this
 three
+<<<<<<< HEAD
 thresholds
 throw
 thru
 thumb
 thumbnail
+=======
+throw
+thru
+thumb
+>>>>>>> origin/main
 tica
 ticas
 tick
@@ -4172,8 +5580,11 @@ tico
 ticos
 tier
 tiers
+<<<<<<< HEAD
 tijolo
 tijolos
+=======
+>>>>>>> origin/main
 tile
 tima
 time
@@ -4189,12 +5600,18 @@ tipo
 tipogr
 tipografia
 tipos
+<<<<<<< HEAD
 tips
 tirar
 tiro
 tiros
 tis
 titulo
+=======
+tirar
+tiro
+tis
+>>>>>>> origin/main
 tmapping
 tmp
 toca
@@ -4208,21 +5625,30 @@ todos
 together
 toggle
 token
+<<<<<<< HEAD
 tokens
+=======
+>>>>>>> origin/main
 tom
 tomadas
 tone
 tonemapeado
 tonemapping
+<<<<<<< HEAD
 tons
+=======
+>>>>>>> origin/main
 tool
 toolchain
 tools
 toon
 top
+<<<<<<< HEAD
 topo
 topol
 topos
+=======
+>>>>>>> origin/main
 toque
 torso
 torus
@@ -4231,9 +5657,13 @@ total
 touch
 towards
 tpc
+<<<<<<< HEAD
 tra
 trabalho
 trace
+=======
+trabalho
+>>>>>>> origin/main
 tracer
 track
 tracker
@@ -4243,15 +5673,20 @@ trails
 train
 trainer
 training
+<<<<<<< HEAD
 transfer
 transfere
 transform
 transforma
+=======
+transform
+>>>>>>> origin/main
 transitorios
 translate
 translation
 transmission
 transparent
+<<<<<<< HEAD
 transparente
 transparentes
 transpose
@@ -4265,6 +5700,15 @@ trave
 traverse
 travessao
 travessia
+=======
+transpose
+traps
+trata
+tratamento
+trava
+traverse
+travessao
+>>>>>>> origin/main
 treinado
 treinar
 treta
@@ -4284,7 +5728,10 @@ tripo
 tripovm
 tris
 troca
+<<<<<<< HEAD
 trocar
+=======
+>>>>>>> origin/main
 trs
 true
 truncadas
@@ -4295,11 +5742,17 @@ ttf
 tua
 tube
 tudo
+<<<<<<< HEAD
 tuft
 tune
 tuned
 turf
 turnaround
+=======
+tune
+tuned
+turf
+>>>>>>> origin/main
 tvm
 twitter
 two
@@ -4316,6 +5769,7 @@ unavailable
 unbind
 unbound
 uncache
+<<<<<<< HEAD
 unchanged
 unfloor
 unguarded
@@ -4325,11 +5779,20 @@ unicos
 unidade
 uniform
 uniforme
+=======
+unfloor
+unguarded
+unico
+uniform
+>>>>>>> origin/main
 uniformly
 uniforms
 union
 unique
+<<<<<<< HEAD
 unir
+=======
+>>>>>>> origin/main
 unit
 units
 unknown
@@ -4342,7 +5805,10 @@ unreal
 unregister
 unroll
 unsubscribe
+<<<<<<< HEAD
 until
+=======
+>>>>>>> origin/main
 unvignette
 upd
 update
@@ -4358,20 +5824,28 @@ urlset
 urna
 usa
 usable
+<<<<<<< HEAD
 usada
 usage
 usam
 usando
+=======
+usage
+>>>>>>> origin/main
 usar
 use
 used
 user
 uses
 using
+<<<<<<< HEAD
 uso
 usos
 usu
 utilidade
+=======
+usu
+>>>>>>> origin/main
 utils
 uto
 uuid
@@ -4387,8 +5861,11 @@ valida
 validar
 validate
 validation
+<<<<<<< HEAD
 validator
 validos
+=======
+>>>>>>> origin/main
 valor
 valorant
 valores
@@ -4399,14 +5876,20 @@ vanilla
 vao
 vap
 var
+<<<<<<< HEAD
 varia
+=======
+>>>>>>> origin/main
 variables
 variant
 variante
 variants
 varredura
 vars
+<<<<<<< HEAD
 vary
+=======
+>>>>>>> origin/main
 varying
 vault
 vazando
@@ -4426,71 +5909,105 @@ vem
 venda
 vendor
 vendorizar
+<<<<<<< HEAD
 ver
+=======
+>>>>>>> origin/main
 vercel
 verdade
 verdadeiro
 verde
+<<<<<<< HEAD
 verdes
 veredito
 verga
 verific
+=======
+veredito
+>>>>>>> origin/main
 verifica
 verificadas
 verificado
 verificadores
+<<<<<<< HEAD
 verificados
+=======
+>>>>>>> origin/main
 verificar
 verification
 verify
 vermelha
 vermelhas
 vermelho
+<<<<<<< HEAD
 vermelhos
 veropeso
+=======
+>>>>>>> origin/main
 vers
 version
 versionado
 versionar
 versoes
 vertex
+<<<<<<< HEAD
 vertical
+=======
+>>>>>>> origin/main
 vertices
 verts
 very
 vetos
+<<<<<<< HEAD
 vez
 via
 viabilidade
+=======
+via
+>>>>>>> origin/main
 viavel
 vida
 vidas
 video
+<<<<<<< HEAD
 vidro
+=======
+>>>>>>> origin/main
 view
 viewmodel
 viewmodels
 viewport
 views
 vignette
+<<<<<<< HEAD
 vil
+=======
+>>>>>>> origin/main
 vine
 viola
 violados
 viole
 vira
+<<<<<<< HEAD
 virado
 viraliza
 viram
+=======
+viraliza
+>>>>>>> origin/main
 virava
 virou
 virtual
 vis
+<<<<<<< HEAD
 visada
+=======
+>>>>>>> origin/main
 visibility
 visible
 visit
 visivel
+<<<<<<< HEAD
 visor
 vistos
 visuais
@@ -4498,6 +6015,12 @@ visual
 viva
 vivas
 vividos
+=======
+vistos
+visual
+viva
+vivas
+>>>>>>> origin/main
 viz
 vizinhanca
 vmattach
@@ -4511,6 +6034,7 @@ voc
 vocabul
 vocabulario
 voice
+<<<<<<< HEAD
 voices
 vol
 volta
@@ -4522,6 +6046,13 @@ vsmooth
 vulnerabilidade
 vuvuzela
 waist
+=======
+vol
+volta
+volume
+vulnerabilidade
+vuvuzela
+>>>>>>> origin/main
 wait
 walk
 wall
@@ -4539,8 +6070,11 @@ watch
 water
 waterfall
 way
+<<<<<<< HEAD
 waypo
 waypoints
+=======
+>>>>>>> origin/main
 wdir
 weapon
 weapons
@@ -4552,7 +6086,10 @@ webp
 webpackbar
 website
 weight
+<<<<<<< HEAD
 weighted
+=======
+>>>>>>> origin/main
 weights
 were
 what
@@ -4564,13 +6101,19 @@ who
 whoever
 why
 width
+<<<<<<< HEAD
 widths
+=======
+>>>>>>> origin/main
 wiki
 will
 win
 windows
+<<<<<<< HEAD
 wing
 wings
+=======
+>>>>>>> origin/main
 wins
 wireframe
 wise
@@ -4599,7 +6142,10 @@ xadrezados
 xform
 xhair
 xima
+<<<<<<< HEAD
 ximo
+=======
+>>>>>>> origin/main
 ximos
 xml
 xss
@@ -4614,10 +6160,17 @@ you
 your
 zero
 zinc
+<<<<<<< HEAD
 zinco
+=======
+>>>>>>> origin/main
 zona
 zonas
 zone
 zones
+<<<<<<< HEAD
 zoom
 zumbi
+=======
+zoom
+>>>>>>> origin/main

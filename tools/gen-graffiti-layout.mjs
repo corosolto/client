@@ -32,6 +32,7 @@
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { impressao } from './eval/graffiti-fingerprint.mjs';
 
 const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
@@ -143,9 +144,19 @@ const cabecalho = `/* ==========================================================
    ${total} peças no total.
    ============================================================================ */
 export const GRAFITE = `;
-writeFileSync(SAIDA, cabecalho + JSON.stringify(anterior) + ';\n');
-console.log(`-> ${SAIDA}  (${total} peças, ${(JSON.stringify(anterior).length / 1024).toFixed(0)} KB)`);
+/* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82): o hash do fonte de cada map_*.js e da
+   passada, gravado JUNTO com a saída assada. É contra isto que a
+   `tools/eval/graffiti-layout-check.mjs` cobra FRESCOR — se a geometria/banda de um
+   mapa ou o algoritmo da passada mudar e ninguém regerar, o hash não bate e o portão
+   fecha. Mesma origem (`graffiti-fingerprint.mjs`) para não discordar de si mesma. */
+const fp = impressao();
+const rodape = `\n/* IMPRESSÃO DIGITAL DAS ENTRADAS (issue #82) — GERADA junto com o layout, ver\n`
+  + `   tools/eval/graffiti-fingerprint.mjs. Cobrada por tools/eval/graffiti-layout-check.mjs. */\n`
+  + `export const GRAFITE_FP = ${JSON.stringify(fp)};\n`;
+writeFileSync(SAIDA, cabecalho + JSON.stringify(anterior) + ';\n' + rodape);
+console.log(`-> ${SAIDA}  (${total} peças, ${(JSON.stringify(anterior).length / 1024).toFixed(0)} KB, fp pass ${fp.pass})`);
 if (semPassada.length) {
   console.error(`SEM PASSADA: ${semPassada.join(', ')} — o arquivo foi gravado sem fóssil, mas o mapa precisa chamar grafitar()`);
   process.exit(1);
 }
+>>>>>>> origin/main

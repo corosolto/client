@@ -34,10 +34,38 @@ export const HAVAN_PROPS = [
   // v3: mobília da loja Mint (gôndolas cheias, caixas, eletro, roupas)
   'gondola_mercado', 'gondola_eletro', 'arara_roupas', 'caixa_cobranca', 'painel_tvs', 'manequim',
 ];
-const CARS = HAVAN_PROPS.filter(id => !['statue_liberty', 'shopping_cart', 'onibus_urbano',
+// `car_a` fora da frota: bbox mais ALTA que comprida, então nenhuma escala o deixa certo
+// (ver a régua). Reentra corrigindo o .glb, tirando-o daqui e dando-lhe linha no CAR_DIM.
+const CARS = HAVAN_PROPS.filter(id => !['statue_liberty', 'shopping_cart', 'onibus_urbano', 'car_a',
   'gondola_mercado', 'gondola_eletro', 'arara_roupas', 'caixa_cobranca', 'painel_tvs', 'manequim'].includes(id));
 // modelos Mint BR com o comprimento no eixo X — giram 90° pra alinhar na vaga
 const RY_FIX = { brasilia_vw: Math.PI / 2, saveiro: Math.PI / 2, moto_cg: Math.PI / 2 };
+
+/* Ficha de fábrica [comprimento, altura] em metros — é a REFERÊNCIA da escala dos veículos,
+   conferida por tools/eval/escala-veiculo-check.mjs. Fora da tabela cai no padrão de sedã. */
+const CAR_DIM = {
+  moto_cg: [2.02, 1.08],
+  fusca: [4.03, 1.50], '1968_volkswagen_beetle': [4.03, 1.50], old_vw_bug: [4.03, 1.50],
+  brasilia_vw: [4.03, 1.40], kombi: [4.51, 1.94], opala: [4.60, 1.39],
+  chevette: [4.14, 1.36], saveiro: [4.24, 1.47],
+  fiat_uno: [3.72, 1.44], uno_mille: [3.66, 1.44], fiat_toro: [4.92, 1.78],
+  '1969_dodge_charger_rt': [5.28, 1.35], '1976_volkswagen_golf_gti_mk1': [3.82, 1.39],
+  '1986_ford_escort_xr3': [4.06, 1.36], '1989_ford_fiesta_xr2i_mk3': [3.74, 1.32],
+  '1999_volkswagen_gol_2000_gti_g2': [3.81, 1.41], '2006_chevrolet_cobalt_lt': [4.48, 1.48],
+  '2006_hyundai_sonata': [4.80, 1.47], dirty_lada_lowpoly_from_scan: [4.04, 1.44],
+  jeep_cherokee: [4.44, 1.78], peugeot_3008: [4.45, 1.62], peugeot_405: [4.41, 1.41],
+  reliant_k_car: [4.50, 1.35], small_price_car: [3.70, 1.45],
+  '2021_nissan_kicks': [4.30, 1.59], '1965_ford_mustang_coupe_289': [4.61, 1.30],
+  '1981_dmc_delorean': [4.27, 1.14], '1999_mercedes_benz_s600': [5.16, 1.44],
+  '2002_volkswagen_golf_r32_mk4': [4.15, 1.44], '2014_mini_cooper_s_f56': [3.85, 1.41],
+  '2015_nissan_versa_sedan_1.6': [4.50, 1.50], '2017_kia_picanto_gt-line': [3.60, 1.49],
+  '2019_ford_fiesta_st': [4.07, 1.47], '2020_bmw_m8_coupe': [4.87, 1.35],
+  '2020_nissan_sentra_sylphy': [4.64, 1.45], '2021_volkswagen_polo_plus': [4.06, 1.45],
+  '2022_chevrolet_tracker_rs_335t': [4.27, 1.66], '2023_nissan_altima__teana': [4.90, 1.44],
+  '2023_toyota_rav4_hybrid': [4.60, 1.69],
+};
+const CAR_DIM_PADRAO = [4.20, 1.50];
+const carDim = (id) => CAR_DIM[id] || CAR_DIM_PADRAO;
 
 // Seleção de carros POR PARTIDA (peso: 12 modelos leves ≈ 8MB em vez de 81MB).
 // A seed é setada no startGame (main.js) ANTES do preload — menu e jogo veem a mesma seleção.
@@ -658,19 +686,23 @@ export function buildHavan(scene, T) {
   // Com BATCH a cor da lataria vai por instanceColor (ver PropBatch.paintTest): 59 carros
   // continuam com 59 pinturas diferentes, mas custam ~1 draw call por material do MODELO.
   const placeCar = (id, x, z, ry) => {
-    if (BATCH) { const col = CARPAINT ? nextPaint() : null; if (PROPS.add(id, { x, y: 0, z, targetH: 1.55, ry, color: col })) return; fallbackCar(id, x, z, ry); return; }
-    const o = placeProp(id, { x, y: 0, z, targetH: 1.55, ry });
+    const [cl, ch] = carDim(id);   // ficha de fábrica; ver CAR_DIM lá em cima
+    if (BATCH) { const col = CARPAINT ? nextPaint() : null; if (PROPS.add(id, { x, y: 0, z, targetLen: cl, targetH: ch, ry, color: col })) return; fallbackCar(id, x, z, ry); return; }
+    const o = placeProp(id, { x, y: 0, z, targetLen: cl, targetH: ch, ry });
     if (!o) { fallbackCar(id, x, z, ry); return; }
     paintBR(o); root.add(o);
     o.traverse((m) => { if (m.isMesh) occluders.push(m); });
   };
   function fallbackCar(id, x, z, ry) {
     let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    // o fallback segue a ficha: senão a moto sem GLB volta como caixa de 4,20 m
+    const [cl, calt] = carDim(id);
+    const kl = cl / CAR_DIM_PADRAO[0], ka = calt / CAR_DIM_PADRAO[1];
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 4.2), lam({ color: CAR_COLORS[Math.abs(h) % CAR_COLORS.length], metalness: 0.55, roughness: 0.32, envMapIntensity: 1.8 }));
-    body.position.y = 0.55; body.castShadow = body.receiveShadow = true; g.add(body);
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.1), lam({ color: 0x20242a, metalness: 0.45, roughness: 0.18, envMapIntensity: 2.2 }));   // vidro do carro
-    cabin.position.set(0, 1.05, -0.2); cabin.castShadow = true; g.add(cabin);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.8 * kl, 0.55 * ka, 4.2 * kl), lam({ color: CAR_COLORS[Math.abs(h) % CAR_COLORS.length], metalness: 0.55, roughness: 0.32, envMapIntensity: 1.8 }));
+    body.position.y = 0.55 * ka; body.castShadow = body.receiveShadow = true; g.add(body);
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6 * kl, 0.5 * ka, 2.1 * kl), lam({ color: 0x20242a, metalness: 0.45, roughness: 0.18, envMapIntensity: 2.2 }));   // vidro do carro
+    cabin.position.set(0, 1.05 * ka, -0.2 * kl); cabin.castShadow = true; g.add(cabin);
     g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
     g.traverse((m) => { if (m.isMesh) occluders.push(m); });
   }

@@ -103,7 +103,7 @@ negativo — resultado negativo medido vale tanto quanto conserto.
 > 0/26. O modo de falha estava documentado desde antes em `public/js/game.js:1457`
 > (*"SEM ambiente … metalness 1,0 lê como silhueta preta"*).
 >
-> **Terceiro caso.** BUG-31: `plans/02-BOTS-E-MODELS.md:285` mandava rodar `retarget-glb.mjs` nos
+> **Terceiro caso.** BUG-31: `docs/historico/plans/02-BOTS-E-MODELS.md:285` mandava rodar `retarget-glb.mjs` nos
 > palhaços. Rodado, medido, **no-op**: 0,13° de desvio máximo por osso. Gerar 88 GLB para não
 > mudar um vértice teria custado peso morto contra o teto de 250 MB da CrazyGames.
 

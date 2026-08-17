@@ -79,7 +79,15 @@ const FORMA_CS = /['"`]((?:fy|de|aim|awp)_[a-z0-9_]+)['"`]/g;
 
 const SEM_VARREDURA = [
   'node_modules', '.git', 'dist', '.vercel', 'graphify-out', 'historico',
+  /* Worktrees são checkouts paralelos de OUTRAS branches — não são código vivo
+     da árvore atual. Sem isto, a régua escaneia `.worktrees/<branch-velha>/` e
+     acusa ids antigos que só existem lá, virando vermelha sem defeito. */
+  '.worktrees',
   'CHANGELOG.md', 'KNOWN-BUGS.md',
+  /* Atribuição histórica: `docs/LICENCA.md` cita o mapa `fy_pool_day` como veio
+     do contribuidor daltonfontes — é o nome da contribuição na origem, não código
+     vivo. Mesmo motivo de CHANGELOG/KNOWN-BUGS. */
+  join('docs', 'LICENCA.md'),
   /* `public/docs` é SAÍDA DE BUILD do Docusaurus (`docs/` -> `npm run build:site`), com
      nome de arquivo por hash. Policiar artefato em vez de fonte deixa a régua vermelha
      toda vez que o bundle publicado ficar uma geração atrás de um rename — que foi
