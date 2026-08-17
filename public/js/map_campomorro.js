@@ -172,7 +172,7 @@ export function buildCampoMorro(scene, T = {}) {
     if (opts.collide !== false) {
       const c = { minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 };
       colliders.push(c); occluders.push(m);
-    }
+    } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
     return m;
   };
 
@@ -184,12 +184,12 @@ export function buildCampoMorro(scene, T = {}) {
     const eixoX = Math.abs(x) > Math.abs(z), lado = eixoX ? Math.sign(x || 1) : Math.sign(z || 1);
     if (eixoX) {
       const fx = x - lado * (w / 2 + 0.035);
-      addBox(0.07, 1.95, 0.86, MAT.door, fx, base + 0.04, z + (seed % 2 ? -d * 0.22 : d * 0.22), { collide: false, cast: false });
+      addBox(0.07, 1.95, 0.86, MAT.door, fx, base + 0.04, z + (seed % 2 ? -d * 0.22 : d * 0.22), { collide: false, cast: false, bala: true });
       addBox(0.06, 0.82, 1.12, MAT.glass, fx - lado * 0.01, base + 1.35, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false, cast: false });
       addBox(0.58, 0.08, 1.45, MAT.roof, fx - lado * 0.28, base + 2.4, z + (seed % 2 ? d * 0.18 : -d * 0.18), { collide: false });
     } else {
       const fz = z - lado * (d / 2 + 0.035);
-      addBox(0.86, 1.95, 0.07, MAT.door, x + (seed % 2 ? -w * 0.22 : w * 0.22), base + 0.04, fz, { collide: false, cast: false });
+      addBox(0.86, 1.95, 0.07, MAT.door, x + (seed % 2 ? -w * 0.22 : w * 0.22), base + 0.04, fz, { collide: false, cast: false, bala: true });
       addBox(1.12, 0.82, 0.06, MAT.glass, x + (seed % 2 ? w * 0.18 : -w * 0.18), base + 1.35, fz - lado * 0.01, { collide: false, cast: false });
       addBox(1.45, 0.08, 0.58, MAT.roof, x + (seed % 2 ? w * 0.18 : -w * 0.18), base + 2.4, fz - lado * 0.28, { collide: false });
     }
@@ -234,6 +234,7 @@ export function buildCampoMorro(scene, T = {}) {
   pos.needsUpdate = true; terrainGeo.computeVertexNormals();
   const terrain = new THREE.Mesh(terrainGeo, MAT.dirt);
   terrain.rotation.x = -Math.PI / 2; terrain.receiveShadow = true; root.add(terrain);
+  occluders.push(terrain);   // a bala para na encosta: sem isto o tiro atravessa o morro (BUG-54)
 
   // Ruas periféricas: material diferente do campo deixa o bowl legível de relance.
   // Com o morro, a rua tem que SUBIR junto — um plano reto a 0,025 m ficaria enterrado
@@ -251,6 +252,7 @@ export function buildCampoMorro(scene, T = {}) {
     p.needsUpdate = true; geo.computeVertexNormals();
     const rua = new THREE.Mesh(geo, MAT.asphalt);
     rua.rotation.x = -Math.PI / 2; rua.position.set(x, 0, z); rua.receiveShadow = true; root.add(rua);
+    occluders.push(rua);   // acompanha a encosta como o terreno: mesmo contrato de bala
   }
   // Cal gasto, ainda legível: dá escala imediata ao bowl sem criar qualquer obstáculo.
   const cal = lam({ color: 0xd5d0b9, roughness: 1, transparent: true, opacity: 0.68 });
@@ -358,9 +360,9 @@ export function buildCampoMorro(scene, T = {}) {
 
   // Arquibancada de um lado só, assentada numa base antiga e irregular acima da rua.
   const gArq = groundHeightAt(-7, 20);
-  addBox(11.8, 0.55, 3.3, MAT.concrete, -7, gArq, 20, { collide: false });
+  addBox(11.8, 0.55, 3.3, MAT.concrete, -7, gArq, 20, { collide: false, bala: true });
   for (let i = 0; i < 3; i++)
-    addBox(11.4 - i * 0.5, 0.34 + i * 0.28, 0.18, MAT.concrete, -7, groundHeightAt(-7, 18.36 + i * 0.08), 18.36 + i * 0.08, { collide: false });
+    addBox(11.4 - i * 0.5, 0.34 + i * 0.28, 0.18, MAT.concrete, -7, groundHeightAt(-7, 18.36 + i * 0.08), 18.36 + i * 0.08, { collide: false, bala: true });
 
   // Fachadas do beco oeste quebram a visada antes da entrada do campo.
   const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 21], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
@@ -407,7 +409,7 @@ export function buildCampoMorro(scene, T = {}) {
   faixaOeste.userData.galpaoBandAnchored = faixaSul.userData.galpaoBandAnchored = true;
   for (const [w,d,x,z,id] of [[.22,.3,21.73,-22.32,'west-a'],[.22,.3,21.73,-19.68,'west-b'],
     [.3,.22,25.98,-15.73,'south-a'],[.3,.22,30.02,-15.73,'south-b']]) {
-    const frame = addBox(w,3.2,d,MAT.steelRust,x,1,z,{ collide:false }); frame.userData.galpaoFrame = id;
+    const frame = addBox(w,3.2,d,MAT.steelRust,x,1,z,{ collide:false, bala:true }); frame.userData.galpaoFrame = id;
   }
   addBox(12, 0.18, 10, MAT.steel, 28, 4.2, -21, { collide: false, cast: false });
   const forro = addBox(11.45,.06,9.45,MAT.galpaoCeiling,28,4.08,-21,{ collide:false,cast:false });
@@ -471,7 +473,7 @@ export function buildCampoMorro(scene, T = {}) {
   addBox(5.45, 0.3, 0.52, MAT.steelRust, 0, 2.35, -FIELD_Z, { collide: false });
   addBox(3.3, 0.62, 0.06, MAT.baile, 0, 2.58, -FIELD_Z + 0.24, { collide: false, cast: false });
   // Sul: concreto pintado e marquise amarela.
-  for (const x of [-2.48, 2.48]) addBox(0.5, 2.6, 0.42, MAT.concrete, x, FIELD_Y, FIELD_Z, { collide: false });
+  for (const x of [-2.48, 2.48]) addBox(0.5, 2.6, 0.42, MAT.concrete, x, FIELD_Y, FIELD_Z, { collide: false, bala: true });
   addBox(5.45, 0.34, 0.68, MAT.concrete, 0, 1.92, FIELD_Z, { collide: false });
   addBox(3.5, 0.12, 1.1, MAT.white, 0, 2.24, FIELD_Z - 0.28, { collide: false });
   // Oeste: cobertura de zinco baixa e remendada.

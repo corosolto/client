@@ -74,7 +74,11 @@ export function buildMansao(scene, T) {
     if (opts.ry) m.rotation.y = opts.ry;
     if (solo && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
     root.add(m);
-    if (opts.collide !== false) { colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 }); occluders.push(m); }
+    if (opts.collide !== false) {
+      colliders.push({ minX: x - w / 2, maxX: x + w / 2, minY: y, maxY: y + h, minZ: z - d / 2, maxZ: z + d / 2 });
+      // vidro segura o corpo mas não a bala: transparente fica fora de occluders (BUG-54)
+      if (!(mat && mat.transparent && (mat.opacity === undefined || mat.opacity < 0.9))) occluders.push(m);
+    } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala tem que parar nele
     return m;
   }
   const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
@@ -149,7 +153,7 @@ export function buildMansao(scene, T) {
     addBox(w, 3.1, d, MAT_WALL, x, 0, z);
   // Vergas e painéis ripados quebram o branco contínuo e enquadram as passagens.
   const ripado = lam({ color: 0x72513b, roughness: 0.72 });
-  for (let x = -13; x <= 13; x += 0.42) addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false });
+  for (let x = -13; x <= 13; x += 0.42) addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false, bala: true });
 
   // Casca modernista: lajes finas em balanço e vidro contínuo fecham a leitura de "planta aberta".
   const glass = lam({ color: 0x9bd0df, transparent: true, opacity: 0.24, metalness: 0.08, roughness: 0.12, side: THREE.DoubleSide });
@@ -180,14 +184,14 @@ export function buildMansao(scene, T) {
     const horizontal = w > d;
     for (let i = -2; i <= 2; i++) addBox(horizontal ? .045 : .06, h, horizontal ? .06 : .045,
       lam({ color: 0x3b4244, metalness: .7, roughness: .28 }), horizontal ? x + i * w / 5 : x, .38,
-      horizontal ? z : z + i * d / 5, { collide: false, skirt: false });
+      horizontal ? z : z + i * d / 5, { collide: false, skirt: false, bala: true });
   }
   // Brises profundos modulam a ala direita, antes uma placa branca sem escala.
   const madeiraNobre = lam({ color: 0x704a31, roughness: .66 });
   for (let x = 3.2; x <= 13; x += .82)
-    addBox(.12, 3.45, .72, madeiraNobre, x, .28, 8.17, { collide: false, skirt: false });
+    addBox(.12, 3.45, .72, madeiraNobre, x, .28, 8.17, { collide: false, skirt: false, bala: true });
   for (let z = -12; z <= 5.8; z += 1.15)
-    addBox(.82, 3.25, .1, madeiraNobre, 15.18, .35, z, { collide: false, skirt: false });
+    addBox(.82, 3.25, .1, madeiraNobre, 15.18, .35, z, { collide: false, skirt: false, bala: true });
   const pedraFachada = lam({ map: TEX.concrete.map || null, color: 0xb2aa98, roughness: .86 });
   for (const [z,h,y] of [[-10,1.0,.2],[-6.6,.72,1.55],[-2.8,1.1,.15],[4.7,.82,1.7]])
     addBox(.08, h, 2.5, pedraFachada, 15.2, y, z, { collide: false, cast: false, skirt: false });
@@ -317,7 +321,7 @@ export function buildMansao(scene, T) {
   // marcá-lo `nonSolidSurface` seria mentir pra régua e manter o defeito. O certo é o que
   // os vasos do deck (linha ~580) e os troncos de árvore já fazem aqui: colisor de verdade.
   const pote=new THREE.Mesh(new THREE.CylinderGeometry(.28,.36,.5,12),lam({color:0x9b6b4a,roughness:.9})); pote.position.y=.25; vaso.add(pote);
-  col(-12.1,-11.5,0,.5,-4.0,-3.4);
+  col(-12.1,-11.5,0,.5,-4.0,-3.4); occluders.push(pote);   // a bala para na cerâmica que o corpo já não atravessa
   // As FOLHAS, ao contrário do pote, são folhagem atravessável — é o que todo o resto do
   // paisagismo deste arquivo já declara (garden-cluster, garden-mass, palmeira, folhagem
   // instanciada, forração). Estavam sem a marca por esquecimento, não por decisão.
@@ -380,6 +384,8 @@ export function buildMansao(scene, T) {
     else for(const x of [-.58,.58]) parte(new THREE.BoxGeometry(.42,.12,.09),grade,x,.34,1.96,'grille');
     parte(new THREE.BoxGeometry(1.48,.1,.1),lam({color:0x777b7c,metalness:.75,roughness:.3}),0,.21,2.08,'bumper');
     root.add(g); col(cx - 1, cx + 1, 0, 1.3, 8.95, 13.05); solids.push({ x0: cx - 1, x1: cx + 1, z0: 8.95, z1: 13.05 });
+    // a bala testa a malha visível do carro (vidro atravessa) — BUG-54, mesmo padrão do propComFallback
+    g.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
     return g;
   };
   carroGenerico(-6, 0xa84132, 0, .04);

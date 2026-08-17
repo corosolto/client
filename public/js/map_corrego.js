@@ -295,7 +295,7 @@ export function buildCorrego(scene, T) {
     if (opts.collide !== false) {
       colRot(x, z, w / 2, d / 2, y, y + h, opts.ry || 0);
       occluders.push(m);
-    }
+    } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
     return m;
   }
 
@@ -521,7 +521,7 @@ export function buildCorrego(scene, T) {
   for (const x of [CANAL_X0 - 0.18, CANAL_X1 + 0.18]) addBox(0.36, 0.08, HALF_Z * 2, matLimo, x, -0.04, 0, { collide: false, cast: false });
   /* Limo na linha d'água, 1,7 m abaixo do passeio — em foto_001 é a faixa escura que
      marca até onde o córrego sobe quando chove. */
-  for (const x of [CANAL_X0 + 0.06, CANAL_X1 - 0.06]) addBox(0.12, 0.5, HALF_Z * 2 - 2, matLimo, x, CANAL_AGUA - 0.1, 0, { collide: false, cast: false, skirt: false });
+  for (const x of [CANAL_X0 + 0.06, CANAL_X1 - 0.06]) addBox(0.12, 0.5, HALF_Z * 2 - 2, matLimo, x, CANAL_AGUA - 0.1, 0, { collide: false, cast: false, skirt: false, bala: true });
   // Espuma, sacolas e garrafas quebram a lâmina reta; tudo flutua sem colisão.
   const espuma = lam({ color: 0xf0ecd3, emissive: 0x4b4a35, emissiveIntensity: .28, transparent: true, opacity: 0.9, roughness: 0.72 });
   for (const [x, z, w, d, ry] of [[-1.2,-31,3.2,.82,.3],[1.35,-25,2.7,.7,-.4],[-.65,-16,3.5,.78,.15],[1.2,-9,2.9,.72,-.25],[-1.2,7,3.4,.76,.2],[1.05,15,3.2,.82,-.15],[-.8,28,3.1,.74,.35]])
@@ -1235,7 +1235,7 @@ export function buildCorrego(scene, T) {
      mais vê) para as empenas altas das fileiras que dão para os becos — pixo de
      empena existe justamente onde há parede cega alta e alguém para olhar. */
   if (TEX.pixo) for (const [x, z, ry] of [[23.72, -28, -Math.PI / 2], [-23.72, 24, Math.PI / 2], [23.72, 8, -Math.PI / 2], [-23.72, -12, Math.PI / 2]])
-    addBox(0.05, 4.6, 6.0, TEX.pixo, x, 1.4, z, { collide: false, ry, skirt: false });
+    addBox(0.05, 4.6, 6.0, TEX.pixo, x, 1.4, z, { collide: false, ry, skirt: false, bala: true });
 
   /* ===================== MUROS EXTERNOS =====================
      De 3 m para 8 m, e de concreto liso para alvenaria. Dois motivos, os dois medidos:

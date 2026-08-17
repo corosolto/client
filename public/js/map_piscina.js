@@ -87,7 +87,7 @@ export function buildPoolDay(scene, T) {
       const ez = (opts.ry || opts.rz) ? Math.max(w, d) / 2 : d / 2;
       colliders.push({ minX: x - ex - pad, maxX: x + ex + pad, minY: y, maxY: y + h, minZ: z - ez - pad, maxZ: z + ez + pad });
       occluders.push(m);
-    }
+    } else if (opts.bala) occluders.push(m);   // visível dentro de colisor alheio: a bala para nele (BUG-54)
     return m;
   }
   function addPlane(w, h, mat, x, y, z, ry = 0, rx = 0) {
@@ -224,7 +224,7 @@ export function buildPoolDay(scene, T) {
      prancha valia um nó de navegação a mais para o BOL. Em |z|=13,7 nenhum lado perde nó. */
   addBox(0.3, 1.3, 0.3, MAT.steel, POOL.cx - 0.8, 0, nZ + 1.7);
   addBox(0.3, 1.3, 0.3, MAT.steel, POOL.cx + 0.8, 0, nZ + 1.7);
-  addBox(1.4, 0.15, 4.0, MAT.white, POOL.cx, 1.3, nZ - 0.4, { collide: false });
+  addBox(1.4, 0.15, 4.0, MAT.white, POOL.cx, 1.3, nZ - 0.4, { collide: false, bala: true });
 
   /* ---------------- walls: white tile + navy accent band ---------------- */
   const wX = HALF_X + 0.5, wZ = HALF_Z + 0.5;
