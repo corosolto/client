@@ -126,7 +126,7 @@ hypothetical one:
 | **Meshy** | 3D props and rigging | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | 2D art | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` records **39 assets** generated through Mint (19 `openrouter-image-concept` · 2 `openrouter-concept-tripo-blender-model` · 5 `imagegen-concept` · 5 `mint-model` · 2 `tripo3d-task` · 2 `openrouter-concept-meshy-model` · 4 `mint-asset-pack`).
+`mint-assets.json` records **41 assets** generated through Mint (19 `openrouter-image-concept` · 2 `openrouter-concept-tripo-blender-model` · 5 `imagegen-concept` · 7 `mint-model` · 2 `tripo3d-task` · 2 `openrouter-concept-meshy-model` · 4 `mint-asset-pack`).
 
 API keys live in the gitignored root `.env`; generation is offline and the game runs without them.
 
