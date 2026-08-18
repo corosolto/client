@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-12T16:29:39.780Z",
+ "gerado": "2026-08-17T12:24:22.647Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
@@ -236,22 +236,17 @@
    "crouch": 0.021
   },
   "mariabonita": {
-   "idle": -0.0236,
-   "walk": -0.0421,
-   "run": -0.033,
-   "shoot": -0.0303,
-   "crouch": -0.0411
+   "crouch": 0.0274
   },
   "saci": {
    "idle": -0.0247,
    "shoot": -0.0402
   },
   "lampiao": {
-   "idle": -0.0227,
-   "walk": -0.0494,
-   "run": -0.0326,
-   "shoot": -0.0305,
-   "crouch": -0.041
+   "idle": 0.0605,
+   "run": 0.0618,
+   "shoot": 0.0493,
+   "crouch": -0.02
   },
   "lobisomem": {
    "idle": 0.2374,
@@ -266,11 +261,10 @@
    "crouch": 0.0503
   },
   "boto": {
-   "idle": -0.0233,
-   "walk": -0.0492,
-   "run": -0.0331,
-   "shoot": -0.0302,
-   "crouch": -0.0449
+   "idle": 0.0379,
+   "walk": 0.0706,
+   "run": 0.0443,
+   "shoot": 0.0556
   },
   "zumbi": {
    "idle": -0.0225,
@@ -285,11 +279,7 @@
    "shoot": 0.0782
   },
   "curupira": {
-   "idle": -0.0241,
-   "walk": 0.0462,
-   "run": 0.0494,
-   "shoot": -0.0306,
-   "crouch": -0.0397
+   "crouch": -0.0519
   },
   "camera-roxa": {
    "walk": 0.0694,
@@ -364,6 +354,21 @@
    "desvio": 0.1619
   },
   {
+   "id": "curupira",
+   "pose": "run",
+   "desvio": 0.1614
+  },
+  {
+   "id": "curupira",
+   "pose": "walk",
+   "desvio": 0.1579
+  },
+  {
+   "id": "curupira",
+   "pose": "idle",
+   "desvio": 0.1445
+  },
+  {
    "id": "ancap",
    "pose": "crouch",
    "desvio": -0.1403
@@ -387,6 +392,11 @@
    "id": "ancap",
    "pose": "walk",
    "desvio": -0.1308
+  },
+  {
+   "id": "curupira",
+   "pose": "shoot",
+   "desvio": 0.1307
   },
   {
    "id": "gilbomes",
@@ -414,6 +424,11 @@
    "desvio": -0.1086
   },
   {
+   "id": "lampiao",
+   "pose": "walk",
+   "desvio": -0.0985
+  },
+  {
    "id": "gilbomes",
    "pose": "shoot",
    "desvio": 0.0982
@@ -422,6 +437,26 @@
    "id": "dollynho",
    "pose": "crouch",
    "desvio": -0.0981
+  },
+  {
+   "id": "mariabonita",
+   "pose": "run",
+   "desvio": -0.0979
+  },
+  {
+   "id": "mariabonita",
+   "pose": "walk",
+   "desvio": -0.096
+  },
+  {
+   "id": "mariabonita",
+   "pose": "idle",
+   "desvio": -0.091
+  },
+  {
+   "id": "mariabonita",
+   "pose": "shoot",
+   "desvio": -0.0857
   },
   {
    "id": "cuca",
