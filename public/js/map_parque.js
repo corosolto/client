@@ -1,5 +1,6 @@
 // Parque da Treta: arena CTF simétrica, colorida e inteiramente procedural.
 import * as THREE from 'three';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const HALF_X = 32;
 const HALF_Z = 42;
@@ -385,7 +386,23 @@ export function buildParque(scene, T) {
     }
   }
 
+  /* BUG-57: parque é DOS POMBOS — e o caramelo passeia sem coleira. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'parque_treta',
+    rats: [
+      { pos: [-16, 0, -30], to: [-13.5, 0, -27.5], phase: .4 },
+      { pos: [16, 0, 30], to: [13.5, 0, 27.5], phase: 1.6 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-6, 0, -10], phase: .2 }, { mode: 'ground', pos: [8, 0, -4], phase: 1.0 },
+      { mode: 'ground', pos: [-4, 0, 12], phase: 1.9 },
+      { mode: 'flight', pos: [0, 10, 0], radius: [9, 6], phase: .7 },
+    ],
+    dogs: [{ pos: [-4, 0, 24], to: [0, 0, 24], phase: .5 }],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt: () => 0, slowAt: () => false, update, sun, hemi, pickups,
     spawns: {
       E: [-9, -3, 3, 9].map(x => ({ x, z: -38.5, yaw: 0 })),

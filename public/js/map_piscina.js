@@ -29,6 +29,7 @@ import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const HALF_X = 17, HALF_Z = 25;   // interior half-extents (walls sit just outside)
 const WALL_H = 7, CEIL = 7;
@@ -836,7 +837,21 @@ export function buildPoolDay(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 53, separacao: 11 },
   });
 
+  /* BUG-57: pombo de borda de piscina + rato de vestiário. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'piscina_treta',
+    rats: [
+      { pos: [-14, 0, -20], to: [-12, 0, -17.5], phase: .4 },
+      { pos: [13.5, 0, 19], to: [11.5, 0, 21.5], phase: 1.6 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-13, 0, 10], phase: .3 }, { mode: 'ground', pos: [12, 0, -12], phase: 1.4 },
+      { mode: 'flight', pos: [0, 9, 0], radius: [6, 4.5], phase: .8 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
        brasília" jogando aqui). O fallback do game.js punha as 3 bandeiras de spawn×0,42 —

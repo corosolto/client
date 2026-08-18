@@ -251,23 +251,23 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,815 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 858 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,001 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,904 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,634 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,832 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 873 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,017 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,920 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,653 |
 | `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 868 |
-| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 658 |
+| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 674 |
 | `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,205 |
 | `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,521 |
-| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 717 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 245 |
+| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 729 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 505 |
+| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 301 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 256 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 270 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 419 |
+| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 448 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 261 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 20 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 

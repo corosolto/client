@@ -13,6 +13,7 @@ import { detailFor, registerDetail } from './textures.js';   // normal+rough por
 import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + raycast de parede
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const HALF_X = 38, HALF_Z = 58;
 // Carros do estacionamento (ids otimizados em public/models/props). Forte cara BR.
@@ -1984,7 +1985,22 @@ export function buildHavan(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 29, separacao: 15 },
   });
 
+  /* BUG-57: estacionamento tem pombo e depósito tem rato. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'loja_h',
+    rats: [
+      { pos: [-20, 0, -25], to: [-17.5, 0, -22.5], phase: .2 },
+      { pos: [19, 0, -25], to: [16.5, 0, -22.5], phase: 1.3 },
+      { pos: [-4, 0, 34], to: [-1.5, 0, 36.5], phase: 2.5 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-9, 0, 20], phase: .5 }, { mode: 'ground', pos: [14, 0, 22], phase: 1.7 },
+      { mode: 'flight', pos: [0, 10, 12], radius: [8, 5], phase: .9 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, doors, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/map-check.mjs) — não é usada pelo jogo.

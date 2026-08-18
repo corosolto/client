@@ -7,6 +7,7 @@ import { grafitar } from './graffiti_pass.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
@@ -649,7 +650,22 @@ export function buildCampoMorro(scene, T = {}) {
     ],
   });
 
+  /* BUG-57: campo de várzea tem caramelo na lateral, pombo na arquibancada e rato no galpão. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'fy_campomorro',
+    rats: [
+      { pos: [24, 1, -18], to: [26.5, 1, -16], phase: .4 },
+      { pos: [-25, 0, 12], to: [-22.5, 0, 14.5], phase: 1.5 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-4, 0, 16], phase: .3 }, { mode: 'ground', pos: [14, 0, 21], phase: 1.4 },
+      { mode: 'flight', pos: [0, 10, 0], radius: [8, 5.5], phase: .8 },
+    ],
+    dogs: [{ pos: [-17, 0, 21], to: [-13, 0, 21], phase: .6 }],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     levels: [{ nome: 'galpao', x0: GALPAO.x0, x1: GALPAO.x1, z0: GALPAO.z0, z1: GALPAO.z1, dePartida: 'B' }],

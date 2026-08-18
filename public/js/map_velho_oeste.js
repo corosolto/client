@@ -1,5 +1,6 @@
 // Velho Oeste da Treta: cidade de madeira ao pôr do sol, com três rotas e cobertura baixa.
 import * as THREE from 'three';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -417,7 +418,21 @@ export function buildVelhoOeste(scene) {
 
   update(0, 0);
 
+  /* BUG-57: cidade de faroeste tem ave de poleiro e rato de saloon. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'velho_oeste',
+    rats: [
+      { pos: [-16, 0, -34], to: [-13.5, 0, -31.5], phase: .3 },
+      { pos: [16, 0, 34], to: [13.5, 0, 31.5], phase: 1.5 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
+      { mode: 'flight', pos: [0, 10, 0], radius: [8, 5.5], phase: .9 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, hemi, update,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),

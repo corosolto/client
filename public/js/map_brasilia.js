@@ -11,6 +11,7 @@ import { detailFor, registerDetail } from './textures.js';   // normal+rough por
 import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + raycast na MALHA
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -1788,7 +1789,23 @@ export function buildBrasilia(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 17, separacao: 13, larg: 4.0, alt: 2.1, minLarg: 2.2 },
   });
 
+  /* BUG-57: a Praça é DOS POMBOS — fauna ancorada na esplanada aberta (0,0). */
+  const ambience = createFavelaAmbience(root, {
+    map: 'praca_poderes',
+    rats: [
+      { pos: [-18, 0, -30], to: [-15.5, 0, -27], phase: .3 },
+      { pos: [17, 0, 24], to: [14.5, 0, 27], phase: 1.7 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-4, 0, -8], phase: .2 }, { mode: 'ground', pos: [11, 0, -6], phase: 1.1 },
+      { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
+      { mode: 'flight', pos: [0, 12, 0], radius: [9, 6], phase: .6 },
+      { mode: 'flight', pos: [-8, 15, -20], radius: [7, 5], phase: 2.4 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono

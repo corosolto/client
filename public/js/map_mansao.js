@@ -16,6 +16,7 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -707,7 +708,18 @@ export function buildMansao(scene, T) {
   const D_PIXO_M = decalIds(T, ['folha-pixaca-03.png', 'folha-pixaca-04.png', 'folha-pixaca-05.png']);
   grafitar({ id: 'fy_mansao', root, T, waypoints: nodes, seed: 14000, passo: 1.0, alcance: 4, cobre: 0.01, minLarg: 0.3, bandas: [{ y0: 0.3, y1: 1.5, larg: 1.5, alturas: [0.8], chance: 5, pool: D_PIXO_M }] });
 
+  /* BUG-57: mansão tem pombo de cobertura e um rato só — no jardim, longe da sala. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'fy_mansao',
+    rats: [{ pos: [-14, 0, 30], to: [-11.5, 0, 32], phase: .7 }],
+    pigeons: [
+      { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
+      { mode: 'flight', pos: [0, 9, 12], radius: [7, 5], phase: .9 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
       { nome: 'escada de serviço', ...STAIR_SERVICE, topo: LAJE_H }],
