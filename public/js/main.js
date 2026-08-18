@@ -1590,7 +1590,6 @@ function renderMapScreen() {
   }
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
   const shown = visibleMapIds();
-  $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
       `<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
@@ -1602,15 +1601,32 @@ function renderMapScreen() {
     tab.classList.toggle('on', on);
     tab.setAttribute('aria-selected', on);
   });
-  const pages = Math.max(1, Math.ceil(shown.length / 5));
-  const activePage = Math.min(pages - 1, Math.floor(Math.max(0, shown.indexOf(currentMap)) / 5));
-  $('ms-dashes').innerHTML = Array.from({ length: pages }, (_, i) => `<i${i === activePage ? ' class="on"' : ''}></i>`).join('');
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
   });
-  requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
+  requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
 }
+/* Teclado 4 direções na GRADE (UIR25): ↑↓ pulam a LINHA inteira. Colunas não são
+   fixas (auto-fill por largura): a primeira linha que compartilha offsetTop diz quantas são. */
+function msGridNav(e) {
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepMap(-1, visibleMapIds()); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); stepMap(1, visibleMapIds()); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const shown = visibleMapIds();
+    const cards = [...$('ms-strip').querySelectorAll('.ms-thumb')];
+    const top0 = cards.length ? cards[0].offsetTop : 0;
+    const cols = Math.max(1, cards.filter((c) => c.offsetTop === top0).length);
+    const idx = shown.indexOf(currentMap) + (e.key === 'ArrowDown' ? cols : -cols);
+    if (idx >= 0 && idx < shown.length) { ui.click(); gotoMap(MAP_IDS.indexOf(shown[idx])); }
+  }
+}
+// ← → ↑ ↓ trocam de mapa com a tela cheia aberta (ESC fecha — ver o handler de ESC do menu)
+addEventListener('keydown', (e) => {
+  if ($('map-screen').classList.contains('hidden')) return;
+  msGridNav(e);
+});
 mapThumb.title = 'Ver mapa em tela cheia';
 mapThumb.style.cursor = 'pointer';
 mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
@@ -1627,12 +1643,6 @@ document.querySelectorAll('.ms-tab').forEach((tab) => {
 });
 // CONTINUAR = o JOGAR de sempre: ele decide o próximo passo (perfil se falta nick, facção se não)
 $('ms-continue').onclick = () => { show('main-menu'); $('btn-jogar').click(); };
-// ← → trocam de mapa com a tela cheia aberta (ESC fecha — ver o handler de ESC do menu)
-addEventListener('keydown', (e) => {
-  if ($('map-screen').classList.contains('hidden')) return;
-  if (e.key === 'ArrowLeft') { e.preventDefault(); stepMap(-1, visibleMapIds()); }
-  else if (e.key === 'ArrowRight') { e.preventDefault(); stepMap(1, visibleMapIds()); }
-});
 const wpnSel = { value: settings.wpnMode || 'all' };
 // dropdown de modo de armas: renders REAIS de /img/weapons (o dono reprovou os glifos)
 const _wpnImg = (id) => `<img class="dd-ico" src="/img/weapons/${id}.webp" alt="" width="44" height="17" loading="lazy">`;
