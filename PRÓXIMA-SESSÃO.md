@@ -1,143 +1,116 @@
-# Handoff para a proxima sessao — 18/08/2026
+# Handoff para a proxima sessao — 18/08/2026 (2a sessao do dia)
 
-## O que foi feito nesta sessao (Devin)
+## O que foi feito nesta sessao (continuacao da de 18/08 de madrugada)
 
-### PRs mergeadas (8 PRs, todas via rebase + novo PR)
-- #329, #323, #291, #288, #305, #267, #306, #312, #326
-- Conflitos resolvidos em maps.js, main.js, package.json, docs gerados
-- check:fast 53/53 VERDE apos todos os merges
+### 1. Portao build VERDE de novo (#344, merged)
+- O `eval:deps` devolvido + **defeito encoberto**: o #332 extraiu a tabela WEAPONS
+  para `public/js/data/weapons.js` e o `vm-kick-sim.mjs` ainda lia `rate:` do
+  `game.js` — o passo so apareceu quando o `eval:deps` parou de matar o build antes
+- Licao: passo novo no portao revela quebra de reguas antigas; rodei os passos
+  seguintes localmente (botsim/build/site-smoke) antes de empurrar
 
-### Bug do Firefox corrigido e pushado na main
-- WASD abria Quick Find no Firefox em vez de mover o personagem
-- Fix: `e.preventDefault()` quando `document.pointerLockElement` ativo
-- Arquivo: `public/js/game.js` linha ~1630
-- Commit: `fix(input): preventDefault em pointer lock impede Quick Find do Firefox`
+### 2. Ruleset da main ATIVO (item 1 do plano anterior — PRIORIDADE ALTA, concluido)
+- **#343** (merged): release.yml faz checkout com `RELEASE_TOKEN`; o push do bump
+  autentica como **csbrasil-BOT** (provado: PushEvent 03:30 = csbrasil-BOT)
+- Ruleset `main` (id 19116007) **active**: PR obrigatorio + checks requeridos
+  (`build`, `dco`, `versao-bumpada`, `ratchet`), 0 reviews, `deletion` +
+  `non_fast_forward`, bypass SO para o csbrasil-BOT (id 314500335)
+- Provado nos dois sentidos: push direto rejeitado ("4 of 4 required status
+  checks"); PR #349 mergeou com checks verdes e o release .154 saiu pelo bot
+- Ruben: push direto seu na main acabou — tudo por PR agora (e o portao e rapido)
 
-### Issues do estraga-codigo limpas
-- Fechadas: #322, #336, #340, #321, #319, #318 (todas resolvidas pelo trabalho de merge)
-- Abertas (legitimas): #327 (pickups), #325 (decals ashtar.png 404), #320 (ronda de estado)
-- Bug de dedupe do bot ja estava corrigido — duplicatas vieram do periodo de transicao (issues antigas sem marcador `<!-- vigia: -->`)
+### 3. check:fast 53/53 de novo (#348, merged)
+- Regua do changelog so contava merge commit; squash merge (padrao do automerge)
+  ficava fora — `#344 squash-merged => "1 na secao, 0 no git"`. Agora conta
+  subject com `(#N)` e o modo escrita lista squash PRs (a secao .152 saiu certa)
+- `foot-offsets.json` re-derivado do `char_probe.json` COMMITADO (a versao da main
+  vinha de sonda suja de 23:37 nao commitada; valores identicos, so timestamp)
 
-### KNOWN-RED.json atualizado
-- MAT2 e TEX1 adicionados como divida conhecida (mapas Velho Oeste e Penitenciaria)
+### 4. package.json limpo (#347, merged — item 2 do plano anterior, concluido)
+- 83 chaves `//nome` viraram `SCRIPTS.md`; `check` legado (`&&`) removido;
+  112 executaveis intactos; ponteiros atualizados (AGENTS.md, gen-docs PT+EN,
+  comecando, colaborar, arquitetura, portao-browser.yml, setup.mjs, skill bug-hunt)
 
-### eval:fixture corrigido
-- `scripts/ci/check_automerge.py` — fixture esperava `needs-greptile-resolution` mas codigo so checava `needs-coderabbit-resolution`
+### 5. Race do release consertado (#349, merged)
+- Dois merges 23s apart => "atomic push failed" no run velho. Main agora e
+  fast-forward-only (ruleset), entao `cancel-in-progress: true` na concurrency do
+  release.yml: o run mais novo (sempre supersete) cancela o velho no ar
 
----
-
-## O que falta fazer (plano aprovado pelo Ruben)
-
-### 1. Branch protection no corosolto/client [PRIORIDADE ALTA]
-- Hoje: ZERO protecao na main, qualquer push direto funciona
-- Fazer: PR obrigatorio + checks verdes (sem review obrigatorio)
-- Como: rulesets via GitHub API (org publica suporta)
-- Checks requeridos: os que rodam no CI de PR (`pr-fast`, `pr-gates`)
-
-### 2. Limpar package.json [PR separado]
-- 138 scripts (70 comentarios `//` + 68 executaveis)
-- Mover documentacao dos `//` para um `SCRIPTS.md`
-- Corrigir indentacao inconsistente (algumas chaves `//` sem indent)
-- Remover `check` legado (usa `&&`, substituido por `check:fast`)
-
-### 3. Reescrever README [PR separado]
-- Hoje parece relatorio de engenharia interno
-- Precisa: screenshot do jogo, "o que e" em 2 linhas, como jogar, como contribuir
-- Feedback do jogador: "conteudo mais humano"
-- AGENTS.md fica tecnico (e pra agentes), README vira humano
-
-### 4. Admin panel — panel.csbrasil.online [PRs no csbrasil-admin]
-- Repo: `rubenmarcus/csbrasil-admin` (privado)
-- Stack: Astro SSR + React + Tailwind + Supabase + Recharts
-- Ja tem: 12 paginas (erros, online, jogo, feedback, inteligencia, geografia, conversao, picks, usuarios, saude, login, perfil)
-- Ja tem: auth (senha + Google OAuth + GitHub OAuth com allowlist)
-- Ja tem: sinais deterministicos, IA via OpenRouter, relatorio diario
-- Falta:
-  - Mover para org `corosolto` (hoje esta em `rubenmarcus`)
-  - CI basico: lint + typecheck + test no PR
-  - Apontar dominio `panel.csbrasil.online`
-  - Branch protection
-
-### 5. Backend separado [futuro, so planejar]
-- 18 APIs em `src/pages/api/` -> migrar para repo `corosolto/backend`
-- 4 paginas SSR (ranking, mapa, perfil, sitemap) fazem query Supabase direto
-- O repo client ficaria so com site Astro + jogo Three.js (zero service_role)
-- Decisao do Ruben: novo repo backend
-
-### 6. Bot Discord + Telegram [criar do zero]
-- NAO existe bot do Emerson — procurei em todos os repos publicos dele (69 repos), no diretorio local, nas issues/PRs
-- Servidor Discord existe: `discord.gg/MJq7Csam`
-- Features pedidas:
-  1. Status diario de jogadores e gameplay
-  2. Releases novos e merges novos
-  3. Novos contribuidores como motivo de festa
-  4. Release como motivo de festa
-  5. Issues abertas
-  6. O que for mais util pro Discord
-- Mesmas features pro Telegram
-- Stack sugerida: discord.js + Telegraf/grammY, repo `corosolto/discord-bot`
-
----
-
-## Inventario de APIs do client (para migracao futura)
-
-### Telemetria (anonimas)
-- `acquisition.ts` POST — origem do jogador (referrer, UTM)
-- `funnel.ts` POST — etapa do funil (land/menu/match_start/match_end/quit)
-- `telemetry.ts` POST — quanto se joga e em qual mapa
-- `match.ts` POST — evento rico de partida
-- `perf.ts` POST — amostra de FPS/boot/dispositivo
-- `pick.ts` POST — contadores de escolha (mapa, modo, faccao, arma)
-- `presence.ts` POST — "estou com o jogo aberto"
-- `jserror.ts` POST — excecao do navegador
-- `heartbeat.ts` POST — presenca online com geo
-
-### Jogador (autenticadas por token)
-- `register.ts` POST — registra nick + token
-- `submit-match.ts` POST — submete partida
-- `avatar.ts` POST — upload de avatar (sharp 128x128)
-- `train-frames.ts` POST — lotes opt-in para treino de bots
-
-### Leitura publica
-- `leaderboard.ts` GET — ranking top 100
-- `online.ts` GET — quantos jogadores online
-- `health.ts` GET — saude do banco
-- `feedback.ts` POST — feedback + email + newsletter
-
-### Imagem dinamica
-- `badge/[...path].png.ts` GET — badge PNG do jogador
-- `og/[tipo].png.ts` GET — OG:image para mapas/armas/personagens
-
-### Dependencias criticas
-- `src/lib/supabase.ts` — client com service_role
-- `src/lib/ratelimit.ts` — rate limit via RPC `rl_take`
-- `src/lib/player-identity.ts` — resolucao UID/token/nick
-- Env vars: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GH_DISPATCH_TOKEN`
-
----
-
-## Bots locais do Ruben (contexto)
-
-### /Users/ruben/estraga-codigo/
-- Conta `estraga-codigo` no GitHub (Outside Collaborator, Read)
-- `canarinho.mjs` — revisor de PR por LLM, 5 acoes (leis-da-casa, mapas, frontend-publico, backend-api, ci-portoes)
-- Modos: selftest, replay, review, fix, poll, commits
-- Dedupe por marcador `<!-- vigia: checagem -->` no body da issue
-
-### /Users/ruben/game3/bots/vigia-prod/
-- `plantao.mjs` — vigia producao, abre issues quando checks falham
-- Conta: `estraga-codigo`
-- Marcador: `<!-- vigia: checagem -->`
-
-### /Users/ruben/game3/bots/zelador/
-- `ronda.mjs` — ronda diaria/semanal (audit-cve, assert-assets, ronda-semanal)
-- Conta: `estraga-codigo`
-- Marcador: `<!-- zelador: checagem -->`
-- launchd: `br.corosolto.zelador-diaria` (9h) e `br.corosolto.zelador-semanal` (seg 9:30)
+### 6. Bot Discord + Telegram NO AR (item 6 do plano anterior, concluido no codigo)
+- Repo: `corosolto/discord-bot` (ja existia! era o kit de setup do servidor — a
+  sessao anterior procurou nos 69 repos do Emerson e nao na org). PR #1 merged
+- Zero infra: GitHub Actions roda, posta via REST e encerra (sem gateway/24-7)
+  - `notify-daily.js` — 09:00 BRT, #🔄-atualizacoes + Telegram: jogadores,
+    partidas, mapa/modo/arma top, conversao, erros novos, issues
+  - `notify-events.js` — 30 min: release novo = 🎉 festa, contribuidor de 1a
+    viagem = 🥳 festa (#🔄-atualizacoes), merges + issues novas (#🤖-commits)
+  - `state.json` comitado pelo workflow; primeira corrida so semeia (sem spam)
+  - CI roda dry-run sem credencial; mensagens puras testadas (node:test)
+- **PARA ATIVAR (so o Ruben)**: secrets no repo — `DISCORD_TOKEN` (**resetar o
+  que vazou em chat**), `TELEGRAM_BOT_TOKEN`+`TELEGRAM_CHAT_ID` (via @BotFather),
+  `SUPABASE_URL`+`SUPABASE_SERVICE_ROLE_KEY` (as mesmas do painel). Sem eles os
+  crons rodam em dry-run e nao mandam nada.
 
 ---
 
 ## Estado do quality gate
-- check:fast: **53/53 VERDE**
-- KNOWN-RED.json: MAT2 (Velho Oeste, Penitenciaria), TEX1 (Velho Oeste, Penitenciaria)
-- Versao: `2.0.0-alpha.148`
+- check:fast: **53/53 VERDE** (main pos-.154)
+- CI pr-fast na main: VERDE
+- Versao: `2.0.0-alpha.154`
+
+## Credenciais pendentes (so o Ruben faz)
+1. `gh secret set CSBRASIL_BOT_TOKEN --repo corosolto/client` — PAT da
+   csbrasil-BOT com escopos `repo`+`workflow`. Deixa o automerge funcionar (hoje
+   inerte; merges manuais funcionam normalmente)
+2. Secrets do discord-bot (lista acima)
+
+---
+
+## O que falta do plano anterior (prioridades atualizadas)
+
+### 1. Reescrever README [PR separado] — PROXIMA FRENTE
+- Hoje parece relatorio de engenharia interno; precisa: screenshot do jogo,
+  "o que e" em 2 linhas, como jogar, como contribuir. AGENTS.md fica tecnico
+- Feedback do jogador: "conteudo mais humano"
+
+### 2. Admin panel — panel.csbrasil.online [PRs no csbrasil-admin]
+- Repo `rubenmarcus/csbrasil-admin` (privado): mover para org `corosolto`, CI
+  basico (lint+typecheck+test no PR), apontar dominio, branch protection
+- O repositorio ja tem teste (`src/lib/*.test.ts`) e workflow de inteligencia
+  diaria de referencia
+
+### 3. Backend separado [futuro, so planejar]
+- 18 APIs em `src/pages/api/` -> repo `corosolto/backend`; 4 paginas SSR fazem
+  query Supabase direto; client ficaria so site+jogo (zero service_role)
+- Inventario das APIs esta no handoff anterior (secao preserved abaixo)
+
+### 4. Issues abertas legitimas
+- #327 pickups nao alcancados · #325 decals ashtar.png 404 · #320 ronda de estado
+- #345/#346 = MAT2/TEX1 (divida conhecida, KNOWN-RED) · #342/#341 = plantao da
+  era de build vermelho (build verde agora — conferir se auto-fecham; senao fechar
+  comentando o run verde)
+
+## Bots locais do Ruben (contexto, inalterado)
+- `/Users/ruben/estraga-codigo/` — canarinho.mjs (revisor de PR, conta estraga-codigo)
+- `/Users/ruben/game3/bots/vigia-prod/` — plantao.mjs (vigia producao)
+- `/Users/ruben/game3/bots/zelador/` — ronda.mjs (launchd 9h / seg 9:30)
+
+## Inventario de APIs do client (para migracao futura)
+
+### Telemetria (anonimas)
+- `acquisition.ts` · `funnel.ts` · `telemetry.ts` · `match.ts` · `perf.ts` ·
+  `pick.ts` · `presence.ts` · `jserror.ts` · `heartbeat.ts` (todas POST)
+
+### Jogador (autenticadas por token)
+- `register.ts` · `submit-match.ts` · `avatar.ts` (sharp 128x128) · `train-frames.ts`
+
+### Leitura publica
+- `leaderboard.ts` GET · `online.ts` GET · `health.ts` GET · `feedback.ts` POST
+
+### Imagem dinamica
+- `badge/[...path].png.ts` · `og/[tipo].png.ts`
+
+### Dependencias criticas
+- `src/lib/supabase.ts` (service_role) · `src/lib/ratelimit.ts` (RPC rl_take) ·
+  `src/lib/player-identity.ts` · env: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `GH_DISPATCH_TOKEN`
