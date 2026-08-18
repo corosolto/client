@@ -12,7 +12,7 @@
 | `public/js/game.js` | 6955 | 249 |
 | `public/js/main.js` | 2698 | 247 |
 | `public/js/glbchars.js` | 1034 | 68 |
-| `public/js/characters.js` | 1234 | 43 |
+| `public/js/characters.js` | 1230 | 41 |
 | `public/js/vmattach.js` | 629 | 4 |
 | `public/js/springs.js` | 261 | 28 |
 | `public/js/weapons.js` | 365 | 21 |

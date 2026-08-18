@@ -600,7 +600,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
         </button>
       </div>
       <!-- FEEDBACK (pedido do dono, 07/08) alimenta a lista da futura newsletter -
-           ver /api/feedback e supabase/migrations/013. -->
+           ver /api/feedback e a migration 013 do banco. -->
       <div class="home-service-strip" aria-label="Serviços e arquivo">
         <button class="cs-item" data-act="config" type="button">CONFIGURAÇÕES</button>
         <button class="cs-item" data-act="ranking" type="button">RANKING</button>
@@ -666,6 +666,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
         </div>
       </div>
   </section>
+  <span class="menu-version" id="mf-ver"></span>
 
   <!-- PAINEL DE SETUP - dois PASSOS no mesmo painel (data-step).
        PASSO 1 = A PARTIDA: o mapa é o protagonista (cartaz grande, nome, modo, bots).
@@ -995,7 +996,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   </div>
 </div>
 
-<!-- Ranking (local + global quando o Supabase estiver ligado) -->
+<!-- Ranking (local + global quando o ranking global estiver ligado) -->
 <div id="ranking-panel" class="screen cine-surface hidden">
   <div class="panel center-panel">
     <h2>RANKING</h2>
@@ -1025,7 +1026,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 
 <!-- Apoio ao projeto. O idioma é uma sugestão, não uma barreira: a pessoa pode trocar
      entre MeApoia/Pix e a plataforma internacional. -->
-<div id="support-panel" class="screen hidden">
+<div id="support-panel" class="screen cine-surface hidden">
   <div class="panel center-panel support-panel">
     <h2>APOIE O JOGO</h2>
     <p class="fb-note">O CORO SOLTO ainda está em alpha. Se você curte a ideia, qualquer apoio ajuda a pagar servidor, domínio e as próximas melhorias.</p>

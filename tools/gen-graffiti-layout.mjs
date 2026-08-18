@@ -159,4 +159,3 @@ if (semPassada.length) {
   console.error(`SEM PASSADA: ${semPassada.join(', ')} — o arquivo foi gravado sem fóssil, mas o mapa precisa chamar grafitar()`);
   process.exit(1);
 }
->>>>>>> origin/main

@@ -359,10 +359,6 @@ const CS_PROBE_ROUGH = `
 	gl_FragColor = vec4(vec3(roughnessFactor), 1.0);
 `;
 
-let _hasTextureLod = false;
-export function setCharacterRendererCapabilities(renderer) {
-  _hasTextureLod = renderer?.capabilities?.isWebGL2 === true;
-}
 
 // Instala a injeção num MeshStandardMaterial de personagem. Idempotente.
 export function applyCharFX(mat, rimColor) {

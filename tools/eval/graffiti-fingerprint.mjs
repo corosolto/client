@@ -36,6 +36,11 @@ export const MAP_SOURCES = {
   loja_h: 'public/js/map_havan.js',
   ferro_velho: 'public/js/map_ferrovelho.js',
   quebrada: 'public/js/map_quebrada.js',
+  fy_escadao: 'public/js/map_escadao.js',
+  fy_campomorro: 'public/js/map_campomorro.js',
+  fy_lajes: 'public/js/map_lajes_authored.js',
+  fy_corrego: 'public/js/map_corrego.js',
+  fy_mansao: 'public/js/map_mansao.js',
 };
 export const PASS_FILE = 'public/js/graffiti_pass.js';
 export const TEX_FILE = 'public/js/textures.js';
@@ -105,6 +110,15 @@ export function universoDecals(texSrc = readFileSync(TEX_FILE, 'utf8')) {
   const murais = new Set(
     mh ? [...mh[1].matchAll(/'([^']+)'/g)].map((m) => 'homenagem-' + m[1]) : [],
   );
+  /* Mural AUTORAL declarado no próprio mapa (grafitar({ murais: { nomes: [...] } })):
+     o pixo-lajes-01 entrou por aqui em 17/08 — MURAIS_HOM segue vazia por contrato
+     editorial (pessoa real), mas mural original de mapa é parte do pool vivo. */
+  for (const arq of Object.values(MAP_SOURCES)) {
+    let src; try { src = readFileSync(arq, 'utf8'); } catch { continue; }
+    for (const b of src.matchAll(/murais:\s*\{[\s\S]{0,400}?nomes:\s*\[([^\]]*)\]/g)) {
+      for (const m of b[1].matchAll(/'([^']+)'/g)) murais.add(m[1]);
+    }
+  }
   return { decals, posters, murais };
 }
 
