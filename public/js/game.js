@@ -570,6 +570,13 @@ export class Game {
     if (this.world.pickups) {
       const keep = [];
       for (const pk of this.world.pickups) {
+        /* id fora de WEAPONS não entra no estado do jogo: o prompt do [E] lê `.short`
+           sem guarda todo quadro e congelava a partida. KNOWN-BUGS BUG-70 / #366. */
+        if (!WEAPONS[pk.weapon]) {
+          console.warn(`[pickup] mapa ${this._mapId}: arma '${pk.weapon}' não existe em WEAPONS — pickup ignorado`);
+          pk.mesh?.removeFromParent();
+          continue;
+        }
         if (this._pickupAllowed(pk.weapon)) {
           const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
           if (rw && pk.mesh) {

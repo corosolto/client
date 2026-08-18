@@ -39,6 +39,67 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
+
+**Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
+*"Uncaught TypeError: Cannot read properties of undefined (reading 'short')"*,
+fingerprint `ea71c000`, classe `codigo`, versão 2.0.0-alpha.157, em
+`game.js:4849:66` → `Game._updatePickups` → `Game.update` → `loop`.
+
+**Causa raiz — confirmada.** `map_penitenciaria.js:223` declarava o 8º pickup da fileira
+central como `kind:'smg'`. **`smg` não é arma: é CLASSE de arma.** Quem mapeia arma→classe
+é `recoil.js:38`, `game.js:316`, `audio.js:271` e `vmattach.js:622`, todos com
+`mp5|uzi|p90 -> 'smg'`; `WEAPONS` (em `public/js/data/weapons.js`, 26 chaves) nunca teve
+`smg`. O prompt do `[E]` desreferencia `WEAPONS[w].short` **sem guarda**
+(`game.js:4849`), e o `_updatePickups` roda **todo quadro** dentro do `update()` — então
+olhar para aquela arma não estragava o HUD, **congelava a partida**. O mapa entrou em
+`f87ff467` (Penitenciária + Velho Oeste, #335), o que explica por que o crash é novo.
+
+**Reprodução:** `node tools/eval/pickup-arma-check.mjs` (semente 12345, sem browser). A
+cláusula PA2 planta o jogador em cima do pickup e chama o `_updatePickups` de produção;
+a exceção sai com a mensagem literal de #366.
+
+**Medido antes do conserto** (`node tools/eval/pickup-arma-check.mjs`, 12 mapas, 772 pickups):
+
+| | antes | depois |
+|---|---|---|
+| ids de pickup fora de `WEAPONS` | **1** (`penitenciaria/mapa 'smg'`) | 0 |
+| mapas em que o `_updatePickups` de produção lança | **1** (penitenciaria) | 0 |
+| `_grabPickup` naquele pickup | `false` (impegável) | `true`, jogador sai com `uzi` na mão |
+
+**O que foi DESCARTADO com medição, não com palpite.** O caminho óbvio era `WEAPONS[w]?.short`
+na linha do crash. Medido: com o `?.`, o HUD passa a escrever literalmente
+**`[E] PEGAR undefined`** e `_grabPickup(pk, player, true)` continua devolvendo **`false`** —
+a arma segue impegável, uma caixa dourada em x=10,0 z=−2,2 no meio de 7 armas de verdade.
+O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conserto é no
+**id**, e a guarda de runtime ficou na **porta de entrada**, não no `.short`.
+
+**Correção.** Duas, em camadas diferentes:
+1. `public/js/map_penitenciaria.js:223` — `'smg'` → `'uzi'` (SMG de verdade, chave de
+   `WEAPONS`; `mp5` já ocupava a outra vaga de SMG da fileira). É a causa.
+2. `public/js/game.js:573-581` — id que não existe em `WEAPONS` **não entra no estado do
+   jogo**: o pickup é descartado na ingestão do mapa com `console.warn`. É rede, não
+   conserto: mantém o defeito de dado fora do caminho quente sem escondê-lo de quem mede,
+   porque a régua lê a lista **crua** do `MAPS[id].build()`, antes desta porta.
+
+**Custo declarado, medido.**
+- `check:fast` ganhou um passo: **+3,7 s** (`eval:pickuparma`), de 53 para 54 passos.
+- A penitenciária ganhou uma arma jogável a mais na fileira central (a vaga já existia e
+  estava morta). Posição, yaw e contagem de pickups do mapa não mudaram: **16 antes, 16
+  depois**. A caixa-marcador `arma-central-uzi` passa a ser trocada pelo GLB real em
+  `game.js:574`, como as 7 irmãs — **isto não foi verificado em browser**, só no harness,
+  onde o carregamento de GLB é stub.
+
+**Régua: `tools/eval/pickup-arma-check.mjs`** (`npm run eval:pickuparma`, no `check:fast`).
+2 cláusulas, 3 mutações medidas:
+`--mutante=smg` acende PA1 (1 id fora de `WEAPONS`) **e** PA2 (1 mapa lançando) — reproduz #366;
+`--mutante=sem-short` acende PA1 nos 12 mapas (`mp5` sem `.short`);
+`--mutante=sem-pickups` acende a anti-vacuidade nos 12 (0 < piso de 20).
+**Resultado negativo medido e declarado no cabeçalho da régua:** `--mutante=sem-short`
+**não** acende a PA2, e é de propósito — campo ausente numa arma que existe vira
+`undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
+sobra quando alguém "conserta" o crash com `?.`.
+
 ### BUG-51 · erro de extensão ou beacon virava bug do jogo
 
 **Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
