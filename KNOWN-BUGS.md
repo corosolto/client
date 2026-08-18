@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado revisado: **2026-08-17**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-18**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatos recentes e resolução*.
 >
@@ -1042,6 +1042,27 @@ não têm o lote. UIR1 cobra i18n nos textos dinâmicos novos.
 **Onde fecha:** na branch de místicos/models que o dono pediu em 17/08 ("uma das branchs
 colocar os misticos so e remodelar tudo que tiver errado com os models") — o pipeline é o
 da `faction-pipeline`. Não afrouxar a régua: ela está certa, a mídia é que falta.
+
+### ~~BUG-60 · Regen de grafite de UM mapa apaga os outros nove do layout~~ · RESOLVIDO 18/08
+
+**Sintoma:** `public/js/graffiti_layout.js` ficou com **1 de 10 mapas** (só `ferro_velho`) no
+meio do regen pós-merge de 17/08. `tools/eval/graffiti-layout-check.mjs` M1 vermelha para 9
+mapas ("chama grafitar mas não está no layout").
+
+**Causa raiz:** `tools/gen-graffiti-layout.mjs` extraía o JSON do `GRAFITE` da primeira `{`
+até o `lastIndexOf('}')` do arquivo — que desde a issue #82 é o fechamento do `GRAFITE_FP` no
+rodapé, não do `GRAFITE`. `JSON.parse` lança (*Unexpected non-whitespace character after
+JSON*), o `catch` vazio zera `anterior` ("recomeça") e o regen de um mapa só grava aquele
+mapa. A feature "preservar os outros" (comentário do próprio tool) nunca funcionou com o
+rodapé FP no arquivo; ninguém notou porque os regens anteriores eram sempre de TODOS os mapas.
+
+**Antes × depois (18/08):** antes — layout 1/10 mapas · 413 peças · M1 9× vermelha ·
+`check:fast` 72/83. Conserto: fim do JSON por casamento de chaves (string-aware), rejeitando
+o rodapé. Depois — regen **individual** dos 9 mapas (cada execução exercita o preserve: 829 →
+1156 → 1204 → … → 2993 peças acumulando, nunca perdendo mapa), check **10/10 mapas ·
+2993 peças · manifesto fresco** verde, `check:fast` **76/83** sem vermelha nova. A mutação
+que prova a régua foi a própria árvore quebrada de 18/08: a saída do tool com o defeito É o
+vermelho que a M1 acusa.
 
 ### BUG-55 · Escala dos barracos/models errada no Lajes e no Córrego — ABERTO 17/08
 

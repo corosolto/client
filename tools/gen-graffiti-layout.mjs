@@ -54,10 +54,22 @@ if (existsSync(SAIDA)) {
   const txt = readFileSync(SAIDA, 'utf8');
   const i = txt.indexOf('export const GRAFITE =');
   if (i >= 0) {
-    try {
-      const json = txt.slice(txt.indexOf('{', i), txt.lastIndexOf('}') + 1);
-      Object.assign(anterior, JSON.parse(json));
-    } catch { /* arquivo antigo em outro formato: recomeça */ }
+    /* Fim por casamento de chaves: lastIndexOf('}') pegava o rodapé GRAFITE_FP
+       (issue #82), o parse lançava e o catch zerava tudo (BUG-60). */
+    const ini = txt.indexOf('{', i);
+    let fim = -1, prof = 0, emStr = false;
+    for (let k = ini; k < txt.length && fim < 0; k++) {
+      const c = txt[k];
+      if (emStr) { if (c === '"' && txt[k - 1] !== '\\') emStr = false; continue; }
+      if (c === '"') emStr = true;
+      else if (c === '{') prof++;
+      else if (c === '}' && --prof === 0) fim = k;
+    }
+    if (fim > ini) {
+      try {
+        Object.assign(anterior, JSON.parse(txt.slice(ini, fim + 1)));
+      } catch { /* arquivo antigo em outro formato: recomeça */ }
+    }
   }
 }
 
