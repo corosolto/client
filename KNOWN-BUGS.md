@@ -29,6 +29,11 @@ superfícies do fy_quebrada ganharam albedo) e a VM14 saiu do vermelho em 17/08 
 duas armas do fundo do canal do corrego subiram para as cabeceiras das pontes. Na mesma
 rodada a wave 3 do BUG-54 fechou: `eval:occluders` 0/0/0 nos 10 mapas.
 
+> **`check:fast` pós-swarm, 18/08: 77/84** (após o regen final do grafite do mansão). As 7
+> vermelhas restantes reproduzem na base 03def43 do dia (SB7, mapid-M1, UIR4/22/26/30 do
+> redesign, camera-grip, char-thumbnail lenda-lanhouse, asset-integrity camera-roxa, devport
+> de ambiente) — nenhuma é das 4 frentes do swarm de 18/08 (BUG-55, 56, 57 parte 2, 59).
+
 Duas reprovações do `check:fast` que **não são defeito de código de jogo** e que cortam a
 corrente de `&&` se ficarem no meio dela: `anims:check` (BUG-15, `public/models/anims/`
 não versionado) — por isso ele foi para o FIM do `check:fast` em 05/08 — e `feet:check`,
@@ -1158,11 +1163,25 @@ Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
 todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
 
 **Conserto (worktree swarm/bug56-mansao):** a frota procedural virou GLB do acervo
-(Delorean DMC-12, Mini Cooper S, Golf R32 — os mesmos ids/fichas do `map_havan.js`,
+(fusca `1968_volkswagen_beetle`, Mini Cooper S, Golf R32 — ids/fichas do `map_havan.js`,
 escala de fábrica, colisor das 3 vagas preservado, `carroGenerico` rebaixado a fallback
 de `?glb=0`/node) e o pack Mint "Mansão do Joá — jardim e casa" (6 props: banco
 modernista, poste, escultura, vaso tropical, lounge, lampião de fachada) foi integrado
 com colisor próprio por prop. Registro: `mansao_jardim_pack` em `mint-assets.json`.
+
+**O que a INTEGRAÇÃO achou depois do merge (18/08):** o agente tinha posto o
+`1981_dmc_delorean` — o `grafite-editorial` reprova (marca protegida na mansão; o mutante
+`carros` existe exatamente pra isso) e a régua estava certa contra o review adversarial do
+agente, que cobriu com "direção do dono" — veto de copyright do `AGENTS.md` prevalece.
+Trocado pelo beetle. A régua nova `mansao-glb-fit` veio com a frota HARDCODED (continuava
+verde lendo delorean com o mapa já trocado — o modo de cegueira "lê a declaração" da
+lição 2): agora lê o `GARAGEM` do fonte. E ganhou PISO de largura 1,30 m — o
+`1986_ford_escort_xr3` do acervo tem bbox 31×47×90 (unidade quebrada), a escala
+média-geométrica o renderizava a **1,12 m de largura** e nenhuma cláusula acusava (só
+havia teto). Provado na integração: escort exit 1, beetle (1,57 m) exit 0, mutante glb2x
+exit 1. Dívida de acervo: `1986_ford_escort_xr3`, `1999_volkswagen_gol_2000_gti_g2` e
+`1989_ford_fiesta_xr2i_mk3` com bbox em unidade quebrada — não usar em mapa sem consertar
+o GLB ou estender a ficha.
 
 **Réguas:** `tools/eval/mansao-glb-fit.mjs` (NOVA) mede a bbox real de cada GLB escalada
 como o jogo escala e compara com o colisor declarado — 8/8 verde; mutante `--mutante=glb2x`
