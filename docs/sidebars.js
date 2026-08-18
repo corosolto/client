@@ -27,6 +27,7 @@ const sidebars = {
     'quality-gates',
     'botbrain',
     'arquitetura',
+    'criar-mapa-com-ia',
     'colaborar',
     'estado',
   ],

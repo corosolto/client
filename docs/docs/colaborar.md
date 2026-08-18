@@ -236,6 +236,10 @@ O pipeline é data-driven a partir do GLB. Os GLBs de arma vivem em `public/mode
 
 ## Como adicionar um mapa
 
+Para um roteiro orientado a agentes — incluindo ficha de design, prompt reutilizável,
+mutantes, preview e revisão adversarial — consulte
+[Criar mapa usando IA](./criar-mapa-com-ia.md).
+
 Hoje mapas são **código**, não dado: cada `map_*.js` é geometria declarada à mão, e os
 maiores rivalizam em tamanho com os módulos de sistema. Migrar isso para JSON é a Fase 2
 conteúdo como dado do
