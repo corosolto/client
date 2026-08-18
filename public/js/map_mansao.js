@@ -23,7 +23,21 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 22, HALF_Z = 36;
 const LAJE_H = 4.5;  // pé-direito duplo
 
-export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol'];
+/* Frota da garagem (BUG-56, 17/08): o dono reprovou os carros procedurais — "usar
+   carros que temos em glbs". [comprimento, altura] de fábrica é a MESMA ficha do
+   CAR_DIM do map_havan.js (referência conferida por tools/eval/escala-veiculo-check.mjs);
+   o contrato da mansão (mansao-water-check) reprova divergência aqui. Cada carro tem
+   que caber no colisor da vaga (4,10 m; o procedural maior era 4,25) porque a pegada
+   de colisão não muda — a jogabilidade é boa por decisão do dono. */
+const GARAGEM = [
+  ['1981_dmc_delorean', 4.27, 1.14],
+  ['2014_mini_cooper_s_f56', 3.85, 1.41],
+  ['2002_volkswagen_golf_r32_mk4', 4.15, 1.44],
+];
+
+export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id),
+  // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
+  'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada'];
 
 export function buildMansao(scene, T) {
   const colliders = [], occluders = [], pickups = [];
@@ -97,6 +111,18 @@ export function buildMansao(scene, T) {
     }
     return obj;
   }
+  /* Prop do pack Mint (BUG-56) no lote PB: 1 draw call por material. O colisor é
+     SEMPRE criado pelo chamador (GLB ou fallback) — a pegada não pode depender do
+     download ter chegado. Fallback = caixa com a DIMENSÃO REAL do prop (fbW/fbD/fbH):
+     caixa maior que o colisor é corpo-dentro-de-sólido no MAP1, caixa de 1,8 m num
+     poste de 0,3 m já reprovou. */
+  const jardimProp = (id, x, z, targetH, ry, y = 0, fb = null, fallback = null) => {
+    if (GLB_ON && PB.add(id, { x, y, z, targetH, ry })) return true;
+    if (fallback) { fallback(); return false; }
+    const [w, d, h] = fb || [0.6, 0.6, targetH];
+    addBox(w, h, d, lam({ color: 0x8a7654, roughness: .8 }), x, y, z, { ry, collide: false });
+    return false;
+  };
 
   /* CÉU */
   setMapSky(scene, T, '/img/textures/sky_joa.webp', 0xf0d4a8);
@@ -193,6 +219,12 @@ export function buildMansao(scene, T) {
     addBox(.12, 3.45, .72, madeiraNobre, x, .28, 8.17, { collide: false, skirt: false, bala: true });
   for (let z = -12; z <= 5.8; z += 1.15)
     addBox(.82, 3.25, .1, madeiraNobre, 15.18, .35, z, { collide: false, skirt: false, bala: true });
+  // Lampiões Mint (BUG-56) flanqueando a porta sul e o vão do terraço: fachada
+  // ganha luz quente pontual sem tocar na planta. Sem colisor — estão a 2,3 m,
+  // colados à parede que já é sólida.
+  for (const [lx, lz, ry] of [[-6, 8.32, 0], [6, 8.32, 0], [-8, -14.62, Math.PI], [8, -14.62, Math.PI]]) {
+    jardimProp('lampiao_fachada', lx, lz, .52, ry, 2.3, null, () => addBox(.3, .42, .16, lam({ color: 0xb98a4a, emissive: 0x6b4a1c, emissiveIntensity: .35 }), lx, 2.3, lz, { collide: false, cast: false, skirt: false }));
+  }
   const pedraFachada = lam({ map: TEX.concrete.map || null, color: 0xb2aa98, roughness: .86 });
   for (const [z,h,y] of [[-10,1.0,.2],[-6.6,.72,1.55],[-2.8,1.1,.15],[4.7,.82,1.7]])
     addBox(.08, h, 2.5, pedraFachada, 15.2, y, z, { collide: false, cast: false, skirt: false });
@@ -339,9 +371,10 @@ export function buildMansao(scene, T) {
   /* ===================== GARAGEM (aberta) ===================== */
   // piso diferente (cimento queimado)
   addFloor(20, 7, 0, 11.5, TEX.concrete || lam({ map: T.concrete }), 0.03);
-  // Três desenhos esportivos originais: roadster aberto, cupê fastback e targa.
-  // Não copiam grade, farol ou perfil de marca real e diferem por estrutura — não
-  // apenas pela cor. Rodas dianteiras ultrapassam a carroceria no close frontal.
+  /* Três desenhos procedurais ORIGINAIS (roadster aberto, cupê fastback e targa).
+     Não copiam grade, farol ou perfil de marca real e diferem por estrutura.
+     Desde BUG-56 são o FALLBACK do lote GLB: aparecem sem GLB (node, ?glb=0, GLB
+     404) com o mesmo colisor da vaga — a garagem nunca fica vazia. */
   const carroGenerico = (cx, cor, estilo, ry = 0) => {
     const familias=['aurora-roadster','mare-fastback','serra-targa'];
     const g = new THREE.Group(); g.position.set(cx, 0, 11); g.rotation.y = ry;
@@ -389,9 +422,18 @@ export function buildMansao(scene, T) {
     g.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
     return g;
   };
-  carroGenerico(-6, 0xa84132, 0, .04);
-  carroGenerico(0, 0x31506a, 1, 0);
-  carroGenerico(6, 0xb8b6aa, 2, -.04);
+  /* BUG-56: carro do ACERVO em GLB, escala de fábrica, no mesmo eixo e no mesmo
+     colisor da vaga. Vai pro PropBatch (1 draw call por material do modelo, malha
+     mesclada) igual à frota da Havan; sem GLB cai no carroGenerico acima. Os
+     InstancedMesh do lote entram em `occluders` depois do PB.build lá embaixo —
+     mesmo padrão do map_havan.js (~1931): vidro (transparente) fica de fora. */
+  const carroAcervo = (cx, [id, cl, ch], cor, estilo, ry) => {
+    if (!(GLB_ON && PB.add(id, { x: cx, y: 0, z: 11, targetLen: cl, targetH: ch, ry }))) carroGenerico(cx, cor, estilo, ry);
+    else { col(cx - 1, cx + 1, 0, 1.3, 8.95, 13.05); solids.push({ x0: cx - 1, x1: cx + 1, z0: 8.95, z1: 13.05 }); }
+  };
+  carroAcervo(-6, GARAGEM[0], 0xa84132, 0, .04);
+  carroAcervo(0, GARAGEM[1], 0x31506a, 1, 0);
+  carroAcervo(6, GARAGEM[2], 0xb8b6aa, 2, -.04);
 
   /* ===================== JARDIM TROPICAL MODERNISTA ===================== */
   // Caminho sinuoso de pedras irregulares quebra a malha ortogonal da casa.
@@ -517,6 +559,36 @@ export function buildMansao(scene, T) {
     banana.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
     root.add(banana);
   }
+  /* SET DRESSING MINT (BUG-56): mobiliário e luz de jardim. Colocação fora do
+     corredor central de combate (pedras x∈[-2,2] e espelho x∈[-6,-2,5]) e fora
+     das linhas de waypoint z=18/24/30 — os colisores novos são de borda, o A*
+     e o fluxo de spawn continuam os mesmos. */
+  for (const [bx, bz, ry] of [[-14.9, 16.6, .28], [16.6, 22.6, -2.86]]) {
+    jardimProp('banco_jardim', bx, bz, .82, ry, 0, [1.8, .55, .5]);
+    const horiz = Math.abs(Math.cos(ry)) > Math.abs(Math.sin(ry));
+    col(bx - (horiz ? .95 : .35), bx + (horiz ? .95 : .35), 0, .5, bz - (horiz ? .35 : .95), bz + (horiz ? .35 : .95));
+    solids.push({ x0: bx - (horiz ? .95 : .35), x1: bx + (horiz ? .95 : .35), z0: bz - (horiz ? .35 : .95), z1: bz + (horiz ? .35 : .95) });
+  }
+  // Postes ladeando o caminho de pedras em x=±2,3: a grade global tem colunas em
+  // x=±3 e a inflação de 0,5 m do blocked() alarga o colisor — em ±2,4 ainda matava
+  // os nós (-3,17) e (-3,27,2) e derrubava rota separada do CTF2. Col ±0,18 cobre a
+  // malha real medida (0,34 m de base no GLB — tools/eval/mansao-glb-fit.mjs).
+  for (const [px, pz] of [[-2.3, 17.4], [2.3, 22.6], [-2.3, 27.4], [2.3, 32.6]]) {
+    jardimProp('poste_jardim', px, pz, 2.4, 0, 0, [.26, .26, 2.4]);
+    col(px - .18, px + .18, 0, 2.4, pz - .18, pz + .18);
+  }
+  jardimProp('escultura_jardim', 18.6, 32.2, 2.2, -.6, 0, [.9, .9, 2.2]);
+  col(18.0, 19.2, 0, 2.2, 31.6, 32.8); solids.push({ x0: 18.0, x1: 19.2, z0: 31.6, z1: 32.8 });
+  // Vaso via propComFallback: o collider do proxy fica SEMPRE — é o vaso rígido.
+  // 0,70 m: base rígida medida do GLB é 0,67 m (mansao-glb-fit) — col menor deixa
+  // 7 cm de cerâmica atravessável. A folhagem do GLB abre 1,23 m: folha é
+  // atravessável por doutrina (mesma regra da bananeira/palmeira), então a malha
+  // GLB leva nonSolidSurface — o corpo roça a folha, não entra no vaso.
+  for (const [vx, vz] of [[-18.9, 20.4], [19.6, 26.2], [-20.2, -21.4], [20.2, -21.4]]) {
+    const v = propComFallback('vaso_tropical', vx, vz, 1.05, (vx + vz) * .3,
+      () => addBox(.7, 1.05, .7, lam({ color: 0x2e6636, roughness: 1 }), vx, 0, vz));
+    if (v) v.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+  }
   // Encosta verde lateral em dois planos de profundidade: o horizonte deixa de
   // terminar numa linha oceânica reta, sem bloquear o eixo central de combate.
   const encosta = new THREE.Group(); encosta.userData.mansaoFeature = 'encosta';
@@ -601,6 +673,11 @@ export function buildMansao(scene, T) {
   // heliponto (H) — decoração
   addBox(0.3, 0.05, 8.0, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
   addBox(8.0, 0.05, 0.3, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
+  // Lounge Mint (BUG-56) no deck oeste: alinhado a z (ry π/2) e colisor 1,9 — a
+  // malha real do conjunto é 1,91×1,06 (mansao-glb-fit); em janela entre nós da
+  // grade (x≠-16,6/-13,2, z≠-17) sem apagar waypoint nem a linha do terraço.
+  jardimProp('lounge_externo', -14.9, -18.5, 1.05, 1.57, 0, [1.7, 1.7, .8]);
+  col(-15.85, -13.95, 0, .8, -19.45, -17.55); solids.push({ x0: -15.85, x1: -13.95, z0: -19.45, z1: -17.55 });
 
   /* MUROS */
   for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_WALL, sx, 0, 0);
@@ -700,7 +777,16 @@ export function buildMansao(scene, T) {
   place('deagle', 4, 4);   place('ak', -8, 11);
   place('shotgun', 0, 32); place('m4', 6, -20);
 
+  /* O lote de carros nasce InstancedMesh em root mas fora de `occluders`: sem isto a
+     bala atravessava carro que o corpo respeita (BUG-54, cláusula atravessa-parede).
+     Vidro (transparente) fica de fora — mesmo teste de superfície do map_havan.js. */
+  const preProps = new Set(root.children);
   PB.build(root);
+  for (const c of root.children) {
+    if (preProps.has(c) || !c.isInstancedMesh) continue;
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
+  }
   SKIRT.build(root);
 
   /* Pixo no muro externo, sem o folha-pixaca-01 ("MORTE" — veto editorial da mansão,

@@ -1128,15 +1128,42 @@ Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
 
 **Lajes:** mesma família de defeito, frente BUG-58 — não medido aqui.
 
-### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — ABERTO 17/08
+### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — CORRIGIDO EM ARQUIVO 18/08, aguardando olho do dono
 
 **Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
 todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
 
-**Direção dada pelo dono:** carros GLB existentes no acervo substituem os `carroGenerico`
-procedurais; jardim e casa ganham models gerados no Mint. A régua visual candidata é a
-mesma família da `lajes-visual` (o dono declarou o lajes como régua de favela — ver
-BUG-58).
+**Conserto (worktree swarm/bug56-mansao):** a frota procedural virou GLB do acervo
+(Delorean DMC-12, Mini Cooper S, Golf R32 — os mesmos ids/fichas do `map_havan.js`,
+escala de fábrica, colisor das 3 vagas preservado, `carroGenerico` rebaixado a fallback
+de `?glb=0`/node) e o pack Mint "Mansão do Joá — jardim e casa" (6 props: banco
+modernista, poste, escultura, vaso tropical, lounge, lampião de fachada) foi integrado
+com colisor próprio por prop. Registro: `mansao_jardim_pack` em `mint-assets.json`.
+
+**Réguas:** `tools/eval/mansao-glb-fit.mjs` (NOVA) mede a bbox real de cada GLB escalada
+como o jogo escala e compara com o colisor declarado — 8/8 verde; mutante `--mutante=glb2x`
+(dobra a malha medida) → 8/8 ESTOURA, exit 1. O primeiro vermelho dela foi o vaso
+(base rígida 0,67 m sobre colisor 0,60 m): colisor corrigido para 0,70 m — malha ≤ col +2 cm
+continua valendo, teto não afrouxou. O contrato `mansao-water-check` ganhou 6 cláusulas de
+frota GLB e 4 mutantes novos (`carros-glb-ausentes`, `carro-glb-clonado`, `carro-glb-gigante`,
+`vaga-sem-colisor`), todos mordendo a cláusula certa, exit 1 comprovado. Verdes preservadas:
+`map-check fy_mansao` (MAP1 dentro 0, CTF2 ≥2 rotas), `pickup-check` (sem alcance 0),
+`eval:map-new`, `eval:asset-integrity` (pack segue a forma dos 4 packs existentes: sem
+`finalSha256`, proveniência no `source`), validador Khronos ad hoc 6/6 GLBs 0 erros.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug56-{antes,depois}/fy_mansao/`, A/B por
+`tools/eval/ab-pixel.py`):** `cars-front-close` 9,4% dos pixels mudados concentrados no
+terço central (os 3 carros GLB); `garden-eye` 3,1% (postes/bancos/vasos no caminho de
+pedras); `facade-garden` 1,1% no centro (lampiões na fachada); `interior` 0,0% (intocado,
+como esperado). A métrica de bordas do `ab-pixel.py` foi consertada: contava
+`len(getdata())` = todos os pixels, sempre 100%/100% — réguas decorativas não entram.
+
+**Dívidas declaradas:** (1) o pedido "casa" foi atendido na FACHADA (lampiões) — o interior
+segue procedural (contrato verde, mas sem props Mint); (2) `grafite-layout-check` VERMELHO
+em fy_mansao até o regen do integrador (`npm run grafite fy_mansao` é dele); (3) o vermelho
+preexistente de `camera-roxa` no asset-integrity não é desta frente (arquivo e registro
+intactos no diff); (4) o A/B é quantitativo — **nenhum agente desta sessão olhou as figuras**
+(modelo sem visão): a aprovação visual é do dono, por screenshot, como sempre.
 
 ### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
 
