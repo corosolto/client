@@ -1031,6 +1031,18 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado) — ABERTO 17/08
+
+**Evidência:** `eval:redesign` UIA1/UIA4/UIR1 vermelhas desde o merge da main (alpha.147,
+17/08). A régua da main exige avatar `.webp`, vídeo de seleção `.webm` e artes de
+vitória/derrota para TODO o elenco — os 18 personagens que esta branch acrescentou
+(mítico + facções novas: boto, cuca, curupira, saci, lampião, gilbomes, camera-roxa…)
+não têm o lote. UIR1 cobra i18n nos textos dinâmicos novos.
+
+**Onde fecha:** na branch de místicos/models que o dono pediu em 17/08 ("uma das branchs
+colocar os misticos so e remodelar tudo que tiver errado com os models") — o pipeline é o
+da `faction-pipeline`. Não afrouxar a régua: ela está certa, a mídia é que falta.
+
 ### BUG-55 · Escala dos barracos/models errada no Lajes e no Córrego — ABERTO 17/08
 
 **Sintoma literal do dono (teste de 17/08):** lajes — *"o melhor em textura. mas barracos
