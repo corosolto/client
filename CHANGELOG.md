@@ -37,6 +37,81 @@
 - feat(ci): comentários do bot legíveis — caixa colorida, mapa da mudança e ficha de triagem (#354)
 - fix(release): criação de release idempotente — corrida tag×main não pinta mais vermelho (#355)
 
+- feat(mapa): loader único de mapa em JSON com régua de conteúdo (#210) (#223)
+- fix(site): read live factions from the real table
+- fix(ui): fecha três armadilhas antes que o redesign pise nelas, e liga a régua de UI
+- fix(eval): make retired harness paths portable
+- chore(eval): aposenta as famílias de evals obsoletos G2-R6/R7/R8/R14, R7x e P1/P0 (#43)
+- fix(webgl): compila preview em renderers distintos
+- fix(audio): associa bordoes aos personagens
+- fix(ui): fecha telas finais e contrato de rounds
+- feat(audio): personagens falam ao clicar no avatar
+- feat(ui): fecha redesign AAA e opções da partida
+- feat(ui): os 44 retratos hero entram no jogo
+- fix(assets): lista o elenco pelo characters.js, não pelo diretório de GLB
+- fix(ci): guarda de dedupe na shell — triage não morre mais em issue não-crash
+- docs(contributing): quem conserta o quê — csbrasil-bot é pipeline, estraga-codigo conserta
+- fix(menu): convida jogador a enviar feedback
+- fix(ci): valida animacoes antes do deploy
+- fix(ui): fecha fundos responsivos do redesign
+- fix(docs): ignora arquivos locais nas métricas
+- docs: atualiza contratos gerados
+- fix(eval): mede cache injetado pelo build
+- fix(client): bundle público não nomeia o backend — régua eval:backendhints
+- fix(apoie): URLs de apoio resolvidas pelo servidor no menu do jogo, aria-pressed, bandeira/globo nos botões
+- docs: regenera blocos após página de doações
+- fix(boot): watchdog de partida renova enquanto o preload progride (#241) (#286)
+- fix(telemetria): sem_webgl e ambiente do jogador, nao defeito de codigo (#277) (#285)
+- fix: point international support to Ko-fi profile
+- feat: add donation page and support menu
+- fix(hud): o vídeo do fim de partida derrubava a régua de UI inteira
+- feat(ui): carregamento ganha status por progresso e DICA rotativa (tela 00B)
+- fix(api): client Supabase com timeout no fetch — acaba com os 504 de 300s (#269)
+- feat(ui): personagem em vídeo na entrada e no fim de partida
+- feat(assets): gerador de pose — mesmo personagem comemorando e derrotado
+- fix(assets): emo é rapaz e tem três acessórios; tom de pele vira valor, não categoria
+- feat(ui): a tela de fim de partida finalmente mostra o personagem do jogador
+- fix(assets): óculos vira trava global, e mascote deixa de levar a trava anti-Pixar
+- fix(assets): tira o visual Pixar, usa a arte oficial como 2ª referência, e para de queimar crédito
+- feat(assets): folha de contato — modelo ao lado do gerado, para revisão de fidelidade
+- feat(hud): brasão no lugar da sigla, em plaqueta escura (tela 05 do redesign)
+- feat(ui): barra inferior do menu — chip de perfil e as duas escolhas da partida
+- feat(ui): chips de link no topo-direito do menu (tela 01 do redesign)
+- fix(dev): o style.css vinha do cache no servidor de desenvolvimento
+- fix(assets): lista de exceções por personagem — a Juliet do Mandrake não é Wayfarer
+- feat(assets): enquadra pela caixa do personagem e gera o loop de vídeo a partir do retrato
+- fix(bot): rótulo automático volta sem depender de PAT (#259)
+- feat(assets): retrato fotorrealista com a identidade travada pelo render do modelo
+- feat(ui): fase 2a — menu principal em 4 itens, com os dois modos num submenu
+- feat(ui): fase 1 do redesign AAA — fontes locais, zero radius, e o render do modelo real
+- chore: remove o graphify das regras e dos hooks
+- fix(docs): tabela de licença conta ocorrências, não anota número de linha (#244)
+- feat(harness): régua trava o layout de grafite contra envelhecer em silêncio (#233)
+- test: régua media-net tranca crashes de áudio (#117) e rede (#125) (#227)
+- test(webgl): trava roteamento sem-WebGL do boot com régua de guarda (#224)
+- fix: classifica crash opaco sem origem como externo e não abre issue (#228)
+- fix(harness): atualiza matrizes de mundo apos build para LOS headless valida (#226)
+- fix(crash): não escalar aviso recuperável de textura do three como bug de código (#222)
+- test(ci): cover yaml production workflows
+- fix(ci): keep production deploy fallback manual
+- test(three): hash static harness imports
+- fix(three): tolerate null shader logs
+- test(smoke): exercise 3D preview explicitly
+- docs(site): publish the current architecture and map source
+- fix(botbrain): expire stale combat targets
+- fix(botbrain): bound the local training sink
+- fix(botbrain): secure training and preserve game objectives
+- fix(botbrain): remove travessão do texto público (regra do site, gate travessao:check)
+- fix(botbrain): move o toggle de coleta pra aba PRIVACIDADE (não em Interface)
+- feat(botbrain): --player-boost pondera o dado de jogador acima do professor
+- feat(botbrain): coleta contínua (flush periódico + ao sair), não só no fim da partida
+- feat(botbrain): loop local sem Supabase — sink em arquivo, Docker e guia
+- feat(botbrain): rede neural treinada dirige os bots (Fases B/C/D)
+- feat(botbrain): coleta de jogadas do jogador p/ treinar rede dos bots (Fase A)
+- fix(eval): keep graffiti census comments invariant-only
+- fix(identity): preserve legacy fallback during UID claim
+- fix(identity): migrate player authentication to UID
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.156).
 ## [2.0.0-alpha.155] — 2026-08-18
 
 ### Mudado
