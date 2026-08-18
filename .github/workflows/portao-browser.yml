@@ -36,6 +36,15 @@ on:
       - 'public/js/graffiti_layout.js'
       - 'public/js/characters.js'
       - 'public/js/glbchars.js'
+      # Caminho do VIEWMODEL: o eval:select deste portão é o único lugar do CI
+      # que boota o jogo REAL em browser (?debug=1) — sem estas paths, PR que
+      # mexe em game.js/armas/molas passava pelo portão rápido cego para boot
+      # e render da tela de seleção (as PX de browser seguem sem arnês próprio).
+      - 'public/js/game.js'
+      - 'public/js/weapons.js'
+      - 'public/js/recoil.js'
+      - 'public/js/springs.js'
+      - 'public/js/data/weapons.js'
       - 'public/models/**'
       - 'public/mapview.html'
       - 'tools/eval/graffiti-census.mjs'

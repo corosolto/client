@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**9 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `rubenmarcus`, `Ruben`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**9 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben`, `rubenmarcus`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -342,9 +342,12 @@ em `git ls-files public/models/anims`). Doc que manda fazer o que já foi feito 
 primeira contribuição de alguém; por isso a lista virou ponteiro para `docs/issues/`,
 que é mantida.
 
-O único item da lista antiga que **continua valendo**: a mensagem das invariantes
-PX1–PX4 manda usar `tools/eval/motion.mjs`, que não existe (`ls` confirma). Apontar para
-o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
+O único item da lista antiga que **continua valendo** — e agora está consertado:
+a mensagem das invariantes PX1–PX4 apontava para `tools/eval/motion.mjs`, que
+nunca existiu no git (ponteiro fantasma). Hoje as skips declaram honestamente
+"sem arnês dedicado (dívida PX)": o que existe de browser no CI é o
+`portao-browser` (boot real do jogo + grafite + silhueta da seleção), e um
+arnês de viewmodel dedicado continua sendo trabalho aberto.
 :::
 
 ### Trabalho de verdade, ainda acessível
