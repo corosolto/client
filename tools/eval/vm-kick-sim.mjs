@@ -15,8 +15,8 @@
 //   liftY  = k * GAIN_POS_Y   (m)        -> vm.root.position.y
 //
 // TODOS os numeros acima sao LIDOS por regex de public/js/game.js — nenhum e copiado aqui.
-// A cadencia (rate) vem da tabela WEAPONS (game.js; weapons.js so carrega geometria) e o
-// agendamento replica `p.nextShotAt = this.time + w.rate` (acumula a partir do QUADRO em
+// A cadencia (rate) vem da tabela WEAPONS em public/js/data/weapons.js (extraida do game.js
+// no #332; weapons.js so carrega geometria) e o agendamento replica `p.nextShotAt = this.time + w.rate` (acumula a partir do QUADRO em
 // que o tiro saiu, nao de uma grade ideal — isso muda o pico em ate 0,5 grau).
 //
 // A coronha: back = escalaVM * max(0, -bboxMin.z) e a distancia coronha->grip em metros,
@@ -35,6 +35,7 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../.
 const G = fs.readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
 const RJS = fs.readFileSync(path.join(ROOT, 'public/js/recoil.js'), 'utf8');
 const WJS = fs.readFileSync(path.join(ROOT, 'public/js/weapons.js'), 'utf8');
+const DJS = fs.readFileSync(path.join(ROOT, 'public/js/data/weapons.js'), 'utf8');
 
 const die = (m) => { throw new Error('vm-kick-sim: ' + m); };
 const grab = (re, what) => { const m = re.exec(G); if (!m) die(`nao achei ${what} em game.js`); return m; };
@@ -97,16 +98,16 @@ function loadStaticClass() {
 }
 const STATIC_CLASS = loadStaticClass();
 
-/* ---------- 6) cadencia real (tabela WEAPONS do game.js; weapons.js so tem geometria) ---------- */
+/* ---------- 6) cadencia real (tabela WEAPONS de data/weapons.js, extraida do game.js no #332) ---------- */
 function loadRates() {
   const out = {};
-  for (const m of G.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\brate:\s*([\d.]+)/gm)) out[m[1]] = +m[2];
-  if (!Object.keys(out).length) die('nenhum `rate:` encontrado na tabela WEAPONS');
+  for (const m of DJS.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\brate:\s*([\d.]+)/gm)) out[m[1]] = +m[2];
+  if (!Object.keys(out).length) die('nenhum `rate:` encontrado na tabela WEAPONS de data/weapons.js');
   return out;
 }
 const RATE = loadRates();
 const AUTO = new Set();
-for (const m of G.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\bauto:\s*true/gm)) AUTO.add(m[1]);
+for (const m of DJS.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\bauto:\s*true/gm)) AUTO.add(m[1]);
 // weapons.js e a fonte da GEOMETRIA (len/gripZ/vm) — registrada no relatorio para rastrear
 // de onde veio cada numero; a cadencia NAO mora la.
 const GEOM = {};
