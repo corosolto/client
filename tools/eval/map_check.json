@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-18T09:06:16.366Z",
+ "gerado": "2026-08-18T12:43:13.855Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -2092,7 +2092,7 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.2921,
+     "fracMedia": 0.2916,
      "maiorVisada": 76.4
     },
     {
@@ -2140,8 +2140,8 @@
      "z": 35,
      "chao": 0,
      "obsLonge": 552,
-     "obsVendo": 107,
-     "frac": 0.1938,
+     "obsVendo": 106,
+     "frac": 0.192,
      "maiorVisada": 75.6
     },
     {
@@ -2274,7 +2274,7 @@
    "occluderSemMalha": [],
    "occMedidos": 108,
    "occPulados": 62,
-   "fracSemMalha": 0.0042,
+   "fracSemMalha": 0.0037,
    "quadrantes": [
     {
      "q": "0,0",
