@@ -39,8 +39,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Push do bump autenticado como csbrasil-BOT: o ruleset da main (protecao-main)
+      # não permite bypass do github-actions[bot]; o guard "chore(release):" impede o loop do PAT.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with: { node-version: 22 }
