@@ -51,6 +51,8 @@ com código 1 em falha crítica.
 | `bot-routes.mjs`, `botdiag.mjs` | Diagnóstico de rota e de estado dos bots (complementam o `botsim`). |
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `loadout-test.mjs` | Loadout por personagem/facção. |
+| `ambience-registry-check.mjs` | Fauna no registro: AR1 todo mapa devolve `ambience`, AR2 população mínima por bioma, AR3 nada nasce em sólido. `npm run eval:ambience` (no `check:fast`). |
+| `fauna-shots.mjs` | Fauna viva na partida real (browser): FS1 GLB carregado (não fallback), FS2 animação avança, FS3 tiro real via `_fireHitscan` muda estado pra `flee`/`takeoff`. Gera capturas por mapa. |
 
 ## 4. Viewmodel e rig — a família mais densa
 

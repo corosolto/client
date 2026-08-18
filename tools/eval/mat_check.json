@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-18T22:39:20.106Z",
+ "gerado": "2026-08-18T23:02:58.866Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -440,7 +440,7 @@
    "mutacoes": []
   },
   "chao_drop": {
-   "linha": 4954,
+   "linha": 4956,
    "mutacoes": []
   },
   "tp_mount": {
@@ -595,14 +595,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.961,
+    "opacidadeSprite": 0.99,
     "escalaSprite": [
-     3.22,
-     5.18
+     3.04,
+     5.14
     ],
-    "spritesCobrindoCentro": 12,
-    "alfaAcumuladoCentro": 0.9995,
-    "maiorAlfaSprite": 0.72,
+    "spritesCobrindoCentro": 8,
+    "alfaAcumuladoCentro": 0.9825,
+    "maiorAlfaSprite": 0.638,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -878,14 +878,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#81a3c4",
-    "opacidadeSprite": 0.981,
+    "opacidadeSprite": 0.95,
     "escalaSprite": [
-     3.36,
-     5.2
+     3.1,
+     5.06
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9997,
-    "maiorAlfaSprite": 0.839,
+    "spritesCobrindoCentro": 12,
+    "alfaAcumuladoCentro": 0.9981,
+    "maiorAlfaSprite": 0.69,
     "radianciaFumaca": 0.3467,
     "radianciaCeu": 0.4623,
     "razaoFumacaCeu": 0.75,
@@ -1102,14 +1102,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#8facca",
-    "opacidadeSprite": 0.969,
+    "opacidadeSprite": 0.987,
     "escalaSprite": [
-     3.06,
-     5.16
+     3.02,
+     5.18
     ],
-    "spritesCobrindoCentro": 13,
-    "alfaAcumuladoCentro": 0.9936,
-    "maiorAlfaSprite": 0.55,
+    "spritesCobrindoCentro": 12,
+    "alfaAcumuladoCentro": 0.9968,
+    "maiorAlfaSprite": 0.698,
     "radianciaFumaca": 0.3969,
     "radianciaCeu": 0.5292,
     "razaoFumacaCeu": 0.75,
@@ -1263,14 +1263,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#91adca",
-    "opacidadeSprite": 0.979,
+    "opacidadeSprite": 0.954,
     "escalaSprite": [
-     3.04,
-     5.12
+     3.14,
+     5.16
     ],
-    "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.9485,
-    "maiorAlfaSprite": 0.652,
+    "spritesCobrindoCentro": 13,
+    "alfaAcumuladoCentro": 0.9957,
+    "maiorAlfaSprite": 0.665,
     "radianciaFumaca": 0.4019,
     "radianciaCeu": 0.5359,
     "razaoFumacaCeu": 0.75,
@@ -1451,14 +1451,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.992,
+    "opacidadeSprite": 0.979,
     "escalaSprite": [
-     3,
-     5.08
+     3.08,
+     5.16
     ],
-    "spritesCobrindoCentro": 13,
-    "alfaAcumuladoCentro": 0.9943,
-    "maiorAlfaSprite": 0.615,
+    "spritesCobrindoCentro": 10,
+    "alfaAcumuladoCentro": 0.9923,
+    "maiorAlfaSprite": 0.659,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -1753,14 +1753,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.988,
+    "opacidadeSprite": 0.973,
     "escalaSprite": [
-     3.04,
-     5.14
+     3.02,
+     5.1
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9954,
-    "maiorAlfaSprite": 0.634,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.998,
+    "maiorAlfaSprite": 0.693,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -2563,14 +2563,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.995,
+    "opacidadeSprite": 0.993,
     "escalaSprite": [
-     3.02,
-     5.16
+     3.3,
+     5.1
     ],
-    "spritesCobrindoCentro": 8,
-    "alfaAcumuladoCentro": 0.9855,
-    "maiorAlfaSprite": 0.639,
+    "spritesCobrindoCentro": 14,
+    "alfaAcumuladoCentro": 0.9995,
+    "maiorAlfaSprite": 0.775,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -3804,14 +3804,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.996,
+    "opacidadeSprite": 0.999,
     "escalaSprite": [
-     3.18,
+     3.2,
      4.98
     ],
-    "spritesCobrindoCentro": 15,
-    "alfaAcumuladoCentro": 0.9994,
-    "maiorAlfaSprite": 0.784,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9861,
+    "maiorAlfaSprite": 0.77,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -4775,14 +4775,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.977,
+    "opacidadeSprite": 0.992,
     "escalaSprite": [
-     3.06,
-     5.16
+     3.12,
+     5.14
     ],
     "spritesCobrindoCentro": 11,
-    "alfaAcumuladoCentro": 0.9969,
-    "maiorAlfaSprite": 0.716,
+    "alfaAcumuladoCentro": 0.9878,
+    "maiorAlfaSprite": 0.653,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -4936,14 +4936,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.959,
+    "opacidadeSprite": 0.995,
     "escalaSprite": [
-     3.14,
-     5.14
+     3.02,
+     5.2
     ],
-    "spritesCobrindoCentro": 9,
-    "alfaAcumuladoCentro": 0.9962,
-    "maiorAlfaSprite": 0.664,
+    "spritesCobrindoCentro": 14,
+    "alfaAcumuladoCentro": 0.9998,
+    "maiorAlfaSprite": 0.827,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -5106,14 +5106,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.991,
+    "opacidadeSprite": 0.968,
     "escalaSprite": [
-     3.2,
-     5.12
+     3.26,
+     5.18
     ],
-    "spritesCobrindoCentro": 14,
-    "alfaAcumuladoCentro": 0.9979,
-    "maiorAlfaSprite": 0.784,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9891,
+    "maiorAlfaSprite": 0.714,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -5290,14 +5290,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.997,
+    "opacidadeSprite": 0.995,
     "escalaSprite": [
-     3.06,
-     5.04
+     3.1,
+     5.14
     ],
-    "spritesCobrindoCentro": 13,
-    "alfaAcumuladoCentro": 0.9906,
-    "maiorAlfaSprite": 0.718,
+    "spritesCobrindoCentro": 9,
+    "alfaAcumuladoCentro": 0.9969,
+    "maiorAlfaSprite": 0.803,
     "radianciaFumaca": 0.2379,
     "radianciaCeu": 0.3172,
     "razaoFumacaCeu": 0.75,
@@ -5316,7 +5316,7 @@
   }
  ],
  "shade": {
-  "gerado": "2026-08-18T22:39:20.106Z",
+  "gerado": "2026-08-18T23:02:58.866Z",
   "armas": [
    {
     "arma": "ak",

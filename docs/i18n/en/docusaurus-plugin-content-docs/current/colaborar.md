@@ -251,18 +251,18 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 247 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,847 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 828 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,980 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,904 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,618 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 505 |
+| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 301 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 256 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 270 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 419 |
+| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 448 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 263 |
 
 **12 registered maps** - 2 open in rounds and 10 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 14 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
@@ -345,12 +345,9 @@ in `git ls-files public/models/anims`). A doc that tells you to do what has alre
 someone's first contribution; that is why the list became a pointer to `docs/issues/`,
 which is maintained.
 
-The only item from the old list that **still stands** — and is now fixed: the
-message of invariants PX1–PX4 pointed to `tools/eval/motion.mjs`, which never
-existed in git (a phantom pointer). The skips now honestly declare "no dedicated
-harness (PX debt)": what runs in CI browsers today is `portao-browser` (real game
-boot + graffiti + selection-screen silhouette), and a dedicated viewmodel
-harness remains open work.
+The only item from the old list that **still stands**: the message of invariants
+PX1–PX4 tells you to use `tools/eval/motion.mjs`, which does not exist (`ls` confirms). Pointing to
+the right harness, or marking it as "harness to be written", is a 15-minute PR.
 :::
 
 ### Real work, still accessible {#real-work-still-accessible}

@@ -5,6 +5,7 @@ import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
+import { preloadAmbientLife } from './ambientlife.js';
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -259,7 +260,11 @@ function rebuildMenuBackdrop() {
 }
 // The first backdrop is built before props load; rebuild once they're ready so the
 // menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
+// Fauna junto (BUG-57): o backdrop do menu builda o mapa REAL — com os GLBs no cache
+// o caramelo passeia no menu antes da primeira partida.
+Promise.all([preloadMapProps(MAP_PROPS), preloadAmbientLife()])
+  .then(() => { rebuildMenuBackdrop(); _splashSetReady(); })
+  .catch(() => _splashSetReady());
 
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
@@ -1004,6 +1009,7 @@ async function _startGame(team, charId, enemyFaction) {
       await Promise.all([
         preloadCharacterAssets([...GLB_CHARS]),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
+        preloadAmbientLife(),   // fauna GLB (BUG-57) — já vem do menu na maioria dos casos; aqui cobre entrada direta por URL
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }

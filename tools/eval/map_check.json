@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-15T02:08:00.345Z",
+ "gerado": "2026-08-18T23:02:55.943Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -5034,11 +5034,37 @@
    "celulasAlcancadas": 43385,
    "amostrasChao": 2823,
    "observadores": 723,
-   "corpoDentroDeSolido": 0,
+   "corpoDentroDeSolido": 2,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 0,
-   "piores": [],
-   "dentroTodos": [],
+   "piorPenetracao": 0.59,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": 9.5,
+     "z": -33.5,
+     "pen": 0.59
+    },
+    {
+     "tipo": "chao",
+     "x": -21.5,
+     "z": 17.5,
+     "pen": 0.313
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": 9.5,
+     "z": -33.5,
+     "pen": 0.59
+    },
+    {
+     "tipo": "chao",
+     "x": -21.5,
+     "z": 17.5,
+     "pen": 0.313
+    }
+   ],
    "spawns": [
     {
      "team": "E",
@@ -5284,7 +5310,7 @@
    "occluderSemMalha": [],
    "occMedidos": 411,
    "occPulados": 0,
-   "fracSemMalha": 0.0036,
+   "fracSemMalha": 0.0038,
    "quadrantes": [
     {
      "q": "0,0",
@@ -6201,6 +6227,575 @@
     }
    ],
    "alturaTrianguloMin": 14
+  },
+  {
+   "map": "upa_24h",
+   "celulasAlcancadas": 54212,
+   "amostrasChao": 3371,
+   "observadores": 862,
+   "corpoDentroDeSolido": 0,
+   "submersosAcimaDoPeito": 0,
+   "piorPenetracao": 0,
+   "piores": [],
+   "dentroTodos": [],
+   "spawns": [
+    {
+     "team": "E",
+     "x": -25,
+     "z": -31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -20,
+     "z": -31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -15,
+     "z": -31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -10,
+     "z": -31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 10,
+     "z": 31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 20,
+     "z": 31,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 25,
+     "z": 31,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "exposicaoPorTime": [
+    {
+     "team": "E",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.1557,
+     "maiorVisada": 64.3
+    },
+    {
+     "team": "B",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.0271,
+     "maiorVisada": 64.3
+    }
+   ],
+   "exposicaoPorSpawn": [
+    {
+     "team": "E",
+     "x": -25,
+     "z": -31,
+     "chao": 0,
+     "obsLonge": 713,
+     "obsVendo": 134,
+     "frac": 0.1879,
+     "maiorVisada": 64.3
+    },
+    {
+     "team": "E",
+     "x": -20,
+     "z": -31,
+     "chao": 0,
+     "obsLonge": 686,
+     "obsVendo": 122,
+     "frac": 0.1778,
+     "maiorVisada": 64.2
+    },
+    {
+     "team": "E",
+     "x": -15,
+     "z": -31,
+     "chao": 0,
+     "obsLonge": 656,
+     "obsVendo": 88,
+     "frac": 0.1341,
+     "maiorVisada": 44.9
+    },
+    {
+     "team": "E",
+     "x": -10,
+     "z": -31,
+     "chao": 0,
+     "obsLonge": 633,
+     "obsVendo": 78,
+     "frac": 0.1232,
+     "maiorVisada": 40.3
+    },
+    {
+     "team": "B",
+     "x": 10,
+     "z": 31,
+     "chao": 0,
+     "obsLonge": 643,
+     "obsVendo": 3,
+     "frac": 0.0047,
+     "maiorVisada": 29.4
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 31,
+     "chao": 0,
+     "obsLonge": 668,
+     "obsVendo": 16,
+     "frac": 0.024,
+     "maiorVisada": 44.9
+    },
+    {
+     "team": "B",
+     "x": 20,
+     "z": 31,
+     "chao": 0,
+     "obsLonge": 696,
+     "obsVendo": 35,
+     "frac": 0.0503,
+     "maiorVisada": 64.2
+    },
+    {
+     "team": "B",
+     "x": 25,
+     "z": 31,
+     "chao": 0,
+     "obsLonge": 719,
+     "obsVendo": 21,
+     "frac": 0.0292,
+     "maiorVisada": 64.3
+    }
+   ],
+   "salaDoSpawn": [
+    {
+     "team": "E",
+     "x": -25,
+     "z": -31,
+     "folgaParede": 3.35,
+     "dirPior": 214,
+     "areaContigua": 64,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -20,
+     "z": -31,
+     "folgaParede": 4.5,
+     "dirPior": 264,
+     "areaContigua": 72.1,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -15,
+     "z": -31,
+     "folgaParede": 4.5,
+     "dirPior": 264,
+     "areaContigua": 72.1,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -10,
+     "z": -31,
+     "folgaParede": 4.3,
+     "dirPior": 332,
+     "areaContigua": 69.8,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 10,
+     "z": 31,
+     "folgaParede": 4.2,
+     "dirPior": 242,
+     "areaContigua": 69.2,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 31,
+     "folgaParede": 4.5,
+     "dirPior": 84,
+     "areaContigua": 72.1,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 20,
+     "z": 31,
+     "folgaParede": 4.5,
+     "dirPior": 84,
+     "areaContigua": 71.8,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 25,
+     "z": 31,
+     "folgaParede": 3.35,
+     "dirPior": 34,
+     "areaContigua": 64,
+     "okFolga": true,
+     "okArea": true
+    }
+   ],
+   "piorFolga": 3.35,
+   "piorArea": 64,
+   "escadas": [],
+   "travessia": [],
+   "occluderSemMalha": [],
+   "occMedidos": 122,
+   "occPulados": 0,
+   "fracSemMalha": 0.0041,
+   "quadrantes": [
+    {
+     "q": "0,0",
+     "x0": -29,
+     "z0": -35,
+     "areaAndavel": 215,
+     "props": 5,
+     "waypoints": 25,
+     "densProp": 2.33,
+     "densWp": 11.63,
+     "espacamento": 6.56,
+     "razaoProp": 0.73,
+     "razaoWp": 0.98
+    },
+    {
+     "q": "0,1",
+     "x0": -29,
+     "z0": -17.5,
+     "areaAndavel": 203,
+     "props": 10,
+     "waypoints": 24,
+     "densProp": 4.92,
+     "densWp": 11.8,
+     "espacamento": 4.51,
+     "razaoProp": 1.55,
+     "razaoWp": 0.99
+    },
+    {
+     "q": "0,2",
+     "x0": -29,
+     "z0": 0,
+     "areaAndavel": 211,
+     "props": 8,
+     "waypoints": 24,
+     "densProp": 3.79,
+     "densWp": 11.38,
+     "espacamento": 5.13,
+     "razaoProp": 1.19,
+     "razaoWp": 0.96
+    },
+    {
+     "q": "0,3",
+     "x0": -29,
+     "z0": 17.5,
+     "areaAndavel": 214,
+     "props": 12,
+     "waypoints": 25,
+     "densProp": 5.62,
+     "densWp": 11.71,
+     "espacamento": 4.22,
+     "razaoProp": 1.77,
+     "razaoWp": 0.98
+    },
+    {
+     "q": "1,0",
+     "x0": -14.5,
+     "z0": -35,
+     "areaAndavel": 224,
+     "props": 3,
+     "waypoints": 28,
+     "densProp": 1.34,
+     "densWp": 12.51,
+     "espacamento": 8.64,
+     "razaoProp": 0.42,
+     "razaoWp": 1.05
+    },
+    {
+     "q": "1,1",
+     "x0": -14.5,
+     "z0": -17.5,
+     "areaAndavel": 205,
+     "props": 6,
+     "waypoints": 25,
+     "densProp": 2.93,
+     "densWp": 12.21,
+     "espacamento": 5.84,
+     "razaoProp": 0.92,
+     "razaoWp": 1.03
+    },
+    {
+     "q": "1,2",
+     "x0": -14.5,
+     "z0": 0,
+     "areaAndavel": 204,
+     "props": 7,
+     "waypoints": 25,
+     "densProp": 3.43,
+     "densWp": 12.26,
+     "espacamento": 5.4,
+     "razaoProp": 1.08,
+     "razaoWp": 1.03
+    },
+    {
+     "q": "1,3",
+     "x0": -14.5,
+     "z0": 17.5,
+     "areaAndavel": 208,
+     "props": 12,
+     "waypoints": 25,
+     "densProp": 5.76,
+     "densWp": 12,
+     "espacamento": 4.17,
+     "razaoProp": 1.81,
+     "razaoWp": 1.01
+    },
+    {
+     "q": "2,0",
+     "x0": 0,
+     "z0": -35,
+     "areaAndavel": 218,
+     "props": 4,
+     "waypoints": 33,
+     "densProp": 1.84,
+     "densWp": 15.15,
+     "espacamento": 7.38,
+     "razaoProp": 0.58,
+     "razaoWp": 1.27
+    },
+    {
+     "q": "2,1",
+     "x0": 0,
+     "z0": -17.5,
+     "areaAndavel": 198,
+     "props": 8,
+     "waypoints": 29,
+     "densProp": 4.03,
+     "densWp": 14.62,
+     "espacamento": 4.98,
+     "razaoProp": 1.27,
+     "razaoWp": 1.23
+    },
+    {
+     "q": "2,2",
+     "x0": 0,
+     "z0": 0,
+     "areaAndavel": 206,
+     "props": 5,
+     "waypoints": 28,
+     "densProp": 2.42,
+     "densWp": 13.58,
+     "espacamento": 6.42,
+     "razaoProp": 0.76,
+     "razaoWp": 1.14
+    },
+    {
+     "q": "2,3",
+     "x0": 0,
+     "z0": 17.5,
+     "areaAndavel": 212,
+     "props": 12,
+     "waypoints": 30,
+     "densProp": 5.66,
+     "densWp": 14.14,
+     "espacamento": 4.21,
+     "razaoProp": 1.78,
+     "razaoWp": 1.19
+    },
+    {
+     "q": "3,0",
+     "x0": 14.5,
+     "z0": -35,
+     "areaAndavel": 220,
+     "props": 5,
+     "waypoints": 21,
+     "densProp": 2.27,
+     "densWp": 9.53,
+     "espacamento": 6.64,
+     "razaoProp": 0.71,
+     "razaoWp": 0.8
+    },
+    {
+     "q": "3,1",
+     "x0": 14.5,
+     "z0": -17.5,
+     "areaAndavel": 216,
+     "props": 6,
+     "waypoints": 21,
+     "densProp": 2.77,
+     "densWp": 9.71,
+     "espacamento": 6,
+     "razaoProp": 0.87,
+     "razaoWp": 0.82
+    },
+    {
+     "q": "3,2",
+     "x0": 14.5,
+     "z0": 0,
+     "areaAndavel": 208,
+     "props": 6,
+     "waypoints": 18,
+     "densProp": 2.89,
+     "densWp": 8.67,
+     "espacamento": 5.88,
+     "razaoProp": 0.91,
+     "razaoWp": 0.73
+    },
+    {
+     "q": "3,3",
+     "x0": 14.5,
+     "z0": 17.5,
+     "areaAndavel": 226,
+     "props": 9,
+     "waypoints": 23,
+     "densProp": 3.99,
+     "densWp": 10.19,
+     "espacamento": 5.01,
+     "razaoProp": 1.25,
+     "razaoWp": 0.86
+    }
+   ],
+   "medianaProp": 3.18,
+   "medianaWp": 11.9,
+   "piorRazaoProp": 0.42,
+   "piorRazaoWp": 0.73,
+   "piorEspacamento": 8.64,
+   "rotasSpawnBandeira": [
+    {
+     "time": "E",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      9.6,
+      9.6,
+      9.6,
+      9.6
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "MID",
+     "rotas": 2,
+     "comprimentos": [
+      41,
+      55.2
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "B",
+     "rotas": 2,
+     "comprimentos": [
+      90.7,
+      98.9
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "E",
+     "rotas": 2,
+     "comprimentos": [
+      77,
+      99.1
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "MID",
+     "rotas": 2,
+     "comprimentos": [
+      45.5,
+      66.9
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      6.8,
+      6.8,
+      6.8,
+      6.8
+     ]
+    }
+   ],
+   "piorRotas": 2,
+   "bandeiras": [
+    {
+     "id": "E",
+     "label": "RECEPÇÃO",
+     "x": -18,
+     "z": -28,
+     "distSpawn": 3.61,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 45.9,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "MID",
+     "label": "CORREDOR",
+     "x": 0,
+     "z": -8,
+     "distSpawn": 25.08,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "B",
+     "label": "EMERGÊNCIA",
+     "x": 18,
+     "z": 28,
+     "distSpawn": 3.61,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 41.6,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "alturaTrianguloMin": 4.33
   },
   {
    "map": "obras_prefeitura",
@@ -7444,6 +8039,2043 @@
     }
    ],
    "alturaTrianguloMin": 18
+  },
+  {
+   "map": "parque_treta",
+   "celulasAlcancadas": 71572,
+   "amostrasChao": 4496,
+   "observadores": 1113,
+   "corpoDentroDeSolido": 21,
+   "submersosAcimaDoPeito": 0,
+   "piorPenetracao": 1.06,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": -31.2,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": 30.8,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": -31.2,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": 30.8,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -4.2,
+     "z": 23.8,
+     "pen": 0.59
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 11.8,
+     "pen": 0.45
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": -31.2,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -20.2,
+     "z": 30.8,
+     "pen": 1.06
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": -31.2,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -23.2,
+     "z": 30.8,
+     "pen": 0.7
+    },
+    {
+     "tipo": "chao",
+     "x": -4.2,
+     "z": 23.8,
+     "pen": 0.59
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -16.2,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": -15.2,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 15.8,
+     "z": 12.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": -12.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": -11.2,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": 11.8,
+     "pen": 0.45
+    },
+    {
+     "tipo": "chao",
+     "x": 16.8,
+     "z": 12.8,
+     "pen": 0.45
+    }
+   ],
+   "spawns": [
+    {
+     "team": "E",
+     "x": -9,
+     "z": -38.5,
+     "chao": 0,
+     "penetracao": 0.01
+    },
+    {
+     "team": "E",
+     "x": -3,
+     "z": -38.5,
+     "chao": 0,
+     "penetracao": 0.025
+    },
+    {
+     "team": "E",
+     "x": 3,
+     "z": -38.5,
+     "chao": 0,
+     "penetracao": 0.025
+    },
+    {
+     "team": "E",
+     "x": 9,
+     "z": -38.5,
+     "chao": 0,
+     "penetracao": 0.01
+    },
+    {
+     "team": "B",
+     "x": -9,
+     "z": 38.5,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -3,
+     "z": 38.5,
+     "chao": 0,
+     "penetracao": 0.025
+    },
+    {
+     "team": "B",
+     "x": 3,
+     "z": 38.5,
+     "chao": 0,
+     "penetracao": 0.025
+    },
+    {
+     "team": "B",
+     "x": 9,
+     "z": 38.5,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "exposicaoPorTime": [
+    {
+     "team": "E",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.519,
+     "maiorVisada": 86.2
+    },
+    {
+     "team": "B",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.5222,
+     "maiorVisada": 84.1
+    }
+   ],
+   "exposicaoPorSpawn": [
+    {
+     "team": "E",
+     "x": -9,
+     "z": -38.5,
+     "chao": 0,
+     "obsLonge": 881,
+     "obsVendo": 367,
+     "frac": 0.4166,
+     "maiorVisada": 83.4
+    },
+    {
+     "team": "E",
+     "x": -3,
+     "z": -38.5,
+     "chao": 0,
+     "obsLonge": 876,
+     "obsVendo": 549,
+     "frac": 0.6267,
+     "maiorVisada": 86.2
+    },
+    {
+     "team": "E",
+     "x": 3,
+     "z": -38.5,
+     "chao": 0,
+     "obsLonge": 874,
+     "obsVendo": 560,
+     "frac": 0.6407,
+     "maiorVisada": 85.6
+    },
+    {
+     "team": "E",
+     "x": 9,
+     "z": -38.5,
+     "chao": 0,
+     "obsLonge": 875,
+     "obsVendo": 343,
+     "frac": 0.392,
+     "maiorVisada": 82.9
+    },
+    {
+     "team": "B",
+     "x": -9,
+     "z": 38.5,
+     "chao": 0,
+     "obsLonge": 862,
+     "obsVendo": 360,
+     "frac": 0.4176,
+     "maiorVisada": 81.3
+    },
+    {
+     "team": "B",
+     "x": -3,
+     "z": 38.5,
+     "chao": 0,
+     "obsLonge": 855,
+     "obsVendo": 537,
+     "frac": 0.6281,
+     "maiorVisada": 84
+    },
+    {
+     "team": "B",
+     "x": 3,
+     "z": 38.5,
+     "chao": 0,
+     "obsLonge": 855,
+     "obsVendo": 550,
+     "frac": 0.6433,
+     "maiorVisada": 84.1
+    },
+    {
+     "team": "B",
+     "x": 9,
+     "z": 38.5,
+     "chao": 0,
+     "obsLonge": 855,
+     "obsVendo": 342,
+     "frac": 0.4,
+     "maiorVisada": 81.4
+    }
+   ],
+   "salaDoSpawn": [
+    {
+     "team": "E",
+     "x": -9,
+     "z": -38.5,
+     "folgaParede": 2.75,
+     "dirPior": 264,
+     "areaContigua": 58.7,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -3,
+     "z": -38.5,
+     "folgaParede": 2.75,
+     "dirPior": 264,
+     "areaContigua": 60.8,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 3,
+     "z": -38.5,
+     "folgaParede": 2.75,
+     "dirPior": 264,
+     "areaContigua": 61.1,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 9,
+     "z": -38.5,
+     "folgaParede": 2.75,
+     "dirPior": 264,
+     "areaContigua": 58.7,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -9,
+     "z": 38.5,
+     "folgaParede": 2.75,
+     "dirPior": 84,
+     "areaContigua": 59.8,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -3,
+     "z": 38.5,
+     "folgaParede": 2.75,
+     "dirPior": 84,
+     "areaContigua": 61.8,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 3,
+     "z": 38.5,
+     "folgaParede": 2.75,
+     "dirPior": 84,
+     "areaContigua": 61.9,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 9,
+     "z": 38.5,
+     "folgaParede": 2.75,
+     "dirPior": 84,
+     "areaContigua": 59.7,
+     "okFolga": true,
+     "okArea": true
+    }
+   ],
+   "piorFolga": 2.75,
+   "piorArea": 58.7,
+   "escadas": [],
+   "travessia": [],
+   "occluderSemMalha": [],
+   "occMedidos": 48,
+   "occPulados": 0,
+   "fracSemMalha": 0.0037,
+   "quadrantes": [
+    {
+     "q": "0,0",
+     "x0": -31.2,
+     "z0": -41.2,
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 33,
+     "densProp": 0.33,
+     "densWp": 10.97,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 1.19
+    },
+    {
+     "q": "0,1",
+     "x0": -31.2,
+     "z0": -20.6,
+     "areaAndavel": 286,
+     "props": 2,
+     "waypoints": 26,
+     "densProp": 0.7,
+     "densWp": 9.09,
+     "espacamento": 11.96,
+     "razaoProp": 0.69,
+     "razaoWp": 0.99
+    },
+    {
+     "q": "0,2",
+     "x0": -31.2,
+     "z0": 0,
+     "areaAndavel": 290,
+     "props": 3,
+     "waypoints": 26,
+     "densProp": 1.04,
+     "densWp": 8.97,
+     "espacamento": 9.83,
+     "razaoProp": 1.03,
+     "razaoWp": 0.97
+    },
+    {
+     "q": "0,3",
+     "x0": -31.2,
+     "z0": 20.6,
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 28,
+     "densProp": 0.33,
+     "densWp": 9.31,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 1.01
+    },
+    {
+     "q": "1,0",
+     "x0": -15.6,
+     "z0": -41.2,
+     "areaAndavel": 297,
+     "props": 3,
+     "waypoints": 33,
+     "densProp": 1.01,
+     "densWp": 11.11,
+     "espacamento": 9.95,
+     "razaoProp": 1,
+     "razaoWp": 1.2
+    },
+    {
+     "q": "1,1",
+     "x0": -15.6,
+     "z0": -20.6,
+     "areaAndavel": 245,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.23,
+     "densWp": 9.4,
+     "espacamento": 9.03,
+     "razaoProp": 1.22,
+     "razaoWp": 1.02
+    },
+    {
+     "q": "1,2",
+     "x0": -15.6,
+     "z0": 0,
+     "areaAndavel": 247,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.21,
+     "densWp": 9.31,
+     "espacamento": 9.08,
+     "razaoProp": 1.2,
+     "razaoWp": 1.01
+    },
+    {
+     "q": "1,3",
+     "x0": -15.6,
+     "z0": 20.6,
+     "areaAndavel": 298,
+     "props": 3,
+     "waypoints": 28,
+     "densProp": 1.01,
+     "densWp": 9.39,
+     "espacamento": 9.97,
+     "razaoProp": 1,
+     "razaoWp": 1.02
+    },
+    {
+     "q": "2,0",
+     "x0": 0,
+     "z0": -41.2,
+     "areaAndavel": 302,
+     "props": 3,
+     "waypoints": 33,
+     "densProp": 0.99,
+     "densWp": 10.93,
+     "espacamento": 10.03,
+     "razaoProp": 0.98,
+     "razaoWp": 1.18
+    },
+    {
+     "q": "2,1",
+     "x0": 0,
+     "z0": -20.6,
+     "areaAndavel": 249,
+     "props": 3,
+     "waypoints": 23,
+     "densProp": 1.2,
+     "densWp": 9.22,
+     "espacamento": 9.12,
+     "razaoProp": 1.19,
+     "razaoWp": 1
+    },
+    {
+     "q": "2,2",
+     "x0": 0,
+     "z0": 0,
+     "areaAndavel": 252,
+     "props": 4,
+     "waypoints": 23,
+     "densProp": 1.59,
+     "densWp": 9.13,
+     "espacamento": 7.94,
+     "razaoProp": 1.57,
+     "razaoWp": 0.99
+    },
+    {
+     "q": "2,3",
+     "x0": 0,
+     "z0": 20.6,
+     "areaAndavel": 303,
+     "props": 3,
+     "waypoints": 28,
+     "densProp": 0.99,
+     "densWp": 9.23,
+     "espacamento": 10.06,
+     "razaoProp": 0.98,
+     "razaoWp": 1
+    },
+    {
+     "q": "3,0",
+     "x0": 15.6,
+     "z0": -41.2,
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 27,
+     "densProp": 0.33,
+     "densWp": 8.98,
+     "espacamento": 17.34,
+     "razaoProp": 0.33,
+     "razaoWp": 0.97
+    },
+    {
+     "q": "3,1",
+     "x0": 15.6,
+     "z0": -20.6,
+     "areaAndavel": 250,
+     "props": 4,
+     "waypoints": 17,
+     "densProp": 1.6,
+     "densWp": 6.81,
+     "espacamento": 7.9,
+     "razaoProp": 1.58,
+     "razaoWp": 0.74
+    },
+    {
+     "q": "3,2",
+     "x0": 15.6,
+     "z0": 0,
+     "areaAndavel": 251,
+     "props": 4,
+     "waypoints": 16,
+     "densProp": 1.59,
+     "densWp": 6.37,
+     "espacamento": 7.92,
+     "razaoProp": 1.57,
+     "razaoWp": 0.69
+    },
+    {
+     "q": "3,3",
+     "x0": 15.6,
+     "z0": 20.6,
+     "areaAndavel": 301,
+     "props": 1,
+     "waypoints": 23,
+     "densProp": 0.33,
+     "densWp": 7.64,
+     "espacamento": 17.35,
+     "razaoProp": 0.33,
+     "razaoWp": 0.83
+    }
+   ],
+   "medianaProp": 1.01,
+   "medianaWp": 9.225000000000001,
+   "piorRazaoProp": 0.33,
+   "piorRazaoWp": 0.69,
+   "piorEspacamento": 17.35,
+   "rotasSpawnBandeira": [
+    {
+     "time": "E",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      28.3,
+      30.9,
+      41.8,
+      74.6
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      56.5,
+      63.7,
+      67.4,
+      89.3
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      80.2,
+      85.5,
+      90.8,
+      122.1
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "E",
+     "rotas": 3,
+     "comprimentos": [
+      82.9,
+      89,
+      108.2
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      30.1,
+      32.8,
+      41.8,
+      46.4
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      10.9,
+      10.9,
+      10.9,
+      10.9
+     ]
+    }
+   ],
+   "piorRotas": 3,
+   "bandeiras": [
+    {
+     "id": "E",
+     "label": "PORTAL ROSA",
+     "x": 18,
+     "z": -33,
+     "distSpawn": 10.55,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 84.3,
+     "chao": 0,
+     "penetracao": 0.025
+    },
+    {
+     "id": "MID",
+     "label": "CARROSSEL",
+     "x": 0,
+     "z": 10,
+     "distSpawn": 28.66,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 58,
+     "chao": 0,
+     "penetracao": 0.04
+    },
+    {
+     "id": "B",
+     "label": "PORTAL AZUL",
+     "x": -18,
+     "z": 33,
+     "distSpawn": 10.55,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 87.1,
+     "chao": 0,
+     "penetracao": 0.045
+    }
+   ],
+   "alturaTrianguloMin": 4.79
+  },
+  {
+   "map": "velho_oeste",
+   "celulasAlcancadas": 71310,
+   "amostrasChao": 4460,
+   "observadores": 1107,
+   "corpoDentroDeSolido": 0,
+   "submersosAcimaDoPeito": 0,
+   "piorPenetracao": 0,
+   "piores": [],
+   "dentroTodos": [],
+   "spawns": [
+    {
+     "team": "E",
+     "x": -12,
+     "z": -41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -4,
+     "z": -41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 4,
+     "z": -41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 12,
+     "z": -41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 12,
+     "z": 41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 4,
+     "z": 41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -4,
+     "z": 41,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -12,
+     "z": 41,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "exposicaoPorTime": [
+    {
+     "team": "E",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.6337,
+     "maiorVisada": 92
+    },
+    {
+     "team": "B",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.666,
+     "maiorVisada": 89.8
+    }
+   ],
+   "exposicaoPorSpawn": [
+    {
+     "team": "E",
+     "x": -12,
+     "z": -41,
+     "chao": 0,
+     "obsLonge": 902,
+     "obsVendo": 555,
+     "frac": 0.6153,
+     "maiorVisada": 91.2
+    },
+    {
+     "team": "E",
+     "x": -4,
+     "z": -41,
+     "chao": 0,
+     "obsLonge": 868,
+     "obsVendo": 572,
+     "frac": 0.659,
+     "maiorVisada": 91.9
+    },
+    {
+     "team": "E",
+     "x": 4,
+     "z": -41,
+     "chao": 0,
+     "obsLonge": 862,
+     "obsVendo": 564,
+     "frac": 0.6543,
+     "maiorVisada": 92
+    },
+    {
+     "team": "E",
+     "x": 12,
+     "z": -41,
+     "chao": 0,
+     "obsLonge": 886,
+     "obsVendo": 537,
+     "frac": 0.6061,
+     "maiorVisada": 91.3
+    },
+    {
+     "team": "B",
+     "x": 12,
+     "z": 41,
+     "chao": 0,
+     "obsLonge": 861,
+     "obsVendo": 550,
+     "frac": 0.6388,
+     "maiorVisada": 89.8
+    },
+    {
+     "team": "B",
+     "x": 4,
+     "z": 41,
+     "chao": 0,
+     "obsLonge": 835,
+     "obsVendo": 579,
+     "frac": 0.6934,
+     "maiorVisada": 87.9
+    },
+    {
+     "team": "B",
+     "x": -4,
+     "z": 41,
+     "chao": 0,
+     "obsLonge": 835,
+     "obsVendo": 572,
+     "frac": 0.685,
+     "maiorVisada": 87.3
+    },
+    {
+     "team": "B",
+     "x": -12,
+     "z": 41,
+     "chao": 0,
+     "obsLonge": 869,
+     "obsVendo": 562,
+     "frac": 0.6467,
+     "maiorVisada": 89.7
+    }
+   ],
+   "salaDoSpawn": [
+    {
+     "team": "E",
+     "x": -12,
+     "z": -41,
+     "folgaParede": 4.9,
+     "dirPior": 270,
+     "areaContigua": 73.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -4,
+     "z": -41,
+     "folgaParede": 5.25,
+     "dirPior": 247,
+     "areaContigua": 73.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 4,
+     "z": -41,
+     "folgaParede": 5.25,
+     "dirPior": 293,
+     "areaContigua": 73.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 12,
+     "z": -41,
+     "folgaParede": 4.9,
+     "dirPior": 270,
+     "areaContigua": 73.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 12,
+     "z": 41,
+     "folgaParede": 4.9,
+     "dirPior": 90,
+     "areaContigua": 74.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 4,
+     "z": 41,
+     "folgaParede": 5.25,
+     "dirPior": 68,
+     "areaContigua": 74.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -4,
+     "z": 41,
+     "folgaParede": 5.25,
+     "dirPior": 113,
+     "areaContigua": 74.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -12,
+     "z": 41,
+     "folgaParede": 4.4,
+     "dirPior": 264,
+     "areaContigua": 71.3,
+     "okFolga": true,
+     "okArea": true
+    }
+   ],
+   "piorFolga": 4.4,
+   "piorArea": 71.3,
+   "escadas": [],
+   "travessia": [],
+   "occluderSemMalha": [],
+   "occMedidos": 56,
+   "occPulados": 11,
+   "fracSemMalha": 0.0032,
+   "quadrantes": [
+    {
+     "q": "0,0",
+     "x0": -33.2,
+     "z0": -45.2,
+     "areaAndavel": 239,
+     "props": 1,
+     "waypoints": 23,
+     "densProp": 0.42,
+     "densWp": 9.63,
+     "espacamento": 15.46,
+     "razaoProp": 0.64,
+     "razaoWp": 1.11
+    },
+    {
+     "q": "0,1",
+     "x0": -33.2,
+     "z0": -22.6,
+     "areaAndavel": 257,
+     "props": 2,
+     "waypoints": 28,
+     "densProp": 0.78,
+     "densWp": 10.91,
+     "espacamento": 11.33,
+     "razaoProp": 1.19,
+     "razaoWp": 1.26
+    },
+    {
+     "q": "0,2",
+     "x0": -33.2,
+     "z0": 0,
+     "areaAndavel": 239,
+     "props": 1,
+     "waypoints": 18,
+     "densProp": 0.42,
+     "densWp": 7.55,
+     "espacamento": 15.45,
+     "razaoProp": 0.64,
+     "razaoWp": 0.87
+    },
+    {
+     "q": "0,3",
+     "x0": -33.2,
+     "z0": 22.6,
+     "areaAndavel": 253,
+     "props": 1,
+     "waypoints": 27,
+     "densProp": 0.4,
+     "densWp": 10.68,
+     "espacamento": 15.9,
+     "razaoProp": 0.61,
+     "razaoWp": 1.23
+    },
+    {
+     "q": "1,0",
+     "x0": -16.6,
+     "z0": -45.2,
+     "areaAndavel": 347,
+     "props": 1,
+     "waypoints": 30,
+     "densProp": 0.29,
+     "densWp": 8.65,
+     "espacamento": 18.62,
+     "razaoProp": 0.44,
+     "razaoWp": 1
+    },
+    {
+     "q": "1,1",
+     "x0": -16.6,
+     "z0": -22.6,
+     "areaAndavel": 252,
+     "props": 7,
+     "waypoints": 22,
+     "densProp": 2.77,
+     "densWp": 8.72,
+     "espacamento": 6.01,
+     "razaoProp": 4.23,
+     "razaoWp": 1
+    },
+    {
+     "q": "1,2",
+     "x0": -16.6,
+     "z0": 0,
+     "areaAndavel": 293,
+     "props": 5,
+     "waypoints": 24,
+     "densProp": 1.71,
+     "densWp": 8.2,
+     "espacamento": 7.65,
+     "razaoProp": 2.61,
+     "razaoWp": 0.94
+    },
+    {
+     "q": "1,3",
+     "x0": -16.6,
+     "z0": 22.6,
+     "areaAndavel": 309,
+     "props": 4,
+     "waypoints": 27,
+     "densProp": 1.3,
+     "densWp": 8.75,
+     "espacamento": 8.78,
+     "razaoProp": 1.98,
+     "razaoWp": 1.01
+    },
+    {
+     "q": "2,0",
+     "x0": 0,
+     "z0": -45.2,
+     "areaAndavel": 355,
+     "props": 3,
+     "waypoints": 32,
+     "densProp": 0.84,
+     "densWp": 9.01,
+     "espacamento": 10.88,
+     "razaoProp": 1.28,
+     "razaoWp": 1.04
+    },
+    {
+     "q": "2,1",
+     "x0": 0,
+     "z0": -22.6,
+     "areaAndavel": 286,
+     "props": 4,
+     "waypoints": 27,
+     "densProp": 1.4,
+     "densWp": 9.46,
+     "espacamento": 8.45,
+     "razaoProp": 2.14,
+     "razaoWp": 1.09
+    },
+    {
+     "q": "2,2",
+     "x0": 0,
+     "z0": 0,
+     "areaAndavel": 276,
+     "props": 7,
+     "waypoints": 22,
+     "densProp": 2.53,
+     "densWp": 7.96,
+     "espacamento": 6.28,
+     "razaoProp": 3.86,
+     "razaoWp": 0.92
+    },
+    {
+     "q": "2,3",
+     "x0": 0,
+     "z0": 22.6,
+     "areaAndavel": 357,
+     "props": 2,
+     "waypoints": 32,
+     "densProp": 0.56,
+     "densWp": 8.96,
+     "espacamento": 13.36,
+     "razaoProp": 0.85,
+     "razaoWp": 1.03
+    },
+    {
+     "q": "3,0",
+     "x0": 16.6,
+     "z0": -45.2,
+     "areaAndavel": 249,
+     "props": 1,
+     "waypoints": 19,
+     "densProp": 0.4,
+     "densWp": 7.64,
+     "espacamento": 15.77,
+     "razaoProp": 0.61,
+     "razaoWp": 0.88
+    },
+    {
+     "q": "3,1",
+     "x0": 16.6,
+     "z0": -22.6,
+     "areaAndavel": 241,
+     "props": 0,
+     "waypoints": 20,
+     "densProp": 0,
+     "densWp": 8.31,
+     "espacamento": 99,
+     "razaoProp": 0,
+     "razaoWp": 0.96
+    },
+    {
+     "q": "3,2",
+     "x0": 16.6,
+     "z0": 0,
+     "areaAndavel": 239,
+     "props": 1,
+     "waypoints": 16,
+     "densProp": 0.42,
+     "densWp": 6.7,
+     "espacamento": 15.46,
+     "razaoProp": 0.64,
+     "razaoWp": 0.77
+    },
+    {
+     "q": "3,3",
+     "x0": 16.6,
+     "z0": 22.6,
+     "areaAndavel": 268,
+     "props": 2,
+     "waypoints": 21,
+     "densProp": 0.75,
+     "densWp": 7.85,
+     "espacamento": 11.57,
+     "razaoProp": 1.15,
+     "razaoWp": 0.9
+    }
+   ],
+   "medianaProp": 0.655,
+   "medianaWp": 8.685,
+   "piorRazaoProp": 0,
+   "piorRazaoWp": 0.77,
+   "piorEspacamento": 99,
+   "rotasSpawnBandeira": [
+    {
+     "time": "E",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      8.2,
+      8.2,
+      8.2,
+      8.2
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      49.8,
+      52.6,
+      71.9,
+      108.7
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "B",
+     "rotas": 3,
+     "comprimentos": [
+      90,
+      95.7,
+      103.6
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "E",
+     "rotas": 2,
+     "comprimentos": [
+      88.9,
+      95.7
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      46.4,
+      54.1,
+      71.6,
+      80.1
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      3.4,
+      3.4,
+      3.4,
+      3.4
+     ]
+    }
+   ],
+   "piorRotas": 2,
+   "bandeiras": [
+    {
+     "id": "E",
+     "label": "SALOON",
+     "x": -12,
+     "z": -34,
+     "distSpawn": 7,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 85.4,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "MID",
+     "label": "RUA PRINCIPAL",
+     "x": 0,
+     "z": 0,
+     "distSpawn": 41.19,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 49.4,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "B",
+     "label": "ESTÁBULO",
+     "x": 12,
+     "z": 34,
+     "distSpawn": 7,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 83.3,
+     "chao": 0,
+     "penetracao": 1.08
+    }
+   ],
+   "alturaTrianguloMin": 0
+  },
+  {
+   "map": "penitenciaria",
+   "celulasAlcancadas": 99250,
+   "amostrasChao": 6079,
+   "observadores": 1530,
+   "corpoDentroDeSolido": 14,
+   "submersosAcimaDoPeito": 0,
+   "piorPenetracao": 1.02,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": -15.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -14.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -1.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -4.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -3.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -2.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": 2.9,
+     "z": -7.1,
+     "pen": 1.02
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": -15.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -14.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -2.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -1.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -4.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -3.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -2.1,
+     "z": -13.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": 2.9,
+     "z": -7.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": 2.9,
+     "z": -6.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": 2.9,
+     "z": -5.1,
+     "pen": 1.02
+    },
+    {
+     "tipo": "chao",
+     "x": -19.1,
+     "z": -16.1,
+     "pen": 0.575
+    },
+    {
+     "tipo": "chao",
+     "x": 3.9,
+     "z": 22.9,
+     "pen": 0.575
+    },
+    {
+     "tipo": "chao",
+     "x": -7.1,
+     "z": -2.1,
+     "pen": 0.32
+    },
+    {
+     "tipo": "chao",
+     "x": -1.1,
+     "z": -2.1,
+     "pen": 0.32
+    }
+   ],
+   "spawns": [
+    {
+     "team": "E",
+     "x": -15,
+     "z": -42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -5,
+     "z": -42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 5,
+     "z": -42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 15,
+     "z": -42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 5,
+     "z": 42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -5,
+     "z": 42,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -15,
+     "z": 42,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "exposicaoPorTime": [
+    {
+     "team": "E",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.7932,
+     "maiorVisada": 97.4
+    },
+    {
+     "team": "B",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.7614,
+     "maiorVisada": 98.5
+    }
+   ],
+   "exposicaoPorSpawn": [
+    {
+     "team": "E",
+     "x": -15,
+     "z": -42,
+     "chao": 0,
+     "obsLonge": 1259,
+     "obsVendo": 1005,
+     "frac": 0.7983,
+     "maiorVisada": 97.4
+    },
+    {
+     "team": "E",
+     "x": -5,
+     "z": -42,
+     "chao": 0,
+     "obsLonge": 1237,
+     "obsVendo": 977,
+     "frac": 0.7898,
+     "maiorVisada": 93.3
+    },
+    {
+     "team": "E",
+     "x": 5,
+     "z": -42,
+     "chao": 0,
+     "obsLonge": 1243,
+     "obsVendo": 978,
+     "frac": 0.7868,
+     "maiorVisada": 93.4
+    },
+    {
+     "team": "E",
+     "x": 15,
+     "z": -42,
+     "chao": 0,
+     "obsLonge": 1267,
+     "obsVendo": 1011,
+     "frac": 0.7979,
+     "maiorVisada": 97.4
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 42,
+     "chao": 0,
+     "obsLonge": 1258,
+     "obsVendo": 984,
+     "frac": 0.7822,
+     "maiorVisada": 97.6
+    },
+    {
+     "team": "B",
+     "x": 5,
+     "z": 42,
+     "chao": 0,
+     "obsLonge": 1239,
+     "obsVendo": 951,
+     "frac": 0.7676,
+     "maiorVisada": 93.5
+    },
+    {
+     "team": "B",
+     "x": -5,
+     "z": 42,
+     "chao": 0,
+     "obsLonge": 1238,
+     "obsVendo": 956,
+     "frac": 0.7722,
+     "maiorVisada": 93.5
+    },
+    {
+     "team": "B",
+     "x": -15,
+     "z": 42,
+     "chao": 0,
+     "obsLonge": 1259,
+     "obsVendo": 911,
+     "frac": 0.7236,
+     "maiorVisada": 98.5
+    }
+   ],
+   "salaDoSpawn": [
+    {
+     "team": "E",
+     "x": -15,
+     "z": -42,
+     "folgaParede": 5.55,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -5,
+     "z": -42,
+     "folgaParede": 5.55,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 5,
+     "z": -42,
+     "folgaParede": 5.55,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 15,
+     "z": -42,
+     "folgaParede": 5.55,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 15,
+     "z": 42,
+     "folgaParede": 5.55,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 5,
+     "z": 42,
+     "folgaParede": 5.55,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -5,
+     "z": 42,
+     "folgaParede": 5.55,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -15,
+     "z": 42,
+     "folgaParede": 3.95,
+     "dirPior": 276,
+     "areaContigua": 73,
+     "okFolga": true,
+     "okArea": true
+    }
+   ],
+   "piorFolga": 3.95,
+   "piorArea": 73,
+   "escadas": [],
+   "travessia": [],
+   "occluderSemMalha": [],
+   "occMedidos": 77,
+   "occPulados": 1,
+   "fracSemMalha": 0.0014,
+   "quadrantes": [
+    {
+     "q": "0,0",
+     "x0": -37.1,
+     "z0": -47.1,
+     "areaAndavel": 372,
+     "props": 12,
+     "waypoints": 38,
+     "densProp": 3.23,
+     "densWp": 10.22,
+     "espacamento": 5.57,
+     "razaoProp": 1.67,
+     "razaoWp": 1.06
+    },
+    {
+     "q": "0,1",
+     "x0": -37.1,
+     "z0": -23.6,
+     "areaAndavel": 363,
+     "props": 7,
+     "waypoints": 39,
+     "densProp": 1.93,
+     "densWp": 10.73,
+     "espacamento": 7.2,
+     "razaoProp": 1,
+     "razaoWp": 1.12
+    },
+    {
+     "q": "0,2",
+     "x0": -37.1,
+     "z0": 0,
+     "areaAndavel": 362,
+     "props": 7,
+     "waypoints": 42,
+     "densProp": 1.93,
+     "densWp": 11.59,
+     "espacamento": 7.19,
+     "razaoProp": 1,
+     "razaoWp": 1.2
+    },
+    {
+     "q": "0,3",
+     "x0": -37.1,
+     "z0": 23.6,
+     "areaAndavel": 371,
+     "props": 13,
+     "waypoints": 38,
+     "densProp": 3.5,
+     "densWp": 10.23,
+     "espacamento": 5.34,
+     "razaoProp": 1.81,
+     "razaoWp": 1.06
+    },
+    {
+     "q": "1,0",
+     "x0": -18.6,
+     "z0": -47.1,
+     "areaAndavel": 424,
+     "props": 1,
+     "waypoints": 47,
+     "densProp": 0.24,
+     "densWp": 11.08,
+     "espacamento": 20.6,
+     "razaoProp": 0.12,
+     "razaoWp": 1.15
+    },
+    {
+     "q": "1,1",
+     "x0": -18.6,
+     "z0": -23.6,
+     "areaAndavel": 412,
+     "props": 2,
+     "waypoints": 36,
+     "densProp": 0.49,
+     "densWp": 8.74,
+     "espacamento": 14.35,
+     "razaoProp": 0.25,
+     "razaoWp": 0.91
+    },
+    {
+     "q": "1,2",
+     "x0": -18.6,
+     "z0": 0,
+     "areaAndavel": 400,
+     "props": 4,
+     "waypoints": 40,
+     "densProp": 1,
+     "densWp": 10,
+     "espacamento": 10,
+     "razaoProp": 0.52,
+     "razaoWp": 1.04
+    },
+    {
+     "q": "1,3",
+     "x0": -18.6,
+     "z0": 23.6,
+     "areaAndavel": 418,
+     "props": 6,
+     "waypoints": 40,
+     "densProp": 1.44,
+     "densWp": 9.57,
+     "espacamento": 8.35,
+     "razaoProp": 0.75,
+     "razaoWp": 0.99
+    },
+    {
+     "q": "2,0",
+     "x0": 0,
+     "z0": -47.1,
+     "areaAndavel": 409,
+     "props": 1,
+     "waypoints": 44,
+     "densProp": 0.24,
+     "densWp": 10.76,
+     "espacamento": 20.22,
+     "razaoProp": 0.12,
+     "razaoWp": 1.12
+    },
+    {
+     "q": "2,1",
+     "x0": 0,
+     "z0": -23.6,
+     "areaAndavel": 398,
+     "props": 5,
+     "waypoints": 37,
+     "densProp": 1.26,
+     "densWp": 9.3,
+     "espacamento": 8.92,
+     "razaoProp": 0.65,
+     "razaoWp": 0.97
+    },
+    {
+     "q": "2,2",
+     "x0": 0,
+     "z0": 0,
+     "areaAndavel": 390,
+     "props": 9,
+     "waypoints": 35,
+     "densProp": 2.31,
+     "densWp": 8.98,
+     "espacamento": 6.58,
+     "razaoProp": 1.2,
+     "razaoWp": 0.93
+    },
+    {
+     "q": "2,3",
+     "x0": 0,
+     "z0": 23.6,
+     "areaAndavel": 424,
+     "props": 1,
+     "waypoints": 41,
+     "densProp": 0.24,
+     "densWp": 9.67,
+     "espacamento": 20.6,
+     "razaoProp": 0.12,
+     "razaoWp": 1.01
+    },
+    {
+     "q": "3,0",
+     "x0": 18.6,
+     "z0": -47.1,
+     "areaAndavel": 369,
+     "props": 11,
+     "waypoints": 26,
+     "densProp": 2.98,
+     "densWp": 7.05,
+     "espacamento": 5.79,
+     "razaoProp": 1.54,
+     "razaoWp": 0.73
+    },
+    {
+     "q": "3,1",
+     "x0": 18.6,
+     "z0": -23.6,
+     "areaAndavel": 356,
+     "props": 8,
+     "waypoints": 25,
+     "densProp": 2.25,
+     "densWp": 7.02,
+     "espacamento": 6.67,
+     "razaoProp": 1.17,
+     "razaoWp": 0.73
+    },
+    {
+     "q": "3,2",
+     "x0": 18.6,
+     "z0": 0,
+     "areaAndavel": 363,
+     "props": 7,
+     "waypoints": 28,
+     "densProp": 1.93,
+     "densWp": 7.72,
+     "espacamento": 7.2,
+     "razaoProp": 1,
+     "razaoWp": 0.8
+    },
+    {
+     "q": "3,3",
+     "x0": 18.6,
+     "z0": 23.6,
+     "areaAndavel": 371,
+     "props": 12,
+     "waypoints": 28,
+     "densProp": 3.23,
+     "densWp": 7.54,
+     "espacamento": 5.56,
+     "razaoProp": 1.67,
+     "razaoWp": 0.78
+    }
+   ],
+   "medianaProp": 1.93,
+   "medianaWp": 9.620000000000001,
+   "piorRazaoProp": 0.12,
+   "piorRazaoWp": 0.73,
+   "piorEspacamento": 20.6,
+   "rotasSpawnBandeira": [
+    {
+     "time": "E",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      14.1,
+      14.1,
+      14.1,
+      14.1
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      46.9,
+      49.6,
+      58.6,
+      60.5
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      88.5,
+      96.5,
+      96.5,
+      113.8
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      89.8,
+      95.1,
+      95.1,
+      112.5
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "MID",
+     "rotas": 4,
+     "comprimentos": [
+      51.4,
+      54.1,
+      65,
+      70.6
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      17.3,
+      17.3,
+      17.3,
+      17.3
+     ]
+    }
+   ],
+   "piorRotas": 4,
+   "bandeiras": [
+    {
+     "id": "E",
+     "label": "ALA SUL",
+     "x": 0,
+     "z": -39,
+     "distSpawn": 5.83,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 88.2,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "MID",
+     "label": "PÁTIO",
+     "x": 0,
+     "z": 0,
+     "distSpawn": 42.3,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 55.9,
+     "chao": 0,
+     "penetracao": 0.018
+    },
+    {
+     "id": "B",
+     "label": "ALA NORTE",
+     "x": 0,
+     "z": 39,
+     "distSpawn": 5.83,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 88.4,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "alturaTrianguloMin": 0
   }
  ]
 }

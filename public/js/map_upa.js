@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';
 
 export const UPA_PROPS = ['manequim', 'gondola_mercado', 'gondola_eletro', 'painel_tvs', 'caixa_cobranca', 'cooler'];
 
@@ -274,7 +275,19 @@ export function buildUpa(scene, T) {
     B: [10, 15, 20, 25].map(x => ({ x, z: 31, yaw: Math.PI })),
   };
 
+  /* BUG-57: UPA é interna — rato de corredor, sem pombo (não há céu). */
+  const ambience = createFavelaAmbience(root, {
+    map: 'upa_24h',
+    rats: [
+      { pos: [-20, 0, -28], to: [-17.5, 0, -25.5], phase: .3 },
+      { pos: [20, 0, 28], to: [17.5, 0, 25.5], phase: 1.4 },
+      { pos: [-3, 0, 2], to: [-.5, 0, 4.5], phase: 2.3 },
+    ],
+    pigeons: [],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // MID fora da diagonal E–B (senão o triângulo é colinear e a régua reprova): puxado pro sul do corredor.
     ctfPoints: [

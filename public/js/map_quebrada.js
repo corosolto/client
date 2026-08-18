@@ -19,7 +19,8 @@
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds, paredeAtras, medirParede } from './map_decals.js';   // pool por NOME + medição de parede
-import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
+import { grafitar, esconderSeFaltar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';   // cobertura medida, não coordenada à mão
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
@@ -1591,7 +1592,25 @@ export function buildQuebrada(scene, T) {
     ],
   });
 
+  /* BUG-57: rua de baile tem caramelo em dupla, rato de esquina e pombo de fiação. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'quebrada',
+    rats: [
+      { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
+      { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [10, 0, -8], phase: .5 }, { mode: 'ground', pos: [-21.5, 0, 17.5], phase: 1.6 },
+      { mode: 'flight', pos: [0, 10, -8], radius: [7, 5], phase: .9 },
+    ],
+    dogs: [
+      { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
+      { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
+    ],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

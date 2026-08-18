@@ -12,7 +12,8 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';   // névoa exponencial + cor por direção do olhar
 import { detailFor } from './textures.js';   // normal+rough por Sobel (ver lam)
 import { decalIds, paredeAtras, caixaGirada } from './map_decals.js';   // pool por NOME + raycast de parede
-import { grafitar, esconderSeFaltar } from './graffiti_pass.js';                         // cobertura medida, não coordenada à mão
+import { grafitar, esconderSeFaltar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';                         // cobertura medida, não coordenada à mão
 
 // kill-switches (padrão do projeto): ?nofog=1 sem névoa, ?rays=0 sem god rays,
 // ?dust=0 sem poeira em suspensão, ?mato=0 sem vegetação invasora.
@@ -1877,7 +1878,22 @@ export function buildFerroVelho(scene, T) {
     murais: { texturas: T.muraisHom, nomes: T.muraisHomNomes, seed: 61, separacao: 13 },
   });
 
+  /* BUG-57: ferro velho é território de RATO — e o caramelo guarda o pátio. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'ferro_velho',
+    rats: [
+      { pos: [-11, 0, -4], to: [-8.5, 0, -1.5], phase: .2 }, { pos: [5, 0, 1.5], to: [7.5, 0, 3.5], phase: 1.0 },
+      { pos: [-1, 0, 13.5], to: [1.5, 0, 15.5], phase: 1.9 }, { pos: [-23, 0, 12.5], to: [-20.5, 0, 15], phase: 2.8 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [3, 0, -16], phase: .6 },
+      { mode: 'flight', pos: [0, 11, 0], radius: [7, 5], phase: 1.5 },
+    ],
+    dogs: [{ pos: [-3, 0, 29], to: [1.5, 0, 29], phase: .4 }],
+  });
+
   return {
+    ambience,
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/decal-probe.mjs): a lista COMPLETA contra a qual o
        `paredeAtras` validou cada decalque = colliders + as duas folhas giradas do portão. */

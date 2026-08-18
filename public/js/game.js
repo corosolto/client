@@ -2776,6 +2776,8 @@ export class Game {
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
     }
+    // fauna reage a tiro (BUG-57): TODO tiro — jogador e bot — espanta bicho num raio de 13 m
+    this.world.ambience?.onShot(from, end);
     if (byPlayer && tracer) {
       const muzzle = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle');
       this._tracer(muzzle, end);
@@ -6489,6 +6491,7 @@ export class Game {
       r.autoClear = true;
     }
     this._tickDolly(dt);
+    this.world.ambience?.update(dt, this.player.pos);
     this.world.update?.(dt, this.time);
   }
 
@@ -6525,6 +6528,7 @@ export class Game {
     this.el.scoreboard.classList.add('hidden');
     this.el.vignette.style.opacity = 0;
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
+    this.world.ambience?.dispose();
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }

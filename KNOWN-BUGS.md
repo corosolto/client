@@ -2542,6 +2542,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
   commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
   branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
+### BUG-57 (portado do /game) · Mapas sem ambiência: sem fauna, sem horizonte, sem céu
+
+Pedido literal do dono no `/game` (17/08): *"ele tem ambiência real, coisa que nenhum dos
+outros mapas tem — horizonte, animais, animações no céu; precisamos disso em todos os
+mapas"*. **Porte para cá (18/08):** `public/js/ambientlife.js` + 4 GLB CC-BY/CC0
+(rato, pombo chão, pombo voo, cão caramelo — fontes e licenças em
+`public/models/ambient/FONTE.md`), configs de fauna nos **12/12 mapas** do registro
+(UPA, interno, só rato), hooks `world.ambience` em `_fireHitscan`/`update`/`dispose`
+(game.js) e preload no menu e na partida (main.js). A piscina (comunitária) ganhou céu
+fotográfico equiretangular via `map_sky.js` (`sky_pool.webp`). **Réguas:**
+`eval:ambience` (AR1 todo mapa tem vida, AR2 população por bioma, AR3 fora de sólido;
+mutantes `--mutante=sem-ambience|fauna-em-solido` mordem — conferido) entrou no
+`check:fast`; `tools/eval/fauna-shots.mjs` (FS1 GLB carregado no jogo real, FS2 animação
+avança, FS3 tiro real pelo `_fireHitscan` muda estado pra flee/takeoff) passou **12/12**
+com capturas em `scratchpad/gauntlet-r1-mapas-fauna.html`. Custo de cena medido:
+~10–57k tris de fauna por mapa (junto do orçamento do cena-tetos). **Não portado nesta
+rodada:** régua browser `ambience-check.mjs` completa do /game (depende de traçante e
+mapas que não existem aqui) e `horizon.js` (no /game só o lajes usa; aqui nenhum mapa é
+favela aberta) — follow-up quando a frente de horizonte por bioma abrir.
+
+
 
 ### BUG-60 (portado do /game) · Regen de grafite de um mapa apagava os outros nove
 
