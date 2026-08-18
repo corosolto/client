@@ -18,5 +18,21 @@ de malha skinned.
   Tingido para caramelo no pipeline (`Main` #C68642, `Main_Light` #E4C59A) —
   o original é marrom escuro com marcações cinzas. `skin.skeleton` inválido do
   export original foi removido (hint que o three.js ignora).
+- `jacare_corrego.glb` — “Blocky Belly Caiman”, Mint text-to-3D (Meshy), gerado
+  18/08/2026 para o BUG-57 (pedido do dono: “precisa gerar jacare no mintgg”).
+  Chat: <https://mint.gg/chat/ph71907xmzehws02vnam630e6n8cpypj> · licença de uso
+  do assinante Mint Pro (asset original gerado por prompt, sem copyright de
+  terceiros). Otimizado no pipeline (WebP 256²) a partir de
+  `references/glb/jacare_corrego_mint.glb`; registro com SHA em `mint-assets.json`
+  (`jacare-corrego`). Estático — o pipeline de animação Mint é humanoid-only.
+- `capivara_corrego.glb` — “Sleepy Brown Rodent”, Mint text-to-3D (Meshy), gerado
+  18/08/2026 para o BUG-57 (idem). Chat:
+  <https://mint.gg/chat/ph74kf2engyr4skt5kxkwxxrgd8cqmqt>. Mesma licença e
+  pipeline; textura clareada ×1,45 (`brighten`) porque o Mint entregou lum 69 e
+  o estilo da fauna é lum 86-165 (dog). Registro em `mint-assets.json`
+  (`capivara-corrego`). Estático, idem.
 
-Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs`.
+Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
+`corrego` para regenerar só os dois). Referências de silhueta/procedência de
+medidas: `references/fauna-corrego/FONTE.md`; ficha: `plans/21-FAUNA-CORREGO.md`;
+evidência e revisão: `tools/eval/asset-evidence/fauna/`.
