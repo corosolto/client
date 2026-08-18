@@ -25,11 +25,13 @@ on:
   push:
     branches: [main]
 
-# Dois merges quase juntos: serializa em vez de correr. O rebase no passo de bump cobre
-# a janela residual (main andou entre o evento e a execução).
+# Dois merges quase juntos: o run MAIS NOVO cancela o velho no ar. Como a main é
+# fast-forward-only (ruleset), a head nova sempre contém a velha — o run velho
+# empurrando depois de a main andar é exatamente o "atomic push failed" da .152
+# (03:21 de 18/08): rebase cobre a janela evento→execução, não a janela execução→push.
 concurrency:
   group: release-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
