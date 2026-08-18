@@ -1,0 +1,27 @@
+{
+  "glb": "public/models/ambient/capivara_corrego.glb",
+  "out": "tools/eval/asset-evidence/fauna/capivara_corrego-close.png",
+  "frame": "1536x1024",
+  "dist": 3.2,
+  "trianglesRasterizados": 5005,
+  "silhueta": {
+    "minX": 674,
+    "minY": 323,
+    "maxX": 860,
+    "maxY": 548,
+    "px": 29801,
+    "cobertura": 1.89,
+    "bbox_m": 0.151,
+    "proporcao_largura_altura": 0.83
+  },
+  "paleta_top": [
+    "#905050 16.1%",
+    "#705030 14.5%",
+    "#503030 11.0%",
+    "#b07050 9.3%",
+    "#703030 9.0%",
+    "#705050 6.7%",
+    "#905030 5.2%",
+    "#d07050 5.0%"
+  ]
+}
