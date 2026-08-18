@@ -468,7 +468,7 @@ export function initTextures() {
   // [file, aspect w/h]. Priority first (DOLLYNHO + New Project), then the rest.
   // Reproduz dimensões, aspecto real e desvio: node tools/eval/poster-aspect-check.mjs --json
   const POSTER_FILES = [
-    ['ashtar.png', 0.5625, 1.35], ['ashtar.png', 0.5625, 1.35],
+    ['ashtar.png', 0.5625, 1.35],
     ['ashtar-meme.jpg', 0.98, 1.2],   // o MEME original — o dono mandou voltar ('estava bom tb')
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
     ['DOLLYNHO.png', 0.5625], ['New Project (1).png', 0.5625],
