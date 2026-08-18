@@ -4,24 +4,38 @@
    comprado em 11/08/2026 era um colisor declarado com maxY=0; `_collide` exige topo
    acima dos pés e deixava o jogador parado no centro da água.
 
-   A revisão visual externa alpha.61 (`tmp/map-alpha61-openrouter-review.json`) mostrou
-   que esses marcadores ainda aceitavam carro sem frente, jardim de catálogo e ilha
-   ambígua. Este contrato agora inspeciona peças reais: três silhuetas esportivas
-   distintas com rodas/vidro/grade, maciços assimétricos de três famílias, pergolado
-   ancorado, ilha funcional e home theater inequívoco.
-   Mutantes: agua-entravel | jardim-pobre | interior-vazio | carros-ausentes.
+   A revisão visual externa alpha.61 mostrou que os marcadores aceitavam carro sem
+   frente, jardim de catálogo e ilha ambígua; o contrato passou a inspecionar peças
+   reais. Em 17/08 (BUG-56) o dono reprovou o visual ("lowpoly de todos") e deu a
+   direção: "usar carros que temos em glbs". As cláusulas de silhueta PROCEDURAL
+   saíram; a frota da garagem passou a ser GLB do acervo, e o contrato passou a
+   exigir: ids reais na frota (arquivo existe e é glTF válido com geometria de
+   carro), dimensão de fábrica que CABE no colisor da vaga (a jogabilidade é boa e
+   a pegada de colisão não muda — palavra do dono), colisor das 3 vagas preservado
+   em runtime e fallback procedural vivo (node não carrega GLB — Lição 3 do
+   docs/LICOES.md — e `?glb=0` é o kill-switch do jogador).
+   O mundo GLB em si é medido no browser: eval:occluders (tiro-no-ar/atravessa) e
+   captura 3:2 — este script de node mede o contrato de fonte, o disco e o mundo
+   de fallback.
+   Mutantes: agua-entravel | jardim-pobre | interior-vazio | carros-ausentes |
+   carros-glb-ausentes | carro-glb-clonado | carro-glb-gigante | vaga-sem-colisor.
 */
+import fs from 'node:fs';
+import path from 'node:path';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const MUTANTE = process.argv.includes('--mutante=agua-entravel');
 const MUT_JARDIM = process.argv.includes('--mutante=jardim-pobre');
 const MUT_INTERIOR = process.argv.includes('--mutante=interior-vazio');
 const MUT_CARROS = process.argv.includes('--mutante=carros-ausentes');
-const MUT_CUNHA = process.argv.includes('--mutante=cunha-countach');
+const MUT_CARROS_GLB = process.argv.includes('--mutante=carros-glb-ausentes');
+const MUT_CARRO_CLONADO = process.argv.includes('--mutante=carro-glb-clonado');
+const MUT_CARRO_GIGANTE = process.argv.includes('--mutante=carro-glb-gigante');
+const MUT_VAGA_SOL = process.argv.includes('--mutante=vaga-sem-colisor');
 const MUT_CATALOGO = process.argv.includes('--mutante=jardim-catalogo');
 const MUT_BLOCKOUT = process.argv.includes('--mutante=interior-blockout');
-const MUT_CARROS_CLONADOS = process.argv.includes('--mutante=carros-clonados');
-const MUT_CARRO_SEM_FRENTE = process.argv.includes('--mutante=carro-sem-frente');
 const MUT_JARDIM_ESPELHO = process.argv.includes('--mutante=jardim-espelho');
 const MUT_JARDIM_MONOCULTURA = process.argv.includes('--mutante=jardim-monocultura');
 const MUT_PERGOLA_FLUTUA = process.argv.includes('--mutante=pergola-flutua');
@@ -37,25 +51,77 @@ const provas = [
 ];
 
 const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
+
+/* ── FROTA DA GARAGEM (BUG-56): contrato de fonte + disco ───────────────────
+   A frota vive no fonte do mapa como tabela GARAGEM [['id', comprimento, altura]].
+   Mutantes de fonte precisam PROVAR que aplicaram (skill regua: mutação que não
+   casou é confiança falsa). */
+const ROOT = path.resolve(import.meta.dirname, '../..');
+const MAP_PATH = path.join(ROOT, 'public/js/map_mansao.js');
+const HAVAN_PATH = path.join(ROOT, 'public/js/map_havan.js');
+let mapSrc = fs.readFileSync(MAP_PATH, 'utf8');
+if (MUT_CARROS_GLB) {
+  const antes = mapSrc;
+  mapSrc = mapSrc.replace(/export const MANSAO_PROPS = \[[\s\S]*?\];/, "export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol'];");
+  if (mapSrc === antes) { console.error('MUTANTE carros-glb-ausentes NÃO APLICOU (MANSAO_PROPS não casou)'); process.exit(1); }
+}
+if (MUT_CARRO_CLONADO) {
+  const m = mapSrc.match(/const GARAGEM = \[\s*\['([^']+)',\s*[\d.]+,\s*[\d.]+\]/);
+  if (!m) { console.error('MUTANTE carro-glb-clonado NÃO APLICOU (GARAGEM não casou)'); process.exit(1); }
+  const antes = mapSrc;
+  mapSrc = mapSrc.replace(/'[^']+',(\s*[\d.]+,\s*[\d.]+)/g, `'${m[1]}',$1`);
+  if (mapSrc === antes) { console.error('MUTANTE carro-glb-clonado NÃO APLICOU (ids não casaram)'); process.exit(1); }
+}
+if (MUT_CARRO_GIGANTE) {
+  const antes = mapSrc;
+  mapSrc = mapSrc.replace(/(const GARAGEM = \[\s*\['[^']+',\s*)([\d.]+)/, '$15.20');
+  if (mapSrc === antes) { console.error('MUTANTE carro-glb-gigante NÃO APLICOU (comprimento não casou)'); process.exit(1); }
+}
+const frotaRaw = mapSrc.match(/const GARAGEM = \[([\s\S]*?)\];/);
+const frota = [...(frotaRaw?.[1] || '').matchAll(/\['([^']+)',\s*([\d.]+),\s*([\d.]+)\]/g)]
+  .map((m) => ({ id: m[1], len: parseFloat(m[2]), h: parseFloat(m[3]) }));
+const propsSrc = mapSrc.match(/export const MANSAO_PROPS = \[([\s\S]*?)\];/)?.[1] || '';
+const propsIds = [...propsSrc.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+/* spread `...GARAGEM` coloca a frota toda no preload por construção; id solto também
+   vale. E o USO: cada linha da GARAGEM precisa de um carroAcervo( — declaração sem
+   uso é a invariante cega que o mutante do BUG-54 pegou (AGENTS.md, lei 3). */
+const preloadOk = propsSrc.includes('...GARAGEM') || frota.every((f) => propsIds.includes(f.id));
+const usosCarro = (mapSrc.match(/carroAcervo\(/g) || []).length;
+/* dims de fábrica: mesma ficha do map_havan (CAR_DIM é A referência, conferida por
+   tools/eval/escala-veiculo-check.mjs) — copiar número à mão que diverge é o quinto
+   lugar com o mesmo número desatualizado (AGENTS.md). */
+const havanSrc = fs.readFileSync(HAVAN_PATH, 'utf8');
+const dimHavan = (id) => {
+  const m = havanSrc.match(new RegExp(`'?${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'?\\s*:\\s*\\[\\s*([\\d.]+)\\s*,\\s*([\\d.]+)\\s*\\]`));
+  return m ? [parseFloat(m[1]), parseFloat(m[2])] : null;
+};
+/* GLB no disco: tem que ser glTF válido com geometria de carro de verdade — blob
+  de 200 tris não é carro, e 45k+ estoura o orçamento de triângulos do mapa. */
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+const glbInfo = {};
+for (const f of frota) {
+  const file = path.join(ROOT, 'public/models/props', `${f.id}.glb`);
+  if (!fs.existsSync(file)) { glbInfo[f.id] = { existe: false }; continue; }
+  try {
+    const doc = await io.read(file);
+    const prim = doc.getRoot().listMeshes().flatMap((m) => m.listPrimitives());
+    const tris = prim.reduce((n, p) => n + (p.getIndices()?.getCount() || p.getAttribute('POSITION')?.getCount() || 0) / 3, 0);
+    glbInfo[f.id] = { existe: true, tris: Math.round(tris), primitivas: prim.length };
+  } catch (e) { glbInfo[f.id] = { existe: true, erro: e.message }; }
+}
+/* VAGA: colisor original da garagem — x∈[cx-1,cx+1], y∈[0,1.3], z∈[8.95,13.05].
+   A jogabilidade é boa por decisão do dono: a pegada não muda. */
+const VAGAS = [-6, 0, 6];
+const vagaPreservada = (cx) => game.world.colliders.some((c) =>
+  c.minX <= cx - 0.99 && c.maxX >= cx + 0.99 && c.minY <= 0 && c.maxY >= 1.3 && c.minZ >= 8.9 && c.minZ <= 9.0 && c.maxZ >= 13.0 && c.maxZ <= 13.1);
+if (MUT_VAGA_SOL) game.world.colliders = game.world.colliders.filter((c) => !(c.maxY === 1.3 && c.minZ > 8 && c.maxZ < 14));
 const marcados = [];
 game.world.root.traverse((object) => { if (object.userData?.mansaoFeature) marcados.push(object); });
 if (MUT_JARDIM) for (const o of marcados) if (['bromelia','palmeira','encosta'].includes(o.userData.mansaoFeature)) o.visible = false;
 if (MUT_INTERIOR) for (const o of marcados) if (['ilha-gourmet','estar','divisoria-baixa'].includes(o.userData.mansaoFeature)) o.visible = false;
 if (MUT_CARROS) for (const o of marcados) if (o.userData.mansaoFeature === 'carro-generico') o.visible = false;
-if (MUT_CUNHA) for (const o of marcados) if (o.userData.mansaoFeature === 'carro-generico') o.userData.hoodHeight = .42;
 if (MUT_CATALOGO) for (const o of marcados) if (o.userData.mansaoFeature === 'tropical-3d') o.visible = false;
 if (MUT_BLOCKOUT) for (const o of marcados) if (o.userData.mansaoFeature === 'lived-prop') o.visible = false;
-if (MUT_CARROS_CLONADOS) {
-  const carrosMut = marcados.filter((o) => o.userData.mansaoFeature === 'carro-generico');
-  const bodyBase = (() => { let body; carrosMut[0]?.traverse((o) => { if (o.userData?.carPart === 'body') body = o; }); return body; })();
-  for (const carro of carrosMut) {
-    carro.userData.sportsFamily = 'clone';
-    carro.traverse((o) => { if (o.userData?.carPart === 'body' && bodyBase) o.geometry = bodyBase.geometry; });
-  }
-}
-if (MUT_CARRO_SEM_FRENTE) for (const carro of marcados) if (carro.userData.mansaoFeature === 'carro-generico') {
-  carro.traverse((o) => { if (['front-wheel','windshield','grille'].includes(o.userData?.carPart)) o.visible = false; });
-}
 if (MUT_JARDIM_ESPELHO) for (const o of marcados) if (o.userData.mansaoFeature === 'garden-cluster') {
   const par = Math.floor(o.userData.clusterIndex / 2);
   o.position.set((o.userData.clusterIndex % 2 ? -1 : 1) * (5 + par * 2), o.position.y, 20 + par * 5);
@@ -90,26 +156,6 @@ const carros = marcados.filter((o) => o.visible !== false && o.userData.mansaoFe
 const propsVividos = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'lived-prop');
 const superficies = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'interior-surface');
 const luzes = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'interior-fill');
-const carParts = (carro, tipo) => {
-  const parts = [];
-  carro.traverse((o) => { if (o.visible !== false && o.userData?.carPart === tipo) parts.push(o); });
-  return parts;
-};
-const carrosComLeitura = carros.filter((carro) =>
-  carParts(carro, 'wheel').length + carParts(carro, 'front-wheel').length >= 4
-  && carParts(carro, 'front-wheel').length >= 2
-  && carParts(carro, 'windshield').length >= 1
-  && carParts(carro, 'grille').length >= 1
-  && carParts(carro, 'headlight').length >= 2
-);
-const families = new Set(carros.map((carro) => carro.userData.sportsFamily).filter(Boolean));
-const bodySignatures = new Set(carros.map((carro) => {
-  let body = null; carro.traverse((o) => { if (o.visible !== false && o.userData?.carPart === 'body') body = o; });
-  if (!body) return 'ausente';
-  body.geometry.computeBoundingBox();
-  const s = body.geometry.boundingBox.getSize(new THREE.Vector3());
-  return [s.x,s.y,s.z].map((v) => v.toFixed(3)).join('x');
-}));
 const clusters = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'garden-cluster');
 const clusterFamilies = new Set(clusters.map((o) => o.userData.gardenFamily).filter(Boolean));
 const clusterShapes = new Set(clusters.map((cluster) => {
@@ -129,17 +175,18 @@ const massasEspelhadas=massas.filter((a,i)=>massas.some((b,j)=>i!==j&&Math.abs(a
 const cubas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature==='pool-basin-mask');
 const cubaOpaca=cubas.some((c)=>{const s=new THREE.Box3().setFromObject(c).getSize(new THREE.Vector3());return c.position.y>-.01&&c.position.y<.08&&c.material?.transparent!==true&&s.x>=12&&s.z>=11.8;});
 for (const [nome, ok, medido] of [
-  ['carros genéricos originais', conta('carro-generico') === 3, `${conta('carro-generico')}/3`],
+  ['frota da garagem em GLB do acervo — 3 modelos distintos pré-carregados e usados', frota.length === 3 && new Set(frota.map((f) => f.id)).size === 3 && preloadOk && usosCarro >= 3, `${frota.length} na GARAGEM · preload ${preloadOk ? 'ok' : 'FALTA'} · ${usosCarro} carroAcervo( — id fora do preload volta procedural e id declarado sem uso é invariante cega`],
+  ['GLBs de carro válidos no disco (geometria real, dentro do orçamento)', frota.length === 3 && frota.every((f) => glbInfo[f.id]?.existe && !glbInfo[f.id].erro && glbInfo[f.id].tris >= 2000 && glbInfo[f.id].tris <= 45000), frota.map((f) => `${f.id}:${glbInfo[f.id]?.existe && !glbInfo[f.id].erro ? `${glbInfo[f.id].tris}t` : 'inválido/ausente'}`).join(' · ')],
+  ['escala de fábrica confere com a ficha do acervo (CAR_DIM da Havan)', frota.every((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }), `${frota.filter((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }).length}/3 sem divergência de ficha`],
+  ['carro GLB cabe na vaga (comprimento ≤ 4,35 m; procedural era 4,25)', frota.length === 3 && frota.every((f) => f.len <= 4.35), `maior: ${Math.max(0, ...frota.map((f) => f.len)).toFixed(2)} m — carro além da vaga deixa o corpo dentro do vidro saliente (MAP1 cego em node, Lição 3)`],
+  ['pegada de colisão das 3 vagas preservada (x±1, h1,3, z 8,95–13,05)', VAGAS.every(vagaPreservada), `${VAGAS.filter(vagaPreservada).length}/3 vagas — sem isto a troca de prop mudou o cover da garagem`],
+  ['fallback procedural vivo (node/?glb=0 mostram 3 carros)', carros.length === 3, `${carros.length}/3 — o fallback é o kill-switch da garagem`],
   ['bromélias', conta('bromelia') >= 8 && conta('bromelia') <= 12, `${conta('bromelia')}/8–12`],
   ['palmeiras', conta('palmeira') >= 2, `${conta('palmeira')}/2`],
   ['encosta verde lateral', conta('encosta') >= 1, `${conta('encosta')}/1`],
   ['ilha gourmet', conta('ilha-gourmet') >= 1, `${conta('ilha-gourmet')}/1`],
   ['grupos de estar', conta('estar') >= 2, `${conta('estar')}/2`],
   ['divisória baixa', conta('divisoria-baixa') >= 1, `${conta('divisoria-baixa')}/1`],
-  ['carros com frente própria e capô não-cunha', carros.length === 3 && carros.every((c) => c.userData.genericFront === true && c.userData.hoodHeight >= .58), `${carros.filter((c) => c.userData.genericFront && c.userData.hoodHeight >= .58).length}/3`],
-  ['três carros esportivos de silhuetas originais distintas', carros.length === 3 && families.size === 3, `${families.size}/3 famílias`],
-  ['três proporções físicas de carroceria', bodySignatures.size === 3 && !bodySignatures.has('ausente'), `${bodySignatures.size}/3`],
-  ['carros legíveis com rodas frontais, vidro, grade e faróis', carrosComLeitura.length === 3, `${carrosComLeitura.length}/3`],
   ['folhagem tropical tridimensional', conta('tropical-3d') >= 4, `${conta('tropical-3d')}/4`],
   ['jardim assimétrico autorado', conta('garden-asymmetry') >= 1, `${conta('garden-asymmetry')}/1`],
   ['maciços assimétricos com três famílias tropicais', clusters.length >= 5 && clusterFamilies.size >= 3 && clusterShapes.size >= 3 && espelhados.length <= 1, `${clusters.length} maciços · ${clusterFamilies.size} famílias/${clusterShapes.size} formas · ${espelhados.length} espelhados`],

@@ -42,7 +42,7 @@ export const MAP_EVIDENCE_SHOTS = Object.freeze({
   ],
   fy_mansao: [
     { name: 'garden-eye', from: [3, 1.65, 27.2], look: [0, 1.5, 8], proves: 'maciços tropicais assimetricos e pergolado ancorado vistos a 1,65 m dentro do jardim' },
-    { name: 'cars-front-close', from: [0, 1.55, 16.4], look: [0, .68, 11], proves: 'rodas dianteiras, vidros, grades e tres silhuetas esportivas originais em close' },
+    { name: 'cars-front-close', from: [0, 1.55, 16.4], look: [0, .68, 11], proves: 'três carros do acervo em GLB (BUG-56) de frente na garagem: Delorean, Mini Cooper S e Golf R32 em escala de fábrica dentro das vagas' },
     { name: 'facade-garden', from: [0, 6, 38], look: [-1.4, 2.2, 2], proves: 'jardim tropical assimetrico, espelho deslocado e fachada modernista' },
     { name: 'interior', from: [11.5, 2.4, 4.8], look: [-4, 1.1, -7.5], proves: 'dois grupos de estar, piso de placas grandes, divisoria e mezanino jogaveis' },
     { name: 'gourmet-eye', from: [-13.2, 1.65, -8.15], look: [-8, 1.05, -10], proves: 'ilha gourmet inteira vista de dentro da cozinha, sem parede/escada no primeiro plano: bancada, cooktop, cuba, torneira, tres banquetas e pendentes' },
