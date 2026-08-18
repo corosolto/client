@@ -65,6 +65,7 @@ jobs:
           PY
       - name: Suggest crash duplicate
         run: |
+          rm -f /tmp/crashes.json
           python3 - <<'PY'
           import json, subprocess, pathlib
           current = json.load(open('/tmp/issue.json'))
@@ -81,6 +82,13 @@ jobs:
               'others': data,
           }))
           PY
+          # Guarda na SHELL: SystemExit(0) do python só encerra o INTERPRETADOR —
+          # a shell seguia pra ler /tmp/crashes.json que não existia e o passo
+          # morria em TODA issue não-crash (8 failures seguidas, 17-18/08).
+          if [ ! -f /tmp/crashes.json ]; then
+            echo "issue não é crash-auto — dedupe pulado"
+            exit 0
+          fi
           python3 scripts/ci/crash_dedupe.py < /tmp/crashes.json > /tmp/dup.json
           python3 - <<'PY'
           import json, os, subprocess

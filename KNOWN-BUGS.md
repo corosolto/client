@@ -2454,6 +2454,7 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
 - **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
   dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
   comentários `## csbrasil-bot classification`, 4 deles num intervalo de 2 s (03:21:19–03:21:21), todos de
