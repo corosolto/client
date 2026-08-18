@@ -1072,6 +1072,32 @@ lote de 44: enquadramento tq mais afastado), mas "parece o Brasil?" só o dono r
 de models, fora do escopo de mídia; (3) UIR4/UIR22/UIR26/UIR30 seguem vermelhas — outras
 frentes desta branch, não são de mídia.
 
+### ~~BUG-62 · Home dava ReferenceError `moduleCacheManifest is not defined` no request (SSR)~~ · RESOLVIDO 18/08
+
+**Sintoma:** dev server e função da Vercel devolviam `/` com **500 e 0 bytes** —
+`ReferenceError: moduleCacheManifest is not defined` em `src/pages/index.astro:12`.
+
+**Causa raiz:** o merge `0040c73` resolveu o conflito do frontmatter deixando a CHAMADA
+nua `moduleCacheManifest()` (padrão pré-#194) e jogando fora o import. O padrão vigente
+desde #194 é a constante `__MANIFESTO_JS__` injetada pelo `astro.config` via `vite.define`
+(o manifesto é calculado UMA vez no build — página SSR não lê disco no request, que é a
+classe do *"200 com 0 bytes"* de 12/08). `index.astro` era o único arquivo fora do padrão.
+
+**Por que nada viu (terceiro furo de arnês do mesmo merge):** `astro build` **não executa**
+frontmatter de página SSR — só compila. O build verde do BUG-61 não provava página viva. E
+a régua certa (`eval:ssr`, que renderiza o artefato construído e acusa corpo vazio) existia,
+mordia — e **não estava no `check:fast`**. Rodada contra o `.vercel/output` de ontem:
+SSR1 `/ status=500 0 bytes ✗`.
+
+**Antes × depois (18/08):** antes — `/` 500/0 bytes em dev e no artefato. Depois —
+`index.astro` usa `__MANIFESTO_JS__` (como `Layout.astro`), rebuild, `eval:ssr` verde:
+`/ status=200 76380 bytes`, SSR2/SSR3 PASSA, exit 0. Dev server reiniciado (o `vite.define`
+é congelado na subida) e `/` 200 com import map cache-busted.
+
+**Portão:** passo novo **`eval:build`** no fim do `check:fast` — `npm run build && eval:ssr`,
+sempre contra artefato fresco (artefato velho mede o mundo de ontem: mesma classe do BUG-02).
+A mutação é o estado real de hoje: a árvore de antes do conserto reprova, a de depois passa.
+
 ### ~~BUG-61 · Merge de 17/08 quebrou o build do site e nenhuma régua viu~~ · RESOLVIDO 18/08
 
 **Sintoma:** `npm run build` (e o dev server) falham com *Closing tag '</div>' has no matching
