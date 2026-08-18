@@ -483,6 +483,7 @@ export class Sfx {
       awp: 1.15, mosin: 1.10, rem700: 1.12, m400: 0.85, svd: 0.90, g3sg1: 0.88, sks: 0.80,
       ak: 1.00, akm: 1.08, g3: 1.05, m4: 0.95, scar: 0.98, tavor: 0.93, famas: 0.90, carbine: 1.0,
       mp5: 0.90, uzi: 0.88, p90: 0.85, lmg: 1.10, shotgun: 1.15, md97: 0.96 };   // md97 = 5,56, peso de fuzil (era 1.08, de espingarda)
+    if (dist === 0) this.duck(0.3, 0.09);   // PUNCH: o próprio tiro afunda o resto do mix por ~90 ms (o caminho por sample já fazia)
     this._gunshot(Sfx.GUN_CLASS[w] || 'rifle', dist, vol * (W[w] ?? 1), pan, propDelay);
   }
   // whizz: projétil supersônico passando perto do ouvido (CoD bulletWhizz) — tiro inimigo

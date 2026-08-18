@@ -97,10 +97,13 @@ function loadStaticClass() {
 }
 const STATIC_CLASS = loadStaticClass();
 
-/* ---------- 6) cadencia real (tabela WEAPONS do game.js; weapons.js so tem geometria) ---------- */
+/* ---------- 6) cadencia real (tabela WEAPONS — mudou de game.js para data/weapons.js na
+   modularização da main, alpha.147; weapons.js só tem geometria) ---------- */
 function loadRates() {
   const out = {};
-  for (const m of G.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\brate:\s*([\d.]+)/gm)) out[m[1]] = +m[2];
+  const dataPath = path.join(ROOT, 'public/js/data/weapons.js');
+  const src = fs.existsSync(dataPath) ? fs.readFileSync(dataPath, 'utf8') : G;
+  for (const m of src.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\brate:\s*([\d.]+)/gm)) out[m[1]] = +m[2];
   if (!Object.keys(out).length) die('nenhum `rate:` encontrado na tabela WEAPONS');
   return out;
 }

@@ -341,6 +341,11 @@ const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multik
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
    armas de uma vez — se algo ficar ruim em produção o dono tem o A/B na querystring. */
 const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
+/* PUNCH (dono, 17/08: "feel fraco, sem punch"): concussão POR DISPARO que não mexe em
+   balística nem no recuo medido (vm-kick-sim) — pulso de camera.zoom (~1,4%, decai em
+   ~80 ms), flash/luz de boca ~30% maiores e duck do mix no tiro synth. ?punch=0 desliga. */
+const PUNCH = new URLSearchParams(location.search).get('punch') !== '0';
+const PUNCH_ZOOM = 0.014, PUNCH_DECAY = 13;
 const TRACER_STYLE = Object.freeze({ radius: .0115, travel: .044, fade: .014, segment: 1.45 });
 const D2R = Math.PI / 180;
 // Recoil compartilhado pelo jogo e pelas bancadas vive em recoil.js.
@@ -2886,6 +2891,8 @@ export class Game {
                           : Math.min(1.5, 0.55 + (w.recoil || 0.01) * 13);
     this.vm.recoil.kick(vmAmp * (1 - 0.25 * p.crouchF) * kickMul);
     this.vm.kickSide = Math.random() * 2 - 1;
+    // concussão do PUNCH: pesada em tiro único, mais leve por bala em full-auto
+    if (PUNCH) this._punchF = Math.min(1.4, (this._punchF || 0) + (w.auto ? 0.5 : 1) * (kickMul === 0.5 ? 0.7 : 1));
     const _cls = STATIC_CLASS[p.weapon] || 'rifle';
     this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
     this._ejectCasing();
@@ -3485,7 +3492,8 @@ export class Game {
         if (this._vmFlashLight) this._vmFlashLight.position.copy(off);
         const s = 0.85 + Math.random() * 0.45;
         const fxf = (this._fxTune && this._fxTune.flash) ?? 1;
-        m.jetS = 0.22 * s * fxf; m.coreS = 0.08 * s * fxf;   // boca a ~0.35m da lente: menor que o do mundo
+        const pf = PUNCH ? 1.3 : 1;
+        m.jetS = 0.22 * s * fxf * pf; m.coreS = 0.08 * s * fxf * pf;   // boca a ~0.35m da lente: menor que o do mundo
         m.jet.scale.setScalar(m.jetS); m.core.scale.setScalar(m.coreS);
         m.jetMat.rotation = Math.random() * Math.PI * 2;
         m.jetMat.opacity = 1; m.coreMat.opacity = 1; m.grp.visible = true; m.t = 0;
@@ -3497,7 +3505,8 @@ export class Game {
         m.grp.position.copy(pos).addScaledVector(d, 0.05);   // leve viés à frente da boca
         const s = 0.85 + Math.random() * 0.5;                // variação por tiro (0.36–0.57m no sprite)
         const fxf = (this._fxTune && this._fxTune.flash) ?? 1;
-        m.jetS = 0.42 * s * fxf; m.coreS = 0.15 * s * fxf;
+        const pf = PUNCH ? 1.3 : 1;
+        m.jetS = 0.42 * s * fxf * pf; m.coreS = 0.15 * s * fxf * pf;
         m.jet.scale.setScalar(m.jetS); m.core.scale.setScalar(m.coreS);
         m.jetMat.rotation = Math.random() * Math.PI * 2;     // estrela nunca repete o ângulo
         m.jetMat.opacity = 1; m.coreMat.opacity = 1; m.grp.visible = true; m.t = 0;
@@ -3505,7 +3514,7 @@ export class Game {
       }
     }
     const l = this._mzLights.pop();
-    if (l) { l.position.copy(pos).addScaledVector(d, 0.12); l.intensity = 18 * ((this._fxTune && this._fxTune.light) ?? 1); this._mzLightActive.push({ l, t: 0, life: 0.05 }); }
+    if (l) { l.position.copy(pos).addScaledVector(d, 0.12); l.intensity = 18 * ((this._fxTune && this._fxTune.light) ?? 1) * (PUNCH ? 1.35 : 1); this._mzLightActive.push({ l, t: 0, life: 0.05 }); }
     // flash na CENA DO VM: pulso breve sincronizado (ilumina a arma em 1ª pessoa)
     if (this._vmFlash) { this._vmFlash.t = 0; if (this._vmFlashLight) this._vmFlashLight.intensity = this._vmFlash.peak * ((this._fxTune && this._fxTune.light) ?? 1); }
     // faíscas 3D (partículas com velocidade, encolhendo) + fumacinha. No tiro do PRÓPRIO
@@ -4990,6 +4999,13 @@ export class Game {
       this.camera.fov += Math.sign(tFov - this.camera.fov) * Math.min(stepFov, Math.abs(tFov - this.camera.fov));
       this.camera.updateProjectionMatrix();
     } else { this._fovFrom = undefined; this._fovTo = tFov; }
+    // PUNCH: pulso de zoom por disparo, decai exponencial. Canal próprio (camera.zoom):
+    // não disputa com a rampa de FOV do ADS acima nem com o recuo medido do vm-kick-sim.
+    if (this._punchF > 0.001) {
+      this._punchF *= Math.exp(-PUNCH_DECAY * dt);
+      const z = 1 + PUNCH_ZOOM * Math.min(1, this._punchF);
+      if (Math.abs((this.camera.zoom || 1) - z) > 0.0004) { this.camera.zoom = z; this.camera.updateProjectionMatrix(); }
+    } else if (this._punchF) { this._punchF = 0; this.camera.zoom = 1; this.camera.updateProjectionMatrix(); }
     // LUNETA (G3-R1 — conserto da "faixa preta"). A máscara é um overlay circular de borda
     // escura cuja opacidade acompanha o progresso do zoom (smoothstep). O que quebrava antes
     // não era a máscara e sim a ORDEM: arma e crosshair sumiam no frame do clique, enquanto a
