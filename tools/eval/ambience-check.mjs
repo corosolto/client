@@ -60,6 +60,7 @@ const esperadoPorMutante = {
   relogio: 'AM4',
   'lowq-cheio': 'AM6',
   'tracer-fino': 'AM8',
+  'tracer-um-em-tres': 'AM8b',
   'teleporte-volta': 'AM5b',
 };
 if (mutante && !esperadoPorMutante[mutante]) {
@@ -98,7 +99,7 @@ const srcMain = readFileSync(`${ROOT}public/js/main.js`, 'utf8');
 const srcMaps = Object.fromEntries(MAPAS.map((id) => [id,
   readFileSync(`${ROOT}public/js/map_${id.slice(3)}.js`, 'utf8')]));
 const fireBody = corpoMetodo(srcGame, '\n  _fireHitscan(');
-const updateBody = corpoMetodo(srcGame, '\n  update(dt) {');
+const updateBody = corpoMetodo(srcGame, '\n  update(dt');
 const mapasIntegrados = Object.entries(srcMaps).filter(([, src]) =>
   src.includes('createFavelaAmbience') && /\bambience\b/.test(src)).map(([id]) => id);
 put('AM2', 'os três builders instanciam o controlador comum', mapasIntegrados.length === MAPAS.length,
@@ -300,7 +301,25 @@ runtime.game = await gamePage.evaluate(async (activeMutant) => {
   const ttl = tracer?.ttl || 0;
   game._updateFx(1 / 60);
   game.renderer.render(game.scene, game.camera);
-  return { shotCalls, updateCalls, radius, projectedPixels15m, ttl,
+  /* AM8b — TODO tiro traça (dono, 17/08): três _tryShoot reais seguidos têm de gerar
+     três traçantes. O 1-em-3 antigo derrubava esta contagem para 1. O mutante
+     tracer-um-em-tres reproduz a regressão no boundary do _tracer. */
+  game.paused = false;
+  const p2 = game.player;
+  p2.weapon = 'ak'; p2.ammo.ak = { mag: 30, res: 90 }; p2.nextShotAt = 0; p2.sprayI = 0;
+  let tracerCalls = 0;
+  const tracerReal = game._tracer.bind(game);
+  game._tracer = (...args) => {
+    tracerCalls++;
+    if (activeMutant === 'tracer-um-em-tres' && tracerCalls % 3 !== 1) return;
+    return tracerReal(...args);
+  };
+  const antes = game.tracers.length;
+  for (let i = 0; i < 3; i++) { game._tryShoot(); game.time += 0.2; p2.nextShotAt = 0; }
+  const tracersPorTresTiros = game.tracers.length - antes;
+  game._tracer = tracerReal;
+  game.paused = true;
+  return { shotCalls, updateCalls, radius, projectedPixels15m, ttl, tracersPorTresTiros,
     mutationApplied: activeMutant !== 'tracer-fino' || Math.abs(radius - .0035) < 1e-6 };
 }, mutante);
 if (fotos) await gamePage.screenshot({ path: `${fotos}/fy_lajes-tracer.png`, timeout: 120000 });
@@ -335,6 +354,9 @@ put('AM7', 'os três mapas desenham GLBs das duas espécies dentro do orçamento
 put('AM8', 'traçante ocupa ao menos 1 px a 15 m e vive três frames de 60 Hz',
   runtime.game.projectedPixels15m >= 1 && runtime.game.ttl >= 3 / 60,
   `raio=${runtime.game.radius.toFixed(4)} m projeção=${runtime.game.projectedPixels15m.toFixed(2)} px ttl=${(runtime.game.ttl * 1000).toFixed(1)} ms`);
+put('AM8b', 'todo tiro do jogador deixa traçante (3 tiros = 3 rastros)',
+  runtime.game.tracersPorTresTiros >= 3,
+  `3 _tryShoot -> ${runtime.game.tracersPorTresTiros} traçantes`);
 put('AM9', 'Game._fireHitscan e Game.update chamam o controlador real',
   runtime.game.shotCalls >= 1 && runtime.game.updateCalls >= 1,
   `onShot=${runtime.game.shotCalls} update=${runtime.game.updateCalls}`);
@@ -353,7 +375,9 @@ if (mutante) {
     ? runtime.lowq.report.low === false
     : mutante === 'tracer-fino'
       ? runtime.game?.mutationApplied === true
-      : Object.values(runtime.maps).some((item) => item.mutationApplied === true);
+      : mutante === 'tracer-um-em-tres'
+        ? runtime.game?.tracersPorTresTiros < 3
+        : Object.values(runtime.maps).some((item) => item.mutationApplied === true);
   const mordeu = falhas.some((check) => check.id === esperado);
   if (!aplicou) { console.error(`MUTANTE NÃO APLICOU: ${mutante}`); process.exit(1); }
   if (!mordeu) { console.error(`MUTANTE SOBREVIVEU: ${mutante} não acendeu ${esperado}`); process.exit(1); }

@@ -2847,9 +2847,10 @@ export class Game {
       : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
     const from = this.camera.getWorldPosition(new THREE.Vector3());
     const pellets = w.pellets || 1;
-    // tracer só em PARTE dos tiros (CS): 1 em 3 na rajada; sniper/shotgun sempre (o tiro é o
-    // evento). Antes TODO tiro deixava rastro — vira "chuva de laser" em full-auto.
-    const wantTracer = !GUNFEEL || pellets > 1 || (REC_DEG[p.weapon] ?? 1) > 2.4 || ((p.sprayI || 0) % 3) === 0;
+    // TODO tiro deixa rastro (pedido do dono, 17/08: "todos os tiros traçados" — o mapa
+    // fica vivo com as linhas de fogo). O 1-em-3 antigo existia contra "chuva de laser",
+    // mas o rastro atual é segmento curto viajante (~50 ms), não laser contínuo.
+    const wantTracer = true;
     for (let i = 0; i < pellets; i++) {
       const sp = spreadBase * (1 + this.bloom);
       let dir;
