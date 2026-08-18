@@ -1089,11 +1089,44 @@ vermelho que a M1 acusa.
 e model estao com escala errada"*; córrego — *"melhor em questao de mapa, mas mesmo erro
 de escala, e sem muito detalhes"*.
 
-**Régua: nenhuma ainda.** A candidata: medir a razão entre a altura do barraco/porta no
-GLB posicionado e a referência humana (porta 2,00–2,20 m, pé-direito de barraco 2,4–2,8 m
-— `references/favela/lajes-rio/FONTE.md` tem o cálculo de largura; estender para altura).
-O harness já resolve bounding box por prop (`asset-integrity`), falta a cláusula de
-escala relativa ao jogador (1,70 m de olho). Escrever a régua ANTES de reescalar.
+**Régua (córrego, 18/08):** `npm run eval:escala-favela`
+(`tools/eval/escala-favela-check.mjs`, no `check:fast`) — 5 cláusulas medidas no mundo
+construído via harness: ESC1 toda casa com porta de 2,00–2,20 m e base no piso (portas
+medidas como componentes por aresta compartilhada da malha mesclada do `matVao`;
+cluster por centroide media 0,55 m numa porta de 2,10 m — quad de 2 triângulos não faz
+ponte), ESC2 passo de andar 2,4–2,8 m, ESC3 barraco de frente de muro 2,4–2,8 m,
+ESC4 palafita 2,4–2,8 m sobre os pilotis, ESC5 todo prop GLB na faixa de altura real
+da classe (registro `propEscala` do próprio mapa — valor de USO, não cópia).
+Mutantes: `porta-ana|piso-gigante|puxadinho-alto|palafita-alta|escala2x`, cada um
+reprovando a sua cláusula (0/15, 0/15, 0/19, 0/6, 0/22 medidos no estado verde).
+
+**Córrego — antes × depois (18/08, branch `swarm/bug55-corrego`):**
+
+| cláusula | antes | depois |
+|---|---|---|
+| ESC1 porta no térreo | **0 portas** — vão único de 1,0 m a 1,15 m do chão | 15/15 casas com porta de 2,10 m, base 0,02 m |
+| ESC2 passo de andar | 2,80 m | 2,80 m (já batia) |
+| ESC3 barraco de muro | 6/19 na faixa — até **3,75 m** | 19/19 — 2,40–2,79 m |
+| ESC4 palafita | 4/6 — corpos até **3,2 m** | 6/6 — 2,40–2,80 m |
+| ESC5 props GLB | 22/22 | 22/22 (já batia) |
+
+O defeito era um só e era de escala, não de detalhe: nenhuma fachada tinha porta que
+tocasse o piso (`map_corrego.js`, bloco (8) JANELA E PORTA — o vão nascia a 1,15 m em
+todos os pavimentos, inclusive o térreo), e barraco de 1 pavimento subia a 3,75 m.
+Conserto: porta de 2,10 m com base em 0,02 m no térreo (saindo 0,10 m da face para não
+nascer dentro do embasamento de 1,05 m, que avança 0,08 m), fileira C em
+`2,4 + (|z| mod 4)·0,13` e palafitas com corpo `h−0,4` na faixa. Janela só de andar
+para cima, com peitoril. Detalhe decorativo NÃO entrou (escopo: só escala; "sem muito
+detalhes" é frente de ambiência, BUG-57).
+
+**Custo declarado:** a mudança de geometria deixa o `graffiti-layout-check` (F2
+fy_corrego) vermelho até o integrador regar `npm run grafite fy_corrego` — esperado e
+declarado; regens são serializados na integração. O `mapa-id-check` (M1) já reprova na
+base 03def43 por ids `fy_*` em `docs/docs/*.md` pré-existentes — não é desta frente.
+Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
+`tools/eval/asset-evidence/bug55-corrego/{antes,depois}/`.
+
+**Lajes:** mesma família de defeito, frente BUG-58 — não medido aqui.
 
 ### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — ABERTO 17/08
 

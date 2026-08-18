@@ -98,6 +98,9 @@ for (const [antes, depois] of Object.entries(CORREGO_ARTE_SUBSTITUICOES)) {
 export function buildCorrego(scene, T) {
   const colliders = [], occluders = [], pickups = [];
   const solids = [];
+  // Escala efetiva de cada prop colocado (id, altura-alvo em m) — lido pela régua
+  // eval:escala-favela (BUG-55). Registro de uso, não cópia de número.
+  const propEscala = [];
   const root = new THREE.Group(); scene.add(root);
 
   const lam = (o) => {
@@ -397,6 +400,7 @@ export function buildCorrego(scene, T) {
   const PB = new PropBatch({ bucket: 24 });
   const GLB_ON = QP.get('glb') !== '0';
   function propComFallback(id, x, z, h, ry, fallback) {
+    propEscala.push({ id, h });
     const proxy = fallback();
     if (!GLB_ON || !hasProp(id)) return proxy;
     const o = placeProp(id, { x, z, targetH: h, ry });
@@ -879,7 +883,13 @@ export function buildCorrego(scene, T) {
     }
     // (8) JANELA E PORTA: vãos escuros recuados. Baratos e são o que dá ESCALA à
     //     parede — sem eles um bloco de 8 m lê como muro, não como prédio de 3 lajes.
-    for (let k = 0; k < andares; k++) {
+    //     PORTA no térreo (BUG-55): 2,10 m com a base no piso. O vão único de 1,0 m a
+    //     1,15 m do chão fazia a fachada ler como casa de boneca — é o "mesmo erro de
+    //     escala" do dono. Sai 0,10 m a mais que a face (d/2+0,10) porque o
+    //     embasamento avança 0,08 e engoliria os primeiros 1,03 m da porta.
+    //     Régua: tools/eval/escala-favela-check.mjs (ESC1/ESC2).
+    addBoxSB(1.0, 2.10, 0.1, matVao, px(0.6, d / 2 + 0.10), 0.02, pz(0.6, d / 2 + 0.10), { ry, collide: false, skirt: false, cast: false });
+    for (let k = 1; k < andares; k++) {
       const yv = k * PISO + 1.15;
       for (const s of [-1, 1]) {
         addBoxSB(0.1, 1.0, 1.0, matVao, px(s * (w / 2 + 0.02), (k % 2 ? 0.9 : -0.9)), yv, pz(s * (w / 2 + 0.02), (k % 2 ? 0.9 : -0.9)), { ry, collide: false, skirt: false, cast: false });
@@ -1010,8 +1020,11 @@ export function buildCorrego(scene, T) {
       // encostou no spawn oeste e o MAP2B foi a 0,75 m de folga (medido).
       if ([-25, -5, 15, 35].some((s) => Math.abs(z - s) < 3.6)) continue;
       /* ry pequeno de propósito: barraco encostado em muro nasce alinhado COM o muro, e
-         um giro de 28° faria a caixa atravessar o muro externo e invadir a rua do spawn. */
-      puxadinho(lado * 23.05, z, 1.0, 2.6 + (Math.abs(z0) % 3) * 0.4, 2.4 + (Math.abs(z0) % 4) * 0.45, { semTapume: true, ry: angAnexo() * 0.28 });
+         um giro de 28° faria a caixa atravessar o muro externo e invadir a rua do spawn.
+         Pé-direito 2,40–2,78 m (BUG-55): a faixa real de barraco de 1 pavimento — o
+         degrau antigo (×0,45) chegava a 3,75 m e lia como galpão. Régua: ESC3 do
+         escala-favela-check. */
+      puxadinho(lado * 23.05, z, 1.0, 2.6 + (Math.abs(z0) % 3) * 0.4, 2.4 + (Math.abs(z0) % 4) * 0.13, { semTapume: true, ry: angAnexo() * 0.28 });
     }
     /* ─── BECOS TRANSVERSAIS ─────────────────────────────────────────────────
        Onde a fileira A tem um vão maior, o beco atravessa da beira do canal até a
@@ -1037,10 +1050,12 @@ export function buildCorrego(scene, T) {
      visível (1 ponto, 0,987 m). Com o centro em 5,4 a casa fica sobre o vão, a escora
      fica sobre a ÁGUA (onde o piso está 1,75 m abaixo e ninguém encosta a cabeça) e o
      passeio da beira passa POR BAIXO dela, entre as estacas — que é a foto_001. */
+  /* h = corpo + pilotis: corpo (h−0,4) fica na faixa 2,40–2,80 m de pé-direito (BUG-55,
+     régua ESC4 — os 3,2 m de corpo liam como sobrado, não palafita). */
   for (const [x, z, w, d, h] of [
-    [-5.4, -27, 4.4, 4.2, 3.1], [5.5, -19, 4.6, 4.4, 3.4],
-    [-5.6, 18, 4.5, 4.0, 3.0], [5.3, 24, 4.3, 4.6, 3.6],
-    [-5.2, 4.5, 4.4, 4.2, 3.2], [5.45, -34, 4.2, 4.0, 3.0],
+    [-5.4, -27, 4.4, 4.2, 2.8], [5.5, -19, 4.6, 4.4, 3.1],
+    [-5.6, 18, 4.5, 4.0, 2.8], [5.3, 24, 4.3, 4.6, 3.2],
+    [-5.2, 4.5, 4.4, 4.2, 3.0], [5.45, -34, 4.2, 4.0, 2.8],
   ]) {
     const ry = angAnexo(), baseY = 2.2;
     for (const px2 of [-w * .40, w * .40]) for (const pz2 of [-d * .40, d * .40])
@@ -1216,8 +1231,12 @@ export function buildCorrego(scene, T) {
   for (const [id, x, z, ry] of [
     ['uno_mille', 17.8, -30.6, 0.55], ['fusca', 17.8, -10.6, -0.5], ['fiat_uno', 17.8, 20.6, 0.45],
     ['fusca', -17.8, 29.4, 2.6], ['uno_mille', -17.8, 0.6, 3.6], ['kombi', -17.8, -19.4, 2.55],
-  ]) if (!PB.add(id, { x, z, targetH: id === 'kombi' ? 2.0 : 1.42, ry })) addBox(1.7, 1.4, 4.0, matEletro, x, 0, z, { ry });
+  ]) {
+    const h = id === 'kombi' ? 2.0 : 1.42;
+    propEscala.push({ id, h });
+    if (!PB.add(id, { x, z, targetH: h, ry })) addBox(1.7, 1.4, 4.0, matEletro, x, 0, z, { ry });
     else colRot(x, z, 0.85, 1.95, 0, 1.42, ry);
+  }
 
   // Props pequenos distribuídos por quadrante: identidade e cover sem alterar o proxy físico.
   const propsRua = [
@@ -1514,7 +1533,7 @@ export function buildCorrego(scene, T) {
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience, propEscala,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
