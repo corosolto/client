@@ -202,6 +202,42 @@ const DICT = {
     'Tamborzão in his head and footwork in the recoil. The arena’s old-school funk.',
   'Autotune no grito de guerra e 808 no peito. Trap em dose dupla.':
     'Autotune in the battle cry and an 808 in the chest. A double dose of trap.',
+  'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.':
+    'A tracker of footprints. Sees where the enemy stepped — the villain his own team tolerates.',
+  'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.':
+    'The pink dolphin of the Amazon. Breaks cover, hexes enemy aim and answers with a Deagle.',
+  'Robô de estúdio com lente única e rig no ombro. A transmissão começou.':
+    'Studio robot with a single lens and a shoulder rig. The broadcast has begun.',
+  'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".':
+    'Lobato\'s witch. Throws slowing potions and scrambled vision — "sleep with your fear".',
+  'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.':
+    'Fire-haired boy with backwards feet. His footprints point the wrong way.',
+  'Roupa preta, tablet e leque de cores. Esse fluxo precisa de combate.':
+    'All-black outfit, tablet and a color palette. This user flow needs combat.',
+  'Camadas incompatíveis e invenções nas costas. Hoje eu tô calibrado!':
+    'Mismatched layers and inventions on his back. Today I\'m calibrated!',
+  'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.':
+    '90s crime reporter. Gets there before the police and narrates with relish.',
+  'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!':
+    'Cangaço on the trigger. The longer he holds the shot, the harder it hits — Holy Mary!',
+  'Headset antigo, fichas e mouse de bolinha. Reserva a máquina oito.':
+    'Old headset, arcade tokens and a ball mouse. Machine eight is reserved.',
+  'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.':
+    'Seventh son, crossroads curse. The black wolf wakes up strong, fanged and collarless.',
+  'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.':
+    'Precision cangaceira. Stopped, aimed, hit — the queen of the first shot.',
+  'Criatura felpuda com fones e boom dorsal. Som rodando!':
+    'Fuzzy creature with headphones and a dorsal boom mic. Sound is rolling!',
+  'Capacete, refletivo e bag térmica. Endereço confirmado.':
+    'Helmet, hi-vis vest and a thermal bag. Address confirmed.',
+  'Placas de papelão com previsões absurdas e case de feira. Já aconteceu semana que vem.':
+    'Cardboard signs with absurd forecasts and a street-fair briefcase. It already happened next week.',
+  'Moletom, olheiras e teclado nas costas. Só mais um commit.':
+    'Hoodie, dark circles and a keyboard on his back. Just one more commit.',
+  'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.':
+    'One-legged trickster. A whirlwind of smoke and he\'s gone — the red cap is the hitbox.',
+  'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.':
+    'Quilombola captain. The cry of Palmares echoes and speeds up his allies\' reloads.',
   'Óculos espelhado e corte na régua. No fluxo, quem corre é a bala.':
     'Mirrored shades and a razor-sharp fade. In the flow, the bullet does the running.',
   'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.':
@@ -209,6 +245,9 @@ const DICT = {
   'TIME E': 'TEAM E', 'TIME B': 'TEAM B',
   'os seus': 'your crew',
   'TRIBOS URBANAS': 'URBAN TRIBES', 'PALHAÇOS': 'CLOWNS', 'FUNKEIROS': 'FUNKEIROS',
+  'PALHACOS': 'CLOWNS', 'MITICOS': 'MYTHICS', 'NERDOLAS': 'GEEKS',
+  'PROFISSIONAIS DO CORRE': 'HUSTLE PROS', 'NOIAS': 'JUNKIES', 'TV': 'TV',
+  'TIME ADVERSÁRIO': 'ENEMY TEAM',
   '"A treta se faz na praça!"': '"The fight is at the square!"',
   '"A treta se faz na rodovia!"': '"The fight is on the highway!"',
   '"A treta se faz na quebrada!"': '"The fight is in the hood!"',

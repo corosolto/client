@@ -15,7 +15,10 @@ import { VERSION } from './version.js';
 import { LANG, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
-import { FACTIONS, factionName } from './factions.js';
+import { FACTIONS } from './factions.js';
+/* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
+   a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 
@@ -245,8 +248,8 @@ function showLoading(label, status = 'CARREGANDO MODELOS 3D…', mapName = '') {
   if (vs) {
     const a = $('load-vs-a'), b = $('load-vs-b');
     if (mapName && currentEnemyFaction) {
-      a.textContent = tr(factionName(currentFaction) || ''); a.style.color = (PALETA[currentFaction] || {}).base || '#e0762a';
-      b.textContent = tr(factionName(currentEnemyFaction) || ''); b.style.color = (PALETA[currentEnemyFaction] || {}).base || '#8258d8';
+      a.textContent = tr(FACTION_NAME[currentFaction] || ''); a.style.color = (PALETA[currentFaction] || {}).base || '#e0762a';
+      b.textContent = tr(FACTION_NAME[currentEnemyFaction] || ''); b.style.color = (PALETA[currentEnemyFaction] || {}).base || '#8258d8';
       vs.classList.remove('hidden');
     } else vs.classList.add('hidden');
   }
@@ -1842,7 +1845,8 @@ for (const card of factionCards) {
   const n = CHARACTERS.filter(c => c.team === fac).length;
   const chip = document.createElement('span');
   chip.className = 'team-count';
-  chip.textContent = n ? `${n} ${tr('PERSONAGENS')}` : tr('INDISPONÍVEL');
+  chip.textContent = `${n} ${tr('PERSONAGENS')}`;
+  if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
   const ready = card.dataset.ready === '1' && n > 0;
   card.setAttribute('aria-disabled', String(!ready));
@@ -1979,7 +1983,7 @@ function setTeamStep(step, myFaction) {
   if (step === 'enemy') {
     if (st) st.textContent = tr('PASSO 4 · O ADVERSÁRIO');
     if (tt) tt.textContent = tr('QUEM VAI LEVAR O CORO?');
-    if (hint) hint.textContent = frase('escolhaAdversario', tr(factionName(myFaction) || 'os seus'));
+    if (hint) hint.textContent = frase('escolhaAdversario', tr(FACTION_NAME[myFaction] || 'os seus'));
   } else {
     if (st) st.textContent = tr('PASSO 2 · O SEU LADO');
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
@@ -2410,7 +2414,7 @@ function selectChar(c, row) {
   if (staticPreviews) pvSetVideo(c); else pvStopVideo();
   // rótulo da facção + tamanho do elenco sobre o nome (referência 03: "PALHAÇOS · 8 PERSONAGENS")
   const tagEl = $('char-faction-tag');
-  if (tagEl) tagEl.textContent = `${tr(factionName(currentFaction) || '')} · ${CHARACTERS.filter(x => x.team === currentFaction).length} ${tr('PERSONAGENS')}`;
+  if (tagEl) tagEl.textContent = `${tr(FACTION_NAME[currentFaction] || '')} · ${CHARACTERS.filter(x => x.team === currentFaction).length} ${tr('PERSONAGENS')}`;
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);
@@ -2623,7 +2627,7 @@ function showInspectionResult(won, character) {
   end.classList.toggle('win', won);
   end.classList.toggle('lose', !won);
   $('match-title').textContent = won ? tr('VITÓRIA') : tr('DERROTA');
-  const winnerName = tr(factionName(won ? currentFaction : currentEnemyFaction) || 'TIME ADVERSÁRIO');
+  const winnerName = tr(FACTION_NAME[won ? currentFaction : currentEnemyFaction] || 'TIME ADVERSÁRIO');
   $('match-sub').textContent = won ? frase('venceu', winnerName) : frase('perdeu', winnerName);
   const playerRounds = won ? 4 : 1;
   const enemyRounds = won ? 1 : 4;

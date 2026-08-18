@@ -20,8 +20,6 @@ const qp = new URLSearchParams(location.search);
 const CHAR = qp.get('char') || 'mst';
 const WEAPON = qp.get('w') || 'awp';
 const hud = document.getElementById('hud');
-const CLEAN = qp.get('clean') === '1';
-if (CLEAN) hud.style.display = 'none';
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(innerWidth, innerHeight);
@@ -95,7 +93,6 @@ if (PLAY) {
   };
   window.MOUNT_SET_PLAY(state);
   window.STEP = (dt)=>{ if(built.ctrl) built.ctrl.update(dt, MOV, false, SPD, false); built.group.updateMatrixWorld(true); };
->>>>>>> origin/main
   (function loop(now){
     const dt = Math.min(0.05, (now-last)/1000); last = now;
     window.STEP(dt);
