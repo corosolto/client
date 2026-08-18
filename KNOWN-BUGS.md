@@ -2542,6 +2542,17 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
   commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
   branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
+
+### BUG-60 (portado do /game) · Regen de grafite de um mapa apagava os outros nove
+
+`tools/gen-graffiti-layout.mjs` parseava o layout anterior com
+`lastIndexOf('}')` — que caía no rodapé do `GRAFITE_FP`, o parse lançava, e o `catch`
+zerava o mapa dos outros: rodar `npm run grafite ferro_velho` apagava o layout dos demais
+(sintoma visto aqui em 18/08: `GRAFFITI-LAYOUT-CHECK: 1 mapas · 894 peças` e M1 vermelho
+para os outros 4). **Conserto:** mesmo patch do 9cc84fe do `/game` — fim do JSON por
+casamento de chaves com controle de string. Cinco regens sequenciais agora preservam os
+outros (`5 mapas · 2146 peças`, M1 verde).
+
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:

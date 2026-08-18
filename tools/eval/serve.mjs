@@ -28,6 +28,11 @@ async function renderIndex() {
   });
   return src
     .replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
+    /* O arnês serve o .astro CRU: o `<script is:inline define:vars>` do __SUPPORT vaza
+       `SUPPORT_URL_BR` como identificador livre e mata o boot com pageerror em toda
+       captura. O Astro real injeta os valores; aqui injetamos os defaults do site.ts. */
+    .replace(/window\.__SUPPORT = \{ br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL \};/,
+      `window.__SUPPORT = { br: 'https://meapoia.com/vaquinhas/ajude-a-manter-o-coro-solto-online', intl: 'https://ko-fi.com/corosolto' };`)
     /* O hash do CONTEÚDO entra junto da versão, e não é capricho: o main.js já vem
        com `${V}-${JS_REV}` (revisão calculada do conteúdo de public/js), mas o CSS
        vinha só com `${V}`. Como a versão do package.json não muda entre commits de
