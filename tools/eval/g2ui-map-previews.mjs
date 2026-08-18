@@ -45,6 +45,8 @@ const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   // Rua inteira do campinho até a rotunda do baile, comércio dos dois lados, faixa na
   // frente. Câmera alta e pitch fundo porque a -0,17 metade do cartaz era céu.
   quebrada:  { pos: [0, 8.0, 30], pitch: -0.30, yaw:  0.0 },
+  // Vista diagonal elevada como a referência: fortaleza central, bastiões e rotas laterais.
+  treta_no_gelo: { pos: [32, 8.0, 32], pitch: -0.24, yaw: 0.78 },
 };
 const NOPOSE = process.env.NOPOSE === '1';   // captura do spawn, sem pino de posição
 const TAG = process.env.TAG || '';
@@ -89,7 +91,7 @@ page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); }
 for (const mapId of LIST) {
   await page.goto(`${BASE}/?debug=1&auto=P,mst&map=${mapId}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
-  await page.addStyleTag({ content: '#hud{display:none!important}' });
+  await page.addStyleTag({ content: '#hud,#hud-shortcuts{display:none!important}' });
   await page.evaluate((pose) => {
     const g = window.__game;
     g.player.hp = 1e9;

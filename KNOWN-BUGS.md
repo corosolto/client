@@ -2371,6 +2371,25 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-68 · RESOLVIDO — rampa do Treta no Gelo aparecia sem textura.** Palavras do dono:
+  *"A rampa esta sem textura"*. A régua existente só conferia `material.map.name`, portanto
+  ficava verde mesmo com UV degenerado nas faces laterais da cunha. **Evidência:** GELO8 em
+  `eval:gelo` media 67%/67% de cobertura UV antes e 100%/100% depois de separar as costuras
+  das faces. O mutante `rampa-sem-uv` reprova em 0%/0%. A captura real confirmou os blocos
+  de gelo contínuos nas faces inclinadas e laterais. **Custo:** 18 vértices adicionais por
+  rampa, sem textura, material ou draw call extra.
+
+- **~~BUG-67 · rampas do Treta no Gelo não são transitáveis e destoam dos blocos~~ · RESOLVIDO 18/08.** Palavras do
+  dono: *"Deixe as rampas com a cor dos blocos e faca com que seja possivel subir nela"*.
+  A rampa visível foi cadastrada como um AABB sólido de 2,4 m e o mapa exporta
+  `groundHeightAt: () => 0`; portanto o motor enxergava parede, não inclinação. Agora a
+  altura acompanha continuamente a cunha, o AABB foi retirado e a geometria tem UV para
+  receber a mesma `gelo-pedra` da fortaleza. **Antes:** GELO6 vermelha. **Depois:** o
+  `_updatePlayer()` real subiu ambas as rampas até 2,39 m. A cláusula GELO6 de `eval:gelo`
+  mede altura, colisão, material e movimento; `rampa-plana`, `rampa-parede` e `rampa-cor`
+  deixam a cláusula vermelha. **Custo:** 27 → 25 colisores; as rampas deixam de ocluir por
+  AABB, mas continuam em `occluders` para linha de visão e o grafo permanece conectado.
+
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:

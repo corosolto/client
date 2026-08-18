@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T03:27:43.781Z",
+ "gerado": "2026-08-18T22:48:22.603Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -6769,6 +6769,677 @@
     }
    ],
    "alturaTrianguloMin": 18
+  },
+  {
+   "map": "treta_no_gelo",
+   "celulasAlcancadas": 78616,
+   "amostrasChao": 4916,
+   "observadores": 1172,
+   "corpoDentroDeSolido": 5,
+   "submersosAcimaDoPeito": 0,
+   "piorPenetracao": 0.418,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": 13.9,
+     "z": 6.9,
+     "pen": 0.418
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -6.1,
+     "pen": 0.369
+    },
+    {
+     "tipo": "chao",
+     "x": 12.9,
+     "z": 5.9,
+     "pen": 0.356
+    },
+    {
+     "tipo": "chao",
+     "x": 12.9,
+     "z": -13.1,
+     "pen": 0.35
+    },
+    {
+     "tipo": "chao",
+     "x": -12.1,
+     "z": -5.1,
+     "pen": 0.307
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": 13.9,
+     "z": 6.9,
+     "pen": 0.418
+    },
+    {
+     "tipo": "chao",
+     "x": -13.1,
+     "z": -6.1,
+     "pen": 0.369
+    },
+    {
+     "tipo": "chao",
+     "x": 12.9,
+     "z": 5.9,
+     "pen": 0.356
+    },
+    {
+     "tipo": "chao",
+     "x": 12.9,
+     "z": -13.1,
+     "pen": 0.35
+    },
+    {
+     "tipo": "chao",
+     "x": -12.1,
+     "z": -5.1,
+     "pen": 0.307
+    }
+   ],
+   "spawns": [
+    {
+     "team": "E",
+     "x": -18,
+     "z": -36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": -6,
+     "z": -36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 6,
+     "z": -36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "E",
+     "x": 18,
+     "z": -36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 18,
+     "z": 36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": 6,
+     "z": 36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -6,
+     "z": 36,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "team": "B",
+     "x": -18,
+     "z": 36,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "exposicaoPorTime": [
+    {
+     "team": "E",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.3707,
+     "maiorVisada": 82.1
+    },
+    {
+     "team": "B",
+     "chaoMin": 0,
+     "chaoMax": 0,
+     "fracMedia": 0.3708,
+     "maiorVisada": 82.1
+    }
+   ],
+   "exposicaoPorSpawn": [
+    {
+     "team": "E",
+     "x": -18,
+     "z": -36,
+     "chao": 0,
+     "obsLonge": 957,
+     "obsVendo": 265,
+     "frac": 0.2769,
+     "maiorVisada": 76.4
+    },
+    {
+     "team": "E",
+     "x": -6,
+     "z": -36,
+     "chao": 0,
+     "obsLonge": 926,
+     "obsVendo": 425,
+     "frac": 0.459,
+     "maiorVisada": 77.8
+    },
+    {
+     "team": "E",
+     "x": 6,
+     "z": -36,
+     "chao": 0,
+     "obsLonge": 925,
+     "obsVendo": 391,
+     "frac": 0.4227,
+     "maiorVisada": 77.9
+    },
+    {
+     "team": "E",
+     "x": 18,
+     "z": -36,
+     "chao": 0,
+     "obsLonge": 953,
+     "obsVendo": 309,
+     "frac": 0.3242,
+     "maiorVisada": 82.1
+    },
+    {
+     "team": "B",
+     "x": 18,
+     "z": 36,
+     "chao": 0,
+     "obsLonge": 961,
+     "obsVendo": 265,
+     "frac": 0.2758,
+     "maiorVisada": 76.2
+    },
+    {
+     "team": "B",
+     "x": 6,
+     "z": 36,
+     "chao": 0,
+     "obsLonge": 927,
+     "obsVendo": 430,
+     "frac": 0.4639,
+     "maiorVisada": 78.1
+    },
+    {
+     "team": "B",
+     "x": -6,
+     "z": 36,
+     "chao": 0,
+     "obsLonge": 928,
+     "obsVendo": 393,
+     "frac": 0.4235,
+     "maiorVisada": 77.6
+    },
+    {
+     "team": "B",
+     "x": -18,
+     "z": 36,
+     "chao": 0,
+     "obsLonge": 953,
+     "obsVendo": 305,
+     "frac": 0.32,
+     "maiorVisada": 82.1
+    }
+   ],
+   "salaDoSpawn": [
+    {
+     "team": "E",
+     "x": -18,
+     "z": -36,
+     "folgaParede": 5.45,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": -6,
+     "z": -36,
+     "folgaParede": 5.45,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 6,
+     "z": -36,
+     "folgaParede": 5.45,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "E",
+     "x": 18,
+     "z": -36,
+     "folgaParede": 5.45,
+     "dirPior": 264,
+     "areaContigua": 78.3,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 18,
+     "z": 36,
+     "folgaParede": 5.45,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": 6,
+     "z": 36,
+     "folgaParede": 5.45,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -6,
+     "z": 36,
+     "folgaParede": 5.45,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    },
+    {
+     "team": "B",
+     "x": -18,
+     "z": 36,
+     "folgaParede": 5.45,
+     "dirPior": 84,
+     "areaContigua": 78.4,
+     "okFolga": true,
+     "okArea": true
+    }
+   ],
+   "piorFolga": 5.45,
+   "piorArea": 78.3,
+   "escadas": [],
+   "travessia": [],
+   "occluderSemMalha": [],
+   "occMedidos": 21,
+   "occPulados": 6,
+   "fracSemMalha": 0.0005,
+   "quadrantes": [
+    {
+     "q": "0,0",
+     "x0": -39.1,
+     "z0": -41.1,
+     "areaAndavel": 292,
+     "props": 1,
+     "waypoints": 38,
+     "densProp": 0.34,
+     "densWp": 13.03,
+     "espacamento": 17.08,
+     "razaoProp": 1.05,
+     "razaoWp": 1
+    },
+    {
+     "q": "0,1",
+     "x0": -39.1,
+     "z0": -20.6,
+     "areaAndavel": 319,
+     "props": 1,
+     "waypoints": 39,
+     "densProp": 0.31,
+     "densWp": 12.24,
+     "espacamento": 17.85,
+     "razaoProp": 0.95,
+     "razaoWp": 0.94
+    },
+    {
+     "q": "0,2",
+     "x0": -39.1,
+     "z0": 0,
+     "areaAndavel": 318,
+     "props": 1,
+     "waypoints": 44,
+     "densProp": 0.31,
+     "densWp": 13.82,
+     "espacamento": 17.84,
+     "razaoProp": 0.95,
+     "razaoWp": 1.06
+    },
+    {
+     "q": "0,3",
+     "x0": -39.1,
+     "z0": 20.6,
+     "areaAndavel": 292,
+     "props": 1,
+     "waypoints": 34,
+     "densProp": 0.34,
+     "densWp": 11.66,
+     "espacamento": 17.08,
+     "razaoProp": 1.05,
+     "razaoWp": 0.89
+    },
+    {
+     "q": "1,0",
+     "x0": -19.6,
+     "z0": -41.1,
+     "areaAndavel": 354,
+     "props": 1,
+     "waypoints": 52,
+     "densProp": 0.28,
+     "densWp": 14.69,
+     "espacamento": 18.81,
+     "razaoProp": 0.86,
+     "razaoWp": 1.13
+    },
+    {
+     "q": "1,1",
+     "x0": -19.6,
+     "z0": -20.6,
+     "areaAndavel": 252,
+     "props": 1,
+     "waypoints": 34,
+     "densProp": 0.4,
+     "densWp": 13.48,
+     "espacamento": 15.88,
+     "razaoProp": 1.23,
+     "razaoWp": 1.03
+    },
+    {
+     "q": "1,2",
+     "x0": -19.6,
+     "z0": 0,
+     "areaAndavel": 264,
+     "props": 1,
+     "waypoints": 43,
+     "densProp": 0.38,
+     "densWp": 16.28,
+     "espacamento": 16.25,
+     "razaoProp": 1.17,
+     "razaoWp": 1.25
+    },
+    {
+     "q": "1,3",
+     "x0": -19.6,
+     "z0": 20.6,
+     "areaAndavel": 366,
+     "props": 0,
+     "waypoints": 49,
+     "densProp": 0,
+     "densWp": 13.38,
+     "espacamento": 99,
+     "razaoProp": 0,
+     "razaoWp": 1.03
+    },
+    {
+     "q": "2,0",
+     "x0": 0,
+     "z0": -41.1,
+     "areaAndavel": 366,
+     "props": 1,
+     "waypoints": 53,
+     "densProp": 0.27,
+     "densWp": 14.48,
+     "espacamento": 19.13,
+     "razaoProp": 0.83,
+     "razaoWp": 1.11
+    },
+    {
+     "q": "2,1",
+     "x0": 0,
+     "z0": -20.6,
+     "areaAndavel": 264,
+     "props": 0,
+     "waypoints": 31,
+     "densProp": 0,
+     "densWp": 11.73,
+     "espacamento": 99,
+     "razaoProp": 0,
+     "razaoWp": 0.9
+    },
+    {
+     "q": "2,2",
+     "x0": 0,
+     "z0": 0,
+     "areaAndavel": 252,
+     "props": 2,
+     "waypoints": 32,
+     "densProp": 0.79,
+     "densWp": 12.68,
+     "espacamento": 11.23,
+     "razaoProp": 2.43,
+     "razaoWp": 0.97
+    },
+    {
+     "q": "2,3",
+     "x0": 0,
+     "z0": 20.6,
+     "areaAndavel": 354,
+     "props": 2,
+     "waypoints": 45,
+     "densProp": 0.57,
+     "densWp": 12.72,
+     "espacamento": 13.3,
+     "razaoProp": 1.75,
+     "razaoWp": 0.98
+    },
+    {
+     "q": "3,0",
+     "x0": 19.6,
+     "z0": -41.1,
+     "areaAndavel": 292,
+     "props": 1,
+     "waypoints": 38,
+     "densProp": 0.34,
+     "densWp": 13.03,
+     "espacamento": 17.08,
+     "razaoProp": 1.05,
+     "razaoWp": 1
+    },
+    {
+     "q": "3,1",
+     "x0": 19.6,
+     "z0": -20.6,
+     "areaAndavel": 318,
+     "props": 1,
+     "waypoints": 39,
+     "densProp": 0.31,
+     "densWp": 12.25,
+     "espacamento": 17.84,
+     "razaoProp": 0.95,
+     "razaoWp": 0.94
+    },
+    {
+     "q": "3,2",
+     "x0": 19.6,
+     "z0": 0,
+     "areaAndavel": 319,
+     "props": 1,
+     "waypoints": 47,
+     "densProp": 0.31,
+     "densWp": 14.75,
+     "espacamento": 17.85,
+     "razaoProp": 0.95,
+     "razaoWp": 1.13
+    },
+    {
+     "q": "3,3",
+     "x0": 19.6,
+     "z0": 20.6,
+     "areaAndavel": 292,
+     "props": 1,
+     "waypoints": 34,
+     "densProp": 0.34,
+     "densWp": 11.66,
+     "espacamento": 17.08,
+     "razaoProp": 1.05,
+     "razaoWp": 0.89
+    }
+   ],
+   "medianaProp": 0.325,
+   "medianaWp": 13.03,
+   "piorRazaoProp": 0,
+   "piorRazaoWp": 0.89,
+   "piorEspacamento": 99,
+   "rotasSpawnBandeira": [
+    {
+     "time": "E",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      18.9,
+      18.9,
+      18.9,
+      18.9
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "O",
+     "rotas": 4,
+     "comprimentos": [
+      44,
+      47.2,
+      66.3,
+      119.4
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "L",
+     "rotas": 4,
+     "comprimentos": [
+      65.8,
+      88.4,
+      96.9,
+      149.7
+     ]
+    },
+    {
+     "time": "E",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      75.3,
+      91.3,
+      107.7,
+      150
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "E",
+     "rotas": 4,
+     "comprimentos": [
+      78,
+      90.1,
+      108.8,
+      130.8
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "O",
+     "rotas": 3,
+     "comprimentos": [
+      63.1,
+      67.9,
+      112.4
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "L",
+     "rotas": 4,
+     "comprimentos": [
+      44.5,
+      46.1,
+      59.1,
+      119.8
+     ]
+    },
+    {
+     "time": "B",
+     "bandeira": "B",
+     "rotas": 4,
+     "comprimentos": [
+      20,
+      20,
+      20,
+      20
+     ]
+    }
+   ],
+   "piorRotas": 3,
+   "bandeiras": [
+    {
+     "id": "E",
+     "label": "PORTÃO SUL",
+     "x": 0,
+     "z": -34,
+     "distSpawn": 6.32,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 74.8,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "O",
+     "label": "BASTIÃO OESTE",
+     "x": -31,
+     "z": 0,
+     "distSpawn": 38.28,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 78.4,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "L",
+     "label": "BASTIÃO LESTE",
+     "x": 31,
+     "z": 0,
+     "distSpawn": 38.28,
+     "timeSpawn": "E",
+     "maiorLinhaTiro": 78.5,
+     "chao": 0,
+     "penetracao": 0
+    },
+    {
+     "id": "B",
+     "label": "PORTÃO NORTE",
+     "x": 0,
+     "z": 34,
+     "distSpawn": 6.32,
+     "timeSpawn": "B",
+     "maiorLinhaTiro": 74.9,
+     "chao": 0,
+     "penetracao": 0
+    }
+   ],
+   "alturaTrianguloMin": 31
   }
  ]
 }

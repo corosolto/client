@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T03:27:47.239Z",
+ "gerado": "2026-08-18T22:49:49.054Z",
  "nota": "luzes e env MEDIDOS em runtime (harness.mjs); fatores lidos do chunk JSON dos GLB",
  "maps": [
   {
@@ -84,6 +84,18 @@
     ],
     "color": "#ffffff",
     "intensity": 1.15
+   }
+  },
+  {
+   "map": "treta_no_gelo",
+   "sun": {
+    "pos": [
+     -32,
+     48,
+     -28
+    ],
+    "color": "#e8f5ff",
+    "intensity": 1.72
    }
   }
  ],
@@ -1432,6 +1444,204 @@
        14,
        30,
        20
+      ]
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@treta_no_gelo",
+   "envMap": "treta_no_gelo",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.499,
+      "color": "#d8ede7",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.543,
+      "color": "#70a9ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.17,
+      "color": "#77adff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.749,
+      "color": "#d8dbc6",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.398,
+      "color": "#d8bc91",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.611,
+      "color": "#659dff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#24282a"
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@treta_no_gelo",
+   "envMap": "treta_no_gelo",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.499,
+      "color": "#d8ede7",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.543,
+      "color": "#70a9ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.17,
+      "color": "#77adff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.749,
+      "color": "#d8dbc6",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.398,
+      "color": "#d8bc91",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.611,
+      "color": "#659dff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#24282a"
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 1.9139
+  },
+  {
+   "id": "chao@treta_no_gelo",
+   "envMap": "treta_no_gelo",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.42,
+      "color": "#dceeff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#304657"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.72,
+      "color": "#e8f5ff",
+      "pos": [
+       -32,
+       48,
+       -28
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.42,
+      "color": "#6aa7cb",
+      "pos": [
+       30,
+       18,
+       24
       ]
      }
     ]

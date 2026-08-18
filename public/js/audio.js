@@ -528,8 +528,15 @@ export class Sfx {
   land()      { this.ensure(); this._burst(.08, .18, 400); }
   // passos: round-robin nos samples (nunca repete o anterior) + playbackRate ±8% +
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
-  // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
+  // gelo = crocância seca + cristais agudos, metal = brilho agudo, concreto = seco).
   step(surface = 'concrete') {
+    if (surface === 'ice') {
+      this.ensure();
+      const v = 0.85 + Math.random() * 0.3;
+      this._burst(.055, .075 * v, 620 + Math.random() * 260, .75, 'lowpass');
+      this._burst(.075, .045 * v, 2600 + Math.random() * 1100, 1.8, 'bandpass', .008);
+      return;
+    }
     const arr = this.pack?.cs?.footsteps;
     if (arr && arr.length) {
       this._stepI = (this._stepI + 1) % arr.length;

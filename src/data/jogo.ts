@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** 5 arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
 export const MAPAS: Mapa[] = [
   {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -170,6 +170,13 @@ export const MAPAS: Mapa[] = [
       'calçada e barricadas. As duas vielas do fundo não são enfeite - são a rota alternativa que ' +
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
+  },
+  {
+    id: 'treta_no_gelo', nome: 'Treta no Gelo', modo: 'Rounds · padrão', ctf: false,
+    resumo: 'Fortaleza congelada com bastiões octogonais e corredores de neve.',
+    detalhe: 'O bloco central corta as linhas de tiro e obriga a escolher entre os corredores curtos, ' +
+      'as rampas defensivas e os flancos junto aos quatro bastiões. Pedra congelada, cristais, caixas ' +
+      'e barreiras cobertas de neve criam cobertura sem esconder os pontos de referência da arena.',
   },
 ];
 
