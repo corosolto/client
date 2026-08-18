@@ -2454,6 +2454,32 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
+  dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
+  comentários `## csbrasil-bot classification`, 4 deles num intervalo de 2 s (03:21:19–03:21:21), todos de
+  `github-actions`. Duas causas encadeadas: (1) o secret `CSBRASIL_BOT_TOKEN` nunca tinha sido criado no repo e o
+  fallback silencioso `|| github.token` fazia o comentário nascer com identidade trocada; (2) um review com N
+  comentários dispara N gatilhos (`pull_request_review`, `pull_request_review_comment` ×3) **no mesmo segundo**: os
+  runs paralelos leem a lista de comentários antes de qualquer um postar, e o dedupe por autor+marcador (que pedia
+  login `csbrasil-bot`) nunca casava com `github-actions` — cada run publicava o seu. Correção: `concurrency.group:
+  pr-classify-<n>` com `cancel-in-progress` serializa por PR; fallback removido com guard que derruba o job alto
+  quando o secret falta; dedupe passou a casar só pelo MARCADOR no corpo (extras deletados, o primeiro atualizado);
+  e os passos de rota/label/comentário migraram para REST puro porque `gh pr edit` resolve nó de user/org via
+  GraphQL e exige scope `read:org` — o vermelho que a PR #350 pegou logo depois do secret entrar (PAT tem
+  `repo,workflow`). Duplicatas das PRs #347/#348 deletadas na mão (sobrou 1 cada). Régua: rajada de gatilhos numa
+  PR não pode produzir mais de 1 comentário com o marcador — mutante: remover o bloco `concurrency` do
+  `csbrasil-bot-pr-classify.yml` reabre a corrida.
+- **~~BUG-67 · revisor local re-revisava o mesmo commit para sempre~~ · RESOLVIDO 18/08.** Evidência:
+  `estado/canarinho.err.log` do bot local com dezenas de `poll: achados is not defined`, sempre após revisar
+  commits diretos (`68f5aff6`, `109982b3`…), reprocessando o MESMO commit a cada ciclo. Causa: `reviewCommits()`
+  referenciava `achados.length` numa função onde a variável não existe (`ReferenceError`) — e como `estado.main`
+  só era gravado DEPOIS do loop, o erro abortava o ciclo antes do avanço: commit re-revisado (custo de LLM a cada
+  10 min) e comentário de commit **re-postado a cada ciclo** quando tinha achados. Correção (infra local do bot):
+  `meta.achados.length` + try/catch por commit + `estado.main` gravado dentro do loop. Sintoma irmão: `✗(opencode
+  run: )` com mensagem vazia era timeout do `spawnSync` (SIGTERM, stderr vazio) — `bots/lib/llm.mjs` agora reporta
+  `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
+  commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
+  branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:
