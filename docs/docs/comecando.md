@@ -275,20 +275,20 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 {/* BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` */}
 
 ```bash
-npm run check        # npm run syntax && npm run audio:check && npm run eval:medianet && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
 npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:comentario eval:fixture
 ```
 
-`package.json` tem **113 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **112 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 
 {/* END:GERADO:scripts */}
 
-O `npm run check` é o mesmo conjunto que o CI roda em `.github/workflows/ci.yml`.
+O `check:fast` cobre as réguas de node puro; o CI (`.github/workflows/ci.yml`) roda o
+mesmo conjunto mais os passos que exigem rede.
 
-:::tip Use o `check:fast` no loop, o `check` antes do PR
-O `check` gasta 10-12 min porque sobe o jogo cinco vezes. O `check:fast` cobre as réguas
+:::tip Use o `check:fast` no loop, o `portao-browser` antes do PR
+O `portao-browser` gasta 10-12 min porque sobe o jogo cinco vezes. O `check:fast` cobre as réguas
 que nasceram dos bugs mais recentes (menu de pausa, rodada de captura, regeneração,
 manifesto de animação) e roda em cerca de um minuto.
 :::

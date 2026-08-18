@@ -251,7 +251,7 @@ versão do `docs:check`, e é o mesmo modo de falha do BUG-02 (o quality gate me
 de ontem porque o `&&` cortava antes de o JSON ser regenerado).
 
 Por isso o `docs:check` vem **antes** do `arch:check` no `package.json`, com o motivo
-escrito na chave `//check:fast`. Quando o `ARCH.md` for regenerado e o `arch:check` voltar
+escrito no `SCRIPTS.md` (chave `check:fast`). Quando o `ARCH.md` for regenerado e o `arch:check` voltar
 a verde, a ordem deixa de importar; até lá, importa.
 :::
 

@@ -1,7 +1,7 @@
 # portao-browser — O PORTÃO LENTO, o de NAVEGADOR.
 #
 # POR QUE ESTE ARQUIVO EXISTE (issue #83)
-#   `npm run check` e o ci.yml (pr-fast) rodam TODAS as réguas em node puro. E o que
+#   O `check:fast` e o ci.yml (pr-fast) rodam TODAS as réguas em node puro. E o que
 #   roda em node é cego para o que os GLB fazem: os barracos da Quebrada, as empenas
 #   da Brasília e as fachadas do Ferro Velho não existem fora do navegador, então
 #   `decal-probe` jurava 334 peças enquanto o dono via 12,7% de parede pintada — 238

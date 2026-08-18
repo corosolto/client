@@ -89,7 +89,7 @@ const ruins = resultado.filter((r) => !r.bom);
 console.log('');
 if (!ruins.length && chk.status === 0) {
   console.log(`${VERDE}Pronto.${OFF} \`npm run dev\` e abra http://localhost:4321\n`);
-  console.log(`  ${AMAR}opcional${OFF}  \`npm run check\` roda o portão (~5 min, precisa de nada além disto)`);
+  console.log(`  ${AMAR}opcional${OFF}  \`npm run check:fast\` roda o portão (~5 min, precisa de nada além disto)`);
   console.log(`  ${AMAR}opcional${OFF}  \`FEEDBACK_TO=voce@exemplo.com\` liga a notificação do formulário`);
   console.log(`             (o formsubmit.co exige ATIVAR o endereço: ele manda um link de`);
   console.log(`             confirmação no primeiro envio, e até você clicar nada chega)`);
