@@ -30,7 +30,7 @@ jobs:
       - name: Classify issue
         id: triage
         run: |
-          gh issue view "$ISSUE_NUMBER" --json number,title,url > /tmp/issue.json
+          gh issue view "$ISSUE_NUMBER" --json number,title,url,labels,body,author,state > /tmp/issue.json
           python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
           cat /tmp/triage.json
       - name: Apply labels
@@ -88,11 +88,14 @@ jobs:
           if not dup:
               raise SystemExit(0)
           body = (
-              "Possível duplicata automática detectada.\n\n"
-              f"- candidata: #{dup['number']} — {dup['title']}\n"
-              f"- link: {dup['url']}\n"
-              f"- similaridade: {dup['score']}\n\n"
-              "Sugestão do bot apenas; fechamento continua humano."
+              "> [!TIP]\n"
+              "> **Possível duplicata detectada automaticamente.**\n"
+              "> \n"
+              f"> - candidata: **#{dup['number']}** — {dup['title']}\n"
+              f"> - similaridade: **{dup['score']}**\n"
+              f"> - comparar: {dup['url']}\n"
+              "\n"
+              "Sugestão de bot — o fechamento continua sendo humano."
           )
           subprocess.run([
               'gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'],
