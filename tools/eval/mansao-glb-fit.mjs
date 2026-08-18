@@ -66,16 +66,24 @@ for (const [id, th, cx, cz, folha] of PROPS) {
   if (!okWorst) ruim++;
   console.log(`${okWorst ? '✓' : '✗'} ${id.padEnd(18)} glb ${b.lx.toFixed(2)}x${b.h.toFixed(2)}x${b.lz.toFixed(2)} -> ${medido} | col ${2 * cx}x${2 * cz}${okWorst ? '' : ' — ESTOURA'}`);
 }
-const CARS = [['1981_dmc_delorean', 4.27, 1.14], ['2014_mini_cooper_s_f56', 3.85, 1.41], ['2002_volkswagen_golf_r32_mk4', 4.15, 1.44]];
+/* A frota vem do USO (GARAGEM do map_mansao.js), não de cópia local: régua que lê
+   a própria declaração fica verde quando o mapa muda (o buraco que o mutante
+   glb2x não cobre). */
+const mansaoSrc = (await import('node:fs')).readFileSync('public/js/map_mansao.js', 'utf8');
+const CARS = [...mansaoSrc.matchAll(/\['([a-z0-9_.]+)',\s*([\d.]+),\s*([\d.]+)\]/g)]
+  .map((m) => [m[1], parseFloat(m[2]), parseFloat(m[3])]);
+if (!CARS.length) { console.error('✗ GARAGEM não encontrada em map_mansao.js — régua lendo o lugar errado'); process.exit(1); }
 // Teto de comprimento 4,30: o carro PROCEDURAL original tinha malha 4,25 sobre o
 // col de 4,10 — para-choque/mirror além do col era o desenho aceito. Largura tem
-// que caber (2,00) porque vaga é o espelho da parede.
+// que caber (2,00) porque vaga é o espelho da parede. PISO 1,30 m: GLB em unidade
+// quebrada (escort: bbox 31×47×90) encolhe a largura p/ ~1,12 m e a régua só
+// tinha teto — o mais estreito do CAR_DIM é o uno (1,44).
 for (const [id, cl, ch] of CARS) {
   const b = await bbox(id);
   const len = Math.max(b.lx, b.lz), wid = Math.min(b.lx, b.lz);
   const s = Math.sqrt((cl / len) * (ch / b.h));
   const w = MUT_2X ? wid * s * 2 : wid * s;
-  const ok = w <= 2.0 && cl <= 4.30;
+  const ok = w <= 2.0 && w >= 1.30 && cl <= 4.30;
   if (!ok) ruim++;
   console.log(`${ok ? '✓' : '✗'} ${id.padEnd(31)} mundo ${w.toFixed(2)}m larg × ${cl.toFixed(2)}m comp | teto 2,00×4,30 (procedural: 4,25 sobre col 4,10) ${ok ? 'CABE' : 'ESTOURA'}`);
 }

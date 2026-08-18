@@ -30,7 +30,7 @@ const LAJE_H = 4.5;  // pé-direito duplo
    que caber no colisor da vaga (4,10 m; o procedural maior era 4,25) porque a pegada
    de colisão não muda — a jogabilidade é boa por decisão do dono. */
 const GARAGEM = [
-  ['1981_dmc_delorean', 4.27, 1.14],
+  ['1968_volkswagen_beetle', 4.03, 1.50],
   ['2014_mini_cooper_s_f56', 3.85, 1.41],
   ['2002_volkswagen_golf_r32_mk4', 4.15, 1.44],
 ];
