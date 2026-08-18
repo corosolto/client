@@ -1031,17 +1031,41 @@ mudar.
 
 ## P1 — o jogador vê
 
-### BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado) — ABERTO 17/08
+### ~~BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado)~~ · RESOLVIDO 18/08 (mídia)
 
 **Evidência:** `eval:redesign` UIA1/UIA4/UIR1 vermelhas desde o merge da main (alpha.147,
 17/08). A régua da main exige avatar `.webp`, vídeo de seleção `.webm` e artes de
 vitória/derrota para TODO o elenco — os 18 personagens que esta branch acrescentou
 (mítico + facções novas: boto, cuca, curupira, saci, lampião, gilbomes, camera-roxa…)
-não têm o lote. UIR1 cobra i18n nos textos dinâmicos novos.
+não tinham o lote.
 
-**Onde fecha:** na branch de místicos/models que o dono pediu em 17/08 ("uma das branchs
-colocar os misticos so e remodelar tudo que tiver errado com os models") — o pipeline é o
-da `faction-pipeline`. Não afrouxar a régua: ela está certa, a mídia é que falta.
+**Antes × depois (18/08):** antes — UIA1 faltava 18 avatares + 18 seleções + 36 artes,
+UIA4 `auditoria=divergente`, UIR1 sem wiring (consertada no commit anterior desta branch).
+Depois — lote completo gerado do PRÓPRIO pipeline do jogo (mounttest/GLB, sem IA):
+54 WebM VP9 (18 seleção 640×854 + 36 resultado 640×640), 18 avatares 256×256 derivados do
+frame @1.0s (mesma receita dos 44, punk/gotinha pinados intactos), 36 artes 1024×1536 alpha
+com margens UIA19 — `eval:redesign` UIA1/UIA4/UIR1 VERDES, placar 43→45 ✓.
+
+**Dois defeitos de arnês achados e consertados no caminho:**
+1. `trim()` do sharp 0.35.3 é no-op com fundo transparente (reproduzido em PNG sintético) —
+   o `char-result-stills.mjs` faz trim manual por bbox de alpha>8.
+2. O `caixa()` (bbox por esqueleto) subestima largura em 4 rigs (bandeirante/cuca/lobisomem/
+   microfonildo saíam cortados na borda) — o quadro agora re-renderiza com folga crescente
+   se o conteúdo toca borda.
+3. `serve.mjs` não resolvia `define:vars` do index.astro (SUPPORT_URL, PR #284) e `/` morria
+   com ReferenceError no arnês — variáveis conhecidas viram tabela no renderer.
+
+**Evidência do lote:** prancha e recibos em `tools/eval/asset-evidence/bug59/`
+(contact-sheet-18.png + receipts.json); crítico numérico adversarial
+(`tools/eval/bug59-critico.mjs`) sem reprovações: inventário 62/62/124 exato, 54/54 WebM
+VP9, 18/18 artes nos limites, pares vitoria/derrota byte-idênticos (convenção do lote de 44).
+
+**O que NÃO fechou aqui (declarado):** (1) leitura VISUAL das pranchas por olho humano — o
+perfil numérico a 64px tem figura e contraste reais (corpo 11–36%, abaixo dos 34–51% do
+lote de 44: enquadramento tq mais afastado), mas "parece o Brasil?" só o dono responde;
+(2) `eval:char-thumbnail` tem 1 vermelha pré-existente (thumbnail lenda-lanhouse) — frente
+de models, fora do escopo de mídia; (3) UIR4/UIR22/UIR26/UIR30 seguem vermelhas — outras
+frentes desta branch, não são de mídia.
 
 ### ~~BUG-61 · Merge de 17/08 quebrou o build do site e nenhuma régua viu~~ · RESOLVIDO 18/08
 

@@ -63,18 +63,31 @@ async function renderIndex() {
      para o boot; se um dia uma delas for, o caminho é usar o Astro de verdade, não
      engordar este regex. */
   const VARS = { V, JS_REV };
+  /* `define:vars` do Astro não é renderizado aqui: o script inline executa com
+     ReferenceError e derruba o boot de `/` no arnês (introduzido pelo wiring do
+     link de apoio, PR #284). Variável conhecida = linha na tabela; desconhecida
+     vaza intacta para o erro ser legível, como no `attrs` acima. */
+  const site = await readFile('src/lib/site.ts', 'utf8');
+  const envConst = (nome) => site.match(new RegExp(`export const ${nome} = import\\.meta\\.env\\.\\w+ \\|\\| '([^']+)'`))?.[1] || '';
+  const DEFINE_VARS = { SUPPORT_URL_BR: envConst('SUPPORT_URL_BR'), SUPPORT_URL_INTL: envConst('SUPPORT_URL_INTL') };
+  const defineVars = (s) => s.replace(/<script([^>]*?) define:vars=\{\{([^}]+)\}\}>/g, (todo, attrsScript, nomes) => {
+    const linhas = nomes.split(',').map((n) => n.trim()).filter(Boolean)
+      .map((n) => (DEFINE_VARS[n] ? `const ${n}=${JSON.stringify(DEFINE_VARS[n])};` : null));
+    if (linhas.some((l) => l === null)) return todo;
+    return `<script${attrsScript}>${linhas.join('')}`;
+  });
   const attrs = (s) => s.replace(/(\w[\w:-]*)=\{`([^`]*)`\}/g, (todo, attr, corpo) => {
     const resolvido = corpo.replace(/\$\{(\w+)\}/g, (m, nome) => (nome in VARS ? VARS[nome] : m));
     // sobrou `${...}` = depende de escopo de runtime: devolve intacto, não quebrado.
     return /\$\{/.test(resolvido) ? todo : `${attr}="${resolvido}"`;
   });
-  return attrs(
+  return defineVars(attrs(
     src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
       /* CSS com hash de CONTEÚDO (regra da main, mantida ANTES da varredura genérica):
          a versão do package.json não muda entre commits de trabalho e o navegador
          servia style.css do cache — o JS novo chegava e o CSS não. */
       .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`),
-  );
+  ));
 }
 
 /* ORDEM IMPORTA: o corpo é produzido ANTES de qualquer writeHead.
