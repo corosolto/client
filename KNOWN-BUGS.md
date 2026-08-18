@@ -1043,6 +1043,25 @@ não têm o lote. UIR1 cobra i18n nos textos dinâmicos novos.
 colocar os misticos so e remodelar tudo que tiver errado com os models") — o pipeline é o
 da `faction-pipeline`. Não afrouxar a régua: ela está certa, a mídia é que falta.
 
+### ~~BUG-61 · Merge de 17/08 quebrou o build do site e nenhuma régua viu~~ · RESOLVIDO 18/08
+
+**Sintoma:** `npm run build` (e o dev server) falham com *Closing tag '</div>' has no matching
+opening tag* em `src/pages/index.astro:997`.
+
+**Causa raiz:** o merge `0040c73` achatou o `set-preview-wrap` da main (que tinha dois divs
+internos) num `aside` vazio desta branch e sobrou um `</div>` sem abertura. Antes do merge o
+painão de settings era 41/41 divs balanceado; depois, 8 abre × 9 fecha.
+
+**Por que um dia de build quebrado passou em branco:** `npm run build` **não está no
+`check:fast`** — o portão mede o jogo e as docs, não o deploy. Evidência: a vermelha apareceu
+em 18/08 no primeiro build manual pós-merge. A régua que faltou acender: **build como passo do
+portão** (candidato a entrar no `check:fast`).
+
+**Antes × depois (18/08):** antes — `astro build` morre em CompilerError. Depois — remoção do
+`</div>` órfão, `Server built in 8.49s`, prune roda. Commit `60604fa`. A mutação que prova a
+régua futura é o próprio estado quebrado: um merge que perde uma abertura de tag tem que
+reprovar o portão no mesmo dia, não no próximo build manual.
+
 ### ~~BUG-60 · Regen de grafite de UM mapa apaga os outros nove do layout~~ · RESOLVIDO 18/08
 
 **Sintoma:** `public/js/graffiti_layout.js` ficou com **1 de 10 mapas** (só `ferro_velho`) no
