@@ -9,4 +9,5 @@ while ! mkdir "$LOCK" 2>/dev/null; do
   sleep 5
 done
 trap 'rmdir "$LOCK" 2>/dev/null' EXIT INT TERM
-exec "$@"
+"$@"
+exit $?
