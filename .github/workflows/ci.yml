@@ -134,6 +134,16 @@ jobs:
           if [ -s release-body.md ]; then
             EXTRA=(--notes "$(cat release-body.md)")
           fi
-          gh release create "${{ github.ref_name }}" --generate-notes "${EXTRA[@]}" --title "CSBR ${{ github.ref_name }}"
+          # Idempotente: o release.yml do push na main e este job do push da
+          # TAG criam a mesma release numa corrida de segundos — o perdedor
+          # levava 422 "tag_name already exists" e pintava o run de vermelho
+          # (alpha.154, 18/08). Release que já existe só recebe as notas.
+          TAG="${{ github.ref_name }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG já existe — atualizando notas"
+            gh release edit "$TAG" "${EXTRA[@]}" --title "CSBR $TAG" || true
+          else
+            gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

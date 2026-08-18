@@ -138,4 +138,13 @@ jobs:
           fi
           # As notas nativas ligam PRs e contribuidores às contas GitHub. O fallback
           # antigo (`git log --oneline`) apagou esse crédito no alpha.47 (BUG-40).
-          gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+          # Idempotente: este job e o "release" do ci.yml (disparo de tag)
+          # correm pela mesma release — quem chega segundo levava 422
+          # "tag_name already exists" (alpha.154, 18/08). Já existindo, só
+          # atualiza notas e título.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG já existe — atualizando notas"
+            gh release edit "$TAG" "${EXTRA[@]}" --title "CSBR $TAG" || true
+          else
+            gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+          fi
