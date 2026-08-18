@@ -39,18 +39,18 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 40.144 linhas em 55 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 40.249 linhas em 55 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6.971** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.701 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 125 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 131 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
-| Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 252 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 71 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Arnêses visuais em HTML | 16 | `git ls-files 'public/*.html' \| wc -l` |
+| Scripts do arnês | 263 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 73 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.147` | `public/js/version.js` e `package.json` (batem) |
 
@@ -229,8 +229,8 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 674 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.521 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 729 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.540 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 815 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 505 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 301 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 256 |
@@ -281,10 +281,10 @@ E os dois quality gates, com a lista exata do que cada um roda — direto do `pa
 
 ```bash
 npm run check        # npm run syntax && npm run audio:check && npm run eval:medianet && npm run eval:ctfhud && npm run eval:vm && npm run eval:invariants && npm run eval:kick && npm run eval:bots
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
+npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:mansao-water eval:corrego-contract eval:escala-favela eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check
 ```
 
-`package.json` tem **161 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
+`package.json` tem **162 scripts**. Vários trazem uma chave `//nome` logo acima com o motivo de existirem — é onde mora o porquê.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
 

@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**9 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `rubenmarcus`, `Ruben`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**9 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben Marcus`, `rubenmarcus`, `Ruben`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -257,7 +257,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 674 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
 | `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.540 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 729 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 815 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 505 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 301 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 256 |
