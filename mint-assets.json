@@ -1354,6 +1354,50 @@
     "displayName": "Mansão do Joá — jardim e casa",
     "notes": "6 props (banco modernista, poste de jardim, escultura abstrata, vaso tropical, lounge externo, lampião de fachada). BUG-56: dono pediu models Mint pro jardim/casa. Otimizados via tools/optimize-props.mjs (webp 1024, ~1.6MB total, 1 material cada). Previews em tools/eval/asset-evidence/bug56-mint/."
    }
+  },
+  "tatu-campo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/tatu_campo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks74gmjb885gffbbjekvc6xqs58csx4s",
+    "chatUrl": "https://mint.gg/chat/ph763essssxnfef5n923a7gn5d8crckr",
+    "displayName": "Segmented Tatu Walker (tatu do cerrado)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): tatu para fy_campomorro e praca_poderes. Mint text-to-3D (projeto CSBRASIL Audio Original); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/tatu_campo_mint.glb. Estático — locomoção procedural no ambientlife.js (_updateQuad). Quaternius não tem tatu em nenhum pack (varredura 19/08, FONTE.md do acervo). GLB normalizado: eixo longo no X, gira -PI/2 no normalizeModel."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "32cc2b6af4b579792446dba6daaec6846518915221aaeee82692372d7b6891a7"
+   }
+  },
+  "papagaio-poleiro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/papagaio_poleiro.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks75k731vrspaapj5zfgtge68n8crdya",
+    "chatUrl": "https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4",
+    "displayName": "Yellow Chevron Parrot (papagaio de poleiro)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): papagaio de poleiro para fy_mansao (terraço) e parque_treta. Mint text-to-3D; mesmo pipeline do tatu. Estático — balanço procedural no ambientlife.js (_updateParrot): poleiro não precisa de voo, contornando a dívida de pássaro riggado CC0 (BUG-57). Modelo inclui o poleiro (barra) na malha."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "ae408e0d31001a32220828fba5929f06707fc871418048e31addb43e18d8bcc4"
+   }
   }
  }
 }

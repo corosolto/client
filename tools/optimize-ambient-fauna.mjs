@@ -32,6 +32,12 @@ const jobs = [
     keepClips: /(^|\|)(Idle|Walk)$/ },
   { src: 'references/glb/quaternius_cow.glb', out: `${outDir}/vaca_campo.glb`, skinned: true, fixSkin: true,
     keepClips: /^(Idle|Walk|Gallop)$/ },
+  // vida 1 (plans/22): fauna 2 Mint, estáticos — a locomoção é procedural no
+  // ambientlife.js (tatu anda, papagaio balança no poleiro). Mesma licença dos
+  // anteriores: asset original gerado por prompt, assinante Mint Pro.
+  { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true },
+  { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true },
+  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true },
 ];
 
 const filtroArgs = process.argv.slice(2);
