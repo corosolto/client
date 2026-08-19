@@ -4,7 +4,8 @@ import { mkdirSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { dedup, prune, resample, textureCompress } from '@gltf-transform/functions';
+import { dedup, prune, resample, simplify, textureCompress } from '@gltf-transform/functions';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -35,9 +36,11 @@ const jobs = [
   // vida 1 (plans/22): fauna 2 Mint, estáticos — a locomoção é procedural no
   // ambientlife.js (tatu anda, papagaio balança no poleiro). Mesma licença dos
   // anteriores: asset original gerado por prompt, assinante Mint Pro.
-  { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true },
-  { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true },
-  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true,
+  // simplify: o Mint entrega ~5k tris por bicho — o dobro do padrão Quaternius
+  // (2,4-2,9k) e o AM7 é por mapa. Barata 0,4 (14 cm na tela), tatu/papagaio 0,6.
+  { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true, simplify: .4,
     // o Mint entregou vermelho glossy de brinquedo: sob o sol laranja do córrego
     // o albedo vermelho satura ainda mais (medido na captura). Dessatura pro
     // marrom de barata americana sem perder o lê-no-chão
@@ -79,6 +82,9 @@ for (const job of jobs) {
       texture.setMimeType('image/png');
     }
   }
+  if (job.simplify) await doc.transform(
+    simplify({ simplifier: MeshoptSimplifier, ratio: job.simplify, error: 0.01 }),
+  );
   if (job.skinned) {
     await doc.transform(
       resample(),

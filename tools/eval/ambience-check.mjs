@@ -407,12 +407,14 @@ put('AM6', 'LOWQ preserva as duas espécies e reduz instâncias',
 /* Teto por mapa, medido + folga curta. 17/08: população R27 do lajes media
    84.082 tris/19 draws (com 3 pombos de voo a 10.856 tris cada). 19/08 (v2.1
    frente D): pombo pousado (6.928) no lugar do voo + gato/galinha/vaca mediu
-   74.746/20 (lajes), 33.776/12 (corrego), 28.068/5 (escadão) — tetos
-   rederivados do medido com a mesma folga. Piora reprova; população nova mede
-   antes. Ver PROCEDÊNCIA DOS LIMIARES no cabeçalho. */
+   74.746/20 (lajes), 33.776/12 (corrego), 28.068/5 (escadão). 19/08 (vida 1):
+   +2 baratas (2.124 tris cada, Mint simplificado 0,4) → corrego 38.024/14
+   medido no browser; teto rederivado com a mesma folga. A integração com a
+   frente B (jacaré/capivara/grama no córrego) re-mede e rederiva de novo.
+   Piora reprova; população nova mede antes. Ver PROCEDÊNCIA DOS LIMIARES. */
 const AM7_TETOS = {
   fy_lajes: { tris: 78000, meshes: 21 },
-  fy_corrego: { tris: 35000, meshes: 13 },
+  fy_corrego: { tris: 39000, meshes: 15 },
   fy_escadao: { tris: 29000, meshes: 6 },
 };
 put('AM7', 'os três mapas desenham GLBs da fauna dentro do orçamento',
