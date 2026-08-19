@@ -29,6 +29,11 @@ render no fim): `tools/eval/asset-evidence/props-v21/`.
   espigas. 4.861 tris. Chat:
   <https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718>. Registro:
   `planta-corrego-taboa`. Escala sugerida ~1,4 ⇒ ~1,40 m.
+- `planta_corrego_taioba.glb` — "Heart Leaf Taioba", taioba (Xanthosoma) de
+  folhas cordiformes. 4.476 tris. Chat:
+  <https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4> (v2 — a primeira
+  geração falhou no estágio final do Mint). Registro: `planta-corrego-taioba`.
+  Escala sugerida ~0,95 ⇒ ~0,90 m.
 
 ## v2.1 — lote 2: caixa d'água (frente A)
 

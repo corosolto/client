@@ -1469,6 +1469,29 @@
     ],
     "finalSha256": "d6cd1d44354f6cee66ef197f3f5ad2acb50c2e7ca7d9e34151b9946a17ba9bad"
    }
+  },
+  "planta-corrego-taioba": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/planta_corrego_taioba.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7cb0vyms9gpcftq95yvjkgf18cs8cv",
+    "chatUrl": "https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4",
+    "displayName": "Heart Leaf Taioba (taioba de córrego)",
+    "frente": "v21-e-models",
+    "notes": "Lote 1 da frente E v2.1. Taioba (Xanthosoma) de folhas cordiformes. Primeira geração (asset ks7ac74ys39n51d9ktjvb0q1yh8csmne) falhou no estágio final do Mint e o retry_generation exigiu prompt novo em chat novo — esta é a v2. GLB normalizado pela profundidade (0,998 m; 0,963 m de altura): integrar com scale ~0,95 => ~0,90 m de altura. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taioba-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "2028681d3244aec692bd498b77681111268e3f7b7a87279a336c7a0082c699d7"
+   }
   }
  }
 }
