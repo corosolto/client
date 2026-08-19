@@ -20,7 +20,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';
-import { classifyCrash, shouldDispatchCrash, fingerprintConfere, crashFingerprint } from '../../lib/error-provenance.mjs';
+import { classifyCrash, shouldDispatchCrash, fingerprintConfere, crashFingerprint, isConsoleLog } from '../../lib/error-provenance.mjs';
 
 export const prerender = false;
 
@@ -75,7 +75,10 @@ export const POST: APIRoute = async ({ request }) => {
   const chave = coerente ? fingerprint : crashFingerprint(kind, message, source);
 
   const origin = new URL(request.url).origin;
-  const classification = classifyCrash({ message, source, stack }, origin);
+  /* Rebaixa SÓ o que viraria bug: cache-split vindo do console segue disparando o purge do
+     edge, e externo/recuperavel mantêm o rótulo (BUG-72). */
+  const base = classifyCrash({ message, source, stack }, origin);
+  const classification = base === 'codigo' && isConsoleLog({ kind, stack }) ? 'log' : base;
 
   const { error } = await supabaseAdmin.rpc('report_js_error', {
     p_fingerprint: chave,

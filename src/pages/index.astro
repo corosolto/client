@@ -38,9 +38,10 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 (function(){
   var TETO_SESSAO = 10;      /* no máximo 10 erros DISTINTOS por carregamento de página */
   var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
+  var TETO_CONSOLE = 3;      // log tagarela não come a cota reservada a exceção (BUG-72)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -126,6 +127,9 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
         if (externa) {
           if (nExternos >= TETO_EXTERNO) return null;
           nExternos++;
+        } else if (kind === 'console' && !stack) {
+          if (nConsole >= TETO_CONSOLE) return null;
+          nConsole++;
         } else {
           if (nEnviados >= TETO_SESSAO) return null;
           nEnviados++;
@@ -366,7 +370,10 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
           partes.push(a && a.message ? a.message : String(a));
         }
         var m = partes.join(' ');
-        var pilha = (arguments[0] && arguments[0].stack) || null;
+        /* `console.error('falha ao abrir', e)` põe o erro no argumento 1 (main.js, 4 chamadas):
+           ler só o 0 jogava a pilha fora e o relato chegava sem stack (BUG-72). */
+        var pilha = null;
+        for (var j = 0; j < arguments.length && j < 4 && !pilha; j++) pilha = (arguments[j] && arguments[j].stack) || null;
         // mesma guarda dos outros dois caminhos: extensão que loga não abre overlay
         // nem come a cota de dez envios do jogo (KNOWN-BUGS.md, BUG-51).
         var interna = origemDoJogo(null, pilha, m);

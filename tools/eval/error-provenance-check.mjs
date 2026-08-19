@@ -11,6 +11,7 @@ const mutants = [
   'cache-antes-origem', 'sem-recuperavel', 'sem-opaco', 'opaco-sem-guarda',
   'sem-vercel-helper', 'sem-vercel-cliente', 'sem-webgl',
   'sem-fingerprint', 'escala-incoerente', 'grava-forjado', 'receita-imul', 'cliente-hash-bruto', 'cliente-sem-retrim',
+  'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -20,6 +21,7 @@ let helperSource = existsSync(helperPath) ? readFileSync(helperPath, 'utf8') : '
 let api = readFileSync('src/pages/api/jserror.ts', 'utf8');
 let workflow = readFileSync('.github/workflows/crash-fix.yml', 'utf8');
 let page = readFileSync('src/pages/index.astro', 'utf8');
+let gameJs = readFileSync('public/js/game.js', 'utf8');
 let mutationApplied = !mutant;
 
 const mutate = (source, before, after) => {
@@ -114,11 +116,36 @@ if (mutant === 'cliente-hash-bruto') page = mutate(page,
   "var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;\n      var fp = digital(kind + '|' + mFinal + '|' + (sFinal || ''));",
   "var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;\n      var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));");
 
-let classifyCrash = null, shouldDispatchCrash = null, crashFingerprint = null, fingerprintConfere = null;
+/* BUG-72 · console.error com string é log, não exceção. Os mutantes cobrem os dois lados:
+   a guarda no helper, o rebaixamento na API, a cota no cliente e a pilha que o hook acha. */
+if (mutant === 'sem-log') helperSource = mutate(helperSource,
+  "return kind === 'console' && !stack;", 'return false;');
+if (mutant === 'log-amplo') helperSource = mutate(helperSource,
+  "return kind === 'console' && !stack;", "return kind === 'console';");
+if (mutant === 'log-nao-corta') helperSource = mutate(helperSource,
+  "classification !== 'log'", "classification !== 'log-desligado'");
+if (mutant === 'log-sobre-tudo') api = mutate(api,
+  "const classification = base === 'codigo' && isConsoleLog({ kind, stack }) ? 'log' : base;",
+  "const classification = isConsoleLog({ kind, stack }) ? 'log' : base;");
+if (mutant === 'sem-teto-console') page = mutate(page,
+  'if (nConsole >= TETO_CONSOLE) return null;',
+  'if (nConsole < 0) return null;');
+/* `console.error('falha ao abrir a partida', e)` é o idioma de `main.js` (4 chamadas): o
+   erro vem no argumento 1. Ler só o 0 joga a pilha fora e o corte silencia o relato. */
+/* Sinal DELIBERADO do nosso código: sem `Error` ele não tem pilha, e o corte do BUG-72 o
+   silenciaria. Não há régua de composição de times, então quem guarda esse sinal é esta. */
+if (mutant === 'times-sem-erro') gameJs = mutate(gameJs,
+  "console.error(new Error(msg + ' — TIMES DESIGUAIS (bug de composição)'))",
+  "console.error(msg + ' — TIMES DESIGUAIS (bug de composição)')");
+if (mutant === 'pilha-so-no-primeiro') page = mutate(page,
+  'var pilha = null;\n        for (var j = 0; j < arguments.length && j < 4 && !pilha; j++) pilha = (arguments[j] && arguments[j].stack) || null;',
+  'var pilha = (arguments[0] && arguments[0].stack) || null;');
+
+let classifyCrash = null, shouldDispatchCrash = null, crashFingerprint = null, fingerprintConfere = null, isConsoleLog = null;
 if (helperSource) {
   try {
     const encoded = Buffer.from(helperSource).toString('base64');
-    ({ classifyCrash, shouldDispatchCrash, crashFingerprint, fingerprintConfere } =
+    ({ classifyCrash, shouldDispatchCrash, crashFingerprint, fingerprintConfere, isConsoleLog } =
       await import(`data:text/javascript;base64,${encoded}`));
   } catch { /* cláusulas abaixo ficam vermelhas */ }
 }
@@ -270,6 +297,7 @@ const fingerprintFixtures = [
   ['error', "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')", `${own}/:1:19`, '7122f83c'],
   ['error', "ReferenceError: Can't find variable: DarkReader", `${own}/:1:11`, 'cd468274'],
 ];
+const MSG_382 = '%c[cheat-demo] ainda sem window.__game \u2014 você está no menu. Entre numa partida (JOGAR) e o cheat ativa sozinho. color:#ff2244;font-weight:bold';
 const MSG_383 = 'jserror-overload-2026-08-19T17-36-24-896Z | fase A (mesmo fingerprint) #1';
 
 /* As DUAS funções do cliente, executadas: `digital` sozinha aprovaria um `corta` que não
@@ -354,6 +382,63 @@ const fingerprintWired = coerenteIndex >= 0 && rpcIndexCodigo >= 0 && coerenteIn
   && apiCodigo.includes('if (!shouldDispatchCrash(classification) || !coerente) return json({ ok: true, escalated: false, classification });')
   && apiCodigo.includes("from '../../lib/error-provenance.mjs'");
 
+/* EP13 · BUG-72 (issue #382). `console.error` com string é linha de LOG, não exceção: a #382
+   é `%c[cheat-demo] …` de um cheat colado no devtools, e de 84 issues `crash-auto` ~24 são log
+   informativo. O corte é `kind:'console'` SEM pilha — com pilha o console está sinalizando
+   exceção de verdade e continua escalando.
+
+   O PONTO CEGO QUE ISTO FECHA: `main.js` chama `console.error('falha ao abrir a partida', e)`
+   em 4 lugares, com o erro no argumento 1. O hook lia só `arguments[0].stack`, então jogava a
+   pilha fora — esses relatos já chegavam com stack vazia, e o corte os silenciaria. O hook
+   agora varre os argumentos; o mutante `pilha-so-no-primeiro` devolve o furo. */
+const logFixtures = [
+  { kind: 'console', stack: null, message: MSG_382 },
+  { kind: 'console', stack: '', message: '[TectonicProvider] Failed to initialize' },
+  { kind: 'console', stack: undefined, message: 'THREE.WebGLProgram: Shader Error 1286' },
+];
+const naoLogFixtures = [
+  { kind: 'console', stack: `Error\n    at ${own}/js/game.js:1:2`, message: 'boom' },
+  { kind: 'error', stack: null, message: 'TypeError: x is undefined' },
+  { kind: 'promise', stack: null, message: 'boom' },
+];
+const log = (payload) => (typeof isConsoleLog === 'function' ? isConsoleLog(payload) : null);
+
+/* O hook do console EXTRAÍDO e EXECUTADO com os mesmos argumentos que o jogo passa: regex de
+   fiação sozinha aprovaria uma varredura que não varre. */
+let hookConsole = null;
+const hookMatch = page.match(/var partes = \[\];[\s\S]*?var pilha = [^\n]*\n(?:\s*for \(var j[^\n]*\n)?/);
+if (hookMatch) {
+  try { hookConsole = new Function(`${hookMatch[0]}\nreturn { m: m, pilha: pilha };`); }
+  catch { /* cláusula fica vermelha */ }
+}
+const erroDeVerdade = new Error('falha real');
+const hookAchaPilha = !!hookConsole
+  /* o idioma de main.js:959,1010,1102,1841 — erro no argumento 1 */
+  && !!hookConsole('falha ao abrir a partida', erroDeVerdade).pilha
+  && !!hookConsole(erroDeVerdade).pilha
+  /* e log puro continua sem pilha, senão o corte nunca morde */
+  && hookConsole('%c[cheat-demo] ainda sem window.__game', 'color:#ff2244;font-weight:bold').pilha === null
+  /* a mensagem da #382 é a concatenação dos dois argumentos, com o %c e a CSS juntos */
+  && hookConsole('%c[cheat-demo] x', 'color:#ff2244').m === '%c[cheat-demo] x color:#ff2244';
+
+/* A cota: o `reporta` real do cliente ganhou ramo próprio para console, senão log tagarela
+   come o TETO_SESSAO reservado a exceção (mesmo remédio do TETO_EXTERNO da BUG-51). */
+const cotaConsoleWired = /var TETO_CONSOLE = \d+;/.test(page)
+  && /\bnConsole = 0\b/.test(page)
+  && /\} else if \(kind === 'console' && !stack\) \{\s*\n\s*if \(nConsole >= TETO_CONSOLE\) return null;\s*\n\s*nConsole\+\+;/.test(page)
+  /* console COM pilha escala, então tem que consumir o balde de exceção, não o de log. */
+  && /var TETO_CONSOLE = [0-9]+;/.test(page)
+  && /if \(nEnviados >= TETO_SESSAO\) return null;/.test(page);
+
+/* A API rebaixa SÓ o que viraria bug: `cache-split` vindo do console segue disparando o purge
+   do Cloudflare, e `externo`/`recuperavel` mantêm o rótulo (mutante `log-sobre-tudo`). */
+const baseIndex = api.indexOf("const base = classifyCrash(");
+/* O detector de times desiguais precisa carregar Error para sobreviver ao corte. */
+const sinalDeliberadoTemPilha = /console\.error\(new Error\(msg \+ ' — TIMES DESIGUAIS/.test(gameJs);
+const logWired = api.includes('isConsoleLog')
+  && baseIndex >= 0 && baseIndex < api.indexOf('if (!shouldDispatchCrash(classification)')
+  && /const classification = base === 'codigo' && isConsoleLog\(\{ kind, stack \}\) \? 'log' : base;/.test(api);
+
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
@@ -380,6 +465,12 @@ const checks = [
     'sem_webgl é ambiente (browser sem WebGL, painel do BUG-44 já tratou): externo, sem issue; falha de contexto FORA da assinatura continua acionável'],
   ['EP12', receitaBate && aceitaCoerente && caminhoRealLongo && recusaForjado && fingerprintWired,
     'fingerprint conferido contra o conteúdo que veio junto: a receita reproduz os publicados em #379/#380/#381, o corpo REAL do cliente (inclusive mensagem acima de 500) continua escalando, e o forjado da #383 é gravado sob chave derivada sem escalar'],
+  ['EP13', logFixtures.every((f) => log(f) === true)
+    && naoLogFixtures.every((f) => log(f) === false)
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('log') === false && shouldDispatchCrash('codigo') === true
+    && hookAchaPilha && cotaConsoleWired && logWired && sinalDeliberadoTemPilha,
+    'console.error com string fica na telemetria e não abre issue; console COM pilha (o idioma `console.error(msg, e)` de main.js) continua escalando, e log tem cota própria'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -396,6 +487,8 @@ const mutantClause = {
   'sem-vercel-helper': 'EP10', 'sem-vercel-cliente': 'EP10',
   'sem-fingerprint': 'EP12', 'escala-incoerente': 'EP12', 'grava-forjado': 'EP12',
   'receita-imul': 'EP12', 'cliente-hash-bruto': 'EP12', 'cliente-sem-retrim': 'EP12',
+  'sem-log': 'EP13', 'log-amplo': 'EP13', 'log-sobre-tudo': 'EP13',
+  'log-nao-corta': 'EP13', 'sem-teto-console': 'EP13', 'pilha-so-no-primeiro': 'EP13', 'times-sem-erro': 'EP13',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
