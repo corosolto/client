@@ -1,3 +1,4 @@
+
 # Props de cenário
 
 Acervo de props estáticos dos mapas. O legado (carros, casas do lajes, mobiliário)
@@ -131,3 +132,4 @@ Ressalvas de INTEGRAÇÃO (não de asset):
   dentro do teto, mas é o primeiro candidato a decimação.
 - `aviao_faixa`: pivô da faixa z=-0,095 deixa o centro ~0,42 m fora da linha da
   fuselagem na escala 12 (o correto seria z=-0,06) — imperceptível no céu, anotado.
+

@@ -254,10 +254,10 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.920 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.655 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
-| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 679 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 767 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.274 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.658 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 899 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.612 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 918 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 505 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 301 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 256 |

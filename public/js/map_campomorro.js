@@ -1,12 +1,13 @@
 // CAMPO DO MORRO (fy_campomorro) — campo de varzea rebaixado, oito becos
 // convergentes e galpao do baile elevado. Spec: plans/11-CAMPO-DO-MORRO.md.
 import * as THREE from 'three';
-import { PropBatch } from './mapprops.js';
+import { PropBatch, InstBatch, mergeParts, hasProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
-import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
-import { setMapSky } from './map_sky.js';
+import { applyLook } from './map_sky.js';
+import { aplicaVento, updateVento } from './wind.js';
+import { GPUParticles } from './gpuparticles.js';
 import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -60,6 +61,8 @@ const morroBase = (x, z) => FIELD_Y
 export const CAMPOMORRO_PROPS = [
   'arquibancada', 'junkyard_container', 'caixa_som_baile', 'stall',
   'fav_house', 'pilha_pneus', 'moto_cg', 'fusca',
+  // RC4: grama da frente E (e-models) — o piloto do vento mora nela
+  'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba',
 ];
 
 function laneHeight(x, z) {
@@ -262,14 +265,11 @@ export function buildCampoMorro(scene, T = {}) {
   const circulo = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.46, 36), cal);
   circulo.rotation.x = -Math.PI / 2; circulo.position.y = FIELD_Y + 0.025; root.add(circulo);
 
-  setMapSky(scene, T, '/img/textures/sky_rj.webp', 0xb9c6d2);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_campomorro');
-  const hemi = new THREE.HemisphereLight(0xeaf2f6, 0x67584a, 1.16); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd9a8, 1.65); sun.position.set(30, 42, 10); sun.castShadow = true;
+  const { hemi, sun } = applyLook(scene, T, 'fy_campomorro', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
-  sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006; scene.add(sun); scene.add(sun.target);
+  sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
 
   // Talude do campo: oito aberturas ficam livres; os trechos restantes sao cover baixo.
   for (const [a, b] of [[-20, -14.8], [-10.2, -2.2], [2.2, 10.2], [14.8, 20]]) {
@@ -640,6 +640,59 @@ export function buildCampoMorro(scene, T = {}) {
     const ms = Array.isArray(c.material) ? c.material : [c.material];
     if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
   }
+
+  /* MATO COM VENTO (RC4, plans/23) — o campo pelado ganha margem viva. Tufos dos
+     GLBs da frente E (grama_corrego_01/02, taioba, taboa) em lote instanciado
+     (4k tris/tufo: solto custaria mais que as casas — nota do FONTE do e-models)
+     com o chunk de sway da wind.js; sem GLB (harness node) cai no tufo procedural
+     de 3 planos cruzados, batido no MESMO material de vento — é ele que a régua
+     mede. Nada de collider nem occluder (o build vem DEPOIS do laço de occluders
+     de propósito): mato não para bala nem corpo. O plantio evita as bocas das
+     rampas e o miolo do campo: margem, canto e base de casa — dressing, não cover. */
+  {
+    const matVentoGLB = (m) => aplicaVento(m, { amp: 0.05, freq: 1.25, altRef: 0.75 });
+    const PBV = new PropBatch({ bucket: 14, cast: false, matTweak: matVentoGLB });
+    const IBV = new InstBatch({ bucket: 14 });
+    const geoTufo = mergeParts([0, 1, 2].map((i) => {
+      const p = new THREE.PlaneGeometry(0.65, 0.7);
+      p.translate(0, 0.35, 0); p.rotateY(i * Math.PI / 3);
+      return p;
+    }));
+    const matTufo = new THREE.MeshStandardMaterial({ color: 0x5d7a3e, roughness: 1, side: THREE.DoubleSide });
+    aplicaVento(matTufo, { amp: 0.05, freq: 1.25, altRef: 0.75 });
+    const hashT = (i) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+    const IDS = ['grama_corrego_01', 'grama_corrego_02'];
+    const plantaTufo = (x, z, id, alvo) => {
+      const y = groundHeightAt(x, z), ry = hashT(x * 7 + z * 13) * Math.PI * 2;
+      if (!PBV.add(id, { x, y, z, targetH: alvo, ry })) {
+        const d = new THREE.Object3D();
+        d.position.set(x, y, z); d.rotation.y = ry; d.scale.setScalar(alvo / 0.7);
+        IBV.add(geoTufo, matTufo, d);
+      }
+    };
+    let nt = 0;
+    const jitter = () => (hashT(nt++ * 3 + 17) - 0.5) * 1.6;
+    const moita = (x, z, n, alvo) => {   // tufo solto não lê: 2-3 juntos viram moita
+      for (let k = 0; k < n; k++)
+        plantaTufo(x + (hashT(nt * 11 + k) - 0.5) * 0.9, z + (hashT(nt * 13 + k) - 0.5) * 0.9,
+          IDS[(nt + k) % 2], alvo + hashT(nt + k * 7) * 0.25);
+    };
+    // anel junto ao alambrado (fora das bocas de rampa)
+    for (const z of [-14.6, 14.6]) for (let x = -17; x <= 17; x += 3.8)
+      moita(x + jitter(), z + jitter() * 0.5, 2, 0.55 + hashT(nt) * 0.3);
+    for (const x of [-21.9, 21.9]) for (let z = -9; z <= 9; z += 4.2)
+      moita(x + jitter() * 0.4, z + jitter(), 2, 0.5 + hashT(nt) * 0.3);
+    // cantos do campo (miolo morto, fora das lanes)
+    for (const [x, z] of [[-16.5, -10.6], [16.8, -10.4], [-16.2, 10.7], [16.5, 10.5]])
+      moita(x + jitter() * 0.5, z + jitter() * 0.5, 3, 0.6 + hashT(nt) * 0.25);
+    // taboa/taioba na baixada sul e base de casa — textura de margem de várzea
+    for (const [x, z, id, h] of [[-27.5, 15.5, 'planta_corrego_taboa', 1.35], [-25.9, 16.2, 'planta_corrego_taboa', 1.2],
+      [30.6, 12.8, 'planta_corrego_taioba', 0.85], [-13.4, 22.6, 'planta_corrego_taioba', 0.9],
+      [6.2, 22.9, 'planta_corrego_taboa', 1.3], [28.4, -13.2, 'planta_corrego_taioba', 0.8]])
+      plantaTufo(x, z, id, h);
+    PBV.build(root);
+    IBV.build(root);
+  }
   const D_PIXO = decalIds(T, ['folha-pixaca-02.png', 'folha-pixaca-03.png']);
   const D_MURAL = decalIds(T, ['or-mitico-mural.png', 'personagem-muro.png']);
   grafitar({
@@ -669,9 +722,44 @@ export function buildCampoMorro(scene, T = {}) {
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
   });
 
+  /* POEIRA DE RUA (RC3, plans/23) — o "horizonte dinâmico" do dono passa por
+     partícula ambiente: motas de poeira atravessando as ruas do bowl. Soft
+     particles: o fade de contato vem da MESMA cópia de depth do DepthPass (sem
+     composer cai no comportamento de sempre). O spawner é determinístico (o
+     harness mede vida por ele): uma mota a cada ~0,14 s num ponto das 4 ruas,
+     deriva rasa no eixo da rua e subida leve — poeira de várzea, não nevoeiro. */
+  const poeira = new GPUParticles(scene, null, {
+    tex: typeof document !== 'undefined'
+      ? (() => { const t = new THREE.TextureLoader().load('/img/textures/poeira_puff.webp'); t.colorSpace = THREE.SRGBColorSpace; return t; })()
+      : null,
+    additive: false, max: 96, fadeDist: 0.8, lumAlpha: true, ambiente: 'poeira',
+  });
+  const RUAS_POEIRA = [
+    { x0: -30, z0: -27.4, x1: 18, z1: -27.4 }, { x0: -30, z0: 27.4, x1: 30, z1: 27.4 },
+    { x0: -33.2, z0: -22, x1: -33.2, z1: 22 }, { x0: 33.2, z0: -10, x1: 33.2, z1: 22 },
+  ];
+  let poeiraT = 0, poeiraN = 0;
+  const hashP = (i) => { const s = Math.sin(i * 269.3 + 117.7) * 43758.5453; return s - Math.floor(s); };
+  function updatePoeira(dt) {
+    poeiraT += dt;
+    while (poeiraT > 0.14) {
+      poeiraT -= 0.14;
+      const r = RUAS_POEIRA[poeiraN % RUAS_POEIRA.length], t = hashP(poeiraN * 3 + 1), h2 = hashP(poeiraN * 7 + 2);
+      const x = r.x0 + (r.x1 - r.x0) * t, z = r.z0 + (r.z1 - r.z0) * t;
+      const dx = Math.sign(r.x1 - r.x0), dz = Math.sign(r.z1 - r.z0);
+      poeira.spawn({ x, y: groundHeightAt(x, z) + 0.25 + h2 * 1.3, z }, {
+        vel: new THREE.Vector3(dx * (0.5 + h2 * 0.7), 0.06 + h2 * 0.1, dz * (0.5 + hashP(poeiraN * 5) * 0.7)),
+        life: 5 + h2 * 4, size: 0.45 + h2 * 0.55, grow: 0.09,
+      });
+      poeiraN++;
+    }
+    poeira.update(dt);
+  }
+
   return {
     ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    update(dt) { updateVento(dt); updatePoeira(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     levels: [{ nome: 'galpao', x0: GALPAO.x0, x1: GALPAO.x1, z0: GALPAO.z0, z1: GALPAO.z1, dePartida: 'B' }],
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
