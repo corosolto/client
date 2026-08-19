@@ -846,7 +846,7 @@ export function buildPoolDay(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-13, 0, 10], phase: .3 }, { mode: 'ground', pos: [12, 0, -12], phase: 1.4 },
-      { mode: 'flight', pos: [0, 9, 0], radius: [6, 4.5], phase: .8 },
+      { mode: 'ground', pos: [-11.8, 0, 9], phase: .8 },
     ],
   });
 

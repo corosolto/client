@@ -485,7 +485,7 @@ export function buildPosto(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-15, 0, 6], phase: .5 }, { mode: 'ground', pos: [16, 0, -6], phase: 1.4 },
-      { mode: 'flight', pos: [0, 9, 0], radius: [7, 5], phase: .8 },
+      { mode: 'ground', pos: [-14, 0, 5], phase: .8 },
     ],
     dogs: [{ pos: [-4, 0, 20], to: [0, 0, 20], phase: .5 }],
   });

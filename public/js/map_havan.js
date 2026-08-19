@@ -1995,7 +1995,7 @@ export function buildHavan(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-9, 0, 20], phase: .5 }, { mode: 'ground', pos: [14, 0, 22], phase: 1.7 },
-      { mode: 'flight', pos: [0, 10, 12], radius: [8, 5], phase: .9 },
+      { mode: 'ground', pos: [-7.6, 0, 21], phase: .9 },
     ],
   });
 

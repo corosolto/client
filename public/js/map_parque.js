@@ -396,7 +396,7 @@ export function buildParque(scene, T) {
     pigeons: [
       { mode: 'ground', pos: [-6, 0, -10], phase: .2 }, { mode: 'ground', pos: [8, 0, -4], phase: 1.0 },
       { mode: 'ground', pos: [-4, 0, 12], phase: 1.9 },
-      { mode: 'flight', pos: [0, 10, 0], radius: [9, 6], phase: .7 },
+      { mode: 'ground', pos: [-4.6, 0, 10.6], phase: .7 },
     ],
     dogs: [{ pos: [-4, 0, 24], to: [0, 0, 24], phase: .5 }],
   });

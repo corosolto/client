@@ -8,19 +8,31 @@ const templates = new Map();
 const ASSETS = Object.freeze({
   rat: 'models/ambient/rat_animated.glb',
   pigeonGround: 'models/ambient/pigeon_ground.glb',
-  pigeonFlight: 'models/ambient/pigeon_flight.glb',
   dog: 'models/ambient/dog_caramelo.glb',
   jacare: 'models/ambient/jacare_corrego.glb',
   capivara: 'models/ambient/capivara_corrego.glb',
+  cat: 'models/ambient/cat_telhado.glb',
+  chicken: 'models/ambient/galinha_campo.glb',
+  cow: 'models/ambient/vaca_campo.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
+const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca' });
+const QUADS = new Set(['dog', 'cat', 'chicken', 'cow']);
 const SHOT_REACTION_RADIUS = 13;
-const DOG_WALK_SPEED = 1;
 const DOG_IDLE_TIME = 3;
+/* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2 });
+const QUAD_SPEED = Object.freeze({
+  dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
+});
 
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
 
 export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
+  /* lista vazia vinha de main.js/mapview para os mapas sem `ambience` no registro:
+     nenhum GLB baixava e a fauna inteira caía no fallback procedural (BUG-57) */
+  if (!ids || !ids.length) ids = FAVELA_AMBIENCE_ASSETS;
   await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
     try {
       const gltf = await loadGLB(`${ASSETS[id]}?v=${VERSION}`);
@@ -114,8 +126,10 @@ function normalizeModel(id, model) {
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
-  const target = id === 'rat' ? .36 : id === 'pigeonGround' ? .29 : id === 'dog' ? 1 : .62;
-  const dimension = id === 'pigeonGround' || id === 'dog' ? size.y : Math.max(size.x, size.z);
+  /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
+     comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75 }[id] || .5;
+  const dimension = id === 'rat' ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
@@ -133,7 +147,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -144,22 +158,34 @@ class FavelaAmbience {
     this.group.userData.ambientLife = true;
     root.add(this.group);
     const ratList = low ? rats.slice(0, 1) : rats;
-    const flight = pigeons.find((pigeon) => pigeon.mode === 'flight') || pigeons[0];
-    const pigeonList = low ? (flight ? [flight] : []) : pigeons;
+    const pigeonList = low ? pigeons.slice(0, 1) : pigeons;
     const dogList = low ? dogs.slice(0, 1) : dogs;
+    const catList = low ? cats.slice(0, 1) : cats;
+    const chickenList = low ? chickens.slice(0, 1) : chickens;
+    const cowList = low ? cows.slice(0, 1) : cows;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
     dogList.forEach((config, index) => this._add('dog', config, index));
+    catList.forEach((config, index) => this._add('cat', config, index));
+    chickenList.forEach((config, index) => this._add('chicken', config, index));
+    cowList.forEach((config, index) => this._add('cow', config, index));
     this.reset();
   }
 
   _add(type, config, index) {
-    const assetId = type === 'rat' ? 'rat' : type === 'dog' ? 'dog' : config.mode === 'flight' ? 'pigeonFlight' : 'pigeonGround';
+    if (type === 'pigeon' && config.mode === 'flight') {
+      /* v2.1 (BUG-57): pombo não voa mais — o GLB de voo era estático com asas abertas
+         (dono: "deveria ficar so na ponta das lajes ou no chao"). Config não migrada cai
+         no chão/laje mantendo o y do config: pomba pousada, não pendurada no céu. */
+      if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug'))
+        console.warn('[ambientlife] mode "flight" depreciado na v2.1 — pombo anda; migre o config para ground (BUG-57)');
+    }
+    const assetId = TYPE_ASSET[type] || 'pigeonGround';
     const loaded = cloneAsset(assetId);
     const animalRoot = new THREE.Group();
     animalRoot.name = `${type}:${this.map}:${index}`;
-    animalRoot.userData.fauna = type === 'rat' ? 'rato' : type === 'dog' ? 'cachorro' : 'pomba';
+    animalRoot.userData.fauna = FAUNA_NAME[type] || 'pomba';
     animalRoot.userData.nonCollider = true;
     animalRoot.userData.motion = 'deterministic-run-idle';
     animalRoot.userData.bodyLength = type === 'rat' ? .142 : undefined;
@@ -180,23 +206,24 @@ class FavelaAmbience {
     animalRoot.traverse((object) => {
       if (!object.isMesh) return;
       object.userData.nonSolidSurface = true;
-      object.castShadow = config.mode !== 'flight' && !this.low;
+      object.castShadow = !this.low;
       object.receiveShadow = true;
     });
     this.group.add(animalRoot);
     const clips = loaded?.clips || [];
     let mixer = null;
     let actions = null;
-    if (type === 'dog' && clips.length) {
+    if (QUADS.has(type) && clips.length) {
       // clipes Quaternius vêm como 'AnimalArmature|Idle'; casa por sufixo, cai no primeiro
       mixer = new THREE.AnimationMixer(model);
       actions = {};
       for (const [key, pattern] of [['idle', /(^|\|)Idle$/], ['walk', /(^|\|)Walk$/], ['run', /(^|\|)(Run|Gallop)$/]]) {
-        const clip = clips.find((item) => pattern.test(item.name)) || clips[0];
+        const clip = clips.find((item) => pattern.test(item.name))
+          || (key === 'run' ? clips.find((item) => /(^|\|)Walk$/.test(item.name)) : clips[0]);
         actions[key] = mixer.clipAction(clip);
       }
       actions.idle.play();
-    } else if (type !== 'dog') {
+    } else if (!QUADS.has(type)) {
       const clip = clips.find((item) => item.name === (type === 'rat' ? 'Run' : 'Animation')) || clips[0];
       if (clip) {
         mixer = new THREE.AnimationMixer(model);
@@ -206,7 +233,7 @@ class FavelaAmbience {
     const origin = new THREE.Vector3(...config.pos);
     const to = new THREE.Vector3(...(config.to || config.pos));
     this.animals.push({
-      id: `${type}-${index}`, type, mode: config.mode || 'ground', root: animalRoot, model,
+      id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
@@ -224,7 +251,7 @@ class FavelaAmbience {
       animal.recoverAt = 0;
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
-      animal.state = animal.mode === 'flight' ? 'fly' : 'idle';
+      animal.state = 'idle';
       animal.root.position.copy(animal.origin);
       animal.root.rotation.set(0, animal.phase, 0);
       if (animal.actions) {
@@ -242,14 +269,15 @@ class FavelaAmbience {
       const position = animal.root.getWorldPosition(new THREE.Vector3());
       if (distanceToSegment(position, start, end) > SHOT_REACTION_RADIUS) continue;
       animal.alertAt = this.time;
-      animal.alertUntil = this.time + (animal.type === 'rat' ? 2.1 : animal.type === 'dog' ? 2.6 : 3.2);
+      animal.alertUntil = this.time + (ALERT_TIME[animal.type] || 3.2);
       animal.recoverAt = 0;
       animal.recoverUntil = 0;
       animal.alertOrigin.copy(animal.root.position);
       animal.flee.copy(position).sub(start).setY(0);
       if (animal.flee.lengthSq() < .01) animal.flee.set(Math.sin(animal.phase + 1), 0, Math.cos(animal.phase + 1));
       animal.flee.normalize();
-      animal.state = animal.type === 'pigeon' ? 'takeoff' : 'flee';
+      /* pombo foge a pé pela superfície onde nasceu (v2.1: sem takeoff/flight) */
+      animal.state = 'flee';
       reacted++;
     }
     return reacted;
@@ -263,8 +291,8 @@ class FavelaAmbience {
         this.onShot(from, animal.root.position.clone());
       }
       if (animal.type === 'rat') this._updateRat(animal, dt);
-      else if (animal.type === 'dog') this._updateDog(animal, dt);
-      else this._updatePigeon(animal, dt);
+      else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
+      else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
   }
@@ -294,17 +322,18 @@ class FavelaAmbience {
     animal.action = name;
   }
 
-  _updateDog(animal) {
+  _updateQuad(animal) {
+    const speed = QUAD_SPEED[animal.type] || QUAD_SPEED.dog;
     if (this.time < animal.alertUntil) {
       const elapsed = this.time - animal.alertAt;
-      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(4.5, elapsed * 3.2));
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(speed.flee * 1.4, elapsed * speed.flee));
       animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
       animal.state = 'flee';
       this._dogAction(animal, 'run');
       return;
     }
     const span = animal.origin.distanceTo(animal.to);
-    const leg = span / DOG_WALK_SPEED;
+    const leg = span / speed.walk;
     const cycle = (this.time + animal.phase) % (2 * (DOG_IDLE_TIME + leg));
     let moving = false;
     let direction = null;
@@ -326,35 +355,21 @@ class FavelaAmbience {
   }
 
   _updatePigeon(animal) {
-    const flight = animal.mode === 'flight' || this.time < animal.alertUntil;
-    if (!flight) {
-      const angle = (this.time * .38 + animal.phase) * Math.PI * 2;
-      animal.routine.set(animal.origin.x + Math.sin(angle) * .18, animal.origin.y, animal.origin.z + Math.cos(angle) * .12);
-      const recovering = this._recoverToRoute(animal, animal.routine, 2.2);
-      animal.root.rotation.y = angle + Math.PI / 2;
-      animal.state = recovering ? 'recover' : 'walk';
-      return;
-    }
+    /* v2.1 (BUG-57): pombo não voa — anda no chão e pousa na ponta das lajes. O GLB de
+       voo (estático, asas abertas) saiu do acervo; alerta foge a pé na própria superfície. */
     if (this.time < animal.alertUntil) {
       const elapsed = this.time - animal.alertAt;
-      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, elapsed * 3.1);
-      animal.root.position.y += Math.min(5, elapsed * 2.4);
-      animal.root.rotation.z = Math.sin(elapsed * 8) * .24;
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(1.4, elapsed * 2.6));
+      animal.root.position.y = animal.alertOrigin.y;
       animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
-      animal.state = 'takeoff';
+      animal.state = 'flee';
       return;
     }
-    const angle = this.time * .42 + animal.phase;
-    animal.routine.set(
-      animal.origin.x + Math.cos(angle) * animal.radius[0],
-      animal.origin.y + Math.sin(angle * 2.3) * .28,
-      animal.origin.z + Math.sin(angle) * animal.radius[1],
-    );
+    const angle = (this.time * .38 + animal.phase) * Math.PI * 2;
+    animal.routine.set(animal.origin.x + Math.sin(angle) * .18, animal.origin.y, animal.origin.z + Math.cos(angle) * .12);
     const recovering = this._recoverToRoute(animal, animal.routine, 2.2);
-    const dx = -Math.sin(angle) * animal.radius[0];
-    const dz = Math.cos(angle) * animal.radius[1];
-    animal.root.rotation.set(.04, Math.atan2(dx, dz), THREE.MathUtils.clamp(-Math.sin(angle) * .28, -.3, .3));
-    animal.state = recovering ? 'recover' : 'fly';
+    animal.root.rotation.y = angle + Math.PI / 2;
+    animal.state = recovering ? 'recover' : 'walk';
   }
 
   _recoverToRoute(animal, target, duration) {
@@ -395,9 +410,12 @@ class FavelaAmbience {
     const rat = this.animals.filter((animal) => animal.type === 'rat').length;
     const pigeon = this.animals.filter((animal) => animal.type === 'pigeon').length;
     const dog = this.animals.filter((animal) => animal.type === 'dog').length;
+    const cat = this.animals.filter((animal) => animal.type === 'cat').length;
+    const chicken = this.animals.filter((animal) => animal.type === 'chicken').length;
+    const cow = this.animals.filter((animal) => animal.type === 'cow').length;
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, total: rat + pigeon + dog }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, total: rat + pigeon + dog + cat + chicken + cow }, meshes, triangles: Math.round(triangles),
     };
   }
 

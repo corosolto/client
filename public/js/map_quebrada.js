@@ -1636,12 +1636,14 @@ export function buildQuebrada(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [10, 0, -8], phase: .5 }, { mode: 'ground', pos: [-21.5, 0, 17.5], phase: 1.6 },
-      { mode: 'flight', pos: [0, 10, -8], radius: [7, 5], phase: .9 },
+      { mode: 'ground', pos: [8.6, 0, -7], phase: .9 },
     ],
     dogs: [
       { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
       { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
     ],
+    /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
+    cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
   });
 
   return {

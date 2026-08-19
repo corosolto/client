@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 40,575 lines in 55 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 40,605 lines in 55 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6,971** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,701 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -223,15 +223,15 @@ The maps registered today, and which mode each one opens in:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,832 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,831 |
 | `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 873 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,017 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,920 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,653 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,655 |
 | `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 868 |
-| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 674 |
-| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,271 |
-| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,655 |
+| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 679 |
+| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,274 |
+| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,658 |
 | `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 899 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 505 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 301 |

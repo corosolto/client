@@ -238,7 +238,7 @@ export function buildObras(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-16, 0, 10], phase: .6 },
-      { mode: 'flight', pos: [0, 11, 0], radius: [8, 5], phase: 1.0 },
+      { mode: 'ground', pos: [-14.6, 0, 9], phase: 1.0 },
     ],
   });
 

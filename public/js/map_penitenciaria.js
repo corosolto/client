@@ -249,7 +249,7 @@ export function buildPenitenciaria(scene) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-12, 0, 6], phase: .5 }, { mode: 'ground', pos: [12, 0, -6], phase: 1.6 },
-      { mode: 'flight', pos: [0, 11, 0], radius: [8, 5.5], phase: .8 },
+      { mode: 'ground', pos: [-10.8, 0, 5], phase: .8 },
     ],
   });
 

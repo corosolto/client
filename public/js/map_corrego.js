@@ -1640,8 +1640,11 @@ float ondaCorrego( vec2 p ) {
     ],
     pigeons: [
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
-      { mode: 'flight', pos: [-8, 7.4, -5], radius: [4.7, 3.4], phase: 1.3 },
+      { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },
     ],
+    /* BUG-57 v2.1 (frente D — só o bloco AMBIENCE): gato da margem + galinha de quintal */
+    cats: [{ pos: [12, groundHeightAt(12, 8), 8], to: [14.5, groundHeightAt(14.5, 10), 10], phase: .9 }],
+    chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
   });
 
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;

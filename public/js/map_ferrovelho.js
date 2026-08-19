@@ -1903,7 +1903,7 @@ export function buildFerroVelho(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [3, 0, -16], phase: .6 },
-      { mode: 'flight', pos: [0, 11, 0], radius: [7, 5], phase: 1.5 },
+      { mode: 'ground', pos: [4.4, 0, -15], phase: 1.5 },
     ],
     dogs: [{ pos: [-3, 0, 29], to: [1.5, 0, 29], phase: .4 }],
   });
