@@ -470,9 +470,6 @@ export function buildCorrego(scene, T) {
   // as duas camadas se moverem em fases distintas em vez de imprimirem a mesma mancha.
   const reflexoAgua = lam({ map: mapaAgua(1.5, 20), color: 0x8fc4b4, transparent: true, opacity: .24, roughness: .06,
     metalness: .32, emissive: 0x14372f, emissiveIntensity: .24, depthWrite: false });
-  // segunda lâmina também ondula: scroll em FASE/VELOCIDADE distintas da base —
-  // interferência de marola, não a mesma mancha ecoando duas vezes.
-  if (AGUA_FX) ondularAgua(reflexoAgua, -0.007, 0.013);
   const reflexo = addFloor(CANAL_ABERTURA - .35, HALF_Z * 2 - .6, 0, 0, reflexoAgua, CANAL_AGUA + 0.015);
   reflexo.userData.nonSolidSurface = true; reflexo.userData.corregoWaterSurface = 'reflection'; reflexo.renderOrder = 2;
   // Poças paradas encostadas no pé da parede: a lâmina não é uma faixa uniforme.

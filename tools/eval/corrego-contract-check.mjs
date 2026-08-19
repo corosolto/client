@@ -279,6 +279,9 @@ if (mutante === 'agua-morta') {
   if (!lamina) throw new Error('MUTANTE NAO APLICOU: lâmina base não existe');
   lamina.material.onBeforeCompile = undefined;
   lamina.onBeforeRender = undefined;
+  /* RC2: o relógio é o update(dt) do world — congela junto senão o mutante
+     só mata a implementação v1 e passa verde com a água morta de verdade */
+  if (typeof world2.update === 'function') world2.update = () => {};
 }
 const gramaServida = (world2.gramaServida || []).filter((g) => g && g.isObject3D);
 if (mutante === 'grama-sumiu') {
@@ -306,8 +309,11 @@ const lenSemYaw = (o) => {
 };
 const tamDe = (o) => boxDe(o).getSize(new THREE.Vector3());
 const submerso = (o) => { const b = boxDe(o); return b.min.y < CANAL_AGUA_Y - 0.02 && b.max.y > CANAL_AGUA_Y + 0.05; };
-const aguaShader = !!lamina && typeof lamina.material.onBeforeCompile === 'function'
-  && /uAgua/.test(String(lamina.material.onBeforeCompile));
+const aguaShader = !!lamina && (
+  (typeof lamina.material.onBeforeCompile === 'function' && /uAgua/.test(String(lamina.material.onBeforeCompile)))
+  /* RC2 (frente G): a lâmina vira ShaderMaterial da water.js com uTime — a
+     cláusula mede o CONTRATO (onda viva), não a implementação v1 */
+  || (lamina.material.isShaderMaterial && !!lamina.material.uniforms?.uTime));
 const aguaSegs = !!lamina
   && (lamina.geometry.parameters?.widthSegments || 0) >= 6
   && (lamina.geometry.parameters?.heightSegments || 0) >= 24;
@@ -316,7 +322,14 @@ try {
   const antes = lamina.material.userData?.uAgua?.value;
   lamina.onBeforeRender?.();
   const depois = lamina.material.userData?.uAgua?.value;
-  aguaRelogioAnda = Number.isFinite(antes) && Number.isFinite(depois) && depois > antes;
+  const v1 = Number.isFinite(antes) && Number.isFinite(depois) && depois > antes;
+  let v2 = false;
+  if (lamina.material.uniforms?.uTime && typeof world2.update === 'function') {
+    const t0 = lamina.material.uniforms.uTime.value;
+    world2.update(0.4);
+    v2 = lamina.material.uniforms.uTime.value > t0;
+  }
+  aguaRelogioAnda = v1 || v2;
 } catch { aguaRelogioAnda = false; }
 const aguaAmpOk = !lamina?.userData?.aguaAmp || (lamina.userData.aguaAmp > 0 && lamina.userData.aguaAmp <= 0.03);   // brilho está a +3 cm da lâmina: crista tem de ficar abaixo
 const gramaSpots = world2.gramaSpots || [];
