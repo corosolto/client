@@ -76,3 +76,19 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
 // 'externo' e 'recuperavel' ficam gravados no banco, mas não consomem dispatch nem
 // abrem bug do jogo: um não pertence ao jogo, o outro o jogo já contornou sozinho.
 export const shouldDispatchCrash = (classification) => classification !== 'externo' && classification !== 'recuperavel';
+
+/* Mesma receita do `digital()` de `index.astro`. A multiplicação é em ponto FLUTUANTE de
+   propósito: passa de 2^53 e perde precisão — `Math.imul` daria outro número (BUG-71). */
+export function crashFingerprint(kind, message, source) {
+  const texto = `${kind}|${message ?? ''}|${source ?? ''}`;
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return `0000000${h.toString(16)}`.slice(-8);
+}
+
+/* Fingerprint na palavra do cliente funde erros distintos num grupo só e cala todos menos
+   o primeiro: vale quando é o hash do conteúdo que veio junto (BUG-71). */
+export function fingerprintConfere(claimed, { kind, message, source } = {}) {
+  if (typeof claimed !== 'string' || !claimed) return false;
+  return claimed === crashFingerprint(kind, message, source);
+}

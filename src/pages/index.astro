@@ -71,6 +71,13 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
     return ('0000000' + h.toString(16)).slice(-8);
   }
 
+  /* Espelha o `str()` de `src/pages/api/jserror.ts` (trim, depois corte): o que é hasheado
+     tem que ser o que vai no corpo, ou o servidor não reconstrói o fingerprint (BUG-71). */
+  function corta(v, max){
+    var t = (v === null || v === undefined ? '' : String(v)).trim();
+    return t ? t.slice(0, max).trim() : '';
+  }
+
   /* A versão sai do `?v=` do próprio HTML: ela já está aqui, já sobe junto no bump dos
      dois lados, e assim não há terceiro lugar para esquecer de atualizar. */
   function versao(){
@@ -112,7 +119,8 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   function reporta(kind, msg, source, stack, externa){
     if (reportando) return null;                           // guarda de laço
     try{
-      var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
+      var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;
+      var fp = digital(kind + '|' + mFinal + '|' + (sFinal || ''));
       if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
       if (!enviados[fp]) {
         if (externa) {
@@ -127,8 +135,8 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
       reportando = true;
       var c = contexto();
       c.fingerprint = fp; c.kind = kind;
-      c.message = String(msg || '?').slice(0, 500);
-      c.source = source || null;
+      c.message = mFinal;
+      c.source = sFinal;
       c.stack = stack ? String(stack).slice(0, 4000) : null;
       var corpo = JSON.stringify(c);
       corpos[fp] = corpo;

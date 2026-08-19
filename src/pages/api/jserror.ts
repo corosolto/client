@@ -20,7 +20,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';
-import { classifyCrash, shouldDispatchCrash } from '../../lib/error-provenance.mjs';
+import { classifyCrash, shouldDispatchCrash, fingerprintConfere, crashFingerprint } from '../../lib/error-provenance.mjs';
 
 export const prerender = false;
 
@@ -67,12 +67,19 @@ export const POST: APIRoute = async ({ request }) => {
     : null;
   const source = str(body?.source, 300);
   const stack = str(body?.stack, 4000);
+  const kind = ['error', 'promise', 'console'].includes(body?.kind) ? body.kind : 'error';
+
+  /* Chave de agrupamento do `js_error` E de dedupe do escalonamento (BUG-71). Incoerente não
+     é recusado: grava sob a chave DERIVADA do conteúdo, fora do escalonamento. */
+  const coerente = fingerprintConfere(fingerprint, { kind, message, source });
+  const chave = coerente ? fingerprint : crashFingerprint(kind, message, source);
+
   const origin = new URL(request.url).origin;
   const classification = classifyCrash({ message, source, stack }, origin);
 
   const { error } = await supabaseAdmin.rpc('report_js_error', {
-    p_fingerprint: fingerprint,
-    p_kind: ['error', 'promise', 'console'].includes(body?.kind) ? body.kind : 'error',
+    p_fingerprint: chave,
+    p_kind: kind,
     p_message: message,
     p_source: source,
     p_stack: stack,
@@ -90,7 +97,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (error) return json({ error: 'indisponivel' }, 503);
 
   // Proveniência externa fica no banco bruto, mas não consome dispatch nem abre bug do jogo.
-  if (!shouldDispatchCrash(classification)) return json({ ok: true, escalated: false, classification });
+  if (!shouldDispatchCrash(classification) || !coerente) return json({ ok: true, escalated: false, classification });
 
   /* PRIMEIRA OCORRÊNCIA → repository_dispatch `prod-crash` (crash-fix.yml).
      O UPDATE condicional é atômico: duas requisições simultâneas do mesmo erro
@@ -110,7 +117,7 @@ export const POST: APIRoute = async ({ request }) => {
         const { data: escaladas } = await supabaseAdmin
           .from('js_error')
           .update({ dispatched_at: new Date().toISOString() })
-          .eq('fingerprint', fingerprint)
+          .eq('fingerprint', chave)
           .is('dispatched_at', null)
           .select('fingerprint');
         if (escaladas?.length) {
@@ -124,7 +131,7 @@ export const POST: APIRoute = async ({ request }) => {
             },
             body: JSON.stringify({
               event_type: 'prod-crash',
-              client_payload: { fingerprint, message, source, stack, origin, version: str(body?.version, 40) },
+              client_payload: { fingerprint: chave, message, source, stack, origin, version: str(body?.version, 40) },
             }),
           });
           if (!resp.ok) throw new Error(`dispatch ${resp.status}`);
@@ -135,7 +142,7 @@ export const POST: APIRoute = async ({ request }) => {
          Desfaz a marca para a próxima ocorrência retentar. */
       try {
         await supabaseAdmin.from('js_error').update({ dispatched_at: null })
-          .eq('fingerprint', fingerprint);
+          .eq('fingerprint', chave);
       } catch { /* nem o rollback - a linha segue com o erro gravado */ }
     }
   }

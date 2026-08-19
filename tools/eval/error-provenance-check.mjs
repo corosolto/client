@@ -10,6 +10,7 @@ const mutants = [
   'sem-cliente', 'cliente-mensagem-url', 'sem-teto-externo', 'debug-externo', 'console-sem-origem',
   'cache-antes-origem', 'sem-recuperavel', 'sem-opaco', 'opaco-sem-guarda',
   'sem-vercel-helper', 'sem-vercel-cliente', 'sem-webgl',
+  'sem-fingerprint', 'escala-incoerente', 'grava-forjado', 'receita-imul', 'cliente-hash-bruto', 'cliente-sem-retrim',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -36,11 +37,11 @@ if (mutant === 'filtro-amplo') helperSource = mutate(helperSource,
   'const evidence = [message, source, stack].filter(Boolean).join("\\n");',
   'if (/Script error|undefined/i.test(String(message))) return true;\n  const evidence = [message, source, stack].filter(Boolean).join("\\n");');
 if (mutant === 'sem-api') api = mutate(api,
-  "if (!shouldDispatchCrash(classification))",
-  "if (!neverDispatchCrash(classification))");
+  "if (!shouldDispatchCrash(classification) || !coerente)",
+  "if (!neverDispatchCrash(classification) || !coerente)");
 if (mutant === 'sem-early-return') api = mutate(api,
-  'if (!shouldDispatchCrash(classification)) return json({ ok: true, escalated: false, classification });',
-  'if (!shouldDispatchCrash(classification)) { /* externo segue para dispatch */ }');
+  'if (!shouldDispatchCrash(classification) || !coerente) return json({ ok: true, escalated: false, classification });',
+  'if (!shouldDispatchCrash(classification) || !coerente) { /* externo segue para dispatch */ }');
 if (mutant === 'sem-workflow') workflow = mutate(workflow,
   'node scripts/classify-crash.mjs',
   'node scripts/classificador-removido.mjs');
@@ -85,12 +86,40 @@ if (mutant === 'sem-webgl') helperSource = mutate(helperSource,
 if (mutant === 'opaco-sem-guarda') helperSource = mutate(helperSource,
   'if (source || stack) return false;',
   'if (false) return false;');
+/* Coerente por decreto: a chave forjada volta a ser aceita e a escalar. */
+if (mutant === 'sem-fingerprint') api = mutate(api,
+  'const coerente = fingerprintConfere(fingerprint, { kind, message, source });',
+  'const coerente = true;');
+/* Deixa o incoerente escalar de novo — o vetor exato da #383. */
+if (mutant === 'escala-incoerente') api = mutate(api,
+  'if (!shouldDispatchCrash(classification) || !coerente)',
+  'if (!shouldDispatchCrash(classification))');
+/* Grava sob a chave REIVINDICADA: o dispatch não sai, mas o agrupamento já foi envenenado. */
+if (mutant === 'grava-forjado') api = mutate(api,
+  '    p_fingerprint: chave,',
+  '    p_fingerprint: fingerprint,');
+/* `Math.imul` é a FNV-1a "correta" e é a armadilha: o `digital()` do cliente multiplica em
+   ponto flutuante, perde precisão acima de 2^53, e é esse número que está publicado nas issues. */
+if (mutant === 'receita-imul') helperSource = mutate(helperSource,
+  'h = (h * 16777619) >>> 0;',
+  'h = Math.imul(h, 16777619) >>> 0;');
+/* O cliente voltando a hashear o valor BRUTO: como ele envia o cortado, todo relatório com
+   mensagem acima de 500 chars deixaria de bater — e a guarda o tiraria do escalonamento. */
+/* Sem reaparar depois do corte, o cliente manda um espaço final que o `str()` do servidor
+   tira: crash real comprido vira incoerente e sai do escalonamento sem ninguém ver. */
+if (mutant === 'cliente-sem-retrim') page = mutate(page,
+  "return t ? t.slice(0, max).trim() : '';",
+  "return t ? t.slice(0, max) : '';");
+if (mutant === 'cliente-hash-bruto') page = mutate(page,
+  "var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;\n      var fp = digital(kind + '|' + mFinal + '|' + (sFinal || ''));",
+  "var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;\n      var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));");
 
-let classifyCrash = null, shouldDispatchCrash = null;
+let classifyCrash = null, shouldDispatchCrash = null, crashFingerprint = null, fingerprintConfere = null;
 if (helperSource) {
   try {
     const encoded = Buffer.from(helperSource).toString('base64');
-    ({ classifyCrash, shouldDispatchCrash } = await import(`data:text/javascript;base64,${encoded}`));
+    ({ classifyCrash, shouldDispatchCrash, crashFingerprint, fingerprintConfere } =
+      await import(`data:text/javascript;base64,${encoded}`));
   } catch { /* cláusulas abaixo ficam vermelhas */ }
 }
 const own = 'https://www.csbrasil.online';
@@ -156,12 +185,12 @@ const externalCacheFixtures = [
 /* EP4 precisa provar o early-return real: um único ponto de dispatch, depois
    da guarda que RETORNA, e o RPC de gravação antes dos dois. */
 const rpcIndex = api.indexOf("rpc('report_js_error'");
-const externalIndex = api.indexOf('if (!shouldDispatchCrash(classification))');
+const externalIndex = api.indexOf('if (!shouldDispatchCrash(classification) || !coerente)');
 const dispatchIndex = api.indexOf('const dispatchToken');
 const dispatchFetches = (api.match(/api\.github\.com\/repos/g) || []).length;
 const apiWired = api.includes("from '../../lib/error-provenance.mjs'")
   && api.includes('shouldDispatchCrash')
-  && /if \(!shouldDispatchCrash\(classification\)\)\s*return json\(\{ ok: true, escalated: false, classification \}\);/.test(api)
+  && /if \(!shouldDispatchCrash\(classification\) \|\| !coerente\)\s*return json\(\{ ok: true, escalated: false, classification \}\);/.test(api)
   && rpcIndex >= 0 && externalIndex > rpcIndex && dispatchIndex > externalIndex
   && dispatchFetches === 1;
 
@@ -228,6 +257,103 @@ const clientWired = /origemDoJogo\(e\.filename, e\.error && e\.error\.stack, Str
   && /if \(interna\) showDebug\('console'/.test(page)
   && /reporta\('console', m, null, pilha, !interna\)/.test(page);
 
+/* EP12 · o `fingerprint` é a chave de agrupamento do `js_error` E a chave de dedupe do
+   escalonamento (`dispatched_at`). Na palavra do cliente, um curl funde erros DISTINTOS num
+   grupo só e todos menos o primeiro somem sem nunca escalar. Issue #383 (BUG-71).
+
+   PROCEDÊNCIA: os três fingerprints abaixo são os PUBLICADOS nas issues #379, #380 e #381,
+   abertas pelo coletor real em 19/08 (alpha.159). Se a receita não os reproduz, é a receita
+   que está errada. A multiplicação é em ponto FLUTUANTE: passa de 2^53 e perde precisão, e é
+   esse número lossy que está em campo — `Math.imul` dá outro (mutante `receita-imul`). */
+const fingerprintFixtures = [
+  ['error', "ReferenceError: Can't find variable: __firefox__", `${own}/:1:12`, '470752a2'],
+  ['error', "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')", `${own}/:1:19`, '7122f83c'],
+  ['error', "ReferenceError: Can't find variable: DarkReader", `${own}/:1:11`, 'cd468274'],
+];
+const MSG_383 = 'jserror-overload-2026-08-19T17-36-24-896Z | fase A (mesmo fingerprint) #1';
+
+/* As DUAS funções do cliente, executadas: `digital` sozinha aprovaria um `corta` que não
+   corta. É a composição das duas que tem que bater com o servidor. */
+let digitalCliente = null, cortaCliente = null;
+const digitalMatch = page.match(/function digital\(s\)\{[\s\S]*?\n  \}/);
+const cortaMatch = page.match(/function corta\(v, max\)\{[\s\S]*?\n  \}/);
+if (digitalMatch && cortaMatch) {
+  try {
+    ({ digital: digitalCliente, corta: cortaCliente } =
+      new Function(`${digitalMatch[0]}\n${cortaMatch[0]}\nreturn { digital: digital, corta: corta };`)());
+  } catch { /* cláusula fica vermelha */ }
+}
+/* O trecho do `reporta()` é EXTRAÍDO e EXECUTADO, não reescrito aqui: recompor a receita à
+   mão foi o furo da primeira versão desta régua — ela aprovava uma composição que só existia
+   dentro do próprio arnês, e o cliente podia voltar a hashear o bruto sem acender nada. */
+let montaCliente = null;
+const fragMatch = page.match(/var mFinal = corta\(msg, 500\)[\s\S]*?var fp = digital\([^;]*\);/);
+if (fragMatch && digitalCliente && cortaCliente) {
+  try {
+    montaCliente = new Function('kind', 'msg', 'source', 'digital', 'corta',
+      `${fragMatch[0]}\nreturn { message: mFinal, source: sFinal, fingerprint: fp };`);
+  } catch { /* cláusula fica vermelha */ }
+}
+/* …e o que é hasheado tem que ser o que VAI no corpo: sem este par, `reporta` podia hashear
+   o normalizado e serializar outra coisa. */
+const clienteEnviaOQueHasheia = /c\.message = mFinal;\s*\n\s*c\.source = sFinal;/.test(page);
+const corpoDoCliente = (kind, msg, source) => {
+  if (!montaCliente) return null;
+  const c = montaCliente(kind, msg, source, digitalCliente, cortaCliente);
+  return { kind, message: c.message, source: c.source, fingerprint: c.fingerprint };
+};
+/* O `str()` de `jserror.ts:32` roda ANTES da conferência: sem ele a régua compara o cliente
+   com ele mesmo e cega a fronteira do corte, onde o trim do servidor tira um char (BUG-71). */
+const str = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
+const servidorAceita = (corpo) => !!corpo && typeof fingerprintConfere === 'function'
+  && fingerprintConfere(corpo.fingerprint, {
+    kind: corpo.kind, message: str(corpo.message, 500), source: str(corpo.source, 300),
+  });
+
+const receitaBate = typeof crashFingerprint === 'function' && !!montaCliente && clienteEnviaOQueHasheia
+  && fingerprintFixtures.every(([kind, message, source, publicado]) =>
+    crashFingerprint(kind, message, source) === publicado
+    && corpoDoCliente(kind, message, source)?.fingerprint === publicado);
+const aceitaCoerente = fingerprintFixtures.every(([kind, message, source, publicado]) =>
+  servidorAceita({ kind, message, source, fingerprint: publicado }));
+
+/* O caminho que a primeira versão desta régua deixou passar: mensagem acima de 500 chars
+   (stack embutida, console.error multi-argumento, `Falha ao abrir …` com prefixo). O cliente
+   corta em 500 ANTES de serializar, então o valor bruto não cruza a rede — hashear o bruto
+   tirava do escalonamento todo relatório comprido, que é justo o mais informativo. */
+const caminhoRealLongo = ['error', 'promise', 'console'].every((kind) =>
+  servidorAceita(corpoDoCliente(kind, `boom ${'x'.repeat(900)}`, `${own}/js/game.js:1:2`)))
+  && servidorAceita(corpoDoCliente('error', '  espaço nas pontas  ', null))
+  && servidorAceita(corpoDoCliente('error', 'sem source nenhum', null))
+  && servidorAceita(corpoDoCliente('error', 'src comprido', `${own}/js/${'a'.repeat(400)}.js:1:2`))
+  && servidorAceita(corpoDoCliente('console', '', null))
+  /* Espaço EXATAMENTE na fronteira do corte: o cliente cortava e mandava o espaço final, o
+     `str()` do servidor o apara, e o crash real virava incoerente — gravado e nunca escalado. */
+  && servidorAceita(corpoDoCliente('error', `${'a'.repeat(499)} ${'b'.repeat(50)}`, null))
+  && servidorAceita(corpoDoCliente('error', 'boom', `${own}/js/${'a'.repeat(288)} x.js:1:2`));
+
+/* A rajada "fase A": um fingerprint só para mensagens distintas. Nenhuma é coerente, e a
+   chave DERIVADA de cada uma é distinta — é isso que desfaz a fusão do grupo. */
+const derivadas = new Set([1, 2, 3, 4, 5].map((n) =>
+  typeof crashFingerprint === 'function' ? crashFingerprint('error', MSG_383.replace(/#1$/, `#${n}`), null) : n));
+const recusaForjado = ['error', 'promise', 'console'].every((kind) =>
+  !servidorAceita({ kind, message: MSG_383, source: null, fingerprint: '18084ef4' }))
+  && derivadas.size === 5 && !derivadas.has('18084ef4');
+
+/* Fiação SEM comentário: a versão anterior casava o `return json(…400)` dentro de uma linha
+   COMENTADA e ficava verde com a guarda desativada. Aqui a conferência é sobre o código. */
+const apiCodigo = api.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+const rpcIndexCodigo = apiCodigo.indexOf("rpc('report_js_error'");
+const coerenteIndex = apiCodigo.indexOf('const coerente = fingerprintConfere(fingerprint, { kind, message, source });');
+const fingerprintWired = coerenteIndex >= 0 && rpcIndexCodigo >= 0 && coerenteIndex < rpcIndexCodigo
+  /* incoerente é GRAVADO sob a chave derivada — recusar apagaria relatório de jogador */
+  && apiCodigo.includes('const chave = coerente ? fingerprint : crashFingerprint(kind, message, source);')
+  && apiCodigo.includes('p_fingerprint: chave,')
+  && !/return json\(\{ error: 'fingerprint_incoerente' \}/.test(apiCodigo)
+  /* …e fica FORA do escalonamento, no mesmo early-return do externo */
+  && apiCodigo.includes('if (!shouldDispatchCrash(classification) || !coerente) return json({ ok: true, escalated: false, classification });')
+  && apiCodigo.includes("from '../../lib/error-provenance.mjs'");
+
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
@@ -252,6 +378,8 @@ const checks = [
   ['EP11', ambienteFixtures.every((fixture) => classify(fixture) === 'externo')
     && classify({ source: `${own}/js/glcontext.js:105:1`, message: 'outra falha qualquer de contexto' }) === 'codigo',
     'sem_webgl é ambiente (browser sem WebGL, painel do BUG-44 já tratou): externo, sem issue; falha de contexto FORA da assinatura continua acionável'],
+  ['EP12', receitaBate && aceitaCoerente && caminhoRealLongo && recusaForjado && fingerprintWired,
+    'fingerprint conferido contra o conteúdo que veio junto: a receita reproduz os publicados em #379/#380/#381, o corpo REAL do cliente (inclusive mensagem acima de 500) continua escalando, e o forjado da #383 é gravado sob chave derivada sem escalar'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -266,6 +394,8 @@ const mutantClause = {
   'sem-recuperavel': 'EP8',
   'sem-opaco': 'EP9', 'opaco-sem-guarda': 'EP9',
   'sem-vercel-helper': 'EP10', 'sem-vercel-cliente': 'EP10',
+  'sem-fingerprint': 'EP12', 'escala-incoerente': 'EP12', 'grava-forjado': 'EP12',
+  'receita-imul': 'EP12', 'cliente-hash-bruto': 'EP12', 'cliente-sem-retrim': 'EP12',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);

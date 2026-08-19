@@ -39,6 +39,84 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-71 · `/api/jserror` aceitava fingerprint forjado — carga sintética abria issue e calava crash real~~ · RESOLVIDO 19/08 (issue #383)
+
+**Sintoma (literal, issue #383, aberta pelo `crash-fix.yml`):**
+*"jserror-overload-2026-08-19T17-36-24-896Z | fase A (mesmo fingerprint) #1"*,
+fingerprint `18084ef4`, classe `codigo`, **sem stack, sem origem e sem versão do jogo** —
+enquanto #379, #380 e #381, do mesmo dia, chegaram todas com `2.0.0-alpha.159`.
+
+**Causa raiz — confirmada.** `src/pages/api/jserror.ts` lia o `fingerprint` do corpo e o
+entregava ao RPC sem conferir nada. Esse campo é ao mesmo tempo a **chave de agrupamento**
+do `js_error` (o UPSERT da migration 015 vira `hits`) e a **chave de dedupe do
+escalonamento** (`dispatched_at`, migration 020). Aceito na palavra do cliente ele deixa de
+ser função do conteúdo, e o estrago tem dois sentidos: uma rajada com um fingerprint só (a
+"fase A" da #383) funde erros DISTINTOS num grupo só e **todos menos o primeiro somem sem
+nunca abrir issue**; e texto arbitrário de qualquer `curl` vira título de issue `crash-auto`.
+
+**A medição que prova.** A receita do `digital()` de `src/pages/index.astro` é FNV-1a de 32
+bits sobre `kind|message|source`. Aplicada aos fingerprints **publicados** nas três issues
+legítimas de 19/08 ela os reproduz, e não reproduz o da #383 em nenhum dos três `kind`
+possíveis (`127b9df5`, `5ead1108`, `00753bac` contra o `18084ef4` reivindicado):
+
+```
+ANTES   ACEITA 470752a2 #379 · ACEITA 7122f83c #380 · ACEITA cd468274 #381 · ACEITA 18084ef4 #383
+DEPOIS  ACEITA 470752a2 #379 · ACEITA 7122f83c #380 · ACEITA cd468274 #381 · RECUSA 18084ef4 #383
+```
+
+**Correção, e ela mudou de forma na revisão.** A primeira versão **recusava com 400** o corpo
+incoerente. Dois críticos de contexto limpo mostraram, executando o cliente real, que isso
+**apagava relatório legítimo**: o cliente cortava a mensagem em 500 chars ao serializar mas
+hasheava o valor BRUTO, então todo crash com mensagem acima de 500 (stack embutida,
+`console.error` multi-argumento, o `'Falha ao abrir ' + etapa + ': ' + msg` do `lancamento`)
+respondia 400 e sumia — inclusive no botão ENVIAR RELATÓRIO, que reenvia o mesmo corpo e
+nunca fecharia. O conserto ficou nos dois lados, na causa:
+
+- **cliente** (`src/pages/index.astro`): `corta()` espelha o `str()` do servidor, e `reporta`
+  passa a hashear **exatamente o que envia**;
+- **servidor** (`src/pages/api/jserror.ts`): incoerente **não é recusado** — é gravado sob a
+  chave DERIVADA do conteúdo (o que desfaz a fusão do grupo) e fica fora do escalonamento,
+  no mesmo early-return do `externo`.
+
+**Armadilha da receita, e ela é real:** a multiplicação do `digital()` é em **ponto
+flutuante**. `h * 16777619` passa de 2^53 e perde precisão, e é esse número lossy que está
+publicado nas issues desde a alpha.1. `Math.imul`, que é a FNV-1a "correta", dá outro valor
+(`cd468274` → `b7cc23a5`) e invalidaria todo fingerprint em campo. Mutante `receita-imul`.
+
+**Régua.** EP12 de `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`).
+Ela **extrai e executa** a `digital`, a `corta` e o trecho de hash do `reporta` do
+`index.astro` — recompor a receita à mão foi o furo da primeira versão, que aprovava uma
+composição existente só dentro do arnês. Exige: os três fingerprints publicados reproduzidos;
+o corpo real do cliente aceito **inclusive com mensagem de 900 chars, espaço nas pontas,
+source de 400 chars e mensagem vazia**; o forjado da #383 recusado nos três `kind` com as 5
+chaves derivadas da rajada saindo **distintas**; e a fiação conferida sobre o código **sem
+comentários** — a versão anterior casava um `return` COMENTADO e ficava verde com a guarda
+desativada.
+
+**Mutantes:** `sem-fingerprint` (coerente por decreto), `escala-incoerente` (devolve o vetor
+da #383), `grava-forjado` (grava sob a chave reivindicada e envenena o agrupamento),
+`receita-imul`, `cliente-hash-bruto` (cliente volta a hashear o valor bruto — acende pela
+mensagem comprida) e `cliente-sem-retrim` (ver abaixo). Os seis acendem EP12; os 19
+anteriores seguem acendendo as suas — **25 de 25 na matriz completa**.
+
+**Segundo defeito, achado auditando o primeiro: a régua comparava o cliente com ele mesmo.**
+O `servidorAceita` da EP12 conferia o fingerprint contra o corpo que o cliente monta, sem
+passar pelo `str()` de `jserror.ts:32` que a API aplica antes de conferir. Com isso a
+fronteira do corte ficava cega: mensagem com espaço EXATAMENTE no caractere 500 (ou source
+no 300) era cortada pelo cliente com o espaço no fim, o `trim()` do servidor o tirava, e o
+fingerprint deixava de bater — crash real gravado sob chave derivada e **nunca escalado**,
+em silêncio. Medido: `'a'*499 + ' ' + 'b'*50` fecha em 500 chars no cliente e em 499 no
+servidor. A régua agora roda o `str()` real antes da conferência (o que a deixou vermelha,
+como devia), e o `corta()` do cliente reapara depois do corte, de modo que o `trim()` do
+servidor vira no-op. O mutante `cliente-sem-retrim` desfaz o reaparo e acende EP12.
+
+**Custo declarado.** Durante a janela de cache, aba aberta com o `index.astro` antigo hasheia
+o valor bruto: relatório com mensagem acima de 500 chars ou source acima de 300 continua
+**gravado**, mas não escala até a aba recarregar. Fingerprint em campo muda **só** nesses dois
+casos — os três publicados acima são byte a byte os mesmos. **Não verificado:** POST real
+contra staging; a guarda foi exercitada pelo helper de produção, pelo trecho executado do
+cliente e pela conferência de fiação, não contra o banco.
+
 ### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
 
 **Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
