@@ -137,13 +137,14 @@ jobs:
           # Idempotente: o release.yml do push na main e este job do push da
           # TAG criam a mesma release numa corrida de segundos — o perdedor
           # levava 422 "tag_name already exists" e pintava o run de vermelho
-          # (alpha.154, 18/08). Release que já existe só recebe as notas.
+          # (alpha.154, 18/08). Release que já existe NÃO SE TOCA: o `edit`
+          # com --notes do CHANGELOG APAGAVA a seção "What's Changed" com os
+          # colaboradores que o vencedor gerou (alpha.156-.158, 19/08).
           TAG="${{ github.ref_name }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "release $TAG já existe — atualizando notas"
-            gh release edit "$TAG" "${EXTRA[@]}" --title "CSBR $TAG" || true
-          else
-            gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+            echo "release $TAG já existe (vencedor da corrida) — nada a fazer"
+            exit 0
           fi
+          gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
