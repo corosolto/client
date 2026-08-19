@@ -61,3 +61,13 @@ as novas ficam em ~4,6-4,8k tris com WebP 512².
 > espelhada em Y**, inclusive a evidência de fauna já commitada. Os renders
 > `*-corrigido.png` desta pasta de evidência foram desespelhados com
 > `sharp .flip()`. Consertar o renderer é frente do arnês, não da E.
+
+## Revisão adversarial (19/08, crítico de contexto limpo — skill asset-review)
+
+Veredito: **os 7 vão para o merge, nenhum regenera**. Conferido de fora: SHA × disco
+(todos batem), texturas extraídas dos GLBs (íntegras — a mancha dos renders node é o
+renderer, não o arquivo), `EXT_texture_webp` suportado pelo GLTFLoader r160 vendorizado,
+folhagem OPAQUE+doubleSided, zero vetos. Ressalvas de INTEGRAÇÃO (não de asset):
+grama em InstancedMesh (4k tris/tufo pesa mais que as casas se solto), caixa preta com
+lum ~56 abaixo da banda 86-165 (validar in-game antes de espalhar), caixa azul esguia
+(corrigir com escala X/Z no call-site se na laje parecer magra).
