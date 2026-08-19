@@ -114,7 +114,7 @@ const instData = (mesh) => {
       c.setRGB(cArr[i * 3], cArr[i * 3 + 1], cArr[i * 3 + 2]);
       const hsl = {};
       c.getHSL(hsl);
-      cores.add(`${Math.round(hsl.h * 12)}:${Math.round(hsl.l * 5)}`);
+      cores.add(`${Math.round(hsl.h * 24)}:${Math.round(hsl.s * 4)}:${Math.round(hsl.l * 10)}`);
     }
   }
   sxs.sort((a, b) => a - b);

@@ -50,9 +50,9 @@ const RAIO = 0.38; // mesmo raio passado por Game.update a _collide
    decisão do dono 18/08 (plans/13): raso ~0,8-1,0 m andável; fundo ~1,8-2,0 m.
    1,85 < QUEDA_ANDAR 2,0 (map-check.mjs:151) mantém a borda isenta de guarda-corpo. */
 const CUBA = {
-  x0: -5.5, x1: 5.5, z0: -31.5, z1: -24.5,
+  x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5,
   rasoMax: -0.75, rasoMin: -1.05, fundoMax: -1.6, fundoMin: -2.1,
-  rasoZ: -26.2, fundoZ: -30.2,
+  rasoZ: -28.2, fundoZ: -31.4,
 };
 const overlap2d = (c, r) => c.minX < r.x1 && c.maxX > r.x0 && c.minZ < r.z1 && c.maxZ > r.z0;
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
@@ -144,7 +144,7 @@ if (MUT_PISCINA_CUBA_CURTA) for (const o of marcados) if (o.userData.mansaoFeatu
    que não casou é confiança falsa). */
 const paredesCuba = () => game.world.colliders.filter((c) => c.minY <= -1.5 && c.maxY >= -0.1 && c.maxY <= 0.1
   && overlap2d({ minX: c.minX - 1, maxX: c.maxX + 1, minZ: c.minZ - 1, maxZ: c.maxZ + 1 }, CUBA) && overlap2d(c, { x0: CUBA.x0 - 1, x1: CUBA.x1 + 1, z0: CUBA.z0 - 1, z1: CUBA.z1 + 1 }));
-if (MUT_AGUA_BLOQUEADA) game.world.colliders.push({ minX: -6, maxX: 6, minY: -0.5, maxY: 0.65, minZ: -32, maxZ: -24 });
+if (MUT_AGUA_BLOQUEADA) game.world.colliders.push({ minX: -6, maxX: 6, minY: -0.5, maxY: 0.65, minZ: -33, maxZ: -26 });
 if (MUT_BORDA_ALTA) {
   const parede = paredesCuba();
   if (!parede.length) { console.error('MUTANTE borda-alta NÃO APLICOU (nenhuma parede de cuba encontrada)'); process.exit(1); }
@@ -165,8 +165,8 @@ const gRaso = game.world.groundHeightAt(0, CUBA.rasoZ);
 const gFundo = game.world.groundHeightAt(0, CUBA.fundoZ);
 // entrada andando: do deck sul, passo 0,15 m na direção do fundo, y segue o chão
 let profAlcancada = 0, semProgresso = 0;
-const anda = new THREE.Vector3(0, game.world.groundHeightAt(0, -23.5), -23.5);
-for (let i = 0; i < 60 && semProgresso < 3; i++) {
+const anda = new THREE.Vector3(0, game.world.groundHeightAt(0, -24.5), -24.5);
+for (let i = 0; i < 70 && semProgresso < 3; i++) {
   const pz = anda.z; anda.z -= 0.15;
   anda.y = game.world.groundHeightAt(anda.x, anda.z);
   game._collide(anda, RAIO);
@@ -255,7 +255,7 @@ const cubaPisoOpaco = (() => {
   const b = new THREE.Box3();
   for (const c of opacos) b.union(new THREE.Box3().setFromObject(c));   // mundo pós-scale (mutante curta)
   const s = b.getSize(new THREE.Vector3());
-  return s.x >= 10.5 && s.z >= 6.3;   // raso+fundo planos cobrem ≥6,3 dos 7 m (o resto é escada)
+  return s.x >= 10.5 && s.z >= 5.3;   // raso+fundo planos cobrem ≥5,3 dos 6,0 m da cuba (o resto é escada)
 })();
 const tetoSobreLamina = marcados.filter((o) => {
   if (o.visible === false) return false;
@@ -266,8 +266,8 @@ const tetoSobreLamina = marcados.filter((o) => {
 for (const [nome, ok, medido] of [
   ['piscina entrável — nenhum colisor cobre a lâmina acima dos pés', tampadores.length === 0, `${tampadores.length} tampa(s)${tampadores.length ? ` (pior maxY ${Math.max(...tampadores.map((c) => c.maxY)).toFixed(2)} m)` : ''} — decisão do dono 18/08 (plans/13) inverteu o contrato; mutante agua-bloqueada é este estado`],
   ['piscina andável — o corpo ENTRA andando do deck', profAlcancada <= -0.6, `profundidade alcançada andando: ${profAlcancada.toFixed(2)} m (mín. -0,60) — tampa devolve o "a piscina nao afunda"`],
-  ['raso com profundidade de verdade (0,75–1,05 m)', gRaso <= CUBA.rasoMax && gRaso >= CUBA.rasoMin, `groundHeightAt(0,-26,2) = ${gRaso.toFixed(2)} m — alvo do dono ~0,8–1,0 m andável`],
-  ['fundo com profundidade de verdade (1,60–2,10 m)', gFundo <= CUBA.fundoMax && gFundo >= CUBA.fundoMin, `groundHeightAt(0,-30,2) = ${gFundo.toFixed(2)} m — alvo ~1,8–2,0 m; 1,85 fica 0,15 m abaixo do guarda-corpo MAP6 (QUEDA_ANDAR 2,0, map-check.mjs:151)`],
+  ['raso com profundidade de verdade (0,75–1,05 m)', gRaso <= CUBA.rasoMax && gRaso >= CUBA.rasoMin, `groundHeightAt(0,-28,2) = ${gRaso.toFixed(2)} m — alvo do dono ~0,8–1,0 m andável`],
+  ['fundo com profundidade de verdade (1,60–2,10 m)', gFundo <= CUBA.fundoMax && gFundo >= CUBA.fundoMin, `groundHeightAt(0,-31,4) = ${gFundo.toFixed(2)} m — alvo ~1,8–2,0 m; 1,85 fica 0,15 m abaixo do guarda-corpo MAP6 (QUEDA_ANDAR 2,0, map-check.mjs:151)`],
   ['anti-trap: do fundo se SAI de degrau em degrau (≤0,56 m por passo)', saida.ok, saida.ok ? `saiu em ${saida.passos} passos até y=${saida.pos.y.toFixed(2)} m` : saida.porque],
   ['cuba segura o corpo — paredes leste/oeste/norte param o andarilho', segE <= CUBA.x1 + 0.15 && segW >= CUBA.x0 - 0.15 && segN >= CUBA.z0 - 0.15, `leste parou x=${segE.toFixed(2)} · oeste x=${segW.toFixed(2)} · norte z=${segN.toFixed(2)} — sem parede o corpo atravessa a cuba (mutante sem-parede)`],
   ['cuba opaca no fundo da piscina (piso abaixo da lâmina)', cubaPisoOpaco, `${cubas.length} piso(s) de cuba${cubas.length ? '' : ' — sem piso visível o fundo é o gramado do mapa'}`],
