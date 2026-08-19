@@ -256,7 +256,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 869 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 776 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.275 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.618 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.615 |
 | `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 926 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
