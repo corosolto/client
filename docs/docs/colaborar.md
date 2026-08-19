@@ -248,16 +248,16 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.836 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 874 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.018 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |
-| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 869 |
-| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 776 |
-| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.275 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.615 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 926 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 813 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 861 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
