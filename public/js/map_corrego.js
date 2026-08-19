@@ -450,7 +450,63 @@ export function buildCorrego(scene, T) {
   // água (plano baixo com textura poluída) — agora a 14 cm do fundo: anda-se DENTRO dela
   const aguaViva = lam({ map: TEX.agua.map || null, color: 0xa0b49a, roughness: .12, metalness: .18,
     emissive: 0x16281d, emissiveIntensity: .28 });
-  const lamina = addFloor(CANAL_ABERTURA, HALF_Z * 2, 0, 0, aguaViva, CANAL_AGUA);
+  /* ── ÁGUA VIVA (plans/13-VISUAL-V2.1: "o threejs consegue fazer coisa muito melhor
+     que isso"). Zero build: onBeforeCompile NO material existente — nada de addon
+     Water, CDN ou textura nova. Três coisas andando juntas:
+       (a) GEOMETRIA subdividida (12×160; low 6×24): a onda de vértice precisa de
+           vértice, e a lâmina de 1 segmento não tinha nenhum no meio;
+       (b) ONDA de vértice: soma de 4 senos, amplitude total 2,8 cm — dorso do jacaré
+           e fitas de brilho (+3 cm) continuam acima da crista, o limo da parede
+           (topo −1,21) não é invadido; a NORMAL é recalculada pela declividade
+           analítica (3 amostras), senão a luz não vê a onda e só o silhouette mexe;
+       (c) SCROLL de UV no vMapUv: a mancha de poluição CORRE rio abaixo, e a segunda
+           lâmina corre em fase/velocidade distintas (interferência, não eco).
+     O uniform uAgua é UM objeto só compartilhado pelos materiais; quem avança é o
+     onBeforeRender do mesh (o mapa não recebe hook de tick do game.js — mesmo padrão
+     do piscinão em map_piscinao_ramos.js:868). ?agua=0 volta à lâmina morta (A/B).
+     LOWQ NÃO desliga o shader: 4 senos em ~2k vértices e 1 uniform não pagam porta;
+     o que o low corta é a MALHA (6×24). */
+  const AGUA_FX = QP.get('agua') !== '0';
+  const AGUA_AMP = 0.028;
+  const uAgua = { value: 0 };
+  const ondularAgua = (mat, fluxoX, fluxoY) => {
+    mat.userData.uAgua = uAgua;
+    mat.customProgramCacheKey = () => `corrego-agua-${fluxoX}-${fluxoY}`;
+    mat.onBeforeCompile = (sh) => {
+      sh.uniforms.uAgua = uAgua;
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', `#include <common>
+uniform float uAgua;
+float ondaCorrego( vec2 p ) {
+  return sin( p.x * 1.7 + uAgua * 1.1 ) * 0.55
+       + sin( p.y * 0.9 - uAgua * 0.7 ) * 0.45
+       + sin( ( p.x + p.y ) * 1.3 + uAgua * 0.9 ) * 0.5
+       + sin( p.y * 2.1 - uAgua * 1.3 ) * 0.5;
+}`)
+        .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
+  float hAgua = ondaCorrego( position.xz );
+  float hAguaX = ondaCorrego( position.xz + vec2( 0.18, 0.0 ) );
+  float hAguaZ = ondaCorrego( position.xz + vec2( 0.0, 0.18 ) );
+  objectNormal = normalize( vec3( ( hAgua - hAguaX ) * ${(AGUA_AMP / 0.18).toFixed(3)}, 1.0, ( hAgua - hAguaZ ) * ${(AGUA_AMP / 0.18).toFixed(3)} ) );`)
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\n  transformed.y += hAgua * ' + AGUA_AMP + ';')
+        .replace('#include <map_vertex>', `#include <map_vertex>
+  #ifdef USE_MAP
+    vMapUv += vec2( uAgua * ${fluxoX}, uAgua * ${fluxoY} );
+  #endif`);
+    };
+    return mat;
+  };
+  if (AGUA_FX) ondularAgua(aguaViva, 0.011, 0.018);
+  const lamina = AGUA_FX
+    ? (() => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(CANAL_ABERTURA, HALF_Z * 2, LOWQ ? 6 : 12, LOWQ ? 24 : 160), aguaViva);
+      m.rotation.x = -Math.PI / 2; m.position.set(0, CANAL_AGUA, 0); m.receiveShadow = true;
+      m.userData.aguaAmp = AGUA_AMP;
+      m.onBeforeRender = () => { uAgua.value = performance.now() / 1000; };
+      root.add(m);
+      return m;
+    })()
+    : addFloor(CANAL_ABERTURA, HALF_Z * 2, 0, 0, aguaViva, CANAL_AGUA);
   lamina.userData.nonSolidSurface = true; lamina.userData.corregoWaterSurface = 'base';
   // Uma segunda lâmina translúcida devolve o céu e impede que o canal leia como asfalto verde.
   // As três lâminas de cima eram COR PURA (766 m² + 316 m² + 81 m² sem mapa nenhum),
@@ -460,6 +516,9 @@ export function buildCorrego(scene, T) {
   // as duas camadas se moverem em fases distintas em vez de imprimirem a mesma mancha.
   const reflexoAgua = lam({ map: mapaAgua(1.5, 20), color: 0x8fc4b4, transparent: true, opacity: .24, roughness: .06,
     metalness: .32, emissive: 0x14372f, emissiveIntensity: .24, depthWrite: false });
+  // segunda lâmina também ondula: scroll em FASE/VELOCIDADE distintas da base —
+  // interferência de marola, não a mesma mancha ecoando duas vezes.
+  if (AGUA_FX) ondularAgua(reflexoAgua, -0.007, 0.013);
   const reflexo = addFloor(CANAL_ABERTURA - .35, HALF_Z * 2 - .6, 0, 0, reflexoAgua, CANAL_AGUA + 0.015);
   reflexo.userData.nonSolidSurface = true; reflexo.userData.corregoWaterSurface = 'reflection'; reflexo.renderOrder = 2;
   // Poças paradas encostadas no pé da parede: a lâmina não é uma faixa uniforme.
