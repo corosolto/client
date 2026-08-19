@@ -1484,11 +1484,13 @@ const MAP_DESC = {
   quebrada: 'Rua de baile: muros baixos, beco cego e o paredão marcando o compasso do round.',
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
+  treta_vietnan: 'Selva úmida, vilarejo de madeira e guaritas elevadas: domine as rampas para controlar o campo de batalha.',
 };
 const MAP_CAT = {
   praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
   ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
   atacadao_treta: 'CIDADES',
+  treta_vietnan: 'ARENA',
 };
 let mapCategory = 'TODOS';
 function visibleMapIds() {
