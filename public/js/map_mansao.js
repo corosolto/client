@@ -13,9 +13,8 @@ import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
-import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
-import { setMapSky } from './map_sky.js';
+import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -125,15 +124,11 @@ export function buildMansao(scene, T) {
   };
 
   /* CÉU */
-  setMapSky(scene, T, '/img/textures/sky_joa.webp', 0xf0d4a8);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_mansao');
-  const hemi = new THREE.HemisphereLight(0xf6f3ea, 0x665c50, 1.02); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffefd8, 1.8); sun.position.set(15, 30, -15); sun.castShadow = true;
+  const { hemi, sun } = applyLook(scene, T, 'fy_mansao', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 150; sun.shadow.bias = -0.0006;
-  scene.add(sun); scene.add(sun.target);
 
   /* CHÃO */
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, TEX.garden || lam({ map: T.grass }), -0.01);

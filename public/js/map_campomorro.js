@@ -4,9 +4,8 @@ import * as THREE from 'three';
 import { PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
-import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
-import { setMapSky } from './map_sky.js';
+import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -262,14 +261,11 @@ export function buildCampoMorro(scene, T = {}) {
   const circulo = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.46, 36), cal);
   circulo.rotation.x = -Math.PI / 2; circulo.position.y = FIELD_Y + 0.025; root.add(circulo);
 
-  setMapSky(scene, T, '/img/textures/sky_rj.webp', 0xb9c6d2);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_campomorro');
-  const hemi = new THREE.HemisphereLight(0xeaf2f6, 0x67584a, 1.16); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd9a8, 1.65); sun.position.set(30, 42, 10); sun.castShadow = true;
+  const { hemi, sun } = applyLook(scene, T, 'fy_campomorro', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
-  sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006; scene.add(sun); scene.add(sun.target);
+  sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
 
   // Talude do campo: oito aberturas ficam livres; os trechos restantes sao cover baixo.
   for (const [a, b] of [[-20, -14.8], [-10.2, -2.2], [2.2, 10.2], [14.8, 20]]) {

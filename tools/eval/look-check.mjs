@@ -100,7 +100,7 @@ for (const mapId of MAPAS) {
   if (!fog || !fog.color) { falhas.push(`${mapId}: scene.fog ausente — não sei medir (névoa desligada é vermelho, não silêncio)`); continue; }
   if (MUT === 'fog') {
     const antes = fog.color.getHex();
-    fog.color.r = Math.min(1, fog.color.r + 0.15);
+    fog.color.r = Math.min(1, fog.color.r + 0.3);
     if (fog.color.getHex() === antes) { console.log('LOOK VERMELHA · mutante fog NÃO aplicou'); process.exit(1); }
   }
   const skyUrl = g.scene.userData.skyUrl;

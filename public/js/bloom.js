@@ -24,6 +24,7 @@ import { UnrealBloomPass } from '../vendor/addons/postprocessing/UnrealBloomPass
 import { ShaderPass } from '../vendor/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from '../vendor/addons/postprocessing/OutputPass.js';
 import { Pass, FullScreenQuad } from '../vendor/addons/postprocessing/Pass.js';
+import { LOOK } from './look.js';
 
 const QP = () => new URLSearchParams(location.search);
 
@@ -71,10 +72,8 @@ const LOOKS = {
   ferro_velho:   { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
   quebrada:      { exposure: 1.58, floor: 0.0046, expAces: 1.68 },   // Rio, rua do baile ao entardecer
   fy_escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },   // Rio, escadaria em golden hour
-  fy_campomorro: { exposure: 1.60, floor: 0.0048, expAces: 1.70 },   // várzea aberta, terra quente
   fy_lajes:      { exposure: 1.55, floor: 0.0047, expAces: 1.65 },   // lajes claras, sombras de beco
-  fy_corrego:    { exposure: 1.42, floor: 0.0054, expAces: 1.52 },   // SP cinzenta, água e zinco escuros
-  fy_mansao:     { exposure: 1.36, floor: 0.0043, expAces: 1.46 },   // Joá dourado, mármore e oceano
+  // os 3 pilotos do RC1 (mansao/corrego/campomorro) saíram daqui: vivem no LOOK (look.js)
 };
 // id desconhecido cai no praca_poderes em maps.js (DEFAULT_MAP) — o look padrão tem que ser o
 // MESMO, senão o mapa que roda e a curva que é aplicada divergem.
@@ -97,7 +96,8 @@ function currentQuality() {
 
 function currentLook() {
   const id = currentMapId();
-  const base = LOOKS[id] || DEFAULT_LOOK;
+  const L = LOOK[id];   // piloto RC1: a grade mora no look.js, uma fonte só
+  const base = L ? { exposure: L.grade.exposicao, floor: L.grade.piso, expAces: L.grade.expAces } : (LOOKS[id] || DEFAULT_LOOK);
   const q = QP();
   const exp = parseFloat(q.get('exp'));
   const flo = parseFloat(q.get('floor'));
@@ -124,12 +124,19 @@ const AERIAL = {
   ferro_velho:   { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
   quebrada:      { d: 0.0084, color: 0xb58f78, sun: [38, 30, -22], dir: 0.82 },
   fy_escadao:    { d: 0.0080, color: 0xb9977f, sun: [25, 40, 20], dir: 0.86 },
-  fy_campomorro: { d: 0.0082, color: 0xb48b70, sun: [28, 38, 18], dir: 0.84 },
   fy_lajes:      { d: 0.0085, color: 0xb18f79, sun: [25, 45, 15], dir: 0.84 },
-  fy_corrego:    { d: 0.0102, color: 0x9d7768, sun: [20, 35, 15], dir: 0.72 },
-  fy_mansao:     { d: 0.0068, color: 0xc4a77e, sun: [30, 32, 24], dir: 0.94 },
+  // os 3 pilotos do RC1 (mansao/corrego/campomorro) saíram daqui: vivem no LOOK (look.js)
 };
 const AERIAL_DEFAULT = AERIAL.praca_poderes;
+
+/* A entrada de névoa de um mapa, de UMA fonte só: os pilotos do RC1 vêm do LOOK
+   (a cor é o `horizonte` medido do webp — a régua eval:look garante o casamento);
+   os demais seguem na tabela acima até o rollout. */
+function aerialEntry(mapId) {
+  const L = LOOK[mapId];
+  if (L) return { d: L.neblina.d, color: L.horizonte, sun: L.neblina.solDir, dir: L.neblina.forca };
+  return AERIAL[mapId] || AERIAL_DEFAULT;
+}
 
 // TypedArray permanece compartilhado por `cloneUniforms`: xyz é o sol no mundo e w sua força.
 const _fogSun = new Float32Array([0, 1, 0, 0]);
@@ -223,14 +230,16 @@ patchFogChunks();
    ilumina, que é o "a tela lava pra branco" do dono. Uma fonte só, medida, para os dois.
    `new THREE.Color(hex)` converte sRGB -> linear de trabalho, então o retorno já é radiância. */
 export function skyRadiance(mapId) {
-  return new THREE.Color((AERIAL[mapId] || AERIAL_DEFAULT).color);
+  return new THREE.Color(aerialEntry(mapId).color);
 }
 
 /* A tabela, exportada para LEITURA. Quem quer a cor do céu de um mapa continua chamando
    `skyRadiance`; isto existe para o arnês `clima.html`, que precisa dos valores de
    partida dos sliders e do nome dos campos. Exportar não é convite para escrever: o que
-   ships sai daqui, medido por `tools/eval/r3_fog.py` sobre frames reais. */
-export const AERIAL_TABELA = AERIAL;
+   ships sai daqui, medido por `tools/eval/r3_fog.py` sobre frames reais (e, nos pilotos
+   do RC1, por `tools/eval/look-horizonte.py` sobre o webp do céu). */
+export const AERIAL_TABELA = Object.fromEntries(
+  [...Object.keys(AERIAL), ...Object.keys(LOOK)].map((k) => [k, aerialEntry(k)]));
 
 /* Névoa de um mapa. Os map_*.js chamam isto no lugar de `new THREE.Fog(...)`.
 
@@ -241,7 +250,7 @@ export const AERIAL_TABELA = AERIAL;
    deixar de ser. Nenhum chamador de produção passa `over`. */
 export function makeAerialFog(mapId, over = null) {
   const q = QP();
-  const A = over ? { ...(AERIAL[mapId] || AERIAL_DEFAULT), ...over } : (AERIAL[mapId] || AERIAL_DEFAULT);
+  const A = over ? { ...aerialEntry(mapId), ...over } : aerialEntry(mapId);
   const dOv = parseFloat(q.get('fogd'));
   const d = isFinite(dOv) ? dOv : A.d;
   // sem o patch (vendor diferente / ?fog2=0) a exponencial mudaria o look sem a cor
