@@ -1246,6 +1246,33 @@ Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambien
 declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
 por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
 
+**Córrego, frente B v2.1.0 (19/08, branch `v21/b-corrego`) — jacaré/capivara GLB no
+mapa + água viva:**
+
+| cláusula nova do `eval:corrego-contract` | antes | depois |
+|---|---|---|
+| jacaré GLB posicionado no canal (~1,8 m, escala do Mint) | ✗ proxy procedural | ✓ clone gltf assentado no fundo, ~30% submerso |
+| jacaré meio submerso (dorso de fora) | ✗ | ✓ |
+| capivara GLB na margem alagada (~1,0 m, pés no chão) | ✗ | ✓ |
+| GLB substitui o proxy (proxy invisível) | ✗ nem havia GLB | ✓ proxy fica na cena escondido (padrão placeProp) |
+| fauna GLB sem collider/fora de sólido | ✗ | ✓ |
+| água com shader de onda (onBeforeCompile + uAgua) | ✗ planos mortos | ✓ 4 senos, 2,8 cm, normal analítica |
+| água com geometria subdividida (≥6×24) | ✗ 1 segmento | ✓ 12×160 (low 6×24) |
+| água com relógio vivo | ✗ | ✓ uAgua avança no onBeforeRender |
+| amplitude ≤ 4 cm (não invade o limo) | — | ✓ 2,8 cm |
+| grama: terreno reservado (≥12 spots) | ✗ | ✓ 26 spots (presença DORMENTE até a frente E) |
+
+Estado ANTES medido: 10/35 vermelhas no corrego-contract estendido. DEPOIS: 35/35
+verdes. Mutantes novos mordendo: `proxy-volta` (8/35), `agua-morta` (3/35);
+`grama-sumiu` lança NAO APLICOU (prop não existe — dormência declarada). Browser
+(loader real): censo `source:'gltf'` para os dois, textura 256² carregada, raycast da
+câmera acerta o jacaré; água viva × morta (`?agua=0`) = diff de banda 129 vs 10,9
+(12× mais movimento com o shader). Figuras 3:2 antes/depois em
+`tools/eval/asset-evidence/maps/fy_corrego/`. NÃO verificado: leitura estética
+(pixels de cor do jacaré/capivara não discriminaram sob fog/luz — fica para o olho
+do dono) e o parse GLB em node (trava em textura — limitação declarada no header do
+check; coberto por Khronos + browser).
+
 ### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
 
 **Sintoma literal do dono:** *"mapa esta muito labirintico e confuso apesar que os becos
