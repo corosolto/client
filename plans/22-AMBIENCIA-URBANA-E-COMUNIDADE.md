@@ -39,28 +39,52 @@ A lição do BUG-57: jacaré e capivara ficaram um ciclo inteiro gerados, otimiz
 
 | Item | Onde | Técnica | Régua |
 |---|---|---|---|
-| Pipa voando (animação) | fy_lajes (já tem pipa estática) | model 3D + path/sway procedural, sem rig | sonda: pipa se move, não atravessa laje |
+| Pipa voando (animação) | fy_lajes (12 pipas estáticas de 2 tris, `map_lajes_authored.js:957-975`) | sway/deriva senoidal no `update` do builder (precedente: `map_parque.js:368-373`; `game.js:6931` já chama `world.update`) | sonda: pipa se move, não atravessa laje |
 | Helicóptero | mapas de favela (lajes, corrego, escadao, quebrada) | model 3D + rota em órbita alta, rotor animado | visível do chão, som ambiente opcional |
-| Avião com faixa de praia | mansão do Joá (fy_mansao) | model 3D + travessia reta + faixa com texto | texto da faixa legível, tema praia/Joá |
-| Pombas voando | vários | **BLOQUEADO**: não existe pássaro riggado CC0 (dívida FONTE.md fauna); rig Mint é humanoid-only | só entra com asset animado de verdade |
-| Ratos, gatos, fauna urbana | todos os mapas | pipeline Quaternius/Mint da frente D | AR/AM existentes + espécie por bioma |
+| Avião com faixa de praia | mansão do Joá (fy_mansao); cabe no balneário (plans/18) | model 3D + travessia reta + faixa `PlaneGeometry` com `CanvasTexture` (padrão `signTex`) | texto da faixa legível, tema praia/Joá |
+| Pombas voando | vários | o `pigeon_flight.glb` existia e voava, mas era **arte estática de asas abertas** — removido na frente D a pedido do dono. Volta só com pássaro riggado de verdade (não existe CC0; rig Mint é humanoid-only) | régua de voo com flap visível |
+| Ratos, gatos, fauna urbana | todos os mapas | pipeline Quaternius da frente D (gato/galinha/vaca entregues em `v21/d-fauna`) | AR/AM existentes + espécie por bioma |
 
-## Mapas da comunidade — v2 em preview
+## Estado medido pela sondagem (19/08, contra a base 7125566)
 
-- **Nunca substituir direto.** Cada v2 nasce como PREVIEW (branch/worktree próprio),
-  com captura 3:2 antes×depois; o dono aprova jogando.
-- Por mapa: série de assets com sentido local (buildings, objetos, props) — todos com
-  tema brasileiro e procedência (`FONTE.md` + SHA).
-- O inventário de quais mapas são "da comunidade" e o estado de arte de cada um entra
-  na tabela de lore (sondagem 1).
+Três achados da sondagem **já estão resolvidos nas branches v21 aguardando integração** —
+não reabrir: (1) gato/galinha/vaca e ambience nos 14 mapas → frente D (`v21/d-fauna`,
+AR1-5 verde); (2) jacaré/capivara GLB no córrego → frente B (`v21/b-corrego`, BUG-57);
+(3) preload de fauna com lista vazia → frente D. Achados que seguem ABERTOS em qualquer
+branch: céu fotográfico ausente em 6 mapas, `makeHorizon` sem call-site vivo (o único
+está no `map_lajes.js` morto — deletar, plans/13), helicóptero/avião inexistem, som
+ambiente por mapa não existe, 7 mapas sem `low: LOWQ` na fauna.
 
-## Tabela de lore × ambiência (preenchida pela sondagem, 19/08)
+**"Mapas da comunidade": não existem mapas de fãs** (`docs/docs/colaborar.md`: *"não
+existe comunidade"*; `map_json.js` tem zero mapas registrados). A leitura com evidência:
+mapas de comunidade (favela) = fy_lajes, fy_corrego, fy_escadao, fy_campomorro, quebrada.
+**Primeiro preview v2: `fy_campomorro`** (pior arte com folga — MATERIAL 1/5 no audit,
+*"precisa ser estruturado visualmente como o lajes"*, campo sem um tufo de mato).
 
-> Viva: a sondagem preenche; cada linha ganha call-site antes de qualquer geração.
+## Tabela de lore × ambiência (sondagem 19/08 — tabela completa em `docs/lore-mapas.md`)
 
-| Mapa | Lore/tema | Ambiência atual | Encaixe proposto | Call-site |
-|---|---|---|---|---|
-| (a preencher por `docs/lore-mapas.md`) | | | | |
+> Resumo do encaixe por mapa; a série de assets detalhada (5-10 por mapa, com call-site)
+> está no relatório da sondagem e em `docs/lore-mapas.md`.
+
+| Mapa | Lore/tema | Prioridade de encaixe |
+|---|---|---|
+| fy_lajes | comunidade carioca 2 camadas — **a régua visual** | pipa animada, helicóptero, horizonte de morro, caixa d'água nova |
+| fy_corrego | favela SP sobre córrego — *"o mais brasileiro"* | grama de margem (lote E ✓), água com onda (frente B ✓), varal GLB, helicóptero |
+| fy_escadao | escadaria Selarón genérica + caveirão | helicóptero (lore perfeita), azulejo variante, cabos com catenária, caramelo |
+| fy_campomorro | campo de várzea + galpão do baile — **pior arte** | **preview v2 primeiro**: mato no campo, material muro≠chão≠galpão, bandeirinhas |
+| quebrada | rua do baile SP | captura 3:2 (dívida), varal, letreiros de comércio, helicóptero |
+| fy_mansao | ultra-luxo Joá | avião-faixa, oceano vivo, gaivota (fauna 2), heliponto do spec |
+| posto_treta | rodovia + greve | urubu circling, faixa GREVE, céu golden hour |
+| upa_24h | pronto-socorro indoor | painel de senha animado, TV da espera, ventilador de teto |
+| obras_prefeitura | canteiro eterno | placa "PREVISÃO: 2031", gancho do guindaste com sway |
+| atacadao_treta | galpão atacado | empilhadeira, painel de oferta, céu |
+| loja_h | varejista greco-romana | bandeiras com sway, TV animada, urubu no poste |
+| ferro_velho | cânion de sucata | urubu pousado, gancho com sway, captura do cânion |
+| praca_poderes | Brasília em sítio | avião comercial alto, bandeira com sway, espelho d'água vivo |
+| piscina_treta | homenagem fy_pool_day (sem tema BR, decisão) | boia.glb (órfão no acervo!), placas de clube, pomba→rato indoor |
+| parque_treta | parque de diversão | pipa (parque+pipa=BR), balão perdido, quiosque aberto |
+| velho_oeste | faroeste de madeira | urubu no saloon, cavalo, tumbleweed cruzando a rua |
+| penitenciaria | presídio | holofote varrendo o pátio, varal de uniforme, bola de basquete |
 
 ## Réguas novas (Lei 1 — antes de gerar)
 
