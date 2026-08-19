@@ -38,8 +38,11 @@ const GARAGEM = [
 /* Piscina ENTRÁVEL (plans/13, decisão do dono 18/08: "a piscina nao afunda").
    Interior jogável da cuba, dentro dos muros; profundidades do contrato do
    mansao-water-check. Fundo -1,85 fica 0,15 m abaixo do guarda-corpo MAP6
-   (QUEDA_ANDAR 2,0 do map-check.mjs) — o mesmo argumento do CANAL_FUNDO=-1,75. */
-export const PISCINA = { x0: -5.5, x1: 5.5, z0: -31.5, z1: -24.5, raso: -0.85, fundo: -1.85 };
+   (QUEDA_ANDAR 2,0 do map-check.mjs) — o mesmo argumento do CANAL_FUNDO=-1,75.
+   A cuba termina em z=-26,5 (não -24,5): a 2ª fileira do armário nasce a
+   spawnB-3,6 = -25,6 e tem que nascer NO DECK — a tampa antiga era o que
+   segurava as armas fora da água (pickup-check H_MIN). */
+export const PISCINA = { x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5, raso: -0.85, fundo: -1.85 };
 
 export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id),
   // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
@@ -142,13 +145,13 @@ export function buildMansao(scene, T) {
   scene.add(sun); scene.add(sun.target);
 
   /* CHÃO — o gramado é CORTADO no recorte da piscina/vertedouro (x ±6,35,
-     z -35,5→-23,75): sem o corte, o plano de grass a -0,01 m atravessa a cuba
+     z -35,5→-26,45): sem o corte, o plano de grass a -0,01 m atravessa a cuba
      e a piscina lê como um gramado a 10 cm da lâmina. Mesmo corte que o córrego
      faz nas margens do canal (map_corrego.js:428-435). */
   const gramado = TEX.garden || lam({ map: T.grass });
-  addFloor(HALF_X * 2, 59.75, 0, 6.125, gramado, -0.01);
-  addFloor(15.65, 11.75, -14.175, -29.625, gramado, -0.01);
-  addFloor(15.65, 11.75, 14.175, -29.625, gramado, -0.01);
+  addFloor(HALF_X * 2, 62.45, 0, 4.775, gramado, -0.01);
+  addFloor(15.65, 9.05, -14.175, -30.975, gramado, -0.01);
+  addFloor(15.65, 9.05, 14.175, -30.975, gramado, -0.01);
 
   /* ===================== CASA (interior jogável) =====================
      Planta: retângulo de 30×16 m. Paredes externas com vãos de porta/janela.
@@ -449,10 +452,13 @@ export function buildMansao(scene, T) {
 
   /* ===================== JARDIM TROPICAL MODERNISTA ===================== */
   // Caminho sinuoso de pedras irregulares quebra a malha ortogonal da casa.
+  // Cadeia portão→porta (plans/13): pedras a ≤3 m uma da outra, de z≈33,6 (portão)
+  // a z≈16,2 (garagem/porta) — régua G2.a do mansao-garden-check.
   const pedraJardim = lam({ color: 0x9a998a, roughness: 0.94 });
-  for (const [px, pz, sx, sz, ry] of [[-1.2,18,1.3,.75,.3],[.2,20.1,1.05,.82,-.2],[-1.8,22.3,1.45,.72,.45],[.6,24.4,1.25,.68,-.35],[-.7,26.7,1.5,.8,.15],[1.0,29.2,1.2,.72,-.5],[-.2,32,1.55,.75,.28]]) {
+  for (const [px, pz, sx, sz, ry] of [[.3,33.6,1.25,.7,-.25],[-.2,32,1.55,.75,.28],[.2,30.6,1.2,.72,.4],[1.0,29.2,1.2,.72,-.5],[.2,28,1.15,.7,.35],[-.7,26.7,1.5,.8,.15],[.6,24.4,1.25,.68,-.35],[-.6,23.35,1.35,.7,.2],[-1.8,22.3,1.45,.72,.45],[.2,20.1,1.05,.82,-.2],[-1.2,18,1.3,.75,.3],[-.1,16.2,1.3,.75,.15]]) {
     const pedra = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.08, .08, 7), pedraJardim);
-    pedra.scale.set(sx, 1, sz); pedra.rotation.y = ry; pedra.position.set(px, .035, pz); pedra.receiveShadow = true; root.add(pedra);
+    pedra.scale.set(sx, 1, sz); pedra.rotation.y = ry; pedra.position.set(px, .035, pz); pedra.receiveShadow = true;
+    pedra.userData.mansaoFeature = 'pedra-caminho'; pedra.userData.nonSolidSurface = true; root.add(pedra);
   }
   // Espelho deslocado do eixo: base escura + lâmina translúcida deixam profundidade
   // e quebram a simetria de catálogo sem fechar a rota central.
@@ -510,6 +516,7 @@ export function buildMansao(scene, T) {
   });
   for (const [tx, tz, h] of [[-12.8,19.2,3.7],[10.7,21.4,4.3],[-15.2,27.1,4.8],[13.1,29.6,3.9],[-8.7,33.1,4.2]]) {
     const tronco=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,h,9),lam({color:0x63482f,roughness:1})); tronco.position.set(tx,h/2,tz); root.add(tronco);
+    tronco.userData.mansaoFeature = 'arvore';   // G3 do mansao-garden-check: 3,0–6,8 m
     occluders.push(tronco);   // tronco visível dentro do próprio colisor: a bala para nele
     for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
       const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55 * s, 1), (ox + oz) > 0 ? folhaB : folhaA);
@@ -617,20 +624,54 @@ export function buildMansao(scene, T) {
   for(const [x,z] of [[-13.8,14.7],[-8.2,14.7],[-13.8,18.3],[-8.2,18.3]]) marcaPergola(addBox(.22,3.05,.22,pergolaMat,x,0,z,{collide:false,skirt:false}),'pillar');
   for(const z of [14.7,18.3]) marcaPergola(addBox(5.85,.18,.22,pergolaMat,-11,2.96,z,{collide:false,skirt:false}),'beam');
   for(let z=15;z<=18;z+=.75) marcaPergola(addBox(.16,.14,3.8,pergolaMat,-13.3+(z-15)*1.52,3.13,16.5,{collide:false,skirt:false}),'beam');
-  // Maciços tropicais instanciados: volume nas bordas, corredor de combate preservado.
-  const folhaGeo = new THREE.SphereGeometry(.48, 8, 5);
-  const folhagem = new THREE.InstancedMesh(folhaGeo, lam({ color: 0x2f7040, roughness: 1 }), 72);
-  const dummy = new THREE.Object3D(); let folhaIdx = 0;
-  const macicos = [[-17.4,17.1],[-12.1,18.3],[-18.1,24.8],[-13.4,34],[-7.2,32.9],[16.2,18.6],[11.4,20.2],[17.7,26.1],[14.2,33.5],[7.8,30.8],[-9.3,27.6],[6.4,25.4]];
-  for (let c = 0; c < macicos.length; c++) for (let i = 0; i < 6; i++) {
-    const a = i * Math.PI * 2 / 6 + c * .37, r = .35 + (i % 3) * .22;
-    dummy.position.set(macicos[c][0] + Math.cos(a) * r, .55 + (i % 2) * .2, macicos[c][1] + Math.sin(a) * r);
-    dummy.rotation.set(-.18 + (i % 3) * .13, a, .18 * Math.sin(a));
-    dummy.scale.set(.38 + (i % 2) * .15, .25, 1.15 + (i % 3) * .18); dummy.updateMatrix();
-    folhagem.setMatrixAt(folhaIdx++, dummy.matrix);
+  /* FOLHAGEM INSTANCIADA COM VARIEDADE (plans/13: "o jardim esta bizarro") —
+     eram 72 clones idênticos em 12 anéis de 6, sem cor por instância: repetição
+     mecânica de catálogo. Agora duas famílias de malha (bloco + folha ereta) com
+     tint E escala POR INSTÂNCIA (setColorAt), distribuídas em drifts orgânicos
+     pelo ângulo áureo, nas bordas — o corredor de combate central continua
+     limpo. Régua: tools/eval/mansao-garden-check.mjs (G1 variedade). */
+  const rndJardim = (() => { let s = 20260818 >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
+  const paletaFolha = [0x2f7040, 0x3d8a4a, 0x529a4b, 0x2a6b3a, 0x6aa14e].map((c) => new THREE.Color(c));
+  const driftsJardim = [
+    [-17.6, 16.8], [-13.2, 18.6], [-18.4, 24.9], [-14.1, 33.6], [-8.3, 33.2],
+    [16.8, 17.8], [12.1, 19.9], [18.2, 27.4], [14.8, 33.9], [7.6, 32.7], [-9.8, 28.3],
+  ];
+  const criaFolhagem = (geo) => {
+    const mesh = new THREE.InstancedMesh(geo, lam({ color: 0xffffff, roughness: 1 }), 30);   // branco: cor vem do instanceColor
+    mesh.userData.mansaoFeature = 'folhagem-instanciada';
+    mesh.userData.nonSolidSurface = true;
+    mesh.castShadow = true;
+    root.add(mesh);
+    return mesh;
+  };
+  const dummyFolha = new THREE.Object3D();
+  const corFolha = new THREE.Color();
+  const famA = criaFolhagem(new THREE.SphereGeometry(.48, 8, 5));
+  const famB = criaFolhagem(new THREE.ConeGeometry(.30, 1.05, 6));
+  let iA = 0, iB = 0;
+  for (const [dx, dz] of driftsJardim) {
+    const n = 4 + Math.floor(rndJardim() * 3);   // drift de 4-6 plantas misturando famílias
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.399963 + rndJardim() * .6, r = .34 * Math.sqrt(i + .6) + rndJardim() * .2;
+      dummyFolha.position.set(dx + Math.cos(a) * r, .48 + rndJardim() * .3, dz + Math.sin(a) * r);
+      dummyFolha.rotation.set(rndJardim() * .4, rndJardim() * Math.PI * 2, rndJardim() * .4);
+      const s = .65 + rndJardim() * .8;
+      dummyFolha.scale.set(s, s * (.9 + rndJardim() * .35), s);
+      dummyFolha.updateMatrix();
+      const mesh = i % 2 ? famB : famA;
+      const idx = mesh === famA ? iA : iB;
+      if (idx >= 30) continue;
+      mesh === famA ? iA++ : iB++;
+      mesh.setMatrixAt(idx, dummyFolha.matrix);
+      corFolha.copy(paletaFolha[Math.floor(rndJardim() * paletaFolha.length)])
+        .offsetHSL((rndJardim() - .5) * .03, (rndJardim() - .5) * .15, (rndJardim() - .5) * .08);
+      mesh.setColorAt(idx, corFolha);
+    }
   }
-  folhagem.instanceMatrix.needsUpdate = true; folhagem.castShadow = true;
-  folhagem.userData.nonSolidSurface = true; folhagem.userData.mansaoFeature='tropical-3d'; root.add(folhagem);
+  famA.count = iA; famB.count = iB;
+  famA.instanceMatrix.needsUpdate = true; famB.instanceMatrix.needsUpdate = true;
+  if (famA.instanceColor) famA.instanceColor.needsUpdate = true;
+  if (famB.instanceColor) famB.instanceColor.needsUpdate = true;
   const forracao = lam({ color: 0x416f38, roughness: 1 });
   for (const [x,z,s] of [[-16.4,18.1,2.2],[-14.8,25.6,2.5],[-10.7,33.2,2.8],[15.7,19.1,2.0],[16.4,27.2,2.4],[10.9,31.7,2.6]]) {
     const m = new THREE.Mesh(new THREE.CircleGeometry(s, 14), forracao);
@@ -664,37 +705,39 @@ export function buildMansao(scene, T) {
     const m = addBox(11, h, d, azulejoCuba, 0, yBase, z, { collide: false, cast: false, skirt: false });
     m.userData.mansaoFeature = 'pool-tread'; m.userData.nonSolidSurface = true;
   };
-  degCuba(.567, .284, -24.642, PISCINA.raso);   // degraus de entrada (largura total)
-  degCuba(.283, .284, -24.926, PISCINA.raso);
-  degCuba(.75, .288, -27.744, PISCINA.fundo);   // escada submersa raso→fundo
-  degCuba(.50, .288, -28.031, PISCINA.fundo);
-  degCuba(.25, .288, -28.319, PISCINA.fundo);
-  const pisoRaso = addFloor(11, 2.53, 0, -26.334, lam({ color: 0x1d5a74, roughness: .5 }), PISCINA.raso - .01);
-  const pisoFundo = addFloor(11, 2.75, 0, -30.125, lam({ color: 0x123f54, roughness: .55 }), PISCINA.fundo - .01);
+  degCuba(.567, .284, -26.642, PISCINA.raso);   // degraus de entrada (largura total)
+  degCuba(.283, .284, -26.926, PISCINA.raso);
+  degCuba(.75, .288, -29.744, PISCINA.fundo);   // escada submersa raso→fundo
+  degCuba(.50, .288, -30.031, PISCINA.fundo);
+  degCuba(.25, .288, -30.319, PISCINA.fundo);
+  const pisoRaso = addFloor(11, 2.53, 0, -28.334, lam({ color: 0x1d5a74, roughness: .5 }), PISCINA.raso - .01);
+  const pisoFundo = addFloor(11, 1.75, 0, -31.625, lam({ color: 0x123f54, roughness: .55 }), PISCINA.fundo - .01);
   for (const p of [pisoRaso, pisoFundo]) { p.userData.mansaoFeature = 'pool-basin-floor'; p.userData.nonSolidSurface = true; }
   const paredeCuba = (x, z, w, d) => {
     const m = addBox(w, 1.95, d, azulejoCuba, x, PISCINA.fundo - .1, z);
     m.userData.mansaoFeature = 'pool-wall';
   };
-  paredeCuba(0, -24.25, 12, .5);   // sul (borda de entrada)
-  paredeCuba(0, -31.75, 12, .5);   // norte (sob a borda infinita)
-  paredeCuba(-5.75, -28, .5, 7);   // oeste
-  paredeCuba(5.75, -28, .5, 7);    // leste
+  paredeCuba(0, -26.25, 12, .5);   // sul (borda de entrada)
+  paredeCuba(0, -32.75, 12, .5);   // norte (sob a borda infinita)
+  paredeCuba(-5.75, -29.5, .5, 6);   // oeste
+  paredeCuba(5.75, -29.5, .5, 6);    // leste
   const aguaPiscina = lam({ color: 0x419bb3, roughness: .045, metalness: .16,
     emissive: 0x0b6074, emissiveIntensity: .22, transparent: true, opacity: .86, depthWrite: false, side: THREE.DoubleSide });
-  const piscina = addFloor(11, 7, 0, -28, aguaPiscina, .08);
+  const piscina = addFloor(11, 6, 0, -29.5, aguaPiscina, .08);
   piscina.userData.nonSolidSurface = true;
   const bordaPiscina = lam({ map: TEX.marble.map || null, color: 0xf0eadc, roughness: .3 });
-  for (const x of [-6.2,6.2]) addBox(.32,.18,8.5,bordaPiscina,x,.01,-28,{ collide:false, skirt:false });
-  addBox(12.7,.18,.32,bordaPiscina,0,.01,-23.85,{ collide:false, skirt:false });
+  for (const x of [-6.2,6.2]) addBox(.32,.18,7.6,bordaPiscina,x,.01,-29.5,{ collide:false, skirt:false });
+  // borda sul sobre o TOPO da parede (z∈[-26,31,-25,99]): dentro da cuba o chão é o
+  // degrau a -0,283 e a pedra a +0,19 virava penetração de 0,47 m no MAP1
+  addBox(12.7,.18,.32,bordaPiscina,0,.01,-26.15,{ collide:false, skirt:false });
   // A lâmina termina exatamente na borda norte; o vertedouro azul continua a linha do mar.
   // Subleito OPACO em y=0 (a máscara de cuba saiu: dentro da piscina ela virava teto do
   // nadador) — cobre o gramado cortado sob o vertedouro translúcido visto do terraço.
-  addFloor(12, 4.1, 0, -33.95, lam({ color: 0x0f3a4c, roughness: .4 }), 0);
-  addFloor(12, .55, 0, -31.74, lam({ color: 0x59c9df, roughness: .08, metalness: .08 }), .075);
-  addBox(12, .42, .08, lam({ color: 0x2a91ae, transparent: true, opacity: .72, roughness: .16 }), 0, -.35, -32.02,
+  addFloor(12, 2.9, 0, -34.45, lam({ color: 0x0f3a4c, roughness: .4 }), 0);
+  addFloor(12, .55, 0, -33.74, lam({ color: 0x59c9df, roughness: .08, metalness: .08 }), .075);
+  addBox(12, .42, .08, lam({ color: 0x2a91ae, transparent: true, opacity: .72, roughness: .16 }), 0, -.35, -33.02,
     { collide: false, cast: false, skirt: false });
-  addFloor(12, 3.8, 0, -33.9, lam({ color: 0x247d9d, roughness: .16, metalness: .08, transparent: true, opacity: .9 }), .015);
+  addFloor(12, 2.9, 0, -34.45, lam({ color: 0x247d9d, roughness: .16, metalness: .08, transparent: true, opacity: .9 }), .015);
   // espreguiçadeiras
   for (const [ex, ez, ry] of [[-12, -22, 0.2], [12, -22, -0.2], [-12, -28, 0.1], [12, -28, -0.1]])
     propComFallback('guarda_sol', ex, ez, 2.2, ry, () => addBox(0.8, 0.4, 2.0, lam({ color: 0xf0e8d0 }), ex, 0, ez));
@@ -736,9 +779,9 @@ export function buildMansao(scene, T) {
     // piscina entrável: degraus de entrada ao sul (largura total), raso, escada
     // submersa e fundo — cada subida ≤0,28 m, então a saída é andando (anti-trap)
     if (x >= PISCINA.x0 && x <= PISCINA.x1 && z >= PISCINA.z0 && z <= PISCINA.z1) {
-      if (z > -25.068) return -0.2834 * Math.min(2, Math.floor((-z - 24.5) / 0.284) + 1);
-      if (z > -27.6) return PISCINA.raso;
-      if (z > -28.75) return PISCINA.raso - 0.25 * Math.min(4, Math.floor((-z - 27.6) / 0.2875) + 1);
+      if (z > -27.068) return -0.2834 * Math.min(2, Math.floor((-z - 26.5) / 0.284) + 1);
+      if (z > -29.6) return PISCINA.raso;
+      if (z > -30.75) return PISCINA.raso - 0.25 * Math.min(4, Math.floor((-z - 29.6) / 0.2875) + 1);
       return PISCINA.fundo;
     }
     // Sem referência, preserva a camada superior usada por bandeira/pickup. Com yRef,
@@ -786,7 +829,7 @@ export function buildMansao(scene, T) {
   // terraço
   for (const tz of [-20, -25, -30]) linha(-18, tz, 18, tz, 3.0);
   // piscina entrável: lane pelo raso e pelo fundo, degrau a degrau (dy por nó ≤0,29)
-  linha(0, -24.9, 0, -31.2, 0.42, 0.22);
+  linha(0, -26.9, 0, -32.2, 0.42, 0.22);
 
   const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t, y = a.y + (b.y - a.y) * t; if (blocked(x, z, 0.25, y)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z, dy = Math.abs(nodes[i].y - nodes[j].y); if (dy <= .72 && dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
