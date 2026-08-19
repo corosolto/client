@@ -1492,6 +1492,29 @@
     ],
     "finalSha256": "2028681d3244aec692bd498b77681111268e3f7b7a87279a336c7a0082c699d7"
    }
+  },
+  "caixa-dagua-fibra": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/caixa_dagua_fibra.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks748e4cqwpghd7aazkk4gc0t18cs8ss",
+    "chatUrl": "https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg",
+    "displayName": "Weathered Favela Water Tank (caixa d'água de fibra amarelada)",
+    "frente": "v21-e-models",
+    "notes": "Lote 2 da frente E v2.1. Fibrocimento amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto - a caixa das lajes mais antigas. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_fibra-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "69acf07a5f895426bbc0acc0e0c0d2a8b0744e298c2f741bb962ce2ec55c726d"
+   }
   }
  }
 }

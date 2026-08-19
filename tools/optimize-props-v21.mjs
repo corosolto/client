@@ -17,6 +17,7 @@ const jobs = [
   { src: 'references/glb/planta_corrego_taioba_mint.glb', out: `${outDir}/planta_corrego_taioba.glb`, tex: 256 },
   { src: 'references/glb/caixa_dagua_azul_mint.glb', out: `${outDir}/caixa_dagua_azul.glb`, tex: 512 },
   { src: 'references/glb/caixa_dagua_preta_mint.glb', out: `${outDir}/caixa_dagua_preta.glb`, tex: 512 },
+  { src: 'references/glb/caixa_dagua_fibra_mint.glb', out: `${outDir}/caixa_dagua_fibra.glb`, tex: 512 },
 ];
 
 function triCount(doc) {

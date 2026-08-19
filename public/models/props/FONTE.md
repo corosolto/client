@@ -49,6 +49,10 @@ as novas ficam em ~4,6-4,8k tris com WebP 512².
   extravasor, sobre anel de concreto. 4.802 tris. Chat:
   <https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv>. Registro:
   `caixa-dagua-preta`. Escala sugerida ~1,2 ⇒ ~1,20 m.
+- `caixa_dagua_fibra.glb` — "Weathered Favela Water Tank", fibrocimento
+  amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto.
+  4.542 tris. Chat: <https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg>.
+  Registro: `caixa-dagua-fibra`. Escala sugerida ~1,2 ⇒ ~1,20 m.
 
 ---
 
