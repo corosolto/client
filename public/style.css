@@ -1828,7 +1828,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
 .ms-tab:hover,.ms-tab:focus-visible{color:#ecebe6}
 .ms-tab.on{font-weight:700;color:#b4d92e;border-bottom-color:#b4d92e}
-.ms-head{position:absolute;z-index:2;left:64px;top:130px;width:460px;
+.ms-head{position:absolute;z-index:2;left:32px;top:150px;width:460px;
   display:flex;flex-direction:column;align-items:flex-start;gap:14px;text-align:left}
 .ms-tagrow{display:flex;align-items:center;justify-content:flex-start;gap:10px}
 .ms-cat{font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 10px;border:1px solid}
@@ -1859,20 +1859,23 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-match-options select{height:32px;padding:0 28px 0 9px;border:1px solid rgba(236,235,230,.2);border-radius:0;
   background:#111216;color:#ecebe6;font:700 12px/1 var(--aaa-font-body);letter-spacing:1px;cursor:pointer}
 .ms-match-options select:focus{outline:1px solid var(--br-faixa);border-color:var(--br-faixa)}
-.ms-carousel{position:absolute;z-index:2;left:64px;right:64px;bottom:96px;height:124px;
-  display:flex;align-items:center;gap:14px}
-.ms-arrow{width:34px;height:124px;flex:0 0 34px;display:flex;align-items:center;justify-content:center;
+/* Catálogo em GRADE (UIR25): ficha à esquerda, catálogo à direita com scroll vertical —
+   o carrossel de 5 cartazes por página nasceu com 5 mapas e espremeu 12 cards a 98px. */
+.ms-catalog{position:absolute;z-index:2;left:544px;right:32px;top:150px;bottom:88px;display:flex;gap:12px}
+.ms-arrow{width:34px;flex:0 0 34px;align-self:stretch;display:flex;align-items:center;justify-content:center;
   background:rgba(13,14,17,.7);border:1px solid #26272d;color:#9a9ba1;font-size:16px;cursor:pointer}
 .ms-arrow:hover,.ms-arrow:focus-visible{border-color:#b4d92e;color:#ecebe6}
-.ms-viewport{flex:1;min-width:0;overflow:hidden}
-.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),minmax(0,196px));justify-content:center;gap:12px;width:100%;overflow:visible;scroll-behavior:smooth}
+.ms-grid-viewport{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  scrollbar-width:thin;scrollbar-color:#33343b transparent}
+.ms-grid{--map-count:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(208px,1fr));
+  gap:14px;align-content:start;padding:4px 10px 24px 4px;scroll-behavior:smooth}
 .ms-thumb{position:relative;width:100%;min-width:0;padding:0;display:flex;flex-direction:column;cursor:pointer;
   background:#101014;border:1px solid rgba(236,235,230,.12);opacity:.75;
   font-family:var(--aaa-font-body);text-align:left;text-transform:uppercase;
   transition:border-color var(--t) var(--ease),filter var(--t) var(--ease)}
 .ms-thumb:hover,.ms-thumb:focus-visible{filter:brightness(1.15)}
 .ms-thumb.on{border:2px solid #b4d92e;opacity:1;box-shadow:0 0 26px rgba(180,217,46,.3)}
-.ms-thumb-img{display:block;width:100%;height:96px;object-fit:cover}
+.ms-thumb-img{display:block;width:100%;height:118px;object-fit:cover}
 .ms-thumb-copy{display:flex;flex-direction:column;gap:1px;padding:6px 10px 8px;background:rgba(10,10,12,.85)}
 .ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1882,11 +1885,15 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-thumb-cat[data-cat="ARENA"]{color:#8b8c92}
 .ms-thumb-cat[data-cat="CIDADES"]{color:#8258d8}
 .ms-diamond{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--br-faixa);transform:rotate(45deg)}
-.ms-dashes{position:absolute;z-index:2;left:0;right:0;bottom:74px;display:flex;justify-content:center;gap:6px}
-.ms-dashes i{width:18px;height:3px;background:#33343b}.ms-dashes i.on{background:#b4d92e}
 .ms-actions{position:absolute;right:64px;bottom:24px;z-index:2}
 #map-screen .ms-actions .btn-big{transform:skewX(-8deg);background:linear-gradient(180deg,#cfe84a,#b4d92e);padding:14px 52px;border:0}
 #map-screen .ms-actions .btn-big>*{display:block;transform:skewX(8deg);font:400 23px/1 var(--aaa-font-display);letter-spacing:3px;color:#131313;padding:0}
+@media(max-width:1100px){
+  .ms-head{width:300px}
+  .ms-name{font-size:44px}
+  .ms-desc{display:none}
+  .ms-catalog{left:352px}
+}
 @media(max-height:620px){
   .ms-head{top:112px;gap:7px}
   .ms-name{font-size:54px}

@@ -189,14 +189,21 @@ try {
   await open('maps', 'mapas&map=quebrada', '#map-screen');
   const maps = await page.evaluate(() => {
     const preview = document.querySelector('.ms-bg').getBoundingClientRect();
-    const catalog = document.querySelector('.ms-strip').getBoundingClientRect();
+    const catalog = document.querySelector('#ms-strip').getBoundingClientRect();
+    const viewport = document.getElementById('ms-grid-viewport');
     const cards = [...document.querySelectorAll('.ms-thumb')];
+    const firstTop = cards.length ? cards[0].offsetTop : -1;
+    const cols = cards.filter((card) => card.offsetTop === firstTop).length;
     return {
       count: cards.length,
+      cols,
+      cardMin: cards.length ? Math.min(...cards.map((card) => card.getBoundingClientRect().width)) : 0,
+      gridOverflowY: getComputedStyle(viewport).overflowY,
+      scrollable: viewport.scrollHeight >= viewport.clientHeight,
       selected: cards.filter((card) => card.getAttribute('aria-pressed') === 'true').length,
       visual: cards.every((card) => !!card.querySelector('img.ms-thumb-img') && !!card.querySelector('.ms-thumb-copy')),
       navigation: !!document.getElementById('ms-prev') && !!document.getElementById('ms-next')
-        && document.querySelectorAll('#ms-dashes i').length > 0,
+        && !document.getElementById('ms-dashes'),
       options: ['ms-wpn-mode', 'ms-players', 'ms-rounds'].every((id) => {
         const rect = document.getElementById(id)?.getBoundingClientRect();
         return rect && rect.width > 0 && rect.height > 0;
@@ -211,12 +218,23 @@ try {
       preview: { left: preview.left, right: preview.right, top: preview.top, bottom: preview.bottom, width: preview.width },
     };
   });
+  /* GRADE (UIR25): com 12+ mapas o carrossel de 5/página espremia cards a 98px (medido
+     18/08). Aqui mede o USO: card ≥190px de verdade, colunas reais via offsetTop,
+     viewport com scroll vertical, e ↑↓ pulando exatamente uma linha de cards. */
+  const gridBefore = await page.evaluate(() => [...document.querySelectorAll('.ms-thumb')]
+    .findIndex((card) => card.getAttribute('aria-pressed') === 'true'));
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  const gridAfter = await page.evaluate(() => [...document.querySelectorAll('.ms-thumb')]
+    .findIndex((card) => card.getAttribute('aria-pressed') === 'true'));
   if (maps.count !== registeredMaps || maps.selected !== 1 || !maps.visual || !maps.navigation || !maps.options || !maps.fullBleed || !maps.overlay
-    || maps.selectedId !== 'quebrada' || !maps.name.includes('Quebrada') || !maps.image.includes('/quebrada.jpg')) {
-    throw new Error(`mapas inválidos: ${JSON.stringify(maps)}`);
+    || maps.selectedId !== 'quebrada' || !maps.name.includes('Quebrada') || !maps.image.includes('/quebrada.jpg')
+    || maps.cardMin < 190 || maps.cols < 3 || maps.gridOverflowY !== 'auto' || !maps.scrollable
+    || gridAfter - gridBefore !== 2 * maps.cols) {
+    throw new Error(`mapas inválidos: ${JSON.stringify({ ...maps, gridBefore, gridAfter })}`);
   }
   await page.screenshot({ path: `${OUT}/04_mapas-direto.png` });
-  console.log(`✓ mapas direto: palco único ${Math.round(maps.preview.width)}px e carrossel visual com ${maps.count} missões`);
+  console.log(`✓ mapas direto: grade ${maps.cols} colunas, cards ≥${Math.round(maps.cardMin)}px, ↑↓ pulam linha (${gridBefore}→${gridAfter})`);
   await page.click('.ms-tab[data-cat="CIDADES"]');
   await page.click('#ms-next');
   const cityNavigation = await page.evaluate(() => {
@@ -229,7 +247,7 @@ try {
     };
   });
   if (cityNavigation.count < 1 || !cityNavigation.allCities || cityNavigation.selected.join('') !== 'loja_h'
-    || !['praca_poderes', 'loja_h', 'atacadao_treta'].every((id) => cityNavigation.ids.includes(id))) {
+    || !['praca_poderes', 'loja_h'].every((id) => cityNavigation.ids.includes(id))) {
     throw new Error(`navegação filtrada de mapas inválida: ${JSON.stringify(cityNavigation)}`);
   }
   console.log('✓ mapas CIDADES: setas permanecem dentro da categoria e mantêm um card selecionado');

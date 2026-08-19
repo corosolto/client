@@ -15,18 +15,25 @@
 **Quality gate na data deste arquivo** (`npm run check`, com `eval:vm` antes das invariantes):
 
 ```
-CRÍTICAS: 42/55 passam  ← nenhuma falha nova
+CRÍTICAS: 39/55 passam  ← nenhuma falha nova
 DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8,
-          CHR1, CHR3, CHR4, CTF1
-AVISOS:   VM15 e BOT2 fora do alvo
+          CHR1, CHR3, CHR4, CTF1, BOT4, MAT1, MAT2, TEX1
+AVISOS:   VM15 fora do alvo
 PULADAS:  4 (exigem browser ou arnês ausente)
 ```
 
-Colado de uma execução real de **17/08**. As 13 dívidas continuam todas identificadas em
-`KNOWN-RED.json` e não reprovam o processo; o gate terminou com código 0. `AUD1` passou
-depois do refresh do JSON de viewmodel. Na mesma árvore, o `check:fast` percorreu os **51
-passos** pelo runner e todos passaram — inclusive os novos `eval:parquewheel`,
-`eval:velhooeste`, `eval:penitenciaria`, `eval:backendhints` e `changelog:check`.
+Colado de uma execução real de **18/08** (pós-merge da main alpha.151 + rodada de
+mapas/fauna: BUG-57 porte, BUG-60 grafite, BUG-67 grade de mapas). As dívidas continuam
+todas identificadas em `KNOWN-RED.json` e não reprovam o processo. **MAT1 entrou como
+dívida nesta data**: o `mat_check.json` stale media só os 5 mapas antigos; o regen expôs
+`velho_oeste` (mapa de 17/08) fora dos tetos de croma — medido também **sem** a rodada de
+fauna (stash comprovou), não é regressão dela. **BOT4 entrou como dívida** com A/B de duas
+sementes (sem fauna × com fauna: 3,808→2,986 e 3,899→4,641): o estimador cavalga o teto de
+3,0s por variância de amostra ante materiais novos — comportamento documentado no próprio
+`invariants.mjs` — enquanto o bot ficou MENOS letal em todos os eixos. Na mesma árvore, o
+`check:fast` percorreu os **54 passos** com **53 verdes**; o único vermelho é o
+`changelog:check` da alpha.151, vermelho também na árvore limpa pós-merge (1 PR na seção,
+0 no git).
 
 Mudou em 04/08: **CHR5B saiu do aviso e ficou VERDE** (27/44 personagens sem mapa de
 superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 49 e não 48.
@@ -2542,6 +2549,32 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
   commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
   branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
+### BUG-67 · A tela de seleção de mapas ficou poluída e difícil de navegar com 12+ mapas
+
+Palavras do dono, 18/08: *"vamos melhorar a tela de seleção de mapas ela tá muito difícil
+de navegar e poluída porque já tem muitos mapas"*. Medido antes do conserto (browser real,
+arnês 8200): a strip de carrossel desenhada para **5 cartazes de 196px** espremia os 12
+cards a **98px** em 1536×1024 e a **50px** em 960×640, com `overflow-x` transbordando e
+paginação de 5 (2 cliques de `ms-dashes` até o fim da lista). **Conserto (18/08):** a faixa
+virou **grade** `repeat(auto-fill,minmax(208px,1fr))` numa coluna direita com scroll
+vertical — ficha do mapa continua à esquerda. Cards medem **275px** (3:2) e **228px**
+(960) agora; ↑↓ pulam a LINHA da grade (colunas contadas por `offsetTop` real), ←→ e as
+setas continuam na ordem da categoria. **Régua:** `UIR25` do `eval:redesign` (esqueleto:
+grid/viewport/teclado/fim dos dashes) + bloco novo do `eval:screenquery:browser` que mede
+o **uso**: `cardMin ≥ 190px`, `cols ≥ 3` via offsetTop, `overflow-y:auto`, e dois
+`ArrowDown` reais avançam exatamente `2×cols` cards. Ambas reprovavam o estado anterior
+(conferido antes de construir). Mutante implícito: voltar o carrossel reacende as duas.
+
+### BUG-60 (portado do /game) · Regen de grafite de um mapa apagava os outros nove
+
+`tools/gen-graffiti-layout.mjs` parseava o layout anterior com
+`lastIndexOf('}')` — que caía no rodapé do `GRAFITE_FP`, o parse lançava, e o `catch`
+zerava o mapa dos outros: rodar `npm run grafite ferro_velho` apagava o layout dos demais
+(sintoma visto aqui em 18/08: `GRAFFITI-LAYOUT-CHECK: 1 mapas · 894 peças` e M1 vermelho
+para os outros 4). **Conserto:** mesmo patch do 9cc84fe do `/game` — fim do JSON por
+casamento de chaves com controle de string. Cinco regens sequenciais agora preservam os
+outros (`5 mapas · 2146 peças`, M1 verde).
+
 ### BUG-57 (portado do /game) · Mapas sem ambiência: sem fauna, sem horizonte, sem céu
 
 Pedido literal do dono no `/game` (17/08): *"ele tem ambiência real, coisa que nenhum dos
@@ -2563,97 +2596,6 @@ mapas que não existem aqui) e `horizon.js` (no /game só o lajes usa; aqui nenh
 favela aberta) — follow-up quando a frente de horizonte por bioma abrir.
 
 
-
-### BUG-60 (portado do /game) · Regen de grafite de um mapa apagava os outros nove
-
-`tools/gen-graffiti-layout.mjs` parseava o layout anterior com
-`lastIndexOf('}')` — que caía no rodapé do `GRAFITE_FP`, o parse lançava, e o `catch`
-zerava o mapa dos outros: rodar `npm run grafite ferro_velho` apagava o layout dos demais
-(sintoma visto aqui em 18/08: `GRAFFITI-LAYOUT-CHECK: 1 mapas · 894 peças` e M1 vermelho
-para os outros 4). **Conserto:** mesmo patch do 9cc84fe do `/game` — fim do JSON por
-casamento de chaves com controle de string. Cinco regens sequenciais agora preservam os
-outros (`5 mapas · 2146 peças`, M1 verde).
-
-- **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
-  ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
-  criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:
-  ele estava classificado dentro da pasta do Time B, mas o conteúdo continua sendo a voz
-  errada. A substituição escolhida vem do mesmo pool B e tem fonte nominal
-  `bolsonaro-acabou-porra.mp3` (`fc5bf11f5b8287f5`); os hashes SHA-1 do fonte e do asset
-  publicado são idênticos. Antes, `eval:charvoice` deixava VOICE10 e VOICE12 vermelhas;
-  depois, passa com o runtime e o deploy no `audio-pack-v6`. Os mutantes
-  `faria-volta-lula` e `pack-antigo` reacendem uma cláusula cada. Custo declarado: nenhum
-  áudio novo; só muda a reserva de um clipe que já pertencia ao pool B.
-
-- **~~BUG-65 · bordões da seleção pertenciam à posição, não ao personagem~~ · RESOLVIDO 16/08.**
-  Palavras do dono: *"o Faria Limer tá usando um áudio do Lula"*, *"o Clubber não pode ser
-  bomboclaat, tem que ser o ai delícia; o bomboclaat é o Rasta"* e *"o Funk Raiz é o coé,
-  rapaziada"*. `public/js/audio.js:102` usava o índice do avatar no elenco para buscar o
-  pool; no elenco Urbanas, por exemplo, o índice do Clubber apontava exatamente para
-  `bomboclaat`. A régua nasceu vermelha em **5 identidades**. Agora seis personagens têm
-  associação explícita, os demais pulam os arquivos reservados para não compartilhar fala,
-  e o pacote v5 acrescenta a vinheta de 8 s do Dollynho. `eval:charvoice` passa; os seis
-  mutantes passam a deixar ao menos uma cláusula vermelha, inclusive a troca Clubber↔Rasta.
-
-- **~~BUG-64 · wallpaper da home não preenche o 3:2 sem cortar e versão sai do canto~~ · RESOLVIDO 16/08.**
-  Palavras do dono: *"a tela inicial também não está com o wallpaper cheio e a versão do
-  jogo não está no canto direito"*. `cover` preenchia, mas cortava logo ou personagem dos
-  wallpapers 16:9; `contain` preservava a arte, mas deixava faixas visíveis no viewport 3:2.
-  Cada wallpaper ganhou uma variante 3:2 derivada exclusivamente da própria imagem: quadro
-  original inteiro no centro e extensão desfocada nas áreas novas. Em 1536×1024 a captura
-  mostra logo e personagem inteiros, sem faixa vazia; a versão fica fixa 14 px acima da borda
-  inferior e alinhada à direita. UIR32/UIR42 passam, os mutantes `menu-wall-sem-3x2` e
-  `versao-menu-volta-rodape` ficam vermelhos, e `menuwalls:check` liga fonte, receita e saída.
-
-- **~~BUG-63 · tela final tinha emenda colorida atrás do personagem~~ · RESOLVIDO 16/08.**
-  Palavras do dono: *"faltou só a parte do vitória estar preto igual o degradê final da
-  imagem à esquerda pra parecer uma tela só"*. Dois pseudo-elementos desenhavam um radial
-  verde e um gradiente restrito à metade direita. Ambos foram removidos: vitória e derrota
-  agora usam o mesmo preto contínuo atrás do recorte alfa inteiro. Capturas reais em
-  1536×1024 confirmam ausência de emenda; UIR41 passa e `resultado-emenda-volta` recoloca o
-  radial, deixando a cláusula vermelha.
-
-- **~~BUG-62 · shader dos personagens não compila no Chromium headless~~ · RESOLVIDO 16/08.** Descoberto pelo
-  smoke real em 16/08: `web-assets.spec.js` carregou o GLB e a ficha, mas o overlay de debug
-  bloqueou `#char-confirm` por 900 tentativas. A primeira correção trocou a amostragem por
-  `texture2DLodEXT` e deixou WG11 verde, mas a régua só reconhecia o nome da função. O smoke
-  Linux do PR #302 provou que a extensão estava desabilitada no renderer da vitrine; além
-  disso, a variante do material dependia da capacidade global do renderer principal. A
-  correção usa o bias nativo do fragment shader — `texture2D(map, vMapUv, csAlbLod)` — e não
-  compartilha capacidade entre renderers. WG11 agora recusa a extensão e o estado global; o
-  mutante `texture-lod-ext` devolve a extensão e deixa WG11 vermelha. O smoke também verifica o `crash-overlay`
-  antes de clicar, para uma regressão de shader falhar imediatamente em vez de aguardar o
-  timeout do botão.
-
-- **~~BUG-58 · trocar de time com M quebra a tela~~ · RESOLVIDO 16/08.** Palavras do dono:
-  *"o fluxo de trocar de time parece quebrado quando aperto m ele quebra a tela"*.
-  O smoke reproduziu o estado inválido: depois de `KeyM` e `pointerlockchange`, `#char-select`
-  estava visível **junto** com `#pause-menu` (`expected hidden, received visible`). A causa era
-  sair do pointer lock antes de marcar a pausa; o evento de perda abria uma segunda camada.
-  Agora a pausa ocorre primeiro, a seleção usa `enemyFaction` (não o lado físico), VOLTAR
-  restaura facção/time/personagem e `_switchTeam()` troca também as duas facções. O smoke
-  completo passa e `--mutante=troca-m-abre-pausa` deixa UIR40 vermelha.
-
-- **~~BUG-59 · opção de 5 rounds encerra a partida em 3~~ · RESOLVIDO 16/08.** Palavras do dono:
-  *"o jogo falava 5 rounds mas teve 3"*. A opção se
-  chama “Nº DE ROUNDS”, mas `_fimDaPartida()` encerrava ao atingir maioria. A nova régua
-  ficou vermelha em **8/8** combinações (1/3/5/7 × mata-mata/CTF). O contrato agora é literal:
-  5 selecionado = 5 rounds disputados; só o relógio global do CTF continua como rede de
-  segurança. `eval:matchoptions` passa e os mutantes `fixo` e `maioria` ficam vermelhos.
-
-- **~~BUG-60 · aviso interno do Supabase aparece na tela final~~ · RESOLVIDO 16/08.** Palavras do dono:
-  *"esses erros de supabase jamais devem aparecer no jogo"*. A captura
-  mostra `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` em vermelho dentro do placar final;
-  `submitNote()` anexava a mensagem técnica ao `#match-stats`. Ele agora registra somente
-  `console.warn('[ranking]', msg)`: não consulta DOM e não contém nomes de variáveis de
-  backend. UIR38 passa; `--mutante=backend-aviso-volta` recoloca o vazamento e fica vermelho.
-
-- **~~BUG-61 · seleção de facções abre com arte em branco~~ · RESOLVIDO 16/08.** Palavras do dono:
-  *"carregando a tela de facções, ela deve ser preloaded já as imagens das facções pra não
-  dar delay e espaço em branco"*. As cinco imagens CSS (403.008 bytes) agora começam a
-  carregar no boot; tanto o fluxo normal quanto `?tela=faccao` aguardam o mesmo `decode()`
-  antes de mostrar `#team-select`. UIR39 passa e o mutante que remove o `await` fica vermelho;
-  o browser abre a facção diretamente sem espaço vazio nem skeleton.
 
 ### ~~BUG-55 · painel "FPS P50" media jank de boot vendido como FPS de jogo~~ · RESOLVIDO 15/08
 

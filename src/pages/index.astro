@@ -794,12 +794,14 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
       </label>
     </div>
   </header>
-  <div class="ms-carousel">
+  <!-- Catálogo em GRADE (UIR25): com 12+ mapas o carrossel de 5 por página espremia os
+       cards a 98px e a paginação quebrava o scan. Grade auto-fill ≥208px com scroll
+       vertical: todos os mapas alcançáveis numa tela em 3:2, ↑↓ pulam linha. -->
+  <div class="ms-catalog">
     <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">‹</button>
-    <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
+    <div class="ms-grid-viewport" id="ms-grid-viewport"><div class="ms-grid" id="ms-strip"></div></div>
     <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">›</button>
   </div>
-  <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
   <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
   <div class="ms-actions">
     <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>

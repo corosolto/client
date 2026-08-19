@@ -593,24 +593,31 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /e\.key === 'ArrowLeft'[\s\S]{0,100}stepMap\(-1, visibleMapIds\(\)\)/.test(main)
   && /e\.key === 'ArrowRight'[\s\S]{0,100}stepMap\(1, visibleMapIds\(\)\)/.test(main)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
-  && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
   && /<img class="ms-thumb-img" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
-  && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
+  && /id="ms-grid-viewport"/.test(astro)
   && /\.ms-tabs\{[^}]*top:60px[^}]*left:32px[^}]*gap:24px/.test(css)
-  && /\.ms-head\{[^}]*left:64px[^}]*top:130px[^}]*width:460px/.test(css)
+  && /\.ms-head\{[^}]*width:460px/.test(css)
   && /\.ms-name\{[^}]*font-size:72px/.test(css)
-  && /\.ms-carousel\{[^}]*left:64px[^}]*right:64px[^}]*bottom:96px/.test(css)
-  && /--map-count:1/.test(strip)
-  && /display:grid/.test(strip)
-  && /grid-template-columns:repeat\(var\(--map-count\),minmax\(0,196px\)\)/.test(strip)
-  && /justify-content:center/.test(strip)
-  && /width:100%/.test(strip)
-  && /\.ms-thumb\{[^}]*width:100%[^}]*min-width:0/.test(css)
-  && /\.ms-thumb-img\{[^}]*height:96px[^}]*object-fit:cover/.test(css)
   && /inset:\s*0/.test(fundoMapa) && /border:\s*0/.test(fundoMapa)
   && !/class="ms-rail/.test(funcMap);
+/* UIR25 — GRADE em vez de carrossel paginado. Nasceu com 12+ mapas: a strip de 5
+   cartazes por página espremeu 12 cards a 98px (medido 18/08) e a paginação de 5
+   quebrava o scan. A régua exige: catálogo em GRADE auto-fill com card de ≥208px,
+   viewport com scroll VERTICAL (todos os mapas alcançáveis sem paginação), teclado
+   4 direções (↑↓ pula LINHA da grade, não página) e fim dos dashes de paginação. */
+const gradeGrid = (css.match(/\.ms-grid\{([^}]*)\}/) || [])[1] || '';
+const gradeViewport = (css.match(/\.ms-grid-viewport\{([^}]*)\}/) || [])[1] || '';
+const mapaGrade = /grid-template-columns:repeat\(auto-fill,minmax\(208px,1fr\)\)/.test(gradeGrid)
+  && /gap:14px/.test(gradeGrid)
+  && /overflow-y:auto/.test(gradeViewport)
+  && /overflow-x:hidden/.test(gradeViewport)
+  && /\.ms-thumb-img\{[^}]*height:118px[^}]*object-fit:cover/.test(css)
+  && /function msGridNav[\s\S]{0,600}e\.key === 'ArrowDown'[\s\S]{0,400}e\.key === 'ArrowUp'/.test(main)
+  && /offsetTop === top0/.test(main)
+  && !/id="ms-dashes"/.test(astro)
+  && !/ms-dashes'\)\.innerHTML/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';
 const chaves = [...dict.matchAll(/'((?:\\.|[^'\\])*)'\s*:/g)].map((m) => m[1]);
 const repetidas = [...new Set(chaves.filter((chave, i) => chaves.indexOf(chave) !== i))];
@@ -849,8 +856,10 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas reproduzem abas, ficha e carrossel visual navegável da tela 04 de referência', mapaReferencia,
-    `render usa MAP_IDS completo; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR4', 'mapas reproduzem abas, ficha e catálogo navegável da tela 04 de referência', mapaReferencia,
+    `render usa MAP_IDS completo; grade=${gradeGrid.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR25', 'catálogo de mapas é GRADE navegável (12+ mapas), não carrossel paginado', mapaGrade,
+    `viewport=${gradeViewport.replace(/\s+/g, ' ').trim() || 'ausente'}; ↑↓ pulam linha, dashes de paginação removidos`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,
     'gerador deriva weaponById de CHAR_WEAPON e envia a arma ao mounttest'],
