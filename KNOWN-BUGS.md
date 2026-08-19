@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado revisado: **2026-08-16**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-17**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatos recentes e resolução*.
 >
@@ -22,12 +22,11 @@ AVISOS:   VM15 e BOT2 fora do alvo
 PULADAS:  4 (exigem browser ou arnês ausente)
 ```
 
-Colado de uma execução real de **16/08**. As 13 dívidas continuam todas identificadas em
+Colado de uma execução real de **17/08**. As 13 dívidas continuam todas identificadas em
 `KNOWN-RED.json` e não reprovam o processo; o gate terminou com código 0. `AUD1` passou
-depois do refresh do JSON de viewmodel. Na mesma árvore, o `check:fast` percorreu os 45
-passos pelo runner e todos passaram — inclusive `feet:check`, `anims:check`,
-`eval:matchoptions` e `menuwalls:check`; não existe mais a antiga corrente de `&&` que
-escondia gates posteriores.
+depois do refresh do JSON de viewmodel. Na mesma árvore, o `check:fast` percorreu os **51
+passos** pelo runner e todos passaram — inclusive os novos `eval:parquewheel`,
+`eval:velhooeste`, `eval:penitenciaria`, `eval:backendhints` e `changelog:check`.
 
 Mudou em 04/08: **CHR5B saiu do aviso e ficou VERDE** (27/44 personagens sem mapa de
 superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 49 e não 48.
@@ -39,6 +38,67 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 ---
 
 ## P0 — quebram o jogo ou mentem para quem mede
+
+### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
+
+**Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
+*"Uncaught TypeError: Cannot read properties of undefined (reading 'short')"*,
+fingerprint `ea71c000`, classe `codigo`, versão 2.0.0-alpha.157, em
+`game.js:4849:66` → `Game._updatePickups` → `Game.update` → `loop`.
+
+**Causa raiz — confirmada.** `map_penitenciaria.js:223` declarava o 8º pickup da fileira
+central como `kind:'smg'`. **`smg` não é arma: é CLASSE de arma.** Quem mapeia arma→classe
+é `recoil.js:38`, `game.js:316`, `audio.js:271` e `vmattach.js:622`, todos com
+`mp5|uzi|p90 -> 'smg'`; `WEAPONS` (em `public/js/data/weapons.js`, 26 chaves) nunca teve
+`smg`. O prompt do `[E]` desreferencia `WEAPONS[w].short` **sem guarda**
+(`game.js:4849`), e o `_updatePickups` roda **todo quadro** dentro do `update()` — então
+olhar para aquela arma não estragava o HUD, **congelava a partida**. O mapa entrou em
+`f87ff467` (Penitenciária + Velho Oeste, #335), o que explica por que o crash é novo.
+
+**Reprodução:** `node tools/eval/pickup-arma-check.mjs` (semente 12345, sem browser). A
+cláusula PA2 planta o jogador em cima do pickup e chama o `_updatePickups` de produção;
+a exceção sai com a mensagem literal de #366.
+
+**Medido antes do conserto** (`node tools/eval/pickup-arma-check.mjs`, 12 mapas, 772 pickups):
+
+| | antes | depois |
+|---|---|---|
+| ids de pickup fora de `WEAPONS` | **1** (`penitenciaria/mapa 'smg'`) | 0 |
+| mapas em que o `_updatePickups` de produção lança | **1** (penitenciaria) | 0 |
+| `_grabPickup` naquele pickup | `false` (impegável) | `true`, jogador sai com `uzi` na mão |
+
+**O que foi DESCARTADO com medição, não com palpite.** O caminho óbvio era `WEAPONS[w]?.short`
+na linha do crash. Medido: com o `?.`, o HUD passa a escrever literalmente
+**`[E] PEGAR undefined`** e `_grabPickup(pk, player, true)` continua devolvendo **`false`** —
+a arma segue impegável, uma caixa dourada em x=10,0 z=−2,2 no meio de 7 armas de verdade.
+O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conserto é no
+**id**, e a guarda de runtime ficou na **porta de entrada**, não no `.short`.
+
+**Correção.** Duas, em camadas diferentes:
+1. `public/js/map_penitenciaria.js:223` — `'smg'` → `'uzi'` (SMG de verdade, chave de
+   `WEAPONS`; `mp5` já ocupava a outra vaga de SMG da fileira). É a causa.
+2. `public/js/game.js:573-581` — id que não existe em `WEAPONS` **não entra no estado do
+   jogo**: o pickup é descartado na ingestão do mapa com `console.warn`. É rede, não
+   conserto: mantém o defeito de dado fora do caminho quente sem escondê-lo de quem mede,
+   porque a régua lê a lista **crua** do `MAPS[id].build()`, antes desta porta.
+
+**Custo declarado, medido.**
+- `check:fast` ganhou um passo: **+3,7 s** (`eval:pickuparma`), de 53 para 54 passos.
+- A penitenciária ganhou uma arma jogável a mais na fileira central (a vaga já existia e
+  estava morta). Posição, yaw e contagem de pickups do mapa não mudaram: **16 antes, 16
+  depois**. A caixa-marcador `arma-central-uzi` passa a ser trocada pelo GLB real em
+  `game.js:574`, como as 7 irmãs — **isto não foi verificado em browser**, só no harness,
+  onde o carregamento de GLB é stub.
+
+**Régua: `tools/eval/pickup-arma-check.mjs`** (`npm run eval:pickuparma`, no `check:fast`).
+2 cláusulas, 3 mutações medidas:
+`--mutante=smg` acende PA1 (1 id fora de `WEAPONS`) **e** PA2 (1 mapa lançando) — reproduz #366;
+`--mutante=sem-short` acende PA1 nos 12 mapas (`mp5` sem `.short`);
+`--mutante=sem-pickups` acende a anti-vacuidade nos 12 (0 < piso de 20).
+**Resultado negativo medido e declarado no cabeçalho da régua:** `--mutante=sem-short`
+**não** acende a PA2, e é de propósito — campo ausente numa arma que existe vira
+`undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
+sobra quando alguém "conserta" o crash com `?.`.
 
 ### BUG-51 · erro de extensão ou beacon virava bug do jogo
 
@@ -413,7 +473,45 @@ passava na asserção de nome — furo achado pelo próprio mutante `sem-teto`) 
 solto por frame proibido. Mutantes `--mutante=clamp-frame` (3 vermelhas) e
 `--mutante=sem-teto` (1) executados.
 
+### ~~BUG-54 · "kills além do fisicamente possível" numa partida de captura legítima~~ · CONSERTO PRONTO 15/08, migration 024 PENDENTE de aplicação (issue #116)
+
+**Palavras de quem reportou** (issue #116): *"A partida terminou normalmente, mas as stats
+não foram enviadas e apareceu a mensagem: 'stats não enviados: kills além do fisicamente
+possível'. No final da partida eu estava com 95 kills e 6 mortes."*
+
+**Causa raiz.** A cláusula (a) do `submit_match` (`~/db-privado/supabase/schema.sql`)
+exigia `p_kills ≤ 45 * p_rounds`. O comentário dizia *"respawn de 2,5s => teto teórico
+~40/round"* — premissa do modo **ABATE**, onde a rodada É uma janela de 99 s. No
+**CAPTURA** a partida inteira são **2 rodadas** (`CTF_ROUNDS_TO_WIN`, `game.js:114`), então
+o teto dava **90 kills na partida** — numa modalidade sem janela de tempo, com respawn
+contínuo por até ~960 s. É o mesmo defeito de premissa do BUG-35/#87 (migration 015), um
+ramo acima: lá o piso de TEMPO, aqui o teto de KILLS. E igualmente chamava `_flag()` antes
+de recusar — **três partidas boas de captura escondiam o jogador do ranking**.
+
+**O número novo não é palpite** — é a física do jogo: no CAPTURA o limitante é o
+`RESPAWN_DELAY = 2,2 s` (`game.js:88`): para matar de novo, um inimigo tem que renascer.
+Teto honesto: `greatest(45 * rounds, floor(seconds / 2.2))` — o ramo por rodada continua
+amarrando partida de abate de relógio travado.
+
+| caso | teto antigo (45×rounds) | teto novo | veredito |
+|---|---|---|---|
+| reportado (#116): 95 kills · 2 rodadas · 480 s | 90 → **RECUSAVA** | greatest(90, 218) = 218 | passa |
+| trainer: 150 kills · 30 s | 90 → recusava | greatest(90, 13) = 90 | continua recusado |
+| cliente velho (seconds=0) | 90 | greatest(90, 0) = 90 | idêntico a hoje |
+
+**Régua.** Cláusula **SG6** do `tools/eval/submit-guard-check.mjs` (lê o SQL de
+`~/db-privado/`, o mesmo princípio das SG4/SG5: a fonte é o banco, não uma cópia em JS).
+Vermelha no estado antigo (4 reprovações: caso #116 recusado nos 3 arquivos + `_flag` na
+cláusula); verde depois; `--mutante=kills45` devolve o mundo antigo e acende nos 3.
+
+**Falta aplicar.** `~/db-privado/supabase/migrations/024_submit_guard_kills.sql` (o
+`schema.sql` e o espelho `opcional/012` já estão atualizados nesta máquina). Aplicar em
+staging → produção pela ordem do `~/db-privado/COMO-MIGRAR.md`. Falsos positivos já
+dados pelo caminho antigo: se um jogador reportar sumir do ranking com 3+ partidas de
+captura recusadas, conferir `players.flagged_count` na mão.
+
 ### ~~BUG-35 · "partida rápida demais pra ser verdade" numa partida legítima~~ · RESOLVIDO 07/08 (issue #87)
+
 
 
 **Palavras de quem reportou** (maurodesouza, issue #87): *"Durante uma partida no modo
@@ -1272,6 +1370,52 @@ o visual em jogo (posição do arco na borda, painel de morte) não foi conferid
 **Régua: `tools/eval/dmgdir-check.mjs`** (`npm run eval:dmgdir`, no `check:fast`).
 28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
 ordem de operandos do defeito original e derruba 28/28 casos.
+
+### ~~BUG-53 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+
+**Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
+**0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
+células peladas tinham `z ≥ 0` — fora da zona limpa declarada (`z ≤ −6,4`), ou seja lacuna
+real, não decisão de arte.
+
+**Palpite refutado:** "é o StaticBatch `havan-deco` com normal/matriz de instância" (classe
+do `5da7fc0`) — refutado por leitura: o batch é `Mesh` mesclada com geometria assada em
+mundo (`mapprops.js:135-151`), sem `instanceId`. Também foi refutada em campo a banda de
+altura 5,0–8,0 espelhando a quebrada: 51,9% contra 51,7% sem ela — ruído.
+
+**Causa medida** (sonda `tools/eval/probe-grafite.mjs`, 102 âncoras na fachada): a pele
+greco-romana (banners z=−4,1 · cornija z=−3,8) flutua 1,3–1,7 m à frente da parede
+(z=−5,5) e três filtros da passada a tornavam impintável —
+1. os olhos de descoberta paravam em 3,1 m: a cornija (5,0–5,55) **nunca virava âncora**
+   (`graffiti_pass.js:267`);
+2. `_alturaParede` sondava a base só a 1,0 m: por baixo do banner (que começa a 1,9) não
+   há nada → teto=1,2 → `semTeto` em qualquer banda alta (16 âncoras de banner assim);
+3. `_temChao` reprova o que sobrasse: banner e cornija têm ar embaixo por construção.
+E a régua media a pele enquanto a tinta estava na parede atrás: 16 peças com topo a 5,0 m
+em z≈−5,44, invisíveis ao censo porque a placa fica a 1,4 m do plano da arte e o limite é
+0,6 (`graffiti-census.mjs` PERTO).
+
+**Correção:** âncora passa a guardar a altura do acerto (`olho`); `_alturaParede` cai pra
+altura do acerto quando a sonda de 1,0 m falha; olhos de descoberta configuráveis
+(`olhos`, e a Loja H usa `[1.55, 3.1, 5.25]`); `exigeChao` ganha versão por banda; banda
+2,5–5,2 da loja_h com `exigeChao: false` e `larg: 1.5` (o banner tem 1,9 e a auditoria
+amostra os cantos — com 1,8 sobravam 5 cm de margem e 3/15 amostras caíam fora); banda
+nova de cornija (`y0 5,0–5,6`, pixo fino).
+
+**Prova com controle e mutação:** rebake do controle (sem a correção) = 45,1% · 20,6% ·
+0/90 — é também a prova de que a régua morde: sem o olho de 5,25 m a faixa de 5,0 m volta
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m) na branch original; na
+árvore da main (com o filtro de âncora baixa do #260, que tira a tinta de caixa
+procedural do 1,6 m) o rebake mede **49,4% · 28% · 54,4%**. Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 49 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
+cornija e peças entre colunas, nada no ar nos ângulos de jogador.
+
+**O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
+peça mas a largura útil limita; e o delta de +6 no-ar não foi isolado peça a peça
+(reshuffle da passada mistura a amostra).
+
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
 
@@ -2371,6 +2515,33 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
+- **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
+  dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
+  comentários `## csbrasil-bot classification`, 4 deles num intervalo de 2 s (03:21:19–03:21:21), todos de
+  `github-actions`. Duas causas encadeadas: (1) o secret `CSBRASIL_BOT_TOKEN` nunca tinha sido criado no repo e o
+  fallback silencioso `|| github.token` fazia o comentário nascer com identidade trocada; (2) um review com N
+  comentários dispara N gatilhos (`pull_request_review`, `pull_request_review_comment` ×3) **no mesmo segundo**: os
+  runs paralelos leem a lista de comentários antes de qualquer um postar, e o dedupe por autor+marcador (que pedia
+  login `csbrasil-bot`) nunca casava com `github-actions` — cada run publicava o seu. Correção: `concurrency.group:
+  pr-classify-<n>` com `cancel-in-progress` serializa por PR; fallback removido com guard que derruba o job alto
+  quando o secret falta; dedupe passou a casar só pelo MARCADOR no corpo (extras deletados, o primeiro atualizado);
+  e os passos de rota/label/comentário migraram para REST puro porque `gh pr edit` resolve nó de user/org via
+  GraphQL e exige scope `read:org` — o vermelho que a PR #350 pegou logo depois do secret entrar (PAT tem
+  `repo,workflow`). Duplicatas das PRs #347/#348 deletadas na mão (sobrou 1 cada). Régua: rajada de gatilhos numa
+  PR não pode produzir mais de 1 comentário com o marcador — mutante: remover o bloco `concurrency` do
+  `csbrasil-bot-pr-classify.yml` reabre a corrida.
+- **~~BUG-67 · revisor local re-revisava o mesmo commit para sempre~~ · RESOLVIDO 18/08.** Evidência:
+  `estado/canarinho.err.log` do bot local com dezenas de `poll: achados is not defined`, sempre após revisar
+  commits diretos (`68f5aff6`, `109982b3`…), reprocessando o MESMO commit a cada ciclo. Causa: `reviewCommits()`
+  referenciava `achados.length` numa função onde a variável não existe (`ReferenceError`) — e como `estado.main`
+  só era gravado DEPOIS do loop, o erro abortava o ciclo antes do avanço: commit re-revisado (custo de LLM a cada
+  10 min) e comentário de commit **re-postado a cada ciclo** quando tinha achados. Correção (infra local do bot):
+  `meta.achados.length` + try/catch por commit + `estado.main` gravado dentro do loop. Sintoma irmão: `✗(opencode
+  run: )` com mensagem vazia era timeout do `spawnSync` (SIGTERM, stderr vazio) — `bots/lib/llm.mjs` agora reporta
+  `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
+  commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
+  branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:
@@ -2452,6 +2623,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   antes de mostrar `#team-select`. UIR39 passa e o mutante que remove o `await` fica vermelho;
   o browser abre a facção diretamente sem espaço vazio nem skeleton.
 
+### ~~BUG-55 · painel "FPS P50" media jank de boot vendido como FPS de jogo~~ · RESOLVIDO 15/08
+
+**Sintoma, nas palavras do dono** (print do painel de desempenho, 15/08): *"FPS P50 1 ·
+média 4 · 98% dos jogadores abaixo de 30 FPS"* — e um jogador relatando *"travando com lag"*.
+
+**Causa raiz.** `_sendPerf()` (`main.js`) rodava no **topo do módulo**, na carga da página:
+a janela de 1 s de rAF abria no primeiro segundo de vida, com a main thread parseando JS e
+compilando shader. Thread ocupada não roda rAF — a contagem media **quanto o boot engasgou**,
+não a partida. P50 1 FPS é o esperado nesse instrumento; o painel rotulava como "FPS".
+
+**Conserto** (`main.js` + `api/perf.ts`): a janela passa a abrir **~4 s após
+`state === 'live'`** (em partida, fora do pico de compile). As três colunas ficam honestas
+sem migration: `fps` = partida · `bootMs` = tempo até **jogável** (antes media fim de parse)
+· `loadMs` = carga do módulo (o ex-bootMs — coluna que existia morta na RPC `track_perf`).
+**Número histórico não é comparável** com o novo: a série antiga mede boot.
+
+**Régua.** TL11 do `tools/eval/telemetry-check.mjs` (três laços: espera por live, descanso
+pós-live, loadMs no payload). Mutação `--mutante=perf-no-live` devolve a medição na carga
+e acende. O lag relatado pelo jogador **não foi refutado** — com fps de jogo + connection +
+quality na mesma amostra, a próxima leitura do painel separa máquina fraca de rede lenta.
+
 - **BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**
   O cliente chamava o método diretamente ao criar `cs_anon` e `awpbr_token`; quando
   `crypto` existia sem `randomUUID`, `getAnonId()` lançava antes do primeiro ping.
@@ -2524,6 +2716,34 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   **O que NÃO foi verificado:** o sistema operacional dele, se estava em pointer lock, e
   se a mira trava com QUALQUER tecla de movimento ou só com W. Perguntar antes de medir —
   sem isso a régua nasce medindo a coisa errada.
+
+- **~~BUG-62 · "A roda gigante deve rodar no mesmo local, igual roda gigante de verdade"~~ · RESOLVIDO 16/08.**
+  O grupo girava na base, 12 m abaixo do cubo: o centro do aro derivava 8,791 m por rotação
+  medida. O pivô agora coincide com o cubo e aro, raios e cabines usam coordenadas locais:
+  distância pivô→aro **12,000 → 0,000 m** e deriva **8,791 → 0,000 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=pivo-base` restaura os dois números antigos e
+  reprova. Custo declarado: nenhum colisor, waypoint ou rota mudou; só os volumes visuais da roda.
+
+- **~~BUG-63 · "Mova a roda gigante mais pra esquerda pois esta pegando na lateral do mapa, que parece uma grama verde"~~ · RESOLVIDO 16/08.**
+  A roda, as cabines, a base e os suportes foram movidos juntos 6 m para dentro da arena.
+  A menor folga do volume animado para a lateral verde foi de **-5,546 → 0,454 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=lateral-verde` restaura a posição antiga,
+  devolve **-5,546 m** e reprova RODA3. Custo declarado: a cobertura jogável sob a atração e
+  seu colisor também se deslocaram 6 m; armas, spawns, bandeiras e limites do mapa não mudaram.
+
+- **~~BUG-64 · "Aumente a altura da Roda Gigante pois os assentos estao pegando na base"~~ · RESOLVIDO 16/08.**
+  O eixo e o topo dos suportes subiram **12,0 → 14,5 m**. Em uma volta completa, a menor
+  folga dos assentos para o topo da base foi de **-2,339 → 0,161 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=altura-baixa` restaura 12 m, devolve
+  **-2,339 m** e reprova RODA4. Custo declarado: a silhueta da atração ficou 2,5 m mais alta;
+  base, colisor, raio, velocidade, armas, spawns e rotas não mudaram.
+
+- **~~BUG-65 · "Ajustes pois os assentos estao pegando no circulo da roda gigante"~~ · RESOLVIDO 16/08.**
+  O aro e os raios foram recuados 1,2 m para um plano estrutural atrás das cabines. A folga
+  em profundidade entre cabines e aro foi de **-1,070 → 0,130 m**.
+  Régua: `npm run eval:parquewheel`; `--mutante=aro-no-assento` restaura o mesmo plano,
+  devolve **-1,070 m** e reprova RODA5. Custo declarado: aro e raios ficaram 1,2 m atrás do
+  cubo; altura, raio, cabines, base, colisores, velocidade, armas, spawns e rotas não mudaram.
 
 - **"E vice-versa" do BUG-01** — partida de CTF *sem* a faixa de bandeiras no HUD. O caminho
   `this.ctf → _initCTF → _updateCtfHud` sempre desconde, então o mecanismo não é o mesmo do

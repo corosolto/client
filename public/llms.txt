@@ -7,7 +7,7 @@
 > O jogo já se chamou **CS BRASIL** — é o mesmo jogo, e o domínio segue o mesmo.
 
 Site: https://www.csbrasil.online
-Código: https://github.com/rubenmarcus/csbrasil (AGPL-3.0)
+Código: https://github.com/corosolto/client (AGPL-3.0)
 
 ## O que é, em uma frase
 
@@ -43,8 +43,8 @@ em Brasília; hoje são 5 mapas originais.
   RANKING do jogo. As URLs `/ranking` e `/u/<id>/<nick>` continuam respondendo,
   com aviso e `noindex`, porque vão voltar no mesmo endereço.
 - **Tecnologia**: Three.js (vanilla, sem framework, sem build) para o jogo;
-  Astro com SSR na Vercel para o site; Supabase para telemetria e para o
-  ranking (que está desligado — ver acima).
+  Astro com SSR na Vercel para o site e para as rotas `/api/*` próprias
+  (telemetria e ranking — o ranking está desligado, ver acima).
 - **Licença**: **AGPL-3.0** desde 07/08/2026 (`LICENSE` na raiz). Contribuições
   anteriores à migração entraram sob MIT e seguem MIT dentro do conjunto.
   O pacote de áudio fica fora do repositório.
@@ -94,8 +94,8 @@ Tab mostra o placar · Esc pausa.
 - O jogo é `public/js/*.js` (vanilla ES modules, Three.js vendored, zero build).
   O índice por linha e a tabela de conflito ficam em `tools/eval/ARCH.md`, que é
   **gerado** por `node tools/gen-arch.mjs` — não edite o bloco gerado à mão.
-- O site é `src/` (Astro). As rotas `/api/*` usam a `service_role` do Supabase,
-  que nunca sai do servidor.
+- O site é `src/` (Astro). As rotas `/api/*` falam com o armazenamento só
+  pelo servidor — credencial nenhuma chega ao navegador.
 - Tarefas boas para começar: `docs/issues/` — 15 issues escritas, cada uma com
   contexto, critério de aceite e arquivos a tocar. **Elas ainda não foram
   abertas no GitHub**; até lá, o `.md` é a fonte.

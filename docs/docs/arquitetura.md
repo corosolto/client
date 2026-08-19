@@ -62,15 +62,15 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 6.560 |
-| `public/js/main.js` | 2.514 |
+| `public/js/game.js` | 6.531 |
+| `public/js/main.js` | 2.591 |
 | `public/js/characters.js` | 1.068 |
 | `public/js/glbchars.js` | 837 |
 | `public/js/vmattach.js` | 628 |
 | `public/js/weapons.js` | 344 |
 | `public/js/springs.js` | 260 |
 
-Total de `public/js/`: **30.206 linhas em 40 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **31.917 linhas em 45 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 
@@ -243,13 +243,16 @@ otimizado para fora.** Um gerador que ninguém é obrigado a rodar desatualiza e
 e aí a documentação volta a mentir com a aparência de rigor — que é pior do que mentir sem
 ela.
 
-:::note O runner não esconde o próximo quality gate
-O `check:fast` passa todos os scripts a `tools/eval/runner.mjs`. Cada passo roda mesmo quando
-o anterior fica vermelho; o placar agregado decide o código de saída no fim. Isso substituiu a
-antiga corrente de `&&`, que deixou o primeiro `docs:check` e o refresh do BUG-02 sem executar.
+:::danger Onde você põe o quality gate novo na corrente importa
+O `check:fast` é uma corrente de `&&`: o primeiro erro corta o resto. O `arch:check` está
+vermelho há dias, então **todo quality gate colocado depois dele nasce morto** — roda zero vezes
+e ninguém percebe, porque a saída para antes. Foi exatamente o que aconteceu na primeira
+versão do `docs:check`, e é o mesmo modo de falha do BUG-02 (o quality gate medindo o viewmodel
+de ontem porque o `&&` cortava antes de o JSON ser regenerado).
 
-A ordem continua explícita no `package.json` para tornar o diagnóstico legível, mas não define
-mais quais gates chegam a rodar.
+Por isso o `docs:check` vem **antes** do `arch:check` no `package.json`, com o motivo
+escrito no `SCRIPTS.md` (chave `check:fast`). Quando o `ARCH.md` for regenerado e o `arch:check` voltar
+a verde, a ordem deixa de importar; até lá, importa.
 :::
 
 Colar um bloco novo é escrever o marcador e rodar `npm run docs`:

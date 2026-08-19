@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-16T03:27:47.239Z",
+ "gerado": "2026-08-15T02:08:04.438Z",
  "nota": "luzes e env MEDIDOS em runtime (harness.mjs); fatores lidos do chunk JSON dos GLB",
  "maps": [
   {
@@ -72,6 +72,18 @@
     ],
     "color": "#ffd39a",
     "intensity": 1.6
+   }
+  },
+  {
+   "map": "obras_prefeitura",
+   "sun": {
+    "pos": [
+     24,
+     40,
+     -14
+    ],
+    "color": "#fff0d0",
+    "intensity": 1.5
    }
   },
   {
@@ -1234,6 +1246,204 @@
        20,
        30,
        -10
+      ]
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@obras_prefeitura",
+   "envMap": "obras_prefeitura",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.242,
+      "color": "#f4ebc4",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.311,
+      "color": "#97c7ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.097,
+      "color": "#a0cbff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.621,
+      "color": "#f4daa8",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.33,
+      "color": "#f4ba7a",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.349,
+      "color": "#88b8ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#33312a"
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@obras_prefeitura",
+   "envMap": "obras_prefeitura",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.242,
+      "color": "#f4ebc4",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.311,
+      "color": "#97c7ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.097,
+      "color": "#a0cbff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.621,
+      "color": "#f4daa8",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.33,
+      "color": "#f4ba7a",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.349,
+      "color": "#88b8ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#33312a"
+     }
+    ]
+   },
+   "exposure": 2.4,
+   "floor": 0.0042,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.5763
+  },
+  {
+   "id": "chao@obras_prefeitura",
+   "envMap": "obras_prefeitura",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.05,
+      "color": "#fff0d8",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#4a4030"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.5,
+      "color": "#fff0d0",
+      "pos": [
+       24,
+       40,
+       -14
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.4,
+      "color": "#dfeeff",
+      "pos": [
+       -18,
+       30,
+       12
       ]
      }
     ]

@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-REPO="rubenmarcus/csbrasil"
+REPO="corosolto/client"
 BRANCH="main"
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DRY=0

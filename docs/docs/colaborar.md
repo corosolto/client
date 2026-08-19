@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**10 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `rubenmarcus`, `Ruben`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**11 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Emerson Garrido`, `Ruben`, `rubenmarcus`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `matheusgb`, `daeeseD`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -30,7 +30,7 @@ qualquer decisão de licença está no `CONTRIBUTING.md` (seção de licença e 
 :::
 
 Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, pode
-demorar. A boa: **quase toda a régua é máquina.** `npm run check` te dá o mesmo veredito
+demorar. A boa: **quase toda a régua é máquina.** `npm run check:fast` te dá o mesmo veredito
 que o mantenedor daria, antes de você abrir o PR, sem esperar ninguém. A barreira é baixa
 **de propósito** — é um dos princípios que não mudam do
 [`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md).
@@ -68,7 +68,7 @@ Use `npm run dev`. Detalhes e prova em
 npm run eval:vm                          # OBRIGATÓRIO ANTES — ver o aviso abaixo
 node tools/eval/invariants.mjs           # o quality gate inteiro
 node tools/eval/invariants.mjs --json    # saída pra máquina
-npm run check                            # syntax + vm + quality gate + coice + bots
+npm run check:fast                       # syntax + quality gate (réguas de node puro)
 ```
 
 :::danger `eval:vm` roda ANTES de `invariants.mjs`. Sempre.
@@ -250,14 +250,19 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.952 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 | `treta_vietnan` | Treta no Vietnã | rodadas | `map_treta_vietnan.js` | 547 |
 
-**8 mapas registrados** — 3 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 10 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**13 mapas registrados** — 3 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 15 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -338,9 +343,12 @@ em `git ls-files public/models/anims`). Doc que manda fazer o que já foi feito 
 primeira contribuição de alguém; por isso a lista virou ponteiro para `docs/issues/`,
 que é mantida.
 
-O único item da lista antiga que **continua valendo**: a mensagem das invariantes
-PX1–PX4 manda usar `tools/eval/motion.mjs`, que não existe (`ls` confirma). Apontar para
-o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
+O único item da lista antiga que **continua valendo** — e agora está consertado:
+a mensagem das invariantes PX1–PX4 apontava para `tools/eval/motion.mjs`, que
+nunca existiu no git (ponteiro fantasma). Hoje as skips declaram honestamente
+"sem arnês dedicado (dívida PX)": o que existe de browser no CI é o
+`portao-browser` (boot real do jogo + grafite + silhueta da seleção), e um
+arnês de viewmodel dedicado continua sendo trabalho aberto.
 :::
 
 ### Trabalho de verdade, ainda acessível

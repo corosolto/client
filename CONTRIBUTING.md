@@ -129,6 +129,18 @@ Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
 ## Antes de abrir o PR
 
+**O `git push` já roda o `check:deploy` sozinho** — é o hook `.githooks/pre-push`.
+Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
+vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
+`arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
+
+É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
+browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
+você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua
+sendo a rede de baixo.
+
+Antes de abrir o PR, o resto continua na sua mão:
+
 ```bash
 npm run check        # quality gate completo
 npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado

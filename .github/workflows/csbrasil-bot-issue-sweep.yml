@@ -11,10 +11,30 @@ permissions:
   pull-requests: read
 
 jobs:
-  review-open-issues:
+  bot-token:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "CSBRASIL_BOT_TOKEN is not configured; skipping bot job."
+          fi
+
+  review-open-issues:
+    needs: bot-token
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: needs.bot-token.outputs.available == 'true'
     env:
-      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065

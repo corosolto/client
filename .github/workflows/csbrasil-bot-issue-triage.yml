@@ -30,7 +30,7 @@ jobs:
       - name: Classify issue
         id: triage
         run: |
-          gh issue view "$ISSUE_NUMBER" --json number,title,url > /tmp/issue.json
+          gh issue view "$ISSUE_NUMBER" --json number,title,url,labels,body,author,state > /tmp/issue.json
           python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
           cat /tmp/triage.json
       - name: Apply labels
@@ -65,6 +65,7 @@ jobs:
           PY
       - name: Suggest crash duplicate
         run: |
+          rm -f /tmp/crashes.json
           python3 - <<'PY'
           import json, subprocess, pathlib
           current = json.load(open('/tmp/issue.json'))
@@ -81,6 +82,13 @@ jobs:
               'others': data,
           }))
           PY
+          # Guarda na SHELL: SystemExit(0) do python só encerra o INTERPRETADOR —
+          # a shell seguia pra ler /tmp/crashes.json que não existia e o passo
+          # morria em TODA issue não-crash (8 failures seguidas, 17-18/08).
+          if [ ! -f /tmp/crashes.json ]; then
+            echo "issue não é crash-auto — dedupe pulado"
+            exit 0
+          fi
           python3 scripts/ci/crash_dedupe.py < /tmp/crashes.json > /tmp/dup.json
           python3 - <<'PY'
           import json, os, subprocess
@@ -88,11 +96,14 @@ jobs:
           if not dup:
               raise SystemExit(0)
           body = (
-              "Possível duplicata automática detectada.\n\n"
-              f"- candidata: #{dup['number']} — {dup['title']}\n"
-              f"- link: {dup['url']}\n"
-              f"- similaridade: {dup['score']}\n\n"
-              "Sugestão do bot apenas; fechamento continua humano."
+              "> [!TIP]\n"
+              "> **Possível duplicata detectada automaticamente.**\n"
+              "> \n"
+              f"> - candidata: **#{dup['number']}** — {dup['title']}\n"
+              f"> - similaridade: **{dup['score']}**\n"
+              f"> - comparar: {dup['url']}\n"
+              "\n"
+              "Sugestão de bot — o fechamento continua sendo humano."
           )
           subprocess.run([
               'gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'],

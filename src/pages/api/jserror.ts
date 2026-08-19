@@ -114,7 +114,7 @@ export const POST: APIRoute = async ({ request }) => {
           .is('dispatched_at', null)
           .select('fingerprint');
         if (escaladas?.length) {
-          const resp = await fetch(`https://api.github.com/repos/${process.env.GH_DISPATCH_REPO || 'rubenmarcus/csbrasil'}/dispatches`, {
+          const resp = await fetch(`https://api.github.com/repos/${process.env.GH_DISPATCH_REPO || 'corosolto/client'}/dispatches`, {
             method: 'POST',
             signal: AbortSignal.timeout(2000),
             headers: {

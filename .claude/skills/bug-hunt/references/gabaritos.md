@@ -84,8 +84,8 @@ que mais falta.
 esconde o buraco transfere o custo para quem confiar nele — e nesta base o custo já foi medido em
 dias. Modelos de frase que servem:
 
-- *"`npm run check` não rodou inteiro: parei no `eval:invariants`, que leva ~10-12 min. Rodei
-  `check:fast` verde e a régua nova com as duas mutações."*
+- *"`check:fast` verde e a régua nova com as duas mutações; os passos de browser não rodei
+  (exigem o portão lento)."*
 - *"Medido só em 1536×1024 (3:2). Não olhei 16:9."*
 - *"A régua nova não cobre o caminho do bot, só o do jogador. O bot continua sem medição aqui."*
 - *"Não reproduzi no navegador; a evidência é do motor em node."*
@@ -99,9 +99,7 @@ está o número"* fecha uma porta e economiza a rodada seguinte.
 
 ```bash
 npm run check:fast   # segundos
-npm run check        # completo
-npm run arch         # se mexeu em public/js — o ARCH.md é gerado
-npm run docs         # se algum número de estado mudou
+npm run eval:vm      # ANTES de invariants.mjs, se foi chamado à mão
 npm run build        # o site tem que buildar
 npm run check:seo    # se mexeu em src/ ou public/llms.txt
 ```

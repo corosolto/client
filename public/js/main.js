@@ -653,7 +653,7 @@ let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTE
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
-/* ---------------- TELEMETRIA ANÔNIMA (ver supabase/migrations/012) ----------------
+/* ---------------- TELEMETRIA ANÔNIMA (contrato em tools/eval/telemetry-check) --------------
    O ranking está desligado (src/lib/site.ts, RANKING_ON) mas a MEDIÇÃO não: o dono
    quer saber quanto tempo se joga e em que mapa.
 
@@ -769,9 +769,9 @@ function _pingPresenca() {
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
  * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
- * evento) e passam a morar no NOSSO Postgres, lidos pelo painel admin. Mesma regra das
+ * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
  * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
- * Ver supabase/migrations/016-019 e /api/{match,funnel,perf,acquisition}. */
+ * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (testMode) return;
@@ -810,14 +810,29 @@ async function _sendAcquisition() {
     _acqSent = true;
   } catch { /* fail-silent */ }
 }
-// PERF (018): 1x por sessão, depois do boot. boot_ms = performance.now() no fim do módulo;
-// fps = contagem de frames em 1s de rAF; dispositivo = tier aproximado (nada fino pra não
-// virar fingerprint). Renderer GPU sai de um canvas descartável (não do renderer do jogo).
+// PERF (018): 1x por sessão, EM PARTIDA. fps = contagem de frames em 1s de rAF
+// ~4s após o state==='live' (fora da janela de compile de shader); bootMs = tempo
+// até JOGÁVEL; loadMs = carga do módulo (o que bootMs media antes — sinal mantido).
+// Até 15/08 a janela de fps media o 1º segundo de vida da página: main thread
+// parseando JS e compilando shader não roda rAF, e o painel vendia esse jank de
+// BOOT como "FPS P50" (98% < 30 FPS no print do dono) — número que media outra coisa.
 let _perfSent = false;
+const _perfLoadMs = Math.round(performance.now());
 function _sendPerf() {
   if (testMode || _perfSent) return;
   _perfSent = true;
-  const bootMs = Math.round(performance.now());
+  const aguardaLive = () => {
+    const g = window.__game;
+    if (!g || g.state !== 'live') {
+      if (performance.now() - _perfLoadMs < 120000) setTimeout(aguardaLive, 250);
+      return;
+    }
+    const bootMs = Math.round(performance.now());
+    setTimeout(() => _perfMedeFps(bootMs), 4000);
+  };
+  aguardaLive();
+}
+function _perfMedeFps(bootMs) {
   let frames = 0; const t0 = performance.now();
   const tick = () => { frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
   requestAnimationFrame(tick);
@@ -832,7 +847,7 @@ function _perfFinish(bootMs, frames) {
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
     anonId: getAnonId(), version: VERSION,
-    fps: frames, bootMs,
+    fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
@@ -1484,17 +1499,64 @@ const MAP_DESC = {
   quebrada: 'Rua de baile: muros baixos, beco cego e o paredão marcando o compasso do round.',
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
+  parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
+  velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
+  upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
+  obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
   treta_vietnan: 'Selva úmida, vilarejo de madeira e guaritas elevadas: domine as rampas para controlar o campo de batalha.',
 };
-const MAP_CAT = {
-  praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
-  ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
-  atacadao_treta: 'CIDADES',
-  treta_vietnan: 'ARENA',
+/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
+ * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
+ * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
+ * arquivo do mapa); OFICIAL é o autor da casa. */
+const MAP_CATS = {
+  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
+  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
+  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
+  parque_treta: ['ARENA', 'COMUNIDADE'],
+  velho_oeste: ['ARENA', 'COMUNIDADE'],
+  penitenciaria: ['ARENA', 'COMUNIDADE'],
+  upa_24h: ['ARENA', 'COMUNIDADE'],
+  obras_prefeitura: ['ARENA', 'COMUNIDADE'],
+  treta_vietnan: ['ARENA', 'COMUNIDADE'],
 };
+const MAP_AUTOR = {
+  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
+  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Ruben Marcus',
+  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
+  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
+  upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
+  treta_vietnan: 'Ubiracy Santos',
+};
+const MAP_DATA = {
+  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
+  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
+  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
+  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
+  upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
+  treta_vietnan: '18/08/2026',
+};
+const CAT_DESC = {
+  TODOS: 'O acervo inteiro: oficial e comunidade, arena e cidade.',
+  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
+  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
+  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
+  COMUNIDADE: 'Autoria da comunidade — o crachá de cada mapa diz quem fez.',
+  AI: 'Construídos pelos agentes de IA da casa.',
+};
+const AUTOR_CASA = 'Ruben Marcus';
+const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
+const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
+const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
 let mapCategory = 'TODOS';
+let mapAutorFiltro = 'TODOS';
+function autoresDeComunidade() {
+  return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
+}
 function visibleMapIds() {
-  return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);
+  return MAP_IDS.filter((id) => (mapCategory === 'TODOS' || catsDe(id).includes(mapCategory))
+    && (mapCategory !== 'COMUNIDADE' || mapAutorFiltro === 'TODOS' || autorDe(id) === mapAutorFiltro));
 }
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
@@ -1506,9 +1568,24 @@ function renderMapScreen() {
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
   $('ms-desc').textContent = tr(MAP_DESC[currentMap] || '');
   syncMapOptions();
-  const cat = MAP_CAT[currentMap] || 'ARENA';
+  const cats = catsDe(currentMap);
   const catEl = $('ms-cat');
-  catEl.textContent = tr(cat); catEl.dataset.cat = cat;
+  catEl.innerHTML = cats.map((c) => `<span data-cat="${c}">${tr(c)}</span>`).join('<span class="ms-sep">·</span>');
+  const byline = $('ms-byline');
+  if (byline) byline.innerHTML = `${tr('por')} <strong>${autorDe(currentMap)}</strong> · ${MAP_DATA[currentMap] || ''}` +
+    (oficialDe(currentMap) ? ` <span class="ms-badge-oficial">${tr('OFICIAL')}</span>` : ` <span class="ms-badge-comunidade">${tr('COMUNIDADE')}</span>`);
+  const desc = $('ms-cat-desc');
+  if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
+  const autores = $('ms-authors');
+  if (autores) {
+    const emComunidade = mapCategory === 'COMUNIDADE';
+    autores.hidden = !emComunidade;
+    if (emComunidade) autores.innerHTML = ['TODOS', ...autoresDeComunidade()].map((a) =>
+      `<button class="ms-author${a === mapAutorFiltro ? ' on' : ''}" data-autor="${a}" type="button">${tr(a) || a}</button>`).join('');
+    autores.querySelectorAll('.ms-author').forEach((b) => {
+      b.onclick = () => { ui.click(); mapAutorFiltro = b.dataset.autor; renderMapScreen(); };
+    });
+  }
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
   const shown = visibleMapIds();
   $('ms-strip').style.setProperty('--map-count', shown.length);
@@ -1516,7 +1593,7 @@ function renderMapScreen() {
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
       `<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
-      `<span class="ms-thumb-cat" data-cat="${MAP_CAT[id] || 'ARENA'}">${tr(MAP_CAT[id] || 'ARENA')}</span></span>` +
+      `<span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span></span>` +
       `${id === currentMap ? '<i class="ms-diamond" aria-hidden="true"></i>' : ''}</button>`).join('');
   document.querySelectorAll('.ms-tab').forEach((tab) => {
     const on = tab.dataset.cat === mapCategory;
@@ -1541,8 +1618,8 @@ $('ms-next').onclick = () => stepMap(1, visibleMapIds());
 document.querySelectorAll('.ms-tab').forEach((tab) => {
   tab.onclick = () => {
     ui.click(); mapCategory = tab.dataset.cat || 'TODOS';
-    const first = MAP_IDS.find((id) => mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory);
-    if (first && !MAP_IDS.some((id) => id === currentMap && (mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory))) gotoMap(MAP_IDS.indexOf(first));
+    const first = visibleMapIds()[0];
+    if (first && !visibleMapIds().includes(currentMap)) gotoMap(MAP_IDS.indexOf(first));
     else renderMapScreen();
   };
 });

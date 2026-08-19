@@ -1,0 +1,142 @@
+# portao-browser — O PORTÃO LENTO, o de NAVEGADOR.
+#
+# POR QUE ESTE ARQUIVO EXISTE (issue #83)
+#   O `check:fast` e o ci.yml (pr-fast) rodam TODAS as réguas em node puro. E o que
+#   roda em node é cego para o que os GLB fazem: os barracos da Quebrada, as empenas
+#   da Brasília e as fachadas do Ferro Velho não existem fora do navegador, então
+#   `decal-probe` jurava 334 peças enquanto o dono via 12,7% de parede pintada — 238
+#   decalques morrendo calados, uma classe inteira de defeito SEM PORTÃO. As réguas
+#   que enxergam isso (`eval:grafite`, `eval:select`) existem, exigem servidor no ar
+#   + Chrome + WebGL, e por isso ficaram FORA do portão. Este workflow é esse portão.
+#
+# POR QUE SEPARADO E NÃO DENTRO DO ci.yml
+#   SwiftShader (render por software, o que roda no CI) faz o jogo a ~0,3 FPS e cada
+#   mapa custa minutos (ver docs/docs/instrumentacao-ai.md). Juntar com o pr-fast
+#   tornaria lento o portão que precisa ser rápido. Aqui é o portão LENTO: roda na
+#   `main` e só em PR que toque mapa/personagem/grafite (o filtro `paths`), como o
+#   smoke-web.yml já faz para as rotas do site.
+#
+# O QUE ELE PROVA
+#   · eval:grafite  — cobertura de parede pintada por mapa contra o META declarado em
+#                     graffiti-census.mjs; o census agora SAI != 0 abaixo da meta.
+#   · eval:select   — a silhueta/pose da tela de seleção contra os personagens elogiados.
+#   Em falha: anexa os JSON (número) e roda eval:grafite:ar --fotos (imagem do porquê).
+name: portao-browser
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'public/js/map_*.js'
+      - 'public/js/maps.js'
+      - 'public/js/mapprops.js'
+      - 'public/js/map_decals.js'
+      - 'public/js/graffiti_pass.js'
+      - 'public/js/graffiti_layout.js'
+      - 'public/js/characters.js'
+      - 'public/js/glbchars.js'
+      # Caminho do VIEWMODEL: o eval:select deste portão é o único lugar do CI
+      # que boota o jogo REAL em browser (?debug=1) — sem estas paths, PR que
+      # mexe em game.js/armas/molas passava pelo portão rápido cego para boot
+      # e render da tela de seleção (as PX de browser seguem sem arnês próprio).
+      - 'public/js/game.js'
+      - 'public/js/weapons.js'
+      - 'public/js/recoil.js'
+      - 'public/js/springs.js'
+      - 'public/js/data/weapons.js'
+      - 'public/models/**'
+      - 'public/mapview.html'
+      - 'tools/eval/graffiti-census.mjs'
+      - 'tools/eval/graffiti-audit.mjs'
+      - 'tools/eval/select-inflate.mjs'
+      - 'tools/eval/serve.mjs'
+      - '.github/workflows/portao-browser.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: portao-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  portao:
+    runs-on: ubuntu-latest
+    # SwiftShader é lento de propósito (é o preço do render por software); os 5 mapas
+    # + os personagens da seleção cabem folgado em 45 min, e o teto evita runner preso.
+    timeout-minutes: 45
+    env:
+      BASE: http://localhost:8123
+      # Os arnêses de navegador importam o Playwright do root GLOBAL (npm root -g) e
+      # dirigem o Chromium por CHROME_BIN; PLAYWRIGHT_BROWSERS_PATH fixa onde ele instala.
+      PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # graffiti-census/graffiti-audit/select-inflate fazem `import(npm root -g +
+      # /playwright/index.js)`: o Playwright precisa existir no GLOBAL, na mesma versão
+      # do devDependency, não só no node_modules local.
+      - name: Playwright global (mesma versão do devDependency)
+        run: npm i -g "playwright@$(node -pe "require('./package.json').devDependencies.playwright.replace(/^[^0-9]*/,'')")"
+
+      - name: Instala Chromium + libs do sistema
+        run: npx playwright install --with-deps chromium
+
+      # Quem sabe onde o binário caiu é o próprio Playwright: o layout da pasta muda entre
+      # versões (chrome-linux -> chrome-linux64) e um glob que não casa vira string vazia
+      # sem derrubar o `echo` — CHROME_BIN saía vazio e a régua caía no canal 'chrome',
+      # procurando o Chrome do macOS num runner Linux. Aqui falha alto em vez de degradar.
+      - name: Resolve CHROME_BIN (Chromium do Playwright)
+        run: |
+          BIN="$(node -e "console.log(require('playwright').chromium.executablePath())")"
+          test -x "$BIN" || { echo "CHROME_BIN não resolveu para um executável: [$BIN]"; exit 1; }
+          echo "CHROME_BIN=$BIN" >> "$GITHUB_ENV"
+
+      - name: Sobe o eval:serve em background
+        run: npm run eval:serve >/tmp/eval-serve.log 2>&1 &
+
+      - name: Espera o servidor responder
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8123/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/eval-serve.log
+          exit 1
+
+      # JSON=1 congela os números como artefato mesmo quando passa.
+      - name: eval:grafite (cobertura de parede pintada, 5 mapas)
+        env:
+          JSON: '1'
+        run: npm run eval:grafite
+
+      # Roda mesmo com o grafite vermelho: são réguas independentes, e com o `success()`
+      # padrão uma regressão de silhueta ficaria invisível justo quando já há falha.
+      # `!cancelled()` e não `always()` — corrida cancelada deve parar de verdade.
+      - name: eval:select (silhueta da tela de seleção)
+        if: ${{ !cancelled() }}
+        run: npm run eval:select
+
+      # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
+      - name: Fotos das piores células (só em falha)
+        if: failure()
+        run: npm run eval:grafite:ar -- --fotos 6 || true
+
+      - name: Anexa capturas e números da falha
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: portao-browser-artifacts
+          path: |
+            tools/eval/graffiti_census.json
+            tools/eval/graffiti_audit.json
+            tools/eval/select_inflate.json
+            /tmp/graffiti-audit/**
+            /tmp/eval-serve.log
+          if-no-files-found: ignore

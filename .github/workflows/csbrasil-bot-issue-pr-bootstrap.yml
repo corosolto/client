@@ -13,6 +13,7 @@ permissions:
 jobs:
   bot-token:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       available: ${{ steps.check.outputs.available }}
     steps:
@@ -35,6 +36,7 @@ jobs:
       startsWith(github.event.comment.body, '/bot-fix') &&
       contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
       ISSUE_NUMBER: ${{ github.event.issue.number }}
