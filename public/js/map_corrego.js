@@ -18,13 +18,13 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 24, HALF_Z = 40;
-export const CORREGO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
+export const CORREGO_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacare/capivara (só este mapa baixa)
 const CORREGO_W = 10;         // eixo largo o bastante para dominar a leitura aérea e em FPS
 const CORREGO_X0 = -CORREGO_W / 2, CORREGO_X1 = CORREGO_W / 2;
 
@@ -641,7 +641,19 @@ export function buildCorrego(scene, T) {
     // ele não tem collider nenhum (nada aqui passa por addBox), e era o único bicho
     // do mapa que nenhuma régua olhava.
     gJacare.userData.fauna = 'jacare'; gJacare.userData.nonCollider = true;
+    /* GLB do Mint no lugar do proxy (BUG-57: "eu tinha usado o mint gg pra fazer
+       jacare e capivara e nao vejo"). Assentado no FUNDO: a lâmina de 14 cm cobre
+       ~30% do corpo — dorso e olhos de fora, a leitura clássica. Focinho do GLB
+       aponta −X (medido no loader; ver ambientlife.js) e o yawFix do placeFauna o
+       leva para +Z — a mesma direção do proxy com ry = .22. Sem template (node, ou
+       ?glb=0) o proxy procedural acima continua servindo — cláusulas do fallback. */
+    const jacareGlb = placeFauna('jacare', { x: jx, y: CANAL_FUNDO, z: jz, ry: .22 });
     root.add(gJacare);
+    if (jacareGlb) {
+      jacareGlb.userData.fauna = 'jacare'; jacareGlb.userData.nonCollider = true;
+      root.add(jacareGlb);
+      gJacare.visible = false; gJacare.userData.faunaProxy = 'jacare';
+    }
   }
 
   /* ===================== CAPIVARA (na margem alagada sul) ===================== */
@@ -697,7 +709,16 @@ export function buildCorrego(scene, T) {
     gCap.userData.fauna = 'capivara';
     gCap.userData.nonCollider = true;
     gCap.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    /* GLB do Mint (ficha plans/21-FAUNA-CORREGO.md, revisão APROVADA com scale 1,0 —
+       1,0 m comp × 0,58 alt). Pés no chão do alagado (groundHeightAt 0,05 em |z| ≥ 35),
+       focinho +Z nativo com o mesmo ry = .35 do proxy. Fallback: proxy procedural. */
+    const capivaraGlb = placeFauna('capivara', { x: cx, y: 0.05, z: cz, ry: .35 });
     root.add(gCap);
+    if (capivaraGlb) {
+      capivaraGlb.userData.fauna = 'capivara'; capivaraGlb.userData.nonCollider = true;
+      root.add(capivaraGlb);
+      gCap.visible = false; gCap.userData.faunaProxy = 'capivara';
+    }
   }
   // Contexto material do trio: manilha e sacos no canto evitam a leitura de três
   // objetos soltos no meio de uma esplanada limpa.
