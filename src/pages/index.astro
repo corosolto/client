@@ -770,7 +770,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
-<div id="map-screen" class="screen cine-surface hidden" data-ui-layout="map-broadcast">
+<div id="map-screen" class="screen hidden">
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
   <div class="ms-scrim"></div>
   <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
@@ -781,11 +781,10 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
     <button class="ms-tab" data-cat="CIDADES" type="button" role="tab" aria-selected="false">CIDADES</button>
     <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
   </div>
-  <header class="ms-head map-story">
-    <small>O PALCO DA TRETA</small>
+  <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
+  <div id="ms-authors" class="ms-authors" hidden></div>
+  <header class="ms-head">
     <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span></div>
-    <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
-    <div id="ms-authors" class="ms-authors" hidden></div>
     <h2 id="ms-name" class="ms-name"> - </h2>
     <p id="ms-meta" class="ms-meta"></p>
     <p id="ms-desc" class="ms-desc"></p>
@@ -813,9 +812,11 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
       </label>
     </div>
   </header>
-  <button id="ms-prev" class="map-arrow ms-arrow ms-arrow-l" type="button" aria-label="mapa anterior">‹</button>
-  <button id="ms-next" class="map-arrow ms-arrow ms-arrow-r" type="button" aria-label="próximo mapa">›</button>
-  <div class="ms-strip map-reel" id="ms-strip"></div>
+  <div class="ms-carousel">
+    <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">‹</button>
+    <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
+    <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">›</button>
+  </div>
   <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
   <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
   <div class="ms-actions">
