@@ -6,7 +6,7 @@ import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL
 export const prerender = false;
 const V = pkg.version;
 /* A lista à mão saiu daqui (BUG-39): o manifesto de `public/js` inteiro é injetado
-   pelo astro.config como `__MANIFESTO_JS__` (calculado UMA vez no build — nunca
+   pelo astro.config como `__MANIFESTO_JS__` (calculado UMA vez no build  -  nunca
    ler disco no request: classe do #194, "200 com 0 bytes" na Vercel), então mapa
    novo entra no import map sozinho. O `revision` é o hash do CONTEÚDO dos módulos:
    sem ele, `?v=` só mudava quando `pkg.version` mudava e o edge servia JS velho. */
