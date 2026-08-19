@@ -140,6 +140,60 @@ DECAL_FILES (`textures.js`), coberto pelo portão GRAFFITI-EDITORIAL.
 - `decals/or-pixo-rj-pique.png` SHA-256 `dcf271752d31c033167df262dea6f125401f966f4ea8c66acdfd9a3f0e5f8fcf` (Mint chat `ph7add4g19skstd0763wp5g2bh8crj87`).
 - `decals/or-pixo-rj-onda.png` SHA-256 `386b578cfa97706ade717bb918fd8b03d70c4dc221327470c7d9b5fbc239b66c` (Mint chat `ph7c2kh4jjvcsmwjatex5rjy9x8cr862`).
 
+## Pack pixo SP×RJ — lote 2 (19/08/2026, OpenRouter GPT)
+
+Obra própria gerada com `tools/gen-image.mjs` via OpenRouter, modelo
+`openai/gpt-5.4-image-2` (id confirmado em /api/v1/models), `--n 2 --raw-only`:
+duas variações por decal, escolha a olho em folha de revisão, publicação com
+`--from` (o arquivo commitado é byte a byte o que foi visto). Referências de
+estilo (`--ref`): os decals do lote 1 (`sp-coro`, `sp-varal`, `rj-solto`,
+`rj-trem`). Realismo pedido no prompt: textura de tinta de verdade (spray com
+overspray e escorrido, rolo com cobertura irregular e fade, canetão com streaks),
+sempre em fundo branco liso — exigência do recorte `--pack`. Linha editorial
+mantida: vocábulos do universo do jogo, signos pictóricos inventados, nenhuma
+assinatura/grife real. O último item (rj-peca-rio) teve só a v1 gerada: o
+segundo crédito da chamada estourou o saldo OpenRouter (HTTP 402); a v1 foi
+aprovada na revisão e publicada.
+
+- `decals/or-pixo-sp-travessa.png` SHA-256 `dd796296f5c373980a700c52d94eaab902f06759ee0b95e5db19f43471f4de4a` (v1).
+- `decals/or-pixo-sp-antena.png` SHA-256 `74a0ccd268276fcc642e560dac7a2d96ea20073295ae118e26990c83e7a913a3` (v1).
+- `decals/or-pixo-sp-cimento.png` SHA-256 `e00aa877128e19004682b6e666518274fd0fbbb770e0756a0e9a46b539cb1391` (v1).
+- `decals/or-pixo-sp-cinza.png` SHA-256 `68c7726f53a97b36524d4ab1c3cf316d58eb45151d37cf7722b5cb6ca3ce4280` (v1).
+- `decals/or-pixo-sp-escada.png` SHA-256 `341f1d9eed3f8aaac425174726338884984657c4bd25e9cbb74c95222d00b4de` (v1).
+- `decals/or-pixo-sp-fumaca.png` SHA-256 `ad350e4077f36568809c97a7ad45a090a3345fb853b1a0793e43007d0a7047b6` (v2).
+- `decals/or-pixo-sp-ladeira.png` SHA-256 `86751d1f7508db3bebbdcc9b2f61dd459069d8434927daa35a084d93f1c6ac84` (v1).
+- `decals/or-pixo-sp-coroa.png` SHA-256 `430b626f40c4c6128d3e04e9b586c216a0f59da7ca2f57e9d311b2713509b364` (v1).
+- `decals/or-pixo-sp-estrela.png` SHA-256 `22ef42dc6048764976c9d4efbe14db8a70d3ea9f2d2ab604291436d9a8a81716` (v1).
+- `decals/or-pixo-sp-flecha.png` SHA-256 `ca4a066c58b511a862ce5c4523bd70790f246ced4a8defdf05d7eea21f2b64b2` (v1).
+- `decals/or-pixo-sp-raio.png` SHA-256 `3aa4a069537854428c71c1deef212df411b34bfdc30c57cc809ba404cf7238cd` (v2).
+- `decals/or-pixo-sp-poeira.png` SHA-256 `f7b7dd1203af62463db08f56586fb480eb4ec8817a33fb4938e44fb04ec63dad` (v1).
+- `decals/or-pixo-sp-portao.png` SHA-256 `c03b31711f38baa996bf2ff8bcae3494fd2e197006647725cba00115fe661eef` (v1).
+- `decals/or-pixo-sp-reboco.png` SHA-256 `a1f481a121a578ff4918bf2a5a889fbaf3631b2eed285fb7b08a55064e3570f1` (v2).
+- `decals/or-pixo-sp-rolo.png` SHA-256 `77729735bc8b1e5c695a0057ff9547c2040e1cf29954b54e928d93221895e27e` (v1).
+- `decals/or-pixo-sp-telha.png` SHA-256 `f99cc74d373ed962ffddb13adf86306d5190de80f01281259bfb16d80a7e8254` (v1).
+- `decals/or-pixo-sp-tijolo.png` SHA-256 `bfbef5c718314976339a3855305c1a07a81c60e917899e65051ee4b91e6996ec` (v2).
+- `decals/or-pixo-sp-tinta.png` SHA-256 `5a33389b81566afde7c1143f13eeefd56b59ecd0e4a2ad0e983f2671ece35dea` (v1).
+- `decals/or-pixo-sp-viaduto.png` SHA-256 `39a34b5747753ef9d2ea0db75518d7f99b2ca419b1bfa925ba9c8b699ddbe2cf` (v2).
+- `decals/or-pixo-rj-areia.png` SHA-256 `f43583de6c08ee533e25800cf0ed828942aeff1723e0ab07ed2519717662682a` (v1).
+- `decals/or-pixo-rj-baixada.png` SHA-256 `bd788ad3a456e8b4614c3292896d5e16c164edb00e2990ed50ff48d976e16f9b` (v2).
+- `decals/or-pixo-rj-bonde.png` SHA-256 `a9ef17053687642e7d42543ba7fd780660bfb23006531ad4741429065a12549c` (v1).
+- `decals/or-pixo-rj-calcada.png` SHA-256 `f6c9cb0d604f39476929dd7ebb0de59e22bcffbc14e1e124560715986f02b837` (v2).
+- `decals/or-pixo-rj-calor.png` SHA-256 `f10b88811e10b8501cfd4a2920b6b0172ec53f6e5c422bdf7063ff65d7480895` (v2).
+- `decals/or-pixo-rj-descida.png` SHA-256 `ab7e682243de83d5f7be9aa355faad0dc7d25b28b5a6e518463e569777b63049` (v1).
+- `decals/or-pixo-rj-estacao.png` SHA-256 `b231172f5c9068d788cb9609581ea53324009070dc48deb15aff2d401609ecde` (v2).
+- `decals/or-pixo-rj-ferro.png` SHA-256 `cca46c77b843cbb687791d3fe470b46c96a09ce616f97631ca50d41b25a2a7b5` (v2).
+- `decals/or-pixo-rj-lagoa.png` SHA-256 `b7e31507a7a2e5b394fc30cf619ee0c4e5b4bcfc64008d5b061f4f8c3b828e71` (v2).
+- `decals/or-pixo-rj-mureta.png` SHA-256 `eccc1729ffab6d94b4a0cd0e45514a2f7662446fd0308d38e4914040e2111a2b` (v1).
+- `decals/or-pixo-rj-ce.png` SHA-256 `09ecc7d5b74394a0995cc8fcf8bc8a2d198ae506abdc420dc35dffef760f5d2a` (v2).
+- `decals/or-pixo-rj-lua.png` SHA-256 `713d23e5d2b63fcf3017fb916a9cd8b3cef22b4c9b1d5922d4a564ba43670e43` (v2).
+- `decals/or-pixo-rj-rio.png` SHA-256 `271ff012d977093e89656431c2b0a49d1a03c497c938a869deebae4ab9d9c326` (v1).
+- `decals/or-pixo-rj-sol.png` SHA-256 `ef0ce19010f8948ec60d9482db441848f01289b57f8aab273e663ec1d68fcedb` (v1).
+- `decals/or-pixo-rj-pedra.png` SHA-256 `2aca9b972fc9e227db8393594b767ecc1cf6041973a76a96fdce292b93210ba8` (v1).
+- `decals/or-pixo-rj-praia.png` SHA-256 `2f7a80777a8c1f4ddc69143d4ddcedb82a81abf338b70cc6f846a729244040df` (v1).
+- `decals/or-pixo-rj-sinal.png` SHA-256 `0b4fb90fa316147974766e49553c55262d884c70299fd6463af5ee24814f6dcd` (v2).
+- `decals/or-pixo-rj-suburbio.png` SHA-256 `763d9b81f3a05cd8a8bb92661f5480fb108946677d251a853e7295e261f9bc77` (v2).
+- `decals/or-pixo-rj-trilho.png` SHA-256 `75df2b41806ffcec90670564621b3b42319e77c0895381bf17d991d18b7d5705` (v1).
+
 ## Horizontes dos mapas originais
 
 Todos usam placa horizontal 2:1, horizonte baixo e contínuo, sem texto, marca,

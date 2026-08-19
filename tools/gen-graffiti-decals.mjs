@@ -647,31 +647,36 @@ window.__recorta = async (uri, opt) => {
 }
 
 /* ── MODO --pack (frente F, v2.1) ─────────────────────────────────────────────
- * Pack pixo SP×RJ: obra própria (Mint), UM pixo por arquivo-fonte, fundo liso —
- * então não precisa do segmentador multi-peça do Chrome. Mesmas medidas de aceite
- * do fluxo principal (COBERTURA_MIN / BORDA_MAX, números medidos na 4ª rodada).
+ * Pack pixo SP×RJ: obra própria (Mint/OpenRouter), UM pixo por arquivo-fonte,
+ * fundo liso — então não precisa do segmentador multi-peça do Chrome. Mesmas
+ * medidas de aceite do fluxo principal (COBERTURA_MIN / BORDA_MAX, medidos na
+ * 4ª rodada; CINZA_MAX, medido na 1ª geração do pack).
  * Fonte: references/graffiti/pack/<cidade>-<slug>.<ext>  (cidade: sp | rj)
+ *        ou <cidade>-peca-<slug>.<ext> para tipo 'peca' (padrão: 'tag')
  * Saída: public/img/decals/or-pixo-<cidade>-<slug>.png + bloco PIXO-PACK no
  * textures.js + folha de contato tools/eval/out/pixo-pack-sheet.png.          */
 async function packPixos() {
   const SRC_PACK = path.join(SRC, 'pack');
   if (!existsSync(SRC_PACK)) {
-    console.error('[pack] references/graffiti/pack não existe — gere os pixos (Mint) antes.');
+    console.error('[pack] references/graffiti/pack não existe — gere os pixos antes.');
     process.exit(1);
   }
   const sharp = (await import('sharp')).default;
+  const NOME = /^(sp|rj)(?:-(peca))?-([a-z0-9-]+)\.(png|jpe?g|webp)$/i;
   const arquivos = readdirSync(SRC_PACK).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
-  const validas = arquivos.filter((f) => /^(sp|rj)-[a-z0-9-]+\.\w+$/i.test(f)).sort();
+  const validas = arquivos.filter((f) => NOME.test(f)).sort();
   for (const f of arquivos.filter((f) => !validas.includes(f)))
-    console.warn(`[pack] AVISO: "${f}" fora do padrão <cidade>-<slug>.<ext> (cidade sp|rj) — ignorada`);
+    console.warn(`[pack] AVISO: "${f}" fora do padrão <cidade>[-peca]-<slug>.<ext> (cidade sp|rj) — ignorada`);
   if (!validas.length) { console.error('[pack] nenhuma fonte válida em references/graffiti/pack'); process.exit(1); }
 
   mkdirSync(OUT, { recursive: true });
   const manifesto = [];
   let reprovados = 0;
   for (const f of validas) {
-    const cidade = f.slice(0, 2).toUpperCase();
-    const nome = `or-pixo-${f.replace(/\.\w+$/, '')}.png`;
+    const m = NOME.exec(f);
+    const cidade = m[1].toUpperCase();
+    const tipo = (m[2] || 'tag').toLowerCase();
+    const nome = `or-pixo-${cidade.toLowerCase()}-${m[3]}.png`;
     const r = await recortaPlano(path.join(SRC_PACK, f), sharp);
     if (!r || r.cobertura < COBERTURA_MIN || r.borda > BORDA_MAX || r.cinza > CINZA_MAX) {
       console.error(`  ✗ ${nome}: ${!r ? 'sem tinta após o recorte (ou fonte não é tinta escura sobre fundo claro)'
@@ -685,7 +690,7 @@ async function packPixos() {
     manifesto.push({
       file: nome, w: r.w, h: r.h,
       aspect: Math.round((r.w / r.h) * 1000) / 1000,
-      tipo: 'tag', claro: r.lum > 128, cidade, origem: `pack/${f}`,
+      tipo, claro: r.lum > 128, cidade, origem: `pack/${f}`,
       cobertura: r.cobertura, borda: r.borda, cinza: r.cinza,
     });
     console.log(`  ✓ ${nome} [${cidade}] ${r.w}×${r.h} cobertura ${r.cobertura} borda ${r.borda} cinza ${r.cinza}`);
