@@ -61,12 +61,14 @@ const COBERTURA_MIN = 0.04;
  * não há nenhum arquivo entre 0,105 e 0,214 pra o teto ter que arbitrar. */
 const BORDA_MAX = 0.15;
 /* Rede de segurança nº 3 (só --pack) — HALO CINZA. `cinza` é a fração de pixel
- * opaco com luminância > 96: num decal monocromático de tinta escura, pixel
- * opaco claro é névoa de spray que virou tinta opaca e aparece como halo na
- * parede escura. MEDIDO na 1ª geração do pack (19/08/2026): com o unmix só na
- * banda de 2 px, os 11 decals ficaram entre 0,090 e 0,354; com o unmix de dois
- * tons em todo pixel, os mesmos 11 ficaram em 0,000. 0,05 cai no vão entre o
- * melhor defeito e o pior acerto, com folga dos dois lados. */
+ * opaco, claro (lum > 96) e NEUTRO (spread RGB ≤ 12): num decal de tinta escura,
+ * pixel assim é névoa de spray que virou tinta opaca e aparece como halo na
+ * parede escura. O teste de neutro existe desde o lote 4: sem ele, a segunda
+ * cor de um duotone (vermelho-escuro, azul) cairia na métrica sem ser defeito.
+ * MEDIDO na 1ª geração do pack (19/08/2026): com o unmix só na banda de 2 px,
+ * os 11 decals ficaram entre 0,090 e 0,354; com o unmix em todo pixel, 0,000.
+ * 0,05 cai no vão entre o melhor defeito e o pior acerto, com folga dos dois
+ * lados. */
 const CINZA_MAX = 0.05;
 
 /* ── PROCEDÊNCIA ────────────────────────────────────────────────────────────────
@@ -731,30 +733,28 @@ async function recortaPlano(arquivo, sharp) {
   for (let y = 0; y < H; y++) { amostra(0, y); amostra(W - 1, y); }
   const ord = [...conta.values()].sort((a, b) => b[3] - a[3]);
   const fundo = [ord[0][0] / ord[0][3], ord[0][1] / ord[0][3], ord[0][2] / ord[0][3]];
-  const luma = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
-  const lumFundo = luma(fundo[0], fundo[1], fundo[2]);
 
-  /* UNMIX DE DOIS TONS — o pack é monocromático por desenho (preto fosco sobre
-   * fundo liso, pesquisa SP×RJ: a cidade se lê na forma, não na cor). Spray tem
-   * névoa larga em volta do traço: a rampa de alpha só na banda de 2 px deixava
-   * essa névoa como CINZA OPACO, que vira halo claro na parede escura — medido
-   * na 1ª geração do pack: 9%–35% dos pixels opacos com lum > 96 nos 11 decals
-   * (métrica `cinza` abaixo). Aqui o alpha é chaveado por luminância no eixo
-   * fundo→tinta e a cor é des-misturada em TODO pixel, não só na banda.      */
-  const tintas = [];
+  /* UNMIX POR DISTÂNCIA DO FUNDO — o eixo de alpha é a distância chebyshev ao
+   * fundo, não a luminância. Para tinta neutra (preto/cinza) as duas coincidem;
+   * a distância é o que permite DUOTONE (lote 4): vermelho-escuro puro tem
+   * luminância ~40 (o eixo antigo daria alpha ~0,8 e a letra sairia fantasma),
+   * mas distância 255 do branco — aqui sai opaco. A névoa do spray continua
+   * virando alpha baixo (é perto do fundo), que é o que mata o halo medido na
+   * 1ª geração do pack. Des-mistura em TODO pixel, como antes.              */
+  const distF = (i) => Math.max(Math.abs(d[i] - fundo[0]), Math.abs(d[i + 1] - fundo[1]), Math.abs(d[i + 2] - fundo[2]));
+  const dists = [];
   for (let p = 0; p < W * H; p++) {
-    const i = p * 4, l = luma(d[i], d[i + 1], d[i + 2]);
-    if (lumFundo - l > TOL_DURO) tintas.push(l);
+    const v = distF(p * 4);
+    if (v > TOL_DURO) dists.push(v);
   }
-  if (!tintas.length) return null;
-  tintas.sort((a, b) => a - b);
-  const tintaLum = tintas[Math.floor(tintas.length * 0.05)];
-  if (tintaLum > 128) return null; // fonte não é tinta escura sobre fundo claro — não é caso do --pack
+  if (!dists.length) return null;
+  dists.sort((a, b) => a - b);
+  const distTinta = dists[Math.floor(dists.length * 0.95)];
+  if (distTinta < 100) return null; // sem tinta de verdade (só sujeira de fundo)
   const alpha = new Float32Array(W * H);
   for (let p = 0; p < W * H; p++) {
     const i = p * 4;
-    const l = luma(d[i], d[i + 1], d[i + 2]);
-    const a = Math.max(0, Math.min(1, (lumFundo - l) / (lumFundo - tintaLum)));
+    const a = Math.max(0, Math.min(1, distF(i) / distTinta));
     if (a <= 0.02) { d[i + 3] = 0; continue; }
     alpha[p] = a;
     for (let c = 0; c < 3; c++)
@@ -789,7 +789,9 @@ async function recortaPlano(arquivo, sharp) {
     opacos++;
     const l = 0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2];
     sl += l * a; sa += a;
-    if (l > 96) cinzaOp++;
+    /* halo é cinza NEUTRO; tinta colorida (duotone) clara não é defeito */
+    const neutro = Math.max(dd[i], dd[i + 1], dd[i + 2]) - Math.min(dd[i], dd[i + 1], dd[i + 2]) <= 12;
+    if (l > 96 && neutro) cinzaOp++;
   }
   let anel = 0, anelOp = 0;
   const toca = (x, y) => { anel++; if (dd[(y * ow + x) * 4 + 3] > 127) anelOp++; };
