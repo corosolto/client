@@ -97,13 +97,47 @@ qualidade para mapa da comunidade externa.
   encaixe aprovado (mutante: mapa sem linha → vermelho).
 - Por asset: `FONTE.md` + SHA + `asset-review` (já vigente da frente E).
 
+## Vida de cena (dono, 19/08 — segunda leva literal)
+
+> *"ate ter outros personagens third tipo veios no bar jogando domino, jogando sinuca,
+> os buildings serem entraveis com bar, quiosques, restaurantes, lanchonetes etc, cena
+> comuns do dia-dia animais urbanos como gatos, cachorros, papagaio, com audio inclusive,
+> pombos, ratos, baratas, tatu"*
+
+O precedente que prova o valor: a galinha do cs_italy é o mapa mais lembrado da
+franquia — vida de cena é o que separa "arena" de "lugar".
+
+**Lote vida 1 — fauna urbana 2 + áudio ambiente (o sistema que não existe).**
+A sondagem mediu: zero som ambiente por mapa (`public/audio/game/` só tem tiro/faca/
+killstreak; `audio.js` sem hook de ambiente). Sistema novo: loop posicional por cena
+(balada do bar, rádio de obra, chuva) + one-shot aleatório por bioma (latido, galo,
+pássaro, panela). Fonte **CC0 com FONTE.md** (Pixabay/Freesound), nunca rip. Fauna 2:
+tatu e barata (Mint 3D + locomoção procedural rasteira, padrão do rato); papagaio de
+poleiro (Mint + balanço procedural de cabeça/corpo — pássaro riggado não existe CC0, a
+dívida da pomba; poleiro não precisa de voo). Régua: hook de áudio por mapa (mutante
+silencia → vermelho) + espécie por bioma estendendo AR4.
+
+**Lote vida 2 — NPCs de cena (third, não-jogáveis).** O pipeline já existe: 62
+personagens GLB animados + rig Mint humanoid. Cena 1: véios do dominó no bar (sentado +
+gestos idle + mesa GLB); cena 2: sinuca. Sem clipe custom no início — sentado/idle do
+acervo já vende; régua: NPC reage a tiro próximo (abaixa/olha — mutante manequim →
+vermelho), nunca bloqueia rota de combate (colisor nonSolid + fora do circuito A*).
+
+**Lote vida 3 — buildings entráveis (1 por mapa, com playtest do dono).** Interior muda
+gameplay (ângulo, camper, rota) — por isso um por vez: piloto 1 bar do escadão, piloto
+2 quiosque do parque. Réguas vigentes estendidas junto: anti-trap (o interior entra no
+flood), circuito, largura de porta ≥ corpo, spawn fora de sólido. Nunca em lote fechado.
+
 ## Sequência
 
-1. Sondagem de lore (read-only) → `docs/lore-mapas.md` + esta tabela preenchida.
+1. Sondagem de lore (read-only) → `docs/lore-mapas.md` + esta tabela preenchida. ✔
 2. Lote céu: pipa animada (lajes), helicóptero (favelas), avião-faixa (mansão).
-3. Lote fauna 2: mais animais por bioma (continua a frente D).
-4. Preview v2 do primeiro mapa da comunidade (o pior ranqueado na sondagem de arte).
-5. Série de assets por mapa, na ordem da tabela.
+3. Lote fauna 2 + vida 1 (áudio ambiente): continua a frente D.
+4. Água viva (plans/23 RC2): Joá → **córrego** (pedido explícito 19/08) → Brasília →
+   piscina.
+5. Preview v2 do fy_campomorro (após RC1+RC4 do plans/23).
+6. Vida 2 (NPCs de cena) e vida 3 (entráveis), nessa ordem, um piloto por vez.
+7. Série de assets por mapa, na ordem da tabela.
 
 ## Vetos herdados (não se negociam)
 
