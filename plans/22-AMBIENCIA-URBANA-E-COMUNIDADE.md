@@ -55,11 +55,14 @@ branch: céu fotográfico ausente em 6 mapas, `makeHorizon` sem call-site vivo (
 está no `map_lajes.js` morto — deletar, plans/13), helicóptero/avião inexistem, som
 ambiente por mapa não existe, 7 mapas sem `low: LOWQ` na fauna.
 
-**"Mapas da comunidade": não existem mapas de fãs** (`docs/docs/colaborar.md`: *"não
-existe comunidade"*; `map_json.js` tem zero mapas registrados). A leitura com evidência:
-mapas de comunidade (favela) = fy_lajes, fy_corrego, fy_escadao, fy_campomorro, quebrada.
-**Primeiro preview v2: `fy_campomorro`** (pior arte com folga — MATERIAL 1/5 no audit,
-*"precisa ser estruturado visualmente como o lajes"*, campo sem um tufo de mato).
+**"Mapas da comunidade" = mapas de FÃS (decisão do dono, 19/08).** Hoje não existe
+nenhum (`map_json.js`, o loader de mapa-como-dado, tem zero mapas registrados). Então o
+ciclo tem duas pernas: (1) **preview v2 de mapa existente** — o dono escolheu
+**`fy_campomorro`** como primeiro (pior arte com folga — MATERIAL 1/5 no audit,
+*"precisa ser estruturado visualmente como o lajes"*, campo sem um tufo de mato);
+(2) **habilitar mapas de fãs** — o pipeline `map_json.js` (issue #210) é o habilitador:
+quando a v2 do campomorro provar o padrão de arte, o mesmo padrão vira o contrato de
+qualidade para mapa da comunidade externa.
 
 ## Tabela de lore × ambiência (sondagem 19/08 — tabela completa em `docs/lore-mapas.md`)
 
