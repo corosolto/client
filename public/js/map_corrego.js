@@ -17,6 +17,7 @@ import { GRAFITE } from './graffiti_layout.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
+import { createWater } from './water.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -442,11 +443,23 @@ export function buildCorrego(scene, T) {
     const calha = addFloor(2.2, HALF_Z * 2 - 2, 0, 0, lam({ map: T.dirt, color: 0x3c4436, roughness: 1 }), CANAL_FUNDO + 0.02);
     calha.userData.nonSolidSurface = true;
   }
-  // água (plano baixo com textura poluída) — agora a 14 cm do fundo: anda-se DENTRO dela
-  const aguaViva = lam({ map: TEX.agua.map || null, color: 0xa0b49a, roughness: .12, metalness: .18,
-    emissive: 0x16281d, emissiveIntensity: .28 });
-  const lamina = addFloor(CANAL_ABERTURA, HALF_Z * 2, 0, 0, aguaViva, CANAL_AGUA);
-  lamina.userData.nonSolidSurface = true; lamina.userData.corregoWaterSurface = 'base';
+  // água viva (RC2, plans/23): a lâmina base sai do MeshStandardMaterial verde
+  // chapado e vira o shader de depth-fade + espuma + onda da water.js — o caso
+  // ENTRÁVEL: a espuma de contato desenha nas paredes do canal e nas PERNAS de
+  // quem pisa (a coluna d'água vem do depth da cena). Escala própria do canal
+  // (régua corrego-water): 0,35 m de profEscala, faixas de espuma de 30 cm/6 cm,
+  // onda de 1 cm (uAmp 0,08) e correnteza no eixo do canal. O albedo poluído da
+  // frente B segue como tMapa — a identidade não se perde, ganha vida.
+  const aguaCorrego = createWater(scene, T, 'fy_corrego', {
+    nivel: CANAL_AGUA, centro: [0, 0], tamanho: [CANAL_ABERTURA, HALF_Z * 2], segmentos: 6,   // célula de 1 m: Gerstner λ=3,3 m não precisa mais; 48 dava 61 mil tris num canal de 6×80
+    raso: 0x73927a, fundo: 0x2e4238,   // paleta da lâmina B (0xa0b49a/poças), fundo mais escuro p/ o gradiente
+    profEscala: 0.35, espumaFaixa: 0.30, espumaMiolo: 0.10,
+    profFallback: 0.3, fluxo: [0, 0.06], ampEscala: 0.08,
+    mapa: srcAgua, mapaEscala: [3, 13.3], mapaForca: 0.55,
+    parent: root,
+  });
+  aguaCorrego.mesh.userData.nonSolidSurface = true;
+  aguaCorrego.mesh.userData.corregoWaterSurface = 'base';
   // Uma segunda lâmina translúcida devolve o céu e impede que o canal leia como asfalto verde.
   // As três lâminas de cima eram COR PURA (766 m² + 316 m² + 81 m² sem mapa nenhum),
   // e é o maior naco de superfície chapada do mapa. O `repeat` é calculado para dar
@@ -1529,6 +1542,7 @@ export function buildCorrego(scene, T) {
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience, propEscala,
+    update(dt) { aguaCorrego.update(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };

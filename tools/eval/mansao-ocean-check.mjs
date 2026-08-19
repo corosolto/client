@@ -66,9 +66,9 @@ const g = bootGame('fy_mansao', { textures: T });
 
 /* OC1 — o mesh oceano existe na cena e é shader */
 let oceano = null;
-g.scene.traverse((o) => { if (o.isMesh && o.userData && o.userData.oceano) oceano = o; });
+g.scene.traverse((o) => { if (o.isMesh && o.userData && o.userData.aguaViva) oceano = o; });
 if (!oceano) {
-  falhas.push('OC1: nenhum mesh com userData.oceano na cena do fy_mansao — o mar segue sendo a foto morta do sky_joa.webp');
+  falhas.push('OC1: nenhum mesh com userData.aguaViva na cena do fy_mansao — o mar segue sendo a foto morta do sky_joa.webp');
 } else if (!oceano.material || !oceano.material.isShaderMaterial) {
   falhas.push('OC1: o oceano não é ShaderMaterial — plano azul morto com outro nome');
 }

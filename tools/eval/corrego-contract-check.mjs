@@ -56,7 +56,12 @@ if (mutante === 'ratos-sob-lixo') {
   const posicoesAntigas = [[-18,-3],[-17.62,-2.68],[-17.25,-3.2]];
   for (let i=0;i<Math.min(3,ratos.length);i++) ratos[i].position.set(posicoesAntigas[i][0], ratos[i].position.y, posicoesAntigas[i][1]);
 }
-if (mutante === 'canal-preto') for (const agua of canal) { agua.material.color.setHex(0x050706); agua.material.emissiveIntensity = 0; }
+if (mutante === 'canal-preto') for (const agua of canal) {
+  if (agua.material.isShaderMaterial) {   // lâmina viva do RC2: a cor mora nos uniforms
+    agua.material.uniforms.uCorRasa.value.setHex(0x050706);
+    agua.material.uniforms.uCorFunda.value.setHex(0x050706);
+  } else { agua.material.color.setHex(0x050706); agua.material.emissiveIntensity = 0; }
+}
 if (mutante === 'canal-sem-profundidade') for (const parede of profundidadeCanal) parede.visible = false;
 if (mutante === 'ponte-prancha') for (const colisor of colisoresPonte) colisor.material.visible = true;
 world.root.updateMatrixWorld(true);
@@ -101,10 +106,21 @@ const formaCapivara = !!troncoCap && !!cabecaCap
   && contaCap('body-cap') >= 2 && contaCap('blunt-muzzle') >= 1
   && contaCap('short-leg') >= 4 && contaCap('rounded-foot') >= 4
   && juntaContinua;
-const canalLegivel = canal.length >= 2 && canal.every((agua) => {
-  const c = agua.material?.color;
-  return c && (c.r + c.g + c.b) / 3 >= .12 && (agua.material.map || agua.material.emissiveIntensity >= .08);
-});
+/* A lâmina base do RC2 é ShaderMaterial: a cor mora em uCorRasa/uCorFunda e a
+   textura em tMapa — ler `.color`/`.map` aqui mediria o material errado (o
+   mutante canal-preto acima zera os MESMOS uniforms, senão a régua ficava cega). */
+const legivelAgua = (agua) => {
+  const m = agua.material;
+  if (!m) return false;
+  if (m.isShaderMaterial) {
+    const c = m.uniforms?.uCorRasa?.value;
+    const tex = m.uniforms?.tMapa?.value || m.map;
+    return !!c && (c.r + c.g + c.b) / 3 >= .12 && !!tex;
+  }
+  const c = m.color;
+  return c && (c.r + c.g + c.b) / 3 >= .12 && (m.map || m.emissiveIntensity >= .08);
+};
+const canalLegivel = canal.length >= 2 && canal.every(legivelAgua);
 const paredesProfundas = profundidadeCanal.filter((parede) => {
   if (parede.visible === false || !parede.isMesh) return false;
   const size = new THREE.Box3().setFromObject(parede).getSize(new THREE.Vector3());

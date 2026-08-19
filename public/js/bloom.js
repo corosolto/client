@@ -1007,17 +1007,20 @@ export function enableLightBloom(renderer, opts = {}) {
       cp.setSize(innerWidth, innerHeight);
       cp._w = innerWidth; cp._h = innerHeight;
       cp.addPass(new RenderPass(scene, camera));
-      /* Água viva (RC2): o mesh nasce na camada 0 em modo fallback (uDepthOn=0).
-       Com composer ele migra p/ a WATER_LAYER e o WaterPass (cópia linearizada do
-       depth + desenho da camada) assume — amostrar o depthTexture do PRÓPRIO
-       readBuffer é feedback loop e o ANGLE rejeita o draw (medido 19/08). */
-      const w = scene.userData.water;
-      if (w) {
+      /* Água viva (RC2): as lâminas nascem na camada 0 em modo fallback
+       (uDepthOn=0). Com composer elas migram p/ a WATER_LAYER e o WaterPass
+       (cópia linearizada do depth + desenho da camada) assume — amostrar o
+       depthTexture do PRÓPRIO readBuffer é feedback loop e o ANGLE rejeita
+       o draw (medido 19/08). */
+      const ws = scene.userData.waters;
+      if (ws && ws.length) {
         if (!cp.renderTarget1.depthTexture) attachDepth(cp);
-        w.mesh.layers.set(WATER_LAYER);
-        w.material.depthTest = false;
-        w.material.uniforms.uDepthOn.value = 1;
-        cp._water = new WaterPass(scene, camera, rawRender, w);
+        for (const w of ws) {
+          w.mesh.layers.set(WATER_LAYER);
+          w.material.depthTest = false;
+          w.material.uniforms.uDepthOn.value = 1;
+        }
+        cp._water = new WaterPass(scene, camera, rawRender, ws);
         cp.addPass(cp._water);
       }
       // threshold alto (0.85): só picos de brilho (sol, flash de tiro, speculars) — "bloom leve"

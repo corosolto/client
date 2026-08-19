@@ -56,12 +56,12 @@ void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
 `;
 
 export class WaterPass extends Pass {
-  constructor(scene, camera, rawRender, agua) {
+  constructor(scene, camera, rawRender, aguas) {
     super();
     this.needsSwap = false;
     this.scene = scene; this.camera = camera;
     this._raw = rawRender;           // render CRU: chamar renderer.render aqui recursaria no composer
-    this.agua = agua;
+    this.aguas = aguas;              // scene.userData.waters: UM passe p/ todas as lâminas
     this.depthRT = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType, format: THREE.RGBAFormat,
       minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
@@ -76,15 +76,14 @@ export class WaterPass extends Pass {
       uniforms: u, depthTest: false, depthWrite: false,
     });
     this.fq = new FullScreenQuad(this.copyMat);
-    agua.material.uniforms.tDepth.value = this.depthRT.texture;
+    for (const a of aguas) a.material.uniforms.tDepth.value = this.depthRT.texture;
   }
   setSize(w, h) { this.depthRT.setSize(w, h); }
   render(renderer, writeBuffer, readBuffer) {
     const cam = this.camera, sc = this.scene, u = this.copyMat.uniforms;
     u.tDepth.value = readBuffer.depthTexture;
     u.uNear.value = cam.near; u.uFar.value = cam.far;
-    const wu = this.agua.material.uniforms;
-    wu.uNear.value = cam.near; wu.uFar.value = cam.far;
+    for (const a of this.aguas) { a.material.uniforms.uNear.value = cam.near; a.material.uniforms.uFar.value = cam.far; }
     renderer.setRenderTarget(this.depthRT);
     this.fq.render(renderer);
     const oAuto = renderer.autoClear, oBg = sc.background, oLayers = cam.layers.mask;
@@ -105,21 +104,23 @@ export class WaterPass extends Pass {
 
 const VERT = /* glsl */`
 uniform float uTime;
+uniform float uAmp;
 varying vec3 vWorld;
 varying float vViewZ;
 varying vec4 vClip;
 varying vec2 vSlope;
-// Gerstner leve: 2 ondas, amplitude em metros. Desloca o z LOCAL (o mesh é plano
-// rotation.x=-PI/2: z local é o y do mundo — invariante do createWater).
+// Gerstner leve: 2 ondas, amplitude em metros × uAmp (oceano 1,0; córrego 0,08 —
+// ±14 cm de onda numa lâmina de 14 cm seria o mar reto num canal). Desloca o z
+// LOCAL (o mesh é plano rotation.x=-PI/2: z local é o y do mundo — invariante).
 vec2 gerstner(vec2 xz, float t) {
   vec2 s = vec2(0.0);
-  s += 0.09 * 6.28318 / 6.5 * cos(dot(normalize(vec2(0.30, 1.0)), xz) * 6.28318 / 6.5 - t * 1.1) * normalize(vec2(0.30, 1.0));
-  s += 0.05 * 6.28318 / 3.3 * cos(dot(normalize(vec2(-0.70, 0.8)), xz) * 6.28318 / 3.3 - t * 1.7) * normalize(vec2(-0.70, 0.8));
+  s += 0.09 * uAmp * 6.28318 / 6.5 * cos(dot(normalize(vec2(0.30, 1.0)), xz) * 6.28318 / 6.5 - t * 1.1) * normalize(vec2(0.30, 1.0));
+  s += 0.05 * uAmp * 6.28318 / 3.3 * cos(dot(normalize(vec2(-0.70, 0.8)), xz) * 6.28318 / 3.3 - t * 1.7) * normalize(vec2(-0.70, 0.8));
   return s;
 }
 float altura(vec2 xz, float t) {
-  return 0.09 * sin(dot(normalize(vec2(0.30, 1.0)), xz) * 6.28318 / 6.5 - t * 1.1)
-       + 0.05 * sin(dot(normalize(vec2(-0.70, 0.8)), xz) * 6.28318 / 3.3 - t * 1.7);
+  return 0.09 * uAmp * sin(dot(normalize(vec2(0.30, 1.0)), xz) * 6.28318 / 6.5 - t * 1.1)
+       + 0.05 * uAmp * sin(dot(normalize(vec2(-0.70, 0.8)), xz) * 6.28318 / 3.3 - t * 1.7);
 }
 void main() {
   vec3 p = position;
@@ -152,6 +153,14 @@ uniform vec3 uSolCor;
 uniform vec3 uFogCor;
 uniform float uFogD;
 uniform vec3 uMarLongeCor;
+uniform float uProfEscala;
+uniform float uEspumaFaixa;
+uniform float uEspumaMiolo;
+uniform float uProfFallback;
+uniform vec2 uFluxo;
+uniform sampler2D tMapa;
+uniform vec2 uMapaEscala;
+uniform float uMapaForca;
 varying vec3 vWorld;
 varying float vViewZ;
 varying vec4 vClip;
@@ -164,8 +173,9 @@ float sceneViewZ(vec2 suv) {
 
 void main() {
   // 2 normal maps em scroll cruzado (escalas 9 m e 3,2 m: tira o "padrão único")
-  vec2 uvA = vWorld.xz / 9.0 + uTime * vec2(0.020, 0.014);
-  vec2 uvB = vWorld.xz / 3.2 + uTime * vec2(-0.031, 0.022);
+  // + uFluxo: correnteza do canal (0 no oceano)
+  vec2 uvA = vWorld.xz / 9.0 + uTime * (vec2(0.020, 0.014) + uFluxo);
+  vec2 uvB = vWorld.xz / 3.2 + uTime * (vec2(-0.031, 0.022) + uFluxo * 0.6);
   vec3 nA = texture2D(tNormalA, uvA).xyz * 2.0 - 1.0;
   vec3 nB = texture2D(tNormalB, uvB).xyz * 2.0 - 1.0;
   vec2 pert = nA.xy * 0.90 + nB.xy * 0.60 + vSlope * 0.8;
@@ -173,7 +183,9 @@ void main() {
 
   vec3 viewDir = normalize(cameraPosition - vWorld);
 
-  // depth-fade: coluna d'água sob o fragmento (0 no raso/linha d'água)
+  // depth-fade: coluna d'água sob o fragmento (0 no raso/linha d'água).
+  // Sem composer (uDepthOn=0) cai no uProfFallback: oceano 1,0 (fundo), córrego
+  // ~0,3 (lâmina rasa — o jogador está DENTRO e a leitura opaca de oceano não vale)
   float coluna = 40.0;
   if (uDepthOn > 0.5) {
     vec2 suv = vClip.xy / vClip.w * 0.5 + 0.5;
@@ -181,19 +193,23 @@ void main() {
     if (sz > vViewZ) discard;   // cena mais perto que a água: oclusão manual
     coluna = vViewZ - sz;       // vViewZ e sz negativos: coluna >= 0
   }
-  float prof = clamp(coluna / 7.0, 0.0, 1.0);
+  float prof = uDepthOn > 0.5 ? clamp(coluna / uProfEscala, 0.0, 1.0) : uProfFallback;
 
   vec3 cor = mix(uCorRasa, uCorFunda, prof);
   float alfa = mix(0.62, 0.94, prof);
 
-  /* espuma de contato: miolo sólido colado na linha d'água + manchas na faixa
-     de até ~2,4 m, quebradas pela textura B (padrao.r tem média 0,5 — o corte
-     0,60-0,82 segura só o terço de cima, senão a faixa vira lençol branco) */
+  // albedo do mapa (córrego: água poluída da frente B) — média ~1: mancha, não tingi
+  cor *= mix(vec3(1.0), texture2D(tMapa, vWorld.xz / uMapaEscala).rgb * 2.0, uMapaForca);
+
+  /* espuma de contato: miolo sólido colado na linha d'água + manchas na faixa,
+     quebradas pela textura B (padrao.r tem média 0,5 — o corte 0,60-0,82 segura
+     só o terço de cima, senão a faixa vira lençol branco). Faixas em uniform:
+     oceano 2,4/0,45 m; canal do córrego 0,30/0,06 m (a parede está a 3 m). */
   float foam = 0.0;
   if (uDepthOn > 0.5) {
-    float faixa = smoothstep(2.4, 0.1, coluna);
+    float faixa = smoothstep(uEspumaFaixa, uEspumaFaixa * 0.04, coluna);
     float padrao = texture2D(tNormalB, vWorld.xz / 3.4 + uTime * vec2(0.05, -0.037)).r;
-    float miolo = smoothstep(0.45, 0.10, coluna);
+    float miolo = smoothstep(uEspumaMiolo, uEspumaMiolo * 0.22, coluna);
     float manchas = faixa * smoothstep(0.60, 0.82, padrao);
     foam = clamp(max(miolo, manchas * 0.85), 0.0, 1.0);
     cor = mix(cor, uCorEspuma, foam * 0.9);
@@ -230,6 +246,13 @@ export function createWater(scene, T, mapId, {
   raso = 0x45b8bd,     // turquesa medida dos prints do dono, saturada p/ ler a 20 m (proc. no mansao-ocean-check)
   fundo = 0x17505f,    // médio medido #419493 escurecido: o fundo é mais escuro que qualquer raso
   marLonge = 0x5d7a99, // mar assado no sky_joa.webp, mediana y=450-470/887 (look-horizonte.py, mesmo sampler)
+  profEscala = 7.0,    // coluna que fecha a tinta no fundo; córrego: 0,35 (lâmina de 0,14 m)
+  espumaFaixa = 2.4, espumaMiolo = 0.45,
+  profFallback = 1.0,  // leitura sem composer: oceano fundo; córrego ~0,3 (rasa)
+  fluxo = [0, 0],      // correnteza (córrego: [0, ~0,06] no eixo do canal)
+  ampEscala = 1.0,     // amplitude das ondas de vértice; córrego: 0,08
+  mapa = null, mapaEscala = [9, 9], mapaForca = 0,   // albedo do mapa (água poluída)
+  parent = null,       // default scene; córrego passa root (o contrato B lê world.root)
 } = {}) {
   const L = LOOK[mapId] || {};
   const sol = (L.sol && L.sol.pos) || [20, 35, 15];
@@ -245,6 +268,7 @@ export function createWater(scene, T, mapId, {
     transparent: true, depthWrite: false, depthTest: true,   // composer troca p/ false (feedback loop)
     uniforms: {
       uTime: { value: 0 },
+      uAmp: { value: ampEscala },
       tNormalA: { value: load('/img/textures/water_normal_a.webp') },
       tNormalB: { value: load('/img/textures/water_normal_b.webp') },
       tDepth: { value: null },
@@ -259,14 +283,23 @@ export function createWater(scene, T, mapId, {
       uFogCor: { value: scene.fog && scene.fog.color ? scene.fog.color.clone() : new THREE.Color(0xb1aca5) },
       uFogD: { value: scene.fog && scene.fog.isFogExp2 ? scene.fog.density : 0.0 },
       uMarLongeCor: { value: new THREE.Color(marLonge) },
+      uProfEscala: { value: profEscala },
+      uEspumaFaixa: { value: espumaFaixa },
+      uEspumaMiolo: { value: espumaMiolo },
+      uProfFallback: { value: profFallback },
+      uFluxo: { value: new THREE.Vector2(fluxo[0], fluxo[1]) },
+      tMapa: { value: mapa },
+      uMapaEscala: { value: new THREE.Vector2(mapaEscala[0], mapaEscala[1]) },
+      uMapaForca: { value: mapaForca },
     },
   });
+  if (mapa) mat.map = mapa;   // o shader amostra de verdade (tMapa): a contagem de superfície texturizada mede uso, não declaração
   const geo = new THREE.PlaneGeometry(tamanho[0], tamanho[1], segmentos, Math.round(segmentos * tamanho[1] / tamanho[0]));
   const mesh = new THREE.Mesh(geo, mat);
   mesh.rotation.x = -Math.PI / 2;   // invariante do shader: z local = y do mundo
   mesh.position.set(centro[0], nivel, centro[1]);
-  mesh.userData.oceano = true;      // a régua eval:mansao-ocean procura ESTE mesh vivo
-  scene.add(mesh);
+  mesh.userData.aguaViva = true;    // as réguas da família OC/CW procuram ESTE mesh vivo
+  (parent || scene).add(mesh);
 
   /* Sem "plano longínquo": a câmera do jogo tem far=400 e um segundo plano a
      500 m+ seria recortado inteiro — a convergência p/ uMarLongeCor no shader é
@@ -276,6 +309,8 @@ export function createWater(scene, T, mapId, {
     mesh, material: mat,
     update(dt) { mat.uniforms.uTime.value += dt; },
   };
-  scene.userData.water = agua;      // bloom.js lê daqui p/ alimentar tDepth por frame
+  const ws = scene.userData.waters || (scene.userData.waters = []);
+  ws.push(agua);
+  scene.userData.water = ws[0];     // compat: quem lia a água única segue lendo a primeira
   return agua;
 }
