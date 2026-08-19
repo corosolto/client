@@ -185,3 +185,13 @@ tools/eval/cena_probe.mutante-*.json
 # derivados em public/img/entrada, public/img/resultado e public/video/. Sem esta
 # regra o repo ganharia 97 MB e o deploy publicaria todos eles.
 public/img/chars/molde/
+
+# Artefatos de agente — memória de sessão, não produto (saneamento v2.1.0, 18/08).
+# graphify-out/ é grafo de conhecimento de agente: 323k linhas, 70% do diff da branch.
+graphify-out/
+# Intermediários de pipeline de geração (tmp/ nunca é produto versionado).
+tmp/
+# Cache de verificação de URL de ferramenta de IA.
+url_verification_cache.json
+# Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
+scratchpad/*.log
