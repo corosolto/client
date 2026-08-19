@@ -140,11 +140,11 @@ jobs:
           # antigo (`git log --oneline`) apagou esse crédito no alpha.47 (BUG-40).
           # Idempotente: este job e o "release" do ci.yml (disparo de tag)
           # correm pela mesma release — quem chega segundo levava 422
-          # "tag_name already exists" (alpha.154, 18/08). Já existindo, só
-          # atualiza notas e título.
+          # "tag_name already exists" (alpha.154, 18/08). Existindo, NÃO TOCA:
+          # `edit` com --notes do CHANGELOG apagava o "What's Changed" dos
+          # colaboradores gerado pelo vencedor (alpha.156-.158, 19/08).
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "release $TAG já existe — atualizando notas"
-            gh release edit "$TAG" "${EXTRA[@]}" --title "CSBR $TAG" || true
-          else
-            gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
+            echo "release $TAG já existe (vencedor da corrida) — nada a fazer"
+            exit 0
           fi
+          gh release create "$TAG" --generate-notes "${EXTRA[@]}" --title "CSBR $TAG"
