@@ -1,13 +1,5 @@
-// MANSAO JOÁ (fy_mansao) — spec plans/14-MANSAO_JOA.md: mansão de ultra-luxo no Joá, RJ.
-// Combate assimétrico original: um time invade pelo jardim tropical; o outro defende do
-// terraço/piscina com vista pro oceano. Interior modernista jogável: hall de pé-direito
-// duplo, sala, cozinha gourmet, mezanino com escada. Piscina infinita na borda do penhasco.
-//
-// PLANTA (eixo longo = z; norte = -z = terraço/mar, sul = +z = portão/jardim):
-//   PORTÃO/JARDIM  z ∈ [15, 35]  spawn A (invasor)
-//   GARAGEM        z ∈ [8, 15]   3 vagas abertas, carros
-//   CASA           z ∈ [-15, 8]  hall + sala + cozinha + mezanino
-//   TERRAÇO/PISCINA z ∈ [-35, -15] spawn B (defensor), vista pro mar
+// MANSAO JOÁ (fy_mansao) — spec plans/14-MANSAO_JOA.md. Eixo longo = z; norte = -z
+// (terraço/mar, spawn B), sul = +z (portão/jardim, spawn A); planta e dimensões na spec.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -24,25 +16,16 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 22, HALF_Z = 36;
 const LAJE_H = 4.5;  // pé-direito duplo
 
-/* Frota da garagem (BUG-56, 17/08): o dono reprovou os carros procedurais — "usar
-   carros que temos em glbs". [comprimento, altura] de fábrica é a MESMA ficha do
-   CAR_DIM do map_havan.js (referência conferida por tools/eval/escala-veiculo-check.mjs);
-   o contrato da mansão (mansao-water-check) reprova divergência aqui. Cada carro tem
-   que caber no colisor da vaga (4,10 m; o procedural maior era 4,25) porque a pegada
-   de colisão não muda — a jogabilidade é boa por decisão do dono. */
+/* Frota da garagem (BUG-56): dimensões de fábrica, mesma ficha do CAR_DIM do map_havan.js
+   (tools/eval/escala-veiculo-check.mjs); cada carro tem que caber no colisor da vaga (4,10 m). */
 const GARAGEM = [
   ['1968_volkswagen_beetle', 4.03, 1.50],
   ['2014_mini_cooper_s_f56', 3.85, 1.41],
   ['2002_volkswagen_golf_r32_mk4', 4.15, 1.44],
 ];
 
-/* Piscina ENTRÁVEL (plans/13, decisão do dono 18/08: "a piscina nao afunda").
-   Interior jogável da cuba, dentro dos muros; profundidades do contrato do
-   mansao-water-check. Fundo -1,85 fica 0,15 m abaixo do guarda-corpo MAP6
-   (QUEDA_ANDAR 2,0 do map-check.mjs) — o mesmo argumento do CANAL_FUNDO=-1,75.
-   A cuba termina em z=-26,5 (não -24,5): a 2ª fileira do armário nasce a
-   spawnB-3,6 = -25,6 e tem que nascer NO DECK — a tampa antiga era o que
-   segurava as armas fora da água (pickup-check H_MIN). */
+/* Piscina ENTRÁVEL (plans/13): fundo -1,85 abaixo do guarda-corpo MAP6 (QUEDA_ANDAR 2,0);
+   z1=-26,5 porque a 2ª fileira do armário nasce em -25,6 NO DECK (pickup-check H_MIN). */
 export const PISCINA = { x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5, raso: -0.85, fundo: -1.85 };
 
 export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id),
@@ -121,11 +104,8 @@ export function buildMansao(scene, T) {
     }
     return obj;
   }
-  /* Prop do pack Mint (BUG-56) no lote PB: 1 draw call por material. O colisor é
-     SEMPRE criado pelo chamador (GLB ou fallback) — a pegada não pode depender do
-     download ter chegado. Fallback = caixa com a DIMENSÃO REAL do prop (fbW/fbD/fbH):
-     caixa maior que o colisor é corpo-dentro-de-sólido no MAP1, caixa de 1,8 m num
-     poste de 0,3 m já reprovou. */
+  /* Prop do pack Mint (BUG-56) no lote PB. Colisor SEMPRE pelo chamador — a pegada não
+     depende do download; fallback com a dimensão real, senão é corpo-em-sólido no MAP1. */
   const jardimProp = (id, x, z, targetH, ry, y = 0, fb = null, fallback = null) => {
     if (GLB_ON && PB.add(id, { x, y, z, targetH, ry })) return true;
     if (fallback) { fallback(); return false; }
@@ -141,10 +121,8 @@ export function buildMansao(scene, T) {
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 150; sun.shadow.bias = -0.0006;
 
-  /* CHÃO — o gramado é CORTADO no recorte da piscina/vertedouro (x ±6,35,
-     z -35,5→-26,45): sem o corte, o plano de grass a -0,01 m atravessa a cuba
-     e a piscina lê como um gramado a 10 cm da lâmina. Mesmo corte que o córrego
-     faz nas margens do canal (map_corrego.js:428-435). */
+  /* CHÃO — gramado cortado no recorte da piscina/vertedouro: sem o corte o plano de
+     grass atravessa a cuba. Mesmo corte do córrego (map_corrego.js:428-435). */
   const gramado = TEX.garden || lam({ map: T.grass });
   addFloor(HALF_X * 2, 62.45, 0, 4.775, gramado, -0.01);
   addFloor(15.65, 9.05, -14.175, -30.975, gramado, -0.01);
@@ -231,9 +209,7 @@ export function buildMansao(scene, T) {
     addBox(.12, 3.45, .72, madeiraNobre, x, .28, 8.17, { collide: false, skirt: false, bala: true });
   for (let z = -12; z <= 5.8; z += 1.15)
     addBox(.82, 3.25, .1, madeiraNobre, 15.18, .35, z, { collide: false, skirt: false, bala: true });
-  // Lampiões Mint (BUG-56) flanqueando a porta sul e o vão do terraço: fachada
-  // ganha luz quente pontual sem tocar na planta. Sem colisor — estão a 2,3 m,
-  // colados à parede que já é sólida.
+  // Lampiões Mint (BUG-56) na fachada, sem colisor: colados à parede que já é sólida.
   for (const [lx, lz, ry] of [[-6, 8.32, 0], [6, 8.32, 0], [-8, -14.62, Math.PI], [8, -14.62, Math.PI]]) {
     jardimProp('lampiao_fachada', lx, lz, .52, ry, 2.3, null, () => addBox(.3, .42, .16, lam({ color: 0xb98a4a, emissive: 0x6b4a1c, emissiveIntensity: .35 }), lx, 2.3, lz, { collide: false, cast: false, skirt: false }));
   }
@@ -360,16 +336,11 @@ export function buildMansao(scene, T) {
   const louca=new THREE.Group(); propVivo(louca,'louca-cozinha'); louca.position.set(-6.8,1.04,-10); root.add(louca);
   for(const x of [-.3,0,.3]) { const copo=new THREE.Mesh(new THREE.CylinderGeometry(.075,.06,.28,10),lam({color:0xbad5d8,transparent:true,opacity:.7,roughness:.18})); copo.position.set(x,.14,0); louca.add(copo); }
   const vaso=new THREE.Group(); propVivo(vaso,'vaso-interno'); vaso.position.set(-11.8,0,-3.7); root.add(vaso);
-  // MAP1 "corpo dentro de sólido": em (-11,5, -3,5) a sonda achava 0,859 m de geometria
-  // visível. Medido antes de mexer — ZERO colisor cobrindo o ponto e `_collide` empurrando
-  // 0,0000 m: o corpo do jogador ficava DENTRO do pote. O pote é CERÂMICA, volume rígido;
-  // marcá-lo `nonSolidSurface` seria mentir pra régua e manter o defeito. O certo é o que
-  // os vasos do deck (linha ~580) e os troncos de árvore já fazem aqui: colisor de verdade.
+  // MAP1: o pote é cerâmica rígida — colisor de verdade, como os vasos do deck e os
+  // troncos; `nonSolidSurface` aqui seria mentir pra régua e manter o defeito.
   const pote=new THREE.Mesh(new THREE.CylinderGeometry(.28,.36,.5,12),lam({color:0x9b6b4a,roughness:.9})); pote.position.y=.25; vaso.add(pote);
   col(-12.1,-11.5,0,.5,-4.0,-3.4); occluders.push(pote);   // a bala para na cerâmica que o corpo já não atravessa
-  // As FOLHAS, ao contrário do pote, são folhagem atravessável — é o que todo o resto do
-  // paisagismo deste arquivo já declara (garden-cluster, garden-mass, palmeira, folhagem
-  // instanciada, forração). Estavam sem a marca por esquecimento, não por decisão.
+  // As FOLHAS são atravessáveis como todo o paisagismo do arquivo (cluster, palmeira, folhagem).
   for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); folha.userData.nonSolidSurface=true; vaso.add(folha); }
   // Luz quente local impede que a cobertura do mezanino transforme os móveis em
   // silhuetas pretas; sem sombra dinâmica, o custo em mobile é pequeno.
@@ -383,10 +354,8 @@ export function buildMansao(scene, T) {
   /* ===================== GARAGEM (aberta) ===================== */
   // piso diferente (cimento queimado)
   addFloor(20, 7, 0, 11.5, TEX.concrete || lam({ map: T.concrete }), 0.03);
-  /* Três desenhos procedurais ORIGINAIS (roadster aberto, cupê fastback e targa).
-     Não copiam grade, farol ou perfil de marca real e diferem por estrutura.
-     Desde BUG-56 são o FALLBACK do lote GLB: aparecem sem GLB (node, ?glb=0, GLB
-     404) com o mesmo colisor da vaga — a garagem nunca fica vazia. */
+  /* Desenhos procedurais ORIGINAIS, sem traço de marca real (linha editorial); desde
+     BUG-56 são o fallback do lote GLB, com o mesmo colisor da vaga. */
   const carroGenerico = (cx, cor, estilo, ry = 0) => {
     const familias=['aurora-roadster','mare-fastback','serra-targa'];
     const g = new THREE.Group(); g.position.set(cx, 0, 11); g.rotation.y = ry;
@@ -434,11 +403,8 @@ export function buildMansao(scene, T) {
     g.traverse((m) => { if (m.isMesh && !(m.material && m.material.transparent && (m.material.opacity === undefined || m.material.opacity < 0.9))) occluders.push(m); });
     return g;
   };
-  /* BUG-56: carro do ACERVO em GLB, escala de fábrica, no mesmo eixo e no mesmo
-     colisor da vaga. Vai pro PropBatch (1 draw call por material do modelo, malha
-     mesclada) igual à frota da Havan; sem GLB cai no carroGenerico acima. Os
-     InstancedMesh do lote entram em `occluders` depois do PB.build lá embaixo —
-     mesmo padrão do map_havan.js (~1931): vidro (transparente) fica de fora. */
+  /* BUG-56: GLB do acervo no PropBatch, mesmo eixo e colisor da vaga; os InstancedMesh
+     entram em `occluders` no PB.build sem o vidro (BUG-54, padrão do map_havan.js). */
   const carroAcervo = (cx, [id, cl, ch], cor, estilo, ry) => {
     if (!(GLB_ON && PB.add(id, { x: cx, y: 0, z: 11, targetLen: cl, targetH: ch, ry }))) carroGenerico(cx, cor, estilo, ry);
     else { col(cx - 1, cx + 1, 0, 1.3, 8.95, 13.05); solids.push({ x0: cx - 1, x1: cx + 1, z0: 8.95, z1: 13.05 }); }
@@ -448,9 +414,7 @@ export function buildMansao(scene, T) {
   carroAcervo(6, GARAGEM[2], 0xb8b6aa, 2, -.04);
 
   /* ===================== JARDIM TROPICAL MODERNISTA ===================== */
-  // Caminho sinuoso de pedras irregulares quebra a malha ortogonal da casa.
-  // Cadeia portão→porta (plans/13): pedras a ≤3 m uma da outra, de z≈33,6 (portão)
-  // a z≈16,2 (garagem/porta) — régua G2.a do mansao-garden-check.
+  // Cadeia portão→porta (plans/13): pedras a ≤3 m uma da outra — régua G2.a do mansao-garden-check.
   const pedraJardim = lam({ color: 0x9a998a, roughness: 0.94 });
   for (const [px, pz, sx, sz, ry] of [[.3,33.6,1.25,.7,-.25],[-.2,32,1.55,.75,.28],[.2,30.6,1.2,.72,.4],[1.0,29.2,1.2,.72,-.5],[.2,28,1.15,.7,.35],[-.7,26.7,1.5,.8,.15],[.6,24.4,1.25,.68,-.35],[-.6,23.35,1.35,.7,.2],[-1.8,22.3,1.45,.72,.45],[.2,20.1,1.05,.82,-.2],[-1.2,18,1.3,.75,.3],[-.1,16.2,1.3,.75,.15]]) {
     const pedra = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.08, .08, 7), pedraJardim);
@@ -534,11 +498,8 @@ export function buildMansao(scene, T) {
     }
     const miolo = new THREE.Mesh(new THREE.SphereGeometry(.22, 9, 6), lam({ color: c, roughness: .9 }));
     miolo.position.y = .32; g.add(miolo);
-    // MAP1: a bromélia é a MESMA construção do `garden-cluster` (cones de folha sem
-    // colisor), mas nasceu sem a marca que o cluster tem. Resultado: a sonda vertical
-    // lia 0,43-0,64 m de "sólido" em cima do jogador em 72 células de 0,25 m — três dos
-    // cinco pontos reprovados eram só a fase da grade de 1 m caindo aqui. A marca é a
-    // verdade medida: não há colisor nenhum, o corpo atravessa a folhagem.
+    // MAP1: bromélia é a mesma construção do `garden-cluster` (cones sem colisor) —
+    // a marca é a verdade medida: o corpo atravessa a folhagem.
     g.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
     g.position.set(x, 0, z); root.add(g);
   }
@@ -567,39 +528,29 @@ export function buildMansao(scene, T) {
     banana.userData.mansaoFeature='tropical-3d';
     for(let i=0;i<7;i++){ const a=-1.1+i*.36, folha=new THREE.Mesh(new THREE.SphereGeometry(.52,9,5),lam({color:i%2?0x4b8b45:0x35783c,roughness:1})); folha.scale.set(.28,.08,2.25); folha.rotation.set(-.55,a,0); folha.position.set(Math.sin(a)*.55,1.45+i*.12,Math.cos(a)*.55); banana.add(folha); }
     const caule=new THREE.Mesh(new THREE.CylinderGeometry(.12,.2,1.45,8),lam({color:0x6f8744,roughness:1})); caule.position.y=.72; banana.add(caule);
-    // MAP1: era a PIOR penetração do mapa inteiro (1,384 m em (11,5, 26,5)) e a única
-    // acima de 1 m nos dez mapas. Bananeira é `tropical-3d`, a mesma taxonomia da palmeira
-    // e da folhagem instanciada — que já declaram tronco E folha como atravessáveis. O
-    // pseudocaule da bananeira não é cover (as árvores de tronco lenhoso é que levam
-    // `col()` na linha ~442); ficar sem a marca era divergência de plantio, não decisão.
+    // MAP1: bananeira é `tropical-3d`, mesma taxonomia da palmeira — tronco e folha
+    // atravessáveis; o pseudocaule não é cover (árvore lenhosa é que leva `col()`).
     banana.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
     root.add(banana);
   }
-  /* SET DRESSING MINT (BUG-56): mobiliário e luz de jardim. Colocação fora do
-     corredor central de combate (pedras x∈[-2,2] e espelho x∈[-6,-2,5]) e fora
-     das linhas de waypoint z=18/24/30 — os colisores novos são de borda, o A*
-     e o fluxo de spawn continuam os mesmos. */
+  /* SET DRESSING MINT (BUG-56): fora do corredor central e das linhas de waypoint
+     z=18/24/30 — colisores de borda, A* e fluxo de spawn inalterados. */
   for (const [bx, bz, ry] of [[-14.9, 16.6, .28], [16.6, 22.6, -2.86]]) {
     jardimProp('banco_jardim', bx, bz, .82, ry, 0, [1.8, .55, .5]);
     const horiz = Math.abs(Math.cos(ry)) > Math.abs(Math.sin(ry));
     col(bx - (horiz ? .95 : .35), bx + (horiz ? .95 : .35), 0, .5, bz - (horiz ? .35 : .95), bz + (horiz ? .35 : .95));
     solids.push({ x0: bx - (horiz ? .95 : .35), x1: bx + (horiz ? .95 : .35), z0: bz - (horiz ? .35 : .95), z1: bz + (horiz ? .35 : .95) });
   }
-  // Postes ladeando o caminho de pedras em x=±2,3: a grade global tem colunas em
-  // x=±3 e a inflação de 0,5 m do blocked() alarga o colisor — em ±2,4 ainda matava
-  // os nós (-3,17) e (-3,27,2) e derrubava rota separada do CTF2. Col ±0,18 cobre a
-  // malha real medida (0,34 m de base no GLB — tools/eval/mansao-glb-fit.mjs).
+  // Postes em x=±2,3 com col ±0,18 (base real 0,34 m, mansao-glb-fit): colisor mais
+  // largo mata nós da grade pela inflação de 0,5 m do blocked() e derruba rota do CTF2.
   for (const [px, pz] of [[-2.3, 17.4], [2.3, 22.6], [-2.3, 27.4], [2.3, 32.6]]) {
     jardimProp('poste_jardim', px, pz, 2.4, 0, 0, [.26, .26, 2.4]);
     col(px - .18, px + .18, 0, 2.4, pz - .18, pz + .18);
   }
   jardimProp('escultura_jardim', 18.6, 32.2, 2.2, -.6, 0, [.9, .9, 2.2]);
   col(18.0, 19.2, 0, 2.2, 31.6, 32.8); solids.push({ x0: 18.0, x1: 19.2, z0: 31.6, z1: 32.8 });
-  // Vaso via propComFallback: o collider do proxy fica SEMPRE — é o vaso rígido.
-  // 0,70 m: base rígida medida do GLB é 0,67 m (mansao-glb-fit) — col menor deixa
-  // 7 cm de cerâmica atravessável. A folhagem do GLB abre 1,23 m: folha é
-  // atravessável por doutrina (mesma regra da bananeira/palmeira), então a malha
-  // GLB leva nonSolidSurface — o corpo roça a folha, não entra no vaso.
+  // Vaso com col 0,70 m = base rígida medida 0,67 (mansao-glb-fit); a folhagem do GLB
+  // é atravessável por doutrina (mesma regra da bananeira) e leva nonSolidSurface.
   for (const [vx, vz] of [[-18.9, 20.4], [19.6, 26.2], [-20.2, -21.4], [20.2, -21.4]]) {
     const v = propComFallback('vaso_tropical', vx, vz, 1.05, (vx + vz) * .3,
       () => addBox(.7, 1.05, .7, lam({ color: 0x2e6636, roughness: 1 }), vx, 0, vz));
@@ -621,12 +572,8 @@ export function buildMansao(scene, T) {
   for(const [x,z] of [[-13.8,14.7],[-8.2,14.7],[-13.8,18.3],[-8.2,18.3]]) marcaPergola(addBox(.22,3.05,.22,pergolaMat,x,0,z,{collide:false,skirt:false}),'pillar');
   for(const z of [14.7,18.3]) marcaPergola(addBox(5.85,.18,.22,pergolaMat,-11,2.96,z,{collide:false,skirt:false}),'beam');
   for(let z=15;z<=18;z+=.75) marcaPergola(addBox(.16,.14,3.8,pergolaMat,-13.3+(z-15)*1.52,3.13,16.5,{collide:false,skirt:false}),'beam');
-  /* FOLHAGEM INSTANCIADA COM VARIEDADE (plans/13: "o jardim esta bizarro") —
-     eram 72 clones idênticos em 12 anéis de 6, sem cor por instância: repetição
-     mecânica de catálogo. Agora duas famílias de malha (bloco + folha ereta) com
-     tint E escala POR INSTÂNCIA (setColorAt), distribuídas em drifts orgânicos
-     pelo ângulo áureo, nas bordas — o corredor de combate central continua
-     limpo. Régua: tools/eval/mansao-garden-check.mjs (G1 variedade). */
+  /* FOLHAGEM INSTANCIADA (plans/13): cor e escala por instância em drifts de ângulo
+     áureo nas bordas — corredor central limpo. Régua G1 do mansao-garden-check. */
   const rndJardim = (() => { let s = 20260818 >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
   const paletaFolha = [0x2f7040, 0x3d8a4a, 0x529a4b, 0x2a6b3a, 0x6aa14e].map((c) => new THREE.Color(c));
   const driftsJardim = [
@@ -681,9 +628,8 @@ export function buildMansao(scene, T) {
   addBox(8.0, 3.0, 0.3, lam({ color: 0x2a2a2a, metalness: 0.5 }), 0, 0, 34);
   // Guarita e biombo protegem o respawn, deixando rotas laterais independentes.
   addBox(3.2, 2.8, 3.2, TEX.concrete, -17.5, 0, 31.5);
-  // Cada biombo tem passagem alinhada aos spawns internos. Antes eram painéis cegos:
-  // o primeiro spawn E (-4,5) só conseguia sair pela ponta oeste, colapsando E→JARDIM
-  // e E→PISCINA numa única faixa de navegação apesar de CTF2 apenas imprimir a falha.
+  // Cada biombo tem passagem alinhada aos spawns internos — painel cego colapsava
+  // as rotas E→JARDIM e E→PISCINA numa faixa só (CTF2).
   for (const x of [-6.75, -2.25, 2.25, 6.75]) addBox(2.5, 2.1, 0.35, ripado, x, 0, 29);
 
   /* ===================== TERRAÇO + PISCINA INFINITA ===================== */
@@ -692,11 +638,8 @@ export function buildMansao(scene, T) {
   addFloor(HALF_X * 2 - 2, 9, 0, -19.5, deckMat, 0.03);
   addFloor(15, 11, -13.5, -29.5, deckMat, 0.03);
   addFloor(15, 11, 13.5, -29.5, deckMat, 0.03);
-  // piscina ENTRÁVEL (plans/13): cuba de verdade no padrão do córrego — piso
-  // andável via groundHeightAt + paredes de colisor do fundo até y=0 (em cima
-  // delas não colide: _collide exige pos.y+0,3 < maxY). Raso -0,85 com degraus
-  // de entrada na borda sul; escada submersa desce ao fundo -1,85; saída de
-  // degrau a degrau (0,28 m < STEP_H 0,55 do game.js) — quem cai, SAI.
+  // piscina ENTRÁVEL (plans/13): piso andável via groundHeightAt, paredes de colisor só
+  // até y=0 (em cima _collide não pega); degraus 0,28 m < STEP_H 0,55 — quem cai, SAI.
   const azulejoCuba = lam({ color: 0x256d84, roughness: .38 });
   const degCuba = (h, d, z, yBase) => {
     const m = addBox(11, h, d, azulejoCuba, 0, yBase, z, { collide: false, cast: false, skirt: false });
@@ -716,8 +659,8 @@ export function buildMansao(scene, T) {
   };
   paredeCuba(0, -26.25, 12, .5);   // sul (borda de entrada)
   paredeCuba(0, -32.75, 12, .5);   // norte (sob a borda infinita)
-  paredeCuba(-5.75, -29.5, .5, 6);   // oeste
-  paredeCuba(5.75, -29.5, .5, 6);    // leste
+  paredeCuba(-5.75, -29.5, .5, 6);
+  paredeCuba(5.75, -29.5, .5, 6);
   const aguaPiscina = lam({ color: 0x419bb3, roughness: .045, metalness: .16,
     emissive: 0x0b6074, emissiveIntensity: .22, transparent: true, opacity: .86, depthWrite: false, side: THREE.DoubleSide });
   const piscina = addFloor(11, 6, 0, -29.5, aguaPiscina, .08);
@@ -727,9 +670,8 @@ export function buildMansao(scene, T) {
   // borda sul sobre o TOPO da parede (z∈[-26,31,-25,99]): dentro da cuba o chão é o
   // degrau a -0,283 e a pedra a +0,19 virava penetração de 0,47 m no MAP1
   addBox(12.7,.18,.32,bordaPiscina,0,.01,-26.15,{ collide:false, skirt:false });
-  // A lâmina termina exatamente na borda norte; o vertedouro azul continua a linha do mar.
-  // Subleito OPACO em y=0 (a máscara de cuba saiu: dentro da piscina ela virava teto do
-  // nadador) — cobre o gramado cortado sob o vertedouro translúcido visto do terraço.
+  // Subleito OPACO em y=0 cobre o gramado cortado sob o vertedouro translúcido;
+  // a máscara de cuba saiu — dentro da piscina ela virava teto do nadador.
   addFloor(12, 2.9, 0, -34.45, lam({ color: 0x0f3a4c, roughness: .4 }), 0);
   addFloor(12, .55, 0, -33.74, lam({ color: 0x59c9df, roughness: .08, metalness: .08 }), .075);
   addBox(12, .42, .08, lam({ color: 0x2a91ae, transparent: true, opacity: .72, roughness: .16 }), 0, -.35, -33.02,
@@ -744,9 +686,8 @@ export function buildMansao(scene, T) {
   // heliponto (H) — decoração
   addBox(0.3, 0.05, 8.0, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
   addBox(8.0, 0.05, 0.3, lam({ color: 0xffffff }), -15, 0, -30, { collide: false });
-  // Lounge Mint (BUG-56) no deck oeste: alinhado a z (ry π/2) e colisor 1,9 — a
-  // malha real do conjunto é 1,91×1,06 (mansao-glb-fit); em janela entre nós da
-  // grade (x≠-16,6/-13,2, z≠-17) sem apagar waypoint nem a linha do terraço.
+  // Lounge Mint (BUG-56): colisor 1,9 = malha real 1,91×1,06 (mansao-glb-fit), em
+  // janela entre nós da grade — não apaga waypoint nem a linha do terraço.
   jardimProp('lounge_externo', -14.9, -18.5, 1.05, 1.57, 0, [1.7, 1.7, .8]);
   col(-15.85, -13.95, 0, .8, -19.45, -17.55); solids.push({ x0: -15.85, x1: -13.95, z0: -19.45, z1: -17.55 });
 
@@ -754,12 +695,8 @@ export function buildMansao(scene, T) {
   for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_WALL, sx, 0, 0);
   addBox(HALF_X * 2, 2.5, 0.5, MAT_WALL, 0, 0, HALF_Z);
 
-  /* COSTÃO E OCEANO (RC2, plans/23) — o norte não tem muro: a vista do terraço era
-     a faixa de mar morta assada no sky_joa.webp. O leito desce do rodapé do mapa
-     (z=-36, y≈0) até 4,4 m sob o nível da água (y=-0,9): a régua de depth-fade da
-     water.js transforma essa rampa em turquesa de raso, e a linha onde ela cruza o
-     plano d'água (~z=-44) ganha a espuma de contato. Pedras furam a superfície e
-     ganham anel de espuma pela mesma cláusula. */
+  /* COSTÃO E OCEANO (RC2, plans/23): o leito desce 4,4 m sob a água — a régua de
+     depth-fade da water.js faz o turquesa de raso e a espuma nas pedras que a furam. */
   {
     const leitoGeo = new THREE.PlaneGeometry(200, 44.5, 1, 1);
     const leito = new THREE.Mesh(leitoGeo, lam({ color: 0x6f6350, roughness: .95 }));   // areia/rocha MOLHADA: clara demais lavava o raso pelo alfa
@@ -905,10 +842,8 @@ export function buildMansao(scene, T) {
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
       { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
     ],
-    /* vida 1: papagaio de poleiro no topo da cerca-viva do jardim (Joá tem
-       papagaio de verdade) — balanço procedural, sem voo (a dívida da pomba).
-       y=1,24 = topo da sebe; iterado por captura mapview 19/08: y=1,02 flutuava
-       sobre a piscina (a pomba no céu do BUG-57), y=0,7 ficava DENTRO da sebe */
+    /* vida 1: papagaio de poleiro no topo da sebe (y=1,24) — mais baixo fica dentro
+       dela ou flutua no céu (BUG-57). */
     parrots: [
       { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
     ],

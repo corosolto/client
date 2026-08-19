@@ -1,22 +1,5 @@
-/* ============================================================================
-   look.js — LOOK POR MAPA (RC1 do plans/23): céu, névoa, sol e grade são UM sistema.
-   ----------------------------------------------------------------------------
-   Antes desta tabela, cada mapa declarava o céu numa linha (setMapSky), a névoa
-   noutra tabela (AERIAL, bloom.js), a grade numa terceira (LOOKS, bloom.js) e o
-   sol no meio do builder — e eles descasavam: o fog do Joá media ΔE 21 contra o
-   horizonte do próprio céu, o do Córrego 39, o do Campo do Morro 46 (régua
-   tools/eval/look-check.mjs). Aqui os quatro nascem do MESMO lugar.
-
-   `horizonte`/`zenite` não são escolhidos no olho: saem do webp do próprio mapa
-   por `python3 tools/eval/look-horizonte.py` (mediana das 12 linhas acima do
-   equador equiretangular; assado em tools/eval/look-horizonte.json). O fog nasce
-   da cor do horizonte — nunca cinza genérico — e a régua eval:look reprova o
-   mapa que descasar (teto ΔE76 8, procedência no cabeçalho da régua).
-
-   bloom.js DERIVA desta tabela (névoa em makeAerialFog/skyRadiance, grade em
-   currentLook): este arquivo é a única fonte dos pilotos. Os demais mapas
-   seguem nas tabelas AERIAL/LOOKS do bloom.js até o rollout do RC1.
-   ============================================================================ */
+/* look.js — LOOK por mapa (RC1 do plans/23): céu, névoa, sol e grade nascem do MESMO
+   lugar e bloom.js deriva desta tabela. Cores medidas por tools/eval/look-horizonte.py. */
 export const LOOK = {
   fy_mansao: {   // Joá: sol de fim de tarde sobre o mar
     sky: '/img/textures/sky_joa.webp',

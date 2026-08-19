@@ -207,11 +207,8 @@ function _pintavel(o) {
   return Array.isArray(o.material) ? o.material.some(teste) : teste(o.material);
 }
 
-/* TUDO QUE O JOGADOR VÊ, opaco, inclusive o que não se pinta. É a lista da pergunta
-   INVERTIDA ("o que está na frente do plano?"): porta orgulhosa, marquise, letreiro
-   e pele de fachada saem de `alvos` pelo nome (`NAO_PINTA`), então a sonda de trás
-   as atravessa e a peça nascia atrás delas — desenhada e invisível (a "tapada" da
-   graffiti-audit). O predicado é o MESMO dos `opacos` da régua. */
+/* TUDO que o jogador vê, opaco — inclusive o que não se pinta (`NAO_PINTA` sai de
+   `alvos`). O predicado é o MESMO dos `opacos` da régua graffiti-audit. */
 function _oclusores(root) {
   const out = [];
   root.traverse((o) => {
@@ -757,11 +754,8 @@ export function pendurarMurais(opts) {
    orgulhosa), igual o `medirParede`. */
 const _ea = new THREE.Vector3(), _ed = new THREE.Vector3();
 
-/* As 15 posições de amostra do quad — as MESMAS da `graffiti-audit`, com a mesma
-   folga (2 vazias de 15). Antes a passada amostrava 9 pontos em posições próprias:
-   aprovava o que a régua reprovava, e o "no ar" não descia depois de consertos que
-   deveriam tê-lo derrubado. Duas réguas com pontos e limiares diferentes medindo a
-   mesma coisa é o instrumento discordando de si mesmo. */
+/* As 15 posições de amostra do quad são as MESMAS da `graffiti-audit`, com a mesma
+   folga (2 vazias de 15) — passada e régua não podem medir com pontos diferentes. */
 const AMOSTRAS_15 = [];
 for (const _su of [-0.45, -0.22, 0, 0.22, 0.45]) {
   for (const _sv of [-0.4, 0, 0.4]) AMOSTRAS_15.push([_su, _sv]);
@@ -788,12 +782,8 @@ function _amostrador(alvos, rc, A, frente) {
     cache.set(k, d);
     return d;
   };
-  /* SONDA DO LADO DE CÁ: o primeiro oclusor opaco À FRENTE DA PEÇA — não da âncora.
-     A peça pode nascer RECUADA do plano da âncora (parede em reentrância), e um
-     raio ancorado no plano não enxerga o que ficou entre os dois (medido 13/08 no
-     Ferro Velho: oclusor 4,6 cm à frente da peça, invisível da âncora). Mesmo raio
-     da régua: de 2 cm à frente da peça, 0,25 m para fora. Sem cache — o recuo muda
-     a cada tentativa. */
+  /* Sonda do lado de cá: primeiro oclusor opaco À FRENTE DA PEÇA, não da âncora — a
+     peça pode nascer recuada do plano. Sem cache: o recuo muda a cada tentativa. */
   amostra.frente = !frente ? null : (u, v, recuo) => {
     rc.far = 0.25;
     rc.set(_ea.set(A.x + ux * u + nx * (0.02 - recuo), v, A.z + uz * u + nz * (0.02 - recuo)),

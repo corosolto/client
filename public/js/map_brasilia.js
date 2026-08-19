@@ -773,9 +773,8 @@ export function buildBrasilia(scene, T) {
       // jardim, essa sim com parapeito e leitura clara. Excesso é o problema, não falta.
       const b = placeProp('palacio', { x: px, z: PAL_Z, targetH: PAL_H, ry, y: PL + 0.16 });
       if (b) {
-        // O Palácio Mint já traz albedo, normal e metallic/roughness. Não revestir a malha
-        // inteira com um material procedural: isso apaga o asset profissional e o reduz a
-        // uma caixa branca/escura. Os volumes abaixo complementam a silhueta sem substituir PBR.
+        // Não revestir a malha do Palácio Mint com material procedural: apaga o PBR do asset.
+        // Os volumes abaixo complementam a silhueta sem substituir o material.
         root.add(b); occMesh(b);
         b.updateMatrixWorld(true);
         const bb2 = new THREE.Box3().setFromObject(b);
@@ -793,9 +792,8 @@ export function buildBrasilia(scene, T) {
                 no meio e afina de novo ao encontrar a laje (era um tronco de cone de 8 lados);
              4. a RAMPA, que é a assinatura do Planalto.
            `?planalto=old` volta ao brise antigo. */
-        // A/B visual: `mint` preserva o landmark autoral sem a releitura procedural.
-        // `enhanced` e `old` ficam disponíveis para provar, na mesma câmera, quanto
-        // cada sobreposição se afasta do asset aprovado.
+        // A/B visual: `mint` preserva o landmark autoral; `enhanced`/`old` comparam,
+        // na mesma câmera, o quanto cada sobreposição se afasta do asset aprovado.
         const PALMODE = QP.get('planalto') || 'enhanced';
         const NEWPAL = PALMODE === 'enhanced';
         if (BIG && DETAIL > 0 && NEWPAL) {

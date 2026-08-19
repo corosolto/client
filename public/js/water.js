@@ -2,46 +2,14 @@ import * as THREE from 'three';
 import { Pass, FullScreenQuad } from '../vendor/addons/postprocessing/Pass.js';
 import { LOOK } from './look.js';
 
-/* ============================================================================
-   water.js — ÁGUA VIVA (RC2 do plans/23): depth-fade, espuma de contato, onda.
-   ----------------------------------------------------------------------------
-   O "mar" era a faixa azul assada no panorama do céu — o "plano azul morto" do
-   dono. Aqui a água é UM plano com ShaderMaterial alimentado pelo depth da cena:
-
-   • tinta por profundidade: coluna d'água = sceneViewZ - fragViewZ (mesma matemática
-     do SSAO da casa) -> mix(uCorRasa, uCorFunda) e alfa crescente (o raso deixa ver
-     o fundo, como no print de referência do dono);
-   • espuma de contato: coluna pequena = linha d'água -> faixa de espuma quebrada
-     pela textura de normais B (praia, pedra, casco — qualquer geometria);
-   • oclusão MANUAL: descarta quando a cena está mais perto (o mesh fica com
-     depthTest/depthWrite DESLIGADOS no modo composer);
-   • onda: Gerstner leve no vértice (2 ondas) + 2 normal maps em scroll cruzado;
-   • especular de sol do LOOK (RC1): a água não inventa um segundo sol.
-
-   O FEEDBACK LOOP (medido no Chrome/Metal 19/08, GL_INVALID_OPERATION):
-   amostrar o depthTexture do MESMO render target em que se desenha é feedback
-   loop — mesmo com depthTest/depthWrite desligados, o ANGLE rejeita o draw.
-   Por isso o caminho completo NÃO é "a água desenha no meio da cena": o mesh
-   fica na WATER_LAYER (fora da câmera principal) e o DepthPass, colado no
-   RenderPass, (1) copia o depth para um RT próprio já linearizado (viewZ/-far
-   em meia-float — depth cru em meia-float perderia a faixa de espuma: 1e-5 de
-   resolução a 40 m) e (2) desenha SÓ a camada da água no readBuffer amostrando
-   a cópia. Framebuffer diferente: sem loop, depth do MESMO frame.
-
-   Sem composer (quality 'low' / ?bloom=0): o mesh fica na camada 0 com
-   uDepthOn=0 e depthTest=true — água animada com fresnel/especular, sem
-   depth-fade nem espuma (mesmo degrau do SSAO, que também é med/high).
-   Córrego/Brasília/piscina reutilizam este módulo.
-   ============================================================================ */
+/* water.js — água viva (RC2 do plans/23). INVARIANTE: amostrar o depthTexture do mesmo RT
+   em que se desenha é feedback loop (GL_INVALID_OPERATION) — por isso DepthPass + WATER_LAYER. */
 
 export const WATER_LAYER = 12;   // layers 0-11: 0 default + 11 NO_BLOOM (bloom.js)
 export const SOFT_LAYER = 13;    // partículas soft (RC3): mesmo passe, mesma cópia
 
-/* Passe do RC2/RC3: cópia linearizada do depth + desenho das camadas que a
-   consomem (água viva, partículas soft). Instalado pelo bloom.js logo após o
-   RenderPass (needsSwap=false: escreve no próprio readBuffer, como o
-   CharNoBloomPass). Chamava-se WaterPass até o RC3 — o nome novo é o contrato:
-   quem precisa de depth de cena bebe DESTA cópia, não cria canal paralelo. */
+/* DepthPass (RC2/RC3 do plans/23): cópia linearizada do depth + desenho das camadas que
+   a consomem. Contrato: quem precisa de depth de cena bebe DESTA cópia, não cria canal paralelo. */
 const DEPTH_COPY_FRAG = /* glsl */`
 uniform sampler2D tDepth;
 uniform float uNear;
@@ -64,8 +32,8 @@ export class DepthPass extends Pass {
     this.needsSwap = false;
     this.scene = scene; this.camera = camera;
     this._raw = rawRender;           // render CRU: chamar renderer.render aqui recursaria no composer
-    this.aguas = aguas;              // scene.userData.waters: UM passe p/ todas as lâminas
-    this.softs = softs;              // scene.userData.softs: idem para partículas
+    this.aguas = aguas;              // userData.waters/softs: UM passe p/ todas as lâminas
+    this.softs = softs;
     this.depthRT = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType, format: THREE.RGBAFormat,
       minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
@@ -118,9 +86,8 @@ varying vec3 vWorld;
 varying float vViewZ;
 varying vec4 vClip;
 varying vec2 vSlope;
-// Gerstner leve: 2 ondas, amplitude em metros × uAmp (oceano 1,0; córrego 0,08 —
-// ±14 cm de onda numa lâmina de 14 cm seria o mar reto num canal). Desloca o z
-// LOCAL (o mesh é plano rotation.x=-PI/2: z local é o y do mundo — invariante).
+// Gerstner leve: uAmp escala a amplitude (oceano 1,0; córrego 0,08 — canal não é mar).
+// INVARIANTE: desloca o z LOCAL — rotation.x=-PI/2 faz z local = y do mundo.
 vec2 gerstner(vec2 xz, float t) {
   vec2 s = vec2(0.0);
   s += 0.09 * uAmp * 6.28318 / 6.5 * cos(dot(normalize(vec2(0.30, 1.0)), xz) * 6.28318 / 6.5 - t * 1.1) * normalize(vec2(0.30, 1.0));
@@ -192,9 +159,8 @@ void main() {
 
   vec3 viewDir = normalize(cameraPosition - vWorld);
 
-  // depth-fade: coluna d'água sob o fragmento (0 no raso/linha d'água).
-  // Sem composer (uDepthOn=0) cai no uProfFallback: oceano 1,0 (fundo), córrego
-  // ~0,3 (lâmina rasa — o jogador está DENTRO e a leitura opaca de oceano não vale)
+  // depth-fade: coluna d'água sob o fragmento (0 no raso). Sem composer (uDepthOn=0)
+  // cai no uProfFallback: córrego usa ~0,3 porque o jogador está DENTRO da lâmina.
   float coluna = 40.0;
   if (uDepthOn > 0.5) {
     vec2 suv = vClip.xy / vClip.w * 0.5 + 0.5;
@@ -210,10 +176,8 @@ void main() {
   // albedo do mapa (córrego: água poluída da frente B) — média ~1: mancha, não tingi
   cor *= mix(vec3(1.0), texture2D(tMapa, vWorld.xz / uMapaEscala).rgb * 2.0, uMapaForca);
 
-  /* espuma de contato: miolo sólido colado na linha d'água + manchas na faixa,
-     quebradas pela textura B (padrao.r tem média 0,5 — o corte 0,60-0,82 segura
-     só o terço de cima, senão a faixa vira lençol branco). Faixas em uniform:
-     oceano 2,4/0,45 m; canal do córrego 0,30/0,06 m (a parede está a 3 m). */
+  /* espuma de contato: miolo na linha d'água + manchas quebradas pela textura B
+     (média 0,5: o corte 0,60-0,82 segura só o terço de cima, senão vira lençol). */
   float foam = 0.0;
   if (uDepthOn > 0.5) {
     float faixa = smoothstep(uEspumaFaixa, uEspumaFaixa * 0.04, coluna);
@@ -235,10 +199,8 @@ void main() {
   vec3 h = normalize(viewDir + uSolDir);
   cor += uSolCor * pow(max(dot(n, h), 0.0), 220.0) * 2.2;
 
-  /* neblina reduzida (0,55×: plano d'água inteiro lavava cinza cedo demais) e,
-     mais longe, convergência para a cor do mar ASSADO no panorama — a câmera
-     tem far=400 e sem esta convergência a borda do plano recortava uma tarja
-     escura no encontro com o céu (medido na captura do RC2). */
+  /* neblina reduzida (0,55×) e convergência p/ o mar ASSADO no panorama: sem ela a borda
+     do plano recortava tarja escura no encontro com o céu (far=400; medido no RC2). */
   float dist = length(cameraPosition - vWorld);
   float fogF = 1.0 - exp(-uFogD * 0.55 * uFogD * 0.55 * dist * dist);
   cor = mix(cor, uFogCor, clamp(fogF, 0.0, 1.0));
@@ -252,15 +214,15 @@ void main() {
 
 export function createWater(scene, T, mapId, {
   nivel = -0.9, centro = [0, -276], tamanho = [1000, 480], segmentos = 96,
-  raso = 0x45b8bd,     // turquesa medida dos prints do dono, saturada p/ ler a 20 m (proc. no mansao-ocean-check)
-  fundo = 0x17505f,    // médio medido #419493 escurecido: o fundo é mais escuro que qualquer raso
-  marLonge = 0x5d7a99, // mar assado no sky_joa.webp, mediana y=450-470/887 (look-horizonte.py, mesmo sampler)
-  profEscala = 7.0,    // coluna que fecha a tinta no fundo; córrego: 0,35 (lâmina de 0,14 m)
+  raso = 0x45b8bd,     // turquesa medida dos prints do dono (proc. no mansao-ocean-check);
+  fundo = 0x17505f,    // médio medido #419493 escurecido; marLonge: mediana do sky_joa.webp (look-horizonte.py)
+  marLonge = 0x5d7a99,
+  profEscala = 7.0,
   espumaFaixa = 2.4, espumaMiolo = 0.45,
-  profFallback = 1.0,  // leitura sem composer: oceano fundo; córrego ~0,3 (rasa)
-  fluxo = [0, 0],      // correnteza (córrego: [0, ~0,06] no eixo do canal)
-  ampEscala = 1.0,     // amplitude das ondas de vértice; córrego: 0,08
-  mapa = null, mapaEscala = [9, 9], mapaForca = 0,   // albedo do mapa (água poluída)
+  profFallback = 1.0,
+  fluxo = [0, 0],
+  ampEscala = 1.0,
+  mapa = null, mapaEscala = [9, 9], mapaForca = 0,
   parent = null,       // default scene; córrego passa root (o contrato B lê world.root)
 } = {}) {
   const L = LOOK[mapId] || {};

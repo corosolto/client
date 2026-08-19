@@ -47,20 +47,8 @@ export const GLB_CHARS = new Set([
   'profeta-calcada', 'gilbomes',
 ]);
 
-/* ESTE SET É MANTIDO À MÃO, E ISSO JÁ CUSTOU CARO — TRÊS VEZES EM 12/08.
-   Personagem que entra no `characters.js` e esquece de entrar AQUI não carrega o GLB
-   (cai no procedural) e, pior, some das réguas: a `select-inflate.mjs:114` filtra o
-   elenco por `GLB_CHARS`, então o personagem novo não é medido e nasce invisível para
-   o portão. Foi exatamente o que aconteceu com o `gilbomes`, acrescentado ao roster e
-   ao mapa de armas e esquecido aqui.
-
-   É o mesmo modo de falha do `gl-shots.mjs` (lista de mapas fixa em 5 enquanto o jogo
-   foi a 10, e os 5 novos nunca foram fotografados) e do `g2ui-map-previews.mjs`. Lista
-   à mão paralela a um registro é dívida que cobra juros em silêncio.
-
-   O CONSERTO DE VERDADE é uma cláusula de build que case `characters.js` × este Set ×
-   os arquivos em `public/models/characters/` e reprove divergência — este módulo roda no
-   navegador e não pode ler o disco, então tem que ser portão, não runtime. Anotado. */
+/* SET MANTIDO À MÃO: personagem fora daqui cai no procedural E some das réguas, porque a
+   `select-inflate.mjs` filtra o elenco por `GLB_CHARS`. Divergência com characters.js é caso de portão. */
 
 // Mascotes de braços-toco: a mão de apoio via IK vira uma mão gigante flutuando
 // (caso do Dollynho na tela de seleção). Neles, a mão L segue a pose do clipe.
@@ -138,11 +126,8 @@ const LOBI_CURL_Q = parseFloat(qp.get('lobcurl'));
 const LOBI_CURL = Number.isFinite(LOBI_CURL_Q) ? LOBI_CURL_Q : 0.7;
 const LOBI_CURL_R = _num3(qp.get('lobcurlr'), [LOBI_CURL, 0, 0]);
 const LOBI_CURL_L = _num3(qp.get('lobcurll'), [LOBI_CURL, 0, 0]);
-// Estes três rigs Meshy nasceram com as palmas completamente planas. A correção combina
-// cadeia de duas falanges (finger-curl.mjs --chain) e compactação distal. Motoca/Doidinho
-// precisam 0,65 rad; no Programador essa rotação estourava P99=0,890 e 80,3 arestas/10k.
-// A mão dele já nasce mais fechada: 0,20 mantém a pegada e volta a P99=0,630 / 21,0.
-// A/B e régua: tools/eval/*grip_curl_ab.png + select-mount/select-inflate.
+// Rigs Meshy de palma plana: o curl combina duas falanges + compactação distal. No Programador
+// 0,65 estourava a régua (P99=0,890), por isso 0,20. Régua: select-mount/select-inflate.
 const CHAR_GRIP_CURL = new Map([
   ['programador-virado', 0.20],
   ['motoca-cachorro-loko', 0.65],
@@ -172,11 +157,8 @@ const TP_MOUNT_LIVE = qp.get('tpmountlive') !== '0';
 const _tpc = (qp.get('tpcarry') || '').split(',').map(Number);
 const TP_CARRY_PITCH = ((_tpc.length === 2 && !isNaN(_tpc[0]) ? _tpc[0] : -6)) * Math.PI / 180;  // cano levemente pro chão (porte)
 const TP_CARRY_YAW = ((_tpc.length === 2 && !isNaN(_tpc[1]) ? _tpc[1] : 4)) * Math.PI / 180;     // levemente cruzando o corpo
-// BUG-47: a P90 tem 0,52 m e, no porte global de 4°, projetava só 0,110 m no
-// enquadramento 3:2 do capturador — abaixo dos 0,178 m da M4 aprovada. A malha raw já
-// contém carregador superior e arcos bullpup; o defeito era a apresentação quase de
-// topo. Este yaw é só do mount visual do Doidinho (roster, escala e balística intactos).
-// `?tpcarry=pitch,yaw` continua sendo o override explícito global para A/B.
+// BUG-47: no porte global de 4° a P90 (0,52 m) projetava só 0,110 m no 3:2 — abaixo dos
+// 0,178 m da M4 aprovada. Yaw só do mount visual do Doidinho; roster, escala e balística intactos.
 const TP_CHAR_CARRY_YAW = new Map([
   ['doidinho-bairro', -18],
 ]);
@@ -419,19 +401,8 @@ export function buildCharacterModel(def, opts = {}) {
   model.updateMatrixWorld(true);
   const bbox = new THREE.Box3().setFromObject(model);
 
-  /* ESTATURA É ANATÔMICA, NÃO É BBOX (régua: tools/eval/char-escala-check.mjs).
-     `Box3.setFromObject` engloba moicano, chapéu, boné, bico e antena, então
-     normalizar por ele DESCONTA O ADEREÇO DO CORPO: todo mundo terminava com 1,72 m
-     de caixa e com corpos de tamanhos diferentes. Medido nos 61 antes deste bloco:
-     a estatura anatômica (pé -> topo do crânio) variava de 1,509 (`punk`, 21 cm de
-     moicano) a 1,731 (`dollynho`) — 22 cm de amplitude num elenco que deveria ter
-     zero. O `punk` andava 19 cm mais baixo que o resto do elenco para caber o cabelo
-     dentro do orçamento de altura.
-     O marco é o osso `head_end` (topo do crânio), CONFERIDO em 62/62 dos GLB. O pé
-     continua saindo do bbox: o adereço sobra em cima, nunca embaixo — e é do bbox que
-     vem o assentamento no chão, que já está certo e não se mexe.
-     Fallback: rig sem `head_end` volta ao bbox e AVISA, em vez de escalar por um
-     `undefined` silencioso. */
+  /* ESTATURA É ANATÔMICA, NÃO É BBOX (régua: tools/eval/char-escala-check.mjs): normalizar
+     por bbox desconta adereço do corpo. Marco = osso `head_end`; rig sem ele cai no bbox e AVISA. */
   let cranioRaw = null;
   model.traverse((o) => {
     if (cranioRaw === null && o.isBone && /^(mixamorig)?head_?end$/i.test(o.name)) {
@@ -454,16 +425,8 @@ export function buildCharacterModel(def, opts = {}) {
   const rimCol = charRimColor(def);
   model.traverse((o) => {
     if (!o.isMesh) return;
-    /* PROP RÍGIDO NUNCA ABSORVE TIRO (Profeta da Calçada, 12/08) — o hitscan do
-       game.js raycasta o grupo INTEIRO do bot (intersectObjects(enemyGroups, true),
-       game.js _fireHitscan), então uma malha não-skinnada pendurada em socket
-       (placas de papelão, case) viraria hitbox de graça e alargaria o alvo
-       competitivo — a spec 0002 §8 veda: "partes decorativas não alteram alcance
-       de tiro". Mesmo mecanismo da sombra de contato (characters.js:
-       `m.raycast = () => {}` — "NUNCA absorve tiro"). No-op no resto do elenco:
-       medido em 12/08 com gltf-transform, nenhum outro GLB de
-       public/models/characters tem mesh não-skinnado. Prova:
-       tools/eval/asset-evidence/profeta-calcada/hitbox-probe-{red,green}.json. */
+    /* PROP RÍGIDO NUNCA ABSORVE TIRO (spec 0002 §8): o hitscan raycasta o grupo INTEIRO do
+       bot, então malha não-skinnada em socket viraria hitbox de graça. Mesmo mecanismo da sombra de contato em characters.js. */
     if (!o.isSkinnedMesh) o.raycast = () => {};
     o.castShadow = true;
     // receiveShadow: sem isto a sombra do sol NUNCA escurecia o personagem — parte do
@@ -497,40 +460,8 @@ export function buildCharacterModel(def, opts = {}) {
   model.traverse((o) => { if (o.isBone && !headBone && /^(mixamorig)?head$/i.test(o.name)) headBone = o; });
   if (!headBone) model.traverse((o) => { if (o.isBone && !headBone && /head/i.test(o.name)) headBone = o; });
 
-  /* A CAIXA DE HEADSHOT É DO CRÂNIO DESTE PERSONAGEM (régua: char-escala-check.mjs).
-     Ela era `BoxGeometry(0.26, 0.30, 0.26)` para os 62, centrada no osso `Head`.
-     Como o elenco vai de crânio de 14,2% da estatura (`fluxo`) a 41,8% (`gotinha`),
-     uma caixa constante media coisas diferentes em cada um. Medido antes deste bloco:
-     `gotinha` tinha 32% do crânio valendo headshot (68% da cabeça dele não registrava
-     tiro) contra 100% do `punk` — 3,1× de injustiça competitiva. E, no outro sentido,
-     a metade de baixo da caixa caía no PESCOÇO: 27% da caixa fora da cabeça em boa
-     parte do elenco, ou seja, headshot de graça em tiro de ombro.
-     As duas causas são a mesma: a caixa não sabia onde a cabeça começa nem onde acaba.
-     Agora ela sai de `neck` -> `head_end`, que existem em 62/62 dos GLB:
-       altura = crânio - pescoço          (a cabeça inteira, nem mais nem menos)
-       largura = 0,747 × altura           (ANCORADA NA MEDIANA DO ELENCO, não na razão
-                                           da caixa velha. A mediana de `crânio-pescoço`
-                                           medida nos 61 é 0,348 m; 0,747 × 0,348 = 0,26,
-                                           que é EXATAMENTE a largura que o jogo já tinha
-                                           calibrado. Assim o personagem mediano sai com
-                                           a mesma largura de hoje e só os extremos se
-                                           movem. A razão "natural" 0,26/0,30 = 0,867
-                                           parecia mais óbvia e foi medida: deixava a
-                                           caixa do mediano 16% mais larga, ou seja, um
-                                           buff global de headshot de brinde, que
-                                           cláusula nenhuma pedia. Se o elenco mudar de
-                                           tamanho típico, esta âncora precisa ser
-                                           remedida — `node tools/eval/char-escala-check.mjs`
-                                           imprime a mediana de caixaH.)
-       centro = meio de [pescoço, crânio] (a caixa velha era centrada no osso `Head`,
-                                           que fica na BASE do crânio — daí o pescoço
-                                           entrar e o alto da cabeça ficar de fora)
-     O deslocamento vertical vai em `userData.csHeadOffY` e é reaplicado todo quadro
-     pelo CharController, junto com o rastreio do osso.
-     ATENÇÃO, ISTO É BALANCEAMENTO: cabeça grande virou alvo grande. É a correção
-     justa (o alvo passa a ser do tamanho do que se vê), mas personagem de cabeçorra
-     passa a morrer mais rápido do que morria. Tabela do antes/depois por personagem:
-     `node tools/eval/char-escala-check.mjs`. */
+  /* CAIXA DE HEADSHOT DO CRÂNIO DESTE PERSONAGEM (régua: char-escala-check.mjs): sai de
+     `neck` -> `head_end`; largura = 0,747 × altura, ancorada na mediana do elenco (0,348 m → 0,26 de hoje). */
   let caixaH = 0.30, caixaW = 0.26, headOffY = 0;
   if (headBone) {
     group.updateMatrixWorld(true);
@@ -946,9 +877,8 @@ class CharController {
     if (this.headBone) {
       this.group.updateMatrixWorld(true);
       this.head.position.copy(this.group.worldToLocal(this.headBone.getWorldPosition(_v)));
-      // O osso `Head` fica na BASE do crânio; a caixa é do crânio INTEIRO e por isso
-      // sobe até o meio de [pescoço, head_end]. Deslocamento medido uma vez, na
-      // construção (buildCharacterModel), porque é geometria do rig e não muda com a pose.
+      // O osso `Head` fica na BASE do crânio; a caixa cobre o crânio INTEIRO (meio de
+      // [pescoço, head_end]) — deslocamento fixo do rig, medido uma vez na construção.
       this.head.position.y += this.head.userData.csHeadOffY || 0;
     }
     // Sombra de contato: reage ao estado do corpo. No pulo ela ABRE e desbota (penumbra
@@ -972,10 +902,8 @@ class CharController {
     // em osso e a conta aqui depende da matriz de mundo já resolvida.
     if (this.tpMount && !this.dead) {
       const t = this.tpMount;
-      /* Ajuste de empunhadura sem arrastar a arma num arco em torno do pulso.
-         O mount e filho da mao: girar o osso diretamente tambem gira o vetor local que
-         leva do pulso ate a palma. Guardamos a ancora mundial antes do ajuste e
-         recalculamos a posicao local do mount depois dele; assim so a mao muda de pose. */
+      /* Ajuste de empunhadura: girar o osso da mão gira o vetor pulso→palma; guarda a âncora
+         mundial antes e recalcula a posição local do mount depois — só a mão muda de pose. */
       if (t.handAdjust) {
         t.handBone.updateWorldMatrix(true, false);
         _v.copy(t.palmLocal || t.mount.position);
@@ -1000,9 +928,8 @@ class CharController {
       // converge no quadro seguinte — o assentamento da seleção roda 60 quadros.
       if (t.palmLocal && t.rArm && t.rFore && TP_FRONT_MIN > -Infinity
           && /^(idle|idle1h|crouch)$/.test(this.curName || '')) {
-        // Com handAdjust, mount.position ja contem a compensacao que preserva a ancora
-        // mundial. Medir/solver pelo palmLocal antigo reintroduziria o arco que acabamos
-        // de remover e empurraria a arma para a frente a cada quadro.
+        // Com handAdjust, mount.position já contém a compensação da âncora mundial; medir pelo
+        // palmLocal antigo reintroduziria o arco removido acima e empurraria a arma a cada quadro.
         const anchorLocal = t.handAdjust ? t.mount.position : t.palmLocal;
         _v.copy(anchorLocal);
         t.handBone.localToWorld(_v);

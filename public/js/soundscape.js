@@ -1,15 +1,5 @@
-/* Vida 1 (plans/22, dono 19/08): "cena comuns do dia-dia ... com audio inclusive".
- * Áudio ambiente por mapa = loop posicional por cena (funk do baile, água do
- * córrego, ondas do Joá) + one-shot aleatório por bioma (latido, galo, pássaro,
- * panela, buzina). Os arquivos moram em public/audio/ambiente/ (CC0 Freesound +
- * 1 loop Mint, procedência no FONTE.md da pasta) e shipam pelo audio-pack, não
- * pelo git — arquivo faltando cai em silêncio com warn uma vez, como a fauna
- * sem GLB. Node-safe: nada de window/AudioContext fora das funções.
- *
- * Ligação: o game cria com createSoundscape(this.sfx, world.sound) e chama
- * update(dt, playerPos) no frame; setPaused zera os ganhos (os buffer sources
- * não têm pause). Tudo pendura no duckBus do Sfx: tiro ducka o ambiente junto
- * com voz/rádio, e o volume master do usuário cobre o ambiente sem fio novo. */
+/* Áudio ambiente por mapa (plans/22): os arquivos shipam pelo audio-pack, não pelo git —
+   faltando, silêncio com warn uma vez. Tudo pendura no duckBus do Sfx. Node-safe. */
 
 const A = 'audio/ambiente';
 

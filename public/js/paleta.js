@@ -34,22 +34,9 @@
    (`0xff5555`) chama `num()`.
    ═══════════════════════════════════════════════════════════════════════════════════ */
 
-/* ── DE ONDE VÊM OS HEXES, E POR QUE NÃO SÃO IMPORTADOS ─────────────────────────
-   A cor de cada facção é decisão editorial e mora no REGISTRO DO ELENCO,
-   `public/js/factions.js` (`color` / `dark` / `ink` de cada entrada de `FACTIONS`).
-   Este arquivo NÃO importa de lá: ele é importado por `game.js` e o bloco acima explica
-   o porquê — import aqui é aresta a mais no grafo e risco de ciclo no boot.
-
-   Então os valores abaixo são CÓPIA declarada, hex a hex, de `factions.js`:
-
-       PALETA[X].base    ==  FACTIONS[X].color
-       PALETA[X].escura  ==  FACTIONS[X].dark
-       PALETA[X].palida  ==  FACTIONS[X].ink
-
-   Cópia sem régua é o defeito de 07/08 esperando a vez. Por isso a igualdade acima é
-   COBRADA: `tools/eval/faccao-paleta-check.mjs`, cláusula F4, compara os dois arquivos
-   hex a hex e reprova na primeira divergência. Se você mudar cor aqui sem mudar no
-   registro (ou vice-versa), o portão fica vermelho antes de o dono achar jogando. */
+/* Cópia declarada, hex a hex, de `factions.js` (`color`/`dark`/`ink`) — importar de lá
+   criaria aresta e risco de ciclo no boot. Cobrada pela cláusula F4 de
+   tools/eval/faccao-paleta-check.mjs: base=color, escura=dark, palida=ink. */
 
 /* As facções que têm cor própria, na ordem em que o elenco as declara.
    Facção fora desta lista cai no NEUTRO, nunca em `undefined` — foi o `undefined` que
@@ -79,16 +66,13 @@ export const PALETA = {
   C: { base: '#ff6ec7', escura: '#c23a86', palida: '#ffb3e0' },   // Palhaços rosa-circo
   F: { base: '#ffc233', escura: '#c79a12', palida: '#ffd98a' },   // Funkeiros ouro
 
-  /* As cinco de baixo entraram em 12/08, quando o elenco passou de 5 para 10 facções e
-     17 personagens estavam saindo CINZA pelo NEUTRO — indistinguíveis entre si no anel,
-     no radar e no killfeed. Nenhuma cor foi inventada aqui: as três de cada linha são as
-     `color`/`dark`/`ink` que `factions.js` já declarava para a facção. Ver o bloco
-     "DE ONDE VÊM OS HEXES" acima e a cláusula F4 da régua. */
-  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },   // Míticos roxo-folclore
-  N: { base: '#3f8cff', escura: '#2452b8', palida: '#b6d4ff' },   // Nerdolas azul-monitor
-  R: { base: '#ff8c32', escura: '#bd5520', palida: '#ffd0ad' },   // Profissionais do Corre laranja
-  O: { base: '#a6e22e', escura: '#638f17', palida: '#d8ff8e' },   // Noias verde-limão
-  T: { base: '#31d9ff', escura: '#157eaa', palida: '#b3f3ff' },   // TV ciano-broadcast
+  /* M=Míticos, N=Nerdolas, R=Profissionais do Corre, O=Noias, T=TV — cópia hex a hex
+     de `factions.js` (cláusula F4; ver o bloco acima). */
+  M: { base: '#9d4edd', escura: '#5e35b1', palida: '#d0a3f0' },
+  N: { base: '#3f8cff', escura: '#2452b8', palida: '#b6d4ff' },
+  R: { base: '#ff8c32', escura: '#bd5520', palida: '#ffd0ad' },
+  O: { base: '#a6e22e', escura: '#638f17', palida: '#d8ff8e' },
+  T: { base: '#31d9ff', escura: '#157eaa', palida: '#b3f3ff' },
 };
 
 /* ESPELHO — inimigo da MESMA facção do jogador. Não é cor de facção: é o roxo que existe

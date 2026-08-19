@@ -71,9 +71,9 @@ const LOOKS = {
   piscina_treta: { exposure: 1.92, floor: 0.0039, expAces: 1.91 },   // Piscinão: TEM que ser o mais claro
   loja_h:        { exposure: 1.50, floor: 0.0060, expAces: 1.59 },
   ferro_velho:   { exposure: 1.66, floor: 0.0041, expAces: 1.76 },
-  quebrada:      { exposure: 1.58, floor: 0.0046, expAces: 1.68 },   // Rio, rua do baile ao entardecer
-  fy_escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },   // Rio, escadaria em golden hour
-  fy_lajes:      { exposure: 1.55, floor: 0.0047, expAces: 1.65 },   // lajes claras, sombras de beco
+  quebrada:      { exposure: 1.58, floor: 0.0046, expAces: 1.68 },
+  fy_escadao:    { exposure: 1.52, floor: 0.0048, expAces: 1.62 },
+  fy_lajes:      { exposure: 1.55, floor: 0.0047, expAces: 1.65 },
   // os 3 pilotos do RC1 (mansao/corrego/campomorro) saíram daqui: vivem no LOOK (look.js)
 };
 // id desconhecido cai no praca_poderes em maps.js (DEFAULT_MAP) — o look padrão tem que ser o
@@ -1007,11 +1007,8 @@ export function enableLightBloom(renderer, opts = {}) {
       cp.setSize(innerWidth, innerHeight);
       cp._w = innerWidth; cp._h = innerHeight;
       cp.addPass(new RenderPass(scene, camera));
-      /* Água viva (RC2) + partículas soft (RC3): lâminas e sistemas de partícula
-       nascem na camada 0 em modo fallback (uDepthOn=0). Com composer migram p/
-       as camadas WATER/SOFT e o DepthPass (cópia linearizada do depth + desenho
-       das camadas) assume — amostrar o depthTexture do PRÓPRIO readBuffer é
-       feedback loop e o ANGLE rejeita o draw (medido 19/08). */
+      /* Água viva (RC2) + partículas soft (RC3): com composer migram p/ as camadas
+         WATER/SOFT e o DepthPass assume — amostrar o depth do próprio readBuffer é loop. */
       const ws = scene.userData.waters || [];
       const ss = scene.userData.softs || [];
       if (ws.length || ss.length) {

@@ -383,10 +383,8 @@ export function buildLajes(scene, T) {
         } else if (cursor >= 1.3 && cursor + halfAlong * 2 <= length - 1.3
           && !VANS_DE_FUGA.some((van) => Math.hypot(van.x - (a[0] + tx * centro + nx * side * (front + .01)),
             van.z - (a[1] + tz * centro + nz * side * (front + .01))) < van.r + 1)) {
-          /* Slot vetado (escada/túnel/folga) LONGE da boca: painel de muro rente cobre o
-             vão, senão a fileira abre buraco na beira do beco. Perto da esquina o bolso
-             da curva manda — nada de painel ali (regressão medida pelo LC2/LC4). Vão de
-             fuga (AT1) também veta: painel em cima do buraco re-sela a faixa presa. */
+          /* Slot vetado (escada/túnel/folga) longe da boca: painel de muro rente cobre o
+             vão; perto da esquina o bolso da curva manda (LC2/LC4). Vão de fuga (AT1) também veta. */
           const pw = Math.abs(dx) > Math.abs(dz) ? halfAlong * 2 : .26;
           const pd = Math.abs(dx) > Math.abs(dz) ? .26 : halfAlong * 2;
           wallWithRelief(pw, 2.9 + ((index + i) % 3) * .45, pd, (index + i) % 2 ? MAT.brick : MAT.roof,
@@ -397,10 +395,8 @@ export function buildLajes(scene, T) {
         cursor += halfAlong * 2 + .12;
         i++;
       }
-      /* O muro não nasce aqui: cada lado vira uma wallLine e os intervalos são cortados
-         depois — boca de ramal abre, faixa de túnel desconta, esquina fecha com poste.
-         É o fim da caixa independente por trecho selando cotovelo (BUG-54). Lado sem
-         casa ganha muro rente; lado com casa ganha muro de fundo atrás da fileira. */
+      /* Cada lado vira uma wallLine cortada depois (boca de ramal, túnel, esquina) — fim
+         da caixa por trecho selando cotovelo (BUG-54). Lado sem casa ganha muro rente. */
       wallLines.push({ a, b, width, side, index, branch: index >= MAIN_BECO.length - 1,
         backOff: (placedAny ? Math.max(1.2, Math.min(3.55, clearance)) : .19) - .12 });
     }
@@ -409,9 +405,9 @@ export function buildLajes(scene, T) {
      de cima nelas não sai (medido pelo lajes-antitrap: 24+10+10 células). O vão
      abre o muro para o corredor vizinho; é o buraco de muro real de comunidade. */
   const VANS_DE_FUGA = [
-    { x: 2.2, z: -3.9, r: .8 },   // faixa entre ramal 1 e escadaria → beco
-    { x: 1.3, z: -6.6, r: .8 },   // faixa do miolo norte → faixa da escadaria
-    { x: 3.4, z: 5.4, r: .8 },    // faixa entre beco vertical e escada do varal
+    { x: 2.2, z: -3.9, r: .8 },
+    { x: 1.3, z: -6.6, r: .8 },
+    { x: 3.4, z: 5.4, r: .8 },
   ];
   const alleySegments = [];
   for (let i = 1; i < MAIN_BECO.length; i++) alleySegments.push([MAIN_BECO[i - 1], MAIN_BECO[i]]);
@@ -720,10 +716,8 @@ export function buildLajes(scene, T) {
        a LINHA dele OU O CONVÉS naquele lx está sobre laje: só a linha perdia a
        boca em diagonal do SW-CS (275 células), só o convés perdia a boca lateral
        da WN-MN (a faixa de convés sobre a laje tem 0,15 m). */
-    /* Convenção three (rotation.y): local→mundo é (lx·cos+lz·sin, −lx·sin+lz·cos).
-       O colisor do corrimão usava (lx·cos−lz·sin, lx·sin+lz·cos) — espelhado em z:
-       nas tábuas DIAGONAIS o corpo batia num corrimão invisível 1,5 m ao lado do
-       visível (achado do AT1; bala via malha certa, corpo via colisor errado). */
+    /* Convenção three (rotation.y): local→mundo é (lx·cos+lz·sin, −lx·sin+lz·cos) —
+       o colisor espelhado em z batia 1,5 m ao lado do visível nas tábuas diagonais (AT1). */
     const overSlab = (wx, wz) => ROOF_PARTS.some((part) => wx >= part.x0 - .1 && wx <= part.x1 + .1
       && wz >= part.z0 - .1 && wz <= part.z1 + .1);
     for (const side of [-1, 1]) {
@@ -819,10 +813,8 @@ export function buildLajes(scene, T) {
   };
   const stairs = STAIR_CONFIGS.map(addStaircase);
 
-  /* CHÃO MULTINÍVEL (yRef): a mesma regra da Havan (map_havan.js:1632). Laje e tábua
-     têm chão embaixo quando há pé-direito; quem cai de cima pousa na laje, quem já está
-     no beco fica no térreo. Mirantes (tunnel) abrem vão de 2,5 m sobre o beco.
-     Sem yRef devolve o topo — comportamento antigo de todas as réguas. */
+  /* CHÃO MULTINÍVEL (yRef): mesma regra da Havan (map_havan.js:1632) — chão embaixo
+     quando há pé-direito; sem yRef devolve o topo (comportamento antigo das réguas). */
   const ALTURA_LIVRE = 1.95, STEP_TOL = .55;
   function groundHeightAt(x, z, yRef) {
     let topo = 0;
@@ -884,10 +876,8 @@ export function buildLajes(scene, T) {
     }
   }
 
-  /* MURO DE PERÍMETRO VISÍVEL (o "limite legível" do teste do dono): o casario de fundo
-     continua além dele como cenário, mas o chão jogável termina numa parede que existe
-     no pixel — nada de clamp invisível em campo aberto. As faixas laterais entre os
-     blocos e o muro viram o beco de fundo do circuito inferior. */
+  /* MURO DE PERÍMETRO VISÍVEL: o chão jogável termina numa parede que existe no pixel —
+     nada de clamp invisível em campo aberto; as faixas laterais viram beco de fundo. */
   const perimeterMats = [MAT.brick, MAT.stair, MAT.corrugated, MAT.roof];
   let periIdx = 0;
   const perimeterRun = (alongX, fixed, from, to) => {
@@ -1076,10 +1066,8 @@ export function buildLajes(scene, T) {
   occluders.push(...batchMeshes);
 
   if (ARCHITECTURE_ON) {
-    /* Cenário de fundo em batch PRÓPRIO: continua desenhado (a silhueta aprovada), mas
-       fora de `occluders` — 100 instâncias de pano de fundo custavam 0,58 ms/raio no
-       raycast da bala (medido em 16/08, perf-raycast), e o muro de perímetro já para o
-       tiro a nível de rua. */
+    /* Cenário de fundo em batch PRÓPRIO, fora de `occluders`: 100 instâncias custavam
+       0,58 ms/raio no raycast da bala (perf-raycast); o muro de perímetro já para o tiro. */
     const backdropBatch = new PropBatch({ bucket: 28, tag: 'lajes-backdrop' });
     const backdropHouse = (id, options) => {
       const sample = placeProp(id, { x: 0, y: options.y || 0, z: 0, targetH: options.targetH, ry: options.ry || 0 });

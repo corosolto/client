@@ -1,18 +1,7 @@
 import * as THREE from 'three';
 
-/* ============================================================================
-   wind.js — VENTO (RC4 do plans/23): sway de vertex shader, topo mexe, raiz não.
-   ----------------------------------------------------------------------------
-   Chunk `onBeforeCompile` compartilhado. O peso é a MESMA matemática nos dois
-   lados — `ventoPeso` em JS (a régua eval:wind mede com ela) e o chunk GLSL
-   (gerado com os mesmos parâmetros): pow(clamp(y/altRef), 2). A fase vem da
-   translação do modelo e, em InstancedMesh, da instanceMatrix[3] — o lote não
-   balança em bloco. A sombra não balança junto (o depth material não recebe o
-   patch): amplitude de centímetros, invisível.
-
-   Quem anima: `updateVento(dt)` no update(dt) do mapa (game.js já chama
-   world.update) — um relógio global para todas as frentes de vento.
-   ============================================================================ */
+/* wind.js — vento (RC4 do plans/23): o peso é a MESMA matemática no JS (`ventoPeso`,
+   lida pela régua eval:wind) e no chunk GLSL. A sombra não recebe o patch de propósito. */
 export const uVentoTime = { value: 0 };
 export const ventoPeso = (y, altRef) => Math.pow(Math.min(Math.max(y / altRef, 0), 1), 2);
 export function updateVento(dt) { uVentoTime.value += dt; }

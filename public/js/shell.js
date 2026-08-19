@@ -1,10 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-/* Casca visual assada (piloto 14/08): GLB do Blender por cima da colisão procedural.
-   Contrato com o gerador (tools/blender/build_lajes_shell.py): TEXCOORD_1 = lightmap
-   (AO+indireta), e a textura de lightmap vem em arquivo irmão `<nome>_lm.webp`.
-   glTF usa flipY=false; a lightmap carregada à parte precisa do mesmo. */
+/* Contrato com tools/blender/build_lajes_shell.py: TEXCOORD_1 = lightmap, servida em
+   arquivo irmão `<nome>_lm.webp`; glTF usa flipY=false e a lightmap à parte precisa igual. */
 export async function loadShell(root, url) {
   const gltf = await new GLTFLoader().loadAsync(url);
   const shell = gltf.scene;

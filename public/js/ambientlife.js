@@ -432,10 +432,8 @@ class FavelaAmbience {
   }
 
   _updateParrot(animal) {
-    /* papagaio de POLEIRO (vida 1, plans/22): não voa — pássaro riggado com voo
-       não existe CC0 (a dívida da pomba). Vida = balanço procedural: gingado de
-       corpo + virada de cabeça a cada poucos segundos; tiro perto = sobressalto
-       (tremida rápida sem sair do poleiro). */
+    /* papagaio de POLEIRO (plans/22): não voa; vida = balanço procedural e
+       tiro perto = tremida rápida sem sair do poleiro. */
     const t = this.time + animal.phase * 3;
     if (this.time < animal.alertUntil) {
       animal.root.rotation.z = Math.sin(t * 34) * .1;
@@ -514,18 +512,8 @@ export function createFavelaAmbience(root, options) {
   return new FavelaAmbience(root, options);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   FAUNA ESTÁTICA POSICIONÁVEL (frente B v2.1.0, BUG-57 — região própria, append-only:
-   a frente D edita as regiões de cima sem colidir com esta)
-
-   Jacaré/capivara do córrego: GLBs estáticos SEM rig (pipeline Mint de animação é
-   humanoid-only) — consumo tipo pigeon_flight: template clonado, sem mixer. Escala
-   por COMPRIMENTO (ficha plans/21-FAUNA-CORREGO.md: jacaré ~1,8 m, capivara ~1,0 m).
-   Direção do focinho medida no loader real (evidência
-   tools/eval/asset-evidence/fauna/): jacaré −X no GLB (yawFix π/2 → +Z), capivara +Z.
-   `registerFaunaTemplate` é o MESMO registro que o preload usa — o censo do
-   corrego-contract-check injeta stubs de bounds reais por aqui (limitação declarada
-   no header dele: GLTFLoader trava em node no caminho de textura). */
+/* FAUNA ESTÁTICA POSICIONÁVEL (BUG-57, região append-only): GLB sem rig, escala por
+   comprimento (plans/21-FAUNA-CORREGO.md); yawFix medido em tools/eval/asset-evidence/fauna/. */
 const STATIC_FAUNA_META = {
   jacare: { len: 1.8, yawFix: Math.PI / 2 },
   capivara: { len: 1.0, yawFix: 0 },
@@ -543,9 +531,8 @@ export const CORREGO_FAUNA_ASSETS = Object.freeze([
   ...FAVELA_AMBIENCE_ASSETS, 'jacare', 'capivara',
 ]);
 
-// Coloca um clone do template com comprimento-alvo, base no chão de `y` e `submerge` m
-// afundados. Retorna o Group (userData.faunaAsset/source) ou null sem template — o
-// caller decide o fallback procedural (padrão placeProp do repo).
+// Retorna o Group clonado na base `y` (com `submerge` m afundados) ou null sem
+// template — o caller decide o fallback procedural.
 export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerge = 0 } = {}) {
   const template = templates.get(id);
   if (!template) return null;

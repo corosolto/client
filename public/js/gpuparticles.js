@@ -32,11 +32,8 @@ void main() {
 }
 `;
 
-/* Soft particles (RC3, plans/23): o fade de contato lê a CÓPIA linearizada de
-   depth do DepthPass (tDepth) — a mesma da água viva, não existe segundo canal.
-   uDepthOn=0 (sem composer / quality low): comportamento de sempre, aresta e
-   tudo. uLumAlpha=1: textura sem canal alfa — a luminância vira alfa (sprite de
-   poeira gerado por imagem 2D, que não entrega alfa). */
+/* Soft particles (RC3, plans/23): o fade de contato lê a CÓPIA linearizada de depth
+   do DepthPass (tDepth). uLumAlpha=1: textura sem alfa — a luminância vira alfa. */
 const FRAG = /* glsl */`
 uniform sampler2D uTex;
 uniform sampler2D tDepth;
