@@ -17,6 +17,7 @@ import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -805,7 +806,7 @@ export function buildMansao(scene, T) {
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45],radius:35,vol:.4},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
       { nome: 'escada de serviço', ...STAIR_SERVICE, topo: LAJE_H }],

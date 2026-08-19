@@ -1,6 +1,7 @@
 // Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
@@ -254,7 +255,7 @@ export function buildPenitenciaria(scene) {
   });
 
   return {
-    ambience,root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
     ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
