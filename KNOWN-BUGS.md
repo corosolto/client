@@ -1246,6 +1246,35 @@ Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambien
 declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
 por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
 
+**Fauna v2.1 (frente D, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do
+dono.** Frases literais (18/08): *"a pomba que nao esta com bracos avertos deveria ficar
+so na ponta das lajes ou no chao"* e *"faltou rigar o cachorro caramelo ... e outros
+animais tambem"*.
+
+- **Pombo não voa mais:** o `pigeon_flight.glb` (asas abertas estático) saiu do acervo e
+  do `ambientlife.js`; config `mode:flight` cai no chão com aviso de migração, o alerta
+  de tiro vira fuga A PÉ na superfície onde a pomba nasceu (sem `takeoff`/`fly`, bob 0).
+- **Três espécies novas riggadas (Quaternius CC0, mesmo pipeline do caramelo):**
+  `cat_telhado.glb` (Idle/Walk/Run), `galinha_campo.glb` (Idle/Walk), `vaca_campo.glb`
+  (Idle/Walk/Gallop, clipes podados de 24). Controlador `_updateDog` generalizado para
+  `_updateQuad` com velocidade de fuga/caminhada por espécie; normalização por altura
+  alvo (gato 0,48 / galinha 0,50 / vaca 1,75 m). Procedência em
+  `public/models/ambient/FONTE.md`.
+- **Régua:** `eval:ambience-registry` ganhou AR4 (espécie-chave por bioma: gato na
+  favela, galinha/vaca no campo) e AR5 (nenhuma pomba em modo flight no registro) —
+  mutantes `sem-gato` e `pomba-voa-de-novo` mordem. `eval:ambience` ganhou AM11 (nenhum
+  estado fly/takeoff ao vivo, bob ≤ 0,35 m) e AM12 (espécie nova por bioma com clipe
+  andando, mixer > 0) — mutantes `pomba-voa-de-novo` e `bicho-estatico` mordem. Placar
+  final: AR1-5 VERDE nos 14 mapas, AM1-12 VERDE (16/16).
+- **Caveat de medição:** `eval:ambience` usa `BASE` ou cai na 8123 — um `serve.mjs`
+  velho servindo OUTRO worktree na 8123 mediu o código antigo e inventou 3 vermelhas
+  (AM5 takeoff, AM7 orçamento, AM12 sem espécie). Contra o servidor do próprio worktree:
+  tudo verde sem tocar uma linha. Antes de "consertar" vermelha de browser, confira de
+  qual diretório a porta serve (`lsof -p <pid> | grep cwd`).
+- **Dívida registrada:** jacaré/capivara seguem estáticos — não existe réptil/capivara
+  riggado CC0 (varredura Quaternius + Poly Pizza 19/08, documentada no FONTE.md); o
+  pipeline de animação Mint é humanoid-only. Integração no córrego é da frente B.
+
 ### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
 
 **Sintoma literal do dono:** *"mapa esta muito labirintico e confuso apesar que os becos
