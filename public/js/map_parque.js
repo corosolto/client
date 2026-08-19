@@ -400,6 +400,10 @@ export function buildParque(scene, T) {
       { mode: 'ground', pos: [-4.6, 0, 10.6], phase: .7 },
     ],
     dogs: [{ pos: [-4, 0, 24], to: [0, 0, 24], phase: .5 }],
+    /* vida 1: papagaio de poleiro no parque (fauna 2) */
+    parrots: [
+      { pos: [-5, 1.02, 11], phase: 1.2 }, { pos: [7, 1.02, -6], phase: 2.6 },
+    ],
   });
 
   return {

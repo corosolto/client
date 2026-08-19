@@ -803,6 +803,11 @@ export function buildMansao(scene, T) {
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
       { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
     ],
+    /* vida 1: papagaio de poleiro na balaustrada do terraço (Joá tem papagaio
+       de verdade) — balanço procedural, sem voo (a dívida da pomba) */
+    parrots: [
+      { pos: [4, 1.02, -22], phase: .5 }, { pos: [-7, 1.02, -26], phase: 1.9 },
+    ],
   });
 
   return {

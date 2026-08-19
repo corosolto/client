@@ -1802,6 +1802,10 @@ export function buildBrasilia(scene, T) {
       { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
       { mode: 'ground', pos: [-2.8, 0, 1], phase: .6 }, { mode: 'ground', pos: [9.5, 0, 17], phase: 2.4 },
     ],
+    /* vida 1: tatu no gramado do eixo — cerrado de Brasília (fauna 2) */
+    armadillos: [
+      { pos: [-8, 0, 2], to: [-5, 0, 5], phase: 1.3 }, { pos: [13, 0, -14], to: [10, 0, -11], phase: 2.8 },
+    ],
   });
 
   return {

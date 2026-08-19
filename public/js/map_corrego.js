@@ -1525,6 +1525,11 @@ export function buildCorrego(scene, T) {
       { pos: [-17.35, groundHeightAt(-17.35, -1.95), -1.95], to: [-18.05, groundHeightAt(-18.05, -1.5), -1.5], phase: 2.54 },
       { pos: [17.5, groundHeightAt(17.5, 16.6), 16.6], to: [18.25, groundHeightAt(18.25, 17.4), 17.4], phase: 3.2 },
     ],
+    /* vida 1: barata de esgoto na margem do córrego (fauna 2, Mint + dart do rato) */
+    cockroaches: [
+      { pos: [-16.6, groundHeightAt(-16.6, -2.5), -2.5], to: [-16.1, groundHeightAt(-16.1, -1.9), -1.9], phase: 1.1 },
+      { pos: [17.2, groundHeightAt(17.2, 17.1), 17.1], to: [17.9, groundHeightAt(17.9, 17.8), 17.8], phase: 2.7 },
+    ],
     pigeons: [
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
       { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },

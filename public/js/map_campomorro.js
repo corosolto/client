@@ -668,6 +668,10 @@ export function buildCampoMorro(scene, T = {}) {
       { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
+    /* vida 1: tatu do cerrado no campinho (fauna 2, Mint estático + passo procedural) */
+    armadillos: [
+      { pos: [5, 0, 17.5], to: [9, 0, 19], phase: .9 }, { pos: [-14, 0, 19], to: [-10, 0, 18], phase: 2.4 },
+    ],
   });
 
   return {

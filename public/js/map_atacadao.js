@@ -251,6 +251,11 @@ export function buildAtacadao(scene, T) {
       { pos: [-16, 0, -27], to: [-13.5, 0, -24.5], phase: .3 },
       { pos: [14, 0, 24], to: [11.5, 0, 21.5], phase: 1.5 },
     ],
+    /* vida 1: barata da doca do atacadão (fauna 2) */
+    cockroaches: [
+      { pos: [-15, 0, -26], to: [-12.8, 0, -23.8], phase: .8 },
+      { pos: [13, 0, 22.5], to: [10.8, 0, 20.2], phase: 2.2 },
+    ],
     pigeons: [
       { mode: 'ground', pos: [-8, 0, 20], phase: .4 }, { mode: 'ground', pos: [10, 0, 16], phase: 1.3 },
       { mode: 'ground', pos: [1.2, 0, -9], phase: .8 },
