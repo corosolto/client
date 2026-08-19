@@ -39,6 +39,100 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-73 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
+
+**Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
+*"Falha ao abrir a arena: o código do jogo não chegou (verifique a conexão)"*, fingerprint
+`9703f595`, classe `codigo`, alpha.159, origem `boot-watchdog`, stack
+`Error: … at https://www.csbrasil.online/:290:43`.
+
+**Localização, medida e não estimada.** Baixando o HTML de produção e contando, a linha 290
+é o `lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou …` e a coluna 43
+cai no `new Error(` — ou seja, `:290:43` é `src/pages/index.astro:331`. O fingerprint
+também fecha: `crashFingerprint('error', <mensagem>, 'boot-watchdog')` = `9703f595`.
+
+**Causa raiz - confirmada.** A mensagem só sai quando **`erroDoBoot` é nulo E
+`window.__CS_MAIN_FAILED` está ligado**: ela é o segundo operando de um `||`. Não é o ramo
+de rede lenta, que a casa separou no #265 e que deliberadamente não abre `crash-auto`. O
+módulo de entrada falhou de verdade, e o motivo foi descartado em `index.astro:1215`:
+
+```html
+onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"
+```
+
+O `onerror` de `<script>` é evento de **recurso**: não borbulha, então o listener global
+(`index.astro:301-307`), que é quem preenche `erroDoBoot`, nunca o vê. O handler guardava um
+booleano e jogava fora o `ErrorEvent` inteiro, inclusive o `this.src` com o `?v=` - o único
+dado que separaria "CDN sem o módulo daquele deploy" de "conexão caiu". Minutos depois, o
+clique do jogador na splash **fabricava um `Error` novo, em português, escrito pela casa**.
+O que chegava ao classificador não era a falha: era a nossa paráfrase dela.
+
+**A consequência era cara.** `CACHE_SPLIT_RE` (`src/lib/error-provenance.mjs:6`) só conhece
+frases do navegador **em inglês**. A paráfrase não casa nenhuma, a classe vira `codigo`, e
+com `codigo` o `crash-fix.yml` **pula o purge do edge e o re-probe** (`crash-fix.yml:66-84`):
+a remediação determinística feita exatamente para esta causa não roda.
+
+**Descartado com medição: não foi deploy nem CDN.** A alpha.159 saiu 19h08 antes (19/08
+01:43:12Z) e nada foi publicado no intervalo. O `prod-watch` (cron de 15 min) passou **verde
+às 20:34:08Z, 17 minutos antes, e às 21:01:50Z, 10 minutos depois** - e o
+`tools/eval/prod-coherence.mjs` baixa o HTML da raiz e **cada módulo com o `?v=` exato**,
+tratando 404 como incoerência. O jogador ficou entre duas medições verdes do mesmo recurso.
+O único vermelho da janela foi `csbrasil-bot-pr-classify` às 20:29:34Z, num branch de PR.
+
+**Causa provável, ainda não provada: a #362.** Um Firefox reportando *"O especificador
+'three' era um especificador simples, mas não foi remapeado para nada"* em
+`main.js?v=…:2:24` - que é o `import * as THREE from 'three'`, linha 2, coluna 24. Import
+map não aplicado derruba o grafo do módulo, dispara o `onerror` da tag e liga o
+`__CS_MAIN_FAILED`; se esse jogador tocar na splash, ele gera exatamente a #386. Navegador
+sem suporte a import map (Firefox < 108, Safari < 16.4) ou proxy que reescreve a tag
+produzem isso, e o `prod-coherence` **não pegaria**, porque resolve o import map ele mesmo
+em vez de observar um browser que o ignora.
+
+O parentesco é literal: o commit que fechou a #265 (`5bbad829`, 14/08) foi o que **criou** a
+linha 331. O ramo novo disparou pela primeira vez cinco dias depois.
+
+**Correção - é instrumentação, não diagnóstico.** O `onerror` passou a guardar
+`window.__CS_BOOT_SRC=this.src`; o ramo do watchdog registra três migalhas antes do `fail`
+(módulo que falhou, `HTMLScriptElement.supports('importmap')` e estado da rede); e as
+migalhas, que eram gravadas no banco (`jserror.ts:98`) mas **nunca entravam no
+`client_payload`** (`:137`), agora atravessam até o corpo da issue. A evidência viaja na
+**migalha e não na mensagem**, de propósito: o fingerprint é `kind|message|source`, e pôr o
+`?v=` no texto criaria fingerprint novo a cada release, picotando o agrupamento que a
+BUG-71 acabou de consertar. A cláusula EP14 amarra isso conferindo que `9703f595` não muda.
+
+**Medido antes do conserto:**
+
+| | antes | depois |
+|---|---|---|
+| evidência no relatório de falha de boot | nenhuma | módulo, import map e rede |
+| migalhas chegam à issue | não | sim |
+| fingerprint `9703f595` | estável | estável (EP14 mede) |
+| cláusulas verdes / mutantes que mordem | 13 / 32 | 14 / 36 |
+
+**Custo declarado, e é preciso ser franco: este conserto NÃO resolve a #386.** A causa
+continua desconhecida e **a gravidade não foi medida** - o schema do Supabase é privado
+(`~/db-privado/`, fora do repo) e não há ferramenta de consulta, então não sei se
+`9703f595` atingiu um jogador ou muitos. O que muda é que a próxima ocorrência chega
+diagnosticável. Fica também anotado, para PR próprio: **`CACHE_SPLIT_RE` só conhece
+inglês**, e foi por isso que a #362 (mensagem do Firefox em pt-BR) também caiu em `codigo`
+em vez de `cache-split` e perdeu o purge automático. Mexer nisso altera a classe que
+dispara purge de edge e merece régua própria.
+
+**Não verificado:** o caminho de ponta a ponta (módulo falha → `onerror` → migalha → issue)
+exige navegador e Supabase. O que foi verificado sem navegador: a régua recorta e executa o
+fonte, e o **bundle SSR gerado pelo `npm run build`** contém o `onerror` novo e as três
+migalhas. O `boot-check.mjs` seria o lugar de uma cláusula que injeta falha de carregamento
+de módulo, mas ele exige browser e está fora do `check` - fica como dívida declarada, e não
+como cobertura fingida.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`). EP14, **4 mutações medidas**: `onerror-sem-src`
+(volta ao sinalizador pelado), `boot-sem-migalha`, `payload-sem-migalhas` e
+`issue-sem-migalhas`. Todas acendem EP14; as 32 anteriores seguem nas suas -
+**36 de 36 na matriz completa**. Antes deste conserto, `grep` por `__CS_MAIN_FAILED`,
+`__CS_MAIN_LOADED` e `boot-watchdog` em `tools/`, `tests/` e `.github/` devolvia **zero**:
+esse caminho não tinha régua nenhuma.
+
 ### ~~BUG-72 · `console.error` informativo virava bug do jogo, e a pilha do idioma `(msg, e)` se perdia~~ · RESOLVIDO 19/08 (issue #382)
 
 **Sintoma (literal, issue #382, aberta pelo `crash-fix.yml`):**

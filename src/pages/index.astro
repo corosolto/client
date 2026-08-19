@@ -275,6 +275,14 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   /* Migalhas: o que o jogador FEZ, nunca o que ele ESCREVEU. Clique em elemento com id
      ou em botão cobre o menu inteiro sem precisar instrumentar main.js linha a linha -
      e a regra "só rótulo, nunca conteúdo" está escrita na migration 015. */
+  /* `navigator.connection` já é lido no main.js, mas no boot ele é justamente o que não
+     carregou: aqui é a única chance de saber se a rede do jogador estava de pé (BUG-73). */
+  function estadoDaRede(){
+    try{
+      var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      return 'rede online=' + (navigator.onLine !== false) + ' tipo=' + ((c && c.effectiveType) || '?');
+    }catch(_){ return 'rede online=? tipo=?'; }
+  }
   function migalha(txt){
     migalhas.push(new Date().toISOString().slice(11, 19) + ' ' + String(txt).slice(0, 120));
     if (migalhas.length > MIGALHAS) migalhas.shift();
@@ -328,6 +336,11 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
         var pronto = prompt && !prompt.classList.contains('hidden');
         if (!window.__CS_MAIN_READY__) {
           if (erroDoBoot || window.__CS_MAIN_FAILED) {
+            /* O relatório saía sem UMA evidência: a migalha leva o módulo que falhou, o
+               suporte a import map (hipótese da #362) e o estado da rede (BUG-73). */
+            migalha('boot falhou src=' + (window.__CS_BOOT_SRC || '?'));
+            migalha('importmap suportado=' + !!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap')));
+            migalha(estadoDaRede());
             lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou (verifique a conexão)'), 'boot-watchdog');
           } else if (!window.__CS_MAIN_LOADED) {
             /* Rede lenta (#265): failsafe abre a splash antes do main.js chegar; clicar
@@ -1212,6 +1225,6 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   }
 </script>
 
-<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"></script>
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 </body>
 </html>
