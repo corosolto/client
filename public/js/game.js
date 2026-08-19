@@ -625,6 +625,13 @@ export class Game {
     if (this.world.pickups) {
       const keep = [];
       for (const pk of this.world.pickups) {
+        /* id fora de WEAPONS não entra no estado do jogo: o prompt do [E] lê `.short`
+           sem guarda todo quadro e congelava a partida. KNOWN-BUGS BUG-70 / #366. */
+        if (!WEAPONS[pk.weapon]) {
+          console.warn(`[pickup] mapa ${this._mapId}: arma '${pk.weapon}' não existe em WEAPONS — pickup ignorado`);
+          pk.mesh?.removeFromParent();
+          continue;
+        }
         if (this._pickupAllowed(pk.weapon)) {
           const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
           if (rw && pk.mesh) {
@@ -1686,6 +1693,9 @@ export class Game {
          registrou a derrota ("use C pra agachar"); quem venceu foi `_travaAtalhos()`, com
          a Keyboard Lock API em tela cheia, mais a confirmação de saída do main.js. */
       if ((e.ctrlKey || e.metaKey) && document.pointerLockElement) e.preventDefault();
+      // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
+      // Em pointer lock o jogo é dono do teclado — engole tudo.
+      if (document.pointerLockElement) e.preventDefault();
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];

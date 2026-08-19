@@ -15,8 +15,11 @@
 //   liftY  = k * GAIN_POS_Y   (m)        -> vm.root.position.y
 //
 // TODOS os numeros acima sao LIDOS por regex de public/js/game.js — nenhum e copiado aqui.
-// A cadencia (rate) vem da tabela WEAPONS (game.js; weapons.js so carrega geometria) e o
-// agendamento replica `p.nextShotAt = this.time + w.rate` (acumula a partir do QUADRO em
+// A cadencia (rate) e a tabela WEAPONS vêm por IMPORT de public/js/data/weapons.js (modulo
+// puro) e o REC_DEG por IMPORT de public/js/recoil.js. Já foram regex/new Function: o #332
+// moveu a tabela de arquivo e o regex continuou lendo o game.js — portão vermelho em
+// silêncio por 2 dias. Import não depende de indentação nem de nome de arquivo antigo:
+// se a tabela mudar de lugar, o import quebra ALTO. O agendamento replica `p.nextShotAt = this.time + w.rate` (acumula a partir do QUADRO em
 // que o tiro saiu, nao de uma grade ideal — isso muda o pico em ate 0,5 grau).
 //
 // A coronha: back = escalaVM * max(0, -bboxMin.z) e a distancia coronha->grip em metros,
@@ -30,11 +33,11 @@
 import fs from 'fs';
 import path from 'path';
 import { RecoilAxis } from '../../public/js/springs.js';
+import { REC_DEG } from '../../public/js/recoil.js';
+import { WEAPONS } from '../../public/js/data/weapons.js';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 const G = fs.readFileSync(path.join(ROOT, 'public/js/game.js'), 'utf8');
-const RJS = fs.readFileSync(path.join(ROOT, 'public/js/recoil.js'), 'utf8');
-const WJS = fs.readFileSync(path.join(ROOT, 'public/js/weapons.js'), 'utf8');
 
 const die = (m) => { throw new Error('vm-kick-sim: ' + m); };
 const grab = (re, what) => { const m = re.exec(G); if (!m) die(`nao achei ${what} em game.js`); return m; };
@@ -74,47 +77,30 @@ const GAIN_ROT_Y = +grab(/rotation\.y\s*=\s*ks\s*\*\s*k\s*\*\s*([\d.]+)/, 'ganho
 // então o regex ancora no ganho de k, que é o que esta régua mede.
 const GAIN_ROT_Z = +grab(/rotation\.z\s*=\s*(?:[^;\n]*?\+\s*)?ks\s*\*\s*k\s*\*\s*([\d.]+)/, 'ganho k na rotacao Z')[1];
 
-/* ---------- 4) REC_DEG (recoil.js) ---------- */
-function loadRecDeg() {
-  const marcador = 'export const REC_DEG = {';
-  const i = RJS.indexOf(marcador);
-  if (i < 0) die('REC_DEG nao encontrado');
-  const j = RJS.indexOf('\n};', i);
-  const body = RJS.slice(i + 'export const REC_DEG = '.length, j + 2);
-  // eslint-disable-next-line no-new-func
-  return new Function('return ' + body)();
-}
-const REC_DEG = loadRecDeg();
+/* ---------- 4) REC_DEG: import direto de recoil.js (fonte única de verdade) ---------- */
 
 /* ---------- 5) STATIC_CLASS (para o kickMul de pistola) ---------- */
+/* Único regex que sobra em game.js: a constante é interna (não exportada) e o
+   game.js não é importável aqui. Guard de vazio: sem ele, refactor no loop
+   deixava STATIC_CLASS={} e o kickMul de pistola virava 1 em silêncio. */
 function loadStaticClass() {
   const out = {};
   for (const m of G.matchAll(/for\s*\(const w of \[([^\]]*)\]\)\s*STATIC_CLASS\[w\]\s*=\s*'(\w+)'/g)) {
     for (const id of m[1].split(',')) { const s = id.trim().replace(/^'|'$/g, ''); if (s) out[s] = m[2]; }
   }
   for (const m of G.matchAll(/STATIC_CLASS\['(\w+)'\]\s*=\s*'(\w+)'/g)) out[m[1]] = m[2];
+  if (!Object.keys(out).length) die('STATIC_CLASS vazio — o regex parou de casar com o game.js');
   return out;
 }
 const STATIC_CLASS = loadStaticClass();
 
-/* ---------- 6) cadencia real (tabela WEAPONS — mudou de game.js para data/weapons.js na
-   modularização da main, alpha.147; weapons.js só tem geometria) ---------- */
-function loadRates() {
-  const out = {};
-  const dataPath = path.join(ROOT, 'public/js/data/weapons.js');
-  const src = fs.existsSync(dataPath) ? fs.readFileSync(dataPath, 'utf8') : G;
-  for (const m of src.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\brate:\s*([\d.]+)/gm)) out[m[1]] = +m[2];
-  if (!Object.keys(out).length) die('nenhum `rate:` encontrado na tabela WEAPONS');
-  return out;
-}
-const RATE = loadRates();
+/* ---------- 6) cadencia real (WEAPONS importado de data/weapons.js — sem regex) ---------- */
+const RATE = {};
 const AUTO = new Set();
-for (const m of G.matchAll(/^\s{2}(\w+)\s*:\s*\{[^\n]*?\bauto:\s*true/gm)) AUTO.add(m[1]);
-// weapons.js e a fonte da GEOMETRIA (len/gripZ/vm) — registrada no relatorio para rastrear
-// de onde veio cada numero; a cadencia NAO mora la.
-const GEOM = {};
-for (const m of WJS.matchAll(/(\w+):\s*\{\s*len:\s*([\d.]+),\s*rot:[^}]*?gripZ:\s*([\d.]+)([^}]*)\}/g)) {
-  const vm = /vm:\s*([\d.]+)/.exec(m[4]); GEOM[m[1]] = { len: +m[2], gripZ: +m[3], vm: vm ? +vm[1] : 1 };
+for (const [id, w] of Object.entries(WEAPONS)) {
+  if (typeof w.rate !== 'number') die(`WEAPONS.${id} sem rate numérico`);
+  RATE[id] = w.rate;
+  if (w.auto) AUTO.add(id);
 }
 
 /* ---------- 7) coronha em repouso: vm_mint_audit.json ---------- */
@@ -158,6 +144,7 @@ function burst(w, shots, opts = {}) {
 }
 
 const ids = Object.keys(REC_DEG).filter((w) => RATE[w] != null);
+if (!ids.length) die('nenhuma arma: REC_DEG vazio ou sem interseção com WEAPONS');
 const out = {
   gerado: new Date().toISOString(),
   fonte: {

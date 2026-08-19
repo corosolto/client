@@ -26,30 +26,44 @@ function lastTag(before) {
 }
 
 /* PRs mergeados no intervalo. Fallback sem tag: últimos 3 merges (primeira execução
-   num clone raso ainda lista algo em vez de estourar). */
+   num clone raso ainda lista algo em vez de estourar).
+   DUAS formas de PR chegar à main: merge commit ("Merge pull request #N", título no
+   corpo) ou squash merge (commit comum com "(#N)" no fim do subject — o padrão do
+   automerge). A régua contava só a primeira: com o #344 squash-merged, o check acusava
+   "1 na seção, 0 no git" e o modo escrita nem listaria o PR. */
 function mergedPRs(fromRef, toRef) {
   const range = fromRef ? [`${fromRef}..${toRef || 'HEAD'}`] : ['-3'];
-  const out = git(['log', '--merges', '--format=%H\u0001%s\u0001%b\u0002', ...range]);
+  const out = git(['log', '--format=%H\u0001%s\u0001%b\u0002', ...range]);
   const prs = [];
   for (const chunk of out.split('\u0002')) {
-    const m = chunk.match(/Merge pull request #(\d+)/);
-    if (!m) continue;
     const [, subject, body] = chunk.split('\u0001');
-    const title = (body || '').split('\n').map((l) => l.trim()).filter(Boolean)
-      .find((l) => !/^Signed-off-by:/i.test(l))
-      || subject.replace(/^Merge pull request #\d+ from \S+\s*/, '');
+    if (!subject) continue;
+    let n = null, title = null;
+    const mm = subject.match(/^Merge pull request #(\d+)/);
+    const ms = subject.match(/\s\(#(\d+)\)\s*$/);
+    if (mm) {
+      n = mm[1];
+      title = (body || '').split('\n').map((l) => l.trim()).filter(Boolean)
+        .find((l) => !/^Signed-off-by:/i.test(l))
+        || subject.replace(/^Merge pull request #\d+ from \S+\s*/, '');
+    } else if (ms) {
+      n = ms[1];
+      title = subject.slice(0, ms.index);
+    } else continue;
     if (/^chore\(release\)/.test(title)) continue;
-    prs.push({ n: m[1], title: title.replace(/[<>]/g, '').replace(/\s+/g, ' ') });
+    prs.push({ n, title: title.replace(/[<>]/g, '').replace(/\s+/g, ' ') });
   }
   return prs.reverse();
 }
 
-/* Commits diretos (sem PR) no intervalo — raro, mas não pode sumir do registro. */
+/* Commits diretos (sem PR) no intervalo — raro, mas não pode sumir do registro.
+   Commit com "(#N)" no subject É PR (squash) e já entrou por mergedPRs. */
 function directCommits(fromRef, toRef) {
   if (!fromRef) return [];
   const out = git(['log', '--no-merges', '--format=%s', `${fromRef}..${toRef || 'HEAD'}`]);
   return out.split('\n').map((l) => l.trim()).filter(Boolean)
     .filter((s) => !/^chore\(release\)/.test(s))
+    .filter((s) => !/\s\(#\d+\)\s*$/.test(s))
     .map((s) => ({ n: null, title: s.replace(/[<>]/g, '') }));
 }
 

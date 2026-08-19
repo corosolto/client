@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.147`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.159`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,71 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.159] — 2026-08-19
+
+### Mudado
+- fix(release): perdedor da corrida não toca na release — edit apagava o crédito dos colaboradores (#374)
+
+## [2.0.0-alpha.158] — 2026-08-19
+
+### Mudado
+- fix(mapa): arma 'smg' não existe — crash de todo quadro no _updatePickups (#366) (#367)
+
+## [2.0.0-alpha.157] — 2026-08-18
+
+### Mudado
+- fix(ci): guarda de dedupe na shell — triage não morre mais em issue não-crash (#358)
+
+## [2.0.0-alpha.156] — 2026-08-18
+
+### Mudado
+- fix(ci): classify serializa por PR, posta como csbrasil-BOT e dedupa por marcador (#351)
+- fix(eval): vm-kick-sim importa WEAPONS e REC_DEG em vez de parsear fonte (#352)
+- ci(portao-browser): caminho do viewmodel entra no gatilho de browser (#353)
+- feat(ci): comentários do bot legíveis — caixa colorida, mapa da mudança e ficha de triagem (#354)
+- fix(release): criação de release idempotente — corrida tag×main não pinta mais vermelho (#355)
+
+## [2.0.0-alpha.155] — 2026-08-18
+
+### Mudado
+- docs: handoff da 2a sessao de 18/08 — ruleset ativo, bot no ar, planos 1/2/6 concluidos (#350)
+
+## [2.0.0-alpha.154] — 2026-08-18
+
+### Mudado
+- ci(release): run mais novo cancela o velho no ar (atomic push failed da .152) (#349)
+
+## [2.0.0-alpha.153] — 2026-08-18
+
+### Mudado
+- ci(release): push do bump autentica como csbrasil-BOT para passar no ruleset da main (#343)
+
+## [2.0.0-alpha.152] — 2026-08-18
+
+### Mudado
+- fix(eval): changelog conta squash-merge e foot-offsets volta a bater com a sonda (#348)
+- chore(scripts): documentacao dos // sai do package.json para SCRIPTS.md (#347)
+
+## [2.0.0-alpha.151] — 2026-08-18
+
+### Mudado
+- fix(ci): portao build verde de novo: eval:deps + vm-kick-sim le data/weapons.js (#344)
+
+## [2.0.0-alpha.150] — 2026-08-18
+
+### Mudado
+- docs: handoff para proxima sessao (plano completo de 7 frentes)
+
+## [2.0.0-alpha.149] — 2026-08-17
+
+### Mudado
+- fix(input): preventDefault em pointer lock impede Quick Find do Firefox
+
+## [2.0.0-alpha.148] — 2026-08-17
+
+### Mudado
+- chore(portões): travas locais, agrupamento de crash por classe, timeouts e vulnerabilidades (#209)
 
 ## [2.0.0-alpha.147] — 2026-08-17
 

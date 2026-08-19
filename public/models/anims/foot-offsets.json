@@ -1,16 +1,9 @@
 {
- "gerado": "2026-08-17T12:24:22.647Z",
+ "gerado": "2026-08-15T02:06:07.032Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
  "teto": 0.08,
- "excecoesVerificadas": [
-  "lobisomem/idle",
-  "lobisomem/walk",
-  "lobisomem/run",
-  "lobisomem/shoot",
-  "lobisomem/crouch"
- ],
  "offsets": {
   "esquerdomacho": {
    "walk": 0.0281,
@@ -234,102 +227,6 @@
    "walk": 0.034,
    "run": 0.0179,
    "crouch": 0.021
-  },
-  "mariabonita": {
-   "crouch": 0.0274
-  },
-  "saci": {
-   "idle": -0.0247,
-   "shoot": -0.0402
-  },
-  "lampiao": {
-   "idle": 0.0605,
-   "run": 0.0618,
-   "shoot": 0.0493,
-   "crouch": -0.02
-  },
-  "lobisomem": {
-   "idle": 0.2374,
-   "walk": 0.2659,
-   "run": 0.2692,
-   "shoot": 0.2227,
-   "crouch": 0.1385
-  },
-  "bandeirante": {
-   "walk": 0.0338,
-   "run": 0.0231,
-   "crouch": 0.0503
-  },
-  "boto": {
-   "idle": 0.0379,
-   "walk": 0.0706,
-   "run": 0.0443,
-   "shoot": 0.0556
-  },
-  "zumbi": {
-   "idle": -0.0225,
-   "walk": -0.0507,
-   "run": -0.0323,
-   "shoot": -0.0306,
-   "crouch": -0.0422
-  },
-  "cuca": {
-   "idle": 0.0724,
-   "walk": 0.0791,
-   "shoot": 0.0782
-  },
-  "curupira": {
-   "crouch": -0.0519
-  },
-  "camera-roxa": {
-   "walk": 0.0694,
-   "run": -0.0645,
-   "shoot": -0.0348,
-   "crouch": -0.0309
-  },
-  "microfonildo": {
-   "idle": -0.023,
-   "walk": 0.0699,
-   "run": 0.0322,
-   "shoot": -0.0249,
-   "crouch": 0.0369
-  },
-  "gilbomes": {
-   "idle": -0.0772
-  },
-  "programador-virado": {
-   "walk": 0.0321,
-   "run": 0.0138
-  },
-  "designer-ux": {
-   "idle": -0.0246,
-   "walk": -0.0431,
-   "run": -0.0252,
-   "shoot": -0.0287,
-   "crouch": 0.0217
-  },
-  "lenda-lanhouse": {
-   "idle": -0.0228,
-   "walk": 0.0488,
-   "run": -0.0249,
-   "shoot": -0.0298
-  },
-  "motoca-cachorro-loko": {
-   "idle": -0.0134,
-   "walk": -0.0471,
-   "run": -0.0353,
-   "shoot": -0.0143
-  },
-  "doidinho-bairro": {
-   "idle": -0.0209,
-   "walk": -0.0424,
-   "run": -0.0608,
-   "shoot": -0.0138,
-   "crouch": 0.0107
-  },
-  "profeta-calcada": {
-   "walk": -0.0278,
-   "run": -0.0242
   }
  },
  "suspeitos": [
@@ -344,31 +241,6 @@
    "desvio": -0.3669
   },
   {
-   "id": "cuca",
-   "pose": "crouch",
-   "desvio": -0.2687
-  },
-  {
-   "id": "gilbomes",
-   "pose": "walk",
-   "desvio": 0.1619
-  },
-  {
-   "id": "curupira",
-   "pose": "run",
-   "desvio": 0.1614
-  },
-  {
-   "id": "curupira",
-   "pose": "walk",
-   "desvio": 0.1579
-  },
-  {
-   "id": "curupira",
-   "pose": "idle",
-   "desvio": 0.1445
-  },
-  {
    "id": "ancap",
    "pose": "crouch",
    "desvio": -0.1403
@@ -377,11 +249,6 @@
    "id": "esbirro",
    "pose": "crouch",
    "desvio": -0.1382
-  },
-  {
-   "id": "gilbomes",
-   "pose": "run",
-   "desvio": 0.1374
   },
   {
    "id": "esbirro",
@@ -394,74 +261,14 @@
    "desvio": -0.1308
   },
   {
-   "id": "curupira",
-   "pose": "shoot",
-   "desvio": 0.1307
-  },
-  {
-   "id": "gilbomes",
-   "pose": "crouch",
-   "desvio": 0.1281
-  },
-  {
-   "id": "saci",
-   "pose": "crouch",
-   "desvio": 0.128
-  },
-  {
-   "id": "saci",
-   "pose": "run",
-   "desvio": 0.1257
-  },
-  {
-   "id": "saci",
-   "pose": "walk",
-   "desvio": 0.1116
-  },
-  {
    "id": "ancap",
    "pose": "run",
    "desvio": -0.1086
   },
   {
-   "id": "lampiao",
-   "pose": "walk",
-   "desvio": -0.0985
-  },
-  {
-   "id": "gilbomes",
-   "pose": "shoot",
-   "desvio": 0.0982
-  },
-  {
    "id": "dollynho",
    "pose": "crouch",
    "desvio": -0.0981
-  },
-  {
-   "id": "mariabonita",
-   "pose": "run",
-   "desvio": -0.0979
-  },
-  {
-   "id": "mariabonita",
-   "pose": "walk",
-   "desvio": -0.096
-  },
-  {
-   "id": "mariabonita",
-   "pose": "idle",
-   "desvio": -0.091
-  },
-  {
-   "id": "mariabonita",
-   "pose": "shoot",
-   "desvio": -0.0857
-  },
-  {
-   "id": "cuca",
-   "pose": "run",
-   "desvio": -0.083
   }
  ]
 }

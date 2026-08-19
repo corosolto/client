@@ -222,7 +222,9 @@ export function buildPenitenciaria(scene) {
 
   const GM={dark:MAT.black,steel:MAT.steel,wood:MAT.rust};
   function gun(kind,x,z,yaw){const g=new THREE.Group();g.name=`arma-central-${kind}`;g.position.set(x,.1,z);g.rotation.y=yaw;root.add(g);const long=['awp','ak','m4','shotgun','mp5'].includes(kind);const body=new THREE.Mesh(boxGeo(.13,.13,long?1:.42),kind==='shotgun'?GM.wood:GM.dark);body.position.y=.1;g.add(body);if(long){const barrel=new THREE.Mesh(boxGeo(.08,.08,.55),GM.steel);barrel.position.set(0,.13,-.62);g.add(barrel);}const grip=new THREE.Mesh(boxGeo(.11,.25,.14),GM.wood);grip.position.set(0,-.02,long?.25:.12);g.add(grip);pickups.push({x,z,kind,weapon:kind,readyAt:0,mesh:g});}
-  ['awp','ak','m4','shotgun','mp5','deagle','pistol','smg'].forEach((kind,i)=>gun(kind,-10+i*(20/7),i%2?-2.2:2.2,i*.42));
+  /* `kind` é ID de arma (chave de WEAPONS), não CLASSE: o 8º era 'smg' e crashava
+     o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. */
+  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>gun(kind,-10+i*(20/7),i%2?-2.2:2.2,i*.42));
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
   const hemi=new THREE.HemisphereLight(0xdbe8eb,0x343a36,1.35);scene.add(hemi);

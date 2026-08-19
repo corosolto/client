@@ -33,6 +33,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # deployment_status: só produção bem-sucedida interessa (preview não é prod).
     if: >-
       github.event_name != 'deployment_status' ||

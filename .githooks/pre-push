@@ -12,7 +12,7 @@
 # mentira que a régua que não morde. O que fecha esse lado é bloquear merge com fio
 # aberto (ver docs/quality-gates.md), não um hook.
 #
-# Pular: `git push --no-verify` (ou PREPUSH=0). Custa ~4 s.
+# Pular: `git push --no-verify` (ou PREPUSH=0). O check:deploy domina o custo (~1 min).
 set -uo pipefail
 [ "${PREPUSH:-1}" = "0" ] && exit 0
 
@@ -20,17 +20,14 @@ remoto="$1"
 falhas=()
 t0=$(date +%s)
 
-echo "pre-push: portões locais (~4 s; PREPUSH=0 pula)"
+echo "pre-push: portões locais (syntax/docs/arch/travessão/mapcontrato via check:deploy; PREPUSH=0 pula)"
 
 # Trailer `Agent:` em TODO commit que sobe: o commit-msg não roda em rebase nem em
-# clone sem `npm run setup`.
+# clone sem `npm run setup`. Merge que traz a main injeta história alheia no
+# intervalo — `--not --remotes` só cobra o que o remoto AINDA não tem.
 while read -r _local_ref local_sha _remote_ref remote_sha; do
   [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
-  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
-    intervalo=$(git rev-list "$local_sha" --not --remotes="$remoto")
-  else
-    intervalo=$(git rev-list "$remote_sha..$local_sha")
-  fi
+  intervalo=$(git rev-list "$local_sha" --not --remotes="$remoto")
   for sha in $intervalo; do
     if ! git show -s --format='%B' "$sha" | grep -Eqi '^Agent:[[:space:]]*[^[:space:]]'; then
       falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
@@ -45,7 +42,7 @@ if [ -f package.json ] && [ -f public/js/version.js ]; then
   [ -n "$pj" ] && [ "$pj" != "$vj" ] && falhas+=("package.json ($pj) != version.js ($vj)")
 fi
 
-for portao in syntax docs:check arch:check travessao:check eval:mapcontrato; do
+for portao in eval:mapcontrato check:deploy; do
   if ! npm run "$portao" --silent >/tmp/prepush-$$.log 2>&1; then
     falhas+=("$portao — $(grep -m1 -E '✗|FALHA|error' /tmp/prepush-$$.log | cut -c1-90)")
   fi

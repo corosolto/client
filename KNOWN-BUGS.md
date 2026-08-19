@@ -51,6 +51,67 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
+
+**Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
+*"Uncaught TypeError: Cannot read properties of undefined (reading 'short')"*,
+fingerprint `ea71c000`, classe `codigo`, versão 2.0.0-alpha.157, em
+`game.js:4849:66` → `Game._updatePickups` → `Game.update` → `loop`.
+
+**Causa raiz — confirmada.** `map_penitenciaria.js:223` declarava o 8º pickup da fileira
+central como `kind:'smg'`. **`smg` não é arma: é CLASSE de arma.** Quem mapeia arma→classe
+é `recoil.js:38`, `game.js:316`, `audio.js:271` e `vmattach.js:622`, todos com
+`mp5|uzi|p90 -> 'smg'`; `WEAPONS` (em `public/js/data/weapons.js`, 26 chaves) nunca teve
+`smg`. O prompt do `[E]` desreferencia `WEAPONS[w].short` **sem guarda**
+(`game.js:4849`), e o `_updatePickups` roda **todo quadro** dentro do `update()` — então
+olhar para aquela arma não estragava o HUD, **congelava a partida**. O mapa entrou em
+`f87ff467` (Penitenciária + Velho Oeste, #335), o que explica por que o crash é novo.
+
+**Reprodução:** `node tools/eval/pickup-arma-check.mjs` (semente 12345, sem browser). A
+cláusula PA2 planta o jogador em cima do pickup e chama o `_updatePickups` de produção;
+a exceção sai com a mensagem literal de #366.
+
+**Medido antes do conserto** (`node tools/eval/pickup-arma-check.mjs`, 12 mapas, 772 pickups):
+
+| | antes | depois |
+|---|---|---|
+| ids de pickup fora de `WEAPONS` | **1** (`penitenciaria/mapa 'smg'`) | 0 |
+| mapas em que o `_updatePickups` de produção lança | **1** (penitenciaria) | 0 |
+| `_grabPickup` naquele pickup | `false` (impegável) | `true`, jogador sai com `uzi` na mão |
+
+**O que foi DESCARTADO com medição, não com palpite.** O caminho óbvio era `WEAPONS[w]?.short`
+na linha do crash. Medido: com o `?.`, o HUD passa a escrever literalmente
+**`[E] PEGAR undefined`** e `_grabPickup(pk, player, true)` continua devolvendo **`false`** —
+a arma segue impegável, uma caixa dourada em x=10,0 z=−2,2 no meio de 7 armas de verdade.
+O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conserto é no
+**id**, e a guarda de runtime ficou na **porta de entrada**, não no `.short`.
+
+**Correção.** Duas, em camadas diferentes:
+1. `public/js/map_penitenciaria.js:223` — `'smg'` → `'uzi'` (SMG de verdade, chave de
+   `WEAPONS`; `mp5` já ocupava a outra vaga de SMG da fileira). É a causa.
+2. `public/js/game.js:573-581` — id que não existe em `WEAPONS` **não entra no estado do
+   jogo**: o pickup é descartado na ingestão do mapa com `console.warn`. É rede, não
+   conserto: mantém o defeito de dado fora do caminho quente sem escondê-lo de quem mede,
+   porque a régua lê a lista **crua** do `MAPS[id].build()`, antes desta porta.
+
+**Custo declarado, medido.**
+- `check:fast` ganhou um passo: **+3,7 s** (`eval:pickuparma`), de 53 para 54 passos.
+- A penitenciária ganhou uma arma jogável a mais na fileira central (a vaga já existia e
+  estava morta). Posição, yaw e contagem de pickups do mapa não mudaram: **16 antes, 16
+  depois**. A caixa-marcador `arma-central-uzi` passa a ser trocada pelo GLB real em
+  `game.js:574`, como as 7 irmãs — **isto não foi verificado em browser**, só no harness,
+  onde o carregamento de GLB é stub.
+
+**Régua: `tools/eval/pickup-arma-check.mjs`** (`npm run eval:pickuparma`, no `check:fast`).
+2 cláusulas, 3 mutações medidas:
+`--mutante=smg` acende PA1 (1 id fora de `WEAPONS`) **e** PA2 (1 mapa lançando) — reproduz #366;
+`--mutante=sem-short` acende PA1 nos 12 mapas (`mp5` sem `.short`);
+`--mutante=sem-pickups` acende a anti-vacuidade nos 12 (0 < piso de 20).
+**Resultado negativo medido e declarado no cabeçalho da régua:** `--mutante=sem-short`
+**não** acende a PA2, e é de propósito — campo ausente numa arma que existe vira
+`undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
+sobra quando alguém "conserta" o crash com `?.`.
+
 ### BUG-51 · erro de extensão ou beacon virava bug do jogo
 
 **Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
@@ -3324,6 +3385,33 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
+- **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
+  dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
+  comentários `## csbrasil-bot classification`, 4 deles num intervalo de 2 s (03:21:19–03:21:21), todos de
+  `github-actions`. Duas causas encadeadas: (1) o secret `CSBRASIL_BOT_TOKEN` nunca tinha sido criado no repo e o
+  fallback silencioso `|| github.token` fazia o comentário nascer com identidade trocada; (2) um review com N
+  comentários dispara N gatilhos (`pull_request_review`, `pull_request_review_comment` ×3) **no mesmo segundo**: os
+  runs paralelos leem a lista de comentários antes de qualquer um postar, e o dedupe por autor+marcador (que pedia
+  login `csbrasil-bot`) nunca casava com `github-actions` — cada run publicava o seu. Correção: `concurrency.group:
+  pr-classify-<n>` com `cancel-in-progress` serializa por PR; fallback removido com guard que derruba o job alto
+  quando o secret falta; dedupe passou a casar só pelo MARCADOR no corpo (extras deletados, o primeiro atualizado);
+  e os passos de rota/label/comentário migraram para REST puro porque `gh pr edit` resolve nó de user/org via
+  GraphQL e exige scope `read:org` — o vermelho que a PR #350 pegou logo depois do secret entrar (PAT tem
+  `repo,workflow`). Duplicatas das PRs #347/#348 deletadas na mão (sobrou 1 cada). Régua: rajada de gatilhos numa
+  PR não pode produzir mais de 1 comentário com o marcador — mutante: remover o bloco `concurrency` do
+  `csbrasil-bot-pr-classify.yml` reabre a corrida.
+- **~~BUG-67 · revisor local re-revisava o mesmo commit para sempre~~ · RESOLVIDO 18/08.** Evidência:
+  `estado/canarinho.err.log` do bot local com dezenas de `poll: achados is not defined`, sempre após revisar
+  commits diretos (`68f5aff6`, `109982b3`…), reprocessando o MESMO commit a cada ciclo. Causa: `reviewCommits()`
+  referenciava `achados.length` numa função onde a variável não existe (`ReferenceError`) — e como `estado.main`
+  só era gravado DEPOIS do loop, o erro abortava o ciclo antes do avanço: commit re-revisado (custo de LLM a cada
+  10 min) e comentário de commit **re-postado a cada ciclo** quando tinha achados. Correção (infra local do bot):
+  `meta.achados.length` + try/catch por commit + `estado.main` gravado dentro do loop. Sintoma irmão: `✗(opencode
+  run: )` com mensagem vazia era timeout do `spawnSync` (SIGTERM, stderr vazio) — `bots/lib/llm.mjs` agora reporta
+  `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
+  commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
+  branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:
