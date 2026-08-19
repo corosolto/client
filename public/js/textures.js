@@ -915,6 +915,20 @@ export function initTextures() {
      5º campo: cidade ('SP'|'RJ'), coberto pelo portão GRAFFITI-EDITORIAL.
      GERADO por `node tools/gen-graffiti-decals.mjs --pack` — edite o script. */
   /* PIXO-PACK:GERADO-INICIO */
+  DECAL_FILES.push(
+    ['or-pixo-rj-faixa.png', 2.626, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-grau.png', 2.016, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-onda.png', 1.882, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pique.png', 2.438, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-solto.png', 2.081, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trem.png', 2.098, 'tag', 0, 'RJ'],
+    ['or-pixo-sp-asfalto.png', 1.862, 'tag', 0, 'SP'],
+    ['or-pixo-sp-beco.png', 1.24, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coro.png', 1.33, 'tag', 0, 'SP'],
+    ['or-pixo-sp-laje.png', 1.467, 'tag', 0, 'SP'],
+    ['or-pixo-sp-morro.png', 1.561, 'tag', 0, 'SP'],
+    ['or-pixo-sp-varal.png', 0.754, 'tag', 0, 'SP'],
+  );
   /* PIXO-PACK:GERADO-FIM */
   /* As homenagens or-hom-* (pessoa real) saíram do pool E do disco em 17/08 —
      contrato editorial; o portão GRAFFITI-EDITORIAL impede a reintrodução. */

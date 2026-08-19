@@ -116,6 +116,30 @@ respectivamente. São PNGs com alfa, sem texto e sem marca externa.
   10 percent visibly broken; no alternating end-on blocks; no plaster; no graffiti;
   no objects; no people; no text; no watermark; no vignette; no dramatic lighting."
 
+## Pack pixo SP×RJ (frente F, v2.1 — lote 1, 19/08/2026)
+
+Obra própria gerada pelo Mint (image generation) a partir da pesquisa de estilo
+`references/graffiti/PIXACAO-SP-RJ.md` — **estilo, nunca assinatura**: nenhum
+decal reproduz tag, grife ou sigla de writer real, e os textos são vocábulos do
+universo do jogo. Fontes locais em `references/graffiti/pack/<cidade>-<slug>.png`,
+recorte reproduzível por `node tools/gen-graffiti-decals.mjs --pack` (unmix de
+dois tons; aceite cobertura/borda/cinza). SP = pixo reto (alto, angular, gótico);
+RJ = xarpi (redondo, gordo, corrido). Cada decal declara `cidade` no 5º campo do
+DECAL_FILES (`textures.js`), coberto pelo portão GRAFFITI-EDITORIAL.
+
+- `decals/or-pixo-sp-coro.png` SHA-256 `9757db8f3b08ec0dd2b960856d9728017948925185d937ec940a71ba1fb0bb36` (Mint chat `ph7f7br2n3p31h72c66p9mm3598cszfg`).
+- `decals/or-pixo-sp-laje.png` SHA-256 `a1b9e595c9cb0fb7fedbc28686e6896dbc8df78e9260a48b394b5f2dae5b5216` (Mint chat `ph70t3d36jq13m7b9zybjbp3x98crt0b`).
+- `decals/or-pixo-sp-beco.png` SHA-256 `8d2c50a3de1463a3881a767256bea7fe0959f3fac3500ef56f6106e50b4e940e` (Mint chat `ph70vy54d5psck9qm1hkr5fv4s8crb2a`).
+- `decals/or-pixo-sp-morro.png` SHA-256 `0a639cc6908cda807924c5d1e3da9a98481ae4e6c9b3e6503d7aaf55bdd4a395` (Mint chat `ph7azs6z1jyfm1e7fgkbe6hv0h8csm69`).
+- `decals/or-pixo-sp-asfalto.png` SHA-256 `29fc8676fb6730cfb37479848d0478c53b4fa413c37f430656d444e65b2f8d36` (Mint chat `ph7aay6jhxch4143vdrfycpjgs8crrp4`).
+- `decals/or-pixo-sp-varal.png` SHA-256 `b90a5743698e780a5a545608f4d4464b48c3a8bc4f398a1bda2bc8e919d879c2` (Mint chat `ph70vr2fncyw1q7cazey7tnpks8cr7wc`; 2ª versão — a 1ª veio como foto de muro e foi reprovada pela métrica `borda` do gerador).
+- `decals/or-pixo-rj-solto.png` SHA-256 `5977f5524bacf130c3b7a2e9de1a4a32b9214b6a54ea7b1131380b7fedf3bcd5` (Mint chat `ph77rdndj60n1ac7g0z70xg9g58crf8v`).
+- `decals/or-pixo-rj-trem.png` SHA-256 `5376f3d787b37790c0cce9bdb2e15802138f31a81312562e2ac5fe9ae4329fc6` (Mint chat `ph72n90t4vsfrx36mbadwmb1bx8crpb8`).
+- `decals/or-pixo-rj-grau.png` SHA-256 `099dbe04cbc39c6513f1b27f27fd503bf2d37dc03ad67158db4fa577cb62ce6d` (Mint chat `ph72zksrej6j0f7cbaycae0n558csvk0`).
+- `decals/or-pixo-rj-faixa.png` SHA-256 `35410ce34c0a542062f6f6b564c320de56d32a15b1d6678137d3487303c06f3a` (Mint chat `ph7brxgdvew9y5y11vaqqa1z0d8csbtq`).
+- `decals/or-pixo-rj-pique.png` SHA-256 `dcf271752d31c033167df262dea6f125401f966f4ea8c66acdfd9a3f0e5f8fcf` (Mint chat `ph7add4g19skstd0763wp5g2bh8crj87`).
+- `decals/or-pixo-rj-onda.png` SHA-256 `386b578cfa97706ade717bb918fd8b03d70c4dc221327470c7d9b5fbc239b66c` (Mint chat `ph7c2kh4jjvcsmwjatex5rjy9x8cr862`).
+
 ## Horizontes dos mapas originais
 
 Todos usam placa horizontal 2:1, horizonte baixo e contínuo, sem texto, marca,
