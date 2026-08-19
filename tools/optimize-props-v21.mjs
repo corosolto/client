@@ -18,6 +18,12 @@ const jobs = [
   { src: 'references/glb/caixa_dagua_azul_mint.glb', out: `${outDir}/caixa_dagua_azul.glb`, tex: 512 },
   { src: 'references/glb/caixa_dagua_preta_mint.glb', out: `${outDir}/caixa_dagua_preta.glb`, tex: 512 },
   { src: 'references/glb/caixa_dagua_fibra_mint.glb', out: `${outDir}/caixa_dagua_fibra.glb`, tex: 512 },
+  { src: 'references/glb/varal_roupas_01_mint.glb', out: `${outDir}/varal_roupas_01.glb`, tex: 512 },
+  { src: 'references/glb/varal_roupas_02_mint.glb', out: `${outDir}/varal_roupas_02.glb`, tex: 512 },
+  // pipa/heli/avião passam antes pelo split-props-v21.mjs (nós animáveis)
+  { src: 'references/glb/pipa_papel_split.glb', out: `${outDir}/pipa_papel.glb`, tex: 256 },
+  { src: 'references/glb/helicoptero_pm_split.glb', out: `${outDir}/helicoptero_pm.glb`, tex: 512 },
+  { src: 'references/glb/aviao_faixa_split.glb', out: `${outDir}/aviao_faixa.glb`, tex: 512 },
 ];
 
 function triCount(doc) {

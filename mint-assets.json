@@ -1515,6 +1515,124 @@
     ],
     "finalSha256": "69acf07a5f895426bbc0acc0e0c0d2a8b0744e298c2f741bb962ce2ec55c726d"
    }
+  },
+  "varal-roupas-01": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/varal_roupas_01.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7dtxhh7gbkyf8941pet5vav58crdye",
+    "chatUrl": "https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p",
+    "displayName": "Colorful Laundry Varal (varal de corda)",
+    "frente": "v21-e-models",
+    "notes": "Lote 3 da frente E v2.1 (dono: \"as roupas penduradas no corrego, quebrada e campinho tao ruins, na laje tao bons, fazer variacoes\"). Corda com 6 peças coloridas em prendedores entre ganchos. GLB normalizado pela largura (1,0 m; 0,28 m de altura): integrar com scale ~3,0 => 3,0 m x 0,84 m. Calibrado pelo lajes_varal.glb (o varal bom do dono). Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_01-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52"
+   }
+  },
+  "varal-roupas-02": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/varal_roupas_02.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks75rz911e611m14c0pbah8c2h8crgr1",
+    "chatUrl": "https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg",
+    "displayName": "Colorful Laundry Varal (varal de chão)",
+    "frente": "v21-e-models",
+    "notes": "Lote 3 da frente E v2.1. Varal de chão em T de alumínio, 2 linhas com camisetas, jeans, meias e fronha. GLB normalizado pela largura (1,0 m; 0,81 m de altura): integrar com scale ~1,8 => 1,8 m x 1,46 m. Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_02-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969"
+   }
+  },
+  "pipa-papel": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/pipa_papel.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks73xs6xv6x07h45qp44r5w3en8cs1m1",
+    "chatUrl": "https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5",
+    "displayName": "Yellow Green Pipa",
+    "frente": "v21-e-models",
+    "notes": "Lote 3 da frente E v2.1 (dono: \"o lajes tem pipa mas nao tem animacao do pipa voando\"). Losango amarelo/verde com varetas em cruz e rabiola de 5 lacinhos. Rabiola é NÓ SEPARADO (\"rabiola\", 4.452 tris) com pivô na ponta inferior da vela T=(0,14;-0,12;0,02) para sway procedural - split por tools/split-props-v21.mjs. GLB normalizado pela altura total (1,0 m): integrar com scale ~1,6 => vela ~0,74 m. Evidência: tools/eval/asset-evidence/props-v21/pipa_papel-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/split-props-v21.mjs",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "3eb30ff784be191f42cd43667db94a619d19c3c42991dd871e0c666d57eea82f"
+   }
+  },
+  "helicoptero-pm": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/helicoptero_pm.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks75eehczen48e5qsvsygy4abh8cs92f",
+    "chatUrl": "https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0",
+    "displayName": "Blue White Police Copter",
+    "frente": "v21-e-models",
+    "notes": "Lote 3 da frente E v2.1 (dono: \"podemos por helicoptero\"). JetRanger azul/branco genérico, SEM logo/texto (veto editorial). Rotores são NÓS SEPARADOS com pivô no eixo: \"rotor_main\" (287 tris, T=(0,08;0,17;0), gira em Y) e \"rotor_tail\" (75 tris, T=(-0,44;0,02;-0,05), gira em Z) - split por tools/split-props-v21.mjs (malha Meshy vem em 1.155 ilhas; regra por centróide calibrada no render). GLB normalizado pelo comprimento (1,0 m): integrar com scale ~10 => ~10 m, disco ~8,7 m. Evidência: tools/eval/asset-evidence/props-v21/helicoptero_pm-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/split-props-v21.mjs",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "47ffa24e6d2e88b74d928b0df70c00f2de7356fe29b16c550ae1c055eb4d5773"
+   }
+  },
+  "aviao-faixa": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/aviao_faixa.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7cpept2cp0585aefgpq14t2n8crs4b",
+    "chatUrl": "https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r",
+    "displayName": "Red Stripe Sky Advertiser",
+    "frente": "v21-e-models",
+    "notes": "Lote 3 da frente E v2.1 (dono: \"aviao com faixa da praia, no caso da mansao do joa\"). Monomotor asa alta branco/vermelho puxando faixa em branco. Faixa é NÓ SEPARADO (\"faixa\", 1.397 tris, T=(0;0;-0,095)) para receber textura de texto via OpenRouter (outra frente) - split por tools/split-props-v21.mjs. GLB normalizado pelo comprimento total (1,0 m): integrar com scale ~12 => envergadura ~10,7 m, avião ~6 m, faixa ~6 m. Evidência: tools/eval/asset-evidence/props-v21/aviao_faixa-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/split-props-v21.mjs",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "304d9c2bcd44d88fd0dd61fb739d0ed0e309da2563a3d81938061945f9a07aac"
+   }
   }
  }
 }

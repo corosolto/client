@@ -54,6 +54,51 @@ as novas ficam em ~4,6-4,8k tris com WebP 512².
   4.542 tris. Chat: <https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg>.
   Registro: `caixa-dagua-fibra`. Escala sugerida ~1,2 ⇒ ~1,20 m.
 
+## v2.1 — lote 3: varais + vida de céu
+
+Pedidos do dono (19/08/2026): *"as roupas penduradas no corrego, quebrada e
+campinho tao ruins, na laje tao bons, fazer variacoes"* e *"o lajes tem pipa mas
+nao tem animacao do pipa voando, podemos por helicoptero, aviao com faixa da
+praia, no caso da mansao do joa"*. Mesma licença e pipeline dos lotes 1-2, com
+`tools/split-props-v21.mjs` antes do optimize nos três animáveis — o Meshy
+entrega malha única fragmentada (1.155 ilhas no heli), então o split é por
+centróide de triângulo com regra calibrada no render bruto, e o pivô do nó fica
+no eixo de rotação/balanço (o call-site só faz `node.rotation.*`).
+
+- `varal_roupas_01.glb` — "Colorful Laundry Varal", corda com 6 peças coloridas
+  em prendedores entre ganchos. 4.773 tris. Chat:
+  <https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p>. Registro:
+  `varal-roupas-01`. Escala sugerida ~3,0 ⇒ 3,0 m × 0,84 m.
+- `varal_roupas_02.glb` — varal de chão em T de alumínio, 2 linhas com
+  camisetas, jeans, meias e fronha. 4.818 tris. Chat:
+  <https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg>. Registro:
+  `varal-roupas-02`. Escala sugerida ~1,8 ⇒ 1,8 m × 1,46 m.
+- `pipa_papel.glb` — "Yellow Green Pipa", losango amarelo/verde com varetas e
+  rabiola de 5 lacinhos. 4.983 tris; nó `rabiola` separado (4.452 tris) com
+  pivô na ponta inferior da vela T=(0,14; -0,12; 0,02). Chat:
+  <https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5>. Registro:
+  `pipa-papel`. Escala sugerida ~1,6 ⇒ vela ~0,74 m.
+- `helicoptero_pm.glb` — "Blue White Police Copter", JetRanger azul/branco
+  genérico, **sem logo nem texto** (veto editorial). 4.933 tris; nós
+  `rotor_main` (287 tris, pivô T=(0,08; 0,17; 0), rotação em Y) e `rotor_tail`
+  (75 tris, pivô T=(-0,44; 0,02; -0,05), rotação em Z). Chat:
+  <https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0>. Registro:
+  `helicoptero-pm`. Escala sugerida ~10 ⇒ ~10 m.
+- `aviao_faixa.glb` — "Red Stripe Sky Advertiser", monomotor de aeropublicidade
+  puxando faixa em branco. 4.546 tris; nó `faixa` separado (1.397 tris,
+  T=(0; 0; -0,095)) — a textura do texto é arte 2D via OpenRouter, outra frente
+  (regra 19/08: Mint só 3D). Chat:
+  <https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r>. Registro:
+  `aviao-faixa`. Escala sugerida ~12 ⇒ envergadura ~10,7 m.
+
+> Nota de evidência: além do espelho em Y já documentado abaixo, o
+> `render-fauna-soft.mjs` também **ignora o `translation` dos nós** (cai no
+> fallback identidade) — nos renders `*-corrigido.png` dos três animáveis o
+> rotor/rabiola/faixa aparece levemente deslocados do encaixe. A prova de
+> montagem é o `getBounds` por nó (rotor_main -0,37..0,50 × 0,15..0,23; rabiola
+> -0,50..-0,12; faixa 0,0..0,50 — todos no lugar) e a árvore de nós impressa
+> pelo `split-props-v21.mjs`.
+
 ---
 
 > Nota de ferramenta (19/08/2026): `tools/render-fauna-soft.mjs` projeta com o
