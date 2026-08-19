@@ -10,10 +10,85 @@
    Procedência visual: `tmp/map-alpha61-openrouter-review.json`, fy_corrego, itens 1–5.
    Mutações: sem-lento | capivara-centro | ratos-parados | capivara-gigante | ratos-ovais
    | capivara-brinquedo | ratos-sem-contexto | canal-sem-profundidade
+
+   ── FRENTE B v2.1.0 (plans/13-VISUAL-V2.1.md): fauna GLB + água viva + grama ──
+
+   O jogo sobe DUAS vezes: primeiro SEM templates de fauna (os proxies procedurais —
+   cláusulas originais intactas, é o que os demais checks e o ?glb=0 medem), depois
+   COM templates registrados (o clone GLB tem de estar posicionado: jacaré ~1,8 m
+   meio submerso no canal, capivara ~1,0 m na margem alagada, e os proxies invisíveis).
+
+   LIMITAÇÃO DECLARADA (por que stub e não o binário): o GLTFLoader do jogo trava em
+   node no caminho de TEXTURA (EXT_texture_webp → ImageBitmap/DOM; medido: GLB sem
+   textura parseia, com textura a promise do parse nunca resolve). O censo injeta um
+   stub cujos BOUNDS vêm do binário real (accessor POSITION de meshes[].primitives[],
+   o mesmo critério que o shader-budget usa para a urna) pelo mesmo registro que o
+   preload do browser usa (`registerFaunaTemplate`). Isso valida registro, clone,
+   normalização de escala, posição e afundamento — todo o código do JOGO. O parse real
+   do binário fica coberto por `eval:gltf-validator` (Khronos 0 erros) e pela captura
+   de browser (evidência da frente em tools/eval/asset-evidence/maps/fy_corrego/).
+
+   ÁGUA VIVA ("o threejs consegue fazer coisa muito melhor que isso", dono 18/08): a
+   lâmina base precisa de onBeforeCompile com uniform de tempo (uAgua), geometria
+   subdividida para a onda de vértice existir (>= 6 x 24 segmentos) e onBeforeRender
+   que avança o uniforme entre quadros; amplitude <= 3 cm (a crista tem de ficar
+   abaixo das fitas de brilho, que estão a +3 cm da lâmina).
+   Mutações: agua-morta (remove onBeforeCompile e congela o relógio → vermelho).
+
+   GRAMA (lote E-B, frente E): o mundo expõe `gramaSpots` (terreno reservado) e
+   `gramaServida` (meshes colocados quando o prop `grama_corrego` existir no acervo).
+   Sem o prop, a cláusula de presença fica DORMENTE e AVISA (pendência da frente E);
+   com o prop, >= 90% dos spots servidos. Mutante grama-sumiu (só aplica com prop).
 */
+import { readFileSync } from 'node:fs';
 import { THREE, initTextures, bootGame } from './harness.mjs';
+import { registerFaunaTemplate } from '../../public/js/ambientlife.js';
 
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
+const MUTANTES_FALLBACK = ['sem-lento', 'capivara-centro', 'ratos-parados', 'capivara-gigante', 'ratos-ovais',
+  'capivara-urso', 'capivara-brinquedo', 'capivara-tapir', 'capivara-dois-apoios', 'ratos-clonados',
+  'ratos-sem-contexto', 'ratos-sob-lixo', 'canal-preto', 'canal-sem-profundidade', 'ponte-prancha'];
+const MUTANTES_GLB = ['proxy-volta', 'agua-morta', 'grama-sumiu'];
+if (mutante && !MUTANTES_FALLBACK.includes(mutante) && !MUTANTES_GLB.includes(mutante)) {
+  throw new Error(`mutante desconhecido: ${mutante}`);
+}
+
+function glbBounds(file) {
+  const d = readFileSync(file);
+  if (d.readUInt32LE(0) !== 0x46546c67 || d.readUInt32LE(4) !== 2) throw new Error(`${file}: GLB 2.0 inválido`);
+  let offset = 12, json = null, bin = null;
+  while (offset + 8 <= d.length) {
+    const length = d.readUInt32LE(offset);
+    const type = d.readUInt32LE(offset + 4);
+    if (type === 0x4e4f534a) json = JSON.parse(d.subarray(offset + 8, offset + 8 + length).toString('utf8'));
+    if (type === 0x004e4942) bin = d.subarray(offset + 8, offset + 8 + length);
+    offset += 8 + length;
+  }
+  if (!json || !bin) throw new Error(`${file}: chunk JSON/BIN ausente`);
+  let mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  for (const mesh of json.meshes || []) for (const prim of mesh.primitives || []) {
+    const acc = json.accessors[prim.attributes?.POSITION];
+    if (!acc?.min || !acc?.max) throw new Error(`${file}: accessor POSITION sem min/max`);
+    for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], acc.min[k]); mx[k] = Math.max(mx[k], acc.max[k]); }
+  }
+  return { min: mn, max: mx };
+}
+function registrarStubs() {
+  for (const [id, file, alvoLen, yawFix] of [
+    ['jacare', 'public/models/ambient/jacare_corrego.glb', 1.8, Math.PI / 2],   // focinho -X no GLB → +Z após o fix
+    ['capivara', 'public/models/ambient/capivara_corrego.glb', 1.0, 0],          // focinho +Z nativo
+  ]) {
+    const b = glbBounds(file);
+    const size = [0, 1, 2].map((k) => b.max[k] - b.min[k]);
+    const scene = new THREE.Group();
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(size[0], size[1], size[2]), new THREE.MeshStandardMaterial());
+    mesh.position.set((b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2);
+    scene.add(mesh);
+    registerFaunaTemplate(id, scene, { len: alvoLen, yawFix });
+  }
+}
+
+/* ══ PASS 1 — SEM templates: proxies procedurais (cláusulas originais) ══ */
 const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world = game.world;
 const slowAt = mutante === 'sem-lento' ? () => false : world.slowAt;
@@ -163,6 +238,120 @@ const checks = [
     return ok;
   })],
 ];
+
+/* ══ PASS 2 — COM templates de fauna: censo GLB + água viva + grama ══ */
+registrarStubs();
+const game2 = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const world2 = game2.world;
+const fauna2 = [], faunaProxy2 = [], canal2 = [];
+world2.root.updateMatrixWorld(true);
+world2.root.traverse((object) => {
+  if (object.userData?.fauna) fauna2.push(object);
+  if (object.userData?.faunaProxy) faunaProxy2.push(object);
+  if (object.userData?.corregoWaterSurface) canal2.push(object);
+});
+if (mutante === 'proxy-volta') {
+  const glbs = fauna2.filter((o) => o.userData.fauna === 'jacare' && o.userData.source === 'gltf' && o.visible !== false);
+  if (!glbs.length) throw new Error('MUTANTE NAO APLICOU: nenhum jacaré GLB visível para sumir');
+  for (const glb of glbs) { glb.visible = false; delete glb.userData.source; }
+  const proxy = faunaProxy2.find((o) => o.userData.faunaProxy === 'jacare');
+  if (!proxy) throw new Error('MUTANTE NAO APLICOU: proxy do jacaré não existe para voltar');
+  proxy.visible = true;
+}
+const lamina = canal2.find((agua) => agua.userData.corregoWaterSurface === 'base');
+if (mutante === 'agua-morta') {
+  if (!lamina) throw new Error('MUTANTE NAO APLICOU: lâmina base não existe');
+  lamina.material.onBeforeCompile = undefined;
+  lamina.onBeforeRender = undefined;
+}
+const gramaServida = (world2.gramaServida || []).filter((g) => g && g.isObject3D);
+if (mutante === 'grama-sumiu') {
+  if (!gramaServida.length) throw new Error('MUTANTE NAO APLICOU: nenhuma grama servida (prop grama_corrego existe?)');
+  for (const g of gramaServida) g.visible = false;
+}
+world2.root.updateMatrixWorld(true);
+
+const jacareGlb = fauna2.find((o) => o.userData.fauna === 'jacare' && o.userData.source === 'gltf' && o.visible !== false);
+const capivaraGlb = fauna2.find((o) => o.userData.fauna === 'capivara' && o.userData.source === 'gltf' && o.visible !== false);
+const proxyJacare = faunaProxy2.find((o) => o.userData.faunaProxy === 'jacare');
+const proxyCapivara = faunaProxy2.find((o) => o.userData.faunaProxy === 'capivara');
+const CANAL_AGUA_Y = -1.61;
+const boxDe = (o) => new THREE.Box3().setFromObject(o);
+// comprimento SEM o yaw: AABB de objeto girado infla o eixo (1,8 m a 92° mede 2,01);
+// tirar a rotação mede o tamanho real do asset como posicionado (escala incluída).
+const lenSemYaw = (o) => {
+  const ry = o.rotation.y;
+  o.rotation.y = 0;
+  o.updateMatrixWorld(true);
+  const s = boxDe(o).getSize(new THREE.Vector3());
+  o.rotation.y = ry;
+  o.updateMatrixWorld(true);
+  return Math.max(s.x, s.z);
+};
+const tamDe = (o) => boxDe(o).getSize(new THREE.Vector3());
+const submerso = (o) => { const b = boxDe(o); return b.min.y < CANAL_AGUA_Y - 0.02 && b.max.y > CANAL_AGUA_Y + 0.05; };
+const aguaShader = !!lamina && typeof lamina.material.onBeforeCompile === 'function'
+  && /uAgua/.test(String(lamina.material.onBeforeCompile));
+const aguaSegs = !!lamina
+  && (lamina.geometry.parameters?.widthSegments || 0) >= 6
+  && (lamina.geometry.parameters?.heightSegments || 0) >= 24;
+let aguaRelogioAnda = false;
+try {
+  const antes = lamina.material.userData?.uAgua?.value;
+  lamina.onBeforeRender?.();
+  const depois = lamina.material.userData?.uAgua?.value;
+  aguaRelogioAnda = Number.isFinite(antes) && Number.isFinite(depois) && depois > antes;
+} catch { aguaRelogioAnda = false; }
+const aguaAmpOk = !lamina?.userData?.aguaAmp || (lamina.userData.aguaAmp > 0 && lamina.userData.aguaAmp <= 0.03);   // brilho está a +3 cm da lâmina: crista tem de ficar abaixo
+const gramaSpots = world2.gramaSpots || [];
+const gramaAtiva = gramaServida.length > 0;
+const gramaVisivel = gramaServida.filter((g) => g.visible !== false).length;
+// dentro do mapa PELOS BOUNDS do próprio world — número de outra fonte é teto órfão
+const b0 = world2.bounds || {};
+const gramaSpotsDentro = gramaSpots.every((s) =>
+  s.x >= (b0.minX ?? -Infinity) && s.x <= (b0.maxX ?? Infinity)
+  && s.z >= (b0.minZ ?? -Infinity) && s.z <= (b0.maxZ ?? Infinity)
+  && Math.abs(s.x) >= 3);   // grama é de MARGEM: nunca no vão do canal
+
+checks.push(
+  ['jacaré GLB posicionado no canal na escala do Mint (BUG-57)', !!jacareGlb && (() => {
+    const b = boxDe(jacareGlb);
+    const len = lenSemYaw(jacareGlb);
+    const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2;
+    return len >= 1.62 && len <= 1.98 && Math.abs(cx - 0.8) < 2.5 && Math.abs(cz + 7) < 2.5;
+  })()],
+  ['jacaré meio submerso na lâmina (dorso de fora, patas na água)', !!jacareGlb && submerso(jacareGlb)],
+  ['capivara GLB na margem alagada com escala da ficha', !!capivaraGlb && (() => {
+    const b = boxDe(capivaraGlb);
+    const len = lenSemYaw(capivaraGlb);
+    const cz = (b.min.z + b.max.z) / 2;
+    return len >= 0.9 && len <= 1.2 && Math.abs(cz + 38) < 4;
+  })()],
+  ['capivara GLB com os pés no chão da margem', !!capivaraGlb && (() => {
+    const b = boxDe(capivaraGlb);
+    const chao = world2.groundHeightAt((b.min.x + b.max.x) / 2, (b.min.z + b.max.z) / 2);
+    return b.min.y >= chao - 0.12 && b.min.y <= chao + 0.12;
+  })()],
+  ['GLB substitui o proxy (proxies invisíveis quando o template existe)',
+    !!jacareGlb && !!proxyJacare && proxyJacare.visible === false
+    && !!capivaraGlb && !!proxyCapivara && proxyCapivara.visible === false],
+  ['fauna GLB sem collider e fora de superfície sólida', !!jacareGlb && !!capivaraGlb
+    && [jacareGlb, capivaraGlb].every((animal) => {
+      let ok = animal.userData.nonCollider === true;
+      animal.traverse((part) => { if (part.isMesh && part.userData.nonSolidSurface !== true) ok = false; });
+      return ok;
+    })],
+  ['água com shader de onda (onBeforeCompile + uAgua)', aguaShader],
+  ['água com geometria subdividida para a onda de vértice', aguaSegs],
+  ['água com relógio vivo (uniform avança entre quadros)', aguaRelogioAnda],
+  ['amplitude da onda <= 3 cm (crista abaixo do brilho)', aguaAmpOk],
+  ['grama: terreno reservado nas margens (>= 12 spots dentro do mapa)', gramaSpots.length >= 12 && gramaSpotsDentro],
+);
+if (!gramaAtiva) {
+  console.log('· GRAMA: prop grama_corrego ausente no acervo — cláusula de presença DORMENTE (pendência da frente E, lote E-B)');
+} else {
+  checks.push(['grama servida e visível em >= 90% dos spots', gramaVisivel / Math.max(1, gramaServida.length) >= 0.9]);
+}
 
 let falhas = 0;
 for (const [nome, ok] of checks) { if (!ok) falhas++; console.log(`${ok ? '✓' : '✗'} ${nome}`); }

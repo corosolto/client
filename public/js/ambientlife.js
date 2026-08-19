@@ -10,6 +10,8 @@ const ASSETS = Object.freeze({
   pigeonGround: 'models/ambient/pigeon_ground.glb',
   pigeonFlight: 'models/ambient/pigeon_flight.glb',
   dog: 'models/ambient/dog_caramelo.glb',
+  jacare: 'models/ambient/jacare_corrego.glb',
+  capivara: 'models/ambient/capivara_corrego.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
 const SHOT_REACTION_RADIUS = 13;
@@ -407,4 +409,63 @@ class FavelaAmbience {
 
 export function createFavelaAmbience(root, options) {
   return new FavelaAmbience(root, options);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FAUNA ESTÁTICA POSICIONÁVEL (frente B v2.1.0, BUG-57 — região própria, append-only:
+   a frente D edita as regiões de cima sem colidir com esta)
+
+   Jacaré/capivara do córrego: GLBs estáticos SEM rig (pipeline Mint de animação é
+   humanoid-only) — consumo tipo pigeon_flight: template clonado, sem mixer. Escala
+   por COMPRIMENTO (ficha plans/21-FAUNA-CORREGO.md: jacaré ~1,8 m, capivara ~1,0 m).
+   Direção do focinho medida no loader real (evidência
+   tools/eval/asset-evidence/fauna/): jacaré −X no GLB (yawFix π/2 → +Z), capivara +Z.
+   `registerFaunaTemplate` é o MESMO registro que o preload usa — o censo do
+   corrego-contract-check injeta stubs de bounds reais por aqui (limitação declarada
+   no header dele: GLTFLoader trava em node no caminho de textura). */
+const STATIC_FAUNA_META = {
+  jacare: { len: 1.8, yawFix: Math.PI / 2 },
+  capivara: { len: 1.0, yawFix: 0 },
+};
+
+export function registerFaunaTemplate(id, scene, meta = {}) {
+  if (!scene) { templates.delete(id); return; }
+  const base = STATIC_FAUNA_META[id] || {};
+  templates.set(id, { scene, clips: [], skinned: false, meta: { ...base, ...meta } });
+}
+
+export function faunaAssetUrl(id) { return ASSETS[id] || null; }
+
+export const CORREGO_FAUNA_ASSETS = Object.freeze([
+  ...FAVELA_AMBIENCE_ASSETS, 'jacare', 'capivara',
+]);
+
+// Coloca um clone do template com comprimento-alvo, base no chão de `y` e `submerge` m
+// afundados. Retorna o Group (userData.faunaAsset/source) ou null sem template — o
+// caller decide o fallback procedural (padrão placeProp do repo).
+export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerge = 0 } = {}) {
+  const template = templates.get(id);
+  if (!template) return null;
+  const model = template.scene.clone(true);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const alvo = targetLen || template.meta?.len;
+  const len = Math.max(size.x, size.z) || 1;
+  const s = (alvo && alvo > 0) ? alvo / len : 1;
+  model.scale.setScalar(s);
+  const yawFix = template.meta?.yawFix || 0;
+  const root = new THREE.Group();
+  root.position.set(x, y - box.min.y * s - submerge, z);
+  root.rotation.y = ry + yawFix;
+  root.userData.faunaAsset = id;
+  root.userData.source = 'gltf';
+  root.add(model);
+  root.traverse((object) => {
+    if (!object.isMesh) return;
+    object.userData.nonSolidSurface = true;
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+  return root;
 }
