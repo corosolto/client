@@ -60,6 +60,14 @@ const COBERTURA_MIN = 0.04;
  * ele está certo. Ou seja: 0,15 cai no vão entre o pior defeito e o melhor acerto, e
  * não há nenhum arquivo entre 0,105 e 0,214 pra o teto ter que arbitrar. */
 const BORDA_MAX = 0.15;
+/* Rede de segurança nº 3 (só --pack) — HALO CINZA. `cinza` é a fração de pixel
+ * opaco com luminância > 96: num decal monocromático de tinta escura, pixel
+ * opaco claro é névoa de spray que virou tinta opaca e aparece como halo na
+ * parede escura. MEDIDO na 1ª geração do pack (19/08/2026): com o unmix só na
+ * banda de 2 px, os 11 decals ficaram entre 0,090 e 0,354; com o unmix de dois
+ * tons em todo pixel, os mesmos 11 ficaram em 0,000. 0,05 cai no vão entre o
+ * melhor defeito e o pior acerto, com folga dos dois lados. */
+const CINZA_MAX = 0.05;
 
 /* ── PROCEDÊNCIA ────────────────────────────────────────────────────────────────
  * Fora do pacote, com o motivo. Marca de loja/estúdio/banco de imagem impressa na
@@ -665,10 +673,11 @@ async function packPixos() {
     const cidade = f.slice(0, 2).toUpperCase();
     const nome = `or-pixo-${f.replace(/\.\w+$/, '')}.png`;
     const r = await recortaPlano(path.join(SRC_PACK, f), sharp);
-    if (!r || r.cobertura < COBERTURA_MIN || r.borda > BORDA_MAX) {
-      console.error(`  ✗ ${nome}: ${!r ? 'sem tinta após o recorte'
+    if (!r || r.cobertura < COBERTURA_MIN || r.borda > BORDA_MAX || r.cinza > CINZA_MAX) {
+      console.error(`  ✗ ${nome}: ${!r ? 'sem tinta após o recorte (ou fonte não é tinta escura sobre fundo claro)'
         : r.cobertura < COBERTURA_MIN ? `cobertura ${r.cobertura} < ${COBERTURA_MIN} (quase vazio)`
-        : `borda ${r.borda} > ${BORDA_MAX} (fundo não saiu)`}`);
+        : r.borda > BORDA_MAX ? `borda ${r.borda} > ${BORDA_MAX} (fundo não saiu)`
+        : `cinza ${r.cinza} > ${CINZA_MAX} (halo de névoa opaca)`}`);
       reprovados++;
       continue;
     }
@@ -677,9 +686,9 @@ async function packPixos() {
       file: nome, w: r.w, h: r.h,
       aspect: Math.round((r.w / r.h) * 1000) / 1000,
       tipo: 'tag', claro: r.lum > 128, cidade, origem: `pack/${f}`,
-      cobertura: r.cobertura, borda: r.borda,
+      cobertura: r.cobertura, borda: r.borda, cinza: r.cinza,
     });
-    console.log(`  ✓ ${nome} [${cidade}] ${r.w}×${r.h} cobertura ${r.cobertura} borda ${r.borda}`);
+    console.log(`  ✓ ${nome} [${cidade}] ${r.w}×${r.h} cobertura ${r.cobertura} borda ${r.borda} cinza ${r.cinza}`);
   }
   sincronizaPackTextures(manifesto);
   writeFileSync(path.join(OUT, 'manifest-pixo-pack.json'), JSON.stringify({
@@ -698,7 +707,7 @@ async function packPixos() {
  * borda; rampa de alpha + des-mistura só na banda de 2 px (anti-franja); trim e
  * teto de 512 px. Os números são os do fluxo principal, medidos na 4ª rodada. */
 async function recortaPlano(arquivo, sharp) {
-  const TRAB_MAX = 1400, SAIDA_MAX = 512, TOL_DURO = 34, TOL_SUAVE = 64, BANDA = 2;
+  const TRAB_MAX = 1400, SAIDA_MAX = 512, TOL_DURO = 34;
   const meta = await sharp(arquivo).metadata();
   const esc = Math.min(1, TRAB_MAX / Math.max(meta.width, meta.height));
   const W = Math.max(1, Math.round(meta.width * esc)), H = Math.max(1, Math.round(meta.height * esc));
@@ -717,42 +726,32 @@ async function recortaPlano(arquivo, sharp) {
   for (let y = 0; y < H; y++) { amostra(0, y); amostra(W - 1, y); }
   const ord = [...conta.values()].sort((a, b) => b[3] - a[3]);
   const fundo = [ord[0][0] / ord[0][3], ord[0][1] / ord[0][3], ord[0][2] / ord[0][3]];
-  const dist = (i) => Math.max(Math.abs(d[i] - fundo[0]), Math.abs(d[i + 1] - fundo[1]), Math.abs(d[i + 2] - fundo[2]));
+  const luma = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+  const lumFundo = luma(fundo[0], fundo[1], fundo[2]);
 
-  const ehFundo = new Uint8Array(W * H);
-  const pilha = new Int32Array(W * H);
-  let sp = 0;
-  const push = (p) => {
-    if (ehFundo[p] || dist(p * 4) > TOL_DURO) return;
-    ehFundo[p] = 1; pilha[sp++] = p;
-  };
-  for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); }
-  for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
-  while (sp > 0) {
-    const p = pilha[--sp], x = p % W, y = (p / W) | 0;
-    if (x > 0) push(p - 1);
-    if (x < W - 1) push(p + 1);
-    if (y > 0) push(p - W);
-    if (y < H - 1) push(p + W);
+  /* UNMIX DE DOIS TONS — o pack é monocromático por desenho (preto fosco sobre
+   * fundo liso, pesquisa SP×RJ: a cidade se lê na forma, não na cor). Spray tem
+   * névoa larga em volta do traço: a rampa de alpha só na banda de 2 px deixava
+   * essa névoa como CINZA OPACO, que vira halo claro na parede escura — medido
+   * na 1ª geração do pack: 9%–35% dos pixels opacos com lum > 96 nos 11 decals
+   * (métrica `cinza` abaixo). Aqui o alpha é chaveado por luminância no eixo
+   * fundo→tinta e a cor é des-misturada em TODO pixel, não só na banda.      */
+  const tintas = [];
+  for (let p = 0; p < W * H; p++) {
+    const i = p * 4, l = luma(d[i], d[i + 1], d[i + 2]);
+    if (lumFundo - l > TOL_DURO) tintas.push(l);
   }
-
-  const naBanda = new Uint8Array(W * H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const p = y * W + x;
-    if (ehFundo[p]) continue;
-    for (let dy = -BANDA; dy <= BANDA && !naBanda[p]; dy++)
-      for (let dx = -BANDA; dx <= BANDA; dx++) {
-        const u = x + dx, v = y + dy;
-        if (u < 0 || v < 0 || u >= W || v >= H || ehFundo[v * W + u]) { naBanda[p] = 1; break; }
-      }
-  }
+  if (!tintas.length) return null;
+  tintas.sort((a, b) => a - b);
+  const tintaLum = tintas[Math.floor(tintas.length * 0.05)];
+  if (tintaLum > 128) return null; // fonte não é tinta escura sobre fundo claro — não é caso do --pack
   const alpha = new Float32Array(W * H);
   for (let p = 0; p < W * H; p++) {
     const i = p * 4;
-    if (ehFundo[p]) { d[i + 3] = 0; continue; }
-    const a = naBanda[p] ? Math.min(1, dist(i) / TOL_SUAVE) : 1;
+    const l = luma(d[i], d[i + 1], d[i + 2]);
+    const a = Math.max(0, Math.min(1, (lumFundo - l) / (lumFundo - tintaLum)));
+    if (a <= 0.02) { d[i + 3] = 0; continue; }
     alpha[p] = a;
-    if (a <= 0.004) { d[i + 3] = 0; continue; }
     for (let c = 0; c < 3; c++)
       d[i + c] = Math.max(0, Math.min(255, Math.round((d[i + c] - fundo[c] * (1 - a)) / a)));
     d[i + 3] = Math.round(a * 255);
@@ -779,11 +778,13 @@ async function recortaPlano(arquivo, sharp) {
     .resize(ow, oh, { kernel: 'lanczos3' }).png().toBuffer();
   const od = await sharp(saida).raw().toBuffer({ resolveWithObject: true });
   const dd = od.data;
-  let sl = 0, sa = 0, opacos = 0;
+  let sl = 0, sa = 0, opacos = 0, cinzaOp = 0;
   for (let i = 0; i < dd.length; i += 4) {
     const a = dd[i + 3] / 255; if (a < 0.5) continue;
     opacos++;
-    sl += (0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2]) * a; sa += a;
+    const l = 0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2];
+    sl += l * a; sa += a;
+    if (l > 96) cinzaOp++;
   }
   let anel = 0, anelOp = 0;
   const toca = (x, y) => { anel++; if (dd[(y * ow + x) * 4 + 3] > 127) anelOp++; };
@@ -793,6 +794,7 @@ async function recortaPlano(arquivo, sharp) {
     png: saida, w: ow, h: oh, lum: sa ? sl / sa : 0,
     cobertura: Math.round((opacos / (ow * oh)) * 1000) / 1000,
     borda: Math.round((anelOp / anel) * 1000) / 1000,
+    cinza: opacos ? Math.round((cinzaOp / opacos) * 1000) / 1000 : 0,
   };
 }
 
