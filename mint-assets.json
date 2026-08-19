@@ -1354,6 +1354,121 @@
     "displayName": "Mansão do Joá — jardim e casa",
     "notes": "6 props (banco modernista, poste de jardim, escultura abstrata, vaso tropical, lounge externo, lampião de fachada). BUG-56: dono pediu models Mint pro jardim/casa. Otimizados via tools/optimize-props.mjs (webp 1024, ~1.6MB total, 1 material cada). Previews em tools/eval/asset-evidence/bug56-mint/."
    }
+  },
+  "grama-corrego-01": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/grama_corrego_01.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks705h592kaq9f0nb9958hvqnh8cr3za",
+    "chatUrl": "https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj",
+    "displayName": "Arching Guinea Grass Tuft (capim alto de córrego)",
+    "frente": "v21-e-models",
+    "notes": "Lote 1 da frente E v2.1 (plans/13: \"faltou tambem usar os glbs de grama\"). Tufo de capim-colonião alto com palhas secas na base. GLB normalizado Mint (0,967 m de altura): integrar com scale ~0,72 => ~0,70 m. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_01-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "061a6302c0c6380cd11dbd436f7526a0053af5500d1e905d2a0e0f6dafe8354c"
+   }
+  },
+  "grama-corrego-02": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/grama_corrego_02.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7ad08zxczjzpywjqnges9eb18csm41",
+    "chatUrl": "https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2",
+    "displayName": "Urban Creekside Weeds (capim rasteiro de córrego)",
+    "frente": "v21-e-models",
+    "notes": "Lote 1 da frente E v2.1. Moita baixa e larga de capim rasteiro amarelado com folhas de mato. GLB normalizado pela largura (0,998 m): integrar com scale ~0,6 => ~0,60 m largo × ~0,37 m alto. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_02-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "cd24a8276e0e6e5339398a5d86b1cfa77b5d552e0ec7086eee6eed904cee550f"
+   }
+  },
+  "planta-corrego-taboa": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/planta_corrego_taboa.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks753dc0a7hfg2dz4shrb0cyan8cr0ye",
+    "chatUrl": "https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718",
+    "displayName": "Brown Spike Cattail (taboa de córrego)",
+    "frente": "v21-e-models",
+    "notes": "Lote 1 da frente E v2.1. Taboa (Typha) com duas espigas marrons, clássica de beira de córrego urbano. GLB normalizado (0,998 m de altura): integrar com scale ~1,4 => ~1,40 m. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taboa-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "2adc0485a0abba8dd37c0cfac12e0b9e9ad20ce357ceb4a22e658ed4d8e580a6"
+   }
+  },
+  "caixa-dagua-azul": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/caixa_dagua_azul.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7ct1jdj0ns0x8ppepbgea4cd8csxf4",
+    "chatUrl": "https://mint.gg/chat/ph7c3scfqprd8jp9bn92279kwx8csbkq",
+    "displayName": "Blue Ribbed Water Tank (caixa d'água azul de laje)",
+    "frente": "v21-e-models",
+    "notes": "Lote 2 da frente E v2.1 (pedido do dono: \"a caixa da agua ta horrivel ... fazer variacoes\"). Tanque azul de polietileno com tampa azul-escura e bocal, sobre tábua apoiada em blocos de concreto. GLB normalizado (0,998 m): integrar com scale ~1,4 => ~1,40 m com a base. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_azul-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "efa77a883b7609167d51bf4887b26c77451f45ace9ee8c6a9b914b9004470221"
+   }
+  },
+  "caixa-dagua-preta": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/caixa_dagua_preta.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7bnjam9pb489v7mg490a23z58crd1e",
+    "chatUrl": "https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv",
+    "displayName": "Ribbed Black Water Tank (caixa d'água preta de laje)",
+    "frente": "v21-e-models",
+    "notes": "Lote 2 da frente E v2.1. Tanque preto com tampa e extravasor, sobre anel de concreto. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_preta-corrigido.png."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "d6cd1d44354f6cee66ef197f3f5ad2acb50c2e7ca7d9e34151b9946a17ba9bad"
+   }
   }
  }
 }
