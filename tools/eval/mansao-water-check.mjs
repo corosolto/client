@@ -1,24 +1,23 @@
-/* Piscina e espelho d'água da Mansão precisam ser não entráveis.
+/* Mansão: PISCINA ENTRÁVEL (contrato invertido) + espelho d'água não entrável +
+   composição (frota GLB, jardim, interior).
 
-   Mede o caminho real: mundo real + Game._collide + raio real do jogador. O defeito
-   comprado em 11/08/2026 era um colisor declarado com maxY=0; `_collide` exige topo
-   acima dos pés e deixava o jogador parado no centro da água.
+   A piscina era "não entrável" por contrato (colisor-tampa maxY 0,65; o mutante se
+   chamava agua-entravel). A decisão do dono de 18/08 (plans/13-VISUAL-V2.1:
+   "a piscina nao afunda") INVERTEU: a piscina é área jogável — borda pulável, raso
+   andável (~0,8-1,0 m), fundo real (~1,8-2,0 m) e SAÍDA GARANTIDA (anti-trap: quem
+   cai na piscina SAI). As bandas do fundo: 1,85 m fica 0,15 m abaixo do teto de
+   guarda-corpo MAP6 QUEDA_ANDAR=2,0 (map-check.mjs:151) — o mesmo argumento do
+   CANAL_FUNDO=-1,75 do córrego (map_corrego.js:62), que é o padrão copiado.
+   O espelho d'água decorativo CONTINUA não entrável.
 
-   A revisão visual externa alpha.61 mostrou que os marcadores aceitavam carro sem
-   frente, jardim de catálogo e ilha ambígua; o contrato passou a inspecionar peças
-   reais. Em 17/08 (BUG-56) o dono reprovou o visual ("lowpoly de todos") e deu a
-   direção: "usar carros que temos em glbs". As cláusulas de silhueta PROCEDURAL
-   saíram; a frota da garagem passou a ser GLB do acervo, e o contrato passou a
-   exigir: ids reais na frota (arquivo existe e é glTF válido com geometria de
-   carro), dimensão de fábrica que CABE no colisor da vaga (a jogabilidade é boa e
-   a pegada de colisão não muda — palavra do dono), colisor das 3 vagas preservado
-   em runtime e fallback procedural vivo (node não carrega GLB — Lição 3 do
-   docs/LICOES.md — e `?glb=0` é o kill-switch do jogador).
-   O mundo GLB em si é medido no browser: eval:occluders (tiro-no-ar/atravessa) e
-   captura 3:2 — este script de node mede o contrato de fonte, o disco e o mundo
-   de fallback.
-   Mutantes: agua-entravel | jardim-pobre | interior-vazio | carros-ausentes |
-   carros-glb-ausentes | carro-glb-clonado | carro-glb-gigante | vaga-sem-colisor.
+   Mede o caminho real: mundo real + Game._collide + raio real do jogador.
+   O mundo GLB em si é medido no browser: eval:occluders e captura 3:2 — este
+   script de node mede o contrato de fonte, o disco e o mundo de fallback.
+   Mutantes: agua-bloqueada (tampa volta; o nome antigo agua-entravel segue valendo
+   como alias) | borda-alta (saída selada, anti-trap) | sem-parede (cuba não segura) |
+   jardim-pobre | interior-vazio | carros-ausentes | carros-glb-ausentes |
+   carro-glb-clonado | carro-glb-gigante | vaga-sem-colisor | piscina-sem-cuba |
+   piscina-cuba-curta.
 */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,7 +25,9 @@ import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
-const MUTANTE = process.argv.includes('--mutante=agua-entravel');
+const MUT_AGUA_BLOQUEADA = process.argv.includes('--mutante=agua-bloqueada') || process.argv.includes('--mutante=agua-entravel');
+const MUT_BORDA_ALTA = process.argv.includes('--mutante=borda-alta');
+const MUT_SEM_PAREDE = process.argv.includes('--mutante=sem-parede');
 const MUT_JARDIM = process.argv.includes('--mutante=jardim-pobre');
 const MUT_INTERIOR = process.argv.includes('--mutante=interior-vazio');
 const MUT_CARROS = process.argv.includes('--mutante=carros-ausentes');
@@ -45,10 +46,16 @@ const MUT_JARDIM_RARO = process.argv.includes('--mutante=jardim-raro');
 const MUT_PISCINA_SEM_CUBA = process.argv.includes('--mutante=piscina-sem-cuba');
 const MUT_PISCINA_CUBA_CURTA = process.argv.includes('--mutante=piscina-cuba-curta');
 const RAIO = 0.38; // mesmo raio passado por Game.update a _collide
-const provas = [
-  { nome: 'piscina', x: 0, z: -28 },
-  { nome: 'espelho', x: -8, z: 25 },
-];
+/* CUBA da piscina: interior jogável (dentro dos muros). As bandas são o contrato da
+   decisão do dono 18/08 (plans/13): raso ~0,8-1,0 m andável; fundo ~1,8-2,0 m.
+   1,85 < QUEDA_ANDAR 2,0 (map-check.mjs:151) mantém a borda isenta de guarda-corpo. */
+const CUBA = {
+  x0: -5.5, x1: 5.5, z0: -31.5, z1: -24.5,
+  rasoMax: -0.75, rasoMin: -1.05, fundoMax: -1.6, fundoMin: -2.1,
+  rasoZ: -26.2, fundoZ: -30.2,
+};
+const overlap2d = (c, r) => c.minX < r.x1 && c.maxX > r.x0 && c.minZ < r.z1 && c.maxZ > r.z0;
+const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
 const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
 
@@ -131,27 +138,77 @@ if (MUT_PERGOLA_FLUTUA) for (const o of marcados) if (o.userData.pergolaPart ===
 if (MUT_ILHA_AMBIGUA) for (const o of marcados) if (o.userData.mansaoFeature === 'gourmet-part' && o.userData.gourmetPart !== 'countertop') o.visible = false;
 if (MUT_TEATRO_VAZIO) for (const o of marcados) if (o.userData.mansaoFeature === 'theater-part') o.visible = false;
 if (MUT_JARDIM_RARO) for (const o of marcados) if (o.userData.mansaoFeature === 'garden-mass') o.visible = false;
-if (MUT_PISCINA_SEM_CUBA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-mask') o.visible = false;
-if (MUT_PISCINA_CUBA_CURTA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-mask') o.scale.y = .55;
-if (MUTANTE) {
-  for (const prova of provas) for (const c of game.world.colliders) {
-    if (prova.x > c.minX && prova.x < c.maxX && prova.z > c.minZ && prova.z < c.maxZ) c.maxY = 0;
-  }
+if (MUT_PISCINA_SEM_CUBA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-floor') o.visible = false;
+if (MUT_PISCINA_CUBA_CURTA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-floor') o.scale.set(1, 1, .45);
+/* Mutantes de MUNDO da piscina — cada um PROVA que aplicou (skill regua: mutação
+   que não casou é confiança falsa). */
+const paredesCuba = () => game.world.colliders.filter((c) => c.minY <= -1.5 && c.maxY >= -0.1 && c.maxY <= 0.1
+  && overlap2d({ minX: c.minX - 1, maxX: c.maxX + 1, minZ: c.minZ - 1, maxZ: c.maxZ + 1 }, CUBA) && overlap2d(c, { x0: CUBA.x0 - 1, x1: CUBA.x1 + 1, z0: CUBA.z0 - 1, z1: CUBA.z1 + 1 }));
+if (MUT_AGUA_BLOQUEADA) game.world.colliders.push({ minX: -6, maxX: 6, minY: -0.5, maxY: 0.65, minZ: -32, maxZ: -24 });
+if (MUT_BORDA_ALTA) {
+  const parede = paredesCuba();
+  if (!parede.length) { console.error('MUTANTE borda-alta NÃO APLICOU (nenhuma parede de cuba encontrada)'); process.exit(1); }
+  for (const c of parede) c.maxY = 2.2;
+  const gOrig = game.world.groundHeightAt;
+  game.world.groundHeightAt = (x, z, yRef) => (x > CUBA.x0 && x < CUBA.x1 && z > CUBA.z0 && z < CUBA.z1 ? CUBA.fundoMin : gOrig(x, z, yRef));
+}
+if (MUT_SEM_PAREDE) {
+  const parede = paredesCuba();
+  if (!parede.length) { console.error('MUTANTE sem-parede NÃO APLICOU (nenhuma parede de cuba encontrada)'); process.exit(1); }
+  game.world.colliders = game.world.colliders.filter((c) => !parede.includes(c));
 }
 game.world.root.updateMatrixWorld(true);
 
-let falhas = 0;
-for (const prova of provas) {
-  const antes = new THREE.Vector3(prova.x, game.world.groundHeightAt(prova.x, prova.z), prova.z);
-  const depois = antes.clone();
-  game._collide(depois, RAIO);
-  const deslocamento = depois.distanceTo(antes);
-  const ok = deslocamento >= RAIO * 0.9;
-  if (!ok) falhas++;
-  console.log(`${ok ? '✓' : '✗'} ${prova.nome}: deslocamento=${deslocamento.toFixed(3)} m (mínimo ${(RAIO * 0.9).toFixed(3)} m)`);
+/* ── PISCINA: sondas comportamentais (uso, não declaração — Lição 3) ────────── */
+const tampadores = game.world.colliders.filter((c) => overlap2d(c, CUBA) && c.maxY > 0.15);
+const gRaso = game.world.groundHeightAt(0, CUBA.rasoZ);
+const gFundo = game.world.groundHeightAt(0, CUBA.fundoZ);
+// entrada andando: do deck sul, passo 0,15 m na direção do fundo, y segue o chão
+let profAlcancada = 0, semProgresso = 0;
+const anda = new THREE.Vector3(0, game.world.groundHeightAt(0, -23.5), -23.5);
+for (let i = 0; i < 60 && semProgresso < 3; i++) {
+  const pz = anda.z; anda.z -= 0.15;
+  anda.y = game.world.groundHeightAt(anda.x, anda.z);
+  game._collide(anda, RAIO);
+  if (Math.abs(anda.z - (pz - 0.15)) > 0.05) semProgresso++; else semProgresso = 0;
+  profAlcancada = Math.min(profAlcancada, anda.y);
 }
+// saída anti-trap: escalada gulosa de degrau em degrau (subida ≤ 0,56 m = STEP_H+folga)
+const saiDaAgua = () => {
+  const pos = new THREE.Vector3(0, game.world.groundHeightAt(0, CUBA.fundoZ), CUBA.fundoZ);
+  if (pos.y > -1.5) return { ok: false, porque: `sem fundo pra provar (y=${pos.y.toFixed(2)})`, passos: 0, pos };
+  let passos = 0;
+  for (; passos < 90 && pos.y < -0.06; passos++) {
+    let melhor = null;
+    for (let d = 0; d < 16; d++) for (const dist of [0.3, 0.45, 0.6, 0.8, 1.05]) {
+      const a = d * Math.PI / 8, tx = pos.x + Math.sin(a) * dist, tz = pos.z + Math.cos(a) * dist;
+      const g = game.world.groundHeightAt(tx, tz), sobe = g - pos.y;
+      if (sobe <= 0.001 || sobe > 0.56) continue;
+      const c = new THREE.Vector3(tx, g, tz); game._collide(c, RAIO);
+      if (Math.hypot(c.x - tx, c.z - tz) > 0.25) continue;   // empurrado = não vira
+      if (!melhor || sobe > melhor.sobe) melhor = { sobe, pos: c };
+    }
+    if (!melhor) return { ok: false, porque: `preso em y=${pos.y.toFixed(2)} (sem degrau ≤0,56 m)`, passos, pos };
+    pos.copy(melhor.pos);
+  }
+  return pos.y >= -0.06 ? { ok: true, porque: 'saiu', passos, pos } : { ok: false, porque: `não chegou ao deck (y=${pos.y.toFixed(2)})`, passos, pos };
+};
+const saida = saiDaAgua();
+// paredes seguram: caminha E/W no raso e N no fundo; a cuba tem que parar o corpo
+const paredeSegura = (dir) => {
+  const z = dir === 'n' ? CUBA.fundoZ : CUBA.rasoZ;
+  const p = new THREE.Vector3(0, game.world.groundHeightAt(0, z), z);
+  for (let i = 0; i < 90; i++) { p[dir === 'e' ? 'x' : dir === 'w' ? 'x' : 'z'] += dir === 'w' ? -0.15 : dir === 'n' ? -0.15 : 0.15; game._collide(p, RAIO); }
+  return dir === 'e' ? p.x : dir === 'w' ? p.x : p.z;
+};
+const segE = paredeSegura('e'), segW = paredeSegura('w'), segN = paredeSegura('n');
+// espelho d'água decorativo: CONTINUA expulsando o corpo
+const espelhoAntes = new THREE.Vector3(-8, game.world.groundHeightAt(-8, 25), 25);
+const espelhoDepois = espelhoAntes.clone(); game._collide(espelhoDepois, RAIO);
+const espelhoAfasta = espelhoDepois.distanceTo(espelhoAntes) >= RAIO * 0.9;
 
 const conta = (tipo) => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === tipo).length;
+let falhas = 0;
 const carros = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'carro-generico');
 const propsVividos = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'lived-prop');
 const superficies = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'interior-surface');
@@ -172,9 +229,24 @@ const teatroTipos = (tipo) => teatro.filter((o) => o.userData.theaterPart === ti
 const massas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature==='garden-mass');
 const massasDensas = massas.filter((massa)=>{let n=0;massa.traverse((o)=>{if(o.isMesh&&o.visible!==false)n++;});return n>=20;});
 const massasEspelhadas=massas.filter((a,i)=>massas.some((b,j)=>i!==j&&Math.abs(a.position.x+b.position.x)<.6&&Math.abs(a.position.z-b.position.z)<.6));
-const cubas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature==='pool-basin-mask');
-const cubaOpaca=cubas.some((c)=>{const s=new THREE.Box3().setFromObject(c).getSize(new THREE.Vector3());return c.position.y>-.01&&c.position.y<.08&&c.material?.transparent!==true&&s.x>=12&&s.z>=11.8;});
+const cubas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature==='pool-basin-floor');
+const cubaPisoOpaco=cubas.some((c)=>{const s=new THREE.Box3().setFromObject(c).getSize(new THREE.Vector3());return c.position.y<=-0.5&&!(c.material?.transparent&&(c.material.opacity??1)<0.9)&&s.x>=10&&s.z>=6.5;});
+const tetoSobreLamina = marcados.filter((o) => {
+  if (o.visible === false) return false;
+  const b = new THREE.Box3().setFromObject(o);
+  return b.max.x > CUBA.x0 && b.min.x < CUBA.x1 && b.max.z > CUBA.z0 && b.min.z < CUBA.z1
+    && b.min.y > 0.02 && b.max.y < 0.5 && !(o.material?.transparent && (o.material.opacity ?? 1) < 0.9);
+});
 for (const [nome, ok, medido] of [
+  ['piscina entrável — nenhum colisor cobre a lâmina acima dos pés', tampadores.length === 0, `${tampadores.length} tampa(s)${tampadores.length ? ` (pior maxY ${Math.max(...tampadores.map((c) => c.maxY)).toFixed(2)} m)` : ''} — decisão do dono 18/08 (plans/13) inverteu o contrato; mutante agua-bloqueada é este estado`],
+  ['piscina andável — o corpo ENTRA andando do deck', profAlcancada <= -0.6, `profundidade alcançada andando: ${profAlcancada.toFixed(2)} m (mín. -0,60) — tampa devolve o "a piscina nao afunda"`],
+  ['raso com profundidade de verdade (0,75–1,05 m)', gRaso <= CUBA.rasoMax && gRaso >= CUBA.rasoMin, `groundHeightAt(0,-26,2) = ${gRaso.toFixed(2)} m — alvo do dono ~0,8–1,0 m andável`],
+  ['fundo com profundidade de verdade (1,60–2,10 m)', gFundo <= CUBA.fundoMax && gFundo >= CUBA.fundoMin, `groundHeightAt(0,-30,2) = ${gFundo.toFixed(2)} m — alvo ~1,8–2,0 m; 1,85 fica 0,15 m abaixo do guarda-corpo MAP6 (QUEDA_ANDAR 2,0, map-check.mjs:151)`],
+  ['anti-trap: do fundo se SAI de degrau em degrau (≤0,56 m por passo)', saida.ok, saida.ok ? `saiu em ${saida.passos} passos até y=${saida.pos.y.toFixed(2)} m` : saida.porque],
+  ['cuba segura o corpo — paredes leste/oeste/norte param o andarilho', segE <= CUBA.x1 + 0.15 && segW >= CUBA.x0 - 0.15 && segN >= CUBA.z0 - 0.15, `leste parou x=${segE.toFixed(2)} · oeste x=${segW.toFixed(2)} · norte z=${segN.toFixed(2)} — sem parede o corpo atravessa a cuba (mutante sem-parede)`],
+  ['cuba opaca no fundo da piscina (piso abaixo da lâmina)', cubaPisoOpaco, `${cubas.length} piso(s) de cuba${cubas.length ? '' : ' — sem piso visível o fundo é o gramado do mapa'}`],
+  ['sem teto opaco sobre a lâmina (máscara antiga = teto do nadador)', tetoSobreLamina.length === 0, `${tetoSobreLamina.length} plano(s) opaco(s) em y∈(0,02;0,5) dentro da cuba`],
+  ['espelho d\'água decorativo segue NÃO entrável', espelhoAfasta, `deslocamento ${espelhoDepois.distanceTo(espelhoAntes).toFixed(3)} m (mín. ${(RAIO * 0.9).toFixed(3)})`],
   ['frota da garagem em GLB do acervo — 3 modelos distintos pré-carregados e usados', frota.length === 3 && new Set(frota.map((f) => f.id)).size === 3 && preloadOk && usosCarro >= 3, `${frota.length} na GARAGEM · preload ${preloadOk ? 'ok' : 'FALTA'} · ${usosCarro} carroAcervo( — id fora do preload volta procedural e id declarado sem uso é invariante cega`],
   ['GLBs de carro válidos no disco (geometria real, dentro do orçamento)', frota.length === 3 && frota.every((f) => glbInfo[f.id]?.existe && !glbInfo[f.id].erro && glbInfo[f.id].tris >= 2000 && glbInfo[f.id].tris <= 45000), frota.map((f) => `${f.id}:${glbInfo[f.id]?.existe && !glbInfo[f.id].erro ? `${glbInfo[f.id].tris}t` : 'inválido/ausente'}`).join(' · ')],
   ['escala de fábrica confere com a ficha do acervo (CAR_DIM da Havan)', frota.every((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }), `${frota.filter((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }).length}/3 sem divergência de ficha`],
@@ -191,7 +263,6 @@ for (const [nome, ok, medido] of [
   ['jardim assimétrico autorado', conta('garden-asymmetry') >= 1, `${conta('garden-asymmetry')}/1`],
   ['maciços assimétricos com três famílias tropicais', clusters.length >= 5 && clusterFamilies.size >= 3 && clusterShapes.size >= 3 && espelhados.length <= 1, `${clusters.length} maciços · ${clusterFamilies.size} famílias/${clusterShapes.size} formas · ${espelhados.length} espelhados`],
   ['dois–três maciços tropicais densos e não espelhados', massasDensas.length>=2&&massasDensas.length<=3&&massasEspelhadas.length===0, `${massasDensas.length} densos · ${massasEspelhadas.length} espelhados`],
-  ['piscina e vertedouro com cuba opaca contínua acima do gramado', cubaOpaca, `${cubas.length} máscara(s)`],
   ['pergolado ancorado', pergola.filter((o) => o.userData.pergolaPart === 'pillar').length >= 4 && pergola.filter((o) => o.userData.pergolaPart === 'beam').length >= 5, `${pergola.filter((o) => o.userData.pergolaPart === 'pillar').length} pilares · ${pergola.filter((o) => o.userData.pergolaPart === 'beam').length} vigas`],
   ['ilha gourmet funcional e inequívoca', gourmetTipos('countertop') >= 1 && gourmetTipos('stool') >= 3 && gourmetTipos('cooktop') >= 1 && gourmetTipos('sink') >= 1 && gourmetTipos('faucet') >= 1 && gourmetTipos('pendant') >= 3, `${gourmet.length} peças`],
   ['home theater funcional e inequívoco', teatroTipos('screen') >= 1 && teatroTipos('media-console') >= 1 && teatroTipos('recliner') >= 4 && teatroTipos('acoustic-panel') >= 3, `${teatro.length} peças`],
@@ -204,11 +275,11 @@ for (const [nome, ok, medido] of [
 }
 
 if (falhas) {
-  console.error(`MANSÃO-CONTRATO FALHA: ${falhas} cláusula(s) de água/composição${MUTANTE ? ' (mutante mordido)' : ''}.`);
+  console.error(`MANSÃO-CONTRATO FALHA: ${falhas} cláusula(s) de água/composição${algumMutante() ? ' (mutante mordido)' : ''}.`);
   process.exitCode = 1;
-} else if (process.argv.some((arg) => arg.startsWith('--mutante='))) {
+} else if (algumMutante()) {
   console.error('MUTANTE sobreviveu: a sonda não dependeu da composição quebrada.');
   process.exitCode = 1;
 } else {
-  console.log('MANSÃO-CONTRATO OK: água segura e composição autorada presente.');
+  console.log('MANSÃO-CONTRATO OK: piscina entrável com saída, espelho seguro e composição autorada presente.');
 }
