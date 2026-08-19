@@ -25,6 +25,7 @@ import { ShaderPass } from '../vendor/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from '../vendor/addons/postprocessing/OutputPass.js';
 import { Pass, FullScreenQuad } from '../vendor/addons/postprocessing/Pass.js';
 import { LOOK } from './look.js';
+import { WaterPass, WATER_LAYER } from './water.js';
 
 const QP = () => new URLSearchParams(location.search);
 
@@ -979,6 +980,7 @@ export function enableLightBloom(renderer, opts = {}) {
     if (cp._aa) cp._aa.uniforms.uTime.value = cp._time;
     if (cp._ssao) cp._ssao.camera = camera;   // a cena pode trocar de câmera (menu/preview)
     if (scene.userData.vmPass) focusSunShadow(scene, camera);   // só na cena de jogo
+    if (cp._water) cp._water.camera = camera;   // a cena pode trocar de câmera
     cp.render();
     renderer.render = patched;
   };
@@ -1005,6 +1007,19 @@ export function enableLightBloom(renderer, opts = {}) {
       cp.setSize(innerWidth, innerHeight);
       cp._w = innerWidth; cp._h = innerHeight;
       cp.addPass(new RenderPass(scene, camera));
+      /* Água viva (RC2): o mesh nasce na camada 0 em modo fallback (uDepthOn=0).
+       Com composer ele migra p/ a WATER_LAYER e o WaterPass (cópia linearizada do
+       depth + desenho da camada) assume — amostrar o depthTexture do PRÓPRIO
+       readBuffer é feedback loop e o ANGLE rejeita o draw (medido 19/08). */
+      const w = scene.userData.water;
+      if (w) {
+        if (!cp.renderTarget1.depthTexture) attachDepth(cp);
+        w.mesh.layers.set(WATER_LAYER);
+        w.material.depthTest = false;
+        w.material.uniforms.uDepthOn.value = 1;
+        cp._water = new WaterPass(scene, camera, rawRender, w);
+        cp.addPass(cp._water);
+      }
       // threshold alto (0.85): só picos de brilho (sol, flash de tiro, speculars) — "bloom leve"
       const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.25, 0.45, 0.85);
       // A máscara de personagem tem que vir AQUI, colada no RenderPass: é o único ponto da

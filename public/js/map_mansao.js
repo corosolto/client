@@ -16,6 +16,7 @@ import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGroun
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { createWater } from './water.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -677,6 +678,28 @@ export function buildMansao(scene, T) {
   /* MUROS */
   for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_WALL, sx, 0, 0);
   addBox(HALF_X * 2, 2.5, 0.5, MAT_WALL, 0, 0, HALF_Z);
+
+  /* COSTÃO E OCEANO (RC2, plans/23) — o norte não tem muro: a vista do terraço era
+     a faixa de mar morta assada no sky_joa.webp. O leito desce do rodapé do mapa
+     (z=-36, y≈0) até 4,4 m sob o nível da água (y=-0,9): a régua de depth-fade da
+     water.js transforma essa rampa em turquesa de raso, e a linha onde ela cruza o
+     plano d'água (~z=-44) ganha a espuma de contato. Pedras furam a superfície e
+     ganham anel de espuma pela mesma cláusula. */
+  {
+    const leitoGeo = new THREE.PlaneGeometry(200, 44.5, 1, 1);
+    const leito = new THREE.Mesh(leitoGeo, lam({ color: 0x6f6350, roughness: .95 }));   // areia/rocha MOLHADA: clara demais lavava o raso pelo alfa
+    leito.rotation.x = -Math.PI / 2 - Math.atan2(4.38, 44);
+    leito.position.set(0, -2.21, -58);
+    leito.receiveShadow = true; root.add(leito);
+    const pedraMat = lam({ color: 0x7d7468, roughness: .9 });
+    for (const [px, pz, pr, py] of [[-9, -41, 1.6, -1.5], [7, -44, 2.2, -1.8], [-22, -47, 2.8, -2.0], [16, -52, 1.9, -2.2], [30, -43, 1.3, -1.4]]) {
+      const pedra = new THREE.Mesh(new THREE.DodecahedronGeometry(pr, 0), pedraMat);
+      pedra.position.set(px, py, pz); pedra.rotation.set(pr, pz, px);
+      pedra.castShadow = true; root.add(pedra);
+    }
+  }
+  const oceano = createWater(scene, T, 'fy_mansao');
+
   // Vasos e balizadores dão escala ao deck e às circulações sem virarem paredes de cover.
   const vasos = [
     [-19,-33,1.0],[-19,-29,.8],[-19,-25,.8],[-19,-19,.9],[-10,-34,.8],[-10,-29,.75],[-10,-25,.75],[-10,-19,.8],
@@ -802,6 +825,7 @@ export function buildMansao(scene, T) {
   return {
     ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    update(dt) { oceano.update(dt); },
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
       { nome: 'escada de serviço', ...STAIR_SERVICE, topo: LAJE_H }],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
