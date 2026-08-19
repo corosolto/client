@@ -181,9 +181,9 @@ function normalizeModel(id, model) {
   const center = box.getCenter(new THREE.Vector3());
   model.scale.setScalar(scale);
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
-  /* Mint entrega o eixo longo no X (tatu/barata) — gira pra cara ficar no +Z,
-     mesma correção do rato */
-  if (['rat', 'armadillo', 'cockroach'].includes(id)) model.rotation.y = -Math.PI / 2;
+  /* Mint entrega o tatu com o eixo longo no X — gira pra cara ficar no +Z, mesma
+     correção do rato. A barata já vem no Z (bbox 0,91 × 1,0). */
+  if (['rat', 'armadillo'].includes(id)) model.rotation.y = -Math.PI / 2;
 }
 
 function distanceToSegment(point, start, end) {

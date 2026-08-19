@@ -19,6 +19,10 @@ dist/
 # Recupere com `npm run fetch-audio`. O manifest de exemplo é versionado.
 public/audio/
 !public/audio/manifest.example.json
+# vida 1: a procedência do áudio ambiente (CC0 Freesound + 1 loop Mint) é
+# versionada como exceção — `public/audio/ambiente/FONTE.md` entra com
+# `git add -f` (o gitignore não consegue re-incluir arquivo sob dir excluído).
+# Os mp3 shipam pelo audio-pack.zip, nunca pelo git.
 
 # ── Skills de terceiros ─────────────────────────────────────────────────────
 # 13 MB de skills de terceiros (incluindo 8 GIFs de demonstração, 3,2 MB o

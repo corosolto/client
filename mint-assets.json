@@ -1398,6 +1398,28 @@
     ],
     "finalSha256": "ae408e0d31001a32220828fba5929f06707fc871418048e31addb43e18d8bcc4"
    }
+  },
+  "barata-urbana": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/barata_urbana.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks74jpd1cwg0xz1r5hx0j5yqs58crym6",
+    "chatUrl": "https://mint.gg/chat/ph7as0a36mqhp9rkcwz6c9mva58crs75",
+    "displayName": "Curved Antenna Ladybug (barata urbana)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): barata para fy_corrego e atacadao_treta. Primeira geração (Rust Antenna Roach) bloqueada pela moderação do Mint; regenerada com prompt de garden beetle — saiu marrom-avermelhada oval com antenas longas, lê como barata americana na escala de 14 cm. Pipeline idem tatu. Estática — darta pelo _updateRat do ambientlife.js. Eixo longo no Z (sem rotação no normalizeModel)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "7eafda399c3ab61657e1890cea87cfa140e64020b3ec03dfd48d4b9dcdc42faf"
+   }
   }
  }
 }
