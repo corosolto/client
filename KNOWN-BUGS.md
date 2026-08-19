@@ -1260,6 +1260,29 @@ circuito (LC1-LC6) já mede conectividade — falta um teto de COMPLEXIDADE (nº
 área total / decisões por travessia) medido contra o que o dono aprovar na versão
 simplificada.
 
+**Anti-trap (v2.1, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono.**
+Frase literal do dono (17/08): *"a parte debaixo tem cantos intransponiveis se vc cai de
+cima voce nao sai nunca mais isso nao pode acontecer"*. O LC1-6 media o térreo contíguo
+e os ~4% fora do circuito eram exatamente os cantos onde ele ficou preso.
+
+**Régua nova `eval:lajes-antitrap` (AT1):** no `Game` real, com índice espacial de
+colisores PROVADO igual ao `_collide` em 400 pontos (divergência aborta), grade 0,5 m
+8-vizinhos com validação de segmento e flood REVERSO dos spawns por todas as camadas:
+100% das células andáveis têm caminho de VOLTA a um spawn andando (pulo/mantle não
+contam). **Antes: 143 células sem volta** — laje MN selada pelo próprio guarda-corpo da
+tábua (62), faixas de miolo atrás dos muros do beco (44+), nichos entre caixa d'água e
+corrimão (5). **Depois: 6759/6759 (100%)**, zero bolsões. Mutante `sela-canto` fecha os
+dois vãos da escadaria → 22 células vermelhas, exit 1. Overlay por camada em
+`tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png` (vermelho = preso).
+
+**Conserto:** três vãos de fuga (`VANS_DE_FUGA`, map_lajes_authored.js) cortam o muro
+emitido para o corredor vizinho — o buraco de muro real de comunidade — e o painel de
+muro rente passa a vetar slot em cima de vão; o guarda-corpo da tábua é omitido onde a
+linha OU o convés cruza laje ao nível 5,20 (a boca da WN-MN tinha janela livre de 0,15 m
+para um corpo de 0,76). **Achado no caminho:** o colisor do corrimão usava a convenção
+de rotação espelhada em z — nas tábuas diagonais o corpo batia num corrimão invisível a
+1,5 m do visível (bala via malha certa, corpo via colisor errado).
+
 ### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
 
 **Sintoma literal do dono, após jogar a R18:** *"a textura e de favela, mas o mapa nao,

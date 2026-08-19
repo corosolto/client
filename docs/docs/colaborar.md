@@ -255,7 +255,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.653 |
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 868 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 674 |
-| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.205 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.271 |
 | `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.540 |
 | `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 815 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 505 |
