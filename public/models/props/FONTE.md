@@ -1,0 +1,133 @@
+# Props de cenário
+
+Acervo de props estáticos dos mapas. O legado (carros, casas do lajes, mobiliário)
+chegou antes da régua de registro existir — regularização fora do escopo da v2.1.
+A partir da frente E da v2.1 (`plans/13-VISUAL-V2.1.md`), todo prop novo entra com
+`source.frente: "v21-e-models"` no `mint-assets.json` e linha aqui — cobrado pelo
+`eval:props-acervo` (mutantes: sem-fonte, sem-sha, arquivo-sumido).
+
+## v2.1 — lote 1: vegetação de córrego (frente B)
+
+Pedido do dono (18/08/2026): *"faltou tambem usar os glbs de grama"*. Mint
+text-to-3D (Meshy), licença de uso do assinante Mint Pro (asset original gerado
+por prompt, sem copyright de terceiros). Pipeline reproduzível:
+`node tools/optimize-props-v21.mjs` (dedup/prune + WebP 256²), a partir dos GLBs
+brutos em `references/glb/` (não versionados). Convenção do acervo: GLB
+normalizado ~1 m, pivô central — escalar no call-site como já se faz com
+`caixa_dagua.glb`. Evidência visual (render node, Y corrigido — ver nota do
+render no fim): `tools/eval/asset-evidence/props-v21/`.
+
+- `grama_corrego_01.glb` — "Arching Guinea Grass Tuft", tufo de capim alto de
+  margem (capim-colonião) com palhas secas na base. 4.142 tris. Chat:
+  <https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj>. Registro:
+  `grama-corrego-01`. Escala sugerida ~0,72 ⇒ ~0,70 m.
+- `grama_corrego_02.glb` — "Urban Creekside Weeds", moita rasteira amarelada
+  com folhas de mato. 4.046 tris. Chat:
+  <https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2>. Registro:
+  `grama-corrego-02`. Escala sugerida ~0,6 ⇒ ~0,60 m largo.
+- `planta_corrego_taboa.glb` — "Brown Spike Cattail", taboa (Typha) com duas
+  espigas. 4.861 tris. Chat:
+  <https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718>. Registro:
+  `planta-corrego-taboa`. Escala sugerida ~1,4 ⇒ ~1,40 m.
+- `planta_corrego_taioba.glb` — "Heart Leaf Taioba", taioba (Xanthosoma) de
+  folhas cordiformes. 4.476 tris. Chat:
+  <https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4> (v2 — a primeira
+  geração falhou no estágio final do Mint). Registro: `planta-corrego-taioba`.
+  Escala sugerida ~0,95 ⇒ ~0,90 m.
+
+## v2.1 — lote 2: caixa d'água (frente A)
+
+Pedido do dono: *"a caixa da agua ta horrivel [...] na laje tao bons, fazer
+variacoes"*. Variações estilo favela da `caixa_dagua.glb` (Tripo, 18,7k tris) —
+as novas ficam em ~4,6-4,8k tris com WebP 512².
+
+- `caixa_dagua_azul.glb` — "Blue Ribbed Water Tank", tanque azul de polietileno
+  com tampa azul-escura e bocal, sobre tábua e blocos de concreto. 4.636 tris.
+  Chat: <https://mint.gg/chat/ph7c3scfqprd8jp9bn92279kwx8csbkq>. Registro:
+  `caixa-dagua-azul`. Escala sugerida ~1,4 ⇒ ~1,40 m com a base.
+- `caixa_dagua_preta.glb` — "Ribbed Black Water Tank", tanque preto com tampa e
+  extravasor, sobre anel de concreto. 4.802 tris. Chat:
+  <https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv>. Registro:
+  `caixa-dagua-preta`. Escala sugerida ~1,2 ⇒ ~1,20 m.
+- `caixa_dagua_fibra.glb` — "Weathered Favela Water Tank", fibrocimento
+  amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto.
+  4.542 tris. Chat: <https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg>.
+  Registro: `caixa-dagua-fibra`. Escala sugerida ~1,2 ⇒ ~1,20 m.
+
+## v2.1 — lote 3: varais + vida de céu
+
+Pedidos do dono (19/08/2026): *"as roupas penduradas no corrego, quebrada e
+campinho tao ruins, na laje tao bons, fazer variacoes"* e *"o lajes tem pipa mas
+nao tem animacao do pipa voando, podemos por helicoptero, aviao com faixa da
+praia, no caso da mansao do joa"*. Mesma licença e pipeline dos lotes 1-2, com
+`tools/split-props-v21.mjs` antes do optimize nos três animáveis — o Meshy
+entrega malha única fragmentada (1.155 ilhas no heli), então o split é por
+centróide de triângulo com regra calibrada no render bruto, e o pivô do nó fica
+no eixo de rotação/balanço (o call-site só faz `node.rotation.*`).
+
+- `varal_roupas_01.glb` — "Colorful Laundry Varal", corda com 6 peças coloridas
+  em prendedores entre ganchos. 4.773 tris. Chat:
+  <https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p>. Registro:
+  `varal-roupas-01`. Escala sugerida ~3,0 ⇒ 3,0 m × 0,84 m.
+- `varal_roupas_02.glb` — varal de chão, rack dobrável em X (o crítico corrigiu:
+  não é "em T"), 2 linhas com camisetas, jeans, meias e fronha. 4.818 tris. Chat:
+  <https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg>. Registro:
+  `varal-roupas-02`. Escala sugerida ~1,8 ⇒ 1,8 m × 1,46 m.
+- `pipa_papel.glb` — "Yellow Green Pipa", losango amarelo/verde com varetas e
+  rabiola de 5 lacinhos. 4.983 tris; nó `rabiola` separado (4.452 tris) com
+  pivô na ponta inferior da vela T=(0,14; -0,12; 0,02). Chat:
+  <https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5>. Registro:
+  `pipa-papel`. Escala sugerida ~1,6 ⇒ vela ~0,74 m.
+- `helicoptero_pm.glb` — "Blue White Police Copter", JetRanger azul/branco
+  genérico, **sem logo nem texto** (veto editorial). 4.933 tris; nós
+  `rotor_main` (287 tris, pivô T=(0,08; 0,17; 0), rotação em Y) e `rotor_tail`
+  (75 tris, pivô T=(-0,44; 0,02; -0,05), rotação em Z). Chat:
+  <https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0>. Registro:
+  `helicoptero-pm`. Escala sugerida ~10 ⇒ ~10 m.
+- `aviao_faixa.glb` — "Red Stripe Sky Advertiser", monomotor de aeropublicidade
+  puxando faixa em branco. 4.546 tris; nó `faixa` separado (1.397 tris,
+  T=(0; 0; -0,095)) — a textura do texto é arte 2D via OpenRouter, outra frente
+  (regra 19/08: Mint só 3D). Chat:
+  <https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r>. Registro:
+  `aviao-faixa`. Escala sugerida ~12 ⇒ envergadura ~10,7 m.
+
+> Nota de evidência: além do espelho em Y já documentado abaixo, o
+> `render-fauna-soft.mjs` também **ignora o `translation` dos nós** (cai no
+> fallback identidade) — nos renders `*-corrigido.png` dos três animáveis o
+> rotor/rabiola/faixa aparece levemente deslocados do encaixe. A prova de
+> montagem é o `getBounds` por nó (rotor_main -0,37..0,50 × 0,15..0,23; rabiola
+> -0,50..-0,12; faixa 0,0..0,50 — todos no lugar) e a árvore de nós impressa
+> pelo `split-props-v21.mjs`.
+
+---
+
+> Nota de ferramenta (19/08/2026): `tools/render-fauna-soft.mjs` projeta com o
+> vetor "up" invertido (produto vetorial left-handed) — **toda saída dele é
+> espelhada em Y**, inclusive a evidência de fauna já commitada. Os renders
+> `*-corrigido.png` desta pasta de evidência foram desespelhados com
+> `sharp .flip()`. Consertar o renderer é frente do arnês, não da E.
+
+## Revisão adversarial (19/08, crítico de contexto limpo — skill asset-review)
+
+Veredito: **os 7 vão para o merge, nenhum regenera**. Conferido de fora: SHA × disco
+(todos batem), texturas extraídas dos GLBs (íntegras — a mancha dos renders node é o
+renderer, não o arquivo), `EXT_texture_webp` suportado pelo GLTFLoader r160 vendorizado,
+folhagem OPAQUE+doubleSided, zero vetos. Ressalvas de INTEGRAÇÃO (não de asset):
+grama em InstancedMesh (4k tris/tufo pesa mais que as casas se solto), caixa preta com
+lum ~56 abaixo da banda 86-165 (validar in-game antes de espalhar), caixa azul esguia
+(corrigir com escala X/Z no call-site se na laje parecer magra).
+
+## Revisão adversarial do lote 3 (19/08, crítico de contexto limpo)
+
+Veredito: **os 5 vão para o merge, nenhum regenera**. Verificado de fora: SHA × disco
+nos 5, texturas extraídas (heli/avião/varais sem logo, texto ou brasão — veto editorial
+limpo), plano de rotação dos rotores medido por variância de vértices (rotor_main em Y,
+rotor_tail em Z — eixo fisicamente certo), nós animáveis confirmados NO ARQUIVO.
+Ressalvas de INTEGRAÇÃO (não de asset):
+- `varal_roupas_01`: gancho central pendurado no alto — esticado a 3 m flutua no vazio;
+  esconder ou apontar para um beiral no call-site. Se parecer fino demais, escala Y no
+  call-site, não prompt.
+- `pipa_papel`: 89% dos tris (4.452) estão nos lacinhos de ~5 cm (sub-pixel em jogo) —
+  dentro do teto, mas é o primeiro candidato a decimação.
+- `aviao_faixa`: pivô da faixa z=-0,095 deixa o centro ~0,42 m fora da linha da
+  fuselagem na escala 12 (o correto seria z=-0,06) — imperceptível no céu, anotado.

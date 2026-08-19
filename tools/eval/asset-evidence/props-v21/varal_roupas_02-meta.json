@@ -1,0 +1,27 @@
+{
+  "glb": "public/models/props/varal_roupas_02.glb",
+  "out": "/tmp/varal_roupas_02.png",
+  "frame": "1536x1024",
+  "dist": 2.4,
+  "trianglesRasterizados": 4818,
+  "silhueta": {
+    "minX": 500,
+    "minY": 179,
+    "maxX": 1051,
+    "maxY": 615,
+    "px": 93301,
+    "cobertura": 5.93,
+    "bbox_m": 0.447,
+    "proporcao_largura_altura": 1.26
+  },
+  "paleta_top": [
+    "#909090 21.7%",
+    "#b09090 11.0%",
+    "#b0b0b0 9.6%",
+    "#b09030 4.2%",
+    "#707070 3.1%",
+    "#505050 2.2%",
+    "#907050 2.1%",
+    "#d0b030 2.1%"
+  ]
+}
