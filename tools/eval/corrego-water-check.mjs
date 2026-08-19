@@ -22,14 +22,14 @@
      CW4  onda viva: vertexShader usa uTime E world.update avança o relógio;
      CW5  especular alinhado ao sol do LOOK (look.js, RC1): uSolDir ==
           normalize(LOOK.fy_corrego.sol.pos);
-     CW6  fio do depth: bloom.js instala o WaterPass para scene.userData.waters
+     CW6  fio do depth: bloom.js instala o DepthPass para scene.userData.waters
           (nível-declaração: node não tem WebGL; a captura 3:2 é a prova de uso);
      CW7  a ESCALA de profundidade é do canal, não do oceano: uProfEscala ≤ 0,5 m.
           Procedência (Lei 2): a lâmina máxima é 0,14 m (map_corrego.js:61-62);
           com os 7,0 m do oceano o ponto mais fundo leria prof = 0,14/7 = 2% —
           depth-fade morto. 0,5 m ≈ 3,6× a lâmina máxima. E o albedo poluído do
           mapa (tMapa + uMapaForca > 0) segura a identidade visual da frente B;
-     CW8  a lâmina entra na LISTA scene.userData.waters (o WaterPass a renderiza)
+     CW8  a lâmina entra na LISTA scene.userData.waters (o DepthPass a renderiza)
           e mantém corregoWaterSurface='base' (o contrato B segue vendo a base).
 
    Mutantes (Lei 3):
@@ -118,7 +118,7 @@ if (agua && agua.material && agua.material.isShaderMaterial) {
     falhas.push('CW7: sem albedo poluído (tMapa + uMapaForca) — a lâmina perdeu a identidade da frente B');
   else ok.push(`CW7 escala de canal (uProfEscala ${u.uProfEscala.value} ≤ 0,5) + albedo poluído`);
 
-  /* CW8 — lista do WaterPass + marca do contrato B */
+  /* CW8 — lista do DepthPass + marca do contrato B */
   const ws = g.scene.userData.waters || [];
   if (!ws.some((w) => w.mesh === agua)) falhas.push('CW8: a lâmina não está em scene.userData.waters — o WaterPass não a renderiza');
   else if (agua.userData.corregoWaterSurface !== 'base')
@@ -128,8 +128,8 @@ if (agua && agua.material && agua.material.isShaderMaterial) {
 
 /* CW6 — fio do depth no composer (nível-declaração) */
 const bloomSrc = readFileSync(path.join(RAIZ, 'public/js/bloom.js'), 'utf8');
-if (!/userData\.waters/.test(bloomSrc) || !/WaterPass/.test(bloomSrc))
-  falhas.push('CW6: bloom.js não instala o WaterPass da lista scene.userData.waters');
+if (!/userData\.waters/.test(bloomSrc) || !/DepthPass/.test(bloomSrc))
+  falhas.push('CW6: bloom.js não instala o DepthPass da lista scene.userData.waters');
 else ok.push('CW6 fio do depth no composer (declaração — captura 3:2 é a prova de uso)');
 
 for (const o of ok) console.log(`  CORREGO-ÁGUA ok · ${o}`);

@@ -7,6 +7,7 @@ import { grafitar } from './graffiti_pass.js';
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { aplicaVento, updateVento } from './wind.js';
+import { GPUParticles } from './gpuparticles.js';
 import { createFavelaAmbience } from './ambientlife.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -716,10 +717,44 @@ export function buildCampoMorro(scene, T = {}) {
     dogs: [{ pos: [-17, 0, 21], to: [-13, 0, 21], phase: .6 }],
   });
 
+  /* POEIRA DE RUA (RC3, plans/23) — o "horizonte dinâmico" do dono passa por
+     partícula ambiente: motas de poeira atravessando as ruas do bowl. Soft
+     particles: o fade de contato vem da MESMA cópia de depth do DepthPass (sem
+     composer cai no comportamento de sempre). O spawner é determinístico (o
+     harness mede vida por ele): uma mota a cada ~0,14 s num ponto das 4 ruas,
+     deriva rasa no eixo da rua e subida leve — poeira de várzea, não nevoeiro. */
+  const poeira = new GPUParticles(scene, null, {
+    tex: typeof document !== 'undefined'
+      ? (() => { const t = new THREE.TextureLoader().load('/img/textures/poeira_puff.webp'); t.colorSpace = THREE.SRGBColorSpace; return t; })()
+      : null,
+    additive: false, max: 96, fadeDist: 0.8, lumAlpha: true, ambiente: 'poeira',
+  });
+  const RUAS_POEIRA = [
+    { x0: -30, z0: -27.4, x1: 18, z1: -27.4 }, { x0: -30, z0: 27.4, x1: 30, z1: 27.4 },
+    { x0: -33.2, z0: -22, x1: -33.2, z1: 22 }, { x0: 33.2, z0: -10, x1: 33.2, z1: 22 },
+  ];
+  let poeiraT = 0, poeiraN = 0;
+  const hashP = (i) => { const s = Math.sin(i * 269.3 + 117.7) * 43758.5453; return s - Math.floor(s); };
+  function updatePoeira(dt) {
+    poeiraT += dt;
+    while (poeiraT > 0.14) {
+      poeiraT -= 0.14;
+      const r = RUAS_POEIRA[poeiraN % RUAS_POEIRA.length], t = hashP(poeiraN * 3 + 1), h2 = hashP(poeiraN * 7 + 2);
+      const x = r.x0 + (r.x1 - r.x0) * t, z = r.z0 + (r.z1 - r.z0) * t;
+      const dx = Math.sign(r.x1 - r.x0), dz = Math.sign(r.z1 - r.z0);
+      poeira.spawn({ x, y: groundHeightAt(x, z) + 0.25 + h2 * 1.3, z }, {
+        vel: new THREE.Vector3(dx * (0.5 + h2 * 0.7), 0.06 + h2 * 0.1, dz * (0.5 + hashP(poeiraN * 5) * 0.7)),
+        life: 5 + h2 * 4, size: 0.45 + h2 * 0.55, grow: 0.09,
+      });
+      poeiraN++;
+    }
+    poeira.update(dt);
+  }
+
   return {
     ambience,
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
-    update(dt) { updateVento(dt); },
+    update(dt) { updateVento(dt); updatePoeira(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     levels: [{ nome: 'galpao', x0: GALPAO.x0, x1: GALPAO.x1, z0: GALPAO.z0, z1: GALPAO.z1, dePartida: 'B' }],
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

@@ -22,7 +22,7 @@ import { LOOK } from './look.js';
    amostrar o depthTexture do MESMO render target em que se desenha é feedback
    loop — mesmo com depthTest/depthWrite desligados, o ANGLE rejeita o draw.
    Por isso o caminho completo NÃO é "a água desenha no meio da cena": o mesh
-   fica na WATER_LAYER (fora da câmera principal) e o WaterPass, colado no
+   fica na WATER_LAYER (fora da câmera principal) e o DepthPass, colado no
    RenderPass, (1) copia o depth para um RT próprio já linearizado (viewZ/-far
    em meia-float — depth cru em meia-float perderia a faixa de espuma: 1e-5 de
    resolução a 40 m) e (2) desenha SÓ a camada da água no readBuffer amostrando
@@ -35,10 +35,13 @@ import { LOOK } from './look.js';
    ============================================================================ */
 
 export const WATER_LAYER = 12;   // layers 0-11: 0 default + 11 NO_BLOOM (bloom.js)
+export const SOFT_LAYER = 13;    // partículas soft (RC3): mesmo passe, mesma cópia
 
-/* Passe do RC2: cópia linearizada do depth + desenho da camada da água.
-   Instalado pelo bloom.js logo após o RenderPass (needsSwap=false: escreve no
-   próprio readBuffer, como o CharNoBloomPass). */
+/* Passe do RC2/RC3: cópia linearizada do depth + desenho das camadas que a
+   consomem (água viva, partículas soft). Instalado pelo bloom.js logo após o
+   RenderPass (needsSwap=false: escreve no próprio readBuffer, como o
+   CharNoBloomPass). Chamava-se WaterPass até o RC3 — o nome novo é o contrato:
+   quem precisa de depth de cena bebe DESTA cópia, não cria canal paralelo. */
 const DEPTH_COPY_FRAG = /* glsl */`
 uniform sampler2D tDepth;
 uniform float uNear;
@@ -55,13 +58,14 @@ varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
 `;
 
-export class WaterPass extends Pass {
-  constructor(scene, camera, rawRender, aguas) {
+export class DepthPass extends Pass {
+  constructor(scene, camera, rawRender, aguas, softs = []) {
     super();
     this.needsSwap = false;
     this.scene = scene; this.camera = camera;
     this._raw = rawRender;           // render CRU: chamar renderer.render aqui recursaria no composer
     this.aguas = aguas;              // scene.userData.waters: UM passe p/ todas as lâminas
+    this.softs = softs;              // scene.userData.softs: idem para partículas
     this.depthRT = new THREE.WebGLRenderTarget(1, 1, {
       type: THREE.HalfFloatType, format: THREE.RGBAFormat,
       minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter,
@@ -77,6 +81,7 @@ export class WaterPass extends Pass {
     });
     this.fq = new FullScreenQuad(this.copyMat);
     for (const a of aguas) a.material.uniforms.tDepth.value = this.depthRT.texture;
+    for (const s of softs) s.uniforms.tDepth.value = this.depthRT.texture;
   }
   setSize(w, h) { this.depthRT.setSize(w, h); }
   render(renderer, writeBuffer, readBuffer) {
@@ -84,15 +89,19 @@ export class WaterPass extends Pass {
     u.tDepth.value = readBuffer.depthTexture;
     u.uNear.value = cam.near; u.uFar.value = cam.far;
     for (const a of this.aguas) { a.material.uniforms.uNear.value = cam.near; a.material.uniforms.uFar.value = cam.far; }
+    for (const s of this.softs) {
+      s.uniforms.uFar.value = cam.far;
+      s.uniforms.uRes.value.set(readBuffer.width, readBuffer.height);
+    }
     renderer.setRenderTarget(this.depthRT);
     this.fq.render(renderer);
     const oAuto = renderer.autoClear, oBg = sc.background, oLayers = cam.layers.mask;
     const sm = renderer.shadowMap, oSmAuto = sm.autoUpdate, oSmNeeds = sm.needsUpdate;
     renderer.setRenderTarget(readBuffer);
     renderer.autoClear = false;      // o RenderPass já desenhou aqui: limpar seria apagar o quadro
-    sm.autoUpdate = false; sm.needsUpdate = false;   // água não usa sombra; re-render dobraria custo
+    sm.autoUpdate = false; sm.needsUpdate = false;   // água/soft não usam sombra; re-render dobraria custo
     sc.background = null;
-    cam.layers.set(WATER_LAYER);
+    cam.layers.mask = (1 << WATER_LAYER) | (1 << SOFT_LAYER);
     this._raw(sc, cam);
     cam.layers.mask = oLayers;
     sc.background = oBg;
@@ -167,7 +176,7 @@ varying vec4 vClip;
 varying vec2 vSlope;
 
 float sceneViewZ(vec2 suv) {
-  // tDepth é a CÓPIA linearizada do WaterPass (viewZ/-far), não o depth cru
+  // tDepth é a CÓPIA linearizada do DepthPass (viewZ/-far), não o depth cru
   return -texture2D(tDepth, suv).r * uFar;
 }
 

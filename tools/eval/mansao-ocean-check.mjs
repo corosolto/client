@@ -132,10 +132,10 @@ if (oceano && oceano.material && oceano.material.isShaderMaterial) {
 
 /* OC6 — fio do depth no composer (nível-declaração: node não tem WebGL; a prova
    de uso no browser é a captura 3:2, Lei 4): bloom.js migra o mesh para a
-   WATER_LAYER e instala o WaterPass (cópia linearizada do depth) */
+   WATER_LAYER e instala o DepthPass (cópia linearizada do depth) */
 const bloomSrc = readFileSync(path.join(RAIZ, 'public/js/bloom.js'), 'utf8');
-if (!/userData\.water/.test(bloomSrc) || !/WaterPass/.test(bloomSrc))
-  falhas.push('OC6: bloom.js não instala o WaterPass da água (scene.userData.water -> WATER_LAYER + cópia de depth)');
+if (!/userData\.water/.test(bloomSrc) || !/DepthPass/.test(bloomSrc))
+  falhas.push('OC6: bloom.js não instala o DepthPass da água (scene.userData.water -> WATER_LAYER + cópia de depth)');
 else ok.push('OC6 fio do depth no composer (declaração — captura 3:2 é a prova de uso)');
 
 /* ---------- placar ---------- */
