@@ -179,3 +179,13 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   or border. Output only the panorama." O processamento recortou o centro superior
   `1240×620+480+190` antes do resize; o enquadramento coloca o horizonte na faixa
   visível atrás da piscina real e remove o landmark montanhoso da borda esquerda.
+- `textures/water_normal_a.webp` e `textures/water_normal_b.webp` (RC2, 19/08):
+  normal maps da água viva, derivados por sobel da luminância da textura de
+  superfície gerada via OpenRouter (`tools/gen-image.mjs`, modelo
+  google/gemini-3-pro-image — a regra da casa é 2D só por lá; o modelo de imagem
+  não entrega normal map válido, então a derivação é local e reproduzível:
+  `node tools/gen-water-normals.mjs <png>`). Prompt: "Top-down aerial texture of
+  a calm turquoise sea surface, subtle ripples, seamless repeating pattern, even
+  ambient light, no boats, no people, no coastline, no text". SHA-256
+  `73766d359e0ac741315a448e434c3e8b6cd22f09b02ba8fed0d77950465ffdbe` (a) e
+  `0f31b4c7a486891dac4569e91e13feb1ec2d82360e27420cee2da4d43cf9f6d6` (b).
