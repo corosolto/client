@@ -257,7 +257,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,920 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,653 |
 | `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 868 |
-| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 727 |
+| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 762 |
 | `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,205 |
 | `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,549 |
 | `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 834 |
