@@ -139,7 +139,7 @@ if (MUT_ILHA_AMBIGUA) for (const o of marcados) if (o.userData.mansaoFeature ===
 if (MUT_TEATRO_VAZIO) for (const o of marcados) if (o.userData.mansaoFeature === 'theater-part') o.visible = false;
 if (MUT_JARDIM_RARO) for (const o of marcados) if (o.userData.mansaoFeature === 'garden-mass') o.visible = false;
 if (MUT_PISCINA_SEM_CUBA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-floor') o.visible = false;
-if (MUT_PISCINA_CUBA_CURTA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-floor') o.scale.set(1, 1, .45);
+if (MUT_PISCINA_CUBA_CURTA) for (const o of marcados) if (o.userData.mansaoFeature === 'pool-basin-floor') o.scale.set(1, .45, 1);   // plano girado -π/2: y local = z mundo -π/2: y local = z mundo
 /* Mutantes de MUNDO da piscina — cada um PROVA que aplicou (skill regua: mutação
    que não casou é confiança falsa). */
 const paredesCuba = () => game.world.colliders.filter((c) => c.minY <= -1.5 && c.maxY >= -0.1 && c.maxY <= 0.1
@@ -177,19 +177,38 @@ for (let i = 0; i < 60 && semProgresso < 3; i++) {
 const saiDaAgua = () => {
   const pos = new THREE.Vector3(0, game.world.groundHeightAt(0, CUBA.fundoZ), CUBA.fundoZ);
   if (pos.y > -1.5) return { ok: false, porque: `sem fundo pra provar (y=${pos.y.toFixed(2)})`, passos: 0, pos };
-  let passos = 0;
-  for (; passos < 90 && pos.y < -0.06; passos++) {
+  const vistos = new Set();
+  const chave = (p) => `${p.x.toFixed(1)}:${p.z.toFixed(1)}`;
+  let passos = 0, planos = 0;
+  for (; passos + planos < 200 && pos.y < -0.06;) {
     let melhor = null;
-    for (let d = 0; d < 16; d++) for (const dist of [0.3, 0.45, 0.6, 0.8, 1.05]) {
+    for (let d = 0; d < 16; d++) for (const dist of [0.3, 0.45, 0.6, 0.8, 1.05, 1.3, 1.6, 1.9, 2.2]) {
       const a = d * Math.PI / 8, tx = pos.x + Math.sin(a) * dist, tz = pos.z + Math.cos(a) * dist;
       const g = game.world.groundHeightAt(tx, tz), sobe = g - pos.y;
       if (sobe <= 0.001 || sobe > 0.56) continue;
+      if (dist > 0.9) {   // passo longo só por chão plano (não teleporte por parede)
+        const gx = pos.x + Math.sin(a) * dist / 2, gz = pos.z + Math.cos(a) * dist / 2;
+        if (Math.abs(game.world.groundHeightAt(gx, gz) - pos.y) > 0.35) continue;
+      }
       const c = new THREE.Vector3(tx, g, tz); game._collide(c, RAIO);
       if (Math.hypot(c.x - tx, c.z - tz) > 0.25) continue;   // empurrado = não vira
       if (!melhor || sobe > melhor.sobe) melhor = { sobe, pos: c };
     }
-    if (!melhor) return { ok: false, porque: `preso em y=${pos.y.toFixed(2)} (sem degrau ≤0,56 m)`, passos, pos };
-    pos.copy(melhor.pos);
+    if (melhor) { pos.copy(melhor.pos); vistos.add(chave(pos)); passos++; continue; }
+    // sem degrau à vista: anda no PLANO pra onde não pisou ainda (raio do fundo é pequeno)
+    let plano = null;
+    for (let d = 0; d < 16 && !plano; d++) for (const dist of [0.45, 0.7, 0.9]) {
+      const a = d * Math.PI / 8 + planos * .3, tx = pos.x + Math.sin(a) * dist, tz = pos.z + Math.cos(a) * dist;
+      if (Math.abs(game.world.groundHeightAt(tx, tz) - pos.y) > 0.001) continue;
+      if (tx < CUBA.x0 - 2 || tx > CUBA.x1 + 2 || tz < CUBA.z0 - 2 || tz > CUBA.z1 + 2) continue;
+      const c = new THREE.Vector3(tx, pos.y, tz); game._collide(c, RAIO);
+      if (Math.hypot(c.x - tx, c.z - tz) > 0.2) continue;
+      const k = `${c.x.toFixed(1)}:${c.z.toFixed(1)}`;
+      if (vistos.has(k)) continue;
+      plano = c;
+    }
+    if (!plano || ++planos > 120) return { ok: false, porque: `preso em y=${pos.y.toFixed(2)} (sem degrau ≤0,56 m ao alcance)`, passos, pos };
+    pos.copy(plano); vistos.add(chave(pos));
   }
   return pos.y >= -0.06 ? { ok: true, porque: 'saiu', passos, pos } : { ok: false, porque: `não chegou ao deck (y=${pos.y.toFixed(2)})`, passos, pos };
 };
@@ -230,7 +249,14 @@ const massas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature=
 const massasDensas = massas.filter((massa)=>{let n=0;massa.traverse((o)=>{if(o.isMesh&&o.visible!==false)n++;});return n>=20;});
 const massasEspelhadas=massas.filter((a,i)=>massas.some((b,j)=>i!==j&&Math.abs(a.position.x+b.position.x)<.6&&Math.abs(a.position.z-b.position.z)<.6));
 const cubas = marcados.filter((o)=>o.visible!==false&&o.userData.mansaoFeature==='pool-basin-floor');
-const cubaPisoOpaco=cubas.some((c)=>{const s=new THREE.Box3().setFromObject(c).getSize(new THREE.Vector3());return c.position.y<=-0.5&&!(c.material?.transparent&&(c.material.opacity??1)<0.9)&&s.x>=10&&s.z>=6.5;});
+const cubaPisoOpaco = (() => {
+  const opacos = cubas.filter((c) => c.position.y <= -0.5 && !(c.material?.transparent && (c.material.opacity ?? 1) < 0.9));
+  if (!opacos.length) return false;
+  const b = new THREE.Box3();
+  for (const c of opacos) b.union(new THREE.Box3().setFromObject(c));   // mundo pós-scale (mutante curta)
+  const s = b.getSize(new THREE.Vector3());
+  return s.x >= 10.5 && s.z >= 6.3;   // raso+fundo planos cobrem ≥6,3 dos 7 m (o resto é escada)
+})();
 const tetoSobreLamina = marcados.filter((o) => {
   if (o.visible === false) return false;
   const b = new THREE.Box3().setFromObject(o);
