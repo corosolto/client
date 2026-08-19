@@ -625,6 +625,40 @@ float ondaCorrego( vec2 p ) {
       { collide: false, skirt: false, rx: -sz * Math.atan2(0.05 - CANAL_FUNDO, L) });   // mesmo sinal da rampa
   }
 
+  /* ═══════════ GRAMA_SPOTS — terreno reservado para o lote E-B (frente E) ═══════════
+     "faltou tambem usar os glbs de grama" (dono, 18/08) — mas NENHUM GLB de
+     vegetação existe no acervo; a frente E fabrica (`models/props/grama_corrego.glb`).
+     O call-site já está aqui: quando o prop existir no acervo, cada spot recebe um
+     tufo girado (determinístico, sem random — o mapa tem que nascer igual); sem o
+     prop, nada é colocado e a cláusula de presença do corrego-contract AVISA
+     (DORMENTE) em vez de reprovar — a pendência é do acervo, não do mapa.
+     Grama é decoração: sem collider, sem occluder (capim fino não para bala).
+     Faixa: passeio da beira do canal (|x| ≈ 5,7, o "capim na rachadura do
+     concreto"), cantos do muro externo e pé das pontes — fora do vão das pontes e
+     das cabeceiras para não sujar a leitura das rotas. */
+  const GRAMA_SPOTS = [];
+  for (const lado of [-1, 1]) {
+    let i = 0;
+    for (let z = -36; z <= 36; z += 5.2) {
+      if ([-22, 0, 22].some((bz) => Math.abs(z - bz) < 2.4)) continue;   // vão das pontes livre
+      GRAMA_SPOTS.push({ x: lado * (5.5 + (i % 3) * 0.35), z, ry: (i * 2.399) % 6.283 });
+      i++;
+    }
+  }
+  for (const [sx, sz] of [[-HALF_X + 1.2, -HALF_Z + 1.2], [HALF_X - 1.2, -HALF_Z + 1.2], [-HALF_X + 1.2, HALF_Z - 1.2], [HALF_X - 1.2, HALF_Z - 1.2]])
+    GRAMA_SPOTS.push({ x: sx, z: sz, ry: 0.7 });
+  const gramaServida = [];
+  if (hasProp('grama_corrego')) {
+    for (const spot of GRAMA_SPOTS) {
+      const tufo = placeProp('grama_corrego', { x: spot.x, z: spot.z, targetH: 0.4, ry: spot.ry });
+      if (!tufo) continue;
+      tufo.userData.nonCollider = true;
+      tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+      root.add(tufo);
+      gramaServida.push(tufo);
+    }
+  }
+
   /* ===================== JACARÉ (decoração no córrego) ===================== */
   {
     const jx = 0.8, jz = -7;
@@ -1615,6 +1649,7 @@ float ondaCorrego( vec2 p ) {
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience, propEscala,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    gramaSpots: GRAMA_SPOTS, gramaServida,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
 }

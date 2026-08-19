@@ -277,6 +277,17 @@ const proxyJacare = faunaProxy2.find((o) => o.userData.faunaProxy === 'jacare');
 const proxyCapivara = faunaProxy2.find((o) => o.userData.faunaProxy === 'capivara');
 const CANAL_AGUA_Y = -1.61;
 const boxDe = (o) => new THREE.Box3().setFromObject(o);
+// comprimento SEM o yaw: AABB de objeto girado infla o eixo (1,8 m a 92° mede 2,01);
+// tirar a rotação mede o tamanho real do asset como posicionado (escala incluída).
+const lenSemYaw = (o) => {
+  const ry = o.rotation.y;
+  o.rotation.y = 0;
+  o.updateMatrixWorld(true);
+  const s = boxDe(o).getSize(new THREE.Vector3());
+  o.rotation.y = ry;
+  o.updateMatrixWorld(true);
+  return Math.max(s.x, s.z);
+};
 const tamDe = (o) => boxDe(o).getSize(new THREE.Vector3());
 const submerso = (o) => { const b = boxDe(o); return b.min.y < CANAL_AGUA_Y - 0.02 && b.max.y > CANAL_AGUA_Y + 0.05; };
 const aguaShader = !!lamina && typeof lamina.material.onBeforeCompile === 'function'
@@ -295,19 +306,24 @@ const aguaAmpOk = !lamina?.userData?.aguaAmp || lamina.userData.aguaAmp <= 0.04;
 const gramaSpots = world2.gramaSpots || [];
 const gramaAtiva = gramaServida.length > 0;
 const gramaVisivel = gramaServida.filter((g) => g.visible !== false).length;
-const gramaSpotsDentro = gramaSpots.every((s) => Math.abs(s.x) >= 3 && Math.abs(s.x) <= 24 && Math.abs(s.z) <= 38);
+// dentro do mapa PELOS BOUNDS do próprio world — número de outra fonte é teto órfão
+const b0 = world2.bounds || {};
+const gramaSpotsDentro = gramaSpots.every((s) =>
+  s.x >= (b0.minX ?? -Infinity) && s.x <= (b0.maxX ?? Infinity)
+  && s.z >= (b0.minZ ?? -Infinity) && s.z <= (b0.maxZ ?? Infinity)
+  && Math.abs(s.x) >= 3);   // grama é de MARGEM: nunca no vão do canal
 
 checks.push(
   ['jacaré GLB posicionado no canal na escala do Mint (BUG-57)', !!jacareGlb && (() => {
-    const b = boxDe(jacareGlb), s = b.getSize(new THREE.Vector3());
-    const len = Math.max(s.x, s.z);
+    const b = boxDe(jacareGlb);
+    const len = lenSemYaw(jacareGlb);
     const cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2;
     return len >= 1.62 && len <= 1.98 && Math.abs(cx - 0.8) < 2.5 && Math.abs(cz + 7) < 2.5;
   })()],
   ['jacaré meio submerso na lâmina (dorso de fora, patas na água)', !!jacareGlb && submerso(jacareGlb)],
   ['capivara GLB na margem alagada com escala da ficha', !!capivaraGlb && (() => {
-    const b = boxDe(capivaraGlb), s = b.getSize(new THREE.Vector3());
-    const len = Math.max(s.x, s.z);
+    const b = boxDe(capivaraGlb);
+    const len = lenSemYaw(capivaraGlb);
     const cz = (b.min.z + b.max.z) / 2;
     return len >= 0.9 && len <= 1.2 && Math.abs(cz + 38) < 4;
   })()],
