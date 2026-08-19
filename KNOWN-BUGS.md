@@ -1366,7 +1366,10 @@ animais tambem"*.
   velho servindo OUTRO worktree na 8123 mediu o código antigo e inventou 3 vermelhas
   (AM5 takeoff, AM7 orçamento, AM12 sem espécie). Contra o servidor do próprio worktree:
   tudo verde sem tocar uma linha. Antes de "consertar" vermelha de browser, confira de
-  qual diretório a porta serve (`lsof -p <pid> | grep cwd`).
+  qual diretório a porta serve (`lsof -p <pid> | grep cwd`). Mordeu de novo na
+  integração v2.1.0 (19/08): o `gen-graffiti-layout` também cai na 8123 por default e
+  a primeira regen dos 10 layouts assou os murais "homenagem-*" da MAIN (MURAIS_HOM
+  povoado lá) em vez da branch — M5 pegou. Regen certa é com `BASE=http://127.0.0.1:<porta do worktree>`.
 - **Dívida registrada:** jacaré/capivara seguem estáticos — não existe réptil/capivara
   riggado CC0 (varredura Quaternius + Poly Pizza 19/08, documentada no FONTE.md); o
   pipeline de animação Mint é humanoid-only. Integração no córrego é da frente B.
