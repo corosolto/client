@@ -31,8 +31,8 @@
    ÁGUA VIVA ("o threejs consegue fazer coisa muito melhor que isso", dono 18/08): a
    lâmina base precisa de onBeforeCompile com uniform de tempo (uAgua), geometria
    subdividida para a onda de vértice existir (>= 6 x 24 segmentos) e onBeforeRender
-   que avança o uniforme entre quadros; amplitude <= 4 cm (não pode erguer a lâmina
-   acima do limo da parede).
+   que avança o uniforme entre quadros; amplitude <= 3 cm (a crista tem de ficar
+   abaixo das fitas de brilho, que estão a +3 cm da lâmina).
    Mutações: agua-morta (remove onBeforeCompile e congela o relógio → vermelho).
 
    GRAMA (lote E-B, frente E): o mundo expõe `gramaSpots` (terreno reservado) e
@@ -302,7 +302,7 @@ try {
   const depois = lamina.material.userData?.uAgua?.value;
   aguaRelogioAnda = Number.isFinite(antes) && Number.isFinite(depois) && depois > antes;
 } catch { aguaRelogioAnda = false; }
-const aguaAmpOk = !lamina?.userData?.aguaAmp || lamina.userData.aguaAmp <= 0.04;
+const aguaAmpOk = !lamina?.userData?.aguaAmp || (lamina.userData.aguaAmp > 0 && lamina.userData.aguaAmp <= 0.03);   // brilho está a +3 cm da lâmina: crista tem de ficar abaixo
 const gramaSpots = world2.gramaSpots || [];
 const gramaAtiva = gramaServida.length > 0;
 const gramaVisivel = gramaServida.filter((g) => g.visible !== false).length;
@@ -344,7 +344,7 @@ checks.push(
   ['água com shader de onda (onBeforeCompile + uAgua)', aguaShader],
   ['água com geometria subdividida para a onda de vértice', aguaSegs],
   ['água com relógio vivo (uniform avança entre quadros)', aguaRelogioAnda],
-  ['amplitude da onda <= 4 cm (não invade o limo)', aguaAmpOk],
+  ['amplitude da onda <= 3 cm (crista abaixo do brilho)', aguaAmpOk],
   ['grama: terreno reservado nas margens (>= 12 spots dentro do mapa)', gramaSpots.length >= 12 && gramaSpotsDentro],
 );
 if (!gramaAtiva) {
