@@ -910,6 +910,12 @@ export function initTextures() {
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
     ['or-stencil-pomba.png', 1.181, 'ilustracao', 0],
   );
+  /* PACK PIXO SP×RJ (frente F, v2.1): obra própria gerada no Mint a partir da
+     pesquisa references/graffiti/PIXACAO-SP-RJ.md — estilo, nunca assinatura.
+     5º campo: cidade ('SP'|'RJ'), coberto pelo portão GRAFFITI-EDITORIAL.
+     GERADO por `node tools/gen-graffiti-decals.mjs --pack` — edite o script. */
+  /* PIXO-PACK:GERADO-INICIO */
+  /* PIXO-PACK:GERADO-FIM */
   /* As homenagens or-hom-* (pessoa real) saíram do pool E do disco em 17/08 —
      contrato editorial; o portão GRAFFITI-EDITORIAL impede a reintrodução. */
   /* Galeria desativada por contrato editorial: os mapas não geram arte de pessoa
@@ -962,6 +968,8 @@ export function initTextures() {
   T.decalTipos = DECAL_FILES.map(([, , k]) => k);
   T.decalClaro = DECAL_FILES.map(([, , , c]) => !!c);
   T.decalFiles = DECAL_FILES.map(([f]) => f);
+  /* 'SP' | 'RJ' | null — só o pack or-pixo-* declara (5º campo); o resto é null. */
+  T.decalCidades = DECAL_FILES.map(([, , , , cd]) => cd || null);
   /* Índices de um tipo — `T.decalsDoTipo('tag')`. Devolve índice, não textura, de
      propósito: assim dá pra sortear e carregar só o que a parede vai usar. */
   T.decalsDoTipo = (tipo) => T.decalTipos.reduce((a, k, i) => (k === tipo && a.push(i), a), []);

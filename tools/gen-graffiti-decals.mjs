@@ -5,6 +5,13 @@
  *   node tools/gen-graffiti-decals.mjs              # gera tudo
  *   node tools/gen-graffiti-decals.mjs --sheet      # gera + folha de contato p/ olhar
  *   node tools/gen-graffiti-decals.mjs --only=1a426 # só as fontes que casam com o trecho
+ *   node tools/gen-graffiti-decals.mjs --pack       # pack pixo SP×RJ (frente F): node puro
+ *                                                   # com sharp, SEM Chrome — fontes em
+ *                                                   # references/graffiti/pack/<cidade>-<slug>.png
+ *                                                   # (cidade: sp|rj), um pixo por arquivo,
+ *                                                   # fundo liso. Saída: or-pixo-*.png +
+ *                                                   # bloco PIXO-PACK no textures.js + folha
+ *                                                   # de contato em tools/eval/out/.
  *
  *   Sugestão de script no package.json (NÃO é meu arquivo — pedir pro dono adicionar):
  *     "decals": "node tools/gen-graffiti-decals.mjs --sheet"
@@ -169,6 +176,8 @@ const INTEIRO = new Set([
   'images.webp', 'images (1).webp', 'images (2).webp', 'images (3).webp',
   'images (4).webp', 'images (5).webp', 'images (6).webp',
 ]);
+
+if (process.argv.includes('--pack')) { await packPixos(); process.exit(0); }
 
 if (!existsSync(SRC)) {
   console.error(`[decals] ${path.relative(ROOT, SRC)} não existe.\n` +
@@ -627,4 +636,206 @@ window.__recorta = async (uri, opt) => {
   return saida;
 };
 `;
+}
+
+/* ── MODO --pack (frente F, v2.1) ─────────────────────────────────────────────
+ * Pack pixo SP×RJ: obra própria (Mint), UM pixo por arquivo-fonte, fundo liso —
+ * então não precisa do segmentador multi-peça do Chrome. Mesmas medidas de aceite
+ * do fluxo principal (COBERTURA_MIN / BORDA_MAX, números medidos na 4ª rodada).
+ * Fonte: references/graffiti/pack/<cidade>-<slug>.<ext>  (cidade: sp | rj)
+ * Saída: public/img/decals/or-pixo-<cidade>-<slug>.png + bloco PIXO-PACK no
+ * textures.js + folha de contato tools/eval/out/pixo-pack-sheet.png.          */
+async function packPixos() {
+  const SRC_PACK = path.join(SRC, 'pack');
+  if (!existsSync(SRC_PACK)) {
+    console.error('[pack] references/graffiti/pack não existe — gere os pixos (Mint) antes.');
+    process.exit(1);
+  }
+  const sharp = (await import('sharp')).default;
+  const arquivos = readdirSync(SRC_PACK).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
+  const validas = arquivos.filter((f) => /^(sp|rj)-[a-z0-9-]+\.\w+$/i.test(f)).sort();
+  for (const f of arquivos.filter((f) => !validas.includes(f)))
+    console.warn(`[pack] AVISO: "${f}" fora do padrão <cidade>-<slug>.<ext> (cidade sp|rj) — ignorada`);
+  if (!validas.length) { console.error('[pack] nenhuma fonte válida em references/graffiti/pack'); process.exit(1); }
+
+  mkdirSync(OUT, { recursive: true });
+  const manifesto = [];
+  let reprovados = 0;
+  for (const f of validas) {
+    const cidade = f.slice(0, 2).toUpperCase();
+    const nome = `or-pixo-${f.replace(/\.\w+$/, '')}.png`;
+    const r = await recortaPlano(path.join(SRC_PACK, f), sharp);
+    if (!r || r.cobertura < COBERTURA_MIN || r.borda > BORDA_MAX) {
+      console.error(`  ✗ ${nome}: ${!r ? 'sem tinta após o recorte'
+        : r.cobertura < COBERTURA_MIN ? `cobertura ${r.cobertura} < ${COBERTURA_MIN} (quase vazio)`
+        : `borda ${r.borda} > ${BORDA_MAX} (fundo não saiu)`}`);
+      reprovados++;
+      continue;
+    }
+    writeFileSync(path.join(OUT, nome), r.png);
+    manifesto.push({
+      file: nome, w: r.w, h: r.h,
+      aspect: Math.round((r.w / r.h) * 1000) / 1000,
+      tipo: 'tag', claro: r.lum > 128, cidade, origem: `pack/${f}`,
+      cobertura: r.cobertura, borda: r.borda,
+    });
+    console.log(`  ✓ ${nome} [${cidade}] ${r.w}×${r.h} cobertura ${r.cobertura} borda ${r.borda}`);
+  }
+  sincronizaPackTextures(manifesto);
+  writeFileSync(path.join(OUT, 'manifest-pixo-pack.json'), JSON.stringify({
+    gerado: new Date().toISOString().slice(0, 10),
+    script: 'tools/gen-graffiti-decals.mjs --pack',
+    pesquisa: 'references/graffiti/PIXACAO-SP-RJ.md',
+    decals: manifesto,
+  }, null, 2) + '\n');
+  await folhaContatoPack(manifesto, sharp);
+  console.log(`[pack] ${manifesto.length} decals · ${reprovados} reprovado(s) nas medidas de aceite`);
+  if (reprovados) process.exit(1);
+}
+
+/* Recorte de fundo liso para fonte de peça única. Fundo = cor mais comum do anel
+ * de borda (as fontes do pack vêm com fundo branco chapado); flood a partir da
+ * borda; rampa de alpha + des-mistura só na banda de 2 px (anti-franja); trim e
+ * teto de 512 px. Os números são os do fluxo principal, medidos na 4ª rodada. */
+async function recortaPlano(arquivo, sharp) {
+  const TRAB_MAX = 1400, SAIDA_MAX = 512, TOL_DURO = 34, TOL_SUAVE = 64, BANDA = 2;
+  const meta = await sharp(arquivo).metadata();
+  const esc = Math.min(1, TRAB_MAX / Math.max(meta.width, meta.height));
+  const W = Math.max(1, Math.round(meta.width * esc)), H = Math.max(1, Math.round(meta.height * esc));
+  const { data: d } = await sharp(arquivo).resize(W, H).ensureAlpha().raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const conta = new Map();
+  const amostra = (x, y) => {
+    const i = (y * W + x) * 4;
+    const k = (d[i] >> 4) * 4096 + (d[i + 1] >> 4) * 256 + (d[i + 2] >> 4) * 16;
+    const e = conta.get(k) || [0, 0, 0, 0];
+    e[0] += d[i]; e[1] += d[i + 1]; e[2] += d[i + 2]; e[3]++;
+    conta.set(k, e);
+  };
+  for (let x = 0; x < W; x++) { amostra(x, 0); amostra(x, H - 1); }
+  for (let y = 0; y < H; y++) { amostra(0, y); amostra(W - 1, y); }
+  const ord = [...conta.values()].sort((a, b) => b[3] - a[3]);
+  const fundo = [ord[0][0] / ord[0][3], ord[0][1] / ord[0][3], ord[0][2] / ord[0][3]];
+  const dist = (i) => Math.max(Math.abs(d[i] - fundo[0]), Math.abs(d[i + 1] - fundo[1]), Math.abs(d[i + 2] - fundo[2]));
+
+  const ehFundo = new Uint8Array(W * H);
+  const pilha = new Int32Array(W * H);
+  let sp = 0;
+  const push = (p) => {
+    if (ehFundo[p] || dist(p * 4) > TOL_DURO) return;
+    ehFundo[p] = 1; pilha[sp++] = p;
+  };
+  for (let x = 0; x < W; x++) { push(x); push((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { push(y * W); push(y * W + W - 1); }
+  while (sp > 0) {
+    const p = pilha[--sp], x = p % W, y = (p / W) | 0;
+    if (x > 0) push(p - 1);
+    if (x < W - 1) push(p + 1);
+    if (y > 0) push(p - W);
+    if (y < H - 1) push(p + W);
+  }
+
+  const naBanda = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const p = y * W + x;
+    if (ehFundo[p]) continue;
+    for (let dy = -BANDA; dy <= BANDA && !naBanda[p]; dy++)
+      for (let dx = -BANDA; dx <= BANDA; dx++) {
+        const u = x + dx, v = y + dy;
+        if (u < 0 || v < 0 || u >= W || v >= H || ehFundo[v * W + u]) { naBanda[p] = 1; break; }
+      }
+  }
+  const alpha = new Float32Array(W * H);
+  for (let p = 0; p < W * H; p++) {
+    const i = p * 4;
+    if (ehFundo[p]) { d[i + 3] = 0; continue; }
+    const a = naBanda[p] ? Math.min(1, dist(i) / TOL_SUAVE) : 1;
+    alpha[p] = a;
+    if (a <= 0.004) { d[i + 3] = 0; continue; }
+    for (let c = 0; c < 3; c++)
+      d[i + c] = Math.max(0, Math.min(255, Math.round((d[i + c] - fundo[c] * (1 - a)) / a)));
+    d[i + 3] = Math.round(a * 255);
+  }
+
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (alpha[y * W + x] < 0.35) continue;
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (x1 < 0) return null;
+  const pad = Math.max(2, Math.round(0.02 * Math.max(x1 - x0, y1 - y0)));
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad);
+  x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+
+  const rec = Buffer.alloc(cw * ch * 4);
+  for (let y = 0; y < ch; y++)
+    d.copy(rec, y * cw * 4, ((y + y0) * W + x0) * 4, ((y + y0) * W + x0 + cw) * 4);
+  const k = Math.min(1, SAIDA_MAX / Math.max(cw, ch));
+  const ow = Math.max(1, Math.round(cw * k)), oh = Math.max(1, Math.round(ch * k));
+  const saida = await sharp(rec, { raw: { width: cw, height: ch, channels: 4 } })
+    .resize(ow, oh, { kernel: 'lanczos3' }).png().toBuffer();
+  const od = await sharp(saida).raw().toBuffer({ resolveWithObject: true });
+  const dd = od.data;
+  let sl = 0, sa = 0, opacos = 0;
+  for (let i = 0; i < dd.length; i += 4) {
+    const a = dd[i + 3] / 255; if (a < 0.5) continue;
+    opacos++;
+    sl += (0.299 * dd[i] + 0.587 * dd[i + 1] + 0.114 * dd[i + 2]) * a; sa += a;
+  }
+  let anel = 0, anelOp = 0;
+  const toca = (x, y) => { anel++; if (dd[(y * ow + x) * 4 + 3] > 127) anelOp++; };
+  for (let x = 0; x < ow; x++) { toca(x, 0); toca(x, oh - 1); }
+  for (let y = 0; y < oh; y++) { toca(0, y); toca(ow - 1, y); }
+  return {
+    png: saida, w: ow, h: oh, lum: sa ? sl / sa : 0,
+    cobertura: Math.round((opacos / (ow * oh)) * 1000) / 1000,
+    borda: Math.round((anelOp / anel) * 1000) / 1000,
+  };
+}
+
+/* Reescreve o miolo do bloco PIXO-PACK no textures.js — mesma técnica do
+ * sincronizaTextures: o gerador é dono do miolo, o resto do arquivo fica
+ * intocado. 5º campo = cidade, exigido pelo portão GRAFFITI-EDITORIAL. */
+function sincronizaPackTextures(man) {
+  const alvo = path.join(ROOT, 'public', 'js', 'textures.js');
+  const ini = '/* PIXO-PACK:GERADO-INICIO */', fim = '/* PIXO-PACK:GERADO-FIM */';
+  const src = readFileSync(alvo, 'utf8');
+  const a = src.indexOf(ini), b = src.indexOf(fim);
+  if (a < 0 || b < 0) { console.warn('[pack] marcadores PIXO-PACK:GERADO não achados em textures.js — pulei'); return; }
+  const linhas = man.map((m) =>
+    `    ['${m.file}', ${m.aspect}, '${m.tipo}', ${m.claro ? 1 : 0}, '${m.cidade}'],`).join('\n');
+  const bloco = `${ini}\n  DECAL_FILES.push(\n${linhas}\n  );\n  `;
+  writeFileSync(alvo, src.slice(0, a) + bloco + src.slice(b));
+  console.log(`[pack] textures.js: bloco PIXO-PACK com ${man.length} entradas`);
+}
+
+/* Folha de contato em node puro (sharp), metade fundo escuro metade claro —
+ * franja branca aparece no escuro, franja escura no claro. OLHE antes de aceitar. */
+async function folhaContatoPack(man, sharp) {
+  if (!man.length) return;
+  const SHEET_PACK = path.join(ROOT, 'tools', 'eval', 'out', 'pixo-pack-sheet.png');
+  mkdirSync(path.dirname(SHEET_PACK), { recursive: true });
+  const COLS = Math.min(7, man.length), CELL = 200, ROT = 22;
+  const linhas = Math.ceil(man.length / COLS);
+  const W = COLS * CELL, H = linhas * (CELL + ROT);
+  const comps = [];
+  for (const [i, m] of man.entries()) {
+    const cx = (i % COLS) * CELL, cy = ((i / COLS) | 0) * (CELL + ROT);
+    const claro = i % 2 === 0;
+    comps.push({
+      input: Buffer.from(`<svg width="${CELL}" height="${CELL + ROT}"><rect width="100%" height="100%" fill="${claro ? '#b9b2a6' : '#2b2b2b'}"/>`
+        + `<text x="6" y="${CELL + 15}" font-family="monospace" font-size="11" fill="${claro ? '#111' : '#eee'}">${m.file.replace('.png', '')}</text></svg>`),
+      left: cx, top: cy,
+    });
+    const mini = await sharp(path.join(OUT, m.file))
+      .resize(CELL - 20, CELL - 20, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+    const mm = await sharp(mini).metadata();
+    comps.push({ input: mini, left: cx + ((CELL - mm.width) >> 1), top: cy + ((CELL - mm.height) >> 1) });
+  }
+  await sharp({ create: { width: W, height: H, channels: 3, background: '#111' } })
+    .composite(comps).png().toFile(SHEET_PACK);
+  console.log(`[pack] folha de contato → ${path.relative(ROOT, SHEET_PACK)} — OLHE ANTES DE ACEITAR`);
 }
