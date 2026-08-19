@@ -75,7 +75,7 @@ export function buildPenitenciaria(scene) {
     yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x8b8f89, roughness: 1 }),
     steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x8a9292, metalness: .72, roughness: .5 }),
     rust: new THREE.MeshStandardMaterial({ color: 0x714529, metalness: .42, roughness: .82 }),
-    white: new THREE.MeshStandardMaterial({ color: 0xe6e2cf, roughness: .75 }),
+    white: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .025, color: 0xe6e2cf, roughness: .75 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xe5a92f, roughness: .7 }),
     red: new THREE.MeshStandardMaterial({ color: 0xb42d25, roughness: .65 }),
     blue: new THREE.MeshStandardMaterial({ color: 0x173f79, roughness: .5 }),

@@ -386,7 +386,7 @@ export function buildVelhoOeste(scene) {
   const hemi = new THREE.HemisphereLight(0xffd2a3, 0x5b3828, 1.45); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc27b, 2.05); sun.position.set(-35, 42, -28); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48; sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045; scene.add(sun);
-  const fill = new THREE.DirectionalLight(0x86a5c9, .42); fill.position.set(24, 22, 35); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0x86a5c9, .34); fill.position.set(24, 22, 35); scene.add(fill);
 
   const groundHeightAt = () => 0;
   const slowAt = () => false;
