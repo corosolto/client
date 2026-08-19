@@ -1185,6 +1185,10 @@ Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
 
 ### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — CORRIGIDO EM ARQUIVO 18/08, aguardando olho do dono
 
+> **Atualização 19/08 (frente C do swarm v2.1.0):** a cláusula de água deste contrato foi
+> **INVERTIDA** pela decisão do dono 18/08 (plans/13: "a piscina nao afunda") — ver
+> **BUG-67**. A frota GLB, o pack Mint e o espelho d'água NÃO entrável seguem valendo aqui.
+
 **Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
 todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
 
@@ -1233,6 +1237,71 @@ em fy_mansao até o regen do integrador (`npm run grafite fy_mansao` é dele); (
 preexistente de `camera-roxa` no asset-integrity não é desta frente (arquivo e registro
 intactos no diff); (4) o A/B é quantitativo — **nenhum agente desta sessão olhou as figuras**
 (modelo sem visão): a aprovação visual é do dono, por screenshot, como sempre.
+
+
+### BUG-67 · "a piscina nao afunda" + "o jardim esta bizarro" — Mansão v2.1: piscina entrável e jardim refeito — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono
+
+**Frases literais do dono (18/08)** e decisão registrada no
+[`plans/13-VISUAL-V2.1.md`](plans/13-VISUAL-V2.1.md): piscina **entrável** com
+profundidade de verdade e jardim **refeito do zero** com régua de variedade. A decisão
+INVERTEU o contrato de água do BUG-56 (a piscina "não entrável" vira o estado REPROVADO).
+
+**Conserto 1 — PISCINA ENTRÁVEL (padrão córrego, `CANAL_FUNDO`):** o colisor-tampa
+`col(-6,6,-0.5,0.65,-32,-24)` saiu; a cuba é piso andável via `groundHeightAt` +
+paredes de colisor do fundo até y=0 (em cima delas não colide: `_collide` exige
+`pos.y+0,3 < maxY`). Raso **-0,85 m** com 2 degraus de entrada na borda sul (largura
+total), escada submersa (4 degraus de 0,25) e fundo **-1,85 m** — 0,15 m abaixo do teto
+de guarda-corpo MAP6 (`QUEDA_ANDAR 2,0`, map-check.mjs:151). Saída de degrau a degrau
+(subidas 0,28 < STEP_H 0,55): **quem cai na piscina SAI andando** — e o mantle (1,95 m)
+segue como segunda saída. A máscara opaca a 0,045 m virou subleito do vertedouro (era o
+teto do nadador); o gramado é cortado no recorte da cuba (a lâmina a -0,01 atravessava).
+A cuba terminou **2 m ao norte** (interior z∈[-32,5,-26,5]): a 2ª fileira do armário
+nasce a `spawnB-3,6 = -25,6` e caía **na água** (pickup-check "abaixo do piso" **7, pior
+-0,85** — a tampa antiga era o guarda-rail do rack; `_walkDepth` só enxerga colisor).
+No deck: **abaixo do piso 0**.
+
+**Conserto 2 — JARDIM:** os **72 clones idênticos** (1 `InstancedMesh`, 12 anéis de 6,
+ZERO cor por instância) viram **2 famílias de malha** (blobo + folha ereta, 30+26) com
+**tint E escala por instância** (`setColorAt`, paleta de 5 verdes + jitter HSL), em
+**drifts orgânicos** pelo ângulo áureo, nas bordas — corredor de combate central limpo.
+Caminho de pedras vira **cadeia portão→porta** (12 pedras a ≤3 m, z 33,6→16,2, tag
+`pedra-caminho`); árvores ganham tag `arvore`. Props Mint do BUG-56, frota GLB e espelho
+d'água NÃO entrável: intocados (cláusulas verdes preservadas).
+
+**Réguas:** `mansao-water-check` **INVERTIDA** (9 cláusulas de piscina/espelho; o mutante
+`agua-entravel` virou `agua-bloqueada` = o estado reprovado por definição) — antes no
+estado v2.1.0: **8 VERMELHAS** (tampa maxY 0,65 · entrada andando 0,00 m · raso/fundo
+0,00 m · paredes atravessáveis até x=18 · 0 pisos de cuba · 1 máscara-teto); depois:
+VERDE, anti-trap "saiu em 5 passos até y=0,00". Mutantes `agua-bloqueada` (4 cláusulas),
+`borda-alta` (3 — anti-trap), `sem-parede`, `piscina-sem-cuba`, `piscina-cuba-curta`:
+**todos exit 1**. NOVA `mansao-garden-check.mjs` (G1 variedade/G2 composição/G3 escala):
+antes **6 VERMELHAS** (72 instâncias · 0 cores/1,39× · colônia same-mesh 16 em 6 m ·
+0 pedras marcadas · G2c sem medir · 0 árvores marcadas); depois VERDE (30+26 · 8/9
+cores · spread 1,86/1,91× · colônia 8 · cadeia de 12 pedras · plantio a 5,05 m do
+caminho). Mutantes `clona-tudo` (0 cores/1,00× + colônia 30), `planta-no-caminho`
+(0,25 m), `planta-gigante` (2,7 m), `sem-pedras`: **todos exit 1**.
+
+**Verdes preservadas:** `mansao-glb-fit` 8/8 · `map-check fy_mansao` (MAP1 0 — a pedra
+sul sobre o degrau a -0,283 fazia penetração 0,47 m em 12 pontos, corrigida; MAP6 0;
+CTF2 ≥2 rotas) · `pickup-check` (sem alcance 0, abaixo do piso 0, flutuando 0) ·
+`eval:grafite-editorial` · `eval:spawn` · `syntax`.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug64-mansao-v21/{antes,depois}/`,
+captura `mansao-v21-capture.mjs` com vareta de 1,70 m, A/B `ab-pixel.py`):** vistas
+NÃO alteradas ~0,2% (`jardim-no-caminho`, olhando o portão); vistas alteradas:
+`jardim-composicao` 51,5% (bordas 2,5→3,3% — mais detalhe), `piscina-dentro-fundo`
+51,1% (pose só existe no depois: nadador no fundo), `piscina-do-spawn` 86,2% (enquadre
+mudou 2 m com a cuba). Sonda de cor: azulejo/água em 11% do frame exterior e **37,6%
+do frame de dentro da piscina**. **Nenhum agente desta sessão OLHOU as figuras**
+(modelo sem visão, mesmo limite do BUG-56): aprovação visual é do dono.
+
+**Dívidas declaradas:** (1) a lâmina visual segue o tratamento simples
+(`MeshStandardMaterial` plano, agora `DoubleSide`) — ondas/reflexo são a frente B
+(córrego), por decisão do plans/13 "a lâmina pode ganhar o mesmo tratamento da frente B
+depois"; (2) `map_check.json`/`pickup_check.json` não foram regenerados por esta frente
+(regen é do integrador, BUG-02/BUG-60); (3) os 404 preexistentes de
+`folha-pixaca-0{3,4,5}.png` no serve de eval não são desta frente (defeito de acervo
+pré-existente).
 
 ### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
 
