@@ -51,6 +51,22 @@ de malha skinned.
   o estilo da fauna é lum 86-165 (dog). Registro em `mint-assets.json`
   (`capivara-corrego`). Estático, idem — mesma dívida de rig da frente D (busca
   “capybara”/“capybara animated” no Poly Pizza: só estáticos).
+- `tatu_campo.glb` — “Segmented Tatu Walker”, Mint text-to-3D, gerado 19/08/2026
+  para a vida 1 (plans/22). Chat: <https://mint.gg/chat/ph763essssxnfef5n923a7gn5d8crckr>.
+  Mesma licença do jacaré/capivara; registro em `mint-assets.json` (`tatu-campo`).
+  Estático — anda pelo `_updateQuad` do `ambientlife.js`. Tatu não existe em
+  nenhum pack Quaternius (a varredura 19/08 acima cobre: 12 mamíferos + farm,
+  nenhum xenartro). Call-sites: fy_campomorro, praca_poderes (AR4).
+- `papagaio_poleiro.glb` — “Yellow Chevron Parrot”, Mint text-to-3D, 19/08/2026
+  (vida 1). Chat: <https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4>.
+  Registro `papagaio-poleiro`. Estático de poleiro (a barra faz parte da malha)
+  com balanço procedural `_updateParrot` — poleiro não precisa de voo, o que
+  contorna a dívida de pássaro riggado CC0 registrada na pomba. Call-sites:
+  fy_mansao (balaustrada do terraço), parque_treta (AR4).
+- `barata_urbana.glb` — Mint text-to-3D, 19/08/2026 (vida 1). Barata de esgoto
+  do córrego e da doca do atacadão; darta pelo `_updateRat`. Registro
+  `barata-urbana`. (Primeira geração bloqueada pela moderação do Mint;
+  regenerada com prompt de "garden beetle".)
 
 Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
 `quaternius_cat`/`quaternius_chicken`/`quaternius_cow` para regenerar as

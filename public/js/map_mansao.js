@@ -17,6 +17,7 @@ import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { createWater } from './water.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -904,10 +905,17 @@ export function buildMansao(scene, T) {
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
       { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
     ],
+    /* vida 1: papagaio de poleiro no topo da cerca-viva do jardim (Joá tem
+       papagaio de verdade) — balanço procedural, sem voo (a dívida da pomba).
+       y=1,24 = topo da sebe; iterado por captura mapview 19/08: y=1,02 flutuava
+       sobre a piscina (a pomba no céu do BUG-57), y=0,7 ficava DENTRO da sebe */
+    parrots: [
+      { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
+    ],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45],radius:35,vol:.4},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     update(dt) { oceano.update(dt); },
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },

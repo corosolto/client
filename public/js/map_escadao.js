@@ -21,6 +21,7 @@ import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -850,7 +851,7 @@ export function buildEscadao(scene, T) {
   });
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:70,vol:.32},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'},
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: [
       // Inclui um piso da chegada inferior: ele é a superfície antes do primeiro dos 12

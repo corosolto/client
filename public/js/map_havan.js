@@ -14,6 +14,7 @@ import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + 
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38, HALF_Z = 58;
 // Carros do estacionamento (ids otimizados em public/models/props). Forte cara BR.
@@ -2000,7 +2001,7 @@ export function buildHavan(scene, T) {
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.3}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, doors, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/map-check.mjs) — não é usada pelo jogo.

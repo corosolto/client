@@ -26,6 +26,7 @@ import { PlayerRecorder } from './botbrain/recorder.js';   // BOTBRAIN: grava (e
 import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o vetor de estado do bot p/ a rede
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
+import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
 
 import { WEAPONS } from './data/weapons.js';
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
@@ -2475,6 +2476,7 @@ export class Game {
     if (this.state !== 'live' && this.state !== 'countdown') v = false;
     const entrou = v && !this.paused;
     this.paused = v;
+    this.soundscape?.setPaused(v);
     if (v) this.keys = {};
     this.el.pause.classList.toggle('hidden', !v);
     if (v && document.pointerLockElement) document.exitPointerLock();
@@ -6928,6 +6930,8 @@ export class Game {
     }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
+    if (!this.soundscape && this.world.sound) this.soundscape = createSoundscape(this.sfx, this.world.sound);
+    this.soundscape?.update(dt, this.player.pos);
     this.world.update?.(dt, this.time);
   }
 
@@ -6965,6 +6969,7 @@ export class Game {
     this.el.vignette.style.opacity = 0;
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
     this.world.ambience?.dispose();
+    this.soundscape?.dispose(); this.soundscape = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }

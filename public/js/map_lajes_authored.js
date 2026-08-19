@@ -4,6 +4,7 @@ import { makeAerialFog } from './bloom.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
@@ -1263,7 +1264,7 @@ export function buildLajes(scene, T) {
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi,
-    pickups, ctfPoints, ambience, waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:60,vol:.3},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:60,vol:.2}],bioma:'favela'}, waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: mapStairs, staircases: stairs,
     jumpImpulse: 5.85,
     levels: ROOFS.filter((roof) => roof.name !== 'MN' && roof.name !== 'MS').map((roof) => ({ nome: roof.label,

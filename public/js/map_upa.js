@@ -5,6 +5,7 @@ import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 export const UPA_PROPS = ['manequim', 'gondola_mercado', 'gondola_eletro', 'painel_tvs', 'caixa_cobranca', 'cooler'];
 
@@ -287,7 +288,7 @@ export function buildUpa(scene, T) {
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.hum,pos:[0,3,0],radius:45,vol:.22}],bioma:'indoor'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // MID fora da diagonal E–B (senão o triângulo é colinear e a régua reprova): puxado pro sul do corredor.
     ctfPoints: [

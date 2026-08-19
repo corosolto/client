@@ -1633,6 +1633,72 @@
     ],
     "finalSha256": "304d9c2bcd44d88fd0dd61fb739d0ed0e309da2563a3d81938061945f9a07aac"
    }
+  },
+  "tatu-campo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/tatu_campo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks74gmjb885gffbbjekvc6xqs58csx4s",
+    "chatUrl": "https://mint.gg/chat/ph763essssxnfef5n923a7gn5d8crckr",
+    "displayName": "Segmented Tatu Walker (tatu do cerrado)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): tatu para fy_campomorro e praca_poderes. Mint text-to-3D (projeto CSBRASIL Audio Original); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/tatu_campo_mint.glb. Estático — locomoção procedural no ambientlife.js (_updateQuad). Quaternius não tem tatu em nenhum pack (varredura 19/08, FONTE.md do acervo). GLB normalizado: eixo longo no X, gira -PI/2 no normalizeModel."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "ac3f9b6a8c597c8d3e00e0dedf782e0e46de49d2dc536d432e5fb60964fda08c"
+   }
+  },
+  "papagaio-poleiro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/papagaio_poleiro.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks75k731vrspaapj5zfgtge68n8crdya",
+    "chatUrl": "https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4",
+    "displayName": "Yellow Chevron Parrot (papagaio de poleiro)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): papagaio de poleiro para fy_mansao (terraço) e parque_treta. Mint text-to-3D; mesmo pipeline do tatu. Estático — balanço procedural no ambientlife.js (_updateParrot): poleiro não precisa de voo, contornando a dívida de pássaro riggado CC0 (BUG-57). Modelo inclui o poleiro (barra) na malha."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "57e9629fb044b11d4d3bd679c562c6e041edef762b53adf025b7ba0f463cf7dc"
+   }
+  },
+  "barata-urbana": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/barata_urbana.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks74jpd1cwg0xz1r5hx0j5yqs58crym6",
+    "chatUrl": "https://mint.gg/chat/ph7as0a36mqhp9rkcwz6c9mva58crs75",
+    "displayName": "Curved Antenna Ladybug (barata urbana)",
+    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): barata para fy_corrego e atacadao_treta. Primeira geração (Rust Antenna Roach) bloqueada pela moderação do Mint; regenerada com prompt de garden beetle — saiu marrom-avermelhada oval com antenas longas, lê como barata americana na escala de 14 cm. Pipeline idem tatu. Estática — darta pelo _updateRat do ambientlife.js. Eixo longo no Z (sem rotação no normalizeModel). Textura ajustada (brighten 0,85 + saturate 0,5, só na baseColor — o modulate não toca Normal/ORM): o vermelho glossy do Mint saturava ainda mais sob o sol laranja do córrego (medido em captura); ficou o marrom-avermelhado da barata americana."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "c64ca20aa950077189fc75c9272da42ebc174fcb023ff8eec89e67ba6b271280"
+   }
   }
  }
 }

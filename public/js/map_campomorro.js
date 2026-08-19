@@ -9,6 +9,7 @@ import { applyLook } from './map_sky.js';
 import { aplicaVento, updateVento } from './wind.js';
 import { GPUParticles } from './gpuparticles.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
@@ -720,6 +721,14 @@ export function buildCampoMorro(scene, T = {}) {
       { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
+    /* vida 1: tatu do cerrado no campinho (fauna 2, Mint estático + passo procedural).
+       No campo ABERTO com groundHeightAt — a 1ª posição colou na mesa
+       [4.1,5.9]×[17.3,18.7] e y=0 cravado enterrava o bicho na encosta
+       (achados da captura mapview 19/08) */
+    armadillos: [
+      { pos: [11, groundHeightAt(11, 20), 20], to: [13.5, groundHeightAt(13.5, 21.5), 21.5], phase: .9 },
+      { pos: [-6, groundHeightAt(-6, 16), 16], to: [-9, groundHeightAt(-9, 17.5), 17.5], phase: 2.4 },
+    ],
   });
 
   /* POEIRA DE RUA (RC3, plans/23) — o "horizonte dinâmico" do dono passa por
@@ -757,7 +766,7 @@ export function buildCampoMorro(scene, T = {}) {
   }
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[28,2,-21],radius:24,vol:.5},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:80,vol:.26}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     update(dt) { updateVento(dt); updatePoeira(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,

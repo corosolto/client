@@ -4,7 +4,8 @@ import { mkdirSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { dedup, prune, resample, textureCompress } from '@gltf-transform/functions';
+import { dedup, prune, resample, simplify, textureCompress } from '@gltf-transform/functions';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
@@ -32,6 +33,18 @@ const jobs = [
     keepClips: /(^|\|)(Idle|Walk)$/ },
   { src: 'references/glb/quaternius_cow.glb', out: `${outDir}/vaca_campo.glb`, skinned: true, fixSkin: true,
     keepClips: /^(Idle|Walk|Gallop)$/ },
+  // vida 1 (plans/22): fauna 2 Mint, estáticos — a locomoção é procedural no
+  // ambientlife.js (tatu anda, papagaio balança no poleiro). Mesma licença dos
+  // anteriores: asset original gerado por prompt, assinante Mint Pro.
+  // simplify: o Mint entrega ~5k tris por bicho — o dobro do padrão Quaternius
+  // (2,4-2,9k) e o AM7 é por mapa. Barata 0,4 (14 cm na tela), tatu/papagaio 0,6.
+  { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true, simplify: .4,
+    // o Mint entregou vermelho glossy de brinquedo: sob o sol laranja do córrego
+    // o albedo vermelho satura ainda mais (medido na captura). Dessatura pro
+    // marrom de barata americana sem perder o lê-no-chão
+    brighten: .85, saturate: .5 },
 ];
 
 const filtroArgs = process.argv.slice(2);
@@ -58,14 +71,20 @@ for (const job of jobs) {
   if (job.keepClips) for (const clip of doc.getRoot().listAnimations()) {
     if (!job.keepClips.test(clip.getName())) clip.dispose();
   }
-  if (job.brighten) {
-    for (const texture of doc.getRoot().listTextures()) {
+  if (job.brighten || job.saturate) {
+    /* só a textura de COR (baseColor das materiais) — modulate em Normal/ORM
+       destrói o mapa (o brighten da capivara não tinha ORM/Normal no GLB) */
+    const deCor = new Set(doc.getRoot().listMaterials().map((m) => m.getBaseColorTexture()).filter(Boolean));
+    for (const texture of deCor) {
       const boosted = await sharp(Buffer.from(texture.getImage()))
-        .modulate({ brightness: job.brighten }).png().toBuffer();
+        .modulate({ brightness: job.brighten ?? 1, saturation: job.saturate ?? 1 }).png().toBuffer();
       texture.setImage(boosted, 'image/png');
       texture.setMimeType('image/png');
     }
   }
+  if (job.simplify) await doc.transform(
+    simplify({ simplifier: MeshoptSimplifier, ratio: job.simplify, error: 0.01 }),
+  );
   if (job.skinned) {
     await doc.transform(
       resample(),

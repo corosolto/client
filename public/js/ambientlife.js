@@ -14,17 +14,23 @@ const ASSETS = Object.freeze({
   cat: 'models/ambient/cat_telhado.glb',
   chicken: 'models/ambient/galinha_campo.glb',
   cow: 'models/ambient/vaca_campo.glb',
+  /* vida 1 (plans/22): Mint estático + locomoção procedural — Quaternius não tem
+     tatu/barata/papagaio em nenhum pack (varredura 19/08 no FONTE.md do acervo) */
+  armadillo: 'models/ambient/tatu_campo.glb',
+  cockroach: 'models/ambient/barata_urbana.glb',
+  parrot: 'models/ambient/papagaio_poleiro.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca' });
-const QUADS = new Set(['dog', 'cat', 'chicken', 'cow']);
+const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
+const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
+  armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
 });
 
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
@@ -113,8 +119,50 @@ function fallbackDog() {
   return group;
 }
 
-function cloneAsset(id) {
-  const template = templates.get(id);
+function fallbackArmadillo() {
+  const group = new THREE.Group();
+  const shell = new THREE.MeshStandardMaterial({ color: 0x8a7d6b, roughness: .9 });
+  const skin = new THREE.MeshStandardMaterial({ color: 0xc9a08e, roughness: .95 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 7), shell);
+  body.scale.set(.75, .62, 1.15); body.position.y = .13; group.add(body);
+  for (let i = 0; i < 4; i++) {
+    const band = new THREE.Mesh(new THREE.TorusGeometry(.105, .014, 5, 10), shell);
+    band.rotation.y = Math.PI / 2; band.scale.set(1, 1, 1.4); band.position.set(0, .13, -.06 + i * .045); group.add(band);
+  }
+  const head = new THREE.Mesh(new THREE.ConeGeometry(.05, .16, 7), skin);
+  head.rotation.x = -Math.PI / 2; head.position.set(0, .11, .24); group.add(head);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(.008, .02, .2, 5), skin);
+  tail.rotation.x = Math.PI / 2 - .25; tail.position.set(0, .08, -.25); group.add(tail);
+  return group;
+}
+
+function fallbackCockroach() {
+  const group = new THREE.Group();
+  const chitin = new THREE.MeshStandardMaterial({ color: 0x5a2e18, roughness: .55 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.05, 9, 6), chitin);
+  body.scale.set(.72, .3, 1.25); body.position.y = .02; group.add(body);
+  for (const side of [-1, 1]) {
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(.0018, .0018, .09, 3), chitin);
+    ant.rotation.set(Math.PI / 2 - .3, 0, side * .35); ant.position.set(side * .015, .035, .07); group.add(ant);
+  }
+  return group;
+}
+
+function fallbackParrot() {
+  const group = new THREE.Group();
+  const green = new THREE.MeshStandardMaterial({ color: 0x3f9142, roughness: .85 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.085, 9, 7), green);
+  body.scale.set(.8, 1.25, .8); body.position.y = .22; group.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.052, 8, 6), green);
+  head.position.set(0, .37, .02); head.userData.faunaPart = 'head'; group.add(head);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(.022, .05, 6), new THREE.MeshStandardMaterial({ color: 0xd97b2f, roughness: .7 }));
+  beak.rotation.x = Math.PI / 2; beak.position.set(0, .36, .07); group.add(beak);
+  const tail = new THREE.Mesh(new THREE.BoxGeometry(.045, .22, .02), green);
+  tail.rotation.x = .5; tail.position.set(0, .06, -.1); group.add(tail);
+  return group;
+}
+
+function cloneAsset(id) {  const template = templates.get(id);
   if (!template) return null;
   return {
     model: template.skinned ? skeletonClone(template.scene) : template.scene.clone(true),
@@ -128,14 +176,16 @@ function normalizeModel(id, model) {
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
      comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
-  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75 }[id] || .5;
-  const dimension = id === 'rat' ? Math.max(size.x, size.z) : size.y;
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34 }[id] || .5;
+  const dimension = ['rat', 'armadillo', 'cockroach'].includes(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
   model.scale.setScalar(scale);
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
-  if (id === 'rat') model.rotation.y = -Math.PI / 2;
+  /* Mint entrega o tatu com o eixo longo no X — gira pra cara ficar no +Z, mesma
+     correção do rato. A barata já vem no Z (bbox 0,91 × 1,0). */
+  if (['rat', 'armadillo'].includes(id)) model.rotation.y = -Math.PI / 2;
 }
 
 function distanceToSegment(point, start, end) {
@@ -147,7 +197,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -163,6 +213,9 @@ class FavelaAmbience {
     const catList = low ? cats.slice(0, 1) : cats;
     const chickenList = low ? chickens.slice(0, 1) : chickens;
     const cowList = low ? cows.slice(0, 1) : cows;
+    const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
+    const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
+    const parrotList = low ? parrots.slice(0, 1) : parrots;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -170,6 +223,9 @@ class FavelaAmbience {
     catList.forEach((config, index) => this._add('cat', config, index));
     chickenList.forEach((config, index) => this._add('chicken', config, index));
     cowList.forEach((config, index) => this._add('cow', config, index));
+    armadilloList.forEach((config, index) => this._add('armadillo', config, index));
+    cockroachList.forEach((config, index) => this._add('cockroach', config, index));
+    parrotList.forEach((config, index) => this._add('parrot', config, index));
     this.reset();
   }
 
@@ -199,7 +255,9 @@ class FavelaAmbience {
       normalizeModel(assetId, model);
       animalRoot.add(model);
     } else {
-      model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog() : fallbackPigeon();
+      model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
+        : type === 'armadillo' ? fallbackArmadillo() : type === 'cockroach' ? fallbackCockroach()
+        : type === 'parrot' ? fallbackParrot() : fallbackPigeon();
       while (model.children.length) animalRoot.add(model.children[0]);
       model = animalRoot;
     }
@@ -290,8 +348,9 @@ class FavelaAmbience {
         const from = new THREE.Vector3(playerPosition.x, animal.root.position.y, playerPosition.z);
         this.onShot(from, animal.root.position.clone());
       }
-      if (animal.type === 'rat') this._updateRat(animal, dt);
+      if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
       else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
+      else if (animal.type === 'parrot') this._updateParrot(animal, dt);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -372,6 +431,29 @@ class FavelaAmbience {
     animal.state = recovering ? 'recover' : 'walk';
   }
 
+  _updateParrot(animal) {
+    /* papagaio de POLEIRO (vida 1, plans/22): não voa — pássaro riggado com voo
+       não existe CC0 (a dívida da pomba). Vida = balanço procedural: gingado de
+       corpo + virada de cabeça a cada poucos segundos; tiro perto = sobressalto
+       (tremida rápida sem sair do poleiro). */
+    const t = this.time + animal.phase * 3;
+    if (this.time < animal.alertUntil) {
+      animal.root.rotation.z = Math.sin(t * 34) * .1;
+      animal.root.position.y = animal.origin.y + Math.abs(Math.sin(t * 22)) * .03;
+      animal.state = 'flee';
+      return;
+    }
+    animal.root.rotation.z = Math.sin(t * .9) * .055;
+    animal.root.rotation.x = Math.sin(t * .63 + 1) * .035;
+    animal.root.position.y = animal.origin.y;
+    /* virada de cabeça em degrau: 4 s por rumo, interpolação curta entre eles */
+    const rumo = Math.floor(t / 4) % 3 - 1;
+    const alvo = animal.phase + rumo * .9;
+    const k = Math.min(1, (t % 4) / .6);
+    animal.root.rotation.y = animal.root.rotation.y + (alvo - animal.root.rotation.y) * k * .3;
+    animal.state = 'idle';
+  }
+
   _recoverToRoute(animal, target, duration) {
     if (animal.alertUntil > 0 && this.time >= animal.alertUntil && animal.recoverUntil === 0) {
       animal.recoverAt = this.time;
@@ -413,9 +495,12 @@ class FavelaAmbience {
     const cat = this.animals.filter((animal) => animal.type === 'cat').length;
     const chicken = this.animals.filter((animal) => animal.type === 'chicken').length;
     const cow = this.animals.filter((animal) => animal.type === 'cow').length;
+    const armadillo = this.animals.filter((animal) => animal.type === 'armadillo').length;
+    const cockroach = this.animals.filter((animal) => animal.type === 'cockroach').length;
+    const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, total: rat + pigeon + dog + cat + chicken + cow }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot }, meshes, triangles: Math.round(triangles),
     };
   }
 

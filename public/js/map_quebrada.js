@@ -25,6 +25,7 @@ import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -1647,7 +1648,7 @@ export function buildQuebrada(scene, T) {
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[-19,2,-42],radius:26,vol:.5},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.22}],bioma:'favela'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

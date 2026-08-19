@@ -19,6 +19,7 @@ import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
 import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -1591,6 +1592,11 @@ export function buildCorrego(scene, T) {
       { pos: [-17.35, groundHeightAt(-17.35, -1.95), -1.95], to: [-18.05, groundHeightAt(-18.05, -1.5), -1.5], phase: 2.54 },
       { pos: [17.5, groundHeightAt(17.5, 16.6), 16.6], to: [18.25, groundHeightAt(18.25, 17.4), 17.4], phase: 3.2 },
     ],
+    /* vida 1: barata de esgoto na margem do córrego (fauna 2, Mint + dart do rato) */
+    cockroaches: [
+      { pos: [-16.6, groundHeightAt(-16.6, -2.5), -2.5], to: [-16.1, groundHeightAt(-16.1, -1.9), -1.9], phase: 1.1 },
+      { pos: [17.2, groundHeightAt(17.2, 17.1), 17.1], to: [17.9, groundHeightAt(17.9, 17.8), 17.8], phase: 2.7 },
+    ],
     pigeons: [
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
       { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },
@@ -1603,7 +1609,7 @@ export function buildCorrego(scene, T) {
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience, propEscala,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
     update(dt) { aguaCorrego.update(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     gramaSpots: GRAMA_SPOTS, gramaServida,
