@@ -69,8 +69,8 @@ no eixo de rotação/balanço (o call-site só faz `node.rotation.*`).
   em prendedores entre ganchos. 4.773 tris. Chat:
   <https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p>. Registro:
   `varal-roupas-01`. Escala sugerida ~3,0 ⇒ 3,0 m × 0,84 m.
-- `varal_roupas_02.glb` — varal de chão em T de alumínio, 2 linhas com
-  camisetas, jeans, meias e fronha. 4.818 tris. Chat:
+- `varal_roupas_02.glb` — varal de chão, rack dobrável em X (o crítico corrigiu:
+  não é "em T"), 2 linhas com camisetas, jeans, meias e fronha. 4.818 tris. Chat:
   <https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg>. Registro:
   `varal-roupas-02`. Escala sugerida ~1,8 ⇒ 1,8 m × 1,46 m.
 - `pipa_papel.glb` — "Yellow Green Pipa", losango amarelo/verde com varetas e
@@ -116,3 +116,18 @@ folhagem OPAQUE+doubleSided, zero vetos. Ressalvas de INTEGRAÇÃO (não de asse
 grama em InstancedMesh (4k tris/tufo pesa mais que as casas se solto), caixa preta com
 lum ~56 abaixo da banda 86-165 (validar in-game antes de espalhar), caixa azul esguia
 (corrigir com escala X/Z no call-site se na laje parecer magra).
+
+## Revisão adversarial do lote 3 (19/08, crítico de contexto limpo)
+
+Veredito: **os 5 vão para o merge, nenhum regenera**. Verificado de fora: SHA × disco
+nos 5, texturas extraídas (heli/avião/varais sem logo, texto ou brasão — veto editorial
+limpo), plano de rotação dos rotores medido por variância de vértices (rotor_main em Y,
+rotor_tail em Z — eixo fisicamente certo), nós animáveis confirmados NO ARQUIVO.
+Ressalvas de INTEGRAÇÃO (não de asset):
+- `varal_roupas_01`: gancho central pendurado no alto — esticado a 3 m flutua no vazio;
+  esconder ou apontar para um beiral no call-site. Se parecer fino demais, escala Y no
+  call-site, não prompt.
+- `pipa_papel`: 89% dos tris (4.452) estão nos lacinhos de ~5 cm (sub-pixel em jogo) —
+  dentro do teto, mas é o primeiro candidato a decimação.
+- `aviao_faixa`: pivô da faixa z=-0,095 deixa o centro ~0,42 m fora da linha da
+  fuselagem na escala 12 (o correto seria z=-0,06) — imperceptível no céu, anotado.
