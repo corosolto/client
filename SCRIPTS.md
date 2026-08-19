@@ -106,6 +106,14 @@ Todo mapa DO REGISTRO devolve o que o game.js CONSOME. Irma da eval:mapjson, que
 npm run eval:mapcontrato
 ```
 
+## `eval:pickuparma`
+
+Toda arma no chão é uma arma que EXISTE (BUG-70, crash em produção #366: um mapa declarava `weapon:'smg'`, que é CLASSE de arma e não chave de `WEAPONS`, e o prompt do [E] fazia `WEAPONS[w].short` sem guarda a cada quadro dentro do `update()` — olhar pra ela congelava a partida). PA1 lê a lista CRUA de `MAPS[id].build()`, antes da guarda de entrada do Game, mais o armário do spawn, e exige que todo id resolva em `WEAPONS` com `short`/`name`/`mag`/`reserve` (os campos desreferenciados sem guarda). PA2 planta o jogador em cima de cada pickup e chama o `_updatePickups()` de produção — a linha exata do stack. Mutantes: `smg|sem-short|sem-pickups`.
+
+```bash
+npm run eval:pickuparma
+```
+
 ## `eval:parquewheel`
 
 A roda-gigante gira em torno do cubo; assentos não invadem lateral, base nem aro. Mede pivô, deriva e folgas durante a animação; mutantes: pivo-base|lateral-verde|altura-baixa|aro-no-assento.
