@@ -37,7 +37,11 @@ const jobs = [
   // anteriores: asset original gerado por prompt, assinante Mint Pro.
   { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true },
   { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true },
-  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true },
+  { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true,
+    // o Mint entregou vermelho glossy de brinquedo: sob o sol laranja do córrego
+    // o albedo vermelho satura ainda mais (medido na captura). Dessatura pro
+    // marrom de barata americana sem perder o lê-no-chão
+    brighten: .85, saturate: .5 },
 ];
 
 const filtroArgs = process.argv.slice(2);
@@ -64,10 +68,13 @@ for (const job of jobs) {
   if (job.keepClips) for (const clip of doc.getRoot().listAnimations()) {
     if (!job.keepClips.test(clip.getName())) clip.dispose();
   }
-  if (job.brighten) {
-    for (const texture of doc.getRoot().listTextures()) {
+  if (job.brighten || job.saturate) {
+    /* só a textura de COR (baseColor das materiais) — modulate em Normal/ORM
+       destrói o mapa (o brighten da capivara não tinha ORM/Normal no GLB) */
+    const deCor = new Set(doc.getRoot().listMaterials().map((m) => m.getBaseColorTexture()).filter(Boolean));
+    for (const texture of deCor) {
       const boosted = await sharp(Buffer.from(texture.getImage()))
-        .modulate({ brightness: job.brighten }).png().toBuffer();
+        .modulate({ brightness: job.brighten ?? 1, saturation: job.saturate ?? 1 }).png().toBuffer();
       texture.setImage(boosted, 'image/png');
       texture.setMimeType('image/png');
     }

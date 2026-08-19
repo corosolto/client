@@ -400,9 +400,11 @@ export function buildParque(scene, T) {
       { mode: 'ground', pos: [-4.6, 0, 10.6], phase: .7 },
     ],
     dogs: [{ pos: [-4, 0, 24], to: [0, 0, 24], phase: .5 }],
-    /* vida 1: papagaio de poleiro no parque (fauna 2) */
+    /* vida 1: papagaio de poleiro no topo do globo dos postes do parque (fauna 2).
+       y=4,62 = topo do globo (poste 0→4,2, globo →4,63); iterado por captura
+       mapview 19/08: y=1,02 flutuava no ar, y=4,45 ficava atrás do globo */
     parrots: [
-      { pos: [-5, 1.02, 11], phase: 1.2 }, { pos: [7, 1.02, -6], phase: 2.6 },
+      { pos: [7, 4.62, 12], phase: 1.2 }, { pos: [-7, 4.62, -12], phase: 2.6 },
     ],
   });
 

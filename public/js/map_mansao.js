@@ -803,10 +803,12 @@ export function buildMansao(scene, T) {
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
       { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
     ],
-    /* vida 1: papagaio de poleiro na balaustrada do terraço (Joá tem papagaio
-       de verdade) — balanço procedural, sem voo (a dívida da pomba) */
+    /* vida 1: papagaio de poleiro no topo da cerca-viva do jardim (Joá tem
+       papagaio de verdade) — balanço procedural, sem voo (a dívida da pomba).
+       y=1,24 = topo da sebe; iterado por captura mapview 19/08: y=1,02 flutuava
+       sobre a piscina (a pomba no céu do BUG-57), y=0,7 ficava DENTRO da sebe */
     parrots: [
-      { pos: [4, 1.02, -22], phase: .5 }, { pos: [-7, 1.02, -26], phase: 1.9 },
+      { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
     ],
   });
 

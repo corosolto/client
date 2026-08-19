@@ -668,9 +668,13 @@ export function buildCampoMorro(scene, T = {}) {
       { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
-    /* vida 1: tatu do cerrado no campinho (fauna 2, Mint estático + passo procedural) */
+    /* vida 1: tatu do cerrado no campinho (fauna 2, Mint estático + passo procedural).
+       No campo ABERTO com groundHeightAt — a 1ª posição colou na mesa
+       [4.1,5.9]×[17.3,18.7] e y=0 cravado enterrava o bicho na encosta
+       (achados da captura mapview 19/08) */
     armadillos: [
-      { pos: [5, 0, 17.5], to: [9, 0, 19], phase: .9 }, { pos: [-14, 0, 19], to: [-10, 0, 18], phase: 2.4 },
+      { pos: [11, groundHeightAt(11, 20), 20], to: [13.5, groundHeightAt(13.5, 21.5), 21.5], phase: .9 },
+      { pos: [-6, groundHeightAt(-6, 16), 16], to: [-9, groundHeightAt(-9, 17.5), 17.5], phase: 2.4 },
     ],
   });
 
