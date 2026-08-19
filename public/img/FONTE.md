@@ -255,6 +255,66 @@ tamanho real por suspeita de leitura (aprovados: P com bowl gordo; E estilizado)
 - `decals/or-pixo-sp-terreno.png` SHA-256 `d9261d4728309cfbccf7634ee6befbd4c00b6b2d212d941a5b89f0ffff0c72cf` (cru único).
 - `decals/or-pixo-sp-tunel.png` SHA-256 `c6014329c60ff81a2f6f149183b9049b28bd4ce9f11f17013c86bb5cf4982ceb` (cru único).
 
+## Pack pixo SP×RJ — lote 4 (19/08/2026, OpenRouter GPT, pesos extremos + duotone)
+
+Fechamento dos 150. Pesos de traço extremos: rolo largo (bloco pesado) vs
+canetão fino (linha precisa), mais 10 duotone (preto + sombra offset vermelha
+em SP, azul no RJ). O duotone exigiu a troca do eixo de alpha do recorte
+--pack para distância chebyshev ao fundo (commit 627a19f): por luminância, a
+segunda cor saía translúcida. Fluxo idêntico ao lote 3 (`--n 1` nas tags,
+`--n 2` nos duotone, revisão em folha antes de publicar com `--from`).
+
+- `decals/or-pixo-rj-alto.png` SHA-256 `3a840daa7bd3749b3b534ce49fce3c3369ac38ad19e56c37b6ca00109bbd718c` (cru único).
+- `decals/or-pixo-rj-arena.png` SHA-256 `7408272269384756605c38585513ed9e31440455edcc49b65f817e0266a50bbe` (cru único).
+- `decals/or-pixo-rj-asa.png` SHA-256 `dd8bb835e3ca9e8634afe15825ee19d7e2167504b7f3891ee8af0d73a06d705f` (cru único).
+- `decals/or-pixo-rj-colina.png` SHA-256 `96bbac08a5443228d8cf3ea2895140f5a47fb9ab744789b4c8b7b8d4a03e6918` (cru único).
+- `decals/or-pixo-rj-duna.png` SHA-256 `e7a64b1c9fd8d9fd7fdf346bbc3869ac86456bbb07321f234a8d39e4c560dc5b` (cru único).
+- `decals/or-pixo-rj-duo-letra.png` SHA-256 `6d8cc38b7e802adc3961fc4d4d6b0cbb7e8e72e00c1ad1906b1bf250ed79cb15` (v2).
+- `decals/or-pixo-rj-duo-mancha.png` SHA-256 `819fd25470ff65380083c40eb82d783faf932bbb7c368b35f403c396be8311b7` (v2).
+- `decals/or-pixo-rj-duo-rabisco.png` SHA-256 `f421c69a0e7f937a2331b3ee6c56a964c6b718186da08dd9b33183c6f085e294` (v2).
+- `decals/or-pixo-rj-duo-spray.png` SHA-256 `d4fccd1be585c1cca012b025a1c5df000c8dd08f848ce4830890c4c8bd0e66cd` (v2).
+- `decals/or-pixo-rj-duo-traco.png` SHA-256 `ac00e5b56d9233e593fc5db5da71ac907e16e6dd302a484896bb239e10ccdaca` (v1).
+- `decals/or-pixo-rj-encosta.png` SHA-256 `ce47c6e864afa2b3500dc4f9c437a4cbaeb77dbea940e1d6fc420844200d33b3` (cru único).
+- `decals/or-pixo-rj-fundo.png` SHA-256 `5473a87ae62a065b3710f32fa572cdea308b396a989a64cf8f0e55ab31ce3144` (cru único).
+- `decals/or-pixo-rj-leste.png` SHA-256 `23a78a8de4a57a434154c1985411766f5f344b4d899b8f59413e410bca2207a1` (cru único).
+- `decals/or-pixo-rj-norte.png` SHA-256 `76434705f9e443de6a32df239c93530083f0737abc5deb628331252c678df394` (cru único).
+- `decals/or-pixo-rj-oeste.png` SHA-256 `bb3624e7edc41d84e89367db15c87b90beabc2bc1ad420da48067896b5848871` (cru único).
+- `decals/or-pixo-rj-pier.png` SHA-256 `556b05757265f83d17ce99196ccba20658a0c7282792fe7b0c123d98fb0a10a3` (cru único).
+- `decals/or-pixo-rj-pipa.png` SHA-256 `87e032caefb402239f08a99b701637e420c782ab85c44b077b6ae6e89837d82f` (cru único).
+- `decals/or-pixo-rj-prancha.png` SHA-256 `d1eb369c08761698be44b8f654204e3b2a5e6c9ccf7975de0d68278f86734e09` (cru único).
+- `decals/or-pixo-rj-raia.png` SHA-256 `4c86d1fa789e6198ef75b46ffd3ddff751cb2f60434a97598599026a5d15ee83` (cru único).
+- `decals/or-pixo-rj-regata.png` SHA-256 `16a2c32282974fa6b5ee1c6896ad0c999b7cbd6fa5f5884fbfe5eaa252e39931` (cru único).
+- `decals/or-pixo-rj-remo.png` SHA-256 `3ac69cd6dfdc35de8ed09b5f24387456cc1dfa12d3a52a13b40c356aba2e5a48` (cru único).
+- `decals/or-pixo-rj-subida.png` SHA-256 `6ec8625fe9a147d074c35d663456d44b21c826bdf1b57c6f885920fbcc434a03` (cru único).
+- `decals/or-pixo-rj-sul.png` SHA-256 `4e61b2d06e8584c0b4603514c8add57cb472ae9d0a9113c91dd1575d4cfaca34` (cru único).
+- `decals/or-pixo-rj-trilha.png` SHA-256 `e212362fc0bbbf348e3c05396d7cf77cd43279c8c928a69a95e1f812662299ff` (cru único).
+- `decals/or-pixo-rj-vento.png` SHA-256 `94ecd8c2c3a504b8a62e82b9db51734be085af5def4d8df5ab954ef5db782e6d` (cru único).
+- `decals/or-pixo-sp-andaime.png` SHA-256 `e658121ffb81c56290e7705e6df788f1208b2d4f97f9b2840ad80c9cab44bc12` (cru único).
+- `decals/or-pixo-sp-bloco.png` SHA-256 `9cf3fa64999d5c70e6dfb4a47a1e13ebd0f19cdcf573b11b1d244c4c8659f29d` (cru único).
+- `decals/or-pixo-sp-caixa.png` SHA-256 `831fc7f7b1ea0d2dcc1521af428ccb98d3a3e6ceb3bbe9186eaf854f87fe91df` (cru único).
+- `decals/or-pixo-sp-cal.png` SHA-256 `5b9ce8d88f312a3155f5e1d5551fa6c8614290f81f4025d5f91b333227ec6c57` (cru único).
+- `decals/or-pixo-sp-duo-alicate.png` SHA-256 `9e895304dec39fb826d470ab6ffbf715d1fcdaca9b888a39ab81b607b759cfac` (v2).
+- `decals/or-pixo-sp-duo-chave.png` SHA-256 `ec18ae235bad4d9cf7fca621d84258104e5fe625ee07cfe94cb99d32d7ecf7a1` (v2).
+- `decals/or-pixo-sp-duo-martelo.png` SHA-256 `ecfc40f420c05cfcc63187205e7a2637b5f9d751a797522a7847a60cbf47e03f` (v1).
+- `decals/or-pixo-sp-duo-serrote.png` SHA-256 `928033b545f2496fe666e561ece5e9d83855ca608bf8fc03c5ce42d0275f2cea` (v2).
+- `decals/or-pixo-sp-duo-trator.png` SHA-256 `5460426a9074804bb13dbd8971f69d01b4034e2d8077d8fdb3ffd55ab0dc06e0` (v1).
+- `decals/or-pixo-sp-ferrugem.png` SHA-256 `9793dc9776adb55522c751057f049855734181593eaebafb501fd84f93fcf3b0` (cru único).
+- `decals/or-pixo-sp-giz.png` SHA-256 `321d29a06521255f077ae2d524299ec7e108abd4efc194ef88dc2176911dfc31` (cru único).
+- `decals/or-pixo-sp-guincho.png` SHA-256 `0310f3991f23ba48c6cbe1cbfe8717d8e355e9c5271544541568a064c5dbc3a9` (cru único).
+- `decals/or-pixo-sp-lata.png` SHA-256 `33ef8d0e4ca3dd5d80c82fc3bb07912deb320046024908ab24ea6ceaf58271d3` (cru único).
+- `decals/or-pixo-sp-marginal.png` SHA-256 `545039c80a78387b282c98ba7e1754e498a283947a81dcf75e9e50dc2621fb14` (cru único).
+- `decals/or-pixo-sp-obra.png` SHA-256 `041dd72c7718c73e60894d709288bcf3e2ca70035cca6ec75eb54e25e7985624` (cru único).
+- `decals/or-pixo-sp-pilar.png` SHA-256 `35e629f488c463f992bc46952da85b76748cadbd91abd4f4e449bc384a26bd04` (cru único).
+- `decals/or-pixo-sp-pintura.png` SHA-256 `823b5977ec56549411662616b631535490175108434c95b0b1f1d4c64d602471` (cru único).
+- `decals/or-pixo-sp-poco.png` SHA-256 `01b7f6ec2ac92b2435e96554c785b224949dd16639c06376f3fb7a932f8fb467` (cru único).
+- `decals/or-pixo-sp-porteira.png` SHA-256 `91854de70d765c711fe1783609398822c45db5707b444d904fc6f805a15c3eb9` (cru único).
+- `decals/or-pixo-sp-prumo.png` SHA-256 `2b6e59ed6f53528e05d9908c4d0f4d95cbfc495730f0dc3122b5b246da3f420e` (cru único).
+- `decals/or-pixo-sp-risco.png` SHA-256 `7166f60116e7b5a7f1364c972ba120b6358a9291c235e285f593377a83a30ff9` (cru único).
+- `decals/or-pixo-sp-rodovia.png` SHA-256 `c849c6cc4289baeda0a22e29f91a42e59f9894e1615275a38cdfbcae938a4852` (cru único).
+- `decals/or-pixo-sp-tampa.png` SHA-256 `9db026b698a3d3ab24a994dc951f26908601a0e62cd82448abe65ddade0a96fc` (cru único).
+- `decals/or-pixo-sp-terra.png` SHA-256 `94ee51f32858ef3a8620042812976f3e54499f6b7a559feb5c321918dfa8c507` (cru único).
+- `decals/or-pixo-sp-viga.png` SHA-256 `45cfb4fb1caf6c6664f9b1d9c6426c2a30ffc54bb77e9dbf04fb19b8ba3f9c90` (cru único).
+
 ## Horizontes dos mapas originais
 
 Todos usam placa horizontal 2:1, horizonte baixo e contínuo, sem texto, marca,
