@@ -19,6 +19,11 @@
  *  AR5  NENHUM pombo em modo flight no registro inteiro (dono, 18/08: "a pomba
  *       que nao esta com bracos avertos deveria ficar so na ponta das lajes ou
  *       no chao") — pombo voando com GLB estático de asas abertas é o defeito
+ *  AR6  TODO mapa devolve `sound` (vida 1, plans/22, dono 19/08: "cena comuns
+ *       do dia-dia animais urbanos ... com audio inclusive"). Forma mínima:
+ *       { loops: [{ src, pos:[x,y,z], radius, vol }] } e/ou { bioma: '...' } —
+ *       o hook existe por mapa; arquivo faltando é dívida do audio-pack, não
+ *       da régua (o soundscape cai em silêncio com warn, como a fauna sem GLB)
  *
  * USO
  *   node tools/eval/ambience-registry-check.mjs
@@ -26,6 +31,8 @@
  *   node tools/eval/ambience-registry-check.mjs --mutante=fauna-em-solido  # AR3
  *   node tools/eval/ambience-registry-check.mjs --mutante=sem-gato         # AR4
  *   node tools/eval/ambience-registry-check.mjs --mutante=pomba-voa-de-novo # AR5
+ *   node tools/eval/ambience-registry-check.mjs --mutante=sem-som          # AR6
+ *   node tools/eval/ambience-registry-check.mjs --mutante=sem-fauna2       # AR4 (tatu/barata/papagaio)
  *
  * Horizonte/vida de céu por mapa é a parte 2 do BUG-57 (direção de arte por
  * bioma) e ganha cláusula própria quando o dono aprovar a primeira referência.
@@ -33,7 +40,7 @@
 import { THREE, MAPS, initTextures } from './harness.mjs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo']);
+const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo', 'sem-som', 'sem-fauna2']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 /* Mapa 100% interno (sem céu): pombo não entra; rato sim — UPA com rato é a sátira. */
@@ -42,24 +49,41 @@ const INTERNOS = new Set(['upa_24h']);
 /* Espécie-chave por bioma (v2.1, frente D): gato de telhado na favela, galinha de
    quintal/campinho, vaca na várzea. Mapa novo desse bioma herda a cobrança. */
 const BIOMA_FAUNA = {
-  fy_lajes: ['cat'], quebrada: ['cat'], fy_corrego: ['cat', 'chicken'],
-  fy_campomorro: ['chicken', 'cow'],
+  fy_lajes: ['cat'], quebrada: ['cat'], fy_corrego: ['cat', 'chicken', 'cockroach'],
+  fy_campomorro: ['chicken', 'cow', 'armadillo'],
+  /* fauna 2 (vida 1, plans/22): tatu no cerrado (campo/Brasília), barata urbana
+     (córrego/atacadão), papagaio de poleiro (mansão/parque) */
+  praca_poderes: ['armadillo'], atacadao_treta: ['cockroach'],
+  fy_mansao: ['parrot'], parque_treta: ['parrot'],
 };
+const FAUNA2 = new Set(['armadillo', 'cockroach', 'parrot']);
 
 const T = await initTextures();
 const ids = Object.keys(MAPS);
 const linhas = [];
-let mutanteAplicou = MUTANTE === 'pomba-voa-de-novo' ? false : null;
+let mutanteAplicou = ['pomba-voa-de-novo', 'sem-som', 'sem-fauna2'].includes(MUTANTE) ? false : null;
 for (const id of ids) {
   const scene = new THREE.Scene();
   let W;
   try { W = MAPS[id].build(scene, T); } catch (e) { linhas.push({ id, erro: String(e?.message || e) }); continue; }
+  /* AR6: hook de áudio ambiente (vida 1). Válido = loop posicional bem formado
+     e/ou bioma declarado (a pool de one-shots mora no soundscape.js). */
+  let sound = W.sound;
+  if (MUTANTE === 'sem-som' && !mutanteAplicou && sound) { sound = null; mutanteAplicou = true; }
+  const loopRuim = (sound?.loops || []).find((l) => typeof l?.src !== 'string'
+    || !Array.isArray(l?.pos) || l.pos.length !== 3 || typeof l?.radius !== 'number' || l.radius <= 0);
+  const somOk = !!sound && ((sound.loops?.length > 0 && !loopRuim) || typeof sound.bioma === 'string');
   let amb = W.ambience;
   if (MUTANTE === 'sem-ambience' && id === ids[0]) amb = null;
-  if (!amb || !Array.isArray(amb.animals)) { linhas.push({ id, animals: null }); continue; }
+  if (!amb || !Array.isArray(amb.animals)) { linhas.push({ id, animals: null, somOk }); continue; }
   if (MUTANTE === 'sem-gato') {
     const antes = amb.animals.length;
     amb.animals = amb.animals.filter((a) => a.type !== 'cat');
+    if (amb.animals.length < antes) mutanteAplicou = true;
+  }
+  if (MUTANTE === 'sem-fauna2') {
+    const antes = amb.animals.length;
+    amb.animals = amb.animals.filter((a) => !FAUNA2.has(a.type));
     if (amb.animals.length < antes) mutanteAplicou = true;
   }
   if (MUTANTE === 'pomba-voa-de-novo' && !mutanteAplicou) {
@@ -85,7 +109,7 @@ for (const id of ids) {
     const c = W.colliders.find((k) => typeof k.minX === 'number' && k.maxY - k.minY > 0.5);
     if (c) emSolido.push({ type: 'mutante', x: (c.minX + c.maxX) / 2, z: (c.minZ + c.maxZ) / 2 });
   }
-  linhas.push({ id, animals: amb.animals.length, por, emSolido, voando });
+  linhas.push({ id, animals: amb.animals.length, por, emSolido, voando, somOk });
 }
 
 const ar1 = linhas.filter((r) => r.erro || r.animals === null || r.animals === 0);
@@ -97,6 +121,7 @@ const ar2 = linhas.filter((r) => {
 const ar3 = linhas.filter((r) => r.emSolido && r.emSolido.length);
 const ar4 = linhas.filter((r) => !r.erro && (BIOMA_FAUNA[r.id] || []).some((especie) => !(r.por?.[especie] > 0)));
 const ar5 = linhas.filter((r) => !r.erro && r.voando > 0);
+const ar6 = linhas.filter((r) => !r.erro && !r.somOk);
 
 console.log(`AMBIÊNCIA NO REGISTRO — ${ids.length} mapas${MUTANTE ? `  [mutante: ${MUTANTE}]` : ''}\n`);
 for (const r of linhas) {
@@ -105,7 +130,8 @@ for (const r of linhas) {
   const pop = Object.entries(r.por).map(([k, v]) => `${k}:${v}`).join(' ');
   const solido = r.emSolido.length ? `  <- ${r.emSolido.length} EM SÓLIDO ${JSON.stringify(r.emSolido[0])}` : '';
   const voo = r.voando ? `  <- ${r.voando} EM VOO` : '';
-  console.log(`  ${r.emSolido.length || r.voando ? 'x' : 'ok'} ${r.id.padEnd(17)} ${String(r.animals).padStart(2)} animais  ${pop}${solido}${voo}`);
+  const mudo = r.somOk ? '' : '  <- MUDO';
+  console.log(`  ${r.emSolido.length || r.voando || !r.somOk ? 'x' : 'ok'} ${r.id.padEnd(17)} ${String(r.animals).padStart(2)} animais  ${pop}${solido}${voo}${mudo}`);
 }
 const f4 = ar4.map((r) => `${r.id}(faltam ${BIOMA_FAUNA[r.id].filter((e) => !(r.por?.[e] > 0)).join('+')})`).join(', ');
 const f5 = ar5.map((r) => `${r.id}:${r.voando}`).join(', ');
@@ -114,16 +140,19 @@ console.log(`  AR2 população mínima por bioma    ${ar2.length ? `FALHA — ${
 console.log(`  AR3 fauna fora de sólido          ${ar3.length ? `FALHA — ${ar3.map((r) => r.id).join(', ')}` : 'PASSA'}`);
 console.log(`  AR4 espécie-chave por bioma       ${ar4.length ? `FALHA — ${f4}` : 'PASSA'}`);
 console.log(`  AR5 nenhuma pomba em voo          ${ar5.length ? `FALHA — ${f5} (mode flight sobreviveu; BUG-57 v2.1)` : 'PASSA'}`);
+console.log(`  AR6 todo mapa tem som ambiente    ${ar6.length ? `FALHA — ${ar6.map((r) => r.id).join(', ')}` : 'PASSA'}`);
 
-if (MUTANTE === 'sem-gato' || MUTANTE === 'pomba-voa-de-novo') {
-  const esperado = MUTANTE === 'sem-gato' ? 'AR4' : 'AR5';
-  const mordeu = (MUTANTE === 'sem-gato' ? ar4 : ar5).length > 0;
+const MUTANTES = { 'sem-gato': ['AR4', ar4], 'sem-fauna2': ['AR4', ar4], 'pomba-voa-de-novo': ['AR5', ar5], 'sem-som': ['AR6', ar6] };
+if (MUTANTES[MUTANTE]) {
+  const [esperado, falhas] = MUTANTES[MUTANTE];
+  const mordeu = falhas.length > 0;
   if (!mutanteAplicou) { console.error(`\nMUTANTE NÃO APLICOU: ${MUTANTE}`); process.exit(1); }
   if (!mordeu) { console.error(`\nMUTANTE SOBREVIVEU: ${MUTANTE} não acendeu ${esperado}`); process.exit(1); }
   const colaterais = [ar1.length && 'AR1', ar2.length && 'AR2', ar3.length && 'AR3',
-    MUTANTE === 'sem-gato' ? ar5.length && 'AR5' : ar4.length && 'AR4'].filter(Boolean);
+    esperado !== 'AR4' && ar4.length && 'AR4', esperado !== 'AR5' && ar5.length && 'AR5',
+    esperado !== 'AR6' && ar6.length && 'AR6'].filter(Boolean);
   if (colaterais.length) { console.error(`\nMUTANTE ${MUTANTE} acendeu cláusulas colaterais: ${colaterais.join(', ')}`); process.exit(1); }
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-process.exit(ar1.length || ar2.length || ar3.length || ar4.length || ar5.length ? 1 : 0);
+process.exit(ar1.length || ar2.length || ar3.length || ar4.length || ar5.length || ar6.length ? 1 : 0);
