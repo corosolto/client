@@ -659,9 +659,14 @@ export function buildCampoMorro(scene, T = {}) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-4, 0, 16], phase: .3 }, { mode: 'ground', pos: [14, 0, 21], phase: 1.4 },
-      { mode: 'flight', pos: [0, 10, 0], radius: [8, 5.5], phase: .8 },
+      { mode: 'ground', pos: [2.2, 0, 15], phase: .8 },
     ],
     dogs: [{ pos: [-17, 0, 21], to: [-13, 0, 21], phase: .6 }],
+    /* BUG-57 v2.1: galinha do campinho e vaca da várzea (Quaternius CC0) */
+    chickens: [
+      { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
+    ],
+    cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
   });
 
   return {

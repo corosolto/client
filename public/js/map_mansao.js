@@ -800,7 +800,7 @@ export function buildMansao(scene, T) {
     rats: [{ pos: [-14, 0, 30], to: [-11.5, 0, 32], phase: .7 }],
     pigeons: [
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },
-      { mode: 'flight', pos: [0, 9, 12], radius: [7, 5], phase: .9 },
+      { mode: 'ground', pos: [7.4, 0, 32], phase: .9 },
     ],
   });
 

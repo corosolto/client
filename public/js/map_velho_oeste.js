@@ -427,7 +427,7 @@ export function buildVelhoOeste(scene) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
-      { mode: 'flight', pos: [0, 10, 0], radius: [8, 5.5], phase: .9 },
+      { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
     ],
   });
 

@@ -1183,13 +1183,16 @@ export function buildLajes(scene, T) {
     pigeons: [
       { mode: 'ground', pos: [-11.4, ROOF_H, -26], phase: .3 }, { mode: 'ground', pos: [11.2, ROOF_H, -20], phase: 1.3 },
       { mode: 'ground', pos: [-11.5, ROOF_H, 20], phase: 2.1 }, { mode: 'ground', pos: [11.4, ROOF_H, 11], phase: 2.9 },
-      { mode: 'flight', pos: [-5, 11, -10], radius: [7.2, 5], phase: .7 },
-      { mode: 'flight', pos: [6, 13, 8], radius: [6, 4.5], phase: 2.4 },
-      { mode: 'flight', pos: [0, 15, 25], radius: [8, 5.5], phase: 4.1 },
+      /* v2.1: os três voos viraram pomba pousada na PONTA de outras lajes (NW/ES/CS) */
+      { mode: 'ground', pos: [-11.3, ROOF_H, -19.5], phase: 4.6 },
+      { mode: 'ground', pos: [10.9, ROOF_H, -2.2], phase: 5.3 },
+      { mode: 'ground', pos: [1.6, ROOF_H, 30.5], phase: 6.1 },
     ],
     /* Caramelo do circuito inferior: trecho do beco [-2,10]→[-2,22], verificado livre
        pelo lajes-circuito-check (LC4). Não é collider nem occluder. */
     dogs: [{ pos: [-2, 0, 12.5], to: [-2, 0, 18.5], phase: .6 }],
+    /* Gato de telhado (BUG-57): ronda a laje do churrasco, parte sul [21.2,27] */
+    cats: [{ pos: [-11.5, ROOF_H, 22.2], to: [-9.3, ROOF_H, 24.5], phase: 1.2 }],
   });
 
   return {

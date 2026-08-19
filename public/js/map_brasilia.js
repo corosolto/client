@@ -1799,8 +1799,7 @@ export function buildBrasilia(scene, T) {
     pigeons: [
       { mode: 'ground', pos: [-4, 0, -8], phase: .2 }, { mode: 'ground', pos: [11, 0, -6], phase: 1.1 },
       { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
-      { mode: 'flight', pos: [0, 12, 0], radius: [9, 6], phase: .6 },
-      { mode: 'flight', pos: [-8, 15, -20], radius: [7, 5], phase: 2.4 },
+      { mode: 'ground', pos: [-2.8, 0, 1], phase: .6 }, { mode: 'ground', pos: [9.5, 0, 17], phase: 2.4 },
     ],
   });
 

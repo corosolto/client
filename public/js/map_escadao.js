@@ -844,8 +844,8 @@ export function buildEscadao(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-2, groundHeightAt(-2, -36), -36], phase: .8 },
-      { mode: 'flight', pos: [0, H_TOP + 6.2, -18], radius: [4.8, 3.4], phase: 1.1 },
-      { mode: 'flight', pos: [-10, 7.2, 12], radius: [3.8, 3.1], phase: 2.9 },
+      { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
+      { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
   });
 

@@ -252,7 +252,7 @@ export function buildAtacadao(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-8, 0, 20], phase: .4 }, { mode: 'ground', pos: [10, 0, 16], phase: 1.3 },
-      { mode: 'flight', pos: [0, 9, -10], radius: [7, 5], phase: .8 },
+      { mode: 'ground', pos: [1.2, 0, -9], phase: .8 },
     ],
   });
 
