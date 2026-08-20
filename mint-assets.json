@@ -1711,7 +1711,7 @@
     "chatUrl": "https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw",
     "displayName": "Imperial Grey Palm (palmeira-imperial)",
     "frente": "v21-c-mansao-jardim",
-    "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site."
+    "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site. Tronco escurecido no pipeline (trunkShade 0,55/0,47/0,40 nos 42% inferiores — tronco branco-liso reprovado pelo crítico)."
    },
    "processing": {
     "provider": "mint",
@@ -1720,7 +1720,7 @@
      "mint.gg",
      "tools/optimize-props-v21.mjs"
     ],
-    "finalSha256": "fc86f1f83ddeac051ed5bda007a707696b0266ef7ca8bc6fd3f953d22a4490eb"
+    "finalSha256": "d7d109d83dd0be4ab9e8a4df384cadac9d4e9099405fb8a899251e42ef42e625"
    }
   },
   "palmeira-ravenala-jardim": {

@@ -61,6 +61,32 @@ export function buildMansao(scene, T) {
     const tex=new THREE.DataTexture(data,S,S,THREE.RGBAFormat); tex.colorSpace=THREE.SRGBColorSpace;
     tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(rx,ry); tex.needsUpdate=true; return tex;
   };
+  /* Hardscape do jardim (crítico v2.1: cor chapada = Minecraft): texturas DataTexture
+     — existem em node, que é onde a régua G5 mede. 128 px/m via escalaUVporMundo. */
+  const texProcedural = (S, fn) => {
+    const data = new Uint8Array(S * S * 4);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) data.set([...fn(x, y), 255], (y * S + x) * 4);
+    const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true;
+    return t;
+  };
+  // concreto de fôrma: fiadas de 0,5 m + junta de painel + nuance; tile 2 m (S=256)
+  const texturaMuro = () => texProcedural(256, (x, y) => {
+    const junta = x < 3 || (y % 64) < 2, n = ((x * 17 + y * 31) % 19) - 9;
+    const b = junta ? 138 : 196 + n;
+    return [b, b - 3, b - 8];
+  });
+  // ripado de madeira: ripa de 12,5 cm com fresta escura; tile 1 m (S=128)
+  const texturaRipado = () => texProcedural(128, (x, y) => {
+    const fresta = (x % 16) < 2, n = ((x * 5 + y * 11) % 9) - 4;
+    return fresta ? [40, 27, 19] : [114 + n * 2, 81 + n, 59 + n];
+  });
+  // portão de aço: lâminas horizontais grafite-azuladas com fio de luz, não o #2a2a2a chapado
+  const texturaPortao = () => texProcedural(128, (x, y) => {
+    const lam2 = y % 16, n = ((x * 7 + y * 13) % 7) - 3;
+    const b = lam2 < 3 ? 24 : 58 + n + (lam2 === 4 ? 16 : 0);
+    return [b - 2, b, b + 5];
+  });
   const pisoInterior=lam({ map:texturaLaje(0xc9c1b2,0x8e887f,3,2),color:0xf0ede7,roughness:.34 });
   const forroInterior=lam({ map:texturaLaje(0xe7e1d7,0xc8c2b8,2,2),color:0xf8f4ed,roughness:.82,side:THREE.DoubleSide });
   let TEX = {
@@ -71,7 +97,8 @@ export function buildMansao(scene, T) {
   if (typeof document !== 'undefined') {
     const load = (url, rx = 3, ry = 3) => { const t = new THREE.TextureLoader().load(url); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t; };
     TEX.marble = lam({ map: load('/img/textures/mansao_streetart_marble.webp', 4, 4), roughness: 0.15, metalness: 0.05 });
-    TEX.garden = lam({ map: load('/img/textures/tex_garden.webp', 5, 5), roughness: 1.0 });
+    TEX.garden = lam({ map: load('/img/textures/tex_mansao_lawn.webp', 11, 15.6), roughness: 1.0 });   // grama limpa v2.1: tex_garden tinha flor 2D gigante e xadrez de pedra assados
+    TEX.garden.map.wrapS = TEX.garden.map.wrapT = THREE.MirroredRepeatWrapping;   // tile 4 m sem emenda
     TEX.deck = lam({ map: load('/img/textures/tex_deck.webp', 3, 6), roughness: 0.7 });
     TEX.concrete = lam({ map: load('/img/textures/concrete_br.webp', 2, 2) });
   }
@@ -173,7 +200,7 @@ export function buildMansao(scene, T) {
   for (const [x, z, w, d] of [[-9.5,-6.5,11,.18],[9.75,-6.5,3.5,.18],[14.5,-6.5,1,.18],[-4,4.5,.18,7],[-4,-4.5,.18,3]])
     addBox(w, 3.1, d, MAT_WALL, x, 0, z);
   // Vergas e painéis ripados quebram o branco contínuo e enquadram as passagens.
-  const ripado = lam({ color: 0x72513b, roughness: 0.72 });
+  const ripado = lam({ map: texturaRipado(), roughness: 0.72 });
   for (let x = -13; x <= 13; x += 0.42) addBox(0.12, 2.7, 0.08, ripado, x, 0.2, CASA.z0 + 0.24, { collide: false, skirt: false, bala: true });
 
   // Casca modernista: lajes finas em balanço e vidro contínuo fecham a leitura de "planta aberta".
@@ -425,17 +452,19 @@ export function buildMansao(scene, T) {
     pedra.scale.set(sx, 1, sz); pedra.rotation.y = ry; pedra.position.set(px, .035, pz); pedra.receiveShadow = true;
     pedra.userData.mansaoFeature = 'pedra-caminho'; pedra.userData.nonSolidSurface = true; root.add(pedra);
   }
-  // Espelho deslocado do eixo: base escura + lâmina translúcida deixam profundidade
-  // e quebram a simetria de catálogo sem fechar a rota central.
+  // Espelho deslocado do eixo: base escura + lâmina viva (água da water.js, mesma
+  // família RC2 do oceano/córrego) — o plano azul chapado foi reprovo do crítico.
   const eixoX=-4.2;
   addFloor(3.45,13.2,eixoX,24.8,lam({color:0x163f4b,roughness:.5}),-.055);
-  const aguaEixo = lam({ color: 0x4eaabd, roughness: .055, metalness: .14,
-    emissive: 0x095367, emissiveIntensity: .24, transparent: true, opacity: .68,depthWrite:false });
-  const eixoAgua = addFloor(3.25, 13.2, eixoX, 24.8, aguaEixo, .025);
-  eixoAgua.userData.nonSolidSurface = true;
+  const LAMINA = { segmentos: 4, raso: 0x4eaabd, fundo: 0x16323e, profEscala: .3,
+    espumaFaixa: .12, espumaMiolo: .05, profFallback: .25, ampEscala: .05, parent: root };
+  const aguaEixo = createWater(scene, T, 'fy_mansao', { nivel: .025, centro: [eixoX, 24.8], tamanho: [3.25, 13.2], ...LAMINA });
+  aguaEixo.mesh.userData.nonSolidSurface = true;
   for (const x of [eixoX-1.78,eixoX+1.78]) addBox(.16,.08,13.2,TEX.marble,x,.01,24.8,{ collide:false,cast:false,skirt:false });
-  // espelho d'água (retangular, raso)
-  addFloor(6, 4, -8, 25, lam({ color: 0x2a4a6a, roughness: 0.05, metalness: 0.3 }), 0.02);
+  // espelho d'água (retangular, raso): cuba escura sob a lâmina viva
+  addFloor(6, 4, -8, 25, lam({ color: 0x14313d, roughness: .5 }), -.04);
+  const aguaEspelho = createWater(scene, T, 'fy_mansao', { nivel: .02, centro: [-8, 25], tamanho: [6, 4], ...LAMINA });
+  aguaEspelho.mesh.userData.nonSolidSurface = true;
   col(-11, -5, -0.5, 0.65, 23, 27);  // topo acima dos pés: _collide realmente expulsa o corpo
   // Árvores mantêm o tronco-colisor, mas as copas deixam de ser cubos.
   const folhaA = lam({ color: 0x28582f, roughness: 1 });
@@ -658,15 +687,16 @@ export function buildMansao(scene, T) {
     m.rotation.x = -Math.PI / 2; m.position.set(x,.018,z); m.receiveShadow = true;
     m.userData.nonSolidSurface = true; root.add(m);
   }
-  // muretas dos canteiros (cover agachado)
-  for (const [mx, mz,ry] of [[5.4,23.3,.08],[-6.2,24.8,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06]]) { addBox(3.0, 0.6, 0.4, lam({ color: 0x8a8a7a }), mx, 0, mz,{ry}); solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 }); }
+  // muretas dos canteiros (cover agachado); a de (-7,4;22,6) saiu de cima do espelho —
+  // sobre a água ela lia como viga flutuando (crítico v2.1)
+  for (const [mx, mz,ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06]]) { addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz,{ry}); solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 }); }
   // portão da frente
-  addBox(8.0, 3.0, 0.3, lam({ color: 0x2a2a2a, metalness: 0.5 }), 0, 0, 34);
+  addBox(8.0, 3.0, 0.3, lam({ map: texturaPortao(), metalness: 0.45, roughness: .55 }), 0, 0, 34).userData.mansaoFeature = 'portao';
   // Guarita e biombo protegem o respawn, deixando rotas laterais independentes.
   addBox(3.2, 2.8, 3.2, TEX.concrete, -17.5, 0, 31.5);
   // Cada biombo tem passagem alinhada aos spawns internos — painel cego colapsava
   // as rotas E→JARDIM e E→PISCINA numa faixa só (CTF2).
-  for (const x of [-6.75, -2.25, 2.25, 6.75]) addBox(2.5, 2.1, 0.35, ripado, x, 0, 29);
+  for (const x of [-6.75, -2.25, 2.25, 6.75]) addBox(2.5, 2.1, 0.35, ripado, x, 0, 29).userData.mansaoFeature = 'biombo';
 
   /* ===================== TERRAÇO + PISCINA INFINITA ===================== */
   // Deck recortado nas laterais: não existe madeira depois da borda infinita central.
@@ -727,9 +757,10 @@ export function buildMansao(scene, T) {
   jardimProp('lounge_externo', -14.9, -18.5, 1.05, 1.57, 0, [1.7, 1.7, .8]);
   col(-15.85, -13.95, 0, .8, -19.45, -17.55); solids.push({ x0: -15.85, x1: -13.95, z0: -19.45, z1: -17.55 });
 
-  /* MUROS */
-  for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_WALL, sx, 0, 0);
-  addBox(HALF_X * 2, 2.5, 0.5, MAT_WALL, 0, 0, HALF_Z);
+  /* MUROS — concreto de fôrma com junta (G5); o volume e o colisor não mudam */
+  const MAT_MURO = lam({ map: texturaMuro(), roughness: .85 });
+  for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_MURO, sx, 0, 0).userData.mansaoFeature = 'muro-perimetro';
+  addBox(HALF_X * 2, 2.5, 0.5, MAT_MURO, 0, 0, HALF_Z).userData.mansaoFeature = 'muro-perimetro';
 
   /* COSTÃO E OCEANO (RC2, plans/23): o leito desce 4,4 m sob a água — a régua de
      depth-fade da water.js faz o turquesa de raso e a espuma nas pedras que a furam. */
@@ -746,7 +777,7 @@ export function buildMansao(scene, T) {
       pedra.castShadow = true; root.add(pedra);
     }
   }
-  const oceano = createWater(scene, T, 'fy_mansao');
+  createWater(scene, T, 'fy_mansao');   // oceano; o update() tica todas as scene.userData.waters
 
   // Vasos e balizadores dão escala ao deck e às circulações sem virarem paredes de cover.
   const vasos = [
@@ -888,7 +919,7 @@ export function buildMansao(scene, T) {
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45],radius:35,vol:.4},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
-    update(dt) { oceano.update(dt); },
+    update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
       { nome: 'escada de serviço', ...STAIR_SERVICE, topo: LAJE_H }],
     waypoints: { nodes, adj }, nearestWaypoint, findPath,

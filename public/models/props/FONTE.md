@@ -145,8 +145,10 @@ lotes 1-3 (`node tools/optimize-props-v21.mjs`, WebP 512², a partir dos brutos
 central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 
 - `palmeira_imperial.glb` — "Imperial Grey Palm", palmeira-imperial com tronco
-  anelado cinza e crownshaft verde. 3.637 tris. Chat:
-  <https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw>. Registro:
+  anelado cinza e crownshaft verde. 3.637 tris. Tronco escurecido no pipeline
+  (`trunkShade` do optimize: material-clone fator 0,55/0,47/0,40 nos triângulos
+  dos 42% inferiores — o tronco branco-liso foi reprovado pelo crítico v2.1).
+  Chat: <https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw>. Registro:
   `palmeira-imperial-jardim`.
 - `palmeira_ravenala.glb` — "Dramatic Fan Palm", ravenala (palmeira-leque) em
   leque vertical. 4.428 tris. Chat:
