@@ -12,6 +12,7 @@ import { decalIds, paredeAtras } from './map_decals.js';   // pool por NOME + ra
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';             // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 /* PEGADA NA ALTURA DO CORPO (reprovação do dono, 05/08: "problemas com o box do ônibus
    e barracas"). O colisor derivado do Box3 do GLB INTEIRO conta como parede coisas que só
@@ -772,9 +773,8 @@ export function buildBrasilia(scene, T) {
       // jardim, essa sim com parapeito e leitura clara. Excesso é o problema, não falta.
       const b = placeProp('palacio', { x: px, z: PAL_Z, targetH: PAL_H, ry, y: PL + 0.16 });
       if (b) {
-        // O Palácio Mint já traz albedo, normal e metallic/roughness. Não revestir a malha
-        // inteira com um material procedural: isso apaga o asset profissional e o reduz a
-        // uma caixa branca/escura. Os volumes abaixo complementam a silhueta sem substituir PBR.
+        // Não revestir a malha do Palácio Mint com material procedural: apaga o PBR do asset.
+        // Os volumes abaixo complementam a silhueta sem substituir o material.
         root.add(b); occMesh(b);
         b.updateMatrixWorld(true);
         const bb2 = new THREE.Box3().setFromObject(b);
@@ -792,9 +792,8 @@ export function buildBrasilia(scene, T) {
                 no meio e afina de novo ao encontrar a laje (era um tronco de cone de 8 lados);
              4. a RAMPA, que é a assinatura do Planalto.
            `?planalto=old` volta ao brise antigo. */
-        // A/B visual: `mint` preserva o landmark autoral sem a releitura procedural.
-        // `enhanced` e `old` ficam disponíveis para provar, na mesma câmera, quanto
-        // cada sobreposição se afasta do asset aprovado.
+        // A/B visual: `mint` preserva o landmark autoral; `enhanced`/`old` comparam,
+        // na mesma câmera, o quanto cada sobreposição se afasta do asset aprovado.
         const PALMODE = QP.get('planalto') || 'enhanced';
         const NEWPAL = PALMODE === 'enhanced';
         if (BIG && DETAIL > 0 && NEWPAL) {
@@ -1799,13 +1798,16 @@ export function buildBrasilia(scene, T) {
     pigeons: [
       { mode: 'ground', pos: [-4, 0, -8], phase: .2 }, { mode: 'ground', pos: [11, 0, -6], phase: 1.1 },
       { mode: 'ground', pos: [-2, 0, 10], phase: 2.0 }, { mode: 'ground', pos: [8, 0, 16], phase: 2.9 },
-      { mode: 'flight', pos: [0, 12, 0], radius: [9, 6], phase: .6 },
-      { mode: 'flight', pos: [-8, 15, -20], radius: [7, 5], phase: 2.4 },
+      { mode: 'ground', pos: [-2.8, 0, 1], phase: .6 }, { mode: 'ground', pos: [9.5, 0, 17], phase: 2.4 },
+    ],
+    /* vida 1: tatu no gramado do eixo — cerrado de Brasília (fauna 2) */
+    armadillos: [
+      { pos: [-8, 0, 2], to: [-5, 0, 5], phase: 1.3 }, { pos: [13, 0, -14], to: [10, 0, -11], phase: 2.8 },
     ],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:85,vol:.28},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:85,vol:.22}],bioma:'campo'},
     root, colliders, occluders, groundHeightAt, spawns, sun, hemi,
     /* BANDEIRAS DO CTF — DECLARADAS PELO MAPA (06/08). Os nomes CONGRESSO/ÔNIBUS/CATEDRAL
        moravam no fallback do game.js e vazavam pra QUALQUER mapa sem declaração — o dono

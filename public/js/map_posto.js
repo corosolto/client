@@ -5,6 +5,7 @@ import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 // props GLB que este mapa usa (main.js pré-carrega MAPS[id].props)
 export const POSTO_PROPS = [
@@ -485,13 +486,13 @@ export function buildPosto(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-15, 0, 6], phase: .5 }, { mode: 'ground', pos: [16, 0, -6], phase: 1.4 },
-      { mode: 'flight', pos: [0, 9, 0], radius: [7, 5], phase: .8 },
+      { mode: 'ground', pos: [-14, 0, 5], phase: .8 },
     ],
     dogs: [{ pos: [-4, 0, 20], to: [0, 0, 20], phase: .5 }],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:75,vol:.24},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:75,vol:.26}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // triângulo (NÃO-colinear): MID sob a marquise (x=4), E/B no pátio oeste (x=-10)
     ctfPoints: [

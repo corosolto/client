@@ -181,7 +181,7 @@ npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telem
 
 O `check:fast` usa `tools/eval/runner.mjs`: **todos os passos rodam mesmo quando um deles
 fica vermelho**, e o código de saída só é decidido no placar final. Isso evita que um defeito
-conhecido esconda um quality gate novo. Leia a chave `//check:fast` do `package.json` antes de
+conhecido esconda um quality gate novo. Leia a entrada `check:fast` do `SCRIPTS.md` antes de
 acrescentar um passo.
 
 **O placar do quality gate não mora neste arquivo, e não deve morar em nenhum outro além de um.**

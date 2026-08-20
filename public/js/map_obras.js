@@ -5,6 +5,7 @@ import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 export const OBRAS_PROPS = [
   'construction_rubble', 'guindaste', 'concrete_roadblock', 'jersey_barrier', 'sandbags',
@@ -238,12 +239,12 @@ export function buildObras(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-16, 0, 10], phase: .6 },
-      { mode: 'flight', pos: [0, 11, 0], radius: [8, 5], phase: 1.0 },
+      { mode: 'ground', pos: [-14.6, 0, 9], phase: 1.0 },
     ],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.obra,pos:[0,3,0],radius:70,vol:.35},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.2}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
       { id: 'E', label: 'CANTEIRO SUL', x: -10, z: -14 },

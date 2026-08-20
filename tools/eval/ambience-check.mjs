@@ -26,12 +26,16 @@
      um orçamento de 500k que nenhum mapa pratica. Mesmo padrão do cena-tetos:
      medido + folga curta, e piora reprova.
 
-   MUTAÇÕES
-     --mutante=sem-reacao       neutraliza onShot no objeto que o jogo chama
-     --mutante=relogio          injeta performance.now no avanço determinístico
-     --mutante=lowq-cheio       abre a medição LOWQ com qualidade completa
-     --mutante=tracer-fino      repõe o raio anterior de 0,0035 m
-     --mutante=teleporte-volta  injeta salto de dois metros após a reação
+    MUTAÇÕES
+      --mutante=sem-reacao       neutraliza onShot no objeto que o jogo chama
+      --mutante=relogio          injeta performance.now no avanço determinístico
+      --mutante=lowq-cheio       abre a medição LOWQ com qualidade completa
+      --mutante=tracer-fino      repõe o raio anterior de 0,0035 m
+      --mutante=teleporte-volta  injeta salto de dois metros após a reação
+      --mutante=pomba-voa-de-novo restaura o _updatePigeon pré-v2.1 (pombo em
+                                 trajetória de voo) — AM11 acende (BUG-57 v2.1)
+      --mutante=bicho-estatico   zera os mixers de dog/cat/chicken/cow — AM12
+                                 acende (clipe parado = bicho estático)
 
    Uso:
      npm run eval:serve
@@ -62,6 +66,8 @@ const esperadoPorMutante = {
   'tracer-fino': 'AM8',
   'tracer-um-em-tres': 'AM8b',
   'teleporte-volta': 'AM5b',
+  'pomba-voa-de-novo': 'AM11',
+  'bicho-estatico': 'AM12',
 };
 if (mutante && !esperadoPorMutante[mutante]) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -86,10 +92,13 @@ const put = (id, descricao, ok, evidencia) => checks.push({ id, descricao, ok: !
 const finalAssets = {
   rat: 'public/models/ambient/rat_animated.glb',
   pigeonGround: 'public/models/ambient/pigeon_ground.glb',
-  pigeonFlight: 'public/models/ambient/pigeon_flight.glb',
+  cat: 'public/models/ambient/cat_telhado.glb',
+  chicken: 'public/models/ambient/galinha_campo.glb',
+  cow: 'public/models/ambient/vaca_campo.glb',
 };
 const faltando = Object.values(finalAssets).filter((file) => !existsSync(`${ROOT}${file}`));
-put('AM1', 'assets finais de rato, pombo de chão e pombo em voo existem', faltando.length === 0,
+put('AM1', 'assets finais de rato, pombo de chão e das espécies v2.1 (gato/galinha/vaca) existem',
+  faltando.length === 0,
   faltando.length ? `faltam: ${faltando.join(', ')}` : Object.values(finalAssets).join(', '));
 
 const srcAmb = existsSync(`${ROOT}public/js/ambientlife.js`)
@@ -127,11 +136,20 @@ if (!faltando.length) {
     };
   }
   const totalBytes = Object.values(assetReport).reduce((sum, item) => sum + item.bytes, 0);
+  /* Quaternius v2.1: quads vêm com skin + Idle/Walk (o controlador casa por sufixo);
+     pombo de voo saiu do acervo — assets sem skin em trajetória de voo é o BUG-57 */
+  const clipsDe = (id, nomes) => {
+    const lista = assetReport[id].animations;
+    return nomes.every((nome) => lista.some((clip) => clip.endsWith(`|${nome}`) || clip === nome));
+  };
   const clipsOk = assetReport.rat.skins >= 1 && assetReport.rat.animations.includes('Run')
     && assetReport.pigeonGround.skins >= 1 && assetReport.pigeonGround.animations.includes('Animation')
-    && assetReport.pigeonFlight.skins === 0;
+    && assetReport.cat.skins >= 1 && clipsDe('cat', ['Idle', 'Walk', 'Run'])
+    && assetReport.chicken.skins >= 1 && clipsDe('chicken', ['Idle', 'Walk'])
+    && assetReport.cow.skins >= 1 && clipsDe('cow', ['Idle', 'Walk', 'Gallop']);
   const budgetOk = assetReport.rat.triangles <= 4500 && assetReport.pigeonGround.triangles <= 7500
-    && assetReport.pigeonFlight.triangles <= 12000 && totalBytes <= 2 * 1024 * 1024;
+    && assetReport.cat.triangles <= 4500 && assetReport.chicken.triangles <= 4500 && assetReport.cow.triangles <= 4500
+    && totalBytes <= 2 * 1024 * 1024;
   put('AM1b', 'os clips/skins finais continuam presentes', clipsOk, JSON.stringify(assetReport));
   put('AM1c', 'fauna final cabe no orçamento de malha e download', budgetOk,
     `${Math.round(totalBytes / 1024)} KiB; tris ${Object.entries(assetReport).map(([id, value]) => `${id}=${value.triangles}`).join(' ')}`);
@@ -200,8 +218,7 @@ async function abrirMapa(map, quality = 'med') {
     const continuity = {};
     const reactionSpecs = [
       ['rat', (item) => item.type === 'rat'],
-      ['pigeonGround', (item) => item.type === 'pigeon' && item.mode === 'ground'],
-      ['pigeonFlight', (item) => item.type === 'pigeon' && item.mode === 'flight'],
+      ['pigeonGround', (item) => item.type === 'pigeon'],
     ];
     for (const [key, pick] of reactionSpecs) {
       ambience.reset();
@@ -216,7 +233,8 @@ async function abrirMapa(map, quality = 'med') {
       for (let i = 0; i < 45; i++) ambience.update(1 / 60, null);
       const after = ambience.snapshot().find((item) => item.id === animal.id);
       const distance = before && after ? Math.hypot(after.x - before.x, after.y - before.y, after.z - before.z) : 0;
-      const reactionState = animal.type === 'rat' ? 'flee' : 'takeoff';
+      /* v2.1: pombo foge a pé (sem takeoff) — o estado de voo não existe mais */
+      const reactionState = 'flee';
       reactions[key] = { ok: !!before && !!after && after.state === reactionState && distance >= .08, distance, before, after };
 
       ambience.reset();
@@ -237,20 +255,65 @@ async function abrirMapa(map, quality = 'med') {
       }
       continuity[key] = { maxStep };
     }
-    return { report: ambience.report(), deterministic, reactions, continuity, errors: [], mutationApplied };
+    /* AM12 — bicho novo (dog/cat/chicken/cow) anda com clipe tocando. Mutante
+       bicho-estatico zera os mixers: clipe parado é bicho estático. */
+    ambience.reset();
+    if (activeMutant === 'bicho-estatico') {
+      /* o estático-sem-rig não tem mixer NEM actions (é o que o pigeon_flight.glb
+         produzia): zera os dois, como cloneAsset de um GLB sem clipes */
+      for (const a of ambience.animals) if (['dog', 'cat', 'chicken', 'cow'].includes(a.type)) { a.mixer = null; a.actions = null; }
+      mutationApplied = true;
+    }
+    for (let i = 0; i < 90; i++) ambience.update(1 / 60, null);
+    const quads = ambience.animals.filter((item) => ['dog', 'cat', 'chicken', 'cow'].includes(item.type));
+    const speciesAudit = {
+      quads: quads.length,
+      clipMin: quads.length ? Math.min(...ambience.snapshot()
+        .filter((item) => ['dog-', 'cat-', 'chicken-', 'cow-'].some((prefix) => item.id.startsWith(prefix)))
+        .map((item) => item.clipTime)) : null,
+    };
+    /* AM11 — pombo não voa (BUG-57 v2.1). Mutante pomba-voa-de-novo restaura o
+       _updatePigeon pré-v2.1: trajetória aérea + estado 'fly'. Roda por ÚLTIMO para
+       não vazar estado nas medições de reação/continuidade. */
+    const pigeon = ambience.animals.find((item) => item.type === 'pigeon');
+    const flightAudit = { presente: !!pigeon, states: [], bob: 0 };
+    if (pigeon) {
+      if (activeMutant === 'pomba-voa-de-novo') {
+        pigeon.mode = 'flight';
+        ambience._updatePigeon = function (animal) {
+          const angle = this.time * .42 + animal.phase;
+          animal.root.position.set(
+            animal.origin.x + Math.cos(angle) * animal.radius[0],
+            animal.origin.y + 1.2 + Math.sin(angle * 2.3) * .28,
+            animal.origin.z + Math.sin(angle) * animal.radius[1]);
+          animal.root.position.y = animal.origin.y + 1.2 + Math.sin(angle * 2.3) * .28;
+          animal.state = 'fly';
+        };
+        mutationApplied = true;
+      }
+      ambience.reset();
+      const baseY = pigeon.origin.y;
+      for (let i = 0; i < 120; i++) {
+        ambience.update(1 / 60, null);
+        if (!flightAudit.states.includes(pigeon.state)) flightAudit.states.push(pigeon.state);
+        flightAudit.bob = Math.max(flightAudit.bob, Math.abs(pigeon.root.position.y - baseY));
+      }
+    }
+    return { report: ambience.report(), deterministic, reactions, continuity, errors: [], mutationApplied, speciesAudit, flightAudit };
   }, mutante);
   measured.errors = errors;
   if (fotos && quality === 'med') {
-    for (const focus of ['rat', 'pigeon-ground', 'pigeon-flight']) {
+    for (const focus of ['rat', 'pigeon-ground', 'cat', 'chicken', 'cow']) {
       const focused = await page.evaluate((kind) => {
         const ambience = window.__gworld.ambience;
         ambience.reset();
         const animal = ambience.animals.find((item) => kind === 'rat'
           ? item.type === 'rat'
-          : item.type === 'pigeon' && item.mode === kind.slice('pigeon-'.length));
+          : kind === 'pigeon-ground' ? item.type === 'pigeon' : item.type === kind);
         if (!animal) return false;
         const p = animal.root.getWorldPosition(new animal.root.position.constructor());
-        const offset = kind === 'rat' ? [1.15, .46, 1.45] : kind === 'pigeon-flight' ? [3.8, 1.8, 4.5] : [3.2, 1.35, 3.8];
+        const offset = { rat: [1.15, .46, 1.45], 'pigeon-ground': [3.2, 1.35, 3.8],
+          cat: [2.6, .9, 3.1], chicken: [1.6, .75, 1.9], cow: [3.6, 1.7, 4.4] }[kind];
         window.MAPEVAL.view([p.x + offset[0], p.y + offset[1], p.z + offset[2]], [p.x, p.y + (kind === 'rat' ? .03 : 0), p.z]);
         return true;
       }, focus);
@@ -331,8 +394,8 @@ const allKinds = reports.every((report) => report.counts.rat >= 1 && report.coun
 put('AM4', 'duas corridas com os mesmos deltas produzem a mesma pose',
   Object.values(runtime.maps).every((item) => item.deterministic),
   Object.entries(runtime.maps).map(([map, item]) => `${map}=${item.deterministic}`).join(' '));
-put('AM5', 'tiro próximo muda estado ou desloca rato e pombo',
-  Object.values(runtime.maps).every((item) => item.reactions.rat.ok && item.reactions.pigeonGround.ok && item.reactions.pigeonFlight.ok),
+put('AM5', 'tiro próximo muda estado ou desloca rato e pombo (pombo foge a pé, v2.1)',
+  Object.values(runtime.maps).every((item) => item.reactions.rat.ok && item.reactions.pigeonGround.ok),
   JSON.stringify(Object.fromEntries(Object.entries(runtime.maps).map(([map, item]) => [map, item.reactions]))));
 put('AM5b', 'fauna reage e retoma a rota sem salto maior que 20 cm por quadro',
   Object.values(runtime.maps).every((item) => Object.values(item.continuity).every((entry) => entry.maxStep <= .2)),
@@ -341,14 +404,20 @@ put('AM6', 'LOWQ preserva as duas espécies e reduz instâncias',
   runtime.lowq.report.counts.rat >= 1 && runtime.lowq.report.counts.pigeon >= 1
     && runtime.lowq.report.counts.total < runtime.maps.fy_lajes.report.counts.total,
   `full=${runtime.maps.fy_lajes.report.counts.total} low=${runtime.lowq.report.counts.total}`);
-/* Teto por mapa, medido em 17/08 com a população autoral do R27 + folga curta —
-   ver PROCEDÊNCIA DOS LIMIARES no cabeçalho. Piora reprova; população nova mede antes. */
+/* Teto por mapa, medido + folga curta. 17/08: população R27 do lajes media
+   84.082 tris/19 draws (com 3 pombos de voo a 10.856 tris cada). 19/08 (v2.1
+   frente D): pombo pousado (6.928) no lugar do voo + gato/galinha/vaca mediu
+   74.746/20 (lajes), 33.776/12 (corrego), 28.068/5 (escadão). 19/08 (vida 1):
+   +2 baratas (2.124 tris cada, Mint simplificado 0,4) → corrego 38.024/14
+   medido no browser; teto rederivado com a mesma folga. A integração com a
+   frente B (jacaré/capivara/grama no córrego) re-mede e rederiva de novo.
+   Piora reprova; população nova mede antes. Ver PROCEDÊNCIA DOS LIMIARES. */
 const AM7_TETOS = {
-  fy_lajes: { tris: 90000, meshes: 20 },
-  fy_corrego: { tris: 40000, meshes: 10 },
-  fy_escadao: { tris: 40000, meshes: 10 },
+  fy_lajes: { tris: 78000, meshes: 21 },
+  fy_corrego: { tris: 39000, meshes: 15 },
+  fy_escadao: { tris: 29000, meshes: 6 },
 };
-put('AM7', 'os três mapas desenham GLBs das duas espécies dentro do orçamento',
+put('AM7', 'os três mapas desenham GLBs da fauna dentro do orçamento',
   allKinds && reports.every((report) => { const t = AM7_TETOS[report.map]; return t && report.triangles <= t.tris && report.meshes <= t.meshes; }),
   reports.map((report) => `${report.map}: ${report.counts.total} animais ${report.meshes} draws ${report.triangles} tris gltf=${report.gltf}`).join(' | '));
 put('AM8', 'traçante ocupa ao menos 1 px a 15 m e vive três frames de 60 Hz',
@@ -365,6 +434,36 @@ const errosFauna = Object.fromEntries(Object.entries(runtime.maps).map(([map, it
 put('AM10', 'navegador não registrou erro ao carregar fauna',
   Object.values(errosFauna).every((errors) => errors.length === 0),
   Object.entries(errosFauna).map(([map, errors]) => `${map}=${errors.length}`).join(' '));
+/* AM11 (v2.1, BUG-57): pombo não voa mais — dono 18/08: "a pomba que nao esta com
+   bracos avertos deveria ficar so na ponta das lajes ou no chao". O GLB de voo era
+   estático (0 skins) com asas abertas: trajetória aérea com asset sem rig é o defeito.
+   Mede o ESTADO real do controlador (nenhum fly/takeoff) e a trajetória (bob vertical
+   ≤ 0,35 m); o pombo pousado numa laje anda na cota da laje. Mutante:
+   pomba-voa-de-novo. */
+const vooEstados = Object.values(runtime.maps).flatMap((item) => item.flightAudit.states);
+const bobMax = Math.max(...Object.values(runtime.maps).map((item) => item.flightAudit.bob));
+put('AM11', 'nenhuma pomba voa: sem estado fly/takeoff e bob vertical ≤ 0,35 m',
+  !srcAmb.includes('pigeonFlight')
+    && Object.values(runtime.maps).every((item) => item.flightAudit.presente)
+    && !vooEstados.some((estado) => estado === 'fly' || estado === 'takeoff')
+    && bobMax <= .35,
+  `srcSemPigeonFlight=${!srcAmb.includes('pigeonFlight')} estados=[${[...new Set(vooEstados)].join(',') || '-'}] bobMax=${bobMax.toFixed(3)}m`);
+/* AM12 (v2.1): espécies novas por bioma, com rig tocando — gato na favela (lajes),
+   galinha no córrego; o clipTime > 0 prova que o AnimationMixer anda (bicho estático
+   com mixer nulo é o mutante bicho-estatico). */
+const ESPECIE_ESPERADA = { fy_lajes: ['cat'], fy_corrego: ['chicken'], fy_escadao: [] };
+const especieFalha = Object.entries(ESPECIE_ESPERADA).flatMap(([map, especies]) => {
+  const report = runtime.maps[map]?.report;
+  /* em modo mutante só o fy_lajes abre (runtimeMaps): mapa não aberto não é cláusula */
+  if (!report || !especies.length) return [];
+  const faltam = especies.filter((e) => !(report.counts[e] > 0));
+  return faltam.map((e) => `${map} sem ${e}`);
+});
+const quadsParados = Object.entries(runtime.maps).filter(([, item]) =>
+  item.speciesAudit.quads > 0 && (item.speciesAudit.clipMin === null || item.speciesAudit.clipMin <= 0)).map(([map]) => map);
+put('AM12', 'espécies novas por bioma existem e o clipe anda (mixer > 0)',
+  especieFalha.length === 0 && quadsParados.length === 0,
+  `${especieFalha.join(' ') || 'biomas ok'}; quads=${Object.entries(runtime.maps).map(([map, item]) => `${map}:${item.speciesAudit.quads}t${item.speciesAudit.clipMin === null ? '-' : item.speciesAudit.clipMin.toFixed(2)}s`).join(' ')}${quadsParados.length ? ` PARADOS: ${quadsParados.join(',')}` : ''}`);
 
 if (saida) writeFileSync(saida, JSON.stringify({ assetReport, runtime, checks }, null, 2));
 for (const check of checks) console.log(`${check.ok ? '✓' : '✗'} ${check.id} ${check.descricao} — ${check.evidencia}`);

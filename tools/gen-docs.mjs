@@ -202,7 +202,6 @@ function medir() {
   const scripts = Object.entries(pkg.scripts).filter(([k]) => !k.startsWith('//'));
   f.scripts = {
     total: scripts.length,
-    check: pkg.scripts.check || null,
     checkFast: pkg.scripts['check:fast'] || null,
     nomes: scripts.map(([k]) => k),
     cmd: "node -p \"Object.keys(require('./package.json').scripts)\"",
@@ -282,7 +281,10 @@ function medir() {
   f.raso = sh('git', ['rev-parse', '--is-shallow-repository']).trim() === 'true';
   const short = sh('git', ['shortlog', '-sn', '--no-merges', 'HEAD']).trim().split('\n').filter(Boolean);
   const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean)
-    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome));   // shortlog deixa empates de count em ordem instável → determinismo
+    /* empate de count: comparação byte-a-byte, NUNCA localeCompare — locale da
+     * máquina flipava "Ruben"/"rubenmarcus" e o docs:check ficava vermelho
+     * num clone e verde noutro com a MESMA árvore (medido mac × CI 18/08). */
+    .sort((a, b) => b.n - a.n || (a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : 0));
   const ehAgente = (n) => /^claude\b/i.test(n) || /^(codex|kimi|gpt|cursor|devin)\b/i.test(n) || /bot\b/i.test(n) || /^github-actions/i.test(n);
   const humanos = autores.filter((a) => !ehAgente(a.nome));
   f.pessoas = {
@@ -652,11 +654,10 @@ const BLOCOS = {
   /* Os scripts do portão, direto do package.json. */
   scripts: (f) => [
     '```bash',
-    `npm run check        # ${f.scripts.check}`,
     `npm run check:fast   # ${f.scripts.checkFast}`,
     '```',
     '',
-    `\`package.json\` tem **${f.scripts.total} scripts**. Vários trazem uma chave \`//nome\` logo acima com o motivo de existirem — é onde mora o porquê.`,
+    `\`package.json\` tem **${f.scripts.total} scripts**; o motivo de cada um mora em \`SCRIPTS.md\` (migrado das chaves \`//nome\` em 18/08/2026) — é onde está o porquê.`,
     rodape(f.scripts.cmd),
   ].join('\n'),
 
@@ -790,7 +791,7 @@ const BLOCOS_EN = {
     '', `**${f.mapas.total} registered maps** - ${f.mapas.emRodadas} open in rounds and ${f.mapas.emCaptura} in capture. \`ctfMode\` sets the initial mode; it does not lock it. There are ${f.mapas.arquivosNoDisco} \`map_*.js\` files on disk, so a file alone does **not** make a map playable.`,
     rodapeEn(f.mapas.cmd),
   ].join('\n'),
-  scripts: (f) => ['```bash', `npm run check        # ${f.scripts.check}`, `npm run check:fast   # ${f.scripts.checkFast}`, '```', '', `\`package.json\` has **${f.scripts.total} scripts**. Keys prefixed with \`//\` explain why the adjacent command exists.`, rodapeEn(f.scripts.cmd)].join('\n'),
+  scripts: (f) => ['```bash', `npm run check:fast   # ${f.scripts.checkFast}`, '```', '', `\`package.json\` has **${f.scripts.total} scripts**; the reason behind each one lives in \`SCRIPTS.md\`.`, rodapeEn(f.scripts.cmd)].join('\n'),
   stack: (f) => [
     '| Layer | Tool | Version |', '|---|---|---|',
     `| 3D engine (WebGL) | **Three.js**, vendored | \`${f.stack.three}\` |`, `| Game | vanilla ES modules, **zero build** | ${f.jogo.arquivos} files |`,

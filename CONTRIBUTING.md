@@ -46,7 +46,7 @@ critério de aceite.
 ## Rodando localmente
 
 ```bash
-git clone https://github.com/corosolto/client.git
+git clone https://github.com/rubenmarcus/csbrasil.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional — sem envs, o ranking responde 503 e o resto roda
@@ -129,6 +129,18 @@ Espelhe em `src/data/jogo.ts` (`MAPAS`) pro mapa aparecer em `/mapas`.
 
 ## Antes de abrir o PR
 
+**O `git push` já roda o `check:deploy` sozinho** — é o hook `.githooks/pre-push`.
+Ele existe porque numa única sessão de 12/08/2026 quatro pushes seguidos abriram CI
+vermelho em portão que roda em **5 segundos** na máquina: `docs:check` duas vezes,
+`arch:check` e `eval:shaderlog`. O portão existia; ninguém rodava.
+
+É o `check:deploy` e não o `check:fast` de propósito: 20 passos determinísticos, sem
+browser e sem rede, contra 35. Portão que demora vira portão que se contorna. Quando
+você precisar mesmo passar por cima, `PULAR_PORTAO=1 git push` — e o CI continua
+sendo a rede de baixo.
+
+Antes de abrir o PR, o resto continua na sua mão:
+
 ```bash
 npm run check        # quality gate completo
 npm run arch         # se você mexeu em public/js, o ARCH.md precisa ser regerado
@@ -187,28 +199,6 @@ E teste à mão: o jogo abre, o console fica limpo, uma partida completa roda
    > Contribuições anteriores à troca entraram sob MIT — licença permissiva e
    > compatível: elas seguem MIT dentro do conjunto, que é distribuído sob
    > AGPL-3.0. Se isso for decisivo pra você, pergunte antes de abrir o PR.
-
-## Quem conserta o quê (bots da casa)
-
-**`csbrasil-bot` é pipeline** (classificação, portões, deploy). **`estraga-codigo` é quem
-revisa e conserta** — o nome é ironia: ele existe pra *desestragar*. Divisão do dono
-(17/08): quem abriu o PR não precisa esperar humano pra ver um fio major virar conserto.
-
-Regras de atuação do `estraga-codigo` (o caso #310, 16/08, pagou a lição):
-
-1. **Nunca pusha em fork de contribuidor** — o "permission denied" do #310 não era falta
-   de permissão ajustável: push em fork só com convite de colaborador do dono do fork,
-   e isso não se pede a contribuidor casual.
-2. **Fix mora em branch do repo base**: `estraga-codigo/fix-<n>-<slug>` criada da head
-   do PR + commit de conserto. O autor do PR continua creditado (a branch preserva os
-   commits dele); o dono mergeia o PR original atualizado ou o da fix, como preferir.
-3. **Patch `git am` sempre no comentário** — quem prefere aplicar no próprio fork
-   aplica (é o que o `git am` preserva: autoria e mensagem).
-4. **Não mergeia o que consertou** — revisão adversarial é de outro par de olhos
-   (humano ou a esteira de portões).
-
-Permissões hoje: `write` no repo base (suficiente para 1-3). `maintain` (editar
-metadata de PR de terceiro) exige membro da org — pendente de convite pelo dono.
 
 ### As superfícies da licença
 

@@ -3,18 +3,8 @@ import * as THREE from 'three';
 
 function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
 
-/* ANISOTROPIA — o buraco de 12 anos desta fábrica.
-   `tex()` produz TODO chão procedural do jogo, e nunca atribuía `anisotropy`. O default do
-   three é 1, ou seja filtragem trilinear pura: a textura vista em ângulo RASANTE (que num
-   FPS é o chão, o tempo todo, do horizonte até os pés) tem os mipmaps escolhidos pelo eixo
-   de maior compressão e vira papa a partir de uns 6-8 m. Medido antes do conserto pela
-   cláusula TEXEL4 do tools/eval/texel-check.mjs: 118 superfícies horizontais só no
-   fy_quebrada, 125 no ferro_velho, em 9 dos 10 mapas.
-   8 é o valor: `getMaxAnisotropy()` devolve 16 em qualquer GPU de notebook com WebGL2 desde
-   2015, e o ganho de 8 para 16 já não se vê no piso a 1280×720. Em `quality: 'low'` cai
-   para 4, que é onde a banda de memória começa a importar mais que a nitidez do horizonte.
-   O espelho destes números mora em tools/eval/texel-tetos.mjs (ANISO_ALVO / ANISO_MIN).
-   Kill-switch: `?texel=0` volta a 1, junto com o resto da escala de texel. */
+/* Anisotropia 8 (4 em `q=low`): sem ela o chão visto em ângulo rasteiro vira papa.
+   Espelho dos tetos: tools/eval/texel-tetos.mjs (ANISO_ALVO/ANISO_MIN); kill-switch `?texel=0`. */
 const _texQS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
 const TEXEL_ON = _texQS.get('texel') !== '0';
 const ANISO_TEX = !TEXEL_ON ? 1 : (_texQS.get('q') === 'low' ? 4 : 8);
@@ -22,10 +12,8 @@ const ANISO_TEX = !TEXEL_ON ? 1 : (_texQS.get('q') === 'low' ? 4 : 8);
 function tex(c, repeat = 1, ry = null) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  /* NearestFilter fica: é decisão travada de direção de arte ("retro CS 1.6 pixel look",
-     art-direction v2), e o defeito que ela causava — texel de 12 cm ampliado — some
-     sozinho quando o texel passa de 12 cm para ~0,8 cm. Trocar por Linear aqui seria
-     mudar o look do jogo inteiro a reboque de um conserto de densidade. */
+  /* NearestFilter fica: decisão travada de direção de arte (look pixel CS 1.6);
+     trocar por Linear mudaria o look do jogo inteiro. */
   t.magFilter = THREE.NearestFilter;
   t.minFilter = THREE.LinearMipmapLinearFilter;
   t.anisotropy = ANISO_TEX;
@@ -34,78 +22,20 @@ function tex(c, repeat = 1, ry = null) {
   return t;
 }
 
-/* ===========================================================================
-   TILE PURO — a declaração "o CONTEÚDO desta textura não tem leitura".
-   ---------------------------------------------------------------------------
-   POR QUE ELA PRECISA EXISTIR, e por que ela mora AQUI e não no vao.js:
-   a escala de UV das caixas (vao.js `aoBoxGeo`) tem uma guarda chamada MIN_TILES:
-   abaixo de 2 voltas inteiras a face fica com a UV original, porque RECORTAR uma
-   textura DESENHADA que tila — a caixa dos Correios com o "C" azul, a peça de
-   grafite com a palavra escrita — mostra um pedaço da letra e estraga o desenho.
-   A guarda está certa para essas. Mas ela vale hoje para TODA textura, e a família
-   de chão/estrutura (concreto, asfalto, terra, mato) não tem desenho nenhum: é
-   ruído, mancha e trinca distribuídos uniformemente. Recortar uma janela de 3% de
-   um canvas de ruído dá OUTRO ruído com a mesma estatística — não há o que estragar.
-
-   O PREÇO DE NÃO DECLARAR ISSO, medido (tools/eval/texel-check.mjs, cláusula TEXEL3b):
-   com `repeat` alto (T.dirt está em 17) o tile de mundo vale 68 m, então NENHUMA caixa
-   chega às 2 voltas; todas caem no ramo do TETO_PXM e param, coladas, em exatamente
-   512,0 px/m. No fy_quebrada isso é 4,6× a mediana de 112 — dois níveis de detalhe na
-   mesma tela, que é justamente o defeito que a BAR-CONSISTENCIA §3.1 proíbe. Ou seja:
-   a guarda que protege o desenho estava produzindo o defeito no que não é desenho.
-
-   ISTO NÃO É AFROUXAR TETO. O teto continua onde está para todo mundo; o que muda é
-   que SEIS texturas NOMEADAS aqui declaram que podem ser recortadas, e elas passam a
-   acertar o ALVO_PXM em vez de encostar no teto. Quem não declara continua protegido —
-   inclusive toda textura que nasce fora deste arquivo, cujo conteúdo eu não conheço.
-   Custo: zero. `userData` é um objeto JS que já existe em toda Texture do three.
-   =========================================================================== */
+/* TILE PURO: declara que a textura não tem desenho (só ruído/mancha), então o vao.js
+   pode recortar a UV além da guarda MIN_TILES. Contexto: texel-check TEXEL3b, BAR-CONSISTENCIA §3.1. */
 function puro(t) {
   if (Array.isArray(t)) { t.forEach(puro); return t; }
   if (t) t.userData.tilePuro = true;
   return t;
 }
 
-/* ===========================================================================
-   METROS POR TILE — o `repeat` do CHÃO deixa de ser um número solto.
-   ---------------------------------------------------------------------------
-   As caixas (60% das malhas dos mapas) foram consertadas na GEOMETRIA, em
-   vao.js `aoBoxGeo`: a UV passou a saber o tamanho do mundo, e a densidade delas é
-   `ALVO_PXM` por construção, qualquer que seja o `repeat` daqui — a conta de lá divide
-   por ele de propósito. O CHÃO, não: ele é `PlaneGeometry` criado dentro de cada
-   `map_*.js`, com UV 0→1, e a única alavanca que alcança os 10 mapas de uma vez é o
-   `repeat` gravado aqui, na textura compartilhada.
-
-   Isso tem um limite honesto e ele está escrito aqui em vez de escondido: um `repeat`
-   por textura não pode acertar chões de tamanhos diferentes. As extensões MEDIDAS
-   (tools/eval, os 10 mapas, superfície por superfície) são:
-       dirt ....... 94, 73, 66, 54, 28 m
-       grass ...... 158, 38, 38, 31, 31 m      (o de 158 m é 25 000 dos 29 700 m² totais)
-       asphalt .... 127, 31, 25, 24, 17, 17, 14, 14 m
-   Os valores abaixo são escolhidos para que TODAS essas extensões caiam dentro da banda
-   64-512 px/m da BAR §1.8 — não para que todas acertem 128. Acertar 128 em cada chão
-   exige `repeat` por superfície, que só existe editando os `map_*.js`; quando isso for
-   feito, a convenção é `repeat = extensão / METROS_POR_TILE`.
-
-   O CANVAS sobe de 256² para 512² só no chão (`CHAO_PX`). É o que permite `repeat`
-   moderado em vez de tiling visível: dobrar o canvas dobra a densidade sem repetir mais
-   o desenho. Custo medido: 3 texturas × (512²−256²) × 4 B × 1,33 de mipmap ≈ 3 MB de
-   VRAM no total, e o boot gera 3 canvas maiores. Fora do chão o canvas continua 256²,
-   porque lá a densidade já vem da UV da caixa e canvas maior seria pagar por nada.
-   =========================================================================== */
+/* CHÃO é PlaneGeometry com UV 0→1 criada em cada map_*.js: a única alavanca dos 10
+   mapas é o `repeat` daqui (caixas têm densidade via aoBoxGeo no vao.js). Banda: BAR §1.8. */
 const CHAO_PX = 512;
 
-/* ================================================================
-   DETALHE DE SUPERFÍCIE (R7 — crítica: "materiais chapados, tiling visível")
-   O mundo inteiro era cor+albedo puro: `grep normalMap public/js/*.js` só achava o
-   viewmodel. Sem normal map nenhuma superfície reage ao sol, e sem variação de macro-escala
-   o olho enxerga o tile se repetindo. Aqui geramos, a partir do MESMO canvas do albedo:
-     - normalMap por Sobel da luminância (relevo grátis, sem asset externo);
-     - roughnessMap (escuro = mais áspero) — quebra o especular chapado sob o env map novo.
-   Ficam registrados em WeakMaps indexados pela textura de albedo, então quem cria material
-   só precisa chamar detailFor(t) — ver `lam()` no map.js. Custo de boot: os mapas são
-   gerados em no máx. 512² (relevo não precisa de resolução de albedo).
-   ================================================================ */
+/* DETALHE DE SUPERFÍCIE: normalMap (Sobel do albedo) e roughnessMap derivados do MESMO
+   canvas, cacheados em WeakMaps por textura. Quem cria material chama detailFor(t) — ver `lam()` no map.js. */
 const NORMALS = new WeakMap();
 const ROUGHS = new WeakMap();
 // indexado pelo `source` da textura (o que o `clone()` compartilha) — ver detailFor
@@ -199,16 +129,8 @@ export function registerDetail(t, canvas, strength = 2.2, lo = 0.55, hi = 0.98) 
    mesmos WeakMaps). */
 export function detailFor(t) {
   if (!t) return null;
-  /* ANISOTROPIA TAMBÉM PARA A TEXTURA QUE NÃO NASCEU AQUI.
-     A fábrica `tex()` só alcança o pacote `T`. Quatro mapas montam canvas próprio
-     (map_ferrovelho, map_lajes, map_corrego, map_mansao) e ficavam com anisotropy 1:
-     125, 140, 121 e 74 superfícies horizontais, medidas pela cláusula TEXEL4. Mas TODOS
-     eles passam a textura por aqui para ganhar normal/rough — `detailFor` é o gargalo
-     comum, e é a única alavanca dentro deste arquivo que chega nos 10 mapas.
-     Só sobe quem está no DEFAULT (1): um mapa que escolheu 4 de propósito
-     (map_ferrovelho.js:370) continua com 4, porque sobrescrever escolha alheia é como se
-     perde a confiança de quem trabalha no mesmo repositório.
-     Custo: zero — `anisotropy` é estado de sampler, não upload. */
+  /* Alavanca comum dos 10 mapas: texturas nascidas fora de `tex()` (4 mapas montam
+     canvas próprio) também ganham anisotropia aqui. Só sobe quem está no default (1). */
   if (TEXEL_ON && t.anisotropy <= 1) t.anisotropy = ANISO_TEX;
   let n = NORMALS.get(t), r = ROUGHS.get(t);
   if (!n && !r && t.source && BY_SOURCE.has(t.source)) {
@@ -422,49 +344,20 @@ export function initTextures() {
   }
   T.ground = puro(withDetail(tex(gc, 10, 10), gc, 2.6, 0.60, 0.98));
 
-  /* T.concrete FICA em 256² de propósito, e a conta que justifica isso está aqui porque
-     ela é contraintuitiva: este é o pior candidato do pacote a `repeat`/canvas global.
-     Medido (tools/eval, os 10 mapas, superfície por superfície): 10 097 m² vestem
-     T.concrete, e 6 908 deles são o fy_campomorro — mapa que NÃO usa `aoBoxGeo`
-     (`grep -c aoBoxGeo public/js/map_campomorro.js` = 0), então nenhuma caixa dele tem
-     UV normalizada e a família inteira sai espalhada de 28 a 314 px/m. São 11× de
-     amplitude DENTRO de uma textura só; a banda 64-512 da BAR §1.8 tem 8×. Não existe
-     multiplicador global K que caiba: o K que tira o piso de 28 do vermelho (K≈2,3)
-     joga o topo de 314 para 722, acima do teto. O mesmo vale para o piso de 7,26 px/m
-     do fy_escadao (1 244 m², `addFloor` de 36 × 35 m com a textura compartilhada e
-     `repeat` 1): ele pede K≈17, que estouraria tudo o mais.
-     Ou seja: esses dois mapas precisam de `aoBoxGeo`/`repeat` POR SUPERFÍCIE dentro do
-     próprio map_*.js — não há alavanca honesta daqui. Deixar 256² é a decisão de não
-     trocar um mapa vermelho por três. */
+  /* T.concrete FICA em 256²: a família se espalha de 28 a 314 px/m (campomorro sem aoBoxGeo,
+     escadão a 7,3), e nenhum K global cabe na banda 64-512 da BAR §1.8 — conserto é por superfície no map_*.js. */
   { const c = concreteBase(); T.concrete = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.58, 0.97)); }
-  { /* T.concreteDark SOBE para 512² — e aqui a conta fecha, ao contrário do T.concrete.
-       Medido: 25 479 m² vestem esta textura, e 17 280 deles são UMA superfície: o piso de
-       36 × 240 m do praca_poderes, `PlaneGeometry` com `repeat` 4 × 80, a 49,3 px/m. É
-       sozinha 76% da área abaixo do piso daquele mapa. Plano não passa por `aoBoxGeo`
-       (a UV dele nasce 0→1 dentro do map_*.js), então canvas é a ÚNICA alavanca que o
-       alcança daqui — e ela é segura porque as caixas que usam esta mesma textura têm a
-       UV escalada (fy_escadao 100%, fy_quebrada 94%) e a conta do vao.js divide o canvas
-       fora: elas continuam em 128 px/m exatos, dobrando o canvas ou não.
-       POR QUE 512 E NÃO 1024: as outras superfícies não-escaladas da família também
-       dobram. Em 512 elas ficam em 98 (praça), 356 e 450 (piscina) — todas dentro da
-       banda. Em 1024 a piscina iria a 712 e 900, ACIMA do teto de 512: o conserto de um
-       mapa viraria defeito em outro. 512 é o maior K que não quebra ninguém.
-       Custo medido em tools/eval/texel-custo.mjs: a textura e seus dois derivados
-       (normal + roughness, gerados do mesmo canvas) passam de 256² para 512². */
-    /* Gated pelo TEXEL_ON como o `repeat` da terra e do mato: `?texel=0` tem que devolver
-       o comportamento antigo INTEIRO, senão o A/B de captura mede meia mudança.
-       (Dívida herdada e NÃO consertada aqui: o `CHAO_PX` acima não é gated, então
-       `?texel=0` ainda deixa asfalto/terra/mato em canvas 512².) */
+  { /* T.concreteDark SOBE para 512²: o piso de 36×240 m do praca_poderes (76% da área abaixo
+       do piso do mapa) só é alcançado pelo canvas; 1024 jogaria a piscina acima do teto 512 — ver texel-custo.mjs. */
+    /* Gated pelo TEXEL_ON: `?texel=0` tem que devolver o comportamento antigo INTEIRO,
+       senão o A/B mede meia mudança. (Dívida não consertada: CHAO_PX não é gated.) */
     const CD_PX = TEXEL_ON ? 512 : 256;
     const c = concreteBase(CD_PX, CD_PX, '#6f6a62', '#57534c');
     T.concreteDark = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.60, 0.98));
   }
 
-  { /* asphalt for central lane — CHÃO: canvas 512² (era 256²).
-       Extensões medidas: 127, 31, 25, 24, 17, 17, 14, 14 m, que davam 80, 33, 41, 43, 61,
-       61, 71, 71 px/m — sete das oito abaixo do piso de 64. Só dobrar o canvas dobra todas
-       (160, 66, 82, 86, 122, 122, 142, 142) e leva a família inteira para dentro da banda,
-       sem repetir o desenho mais vezes: por isso o `repeat` fica em 4. */
+  { /* asphalt — CHÃO: canvas 512² e repeat 4. Dobrar o canvas basta para trazer as 8
+       extensões medidas (14-127 m) para dentro da banda 64-512 px/m da BAR §1.8. */
     const P = CHAO_PX;
     const c = canvas(P, P), x = c.getContext('2d');
     x.fillStyle = '#5c5a58'; x.fillRect(0, 0, P, P);
@@ -481,23 +374,8 @@ export function initTextures() {
        quente): 0,478 no albedo vira 0,65+ na tela e sozinha estoura o teto de 5 % de C2.
        Alvo do gabarito para textura base de terra/areia/asfalto: S 0,20-0,30. Aqui: 0,26,
        matiz 31° intacto — é o hue que diz "terra brasileira", não a saturação. */
-    /* CHÃO: canvas 512² (era 256²) e repeat 17 (era 3). A terra era a PIOR superfície do
-       jogo — 22 151 m² a 8-27 px/m, o chão do fy_quebrada a 8,18 px/m contra os 628 px/m
-       da parede de tijolo a doze metros. Extensões medidas: 94, 73, 66, 54, 28 m; com
-       512 px e repeat 17 elas viram 93, 119, 132, 161, 311 px/m — as cinco dentro da
-       banda 64-512 da BAR §1.8, e as duas maiores (que são o chão que o jogador pisa)
-       em cima do alvo de 128. Repeat 17 e não 26 (= 53,7 m / 2,0 m) porque o canvas
-       dobrou: o tile passa a valer 4,0 m de mundo, não 2,0.
-       17 É TETO, E O TETO NÃO É DA TERRA — medido varrendo 20/23/24/26 nos 10 mapas.
-       Subir daqui melhora o fy_quebrada (mediana 112 -> 131, e a TEXEL3b dele fecha em 26)
-       mas ACENDE duas cláusulas novas: a dispersão do fy_escadao vai de 1,27x para 1,79x e
-       a do fy_campomorro de 1,42x para 1,88x, as duas acima do 1,5x da BAR-CONSISTENCIA
-       §3.1. O motivo é que nesses dois a MEDIANA não sobe junto: ela é fixada por
-       superfície que NÃO passa por `aoBoxGeo` (o piso de 36 x 35 m do escadão a 7,3 px/m;
-       as caixas de concreto do campomorro a 28 px/m, mapa com zero chamadas de aoBoxGeo),
-       então subir o chão só afasta o p95 da mediana. Trocar uma vermelha por duas é pior.
-       Quando esses dois mapas tiverem `repeat`/UV por superfície, este número pode ir para
-       ~24, que é onde a mediana do quebrada encosta no ALVO_PXM. */
+    /* CHÃO: canvas 512² e repeat 17 põem as 5 extensões medidas (28-94 m) na banda 64-512 da BAR §1.8.
+       17 É TETO: subir acende a dispersão de 1,5× do escadão/campomorro (BAR-CONSISTENCIA §3.1). */
     const P = CHAO_PX;
     const c = canvas(P, P), x = c.getContext('2d');
     x.fillStyle = TEX_SAT_HOT ? '#8a6b48' : '#8a7866'; x.fillRect(0, 0, P, P);
@@ -509,11 +387,8 @@ export function initTextures() {
        precisa contrastar com a terra, mas esse contraste vem do MATIZ (85° contra 31°),
        não do croma. S 0,32: fica acima do teto de terra (é vegetação viva) e ainda assim
        longe de 0,55, que fica reservado a bandeira/placa/barril/cone. */
-    /* CHÃO: canvas 512² (era 128², o menor do pacote) e repeat 30 (era 2). O mato tem a
-       distribuição mais torta do jogo: cinco superfícies de 158, 38, 38, 31 e 31 m, e a
-       de 158 m sozinha é 25 000 dos 29 700 m² — ela É o gramado do jogo, as outras são
-       canteiros. Por isso o alvo de 128 px/m foi mirado NELA (512 × 30 / 158 = 97 px/m);
-       os canteiros sobem para 404-495 px/m, que ainda cabe embaixo do teto de 512. */
+    /* CHÃO: canvas 512² e repeat 30, mirados no gramado de 158 m (25 000 dos 29 700 m² do
+       jogo): ele fica a 97 px/m e os canteiros (31-38 m) cabem abaixo do teto de 512. */
     const P = CHAO_PX;
     const c = canvas(P, P), x = c.getContext('2d');
     x.fillStyle = TEX_SAT_HOT ? '#5f7d3a' : '#677d55'; x.fillRect(0, 0, P, P);
@@ -623,10 +498,8 @@ export function initTextures() {
     poster('#2b4d8f', '#fff', ['CANDIDATO', 'FICTÍCIO', 'PROMETO NADA']),
   ];
 
-  // --- poster art (public/posters) — curated satirical posters for the map walls.
-  // [file, aspect w/h]. Prioritários primeiro, depois o resto. Personagens e marcas
-  // protegidas não entram neste pool.
-  // Reproduz dimensões, aspecto real e desvio: node tools/eval/poster-aspect-check.mjs --json
+  // --- poster art (public/posters): pool satírico; personagens e marcas protegidas não entram.
+  // Dimensões/aspecto reproduzidos por `node tools/eval/poster-aspect-check.mjs --json`.
   const POSTER_FILES = [
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
     ['New Project (1).png', 0.5625],
@@ -910,6 +783,162 @@ export function initTextures() {
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
     ['or-stencil-pomba.png', 1.181, 'ilustracao', 0],
   );
+  /* PACK PIXO SP×RJ (frente F, v2.1): obra própria, estilo sem assinatura — references/graffiti/PIXACAO-SP-RJ.md.
+     5º campo = cidade (portão GRAFFITI-EDITORIAL). GERADO por tools/gen-graffiti-decals.mjs --pack — edite o script. */
+  /* PIXO-PACK:GERADO-INICIO */
+  DECAL_FILES.push(
+    ['or-pixo-rj-alto.png', 3.346, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-areia.png', 2.86, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-arena.png', 3.346, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-asa.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-baile.png', 3.122, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-baixada.png', 3.303, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-barco.png', 2.709, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bike.png', 2.142, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bola.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bonde.png', 2.709, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-brisa.png', 2.599, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-calcada.png', 2.599, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-calor.png', 2.943, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-campo.png', 2.723, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-coco.png', 2.681, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-colina.png', 4.096, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-descida.png', 3.18, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duna.png', 3.282, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-letra.png', 2.547, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-mancha.png', 2.96, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-rabisco.png', 2.783, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-spray.png', 2.535, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-traco.png', 2.813, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-baile-funk.png', 3.765, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-praia-mar.png', 3.18, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-zn-zs.png', 2.86, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-encosta.png', 4.491, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-estacao.png', 3.391, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-faixa.png', 2.626, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-ferro.png', 2.876, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-fundo.png', 3.938, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-funk.png', 2.977, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-grau.png', 2.016, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-lagoa.png', 3.048, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-leste.png', 2.404, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-mare.png', 3.122, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-mureta.png', 3.303, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-norte.png', 3.22, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-oeste.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-onda.png', 1.882, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-ce.png', 0.939, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-copa.png', 1.145, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-lua.png', 1.101, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-rio.png', 1.191, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-sol.png', 1.03, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-voo.png', 1.177, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-zn.png', 0.977, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-pedra.png', 2.909, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pier.png', 3.938, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pipa.png', 2.723, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pique.png', 2.438, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pista.png', 3.368, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-praia.png', 2.473, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-prancha.png', 3.325, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-quadra.png', 3.765, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-raia.png', 2.133, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-rede.png', 2.573, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-regata.png', 2.639, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-remo.png', 2.359, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sal.png', 2.612, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-samba.png', 2.427, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sinal.png', 2.612, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-skate.png', 3.483, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-solto.png', 2.081, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-subida.png', 4.096, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-suburbio.png', 3.58, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sul.png', 2.876, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-surfe.png', 3.793, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-torcida.png', 2.798, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trem.png', 2.098, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trilha.png', 4.491, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trilho.png', 2.738, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-vela.png', 2.462, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-vento.png', 2.485, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-verao.png', 2.926, 'tag', 0, 'RJ'],
+    ['or-pixo-sp-andaime.png', 1.193, 'tag', 0, 'SP'],
+    ['or-pixo-sp-antena.png', 0.75, 'tag', 0, 'SP'],
+    ['or-pixo-sp-asfalto.png', 1.862, 'tag', 0, 'SP'],
+    ['or-pixo-sp-avenida.png', 0.686, 'tag', 0, 'SP'],
+    ['or-pixo-sp-beco.png', 1.24, 'tag', 0, 'SP'],
+    ['or-pixo-sp-bloco.png', 0.57, 'tag', 0, 'SP'],
+    ['or-pixo-sp-caixa.png', 0.873, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cal.png', 0.496, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cerca.png', 0.625, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cimento.png', 0.973, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cinza.png', 0.777, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coluna.png', 0.939, 'tag', 0, 'SP'],
+    ['or-pixo-sp-concreto.png', 1.004, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coro.png', 1.33, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-alicate.png', 1.255, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-chave.png', 0.836, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-martelo.png', 1.082, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-serrote.png', 1.018, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-trator.png', 1.135, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-garoa-cinza.png', 1.816, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-portao-grade.png', 1.809, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-viaduto-tunel.png', 2.286, 'tag', 0, 'SP'],
+    ['or-pixo-sp-escada.png', 0.58, 'tag', 0, 'SP'],
+    ['or-pixo-sp-esquina.png', 0.826, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ferrugem.png', 1.225, 'tag', 0, 'SP'],
+    ['or-pixo-sp-fumaca.png', 0.953, 'tag', 0, 'SP'],
+    ['or-pixo-sp-galpao.png', 0.775, 'tag', 0, 'SP'],
+    ['or-pixo-sp-garoa.png', 0.863, 'tag', 0, 'SP'],
+    ['or-pixo-sp-giz.png', 0.445, 'tag', 0, 'SP'],
+    ['or-pixo-sp-grade.png', 0.873, 'tag', 0, 'SP'],
+    ['or-pixo-sp-guincho.png', 0.74, 'tag', 0, 'SP'],
+    ['or-pixo-sp-janela.png', 0.793, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ladeira.png', 0.836, 'tag', 0, 'SP'],
+    ['or-pixo-sp-laje.png', 1.467, 'tag', 0, 'SP'],
+    ['or-pixo-sp-lata.png', 0.848, 'tag', 0, 'SP'],
+    ['or-pixo-sp-marginal.png', 1.261, 'tag', 0, 'SP'],
+    ['or-pixo-sp-mercado.png', 1.182, 'tag', 0, 'SP'],
+    ['or-pixo-sp-morro.png', 1.561, 'tag', 0, 'SP'],
+    ['or-pixo-sp-muro.png', 0.736, 'tag', 0, 'SP'],
+    ['or-pixo-sp-obra.png', 0.586, 'tag', 0, 'SP'],
+    ['or-pixo-sp-oficina.png', 0.93, 'tag', 0, 'SP'],
+    ['or-pixo-sp-padaria.png', 1.299, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coroa.png', 0.574, 'peca', 0, 'SP'],
+    ['or-pixo-sp-estrela.png', 0.857, 'peca', 0, 'SP'],
+    ['or-pixo-sp-flecha.png', 1.202, 'peca', 0, 'SP'],
+    ['or-pixo-sp-leste26.png', 0.549, 'peca', 0, 'SP'],
+    ['or-pixo-sp-norte26.png', 0.596, 'peca', 0, 'SP'],
+    ['or-pixo-sp-raio.png', 0.635, 'peca', 0, 'SP'],
+    ['or-pixo-sp-zl26.png', 0.334, 'peca', 0, 'SP'],
+    ['or-pixo-sp-pilar.png', 0.91, 'tag', 0, 'SP'],
+    ['or-pixo-sp-pintura.png', 1.188, 'tag', 0, 'SP'],
+    ['or-pixo-sp-poco.png', 0.527, 'tag', 0, 'SP'],
+    ['or-pixo-sp-poeira.png', 0.844, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ponte.png', 0.738, 'tag', 0, 'SP'],
+    ['or-pixo-sp-porta.png', 0.895, 'tag', 0, 'SP'],
+    ['or-pixo-sp-portao.png', 0.895, 'tag', 0, 'SP'],
+    ['or-pixo-sp-porteira.png', 1.45, 'tag', 0, 'SP'],
+    ['or-pixo-sp-prumo.png', 0.709, 'tag', 0, 'SP'],
+    ['or-pixo-sp-quintal.png', 0.934, 'tag', 0, 'SP'],
+    ['or-pixo-sp-reboco.png', 0.916, 'tag', 0, 'SP'],
+    ['or-pixo-sp-risco.png', 0.541, 'tag', 0, 'SP'],
+    ['or-pixo-sp-rodovia.png', 0.996, 'tag', 0, 'SP'],
+    ['or-pixo-sp-rolo.png', 0.801, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tampa.png', 1.228, 'tag', 0, 'SP'],
+    ['or-pixo-sp-telha.png', 0.781, 'tag', 0, 'SP'],
+    ['or-pixo-sp-telhado.png', 1.004, 'tag', 0, 'SP'],
+    ['or-pixo-sp-terra.png', 0.637, 'tag', 0, 'SP'],
+    ['or-pixo-sp-terreno.png', 0.982, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tijolo.png', 0.73, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tinta.png', 0.844, 'tag', 0, 'SP'],
+    ['or-pixo-sp-travessa.png', 0.977, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tunel.png', 0.912, 'tag', 0, 'SP'],
+    ['or-pixo-sp-varal.png', 0.754, 'tag', 0, 'SP'],
+    ['or-pixo-sp-viaduto.png', 0.846, 'tag', 0, 'SP'],
+    ['or-pixo-sp-viga.png', 0.795, 'tag', 0, 'SP'],
+  );
+  /* PIXO-PACK:GERADO-FIM */
   /* As homenagens or-hom-* (pessoa real) saíram do pool E do disco em 17/08 —
      contrato editorial; o portão GRAFFITI-EDITORIAL impede a reintrodução. */
   /* Galeria desativada por contrato editorial: os mapas não geram arte de pessoa
@@ -962,6 +991,8 @@ export function initTextures() {
   T.decalTipos = DECAL_FILES.map(([, , k]) => k);
   T.decalClaro = DECAL_FILES.map(([, , , c]) => !!c);
   T.decalFiles = DECAL_FILES.map(([f]) => f);
+  /* 'SP' | 'RJ' | null — só o pack or-pixo-* declara (5º campo); o resto é null. */
+  T.decalCidades = DECAL_FILES.map(([, , , , cd]) => cd || null);
   /* Índices de um tipo — `T.decalsDoTipo('tag')`. Devolve índice, não textura, de
      propósito: assim dá pra sortear e carregar só o que a parede vai usar. */
   T.decalsDoTipo = (tipo) => T.decalTipos.reduce((a, k, i) => (k === tipo && a.push(i), a), []);

@@ -1,17 +1,5 @@
-// ESCADÃO (fy_escadao) — spec plans/12-ESCADAO.md: comunidade cortada por uma ESCADARIA
-// MONUMENTAL de azulejo colorido (estilo Selarón, genérico). Um time nasce EMBAIXO (rua com
-// bar e mercadinho); o outro nasce EM CIMA (laje-mirante). Entre os dois: o escadão, com
-// BARRICADAS nos patamares e um CAVEIRÃO atravessado no patamar central.
-//
-// PLANTA (eixo longo = z; norte = -z, subida). Faixas em x:
-//   beco O   x ∈ [-15, -9]    escada x ∈ [-2,5, 2,5]    beco L   x ∈ [9, 15]
-//   BASE     z ∈ [14, 40]  y=0
-//   ESCADA   termina em TOP_Z e sobe até H_TOP em 3 lances com patamares
-//   TOPO     z ∈ [-40, TOP_Z] y=H_TOP
-//
-// O QUE FAZ A CTF2 FECHAR: os dois BECOS laterais têm escadas PRÓPRIAS que sobem do nível da
-// rua (y=0) até o PATAMAR 1 (y=RISE). Cada beco é uma rota independente separada por ≥ 6 m
-// do eixo da escada central — é o que dá as 2+ rotas separadas entre spawn e bandeira.
+// ESCADÃO (fy_escadao) — spec plans/12-ESCADAO.md. Invariante CTF2: os dois becos laterais
+// têm escada própria rua → patamar 1, separados ≥ 6 m do eixo central (2+ rotas spawn→bandeira).
 import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -21,6 +9,7 @@ import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
@@ -47,19 +36,13 @@ const TOP_Z = F3.z0;
 
 // bordas da escada central em x
 const X0 = -ESC.larg / 2, X1 = ESC.larg / 2;
-// becos
 const BW = { x0: -15, x1: -9 };   // beco oeste
 const BE = { x0: 9,   x1: 15 };   // beco leste
-// escada do beco: sobe de y=0 a y=RISE
 const B_STAIR = { z0: 11 - RUN, z1: 11 };
 // Laje de chegada da escada do beco (a "boca" de cima do lance).
 const CHEGADA_D = 2.2;
-// PLATAFORMA DE CONEXÃO beco -> patamar 1. Ia só de P1.z0 a P1.z1, e a laje de chegada do beco
-// morria 1,2 m antes dela: sobrava uma fresta de 0,62 m em x=±9 — menos que o diâmetro do corpo
-// (raio 0,42 m). Resultado medido pela régua escadao-rota: a escada do beco leste terminava
-// numa laje de 7 m² sem saída e a própria plataforma de conexão (com a bandeira PATAMAR 1 em
-// cima) era uma ilha inalcançável. Agora a conexão desce até a testa da chegada do beco, o que
-// abre uma frente de 2,2 m entre as duas lajes na mesma cota (y = RISE).
+// Plataforma de conexão beco → patamar 1: tem de descer até a testa da chegada do beco,
+// senão a laje vira ilha sem saída (medido pela régua escadao-rota).
 const CONEX = { z0: B_STAIR.z0 - CHEGADA_D, z1: P1.z1 };
 // Continuação física do flanco oeste: P1 -> P2 -> mirante, 12 m afastada do eixo central.
 const AUX_X = -12, AUX_W = 3;
@@ -355,13 +338,8 @@ export function buildEscadao(scene, T) {
   buildLanding(P2.z0, P2.z1, RISE * 2);
   buildFlight(F3, RISE * 2, MAT_AZ);
 
-  // Muros laterais dos patamares (proteção + bloqueio de visão).
-  // O muro do PATAMAR 1 corria os 4 m inteiros e era ele que selava o patamar das duas
-  // plataformas de conexão — a escada do beco leste morria numa laje de 7 m² e a bandeira
-  // PATAMAR 1 ficava numa ilha. Agora ele é partido em dois trechos com um VÃO de 2 m no
-  // meio: a rota beco → conexão → patamar 1 que o mapa sempre declarou passa a existir de
-  // verdade. O muro do PATAMAR 2 continua inteiro: ali fora não há laje nenhuma, é queda
-  // de 4 m para a rua, e o muro é a guarda.
+  // Muros laterais dos patamares (proteção + bloqueio de visão). O vão de 2 m no muro do
+  // PATAMAR 1 é a rota beco → patamar 1; o do PATAMAR 2 fica inteiro porque fora é queda.
   const VAO_P1 = 2.0;
   for (const [pz0, pz1, py] of [[P1.z0, P1.z1, RISE], [P2.z0, P2.z1, RISE * 2]]) {
     const trechos = py === RISE
@@ -387,12 +365,8 @@ export function buildEscadao(scene, T) {
   corrimao(F2.z0, F2.z1, RISE);
   corrimao(F3.z0, F3.z1, RISE * 2);
 
-  /* ===================== BECOS LATERAIS (flancos com escada própria) =====================
-     Cada beco é um corredor de 6 m de largura (x ∈ [±9, ±15]) que sobe do nível da rua
-     (y=0) até a altura do PATAMAR 1 (y=RISE). A escada do beco usa a mesma corrida da central.
-     O beco desemboca numa plataforma de conexão (x ∈ [±5, ±9]) que liga ao patamar 1.
-     Isto é o que dá as 2+ rotas separadas (CTF2): a rota central (escadão) e a rota lateral
-     (beco) ficam separadas por ≥ 6 m. */
+  /* ===================== BECOS LATERAIS =====================
+     Flancos com escada própria rua → patamar 1; são as 2+ rotas da invariante CTF2. */
   function buildBeco(bx0, bx1, dir) {
     const cx = (bx0 + bx1) / 2;   // centro do beco em x
     // piso do beco (corredor plano na base)
@@ -417,9 +391,7 @@ export function buildEscadao(scene, T) {
     const pd = CONEX.z1 - CONEX.z0, pcz = (CONEX.z0 + CONEX.z1) / 2;
     addFloor(pw, pd, pcx, pcz, MAT.concrete, RISE + 0.01);
     addBox(pw, 0.12, pd, lam({ color: 0x909088 }), pcx, RISE - 0.12, pcz);
-    // As duas bordas de queda (2,04 m) ficam fechadas por mureta — MAP6 exige guarda em toda
-    // borda alcançável com queda ≥ 2 m. O acesso continua aberto pela chegada do beco (x=±9)
-    // e pelo vão da mureta do patamar central.
+    // Muretas fecham as bordas de queda (2,04 m) — MAP6 exige guarda em borda com queda ≥ 2 m.
     for (const z of [CONEX.z0 + 0.11, CONEX.z1 - 0.11])
       addBox(pw, 1.05, 0.22, MAT_AZ_LONG, pcx, RISE, z);
     addBox(0.42, 0.12, 2.2, AZ_CAPS[dir > 0 ? 0 : 2], inner, RISE + 0.04, chegadaZ, { collide: false, cast: false, skirt: false });
@@ -468,9 +440,7 @@ export function buildEscadao(scene, T) {
     const caveirao = new THREE.Group();
     caveirao.userData.landmark = 'caveirao';
     caveirao.position.set(cvX, cy + .18, cvZ);
-    // Casco monovolume com frente inclinada. A versão anterior vestia um caminhão-baú
-    // com torre/mastro; no frame 3:2 continuava lendo caminhão. Aqui cabine e carroceria
-    // são uma única cunha blindada, sem logo, caveira ou insígnia oficial.
+    // Casco monovolume genérico, sem logo, caveira ou insígnia oficial (linha editorial).
     const L = 4.6, W = 2.1, H = 2.18, xf = L / 2, xt = xf - .62, xr = -L / 2;
     const vertices = new Float32Array([
       xr,0,-W/2,  xr,0,W/2,  xf,0,-W/2,  xf,0,W/2,
@@ -527,11 +497,7 @@ export function buildEscadao(scene, T) {
   // base: portão arrancado
   addBox(2.5, 1.2, 0.8, lam({ color: 0x4a4a3a, roughness: 0.8 }), 1.5, 0, 14.5);
 
-  /* ===================== BASE (rua) ======================
-     Spawn A (E) precisa de cobertura contra tiros da escada e becos.
-     A exposição medida é alta (53%) porque a base é um tabuleiro aberto
-     visto de cima pela escada. A correção é FECHAR a linha de visão da
-     escada para o spawn com prédios no caminho. */
+  /* ===================== BASE (rua) ====================== */
   // bar de esquina (bloqueia visão do beco oeste)
   casa(-12, 32, 6, 5, 3.5, 0);
   addBox(6, 0.8, 0.3, lam({ color: 0x8a4a2a }), -12, 3.5, 29.8, { collide: false });
@@ -542,22 +508,8 @@ export function buildEscadao(scene, T) {
   casa(-5, 22, 4, 5, 4, 1);
   casa(5, 22, 4, 5, 4, 0);
 
-  /* ---------- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E) ----------
-     O dono: "dá pra ver o andar do respawn de cima". Medido pela régua escadao-rota:
-     205 pontos altos liam o spawn E, 134 deles no mirante inteiro. A causa é simples e não
-     tinha nada de exótico: o escadão é uma calha aberta que desce 6,12 m em linha reta até a
-     rua, e o parapeito do mirante tem 1,20 m — abaixo dos 1,62 m do olho. Quem está em cima
-     olha POR CIMA da própria mureta e enxerga a rua inteira lá embaixo.
-
-     Não dá pra fechar isso na origem sem emparedar o mirante, e mover o spawn era exatamente
-     o erro do BUG-32 (esconde o defeito e ele volta no próximo mapa com plataforma). O que
-     resolve é atravessar a calha: todas essas visadas passam por z ≈ 15,5 numa faixa estreita
-     de altura (≈ 2,4 m a 3,7 m), porque convergem nos 4 slots do spawn, que ocupam menos de
-     5 m em x. Uma laje sobre pilotis nessa cota corta a faixa inteira e deixa a passagem a pé
-     livre por baixo — que é como uma favela resolve isso na vida real (casa sobre a rua).
-
-     A laje NÃO é piso: `groundHeightAt` não a conhece, então ninguém sobe nela e ela não vira
-     plataforma sem saída (a cláusula 1 da régua checaria). Ela é massa e occluder. */
+  /* ---- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E; BUG-32, régua escadao-rota) ----
+     Invariante: NÃO é piso — `groundHeightAt` não a conhece, senão vira plataforma sem saída. */
   {
     const LAJE_Z = 15.5, LAJE_D = 2.6, LAJE_W = 17.2, LAJE_Y = 2.35, LAJE_H = 0.40;
     const marca = (m) => { m.userData.escadaoAbrigo = true; return m; };
@@ -584,9 +536,7 @@ export function buildEscadao(scene, T) {
 
   /* ===================== TOPO (mirante) =====================
      Spawn B precisa de cobertura contra tiros da escada. */
-  // Caixa d'água Tripo PBR: o cubo preto anterior passava colisão/MAP5, mas na captura
-  // 3:2 lia literalmente como um bloco sem autoria. O proxy conserva o mesmo cover e
-  // vira fallback quando o GLB não carrega; o asset só substitui os pixels.
+  // Caixa d'água Tripo PBR: o proxy mantém o mesmo cover e é fallback se o GLB não carrega.
   propAt('caixa_dagua', -12, -32, 3.0, 2.5, 2.5,
     lam({ color: 0x1a1a1a, roughness: 0.8 }), 0, H_TOP);
   // barraco de obra (cover)
@@ -736,18 +686,15 @@ export function buildEscadao(scene, T) {
   // patamares: cruzeta de um lado ao outro
   linha(-2.5, P1.z1, 2.5, P1.z0, 1.2);
   linha(-2.5, P2.z1, 2.5, P2.z0, 1.2);
-  // becos: escada própria + conexão ao patamar 1.
-  // A reta antiga beco → patamar 1 cortava o muro do beco (x=±9) e o muro do patamar, e por
-  // isso `blocked` derrubava os nós do meio: os bots nunca tiveram essa rota. Agora ela é uma
-  // cotovelada que segue a geometria real — desce a laje de chegada, atravessa a frente comum
-  // em z≈6,2 (única cota onde as duas lajes se encostam) e entra pelo vão da mureta do patamar.
+  // becos: escada própria + conexão ao patamar 1. A rota é cotovelada porque a reta
+  // beco → patamar corta muros e o `blocked` derrubava os nós do meio.
   const CONEX_Z = CONEX.z0 + 0.9, P1_MEIO = (P1.z0 + P1.z1) / 2;
   const rotaBeco = (bx, mx, alvo) => {
-    linha(bx, 14, bx, B_STAIR.z0, 1.0);          // escada do beco
-    linha(bx, B_STAIR.z0, bx, CONEX_Z, 0.8);     // laje de chegada
-    linha(bx, CONEX_Z, mx, CONEX_Z, 1.2);        // frente comum (passa por x=±9)
-    linha(mx, CONEX_Z, mx, P1_MEIO, 1.2);        // plataforma de conexão
-    linha(mx, P1_MEIO, alvo, P1_MEIO, 1.2);      // vão da mureta → patamar 1
+    linha(bx, 14, bx, B_STAIR.z0, 1.0);
+    linha(bx, B_STAIR.z0, bx, CONEX_Z, 0.8);
+    linha(bx, CONEX_Z, mx, CONEX_Z, 1.2);        // frente comum: única cota onde as lajes se encostam
+    linha(mx, CONEX_Z, mx, P1_MEIO, 1.2);
+    linha(mx, P1_MEIO, alvo, P1_MEIO, 1.2);      // entra pelo vão da mureta do patamar 1
   };
   rotaBeco(-12, -6, X0);
   rotaBeco(12, 6, X1);   // beco leste
@@ -788,9 +735,7 @@ export function buildEscadao(scene, T) {
   };
 
   /* ===================== CTF — 4 BANDEIRAS =====================
-     Alternando lados agressivamente (CTF1 pede altura de triângulo ≥ raio de
-     captura = 4,5 m). A separação máxima em x entre bandeiras adjacentes é o que
-     evita colinearidade. */
+     Alternadas em x: CTF1 pede altura de triângulo ≥ raio de captura (4,5 m). */
   const ctfPoints = [
     { id: 'R', label: 'MIRANTE',     x: 7,   z: -25 },
     { id: 'E', label: 'PATAMAR 2',   x: -7,  z: 1.5 },
@@ -844,13 +789,13 @@ export function buildEscadao(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-2, groundHeightAt(-2, -36), -36], phase: .8 },
-      { mode: 'flight', pos: [0, H_TOP + 6.2, -18], radius: [4.8, 3.4], phase: 1.1 },
-      { mode: 'flight', pos: [-10, 7.2, 12], radius: [3.8, 3.1], phase: 2.9 },
+      { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
+      { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
   });
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:70,vol:.32},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'},
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: [
       // Inclui um piso da chegada inferior: ele é a superfície antes do primeiro dos 12

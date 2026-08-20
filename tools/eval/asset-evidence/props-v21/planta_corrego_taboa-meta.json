@@ -1,0 +1,27 @@
+{
+  "glb": "public/models/props/planta_corrego_taboa.glb",
+  "out": "tools/eval/asset-evidence/props-v21/planta_corrego_taboa.png",
+  "frame": "1536x1024",
+  "dist": 2.2,
+  "trianglesRasterizados": 4861,
+  "silhueta": {
+    "minX": 628,
+    "minY": 152,
+    "maxX": 904,
+    "maxY": 662,
+    "px": 28485,
+    "cobertura": 1.81,
+    "bbox_m": 0.224,
+    "proporcao_largura_altura": 0.54
+  },
+  "paleta_top": [
+    "#507010 25.3%",
+    "#305010 23.8%",
+    "#505030 7.5%",
+    "#707050 6.2%",
+    "#303010 5.7%",
+    "#501010 4.2%",
+    "#707030 4.0%",
+    "#301010 3.7%"
+  ]
+}

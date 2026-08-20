@@ -1,8 +1,7 @@
 // 8 fictional satirical archetypes — procedural low-poly meshes.
 import * as THREE from 'three';
-// cor de facção: UMA origem, a mesma de game.js e brasoes.js — o registro do elenco.
-// (A main tinha posto essa origem em `paleta.js`, que só cobre as 5 primeiras facções;
-//  `factions.js` tem os mesmos hexes e cobre o elenco inteiro, Míticos incluídos.)
+// cor de facção: UMA origem, a mesma de game.js e brasoes.js — `factions.js` cobre o
+// elenco inteiro (Míticos incluídos); `paleta.js` só cobre as 5 primeiras facções.
 import { faction, factionColor } from './factions.js';
 
 
@@ -58,16 +57,8 @@ export const CHAR_FX = {
   mats:    _cqp.get('charmat') !== '0',                // kill-switch da correção do material do GLB
   low:     _lowQ,
   /* ── INSTRUMENTOS DE MEDIÇÃO (padrão = comportamento de hoje, byte a byte) ──
-     O `roughness: 0.86` e o bloco CS_REGION eram os dois únicos números do
-     acabamento SEM alavanca: não dava para medir a contribuição deles na tela,
-     só argumentar. Régua que não consegue variar a entrada não consegue provar
-     causa, e foi assim que o conserto de PBR do camera-roxa (24× no material)
-     virou 12% na tela sem ninguém saber de quem era a culpa.
-     `charrough` = a constante de rugosidade; `charregion=0` remove o bloco que
-     REESCREVE a rugosidade a partir do albedo; `charprobe=rough` faz o shader
-     cuspir a rugosidade EFETIVA como cor (é a única forma de ler o valor que o
-     BRDF de fato usou — do arquivo até o pixel ele passa por 3 reescritas). */
-  rough:   _cnum('charrough', 0.86),                   // constante de rugosidade do material de personagem
+     `charrough` = rugosidade; `charregion=0` tira a reescrita por albedo; `charprobe=rough` cospe a rugosidade efetiva como cor. */
+  rough:   _cnum('charrough', 0.86),
   region:  _cqp.get('charregion') !== '0',             // kill-switch da rugosidade por região (CS_REGION)
   probe:   _cqp.get('charprobe') || '',                // 'rough' = cospe roughnessFactor como cor (só medição)
   // ── clamp de ambiente: unidades de IRRADIÂNCIA do three (useLegacyLights=false),
@@ -85,38 +76,8 @@ export const CHAR_FX = {
   floorIrr: _cnum('charfloor', 1.15),                  // piso de irradiância indireta (perto)
   floorFar: _cnum('charfloorfar', 1.55),               // piso a 45 m+ (era 3.0 = fantasma branco distante)
   ceilIrr:  _cnum('charceil', 4.5),                    // teto: céu HDR não pode estourar o personagem
-  /* 0,09 -> 0,045. MEDIDO na tela (tools/eval/char-plastico.mjs), 9 personagens
-     cobrindo a distribuição de rugosidade do elenco, em DOIS mapas:
-
-                       loja_h            fy_corrego
-       albMin      Lsd    dL*         Lsd    dL*
-       0,090     12,51    8,63       13,82    6,5     <- valor anterior
-       0,065       (o valor adotado; medição no fim deste bloco)
-       0,045     12,91    9,64          -      -
-       0,000     13,17   10,17       14,79    8,9
-
-     O piso foi escrito para comprar CLAREZA (C1: dL* da silhueta contra o anel de
-     fundo, alvo >= 20) ao preço de um pouco de contraste interno. Medido, ele NÃO
-     compra: piora as duas coisas ao mesmo tempo. O motivo é geométrico e não
-     estava previsto — na loja_h e no córrego o fundo (concreto, asfalto) é MAIS
-     CLARO que o personagem (L* ~53 contra ~43), então levantar o albedo do
-     personagem escuro o empurra PARA CIMA, na direção do fundo, e come a
-     separação. O comentário do bloco cita "dL* = 10,8, alvo >= 20" como a dor que
-     o piso veio curar; com o piso em 0,09 o dL* médio destes 9 é 8,63 — ABAIXO do
-     baseline que ele deveria ter consertado.
-     Nenhum personagem piora de Lsd nem de dL* ao baixar o piso (o único que cede é
-     o lampião, dL* 0,7 -> 0,1, que já era ruído longe do alvo).
-     PARA ONDE FOI, E POR QUE NÃO FOI A ZERO: quem manda no limite é a régua
-     VIZINHA, não o gosto. O C10a (char-floor.mjs) cobra perda de contraste <= 10%
-     por personagem medida na TEXTURA, e ela reprova abaixo de 0,065 — o pior caso
-     regional é lobisomem 7,9% em 0,075, 8,9% em 0,065, 11,1% em 0,055 e 12,8% em
-     0,045. A relação NÃO é monótona e isso não estava previsto: abaixar o piso
-     levanta MENOS regiões, e com só uma parte das regiões levantada a razão ENTRE
-     regiões sofre mais do que quando todas sobem juntas. Então 0,065 é o menor
-     valor que segura as duas réguas ao mesmo tempo, e afrouxar o teto do C10 para
-     descer mais seria mudar a régua para caber no conserto.
-     O piso também segue sendo a rede de segurança do canto escuro: os dois mapas
-     medidos são de DIA. `?charalbmin=0` fecha a diferença para quem quiser o A/B. */
+  /* Piso medido (tools/eval/char-plastico.mjs): 0,065 é o menor valor que segura C1 (clareza)
+     e C10a (char-floor.mjs, perda de contraste <= 10%) ao mesmo tempo. `?charalbmin=` faz A/B. */
   albMin:   _cnum('charalbmin', 0.065),               // valor mínimo do albedo, por ESCALA (matiz/S intactos)
   /* PISO DE ALBEDO NA BANDA BAIXA, não no texel (C10 / char-floor.mjs).
      `albMin` é 0,045 LINEAR (era 0,09; ver a tabela medida logo acima) — que é sRGB
@@ -153,11 +114,8 @@ export const CHAR_FX = {
 // 0.35 (era 0.45 na R2): com o piso agora multiplicativo o rim voltou a ser o único
 // termo aditivo do personagem, e cada ponto que ele anda na direção do branco é croma
 // que ele TIRA do boneco. Medido no char_sim: 0.45 custava ~1,5 de C* sem ganhar ΔL*.
-/* Braçadeira: qual TOM cada facção usa. Os hexes vêm do registro (`factions.js`); o que
-   fica aqui é só a escolha de tom, que não é uniforme (ver o bloco no ponto de uso, em
-   `buildCharacter`). Facção desconhecida cai no base de U, que é o `else` que a régua F1
-   declara. A comparação continua no `team` CRU, como a main escreveu, para não mudar tom
-   de ninguém: quem chama já passa a letra maiúscula. */
+/* Braçadeira: TOM por facção (os hexes vêm de `factions.js`). Comparação no `team` CRU,
+   como a main escreveu, para não mudar tom de ninguém; desconhecida cai no base de U da F1. */
 function bracadeiraDaFaccao(team) {
   const f = faction(team);
   if (!f) return factionColor('U');
@@ -169,9 +127,7 @@ function bracadeiraDaFaccao(team) {
 // que parece decisão de arte. Agora a cor vem do registro do elenco, a mesma que a
 // bandeira e o `_teamColor` usam, e facção nova entra nas três de uma vez.
 // O `|| 0xffffff` continua: facção desconhecida cai em BRANCO como sempre caiu, e não no
-// cinza do NEUTRO. Unificar origem não é hora de mudar pixel — se o branco for defeito,
-// é conserto com régua própria. Por isso lê a entrada do registro direto, e não
-// `factionColor()`, que já devolve o cinza do neutro no lugar do branco.
+// cinza do NEUTRO — por isso lê o registro direto, e não `factionColor()`, que devolve o cinza.
 export function charRimColor(def) {
   const f = faction((def && def.team) || 'E');
   const c = new THREE.Color(f ? f.color : 0xffffff);
@@ -347,14 +303,8 @@ const CS_SSS = `
 const CS_END = `	}
 `;
 
-/* ── SONDA DE RUGOSIDADE EFETIVA (?charprobe=rough) ─────────────────────────
-   Injetada DEPOIS de <dithering_fragment>, que é o último chunk do main(): o
-   valor sai cru, sem tonemap e sem conversão de espaço de cor, então o byte
-   lido da tela é `roughnessFactor * 255` exato. É a ÚNICA leitura honesta da
-   rugosidade que o BRDF usou: entre o arquivo e o pixel ela é reescrita três
-   vezes (constante do material, roughnessMap, e CS_REGION a partir do albedo),
-   e medir qualquer um dos três degraus isolado mede a declaração, não a tela.
-   Custo zero quando desligada: o bloco nem entra no fonte. */
+/* ── SONDA DE RUGOSIDADE EFETIVA (?charprobe=rough) ── injetada DEPOIS de
+   <dithering_fragment>, último chunk do main(): o byte lido é `roughnessFactor * 255` exato. */
 const CS_PROBE_ROUGH = `
 	gl_FragColor = vec4(vec3(roughnessFactor), 1.0);
 `;
@@ -408,9 +358,8 @@ export function applyCharFX(mat, rimColor) {
   // O sufixo muda com a variante do FONTE (low corta SSS+banda fina; charclamp=0
   // corta albedo+ambiente) — se não mudasse, o three serviria o programa errado.
   mat.customProgramCacheKey = () => 'csCharFx4' + (CHAR_FX.low ? 'L' : 'H') + (clampOn ? 'C' : 'c') + (regOn ? 'R' : 'r') + (CHAR_FX.ambChroma ? 'K' : 'k')
-    // A chave TEM que enxergar os dois blocos novos: os dois mudam o FONTE, e chave
-    // que não muda faz o three servir o programa do outro lado do A/B — a medição
-    // sairia idêntica e a conclusão seria "não tem efeito" por bug de cache.
+    // A chave TEM que enxergar os dois blocos novos: os dois mudam o FONTE, e chave que
+    // não muda faz o three servir o programa do outro lado do A/B (bug de cache).
     + (CHAR_FX.region ? 'G' : 'g') + (CHAR_FX.probe === 'rough' ? 'P' : 'p');
   mat.needsUpdate = true;
   return mat;
@@ -427,10 +376,8 @@ export function applyCharFX(mat, rimColor) {
 // (Na R1 esse emissivo é que segurava o croma alto: o personagem era literalmente
 // o albedo cru na tela. Bonito de cor, zero volume — e a régua cobrou volume.)
 export function upgradeCharMaterial(src, rimColor) {
-  // Acessório rígido pode declarar este prefixo no material do GLB. O shader de
-  // personagem acrescenta piso de albedo, SSS e rim de facção; isso é correto para
-  // pele/roupa, mas transformava o capacete preto do Motoca em salmão. O prefixo é
-  // um contrato genérico do asset, não uma exceção por personagem.
+  // Acessório rígido declara este prefixo no material do GLB: o shader de personagem (piso
+  // de albedo, SSS, rim) é pra pele/roupa — contrato genérico do asset, não exceção por personagem.
   const hardSurface = /^CS_HARD_/i.test(src.name || '');
   const m = new THREE.MeshStandardMaterial({
     map: src.map || null,
@@ -660,10 +607,8 @@ export const CHARACTERS = [
     blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.',
     pal: { skin: 0xd9a066, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0xffd23f } },
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  //  TIME MÍTICO (M) — heróis históricos, folclore e literatura brasileira.
-  //  Nenhum personagem da atualidade, nenhum copyright. Spec: plans/09-TIME-MITICO.md
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ── TIME MÍTICO (M) — heróis históricos, folclore e literatura brasileira.
+  //    Nenhum personagem da atualidade, nenhum copyright. Spec: plans/09-TIME-MITICO.md
   { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
     blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
     pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
@@ -700,14 +645,8 @@ export const CHARACTERS = [
   { id: 'microfonildo', team: 'T', tribe: 'tv', name: 'Microfonildo',
     blurb: 'Criatura felpuda com fones e boom dorsal. Som rodando!',
     pal: { skin: 0xc28b25, shirt: 0xd9a42f, pants: 0x795019, hair: 0xe2b33f, boots: 0x224f56 } },
-  /* GIL BOMES — repórter policial. Entra em 12/08 e é o PRIMEIRO humano fotorrealista
-     da facção, que até aqui era só bicho e objeto personificados (ver a arte em
-     public/img/faccoes/tv.webp). Isso é DIVERGÊNCIA DE DIREÇÃO conhecida, não descuido:
-     o dono pediu "real pra todas as facções" em 12/08, e ou os outros cinco vêm atrás
-     ou este volta a ser estilizado. Enquanto os dois estilos convivem, a facção lê
-     inconsistente — e a BAR-CONSISTENCIA.md põe consistência acima de fidelidade.
-     A `pal` abaixo é fallback procedural (usada quando o GLB não carrega) e segue a
-     camisa estampada vermelho-bordô, que é a marca dele. */
+  /* GIL BOMES — repórter policial, PRIMEIRO humano fotorrealista da facção: divergência de
+     direção conhecida (pedido do dono). `pal` = fallback procedural. Ver BAR-CONSISTENCIA.md. */
   { id: 'gilbomes', team: 'T', tribe: 'tv', name: 'Gil Bomes',
     blurb: 'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.',
     pal: { skin: 0xc99a76, shirt: 0x7b1f2b, pants: 0x1c1b22, hair: 0x241a14, boots: 0x14110f } },

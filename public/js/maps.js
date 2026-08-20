@@ -64,21 +64,8 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
-  /* DÍVIDA CONHECIDA: os 5 abaixo ainda carregam o prefixo `fy_` do Counter-Strike que o
-     PR #200 veio tirar. Eles NÃO foram renomeados junto de propósito, e o motivo vale
-     mais que a inconsistência:
-
-     `LOOKS` (bloom.js) é indexada pelo id do REGISTRO, via `currentMapId()`. `AERIAL` e
-     `GRAFITE` são indexadas pelo LITERAL que cada builder passa para `makeAerialFog()` e
-     `grafitar()` — e `map_corrego.js` / `map_lajes.js` ainda leem `GRAFITE?.fy_corrego` e
-     `?.fy_lajes` no literal. Hoje as duas indexações coincidem. Renomear só aqui faz
-     `LOOKS` perder os 5 CALADO: eles caem no `DEFAULT_LOOK` da Brasília, com o céu e a
-     névoa de outro mapa, sem erro no console.
-
-     Renomear direito é mudança própria — os 5 builders, as duas tabelas, os geradores, as
-     réguas e os JSON de evidência —, e ela precisa de régua que case registro × LOOKS ×
-     AERIAL × GRAFITE. De carona num merge, é como se planta quebra silenciosa. Alias não
-     é preciso: nenhum destes 5 foi publicado. */
+  /* DÍVIDA: renomear o prefixo `fy_` só aqui quebra CALADO — `LOOKS` (bloom.js) cai no
+     DEFAULT_LOOK de Brasília. Renome exige mudança própria com régua (PR #200). */
   fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   fy_campomorro: { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
   fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },

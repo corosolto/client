@@ -51,6 +51,89 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
+
+**Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
+debug vermelho cobrindo metade da tela — `THREE.WebGLProgram: Shader Error, 'uv1':
+undeclared identifier`. O erro seguia vivo na v2.1.0-teste depois do merge da main.
+
+**Causa raiz — medida, não palpite.** O Mini Cooper (`2014_mini_cooper_s_f56.glb`) tem
+`normalTexture.texCoord: 1` (glTF legal, a primitiva tem TEXCOORD_1). O `PropBatch`
+instancia via `normalizeGeo` (`mapprops.js`), que reescrevia a geometria só com
+{position, normal, uv}: o uv1 sumia e o material (com a textura no canal 1) ficava. O
+three r160 só declara `attribute vec2 uv1` quando a GEOMETRIA tem uv1
+(`three.module.js:20851`, `vertexUv1s: HAS_ATTRIBUTE_UV1`) — shader compilado usa `uv1`
+sem declaração. Confirmação em runtime: os 3 programas com `diagnostics` no renderer da
+mansão bootada eram exatamente os materiais do Mini com `uv1` no cacheKey. Varredura de
+JSON em 929 GLBs: **7 com textura em canal ≥1** (Mini, DeLorean, Cobalt, Fiesta, M8,
+Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
+
+**Conserto:** `normalizeGeo` agora carrega uv1 (o da fonte, ou cópia do uv — o merge
+exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
+normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
+Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+
+### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
+
+**Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
+*"Uncaught TypeError: Cannot read properties of undefined (reading 'short')"*,
+fingerprint `ea71c000`, classe `codigo`, versão 2.0.0-alpha.157, em
+`game.js:4849:66` → `Game._updatePickups` → `Game.update` → `loop`.
+
+**Causa raiz — confirmada.** `map_penitenciaria.js:223` declarava o 8º pickup da fileira
+central como `kind:'smg'`. **`smg` não é arma: é CLASSE de arma.** Quem mapeia arma→classe
+é `recoil.js:38`, `game.js:316`, `audio.js:271` e `vmattach.js:622`, todos com
+`mp5|uzi|p90 -> 'smg'`; `WEAPONS` (em `public/js/data/weapons.js`, 26 chaves) nunca teve
+`smg`. O prompt do `[E]` desreferencia `WEAPONS[w].short` **sem guarda**
+(`game.js:4849`), e o `_updatePickups` roda **todo quadro** dentro do `update()` — então
+olhar para aquela arma não estragava o HUD, **congelava a partida**. O mapa entrou em
+`f87ff467` (Penitenciária + Velho Oeste, #335), o que explica por que o crash é novo.
+
+**Reprodução:** `node tools/eval/pickup-arma-check.mjs` (semente 12345, sem browser). A
+cláusula PA2 planta o jogador em cima do pickup e chama o `_updatePickups` de produção;
+a exceção sai com a mensagem literal de #366.
+
+**Medido antes do conserto** (`node tools/eval/pickup-arma-check.mjs`, 12 mapas, 772 pickups):
+
+| | antes | depois |
+|---|---|---|
+| ids de pickup fora de `WEAPONS` | **1** (`penitenciaria/mapa 'smg'`) | 0 |
+| mapas em que o `_updatePickups` de produção lança | **1** (penitenciaria) | 0 |
+| `_grabPickup` naquele pickup | `false` (impegável) | `true`, jogador sai com `uzi` na mão |
+
+**O que foi DESCARTADO com medição, não com palpite.** O caminho óbvio era `WEAPONS[w]?.short`
+na linha do crash. Medido: com o `?.`, o HUD passa a escrever literalmente
+**`[E] PEGAR undefined`** e `_grabPickup(pk, player, true)` continua devolvendo **`false`** —
+a arma segue impegável, uma caixa dourada em x=10,0 z=−2,2 no meio de 7 armas de verdade.
+O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conserto é no
+**id**, e a guarda de runtime ficou na **porta de entrada**, não no `.short`.
+
+**Correção.** Duas, em camadas diferentes:
+1. `public/js/map_penitenciaria.js:223` — `'smg'` → `'uzi'` (SMG de verdade, chave de
+   `WEAPONS`; `mp5` já ocupava a outra vaga de SMG da fileira). É a causa.
+2. `public/js/game.js:573-581` — id que não existe em `WEAPONS` **não entra no estado do
+   jogo**: o pickup é descartado na ingestão do mapa com `console.warn`. É rede, não
+   conserto: mantém o defeito de dado fora do caminho quente sem escondê-lo de quem mede,
+   porque a régua lê a lista **crua** do `MAPS[id].build()`, antes desta porta.
+
+**Custo declarado, medido.**
+- `check:fast` ganhou um passo: **+3,7 s** (`eval:pickuparma`), de 53 para 54 passos.
+- A penitenciária ganhou uma arma jogável a mais na fileira central (a vaga já existia e
+  estava morta). Posição, yaw e contagem de pickups do mapa não mudaram: **16 antes, 16
+  depois**. A caixa-marcador `arma-central-uzi` passa a ser trocada pelo GLB real em
+  `game.js:574`, como as 7 irmãs — **isto não foi verificado em browser**, só no harness,
+  onde o carregamento de GLB é stub.
+
+**Régua: `tools/eval/pickup-arma-check.mjs`** (`npm run eval:pickuparma`, no `check:fast`).
+2 cláusulas, 3 mutações medidas:
+`--mutante=smg` acende PA1 (1 id fora de `WEAPONS`) **e** PA2 (1 mapa lançando) — reproduz #366;
+`--mutante=sem-short` acende PA1 nos 12 mapas (`mp5` sem `.short`);
+`--mutante=sem-pickups` acende a anti-vacuidade nos 12 (0 < piso de 20).
+**Resultado negativo medido e declarado no cabeçalho da régua:** `--mutante=sem-short`
+**não** acende a PA2, e é de propósito — campo ausente numa arma que existe vira
+`undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
+sobra quando alguém "conserta" o crash com `?.`.
+
 ### BUG-51 · erro de extensão ou beacon virava bug do jogo
 
 **Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
@@ -1185,6 +1268,10 @@ Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
 
 ### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — CORRIGIDO EM ARQUIVO 18/08, aguardando olho do dono
 
+> **Atualização 19/08 (frente C do swarm v2.1.0):** a cláusula de água deste contrato foi
+> **INVERTIDA** pela decisão do dono 18/08 (plans/13: "a piscina nao afunda") — ver
+> **BUG-67**. A frota GLB, o pack Mint e o espelho d'água NÃO entrável seguem valendo aqui.
+
 **Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
 todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
 
@@ -1234,6 +1321,71 @@ preexistente de `camera-roxa` no asset-integrity não é desta frente (arquivo e
 intactos no diff); (4) o A/B é quantitativo — **nenhum agente desta sessão olhou as figuras**
 (modelo sem visão): a aprovação visual é do dono, por screenshot, como sempre.
 
+
+### BUG-67 · "a piscina nao afunda" + "o jardim esta bizarro" — Mansão v2.1: piscina entrável e jardim refeito — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono
+
+**Frases literais do dono (18/08)** e decisão registrada no
+[`plans/13-VISUAL-V2.1.md`](plans/13-VISUAL-V2.1.md): piscina **entrável** com
+profundidade de verdade e jardim **refeito do zero** com régua de variedade. A decisão
+INVERTEU o contrato de água do BUG-56 (a piscina "não entrável" vira o estado REPROVADO).
+
+**Conserto 1 — PISCINA ENTRÁVEL (padrão córrego, `CANAL_FUNDO`):** o colisor-tampa
+`col(-6,6,-0.5,0.65,-32,-24)` saiu; a cuba é piso andável via `groundHeightAt` +
+paredes de colisor do fundo até y=0 (em cima delas não colide: `_collide` exige
+`pos.y+0,3 < maxY`). Raso **-0,85 m** com 2 degraus de entrada na borda sul (largura
+total), escada submersa (4 degraus de 0,25) e fundo **-1,85 m** — 0,15 m abaixo do teto
+de guarda-corpo MAP6 (`QUEDA_ANDAR 2,0`, map-check.mjs:151). Saída de degrau a degrau
+(subidas 0,28 < STEP_H 0,55): **quem cai na piscina SAI andando** — e o mantle (1,95 m)
+segue como segunda saída. A máscara opaca a 0,045 m virou subleito do vertedouro (era o
+teto do nadador); o gramado é cortado no recorte da cuba (a lâmina a -0,01 atravessava).
+A cuba terminou **2 m ao norte** (interior z∈[-32,5,-26,5]): a 2ª fileira do armário
+nasce a `spawnB-3,6 = -25,6` e caía **na água** (pickup-check "abaixo do piso" **7, pior
+-0,85** — a tampa antiga era o guarda-rail do rack; `_walkDepth` só enxerga colisor).
+No deck: **abaixo do piso 0**.
+
+**Conserto 2 — JARDIM:** os **72 clones idênticos** (1 `InstancedMesh`, 12 anéis de 6,
+ZERO cor por instância) viram **2 famílias de malha** (blobo + folha ereta, 30+26) com
+**tint E escala por instância** (`setColorAt`, paleta de 5 verdes + jitter HSL), em
+**drifts orgânicos** pelo ângulo áureo, nas bordas — corredor de combate central limpo.
+Caminho de pedras vira **cadeia portão→porta** (12 pedras a ≤3 m, z 33,6→16,2, tag
+`pedra-caminho`); árvores ganham tag `arvore`. Props Mint do BUG-56, frota GLB e espelho
+d'água NÃO entrável: intocados (cláusulas verdes preservadas).
+
+**Réguas:** `mansao-water-check` **INVERTIDA** (9 cláusulas de piscina/espelho; o mutante
+`agua-entravel` virou `agua-bloqueada` = o estado reprovado por definição) — antes no
+estado v2.1.0: **8 VERMELHAS** (tampa maxY 0,65 · entrada andando 0,00 m · raso/fundo
+0,00 m · paredes atravessáveis até x=18 · 0 pisos de cuba · 1 máscara-teto); depois:
+VERDE, anti-trap "saiu em 5 passos até y=0,00". Mutantes `agua-bloqueada` (4 cláusulas),
+`borda-alta` (3 — anti-trap), `sem-parede`, `piscina-sem-cuba`, `piscina-cuba-curta`:
+**todos exit 1**. NOVA `mansao-garden-check.mjs` (G1 variedade/G2 composição/G3 escala):
+antes **6 VERMELHAS** (72 instâncias · 0 cores/1,39× · colônia same-mesh 16 em 6 m ·
+0 pedras marcadas · G2c sem medir · 0 árvores marcadas); depois VERDE (30+26 · 8/9
+cores · spread 1,86/1,91× · colônia 8 · cadeia de 12 pedras · plantio a 5,05 m do
+caminho). Mutantes `clona-tudo` (0 cores/1,00× + colônia 30), `planta-no-caminho`
+(0,25 m), `planta-gigante` (2,7 m), `sem-pedras`: **todos exit 1**.
+
+**Verdes preservadas:** `mansao-glb-fit` 8/8 · `map-check fy_mansao` (MAP1 0 — a pedra
+sul sobre o degrau a -0,283 fazia penetração 0,47 m em 12 pontos, corrigida; MAP6 0;
+CTF2 ≥2 rotas) · `pickup-check` (sem alcance 0, abaixo do piso 0, flutuando 0) ·
+`eval:grafite-editorial` · `eval:spawn` · `syntax`.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug64-mansao-v21/{antes,depois}/`,
+captura `mansao-v21-capture.mjs` com vareta de 1,70 m, A/B `ab-pixel.py`):** vistas
+NÃO alteradas ~0,2% (`jardim-no-caminho`, olhando o portão); vistas alteradas:
+`jardim-composicao` 51,5% (bordas 2,5→3,3% — mais detalhe), `piscina-dentro-fundo`
+51,1% (pose só existe no depois: nadador no fundo), `piscina-do-spawn` 86,2% (enquadre
+mudou 2 m com a cuba). Sonda de cor: azulejo/água em 11% do frame exterior e **37,6%
+do frame de dentro da piscina**. **Nenhum agente desta sessão OLHOU as figuras**
+(modelo sem visão, mesmo limite do BUG-56): aprovação visual é do dono.
+
+**Dívidas declaradas:** (1) a lâmina visual segue o tratamento simples
+(`MeshStandardMaterial` plano, agora `DoubleSide`) — ondas/reflexo são a frente B
+(córrego), por decisão do plans/13 "a lâmina pode ganhar o mesmo tratamento da frente B
+depois"; (2) `map_check.json`/`pickup_check.json` não foram regenerados por esta frente
+(regen é do integrador, BUG-02/BUG-60); (3) os 404 preexistentes de
+`folha-pixaca-0{3,4,5}.png` no serve de eval não são desta frente (defeito de acervo
+pré-existente).
+
 ### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
 
 **Sintoma literal do dono:** *"ele tem ambiencia real coisa que nenhum dos outros mapas
@@ -1245,6 +1397,65 @@ lajes — *"falta colocar uns cachorro caramelo e mais animais como ratos"*.
 Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambience`
 declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
 por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
+
+**Córrego, frente B v2.1.0 (19/08, branch `v21/b-corrego`) — jacaré/capivara GLB no
+mapa + água viva:**
+
+| cláusula nova do `eval:corrego-contract` | antes | depois |
+|---|---|---|
+| jacaré GLB posicionado no canal (~1,8 m, escala do Mint) | ✗ proxy procedural | ✓ clone gltf assentado no fundo, ~30% submerso |
+| jacaré meio submerso (dorso de fora) | ✗ | ✓ |
+| capivara GLB na margem alagada (~1,0 m, pés no chão) | ✗ | ✓ |
+| GLB substitui o proxy (proxy invisível) | ✗ nem havia GLB | ✓ proxy fica na cena escondido (padrão placeProp) |
+| fauna GLB sem collider/fora de sólido | ✗ | ✓ |
+| água com shader de onda (onBeforeCompile + uAgua) | ✗ planos mortos | ✓ 4 senos, 2,8 cm, normal analítica |
+| água com geometria subdividida (≥6×24) | ✗ 1 segmento | ✓ 12×160 (low 6×24) |
+| água com relógio vivo | ✗ | ✓ uAgua avança no onBeforeRender |
+| amplitude ≤ 4 cm (não invade o limo) | — | ✓ 2,8 cm |
+| grama: terreno reservado (≥12 spots) | ✗ | ✓ 26 spots (presença DORMENTE até a frente E) |
+
+Estado ANTES medido: 10/35 vermelhas no corrego-contract estendido. DEPOIS: 35/35
+verdes. Mutantes novos mordendo: `proxy-volta` (8/35), `agua-morta` (3/35);
+`grama-sumiu` lança NAO APLICOU (prop não existe — dormência declarada). Browser
+(loader real): censo `source:'gltf'` para os dois, textura 256² carregada, raycast da
+câmera acerta o jacaré; água viva × morta (`?agua=0`) = diff de banda 129 vs 10,9
+(12× mais movimento com o shader). Figuras 3:2 antes/depois em
+`tools/eval/asset-evidence/maps/fy_corrego/`. NÃO verificado: leitura estética
+(pixels de cor do jacaré/capivara não discriminaram sob fog/luz — fica para o olho
+do dono) e o parse GLB em node (trava em textura — limitação declarada no header do
+check; coberto por Khronos + browser).
+
+**Fauna v2.1 (frente D, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do
+dono.** Frases literais (18/08): *"a pomba que nao esta com bracos avertos deveria ficar
+so na ponta das lajes ou no chao"* e *"faltou rigar o cachorro caramelo ... e outros
+animais tambem"*.
+
+- **Pombo não voa mais:** o `pigeon_flight.glb` (asas abertas estático) saiu do acervo e
+  do `ambientlife.js`; config `mode:flight` cai no chão com aviso de migração, o alerta
+  de tiro vira fuga A PÉ na superfície onde a pomba nasceu (sem `takeoff`/`fly`, bob 0).
+- **Três espécies novas riggadas (Quaternius CC0, mesmo pipeline do caramelo):**
+  `cat_telhado.glb` (Idle/Walk/Run), `galinha_campo.glb` (Idle/Walk), `vaca_campo.glb`
+  (Idle/Walk/Gallop, clipes podados de 24). Controlador `_updateDog` generalizado para
+  `_updateQuad` com velocidade de fuga/caminhada por espécie; normalização por altura
+  alvo (gato 0,48 / galinha 0,50 / vaca 1,75 m). Procedência em
+  `public/models/ambient/FONTE.md`.
+- **Régua:** `eval:ambience-registry` ganhou AR4 (espécie-chave por bioma: gato na
+  favela, galinha/vaca no campo) e AR5 (nenhuma pomba em modo flight no registro) —
+  mutantes `sem-gato` e `pomba-voa-de-novo` mordem. `eval:ambience` ganhou AM11 (nenhum
+  estado fly/takeoff ao vivo, bob ≤ 0,35 m) e AM12 (espécie nova por bioma com clipe
+  andando, mixer > 0) — mutantes `pomba-voa-de-novo` e `bicho-estatico` mordem. Placar
+  final: AR1-5 VERDE nos 14 mapas, AM1-12 VERDE (16/16).
+- **Caveat de medição:** `eval:ambience` usa `BASE` ou cai na 8123 — um `serve.mjs`
+  velho servindo OUTRO worktree na 8123 mediu o código antigo e inventou 3 vermelhas
+  (AM5 takeoff, AM7 orçamento, AM12 sem espécie). Contra o servidor do próprio worktree:
+  tudo verde sem tocar uma linha. Antes de "consertar" vermelha de browser, confira de
+  qual diretório a porta serve (`lsof -p <pid> | grep cwd`). Mordeu de novo na
+  integração v2.1.0 (19/08): o `gen-graffiti-layout` também cai na 8123 por default e
+  a primeira regen dos 10 layouts assou os murais "homenagem-*" da MAIN (MURAIS_HOM
+  povoado lá) em vez da branch — M5 pegou. Regen certa é com `BASE=http://127.0.0.1:<porta do worktree>`.
+- **Dívida registrada:** jacaré/capivara seguem estáticos — não existe réptil/capivara
+  riggado CC0 (varredura Quaternius + Poly Pizza 19/08, documentada no FONTE.md); o
+  pipeline de animação Mint é humanoid-only. Integração no córrego é da frente B.
 
 ### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
 
@@ -1259,6 +1470,29 @@ ramais; a decisão de arte do lajes vira o padrão dos mapas de favela. A régua
 circuito (LC1-LC6) já mede conectividade — falta um teto de COMPLEXIDADE (nº de ramais /
 área total / decisões por travessia) medido contra o que o dono aprovar na versão
 simplificada.
+
+**Anti-trap (v2.1, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono.**
+Frase literal do dono (17/08): *"a parte debaixo tem cantos intransponiveis se vc cai de
+cima voce nao sai nunca mais isso nao pode acontecer"*. O LC1-6 media o térreo contíguo
+e os ~4% fora do circuito eram exatamente os cantos onde ele ficou preso.
+
+**Régua nova `eval:lajes-antitrap` (AT1):** no `Game` real, com índice espacial de
+colisores PROVADO igual ao `_collide` em 400 pontos (divergência aborta), grade 0,5 m
+8-vizinhos com validação de segmento e flood REVERSO dos spawns por todas as camadas:
+100% das células andáveis têm caminho de VOLTA a um spawn andando (pulo/mantle não
+contam). **Antes: 143 células sem volta** — laje MN selada pelo próprio guarda-corpo da
+tábua (62), faixas de miolo atrás dos muros do beco (44+), nichos entre caixa d'água e
+corrimão (5). **Depois: 6759/6759 (100%)**, zero bolsões. Mutante `sela-canto` fecha os
+dois vãos da escadaria → 22 células vermelhas, exit 1. Overlay por camada em
+`tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png` (vermelho = preso).
+
+**Conserto:** três vãos de fuga (`VANS_DE_FUGA`, map_lajes_authored.js) cortam o muro
+emitido para o corredor vizinho — o buraco de muro real de comunidade — e o painel de
+muro rente passa a vetar slot em cima de vão; o guarda-corpo da tábua é omitido onde a
+linha OU o convés cruza laje ao nível 5,20 (a boca da WN-MN tinha janela livre de 0,15 m
+para um corpo de 0,76). **Achado no caminho:** o colisor do corrimão usava a convenção
+de rotação espelhada em z — nas tábuas diagonais o corpo batia num corrimão invisível a
+1,5 m do visível (bala via malha certa, corpo via colisor errado).
 
 ### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
 
@@ -3173,6 +3407,33 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
+- **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
+  dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
+  comentários `## csbrasil-bot classification`, 4 deles num intervalo de 2 s (03:21:19–03:21:21), todos de
+  `github-actions`. Duas causas encadeadas: (1) o secret `CSBRASIL_BOT_TOKEN` nunca tinha sido criado no repo e o
+  fallback silencioso `|| github.token` fazia o comentário nascer com identidade trocada; (2) um review com N
+  comentários dispara N gatilhos (`pull_request_review`, `pull_request_review_comment` ×3) **no mesmo segundo**: os
+  runs paralelos leem a lista de comentários antes de qualquer um postar, e o dedupe por autor+marcador (que pedia
+  login `csbrasil-bot`) nunca casava com `github-actions` — cada run publicava o seu. Correção: `concurrency.group:
+  pr-classify-<n>` com `cancel-in-progress` serializa por PR; fallback removido com guard que derruba o job alto
+  quando o secret falta; dedupe passou a casar só pelo MARCADOR no corpo (extras deletados, o primeiro atualizado);
+  e os passos de rota/label/comentário migraram para REST puro porque `gh pr edit` resolve nó de user/org via
+  GraphQL e exige scope `read:org` — o vermelho que a PR #350 pegou logo depois do secret entrar (PAT tem
+  `repo,workflow`). Duplicatas das PRs #347/#348 deletadas na mão (sobrou 1 cada). Régua: rajada de gatilhos numa
+  PR não pode produzir mais de 1 comentário com o marcador — mutante: remover o bloco `concurrency` do
+  `csbrasil-bot-pr-classify.yml` reabre a corrida.
+- **~~BUG-67 · revisor local re-revisava o mesmo commit para sempre~~ · RESOLVIDO 18/08.** Evidência:
+  `estado/canarinho.err.log` do bot local com dezenas de `poll: achados is not defined`, sempre após revisar
+  commits diretos (`68f5aff6`, `109982b3`…), reprocessando o MESMO commit a cada ciclo. Causa: `reviewCommits()`
+  referenciava `achados.length` numa função onde a variável não existe (`ReferenceError`) — e como `estado.main`
+  só era gravado DEPOIS do loop, o erro abortava o ciclo antes do avanço: commit re-revisado (custo de LLM a cada
+  10 min) e comentário de commit **re-postado a cada ciclo** quando tinha achados. Correção (infra local do bot):
+  `meta.achados.length` + try/catch por commit + `estado.main` gravado dentro do loop. Sintoma irmão: `✗(opencode
+  run: )` com mensagem vazia era timeout do `spawnSync` (SIGTERM, stderr vazio) — `bots/lib/llm.mjs` agora reporta
+  `signal=`/`status=`. Prova operacional: depois do restart, nenhuma linha `poll:` nova e `estado.main` avança
+  commit a commit. Contrato novo junto: achado grave vira `REQUEST_CHANGES` e fio não resolvido trava o merge via
+  branch protection "require resolved conversations" (antes: "comenta, não bloqueia").
 - **~~BUG-66 · Faria Limer ainda fala com a voz do Lula~~ · RESOLVIDO 16/08.** Palavras do dono: *"o farialimer
   ainda tá com som do Lula; precisamos usar um do time do Bolsonaro"*. O vínculo explícito
   criado no BUG-65 aponta para `55678d5886537476`, hash do arquivo-fonte `cana_doce.mp3`:

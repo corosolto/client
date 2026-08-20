@@ -1,64 +1,32 @@
-// CÓRREGO (fy_corrego) — spec plans/13-CORREGO.md: favela de São Paulo sobre um córrego
-// a céu aberto. Água escura corta o mapa no meio; pontes de madeira ligam os dois lados.
-// Casas de madeira com telhado de zinco, antena parabólica, caixas d'água. Jacaré no
-// córrego, capivara na margem, ratos no lixo. É o mapa mais brasileiro do elenco.
-//
-// PLANTA (eixo longo = z; norte = -z).
-//   MARGEM O  x ∈ [-24, -3]   spawn B (casas de madeira, vielas)
-//   CÓREGO    x ∈ [-3, 3]     água a y=-0,3; intransponível (colisor)
-//   MARGEM L  x ∈ [3, 24]     spawn E (espelho do oeste)
-//   3 pontes em z = -22, 0, 22
-//   Alagado em z ∈ [-40,-34] e [34,40] (chão com textura de água)
+// CÓRREGO (fy_corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
+// córrego em x ∈ [−3, 3] (água rasa), margens em ±[3, 24], pontes em z = −22, 0, 22.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { GRAFITE } from './graffiti_layout.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
-import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
-import { setMapSky } from './map_sky.js';
-import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { applyLook } from './map_sky.js';
+import { createWater } from './water.js';
+import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 24, HALF_Z = 40;
-export const CORREGO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
+export const CORREGO_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacare/capivara (só este mapa baixa)
 const CORREGO_W = 10;         // eixo largo o bastante para dominar a leitura aérea e em FPS
 const CORREGO_X0 = -CORREGO_W / 2, CORREGO_X1 = CORREGO_W / 2;
 
 /* ===================== O CANAL TEM FUNDO =====================
-   Relato do dono, literal: "O CORREGO NAO TEM ALTURA NENHUMA, QUANDO SE CAI TRAVA, E
-   DEVIA CAIR E TER ALTURA". As duas metades da frase são o MESMO defeito, e ele era de
-   código, não de arte:
-
-     · `groundHeightAt` devolvia −0,4 dentro do canal (chão logo abaixo da margem), e ao
-       mesmo tempo um `col(CORREGO_X0, CORREGO_X1, −2,0, −0,12, …)` enchia o vão inteiro
-       de sólido. Quem caísse da ponte pousava em y = −0,4 DENTRO desse colisor: o
-       `_collide` do game.js (`pos.y + 1,5 > minY && pos.y + 0,3 < maxY`) empurrava o
-       corpo lateralmente todo frame sem nunca resolver. Isso é o "quando se cai trava".
-     · E como o vão era sólido, o canal não tinha profundidade nenhuma para o jogador:
-       era um muro pintado de água. Isso é o "não tem altura nenhuma".
-
-   Agora o canal é um VAZIO REAL: piso andável em CANAL_FUNDO, paredes verticais de
-   concreto como colisor (só as paredes), e rampas de acesso para sair. Cair nele é uma
-   rota, não um bug.
-
-   POR QUE 1,85 m E NÃO OS ~3 m DA FOTOGRAFIA (foto_001): o `map-check.mjs` define
-   QUEDA_ANDAR = 2,0 m como a fronteira entre "queda tática" e "passagem para o avesso da
-   camada", e cobra guarda-corpo acima disso (MAP6). Um canal com guarda-corpo nos 80 m
-   das duas margens é justamente o que impede de cair — mataria o pedido. 1,85 m fica do
-   lado tático dessa fronteira POR CONSTRUÇÃO, e continua 23 cm acima da linha do olho
-   (1,62 m): de dentro do canal não se enxerga a margem, que é a leitura que interessa.
-   Isto é uma limitação declarada, não um número escolhido para ficar verde — ver o
-   relatório. */
+   O canal é um VAZIO REAL: piso andável em CANAL_FUNDO e só as paredes como colisor —
+   um colisor enchendo o vão era o "quando se cai trava" do dono (caso no relatório). */
 const CANAL_ABERTURA = 6;                       // vão livre: x ∈ [−3, 3]
 const CANAL_X0 = -CANAL_ABERTURA / 2, CANAL_X1 = CANAL_ABERTURA / 2;
-/* −1,75 e não −1,85: a PONTE fica a y = 0,15, então a queda ponte→fundo é 0,15 − FUNDO.
-   Com −1,85 essa conta dava exatamente 2,00 m e o MAP6 acusou 64 bordas (medido). O teto
-   que manda aqui é o da queda a partir da superfície MAIS ALTA que dá no vão, não o da
-   margem. Continua 13 cm acima da linha do olho (1,62 m). */
+/* −1,75 e não −1,85: a ponte fica a y = 0,15, e −1,85 dava queda de exatamente 2,00 m
+   (QUEDA_ANDAR do MAP6, medido). O teto mede da superfície MAIS ALTA que dá no vão. */
 const CANAL_FUNDO = -1.75;
 const CANAL_AGUA = CANAL_FUNDO + 0.14;          // lâmina rasa: anda-se DENTRO dela
 /* Rampas de contenção, paralelas ao canal (é assim que córrego canalizado de verdade dá
@@ -142,32 +110,8 @@ export function buildCorrego(scene, T) {
     TEX.pixo = lam({ map: load('/img/textures/corrego_streetart_pixo.webp', 2, 2), roughness: 0.98 });
   }
 
-  /* ── SUPERFÍCIE: UM MATERIAL POR FAMÍLIA, E TODO ELE COM MAPA ────────────────
-     O relato do dono jogando foi "o do corrego esta horrivel, sem textura
-     nenhuma", e a medida (tools/eval/corrego-superficie-check.mjs) deu 66% dos
-     materiais do mapa sem `map`, contra 32% de média dos 5 mapas maduros: as três
-     lâminas de água, 24 caixas d'água, 18 parabólicas, geladeira, pneu, limo e os
-     pilares de ponte eram COR PURA. Superfície sem mapa nem entra na conta de
-     densidade do texel-check ("fora da conta"), então era justamente a pior parte
-     do mapa que nenhuma régua alcançava.
-
-     Duas coisas se resolvem no mesmo lugar:
-     (a) TEXTURA — cada família passa a consumir o catálogo que JÁ EXISTE em
-         textures.js (T.concrete, T.dirt, T.metal, T.asphalt, T.crate) e os webp
-         que o mapa já carrega. Nenhuma textura nova nasce aqui: subir densidade
-         de texel é frente de outro agente, e este arquivo só consome a API dele.
-     (b) REPETIÇÃO — material COMPARTILHADO por família, em vez de um `lam()`
-         dentro do laço. 24 caixas d'água eram 24 materiais distintos (medido:
-         186 materiais no mapa, agora 106). Isso NÃO derruba draw call por si só —
-         cada malha continua sendo uma chamada — mas derruba troca de estado e de
-         programa na GPU, e é pré-requisito para qualquer merge futuro, que exige
-         material idêntico. `aoMatFactory` (vao.js:281) tem cache POR MATERIAL de
-         origem: com um `lam()` por peça, ele clonava um AO material por peça.
-
-     Caixa e prop NÃO levam `repeat` na mão: `aoBoxGeo`+`aoMat` (vao.js) escalam a
-     UV pelo tamanho de mundo até ALVO_PXM, então dar o mapa já basta. Quem precisa
-     de `repeat` explícito é plano de `addFloor`, que não passa pelo vao — por isso
-     só as lâminas de água abaixo clonam a textura com `repeat` calculado. */
+  /* ── SUPERFÍCIE: um material COMPARTILHADO por família, todo com `map` do catálogo
+     (régua corrego-superficie-check). O vao normaliza a UV — caixa/prop sem `repeat` na mão. */
   const srcAgua = TEX.agua.map || T.dirt;
   const mapaAgua = (rx, ry) => {
     const t = srcAgua.clone(); t.needsUpdate = true;
@@ -184,19 +128,11 @@ export function buildCorrego(scene, T) {
   const matMadeiraBruta = lam({ map: TEX.wall.map || T.dirt, color: 0x8a6a4e, roughness: 1 });
   const matLimo = lam({ map: T.dirt, color: 0x3e5c40, roughness: 1 });
   const matHaste = lam({ map: T.metal, color: 0x6e6e6e, metalness: 0.5, roughness: 0.55 });
-  /* Peça pequena e orgânica NÃO leva mapa (ver o comentário do jacaré): ela fica com
-     UV 0→1 sobre a textura inteira e estoura a dispersão do texel-check. O que estas
-     ganham aqui é deixar de nascer DENTRO do laço — cada `lam()` repetido era um
-     material a mais, e material a mais é draw call que nenhum merge junta. */
+  /* Peça pequena e orgânica NÃO leva mapa (mesma regra do jacaré): UV 0→1 sobre a
+     textura inteira estoura a dispersão do texel-check. */
   const matCabo = lam({ color: 0x8a8a8a });
-  /* Mesma regra, e ela mordeu de novo nesta rodada: as peças finas que entraram com a
-     favela (prumada de cano 7 cm, ferro de espera 5 cm, cavalete 10 cm, braço de poste
-     14 cm, roupa de varal 2 cm) tinham textura, e uma face de 7 cm com a textura inteira
-     mede ~3.000 px/m contra a mediana de 162 do mapa — o `texel-check` acusou TEXEL3b em
-     18,5× (teto 4×). Vara fina com textura de metal não acrescenta um pixel de informação
-     a 3 m de distância e destrói a dispersão. Cor pura, e o custo em SUP1/SUP2 é
-     desprezível porque a ÁREA dessas peças é minúscula (medido: 311 m² de superfície sem
-     textura no mapa inteiro, contra um teto de 6% da área). */
+  /* Mesma regra do texel-check: peça fina com textura (cano 7 cm, ferro 5 cm, roupa 2 cm)
+     mede milhares de px/m contra a mediana do mapa — cor pura, e a área no SUP1/SUP2 é desprezível. */
   const matCano = lam({ color: 0xd6d3cb, roughness: 0.5 });
   const matVerga = lam({ color: 0x7c6a52, roughness: 0.85 });
   const matRipa = lam({ color: 0x8a6a4e, roughness: 1 });
@@ -205,25 +141,8 @@ export function buildCorrego(scene, T) {
   const matOlhoEscuro = lam({ color: 0x15100d });
   const matFocinhoCap = lam({ color: 0x211b17, roughness: .8 });
 
-  /* ── ALVENARIA: O VOCABULÁRIO QUE FALTAVA ───────────────────────────────────
-     Achado desta rodada, e ele explica sozinho metade do "barracos genéricos" do
-     dono: `/img/textures/favela_wall.webp` (reboco descascado com tijolo aparente
-     por baixo) JÁ EXISTE no disco e é consumida pelo escadão, pelo campo do morro e
-     pelo lajes — mas NÃO pelo córrego, que mandava TODA parede de casa para
-     `TEX.wall` = `tex_madeira.webp`. Trinta barracos com a mesma prancha bege é
-     exatamente o que se vê no frame de referência desta rodada.
-
-     Nas 18 fotos de `references/favela/fotos-reais/` não existe uma parede de
-     madeira dominante: o que domina é (a) tijolo baiano aparente sem reboco,
-     (b) reboco cinza cru na parte de baixo com o tijolo aparecendo acima — a
-     "faixa" horizontal é a assinatura visual mais forte do conjunto (foto_001,
-     foto_005) — e (c) pintura saturada e desbotada (foto_040: verde, amarelo,
-     turquesa; foto_012: azul, verde).
-
-     Por isso a família abaixo COMPARTILHA uma fonte só (uma textura na GPU) e varia
-     por TINTA e por escala de repetição. Custo: zero textura nova, zero download.
-     Ganho medido no relatório: `superf_chapada` e `superf_sd` do foto-vs-render são
-     dois dos quatro descritores não-cegos, e os dois medem exatamente isto. */
+  /* ── ALVENARIA: favela_wall.webp já era consumida por escadão/campomorro/lajes, menos
+     aqui. Uma fonte só variando por tinta e repeat; cores das fotos (foto_001/005/040/012). */
   const _srcTijolo = TEX.tijolo.map;
   const tijoloTex = (rx, ry) => {
     if (!_srcTijolo) return null;
@@ -249,24 +168,14 @@ export function buildCorrego(scene, T) {
   /* Vão de janela/porta: o interior escuro visto de fora. É o que dá ESCALA à parede —
      sem ele um bloco de 8 m lê como muro. Textura de concreto muito escurecida em vez de
      preto chapado, senão volta a ser superfície sem mapa (SUP1). */
-  /* TENTATIVA DESCARTADA, registrada para ninguém repetir: passar este material para cor
-     pura (na hipótese de que as faces finas do vão fossem o pico do texel-check) NÃO moveu
-     o TEXEL3b — continuou 5,4× — e levou a área sem textura de 1,5% para 3,4%. Custo sem
-     efeito, revertido. O pico de 876 px/m está em outro grupo do lote mesclado. */
+  /* Cor pura aqui foi tentada e revertida: não moveu o TEXEL3b e dobrou a área sem
+     textura (SUP1). O pico de texel está em outro grupo do lote mesclado. */
   const matVao = lam({ map: TEX.concrete.map || T.concrete, color: 0x2b2a27, roughness: 1 });
 
   const aoMat = aoMatFactory();
   const SKIRT = new ContactSkirt({ low: LOWQ });
-  /* ── COLISOR GIRADO ─────────────────────────────────────────────────────────
-     Portado de `map_brasilia.js:110` (colRot/foraDaCaixaGirada) em vez de inventado
-     aqui — é o padrão que a base já tem para o mesmo problema.
-
-     Ele passa a ser OBRIGATÓRIO neste mapa a partir desta rodada. O portão
-     `mapa-novo-gate.mjs` cobra ≥ 15% da massa fora da grade de 3° (ORT1) e as casas
-     agora nascem giradas de 3° a 28°. Com colisor AABB, um bloco de 6 × 5 m girado
-     28° projeta canto ~1,1 m para FORA da caixa registrada: o jogador entraria
-     dentro da malha visível e o `MAP1` (corpo dentro de sólido) do map-check
-     acusaria — melhoria de ângulo que quebra colisão é regressão, não melhoria. */
+  /* ── COLISOR GIRADO — portado de `map_brasilia.js` (padrão da base). Obrigatório aqui:
+     com casa girada 3°-28°, AABB projeta canto para fora e o MAP1 acusa corpo em sólido. */
   const alinhado = (ry) => Math.abs(Math.sin(2 * ry)) < 1e-6;
   function colRot(cx, cz, hx, hz, minY, maxY, ry) {
     if (!ry || alinhado(ry)) {
@@ -303,10 +212,8 @@ export function buildCorrego(scene, T) {
   }
 
   const SB = new StaticBatch({ name: 'favela' });
-  /* Peça estática de alvenaria: mesma semântica de `addBox` (colisor, saia de contato,
-     bandas de AO), mas a MALHA vai para o lote em vez de virar um Mesh próprio.
-     `aoBoxGeo` tem de ser chamado imediatamente antes de `aoMat` — o vao passa a UV
-     por um handoff de módulo, e inverter a ordem escala a caixa errada. */
+  /* Alvenaria estática: semântica de `addBox`, malha no lote. `aoBoxGeo` tem de ser
+     chamado imediatamente antes de `aoMat` — o vao passa a UV por handoff de módulo. */
   const _mtx = new THREE.Matrix4(), _eul = new THREE.Euler();
   function addBoxSB(w, h, d, mat, x, y, z, opts = {}) {
     const geo = aoBoxGeo(w, h, d, { low: LOWQ, base: (onGround(y, h) && !opts.ry) ? undefined : BASE_FLOATING });
@@ -317,25 +224,8 @@ export function buildCorrego(scene, T) {
     if (onGround(y, h) && opts.skirt !== false) SKIRT.add(x, y, z, w, d, opts.ry || 0);
     if (opts.collide !== false) colRot(x, z, w / 2, d / 2, y, y + h, opts.ry || 0);
   }
-  /* ── PEÇA INSTANCIADA ────────────────────────────────────────────────────────
-     O lote estático resolve draw call e CEGA O PORTÃO. `mapa-novo-gate.mjs` mede o
-     ângulo de cada massa pela MATRIZ DE MUNDO do objeto; `StaticBatch` assa a matriz
-     nos vértices e devolve uma malha com rotação identidade. Medido: com toda a
-     alvenaria mesclada, o censo caiu de 339 para 158 massas e os ângulos distintos
-     ficaram em 13 — não porque as casas estejam de esquadro (elas não estão), mas
-     porque o instrumento perdeu a informação. Número que some não é número que melhora.
-
-     `InstBatch` resolve os dois: 1 draw call por (geometria, material) E uma matriz
-     POR CÓPIA, que é exatamente o que o portão lê — o próprio cabeçalho dele diz que
-     passou a ler `instanceMatrix` justamente para instancing não virar jeito barato de
-     fazer o número dizer o que se quiser. Então tudo que CARREGA o ângulo da casa e se
-     repete muito (pilar, telhado, caixa d'água, cavalete, ferro de espera, entulho)
-     passa por aqui, e só a alvenaria maciça — que tem o MESMO ângulo dos pilares que a
-     cercam — fica no lote mesclado.
-
-     LIMITAÇÃO DECLARADA: a alvenaria em si continua invisível para o ORT1. O conserto
-     certo é o portão medir NORMAL DE TRIÂNGULO em vez de matriz de objeto, o que muda
-     o número dos 10 mapas e não cabe numa prova de conceito. Está no relatório. */
+  /* ── PEÇA INSTANCIADA: StaticBatch assa a matriz nos vértices e cega o ORT1; InstBatch
+     mantém matriz por cópia. Alvenaria mesclada segue cega ao ORT1 (limitação no relatório). */
   const IB = new InstBatch({ bucket: 0 });
   const _geoI = new Map();
   /* Geometria memoizada por (tamanho, material): o `aoBoxGeo`+`aoMat` escala a UV pelo
@@ -355,11 +245,8 @@ export function buildCorrego(scene, T) {
     IB.add(e.g, e.m, _mtx, null, { cast: opts.cast !== false });
     if (opts.collide) colRot(x, z, w / 2, d / 2, y, y + h, opts.ry || 0);
   }
-  /* Placa inclinada (telhado, beiral, marquise). `rx`/`rz` inclinam; é a inclinação que
-     faz DUAS chapas vizinhas se cruzarem na imagem, e é disso que `juncao_dens` é feita.
-     Nunca tem colisor: telhado não é piso neste mapa.
-     UMA geometria de referência escalada por cópia: a chapa ondulada tolera ±25% de erro
-     de UV, e em troca 90 telhados custam UM draw call em vez de 90. */
+  /* Placa inclinada (telhado, beiral, marquise): nunca tem colisor. UMA geometria de
+     referência escalada por cópia — dezenas de telhados custam 1 draw call. */
   const PLACA_REF = [3.4, 0.1, 5.6];
   function addPlacaSB(w, h, d, mat, x, y, z, ry = 0, rz = 0, rx = 0) {
     const e = geoInst(PLACA_REF[0], PLACA_REF[1], PLACA_REF[2], mat);
@@ -415,30 +302,19 @@ export function buildCorrego(scene, T) {
   }
 
   /* ===================== CÉU / LUZ ===================== */
-  setMapSky(scene, T, '/img/textures/sky_sp.webp', 0xb9a08a);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_corrego');
-  const hemi = new THREE.HemisphereLight(0xd8b89a, 0x4a3830, 0.85); scene.add(hemi);   // mais quente/amarelado
-  const sun = new THREE.DirectionalLight(0xffc888, 1.7); sun.position.set(20, 35, 15); sun.castShadow = true;
+  const { hemi, sun } = applyLook(scene, T, 'fy_corrego', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 180; sun.shadow.bias = -0.0006;
-  scene.add(sun); scene.add(sun.target);
 
-  /* ===================== CHÃO DAS MARGENS =====================
-     O plano começa em |x| = 5, NÃO em 3: a faixa [3, 5] é o topo da parede do canal e
-     as rampas de acesso, que descem. Enquanto o asfalto ia até x = 3 ele ficava
-     pairando 1,7 m acima de quem descia a rampa, e o map-check acusou 31 pontos com o
-     corpo dentro de sólido — plano de chão que ignora o relevo é a forma mais barata
-     de reintroduzir o defeito que este mapa acabou de tirar. */
+  /* CHÃO DAS MARGENS: o plano começa em |x| = 5, NÃO em 3 — [3, 5] é o topo da parede
+     e as rampas; asfalto até x = 3 pairava sobre a rampa (MAP1: corpo em sólido). */
   addFloor(HALF_X - 5, HALF_Z * 2, -(5 + HALF_X) / 2, 0, TEX.asphalt || lam({ map: T.asphalt }), 0.01);
   addFloor(HALF_X - 5, HALF_Z * 2, (5 + HALF_X) / 2, 0, TEX.asphalt || lam({ map: T.asphalt }), 0.01);
 
-  /* ===================== O CÓRREGO =====================
-     Canal de concreto com FUNDO ANDÁVEL (ver o bloco "O CANAL TEM FUNDO" no topo).
-     O vão de 6 m entre as paredes é uma rota baixa de 80 m: dá pra cair dentro, dá
-     pra andar nele por baixo das pontes, e dá pra sair pelas quatro rampas e pelas
-     duas pontas alagadas. As PONTES passam por cima. */
+  /* O CÓRREGO: canal com FUNDO ANDÁVEL (bloco "O CANAL TEM FUNDO") — o vão de 6 m é
+     rota baixa de 80 m, com saída pelas rampas e pontas alagadas; as pontes passam por cima. */
   // Piso do canal: laje de concreto suja, é onde o corpo pousa.
   const matFundoCanal = lam({ map: TEX.concrete.map || T.concrete, color: 0x6f6f61, roughness: 1 });
   addFloor(CANAL_ABERTURA, HALF_Z * 2, 0, 0, matFundoCanal, CANAL_FUNDO);
@@ -447,17 +323,21 @@ export function buildCorrego(scene, T) {
     const calha = addFloor(2.2, HALF_Z * 2 - 2, 0, 0, lam({ map: T.dirt, color: 0x3c4436, roughness: 1 }), CANAL_FUNDO + 0.02);
     calha.userData.nonSolidSurface = true;
   }
-  // água (plano baixo com textura poluída) — agora a 14 cm do fundo: anda-se DENTRO dela
-  const aguaViva = lam({ map: TEX.agua.map || null, color: 0xa0b49a, roughness: .12, metalness: .18,
-    emissive: 0x16281d, emissiveIntensity: .28 });
-  const lamina = addFloor(CANAL_ABERTURA, HALF_Z * 2, 0, 0, aguaViva, CANAL_AGUA);
-  lamina.userData.nonSolidSurface = true; lamina.userData.corregoWaterSurface = 'base';
-  // Uma segunda lâmina translúcida devolve o céu e impede que o canal leia como asfalto verde.
-  // As três lâminas de cima eram COR PURA (766 m² + 316 m² + 81 m² sem mapa nenhum),
-  // e é o maior naco de superfície chapada do mapa. O `repeat` é calculado para dar
-  // ~130 px/m no plano de 5,7 × 79 m — plano de `addFloor` não passa pelo vao, que é
-  // quem normaliza densidade nas caixas. Escala de tile diferente da lâmina base faz
-  // as duas camadas se moverem em fases distintas em vez de imprimirem a mesma mancha.
+  // água viva (RC2, plans/23): shader de depth-fade + espuma + onda da water.js na
+  // escala do canal (régua corrego-water); o albedo poluído segue como tMapa.
+  const aguaCorrego = createWater(scene, T, 'fy_corrego', {
+    nivel: CANAL_AGUA, centro: [0, 0], tamanho: [CANAL_ABERTURA, HALF_Z * 2], segmentos: 6,   // célula de 1 m: Gerstner λ=3,3 m não precisa mais; 48 dava 61 mil tris num canal de 6×80
+    raso: 0x73927a, fundo: 0x2e4238,   // paleta da lâmina B (0xa0b49a/poças), fundo mais escuro p/ o gradiente
+    profEscala: 0.35, espumaFaixa: 0.30, espumaMiolo: 0.10,
+    profFallback: 0.3, fluxo: [0, 0.06], ampEscala: 0.08,
+    mapa: srcAgua, mapaEscala: [3, 13.3], mapaForca: 0.55,
+    parent: root,
+  });
+  aguaCorrego.mesh.userData.nonSolidSurface = true;
+  aguaCorrego.mesh.userData.corregoWaterSurface = 'base';
+
+  // Segunda lâmina translúcida devolve o céu. Plano de addFloor não passa pelo vao,
+  // então o `repeat` é calculado à mão (~130 px/m); tile diferente da base separa as fases.
   const reflexoAgua = lam({ map: mapaAgua(1.5, 20), color: 0x8fc4b4, transparent: true, opacity: .24, roughness: .06,
     metalness: .32, emissive: 0x14372f, emissiveIntensity: .24, depthWrite: false });
   const reflexo = addFloor(CANAL_ABERTURA - .35, HALF_Z * 2 - .6, 0, 0, reflexoAgua, CANAL_AGUA + 0.015);
@@ -476,16 +356,8 @@ export function buildCorrego(scene, T) {
     const r = addBox(w, .012, d, brilho, x, CANAL_AGUA + 0.03, z, { collide: false, cast: false, skirt: false, ry });
     r.userData.nonSolidSurface = true; r.renderOrder = 3;
   }
-  /* ── PAREDES DO CANAL ────────────────────────────────────────────────────────
-     Vertical, de CANAL_FUNDO até y = 0, na faixa |x| ∈ [3, 5]. É o colisor que
-     segura o corpo dentro do canal — e é SÓ ele: o vão continua vazio, que é a
-     diferença entre "canal" e "muro pintado de água".
-
-     Quem anda em cima delas (o topo é o passeio da beira, 2 m de largura) não
-     colide: `_collide` do game.js exige `pos.y + 0,3 < c.maxY`, e com os pés em
-     y = 0 e maxY = 0 a conta dá falso. Isso é do jogo, não uma folga inventada aqui.
-
-     O laço pula os trechos de RAMPA — onde a parede seria, o concreto desce. */
+  /* ── PAREDES DO CANAL: são SÓ elas o colisor do canal — o vão fica vazio. No topo
+     não se colide (`_collide` exige pos.y + 0,3 < maxY). O laço pula os trechos de rampa. */
   const matParedeCanal = lam({ map: TEX.concrete.map || T.concrete, color: 0x8f8b80, roughness: 0.97 });
   for (const lado of [-1, 1]) {
     const cortes = RAMPAS.filter((r) => r.lado === lado)
@@ -500,20 +372,12 @@ export function buildCorrego(scene, T) {
         lado * (RAMPA_X0 + RAMPA_X1) / 2, CANAL_FUNDO, (a + b) / 2);
       parede.userData.corregoDepthWall = lado < 0 ? 'oeste' : 'leste';
     }
-    /* Rampa de acesso: laje inclinada de 6 m. `rotation.x` inclina em torno de X, e o
-       comprimento da laje é a HIPOTENUSA (√(6² + 1,85²)), senão sobra degrau na ponta.
-       Sem colisor: quem manda na altura aqui é `groundHeightAt`, e um colisor com a
-       AABB da laje inclinada bloquearia justamente quem está descendo por ela. */
+    /* Rampa de acesso: o comprimento da laje é a HIPOTENUSA, senão sobra degrau na
+       ponta. Sem colisor — quem manda na altura aqui é `groundHeightAt`. */
     for (const r of RAMPAS.filter((x) => x.lado === lado)) {
       const L = Math.abs(r.zBaixo - r.zAlto), hip = Math.hypot(L, -CANAL_FUNDO);
-      /* SINAL: rotação em X leva o local (0,0,L) para o mundo (y = −L·senθ, z = L·cosθ),
-         logo dy/dz = −tanθ. A rampa quer dy/dz = FUNDO/Δz, então θ = atan2(−FUNDO, Δz).
-         A primeira versão usava atan2(FUNDO, Δz) — a laje subia em vez de descer, e o
-         map-check acusou 43 pontos com o corpo dentro dela (pior 1,398 m).
-         E vai pelo LOTE (portanto por `aoBoxGeo`/`aoMat`) em vez de ser um `Mesh` cru:
-         sem a normalização de UV do vao a laje herdava o `repeat` da textura de origem
-         — pensado para um piso de 80 m — e o `texel-check` mediu ~3.000 px/m contra a
-         mediana de 162 do mapa. */
+      /* SINAL: dy/dz da rampa é FUNDO/Δz, logo θ = atan2(−FUNDO, Δz) — o sinal errado
+         fazia a laje subir. Vai pelo lote: sem o vao a UV herdava o `repeat` do piso (texel-check). */
       addBoxSB(RAMPA_X1 - RAMPA_X0, 0.22, hip, matParedeCanal,
         lado * (RAMPA_X0 + RAMPA_X1) / 2, CANAL_FUNDO / 2 - 0.22, (r.zAlto + r.zBaixo) / 2,
         { collide: false, skirt: false, rx: Math.atan2(-CANAL_FUNDO, r.zBaixo - r.zAlto) });
@@ -538,27 +402,20 @@ export function buildCorrego(scene, T) {
   const lixoAgua = [0xc74c36, 0xe0d59a, 0x47709a, 0xddd7c9, 0x5b7546].map(color => lam({ map: T.crate, color, roughness: 0.82 }));
   for (const [i, x, z, ry] of [[0,-1.8,-27,.5],[1,1.6,-18,-.3],[2,-1.1,-9,.8],[3,1.8,5,-.7],[4,-1.5,13,.4],[0,1.2,26,-.5]])
     addBox(0.32, 0.045, 0.18, lixoAgua[i], x, CANAL_AGUA + 0.04, z, { collide: false, cast: false, skirt: false, ry });
-  /* NÃO existe mais colisor enchendo o vão do córrego. Ele era a linha
-       col(CORREGO_X0, CORREGO_X1, −2,0, −0,12, −HALF_Z+6, HALF_Z−6)
-     e era a causa direta do "quando se cai trava": o piso do canal ficava DENTRO
-     dele. Quem segura o corpo agora são as paredes verticais, e o vão é vazio. */
+  /* NÃO existe colisor enchendo o vão do córrego: o piso do canal ficava DENTRO dele
+     ("quando se cai trava"). Quem segura o corpo são as paredes verticais — o vão é vazio. */
   // ALAGADO nas pontas (não tem colisor — anda por cima, só é visual de água rasa)
   // norte
   addFloor(CORREGO_W + 4, 6, 0, -HALF_Z + 3, TEX.agua || lam({ color: 0x2a3a1a }), 0.02);
   addFloor(CORREGO_W + 4, 6, 0, HALF_Z - 3, TEX.agua || lam({ color: 0x2a3a1a }), 0.02);
-  // remover colisor do córrego nos trechos alagados (substituir por chão andável)
-  // — o col() acima já exclui as 6m de cada ponta ([-HALF_Z+6, HALF_Z-6])
+  // Trechos alagados sem colisor (o vão já exclui as 6 m de cada ponta).
   // Escadarias de contenção: descem da margem até a lâmina rasa nas duas pontas.
   for (const sz of [-1, 1]) for (let i = 0; i < 4; i++) {
     addBox(1.8, 0.04, 0.34, matConcretoFino, sz * (3.55 - i * 0.42), -i * 0.11, sz < 0 ? -36.2 : 36.2,
       { collide: false, skirt: false });
   }
-  /* ASSOREAMENTO DAS PONTAS — o canal não termina num degrau de 1,85 m.
-     Nas duas pontas o fundo sobe até o alagado raso: é onde o córrego "sai" da calha,
-     e é a quinta e a sexta saída do canal (as outras quatro são as rampas). Sem isto
-     quem andasse pelo fundo bateria numa parede invisível em |z| = 32.
-     32° de inclinação: dentro do DEGRAU de 0,30 m por 0,25 m da grade do map-check, ou
-     seja, a sonda de alcançabilidade sobe por aqui de verdade. */
+  /* ASSOREAMENTO DAS PONTAS: o fundo sobe até o alagado nas duas pontas — são saídas
+     do canal (sem parede invisível em |z| = 32), dentro do DEGRAU da grade do map-check. */
   const matAssoreado = lam({ map: T.dirt, color: 0x6b6350, roughness: 1 });
   for (const sz of [-1, 1]) {
     const L = 3.4, hip = Math.hypot(L, -CANAL_FUNDO + 0.05);
@@ -566,24 +423,37 @@ export function buildCorrego(scene, T) {
       { collide: false, skirt: false, rx: -sz * Math.atan2(0.05 - CANAL_FUNDO, L) });   // mesmo sinal da rampa
   }
 
+  /* ═══════════ GRAMA_SPOTS — call-site do `grama_corrego.glb` (frente E): sem o prop
+     no acervo nada é colocado e o corrego-contract AVISA (DORMENTE). Decoração: sem collider/occluder. */
+  const GRAMA_SPOTS = [];
+  for (const lado of [-1, 1]) {
+    let i = 0;
+    for (let z = -36; z <= 36; z += 5.2) {
+      if ([-22, 0, 22].some((bz) => Math.abs(z - bz) < 2.4)) continue;   // vão das pontes livre
+      GRAMA_SPOTS.push({ x: lado * (5.5 + (i % 3) * 0.35), z, ry: (i * 2.399) % 6.283 });
+      i++;
+    }
+  }
+  for (const [sx, sz] of [[-HALF_X + 1.2, -HALF_Z + 1.2], [HALF_X - 1.2, -HALF_Z + 1.2], [-HALF_X + 1.2, HALF_Z - 1.2], [HALF_X - 1.2, HALF_Z - 1.2]])
+    GRAMA_SPOTS.push({ x: sx, z: sz, ry: 0.7 });
+  const gramaServida = [];
+  if (hasProp('grama_corrego')) {
+    for (const spot of GRAMA_SPOTS) {
+      const tufo = placeProp('grama_corrego', { x: spot.x, z: spot.z, targetH: 0.4, ry: spot.ry });
+      if (!tufo) continue;
+      tufo.userData.nonCollider = true;
+      tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+      root.add(tufo);
+      gramaServida.push(tufo);
+    }
+  }
+
   /* ===================== JACARÉ (decoração no córrego) ===================== */
   {
     const jx = 0.8, jz = -7;
     const gJacare = new THREE.Group();
-    /* O jacaré era o pior bicho do mapa: crânio e focinho eram BoxGeometry, e caixa
-       não tem a única coisa que identifica um jacaré à distância — o focinho LONGO,
-       BAIXO e AFUNILADO. Medido antes, 35% da área do bicho era caixa; a régua
-       corrego-superficie-check cobra ≤ 12%.
-       Aqui o crânio vira esfera achatada, o focinho e a mandíbula viram cilindros
-       afunilados (raio da ponta menor que o da base) e a boca ganha dentes, que é o
-       que devolve a leitura de réptil sem passar de 30 malhas.
-       O COURO CONTINUA EM COR PURA, e isso é decisão medida, não esquecimento:
-       tentei o grão do concreto tingido de verde e o texel-check saltou de 2,9× para
-       266× de dispersão (TEXEL3b). Textura que tila é feita para superfície plana de
-       tamanho conhecido; num bicho as peças variam de 0,02 m² (escudo dorsal) a 7 m²
-       (tronco) com UV 0→1, então um material compartilhado espalha a densidade por
-       duas ordens de grandeza. Pele de animal precisa de textura COM UV PRÓPRIA — ou
-       seja, de asset real (ver o relatório). Cor pura é o estado honesto até lá. */
+    /* Focinho LONGO, BAIXO e AFUNILADO é o que identifica o jacaré (régua corrego-superficie:
+       ≤ 12% de caixa). Couro em cor pura: textura tilada estoura o TEXEL3b — pele pede UV própria. */
     const matJ = lam({ color: 0x5d7040, roughness: .92 });
     const matBarriga = lam({ color: 0x939a6a, roughness: 1 });
     const matOlho = lam({ color: 0xe7c84b, emissive: 0x574200, emissiveIntensity: .35 });
@@ -594,11 +464,8 @@ export function buildCorrego(scene, T) {
     // crânio: esfera achatada, testa arredondada e mais estreita que o tronco
     const cab = new THREE.Mesh(new THREE.SphereGeometry(.47, 14, 9), matJ);
     cab.scale.set(.98,.40,1.02); cab.position.set(0,.05,1.16); gJacare.add(cab);
-    /* Focinho: CylinderGeometry com o raio da PONTA menor que o da BASE — é o
-       afunilamento que a caixa não tinha. O eixo do cilindro é Y; `rotation.x =
-       +PI/2` leva +Y para +Z (frente), então o topo estreito fica na ponta da fuça
-       e não no crânio. O `scale.z` local vai para o eixo vertical do mundo depois da
-       rotação, e é ele que achata a fuça: jacaré tem focinho baixo, não tubo. */
+    /* Focinho: cilindro com raio da ponta menor que o da base; `rotation.x = +π/2`
+       leva +Y para +Z, e o `scale.z` local vira o achatamento vertical da fuça. */
     const foc = new THREE.Mesh(new THREE.CylinderGeometry(.20,.34,1.30,12), matJ);
     foc.rotation.x = Math.PI / 2; foc.scale.set(1,1,.52); foc.position.set(0,.02,2.05); gJacare.add(foc);
     // mandíbula: mais estreita e mais baixa, e desce ABAIXO da linha do focinho —
@@ -609,10 +476,8 @@ export function buildCorrego(scene, T) {
       const nar = new THREE.Mesh(new THREE.SphereGeometry(.038,6,5), matJ);
       nar.scale.set(1,.6,1); nar.position.set(ex,.10,2.58); gJacare.add(nar);
     }
-    /* Escudo lateral: fica NA BORDA da silhueta do tronco (meia-largura .667), que é
-       a única posição em que peça pequena de bicho aparece de fato. Dente foi tentado
-       e descartado — em qualquer posição plausível ele nasce dentro da mandíbula ou
-       do focinho, e cone branco escondido é custo sem imagem. */
+    /* Escudo lateral NA BORDA da silhueta do tronco (meia-largura .667) — única posição
+       em que peça pequena aparece. Dente descartado: nascia escondido dentro da mandíbula. */
     for (const [sx, sz] of [[-1,-1.15],[1,-1.15],[-1,-.35],[1,-.35],[-1,.45],[1,.45]]) {
       const esc = new THREE.Mesh(new THREE.SphereGeometry(.10,7,5), matEscudo);
       esc.scale.set(.45,.42,1.05); esc.position.set(sx * .60, -.02, sz); gJacare.add(esc);
@@ -637,24 +502,29 @@ export function buildCorrego(scene, T) {
     // O canal tem fundo agora: o jacaré deitou nele, meio submerso na lâmina rasa.
     gJacare.position.set(jx, CANAL_AGUA - .18, jz); gJacare.rotation.y = .22;
     gJacare.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
-    // Entra no censo de fauna do corrego-contract-check junto com capivara e ratos:
-    // ele não tem collider nenhum (nada aqui passa por addBox), e era o único bicho
-    // do mapa que nenhuma régua olhava.
+    // Censo de fauna do corrego-contract-check: sem collider (nada passa por addBox)
+    // e marcado como fauna — antes nenhuma régua olhava este bicho.
     gJacare.userData.fauna = 'jacare'; gJacare.userData.nonCollider = true;
+    /* GLB do Mint no lugar do proxy (BUG-57). Focinho do GLB aponta −X e o yawFix do
+       placeFauna o leva a +Z (ver ambientlife.js); sem template (node, ?glb=0) o proxy serve. */
+    const jacareGlb = placeFauna('jacare', { x: jx, y: CANAL_FUNDO, z: jz, ry: .22 });
     root.add(gJacare);
+    if (jacareGlb) {
+      jacareGlb.userData.fauna = 'jacare'; jacareGlb.userData.nonCollider = true;
+      root.add(jacareGlb);
+      gJacare.visible = false; gJacare.userData.faunaProxy = 'jacare';
+    }
   }
 
   /* ===================== CAPIVARA (na margem alagada sul) ===================== */
   {
     const cx = -5.2, cz = -38;
     const gCap = new THREE.Group();
-    // Cor pura de propósito, pelo mesmo motivo do jacaré: textura que tila espalha a
-    // densidade de texel por duas ordens de grandeza num bicho (TEXEL3b). Pelo de
-    // capivara pede textura com UV própria, que é asset real e não existe aqui.
+    // Cor pura de propósito (mesmo motivo do jacaré): textura tilada estoura o TEXEL3b
+    // num bicho; pelo pede textura com UV própria, que é asset real.
     const matC = lam({ color: 0x6a4a3a, roughness: 0.9 });
-    // Barril afunilado contínuo: o eixo do CylinderGeometry vira longitudinal.
-    // O estado anterior (esfera + caixa + cilindros-pino) foi reprovado no pixel
-    // mesmo com escala correta; as peças abaixo se sobrepõem de propósito na junta.
+    // Barril afunilado contínuo (cilindro no eixo longitudinal); as peças se sobrepõem
+    // de propósito na junta — a versão esfera+caixa foi reprovada no pixel.
     const corpo = new THREE.Mesh(new THREE.CylinderGeometry(.43,.48,1.25,16,2), matC);
     corpo.rotation.x = Math.PI / 2; corpo.position.set(0,-.01,-.16);
     corpo.userData.capivaraPart='rounded-body-core'; gCap.add(corpo);
@@ -697,7 +567,16 @@ export function buildCorrego(scene, T) {
     gCap.userData.fauna = 'capivara';
     gCap.userData.nonCollider = true;
     gCap.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    /* GLB do Mint (ficha plans/21-FAUNA-CORREGO.md, revisão APROVADA com scale 1,0 —
+       1,0 m comp × 0,58 alt). Pés no chão do alagado (groundHeightAt 0,05 em |z| ≥ 35),
+       focinho +Z nativo com o mesmo ry = .35 do proxy. Fallback: proxy procedural. */
+    const capivaraGlb = placeFauna('capivara', { x: cx, y: 0.05, z: cz, ry: .35 });
     root.add(gCap);
+    if (capivaraGlb) {
+      capivaraGlb.userData.fauna = 'capivara'; capivaraGlb.userData.nonCollider = true;
+      root.add(capivaraGlb);
+      gCap.visible = false; gCap.userData.faunaProxy = 'capivara';
+    }
   }
   // Contexto material do trio: manilha e sacos no canto evitam a leitura de três
   // objetos soltos no meio de uma esplanada limpa.
@@ -716,9 +595,8 @@ export function buildCorrego(scene, T) {
   /* ===================== PONTES DE MADEIRA =====================
      3 pontes cruzando o córrego. Cada uma é um tablado de madeira a y=0.1. */
   function ponte(z, largura = 3, comGuarda = false) {
-    // Colisão contínua invisível mantém a rota justa; a malha servida são tábuas
-    // independentes com lacunas, empeno e desalinhamento. O tablado é colisor de CORPO
-    // apenas — occluder são as tábuas (a bala enxerga as lacunas que o olho enxerga).
+    // Colisão contínua invisível mantém a rota justa sob as tábuas com lacunas; o tablado
+    // é colisor de CORPO apenas — occluder são as tábuas (a bala enxerga as lacunas).
     const matMadeira = TEX.wall || lam({ color: 0x8a6a4a, roughness: 0.9 });
     const tablado = addBox(CORREGO_W + 2, .18, largura, new THREE.MeshBasicMaterial({visible:false}), 0, 0, z,{skirt:false,collide:false});
     colRot(0, z, (CORREGO_W + 2) / 2, largura / 2, 0, .18, 0);
@@ -743,69 +621,16 @@ export function buildCorrego(scene, T) {
       }
     }
   }
-  ponte(-22, 3.0, true);    // norte: larga, com guarda-corpo (rota principal)
-  ponte(0, 1.8, false);     // central: estreita, sem guarda (risco)
-  ponte(22, 3.0, false);    // sul: passagem coberta por uma palafita
+  /* norte: larga, com guarda-corpo (rota principal); central: estreita, sem guarda
+     (risco); sul: passagem coberta por uma palafita. */
+  ponte(-22, 3.0, true);
+  ponte(0, 1.8, false);
+  ponte(22, 3.0, false);
   addBox(CORREGO_W + 2.8, 0.12, 3.8, TEX.zinco || lam({ color: 0x77746d }), 0, 2.5, 22);
   for (const px of [-3.6, 3.6]) addBox(0.16, 2.5, 0.16, TEX.concrete, px, 0, 22);
 
   /* ═══════════════════ A FAVELA ═══════════════════════════════════════════════
-     O QUE ESTAVA ERRADO, e é uma coisa só: 26 caixas soltas em duas fileiras retas,
-     de 5 a 7 m uma da outra, todas com 3 a 4 m de altura, todas de esquadro, todas
-     com a mesma prancha de madeira. Da posição de spawn (x = ±21) o jogador via um
-     corredor de asfalto vazio e um muro de 3 m coberto de cartaz. É o "SEM DENSIDADE
-     DE FAVELA E BECOS DIREITO, SEM DETALHES" do dono, e o `foto-vs-render` diz a
-     mesma coisa em número: `juncao_dens` (densidade de junção — quantos pontos da
-     imagem têm 3+ orientações de aresta se cruzando) a −2,3 sigmas da fotografia.
-     É o ÚNICO descritor em que os 10 mapas ficam abaixo de TODAS as 18 fotos.
-
-     O QUE AS 18 FOTOS TÊM E ISTO NÃO TINHA (`references/favela/fotos-reais/`)
-       foto_063 (beco visto de cima) — é a foto que define o problema: dois PLANOS DE
-         TELHADO se sobrepõem em quase todo pixel, cada um num ângulo diferente, e o
-         beco tem 2 m entre paredes de 6 a 8 m. Densidade de junção não vem de "mais
-         objetos"; vem de PLANO NA FRENTE DE PLANO.
-       foto_001 (o córrego) — as casas ficam EM CIMA da parede do canal, e a parede
-         delas é o próprio muro de arrimo; mãos-francesas de madeira saem da parede
-         sobre a água; laje com ferro de espera; a faixa horizontal de reboco cinza
-         embaixo e tijolo aparente acima.
-       foto_005 — casas ESCALONADAS, cada uma um pouco girada em relação à vizinha,
-         pilar de concreto aparente cortando a alvenaria.
-       foto_040 (beco com escada) — 1,5 m entre paredes pintadas de verde/amarelo,
-         caixa d'água azul na laje, poste com prumada de canos.
-       foto_012 — beiral avançando 1 m sobre a rua, varal atravessado na frente.
-
-     A TRADUÇÃO EM PLANTA (por margem; a oeste tem o mesmo esquema com deslocamento
-     de z, para as duas não lerem como espelho):
-       |x| 5,0 → 6,8   passeio da beira do canal (1,8 m entre a queda e a parede)
-       |x| 6,8 → 12,4  FILEIRA A, de 2 a 3 lajes, fundos sobre o canal
-       |x| 12,4 → 14,2 BECO 1 (1,8 m, paredes de 6 a 9 m dos dois lados)
-       |x| 14,2 → 19,0 FILEIRA B, de 2 a 3 lajes, sacadas avançando sobre o beco
-       |x| 19,0 → 22,6 rua do spawn (3,6 m)
-       |x| 22,6 → 23,8 FILEIRA C, barracos encostados no muro externo
-     e becos TRANSVERSAIS ligando os três eixos, senão a margem vira dois corredores
-     paralelos sem escolha.
-
-     CUSTO — e este é o motivo de tudo aqui passar por `StaticBatch`. Medido ANTES:
-     559 malhas visíveis para 16.168 triângulos, ou seja ~559 draw calls no passe
-     principal + 341 no de sombra, contra o teto documentado de 300-800. O mapa já
-     estava estourado sem ter geometria nenhuma — 559 chamadas para 16 mil triângulos
-     é a definição de "muito caixa". Uma casa desta rodada tem ~14 peças; 40 casas à
-     moda antiga seriam +560 chamadas. Com o lote estático, TODA a alvenaria do mapa
-     vira ~1 chamada POR MATERIAL. Ver o número medido no fim do arquivo. */
-  /* ÂNGULOS — tabela EXPLÍCITA, não sorteio.
-     O portão cobra ≥ 20 ângulos DISTINTOS (arredondados ao grau, dobrados em 0-45°
-     porque caixa é simétrica a cada 90°) e ≥ 15% da massa fora da grade de 3°.
-     Sorteio uniforme não GARANTE 20 valores distintos: dois sorteios caem no mesmo
-     grau e o número passa a depender da semente. Aqui cada peça recebe um grau seu,
-     e a tabela é a prova de que o número não veio de sorte.
-
-     Duas tabelas, e a separação é geométrica, não cosmética: casa de fileira só pode
-     girar pouco, senão a AABB dela come o beco de 1,8 m (uma caixa de 4,4 × 5,4 m a
-     28° cresce 1,2 m de cada lado). Quem carrega os ângulos grandes é o que é pequeno
-     e realmente nasce torto — puxadinho, barraco de fundo, tapume, banca. Somadas dão
-     26 graus distintos.
-     O sinal alterna: para o portão só |a| conta, mas para o olho o que importa é a
-     fileira não pender toda para o mesmo lado. */
+     Planta nova medida contra `references/favela/fotos-reais/` (caso e números no relatório). Ângulos em TABELA, não sorteio: fileira gira pouco (AABB comeria o beco), anexo gira muito. */
   const GRAUS_FILEIRA = [4, 6, 8, 9, 11, 12, 13, 5, 7, 10, 14, 3];
   const GRAUS_ANEXO = [16, 18, 20, 22, 24, 26, 28, 17, 19, 21, 23, 25, 27, 15];
   const RAD = Math.PI / 180;
@@ -842,9 +667,8 @@ export function buildCorrego(scene, T) {
     for (let k = 1; k < andares; k++)
       addBoxSB(w + 0.24, 0.18, d + 0.24, matReboco, x, k * PISO - 0.09, z, { ry, collide: false, skirt: false });
 
-    // (5) COBERTURA. Duas famílias, e a alternância é o que impede a fileira de
-    //     virar pente: telha ondulada em duas águas com BEIRAL LARGO (foto_012,
-    //     foto_063), ou laje plana com platibanda e ferro de espera (foto_001).
+    // (5) COBERTURA: telha duas águas com beiral largo (foto_012/063) ou laje plana
+    //     com platibanda e ferro de espera (foto_001) — a alternância impede o pente.
     const beiral = 0.85 + (i % 3) * 0.18;
     if (i % 3 === 2) {
       // laje plana + platibanda: o topo fica utilizável e a silhueta fica reta
@@ -881,13 +705,8 @@ export function buildCorrego(scene, T) {
       root.add(dish);
       addBoxI(0.05, 0.55, 0.05, matVerga, px(a, b), h + 0.45, pz(a, b), { ry, cast: false });
     }
-    // (8) JANELA E PORTA: vãos escuros recuados. Baratos e são o que dá ESCALA à
-    //     parede — sem eles um bloco de 8 m lê como muro, não como prédio de 3 lajes.
-    //     PORTA no térreo (BUG-55): 2,10 m com a base no piso. O vão único de 1,0 m a
-    //     1,15 m do chão fazia a fachada ler como casa de boneca — é o "mesmo erro de
-    //     escala" do dono. Sai 0,10 m a mais que a face (d/2+0,10) porque o
-    //     embasamento avança 0,08 e engoliria os primeiros 1,03 m da porta.
-    //     Régua: tools/eval/escala-favela-check.mjs (ESC1/ESC2).
+    // (8) JANELA E PORTA: vãos escuros recuados dão escala à parede. PORTA no térreo
+    //     de 2,10 m com base no piso (BUG-55; régua ESC1/ESC2 do escala-favela-check).
     addBoxSB(1.0, 2.10, 0.1, matVao, px(0.6, d / 2 + 0.10), 0.02, pz(0.6, d / 2 + 0.10), { ry, collide: false, skirt: false, cast: false });
     for (let k = 1; k < andares; k++) {
       const yv = k * PISO + 1.15;
@@ -900,24 +719,15 @@ export function buildCorrego(scene, T) {
     return { ry, h };
   }
 
-  /* PUXADINHO — anexo pequeno, torto de verdade (tabela de ângulo grande), telhado
-     próprio numa inclinação diferente da casa vizinha. É a peça que mais rende em
-     `juncao_dens` por metro cúbico: dois telhados quase encostados em ângulos
-     diferentes produzem junção onde uma caixa sozinha produz uma aresta. */
+  /* PUXADINHO — anexo torto de verdade (ângulo grande da tabela): dois telhados quase
+     encostados em ângulos diferentes rendem junção onde uma caixa dá uma aresta. */
   function puxadinho(x, z, w, d, h, opts = {}) {
     const ry = opts.ry !== undefined ? opts.ry : angAnexo();
-    /* ALVENARIA POR PADRÃO, madeira em 1 de cada 4. A primeira versão sorteava meio a
-       meio e o frame de spawn voltou a ser exatamente o que o dono reprovou: uma parede
-       de tábua bege coberta de cartaz a 1,5 m do rosto. Nas 18 fotos a tábua aparece em
-       remendo e em barraco isolado (foto_029, foto_012) — nunca como material dominante
-       de uma fileira inteira. */
+    /* Alvenaria por padrão, chapa 1 em 4: nas 18 fotos a tábua só aparece em remendo
+       e barraco isolado (foto_029, foto_012) — nunca como material dominante de fileira. */
     const _sorte = Math.abs(Math.round(x * 3 + z * 7));
-    /* E a madeira SAIU de vez do corpo do barraco. Segunda captura desta rodada: com
-       1 em 4 de tábua, o quadro de um dos yaws ainda era `tex_madeira.webp` ocupando a
-       tela inteira — uma mancha bege sem grão a 2 m do olho, que é literalmente o "sem
-       textura nenhuma". Nas fotos o barraco leve é de CHAPA ONDULADA (foto_029,
-       foto_012); a madeira aparece em ripa de remendo, e as ripas continuam aqui logo
-       abaixo. Chapa 1 em 4, alvenaria no resto. */
+    /* E a madeira SAIU do corpo do barraco: nas fotos o barraco leve é de chapa
+       ondulada (foto_029, foto_012); madeira fica só nas ripas de remendo, logo abaixo. */
     const mat = opts.mat || (_sorte % 4 === 0 ? TEX.zinco : MURO[_sorte % MURO.length]);
     addBoxSB(w, h, d, mat, x, opts.y || 0, z, { ry, skirt: opts.y ? false : undefined });
     addPlacaSB(w + 0.7, 0.09, d + 0.6, TEX.zinco, x, (opts.y || 0) + h + 0.16, z, ry + 0.12, 0.16 + (Math.abs(Math.round(x)) % 3) * 0.05);
@@ -928,16 +738,8 @@ export function buildCorrego(scene, T) {
     if (!opts.semSolido) solids.push({ x0: x - w / 2 - 0.3, x1: x + w / 2 + 0.3, z0: z - d / 2 - 0.3, z1: z + d / 2 + 0.3 });
   }
 
-  /* ─── FILEIRAS ───────────────────────────────────────────────────────────────
-     Os centros em z são DERIVADOS dos becos transversais, não escritos à mão. A
-     primeira versão desta rodada escreveu a lista à mão com passo de 6,8 m e casas de
-     até 6,5 m de profundidade — esquecendo que uma caixa de 4,8 × 6,5 m girada 14°
-     ocupa 7,5 m em z, não 6,5. Os becos transversais nasceram com 0,3 m de vão, o
-     grafo de waypoints partiu em 23 componentes desconexas e o `CTF2` do map-check foi
-     a 0 rotas em TODOS os 8 pares spawn↔bandeira. Foi o defeito mais caro da rodada e
-     é do tipo que só aparece medindo: no render as casas ficam bonitas.
-
-     Agora o vão do beco é entrada da conta, e a fileira preenche o que sobra. */
+  /* ─── FILEIRAS: centros em z DERIVADOS dos becos transversais — o vão livre do beco
+     é entrada da conta (caixa girada ocupa mais que a profundidade; sem isto o CTF2 foi a 0 rotas). */
   const BECOS_Z = [-21.0, -8.7, 11.1, 24.3];
   const SPAWN_Z = [-25, -5, 15, 35];   // usado pelo largo do spawn e pela fileira C
   const MEIO_BECO = 1.3;                       // metade do vão LIVRE do beco transversal
@@ -973,19 +775,12 @@ export function buildCorrego(scene, T) {
     for (let i = 0; i < FILEIRA_B.length; i++) {
       const z = FILEIRA_B[i];
       if (Math.abs(z) > HALF_Z - 3) continue;
-      /* LARGO DO SPAWN — onde a fileira B cruza um ponto de spawn, ela NÃO é
-         construída: a rua alarga de 3,1 m para 7,7 m e vira o largo onde o time
-         nasce. Não é decisão de estética, é o `MAP2B`: ele mede a área ANDÁVEL
-         CONTÍGUA num disco de 5 m de raio e cobra ≥ 40 m². Uma rua de 3,1 m atravessando
-         esse disco entrega no máximo ~31 m² — medido exatamente isso (30,9) antes deste
-         corte. Rua estreita é o objetivo do mapa; spawn em fresta é regressão. */
+      /* LARGO DO SPAWN: onde a fileira B cruza um spawn ela NÃO é construída — o MAP2B
+         cobra ≥ 40 m² de área andável contígua num disco de 5 m; rua de 3,1 m dá ~31 (medido). */
       if (SPAWN_Z.some((s) => Math.abs(z - s) < 4.2)) continue;
       const w = 3.0 + (i % 3) * 0.3, d = 4.0 + (i % 3) * 0.4;
-      /* A FILEIRA DE DENTRO É A ALTA, e isso vem da fotografia: em foto_001 e foto_024 o
-         que está na beira d'água é o barraco velho de 1-2 lajes, e o que sobe para 3-4
-         lajes é o que está atrás, longe da cheia. É também o que resolve o ALT1 do
-         portão (h90 ≥ 9 m) SEM inflar pé-direito: 3 lajes de 2,8 m dão 8,4 m e 4 dão
-         11,2 m — dentro dos "9-12 m" que o próprio teto cita como referência. */
+      /* A FILEIRA DE DENTRO É A ALTA (foto_001/024: o alto fica longe da cheia) e fecha
+         o ALT1 (h90 ≥ 9 m) sem inflar pé-direito: 3-4 lajes de 2,8 m = 8,4-11,2 m. */
       const andares = i % 3 === 0 ? 4 : 3;
       const c = casa(lado * 16.95, z, w, d, andares);
       /* SACADA sobre o BECO 1 — volume do 2º pavimento avançando 1,2 m no vão. É o
@@ -996,41 +791,27 @@ export function buildCorrego(scene, T) {
           { ry: c.ry, collide: false, skirt: false });
         addPlacaSB(1.9, 0.09, d * 0.8, TEX.zinco, lado * (16.95 - (w / 2 + 0.9)), PISO + 2.6, z + 0.4, c.ry, lado * 0.2);
       }
-      /* MARQUISE SOBRE A RUA. A tentativa anterior foi um puxadinho AVANÇANDO 1,4 m
-         na rua para quebrar os 80 m de corredor reto; ele estrangulou a passagem para
-         0,78 m entre a fileira C e o anexo, o `CTF2` caiu de 2 para 1 rota separada em
-         4 pares e a folga do spawn foi a 1,4 m. Recorte que fecha rota é regressão.
-         A marquise faz o mesmo recorte SEM tocar no chão: laje de 1,9 m saindo da
-         fachada a 3,3 m de altura, com telha por cima. */
+      /* MARQUISE SOBRE A RUA: recorta os 80 m de corredor SEM tocar o chão — recorte
+         que avança na rua estrangula a passagem e derruba o CTF2 (medido na tentativa anterior). */
       if (i % 3 === 1) {
         addPlacaSB(1.9, 0.16, d * 0.9, matRebocoSujo, lado * 20.0, 3.3, z + 0.6, c.ry, lado * 0.06);
         for (const k of [-1, 1])
           addBoxI(0.12, 3.3, 0.12, matConcretoFino, lado * 20.7, 0, z + 0.6 + k * d * 0.35, { ry: c.ry, cast: false });
       }
     }
-    /* ─── FILEIRA C · barracos encostados no muro externo ────────────────────
-       Existe por uma razão jogável antes de estética: o spawn ficava de costas
-       para 80 m de muro liso de 3 m coberto de cartaz, e era ESSE o quadro que o
-       dono viu. Os vãos de z respeitam os quatro pontos de spawn (±25, ±5, 15, 35)
-       com 3 m de folga, para o `MAP2B` (folga ≥ 1,2 m, área contígua ≥ 40 m²) não
-       cair — spawn apertado é regressão, não densidade. */
+    /* ─── FILEIRA C · barracos encostados no muro externo: o spawn não fica de costas
+       para 80 m de muro liso. Vãos de z respeitam os pontos de spawn (MAP2B: folga e área). */
     for (const z0 of [-37, -32, -20, -15, -10, 0, 5, 10, 21, 26, 31]) {
       const z = z0 + dz * 0.5;
       // a folga é medida no z FINAL, não no de partida — foi assim que um barraco
       // encostou no spawn oeste e o MAP2B foi a 0,75 m de folga (medido).
       if ([-25, -5, 15, 35].some((s) => Math.abs(z - s) < 3.6)) continue;
-      /* ry pequeno de propósito: barraco encostado em muro nasce alinhado COM o muro, e
-         um giro de 28° faria a caixa atravessar o muro externo e invadir a rua do spawn.
-         Pé-direito 2,40–2,78 m (BUG-55): a faixa real de barraco de 1 pavimento — o
-         degrau antigo (×0,45) chegava a 3,75 m e lia como galpão. Régua: ESC3 do
-         escala-favela-check. */
+      /* ry pequeno de propósito: barraco encostado em muro nasce alinhado COM ele; giro
+         grande atravessaria o muro e invadiria a rua. Pé-direito 2,40–2,78 m (BUG-55, ESC3). */
       puxadinho(lado * 23.05, z, 1.0, 2.6 + (Math.abs(z0) % 3) * 0.4, 2.4 + (Math.abs(z0) % 4) * 0.13, { semTapume: true, ry: angAnexo() * 0.28 });
     }
-    /* ─── BECOS TRANSVERSAIS ─────────────────────────────────────────────────
-       Onde a fileira A tem um vão maior, o beco atravessa da beira do canal até a
-       rua do spawn. Cada travessia recebe um PÓRTICO: laje ligando as duas casas
-       por cima do beco, com 2,4 m de vão livre. É passagem coberta — a coisa que
-       mais aparece nas fotos de beco e a que mais rende profundidade na imagem. */
+    /* ─── BECOS TRANSVERSAIS com PÓRTICO (laje ligando as casas, 2,4 m livres): passagem
+       coberta — o que mais aparece nas fotos de beco e mais rende profundidade. */
     for (const z of BECOS_Z) {
       const zz = z + dz;
       addPlacaSB(9.0, 0.22, 2.0, matRebocoSujo, lado * 13.4, 3.9, zz, lado * 0.05, 0.02);
@@ -1040,16 +821,8 @@ export function buildCorrego(scene, T) {
     }
   }
 
-  /* ─── PALAFITAS SOBRE O CANAL ────────────────────────────────────────────────
-     Em foto_001 as casas não param na margem: elas AVANÇAM sobre a calha, apoiadas
-     em estaca, com mão-francesa de madeira saindo da parede. É a leitura que dá
-     nome ao mapa, e o vão embaixo continua atravessável (2,2 m livres). */
-  /* |x| ≈ 5,4 e não 6,5: a palafita tem de AVANÇAR sobre a calha, e não ficar atrás
-     dela. Com o centro em 6,5 a mão-francesa caía em x ≈ 4,2 — em cima do passeio, na
-     altura do peito, sem colisor — e o map-check acusou o corpo dentro de geometria
-     visível (1 ponto, 0,987 m). Com o centro em 5,4 a casa fica sobre o vão, a escora
-     fica sobre a ÁGUA (onde o piso está 1,75 m abaixo e ninguém encosta a cabeça) e o
-     passeio da beira passa POR BAIXO dela, entre as estacas — que é a foto_001. */
+  /* ─── PALAFITAS SOBRE O CANAL (foto_001): centro em |x| ≈ 5,4 para a casa AVANÇAR
+     sobre a calha e a escora cair sobre a água; o passeio da beira passa por baixo, entre as estacas. */
   /* h = corpo + pilotis: corpo (h−0,4) fica na faixa 2,40–2,80 m de pé-direito (BUG-55,
      régua ESC4 — os 3,2 m de corpo liam como sobrado, não palafita). */
   for (const [x, z, w, d, h] of [
@@ -1074,28 +847,10 @@ export function buildCorrego(scene, T) {
         { ry: ry + k * 0.05 });
   }
 
-  /* ─── ENTULHO: O QUE ENCHE O CANAL E O BECO ──────────────────────────────────
-     Duas razões, e as duas são medidas.
-
-     (a) FOTOGRAFIA. Em foto_029 e foto_001 não existe um metro quadrado de chão
-         limpo: manilha de concreto largada, tambor, pilha de tijolo, entulho de obra,
-         carcaça de eletrodoméstico. "SEM DETALHES" é literalmente isto.
-     (b) RÉGUA. Abrir o fundo do canal acrescentou ~430 m² de chão andável SEM UMA
-         PEÇA DE COBERTURA, e o `MAP5` do map-check (densidade de prop por quadrante)
-         saltou de 6,8 m de espaçamento para 10,6 m, contra um teto de 7. Corredor
-         de 80 m sem nada onde se abrigar é galeria de tiro, não rota.
-
-     Tudo entra no lote estático; o colisor de cada peça tem ≥ 0,60 m de altura útil,
-     que é o que o MAP5 conta como prop, e é também o que serve de cover de agachado. */
-  /* REPEAT CALCULADO, não herdado. Estes dois são CILINDROS e não passam pelo
-     `aoBoxGeo`/`aoMat` — ou seja, ninguém normaliza a UV deles pelo tamanho de mundo, e
-     eles herdariam o `repeat` da textura de origem (pensada para um piso). Medido: a
-     manilha ficou a 876 px/m contra a mediana de 204 do mapa e era o pico que segurava o
-     TEXEL3b em 4,3× (teto 4×). A UV de um cilindro do three vai de 0 a 1 na
-     circunferência e de 0 a 1 na altura, então basta repeat = ALVO_PXM × medida ÷ 512
-     (as três texturas do mapa são 512²; conferido no disco). ALVO_PXM = 128, manilha
-     Ø 1,10 m (circunferência 3,46 m) × 1,50 m de comprimento; tambor Ø 0,60 m
-     (circunferência 1,88 m) × 0,88 m. */
+  /* ─── ENTULHO: o fundo do canal novo somava ~430 m² de chão sem cover (MAP5 a 10,6 m
+     de espaçamento, teto 7). Colisor com ≥ 0,60 m úteis conta como prop e é cover de agachado. */
+  /* REPEAT CALCULADO, não herdado: cilindros não passam pelo vao, então repeat =
+     ALVO_PXM (128) × medida ÷ 512 (as três texturas do mapa são 512²) — senão estouram o TEXEL3b. */
   const repetir = (tex, u, v) => { if (!tex) return null; const t = tex.clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(u, v); return t; };
   const matManilha = lam({ map: repetir(TEX.concrete.map, 0.87, 0.38) || T.concrete, color: 0x8a867c, roughness: 0.98 });
   const matTambor = lam({ map: repetir(T.metal, 0.47, 0.22) || T.metal, color: 0x7a5a3c, metalness: 0.3, roughness: 0.85 });
@@ -1156,10 +911,8 @@ export function buildCorrego(scene, T) {
     }
   }
 
-  /* ─── POSTE E EMARANHADO DE FIOS ─────────────────────────────────────────────
-     Está em TODAS as 18 fotos, sem exceção, e é o elemento que mais atravessa o
-     quadro de ponta a ponta em ângulos que nenhuma parede tem. Poste de concreto
-     com braço, prumada de canos e o feixe de gatos saindo em várias direções. */
+  /* ─── POSTE E EMARANHADO DE FIOS: está nas 18 fotos e atravessa o quadro em ângulos
+     que nenhuma parede tem — poste com braço, prumada de canos e feixe de gatos. */
   const fio = lam({ color: 0x1d1b19, roughness: 0.72 });
   const POSTES = [[-6.6, -31], [7.1, -12], [-7.2, 6], [6.8, 29], [-13.3, -24], [13.3, -3], [-13.3, 16], [13.3, 30], [-20.6, -34], [20.6, -18], [-20.6, 12], [20.6, 22]];
   for (let i = 0; i < POSTES.length; i++) {
@@ -1196,14 +949,8 @@ export function buildCorrego(scene, T) {
         lado * xv, 2.5 - (k % 3) * 0.1, z - 1.8 + k * 0.66, { ry: (k - 2.5) * 0.05 + angAnexo() * 0.12, cast: false });
   }
 
-  /* ===================== COVER NAS MARGENS ===================== */
-  // sofá velho, geladeira, pneus
-  // Sofá, geladeira e pilha de pneu eram cor pura — e são cover na altura do peito,
-  // ou seja, exatamente o que o jogador encosta o nariz. Cada família com um material
-  // compartilhado e com mapa do catálogo de textures.js.
-  /* Cover MOVIDO: as peças moravam em |x| = 5, que agora é a beirada da queda de 1,75 m
-     do canal — cover em cima de precipício é cover que ninguém usa. Foram para o passeio
-     da beira (|x| ≈ 5,9) e para os becos, que é onde há tráfego. */
+  /* ===================== COVER NAS MARGENS =====================
+     No passeio da beira (|x| ≈ 5,9) e nos becos, não na beirada da queda do canal; um material com mapa por família. */
   for (const [i, x, z] of [[0, 5.9, -15], [1, -5.9, 15]])
     addBox(2.0, 0.8, 0.8, matSofa[i], x, 0, z, { ry: angAnexo() * 0.4 });
   addBox(1.5, 1.8, 1.5, matEletro, 5.9, 0, 10);   // geladeira encostada na parede do canal
@@ -1221,10 +968,8 @@ export function buildCorrego(scene, T) {
     propComFallback('botijao_gas', x, z, h, angAnexo(), () => addBox(0.42, h, 0.42, matEletro, x, 0, z));
   for (const [x, z] of [[13.65, 8.2], [-13.65, -12.8]])
     propComFallback('caixa_dagua', x, z, 1.25, angAnexo(), () => addBox(1.1, 1.25, 1.1, matCaixaAgua, x, 0, z));
-  /* CARRO POPULAR ENCOSTADO NA RUA — foto_024 e foto_055: a rua da favela é uma fila
-     de carro velho de um lado só. Serve de cover de agachado e, junto com o
-     puxadinho que avança, é o que recorta os 80 m de rua reta. Três modelos, para a
-     fila não ler como cópia; entram no `PropBatch` (1 call por material, por bloco). */
+  /* CARRO POPULAR ENCOSTADO NA RUA (foto_024/055): cover de agachado que recorta os
+     80 m de rua reta; três modelos para a fila não ler como cópia (PropBatch). */
   /* Ficam DENTRO do largo (|x| ≈ 17,8), não na pista de 3,1 m: um carro de 1,7 m numa
      rua de 3,1 m deixa 1,0 m de vão e foi assim que a primeira tentativa cortou rota.
      E ficam a ≥ 5,5 m do ponto de spawn, fora do disco que o MAP2B mede. */
@@ -1250,35 +995,13 @@ export function buildCorrego(scene, T) {
     propComFallback(id, x, z, h, ry, () => addBox(1.35, h, 1.35, PAREDES[(Math.abs(z) / 10 | 0) & 3], x, 0, z));
   }
 
-  /* Empenas de pixação SP. MOVIDAS de |x| = 23,72 (atrás da fileira C, onde ninguém
-     mais vê) para as empenas altas das fileiras que dão para os becos — pixo de
-     empena existe justamente onde há parede cega alta e alguém para olhar. */
+  /* Empenas de pixo nas paredes cegas altas voltadas aos becos — pixo de empena existe
+     onde há parede cega e alguém para olhar, não atrás da fileira C. */
   if (TEX.pixo) for (const [x, z, ry] of [[23.72, -28, -Math.PI / 2], [-23.72, 24, Math.PI / 2], [23.72, 8, -Math.PI / 2], [-23.72, -12, Math.PI / 2]])
     addBox(0.05, 4.6, 6.0, TEX.pixo, x, 1.4, z, { collide: false, ry, skirt: false, bala: true });
 
   /* ===================== MUROS EXTERNOS =====================
-     De 3 m para 8 m, e de concreto liso para alvenaria. Dois motivos, os dois medidos:
-
-     (a) O muro de 3 m era a maior superfície LISA e CONTÍNUA do mapa (80 m × 3 m × 2
-         lados = 480 m²) e por isso era onde a passada de grafite despejava a maior
-         parte das 425 peças assadas. O frame de referência desta rodada mostra o
-         spawn de frente para uma parede bege com seis cartazes lado a lado — é
-         literalmente o "BARRACOS GENERICOS CHEIO DE POSTER NADA VE".
-     (b) Com 3 m o horizonte do mapa era o CÉU logo acima da cabeça em toda direção
-         que não fosse o canal. Em foto_024 e foto_063 nunca se vê o horizonte: o que
-         fecha o quadro é sempre outra construção mais alta atrás.
-
-     8 m é a altura da fileira mais alta (3 lajes = 8,4 m com platibanda), então ele
-     fecha o fundo sem virar caixa de sapato. A fileira C fica NA FRENTE dele. */
-  /* EM SEGMENTOS DE 8 m, não numa caixa de 80 m. Duas razões, e a primeira é um defeito
-     que a captura pegou: uma face de 80 × 8 m não completa uma volta de UV na vertical
-     (com a textura de alvenaria a volta dá ~8,4 m), então o vao cai no caminho de "tile
-     puro" e ESTICA a imagem inteira sobre os 8 m de altura enquanto a repete 12 vezes na
-     horizontal. Na tela isso é uma mancha bege listrada — exatamente o "sem textura
-     nenhuma" do dono, e foi o que apareceu num dos yaws da captura desta rodada.
-     A segunda razão é fotográfica: muro de arrimo de favela é remendo (foto_005,
-     foto_040), cada trecho de uma cor e de uma altura. Segmento por segmento sai de
-     graça no lote (mesmo material = mesma malha mesclada) e a altura varia 7,4-8,6 m. */
+     8 m fecha o horizonte (o muro liso de 3 m era o ímã dos cartazes reprovados) e EM SEGMENTOS de 8 m — face de 80 m não fecha uma volta de UV e o vao estica a textura. */
   const SEG = 8;
   for (const sx of [-HALF_X, HALF_X]) {
     for (let k = 0; k < (HALF_Z * 2) / SEG; k++) {
@@ -1345,11 +1068,8 @@ export function buildCorrego(scene, T) {
     const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / passo));
     for (let i = 0; i <= n; i++) { const x = x0 + (x1 - x0) * i / n, z = z0 + (z1 - z0) * i / n; if (!blocked(x, z, inf)) nodes.push({ x, z }); }
   };
-  /* ── LANES ────────────────────────────────────────────────────────────────────
-     A grade regular de 3,4 m acima NÃO acha beco de 1,8 m: ela cai dentro de casa e
-     o nó morre. Quem descreve a planta são as linhas abaixo, e elas passam pelos
-     MESMOS eixos que a planta declara no bloco A FAVELA. Beco sem waypoint é beco em
-     que bot não entra — e beco em que bot não entra é beco que não existe pro jogo. */
+  /* ── LANES: a grade de 3,4 m NÃO acha beco de 1,8 m — as linhas passam pelos mesmos
+     eixos da planta (bloco A FAVELA). Beco sem waypoint é beco em que bot não entra. */
   // adensamento nas 3 pontes (passo apertado — corredor estreito)
   for (const bz of [-22, 0, 22]) linha(0, bz - 2, 0, bz + 2, 1.0);
   /* FUNDO DO CANAL — a rota baixa nova. Passo curto porque é um corredor de 6 m com
@@ -1381,14 +1101,8 @@ export function buildCorrego(scene, T) {
   // ligação alagado ↔ fundo do canal pelo assoreamento das pontas
   for (const sz of [-1, 1]) linha(0, sz * 35.5, 0, sz * 30.5, 1.6, 0.3);
 
-  /* ARESTA TAMBÉM PRECISA SER SUBÍVEL, não só desimpedida.
-     O canal andável quebrou a premissa antiga de que este mapa era plano. Sem a
-     cláusula de altura, o A* liga um nó do FUNDO (y = −1,75) a um nó do PASSEIO
-     (y = 0) porque em 2D não há colisor entre eles — a parede tem topo em y = 0 e o
-     `blocked` a descarta corretamente para quem está EM CIMA dela. O bot então anda
-     contra 1,75 m de concreto até o fim do round. É a mesma família do "quando se cai
-     trava", só que do lado da IA. 0,55 m é o `STEP_H` do game.js: o mesmo degrau que
-     o corpo sobe de um passo, para os dois não discordarem sobre o que é subível. */
+  /* ARESTA TAMBÉM PRECISA SER SUBÍVEL, não só desimpedida: sem a cláusula de altura o
+     A* liga o fundo (−1,75) ao passeio (0). 0,55 m = STEP_H do game.js — bot e corpo concordam no degrau. */
   const DEGRAU_WP = 0.55;
   const segClear = (a, b) => {
     let y0 = groundHeightAt(a.x, a.z);
@@ -1466,10 +1180,8 @@ export function buildCorrego(scene, T) {
   const _antesBatch = new Set(root.children);
   PB.build(root);
   SKIRT.build(root);
-  /* LOTE ESTÁTICO — toda a alvenaria vira ~1 malha por material (ver o custo medido
-     no bloco A FAVELA). As malhas resultantes entram em `occluders`: bala e linha de
-     visão continuam batendo na parede, e o MAP4 do map-check continua enxergando
-     superfície de verdade porque a malha mesclada tem os mesmos triângulos. */
+  /* LOTE ESTÁTICO — toda a alvenaria vira ~1 malha por material; as malhas entram em
+     `occluders` para bala e MAP4 continuarem batendo em superfície de verdade. */
   for (const m of SB.build(root)) occluders.push(m);
   IB.build(root);
   for (const c of root.children) if (!_antesBatch.has(c) && c.isInstancedMesh) {
@@ -1491,20 +1203,16 @@ export function buildCorrego(scene, T) {
   grafitar({
     id: 'fy_corrego',
     root, T, waypoints: nodes, seed: 13007, passo: 0.95, alcance: 9, cobre: 0.025, minLarg: 0.3,
-    /* ZONA LIMPA nos oito largos de spawn. O primeiro frame que o jogador vê é o do
-       spawn, e com a fileira C encostada na rua ela virou a parede mais próxima de todo
-       waypoint de spawn — ou seja, a que mais recebia peça. Parede pichada é o mapa;
-       parede pichada colada no rosto no segundo zero é a reclamação. */
+    /* ZONA LIMPA nos oito largos de spawn: a fileira C virou a parede mais próxima de
+       todo spawn — pixo colado no rosto no segundo zero é a reclamação. */
     limpo: [-25, -5, 15, 35].flatMap((z) => [
       { x0: 18.0, x1: HALF_X, z0: z - 4.5, z1: z + 4.5 },
       { x0: -HALF_X, x1: -18.0, z0: z - 4.5, z1: z + 4.5 },
     ]),
     murais: { texturas: (T && T.muraisHom) || [], nomes: (T && T.muraisHomNomes) || [], seed: 13, separacao: 15 },
     bandas: [
-      /* chance 30 → 12. "BARRACOS GENERICOS CHEIO DE POSTER NADA VE": o cartaz é a
-         única banda que o dono nomeou como excesso, e era a de maior chance depois do
-         pixo. Não é o cartaz que some, é a frequência dele — de ~1 em cada 3 âncoras
-         para ~1 em cada 8. As outras três bandas (pixo, mural, tag) ficam como estavam. */
+      /* chance 30 → 12: o cartaz era a banda mais frequente e a que o dono nomeou
+         ("CHEIO DE POSTER") — cai para ~1 em 8 âncoras; as outras bandas ficam. */
       { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 12, fonte: 'poster',
         pool: ((T && T.posterFiles) || []).map((nome, i) => [nome, i]).filter(([nome]) => !['despisque-leao.jpg','ashtar-meme.jpg','ashtar.png'].includes(nome)).map(([,i]) => i) },
       { y0: 0.25, y1: 2.35, larg: 3.6, alturas: [2.0, 1.5, 1.1, 0.8, 0.6], chance: 45,
@@ -1524,17 +1232,27 @@ export function buildCorrego(scene, T) {
       { pos: [-17.35, groundHeightAt(-17.35, -1.95), -1.95], to: [-18.05, groundHeightAt(-18.05, -1.5), -1.5], phase: 2.54 },
       { pos: [17.5, groundHeightAt(17.5, 16.6), 16.6], to: [18.25, groundHeightAt(18.25, 17.4), 17.4], phase: 3.2 },
     ],
+    /* vida 1: barata de esgoto na margem do córrego (fauna 2, Mint + dart do rato) */
+    cockroaches: [
+      { pos: [-16.6, groundHeightAt(-16.6, -2.5), -2.5], to: [-16.1, groundHeightAt(-16.1, -1.9), -1.9], phase: 1.1 },
+      { pos: [17.2, groundHeightAt(17.2, 17.1), 17.1], to: [17.9, groundHeightAt(17.9, 17.8), 17.8], phase: 2.7 },
+    ],
     pigeons: [
       { mode: 'ground', pos: [8.2, groundHeightAt(8.2, -15), -15], phase: .6 },
-      { mode: 'flight', pos: [-8, 7.4, -5], radius: [4.7, 3.4], phase: 1.3 },
+      { mode: 'ground', pos: [6.6, groundHeightAt(6.6, -13.6), -13.6], phase: 1.3 },
     ],
+    /* BUG-57 v2.1 (frente D — só o bloco AMBIENCE): gato da margem + galinha de quintal */
+    cats: [{ pos: [12, groundHeightAt(12, 8), 8], to: [14.5, groundHeightAt(14.5, 10), 10], phase: .9 }],
+    chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
   });
 
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience, propEscala,
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
+    update(dt) { aguaCorrego.update(dt); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    gramaSpots: GRAMA_SPOTS, gramaServida,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
   };
 }

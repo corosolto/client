@@ -99,9 +99,8 @@ export class Sfx {
     this._lastVoice = performance.now();
     return true;
   }
-  // Voz original por personagem. Se o pacote ainda não trouxe aquele arquivo, usa o
-  // pool da facção sem quebrar menu/partida. `interrupt` serve à seleção: trocar de linha
-  // corta a anterior; kills respeitam o cooldown global para oito bots não se sobreporem.
+  // Voz por personagem; sem o arquivo no pacote, cai no pool da facção. Kills
+  // respeitam o cooldown global para os oito bots não se sobreporem.
   characterVoice(characterId, event, { fallbackFaction = null, interrupt = false } = {}) {
     if (!this.speechEnabled) return false;
     const now = performance.now();

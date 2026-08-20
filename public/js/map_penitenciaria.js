@@ -1,6 +1,7 @@
 // Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
@@ -74,7 +75,7 @@ export function buildPenitenciaria(scene) {
     yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x8b8f89, roughness: 1 }),
     steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x8a9292, metalness: .72, roughness: .5 }),
     rust: new THREE.MeshStandardMaterial({ color: 0x714529, metalness: .42, roughness: .82 }),
-    white: new THREE.MeshStandardMaterial({ color: 0xe6e2cf, roughness: .75 }),
+    white: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .025, color: 0xe6e2cf, roughness: .75 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xe5a92f, roughness: .7 }),
     red: new THREE.MeshStandardMaterial({ color: 0xb42d25, roughness: .65 }),
     blue: new THREE.MeshStandardMaterial({ color: 0x173f79, roughness: .5 }),
@@ -221,7 +222,9 @@ export function buildPenitenciaria(scene) {
 
   const GM={dark:MAT.black,steel:MAT.steel,wood:MAT.rust};
   function gun(kind,x,z,yaw){const g=new THREE.Group();g.name=`arma-central-${kind}`;g.position.set(x,.1,z);g.rotation.y=yaw;root.add(g);const long=['awp','ak','m4','shotgun','mp5'].includes(kind);const body=new THREE.Mesh(boxGeo(.13,.13,long?1:.42),kind==='shotgun'?GM.wood:GM.dark);body.position.y=.1;g.add(body);if(long){const barrel=new THREE.Mesh(boxGeo(.08,.08,.55),GM.steel);barrel.position.set(0,.13,-.62);g.add(barrel);}const grip=new THREE.Mesh(boxGeo(.11,.25,.14),GM.wood);grip.position.set(0,-.02,long?.25:.12);g.add(grip);pickups.push({x,z,kind,weapon:kind,readyAt:0,mesh:g});}
-  ['awp','ak','m4','shotgun','mp5','deagle','pistol','smg'].forEach((kind,i)=>gun(kind,-10+i*(20/7),i%2?-2.2:2.2,i*.42));
+  /* `kind` é ID de arma (chave de WEAPONS), não CLASSE: o 8º era 'smg' e crashava
+     o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. */
+  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>gun(kind,-10+i*(20/7),i%2?-2.2:2.2,i*.42));
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
   const hemi=new THREE.HemisphereLight(0xdbe8eb,0x343a36,1.35);scene.add(hemi);
@@ -249,12 +252,12 @@ export function buildPenitenciaria(scene) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-12, 0, 6], phase: .5 }, { mode: 'ground', pos: [12, 0, -6], phase: 1.6 },
-      { mode: 'flight', pos: [0, 11, 0], radius: [8, 5.5], phase: .8 },
+      { mode: 'ground', pos: [-10.8, 0, 5], phase: .8 },
     ],
   });
 
   return {
-    ambience,root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
     ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};

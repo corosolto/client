@@ -14,6 +14,7 @@ import { decalIds, paredeAtras } from './map_decals.js';     // pool por NOME + 
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';               // cobertura medida, não coordenada à mão
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38, HALF_Z = 58;
 // Carros do estacionamento (ids otimizados em public/models/props). Forte cara BR.
@@ -639,9 +640,8 @@ export function buildHavan(scene, T) {
     if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
     return !!o;
   };
-  // SÓ corpo (AABB): a bala é da malha visível do carro (InstancedMesh do PropBatch,
-  // empurrada em `occluders` no build lá embaixo) — caixa inteira cobria o vão entre
-  // rodas e matava a bala no ar (BUG-54).
+  // SÓ corpo (AABB): a malha visível entra em `occluders` no build — caixa inteira cobria
+  // o vão entre rodas e matava a bala no ar (BUG-54).
   const carCover = (x, z, hw, hd, h) => {
     colliders.push({ minX: x - hw, maxX: x + hw, minY: 0, maxY: h, minZ: z - hd, maxZ: z + hd });
   };
@@ -709,9 +709,7 @@ export function buildHavan(scene, T) {
   }
 
   // ===== entorno não jogável =====
-  // Sem este avental o pátio terminava num retângulo suspenso sobre o céu. A faixa de terra
-  // e o acostamento ficam 8-12 cm abaixo do mapa, sem collider, occluder ou waypoint: mudam
-  // somente o horizonte aéreo e dão contexto de loja de rodovia à Casa Branca cenográfica.
+  // Avental puramente visual: sem collider, occluder ou waypoint — só fecha o horizonte.
   {
     const grass = lam({ map: reTile(T.grass, 52, 42), color: 0xa6a56f, roughness: 1 });
     const road = lam({ map: reTile(T.asphalt, 34, 46), color: 0x8b8b86, roughness: 0.98 });
@@ -1206,9 +1204,8 @@ export function buildHavan(scene, T) {
       // ela vira um segundo patamar e a régua MAP3 lê 35 degraus de 10 cm em vez de 20 de 17.
       addBox(ESC.larg, 0.012, 0.04, antid, cx, yTop - 0.010, zNariz - 0.03, { collide: false, cast: false });
     }
-    // viga lateral (limão) + corrimão: caixas INCLINADAS, então vão como malha própria.
-    // São occluders: a régua de raios via a viga/corrimão dentro do colisor da escada e a
-    // bala passava direto (merge estático continua fora de occluders — ver :1122).
+    // viga lateral + corrimão: caixas INCLINADAS, vão como malha própria e são occluders
+    // (merge estático continua fora de occluders — ver :1122).
     const ang = Math.atan2(MZ.h, R.z1 - R.z0);                       // 30,4°
     const comp = Math.hypot(MZ.h, R.z1 - R.z0);
     for (const sx of [R.x0 + 0.05, R.x1 - 0.05]) {
@@ -1929,9 +1926,8 @@ export function buildHavan(scene, T) {
   const preProps = new Set(root.children);
   PROPS.build(root);
   PROPS_LOJA.build(root);
-  // O lote nasce InstancedMesh em root mas fora de `occluders`: sem isto a bala
-  // atravessava gôndola/carro que o corpo respeita (BUG-54, cláusula atravessa-parede).
-  // Transparente (vidro) fica de fora — mesmo teste de superfície da régua.
+  // InstancedMesh do lote entra em `occluders` (BUG-54: bala atravessava gôndola/carro);
+  // material transparente (vidro) fica de fora.
   for (const c of root.children) {
     if (preProps.has(c) || !c.isInstancedMesh) continue;
     const ms = Array.isArray(c.material) ? c.material : [c.material];
@@ -1995,12 +1991,12 @@ export function buildHavan(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [-9, 0, 20], phase: .5 }, { mode: 'ground', pos: [14, 0, 22], phase: 1.7 },
-      { mode: 'flight', pos: [0, 10, 12], radius: [8, 5], phase: .9 },
+      { mode: 'ground', pos: [-7.6, 0, 21], phase: .9 },
     ],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.3}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, doors, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     /* DECLARAÇÃO PRA RÉGUA (tools/eval/map-check.mjs) — não é usada pelo jogo.

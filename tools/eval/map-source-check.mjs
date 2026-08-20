@@ -50,7 +50,12 @@ for (const [mapa, assets] of Object.entries(usos)) {
     src = src.replace('\n  setLajesSky(scene);', "\n  setMapSky(scene, T, '/img/textures/sky_rj.webp', 0xb9c6d2);");
     if (src === antes) throw new Error('MUTANTE ceu-fotografico nao aplicou');
   }
-  const ausentes = assets.filter((asset) => !src.includes(`/img/textures/${asset}`));
+  /* o céu fotográfico pode vir DIRETO no mapa (setMapSky com o literal) ou
+     INDIRETO pelo applyLook do RC1 (a LOOK table do look.js aponta o mesmo
+     /img/textures/sky_*.webp) — ler só o map_*.js acusava 3 faltando sendo que
+     o céu é servido pelo look.js (v2.1, frente G) */
+  const srcLook = src.includes('applyLook') ? readFileSync('public/js/look.js', 'utf8') : '';
+  const ausentes = assets.filter((asset) => !src.includes(`/img/textures/${asset}`) && !srcLook.includes(`/img/textures/${asset}`));
   const lajesProcedural = mapa !== 'map_lajes.js' || (
     src.includes('\n  setLajesSky(scene);')
     && src.includes('\n  makeHorizon(scene,')

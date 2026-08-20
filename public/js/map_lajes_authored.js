@@ -4,6 +4,7 @@ import { makeAerialFog } from './bloom.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch { return false; } })();
@@ -379,10 +380,11 @@ export function buildLajes(scene, T) {
         if (!tunnelPartAt(ux, uz) && !stairBandAt(ux, uz, halfAlong, halfOut) && front + halfOut * 2 <= clearance + .45) {
           solidHouse(id, { x: ux, z: uz, targetH, ry });
           placedAny = true;
-        } else if (cursor >= 1.3 && cursor + halfAlong * 2 <= length - 1.3) {
-          /* Slot vetado (escada/túnel/folga) LONGE da boca: painel de muro rente cobre o
-             vão, senão a fileira abre buraco na beira do beco. Perto da esquina o bolso
-             da curva manda — nada de painel ali (regressão medida pelo LC2/LC4). */
+        } else if (cursor >= 1.3 && cursor + halfAlong * 2 <= length - 1.3
+          && !VANS_DE_FUGA.some((van) => Math.hypot(van.x - (a[0] + tx * centro + nx * side * (front + .01)),
+            van.z - (a[1] + tz * centro + nz * side * (front + .01))) < van.r + 1)) {
+          /* Slot vetado (escada/túnel/folga) longe da boca: painel de muro rente cobre o
+             vão; perto da esquina o bolso da curva manda (LC2/LC4). Vão de fuga (AT1) também veta. */
           const pw = Math.abs(dx) > Math.abs(dz) ? halfAlong * 2 : .26;
           const pd = Math.abs(dx) > Math.abs(dz) ? .26 : halfAlong * 2;
           wallWithRelief(pw, 2.9 + ((index + i) % 3) * .45, pd, (index + i) % 2 ? MAT.brick : MAT.roof,
@@ -393,14 +395,20 @@ export function buildLajes(scene, T) {
         cursor += halfAlong * 2 + .12;
         i++;
       }
-      /* O muro não nasce aqui: cada lado vira uma wallLine e os intervalos são cortados
-         depois — boca de ramal abre, faixa de túnel desconta, esquina fecha com poste.
-         É o fim da caixa independente por trecho selando cotovelo (BUG-54). Lado sem
-         casa ganha muro rente; lado com casa ganha muro de fundo atrás da fileira. */
+      /* Cada lado vira uma wallLine cortada depois (boca de ramal, túnel, esquina) — fim
+         da caixa por trecho selando cotovelo (BUG-54). Lado sem casa ganha muro rente. */
       wallLines.push({ a, b, width, side, index, branch: index >= MAIN_BECO.length - 1,
         backOff: (placedAny ? Math.max(1.2, Math.min(3.55, clearance)) : .19) - .12 });
     }
   };
+  /* VÃOS DE FUGA (AT1): faixas de miolo seladas pelas paredes do beco — quem cai
+     de cima nelas não sai (medido pelo lajes-antitrap: 24+10+10 células). O vão
+     abre o muro para o corredor vizinho; é o buraco de muro real de comunidade. */
+  const VANS_DE_FUGA = [
+    { x: 2.2, z: -3.9, r: .8 },
+    { x: 1.3, z: -6.6, r: .8 },
+    { x: 3.4, z: 5.4, r: .8 },
+  ];
   const alleySegments = [];
   for (let i = 1; i < MAIN_BECO.length; i++) alleySegments.push([MAIN_BECO[i - 1], MAIN_BECO[i]]);
   alleySegments.push(...BRANCHES);
@@ -504,8 +512,32 @@ export function buildLajes(scene, T) {
       const wlen = (t1 - t0) * length + .24;
       const wh = 2.9 + ((wall.index * 7) % 4) * .45;
       const wallBase = [MAT.brick, MAT.roof, MAT.plaster, MAT.stair][wall.index % 4];
-      wallWithRelief(Math.abs(dx) > Math.abs(dz) ? wlen : .24, wh,
-        Math.abs(dx) > Math.abs(dz) ? .24 : wlen, wallBase, wcx, wcz, wall.index);
+      const aoLongoX = Math.abs(dx) > Math.abs(dz);
+      /* VÃO DE FUGA: o vão corta o MURO EMITIDO (coordenada de mundo, sem
+         parentesco de segmento — mitra e retorno caem na mesma regra). */
+      const span0 = aoLongoX ? wcx - wlen / 2 : wcz - wlen / 2;
+      const cortes = [];
+      for (const van of VANS_DE_FUGA) {
+        const distPerp = aoLongoX ? Math.abs(van.z - wcz) : Math.abs(van.x - wcx);
+        const vanAoLongo = aoLongoX ? van.x : van.z;
+        if (distPerp > .8) continue;   // o vão só corta muro que passa por ele
+        const s0 = vanAoLongo - van.r, s1 = vanAoLongo + van.r;
+        if (s1 <= span0 || s0 >= span0 + wlen) continue;
+        cortes.push([Math.max(span0, s0), Math.min(span0 + wlen, s1)]);
+      }
+      const emit = (from, to) => {
+        const len = to - from;
+        if (len < .55) return;
+        wallWithRelief(aoLongoX ? len : .24, wh, aoLongoX ? .24 : len, wallBase,
+          aoLongoX ? (from + to) / 2 : wcx, aoLongoX ? wcz : (from + to) / 2, wall.index);
+      };
+      if (!cortes.length) emit(span0, span0 + wlen);
+      else {
+        cortes.sort((p, q) => p[0] - q[0]);
+        let cursor = span0;
+        for (const [g0, g1] of cortes) { emit(cursor, g0); cursor = Math.max(cursor, g1); }
+        emit(cursor, span0 + wlen);
+      }
     }
   }
   /* (sem postes de canto: a mitra dos muros externos fecha a diagonal — ver acima) */
@@ -672,26 +704,48 @@ export function buildLajes(scene, T) {
     const spawnAccess = /(?:CN|CS)/.test(config.id);
     const rawLength = Math.hypot(dx, dz), length = rawLength + (spawnAccess ? 1.7 : 1.3), width = spawnAccess ? 2.15 : 1.8;
     const angle = -Math.atan2(dz, dx), cx = (ax + bx) / 2, cz = (az + bz) / 2;
+    const cos = Math.cos(angle), sin = Math.sin(angle);
     const group = new THREE.Group(); group.position.set(cx, ROOF_H, cz); group.rotation.y = angle; root.add(group);
     const deck = new THREE.Mesh(new THREE.BoxGeometry(length, .11, width), MAT.wood);
     deck.position.y = -.055; deck.castShadow = true; deck.receiveShadow = true;
     deck.userData[config.id.startsWith('internal-') ? 'lajesInternalTabua' : 'lajesTabua'] = config.id; group.add(deck);
     occluders.push(deck);   // a tábua para bala também (o último atravessa-parede da régua)
+    /* VÃO DO GUARDA-CORPO SOBRE LAJE (AT1): onde o convés cruza uma laje ao nível
+       5,20 o guarda-corpo sela a passagem — a boca da WN-MN virou armadilha de 62
+       células (janela livre de 0,15 m para um corpo de 0,76). Pula o corrimão onde
+       a LINHA dele OU O CONVÉS naquele lx está sobre laje: só a linha perdia a
+       boca em diagonal do SW-CS (275 células), só o convés perdia a boca lateral
+       da WN-MN (a faixa de convés sobre a laje tem 0,15 m). */
+    /* Convenção three (rotation.y): local→mundo é (lx·cos+lz·sin, −lx·sin+lz·cos) —
+       o colisor espelhado em z batia 1,5 m ao lado do visível nas tábuas diagonais (AT1). */
+    const overSlab = (wx, wz) => ROOF_PARTS.some((part) => wx >= part.x0 - .1 && wx <= part.x1 + .1
+      && wz >= part.z0 - .1 && wz <= part.z1 + .1);
     for (const side of [-1, 1]) {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(length, .38, .07), MAT.woodDark);
-      rail.position.set(0, .19, side * (width / 2 - .035)); rail.castShadow = true; group.add(rail);
-      occluders.push(rail);   // guarda-corpo da tábua para bala também (era o atravessa da régua)
-      const offset = side * (width / 2 - .035), cs = Math.cos(angle), sn = Math.sin(angle);
-      const rcx = cx + offset * sn, rcz = cz + offset * cs, hx = length / 2, hz = .035;
-      const ex = Math.abs(cs) * hx + Math.abs(sn) * hz, ez = Math.abs(sn) * hx + Math.abs(cs) * hz;
-      colliders.push({ minX: rcx - ex, maxX: rcx + ex, minY: ROOF_H, maxY: ROOF_H + .38,
-        minZ: rcz - ez, maxZ: rcz + ez, cx: rcx, cz: rcz, hx, hz, ry: angle, cos: cs, sin: sn });
+      const lateral = side * (width / 2 - .035);
+      let run0 = null;
+      const flushRun = (until) => {
+        if (run0 == null || until - run0 < .3) { run0 = null; return; }
+        const segLen = until - run0, mid = (run0 + until) / 2;
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(segLen, .38, .07), MAT.woodDark);
+        rail.position.set(mid, .19, lateral); rail.castShadow = true; group.add(rail);
+        occluders.push(rail);
+        const rcx = cx + mid * cos + lateral * sin, rcz = cz - mid * sin + lateral * cos;
+        const hx = segLen / 2, hz = .035;
+        const ex = Math.abs(cos) * hx + Math.abs(sin) * hz, ez = Math.abs(sin) * hx + Math.abs(cos) * hz;
+        colliders.push({ minX: rcx - ex, maxX: rcx + ex, minY: ROOF_H, maxY: ROOF_H + .38,
+          minZ: rcz - ez, maxZ: rcz + ez, cx: rcx, cz: rcz, hx, hz, ry: angle, cos, sin });
+        run0 = null;
+      };
+      for (let lx = -length / 2; lx <= length / 2 + .01; lx += .2) {
+        if (!overSlab(cx + lx * cos + lateral * sin, cz - lx * sin + lateral * cos)) { if (run0 == null) run0 = lx; }
+        else flushRun(lx);
+      }
+      flushRun(length / 2);
     }
     for (let x = -length / 2 + .35; x < length / 2; x += .48) {
       const seam = new THREE.Mesh(new THREE.BoxGeometry(.025, .012, width - .12), MAT.woodDark);
       seam.position.set(x, .008, 0); group.add(seam);
     }
-    const cos = Math.cos(angle), sin = Math.sin(angle);
     plankSurfaces.push({ ...config, cx, cz, length, width, cos, sin });
     if (index % 4 === 0) {
       const brace = addBox(.12, ROOF_H, .12, MAT.woodDark, cx, 0, cz, { collide: false });
@@ -736,6 +790,9 @@ export function buildLajes(scene, T) {
     const bordaAte = topX + Math.sign(topX - outerX) * width / 2;
     const gA = Math.min(livreAte, bordaAte), gB = Math.max(livreAte, bordaAte);
     if (gB - gA > .3) addBox(gB - gA, .62, .14, MAT.brick, (gA + gB) / 2, ROOF_H, chegadaZ);
+    /* Borda lateral do patamar de topo que olha o poço do primeiro lance (AT1/MAP6):
+        sem ela, quem chega pela laje despenca 5 m na valeta entre os lances. */
+    addBox(.14, .62, width, MAT.brick, outerX - config.side * width / 2, ROOF_H, config.bottomZ);
     const left = Math.min(innerX, outerX) - width / 2 - .12, right = Math.max(innerX, outerX) + width / 2 + .12;
     /* Paredes do poço da escada são VISÍVEIS (tijolo) e PARAM 1,8 m depois do pé do
        lance: cruzar a faixa do ramal isolava o pé da escada num enclave de 14 células. */
@@ -756,10 +813,8 @@ export function buildLajes(scene, T) {
   };
   const stairs = STAIR_CONFIGS.map(addStaircase);
 
-  /* CHÃO MULTINÍVEL (yRef): a mesma regra da Havan (map_havan.js:1632). Laje e tábua
-     têm chão embaixo quando há pé-direito; quem cai de cima pousa na laje, quem já está
-     no beco fica no térreo. Mirantes (tunnel) abrem vão de 2,5 m sobre o beco.
-     Sem yRef devolve o topo — comportamento antigo de todas as réguas. */
+  /* CHÃO MULTINÍVEL (yRef): mesma regra da Havan (map_havan.js:1632) — chão embaixo
+     quando há pé-direito; sem yRef devolve o topo (comportamento antigo das réguas). */
   const ALTURA_LIVRE = 1.95, STEP_TOL = .55;
   function groundHeightAt(x, z, yRef) {
     let topo = 0;
@@ -821,10 +876,8 @@ export function buildLajes(scene, T) {
     }
   }
 
-  /* MURO DE PERÍMETRO VISÍVEL (o "limite legível" do teste do dono): o casario de fundo
-     continua além dele como cenário, mas o chão jogável termina numa parede que existe
-     no pixel — nada de clamp invisível em campo aberto. As faixas laterais entre os
-     blocos e o muro viram o beco de fundo do circuito inferior. */
+  /* MURO DE PERÍMETRO VISÍVEL: o chão jogável termina numa parede que existe no pixel —
+     nada de clamp invisível em campo aberto; as faixas laterais viram beco de fundo. */
   const perimeterMats = [MAT.brick, MAT.stair, MAT.corrugated, MAT.roof];
   let periIdx = 0;
   const perimeterRun = (alongX, fixed, from, to) => {
@@ -865,7 +918,11 @@ export function buildLajes(scene, T) {
   };
   const roofDetails = [
     [-12.05, -25], [12.05, -25], [-12.05, -9], [12.05, -9],
-    [-12.05, 2.4], [12.05, 2.4], [-12.05, 18], [12.05, 18],
+    [-12.05, 2.4], [12.05, 2.4],
+    /* Caixas de z=18 encostadas na divisa (AT1): no miolo, entre a caixa, o
+       corrimão da tábua interna e o guarda da borda, sobrava um nicho de 3 células
+       sem saída nenhuma. Na parede, o nicho não se forma. */
+    [-12.55, 18], [12.55, 18],
   ];
   roofDetails.forEach(([x, z], i) => {
     const tank = centerProp('caixa_dagua', { x, y: ROOF_H, z,
@@ -906,7 +963,7 @@ export function buildLajes(scene, T) {
     colliders.push({ minX: x - 1.36, maxX: x + 1.36, minY: ROOF_H, maxY: ROOF_H + .58,
       minZ: z - 1.36, maxZ: z + 1.36 });
   };
-  addPool(8.3, 17.5); addPool(-9.6, 3.9);   // a leste era (9.7,15.7): em cima do pouso da tábua interna (VM14)
+  addPool(8.3, 17.5); addPool(-9.3, 3.9);   // oeste: −9.6→−9.3 (AT1) — abre o arco de fuga da faixa oeste da laje WS entre a piscina e o guarda; a leste era (9.7,15.7), em cima do pouso da tábua interna (VM14)
   const addBarbecue = (x, z) => {
     addBox(.78, .72, .6, MAT.brick, x, ROOF_H, z, { collide: false, bala: true });
     addBox(.58, .08, .42, MAT.charcoal, x, ROOF_H + .66, z, { collide: false, bala: true });
@@ -1009,10 +1066,8 @@ export function buildLajes(scene, T) {
   occluders.push(...batchMeshes);
 
   if (ARCHITECTURE_ON) {
-    /* Cenário de fundo em batch PRÓPRIO: continua desenhado (a silhueta aprovada), mas
-       fora de `occluders` — 100 instâncias de pano de fundo custavam 0,58 ms/raio no
-       raycast da bala (medido em 16/08, perf-raycast), e o muro de perímetro já para o
-       tiro a nível de rua. */
+    /* Cenário de fundo em batch PRÓPRIO, fora de `occluders`: 100 instâncias custavam
+       0,58 ms/raio no raycast da bala (perf-raycast); o muro de perímetro já para o tiro. */
     const backdropBatch = new PropBatch({ bucket: 28, tag: 'lajes-backdrop' });
     const backdropHouse = (id, options) => {
       const sample = placeProp(id, { x: 0, y: options.y || 0, z: 0, targetH: options.targetH, ry: options.ry || 0 });
@@ -1183,18 +1238,21 @@ export function buildLajes(scene, T) {
     pigeons: [
       { mode: 'ground', pos: [-11.4, ROOF_H, -26], phase: .3 }, { mode: 'ground', pos: [11.2, ROOF_H, -20], phase: 1.3 },
       { mode: 'ground', pos: [-11.5, ROOF_H, 20], phase: 2.1 }, { mode: 'ground', pos: [11.4, ROOF_H, 11], phase: 2.9 },
-      { mode: 'flight', pos: [-5, 11, -10], radius: [7.2, 5], phase: .7 },
-      { mode: 'flight', pos: [6, 13, 8], radius: [6, 4.5], phase: 2.4 },
-      { mode: 'flight', pos: [0, 15, 25], radius: [8, 5.5], phase: 4.1 },
+      /* v2.1: os três voos viraram pomba pousada na PONTA de outras lajes (NW/ES/CS) */
+      { mode: 'ground', pos: [-11.3, ROOF_H, -19.5], phase: 4.6 },
+      { mode: 'ground', pos: [10.9, ROOF_H, -2.2], phase: 5.3 },
+      { mode: 'ground', pos: [1.6, ROOF_H, 30.5], phase: 6.1 },
     ],
     /* Caramelo do circuito inferior: trecho do beco [-2,10]→[-2,22], verificado livre
        pelo lajes-circuito-check (LC4). Não é collider nem occluder. */
     dogs: [{ pos: [-2, 0, 12.5], to: [-2, 0, 18.5], phase: .6 }],
+    /* Gato de telhado (BUG-57): ronda a laje do churrasco, parte sul [21.2,27] */
+    cats: [{ pos: [-11.5, ROOF_H, 22.2], to: [-9.3, ROOF_H, 24.5], phase: 1.2 }],
   });
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi,
-    pickups, ctfPoints, ambience, waypoints: { nodes, adj }, nearestWaypoint, findPath,
+    pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:60,vol:.3},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:60,vol:.2}],bioma:'favela'}, waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: mapStairs, staircases: stairs,
     jumpImpulse: 5.85,
     levels: ROOFS.filter((roof) => roof.name !== 'MN' && roof.name !== 'MS').map((roof) => ({ nome: roof.label,

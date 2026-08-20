@@ -25,6 +25,7 @@ import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
 import { setMapSky } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -1636,16 +1637,18 @@ export function buildQuebrada(scene, T) {
     ],
     pigeons: [
       { mode: 'ground', pos: [10, 0, -8], phase: .5 }, { mode: 'ground', pos: [-21.5, 0, 17.5], phase: 1.6 },
-      { mode: 'flight', pos: [0, 10, -8], radius: [7, 5], phase: .9 },
+      { mode: 'ground', pos: [8.6, 0, -7], phase: .9 },
     ],
     dogs: [
       { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
       { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
     ],
+    /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
+    cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
   });
 
   return {
-    ambience,
+    ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[-19,2,-42],radius:26,vol:.5},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.22}],bioma:'favela'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

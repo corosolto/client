@@ -1,16 +1,5 @@
-// LAJES (fy_lajes) — spec plans/10-LAJES.md: comunidade carioca em DUAS CAMADAS — lajes
-// em cima, becos embaixo. Um time nasce nas lajes e se move pulando de telhado em telhado;
-// o outro nos becos e domina o nível da rua. O mapa é a luta pela VERTICAL: quem está em
-// cima vê longe mas se expõe; quem está embaixo tem cover mas não vê nada.
-//
-// PLANTA (eixo longo = z; norte = -z). Duas fileiras de prédios com becos estreitos:
-//   ROW N   z ∈ [-35, -10]  lajes a y=3,5 (spawn A no topo)
-//   BECO C  z ∈ [-10, 10]   y=0 (corredor central largo, conecta todos os becos)
-//   ROW S   z ∈ [10, 35]    lajes a y=3,5 (spawn B embaixo)
-//
-// O MULTINÍVEL funciona como no havan: cada prédio é SÓLIDO (caixa de y=0 a y=3,5), o topo
-// é a laje andável, e os becos correm ENTRE os prédios a y=0. Escadas em 4 pontos conectam
-// as camadas. groundHeightAt retorna 3,5 sobre prédios e 0 nos becos.
+// LAJES (fy_lajes) — spec plans/10-LAJES.md: lajes em cima, becos embaixo; a luta é pela VERTICAL.
+// Multinível como no havan: prédio SÓLIDO com topo andável; groundHeightAt dá 3,5 sobre prédio e 0 no beco.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -60,9 +49,8 @@ function setLajesSky(scene) {
   scene.background = texture;
 }
 
-// O recorte azul de `folha-person-01.png` leu como Rick Sánchez nas duas capturas
-// de 11/08. A troca é nominal, preserva as vagas assadas e usa o mural original do
-// time Mítico; assim o gerador pode ser reexecutado depois sem reintroduzir a peça.
+// folha-person-01.png lia como pessoa real nas capturas (veto editorial); a troca é
+// nominal, preserva as vagas assadas e deixa o gerador reexecutável sem reintroduzi-la.
 export const LAJES_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-person-01.png': 'or-mitico-mural.png',
   'personagens-graffiti-01.png': 'or-mitico-mural.png',
@@ -81,26 +69,24 @@ export const EDIFICIOS = [];
 function predio(x, z, w, d, h = LAJE_H) { EDIFICIOS.push({ x, z, w, d, h }); }
 export const NOMES_LAJE = Object.freeze(['NW', 'CN', 'NE', 'SW', 'CS', 'SE', 'WN', 'EN', 'WS', 'ES', 'MN', 'MS', 'MEIO']);
 
-/* MASSA DE FAVELA, não grade de caixas (dono, 15/08: "uma caixa bonita continua
-   caixa"). Vãos de 4 m apertados para ~2,75 m e o beco central de 8 m para 5 m;
-   os ANEXOS (puxadinhos mais baixos, andáveis) beliscam os vãos a 1,3–1,6 m em
-   trechos e quebram a silhueta — é o engatilhado que lê como morro. */
+/* MASSA DE FAVELA, não grade de caixas (veto do dono): vãos apertados e ANEXOS
+   beliscando os vãos quebram a silhueta — é o engatilhado que lê como morro. */
 // FILEIRA NORTE (lajes onde o spawn A nasce):
-predio(-13.75, -22, 8.5, 18, LAJE_H);        // NW  x -18..-9.5
-predio(0, -22, 13.5, 18, LAJE_H + 1.5);      // CN  x -6.75..6.75 (spawn A no topo)
-predio(13.75, -22, 8.5, 18, LAJE_H);         // NE  x 9.5..18
+predio(-13.75, -22, 8.5, 18, LAJE_H);
+predio(0, -22, 13.5, 18, LAJE_H + 1.5);
+predio(13.75, -22, 8.5, 18, LAJE_H);
 // FILEIRA SUL (lajes):
-predio(-13.75, 20, 8.5, 14, LAJE_H);         // SW  z 13..27
-predio(0, 20, 8.5, 14, LAJE_H);              // CS  x -4.25..4.25
-predio(13.75, 20, 8.5, 14, LAJE_H);          // SE
-// Fileiras intermediárias (mais fundas: z -12..-2.5 e 2.5..12 — beco central de 5 m):
-predio(-13.75, -7.25, 8.5, 9.5, LAJE_H);     // WN
-predio(13.75, -7.25, 8.5, 9.5, LAJE_H);      // EN
-predio(-13.75, 7.25, 8.5, 9.5, LAJE_H);      // WS
-predio(13.75, 7.25, 8.5, 9.5, LAJE_H);       // ES
+predio(-13.75, 20, 8.5, 14, LAJE_H);
+predio(0, 20, 8.5, 14, LAJE_H);
+predio(13.75, 20, 8.5, 14, LAJE_H);
+// Fileiras intermediárias (mais fundas — beco central de 5 m):
+predio(-13.75, -7.25, 8.5, 9.5, LAJE_H);
+predio(13.75, -7.25, 8.5, 9.5, LAJE_H);
+predio(-13.75, 7.25, 8.5, 9.5, LAJE_H);
+predio(13.75, 7.25, 8.5, 9.5, LAJE_H);
 // Um zigue-zague central liga norte e sul sem transformar o piso baixo num corredor reto.
-predio(-5.1, -7.25, 3.3, 9.5, LAJE_H);       // MN  x -6.75..-3.45
-predio(5.1, 7.25, 3.3, 9.5, LAJE_H);         // MS  x 3.45..6.75
+predio(-5.1, -7.25, 3.3, 9.5, LAJE_H);
+predio(5.1, 7.25, 3.3, 9.5, LAJE_H);
 // ilha no beco central (cover)
 predio(0, 0, 3, 3, LAJE_H);
 
@@ -108,16 +94,16 @@ predio(0, 0, 3, 3, LAJE_H);
    Andáveis (entram em footprints) — da laje principal se desce neles, e o mantle
    devolve. É onde o vão aperta de verdade e onde a caixa morre. */
 export const ANEXOS = [
-  { x: -8.8, z: -24.75, w: 1.4, d: 4.5, h: 2.8 },   // NW→vão oeste norte
-  { x: 7.5, z: -17, w: 1.5, d: 4, h: 2.6 },         // CN→vão leste norte
-  { x: 8.9, z: -27, w: 1.2, d: 4, h: 2.9 },         // NE→vão leste norte (aperto duplo)
-  { x: -8.85, z: -8.25, w: 1.3, d: 3.5, h: 2.7 },   // WN→vão oeste
-  { x: -8.9, z: 19.5, w: 1.2, d: 5, h: 2.5 },       // SW→vão oeste sul
-  { x: 8.85, z: 17, w: 1.3, d: 4, h: 2.8 },         // SE→vão leste sul
-  { x: 8.8, z: 7, w: 1.4, d: 4, h: 2.4 },           // ES→vão leste
-  { x: -4.95, z: 18, w: 1.4, d: 4, h: 2.6 },        // CS→vão oeste sul
-  { x: 18.65, z: -8, w: 1.3, d: 4, h: 2.5 },        // EN→rua leste (belisco no perímetro)
-  { x: 5, z: 1.9, w: 2, d: 1.2, h: 2.3 },           // MS→beco central
+  { x: -8.8, z: -24.75, w: 1.4, d: 4.5, h: 2.8 },
+  { x: 7.5, z: -17, w: 1.5, d: 4, h: 2.6 },
+  { x: 8.9, z: -27, w: 1.2, d: 4, h: 2.9 },
+  { x: -8.85, z: -8.25, w: 1.3, d: 3.5, h: 2.7 },
+  { x: -8.9, z: 19.5, w: 1.2, d: 5, h: 2.5 },
+  { x: 8.85, z: 17, w: 1.3, d: 4, h: 2.8 },
+  { x: 8.8, z: 7, w: 1.4, d: 4, h: 2.4 },
+  { x: -4.95, z: 18, w: 1.4, d: 4, h: 2.6 },
+  { x: 18.65, z: -8, w: 1.3, d: 4, h: 2.5 },
+  { x: 5, z: 1.9, w: 2, d: 1.2, h: 2.3 },
 ];
 
 const FIADAS_TIJOLO_HEROI = Object.freeze([
@@ -381,11 +367,7 @@ export function buildLajes(scene, T) {
   addBox(6.2, 3.2, 0.05, MAT.mural, -14, 0.55, 12.82, { collide: false, cast: false, skirt: false });
 
   /* ===================== TÁBUAS ENTRE LAJES =====================
-     Tábua de favela, não ilha de salto: prancha de madeira ancorada nos DOIS
-     telhados, andável a pé — jogador não precisa pular (o salto de 0,75 m falhava)
-     e bot não pula por construção, então toda ligação aqui é piso para o A*.
-     Convés plano a 3,5 (mesma cota das lajes) e duas rampas para a laje alta do
-     spawn A (5,0). Ripa lateral de 10 cm é a guarda que a MAP6 cobra na borda. */
+     Toda ligação é piso andável (bot não pula, é o caminho do A*); ripa lateral = guarda da MAP6. */
   function tabuaTex(seed, repX = 1) {
     const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d');
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
@@ -454,10 +436,8 @@ export function buildLajes(scene, T) {
     const route = addBox(.18, .025, 8.5, MAT.route, x, LAJE_H + .125, 20, { collide: false, cast: false, skirt: false, vao: false });
     route.userData.roofRoute = nome;
   }
-  // Um volume/cor por ala é orientação de jogo, não decoração repetida. COLIDE:
-  // o proxy conserva o corpo medido; a pele cilíndrica evita voltar ao cubo-placeholder.
-  // O marco central fica na laje ALTA do centro-norte (5,0 m): na altura das outras
-  // (3,64) ele nascia enterrado dentro do prédio e a ala central nunca tinha cor.
+  // Um volume/cor por ala é orientação de jogo; o proxy COLIDE (a pele cilíndrica, não).
+  // O marco central fica na laje ALTA (5,0 m) — na cota das outras nascia enterrado no prédio.
   for (const [x, cor, nome, h, yBase, mz] of [[-13.75,0x2f7394,'west',1.7,LAJE_H,-18],[-4.2,0xc36c35,'center',1.25,LAJE_H+1.5,-16.5],[13.75,0x4d8651,'east',2.05,LAJE_H,-18]]) {
     const mat = lam({ color:cor,roughness:.76 });
     const proxy = addBox(1.2,h,1.2,new THREE.MeshBasicMaterial({ visible: false }),x,yBase + .14,mz,
@@ -571,8 +551,7 @@ export function buildLajes(scene, T) {
     tampa.position.set(x, y + h + .08, z); tampa.castShadow = true; root.add(tampa);
   }
   for (const [ex, ez, ey] of [[-15,-25,LAJE_H],[4,-29,LAJE_H+1.5],[15,-25,LAJE_H]]) caixaDagua(ex, ez, ey);
-  // Clusters de caixas cilíndricas e parabólicas criam o ritmo de telhado carioca.
-  // As silhuetas adicionais ficam sobre covers já físicos; a sonda MAP1 não pode
+  // Silhuetas adicionais ficam sobre covers já físicos: a sonda MAP1 não pode
   // confundir decoração atravessável com espaço onde o jogador deveria caber.
   for (const [x, z, y, s] of [[-15,-25,LAJE_H,0.72],[-14.45,-24.65,LAJE_H,0.58],[4,-29,LAJE_H+1.5,0.8],[4.45,-28.7,LAJE_H+1.5,0.55],[15,-25,LAJE_H,0.65],[14.45,-24.7,LAJE_H,0.52],[2.2,25,LAJE_H+2,0.55],[2.9,25,LAJE_H+2,0.48]]) {
     const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.82 * s, 0.82 * s, 1.6 * s, 14), caixaMat);
@@ -597,9 +576,8 @@ export function buildLajes(scene, T) {
     const dish = new THREE.Mesh(new THREE.SphereGeometry(0.58, 12, 6, 0, Math.PI), metal);
     dish.scale.set(1, 0.32, 1); dish.rotation.set(-Math.PI / 2.8, ry, 0); dish.position.set(x, y + 2.1, z); rooftopDetail(dish, 'antenna'); root.add(dish);
   }
-  // varal (decoração). O fio da laje alta do centro-norte (5,0 m) fica a partir de
-  // z=-18,5: mais ao norte as roupas penduram a 0,8 m da câmera de evidência (0,6,65,-22)
-  // e tapam o frame; os dois postes seguram o fio que antes flutuava.
+  // varal (decoração). Fio da laje alta (5,0 m) a partir de z=-18,5: mais ao norte
+  // as roupas tapam a câmera de evidência (0,6,65,-22) a 0,8 m dela.
   for (const [ex, ey, wz] of [[-15, LAJE_H + 1.5, -20], [0, LAJE_H + 3.0, -16.5]]) {
     rooftopDetail(addBox(0.04, 0.04, 4.0, lam({ color: 0x8a8a8a }), ex, ey, wz, { collide: false }), 'clothesline');
     for (const pz of [wz - 1.9, wz + 1.9]) addBox(0.07, ey - (ey > 6 ? LAJE_H + 1.5 : LAJE_H), 0.07, metal, ex, ey > 6 ? LAJE_H + 1.5 : LAJE_H, pz, { collide: false, cast: false, skirt: false });
@@ -650,9 +628,8 @@ export function buildLajes(scene, T) {
       lam({ color: [0x2f6b9b,0xd8b040,0xb74435,0xe6dfc7,0x567b4d][i] }), x - 1.65 + i * 0.82, y - 0.78, z + rz,
       { collide: false, cast: false, skirt: false });
   }
-  // Puxadinho no sudeste da laje alta (spawn A) + manchas de uso no piso: quebram a
-  // placa de 12×18 m no primeiro plano do roof-eye sem encostar na zona de spawn
-  // (norte) nem na ponte (oeste). Mancha é pele de 1 cm, nunca colisor.
+  // Puxadinho + manchas de uso no sudeste da laje alta, fora da zona de spawn (norte)
+  // e da ponte (oeste). Mancha é pele de 1 cm, nunca colisor.
   addBox(2.3, 1.7, 1.9, tijolo, 4.6, LAJE_H + 1.5, -16.2, { skirt: false });
   addBox(2.58, 0.09, 2.18, zinco, 4.6, LAJE_H + 3.2, -16.2, { collide: false, skirt: false });
   for (const [sx, sz, sw, sd] of [[-1.5, -19.5, 4.5, 3.0], [2.0, -15.8, 2.6, 1.8]])
@@ -678,19 +655,15 @@ export function buildLajes(scene, T) {
   }
 
   /* ===================== ESCADAS (4 conexões entre camadas) =====================
-     Cada escada sobe de y=0 a y=LAJE_H. São o ponto de estrangulamento — posições
-     contestáveis dos dois lados. A CTF2 pede ≥ 2 rotas separadas entre cada spawn
-     e cada bandeira; as escadas nas pontas leste/oeste dão essa separação. */
+     As escadas nas pontas leste/oeste dão as ≥ 2 rotas separadas por spawn/bandeira da CTF2. */
   const ESCADAS = [
     { nome: 'noroeste', x: -19.5, z: -10, dz: -1 },
     { nome: 'nordeste', x: 19.5, z: -10, dz: -1 },
     { nome: 'sudoeste', x: -19.5, z: 10, dz: 1 },
     { nome: 'sudeste', x: 19.5, z: 10, dz: 1 },
   ];
-  /* Escada de favela, não escada de Minecraft: lance baixo em alvenaria CHEIA (espelho
-     fechado até o chão), lance alto VAZADO sobre laje inclinada — debaixo dele corre o
-     vão de pedestre (≥ 2,0 m livres a partir do degrau 12). Mureta de 0,92 m acompanha
-     a linha dos degraus; os muros de altura plena que fechavam o vão sumiram. */
+  /* Escada de favela: lance baixo CHEIO, lance alto VAZADO sobre laje inclinada —
+     debaixo corre o vão de pedestre (≥ 2,0 m livres a partir do degrau 12). */
   const VAO_DEGRAU = 12;   // 12 × 0,167 = 2,0 m — pé-direito mínimo do vão
   function buildStair(es) {
     const w = 2.5;
@@ -739,11 +712,8 @@ export function buildLajes(scene, T) {
   }
   const navColliderCount = colliders.length;
 
-  // Toda borda com queda de andar recebe platibanda física; pontes e topo das escadas
-  // ficam abertos porque o piso amostrado do outro lado continua na mesma cota.
-  // A sonda vai 0,55 m além da face: menos que o vão de 1 m entre prédios (ler o
-  // telhado vizinho como "mesma cota" deixava a borda pelada — MAP6, 14/08) e ainda
-  // dentro da âncora de 0,4 m que a tábua crava na laje.
+  // Borda com queda de andar recebe platibanda física; pontes e topo de escada ficam
+  // abertos (mesma cota). Sonda a 0,55 m da face: < vão de 1 m e < âncora da tábua (MAP6).
   function guardaTrechos(e, eixo, sinal) {
     const inicio = eixo === 'x' ? e.z - e.d / 2 : e.x - e.w / 2;
     const fim = eixo === 'x' ? e.z + e.d / 2 : e.x + e.w / 2;
@@ -1231,9 +1201,8 @@ export function buildLajes(scene, T) {
   for (const bx of [-11, -3.5, 3.5, 11]) linha(bx, 13, bx, 31, 2.0);
   // beco central (largo)
   for (const bz of [-8, -4, 0, 4, 8]) linha(-20, bz, 20, bz, 3.0);
-  // lajes (topos de prédios) — adensamento para cobertura de waypoints.
-  // O bloco do MEIO fica de fora: a laje dele não tem tábua nem escada, é cenografia —
-  // waypoint lá em cima ensina o bot a atravessar parede.
+  // lajes (topos de prédios) — adensamento de waypoints. Bloco do MEIO fora: laje
+  // cenográfica sem acesso ensinaria o bot a atravessar parede.
   for (const e of EDIFICIOS.slice(0, 12)) {
     const N = 3;
     for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
@@ -1276,9 +1245,8 @@ export function buildLajes(scene, T) {
   for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
   const perto = (x, z) => { let b = 0, d0 = Infinity; for (let i = 0; i < nodes.length; i++) { const d = (nodes[i].x - x) ** 2 + (nodes[i].z - z) ** 2; if (d < d0) { d0 = d; b = i; } } return b; };
   const liga = (ax, az, bx, bz) => { const a = perto(ax, az), b = perto(bx, bz); if (!adj[a].includes(b)) adj[a].push(b); if (!adj[b].includes(a)) adj[b].push(a); };
-  // As arestas dirigidas abaixo descrevem os desníveis de 0,75 m das passarelas.
-  // O jogador cai sobre elas sem atravessar platibanda; o teste genérico de segmento,
-  // que só conhece AABB em 2D, confundia a face do prédio com uma parede intransponível.
+  // Arestas dirigidas dos desníveis de 0,75 m das passarelas: o teste de segmento
+  // (AABB 2D) lia a face do prédio como parede intransponível.
   for (const sx of [-1, 1]) {
     liga(sx * 4, -22, sx * 8, -22);
     liga(sx * 8, -22, sx * 12, -22);

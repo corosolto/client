@@ -16,6 +16,14 @@
     --mutante=rick       injeta o decal que leu como personagem protegido em Lajes
     --mutante=carros     injeta os IDs de três carros protegidos na Mansão
     --mutante=morte      injeta o pixo MORTE no layout assado da Mansão
+    --mutante=semcidade  injeta decal do pack pixo SEM o metadado cidade
+    --mutante=cidadefora injeta decal do pack com cidade fora de SP|RJ
+    --mutante=writer     injeta decal cujo nome é assinatura de writer real
+
+  Cláusulas da frente F (v2.1, plans/13): todo decal do pack novo (`or-pixo-*`)
+  declara `cidade` ('SP'|'RJ') como 5º campo do DECAL_FILES — a distinção de
+  estilo vem da pesquisa em references/graffiti/PIXACAO-SP-RJ.md. E nenhum decal
+  do pool nomeia writer/grife real: estilo, nunca assinatura (linha editorial).
 */
 import { readFileSync } from 'node:fs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
@@ -91,6 +99,26 @@ for (const id of NOVOS) {
 }
 
 const fonte = readFileSync('public/js/textures.js', 'utf8');
+let fontePixo = fonte;
+if (MUT === 'semcidade') fontePixo += "\n    ['or-pixo-sp-mutante.png', 1.2, 'tag', 0],";
+if (MUT === 'cidadefora') fontePixo += "\n    ['or-pixo-rj-mutante.png', 1.2, 'tag', 0, 'MG'],";
+if (MUT === 'writer') fontePixo += "\n    ['or-pixo-rj-vinga.png', 1.2, 'tag', 0, 'RJ'],";
+/* Writers/grifes reais documentados na pesquisa SP×RJ — aparecem em
+   references/graffiti/PIXACAO-SP-RJ.md como DOCUMENTAÇÃO, nunca como decal. */
+const WRITERS_REAIS = ['vinga', 'tane', 'gemeos', 'osgemeos', 'kobra', 'cripta', 'djan', 'acme', 'taki'];
+const pixoNovos = [];
+for (const m of fontePixo.matchAll(/\['(or-pixo-[^']+)'\s*,\s*[\d.]+\s*,\s*'(\w+)'\s*,\s*[01]\s*(?:,\s*'([A-Z]{2})')?\s*\]/g)) {
+  pixoNovos.push(m[1]);
+  if (!m[3]) falhas.push(`textures.js: ${m[1]} do pack pixo sem metadado cidade (5º campo SP|RJ)`);
+  else if (!['SP', 'RJ'].includes(m[3])) falhas.push(`textures.js: ${m[1]} com cidade '${m[3]}' — só SP ou RJ`);
+}
+for (const m of fontePixo.matchAll(/\['([^']+\.(?:png|jpe?g|webp))'\s*,/g)) {
+  const slug = m[1].toLowerCase().replace(/\.\w+$/, '');
+  for (const w of WRITERS_REAIS) {
+    if (new RegExp(`(^|[^a-z])${w}([^a-z]|$)`).test(slug))
+      falhas.push(`textures.js: ${m[1]} nomeia writer real (${w}) — estilo, nunca assinatura`);
+  }
+}
 let mansaoFonte = readFileSync('public/js/map_mansao.js', 'utf8');
 if (MUT === 'carros') mansaoFonte += "\n'2020_bmw_m8_coupe' '1965_ford_mustang_coupe_289' '1981_dmc_delorean'\n";
 if (MUT === 'vw') {
@@ -108,10 +136,10 @@ for (const id of ['fusca', 'saveiro']) if (lajesFonte.includes(`'${id}'`)) falha
 if (/folha-pixaca-01\.png/.test(mansaoFonte)) falhas.push('map_mansao.js: pixo MORTE permanece no pool vivo');
 
 console.log('┌─ GRAFFITI-EDITORIAL — cinco mapas novos');
-console.log(`├─ layout: ${NOVOS.length} mapas · pool-fonte: textures.js`);
+console.log(`├─ layout: ${NOVOS.length} mapas · pool-fonte: textures.js · pack pixo: ${pixoNovos.length} com metadado cidade`);
 if (falhas.length) {
   for (const falha of falhas) console.error(`├─ ✗ ${falha}`);
   console.error(`└─ REPROVADO (${falhas.length})`);
   process.exit(1);
 }
-console.log('└─ APROVADO — sem mascote protegido e sem homenagem a pessoa real');
+console.log('└─ APROVADO — sem mascote protegido, sem homenagem a pessoa real e pack pixo com cidade SP|RJ');

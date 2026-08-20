@@ -1,0 +1,29 @@
+{
+ "sky_joa.webp": {
+  "banda": [
+   429,
+   441
+  ],
+  "horizonte": "b1aca5",
+  "n": 19596,
+  "zenite": "6595bf"
+ },
+ "sky_rj.webp": {
+  "banda": [
+   429,
+   441
+  ],
+  "horizonte": "b9daee",
+  "n": 19596,
+  "zenite": "a5cae9"
+ },
+ "sky_sp.webp": {
+  "banda": [
+   429,
+   441
+  ],
+  "horizonte": "d6dad9",
+  "n": 19596,
+  "zenite": "98a4b1"
+ }
+}

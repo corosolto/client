@@ -66,7 +66,6 @@ if (mutante === 'composicao-antiga') {
     ['data-ui-layout="mission-cut"', 'class="cs-setup"'],
     ['data-ui-layout="faction-editorial"', 'class="team-rail"'],
     ['data-ui-layout="cast-stage"', 'class="char-stage"'],
-    ['data-ui-layout="map-broadcast"', 'class="map-screen-legacy"'],
     ['data-ui-layout="settings-cockpit"', 'class="panel settings-wrap"'],
   ];
   for (const [novo, antigo] of regressions) astro = troca(astro, novo, antigo, mutante);
@@ -136,14 +135,15 @@ put('CINE6', 'pausa e resultado acionam o chrome pelos caminhos reais do jogo', 
 /* CINE7 — BUG-42, palavras do dono: "a UI continua a mesma de sempre".
    O contrato anterior premiava decoração: chrome, foco e reduced-motion podiam ficar
    verdes sobre os mesmos cinco shells da alpha.58. Esta cláusula lê o DOM de produção
-   e exige seis composições novas, cada uma com landmarks próprios. Não tenta dar nota
-   estética; prova que a árvore deixou de ser a velha coluna/cards/filmstrip/painel. */
+   e exige cinco composições novas, cada uma com landmarks próprios. Não tenta dar nota
+   estética; prova que a árvore deixou de ser a velha coluna/cards/filmstrip/painel.
+   Eram SEIS: o fluxo map-broadcast saiu em 19/08/2026 por decisão do dono — a tela de
+   seleção de mapas volta ao carrossel da main (commit 71c5640); UIR4 é quem a guarda. */
 const structuralFlows = [
   ['home-broadcast', ['home-mode-deck', 'home-service-strip']],
   ['mission-cut', ['mission-visual', 'mission-console']],
   ['faction-editorial', ['faction-index', 'faction-hero']],
   ['cast-stage', ['cast-rail', 'cast-avatar', 'cast-dossier']],
-  ['map-broadcast', ['map-story', 'map-reel']],
   ['settings-cockpit', ['settings-nav', 'settings-workbench']],
 ];
 const structuralEvidence = structuralFlows.map(([layout, landmarks]) => {
@@ -153,7 +153,7 @@ const structuralEvidence = structuralFlows.map(([layout, landmarks]) => {
 });
 const legacyShells = ['cs-left', 'team-rail', 'char-filmstrip', 'panel settings-wrap']
   .filter(name => astro.includes(`class="${name}"`));
-put('CINE7', 'os seis fluxos usam composições próprias, não os shells da alpha.58',
+put('CINE7', 'os cinco fluxos usam composições próprias, não os shells da alpha.58',
   structuralEvidence.every(x => x.ok) && legacyShells.length === 0,
   `${structuralEvidence.filter(x => x.ok).length}/${structuralEvidence.length} fluxos novos · ` +
   `faltas: ${structuralEvidence.filter(x => !x.ok).map(x => `${x.layout}[${x.missing.join('+')}]`).join(', ') || 'nenhuma'} · ` +
