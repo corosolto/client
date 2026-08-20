@@ -20,7 +20,9 @@
    Mutantes (todos PROVAM que aplicaram — skill regua): clona-tudo (instâncias
    idênticas em grade, sem cor) | planta-no-caminho (bromélia em cima da pedrada) |
    planta-gigante (bromélia 3× = 2,7 m) | sem-pedras | jardim-primitivo (tira as
-   espécies GLB do preload — o defeito do BUG-64: jardim 100% primitiva chapada).
+   espécies GLB do preload — o defeito do BUG-64: jardim 100% primitiva chapada) |
+   hardscape-chapado (tira o map de muro/biombo/portão — o "40% do quadro Minecraft"
+   do crítico v2.1).
    Uso: node tools/eval/mansao-garden-check.mjs [--mutante=...]
 */
 import fs from 'node:fs';
@@ -34,6 +36,7 @@ const MUT_CAMINHO = process.argv.includes('--mutante=planta-no-caminho');
 const MUT_GIGANTE = process.argv.includes('--mutante=planta-gigante');
 const MUT_SEM_PEDRAS = process.argv.includes('--mutante=sem-pedras');
 const MUT_SEM_GLB = process.argv.includes('--mutante=jardim-primitivo');
+const MUT_CHAPADO = process.argv.includes('--mutante=hardscape-chapado');
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
 const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
@@ -64,6 +67,11 @@ if (MUT_CLONA) {
 if (MUT_SEM_PEDRAS) {
   if (!pedras.length) { console.error('MUTANTE sem-pedras NÃO APLICOU (nenhuma pedra marcada)'); process.exit(1); }
   for (const p of pedras) p.visible = false;
+}
+if (MUT_CHAPADO) {
+  const alvos = marcados.filter((o) => ['muro-perimetro', 'biombo', 'portao'].includes(o.userData.mansaoFeature));
+  if (!alvos.length) { console.error('MUTANTE hardscape-chapado NÃO APLICOU (sem hardscape marcado)'); process.exit(1); }
+  for (const o of alvos) for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m) m.map = null;
 }
 const pedrasVivas = () => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'pedra-caminho');
 
@@ -135,6 +143,15 @@ for (const id of vegIds) {
   } catch (e) { vegGlb[id] = { existe: true, erro: e.message }; }
 }
 const vegSemFolha = vegIds.filter((id) => !vegGlb[id]?.existe || vegGlb[id]?.erro || !vegGlb[id]?.folha);
+
+/* ── G5 hardscape texturizado (mundo node) ─────────────────────────────────
+   O crítico da v2.1 reprovou o jardim pelos muros/biombos/portão de COR CHAPADA
+   (40% do quadro). Volumes e colisores são cover e ficam — a cláusula mede a
+   SUPERFÍCIE: todo hardscape marcado tem que ter material.map de verdade (as
+   texturas DataTexture do mapa existem em node; o defeito é cor sem textura). */
+const hardscape = marcados.filter((o) => o.visible !== false && ['muro-perimetro', 'biombo', 'portao'].includes(o.userData.mansaoFeature));
+const semMapa = hardscape.filter((o) => !(Array.isArray(o.material) ? o.material : [o.material]).some((m) => m && m.map));
+const tiposHard = new Set(hardscape.map((o) => o.userData.mansaoFeature));
 
 /* ── G1 variedade ── */
 const instData = (mesh) => {
@@ -222,6 +239,7 @@ for (const [nome, ok, medido] of [
   ['G3 forração instanciada 0,20–2,60 m', forra.length > 0 && foraForra.length === 0, forra.length ? `${foraForra.length}/${forra.length} fora da banda` : 'sem forração'],
   ['G3 árvores 3,0–6,8 m', arvores.length >= 4 && foraArvore.length === 0, arvores.length ? `${foraArvore.length}/${arvores.length} fora da banda (${alturasArvores.map((h) => h.toFixed(1)).join(', ')} m)` : '0 árvores marcadas'],
   ['G4 vegetação GLB com folha texturizada (≥6 espécies declaradas, no preload, usadas e no disco)', vegIds.length >= 6 && vegPreload && vegSemUso.length === 0 && vegSemFolha.length === 0, vegIds.length ? `${vegIds.length} espécies · preload ${vegPreload ? 'ok' : 'FALTA'} · sem uso: ${vegSemUso.join(',') || 'nenhuma'} · sem GLB/folha: ${vegSemFolha.join(',') || 'nenhuma'}` : 'JARDIM_VEG ausente — jardim 100% primitiva (o defeito do BUG-64)'],
+  ['G5 hardscape texturizado (muro-perimetro/biombo/portao com material.map)', tiposHard.size >= 3 && hardscape.length >= 5 && semMapa.length === 0, hardscape.length ? `${hardscape.length} peças (${[...tiposHard].join('+')}) · chapadas: ${semMapa.length}` : 'sem hardscape marcado — muro/biombo/portão de cor chapada era 40% do quadro (crítico v2.1)'],
 ]) {
   if (!ok) falhas++;
   console.log(`${ok ? '✓' : '✗'} ${nome}: ${medido}`);

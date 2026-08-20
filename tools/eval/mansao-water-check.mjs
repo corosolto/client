@@ -45,6 +45,7 @@ const MUT_TEATRO_VAZIO = process.argv.includes('--mutante=teatro-vazio');
 const MUT_JARDIM_RARO = process.argv.includes('--mutante=jardim-raro');
 const MUT_PISCINA_SEM_CUBA = process.argv.includes('--mutante=piscina-sem-cuba');
 const MUT_PISCINA_CUBA_CURTA = process.argv.includes('--mutante=piscina-cuba-curta');
+const MUT_ESPELHO_MORTO = process.argv.includes('--mutante=espelho-morto');
 const RAIO = 0.38; // mesmo raio passado por Game.update a _collide
 /* CUBA da piscina: interior jogável (dentro dos muros). As bandas são o contrato da
    decisão do dono 18/08 (plans/13): raso ~0,8-1,0 m andável; fundo ~1,8-2,0 m.
@@ -225,6 +226,21 @@ const segE = paredeSegura('e'), segW = paredeSegura('w'), segN = paredeSegura('n
 const espelhoAntes = new THREE.Vector3(-8, game.world.groundHeightAt(-8, 25), 25);
 const espelhoDepois = espelhoAntes.clone(); game._collide(espelhoDepois, RAIO);
 const espelhoAfasta = espelhoDepois.distanceTo(espelhoAntes) >= RAIO * 0.9;
+/* Espelho e canal do eixo como ÁGUA VIVA (crítico v2.1: "plano azul sólido"): mesh
+   aguaViva da water.js com lâmina rasa (uProfEscala ≤ 0,6 — padrão córrego) no lugar
+   do addFloor de cor chapada. O mutante espelho-morto arranca os meshes vivos. */
+const aguasJardim = [];
+game.world.root.traverse((o) => { if (o.isMesh && o.userData?.aguaViva) aguasJardim.push(o); });
+if (MUT_ESPELHO_MORTO) {
+  if (!aguasJardim.length) { console.error('MUTANTE espelho-morto NÃO APLICOU (nenhuma água viva no jardim)'); process.exit(1); }
+  for (const o of aguasJardim) o.removeFromParent();
+}
+const laminaViva = (cx, cz, rx, rz) => aguasJardim.filter((o) => {
+  if (o.visible === false || !o.parent) return false;
+  const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
+  const u = o.material?.uniforms || {};
+  return Math.abs(c.x - cx) <= rx && Math.abs(c.z - cz) <= rz && o.material?.isShaderMaterial && u.uTime && u.uProfEscala?.value <= 0.6;
+});
 
 const conta = (tipo) => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === tipo).length;
 let falhas = 0;
@@ -273,6 +289,7 @@ for (const [nome, ok, medido] of [
   ['cuba opaca no fundo da piscina (piso abaixo da lâmina)', cubaPisoOpaco, `${cubas.length} piso(s) de cuba${cubas.length ? '' : ' — sem piso visível o fundo é o gramado do mapa'}`],
   ['sem teto opaco sobre a lâmina (máscara antiga = teto do nadador)', tetoSobreLamina.length === 0, `${tetoSobreLamina.length} plano(s) opaco(s) em y∈(0,02;0,5) dentro da cuba`],
   ['espelho d\'água decorativo segue NÃO entrável', espelhoAfasta, `deslocamento ${espelhoDepois.distanceTo(espelhoAntes).toFixed(3)} m (mín. ${(RAIO * 0.9).toFixed(3)})`],
+  ['espelho e canal do eixo são água VIVA (shader uTime, lâmina rasa)', laminaViva(-8, 25, 3.5, 2.5).length >= 1 && laminaViva(-4.2, 24.8, 2.2, 7).length >= 1, `${aguasJardim.filter((o) => o.parent).length} lâmina(s) viva(s) no jardim — plano azul chapado foi o reprovo do crítico v2.1`],
   ['frota da garagem em GLB do acervo — 3 modelos distintos pré-carregados e usados', frota.length === 3 && new Set(frota.map((f) => f.id)).size === 3 && preloadOk && usosCarro >= 3, `${frota.length} na GARAGEM · preload ${preloadOk ? 'ok' : 'FALTA'} · ${usosCarro} carroAcervo( — id fora do preload volta procedural e id declarado sem uso é invariante cega`],
   ['GLBs de carro válidos no disco (geometria real, dentro do orçamento)', frota.length === 3 && frota.every((f) => glbInfo[f.id]?.existe && !glbInfo[f.id].erro && glbInfo[f.id].tris >= 2000 && glbInfo[f.id].tris <= 45000), frota.map((f) => `${f.id}:${glbInfo[f.id]?.existe && !glbInfo[f.id].erro ? `${glbInfo[f.id].tris}t` : 'inválido/ausente'}`).join(' · ')],
   ['escala de fábrica confere com a ficha do acervo (CAR_DIM da Havan)', frota.every((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }), `${frota.filter((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }).length}/3 sem divergência de ficha`],
