@@ -496,8 +496,6 @@ export function buildMansao(scene, T) {
     const tronco=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,h,9),lam({color:0x63482f,roughness:1})); tronco.position.set(tx,h/2,tz); root.add(tronco);
     tronco.userData.mansaoFeature = 'arvore';   // G3 do mansao-garden-check: 3,0–6,8 m
     occluders.push(tronco);   // tronco visível dentro do próprio colisor: a bala para nele
-    // BUG-64: com o GLB a copa é palmeira-imperial e o tronco vira occluder invisível
-    // (mesmo volume, mesma bala parando — o raycast não filtra visible)
     if (GLB_ON && PB.add('palmeira_imperial', { x: tx, z: tz, targetH: h + 1.6, ry: (tx * 7 + tz * 3) % 6.283 })) tronco.visible = false;
     else for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
       const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55 * s, 1), (ox + oz) > 0 ? folhaB : folhaA);
@@ -597,10 +595,8 @@ export function buildMansao(scene, T) {
   for(const [x,z] of [[-13.8,14.7],[-8.2,14.7],[-13.8,18.3],[-8.2,18.3]]) marcaPergola(addBox(.22,3.05,.22,pergolaMat,x,0,z,{collide:false,skirt:false}),'pillar');
   for(const z of [14.7,18.3]) marcaPergola(addBox(5.85,.18,.22,pergolaMat,-11,2.96,z,{collide:false,skirt:false}),'beam');
   for(let z=15;z<=18;z+=.75) marcaPergola(addBox(.16,.14,3.8,pergolaMat,-13.3+(z-15)*1.52,3.13,16.5,{collide:false,skirt:false}),'beam');
-  /* FOLHAGEM INSTANCIADA (plans/13): cor e escala por instância em drifts de ângulo
-     áureo nas bordas — corredor central limpo. Régua G1 do mansao-garden-check.
-     BUG-64: com GLB os drifts são touceiras tropicais de verdade (samambaia/ixora/
-     heliconia via PropBatch); o InstancedMesh fica de fallback de node/?glb=0. */
+  /* FOLHAGEM INSTANCIADA (plans/13): drifts de ângulo áureo nas bordas, régua G1 do
+     mansao-garden-check. BUG-64: com GLB os drifts são touceiras via PropBatch. */
   const rndJardim = (() => { let s = 20260818 >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
   const driftsJardim = [
     [-17.6, 16.8], [-13.2, 18.6], [-18.4, 24.9], [-14.1, 33.6], [-8.3, 33.2],

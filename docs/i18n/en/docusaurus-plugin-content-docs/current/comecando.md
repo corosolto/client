@@ -41,12 +41,12 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 40,459 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 40,455 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6,879** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,701 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 143 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 151 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 62, in 10 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
@@ -232,7 +232,7 @@ The maps registered today, and which mode each one opens in:
 | `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 713 |
 | `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
 | `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,258 |
-| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 901 |
+| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 897 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
