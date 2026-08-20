@@ -34,7 +34,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 40.486 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 40.509 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6.879** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.701 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -325,7 +325,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
 | `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
-| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 928 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 951 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |

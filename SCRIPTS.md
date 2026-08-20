@@ -843,7 +843,7 @@ Mansão: água não entrável, carros originais com frente/capô não-cunha, jar
 
 ## `eval:mansao-garden`
 
-Jardim da mansão: variedade das folhagens instanciadas (teto, tint+escala por instância, sem colônia), composição (caminho de pedras portão→porta, rota porta→piscina no A* do mapa, nada plantado na pedrada), escala humana (dossel/forração/árvore contra o jogador de 1,70 m) e (BUG-64) vegetação GLB com folha texturizada — espécies do JARDIM_VEG declaradas, no preload, usadas e com GLB de folha texturizada no disco. Mutantes: clona-tudo, planta-no-caminho, planta-gigante, sem-pedras, jardim-primitivo.
+Jardim da mansão: variedade das folhagens instanciadas (teto, tint+escala por instância, sem colônia), composição (caminho de pedras portão→porta, rota porta→piscina no A* do mapa, nada plantado na pedrada), escala humana (dossel/forração/árvore contra o jogador de 1,70 m), (BUG-64) vegetação GLB com folha texturizada — espécies do JARDIM_VEG declaradas, no preload, usadas e com GLB de folha texturizada no disco — e acabamento de hardscape: muro/biombo/portão com textura real, portão de correr estruturado (trilho/mourões/motor/folha), biombos com mourões e travessa, beiral nas lajes. Mutantes: clona-tudo, planta-no-caminho, planta-gigante, sem-pedras, jardim-primitivo, hardscape-chapado, portao-laje, biombo-caixa, laje-sem-beiral.
 
 ## `eval:look`
 
