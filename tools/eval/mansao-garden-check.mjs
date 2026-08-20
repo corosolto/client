@@ -19,15 +19,21 @@
 
    Mutantes (todos PROVAM que aplicaram — skill regua): clona-tudo (instâncias
    idênticas em grade, sem cor) | planta-no-caminho (bromélia em cima da pedrada) |
-   planta-gigante (bromélia 3× = 2,7 m) | sem-pedras.
+   planta-gigante (bromélia 3× = 2,7 m) | sem-pedras | jardim-primitivo (tira as
+   espécies GLB do preload — o defeito do BUG-64: jardim 100% primitiva chapada).
    Uso: node tools/eval/mansao-garden-check.mjs [--mutante=...]
 */
+import fs from 'node:fs';
+import path from 'node:path';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const MUT_CLONA = process.argv.includes('--mutante=clona-tudo');
 const MUT_CAMINHO = process.argv.includes('--mutante=planta-no-caminho');
 const MUT_GIGANTE = process.argv.includes('--mutante=planta-gigante');
 const MUT_SEM_PEDRAS = process.argv.includes('--mutante=sem-pedras');
+const MUT_SEM_GLB = process.argv.includes('--mutante=jardim-primitivo');
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
 const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
@@ -99,6 +105,36 @@ if (MUT_GIGANTE) {
   alvo.scale.setScalar(3);
   alvo.updateMatrixWorld(true);
 }
+
+/* ── G4 vegetação GLB (fonte + disco) ──────────────────────────────────────
+   O defeito do BUG-64 é o jardim 100% primitiva de cor chapada; em node o GLB
+   nunca carrega (o mundo medido acima é o fallback), então a régua lê o FONTE
+   (espécie declarada, no preload e USADA) e o DISCO (GLB com folha texturizada:
+   baseColorTexture ou corte alfa) — mesmo padrão da frota no mansao-water-check. */
+const ROOT = path.resolve(import.meta.dirname, '../..');
+let mapSrc = fs.readFileSync(path.join(ROOT, 'public/js/map_mansao.js'), 'utf8');
+if (MUT_SEM_GLB) {
+  const antes = mapSrc;
+  mapSrc = mapSrc.replace(/\.\.\.JARDIM_VEG,?\s*/, '');
+  if (mapSrc === antes) { console.error('MUTANTE jardim-primitivo NÃO APLICOU (...JARDIM_VEG não casou)'); process.exit(1); }
+}
+const vegSrc = mapSrc.match(/const JARDIM_VEG = \[([\s\S]*?)\];/)?.[1] || '';
+const vegIds = [...vegSrc.matchAll(/'([^']+)'/g)].map((m) => m[1]);
+const propsBlk = mapSrc.match(/export const MANSAO_PROPS = \[([\s\S]*?)\];/)?.[1] || '';
+const vegPreload = propsBlk.includes('...JARDIM_VEG') || vegIds.every((id) => propsBlk.includes(`'${id}'`));
+const vegSemUso = vegIds.filter((id) => !new RegExp(`(?:PB\\.add|placeProp|jardimProp)\\(\\s*'${id}'`).test(mapSrc));
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+const vegGlb = {};
+for (const id of vegIds) {
+  const file = path.join(ROOT, 'public/models/props', `${id}.glb`);
+  if (!fs.existsSync(file)) { vegGlb[id] = { existe: false }; continue; }
+  try {
+    const doc = await io.read(file);
+    const mats = doc.getRoot().listMaterials();
+    vegGlb[id] = { existe: true, folha: mats.some((m) => m.getBaseColorTexture() || m.getAlphaMode() === 'MASK') };
+  } catch (e) { vegGlb[id] = { existe: true, erro: e.message }; }
+}
+const vegSemFolha = vegIds.filter((id) => !vegGlb[id]?.existe || vegGlb[id]?.erro || !vegGlb[id]?.folha);
 
 /* ── G1 variedade ── */
 const instData = (mesh) => {
@@ -185,6 +221,7 @@ for (const [nome, ok, medido] of [
   ['G3 dossel em escala humana (0,50–2,60 m vs jogador 1,70)', dossel.length > 0 && foraDossel.length === 0, dossel.length ? `${foraDossel.length}/${dossel.length} fora da banda` : 'sem plantio de dossel marcado'],
   ['G3 forração instanciada 0,20–2,60 m', forra.length > 0 && foraForra.length === 0, forra.length ? `${foraForra.length}/${forra.length} fora da banda` : 'sem forração'],
   ['G3 árvores 3,0–6,8 m', arvores.length >= 4 && foraArvore.length === 0, arvores.length ? `${foraArvore.length}/${arvores.length} fora da banda (${alturasArvores.map((h) => h.toFixed(1)).join(', ')} m)` : '0 árvores marcadas'],
+  ['G4 vegetação GLB com folha texturizada (≥6 espécies declaradas, no preload, usadas e no disco)', vegIds.length >= 6 && vegPreload && vegSemUso.length === 0 && vegSemFolha.length === 0, vegIds.length ? `${vegIds.length} espécies · preload ${vegPreload ? 'ok' : 'FALTA'} · sem uso: ${vegSemUso.join(',') || 'nenhuma'} · sem GLB/folha: ${vegSemFolha.join(',') || 'nenhuma'}` : 'JARDIM_VEG ausente — jardim 100% primitiva (o defeito do BUG-64)'],
 ]) {
   if (!ok) falhas++;
   console.log(`${ok ? '✓' : '✗'} ${nome}: ${medido}`);

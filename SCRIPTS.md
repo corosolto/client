@@ -841,6 +841,10 @@ Abre os GLBs reais no navegador e anda a fauna dos três mapas: determinismo, re
 
 Mansão: água não entrável, carros originais com frente/capô não-cunha, jardim tropical 3D assimétrico e interior com 6–8 props, piso/forro próprios e fill. Mutantes por cláusula.
 
+## `eval:mansao-garden`
+
+Jardim da mansão: variedade das folhagens instanciadas (teto, tint+escala por instância, sem colônia), composição (caminho de pedras portão→porta, rota porta→piscina no A* do mapa, nada plantado na pedrada), escala humana (dossel/forração/árvore contra o jogador de 1,70 m) e (BUG-64) vegetação GLB com folha texturizada — espécies do JARDIM_VEG declaradas, no preload, usadas e com GLB de folha texturizada no disco. Mutantes: clona-tudo, planta-no-caminho, planta-gigante, sem-pedras, jardim-primitivo.
+
 ## `eval:look`
 
 RC1 (plans/23): a cor do fog É a cor do horizonte do céu — o truque que assenta a cena. Sobe cada mapa piloto no harness e lê scene.fog.color (uso, não declaração) contra o horizonte amostrado do MESMO webp que o mapa pediu (scene.userData.skyUrl), ΔE CIE76 com teto 8 ancorado na dispersão interna medida do horizonte. Node puro; sem python3/PIL cai no assado look-horizonte.json (e com ele reprova assado velho). --mutante=fog prova que morde.
