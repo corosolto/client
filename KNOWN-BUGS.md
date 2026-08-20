@@ -51,6 +51,28 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
+
+**Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
+debug vermelho cobrindo metade da tela — `THREE.WebGLProgram: Shader Error, 'uv1':
+undeclared identifier`. O erro seguia vivo na v2.1.0-teste depois do merge da main.
+
+**Causa raiz — medida, não palpite.** O Mini Cooper (`2014_mini_cooper_s_f56.glb`) tem
+`normalTexture.texCoord: 1` (glTF legal, a primitiva tem TEXCOORD_1). O `PropBatch`
+instancia via `normalizeGeo` (`mapprops.js`), que reescrevia a geometria só com
+{position, normal, uv}: o uv1 sumia e o material (com a textura no canal 1) ficava. O
+three r160 só declara `attribute vec2 uv1` quando a GEOMETRIA tem uv1
+(`three.module.js:20851`, `vertexUv1s: HAS_ATTRIBUTE_UV1`) — shader compilado usa `uv1`
+sem declaração. Confirmação em runtime: os 3 programas com `diagnostics` no renderer da
+mansão bootada eram exatamente os materiais do Mini com `uv1` no cacheKey. Varredura de
+JSON em 929 GLBs: **7 com textura em canal ≥1** (Mini, DeLorean, Cobalt, Fiesta, M8,
+Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
+
+**Conserto:** `normalizeGeo` agora carrega uv1 (o da fonte, ou cópia do uv — o merge
+exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
+normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
+Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+
 ### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
 
 **Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**

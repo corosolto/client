@@ -912,3 +912,7 @@ Régua + a mutação que prova que ela morde, no mesmo comando: primeiro valida 
 ## `skills:sync`
 
 Este repo é multi-agente (Claude, Kimi, OpenCode). Skills NATIVAS (csbrasil, asset-review, bug-hunt, gauntlet-fps, regua) vivem como diretórios reais em .claude/skills/, mas os outros arnêses leem .agents/skills/ — que é gitignored. Este script cria o symlink .agents/skills/<nome> → ../.claude/skills/<nome> para cada nativa. Nunca toca diretório real de .agents/skills/ (terceira, dona é o skills-lock.json).
+
+## `eval:propsuv1`
+
+Geometria normalizada pelo PropBatch não pode perder o uv1 do GLB: material com textura em canal 1 (Mini Cooper + 6 carros) sem uv1 na geometria compila shader com `uv1` não declarado e cobre a captura de erro vermelho (mansão, 20/08). `--mutante=dropa-uv1` prova que morde.
