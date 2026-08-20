@@ -1699,6 +1699,190 @@
     ],
     "finalSha256": "c64ca20aa950077189fc75c9272da42ebc174fcb023ff8eec89e67ba6b271280"
    }
+  },
+  "palmeira-imperial-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/palmeira_imperial.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7epscg489gta2x7zzm7he5398cvnfj",
+    "chatUrl": "https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw",
+    "displayName": "Imperial Grey Palm (palmeira-imperial)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "fc86f1f83ddeac051ed5bda007a707696b0266ef7ca8bc6fd3f953d22a4490eb"
+   }
+  },
+  "palmeira-ravenala-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/palmeira_ravenala.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks72t6bgnx7ww5azs74rvbbpnh8cvv8a",
+    "chatUrl": "https://mint.gg/chat/ph7by8184sbqmx1ev8j068pvm58ctqm0",
+    "displayName": "Dramatic Fan Palm (ravenala, palmeira-leque)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Ravenala em leque vertical (4.428 tris). Par assimétrico enquadrando a fachada sul (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "c707dc3fbcec4d63ec2313f93eeecf29dcc1d5aaef5ba1de6fc889f336047d85"
+   }
+  },
+  "heliconia-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/heliconia.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks79v1kkj8c32e71yyab27bqds8cvm8a",
+    "chatUrl": "https://mint.gg/chat/ph7cp8y6gyxt9gg461m4rcg8th8ctwfd",
+    "displayName": "Red Claw Heliconia (helicônia)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Heliconia com brácteas vermelho-amarelas pendentes (4.052 tris). Maciços florais e drifts do jardim (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "88cd13ab1bde0723e58df647b5f79e6da28f68007bc8c13496546de9afdd60f7"
+   }
+  },
+  "costela-adao-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/costela_adao.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7csdx865mvkee2aa3chszfns8ct9qv",
+    "chatUrl": "https://mint.gg/chat/ph7byt97jw52ykdjrzezvwhsvn8cvsje",
+    "displayName": "Perforated Monstera Bush (costela-de-adão)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Monstera deliciosa de folhas fenestradas (3.472 tris). Massa de dossel dos maciços (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "82c5f004f3e8497398c0ba7299ed6239ffe514c461b9886ad933e8526246a277"
+   }
+  },
+  "bananeira-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/bananeira.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7b9rr467gcfq4yrk6bv9ds0x8cva40",
+    "chatUrl": "https://mint.gg/chat/ph71fmfkb7fb4433vac33xghd58cttan",
+    "displayName": "Drooping Paddle Banana Plant (bananeira)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Bananeira de pseudocaule verde e folhas-pá (4.684 tris). Substitui as bananeiras de esferas achatadas (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "b4b5e40537b248a02a4442803baf34c648bfcd035179f7abac0edfb7bcce4d5d"
+   }
+  },
+  "ixora-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/ixora.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7f812b4388pzarx4wekxf8g98ct1en",
+    "chatUrl": "https://mint.gg/chat/ph7dcr7emj3jkafn0yq98gantx8cvtvs",
+    "displayName": "Crimson Ixora Bloom (ixora)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Ixora arbustiva com buquês vermelho-alaranjados (4.496 tris). Manchas floridas nos canteiros, no lugar das bromélias de cone (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "b2bcbf7458f5f3052b35805cf57c9955177f2f52adaa23112762e6a973eb0710"
+   }
+  },
+  "agave-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/agave.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks79jrvhxqhgpb3nc92vtbz7v58cthdg",
+    "chatUrl": "https://mint.gg/chat/ph777k51x3zm7rh2p92m2yferh8cv41j",
+    "displayName": "Blue-Green Agave Rosette (agave)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Agave azul-esverdeada em roseta (4.688 tris). Acentos esculturais dos maciços e encosta (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "2f0c046535ee11fda49d4f2d8c40300e7946c4454fa89675196d843cb7ad314d"
+   }
+  },
+  "samambaia-jardim": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/samambaia.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7966nvp1k21fd5e12aqq5cxn8cvq8f",
+    "chatUrl": "https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0",
+    "displayName": "Emerald Feather Clump (samambaia)",
+    "frente": "v21-c-mansao-jardim",
+    "notes": "Samambaia espada em touceira densa (3.757 tris). Forração instanciada dos drifts de borda (BUG-64). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
+   }
   }
  }
 }

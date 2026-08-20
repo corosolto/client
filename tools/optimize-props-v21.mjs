@@ -24,6 +24,15 @@ const jobs = [
   { src: 'references/glb/pipa_papel_split.glb', out: `${outDir}/pipa_papel.glb`, tex: 256 },
   { src: 'references/glb/helicoptero_pm_split.glb', out: `${outDir}/helicoptero_pm.glb`, tex: 512 },
   { src: 'references/glb/aviao_faixa_split.glb', out: `${outDir}/aviao_faixa.glb`, tex: 512 },
+  // BUG-64 jardim da mansão (frente C v2.1): 8 espécies tropicais, folha em card com alfa
+  { src: 'references/glb/palmeira_imperial_mint.glb', out: `${outDir}/palmeira_imperial.glb`, tex: 512 },
+  { src: 'references/glb/palmeira_ravenala_mint.glb', out: `${outDir}/palmeira_ravenala.glb`, tex: 512 },
+  { src: 'references/glb/heliconia_mint.glb', out: `${outDir}/heliconia.glb`, tex: 512 },
+  { src: 'references/glb/costela_adao_mint.glb', out: `${outDir}/costela_adao.glb`, tex: 512 },
+  { src: 'references/glb/bananeira_mint.glb', out: `${outDir}/bananeira.glb`, tex: 512 },
+  { src: 'references/glb/ixora_mint.glb', out: `${outDir}/ixora.glb`, tex: 512 },
+  { src: 'references/glb/agave_mint.glb', out: `${outDir}/agave.glb`, tex: 512 },
+  { src: 'references/glb/samambaia_mint.glb', out: `${outDir}/samambaia.glb`, tex: 512 },
 ];
 
 function triCount(doc) {
