@@ -67,7 +67,25 @@ for (const [nome, x, y, z, yaw, pitch] of POSES) {
     g.player.vel.set(0, 0, 0);
     g.player.grounded = true;
   }, [x, y, z, yaw, pitch]);
-  await page.waitForTimeout(450);
+  // SwiftShader rende ~1 frame por shot: sem esperar a câmera convergir pra pose,
+  // o screenshot pega o frame da pose ANTERIOR (portao/no-caminho saíam gêmeos).
+  // O re-pin a cada poll é o que segura a pose aérea (composicao): sem chão em
+  // z>36 o jogador CAIA durante a espera e o frame saía preto debaixo do mapa.
+  await page.waitForFunction(([px, py, pz, yw, pt]) => {
+    const g = window.__game;
+    g.player.pos.set(px, py, pz); g.player.yaw = yw; g.player.pitch = pt; g.player.vel.set(0, 0, 0);
+    const c = g.cam || g.camera;
+    return c && Math.hypot(c.position.x - px, c.position.z - pz) < 0.05;
+  }, [x, y, z, yaw, pitch], { timeout: 20000 }).catch(() => {});
+  // o frame apresentado fica 1-2 frames ATRÁS do estado JS no SwiftShader: mais
+  // alguns polls re-pinados antes do shot, senão sai o frame da pose anterior
+  for (let i = 0; i < 3; i++) {
+    await page.evaluate(([px, py, pz, yw, pt]) => {
+      const g = window.__game;
+      g.player.pos.set(px, py, pz); g.player.yaw = yw; g.player.pitch = pt; g.player.vel.set(0, 0, 0);
+    }, [x, y, z, yaw, pitch]);
+    await page.waitForTimeout(180);
+  }
   await page.screenshot({ path: `${OUT}/${nome}.png`, timeout: 90000 });
   console.log('  shot', nome);
 }
