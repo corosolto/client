@@ -38,6 +38,47 @@
 ### Mudado
 - fix(release): perdedor da corrida não toca na release — edit apagava o crédito dos colaboradores (#374)
 
+- fix(webgl): compila preview em renderers distintos
+- fix(audio): associa bordoes aos personagens
+- fix(ui): fecha telas finais e contrato de rounds
+- feat(audio): personagens falam ao clicar no avatar
+- feat(ui): fecha redesign AAA e opções da partida
+- feat(ui): os 44 retratos hero entram no jogo
+- fix(assets): lista o elenco pelo characters.js, não pelo diretório de GLB
+- docs(changelog): rodada do cronista — 128 commits
+- docs(contributing): quem conserta o quê — csbrasil-bot é pipeline, estraga-codigo conserta
+- fix(menu): convida jogador a enviar feedback
+- fix(ci): valida animacoes antes do deploy
+- fix(ui): fecha fundos responsivos do redesign
+- fix(docs): ignora arquivos locais nas métricas
+- docs: atualiza contratos gerados
+- fix(eval): mede cache injetado pelo build
+- fix(client): bundle público não nomeia o backend — régua eval:backendhints
+- fix(apoie): URLs de apoio resolvidas pelo servidor no menu do jogo, aria-pressed, bandeira/globo nos botões
+- docs: regenera blocos após página de doações
+- fix(boot): watchdog de partida renova enquanto o preload progride (#241) (#286)
+- fix(telemetria): sem_webgl e ambiente do jogador, nao defeito de codigo (#277) (#285)
+- fix: point international support to Ko-fi profile
+- feat: add donation page and support menu
+- fix(hud): o vídeo do fim de partida derrubava a régua de UI inteira
+- feat(ui): carregamento ganha status por progresso e DICA rotativa (tela 00B)
+- fix(api): client Supabase com timeout no fetch — acaba com os 504 de 300s (#269)
+- feat(ui): personagem em vídeo na entrada e no fim de partida
+- feat(assets): gerador de pose — mesmo personagem comemorando e derrotado
+- fix(assets): emo é rapaz e tem três acessórios; tom de pele vira valor, não categoria
+- feat(ui): a tela de fim de partida finalmente mostra o personagem do jogador
+- fix(assets): óculos vira trava global, e mascote deixa de levar a trava anti-Pixar
+- fix(assets): tira o visual Pixar, usa a arte oficial como 2ª referência, e para de queimar crédito
+- feat(assets): folha de contato — modelo ao lado do gerado, para revisão de fidelidade
+- feat(hud): brasão no lugar da sigla, em plaqueta escura (tela 05 do redesign)
+- feat(ui): barra inferior do menu — chip de perfil e as duas escolhas da partida
+- feat(ui): chips de link no topo-direito do menu (tela 01 do redesign)
+- fix(dev): o style.css vinha do cache no servidor de desenvolvimento
+- fix(assets): lista de exceções por personagem — a Juliet do Mandrake não é Wayfarer
+- feat(assets): enquadra pela caixa do personagem e gera o loop de vídeo a partir do retrato
+- fix(bot): rótulo automático volta sem depender de PAT (#259)
+- feat(assets): retrato fotorrealista com a identidade travada pelo render do modelo
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.159).
 ## [2.0.0-alpha.158] — 2026-08-19
 
 ### Mudado
