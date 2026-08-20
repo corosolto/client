@@ -22,7 +22,8 @@
    planta-gigante (bromélia 3× = 2,7 m) | sem-pedras | jardim-primitivo (tira as
    espécies GLB do preload — o defeito do BUG-64: jardim 100% primitiva chapada) |
    hardscape-chapado (tira o map de muro/biombo/portão — o "40% do quadro Minecraft"
-   do crítico v2.1).
+   do crítico v2.1) | portao-laje (some trilho/mourão/motor) | biombo-caixa (some
+   mourão/travessa) | laje-sem-beiral (some o acabamento das lajes).
    Uso: node tools/eval/mansao-garden-check.mjs [--mutante=...]
 */
 import fs from 'node:fs';
@@ -37,6 +38,9 @@ const MUT_GIGANTE = process.argv.includes('--mutante=planta-gigante');
 const MUT_SEM_PEDRAS = process.argv.includes('--mutante=sem-pedras');
 const MUT_SEM_GLB = process.argv.includes('--mutante=jardim-primitivo');
 const MUT_CHAPADO = process.argv.includes('--mutante=hardscape-chapado');
+const MUT_PORTAO_LAJE = process.argv.includes('--mutante=portao-laje');
+const MUT_BIOMBO_CAIXA = process.argv.includes('--mutante=biombo-caixa');
+const MUT_SEM_BEIRAL = process.argv.includes('--mutante=laje-sem-beiral');
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
 const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
@@ -73,6 +77,19 @@ if (MUT_CHAPADO) {
   if (!alvos.length) { console.error('MUTANTE hardscape-chapado NÃO APLICOU (sem hardscape marcado)'); process.exit(1); }
   for (const o of alvos) for (const m of Array.isArray(o.material) ? o.material : [o.material]) if (m) m.map = null;
 }
+/* partes de acabamento (rodada 3 do crítico): marcadas por userData próprio, não por
+   mansaoFeature — o mutante esconde e a cláusula morre */
+const partes = [];
+game.world.root.traverse((o) => { if (o.userData?.portaoPart || o.userData?.biomboPart || o.userData?.mansaoFeature === 'beiral') partes.push(o); });
+const esconde = (pred, nome) => {
+  const alvos = partes.filter(pred);
+  if (!alvos.length) { console.error(`MUTANTE ${nome} NÃO APLICOU (sem partes)`); process.exit(1); }
+  for (const o of alvos) o.visible = false;
+};
+if (MUT_PORTAO_LAJE) esconde((o) => !!o.userData.portaoPart, 'portao-laje');
+if (MUT_BIOMBO_CAIXA) esconde((o) => !!o.userData.biomboPart, 'biombo-caixa');
+if (MUT_SEM_BEIRAL) esconde((o) => o.userData.mansaoFeature === 'beiral', 'laje-sem-beiral');
+const vivos = (pred) => partes.filter((o) => o.visible !== false && o.parent && pred(o)).length;
 const pedrasVivas = () => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'pedra-caminho');
 
 /* plantios: centros por tipo (grupo inteiro ou instância) */
@@ -240,6 +257,9 @@ for (const [nome, ok, medido] of [
   ['G3 árvores 3,0–6,8 m', arvores.length >= 4 && foraArvore.length === 0, arvores.length ? `${foraArvore.length}/${arvores.length} fora da banda (${alturasArvores.map((h) => h.toFixed(1)).join(', ')} m)` : '0 árvores marcadas'],
   ['G4 vegetação GLB com folha texturizada (≥6 espécies declaradas, no preload, usadas e no disco)', vegIds.length >= 6 && vegPreload && vegSemUso.length === 0 && vegSemFolha.length === 0, vegIds.length ? `${vegIds.length} espécies · preload ${vegPreload ? 'ok' : 'FALTA'} · sem uso: ${vegSemUso.join(',') || 'nenhuma'} · sem GLB/folha: ${vegSemFolha.join(',') || 'nenhuma'}` : 'JARDIM_VEG ausente — jardim 100% primitiva (o defeito do BUG-64)'],
   ['G5 hardscape texturizado (muro-perimetro/biombo/portao com material.map)', tiposHard.size >= 3 && hardscape.length >= 5 && semMapa.length === 0, hardscape.length ? `${hardscape.length} peças (${[...tiposHard].join('+')}) · chapadas: ${semMapa.length}` : 'sem hardscape marcado — muro/biombo/portão de cor chapada era 40% do quadro (crítico v2.1)'],
+  ['G6 portão de correr estruturado (trilho, 2 mourões, motor, folha)', vivos((o) => o.userData.portaoPart === 'trilho') >= 1 && vivos((o) => o.userData.portaoPart === 'mourao') >= 2 && vivos((o) => o.userData.portaoPart === 'motor') >= 1 && vivos((o) => o.userData.portaoPart === 'folha') >= 1, `trilho ${vivos((o) => o.userData.portaoPart === 'trilho')} · mourão ${vivos((o) => o.userData.portaoPart === 'mourao')} · motor ${vivos((o) => o.userData.portaoPart === 'motor')} · folha ${vivos((o) => o.userData.portaoPart === 'folha')} — laje preta chapada foi reprovo do crítico`],
+  ['G7 biombos com estrutura (mourões + travessa por painel)', vivos((o) => o.userData.biomboPart === 'mourao') >= 8 && vivos((o) => o.userData.biomboPart === 'travessa') >= 4, `mourões ${vivos((o) => o.userData.biomboPart === 'mourao')}/8 · travessas ${vivos((o) => o.userData.biomboPart === 'travessa')}/4 — "caixa flutuando com textura clonada"`],
+  ['G8 lajes com beiral fino de acabamento (≥6)', vivos((o) => o.userData.mansaoFeature === 'beiral') >= 6, `${vivos((o) => o.userData.mansaoFeature === 'beiral')} beirais — aérea lia placa sem acabamento`],
 ]) {
   if (!ok) falhas++;
   console.log(`${ok ? '✓' : '✗'} ${nome}: ${medido}`);

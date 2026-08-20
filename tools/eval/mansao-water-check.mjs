@@ -235,11 +235,11 @@ if (MUT_ESPELHO_MORTO) {
   if (!aguasJardim.length) { console.error('MUTANTE espelho-morto NÃO APLICOU (nenhuma água viva no jardim)'); process.exit(1); }
   for (const o of aguasJardim) o.removeFromParent();
 }
-const laminaViva = (cx, cz, rx, rz) => aguasJardim.filter((o) => {
+const laminaViva = (cx, cz, rx, rz, profMax = 0.6) => aguasJardim.filter((o) => {
   if (o.visible === false || !o.parent) return false;
   const c = new THREE.Box3().setFromObject(o).getCenter(new THREE.Vector3());
   const u = o.material?.uniforms || {};
-  return Math.abs(c.x - cx) <= rx && Math.abs(c.z - cz) <= rz && o.material?.isShaderMaterial && u.uTime && u.uProfEscala?.value <= 0.6;
+  return Math.abs(c.x - cx) <= rx && Math.abs(c.z - cz) <= rz && o.material?.isShaderMaterial && u.uTime && u.uProfEscala?.value <= profMax;
 });
 
 const conta = (tipo) => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === tipo).length;
@@ -290,6 +290,7 @@ for (const [nome, ok, medido] of [
   ['sem teto opaco sobre a lâmina (máscara antiga = teto do nadador)', tetoSobreLamina.length === 0, `${tetoSobreLamina.length} plano(s) opaco(s) em y∈(0,02;0,5) dentro da cuba`],
   ['espelho d\'água decorativo segue NÃO entrável', espelhoAfasta, `deslocamento ${espelhoDepois.distanceTo(espelhoAntes).toFixed(3)} m (mín. ${(RAIO * 0.9).toFixed(3)})`],
   ['espelho e canal do eixo são água VIVA (shader uTime, lâmina rasa)', laminaViva(-8, 25, 3.5, 2.5).length >= 1 && laminaViva(-4.2, 24.8, 2.2, 7).length >= 1, `${aguasJardim.filter((o) => o.parent).length} lâmina(s) viva(s) no jardim — plano azul chapado foi o reprovo do crítico v2.1`],
+  ['piscina é água VIVA (entrável, profundidade real ≤2,0 m de fade)', laminaViva(0, -29.5, 6, 3.5, 2.0).length >= 1, `${laminaViva(0, -29.5, 6, 3.5, 2.0).length} lâmina na cuba — "retângulo turquesa fosco" (crítico v2.1 r3); contrato entrável medido acima`],
   ['frota da garagem em GLB do acervo — 3 modelos distintos pré-carregados e usados', frota.length === 3 && new Set(frota.map((f) => f.id)).size === 3 && preloadOk && usosCarro >= 3, `${frota.length} na GARAGEM · preload ${preloadOk ? 'ok' : 'FALTA'} · ${usosCarro} carroAcervo( — id fora do preload volta procedural e id declarado sem uso é invariante cega`],
   ['GLBs de carro válidos no disco (geometria real, dentro do orçamento)', frota.length === 3 && frota.every((f) => glbInfo[f.id]?.existe && !glbInfo[f.id].erro && glbInfo[f.id].tris >= 2000 && glbInfo[f.id].tris <= 45000), frota.map((f) => `${f.id}:${glbInfo[f.id]?.existe && !glbInfo[f.id].erro ? `${glbInfo[f.id].tris}t` : 'inválido/ausente'}`).join(' · ')],
   ['escala de fábrica confere com a ficha do acervo (CAR_DIM da Havan)', frota.every((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }), `${frota.filter((f) => { const d = dimHavan(f.id); return d && Math.abs(d[0] - f.len) < 0.011 && Math.abs(d[1] - f.h) < 0.011; }).length}/3 sem divergência de ficha`],
