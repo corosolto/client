@@ -76,10 +76,11 @@ export function buildMansao(scene, T) {
     const b = junta ? 138 : 196 + n;
     return [b, b - 3, b - 8];
   });
-  // ripado de madeira: ripa de 12,5 cm com fresta escura; tile 1 m (S=128)
+  const MAT_MURO = lam({ map: texturaMuro(), roughness: .85 });
+  // ripado de madeira: ripa de 12,5 cm com fresta escura e tom por tábua; tile 1 m
   const texturaRipado = () => texProcedural(128, (x, y) => {
-    const fresta = (x % 16) < 2, n = ((x * 5 + y * 11) % 9) - 4;
-    return fresta ? [40, 27, 19] : [114 + n * 2, 81 + n, 59 + n];
+    const fresta = (x % 16) < 2, tom = (((x >> 4) * 37) % 5 - 2) * 5, n = ((x * 5 + y * 11) % 9) - 4;
+    return fresta ? [40, 27, 19] : [114 + tom + n * 2, 81 + tom + n, 59 + tom + n];
   });
   // portão de aço: lâminas horizontais grafite-azuladas com fio de luz, não o #2a2a2a chapado
   const texturaPortao = () => texProcedural(128, (x, y) => {
@@ -226,6 +227,11 @@ export function buildMansao(scene, T) {
   addBox(4.8, .07, 8.0, glass, 0, 6.2, -11.4, { collide: false, cast: false, skirt: false });
   addBox(7.0, 0.18, 15.0, concretoClaro, -15.7, 3.95, -3.0, { skirt: false });
   addBox(7.0, 0.18, 12.0, concretoClaro, 15.7, 3.95, -1.5, { skirt: false });
+  // Beiral fino e claro coroando cada laje (crítico r3: aérea lia placa sem acabamento)
+  const beiralMat = lam({ color: 0xf5f1e6, roughness: .6 });
+  for (const [bx, bz, bw, bd, by] of [[-11.4, 2.6, 9.7, 10.5, 4.25], [11.4, 2.6, 9.7, 10.5, 4.25], [0, 6.15, 13.1, 3.4, 4.25], [0, -.35, 13.1, 2.4, 4.25],
+    [-7.7, -11.4, 10.1, 8.2, 6.42], [7.7, -11.4, 10.1, 8.2, 6.42], [-15.7, -3, 7, 15, 4.13], [15.7, -1.5, 7, 12, 4.13]])
+    addBox(bw + .14, .08, bd + .14, beiralMat, bx, by, bz, { collide: false, cast: false, skirt: false }).userData.mansaoFeature = 'beiral';
   // Panos segmentados: 4 m livres na entrada e 6 m livres para o terraço.
   for (const [x, z, w, d, h] of [[-7,7.82,10,.06,3.3],[7,7.82,10,.06,3.3],[-8.5,-14.78,5,.06,3.45],[8.5,-14.78,5,.06,3.45]]) {
     addBox(w, h, d, glass, x, .38, z, { cast: false, skirt: false });
@@ -690,13 +696,28 @@ export function buildMansao(scene, T) {
   // muretas dos canteiros (cover agachado); a de (-7,4;22,6) saiu de cima do espelho —
   // sobre a água ela lia como viga flutuando (crítico v2.1)
   for (const [mx, mz,ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06]]) { addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz,{ry}); solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 }); }
-  // portão da frente
-  addBox(8.0, 3.0, 0.3, lam({ map: texturaPortao(), metalness: 0.45, roughness: .55 }), 0, 0, 34).userData.mansaoFeature = 'portao';
+  // Portão de correr: o colisor único 8×3 fica (gameplay); o visual ganha trilho,
+  // mourões, motor e folha de aço flutuando 12 cm — a "laje preta" morreu (crítico r3).
+  col(-4, 4, 0, 3.0, 33.85, 34.15);
+  const marcaParte = (o, k, t) => { o.userData[k] = t; return o; };
+  marcaParte(addBox(8.3, .05, .14, lam({ color: 0x4a4f55, metalness: .6, roughness: .4 }), 0, 0, 34, { collide: false, cast: false, skirt: false }), 'portaoPart', 'trilho');
+  for (const mx of [-4.15, 4.15]) marcaParte(addBox(.35, 2.6, .5, MAT_MURO, mx, 0, 34, { collide: false }), 'portaoPart', 'mourao');
+  marcaParte(addBox(.5, .9, .35, lam({ color: 0x3a4046, metalness: .5, roughness: .5 }), 4.62, 0, 34.55, { collide: false }), 'portaoPart', 'motor');
+  const portaoObj = propComFallback('portao_correr', 0, 34, 2.3, 0, () => {
+    const folha = addBox(7.9, 2.1, .12, lam({ map: texturaPortao(), metalness: .45, roughness: .55 }), 0, .12, 34, { collide: false, skirt: false });
+    folha.userData.portaoPart = 'folha'; folha.userData.mansaoFeature = 'portao'; occluders.push(folha);
+    return folha;
+  });
+  if (portaoObj) portaoObj.userData.mansaoFeature = 'portao';
   // Guarita e biombo protegem o respawn, deixando rotas laterais independentes.
   addBox(3.2, 2.8, 3.2, TEX.concrete, -17.5, 0, 31.5);
-  // Cada biombo tem passagem alinhada aos spawns internos — painel cego colapsava
-  // as rotas E→JARDIM e E→PISCINA numa faixa só (CTF2).
-  for (const x of [-6.75, -2.25, 2.25, 6.75]) addBox(2.5, 2.1, 0.35, ripado, x, 0, 29).userData.mansaoFeature = 'biombo';
+  // Biombo com estrutura (crítico r3: "caixa flutuando"): mourões a cada ~1,2 m
+  // descendo ao chão e travessa coroando — painéis e passagens dos spawns (CTF2) intactos.
+  for (const x of [-6.75, -2.25, 2.25, 6.75]) {
+    addBox(2.5, 2.1, 0.35, ripado, x, 0, 29).userData.mansaoFeature = 'biombo';
+    for (const px of [x - 1.22, x, x + 1.22]) marcaParte(addBox(.14, 2.3, .44, ripado, px, 0, 29, { collide: false }), 'biomboPart', 'mourao');
+    marcaParte(addBox(2.62, .09, .42, lam({ color: 0x5c4030, roughness: .7 }), x, 2.1, 29, { collide: false, cast: false, skirt: false }), 'biomboPart', 'travessa');
+  }
 
   /* ===================== TERRAÇO + PISCINA INFINITA ===================== */
   // Deck recortado nas laterais: não existe madeira depois da borda infinita central.
@@ -727,10 +748,13 @@ export function buildMansao(scene, T) {
   paredeCuba(0, -32.75, 12, .5);   // norte (sob a borda infinita)
   paredeCuba(-5.75, -29.5, .5, 6);
   paredeCuba(5.75, -29.5, .5, 6);
-  const aguaPiscina = lam({ color: 0x419bb3, roughness: .045, metalness: .16,
-    emissive: 0x0b6074, emissiveIntensity: .22, transparent: true, opacity: .86, depthWrite: false, side: THREE.DoubleSide });
-  const piscina = addFloor(11, 6, 0, -29.5, aguaPiscina, .08);
-  piscina.userData.nonSolidSurface = true;
+  // Piscina com a MESMA água viva RC2 (crítico r3: "retângulo turquesa fosco") —
+  // fade na profundidade real da cuba (1,93 m); o contrato entrável não muda.
+  const aguaPiscina = createWater(scene, T, 'fy_mansao', { nivel: .08, centro: [0, -29.5], tamanho: [11, 6],
+    segmentos: 6, raso: 0x419bb3, fundo: 0x1a5a72, profEscala: 1.9, espumaFaixa: .3, espumaMiolo: .1,
+    profFallback: .55, ampEscala: .06, parent: root });
+  aguaPiscina.mesh.userData.nonSolidSurface = true;
+  aguaPiscina.material.side = THREE.DoubleSide;   // piscina é entrável: de dentro o fundo lê a película da superfície
   const bordaPiscina = lam({ map: TEX.marble.map || null, color: 0xf0eadc, roughness: .3 });
   for (const x of [-6.2,6.2]) addBox(.32,.18,7.6,bordaPiscina,x,.01,-29.5,{ collide:false, skirt:false });
   // borda sul sobre o TOPO da parede (z∈[-26,31,-25,99]): dentro da cuba o chão é o
@@ -758,7 +782,6 @@ export function buildMansao(scene, T) {
   col(-15.85, -13.95, 0, .8, -19.45, -17.55); solids.push({ x0: -15.85, x1: -13.95, z0: -19.45, z1: -17.55 });
 
   /* MUROS — concreto de fôrma com junta (G5); o volume e o colisor não mudam */
-  const MAT_MURO = lam({ map: texturaMuro(), roughness: .85 });
   for (const sx of [-HALF_X, HALF_X]) addBox(0.5, 2.5, HALF_Z * 2, MAT_MURO, sx, 0, 0).userData.mansaoFeature = 'muro-perimetro';
   addBox(HALF_X * 2, 2.5, 0.5, MAT_MURO, 0, 0, HALF_Z).userData.mansaoFeature = 'muro-perimetro';
 
