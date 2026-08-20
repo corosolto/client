@@ -11,7 +11,7 @@ import { setHavanCarSeed } from './map_havan.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS } from './game.js';
 import { VERSION } from './version.js';
-import { LANG, translateDom, tr, frase } from './i18n.js';
+import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
@@ -718,6 +718,8 @@ let heartbeatOff = false;
    view online_now (heartbeat < 2 min). `hidden` até ter número: rodapé nunca mostra
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 { const v = document.getElementById('mf-ver'); if (v) v.textContent = `CORO SOLTO v${VERSION}`; }
+// o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
+await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
