@@ -56,12 +56,13 @@ conservadorismo: é o que permite `tools/eval/harness.mjs` subir a classe `Game`
 puro em segundos — que é o que faz o quality gate existir. Um bundler no meio quebraria a régua
 junto com a portabilidade. Three.js é vendorizado em `public/vendor/`; não adicione CDN.
 
-**Roteamento de geração de asset (regra do dono, 19/08/2026): Mint é SÓ para 3D e
-rig/animação** (models, props, personagens riggáveis); **toda arte 2D sai pelo OpenRouter**
-(`tools/gen-image.mjs`, chave só do `.env`). O pipeline de animação do Mint é
-humanoid-only e o GPT de imagem entrega 2D com mais base no real — medido nos lotes da
-v2.1 (pixos SP×RJ). Fauna continua preferindo Quaternius/CC0 com procedência em
-`FONTE.md` antes de qualquer geração paga.
+**Roteamento de geração de asset (regra do dono, 19/08/2026; música em 20/08/2026):
+Mint é SÓ para 3D** (models, props, personagens, rig/animação); **toda arte 2D sai pelo
+OpenRouter** (`tools/gen-image.mjs`, chave só do `.env`); **música NÃO é Mint — sai pelo
+OpenRouter** (`/audio/speech` e cia., mesma chave) ou outro provedor dedicado. O pipeline
+de animação do Mint é humanoid-only, o GPT de imagem entrega 2D com mais base no real
+(medido nos lotes da v2.1, pixos SP×RJ) e a música do Mint não agradou. Fauna continua
+preferindo Quaternius/CC0 com procedência em `FONTE.md` antes de qualquer geração paga.
 
 **Mexeu em `public/js/*.js`? Preserve o cache-bust por conteúdo** — o import map de
 `src/pages/index.astro` e o arnês usam o manifesto recursivo de `scripts/module-cache.mjs`.
