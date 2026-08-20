@@ -28,7 +28,11 @@ const GARAGEM = [
    z1=-26,5 porque a 2ª fileira do armário nasce em -25,6 NO DECK (pickup-check H_MIN). */
 export const PISCINA = { x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5, raso: -0.85, fundo: -1.85 };
 
-export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id),
+/* Jardim BUG-64: 8 espécies tropicais em GLB (lote 4 do props/FONTE.md); o
+   procedural vira fallback de node/?glb=0 — zonas e colisores não mudam. */
+const JARDIM_VEG = ['palmeira_imperial', 'palmeira_ravenala', 'heliconia', 'costela_adao', 'bananeira', 'ixora', 'agave', 'samambaia'];
+
+export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id), ...JARDIM_VEG,
   // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
   'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada'];
 
@@ -443,7 +447,11 @@ export function buildMansao(scene, T) {
   clusterSpecs.forEach(([gx,gz,familia],clusterIndex)=>{
     const cluster=new THREE.Group(); cluster.position.set(gx,0,gz);
     cluster.userData.mansaoFeature='garden-cluster'; cluster.userData.gardenFamily=familia; cluster.userData.clusterIndex=clusterIndex;
-    if(familia==='heliconia') for(let i=0;i<7;i++) {
+    const glbOk = familia==='heliconia' ? GLB_ON && PB.add('heliconia',{x:gx,z:gz,targetH:1.35,ry:clusterIndex*1.7})
+      : familia==='filodendro' ? GLB_ON && PB.add('costela_adao',{x:gx,z:gz,targetH:1.15,ry:clusterIndex*2.3})
+      : GLB_ON && PB.add('agave',{x:gx,z:gz,targetH:.95,ry:clusterIndex*1.1});
+    if (!glbOk) {
+      if(familia==='heliconia') for(let i=0;i<7;i++) {
       const a=-.9+i*.3, caule=new THREE.Mesh(new THREE.CylinderGeometry(.035,.05,.75+i*.09,6),lam({color:0x397343,roughness:1}));
       caule.position.set((i-3)*.12,(.75+i*.09)/2,Math.sin(a)*.18); cluster.add(caule);
       const flor=new THREE.Mesh(new THREE.ConeGeometry(.13,.38,6),lam({color:i%2?0xd64d32:0xf09a35,roughness:.9})); flor.rotation.z=(i-3)*.09; flor.position.set((i-3)*.12,.82+i*.09,Math.sin(a)*.18); cluster.add(flor);
@@ -454,7 +462,9 @@ export function buildMansao(scene, T) {
       const a=i*Math.PI*2/10, folha=new THREE.Mesh(new THREE.ConeGeometry(.16,.95,6),lam({color:i%2?0x64834a:0x78994f,roughness:1}));
       folha.rotation.set(.68,a,0); folha.position.set(Math.sin(a)*.31,.34,Math.cos(a)*.31); cluster.add(folha);
     }
-    cluster.traverse((o)=>{if(o.isMesh){o.castShadow=true;o.userData.nonSolidSurface=true;}}); root.add(cluster);
+      cluster.traverse((o)=>{if(o.isMesh){o.castShadow=true;o.userData.nonSolidSurface=true;}});
+    }
+    root.add(cluster);
   });
   // Três maciços densos deslocados: volumes contínuos enquadram a aproximação e
   // retiram o jardim da leitura axial/rala sem invadir o corredor central.
@@ -462,16 +472,23 @@ export function buildMansao(scene, T) {
   massSpecs.forEach(([mx,mz,rot],mi)=>{
     const mass=new THREE.Group(); mass.position.set(mx,0,mz); mass.rotation.y=rot;
     mass.userData.mansaoFeature='garden-mass';
-    for(let i=0;i<24;i++) {
-      const a=i*Math.PI*2/24+mi*.31,r=.38+(i%6)*.17;
-      const leaf=new THREE.Mesh(new THREE.SphereGeometry(.42,8,5),lam({color:i%3===0?0x255f36:i%3===1?0x3d8245:0x527d3e,roughness:1}));
-      leaf.scale.set(.28,.10,1.45+(i%4)*.16); leaf.rotation.set(-.42+(i%3)*.1,a,(i%2?1:-1)*.12);
-      leaf.position.set(Math.sin(a)*r,.42+(i%5)*.13,Math.cos(a)*r); leaf.userData.nonSolidSurface=true; mass.add(leaf);
-    }
-    for(let i=0;i<6;i++) {
-      const flower=new THREE.Mesh(new THREE.ConeGeometry(.12,.52,6),lam({color:i%2?0xe06a34:0xc94334,roughness:.9}));
-      flower.position.set((i-2.5)*.19,.72+(i%3)*.18,Math.sin(i)*.32); flower.rotation.z=(i-2.5)*.07;
-      flower.userData.nonSolidSurface=true; mass.add(flower);
+    const glbMass = GLB_ON && hasProp('costela_adao') && hasProp('heliconia') && hasProp('agave');
+    if (glbMass) {
+      PB.add('costela_adao',{x:mx,z:mz,targetH:1.5,ry:rot});
+      PB.add('heliconia',{x:mx+.9,z:mz+.45,targetH:1.6,ry:rot+2.1});
+      if (!LOWQ) PB.add('agave',{x:mx-.85,z:mz+.6,targetH:.8,ry:rot+4.2});
+    } else {
+      for(let i=0;i<24;i++) {
+        const a=i*Math.PI*2/24+mi*.31,r=.38+(i%6)*.17;
+        const leaf=new THREE.Mesh(new THREE.SphereGeometry(.42,8,5),lam({color:i%3===0?0x255f36:i%3===1?0x3d8245:0x527d3e,roughness:1}));
+        leaf.scale.set(.28,.10,1.45+(i%4)*.16); leaf.rotation.set(-.42+(i%3)*.1,a,(i%2?1:-1)*.12);
+        leaf.position.set(Math.sin(a)*r,.42+(i%5)*.13,Math.cos(a)*r); leaf.userData.nonSolidSurface=true; mass.add(leaf);
+      }
+      for(let i=0;i<6;i++) {
+        const flower=new THREE.Mesh(new THREE.ConeGeometry(.12,.52,6),lam({color:i%2?0xe06a34:0xc94334,roughness:.9}));
+        flower.position.set((i-2.5)*.19,.72+(i%3)*.18,Math.sin(i)*.32); flower.rotation.z=(i-2.5)*.07;
+        flower.userData.nonSolidSurface=true; mass.add(flower);
+      }
     }
     root.add(mass);
   });
@@ -479,7 +496,10 @@ export function buildMansao(scene, T) {
     const tronco=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,h,9),lam({color:0x63482f,roughness:1})); tronco.position.set(tx,h/2,tz); root.add(tronco);
     tronco.userData.mansaoFeature = 'arvore';   // G3 do mansao-garden-check: 3,0–6,8 m
     occluders.push(tronco);   // tronco visível dentro do próprio colisor: a bala para nele
-    for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
+    // BUG-64: com o GLB a copa é palmeira-imperial e o tronco vira occluder invisível
+    // (mesmo volume, mesma bala parando — o raycast não filtra visible)
+    if (GLB_ON && PB.add('palmeira_imperial', { x: tx, z: tz, targetH: h + 1.6, ry: (tx * 7 + tz * 3) % 6.283 })) tronco.visible = false;
+    else for (const [ox, oy, oz, s] of [[0,0,0,1],[-.85,-.15,.15,.72],[.8,-.08,-.2,.76],[.1,.48,.2,.68]]) {
       const copa = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55 * s, 1), (ox + oz) > 0 ? folhaB : folhaA);
       copa.scale.set(1.05, .78, .94); copa.position.set(tx + ox, h + .1 + oy, tz + oz); copa.castShadow = true; root.add(copa);
     }
@@ -487,6 +507,7 @@ export function buildMansao(scene, T) {
   }
   // Bromélias em manchas curvas amarram canteiros, espelho d'água e caminho.
   for (const [x, z, c] of [[-11.2,19.4,0xb84132],[-7.4,20.8,0xd1842f],[6.7,21.7,0xb84132],[10.6,24.1,0xd1842f],[-13.3,28.9,0xb84132],[-6.1,31.2,0xd1842f],[7.9,27.4,0xb84132],[14.1,32.2,0xd1842f]]) {
+    if (GLB_ON && PB.add('ixora', { x, z, targetH: .95, ry: (x * 5 + z * 11) % 6.283 })) continue;   // BUG-64: ixora florida no lugar dos cones
     const g = new THREE.Group();
     g.userData.mansaoFeature = 'bromelia';
     for (let i = 0; i < 11; i++) {
@@ -507,6 +528,7 @@ export function buildMansao(scene, T) {
   // inclinações para não ler como as copas esféricas existentes.
   const folhaPalma = lam({ color: 0x2c713c, roughness: 1 });
   for (const [px,pz,sgn] of [[-17.2,22.5,1],[17.2,24,-1]]) {
+    if (GLB_ON && PB.add('palmeira_ravenala', { x: px, z: pz, targetH: 5.0, ry: sgn > 0 ? .45 : 2.69 })) continue;   // BUG-64: ravenala em leque no lugar das esferas
     const palm = new THREE.Group(); palm.position.set(px,0,pz); palm.userData.mansaoFeature = 'palmeira';
     const tropicalTag=new THREE.Group(); tropicalTag.userData.mansaoFeature='tropical-3d'; palm.add(tropicalTag);
     for (let i=0;i<5;i++) {
@@ -524,6 +546,7 @@ export function buildMansao(scene, T) {
   }
   // Bananeiras no primeiro plano: folhas altas, largas e em leque, não estrelas 2D.
   for(const [bx,bz,ry] of [[-9.8,24.8,.3],[11.6,26.5,-.45]]){
+    if (GLB_ON && PB.add('bananeira', { x: bx, z: bz, targetH: 2.3, ry })) continue;   // BUG-64
     const banana=new THREE.Group(); banana.position.set(bx,0,bz); banana.rotation.y=ry;
     banana.userData.mansaoFeature='tropical-3d';
     for(let i=0;i<7;i++){ const a=-1.1+i*.36, folha=new THREE.Mesh(new THREE.SphereGeometry(.52,9,5),lam({color:i%2?0x4b8b45:0x35783c,roughness:1})); folha.scale.set(.28,.08,2.25); folha.rotation.set(-.55,a,0); folha.position.set(Math.sin(a)*.55,1.45+i*.12,Math.cos(a)*.55); banana.add(folha); }
@@ -563,6 +586,8 @@ export function buildMansao(scene, T) {
     const morro = new THREE.Mesh(new THREE.DodecahedronGeometry(3.5,1), lam({ color: 0x356438, roughness: 1 }));
     morro.scale.set(sx,sy,sz); morro.position.set(x,.55,z); morro.rotation.y = x < 0 ? .24 : -.3; morro.receiveShadow = true;
     morro.userData.nonSolidSurface = true; encosta.add(morro);
+    // BUG-64: coroamento quebra a silhueta de poliedro chapado
+    if (GLB_ON) { PB.add('agave', { x: x * .96, y: 1.0, z: z - 1.1, targetH: .9, ry: x }); PB.add('samambaia', { x: x * .98, y: .8, z: z + 1.5, targetH: .85, ry: z }); }
   }
   root.add(encosta);
   // Pergolado do lounge: quatro pilares chegam ao solo; cinco travessas e duas
@@ -573,13 +598,27 @@ export function buildMansao(scene, T) {
   for(const z of [14.7,18.3]) marcaPergola(addBox(5.85,.18,.22,pergolaMat,-11,2.96,z,{collide:false,skirt:false}),'beam');
   for(let z=15;z<=18;z+=.75) marcaPergola(addBox(.16,.14,3.8,pergolaMat,-13.3+(z-15)*1.52,3.13,16.5,{collide:false,skirt:false}),'beam');
   /* FOLHAGEM INSTANCIADA (plans/13): cor e escala por instância em drifts de ângulo
-     áureo nas bordas — corredor central limpo. Régua G1 do mansao-garden-check. */
+     áureo nas bordas — corredor central limpo. Régua G1 do mansao-garden-check.
+     BUG-64: com GLB os drifts são touceiras tropicais de verdade (samambaia/ixora/
+     heliconia via PropBatch); o InstancedMesh fica de fallback de node/?glb=0. */
   const rndJardim = (() => { let s = 20260818 >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
-  const paletaFolha = [0x2f7040, 0x3d8a4a, 0x529a4b, 0x2a6b3a, 0x6aa14e].map((c) => new THREE.Color(c));
   const driftsJardim = [
     [-17.6, 16.8], [-13.2, 18.6], [-18.4, 24.9], [-14.1, 33.6], [-8.3, 33.2],
     [16.8, 17.8], [12.1, 19.9], [18.2, 27.4], [14.8, 33.9], [7.6, 32.7], [-9.8, 28.3],
   ];
+  if (GLB_ON && hasProp('samambaia') && hasProp('ixora') && hasProp('heliconia')) {
+    for (const [dx, dz] of driftsJardim) {
+      const n = LOWQ ? 2 : 3;
+      for (let i = 0; i < n; i++) {
+        const a = i * 2.399963 + rndJardim() * .6, r = .34 * Math.sqrt(i + .6) + rndJardim() * .2;
+        const fx = dx + Math.cos(a) * r, fz = dz + Math.sin(a) * r, fh = .55 + rndJardim() * .45, fry = rndJardim() * 6.283;
+        if (i % 3 === 0) PB.add('samambaia', { x: fx, z: fz, targetH: fh, ry: fry });
+        else if (i % 3 === 1) PB.add('ixora', { x: fx, z: fz, targetH: fh + .15, ry: fry });
+        else PB.add('heliconia', { x: fx, z: fz, targetH: fh + .5, ry: fry });
+      }
+    }
+  } else {
+  const paletaFolha = [0x2f7040, 0x3d8a4a, 0x529a4b, 0x2a6b3a, 0x6aa14e].map((c) => new THREE.Color(c));
   const criaFolhagem = (geo) => {
     const mesh = new THREE.InstancedMesh(geo, lam({ color: 0xffffff, roughness: 1 }), 30);   // branco: cor vem do instanceColor
     mesh.userData.mansaoFeature = 'folhagem-instanciada';
@@ -616,6 +655,7 @@ export function buildMansao(scene, T) {
   famA.instanceMatrix.needsUpdate = true; famB.instanceMatrix.needsUpdate = true;
   if (famA.instanceColor) famA.instanceColor.needsUpdate = true;
   if (famB.instanceColor) famB.instanceColor.needsUpdate = true;
+  }
   const forracao = lam({ color: 0x416f38, roughness: 1 });
   for (const [x,z,s] of [[-16.4,18.1,2.2],[-14.8,25.6,2.5],[-10.7,33.2,2.8],[15.7,19.1,2.0],[16.4,27.2,2.4],[10.9,31.7,2.6]]) {
     const m = new THREE.Mesh(new THREE.CircleGeometry(s, 14), forracao);
