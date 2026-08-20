@@ -44,9 +44,10 @@ window.__GEO_LANG__ = (function () {
   var TETO_SESSAO = 10;      /* no máximo 10 erros DISTINTOS por carregamento de página */
   var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
   var TETO_CONSOLE = 3;      // log tagarela não come a cota reservada a exceção (BUG-72)
+  var TETO_MIDIA = 2;        // abort de mídia é rotina do jogo, não exceção (BUG-73)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, nMidia = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -132,6 +133,11 @@ window.__GEO_LANG__ = (function () {
         if (externa) {
           if (nExternos >= TETO_EXTERNO) return null;
           nExternos++;
+        } else if (erroIgnoravel(mFinal)) {
+          /* Rotina do jogo, não exceção: balde próprio para o abort não comer um dos dez
+             slots de exceção real, e a linha segue no banco (KNOWN-BUGS.md, BUG-73). */
+          if (nMidia >= TETO_MIDIA) return null;
+          nMidia++;
         } else if (kind === 'console' && !stack) {
           if (nConsole >= TETO_CONSOLE) return null;
           nConsole++;
@@ -160,10 +166,13 @@ window.__GEO_LANG__ = (function () {
     return null;
   }
 
+  /* MESMA redação do `MEDIA_ABORT_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+     discordarem, o abort volta a comer cota aqui ou a abrir issue lá (BUG-73). */
   function erroIgnoravel(r){
-    var nome = r && r.name;
     var msg = String((r && r.message) || r || '');
-    return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
+    // `name` vale só para o painel de falha; quem decide o balde é a mensagem.
+    if (r && r.name === 'AbortError') return true;
+    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i.test(msg);
   }
   /* URL http só prova origem em source/stack; na mensagem ela é payload do
      jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
