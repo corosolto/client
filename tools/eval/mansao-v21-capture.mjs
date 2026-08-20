@@ -46,6 +46,11 @@ await page.evaluate(() => {
   g._endRound = () => {}; g.timeLeft = 1e9;   // congela o round (bug55): rebuild mataria a vareta
   for (const b of g.bots) { b.pos.set(0, -80, 0); b.hp = 1e9; }
   g.player.hp = 1e9;
+  // contador de frames APRESENTADOS: com ~1 s/frame no SwiftShader, convergência de
+  // câmera sozinha não basta — o shot saía um frame inteiro ATRÁS (bandas/poses gêmeas)
+  g.__frames = 0;
+  const rr = g.renderer.render.bind(g.renderer);
+  g.renderer.render = (...a) => { g.__frames++; return rr(...a); };
 });
 // vareta de 1,70 m = altura do jogador (G3): na borda sul da piscina e no caminho do jardim
 await page.evaluate(async () => {
@@ -77,15 +82,14 @@ for (const [nome, x, y, z, yaw, pitch] of POSES) {
     const c = g.cam || g.camera;
     return c && Math.hypot(c.position.x - px, c.position.z - pz) < 0.05;
   }, [x, y, z, yaw, pitch], { timeout: 20000 }).catch(() => {});
-  // o frame apresentado fica 1-2 frames ATRÁS do estado JS no SwiftShader: mais
-  // alguns polls re-pinados antes do shot, senão sai o frame da pose anterior
-  for (let i = 0; i < 3; i++) {
-    await page.evaluate(([px, py, pz, yw, pt]) => {
-      const g = window.__game;
-      g.player.pos.set(px, py, pz); g.player.yaw = yw; g.player.pitch = pt; g.player.vel.set(0, 0, 0);
-    }, [x, y, z, yaw, pitch]);
-    await page.waitForTimeout(180);
-  }
+  // o frame apresentado fica 1-2 frames ATRÁS do estado JS no SwiftShader: espera
+  // 2 frames NOVOS re-pinando a pose, senão sai o frame da pose anterior
+  const f0 = await page.evaluate(() => window.__game.__frames);
+  await page.waitForFunction(([f, px, py, pz, yw, pt]) => {
+    const g = window.__game;
+    g.player.pos.set(px, py, pz); g.player.yaw = yw; g.player.pitch = pt; g.player.vel.set(0, 0, 0);
+    return g.__frames >= f + 2;
+  }, [f0, x, y, z, yaw, pitch], { timeout: 30000, polling: 200 }).catch(() => {});
   await page.screenshot({ path: `${OUT}/${nome}.png`, timeout: 90000 });
   console.log('  shot', nome);
 }
