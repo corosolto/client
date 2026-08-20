@@ -10,7 +10,8 @@ description: Como testar, treinar e validar o controlador neural experimental do
 
 BotBrain é um controlador neural experimental atrás de `?botbrain=1`. Sem essa flag, o
 jogo continua usando a IA roteirizada. O modelo publicado aprende pares de estado e ação,
-mas só pode substituir pesos depois de passar a régua funcional e uma revisão manual.
+mas só pode substituir pesos depois de passar a régua funcional em sementes fora do dataset
+bootstrap e uma revisão manual.
 
 ## Testar o modelo
 
@@ -51,5 +52,6 @@ taxa, corpo e metadados, e interrompe a coleta ao atingir 50 MiB.
 ## Gates
 
 `npm run eval:botbrain` verifica identidade UID, consentimento, objetivo de CTF, cache bust,
-sink local, execução não-root no contêiner e balanceamento do corpus. `npm run bot:brain:check` executa
-partidas bot contra bot e confirma que a rede se move, atira e consegue abates.
+sink local, execução não-root no contêiner, balanceamento do corpus e separação entre as
+sementes de treino e avaliação. `npm run bot:brain:check` executa partidas bot contra bot
+com sementes holdout e confirma que a rede se move, atira e consegue abates.
