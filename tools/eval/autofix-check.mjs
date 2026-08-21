@@ -13,10 +13,14 @@
          bot que edita o workflow que o governa amplia a própria permissão.
    AF3 · o bot não mergeia. Deixar o PR pronto e fechá-lo são coisas diferentes, e
          a segunda é humana (decisão do dono, 21/08).
+   AF4 · e isso vale para o repositório INTEIRO, não só para o autofix: nenhum
+         workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
+         era a única coisa que um bot daqui fazia sozinho — justamente a que não
+         devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
 
    Uso: node tools/eval/autofix-check.mjs [--mutante=<nome>]
    ============================================================================ */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = {
@@ -24,6 +28,7 @@ const MUTANTES = {
   'lista-abre-codigo': 'AF2',
   'lista-abre-workflow': 'AF2',
   'autofix-mergeia': 'AF3',
+  'automerge-volta': 'AF4',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -73,6 +78,20 @@ else {
 /* ---- AF3: o bot não mergeia ---- */
 if (/gh pr merge/.test(wf)) {
   falhas.push('AF3 autofix.yml mergeia PR — o autofix deixa pronto, quem fecha é gente');
+}
+
+/* ---- AF4: e nenhum outro workflow mergeia tampouco ---- */
+const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
+for (const nome of WORKFLOWS) {
+  let texto = ler(`.github/workflows/${nome}`);
+  if (MUT === 'automerge-volta' && nome === 'csbrasil-bot-automerge.yml') {
+    texto += "\n          subprocess.run(['gh', 'pr', 'merge', pr, '--squash', '--auto'])\n";
+  }
+  /* Só a CHAMADA conta: o comentário que explica por que ela saiu tem de poder citá-la. */
+  const linhas = texto.split('\n').filter((l) => !/^\s*#/.test(l));
+  if (linhas.some((l) => /gh['"]?,\s*['"]pr['"],\s*['"]merge['"]|gh pr merge/.test(l))) {
+    falhas.push(`AF4 ${nome} mergeia PR sozinho — deixar pronto e fechar são coisas diferentes`);
+  }
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);

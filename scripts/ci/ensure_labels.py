@@ -18,6 +18,7 @@ LABELS = {
     "stale-backlog": ("c2e0c6", "Issue antiga ou desalinhada com o checkout atual; precisa revalidação"),
     "needs-repro": ("f9d0c4", "Issue precisa passos de reprodução mais concretos"),
     "preview-autorizado": ("0e8a16", "Mantenedor revisou o SHA atual e liberou preview do fork na Vercel"),
+    "pronto-pra-merge": ("0e8a16", "Portões verdes e diff dentro do aceito: falta só o merge, que é humano"),
 }
 
 
