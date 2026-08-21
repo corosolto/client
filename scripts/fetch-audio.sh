@@ -18,7 +18,7 @@ if [ -f "$DEST/manifest.json" ]; then
 fi
 mkdir -p "$DEST"
 echo "Baixando pacote de áudio de: $URL"
-curl -fsSL "$URL" -o /tmp/csbrasil-audio.zip
+curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-audio.zip
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"
 echo "Pronto. Áudio instalado em $DEST/."
