@@ -30,7 +30,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune, mergeDocuments, unpartition } from '@gltf-transform/functions';
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
+await MeshoptDecoder.ready; await MeshoptEncoder.ready;
 
 const ANIMS = 'public/models/anims';
 const GLBCHARS = 'public/js/glbchars.js';
@@ -45,7 +48,10 @@ const listaDe = (nome) => {
 const ESTADOS = [...listaDe('STATES'), ...listaDe('OPT_STATES')];
 if (!ESTADOS.length) { console.error('não achei STATES/OPT_STATES em', GLBCHARS); process.exit(1); }
 
-const io = new NodeIO();
+/* Os clipes são comprimidos com meshopt desde 22/08 (optimize-anims): sem registrar a extensão
+   e o decodificador, o read() estoura com "Missing required extension". */
+const io = new NodeIO().registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.decoder': MeshoptDecoder, 'meshopt.encoder': MeshoptEncoder });
 
 // Pastas com pelo menos 1 clipe de estado (inclui o pack compartilhado, ex. `mixamo`).
 const pastas = fs.readdirSync(ANIMS).filter((f) => {

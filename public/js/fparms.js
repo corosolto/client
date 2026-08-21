@@ -18,6 +18,7 @@
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { VERSION } from './version.js';
 import { getSharedClips, measurePalmLocal } from './glbchars.js';
 import { gripPoints, ONE_HANDED, weaponMetrics } from './weapons.js';
@@ -73,6 +74,8 @@ const _qg = new THREE.Quaternion(), _qp = new THREE.Quaternion(), _qf = new THRE
 let _armsTpl = null;
 let _loading = null;
 const _loader = new GLTFLoader();
+/* Sem o decoder, GLB com EXT_meshopt_compression não abre — some calado no catch. */
+_loader.setMeshoptDecoder(MeshoptDecoder);
 
 // Preload do asset dedicado. Falha → _armsTpl fica null → buildFPArms devolve null →
 // fallback procedural (fpArm/frontHand do game.js).

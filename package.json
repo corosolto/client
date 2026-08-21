@@ -104,6 +104,8 @@
     "feet:check": "node tools/gen-foot-offsets.mjs --check",
     "anims": "node tools/gen-anim-manifest.mjs",
     "anims:check": "node tools/gen-anim-manifest.mjs --check",
+    "eval:animsdesvio": "node tools/eval/anims-desvio-check.mjs",
+    "anims:otimiza": "node tools/optimize-anims.mjs",
     "anims:merge": "node tools/merge-anims.mjs",
     "anims:merge:check": "node tools/merge-anims.mjs --check",
     "walls:check": "node tools/eval/walls-check.mjs",
@@ -119,7 +121,7 @@
     "eval:ctfwin": "node tools/eval/ctf-win-check.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs syntax eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
-    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
+    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam eval:animsdesvio",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs"
   },

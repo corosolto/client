@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { VERSION } from './version.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
@@ -157,6 +158,8 @@ const PALM_GUARD = qp.get('palmguard') !== '0';
 const PALM_MAX_LEVER = parseFloat(qp.get('palmlever')) || 0.9;
 
 const loader = new GLTFLoader();
+/* Sem o decoder, GLB com EXT_meshopt_compression não abre — some calado no catch. */
+loader.setMeshoptDecoder(MeshoptDecoder);
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback

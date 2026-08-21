@@ -4,8 +4,11 @@
 import * as THREE from 'three';
 import { VERSION } from './version.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 
 const loader = new GLTFLoader();
+/* Sem o decoder, GLB com EXT_meshopt_compression não abre — some calado no catch. */
+loader.setMeshoptDecoder(MeshoptDecoder);
 const _cache = new Map();
 export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pistol', 'knife',
   'm92', 'akm', 'g3', 'revolver38', 'md97', 'carbine', 'm400', 'mosin', 'rem700',
