@@ -31,7 +31,7 @@ Leia, nesta ordem, e não pule:
 **A entrada do `KNOWN-BUGS.md` pode estar velha, e estava.** Em 05/08, seguindo esta skill,
 três defeitos listados como abertos já estavam consertados no código, com régua e tudo:
 BUG-01 (a guarda de modo mora em `public/js/game.js:4358`, `_hideCtfHud` em `:4337`, o
-`dispose()` chama em `:6411`, e existe `tools/eval/ctfhud-check.mjs` no `npm run check`),
+`dispose()` chama em `:6411`, e existe `tools/eval/ctfhud-check.mjs` no `check:fast`),
 BUG-03 (`public/js/game.js:5625-5639`) e BUG-04 (`public/js/game.js:12` importa o
 `ViewModelRig`; ele é instanciado em `:1881`). Confira o código antes de "consertar" o que já
 está consertado — e atualize a entrada quando descobrir isso.
@@ -266,27 +266,27 @@ e as mutações com o número de cada uma. E anote o **custo declarado**: o que 
 
 ```bash
 npm run check:fast   # segundos — rode este primeiro, sempre
-npm run check        # o quality gate completo (o de invariantes leva ~10-12 min)
 npm run build        # o site tem que buildar
 npm run check:seo    # se mexeu em src/ ou em public/llms.txt
 ```
 
-A composição exata de cada um sai do `package.json` (que também guarda a chave `//check` e
-`//check:fast` com o **porquê** de cada passo) e está publicada como bloco gerado em
+A composição exata sai do `package.json` (o **porquê** de cada passo mora no
+[`SCRIPTS.md`](../../../SCRIPTS.md)) e está publicada como bloco gerado em
 [`AGENTS.md`](../../../AGENTS.md). Não copie a lista para lugar nenhum — ela muda.
 
 Três armadilhas de quality gate, todas já pagas:
 
 - **`eval:vm` roda ANTES de `eval:invariants`.** As invariantes de viewmodel leem um JSON que o
   `eval:vm` gera. Com o JSON congelado, VM5 acusava 26/26 armas fora; regenerado, 3/26. O
-  `npm run check` já está na ordem certa — o cuidado é para quando você chamar
+  `check:fast` já está na ordem certa — o cuidado é para quando você chamar
   `node tools/eval/invariants.mjs` à mão. É o BUG-02.
-- **`check:fast` é uma corrente de `&&`.** Passo novo colocado depois de um passo que já está
-  vermelho **nasce morto**: roda zero vezes e ninguém percebe. Caso real de 05/08: com o
+- **Placar vermelho por dívida conhecida mascara passo novo vermelho.** O runner percorre
+  todos os passos mesmo com vermelho no meio e decide o código de saída só no fim — o que
+  significa que, com um vermelho conhecido na cadeia, um passo que **quebrou agora** não muda
+  o sinal: é preciso ler o placar passo a passo. Caso real de 05/08: com o
   `anims:check` vermelho no meio da corrente (BUG-15, `public/models/anims/` não versionado),
-  **sete quality gates atrás dele rodavam zero vezes**. Ele foi para o fim da corrente — sem afrouxar
-  nada, e continuando vermelho. Leia a chave `//check:fast` do `package.json` antes de
-  acrescentar um passo.
+  **sete quality gates atrás dele rodavam zero vezes** na época do `&&`. Leia a entrada
+  `check:fast` do `SCRIPTS.md` antes de acrescentar um passo.
 - **Vermelho que não corresponde a defeito ensina a ignorar vermelho.** Se uma régua fica
   vermelha por edição de prosa ou por commit, o defeito é dela.
 

@@ -4,8 +4,13 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
+import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
+import { buildUpa, UPA_PROPS } from './map_upa.js';
 import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
+import { buildParque } from './map_parque.js';
+import { buildVelhoOeste } from './map_velho_oeste.js';
+import { buildPenitenciaria } from './map_penitenciaria.js';
 import { buildTretaNoGelo } from './map_gelo.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
@@ -59,10 +64,23 @@ export const MAPS = {
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
   // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
   posto_treta: { name: 'Posto da Treta', build: buildPosto, props: POSTO_PROPS, ctfMode: true },
+  // UPA 24h: pronto-socorro lotado, mapa 100% INTERNO (prédio fechado, sem céu). Salas de verdade
+  // — recepção/espera, triagem, consultórios, raio-x, farmácia, enfermaria e emergência — ligadas
+  // por corredor central em cruz com portas de vidro. Piso com faixas de sinalização coloridas
+  // levando a cada setor e aparelhos médicos procedurais (monitores, respirador, crash cart, O2).
+  // Cheio de canto pra se esconder. A treta é a fila eterna: "SENHA 999 · ESPERA 8H".
+  upa_24h: { name: 'UPA 24h da Treta', build: buildUpa, props: UPA_PROPS, ctfMode: true },
+  // Canteiro de obra da prefeitura que nunca acaba: TERRENO ONDULADO com buracos de escavação
+  // (groundHeightAt), estrutura meio-construída no centro, tapumes, andaimes, guindaste, entulho.
+  // Simétrico em z=0. A treta é o "desvio de dinheiro público".
+  obras_prefeitura: { name: 'Obras da Prefeitura', build: buildObras, props: OBRAS_PROPS, ctfMode: true },
   // Galpão de atacado estilo Loja H: LOJA fechada (Time B) + ESTACIONAMENTO aberto (Time E) ligados
   // por portas de verdade na fachada. Gôndolas reais (gondola_mercado/eletro), caixas, doca, e um
   // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
+  parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
+  velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
+  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
   treta_no_gelo: { name: 'Treta no Gelo', build: buildTretaNoGelo },
 };
 export const MAP_IDS = Object.keys(MAPS);

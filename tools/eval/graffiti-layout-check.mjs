@@ -9,7 +9,7 @@
    O preço está escrito no cabeçalho do `gen-graffiti-layout.mjs`: LAYOUT VELHO É
    PEÇA NO LUGAR ERRADO. Mexeu na geometria de um mapa, na passada ou no pool de
    decalque e não regerou? A tinta continua colada onde a parede estava ontem — e
-   nada no portão percebe, porque `npm run check` não abre navegador e o `decal-probe`
+   nada no portão percebe, porque o `check:fast` não abre navegador e o `decal-probe`
    roda em node, onde nenhum GLB carrega.
 
    Hoje isso dependia de alguém LEMBRAR de rodar `npm run grafite`. Memória de pessoa

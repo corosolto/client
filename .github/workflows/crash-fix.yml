@@ -41,6 +41,7 @@ concurrency:
 jobs:
   atende:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       # no env DO JOB: `if` de step não enxerga o env do próprio step
       CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
@@ -97,6 +98,8 @@ jobs:
           SRC: ${{ github.event.client_payload.source }}
           STK: ${{ github.event.client_payload.stack }}
           VER: ${{ github.event.client_payload.version }}
+          # Migalhas sao acao de JOGO, nunca texto do jogador (topo da migration 015).
+          MIGALHAS: ${{ join(github.event.client_payload.breadcrumbs, '\n') }}
           CLASSE: ${{ steps.cls.outputs.classe }}
         run: |
           gh label create crash-auto --color B60205 --description "crash de produção reportado por /api/jserror ou prod-watch" --force
@@ -115,6 +118,11 @@ jobs:
           **Stack:**
           \`\`\`
           $STK
+          \`\`\`
+
+          **Migalhas:**
+          \`\`\`
+          $MIGALHAS
           \`\`\`
 
           _Aberta pelo crash-fix.yml (repository_dispatch prod-crash). Linha completa na tabela \`js_error\` do Supabase._

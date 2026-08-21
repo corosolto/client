@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-18T22:49:49.054Z",
+ "gerado": "2026-08-15T02:08:04.438Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -61,6 +61,15 @@
    "matizVmMediano": 54.9,
    "matizChaoMediano": 65
   },
+  "obras_prefeitura": {
+   "dLmediano": 1.99,
+   "dABmediano": 0.26,
+   "dABmax": 0.67,
+   "dABpior": "p90",
+   "razaoCromaMediana": 1.04,
+   "matizVmMediano": 266.2,
+   "matizChaoMediano": 269.5
+  },
   "atacadao_treta": {
    "dLmediano": -0.43,
    "dABmediano": 0.88,
@@ -69,15 +78,6 @@
    "razaoCromaMediana": 1.07,
    "matizVmMediano": 268.8,
    "matizChaoMediano": 264.3
-  },
-  "treta_no_gelo": {
-   "dLmediano": 2.53,
-   "dABmediano": 0.29,
-   "dABmax": 0.91,
-   "dABpior": "p90",
-   "razaoCromaMediana": 1.06,
-   "matizVmMediano": 265.4,
-   "matizChaoMediano": 261.4
   }
  },
  "looks": {
@@ -393,18 +393,18 @@
  ],
  "caminhos": {
   "vm": {
-   "linha": 1395,
+   "linha": 1385,
    "fonte": "(obj) => obj.traverse((o) => { if (!o.isMesh || !o.material) return; if (!VM_MAT_LEGACY && temEnv) return; // MAT1: mesmo GLB, mesmo material, nos 3 caminhos o.material = o.material.clone(); if ('meta",
    "metalFactor": 1,
    "roughFactor": 1,
    "envMapIntensity": 1
   },
   "chao_pickup": {
-   "linha": 614,
+   "linha": 615,
    "mutacoes": []
   },
   "chao_drop": {
-   "linha": 4991,
+   "linha": 4952,
    "mutacoes": []
   },
   "tp_mount": {
@@ -1742,6 +1742,1256 @@
    }
   },
   {
+   "map": "obras_prefeitura",
+   "sun": {
+    "pos": [
+     24,
+     40,
+     -14
+    ],
+    "color": "#fff0d0",
+    "intensity": 1.5
+   },
+   "mapa": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.05,
+      "color": "#fff0d8",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#4a4030"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.5,
+      "color": "#fff0d0",
+      "pos": [
+       24,
+       40,
+       -14
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.4,
+      "color": "#dfeeff",
+      "pos": [
+       -18,
+       30,
+       12
+      ]
+     }
+    ],
+    "dir": 1.9,
+    "hemi": 1.05,
+    "amb": 0,
+    "pontual": 0,
+    "global": 2.95
+   },
+   "vm": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.242,
+      "color": "#f4ebc4",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.311,
+      "color": "#97c7ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.097,
+      "color": "#a0cbff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.621,
+      "color": "#f4daa8",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.33,
+      "color": "#f4ba7a",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.349,
+      "color": "#88b8ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#33312a"
+     }
+    ],
+    "dir": 2.601,
+    "hemi": 0.349,
+    "amb": 0,
+    "pontual": 0,
+    "global": 2.95
+   },
+   "razaoVmMapa": 1,
+   "env": {
+    "cena": true,
+    "vm": true,
+    "mesmaTextura": true
+   },
+   "fog": {
+    "tipo": "Fog",
+    "cor": "#c7bfa8",
+    "densidade": null,
+    "near": 70,
+    "far": 160
+   },
+   "look": {
+    "exposure": 2.4,
+    "floor": 0.0042,
+    "expAces": 2.61,
+    "sat": 1.12
+   },
+   "superficies": [
+    {
+     "cor": "#2f5fa8",
+     "lum": 0.12,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 91,
+     "pos": [
+      -28,
+      1,
+      0
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#2f5fa8",
+     "lum": 0.12,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 91,
+     "pos": [
+      28,
+      1,
+      0
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#2f5fa8",
+     "lum": 0.12,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 72.8,
+     "pos": [
+      0,
+      1,
+      -35
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#2f5fa8",
+     "lum": 0.12,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 72.8,
+     "pos": [
+      0,
+      1,
+      35
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#b3ab97",
+     "lum": 0.41,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 72,
+     "pos": [
+      0,
+      4,
+      -8
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 55.3,
+     "pos": [
+      -3,
+      9,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 52,
+     "pos": [
+      -30,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 52,
+     "pos": [
+      6,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 48.8,
+     "pos": [
+      -30,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 45.5,
+     "pos": [
+      -12,
+      7,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 42.3,
+     "pos": [
+      6,
+      7,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 42.3,
+     "pos": [
+      15,
+      7,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 39,
+     "pos": [
+      15,
+      6,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 35.8,
+     "pos": [
+      -21,
+      6,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 35.8,
+     "pos": [
+      -3,
+      6,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 35.8,
+     "pos": [
+      24,
+      6,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 32.5,
+     "pos": [
+      -12,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 32.5,
+     "pos": [
+      24,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#a7a29a",
+     "lum": 0.36,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 29.3,
+     "pos": [
+      -21,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      12,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      15,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      10,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -30,
+      12,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -21,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      12,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -12,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      12,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      15,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      -3,
+      10,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      12,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      15,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      10,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      6,
+      12,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      10,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      12,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      15,
+      10,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      3,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      5,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      8,
+      -47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      3,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      5,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      8,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#35404e",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 19.9,
+     "pos": [
+      24,
+      10,
+      47
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#9c7b4a",
+     "lum": 0.22,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 7.5,
+     "pos": [
+      9,
+      2,
+      2
+     ],
+     "claro": false
+    }
+   ],
+   "fumaca": {
+    "sprites": 18,
+    "raio": 4,
+    "duracao": 13,
+    "corSprite": "#6d89a4",
+    "opacidadeSprite": 0.996,
+    "escalaSprite": [
+     3.18,
+     4.98
+    ],
+    "spritesCobrindoCentro": 15,
+    "alfaAcumuladoCentro": 0.9994,
+    "maiorAlfaSprite": 0.784,
+    "radianciaFumaca": 0.2379,
+    "radianciaCeu": 0.3172,
+    "razaoFumacaCeu": 0.75,
+    "fonteCeu": "bloom.js skyRadiance(obras_prefeitura) — AERIAL, medida por r3_fog.py"
+   },
+   "nevoa": {
+    "cor": "#c7bfa8",
+    "radianciaNevoa": 0.5223,
+    "radianciaNevoaContraluz": 0.8284,
+    "fogFactor": {
+     "m50": null,
+     "m100": null,
+     "m200": null
+    }
+   }
+  },
+  {
    "map": "atacadao_treta",
    "sun": {
     "pos": [
@@ -2702,180 +3952,10 @@
     "fonteCeu": "bloom.js skyRadiance(atacadao_treta) — AERIAL, medida por r3_fog.py"
    },
    "nevoa": null
-  },
-  {
-   "map": "treta_no_gelo",
-   "sun": {
-    "pos": [
-     -32,
-     48,
-     -28
-    ],
-    "color": "#e8f5ff",
-    "intensity": 1.72
-   },
-   "mapa": {
-    "lights": [
-     {
-      "type": "HemisphereLight",
-      "intensity": 1.42,
-      "color": "#dceeff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#304657"
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.72,
-      "color": "#e8f5ff",
-      "pos": [
-       -32,
-       48,
-       -28
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.42,
-      "color": "#6aa7cb",
-      "pos": [
-       30,
-       18,
-       24
-      ]
-     }
-    ],
-    "dir": 2.14,
-    "hemi": 1.42,
-    "amb": 0,
-    "pontual": 0,
-    "global": 3.56
-   },
-   "vm": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.499,
-      "color": "#d8ede7",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.543,
-      "color": "#70a9ff",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.17,
-      "color": "#77adff",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.749,
-      "color": "#d8dbc6",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.398,
-      "color": "#d8bc91",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.611,
-      "color": "#659dff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#24282a"
-     }
-    ],
-    "dir": 3.36,
-    "hemi": 0.611,
-    "amb": 0,
-    "pontual": 0,
-    "global": 3.971
-   },
-   "razaoVmMapa": 1.12,
-   "env": {
-    "cena": true,
-    "vm": true,
-    "mesmaTextura": true
-   },
-   "fog": {
-    "tipo": "Fog",
-    "cor": "#a8bfcd",
-    "densidade": null,
-    "near": 62,
-    "far": 135
-   },
-   "look": {
-    "exposure": 2.4,
-    "floor": 0.0042,
-    "expAces": 2.61,
-    "sat": 1.12
-   },
-   "superficies": [],
-   "fumaca": {
-    "sprites": 18,
-    "raio": 4,
-    "duracao": 13,
-    "corSprite": "#6d89a4",
-    "opacidadeSprite": 0.953,
-    "escalaSprite": [
-     3.02,
-     5.06
-    ],
-    "spritesCobrindoCentro": 8,
-    "alfaAcumuladoCentro": 0.9915,
-    "maiorAlfaSprite": 0.72,
-    "radianciaFumaca": 0.2379,
-    "radianciaCeu": 0.3172,
-    "razaoFumacaCeu": 0.75,
-    "fonteCeu": "bloom.js skyRadiance(treta_no_gelo) — AERIAL, medida por r3_fog.py"
-   },
-   "nevoa": {
-    "cor": "#a8bfcd",
-    "radianciaNevoa": 0.4999,
-    "radianciaNevoaContraluz": 0.752,
-    "fogFactor": {
-     "m50": null,
-     "m100": null,
-     "m200": null
-    }
-   }
   }
  ],
  "shade": {
-  "gerado": "2026-08-18T22:49:49.054Z",
+  "gerado": "2026-08-15T02:08:04.438Z",
   "armas": [
    {
     "arma": "ak",
@@ -3353,6 +4433,84 @@
       "metal_ef": 0.28665568627450977,
       "rough_ef": 0.43389176470588225
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 37.55462151438235,
+      "Lmedia_por_texel": 39.91258828128188,
+      "Lp05": 14.573838524959108,
+      "Lp50": 37.57715024200923,
+      "Lp95": 56.25111084882214,
+      "Lp99": 88.24631759841432,
+      "pct_preto": 2.551373913043478,
+      "pct_branco": 0.7645217391304353,
+      "rgb": [
+       0.14878544593044826,
+       0.11319169649573682,
+       0.10284029836520006
+      ],
+      "Lab": [
+       11.679658096047891,
+       3.8991481509683816,
+       3.494249812216604
+      ],
+      "aStar": 3.8991481509683816,
+      "bStar": 3.494249812216604,
+      "croma": 5.235755728963673,
+      "matiz": 41.86533647853935,
+      "metal_ef": 0.28665568627450977,
+      "rough_ef": 0.43389176470588225
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 49.39625943105723,
+      "Lmedia_por_texel": 51.22481061853539,
+      "Lp05": 21.62882515736969,
+      "Lp50": 50.535314397179576,
+      "Lp95": 69.15294992382836,
+      "Lp99": 95.10052026474148,
+      "pct_preto": 0.024347826086956514,
+      "pct_branco": 1.2022956521739137,
+      "rgb": [
+       0.25336680951029045,
+       0.19830383918756303,
+       0.17497790041957526
+      ],
+      "Lab": [
+       22.39871234268334,
+       5.241075834673175,
+       6.172351030103274
+      ],
+      "aStar": 5.241075834673175,
+      "bStar": 6.172351030103274,
+      "croma": 8.097332470858046,
+      "matiz": 49.664698481017524,
+      "metal_ef": 0.15766062745098042,
+      "rough_ef": 0.43389176470588225
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 35.49199381785518,
+      "Lmedia_por_texel": 38.74047085409559,
+      "Lp05": 10.31010189612483,
+      "Lp50": 35.578005466344415,
+      "Lp95": 63.332420294065955,
+      "Lp99": 72.39869062032534,
+      "pct_preto": 7.139060869565217,
+      "pct_branco": 0,
+      "rgb": [
+       0.14310647774630067,
+       0.10607392762484824,
+       0.09622854837659503
+      ],
+      "Lab": [
+       10.837384472947427,
+       4.154521753549744,
+       3.5163986439449513
+      ],
+      "aStar": 4.154521753549744,
+      "bStar": 3.5163986439449513,
+      "croma": 5.442895408131221,
+      "matiz": 40.244668146205754,
+      "metal_ef": 0.28665568627450977,
+      "rough_ef": 0.43389176470588225
+     },
      "vm@atacadao_treta": {
       "Lmean": 36.522846394191625,
       "Lmedia_por_texel": 39.04679805430898,
@@ -3428,84 +4586,6 @@
       "bStar": 3.1415534658275956,
       "croma": 5.167550665759403,
       "matiz": 37.44059839474892,
-      "metal_ef": 0.28665568627450977,
-      "rough_ef": 0.43389176470588225
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 38.87353814922729,
-      "Lmedia_por_texel": 41.39897500180011,
-      "Lp05": 15.523107112790289,
-      "Lp50": 39.23434997419274,
-      "Lp95": 59.884629180492965,
-      "Lp99": 89.7341944061984,
-      "pct_preto": 1.6929391304347823,
-      "pct_branco": 0.8331826086956524,
-      "rgb": [
-       0.14103280686039696,
-       0.12574537679584682,
-       0.12972362084044498
-      ],
-      "Lab": [
-       12.742294374796096,
-       2.0860217281085944,
-       -0.015884244466013442
-      ],
-      "aStar": 2.0860217281085944,
-      "bStar": -0.015884244466013442,
-      "croma": 2.086082203405087,
-      "matiz": 359.5637233461647,
-      "metal_ef": 0.28665568627450977,
-      "rough_ef": 0.43389176470588225
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 48.13107253625702,
-      "Lmedia_por_texel": 50.10357814189081,
-      "Lp05": 20.76762464214265,
-      "Lp50": 49.49877694296353,
-      "Lp95": 68.46962112879574,
-      "Lp99": 94.40537703696441,
-      "pct_preto": 0.032626086956521735,
-      "pct_branco": 1.1760000000000006,
-      "rgb": [
-       0.20974237597284032,
-       0.193606657190744,
-       0.2007768097795256
-      ],
-      "Lab": [
-       20.975010350654415,
-       2.2349385874367025,
-       -0.5026040047420466
-      ],
-      "aStar": 2.2349385874367025,
-      "bStar": -0.5026040047420466,
-      "croma": 2.2907556122808708,
-      "matiz": 347.32589207362156,
-      "metal_ef": 0.15766062745098042,
-      "rough_ef": 0.43389176470588225
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 36.116121646365585,
-      "Lmedia_por_texel": 39.72974134913669,
-      "Lp05": 10.907993327856044,
-      "Lp50": 36.179777843932264,
-      "Lp95": 65.9293047500833,
-      "Lp99": 77.63372743035028,
-      "pct_preto": 6.158956521739129,
-      "pct_branco": 0,
-      "rgb": [
-       0.13089537135485677,
-       0.11525487878500522,
-       0.11755642165857577
-      ],
-      "Lab": [
-       11.423078958738007,
-       2.0539619600813683,
-       0.2946442103233915
-      ],
-      "aStar": 2.0539619600813683,
-      "bStar": 0.2946442103233915,
-      "croma": 2.0749879383115437,
-      "matiz": 8.163480469161755,
       "metal_ef": 0.28665568627450977,
       "rough_ef": 0.43389176470588225
      }
@@ -3987,6 +5067,84 @@
       "metal_ef": 0.429675294117647,
       "rough_ef": 0.503193725490196
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 44.02770793814061,
+      "Lmedia_por_texel": 45.54149137995745,
+      "Lp05": 28.91542733258975,
+      "Lp50": 45.06333764955096,
+      "Lp95": 55.973253275197806,
+      "Lp99": 84.96344644321702,
+      "pct_preto": 0,
+      "pct_branco": 0.3004521739130437,
+      "rgb": [
+       0.18843666678265433,
+       0.14212934669329264,
+       0.11375586782998869
+      ],
+      "Lab": [
+       15.460907183799485,
+       4.281742516429265,
+       6.9671604286868085
+      ],
+      "aStar": 4.281742516429265,
+      "bStar": 6.9671604286868085,
+      "croma": 8.177691814690583,
+      "matiz": 58.42675335273134,
+      "metal_ef": 0.429675294117647,
+      "rough_ef": 0.503193725490196
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 57.45614049970616,
+      "Lmedia_por_texel": 58.58392357611749,
+      "Lp05": 43.38553194670989,
+      "Lp50": 57.79748159477191,
+      "Lp95": 70.07971482334743,
+      "Lp99": 93.00234288801741,
+      "pct_preto": 0,
+      "pct_branco": 1.1969391304347834,
+      "rgb": [
+       0.32450220917382505,
+       0.25487871555769487,
+       0.20390855514455358
+      ],
+      "Lab": [
+       29.045359761708553,
+       5.530966183534158,
+       10.852747028278609
+      ],
+      "aStar": 5.530966183534158,
+      "bStar": 10.852747028278609,
+      "croma": 12.180874557403856,
+      "matiz": 62.99490627381448,
+      "metal_ef": 0.23632141176470586,
+      "rough_ef": 0.503193725490196
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 41.70074536546293,
+      "Lmedia_por_texel": 44.29673949726677,
+      "Lp05": 24.08665714798525,
+      "Lp50": 41.342209515628575,
+      "Lp95": 66.68864655067235,
+      "Lp99": 67.6574244187057,
+      "pct_preto": 0,
+      "pct_branco": 0,
+      "rgb": [
+       0.18115770223299033,
+       0.1330524690355567,
+       0.10562362125206348
+      ],
+      "Lab": [
+       14.424646048136843,
+       4.620281094900425,
+       6.9717270849112944
+      ],
+      "aStar": 4.620281094900425,
+      "bStar": 6.9717270849112944,
+      "croma": 8.363729786547387,
+      "matiz": 56.46689239866828,
+      "metal_ef": 0.429675294117647,
+      "rough_ef": 0.503193725490196
+     },
      "vm@atacadao_treta": {
       "Lmean": 42.91737554792103,
       "Lmedia_por_texel": 44.560643290413566,
@@ -4062,84 +5220,6 @@
       "bStar": 6.774189045361856,
       "croma": 7.937930375541469,
       "matiz": 58.58285655883628,
-      "metal_ef": 0.429675294117647,
-      "rough_ef": 0.503193725490196
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 45.464412622036136,
-      "Lmedia_por_texel": 47.06605435915872,
-      "Lp05": 30.51981396041041,
-      "Lp50": 44.16960303232291,
-      "Lp95": 58.60196942277969,
-      "Lp99": 86.58386737116123,
-      "pct_preto": 0,
-      "pct_branco": 0.3165217391304351,
-      "rgb": [
-       0.17701049051289552,
-       0.15793019376658354,
-       0.14631758963828853
-      ],
-      "Lab": [
-       16.663380433398046,
-       1.5975476572977487,
-       2.7584833769576766
-      ],
-      "aStar": 1.5975476572977487,
-      "bStar": 2.7584833769576766,
-      "croma": 3.187693375826689,
-      "matiz": 59.923157894576434,
-      "metal_ef": 0.429675294117647,
-      "rough_ef": 0.503193725490196
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 55.901562679417886,
-      "Lmedia_por_texel": 57.09565369085474,
-      "Lp05": 42.09268356630335,
-      "Lp50": 55.742347475361925,
-      "Lp95": 68.49632572588025,
-      "Lp99": 92.08408360692005,
-      "pct_preto": 0,
-      "pct_branco": 1.0498782608695658,
-      "rgb": [
-       0.2672997936683356,
-       0.24702984530676025,
-       0.23276439269532498
-      ],
-      "Lab": [
-       27.041642467655777,
-       1.4582055390484905,
-       3.025031646100307
-      ],
-      "aStar": 1.4582055390484905,
-      "bStar": 3.025031646100307,
-      "croma": 3.358151255381453,
-      "matiz": 64.26377716419938,
-      "metal_ef": 0.23632141176470586,
-      "rough_ef": 0.503193725490196
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 42.35589660059481,
-      "Lmedia_por_texel": 44.83588598276543,
-      "Lp05": 25.984117736886198,
-      "Lp50": 41.074371875640196,
-      "Lp95": 70.90504032204592,
-      "Lp99": 72.6738471827351,
-      "pct_preto": 0,
-      "pct_branco": 0,
-      "rgb": [
-       0.16197394054517472,
-       0.14170141788408408,
-       0.12827097312004618
-      ],
-      "Lab": [
-       14.71139944934363,
-       1.6827044318610818,
-       3.170298707389163
-      ],
-      "aStar": 1.6827044318610818,
-      "bStar": 3.170298707389163,
-      "croma": 3.589190451770193,
-      "matiz": 62.04190816670007,
       "metal_ef": 0.429675294117647,
       "rough_ef": 0.503193725490196
      }
@@ -4621,6 +5701,84 @@
       "metal_ef": 0.2696,
       "rough_ef": 0.3459592156862745
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 33.58511273800428,
+      "Lmedia_por_texel": 36.26480933455054,
+      "Lp05": 15.435253904205574,
+      "Lp50": 33.53571892575717,
+      "Lp95": 49.7521611182776,
+      "Lp99": 94.22637849469105,
+      "pct_preto": 0.7213217391304348,
+      "pct_branco": 1.0956521739130443,
+      "rgb": [
+       0.0850143229855842,
+       0.0970713050547432,
+       0.0959209148321511
+      ],
+      "Lab": [
+       8.302566547082971,
+       -1.5462894680068202,
+       -0.2973726965552814
+      ],
+      "aStar": -1.5462894680068202,
+      "bStar": -0.2973726965552814,
+      "croma": 1.5746242851948444,
+      "matiz": 190.88586069796625,
+      "metal_ef": 0.2696,
+      "rough_ef": 0.3459592156862745
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 44.79388467974441,
+      "Lmedia_por_texel": 46.76773724810845,
+      "Lp05": 25.460534773803353,
+      "Lp50": 45.17142318929913,
+      "Lp95": 60.445301861814386,
+      "Lp99": 98.22037245141145,
+      "pct_preto": 0.034017391304347826,
+      "pct_branco": 1.2008347826086962,
+      "rgb": [
+       0.15118224119608473,
+       0.1657821212569041,
+       0.15548664927632994
+      ],
+      "Lab": [
+       16.74270732277956,
+       -2.3038360171794836,
+       1.1438399889621809
+      ],
+      "aStar": -2.3038360171794836,
+      "bStar": 1.1438399889621809,
+      "croma": 2.572164519311008,
+      "matiz": 153.59589266247997,
+      "metal_ef": 0.14828000000000002,
+      "rough_ef": 0.3459592156862745
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 32.12918361645666,
+      "Lmedia_por_texel": 35.178779396754365,
+      "Lp05": 12.483957749085882,
+      "Lp50": 30.50061244175277,
+      "Lp95": 57.30498682383016,
+      "Lp99": 61.12376390015666,
+      "pct_preto": 3.9429565217391294,
+      "pct_branco": 0,
+      "rgb": [
+       0.08101219923332499,
+       0.09129773736698965,
+       0.08838699577716906
+      ],
+      "Lab": [
+       7.5853893096342055,
+       -1.3947467379724494,
+       0.0871348304376629
+      ],
+      "aStar": -1.3947467379724494,
+      "bStar": 0.0871348304376629,
+      "croma": 1.3974659000348413,
+      "matiz": 176.4251731431125,
+      "metal_ef": 0.2696,
+      "rough_ef": 0.3459592156862745
+     },
      "vm@atacadao_treta": {
       "Lmean": 32.76325181363522,
       "Lmedia_por_texel": 35.59787376035164,
@@ -4696,84 +5854,6 @@
       "bStar": -0.9320252232310922,
       "croma": 2.4363563060967666,
       "matiz": 202.4916518912684,
-      "metal_ef": 0.2696,
-      "rough_ef": 0.3459592156862745
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 35.21498534763821,
-      "Lmedia_por_texel": 37.97134664356583,
-      "Lp05": 16.506198898704547,
-      "Lp50": 34.72216650962368,
-      "Lp95": 52.559921217974235,
-      "Lp99": 95.13593837020713,
-      "pct_preto": 0.41419130434782614,
-      "pct_branco": 1.1263304347826095,
-      "rgb": [
-       0.0821359249493859,
-       0.10859993666410972,
-       0.12171088548852886
-      ],
-      "Lab": [
-       9.592749144499532,
-       -2.0894989670082467,
-       -3.3357038593554544
-      ],
-      "aStar": -2.0894989670082467,
-      "bStar": -3.3357038593554544,
-      "croma": 3.9361054572314758,
-      "matiz": 237.9367974769666,
-      "metal_ef": 0.2696,
-      "rough_ef": 0.3459592156862745
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 43.97369544177676,
-      "Lmedia_por_texel": 46.09318376626837,
-      "Lp05": 24.8856009028531,
-      "Lp50": 43.93073981405377,
-      "Lp95": 60.46646164082114,
-      "Lp99": 97.80165616391821,
-      "pct_preto": 0.03144347826086956,
-      "pct_branco": 1.1915826086956527,
-      "rgb": [
-       0.12513168855071669,
-       0.16349674469610959,
-       0.18178926735692946
-      ],
-      "Lab": [
-       16.20423659812429,
-       -2.876437514646335,
-       -4.432856749099479
-      ],
-      "aStar": -2.876437514646335,
-      "bStar": -4.432856749099479,
-      "croma": 5.284326989664964,
-      "matiz": 237.02085396297065,
-      "metal_ef": 0.14828000000000002,
-      "rough_ef": 0.3459592156862745
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 33.403351877327026,
-      "Lmedia_por_texel": 36.78571123923444,
-      "Lp05": 13.49748918148865,
-      "Lp50": 31.969217400139144,
-      "Lp95": 63.36060992239125,
-      "Lp99": 67.7109485747606,
-      "pct_preto": 2.407304347826087,
-      "pct_branco": 0,
-      "rgb": [
-       0.0765571815601091,
-       0.10191711087162067,
-       0.11191949847012163
-      ],
-      "Lab": [
-       8.72597635630553,
-       -2.2242646323981234,
-       -2.772822696232591
-      ],
-      "aStar": -2.2242646323981234,
-      "bStar": -2.772822696232591,
-      "croma": 3.554700952215212,
-      "matiz": 231.26459249931094,
       "metal_ef": 0.2696,
       "rough_ef": 0.3459592156862745
      }
@@ -5255,6 +6335,84 @@
       "metal_ef": 0.5445505882352941,
       "rough_ef": 0.60392
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 44.273399684521706,
+      "Lmedia_por_texel": 45.92746589954097,
+      "Lp05": 26.013593768430468,
+      "Lp50": 44.933894981713074,
+      "Lp95": 59.24158022399794,
+      "Lp99": 67.01619967843097,
+      "pct_preto": 0.008208695652173914,
+      "pct_branco": 0.10664347826086965,
+      "rgb": [
+       0.20265193939407847,
+       0.1428390571957876,
+       0.1149224068839396
+      ],
+      "Lab": [
+       16.00061084432896,
+       6.034917983550214,
+       7.574763587011402
+      ],
+      "aStar": 6.034917983550214,
+      "bStar": 7.574763587011402,
+      "croma": 9.68489950734088,
+      "matiz": 51.45518732178965,
+      "metal_ef": 0.5445505882352941,
+      "rough_ef": 0.60392
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 58.84159736318986,
+      "Lmedia_por_texel": 59.894722049596766,
+      "Lp05": 43.62834399236841,
+      "Lp50": 59.46527758119838,
+      "Lp95": 72.52593352227186,
+      "Lp99": 79.20138260616304,
+      "pct_preto": 0,
+      "pct_branco": 0.7070608695652179,
+      "rgb": [
+       0.35351969746559464,
+       0.2664014455270042,
+       0.21825183335993492
+      ],
+      "Lab": [
+       30.853887969702342,
+       7.621076213548794,
+       11.127483689204798
+      ],
+      "aStar": 7.621076213548794,
+      "bStar": 11.127483689204798,
+      "croma": 13.48709367900431,
+      "matiz": 55.59323798241468,
+      "metal_ef": 0.2995028235294118,
+      "rough_ef": 0.60392
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 41.3063731664749,
+      "Lmedia_por_texel": 44.37411729371877,
+      "Lp05": 19.453642979846784,
+      "Lp50": 41.21374919335404,
+      "Lp95": 65.3272350195898,
+      "Lp99": 74.1883784358091,
+      "pct_preto": 0.08243478260869563,
+      "pct_branco": 0,
+      "rgb": [
+       0.19111153735587094,
+       0.13201087372043593,
+       0.10703608894869437
+      ],
+      "Lab": [
+       14.689732332387447,
+       6.157946826945315,
+       7.134013721118598
+      ],
+      "aStar": 6.157946826945315,
+      "bStar": 7.134013721118598,
+      "croma": 9.424142448870045,
+      "matiz": 49.199855629238755,
+      "metal_ef": 0.5445505882352941,
+      "rough_ef": 0.60392
+     },
      "vm@atacadao_treta": {
       "Lmean": 43.071331518401614,
       "Lmedia_por_texel": 44.86329774935215,
@@ -5330,84 +6488,6 @@
       "bStar": 6.845322152934175,
       "croma": 9.025828793573883,
       "matiz": 49.324648885352985,
-      "metal_ef": 0.5445505882352941,
-      "rough_ef": 0.60392
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 45.52553366986617,
-      "Lmedia_por_texel": 47.31689404265745,
-      "Lp05": 27.26319666859588,
-      "Lp50": 45.10042712365696,
-      "Lp95": 62.26418770797849,
-      "Lp99": 69.31212575740325,
-      "pct_preto": 0.003895652173913043,
-      "pct_branco": 0.4080695652173915,
-      "rgb": [
-       0.18972173555385355,
-       0.15808923331772123,
-       0.14709854257623325
-      ],
-      "Lab": [
-       17.052110143582397,
-       3.1599532394175345,
-       3.2238901504497375
-      ],
-      "aStar": 3.1599532394175345,
-      "bStar": 3.2238901504497375,
-      "croma": 4.514285345154003,
-      "matiz": 45.57382245355575,
-      "metal_ef": 0.5445505882352941,
-      "rough_ef": 0.60392
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 57.2145597848579,
-      "Lmedia_por_texel": 58.32108783304512,
-      "Lp05": 42.23099809025652,
-      "Lp50": 57.19909525439398,
-      "Lp95": 71.6095977721808,
-      "Lp99": 77.63208813338458,
-      "pct_preto": 0,
-      "pct_branco": 0.6914782608695655,
-      "rgb": [
-       0.2918250336587278,
-       0.25787922021924403,
-       0.2487835687067391
-      ],
-      "Lab": [
-       28.654821825129545,
-       3.231120630371731,
-       2.7594228434330126
-      ],
-      "aStar": 3.231120630371731,
-      "bStar": 2.7594228434330126,
-      "croma": 4.249065186234938,
-      "matiz": 40.49779672109605,
-      "metal_ef": 0.2995028235294118,
-      "rough_ef": 0.60392
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 41.51068485642224,
-      "Lmedia_por_texel": 44.5150619268876,
-      "Lp05": 20.519224912697993,
-      "Lp50": 41.292283694321945,
-      "Lp95": 66.9980520453881,
-      "Lp99": 79.3965171117403,
-      "pct_preto": 0.05606956521739129,
-      "pct_branco": 0,
-      "rgb": [
-       0.16982219410449848,
-       0.13786762895480012,
-       0.12571428165976503
-      ],
-      "Lab": [
-       14.602693160857356,
-       3.2217928081786082,
-       3.5133633158832334
-      ],
-      "aStar": 3.2217928081786082,
-      "bStar": 3.5133633158832334,
-      "croma": 4.766935146215588,
-      "matiz": 47.47883417511565,
       "metal_ef": 0.5445505882352941,
       "rough_ef": 0.60392
      }
@@ -5889,6 +6969,84 @@
       "metal_ef": 0.6823058823529411,
       "rough_ef": 0.3891749019607843
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 37.989349569143414,
+      "Lmedia_por_texel": 40.54708534678694,
+      "Lp05": 16.725379085486715,
+      "Lp50": 37.714977771257345,
+      "Lp95": 58.46608137930963,
+      "Lp99": 87.06989403010692,
+      "pct_preto": 1.8082782608695651,
+      "pct_branco": 0.8998956521739135,
+      "rgb": [
+       0.1143683937507373,
+       0.12350170614292236,
+       0.13833740995820248
+      ],
+      "Lab": [
+       11.90764742040787,
+       -0.054910467137750385,
+       -2.93101681893424
+      ],
+      "aStar": -0.054910467137750385,
+      "bStar": -2.93101681893424,
+      "croma": 2.931531127632227,
+      "matiz": 268.9267308172833,
+      "metal_ef": 0.6823058823529411,
+      "rough_ef": 0.3891749019607843
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 53.279562160880936,
+      "Lmedia_por_texel": 54.70896897290015,
+      "Lp05": 28.79491132483684,
+      "Lp50": 54.06442890048716,
+      "Lp95": 71.82733071552403,
+      "Lp99": 94.42019141713862,
+      "pct_preto": 0,
+      "pct_branco": 1.0576695652173922,
+      "rgb": [
+       0.23081179932059437,
+       0.23925791313323502,
+       0.25145500815303806
+      ],
+      "Lab": [
+       25.670272446120002,
+       -0.17448755362933777,
+       -2.2245257363233795
+      ],
+      "aStar": -0.17448755362933777,
+      "bStar": -2.2245257363233795,
+      "croma": 2.231358478133136,
+      "matiz": 265.5150113670488,
+      "metal_ef": 0.3752682352941177,
+      "rough_ef": 0.3891749019607843
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 35.960824518802596,
+      "Lmedia_por_texel": 39.1404071038454,
+      "Lp05": 12.988076609525752,
+      "Lp50": 35.17652675320553,
+      "Lp95": 63.45452891917331,
+      "Lp99": 73.48638240339095,
+      "pct_preto": 4.121808695652175,
+      "pct_branco": 0,
+      "rgb": [
+       0.10489736971333828,
+       0.11482448558915825,
+       0.13031208680365455
+      ],
+      "Lab": [
+       10.800125744113068,
+       -0.09225045481182914,
+       -3.103470215632931
+      ],
+      "aStar": -0.09225045481182914,
+      "bStar": -3.103470215632931,
+      "croma": 3.1048409823586294,
+      "matiz": 268.29738793930625,
+      "metal_ef": 0.6823058823529411,
+      "rough_ef": 0.3891749019607843
+     },
      "vm@atacadao_treta": {
       "Lmean": 37.07217846749583,
       "Lmedia_por_texel": 39.74064454853335,
@@ -5964,84 +7122,6 @@
       "bStar": -4.706269861783813,
       "croma": 4.712279998583653,
       "matiz": 267.1059206479258,
-      "metal_ef": 0.6823058823529411,
-      "rough_ef": 0.3891749019607843
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 39.42907759403769,
-      "Lmedia_por_texel": 42.10972242320386,
-      "Lp05": 17.55976963575339,
-      "Lp50": 39.22518974254199,
-      "Lp95": 62.0376286505966,
-      "Lp99": 88.65043313038701,
-      "pct_preto": 1.3132521739130434,
-      "pct_branco": 0.9237565217391309,
-      "rgb": [
-       0.1108186021064146,
-       0.1357015797998718,
-       0.16768883192557885
-      ],
-      "Lab": [
-       13.242585353878052,
-       -0.43494230281740376,
-       -6.365020879419081
-      ],
-      "aStar": -0.43494230281740376,
-      "bStar": -6.365020879419081,
-      "croma": 6.379864073961213,
-      "matiz": 266.0908724215255,
-      "metal_ef": 0.6823058823529411,
-      "rough_ef": 0.3891749019607843
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 52.44719426898714,
-      "Lmedia_por_texel": 53.96210306155104,
-      "Lp05": 28.15506735890004,
-      "Lp50": 53.26506178591623,
-      "Lp95": 71.95403282387674,
-      "Lp99": 93.64959919207126,
-      "pct_preto": 0,
-      "pct_branco": 1.0372173913043485,
-      "rgb": [
-       0.19405096354761228,
-       0.23618968536594956,
-       0.28858922055783215
-      ],
-      "Lab": [
-       24.981452427806822,
-       -0.7234170537232798,
-       -9.607750586717334
-      ],
-      "aStar": -0.7234170537232798,
-      "bStar": -9.607750586717334,
-      "croma": 9.634946993636495,
-      "matiz": 265.69403059340004,
-      "metal_ef": 0.3752682352941177,
-      "rough_ef": 0.3891749019607843
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 36.99897668681528,
-      "Lmedia_por_texel": 40.54270792581937,
-      "Lp05": 13.877463655628027,
-      "Lp50": 35.4427275368467,
-      "Lp95": 64.98275741452386,
-      "Lp99": 79.83900709251506,
-      "pct_preto": 3.3367652173913043,
-      "pct_branco": 0,
-      "rgb": [
-       0.10027276617068816,
-       0.1254763729332715,
-       0.15563780135628705
-      ],
-      "Lab": [
-       11.94337251958552,
-       -0.5925522465346639,
-       -6.130981812492825
-      ],
-      "aStar": -0.5925522465346639,
-      "bStar": -6.130981812492825,
-      "croma": 6.159549995737602,
-      "matiz": 264.4795758359128,
       "metal_ef": 0.6823058823529411,
       "rough_ef": 0.3891749019607843
      }
@@ -6523,6 +7603,84 @@
       "metal_ef": 0.6201584313725491,
       "rough_ef": 0.376398431372549
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 36.00935869577922,
+      "Lmedia_por_texel": 38.99939855978099,
+      "Lp05": 14.226294327892557,
+      "Lp50": 36.448618427882444,
+      "Lp95": 56.006854750762045,
+      "Lp99": 95.73279789374874,
+      "pct_preto": 1.355826086956522,
+      "pct_branco": 1.2032695652173921,
+      "rgb": [
+       0.11194375078966412,
+       0.11086652003572615,
+       0.11098573325847254
+      ],
+      "Lab": [
+       10.433961939217458,
+       0.13865017312357508,
+       0.025303035551010877
+      ],
+      "aStar": 0.13865017312357508,
+      "bStar": 0.025303035551010877,
+      "croma": 0.14094010825628403,
+      "matiz": 10.34240877232429,
+      "metal_ef": 0.6201584313725491,
+      "rough_ef": 0.376398431372549
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 49.95421919820446,
+      "Lmedia_por_texel": 51.85408782026744,
+      "Lp05": 20.84851784309444,
+      "Lp50": 51.53828598305235,
+      "Lp95": 70.55166400084869,
+      "Lp99": 99.03401368354487,
+      "pct_preto": 0,
+      "pct_branco": 1.2100869565217396,
+      "rgb": [
+       0.21744333606795663,
+       0.21055899684124244,
+       0.2019020963217848
+      ],
+      "Lab": [
+       22.57729925697474,
+       0.2756602954752385,
+       1.65909599826779
+      ],
+      "aStar": 0.2756602954752385,
+      "bStar": 1.65909599826779,
+      "croma": 1.6818406969655866,
+      "matiz": 80.56643269210878,
+      "metal_ef": 0.34108713725490203,
+      "rough_ef": 0.376398431372549
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 33.43349309317222,
+      "Lmedia_por_texel": 37.35725169757001,
+      "Lp05": 11.537775071677185,
+      "Lp50": 33.44651524902838,
+      "Lp95": 62.00662182489715,
+      "Lp99": 73.22727735405984,
+      "pct_preto": 5.981147826086957,
+      "pct_branco": 0,
+      "rgb": [
+       0.10016557150912048,
+       0.1016173428980568,
+       0.10432376780016207
+      ],
+      "Lab": [
+       9.204948134828047,
+       0.0017481295821880627,
+       -0.5433068912368222
+      ],
+      "aStar": 0.0017481295821880627,
+      "bStar": -0.5433068912368222,
+      "croma": 0.5433097035968125,
+      "matiz": 270.18435271680295,
+      "metal_ef": 0.6201584313725491,
+      "rough_ef": 0.376398431372549
+     },
      "vm@atacadao_treta": {
       "Lmean": 34.98305921402687,
       "Lmedia_por_texel": 38.134447240522675,
@@ -6598,84 +7756,6 @@
       "bStar": -1.8509955477138462,
       "croma": 1.8702991832716749,
       "matiz": 261.7609737481189,
-      "metal_ef": 0.6201584313725491,
-      "rough_ef": 0.376398431372549
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 37.35363334369719,
-      "Lmedia_por_texel": 40.538563812982346,
-      "Lp05": 15.12002508100759,
-      "Lp50": 37.68768882767433,
-      "Lp95": 59.38012085401721,
-      "Lp99": 96.46593591443028,
-      "pct_preto": 1.0025043478260869,
-      "pct_branco": 1.2052173913043487,
-      "rgb": [
-       0.10793976165352379,
-       0.12264930210547086,
-       0.13704337555357568
-      ],
-      "Lab": [
-       11.659324694740043,
-       -0.7076894486461455,
-       -3.076354254094271
-      ],
-      "aStar": -0.7076894486461455,
-      "bStar": -3.076354254094271,
-      "croma": 3.156703953874833,
-      "matiz": 257.04497186372214,
-      "metal_ef": 0.6201584313725491,
-      "rough_ef": 0.376398431372549
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 49.03975923704451,
-      "Lmedia_por_texel": 51.07715985195497,
-      "Lp05": 20.45451259996559,
-      "Lp50": 50.54820590928463,
-      "Lp95": 69.6340891850245,
-      "Lp99": 98.61628973452102,
-      "pct_preto": 0.008626086956521738,
-      "pct_branco": 1.2096000000000007,
-      "rgb": [
-       0.181657673795918,
-       0.20754484537204348,
-       0.23285390302405196
-      ],
-      "Lab": [
-       21.75282945168351,
-       -1.1089211779818364,
-       -4.99016217842827
-      ],
-      "aStar": -1.1089211779818364,
-      "bStar": -4.99016217842827,
-      "croma": 5.111890525626757,
-      "matiz": 257.47123332731843,
-      "metal_ef": 0.34108713725490203,
-      "rough_ef": 0.376398431372549
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 34.16791739156404,
-      "Lmedia_por_texel": 38.62984584466098,
-      "Lp05": 12.492910161428398,
-      "Lp50": 32.83044002864294,
-      "Lp95": 66.42516614350563,
-      "Lp99": 79.92738088377783,
-      "pct_preto": 4.148869565217391,
-      "pct_branco": 0,
-      "rgb": [
-       0.09460272264583587,
-       0.11073820569804992,
-       0.12581609014646639
-      ],
-      "Lab": [
-       10.124502597164362,
-       -0.8134307114229244,
-       -3.289850769683617
-      ],
-      "aStar": -0.8134307114229244,
-      "bStar": -3.289850769683617,
-      "croma": 3.388921304644575,
-      "matiz": 256.1118992056103,
       "metal_ef": 0.6201584313725491,
       "rough_ef": 0.376398431372549
      }
@@ -7157,6 +8237,84 @@
       "metal_ef": 0.5187654901960784,
       "rough_ef": 0.2633960784313725
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 30.510278869723635,
+      "Lmedia_por_texel": 34.078273395601705,
+      "Lp05": 10.067658243159084,
+      "Lp50": 30.74322986757469,
+      "Lp95": 52.56934847044573,
+      "Lp99": 93.19674701003426,
+      "pct_preto": 12.002782608695654,
+      "pct_branco": 1.0294260869565224,
+      "rgb": [
+       0.08676922648637944,
+       0.08801125609923022,
+       0.08397295069478872
+      ],
+      "Lab": [
+       7.394288823377302,
+       -0.39893050605194214,
+       0.6324291677322791
+      ],
+      "aStar": -0.39893050605194214,
+      "bStar": 0.6324291677322791,
+      "croma": 0.7477380563121031,
+      "matiz": 122.24335225810063,
+      "metal_ef": 0.5187654901960784,
+      "rough_ef": 0.2633960784313725
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 43.04247016718826,
+      "Lmedia_por_texel": 45.180634130482524,
+      "Lp05": 23.003332140781282,
+      "Lp50": 42.61105859594078,
+      "Lp95": 63.73994999760242,
+      "Lp99": 97.63234505652616,
+      "pct_preto": 0.05481739130434782,
+      "pct_branco": 1.124382608695653,
+      "rgb": [
+       0.157261897712218,
+       0.15564275554729867,
+       0.1429883866642606
+      ],
+      "Lab": [
+       15.902008980882922,
+       -0.5627403681854048,
+       2.193369490662367
+      ],
+      "aStar": -0.5627403681854048,
+      "bStar": 2.193369490662367,
+      "croma": 2.264408630206557,
+      "matiz": 104.38967732477772,
+      "metal_ef": 0.2853210196078431,
+      "rough_ef": 0.2633960784313725
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 29.537884447765087,
+      "Lmedia_por_texel": 32.58195832247627,
+      "Lp05": 9.56754968098004,
+      "Lp50": 28.24444819692014,
+      "Lp95": 58.00476868688398,
+      "Lp99": 63.38339707445945,
+      "pct_preto": 14.14831304347826,
+      "pct_branco": 0,
+      "rgb": [
+       0.08177385425676234,
+       0.08144902094589877,
+       0.0768732823926199
+      ],
+      "Lab": [
+       6.637611038124362,
+       -0.22940283256323024,
+       0.7362132104028474
+      ],
+      "aStar": -0.22940283256323024,
+      "bStar": 0.7362132104028474,
+      "croma": 0.7711261574863744,
+      "matiz": 107.30694875101528,
+      "metal_ef": 0.5187654901960784,
+      "rough_ef": 0.2633960784313725
+     },
      "vm@atacadao_treta": {
       "Lmean": 29.705379034369486,
       "Lmedia_por_texel": 33.411496659486225,
@@ -7232,84 +8390,6 @@
       "bStar": 0.5406936273282203,
       "croma": 0.9924746044989469,
       "matiz": 146.9894526537048,
-      "metal_ef": 0.5187654901960784,
-      "rough_ef": 0.2633960784313725
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 31.703404179545114,
-      "Lmedia_por_texel": 35.423913889680094,
-      "Lp05": 10.427729222836827,
-      "Lp50": 31.063405107215935,
-      "Lp95": 55.04260260813216,
-      "Lp99": 94.20518266741384,
-      "pct_preto": 10.626921739130434,
-      "pct_branco": 1.0528000000000008,
-      "rgb": [
-       0.0841635140639936,
-       0.09713622656753633,
-       0.10219480984537109
-      ],
-      "Lab": [
-       8.348680308539006,
-       -1.2104279483112075,
-       -1.4423847998264572
-      ],
-      "aStar": -1.2104279483112075,
-      "bStar": -1.4423847998264572,
-      "croma": 1.8829789507116876,
-      "matiz": 229.99712374189482,
-      "metal_ef": 0.5187654901960784,
-      "rough_ef": 0.2633960784313725
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 42.308783023314426,
-      "Lmedia_por_texel": 44.62177921172991,
-      "Lp05": 22.571267724837504,
-      "Lp50": 41.555890543870625,
-      "Lp95": 63.63054470014269,
-      "Lp99": 97.19012657586501,
-      "pct_preto": 0.05697391304347826,
-      "pct_branco": 1.1088000000000007,
-      "rgb": [
-       0.13188948713350027,
-       0.1540151941685378,
-       0.16524768322384717
-      ],
-      "Lab": [
-       15.334654048239145,
-       -1.7279428293978938,
-       -2.7322261490544064
-      ],
-      "aStar": -1.7279428293978938,
-      "bStar": -2.7322261490544064,
-      "croma": 3.232776848352554,
-      "matiz": 237.6894960198333,
-      "metal_ef": 0.2853210196078431,
-      "rough_ef": 0.2633960784313725
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 30.559817363659803,
-      "Lmedia_por_texel": 33.877022832881366,
-      "Lp05": 9.888070441024546,
-      "Lp50": 29.13828161661806,
-      "Lp95": 58.16944041631871,
-      "Lp99": 68.28415117918506,
-      "pct_preto": 12.84250434782609,
-      "pct_branco": 0,
-      "rgb": [
-       0.07724556322885508,
-       0.08985471880307283,
-       0.09357486321121528
-      ],
-      "Lab": [
-       7.409435390198741,
-       -1.196208367869045,
-       -1.1738346813852663
-      ],
-      "aStar": -1.196208367869045,
-      "bStar": -1.1738346813852663,
-      "croma": 1.6759481849337627,
-      "matiz": 224.45913230154014,
       "metal_ef": 0.5187654901960784,
       "rough_ef": 0.2633960784313725
      }
@@ -7791,6 +8871,84 @@
       "metal_ef": 0.35726274509803924,
       "rough_ef": 0.4065349019607843
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 32.65324434522711,
+      "Lmedia_por_texel": 35.26252666860437,
+      "Lp05": 18.854828799578684,
+      "Lp50": 32.4240636955178,
+      "Lp95": 44.42926035202608,
+      "Lp99": 91.62301623514473,
+      "pct_preto": 0.19394782608695652,
+      "pct_branco": 0.9894956521739132,
+      "rgb": [
+       0.08226004041865002,
+       0.08716698579098446,
+       0.09511082260614347
+      ],
+      "Lab": [
+       7.3051702135143834,
+       -0.047190630913823695,
+       -1.6114632651823002
+      ],
+      "aStar": -0.047190630913823695,
+      "bStar": -1.6114632651823002,
+      "croma": 1.6121540902401499,
+      "matiz": 268.3226105542793,
+      "metal_ef": 0.35726274509803924,
+      "rough_ef": 0.4065349019607843
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 44.56164041772907,
+      "Lmedia_por_texel": 46.490293329244224,
+      "Lp05": 29.41588828771203,
+      "Lp50": 44.57730362938069,
+      "Lp95": 59.048076394379606,
+      "Lp99": 96.85895327582398,
+      "pct_preto": 0,
+      "pct_branco": 1.1633391304347835,
+      "rgb": [
+       0.15380779319284382,
+       0.15708878582301963,
+       0.161920813022001
+      ],
+      "Lab": [
+       16.101023678956423,
+       -0.07365633138156635,
+       -0.9401810005341238
+      ],
+      "aStar": -0.07365633138156635,
+      "bStar": -0.9401810005341238,
+      "croma": 0.9430618054602451,
+      "matiz": 265.5204427200167,
+      "metal_ef": 0.1964945098039216,
+      "rough_ef": 0.4065349019607843
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 30.943305758342753,
+      "Lmedia_por_texel": 34.15685512917676,
+      "Lp05": 15.500352357051792,
+      "Lp50": 30.271128618845722,
+      "Lp95": 58.30134469012127,
+      "Lp99": 59.84637348515378,
+      "pct_preto": 0.674295652173913,
+      "pct_branco": 0,
+      "rgb": [
+       0.07782126412990727,
+       0.0815850978199732,
+       0.08813846091260481
+      ],
+      "Lab": [
+       6.648516152409606,
+       -0.009963432814397155,
+       -1.2438986981914035
+      ],
+      "aStar": -0.009963432814397155,
+      "bStar": -1.2438986981914035,
+      "croma": 1.2439386003158337,
+      "matiz": 269.54107963724175,
+      "metal_ef": 0.35726274509803924,
+      "rough_ef": 0.4065349019607843
+     },
      "vm@atacadao_treta": {
       "Lmean": 31.837042233162688,
       "Lmedia_por_texel": 34.59978584091264,
@@ -7866,84 +9024,6 @@
       "bStar": -2.9557068595986333,
       "croma": 2.9680456087749016,
       "matiz": 264.7737704423674,
-      "metal_ef": 0.35726274509803924,
-      "rough_ef": 0.4065349019607843
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 34.3242092623857,
-      "Lmedia_por_texel": 37.01742857299168,
-      "Lp05": 20.147915575975865,
-      "Lp50": 32.59005324078035,
-      "Lp95": 49.09938164549996,
-      "Lp99": 92.80492414590958,
-      "pct_preto": 0.1328,
-      "pct_branco": 1.0172521739130438,
-      "rgb": [
-       0.0788714586602507,
-       0.09827569724853713,
-       0.1228262502418717
-      ],
-      "Lab": [
-       8.553489578219853,
-       -0.39955510100198044,
-       -5.1203966529679015
-      ],
-      "aStar": -0.39955510100198044,
-      "bStar": -5.1203966529679015,
-      "croma": 5.135962048386027,
-      "matiz": 265.5381337181112,
-      "metal_ef": 0.35726274509803924,
-      "rough_ef": 0.4065349019607843
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 43.70806993386795,
-      "Lmedia_por_texel": 45.763792739237154,
-      "Lp05": 28.800816702455826,
-      "Lp50": 42.85263676982434,
-      "Lp95": 58.05272293310489,
-      "Lp99": 96.34369232792527,
-      "pct_preto": 0,
-      "pct_branco": 1.1331478260869572,
-      "rgb": [
-       0.1254380863428362,
-       0.15499372146873078,
-       0.1909022390508027
-      ],
-      "Lab": [
-       15.547497152964812,
-       -0.6265691264479845,
-       -7.061688595252058
-      ],
-      "aStar": -0.6265691264479845,
-      "bStar": -7.061688595252058,
-      "croma": 7.089431196261853,
-      "matiz": 264.92954131227907,
-      "metal_ef": 0.1964945098039216,
-      "rough_ef": 0.4065349019607843
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 32.148291079562746,
-      "Lmedia_por_texel": 35.68236714132979,
-      "Lp05": 16.799558056864086,
-      "Lp50": 30.446939172641542,
-      "Lp95": 63.540686645607536,
-      "Lp99": 67.92712515621784,
-      "pct_preto": 0.4448695652173912,
-      "pct_branco": 0,
-      "rgb": [
-       0.07289726879275694,
-       0.09125462811703557,
-       0.11210558193612247
-      ],
-      "Lab": [
-       7.628912094668337,
-       -0.5617485160786528,
-       -4.462294399237093
-      ],
-      "aStar": -0.5617485160786528,
-      "bStar": -4.462294399237093,
-      "croma": 4.497514057874561,
-      "matiz": 262.82490336221446,
       "metal_ef": 0.35726274509803924,
       "rough_ef": 0.4065349019607843
      }
@@ -8425,6 +9505,84 @@
       "metal_ef": 0.33774901960784315,
       "rough_ef": 0.5028125490196079
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 31.825189451703178,
+      "Lmedia_por_texel": 33.709195256053434,
+      "Lp05": 15.000248037051268,
+      "Lp50": 30.194916964768503,
+      "Lp95": 59.19646317120413,
+      "Lp99": 66.34745850521537,
+      "pct_preto": 0.05759999999999999,
+      "pct_branco": 0.3817739130434784,
+      "rgb": [
+       0.08366822486143508,
+       0.09070397119623215,
+       0.10220836749910732
+      ],
+      "Lab": [
+       7.7314584613679465,
+       -0.041730092350311665,
+       -2.360935141434206
+      ],
+      "aStar": -0.041730092350311665,
+      "bStar": -2.360935141434206,
+      "croma": 2.361303907307681,
+      "matiz": 268.98738885900957,
+      "metal_ef": 0.33774901960784315,
+      "rough_ef": 0.5028125490196079
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 44.723424403235036,
+      "Lmedia_por_texel": 46.219542895136506,
+      "Lp05": 21.9431202824671,
+      "Lp50": 42.017401971832506,
+      "Lp95": 73.61000087946748,
+      "Lp99": 79.59168360979913,
+      "pct_preto": 0,
+      "pct_branco": 0.4182956521739133,
+      "rgb": [
+       0.17580959042080369,
+       0.17933770309875624,
+       0.1850910241825453
+      ],
+      "Lab": [
+       18.77398774894513,
+       -0.04305965696971281,
+       -1.0822628036063153
+      ],
+      "aStar": -0.04305965696971281,
+      "bStar": -1.0822628036063153,
+      "croma": 1.0831190655362646,
+      "matiz": 267.72159217848343,
+      "metal_ef": 0.18576196078431373,
+      "rough_ef": 0.5028125490196079
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 30.050092165146804,
+      "Lmedia_por_texel": 32.72646063565469,
+      "Lp05": 10.868332474804827,
+      "Lp50": 26.45650545831628,
+      "Lp95": 58.957869703901736,
+      "Lp99": 66.63879787260761,
+      "pct_preto": 11.667339130434783,
+      "pct_branco": 0,
+      "rgb": [
+       0.07907843908360243,
+       0.0860437674460733,
+       0.09772656671467699
+      ],
+      "Lab": [
+       7.152844226156109,
+       -0.0175317617368137,
+       -2.3552623137881867
+      ],
+      "aStar": -0.0175317617368137,
+      "bStar": -2.3552623137881867,
+      "croma": 2.3553275630834194,
+      "matiz": 269.57351782121646,
+      "metal_ef": 0.33774901960784315,
+      "rough_ef": 0.5028125490196079
+     },
      "vm@atacadao_treta": {
       "Lmean": 31.087351328631733,
       "Lmedia_por_texel": 33.06289681041159,
@@ -8500,84 +9658,6 @@
       "bStar": -3.5593089097782196,
       "croma": 3.562434329653854,
       "matiz": 267.59978504113303,
-      "metal_ef": 0.33774901960784315,
-      "rough_ef": 0.5028125490196079
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 33.17803118951315,
-      "Lmedia_por_texel": 35.18008585686794,
-      "Lp05": 16.081375909456547,
-      "Lp50": 32.08395628200324,
-      "Lp95": 60.95325122148043,
-      "Lp99": 69.79296628005764,
-      "pct_preto": 0.03353043478260869,
-      "pct_branco": 0.40563478260869584,
-      "rgb": [
-       0.08092079543064373,
-       0.09912219079841754,
-       0.12290099200387568
-      ],
-      "Lab": [
-       8.681879936264586,
-       -0.3376047377551955,
-       -4.935875762281672
-      ],
-      "aStar": -0.3376047377551955,
-      "bStar": -4.935875762281672,
-      "croma": 4.9474080587348395,
-      "matiz": 266.0871692745303,
-      "metal_ef": 0.33774901960784315,
-      "rough_ef": 0.5028125490196079
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 43.79188446659612,
-      "Lmedia_por_texel": 45.34829464205235,
-      "Lp05": 21.238320019752607,
-      "Lp50": 40.79313998685027,
-      "Lp95": 73.02023838272578,
-      "Lp99": 78.22848806821084,
-      "pct_preto": 0,
-      "pct_branco": 0.4168347826086959,
-      "rgb": [
-       0.14618113328138432,
-       0.1765634709453954,
-       0.21363791906519145
-      ],
-      "Lab": [
-       18.133387685217606,
-       -0.66061436816503,
-       -7.1570410036366
-      ],
-      "aStar": -0.66061436816503,
-      "bStar": -7.1570410036366,
-      "croma": 7.187464592689252,
-      "matiz": 264.72638639804154,
-      "metal_ef": 0.18576196078431373,
-      "rough_ef": 0.5028125490196079
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 30.64729082032788,
-      "Lmedia_por_texel": 33.52363237592698,
-      "Lp05": 11.638421220279,
-      "Lp50": 28.09624462059628,
-      "Lp95": 56.98959487539216,
-      "Lp99": 71.30345429803667,
-      "pct_preto": 7.397704347826087,
-      "pct_branco": 0,
-      "rgb": [
-       0.07483655205750075,
-       0.09166537708774831,
-       0.11309700514199467
-      ],
-      "Lab": [
-       7.722787331570149,
-       -0.36058752627829427,
-       -4.508806963131046
-      ],
-      "aStar": -0.36058752627829427,
-      "bStar": -4.508806963131046,
-      "croma": 4.523202802758959,
-      "matiz": 265.42755645730045,
       "metal_ef": 0.33774901960784315,
       "rough_ef": 0.5028125490196079
      }
@@ -9059,6 +10139,84 @@
       "metal_ef": 0.49659294117647057,
       "rough_ef": 0.34850039215686274
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 32.04802696942066,
+      "Lmedia_por_texel": 35.16401006629782,
+      "Lp05": 13.341801031384758,
+      "Lp50": 31.556712010468594,
+      "Lp95": 51.12479288856578,
+      "Lp99": 90.73619860633151,
+      "pct_preto": 3.1624347826086945,
+      "pct_branco": 0.8984347826086959,
+      "rgb": [
+       0.0844674147165658,
+       0.08996447526336841,
+       0.09962074845088409
+      ],
+      "Lab": [
+       7.657784715339989,
+       0.0029694077968156485,
+       -1.96485489760575
+      ],
+      "aStar": 0.0029694077968156485,
+      "bStar": -1.96485489760575,
+      "croma": 1.9648571413789773,
+      "matiz": 270.0865887883601,
+      "metal_ef": 0.49659294117647057,
+      "rough_ef": 0.34850039215686274
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 45.169915274486364,
+      "Lmedia_por_texel": 47.222405066085095,
+      "Lp05": 22.158270568798578,
+      "Lp50": 45.16989164306607,
+      "Lp95": 64.1800821763214,
+      "Lp99": 96.40014620872266,
+      "pct_preto": 0.11053913043478261,
+      "pct_branco": 1.2139826086956529,
+      "rgb": [
+       0.16702163539501486,
+       0.17032545309672106,
+       0.17600900241606574
+      ],
+      "Lab": [
+       17.703500686182466,
+       -0.02223534826245599,
+       -1.0702967049930123
+      ],
+      "aStar": -0.02223534826245599,
+      "bStar": -1.0702967049930123,
+      "croma": 1.0705276490736948,
+      "matiz": 268.8098549039338,
+      "metal_ef": 0.27312611764705885,
+      "rough_ef": 0.34850039215686274
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 30.511673465397408,
+      "Lmedia_por_texel": 33.87675638149283,
+      "Lp05": 10.665354198132746,
+      "Lp50": 28.809958418756423,
+      "Lp95": 56.71572503154313,
+      "Lp99": 65.55331835226103,
+      "pct_preto": 7.558191304347826,
+      "pct_branco": 0,
+      "rgb": [
+       0.0783707474444348,
+       0.08364417985410455,
+       0.09304187707354092
+      ],
+      "Lab": [
+       6.881957977446422,
+       0.011751280880489823,
+       -1.8369912794689802
+      ],
+      "aStar": 0.011751280880489823,
+      "bStar": -1.8369912794689802,
+      "croma": 1.8370288657088143,
+      "matiz": 270.3665175887573,
+      "metal_ef": 0.49659294117647057,
+      "rough_ef": 0.34850039215686274
+     },
      "vm@atacadao_treta": {
       "Lmean": 31.19894022005447,
       "Lmedia_por_texel": 34.45588670710674,
@@ -9134,84 +10292,6 @@
       "bStar": -3.1313710833127506,
       "croma": 3.136297004503769,
       "matiz": 266.7883395236812,
-      "metal_ef": 0.49659294117647057,
-      "rough_ef": 0.34850039215686274
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 33.41334890374441,
-      "Lmedia_por_texel": 36.665998633190156,
-      "Lp05": 14.173527174302055,
-      "Lp50": 32.381454318711114,
-      "Lp95": 54.78444599705037,
-      "Lp99": 91.99210733556073,
-      "pct_preto": 2.359373913043478,
-      "pct_branco": 0.9987478260869567,
-      "rgb": [
-       0.08212483569472556,
-       0.09959143449136898,
-       0.12215975455379528
-      ],
-      "Lab": [
-       8.745775822988811,
-       -0.3590493994262145,
-       -4.694455433527528
-      ],
-      "aStar": -0.3590493994262145,
-      "bStar": -4.694455433527528,
-      "croma": 4.708166127974295,
-      "matiz": 265.62632089153567,
-      "metal_ef": 0.49659294117647057,
-      "rough_ef": 0.34850039215686274
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 44.40651781611572,
-      "Lmedia_por_texel": 46.614639898745416,
-      "Lp05": 21.60206684330069,
-      "Lp50": 44.636318360109286,
-      "Lp95": 65.3250047037336,
-      "Lp99": 95.83666100486771,
-      "pct_preto": 0.12132173913043476,
-      "pct_branco": 1.211060869565218,
-      "rgb": [
-       0.13944873756392548,
-       0.16866195983843899,
-       0.20429129098551838
-      ],
-      "Lab": [
-       17.1992670786245,
-       -0.6435478040356657,
-       -6.927350226572093
-      ],
-      "aStar": -0.6435478040356657,
-      "bStar": -6.927350226572093,
-      "croma": 6.957178662192567,
-      "matiz": 264.69248072475546,
-      "metal_ef": 0.27312611764705885,
-      "rough_ef": 0.34850039215686274
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 31.544727814385208,
-      "Lmedia_por_texel": 35.4074791483367,
-      "Lp05": 11.363716828105474,
-      "Lp50": 29.459508395164946,
-      "Lp95": 62.43008730366539,
-      "Lp99": 71.07406037351186,
-      "pct_preto": 6.096347826086958,
-      "pct_branco": 0,
-      "rgb": [
-       0.07547595104688548,
-       0.09294691646542524,
-       0.11380268228805555
-      ],
-      "Lab": [
-       7.865375572603931,
-       -0.48167997871245705,
-       -4.429236349546784
-      ],
-      "aStar": -0.48167997871245705,
-      "bStar": -4.429236349546784,
-      "croma": 4.45535074287524,
-      "matiz": 263.79346785471336,
       "metal_ef": 0.49659294117647057,
       "rough_ef": 0.34850039215686274
      }
@@ -9693,6 +10773,84 @@
       "metal_ef": 0.749035294117647,
       "rough_ef": 0.5204564705882353
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 25.929148013961424,
+      "Lmedia_por_texel": 29.02548431015017,
+      "Lp05": 8.965784103273943,
+      "Lp50": 24.43823470857064,
+      "Lp95": 47.10406376045655,
+      "Lp99": 84.21730896457868,
+      "pct_preto": 13.24153043478261,
+      "pct_branco": 0.0029217391304347845,
+      "rgb": [
+       0.0645514165866693,
+       0.06273337210100478,
+       0.06201092627855786
+      ],
+      "Lab": [
+       4.711633121329083,
+       0.1323925845305024,
+       0.1536266680581544
+      ],
+      "aStar": 0.1323925845305024,
+      "bStar": 0.1536266680581544,
+      "croma": 0.20280273562582082,
+      "matiz": 49.245852491564904,
+      "metal_ef": 0.749035294117647,
+      "rough_ef": 0.5204564705882353
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 39.957201999958635,
+      "Lmedia_por_texel": 42.25628273730918,
+      "Lp05": 19.036379706818813,
+      "Lp50": 39.3432670723092,
+      "Lp95": 62.37635669319765,
+      "Lp99": 92.91689093901121,
+      "pct_preto": 0.02351304347826086,
+      "pct_branco": 1.1940173913043484,
+      "rgb": [
+       0.14005401130040127,
+       0.13350373425270484,
+       0.12707630873010714
+      ],
+      "Lab": [
+       13.369502040073101,
+       0.3949228709667074,
+       1.3813145577236174
+      ],
+      "aStar": 0.3949228709667074,
+      "bStar": 1.3813145577236174,
+      "croma": 1.4366607050350404,
+      "matiz": 74.04457378805205,
+      "metal_ef": 0.4119694117647059,
+      "rough_ef": 0.5204564705882353
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 23.752041232886576,
+      "Lmedia_por_texel": 27.68926174760299,
+      "Lp05": 6.959537484436073,
+      "Lp50": 20.003487799940842,
+      "Lp95": 51.56211693497943,
+      "Lp99": 63.95402030153559,
+      "pct_preto": 25.02045217391304,
+      "pct_branco": 0,
+      "rgb": [
+       0.05785501157608074,
+       0.0572680641598546,
+       0.05820433150386809
+      ],
+      "Lab": [
+       4.192062669172948,
+       0.09277001534013785,
+       -0.09834486732085423
+      ],
+      "aStar": 0.09277001534013785,
+      "bStar": -0.09834486732085423,
+      "croma": 0.13519611190624467,
+      "matiz": 313.3291466630801,
+      "metal_ef": 0.749035294117647,
+      "rough_ef": 0.5204564705882353
+     },
      "vm@atacadao_treta": {
       "Lmean": 25.17098848465832,
       "Lmedia_por_texel": 28.493488670716733,
@@ -9768,84 +10926,6 @@
       "bStar": -0.7827404345211009,
       "croma": 0.7836890196420672,
       "matiz": 267.1806582710731,
-      "metal_ef": 0.749035294117647,
-      "rough_ef": 0.5204564705882353
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 27.107150676521076,
-      "Lmedia_por_texel": 30.472752073238183,
-      "Lp05": 9.397792736934559,
-      "Lp50": 25.344449161348585,
-      "Lp95": 50.288211818343726,
-      "Lp99": 85.99382539579192,
-      "pct_preto": 11.793530434782609,
-      "pct_branco": 0.0073043478260869585,
-      "rgb": [
-       0.06128202155506181,
-       0.0705455645595634,
-       0.08001724264171325
-      ],
-      "Lab": [
-       5.339463840879684,
-       -0.3468629875081619,
-       -1.7455532343596536
-      ],
-      "aStar": -0.3468629875081619,
-      "bStar": -1.7455532343596536,
-      "croma": 1.7796825632922673,
-      "matiz": 258.7610243261027,
-      "metal_ef": 0.749035294117647,
-      "rough_ef": 0.5204564705882353
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 38.91717603266631,
-      "Lmedia_por_texel": 41.3871689629251,
-      "Lp05": 18.435595328570187,
-      "Lp50": 38.238389099477246,
-      "Lp95": 61.9580221839434,
-      "Lp99": 92.00324923490258,
-      "pct_preto": 0.05071304347826086,
-      "pct_branco": 1.0006956521739134,
-      "rgb": [
-       0.11264619971797776,
-       0.13090558596731938,
-       0.15008930903968037
-      ],
-      "Lab": [
-       12.658011190452847,
-       -0.7389506363917608,
-       -3.997268512632507
-      ],
-      "aStar": -0.7389506363917608,
-      "bStar": -3.997268512632507,
-      "croma": 4.064997368401004,
-      "matiz": 259.52632208320426,
-      "metal_ef": 0.4119694117647059,
-      "rough_ef": 0.5204564705882353
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 24.068228074804427,
-      "Lmedia_por_texel": 28.818688878533244,
-      "Lp05": 7.215634338851766,
-      "Lp50": 20.035368854879643,
-      "Lp95": 56.55471070686208,
-      "Lp99": 69.85367005828134,
-      "pct_preto": 23.795339130434787,
-      "pct_branco": 0,
-      "rgb": [
-       0.053546918461484336,
-       0.06239175431866739,
-       0.07185630902875881
-      ],
-      "Lab": [
-       4.546008809764206,
-       -0.2775581218675549,
-       -1.5795486299268469
-      ],
-      "aStar": -0.2775581218675549,
-      "bStar": -1.5795486299268469,
-      "croma": 1.6037494771062042,
-      "matiz": 260.03373801140003,
       "metal_ef": 0.749035294117647,
       "rough_ef": 0.5204564705882353
      }
@@ -10327,6 +11407,84 @@
       "metal_ef": 0.38976,
       "rough_ef": 0.43755921568627454
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 29.023454055949987,
+      "Lmedia_por_texel": 32.10352063748769,
+      "Lp05": 11.72744183357036,
+      "Lp50": 28.54261635386395,
+      "Lp95": 46.69053100041098,
+      "Lp99": 88.60805410380573,
+      "pct_preto": 5.4960695652173905,
+      "pct_branco": 0.7411478260869571,
+      "rgb": [
+       0.07057071633397995,
+       0.074549634380802,
+       0.08177750719485655
+      ],
+      "Lab": [
+       5.85548477802152,
+       0.010497498884362577,
+       -1.273541239859105
+      ],
+      "aStar": 0.010497498884362577,
+      "bStar": -1.273541239859105,
+      "croma": 1.273584503323079,
+      "matiz": 270.4722648482042,
+      "metal_ef": 0.38976,
+      "rough_ef": 0.43755921568627454
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 40.490055423543396,
+      "Lmedia_por_texel": 42.896508866457715,
+      "Lp05": 19.746347373143763,
+      "Lp50": 40.39071586655558,
+      "Lp95": 59.81865787241328,
+      "Lp99": 95.3071963577723,
+      "pct_preto": 0.07366956521739129,
+      "pct_branco": 1.166260869565218,
+      "rgb": [
+       0.1334078342274962,
+       0.13612191660049652,
+       0.14138569853230132
+      ],
+      "Lab": [
+       13.550793863653716,
+       0.019628362181667303,
+       -1.0100580508083934
+      ],
+      "aStar": 0.019628362181667303,
+      "bStar": -1.0100580508083934,
+      "croma": 1.0102487508553455,
+      "matiz": 271.1132833170336,
+      "metal_ef": 0.21436800000000003,
+      "rough_ef": 0.43755921568627454
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 27.194842506861594,
+      "Lmedia_por_texel": 30.89301749637241,
+      "Lp05": 8.929223772703246,
+      "Lp50": 24.727191831471472,
+      "Lp95": 55.01740808124971,
+      "Lp99": 62.26339886152991,
+      "pct_preto": 13.489321739130435,
+      "pct_branco": 0,
+      "rgb": [
+       0.06555989615612831,
+       0.06924828031777183,
+       0.07620513683692978
+      ],
+      "Lab": [
+       5.299666710466457,
+       0.022892170478502893,
+       -1.1515923786717008
+      ],
+      "aStar": 0.022892170478502893,
+      "bStar": -1.1515923786717008,
+      "croma": 1.1518198896025207,
+      "matiz": 271.1388161722732,
+      "metal_ef": 0.38976,
+      "rough_ef": 0.43755921568627454
+     },
      "vm@atacadao_treta": {
       "Lmean": 28.25537525390449,
       "Lmedia_por_texel": 31.520995431564515,
@@ -10402,84 +11560,6 @@
       "bStar": -2.3796842946077423,
       "croma": 2.3823981119674214,
       "matiz": 267.2649705649817,
-      "metal_ef": 0.38976,
-      "rough_ef": 0.43755921568627454
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 30.495351512842166,
-      "Lmedia_por_texel": 33.74480842217129,
-      "Lp05": 12.394493595399897,
-      "Lp50": 29.513363504612755,
-      "Lp95": 50.2906595437784,
-      "Lp99": 90.06667843105053,
-      "pct_preto": 4.432765217391303,
-      "pct_branco": 0.8867478260869567,
-      "rgb": [
-       0.06780257976666627,
-       0.08399411125297715,
-       0.10514503747986063
-      ],
-      "Lab": [
-       6.792215552156929,
-       -0.27813931244778656,
-       -4.3689249696337304
-      ],
-      "aStar": -0.27813931244778656,
-      "bStar": -4.3689249696337304,
-      "croma": 4.377769622469645,
-      "matiz": 266.3572889742566,
-      "metal_ef": 0.38976,
-      "rough_ef": 0.43755921568627454
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 39.691005501735575,
-      "Lmedia_por_texel": 42.27114821341745,
-      "Lp05": 19.271493471314926,
-      "Lp50": 39.41842150174219,
-      "Lp95": 59.90620545536724,
-      "Lp99": 94.63214559305523,
-      "pct_preto": 0.08514782608695647,
-      "pct_branco": 1.1521391304347832,
-      "rgb": [
-       0.10911067371532049,
-       0.13455490922224989,
-       0.166628444675426
-      ],
-      "Lab": [
-       13.089327618693119,
-       -0.48164760159181974,
-       -6.406069456770968
-      ],
-      "aStar": -0.48164760159181974,
-      "bStar": -6.406069456770968,
-      "croma": 6.424150550624809,
-      "matiz": 265.7002417347569,
-      "metal_ef": 0.21436800000000003,
-      "rough_ef": 0.43755921568627454
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 28.04608723445087,
-      "Lmedia_por_texel": 32.36688232748994,
-      "Lp05": 9.441564975960098,
-      "Lp50": 25.21631411043866,
-      "Lp95": 61.135426497689096,
-      "Lp99": 68.84078413859872,
-      "pct_preto": 11.312417391304349,
-      "pct_branco": 0,
-      "rgb": [
-       0.061990899827061983,
-       0.07725770969860556,
-       0.09594354164328954
-      ],
-      "Lab": [
-       6.017474703246343,
-       -0.3335739018041767,
-       -3.71521960950823
-      ],
-      "aStar": -0.3335739018041767,
-      "bStar": -3.71521960950823,
-      "croma": 3.7301646471488823,
-      "matiz": 264.8694107841204,
       "metal_ef": 0.38976,
       "rough_ef": 0.43755921568627454
      }
@@ -10961,6 +12041,84 @@
       "metal_ef": 0.7195058823529412,
       "rough_ef": 0.39399372549019607
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 31.947770906895148,
+      "Lmedia_por_texel": 35.2108953067683,
+      "Lp05": 11.15901253551056,
+      "Lp50": 32.00210440609409,
+      "Lp95": 52.355855823637995,
+      "Lp99": 92.59527623703185,
+      "pct_preto": 6.096556521739131,
+      "pct_branco": 1.0182260869565223,
+      "rgb": [
+       0.09528814330474208,
+       0.08950019770988384,
+       0.09487308899109899
+      ],
+      "Lab": [
+       7.862187550344572,
+       1.0745213252312813,
+       -0.7076427751658898
+      ],
+      "aStar": 1.0745213252312813,
+      "bStar": -0.7076427751658898,
+      "croma": 1.2866057576512204,
+      "matiz": 326.63247468872254,
+      "metal_ef": 0.7195058823529412,
+      "rough_ef": 0.39399372549019607
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 46.51153732869205,
+      "Lmedia_por_texel": 48.53112258329873,
+      "Lp05": 21.988054298232065,
+      "Lp50": 47.03330054378425,
+      "Lp95": 67.25995829630854,
+      "Lp99": 97.31076397616509,
+      "pct_preto": 0.1604173913043478,
+      "pct_branco": 1.207165217391305,
+      "rgb": [
+       0.19283406285607957,
+       0.178623946995114,
+       0.17965053549536233
+      ],
+      "Lab": [
+       19.106691564431053,
+       1.6866443430712807,
+       0.41699718477994363
+      ],
+      "aStar": 1.6866443430712807,
+      "bStar": 0.41699718477994363,
+      "croma": 1.737427924297509,
+      "matiz": 13.887032351914627,
+      "metal_ef": 0.3957282352941177,
+      "rough_ef": 0.39399372549019607
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 29.719835412771094,
+      "Lmedia_por_texel": 33.71655778552773,
+      "Lp05": 8.779540552166168,
+      "Lp50": 27.84361871993879,
+      "Lp95": 58.96530127201831,
+      "Lp99": 70.74159747218242,
+      "pct_preto": 12.342608695652176,
+      "pct_branco": 0,
+      "rgb": [
+       0.08635207826217933,
+       0.08196766054019318,
+       0.08946624640879015
+      ],
+      "Lab": [
+       6.906978719790981,
+       0.9697843617343799,
+       -1.0897797027954403
+      ],
+      "aStar": 0.9697843617343799,
+      "bStar": -1.0897797027954403,
+      "croma": 1.4588013946008815,
+      "matiz": 311.6655744449049,
+      "metal_ef": 0.7195058823529412,
+      "rough_ef": 0.39399372549019607
+     },
      "vm@atacadao_treta": {
       "Lmean": 30.986294096579194,
       "Lmedia_por_texel": 34.428787030646404,
@@ -11036,84 +12194,6 @@
       "bStar": -1.8406961049243997,
       "croma": 2.068402608506603,
       "matiz": 297.13782104957784,
-      "metal_ef": 0.7195058823529412,
-      "rough_ef": 0.39399372549019607
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 33.15736402319425,
-      "Lmedia_por_texel": 36.65190775013295,
-      "Lp05": 11.620429513864472,
-      "Lp50": 32.42346173817829,
-      "Lp95": 56.21450333604275,
-      "Lp99": 93.68391815937305,
-      "pct_preto": 5.378295652173913,
-      "pct_branco": 1.0625391304347835,
-      "rgb": [
-       0.0919143589299741,
-       0.09918751611005804,
-       0.1163794514697143
-      ],
-      "Lab": [
-       8.885208745164434,
-       0.34839486841174716,
-       -3.352064078370798
-      ],
-      "aStar": 0.34839486841174716,
-      "bStar": -3.352064078370798,
-      "croma": 3.370120557166984,
-      "matiz": 275.933699374639,
-      "metal_ef": 0.7195058823529412,
-      "rough_ef": 0.39399372549019607
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 45.55235272032207,
-      "Lmedia_por_texel": 47.72948998324039,
-      "Lp05": 20.768423983372585,
-      "Lp50": 45.761902513211155,
-      "Lp95": 67.20372338521655,
-      "Lp99": 96.83550645471814,
-      "pct_preto": 0.18573913043478257,
-      "pct_branco": 1.199860869565218,
-      "rgb": [
-       0.15970954389725653,
-       0.17627438358336261,
-       0.20798686080166262
-      ],
-      "Lab": [
-       18.347683992587392,
-       0.3157991171045538,
-       -5.805341664668163
-      ],
-      "aStar": 0.3157991171045538,
-      "bStar": -5.805341664668163,
-      "croma": 5.813924743742056,
-      "matiz": 273.1137083227966,
-      "metal_ef": 0.3957282352941177,
-      "rough_ef": 0.39399372549019607
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 30.329739417405513,
-      "Lmedia_por_texel": 35.06326196175039,
-      "Lp05": 9.103265359715024,
-      "Lp50": 27.54358712313499,
-      "Lp95": 63.94607661845403,
-      "Lp99": 77.72648524273826,
-      "pct_preto": 11.06587826086956,
-      "pct_branco": 0,
-      "rgb": [
-       0.08204716302953717,
-       0.09018182571719945,
-       0.10776511825376135
-      ],
-      "Lab": [
-       7.7013305425694725,
-       0.2851415953430969,
-       -3.4891722955890825
-      ],
-      "aStar": 0.2851415953430969,
-      "bStar": -3.4891722955890825,
-      "croma": 3.500804055885047,
-      "matiz": 274.6719347916955,
       "metal_ef": 0.7195058823529412,
       "rough_ef": 0.39399372549019607
      }
@@ -11595,6 +12675,84 @@
       "metal_ef": 0.5731639215686275,
       "rough_ef": 0.4820533333333334
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 35.002253401024674,
+      "Lmedia_por_texel": 37.50526256303075,
+      "Lp05": 17.536045230360727,
+      "Lp50": 34.98954210511488,
+      "Lp95": 53.713875252214194,
+      "Lp99": 82.56393478423215,
+      "pct_preto": 1.498991304347826,
+      "pct_branco": 0.5327304347826091,
+      "rgb": [
+       0.10512894330415991,
+       0.10072778615650167,
+       0.09910026710381277
+      ],
+      "Lab": [
+       9.211955795915426,
+       0.4408396752191984,
+       0.4833946991834315
+      ],
+      "aStar": 0.4408396752191984,
+      "bStar": 0.4833946991834315,
+      "croma": 0.6542247736412987,
+      "matiz": 47.63623871680858,
+      "metal_ef": 0.5731639215686275,
+      "rough_ef": 0.4820533333333334
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 49.16259434556994,
+      "Lmedia_por_texel": 50.834752137559725,
+      "Lp05": 29.105505300505243,
+      "Lp50": 49.17859782936458,
+      "Lp95": 68.07563408818098,
+      "Lp99": 91.76023584294195,
+      "pct_preto": 0,
+      "pct_branco": 0.9622260869565221,
+      "rgb": [
+       0.20809796041299713,
+       0.1963402977647525,
+       0.1863294077463571
+      ],
+      "Lab": [
+       21.037532715279546,
+       0.7661182005375688,
+       2.0966841107459944
+      ],
+      "aStar": 0.7661182005375688,
+      "bStar": 2.0966841107459944,
+      "croma": 2.2322682091204102,
+      "matiz": 69.92794175099283,
+      "metal_ef": 0.31524015686274515,
+      "rough_ef": 0.4820533333333334
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 32.14752918192438,
+      "Lmedia_por_texel": 35.92149161769128,
+      "Lp05": 13.388994465542428,
+      "Lp50": 31.00727809866747,
+      "Lp95": 57.931388563665976,
+      "Lp99": 73.57170475634862,
+      "pct_preto": 3.839930434782609,
+      "pct_branco": 0,
+      "rgb": [
+       0.09410127372751853,
+       0.09200030100223945,
+       0.0928687025040987
+      ],
+      "Lab": [
+       8.039251281807925,
+       0.31897067768146825,
+       -0.0635393619853486
+      ],
+      "aStar": 0.31897067768146825,
+      "bStar": -0.0635393619853486,
+      "croma": 0.32523767269810594,
+      "matiz": 348.73407835009334,
+      "metal_ef": 0.5731639215686275,
+      "rough_ef": 0.4820533333333334
+     },
      "vm@atacadao_treta": {
       "Lmean": 34.026462657947626,
       "Lmedia_por_texel": 36.70365245013718,
@@ -11670,84 +12828,6 @@
       "bStar": -1.3900238810237775,
       "croma": 1.3904210086772286,
       "matiz": 271.36943010766055,
-      "metal_ef": 0.5731639215686275,
-      "rough_ef": 0.4820533333333334
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 36.40555472143309,
-      "Lmedia_por_texel": 39.10776958229938,
-      "Lp05": 18.184797008308088,
-      "Lp50": 35.218150787620544,
-      "Lp95": 58.724325625827774,
-      "Lp99": 84.39700803218942,
-      "pct_preto": 1.1993043478260865,
-      "pct_branco": 0.6130782608695656,
-      "rgb": [
-       0.09981422828746887,
-       0.1124088990435658,
-       0.12644836177829663
-      ],
-      "Lab": [
-       10.412229289312773,
-       -0.49766461639681736,
-       -2.9665633770911306
-      ],
-      "aStar": -0.49766461639681736,
-      "bStar": -2.9665633770911306,
-      "croma": 3.008017343818304,
-      "matiz": 260.47685205650305,
-      "metal_ef": 0.5731639215686275,
-      "rough_ef": 0.4820533333333334
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 48.04810814140434,
-      "Lmedia_por_texel": 49.82071566494767,
-      "Lp05": 28.217917376357555,
-      "Lp50": 48.07865293863584,
-      "Lp95": 68.42412637157834,
-      "Lp99": 90.74338621586897,
-      "pct_preto": 0,
-      "pct_branco": 0.8550956521739135,
-      "rgb": [
-       0.1699544423251823,
-       0.19238216787792226,
-       0.21725920356456427
-      ],
-      "Lab": [
-       20.051917179182638,
-       -0.7849571564647606,
-       -4.853379296628346
-      ],
-      "aStar": -0.7849571564647606,
-      "bStar": -4.853379296628346,
-      "croma": 4.916446718355229,
-      "matiz": 260.8128702247625,
-      "metal_ef": 0.31524015686274515,
-      "rough_ef": 0.4820533333333334
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 32.63633221291781,
-      "Lmedia_por_texel": 36.75549833077598,
-      "Lp05": 13.916703204621953,
-      "Lp50": 30.75753266702528,
-      "Lp95": 62.86608902117837,
-      "Lp99": 79.59103649268907,
-      "pct_preto": 3.435965217391305,
-      "pct_branco": 0,
-      "rgb": [
-       0.08580882665151002,
-       0.09846968109655235,
-       0.1118883845566064
-      ],
-      "Lab": [
-       8.615786490415129,
-       -0.5494322642377453,
-       -2.9083169141607246
-      ],
-      "aStar": -0.5494322642377453,
-      "bStar": -2.9083169141607246,
-      "croma": 2.959760646771758,
-      "matiz": 259.30190067496494,
       "metal_ef": 0.5731639215686275,
       "rough_ef": 0.4820533333333334
      }
@@ -12229,6 +13309,84 @@
       "metal_ef": 0.5535827450980393,
       "rough_ef": 0.5134086274509804
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 34.32730868320071,
+      "Lmedia_por_texel": 36.454561853219865,
+      "Lp05": 15.25554752408441,
+      "Lp50": 34.55147706432849,
+      "Lp95": 51.169826849917925,
+      "Lp99": 78.68578225278364,
+      "pct_preto": 0.12758260869565216,
+      "pct_branco": 0.38810434782608716,
+      "rgb": [
+       0.1131750969211243,
+       0.09321230831171112,
+       0.08780806903616917
+      ],
+      "Lab": [
+       8.674490125285828,
+       2.219893815572749,
+       1.892381372829366
+      ],
+      "aStar": 2.219893815572749,
+      "bStar": 1.892381372829366,
+      "croma": 2.9170251648982553,
+      "matiz": 40.44642446273946,
+      "metal_ef": 0.5535827450980393,
+      "rough_ef": 0.5134086274509804
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 48.47726086493505,
+      "Lmedia_por_texel": 50.03631356962522,
+      "Lp05": 30.124461150107166,
+      "Lp50": 48.59263323746137,
+      "Lp95": 65.8547416680145,
+      "Lp99": 89.29181593791019,
+      "pct_preto": 0,
+      "pct_branco": 0.7664695652173917,
+      "rgb": [
+       0.21850241964541356,
+       0.18196327770376072,
+       0.1666332611168248
+      ],
+      "Lab": [
+       19.999357781093487,
+       3.4515043359235884,
+       4.082847674399403
+      ],
+      "aStar": 3.4515043359235884,
+      "bStar": 4.082847674399403,
+      "croma": 5.346262929677883,
+      "matiz": 49.78992726983688,
+      "metal_ef": 0.3044705098039216,
+      "rough_ef": 0.5134086274509804
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 31.727491850358003,
+      "Lmedia_por_texel": 35.09996320066835,
+      "Lp05": 10.29674757665967,
+      "Lp50": 29.416149805677165,
+      "Lp95": 57.92093782130411,
+      "Lp99": 65.32077411834923,
+      "pct_preto": 9.713321739130434,
+      "pct_branco": 0,
+      "rgb": [
+       0.106054350942412,
+       0.0860928355184852,
+       0.08166200925523298
+      ],
+      "Lab": [
+       7.760852561325304,
+       2.2904606767922413,
+       1.6427797817841872
+      ],
+      "aStar": 2.2904606767922413,
+      "bStar": 1.6427797817841872,
+      "croma": 2.818676200518689,
+      "matiz": 35.64910478795355,
+      "metal_ef": 0.5535827450980393,
+      "rough_ef": 0.5134086274509804
+     },
      "vm@atacadao_treta": {
       "Lmean": 33.3619524144783,
       "Lmedia_por_texel": 35.672666113112726,
@@ -12304,84 +13462,6 @@
       "bStar": 0.8355463278235331,
       "croma": 2.310042142992088,
       "matiz": 21.20474427395783,
-      "metal_ef": 0.5535827450980393,
-      "rough_ef": 0.5134086274509804
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 35.68351251015059,
-      "Lmedia_por_texel": 37.98178838752978,
-      "Lp05": 16.614419850028618,
-      "Lp50": 35.69443395538287,
-      "Lp95": 54.53788693247124,
-      "Lp99": 80.71885672339647,
-      "pct_preto": 0.04417391304347826,
-      "pct_branco": 0.428034782608696,
-      "rgb": [
-       0.10626390336006941,
-       0.10454097744899678,
-       0.11401637606435674
-      ],
-      "Lab": [
-       9.733010099943684,
-       0.8395957362830192,
-       -1.5979360365358186
-      ],
-      "aStar": 0.8395957362830192,
-      "bStar": -1.5979360365358186,
-      "croma": 1.8050818754960747,
-      "matiz": 297.7185641638705,
-      "metal_ef": 0.5535827450980393,
-      "rough_ef": 0.5134086274509804
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 47.14781645786313,
-      "Lmedia_por_texel": 48.805556334311945,
-      "Lp05": 29.07687714593957,
-      "Lp50": 46.5958587255711,
-      "Lp95": 64.53584109482696,
-      "Lp99": 88.07316199399908,
-      "pct_preto": 0,
-      "pct_branco": 0.6471652173913048,
-      "rgb": [
-       0.17591825290241214,
-       0.17743408644869935,
-       0.1951588842472901
-      ],
-      "Lab": [
-       18.707510471935997,
-       0.9438111513349057,
-       -2.959135199346985
-      ],
-      "aStar": 0.9438111513349057,
-      "bStar": -2.959135199346985,
-      "croma": 3.106003962875521,
-      "matiz": 287.6899944117152,
-      "metal_ef": 0.3044705098039216,
-      "rough_ef": 0.5134086274509804
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 32.11374713633986,
-      "Lmedia_por_texel": 35.73807557769378,
-      "Lp05": 11.061087244887172,
-      "Lp50": 29.914189251753626,
-      "Lp95": 62.66329765901459,
-      "Lp99": 70.03331312263273,
-      "pct_preto": 7.32918260869565,
-      "pct_branco": 0,
-      "rgb": [
-       0.09482625474524067,
-       0.09246591856948685,
-       0.10014183943271251
-      ],
-      "Lab": [
-       8.173319906988517,
-       0.8072100245393038,
-       -1.272889868316368
-      ],
-      "aStar": 0.8072100245393038,
-      "bStar": -1.272889868316368,
-      "croma": 1.5072613046778598,
-      "matiz": 302.3810491787798,
       "metal_ef": 0.5535827450980393,
       "rough_ef": 0.5134086274509804
      }
@@ -12863,6 +13943,84 @@
       "metal_ef": 0.2990572549019607,
       "rough_ef": 0.28835137254901966
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 27.183984362993577,
+      "Lmedia_por_texel": 31.02858034557383,
+      "Lp05": 12.678386002226109,
+      "Lp50": 25.80173218141495,
+      "Lp95": 42.56147079471611,
+      "Lp99": 97.1847536732663,
+      "pct_preto": 3.571408695652173,
+      "pct_branco": 1.2173913043478266,
+      "rgb": [
+       0.06242090417120072,
+       0.0676638089562672,
+       0.07785528467190761
+      ],
+      "Lab": [
+       5.132856627365136,
+       0.06273312601574876,
+       -1.677489524375697
+      ],
+      "aStar": 0.06273312601574876,
+      "bStar": -1.677489524375697,
+      "croma": 1.6786621308321428,
+      "matiz": 272.1416939422792,
+      "metal_ef": 0.2990572549019607,
+      "rough_ef": 0.28835137254901966
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 37.37525862710688,
+      "Lmedia_por_texel": 40.072840569617675,
+      "Lp05": 20.665109139002546,
+      "Lp50": 37.844619816732724,
+      "Lp95": 51.82678009881637,
+      "Lp99": 99.83355562876739,
+      "pct_preto": 0,
+      "pct_branco": 1.2173913043478268,
+      "rgb": [
+       0.10974111924066017,
+       0.1146470826927208,
+       0.12409480899254018
+      ],
+      "Lab": [
+       10.844131240185785,
+       0.050198630936026944,
+       -1.8535172625807839
+      ],
+      "aStar": 0.050198630936026944,
+      "bStar": -1.8535172625807839,
+      "croma": 1.8541969003406338,
+      "matiz": 271.55135689829126,
+      "metal_ef": 0.16448149019607844,
+      "rough_ef": 0.28835137254901966
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 26.01589446336489,
+      "Lmedia_por_texel": 29.56841720447584,
+      "Lp05": 11.212234716895427,
+      "Lp50": 24.030111612442873,
+      "Lp95": 52.713023520138094,
+      "Lp99": 58.29706627414781,
+      "pct_preto": 8.344765217391304,
+      "pct_branco": 0,
+      "rgb": [
+       0.0567391245388122,
+       0.061709534013064345,
+       0.07161334170077226
+      ],
+      "Lab": [
+       4.556983666057178,
+       0.06827019344725349,
+       -1.5182714107774942
+      ],
+      "aStar": 0.06827019344725349,
+      "bStar": -1.5182714107774942,
+      "croma": 1.5198055454885036,
+      "matiz": 272.57461268792196,
+      "metal_ef": 0.2990572549019607,
+      "rough_ef": 0.28835137254901966
+     },
      "vm@atacadao_treta": {
       "Lmean": 26.40352155746348,
       "Lmedia_por_texel": 30.417865637973918,
@@ -12938,84 +14096,6 @@
       "bStar": -2.289642293186306,
       "croma": 2.289774124574718,
       "matiz": 269.38517317830895,
-      "metal_ef": 0.2990572549019607,
-      "rough_ef": 0.28835137254901966
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 28.475163608161186,
-      "Lmedia_por_texel": 32.440188269475385,
-      "Lp05": 13.333809257548161,
-      "Lp50": 26.052958066286465,
-      "Lp95": 46.12272152732298,
-      "Lp99": 97.76308136953466,
-      "pct_preto": 2.5860173913043476,
-      "pct_branco": 1.2173913043478268,
-      "rgb": [
-       0.061449296653591355,
-       0.07504433526358702,
-       0.09471864171334196
-      ],
-      "Lab": [
-       5.819127431446226,
-       -0.10692909059382971,
-       -3.763864819311663
-      ],
-      "aStar": -0.10692909059382971,
-      "bStar": -3.763864819311663,
-      "croma": 3.7653834078971613,
-      "matiz": 268.3726997519851,
-      "metal_ef": 0.2990572549019607,
-      "rough_ef": 0.28835137254901966
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 36.866191635433125,
-      "Lmedia_por_texel": 39.79916415136815,
-      "Lp05": 20.299354551564846,
-      "Lp50": 36.27639229721117,
-      "Lp95": 53.74073990428312,
-      "Lp99": 99.852774079648,
-      "pct_preto": 0,
-      "pct_branco": 1.2173913043478266,
-      "rgb": [
-       0.0933775592959882,
-       0.11500360274840371,
-       0.14447358839729943
-      ],
-      "Lab": [
-       10.698322554492641,
-       -0.26108007236362585,
-       -5.948373925406846
-      ],
-      "aStar": -0.26108007236362585,
-      "bStar": -5.948373925406846,
-      "croma": 5.954100701251655,
-      "matiz": 267.4868439841799,
-      "metal_ef": 0.16448149019607844,
-      "rough_ef": 0.28835137254901966
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 27.17539505152569,
-      "Lmedia_por_texel": 31.329933857928378,
-      "Lp05": 11.828750470409076,
-      "Lp50": 24.348438505546383,
-      "Lp95": 56.85735191549588,
-      "Lp99": 64.75758355814789,
-      "pct_preto": 5.623443478260868,
-      "pct_branco": 0,
-      "rgb": [
-       0.05619163110391214,
-       0.07037219387471338,
-       0.08928441445453326
-      ],
-      "Lab": [
-       5.309175304364988,
-       -0.19229647396599991,
-       -3.4697088795888176
-      ],
-      "aStar": -0.19229647396599991,
-      "bStar": -3.4697088795888176,
-      "croma": 3.475033473651332,
-      "matiz": 266.82782706695264,
       "metal_ef": 0.2990572549019607,
       "rough_ef": 0.28835137254901966
      }
@@ -13497,6 +14577,84 @@
       "metal_ef": 0.07786509803921567,
       "rough_ef": 0.32012235294117647
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 35.857103297064555,
+      "Lmedia_por_texel": 38.341739645147506,
+      "Lp05": 18.313807759031405,
+      "Lp50": 35.5813362029132,
+      "Lp95": 51.79013798882818,
+      "Lp99": 96.9589498253751,
+      "pct_preto": 0.4469565217391305,
+      "pct_branco": 1.211060869565218,
+      "rgb": [
+       0.10050223599594514,
+       0.10619143574350351,
+       0.11524372689899284
+      ],
+      "Lab": [
+       9.742206657054979,
+       -0.0669622045122581,
+       -1.8352074647807748
+      ],
+      "aStar": -0.0669622045122581,
+      "bStar": -1.8352074647807748,
+      "croma": 1.836428701480191,
+      "matiz": 267.91034501120373,
+      "metal_ef": 0.07786509803921567,
+      "rough_ef": 0.32012235294117647
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 46.01417774481216,
+      "Lmedia_por_texel": 47.91556954644495,
+      "Lp05": 25.87233433836628,
+      "Lp50": 46.2789152686494,
+      "Lp95": 63.64545289444084,
+      "Lp99": 99.82098241339534,
+      "pct_preto": 0,
+      "pct_branco": 1.214469565217392,
+      "rgb": [
+       0.16919810534430793,
+       0.17254368903739506,
+       0.17710161432800756
+      ],
+      "Lab": [
+       17.957903917260246,
+       -0.09763388374728343,
+       -0.8846294329576843
+      ],
+      "aStar": -0.09763388374728343,
+      "bStar": -0.8846294329576843,
+      "croma": 0.8900009038819073,
+      "matiz": 263.7019270046068,
+      "metal_ef": 0.04282580392156863,
+      "rough_ef": 0.32012235294117647
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 34.529107350496275,
+      "Lmedia_por_texel": 37.289666490226196,
+      "Lp05": 15.602729426975927,
+      "Lp50": 33.821747437825664,
+      "Lp95": 59.47749981284345,
+      "Lp99": 63.97844361679243,
+      "pct_preto": 1.2111304347826086,
+      "pct_branco": 0,
+      "rgb": [
+       0.09706460746536914,
+       0.10012141544468282,
+       0.10594992539678576
+      ],
+      "Lab": [
+       8.999064421382286,
+       0.020534759030285676,
+       -1.167283383902229
+      ],
+      "aStar": 0.020534759030285676,
+      "bStar": -1.167283383902229,
+      "croma": 1.1674639928762987,
+      "matiz": 271.0078389641816,
+      "metal_ef": 0.07786509803921567,
+      "rough_ef": 0.32012235294117647
+     },
      "vm@atacadao_treta": {
       "Lmean": 35.033725889930025,
       "Lmedia_por_texel": 37.65586379794303,
@@ -13572,84 +14730,6 @@
       "bStar": -2.9121190580463088,
       "croma": 2.9417385253337174,
       "matiz": 261.86253205866336,
-      "metal_ef": 0.07786509803921567,
-      "rough_ef": 0.32012235294117647
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 37.56022471374518,
-      "Lmedia_por_texel": 40.080523823739554,
-      "Lp05": 19.50857245018716,
-      "Lp50": 36.84188968489142,
-      "Lp95": 54.63866348510976,
-      "Lp99": 97.55647667204074,
-      "pct_preto": 0.26817391304347826,
-      "pct_branco": 1.211547826086957,
-      "rgb": [
-       0.09671106456226113,
-       0.11874404450822605,
-       0.1462650196469837
-      ],
-      "Lab": [
-       11.138926877735724,
-       -0.4705887112982782,
-       -5.609496979142597
-      ],
-      "aStar": -0.4705887112982782,
-      "bStar": -5.609496979142597,
-      "croma": 5.629201550327657,
-      "matiz": 265.2046038441057,
-      "metal_ef": 0.07786509803921567,
-      "rough_ef": 0.32012235294117647
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 45.22699997731446,
-      "Lmedia_por_texel": 47.27362923063682,
-      "Lp05": 25.36772841907686,
-      "Lp50": 45.074679578461335,
-      "Lp95": 62.996304058841446,
-      "Lp99": 99.67914008436597,
-      "pct_preto": 0,
-      "pct_branco": 1.214469565217392,
-      "rgb": [
-       0.1404572397490113,
-       0.17064980481740027,
-       0.20651821356710656
-      ],
-      "Lab": [
-       17.41892550316328,
-       -0.7242319078046289,
-       -6.988746572721083
-      ],
-      "aStar": -0.7242319078046289,
-      "bStar": -6.988746572721083,
-      "croma": 7.026171824970054,
-      "matiz": 264.0836538160562,
-      "metal_ef": 0.04282580392156863,
-      "rough_ef": 0.32012235294117647
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 35.995710236595535,
-      "Lmedia_por_texel": 38.97322523234915,
-      "Lp05": 16.91688365945687,
-      "Lp50": 34.724557204896506,
-      "Lp95": 64.90151330358923,
-      "Lp99": 68.39585776308144,
-      "pct_preto": 0.8377739130434781,
-      "pct_branco": 0,
-      "rgb": [
-       0.09110757691607227,
-       0.11222127709356594,
-       0.13471918307301575
-      ],
-      "Lab": [
-       10.277563076796643,
-       -0.7704978252452005,
-       -4.752268207909416
-      ],
-      "aStar": -0.7704978252452005,
-      "bStar": -4.752268207909416,
-      "croma": 4.81432446129404,
-      "matiz": 260.79062121361204,
       "metal_ef": 0.07786509803921567,
       "rough_ef": 0.32012235294117647
      }
@@ -14131,6 +15211,84 @@
       "metal_ef": 0.04073098039215686,
       "rough_ef": 0.36523921568627454
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 29.164805565389056,
+      "Lmedia_por_texel": 32.38175112298386,
+      "Lp05": 15.807871625661399,
+      "Lp50": 28.950026270625997,
+      "Lp95": 40.269047453039555,
+      "Lp99": 96.05232872063603,
+      "pct_preto": 0.07102608695652173,
+      "pct_branco": 1.2081391304347833,
+      "rgb": [
+       0.0680157558351032,
+       0.07313664811214277,
+       0.08086507500729898
+      ],
+      "Lab": [
+       5.682493234111885,
+       -0.07107605282728746,
+       -1.3740868907022918
+      ],
+      "aStar": -0.07107605282728746,
+      "bStar": -1.3740868907022918,
+      "croma": 1.3759239035954711,
+      "matiz": 267.0389560346402,
+      "metal_ef": 0.04073098039215686,
+      "rough_ef": 0.36523921568627454
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 38.084985058100955,
+      "Lmedia_por_texel": 40.71652452357301,
+      "Lp05": 22.879882466607036,
+      "Lp50": 39.83622472478247,
+      "Lp95": 53.22116073954045,
+      "Lp99": 99.28152946471292,
+      "pct_preto": 0,
+      "pct_branco": 1.214469565217392,
+      "rgb": [
+       0.11332391725848649,
+       0.11748442707291072,
+       0.12215113765415972
+      ],
+      "Lab": [
+       11.176347110462423,
+       -0.18945370839232312,
+       -0.9871002784181071
+      ],
+      "aStar": -0.18945370839232312,
+      "bStar": -0.9871002784181071,
+      "croma": 1.0051167431083357,
+      "matiz": 259.1353679030706,
+      "metal_ef": 0.02240203921568628,
+      "rough_ef": 0.36523921568627454
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 27.60621042160999,
+      "Lmedia_por_texel": 31.218302340037102,
+      "Lp05": 13.041386970156957,
+      "Lp50": 26.449360207817918,
+      "Lp95": 56.07465329155829,
+      "Lp99": 58.58340463325304,
+      "pct_preto": 0.3323826086956521,
+      "pct_branco": 0,
+      "rgb": [
+       0.06328511177860306,
+       0.06797515920504418,
+       0.07515667631663706
+      ],
+      "Lab": [
+       5.1512567227979815,
+       -0.0569927845980589,
+       -1.201992611308239
+      ],
+      "aStar": -0.0569927845980589,
+      "bStar": -1.201992611308239,
+      "croma": 1.2033430164071424,
+      "matiz": 267.28533923329803,
+      "metal_ef": 0.04073098039215686,
+      "rough_ef": 0.36523921568627454
+     },
      "vm@atacadao_treta": {
       "Lmean": 28.356495763694966,
       "Lmedia_por_texel": 31.74952677818477,
@@ -14206,84 +15364,6 @@
       "bStar": -2.2355969016868036,
       "croma": 2.2469005514229985,
       "matiz": 264.2504045440904,
-      "metal_ef": 0.04073098039215686,
-      "rough_ef": 0.36523921568627454
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 30.68934868123351,
-      "Lmedia_por_texel": 34.0091151620117,
-      "Lp05": 16.8528424306826,
-      "Lp50": 27.29059412759983,
-      "Lp95": 44.974818489750774,
-      "Lp99": 96.74856532088147,
-      "pct_preto": 0.052939130434782586,
-      "pct_branco": 1.2105739130434785,
-      "rgb": [
-       0.06607170411096154,
-       0.0821504006712747,
-       0.1022354562968407
-      ],
-      "Lab": [
-       6.567701548103869,
-       -0.33618114323868964,
-       -4.135583005020865
-      ],
-      "aStar": -0.33618114323868964,
-      "bStar": -4.135583005020865,
-      "croma": 4.149224572433587,
-      "matiz": 265.3526502756117,
-      "metal_ef": 0.04073098039215686,
-      "rough_ef": 0.36523921568627454
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 37.43157233771581,
-      "Lmedia_por_texel": 40.267235979050355,
-      "Lp05": 22.22333966210084,
-      "Lp50": 35.14001813881234,
-      "Lp95": 52.21832488952299,
-      "Lp99": 98.92758439875418,
-      "pct_preto": 0,
-      "pct_branco": 1.2134956521739138,
-      "rgb": [
-       0.09438874162963655,
-       0.1170815391018202,
-       0.1436589119681722
-      ],
-      "Lab": [
-       10.903539218785355,
-       -0.6122291419938114,
-       -5.482309035899507
-      ],
-      "aStar": -0.6122291419938114,
-      "bStar": -5.482309035899507,
-      "croma": 5.516388029083148,
-      "matiz": 263.62797546846707,
-      "metal_ef": 0.02240203921568628,
-      "rough_ef": 0.36523921568627454
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 28.776331933407953,
-      "Lmedia_por_texel": 32.97552949869137,
-      "Lp05": 13.991082298623784,
-      "Lp50": 26.285535249390072,
-      "Lp95": 63.700492818976244,
-      "Lp99": 66.04272782964361,
-      "pct_preto": 0.19290434782608692,
-      "pct_branco": 0,
-      "rgb": [
-       0.06136452658631113,
-       0.07739631996526952,
-       0.09576068826418749
-      ],
-      "Lab": [
-       6.014282086085547,
-       -0.4251124384911653,
-       -3.6852028572009865
-      ],
-      "aStar": -0.4251124384911653,
-      "bStar": -3.6852028572009865,
-      "croma": 3.70964158431542,
-      "matiz": 263.4196399363021,
       "metal_ef": 0.04073098039215686,
       "rough_ef": 0.36523921568627454
      }
@@ -14765,6 +15845,84 @@
       "metal_ef": 0.5008360784313726,
       "rough_ef": 0.3276627450980392
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 32.872717568388936,
+      "Lmedia_por_texel": 36.09820811496041,
+      "Lp05": 12.899419493382261,
+      "Lp50": 32.949805005281114,
+      "Lp95": 52.82025961244652,
+      "Lp99": 95.8757353207702,
+      "pct_preto": 2.3227826086956513,
+      "pct_branco": 1.1764869565217395,
+      "rgb": [
+       0.0894200106020422,
+       0.09573433995238831,
+       0.10735286472118676
+      ],
+      "Lab": [
+       8.403702667091132,
+       0.047822054942123216,
+       -2.3410598614660993
+      ],
+      "aStar": 0.047822054942123216,
+      "bStar": -2.3410598614660993,
+      "croma": 2.341548253593455,
+      "matiz": 271.1702481157895,
+      "metal_ef": 0.5008360784313726,
+      "rough_ef": 0.3276627450980392
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 45.67821021702218,
+      "Lmedia_por_texel": 47.85100598912281,
+      "Lp05": 18.43056361031261,
+      "Lp50": 45.69224652084288,
+      "Lp95": 66.24543665507707,
+      "Lp99": 99.18558544838702,
+      "pct_preto": 0.06692173913043477,
+      "pct_branco": 1.2173913043478266,
+      "rgb": [
+       0.17423032877791492,
+       0.17907202453428755,
+       0.1879498789485203
+      ],
+      "Lab": [
+       18.73800028794522,
+       0.0085218853754232,
+       -1.6447440083109943
+      ],
+      "aStar": 0.0085218853754232,
+      "bStar": -1.6447440083109943,
+      "croma": 1.6447660853158628,
+      "matiz": 270.2968630338883,
+      "metal_ef": 0.2754598431372549,
+      "rough_ef": 0.3276627450980392
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 31.190856088970545,
+      "Lmedia_por_texel": 34.751470946084744,
+      "Lp05": 10.39431460216754,
+      "Lp50": 28.65010134715441,
+      "Lp95": 57.67530813129444,
+      "Lp99": 68.48187859709122,
+      "pct_preto": 10.682504347826088,
+      "pct_branco": 0,
+      "rgb": [
+       0.08219497865250969,
+       0.08886635629396973,
+       0.10069357680489291
+      ],
+      "Lab": [
+       7.511170813139799,
+       0.02395067434052267,
+       -2.3967369512585823
+      ],
+      "aStar": 0.02395067434052267,
+      "bStar": -2.3967369512585823,
+      "croma": 2.396856618225139,
+      "matiz": 270.5725396270567,
+      "metal_ef": 0.5008360784313726,
+      "rough_ef": 0.3276627450980392
+     },
      "vm@atacadao_treta": {
       "Lmean": 31.982268201447,
       "Lmedia_por_texel": 35.35325179578392,
@@ -14840,84 +15998,6 @@
       "bStar": -3.6760535656278237,
       "croma": 3.677857275423301,
       "matiz": 268.20550903159983,
-      "metal_ef": 0.5008360784313726,
-      "rough_ef": 0.3276627450980392
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 34.22764805430198,
-      "Lmedia_por_texel": 37.596019591828046,
-      "Lp05": 13.794051808277008,
-      "Lp50": 33.390642067109,
-      "Lp95": 56.58264628767898,
-      "Lp99": 96.59432083472146,
-      "pct_preto": 1.4893217391304348,
-      "pct_branco": 1.1803826086956528,
-      "rgb": [
-       0.08723894200887992,
-       0.10565926400026426,
-       0.13028533621892838
-      ],
-      "Lab": [
-       9.526929766117977,
-       -0.303663524383338,
-       -5.054048051396226
-      ],
-      "aStar": -0.303663524383338,
-      "bStar": -5.054048051396226,
-      "croma": 5.063162375616932,
-      "matiz": 266.56161811973726,
-      "metal_ef": 0.5008360784313726,
-      "rough_ef": 0.3276627450980392
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 44.991805093823515,
-      "Lmedia_por_texel": 47.33089165984888,
-      "Lp05": 18.34197664297413,
-      "Lp50": 45.94946431217627,
-      "Lp95": 67.1221027311365,
-      "Lp99": 98.8082956890095,
-      "pct_preto": 0.06518260869565218,
-      "pct_branco": 1.2154434782608703,
-      "rgb": [
-       0.14685933170228269,
-       0.17769037967593446,
-       0.21689656841068072
-      ],
-      "Lab": [
-       18.28099506569847,
-       -0.5415926533632598,
-       -7.507610023957223
-      ],
-      "aStar": -0.5415926533632598,
-      "bStar": -7.507610023957223,
-      "croma": 7.527119693083141,
-      "matiz": 265.87387842258767,
-      "metal_ef": 0.2754598431372549,
-      "rough_ef": 0.3276627450980392
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 32.27350856233189,
-      "Lmedia_por_texel": 36.44562912000457,
-      "Lp05": 11.061827053932976,
-      "Lp50": 30.23722684637535,
-      "Lp95": 64.45657500868286,
-      "Lp99": 74.86759318731303,
-      "pct_preto": 7.620730434782609,
-      "pct_branco": 0,
-      "rgb": [
-       0.08008314702170692,
-       0.0992834594756454,
-       0.12297244969623713
-      ],
-      "Lab": [
-       8.67832409781461,
-       -0.45148171446261764,
-       -4.956839742768182
-      ],
-      "aStar": -0.45148171446261764,
-      "bStar": -4.956839742768182,
-      "croma": 4.977358332889067,
-      "matiz": 264.7957129659758,
       "metal_ef": 0.5008360784313726,
       "rough_ef": 0.3276627450980392
      }
@@ -15399,6 +16479,84 @@
       "metal_ef": 0.6914870588235295,
       "rough_ef": 0.41562352941176467
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 36.96707136130547,
+      "Lmedia_por_texel": 39.603738223171,
+      "Lp05": 18.186550340568253,
+      "Lp50": 38.93208179110371,
+      "Lp95": 51.79031507319674,
+      "Lp99": 85.67791466435865,
+      "pct_preto": 0,
+      "pct_branco": 0.9622260869565221,
+      "rgb": [
+       0.12868249603012824,
+       0.10791702173690515,
+       0.09421153332663015
+      ],
+      "Lab": [
+       10.514681963375303,
+       1.824848588142025,
+       3.374504796516953
+      ],
+      "aStar": 1.824848588142025,
+      "bStar": 3.374504796516953,
+      "croma": 3.8363205016473616,
+      "matiz": 61.596575662254736,
+      "metal_ef": 0.6914870588235295,
+      "rough_ef": 0.41562352941176467
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 52.3226663937913,
+      "Lmedia_por_texel": 53.807794114862546,
+      "Lp05": 35.84532008992856,
+      "Lp50": 53.84939655372216,
+      "Lp95": 65.83413227403369,
+      "Lp99": 93.48758903658704,
+      "pct_preto": 0,
+      "pct_branco": 1.007513043478261,
+      "rgb": [
+       0.24976472809118455,
+       0.2130160253637486,
+       0.1813361764849234
+      ],
+      "Lab": [
+       23.495582579052197,
+       2.602510312237294,
+       6.606658759973383
+      ],
+      "aStar": 2.602510312237294,
+      "bStar": 6.606658759973383,
+      "croma": 7.1007745983121096,
+      "matiz": 68.49941278005798,
+      "metal_ef": 0.38031788235294123,
+      "rough_ef": 0.41562352941176467
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 34.607528299589546,
+      "Lmedia_por_texel": 38.2247984070241,
+      "Lp05": 15.030188854037686,
+      "Lp50": 33.51033334163359,
+      "Lp95": 63.7622634964619,
+      "Lp99": 67.40102062848791,
+      "pct_preto": 0,
+      "pct_branco": 0,
+      "rgb": [
+       0.11998229901994673,
+       0.10027173969961073,
+       0.08877093988680329
+      ],
+      "Lab": [
+       9.524474750862144,
+       1.828648581680206,
+       2.9609153236689725
+      ],
+      "aStar": 1.828648581680206,
+      "bStar": 2.9609153236689725,
+      "croma": 3.4800826411478742,
+      "matiz": 58.30070029729268,
+      "metal_ef": 0.6914870588235295,
+      "rough_ef": 0.41562352941176467
+     },
      "vm@atacadao_treta": {
       "Lmean": 35.846101589084185,
       "Lmedia_por_texel": 38.63314388616598,
@@ -15474,84 +16632,6 @@
       "bStar": 2.2946929857279805,
       "croma": 2.7624022375562025,
       "matiz": 56.16942491740241,
-      "metal_ef": 0.6914870588235295,
-      "rough_ef": 0.41562352941176467
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 38.21215909165936,
-      "Lmedia_por_texel": 41.03957922393855,
-      "Lp05": 19.104864697223185,
-      "Lp50": 38.63010281601324,
-      "Lp95": 55.321227763757406,
-      "Lp99": 87.24073937191778,
-      "pct_preto": 0,
-      "pct_branco": 0.9787826086956525,
-      "rgb": [
-       0.12281858586973503,
-       0.1196526728591145,
-       0.11720057416295292
-      ],
-      "Lab": [
-       11.580399776639634,
-       0.2287121491683919,
-       0.5622849823121834
-      ],
-      "aStar": 0.2287121491683919,
-      "bStar": 0.5622849823121834,
-      "croma": 0.6070203032115459,
-      "matiz": 67.86572738593833,
-      "metal_ef": 0.6914870588235295,
-      "rough_ef": 0.41562352941176467
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 51.08070550555284,
-      "Lmedia_por_texel": 52.667752732858155,
-      "Lp05": 35.03766740572975,
-      "Lp50": 50.42652170286814,
-      "Lp95": 65.01229739153166,
-      "Lp99": 92.61315394027717,
-      "pct_preto": 0,
-      "pct_branco": 1.0045913043478265,
-      "rgb": [
-       0.20588006837903644,
-       0.20834137661544477,
-       0.20936094864845564
-      ],
-      "Lab": [
-       22.166415039965926,
-       -0.2114254961564921,
-       -0.25893160869668863
-      ],
-      "aStar": -0.2114254961564921,
-      "bStar": -0.25893160869668863,
-      "croma": 0.33428478638321835,
-      "matiz": 230.76732141763097,
-      "metal_ef": 0.38031788235294123,
-      "rough_ef": 0.41562352941176467
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 35.27941857587042,
-      "Lmedia_por_texel": 39.33213275394024,
-      "Lp05": 15.73927492029338,
-      "Lp50": 33.30239078465903,
-      "Lp95": 65.8147740801394,
-      "Lp99": 74.87758948835821,
-      "pct_preto": 0,
-      "pct_branco": 0,
-      "rgb": [
-       0.1113319096643507,
-       0.10947297688906253,
-       0.10821059923814848
-      ],
-      "Lab": [
-       10.26518948848074,
-       0.1460997497854527,
-       0.302530454601152
-      ],
-      "aStar": 0.1460997497854527,
-      "bStar": 0.302530454601152,
-      "croma": 0.335961028764575,
-      "matiz": 64.22290649535176,
       "metal_ef": 0.6914870588235295,
       "rough_ef": 0.41562352941176467
      }
@@ -16033,6 +17113,84 @@
       "metal_ef": 0.31780392156862747,
       "rough_ef": 0.4084517647058824
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 37.62211879709709,
+      "Lmedia_por_texel": 40.168191739121035,
+      "Lp05": 14.726936228071228,
+      "Lp50": 36.69100557128655,
+      "Lp95": 60.53034897981462,
+      "Lp99": 92.4326328990476,
+      "pct_preto": 2.382052173913043,
+      "pct_branco": 1.0459826086956525,
+      "rgb": [
+       0.13283685955721433,
+       0.12188655000104032,
+       0.1128999280183611
+      ],
+      "Lab": [
+       12.022976483544483,
+       0.7992573208130127,
+       2.0404679176159455
+      ],
+      "aStar": 0.7992573208130127,
+      "bStar": 2.0404679176159455,
+      "croma": 2.1914199934501712,
+      "matiz": 68.60957436348929,
+      "metal_ef": 0.31780392156862747,
+      "rough_ef": 0.4084517647058824
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 48.944737243570415,
+      "Lmedia_por_texel": 50.92842115600855,
+      "Lp05": 21.11810398071939,
+      "Lp50": 48.92009952690155,
+      "Lp95": 73.37869521243483,
+      "Lp99": 96.99248442625179,
+      "pct_preto": 0.10768695652173917,
+      "pct_branco": 1.2173913043478266,
+      "rgb": [
+       0.22843223387174894,
+       0.2078044892607718,
+       0.18736064291200397
+      ],
+      "Lab": [
+       22.527992476457428,
+       1.2388708499188328,
+       4.1260071222318455
+      ],
+      "aStar": 1.2388708499188328,
+      "bStar": 4.1260071222318455,
+      "croma": 4.307985115513577,
+      "matiz": 73.28714143244383,
+      "metal_ef": 0.1747921568627451,
+      "rough_ef": 0.4084517647058824
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 35.515911228683535,
+      "Lmedia_por_texel": 38.79089412449422,
+      "Lp05": 11.589351700555504,
+      "Lp50": 33.66599750370819,
+      "Lp95": 63.99821786791664,
+      "Lp99": 76.1442669042964,
+      "pct_preto": 5.567721739130434,
+      "pct_branco": 0,
+      "rgb": [
+       0.12364031838432418,
+       0.11316420036473292,
+       0.10472745897767823
+      ],
+      "Lab": [
+       10.914752188362037,
+       0.782034102998791,
+       1.9437516726851345
+      ],
+      "aStar": 0.782034102998791,
+      "bStar": 1.9437516726851345,
+      "croma": 2.0951725235214838,
+      "matiz": 68.08348359450008,
+      "metal_ef": 0.31780392156862747,
+      "rough_ef": 0.4084517647058824
+     },
      "vm@atacadao_treta": {
       "Lmean": 36.65895058087704,
       "Lmedia_por_texel": 39.36296689382551,
@@ -16108,84 +17266,6 @@
       "bStar": 0.7846389701205159,
       "croma": 0.8178088923494811,
       "matiz": 73.6256948802453,
-      "metal_ef": 0.31780392156862747,
-      "rough_ef": 0.4084517647058824
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 39.07593667344407,
-      "Lmedia_por_texel": 41.746313123370264,
-      "Lp05": 15.467767518348541,
-      "Lp50": 38.53795573783585,
-      "Lp95": 64.6939038629343,
-      "Lp99": 93.48610110996381,
-      "pct_preto": 1.8596173913043479,
-      "pct_branco": 1.150191304347827,
-      "rgb": [
-       0.12655631905217496,
-       0.1350822742346135,
-       0.14244931271002184
-      ],
-      "Lab": [
-       13.29407555016575,
-       -0.507843141565989,
-       -1.603986440546823
-      ],
-      "aStar": -0.507843141565989,
-      "bStar": -1.603986440546823,
-      "croma": 1.6824616363809548,
-      "matiz": 252.4315299682072,
-      "metal_ef": 0.31780392156862747,
-      "rough_ef": 0.4084517647058824
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 47.934202286716676,
-      "Lmedia_por_texel": 50.07266455308599,
-      "Lp05": 20.3237001849703,
-      "Lp50": 48.61702965493035,
-      "Lp95": 73.2647699775097,
-      "Lp99": 96.47632848797737,
-      "pct_preto": 0.10622608695652173,
-      "pct_branco": 1.2173913043478268,
-      "rgb": [
-       0.19066410079035315,
-       0.20414303078923338,
-       0.21538195259505527
-      ],
-      "Lab": [
-       21.50427291393948,
-       -0.7719253022058226,
-       -2.315407199258035
-      ],
-      "aStar": -0.7719253022058226,
-      "bStar": -2.315407199258035,
-      "croma": 2.440692354755406,
-      "matiz": 251.56231407245576,
-      "metal_ef": 0.1747921568627451,
-      "rough_ef": 0.4084517647058824
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 36.420717267293384,
-      "Lmedia_por_texel": 40.03312963512416,
-      "Lp05": 12.365633330778241,
-      "Lp50": 34.54890956860211,
-      "Lp95": 66.18680519683042,
-      "Lp99": 80.46378496737313,
-      "pct_preto": 4.567234782608696,
-      "pct_branco": 0,
-      "rgb": [
-       0.11391545742850917,
-       0.12297338612171677,
-       0.128764274811062
-      ],
-      "Lab": [
-       11.753631520958546,
-       -0.6818265472871982,
-       -1.3737948999578753
-      ],
-      "aStar": -0.6818265472871982,
-      "bStar": -1.3737948999578753,
-      "croma": 1.533688321575101,
-      "matiz": 243.60438901108262,
       "metal_ef": 0.31780392156862747,
       "rough_ef": 0.4084517647058824
      }
@@ -16667,6 +17747,84 @@
       "metal_ef": 0.4659780392156863,
       "rough_ef": 0.6615796078431373
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 30.595216624893922,
+      "Lmedia_por_texel": 32.51384717379442,
+      "Lp05": 13.512853177859988,
+      "Lp50": 30.562460774977637,
+      "Lp95": 50.2961108197627,
+      "Lp99": 63.731240343467505,
+      "pct_preto": 2.105113043478261,
+      "pct_branco": 0.15874782608695664,
+      "rgb": [
+       0.10639499478136524,
+       0.06999669871526609,
+       0.05910619711122188
+      ],
+      "Lab": [
+       6.298395165507465,
+       3.8239482024960414,
+       3.002377398960576
+      ],
+      "aStar": 3.8239482024960414,
+      "bStar": 3.002377398960576,
+      "croma": 4.861774357285824,
+      "matiz": 38.13727225714257,
+      "metal_ef": 0.4659780392156863,
+      "rough_ef": 0.6615796078431373
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 44.28817674320896,
+      "Lmedia_por_texel": 45.74692047079837,
+      "Lp05": 28.000736162231327,
+      "Lp50": 43.894884174518225,
+      "Lp95": 65.85319679665601,
+      "Lp99": 76.66095324209141,
+      "pct_preto": 0.007095652173913042,
+      "pct_branco": 0.4874434782608697,
+      "rgb": [
+       0.21004170685711557,
+       0.1449535495069288,
+       0.1193425317954865
+      ],
+      "Lab": [
+       16.44996902591665,
+       6.781670450128535,
+       7.441128352612103
+      ],
+      "aStar": 6.781670450128535,
+      "bStar": 7.441128352612103,
+      "croma": 10.067842134946012,
+      "matiz": 47.65468938132352,
+      "metal_ef": 0.25628792156862745,
+      "rough_ef": 0.6615796078431373
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 28.34762499905965,
+      "Lmedia_por_texel": 31.471291457216058,
+      "Lp05": 9.420384347468172,
+      "Lp50": 26.504062843662723,
+      "Lp95": 51.31557387306957,
+      "Lp99": 65.08549897177,
+      "pct_preto": 10.65293913043478,
+      "pct_branco": 0,
+      "rgb": [
+       0.10200273476943796,
+       0.06438146419864865,
+       0.05544238466154945
+      ],
+      "Lab": [
+       5.735328106916949,
+       3.8727637776775348,
+       2.6497259536130855
+      ],
+      "aStar": 3.8727637776775348,
+      "bStar": 2.6497259536130855,
+      "croma": 4.6924776938139985,
+      "matiz": 34.37974222331616,
+      "metal_ef": 0.4659780392156863,
+      "rough_ef": 0.6615796078431373
+     },
      "vm@atacadao_treta": {
       "Lmean": 29.5585584865259,
       "Lmedia_por_texel": 31.641952654313855,
@@ -16742,84 +17900,6 @@
       "bStar": 2.8904401546055225,
       "croma": 5.326697169148006,
       "matiz": 32.86303973813199,
-      "metal_ef": 0.4659780392156863,
-      "rough_ef": 0.6615796078431373
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 31.653242406949435,
-      "Lmedia_por_texel": 33.764434937006676,
-      "Lp05": 14.312429583329024,
-      "Lp50": 31.021764172867428,
-      "Lp95": 52.09673337921927,
-      "Lp99": 67.34874705767717,
-      "pct_preto": 1.6895999999999998,
-      "pct_branco": 0.22886956521739146,
-      "rgb": [
-       0.09937524941645412,
-       0.07879487922603255,
-       0.07646369643523736
-      ],
-      "Lab": [
-       6.895537129865595,
-       2.352215836504648,
-       1.2384081289317783
-      ],
-      "aStar": 2.352215836504648,
-      "bStar": 1.2384081289317783,
-      "croma": 2.6583028486813856,
-      "matiz": 27.766165911171413,
-      "metal_ef": 0.4659780392156863,
-      "rough_ef": 0.6615796078431373
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 42.581124177366036,
-      "Lmedia_por_texel": 44.12003510487159,
-      "Lp05": 26.972469358143087,
-      "Lp50": 41.336661499474275,
-      "Lp95": 64.51671703642381,
-      "Lp99": 76.19323108251561,
-      "pct_preto": 0.011408695652173912,
-      "pct_branco": 0.4587130434782611,
-      "rgb": [
-       0.16650311640001356,
-       0.14008842074032932,
-       0.1392269714053175
-      ],
-      "Lab": [
-       14.797287687596079,
-       3.1201253837292997,
-       1.3150036914685526
-      ],
-      "aStar": 3.1201253837292997,
-      "bStar": 1.3150036914685526,
-      "croma": 3.3859145173450305,
-      "matiz": 22.853409102352202,
-      "metal_ef": 0.25628792156862745,
-      "rough_ef": 0.6615796078431373
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 28.336864030650222,
-      "Lmedia_por_texel": 31.723880934168346,
-      "Lp05": 9.87894687876716,
-      "Lp50": 26.367730750087084,
-      "Lp95": 52.818539039343904,
-      "Lp99": 69.22996766923366,
-      "pct_preto": 9.773286956521739,
-      "pct_branco": 0,
-      "rgb": [
-       0.08994561736803239,
-       0.06824855168493098,
-       0.06608604126056702
-      ],
-      "Lab": [
-       5.735508383918475,
-       2.2597489069299814,
-       1.134901292594731
-      ],
-      "aStar": 2.2597489069299814,
-      "bStar": 1.134901292594731,
-      "croma": 2.5287281519183584,
-      "matiz": 26.666924553008187,
       "metal_ef": 0.4659780392156863,
       "rough_ef": 0.6615796078431373
      }
@@ -17301,6 +18381,84 @@
       "metal_ef": 0.5383984313725491,
       "rough_ef": 0.36683921568627453
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 35.36594745901739,
+      "Lmedia_por_texel": 38.08833526091295,
+      "Lp05": 16.798545988136155,
+      "Lp50": 35.85101869922298,
+      "Lp95": 50.8095930372921,
+      "Lp99": 95.46919950328252,
+      "pct_preto": 0.6151652173913044,
+      "pct_branco": 1.203756521739131,
+      "rgb": [
+       0.12315995640006154,
+       0.09775339150221286,
+       0.10499383445363035
+      ],
+      "Lab": [
+       9.54483754256158,
+       3.626635498602773,
+       -0.09366287795342099
+      ],
+      "aStar": 3.626635498602773,
+      "bStar": -0.09366287795342099,
+      "croma": 3.6278447836742274,
+      "matiz": 358.52058611063995,
+      "metal_ef": 0.5383984313725491,
+      "rough_ef": 0.36683921568627453
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 49.056228775762094,
+      "Lmedia_por_texel": 50.76119474253652,
+      "Lp05": 30.97411168319212,
+      "Lp50": 49.60287814121055,
+      "Lp95": 64.45873441738142,
+      "Lp99": 98.91883444323325,
+      "pct_preto": 0,
+      "pct_branco": 1.2159304347826092,
+      "rgb": [
+       0.22634186311044283,
+       0.1842510166101975,
+       0.18811999344732994
+      ],
+      "Lab": [
+       20.580889021888403,
+       5.063986143300392,
+       1.1885372913677084
+      ],
+      "aStar": 5.063986143300392,
+      "bStar": 1.1885372913677084,
+      "croma": 5.201593655074381,
+      "matiz": 13.208472662343297,
+      "metal_ef": 0.296119137254902,
+      "rough_ef": 0.36683921568627453
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 33.52656555217206,
+      "Lmedia_por_texel": 36.91803095548111,
+      "Lp05": 13.583426534307026,
+      "Lp50": 32.707341298416246,
+      "Lp95": 61.02427095628758,
+      "Lp99": 66.94096956942732,
+      "pct_preto": 2.5563826086956523,
+      "pct_branco": 0,
+      "rgb": [
+       0.11804388804364564,
+       0.09113059986907832,
+       0.0985972782762006
+      ],
+      "Lab": [
+       8.744742882283102,
+       3.8633064614864985,
+       -0.053271839631113815
+      ],
+      "aStar": 3.8633064614864985,
+      "bStar": -0.053271839631113815,
+      "croma": 3.8636737316006657,
+      "matiz": 359.20998808224124,
+      "metal_ef": 0.5383984313725491,
+      "rough_ef": 0.36683921568627453
+     },
      "vm@atacadao_treta": {
       "Lmean": 34.33869462015492,
       "Lmedia_por_texel": 37.21918661840367,
@@ -17376,84 +18534,6 @@
       "bStar": -0.37729644182385447,
       "croma": 4.229811933004307,
       "matiz": 354.8824524843353,
-      "metal_ef": 0.5383984313725491,
-      "rough_ef": 0.36683921568627453
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 36.69135393208334,
-      "Lmedia_por_texel": 39.559988653872345,
-      "Lp05": 17.849280631346282,
-      "Lp50": 36.52548956683278,
-      "Lp95": 54.545944676814855,
-      "Lp99": 96.22552227524604,
-      "pct_preto": 0.3778086956521738,
-      "pct_branco": 1.2086260869565224,
-      "rgb": [
-       0.11776518068123665,
-       0.1087361929253306,
-       0.1294898054153213
-      ],
-      "Lab": [
-       10.587173470763094,
-       2.46545678781529,
-       -3.2303425420591783
-      ],
-      "aStar": 2.46545678781529,
-      "bStar": -3.2303425420591783,
-      "croma": 4.063691685108732,
-      "matiz": 307.35153886985825,
-      "metal_ef": 0.5383984313725491,
-      "rough_ef": 0.36683921568627453
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 47.942557859489554,
-      "Lmedia_por_texel": 49.779178648619784,
-      "Lp05": 30.129916767132386,
-      "Lp50": 48.03221752242777,
-      "Lp95": 64.17387165254347,
-      "Lp99": 98.5041017674134,
-      "pct_preto": 0,
-      "pct_branco": 1.21544347826087,
-      "rgb": [
-       0.1869992768670352,
-       0.1811598195230158,
-       0.2165955028730426
-      ],
-      "Lab": [
-       19.507759168110013,
-       2.896805461581775,
-       -5.511674522776822
-      ],
-      "aStar": 2.896805461581775,
-      "bStar": -5.511674522776822,
-      "croma": 6.226559076028839,
-      "matiz": 297.72535133868814,
-      "metal_ef": 0.296119137254902,
-      "rough_ef": 0.36683921568627453
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 34.36847771333244,
-      "Lmedia_por_texel": 38.21842498536419,
-      "Lp05": 14.46048458523844,
-      "Lp50": 32.817430066044416,
-      "Lp95": 66.22934404505548,
-      "Lp99": 74.23007922985202,
-      "pct_preto": 1.8082086956521737,
-      "pct_branco": 0,
-      "rgb": [
-       0.1099213509948529,
-       0.10098301911790011,
-       0.12019714584446017
-      ],
-      "Lab": [
-       9.578886073542115,
-       2.3725989973702593,
-       -2.9945396251726097
-      ],
-      "aStar": 2.3725989973702593,
-      "bStar": -2.9945396251726097,
-      "croma": 3.820535769895536,
-      "matiz": 308.39008217111086,
       "metal_ef": 0.5383984313725491,
       "rough_ef": 0.36683921568627453
      }
@@ -17935,6 +19015,84 @@
       "metal_ef": 0.4697207843137255,
       "rough_ef": 0.4065098039215686
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 37.58155937215231,
+      "Lmedia_por_texel": 40.047619129933274,
+      "Lp05": 14.329893739334622,
+      "Lp50": 38.53192595598784,
+      "Lp95": 58.05061621847737,
+      "Lp99": 90.65624615101552,
+      "pct_preto": 3.104278260869565,
+      "pct_branco": 0.9213217391304349,
+      "rgb": [
+       0.15154111900630798,
+       0.11398273668913235,
+       0.10196567906904642
+      ],
+      "Lab": [
+       11.830557276581096,
+       4.067855193888609,
+       3.8838692195560798
+      ],
+      "aStar": 4.067855193888609,
+      "bStar": 3.8838692195560798,
+      "croma": 5.624223145738591,
+      "matiz": 43.67453414078449,
+      "metal_ef": 0.4697207843137255,
+      "rough_ef": 0.4065098039215686
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 50.95694199881678,
+      "Lmedia_por_texel": 52.56646266524278,
+      "Lp05": 25.429142686923697,
+      "Lp50": 52.165181113646454,
+      "Lp95": 70.22868491780196,
+      "Lp99": 96.31455542472621,
+      "pct_preto": 0.15415652173913041,
+      "pct_branco": 1.1122086956521746,
+      "rgb": [
+       0.2630657256775298,
+       0.20742680733631905,
+       0.18220710110176405
+      ],
+      "Lab": [
+       23.45143231540448,
+       5.1773521872811585,
+       6.453468257633499
+      ],
+      "aStar": 5.1773521872811585,
+      "bStar": 6.453468257633499,
+      "croma": 8.273586176708873,
+      "matiz": 51.261361565765526,
+      "metal_ef": 0.25834643137254903,
+      "rough_ef": 0.4065098039215686
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 35.81302573877143,
+      "Lmedia_por_texel": 38.897668655627186,
+      "Lp05": 11.185638610141346,
+      "Lp50": 35.95151635207027,
+      "Lp95": 64.83999923408007,
+      "Lp99": 69.90231077076494,
+      "pct_preto": 5.877217391304347,
+      "pct_branco": 0,
+      "rgb": [
+       0.14668070451574666,
+       0.1071967002883654,
+       0.09549014996128462
+      ],
+      "Lab": [
+       11.047120935103631,
+       4.377980171325888,
+       3.9686571483709967
+      ],
+      "aStar": 4.377980171325888,
+      "bStar": 3.9686571483709967,
+      "croma": 5.909056603370699,
+      "matiz": 42.19243726099967,
+      "metal_ef": 0.4697207843137255,
+      "rough_ef": 0.4065098039215686
+     },
      "vm@atacadao_treta": {
       "Lmean": 36.55066391226129,
       "Lmedia_por_texel": 39.16199673884277,
@@ -18010,84 +19168,6 @@
       "bStar": 3.837422082006192,
       "croma": 5.749583989165445,
       "matiz": 41.86871493725732,
-      "metal_ef": 0.4697207843137255,
-      "rough_ef": 0.4065098039215686
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 38.85100061954119,
-      "Lmedia_por_texel": 41.45695377571865,
-      "Lp05": 15.099029734266118,
-      "Lp50": 39.54931832759965,
-      "Lp95": 60.487381450689156,
-      "Lp99": 91.85025407068866,
-      "pct_preto": 2.514434782608695,
-      "pct_branco": 0.9938782608695654,
-      "rgb": [
-       0.14403541307963252,
-       0.12603308420561884,
-       0.12661146654987268
-      ],
-      "Lab": [
-       12.826918928435386,
-       2.215462377943039,
-       0.6951595186420301
-      ],
-      "aStar": 2.215462377943039,
-      "bStar": 0.6951595186420301,
-      "croma": 2.321964750903778,
-      "matiz": 17.420619458805845,
-      "metal_ef": 0.4697207843137255,
-      "rough_ef": 0.4065098039215686
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 49.73311096384659,
-      "Lmedia_por_texel": 51.46341703059529,
-      "Lp05": 24.406642687530386,
-      "Lp50": 50.6120512318835,
-      "Lp95": 69.06222513579664,
-      "Lp99": 95.71966622905731,
-      "pct_preto": 0.1791304347826087,
-      "pct_branco": 1.1014956521739139,
-      "rgb": [
-       0.21885525012649445,
-       0.2025489748751015,
-       0.20844181155364613
-      ],
-      "Lab": [
-       22.01135435201931,
-       2.1652744360063925,
-       -0.2877135545925169
-      ],
-      "aStar": 2.1652744360063925,
-      "bStar": -0.2877135545925169,
-      "croma": 2.184305947599617,
-      "matiz": 352.4310894774111,
-      "metal_ef": 0.25834643137254903,
-      "rough_ef": 0.4065098039215686
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 36.58847073190199,
-      "Lmedia_por_texel": 40.035746810020996,
-      "Lp05": 11.76961237560895,
-      "Lp50": 36.160286259514386,
-      "Lp95": 66.64306264616012,
-      "Lp99": 74.63348481296951,
-      "pct_preto": 5.207721739130435,
-      "pct_branco": 0,
-      "rgb": [
-       0.13529023844263963,
-       0.11709090410842415,
-       0.11638800442382699
-      ],
-      "Lab": [
-       11.703318206550552,
-       2.189267998702518,
-       0.9369722274097159
-      ],
-      "aStar": 2.189267998702518,
-      "bStar": 0.9369722274097159,
-      "croma": 2.3813465361177597,
-      "matiz": 23.17016217019159,
       "metal_ef": 0.4697207843137255,
       "rough_ef": 0.4065098039215686
      }
@@ -18569,6 +19649,84 @@
       "metal_ef": 0.3309505882352941,
       "rough_ef": 0.4665992156862745
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 34.27429270750859,
+      "Lmedia_por_texel": 36.68312572730274,
+      "Lp05": 14.716967070661404,
+      "Lp50": 34.54266519225127,
+      "Lp95": 50.32658817261205,
+      "Lp99": 85.96738823795305,
+      "pct_preto": 2.5965217391304347,
+      "pct_branco": 0.6004173913043481,
+      "rgb": [
+       0.09294450404212667,
+       0.09760976877595194,
+       0.10454586835873587
+      ],
+      "Lab": [
+       8.642439643274596,
+       -0.09433535953298766,
+       -1.4361068007626543
+      ],
+      "aStar": -0.09433535953298766,
+      "bStar": -1.4361068007626543,
+      "croma": 1.439201828533776,
+      "matiz": 266.2417391944577,
+      "metal_ef": 0.3309505882352941,
+      "rough_ef": 0.4665992156862745
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 46.12251384689642,
+      "Lmedia_por_texel": 48.04540953438229,
+      "Lp05": 23.140077932520825,
+      "Lp50": 46.912244937518196,
+      "Lp95": 64.3225866427696,
+      "Lp99": 93.72981044634463,
+      "pct_preto": 0.1485913043478261,
+      "pct_branco": 1.0693565217391312,
+      "rgb": [
+       0.17218109151770486,
+       0.17500895742604153,
+       0.17841962674758952
+      ],
+      "Lab": [
+       18.255155650264847,
+       -0.11083843585205089,
+       -0.6737586521138428
+      ],
+      "aStar": -0.11083843585205089,
+      "bStar": -0.6737586521138428,
+      "croma": 0.6828146748279443,
+      "matiz": 260.6580803801119,
+      "metal_ef": 0.1820228235294118,
+      "rough_ef": 0.4665992156862745
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 32.280692948935894,
+      "Lmedia_por_texel": 35.4792720242639,
+      "Lp05": 11.283353751947669,
+      "Lp50": 30.741465099731272,
+      "Lp95": 58.53736858099461,
+      "Lp99": 63.50810530796414,
+      "pct_preto": 5.962017391304348,
+      "pct_branco": 0,
+      "rgb": [
+       0.08763968065438917,
+       0.09110438278730487,
+       0.09667136689616425
+      ],
+      "Lab": [
+       7.815952908722267,
+       -0.04526743912164344,
+       -1.1492647283915025
+      ],
+      "aStar": -0.04526743912164344,
+      "bStar": -1.1492647283915025,
+      "croma": 1.1501558837694243,
+      "matiz": 267.7443898559329,
+      "metal_ef": 0.3309505882352941,
+      "rough_ef": 0.4665992156862745
+     },
      "vm@atacadao_treta": {
       "Lmean": 33.47497669295312,
       "Lmedia_por_texel": 36.0373020659465,
@@ -18644,84 +19802,6 @@
       "bStar": -2.9533327665104583,
       "croma": 2.9772130565111627,
       "matiz": 262.73821829847157,
-      "metal_ef": 0.3309505882352941,
-      "rough_ef": 0.4665992156862745
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 35.95169392910092,
-      "Lmedia_por_texel": 38.466219398481925,
-      "Lp05": 15.563824198242347,
-      "Lp50": 36.15426291045941,
-      "Lp95": 54.0109404423671,
-      "Lp99": 87.57250097571989,
-      "pct_preto": 2.0019478260869565,
-      "pct_branco": 0.7732869565217396,
-      "rgb": [
-       0.08836330785431713,
-       0.10999389462626652,
-       0.13613428053035956
-      ],
-      "Lab": [
-       10.02382293854842,
-       -0.5246325805346314,
-       -5.409210136908843
-      ],
-      "aStar": -0.5246325805346314,
-      "bStar": -5.409210136908843,
-      "croma": 5.434592316797628,
-      "matiz": 264.4602804465461,
-      "metal_ef": 0.3309505882352941,
-      "rough_ef": 0.4665992156862745
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 45.21439481010589,
-      "Lmedia_por_texel": 47.25892442399836,
-      "Lp05": 22.374545419755904,
-      "Lp50": 45.95609323785069,
-      "Lp95": 63.546158844096624,
-      "Lp99": 92.89051870721202,
-      "pct_preto": 0.16640000000000002,
-      "pct_branco": 1.0357565217391311,
-      "rgb": [
-       0.14018711710024642,
-       0.17208622431128204,
-       0.20954794665245058
-      ],
-      "Lab": [
-       17.57184348008291,
-       -0.7682913589661944,
-       -7.295582619083052
-      ],
-      "aStar": -0.7682913589661944,
-      "bStar": -7.295582619083052,
-      "croma": 7.335925119855631,
-      "matiz": 263.98838968599915,
-      "metal_ef": 0.1820228235294118,
-      "rough_ef": 0.4665992156862745
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 33.30748143682418,
-      "Lmedia_por_texel": 36.79257912725428,
-      "Lp05": 12.080574727126777,
-      "Lp50": 31.745555446730272,
-      "Lp95": 64.37781554401752,
-      "Lp99": 69.56438182990365,
-      "pct_preto": 4.891339130434783,
-      "pct_branco": 0,
-      "rgb": [
-       0.08039009593573215,
-       0.10012114487029737,
-       0.12161001183626523
-      ],
-      "Lab": [
-       8.748751478081907,
-       -0.6904391454413544,
-       -4.588541409844781
-      ],
-      "aStar": -0.6904391454413544,
-      "bStar": -4.588541409844781,
-      "croma": 4.640195953127209,
-      "matiz": 261.44288364986147,
       "metal_ef": 0.3309505882352941,
       "rough_ef": 0.4665992156862745
      }
@@ -19203,6 +20283,84 @@
       "metal_ef": 0.7173474509803922,
       "rough_ef": 0.32817411764705884
      },
+     "vm@obras_prefeitura": {
+      "Lmean": 26.31587814846615,
+      "Lmedia_por_texel": 30.378013921845266,
+      "Lp05": 11.657762302048372,
+      "Lp50": 25.101788797423865,
+      "Lp95": 42.25677086512236,
+      "Lp99": 96.9319612923008,
+      "pct_preto": 7.756313043478262,
+      "pct_branco": 1.184765217391305,
+      "rgb": [
+       0.06050727659204109,
+       0.06493806650050427,
+       0.07398704448562607
+      ],
+      "Lab": [
+       4.869841149974292,
+       0.07018841142933385,
+       -1.4300583088837526
+      ],
+      "aStar": 0.07018841142933385,
+      "bStar": -1.4300583088837526,
+      "croma": 1.4317797246456705,
+      "matiz": 272.80986811220464,
+      "metal_ef": 0.7173474509803922,
+      "rough_ef": 0.32817411764705884
+     },
+     "vmLegado@obras_prefeitura": {
+      "Lmean": 39.83865319848696,
+      "Lmedia_por_texel": 42.32507669217617,
+      "Lp05": 21.070408326228026,
+      "Lp50": 40.28208196003649,
+      "Lp95": 55.25314030048811,
+      "Lp99": 99.82015445666025,
+      "pct_preto": 0.03554782608695652,
+      "pct_branco": 1.2173913043478268,
+      "rgb": [
+       0.12526653863358292,
+       0.1294620532927116,
+       0.13814827838842866
+      ],
+      "Lab": [
+       12.717529741846818,
+       0.07658721728212581,
+       -1.6642443578206212
+      ],
+      "aStar": 0.07658721728212581,
+      "bStar": -1.6642443578206212,
+      "croma": 1.6660056675740307,
+      "matiz": 272.6348477902051,
+      "metal_ef": 0.3945410980392157,
+      "rough_ef": 0.32817411764705884
+     },
+     "chao@obras_prefeitura": {
+      "Lmean": 24.78536264743482,
+      "Lmedia_por_texel": 28.925133991713555,
+      "Lp05": 9.738483136189483,
+      "Lp50": 22.440127500654306,
+      "Lp95": 55.03920039548433,
+      "Lp99": 59.657074903711504,
+      "pct_preto": 21.998469565217395,
+      "pct_branco": 0,
+      "rgb": [
+       0.05426514340343351,
+       0.059240118251162675,
+       0.0689487748709558
+      ],
+      "Lab": [
+       4.327094229218506,
+       0.05660415527829199,
+       -1.4475193975422462
+      ],
+      "aStar": 0.05660415527829199,
+      "bStar": -1.4475193975422462,
+      "croma": 1.4486257061973726,
+      "matiz": 272.2393673113785,
+      "metal_ef": 0.7173474509803922,
+      "rough_ef": 0.32817411764705884
+     },
      "vm@atacadao_treta": {
       "Lmean": 25.494041034168845,
       "Lmedia_por_texel": 29.748837006417936,
@@ -19278,84 +20436,6 @@
       "bStar": -1.9913121433382752,
       "croma": 1.991337669030888,
       "matiz": 270.2901044610101,
-      "metal_ef": 0.7173474509803922,
-      "rough_ef": 0.32817411764705884
-     },
-     "vm@treta_no_gelo": {
-      "Lmean": 27.50612141324035,
-      "Lmedia_por_texel": 31.776235020761995,
-      "Lp05": 12.261594019189133,
-      "Lp50": 25.75202871937112,
-      "Lp95": 45.33308787313588,
-      "Lp99": 97.53446012199902,
-      "pct_preto": 3.7803826086956516,
-      "pct_branco": 1.1974260869565223,
-      "rgb": [
-       0.05965442471297929,
-       0.0720894337063236,
-       0.08970526437161606
-      ],
-      "Lab": [
-       5.508449416052368,
-       -0.13183613741288291,
-       -3.2502251907376767
-      ],
-      "aStar": -0.13183613741288291,
-      "bStar": -3.2502251907376767,
-      "croma": 3.2528978707659597,
-      "matiz": 267.6772330358217,
-      "metal_ef": 0.7173474509803922,
-      "rough_ef": 0.32817411764705884
-     },
-     "vmLegado@treta_no_gelo": {
-      "Lmean": 39.23371202228858,
-      "Lmedia_por_texel": 41.9238000876031,
-      "Lp05": 20.69980086119265,
-      "Lp50": 38.77809747077548,
-      "Lp95": 55.67112932220799,
-      "Lp99": 99.66154247143174,
-      "pct_preto": 0.035547826086956516,
-      "pct_branco": 1.2173913043478266,
-      "rgb": [
-       0.10507561850586943,
-       0.1291430521893297,
-       0.16141054844777833
-      ],
-      "Lab": [
-       12.450123004826718,
-       -0.3149082613665005,
-       -6.4220497617644865
-      ],
-      "aStar": -0.3149082613665005,
-      "bStar": -6.4220497617644865,
-      "croma": 6.42976596429887,
-      "matiz": 267.1927227997644,
-      "metal_ef": 0.3945410980392157,
-      "rough_ef": 0.32817411764705884
-     },
-     "chao@treta_no_gelo": {
-      "Lmean": 25.72971355512959,
-      "Lmedia_por_texel": 30.812924971057836,
-      "Lp05": 10.122391735725348,
-      "Lp50": 21.993707409765342,
-      "Lp95": 59.51325502065326,
-      "Lp99": 67.35022232878804,
-      "pct_preto": 18.957217391304347,
-      "pct_branco": 0,
-      "rgb": [
-       0.05457632177120524,
-       0.06802050189839931,
-       0.08603004439697363
-      ],
-      "Lab": [
-       5.07702855840753,
-       -0.17939074880411743,
-       -3.2088124754301783
-      ],
-      "aStar": -0.17939074880411743,
-      "bStar": -3.2088124754301783,
-      "croma": 3.213823041679932,
-      "matiz": 266.8001730252423,
       "metal_ef": 0.7173474509803922,
       "rough_ef": 0.32817411764705884
      }

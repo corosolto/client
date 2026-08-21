@@ -58,14 +58,23 @@ const MAPS = ['praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebra
    CONTINUAM contando como placa de parede aqui, porque elas são parede que o jogador
    vê. Cobrar 85 delas seria a régua brigando com o pedido do dono. */
 // Pisos medidos nas três faixas; aumente-os quando a cobertura melhorar.
-const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 43, ferro_velho: 46, quebrada: 67 };
+// loja_h 43→49 em 13/08: medido 49,4% (1,6 m 62,7 · 3,2 m 28 · 5,0 m 54,4) depois da
+// fachada greco-romana virar pintável, já com o filtro de âncora baixa do #260 (que
+// tirou da conta a tinta em caixa procedural — o 1,6 m era 87,8% antes dele).
+const META = { praca_poderes: 35, piscina_treta: 76, loja_h: 49, ferro_velho: 46, quebrada: 67 };
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
+// CHROME_BIN dirige o Chromium empacotado do Playwright (SwiftShader) — é o padrão
+// do CI/headless documentado em docs/docs/instrumentacao-ai.md e o mesmo caminho que
+// o select-inflate já usa. Sem a variável cai no canal 'chrome' do Chrome estável
+// local, que é como o dono roda na bancada.
+const CHROME_BIN = process.env.CHROME_BIN;
 const browser = await chromium.launch({
-  channel: 'chrome', headless: true,
+  ...(CHROME_BIN ? { executablePath: CHROME_BIN } : { channel: 'chrome' }),
+  headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
 });
 
@@ -256,6 +265,10 @@ const CENSO = async () => {
 };
 
 const out = {};
+// A régua era só relatório: imprimia BAIXO e saía 0, então mesmo dentro de um portão
+// ela nunca reprovava. Aqui ela vira PORTÃO — junta os mapas abaixo da meta e sai != 0
+// no fim, com a lista nomeada. (issue #83: sem código de saída, o job de navegador não morde.)
+const reprovados = [];
 for (const id of MAPS) {
   if (ONLY && id !== ONLY) continue;
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
@@ -268,6 +281,7 @@ for (const id of MAPS) {
   await page.close();
   out[id] = r;
   const meta = META[id] || 0;
+  if (r.cobertura < meta) reprovados.push({ id, cobertura: r.cobertura, meta });
   const sinal = r.cobertura >= meta ? 'OK  ' : 'BAIXO';
   console.log(`${sinal} ${id.padEnd(14)} cobertura ${String(r.cobertura).padStart(5)}%  (meta ${meta}%)  `
     + `${r.pintadas}/${r.placas} placas | ${r.pecas} peças (${r.murais} murais) | ${r.arquivos} arquivos | `
@@ -288,4 +302,9 @@ await browser.close();
 if (process.env.JSON === '1') {
   writeFileSync('tools/eval/graffiti_census.json', JSON.stringify(out, null, 1));
   console.log('-> tools/eval/graffiti_census.json');
+}
+if (reprovados.length) {
+  console.log(`\nPORTÃO VERMELHO — ${reprovados.length} mapa(s) com parede pintada abaixo da meta:`);
+  for (const f of reprovados) console.log(`  ${f.id}: cobertura ${f.cobertura}% < meta ${f.meta}%`);
+  process.exit(1);
 }

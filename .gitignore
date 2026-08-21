@@ -164,6 +164,11 @@ graphify-out/.graphify_labels.json
 graphify-out/.graphify_labels.json.sig
 graphify-out/20??-??-??/
 
+# Saída final do graphify — regenerada a cada análise
+graphify-out/graph.json
+graphify-out/graph.html
+graphify-out/GRAPH_REPORT.md
+
 # BOTBRAIN: dataset bootstrap (regenerável via bot:record, grande)
 tools/eval/data/
 

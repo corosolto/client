@@ -1909,6 +1909,9 @@ export function buildHavan(scene, T) {
   grafitar({
     id: 'loja_h',
     root, T, waypoints: nodes, seed: 5501, passo: 1.0, alcance: 9, cobre: 0.06, minLarg: 0.32,
+    /* O olho de 5,25 m existe pra cornija (y 5,0–5,55): sem ele a fachada greco-romana
+       nunca vira âncora acima de 3,1 m e o censo media 0/90 placas pintadas a 5,0 m. */
+    olhos: [1.55, 3.1, 5.25],
     /* SÓ DO LADO DE FORA (dono, 07/08: "pode tirar os graffitis de dentro da loja,
        pode deixar só na parte de fora que ficou boa"). O interior da loja é z < -6;
        74% das peças do mapa estavam lá dentro, e 7 dos 8 murais de homenagem também.
@@ -1927,8 +1930,17 @@ export function buildHavan(scene, T) {
         pool: (T.posterFiles || []).map((_, i) => i) },
       { y0: 0.35, y1: 2.6, larg: 3.6, alturas: [2.1, 1.55, 1.1, 0.8],
         pool: D_TAG.concat(D_MURAL) },
-      { y0: 2.5, y1: 5.2, larg: 4.8, alturas: [2.3, 1.6, 1.1],
+      { y0: 2.5, y1: 5.2, larg: 1.5, alturas: [2.3, 1.6, 1.1],
+        /* A pele da fachada (banner 1,9–4,8 m) tem ar embaixo por construção — o
+           encaixe já garante a peça inteira EM cima da pele, e a audit cobra parede.
+           larg 1,5: o banner tem 1,9 e a audit amostra os cantos do quad — com 1,8
+           sobravam 5 cm de margem e 3/15 amostras caíam fora (vao 0,2 em 13/08). */
+        exigeChao: false,
         pool: D_MURAL.concat(D_TAG) },
+      /* CORNIJA (y 5,0–5,55): faixa de 0,55 m — só pixo fino cabe. É a placa que o
+         censo mede a 5,0 m; sem esta banda a faixa fica 0/90 pra sempre. */
+      { y0: 5.0, y1: 5.6, larg: 2.4, alturas: [0.4, 0.3], exigeChao: false,
+        pool: D_TAG },
       { y0: 0.35, y1: 3.0, larg: 1.6, alturas: [0.9, 0.65, 0.45], planura: 0.5,
         pool: D_TAG },
     ],

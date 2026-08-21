@@ -569,7 +569,7 @@ body>footer a:hover{color:var(--amber)}
 <canvas id="bg-canvas" aria-hidden="true"></canvas>
 <div id="bg-overlay"></div>
 <div id="bg-scan"></div>
-<script type="module" src={`/js/site-bg.js?v=${V}-${JS_REV}`}></script>
+<script type="module" src={`/js/site-bg.js?v=${V}-${JS_REV}`} is:inline></script>
 <header>
   {/* MARCA: logo + canarinho, que é o pedido do dono e é personagem do elenco.
 
@@ -593,7 +593,7 @@ body>footer a:hover{color:var(--amber)}
     {NAV.map(([href, label]) => (
       <a href={href} aria-current={path === href ? 'page' : undefined}>{label}</a>
     ))}
-    <a href="https://github.com/rubenmarcus/csbrasil" rel="noopener">GITHUB</a>
+    <a href="https://github.com/corosolto/client" rel="noopener">GITHUB</a>
   </nav>
   {/* O jogo é a rota `/`, e ele é o produto: o link pra ele é botão cheio, nunca
       um item de texto igual aos outros. É a hierarquia da referência. */}

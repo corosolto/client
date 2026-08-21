@@ -202,7 +202,6 @@ function medir() {
   const scripts = Object.entries(pkg.scripts).filter(([k]) => !k.startsWith('//'));
   f.scripts = {
     total: scripts.length,
-    check: pkg.scripts.check || null,
     checkFast: pkg.scripts['check:fast'] || null,
     nomes: scripts.map(([k]) => k),
     cmd: "node -p \"Object.keys(require('./package.json').scripts)\"",
@@ -277,7 +276,10 @@ function medir() {
   f.raso = sh('git', ['rev-parse', '--is-shallow-repository']).trim() === 'true';
   const short = sh('git', ['shortlog', '-sn', '--no-merges', 'HEAD']).trim().split('\n').filter(Boolean);
   const autores = short.map((l) => { const m = /^\s*(\d+)\s+(.*)$/.exec(l); return m ? { n: +m[1], nome: m[2] } : null; }).filter(Boolean)
-    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome));   // shortlog deixa empates de count em ordem instável → determinismo
+    /* empate de count: comparação byte-a-byte, NUNCA localeCompare — locale da
+     * máquina flipava "Ruben"/"rubenmarcus" e o docs:check ficava vermelho
+     * num clone e verde noutro com a MESMA árvore (medido mac × CI 18/08). */
+    .sort((a, b) => b.n - a.n || (a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : 0));
   const ehAgente = (n) => /^claude\b/i.test(n) || /^(codex|kimi|gpt|cursor|devin)\b/i.test(n) || /bot\b/i.test(n) || /^github-actions/i.test(n);
   const humanos = autores.filter((a) => !ehAgente(a.nome));
   f.pessoas = {
@@ -643,11 +645,10 @@ const BLOCOS = {
   /* Os scripts do portão, direto do package.json. */
   scripts: (f) => [
     '```bash',
-    `npm run check        # ${f.scripts.check}`,
     `npm run check:fast   # ${f.scripts.checkFast}`,
     '```',
     '',
-    `\`package.json\` tem **${f.scripts.total} scripts**. Vários trazem uma chave \`//nome\` logo acima com o motivo de existirem — é onde mora o porquê.`,
+    `\`package.json\` tem **${f.scripts.total} scripts**; o motivo de cada um mora em \`SCRIPTS.md\` (migrado das chaves \`//nome\` em 18/08/2026) — é onde está o porquê.`,
     rodape(f.scripts.cmd),
   ].join('\n'),
 
@@ -781,7 +782,7 @@ const BLOCOS_EN = {
     '', `**${f.mapas.total} registered maps** - ${f.mapas.emRodadas} open in rounds and ${f.mapas.emCaptura} in capture. \`ctfMode\` sets the initial mode; it does not lock it. There are ${f.mapas.arquivosNoDisco} \`map_*.js\` files on disk, so a file alone does **not** make a map playable.`,
     rodapeEn(f.mapas.cmd),
   ].join('\n'),
-  scripts: (f) => ['```bash', `npm run check        # ${f.scripts.check}`, `npm run check:fast   # ${f.scripts.checkFast}`, '```', '', `\`package.json\` has **${f.scripts.total} scripts**. Keys prefixed with \`//\` explain why the adjacent command exists.`, rodapeEn(f.scripts.cmd)].join('\n'),
+  scripts: (f) => ['```bash', `npm run check:fast   # ${f.scripts.checkFast}`, '```', '', `\`package.json\` has **${f.scripts.total} scripts**; the reason behind each one lives in \`SCRIPTS.md\`.`, rodapeEn(f.scripts.cmd)].join('\n'),
   stack: (f) => [
     '| Layer | Tool | Version |', '|---|---|---|',
     `| 3D engine (WebGL) | **Three.js**, vendored | \`${f.stack.three}\` |`, `| Game | vanilla ES modules, **zero build** | ${f.jogo.arquivos} files |`,
@@ -828,8 +829,8 @@ const COLOCACAO = {
   numeros: ['README.md', 'docs/docs/comecando.md'],
   regras: ['README.md', 'docs/docs/comecando.md'],
   mapas: ['README.md', 'docs/docs/comecando.md', 'docs/docs/colaborar.md'],
-  scripts: ['README.md', 'docs/docs/comecando.md', 'AGENTS.md'],
-  zonas: ['AGENTS.md'],
+  scripts: ['ARCH.generated.md', 'docs/docs/comecando.md'],
+  zonas: ['ARCH.generated.md'],
   stack: ['README.md', 'docs/docs/stack.md'],
   assets: ['docs/docs/stack.md'],
   skills: ['docs/docs/stack.md'],
@@ -866,6 +867,15 @@ const marcador = (nome) => new RegExp(
   `(<!--\\s*END:GERADO:${nome}\\s*-->|\\{/\\*\\s*END:GERADO:${nome}\\s*\\*/\\})`,
 );
 
+/* AUTORIA NÃO É DERIVÁVEL ANTES DO MERGE. O bloco `pessoas` sai do `git shortlog` da branch,
+   e o squash reescreve o autor: no #392 os commits eram `manazitto <mana.gsoares@gmail.com>` e
+   viraram `Maná Soares <153231177+manazitto@users.noreply.github.com>` na main. Rodar `npm run
+   docs` na branch (foi rodado) não salva — o valor certo só existe DEPOIS do merge. Conferir
+   isso num PR reprova quem não tem como consertar, e a culpa cai no PR seguinte. Mesma regra do
+   clone raso logo acima: onde o número não é derivável, ele não derruba o portão; onde é (a
+   main, com `--autoria`), continua mordendo. */
+const VERIFICA_AUTORIA = !process.argv.includes('--check') || process.argv.includes('--autoria');
+
 function aplicar(fatos) {
   const mudancas = [];              // { arquivo, novo }
   const achados = new Map();        // bloco -> Set(arquivos em que foi encontrado)
@@ -882,7 +892,7 @@ function aplicar(fatos) {
         const chave = local.prefixo + nome;
         if (!achados.has(chave)) achados.set(chave, new Set());
         achados.get(chave).add(arq);
-        if (nome === 'pessoas' && fatos.raso) continue;
+        if (nome === 'pessoas' && (fatos.raso || !VERIFICA_AUTORIA)) continue;
         novo = novo.replace(re, (_, abre, __, fecha) => `${abre}\n\n${gerar(fatos).trim()}\n\n${fecha}`);
       }
     }
@@ -984,6 +994,7 @@ if (process.argv.includes('--check')) {
     process.exit(1);
   }
   const marcadores = [...achados.values()].reduce((s, x) => s + x.size, 0);
+  if (!VERIFICA_AUTORIA) console.log('  ⚠ bloco de autoria NÃO conferido aqui (só é derivável depois do merge — ver docs:check:autoria na main)');
   console.log(`✓ DOCS1  docs em dia (${achados.size} blocos em ${marcadores} marcadores, ${fatos.jogo.arquivos} arquivos de jogo, ${num(fatos.jogo.linhas)} linhas)`);
   process.exit(0);
 }

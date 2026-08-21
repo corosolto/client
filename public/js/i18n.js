@@ -1,7 +1,8 @@
 /* i18n.js — PT é a FONTE, EN é camada (decisão de 06/08, pré-lançamento internacional).
    Por que assim e não chaves espalhadas: o jogo tem centenas de strings PT hardcoded e
    véspera de live não é hora de reescrever call site. Este módulo:
-     1. resolve o idioma: escolha explícita > país detectado no SSR > português;
+     1. resolve o idioma: escolha explícita (?lang, cs_lang) > país via /api/geo-lang
+        (resolveGeoLang, esperada pelo main.js ANTES do boot) > navegador > português;
      2. `tr(s)`: tradução por CORRESPONDÊNCIA EXATA da string PT (o dicionário abaixo);
         sem entrada = fica PT (sabor como apelido de arma É PT nos dois idiomas, decisão);
      3. `translateDom(root)`: varre nós de texto e atributos (placeholder/title/aria) do
@@ -13,11 +14,24 @@ let _lang = null;
 // ?lang=pt|en na URL vence tudo (teste/demonstração — ex.: a live mostra EN sem mexer em config)
 try { const q = new URLSearchParams(location.search).get('lang'); if (q === 'pt' || q === 'en') _lang = q; } catch { /* sem window */ }
 if (!_lang) try { _lang = localStorage.getItem('cs_lang'); } catch { /* storage bloqueado */ }
-if (_lang !== 'pt' && _lang !== 'en') {
-  const geo = (typeof document !== 'undefined' && document.documentElement.dataset.geoLang) || 'pt';
-  _lang = geo === 'en' ? 'en' : 'pt';
+const _explicito = _lang === 'pt' || _lang === 'en';
+if (!_explicito) {
+  // provisório até a geo responder: navegador ('pt*' vira pt; o resto, en)
+  const nav = (typeof navigator !== 'undefined' && (navigator.language || '')) || 'pt';
+  _lang = /^pt/i.test(nav) ? 'pt' : 'en';
 }
-export const LANG = _lang;
+export let LANG = _lang;
+
+/* window.__GEO_LANG__ é a promise que o <head> do index.astro abre antes dos módulos;
+   sem ela (host estático puro, dev offline, arnês) fica o provisório do navegador. */
+export async function resolveGeoLang() {
+  if (_explicito || typeof window === 'undefined' || !window.__GEO_LANG__) return LANG;
+  try {
+    const d = await window.__GEO_LANG__;
+    if (d && (d.lang === 'pt' || d.lang === 'en')) { _lang = d.lang; LANG = d.lang; }
+  } catch { /* promise rejeitada: fica o provisório */ }
+  return LANG;
+}
 
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {
@@ -72,7 +86,21 @@ const DICT = {
   'O PALCO DA TRETA': 'THE STAGE',
   // map screen (abas de categoria — tela 04 do redesign)
   'ESCOLHA DO MAPA': 'PICK THE MAP',
-  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES',
+  'TODOS': 'ALL', 'ARENA': 'ARENA', 'FAVELA': 'FAVELA', 'CIDADES': 'CITIES', 'COMUNIDADE': 'COMMUNITY', 'AI': 'AI',
+  'OFICIAL': 'OFFICIAL', 'por': 'by',
+  // descrições de categoria da tela de mapas (a chave é o texto PT exato do CAT_DESC)
+  'O acervo inteiro: oficial e comunidade, arena e cidade.': 'The whole roster: official and community, arena and city.',
+  // as duas abas que sobraram do #368 trocaram o texto de categoria
+  'Mapas oficiais da casa.': 'Maps made in-house.',
+  'O acervo inteiro, do mais jogado ao menos jogado.': 'The whole roster, most played first.',
+  'PARTIDA': 'MATCH', 'PARTIDAS': 'MATCHES',
+  'Mapas feitos pela comunidade.': 'Maps made by the community.',
+  'OFICIAIS': 'OFFICIAL',
+  'Combate fechado e simétrico — o duelo de angulação clássico.': 'Tight, symmetric combat — the classic angle duel.',
+  'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.': 'Rooftop verticality, alley and shade: who owns the high ground runs the round.',
+  'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.': 'Brazilian landmarks at treta scale: concrete, sidewalk and straight lines.',
+  'Autoria da comunidade — o crachá de cada mapa diz quem fez.': 'Community-made maps — each badge says who built it.',
+  'Construídos pelos agentes de IA da casa.': 'Built by the house AI agents.',
   'ESCOLHA SEU LADO DA TRETA': 'PICK YOUR SIDE',
   'QUEM VAI LEVAR O CORO?': "WHO'S GETTING THE BOOT?",
   'ESCOLHA SEU PERSONAGEM': 'PICK YOUR CHARACTER',
@@ -249,11 +277,126 @@ const DICT = {
   'KILLS': 'KILLS', 'MORTES': 'DEATHS', 'JOGADOR': 'PLAYER', 'CAP.': 'CAP.',
   'CORO SOLTO — PLACAR': 'CORO SOLTO — SCOREBOARD',
   'A treta continua sem você. Por enquanto.': 'The fight goes on without you. For now.',
+  /* --- varredura de 21/08: as sobras PT que apareciam no meio do EN (tela 04 e vizinhas).
+     Personagem, facção e nome de mapa continuam PT nos dois idiomas — é sabor, decisão do dono. */
+  // boot / erro
+  'CARREGANDO MAPA': 'LOADING MAP',
+  'A TRETA DEU UMA PAUSA': 'THE FIGHT TOOK A BREAK',
+  'A ARENA NÃO ABRIU': 'THE ARENA DID NOT OPEN',
+  'Alguma coisa travou durante o carregamento. O erro já foi registrado automaticamente, sem pedir senha.':
+    'Something jammed while loading. The error was logged automatically, no password needed.',
+  'RELATÓRIO LOCAL': 'LOCAL REPORT',
+  'TENTAR DE NOVO': 'TRY AGAIN',
+  'REPORTAR ERRO': 'REPORT ERROR',
+  'Se quiser, confirme o envio pelo botão acima.': 'If you like, confirm the submission with the button above.',
+  'DICA': 'TIP', 'CORRIDA': 'RUN',
+  // aviso de desktop
+  'Este jogo foi feito para': 'This game was built for',
+  '(mouse + teclado).': '(mouse + keyboard).',
+  'Jogar num PC ou notebook é': 'Playing on a PC or laptop is',
+  'recomendado': 'recommended',
+  '. No celular a treta não flui.': '. On a phone the fight does not flow.',
+  // menu principal / perfil
+  'RANKING GLOBAL': 'GLOBAL LEADERBOARD',
+  'MAPA DA TRETA': 'THE MAP',
+  'SOBRE': 'ABOUT',
+  'ENVIE SEU FEEDBACK': 'SEND YOUR FEEDBACK',
+  'EDITAR PERFIL': 'EDIT PROFILE',
+  'NÍVEL 1': 'LEVEL 1',
+  '▶ JOGAR': '▶ PLAY',
+  'CONFIG.': 'SETTINGS',
+  'SEU NICK': 'YOUR NICK',
+  'REDES SOCIAIS (OPCIONAL)': 'SOCIAL LINKS (OPTIONAL)',
+  '+ REDE SOCIAL': '+ SOCIAL LINK',
+  '+ FOTO DE PERFIL': '+ PROFILE PHOTO',
+  'É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.':
+    'This is the name that shows up in the killfeed. Choose it well — the fight is public.',
+  'ex: Zé do AWP': 'e.g. AWP Joe',
+  // tela 04 · escolha do mapa
+  '04 · ESCOLHA DO MAPA': '04 · PICK THE MAP',
+  'Categorias de mapa': 'Map categories',
+  'Opções da partida': 'Match options',
+  'Mapa anterior': 'Previous map', 'mapa anterior': 'previous map',
+  'Próximo mapa': 'Next map', 'próximo mapa': 'next map',
+  'Ver mapa em tela cheia': 'View map full screen',
+  'Escolher o mapa da partida': 'Pick the match map',
+  'Escolher as armas da partida': 'Pick the match weapons',
+  'Clique pra trocar entre ROUNDS e CAPTURE THE FLAG': 'Click to switch between ROUNDS and CAPTURE THE FLAG',
+  // fichas dos mapas que faltavam (as antigas já estavam acima)
+  'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.':
+    'A wholesale warehouse at war: tight aisles, crates for cover and a parking lot contested cart by cart.',
+  'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.':
+    'An amusement park in a confetti war: carousel at the center, ferris wheel, colorful castle and three attack routes.',
+  'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.':
+    'A duel in the dusty town: saloon, bank, wagons and tumbleweeds crossing three routes between wooden houses.',
+  'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.':
+    'Yard riot: open cells, worn concrete, watchtowers and police barricades across three routes.',
+  'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.':
+    'A packed emergency room: real wards, a cross-shaped corridor and a fight under fluorescent light — fully indoors.',
+  'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.':
+    'An eternal construction site: uneven ground, dig pits, hoardings and the fight over the missing budget.',
+  // personagem / config / como jogar
+  'personagem anterior': 'previous character', 'próximo personagem': 'next character',
+  'Categorias de configuração': 'Settings categories',
+  'Configurações': 'Settings',
+  'Escolha sua região': 'Choose your region',
+  'Liga/desliga as falas (memes)': 'Toggle the meme voice lines',
+  'FECHAR': 'CLOSE', 'JOGABILIDADE': 'GAMEPLAY',
+  'QUALIDADE GRÁFICA': 'GRAPHICS QUALITY',
+  'SENSIBILIDADE DO MOUSE': 'MOUSE SENSITIVITY',
+  'LIGADO': 'ON', 'DESLIGADO': 'OFF',
+  'VOLUME GERAL': 'MASTER VOLUME',
+  'FALAS DOS MEMES': 'MEME VOICE LINES',
+  'COR DA MIRA': 'CROSSHAIR COLOR',
+  'AJUDAR A TREINAR OS BOTS': 'HELP TRAIN THE BOTS',
+  '“Padrão ouro” liga sombras e neblina. Em notebook de reunião, escolha “Batata”.':
+    '“Gold standard” turns on shadows and fog. On a meeting laptop, pick “Potato”.',
+  'PRÉVIA · FERRO VELHO DO ZÉ · PADRÃO OURO': 'PREVIEW · FERRO VELHO DO ZÉ · GOLD STANDARD',
+  'RESTAURAR PADRÃO': 'RESTORE DEFAULTS',
+  'APLICAR': 'APPLY', 'SALVAR': 'SAVE',
+  'Estes stats ficam': 'These stats live', 'neste navegador': 'in this browser',
+  '. O ranking global está desligado enquanto o jogo está em alpha - volta quando o placar for confiável.':
+    '. The global leaderboard is off while the game is in alpha — it returns when the scoreboard is trustworthy.',
+  'O CORO SOLTO ainda está em alpha. Se você curte a ideia, qualquer apoio ajuda a pagar servidor, domínio e as próximas melhorias.':
+    'CORO SOLTO is still in alpha. If you like the idea, any support helps pay for the server, the domain and the next improvements.',
+  '🇧🇷 SOU DO BRASIL': '🇧🇷 I AM IN BRAZIL',
+  '🌐 FORA DO BRASIL': '🌐 OUTSIDE BRAZIL',
+  'ABRIR PÁGINA DE APOIO': 'OPEN THE SUPPORT PAGE',
+  'AWP / Pistola / Faca': 'AWP / Pistol / Knife',
+  'CTRL ou C': 'CTRL or C',
+  'Gire o celular na horizontal pra jogar': 'Turn your phone sideways to play',
+  'com respawn: cada round dura 1:39 ou fecha quando um time chega no alvo de abates; o time com mais kills leva o round. Por padrão, vence quem ganhar 3 rounds (melhor de 5); o teto pode ser escolhido na tela de mapas.':
+    'with respawn: each round lasts 1:39 or ends when a team hits the kill target; the team with more kills takes the round. By default the first to 3 rounds wins (best of 5); the cap can be chosen on the map screen.',
+  'não tem cronômetro de round: a rodada acaba quando um time captura 3 bandeiras (ou domina todas de uma vez). Vence quem ganhar 2 rodadas (melhor de 3). A partida tem um limite de 8 minutos, que só aparece no HUD no último minuto.':
+    'has no round clock: the round ends when a team captures 3 flags (or holds them all at once). First to 2 rounds wins (best of 3). The match has an 8-minute cap that only shows on the HUD in the final minute.',
+  // HUD / placar
+  'PROTEGIDO': 'PROTECTED',
+  'RECARREGANDO…': 'RELOADING…',
+  'Z/X/V RÁDIO': 'Z/X/V RADIO', 'TAB PLACAR': 'TAB SCOREBOARD', 'M TROCAR DE TIME': 'M SWITCH TEAM',
+  'CLIQUE PARA ATIVAR A MIRA': 'CLICK TO LOCK THE CROSSHAIR',
+  'Se o navegador bloquear, clique de novo. Em iframe/preview, abra o jogo em aba própria.':
+    'If the browser blocks it, click again. Inside an iframe/preview, open the game in its own tab.',
+  'ELIMINADO': 'ELIMINATED',
+  'CORO SOLTO - PLACAR': 'CORO SOLTO — SCOREBOARD',
+  'SEGURAR PARA VER': 'HOLD TO VIEW', 'ATIVAR CURSOR': 'ENABLE CURSOR',
+  'Armas e utilitários': 'Weapons and utilities',
+  'Fumaça (tecla 4)  ·  Frag (tecla 5)': 'Smoke (key 4)  ·  Frag (key 5)',
+  // rodapé / links
+  'Links do jogo': 'Game links', 'Menu principal': 'Main menu', 'Abrir seu perfil': 'Open your profile',
+  'Discord do CORO SOLTO': 'CORO SOLTO Discord', 'Telegram do CORO SOLTO': 'CORO SOLTO Telegram',
+  'Código no GitHub': 'Source on GitHub',
 };
+
+/* Índice por espaço NORMALIZADO: o mesmo parágrafo quebrado em duas linhas no
+   index.astro chega aqui com \n e indentação no meio. Sem isto, cada quebra de linha
+   do HTML vira uma sobra em PT no meio do EN (foi o que a varredura de 21/08 achou). */
+const norm = (s) => s.replace(/\s+/g, ' ').trim();
+const DICT_NORM = {};
+for (const k of Object.keys(DICT)) DICT_NORM[norm(k)] = DICT[k];
 
 export const tr = (s) => {
   if (LANG !== 'en' || typeof s !== 'string') return s;
-  return DICT[s] || DICT[s.trim()] || s;
+  return DICT[s] || DICT[s.trim()] || DICT_NORM[norm(s)] || s;
 };
 
 /* Frases DINÂMICAS do jogo (game.js/main.js). PT inline como padrão — o jogo nunca
@@ -319,13 +462,14 @@ export function translateDom(root) {
   for (const n of nos) {
     const t = n.textContent, tt = t.trim();
     if (!tt) continue;
-    const en = DICT[tt];
+    const en = DICT[tt] || DICT_NORM[norm(tt)];
     if (en) n.textContent = t.replace(tt, en);
   }
   for (const el of root.querySelectorAll('[placeholder],[title],[aria-label]')) {
     for (const a of ['placeholder', 'title', 'aria-label']) {
       const v = el.getAttribute(a);
-      if (v && DICT[v.trim()]) el.setAttribute(a, DICT[v.trim()]);
+      const en = v && (DICT[v.trim()] || DICT_NORM[norm(v)]);
+      if (en) el.setAttribute(a, en);
     }
   }
 }

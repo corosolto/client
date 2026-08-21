@@ -9,9 +9,9 @@ import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.j
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster } from './game.js';
 import { VERSION } from './version.js';
-import { LANG, translateDom, tr, frase } from './i18n.js';
+import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
@@ -49,10 +49,23 @@ if (!renderer) {
 }
 const COMPAT_MODE = SAFE_MODE || renderer.__csWebgl?.degraded === true;
 if (COMPAT_MODE) { preferredQuality = settings.quality; settings.quality = 'low'; }
+/* AUTO-PERFIL PARA MÁQUINA FRACA: cai pra 'low' por padrão só se o jogador NUNCA escolheu
+   qualidade à mão (a escolha manual sempre vence). ?perfilauto=0 desliga a heurística. */
+const AUTO_PROFILE = new URLSearchParams(location.search).get('perfilauto') !== '0';
+function detectaHwFraco() {
+  const gpu = (renderer.__csWebgl?.renderer || '').toLowerCase();
+  const integrada = /intel|iris|uhd graphics|hd graphics|mesa|microsoft basic|swiftshader|llvmpipe|softpipe/.test(gpu);
+  const mem = navigator.deviceMemory;              // Chrome limita em 8; 4 GB reporta 4
+  const cores = navigator.hardwareConcurrency || 8;
+  return integrada || (typeof mem === 'number' && mem <= 4) || cores <= 4;
+}
+const WEAK_HW = !COMPAT_MODE && AUTO_PROFILE && savedSettings.quality === undefined && detectaHwFraco();
+if (WEAK_HW) { settings.quality = 'low'; try { console.info('[perf] hardware modesto detectado — qualidade em BAIXA por padrão (mude em Configurações)'); } catch {} }
+const LEAN = COMPAT_MODE || WEAK_HW;   // qualquer caminho leve: previews estáticos + DPR menor
 const ASSET_CHECK = new URLSearchParams(location.search).get('assetcheck') === '1';
-let staticPreviews = COMPAT_MODE && !ASSET_CHECK;
+let staticPreviews = LEAN && !ASSET_CHECK;
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(COMPAT_MODE ? 0.75 : 1);
+renderer.setPixelRatio(LEAN ? 0.75 : 1);
 renderer.shadowMap.enabled = !COMPAT_MODE;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 // Tonemap. Com o composer ligado three já força NoToneMapping nos materiais (só aplica
@@ -172,6 +185,10 @@ function _mkPhase(fillEl, pctEl, statusEl) {
 // fase de boot: props do cenário 3D do menu (carrega por baixo da splash)
 const _bootPhase = _mkPhase(document.getElementById('boot-bar-fill'), document.getElementById('boot-pct'));
 let _splashReady = false;
+/* JANELA DE ENTRADA: o gesto que tira a splash não é escolha de menu. Em máquina lenta ele
+   vazava para o item recém-focado e o JOGAR abria o submenu sozinho (régua ENTRADA1). */
+const ENTRADA_MS = 350;
+let _entradaEm = 0;
 function _splashSetReady() {
   if (_splashReady) return; _splashReady = true;
   _bootPhase.set(1);
@@ -188,7 +205,7 @@ const _lo = {
   box: document.getElementById('load-overlay'), fill: document.getElementById('load-bar-fill'),
   pct: document.getElementById('load-pct'), label: document.getElementById('load-label'), status: document.getElementById('load-status'),
 };
-const loadingStage = new LoadingCharacterStage(document.getElementById('load-character-3d'), { compatibility: COMPAT_MODE });
+const loadingStage = new LoadingCharacterStage(document.getElementById('load-character-3d'), { compatibility: LEAN });
 loadingStage.show('B').catch(() => {});
 function dockLoadingCharacter() {
   const canvas = document.getElementById('load-character-3d');
@@ -272,6 +289,7 @@ function show(id) {
   // aberto embaixo e o VOLTAR cai de volta nele, com mapa/modo/bots intactos.
   if (id !== 'main-menu' && id !== 'map-screen') { const ms = document.getElementById('menu-setup'); if (ms) ms.classList.remove('open'); }
   else { applyHomeWall(); if (musicArmed) startMenuMusic(); }   // volta pra home: wallpaper + música de menu
+  if (id === 'main-menu') setTimeout(focusMenu, 40);   // teclado: ↑/↓ navegam assim que a home aparece
 }
 const $ = id => document.getElementById(id);
 const FACTION_ART_URLS = ['/img/faccoes/time-e.webp', '/img/faccoes/time-b.webp', '/img/faccoes/tribos.webp', '/img/faccoes/palhacos.webp', '/img/faccoes/funkeiros.webp'];
@@ -435,18 +453,33 @@ const _armMusic = () => {
 // SPLASH DE BOOT ("pressione para entrar"): o gesto que sai da splash é GARANTIDO, então
 // destrava o áudio COM SOM na hora — sem fallback mudo e sem fade atrapalhado. Registrado
 // em capture ANTES do _armMusic, que vira no-op (musicArmed já true).
-function dismissSplash() {
+function dismissSplash(e) {
   const sp = document.getElementById('boot-splash');
   if (!sp || !_splashReady || sp.classList.contains('gone')) return;
+  e?.preventDefault?.(); e?.stopPropagation?.();
+  _entradaEm = performance.now();
   loadingStage.hide();
   dockLoadingCharacter();
   sp.classList.add('gone');
   window.__gameLaunch?.ready('entrada');
   setTimeout(() => sp.remove(), 480);
+  setTimeout(focusMenu, 120);   // pós-splash: dá foco ao 1º botão pra ↑/↓ navegarem SEM precisar de Tab
   musicArmed = true;
   if (musicFade) { clearInterval(musicFade); musicFade = null; }
   const m = _ensureMusic();
   m.muted = false; m.volume = MENU_MUSIC_VOL; m.play().catch(() => {});
+}
+/* Foco no 1º item visível do menu CS: o handler de setas vive no #cs-menu e só dispara com
+   o foco lá dentro. Guardas: não rouba foco de campo de texto nem do painel de setup. */
+function focusMenu() {
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+  const menu = document.getElementById('main-menu');
+  if (!menu || menu.classList.contains('hidden')) return;
+  const ms = document.getElementById('menu-setup');
+  if (ms && ms.classList.contains('open')) return;
+  const first = [...document.querySelectorAll('.cs-item')].find((b) => b.offsetParent !== null);
+  if (first) first.focus();
 }
 window.addEventListener('pointerdown', dismissSplash, true);
 window.addEventListener('keydown', dismissSplash, true);
@@ -454,6 +487,10 @@ window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
 startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
 const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 820;
+/* TOUCH = aparelho de toque DE VERDADE (dedo, sem mouse). Separado do isMobile porque este
+   inclui "janela estreita" — um desktop com a janela apertada NÃO deve entrar em modo toque
+   (perderia o mouse-look). Só o TOUCH liga os controles de dedo e a trava de orientação. */
+const TOUCH = matchMedia('(pointer: coarse)').matches;
 let settingsReturn = 'main-menu';
 let howtoReturn = 'main-menu';   // CONTROLES aberto pelo pause volta pro pause, pelo menu volta pro menu
 
@@ -653,7 +690,7 @@ let game = null, currentTeam = 'E', currentFaction = 'E', currentChar = CHARACTE
 let pickingEnemy = false, currentEnemyFaction = null;   // 2º passo do team-select: escolher o adversário
 let submitted = true;   // stats da partida atual já enviados?
 
-/* ---------------- TELEMETRIA ANÔNIMA (ver supabase/migrations/012) ----------------
+/* ---------------- TELEMETRIA ANÔNIMA (contrato em tools/eval/telemetry-check) --------------
    O ranking está desligado (src/lib/site.ts, RANKING_ON) mas a MEDIÇÃO não: o dono
    quer saber quanto tempo se joga e em que mapa.
 
@@ -718,6 +755,8 @@ let heartbeatOff = false;
    view online_now (heartbeat < 2 min). `hidden` até ter número: rodapé nunca mostra
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
 { const v = document.getElementById('mf-ver'); if (v) v.textContent = `CORO SOLTO v${VERSION}`; }
+// o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
+await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
@@ -769,9 +808,9 @@ function _pingPresenca() {
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
  * Quatro sinais que SAIAM do Vercel Analytics (plano grátis não filtra propriedade de
- * evento) e passam a morar no NOSSO Postgres, lidos pelo painel admin. Mesma regra das
+ * evento) e passam a morar no NOSSO backend, lidos pelo painel admin. Mesma regra das
  * irmãs: sendBeacon, fail-silent, anônimas por anonId (UUID de localStorage), sem IP.
- * Ver supabase/migrations/016-019 e /api/{match,funnel,perf,acquisition}. */
+ * Contrato: /api/{match,funnel,perf,acquisition} e tools/eval/telemetry-check.mjs. */
 // FUNIL (017): land → menu → match_start → match_end → quit. Converte "chegou a jogar?".
 function _funnel(step) {
   if (testMode) return;
@@ -810,14 +849,29 @@ async function _sendAcquisition() {
     _acqSent = true;
   } catch { /* fail-silent */ }
 }
-// PERF (018): 1x por sessão, depois do boot. boot_ms = performance.now() no fim do módulo;
-// fps = contagem de frames em 1s de rAF; dispositivo = tier aproximado (nada fino pra não
-// virar fingerprint). Renderer GPU sai de um canvas descartável (não do renderer do jogo).
+// PERF (018): 1x por sessão, EM PARTIDA. fps = contagem de frames em 1s de rAF
+// ~4s após o state==='live' (fora da janela de compile de shader); bootMs = tempo
+// até JOGÁVEL; loadMs = carga do módulo (o que bootMs media antes — sinal mantido).
+// Até 15/08 a janela de fps media o 1º segundo de vida da página: main thread
+// parseando JS e compilando shader não roda rAF, e o painel vendia esse jank de
+// BOOT como "FPS P50" (98% < 30 FPS no print do dono) — número que media outra coisa.
 let _perfSent = false;
+const _perfLoadMs = Math.round(performance.now());
 function _sendPerf() {
   if (testMode || _perfSent) return;
   _perfSent = true;
-  const bootMs = Math.round(performance.now());
+  const aguardaLive = () => {
+    const g = window.__game;
+    if (!g || g.state !== 'live') {
+      if (performance.now() - _perfLoadMs < 120000) setTimeout(aguardaLive, 250);
+      return;
+    }
+    const bootMs = Math.round(performance.now());
+    setTimeout(() => _perfMedeFps(bootMs), 4000);
+  };
+  aguardaLive();
+}
+function _perfMedeFps(bootMs) {
   let frames = 0; const t0 = performance.now();
   const tick = () => { frames++; if (performance.now() - t0 < 1000) requestAnimationFrame(tick); else _perfFinish(bootMs, frames); };
   requestAnimationFrame(tick);
@@ -832,7 +886,7 @@ function _perfFinish(bootMs, frames) {
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
     anonId: getAnonId(), version: VERSION,
-    fps: frames, bootMs,
+    fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
     renderer: rendererStr,
@@ -946,7 +1000,8 @@ async function startGame(team, charId, enemyFaction) {
   }
 }
 async function _startGame(team, charId, enemyFaction) {
-  if (isMobile && !testMode) { show('mobile-warning'); return; }
+  // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
+  // "gire o celular" (CSS) cobre a tela até deitar.
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
   // default = oposto político. Mesma facção dos dois lados = mirror (inimigo roxo no HUD).
   const faction = (CHARACTERS.find(c => c.id === charId) || {}).team || team || 'E';
@@ -972,7 +1027,15 @@ async function _startGame(team, charId, enemyFaction) {
      depois dos awaits falha calado. Aqui em cima o clique ainda vale.
      Falhar é ACEITÁVEL: sem tela cheia não há trava de atalho, e a confirmação de saída
      do `beforeunload` cobre o caso. Por isso nada de await e nada de erro na tela. */
-  if (!testMode) { try { document.documentElement.requestFullscreen?.()?.catch?.(() => {}); } catch {} }
+  if (!testMode) {
+    try {
+      const fs = document.documentElement.requestFullscreen?.();
+      // trava de orientação só depois da tela cheia (a API exige fullscreen). Android respeita;
+      // iOS ignora — daí o overlay "gire o celular" (CSS) como rede. Falhar é aceitável.
+      if (TOUCH && fs?.then) fs.then(() => { try { screen.orientation?.lock?.('landscape'); } catch {} }).catch(() => {});
+      else fs?.catch?.(() => {});
+    } catch {}
+  }
   loadingStage.hide(); dockLoadingCharacter();
   const _sp = document.getElementById('boot-splash'); if (_sp) _sp.remove();   // fluxo ?auto= pula a splash
   // LOADING REAL da partida: overlay opaco cobre TUDO enquanto os GLBs entram e o mundo
@@ -984,10 +1047,17 @@ async function _startGame(team, charId, enemyFaction) {
   // load in parallel and are optional — the map renders fine if they're missing.
   // sorteia os carros da Havan desta partida ANTES do preload (seleção = props do mapa)
   setHavanCarSeed((Math.random() * 1e9) | 0);
+  /* SÓ OS PERSONAGENS DA PARTIDA: o roster é sorteado ANTES do preload e só esses GLBs sobem
+     (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
+  const matchRoster = pickMatchRoster(faction, enemyFac, Math.max(1, Math.min(8, settings.bots || 4)), charId);
+  const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
+    .map((d) => (typeof d === 'string' ? d : d.id))
+    .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
+  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
   try {
     if (!navOnly) {
       await Promise.all([
-        preloadCharacterAssets([...GLB_CHARS]),
+        preloadCharacterAssets(_charsToLoad),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
@@ -997,7 +1067,7 @@ async function _startGame(team, charId, enemyFaction) {
   game = new Game({
     renderer, textures, sfx, settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
@@ -1229,6 +1299,7 @@ function abreModos(abrir) {
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
+    if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
       case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
@@ -1396,6 +1467,7 @@ $('fb-send').onclick = async () => {
 const mapNameEl = $('map-name');
 const mapThumb = $('map-thumb');
 if (mapThumb) {
+  mapThumb.decoding = 'async';   // decode fora da thread principal
   mapThumb.onload = () => { mapThumb.style.opacity = '1'; };
   mapThumb.onerror = () => { mapThumb.style.opacity = '0'; };   // sem captura ainda → some limpo
 }
@@ -1426,7 +1498,7 @@ function setMapMeta() {
 function setMapMode() {
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
+    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
@@ -1484,55 +1556,148 @@ const MAP_DESC = {
   quebrada: 'Rua de baile: muros baixos, beco cego e o paredão marcando o compasso do round.',
   posto_treta: 'Posto de combustível na beira da BR: loja de conveniência, bombas de cobertura e treta no fluorescente.',
   atacadao_treta: 'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.',
+  parque_treta: 'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.',
+  velho_oeste: 'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.',
+  penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
+  upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
+  obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
   treta_no_gelo: 'Fortaleza congelada de pedra e neve: bastiões octogonais, rampas defensivas e rotas apertadas em volta do bloco central.',
 };
-const MAP_CAT = {
-  praca_poderes: 'CIDADES', piscina_treta: 'ARENA', loja_h: 'CIDADES',
-  ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',
-  atacadao_treta: 'CIDADES',
-  treta_no_gelo: 'ARENA',
+/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
+ * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
+ * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
+ * arquivo do mapa); OFICIAL é o autor da casa. */
+const MAP_CATS = {
+  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
+  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
+  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
+  parque_treta: ['ARENA', 'COMUNIDADE'],
+  velho_oeste: ['ARENA', 'COMUNIDADE'],
+  penitenciaria: ['ARENA', 'COMUNIDADE'],
+  upa_24h: ['ARENA', 'COMUNIDADE'],
+  obras_prefeitura: ['ARENA', 'COMUNIDADE'],
+  treta_no_gelo: ['ARENA', 'COMUNIDADE'],
 };
+const MAP_AUTOR = {
+  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
+  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
+  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
+  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
+  upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
+  treta_no_gelo: 'Ubiracy Santos',
+};
+const MAP_DATA = {
+  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
+  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
+  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
+  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
+  upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
+  treta_no_gelo: '18/08/2026',
+};
+const CAT_DESC = {
+  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
+  OFICIAIS: 'Mapas oficiais da casa.',
+  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
+  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
+  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
+  COMUNIDADE: 'Mapas feitos pela comunidade.',
+  AI: 'Construídos pelos agentes de IA da casa.',
+};
+const AUTOR_CASA = 'Ruben Marcus';
+const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
+const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
+const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
 let mapCategory = 'TODOS';
+let mapAutorFiltro = 'TODOS';
+function autoresDeComunidade() {
+  return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
+}
+/* Quantas vezes cada mapa foi escolhido, do contador que o /api/pick alimenta desde
+   06/08 (picks_daily). Chega TARDE, por rede, e pode nunca chegar: a tela abre sem ele,
+   e quando chega redesenha. Nada aqui pode depender do número existir. */
+let mapPlays = {};
+const playsDe = (id) => mapPlays[id] || 0;
+fetch('/api/map-plays')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => {
+    if (!j || !j.plays || typeof j.plays !== 'object') return;
+    mapPlays = j.plays;
+    if (!$('map-screen')?.classList.contains('hidden')) renderMapScreen();
+  })
+  .catch(() => { /* sem banco/rede: a tela fica sem a estatística, e é só isso */ });
 function visibleMapIds() {
-  return mapCategory === 'TODOS' ? MAP_IDS : MAP_IDS.filter((id) => MAP_CAT[id] === mapCategory);
+  /* TODOS = o acervo inteiro, ordenado do mais jogado pro menos (empate: ordem do catálogo,
+     que é estável — `sort` sem desempate deixava a lista dançar entre renders).
+     OFICIAIS e COMUNIDADE são recortes por categoria e mantêm a ordem do catálogo. */
+  if (mapCategory === 'TODOS') {
+    return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));
+  }
+  if (mapCategory === 'OFICIAIS') return MAP_IDS.filter((id) => !catsDe(id).includes('COMUNIDADE'));
+  return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
+  /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
+     Trocas manuais de aba já re-ancoram o mapa antes, então isto não briga com elas. */
+  if (!visibleMapIds().includes(currentMap)) {
+    mapCategory = catsDe(currentMap).includes('COMUNIDADE') ? 'COMUNIDADE' : 'OFICIAIS';
+  }
   const continuar = $('ms-continue')?.querySelector('span');
   if (continuar) continuar.textContent = frase('continuarSetup');
+  img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
   img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
+     foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
+     acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
+  const palco = document.querySelector('#map-screen .ms-bg');
+  if (palco) { palco.style.setProperty('--wall', HOME_WALL); palco.style.setProperty('--wall-3x2', HOME_WALL_3X2); }
   $('ms-name').textContent = MAPS[currentMap].name;
   // separadores da ficha em verde (referência 04): texto continua o mesmo do cartaz
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
   $('ms-desc').textContent = tr(MAP_DESC[currentMap] || '');
   syncMapOptions();
-  const cat = MAP_CAT[currentMap] || 'ARENA';
+  const cats = catsDe(currentMap);
   const catEl = $('ms-cat');
-  catEl.textContent = tr(cat); catEl.dataset.cat = cat;
+  catEl.innerHTML = cats.map((c) => `<span data-cat="${c}">${tr(c)}</span>`).join('<span class="ms-sep">·</span>');
+  const byline = $('ms-byline');
+  if (byline) byline.innerHTML = `${tr('por')} <strong>${autorDe(currentMap)}</strong> · ${MAP_DATA[currentMap] || ''}` +
+    (oficialDe(currentMap) ? ` <span class="ms-badge-oficial">${tr('OFICIAL')}</span>` : ` <span class="ms-badge-comunidade">${tr('COMUNIDADE')}</span>`);
+  const desc = $('ms-cat-desc');
+  if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
+  /* Estatística de partidas: só aparece quando o número EXISTE. Escrever "0 PARTIDAS"
+     num mapa que ninguém mediu é afirmar o que não se sabe — sem o contador, o crachá some. */
+  const plays = $('ms-plays');
+  if (plays) {
+    const n = playsDe(currentMap);
+    plays.hidden = !n;
+    plays.textContent = n ? `${n.toLocaleString('pt-BR')} ${tr(n === 1 ? 'PARTIDA' : 'PARTIDAS')}` : '';
+  }
   const shown = visibleMapIds();
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
-      `<img class="ms-thumb-img" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
+      `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
-      `<span class="ms-thumb-cat" data-cat="${MAP_CAT[id] || 'ARENA'}">${tr(MAP_CAT[id] || 'ARENA')}</span></span>` +
+      `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
+      (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
+      `</span></span>` +
       `${id === currentMap ? '<i class="ms-diamond" aria-hidden="true"></i>' : ''}</button>`).join('');
   document.querySelectorAll('.ms-tab').forEach((tab) => {
     const on = tab.dataset.cat === mapCategory;
     tab.classList.toggle('on', on);
     tab.setAttribute('aria-selected', on);
   });
-  const pages = Math.max(1, Math.ceil(shown.length / 5));
-  const activePage = Math.min(pages - 1, Math.floor(Math.max(0, shown.indexOf(currentMap)) / 5));
-  $('ms-dashes').innerHTML = Array.from({ length: pages }, (_, i) => `<i${i === activePage ? ' class="on"' : ''}></i>`).join('');
+  // A tira é uma grid que mostra TODOS os mapas de uma vez (sem scroll nem página). Os "dots"
+  // de paginação eram falsos — marcavam páginas que não existem. Removidos.
+  $('ms-dashes').innerHTML = '';
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
   });
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapThumb.title = 'Ver mapa em tela cheia';
+mapThumb.title = tr('Ver mapa em tela cheia');
 mapThumb.style.cursor = 'pointer';
 mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };
@@ -1541,8 +1706,8 @@ $('ms-next').onclick = () => stepMap(1, visibleMapIds());
 document.querySelectorAll('.ms-tab').forEach((tab) => {
   tab.onclick = () => {
     ui.click(); mapCategory = tab.dataset.cat || 'TODOS';
-    const first = MAP_IDS.find((id) => mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory);
-    if (first && !MAP_IDS.some((id) => id === currentMap && (mapCategory === 'TODOS' || MAP_CAT[id] === mapCategory))) gotoMap(MAP_IDS.indexOf(first));
+    const first = visibleMapIds()[0];
+    if (first && !visibleMapIds().includes(currentMap)) gotoMap(MAP_IDS.indexOf(first));
     else renderMapScreen();
   };
 });
@@ -2378,11 +2543,16 @@ updLabels();
 })();
 
 /* ---------------- loop ---------------- */
-addEventListener('resize', () => {
+function aplicarResize() {
   renderer.setSize(innerWidth, innerHeight);
   menuCam.aspect = innerWidth / innerHeight; menuCam.updateProjectionMatrix();
   if (game) game.onResize();
-});
+}
+addEventListener('resize', aplicarResize);
+/* iOS (WebKit): ao girar, o 1º 'resize' vem com dimensão velha (o viewport assenta com atraso)
+   — por isso os re-disparos. visualViewport cobre a barra de endereço que aparece/some. */
+addEventListener('orientationchange', () => { aplicarResize(); setTimeout(aplicarResize, 250); setTimeout(aplicarResize, 600); });
+if (window.visualViewport) visualViewport.addEventListener('resize', aplicarResize);
 const clock = new THREE.Clock();
 let menuAngle = 0;
 /* #295: o clamp de 50 ms é teto POR PASSO, não por frame. Como teto por frame ele
@@ -2432,7 +2602,7 @@ loop();
     `v${VERSION} · Sátira política fictícia. Nenhum político real foi consultado (ou poupado).`;
 }
 { const sv = document.getElementById('splash-ver'); if (sv) sv.textContent = `v${VERSION}`; }
-show(isMobile && !testMode ? 'mobile-warning' : 'main-menu');
+show('main-menu');   // mobile agora entra no menu normal (fase 1: controles de toque)
 window.__CS_MAIN_READY__ = true;
 window.__gameLaunch?.ready('boot');
 function showInspectionResult(won, character) {

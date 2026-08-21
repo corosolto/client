@@ -47,7 +47,7 @@ export const abs = (path = '/') => new URL(path, SITE).toString();
    também é servido no dev, no itch.io e na CrazyGames. Mude aqui e em `vercel.json`. */
 export const DISCORD_URL = '/discord';
 export const TELEGRAM_URL = '/telegram';
-export const GITHUB_URL = 'https://github.com/rubenmarcus/csbrasil';
+export const GITHUB_URL = 'https://github.com/corosolto/client';
 
 // Apoio: o endereço da campanha brasileira entra depois que ela for criada no MeApoia.
 // Os fallbacks deixam a página utilizável no primeiro deploy e podem ser trocados só por

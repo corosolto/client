@@ -23,7 +23,17 @@ const alvoPorMutante = {
   'mapa-sem-miniaturas': 'UIR4',
   'mapa-sem-navegacao': 'UIR4',
   'mapa-navega-global': 'UIR4',
-  'mapa-strip-fixa': 'UIR4',
+  'mapa-acervo-deitado': 'UIR4',
+  'mapa-acervo-nao-rola': 'UIR4',
+  'mapa-card-achatado': 'UIR4',
+  'mapa-palco-sem-scrim': 'UIR4',
+  'mapa-header-empilhado': 'UIR4',
+  'mapa-palco-wall-do-setup': 'UIR4',
+  'mapa-rodape-junto': 'UIR4',
+  'mapa-palco-sem-wallpaper': 'UIR4',
+  'mapa-plays-inventado': 'UIR4',
+  'mapa-todos-sem-ranking': 'UIR4',
+  'mapa-plays-sem-guarda': 'UIR4',
   'mapa-categoria-errada': 'UIR4',
   'i18n-duplicada': 'UIR5',
   'arma-unica': 'UIR6',
@@ -82,6 +92,9 @@ const alvoPorMutante = {
   'troca-m-abre-pausa': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
+  'sem-autoria': 'UIR43',
+  'filtro-autor-morto': 'UIR4',   // mistura comunidade nos OFICIAIS de novo (reverte o #368)
+  'sem-badge-oficial': 'UIR43',
 };
 if (MUTANTE && !alvoPorMutante[MUTANTE]) {
   console.error(`mutante desconhecido: ${MUTANTE}`);
@@ -92,6 +105,7 @@ let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
 let css = readFileSync(join(ROOT, 'public/style.css'), 'utf8');
 let i18n = readFileSync(join(ROOT, 'public/js/i18n.js'), 'utf8');
 let astro = readFileSync(join(ROOT, 'src/pages/index.astro'), 'utf8');
+let mapPlaysApi = readFileSync(join(ROOT, 'src/pages/api/map-plays.ts'), 'utf8');
 const characters = readFileSync(join(ROOT, 'public/js/characters.js'), 'utf8');
 let videoGenerator = readFileSync(join(ROOT, 'tools/eval/char-native-vids.mjs'), 'utf8');
 let game = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
@@ -103,6 +117,10 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
+const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
+  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
+const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
+  ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
 const muta = (nome, texto, antes, depois) => {
   if (MUTANTE !== nome) return texto;
@@ -204,12 +222,53 @@ main = muta('mapa-sem-miniaturas', main,
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",
   "$('ms-next').onclick = () => stepMap(1);");
-css = muta('mapa-strip-fixa', css,
-  'grid-template-columns:repeat(var(--map-count),minmax(0,196px))',
-  'grid-template-columns:repeat(var(--map-count),196px)');
+/* 21/08: a faixa horizontal virou GRADE elástica no corpo. Cada mutação abaixo desfaz
+   UMA decisão da tela e tem de acender a UIR4 sozinha. */
+css = muta('mapa-acervo-deitado', css,     // grade elástica vira fileira de largura fixa
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))',
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),196px)');
+css = muta('mapa-header-empilhado', css,   // a linha de três colunas vira pilha de novo
+  '.ms-head{display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr) auto;',
+  '.ms-head{display:grid;grid-template-columns:minmax(0,1fr);');
+css = muta('mapa-rodape-junto', css,           // VOLTAR e CONTINUAR deixam de ir pros cantos
+  '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between',
+  '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-start');
+css = muta('mapa-palco-sem-wallpaper', css,    // o borrão do wallpaper some: volta o preto chapado
+  '.ms-bg::before{inset:-24px;z-index:0;background-size:cover;filter:blur(18px) brightness(.48) saturate(.72)}',
+  '.ms-bg::before{inset:-24px;z-index:0;background-size:auto;filter:none}');
+main = muta('mapa-palco-wall-do-setup', main,  // volta a divergir do menu principal
+  "palco.style.setProperty('--wall', HOME_WALL)",
+  "palco.style.setProperty('--wall', SETUP_WALL)");
+main = muta('mapa-plays-inventado', main,      // zero vira "0 partidas" em vez de sumir
+  '    plays.hidden = !n;',
+  '    plays.hidden = false;');
+main = muta('mapa-todos-sem-ranking', main,    // TODOS deixa de ordenar por partidas jogadas
+  'return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));',
+  'return MAP_IDS.slice();');
+mapPlaysApi = muta('mapa-plays-sem-guarda', mapPlaysApi,   // sem banco, a rota passa a estourar
+  '  if (!supabaseAdmin) return resposta({ plays: {} });',
+  '  // guarda removida');
+css = muta('mapa-card-achatado', css,          // volta ao px fixo: o card deixa de ser quadrado
+  '.ms-thumb-img{display:block;width:100%;height:auto;aspect-ratio:4/3',
+  '.ms-thumb-img{display:block;width:100%;height:96px');
+css = muta('mapa-palco-sem-scrim', css,        // preview sem véu: ficha some em mapa claro
+  '.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;\n  background:linear-gradient(90deg',
+  '.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;\n  background:none;--morto:linear-gradient(90deg');
+css = muta('mapa-acervo-nao-rola', css,
+  '.ms-viewport{flex:1;min-height:0;overflow-y:auto',
+  '.ms-viewport{flex:1;min-height:0;overflow-y:visible');
+main = muta('sem-autoria', main,
+  "const byline = $('ms-byline');",
+  "const byline = null;");
+main = muta('filtro-autor-morto', main,
+  "mapCategory === 'TODOS' ? !catsDe(id).includes('COMUNIDADE') : catsDe(id).includes(mapCategory)",
+  "mapCategory === 'TODOS' ? true : catsDe(id).includes(mapCategory)");
+main = muta('sem-badge-oficial', main,
+  'class="ms-badge-oficial"',
+  'class="ms-badge-x"');   // remove o crachá de verdade: trocar a CONDIÇÃO não mordia (a string ficava)
 main = muta('mapa-categoria-errada', main,
-  "ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA',",
-  "ferro_velho: 'FAVELA', quebrada: 'FAVELA', posto_treta: 'CIDADES',");
+  "piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],",
+  "piscina_treta: ['CIDADES'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['CIDADES'],");
 astro = muta('mapa-sem-navegacao', astro,
   '<button id="ms-prev" class="ms-arrow"',
   '<button id="ms-prev-mutado" class="ms-arrow"');
@@ -306,12 +365,11 @@ game = muta('mouse-invertido-ignorado', game,
 loading3d = muta('loading-vira-esquerda', loading3d,
   'built.group.rotation.y = 0.42;',
   'built.group.rotation.y = -0.42;');
-i18n = muta('idioma-por-navegador', i18n,
-  "const geo = (typeof document !== 'undefined' && document.documentElement.dataset.geoLang) || 'pt';",
-  "const geo = (typeof navigator !== 'undefined' && navigator.language === 'en-US') ? 'en' : 'pt';");
+main = muta('idioma-por-navegador', main,
+  'await resolveGeoLang();\n', '');
 astro = muta('idioma-prerender', astro,
-  'export const prerender = false;',
-  'export const prerender = true;');
+  "import pkg from '../../package.json';",
+  "export const prerender = false;\nimport pkg from '../../package.json';");
 main = muta('backend-aviso-volta', main,
   "function submitNote(msg) {\n  console.warn('[ranking]', msg);\n}",
   "function submitNote(msg) {\n  console.warn('[ranking]', msg);\n  const el = document.getElementById('match-stats');\n  if (el) el.textContent += ` SUPABASE_SERVICE_ROLE_KEY ${msg}`;\n}");
@@ -557,10 +615,36 @@ const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(func
   && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);
 const strip = (css.match(/\.ms-strip\{([^}]*)\}/) || [])[1] || '';
 const fundoMapa = (css.match(/\.ms-bg\{([^}]*)\}/) || [])[1] || '';
+const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
+  && /const MAP_DATA = \{/.test(main)
+  && /const AUTOR_CASA = 'Ruben Marcus';/.test(main)
+  && /const byline = \$\('ms-byline'\);/.test(funcMap)
+  && /\$\{autorDe\(currentMap\)\}<\/strong> · \$\{MAP_DATA\[currentMap\] \|\| ''\}/.test(funcMap)
+  && /ms-badge-oficial/.test(funcMap)
+  && /ms-badge-comunidade/.test(funcMap)
+  // #368: o sub-filtro por autor saiu — COMUNIDADE lista todos. Guardava o elemento ESCONDIDO;
+  // agora guarda a AUSÊNCIA dele (marcação morta é lixo que confunde quem lê — achado do #368).
+  && !/ms-authors/.test(astro)
+  && !/ms-authors/.test(main)
+  && !/ms-authors/.test(css);
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
-  && /ferro_velho: 'ARENA', quebrada: 'FAVELA', posto_treta: 'ARENA'/.test(main)
-  && /atacadao_treta: 'CIDADES'/.test(main)
-  && /function visibleMapIds\(\) \{[\s\S]{0,140}return mapCategory === 'TODOS' \? MAP_IDS : MAP_IDS\.filter\(\(id\) => MAP_CAT\[id\] === mapCategory\)/.test(main)
+  && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
+  && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
+  && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
+  /* TODOS voltou a ser o acervo INTEIRO (21/08) e ordena por partidas jogadas; OFICIAIS
+     virou aba própria. Sem o desempate por índice a lista dança entre renders. */
+  && /if \(mapCategory === 'TODOS'\) \{[\s\S]{0,220}playsDe\(b\) - playsDe\(a\) \|\| MAP_IDS\.indexOf\(a\) - MAP_IDS\.indexOf\(b\)/.test(main)
+  && /if \(mapCategory === 'OFICIAIS'\) return MAP_IDS\.filter\(\(id\) => !catsDe\(id\)\.includes\('COMUNIDADE'\)\)/.test(main)
+  && /return MAP_IDS\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
+  /* a estatística sai do contador REAL (picks_daily via /api/pick), nunca de número local,
+     e a tela tem de abrir sem ela: rede caída não pode derrubar a escolha de mapa. */
+  && /fetch\('\/api\/map-plays'\)/.test(main)
+  && /let mapPlays = \{\};/.test(main)
+  && /\.catch\(\(\) => \{ \/\* sem banco\/rede/.test(main)
+  && /\.from\('picks_daily'\)[\s\S]{0,120}\.eq\('kind', 'mapa'\)/.test(mapPlaysApi)
+  && /if \(!supabaseAdmin\) return resposta\(\{ plays: \{\} \}\);/.test(mapPlaysApi)
+  /* zero partidas é AUSÊNCIA de medida, não medida de zero: o crachá some em vez de mentir */
+  && /plays\.hidden = !n;/.test(funcMap)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
@@ -572,21 +656,47 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
   && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
-  && /<img class="ms-thumb-img" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
+  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
-  && /\.ms-tabs\{[^}]*top:60px[^}]*left:32px[^}]*gap:24px/.test(css)
-  && /\.ms-head\{[^}]*left:64px[^}]*top:130px[^}]*width:460px/.test(css)
-  && /\.ms-name\{[^}]*font-size:72px/.test(css)
-  && /\.ms-carousel\{[^}]*left:64px[^}]*right:64px[^}]*bottom:96px/.test(css)
+  // As três abas: TODOS (acervo inteiro, por partidas), OFICIAIS e COMUNIDADE. O #368
+  // tinha fundido TODOS e OFICIAIS numa só; 21/08 separou de novo, a pedido do dono.
+  && /data-cat="TODOS"[^>]*>TODOS</.test(astro)
+  && /data-cat="OFICIAIS"[^>]*>OFICIAIS</.test(astro)
+  && /data-cat="COMUNIDADE"/.test(astro)
+  && main.includes("$('ms-dashes').innerHTML = '';")
+  /* geometria de 21/08 (3ª rodada): CABEÇALHO + ACERVO + RODAPÉ em três faixas. O corpo
+     é só a grade; ficha e opções da partida moram no cabeçalho; VOLTAR e CONTINUAR nos
+     cantos opostos do rodapé. */
+  && /#map-screen\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/.test(css)
+  /* o cabeçalho é UMA linha de três colunas (navegação | ficha | opções), não uma pilha */
+  && /\.ms-head\{display:grid;grid-template-columns:minmax\(300px,340px\) minmax\(0,1fr\) auto/.test(css)
+  && /class="ms-head"[\s\S]{0,120}class="ms-nav"/.test(astro)
+  /* ficha e opções da partida moram DENTRO do cabeçalho, antes do corpo — é o que
+     libera o corpo inteiro para a grade. A ordem na marcação é a prova. */
+  && /class="ms-topbar"[\s\S]*?class="ms-head"[\s\S]*?id="ms-match-options"[\s\S]*?class="ms-body"[\s\S]*?class="ms-foot"/.test(astro)
+  && /\.ms-foot\{[^}]*justify-content:space-between/.test(css)
+  && /\.ms-name\{[^}]*font-size:40px/.test(css)
+  && /\.ms-viewport\{[^}]*overflow-y:auto/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
-  && /grid-template-columns:repeat\(var\(--map-count\),minmax\(0,196px\)\)/.test(strip)
-  && /justify-content:center/.test(strip)
+  /* a grade decide o número de colunas pela largura real (até 3), e o card é quase
+     quadrado por PROPORÇÃO — px fixo volta a achatar a arte quando a faixa estica. */
+  && /grid-template-columns:repeat\(auto-fill,minmax\(360px,1fr\)\)/.test(strip)
+  && /max-width:1180px/.test(strip)
   && /width:100%/.test(strip)
   && /\.ms-thumb\{[^}]*width:100%[^}]*min-width:0/.test(css)
-  && /\.ms-thumb-img\{[^}]*height:96px[^}]*object-fit:cover/.test(css)
-  && /inset:\s*0/.test(fundoMapa) && /border:\s*0/.test(fundoMapa)
+  && /\.ms-thumb-img\{[^}]*aspect-ratio:4\/3[^}]*object-fit:cover/.test(css)
+  /* o palco é o WALLPAPER, não a preview: o `<img>` fica só para a sonda de tela ler o src */
+  && /inset:\s*0/.test(fundoMapa)
+  /* e é o MESMO wallpaper do menu, pintado pela mesma regra: borrão por baixo, arte
+     inteira por cima e a variante 3:2 na mesma faixa de proporção. */
+  && /\.ms-bg::before\{[^}]*background-size:cover;filter:blur\(18px\) brightness\(\.48\) saturate\(\.72\)/.test(css)
+  && /\.ms-bg::after\{[^}]*background-size:contain/.test(css)
+  && /\.ms-bg::before,\.ms-bg::after\{background-image:var\(--wall-3x2,var\(--wall\)\)/.test(css)
+  && /\.ms-bg img\{display:none\}/.test(css)
+  && /palco\.style\.setProperty\('--wall', HOME_WALL\)[\s\S]{0,80}'--wall-3x2', HOME_WALL_3X2/.test(funcMap)
+  && /\.ms-scrim\{[^}]*linear-gradient\(90deg[^}]*linear-gradient\(0deg/.test(css)
   && !/class="ms-rail/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';
 const chaves = [...dict.matchAll(/'((?:\\.|[^'\\])*)'\s*:/g)].map((m) => m[1]);
@@ -800,14 +910,20 @@ const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
 const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
-const idiomaGeo = /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(astro)
-  && /export const prerender = false/.test(astro)
-  && /const GEO_COUNTRY = \(Astro\.request\.headers\.get\('x-vercel-ip-country'\)[\s\S]*?cf-ipcountry/.test(astro)
-  && /const GEO_LANG = EN_GEO_COUNTRIES\.has\(GEO_COUNTRY\) \? 'en' : 'pt'/.test(astro)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(astro)
-  && /data-geo-lang=\{GEO_LANG\}/.test(astro)
-  && /const geo = \(typeof document !== 'undefined' && document\.documentElement\.dataset\.geoLang\) \|\| 'pt'/.test(i18n)
-  && !/navigator\.language/.test(i18n);
+/* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
+   e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
+   do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
+   ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
+const idiomaGeo = !/export const prerender = false/.test(astro)
+  && /window\.__GEO_LANG__/.test(astro)
+  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
+  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
+  && /export function langFromCountry/.test(geoLib)
+  && /export const prerender = false/.test(apiGeoLang)
+  && /langFromCountry/.test(apiGeoLang)
+  && /export async function resolveGeoLang/.test(i18n)
+  && /navigator\.language/.test(i18n)
+  && /await resolveGeoLang\(\)/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],
@@ -826,8 +942,8 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas reproduzem abas, ficha e carrossel visual navegável da tela 04 de referência', mapaReferencia,
-    `render usa MAP_IDS completo; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR4', 'mapas: três abas com TODOS por partidas, ficha e opções no cabeçalho, acervo dono do corpo', mapaReferencia,
+    `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; coluna=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim() || 'vazio'}`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,
     'gerador deriva weaponById de CHAR_WEAPON e envia a arma ao mounttest'],
@@ -860,7 +976,7 @@ const resultados = [
       ? `${resultadoRuins.length}/${resultadoVisual.length} artes cortadas, opacas ou no quadro errado: ${resultadoRuins.slice(0, 4).map(({ arquivo, meta, bounds }) => `${arquivo} ${meta.width}×${meta.height} alpha=${meta.alpha} margens=${[bounds.left, bounds.right, bounds.top, bounds.bottom].map((v) => (v * 100).toFixed(1)).join('/')}`).join(' · ')}`
       : `${resultadoVisual.length}/${resultadoVisual.length} recortes alpha do elenco inteiro, com folga nos quatro lados`],
   ['UIR20', 'idioma automático usa país conhecido e português como fallback', idiomaGeo,
-    'EUA/Reino Unido/Europa elegível recebem inglês; Portugal, Espanha e país desconhecido ficam em português'],
+    'home estática; /api/geo-lang decide pelo país antes do boot; sem API (host estático) cai no navegador'],
   ['UIR21', 'loading ocupa um quinto do palco anterior e olha para o avanço da barra', loadingCompactoDireita,
     'palco 86×144 no desktop; yaw positivo acompanha a barra da esquerda para a direita'],
   ['UIR22', 'configurações reproduzem painel 980px, prévia 360×200, cabeçalho e rodapé da tela 07', configuracoesReferencia,
@@ -905,6 +1021,8 @@ const resultados = [
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
     'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
+  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE (sub-filtro de autor removido, #368)', autoriaNaFicha,
+    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; sem marcação morta de chips de autor'],
 ];
 
 for (const [id, desc, ok, evid] of resultados) console.log(`${ok ? '✓' : '✗'} ${id} · ${desc}\n  ${evid}`);
