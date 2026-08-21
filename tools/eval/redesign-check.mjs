@@ -26,6 +26,8 @@ const alvoPorMutante = {
   'mapa-acervo-deitado': 'UIR4',
   'mapa-sem-duas-colunas': 'UIR4',
   'mapa-acervo-nao-rola': 'UIR4',
+  'mapa-card-achatado': 'UIR4',
+  'mapa-palco-sem-scrim': 'UIR4',
   'mapa-categoria-errada': 'UIR4',
   'i18n-duplicada': 'UIR5',
   'arma-unica': 'UIR6',
@@ -217,11 +219,17 @@ main = muta('mapa-navega-global', main,
    em vez de minmax) vira "o acervo volta a ser fileira", que é o jeito de perder o
    layout de duas colunas sem tocar em mais nada. */
 css = muta('mapa-acervo-deitado', css,
-  '.ms-strip{--map-count:1;display:grid;grid-template-columns:minmax(0,1fr)',
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))',
   '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),196px)');
 css = muta('mapa-sem-duas-colunas', css,
-  'grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:40px',
+  'grid-template-columns:minmax(0,1fr) minmax(340px,520px);gap:40px',
   'grid-template-columns:minmax(0,1fr);gap:40px');
+css = muta('mapa-card-achatado', css,          // volta ao px fixo: o card deixa de ser quadrado
+  '.ms-thumb-img{display:block;width:100%;height:auto;aspect-ratio:4/3',
+  '.ms-thumb-img{display:block;width:100%;height:96px');
+css = muta('mapa-palco-sem-scrim', css,        // preview sem véu: ficha some em mapa claro
+  '.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;\n  background:linear-gradient(90deg',
+  '.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;\n  background:none;--morto:linear-gradient(90deg');
 css = muta('mapa-acervo-nao-rola', css,
   '.ms-viewport{flex:1;min-height:0;overflow-y:auto',
   '.ms-viewport{flex:1;min-height:0;overflow-y:visible');
@@ -619,7 +627,7 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /data-cat="TODOS"[^>]*>OFICIAIS</.test(astro) && /data-cat="COMUNIDADE"/.test(astro)
   && main.includes("$('ms-dashes').innerHTML = '';")
   /* geometria de 21/08: duas colunas, ficha à esquerda com respiro, acervo em pé */
-  && /\.ms-body\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(300px,420px\)/.test(css)
+  && /\.ms-body\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(340px,520px\)/.test(css)
   && /\.ms-head\{[^}]*grid-column:1[^}]*gap:20px/.test(css)
   && /\.ms-carousel\{[^}]*grid-column:2[^}]*flex-direction:column/.test(css)
   && /\.ms-name\{[^}]*font-size:44px/.test(css)
@@ -627,12 +635,14 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\.ms-viewport\{[^}]*overflow-y:auto/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
-  && /grid-template-columns:minmax\(0,1fr\)/.test(strip)
+  /* o acervo rola em pé numa GRADE DE DOIS, e o card é quase quadrado (proporção, não px) */
+  && /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/.test(strip)
   && /width:100%/.test(strip)
   && /\.ms-thumb\{[^}]*width:100%[^}]*min-width:0/.test(css)
-  && /\.ms-thumb-img\{[^}]*height:96px[^}]*object-fit:cover/.test(css)
-  /* o cartaz em tela cheia saiu do palco: .ms-bg não pinta mais nada */
-  && /display:\s*none/.test(fundoMapa)
+  && /\.ms-thumb-img\{[^}]*aspect-ratio:4\/3[^}]*object-fit:cover/.test(css)
+  /* o palco continua sendo a preview do mapa em foco, e o scrim é quem a torna legível */
+  && /inset:\s*0/.test(fundoMapa) && /border:\s*0/.test(fundoMapa)
+  && /\.ms-scrim\{[^}]*linear-gradient\(90deg[^}]*linear-gradient\(0deg/.test(css)
   && !/class="ms-rail/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';
 const chaves = [...dict.matchAll(/'((?:\\.|[^'\\])*)'\s*:/g)].map((m) => m[1]);

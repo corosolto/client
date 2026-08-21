@@ -782,9 +782,8 @@ window.__GEO_LANG__ = (function () {
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
 <div id="map-screen" class="screen hidden">
-  <!-- A preview em tela cheia saiu do palco (decisão do dono, 21/08): a tela 04 virou
-       LISTA + FICHA, não cartaz. O <img> continua no DOM porque o render e a sonda de
-       tela leem o `src` pra saber qual mapa está em foco - `.ms-bg` fica display:none. -->
+  <!-- A preview do mapa em foco é o palco; quem paga por ela é o `.ms-scrim` logo abaixo,
+       sem o qual ficha e grade somem em cima de mapa claro (a Piscina). -->
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
   <div class="ms-scrim" aria-hidden="true"></div>
   <div class="ms-topbar">
