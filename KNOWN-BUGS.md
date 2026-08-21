@@ -72,6 +72,199 @@ Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
 exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
 normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
 Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
+
+**Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
+*"Falha ao abrir a arena: o código do jogo não chegou (verifique a conexão)"*, fingerprint
+`9703f595`, classe `codigo`, alpha.159, origem `boot-watchdog`, stack
+`Error: … at https://www.csbrasil.online/:290:43`.
+
+**Localização, medida e não estimada.** Baixando o HTML de produção e contando, a linha 290
+é o `lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou …` e a coluna 43
+cai no `new Error(` — ou seja, `:290:43` é `src/pages/index.astro:331`. O fingerprint
+também fecha: `crashFingerprint('error', <mensagem>, 'boot-watchdog')` = `9703f595`.
+
+**Causa raiz - confirmada.** A mensagem só sai quando **`erroDoBoot` é nulo E
+`window.__CS_MAIN_FAILED` está ligado**: ela é o segundo operando de um `||`. Não é o ramo
+de rede lenta, que a casa separou no #265 e que deliberadamente não abre `crash-auto`. O
+módulo de entrada falhou de verdade, e o motivo foi descartado em `index.astro:1215`:
+
+```html
+onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"
+```
+
+O `onerror` de `<script>` é evento de **recurso**: não borbulha, então o listener global
+(`index.astro:301-307`), que é quem preenche `erroDoBoot`, nunca o vê. O handler guardava um
+booleano e jogava fora o `ErrorEvent` inteiro, inclusive o `this.src` com o `?v=` - o único
+dado que separaria "CDN sem o módulo daquele deploy" de "conexão caiu". Minutos depois, o
+clique do jogador na splash **fabricava um `Error` novo, em português, escrito pela casa**.
+O que chegava ao classificador não era a falha: era a nossa paráfrase dela.
+
+**A consequência era cara.** `CACHE_SPLIT_RE` (`src/lib/error-provenance.mjs:6`) só conhece
+frases do navegador **em inglês**. A paráfrase não casa nenhuma, a classe vira `codigo`, e
+com `codigo` o `crash-fix.yml` **pula o purge do edge e o re-probe** (`crash-fix.yml:66-84`):
+a remediação determinística feita exatamente para esta causa não roda.
+
+**Descartado com medição: não foi deploy nem CDN.** A alpha.159 saiu 19h08 antes (19/08
+01:43:12Z) e nada foi publicado no intervalo. O `prod-watch` (cron de 15 min) passou **verde
+às 20:34:08Z, 17 minutos antes, e às 21:01:50Z, 10 minutos depois** - e o
+`tools/eval/prod-coherence.mjs` baixa o HTML da raiz e **cada módulo com o `?v=` exato**,
+tratando 404 como incoerência. O jogador ficou entre duas medições verdes do mesmo recurso.
+O único vermelho da janela foi `csbrasil-bot-pr-classify` às 20:29:34Z, num branch de PR.
+
+**Causa provável, ainda não provada: a #362.** Um Firefox reportando *"O especificador
+'three' era um especificador simples, mas não foi remapeado para nada"* em
+`main.js?v=…:2:24` - que é o `import * as THREE from 'three'`, linha 2, coluna 24. Import
+map não aplicado derruba o grafo do módulo, dispara o `onerror` da tag e liga o
+`__CS_MAIN_FAILED`; se esse jogador tocar na splash, ele gera exatamente a #386. Navegador
+sem suporte a import map (Firefox < 108, Safari < 16.4) ou proxy que reescreve a tag
+produzem isso, e o `prod-coherence` **não pegaria**, porque resolve o import map ele mesmo
+em vez de observar um browser que o ignora.
+
+O parentesco é literal: o commit que fechou a #265 (`5bbad829`, 14/08) foi o que **criou** a
+linha 331. O ramo novo disparou pela primeira vez cinco dias depois.
+
+**Correção - é instrumentação, não diagnóstico.** O `onerror` passou a guardar
+`window.__CS_BOOT_SRC=this.src`; o ramo do watchdog registra três migalhas antes do `fail`
+(módulo que falhou, `HTMLScriptElement.supports('importmap')` e estado da rede); e as
+migalhas, que eram gravadas no banco (`jserror.ts:98`) mas **nunca entravam no
+`client_payload`** (`:137`), agora atravessam até o corpo da issue. A evidência viaja na
+**migalha e não na mensagem**, de propósito: o fingerprint é `kind|message|source`, e pôr o
+`?v=` no texto criaria fingerprint novo a cada release, picotando o agrupamento que a
+BUG-71 acabou de consertar. A cláusula EP14 amarra isso conferindo que `9703f595` não muda.
+
+**Medido antes do conserto:**
+
+| | antes | depois |
+|---|---|---|
+| evidência no relatório de falha de boot | nenhuma | módulo, import map e rede |
+| migalhas chegam à issue | não | sim |
+| fingerprint `9703f595` | estável | estável (EP14 mede) |
+| cláusulas verdes / mutantes que mordem | 13 / 32 | 14 / 36 |
+
+**Custo declarado, e é preciso ser franco: este conserto NÃO resolve a #386.** A causa
+continua desconhecida e **a gravidade não foi medida** - o schema do Supabase é privado
+(`~/db-privado/`, fora do repo) e não há ferramenta de consulta, então não sei se
+`9703f595` atingiu um jogador ou muitos. O que muda é que a próxima ocorrência chega
+diagnosticável. Fica também anotado, para PR próprio: **`CACHE_SPLIT_RE` só conhece
+inglês**, e foi por isso que a #362 (mensagem do Firefox em pt-BR) também caiu em `codigo`
+em vez de `cache-split` e perdeu o purge automático. Mexer nisso altera a classe que
+dispara purge de edge e merece régua própria.
+
+**Não verificado:** o caminho de ponta a ponta (módulo falha → `onerror` → migalha → issue)
+exige navegador e Supabase. O que foi verificado sem navegador: a régua recorta e executa o
+fonte, e o **bundle SSR gerado pelo `npm run build`** contém o `onerror` novo e as três
+migalhas. O `boot-check.mjs` seria o lugar de uma cláusula que injeta falha de carregamento
+de módulo, mas ele exige browser e está fora do `check` - fica como dívida declarada, e não
+como cobertura fingida.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`). EP14, **4 mutações medidas**: `onerror-sem-src`
+(volta ao sinalizador pelado), `boot-sem-migalha`, `payload-sem-migalhas` e
+`issue-sem-migalhas`. Todas acendem EP14; as 32 anteriores seguem nas suas -
+**36 de 36 na matriz completa**. Antes deste conserto, `grep` por `__CS_MAIN_FAILED`,
+`__CS_MAIN_LOADED` e `boot-watchdog` em `tools/`, `tests/` e `.github/` devolvia **zero**:
+esse caminho não tinha régua nenhuma.
+### ~~BUG-73 · abort de mídia virava crash de produção — o jogo cortava o `play()` de propósito e abria issue por isso~~ · RESOLVIDO 20/08 (issue #389)
+
+**Sintoma (literal, issue #389, aberta pelo `crash-fix.yml`):**
+*"The play() request was interrupted by a call to pause(). https://goo.gl/LdLk22"*,
+fingerprint `7d439dd4`, classe `codigo`, alpha.161, **origem e stack vazias**.
+
+**Causa raiz — confirmada.** Não é defeito de áudio: é o rótulo. Essa mensagem é o
+`AbortError` que o navegador devolve quando um `play()` pendente é cortado por um
+`pause()`, e **o jogo corta de propósito**, em três lugares — `audio.js:97` (`radioVoice`
+corta a fala anterior, comportamento CS-style), `audio.js:119` (`characterSelectVoice`
+corta a voz do avatar anterior) e `audio.js:159` (`stopRound` corta a vinheta com fade).
+Não é acidente nem descuido: `tools/eval/character-select-voice-check.mjs:56` **exige** a
+interrupção (`VOICE8 a fala anterior não foi interrompida (pausas=3)`).
+
+O abort chega **sem `stack` e sem `source`**. Sem nenhuma URL para inspecionar, o
+`origemDoJogo` do cliente cai em `return !viuExterna` = `true` (marca como interno e come
+a cota de exceção), e o `classifyCrash` não batia `OPAQUE_RE`, `AMBIENTE_RE`,
+`CACHE_SPLIT_RE` nem `RECOVERABLE_RE`: caía no `return 'codigo'` final e escalava. Trocar
+de faixa, clicar rápido em dois avatares ou entrar na partida por cima da vinheta abria
+issue automática no GitHub.
+
+**É a metade não terminada do BUG-37**, que já tinha o diagnóstico certo em 07/08 —
+*"O defeito não é o áudio: é o overlay de crash tratar isso como crash"* — e cujo próximo
+passo prescrito era exatamente *"filtrar `AbortError` de mídia"*. Desde então entrou o
+`erroIgnoravel` (`index.astro:163`), mas ele só silenciava o painel de falha (`:322`):
+**não cortava o `reporta()` da linha 321**, e o servidor nunca soube de nada. Medido no
+`erroIgnoravel` de antes, executado do fonte: reconhecia a forma `DOMException` com
+`name:'AbortError'` e **não** reconhecia a forma só-mensagem — e em nenhuma das duas
+impedia o envio.
+
+**Palpite óbvio, REFUTADO com medição.** *"Algum `play()` perdeu o `.catch()`."* Falso, e
+a prova já estava no portão: `npm run eval:medianet` varre **49 `.js`, 2 módulos de mídia,
+7 `play()` inspecionados**, e tranca esse contrato desde a #117 — verde antes e depois
+deste conserto. Conferidos à mão os 7 sítios (`audio.js:55`, `main.js:406-409`, `:412`,
+`:416`, `:449`, `:501`): todos guardados. Não há `<audio>` no HTML (só o
+`<video id="char-preview-video">` de `index.astro:914`) e não existe Howler nem
+`THREE.Audio` no repo. **Por isso `public/js/audio.js` e `public/js/main.js` não foram
+tocados:** conserto ali deixaria a régua verde antes e depois, que é a régua que não mede
+nada.
+
+**Medido antes do conserto** (helper e `erroIgnoravel` reais, extraídos do fonte, sem browser):
+
+| | antes | depois |
+|---|---|---|
+| abort de mídia classificado `recuperavel` | **0/5** | **5/5** |
+| abort de mídia abre issue | **5/5** | **0/5** |
+| `erroIgnoravel` do cliente reconhece as 2 formas | 1/2 | 2/2 |
+| balde que o abort consome no cliente | 1 dos 10 de exceção | 1 dos 2 de mídia |
+| crash real dentro de `audio.js` continua `codigo` | sim | sim |
+| cláusulas verdes / mutantes que mordem | 13 / 32 | 14 / 35 |
+
+As 5 redações medidas são as do Chrome/Firefox/Safari: `…interrupted by a call to
+pause()`, `…by a new load request`, `…because the media was removed from the document`,
+`The fetching process for the media resource was aborted…` (a do BUG-37) e
+`AbortError: The operation was aborted.`
+
+**Custo declarado, medido na população real.** Das **88** issues `crash-auto` do
+repositório, exatamente **2** são desta família: a #389 (aberta) e a #122 (fechada, a do
+BUG-37). Nenhuma outra deixa de abrir. O regex é estreito de propósito — `aborted` ou
+`interrupted` soltos engoliriam crash de verdade, e é isso que o mutante `midia-ampla`
+prova. A linha continua gravada no `js_error` com rótulo `recuperavel`: some o disparo
+automático, não o dado.
+
+**O que deliberadamente NÃO entrou no corte, e por quê.** Duas mensagens de mídia vizinhas
+seguem `codigo`, conferidas uma a uma:
+
+| issue | mensagem | por que continua acionável |
+|---|---|---|
+| #293 (aberta) | *"The media resource indicated by the src attribute … was not suitable."* | não é abort: é som que **não toca**. É o sinal do BUG-08/BUG-52 (mídia nova ignorada em silêncio), o defeito mais caro desta base em áudio |
+| #117 (fechada) | *"The play method is not allowed by the user agent…"* | autoplay barrado; já tem régua no portão (`eval:medianet` nasceu dela) e o jogo já cai no fallback mudo de `main.js:407` |
+
+**Custo declarado adicional.** Se algum dia um abort de mídia for sintoma de defeito real
+(o `pause()` chegando cedo demais e cortando fala que deveria tocar inteira), ele deixa de
+gritar sozinho — vai estar no `js_error` com `classification='recuperavel'`, e quem
+procurar acha. É a mesma troca do BUG-72: fim do "regex por incidente" em troca de olhar a
+telemetria em vez de esperar issue.
+
+**Não verificado, e é honesto dizer:** **não há browser nesta máquina** (sem Playwright
+global, sem `CHROME_BIN`), então `tools/eval/crash-watch.mjs` — o instrumento que
+capturaria o `unhandledrejection` ao vivo — não rodou, e **o produtor exato da promessa
+solta em produção continua sem nome**. Os 7 `play()` do fonte estão guardados, então o
+candidato mais provável é bundle antigo em cache, extensão ou portal. O que este conserto
+prova é que, produza quem produzir, a mensagem não vira mais crash nem issue. Quem tiver
+Chrome: `npm run eval:serve &` e `node tools/eval/crash-watch.mjs`, spammando rádio e troca
+de avatar. A tabela `js_error` do Supabase também não foi consultada (sem credencial aqui),
+então quantos slots de `TETO_SESSAO` a família vinha comendo por sessão fica sem número. E
+o stub de node (`tools/eval/harness.mjs:83`) tem `Audio.play()` devolvendo `undefined`, não
+Promise: **nenhuma régua node-side consegue observar essa rejeição** — por isso a régua
+mede a classificação, não a reprodução.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, já no
+`check:fast` e no `check:deploy` — nenhum passo novo no portão). EP14 mede os dois lados:
+classifica as 5 redações do navegador, exige que 3 mensagens vizinhas continuem `codigo`
+(inclusive um crash que estoura **dentro** de `audio.js`), e **executa o `erroIgnoravel`
+recortado do fonte** — regex de fiação sozinha aprovaria `function erroIgnoravel(){ return
+true; }`, que calaria crash de verdade. **3 mutações medidas:** `sem-midia` (o ramo devolve
+`codigo` e a #389 volta a abrir issue), `midia-ampla` (troca o regex por
+`/aborted|interrupted/i` e o crash de `audio.js` vira `recuperavel`) e `sem-cota-midia`
+(anula o teto e o abort volta a comer a cota de exceção). Todas acendem EP14; as 32
+anteriores seguem acendendo as suas — **35 de 35 na matriz completa**.
 ### ~~BUG-72 · `console.error` informativo virava bug do jogo, e a pilha do idioma `(msg, e)` se perdia~~ · RESOLVIDO 19/08 (issue #382)
 
 **Sintoma (literal, issue #382, aberta pelo `crash-fix.yml`):**
@@ -3746,25 +3939,23 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   gráfico de contribuidores pode levar até 24 h para refletir uma reescrita; as notas dos
   releases e os trailers já são verificáveis imediatamente.
 
-- **BUG-37 · Tarja vermelha de CRASH por um erro que não é crash.** Print do dono, 07/08,
-  com o menu de pausa aberto (`RESUME ▶` no canto):
+- **~~BUG-37 · Tarja vermelha de CRASH por um erro que não é crash~~ · RESOLVIDO 20/08
+  pelo BUG-73** (issue #122, e a #389 é a irmã). Print do dono, 07/08, com o menu de pausa
+  aberto (`RESUME ▶` no canto):
   *"⚠ CRASH (promise): The fetching process for the media resource was aborted by the user
   agent at the user's request."*
-  **Régua: nenhuma.**
-  Essa mensagem é o `AbortError` padrão de um `<audio>` cujo `play()` estava pendente
-  quando alguém chamou `pause()` ou trocou o `src` — acontece em toda troca de faixa e em
-  todo fade de saída. **O defeito não é o áudio: é o overlay de crash tratar isso como
-  crash.** O handler está em `src/pages/index.astro:27` e mostra QUALQUER
-  `unhandledrejection` numa tarja vermelha pedindo print. Um jogador levando "CRASH" na
-  cara por causa de música que trocou é ruído que ainda por cima treina todo mundo a
-  ignorar a tarja — inclusive quando ela for de verdade.
-  **O que já foi conferido e NÃO é a origem:** os `play()` do `startMenuMusic`
-  (`main.js:206-216`) têm todos tratamento de rejeição, e o `_sample` do `audio.js:46`
-  também (`.catch(() => off())`). Falta achar quem produz a promessa solta — o
-  `stopMenuMusic` pausa por fade (`main.js:222-228`) e é candidato, mas não foi medido.
-  **Próximo passo:** régua que abra a rota, force troca de faixa/pausa e exija zero
-  `unhandledrejection`; depois filtrar `AbortError` de mídia no overlay, mantendo tudo o
-  mais visível.
+  O diagnóstico desta entrada estava certo desde 07/08 - *"o defeito não é o áudio: é o
+  overlay de crash tratar isso como crash"* - e o próximo passo prescrito, *"filtrar
+  `AbortError` de mídia"*, é exatamente o que o **BUG-73** fez, na mesma família de
+  mensagens e na mesma classificação (`recuperavel`, sem issue, sem tarja, gravado no
+  banco). Régua: EP14 de `tools/eval/error-provenance-check.mjs`, com as 3 mutações.
+  Duas correções de ponteiro que esta entrada carregava velhas: o `startMenuMusic` mora
+  hoje em `main.js:398-417` (não `:206-216`) e o `_sample` em `audio.js:55` (não `:46`).
+  A suspeita registrada aqui - *"o `stopMenuMusic` pausa por fade e é candidato"* - foi
+  **refutada com medição**: `npm run eval:medianet` inspeciona os 7 `play()` de mídia do
+  fonte e todos estão guardados, o do fade inclusive. O produtor da promessa solta em
+  produção continua sem nome, e o BUG-73 diz por quê (não há browser na máquina que
+  consertou).
 
 - **BUG-38 · "Andando não consigo mexer a mira, só quando para" — touchpad de notebook.**
   Palavras de quem reportou (Matheus Paz, 07/08): *"Andando não consigo mexer a mira, só

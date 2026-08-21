@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
             },
             body: JSON.stringify({
               event_type: 'prod-crash',
-              client_payload: { fingerprint: chave, message, source, stack, origin, version: str(body?.version, 40) },
+              client_payload: { fingerprint: chave, message, source, stack, origin, breadcrumbs, version: str(body?.version, 40) },
             }),
           });
           if (!resp.ok) throw new Error(`dispatch ${resp.status}`);
