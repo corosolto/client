@@ -1,0 +1,269 @@
+name: issues-bot
+
+# Bot de issues consolidado (16/08): absorveu csbrasil-bot-issue-triage.yml,
+# csbrasil-bot-issue-sweep.yml e csbrasil-bot-issue-pr-bootstrap.yml. Um
+# arquivo, QUATRO gatilhos, cada job gated por `if:` no evento — os scripts
+# Python de scripts/ci/ são os mesmos, intocados.
+#
+# Mapa evento → job (o contrato da fusão):
+#   issues (opened/reopened/edited)        → triage
+#   schedule (seg 08:17 UTC)               → review-open-issues (sweep)
+#   issue_comment (created, /bot-fix)      → bot-token + bootstrap
+#   workflow_dispatch (com issue_number)   → triage · (sem issue_number) → sweep
+on:
+  issues:
+    types: [opened, reopened, edited]
+  issue_comment:
+    types: [created]
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue a triar (deixa vazio para rodar só o sweep)
+        required: false
+        type: number
+
+jobs:
+  triage:
+    if: github.event_name == 'issues' || (github.event_name == 'workflow_dispatch' && inputs.issue_number != '')
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+    steps:
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ''
+          python-version: '3.13'
+      - name: Ensure labels exist
+        run: python3 scripts/ci/ensure_labels.py crash-auto bot-fixable covered-by-pr
+      - name: Classify issue
+        id: triage
+        run: |
+          gh issue view "$ISSUE_NUMBER" --json number,title,url,labels,body,author,createdAt,state > /tmp/issue.json
+          python3 scripts/ci/issue_triage.py < /tmp/issue.json > /tmp/triage.json
+          cat /tmp/triage.json
+      - name: Apply labels
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          data = json.load(open('/tmp/triage.json'))
+          labels = data.get('labels_add', [])
+          if labels:
+              subprocess.run(['gh', 'issue', 'edit', os.environ['ISSUE_NUMBER'], '--add-label', ','.join(labels)], check=True)
+          PY
+      - name: Review issue and comment
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          issue = json.load(open('/tmp/issue.json'))
+          prs = json.loads(subprocess.check_output([
+              'gh', 'pr', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,url,body'
+          ], text=True))
+          pathlib.Path('/tmp/issue-review-input.json').write_text(json.dumps({'issue': issue, 'prs': prs}))
+          PY
+          python3 scripts/ci/issue_review.py < /tmp/issue-review-input.json > /tmp/issue-review.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          data = json.load(open('/tmp/issue-review.json'))
+          labels = data.get('labels_add', [])
+          if labels:
+              subprocess.run(['gh', 'issue', 'edit', os.environ['ISSUE_NUMBER'], '--add-label', ','.join(labels)], check=True)
+          body = data['comment']
+          subprocess.run(['gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'], '--body', body], check=True)
+          PY
+      - name: Suggest crash duplicate
+        run: |
+          rm -f /tmp/crashes.json
+          python3 - <<'PY'
+          import json, subprocess, pathlib
+          current = json.load(open('/tmp/issue.json'))
+          title = current['title'].lower()
+          if not title.startswith('crash em produção:'):
+              raise SystemExit(0)
+          out = subprocess.check_output([
+              'gh', 'issue', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,url,labels'
+          ], text=True)
+          data = json.loads(out)
+          pathlib.Path('/tmp/crashes.json').write_text(json.dumps({
+              'current': current,
+              'others': data,
+          }))
+          PY
+          if [ ! -f /tmp/crashes.json ]; then echo 'issue não é crash-auto — dedupe pulado'; exit 0; fi
+          python3 scripts/ci/crash_dedupe.py < /tmp/crashes.json > /tmp/dup.json
+          python3 - <<'PY'
+          import json, os, subprocess
+          dup = json.load(open('/tmp/dup.json')).get('duplicate')
+          if not dup:
+              raise SystemExit(0)
+          body = (
+              "> [!TIP]\n"
+              "> **Possível duplicata detectada automaticamente.**\n"
+              f"> \n> - candidata: **#{dup['number']}** — {dup['title']}\n"
+              f"> - similaridade: **{dup['score']}**\n"
+              f"> - comparar: {dup['url']}\n"
+              "\n"
+              "Sugestão de bot — o fechamento continua sendo humano."
+          )
+          subprocess.run([
+              'gh', 'issue', 'comment', os.environ['ISSUE_NUMBER'],
+              '--body', body
+          ], check=True)
+          PY
+
+  review-open-issues:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.issue_number == '')
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+    steps:
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ''
+          python-version: '3.13'
+      - name: Ensure labels exist
+        run: python3 scripts/ci/ensure_labels.py bot-fixable covered-by-pr crash-auto stale-backlog needs-repro
+      - name: Fetch open issues and PRs
+        run: |
+          gh issue list --state open --limit 200 --json number,title,body,url,labels > /tmp/issues.json
+          gh pr list --state open --limit 100 --json number,title,url,body > /tmp/prs.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          payload = {
+              "issues": json.loads(Path('/tmp/issues.json').read_text()),
+              "prs": json.loads(Path('/tmp/prs.json').read_text()),
+          }
+          Path('/tmp/issue-sweep-input.json').write_text(json.dumps(payload))
+          PY
+      - name: Compute sweep actions
+        run: python3 scripts/ci/issue_sweep.py < /tmp/issue-sweep-input.json > /tmp/issue-sweep-actions.json
+      - name: Apply labels and comments
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          actions = json.loads(Path('/tmp/issue-sweep-actions.json').read_text())['actions']
+          for action in actions:
+              number = str(action['issue_number'])
+              labels = action.get('labels_add', [])
+              if labels:
+                  subprocess.run(['gh', 'issue', 'edit', number, '--add-label', ','.join(labels)], check=True)
+              if action.get('should_comment'):
+                  subprocess.run(['gh', 'issue', 'comment', number, '--body', action['comment']], check=True)
+          PY
+
+  bot-token:
+    if: github.event_name == 'issue_comment' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          BOT_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Bot inerte::CSBRASIL_BOT_TOKEN nao configurado — este workflow esta pulando. Ele PRECISA de PAT: merge/push com o GITHUB_TOKEN padrao nao dispara os workflows a jusante, entao a PR entraria sem rodar os portoes."
+          fi
+
+  bootstrap:
+    needs: bot-token
+    if: >
+      github.event_name == 'issue_comment' &&
+      needs.bot-token.outputs.available == 'true' &&
+      github.event.issue.pull_request == null &&
+      startsWith(github.event.comment.body, '/bot-fix') &&
+      contains('OWNER,MEMBER,COLLABORATOR', github.event.comment.author_association)
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ''
+          python-version: '3.13'
+          fetch-depth: '0'
+          token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      - name: Ensure bot-fixable label exists
+        run: python3 scripts/ci/ensure_labels.py bot-fixable
+      - name: Fetch issue
+        run: gh issue view "$ISSUE_NUMBER" --json number,title,body,labels,url > /tmp/issue.json
+      - name: Guard issue eligibility
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          issue = json.load(open('/tmp/issue.json'))
+          labels = {l['name'] for l in issue.get('labels', [])}
+          if 'bot-fixable' not in labels:
+              print('issue is not labeled bot-fixable')
+              sys.exit(1)
+          PY
+      - name: Skip if PR already exists for this issue
+        run: |
+          if gh pr list --state open --search "#${ISSUE_NUMBER}" --json number --jq 'length' | grep -qv '^0$'; then
+            gh issue comment "$ISSUE_NUMBER" --body "Já existe PR aberta referenciando esta issue. Bootstrap cancelado."
+            exit 0
+          fi
+      - name: Create bootstrap branch and empty commit
+        run: |
+          branch="bot/issue-${ISSUE_NUMBER}"
+          git config user.name "csbrasil-bot"
+          git config user.email "csbrasil-bot@users.noreply.github.com"
+          git checkout -B "$branch" origin/main
+          git commit --allow-empty -s -m "chore(bot): bootstrap fix for #${ISSUE_NUMBER}"
+          git push -u origin "$branch" --force
+          echo "BRANCH=$branch" >> "$GITHUB_ENV"
+      - name: Open draft PR
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          issue = json.load(open('/tmp/issue.json'))
+          title = f"bot: bootstrap fix for #{issue['number']} {issue['title']}"
+          body = f"""## Summary
+          - bootstrap PR aberta pelo csbrasil-bot a partir da issue #{issue['number']}
+          - issue: {issue['url']}
+
+          ## Context
+          {issue.get('body') or '(sem descrição)'}
+
+          ## Notes
+          - PR draft inicial; implementação ainda precisa ser adicionada
+          - aberta apenas para issues etiquetadas `bot-fixable`
+          """
+          subprocess.run([
+              'gh', 'pr', 'create',
+              '--base', 'main',
+              '--head', os.environ['BRANCH'],
+              '--title', title,
+              '--body', body,
+              '--draft',
+          ], check=True)
+          subprocess.run([
+              'gh', 'issue', 'comment', str(issue['number']),
+              '--body', f"Draft PR bootstrap aberta a partir desta issue na branch `{os.environ['BRANCH']}`."
+          ], check=True)
+          PY

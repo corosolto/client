@@ -72,7 +72,179 @@ Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
 exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
 normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
 Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+### ~~BUG-72 · `console.error` informativo virava bug do jogo, e a pilha do idioma `(msg, e)` se perdia~~ · RESOLVIDO 19/08 (issue #382)
 
+**Sintoma (literal, issue #382, aberta pelo `crash-fix.yml`):**
+*"%c[cheat-demo] ainda sem window.__game - você está no menu. Entre numa partida (JOGAR) e
+o cheat ativa sozinho. color:#ff2244;font-weight:bold"*, classe `codigo`, alpha.159,
+**origem e stack vazias**.
+
+**Causa raiz - confirmada.** Não é exceção. `cheat-demo`, `ainda sem window.__game` e
+`o cheat ativa sozinho` não existem em nenhum arquivo do repositório, `git log --all -S`
+não devolve commit para nenhuma delas, e não há **um único** `%c` em todo o repo. É snippet
+de cheat de terceiro colado no devtools de produção; `window.__game` é o handle público que
+o jogo expõe, e o `SECURITY.md:9` já assume que anti-cheat client-side é teatro.
+
+O hook de `console.error` (`src/pages/index.astro:363-374`) junta até 4 argumentos com
+`partes.join(' ')` - daí o `%c` e a CSS colados no título - e passa `source` como `null`
+**hardcoded**, razão de *toda* issue deste caminho ter "Origem:" vazia. Sem source e sem
+pilha, o `origemDoJogo` do cliente cai em `return !viuExterna` = `true` (marca como interno
+e consome a cota de exceção) e o `classifyCrash` não bate `OPAQUE_RE`, `AMBIENTE_RE`,
+`CACHE_SPLIT_RE` nem `RECOVERABLE_RE`: cai no `return 'codigo'` final e escala.
+
+**Não era caso isolado.** De 84 issues `crash-auto`, cerca de **24 são log informativo e
+não exceção**: `%c[cheat-demo]` (#382), avisos de extensão (#309, #328, #157, #156),
+`Couldn't load texture` (10 issues, já contidas pela `RECOVERABLE_RE`),
+`THREE.WebGLProgram: Shader Error` (9), e avisos de mídia (#293, #122, #117). O padrão da
+casa vinha sendo comprar uma regex por incidente: a #110 comprou a `RECOVERABLE_RE`
+sozinha. Este conserto corta a classe em vez de comprar a próxima regex.
+
+**Segundo defeito, achado auditando o corte - e foi ele que salvou o conserto.** O corte
+"console sem pilha não escala" ia silenciar **código nosso**: `main.js` chama
+`console.error('falha ao abrir a partida', e)` em 4 lugares (`:959`, `:1010`, `:1102`,
+`:1841`), com o erro no argumento **1**, e o hook lia só `arguments[0].stack`. Ou seja, a
+pilha já estava sendo jogada fora hoje - esses relatos sempre chegaram com stack vazia - e
+com o corte parariam de abrir issue. O hook agora varre os argumentos até achar pilha.
+
+**Medido antes do conserto** (helper e hook reais, sem browser):
+
+| | antes | depois |
+|---|---|---|
+| payload da #382 escala | sim (`codigo`) | não (`log`, gravado) |
+| `console.error('falha ao abrir', e)` traz pilha | **não** | sim |
+| `console.error(new Error(...))` escala | sim | sim |
+| `cache-split` vindo do console dispara purge | sim | sim |
+| cláusulas verdes / mutantes que mordem | 12 / 25 | 13 / 31 |
+
+**O que foi DESCARTADO com medição.** Cortar só na diretiva `%c`: mata a #382 e mais nada.
+As outras ~23 do mesmo grupo não têm `%c`, e o corte por formato é conserto no sintoma.
+
+**Custo declarado, medido.** A família `THREE.WebGLProgram: Shader Error` (9 issues: #331,
+#330, #294, #275, #130, #127, #121, #120, #115) deixa de abrir issue. Aceito porque shader
+já tem régua **no portão**, e mais forte que issue de produção:
+`tools/eval/shader-log-check.mjs` existe para que "logs WebGL anuláveis não escondam o
+diagnóstico real do shader" e `tools/eval/shader-budget-check.mjs` mede o orçamento de
+varyings. A linha continua na telemetria bruta. A família da textura (10 issues) não muda:
+já era `recuperavel`. `glcontext.js:105` também não muda: já é `externo` pela `AMBIENTE_RE`.
+**Inventário dos 6 sítios de `console.error` em `public/js/`, um a um:**
+
+| sítio | tem pilha depois do conserto | escala |
+|---|---|---|
+| `main.js:959` `'falha ao abrir a partida', e` | sim (argumento 1) | sim |
+| `main.js:1010` `'preload da partida falhou parcialmente', e` | sim | sim |
+| `main.js:1102` `'dispose falhou ao sair pro menu', e` | sim | sim |
+| `main.js:1841` `'switch team failed', e` | sim | sim |
+| `glcontext.js:105` `sem_webgl: …` | não | não, e já era `externo` pela `AMBIENTE_RE` |
+| `game.js:739` `TIMES DESIGUAIS` | sim, passou a carregar `Error` | sim |
+
+Sem os dois consertos acima este patch silenciaria **cinco** sítios de sinal real de uma
+vez. Com eles, zero. O `game.js:739` foi o mais perto de escapar: é o único sinal
+deliberado do nosso código que só existia como `console.error` de string, **não há régua
+nenhuma cobrindo composição de times** (conferido: nada em `tools/eval/` cita `teamCount`,
+`teamSize` ou `TIMES DESIGUAIS`), então quem o guarda agora é a própria EP13, pelo mutante
+`times-sem-erro`. Envolver em `Error` não move o agrupamento: o hook usa
+`a.message ? a.message : String(a)`, então o texto reportado continua byte a byte o mesmo.
+
+**O risco que sobra, declarado.** O `three.module.js` reporta quase tudo por `console.error`
+com string literal e sem `Error` (`Shader Error`, `WebGLState: Invalid blending`,
+`computeBoundingSphere(): Computed radius is NaN`). Esses deixam de abrir issue. É
+exatamente o custo que se quis trocar pelo fim do "regex por incidente", e os controles
+compensatórios existem, com os limites deles: `tools/eval/console-check.mjs` reprova o
+portão com qualquer erro de console nas rotas publicadas em Chrome de verdade (mas só
+carrega rotas, não entra em partida), `shader-log-check.mjs` guarda o diagnóstico de shader
+e `shader-budget-check.mjs` o orçamento de varyings. E tudo continua gravado no `js_error`
+com `kind='console'`: some o disparo automático, não o dado.
+
+**Não verificado:** o `sendBeacon` real de uma sessão com devtools aberto, e como o `%c` se
+comporta no console nativo de Firefox e Safari. A régua exercita o hook extraído do fonte,
+não o navegador.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`). EP13 executa o hook do console **extraído do fonte** com
+os mesmos argumentos que o jogo passa - regex de fiação sozinha aprovaria uma varredura que
+não varre - e mede também a cota. **6 mutações medidas:** `sem-log`, `log-amplo` (tira o
+`&& !stack`, e console COM pilha pararia de escalar), `log-sobre-tudo` (rebaixaria
+`cache-split` e mataria o purge), `log-nao-corta`, `sem-teto-console` e
+`pilha-so-no-primeiro` (devolve o furo do `arguments[0]`). Todas acendem EP13; as 25
+anteriores seguem acendendo as suas - **31 de 31 na matriz completa**.
+
+### ~~BUG-71 · `/api/jserror` aceitava fingerprint forjado — carga sintética abria issue e calava crash real~~ · RESOLVIDO 19/08 (issue #383)
+
+**Sintoma (literal, issue #383, aberta pelo `crash-fix.yml`):**
+*"jserror-overload-2026-08-19T17-36-24-896Z | fase A (mesmo fingerprint) #1"*,
+fingerprint `18084ef4`, classe `codigo`, **sem stack, sem origem e sem versão do jogo** —
+enquanto #379, #380 e #381, do mesmo dia, chegaram todas com `2.0.0-alpha.159`.
+
+**Causa raiz — confirmada.** `src/pages/api/jserror.ts` lia o `fingerprint` do corpo e o
+entregava ao RPC sem conferir nada. Esse campo é ao mesmo tempo a **chave de agrupamento**
+do `js_error` (o UPSERT da migration 015 vira `hits`) e a **chave de dedupe do
+escalonamento** (`dispatched_at`, migration 020). Aceito na palavra do cliente ele deixa de
+ser função do conteúdo, e o estrago tem dois sentidos: uma rajada com um fingerprint só (a
+"fase A" da #383) funde erros DISTINTOS num grupo só e **todos menos o primeiro somem sem
+nunca abrir issue**; e texto arbitrário de qualquer `curl` vira título de issue `crash-auto`.
+
+**A medição que prova.** A receita do `digital()` de `src/pages/index.astro` é FNV-1a de 32
+bits sobre `kind|message|source`. Aplicada aos fingerprints **publicados** nas três issues
+legítimas de 19/08 ela os reproduz, e não reproduz o da #383 em nenhum dos três `kind`
+possíveis (`127b9df5`, `5ead1108`, `00753bac` contra o `18084ef4` reivindicado):
+
+```
+ANTES   ACEITA 470752a2 #379 · ACEITA 7122f83c #380 · ACEITA cd468274 #381 · ACEITA 18084ef4 #383
+DEPOIS  ACEITA 470752a2 #379 · ACEITA 7122f83c #380 · ACEITA cd468274 #381 · RECUSA 18084ef4 #383
+```
+
+**Correção, e ela mudou de forma na revisão.** A primeira versão **recusava com 400** o corpo
+incoerente. Dois críticos de contexto limpo mostraram, executando o cliente real, que isso
+**apagava relatório legítimo**: o cliente cortava a mensagem em 500 chars ao serializar mas
+hasheava o valor BRUTO, então todo crash com mensagem acima de 500 (stack embutida,
+`console.error` multi-argumento, o `'Falha ao abrir ' + etapa + ': ' + msg` do `lancamento`)
+respondia 400 e sumia — inclusive no botão ENVIAR RELATÓRIO, que reenvia o mesmo corpo e
+nunca fecharia. O conserto ficou nos dois lados, na causa:
+
+- **cliente** (`src/pages/index.astro`): `corta()` espelha o `str()` do servidor, e `reporta`
+  passa a hashear **exatamente o que envia**;
+- **servidor** (`src/pages/api/jserror.ts`): incoerente **não é recusado** — é gravado sob a
+  chave DERIVADA do conteúdo (o que desfaz a fusão do grupo) e fica fora do escalonamento,
+  no mesmo early-return do `externo`.
+
+**Armadilha da receita, e ela é real:** a multiplicação do `digital()` é em **ponto
+flutuante**. `h * 16777619` passa de 2^53 e perde precisão, e é esse número lossy que está
+publicado nas issues desde a alpha.1. `Math.imul`, que é a FNV-1a "correta", dá outro valor
+(`cd468274` → `b7cc23a5`) e invalidaria todo fingerprint em campo. Mutante `receita-imul`.
+
+**Régua.** EP12 de `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`).
+Ela **extrai e executa** a `digital`, a `corta` e o trecho de hash do `reporta` do
+`index.astro` — recompor a receita à mão foi o furo da primeira versão, que aprovava uma
+composição existente só dentro do arnês. Exige: os três fingerprints publicados reproduzidos;
+o corpo real do cliente aceito **inclusive com mensagem de 900 chars, espaço nas pontas,
+source de 400 chars e mensagem vazia**; o forjado da #383 recusado nos três `kind` com as 5
+chaves derivadas da rajada saindo **distintas**; e a fiação conferida sobre o código **sem
+comentários** — a versão anterior casava um `return` COMENTADO e ficava verde com a guarda
+desativada.
+
+**Mutantes:** `sem-fingerprint` (coerente por decreto), `escala-incoerente` (devolve o vetor
+da #383), `grava-forjado` (grava sob a chave reivindicada e envenena o agrupamento),
+`receita-imul`, `cliente-hash-bruto` (cliente volta a hashear o valor bruto — acende pela
+mensagem comprida) e `cliente-sem-retrim` (ver abaixo). Os seis acendem EP12; os 19
+anteriores seguem acendendo as suas — **25 de 25 na matriz completa**.
+
+**Segundo defeito, achado auditando o primeiro: a régua comparava o cliente com ele mesmo.**
+O `servidorAceita` da EP12 conferia o fingerprint contra o corpo que o cliente monta, sem
+passar pelo `str()` de `jserror.ts:32` que a API aplica antes de conferir. Com isso a
+fronteira do corte ficava cega: mensagem com espaço EXATAMENTE no caractere 500 (ou source
+no 300) era cortada pelo cliente com o espaço no fim, o `trim()` do servidor o tirava, e o
+fingerprint deixava de bater — crash real gravado sob chave derivada e **nunca escalado**,
+em silêncio. Medido: `'a'*499 + ' ' + 'b'*50` fecha em 500 chars no cliente e em 499 no
+servidor. A régua agora roda o `str()` real antes da conferência (o que a deixou vermelha,
+como devia), e o `corta()` do cliente reapara depois do corte, de modo que o `trim()` do
+servidor vira no-op. O mutante `cliente-sem-retrim` desfaz o reaparo e acende EP12.
+
+**Custo declarado.** Durante a janela de cache, aba aberta com o `index.astro` antigo hasheia
+o valor bruto: relatório com mensagem acima de 500 chars ou source acima de 300 continua
+**gravado**, mas não escala até a aba recarregar. Fingerprint em campo muda **só** nesses dois
+casos — os três publicados acima são byte a byte os mesmos. **Não verificado:** POST real
+contra staging; a guarda foi exercitada pelo helper de produção, pelo trecho executado do
+cliente e pela conferência de fiação, não contra o banco.
 ### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
 
 **Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**

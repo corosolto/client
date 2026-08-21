@@ -1,7 +1,8 @@
 /* i18n.js — PT é a FONTE, EN é camada (decisão de 06/08, pré-lançamento internacional).
    Por que assim e não chaves espalhadas: o jogo tem centenas de strings PT hardcoded e
    véspera de live não é hora de reescrever call site. Este módulo:
-     1. resolve o idioma: escolha explícita > país detectado no SSR > português;
+     1. resolve o idioma: escolha explícita (?lang, cs_lang) > país via /api/geo-lang
+        (resolveGeoLang, esperada pelo main.js ANTES do boot) > navegador > português;
      2. `tr(s)`: tradução por CORRESPONDÊNCIA EXATA da string PT (o dicionário abaixo);
         sem entrada = fica PT (sabor como apelido de arma É PT nos dois idiomas, decisão);
      3. `translateDom(root)`: varre nós de texto e atributos (placeholder/title/aria) do
@@ -13,11 +14,24 @@ let _lang = null;
 // ?lang=pt|en na URL vence tudo (teste/demonstração — ex.: a live mostra EN sem mexer em config)
 try { const q = new URLSearchParams(location.search).get('lang'); if (q === 'pt' || q === 'en') _lang = q; } catch { /* sem window */ }
 if (!_lang) try { _lang = localStorage.getItem('cs_lang'); } catch { /* storage bloqueado */ }
-if (_lang !== 'pt' && _lang !== 'en') {
-  const geo = (typeof document !== 'undefined' && document.documentElement.dataset.geoLang) || 'pt';
-  _lang = geo === 'en' ? 'en' : 'pt';
+const _explicito = _lang === 'pt' || _lang === 'en';
+if (!_explicito) {
+  // provisório até a geo responder: navegador ('pt*' vira pt; o resto, en)
+  const nav = (typeof navigator !== 'undefined' && (navigator.language || '')) || 'pt';
+  _lang = /^pt/i.test(nav) ? 'pt' : 'en';
 }
-export const LANG = _lang;
+export let LANG = _lang;
+
+/* window.__GEO_LANG__ é a promise que o <head> do index.astro abre antes dos módulos;
+   sem ela (host estático puro, dev offline, arnês) fica o provisório do navegador. */
+export async function resolveGeoLang() {
+  if (_explicito || typeof window === 'undefined' || !window.__GEO_LANG__) return LANG;
+  try {
+    const d = await window.__GEO_LANG__;
+    if (d && (d.lang === 'pt' || d.lang === 'en')) { _lang = d.lang; LANG = d.lang; }
+  } catch { /* promise rejeitada: fica o provisório */ }
+  return LANG;
+}
 
 /* PT -> EN. Ordena por tela pra manutenção; a chave é o texto EXATO (trim) do DOM. */
 const DICT = {

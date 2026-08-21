@@ -3,21 +3,11 @@ import pkg from '../../package.json';
 import { FACTIONS } from '../../public/js/factions.js';
 import { DISCORD_URL, TELEGRAM_URL, GITHUB_URL, SUPPORT_URL_BR, SUPPORT_URL_INTL } from '../lib/site';
 
-export const prerender = false;
+/* ESTÁTICA de propósito: o Stateloop não publica SSR e `prerender = false` aqui
+   fazia o build não emitir dist/client/index.html. Idioma por país: /api/geo-lang. */
 const V = pkg.version;
-/* Manifesto de `public/js` injetado pelo astro.config (BUG-39; nunca ler disco no
-   request - #194). O `revision` é hash do conteúdo: sem ele o edge servia JS velho. */
 declare const __MANIFESTO_JS__: { modules: string[]; revision: string };
 const { modules: MODULOS, revision: JS_REV } = __MANIFESTO_JS__;
-const EN_GEO_COUNTRIES = new Set([
-  'US', 'GB', 'UK', 'AD', 'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY', 'CZ', 'DE', 'DK',
-  'EE', 'FI', 'FR', 'GR', 'HR', 'HU', 'IE', 'IS', 'IT', 'LI', 'LT', 'LU', 'LV', 'MC', 'MD',
-  'ME', 'MK', 'MT', 'NL', 'NO', 'PL', 'RO', 'RS', 'RU', 'SE', 'SI', 'SK', 'SM', 'TR',
-  'UA', 'VA', 'XK',
-]);
-const GEO_COUNTRY = (Astro.request.headers.get('x-vercel-ip-country')
-  || Astro.request.headers.get('cf-ipcountry') || '').toUpperCase();
-const GEO_LANG = EN_GEO_COUNTRIES.has(GEO_COUNTRY) ? 'en' : 'pt';
 const IMPORTMAP = JSON.stringify({
   imports: {
     three: `./vendor/three.module.js?v=${V}`,
@@ -27,7 +17,7 @@ const IMPORTMAP = JSON.stringify({
 });
 ---
 <!DOCTYPE html>
-<html lang={GEO_LANG === 'en' ? 'en' : 'pt-BR'} data-geo-lang={GEO_LANG}>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <!-- Precisa rodar antes dos módulos para capturar falhas de boot; detalhes só com ?debug=1. -->
@@ -38,12 +28,26 @@ const IMPORTMAP = JSON.stringify({
 window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 </script>
 <script is:inline>
+/* Fetch do /api/geo-lang ANTES dos módulos; o i18n consome a promise no boot.
+   Sem API (host estático puro) rejeita e o i18n cai no navegador. */
+window.__GEO_LANG__ = (function () {
+  try {
+    if (new URLSearchParams(location.search).get('lang')) return null;
+    if (localStorage.getItem('cs_lang')) return null;
+  } catch (e) { /* storage bloqueado: tenta a geo mesmo assim */ }
+  return fetch('/api/geo-lang')
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .catch(function () { return null; });
+})();
+</script>
+<script is:inline>
 (function(){
   var TETO_SESSAO = 10;      /* no máximo 10 erros DISTINTOS por carregamento de página */
   var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
+  var TETO_CONSOLE = 3;      // log tagarela não come a cota reservada a exceção (BUG-72)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -72,6 +76,13 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
     var h = 2166136261;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 16777619) >>> 0; }
     return ('0000000' + h.toString(16)).slice(-8);
+  }
+
+  /* Espelha o `str()` de `src/pages/api/jserror.ts` (trim, depois corte): o que é hasheado
+     tem que ser o que vai no corpo, ou o servidor não reconstrói o fingerprint (BUG-71). */
+  function corta(v, max){
+    var t = (v === null || v === undefined ? '' : String(v)).trim();
+    return t ? t.slice(0, max).trim() : '';
   }
 
   /* A versão sai do `?v=` do próprio HTML: ela já está aqui, já sobe junto no bump dos
@@ -115,12 +126,16 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   function reporta(kind, msg, source, stack, externa){
     if (reportando) return null;                           // guarda de laço
     try{
-      var fp = digital(kind + '|' + (msg || '') + '|' + (source || ''));
+      var mFinal = corta(msg, 500) || '?', sFinal = corta(source, 300) || null;
+      var fp = digital(kind + '|' + mFinal + '|' + (sFinal || ''));
       if (enviados[fp]) return { fp: fp, corpo: corpos[fp] || null }; // 1 envio automático por erro distinto
       if (!enviados[fp]) {
         if (externa) {
           if (nExternos >= TETO_EXTERNO) return null;
           nExternos++;
+        } else if (kind === 'console' && !stack) {
+          if (nConsole >= TETO_CONSOLE) return null;
+          nConsole++;
         } else {
           if (nEnviados >= TETO_SESSAO) return null;
           nEnviados++;
@@ -130,8 +145,8 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
       reportando = true;
       var c = contexto();
       c.fingerprint = fp; c.kind = kind;
-      c.message = String(msg || '?').slice(0, 500);
-      c.source = source || null;
+      c.message = mFinal;
+      c.source = sFinal;
       c.stack = stack ? String(stack).slice(0, 4000) : null;
       var corpo = JSON.stringify(c);
       corpos[fp] = corpo;
@@ -361,7 +376,10 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
           partes.push(a && a.message ? a.message : String(a));
         }
         var m = partes.join(' ');
-        var pilha = (arguments[0] && arguments[0].stack) || null;
+        /* `console.error('falha ao abrir', e)` põe o erro no argumento 1 (main.js, 4 chamadas):
+           ler só o 0 jogava a pilha fora e o relato chegava sem stack (BUG-72). */
+        var pilha = null;
+        for (var j = 0; j < arguments.length && j < 4 && !pilha; j++) pilha = (arguments[j] && arguments[j].stack) || null;
         // mesma guarda dos outros dois caminhos: extensão que loga não abre overlay
         // nem come a cota de dez envios do jogo (KNOWN-BUGS.md, BUG-51).
         var interna = origemDoJogo(null, pilha, m);
@@ -372,7 +390,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   }catch(_){}
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CORO SOLTO: Treta Suprema - FPS grátis de navegador (ex-CS BRASIL)</title>
 <meta name="description" content="Jogo FPS gratuito de navegador: 5 facções brasileiras caricatas, 44 personagens originais, 5 mapas satíricos e 26 armas - bots, rounds, CTF, placar e rádio de voz. Sem instalação - jogue no desktop.">
 <meta name="keywords" content="coro solto, cs brasil, jogo de tiro navegador, fps browser grátis, awp, cs 1.6 brasileiro, jogo satira politica, treta suprema, jogo web three.js">
@@ -772,14 +790,10 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
   <div class="ms-scrim"></div>
   <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
   <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
-    <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
-    <button class="ms-tab" data-cat="ARENA" type="button" role="tab" aria-selected="false">ARENA</button>
-    <button class="ms-tab" data-cat="FAVELA" type="button" role="tab" aria-selected="false">FAVELA</button>
-    <button class="ms-tab" data-cat="CIDADES" type="button" role="tab" aria-selected="false">CIDADES</button>
+    <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">OFICIAIS</button>
     <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
   </div>
   <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
-  <div id="ms-authors" class="ms-authors" hidden></div>
   <header class="ms-head">
     <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span></div>
     <h2 id="ms-name" class="ms-name"> - </h2>
@@ -1193,6 +1207,7 @@ window.__SUPPORT = { br: SUPPORT_URL_BR, intl: SUPPORT_URL_INTL };
 </div>
 
 <div id="game-container"></div>
+<div id="rotate-prompt" aria-hidden="true"><span class="rot-ico">📱</span><span>Gire o celular na horizontal pra jogar</span></div>
 
 <!-- Vercel Web Analytics + Speed Insights (static HTML - sem pacote npm).
      Só carrega fora de localhost. Ative no dashboard: Analytics → Enable. -->
