@@ -35,18 +35,10 @@ if (mutante && !['sem-isencao', 'isencao-vazia', 'advisory-nova'].includes(mutan
    assinaturas (trecho de URL/título) que cobrem a isenção; entrada de cadeia
    (via só com nomes de pacote) não carrega advisory própria - a raiz carrega.
    Cada linha diz por que o risco não se realiza aqui - "é transitiva" não é motivo. */
-const ISENTAS = new Map([
-  ['@astrojs/vercel', { adv: [], motivo: 'cadeia path-to-regexp via @vercel/routing-utils. Reavaliar em 09/2026.' }],
-  ['@vercel/routing-utils', { adv: [], motivo: 'mesma raiz do path-to-regexp. Reavaliar em 09/2026.' }],
-  ['path-to-regexp', { adv: ['GHSA-9wv6-86v2-598j'], motivo: [
-    'ReDoS por backtracking. NÃO exposto: o pacote entra só pelo dist/index.js do adapter,',
-    'que é a integração de BUILD (getTransformedRoutes/normalizeRoutes). O runtime da',
-    'função é dist/serverless/entrypoint.js e não importa routing-utils. As rotas',
-    'transformadas saem do astro.config e do roteamento por arquivo - não há entrada de',
-    'usuário no caminho. O "fix" do npm é @astrojs/vercel@8, que é DOWNGRADE e não',
-    'atende o peer astro ^7.0.0. Reavaliar quando o adapter 11.x subir o routing-utils.',
-  ].join(' ') }],
-]);
+/* Vazia de propósito desde 21/08/2026: as três isenções que moravam aqui (@astrojs/vercel,
+   @vercel/routing-utils, path-to-regexp) cobriam a MESMA cadeia de ReDoS, fechada pelo #363
+   com override para path-to-regexp ^6.3.0 — e o DEP2 acusou que elas viraram letra morta. */
+const ISENTAS = new Map([]);
 
 const GRAVES = new Set(['high', 'critical']);
 
@@ -56,9 +48,15 @@ const assinaturas = (via) => (Array.isArray(via) ? via : [])
   .map((e) => JSON.stringify([e.url || '', e.title || '']));
 
 let relatorio;
+/* Vulnerabilidade sintética: com a lista de isenções vazia (as três saíram no #363), mutar a
+   lista virou no-op e os dois mutantes ficaram cegos — eles precisam TRAZER o vermelho. */
+const VULN_SINTETICA = { vulnerabilities: { 'pacote-sintetico': { severity: 'high', fixAvailable: true,
+  via: [{ url: 'https://github.com/advisories/GHSA-sintetica-0000-0000', title: 'vulnerabilidade alta de mutante' }] } } };
 if (mutante === 'advisory-nova') {
   relatorio = { vulnerabilities: { 'path-to-regexp': { severity: 'high', fixAvailable: false,
     via: [{ url: 'https://github.com/advisories/GHSA-fantasma-0000-0000', title: 'advisory que a isenção não conhece' }] } } };
+} else if (mutante === 'sem-isencao' || mutante === 'isencao-vazia') {
+  relatorio = VULN_SINTETICA;
 } else try {
   relatorio = JSON.parse(execFileSync('npm', ['audit', '--omit=dev', '--json'], {
     encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024,
@@ -74,7 +72,11 @@ if (mutante === 'advisory-nova') {
 }
 
 if (relatorio) {
-  const isentas = mutante === 'sem-isencao' || mutante === 'isencao-vazia' ? new Map() : ISENTAS;
+  /* `sem-isencao`: alta sem isenção nenhuma reprova (DEP1). `isencao-vazia`: isenção que não
+     LISTA a advisory não perdoa (DEP3) — perdão por nome viraria `exit 0` disfarçado. */
+  const isentas = mutante === 'sem-isencao' ? new Map()
+    : mutante === 'isencao-vazia' ? new Map([['pacote-sintetico', { adv: [], motivo: '' }]])
+    : ISENTAS;
   const falhas = [];
   const perdoadas = [];
   for (const [nome, v] of Object.entries(relatorio.vulnerabilities || {})) {

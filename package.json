@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.169",
+  "version": "2.0.0-alpha.172",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -86,6 +86,7 @@
     "eval:pause": "node tools/eval/pause-check.mjs",
     "eval:select": "node tools/eval/select-inflate.mjs",
     "eval:entrada": "node tools/eval/entrada-check.mjs",
+    "eval:replaycam": "node tools/eval/replaycam-check.mjs",
     "eval:select:mutate": "node tools/eval/select-inflate.mjs mandrake,pagodeiro --mutate=skin",
     "assert:assets": "node tools/eval/assets-check.mjs",
     "strip:decalbg": "node tools/strip-decal-bg.mjs",
@@ -117,7 +118,7 @@
     "eval:regen": "node tools/eval/regen-check.mjs",
     "eval:ctfwin": "node tools/eval/ctf-win-check.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
-    "eval:docsautoria": "node tools/eval/docs-autoria-check.mjs",
+    "eval:docsautoria eval:replaycam": "node tools/eval/docs-autoria-check.mjs",
     "eval:devport": "node tools/eval/dev-port-check.mjs",
     "eval:mitico": "node tools/eval/mythic-character-check.mjs",
     "eval:deathcam": "node tools/eval/death-camera-check.mjs",
@@ -175,8 +176,8 @@
     "spec:check": "node tools/spec.mjs check plans/ && node tools/spec.mjs check --mutante",
     "skills:sync": "node tools/sync-skills.mjs",
     "skills:check": "node tools/sync-skills.mjs --check",
-    "check:deploy": "node tools/eval/runner.mjs syntax eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:comentario eval:fixture eval:preload eval:docsautoria",
-    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:props-acervo eval:propsuv1 eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:mansao-water eval:mansao-garden eval:corrego-contract eval:corrego-water eval:look eval:mansao-ocean eval:wind eval:softparticles eval:escala-favela eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check eval:pickuparma eval:comentario eval:fixture eval:preload eval:docsautoria",
+    "check:deploy": "node tools/eval/runner.mjs syntax eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
+    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:props-acervo eval:propsuv1 eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:mansao-water eval:mansao-garden eval:corrego-contract eval:corrego-water eval:look eval:mansao-ocean eval:wind eval:softparticles eval:escala-favela eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check eval:pickuparma eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
     "eval:deps": "node tools/eval/deps-check.mjs",
@@ -194,16 +195,22 @@
   },
   "homepage": "https://www.csbrasil.online",
   "dependencies": {
-    "@astrojs/vercel": "^11.0.3",
+    "@astrojs/vercel": "^11.0.6",
     "@resvg/resvg-js": "^2.6.2",
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
     "dejavu-fonts-ttf": "^2.37.3",
+    "ndarray-pixels": "^5.2.0",
     "sharp": "^0.35.3"
   },
   "private": true,
   "type": "module",
+  "overrides": {
+    "@vercel/routing-utils": {
+      "path-to-regexp": "^6.3.0"
+    }
+  },
   "devDependencies": {
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",
