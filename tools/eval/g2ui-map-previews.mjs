@@ -45,6 +45,13 @@ const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   // Rua inteira do campinho até a rotunda do baile, comércio dos dois lados, faixa na
   // frente. Câmera alta e pitch fundo porque a -0,17 metade do cartaz era céu.
   quebrada:  { pos: [0, 8.0, 30], pitch: -0.30, yaw:  0.0 },
+  /* Os três do Ubiracy chegaram como PRINT DE PARTIDA — arma, HUD e o "VALENDO!" no
+     quadro. Regerados em 21/08 pela mesma pose aérea: do spawn a câmera olha para fora
+     do mapa nos três, e a nível do olho o cartaz vira 60% de céu. yaw 3,14 é o único
+     meio-giro que enquadra o mapa inteiro. */
+  velho_oeste:   { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
+  penitenciaria: { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
+  parque_treta:  { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   // Vilarejo central enquadrado entre as duas guaritas, com mata e ponte em profundidade.
   treta_vietnan: { pos: [0, 8.5, 26], pitch: -0.26, yaw: -0.4 },
 };

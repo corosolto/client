@@ -123,6 +123,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:select
 
+      # A porta de entrada do funil: o gesto que tira a splash não pode apertar o menu
+      # por baixo (medido no runner do #368 — ver tools/eval/entrada-check.mjs).
+      - name: eval:entrada (o gesto que entra não aperta botão do menu)
+        if: ${{ !cancelled() }}
+        run: npm run eval:entrada
+
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
         if: failure()
