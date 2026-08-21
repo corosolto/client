@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-19T22:27:00.791Z",
+ "gerado": "2026-08-21T11:29:53.046Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -2621,14 +2621,28 @@
   },
   {
    "map": "fy_mansao",
-   "celulasAlcancadas": 40371,
-   "amostrasChao": 2413,
-   "observadores": 600,
-   "corpoDentroDeSolido": 0,
+   "celulasAlcancadas": 40332,
+   "amostrasChao": 2411,
+   "observadores": 599,
+   "corpoDentroDeSolido": 1,
    "submersosAcimaDoPeito": 0,
-   "piorPenetracao": 0,
-   "piores": [],
-   "dentroTodos": [],
+   "piorPenetracao": 0.9,
+   "piores": [
+    {
+     "tipo": "chao",
+     "x": 4.5,
+     "z": 34.5,
+     "pen": 0.9
+    }
+   ],
+   "dentroTodos": [
+    {
+     "tipo": "chao",
+     "x": 4.5,
+     "z": 34.5,
+     "pen": 0.9
+    }
+   ],
    "spawns": [
     {
      "team": "E",
@@ -2699,7 +2713,7 @@
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1095,
+     "fracMedia": 0.1098,
      "maiorVisada": 58.2
     }
    ],
@@ -2749,9 +2763,9 @@
      "x": -4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 326,
+     "obsLonge": 325,
      "obsVendo": 49,
-     "frac": 0.1503,
+     "frac": 0.1508,
      "maiorVisada": 57.6
     },
     {
@@ -2759,9 +2773,9 @@
      "x": -1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 309,
+     "obsLonge": 308,
      "obsVendo": 47,
-     "frac": 0.1521,
+     "frac": 0.1526,
      "maiorVisada": 56.8
     },
     {
@@ -2769,9 +2783,9 @@
      "x": 1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 310,
+     "obsLonge": 309,
      "obsVendo": 28,
-     "frac": 0.0903,
+     "frac": 0.0906,
      "maiorVisada": 56.5
     },
     {
@@ -2779,9 +2793,9 @@
      "x": 4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 310,
+     "obsLonge": 309,
      "obsVendo": 14,
-     "frac": 0.0452,
+     "frac": 0.0453,
      "maiorVisada": 58.2
     }
    ],
@@ -3020,14 +3034,14 @@
      "q": "1,3",
      "x0": -10.8,
      "z0": 17.8,
-     "areaAndavel": 141,
+     "areaAndavel": 139,
      "props": 7,
      "waypoints": 24,
-     "densProp": 4.97,
-     "densWp": 17.03,
-     "espacamento": 4.49,
-     "razaoProp": 1.13,
-     "razaoWp": 1.1
+     "densProp": 5.05,
+     "densWp": 17.33,
+     "espacamento": 4.45,
+     "razaoProp": 1.15,
+     "razaoWp": 1.12
     },
     {
      "q": "2,0",

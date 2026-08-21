@@ -1119,7 +1119,9 @@ async function _startGame(team, charId, enemyFaction) {
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
-  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  /* ?preloadall=1 volta ao preload do elenco inteiro — é o A/B do dono e o mutante `todos`
+     da régua PLR1; sem ele a régua não teria como provar que mede o que diz medir. */
+  const _charsToLoad = _rosterGlb.length && params.get('preloadall') !== '1' ? _rosterGlb : [...GLB_CHARS];
   try {
     if (!navOnly) {
       await Promise.all([
@@ -1142,6 +1144,25 @@ async function _startGame(team, charId, enemyFaction) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  /* Elenco da facção INIMIGA em segundo plano: é o que a tecla M pode virar. O elenco
+     inteiro custaria ~35 MB por sessão; a facção sozinha é uma fração. Régua: PLR3. */
+  if (!navOnly && params.get('preloadlazy') !== '0') {
+    const daInimiga = CHARACTERS.filter((c) => c.team === enemyFac && GLB_CHARS.has(c.id)).map((c) => c.id);
+    const resto = daInimiga.filter((id) => !_charsToLoad.includes(id));
+    if (resto.length) {
+      /* Espera o `live` e sai por identidade da partida: baixar na contagem regressiva rouba
+         o primeiro segundo jogável, e partida trocada não pode deixar timer vivo. */
+      const meuJogo = game;
+      let tentativas = 0;
+      const espera = setInterval(() => {
+        if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
+        if (meuJogo.state !== 'live') return;
+        clearInterval(espera);
+        const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+        ocioso(() => preloadCharacterAssets(resto).catch(() => {}));
+      }, 250);
+    }
+  }
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)

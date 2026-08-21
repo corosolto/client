@@ -7,22 +7,22 @@
  * só por causa disso.
  *
  * O QUE ELA NÃO PODE DEIXAR PASSAR — cortar o preload é fácil; cortar E deixar bot de
- * caixa procedural em campo é trocar espera por feiura, que é pior. Por isso a PL2
+ * caixa procedural em campo é trocar espera por feiura, que é pior. Por isso a PLR2
  * cobra o resultado na cena, não a intenção no código. E a tecla M deixa o jogador
  * virar QUALQUER personagem da facção inimiga: preload enxuto sem carga tardia
- * quebraria a troca de time em silêncio — é o que a PL3 cobra.
+ * quebraria a troca de time em silêncio — é o que a PLR3 cobra.
  *
  * O QUE MEDE (jogo real, ?auto=, rede de verdade)
- *   PL1  GLBs de personagem baixados no preload BLOQUEANTE <= TETO (12).
+ *   PLR1  GLBs de personagem baixados no preload BLOQUEANTE <= TETO (12).
  *        Janela: do goto até `window.__game` existir — o Game só é construído depois
  *        do `await Promise.all([...])` do preload, então tudo que entra antes disso é
  *        exatamente o que o jogador espera olhando a tela de carregamento. Contar até
  *        o `live` mediria junto a carga tardia e daria 62 mesmo com o conserto no lugar
  *        (foi o que aconteceu na primeira medição). Estado antes do conserto: 63.
- *   PL2  todo BOT em campo tem malha GLB — zero boneco procedural. Só bot: o jogador
+ *   PLR2  todo BOT em campo tem malha GLB — zero boneco procedural. Só bot: o jogador
  *        é primeira pessoa e não tem malha de corpo (game.js:654 — o `player` não
  *        carrega `mesh`), então incluí-lo pintava a régua de vermelho por engano.
- *   PL3  o elenco restante CHEGA (a troca de time pela tecla M continua possível).
+ *   PLR3  o elenco da FACÇÃO INIMIGA chega (a troca pela tecla M continua possível).
  *        Sonda até 60 s e passa assim que completa — janela fixa de 10 s reprovou a
  *        primeira medição com 10/62 por disputa de CPU com outra régua rodando junto,
  *        e isso é afirmação sobre DESEMPENHO de download, que não é o contrato aqui.
@@ -31,9 +31,9 @@
  *
  * MUTANTES (kill-switches reais do jogo, não monkey-patch de teste)
  *   --mutante=todos      abre com ?preloadall=1  → volta ao preload do elenco inteiro
- *                        → PL1 tem que ficar VERMELHA
+ *                        → PLR1 tem que ficar VERMELHA
  *   --mutante=sem-lazy   abre com ?preloadlazy=0 → sem carga tardia
- *                        → PL3 tem que ficar VERMELHA
+ *                        → PLR3 tem que ficar VERMELHA
  *
  * EXIGE BROWSER E SERVIDOR (`npm run eval:serve`) — passo de pré-deploy, não de check:fast.
  *
@@ -94,13 +94,16 @@ const cena = await page.evaluate(() => {
   };
 });
 
-/* PL3: sonda até completar. A régua cobra que a carga tardia EXISTA, não que ela seja
+/* PLR3: sonda até completar. A régua cobra que a carga tardia EXISTA, não que ela seja
    rápida — por isso espera generosa e saída no primeiro sucesso. */
 const conta = () => page.evaluate(async () => {
+  /* Só a facção INIMIGA: é o que a tecla M pode virar, e é o que a carga tardia baixa.
+     O elenco inteiro custaria ~35 MB por sessão para nada — decisão do dono, 21/08. */
   const m = await import('/js/glbchars.js');
-  let prontos = 0;
-  for (const id of m.GLB_CHARS) if (m.hasModel(id)) prontos++;
-  return { prontos, total: m.GLB_CHARS.size };
+  const { CHARACTERS } = await import('/js/characters.js');
+  const inimiga = window.__game?.enemyFaction;
+  const alvo = CHARACTERS.filter((c) => c.team === inimiga && m.GLB_CHARS.has(c.id)).map((c) => c.id);
+  return { prontos: alvo.filter((id) => m.hasModel(id)).length, total: alvo.length, faccao: inimiga };
 });
 let tarde = await conta(), esperou = 0;
 while (tarde.prontos < tarde.total && esperou < 60000) {
@@ -115,10 +118,10 @@ const pl3 = tarde.prontos === tarde.total;
 
 console.log(`\nmapa ${MAPA}${MUTANTE ? `  [mutante: ${MUTANTE}]` : ''}`);
 console.log(`  espera bloqueante: ${((tBloq - t0) / 1000).toFixed(1)}s  ·  ate 'live': ${((tLive - t0) / 1000).toFixed(1)}s  (evidencia do A/B, sem limiar — headless nao e maquina de jogador)`);
-console.log(`  PL1 GLBs no bloqueante (<= ${TETO}): ${bloqueante}  ${pl1 ? 'OK' : 'FALHOU'}   [ate o 'live', com a carga tardia: ${noLive}]`);
-console.log(`  PL2 bots sem GLB (== 0):         ${cena.procedurais.length} de ${cena.bots}  ${pl2 ? 'OK' : 'FALHOU'}${cena.procedurais.length ? `  [${cena.procedurais.join(', ')}]` : ''}`);
+console.log(`  PLR1 GLBs no bloqueante (<= ${TETO}): ${bloqueante}  ${pl1 ? 'OK' : 'FALHOU'}   [ate o 'live', com a carga tardia: ${noLive}]`);
+console.log(`  PLR2 bots sem GLB (== 0):         ${cena.procedurais.length} de ${cena.bots}  ${pl2 ? 'OK' : 'FALHOU'}${cena.procedurais.length ? `  [${cena.procedurais.join(', ')}]` : ''}`);
 console.log(`      elenco da partida (${cena.ids.length}): ${cena.ids.join(', ')}`);
-console.log(`  PL3 elenco carregado (${tarde.total}/${tarde.total}):   ${tarde.prontos} em ${(esperou / 1000).toFixed(0)}s  ${pl3 ? 'OK' : 'FALHOU'}`);
+console.log(`  PLR3 elenco da inimiga ${tarde.faccao} (${tarde.total}/${tarde.total}):   ${tarde.prontos} em ${(esperou / 1000).toFixed(0)}s  ${pl3 ? 'OK' : 'FALHOU'}`);
 if (erros.length) console.log(`  erros de pagina: ${erros.length}\n   - ${erros.slice(0, 3).join('\n   - ')}`);
 
 if (MUTANTE) {
@@ -126,6 +129,6 @@ if (MUTANTE) {
   console.log(alvo ? `\nMUTANTE ${MUTANTE}: regua MORDEU ✓` : `\nMUTANTE ${MUTANTE}: NAO MORDEU — a regua nao mede o que diz medir ✗`);
   process.exit(alvo ? 0 : 1);
 }
-const falhas = [!pl1 && 'PL1', !pl2 && 'PL2', !pl3 && 'PL3'].filter(Boolean);
+const falhas = [!pl1 && 'PLR1', !pl2 && 'PLR2', !pl3 && 'PLR3'].filter(Boolean);
 console.log(falhas.length ? `\nPRELOAD-ROSTER: ${falhas.join(' ')} vermelha(s)` : '\nPRELOAD-ROSTER: verde');
 process.exit(falhas.length ? 1 : 0);
