@@ -6,13 +6,14 @@ sidebar_position: 5
 description: How to test, train, and validate the bots' experimental neural controller.
 ---
 
-{/* translated from docs/docs/botbrain.md on 12/08/2026 — auto sync: issue #54 */}
+{/* translated from docs/docs/botbrain.md on 20/08/2026 — auto sync: issue #54 */}
 
 # BotBrain
 
 BotBrain is an experimental neural controller behind `?botbrain=1`. Without that flag,
 the game keeps using the scripted AI. The published model learns state-action pairs,
-but weights can only be replaced after passing the functional gate and a manual review.
+but weights can only be replaced after passing the functional gate on seeds outside the
+bootstrap dataset and a manual review.
 
 ## Testing the model
 
@@ -53,5 +54,6 @@ rate, body size, and metadata, and stops collecting once it reaches 50 MiB.
 ## Gates
 
 `npm run eval:botbrain` checks UID identity, consent, the CTF objective, cache busting,
-the local sink, non-root execution in the container, and corpus balance. `npm run bot:brain:check`
-runs bot-versus-bot matches and confirms the network moves, shoots, and gets kills.
+the local sink, non-root execution in the container, corpus balance, and separation between
+training and evaluation seeds. `npm run bot:brain:check` runs bot-versus-bot matches on
+holdout seeds and confirms the network moves, shoots, and gets kills.

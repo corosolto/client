@@ -83,7 +83,7 @@ const alvoPorMutante = {
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
   'sem-autoria': 'UIR43',
-  'filtro-autor-morto': 'UIR43',
+  'filtro-autor-morto': 'UIR4',   // mistura comunidade nos OFICIAIS de novo (reverte o #368)
   'sem-badge-oficial': 'UIR43',
 };
 if (MUTANTE && !alvoPorMutante[MUTANTE]) {
@@ -218,11 +218,11 @@ main = muta('sem-autoria', main,
   "const byline = $('ms-byline');",
   "const byline = null;");
 main = muta('filtro-autor-morto', main,
-  "&& (mapCategory !== 'COMUNIDADE' || mapAutorFiltro === 'TODOS' || autorDe(id) === mapAutorFiltro)",
-  "&& (mapCategory !== 'COMUNIDADE' || true)");
+  "mapCategory === 'TODOS' ? !catsDe(id).includes('COMUNIDADE') : catsDe(id).includes(mapCategory)",
+  "mapCategory === 'TODOS' ? true : catsDe(id).includes(mapCategory)");
 main = muta('sem-badge-oficial', main,
-  "(oficialDe(currentMap) ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`",
-  "(false ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`");
+  'class="ms-badge-oficial"',
+  'class="ms-badge-x"');   // remove o crachá de verdade: trocar a CONDIÇÃO não mordia (a string ficava)
 main = muta('mapa-categoria-errada', main,
   "piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],",
   "piscina_treta: ['CIDADES'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['CIDADES'],");
@@ -579,14 +579,16 @@ const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
   && /\$\{autorDe\(currentMap\)\}<\/strong> · \$\{MAP_DATA\[currentMap\] \|\| ''\}/.test(funcMap)
   && /ms-badge-oficial/.test(funcMap)
   && /ms-badge-comunidade/.test(funcMap)
-  && /id="ms-authors" class="ms-authors"/.test(astro)
-  && /ms-author\$\{a === mapAutorFiltro \? ' on' : ''\}/.test(funcMap)
-  && /data-autor="\$\{a\}"/.test(funcMap);
+  // #368: o sub-filtro por autor saiu — COMUNIDADE lista todos. Guardava o elemento ESCONDIDO;
+  // agora guarda a AUSÊNCIA dele (marcação morta é lixo que confunde quem lê — achado do #368).
+  && !/ms-authors/.test(astro)
+  && !/ms-authors/.test(main)
+  && !/ms-authors/.test(css);
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
   && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
   && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
-  && /function visibleMapIds\(\) \{[\s\S]{0,220}catsDe\(id\)\.includes\(mapCategory\)[\s\S]{0,120}mapAutorFiltro === 'TODOS' \|\| autorDe\(id\) === mapAutorFiltro/.test(main)
+  && /function visibleMapIds\(\) \{[\s\S]{0,450}mapCategory === 'TODOS' \? !catsDe\(id\)\.includes\('COMUNIDADE'\) : catsDe\(id\)\.includes\(mapCategory\)/.test(main)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
@@ -598,13 +600,16 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
   && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
-  && /<img class="ms-thumb-img" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
+  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
+  // #368: abas viraram OFICIAIS(TODOS)/COMUNIDADE e os dots falsos morreram — a régua
+  // guarda o novo cânone, não o layout antigo.
+  && /data-cat="TODOS"[^>]*>OFICIAIS</.test(astro) && /data-cat="COMUNIDADE"/.test(astro)
+  && main.includes("$('ms-dashes').innerHTML = '';")
   && /\.ms-tabs\{[^}]*top:60px[^}]*left:32px[^}]*gap:24px/.test(css)
-  && /\.ms-head\{[^}]*left:64px[^}]*top:130px[^}]*width:460px/.test(css)
-  && /\.ms-name\{[^}]*font-size:72px/.test(css)
-  && /\.ms-carousel\{[^}]*left:64px[^}]*right:64px[^}]*bottom:96px/.test(css)
+  && /\.ms-head\{[^}]*top:112px[^}]*gap:7px/.test(css) && /\.ms-head\{[^}]*width:460px/.test(css)
+  && /\.ms-name\{[^}]*font-size:54px/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
   && /grid-template-columns:repeat\(var\(--map-count\),minmax\(0,196px\)\)/.test(strip)
@@ -858,8 +863,8 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas reproduzem abas, ficha e carrossel visual navegável da tela 04 de referência', mapaReferencia,
-    `render usa MAP_IDS completo; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR4', 'mapas: abas OFICIAIS/COMUNIDADE, ficha e carrossel visual navegável (cânone pós-#368)', mapaReferencia,
+    `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,
     'gerador deriva weaponById de CHAR_WEAPON e envia a arma ao mounttest'],
@@ -937,8 +942,8 @@ const resultados = [
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
     'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
-  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE, com filtro por autor', autoriaNaFicha,
-    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; chips de autor em COMUNIDADE'],
+  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE (sub-filtro de autor removido, #368)', autoriaNaFicha,
+    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; sem marcação morta de chips de autor'],
 ];
 
 for (const [id, desc, ok, evid] of resultados) console.log(`${ok ? '✓' : '✗'} ${id} · ${desc}\n  ${evid}`);

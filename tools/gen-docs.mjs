@@ -867,6 +867,15 @@ const marcador = (nome) => new RegExp(
   `(<!--\\s*END:GERADO:${nome}\\s*-->|\\{/\\*\\s*END:GERADO:${nome}\\s*\\*/\\})`,
 );
 
+/* AUTORIA NÃO É DERIVÁVEL ANTES DO MERGE. O bloco `pessoas` sai do `git shortlog` da branch,
+   e o squash reescreve o autor: no #392 os commits eram `manazitto <mana.gsoares@gmail.com>` e
+   viraram `Maná Soares <153231177+manazitto@users.noreply.github.com>` na main. Rodar `npm run
+   docs` na branch (foi rodado) não salva — o valor certo só existe DEPOIS do merge. Conferir
+   isso num PR reprova quem não tem como consertar, e a culpa cai no PR seguinte. Mesma regra do
+   clone raso logo acima: onde o número não é derivável, ele não derruba o portão; onde é (a
+   main, com `--autoria`), continua mordendo. */
+const VERIFICA_AUTORIA = !process.argv.includes('--check') || process.argv.includes('--autoria');
+
 function aplicar(fatos) {
   const mudancas = [];              // { arquivo, novo }
   const achados = new Map();        // bloco -> Set(arquivos em que foi encontrado)
@@ -883,7 +892,7 @@ function aplicar(fatos) {
         const chave = local.prefixo + nome;
         if (!achados.has(chave)) achados.set(chave, new Set());
         achados.get(chave).add(arq);
-        if (nome === 'pessoas' && fatos.raso) continue;
+        if (nome === 'pessoas' && (fatos.raso || !VERIFICA_AUTORIA)) continue;
         novo = novo.replace(re, (_, abre, __, fecha) => `${abre}\n\n${gerar(fatos).trim()}\n\n${fecha}`);
       }
     }
@@ -985,6 +994,7 @@ if (process.argv.includes('--check')) {
     process.exit(1);
   }
   const marcadores = [...achados.values()].reduce((s, x) => s + x.size, 0);
+  if (!VERIFICA_AUTORIA) console.log('  ⚠ bloco de autoria NÃO conferido aqui (só é derivável depois do merge — ver docs:check:autoria na main)');
   console.log(`✓ DOCS1  docs em dia (${achados.size} blocos em ${marcadores} marcadores, ${fatos.jogo.arquivos} arquivos de jogo, ${num(fatos.jogo.linhas)} linhas)`);
   process.exit(0);
 }

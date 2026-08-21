@@ -2,7 +2,8 @@
    bot-brain-check.mjs — RÉGUA da rede dos bots (Fase D).
    ----------------------------------------------------------------------------
    A pergunta que fecha a Fase C→D: o bot dirigido pela REDE é pelo menos tão bom quanto o
-   roteirizado? Mede em partida BOT×BOT no mesmo mapa/semente: o time E é dirigido pela rede
+   roteirizado? Mede em partida BOT×BOT nos mesmos mapas, mas em sementes fora do bootstrap:
+   o time E é dirigido pela rede
    (_botBrainTeam='E'), o time B pelo roteiro. Conta as MORTES por time e a atividade da rede
    (a rede tem que MOVER e ATIRAR — um modelo morto congela o bot). Régua:
 
@@ -39,7 +40,8 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 // causar uma fatia real de mortes. Bootstrap clone fica ~0.20-0.25; mutação zerada → ~0.
 const SHARE_MIN = 0.15;
 const MAPS = ['dust2', 'praca_poderes', 'loja_h', 'piscinao'];
-const SEEDS = [1, 2, 3];
+// Fixadas antes da medição, sem ajuste pelo resultado; BB11 exige interseção zero com o treino.
+const EVAL_SEEDS = [101, 202, 303];
 
 const h = await initHarness();
 const { BotBrain } = await import(`${JS}/botbrain/brain.js`);
@@ -132,7 +134,7 @@ function countCtfObjectiveCalls() {
 let DE = 0, DB = 0, shots = 0, moveSum = 0, moveCnt = 0;
 for (const mapId of MAPS) {
   const textures = h.initTextures(h.makeRenderer());
-  for (const seed of SEEDS) {
+  for (const seed of EVAL_SEEDS) {
     const r = runMatch(mapId, textures, seed);
     DE += r.deathsE; DB += r.deathsB; shots += r.shotsNN;
     moveSum += r.avgMove; moveCnt++;

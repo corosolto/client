@@ -172,8 +172,9 @@ put('PAUSA4', 'clique no BOTÃO (armado) não retoma — o menu de pausa continu
     const porClique = /\.onclick\s*=|addEventListener\(\s*['"]click['"]|addEventListener\(\s*['"]keydown['"]|needsConfirm\(/.test(ctx);
     if (!porClique) suspeitas.push(`${i + 1}: ${L.trim().slice(0, 90)}`);
   }
-  // o boot (`show(isMobile ? … : 'main-menu')`) é legítimo: não há partida nenhuma ainda
-  const reais = suspeitas.filter((s) => !/isMobile/.test(s));
+  // o boot (`show('main-menu')` imediatamente antes de `__CS_MAIN_READY__`) é legítimo:
+  // não há partida nenhuma ainda. A isenção é pela VIZINHANÇA, não pelo texto da linha.
+  const reais = suspeitas.filter((s) => !/isMobile/.test(s) && !/__CS_MAIN_READY__/.test(linhas[parseInt(s, 10)] || ''));
   put('PAUSA5', 'nenhum caminho AUTOMÁTICO tira uma partida ativa do jogo',
     reais.length === 0, reais.length ? reais.join(' | ') : 'ok — só ação deliberada, inspeção inicial explícita ou catch delimitado de startGame');
 }
