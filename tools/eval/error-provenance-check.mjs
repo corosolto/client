@@ -14,6 +14,7 @@ const mutants = [
   'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
   'onerror-sem-src', 'boot-sem-migalha', 'payload-sem-migalhas', 'issue-sem-migalhas',
   'sem-midia', 'midia-ampla', 'sem-cota-midia',
+  'sem-carteira', 'carteira-ampla', 'sem-carteira-cliente',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -168,6 +169,21 @@ if (mutant === 'payload-sem-migalhas') api = mutate(api,
 if (mutant === 'issue-sem-migalhas') workflow = mutate(workflow,
   '**Migalhas:**', '**Migalhas removidas:**');
 
+/* BUG-75 · carteira cripto injetada (#403/#404). Os três mutantes cobrem os três jeitos de
+   o corte deixar de valer: sumir do helper, alargar a ponto de calar crash nosso, e sumir
+   do cliente (que é onde a cota e o painel de falha são decididos). */
+if (mutant === 'sem-carteira') helperSource = mutate(helperSource,
+  'if (CARTEIRA_RE.test(evidence)) return true;',
+  'if (CARTEIRA_RE.test(evidence)) return false;');
+/* O corte largo é a armadilha real: "ethereum" como substring aposenta qualquer crash do
+   jogo que só CITE a palavra, e é exatamente o que EP16 proíbe. */
+if (mutant === 'carteira-ampla') helperSource = mutate(helperSource,
+  'const CARTEIRA_RE = ',
+  'const CARTEIRA_RE = /ethereum|solana|web3/i; const CARTEIRA_RE_ESTREITO = ');
+if (mutant === 'sem-carteira-cliente') page = mutate(page,
+  "if (carteira.test(sourceText + '\\n' + String(stack || '') + '\\n' + String(mensagem || ''))) return false;",
+  "if (false) return false;");
+
 let classifyCrash = null, shouldDispatchCrash = null, crashFingerprint = null, fingerprintConfere = null, isConsoleLog = null;
 if (helperSource) {
   try {
@@ -249,6 +265,44 @@ const naoMidiaFixtures = [
   { source: '', stack: '', message: 'Match interrupted by host' },
   { source: '', stack: '', message: 'The upload was aborted' },
 ];
+/* BUG-75 · carteira cripto injetada (issues #403 e #404; as irmãs #138 e #166 são a mesma
+   família, mas traziam `chrome-extension://` e já caíam na EXTENSION_RE).
+   PROCEDÊNCIA: os dois primeiros são o payload PUBLICADO nas issues, campo por campo — o
+   fingerprint `ab1ad30e` da #403 e o `e32cd1e4` da #404 são o hash EXATO de
+   `error|<message>|<source>`, e é isso que a cláusula confere abaixo. O Safari reporta o
+   script injetado como `global code@` com o filename da PRÓPRIA PÁGINA: same-origin, e por
+   isso o atalho de origem acusava o jogo. */
+const carteiraFixtures = [
+  { source: `${own}/:1:16`, stack: `global code@${own}/:1:16`, message: "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')" },
+  { source: `${own}/:1:16`, stack: `global code@${own}/:1:16`, message: "TypeError: undefined is not an object (evaluating 'window.ethereum.emit')" },
+  { source: 'chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/evmAsk.js:15:5093', stack: 'TypeError: Cannot redefine property: ethereum\n    at r.inject (chrome-extension://bfnaelmomeimhlpmgjnjophhpkkoljpa/evmAsk.js:15:5093)', message: 'Uncaught TypeError: Cannot redefine property: ethereum' },
+  { source: '', stack: 'i: Failed to connect to MetaMask\n    at Object.connect (chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/inpage.js:7:81161)', message: 'Failed to connect to MetaMask' },
+  /* a próxima carteira, que ainda não abriu issue: o corte é por FAMÍLIA, não uma regex
+     por incidente — a crítica que o BUG-72 fez ao padrão de comprar regex a cada crash. */
+  { source: `${own}/:1:16`, stack: `global code@${own}/:1:16`, message: "TypeError: undefined is not an object (evaluating 'window.solana.connect')" },
+];
+/* O corte é ESTREITO: exige o NOME do global injetado. Estas cinco continuam `codigo` — a
+   palavra solta num texto nosso, um crash real dentro de arquivo do jogo, e a mensagem que
+   fala de carteira sem ser de carteira nenhuma. */
+const naoCarteiraFixtures = [
+  { source: `${own}/js/game.js:1:2`, stack: '', message: 'falha ao carregar ethereum.glb' },
+  { source: `${own}/js/main.js:1:2`, stack: '', message: "Cannot read properties of undefined (reading 'ethereum')" },
+  { source: `${own}/js/game.js:1:2`, stack: '', message: 'solana: rota de mapa inválida' },
+  { source: `${own}/:1:16`, stack: `global code@${own}/:1:16`, message: "TypeError: undefined is not an object (evaluating 'window.__game.start')" },
+  { source: '', stack: '', message: 'Cannot redefine property: playerFaction' },
+];
+/* INVARIANTE DE HONESTIDADE. O corte acima só é legítimo porque o jogo NÃO tem web3: no dia
+   em que alguém adicionar uma carteira de verdade, esta cláusula fica VERMELHA e obriga a
+   revisar o corte, em vez de ele virar mordaça silenciosa sobre código nosso. Varre o fonte
+   pelo global PREFIXADO (`window.ethereum`), que é inequívoco — buscar a palavra solta
+   acenderia em qualquer blob base64 do repositório. O escopo é o JOGO (`src/`, `public/js/`)
+   e não `tools/`: as fixtures desta régua carregam o payload da #403 de propósito. */
+const GLOBAIS_WEB3 = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b/;
+const fontesDoJogo = spawnSync('git', ['ls-files', 'src', 'public/js'], { encoding: 'utf8' })
+  .stdout.split('\n').filter((f) => /\.(?:m?js|ts|astro)$/.test(f));
+const jogoSemWeb3 = fontesDoJogo.length > 0 && fontesDoJogo.every((f) => {
+  try { return !GLOBAIS_WEB3.test(readFileSync(f, 'utf8')); } catch { return true; }
+});
 const externalCacheFixtures = [
   { source: 'chrome-extension://abc/inpage.js:1:2', message: 'does not provide an export' },
   { source: 'https://cdn.example.invalid/chunk.js:1:2', message: 'Failed to fetch dynamically imported module' },
@@ -547,6 +601,29 @@ const cotaMidiaWired = /var TETO_MIDIA = \d+;/.test(page)
   && /\} else if \(erroIgnoravel\(mFinal\)\) \{[\s\S]{0,400}?if \(nMidia >= TETO_MIDIA\) return null;\s*\n\s*nMidia\+\+;/.test(page)
   && /if \(nEnviados >= TETO_SESSAO\) return null;/.test(page);
 
+/* EP16 executa o `origemDoJogo` recortado do fonte com o payload REAL da #403, como o EP6 e
+   o EP14 fazem: regex de fiação sozinha aprovaria `function origemDoJogo(){ return true; }`.
+   É no cliente que se decide a cota (`TETO_EXTERNO`), o overlay e — o que mais importa aqui —
+   se o erro vira `erroDoBoot`/`lancamento.fail`: hoje uma carteira que estoura durante o
+   boot pode ser acusada de ter derrubado o carregamento do jogo. */
+const carteiraCliente = !!origemCliente
+  && carteiraFixtures.every((f) => origemCliente(f.source, f.stack, f.message) === false)
+  /* e o corte NÃO pode cegar o cliente para crash NOSSO: as cinco vizinhas seguem internas,
+     inclusive a que estoura no script inline da própria página (`window.__game.start`) — é
+     ali que mora o código de boot do `index.astro`, e cegar isso apagaria o painel de falha. */
+  && naoCarteiraFixtures.every((f) => origemCliente(f.source, f.stack, f.message) === true);
+/* Nenhuma cota nova: carteira é externo e cai no balde do `TETO_EXTERNO` que a BUG-51 já
+   abriu — ao contrário do `TETO_MIDIA`, que a BUG-73 precisou criar. */
+const carteiraNoBaldeExterno = /var TETO_EXTERNO = \d+;/.test(page)
+  && /if \(nExternos >= TETO_EXTERNO\) return null;/.test(page)
+  && /var carteira = \/.*ethereum.*\/i;/.test(page);
+/* PROCEDÊNCIA dos dois payloads: os fingerprints PUBLICADOS nas issues #403 e #404 são o
+   hash exato de `error|<message>|<source>`. Se algum dia alguém "arrumar" a fixture, o
+   número deixa de bater e a cláusula acusa que ela não é mais o que produção mandou. */
+const carteiraProcede = typeof crashFingerprint === 'function'
+  && crashFingerprint('error', carteiraFixtures[0].message, carteiraFixtures[0].source) === 'ab1ad30e'
+  && crashFingerprint('error', carteiraFixtures[1].message, carteiraFixtures[1].source) === 'e32cd1e4';
+
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
@@ -588,6 +665,12 @@ const checks = [
     && shouldDispatchCrash('recuperavel') === false
     && midiaCliente && cotaMidiaWired,
     'abort de mídia (play() cortado por pause(), #389) é recuperável: fica na telemetria, não abre issue e tem cota própria no cliente; crash real dentro do módulo de áudio continua acionável'],
+  ['EP16', carteiraFixtures.every((fixture) => classify(fixture) === 'externo')
+    && naoCarteiraFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('externo') === false
+    && carteiraProcede && carteiraCliente && carteiraNoBaldeExterno && jogoSemWeb3,
+    'carteira cripto injetada no documento (#403/#404) é externa mesmo com filename same-origin: fica na telemetria, não abre issue e cai no balde de externo; a palavra "ethereum" num texto nosso continua acionável, e o jogo segue sem uma linha de web3'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -609,6 +692,7 @@ const mutantClause = {
   'onerror-sem-src': 'EP15', 'boot-sem-migalha': 'EP15',
   'payload-sem-migalhas': 'EP15', 'issue-sem-migalhas': 'EP15',
   'sem-midia': 'EP14', 'midia-ampla': 'EP14', 'sem-cota-midia': 'EP14',
+  'sem-carteira': 'EP16', 'carteira-ampla': 'EP16', 'sem-carteira-cliente': 'EP16',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
