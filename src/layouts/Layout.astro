@@ -37,6 +37,7 @@
 // plans/08 §1.1). O canarinho do topo sai pelo WebP animado de 96 KB, não pelo
 // GIF de 368 KB - mesmo conteúdo, 24 quadros, 26% do peso.
 import { SITE, BRAND, BRAND_FULL, BRAND_ALT, DESC_SHORT, ORG_ID, WEBSITE_ID, abs, RANKING_ON, DISCORD_URL, TELEGRAM_URL, GITHUB_URL } from '../lib/site';
+import { PT_EN_PAIRS } from '../lib/i18n-pairs';
 import pkg from '../../package.json';
 
 const V = pkg.version;
@@ -105,20 +106,12 @@ const temSub = Astro.slots.has('sub');
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const canonical = new URL(path, Astro.site ?? SITE).toString();
 
-// Tabela fixa porque cada rota EN é uma página própria, não um prefixo de idioma.
-// Alimenta o hreflang recíproco e o link PT/EN estático do rodapé (a troca por JS
-// não é descoberta por crawl).
-const PT_EN_PAIRS: [string, string][] = [
-  ['/como-jogar', '/how-to-play'],
-  ['/personagens', '/characters'],
-  ['/mapas', '/maps'],
-  ['/armas', '/weapons'],
-  ['/sobre', '/about'],
-];
-const ptToEn = new Map(PT_EN_PAIRS);
-const enToPt = new Map(PT_EN_PAIRS.map(([pt, en]) => [en, pt]));
+const ptToEn = new Map<string, string>(PT_EN_PAIRS.map(([pt, en]) => [pt, en]));
+const enToPt = new Map<string, string>(PT_EN_PAIRS.map(([pt, en]) => [en, pt]));
 const pairedEn = ptToEn.get(path);
 const pairedPt = enToPt.get(path);
+const pageLang = pairedPt ? 'en' : 'pt-BR';
+const ogLocale = pageLang === 'en' ? 'en_US' : 'pt_BR';
 const hreflangPt = pairedPt ? new URL(pairedPt, Astro.site ?? SITE).toString() : canonical;
 const hreflangEn = pairedEn ? new URL(pairedEn, Astro.site ?? SITE).toString() : pairedPt ? canonical : null;
 
@@ -164,13 +157,19 @@ const pageGraph = hasOwnPageNode ? [] : [{
   url: canonical,
   name: title,
   description,
-  inLanguage: 'pt-BR',
+  inLanguage: pageLang,
   isPartOf: { '@id': WEBSITE_ID },
   primaryImageOfPage: {
     '@type': 'ImageObject', url: ogImage,
     width: ogImageWidth, height: ogImageHeight,
   },
 }];
+const jsonldLang = (jsonld as { '@type'?: string | string[]; inLanguage?: string }[]).map((n) => {
+  const t = n?.['@type'];
+  const types = Array.isArray(t) ? t : t ? [t] : [];
+  if (types.some((x) => PAGE_NODE_TYPES.has(x)) && !n.inLanguage) return { ...n, inLanguage: pageLang };
+  return n;
+});
 
 // O /ranking sai do nav enquanto RANKING_ON for false (src/lib/site.ts). A página
 // continua respondendo - só deixa de ser oferecida, pra ninguém clicar num aviso.
@@ -185,7 +184,7 @@ const NAV: [string, string][] = [
 ];
 ---
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang={pageLang}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -211,7 +210,8 @@ const NAV: [string, string][] = [
 <meta property="og:image:width" content={String(ogImageWidth)}>
 <meta property="og:image:height" content={String(ogImageHeight)}>
 <meta property="og:image:alt" content={ogImageAlt}>
-<meta property="og:locale" content="pt_BR">
+<meta property="og:locale" content={ogLocale}>
+{hreflangEn && <meta property="og:locale:alternate" content={pageLang === 'en' ? 'pt_BR' : 'en_US'}>}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content={title}>
 <meta name="twitter:description" content={description}>
@@ -235,7 +235,7 @@ const NAV: [string, string][] = [
 <link rel="alternate" type="text/plain" href={abs('/llms.txt')} title="Resumo do site em texto (llms.txt)">
 <link rel="alternate" type="text/plain" href={abs('/llms-full.txt')} title="Conteúdo completo em texto">
 <link rel="alternate" type="application/json" href={abs('/ai-index.json')} title="Índice do site para IA">
-<script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': [...baseGraph, ...pageGraph, ...jsonld] })} />
+<script type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@graph': [...baseGraph, ...pageGraph, ...jsonldLang] })} />
 <slot name="head" />
 <style is:global>
 :root{
@@ -648,8 +648,8 @@ body>footer a:hover{color:var(--amber)}
   /* NAV + RODAPÉ em EN (mesma régua de idioma das páginas gêmeas e do jogo:
      ?lang= > localStorage cs_lang > navigator.language). As gêmeas EN existem
      para personagens/mapas/armas/como-jogar/sobre - rótulo e href trocam juntos.
-     /mapa e /changelog continuam só PT (issue #54) e ficam com o rótulo em PT
-     DE PROPÓSITO: avisa que a página de destino é PT antes do clique. */
+     /mapa continua só PT (issue #54) e fica com o rótulo em PT de propósito.
+     /changelog já tem gêmea /whats-new. */
   try {
     const q = new URLSearchParams(location.search).get('lang');
     const ls = localStorage.getItem('cs_lang');
@@ -664,6 +664,7 @@ body>footer a:hover{color:var(--amber)}
         '/armas': ['/weapons', 'WEAPONS', 'Weapons'],
         '/como-jogar': ['/how-to-play', 'HOW TO PLAY', 'How to play'],
         '/sobre': ['/about', 'ABOUT', 'About'],
+        '/changelog': ['/whats-new', 'CHANGELOG', 'Changelog'],
       };
       document.querySelectorAll('header nav a').forEach((a) => {
         const g = GEMEA[a.getAttribute('href')];

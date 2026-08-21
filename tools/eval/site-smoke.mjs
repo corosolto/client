@@ -59,7 +59,7 @@ const BASE = EXTERNO || `http://localhost:${PORTA}`;
 // ---------------------------------------------------------------------------
 // 8 páginas indexáveis hoje; /ranking entra na conta só com o ranking ligado —
 // desligado ele é noindex (ranking.astro), e noindex no sitemap é contradição.
-const XML_LOC_MIN = RANKING_ON ? 9 : 8;
+const XML_LOC_MIN = RANKING_ON ? 15 : 14;
 
 const CONTRATO = [
   { rota: '/', esperado: '200 + <title> com "CORO SOLTO"',
@@ -95,7 +95,8 @@ const CONTRATO = [
      `public/js` existe e o defeito não pode acontecer. Quem mede o artefato publicado é
      `npm run eval:ssr`. Esta linha pega a próxima página que quebrar por outro motivo;
      ela não teria pego aquela. */
-  ...['/como-jogar', '/mapas', '/mapa', '/armas', '/personagens', '/sobre', '/changelog'].map((rota) => ({
+  ...['/como-jogar', '/mapas', '/mapa', '/armas', '/personagens', '/sobre', '/changelog',
+      '/how-to-play', '/maps', '/weapons', '/characters', '/about', '/whats-new'].map((rota) => ({
     rota, esperado: '200 + corpo não vazio',
     checa: ({ status, corpo }) => {
       if (status !== 200) return `status ${status}`;
@@ -110,6 +111,7 @@ const CONTRATO = [
       if (!/^\s*<\?xml/.test(corpo)) return 'não começa com declaração XML';
       const locs = corpo.match(/<loc>/g) || [];
       if (locs.length < XML_LOC_MIN) return `${locs.length} <loc>, mínimo ${XML_LOC_MIN}`;
+      if (!corpo.includes('/whats-new')) return 'sitemap sem a gêmea EN /whats-new';
       // XML mal formado é o modo de falha silenciosa aqui: um & solto derruba o
       // parse de quem consome e o status continua 200.
       const abertas = (corpo.match(/<url>/g) || []).length;
@@ -151,7 +153,8 @@ const CONTRATO = [
 
 // Páginas que precisam ter todo bloco JSON-LD parseável. JSON-LD quebrado é
 // invisível: some do resultado rico e ninguém percebe por meses.
-const PAGINAS_JSONLD = ['/', '/ranking', '/como-jogar', '/mapas', '/armas', '/personagens', '/sobre', '/changelog'];
+const PAGINAS_JSONLD = ['/', '/ranking', '/como-jogar', '/mapas', '/armas', '/personagens', '/sobre', '/changelog',
+  '/how-to-play', '/maps', '/weapons', '/characters', '/about', '/whats-new'];
 
 // ---------------------------------------------------------------------------
 const RE_JSONLD = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;

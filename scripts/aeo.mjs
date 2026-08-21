@@ -45,7 +45,8 @@ import { fileURLToPath } from 'node:url';
  *    A home entra assim mesmo, mas com o texto CURADO do `llms.txt`.
  *  · `/ranking`, `/u/*`, `/mapa`: SSR, não têm HTML em build time. As duas
  *    primeiras estão `noindex` enquanto RANKING_ON for false. */
-const CONTENT_PAGES = ['/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog'];
+const CONTENT_PAGES = ['/armas', '/mapas', '/personagens', '/como-jogar', '/sobre', '/changelog',
+  '/how-to-play', '/maps', '/weapons', '/characters', '/about', '/whats-new'];
 
 function readPage(clientDir, pathname) {
   const file = pathname === '/'

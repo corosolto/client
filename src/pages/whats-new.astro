@@ -1,23 +1,13 @@
 ---
-// /changelog - o CHANGELOG.md renderizado como página.
-// Parser em src/lib/changelog.ts (compartilhado com /whats-new). `?raw` abaixo.
+// /whats-new - GÊMEA EM INGLÊS do /changelog (issue #54). Mesmo CHANGELOG.md,
+// mesmo renderizador, cromo traduzido aqui. As notas de versão continuam em PT:
+// traduzir o histórico inteiro é outra frente, e os nomes de mapa/arma são marca.
 import Layout from '../layouts/Layout.astro';
 import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
 import { parseChangelog } from '../lib/changelog';
 
-/* `?raw` (Vite) e NÃO `readFileSync(new URL('../../CHANGELOG.md', import.meta.url))`.
-   Os dois parecem "ler em build time", mas só este é.
-
-   O que quebrava: no build, esta página vira um chunk em
-   `dist/server/.prerender/chunks/changelog_*.mjs`. `import.meta.url` passa a apontar
-   para ALI, então a URL relativa resolvia para `dist/server/CHANGELOG.md` - que não
-   existe - e o prerender morria com ENOENT, derrubando o build inteiro:
-
-     [ERROR] ENOENT: no such file or directory, open '.../dist/server/CHANGELOG.md'
-
-   Ninguém tinha visto porque `npm run build` nunca havia rodado nesta árvore
-   (era o item B1 do HANDOFF). Com `?raw` o conteúdo é embutido no bundle pelo Vite:
-   não há caminho para resolver em runtime, e o deploy não depende de o .md estar lá. */
+/* Mesmo `?raw` do /changelog: o prerender mora em dist/server e um readFileSync
+   por import.meta.url quebraria o build (BUG documentado na irmã PT). */
 import md from '../../CHANGELOG.md?raw';
 
 const { versoes, recentes, atualVer } = parseChangelog(md);
@@ -25,8 +15,8 @@ const { versoes, recentes, atualVer } = parseChangelog(md);
 const jsonld = [
   {
     '@type': 'ItemList',
-    '@id': abs('/changelog') + '#lista',
-    name: `Histórico de versões do ${BRAND_FULL}`,
+    '@id': abs('/whats-new') + '#lista',
+    name: `${BRAND_FULL} version history`,
     numberOfItems: recentes.length,
     itemListElement: recentes.map((v, i) => ({
       '@type': 'ListItem', position: i + 1, name: `v${v.versao}`,
@@ -35,46 +25,36 @@ const jsonld = [
   {
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Início', item: abs('/') },
-      { '@type': 'ListItem', position: 2, name: 'Changelog', item: abs('/changelog') },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Changelog', item: abs('/whats-new') },
     ],
   },
   { '@id': GAME_ID, softwareVersion: atualVer },
 ];
 ---
 <Layout
-  title={`Changelog - o que mudou (v${atualVer}) | ${BRAND_FULL}`}
-  description={`Histórico de versões do ${BRAND_FULL}: novas facções, mapas, armas, ajustes de viewmodel, bots e correções, versão por versão.`}
+  title={`Changelog - what changed (v${atualVer}) | ${BRAND_FULL}`}
+  description={`Version history of ${BRAND_FULL}: new factions, maps, weapons, viewmodel tweaks, bots and fixes, version by version.`}
   jsonld={jsonld}
   h1="Changelog"
-  kicker={`versão em produção · v${atualVer}`}
+  kicker={`production version · v${atualVer}`}
   heroImg="/img/map-previews/piscina_treta.jpg"
   heroPos="46%">
   <Fragment slot="sub">
-    Tudo que mudou, versão por versão. A versão em produção é a <strong>v{atualVer}</strong>.
-    O arquivo completo vive em <code>CHANGELOG.md</code> no repositório - esta página é ele,
-    renderizado.
+    Everything that changed, version by version. Production is <strong>v{atualVer}</strong>.
+    The full file lives in <code>CHANGELOG.md</code> in the repository - this page is that
+    file, rendered.
   </Fragment>
 
-  {/* Campo de busca: o conteúdo dentro de um <details> FECHADO é invisível pro
-      Ctrl+F do navegador - é o problema que a issue #44 aponta no bônus. O filtro
-      abaixo procura no texto de TODAS as versões, abre as que casam e esconde as
-      que não. Sem JS ele não aparece (o <input> é inserido pelo script), então
-      nada se perde. */}
   <div id="cl-busca-slot"></div>
 
   {recentes.map((v, i) => (
-    /* id por versão = permalink. `v` na frente porque id não pode começar com
-       dígito em HTML4 e ferramenta antiga ainda tropeça nisso. */
     <details id={`v${v.versao}`} open={i < 3} data-versao={v.versao}>
       <summary>
         <strong>v{v.versao}</strong>
         {v.data && <span style="color:var(--bone-dim);font-size:11px;letter-spacing:2px"> · {v.data}</span>}
-        {/* Âncora REAL, não botão: sem JS ela ainda leva o navegador até a versão
-            certa (o <summary> é visível mesmo com o <details> fechado). O JS
-            transforma o clique em "copia o link" sem sair da página. */}
-        <a class="cl-perma" href={`#v${v.versao}`} title={`Link permanente para a v${v.versao}`}
-           aria-label={`Copiar link permanente da versão ${v.versao}`}>#</a>
+        <a class="cl-perma" href={`#v${v.versao}`} title={`Permalink to v${v.versao}`}
+           aria-label={`Copy permalink for version ${v.versao}`}>#</a>
       </summary>
       <div class="cl" set:html={v.html} />
     </details>
@@ -82,14 +62,13 @@ const jsonld = [
 
   {versoes.length > recentes.length && (
     <p style="margin-top:18px">
-      Versões anteriores à v{recentes[recentes.length - 1].versao} estão no
+      Versions older than v{recentes[recentes.length - 1].versao} live in
       <a href="https://github.com/corosolto/client/blob/main/CHANGELOG.md" rel="noopener"> CHANGELOG.md</a>.
     </p>
   )}
 </Layout>
 
 <style is:global>
-/* o topo fixo cobriria a versão depois do salto pelo hash */
 #main details[id^="v"]{scroll-margin-top:calc(var(--topo) + 12px)}
 .cl-perma{margin-left:8px;color:var(--bone-dim);text-decoration:none;font-weight:bold;
   opacity:0;transition:opacity .12s}
@@ -111,10 +90,6 @@ summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{o
   var versoes = Array.prototype.slice.call(document.querySelectorAll('details[data-versao]'));
   if (!versoes.length) return;
 
-  /* ---- hash -> abre e rola até a versão ----
-     getElementById e NÃO querySelector: os ids têm ponto ("v2.0.0-alpha.21") e
-     num seletor CSS o ponto vira classe. Escapar daria na mesma, mas
-     getElementById não precisa. */
   function abrePeloHash() {
     var h = location.hash.replace(/^#/, '');
     if (!h) return;
@@ -126,10 +101,6 @@ summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{o
   abrePeloHash();
   addEventListener('hashchange', abrePeloHash);
 
-  /* ---- o # copia o link permanente ----
-     preventDefault + stopPropagation porque o <a> vive dentro do <summary>, e
-     clique em summary alterna o <details>: sem isso, copiar o link FECHARIA a
-     versão que a pessoa acabou de abrir. */
   versoes.forEach(function (d) {
     var a = d.querySelector('.cl-perma');
     if (!a) return;
@@ -140,25 +111,20 @@ summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{o
       history.replaceState(null, '', '#' + d.id);
       d.open = true;
       var antes = a.textContent;
-      function ok() { a.textContent = 'copiado'; a.classList.add('copiado');
+      function ok() { a.textContent = 'copied'; a.classList.add('copiado');
         setTimeout(function () { a.textContent = antes; a.classList.remove('copiado'); }, 1400); }
-      // clipboard.writeText exige contexto seguro (https/localhost); em http
-      // simples ele nem existe, então mostramos a URL pra copiar à mão.
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(ok, function () { prompt('Copie o link:', url); });
-      } else { prompt('Copie o link:', url); }
+        navigator.clipboard.writeText(url).then(ok, function () { prompt('Copy the link:', url); });
+      } else { prompt('Copy the link:', url); }
     });
   });
 
-  /* ---- busca ----
-     Injetada por JS de propósito: um campo de filtro que não filtra (JS off) é
-     pior que campo nenhum. */
   var slot = document.getElementById('cl-busca-slot');
   if (!slot) return;
   var input = document.createElement('input');
   input.type = 'search'; input.id = 'cl-busca';
-  input.placeholder = 'filtrar versões… (ex: bots, viewmodel, 3.3)';
-  input.setAttribute('aria-label', 'Filtrar versões do changelog por texto');
+  input.placeholder = 'filter versions… (e.g. bots, viewmodel, 3.3)';
+  input.setAttribute('aria-label', 'Filter changelog versions by text');
   var vazio = document.createElement('p');
   vazio.className = 'cl-vazio'; vazio.hidden = true;
   slot.appendChild(input); slot.appendChild(vazio);
@@ -178,18 +144,18 @@ summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{o
       if (casa) { d.open = true; achou++; }
     });
     vazio.hidden = !q || achou > 0;
-    if (!vazio.hidden) vazio.textContent = 'Nenhuma versão menciona "' + input.value.trim() + '".';
+    if (!vazio.hidden) vazio.textContent = 'No version mentions "' + input.value.trim() + '".';
   });
 })();
 </script>
 
 <script>
-  // espelho do /whats-new: usuário em EN cai na gêmea (issue #54)
+  // espelho do /changelog: usuário em pt cai na gêmea PT (mesmas regras do i18n.js)
   try {
     const q = new URLSearchParams(location.search).get('lang');
     const ls = localStorage.getItem('cs_lang');
     const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
       : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
-    if (lang === 'en') location.replace('/whats-new');
+    if (lang === 'pt') location.replace('/changelog');
   } catch { /* fica */ }
 </script>
