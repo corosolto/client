@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
-import { buildCharacterModel } from './glbchars.js';
+import { buildCharacterModel, hasModel } from './glbchars.js';
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
@@ -556,8 +556,44 @@ function rollBotSkill(mul = 1) {
 // APRENDER quem é perigoso em vez de morrer pra 8 bots visualmente idênticos).
 function botTier(skill) { return skill < 0.75 ? 'ruim' : skill < 1.05 ? 'medio' : skill < 1.4 ? 'bom' : 'muitobom'; }
 
+/* Sorteio do elenco da partida. Extraído do construtor para o `main.js` preloadar só
+   quem joga; equilíbrio de times e o porquê inteiro em docs/LICOES.md §15. */
+export function pickMatchRoster({ playerFaction, enemyFaction, playerCharId, teamSize }) {
+  // Rotação aleatória do pool por partida: sem ela só os 8 primeiros do time viravam
+  // bots (personagens no fim da lista, ex.: canarinho/proerd, nunca apareciam).
+  const cycle = (pool, n) => {
+    const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
+    return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
+  };
+  const roster = (pool, want, quem, fallback) => {
+    let src = pool;
+    if (!src.length) {
+      src = fallback.filter(Boolean);
+      console.warn(`[times] ${quem}: facção sem personagens disponíveis — completando com o elenco geral (o time NÃO pode ficar menor)`);
+    }
+    if (!src.length) return [];
+    if (src.length < want) console.warn(`[times] ${quem}: ${src.length} personagem(ns) para ${want} vaga(s) — vai REPETIR personagem para os dois lados ficarem iguais`);
+    const out = cycle(src, want);
+    while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
+    return out.slice(0, want);
+  };
+  // aliados vêm da FACÇÃO do jogador (P/B/U/C); inimigos da facção inimiga escolhida.
+  const allyDefs = roster(CHARACTERS.filter((c) => c.team === playerFaction && c.id !== playerCharId),
+    teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter((c) => c.id !== playerCharId));
+  const enemyDefs = roster(CHARACTERS.filter((c) => c.team === enemyFaction),
+    teamSize, `inimigos (${enemyFaction})`, CHARACTERS);
+  return { allyDefs, enemyDefs };
+}
+
+/* Ids que a partida REALMENTE usa — o que o `main.js` manda pro `preloadCharacterAssets`.
+   Inclui o personagem do jogador: ele não tem malha de corpo (1ª pessoa), mas os braços
+   FP e a prévia da tela de fim saem do mesmo template. */
+export function matchRosterIds(roster, playerCharId) {
+  return [...new Set([playerCharId, ...roster.allyDefs.map((d) => d.id), ...roster.enemyDefs.map((d) => d.id)].filter(Boolean))];
+}
+
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, matchRoster = null, testMode = false, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
     this._ctfOpt = ctf;
     this.renderer = renderer;
     this.sfx = sfx;
@@ -699,39 +735,11 @@ export class Game {
     // dano do bot contra o JOGADOR agora depende da dificuldade escolhida no menu (antes era
     // 0.85 fixo — o seletor não mudava nada além do sorteio de skill).
     this._botDmgPlayer = BOT_FAIR ? (BOT_DMG_BY_DIFF[diffKey(this.settings)] ?? 0.72) : BOT_DMG_PLAYER;
-    // Rotação aleatória do pool por partida: sem ela só os 8 primeiros do time viravam
-    // bots (personagens no fim da lista, ex.: canarinho/proerd, nunca apareciam).
-    const cycle = (pool, n) => {
-      const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
-      return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
-    };
-    /* ===== EQUILÍBRIO DE TIMES (garantia numérica, não boa-fé) =====
-       PORQUÊ: `cycle` devolve [] quando o pool é VAZIO — `pool[i % 0]` é NaN → undefined e o
-       `.filter(Boolean)` limpa tudo. Ou seja, uma facção sem personagens suficientes produzia
-       um time MENOR **sem nenhum aviso** (jogador sozinho contra 8). Hoje as 4 facções têm
-       8-9 personagens e a conta fecha — medido, enumerando as 16 combinações facção×inimigo
-       × teamSize 1..8: todas dão N vs N. O bug é LATENTE: basta a 5ª facção entrar com 1
-       personagem (ou o único personagem dela ser o escolhido pelo jogador) pra ele voltar,
-       de novo em silêncio. `roster` fecha isso: SEMPRE devolve `want` combatentes (repetir
-       personagem é aceitável — o `cycle` já repetia; time menor não é) e AVISA no console
-       quando teve que repetir ou recorrer ao elenco geral. */
-    const roster = (pool, want, quem, fallback) => {
-      let src = pool;
-      if (!src.length) {
-        src = fallback.filter(Boolean);
-        console.warn(`[times] ${quem}: facção sem personagens disponíveis — completando com o elenco geral (o time NÃO pode ficar menor)`);
-      }
-      if (!src.length) return [];
-      if (src.length < want) console.warn(`[times] ${quem}: ${src.length} personagem(ns) para ${want} vaga(s) — vai REPETIR personagem para os dois lados ficarem iguais`);
-      const out = cycle(src, want);
-      while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
-      return out.slice(0, want);
-    };
-    // aliados vêm da FACÇÃO do jogador (P/B/U/C); inimigos da facção inimiga escolhida.
-    const allyDefs = roster(CHARACTERS.filter(c => c.team === this.playerFaction && c.id !== playerCharId),
-      teamSize - 1, `aliados (${this.playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId));
-    const enemyDefs = roster(CHARACTERS.filter(c => c.team === this.enemyFaction),
-      teamSize, `inimigos (${this.enemyFaction})`, CHARACTERS);
+    // `matchRoster` chega pronto do main.js (que preloada por ele); sem ele, sorteia aqui
+    // pela MESMA função — sortear duas vezes erraria o preload calado. docs/LICOES.md §15.
+    const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster({
+      playerFaction: this.playerFaction, enemyFaction: this.enemyFaction, playerCharId, teamSize,
+    });
     const mkBot = (def, team, i) => {
       const wpn = this._botWeapon();
       const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
@@ -2530,7 +2538,11 @@ export class Game {
     const swapBot = candidates[(Math.random() * candidates.length) | 0];
     if (swapBot) {
       swapBot.team = oldTeam;
-      const defs = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
+      // Prefere quem já tem GLB: com preload por roster, sorteio cego poria boneco de caixa
+      // em campo (cláusula PL2). Sem ninguém carregado, volta ao cego. docs/LICOES.md §15.
+      const todos = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
+      const comModelo = todos.filter(c => hasModel(c.id));
+      const defs = comModelo.length ? comModelo : todos;
       const newDef = defs[(Math.random() * defs.length) | 0];
       swapBot.def = newDef; swapBot.name = newDef.name;
       this.scene.remove(swapBot.mesh.group);

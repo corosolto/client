@@ -10,7 +10,7 @@ import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.j
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, matchRosterIds } from './game.js';
 import { VERSION } from './version.js';
 import { LANG, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
@@ -1065,10 +1065,17 @@ async function _startGame(team, charId, enemyFaction) {
   // load in parallel and are optional — the map renders fine if they're missing.
   // sorteia os carros da Havan desta partida ANTES do preload (seleção = props do mapa)
   setHavanCarSeed((Math.random() * 1e9) | 0);
+  // Preload só do elenco desta partida (era o jogo inteiro: 63 GLBs pra 8 bonecos).
+  // Kill-switches ?preloadall=1 e ?preloadlazy=0 são os mutantes. docs/LICOES.md §15.
+  const _qs = new URLSearchParams(location.search);
+  const _preloadAll = _qs.get('preloadall') === '1';
+  const _teamSize = Math.max(1, Math.min(8, settings.bots || 4));
+  const _roster = pickMatchRoster({ playerFaction: faction, enemyFaction: enemyFac, playerCharId: charId, teamSize: _teamSize });
+  const _rosterIds = matchRosterIds(_roster, charId);
   try {
     if (!navOnly) {
       await Promise.all([
-        preloadCharacterAssets([...GLB_CHARS]),
+        preloadCharacterAssets(_preloadAll ? [...GLB_CHARS] : _rosterIds),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
@@ -1080,6 +1087,7 @@ async function _startGame(team, charId, enemyFaction) {
     renderer, textures, sfx, settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode,
+    matchRoster: _roster,   // sorteado acima, antes do preload — o Game NÃO re-sorteia
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
@@ -1087,6 +1095,26 @@ async function _startGame(team, charId, enemyFaction) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  // Resto do elenco em segundo plano: serve à tecla M. Falha calada de propósito — é
+  // disponibilidade, não requisito da partida. docs/LICOES.md §15.
+  if (!navOnly && !_preloadAll && _qs.get('preloadlazy') !== '0') {
+    const resto = [...GLB_CHARS].filter((id) => !_rosterIds.includes(id));
+    // Espera o `live`: baixar na contagem regressiva rouba o primeiro segundo jogável.
+    if (resto.length) {
+      const solta = () => {
+        const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+        ocioso(() => preloadCharacterAssets(resto).catch(() => {}));
+      };
+      // Guarda de vazamento: sai por identidade da partida e por teto — não existe estado
+      // 'over' no Game (boot|countdown|live|roundEnd|matchEnd).
+      const meuJogo = game;
+      let tentativas = 0;
+      const espera = setInterval(() => {
+        if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
+        if (meuJogo.state === 'live') { clearInterval(espera); solta(); }
+      }, 250);
+    }
+  }
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
