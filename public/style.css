@@ -1836,8 +1836,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-cat[data-cat="ARENA"]{color:#8b8c92;border-color:rgba(139,140,146,.5)}
 .ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}.ms-cat[data-cat="COMUNIDADE"]{color:#2e9ed8;border-color:rgba(46,158,216,.5)}
 .ms-cat[data-cat="AI"]{color:#d8c02e;border-color:rgba(216,192,46,.5)}
-.ms-cat-desc{position:absolute;z-index:2;top:88px;left:32px;max-width:520px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91;pointer-events:none}
-.ms-authors{position:absolute;z-index:2;top:112px;left:32px;display:flex;gap:8px;flex-wrap:wrap}
+.ms-cat-desc{position:absolute;z-index:2;top:100px;left:32px;max-width:520px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91;pointer-events:none}
 .ms-author{padding:5px 12px;font:600 11px/1 var(--aaa-font-body);letter-spacing:2px;color:#5c5d63;background:rgba(16,16,20,.7);border:1px solid #2a2b31;border-radius:999px;cursor:pointer;text-transform:uppercase}
 .ms-author:hover,.ms-author:focus-visible{color:#ecebe6}
 .ms-author.on{color:#2e9ed8;border-color:#2e9ed8}
@@ -2269,3 +2268,72 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   letter-spacing:2px;color:#c9c9cc;text-transform:uppercase}
 #load-meta:empty{display:none}
 #load-meta .lo-sep{color:var(--br-faixa);margin:0 10px}
+
+/* ===================== CONTROLES DE TOQUE (mobile, fase 1) ===================== */
+/* insets do notch/home-indicator (iPhone): os controles se afastam das bordas perigosas */
+#touch-ui{position:fixed;inset:0;z-index:30;pointer-events:none;touch-action:none;-webkit-user-select:none;user-select:none;
+  --sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px);--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+/* MIRA = arraste na METADE DIREITA da tela (estilo CoD Mobile), sem joystick de mira. A metade
+   esquerda fica livre pro polegar do movimento sem virar a câmera sem querer. */
+#touch-ui .touch-look{position:absolute;top:0;bottom:0;right:0;left:42%;pointer-events:auto}
+/* Só o stick ESQUERDO (andar). À direita, o cluster de botões sobre a área de arraste. */
+/* TAMANHOS na proporção da referência CoD Mobile (os nossos estavam ~2× grandes). */
+#touch-ui .touch-joy{position:absolute;bottom:calc(34px + var(--sb));left:calc(32px + var(--sl));width:104px;height:104px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.02) 70%,transparent);
+  border:2px solid rgba(255,255,255,.14);pointer-events:auto;z-index:2}
+#touch-ui .touch-joy-knob{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
+  background:rgba(180,217,46,.30);border:2px solid rgba(255,255,255,.32);will-change:transform}
+#touch-ui .touch-btn{position:absolute;pointer-events:auto;z-index:2;border-radius:50%;color:#fff;
+  font:800 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.3px;
+  background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.32);display:flex;align-items:center;justify-content:center}
+#touch-ui .touch-btn:active{background:rgba(180,217,46,.55)}
+#touch-ui .touch-btn svg{width:54%;height:54%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+/* ESQUERDA: ATIRAR (hip-fire) ao lado do joystick. */
+#touch-ui .touch-fire-l{left:calc(150px + var(--sl));bottom:calc(50px + var(--sb));width:54px;height:54px;background:rgba(230,60,50,.26);border-color:rgba(255,120,110,.45)}
+/* DIREITA: ATIRAR grande; MIRAR em cima; RECARREGAR embaixo-esq. e ABAIXAR ao lado. */
+#touch-ui .touch-fire{right:calc(48px + var(--sr));bottom:calc(52px + var(--sb));width:74px;height:74px;background:rgba(230,60,50,.30);border-color:rgba(255,120,110,.5)}
+#touch-ui .touch-ads{right:calc(56px + var(--sr));bottom:calc(150px + var(--sb));width:54px;height:54px}
+#touch-ui .touch-reload{right:calc(140px + var(--sr));bottom:calc(50px + var(--sb));width:50px;height:50px}
+#touch-ui .touch-crouch{right:calc(204px + var(--sr));bottom:calc(54px + var(--sb));width:50px;height:50px}
+#touch-ui .touch-pause{right:calc(16px + var(--sr));top:calc(14px + var(--st));width:40px;height:40px;background:rgba(16,16,20,.4);border-color:rgba(255,255,255,.28);color:#ecebe6;font-size:14px}
+/* BARRA DE ARMAS embaixo (centro): primária / pistola / faca / fumaça / granada */
+#touch-ui .touch-weps{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(8px + var(--sb));display:flex;gap:8px;z-index:2}
+#touch-ui .touch-wep{pointer-events:auto;width:46px;height:46px;padding:0;border-radius:10px;color:#fff;
+  background:rgba(16,16,20,.34);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center}
+#touch-ui .touch-wep svg{width:62%;height:62%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+#touch-ui .touch-wep:active{background:rgba(180,217,46,.5)}
+/* no mobile: esconde a engrenagem de settings, o ícone de som E os slots de armas laterais
+   (1-5) do HUD — a troca de arma/bomba passou pra barra de baixo do touch UI. */
+@media (pointer:coarse){ #hud-actions,#weapon-hud{display:none!important} }
+
+/* overlay "gire o celular": só em toque + retrato */
+#rotate-prompt{display:none}
+@media (orientation:portrait) and (pointer:coarse){
+  #rotate-prompt{position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    background:#090704;color:#f4efe6;text-align:center;padding:8vw;font:700 18px/1.5 var(--aaa-font-body,sans-serif)}
+  #rotate-prompt .rot-ico{font-size:64px;animation:rotpulse 1.6s ease-in-out infinite}
+}
+@keyframes rotpulse{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(78deg)}}
+
+#touch-ui.paused{display:none}   /* pausado: libera o menu de pausa pro toque */
+
+/* mobile: botão CONFIRMAR do personagem fixo no rodapé da ficha — antes sumia abaixo da
+   dobra da rolagem interna em tela deitada de altura baixa (celular). Sticky + sombra pra
+   separar do conteúdo que rola atrás. */
+@media (pointer:coarse){
+  #char-confirm{position:sticky;bottom:0;margin-top:auto;z-index:2;
+    box-shadow:0 -14px 18px 8px rgba(var(--bg-800-rgb),.92)}
+}
+
+/* mobile: painel de CONFIGURAÇÕES vira tela cheia rolável com o SALVAR fixo no rodapé.
+   Antes o painel estourava a altura deitada (celular) e o botão de salvar + parte dos
+   controles ficavam fora da tela — não dava pra ajustar sensibilidade nem salvar. */
+@media (pointer:coarse){
+  #settings-panel{align-items:stretch;justify-content:stretch;padding:0}
+  #settings-panel .settings-wrap{width:100%;max-width:100%;height:100dvh;max-height:100dvh;
+    border:0;clip-path:none}
+  #settings-panel .set-cols{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+  #settings-panel .set-actions{flex:0 0 auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
+  #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
+}
