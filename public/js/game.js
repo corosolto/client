@@ -987,7 +987,14 @@ export class Game {
     this.puffFx = new GPUParticles(this.scene, this.camera, { tex: this.puffTex, additive: false });
     // fumaça do cano: nuvem cinza persistente por tiro. _tintFx compartilha uTime/uScale do puff
     // (anima sem tick novo) e em quality 'low' devolve o próprio puffFx (degrada sozinho).
-    this._muzzleSmokeFx = this._tintFx(0x8a8a8a, false, 96);
+    // sistema CINZA dedicado — NÃO cai no puffFx bege em quality:'low' (o dono joga em máquina
+    // fraca, é justamente onde ele quer ver a fumaça). 1 draw call, ring buffer de 64, compartilha
+    // uTime/uScale do puff (anima sem tick próprio, igual às fx de sangue via _tintFx).
+    this._muzzleSmokeFx = new GPUParticles(this.scene, this.camera, { tex: this._makeSmokeTex(), additive: false, max: 64 });
+    if (this.puffFx && this.puffFx.uniforms) {
+      this._muzzleSmokeFx.uniforms.uTime = this.puffFx.uniforms.uTime;
+      this._muzzleSmokeFx.uniforms.uScale = this.puffFx.uniforms.uScale;
+    }
     // Muzzle flash (R7.5): 2 SPRITES additivos por tiro — estrela irregular com ruído +
     // núcleo branco-quente — compactos (0.35-0.5m), na boca do VM (baixo-direita), vida
     // ≤3 frames (~50ms). Era um cone de 8 segmentos + icosaedro escalado até 1.4 spawnado
@@ -3634,8 +3641,8 @@ export class Game {
     this.puffFx.spawn(pos.clone().addScaledVector(d, 0.18), { vel: d.clone().multiplyScalar(1.2), life: 0.3, size: fpCls ? 0.16 : 0.28, grow: 0.9 });
     // fumaça do cano: 2-3 baforadas lentas subindo/à frente, vida longa, crescendo. Menor e mais
     // perto na 1ª pessoa (fpCls) pra não virar blob colado na lente (mesmo cuidado das faíscas, R7.6).
-    const smokeN = fpCls ? 2 : 3;
-    const smokeSize = fpCls ? 0.12 : 0.22;
+    const smokeN = fpCls ? 3 : 4;
+    const smokeSize = fpCls ? 0.2 : 0.32;
     const smU = new THREE.Vector3(0, 1, 0);
     for (let i = 0; i < Math.round(smokeN * ((this._fxTune && this._fxTune.smoke) ?? 1)); i++) {
       const sv = d.clone().multiplyScalar(0.6 + Math.random() * 0.5)
