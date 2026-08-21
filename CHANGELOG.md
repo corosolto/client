@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.165`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.166`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,11 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.166] — 2026-08-21
+
+### Mudado
+- fix(docs): o portão de autoria cobra de quem pode consertar, não do PR seguinte (#398)
 
 ## [2.0.0-alpha.165] — 2026-08-21
 

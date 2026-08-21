@@ -13,6 +13,7 @@ const mutants = [
   'sem-fingerprint', 'escala-incoerente', 'grava-forjado', 'receita-imul', 'cliente-hash-bruto', 'cliente-sem-retrim',
   'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
   'onerror-sem-src', 'boot-sem-migalha', 'payload-sem-migalhas', 'issue-sem-migalhas',
+  'sem-midia', 'midia-ampla', 'sem-cota-midia',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -141,8 +142,20 @@ if (mutant === 'times-sem-erro') gameJs = mutate(gameJs,
 if (mutant === 'pilha-so-no-primeiro') page = mutate(page,
   'var pilha = null;\n        for (var j = 0; j < arguments.length && j < 4 && !pilha; j++) pilha = (arguments[j] && arguments[j].stack) || null;',
   'var pilha = (arguments[0] && arguments[0].stack) || null;');
+/* BUG-73 · abort de mídia (#389). Os três mutantes cobrem os três jeitos de o corte deixar
+   de valer: sumir do helper, ficar LARGO a ponto de engolir crash de verdade, e existir no
+   helper sem a cota própria no cliente (que é o que impede o abort de comer o TETO_SESSAO). */
+if (mutant === 'sem-midia') helperSource = mutate(helperSource,
+  "if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';",
+  "if (MEDIA_ABORT_RE.test(evidence)) return 'codigo';");
+if (mutant === 'midia-ampla') helperSource = mutate(helperSource,
+  'const MEDIA_ABORT_RE = ',
+  'const MEDIA_ABORT_RE = /aborted|interrupted/i; const MEDIA_ABORT_RE_ESTREITO = ');
+if (mutant === 'sem-cota-midia') page = mutate(page,
+  'if (nMidia >= TETO_MIDIA) return null;',
+  'if (nMidia < 0) return null;');
 
-/* BUG-73 · o `onerror` da tag do módulo guardava um booleano e jogava fora o ErrorEvent,
+/* BUG-74 · o `onerror` da tag do módulo guardava um booleano e jogava fora o ErrorEvent,
    inclusive o `src` com o `?v=`. O relatório virava paráfrase nossa, sem evidência nenhuma. */
 if (mutant === 'onerror-sem-src') page = mutate(page,
   'onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"',
@@ -214,6 +227,27 @@ const opaqueFixtures = [
 const recoverableFixtures = [
   { source: '', stack: '', message: "THREE.GLTFLoader: Couldn't load texture blob:https://www.csbrasil.online/bbaced98-44e1-4922-83b1-4564e004a737" },
   { message: "THREE.GLTFLoader: Couldn't load texture models/characters/mst.glb" },
+];
+/* BUG-73 · abort de MÍDIA (issue #389; a #122 do BUG-37 é a irmã). O navegador rejeita o
+   `play()` pendente quando alguém chama `pause()` ou troca o `src` — e o jogo faz isso DE
+   PROPÓSITO: `audio.js:97` (radioVoice corta a fala anterior), `:119` (characterSelectVoice
+   corta a voz do avatar anterior) e `:159` (stopRound corta a vinheta com fade). Tanto que
+   `character-select-voice-check.mjs:56` EXIGE a interrupção (`pausas=3`).
+   Chega sem `stack` e sem `source` — então a proveniência não consegue inocentar e o rótulo
+   TEM que sair da mensagem. As cinco redações são as do Chrome/Firefox/Safari. */
+const midiaFixtures = [
+  { source: '', stack: '', message: 'The play() request was interrupted by a call to pause(). https://goo.gl/LdLk22' },
+  { source: '', stack: '', message: 'The play() request was interrupted by a new load request. https://goo.gl/LdLk22' },
+  { source: '', stack: '', message: 'The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22' },
+  { source: '', stack: '', message: "The fetching process for the media resource was aborted by the user agent at the user's request." },
+  { source: '', stack: '', message: 'AbortError: The operation was aborted.' },
+];
+/* O corte não pode ser largo: `aborted`/`interrupted` solto engole crash de verdade. Estes
+   três continuam `codigo` — inclusive um que estoura DENTRO do módulo de áudio. */
+const naoMidiaFixtures = [
+  { source: `${own}/js/audio.js:55:7`, stack: '', message: "Cannot read properties of undefined (reading 'play')" },
+  { source: '', stack: '', message: 'Match interrupted by host' },
+  { source: '', stack: '', message: 'The upload was aborted' },
 ];
 const externalCacheFixtures = [
   { source: 'chrome-extension://abc/inpage.js:1:2', message: 'does not provide an export' },
@@ -453,7 +487,7 @@ const logWired = api.includes('isConsoleLog')
   && baseIndex >= 0 && baseIndex < api.indexOf('if (!shouldDispatchCrash(classification)')
   && /const classification = base === 'codigo' && isConsoleLog\(\{ kind, stack \}\) \? 'log' : base;/.test(api);
 
-/* EP14 · BUG-73 (issue #386). O watchdog de boot relatava "o código do jogo não chegou"
+/* EP15 · BUG-74 (issue #386). O watchdog de boot relatava "o código do jogo não chegou"
    sem UMA evidência: o `onerror` da tag do módulo (index.astro) descartava o ErrorEvent
    inteiro, `migalha()` só era chamada no clique, e as migalhas gravadas nunca entravam no
    `client_payload`, logo nunca chegavam à issue. Instrumentar, não suprimir.
@@ -481,6 +515,37 @@ const migalhasNoPayload = /client_payload: \{ fingerprint: chave, message, sourc
 const migalhasNaIssue = workflow.includes('**Migalhas:**') && workflow.includes('$MIGALHAS')
   /* `join` porque breadcrumbs é array: sem ele o corpo sai como [object Object]. */
   && /MIGALHAS: \$\{\{ join\(github\.event\.client_payload\.breadcrumbs/.test(workflow);
+/* EP14 executa o `erroIgnoravel` INLINE do cliente, como o EP6 faz com o `origemDoJogo`:
+   regex de fiação sozinha aprovaria `function erroIgnoravel(){ return true; }`, que calaria
+   crash de verdade. Cliente e servidor precisam concordar na MESMA redação — se um dos dois
+   souber menos, o abort volta a comer cota de exceção ou volta a abrir issue. */
+let ignoravelCliente = null;
+const ignMatch = page.match(/function erroIgnoravel\(r\)\{[\s\S]*?\n  \}/);
+if (ignMatch) {
+  try { ignoravelCliente = new Function(`${ignMatch[0]}\nreturn erroIgnoravel;`)(); }
+  catch { /* clausula fica vermelha */ }
+}
+/* As duas formas em que o abort chega ao `unhandledrejection`: DOMException com `name`, e a
+   forma só-mensagem (o `reporta` já cortou a razão para string antes de decidir a cota). */
+const midiaRazoes = midiaFixtures.map((f) => f.message)
+  .concat(midiaFixtures.map((f) => ({ name: 'AbortError', message: f.message })));
+const naoMidiaRazoes = naoMidiaFixtures.map((f) => f.message)
+  .concat([{ name: 'TypeError', message: "Cannot read properties of undefined (reading 'short')" }]);
+const midiaCliente = !!ignoravelCliente
+  && midiaRazoes.every((r) => ignoravelCliente(r) === true)
+  && naoMidiaRazoes.every((r) => ignoravelCliente(r) === false)
+  /* a escapatória por `name` é anterior a esta régua e vale só para o painel de falha:
+     operação cancelada nunca é crash. O balde de mídia NÃO passa por aqui (o `reporta`
+     chama com a mensagem já cortada para string), então largura de `name` não vaza cota. */
+  && ignoravelCliente({ name: 'AbortError', message: 'qualquer operação cancelada' }) === true;
+/* A cota: mesmo remédio do TETO_EXTERNO (BUG-51) e do TETO_CONSOLE (BUG-72) — abort de mídia
+   tem balde próprio, e o de exceção continua com os dez slots inteiros. */
+const cotaMidiaWired = /var TETO_MIDIA = \d+;/.test(page)
+  && /\bnMidia = 0\b/.test(page)
+  /* o {0,400} deixa passar o comentário do ramo, mas não deixa passar o ramo SEM a guarda:
+     o que a régua exige é a adjacência balde -> teto -> incremento, não o texto ao redor. */
+  && /\} else if \(erroIgnoravel\(mFinal\)\) \{[\s\S]{0,400}?if \(nMidia >= TETO_MIDIA\) return null;\s*\n\s*nMidia\+\+;/.test(page)
+  && /if \(nEnviados >= TETO_SESSAO\) return null;/.test(page);
 
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
@@ -514,9 +579,15 @@ const checks = [
     && shouldDispatchCrash('log') === false && shouldDispatchCrash('codigo') === true
     && hookAchaPilha && cotaConsoleWired && logWired && sinalDeliberadoTemPilha,
     'console.error com string fica na telemetria e não abre issue; console COM pilha (o idioma `console.error(msg, e)` de main.js) continua escalando, e log tem cota própria'],
-  ['EP14', fingerprint386Estavel && onerrorGuardaSrc && bootMigalha
+  ['EP15', fingerprint386Estavel && onerrorGuardaSrc && bootMigalha
     && migalhasNoPayload && migalhasNaIssue,
     'falha de boot chega com evidência: o onerror guarda o src do módulo, o watchdog registra migalha com import map e rede, e as migalhas atravessam a API até a issue sem mover o fingerprint'],
+  ['EP14', midiaFixtures.every((fixture) => classify(fixture) === 'recuperavel')
+    && naoMidiaFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('recuperavel') === false
+    && midiaCliente && cotaMidiaWired,
+    'abort de mídia (play() cortado por pause(), #389) é recuperável: fica na telemetria, não abre issue e tem cota própria no cliente; crash real dentro do módulo de áudio continua acionável'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -535,8 +606,9 @@ const mutantClause = {
   'receita-imul': 'EP12', 'cliente-hash-bruto': 'EP12', 'cliente-sem-retrim': 'EP12',
   'sem-log': 'EP13', 'log-amplo': 'EP13', 'log-sobre-tudo': 'EP13',
   'log-nao-corta': 'EP13', 'sem-teto-console': 'EP13', 'pilha-so-no-primeiro': 'EP13', 'times-sem-erro': 'EP13',
-  'onerror-sem-src': 'EP14', 'boot-sem-migalha': 'EP14',
-  'payload-sem-migalhas': 'EP14', 'issue-sem-migalhas': 'EP14',
+  'onerror-sem-src': 'EP15', 'boot-sem-migalha': 'EP15',
+  'payload-sem-migalhas': 'EP15', 'issue-sem-migalhas': 'EP15',
+  'sem-midia': 'EP14', 'midia-ampla': 'EP14', 'sem-cota-midia': 'EP14',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
