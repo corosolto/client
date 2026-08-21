@@ -1498,7 +1498,7 @@ function setMapMeta() {
 function setMapMode() {
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
+    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
@@ -1659,7 +1659,7 @@ function renderMapScreen() {
   });
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapThumb.title = 'Ver mapa em tela cheia';
+mapThumb.title = tr('Ver mapa em tela cheia');
 mapThumb.style.cursor = 'pointer';
 mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };

@@ -23,7 +23,9 @@ const alvoPorMutante = {
   'mapa-sem-miniaturas': 'UIR4',
   'mapa-sem-navegacao': 'UIR4',
   'mapa-navega-global': 'UIR4',
-  'mapa-strip-fixa': 'UIR4',
+  'mapa-acervo-deitado': 'UIR4',
+  'mapa-sem-duas-colunas': 'UIR4',
+  'mapa-acervo-nao-rola': 'UIR4',
   'mapa-categoria-errada': 'UIR4',
   'i18n-duplicada': 'UIR5',
   'arma-unica': 'UIR6',
@@ -211,9 +213,18 @@ main = muta('mapa-sem-miniaturas', main,
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",
   "$('ms-next').onclick = () => stepMap(1);");
-css = muta('mapa-strip-fixa', css,
-  'grid-template-columns:repeat(var(--map-count),minmax(0,196px))',
-  'grid-template-columns:repeat(var(--map-count),196px)');
+/* 21/08: a faixa horizontal virou COLUNA. A mutação que mordia a antiga (largura fixa
+   em vez de minmax) vira "o acervo volta a ser fileira", que é o jeito de perder o
+   layout de duas colunas sem tocar em mais nada. */
+css = muta('mapa-acervo-deitado', css,
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:minmax(0,1fr)',
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),196px)');
+css = muta('mapa-sem-duas-colunas', css,
+  'grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:40px',
+  'grid-template-columns:minmax(0,1fr);gap:40px');
+css = muta('mapa-acervo-nao-rola', css,
+  '.ms-viewport{flex:1;min-height:0;overflow-y:auto',
+  '.ms-viewport{flex:1;min-height:0;overflow-y:visible');
 main = muta('sem-autoria', main,
   "const byline = $('ms-byline');",
   "const byline = null;");
@@ -603,21 +614,25 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
-  // #368: abas viraram OFICIAIS(TODOS)/COMUNIDADE e os dots falsos morreram — a régua
+  // #368: abas viraram OFICIAIS(TODOS)/COMUNIDADE e os dots falsos morreram - a régua
   // guarda o novo cânone, não o layout antigo.
   && /data-cat="TODOS"[^>]*>OFICIAIS</.test(astro) && /data-cat="COMUNIDADE"/.test(astro)
   && main.includes("$('ms-dashes').innerHTML = '';")
-  && /\.ms-tabs\{[^}]*top:60px[^}]*left:32px[^}]*gap:24px/.test(css)
-  && /\.ms-head\{[^}]*top:112px[^}]*gap:7px/.test(css) && /\.ms-head\{[^}]*width:460px/.test(css)
-  && /\.ms-name\{[^}]*font-size:54px/.test(css)
+  /* geometria de 21/08: duas colunas, ficha à esquerda com respiro, acervo em pé */
+  && /\.ms-body\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(300px,420px\)/.test(css)
+  && /\.ms-head\{[^}]*grid-column:1[^}]*gap:20px/.test(css)
+  && /\.ms-carousel\{[^}]*grid-column:2[^}]*flex-direction:column/.test(css)
+  && /\.ms-name\{[^}]*font-size:44px/.test(css)
+  && /\.ms-desc\{[^}]*line-height:1\.8/.test(css)
+  && /\.ms-viewport\{[^}]*overflow-y:auto/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
-  && /grid-template-columns:repeat\(var\(--map-count\),minmax\(0,196px\)\)/.test(strip)
-  && /justify-content:center/.test(strip)
+  && /grid-template-columns:minmax\(0,1fr\)/.test(strip)
   && /width:100%/.test(strip)
   && /\.ms-thumb\{[^}]*width:100%[^}]*min-width:0/.test(css)
   && /\.ms-thumb-img\{[^}]*height:96px[^}]*object-fit:cover/.test(css)
-  && /inset:\s*0/.test(fundoMapa) && /border:\s*0/.test(fundoMapa)
+  /* o cartaz em tela cheia saiu do palco: .ms-bg não pinta mais nada */
+  && /display:\s*none/.test(fundoMapa)
   && !/class="ms-rail/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';
 const chaves = [...dict.matchAll(/'((?:\\.|[^'\\])*)'\s*:/g)].map((m) => m[1]);
@@ -863,8 +878,8 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas: abas OFICIAIS/COMUNIDADE, ficha e carrossel visual navegável (cânone pós-#368)', mapaReferencia,
-    `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR4', 'mapas: abas OFICIAIS/COMUNIDADE, ficha respirada à esquerda e acervo em pé à direita', mapaReferencia,
+    `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; coluna=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim() || 'vazio'}`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,
     'gerador deriva weaponById de CHAR_WEAPON e envia a arma ao mounttest'],
