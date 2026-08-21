@@ -123,6 +123,7 @@ jobs:
       - name: Autoteste das réguas de CI
         run: |
           python3 scripts/ci/ensure_labels.py --selftest
+          python3 scripts/ci/autofix_allowlist.py --selftest
           python3 scripts/ci/dco_check.py --selftest
           python3 scripts/ci/agente_check.py --selftest
       - name: Check Signed-off-by
