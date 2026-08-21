@@ -942,7 +942,7 @@ export class Game {
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
       this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
-      this._fxTune = { light: 1, flash: 1, spark: 1 };   // multiplicadores de FX (dev.html game-backed)
+      this._fxTune = { light: 1, flash: 1, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
 
@@ -985,6 +985,9 @@ export class Game {
     // share another (soft smoke) — 1 draw call each, zero per-shot allocation (ring buffer).
     this.flashFx = new GPUParticles(this.scene, this.camera, { tex: this.flashTex, additive: true });
     this.puffFx = new GPUParticles(this.scene, this.camera, { tex: this.puffTex, additive: false });
+    // fumaça do cano: nuvem cinza persistente por tiro. _tintFx compartilha uTime/uScale do puff
+    // (anima sem tick novo) e em quality 'low' devolve o próprio puffFx (degrada sozinho).
+    this._muzzleSmokeFx = this._tintFx(0x8a8a8a, false, 96);
     // Muzzle flash (R7.5): 2 SPRITES additivos por tiro — estrela irregular com ruído +
     // núcleo branco-quente — compactos (0.35-0.5m), na boca do VM (baixo-direita), vida
     // ≤3 frames (~50ms). Era um cone de 8 segmentos + icosaedro escalado até 1.4 spawnado
@@ -1052,8 +1055,8 @@ export class Game {
     // arma→fallback no _muzzleWorld.
     Object.assign(this._vmMuzzle, this._vmMuzzleExt || {});
     // cápsulas (brass) ejetadas a cada tiro — geo/mat compartilhados, pool reusado
-    this._casingGeo = new THREE.CylinderGeometry(0.011, 0.011, 0.034, 6);
-    this._casingMat = new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 0.85, roughness: 0.4 });
+    this._casingGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.05, 8);
+    this._casingMat = new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1.0, roughness: 0.35, emissive: 0x3a2a10, emissiveIntensity: 0.4 });
     this._casings = []; this._casingPool = [];
     // granada de fumaça: projétil (mesh) + nuvem de sprites billboard que bloqueia a visão dos bots
     this._grenades = []; this._smokes = [];
@@ -2924,7 +2927,7 @@ export class Game {
     p.pitch = Math.max(-1.45, Math.min(1.45, p.pitch + vy * REC.perm));   // mesmo clamp do mouse-look
     p.yaw -= hx * REC.perm;
     st.last = this.time;
-    st.sh = Math.min(0.013, st.sh + g * 0.16);
+    st.sh = Math.min(0.020, st.sh + g * 0.22);
   }
   _tryShoot() {
     const p = this.player, w = WEAPONS[p.weapon];
@@ -3629,6 +3632,18 @@ export class Game {
       this.flashFx.spawn(pos, { vel: v, life: 0.06 + Math.random() * 0.05, size: fpCls ? 0.07 : 0.11, grow: -0.4 });
     }
     this.puffFx.spawn(pos.clone().addScaledVector(d, 0.18), { vel: d.clone().multiplyScalar(1.2), life: 0.3, size: fpCls ? 0.16 : 0.28, grow: 0.9 });
+    // fumaça do cano: 2-3 baforadas lentas subindo/à frente, vida longa, crescendo. Menor e mais
+    // perto na 1ª pessoa (fpCls) pra não virar blob colado na lente (mesmo cuidado das faíscas, R7.6).
+    const smokeN = fpCls ? 2 : 3;
+    const smokeSize = fpCls ? 0.12 : 0.22;
+    const smU = new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < Math.round(smokeN * ((this._fxTune && this._fxTune.smoke) ?? 1)); i++) {
+      const sv = d.clone().multiplyScalar(0.6 + Math.random() * 0.5)
+        .addScaledVector(smU, 0.5 + Math.random() * 0.4)
+        .add(new THREE.Vector3((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.5));
+      this._muzzleSmokeFx.spawn(pos.clone().addScaledVector(d, 0.10 + Math.random() * 0.1),
+        { vel: sv, life: 0.45 + Math.random() * 0.35, size: smokeSize, grow: 1.6 });
+    }
   }
   // Boca do cano em WORLD SPACE no instante do tiro: offset local da classe transformada
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
@@ -3716,10 +3731,10 @@ export class Game {
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
     const back = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
-    c.v.copy(right).multiplyScalar(2.2 + Math.random() * 0.9).addScaledVector(up, 1.7 + Math.random() * 0.6).addScaledVector(back, 0.5 + Math.random() * 0.4);
+    c.v.copy(right).multiplyScalar(2.2 + Math.random() * 0.9).addScaledVector(up, 2.0 + Math.random() * 0.6).addScaledVector(back, 0.5 + Math.random() * 0.4);
     c.av.set((Math.random() - 0.5) * 24, (Math.random() - 0.5) * 24, (Math.random() - 0.5) * 24);
     c.m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
-    c.m.scale.setScalar(1); c.ttl = 1.6;
+    c.m.scale.setScalar(1); c.ttl = 2.2;
     this.scene.add(c.m); this._casings.push(c);
   }
 
@@ -4909,7 +4924,11 @@ export class Game {
       camBobLat = Math.sin(p.stepPhase) * 0.009 * amp;
     }
     this.camera.position.set(p.pos.x + Math.cos(p.yaw) * camBobLat, p.pos.y + eye + camBobY, p.pos.z - Math.sin(p.yaw) * camBobLat);
-    this.camera.rotation.set(p.pitch + p.recoilP, p.yaw, 0);
+    const rp = p.recoilP;   // lê o getter 1x (integra/decai o spring do recuo neste frame)
+    // roll leve por tiro: reusa o mesmo st.sh decadente numa freq. diferente do pitch (61 vs 78)
+    // → lê como "tremida" e não como punch puro. Vale pra mouse E toque (câmera finaliza só aqui).
+    const roll = p._rec ? p._rec.sh * Math.sin(this.time * 61) * 0.5 : 0;
+    this.camera.rotation.set(p.pitch + rp, p.yaw, roll);
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
     if (moving) {
