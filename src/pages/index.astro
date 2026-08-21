@@ -782,26 +782,29 @@ window.__GEO_LANG__ = (function () {
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
 <div id="map-screen" class="screen hidden">
-  <!-- A preview do mapa em foco é o palco; quem paga por ela é o `.ms-scrim` logo abaixo,
-       sem o qual ficha e grade somem em cima de mapa claro (a Piscina). -->
+  <!-- Palco: o WALLPAPER do setup, não a preview do mapa (decisão de 21/08) - a foto do
+       mapa em foco já está no card selecionado, e repetida em tela cheia ela brigava com
+       a grade. O <img> segue no DOM porque o render e a sonda de tela leem o `src`. -->
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
   <div class="ms-scrim" aria-hidden="true"></div>
+  <!-- CABEÇALHO carrega tudo que NÃO é lista: abas, ficha do mapa em foco e as opções da
+       partida. Sobra o corpo inteiro para o acervo, que é o que a tela existe para mostrar. -->
   <div class="ms-topbar">
     <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
     <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
-      <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">OFICIAIS</button>
+      <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
+      <button class="ms-tab" data-cat="OFICIAIS" type="button" role="tab" aria-selected="false">OFICIAIS</button>
       <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
     </div>
     <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
-  </div>
-  <!-- duas colunas: ficha à esquerda (texto menor, mais respiro), acervo à direita -->
-  <div class="ms-body">
     <header class="ms-head">
-      <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span></div>
-      <h2 id="ms-name" class="ms-name"> - </h2>
-      <p id="ms-meta" class="ms-meta"></p>
-      <p id="ms-desc" class="ms-desc"></p>
-      <p id="ms-byline" class="ms-byline"></p>
+      <div class="ms-ficha">
+        <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span><span class="ms-plays" id="ms-plays" hidden></span></div>
+        <h2 id="ms-name" class="ms-name"> - </h2>
+        <p id="ms-meta" class="ms-meta"></p>
+        <p id="ms-desc" class="ms-desc"></p>
+        <p id="ms-byline" class="ms-byline"></p>
+      </div>
       <div id="ms-match-options" class="ms-match-options" aria-label="Opções da partida">
         <label><span>ARMAS</span>
           <select id="ms-wpn-mode">
@@ -824,20 +827,23 @@ window.__GEO_LANG__ = (function () {
           </select>
         </label>
       </div>
-      <div class="ms-foot">
-        <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
-        <div class="ms-actions">
-          <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>
-        </div>
-      </div>
     </header>
-    <!-- coluna do acervo: rola na VERTICAL; as setas continuam sendo prev/next do mesmo
-         estado que ← e → movem, então elas apontam pra cima e pra baixo aqui. -->
+  </div>
+  <!-- CORPO: só o acervo. Rola na vertical; as setas continuam sendo prev/next do mesmo
+       estado que ← e → movem, então aqui elas apontam pra cima e pra baixo. -->
+  <div class="ms-body">
     <div class="ms-carousel">
       <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">▲</button>
       <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
       <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">▼</button>
       <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
+    </div>
+  </div>
+  <!-- RODAPÉ: VOLTAR no canto esquerdo, CONTINUAR no direito. -->
+  <div class="ms-foot">
+    <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+    <div class="ms-actions">
+      <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>
     </div>
   </div>
 </div>

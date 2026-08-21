@@ -24,10 +24,15 @@ const alvoPorMutante = {
   'mapa-sem-navegacao': 'UIR4',
   'mapa-navega-global': 'UIR4',
   'mapa-acervo-deitado': 'UIR4',
-  'mapa-sem-duas-colunas': 'UIR4',
   'mapa-acervo-nao-rola': 'UIR4',
   'mapa-card-achatado': 'UIR4',
   'mapa-palco-sem-scrim': 'UIR4',
+  'mapa-ficha-fora-do-header': 'UIR4',
+  'mapa-rodape-junto': 'UIR4',
+  'mapa-palco-sem-wallpaper': 'UIR4',
+  'mapa-plays-inventado': 'UIR4',
+  'mapa-todos-sem-ranking': 'UIR4',
+  'mapa-plays-sem-guarda': 'UIR4',
   'mapa-categoria-errada': 'UIR4',
   'i18n-duplicada': 'UIR5',
   'arma-unica': 'UIR6',
@@ -99,6 +104,7 @@ let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
 let css = readFileSync(join(ROOT, 'public/style.css'), 'utf8');
 let i18n = readFileSync(join(ROOT, 'public/js/i18n.js'), 'utf8');
 let astro = readFileSync(join(ROOT, 'src/pages/index.astro'), 'utf8');
+let mapPlaysApi = readFileSync(join(ROOT, 'src/pages/api/map-plays.ts'), 'utf8');
 const characters = readFileSync(join(ROOT, 'public/js/characters.js'), 'utf8');
 let videoGenerator = readFileSync(join(ROOT, 'tools/eval/char-native-vids.mjs'), 'utf8');
 let game = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
@@ -215,15 +221,29 @@ main = muta('mapa-sem-miniaturas', main,
 main = muta('mapa-navega-global', main,
   "$('ms-next').onclick = () => stepMap(1, visibleMapIds());",
   "$('ms-next').onclick = () => stepMap(1);");
-/* 21/08: a faixa horizontal virou COLUNA. A mutação que mordia a antiga (largura fixa
-   em vez de minmax) vira "o acervo volta a ser fileira", que é o jeito de perder o
-   layout de duas colunas sem tocar em mais nada. */
-css = muta('mapa-acervo-deitado', css,
-  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))',
+/* 21/08: a faixa horizontal virou GRADE elástica no corpo. Cada mutação abaixo desfaz
+   UMA decisão da tela e tem de acender a UIR4 sozinha. */
+css = muta('mapa-acervo-deitado', css,     // grade elástica vira fileira de largura fixa
+  '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))',
   '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),196px)');
-css = muta('mapa-sem-duas-colunas', css,
-  'grid-template-columns:minmax(0,1fr) minmax(340px,520px);gap:40px',
-  'grid-template-columns:minmax(0,1fr);gap:40px');
+css = muta('mapa-ficha-fora-do-header', css,   // cabeçalho deixa de dividir a linha com as opções
+  '.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between',
+  '.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-start');
+css = muta('mapa-rodape-junto', css,           // VOLTAR e CONTINUAR deixam de ir pros cantos
+  '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between',
+  '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-start');
+css = muta('mapa-palco-sem-wallpaper', css,    // o borrão do wallpaper some: volta o preto chapado
+  '.ms-bg::before{inset:-24px;background-size:cover;filter:blur(20px) brightness(.4) saturate(.7)}',
+  '.ms-bg::before{inset:-24px;background-size:auto;filter:none}');
+main = muta('mapa-plays-inventado', main,      // zero vira "0 partidas" em vez de sumir
+  '    plays.hidden = !n;',
+  '    plays.hidden = false;');
+main = muta('mapa-todos-sem-ranking', main,    // TODOS deixa de ordenar por partidas jogadas
+  'return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));',
+  'return MAP_IDS.slice();');
+mapPlaysApi = muta('mapa-plays-sem-guarda', mapPlaysApi,   // sem banco, a rota passa a estourar
+  '  if (!supabaseAdmin) return resposta({ plays: {} });',
+  '  // guarda removida');
 css = muta('mapa-card-achatado', css,          // volta ao px fixo: o card deixa de ser quadrado
   '.ms-thumb-img{display:block;width:100%;height:auto;aspect-ratio:4/3',
   '.ms-thumb-img{display:block;width:100%;height:96px');
@@ -607,7 +627,20 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
   && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
   && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
-  && /function visibleMapIds\(\) \{[\s\S]{0,450}mapCategory === 'TODOS' \? !catsDe\(id\)\.includes\('COMUNIDADE'\) : catsDe\(id\)\.includes\(mapCategory\)/.test(main)
+  /* TODOS voltou a ser o acervo INTEIRO (21/08) e ordena por partidas jogadas; OFICIAIS
+     virou aba própria. Sem o desempate por índice a lista dança entre renders. */
+  && /if \(mapCategory === 'TODOS'\) \{[\s\S]{0,220}playsDe\(b\) - playsDe\(a\) \|\| MAP_IDS\.indexOf\(a\) - MAP_IDS\.indexOf\(b\)/.test(main)
+  && /if \(mapCategory === 'OFICIAIS'\) return MAP_IDS\.filter\(\(id\) => !catsDe\(id\)\.includes\('COMUNIDADE'\)\)/.test(main)
+  && /return MAP_IDS\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
+  /* a estatística sai do contador REAL (picks_daily via /api/pick), nunca de número local,
+     e a tela tem de abrir sem ela: rede caída não pode derrubar a escolha de mapa. */
+  && /fetch\('\/api\/map-plays'\)/.test(main)
+  && /let mapPlays = \{\};/.test(main)
+  && /\.catch\(\(\) => \{ \/\* sem banco\/rede/.test(main)
+  && /\.from\('picks_daily'\)[\s\S]{0,120}\.eq\('kind', 'mapa'\)/.test(mapPlaysApi)
+  && /if \(!supabaseAdmin\) return resposta\(\{ plays: \{\} \}\);/.test(mapPlaysApi)
+  /* zero partidas é AUSÊNCIA de medida, não medida de zero: o crachá some em vez de mentir */
+  && /plays\.hidden = !n;/.test(funcMap)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
@@ -622,26 +655,37 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
-  // #368: abas viraram OFICIAIS(TODOS)/COMUNIDADE e os dots falsos morreram - a régua
-  // guarda o novo cânone, não o layout antigo.
-  && /data-cat="TODOS"[^>]*>OFICIAIS</.test(astro) && /data-cat="COMUNIDADE"/.test(astro)
+  // As três abas: TODOS (acervo inteiro, por partidas), OFICIAIS e COMUNIDADE. O #368
+  // tinha fundido TODOS e OFICIAIS numa só; 21/08 separou de novo, a pedido do dono.
+  && /data-cat="TODOS"[^>]*>TODOS</.test(astro)
+  && /data-cat="OFICIAIS"[^>]*>OFICIAIS</.test(astro)
+  && /data-cat="COMUNIDADE"/.test(astro)
   && main.includes("$('ms-dashes').innerHTML = '';")
-  /* geometria de 21/08: duas colunas, ficha à esquerda com respiro, acervo em pé */
-  && /\.ms-body\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(340px,520px\)/.test(css)
-  && /\.ms-head\{[^}]*grid-column:1[^}]*gap:20px/.test(css)
-  && /\.ms-carousel\{[^}]*grid-column:2[^}]*flex-direction:column/.test(css)
-  && /\.ms-name\{[^}]*font-size:44px/.test(css)
-  && /\.ms-desc\{[^}]*line-height:1\.8/.test(css)
+  /* geometria de 21/08 (3ª rodada): CABEÇALHO + ACERVO + RODAPÉ em três faixas. O corpo
+     é só a grade; ficha e opções da partida moram no cabeçalho; VOLTAR e CONTINUAR nos
+     cantos opostos do rodapé. */
+  && /#map-screen\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/.test(css)
+  && /\.ms-head\{[^}]*justify-content:space-between/.test(css)
+  /* ficha e opções da partida moram DENTRO do cabeçalho, antes do corpo — é o que
+     libera o corpo inteiro para a grade. A ordem na marcação é a prova. */
+  && /class="ms-topbar"[\s\S]*?class="ms-head"[\s\S]*?id="ms-match-options"[\s\S]*?class="ms-body"[\s\S]*?class="ms-foot"/.test(astro)
+  && /\.ms-foot\{[^}]*justify-content:space-between/.test(css)
+  && /\.ms-name\{[^}]*font-size:40px/.test(css)
   && /\.ms-viewport\{[^}]*overflow-y:auto/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
-  /* o acervo rola em pé numa GRADE DE DOIS, e o card é quase quadrado (proporção, não px) */
-  && /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/.test(strip)
+  /* a grade decide o número de colunas pela largura real (até 3), e o card é quase
+     quadrado por PROPORÇÃO — px fixo volta a achatar a arte quando a faixa estica. */
+  && /grid-template-columns:repeat\(auto-fill,minmax\(360px,1fr\)\)/.test(strip)
+  && /max-width:1180px/.test(strip)
   && /width:100%/.test(strip)
   && /\.ms-thumb\{[^}]*width:100%[^}]*min-width:0/.test(css)
   && /\.ms-thumb-img\{[^}]*aspect-ratio:4\/3[^}]*object-fit:cover/.test(css)
-  /* o palco continua sendo a preview do mapa em foco, e o scrim é quem a torna legível */
-  && /inset:\s*0/.test(fundoMapa) && /border:\s*0/.test(fundoMapa)
+  /* o palco é o WALLPAPER, não a preview: o `<img>` fica só para a sonda de tela ler o src */
+  && /inset:\s*0/.test(fundoMapa)
+  && /\.ms-bg::before\{[^}]*background-size:cover[^}]*blur/.test(css)
+  && /\.ms-bg img\{display:none\}/.test(css)
+  && /palco\.style\.setProperty\('--wall', SETUP_WALL\)/.test(funcMap)
   && /\.ms-scrim\{[^}]*linear-gradient\(90deg[^}]*linear-gradient\(0deg/.test(css)
   && !/class="ms-rail/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';
@@ -888,7 +932,7 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas: abas OFICIAIS/COMUNIDADE, ficha respirada à esquerda e acervo em pé à direita', mapaReferencia,
+  ['UIR4', 'mapas: três abas com TODOS por partidas, ficha e opções no cabeçalho, acervo dono do corpo', mapaReferencia,
     `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; coluna=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim() || 'vazio'}`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,

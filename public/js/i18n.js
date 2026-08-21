@@ -92,6 +92,8 @@ const DICT = {
   'O acervo inteiro: oficial e comunidade, arena e cidade.': 'The whole roster: official and community, arena and city.',
   // as duas abas que sobraram do #368 trocaram o texto de categoria
   'Mapas oficiais da casa.': 'Maps made in-house.',
+  'O acervo inteiro, do mais jogado ao menos jogado.': 'The whole roster, most played first.',
+  'PARTIDA': 'MATCH', 'PARTIDAS': 'MATCHES',
   'Mapas feitos pela comunidade.': 'Maps made by the community.',
   'OFICIAIS': 'OFFICIAL',
   'Combate fechado e simétrico — o duelo de angulação clássico.': 'Tight, symmetric combat — the classic angle duel.',
