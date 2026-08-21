@@ -340,7 +340,7 @@ npm run eval:vmlabhud
 
 ## `bot:record`
 
-BOTBRAIN: gera o dataset bootstrap (estado→ação) gravando os bots roteirizados no botsim — o professor da rede enquanto não há dado de jogador. Uso: [segundos] [mapId|all].
+BOTBRAIN: gera o dataset bootstrap (estado→ação) gravando os bots roteirizados no botsim — o professor da rede enquanto não há dado de jogador. Usa `TRAIN_SEEDS`, separadas das sementes do gate funcional. Uso: [segundos] [mapId|all].
 
 ```bash
 npm run bot:record
@@ -356,7 +356,7 @@ npm run bot:train
 
 ## `bot:brain:check`
 
-BOTBRAIN (régua Fase D): a rede é um controlador funcional (move+atira+mata, não congela) e a régua mede a rede — --mutante=zero zera os pesos e a régua reprova.
+BOTBRAIN (régua Fase D): a rede é um controlador funcional (move+atira+mata, não congela) em `EVAL_SEEDS` fora do dataset bootstrap. `--mutante=zero` zera os pesos e a régua reprova.
 
 ```bash
 npm run bot:brain:check
@@ -364,7 +364,7 @@ npm run bot:brain:check
 
 ## `eval:botbrain`
 
-Contrato de produção do BotBrain: coleta opt-in autenticada por UID, limites confiáveis, objetivo CTF, cache bust dos módulos, usuário não-root e balanceamento do corpus remoto. Mutantes: anonimo|ctf|optout|cache|root|poison.
+Contrato de produção do BotBrain: coleta opt-in autenticada por UID, limites confiáveis, objetivo CTF, cache bust dos módulos, usuário não-root, balanceamento do corpus remoto e avaliação sem sobreposição de sementes com o treino. Mutantes: anonimo|ctf|optout|cache|root|poison|eval-leak|eval-usa-treino|treino-usa-eval.
 
 ```bash
 npm run eval:botbrain

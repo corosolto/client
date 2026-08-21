@@ -83,7 +83,7 @@ const alvoPorMutante = {
   'resultado-emenda-volta': 'UIR41',
   'versao-menu-volta-rodape': 'UIR42',
   'sem-autoria': 'UIR43',
-  'filtro-autor-morto': 'UIR43',
+  'filtro-autor-morto': 'UIR4',   // mistura comunidade nos OFICIAIS de novo (reverte o #368)
   'sem-badge-oficial': 'UIR43',
 };
 if (MUTANTE && !alvoPorMutante[MUTANTE]) {
@@ -106,6 +106,10 @@ let staticAudit = existsSync(join(ROOT, 'tools/eval/redesign-static-audit.json')
   ? readFileSync(join(ROOT, 'tools/eval/redesign-static-audit.json'), 'utf8') : '';
 let loading3d = existsSync(join(ROOT, 'public/js/loading3d.js'))
   ? readFileSync(join(ROOT, 'public/js/loading3d.js'), 'utf8') : '';
+const geoLib = existsSync(join(ROOT, 'src/lib/geo.ts'))
+  ? readFileSync(join(ROOT, 'src/lib/geo.ts'), 'utf8') : '';
+const apiGeoLang = existsSync(join(ROOT, 'src/pages/api/geo-lang.ts'))
+  ? readFileSync(join(ROOT, 'src/pages/api/geo-lang.ts'), 'utf8') : '';
 let mutacaoAplicou = !MUTANTE;
 const muta = (nome, texto, antes, depois) => {
   if (MUTANTE !== nome) return texto;
@@ -214,11 +218,11 @@ main = muta('sem-autoria', main,
   "const byline = $('ms-byline');",
   "const byline = null;");
 main = muta('filtro-autor-morto', main,
-  "&& (mapCategory !== 'COMUNIDADE' || mapAutorFiltro === 'TODOS' || autorDe(id) === mapAutorFiltro)",
-  "&& (mapCategory !== 'COMUNIDADE' || true)");
+  "mapCategory === 'TODOS' ? !catsDe(id).includes('COMUNIDADE') : catsDe(id).includes(mapCategory)",
+  "mapCategory === 'TODOS' ? true : catsDe(id).includes(mapCategory)");
 main = muta('sem-badge-oficial', main,
-  "(oficialDe(currentMap) ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`",
-  "(false ? `<span class=\"ms-badge-oficial\">${tr('OFICIAL')}</span>`");
+  'class="ms-badge-oficial"',
+  'class="ms-badge-x"');   // remove o crachá de verdade: trocar a CONDIÇÃO não mordia (a string ficava)
 main = muta('mapa-categoria-errada', main,
   "piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],",
   "piscina_treta: ['CIDADES'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['CIDADES'],");
@@ -318,12 +322,11 @@ game = muta('mouse-invertido-ignorado', game,
 loading3d = muta('loading-vira-esquerda', loading3d,
   'built.group.rotation.y = 0.42;',
   'built.group.rotation.y = -0.42;');
-i18n = muta('idioma-por-navegador', i18n,
-  "const geo = (typeof document !== 'undefined' && document.documentElement.dataset.geoLang) || 'pt';",
-  "const geo = (typeof navigator !== 'undefined' && navigator.language === 'en-US') ? 'en' : 'pt';");
+main = muta('idioma-por-navegador', main,
+  'await resolveGeoLang();\n', '');
 astro = muta('idioma-prerender', astro,
-  'export const prerender = false;',
-  'export const prerender = true;');
+  "import pkg from '../../package.json';",
+  "export const prerender = false;\nimport pkg from '../../package.json';");
 main = muta('backend-aviso-volta', main,
   "function submitNote(msg) {\n  console.warn('[ranking]', msg);\n}",
   "function submitNote(msg) {\n  console.warn('[ranking]', msg);\n  const el = document.getElementById('match-stats');\n  if (el) el.textContent += ` SUPABASE_SERVICE_ROLE_KEY ${msg}`;\n}");
@@ -576,14 +579,16 @@ const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
   && /\$\{autorDe\(currentMap\)\}<\/strong> · \$\{MAP_DATA\[currentMap\] \|\| ''\}/.test(funcMap)
   && /ms-badge-oficial/.test(funcMap)
   && /ms-badge-comunidade/.test(funcMap)
-  && /id="ms-authors" class="ms-authors"/.test(astro)
-  && /ms-author\$\{a === mapAutorFiltro \? ' on' : ''\}/.test(funcMap)
-  && /data-autor="\$\{a\}"/.test(funcMap);
+  // #368: o sub-filtro por autor saiu — COMUNIDADE lista todos. Guardava o elemento ESCONDIDO;
+  // agora guarda a AUSÊNCIA dele (marcação morta é lixo que confunde quem lê — achado do #368).
+  && !/ms-authors/.test(astro)
+  && !/ms-authors/.test(main)
+  && !/ms-authors/.test(css);
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
   && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
   && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
-  && /function visibleMapIds\(\) \{[\s\S]{0,220}catsDe\(id\)\.includes\(mapCategory\)[\s\S]{0,120}mapAutorFiltro === 'TODOS' \|\| autorDe\(id\) === mapAutorFiltro/.test(main)
+  && /function visibleMapIds\(\) \{[\s\S]{0,450}mapCategory === 'TODOS' \? !catsDe\(id\)\.includes\('COMUNIDADE'\) : catsDe\(id\)\.includes\(mapCategory\)/.test(main)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
   && /const pool = ids\.length \? ids : MAP_IDS;/.test(main)
   && /const nextId = pool\[\(Math\.max\(0, pool\.indexOf\(currentMap\)\) \+ dir \+ pool\.length\) % pool\.length\];/.test(main)
@@ -595,13 +600,16 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\$\('ms-strip'\)\.innerHTML = shown\.map\(\(id\) =>/.test(funcMap)
   && /\$\('ms-strip'\)\.style\.setProperty\('--map-count', shown\.length\)/.test(funcMap)
   && /aria-pressed="\$\{id === currentMap\}"/.test(funcMap)
-  && /<img class="ms-thumb-img" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
+  && /<img class="ms-thumb-img" loading="lazy" decoding="async" src="\/img\/map-previews\/\$\{id\}\.jpg\?v=\$\{VERSION\}" alt="">/.test(funcMap)
   && /id="ms-tabs"/.test(astro) && /id="ms-prev"/.test(astro) && /id="ms-next"/.test(astro)
   && /id="ms-dashes"/.test(astro) && /class="ms-carousel"/.test(astro)
+  // #368: abas viraram OFICIAIS(TODOS)/COMUNIDADE e os dots falsos morreram — a régua
+  // guarda o novo cânone, não o layout antigo.
+  && /data-cat="TODOS"[^>]*>OFICIAIS</.test(astro) && /data-cat="COMUNIDADE"/.test(astro)
+  && main.includes("$('ms-dashes').innerHTML = '';")
   && /\.ms-tabs\{[^}]*top:60px[^}]*left:32px[^}]*gap:24px/.test(css)
-  && /\.ms-head\{[^}]*left:64px[^}]*top:130px[^}]*width:460px/.test(css)
-  && /\.ms-name\{[^}]*font-size:72px/.test(css)
-  && /\.ms-carousel\{[^}]*left:64px[^}]*right:64px[^}]*bottom:96px/.test(css)
+  && /\.ms-head\{[^}]*top:112px[^}]*gap:7px/.test(css) && /\.ms-head\{[^}]*width:460px/.test(css)
+  && /\.ms-name\{[^}]*font-size:54px/.test(css)
   && /--map-count:1/.test(strip)
   && /display:grid/.test(strip)
   && /grid-template-columns:repeat\(var\(--map-count\),minmax\(0,196px\)\)/.test(strip)
@@ -825,14 +833,20 @@ const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
 const versaoMenuNoCanto = /(?:<\/div>|<\/section>)\s*<span class="menu-version" id="mf-ver"><\/span>\s*(?:<\/div>)?\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
-const idiomaGeo = /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(astro)
-  && /export const prerender = false/.test(astro)
-  && /const GEO_COUNTRY = \(Astro\.request\.headers\.get\('x-vercel-ip-country'\)[\s\S]*?cf-ipcountry/.test(astro)
-  && /const GEO_LANG = EN_GEO_COUNTRIES\.has\(GEO_COUNTRY\) \? 'en' : 'pt'/.test(astro)
-  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(astro)
-  && /data-geo-lang=\{GEO_LANG\}/.test(astro)
-  && /const geo = \(typeof document !== 'undefined' && document\.documentElement\.dataset\.geoLang\) \|\| 'pt'/.test(i18n)
-  && !/navigator\.language/.test(i18n);
+/* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
+   e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
+   do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
+   ANTES do boot (translateDom) e cai no navegador quando a API não existe. */
+const idiomaGeo = !/export const prerender = false/.test(astro)
+  && /window\.__GEO_LANG__/.test(astro)
+  && /const EN_GEO_COUNTRIES = new Set\(\[[\s\S]*?'US'[\s\S]*?'GB'/.test(geoLib)
+  && !/EN_GEO_COUNTRIES[\s\S]{0,400}'PT'|'ES'/.test(geoLib)
+  && /export function langFromCountry/.test(geoLib)
+  && /export const prerender = false/.test(apiGeoLang)
+  && /langFromCountry/.test(apiGeoLang)
+  && /export async function resolveGeoLang/.test(i18n)
+  && /navigator\.language/.test(i18n)
+  && /await resolveGeoLang\(\)/.test(main);
 
 const resultados = [
   ['UIA1', 'elenco inteiro tem avatar, seleção e dois resultados estáticos', assetOk, assetEvid],
@@ -851,8 +865,8 @@ const resultados = [
     'mapa/descrição/nível, facção/personagens, loading e confronto'],
   ['UIR2', 'canvas 3D não renderiza atrás do vídeo de seleção', previewUso, 'o uso de pv.r.render consulta previewVideoVisible()'],
   ['UIR3', 'vídeo de seleção pausa ao sair da tela', previewPausa, 'show() pausa #char-preview-video fora de char-select'],
-  ['UIR4', 'mapas reproduzem abas, ficha e carrossel visual navegável da tela 04 de referência', mapaReferencia,
-    `render usa MAP_IDS completo; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
+  ['UIR4', 'mapas: abas OFICIAIS/COMUNIDADE, ficha e carrossel visual navegável (cânone pós-#368)', mapaReferencia,
+    `render usa MAP_IDS completo; aba TODOS exclui COMUNIDADE; faixa=${strip.replace(/\s+/g, ' ').trim()} palco=${fundoMapa.replace(/\s+/g, ' ').trim()}`],
   ['UIR5', 'dicionário i18n não tem chave duplicada', repetidas.length === 0, repetidas.join(', ') || `${chaves.length} chaves únicas`],
   ['UIR6', 'gerador de captura recebe a arma declarada de cada personagem', geradorArma,
     'gerador deriva weaponById de CHAR_WEAPON e envia a arma ao mounttest'],
@@ -885,7 +899,7 @@ const resultados = [
       ? `${resultadoRuins.length}/${resultadoVisual.length} artes cortadas, opacas ou no quadro errado: ${resultadoRuins.slice(0, 4).map(({ arquivo, meta, bounds }) => `${arquivo} ${meta.width}×${meta.height} alpha=${meta.alpha} margens=${[bounds.left, bounds.right, bounds.top, bounds.bottom].map((v) => (v * 100).toFixed(1)).join('/')}`).join(' · ')}`
       : `${resultadoVisual.length}/${resultadoVisual.length} recortes alpha do elenco inteiro, com folga nos quatro lados`],
   ['UIR20', 'idioma automático usa país conhecido e português como fallback', idiomaGeo,
-    'EUA/Reino Unido/Europa elegível recebem inglês; Portugal, Espanha e país desconhecido ficam em português'],
+    'home estática; /api/geo-lang decide pelo país antes do boot; sem API (host estático) cai no navegador'],
   ['UIR21', 'loading ocupa um quinto do palco anterior e olha para o avanço da barra', loadingCompactoDireita,
     'palco 86×144 no desktop; yaw positivo acompanha a barra da esquerda para a direita'],
   ['UIR22', 'configurações reproduzem painel 980px, prévia 360×200, cabeçalho e rodapé da tela 07', configuracoesReferencia,
@@ -930,8 +944,8 @@ const resultados = [
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
   ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
     'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
-  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE, com filtro por autor', autoriaNaFicha,
-    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; chips de autor em COMUNIDADE'],
+  ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE (sub-filtro de autor removido, #368)', autoriaNaFicha,
+    'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; sem marcação morta de chips de autor'],
 ];
 
 for (const [id, desc, ok, evid] of resultados) console.log(`${ok ? '✓' : '✗'} ${id} · ${desc}\n  ${evid}`);

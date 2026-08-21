@@ -18,7 +18,7 @@ npm run dev
 npm i -D @tensorflow/tfjs-node          # nativa pesada, fica FORA das deps do projeto
 npm run bot:record 60 all               # gera tools/eval/data/bootstrap.ndjson
 npm run bot:train -- --epochs=40         # treina → public/models/bot-brain/
-npm run bot:brain:check                  # régua: a rede é funcional? (verde/vermelho)
+npm run bot:brain:check                  # régua em sementes fora do bootstrap
 # recarregue http://localhost:4321/?botbrain=1 pra ver o modelo novo
 ```
 
@@ -72,4 +72,4 @@ os arquivos publicados.
 | `src/pages/api/train-frames.ts` | recebe frames (Supabase em prod, arquivo em dev) |
 | `tools/eval/bot-record.mjs` | dataset bootstrap (professor roteirizado) |
 | `tools/eval/bot-train.mjs` | treino do MLP (tfjs-node) → `public/models/bot-brain/` |
-| `tools/eval/bot-brain-check.mjs` | régua: a rede é funcional e a régua mede a rede |
+| `tools/eval/bot-brain-check.mjs` | régua holdout: a rede é funcional em sementes fora do bootstrap |

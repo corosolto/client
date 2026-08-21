@@ -89,6 +89,25 @@ jobs:
       # Supabase, que é exatamente o estado do CI.
       - name: Smoke do site (13 rotas, contrato + JSON-LD)
         run: node tools/eval/site-smoke.mjs
+  # O bloco de autoria sai do shortlog e o squash reescreve o autor: num PR ele não é
+  # derivável (ver tools/eval/docs-autoria-check.mjs). Aqui, na main, é — e só aqui reprova.
+  # fetch-depth: 0 é obrigatório: com clone raso o gerador PULA esse bloco e o portão fica cego.
+  autoria-na-main:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Bloco de autoria em dia (derivável só depois do merge)
+        run: npm run docs:check:autoria
+
   dco:
     runs-on: ubuntu-latest
     timeout-minutes: 5
