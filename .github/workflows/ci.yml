@@ -122,6 +122,7 @@ jobs:
       # Régua se prova antes de medir o PR: portão quebrado passa calado.
       - name: Autoteste das réguas de CI
         run: |
+          python3 scripts/ci/ensure_labels.py --selftest
           python3 scripts/ci/dco_check.py --selftest
           python3 scripts/ci/agente_check.py --selftest
       - name: Check Signed-off-by
