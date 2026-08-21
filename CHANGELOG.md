@@ -83,6 +83,27 @@
 ### Mudado
 - fix(telemetria): console.error com string é log, não bug do jogo (#382) (#385)
 
+- fix(webgl): compila preview em renderers distintos
+- fix(audio): associa bordoes aos personagens
+- fix(ui): fecha telas finais e contrato de rounds
+- feat(audio): personagens falam ao clicar no avatar
+- feat(ui): fecha redesign AAA e opções da partida
+- docs(changelog): rodada do cronista — 95 commits
+- docs(contributing): quem conserta o quê — csbrasil-bot é pipeline, estraga-codigo conserta
+- fix(menu): convida jogador a enviar feedback
+- fix(ci): valida animacoes antes do deploy
+- fix(ui): fecha fundos responsivos do redesign
+- fix(docs): ignora arquivos locais nas métricas
+- docs: atualiza contratos gerados
+- fix(eval): mede cache injetado pelo build
+- fix(client): bundle público não nomeia o backend — régua eval:backendhints
+- fix(apoie): URLs de apoio resolvidas pelo servidor no menu do jogo, aria-pressed, bandeira/globo nos botões
+- docs: regenera blocos após página de doações
+- fix(boot): watchdog de partida renova enquanto o preload progride (#241) (#286)
+- fix(telemetria): sem_webgl e ambiente do jogador, nao defeito de codigo (#277) (#285)
+- fix: point international support to Ko-fi profile
+- feat: add donation page and support menu
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.161).
 ## [2.0.0-alpha.160] — 2026-08-19
 
 ### Mudado
