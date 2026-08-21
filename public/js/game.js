@@ -30,8 +30,17 @@ export { WEAPONS };
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
    ?killcam=0 -> sem painel/câmera de morte
+   ?replaycam=0 -> sem replay cam ao matar (câmera orbital na vítima)
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+const REPLAY_CAM = QS.get('replaycam') !== '0';
+/* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
+   janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
+const REPLAY_DUR = 1.2;
+const REPLAY_SLOWMO = 0.18;
+const REPLAY_SLOWMO_DUR = 0.2;
+const REPLAY_ORBIT_R = 3.2;
+const REPLAY_ORBIT_H = 1.8;
 // ?vmlab=1 usa o viewmodel afinado; sem a flag mantém o calibrado.
 const VMLAB = QS.get('vmlab') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
@@ -3233,6 +3242,13 @@ export class Game {
         mk.best = Math.max(mk.best || 0, mk.count);
         const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
         if (kind) { this._mkBanner(MK_LABELS[kind]); this.sfx.general(kind); }
+        if (REPLAY_CAM && head && ent.pos) {
+          this._replayCam = {
+            t: 0,
+            victimPos: ent.pos.clone(),
+            killerYaw: attacker.yaw,
+          };
+        }
       }
     }
     if (ent.isPlayer) {
@@ -4727,11 +4743,45 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
+  _updateReplayCam(dt) {
+    const rc = this._replayCam;
+    if (!rc) return;
+    rc.t += dt;
+    if (rc.t >= REPLAY_DUR) {
+      this._replayCam = null;
+      const p = this.player;
+      const tFov = p.scoped ? this._zoomFov(p.weapon) : 70;
+      this.camera.fov = tFov;
+      this.camera.updateProjectionMatrix();
+      this._fovFrom = undefined;
+      return;
+    }
+    const progress = rc.t / REPLAY_DUR;
+    const angle = rc.killerYaw + Math.PI + progress * 1.2;
+    const ease = 1 - (1 - progress) * (1 - progress);
+    const r = REPLAY_ORBIT_R * (0.6 + 0.4 * ease);
+    const cx = rc.victimPos.x + Math.sin(angle) * r;
+    const cz = rc.victimPos.z + Math.cos(angle) * r;
+    const cy = rc.victimPos.y + REPLAY_ORBIT_H - ease * 0.4;
+    this.camera.position.set(cx, cy, cz);
+    const lookY = rc.victimPos.y + 1.2;
+    const dx = rc.victimPos.x - cx, dz = rc.victimPos.z - cz;
+    this.camera.rotation.set(
+      Math.atan2(lookY - cy, Math.hypot(dx, dz)),
+      Math.atan2(-dx, -dz),
+      0
+    );
+    this.camera.fov = 50;
+    this.camera.updateProjectionMatrix();
+    if (this.vm?.root) this.vm.root.visible = false;
+    if (this.el.crosshair) this.el.crosshair.style.display = 'none';
+  }
   _updatePlayer(dt) {
     const p = this.player;
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
+      if (this._replayCam) this._replayCam = null;
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
@@ -5036,6 +5086,7 @@ export class Game {
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
+    this._updateReplayCam(dt);
   }
   // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without
@@ -6730,6 +6781,11 @@ export class Game {
   /* ================= main update ================= */
   update(dt, render = true) {
     if (this.paused) return;
+    // Hit-stop: scale dt during replay cam slowmo phase (uses wall-clock time, not game time)
+    if (this._replayCam) {
+      const wallT = this._replayCam._wallT = (this._replayCam._wallT || 0) + dt;
+      if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
+    }
     this.time += dt;
     if (this.state === 'countdown' && this.time >= this.stateUntil) {
       this.state = 'live';

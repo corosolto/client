@@ -1,0 +1,21 @@
+diff --git a/tools/eval/docs-autoria-check.mjs b/tools/eval/docs-autoria-check.mjs
+index 361f3813..ba23805f 100644
+--- a/tools/eval/docs-autoria-check.mjs
++++ b/tools/eval/docs-autoria-check.mjs
+@@ -29,6 +29,16 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
+ const ALVO = 'docs/docs/colaborar.md';
+ const GERADOR = 'tools/gen-docs.mjs';
+ 
++/* Clone RASO (Vercel, CI com fetch-depth:1) não tem histórico, e o gen-docs - por decisão
++   já registrada nele - NÃO regenera o bloco `pessoas` ali: número que não existe no
++   ambiente não derruba portão. Sem regeneração, a mutação de autoria não tem como acender
++   nada, e a DOCSAUT2 acusa cegueira onde na verdade falta medida. Foi o que derrubou o
++   deploy da Vercel (e a produção) desde o #398. Onde há histórico, a régua segue mordendo. */
++if (execFileSync('git', ['rev-parse', '--is-shallow-repository']).toString().trim() === 'true') {
++  console.log('  \x1b[33m⚠\x1b[0m DOCSAUT não medido: clone raso não tem o histórico de onde sai a autoria');
++  process.exit(0);
++}
++
+ const sujo = execFileSync('git', ['status', '--porcelain', '--', ALVO, GERADOR]).toString().trim();
+ if (sujo) {
+   console.log(`  \x1b[31m✗\x1b[0m DOCSAUT não dá para medir: ${ALVO} ou ${GERADOR} com mudança não commitada`);
