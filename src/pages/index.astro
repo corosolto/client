@@ -44,9 +44,10 @@ window.__GEO_LANG__ = (function () {
   var TETO_SESSAO = 10;      /* no máximo 10 erros DISTINTOS por carregamento de página */
   var TETO_EXTERNO = 3;      // externos ficam no banco, mas com cota própria (BUG-51)
   var TETO_CONSOLE = 3;      // log tagarela não come a cota reservada a exceção (BUG-72)
+  var TETO_MIDIA = 2;        // abort de mídia é rotina do jogo, não exceção (BUG-73)
   var MIGALHAS = 20;         // últimas ações guardadas
   var DEBUG = new URLSearchParams(location.search).get('debug') === '1';
-  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, migalhas = [], reportando = false;
+  var enviados = {}, corpos = {}, nEnviados = 0, nExternos = 0, nConsole = 0, nMidia = 0, migalhas = [], reportando = false;
   var relatorioFalha = null, falhaPendente = null, erroDoBoot = null;
   var inicio = Date.now();
   var consoleErroNativo = null;
@@ -132,6 +133,11 @@ window.__GEO_LANG__ = (function () {
         if (externa) {
           if (nExternos >= TETO_EXTERNO) return null;
           nExternos++;
+        } else if (erroIgnoravel(mFinal)) {
+          /* Rotina do jogo, não exceção: balde próprio para o abort não comer um dos dez
+             slots de exceção real, e a linha segue no banco (KNOWN-BUGS.md, BUG-73). */
+          if (nMidia >= TETO_MIDIA) return null;
+          nMidia++;
         } else if (kind === 'console' && !stack) {
           if (nConsole >= TETO_CONSOLE) return null;
           nConsole++;
@@ -160,10 +166,13 @@ window.__GEO_LANG__ = (function () {
     return null;
   }
 
+  /* MESMA redação do `MEDIA_ABORT_RE` de `src/lib/error-provenance.mjs`: se os dois lados
+     discordarem, o abort volta a comer cota aqui ou a abrir issue lá (BUG-73). */
   function erroIgnoravel(r){
-    var nome = r && r.name;
     var msg = String((r && r.message) || r || '');
-    return nome === 'AbortError' || /media resource was aborted|fetching process.*aborted/i.test(msg);
+    // `name` vale só para o painel de falha; quem decide o balde é a mensagem.
+    if (r && r.name === 'AbortError') return true;
+    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i.test(msg);
   }
   /* URL http só prova origem em source/stack; na mensagem ela é payload do
      jogo ("falha ao carregar https://api..."). Esquema de extensão vale em
@@ -280,6 +289,14 @@ window.__GEO_LANG__ = (function () {
   /* Migalhas: o que o jogador FEZ, nunca o que ele ESCREVEU. Clique em elemento com id
      ou em botão cobre o menu inteiro sem precisar instrumentar main.js linha a linha -
      e a regra "só rótulo, nunca conteúdo" está escrita na migration 015. */
+  /* `navigator.connection` já é lido no main.js, mas no boot ele é justamente o que não
+     carregou: aqui é a única chance de saber se a rede do jogador estava de pé (BUG-74). */
+  function estadoDaRede(){
+    try{
+      var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      return 'rede online=' + (navigator.onLine !== false) + ' tipo=' + ((c && c.effectiveType) || '?');
+    }catch(_){ return 'rede online=? tipo=?'; }
+  }
   function migalha(txt){
     migalhas.push(new Date().toISOString().slice(11, 19) + ' ' + String(txt).slice(0, 120));
     if (migalhas.length > MIGALHAS) migalhas.shift();
@@ -333,6 +350,11 @@ window.__GEO_LANG__ = (function () {
         var pronto = prompt && !prompt.classList.contains('hidden');
         if (!window.__CS_MAIN_READY__) {
           if (erroDoBoot || window.__CS_MAIN_FAILED) {
+            /* O relatório saía sem UMA evidência: a migalha leva o módulo que falhou, o
+               suporte a import map (hipótese da #362) e o estado da rede (BUG-74). */
+            migalha('boot falhou src=' + (window.__CS_BOOT_SRC || '?'));
+            migalha('importmap suportado=' + !!(window.HTMLScriptElement && HTMLScriptElement.supports && HTMLScriptElement.supports('importmap')));
+            migalha(estadoDaRede());
             lancamento.fail(erroDoBoot || new Error('o código do jogo não chegou (verifique a conexão)'), 'boot-watchdog');
           } else if (!window.__CS_MAIN_LOADED) {
             /* Rede lenta (#265): failsafe abre a splash antes do main.js chegar; clicar
@@ -773,52 +795,72 @@ window.__GEO_LANG__ = (function () {
 <!-- Map screen (escolha de mapa em tela cheia) - abre pelo cartaz do mapa no setup.
      Lê o MESMO estado do carrossel do menu (currentMap/mapIdx): trocar aqui troca lá. -->
 <div id="map-screen" class="screen hidden">
+  <!-- Palco: o WALLPAPER do setup, não a preview do mapa (decisão de 21/08) - a foto do
+       mapa em foco já está no card selecionado, e repetida em tela cheia ela brigava com
+       a grade. O <img> segue no DOM porque o render e a sonda de tela leem o `src`. -->
   <div class="ms-bg"><img id="ms-bg-img" alt=""></div>
-  <div class="ms-scrim"></div>
-  <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
-  <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
-    <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">OFICIAIS</button>
-    <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
+  <div class="ms-scrim" aria-hidden="true"></div>
+  <!-- CABEÇALHO carrega tudo que NÃO é lista: abas, ficha do mapa em foco e as opções da
+       partida. Sobra o corpo inteiro para o acervo, que é o que a tela existe para mostrar. -->
+  <div class="ms-topbar">
+    <!-- UMA linha, três colunas: navegação | ficha do mapa em foco | opções da partida -->
+    <header class="ms-head">
+      <div class="ms-nav">
+        <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
+        <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
+          <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
+          <button class="ms-tab" data-cat="OFICIAIS" type="button" role="tab" aria-selected="false">OFICIAIS</button>
+          <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
+        </div>
+        <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
+      </div>
+      <div class="ms-ficha">
+        <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span><span class="ms-plays" id="ms-plays" hidden></span></div>
+        <h2 id="ms-name" class="ms-name"> - </h2>
+        <p id="ms-meta" class="ms-meta"></p>
+        <p id="ms-desc" class="ms-desc"></p>
+        <p id="ms-byline" class="ms-byline"></p>
+      </div>
+      <div id="ms-match-options" class="ms-match-options" aria-label="Opções da partida">
+        <label><span>ARMAS</span>
+          <select id="ms-wpn-mode">
+            <option value="all">TODAS</option><option value="pistols">SÓ PISTOLAS</option>
+            <option value="knife">SÓ FACA</option><option value="awp">SÓ AWP</option>
+          </select>
+        </label>
+        <label><span>JOGADORES</span>
+          <select id="ms-players">
+            <option value="2">2 × 2</option><option value="3">3 × 3</option>
+            <option value="4">4 × 4</option><option value="5">5 × 5</option>
+            <option value="6">6 × 6</option><option value="7">7 × 7</option>
+            <option value="8">8 × 8</option>
+          </select>
+        </label>
+        <label><span>Nº DE ROUNDS</span>
+          <select id="ms-rounds">
+            <option value="1">1</option><option value="3">3</option>
+            <option value="5">5</option><option value="7">7</option>
+          </select>
+        </label>
+      </div>
+    </header>
   </div>
-  <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
-  <header class="ms-head">
-    <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span></div>
-    <h2 id="ms-name" class="ms-name"> - </h2>
-    <p id="ms-meta" class="ms-meta"></p>
-    <p id="ms-desc" class="ms-desc"></p>
-    <p id="ms-byline" class="ms-byline"></p>
-    <div id="ms-match-options" class="ms-match-options" aria-label="Opções da partida">
-      <label><span>ARMAS</span>
-        <select id="ms-wpn-mode">
-          <option value="all">TODAS</option><option value="pistols">SÓ PISTOLAS</option>
-          <option value="knife">SÓ FACA</option><option value="awp">SÓ AWP</option>
-        </select>
-      </label>
-      <label><span>JOGADORES</span>
-        <select id="ms-players">
-          <option value="2">2 × 2</option><option value="3">3 × 3</option>
-          <option value="4">4 × 4</option><option value="5">5 × 5</option>
-          <option value="6">6 × 6</option><option value="7">7 × 7</option>
-          <option value="8">8 × 8</option>
-        </select>
-      </label>
-      <label><span>Nº DE ROUNDS</span>
-        <select id="ms-rounds">
-          <option value="1">1</option><option value="3">3</option>
-          <option value="5">5</option><option value="7">7</option>
-        </select>
-      </label>
+  <!-- CORPO: só o acervo. Rola na vertical; as setas continuam sendo prev/next do mesmo
+       estado que ← e → movem, então aqui elas apontam pra cima e pra baixo. -->
+  <div class="ms-body">
+    <div class="ms-carousel">
+      <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">▲</button>
+      <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
+      <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">▼</button>
+      <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
     </div>
-  </header>
-  <div class="ms-carousel">
-    <button id="ms-prev" class="ms-arrow" type="button" aria-label="Mapa anterior">‹</button>
-    <div class="ms-viewport"><div class="ms-strip" id="ms-strip"></div></div>
-    <button id="ms-next" class="ms-arrow" type="button" aria-label="Próximo mapa">›</button>
   </div>
-  <div class="ms-dashes" id="ms-dashes" aria-hidden="true"></div>
-  <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
-  <div class="ms-actions">
-    <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>
+  <!-- RODAPÉ: VOLTAR no canto esquerdo, CONTINUAR no direito. -->
+  <div class="ms-foot">
+    <button id="ms-back" class="btn btn-back" type="button">◀ VOLTAR</button>
+    <div class="ms-actions">
+      <button id="ms-continue" class="btn btn-big" type="button"><span>CONTINUAR ▶</span></button>
+    </div>
   </div>
 </div>
 
@@ -1214,6 +1256,6 @@ window.__GEO_LANG__ = (function () {
   }
 </script>
 
-<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1"></script>
+<script type="module" src={`/js/main.js?v=${V}-${JS_REV}`} is:inline onload="window.__CS_MAIN_LOADED=1" onerror="window.__CS_MAIN_FAILED=1;window.__CS_BOOT_SRC=this.src"></script>
 </body>
 </html>

@@ -15,7 +15,8 @@
    A REGRA QUE ESTA RÉGUA GUARDA
    (a) num PR (`--check`), o bloco de autoria NÃO derruba o portão;
    (b) na main (`--check --autoria`), ele derruba — lá é derivável e consertável;
-   (c) qualquer OUTRO bloco gerado continua derrubando os dois — a tolerância é só da autoria.
+   (c) qualquer OUTRO bloco gerado continua derrubando os dois — a tolerância é só da autoria;
+   (d) em clone RASO não há o que medir, e portão sem medida não vota (ver o guard lá embaixo).
 
    Mede executando o gerador de verdade sobre uma mutação real no arquivo, e devolve o
    arquivo ao estado original no fim (recusa rodar se ele já estiver sujo).
@@ -28,6 +29,16 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const ALVO = 'docs/docs/colaborar.md';
 const GERADOR = 'tools/gen-docs.mjs';
+
+/* Clone RASO (Vercel, CI com fetch-depth:1) não tem histórico, e o gen-docs - por decisão
+   já registrada nele - NÃO regenera o bloco `pessoas` ali: número que não existe no
+   ambiente não derruba portão. Sem regeneração, a mutação de autoria não tem como acender
+   nada, e a DOCSAUT2 acusa cegueira onde na verdade falta medida. Foi o que derrubou o
+   deploy da Vercel (e a produção) desde o #398. Onde há histórico, a régua segue mordendo. */
+if (execFileSync('git', ['rev-parse', '--is-shallow-repository']).toString().trim() === 'true') {
+  console.log('  \x1b[33m⚠\x1b[0m DOCSAUT não medido: clone raso não tem o histórico de onde sai a autoria');
+  process.exit(0);
+}
 
 const sujo = execFileSync('git', ['status', '--porcelain', '--', ALVO, GERADOR]).toString().trim();
 if (sujo) {

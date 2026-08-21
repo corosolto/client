@@ -1498,7 +1498,7 @@ function setMapMeta() {
 function setMapMode() {
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
+    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
@@ -1591,7 +1591,8 @@ const MAP_DATA = {
   upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
 };
 const CAT_DESC = {
-  TODOS: 'Mapas oficiais da casa.',
+  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
+  OFICIAIS: 'Mapas oficiais da casa.',
   ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
   FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
   CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
@@ -1607,22 +1608,45 @@ let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
   return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
 }
+/* Quantas vezes cada mapa foi escolhido, do contador que o /api/pick alimenta desde
+   06/08 (picks_daily). Chega TARDE, por rede, e pode nunca chegar: a tela abre sem ele,
+   e quando chega redesenha. Nada aqui pode depender do número existir. */
+let mapPlays = {};
+const playsDe = (id) => mapPlays[id] || 0;
+fetch('/api/map-plays')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => {
+    if (!j || !j.plays || typeof j.plays !== 'object') return;
+    mapPlays = j.plays;
+    if (!$('map-screen')?.classList.contains('hidden')) renderMapScreen();
+  })
+  .catch(() => { /* sem banco/rede: a tela fica sem a estatística, e é só isso */ });
 function visibleMapIds() {
-  /* A aba TODOS lista só os mapas OFICIAIS — os de comunidade têm a própria aba. "De comunidade"
-     é pela categoria (a etiqueta do crachá), que coincide com autoria não-oficial. */
-  return MAP_IDS.filter((id) => mapCategory === 'TODOS' ? !catsDe(id).includes('COMUNIDADE') : catsDe(id).includes(mapCategory));
+  /* TODOS = o acervo inteiro, ordenado do mais jogado pro menos (empate: ordem do catálogo,
+     que é estável — `sort` sem desempate deixava a lista dançar entre renders).
+     OFICIAIS e COMUNIDADE são recortes por categoria e mantêm a ordem do catálogo. */
+  if (mapCategory === 'TODOS') {
+    return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));
+  }
+  if (mapCategory === 'OFICIAIS') return MAP_IDS.filter((id) => !catsDe(id).includes('COMUNIDADE'));
+  return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
      Trocas manuais de aba já re-ancoram o mapa antes, então isto não briga com elas. */
   if (!visibleMapIds().includes(currentMap)) {
-    mapCategory = catsDe(currentMap).includes('COMUNIDADE') ? 'COMUNIDADE' : 'TODOS';
+    mapCategory = catsDe(currentMap).includes('COMUNIDADE') ? 'COMUNIDADE' : 'OFICIAIS';
   }
   const continuar = $('ms-continue')?.querySelector('span');
   if (continuar) continuar.textContent = frase('continuarSetup');
   img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
   img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
+     foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
+     acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
+  const palco = document.querySelector('#map-screen .ms-bg');
+  if (palco) { palco.style.setProperty('--wall', HOME_WALL); palco.style.setProperty('--wall-3x2', HOME_WALL_3X2); }
   $('ms-name').textContent = MAPS[currentMap].name;
   // separadores da ficha em verde (referência 04): texto continua o mesmo do cartaz
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
@@ -1637,13 +1661,23 @@ function renderMapScreen() {
   const desc = $('ms-cat-desc');
   if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
+  /* Estatística de partidas: só aparece quando o número EXISTE. Escrever "0 PARTIDAS"
+     num mapa que ninguém mediu é afirmar o que não se sabe — sem o contador, o crachá some. */
+  const plays = $('ms-plays');
+  if (plays) {
+    const n = playsDe(currentMap);
+    plays.hidden = !n;
+    plays.textContent = n ? `${n.toLocaleString('pt-BR')} ${tr(n === 1 ? 'PARTIDA' : 'PARTIDAS')}` : '';
+  }
   const shown = visibleMapIds();
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
       `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
-      `<span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span></span>` +
+      `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
+      (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
+      `</span></span>` +
       `${id === currentMap ? '<i class="ms-diamond" aria-hidden="true"></i>' : ''}</button>`).join('');
   document.querySelectorAll('.ms-tab').forEach((tab) => {
     const on = tab.dataset.cat === mapCategory;
@@ -1659,7 +1693,7 @@ function renderMapScreen() {
   });
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapThumb.title = 'Ver mapa em tela cheia';
+mapThumb.title = tr('Ver mapa em tela cheia');
 mapThumb.style.cursor = 'pointer';
 mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };

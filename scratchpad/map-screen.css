@@ -1,0 +1,98 @@
+/* ============ MAP SCREEN ============ */
+/* Redesign de 21/08: DUAS COLUNAS. À esquerda a ficha do mapa (texto menor e com mais
+   respiro do que o cartaz antigo — o dono reclamou que o nome de 72px comia a tela);
+   à direita o acervo inteiro rolando na VERTICAL, só miniaturas. A preview em tela
+   cheia saiu: o fundo agora é o preto do jogo. `.ms-bg` continua no DOM (o render
+   escreve o src e a sonda de tela lê) mas não pinta nada. */
+#map-screen{padding:0;justify-content:flex-start;align-items:stretch;gap:0;background:#08080a;
+  font-family:var(--aaa-font-body);display:grid;grid-template-rows:auto minmax(0,1fr)}
+.ms-bg{display:none}
+.ms-bg img{display:none}
+.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(120% 90% at 12% 8%,rgba(180,217,46,.05),transparent 58%),repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.05) 3px 4px)}
+.ms-topbar{position:relative;z-index:2;padding:24px 40px 14px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:12px;
+  border-bottom:1px solid rgba(236,235,230,.08)}
+.ms-kicker{font-family:var(--aaa-font-body);font-weight:600;font-size:12px;letter-spacing:4px;
+  color:var(--br-faixa);text-transform:uppercase}
+.ms-tabs{display:flex;gap:24px;flex-wrap:wrap}
+.ms-tab{padding:6px 2px;font:600 14px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63;
+  background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
+.ms-tab:hover,.ms-tab:focus-visible{color:#ecebe6}
+.ms-tab.on{font-weight:700;color:#b4d92e;border-bottom-color:#b4d92e}
+.ms-cat-desc{max-width:640px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91}
+.ms-authors{display:flex;gap:8px;flex-wrap:wrap}
+.ms-author{padding:5px 12px;font:600 11px/1 var(--aaa-font-body);letter-spacing:2px;color:#5c5d63;background:rgba(16,16,20,.7);border:1px solid #2a2b31;border-radius:999px;cursor:pointer;text-transform:uppercase}
+.ms-author:hover,.ms-author:focus-visible{color:#ecebe6}
+.ms-author.on{color:#2e9ed8;border-color:#2e9ed8}
+/* as duas colunas: ficha fluida até 560px, acervo numa faixa fixa que rola */
+.ms-body{position:relative;z-index:2;min-height:0;display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:40px;padding:26px 40px 28px}
+.ms-head{grid-column:1;min-width:0;max-width:560px;
+  display:flex;flex-direction:column;align-items:flex-start;gap:20px;text-align:left}
+.ms-tagrow{display:flex;align-items:center;justify-content:flex-start;gap:10px}
+.ms-cat{font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 10px;border:1px solid}
+.ms-cat[data-cat="FAVELA"]{color:#e0762a;border-color:rgba(224,118,42,.5)}
+.ms-cat[data-cat="ARENA"]{color:#8b8c92;border-color:rgba(139,140,146,.5)}
+.ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}.ms-cat[data-cat="COMUNIDADE"]{color:#2e9ed8;border-color:rgba(46,158,216,.5)}
+.ms-cat[data-cat="AI"]{color:#d8c02e;border-color:rgba(216,192,46,.5)}
+.ms-byline{margin:0;font:400 12px/1.4 var(--aaa-font-body);letter-spacing:.6px;color:#8a8b91}
+.ms-byline strong{color:#b9babf;font-weight:600}
+.ms-badge-oficial{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#b4d92e;border:1px solid rgba(180,217,46,.5);border-radius:3px;text-transform:uppercase}
+.ms-badge-comunidade{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#2e9ed8;border:1px solid rgba(46,158,216,.5);border-radius:3px;text-transform:uppercase}
+.ms-count{font-family:var(--font);font-weight:600;font-size:11px;letter-spacing:2px;color:#5c5d63}
+.ms-name{margin:0;font-family:var(--aaa-font-display);font-weight:400;font-size:44px;
+  line-height:1;letter-spacing:1px;text-transform:uppercase;color:var(--ink-100);
+  text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+.ms-meta{margin:0;font-family:var(--font);font-weight:700;font-size:12px;letter-spacing:2.4px;color:var(--ink-100)}
+.ms-meta .ms-sep{color:var(--br-faixa);margin:0 8px}
+.ms-desc{margin:0;font-size:14px;font-weight:400;color:#b9b9be;max-width:46ch;line-height:1.7}
+.ms-match-options{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0;padding:12px 14px;
+  background:rgba(16,16,20,.8);border-left:2px solid var(--br-faixa)}
+.ms-match-options label{display:flex;flex-direction:column;gap:6px;min-width:112px;
+  font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#8b8c92;text-transform:uppercase}
+.ms-match-options select{height:32px;padding:0 28px 0 9px;border:1px solid rgba(236,235,230,.2);border-radius:0;
+  background:#111216;color:#ecebe6;font:700 12px/1 var(--aaa-font-body);letter-spacing:1px;cursor:pointer}
+.ms-match-options select:focus{outline:1px solid var(--br-faixa);border-color:var(--br-faixa)}
+/* VOLTAR e CONTINUAR moram no pé da ficha — não são mais cantos soltos do palco */
+.ms-foot{display:flex;align-items:center;gap:18px;margin-top:auto;padding-top:6px}
+/* ---- coluna 2: o acervo em pé ---- */
+.ms-carousel{grid-column:2;min-height:0;display:flex;flex-direction:column;gap:8px}
+.ms-arrow{flex:0 0 auto;width:100%;height:26px;display:flex;align-items:center;justify-content:center;
+  background:rgba(13,14,17,.7);border:1px solid #26272d;color:#9a9ba1;font-size:12px;line-height:1;cursor:pointer}
+.ms-arrow:hover,.ms-arrow:focus-visible{border-color:#b4d92e;color:#ecebe6;background:rgba(13,14,17,.9)}
+.ms-viewport{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#33343b transparent}
+.ms-viewport::-webkit-scrollbar{width:6px}
+.ms-viewport::-webkit-scrollbar-thumb{background:#33343b}
+.ms-strip{--map-count:1;display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch;gap:10px;width:100%;scroll-behavior:smooth}
+.ms-thumb{position:relative;width:100%;min-width:0;padding:0;display:flex;flex-direction:column;cursor:pointer;
+  background:#101014;border:1px solid rgba(236,235,230,.12);opacity:.75;
+  font-family:var(--aaa-font-body);text-align:left;text-transform:uppercase;
+  transition:border-color var(--t) var(--ease),filter var(--t) var(--ease),opacity var(--t) var(--ease)}
+.ms-thumb:hover,.ms-thumb:focus-visible{filter:brightness(1.15);opacity:1}
+.ms-thumb.on{border:2px solid #b4d92e;opacity:1;box-shadow:0 0 26px rgba(180,217,46,.3)}
+.ms-thumb-img{display:block;width:100%;height:96px;object-fit:cover}
+.ms-thumb-copy{display:flex;flex-direction:column;gap:1px;padding:7px 10px 9px;background:rgba(10,10,12,.85)}
+.ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-thumb.on .ms-thumb-name{color:#b4d92e}
+.ms-thumb-cat{font-weight:600;font-size:9px;letter-spacing:2px}
+.ms-thumb-cat[data-cat="FAVELA"]{color:#e0762a}
+.ms-thumb-cat[data-cat="ARENA"]{color:#8b8c92}
+.ms-thumb-cat[data-cat="CIDADES"]{color:#8258d8}
+.ms-diamond{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--br-faixa);transform:rotate(45deg)}
+.ms-dashes{flex:0 0 auto;display:flex;justify-content:center;gap:6px}
+.ms-dashes i{width:18px;height:3px;background:#33343b}.ms-dashes i.on{background:#b4d92e}
+.ms-actions{position:static}
+#map-screen .ms-actions .btn-big{transform:skewX(-8deg);background:linear-gradient(180deg,#cfe84a,#b4d92e);padding:12px 40px;border:0}
+#map-screen .ms-actions .btn-big>*{display:block;transform:skewX(8deg);font:400 20px/1 var(--aaa-font-display);letter-spacing:3px;color:#131313;padding:0}
+@media(max-height:720px){
+  .ms-body{gap:28px;padding:18px 32px 20px}
+  .ms-head{gap:14px}
+  .ms-name{font-size:36px}
+  .ms-desc{font-size:13px;line-height:1.6}
+  .ms-match-options{padding:9px 11px}.ms-match-options select{height:28px}
+}
+@media(max-width:1040px){
+  .ms-body{grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:24px}
+}
