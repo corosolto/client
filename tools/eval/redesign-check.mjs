@@ -27,7 +27,8 @@ const alvoPorMutante = {
   'mapa-acervo-nao-rola': 'UIR4',
   'mapa-card-achatado': 'UIR4',
   'mapa-palco-sem-scrim': 'UIR4',
-  'mapa-ficha-fora-do-header': 'UIR4',
+  'mapa-header-empilhado': 'UIR4',
+  'mapa-palco-wall-do-setup': 'UIR4',
   'mapa-rodape-junto': 'UIR4',
   'mapa-palco-sem-wallpaper': 'UIR4',
   'mapa-plays-inventado': 'UIR4',
@@ -226,15 +227,18 @@ main = muta('mapa-navega-global', main,
 css = muta('mapa-acervo-deitado', css,     // grade elástica vira fileira de largura fixa
   '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))',
   '.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(var(--map-count),196px)');
-css = muta('mapa-ficha-fora-do-header', css,   // cabeçalho deixa de dividir a linha com as opções
-  '.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between',
-  '.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:flex-start');
+css = muta('mapa-header-empilhado', css,   // a linha de três colunas vira pilha de novo
+  '.ms-head{display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr) auto;',
+  '.ms-head{display:grid;grid-template-columns:minmax(0,1fr);');
 css = muta('mapa-rodape-junto', css,           // VOLTAR e CONTINUAR deixam de ir pros cantos
   '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between',
   '.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-start');
 css = muta('mapa-palco-sem-wallpaper', css,    // o borrão do wallpaper some: volta o preto chapado
-  '.ms-bg::before{inset:-24px;background-size:cover;filter:blur(20px) brightness(.4) saturate(.7)}',
-  '.ms-bg::before{inset:-24px;background-size:auto;filter:none}');
+  '.ms-bg::before{inset:-24px;z-index:0;background-size:cover;filter:blur(18px) brightness(.48) saturate(.72)}',
+  '.ms-bg::before{inset:-24px;z-index:0;background-size:auto;filter:none}');
+main = muta('mapa-palco-wall-do-setup', main,  // volta a divergir do menu principal
+  "palco.style.setProperty('--wall', HOME_WALL)",
+  "palco.style.setProperty('--wall', SETUP_WALL)");
 main = muta('mapa-plays-inventado', main,      // zero vira "0 partidas" em vez de sumir
   '    plays.hidden = !n;',
   '    plays.hidden = false;');
@@ -665,7 +669,9 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
      é só a grade; ficha e opções da partida moram no cabeçalho; VOLTAR e CONTINUAR nos
      cantos opostos do rodapé. */
   && /#map-screen\{[^}]*grid-template-rows:auto minmax\(0,1fr\) auto/.test(css)
-  && /\.ms-head\{[^}]*justify-content:space-between/.test(css)
+  /* o cabeçalho é UMA linha de três colunas (navegação | ficha | opções), não uma pilha */
+  && /\.ms-head\{display:grid;grid-template-columns:minmax\(300px,340px\) minmax\(0,1fr\) auto/.test(css)
+  && /class="ms-head"[\s\S]{0,120}class="ms-nav"/.test(astro)
   /* ficha e opções da partida moram DENTRO do cabeçalho, antes do corpo — é o que
      libera o corpo inteiro para a grade. A ordem na marcação é a prova. */
   && /class="ms-topbar"[\s\S]*?class="ms-head"[\s\S]*?id="ms-match-options"[\s\S]*?class="ms-body"[\s\S]*?class="ms-foot"/.test(astro)
@@ -683,9 +689,13 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /\.ms-thumb-img\{[^}]*aspect-ratio:4\/3[^}]*object-fit:cover/.test(css)
   /* o palco é o WALLPAPER, não a preview: o `<img>` fica só para a sonda de tela ler o src */
   && /inset:\s*0/.test(fundoMapa)
-  && /\.ms-bg::before\{[^}]*background-size:cover[^}]*blur/.test(css)
+  /* e é o MESMO wallpaper do menu, pintado pela mesma regra: borrão por baixo, arte
+     inteira por cima e a variante 3:2 na mesma faixa de proporção. */
+  && /\.ms-bg::before\{[^}]*background-size:cover;filter:blur\(18px\) brightness\(\.48\) saturate\(\.72\)/.test(css)
+  && /\.ms-bg::after\{[^}]*background-size:contain/.test(css)
+  && /\.ms-bg::before,\.ms-bg::after\{background-image:var\(--wall-3x2,var\(--wall\)\)/.test(css)
   && /\.ms-bg img\{display:none\}/.test(css)
-  && /palco\.style\.setProperty\('--wall', SETUP_WALL\)/.test(funcMap)
+  && /palco\.style\.setProperty\('--wall', HOME_WALL\)[\s\S]{0,80}'--wall-3x2', HOME_WALL_3X2/.test(funcMap)
   && /\.ms-scrim\{[^}]*linear-gradient\(90deg[^}]*linear-gradient\(0deg/.test(css)
   && !/class="ms-rail/.test(funcMap);
 const dict = (i18n.match(/const DICT = \{([\s\S]*?)\n\};/) || [])[1] || '';

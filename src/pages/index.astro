@@ -790,14 +790,17 @@ window.__GEO_LANG__ = (function () {
   <!-- CABEÇALHO carrega tudo que NÃO é lista: abas, ficha do mapa em foco e as opções da
        partida. Sobra o corpo inteiro para o acervo, que é o que a tela existe para mostrar. -->
   <div class="ms-topbar">
-    <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
-    <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
-      <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
-      <button class="ms-tab" data-cat="OFICIAIS" type="button" role="tab" aria-selected="false">OFICIAIS</button>
-      <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
-    </div>
-    <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
+    <!-- UMA linha, três colunas: navegação | ficha do mapa em foco | opções da partida -->
     <header class="ms-head">
+      <div class="ms-nav">
+        <div class="ms-kicker">04 · ESCOLHA DO MAPA</div>
+        <div class="ms-tabs" id="ms-tabs" role="tablist" aria-label="Categorias de mapa">
+          <button class="ms-tab on" data-cat="TODOS" type="button" role="tab" aria-selected="true">TODOS</button>
+          <button class="ms-tab" data-cat="OFICIAIS" type="button" role="tab" aria-selected="false">OFICIAIS</button>
+          <button class="ms-tab" data-cat="COMUNIDADE" type="button" role="tab" aria-selected="false">COMUNIDADE</button>
+        </div>
+        <p id="ms-cat-desc" class="ms-cat-desc" aria-live="polite"></p>
+      </div>
       <div class="ms-ficha">
         <div class="ms-tagrow"><span class="ms-cat" id="ms-cat">ARENA</span><span class="ms-count" id="ms-count"></span><span class="ms-plays" id="ms-plays" hidden></span></div>
         <h2 id="ms-name" class="ms-name"> - </h2>

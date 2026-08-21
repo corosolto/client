@@ -1642,11 +1642,11 @@ function renderMapScreen() {
   if (continuar) continuar.textContent = frase('continuarSetup');
   img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
   img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
-  /* O palco é o WALLPAPER do setup, não esta preview: a foto do mapa em foco já está no
-     card selecionado, e em tela cheia ela brigava com a grade. O `src` acima continua
-     sendo escrito porque é dele que a sonda de tela lê qual mapa está em foco. */
+  /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
+     foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
+     acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
   const palco = document.querySelector('#map-screen .ms-bg');
-  if (palco) palco.style.setProperty('--wall', SETUP_WALL);
+  if (palco) { palco.style.setProperty('--wall', HOME_WALL); palco.style.setProperty('--wall-3x2', HOME_WALL_3X2); }
   $('ms-name').textContent = MAPS[currentMap].name;
   // separadores da ficha em verde (referência 04): texto continua o mesmo do cartaz
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
