@@ -212,10 +212,47 @@ assado do grafite e para qualquer lista que um gerador reescreva.
 
 ---
 
+## 15. Preload carrega o que a cena usa, e quem corta a espera responde pela cena
+
+`main.js` chamava `preloadCharacterAssets([...GLB_CHARS])` antes de construir o
+Game: **62 personagens, bloqueando**, para pôr 8 bonecos em campo. Medido pela
+`eval:preload-roster`: 63 GLBs baixados antes de o jogador ver qualquer coisa.
+
+Três coisas que o conserto ensinou, e que valem para qualquer preload desta base:
+
+- **Quem preloada tem que saber o que a cena vai usar.** O elenco é sorteado por
+  `pickMatchRoster` (game.js) e passado pronto ao Game em `matchRoster`. Sortear
+  DUAS vezes daria elencos diferentes e o preload erraria o alvo **em silêncio**
+  — a classe de defeito da lição 5.
+- **Carga tardia espera a cena ficar de pé.** Soltar o resto junto da contagem
+  regressiva rouba banda e decode do primeiro segundo jogável, e a régua continuou
+  vermelha em 62 igual a antes do conserto. Hoje espera o `live`.
+- **Quem corta a espera responde pelo que aparece.** `_switchTeam` (tecla M)
+  sorteava qualquer personagem da facção; com preload enxuto isso poria um boneco
+  de caixa procedural em campo. Trocar espera por feiura é pior que a espera —
+  hoje o sorteio prefere quem tem GLB em memória. É a cláusula PL2.
+
+Resultado: 63 → 9 GLBs no preload bloqueante. Régua, cláusulas e mutantes
+(`?preloadall=1`, `?preloadlazy=0`) em `SCRIPTS.md`, `eval:preload-roster`.
+
+### Equilíbrio de times (o que já morava no `game.js`)
+
+`cycle` devolve `[]` quando o pool é VAZIO — `pool[i % 0]` é NaN → undefined e o
+`.filter(Boolean)` limpa tudo. Uma facção sem personagens suficientes produzia um
+time MENOR **sem nenhum aviso** (jogador sozinho contra 8). Hoje as facções têm
+8-9 personagens e a conta fecha — medido, enumerando as 16 combinações
+facção×inimigo × teamSize 1..8: todas dão N vs N. O bug é LATENTE: basta uma
+facção entrar com 1 personagem para ele voltar, de novo em silêncio. `roster`
+fecha isso: SEMPRE devolve `want` combatentes (repetir personagem é aceitável;
+time menor não é) e AVISA no console quando repetiu ou recorreu ao elenco geral.
+
+---
+
 ## Como usar este arquivo
 
 - **Antes de escrever régua:** leia 1, 2, 3, 4.
 - **Antes de mexer em asset ou build:** leia 5, 11, 12, 14.
+- **Antes de mexer em preload ou em quem entra na cena:** leia 15.
 - **Antes de gerar arte com pessoa real:** leia 9.
 - **Quando o portão estiver verde e o dono disser que está errado:** leia 1 e 3.
   Esse caso é o mais importante desta base, e o mais mal resolvido.

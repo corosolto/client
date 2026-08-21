@@ -152,6 +152,8 @@
     "eval:lajes-authored": "node tools/eval/lajes-authored-check.mjs",
     "eval:lajes-spatial": "node tools/eval/lajes-spatial-check.mjs",
     "eval:ambience": "node tools/eval/ambience-check.mjs",
+    "eval:fauna-shots": "node tools/eval/fauna-shots.mjs",
+    "eval:preload-roster": "node tools/eval/preload-roster-check.mjs",
     "eval:mansao-water": "node tools/eval/mansao-water-check.mjs",
     "eval:mansao-garden": "node tools/eval/mansao-garden-check.mjs",
     "eval:look": "node tools/eval/look-check.mjs",
