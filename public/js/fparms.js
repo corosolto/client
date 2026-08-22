@@ -18,6 +18,7 @@
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { aplicaKtx2 } from './ktx2.js';
 import { VERSION } from './version.js';
 import { getSharedClips, measurePalmLocal } from './glbchars.js';
 import { gripPoints, ONE_HANDED, weaponMetrics } from './weapons.js';
@@ -78,7 +79,7 @@ const _loader = new GLTFLoader();
 // fallback procedural (fpArm/frontHand do game.js).
 export function preloadFPArms() {
   if (!_loading) {
-    _loading = new Promise((res, rej) => _loader.load(`models/fparms/arms.glb?v=${VERSION}`, res, undefined, rej))
+    _loading = new Promise((res, rej) => aplicaKtx2(_loader).load(`models/fparms/arms.glb?v=${VERSION}`, res, undefined, rej))
       .then((g) => { _armsTpl = g.scene; })
       .catch((e) => { console.warn('[fparms] arms.glb falhou no load — mãos procedurais', e); });
   }

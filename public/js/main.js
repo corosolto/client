@@ -41,9 +41,11 @@ const PLAYER_AVATAR_KEY = 'awpbr_player_avatar';
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
 import { applyNoPostTone } from './bloom.js';
 import { criaRenderer, avisaSemWebgl } from './glcontext.js';
+import { armaKtx2 } from './ktx2.js';
 const container = document.getElementById('game-container');
 const SAFE_MODE = new URLSearchParams(location.search).get('safe') === '1';
 const renderer = criaRenderer({}, { compatibility: SAFE_MODE });
+armaKtx2(renderer);   // textura basisu precisa saber o formato que a GPU aceita
 if (!renderer) {
   avisaSemWebgl('WebGL indisponível neste navegador/driver');
   throw new Error('sem_webgl');
