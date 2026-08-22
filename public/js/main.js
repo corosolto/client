@@ -1579,6 +1579,7 @@ const MAP_DESC = {
   penitenciaria: 'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.',
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
+  treta_vietnan: 'Selva úmida, vilarejo de madeira e guaritas elevadas: domine as rampas para controlar o campo de batalha.',
 };
 /* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
  * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
@@ -1593,6 +1594,7 @@ const MAP_CATS = {
   penitenciaria: ['ARENA', 'COMUNIDADE'],
   upa_24h: ['ARENA', 'COMUNIDADE'],
   obras_prefeitura: ['ARENA', 'COMUNIDADE'],
+  treta_vietnan: ['ARENA', 'COMUNIDADE'],
 };
 const MAP_AUTOR = {
   praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
@@ -1600,6 +1602,7 @@ const MAP_AUTOR = {
   piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
   parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
   upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
+  treta_vietnan: 'Ubiracy Santos',
 };
 const MAP_DATA = {
   praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
@@ -1607,6 +1610,7 @@ const MAP_DATA = {
   piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
   parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
   upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
+  treta_vietnan: '18/08/2026',
 };
 const CAT_DESC = {
   TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',

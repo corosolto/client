@@ -171,6 +171,14 @@ export const MAPAS: Mapa[] = [
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
   },
+  {
+    id: 'treta_vietnan', nome: 'Treta no Vietnã', modo: 'Rounds · padrão', ctf: false,
+    resumo: 'Arena de selva úmida com vilarejo de madeira, barreiras e guaritas elevadas.',
+    detalhe: 'Três rotas atravessam vegetação tropical, cabanas, pontes e coberturas improvisadas. ' +
+      'Duas rampas largas dão acesso às guaritas laterais, criando posições elevadas sobre o centro ' +
+      'sem controlar todas as rotas. O riacho desacelera a travessia central, enquanto ' +
+      'os flancos secos favorecem avanço rápido entre árvores, caixas e barreiras de sacos de areia.',
+  },
 ];
 
 export interface Personagem { faccao: string; nome: string; blurb: string; }
