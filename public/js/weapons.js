@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { VERSION } from './version.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { aplicaKtx2 } from './ktx2.js';
 
 const loader = new GLTFLoader();
 const _cache = new Map();
@@ -229,7 +230,7 @@ function buildMag(id) {
   return g;
 }
 
-const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+const loadGLB = (url) => new Promise((res, rej) => aplicaKtx2(loader).load(url, res, undefined, rej));
 
 /* `ids` opcional: a partida carrega SÓ as armas que ela sorteou (ver pickMatchWeapons), e o
    resto chega em ocioso. Sem lista = elenco inteiro, que é o caminho do arnês e do menu. */
