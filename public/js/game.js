@@ -2737,7 +2737,7 @@ export class Game {
     this.vm.rig.startReload(WEAPONS[w].reload);
     p.sprayI = 0;   // recarregou = rajada nova (padrão de recuo do tiro 1)
     this.el.reloadNote.classList.remove('hidden');
-    this.sfx.reloadStart();
+    this.sfx.reloadStart(w);
     this._reloadLayers(w, WEAPONS[w].reload);
   }
   // Camadas de recarga (GUNFEEL): era 1 beep na entrada e 1 na saída. Agora magOut (trava +
@@ -2750,9 +2750,15 @@ export class Game {
     const alive = () => this._rlTok === tok && this.player.weapon === w && this._reloading();
     const at = (f, t) => setTimeout(() => { if (alive()) f(); }, t * 1000);
     const heavy = STATIC_CLASS[w] === 'awp' || STATIC_CLASS[w] === 'shotgun';
-    at(() => { s._burst(0.03, 0.16, 2600, 6, 'bandpass'); s._burst(0.09, 0.10, 700, 1.2); }, dur * 0.18);   // trava + pente saindo
-    at(() => { s._beep('sine', 180, 110, 0.08, 0.20); s._burst(0.06, 0.14, 900, 1.5); }, dur * 0.62);       // thunk grave do encaixe
-    at(() => { s._burst(0.035, 0.18, heavy ? 1400 : 2000, 7, 'bandpass'); s._burst(0.04, 0.13, heavy ? 2100 : 3000, 5, 'bandpass', 0.03); }, dur * 0.86);   // ferrolho
+    at(() => {
+      if (!s.magazineOut(w)) { s._burst(0.03, 0.16, 2600, 6, 'bandpass'); s._burst(0.09, 0.10, 700, 1.2); }
+    }, dur * 0.18); // trava + pente saindo
+    at(() => {
+      if (!s.magazineIn(w)) { s._beep('sine', 180, 110, 0.08, 0.20); s._burst(0.06, 0.14, 900, 1.5); }
+    }, dur * 0.62); // thunk grave do encaixe
+    at(() => {
+      if (!s.bolt(w)) { s._burst(0.035, 0.18, heavy ? 1400 : 2000, 7, 'bandpass'); s._burst(0.04, 0.13, heavy ? 2100 : 3000, 5, 'bandpass', 0.03); }
+    }, dur * 0.86); // ferrolho/pump
   }
   /* GUNFEEL — recuo de CÂMERA. Toma posse da curva de `p.recoilP` com um acessor em vez de
      editar o loop principal (que pertence a outra região do arquivo): o loop faz
@@ -2824,8 +2830,9 @@ export class Game {
     a.mag--;
     p.nextShotAt = this.time + w.rate;
     p.revealedAt = this.time;
-    if (p.weapon === 'awp') setTimeout(() => this.sfx.bolt(), 420);
-    this.sfx.shotWeapon(p.weapon, 0);   // 1ª pessoa = distância 0 no mix do synth
+    const firedWeapon = p.weapon;
+    if (firedWeapon === 'awp') setTimeout(() => this.sfx.bolt(firedWeapon), 420);
+    this.sfx.shotWeapon(firedWeapon, 0);   // 1ª pessoa = distância 0 no mix do synth
     // spread & direção. GUNFEEL: (a) ADS agora fecha o spread em TODAS as armas — antes só a
     // awp consultava spreadScope e 6 armas o declaravam sem nunca usar (ADS era só zoom);
     // (b) correr/pular abre — antes só o agachar entrava na conta; (c) a distribuição virou
@@ -4965,7 +4972,7 @@ export class Game {
         if (inf) am.res = WEAPONS[k].reserve;
       }
       this.el.reloadNote.classList.add('hidden');
-      this.sfx.reloadEnd();
+      this.sfx.reloadEnd(p.weapon);
     }
     // view model animation — recoil via RecoilAxis (spring snappy + residual, port CoD:
     // sobe instantâneo, volta quase tudo, settle lento; era decaimento linear dt*11)
@@ -5262,7 +5269,7 @@ export class Game {
       who.ammo[w].res = WEAPONS[w].reserve;
       {
         const oldW = who.weapon;                   // arma que estava na mão
-        this._switchWeapon(w); this.sfx.reloadEnd();
+        this._switchWeapon(w); this.sfx.reloadEnd(w);
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);

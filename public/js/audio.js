@@ -76,6 +76,27 @@ export class Sfx {
     if (this.onDuck) { try { this.onDuck(amt, hold); } catch {} }
   }
   _pick(arr) { return arr && arr.length ? arr[(Math.random() * arr.length) | 0] : null; }
+  // Contrato de arma, compatível com o manifesto antigo:
+  //
+  //   "ak": ["audio/weapons/ak-shot.mp3"]
+  //   "ak": { "shot": [...], "magazineOut": [...], "magazineIn": [...], "bolt": [...] }
+  //
+  // O array antigo continua sendo apenas o tiro. O objeto novo permite que a
+  // animação do view model tenha som próprio em cada batida, sem reintroduzir
+  // um pool global de samples de CS/Valve.
+  _weaponCue(weapon, cue = 'shot') {
+    const entry = this.pack?.weapons?.[weapon];
+    if (Array.isArray(entry)) return cue === 'shot' ? this._pick(entry) : null;
+    if (!entry || typeof entry !== 'object') return null;
+    const value = entry[cue];
+    return Array.isArray(value) ? this._pick(value) : (typeof value === 'string' ? value : null);
+  }
+  _weaponSample(weapon, cue, vol = 1) {
+    const file = this._weaponCue(weapon, cue);
+    if (!file) return false;
+    this._sample(file, vol);
+    return true;
+  }
 
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
@@ -474,7 +495,10 @@ export class Sfx {
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
     vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f) { this.duck(0.3, 0.16); this._sample(f, vol); return; } }
+    if (this.pack?.weaponSamples) {
+      const f = this._weaponCue(w, 'shot');
+      if (f) { this.duck(0.3, 0.16); this._sample(f, vol); return; }
+    }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.
@@ -517,14 +541,28 @@ export class Sfx {
     this.ensure(); this._burst(.08, .3, 1200); }
   knifeDeploy(){ const s = this._cs('knifedeploy'); if (s) { this._sample(s, .7); } }
   dryFire()   { this.ensure(); this._beep('square', 1200, 900, .03, .1); }
-  // bolt da AWP: sample real do pack quando houver; fallback = 2 cliques de metal filtrado
-  // (antes: 2 beeps square "game boy" a +420ms — soava como eco digital depois do estouro)
-  bolt()      { const s = this._cs('bolt'); if (s) { this._sample(s, .8); return; }
+  // Bolt/pump pertence à arma para que rifle, sniper e escopeta não tenham a
+  // mesma assinatura. O pool legado `cs.bolt` só fica como fallback local.
+  bolt(w = null) {
+    if (w && this._weaponSample(w, 'bolt', .8)) return true;
+    const s = this._cs('bolt'); if (s) { this._sample(s, .8); return true; }
     this.ensure(); this._burst(.03, .16, 2400, 3, 'bandpass'); this._burst(.035, .14, 1700, 3, 'bandpass', .11); }
-  reloadStart(){ const s = this._cs('reload'); if (s) { this._sample(s); return; }
+  reloadStart(w = null) {
+    if (w && (this._weaponSample(w, 'reloadStart') || this._weaponSample(w, 'reload'))) return true;
+    const s = this._cs('reload'); if (s) { this._sample(s); return true; }
     this.ensure(); this._beep('square', 240, 160, .07, .16); this._burst(.08, .2, 2000); }
-  reloadEnd() { const s = this._cs('reloadend'); if (s) { this._sample(s); return; }
+  reloadEnd(w = null) {
+    if (w && this._weaponSample(w, 'reloadEnd')) return true;
+    const s = this._cs('reloadend'); if (s) { this._sample(s); return true; }
     this.ensure(); this._beep('square', 180, 420, .09, .2); this._burst(.06, .25, 2600); }
+  magazineOut(w = null) {
+    if (w && this._weaponSample(w, 'magazineOut', .85)) return true;
+    return false;
+  }
+  magazineIn(w = null) {
+    if (w && this._weaponSample(w, 'magazineIn', .9)) return true;
+    return false;
+  }
   hitmark()   { this.ensure(); this._beep('sine', 1400, 1100, .05, .22); }
   killConfirm(){ this.ensure(); this._beep('sine', 660, 660, .07, .25); this._beep('sine', 990, 990, .1, .25, .08); }
   hurt()      { this.ensure(); this._beep('sawtooth', 180, 90, .18, .3); this._burst(.1, .2, 500); }

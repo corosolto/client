@@ -15,6 +15,9 @@ arquivo sem origem verificável.
 O ledger de cada fonte tem um bloco JSON delimitado. O campo `accountPlan` é
 obrigatório para geração porque o direito comercial pode depender do plano
 vigente. O hash é do MP3 final, depois de qualquer normalização/transcodificação.
+Como `public/audio/` é local, um lote instalado pode usar
+`SOURCES.local.md` ao lado do `SOURCES.md` versionado; o pré-voo prioriza esse
+ledger local. Nunca suba recibos, e-mails, chaves ou dados de pagamento.
 
 ## Roteiro sem perda
 
@@ -60,3 +63,27 @@ npm run eval:audio-provenance             # testa a própria trava e mutações
 O pré-voo não substitui conselho jurídico: ele impede a ausência de evidência,
 mas cabe ao responsável conferir os termos do provedor e do plano antes de uma
 distribuição monetizada.
+
+## Eventos de recarga por arma
+
+Além da forma antiga (`"ak": ["audio/...-shot.mp3"]`), o manifesto aceita uma
+entrada por ação. A forma antiga continua válida e significa apenas `shot`.
+
+```json
+{
+  "weapons": {
+    "ak": {
+      "shot": ["audio/a/tiro.mp3"],
+      "magazineOut": ["audio/a/pente-sai.wav"],
+      "magazineIn": ["audio/a/pente-entra.wav"],
+      "bolt": ["audio/a/ferrolho.wav"]
+    }
+  }
+}
+```
+
+`game.js` dispara essas três ações nos marcos da animação de reload. Sem o
+arquivo daquela ação, o jogo mantém o fallback sintético; não deve cair em
+efeito de CS/Valve. O pacote de lançamento deve declarar `licenseProfile` como
+`release-safe` e não incluir referências a fontes que não tenham passado pelo
+ledger.
