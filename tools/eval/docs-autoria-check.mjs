@@ -56,7 +56,8 @@ if (spawnSync('node', [GERADOR, '--check'], { encoding: 'utf8' }).status !== 0) 
 
 /* A DOCSAUT2 pergunta se `--autoria` MORDE a autoria torta. Numa branch onde ela já está torta
    por si, a pergunta não tem resposta: pular dizendo isso é honesto, cobrar não. */
-const autoriaMedivel = spawnSync('node', [GERADOR, '--check', '--autoria'], { encoding: 'utf8' }).status === 0;
+const autoriaDerivavel = spawnSync('node', [GERADOR, '--check', '--autoria'], { encoding: 'utf8' }).status === 0;
+const autoriaMedivel = autoriaDerivavel;
 
 const original = readFileSync(ALVO, 'utf8');
 const geradorOriginal = readFileSync(GERADOR, 'utf8');
@@ -81,6 +82,9 @@ try {
   if (comAutoriaTorta === original) throw new Error('não achei a frase de autoria para mutar');
   writeFileSync(ALVO, comAutoriaTorta);
   if (!rodar([])) falhas.push('DOCSAUT1 autoria torta REPROVOU o PR — cobra de quem não pode consertar (só é derivável após o squash)');
+  /* O outro lado da tolerância (achado da sessão game4-fc): se a autoria ERA derivável aqui e
+     mesmo assim não foi medida, o portão ficou cego calado — que é o buraco do #398. */
+  if (autoriaDerivavel && !autoriaMedivel) falhas.push('DOCSAUT4 autoria era derivável e a régua pulou a medição — portão cego');
   if (!autoriaMedivel) console.log('  \x1b[33m⚠\x1b[0m DOCSAUT2 pulada: a autoria já está torta nesta branch (autor novo no histórico), então a mutação não é medível aqui');
   if (autoriaMedivel && rodar(['--autoria'])) falhas.push('DOCSAUT2 autoria torta PASSOU com --autoria — o portão da main está cego para o único lugar onde o número é derivável');
   writeFileSync(ALVO, original);
