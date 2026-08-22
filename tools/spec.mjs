@@ -13,13 +13,16 @@
    Brasil?), fica com a skill `asset-review`.
 
    ── O CONTRATO ──────────────────────────────────────────────────────────────
-   Ficha é um MD em plans/ com `<!-- spec:time -->` ou `<!-- spec:mapa -->` na
+   Ficha é um MD em plans/ com `<!-- spec:time -->`, `<!-- spec:mapa -->` ou
+   `<!-- spec:asset -->` na
    primeira linha. O marcador é o que separa ficha de plano comum: o check varre
    plans/ e só valida quem se declara spec.
 
    time: cada seção `## N. Nome — papel` exige Visual, Papel, Arma e Mecânica.
    mapa: exige as seções Local real, Layout, Cobertura, Linhas de visão,
          Referências e Régua de aceite.
+   asset: exige Objetivo, Direção visual, Contrato do asset, Evidência e
+          procedência e Portões de aceitação.
 
    Uso:
      node tools/spec.mjs new time <slug>     → cria plans/NN-<SLUG>.md
@@ -32,11 +35,15 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const MARCADOR = /<!--\s*spec:(time|mapa)\s*-->/;
+const MARCADOR = /<!--\s*spec:(time|mapa|asset)\s*-->/;
 const CAMPOS_TIME = ['Visual', 'Papel', 'Arma', 'Mecânica'];
 const SECOES_MAPA = [
   'Local real', 'Layout', 'Cobertura (cover)',
   'Linhas de visão', 'Referências', 'Régua de aceite',
+];
+const SECOES_ASSET = [
+  'Objetivo', 'Direção visual', 'Contrato do asset', 'Evidência e procedência',
+  'Portões de aceitação',
 ];
 
 /* ── extração ─────────────────────────────────────────────────────────────── */
@@ -90,13 +97,24 @@ function validaMapa(md, arq) {
   return erros;
 }
 
+function validaAsset(md, arq) {
+  const erros = [];
+  const titulos = secoes(md).map((s) => s.titulo.toLowerCase());
+  for (const s of SECOES_ASSET) {
+    if (!titulos.some((t) => t.startsWith(s.toLowerCase()))) {
+      erros.push(`${arq}: spec:asset sem a seção "## ${s}"`);
+    }
+  }
+  return erros;
+}
+
 function validaArquivo(arq, exigeMarcador = false) {
   const md = readFileSync(arq, 'utf8');
   const m = md.slice(0, 400).match(MARCADOR);
   if (!m) return exigeMarcador
-    ? [`${arq}: arquivo pedido explicitamente sem <!-- spec:time --> ou <!-- spec:mapa -->`]
+    ? [`${arq}: arquivo pedido explicitamente sem marcador spec válido`]
     : []; // plano comum varrido em diretório, fora da jurisdição desta régua
-  return m[1] === 'time' ? validaTime(md, arq) : validaMapa(md, arq);
+  return m[1] === 'time' ? validaTime(md, arq) : m[1] === 'mapa' ? validaMapa(md, arq) : validaAsset(md, arq);
 }
 
 /* ── scaffold ─────────────────────────────────────────────────────────────── */
@@ -172,9 +190,24 @@ const FIXTURE_QUEBRADA = `<!-- spec:time -->
 - **Mecânica:**
 `;
 
+const FIXTURE_ASSET_QUEBRADA = `<!-- spec:asset -->
+# 99 — ASSET QUEBRADO
+
+## Objetivo
+
+## Direção visual
+
+## Contrato do asset
+
+## Evidência e procedência
+`;
+
 function mutante() {
-  /* A fixture tem Papel e Mecânica vazios. Se a régua aprovar, ela está cega. */
-  const erros = validaTime(FIXTURE_QUEBRADA, '<mutante>');
+  /* As fixtures deixam campos/seções exigidos vazios. Se uma passar, a régua está cega. */
+  const erros = [
+    ...validaTime(FIXTURE_QUEBRADA, '<mutante:time>'),
+    ...validaAsset(FIXTURE_ASSET_QUEBRADA, '<mutante:asset>'),
+  ];
   if (erros.length === 0) {
     console.error('MUTANTE PASSOU: spec sem Papel/Mecânica foi aprovado — a régua está cega.');
     process.exit(1);
