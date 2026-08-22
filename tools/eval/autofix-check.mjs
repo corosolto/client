@@ -17,6 +17,10 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
+   AF7 · todo commit que o bot faz carrega os trailers que o CI cobra de humano:
+         `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem eles o bot conserta
+         o PR e reprova o mesmo PR no passo seguinte - foi o que aconteceu no primeiro
+         disparo real, em 22/08.
    AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
          releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
          gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
@@ -40,6 +44,7 @@ const MUTANTES = {
   'automerge-volta': 'AF4',
   'resolve-conflito-de-codigo': 'AF5',
   'sem-varredura-pos-release': 'AF6',
+  'commit-sem-trailer': 'AF7',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -107,6 +112,14 @@ if (resolveConflito) {
   if (!/--caminhos/.test(ler('scripts/ci/autofix_allowlist.py'))) {
     falhas.push('AF5 autofix_allowlist.py não entende `--caminhos`, que é como o resolvedor o consulta');
   }
+}
+
+/* ---- AF7: os commits do bot levam os trailers que o CI cobra ---- */
+if (MUT === 'commit-sem-trailer') wf = wf.replace(/\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/g, '');
+const commits = [...wf.matchAll(/git commit[\s\S]{0,600}?(?=\n\s{0,10}[a-z-]+:|\n\s*$)/g)].map((m) => m[0]);
+for (const c of commits) {
+  if (!/Agent:/.test(c)) falhas.push('AF7 um `git commit` do bot não leva o trailer `Agent:` — o agente_check reprova o PR que ele acabou de consertar');
+  if (!/Signed-off-by:/.test(c)) falhas.push('AF7 um `git commit` do bot não leva `Signed-off-by:` — o dco reprova o PR que ele acabou de consertar');
 }
 
 /* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
