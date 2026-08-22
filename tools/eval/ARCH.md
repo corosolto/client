@@ -10,12 +10,12 @@
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
 | `public/js/game.js` | 6911 | 251 |
-| `public/js/main.js` | 2699 | 252 |
-| `public/js/glbchars.js` | 845 | 60 |
+| `public/js/main.js` | 2701 | 252 |
+| `public/js/glbchars.js` | 846 | 60 |
 | `public/js/characters.js` | 1069 | 40 |
 | `public/js/vmattach.js` | 629 | 4 |
 | `public/js/springs.js` | 261 | 28 |
-| `public/js/weapons.js` | 347 | 20 |
+| `public/js/weapons.js` | 348 | 20 |
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
