@@ -69,6 +69,7 @@
     "eval:pickuparma": "node tools/eval/pickup-arma-check.mjs",
     "eval:fixture": "node tools/eval/fixture-check.mjs",
     "eval:preload": "node tools/eval/preload-check.mjs",
+    "eval:tela": "node tools/eval/tela-check.mjs",
     "eval:armas": "node tools/eval/armas-check.mjs",
     "eval:comentario": "node tools/eval/comentario-check.mjs",
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",

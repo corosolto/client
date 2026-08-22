@@ -134,6 +134,12 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:armas
 
+      # O que o jogador sente é o relógio, não a VRAM: dois PRs meus passaram em régua de
+      # grandeza vizinha e foram reprovados jogando. Esta mede tempo até o elenco na tela.
+      - name: eval:tela (tempo até o elenco aparecer)
+        if: ${{ !cancelled() }}
+        run: npm run eval:tela
+
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
         if: failure()
