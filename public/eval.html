@@ -112,6 +112,7 @@ function measure(){
 window.EVAL = {
   ready:false,
   setAngle(n){ setAngle(n); renderer.render(scene,cam); },
+  setBackground(hex=0x20242b){ renderer.setClearColor(hex, 1); renderer.render(scene,cam); },
   measure,
   info(){ return { char:CHAR, loaded:!!group }; },
 };

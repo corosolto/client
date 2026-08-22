@@ -1,0 +1,176 @@
+{
+  "provider": "openrouter",
+  "model": "openai/whisper-large-v3",
+  "generatedAt": "2026-08-11T21:38:30.599Z",
+  "note": "STT prova conteúdo aproximado; timbre, interpretação e aprovação continuam humanos.",
+  "results": [
+    {
+      "characterId": "chroma-rex",
+      "key": "select-01",
+      "file": "audio/characters/chroma-rex/select/select-01.mp3",
+      "expected": "No fundo verde eu desapareço.",
+      "transcript": "No fundo verde, eu desapareço.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3,
+        "silenceSeconds": 0.826,
+        "silenceRatio": 0.275,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -16.6
+      },
+      "usage": {
+        "seconds": 3,
+        "cost": 0.000075
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "select-02",
+      "file": "audio/characters/chroma-rex/select/select-02.mp3",
+      "expected": "Chroma pronto. Efeito ligado.",
+      "transcript": "Chroma pronto. Efeito ligado.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.12,
+        "silenceSeconds": 1.005,
+        "silenceRatio": 0.322,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.7
+      },
+      "usage": {
+        "seconds": 3.12,
+        "cost": 0.000078
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "kill-01",
+      "file": "audio/characters/chroma-rex/kill/kill-01.mp3",
+      "expected": "Efeito prático!",
+      "transcript": "Efeito prático",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.08,
+        "silenceSeconds": 0.7,
+        "silenceRatio": 0.336,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -22.1
+      },
+      "usage": {
+        "seconds": 2.08,
+        "cost": 0.000052
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "kill-02",
+      "file": "audio/characters/chroma-rex/kill/kill-02.mp3",
+      "expected": "Recorte perfeito!",
+      "transcript": "Recorte perfeito.",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.44,
+        "silenceSeconds": 0.874,
+        "silenceRatio": 0.358,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -21.4
+      },
+      "usage": {
+        "seconds": 2.44,
+        "cost": 0.000061
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "kill-03",
+      "file": "audio/characters/chroma-rex/kill/kill-03.mp3",
+      "expected": "Sumiu do quadro!",
+      "transcript": "Sumiu do quadro?",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.04,
+        "silenceSeconds": 0.606,
+        "silenceRatio": 0.297,
+        "maxVolumeDb": -2.9,
+        "meanVolumeDb": -17
+      },
+      "usage": {
+        "seconds": 2.04,
+        "cost": 0.000051
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "radio-contato",
+      "file": "audio/characters/chroma-rex/radio/radio-contato.mp3",
+      "expected": "Contato fora do chroma!",
+      "transcript": "Contato fora do croma.",
+      "wordEdits": 1,
+      "expectedWords": 4,
+      "wordErrorRate": 0.25,
+      "audio": {
+        "durationSeconds": 2.24,
+        "silenceSeconds": 0.6,
+        "silenceRatio": 0.268,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -18.9
+      },
+      "usage": {
+        "seconds": 2.24,
+        "cost": 0.000056
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "radio-avanco",
+      "file": "audio/characters/chroma-rex/radio/radio-avanco.mp3",
+      "expected": "Efeito pronto. Avança!",
+      "transcript": "Efeito pronto. Avança.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.96,
+        "silenceRatio": 0.364,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -22.1
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.000066
+      }
+    },
+    {
+      "characterId": "chroma-rex",
+      "key": "radio-cobertura",
+      "file": "audio/characters/chroma-rex/radio/radio-cobertura.mp3",
+      "expected": "Faço a máscara daqui!",
+      "transcript": "Faça a máscara daqui.",
+      "wordEdits": 1,
+      "expectedWords": 4,
+      "wordErrorRate": 0.25,
+      "audio": {
+        "durationSeconds": 2.08,
+        "silenceSeconds": 0.563,
+        "silenceRatio": 0.271,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.8
+      },
+      "usage": {
+        "seconds": 2.08,
+        "cost": 0.000052
+      }
+    }
+  ]
+}

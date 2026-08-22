@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado revisado: **2026-08-17**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-08-18**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatos recentes e resolução*.
 >
@@ -16,17 +16,29 @@
 
 ```
 CRÍTICAS: 42/55 passam  ← nenhuma falha nova
-DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8,
-          CHR1, CHR3, CHR4, CTF1
-AVISOS:   VM15 e BOT2 fora do alvo
+DÍVIDAS:  VM1, VM3, VM9, VM12, VM20, VM16, VM18, VM19, BOT8, CHR1, CHR3,
+          CHR4, CTF1 (KNOWN-RED.json — não reprovam, mas continuam devidas)
+AVISOS:   VM15, BOT2, CHR5B fora do alvo
 PULADAS:  4 (exigem browser ou arnês ausente)
 ```
 
-Colado de uma execução real de **17/08**. As 13 dívidas continuam todas identificadas em
-`KNOWN-RED.json` e não reprovam o processo; o gate terminou com código 0. `AUD1` passou
-depois do refresh do JSON de viewmodel. Na mesma árvore, o `check:fast` percorreu os **51
-passos** pelo runner e todos passaram — inclusive os novos `eval:parquewheel`,
-`eval:velhooeste`, `eval:penitenciaria`, `eval:backendhints` e `changelog:check`.
+Colado de uma execução real de **17/08** (`npm run check`, que roda `eval:vm` antes das
+invariantes — ver BUG-02). **Zero vermelhas reprovando**: as 13 antigas viraram dívida
+declarada em `KNOWN-RED.json` (continuam devidas, não reprovam), TEX1 ficou VERDE (as 10
+superfícies do fy_quebrada ganharam albedo) e a VM14 saiu do vermelho em 17/08 quando as
+duas armas do fundo do canal do corrego subiram para as cabeceiras das pontes. Na mesma
+rodada a wave 3 do BUG-54 fechou: `eval:occluders` 0/0/0 nos 10 mapas.
+
+> **`check:fast` pós-swarm, 18/08: 77/84** (após o regen final do grafite do mansão). As 7
+> vermelhas restantes reproduzem na base 03def43 do dia (SB7, mapid-M1, UIR4/22/26/30 do
+> redesign, camera-grip, char-thumbnail lenda-lanhouse, asset-integrity camera-roxa, devport
+> de ambiente) — nenhuma é das 4 frentes do swarm de 18/08 (BUG-55, 56, 57 parte 2, 59).
+
+Duas reprovações do `check:fast` que **não são defeito de código de jogo** e que cortam a
+corrente de `&&` se ficarem no meio dela: `anims:check` (BUG-15, `public/models/anims/`
+não versionado) — por isso ele foi para o FIM do `check:fast` em 05/08 — e `feet:check`,
+que reprova enquanto houver mudança de personagem não regenerada na árvore
+(`npm run feet`).
 
 Mudou em 04/08: **CHR5B saiu do aviso e ficou VERDE** (27/44 personagens sem mapa de
 superfície → 0/44) e entrou a **CHR7** (convenção de skin), verde — daí 49 e não 48.
@@ -39,6 +51,27 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
+
+**Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
+debug vermelho cobrindo metade da tela — `THREE.WebGLProgram: Shader Error, 'uv1':
+undeclared identifier`. O erro seguia vivo na v2.1.0-teste depois do merge da main.
+
+**Causa raiz — medida, não palpite.** O Mini Cooper (`2014_mini_cooper_s_f56.glb`) tem
+`normalTexture.texCoord: 1` (glTF legal, a primitiva tem TEXCOORD_1). O `PropBatch`
+instancia via `normalizeGeo` (`mapprops.js`), que reescrevia a geometria só com
+{position, normal, uv}: o uv1 sumia e o material (com a textura no canal 1) ficava. O
+three r160 só declara `attribute vec2 uv1` quando a GEOMETRIA tem uv1
+(`three.module.js:20851`, `vertexUv1s: HAS_ATTRIBUTE_UV1`) — shader compilado usa `uv1`
+sem declaração. Confirmação em runtime: os 3 programas com `diagnostics` no renderer da
+mansão bootada eram exatamente os materiais do Mini com `uv1` no cacheKey. Varredura de
+JSON em 929 GLBs: **7 com textura em canal ≥1** (Mini, DeLorean, Cobalt, Fiesta, M8,
+Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
+
+**Conserto:** `normalizeGeo` agora carrega uv1 (o da fonte, ou cópia do uv — o merge
+exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
+normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
+Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
 **Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
@@ -232,7 +265,6 @@ true; }`, que calaria crash de verdade. **3 mutações medidas:** `sem-midia` (o
 `/aborted|interrupted/i` e o crash de `audio.js` vira `recuperavel`) e `sem-cota-midia`
 (anula o teto e o abort volta a comer a cota de exceção). Todas acendem EP14; as 32
 anteriores seguem acendendo as suas — **35 de 35 na matriz completa**.
-
 ### ~~BUG-72 · `console.error` informativo virava bug do jogo, e a pilha do idioma `(msg, e)` se perdia~~ · RESOLVIDO 19/08 (issue #382)
 
 **Sintoma (literal, issue #382, aberta pelo `crash-fix.yml`):**
@@ -406,7 +438,6 @@ o valor bruto: relatório com mensagem acima de 500 chars ou source acima de 300
 casos — os três publicados acima são byte a byte os mesmos. **Não verificado:** POST real
 contra staging; a guarda foi exercitada pelo helper de produção, pelo trecho executado do
 cliente e pela conferência de fiação, não contra o banco.
-
 ### ~~BUG-70 · crash em produção no `_updatePickups` — arma do mapa com id que não existe~~ · RESOLVIDO 18/08
 
 **Sintoma (literal, issue #366, aberta pelo `crash-fix.yml`):**
@@ -678,6 +709,53 @@ Um compile real no Chrome/SwiftShader com contexto WebGL1 gerou os dois programa
 de #120/#121; #115, #127 e #130 permanecem abertos porque seus logs não identificam o mesmo
 programa. O shader crítico fica exatamente no piso mínimo, então novos mapas devem continuar
 reutilizando varyings ou aplicar o perfil seguro.
+
+### BUG-40 · Míticos deformados, semanticamente errados e sem grip funcional — ABERTO 10/08
+
+**Sintoma (do dono, com 49 capturas da tela real):** *"TEM Varios problemas nos
+personagens, o boto ta com as maos esquisitas nenhum segura as maos dieito na arma,
+varios tao com formato de balao um bug antigo"*. Nas figuras, Boto é um homem de terno
+com mãos alongadas em vez do golfinho rosa; Lobisomem é um homem comum; Cuca tem a malha
+rasgada; armas flutuam, atravessam mãos ou ficam presas fora da pegada em vários membros
+do time. A descrição antiga de lobo-guará foi explicitamente revogada pelo dono: a
+referência válida é o lobo preto, forte e dentuço em `references/mitico/lobisomem/`.
+Prévia Mint nova aprovada em 10/08: *"agora sim o lobisomen ficou top"*; o GLB foi
+integrado e passou pela captura do runtime, mas a frente Mítica continua aberta pelos
+outros personagens e pelos portões descritos abaixo.
+
+**Evidência automática inicial:** `node tools/eval/mythic-character-check.mjs` mede
+9/9 GLB e 9/9 PBR, mas só 8/9 com skin; `bandeirante` tem zero skins. O resultado prova
+também que a régua vigente está incompleta: ela aprova identidade visual errada e não
+mede o grip que aparece na seleção.
+
+**Régua antes do conserto:** `tools/eval/mythic-character-check.mjs` para arquivo/skin/PBR;
+`tools/eval/select-inflate.mjs` para deformação GPU no caminho da seleção;
+`tools/eval/select-mount.mjs` para montagem da arma no mesmo caminho. Falta acrescentar
+uma sonda de identidade/proveniência e provar as mutações antes de trocar os assets.
+
+**Lobisomem, estado medido em 10/08.** O auditor do Blender
+(`tools/blender-character-audit.py`) confirma skin nativa e bind com os pés no chão; a
+`Icosphere` vista pelo importador foi refutada como hipótese — é helper do Blender e não
+existe na cena glTF. No caminho real da seleção, `select-mount` passa a shotgun nas duas
+mãos; o mutante `--mutate=tras` reprova o contato da mão de apoio. A captura nova da
+`select-inflate --fotos` mostrou outro defeito que o enquadramento antigo escondia: o
+plano `y=0` cortava as duas pernas porque os cinco clipes afundavam o corpo (pior caso
+medido: `-0,2692 m`). O gerador de `foot-offsets.json` agora aceita acima do teto **só**
+os pares do Lobisomem conferidos em imagem; `npm run feet:check` sai 0 e
+`--mutante=semverificados` sai 1 recolocando os cinco na lista de suspeitos. A revisão
+adversarial aprovou o item de engine depois do A/B: antes não havia patas; depois, patas,
+dedos e garras aparecem inteiros sobre o piso.
+
+**Ainda não está verde por decreto.** `select-inflate` mede `32,6` arestas ruins/10 mil
+contra teto `23,6`, embora a figura posada não mostre o antigo formato de balão; a hipótese
+de morfologia foi localizada com `--diagnose`: as arestas que dobram se concentram em
+`Head`, `LeftHand` e `Curl_R/L`; perna, quadril e torso não aparecem entre os oito ossos
+dominantes. Isso refuta balão corporal, mas ainda não autoriza exceção sem uma referência
+monstruosa aprovada. A revisão adversarial também reprovou a
+brasilidade: a silhueta lê como lobisomem de fantasia genérico, e
+`references/mitico/lobisomem/` ainda não tem `FONTE.md`. Não afrouxar o teto nem inventar
+adereço sem decisão do dono.
+
 
 ### ~~BUG-45 · log WebGL nulo derrubava o loop de render~~ · RESOLVIDO 11/08
 
@@ -1406,7 +1484,480 @@ mudar.
 
 ## P1 — o jogador vê
 
-### ~~BUG-54 · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
+### ~~BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado)~~ · RESOLVIDO 18/08 (mídia)
+
+**Evidência:** `eval:redesign` UIA1/UIA4/UIR1 vermelhas desde o merge da main (alpha.147,
+17/08). A régua da main exige avatar `.webp`, vídeo de seleção `.webm` e artes de
+vitória/derrota para TODO o elenco — os 18 personagens que esta branch acrescentou
+(mítico + facções novas: boto, cuca, curupira, saci, lampião, gilbomes, camera-roxa…)
+não tinham o lote.
+
+**Antes × depois (18/08):** antes — UIA1 faltava 18 avatares + 18 seleções + 36 artes,
+UIA4 `auditoria=divergente`, UIR1 sem wiring (consertada no commit anterior desta branch).
+Depois — lote completo gerado do PRÓPRIO pipeline do jogo (mounttest/GLB, sem IA):
+54 WebM VP9 (18 seleção 640×854 + 36 resultado 640×640), 18 avatares 256×256 derivados do
+frame @1.0s (mesma receita dos 44, punk/gotinha pinados intactos), 36 artes 1024×1536 alpha
+com margens UIA19 — `eval:redesign` UIA1/UIA4/UIR1 VERDES, placar 43→45 ✓.
+
+**Dois defeitos de arnês achados e consertados no caminho:**
+1. `trim()` do sharp 0.35.3 é no-op com fundo transparente (reproduzido em PNG sintético) —
+   o `char-result-stills.mjs` faz trim manual por bbox de alpha>8.
+2. O `caixa()` (bbox por esqueleto) subestima largura em 4 rigs (bandeirante/cuca/lobisomem/
+   microfonildo saíam cortados na borda) — o quadro agora re-renderiza com folga crescente
+   se o conteúdo toca borda.
+3. `serve.mjs` não resolvia `define:vars` do index.astro (SUPPORT_URL, PR #284) e `/` morria
+   com ReferenceError no arnês — variáveis conhecidas viram tabela no renderer.
+
+**Evidência do lote:** prancha e recibos em `tools/eval/asset-evidence/bug59/`
+(contact-sheet-18.png + receipts.json); crítico numérico adversarial
+(`tools/eval/bug59-critico.mjs`) sem reprovações: inventário 62/62/124 exato, 54/54 WebM
+VP9, 18/18 artes nos limites, pares vitoria/derrota byte-idênticos (convenção do lote de 44).
+
+**O que NÃO fechou aqui (declarado):** (1) leitura VISUAL das pranchas por olho humano — o
+perfil numérico a 64px tem figura e contraste reais (corpo 11–36%, abaixo dos 34–51% do
+lote de 44: enquadramento tq mais afastado), mas "parece o Brasil?" só o dono responde;
+(2) `eval:char-thumbnail` tem 1 vermelha pré-existente (thumbnail lenda-lanhouse) — frente
+de models, fora do escopo de mídia; (3) UIR4/UIR22/UIR26/UIR30 seguem vermelhas — outras
+frentes desta branch, não são de mídia.
+
+### ~~BUG-62 · Home dava ReferenceError `moduleCacheManifest is not defined` no request (SSR)~~ · RESOLVIDO 18/08
+
+**Sintoma:** dev server e função da Vercel devolviam `/` com **500 e 0 bytes** —
+`ReferenceError: moduleCacheManifest is not defined` em `src/pages/index.astro:12`.
+
+**Causa raiz:** o merge `0040c73` resolveu o conflito do frontmatter deixando a CHAMADA
+nua `moduleCacheManifest()` (padrão pré-#194) e jogando fora o import. O padrão vigente
+desde #194 é a constante `__MANIFESTO_JS__` injetada pelo `astro.config` via `vite.define`
+(o manifesto é calculado UMA vez no build — página SSR não lê disco no request, que é a
+classe do *"200 com 0 bytes"* de 12/08). `index.astro` era o único arquivo fora do padrão.
+
+**Por que nada viu (terceiro furo de arnês do mesmo merge):** `astro build` **não executa**
+frontmatter de página SSR — só compila. O build verde do BUG-61 não provava página viva. E
+a régua certa (`eval:ssr`, que renderiza o artefato construído e acusa corpo vazio) existia,
+mordia — e **não estava no `check:fast`**. Rodada contra o `.vercel/output` de ontem:
+SSR1 `/ status=500 0 bytes ✗`.
+
+**Antes × depois (18/08):** antes — `/` 500/0 bytes em dev e no artefato. Depois —
+`index.astro` usa `__MANIFESTO_JS__` (como `Layout.astro`), rebuild, `eval:ssr` verde:
+`/ status=200 76380 bytes`, SSR2/SSR3 PASSA, exit 0. Dev server reiniciado (o `vite.define`
+é congelado na subida) e `/` 200 com import map cache-busted.
+
+**Portão:** passo novo **`eval:build`** no fim do `check:fast` — `npm run build && eval:ssr`,
+sempre contra artefato fresco (artefato velho mede o mundo de ontem: mesma classe do BUG-02).
+A mutação é o estado real de hoje: a árvore de antes do conserto reprova, a de depois passa.
+
+### ~~BUG-61 · Merge de 17/08 quebrou o build do site e nenhuma régua viu~~ · RESOLVIDO 18/08
+
+**Sintoma:** `npm run build` (e o dev server) falham com *Closing tag '</div>' has no matching
+opening tag* em `src/pages/index.astro:997`.
+
+**Causa raiz:** o merge `0040c73` achatou o `set-preview-wrap` da main (que tinha dois divs
+internos) num `aside` vazio desta branch e sobrou um `</div>` sem abertura. Antes do merge o
+painão de settings era 41/41 divs balanceado; depois, 8 abre × 9 fecha.
+
+**Por que um dia de build quebrado passou em branco:** `npm run build` **não está no
+`check:fast`** — o portão mede o jogo e as docs, não o deploy. Evidência: a vermelha apareceu
+em 18/08 no primeiro build manual pós-merge. A régua que faltou acender: **build como passo do
+portão** (candidato a entrar no `check:fast`).
+
+**Antes × depois (18/08):** antes — `astro build` morre em CompilerError. Depois — remoção do
+`</div>` órfão, `Server built in 8.49s`, prune roda. Commit `60604fa`. A mutação que prova a
+régua futura é o próprio estado quebrado: um merge que perde uma abertura de tag tem que
+reprovar o portão no mesmo dia, não no próximo build manual.
+
+### ~~BUG-60 · Regen de grafite de UM mapa apaga os outros nove do layout~~ · RESOLVIDO 18/08
+
+**Sintoma:** `public/js/graffiti_layout.js` ficou com **1 de 10 mapas** (só `ferro_velho`) no
+meio do regen pós-merge de 17/08. `tools/eval/graffiti-layout-check.mjs` M1 vermelha para 9
+mapas ("chama grafitar mas não está no layout").
+
+**Causa raiz:** `tools/gen-graffiti-layout.mjs` extraía o JSON do `GRAFITE` da primeira `{`
+até o `lastIndexOf('}')` do arquivo — que desde a issue #82 é o fechamento do `GRAFITE_FP` no
+rodapé, não do `GRAFITE`. `JSON.parse` lança (*Unexpected non-whitespace character after
+JSON*), o `catch` vazio zera `anterior` ("recomeça") e o regen de um mapa só grava aquele
+mapa. A feature "preservar os outros" (comentário do próprio tool) nunca funcionou com o
+rodapé FP no arquivo; ninguém notou porque os regens anteriores eram sempre de TODOS os mapas.
+
+**Antes × depois (18/08):** antes — layout 1/10 mapas · 413 peças · M1 9× vermelha ·
+`check:fast` 72/83. Conserto: fim do JSON por casamento de chaves (string-aware), rejeitando
+o rodapé. Depois — regen **individual** dos 9 mapas (cada execução exercita o preserve: 829 →
+1156 → 1204 → … → 2993 peças acumulando, nunca perdendo mapa), check **10/10 mapas ·
+2993 peças · manifesto fresco** verde, `check:fast` **76/83** sem vermelha nova. A mutação
+que prova a régua foi a própria árvore quebrada de 18/08: a saída do tool com o defeito É o
+vermelho que a M1 acusa.
+
+### BUG-55 · Escala dos barracos/models errada no Lajes e no Córrego — ABERTO 17/08
+
+**Sintoma literal do dono (teste de 17/08):** lajes — *"o melhor em textura. mas barracos
+e model estao com escala errada"*; córrego — *"melhor em questao de mapa, mas mesmo erro
+de escala, e sem muito detalhes"*.
+
+**Régua (córrego, 18/08):** `npm run eval:escala-favela`
+(`tools/eval/escala-favela-check.mjs`, no `check:fast`) — 5 cláusulas medidas no mundo
+construído via harness: ESC1 toda casa com porta de 2,00–2,20 m e base no piso (portas
+medidas como componentes por aresta compartilhada da malha mesclada do `matVao`;
+cluster por centroide media 0,55 m numa porta de 2,10 m — quad de 2 triângulos não faz
+ponte), ESC2 passo de andar 2,4–2,8 m, ESC3 barraco de frente de muro 2,4–2,8 m,
+ESC4 palafita 2,4–2,8 m sobre os pilotis, ESC5 todo prop GLB na faixa de altura real
+da classe (registro `propEscala` do próprio mapa — valor de USO, não cópia).
+Mutantes: `porta-ana|piso-gigante|puxadinho-alto|palafita-alta|escala2x`, cada um
+reprovando a sua cláusula (0/15, 0/15, 0/19, 0/6, 0/22 medidos no estado verde).
+
+**Córrego — antes × depois (18/08, branch `swarm/bug55-corrego`):**
+
+| cláusula | antes | depois |
+|---|---|---|
+| ESC1 porta no térreo | **0 portas** — vão único de 1,0 m a 1,15 m do chão | 15/15 casas com porta de 2,10 m, base 0,02 m |
+| ESC2 passo de andar | 2,80 m | 2,80 m (já batia) |
+| ESC3 barraco de muro | 6/19 na faixa — até **3,75 m** | 19/19 — 2,40–2,79 m |
+| ESC4 palafita | 4/6 — corpos até **3,2 m** | 6/6 — 2,40–2,80 m |
+| ESC5 props GLB | 22/22 | 22/22 (já batia) |
+
+O defeito era um só e era de escala, não de detalhe: nenhuma fachada tinha porta que
+tocasse o piso (`map_corrego.js`, bloco (8) JANELA E PORTA — o vão nascia a 1,15 m em
+todos os pavimentos, inclusive o térreo), e barraco de 1 pavimento subia a 3,75 m.
+Conserto: porta de 2,10 m com base em 0,02 m no térreo (saindo 0,10 m da face para não
+nascer dentro do embasamento de 1,05 m, que avança 0,08 m), fileira C em
+`2,4 + (|z| mod 4)·0,13` e palafitas com corpo `h−0,4` na faixa. Janela só de andar
+para cima, com peitoril. Detalhe decorativo NÃO entrou (escopo: só escala; "sem muito
+detalhes" é frente de ambiência, BUG-57).
+
+**Custo declarado:** a mudança de geometria deixa o `graffiti-layout-check` (F2
+fy_corrego) vermelho até o integrador regar `npm run grafite fy_corrego` — esperado e
+declarado; regens são serializados na integração. O `mapa-id-check` (M1) já reprova na
+base 03def43 por ids `fy_*` em `docs/docs/*.md` pré-existentes — não é desta frente.
+Figuras 3:2 antes/depois com referência humana (bot + vareta de 1,70 m) em
+`tools/eval/asset-evidence/bug55-corrego/{antes,depois}/`.
+
+**Lajes:** mesma família de defeito, frente BUG-58 — não medido aqui.
+
+### BUG-56 · Mansão do Joá é o mapa mais low-poly — jogabilidade boa, visual reprovado — CORRIGIDO EM ARQUIVO 18/08, aguardando olho do dono
+
+> **Atualização 19/08 (frente C do swarm v2.1.0):** a cláusula de água deste contrato foi
+> **INVERTIDA** pela decisão do dono 18/08 (plans/13: "a piscina nao afunda") — ver
+> **BUG-67**. A frota GLB, o pack Mint e o espelho d'água NÃO entrável seguem valendo aqui.
+
+**Sintoma literal do dono:** *"esta bom como mapa pessimo visualmente mais lowpoly de
+todos, usar carros que temos em glbs e tambem gerar models no mint gg pro jardim, casa"*.
+
+**Conserto (worktree swarm/bug56-mansao):** a frota procedural virou GLB do acervo
+(fusca `1968_volkswagen_beetle`, Mini Cooper S, Golf R32 — ids/fichas do `map_havan.js`,
+escala de fábrica, colisor das 3 vagas preservado, `carroGenerico` rebaixado a fallback
+de `?glb=0`/node) e o pack Mint "Mansão do Joá — jardim e casa" (6 props: banco
+modernista, poste, escultura, vaso tropical, lounge, lampião de fachada) foi integrado
+com colisor próprio por prop. Registro: `mansao_jardim_pack` em `mint-assets.json`.
+
+**O que a INTEGRAÇÃO achou depois do merge (18/08):** o agente tinha posto o
+`1981_dmc_delorean` — o `grafite-editorial` reprova (marca protegida na mansão; o mutante
+`carros` existe exatamente pra isso) e a régua estava certa contra o review adversarial do
+agente, que cobriu com "direção do dono" — veto de copyright do `AGENTS.md` prevalece.
+Trocado pelo beetle. A régua nova `mansao-glb-fit` veio com a frota HARDCODED (continuava
+verde lendo delorean com o mapa já trocado — o modo de cegueira "lê a declaração" da
+lição 2): agora lê o `GARAGEM` do fonte. E ganhou PISO de largura 1,30 m — o
+`1986_ford_escort_xr3` do acervo tem bbox 31×47×90 (unidade quebrada), a escala
+média-geométrica o renderizava a **1,12 m de largura** e nenhuma cláusula acusava (só
+havia teto). Provado na integração: escort exit 1, beetle (1,57 m) exit 0, mutante glb2x
+exit 1. Dívida de acervo: `1986_ford_escort_xr3`, `1999_volkswagen_gol_2000_gti_g2` e
+`1989_ford_fiesta_xr2i_mk3` com bbox em unidade quebrada — não usar em mapa sem consertar
+o GLB ou estender a ficha.
+
+**Réguas:** `tools/eval/mansao-glb-fit.mjs` (NOVA) mede a bbox real de cada GLB escalada
+como o jogo escala e compara com o colisor declarado — 8/8 verde; mutante `--mutante=glb2x`
+(dobra a malha medida) → 8/8 ESTOURA, exit 1. O primeiro vermelho dela foi o vaso
+(base rígida 0,67 m sobre colisor 0,60 m): colisor corrigido para 0,70 m — malha ≤ col +2 cm
+continua valendo, teto não afrouxou. O contrato `mansao-water-check` ganhou 6 cláusulas de
+frota GLB e 4 mutantes novos (`carros-glb-ausentes`, `carro-glb-clonado`, `carro-glb-gigante`,
+`vaga-sem-colisor`), todos mordendo a cláusula certa, exit 1 comprovado. Verdes preservadas:
+`map-check fy_mansao` (MAP1 dentro 0, CTF2 ≥2 rotas), `pickup-check` (sem alcance 0),
+`eval:map-new`, `eval:asset-integrity` (pack segue a forma dos 4 packs existentes: sem
+`finalSha256`, proveniência no `source`), validador Khronos ad hoc 6/6 GLBs 0 erros.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug56-{antes,depois}/fy_mansao/`, A/B por
+`tools/eval/ab-pixel.py`):** `cars-front-close` 9,4% dos pixels mudados concentrados no
+terço central (os 3 carros GLB); `garden-eye` 3,1% (postes/bancos/vasos no caminho de
+pedras); `facade-garden` 1,1% no centro (lampiões na fachada); `interior` 0,0% (intocado,
+como esperado). A métrica de bordas do `ab-pixel.py` foi consertada: contava
+`len(getdata())` = todos os pixels, sempre 100%/100% — réguas decorativas não entram.
+
+**Dívidas declaradas:** (1) o pedido "casa" foi atendido na FACHADA (lampiões) — o interior
+segue procedural (contrato verde, mas sem props Mint); (2) `grafite-layout-check` VERMELHO
+em fy_mansao até o regen do integrador (`npm run grafite fy_mansao` é dele); (3) o vermelho
+preexistente de `camera-roxa` no asset-integrity não é desta frente (arquivo e registro
+intactos no diff); (4) o A/B é quantitativo — **nenhum agente desta sessão olhou as figuras**
+(modelo sem visão): a aprovação visual é do dono, por screenshot, como sempre.
+
+
+### BUG-67 · "a piscina nao afunda" + "o jardim esta bizarro" — Mansão v2.1: piscina entrável e jardim refeito — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono
+
+**Frases literais do dono (18/08)** e decisão registrada no
+[`plans/13-VISUAL-V2.1.md`](plans/13-VISUAL-V2.1.md): piscina **entrável** com
+profundidade de verdade e jardim **refeito do zero** com régua de variedade. A decisão
+INVERTEU o contrato de água do BUG-56 (a piscina "não entrável" vira o estado REPROVADO).
+
+**Conserto 1 — PISCINA ENTRÁVEL (padrão córrego, `CANAL_FUNDO`):** o colisor-tampa
+`col(-6,6,-0.5,0.65,-32,-24)` saiu; a cuba é piso andável via `groundHeightAt` +
+paredes de colisor do fundo até y=0 (em cima delas não colide: `_collide` exige
+`pos.y+0,3 < maxY`). Raso **-0,85 m** com 2 degraus de entrada na borda sul (largura
+total), escada submersa (4 degraus de 0,25) e fundo **-1,85 m** — 0,15 m abaixo do teto
+de guarda-corpo MAP6 (`QUEDA_ANDAR 2,0`, map-check.mjs:151). Saída de degrau a degrau
+(subidas 0,28 < STEP_H 0,55): **quem cai na piscina SAI andando** — e o mantle (1,95 m)
+segue como segunda saída. A máscara opaca a 0,045 m virou subleito do vertedouro (era o
+teto do nadador); o gramado é cortado no recorte da cuba (a lâmina a -0,01 atravessava).
+A cuba terminou **2 m ao norte** (interior z∈[-32,5,-26,5]): a 2ª fileira do armário
+nasce a `spawnB-3,6 = -25,6` e caía **na água** (pickup-check "abaixo do piso" **7, pior
+-0,85** — a tampa antiga era o guarda-rail do rack; `_walkDepth` só enxerga colisor).
+No deck: **abaixo do piso 0**.
+
+**Conserto 2 — JARDIM:** os **72 clones idênticos** (1 `InstancedMesh`, 12 anéis de 6,
+ZERO cor por instância) viram **2 famílias de malha** (blobo + folha ereta, 30+26) com
+**tint E escala por instância** (`setColorAt`, paleta de 5 verdes + jitter HSL), em
+**drifts orgânicos** pelo ângulo áureo, nas bordas — corredor de combate central limpo.
+Caminho de pedras vira **cadeia portão→porta** (12 pedras a ≤3 m, z 33,6→16,2, tag
+`pedra-caminho`); árvores ganham tag `arvore`. Props Mint do BUG-56, frota GLB e espelho
+d'água NÃO entrável: intocados (cláusulas verdes preservadas).
+
+**Réguas:** `mansao-water-check` **INVERTIDA** (9 cláusulas de piscina/espelho; o mutante
+`agua-entravel` virou `agua-bloqueada` = o estado reprovado por definição) — antes no
+estado v2.1.0: **8 VERMELHAS** (tampa maxY 0,65 · entrada andando 0,00 m · raso/fundo
+0,00 m · paredes atravessáveis até x=18 · 0 pisos de cuba · 1 máscara-teto); depois:
+VERDE, anti-trap "saiu em 5 passos até y=0,00". Mutantes `agua-bloqueada` (4 cláusulas),
+`borda-alta` (3 — anti-trap), `sem-parede`, `piscina-sem-cuba`, `piscina-cuba-curta`:
+**todos exit 1**. NOVA `mansao-garden-check.mjs` (G1 variedade/G2 composição/G3 escala):
+antes **6 VERMELHAS** (72 instâncias · 0 cores/1,39× · colônia same-mesh 16 em 6 m ·
+0 pedras marcadas · G2c sem medir · 0 árvores marcadas); depois VERDE (30+26 · 8/9
+cores · spread 1,86/1,91× · colônia 8 · cadeia de 12 pedras · plantio a 5,05 m do
+caminho). Mutantes `clona-tudo` (0 cores/1,00× + colônia 30), `planta-no-caminho`
+(0,25 m), `planta-gigante` (2,7 m), `sem-pedras`: **todos exit 1**.
+
+**Verdes preservadas:** `mansao-glb-fit` 8/8 · `map-check fy_mansao` (MAP1 0 — a pedra
+sul sobre o degrau a -0,283 fazia penetração 0,47 m em 12 pontos, corrigida; MAP6 0;
+CTF2 ≥2 rotas) · `pickup-check` (sem alcance 0, abaixo do piso 0, flutuando 0) ·
+`eval:grafite-editorial` · `eval:spawn` · `syntax`.
+
+**Antes×depois (3:2, `tools/eval/asset-evidence/bug64-mansao-v21/{antes,depois}/`,
+captura `mansao-v21-capture.mjs` com vareta de 1,70 m, A/B `ab-pixel.py`):** vistas
+NÃO alteradas ~0,2% (`jardim-no-caminho`, olhando o portão); vistas alteradas:
+`jardim-composicao` 51,5% (bordas 2,5→3,3% — mais detalhe), `piscina-dentro-fundo`
+51,1% (pose só existe no depois: nadador no fundo), `piscina-do-spawn` 86,2% (enquadre
+mudou 2 m com a cuba). Sonda de cor: azulejo/água em 11% do frame exterior e **37,6%
+do frame de dentro da piscina**. **Nenhum agente desta sessão OLHOU as figuras**
+(modelo sem visão, mesmo limite do BUG-56): aprovação visual é do dono.
+
+**Dívidas declaradas:** (1) a lâmina visual segue o tratamento simples
+(`MeshStandardMaterial` plano, agora `DoubleSide`) — ondas/reflexo são a frente B
+(córrego), por decisão do plans/13 "a lâmina pode ganhar o mesmo tratamento da frente B
+depois"; (2) `map_check.json`/`pickup_check.json` não foram regenerados por esta frente
+(regen é do integrador, BUG-02/BUG-60); (3) os 404 preexistentes de
+`folha-pixaca-0{3,4,5}.png` no serve de eval não são desta frente (defeito de acervo
+pré-existente).
+
+### BUG-57 · Ambiência real só existe no Lajes — todos os mapas precisam — ABERTO 17/08
+
+**Sintoma literal do dono:** *"ele tem ambiencia real coisa que nenhum dos outros mapas
+tem, horizonte, animais, animacoes no ceu, precismoa disso em todos os mapas"*. Também:
+córrego — *"precisa gerar jacare no mintgg e a capivara, pode usar glbs de mesa de bar"*;
+lajes — *"falta colocar uns cachorro caramelo e mais animais como ratos"*.
+
+**Régua: parcial.** `eval:ambience` (AM1-AM10) cobre fy_lajes/fy_corrego/fy_escadao.
+Falta: (1) estender o contrato para os 10 mapas do registro — mapa sem `ambience`
+declarada reprova; (2) horizonte (`makeHorizon`) e vida de céu viram cláusula; (3) fauna
+por bioma (jacaré+capivara no córrego, caramelo+ratos a mais no lajes).
+
+**Córrego, frente B v2.1.0 (19/08, branch `v21/b-corrego`) — jacaré/capivara GLB no
+mapa + água viva:**
+
+| cláusula nova do `eval:corrego-contract` | antes | depois |
+|---|---|---|
+| jacaré GLB posicionado no canal (~1,8 m, escala do Mint) | ✗ proxy procedural | ✓ clone gltf assentado no fundo, ~30% submerso |
+| jacaré meio submerso (dorso de fora) | ✗ | ✓ |
+| capivara GLB na margem alagada (~1,0 m, pés no chão) | ✗ | ✓ |
+| GLB substitui o proxy (proxy invisível) | ✗ nem havia GLB | ✓ proxy fica na cena escondido (padrão placeProp) |
+| fauna GLB sem collider/fora de sólido | ✗ | ✓ |
+| água com shader de onda (onBeforeCompile + uAgua) | ✗ planos mortos | ✓ 4 senos, 2,8 cm, normal analítica |
+| água com geometria subdividida (≥6×24) | ✗ 1 segmento | ✓ 12×160 (low 6×24) |
+| água com relógio vivo | ✗ | ✓ uAgua avança no onBeforeRender |
+| amplitude ≤ 4 cm (não invade o limo) | — | ✓ 2,8 cm |
+| grama: terreno reservado (≥12 spots) | ✗ | ✓ 26 spots (presença DORMENTE até a frente E) |
+
+Estado ANTES medido: 10/35 vermelhas no corrego-contract estendido. DEPOIS: 35/35
+verdes. Mutantes novos mordendo: `proxy-volta` (8/35), `agua-morta` (3/35);
+`grama-sumiu` lança NAO APLICOU (prop não existe — dormência declarada). Browser
+(loader real): censo `source:'gltf'` para os dois, textura 256² carregada, raycast da
+câmera acerta o jacaré; água viva × morta (`?agua=0`) = diff de banda 129 vs 10,9
+(12× mais movimento com o shader). Figuras 3:2 antes/depois em
+`tools/eval/asset-evidence/maps/fy_corrego/`. NÃO verificado: leitura estética
+(pixels de cor do jacaré/capivara não discriminaram sob fog/luz — fica para o olho
+do dono) e o parse GLB em node (trava em textura — limitação declarada no header do
+check; coberto por Khronos + browser).
+
+**Fauna v2.1 (frente D, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do
+dono.** Frases literais (18/08): *"a pomba que nao esta com bracos avertos deveria ficar
+so na ponta das lajes ou no chao"* e *"faltou rigar o cachorro caramelo ... e outros
+animais tambem"*.
+
+- **Pombo não voa mais:** o `pigeon_flight.glb` (asas abertas estático) saiu do acervo e
+  do `ambientlife.js`; config `mode:flight` cai no chão com aviso de migração, o alerta
+  de tiro vira fuga A PÉ na superfície onde a pomba nasceu (sem `takeoff`/`fly`, bob 0).
+- **Três espécies novas riggadas (Quaternius CC0, mesmo pipeline do caramelo):**
+  `cat_telhado.glb` (Idle/Walk/Run), `galinha_campo.glb` (Idle/Walk), `vaca_campo.glb`
+  (Idle/Walk/Gallop, clipes podados de 24). Controlador `_updateDog` generalizado para
+  `_updateQuad` com velocidade de fuga/caminhada por espécie; normalização por altura
+  alvo (gato 0,48 / galinha 0,50 / vaca 1,75 m). Procedência em
+  `public/models/ambient/FONTE.md`.
+- **Régua:** `eval:ambience-registry` ganhou AR4 (espécie-chave por bioma: gato na
+  favela, galinha/vaca no campo) e AR5 (nenhuma pomba em modo flight no registro) —
+  mutantes `sem-gato` e `pomba-voa-de-novo` mordem. `eval:ambience` ganhou AM11 (nenhum
+  estado fly/takeoff ao vivo, bob ≤ 0,35 m) e AM12 (espécie nova por bioma com clipe
+  andando, mixer > 0) — mutantes `pomba-voa-de-novo` e `bicho-estatico` mordem. Placar
+  final: AR1-5 VERDE nos 14 mapas, AM1-12 VERDE (16/16).
+- **Caveat de medição:** `eval:ambience` usa `BASE` ou cai na 8123 — um `serve.mjs`
+  velho servindo OUTRO worktree na 8123 mediu o código antigo e inventou 3 vermelhas
+  (AM5 takeoff, AM7 orçamento, AM12 sem espécie). Contra o servidor do próprio worktree:
+  tudo verde sem tocar uma linha. Antes de "consertar" vermelha de browser, confira de
+  qual diretório a porta serve (`lsof -p <pid> | grep cwd`). Mordeu de novo na
+  integração v2.1.0 (19/08): o `gen-graffiti-layout` também cai na 8123 por default e
+  a primeira regen dos 10 layouts assou os murais "homenagem-*" da MAIN (MURAIS_HOM
+  povoado lá) em vez da branch — M5 pegou. Regen certa é com `BASE=http://127.0.0.1:<porta do worktree>`.
+- **Dívida registrada:** jacaré/capivara seguem estáticos — não existe réptil/capivara
+  riggado CC0 (varredura Quaternius + Poly Pizza 19/08, documentada no FONTE.md); o
+  pipeline de animação Mint é humanoid-only. Integração no córrego é da frente B.
+
+### BUG-58 · Lajes é a régua visual de favela, mas está labiríntico e grande demais — ABERTO 17/08
+
+**Sintoma literal do dono:** *"mapa esta muito labirintico e confuso apesar que os becos
+estao reais"*; *"talvez deixar becos e escadas, melhorar a escalas dos barracos de favela,
+e simplificar o mapa, nao fazer tao grande"*; e a consagração: *"o lajes e a regua de
+favela visualmente ... e o mais bonito de todos"*. Campinho: *"otimo como mapa, precisa
+ser estruturado visualmente como o lajes"*.
+
+**Leitura:** manter becos/escadas (reais), reduzir a extensão total e o número de
+ramais; a decisão de arte do lajes vira o padrão dos mapas de favela. A régua de
+circuito (LC1-LC6) já mede conectividade — falta um teto de COMPLEXIDADE (nº de ramais /
+área total / decisões por travessia) medido contra o que o dono aprovar na versão
+simplificada.
+
+**Anti-trap (v2.1, plans/13) — CORRIGIDO EM ARQUIVO 19/08, aguardando olho do dono.**
+Frase literal do dono (17/08): *"a parte debaixo tem cantos intransponiveis se vc cai de
+cima voce nao sai nunca mais isso nao pode acontecer"*. O LC1-6 media o térreo contíguo
+e os ~4% fora do circuito eram exatamente os cantos onde ele ficou preso.
+
+**Régua nova `eval:lajes-antitrap` (AT1):** no `Game` real, com índice espacial de
+colisores PROVADO igual ao `_collide` em 400 pontos (divergência aborta), grade 0,5 m
+8-vizinhos com validação de segmento e flood REVERSO dos spawns por todas as camadas:
+100% das células andáveis têm caminho de VOLTA a um spawn andando (pulo/mantle não
+contam). **Antes: 143 células sem volta** — laje MN selada pelo próprio guarda-corpo da
+tábua (62), faixas de miolo atrás dos muros do beco (44+), nichos entre caixa d'água e
+corrimão (5). **Depois: 6759/6759 (100%)**, zero bolsões. Mutante `sela-canto` fecha os
+dois vãos da escadaria → 22 células vermelhas, exit 1. Overlay por camada em
+`tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png` (vermelho = preso).
+
+**Conserto:** três vãos de fuga (`VANS_DE_FUGA`, map_lajes_authored.js) cortam o muro
+emitido para o corredor vizinho — o buraco de muro real de comunidade — e o painel de
+muro rente passa a vetar slot em cima de vão; o guarda-corpo da tábua é omitido onde a
+linha OU o convés cruza laje ao nível 5,20 (a boca da WN-MN tinha janela livre de 0,15 m
+para um corpo de 0,76). **Achado no caminho:** o colisor do corrimão usava a convenção
+de rotação espelhada em z — nas tábuas diagonais o corpo batia num corrimão invisível a
+1,5 m do visível (bala via malha certa, corpo via colisor errado).
+
+### BUG-54 · Lajes tem pele de favela sobre planta de caixas e perdeu a jogabilidade roof-first — ABERTO 16/08
+
+**Sintoma literal do dono, após jogar a R18:** *"a textura e de favela, mas o mapa nao,
+ainda parece um monte de caixa amontuada sem nexo nenhum"*; *"a ideia era o mapa ser de
+sinper e todo mundo jogar de lages, mas tb poder cair por becos apertados"*; *"as escadas
+estao esdruxulas, nenhuma favela tem escada assim"*. Na rodada seguinte ele explicitou que
+o fluxo entre lajes precisa de acessos de madeira e de um pulo mais alto.
+
+**Reprodução:** screenshots 3:2 do teste do dono em 16/08 mostram os dois spawns no chão,
+um corredor central de 7,2 m, três ilhas superiores sem rede contínua e três lances retos
+de 30 degraus tratados como objetos soltos. A régua antiga ficou verde porque contava três
+acessos, três escadas e detalhe cultural; ela não media qual camada domina a travessia nem
+a largura e o encaixe urbano do caminho inferior.
+
+**Referências e regra:** `references/favela/lajes-rio/FONTE.md` registra becos publicados
+de 0,8–1,5 m, rede local proposta de 2 m, usos sociais da laje e a gramática de navegação
+vertical do guia oficial de Favela. A tradução jogável está em `plans/10-LAJES.md`.
+
+**Régua vigente:** `eval:lajes-spatial` reprovou o estado recebido em 6/6 cláusulas e
+agora mede no `Game` real: spawns a 5,20 m, duas rotas superiores independentes, caminho
+curto 100% acima de 4 m, becos p50 1,81 m/p90 1,86 m, três escadas de dois lances e ápice
+local de 0,806 m contra 0,586 m no controle. Os mutantes `spawn-beco`, `rota-unica`,
+`beco-avenida`, `escada-reta` e `pulo-global` ficam vermelhos. `eval:lajes-gap` mede as
+13 passarelas na `Box3`; `map-check fy_lajes` confirma dez níveis alcançáveis pelo corpo
+e pelo A*, zero penetração e zero borda alta aberta.
+
+**Estado:** corrigido em arquivo, aguardando o teste visual/jogável do dono. As seis
+capturas 3:2 vigentes estão em `tools/eval/asset-evidence/maps/fy_lajes/`; o bug não fecha
+por placar nem por nota de quem construiu.
+
+**Teste do dono, R26 em 16/08 — visual aprovado, gameplay reaberto:** *"visualmente o
+mapa está incrivel. esta muito proximo do que queriamos"*. Essa aprovação preserva a
+direção de arquitetura, materiais, fiação, pipas, pombos e ratos. No mesmo teste ele
+reportou quatro bloqueadores: *"o mapa ta em boxes procedurais eu atiro pra frente e bate
+tiros no ar"*; *"tem um ponto que eu ficava caindo pra cima da laje de novo e depois no
+chao tem um bug ali"*; *"nao da pra saber os limites do mapa"*; e o fluxo entre a rota de
+lajes e o ataque inferior ficou confuso. Evidência: screenshots 3:2 em
+`/Users/ruben/Desktop/screenshots/Screenshot 2026-08-16 at 17.* (2).png`.
+
+**Leitura do fonte, ainda sem régua de reprodução:** `map_lajes_authored.js:128-137`
+coloca toda caixa invisível `MAT.proxy` também em `world.occluders`, e
+`game.js:2923-2928` atira contra essa lista; portanto portas, janelas e recortes visuais
+dos GLB continuam sólidos para a bala. `map_lajes_authored.js:321-337` ignora o `yRef`
+que `_updatePlayer` passa em `game.js:4857-4882`, então uma consulta feita por quem está
+abaixo ainda pode devolver a laje de 5,20 m. Os limites físicos terminam em x ±15,5 / z
+−39..39, mas o casario visível continua fora deles (`map_lajes_authored.js:491-511`),
+criando caminho que parece aberto e termina no clamp invisível. As caixas independentes
+dos segmentos de beco (`:194-219`) também podem se sobrepor nos retornos; localizar os
+pares exatos em que isso bloqueia a passagem ainda depende de um probe caminhando com o
+`_collide` real.
+
+**Régua ausente que impede consertar por palpite:** falta um gate que (1) compare o
+primeiro hit dos proxies com a superfície visível carregada no navegador; (2) caminhe o
+térreo com `_collide` e `groundHeightAt(..., yRef=0)`; (3) mute a camada para reproduzir
+o salto térreo→laje; e (4) prove que todo limite aparente tem fechamento físico visível.
+Os portões atuais medem o grafo declarado, não esses quatro comportamentos.
+
+**Rodada R27 (16/08, noite) — réguas escritas, estado vermelho medido, conserto em
+andamento nesta mesma árvore (não commitado):**
+
+- **Régua de bala (browser):** `npm run eval:occluders` sonda raios dos waypoints a
+  0,5/1,3/1,62 m comparando o primeiro hit de `world.occluders` com a primeira malha
+  VISÍVEL. Estado recebido: **977 raios tiro-no-ar em fy_lajes (33%)** e vermelho nos
+  10 mapas (ferro_velho 36,3%, loja_h 17,5%, quebrada 18,6%, praca 38 grupos-letra-morta
+  + escadão 34). Mutantes `occluder-invisivel|proxy-inflado|grupo-sem-raycast|vao-fechado`
+  aplicam e ficam vermelhos.
+- **Régua de circuito (node):** `npm run eval:lajes-circuito` — o térreo tinha **14
+  componentes conexos** e os pés das três escadas em três ilhas; `groundHeightAt`
+  ignorava o `yRef` (sob tábua/mirante devolvia 5,20 m para quem estava no chão e o
+  snap de gravidade teleportava o corpo para cima — o "caindo pra cima da laje" do dono,
+  reproduzido em harness). Mutantes `ignora-yref|ramal-fechado|rota-inferior-partida`.
+- **Conserto em Lajes:** occluder = malha visível (casas instanciadas do PropBatch entram
+  em `occluders`; corpo dos blocos vira collider puro; muros de beco/escada/perímetro
+  agora são malha visível); `groundHeightAt(x,z,yRef)` multinível pela regra da Havan;
+  mirantes viraram pilotis com túnel andável de 2,1 m; esquinas por mitra de muros
+  (fim da caixa independente por trecho); muro de perímetro visível nos 4 lados; faixas
+  de fachada do chão à laje em cada bloco (empilhamento); fascia/remendos nas bordas;
+  caixas d'água com variação preta/azul + PVC; cachorro caramelo (Quaternius CC0 tingido)
+  no circuito inferior. Resultado medido: **tiro-no-ar 977→0, atravessa-parede→0**,
+  circuito 96-97% contíguo, LS1-LS6 e LC1-LC5 verdes com os 8 mutantes mordendo.
+- **Fecha só com o dono:** a rodada de capturas 3:2 e o crítico adversarial estão na
+  evidência (`tools/eval/asset-evidence/maps/fy_lajes/`); o teste jogável é dele.
+
+**Rodada de 17/08 — wave 3 fechada e commitada:** `eval:occluders` **VERDE 0/0/0 nos 10
+mapas**. fy_mansao 123+35→0 (vidro sai de occluders, carros/brises/ripados/pote entram),
+fy_campomorro 64→0 (o TERRENO do morro passa a parar bala; ruas, portas salientes,
+arquibancada e traves idem), fy_corrego 2→0, piscina_treta 1→0, quebrada já media 0.
+Padrão novo nos addBox dos 4 mapas: `opts.bala` registra occluder visível sem colisor
+próprio. VM14 saiu do vermelho (as 2 armas do fundo do canal do corrego subiram para as
+cabeceiras das pontes). O grafite do fy_lajes voltou (a chamada morreu na troca de builder
+— audit 0 no ar/0 tapadas) e `eval:ambience` rodou pela primeira vez com o cachorro,
+13/13. Segue aguardando o teste jogável do dono.
+
+### ~~BUG-52 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+> **Numeração em colisão (merge 17/08):** as entradas abaixo vieram da `main`, que
+> numerou BUG-52..57 em paralelo a esta branch. Os números da main foram mantidos
+> com o sufixo `(main)` — não confundir com os BUG-52..58 desta árvore.
+
+### ~~BUG-54 (main) · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
 
 **Evidência antes.** `BASE=http://localhost:4322 OUT=/tmp/bug292-before npm run
 eval:loadingwall` abriu splash e loading reais em 16:9/3:2, DPR 1/2, e reprovou as oito
@@ -1436,7 +1987,7 @@ sobras laterais são preenchimento escuro desfocado. **Custo:** a URL é baixada
 uma vez, mas pintada em dois planos; não entrou asset nem request novo, apenas um segundo
 paint durante telas estáticas de espera.
 
-### BUG-53 · O redesign novo tinha mídia completa, mas integração e régua continuam erradas
+### BUG-53 (main) · O redesign novo tinha mídia completa, mas integração e régua continuam erradas
 
 **Décima revisão do dono (16/08):** a tela cheia de mapas ganhou opções de armas, jogadores
 e número de rounds sem esconder o catálogo. A escolha de 1/3/5/7 atravessa `main.js` e
@@ -1688,7 +2239,7 @@ loading passou a GLB ao vivo.
 `tools/eval/select-mount.mjs --mutate=sem-preview` prova que o porte funcional não pode
 voltar a substituir a pose apresentada.
 
-### ~~BUG-52 · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
+### ~~BUG-52 (main) · O indicador de dano apontava 180° pro lado errado~~ · RESOLVIDO 12/08
 
 **Sintoma (do dono):** *"O jogo está mostrando o dano recebido (e o texto do dano) em uma
 posição 180 graus além da esperada. Ou seja, se eu tomo na frente, aparece que eu tomei nas
@@ -1739,7 +2290,7 @@ o visual em jogo (posição do arco na borda, painel de morte) não foi conferid
 28 cláusulas (4 direções × 7 yaws), 1 mutação medida: `--mutante=ordem-trocada` devolve a
 ordem de operandos do defeito original e derruba 28/28 casos.
 
-### ~~BUG-53 · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
+### ~~BUG-53 (main) · Loja H: fachada sem tinta acima da linha do olho~~ · RESOLVIDO 13/08
 
 **Sintoma (medido, censo no navegador):** fachada externa com 22% de cobertura a 3,2 m e
 **0/90 placas a 5,0 m** (quebrada 65,7/44,4 · piscina 68,5/72,7 nas mesmas faixas). As
@@ -1772,6 +2323,10 @@ nova de cornija (`y0 5,0–5,6`, pixo fino).
 
 **Prova com controle e mutação:** rebake do controle (sem a correção) = 45,1% · 20,6% ·
 0/90 — é também a prova de que a régua morde: sem o olho de 5,25 m a faixa de 5,0 m volta
+a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m). Auditoria irmã: no-ar
+reais 20 (controle) → 26, todos na classe pré-existente de peça em base de coluna/poste
+(y ≤ 1,7); zero peça flutuante nas faixas novas. Piso da `graffiti-census` para loja_h
+subiu 43 → 50 (o censo varia ±6 pontos entre execuções). Fotos olhadas: pixo correndo na
 a zero. Com a correção: **57,5% · 28% · 54,4%** (49/90 a 5,0 m) na branch original; na
 árvore da main (com o filtro de âncora baixa do #260, que tira a tinta de caixa
 procedural do 1,6 m) o rebake mede **49,4% · 28% · 54,4%**. Auditoria irmã: no-ar
@@ -1783,6 +2338,164 @@ cornija e peças entre colunas, nada no ar nos ângulos de jogador.
 **O que NÃO foi verificado:** 3,2 m continua 28% (quebrada 65,7) — os banners recebem
 peça mas a largura útil limita; e o delta de +6 no-ar não foi isolado peça a peça
 (reshuffle da passada mistura a amostra).
+
+### ~~BUG-53 · Mansão: 18 peças de pixo MORTE fósseis no layout, e duas réguas que liam ausência como saúde~~ · RESOLVIDO 14/08
+
+**Sintoma (medido):** `graffiti-audit` reportava `OK fy_mansao 0 peças` — verde com zero
+peças medidas. Atrás disso: `map_mansao.js` importava `grafitar` mas **nunca chamava**
+(o chamado original, `c3ede3e`, foi removido quando o pool tinha `folha-pixaca-01.png`,
+o pixo que lê "MORTE"), e o `gen-graffiti-layout.mjs`, ao não achar passada, **mantinha
+a entrada anterior** — então o layout assado seguiu com 18 peças do pixo vetado,
+meses depois da fonte limpa, invisível para o `grafite-editorial` (que só media o MORTE
+na fonte, não no assado).
+
+**Causa (a mesma classe, três instrumentos):** degradação calada. O gerador preservava
+fóssil (`continue` silencioso), a auditoria lia `0 peças` como OK, e o editorial não
+medeia o assado da mansão. Qualquer um dos três sozinho teria denunciado; os três juntos
+deixaram o veto editorial valendo só no papel.
+
+**Correção:** (1) `map_mansao.js` volta a chamar `grafitar` com pool sem o pixo-01
+(`folha-pixaca-03/04/05`, mesma banda e chance do chamado original); (2) o gerador agora
+**apaga a entrada** de mapa sem passada e sai com código 1 listando os mapas
+(`sem passada` vira erro alto, não aviso); (3) a auditoria marca RUIM qualquer mapa com
+**0 peças medidas** — ausência nunca mais lê como saúde; (4) o editorial mede o MORTE no
+layout assado da mansão, com mutante `--mutante=morte` que reprova (prova de que morde:
+exit 1 no mutante, exit 0 no real após o rebake — 15 peças, pool limpo).
+
+**Bônus medido na mesma rodada:** as faixas de pano penduradas em arame na Quebrada
+("ETERNAMENTE", "DA LESTE VIVE") eram nomeadas `mural:` e a auditoria as cobrava como
+arte de parede — 100% no ar por construção (é pano no arame, decisão de arte de 06/08).
+Renomeadas para `faixa:` (`map_quebrada.js:1199`), com `faixa` incluída no `NAO_PINTA`
+e na varredura de vagas ocupadas da passada.
+
+### BUG-47 · Doidinho: P90 vira blob/pistola e desaparece no medium — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a P90 não existe nos pixels como P90"* e
+*"em `medium` a arma é invisível"*. No `grip`, o crítico não encontrou carregador superior
+longitudinal, corpo bullpup/trilho, arco fechado do punho dianteiro nem contato verificável da
+mão dianteira.
+
+**Palpite refutado:** a P90 raw não estava ausente nem remodelada como pistola. O Blender mostra
+carregador superior e dois arcos; o GLB preserva os spans desses marcadores. O caminho real usava
+o porte funcional de `4°`, quase na direção da câmera do capturador: os `0,52 m` projetavam só
+`0,110 m`, enquanto a M4 aprovada no mesmo quadro projetava `0,178 m`.
+
+**Correção mínima:** somente o mount visual de `doidinho-bairro` usa yaw `-18°`; roster, GLB,
+escala e balística permanecem intactos. A projeção medida sobe para `0,292 m`. A prova Blender
+3/4/walk/crouch mostra carregador, corpo bullpup, dois arcos e mão dianteira no arco.
+
+**Régua:** `npm run eval:pilot-system` mede marcadores, projeção contra a M4 aprovada, ID e
+contato da mão; `npm run eval:pilot-grip` recalcula SHA e distâncias Blender. Seis mutantes
+causais ficam vermelhos. Evidência em `tools/eval/asset-evidence/doidinho-bairro/grip/`.
+Sem browser nesta passada: o arquivo está pronto para recaptura, não autoaprovado.
+
+**Bloqueador adicional do segundo crítico limpo:** P90, rig, clipes e roupa passaram, mas a
+gambiarra grande e branca no ombro leu como disco placeholder. A extensão da régua ficou
+vermelha antes do passe (`luma 1,000`, `0,203×0,397 m`, centro lateral `0,113 m`).
+`tools/blender-doidinho-meter-prop.py` compactou só a gambiarra em `0,72×`, levou-a ao centro
+traseiro da mochila e retexturizou carcaça teal + aro cobre + dial escuro + seletor vermelho.
+Depois: luma `0,165`, chroma `0,180`, projeção `0,101×0,262 m`, centro `0,065 m` e frente
+`-0,042 m`. Os mutantes `doidinho-disco-branco` e `doidinho-prop-ombro` ficam vermelhos.
+
+### BUG-46 · Programador: caneca/mouse mudam peito→ar→quadril e ocultam a mão de apoio — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Sintoma (laudo externo limpo, 0/2):** *"a mesma caneca aparece agora na altura do
+quadril/coxa, também sem ponto de fixação visível"* e *"caneca e mouse aparecem colados no meio
+do peito, ocupando [...] exatamente a região onde a mão de apoio deveria aparecer"*. A M4 e a
+mão traseira foram aprovadas e não devem ser reabertas.
+
+**Causa medida:** caneca, mouse, trackball e cabo estavam no plano frontal e pesados em
+`Spine02`, portanto orbitavam com o peito e cobriam a mão de apoio. A primeira execução de
+`eval:pilot-system` ficou vermelha: frente `+0,243 m` e `0%` dos vértices rigidamente em Hips.
+
+**Correção mínima:** `tools/blender-programador-prop-sockets.py` move somente esses props para
+o quadril lateral/traseiro e atribui seus vértices a `Hips:1`. Depois: frente máxima
+`-0,027 m` e `100%` de `2.396` vértices rígidos. A M4, teclado, corpo e rig ficaram fora da
+seleção. A figura Blender 3/4 mostra a mão dianteira no handguard; o A/B desloca só a arma.
+
+**Régua:** `npm run eval:pilot-system` + `npm run eval:pilot-grip`; mutantes `prop-peito`,
+`prop-solto` e `arma-deslocada` ficam vermelhos. Recibo, backup e figuras em
+`tools/eval/asset-evidence/programador-virado/`. Sem browser nesta passada: aguarda recaptura
+e nota externa.
+
+### BUG-45 · Motoca: capacete ainda lê como blob/lâmina e telefone como slab — CORRIGIDO EM ARQUIVO, AGUARDA RECAPTURA 11/08
+
+**Palavras do reporte:** *"pixel reprovou queixeira como lâmina preta horizontal/projeção
+frontal apesar HARD verde."*
+
+**Reprodução antes do conserto:** `npm run eval:charhard` passa 7/7 porque HARD4 mede apenas
+a largura da faixa frontal. No GLB servido, a ponta projetada da queixeira tem razão frontal
+largura/altura 3,10; a vista frontal do Blender mostra a placa preta atravessando o queixo.
+O preto não é erro de shader: o material `CS_HARD_` e o albedo quase preto já passam HARD1–3.
+Régua nova deve medir forma/projeção frontal e ficar vermelha antes de remodelar o capacete.
+
+**Antes × depois medido:** HARD8 entrou primeiro e reprovou o canônico em `3,10:1`.
+`tools/blender-motoca-front-profile.py` selecionou somente 127 vértices da ponta frontal do
+material `CS_HARD_Motofrete_Helmet_Black`, compactou X em `0,52×` e recuou Y em 4 mm; bag,
+telefone, demais materiais e rig não foram tocados. O canônico novo mede `1,61:1`, largura
+frontal `0,051 m`, mantém casco `0,240 m`, aro `0,255 m` e visor em chroma `0,007`.
+Recibo: `tools/eval/asset-evidence/motoca-cachorro-loko/front-profile-receipt.json`;
+antes/depois e vistas Blender ficam no mesmo diretório.
+
+**Régua e mutação:** `npm run eval:charhard` passa HARD1–HARD8. O mutante
+`--mutante=queixeira-frontal-lamina` amplia apenas a projeção medida e reprova HARD8; os cinco
+mutantes anteriores também reprovam suas cláusulas próprias (inclusive
+`queixeira-lamina`, recalibrado para recompor os ~0,30 m depois da compactação). Khronos valida
+o GLB com zero erros e a integridade confere o SHA
+`56011f4a77d4d5726c32c8257de39db36c7b8121a7b7ba2d86076b4c6957f9ce`.
+
+**Reaberto por nota externa limpa:** a primeira compactação passou HARD8, mas os pixels ainda
+mostraram *"placa cinza chapada"*, *"massa preta amorfa envolvendo mandíbula/nuca"* e telefone
+como *"retângulo ciano chapado"*. Isso provou que razão geométrica isolada continuava cega.
+
+**Segunda régua, antes do segundo conserto:** a máscara frontal Blender `360×463` passou a
+medir abertura facial, continuidade da silhueta e corpo/suporte/tela do telefone. O estado
+anterior ficou vermelho por não ter peças explícitas de shell/chin/hinge/mount e por tela com
+luma `0,655`. `tools/blender-motoca-rebuild-helmet-phone.py` removeu somente os triângulos
+antigos desses artefatos e criou calota contínua, queixeira espessa em U, viseira levantada
+ligada por dobradiças e telefone escuro menor com tela fraca, berço e correia. Bag, jaqueta,
+M4, corpo e rig ficaram fora da seleção.
+
+**Depois medido:** abertura facial `65,6%`, maior componente do casco/queixeira `100%`,
+silhueta do capacete `63×143 px` no frame de prova, corpo/suporte do telefone `91,5%` dos
+pixels e luma da tela `0,030`. `npm run eval:charhard` passa 8/8; `eval:motoca-visual` passa
+8/8. Os seis mutantes geométricos anteriores e três novos (`casco-fechado`,
+`casco-rompido`, `telefone-slab`) ficam vermelhos. Recibo, backup, máscara e vistas Blender
+estão em `tools/eval/asset-evidence/motoca-cachorro-loko/`.
+
+**Limite declarado:** as figuras offline foram olhadas pelo builder, não aprovadas por ele.
+A correção só fecha visualmente depois da recaptura do runtime e de nova nota adversarial.
+
+### BUG-41 · Time Mítico aparece como caixas ou T-pose na seleção
+
+**Palavras de quem reportou** (Ruben, screenshot 09/08): *"tem varios personagens que
+estao low poly ainda e os mapas tambem. esta ruim. especialmente esse time de miticos"*.
+
+**Evidência visual.** Com Lampião selecionado, o palco 3D mostra cabeça, tronco e membros
+como paralelepípedos; a arma também é procedural. A lista lateral mistura esse fallback
+com miniaturas detalhadas em T-pose, portanto o defeito não é direção de arte uniforme.
+
+**Censo antes do conserto.** Os nove arquivos existiam, mas `GLB_CHARS` cadastrava só seis.
+Todos os seis Mint tinham material PBR e `0 skins`; Lampião, Lobisomem e Zumbi eram raws sem
+normal, UV, material ou textura, com centenas de milhares de triângulos. Ativá-los como
+estavam só trocaria caixa por malha branca/preta pesada.
+
+**Estado medido depois da recuperação (09/08).** `GLB_CHARS` cadastra `9/9`; todos têm PBR
+e ficam entre 4,4k e 5,0k triângulos. O rig de doador retirou o fallback cúbico de oito:
+`8/9` têm skin. O Bandeirante permanece sem skin e sem arma animada, então o portão continua
+vermelho. A captura de 09/08 também reprovava o conteúdo que a contagem não enxerga:
+Boto ainda é um homem de terno em vez do golfinho rosa pedido,
+Lobisomem era humano e a arma da Cuca cruzava o torso. Esses assets exigiam nova
+geração/rig no Mint; o Lobisomem já foi substituído pelo lobo preto
+aprovado, mas permanece com as pendências de régua/proveniência do BUG-40. Meshy está
+vetado porque seus GLBs já renderizaram
+pretos e sem anexo de arma neste loader. O MCP Mint desta máquina ainda não oferece escopo
+de escrita, portanto isso não está resolvido.
+
+**Régua:** `npm run eval:mitico` (`tools/eval/mythic-character-check.mjs`). Cobra `9/9`
+cadastrados, com skin, PBR completo e orçamento de `2,5k–40k` triângulos. Mutações:
+`--mutante=fallback|semrig|sempbr`. Estado atual: `9/9 GLB · 8/9 rig · 9/9 PBR`, vermelho
+em `bandeirante: 0 skins`.
 
 
 ### ~~BUG-43 · "o menu de HUD não está mostrando com vmlab=1 em produção"~~ · RESOLVIDO 10/08
@@ -2224,6 +2937,110 @@ tipografia sem olhar overflow já quebrou tela antes). As 9 telas foram capturad
 Chrome headless a 1536×1024 (3:2, o enquadramento do dono) e medidas com o mesmo `ref-ui.py`
 apontado para as capturas.
 
+### ~~BUG-42 · "a UI continua a mesma de sempre"~~ · RESOLVIDO 11/08
+
+**Sintoma (palavras do dono, olhando o QA da alpha.58):** *"eu vi seu teste de QA da UI e
+ela continua a mesma de sempre"*.
+
+**Reproduzido, e não é cache.** As capturas julgadas mostram o chrome `CORO SOLTO //
+TRANSMISSÃO` e a versão `alpha.58`, portanto carregaram o CSS e o módulo novos. Mesmo assim,
+o fluxo preserva as composições antigas: menu em coluna à esquerda, facções em cartões,
+personagem em filmstrip vertical + ficha + preview, mapa em cabeçalho + foto + strip e
+configurações no mesmo painel tabulado. O diff confirma a causa: a rodada acrescentou a
+classe `.cine-surface` às telas, 164 linhas de CSS decorativo e um chrome persistente, mas
+não substituiu a estrutura dos fluxos principais.
+
+**Falha da régua:** `tools/eval/cinematic-ui-contract-check.mjs` mede presença de chrome,
+metadados de capítulo, superfície, foco e movimento reduzido. Todas podem ficar verdes sobre
+a mesma composição antiga; portanto o portão respondeu "cinematográfica" quando só provou
+"tem decoração cinematográfica". O APROVADO visual anterior fica retirado.
+
+**Ordem do conserto:** primeiro uma régua estrutural que fique vermelha neste estado e uma
+mutação que restaure uma composição antiga; depois substituir de fato as composições do
+menu, facção, personagem, mapa e configurações; por fim capturar novamente em 3:2 e entregar
+as imagens a um crítico sem contexto. Não afrouxar o BUG-05: contraste, margem, legibilidade
+e navegação continuam valendo dentro da nova estrutura.
+
+**Fechado por composição e captura.** O menu virou deck cinematográfico; setup ganhou
+briefing; facções mostram a grade inteira sem rolagem e com adversário estável; personagem
+usa palco+dossiê+rail; mapa ficou full-bleed; configurações ocupam o quadro como sistema.
+A régua estrutural fica verde e os mutantes `composicao-antiga` e `faccao-rolavel`
+derrubam somente suas cláusulas. Um crítico sem contexto aprovou as capturas finais em
+3:2, inclusive a passagem adicional em 1280×720. A evidência persistente mora em
+`tools/eval/asset-evidence/ui-cinematic/`; não voltar a usar os contatos temporários da
+alpha.58 como baseline visual.
+
+### ~~BUG-43 · Quatro mapas novos passaram os contratos e falharam no pixel~~ · RESOLVIDO 11/08
+
+**Sintoma (asset-review independente, 17 PNGs em 1536×1024):** Campo tem
+*"teto, piso e paredão quase no mesmo preto"* no galpão; Lajes tem vãos que leem como
+*"placa escura contínua"* e um decal reconhecível como Rick Sánchez; Córrego tem capivara
+em *"escala sofá/carro"* intersectando pneus e só dois ratos legíveis como ovais; Mansão
+tem jardim/interior pobres e três carros reconhecíveis como Mustang, DeLorean e BMW.
+
+**Evidência:** `tools/eval/asset-evidence/maps/fy_campomorro/galpao-interior.png`,
+`fy_lajes/{jump-link,roof-route}.png`, `fy_corrego/{capivara,rats}.png` e
+`fy_mansao/{facade-garden,interior}.png`. O `eval:map-evidence` estava verde porque mede
+frescor, câmera e integridade dos arquivos — não iluminação, silhueta, composição ou veto
+editorial.
+
+**Régua antes do conserto:** estender os contratos de Campo, Lajes, Córrego e Mansão com
+marcadores da cena real e mutantes nomeados; estender `graffiti-editorial-check.mjs` para
+os identificadores protegidos. **Correção mecânica em 11/08:** contratos verdes e todos os
+mutantes mordidos; Campo preserva 92% na `field-mouth`, Córrego mede capivara ≤1,85 m e
+ratos de 12–15 cm, Lajes mede 8/8 bordas + 3/3 rotas, Mansão mede 3 carros genéricos,
+8 bromélias, 2 palmeiras e o interior. **Continua aberto até a recaptura 3:2 e o novo
+asset-review independente**; essa etapa pertence ao agente único de browser.
+
+**Reaberto pelo pixel externo (alpha.60).** Um Claude Opus 5 via OpenRouter recebeu apenas
+o contato 3:2 e as perguntas editoriais, sem justificativa do builder; recibo literal em
+`tmp/map-alpha60-openrouter-review.json`. Reprovou 4/4: no Campo o piso era *"uma cor cinza
+uniforme sem textura"* e as faixas laranja pareciam flutuar; em Lajes ainda leu
+marinheiro/Popeye, Fusca/VW e pousos sem borda frontal; no Córrego a capivara leu urso/hamster,
+os ratos eram clones e o pôster religioso/vulgar permaneceu; na Mansão os carros estavam
+distantes, a cunha vermelha lembrava Countach/Testarossa, o jardim parecia catálogo simétrico
+e o interior continuava blockout. As novas cláusulas precisam reprovar exatamente esses
+estados e seus mutantes antes da segunda correção; evidência fresca e nova nota externa são
+obrigatórias para fechar.
+
+**Reaberto novamente pelo mesmo crítico limpo (alpha.61).** No Córrego, escala e folga dos
+pneus passaram, mas a capivara ainda era *"corpo elipsoide + 4 cilindros finos + cabeça que
+é uma caixa"*; ratos continuaram blobs sem apoio/contexto e o córrego leu como quadra na
+mesma cota. Na Mansão, as marcas reais saíram, mas o close revelou carros sem leitura de
+roda/vidro/grade, a ilha continuou ambígua, o pergolado flutuava e água/jardim seguiam
+chapados. As cláusulas novas medem a geometria servida (não só o marcador): junta e membros
+da capivara, paredes de profundidade e contexto dos ratos; peças frontais e três famílias
+de carro, distribuição real dos maciços, pilares/vigas, cozinha funcional e home theater.
+O bug permanece aberto até recaptura seletiva 3:2 e outra nota externa.
+
+**QA de evidência camera2:** a ilha gourmet finalmente ficou inteira, mas o frame dos
+ratos provou que dois animais nasciam dentro dos próprios sacos de lixo e a animação por
+`performance.now()` mudava a pose entre máquinas. A régua nova mede interseção real de
+`Box3`; o trio foi afastado apenas para a faixa livre junto da mesma manilha e fica estável
+quando `mapview` abre com `?capture=<sha>`. O mutante `ratos-sob-lixo` restaura as posições
+reprovadas e fica vermelho. Como o fonte de Córrego mudou, os seis frames dele precisam de
+recaptura; Mansão não deve ser recapturada nesta passagem.
+
+**Terceiro crítico limpo, após a recaptura:** ratos, canal, jacaré, carros, lounge,
+gourmet e theater passaram, mas a capivara ainda leu porco/tapir; a ponte norte era uma
+prancha uniforme; `ashtar-meme.jpg` expôs um retrato reconhecível de Vladimir Putin; o
+jardim da Mansão permaneceu axial/raro e a piscina transparente mostrava o gramado sob a
+água. As réguas novas ficaram vermelhas nesses cinco estados. A correção troca a capivara
+por corpo de cilindro com tampas arredondadas, cabeça/focinho rombos e patas curtas; separa
+a ponte em tábuas empenadas com lacunas; retira `ashtar*.{jpg,png}` do pool; cria três
+maciços tropicais densos e uma cuba opaca acima do gramado. Mutantes: `capivara-tapir`,
+`ponte-prancha`, `putin`, `jardim-raro` e `piscina-sem-cuba`. Continua sem aprovação até
+recaptura integral ligada aos novos SHAs e outro crítico limpo.
+
+**Fechado pelo pixel, não pelo contrato.** A última captura integral ficou ligada aos
+fontes e câmeras atuais; o mutante de `camera-drift` continuou vermelho. O crítico final
+sem contexto aprovou Campo, Lajes e Escadão e, numa passagem focal separada, aprovou a
+capivara com quatro apoios distintos no chão, a ponte sem rosto/pessoa real e a piscina
+com cuba opaca contínua, sem jardim visível sob a lâmina. Os mutantes finais
+`capivara-dois-apoios`, `rostos-carecas` e `piscina-cuba-curta` restauram exatamente os
+três pixels interceptados na última rodada e ficam vermelhos. Evidência canônica:
+`tools/eval/asset-evidence/maps/manifest.json` e os PNGs de `fy_corrego`/`fy_mansao`.
+
 ### ~~BUG-06 · Alvo de capturas do CTF não deriva do número de bandeiras~~ · RESOLVIDO 05/08
 
 **Sintoma (palavras do dono, jogando):** *"no capture the flag na loja H está com 3 capturas
@@ -2603,6 +3420,27 @@ voltou a funcionar — GLB novo 531 KB com texturas restauradas via `rig-tex-res
 **Medido depois:** `select-mount` **0/44**; `select-inflate` nos 4: 0/4, com o trapfunk
 MELHOR que antes (21,4 → 14,6 ruins/1e4). A/B por figura na página da rodada.
 
+#### BUG-25 (5º ciclo) · re-rig dos 10 piores via `rig-meshy.mjs` — 1 verde, 3 melhores, 6 sem caminho (13/08)
+
+Fila dos 10 piores do `select-inflate` (JSON de 12/08, 23/62 reprovados) submetida a
+**rig novo do Meshy sobre a MESMA malha** (`tools/rig-meshy.mjs` — 5 créditos/personagem,
+esqueleto de 24 juntas idêntico ao das referências mandrake/pagodeiro, texturas
+restauradas por `rig-tex-restore`, otimização textura-only 1024/webp). Teto da régua:
+p99 ≤ 0,675 · ruins/1e4 ≤ 23,6.
+
+| destino | quem | número |
+|---|---|---|
+| **verde** | boto | p99 9,90 → **0,611** · ruins 778 → **21,6** |
+| melhorou, segue vermelho | curupira 4,70→0,598/32,1 · mariabonita 2,55→0,731/47,5 · lampiao 1,64→1,121/121,5 | ablação `semik` não move: é peso de pele, não IK |
+| **revertido** (rig novo PIOR) | cuca 310→1040 ruins · gilbomes 57→373 · esbirro 44→87 | auto-rig piora o que já estava perto do teto |
+| **revertido** (rig novo pior NO OLHO) | saci 4,29/607 → 1,34/189 no número, mas a perna virou fita torcida na figura | foto ganha de raciocínio: número melhor, imagem pior |
+| não rigável por este caminho | profeta-calcada (Meshy 422 "pose estimation failed") · programador-virado (7 materiais, fora do padrão Mint de 1; o restore interno do `rig-meshy` aborta) | precisam de outra rota (pose/malha primeiro) |
+
+**Lição da rodada:** re-rig automático é alavanca grande só para rig catastrófico
+(p99 > ~2); abaixo disso ele troca um skin ruim por outro e pode piorar — medir e OLHAR
+cada um, não rodar em lote cego. Placar da régua: **23/62 → 22/62** (baseline completo
+re-escrito em `tools/eval/select_inflate.json`).
+
 ### ~~BUG-32 · "mapa ctf na piscina ta com bandeiras com nome do patio brasilia"~~ · RESOLVIDO 06/08
 
 **Sintoma (do dono, com print do preview):** faixa do CTF na Piscina da Treta mostrando
@@ -2683,7 +3521,58 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
-### ~~BUG-57 · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
+### ~~BUG-44 · `eval:gltf-validator` tenta abrir concepts WebP do `mint-assets` como glTF~~ · RESOLVIDO 11/08
+
+**Palavras do reporte:** *"`eval:gltf-validator` tenta abrir concepts WebP do mint-assets
+como glTF."*
+
+**Reprodução antes do conserto:** `npm run eval:gltf-validator` selecionava toda entrada com
+`processing.finalSha256`; tentava entregar quatro WebP ao Khronos e saía 1, embora os seis GLB
+registrados tenham zero erros. Régua: o próprio `tools/eval/gltf-validator-check.mjs` ainda
+não distingue o tipo do artefato. O conserto não pode remover concepts do registro nem
+afrouxar a validação dos GLB.
+
+**Causa raiz e conserto:** `finalSha256` descreve integridade, não formato. Os dois gates
+usavam essa propriedade para enumerar assets, e o Khronos inferia glTF por posição na lista.
+Cada artefato final agora declara `artifactType`; `final-asset-registry.mjs` valida o tipo
+contra `files[0]` e fornece a mesma enumeração para integridade e Khronos. Integridade segue
+cobrando concepts e modelos; Khronos seleciona apenas `model/gltf-binary`.
+
+**Antes × depois:** antes, quatro WebP falhavam e os seis GLB passavam; depois,
+`npm run eval:asset-integrity` confere os onze artefatos finais e
+`npm run eval:gltf-validator` confere os seis GLB, com zero erros. Mutações:
+`--mutante=inclui-imagem` recoloca os WebP no escopo e sai 1; `--mutante=cabecalho`
+corrompe o primeiro GLB e sai 1. Custo declarado: todo novo artefato com hash final precisa
+de tipo explícito; tipo ausente ou extensão divergente falha fechado.
+
+### ~~BUG-40 · `npm run dev` não abre outra porta quando já existe um servidor~~ · RESOLVIDO 09/08
+
+**Palavras de quem reportou** (Ruben, 09/08): *"precisamos por um fix na hora de rodar
+dev que se a porta tiver usendo usado ele serve de outra porta"*.
+
+**Reprodução antes do conserto.** Com o Astro do próprio projeto vivo em `:4321`,
+`npm run dev` encerra com código 0 e imprime apenas `Dev server already running at
+http://127.0.0.1:4321`; nenhuma segunda URL é criada. A porta estava ocupada por PID vivo,
+portanto não era lock órfão.
+
+**Causa raiz.** O Astro 7 detecta este ambiente de agente e daemoniza automaticamente. O
+processo em background consulta `.astro/dev.json` antes de o Vite tentar abrir o socket;
+ao encontrar lock vivo, encerrava com código 0. Portanto a capacidade nativa do Vite de
+avançar `4321 -> 4322` nunca chegava a rodar.
+
+**Conserto.** `scripts/dev.mjs` inicia o CLI Astro em foreground com `--ignore-lock`. É um
+lançador Node, em vez de `VAR=valor` no script npm, para continuar funcionando no Windows.
+O Vite segue escolhendo a porta: no caso real, com `4321` ocupada, anunciou e serviu
+`http://localhost:4322/`. A instância extra fica deliberadamente fora do lock do Astro e é
+encerrada por `Ctrl+C`; `astro dev stop` continua controlando só a instância original.
+
+**Régua:** `npm run eval:devport` (`tools/eval/dev-port-check.mjs`). Planta lock vivo e
+socket ocupado num projeto Astro temporário, executa o `scripts.dev` real e exige uma URL
+em outra porta. Antes: saída 1, nenhuma segunda URL. Depois: porta ocupada `58402` ->
+servidor `58403`, saída 0. Mutação `--mutante=semlock`: saída 1 e mensagem do Astro dizendo
+apenas que o servidor do lock já estava vivo. A régua entra no `check:fast` antes dos
+portões que podem cortar a corrente.
+### ~~BUG-57 (main) · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
 
 **Sintoma.** Deploys da Vercel falhando desde `ef0a392` (16/08 ~01:52) com
 `check:deploy` vermelho em `eval:redesign` — UIA6. A main ficou SEM publicar por

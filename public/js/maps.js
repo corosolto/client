@@ -4,6 +4,11 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
+import { buildEscadao, ESCADAO_PROPS, ESCADAO_AMBIENCE } from './map_escadao.js';
+import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
+import { buildLajes, LAJES_PROPS, LAJES_AMBIENCE } from './map_lajes_authored.js';
+import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
+import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
 import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
@@ -59,6 +64,13 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
+  /* DÍVIDA: renomear o prefixo `fy_` só aqui quebra CALADO — `LOOKS` (bloom.js) cai no
+     DEFAULT_LOOK de Brasília. Renome exige mudança própria com régua (PR #200). */
+  fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
+  fy_campomorro: { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
+  fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
+  fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
+  fy_mansao:     { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
   // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
   // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).

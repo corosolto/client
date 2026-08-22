@@ -91,6 +91,10 @@ export function normalizeGeo(src, mtx, opts = {}) {
   g.setAttribute('position', new THREE.BufferAttribute(pullAttr(pos, 3, n), 3));
   g.setAttribute('normal', new THREE.BufferAttribute(pullAttr(src.attributes.normal, 3, n), 3));
   g.setAttribute('uv', new THREE.BufferAttribute(pullAttr(src.attributes.uv, 2, n), 2));
+  // uv1 precisa sobreviver: material com textura em canal 1 (Mini Cooper e mais 6 GLBs)
+  // sem uv1 na geometria compila shader com `uv1` não declarado (props-uv1-check).
+  const uv1 = src.attributes.uv1 || src.attributes.uv;
+  g.setAttribute('uv1', new THREE.BufferAttribute(pullAttr(uv1, 2, n), 2));
   if (opts.color) {
     const src3 = src.attributes.color;
     const c = src3 ? pullAttr(src3, 3, n) : new Float32Array(n * 3).fill(1);

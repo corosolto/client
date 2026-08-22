@@ -159,7 +159,7 @@ for (const mapId of MAP_IDS) {
      é respondida por busca em largura sobre uma grade de andabilidade de 0,25 m, semeada
      nos pontos de spawn DOS DOIS TIMES, com a física do próprio jogo:
        • célula andável  = `g._collide({x, gh(x,z), z}, 0,38)` não empurra o corpo;
-       • aresta          = 4-vizinhança com |Δ groundHeightAt| ≤ 0,30 m (degrau que se sobe);
+       • aresta          = 4-vizinhança com SUBIDA ≤ 0,30 m (descida é livre, como no jogo);
        • a arma PASSA    = existe célula ALCANÇADA a ≤ 1,0 m dela.
      Vale IGUAL pras duas fontes (`mapa` e `rack`). Antes cada fonte tinha a sua régua, o que
      é exatamente o buraco por onde passaram as 2 do bolsão: o bot precisa chegar na arma do
@@ -182,54 +182,72 @@ for (const mapId of MAP_IDS) {
   const nGz = Math.ceil((B.maxZ - B.minZ) / STEP_G) + 1;
   const GX = (i) => B.minX + i * STEP_G, GZ = (j) => B.minZ + j * STEP_G;
   const gid = (i, j) => i * nGz + j;
-  const andavelCache = new Int8Array(nGx * nGz).fill(-1);
-  const andavel = (i, j) => {
+  const andavelCache = new Int8Array(nGx * nGz * 2).fill(-1);
+  /* Grade de DUAS camadas: a de cima (tabelas/telhados/escadas, `gh` sem yRef) e a do
+     térreo (`gh(x,z,0)` — embaixo de tábua/mirante/mezanino). A grade de camada única lia
+     a tábua sobre o vão e apagava a passagem de baixo: medido na R27, a faixa oeste e a
+     banda do armário de fy_lajes ficavam invisíveis pro flood com o beco caminhável. */
+  const ghG = (x, z) => (gh.length >= 3 ? gh(x, z, 0) : gh(x, z));
+  const andavel = (i, j, L) => {
     if (i < 0 || j < 0 || i >= nGx || j >= nGz) return false;
-    const k = gid(i, j);
+    const k = gid(i, j) * 2 + L;
     if (andavelCache[k] < 0) {
-      const x = GX(i), z = GZ(j), p = { x, y: gh(x, z), z };
+      const x = GX(i), z = GZ(j), y = L ? gh(x, z) : ghG(x, z), p = { x, y, z };
       g._collide(p, R_BODY);
       andavelCache[k] = (Math.abs(p.x - x) < 1e-6 && Math.abs(p.z - z) < 1e-6) ? 1 : 0;
     }
     return andavelCache[k] === 1;
   };
-  const alturaCache = new Float32Array(nGx * nGz).fill(NaN);
-  const altura = (i, j) => {
-    const k = gid(i, j);
-    if (Number.isNaN(alturaCache[k])) alturaCache[k] = gh(GX(i), GZ(j));
+  const alturaCache = new Float32Array(nGx * nGz * 2).fill(NaN);
+  const altura = (i, j, L) => {
+    const k = gid(i, j) * 2 + L;
+    if (Number.isNaN(alturaCache[k])) alturaCache[k] = L ? gh(GX(i), GZ(j)) : ghG(GX(i), GZ(j));
     return alturaCache[k];
   };
-  const alcancado = new Uint8Array(nGx * nGz);
+  const alcancado = new Uint8Array(nGx * nGz);   // bit 1 = térreo, bit 2 = topo
   {
     const fila = [];
+    const semeia = (i, j, L) => {
+      const k = gid(i, j), bit = L ? 2 : 1;
+      if (!(alcancado[k] & bit)) { alcancado[k] |= bit; fila.push(i, j, L); }
+    };
     for (const s of Object.values(W.spawns || {}).flat()) {
       let i = Math.round((s.x - B.minX) / STEP_G), j = Math.round((s.z - B.minZ) / STEP_G);
       /* o ponto de spawn pode cair numa célula que o `_collide` rejeita (o spawn é o CENTRO
          do corpo e a grade não se alinha com ele): procura em anéis a andável mais perto,
          senão a semente se perde e o mapa inteiro sai "inalcançável" — falso VERMELHO. */
-      let ok = andavel(i, j);
+      let ok = andavel(i, j, 1);
       for (let rad = 1; rad <= 8 && !ok; rad++)
         for (let di = -rad; di <= rad && !ok; di++)
           for (let dj = -rad; dj <= rad && !ok; dj++) {
             if (Math.max(Math.abs(di), Math.abs(dj)) !== rad) continue;
-            if (andavel(i + di, j + dj)) { i += di; j += dj; ok = true; }
+            if (andavel(i + di, j + dj, 1)) { i += di; j += dj; ok = true; }
           }
       if (!ok) continue;
-      if (!alcancado[gid(i, j)]) { alcancado[gid(i, j)] = 1; fila.push(i, j); }
+      semeia(i, j, 1);
     }
-    for (let h = 0; h < fila.length; h += 2) {
-      const i = fila[h], j = fila[h + 1], y0 = altura(i, j);
+    for (let h = 0; h < fila.length; h += 3) {
+      const i = fila[h], j = fila[h + 1], L = fila[h + 2], y0 = altura(i, j, L);
       for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const a = i + di, b = j + dj;
         if (a < 0 || b < 0 || a >= nGx || b >= nGz) continue;
-        const k = gid(a, b);
-        if (alcancado[k] || !andavel(a, b)) continue;
-        if (Math.abs(altura(a, b) - y0) > DEGRAU) continue;    // degrau alto: não se sobe andando
-        alcancado[k] = 1; fila.push(a, b);
+        /* mesma camada: subida tem degrau (0,30 m); DESCIDA é livre — o `_updatePlayer`
+           cai qualquer altura e o snap de gravidade pousa. A régua simétrica lia queda
+           de 0,35 m da junção patamar→lance como parede (medido na R27). */
+        if (andavel(a, b, L) && altura(a, b, L) - y0 <= DEGRAU) semeia(a, b, L);
+        if (L === 1) {
+          /* queda livre: do topo dá pra pular pro térreo do vizinho (beirada sem guarda
+             para o corpo no `_collide` da célula de origem — o collider da guarda barra). */
+          if (andavel(a, b, 0)) semeia(a, b, 0);
+        } else {
+          /* térreo→topo só onde as camadas coincidem (chão aberto) ou sobem por degrau —
+             embaixo da tábua o térreo segue no térreo, não "sobe" pro convés. */
+          if (andavel(a, b, 1) && Math.abs(altura(a, b, 1) - y0) <= DEGRAU) semeia(a, b, 1);
+        }
       }
     }
   }
-  const celulasAlcancadas = alcancado.reduce((a, v) => a + v, 0);
+  const celulasAlcancadas = alcancado.reduce((a, v) => a + (v ? 1 : 0), 0);
   // distância da arma à célula ALCANÇADA mais próxima (só varre a vizinhança de `max`)
   const distAndavel = (x, z, max = 4.0) => {
     const ci = Math.round((x - B.minX) / STEP_G), cj = Math.round((z - B.minZ) / STEP_G);

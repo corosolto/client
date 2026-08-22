@@ -680,3 +680,243 @@ FPS baixo não pode desacelerar o relógio do jogo (issue #295). O clamp de 50 m
 ```bash
 npm run eval:simclock
 ```
+
+---
+
+<!-- Secoes dos portoes v2.1 (merge v2.1.0-teste, 19/08/2026) -->
+
+## `eval:ambience-registry`
+
+BUG-57 (dono, 17/08): "precisamos disso em todos os mapas". Varre o REGISTRO em node puro: AR1 todo mapa devolve ambience, AR2 população mínima por bioma (interno = só rato), AR3 fauna fora de sólido, AR4 espécie-chave por bioma (v2.1: gato/galinha/vaca + vida 1: tatu/barata/papagaio), AR5 nenhuma pomba em modo flight, AR6 todo mapa devolve sound (vida 1, plans/22). A irmã eval:ambience (browser) mede qualidade em 3 mapas; esta garante que mapa novo não nasce morto. Mutantes: sem-ambience|fauna-em-solido|sem-gato|pomba-voa-de-novo|sem-som|sem-fauna2.
+
+## `eval:mapanovo`
+
+O PORTÃO DE MAPA NOVO — uma régua só para as cláusulas estruturais dos 10 mapas, varrendo o REGISTRO e não uma lista à mão. Nasceu do dono em 12/08 ('os 5 mapas novos estão low poly e injogáveis'): o gl-shots tinha lista LITERAL parada em 5 enquanto o jogo foi para 10, então escadão/campo/lajes/córrego/mansão nunca passaram por captura nenhuma — mapa que não é fotografado não é criticado, e o que não é criticado regride calado. ORT1 ortogonalidade (≥20 ângulos distintos E ≥15% de massa fora da grade, só na classe `organico`: favela é autoconstrução, mas salão de piscina e estacionamento de loja são ortogonais DE VERDADE e ficam isentos por referência); ALT1 h90 ≥ 9 m; SUP1/SUP2 cor chapada, com os tetos LIDOS do fonte do corrego-superficie-check (fonte única — dois limiares para o mesmo conceito é o instrumento discordando de si); JOG1/JOG2 consumidos do map_check.json; COB1/COB2 cobertura de captura, que é a cláusula-meta cuja ausência causou tudo isso. Não saber medir custa o mesmo que estar errado: texel-check mudo, map_check.json ausente OU MAIS VELHO que os fontes de mapa, e mapa que não constrói ficam VERMELHOS. Dívida de hoje (28 entradas, medidas e nomeadas) mora na tabela DIVIDA do próprio arquivo e AVISA em vez de reprovar; vermelho fora dela reprova. `--simular-novo=<id>` ignora a dívida daquele mapa e responde 'se ele chegasse hoje, entrava?' — medido, fy_campomorro reprova em ORT1/SUP1/SUP2. FORA DO check:fast DE PROPÓSITO: ele consome o map_check.json e o `eval:map-new` do próprio check:fast reescreve esse JSON com só 5 mapas (map-check.mjs:153), então a ordem deixaria o portão vermelho por contabilidade, não por defeito — ele exige `node tools/eval/map-check.mjs all` antes e é passo de rodada/pré-deploy. `--mutante=grade-perfeita|teto-baixo|tudo-chapado|texel-ausente|corpo-dentro|mapcheck-velho|registro-fora-de-forma|bateria-fixa` provam que morde, um por cláusula.
+
+## `eval:build`
+
+BUILD + SSR CONTRA O ARTEFATO FRESCO. Nasceu do 18/08, quando DOIS defeitos do merge 0040c73 passaram o dia intocados: o `</div>` órfão matava o `astro build` (BUG-61) e a chamada nua `moduleCacheManifest()` em index.astro dava ReferenceError no REQUEST da home (BUG-62) — o build de página SSR NÃO executa frontmatter, então 'build verde' não prova página viva. O passo compila e roda o eval:ssr contra o .vercel/output recém-nascido: artefato velho mede o mundo de ontem (mesma classe do BUG-02). Fica no FIM do check:fast porque é o mais lento e o de cara de deploy.
+
+## `eval:mantle`
+
+SUBIR EM BEIRADA. Nasceu do dono jogando o Córrego reconstruído: 'uma vez q o cara cai no corrego e dificil sair porque ele nao pula em cima dos objetos'. O corpo subia degrau de 0,55 m e nada acima disso, então o canal de 1,75 m que o mapa acabou de ganhar virou armadilha — medido, 2 células de fundo de queda SEM volta a pé nenhuma e até 22 m (4,58 s) de caminhada para as outras, num canal onde a linha do olho (1,62 m) fica ABAIXO da borda e o jogador não vê para onde ir. MNT1 toda queda de mão única de escala humana ((0,55, 1,95]) é reversível a pé em <= 2,0 s; MNT2 toda beirada de escala humana com apoio no topo é escalável, verificado ANDANDO O `_updatePlayer`; MNT3 o mantle não abre NENHUMA célula nova — mantling é a forma clássica de sair do mapa, e sem esta cláusula o conserto vira exploit (medido: com teto de 4 m ele abria 4.360 células de telhado nas Lajes com a cota máxima PARADA, porque cota sozinha não morde). Node puro, ~4 s, sem browser. O A/B do conserto é `SIM_QS='?mantle=0'`, que é o mesmo kill-switch do jogo (`?mantle=0`). `--mutante=beirada-baixa|beirada-alta|canal-fechado` provam as cláusulas, uma a uma.
+
+## `eval:devport`
+
+npm run dev deve servir uma SEGUNDA instância quando já existe um Astro/porta ocupado. O Astro 7 detecta ambiente de agente, daemoniza e obedece ao lock antes de o Vite procurar outra porta; por isso o comando antigo saía 0 sem subir nada. A régua cria lock vivo + socket ocupado num projeto temporário. --mutante=semlock remove as proteções e prova o vermelho.
+
+## `eval:mitico`
+
+Os 9 personagens Míticos precisam entrar como GLB jogável, não caixa/T-pose/raw. Screenshot do dono em 09/08 mostrou Lampião procedural; o censo achou 6/9 cadastrados, 0/9 com skin e 3 raws sem PBR com 433k–728k triângulos. Cobra cadastro, skin, PBR completo e orçamento 2,5k–40k tris. --mutante=fallback|semrig|sempbr provam as cláusulas.
+
+## `eval:deathcam`
+
+Câmera de morte respeita o piso local em mapa multinível. Screenshot do dono mostrou o avesso do mirante do Escadão: chão 14,28 m e câmera descendo para y global 0,5. A sonda mata o jogador no spawn alto do jogo real; --mutante=yglobal prova o vermelho.
+
+## `eval:menuprops`
+
+O backdrop do menu não pode prometer GLB e servir caixa procedural. O preload inclui MAPS[currentMap].props e o rebuild definitivo ocorre depois dele em toda troca; --mutante=sempropsmapa prova a cláusula.
+
+## `eval:landmark`
+
+Landmark Mint não pode virar caixa por override de material. O Palácio do Planalto mantém albedo+normal+metal/rough do GLB; --mutante=reveste reproduz o MAT.concBranco que apagava o asset.
+
+## `eval:maptex`
+
+Textura externa citada por mapa precisa existir no caminho servido. Nasceu do zinco.webp inexistente que deixava materiais vazios no Escadão/Campo; --mutante=ausente injeta o caminho antigo e prova o vermelho.
+
+## `eval:map-evidence`
+
+Manifest visual dos cinco mapas liga cada PNG ao SHA dos fontes, GLBs, camera e viewport 3:2. Fica fora do check:fast ate a recaptura; --selftest --mutante=camera-drift prova a regua sem abrir browser.
+
+## `capture:map-evidence`
+
+Um unico browser recaptura os mapas na ordem canonica; --plan imprime cameras, fontes e comando sem abrir Chrome.
+
+## `eval:mapview`
+
+O arnês visual precisa redesenhar enquanto TextureLoader/GLTFLoader concluem; um único frame capturava céu preto e caixas cinzas que não eram o jogo. --mutante=umframe prova o vermelho.
+
+## `eval:spawnface`
+
+Spawn do Escadão precisa olhar para uma rota com 2 m livres, não para a parede do bar vista na captura 3:2; --mutante=inverte restaura os pontos laterais antigos.
+
+## `eval:charhard`
+
+Material rígido escuro de personagem não recebe shader de pele/roupa; o capacete do Motoca também preserva largura, perfil frontal e visor. Mutantes semmarcador/queixeira-frontal-lamina e os geométricos provam a régua.
+
+## `eval:charpbr`
+
+RUGOSIDADE EFETIVA do elenco, medida por ÁREA DE SUPERFÍCIE no caminho servido. Nasceu do dono dizendo que os personagens parecem 'brinquedo de plástico' — que é dielétrico com rugosidade quase zero, e era literalmente o caso do camera-roxa (0,035 efetivo, 95,3% da superfície abaixo de 0,20; o resto do elenco vive entre 0,27 e 0,86). Refuta DUAS coisas de uma vez: (1) não existe KTX2 neste elenco — `KHR_texture_basisu` aparece zero vezes nos 62 GLB, o que existe é EXT_texture_webp e image/jpeg, e sharp decodifica os dois, então NENHUM personagem é imedível; (2) metallicFactor/roughnessFactor do ARQUIVO não chegam na tela, porque upgradeCharMaterial (characters.js:370) constrói material novo com metalness 0,0 e roughness 0,86 fixos e só reaproveita roughnessMap — reprovar por fator seria medir a declaração e não o resultado, o mesmo erro que o comentário do CHR5B já registra. As duas bases são LIDAS do characters.js, não copiadas. Os tetos saem da distribuição medida: PBR1 área com rugosidade < 0,20 ≤ 31,6% e PBR2 rugosidade média ≥ 0,103, cada um o MEIO GEOMÉTRICO entre o pior aprovado e o reprovado (~3,0x de folga dos dois lados). `--mutante=<nome>` enverniza um personagem bom e prova que morde.
+
+## `eval:charplastico`
+
+C12 — o par de tela do eval:charpbr. O C9 mede rugosidade no ARQUIVO; esta mede a rugosidade EFETIVA no PIXEL, com a sonda `?charprobe=rough` do characters.js, no charlineup.html (mapa real, IBL do game.js, composite do bloom.js). Nasceu de o dono dizer 'plástico' e o conserto de PBR do camera-roxa (material 24x melhor) mover a tela 12%: sem medir os dois lados ninguém sabia se o arquivo chegava na tela. Resposta medida: CHEGA — espalhamento arquivo sd 0,218 x tela sd 0,239, compressão 0,91x — e a rugosidade NÃO é o gargalo (levar o elenco a 0,03, espelho 29x mais liso, move L* 1,70 e contraste interno 0,66). PL1 cobra que o arquivo chegue (compressão <= 1,60x) e PL2 que ninguém vire espelho na tela (p50 >= 0,20, MESMO ponto do C9 de propósito). Lsd/C*/verniz% são impressos como evidência do A/B mas não têm limiar: teto de contraste interno reprovaria figurino preto por ser preto. EXIGE BROWSER E SERVIDOR (`npm run eval:serve`), então é passo de pré-deploy e não de check:fast. `--mutante=verniz|semmapa` provam que morde; `semmapa` é a regressão histórica (roughnessMap como peso morto) e restaura o fonte inclusive em Ctrl-C.
+
+## `eval:camera-grip`
+
+Evidência Blender offline do Câmera Roxa: M4 canônica em walk/crouch, mãos nos anchors e A/B causal. --mutante=arma-deslocada move somente a arma.
+
+## `eval:pilot-system`
+
+Programador prende props; Doidinho projeta a P90; Lenda mantém sockets; Microfonildo TV mantém M4, 11 clipes, pelo angular, silhueta larga e reels. Mutantes causais por defeito.
+
+## `eval:pilot-grip`
+
+Recibos Blender não-browser provam mão de gatilho+apoio em M4/P90, incluindo Lenda e Microfonildo, e figuras A/B; os mutantes arma-deslocada abrem o contato.
+
+## `eval:motoca-visual`
+
+Máscara Blender 360x463 mede abertura/continuidade do capacete e moldura/brilho do telefone. Três mutantes causais.
+
+## `eval:grafite-editorial`
+
+Veto editorial dos cinco mapas novos: layout efetivo e pool-fonte não podem conter mascote/personagem protegido, homenagem real, pôster religioso/vulgar, MORTE ou carros reconhecíveis. Mutantes incluem popeye, religioso-vulgar e vw.
+
+## `eval:campo-contract`
+
+Campo: assimetria e boca oeste 80%; galpão exige fill, piso/forro texturizados, batentes/faixas ancoradas; traves têm redes e campo mantém três marcos distintos. Mutantes por cláusula.
+
+## `eval:char-thumbnail`
+
+Thumbnail deriva a arma de CHAR_WEAPON e traz recibo com SHA/dimensões; nasceu quando Programador e Doidinho foram capturados com SVD. Mutante: arma-trocada.
+
+## `eval:character-game-evidence`
+
+Captura 3:2 deriva CHAR_WEAPON, prova mesh visível e dois frames estáveis e liga cinco estados ao recibo por SHA. Passe --evidence=<dir> e --char=<id>; o mutante arma-aleatoria deve parar antes do PNG.
+
+## `eval:map-new`
+
+Mede os cinco mapas novos juntos e grava todos em map_check.json; evita que uma execução unitária masque CTF2 de outro mapa.
+
+## `eval:asset-integrity`
+
+Compara files[0] ao processing.finalSha256 do registro Mint/Tripo/Meshy; mutante sha-trocado prova a cobrança.
+
+## `eval:asset-gen`
+
+Meshy preview e so malha sem textura; cobra refine PBR 2K antes do download. Mutante: sem-refine.
+
+## `eval:gltf-validator`
+
+Validador oficial Khronos só nos artefatos tipados como model/gltf-binary; erro de spec bloqueia. Mutantes: cabecalho e inclui-imagem.
+
+## `eval:props-acervo`
+
+Frente E v2.1 (plans/13): todo prop com source.frente=v21-e-models tem GLB no disco, finalSha256 e linha no FONTE.md dos props; o legado sem registro fica fora do escopo. Mutantes: sem-fonte, sem-sha, arquivo-sumido.
+
+## `eval:character-voice`
+
+Cobra 2 select + 3 kill + 3 radio por slice, hooks por def.id/playerCharId, fallback e gerador seguro; também veta nas specs a fala editorial já rejeitada. Mutantes: fala-longa, estigma e spec-estigma.
+
+## `eval:audio-pack-character-voice`
+
+O pacote ofusca cada MP3 em audio/a/<hash>, então characterVoiceText precisa trocar a CHAVE junto ou a voz toca sem legenda só no deploy. Mutante chave-legenda-antiga reproduz o rewriter que alterava apenas valores.
+
+## `eval:cinematic-ui`
+
+Todo id do array screens precisa entrar no chrome cinematográfico compartilhado, com metadados de seção/etapa, superfície, foco e reduced-motion. Nasceu do redesign pedido em 11/08/2026; mutantes sem-chrome, sem-tela e sem-movimento-reduzido provam as cláusulas.
+
+## `eval:lajes-rooftop`
+
+A camada superior das Lajes precisa desenhar caixas d'água, antenas e varais distribuídos, não só placas que passam colisão. Mede objetos marcados na cena real; --mutante=placas-vazias apaga um quadrante em memória.
+
+## `eval:lajes-visual`
+
+A casca servida precisa cobrir todo footprint declarado por map_lajes.js, ligar por padrão com kill-switch, substituir a pele duplicada só depois de carregar, manter fallback procedural e não reintroduzir a foto repetida que o dono reprovou no frame de 15/08. O GLB e o inventário são lidos dos artefatos reais; cinco mutantes provam as cláusulas.
+
+## `eval:lajes-authored`
+
+A reconstrução da Lajes substitui a baseline de caixas: runtime novo, GLBs válidos também no LOWQ, três marcos e três atalhos verticais ligados ao percurso dos becos. Mutantes: sem-assets|duas-conexoes|volta-casca.
+
+## `eval:lajes-spatial`
+
+Contrato roof-first medido no Game real: spawns altos, duas rotas superiores independentes, caminho dominante nas lajes, becos estreitos nos colisores, escadas em lances e pulo maior só em Lajes. Mutantes: spawn-beco|rota-unica|beco-avenida|escada-reta|pulo-global.
+
+## `eval:ambience`
+
+Abre os GLBs reais no navegador e anda a fauna dos três mapas: determinismo, reação pelo caminho de tiro, LOWQ, custo, traçante materializado em 3:2 e (v2.1) pombo-sem-voo + espécies novas andando. Fica fora do check:fast porque usa Chrome. Mutantes: sem-reacao, relogio, lowq-cheio, tracer-fino, teleporte-volta, pomba-voa-de-novo e bicho-estatico.
+
+## `eval:mansao-water`
+
+Mansão: água não entrável, carros originais com frente/capô não-cunha, jardim tropical 3D assimétrico e interior com 6–8 props, piso/forro próprios e fill. Mutantes por cláusula.
+
+## `eval:mansao-garden`
+
+Jardim da mansão: variedade das folhagens instanciadas (teto, tint+escala por instância, sem colônia), composição (caminho de pedras portão→porta, rota porta→piscina no A* do mapa, nada plantado na pedrada), escala humana (dossel/forração/árvore contra o jogador de 1,70 m), (BUG-64) vegetação GLB com folha texturizada — espécies do JARDIM_VEG declaradas, no preload, usadas e com GLB de folha texturizada no disco — e acabamento de hardscape: muro/biombo/portão com textura real, portão de correr estruturado (trilho/mourões/motor/folha), biombos com mourões e travessa, beiral nas lajes. Mutantes: clona-tudo, planta-no-caminho, planta-gigante, sem-pedras, jardim-primitivo, hardscape-chapado, portao-laje, biombo-caixa, laje-sem-beiral.
+
+## `eval:look`
+
+RC1 (plans/23): a cor do fog É a cor do horizonte do céu — o truque que assenta a cena. Sobe cada mapa piloto no harness e lê scene.fog.color (uso, não declaração) contra o horizonte amostrado do MESMO webp que o mapa pediu (scene.userData.skyUrl), ΔE CIE76 com teto 8 ancorado na dispersão interna medida do horizonte. Node puro; sem python3/PIL cai no assado look-horizonte.json (e com ele reprova assado velho). --mutante=fog prova que morde.
+
+## `eval:mansao-ocean`
+
+RC2 (plans/23): a água do Joá é VIVA — depth-fade raso->fundo, espuma de contato, onda com uTime avançando, especular do sol do LOOK. Lê o material VIVO do mesh oceano na cena bootada (uso, não declaração); o fio do depth no composer é nível-declaração e a captura 3:2 (tools/eval/water-capture.mjs) é a prova visual — água não fecha por placar (Lei 4). Cores com procedência medida nos prints do dono (cabeçalho da régua). --mutante=depthfade|espuma|sol prova que morde.
+
+## `eval:corrego-water`
+
+RC2 (plans/23) no caso ENTRÁVEL: a lâmina do canal (14 cm, pisa-se dentro) é viva — mesma família OC do Joá + escala de profundidade do canal (uProfEscala ≤ 0,5 m; procedência: lâmina de 0,14 m em map_corrego.js:61-62), albedo poluído da frente B preservado (tMapa), nonSolidSurface e lista scene.userData.waters. Lê o material VIVO sob world.root (o contrato B o enxerga lá). --mutante=depthfade|espuma|sol|escala prova que morde.
+
+## `eval:wind`
+
+RC4 (plans/23): vento é sway de vertex shader — o topo balança, a raiz não, e a fase é por instância. Chama o onBeforeCompile VIVO do material da grama do campomorro num stub e mede o shader que o browser compilaria (uVentoTime + ventoPeso + instanceMatrix[3]); o peso por altura é medido com a MESMA função JS que a wind.js injeta no GLSL; o relógio (uVentoTime) tem que avançar via world.update. --mutante=congela|sem-chunk prova que morde.
+
+## `eval:softparticles`
+
+RC3 (plans/23): partícula que toca o chão não tem aresta dura — fade de alfa pela distância à geometria lida da MESMA cópia de depth do DepthPass (não existe segundo canal). Mede o fragmentShader VIVO da poeira de rua do campomorro (tDepth + softDepth), a distância de fade na ordem do sprite (procedência no cabeçalho) e o spawner determinístico nascendo de verdade via world.update. --mutante=sem-fade prova que morde.
+
+## `eval:corrego-contract`
+
+Córrego mede lentidão, canal/pontes legíveis e fauna: capivara com silhueta/contato inequívocos e 3–5 ratos alongados em duas poses/albedos. Mutantes por cláusula.
+
+## `eval:escala-favela`
+
+BUG-55: escala humana da favela do córrego no mundo construído — toda casa com PORTA de 2,00–2,20 m de base no piso (o vão de 1,0 m a 1,15 m do chão era a 'casa de boneca' do dono), passo de andar 2,4–2,8 m, barraco de 1 pavimento e palafita com pé-direito na faixa real, e todo prop GLB na altura de fabricante (registro propEscala do próprio mapa, valores de USO). Porta e janela medidas como componentes por aresta compartilhada da malha mesclada do matVao — cluster por centroide media 0,55 m numa porta de 2,10 m (quad de 2 triângulos não faz ponte). Mutantes: porta-ana|piso-gigante|puxadinho-alto|palafita-alta|escala2x, cada um mordendo a sua cláusula.
+
+## `eval:occluders`
+
+A BALA PARA NO AR? Nasce do BUG-54 / relato do dono 'atiro pra frente e bate tiros no ar': _fireHitscan (game.js:2927) raycasta world.occluders NÃO-recursivo e o Raycaster ignora `visible`, então proxy invisível que cobre casa GLB com porta/janela mata a bala antes da superfície vista. Sonda raios dos waypoints: hitA (o que a bala vê) × hitB (malha visível) — divergência medida, não declaração. Régua de BROWSER: exige `npm run eval:serve` no ar e fica FORA do check:fast de propósito (skill regua). `--mutante=occluder-invisivel|proxy-inflado|grupo-sem-raycast|vao-fechado` prova que morde; `--fotos N` fotografa as piores origens.
+
+## `eval:slice-abilities`
+
+As três vertical slices precisam ter mecânica executável, não só GLB: stack trace com LOS, ping Motoca +1 s após 3 s e peça Doidinho ×1,25 uma vez/round. Mutantes em tools/eval/vertical-slice-abilities-check.mjs.
+
+## `eval:lajes-gap`
+
+Mede na Box3 da cena as 13 tábuas declaradas: cada uma toca as duas lajes, casa o convés com as cotas, mantém três alas legíveis e cabos acima da espessura mínima. Mutantes por cláusula.
+
+## `eval:lajes-circuito`
+
+BUG-54 (teste do dono 16/08): 'ficava caindo pra cima da laje de novo e depois no chao' + 'becos parecem passagem e estão bloqueados'. Medido no Game real com o _collide de produção: o térreo tinha 14 componentes conexos e os pés das três escadas em três ilhas; groundHeightAt ignorava o yRef que _updatePlayer passa (game.js:4861) — sob tábua/mirante devolvia 5,20 m para quem estava no chão e o snap de gravidade teleportava o corpo para cima. LC1 camadas por yRef (mesma regra da Havan), LC2 circuito único ≥92% das células livres, LC3 três acessos verticais no circuito, LC4 beco+ramais dentro, LC5 nada nasce em sólido. Grava o overlay livre/bloqueado em tools/eval/asset-evidence/maps/fy_lajes/terreo-overlay.png — olhe a figura. Node puro, entra no check:fast depois do lajes-gap. Mutantes: ignora-yref|ramal-fechado|rota-inferior-partida.
+
+## `eval:lajes-antitrap`
+
+BUG-58/plans/13 (dono, 17/08): 'a parte debaixo tem cantos intransponiveis se vc cai de cima voce nao sai nunca mais isso nao pode acontecer'. O LC1-6 mede o TÉRREU contíguo — os ~4% fora do circuito eram exatamente os cantos onde o dono ficou preso. AT1: no Game real (índice espacial de colisores PROVADO igual ao _collide em 400 pontos, divergência aborta), grade 0,5 m 8-vizinhos com validação de segmento (a curva real do corpo — grade 0,75/4-viz declarava o bolso SW de 120 células como preso numa boca de 0,7 m que o corpo atravessa), flood REVERSO dos spawns por TODAS as camadas: 100% das células andáveis alcançam um spawn andando (pulo/mantle NÃO contam — se o canto só sai pulando, o dono ficou preso). Estado recebido: 143 células sem volta (MN selada pelo próprio guarda-corpo da tábua, 62; faixas de miolo atrás dos muros do beco, 44; nichos entre caixa d'água e corrimão, 5). Mutante sela-canto fecha os dois vãos da ESCADARIA → 22 células vermelhas, exit 1. Grava antitrap-overlay.png — OLHE A FIGURA.
+
+## `eval:faction-registry`
+
+Dez faccoes na mesma tela saem de public/js/factions.js; Astro/main importam a fonte e nenhum btn-team ou paginacao fica manual. --mutar=sem-tv|hardcode|paginar prova que o gate morde.
+
+## `eval:origmaps`
+
+Contratos de gameplay dos cinco mapas originais: cover GLB bloqueia bala/LOS, piscina andável entra no A* e o motor respeita spawn.yaw. Exige `npm run eval:serve` no ar por carregar GLBs reais. `--mutante=semcover|sempiscina|yawfixo` prova cada cláusula.
+
+## `voices`
+
+Gera vozes originais por personagem via OpenRouter /audio/speech; --dry-run é zero rede/crédito, geração exige chave e voz sintética por personagem, --force é obrigatório para sobrescrever.
+
+## `spec`
+
+Fichas de conteúdo novo (times/mapas) da skill csbrasil. O scaffold dá o molde; o check é o portão 1 do pipeline: ficha sem Visual/Papel/Arma/Mecânica preenchidos reprova ANTES de virar prompt e asset. Só valida MD com o marcador <!-- spec:time|mapa --> — plano comum de plans/ está fora da jurisdição.
+
+## `spec:check`
+
+Régua + a mutação que prova que ela morde, no mesmo comando: primeiro valida plans/, depois exige que uma ficha PROPOSITALMENTE quebrada seja reprovada. Lei 3 da casa: invariante sem mutante está cega.
+
+## `skills:sync`
+
+Este repo é multi-agente (Claude, Kimi, OpenCode). Skills NATIVAS (csbrasil, asset-review, bug-hunt, gauntlet-fps, regua) vivem como diretórios reais em .claude/skills/, mas os outros arnêses leem .agents/skills/ — que é gitignored. Este script cria o symlink .agents/skills/<nome> → ../.claude/skills/<nome> para cada nativa. Nunca toca diretório real de .agents/skills/ (terceira, dona é o skills-lock.json).
+
+## `eval:propsuv1`
+
+Geometria normalizada pelo PropBatch não pode perder o uv1 do GLB: material com textura em canal 1 (Mini Cooper + 6 carros) sem uv1 na geometria compila shader com `uv1` não declarado e cobre a captura de erro vermelho (mansão, 20/08). `--mutante=dropa-uv1` prova que morde.

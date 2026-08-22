@@ -9,6 +9,7 @@
 // uso: node tools/rig-tex-restore.mjs <original.glb> <rigado.glb> <saida.glb>
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { prune } from '@gltf-transform/functions';
 
 const [, , origPath, rigPath, outPath] = process.argv;
 if (!origPath || !rigPath || !outPath) {
@@ -29,13 +30,16 @@ const [oM, rM] = [oMats[0], rMats[0]];
 
 const copyTex = (getter, setter) => {
   const t = oM[getter]();
-  if (!t) return false;
+  if (!t) { rM[setter](null); return false; }
   const nt = rig.createTexture(t.getName())
     .setImage(t.getImage())
     .setMimeType(t.getMimeType());
   rM[setter](nt);
   return true;
 };
+// Também devolve o albedo original: o Meshy reencoda o mesmo atlas como PNG 2K.
+// No Bandeirante isso custou 4,57 MB contra 338 KB do JPEG Mint sem ganho visual.
+const temBase = copyTex('getBaseColorTexture', 'setBaseColorTexture');
 const temNormal = copyTex('getNormalTexture', 'setNormalTexture');
 const temMR = copyTex('getMetallicRoughnessTexture', 'setMetallicRoughnessTexture');
 const temOcc = copyTex('getOcclusionTexture', 'setOcclusionTexture');
@@ -44,5 +48,20 @@ rM.setMetallicFactor(oM.getMetallicFactor());
 rM.setRoughnessFactor(oM.getRoughnessFactor());
 rM.setEmissiveFactor(oM.getEmissiveFactor());
 
+// O rig vem com `Armature|clip0|baselayer`, 72 canais e duração zero. Não é animação
+// jogável; manter esse clipe faz loaders tratarem a bind pose como um estado real.
+let clipsServico = 0;
+for (const animation of rig.getRoot().listAnimations()) {
+  let duration = 0;
+  for (const sampler of animation.listSamplers()) {
+    const input = sampler.getInput()?.getArray();
+    if (input?.length) duration = Math.max(duration, input[input.length - 1]);
+  }
+  if (duration <= 1e-6 || /baselayer|bind|t[-_ ]?pose/i.test(animation.getName())) {
+    animation.dispose(); clipsServico++;
+  }
+}
+
+await rig.transform(prune());
 await io.write(outPath, rig);
-console.log(`${outPath}: normal=${temNormal} mr=${temMR} occ=${temOcc} emis=${temEmis} metal=${oM.getMetallicFactor()} rough=${oM.getRoughnessFactor()}`);
+console.log(`${outPath}: base=${temBase} normal=${temNormal} mr=${temMR} occ=${temOcc} emis=${temEmis} clipsServicoRemovidos=${clipsServico} metal=${oM.getMetallicFactor()} rough=${oM.getRoughnessFactor()}`);

@@ -1,0 +1,32 @@
+{
+  "char": "lenda-lanhouse",
+  "status": "pending-single-browser-agent",
+  "canonicalWeapon": "m4",
+  "viewport": {
+    "width": 1536,
+    "height": 1024,
+    "aspect": "3:2"
+  },
+  "map": "fy_quebrada",
+  "position": {
+    "x": 0,
+    "z": 0
+  },
+  "states": [
+    "close",
+    "medium",
+    "grip",
+    "walk",
+    "crouch"
+  ],
+  "closeMediumIntent": "third-person M4 rifle-ready and shoulder/ADS clearance; not literal first-person viewmodel ADS",
+  "thumbnail": {
+    "canonical": "public/img/chars/lenda-lanhouse.webp",
+    "canonicalWidth": 360,
+    "canonicalHeight": 463,
+    "reviewWidth": 150
+  },
+  "evidenceDirectory": "tools/eval/asset-evidence/lenda-lanhouse/browser",
+  "mutant": "arma-aleatoria",
+  "browserOwner": "single-clean-reviewer"
+}

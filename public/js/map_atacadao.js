@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 export const ATACADAO_PROPS = [
   'gondola_mercado', 'gondola_eletro', 'shopping_cart', 'caixa_cobranca', 'arara_roupas',
@@ -242,7 +244,26 @@ export function buildAtacadao(scene, T) {
     B: [-8, -2, 4, 10].map(x => ({ x, z: ZN - 4, yaw: Math.PI })), // loja, olhando pra fachada
   };
 
+  /* BUG-57: pombo de estacionamento de atacado e rato de doca. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'atacadao_treta',
+    rats: [
+      { pos: [-16, 0, -27], to: [-13.5, 0, -24.5], phase: .3 },
+      { pos: [14, 0, 24], to: [11.5, 0, 21.5], phase: 1.5 },
+    ],
+    /* vida 1: barata da doca do atacadão (fauna 2) */
+    cockroaches: [
+      { pos: [-15, 0, -26], to: [-12.8, 0, -23.8], phase: .8 },
+      { pos: [13, 0, 22.5], to: [10.8, 0, 20.2], phase: 2.2 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-8, 0, 20], phase: .4 }, { mode: 'ground', pos: [10, 0, 16], phase: 1.3 },
+      { mode: 'ground', pos: [1.2, 0, -9], phase: .8 },
+    ],
+  });
+
   return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.hum,pos:[0,3,0],radius:60,vol:.2},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:60,vol:.18}],bioma:'urbano'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
       { id: 'E', label: 'ESTACIONAMENTO', x: -8, z: ZS + 12 },
