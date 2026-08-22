@@ -26,9 +26,20 @@ faixas IA nem permite reedição por título.
 - `tools/eval/trilha-medida.py` e `tools/eval/perfil-trilha.json`: régua de
   conjunto das faixas.
 
-Os dois geradores OpenRouter ficaram no estado **pronto, mas não executado**:
-a sessão do Claude não tinha `OPENROUTER_API_KEY`. Nenhum áudio Lyria ou TTS
-deve ser alegado como gerado até que essa execução seja feita e auditada.
+Na sessão de recuperação de 22/08, ambos foram executados com uma credencial
+local já existente, sem registrá-la neste repositório:
+
+- Lyria: cinco arquivos em `public/audio/ia/rounds-lyria/` (`r-e`, `r-b`,
+  `r-u`, `r-c`, `r-f`). A régua encontrou BPM 112–152, três modos distintos e
+  40% em tonalidade menor — sem convergência óbvia entre as faixas.
+- TTS: 18 tomadas em `public/audio/ia/piloto/`. O modelo antigo que o Claude
+  registrou saiu do catálogo; o gerador consolidado usa
+  `google/gemini-3.1-flash-tts-preview`, PCM 24 kHz convertido localmente para
+  MP3, com três vozes por fala.
+
+Os diretórios `public/audio/` são ignorados pelo Git de propósito. Os arquivos
+estão no computador para audição, mas ainda não entram no manifest de jogo nem
+devem ser publicados sem seleção e aprovação.
 
 ## Consolidação segura
 
@@ -37,6 +48,6 @@ deve ser alegado como gerado até que essa execução seja feita e auditada.
    título, URL/origem, duração e checksum.
 3. Ouvir e aprovar os cinco pilotos Mint; só então produzir as versões de jogo
    com `trilha-ia.mjs`.
-4. Rodar Lyria/TTS apenas com aprovação de gasto e registrar modelo, custo,
-   prompt, arquivo resultante e checksum.
+4. Registrar modelo, custo, prompt, arquivo resultante e checksum a cada novo
+   lote.
 5. Atualizar o manifest de execução somente com arquivos aprovados.
