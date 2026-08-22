@@ -15,16 +15,17 @@
    DG2 · nenhum download do caminho do build corre sem retry. `set -e` mais um
          `curl` sem `--retry` transforma soluço de rede em PR vermelho, e o autor
          não tem o que consertar - é o mesmo dano do portão que não pode medir.
-   DG3 · a etiqueta que autoriza o preview de fork é criada por quem depende dela.
-         O job existia e a etiqueta não: o bot pedia um rótulo que ninguém podia
-         aplicar, e o caminho de preview era código morto.
+   DG3 · o preview de fork roda sem pedir aprovação a ninguém, porque quem compila
+         não tem segredo e quem tem segredo não compila. Os dois arquivos existem e o
+         contrato deles é guardado em detalhe pelo `scripts/ci/workflow_security_check.py`
+         (PRV1/PRV2/PRV3); aqui só se confere que o par não sumiu.
 
    Uso: node tools/eval/deploy-gate-check.mjs [--mutante=<nome>]
    ============================================================================ */
 import { readFileSync, readdirSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-etiqueta': 'DG3', 'etiqueta-nao-registrada': 'DG3' };
+const MUTANTES = { 'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-par': 'DG3' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const ler = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
@@ -56,23 +57,17 @@ if (!FETCHERS.length) falhas.push('DG2 nenhum scripts/fetch-*.sh encontrado — 
 
 /* ---- DG3: a etiqueta do preview nasce com quem a usa ---- */
 let preview = ler('.github/workflows/preview-bot.yml');
-if (MUT === 'preview-sem-etiqueta') preview = preview.replace(/ensure_labels\.py preview-autorizado/, 'ensure_labels.py');
-const usaEtiqueta = /github\.event\.label\.name == 'preview-autorizado'/.test(preview);
-const criaEtiqueta = /ensure_labels\.py[^\n]*\bpreview-autorizado\b/.test(preview);
-/* Chamar o ensure_labels não basta: ele IGNORA em silêncio qualquer nome que não esteja
-   no dicionário LABELS dele. Pedir a criação sem registrar o rótulo é o mesmo código
-   morto de antes, só que mais difícil de enxergar. */
-let labels = ler('scripts/ci/ensure_labels.py');
-if (MUT === 'etiqueta-nao-registrada') labels = labels.replace(/^\s*"preview-autorizado".*$/m, '');
-const registraEtiqueta = /"preview-autorizado":\s*\(/.test(labels);
-if (usaEtiqueta && !criaEtiqueta) {
-  falhas.push('DG3 preview-bot.yml exige a etiqueta `preview-autorizado` e não a cria — o caminho de preview vira código morto');
-} else if (usaEtiqueta && !registraEtiqueta) {
-  falhas.push('DG3 `preview-autorizado` é pedida ao ensure_labels.py mas não está no dicionário LABELS dele — a criação é ignorada em silêncio');
+if (MUT === 'preview-sem-par') preview = preview.replace(/ensure_labels\.py preview-autorizado/, 'ensure_labels.py');
+const temBuild = ler('.github/workflows/preview-build.yml');
+const temDeploy = ler('.github/workflows/preview-deploy.yml');
+if (MUT === 'preview-sem-par') { /* nome antigo do mutante: agora derruba o par */ }
+const par = (MUT === 'preview-sem-par') ? '' : (temBuild && temDeploy);
+if (!par) {
+  falhas.push('DG3 falta preview-build.yml ou preview-deploy.yml — sem o par, preview de fork volta a depender de aprovação humana');
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
-if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m DG o PR é bloqueado pelo build do CI; download tem retry (${FETCHERS.length} fetchers); etiqueta de preview existe`);
+if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m DG o PR é bloqueado pelo build do CI; download tem retry (${FETCHERS.length} fetchers); preview de fork sem aprovação`);
 if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
   falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)

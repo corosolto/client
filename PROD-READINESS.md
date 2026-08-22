@@ -44,11 +44,16 @@ conta dona do projeto:
 2. **Settings → Git → Ignored Build Step**: opcional, para parar de gastar build em branch
    de PR interna. A produção continua publicando pela `main`.
 
-O preview de fork continua disponível **sob demanda**: um mantenedor aplica a etiqueta
-`preview-autorizado` e o job `preview` do `preview-bot.yml` publica pela CLI da Vercel,
-depois de conferir permissão do ator e SHA aprovado. A etiqueta passou a ser criada pelo
-próprio workflow (DG3) - antes ela não existia no repositório e o caminho inteiro era
-código morto.
+O preview de fork **não pede aprovação a ninguém** desde 22/08, e sem expor o token:
+o `preview-build.yml` compila o código do fork em `pull_request` — que num PR de fork
+roda **sem acesso a `secrets`** —, e o `preview-deploy.yml` publica em `workflow_run`,
+que roda no contexto base **com** o token e **não executa nada do PR** (`vercel deploy
+--prebuilt` só envia arquivo). Quem tem o que roubar não roda código de terceiro; quem
+roda código de terceiro não tem o que roubar.
+
+O contrato está preso em `scripts/ci/workflow_security_check.py` (PRV1/PRV2/PRV3): nove
+mutações, incluindo pôr `secrets.` no job que compila e um `actions/checkout` no que
+publica.
 
 ## Blockers conhecidos para prod
 
