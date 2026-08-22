@@ -44,9 +44,17 @@ conta dona do projeto:
 2. **Settings → Git → Ignored Build Step**: opcional, para parar de gastar build em branch
    de PR interna. A produção continua publicando pela `main`.
 
-O preview de fork continua disponível **sob demanda**: um mantenedor aplica a etiqueta
-`preview-autorizado` e o job `preview` do `preview-bot.yml` publica pela CLI da Vercel,
-depois de conferir permissão do ator e SHA aprovado. A etiqueta passou a ser criada pelo
+O preview de fork é **liberado sozinho** quando as duas condições valem ao mesmo tempo
+(DG4): o autor já é colaborador do repositório **e** o diff não encosta em área sensível
+(`.github/`, `scripts/`, `package.json`, `vercel.json`, `src/pages/api/`, `supabase/`,
+`.env`) nem passa de 3.000 linhas. Fora disso — estranho da internet, área sensível ou
+diff grande — continua exigindo que um mantenedor aplique a etiqueta à mão.
+
+**Por que a trava do autor existe:** o job de preview roda `vercel build`, que executa o
+build **do fork** com o `VERCEL_TOKEN` no ambiente. Aprovar preview é dar execução de
+código a quem abriu o PR. Soltar o lado do autor transforma a comodidade de não clicar
+num vetor de roubo de token — por isso a régua DG4 recusa qualquer das duas travas
+sozinha. O job segue conferindo permissão do ator e SHA aprovado antes de publicar. A etiqueta passou a ser criada pelo
 próprio workflow (DG3) - antes ela não existia no repositório e o caminho inteiro era
 código morto.
 

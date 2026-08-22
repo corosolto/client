@@ -36,7 +36,8 @@ jobs:
 
       - name: classifica o diff sem executar código do fork
         env:
-          GH_TOKEN: ${{ github.token }}
+          # PAT do bot: rotular com o github.token não dispara o job `preview` a jusante
+          GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN || github.token }}
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
@@ -44,12 +45,28 @@ jobs:
             --jq '.[] | .filename + " +" + (.additions|tostring) + " -" + (.deletions|tostring)' > /tmp/arquivos.txt
           TOTAL=$(gh api "repos/$REPO/pulls/$PR" --jq '.additions + .deletions')
           PERIGO=$(grep -cE '^\.github/|^scripts/|^package(-lock)?\.json|^vercel\.json|^src/pages/api/|^supabase/|^\.env' /tmp/arquivos.txt || true)
+          # QUEM ABRIU importa tanto quanto O QUE mudou. O preview roda `vercel build`, que
+          # executa o build DO FORK com o VERCEL_TOKEN no ambiente: aprovar é dar execução
+          # de código a quem abriu o PR. Por isso a liberação automática exige as DUAS
+          # coisas — autor já convidado para o repositório E diff longe de área sensível.
+          # Estranho da internet, área sensível ou diff grande continuam pedindo mão humana.
+          AUTOR=$(gh api "repos/$REPO/pulls/$PR" --jq .user.login)
+          PERM=$(gh api "repos/$REPO/collaborators/$AUTOR/permission" --jq .permission 2>/dev/null || echo none)
+          case "$PERM" in admin|maintain|write|read) CONHECIDO=1 ;; *) CONHECIDO=0 ;; esac
+
           if [ "$PERIGO" -gt 0 ] || [ "$TOTAL" -gt 3000 ]; then
             TEXTO="área sensível ou diff grande; revisão manual obrigatória"
+          elif [ "$CONHECIDO" = "1" ]; then
+            TEXTO="autor já é colaborador e o diff não encosta em área sensível; liberei o preview sozinho"
           else
-            TEXTO="candidato a preview; um mantenedor deve revisar o SHA e aplicar o label"
+            TEXTO="autor de fora do repositório; um mantenedor deve revisar o SHA e aplicar o label"
           fi
           gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO \`preview-autorizado\`."
+          # A etiqueta é aplicada DEPOIS do comentário: aplicá-la dispara o job `preview`,
+          # e o comentário precisa estar no PR antes, para o registro do porquê existir.
+          if [ "$PERIGO" -eq 0 ] && [ "$TOTAL" -le 3000 ] && [ "$CONHECIDO" = "1" ]; then
+            gh pr edit "$PR" --repo "$REPO" --add-label preview-autorizado
+          fi"
 
   preview:
     if: >-

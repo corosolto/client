@@ -15,6 +15,11 @@
    DG2 · nenhum download do caminho do build corre sem retry. `set -e` mais um
          `curl` sem `--retry` transforma soluço de rede em PR vermelho, e o autor
          não tem o que consertar - é o mesmo dano do portão que não pode medir.
+   DG4 · a liberação AUTOMÁTICA do preview exige as duas coisas ao mesmo tempo: autor já
+         convidado para o repositório E diff longe de área sensível. O preview roda
+         `vercel build`, que executa o build DO FORK com o VERCEL_TOKEN no ambiente —
+         aprovar é dar execução de código a quem abriu o PR. Soltar qualquer um dos dois
+         lados transforma o conforto de não clicar num vetor de roubo de token.
    DG3 · a etiqueta que autoriza o preview de fork é criada por quem depende dela.
          O job existia e a etiqueta não: o bot pedia um rótulo que ninguém podia
          aplicar, e o caminho de preview era código morto.
@@ -24,7 +29,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = { 'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-etiqueta': 'DG3', 'etiqueta-nao-registrada': 'DG3' };
+const MUTANTES = { 'ci-sem-build': 'DG1', 'download-sem-retry': 'DG2', 'preview-sem-etiqueta': 'DG3', 'etiqueta-nao-registrada': 'DG3', 'preview-solta-estranho': 'DG4', 'preview-solta-sensivel': 'DG4' };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 const ler = (p) => { try { return readFileSync(p, 'utf8'); } catch { return ''; } };
@@ -69,6 +74,23 @@ if (usaEtiqueta && !criaEtiqueta) {
   falhas.push('DG3 preview-bot.yml exige a etiqueta `preview-autorizado` e não a cria — o caminho de preview vira código morto');
 } else if (usaEtiqueta && !registraEtiqueta) {
   falhas.push('DG3 `preview-autorizado` é pedida ao ensure_labels.py mas não está no dicionário LABELS dele — a criação é ignorada em silêncio');
+}
+
+/* ---- DG4: a liberação automática tem as duas travas ---- */
+if (MUT === 'preview-solta-estranho') preview = preview.replace(/&& \[ "\$CONHECIDO" = "1" \]/, '');
+if (MUT === 'preview-solta-sensivel') preview = preview.replace(/\[ "\$PERIGO" -eq 0 \] && /, '');
+const autoLabel = /--add-label preview-autorizado/.test(preview);
+if (autoLabel) {
+  const guarda = (preview.match(/if \[ "\$PERIGO"[^\n]*\n\s*gh pr edit[^\n]*--add-label preview-autorizado/) || [''])[0];
+  if (!/CONHECIDO" = "1"/.test(guarda)) {
+    falhas.push('DG4 o preview é liberado sozinho sem conferir se o autor é colaborador — dá execução de código com o VERCEL_TOKEN a qualquer um');
+  }
+  if (!/PERIGO" -eq 0/.test(guarda) || !/TOTAL" -le/.test(guarda)) {
+    falhas.push('DG4 o preview é liberado sozinho sem conferir área sensível nem tamanho do diff');
+  }
+  if (!/collaborators\/\$AUTOR\/permission/.test(preview)) {
+    falhas.push('DG4 a liberação automática não consulta a permissão do AUTOR do PR');
+  }
 }
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
