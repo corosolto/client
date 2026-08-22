@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.169",
+  "version": "2.0.0-alpha.176",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -70,6 +70,8 @@
     "bot:brain:check": "node tools/eval/bot-brain-check.mjs",
     "eval:botbrain": "node tools/eval/botbrain-safety-check.mjs",
     "eval:preload": "node tools/eval/preload-check.mjs",
+    "eval:armas": "node tools/eval/armas-check.mjs",
+    "eval:comentario": "node tools/eval/comentario-check.mjs",
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",
     "eval:ui": "node tools/eval/ui-check.mjs all",
     "eval:redesign": "node tools/eval/redesign-check.mjs",
@@ -86,6 +88,7 @@
     "eval:pause": "node tools/eval/pause-check.mjs",
     "eval:select": "node tools/eval/select-inflate.mjs",
     "eval:entrada": "node tools/eval/entrada-check.mjs",
+    "eval:replaycam": "node tools/eval/replaycam-check.mjs",
     "eval:select:mutate": "node tools/eval/select-inflate.mjs mandrake,pagodeiro --mutate=skin",
     "assert:assets": "node tools/eval/assets-check.mjs",
     "strip:decalbg": "node tools/strip-decal-bg.mjs",
@@ -117,7 +120,6 @@
     "eval:regen": "node tools/eval/regen-check.mjs",
     "eval:ctfwin": "node tools/eval/ctf-win-check.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
-    "eval:docsautoria": "node tools/eval/docs-autoria-check.mjs",
     "eval:devport": "node tools/eval/dev-port-check.mjs",
     "eval:mitico": "node tools/eval/mythic-character-check.mjs",
     "eval:deathcam": "node tools/eval/death-camera-check.mjs",
@@ -184,8 +186,12 @@
     "eval:deps": "node tools/eval/deps-check.mjs",
     "eval:pickuparma": "node tools/eval/pickup-arma-check.mjs",
     "eval:fixture": "node tools/eval/fixture-check.mjs",
-    "eval:comentario": "node tools/eval/comentario-check.mjs",
-    "eval:propsuv1": "node tools/eval/props-uv1-check.mjs"
+    "eval:propsuv1": "node tools/eval/props-uv1-check.mjs",
+    "eval:mutcega": "node tools/eval/mutacao-cega-check.mjs",
+    "eval:wfsecret": "node tools/eval/workflow-secret-check.mjs",
+    "eval:deploygate": "node tools/eval/deploy-gate-check.mjs",
+    "eval:autofix": "node tools/eval/autofix-check.mjs",
+    "eval:portaointeiro": "node tools/eval/portao-inteiro-check.mjs"
   },
   "repository": {
     "type": "git",
@@ -196,16 +202,22 @@
   },
   "homepage": "https://www.csbrasil.online",
   "dependencies": {
-    "@astrojs/vercel": "^11.0.3",
+    "@astrojs/vercel": "^11.0.6",
     "@resvg/resvg-js": "^2.6.2",
     "@resvg/resvg-wasm": "^2.6.2",
     "@supabase/supabase-js": "^2.110.7",
     "astro": "^7.1.1",
     "dejavu-fonts-ttf": "^2.37.3",
+    "ndarray-pixels": "^5.2.0",
     "sharp": "^0.35.3"
   },
   "private": true,
   "type": "module",
+  "overrides": {
+    "@vercel/routing-utils": {
+      "path-to-regexp": "^6.3.0"
+    }
+  },
   "devDependencies": {
     "@gltf-transform/core": "^4.4.1",
     "@gltf-transform/extensions": "^4.4.1",

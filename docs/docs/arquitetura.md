@@ -62,15 +62,15 @@ Tamanho dos arquivos que o `gen-arch.mjs` indexa — bloco gerado, regenerado po
 
 | Arquivo | Linhas |
 |---|---:|
-| `public/js/game.js` | 7.188 |
-| `public/js/main.js` | 2.781 |
+| `public/js/game.js` | 6.910 |
+| `public/js/main.js` | 2.698 |
 | `public/js/characters.js` | 1.168 |
-| `public/js/glbchars.js` | 960 |
+| `public/js/glbchars.js` | 844 |
 | `public/js/vmattach.js` | 628 |
-| `public/js/weapons.js` | 353 |
+| `public/js/weapons.js` | 346 |
 | `public/js/springs.js` | 260 |
 
-Total de `public/js/`: **40.912 linhas em 59 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
+Total de `public/js/`: **40.552 linhas em 59 arquivos**. O índice símbolo→linha, com a tabela de conflito, é outro bloco gerado: `tools/eval/ARCH.md` (`npm run arch`).
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: ``git ls-files public/js/*.js | xargs wc -l``
 
@@ -251,7 +251,7 @@ versão do `docs:check`, e é o mesmo modo de falha do BUG-02 (o quality gate me
 de ontem porque o `&&` cortava antes de o JSON ser regenerado).
 
 Por isso o `docs:check` vem **antes** do `arch:check` no `package.json`, com o motivo
-escrito na chave `//check:fast`. Quando o `ARCH.md` for regenerado e o `arch:check` voltar
+escrito no `SCRIPTS.md` (chave `check:fast`). Quando o `ARCH.md` for regenerado e o `arch:check` voltar
 a verde, a ordem deixa de importar; até lá, importa.
 :::
 

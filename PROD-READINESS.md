@@ -26,6 +26,35 @@
 - Headers de cache: `/vendor/*` curto, `/models/*` e `/audio/a/*` longo/immutable, `og-image.png` 7 dias.
 - CSP está declarado em `vercel.json`; import map e scripts são `self` + `unsafe-inline` + Cloudflare beacon.
 
+## Preview de PR e a Vercel (21/08/2026)
+
+Medido nos últimos 29 PRs: a Vercel reprovou **13 dos 14 PRs vindos de fork**, sempre com
+`Authorization required to deploy.` - é a proteção de fork da própria Vercel, e nenhum
+commit do colaborador a resolve.
+
+**Quem bloqueia o PR é o `ci.yml`**, que já roda `npm run build` em `pull_request`. A
+Vercel é conveniência, não portão - a régua `eval:deploygate` (DG1) guarda essa condição.
+
+Dois ajustes ficam no **painel da Vercel**, fora do alcance do repositório, e precisam da
+conta dona do projeto:
+
+1. **Project → Git → Deploy Hooks / Fork Protection**: desligar o deploy automático de PR
+   vindo de fork. Enquanto estiver ligado, todo PR externo nasce com um vermelho que o
+   autor não tem como consertar.
+2. **Settings → Git → Ignored Build Step**: opcional, para parar de gastar build em branch
+   de PR interna. A produção continua publicando pela `main`.
+
+O preview de fork **não pede aprovação a ninguém** desde 22/08, e sem expor o token:
+o `preview-build.yml` compila o código do fork em `pull_request` — que num PR de fork
+roda **sem acesso a `secrets`** —, e o `preview-deploy.yml` publica em `workflow_run`,
+que roda no contexto base **com** o token e **não executa nada do PR** (`vercel deploy
+--prebuilt` só envia arquivo). Quem tem o que roubar não roda código de terceiro; quem
+roda código de terceiro não tem o que roubar.
+
+O contrato está preso em `scripts/ci/workflow_security_check.py` (PRV1/PRV2/PRV3): nove
+mutações, incluindo pôr `secrets.` no job que compila e um `actions/checkout` no que
+publica.
+
 ## Blockers conhecidos para prod
 
 1. **`npm run check` (full) não foi executado nesta sessão.** `check:fast` passou; `check` ainda inclui `eval:vm`, `invariants`, `kick`, `bots` e deve ser verde antes de publicar.

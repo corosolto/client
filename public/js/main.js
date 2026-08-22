@@ -5,20 +5,16 @@ import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
-import { preloadAmbientLife } from './ambientlife.js';
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
+import { preloadWeapons } from './weapons.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
-import { FACTIONS } from './factions.js';
-/* Literal exigido pela régua UIR1 (redesign-check lê a declaração, não o uso);
-   a fonte dos nomes é factions.js — mantenha os dois em sincronia. */
-const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHACOS', F: 'FUNKEIROS', M: 'MITICOS', N: 'NERDOLAS', R: 'PROFISSIONAIS DO CORRE', O: 'NOIAS', T: 'TV' };
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 
@@ -142,14 +138,6 @@ sfx.onDuck = (amt, hold) => {
   if (!m || m.paused || m.muted || musicFade) return;
   m.volume = MENU_MUSIC_VOL * amt;
   setTimeout(() => { if (menuMusic && !musicFade && !menuMusic.paused) menuMusic.volume = MENU_MUSIC_VOL; }, hold * 1000 + 220);
-};
-sfx.onCharacterVoice = ({ characterId, event, text }) => {
-  if (event !== 'select') return;
-  const caption = $('char-voice-caption');
-  if (!caption) return;
-  const character = CHARACTERS.find((entry) => entry.id === characterId);
-  caption.textContent = text ? `${character?.name || characterId}: “${text}”` : '';
-  caption.classList.toggle('show', !!text);
 };
 const sfxReady = sfx.loadManifest();
 
@@ -287,66 +275,13 @@ function rebuildMenuBackdrop() {
   menuScene = new THREE.Scene();
   MAPS[currentMap].build(menuScene, textures);
 }
-function menuProps(id) {
-  return [...MAP_PROPS, ...((MAPS[id] && MAPS[id].props) || [])];
-}
-let _menuLoadSeq = 0;
-function loadMenuBackdrop() {
-  const id = currentMap, seq = ++_menuLoadSeq;
-  return Promise.all([
-    preloadMapProps(menuProps(id)),
-    preloadAmbientLife((MAPS[id] && MAPS[id].ambience) || []),
-  ]).then(() => {
-    // O jogador pode trocar de mapa enquanto o GLB baixa. Resultado velho não reconstrói
-    // a cena nova; a próxima chamada tem seu próprio preload e sequência.
-    if (seq === _menuLoadSeq && id === currentMap) rebuildMenuBackdrop();
-  });
-}
 // The first backdrop is built before props load; rebuild once they're ready so the
 // menu shows the real Brasília landmarks too. Só então a splash libera a entrada.
-loadMenuBackdrop().then(_splashSetReady).catch(_splashSetReady);
+preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
 
 /* ---------------- screens ---------------- */
-const CINE_SCREEN_META = Object.freeze({
-  'mobile-warning': { section: 'ACESSO', step: 'DESKTOP RECOMENDADO', progress: 4 },
-  'main-menu': { section: 'ABERTURA', step: 'ESCOLHA A TRETA', progress: 12 },
-  'map-screen': { section: 'PREPARAÇÃO', step: '01 · O PALCO', progress: 26 },
-  'team-select': { section: 'ESCALAÇÃO', step: '02 · O SEU LADO', progress: 44 },
-  'char-select': { section: 'ESCALAÇÃO', step: '03 · O PERSONAGEM', progress: 62 },
-  'settings-panel': { section: 'SISTEMA', step: 'AJUSTE A ARENA', progress: 18 },
-  'howto-panel': { section: 'ARQUIVO', step: 'MANUAL DE CAMPO', progress: 18 },
-  'ranking-panel': { section: 'ARQUIVO', step: 'PLACAR DA RUA', progress: 18 },
-  'feedback-panel': { section: 'CANAL ABERTO', step: 'MANDE O PAPO', progress: 18 },
-  'pause-menu': { section: 'INTERVALO', step: 'A TRETA ESPERA', progress: 76 },
-  'match-end': { section: 'DESFECHO', step: 'FIM DE RODADA', progress: 100 },
-  'support-panel': { section: 'CANAL ABERTO', step: 'APOIE A TRETA', progress: 18 },
-});
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
-function applyCinematicScreen(id) {
-  if (!id || !CINE_SCREEN_META[id]) {
-    delete document.body.dataset.cineScreen;
-    return;
-  }
-  const meta = { ...CINE_SCREEN_META[id] };
-  if (id === 'main-menu' && document.getElementById('menu-setup')?.classList.contains('open')) {
-    const profile = document.getElementById('menu-setup')?.dataset.step === 'profile';
-    meta.section = profile ? 'IDENTIDADE' : 'PREPARAÇÃO';
-    meta.step = profile ? 'SEU PERFIL' : '01 · A PARTIDA';
-    meta.progress = profile ? 20 : 26;
-  }
-  if (id === 'team-select' && document.getElementById('team-select')?.dataset.step === 'enemy') {
-    meta.section = 'CONFRONTO'; meta.step = '04 · O ADVERSÁRIO'; meta.progress = 82;
-  }
-  document.body.dataset.cineScreen = id;
-  const section = document.getElementById('cine-section');
-  const step = document.getElementById('cine-step');
-  const progress = document.getElementById('cine-progress');
-  if (section) section.textContent = meta.section;
-  if (step) step.textContent = meta.step;
-  if (progress) progress.style.width = `${meta.progress}%`;
-}
 function show(id) {
-  applyCinematicScreen(id);
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
@@ -1119,15 +1054,16 @@ async function _startGame(team, charId, enemyFaction) {
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
-  /* ?preloadall=1 volta ao preload do elenco inteiro — é o A/B do dono e o mutante `todos`
-     da régua PLR1; sem ele a régua não teria como provar que mede o que diz medir. */
-  const _charsToLoad = _rosterGlb.length && params.get('preloadall') !== '1' ? _rosterGlb : [...GLB_CHARS];
+  const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
+     e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
+  const matchWeapons = pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.min(8, settings.bots || 4)) });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
-        preloadCharacterAssets(_charsToLoad),
+        preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
-        preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }
@@ -1136,7 +1072,7 @@ async function _startGame(team, charId, enemyFaction) {
   game = new Game({
     renderer, textures, sfx, settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
@@ -1144,24 +1080,18 @@ async function _startGame(team, charId, enemyFaction) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
-  /* Elenco da facção INIMIGA em segundo plano: é o que a tecla M pode virar. O elenco
-     inteiro custaria ~35 MB por sessão; a facção sozinha é uma fração. Régua: PLR3. */
-  if (!navOnly && params.get('preloadlazy') !== '0') {
-    const daInimiga = CHARACTERS.filter((c) => c.team === enemyFac && GLB_CHARS.has(c.id)).map((c) => c.id);
-    const resto = daInimiga.filter((id) => !_charsToLoad.includes(id));
-    if (resto.length) {
-      /* Espera o `live` e sai por identidade da partida: baixar na contagem regressiva rouba
-         o primeiro segundo jogável, e partida trocada não pode deixar timer vivo. */
-      const meuJogo = game;
-      let tentativas = 0;
-      const espera = setInterval(() => {
-        if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
-        if (meuJogo.state !== 'live') return;
-        clearInterval(espera);
-        const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
-        ocioso(() => preloadCharacterAssets(resto).catch(() => {}));
-      }, 250);
-    }
+  /* Resto das armas em ocioso: o drop do chão e a troca no meio da partida precisam de malha
+     real, senão vira caixa procedural. Falha calada — é disponibilidade, não requisito. */
+  if (!navOnly && params.get('armaslazy') !== '0') {
+    const meuJogo = game;
+    let tentativas = 0;
+    const espera = setInterval(() => {
+      if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
+      if (meuJogo.state !== 'live') return;
+      clearInterval(espera);
+      const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+      ocioso(() => preloadWeapons().catch(() => {}));
+    }, 250);
   }
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
@@ -1173,10 +1103,7 @@ async function _startGame(team, charId, enemyFaction) {
   game.onOpenSettings = () => { game.setPaused(true); settingsReturn = 'pause-menu'; show('settings-panel'); };
   // pausa nova = botão destrutivo desarmado (senão um "CLIQUE DE NOVO" velho sobrevive
   // até a pausa seguinte e o primeiro clique já confirmaria)
-  game.onPauseChange = (paused) => {
-    resetConfirms();
-    applyCinematicScreen(paused ? 'pause-menu' : null);
-  };
+  game.onPauseChange = () => resetConfirms();
   game.onToggleSpeech = () => {
     settings.speech = !settings.speech;
     sfx.speechEnabled = settings.speech;
@@ -1360,7 +1287,6 @@ function setSetupStep(step) {
     if (st) st.textContent = tr(matchMode === 'ctf' ? 'PASSO 1 · A PARTIDA (CTF)' : 'PASSO 1 · A PARTIDA');
     if (tt) tt.textContent = tr(setupTitle);
   }
-  if (document.body.dataset.cineScreen === 'main-menu') applyCinematicScreen('main-menu');
 }
 const openSetup = (mode, title, act) => {
   if (mode) { matchMode = mode; modoEscolhido = true; }   // veio de SINGLE PLAYER/CAPTURE THE FLAG = escolha explícita
@@ -1590,7 +1516,7 @@ function setMapMeta() {
 function setMapMode() {
   const m = $('map-mode');
   if (m) {
-    m.textContent = matchMode === 'ctf' ? 'CAPTURE THE FLAG' : 'MATA-MATA';
+    m.textContent = matchMode === 'ctf' ? tr('CAPTURE THE FLAG') : tr('MATA-MATA');
     m.dataset.mode = matchMode;
   }
   const d = $('map-dots');
@@ -1623,7 +1549,6 @@ function gotoMap(i) {
   if (!modoEscolhido) matchMode = MAPS[currentMap].ctfMode ? 'ctf' : 'rounds';
   setMapMode();
   rebuildMenuBackdrop();
-  loadMenuBackdrop().catch(() => {});
   renderMapScreen();   // se a tela cheia estiver aberta, ela acompanha o carrossel
 }
 function stepMap(dir, ids = MAP_IDS) {
@@ -1684,7 +1609,8 @@ const MAP_DATA = {
   upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
 };
 const CAT_DESC = {
-  TODOS: 'Mapas oficiais da casa.',
+  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
+  OFICIAIS: 'Mapas oficiais da casa.',
   ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
   FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
   CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
@@ -1700,22 +1626,45 @@ let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
   return [...new Set(MAP_IDS.filter((id) => catsDe(id).includes('COMUNIDADE')).map(autorDe))].sort();
 }
+/* Quantas vezes cada mapa foi escolhido, do contador que o /api/pick alimenta desde
+   06/08 (picks_daily). Chega TARDE, por rede, e pode nunca chegar: a tela abre sem ele,
+   e quando chega redesenha. Nada aqui pode depender do número existir. */
+let mapPlays = {};
+const playsDe = (id) => mapPlays[id] || 0;
+fetch('/api/map-plays')
+  .then((r) => (r.ok ? r.json() : null))
+  .then((j) => {
+    if (!j || !j.plays || typeof j.plays !== 'object') return;
+    mapPlays = j.plays;
+    if (!$('map-screen')?.classList.contains('hidden')) renderMapScreen();
+  })
+  .catch(() => { /* sem banco/rede: a tela fica sem a estatística, e é só isso */ });
 function visibleMapIds() {
-  /* A aba TODOS lista só os mapas OFICIAIS — os de comunidade têm a própria aba. "De comunidade"
-     é pela categoria (a etiqueta do crachá), que coincide com autoria não-oficial. */
-  return MAP_IDS.filter((id) => mapCategory === 'TODOS' ? !catsDe(id).includes('COMUNIDADE') : catsDe(id).includes(mapCategory));
+  /* TODOS = o acervo inteiro, ordenado do mais jogado pro menos (empate: ordem do catálogo,
+     que é estável — `sort` sem desempate deixava a lista dançar entre renders).
+     OFICIAIS e COMUNIDADE são recortes por categoria e mantêm a ordem do catálogo. */
+  if (mapCategory === 'TODOS') {
+    return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));
+  }
+  if (mapCategory === 'OFICIAIS') return MAP_IDS.filter((id) => !catsDe(id).includes('COMUNIDADE'));
+  return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
      Trocas manuais de aba já re-ancoram o mapa antes, então isto não briga com elas. */
   if (!visibleMapIds().includes(currentMap)) {
-    mapCategory = catsDe(currentMap).includes('COMUNIDADE') ? 'COMUNIDADE' : 'TODOS';
+    mapCategory = catsDe(currentMap).includes('COMUNIDADE') ? 'COMUNIDADE' : 'OFICIAIS';
   }
   const continuar = $('ms-continue')?.querySelector('span');
   if (continuar) continuar.textContent = frase('continuarSetup');
   img.decoding = 'async';   // decode fora da thread principal — não trava a UI da tela de mapas
   img.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  /* O palco é o MESMO wallpaper do menu principal, não esta preview: a foto do mapa em
+     foco já está no card selecionado, e em tela cheia ela brigava com a grade. O `src`
+     acima continua sendo escrito porque é dele que a sonda de tela lê o mapa em foco. */
+  const palco = document.querySelector('#map-screen .ms-bg');
+  if (palco) { palco.style.setProperty('--wall', HOME_WALL); palco.style.setProperty('--wall-3x2', HOME_WALL_3X2); }
   $('ms-name').textContent = MAPS[currentMap].name;
   // separadores da ficha em verde (referência 04): texto continua o mesmo do cartaz
   $('ms-meta').innerHTML = ($('map-meta').textContent || '').split('·').join('<span class="ms-sep">·</span>');
@@ -1730,13 +1679,23 @@ function renderMapScreen() {
   const desc = $('ms-cat-desc');
   if (desc) desc.textContent = CAT_DESC[mapCategory] ? tr(CAT_DESC[mapCategory]) : '';
   $('ms-count').textContent = `${tr('MAPA')} ${MAP_IDS.indexOf(currentMap) + 1} ${tr('DE')} ${MAP_IDS.length}`;
+  /* Estatística de partidas: só aparece quando o número EXISTE. Escrever "0 PARTIDAS"
+     num mapa que ninguém mediu é afirmar o que não se sabe — sem o contador, o crachá some. */
+  const plays = $('ms-plays');
+  if (plays) {
+    const n = playsDe(currentMap);
+    plays.hidden = !n;
+    plays.textContent = n ? `${n.toLocaleString('pt-BR')} ${tr(n === 1 ? 'PARTIDA' : 'PARTIDAS')}` : '';
+  }
   const shown = visibleMapIds();
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
       `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
-      `<span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span></span>` +
+      `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
+      (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
+      `</span></span>` +
       `${id === currentMap ? '<i class="ms-diamond" aria-hidden="true"></i>' : ''}</button>`).join('');
   document.querySelectorAll('.ms-tab').forEach((tab) => {
     const on = tab.dataset.cat === mapCategory;
@@ -1752,7 +1711,7 @@ function renderMapScreen() {
   });
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapThumb.title = 'Ver mapa em tela cheia';
+mapThumb.title = tr('Ver mapa em tela cheia');
 mapThumb.style.cursor = 'pointer';
 mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };
@@ -1891,61 +1850,21 @@ const stripStep = (dir) => {
 };
 $('strip-up').onclick = () => { ui.click(); stripStep(-1); };
 $('strip-down').onclick = () => { ui.click(); stripStep(1); };
-// Cards vêm do registro único; facção sem roster aprovado aparece no
-// catálogo, mas não abre o fallback procedural que o dono reprovou como Roblox.
-const factionCards = [...document.querySelectorAll('.team-card[data-faction]')];
-/* BUG-42: o catálogo de pôsteres virou índice + um único hero editorial. A seleção
-   continua vindo dos mesmos botões/registro; esta função só projeta a linha focada no
-   palco, sem duplicar regra de disponibilidade nem de roster. */
-function presentFaction(card) {
-  if (!card || card.classList.contains('faction-excluded')) return;
-  const hero = $('faction-hero'); if (!hero) return;
-  const name = card.querySelector('.team-name')?.textContent?.trim() || '—';
-  const slogan = card.querySelector('.team-slogan')?.textContent?.trim() || '—';
-  const ready = card.dataset.ready === '1';
-  const count = CHARACTERS.filter(c => c.team === card.dataset.faction).length;
-  hero.style.setProperty('--hero-art', card.style.getPropertyValue('--art'));
-  hero.style.setProperty('--hero-color', card.style.getPropertyValue('--tc'));
-  hero.style.setProperty('--hero-rgb', card.style.getPropertyValue('--tc-rgb'));
-  const crest = $('fh-crest'); if (crest) { crest.src = card.querySelector('.team-crest')?.src || ''; crest.alt = `Brasão ${name}`; }
-  $('fh-name').textContent = name;
-  $('fh-slogan').textContent = slogan;
-  $('fh-desc').textContent = card.dataset.description || '';
-  $('fh-status').textContent = ready && count ? `${count} PERSONAGENS // ABRIR ELENCO` : 'ELENCO 3D EM PRODUÇÃO';
-  hero.dataset.ready = ready && count ? '1' : '0';
-  for (const item of factionCards) item.classList.toggle('is-preview', item === card);
-}
-for (const card of factionCards) {
-  const fac = card.dataset.faction;
-  const n = CHARACTERS.filter(c => c.team === fac).length;
+// Contador de elenco nos cards de facção ("8 PERSONAGENS" — referência telas/02)
+for (const f of ['e', 'b', 'u', 'c', 'f']) {
+  const n = CHARACTERS.filter(c => c.team === f.toUpperCase()).length;
+  const card = $('btn-team-' + f);
+  if (!card) continue;
   const chip = document.createElement('span');
   chip.className = 'team-count';
   chip.textContent = `${n} ${tr('PERSONAGENS')}`;
-  if (!n) chip.textContent = tr('INDISPONÍVEL');
   card.appendChild(chip);
-  const ready = card.dataset.ready === '1' && n > 0;
-  card.setAttribute('aria-disabled', String(!ready));
-  card.addEventListener('focus', () => { card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); presentFaction(card); });
-  card.addEventListener('mouseenter', () => presentFaction(card));
-  card.onclick = () => {
-    if (!ready) { ui.back(); return; }
-    sfx.uiClick(); pickTeam(fac);
-  };
 }
-presentFaction(factionCards.find(card => card.dataset.ready === '1') || factionCards[0]);
-if ($('fh-status')) $('fh-status').onclick = () => {
-  const card = factionCards.find(item => item.classList.contains('is-preview'));
-  if (card) card.click();
-};
-for (const [id, direction] of [['team-prev', -1], ['team-next', 1]]) {
-  const button = $(id);
-  if (!button) continue;
-  button.onclick = () => {
-    ui.click();
-    const rail = document.querySelector('.team-row');
-    rail?.scrollBy({ top: direction * Math.max(92, rail.clientHeight * .56), behavior: 'smooth' });
-  };
-}
+$('btn-team-e').onclick = () => { sfx.uiClick(); pickTeam('E'); };
+$('btn-team-b').onclick = () => { sfx.uiClick(); pickTeam('B'); };
+$('btn-team-u') && ($('btn-team-u').onclick = () => { sfx.uiClick(); pickTeam('U'); });
+$('btn-team-c') && ($('btn-team-c').onclick = () => { sfx.uiClick(); pickTeam('C'); });
+$('btn-team-f') && ($('btn-team-f').onclick = () => { sfx.uiClick(); pickTeam('F'); });
 $('btn-resume').onclick = () => { sfx.uiClick(); game?.resume(); };
 $('btn-pause-settings').onclick = () => { sfx.uiClick(); settingsReturn = 'pause-menu'; show('settings-panel'); };
 $('btn-pause-controls').onclick = () => { sfx.uiClick(); howtoReturn = 'pause-menu'; show('howto-panel'); };
@@ -2040,18 +1959,19 @@ $('char-confirm').onclick = () => {
   }
 };
 
-// Esconde/mostra o card da sua facção na tela de adversário; os demais continuam juntos.
+// Esconde/mostra o card da sua facção na tela de adversário (btn-team-e/b/u).
 function setEnemyPickMode(on, myFaction) {
-  for (const card of factionCards)
-    card.classList.toggle('faction-excluded', !!(on && card.dataset.faction === myFaction));
-  presentFaction(factionCards.find(card => !card.classList.contains('faction-excluded') && card.dataset.ready === '1') ||
-    factionCards.find(card => !card.classList.contains('faction-excluded')));
+  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+    const b = $('btn-team-' + f);
+    if (b) b.classList.toggle('hidden', !!(on && f.toUpperCase() === myFaction));
+  }
 }
 /* A MESMA tela serve dois passos e precisa DIZER qual é. Antes o único sinal era o
    título trocado por querySelector em 4 lugares diferentes do arquivo — e o 2º passo
    ficava com cara de formulário ("escolha o adversário" e três caixas iguais).
    Agora o passo é um estado (data-step) que a tela inteira lê: eyebrow, título, dica
    e o texto da barra de ação de cada placa (ver .team-cta no style.css). */
+const FACTION_NAME = { E: 'TIME E', B: 'TIME B', U: 'TRIBOS URBANAS', C: 'PALHAÇOS', F: 'FUNKEIROS' };
 function setTeamStep(step, myFaction) {
   const ts = $('team-select'); if (ts) ts.dataset.step = step;
   const st = $('team-step'), tt = $('team-title'), hint = $('team-hint');
@@ -2064,7 +1984,6 @@ function setTeamStep(step, myFaction) {
     if (tt) tt.textContent = tr('ESCOLHA SEU LADO DA TRETA');
     if (hint) hint.textContent = tr('Cada facção tem elenco, grito e jeito de brigar. Escolha o coro.');
   }
-  if (document.body.dataset.cineScreen === 'team-select') applyCinematicScreen('team-select');
 }
 
 const nickEl = $('nick-input');
@@ -2224,7 +2143,6 @@ function loadStats() {
     JSON.parse(localStorage.getItem(STATS_KEY) || '{}'));
 }
 async function recordMatchStats(s) {
-  applyCinematicScreen('match-end');
   submitted = true;
   sendTelemetry();   // ANTES do guard de nick lá embaixo: telemetria cobre quem não registrou
   sendMatchEvent(s?.won ? 'won' : 'lost');   // evento rico anônimo (feat/telemetria, 016)
@@ -2365,8 +2283,8 @@ let teamPreviewsDone = false;
 function ensureTeamPreviews() {
   if (teamPreviewsDone) return;
   teamPreviewsDone = true;
-  for (const fac of FACTIONS.map((f) => f.id)) {
-    const box = document.querySelector(`.team-card[data-faction="${fac}"] .team-chars`);
+  for (const [btn, fac] of [['btn-team-e', 'E'], ['btn-team-b', 'B'], ['btn-team-u', 'U'], ['btn-team-c', 'C'], ['btn-team-f', 'F']]) {
+    const box = document.querySelector(`#${btn} .team-chars`);
     if (!box) continue;
     const chars = CHARACTERS.filter(c => c.team === fac && GLB_CHARS.has(c.id)).slice(0, 4);
     if (!chars.length) continue;
@@ -2395,8 +2313,10 @@ function pickTeam(faction) {
   currentFaction = faction;
   currentTeam = faction === 'B' ? 'B' : 'E';
   // estado de seleção persistente nos cards: ao voltar do personagem, a tela diz qual é o SEU lado
-  for (const card of factionCards)
-    card.setAttribute('aria-pressed', String(card.dataset.faction === faction));
+  for (const f of ['e', 'b', 'u', 'c', 'f']) {
+    const b = $('btn-team-' + f);
+    if (b) b.setAttribute('aria-pressed', String(f.toUpperCase() === faction));
+  }
   const chars = CHARACTERS.filter(c => c.team === faction);   // roster da facção escolhida
   // ?nav=1 pula o preload 3D do roster (lento) — thumbnails caem no fallback pvThumb, que
   // nunca dispara GLB. A transição #char-select é o que o smoke de navegação quer provar.
@@ -2493,9 +2413,6 @@ function selectChar(c, row) {
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);
-  sfxReady.then(() => {
-    if (selChar?.id === c.id) sfx.characterVoice(c.id, 'select', { fallbackFaction: c.team, interrupt: true });
-  });
 }
 
 function selectCharacterFromAvatar(c, row, roster) {
@@ -2776,6 +2693,6 @@ async function openInspectionScreen(target) {
 if (inspectionScreen) {
   openInspectionScreen(inspectionScreen).catch((error) => window.__gameLaunch?.fail(error, 'screen-query'));
 } else if (testMode && params.get('auto')) {
-  const [team, char, enemyFaction] = params.get('auto').split(',');
-  startGame(team || 'E', char || CHARACTERS[0].id, enemyFaction || undefined);
+  const [team, char] = params.get('auto').split(',');
+  startGame(team || 'E', char || CHARACTERS[0].id);
 }
