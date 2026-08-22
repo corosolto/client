@@ -54,7 +54,19 @@ const _derivaDoRoster = (expr) => {
   }
   return false;
 };
-const _chamadas = [...main.matchAll(/preloadCharacterAssets\(([^)]*(?:\([^)]*\))?[^)]*)\)/g)].map((m) => m[1]);
+/* Só o PRIMEIRO argumento: a chamada ganhou um 2º (a lista de armas da partida), e seguir a
+   cadeia do texto inteiro dava a lista errada. Vírgula de topo, sem entrar em {...} nem (...). */
+const _primeiro = (txt) => {
+  let prof = 0;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if ('([{'.includes(c)) prof++;
+    else if (')]}'.includes(c)) prof--;
+    else if (c === ',' && prof === 0) return txt.slice(0, i);
+  }
+  return txt;
+};
+const _chamadas = [...main.matchAll(/preloadCharacterAssets\(([\s\S]*?)\)[,;\s]/g)].map((m) => _primeiro(m[1]));
 if (!_chamadas.length) falhas.push('PL1 nenhum preload de personagem no main.js');
 if (_chamadas.some((a) => /GLB_CHARS/.test(a)))
   falhas.push('PL1 preload voltou a subir o elenco inteiro (44 GLBs no boot da partida)');
