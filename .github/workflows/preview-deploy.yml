@@ -1,0 +1,89 @@
+# preview-deploy — PUBLICA o que já veio compilado, sem executar nada do fork.
+#
+# Metade 2 de 2 do preview de fork. Este job TEM o `VERCEL_TOKEN`, e por isso a
+# regra dele é uma só: nunca rodar código que veio do PR. Ele não faz checkout da
+# branch do fork, não roda `npm ci`, não roda script de build. Baixa o artefato
+# produzido pelo `preview-build.yml` — bytes estáticos de `.vercel/output` — e
+# chama `vercel deploy --prebuilt`, que apenas envia arquivo.
+#
+# `workflow_run` é o que torna isso possível: ele roda no contexto do repositório
+# BASE, com segredo, mesmo quando o PR original veio de fork.
+#
+# ATENÇÃO A QUEM FOR MEXER: qualquer passo aqui que execute conteúdo do artefato
+# (um `npm run`, um `node` sobre arquivo baixado, um `bash` de script do fork)
+# desfaz a separação inteira e devolve o token para as mãos de quem abriu o PR. É
+# o que a régua PRV3 guarda.
+name: preview-deploy
+
+on:
+  workflow_run:
+    workflows: [preview-build]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: preview-deploy-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Baixa o artefato compilado
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: preview-*
+          path: /tmp/artefato
+
+      - name: Lê de qual PR veio
+        id: pr
+        run: |
+          NUM=$(cat /tmp/artefato/preview-meta-*/pr-numero.txt 2>/dev/null | tr -dc '0-9')
+          SHA=$(cat /tmp/artefato/preview-meta-*/pr-sha.txt 2>/dev/null | tr -dc '0-9a-f')
+          # Confere contra a API em vez de confiar no arquivo: ele veio de um job que
+          # rodou código do fork, então é entrada não confiável.
+          case "$NUM" in ''|*[!0-9]*) echo "número de PR inválido no artefato"; exit 1 ;; esac
+          REAL=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUM" --jq .head.sha)
+          if [ "$REAL" != "$SHA" ]; then
+            echo "::warning::o PR #$NUM avançou desde o build ($SHA != $REAL) — preview descartado"
+            echo "pular=1" >> "$GITHUB_OUTPUT"
+          fi
+          echo "numero=$NUM" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.pr.outputs.pular != '1'
+        with: { node-version: 22 }
+      - run: npm i -g vercel@58.9.0
+        if: steps.pr.outputs.pular != '1'
+
+      # `--prebuilt` só empacota e envia o diretório. Nenhum script do PR roda aqui.
+      - name: Publica
+        id: deploy
+        if: steps.pr.outputs.pular != '1'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          mkdir -p .vercel/output
+          cp -R /tmp/artefato/preview-*/. .vercel/output/ 2>/dev/null || true
+          rm -f .vercel/output/pr-numero.txt .vercel/output/pr-sha.txt
+          URL=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comenta a URL
+        if: steps.pr.outputs.pular != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ steps.pr.outputs.numero }}" --repo "$GITHUB_REPOSITORY" \
+            --body "🤖 **preview** no ar → ${{ steps.deploy.outputs.url }}"
