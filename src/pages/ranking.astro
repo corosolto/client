@@ -125,7 +125,7 @@ const jsonld = (RANKING_ON && rows.length) ? [
     </div>
   )}
 
-  {RANKING_ON && !configured && <div class="panel"><p>Ranking ainda não configurado (envs do Supabase pendentes).</p></div>}
+  {RANKING_ON && !configured && <div class="panel"><p>Ranking ainda não configurado (pendências de ambiente no servidor).</p></div>}
 
   {RANKING_ON && configured && players.length === 0 && (
     <div class="panel">

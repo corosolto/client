@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
-import { buildCharacterModel } from './glbchars.js';
+import { buildCharacterModel, hasModel } from './glbchars.js';
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
@@ -22,56 +22,25 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 
-export const WEAPONS = {
-  awp:    { name: 'AWP "DELIBERADOR"', short: 'AWP', dmg: 400, mag: 5, reserve: 25, rate: 1.7, reload: 3.1, spreadHip: 0.075, spreadScope: 0.0008, recoil: 0.055, scope: true },
-  // dmg 33→36 (crítico de gunfeel): 33×3=99 deixava a arma-tema 1 HP de matar em 3 tiros —
-  // era a 12ª em TTK. Com 36 mata em 3 (TTK 0.200) e volta a ser a régua do arsenal.
-  ak:     { name: 'AK-47 "BATE-ESTACA"', short: 'AK', dmg: 36, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.024, recoil: 0.008, auto: true },
-  m4:     { name: 'M4A1 "REQUINTE"', short: 'M4', dmg: 31, mag: 30, reserve: 90, rate: 0.09, reload: 2.4, spreadHip: 0.02, recoil: 0.007, auto: true },
-  mp5:    { name: 'MP5 "VASSOURA"', short: 'MP5', dmg: 26, mag: 30, reserve: 120, rate: 0.075, reload: 2.2, spreadHip: 0.03, recoil: 0.005, auto: true },
-  // 8×12=96 não matava nem com o cartucho inteiro no peito (TTK 0.9s, pior arma do jogo).
-  // 9×14=126 = mata no contato, que é o contrato de uma pump.
-  shotgun:{ name: 'M3 "CONVERSA FIADA"', short: 'M3', dmg: 14, pellets: 9, mag: 7, reserve: 32, rate: 0.9, reload: 3.0, spreadHip: 0.06, recoil: 0.045 },
-  deagle: { name: 'DEAGLE "MARTELO"', short: 'DE', dmg: 53, mag: 7, reserve: 35, rate: 0.28, reload: 2.0, spreadHip: 0.012, recoil: 0.03 },
-  pistol: { name: 'PT-38 "APITO"', short: 'PT-38', dmg: 34, mag: 12, reserve: 48, rate: 0.24, reload: 1.6, spreadHip: 0.02, recoil: 0.014, scope: false },
-  knife:  { name: 'FACA "CONVERSA FIADA"', short: 'FACA', dmg: 55, rate: 0.55, range: 2.4, reload: 0, recoil: 0.02, scope: false },
-  // arsenal 2 (BR)
-  m92:       { name: 'ZASTAVA M92 "IOGUSLAVO"', short: 'M92', dmg: 32, mag: 30, reserve: 90, rate: 0.1, reload: 2.5, spreadHip: 0.026, recoil: 0.009, auto: true },
-  akm:       { name: 'AKM "KALASH DA VÉIA"', short: 'AKM', dmg: 34, mag: 30, reserve: 90, rate: 0.105, reload: 2.5, spreadHip: 0.025, recoil: 0.009, auto: true },   // 35→34: matava em 3 e ficava ACIMA da AK-47 sem contrapartida; agora 4 tiros (pesada e lenta, como o nome promete)
-  g3:        { name: 'HK G3 "FRITZ"', short: 'G3', dmg: 37, mag: 20, reserve: 80, rate: 0.11, reload: 2.6, spreadHip: 0.022, recoil: 0.013, auto: true },
-  revolver38:{ name: 'REVÓLVER .38 "TROVÃO"', short: '.38', dmg: 46, mag: 6, reserve: 24, rate: 0.36, reload: 2.4, spreadHip: 0.016, recoil: 0.03 },
-  md97:      { name: 'MD97 "FUZIL DA PÁTRIA"', short: 'MD97', dmg: 38, mag: 20, reserve: 80, rate: 0.12, reload: 2.6, spreadHip: 0.022, recoil: 0.012, auto: true },
-  carbine:   { name: 'CARABINA "PAPO DE PEÃO"', short: 'CARB', dmg: 42, mag: 10, reserve: 40, rate: 0.5, reload: 2.8, spreadHip: 0.02, recoil: 0.02 },
-  // G3-R1: scope VOLTA a true. O bug nunca foi "ter luneta" e sim a máscara entrar em 1 frame
-  // ainda no FOV 70 (tela quase toda preta = a "faixa preta" que o dono viu) somada a esconder
-  // arma E crosshair antes de ela existir. Agora a luneta é um overlay circular com fade curto
-  // amarrado ao progresso do zoom, e nem a arma nem a mira somem antes de a luneta estar opaca
-  // (ver _scope/_updatePlayer). Sniper sem zoom não parece jogo.
-  m400:      { name: 'M400 "MIRA FINA"', short: 'M400', dmg: 40, mag: 20, reserve: 80, rate: 0.11, reload: 2.4, spreadHip: 0.018, spreadScope: 0.004, recoil: 0.011, auto: true, scope: true },
-  mosin:     { name: 'MOSIN "VOVÓ RUSSA"', short: 'MOSIN', dmg: 120, mag: 5, reserve: 25, rate: 1.5, reload: 3.4, spreadHip: 0.08, spreadScope: 0.001, recoil: 0.05, scope: true },
-  rem700:    { name: 'REM 700 "CAÇADOR"', short: 'REM', dmg: 130, mag: 5, reserve: 25, rate: 1.5, reload: 3.2, spreadHip: 0.08, spreadScope: 0.0009, recoil: 0.05, scope: true },
-  // snipers SEMI-AUTO (estilo M400: luneta + tiro rápido) — dano/cadência entre a M400 e os ferrolhos.
-  // G3-R1: as 3 voltam a ter LUNETA (eram scope:false desde a G2-R6A). Ver o comentário da
-  // M400 acima: a luneta certa resolve a "faixa preta" — tirar o zoom da sniper não.
-  svd:       { name: 'SVD "VODKA"', short: 'SVD', dmg: 62, mag: 10, reserve: 40, rate: 0.28, reload: 3.0, spreadHip: 0.05, spreadScope: 0.0015, recoil: 0.03, auto: true, scope: true },
-  g3sg1:     { name: 'G3SG1 "FRITZ"', short: 'G3SG1', dmg: 55, mag: 20, reserve: 60, rate: 0.22, reload: 2.8, spreadHip: 0.045, spreadScope: 0.0016, recoil: 0.026, auto: true, scope: true },
-  sks:       { name: 'SKS "MILÍCIA"', short: 'SKS', dmg: 48, mag: 10, reserve: 50, rate: 0.18, reload: 2.6, spreadHip: 0.04, spreadScope: 0.002, recoil: 0.02, auto: true, scope: true },
-  // arsenal 3 (militar)
-  lmg:       { name: 'METRALHA "TRETA PESADA"', short: 'LMG', dmg: 31, mag: 100, reserve: 200, rate: 0.085, reload: 5.0, spreadHip: 0.04, recoil: 0.011, auto: true },
-  scar:      { name: 'SCAR "PAGA-PAU"', short: 'SCAR', dmg: 37, mag: 20, reserve: 80, rate: 0.11, reload: 2.5, spreadHip: 0.02, recoil: 0.01, auto: true },
-  tavor:     { name: 'TAVOR "CURTINHO"', short: 'TAVOR', dmg: 32, mag: 30, reserve: 90, rate: 0.09, reload: 2.3, spreadHip: 0.024, recoil: 0.008, auto: true },
-  // rate 0.06→0.075: a 1000 RPM full-auto ela era a MELHOR arma do jogo (TTK 0.180) com o
-  // 2º menor recuo. 800 RPM mantém o caráter "rajada rápida" sem apagar os rifles 7.62.
-  famas:     { name: 'FAMAS "BAGUETE"', short: 'FAMAS', dmg: 29, mag: 25, reserve: 90, rate: 0.075, reload: 2.4, spreadHip: 0.028, recoil: 0.006, auto: true },
-  uzi:       { name: 'UZI "RÁ-TÁ-TÁ"', short: 'UZI', dmg: 25, mag: 25, reserve: 100, rate: 0.07, reload: 2.1, spreadHip: 0.032, recoil: 0.006, auto: true },
-  p90:       { name: 'P90 "CHINELÃO"', short: 'P90', dmg: 23, mag: 50, reserve: 100, rate: 0.065, reload: 2.3, spreadHip: 0.03, recoil: 0.005, auto: true },
-};
+import { WEAPONS } from './data/weapons.js';
+// Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
+// autoritativo) e tools/eval/botdiag.mjs. Consumidor novo importa de data/weapons.js.
+export { WEAPONS };
 /* ===================== RITMO / MOVIMENTO (kill-switches) =====================
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
    ?killcam=0 -> sem painel/câmera de morte
+   ?replaycam=0 -> sem replay cam ao matar (câmera orbital na vítima)
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+const REPLAY_CAM = QS.get('replaycam') !== '0';
+/* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
+   janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
+const REPLAY_DUR = 1.2;
+const REPLAY_SLOWMO = 0.18;
+const REPLAY_SLOWMO_DUR = 0.2;
+const REPLAY_ORBIT_R = 3.2;
+const REPLAY_ORBIT_H = 1.8;
 // ?vmlab=1 usa o viewmodel afinado; sem a flag mantém o calibrado.
 const VMLAB = QS.get('vmlab') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
@@ -333,6 +302,9 @@ const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multik
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
    armas de uma vez — se algo ficar ruim em produção o dono tem o A/B na querystring. */
 const GUNFEEL = new URLSearchParams(location.search).get('gunfeel') !== '0';
+// Kill-switch: ?blood=0 desliga o sangue (spray + mancha em parede/chão + poça sob o
+// cadáver). Muda o "gore" sentido pelo jogador — flag pro A/B do dono, como ?gunfeel=0.
+const BLOOD = new URLSearchParams(location.search).get('blood') !== '0';
 const D2R = Math.PI / 180;
 // Recoil compartilhado pelo jogo e pelas bancadas vive em recoil.js.
 // Queda de dano por distância: hoje o raycast vai a 200 m com dano constante (P90 a 40 m
@@ -570,13 +542,59 @@ function rollBotSkill(mul = 1) {
 // APRENDER quem é perigoso em vez de morrer pra 8 bots visualmente idênticos).
 function botTier(skill) { return skill < 0.75 ? 'ruim' : skill < 1.05 ? 'medio' : skill < 1.4 ? 'bom' : 'muitobom'; }
 
+/* Roster da partida, uma fonte só: main.js sorteia ANTES do preload e o Game consome o mesmo
+   sorteio. SEMPRE `want` por lado — facção sem elenco repete e avisa; time menor nunca. */
+const _cyclePool = (pool, n) => {
+  const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
+  return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
+};
+const _rosterPool = (pool, want, quem, fallback) => {
+  let src = pool;
+  if (!src.length) {
+    src = fallback.filter(Boolean);
+    console.warn(`[times] ${quem}: facção sem personagens disponíveis — completando com o elenco geral (o time NÃO pode ficar menor)`);
+  }
+  if (!src.length) return [];
+  if (src.length < want) console.warn(`[times] ${quem}: ${src.length} personagem(ns) para ${want} vaga(s) — vai REPETIR personagem para os dois lados ficarem iguais`);
+  const out = _cyclePool(src, want);
+  while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
+  return out.slice(0, want);
+};
+export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId) {
+  return {
+    allyDefs: _rosterPool(CHARACTERS.filter(c => c.team === playerFaction && c.id !== playerCharId),
+      teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
+    enemyDefs: _rosterPool(CHARACTERS.filter(c => c.team === enemyFaction), teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
+  };
+}
+
+/* Pool dos bots em modo `all`: uma fonte só para o sorteio da partida (pickMatchWeapons) e
+   para o fallback do Game — duas listas divergiriam em silêncio e furariam o preload. */
+const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
+  'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
+
+/* Armas da partida sorteadas ANTES do preload, pelo mesmo motivo do roster: o main.js precisa
+   saber o que carregar, e re-sortear no Game poria arma de caixa em bot. Régua: ARM1. */
+export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
+  const um = () => (mode === 'awp' ? 'awp' : mode === 'knife' ? 'knife'
+    : mode === 'pistols' ? (Math.random() < 0.5 ? 'pistol' : 'deagle')
+    : BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0]);
+  return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
+}
+
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
     this._ctfOpt = ctf;
+    this._matchWeapons = matchWeapons;
+    this._armaN = 0;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
     this.testMode = testMode;
+    // MOBILE (fase 1): controles de toque no lugar do pointer lock + teclado/mouse.
+    this.mobile = mobile;
+    this.touchMove = { x: 0, z: 0 };   // stick ESQUERDO (andar) — vetor analógico
+    this.touchLook = { x: 0, y: 0 };   // stick DIREITO (mira/câmera) — velocidade angular
     this.onQuit = onQuit;
     this.onMatchEnd = onMatchEnd;
     // A coleta só amostra quando recordTraining veio do consentimento persistido.
@@ -610,6 +628,13 @@ export class Game {
     if (this.world.pickups) {
       const keep = [];
       for (const pk of this.world.pickups) {
+        /* id fora de WEAPONS não entra no estado do jogo: o prompt do [E] lê `.short`
+           sem guarda todo quadro e congelava a partida. KNOWN-BUGS BUG-70 / #366. */
+        if (!WEAPONS[pk.weapon]) {
+          console.warn(`[pickup] mapa ${this._mapId}: arma '${pk.weapon}' não existe em WEAPONS — pickup ignorado`);
+          pk.mesh?.removeFromParent();
+          continue;
+        }
         if (this._pickupAllowed(pk.weapon)) {
           const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
           if (rw && pk.mesh) {
@@ -706,41 +731,13 @@ export class Game {
     // dano do bot contra o JOGADOR agora depende da dificuldade escolhida no menu (antes era
     // 0.85 fixo — o seletor não mudava nada além do sorteio de skill).
     this._botDmgPlayer = BOT_FAIR ? (BOT_DMG_BY_DIFF[diffKey(this.settings)] ?? 0.72) : BOT_DMG_PLAYER;
-    // Rotação aleatória do pool por partida: sem ela só os 8 primeiros do time viravam
-    // bots (personagens no fim da lista, ex.: canarinho/proerd, nunca apareciam).
-    const cycle = (pool, n) => {
-      const r = pool.length ? (Math.random() * pool.length) | 0 : 0;
-      return Array.from({ length: Math.max(0, n) }, (_, i) => pool[(i + r) % pool.length]).filter(Boolean);
-    };
-    /* ===== EQUILÍBRIO DE TIMES (garantia numérica, não boa-fé) =====
-       PORQUÊ: `cycle` devolve [] quando o pool é VAZIO — `pool[i % 0]` é NaN → undefined e o
-       `.filter(Boolean)` limpa tudo. Ou seja, uma facção sem personagens suficientes produzia
-       um time MENOR **sem nenhum aviso** (jogador sozinho contra 8). Hoje as 4 facções têm
-       8-9 personagens e a conta fecha — medido, enumerando as 16 combinações facção×inimigo
-       × teamSize 1..8: todas dão N vs N. O bug é LATENTE: basta a 5ª facção entrar com 1
-       personagem (ou o único personagem dela ser o escolhido pelo jogador) pra ele voltar,
-       de novo em silêncio. `roster` fecha isso: SEMPRE devolve `want` combatentes (repetir
-       personagem é aceitável — o `cycle` já repetia; time menor não é) e AVISA no console
-       quando teve que repetir ou recorrer ao elenco geral. */
-    const roster = (pool, want, quem, fallback) => {
-      let src = pool;
-      if (!src.length) {
-        src = fallback.filter(Boolean);
-        console.warn(`[times] ${quem}: facção sem personagens disponíveis — completando com o elenco geral (o time NÃO pode ficar menor)`);
-      }
-      if (!src.length) return [];
-      if (src.length < want) console.warn(`[times] ${quem}: ${src.length} personagem(ns) para ${want} vaga(s) — vai REPETIR personagem para os dois lados ficarem iguais`);
-      const out = cycle(src, want);
-      while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
-      return out.slice(0, want);
-    };
-    // aliados vêm da FACÇÃO do jogador (P/B/U/C); inimigos da facção inimiga escolhida.
-    const allyDefs = roster(CHARACTERS.filter(c => c.team === this.playerFaction && c.id !== playerCharId),
-      teamSize - 1, `aliados (${this.playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId));
-    const enemyDefs = roster(CHARACTERS.filter(c => c.team === this.enemyFaction),
-      teamSize, `inimigos (${this.enemyFaction})`, CHARACTERS);
+    // Equilíbrio de times: o roster (regra de N×N garantido, repete com aviso se a facção não
+    // tem elenco — ver pickMatchRoster) vem sorteado do main.js ou é sorteado aqui (arnês/testes).
+    const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId);
     const mkBot = (def, team, i) => {
-      const wpn = this._botWeapon();
+      // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
+      // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
+      const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
       const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
@@ -769,7 +766,7 @@ export class Game {
       const nMine = this.bots.filter(b => b.team === playerTeam).length + 1;   // +1 = o jogador
       const nFoe = this.bots.filter(b => b.team === this.enemyTeam).length;
       const msg = `[times] ${this._teamTag(playerTeam)} ${nMine} × ${nFoe} ${this._teamTag(this.enemyTeam)} (teamSize ${teamSize})`;
-      if (nMine !== nFoe) console.error(msg + ' — TIMES DESIGUAIS (bug de composição)');
+      if (nMine !== nFoe) console.error(new Error(msg + ' — TIMES DESIGUAIS (bug de composição)'));
       else console.info(msg);
       this.teamCount = { [playerTeam]: nMine, [this.enemyTeam]: nFoe };   // exposto p/ debug/harness
     }
@@ -989,6 +986,17 @@ export class Game {
       this._holeGeo = new THREE.PlaneGeometry(0.22, 0.22);
       this._holeMat = new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
     }
+    // Manchas de sangue: mesmo padrão do furo de bala (geometria única + materiais
+    // pré-assados, zero alloc por tiro), mas ring buffer próprio com teto 64 — não evicta furo.
+    this.bloodDecals = [];
+    this._bloodPools = [];
+    this._bloodGeo = new THREE.PlaneGeometry(1, 1);   // escalado por colocação
+    this._bloodMats = [];
+    for (let i = 0; i < 5; i++) {
+      const t = this._makeBloodTex(i);
+      this._bloodMats.push(new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, opacity: 0.92 }));
+    }
+    this._bloodPoolMat = new THREE.MeshBasicMaterial({ map: this._makeBloodPoolTex(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, opacity: 0.9 });
     this.drops = [];
     this.puffTex = this._makePuffTexture();
     // GPU-batched particles: ALL muzzle flashes share one Points (additive), ALL impact puffs
@@ -1621,6 +1629,119 @@ export class Game {
     x.fillStyle = g; x.fillRect(0, 0, 64, 64);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
+  // Respingo de sangue: `seed` gera 5 variantes estáveis pras manchas não repetirem.
+  // Vermelho escuro coagulado (#5a0608–#6e0a0c) de propósito — não vivo.
+  _makeBloodTex(seed = 0) {
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    let rng = (seed + 1) * 9301 + 7; const rnd = () => { rng = (rng * 9301 + 49297) % 233280; return rng / 233280; };
+    const cx = S / 2, cy = S / 2;
+    const blob = (px, py, r, a) => {
+      const g = x.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, `rgba(${80 + (rnd() * 26 | 0)},7,9,${a})`);
+      g.addColorStop(0.7, `rgba(${62 + (rnd() * 22 | 0)},5,7,${(a * 0.82).toFixed(2)})`);
+      g.addColorStop(1, 'rgba(52,4,6,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+    };
+    // 3 camadas de densidade decaindo: massa central, anel médio, spray fino
+    for (let i = 0; i < 6; i++) blob(cx + (rnd() - .5) * 26, cy + (rnd() - .5) * 26, 20 + rnd() * 16, 0.95);
+    for (let i = 0; i < 22; i++) { const a = rnd() * 7, d = 24 + rnd() * 26; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 3 + rnd() * 7, 0.9); }
+    for (let i = 0; i < 30; i++) { const a = rnd() * 7, d = 40 + rnd() * 22; blob(cx + Math.cos(a) * d, cy + Math.sin(a) * d, 1 + rnd() * 3, 0.85); }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  // Poça sob o cadáver: mais redonda e densa que o respingo, com gotas em volta. Cresce em cena.
+  _makeBloodPoolTex() {
+    const S = 128, c = document.createElement('canvas'); c.width = c.height = S;
+    const x = c.getContext('2d');
+    let rng = 4242; const rnd = () => { rng = (rng * 9301 + 49297) % 233280; return rng / 233280; };
+    const cx = S / 2, cy = S / 2;
+    for (let i = 0; i < 10; i++) {
+      const px = cx + (rnd() - .5) * 28, py = cy + (rnd() - .5) * 28, r = 28 + rnd() * 22;
+      const g = x.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, 'rgba(74,6,8,0.96)'); g.addColorStop(0.75, 'rgba(58,5,7,0.9)'); g.addColorStop(1, 'rgba(50,4,6,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+    }
+    for (let i = 0; i < 26; i++) {
+      const a = rnd() * 7, d = 42 + rnd() * 20, px = cx + Math.cos(a) * d, py = cy + Math.sin(a) * d, r = 2 + rnd() * 6;
+      const g = x.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, 'rgba(68,6,8,0.9)'); g.addColorStop(1, 'rgba(55,4,6,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  }
+  // Cola uma mancha de sangue numa superfície (normal do hit). `pool` usa a textura de poça.
+  // Ring buffer próprio (teto 64) — não briga com os furos de bala.
+  _bloodDecal(pos, normal, scale = 1, pool = false) {
+    if (!BLOOD || !normal) return null;
+    const mat = pool ? this._bloodPoolMat : this._bloodMats[(Math.random() * this._bloodMats.length) | 0];
+    const m = new THREE.Mesh(this._bloodGeo, mat);
+    m.position.copy(pos).add(normal.clone().multiplyScalar(0.013));
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal.clone().normalize());
+    m.rotateZ(Math.random() * Math.PI * 2);
+    m.scale.setScalar(scale);
+    m.renderOrder = 4;
+    this.scene.add(m);
+    this.bloodDecals.push(m);
+    if (this.bloodDecals.length > 64) { const old = this.bloodDecals.shift(); this.scene.remove(old); }
+    return m;
+  }
+  // Spray de sangue: SEMPRE vermelho em qualquer quality — não usa _tintFx de propósito
+  // (ele cai pro puff branco no 'low'). Compartilha o relógio do puff pra animar junto.
+  _makeBloodFx(additive = false) {
+    const c = document.createElement('canvas'); c.width = c.height = 32;
+    const g = c.getContext('2d');
+    const rad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+    if (additive) {
+      // pop brilhante: some rápido, dá o "flash" de acerto
+      rad.addColorStop(0, 'rgba(255,64,52,1)'); rad.addColorStop(0.5, 'rgba(210,20,20,0.7)'); rad.addColorStop(1, 'rgba(150,0,0,0)');
+    } else {
+      // chunky: alpha alto até 62% do raio (lê como GOTA sólida, não fumaça esfumada)
+      rad.addColorStop(0, 'rgba(200,22,26,1)'); rad.addColorStop(0.62, 'rgba(150,12,16,0.95)'); rad.addColorStop(1, 'rgba(110,6,8,0)');
+    }
+    g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
+    const tex = new THREE.CanvasTexture(c);
+    const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max: 384 });
+    if (this.puffFx) { fx.uniforms.uTime = this.puffFx.uniforms.uTime; fx.uniforms.uScale = this.puffFx.uniforms.uScale; }
+    fx.points.renderOrder = additive ? 7 : 6;   // por cima da fumaça de impacto
+    return fx;
+  }
+  // Mancha na parede ATRÁS do alvo (na direção da bala) + gota no chão sob ele.
+  // `footY` é a altura dos pés do alvo; o fallback é groundHeightAt na coluna do hit.
+  _bloodSpatter(pos, dir, head = false, footY = null) {
+    if (!BLOOD || !this.world) return;
+    // parede atrás (a "saída" do projétil): occluders são justamente as paredes/objetos altos
+    if (this.world.occluders && Math.random() < 0.75) {
+      this.ray.set(pos, dir); this.ray.far = 6;
+      const b = this.ray.intersectObjects(this.world.occluders, false)[0];
+      if (b && b.face) this._bloodDecal(b.point, b.face.normal, 0.5 + Math.random() * 0.5 + (head ? 0.4 : 0));
+    }
+    // O PISO NÃO É OCCLUDER (só h>1.2 entra em occluders) — raycast pra baixo falha.
+    // groundHeightAt dá a altura do chão em qualquer (x,z), inclusive rampa/degrau.
+    const gy = this.world.groundHeightAt ? this.world.groundHeightAt(pos.x, pos.z, pos.y) : footY;
+    if (gy != null && Math.random() < 0.7) {
+      const jx = (Math.random() - .5) * 0.7, jz = (Math.random() - .5) * 0.7;   // não empilha no mesmo ponto
+      this._bloodDecal(new THREE.Vector3(pos.x + jx, gy, pos.z + jz), new THREE.Vector3(0, 1, 0), 0.45 + Math.random() * 0.45);
+    }
+  }
+  // Poça que cresce sob o cadáver — chamada no _kill. Cresce de 0.3× ao máximo em ~0.6s.
+  // Piso via groundHeightAt (não é occluder). worldPos = posição do cadáver (pés).
+  _bloodPoolAt(worldPos) {
+    if (!BLOOD || !this.world || !this.world.groundHeightAt) return;
+    const gy = this.world.groundHeightAt(worldPos.x, worldPos.z, worldPos.y);
+    const pool = this._bloodDecal(new THREE.Vector3(worldPos.x, gy, worldPos.z), new THREE.Vector3(0, 1, 0), 0.4, true);
+    if (pool) this._bloodPools.push({ mesh: pool, t: 0, max: 2.1 + Math.random() * 1.1 });
+  }
+  _updateBlood(dt) {
+    for (let i = this._bloodPools.length - 1; i >= 0; i--) {
+      const p = this._bloodPools[i];
+      if (!p.mesh.parent) { this._bloodPools.splice(i, 1); continue; }   // evicta do ring buffer: para de animar
+      p.t += dt;
+      const k = Math.min(1, p.t / 0.6);
+      const ease = 1 - (1 - k) * (1 - k);
+      p.mesh.scale.setScalar(0.3 + (p.max - 0.3) * ease);
+      if (k >= 1) this._bloodPools.splice(i, 1);   // chegou no tamanho final: solta (o mesh fica na cena)
+    }
+  }
   // Estrela de muzzle flash IRREGULAR (R7.5): glow quente + 8-11 raios radiais de
   // comprimento/largura/ângulo aleatórios (seed fixo — textura única, a variação por tiro
   // vem do material.rotation). Substitui a silhueta poligonal de arestas duras do cone.
@@ -1666,6 +1787,9 @@ export class Game {
          registrou a derrota ("use C pra agachar"); quem venceu foi `_travaAtalhos()`, com
          a Keyboard Lock API em tela cheia, mais a confirmação de saída do main.js. */
       if ((e.ctrlKey || e.metaKey) && document.pointerLockElement) e.preventDefault();
+      // Firefox Quick Find: qualquer letra abre a barra de busca se não cancelar o evento.
+      // Em pointer lock o jogo é dono do teclado — engole tudo.
+      if (document.pointerLockElement) e.preventDefault();
       this.keys[e.code] = true;
       if (this.radioOpen) {
         const n = { Digit1: 1, Digit2: 2, Digit3: 3 }[e.code];
@@ -1771,9 +1895,156 @@ export class Game {
     document.addEventListener('contextmenu', this._cc);
     document.addEventListener('pointerlockchange', this._plc);
     window.addEventListener('blur', this._blur);
+    if (this.mobile) this._touchControls();
+  }
+
+  /* ============ CONTROLES DE TOQUE (mobile) ============
+     Cada zona é um elemento próprio, então joystick + olhar + atirar funcionam juntos (multitouch). Só no mobile (gate this.mobile). */
+  _touchControls() {
+    if (this._touchUi) return;
+    const root = document.createElement('div');
+    root.id = 'touch-ui';
+    // ícones SVG (herdam a cor via currentColor). Sem texto nos botões.
+    const IC = {
+      fire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>',
+      ads: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>',
+      reload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 3v5h-5"/></svg>',
+      crouch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5l6 6 6-6M6 12l6 6 6-6"/></svg>',
+      rifle: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 10h13l3-2h4v2l-3 1h-2v2h-3l-1 3h-2l1-3H8v3H5v-3H2z"/></svg>',
+      pistol: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8h14v3h-3l-1 2h-3v5H7v-5H6l-3-2z"/></svg>',
+      knife: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 15L14 4l3 3-11 11z"/><rect x="12.5" y="15" width="7" height="2.6" rx="1"/></svg>',
+      nade: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="14.5" r="6"/><rect x="10" y="4.5" width="4" height="4"/><rect x="13" y="5" width="6" height="2" rx="1"/></svg>',
+    };
+    root.innerHTML =
+      '<div class="touch-look"></div>' +
+      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob"></div></div>' +
+      '<button class="touch-btn touch-fire-l" aria-label="Atirar">' + IC.fire + '</button>' +
+      '<button class="touch-btn touch-fire" aria-label="Atirar">' + IC.fire + '</button>' +
+      '<button class="touch-btn touch-ads" aria-label="Mirar">' + IC.ads + '</button>' +
+      '<button class="touch-btn touch-reload" aria-label="Recarregar">' + IC.reload + '</button>' +
+      '<button class="touch-btn touch-crouch" aria-label="Agachar">' + IC.crouch + '</button>' +
+      '<button class="touch-btn touch-pause" aria-label="Pausar">II</button>' +
+      '<div class="touch-weps">' +
+        '<button class="touch-wep" data-wep="primary" aria-label="Arma primária">' + IC.rifle + '</button>' +
+        '<button class="touch-wep" data-wep="secondary" aria-label="Pistola">' + IC.pistol + '</button>' +
+        '<button class="touch-wep" data-wep="knife" aria-label="Faca">' + IC.knife + '</button>' +
+        '<button class="touch-wep" data-wep="smoke" aria-label="Fumaça">' + IC.nade + '</button>' +
+        '<button class="touch-wep" data-wep="frag" aria-label="Granada">' + IC.nade + '</button>' +
+      '</div>';
+    document.body.appendChild(root);
+    this._touchUi = root;
+    const q = (s) => root.querySelector(s);
+
+    // OLHAR: arraste ajusta yaw/pitch pelo delta do dedo (no lugar do movementX do mouse).
+    const look = q('.touch-look');
+    let lookId = null, lx = 0, ly = 0;
+    look.addEventListener('touchstart', (e) => {
+      const t = e.changedTouches[0]; lookId = t.identifier; lx = t.clientX; ly = t.clientY; e.preventDefault();
+    }, { passive: false });
+    look.addEventListener('touchmove', (e) => {
+      for (const t of e.changedTouches) {
+        if (t.identifier !== lookId) continue;
+        const dx = t.clientX - lx, dy = t.clientY - ly; lx = t.clientX; ly = t.clientY;
+        if (!this._acceptInput()) continue;
+        const s = this.settings.sens * 0.0024 * (this.player.scoped ? Math.max(0.3, this.camera.fov / 70) : 1);
+        const invertY = this.settings.invertY ? -1 : 1;
+        this.player.yaw -= dx * s;
+        this.player.pitch -= dy * s * invertY;
+        this.player.pitch = Math.max(-1.45, Math.min(1.45, this.player.pitch));
+      }
+      e.preventDefault();
+    }, { passive: false });
+    const lookEnd = (e) => { for (const t of e.changedTouches) if (t.identifier === lookId) lookId = null; };
+    look.addEventListener('touchend', lookEnd); look.addEventListener('touchcancel', lookEnd);
+
+    // STICKS ANALÓGICOS (esquerdo = andar, direito = mira/câmera). Helper genérico: knob segue
+    // o dedo até o raio R, com zona morta; `onVec` recebe o vetor -1..1 COM magnitude.
+    const stick = (sel, onVec) => {
+      const el = q(sel), kn = el.querySelector('.touch-joy-knob'); const R = 56;
+      let id = null, cx = 0, cy = 0;
+      const move = (t) => {
+        const dx = t.clientX - cx, dy = t.clientY - cy;
+        const d = Math.hypot(dx, dy) || 1, cl = Math.min(d, R), nx = dx / d, ny = dy / d, mag = Math.min(1, d / R);
+        kn.style.transform = `translate(${nx * cl}px, ${ny * cl}px)`;
+        if (mag < 0.18) onVec(0, 0); else onVec(nx * mag, ny * mag);
+      };
+      el.addEventListener('touchstart', (e) => {
+        const t = e.changedTouches[0]; id = t.identifier;
+        const r = el.getBoundingClientRect(); cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+        move(t); e.preventDefault();
+      }, { passive: false });
+      el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
+      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); kn.style.transform = ''; } };
+      el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
+    };
+    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; });   // andar (direção; a velocidade é normalizada no movimento)
+    // MIRA = arraste na tela (sem stick), estilo CoD Mobile — feito na camada .touch-look acima.
+
+    // BOTÕES: cada um com touchstart/end próprios (stopPropagation implícito por serem elementos).
+    const on = (sel, start, end) => {
+      const el = q(sel);
+      el.addEventListener('touchstart', (e) => { e.preventDefault(); start(); }, { passive: false });
+      if (end) { const h = (e) => { e.preventDefault(); end(); }; el.addEventListener('touchend', h); el.addEventListener('touchcancel', h); }
+    };
+    // DOIS botões de ATIRAR (esquerda perto do joystick = hip-fire; direita = principal).
+    const fireStart = () => { if (this._acceptInput()) { this.mouseDown0 = true; this._tryShoot(); } };
+    const fireEnd = () => { this.mouseDown0 = false; };
+    on('.touch-fire', fireStart, fireEnd);
+    on('.touch-fire-l', fireStart, fireEnd);
+    on('.touch-reload', () => { if (this._acceptInput()) this._startReload(); });
+    on('.touch-ads', () => {
+      if (!this._acceptInput()) return;
+      const w = this.player.weapon;
+      if (WEAPONS[w] && WEAPONS[w].scope) this._scope(!this.player.scoped); else this._scope(true);
+    }, () => { const w = this.player.weapon; if (!(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
+    on('.touch-crouch', () => { if (this._acceptInput()) this.keys.KeyC = true; }, () => { this.keys.KeyC = false; });
+    on('.touch-pause', () => { this.setPaused(!this.paused); });
+    // BARRA DE ARMAS (embaixo): primária / pistola / faca / fumaça / granada
+    root.querySelectorAll('.touch-wep').forEach((b) => {
+      b.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!this._acceptInput()) return;
+        const w = b.dataset.wep, p = this.player;
+        if (w === 'primary') this._switchWeapon(p.primary || 'awp');
+        else if (w === 'secondary') this._switchWeapon(p.secondary || 'pistol');
+        else if (w === 'knife') this._switchWeapon('knife');
+        else if (w === 'smoke') this._throwSmoke();
+        else if (w === 'frag') this._throwFrag();
+      }, { passive: false });
+    });
+  }
+  /* AIM-ASSIST DO TOQUE (mobile): sticky aim, não auto-aim — cone apertado e ganho pequeno,
+     o jogador continua no comando; só compensa a imprecisão do dedo. Só roda no mobile. */
+  _aimAssist(dt) {
+    const p = this.player; if (!p.alive) return;
+    const from = this.camera.position;
+    const cp = Math.cos(p.pitch);
+    const ax = -Math.sin(p.yaw) * cp, ay = Math.sin(p.pitch), az = -Math.cos(p.yaw) * cp;   // forward = (-sin,-cos)
+    let best = null, bestAng = 0.11;   // ~6,3° de cone
+    for (const b of this.bots) {
+      if (!b.alive || b.team === this.playerTeam) continue;
+      const dx = b.pos.x - from.x, dy = (b.pos.y + 1.2) - from.y, dz = b.pos.z - from.z;
+      const dist = Math.hypot(dx, dy, dz); if (dist < 0.5 || dist > 60) continue;
+      const nx = dx / dist, ny = dy / dist, nz = dz / dist;
+      const ang = Math.acos(Math.max(-1, Math.min(1, ax * nx + ay * ny + az * nz)));
+      if (ang >= bestAng) continue;
+      this.ray.set(from, new THREE.Vector3(nx, ny, nz)); this.ray.far = dist - 0.3;
+      const w = this.ray.intersectObjects(this.world.occluders, false)[0];
+      if (w && w.distance < dist - 0.5) continue;   // parede na frente: sem assist
+      bestAng = ang; best = { nx, ny, nz };
+    }
+    if (!best) return;
+    const h = Math.hypot(best.nx, best.nz) || 1e-3;
+    const tYaw = Math.atan2(-best.nx, -best.nz);
+    const tPitch = Math.max(-1.45, Math.min(1.45, Math.atan2(best.ny, h)));
+    const k = Math.min(1, (this.mouseDown0 ? 9 : 3.5) * dt);
+    let dyaw = tYaw - p.yaw; while (dyaw > Math.PI) dyaw -= 2 * Math.PI; while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+    p.yaw += dyaw * k;
+    p.pitch += (tPitch - p.pitch) * k;
   }
 
   _requestLock() {
+    if (this.mobile) return;   // sem pointer lock no toque
     try { this.renderer.domElement.requestPointerLock()?.catch?.(() => {}); } catch {}
     this._travaAtalhos();
   }
@@ -1805,7 +2076,7 @@ export class Game {
   }
   _acceptInput() {
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
-    return this.testMode || !!document.pointerLockElement;
+    return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
   }
   /* O clique caiu no FUNDO do menu de pausa (e não num botão dele)? Durante a janela de
      guarda o painel está com `pointer-events:none`, então até o clique MIRADO num botão
@@ -2329,8 +2600,11 @@ export class Game {
     if (this.state !== 'live' && this.state !== 'countdown') v = false;
     const entrou = v && !this.paused;
     this.paused = v;
-    if (v) this.keys = {};
+    if (v) { this.keys = {}; this.touchMove.x = 0; this.touchMove.z = 0; this.mouseDown0 = false; }
     this.el.pause.classList.toggle('hidden', !v);
+    // pausado, o overlay de toque some — senão a camada de OLHAR (tela cheia) tapava o menu
+    // de pausa e roubava os toques dos botões dele.
+    if (this._touchUi) this._touchUi.classList.toggle('paused', v);
     if (v && document.pointerLockElement) document.exitPointerLock();
     /* PAUSADO OS ATALHOS VOLTAM A SER DO NAVEGADOR. A trava de Ctrl+W existe pra proteger
        quem está no tiroteio; segurar ela com o menu de pausa aberto seria sequestrar o
@@ -2402,7 +2676,10 @@ export class Game {
     if (swapBot) {
       swapBot.team = oldTeam;
       const defs = CHARACTERS.filter(c => c.team === oldFaction && c.id !== p.def.id);
-      const newDef = defs[(Math.random() * defs.length) | 0];
+      // prefere GLB já carregado no preload da partida; fora dele o bot cairia no procedural
+      const carregados = defs.filter(c => hasModel(c.id));
+      const pool = carregados.length ? carregados : defs;
+      const newDef = pool[(Math.random() * pool.length) | 0];
       swapBot.def = newDef; swapBot.name = newDef.name;
       this.scene.remove(swapBot.mesh.group);
       // GLB clones share geometry with the cached template — never dispose it here.
@@ -2791,7 +3068,7 @@ export class Game {
             if (head) d *= HS_MUL[bc] ?? 4;
           } else if (head && d < 100) d = 100;
           this._damage(bot, d, shooter, weap, head, end);
-          if (byPlayer) this._fleshImpact(end, dir, head);
+          this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
         }
       }
     } else if (hW) {
@@ -2842,17 +3119,33 @@ export class Game {
   }
   // Impacto em CARNE: puff vermelho curto + som próprio. Antes o único sinal de que você
   // acertou uma PESSOA era o mesmo bip de acertar uma parede (grep blood = 0 ocorrências).
-  _fleshImpact(pos, dir, head) {
+  _fleshImpact(pos, dir, head, footY = null, byPlayer = true) {
     if (!GUNFEEL) return;
-    const voice = this._fxVoice(head ? 3 : 2);
-    const fx = this._bloodFx || (this._bloodFx = this._tintFx(0xb1121a, false));
+    // acerto alheio (parceiro levando tiro, bot×bot): só rende se perto — longe, espirra sangue invisível e come frame
+    if (!byPlayer && this.camera.position.distanceToSquared(pos) > 3600) return;   // >60 m: pula
+    const voice = byPlayer && this._fxVoice(head ? 3 : 2);
+    // buffer maior (384): um cartucho de shotgun são 9 pellets × ~26 gotas num frame só.
+    const fx = this._bloodFx || (this._bloodFx = this._makeBloodFx());
+    const pop = this._bloodPop || (this._bloodPop = this._makeBloodFx(true));   // camada aditiva brilhante
     const back = dir.clone().multiplyScalar(-1);
-    fx.spawn(pos, { life: 0.2, size: head ? 0.20 : 0.13, grow: 0.5 });
-    for (let i = 0; i < (head ? 5 : 3); i++) {
-      const v = back.clone().multiplyScalar(1.2 + Math.random() * 2.2)
-        .add(new THREE.Vector3((Math.random() - .5) * 2, (Math.random() - .5) * 1.6 + 0.6, (Math.random() - .5) * 2));
-      fx.spawn(pos, { vel: v, life: 0.24 + Math.random() * 0.12, size: 0.05, grow: -0.05 });
+    // A nuvem nasce 14 cm À FRENTE do corpo: na superfície do alvo, metade das partículas
+    // ficava atrás dele (tapada) e o sangue lia fraco.
+    const sp = pos.clone().addScaledVector(dir, -0.14);
+    // "pop" aditivo instantâneo (lê como acerto na hora) + 2 camadas de nuvem GORDA e vermelha.
+    // Sprites de GPUParticles encolhem com a distância — por isso os tamanhos são grandes.
+    pop.spawn(sp, { life: 0.10, size: head ? 1.1 : 0.75, grow: 2.4 });
+    fx.spawn(sp, { life: 0.30, size: head ? 1.4 : 0.95, grow: 3.2 });
+    fx.spawn(sp, { life: 0.44, size: head ? 0.9 : 0.6, grow: 4.2 });
+    // ~40% das gotas SAI PELA FRENTE (ferida de saída, CS 1.6). Sem BLOOD, volta ao mínimo antigo.
+    const n = ((BLOOD ? (head ? 26 : 18) : (head ? 6 : 4)) * (byPlayer ? 1 : 0.6)) | 0;   // hit alheio: mais leve
+    for (let i = 0; i < n; i++) {
+      const fwd = BLOOD && i % 5 < 2;
+      const v = (fwd ? dir : back).clone().multiplyScalar(2.0 + Math.random() * (fwd ? 5.5 : 3.5))
+        .add(new THREE.Vector3((Math.random() - .5) * 3.6, (Math.random() - .5) * 2.4 + 0.8, (Math.random() - .5) * 3.6));
+      fx.spawn(sp, { vel: v, life: 0.3 + Math.random() * 0.26, size: (BLOOD ? 0.16 : 0.06) + Math.random() * (BLOOD ? 0.24 : 0.03), grow: -0.05 });
     }
+    // sangue grudado: mancha na parede atrás do alvo + gota no chão sob ele (footY = pés do alvo)
+    if (BLOOD) this._bloodSpatter(pos, dir, head, footY);
     if (!voice) return;
     const s = this.sfx; s.ensure(); if (!s.ctx) return;
     s._burst(0.05, head ? 0.30 : 0.20, head ? 420 : 620, 1.1);              // baque úmido
@@ -2884,7 +3177,7 @@ export class Game {
   // Sistema de partículas COLORIDO sob demanda (poeira bege, faísca, sangue). Compartilha o
   // uTime/uScale do puffFx de propósito: assim ele anima no update do puffFx e não precisa de
   // um tick próprio no loop principal (que é de outra região do arquivo).
-  _tintFx(hex, additive) {
+  _tintFx(hex, additive, max = 128) {
     // degradação segura: em quality 'low' não abre sistema novo (mais 1 draw call + 1
     // textura por material) — reusa o puff branco existente.
     if (this.settings && this.settings.quality === 'low') return this.puffFx;
@@ -2895,7 +3188,7 @@ export class Game {
     rad.addColorStop(0, `rgba(${rgb},1)`); rad.addColorStop(0.45, `rgba(${rgb},0.55)`); rad.addColorStop(1, `rgba(${rgb},0)`);
     g.fillStyle = rad; g.fillRect(0, 0, 32, 32);
     const tex = new THREE.CanvasTexture(c);
-    const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max: 128 });
+    const fx = new GPUParticles(this.scene, this.camera, { tex, additive, max });
     const src = this.puffFx && this.puffFx.uniforms;
     if (src) { fx.uniforms.uTime = src.uTime; fx.uniforms.uScale = src.uScale; }
     return fx;
@@ -2967,6 +3260,13 @@ export class Game {
         mk.best = Math.max(mk.best || 0, mk.count);
         const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
         if (kind) { this._mkBanner(MK_LABELS[kind]); this.sfx.general(kind); }
+        if (REPLAY_CAM && head && ent.pos) {
+          this._replayCam = {
+            t: 0,
+            victimPos: ent.pos.clone(),
+            killerYaw: attacker.yaw,
+          };
+        }
       }
     }
     if (ent.isPlayer) {
@@ -2984,6 +3284,8 @@ export class Game {
       const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
       this.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
     }
+    // poça que cresce sob o cadáver (qualquer morte com posição — inclui bot×bot)
+    if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
     this._feed(attacker, ent, weap, head);
   }
   /* ===================== INDICADOR DIRECIONAL DE DANO =====================
@@ -3394,6 +3696,7 @@ export class Game {
     }
     this.flashFx.update(dt);
     this.puffFx.update(dt);
+    this._updateBlood(dt);
     // muzzle flash: sprites esmaecem rápido (≤3 frames), núcleo some antes; luzes decaem à 0
     for (let i = this._mzActive.length - 1; i >= 0; i--) {
       const m = this._mzActive[i]; m.t += dt; const k = m.t / m.life;
@@ -4458,11 +4761,45 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
+  _updateReplayCam(dt) {
+    const rc = this._replayCam;
+    if (!rc) return;
+    rc.t += dt;
+    if (rc.t >= REPLAY_DUR) {
+      this._replayCam = null;
+      const p = this.player;
+      const tFov = p.scoped ? this._zoomFov(p.weapon) : 70;
+      this.camera.fov = tFov;
+      this.camera.updateProjectionMatrix();
+      this._fovFrom = undefined;
+      return;
+    }
+    const progress = rc.t / REPLAY_DUR;
+    const angle = rc.killerYaw + Math.PI + progress * 1.2;
+    const ease = 1 - (1 - progress) * (1 - progress);
+    const r = REPLAY_ORBIT_R * (0.6 + 0.4 * ease);
+    const cx = rc.victimPos.x + Math.sin(angle) * r;
+    const cz = rc.victimPos.z + Math.cos(angle) * r;
+    const cy = rc.victimPos.y + REPLAY_ORBIT_H - ease * 0.4;
+    this.camera.position.set(cx, cy, cz);
+    const lookY = rc.victimPos.y + 1.2;
+    const dx = rc.victimPos.x - cx, dz = rc.victimPos.z - cz;
+    this.camera.rotation.set(
+      Math.atan2(lookY - cy, Math.hypot(dx, dz)),
+      Math.atan2(-dx, -dz),
+      0
+    );
+    this.camera.fov = 50;
+    this.camera.updateProjectionMatrix();
+    if (this.vm?.root) this.vm.root.visible = false;
+    if (this.el.crosshair) this.el.crosshair.style.display = 'none';
+  }
   _updatePlayer(dt) {
     const p = this.player;
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
+      if (this._replayCam) this._replayCam = null;
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
@@ -4471,6 +4808,7 @@ export class Game {
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
     }
+    if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
     // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
     // o _damage fica fora desta região de edição, então não dá pra marcar o timestamp lá.
     if (p.hp < (p._lastHp === undefined ? 100 : p._lastHp)) p._hurtAt = this.time;
@@ -4494,6 +4832,8 @@ export class Game {
       : (sprint && slowMul === 1 ? 6.6 : 4.7) * (p.scoped ? 0.5 : 1) * (1 - 0.5 * p.crouchF) * slowMul;
     let ix = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
     let iz = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
+    // mobile: o joystick de toque manda o vetor (sobrepõe as teclas quando fora da zona morta)
+    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { ix = this.touchMove.x; iz = this.touchMove.z; }
     const il = Math.hypot(ix, iz) || 1; ix /= il; iz /= il;
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
@@ -4764,6 +5104,7 @@ export class Game {
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
+    this._updateReplayCam(dt);
   }
   // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without
@@ -4927,9 +5268,7 @@ export class Game {
     if (mode === 'awp') return 'awp';
     if (mode === 'knife') return 'knife';
     if (mode === 'pistols') return Math.random() < 0.5 ? 'pistol' : 'deagle';
-    const pool = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
-      'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
-    return pool[(Math.random() * pool.length) | 0];
+    return BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0];
   }
   // Modo restrito não tem pickup de outra arma no mapa, então reserva finita = partida
   // acabada quando zera. Fica infinita a RESERVA, não o pente: a recarga segue cobrando.
@@ -5640,6 +5979,9 @@ export class Game {
           const dmgMul = e.isPlayer ? (BOT_FAIR ? this._botDmgPlayer : BOT_DMG_PLAYER) : 1;
           dmg = Math.max(6, Math.min(e.isPlayer ? 100 : 130, Math.round(dmg * dmgMul)));
           this._damage(e, dmg, b, Wb.short || 'AWP', head, teye);   // arma real do bot no killfeed
+          // sangue do tiro do BOT: bot×bot = efeito completo (spray + chão); jogador levando
+          // tiro = só decals (chão/parede), sem o spray gordo estourando na câmera.
+          if (BLOOD) { if (e.isPlayer) this._bloodSpatter(teye, dir, head, e.pos ? e.pos.y : null); else this._fleshImpact(teye, dir, head, e.pos ? e.pos.y : null, false); }
           if (e.isPlayer) this._noteHit(b, Wb.short || 'ARMA', dmg, head, tdist);
         } else if (hitsW && Math.random() < 0.5) this._puff(hitsW.point, hitsW.face ? hitsW.face.normal : null);
         /* COICE PROPORCIONAL AO ALVO (ver BOT_SPRAY_K). Somado DEPOIS de resolver o tiro: o
@@ -6140,6 +6482,7 @@ export class Game {
       const dmgMul = e.isPlayer ? (BOT_FAIR ? this._botDmgPlayer : BOT_DMG_PLAYER) : 1;
       dmg = Math.max(6, Math.min(e.isPlayer ? 100 : 130, Math.round(dmg * dmgMul)));
       this._damage(e, dmg, b, Wb.short || 'ARMA', false, teye);
+      if (BLOOD) { if (e.isPlayer) this._bloodSpatter(teye, dir, false, e.pos ? e.pos.y : null); else this._fleshImpact(teye, dir, false, e.pos ? e.pos.y : null, false); }
       if (e.isPlayer) this._noteHit(b, Wb.short || 'ARMA', dmg, false, tdist);
     }
     this._tracer(from.clone().add(dir.clone().multiplyScalar(0.7)), end);
@@ -6454,6 +6797,11 @@ export class Game {
   /* ================= main update ================= */
   update(dt, render = true) {
     if (this.paused) return;
+    // Hit-stop: scale dt during replay cam slowmo phase (uses wall-clock time, not game time)
+    if (this._replayCam) {
+      const wallT = this._replayCam._wallT = (this._replayCam._wallT || 0) + dt;
+      if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
+    }
     this.time += dt;
     if (this.state === 'countdown' && this.time >= this.stateUntil) {
       this.state = 'live';
@@ -6504,7 +6852,7 @@ export class Game {
     // hint de pointer lock: visível só quando o jogo está ativo mas sem lock
     if (this.el.lockHint)
       this.el.lockHint.classList.toggle('hidden',
-        this.testMode || this.paused || !!document.pointerLockElement ||
+        this.testMode || this.mobile || this.paused || !!document.pointerLockElement ||
         (this.state !== 'live' && this.state !== 'countdown'));
     /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
        passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
@@ -6519,6 +6867,7 @@ export class Game {
       r.autoClear = true;
     }
     this._tickDolly(dt);
+    this.world.update?.(dt, this.time);
   }
 
   /* ================= teardown ================= */
@@ -6534,6 +6883,7 @@ export class Game {
     document.removeEventListener('contextmenu', this._cc);
     document.removeEventListener('pointerlockchange', this._plc);
     window.removeEventListener('blur', this._blur);
+    if (this._touchUi) { this._touchUi.remove(); this._touchUi = null; }   // overlay de toque some com a partida
     this._soltaAtalhos();   // fora da partida os atalhos do navegador voltam a ser do navegador
     this.el.hud.classList.add('hidden');
     this.el.pause.classList.add('hidden');

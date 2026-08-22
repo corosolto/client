@@ -221,7 +221,7 @@ export function pintarParedes(opts) {
     root, T, waypoints, bandas,
     alcance = 7, passo = 2.2, raios = 16, cobre = 0.25,
     excluir = null, limpo = null, evitar = null, seed = 1, maxLarg = 5.2, minLarg = 0.45,
-    exigeChao = true, ocupado = null,
+    exigeChao = true, ocupado = null, olhos = null,
   } = opts;
   /* ZONA LIMPA — parede que o dono quer SEM tinta, declarada em coordenada.
      Nasceu da Loja H (07/08): "pode tirar os graffitis de dentro da loja, pode deixar
@@ -251,7 +251,9 @@ export function pintarParedes(opts) {
   /* ── 1. ÂNCORAS ───────────────────────────────────────────────────────────
      Duas alturas de olho e não uma: a 1,55 m o raio acha o muro e o armário; a
      3,10 m ele acha a empena ACIMA do armário, que da altura do olho está tapada
-     e é justamente a parte alta que ficava pelada. */
+     e é justamente a parte alta que ficava pelada. `olhos` no cfg adiciona faixas
+     (a Loja H precisa de 5,25 m pra cornija da fachada virar âncora). */
+  const OLHOS = olhos || [1.55, 3.1];
   const rc = new THREE.Raycaster(); rc.far = alcance;
   const o3 = new THREE.Vector3(), d3 = new THREE.Vector3();
   const ancoras = new Map();
@@ -262,7 +264,7 @@ export function pintarParedes(opts) {
   const longe = _grade(alvos, Math.max(12, Math.ceil(alcance * 1.5)));
   for (const wp of waypoints) {
     const vizWp = longe(wp.x, wp.z);
-    for (const eye of [1.55, 3.1]) {
+    for (const eye of OLHOS) {
       for (let a = 0; a < raios; a++) {
         const ang = (a / raios) * Math.PI * 2 + (mix32(a * 7 + seed) % 100) / 3000;
         rc.set(o3.set(wp.x, (wp.y || 0) + eye, wp.z),
@@ -281,7 +283,7 @@ export function pintarParedes(opts) {
         if (_naZona(h.point.x, h.point.z)) continue;
         if (evitar && evitar.test(_cadeia(h.object))) continue;
         if (excluir && excluir(h.point.x, h.point.y, h.point.z, nw, h.object)) continue;
-        ancoras.set(k, { x: h.point.x, z: h.point.z, ry, teto: 0, quem: _cadeia(h.object) });
+        ancoras.set(k, { x: h.point.x, z: h.point.z, ry, teto: 0, olho: h.point.y, quem: _cadeia(h.object) });
       }
     }
   }
@@ -305,6 +307,10 @@ export function pintarParedes(opts) {
   // Reproduz: eval:grafite (conta peças antes/depois do corte).
   const MIN_ALT_PAREDE = 1.8;
   for (const [k, A] of ancoras) if ((A.teto || 0) < MIN_ALT_PAREDE) ancoras.delete(k);
+  const _dbg = (typeof window !== 'undefined' && window.__grafiteDebug)
+    ? [...ancoras.values()]
+      .map((A) => ({ x: +A.x.toFixed(2), z: +A.z.toFixed(2), teto: +A.teto.toFixed(2), quem: A.quem.slice(0, 40) }))
+    : null;
 
   /* ── 2. PINTAR ────────────────────────────────────────────────────────────
      Ordem determinística por hash da célula (não pela ordem de descoberta, que
@@ -391,7 +397,7 @@ export function pintarParedes(opts) {
         const ax = A.x + Math.cos(A.ry) * du, az = A.z - Math.sin(A.ry) * du;
         const px = ax - Math.sin(A.ry) * recuo, pz = az - Math.cos(A.ry) * recuo;
         if (_cobreDemais(postas, px, yc, pz, A.ry, w, h, cobre)) { rec.cobria++; continue; }
-        if (exigeChao && !_temChao(amostra, du, w, yc - h / 2)) { rec.noAr++; continue; }
+        if (exigeChao && B.exigeChao !== false && !_temChao(amostra, du, w, yc - h / 2)) { rec.noAr++; continue; }
         postas.push({ i, cartaz, x: px, y: yc, z: pz, ry: A.ry, hw: w / 2, hh: h / 2, quem: A.quem });
         const g = new THREE.PlaneGeometry(w, h);
         g.rotateY(A.ry); g.translate(px, yc, pz);
@@ -436,6 +442,7 @@ export function pintarParedes(opts) {
       const k = (String(p.quem || '').match(/[A-Za-z_]{4,}/g) || ['?']).slice(0, 2).join('/');
       a[k] = (a[k] || 0) + 1; return a;
     }, {})).sort((x, y) => y[1] - x[1]).slice(0, 18), vazias,
+    ...(_dbg ? { ancDetalhe: _dbg } : {}),
   };
 }
 
@@ -510,8 +517,9 @@ export function aplicarGrafite(root, T, layout, muraisTex) {
    embaixo de muro pichado, e reprovar por causa de uma porta seria trocar um defeito
    por outro. Custa quase nada: o amostrador é cacheado por âncora.
 
-   `exigeChao: false` existe para o caso que ainda não apareceu — parede suspensa que
-   o mapa QUEIRA pichada. Nenhum mapa usa hoje. */
+   `exigeChao: false` (global ou por banda) é pra pele suspensa que o mapa QUEIRA
+   pichada — a fachada greco-romana da Loja H (banner e cornija têm ar embaixo por
+   construção). A régua irmã (`graffiti-audit`) continua cobrando parede atrás. */
 function _temChao(amostra, du, w, yBase) {
   if (yBase <= 0.9) return true;                 // já nasce rente ao chão
   let colunas = 0;
@@ -826,12 +834,19 @@ function _alturaParede(alvos, rc, A) {
   const nx = Math.sin(A.ry), nz = Math.cos(A.ry);
   const bx = A.x + nx * 0.6, bz = A.z + nz * 0.6;
   rc.far = 1.4;
-  rc.set(_pa.set(bx, 1.0, bz), _pd.set(-nx, 0, -nz).normalize());
-  let base = null;
-  for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { base = x.distance; break; }
+  /* Pele suspensa (banner, cornija): a sonda de base a 1,0 m passa POR BAIXO dela e
+     devolveria teto 1,2 — mas a âncora existe porque um raio BATEU nela na altura
+     `olho`. Base cai pra altura do acerto antes de desistir (Loja H, 13/08: 16
+     âncoras de banner com teto 1,2 e fachada pelada acima de 2,8 m). */
+  let y0 = 1.0, base = null;
+  for (const yb of (A.olho > 1.4 ? [1.0, A.olho] : [1.0])) {
+    rc.set(_pa.set(bx, yb, bz), _pd.set(-nx, 0, -nz).normalize());
+    for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { base = x.distance; break; }
+    if (base !== null) { y0 = yb; break; }
+  }
   if (base === null) return 1.2;
-  let topo = 1.0;
-  for (let y = 1.4; y <= 8.2; y += 0.4) {
+  let topo = y0;
+  for (let y = y0 + 0.4; y <= 8.2; y += 0.4) {
     rc.set(_pa.set(bx, y, bz), _pd.set(-nx, 0, -nz).normalize());
     let d = null;
     for (const x of rc.intersectObjects(alvos, false)) if (x.distance > 0.05) { d = x.distance; break; }

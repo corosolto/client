@@ -1,8 +1,8 @@
 # CORO SOLTO: Treta Suprema
 
 [![license: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
-[![CI](https://github.com/rubenmarcus/csbrasil/actions/workflows/ci.yml/badge.svg?branch=v2%2Falpha-release)](https://github.com/rubenmarcus/csbrasil/actions/workflows/ci.yml)
-[![pr-gates](https://github.com/rubenmarcus/csbrasil/actions/workflows/pr-gates.yml/badge.svg)](https://github.com/rubenmarcus/csbrasil/actions/workflows/pr-gates.yml)
+[![CI](https://github.com/corosolto/client/actions/workflows/ci.yml/badge.svg?branch=v2%2Falpha-release)](https://github.com/corosolto/client/actions/workflows/ci.yml)
+[![pr-gates](https://github.com/corosolto/client/actions/workflows/pr-gates.yml/badge.svg)](https://github.com/corosolto/client/actions/workflows/pr-gates.yml)
 [![astro](https://img.shields.io/badge/site-astro-ff5d01?logo=astro)](https://astro.build)
 [![three.js](https://img.shields.io/badge/jogo-three.js%20r160-000000?logo=three.js)](https://threejs.org)
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
@@ -34,20 +34,20 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 29.655 linhas em 39 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **6.560** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.512 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 32.001 linhas em 44 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **6.910** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.698 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 573 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
-| Mapas no registro | 7 | objeto `MAPS` de `maps.js` |
+| Mapas no registro | 12 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Scripts do arnês | 200 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 54 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.136` | `public/js/version.js` — **DIVERGE do `package.json`: `2.0.0-alpha.177`** |
+| Versão | `2.0.0-alpha.177` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 39 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 44 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -172,7 +172,7 @@ precisa rodar em CI lê o JSON, nunca o PNG.
 **O site completo** (é o modo que você quer — inclui o jogo):
 
 ```bash
-git clone https://github.com/rubenmarcus/csbrasil.git
+git clone https://github.com/corosolto/client.git
 cd csbrasil
 npm install
 cp .env.example .env      # opcional: sem envs, o ranking responde 503 e o resto roda
@@ -192,17 +192,7 @@ está lá. Use `npm run dev`.
 
 ## Quality gate de qualidade
 
-<!-- BEGIN:GERADO:scripts — não edite à mão, rode `npm run docs` -->
-
-```bash
-npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam
-```
-
-`package.json` tem **124 scripts**; o motivo de cada um mora em `SCRIPTS.md` (migrado das chaves `//nome` em 18/08/2026) — é onde está o porquê.
-
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `node -p "Object.keys(require('./package.json').scripts)"`
-
-<!-- END:GERADO:scripts -->
+Comandos atuais do quality gate: veja [`ARCH.generated.md`](ARCH.generated.md) (gerado — não editar à mão).
 
 ```bash
 npm run arch         # regenera tools/eval/ARCH.md (índice + tabela de conflito)
@@ -289,7 +279,7 @@ projeto.
 | Regra | Valor | Constante |
 |---|---|---|
 | Facções · personagens | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
-| Mapas no menu | 7 — 2 abrem em rodadas, **5 em captura** | `MAPS` / `ctfMode` |
+| Mapas no menu | 12 — 2 abrem em rodadas, **10 em captura** | `MAPS` / `ctfMode` |
 | Respawn | 2,2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 vitórias | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Captura | alvo = **todas as bandeiras do mapa**, 2 rodadas (rede de segurança 480 s) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -318,13 +308,18 @@ Os mapas registrados, e em que modo cada um abre:
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
 | `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.952 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
 
-**7 mapas registrados** — 2 abrem em rodadas e 5 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 9 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**12 mapas registrados** — 2 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 14 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

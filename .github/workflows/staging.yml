@@ -8,6 +8,7 @@ on:
 jobs:
   staging-config:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       available: ${{ steps.check.outputs.available }}
     steps:

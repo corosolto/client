@@ -17,6 +17,7 @@ permissions:
 jobs:
   bot-token:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       available: ${{ steps.check.outputs.available }}
     steps:
@@ -34,6 +35,7 @@ jobs:
   automerge:
     needs: bot-token
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: needs.bot-token.outputs.available == 'true'
     env:
       GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
@@ -43,17 +45,34 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
+      - name: Garante a etiqueta de pronto
+        run: python3 scripts/ci/ensure_labels.py pronto-pra-merge
       - name: Fetch PR status
         run: gh pr view "$PR_NUMBER" --json isDraft,labels,reviewDecision,mergeStateStatus,statusCheckRollup,files > /tmp/automerge.json
       - name: Check eligibility
-        run: python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
-      - name: Merge when eligible
+        # O autoteste roda ANTES da decisão: este script mescla sem humano no
+        # caminho, e portão quebrado que passa calado aqui mescla PR vermelho.
+        run: |
+          python3 scripts/ci/check_automerge.py --selftest
+          python3 scripts/ci/check_automerge.py < /tmp/automerge.json > /tmp/automerge-result.json
+      # DEIXAR PRONTO NÃO É MERGEAR (decisão do dono, 21/08). Este passo chamava
+      # `gh pr merge --squash --auto` e fechava o PR sozinho. A intenção declarada dos
+      # bots é outra: autocorreção e autorrevisão para deixar o PR PRONTO, com o botão
+      # de merge continuando humano. O que era merge vira etiqueta e um comentário que
+      # diz por que o PR está pronto.
+      - name: Marca como pronto quando elegível
         run: |
           python3 - <<'PY'
           import json, os, subprocess, sys
           data = json.load(open('/tmp/automerge-result.json'))
+          pr = os.environ['PR_NUMBER']
           if not data.get('eligible'):
-              print('automerge: not eligible')
+              print('pronto-pra-merge: not eligible')
+              subprocess.run(['gh', 'pr', 'edit', pr, '--remove-label', 'pronto-pra-merge'], check=False)
               sys.exit(0)
-          subprocess.run(['gh', 'pr', 'merge', os.environ['PR_NUMBER'], '--squash', '--delete-branch', '--auto'], check=True)
+          subprocess.run(['gh', 'pr', 'edit', pr, '--add-label', 'pronto-pra-merge'], check=True)
+          subprocess.run(['gh', 'pr', 'comment', pr, '--body',
+                          '🤖 **csbrasil-bot**: portões verdes e diff dentro do que o '
+                          '`check_automerge` aceita — marquei como `pronto-pra-merge`. '
+                          'O merge continua sendo seu.'], check=True)
           PY

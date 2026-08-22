@@ -117,9 +117,9 @@ medições que explicam — a régua mede rasgo de pele, não plausibilidade de 
    ============================================================================ */
 ```
 
-Depois: entrada no `package.json` com a chave `//<script>` explicando **por que ela existe**,
-e o passo dentro do `check:fast` — lembrando que ele é uma corrente de `&&` e que um passo
-colocado depois de um vermelho existente nasce morto.
+Depois: entrada no `package.json` mais a seção correspondente no `SCRIPTS.md` explicando
+**por que ela existe**, e o passo dentro do `check:fast` — lembrando que, com um vermelho
+conhecido na cadeia, só o placar passo a passo revela um passo que quebrou agora.
 
 Régua de node puro que roda em segundos vai para o `check:fast`. Régua que precisa de browser ou
 de minutos vai para o `check`, e o motivo fica escrito.

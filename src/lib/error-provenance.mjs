@@ -9,6 +9,9 @@ const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically i
 // mas o modelo CARREGA sem aquele mapa — o jogo não trava. É ambiental (não é defeito de
 // código) e não tem conserto no repo, então fica na telemetria bruta mas NÃO abre issue.
 const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture/i;
+// Abort de mídia: o jogo corta `play()` pendente de propósito (audio.js:97/:119/:159) e a
+// rejeição chega sem stack. ESTREITO de propósito — KNOWN-BUGS.md, BUG-73.
+const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -70,9 +73,33 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   if (AMBIENTE_RE.test(String(payload.message || ''))) return 'externo';
   if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';
   if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';
+  if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';
   return 'codigo';
+}
+
+/* console.error com string é linha de log, não exceção: quando o console sinaliza exceção de
+   verdade o hook do cliente acha a pilha entre os argumentos e ela vem junto (BUG-72). */
+export function isConsoleLog({ kind, stack } = {}) {
+  return kind === 'console' && !stack;
 }
 
 // 'externo' e 'recuperavel' ficam gravados no banco, mas não consomem dispatch nem
 // abrem bug do jogo: um não pertence ao jogo, o outro o jogo já contornou sozinho.
-export const shouldDispatchCrash = (classification) => classification !== 'externo' && classification !== 'recuperavel';
+export const shouldDispatchCrash = (classification) => classification !== 'externo'
+  && classification !== 'recuperavel' && classification !== 'log';
+
+/* Mesma receita do `digital()` de `index.astro`. A multiplicação é em ponto FLUTUANTE de
+   propósito: passa de 2^53 e perde precisão — `Math.imul` daria outro número (BUG-71). */
+export function crashFingerprint(kind, message, source) {
+  const texto = `${kind}|${message ?? ''}|${source ?? ''}`;
+  let h = 2166136261;
+  for (let i = 0; i < texto.length; i++) { h ^= texto.charCodeAt(i); h = (h * 16777619) >>> 0; }
+  return `0000000${h.toString(16)}`.slice(-8);
+}
+
+/* Fingerprint na palavra do cliente funde erros distintos num grupo só e cala todos menos
+   o primeiro: vale quando é o hash do conteúdo que veio junto (BUG-71). */
+export function fingerprintConfere(claimed, { kind, message, source } = {}) {
+  if (typeof claimed !== 'string' || !claimed) return false;
+  return claimed === crashFingerprint(kind, message, source);
+}

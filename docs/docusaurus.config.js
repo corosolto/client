@@ -69,7 +69,7 @@ const config = {
           // docs-only: o site inteiro É a documentação, sem landing separada.
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          editUrl: 'https://github.com/rubenmarcus/csbrasil/tree/main/docs/',
+          editUrl: 'https://github.com/corosolto/client/tree/main/docs/',
           showLastUpdateTime: false,
         },
         blog: false,
@@ -108,7 +108,7 @@ const config = {
           { type: 'docSidebar', sidebarId: 'dev', position: 'left', label: 'Documentação' },
           { type: 'localeDropdown', position: 'right' },
           { href: 'https://csbrasil.online/', label: 'Jogar', position: 'right' },
-          { href: 'https://github.com/rubenmarcus/csbrasil', label: 'GitHub', position: 'right' },
+          { href: 'https://github.com/corosolto/client', label: 'GitHub', position: 'right' },
         ],
       },
       footer: {
@@ -142,8 +142,8 @@ const config = {
           {
             title: 'Projeto',
             items: [
-              { label: 'GitHub', href: 'https://github.com/rubenmarcus/csbrasil' },
-              { label: 'Issues', href: 'https://github.com/rubenmarcus/csbrasil/issues' },
+              { label: 'GitHub', href: 'https://github.com/corosolto/client' },
+              { label: 'Issues', href: 'https://github.com/corosolto/client/issues' },
             ],
           },
         ],

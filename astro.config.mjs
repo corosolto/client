@@ -33,6 +33,9 @@ const MANIFESTO_JS = moduleCacheManifest();
 export default defineConfig({
   output: 'static',
   adapter: vercel(),
+  server: {
+    port: Number(process.env.PORT) || 4321,
+  },
 
   vite: {
     define: {

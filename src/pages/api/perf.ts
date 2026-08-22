@@ -1,10 +1,12 @@
 // POST /api/perf - amostra de performance do cliente (FPS, boot, dispositivo).
 // Ver supabase/migrations/018.
 //
-// UMA amostra por sessão (depois do boot), não por frame. Responde "quantos
-// jogam abaixo de 30 FPS?" e "quanto demora o boot frio pra quem não é o dev?"
-// - requisito declarado do dono (máquina fraca). O js_error pega crash; isto
-// pega engasgo. Anônimo, sem IP, fail-silent.
+// UMA amostra por sessão, EM PARTIDA (janela de 1s de rAF ~4s após o live), não por
+// frame. Responde "quantos jogam abaixo de 30 FPS?" e "quanto demora o boot frio
+// (até JOGÁVEL) pra quem não é o dev?" - requisito declarado do dono (máquina fraca).
+// load_ms = carga do módulo (o que boot_ms media até 15/08, quando o fps media o
+// jank de boot e o painel vendia "FPS P50 1" como se fosse partida).
+// O js_error pega crash; isto pega engasgo. Anônimo, sem IP, fail-silent.
 import type { APIRoute } from 'astro';
 import { supabaseAdmin, NOT_CONFIGURED } from '../../lib/supabase';
 import { rateLimit } from '../../lib/ratelimit';

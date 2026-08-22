@@ -39,7 +39,7 @@ hora que importa.
 
 > **Por que essa tabela é gerada, e não uma lista.**
 > Duas listas escritas à mão já tentaram enumerar essas superfícies — a seção de licenças do
-> `README.md` e o degrau 3 do [`docs/historico/plans/08-RELEASE-PROFISSIONAL.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md).
+> `README.md` e o degrau 3 do [`docs/historico/plans/08-RELEASE-PROFISSIONAL.md`](https://github.com/corosolto/client/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md).
 > **As duas esquecem o JSON-LD do jogo e o rodapé da documentação.** Uma lista de onde a
 > licença aparece envelhece exatamente como qualquer outro número escrito à mão: no primeiro
 > commit que criar uma página nova. A lista de superfícies *a conferir* é decisão humana e mora
@@ -49,12 +49,12 @@ hora que importa.
 ## A migração MIT → AGPL-3.0, aplicada em 07/08/2026
 
 O projeto nasceu **MIT** e é **AGPL-3.0** desde **07/08/2026**, aplicada no commit
-[`3f7a9be`](https://github.com/rubenmarcus/csbrasil/commit/3f7a9be) — as oito superfícies
+[`3f7a9be`](https://github.com/corosolto/client/commit/3f7a9be) — as oito superfícies
 num commit só, como este documento exigia antes de a troca acontecer. A decisão reverte uma
 recomendação anterior do próprio repositório (`docs/historico/plans/06 §1.2` defendia manter permissivo por
 causa de Steamworks e de programas de crédito de IA).
 
-O motivo da virada está no [`docs/historico/plans/08 §3`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md):
+O motivo da virada está no [`docs/historico/plans/08 §3`](https://github.com/corosolto/client/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md):
 o projeto pretende **vender skins e mapas**, e venda de item muda o modelo de ameaça. A AGPL
 **não impede** vender — você vende o direito de uso — mas ela é honesta sobre o que não
 resolve: qualquer um pode publicar um fork com o gate de posse removido, **legalmente**. Essa
@@ -149,7 +149,7 @@ cada arquivo passa a responder uma coisa diferente para quem pergunta.
 
 ## A separação que quase ninguém sabe: código × arte × marca
 
-Esta é a decisão do [`docs/historico/plans/08 §3`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md)
+Esta é a decisão do [`docs/historico/plans/08 §3`](https://github.com/corosolto/client/blob/main/docs/historico/plans/08-RELEASE-PROFISSIONAL.md)
 que torna o resto possível, e ela é **três licenças diferentes para três coisas diferentes**:
 
 | Camada | O que é | Regime | Onde mora |
