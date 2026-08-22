@@ -24,6 +24,6 @@ if [ -d "$DEST" ] && [ "$(ls -1 "$DEST"/*.png 2>/dev/null | grep -cv '/or-')" -g
 fi
 mkdir -p "$DEST"
 echo "Baixando decalques de: $URL"
-curl -fsSL "$URL" -o /tmp/csbrasil-decals.zip
+curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-decals.zip
 unzip -o -q /tmp/csbrasil-decals.zip -d "$DEST/"
 echo "Pronto. $(ls -1 "$DEST"/*.png | wc -l | tr -d ' ') decalques em $DEST/."
