@@ -20,6 +20,8 @@
     "eval:invariants": "node tools/eval/invariants.mjs",
     "prod:coherence": "node tools/eval/prod-coherence.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
+    "eval:launchbudget": "node tools/eval/launch-budget.mjs",
+    "launch:preflight": "npm run build && npm run eval:launchbudget",
     "eval:uuid": "node tools/eval/uuid-compat-check.mjs",
     "eval:drop": "node tools/eval/drop-check.mjs",
     "eval:escala": "node tools/eval/escala-veiculo-check.mjs",
