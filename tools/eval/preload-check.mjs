@@ -87,6 +87,8 @@ if (!/hasModel\(c\.id\)/.test(game))
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m PL1 preload da partida = roster sorteado (~8 GLBs), Game honra, M não materializa fora do carregado');
-if (MUT && !falhas.length)
+if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso
+}
 process.exit(falhas.length ? 1 : 0);
