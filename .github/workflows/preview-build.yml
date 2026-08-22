@@ -1,0 +1,81 @@
+# preview-build — COMPILA o PR sem ter nada para roubar.
+#
+# Metade 1 de 2 do preview de fork. A regra que faz isso funcionar sem aprovação
+# humana: este job roda o código do FORK e por isso NÃO recebe segredo nenhum.
+# `pull_request` (e não `pull_request_target`) garante isso — num PR de fork o
+# GitHub roda com token só-leitura e sem acesso a `secrets`.
+#
+# O que sai daqui é BYTE ESTÁTICO: o `npm run build` do Astro com adapter da Vercel
+# já produz `.vercel/output` inteiro, que é exatamente o que `vercel deploy
+# --prebuilt` consome. Quem publica é o `preview-deploy.yml`, que tem o segredo e
+# NÃO executa nada do fork.
+#
+# Antes disso o preview de fork dependia de um mantenedor aprovar cada push, porque
+# o desenho antigo rodava `vercel build` (código do fork) com o VERCEL_TOKEN no
+# ambiente. Separar as duas metades resolve os dois lados de uma vez: preview
+# automático e token que nunca encosta em código de terceiro.
+name: preview-build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# Só leitura. Este job não comenta, não rotula e não publica.
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with: { node-version: 22, cache: npm }
+
+      - run: npm ci
+
+      # Os pacotes de asset vêm de release público — sem segredo, e com retry para
+      # soluço de rede não virar PR vermelho (é a DG2).
+      - name: Assets
+        run: |
+          bash scripts/fetch-audio.sh
+          bash scripts/fetch-decals.sh
+          npm run strip:decalbg
+          npm run assert:assets
+
+      - name: Build
+        run: npm run build
+
+      # O número do PR viaja junto: o job de deploy roda em `workflow_run`, onde o
+      # contexto não sabe de qual PR veio.
+      - name: Anota o PR
+        run: |
+          mkdir -p .vercel/output
+          echo "${{ github.event.pull_request.number }}" > /tmp/pr-numero.txt
+          echo "${{ github.event.pull_request.head.sha }}" > /tmp/pr-sha.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: preview-${{ github.event.pull_request.number }}
+          path: |
+            .vercel/output
+          retention-days: 3
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: preview-meta-${{ github.event.pull_request.number }}
+          path: |
+            /tmp/pr-numero.txt
+            /tmp/pr-sha.txt
+          retention-days: 3
+          if-no-files-found: error

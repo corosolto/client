@@ -17,6 +17,20 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
+   AF7 · todo commit que o bot faz - `git commit` E `git merge` - carrega os trailers que
+         o CI cobra de gente: `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem
+         `-m`, o `git merge` escreve a mensagem automática, que não leva trailer nenhum -
+         e aí o bot conserta o PR e o dco reprova o commit que ele mesmo fez. Medido no
+         #406, onde o merge limpo do autofix travou o PR inteiro.
+   AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
+         releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
+         gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
+         quem está parado esperando revisão, que é justamente quem precisa.
+   AF5 · o resolvedor de conflito passa pela MESMA trava e ABORTA quando sobra
+         conflito fora dela. Resolver conflito de arquivo gerado é mecânico (todo
+         `chore(release)` reabre um em cada PR aberto); resolver conflito de código
+         é julgamento. Sem o `git merge --abort` no caminho de exceção, o bot
+         resolveria código escolhendo um lado no escuro.
 
    Uso: node tools/eval/autofix-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -29,6 +43,10 @@ const MUTANTES = {
   'lista-abre-workflow': 'AF2',
   'autofix-mergeia': 'AF3',
   'automerge-volta': 'AF4',
+  'resolve-conflito-de-codigo': 'AF5',
+  'sem-varredura-pos-release': 'AF6',
+  'commit-sem-trailer': 'AF7',
+  'merge-sem-trailer': 'AF7',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -79,6 +97,50 @@ else {
 if (/gh pr merge/.test(wf)) {
   falhas.push('AF3 autofix.yml mergeia PR — o autofix deixa pronto, quem fecha é gente');
 }
+
+/* ---- AF5: o resolvedor de conflito aborta quando o conflito é de gente ---- */
+if (MUT === 'resolve-conflito-de-codigo') {
+  wf = wf.replace(/\s*git merge --abort\n/, '\n');
+}
+const resolveConflito = /--caminhos/.test(wf) && /git checkout --theirs/.test(wf);
+if (resolveConflito && !/git show FETCH_HEAD:scripts\/ci\/autofix_allowlist\.py/.test(wf)) {
+  falhas.push('AF5 a trava consultada no merge não vem da BASE — um PR que reescrevesse o allowlist liberaria a si mesmo');
+}
+if (resolveConflito) {
+  const trecho = wf.slice(wf.indexOf('diff-filter=U'), wf.indexOf('git checkout --theirs'));
+  /* Vale tanto o script do repositório quanto a cópia da BASE extraída para /tmp — a
+     segunda é MAIS segura, porque um PR que reescrevesse o allowlist liberaria a si
+     mesmo. O que a régua recusa é escolher lado sem consultar trava nenhuma. */
+  if (!/(?:autofix_allowlist|allowlist-base)\.py --caminhos/.test(trecho)) {
+    falhas.push('AF5 o resolvedor escolhe lado do conflito sem consultar a lista de permissão');
+  }
+  if (!/git merge --abort/.test(trecho)) {
+    falhas.push('AF5 o resolvedor não aborta o merge quando sobra conflito fora da lista — passaria a decidir código no escuro');
+  }
+  if (!/--caminhos/.test(ler('scripts/ci/autofix_allowlist.py'))) {
+    falhas.push('AF5 autofix_allowlist.py não entende `--caminhos`, que é como o resolvedor o consulta');
+  }
+}
+
+/* ---- AF7: os commits do bot levam os trailers que o CI cobra ---- */
+if (MUT === 'commit-sem-trailer') wf = wf.replace(/\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/g, '');
+if (MUT === 'merge-sem-trailer') wf = wf.replace(/git merge --no-edit -m[\s\S]*?FETCH_HEAD; then/, 'git merge --no-edit FETCH_HEAD; then');
+/* Só a CHAMADA conta. `git merge` citado dentro de `--body` é instrução que o bot manda
+   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. */
+for (const trecho of [...wf.matchAll(/^\s*(?:if )?git (?:commit|merge)[\s\S]{0,600}?(?=\n\s{0,10}[a-z-]+:|\n\s*$)/gm)].map((m) => m[0])) {
+  if (/--abort/.test(trecho)) continue;                   // abortar não cria commit
+  if (!/Agent:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Agent:` — o agente_check reprova o PR que ele acabou de consertar');
+  if (!/Signed-off-by:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Signed-off-by:` — o dco reprova o PR que ele acabou de consertar');
+}
+
+/* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
+if (MUT === 'sem-varredura-pos-release') wf = wf.replace(/\n  push:\n    branches: \[main\]/, '');
+const temPush = /^\s{2}push:\n\s{4}branches: \[main\]/m.test(wf);
+const temVarredura = /varredura:\n\s+if: github\.event_name == 'push'/.test(wf);
+const filtraAtrasado = /mergeable != "MERGEABLE"/.test(wf) && /gh workflow run autofix\.yml/.test(wf);
+if (!temPush) falhas.push('AF6 autofix.yml não acorda quando a main anda — PR parado esperando revisão nunca é consertado');
+else if (!temVarredura) falhas.push('AF6 o gatilho de push existe mas não há job de varredura');
+else if (!filtraAtrasado) falhas.push('AF6 a varredura não seleciona os PRs desatualizados nem dispara o autofix de cada um');
 
 /* ---- AF4: e nenhum outro workflow mergeia tampouco ---- */
 const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
