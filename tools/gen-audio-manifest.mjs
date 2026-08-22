@@ -80,6 +80,48 @@ const take = (files) => { files.forEach(f => used.add(f)); return files.map(toUr
 const prev = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8')) : {};
 const out = {};
 
+/* O pacote que vai para release não preserva a árvore de autoria: o
+   build-audio-pack troca os nomes por hashes em audio/a/. Ele traz um manifest já
+   reescrito e, portanto, não pode passar pelo gerador de pools abaixo. Antes deste
+   ramo, `npm run audio:check` via 252 assets opacos como órfãos e sugeria rodar
+   `npm run audio`; fazer isso apagava as referências de voz do pacote instalado.
+
+   Em uma instalação de release, a verificação correta é de integridade: cada
+   caminho que o manifest expõe (inclusive as chaves de characterVoiceText) existe
+   no disco. A geração continua exclusiva para a árvore de autoria legível. */
+const OPAQUE_DIR = join(AUDIO, 'a');
+const manifestPaths = (value, paths = new Set(), inCharacterVoiceText = false) => {
+  if (typeof value === 'string') {
+    if (value.startsWith('audio/')) paths.add(value);
+    return paths;
+  }
+  if (Array.isArray(value)) {
+    value.forEach(item => manifestPaths(item, paths, inCharacterVoiceText));
+    return paths;
+  }
+  if (!value || typeof value !== 'object') return paths;
+  for (const [key, item] of Object.entries(value)) {
+    if (inCharacterVoiceText && key.startsWith('audio/')) paths.add(key);
+    manifestPaths(item, paths, key === 'characterVoiceText');
+  }
+  return paths;
+};
+const isOpaqueReleasePack = existsSync(OPAQUE_DIR) && [...manifestPaths(prev)]
+  .some(p => p.startsWith('audio/a/'));
+if (isOpaqueReleasePack) {
+  const paths = [...manifestPaths(prev)];
+  const missing = paths.filter(p => !existsSync(join(ROOT, 'public', decodeURIComponent(p))));
+  console.log(`AUDIO  pacote opaco de release · ${paths.length} referência(s) no manifest`);
+  if (missing.length) {
+    console.error(`✗ ${missing.length} referência(s) ausente(s):`);
+    missing.forEach(p => console.error(`  ${p}`));
+    process.exit(1);
+  }
+  console.log('✓ manifest íntegro para teste local; não regenerado a partir do pacote opaco');
+  if (!CHECK) console.log('  Para editar pools, use a árvore de autoria antes de gerar o pacote.');
+  process.exit(0);
+}
+
 // ── pools por facção ────────────────────────────────────────────────────────
 out.voice = {}; out.round = {};
 for (const [dir, team] of Object.entries(FACTIONS)) {
