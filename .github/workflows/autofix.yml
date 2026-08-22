@@ -146,7 +146,12 @@ jobs:
           git config user.email "csbrasil-bot@users.noreply.github.com"
           BASE="${{ github.event.pull_request.base.ref || 'main' }}"
           git fetch base "$BASE"
-          if git merge --no-edit FETCH_HEAD; then
+          # A mensagem vai EXPLÍCITA mesmo quando o merge não conflita: `--no-edit` usa a
+          # mensagem automática do git, que não leva `Agent:` nem `Signed-off-by` — e aí o
+          # bot conserta o PR e o dco reprova o commit que ele mesmo fez (medido no #406).
+          if git merge --no-edit -m "Merge da base (autofix)" \
+                       -m "Agent: csbrasil-bot (autofix)" \
+                       -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>" FETCH_HEAD; then
             git diff --quiet HEAD@{1} HEAD || echo "mesclou=1" >> "$GITHUB_OUTPUT"
             echo "PR já está em cima da base (ou mesclou limpo)."
             exit 0

@@ -17,6 +17,11 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
+   AF7 · todo commit que o bot faz - `git commit` E `git merge` - carrega os trailers que
+         o CI cobra de gente: `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem
+         `-m`, o `git merge` escreve a mensagem automática, que não leva trailer nenhum -
+         e aí o bot conserta o PR e o dco reprova o commit que ele mesmo fez. Medido no
+         #406, onde o merge limpo do autofix travou o PR inteiro.
    AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
          releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
          gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
@@ -40,6 +45,8 @@ const MUTANTES = {
   'automerge-volta': 'AF4',
   'resolve-conflito-de-codigo': 'AF5',
   'sem-varredura-pos-release': 'AF6',
+  'commit-sem-trailer': 'AF7',
+  'merge-sem-trailer': 'AF7',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -107,6 +114,17 @@ if (resolveConflito) {
   if (!/--caminhos/.test(ler('scripts/ci/autofix_allowlist.py'))) {
     falhas.push('AF5 autofix_allowlist.py não entende `--caminhos`, que é como o resolvedor o consulta');
   }
+}
+
+/* ---- AF7: os commits do bot levam os trailers que o CI cobra ---- */
+if (MUT === 'commit-sem-trailer') wf = wf.replace(/\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/g, '');
+if (MUT === 'merge-sem-trailer') wf = wf.replace(/git merge --no-edit -m[\s\S]*?FETCH_HEAD; then/, 'git merge --no-edit FETCH_HEAD; then');
+/* Só a CHAMADA conta. `git merge` citado dentro de `--body` é instrução que o bot manda
+   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. */
+for (const trecho of [...wf.matchAll(/^\s*(?:if )?git (?:commit|merge)[\s\S]{0,600}?(?=\n\s{0,10}[a-z-]+:|\n\s*$)/gm)].map((m) => m[0])) {
+  if (/--abort/.test(trecho)) continue;                   // abortar não cria commit
+  if (!/Agent:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Agent:` — o agente_check reprova o PR que ele acabou de consertar');
+  if (!/Signed-off-by:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Signed-off-by:` — o dco reprova o PR que ele acabou de consertar');
 }
 
 /* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
