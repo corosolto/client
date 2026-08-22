@@ -128,17 +128,48 @@ def glb_json(path):
     return js, bin_
 
 
+def _ktx2_para_png(dados):
+    """KTX2/Basis não abre no PIL. Desempacota com o `basisu` (brew install
+    basis_universal) — sem ele a régua não mede textura comprimida e diz isso."""
+    import subprocess, tempfile, glob as _glob, os
+    with tempfile.TemporaryDirectory() as d:
+        ktx = os.path.join(d, 'in.ktx2')
+        open(ktx, 'wb').write(dados)
+        try:
+            subprocess.run(['basisu', '-unpack', '-no_ktx', ktx], cwd=d, check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            raise RuntimeError('textura KTX2 e `basisu` ausente — instale basis_universal')
+        # `unpacked_a_...` (visualização do ALFA) vem antes de `unpacked_rgb_...` na ordem
+        # alfabética: pegar o primeiro compara alfa com cor e inventa ΔL* de 7.
+        saidas = sorted(_glob.glob(os.path.join(d, '*unpacked_rgb*level_0*.png'))) \
+            or sorted(_glob.glob(os.path.join(d, '*level_0*.png')))
+        if not saidas:
+            raise RuntimeError('basisu não devolveu PNG de cor para a textura KTX2')
+        return open(saidas[0], 'rb').read()
+
+
 def glb_image(js, bin_, tex_index):
     """Bytes da imagem de uma textura, honrando EXT_texture_webp (a Mint exporta
-    metade dos 26 em webp e metade em jpeg)."""
+    metade dos 26 em webp e metade em jpeg) e KHR_texture_basisu (KTX2, desde
+    22/08 — ver tools/optimize-ktx2.mjs)."""
     t = js['textures'][tex_index]
     src = t.get('source')
+    ktx2 = False
     if src is None:
-        src = t['extensions']['EXT_texture_webp']['source']
+        ext = t.get('extensions', {})
+        if 'EXT_texture_webp' in ext:
+            src = ext['EXT_texture_webp']['source']
+        elif 'KHR_texture_basisu' in ext:
+            src = ext['KHR_texture_basisu']['source']
+            ktx2 = True
+        else:
+            raise RuntimeError(f'textura {tex_index} sem source e sem extensão conhecida')
     img = js['images'][src]
     bv = js['bufferViews'][img['bufferView']]
     o = bv.get('byteOffset', 0)
-    return bin_[o:o + bv['byteLength']]
+    dados = bin_[o:o + bv['byteLength']]
+    return _ktx2_para_png(dados) if ktx2 or img.get('mimeType') == 'image/ktx2' else dados
 
 
 def weapon_material(glb_path, max_texels=2500):

@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { VERSION } from './version.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { aplicaKtx2 } from './ktx2.js';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { buildRifle, CHAR_FX, charRimColor, upgradeCharMaterial, makeContactShadow } from './characters.js';
 import { weaponModel, preloadWeapons, ONE_HANDED, gripPoints } from './weapons.js';
@@ -157,7 +158,7 @@ const PALM_GUARD = qp.get('palmguard') !== '0';
 const PALM_MAX_LEVER = parseFloat(qp.get('palmlever')) || 0.9;
 
 const loader = new GLTFLoader();
-const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
+const loadGLB = (url) => new Promise((res, rej) => aplicaKtx2(loader).load(url, res, undefined, rej));
 
 let _clips = null;                 // { idle: AnimationClip, ... } shared fallback
 const _clipsByChar = {};           // id -> per-character retargeted clip set (fallback to _clips)
