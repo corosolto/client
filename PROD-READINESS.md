@@ -26,6 +26,30 @@
 - Headers de cache: `/vendor/*` curto, `/models/*` e `/audio/a/*` longo/immutable, `og-image.png` 7 dias.
 - CSP está declarado em `vercel.json`; import map e scripts são `self` + `unsafe-inline` + Cloudflare beacon.
 
+## Preview de PR e a Vercel (21/08/2026)
+
+Medido nos últimos 29 PRs: a Vercel reprovou **13 dos 14 PRs vindos de fork**, sempre com
+`Authorization required to deploy.` - é a proteção de fork da própria Vercel, e nenhum
+commit do colaborador a resolve.
+
+**Quem bloqueia o PR é o `ci.yml`**, que já roda `npm run build` em `pull_request`. A
+Vercel é conveniência, não portão - a régua `eval:deploygate` (DG1) guarda essa condição.
+
+Dois ajustes ficam no **painel da Vercel**, fora do alcance do repositório, e precisam da
+conta dona do projeto:
+
+1. **Project → Git → Deploy Hooks / Fork Protection**: desligar o deploy automático de PR
+   vindo de fork. Enquanto estiver ligado, todo PR externo nasce com um vermelho que o
+   autor não tem como consertar.
+2. **Settings → Git → Ignored Build Step**: opcional, para parar de gastar build em branch
+   de PR interna. A produção continua publicando pela `main`.
+
+O preview de fork continua disponível **sob demanda**: um mantenedor aplica a etiqueta
+`preview-autorizado` e o job `preview` do `preview-bot.yml` publica pela CLI da Vercel,
+depois de conferir permissão do ator e SHA aprovado. A etiqueta passou a ser criada pelo
+próprio workflow (DG3) - antes ela não existia no repositório e o caminho inteiro era
+código morto.
+
 ## Blockers conhecidos para prod
 
 1. **`npm run check` (full) não foi executado nesta sessão.** `check:fast` passou; `check` ainda inclui `eval:vm`, `invariants`, `kick`, `bots` e deve ser verde antes de publicar.

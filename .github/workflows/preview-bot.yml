@@ -26,6 +26,14 @@ jobs:
           REPO: ${{ github.repository }}
         run: gh pr edit "$PR" --repo "$REPO" --remove-label "preview-autorizado" 2>/dev/null || true
 
+      # O job `preview` abaixo só dispara em `labeled` com esta etiqueta. Ela nunca foi
+      # criada no repositório, então o caminho inteiro era código morto: o bot pedia um
+      # rótulo que ninguém tinha como aplicar. Criar aqui é o que liga o mecanismo.
+      - name: garante a etiqueta que autoriza o preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/ensure_labels.py preview-autorizado
+
       - name: classifica o diff sem executar código do fork
         env:
           GH_TOKEN: ${{ github.token }}
