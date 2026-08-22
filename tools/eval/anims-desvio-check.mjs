@@ -83,5 +83,8 @@ if (piorGraus > TETO_GRAUS) falhas.push(`AD2 rotação desviou ${piorGraus.toFix
 console.log(`  ${comparados} keyframes contra o git · translação ${piorMm.toFixed(3)} mm (teto ${TETO_MM}) · rotação ${piorGraus.toFixed(3)}° (teto ${TETO_GRAUS})`);
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m AD compressão de clipe dentro do desvio tolerado');
-if (MUT && !falhas.length) console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+if (MUT && !falhas.length) {
+  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
+}
 process.exit(falhas.length ? 1 : 0);

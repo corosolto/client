@@ -129,6 +129,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run eval:entrada
 
+      # A partida carrega as armas DELA e nenhum bot empunha caixa (medido no navegador).
+      - name: eval:armas (preload de arma por partida)
+        if: ${{ !cancelled() }}
+        run: npm run eval:armas
+
       # Número diz que caiu; imagem diz por quê. Só quando algum passo acima reprova.
       - name: Fotos das piores células (só em falha)
         if: failure()

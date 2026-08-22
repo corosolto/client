@@ -282,11 +282,14 @@ const torsoRadiusAt = (prof, y) => {
 // Preload shared clips + base meshes for the given character ids. Safe to call once
 // before a match; already-loaded assets are skipped. Failures are swallowed per-asset
 // so a missing model just falls back to the box mesh.
-export async function preloadCharacterAssets(ids) {
+export async function preloadCharacterAssets(ids, opts = {}) {
+  /* Armas FORA do bootstrap de clipes: a 1ª chamada é a da tela de carregamento, e prender as
+     armas ao `if (!_clips)` fazia a partida herdar a lista errada (ou as 26). Idempotente. */
+  const armas = preloadWeapons(opts.weapons);
   if (!_clips) {
     _clips = {};
     await Promise.all([
-      preloadWeapons(), // real weapon GLBs (mounts fall back to box if missing)
+      armas,
       // Pack compartilhado em 1 GLB MESCLADO (tools/merge-anims.mjs): os 11 requests de
       // clipe viram 1. O THREE amarra o clipe no esqueleto pelo NOME do osso, então
       // basta ler as animações nomeadas. Se o mesclado faltar (deploy velho, ?animdir=
@@ -313,7 +316,7 @@ export async function preloadCharacterAssets(ids) {
         ]);
       })(),
     ]);
-  }
+  } else await armas;
   const wanted = [...new Set(ids)].filter((id) => GLB_CHARS.has(id) && !_base.has(id));
   await Promise.all(wanted.map(async (id) => {
     try {
@@ -430,7 +433,11 @@ export function buildCharacterModel(def, opts = {}) {
   model.traverse((o) => { if (o.isBone && !rforeBone && /right.?forearm|r_forearm/i.test(o.name)) rforeBone = o; });
   if (!handBone) model.traverse((o) => { if (o.isBone && !handBone && /hand/i.test(o.name)) handBone = o; });
   if (handBone && withWeapon) {
-    const gun = weaponModel(opts.weaponId || 'awp') || buildRifle();
+    /* O nome é o que torna a queda em caixa MEDÍVEL: sem ele a arma procedural some calada
+       dentro da cena e nenhuma régua enxerga (ARM2). */
+    const glb = weaponModel(opts.weaponId || 'awp');
+    const gun = glb || buildRifle();
+    gun.name = glb ? 'arma-glb' : 'arma-caixa';
     // Flip de 180° SÓ na 3ª pessoa p/ armas que ficam de costas no mount (o cano +Z da
     // weaponModel não bate com a mão nesses casos). O FP tem seu próprio ajuste (vmRotY),
     // então corrigimos aqui sem tocar no viewmodel já validado. (P90: usuário viu ao contrário.)
