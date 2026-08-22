@@ -1,0 +1,575 @@
+{
+  "provider": "openrouter",
+  "model": "openai/whisper-large-v3",
+  "generatedAt": "2026-08-22T02:16:52.630Z",
+  "note": "STT prova conteúdo aproximado; timbre, interpretação e aprovação continuam humanos.",
+  "results": [
+    {
+      "characterId": "mandrake",
+      "key": "select-01",
+      "file": "audio/characters/mandrake/select/select-01.mp3",
+      "expected": "Visão, mandrake chegou. Tô na atividade.",
+      "transcript": " Visão! Mandrake chegou! Estou na atividade!",
+      "wordEdits": 1,
+      "expectedWords": 6,
+      "wordErrorRate": 0.167,
+      "audio": {
+        "durationSeconds": 3.94,
+        "silenceSeconds": 0.851,
+        "silenceRatio": 0.216,
+        "maxVolumeDb": -2.5,
+        "meanVolumeDb": -17.4
+      },
+      "usage": {
+        "seconds": 3.939,
+        "cost": 0.0000295425
+      }
+    },
+    {
+      "characterId": "mandrake",
+      "key": "kill-01",
+      "file": "audio/characters/mandrake/kill/kill-01.mp3",
+      "expected": "Bota a cara. O bonde respondeu.",
+      "transcript": " Bota a cara!  O bonde respondeu:",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 1.051,
+        "silenceRatio": 0.36,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -21.4
+      },
+      "usage": {
+        "seconds": 2.92,
+        "cost": 0.0000219
+      }
+    },
+    {
+      "characterId": "mandrake",
+      "key": "radio-contato",
+      "file": "audio/characters/mandrake/radio/radio-contato.mp3",
+      "expected": "Tem um na quebra. Fecha comigo!",
+      "transcript": " Tem um na quebra. Fecha comigo.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.68,
+        "silenceSeconds": 0.913,
+        "silenceRatio": 0.341,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.8
+      },
+      "usage": {
+        "seconds": 2.68,
+        "cost": 0.0000201
+      }
+    },
+    {
+      "characterId": "raul",
+      "key": "select-01",
+      "file": "audio/characters/raul/select/select-01.mp3",
+      "expected": "Franja no lugar. Agora é só jogar bonito.",
+      "transcript": " Franja no lugar. Agora é só jogar bonito.",
+      "wordEdits": 0,
+      "expectedWords": 8,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.92,
+        "silenceSeconds": 0.884,
+        "silenceRatio": 0.226,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.7
+      },
+      "usage": {
+        "seconds": 3.92,
+        "cost": 0.0000294
+      }
+    },
+    {
+      "characterId": "raul",
+      "key": "kill-01",
+      "file": "audio/characters/raul/kill/kill-01.mp3",
+      "expected": "Sarneou na mira. Já era, parceiro.",
+      "transcript": " Sarniou na mira. Já era, parceiro.",
+      "wordEdits": 1,
+      "expectedWords": 6,
+      "wordErrorRate": 0.167,
+      "audio": {
+        "durationSeconds": 2.93,
+        "silenceSeconds": 0.659,
+        "silenceRatio": 0.225,
+        "maxVolumeDb": -2.4,
+        "meanVolumeDb": -17.9
+      },
+      "usage": {
+        "seconds": 2.928,
+        "cost": 0.00002196
+      }
+    },
+    {
+      "characterId": "raul",
+      "key": "radio-contato",
+      "file": "audio/characters/raul/radio/radio-contato.mp3",
+      "expected": "Ó o pico ali. Vem na resenha!",
+      "transcript": " Olha o pico ali! Vem na resenha!",
+      "wordEdits": 1,
+      "expectedWords": 7,
+      "wordErrorRate": 0.143,
+      "audio": {
+        "durationSeconds": 2.8,
+        "silenceSeconds": 1.169,
+        "silenceRatio": 0.417,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.7
+      },
+      "usage": {
+        "seconds": 2.8,
+        "cost": 0.000021
+      }
+    },
+    {
+      "characterId": "oakley",
+      "key": "select-01",
+      "file": "audio/characters/oakley/select/select-01.mp3",
+      "expected": "Corre alinhado. Eu seguro a frente.",
+      "transcript": " Corre alinhado.  Eu seguro a frente.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.96,
+        "silenceSeconds": 0.788,
+        "silenceRatio": 0.266,
+        "maxVolumeDb": -2.7,
+        "meanVolumeDb": -17.2
+      },
+      "usage": {
+        "seconds": 2.96,
+        "cost": 0.0000222
+      }
+    },
+    {
+      "characterId": "oakley",
+      "key": "kill-01",
+      "file": "audio/characters/oakley/kill/kill-01.mp3",
+      "expected": "Vacilou no passo. Leitura feita.",
+      "transcript": " Vacilou no passo.  Leitura feita.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.93,
+        "silenceSeconds": 0.982,
+        "silenceRatio": 0.335,
+        "maxVolumeDb": -2.4,
+        "meanVolumeDb": -17.5
+      },
+      "usage": {
+        "seconds": 2.93,
+        "cost": 0.000021975
+      }
+    },
+    {
+      "characterId": "oakley",
+      "key": "radio-contato",
+      "file": "audio/characters/oakley/radio/radio-contato.mp3",
+      "expected": "Contato na direita. Não dá mole.",
+      "transcript": " Contato na direita. Não dá mole.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.6,
+        "silenceSeconds": 0.89,
+        "silenceRatio": 0.342,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -20.5
+      },
+      "usage": {
+        "seconds": 2.6,
+        "cost": 0.0000195
+      }
+    },
+    {
+      "characterId": "criarj",
+      "key": "select-01",
+      "file": "audio/characters/criarj/select/select-01.mp3",
+      "expected": "É cria. Hoje ninguém segura o morro.",
+      "transcript": " É cria!  Hoje ninguém segura o morro.",
+      "wordEdits": 0,
+      "expectedWords": 7,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 4,
+        "silenceSeconds": 1.13,
+        "silenceRatio": 0.282,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.1
+      },
+      "usage": {
+        "seconds": 4,
+        "cost": 0.00003
+      }
+    },
+    {
+      "characterId": "criarj",
+      "key": "kill-01",
+      "file": "audio/characters/criarj/kill/kill-01.mp3",
+      "expected": "Tá com medo? Então recua, mano.",
+      "transcript": " Tá com medo? Então recua, mano!",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.903,
+        "silenceRatio": 0.309,
+        "maxVolumeDb": -2.3,
+        "meanVolumeDb": -16.9
+      },
+      "usage": {
+        "seconds": 2.924,
+        "cost": 0.00002193
+      }
+    },
+    {
+      "characterId": "criarj",
+      "key": "radio-contato",
+      "file": "audio/characters/criarj/radio/radio-contato.mp3",
+      "expected": "Tem contato no alto. Vamo subir!",
+      "transcript": " Tem contato no alto. Vamos subir.",
+      "wordEdits": 1,
+      "expectedWords": 6,
+      "wordErrorRate": 0.167,
+      "audio": {
+        "durationSeconds": 2.8,
+        "silenceSeconds": 0.716,
+        "silenceRatio": 0.256,
+        "maxVolumeDb": -2.2,
+        "meanVolumeDb": -16.8
+      },
+      "usage": {
+        "seconds": 2.8,
+        "cost": 0.000021
+      }
+    },
+    {
+      "characterId": "chave",
+      "key": "select-01",
+      "file": "audio/characters/chave/select/select-01.mp3",
+      "expected": "Tá chave. Joga simples e fecha o round.",
+      "transcript": " Tá chave. Joga simples e fecha o round.",
+      "wordEdits": 0,
+      "expectedWords": 8,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.6,
+        "silenceSeconds": 0.776,
+        "silenceRatio": 0.215,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.4
+      },
+      "usage": {
+        "seconds": 3.6,
+        "cost": 0.000027
+      }
+    },
+    {
+      "characterId": "chave",
+      "key": "kill-01",
+      "file": "audio/characters/chave/kill/kill-01.mp3",
+      "expected": "Mira firme. Foi limpo.",
+      "transcript": " Mira firme. Foi limpo.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.56,
+        "silenceSeconds": 0.89,
+        "silenceRatio": 0.348,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -18.3
+      },
+      "usage": {
+        "seconds": 2.56,
+        "cost": 0.0000192
+      }
+    },
+    {
+      "characterId": "chave",
+      "key": "radio-contato",
+      "file": "audio/characters/chave/radio/radio-contato.mp3",
+      "expected": "Dois no corredor. Segura essa visão.",
+      "transcript": " Dois no corredor. Segura essa visão.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.72,
+        "silenceRatio": 0.246,
+        "maxVolumeDb": -2.3,
+        "meanVolumeDb": -17.1
+      },
+      "usage": {
+        "seconds": 2.921,
+        "cost": 0.0000219075
+      }
+    },
+    {
+      "characterId": "funkraiz",
+      "key": "select-01",
+      "file": "audio/characters/funkraiz/select/select-01.mp3",
+      "expected": "Tamborzão no peito. Vambora, bonde!",
+      "transcript": " Tamborzão no peito. Vambora, bonde!",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 4,
+        "silenceSeconds": 0.853,
+        "silenceRatio": 0.213,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.7
+      },
+      "usage": {
+        "seconds": 4,
+        "cost": 0.00003
+      }
+    },
+    {
+      "characterId": "funkraiz",
+      "key": "kill-01",
+      "file": "audio/characters/funkraiz/kill/kill-01.mp3",
+      "expected": "Passinho encaixou. Ponto pro bonde!",
+      "transcript": " Passinho encaixou!  Ponto pro bonde.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.861,
+        "silenceRatio": 0.295,
+        "maxVolumeDb": -2.7,
+        "meanVolumeDb": -17.5
+      },
+      "usage": {
+        "seconds": 2.924,
+        "cost": 0.00002193
+      }
+    },
+    {
+      "characterId": "funkraiz",
+      "key": "radio-contato",
+      "file": "audio/characters/funkraiz/radio/radio-contato.mp3",
+      "expected": "Contato no meio!",
+      "transcript": " Contato no meio.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2,
+        "silenceSeconds": 0.64,
+        "silenceRatio": 0.32,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -19.2
+      },
+      "usage": {
+        "seconds": 2,
+        "cost": 0.000015
+      }
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "select-01",
+      "file": "audio/characters/trapfunk/select/select-01.mp3",
+      "expected": "Grave no peito. Foco no objetivo.",
+      "transcript": " Grave no peito.  Foco no objetivo.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.76,
+        "silenceSeconds": 0.995,
+        "silenceRatio": 0.265,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -17.6
+      },
+      "usage": {
+        "seconds": 3.76,
+        "cost": 0.0000282
+      }
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "kill-01",
+      "file": "audio/characters/trapfunk/kill/kill-01.mp3",
+      "expected": "Caiu no drop. Round continua.",
+      "transcript": " Caiu no drop.  Round continua.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.64,
+        "silenceSeconds": 0.868,
+        "silenceRatio": 0.329,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -21.1
+      },
+      "usage": {
+        "seconds": 2.64,
+        "cost": 0.0000198
+      }
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "radio-contato",
+      "file": "audio/characters/trapfunk/radio/radio-contato.mp3",
+      "expected": "Marca no radar. Vem pela lateral.",
+      "transcript": " Marca no radar. Vem pela lateral.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.72,
+        "silenceSeconds": 0.876,
+        "silenceRatio": 0.322,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.3
+      },
+      "usage": {
+        "seconds": 2.72,
+        "cost": 0.0000204
+      }
+    },
+    {
+      "characterId": "fluxo",
+      "key": "select-01",
+      "file": "audio/characters/fluxo/select/select-01.mp3",
+      "expected": "No fluxo, na mira. Bora movimentar!",
+      "transcript": " No fluxo, na mira, bora movimentar!",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.84,
+        "silenceSeconds": 1.053,
+        "silenceRatio": 0.274,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -16.4
+      },
+      "usage": {
+        "seconds": 3.84,
+        "cost": 0.0000288
+      }
+    },
+    {
+      "characterId": "fluxo",
+      "key": "kill-01",
+      "file": "audio/characters/fluxo/kill/kill-01.mp3",
+      "expected": "Foi de base no giro, cria!",
+      "transcript": " Foi de base no giro cria.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.68,
+        "silenceSeconds": 0.629,
+        "silenceRatio": 0.235,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18
+      },
+      "usage": {
+        "seconds": 2.68,
+        "cost": 0.0000201
+      }
+    },
+    {
+      "characterId": "fluxo",
+      "key": "radio-contato",
+      "file": "audio/characters/fluxo/radio/radio-contato.mp3",
+      "expected": "Movimento no fundo. Cola no bonde!",
+      "transcript": " Movimento no Fundo.  Cola no bonde.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.918,
+        "silenceRatio": 0.314,
+        "maxVolumeDb": -2.4,
+        "meanVolumeDb": -16.7
+      },
+      "usage": {
+        "seconds": 2.922,
+        "cost": 0.000021915
+      }
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "select-01",
+      "file": "audio/characters/ostentacao/select/select-01.mp3",
+      "expected": "Brilho no kit, precisão no jogo.",
+      "transcript": " Brilho no kit.  Precisão no jogo.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.36,
+        "silenceSeconds": 1.015,
+        "silenceRatio": 0.302,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -17.6
+      },
+      "usage": {
+        "seconds": 3.36,
+        "cost": 0.0000252
+      }
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "kill-01",
+      "file": "audio/characters/ostentacao/kill/kill-01.mp3",
+      "expected": "Classe não erra. Próximo lance.",
+      "transcript": " Classe não erra. Próximo lance.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3,
+        "silenceSeconds": 0.764,
+        "silenceRatio": 0.255,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.6
+      },
+      "usage": {
+        "seconds": 3,
+        "cost": 0.0000225
+      }
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "radio-contato",
+      "file": "audio/characters/ostentacao/radio/radio-contato.mp3",
+      "expected": "Contato à frente!",
+      "transcript": " Contato à frente.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.96,
+        "silenceSeconds": 0.719,
+        "silenceRatio": 0.367,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -19.4
+      },
+      "usage": {
+        "seconds": 1.96,
+        "cost": 0.0000147
+      }
+    }
+  ]
+}

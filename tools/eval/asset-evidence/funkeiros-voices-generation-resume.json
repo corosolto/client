@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-22T02:08:07.947Z",
+  "completedAt": "2026-08-22T02:08:58.762Z",
+  "status": "failed",
+  "maxCostUsd": 0.15,
+  "totalCostUsd": 0.007344,
+  "plannedJobs": 14,
+  "plannedCharacters": [
+    "chave",
+    "funkraiz",
+    "trapfunk",
+    "fluxo",
+    "ostentacao"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-22T02:08:07.946Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 28.66480662,
+    "capUsd": 0.15
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "chave",
+      "key": "kill-01",
+      "event": "kill",
+      "file": "audio/characters/chave/kill/kill-01.mp3",
+      "sha256": "5d9651754c8985a017bc63bdc47bffcc7db5b362bc79756ef23c40677c45881a",
+      "duration": 2.93839,
+      "generationId": "gen-tts-1787364487-roXUtyqW9JqJIV3G2Rop",
+      "costUsd": 0.001607,
+      "usage": 0.001607,
+      "generatedAt": "2026-08-22T02:08:23.883Z"
+    },
+    {
+      "characterId": "chave",
+      "key": "radio-contato",
+      "event": "radio",
+      "file": "audio/characters/chave/radio/radio-contato.mp3",
+      "sha256": "845263f68d704ad223c40de6cc3bfaa906281f55d1f7240e4f4611f20c77d45b",
+      "duration": 2.921905,
+      "generationId": "gen-tts-1787364503-dMUdrEpChLBbuYHSapGN",
+      "costUsd": 0.00171,
+      "usage": 0.00171,
+      "generatedAt": "2026-08-22T02:08:35.177Z"
+    },
+    {
+      "characterId": "funkraiz",
+      "key": "select-01",
+      "event": "select",
+      "file": "audio/characters/funkraiz/select/select-01.mp3",
+      "sha256": "f7ea31ace262cd496c7c23766a69033e6c5124d354317c2f8e5655636ca440eb",
+      "duration": 4,
+      "generationId": "gen-tts-1787364515-OaOhh2qmiSigSKkOVn5s",
+      "costUsd": 0.002014,
+      "usage": 0.002014,
+      "generatedAt": "2026-08-22T02:08:46.978Z"
+    }
+  ],
+  "failures": [
+    {
+      "characterId": "funkraiz",
+      "key": "kill-01",
+      "at": "2026-08-22T02:08:58.762Z",
+      "error": "duração 4.00 s fora de 0-3 s"
+    }
+  ]
+}

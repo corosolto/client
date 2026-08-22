@@ -24,3 +24,14 @@ uma paleta brasileira específica, não a etiqueta vaga “música latina”.
    repetição, não personalidade ou graça.
 3. Só a faixa escolhida, com plano/direito comercial confirmado, segue para a
    trilha longa e para o menu derivado.
+4. Se duas faixas parecem ter o mesmo gancho, ostinato ou curva de arranjo para
+   quem escuta, ambas reprovam mesmo com métricas verdes. Uma linha de prompt só
+   descreve uma peça; nunca se usa a mesma "melodia principal" como atalho de lote.
+
+## Onda 2 — paletas solicitadas
+
+Cada item é composição original baseada em vocabulário musical, não réplica de
+uma gravação ou de uma banda: funk de batida fina, tamborzão, música caipira,
+sertanejo contemporâneo, thrash brasileiro, rock urbano, rap consciente e rap
+soul de rua. Os dois primeiros não têm melodia ou progressão harmônica justamente
+para não carregar o mesmo gancho que contaminou a primeira leva.

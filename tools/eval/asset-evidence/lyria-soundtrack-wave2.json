@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "provider": "OpenRouter",
+  "model": "google/lyria-3-clip-preview",
+  "startedAt": "2026-08-22T02:02:30.750Z",
+  "completedAt": "2026-08-22T02:03:45.415Z",
+  "status": "complete",
+  "maxCostUsd": 0.5,
+  "totalCostUsd": 0.48,
+  "accountPlan": "pending confirmation",
+  "commercialUse": false,
+  "note": "Pilotos de escuta. Plano, termos e direito comercial não foram confirmados; não integrar ao pacote/publicação.",
+  "preflight": {
+    "endpointCount": 1,
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    }
+  },
+  "completed": [
+    {
+      "id": "pilot-funk-batida-fina",
+      "file": "public/audio/soundtrack/pilot-funk-batida-fina.mp3",
+      "sha256": "af63cca9260a29b89f28cbbf2a4ca1af3a992a129bfd2559478c8a38269bb680",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363869-w2QXH87c93xWUHziOdHV",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:58:10.069Z",
+      "prompt": "Original 130 BPM Brazilian baile-funk gameplay instrumental with a polished beat-fino character: dry tamborzao kick pattern, alternating caixa rimshots, tight filtered percussion fills, deep but short sub bass, one original percussive synth stab used as texture only. No chord progression and no singable melody; arrange a 4-bar drum call, 2-bar empty break, then a different 4-bar answer. No vocals, no spoken words, no artist imitation, no melody from an existing song, no reggaeton, no generic Latin dance."
+    },
+    {
+      "id": "pilot-tamborzao-raiz",
+      "file": "public/audio/soundtrack/pilot-tamborzao-raiz.mp3",
+      "sha256": "1a8aaa4665b904c592d0d5225e00400dedabd08a81139e0721deb0a838b578e8",
+      "durationSeconds": 30.72,
+      "generationId": "gen-1787363890-97fKuooyF522nuIYIysL",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:58:26.969Z",
+      "prompt": "Original 150 BPM Brazilian tamborzao gameplay instrumental, raw and minimal: heavy low kick, dry clap, syncopated caixa, scraped percussion and a single distorted sub-bass pulse. Entire track is rhythm-first with no chords, no lead, no piano and no melodic synth. Use abrupt cut-and-return transitions and an 8-bar pressure build that never turns into EDM. No vocals, no spoken words, no artist imitation, no melody from an existing song, no reggaeton or Latin pop."
+    },
+    {
+      "id": "pilot-sertanejo-raiz",
+      "file": "public/audio/soundtrack/pilot-sertanejo-raiz.mp3",
+      "sha256": "a28b9fec7b99b1103c3243ba80f1d1d835be6a36e709d4f744c147f37ca0a13a",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363907-lqBvG3o3zmhrQyZLApW5",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:58:48.394Z",
+      "prompt": "Original 96 BPM Brazilian musica-caipira gameplay instrumental. Solo viola caipira plays a short modal answer phrase with low-string drone; violao de aco, quiet zabumba-like pulse and acoustic bass answer it. Rural and weathered, intimate mono room recording, minor/dorian color, no pop drum kit, no stadium chorus and no glossy country-pop production. No vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-sertanejo-universitario",
+      "file": "public/audio/soundtrack/pilot-sertanejo-universitario.mp3",
+      "sha256": "96847bd22f01e782c764f95535bbb5174756f8407c059bfeb34138f5f4aa6cea",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363928-5SUd6N7XsKjzoaitt9YL",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:59:07.008Z",
+      "prompt": "Original 124 BPM Brazilian contemporary sertanejo gameplay instrumental. Bright viola caipira and accordion trade a completely new four-note hook over firm kick, palm-muted acoustic guitar and electric bass; the hook appears once, then the bridge switches to a descending answer. Wide but human bar-stage production, major mixolydian color. No vocals, no spoken words, no artist imitation, no melody from an existing song, no generic Latin pop."
+    },
+    {
+      "id": "pilot-thrash-brasileiro",
+      "file": "public/audio/soundtrack/pilot-thrash-brasileiro.mp3",
+      "sha256": "498e8b58778807b89e1587ad0a8ebef88d1ad2cd75158440b42b0c664403e0c5",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363947-pcbyUe25FLtbSxGawfQC",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:59:23.923Z",
+      "prompt": "Original 178 BPM Brazilian thrash-metal gameplay instrumental. Palm-muted low-string riff in Phrygian minor, one jagged three-note turnaround, fast alternating snare and kick, dry tom fill, distorted bass locked to guitar, raw rehearsal-room amp sound. Include a sudden half-time breakdown after eight bars; no orchestral layer, no heroic trailer melody, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-rock-urbano",
+      "file": "public/audio/soundtrack/pilot-rock-urbano.mp3",
+      "sha256": "10dc174fb270737629b974171749002b767106d8045cfb1baa1e5320a7625862",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363963-1H6EtSq2J5SMBGOQpiWU",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:59:44.713Z",
+      "prompt": "Original 104 BPM Brazilian urban rock gameplay instrumental. Loose swung drum groove, round electric bass, muted reggae-guitar offbeats, then a gritty skate-rock chorus with a different ascending guitar figure; use a short samba-like percussion response only in the bridge. Street band recorded in a small room, dark minor harmony, no tropical resort mood, no ska cheerfulness, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-rap-consciente",
+      "file": "public/audio/soundtrack/pilot-rap-consciente.mp3",
+      "sha256": "2ce731a9c572a6304c2a87bb7b1acd78e86d855839ff21f6140c1f868fe269cf",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787363984-QKUfA6elr9FlX2CCWint",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:00:08.418Z",
+      "prompt": "Original 82 BPM Brazilian conscious street-rap gameplay instrumental. Dusty boom-bap drums with sampled-feeling but newly synthesized vinyl crackle, low electric bass, minor piano two-note question followed by a four-note answer, sparse guitar harmonic and silence around the snare. Night bus, concrete and tension; no trap hi-hat rolls, no sung hook, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-rap-soul-de-rua",
+      "file": "public/audio/soundtrack/pilot-rap-soul-de-rua.mp3",
+      "sha256": "95a00005568914222d45988d477a2c9a8f77015c79b03aab8d81257f3df44c54",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787364008-5OEyfJB5XQkOOsYhAg2G",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:00:26.097Z",
+      "prompt": "Original 94 BPM Brazilian street-soul rap gameplay instrumental. Warm drum break, dry caixa, muted wah guitar, restrained brass-like synth punctuation, acoustic bass and a completely original samba-tinged chord turn in Dorian minor. Keep the melody fragment short and never repeat the previous rap pilot motif; no vocals, no spoken words, no artist imitation, no melody from an existing song, no trap or glossy R&B chorus."
+    },
+    {
+      "id": "pilot-pisadinha-paredao",
+      "file": "public/audio/soundtrack/pilot-pisadinha-paredao.mp3",
+      "sha256": "cf4759a7828858e979593fdfd9fbb43db626eeff9e20873e08030665da8646aa",
+      "durationSeconds": 29.518,
+      "generationId": "gen-1787364150-haHdl0KkzmFWH0WXdQs0",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:02:53.360Z",
+      "prompt": "Original 136 BPM Brazilian pisadinha gameplay instrumental for a paredao: clipped electronic keyboard bass ostinato with only two notes, dry zabumba, bright triangle, handclap answers and sparse accordion breaths. Make the rhythm carry the identity; no lyrical lead, no chord loop longer than two bars and no sung melody. Include one silent half-bar before the second drop. No vocals, no spoken words, no artist imitation and no melody from an existing song."
+    },
+    {
+      "id": "pilot-forro-feirinha",
+      "file": "public/audio/soundtrack/pilot-forro-feirinha.mp3",
+      "sha256": "895f311c7bbc4f9825272b92c98ecc75bbaa9148a2368dc8d6dcfa35baeeff3c",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787364173-ly7e8kWDj3AScCYxyxTg",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:03:10.884Z",
+      "prompt": "Original 104 BPM Brazilian forro de feira gameplay instrumental. Acoustic zabumba and triangle lead, sanfona gives a brief descending answer in a different mode from every other pilot, viola caipira supplies dry rhythm. Earthy small-town dance floor, nearly acoustic and warm, with a four-bar stop-and-go bridge. No pop kick, no EDM build, no vocals, no spoken words, no artist imitation and no melody from an existing song."
+    },
+    {
+      "id": "pilot-piseiro-noturno",
+      "file": "public/audio/soundtrack/pilot-piseiro-noturno.mp3",
+      "sha256": "90aed9ea6dda0dadcd5b07bba13a12f25038df4a6d150f160e9f253704de2599",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787364190-ACIKWOlCDeY6qoChhHQc",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:03:29.538Z",
+      "prompt": "Original 148 BPM Brazilian piseiro gameplay instrumental, nocturnal and tense: syncopated low electronic keyboard, crisp triangle, compressed zabumba, short reverse-percussion pull and a restrained sub bass. Start with percussion alone, bring the keyboard only after six bars, then replace it with a contrasting accordion stab for the final phrase. No vocal chop, no sung melody, no artist imitation and no melody from an existing song."
+    },
+    {
+      "id": "pilot-phonk-automotivo",
+      "file": "public/audio/soundtrack/pilot-phonk-automotivo.mp3",
+      "sha256": "4a66ef119764fb090341deb5b200802f3a596028392b4bb54b16888c90f7802d",
+      "durationSeconds": 30.119,
+      "generationId": "gen-1787364209-HWulRCpQXlOQog6FeAag",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T02:03:45.414Z",
+      "prompt": "Original 150 BPM Brazilian automotive phonk gameplay instrumental: distorted 808 glide, dry cowbell rhythm, sparse clap, filtered engine-like bass texture made from synthesis, and a short original siren-like synth rise. Dark night drive energy with a one-bar brake before the drop; no sampled record, no vocal chop, no spoken words, no artist imitation and no melody or arrangement from an existing song."
+    }
+  ],
+  "failures": []
+}

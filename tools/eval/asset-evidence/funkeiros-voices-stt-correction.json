@@ -1,0 +1,71 @@
+{
+  "provider": "openrouter",
+  "model": "openai/whisper-large-v3",
+  "generatedAt": "2026-08-22T02:14:48.095Z",
+  "note": "STT prova conteúdo aproximado; timbre, interpretação e aprovação continuam humanos.",
+  "results": [
+    {
+      "characterId": "chave",
+      "key": "select-01",
+      "file": "audio/characters/chave/select/select-01.mp3",
+      "expected": "Tá chave. Joga simples e fecha o round.",
+      "transcript": " Tá chave. Joga simples e fecha o round.",
+      "wordEdits": 0,
+      "expectedWords": 8,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 3.6,
+        "silenceSeconds": 0.776,
+        "silenceRatio": 0.215,
+        "maxVolumeDb": -1.9,
+        "meanVolumeDb": -18.4
+      },
+      "usage": {
+        "seconds": 3.6,
+        "cost": 0.000027
+      }
+    },
+    {
+      "characterId": "chave",
+      "key": "kill-01",
+      "file": "audio/characters/chave/kill/kill-01.mp3",
+      "expected": "Mira firme. Foi limpo.",
+      "transcript": " Mira firme. Foi limpo.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.56,
+        "silenceSeconds": 0.89,
+        "silenceRatio": 0.348,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -18.3
+      },
+      "usage": {
+        "seconds": 2.56,
+        "cost": 0.0000192
+      }
+    },
+    {
+      "characterId": "chave",
+      "key": "radio-contato",
+      "file": "audio/characters/chave/radio/radio-contato.mp3",
+      "expected": "Dois no corredor. Segura essa visão.",
+      "transcript": " Dois no corredor. Segura essa visão.",
+      "wordEdits": 0,
+      "expectedWords": 6,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.72,
+        "silenceRatio": 0.246,
+        "maxVolumeDb": -2.3,
+        "meanVolumeDb": -17.1
+      },
+      "usage": {
+        "seconds": 2.921,
+        "cost": 0.0000219075
+      }
+    }
+  ]
+}

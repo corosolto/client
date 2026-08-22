@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-22T02:10:01.165Z",
+  "completedAt": "2026-08-22T02:12:15.845Z",
+  "status": "complete",
+  "maxCostUsd": 0.15,
+  "totalCostUsd": 0.020105,
+  "plannedJobs": 10,
+  "plannedCharacters": [
+    "funkraiz",
+    "trapfunk",
+    "fluxo",
+    "ostentacao"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-22T02:10:01.164Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 28.65746262,
+    "capUsd": 0.15
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "funkraiz",
+      "key": "radio-contato",
+      "event": "radio",
+      "file": "audio/characters/funkraiz/radio/radio-contato.mp3",
+      "sha256": "a7d0e990de07fb941174691e7262e75087a2716dcd548765f2ef5c42df0821b4",
+      "duration": 2,
+      "generationId": "gen-tts-1787364601-VosZoIcpKnjbHeFkkTNQ",
+      "costUsd": 0.001924,
+      "usage": 0.001924,
+      "generatedAt": "2026-08-22T02:10:11.802Z"
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "select-01",
+      "event": "select",
+      "file": "audio/characters/trapfunk/select/select-01.mp3",
+      "sha256": "36c290febbe05bb4de7cfe14f6dda269dde6ac0b3f886d851a5739a8f7833530",
+      "duration": 3.76,
+      "generationId": "gen-tts-1787364611-pWNQHqP1LK8WeLQiVVQS",
+      "costUsd": 0.003731,
+      "usage": 0.003731,
+      "generatedAt": "2026-08-22T02:10:27.661Z"
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "kill-01",
+      "event": "kill",
+      "file": "audio/characters/trapfunk/kill/kill-01.mp3",
+      "sha256": "a4115e1f7aa7033afa77c2a422758138d9213f1daa0bb024ff83edecad66383b",
+      "duration": 2.64,
+      "generationId": "gen-tts-1787364627-LZ5aGHDX5THhGmKqqR63",
+      "costUsd": 0.001329,
+      "usage": 0.001329,
+      "generatedAt": "2026-08-22T02:10:43.336Z"
+    },
+    {
+      "characterId": "trapfunk",
+      "key": "radio-contato",
+      "event": "radio",
+      "file": "audio/characters/trapfunk/radio/radio-contato.mp3",
+      "sha256": "dbf2e96e09569be33d35fee444de2da679ae95149f8be7911239d5aeee7dcfd4",
+      "duration": 2.72,
+      "generationId": "gen-tts-1787364643-uHFjG7eAdJ5NAta820KP",
+      "costUsd": 0.001368,
+      "usage": 0.001368,
+      "generatedAt": "2026-08-22T02:10:55.643Z"
+    },
+    {
+      "characterId": "fluxo",
+      "key": "select-01",
+      "event": "select",
+      "file": "audio/characters/fluxo/select/select-01.mp3",
+      "sha256": "bbebadae5df4cad515842f8e0bc639baddcc2bdcfc8a332e795c791a5b95c570",
+      "duration": 3.84,
+      "generationId": "gen-tts-1787364655-Fyn5dAl8Jz4iBsdEAnqE",
+      "costUsd": 0.00193,
+      "usage": 0.00193,
+      "generatedAt": "2026-08-22T02:11:12.023Z"
+    },
+    {
+      "characterId": "fluxo",
+      "key": "kill-01",
+      "event": "kill",
+      "file": "audio/characters/fluxo/kill/kill-01.mp3",
+      "sha256": "eb553e32fd109ff9a4df5718e0b0df9b912b578ea6fce93727fc9750f459d0ae",
+      "duration": 2.68,
+      "generationId": "gen-tts-1787364672-KsP723fZKt8wTPEjwwRG",
+      "costUsd": 0.001348,
+      "usage": 0.001348,
+      "generatedAt": "2026-08-22T02:11:23.489Z"
+    },
+    {
+      "characterId": "fluxo",
+      "key": "radio-contato",
+      "event": "radio",
+      "file": "audio/characters/fluxo/radio/radio-contato.mp3",
+      "sha256": "021ad8e14f4b5fef0ef9c2c3e5730fae2e05dd921ef4a94d7f6c242fd92cc300",
+      "duration": 2.92263,
+      "generationId": "gen-tts-1787364683-avBpTjUgGiubNppLQg2n",
+      "costUsd": 0.00177,
+      "usage": 0.00177,
+      "generatedAt": "2026-08-22T02:11:34.903Z"
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "select-01",
+      "event": "select",
+      "file": "audio/characters/ostentacao/select/select-01.mp3",
+      "sha256": "a30cef835798779d102c2931375d17abb8bd960780d62e477f516627fbd110f2",
+      "duration": 3.36,
+      "generationId": "gen-tts-1787364694-P7tPlz5a2BYjZaA6rdVh",
+      "costUsd": 0.003351,
+      "usage": 0.003351,
+      "generatedAt": "2026-08-22T02:11:47.073Z"
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "kill-01",
+      "event": "kill",
+      "file": "audio/characters/ostentacao/kill/kill-01.mp3",
+      "sha256": "fa3682de34d639c65d914ec63d7ca678c51826f3165a3f3585cb17d15106fd9a",
+      "duration": 3,
+      "generationId": "gen-tts-1787364707-czSYaYcB3pspMpy6sCIb",
+      "costUsd": 0.00151,
+      "usage": 0.00151,
+      "generatedAt": "2026-08-22T02:12:00.092Z"
+    },
+    {
+      "characterId": "ostentacao",
+      "key": "radio-contato",
+      "event": "radio",
+      "file": "audio/characters/ostentacao/radio/radio-contato.mp3",
+      "sha256": "8ff364356e21904d348fc03e7905ebb2f68be5e0e5059f92b4e79a5c4a46fbe3",
+      "duration": 1.960249,
+      "generationId": "gen-tts-1787364720-UgDkTvOWx5DbQ7gVdQqn",
+      "costUsd": 0.001844,
+      "usage": 0.001844,
+      "generatedAt": "2026-08-22T02:12:15.841Z"
+    }
+  ],
+  "failures": []
+}

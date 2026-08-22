@@ -16,6 +16,7 @@ const value = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const dryRun = args.includes('--dry-run');
 const force = args.includes('--force');
 const onlyCharacter = value('--character');
+const onlyFaction = value('--faction')?.toUpperCase();
 const model = value('--model') || 'openai/whisper-large-v3';
 const output = value('--out') || 'tools/eval/asset-evidence/character-voices-stt.json';
 if (!dryRun && existsSync(output) && !force) throw new Error(`saída já existe: ${output} (use --force deliberadamente)`);
@@ -68,6 +69,7 @@ const source = JSON.parse(readFileSync('content/voice-lines.json', 'utf8'));
 const jobs = [];
 for (const [characterId, character] of Object.entries(source.characters || {})) {
   if (onlyCharacter && characterId !== onlyCharacter) continue;
+  if (onlyFaction && character.faction !== onlyFaction) continue;
   for (const line of character.lines || []) {
     const file = line.output?.file ? `public/${line.output.file}` : null;
     if (file && existsSync(file)) jobs.push({ characterId, line, file });
@@ -76,7 +78,7 @@ for (const [characterId, character] of Object.entries(source.characters || {})) 
 console.log(JSON.stringify({ dryRun, model, output, files: jobs.length,
   durationSeconds: +jobs.reduce((sum, job) => sum + (job.line.output?.duration || 0), 0).toFixed(2) }, null, 2));
 if (dryRun) process.exit(0);
-const env = { ...loadEnv(), ...process.env };
+const env = { ...loadEnv(value('--env') || '.env'), ...process.env };
 if (!env.OPENROUTER_API_KEY) throw new Error('OPENROUTER_API_KEY ausente; use --dry-run ou configure fora do git');
 
 const results = [];

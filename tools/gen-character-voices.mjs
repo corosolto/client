@@ -40,7 +40,7 @@ function loadEnv(file = '.env') {
   }
   return out;
 }
-const ENV = { ...loadEnv(), ...process.env };
+const ENV = { ...loadEnv(value('--env') || '.env'), ...process.env };
 const secrets = [ENV.OPENROUTER_API_KEY, ENV.ELEVENLABS_API_KEY].filter(v => v?.length > 8);
 const redact = (input) => secrets.reduce((text, key) => text.split(key).join('***REDACTED***'), String(input ?? ''));
 const source = JSON.parse(readFileSync(SOURCE, 'utf8'));
