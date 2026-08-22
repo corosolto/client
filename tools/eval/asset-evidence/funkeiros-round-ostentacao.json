@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-22T22:32:41.504Z",
+  "completedAt": "2026-08-22T22:32:53.603Z",
+  "status": "complete",
+  "maxCostUsd": 0.1,
+  "totalCostUsd": 0.003368,
+  "plannedJobs": 1,
+  "plannedCharacters": [
+    "ostentacao"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-22T22:32:41.502Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 28.56145236,
+    "capUsd": 0.1
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "ostentacao",
+      "key": "round-01",
+      "event": "round",
+      "file": "audio/characters/ostentacao/round/round-01.mp3",
+      "sha256": "e9db25bc622ce1a5a2da2ec0d77bb2b5470b4887e77c714b09f9f2f11a44be3f",
+      "duration": 2.925488,
+      "generationId": "gen-tts-1787437961-2EqpM78hSC7QJg4vXCrz",
+      "costUsd": 0.003368,
+      "usage": 0.003368,
+      "generatedAt": "2026-08-22T22:32:53.600Z"
+    }
+  ],
+  "failures": []
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "provider": "openrouter",
+  "modelId": "google/gemini-3.1-flash-tts-preview",
+  "startedAt": "2026-08-22T22:31:44.416Z",
+  "completedAt": "2026-08-22T22:31:56.298Z",
+  "status": "complete",
+  "maxCostUsd": 0.1,
+  "totalCostUsd": 0.002889,
+  "plannedJobs": 1,
+  "plannedCharacters": [
+    "trapfunk"
+  ],
+  "preflight": {
+    "checkedAt": "2026-08-22T22:31:44.403Z",
+    "modelId": "google/gemini-3.1-flash-tts-preview",
+    "modelName": "Google: Gemini 3.1 Flash TTS Preview",
+    "pricing": {
+      "prompt": "0.000001",
+      "completion": "0.00002",
+      "discount": 0
+    },
+    "endpointCount": 1,
+    "providers": [
+      "Google"
+    ],
+    "balanceUsd": 28.56727436,
+    "capUsd": 0.1
+  },
+  "note": "Vozes sintéticas originais; nenhuma clonagem. Status generated exige escuta humana posterior.",
+  "completed": [
+    {
+      "characterId": "trapfunk",
+      "key": "round-01",
+      "event": "round",
+      "file": "audio/characters/trapfunk/round/round-01.mp3",
+      "sha256": "cfa4782f0399d78b64f7e0ee5196a6e23b0f0095d2299c53c9439e9cca8dfc02",
+      "duration": 2.88,
+      "generationId": "gen-tts-1787437904-0ylFS83xLs4DPdfV3p5J",
+      "costUsd": 0.002889,
+      "usage": 0.002889,
+      "generatedAt": "2026-08-22T22:31:56.294Z"
+    }
+  ],
+  "failures": []
+}
