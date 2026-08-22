@@ -907,7 +907,9 @@ const trocaMConsistente = /game\.onRequestSwitch = \(\) => \{[\s\S]{0,180}game\.
   && /const oldFaction = this\.playerFaction;[\s\S]{0,160}this\.playerFaction = this\.enemyFaction;[\s\S]{0,80}this\.enemyFaction = oldFaction;/.test(game);
 const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
   && !/--me-accent-rgb/.test(`${css}\n${main}\n${game}`);
-const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
+/* Aceita as duas árvores do menu (a da main fechava em </div></div>; a do
+   cinematic-ui fecha em </section>) — a cláusula real é a camada própria + CSS fixo. */
+const versaoMenuNoCanto = /(?:<\/div>|<\/section>)\s*<span class="menu-version" id="mf-ver"><\/span>\s*(?:<\/div>)?\s*<!-- PAINEL DE SETUP/.test(astro)
   && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
   && /\.menu-footer\{[^}]*bottom:48px/.test(css);
 /* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático

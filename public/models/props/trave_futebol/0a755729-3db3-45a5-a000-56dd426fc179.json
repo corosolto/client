@@ -1,0 +1,37 @@
+{
+  "task_id": "0a755729-3db3-45a5-a000-56dd426fc179",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "prompt": "Brazilian street football goal post (trave de futebol), white metal pipe frame goal with two vertical posts and a horizontal crossbar, simple concrete block base, no net, weathered white paint, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+    "model_version": "v3.1-20260211",
+    "texture": true,
+    "pbr": true,
+    "texture_quality": "detailed",
+    "texture_alignment": "geometry",
+    "export_uv": true,
+    "geometry_quality": "detailed"
+  },
+  "output": {
+    "pbr_model": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/tripo_pbr_model_0a755729-3db3-45a5-a000-56dd426fc179.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L3RyaXBvX3Bicl9tb2RlbF8wYTc1NTcyOS0zZGIzLTQ1YTUtYTAwMC01NmRkNDI2ZmMxNzkuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MzIwMDAwfX19XX0_&Signature=vyOiZAcUVA4ErLZccMiuogyIOEnuZNjXJVSdHMsJ20~W4IX0iHH2pQ1bBmVYgR8gP--vWcP1cp2Ep46ka4onCS3oUCbuq0Q1XM204u68v97X6CaqHGOky7rbZ-xx2uAFgLu7cdtZj-VALfx6xfXirWLj9Hu3NH7SghFN8fTEeJzAgcmJFeV9YXdTVpLznJZzLWNQTDDI27Pee91WR1meihX4khrsdcvDalKzYB~DBCxlHeHNnaSJZEM4OASGSCBC77Ed~Zs-BJHgA~0DHCFf1SWpVL59wkVKtUnWy0lkEFLWFpsfxdbUR~1ghFJnp160K-l7elPIMINNYXFNtlHS7w__",
+    "generated_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/text2image_0a755729-3db3-45a5-a000-56dd426fc179.jpeg?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L3RleHQyaW1hZ2VfMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5LmpwZWciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=o7c6uxbbujKVxLbeYmZsezH-h-9Spfv8EE3RlbE32B5xto~WpaBqlCYEOny23U1xcSIWdAlLWBbHAxNTVdghs2DmNvpJn29-Pfc1Z6oZlKOJoWXaYdABUlYELepUP33VCgArqQHkv1DXi9YjsW60VionoeAYo7~85h2L8OpuKiSNwaSo-c9zqiTZv51Xa8y5a88lvucU6NtiOOWrIR19Eymbc-dV04R3jUCRnPyqctNS7jZxUz7QCtBruieG8SknQUh0XCIjT7aUe--2VzcY25fmKc-mV6CKkLU-~xVKde34eQwHVeV8dCEHdBhxBekWRWO5L9vDlBbyBGdwnMFtOA__",
+    "rendered_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=SZs5SqcWC3aS7Uvo6R6elTZNWhkpc~Bdi38WZPjO48zBLs41ZFsT0Fhk6uHkmDVLTR4~jwomdFHjirKVDgMMukNhvrOhINT0nTcDdz0euY0xvQUko5PNEuxuEy6eqULEt3uI78516qWSMc7cEcdr3DpyMOTpnYclE62Mol2Mn7ZDYVRymYrrOFx02RUnUgOfkfEGKtL4Auz2ia1S8KD8gY2ZENjqjC0-ug0neO4coUYdgv3z4SfE4vvuqsNP9EkbUrZLB8retODtdTmmBLDTWzujrGMmm8mnsx5BfkoUofsxP-EJaYwPMg9cKDTiiXbwJYjSBHZYqqfYm4zoWiHdEA__"
+  },
+  "progress": 100,
+  "create_time": 1786244942,
+  "consumed_credit": 50,
+  "prompt": "Brazilian street football goal post (trave de futebol), white metal pipe frame goal with two vertical posts and a horizontal crossbar, simple concrete block base, no net, weathered white paint, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+  "thumbnail": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=SZs5SqcWC3aS7Uvo6R6elTZNWhkpc~Bdi38WZPjO48zBLs41ZFsT0Fhk6uHkmDVLTR4~jwomdFHjirKVDgMMukNhvrOhINT0nTcDdz0euY0xvQUko5PNEuxuEy6eqULEt3uI78516qWSMc7cEcdr3DpyMOTpnYclE62Mol2Mn7ZDYVRymYrrOFx02RUnUgOfkfEGKtL4Auz2ia1S8KD8gY2ZENjqjC0-ug0neO4coUYdgv3z4SfE4vvuqsNP9EkbUrZLB8retODtdTmmBLDTWzujrGMmm8mnsx5BfkoUofsxP-EJaYwPMg9cKDTiiXbwJYjSBHZYqqfYm4zoWiHdEA__",
+  "queuing_num": -1,
+  "running_left_time": -1,
+  "result": {
+    "pbr_model": {
+      "type": "glb",
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/tripo_pbr_model_0a755729-3db3-45a5-a000-56dd426fc179.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L3RyaXBvX3Bicl9tb2RlbF8wYTc1NTcyOS0zZGIzLTQ1YTUtYTAwMC01NmRkNDI2ZmMxNzkuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MzIwMDAwfX19XX0_&Signature=vyOiZAcUVA4ErLZccMiuogyIOEnuZNjXJVSdHMsJ20~W4IX0iHH2pQ1bBmVYgR8gP--vWcP1cp2Ep46ka4onCS3oUCbuq0Q1XM204u68v97X6CaqHGOky7rbZ-xx2uAFgLu7cdtZj-VALfx6xfXirWLj9Hu3NH7SghFN8fTEeJzAgcmJFeV9YXdTVpLznJZzLWNQTDDI27Pee91WR1meihX4khrsdcvDalKzYB~DBCxlHeHNnaSJZEM4OASGSCBC77Ed~Zs-BJHgA~0DHCFf1SWpVL59wkVKtUnWy0lkEFLWFpsfxdbUR~1ghFJnp160K-l7elPIMINNYXFNtlHS7w__"
+    },
+    "rendered_image": {
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/0a755729-3db3-45a5-a000-56dd426fc179/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvMGE3NTU3MjktM2RiMy00NWE1LWEwMDAtNTZkZDQyNmZjMTc5L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=SZs5SqcWC3aS7Uvo6R6elTZNWhkpc~Bdi38WZPjO48zBLs41ZFsT0Fhk6uHkmDVLTR4~jwomdFHjirKVDgMMukNhvrOhINT0nTcDdz0euY0xvQUko5PNEuxuEy6eqULEt3uI78516qWSMc7cEcdr3DpyMOTpnYclE62Mol2Mn7ZDYVRymYrrOFx02RUnUgOfkfEGKtL4Auz2ia1S8KD8gY2ZENjqjC0-ug0neO4coUYdgv3z4SfE4vvuqsNP9EkbUrZLB8retODtdTmmBLDTWzujrGMmm8mnsx5BfkoUofsxP-EJaYwPMg9cKDTiiXbwJYjSBHZYqqfYm4zoWiHdEA__",
+      "type": "webp"
+    }
+  }
+}

@@ -41,6 +41,19 @@
    "walk1h",
    "walkfire"
   ],
+  "bandeirante": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "blackmetal": [
    "idle",
    "walk",
@@ -81,6 +94,19 @@
    "walkfire"
   ],
   "cadequinha": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "camera-roxa": [
    "idle",
    "walk",
    "run",
@@ -159,6 +185,32 @@
    "walkfire"
   ],
   "criarj": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "designer-ux": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "doidinho-bairro": [
    "idle",
    "walk",
    "run",
@@ -340,6 +392,19 @@
    "walk1h",
    "walkfire"
   ],
+  "lenda-lanhouse": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "mandrake": [
    "idle",
    "walk",
@@ -366,6 +431,19 @@
    "walk1h",
    "walkfire"
   ],
+  "microfonildo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
   "mistico": [
    "idle",
    "walk",
@@ -380,6 +458,19 @@
    "walkfire"
   ],
   "mixamo": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "motoca-cachorro-loko": [
    "idle",
    "walk",
    "run",
@@ -484,6 +575,32 @@
    "walkfire"
   ],
   "proerd": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "profeta-calcada": [
+   "idle",
+   "walk",
+   "run",
+   "shoot",
+   "death",
+   "crouch",
+   "crouchwalk",
+   "jump",
+   "idle1h",
+   "walk1h",
+   "walkfire"
+  ],
+  "programador-virado": [
    "idle",
    "walk",
    "run",

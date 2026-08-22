@@ -19,6 +19,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { rewriteAudioManifest } from './audio-pack-rewrite.mjs';
 
 const OUT = process.argv[2];
 if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir>'); process.exit(1); }
@@ -32,21 +33,19 @@ mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
 let copiados = 0, faltando = [];
+const nomesOpacos = new Map();
 const hashNome = (rel) => {
+  if (nomesOpacos.has(rel)) return nomesOpacos.get(rel);
   const src = path.join(RAIZ, 'public', rel);
   if (!existsSync(src)) { faltando.push(rel); return rel; }
   const h = createHash('sha1').update(readFileSync(src)).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;
   cpSync(src, path.join(PACK, novo.replace(/^audio\//, '')));
+  nomesOpacos.set(rel, novo);
   copiados++;
   return novo;
 };
-const reescreve = (o) => {
-  if (Array.isArray(o)) return o.map((v) => (typeof v === 'string' && v.startsWith('audio/') ? hashNome(v) : v));
-  if (o && typeof o === 'object') { const r = {}; for (const [k, v] of Object.entries(o)) r[k] = reescreve(v); return r; }
-  return o;
-};
-const novoManifesto = reescreve(manifesto);
+const novoManifesto = rewriteAudioManifest(manifesto, hashNome);
 writeFileSync(path.join(PACK, 'manifest.json'), JSON.stringify(novoManifesto, null, 1));
 
 // menu-music: nomes já opacos (m01..mNN); o mapa de nomes reais fica de fora.

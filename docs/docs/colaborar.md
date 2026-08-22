@@ -30,7 +30,7 @@ qualquer decisão de licença está no `CONTRIBUTING.md` (seção de licença e 
 :::
 
 Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, pode
-demorar. A boa: **quase toda a régua é máquina.** `npm run check:fast` te dá o mesmo veredito
+demorar. A boa: **quase toda a régua é máquina.** `npm run check` te dá o mesmo veredito
 que o mantenedor daria, antes de você abrir o PR, sem esperar ninguém. A barreira é baixa
 **de propósito** — é um dos princípios que não mudam do
 [`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md).
@@ -68,7 +68,7 @@ Use `npm run dev`. Detalhes e prova em
 npm run eval:vm                          # OBRIGATÓRIO ANTES — ver o aviso abaixo
 node tools/eval/invariants.mjs           # o quality gate inteiro
 node tools/eval/invariants.mjs --json    # saída pra máquina
-npm run check:fast                       # syntax + quality gate (réguas de node puro)
+npm run check                            # syntax + vm + quality gate + coice + bots
 ```
 
 :::danger `eval:vm` roda ANTES de `invariants.mjs`. Sempre.
@@ -248,20 +248,25 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 874 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 813 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
+| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 951 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 276 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
 
-**12 mapas registrados** — 2 abrem em rodadas e 10 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 14 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
@@ -342,12 +347,9 @@ em `git ls-files public/models/anims`). Doc que manda fazer o que já foi feito 
 primeira contribuição de alguém; por isso a lista virou ponteiro para `docs/issues/`,
 que é mantida.
 
-O único item da lista antiga que **continua valendo** — e agora está consertado:
-a mensagem das invariantes PX1–PX4 apontava para `tools/eval/motion.mjs`, que
-nunca existiu no git (ponteiro fantasma). Hoje as skips declaram honestamente
-"sem arnês dedicado (dívida PX)": o que existe de browser no CI é o
-`portao-browser` (boot real do jogo + grafite + silhueta da seleção), e um
-arnês de viewmodel dedicado continua sendo trabalho aberto.
+O único item da lista antiga que **continua valendo**: a mensagem das invariantes
+PX1–PX4 manda usar `tools/eval/motion.mjs`, que não existe (`ls` confirma). Apontar para
+o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
 :::
 
 ### Trabalho de verdade, ainda acessível

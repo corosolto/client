@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-15T02:08:04.438Z",
+ "gerado": "2026-08-17T12:27:11.803Z",
  "nota": "luzes e env MEDIDOS em runtime (harness.mjs); fatores lidos do chunk JSON dos GLB",
  "maps": [
   {
@@ -58,44 +58,68 @@
      30,
      -22
     ],
-    "color": "#ffd9a8",
-    "intensity": 1.5
+    "color": "#ffefd8",
+    "intensity": 1.65
    }
   },
   {
-   "map": "posto_treta",
+   "map": "fy_escadao",
    "sun": {
     "pos": [
-     -38,
-     26,
-     14
-    ],
-    "color": "#ffd39a",
-    "intensity": 1.6
-   }
-  },
-  {
-   "map": "obras_prefeitura",
-   "sun": {
-    "pos": [
-     24,
+     25,
      40,
-     -14
+     20
     ],
-    "color": "#fff0d0",
-    "intensity": 1.5
+    "color": "#ffd9a8",
+    "intensity": 1.65
    }
   },
   {
-   "map": "atacadao_treta",
+   "map": "fy_campomorro",
    "sun": {
     "pos": [
-     -12,
+     30,
      42,
-     -20
+     10
     ],
-    "color": "#ffffff",
-    "intensity": 1.15
+    "color": "#ffd9a8",
+    "intensity": 1.65
+   }
+  },
+  {
+   "map": "fy_lajes",
+   "sun": {
+    "pos": [
+     25,
+     45,
+     15
+    ],
+    "color": "#ffd9a8",
+    "intensity": 1.75
+   }
+  },
+  {
+   "map": "fy_corrego",
+   "sun": {
+    "pos": [
+     20,
+     35,
+     15
+    ],
+    "color": "#ffc888",
+    "intensity": 1.7
+   }
+  },
+  {
+   "map": "fy_mansao",
+   "sun": {
+    "pos": [
+     15,
+     30,
+     -15
+    ],
+    "color": "#ffefd8",
+    "intensity": 1.8
    }
   }
  ],
@@ -107,7 +131,7 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.516,
+      "intensity": 1.701,
       "color": "#f3ebc7",
       "pos": [
        -0.45,
@@ -117,8 +141,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.394,
-      "color": "#94c3ff",
+      "intensity": 0.442,
+      "color": "#93c3ff",
       "pos": [
        0.6,
        -0.15,
@@ -127,7 +151,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.123,
+      "intensity": 0.138,
       "color": "#9dc7ff",
       "pos": [
        0.55,
@@ -137,7 +161,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.758,
+      "intensity": 0.851,
       "color": "#f3daab",
       "pos": [
        0.2,
@@ -147,7 +171,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.403,
+      "intensity": 0.452,
       "color": "#f3ba7c",
       "pos": [
        -0.2,
@@ -157,8 +181,8 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.443,
-      "color": "#86b5ff",
+      "intensity": 0.498,
+      "color": "#85b5ff",
       "pos": [
        0,
        1,
@@ -183,7 +207,7 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.516,
+      "intensity": 1.701,
       "color": "#f3ebc7",
       "pos": [
        -0.45,
@@ -193,8 +217,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.394,
-      "color": "#94c3ff",
+      "intensity": 0.442,
+      "color": "#93c3ff",
       "pos": [
        0.6,
        -0.15,
@@ -203,7 +227,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.123,
+      "intensity": 0.138,
       "color": "#9dc7ff",
       "pos": [
        0.55,
@@ -213,7 +237,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.758,
+      "intensity": 0.851,
       "color": "#f3daab",
       "pos": [
        0.2,
@@ -223,7 +247,7 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.403,
+      "intensity": 0.452,
       "color": "#f3ba7c",
       "pos": [
        -0.2,
@@ -233,8 +257,8 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.443,
-      "color": "#86b5ff",
+      "intensity": 0.498,
+      "color": "#85b5ff",
       "pos": [
        0,
        1,
@@ -250,7 +274,7 @@
    "metalFactor": 0.55,
    "roughFactor": 1,
    "envMapIntensity": 1.2,
-   "lightMul": 2.0896
+   "lightMul": 1.8618
   },
   {
    "id": "chao@praca_poderes",
@@ -259,7 +283,7 @@
     "lights": [
      {
       "type": "HemisphereLight",
-      "intensity": 0.3,
+      "intensity": 0.52,
       "color": "#bdd8f5",
       "pos": [
        0,
@@ -280,8 +304,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.2,
-      "color": "#c9b98f",
+      "intensity": 0.42,
+      "color": "#d8c9a3",
       "pos": [
        -32,
        22,
@@ -879,8 +903,8 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.055,
-      "color": "#ffe4b2",
+      "intensity": 1.074,
+      "color": "#f5eac7",
       "pos": [
        -0.45,
        0.75,
@@ -889,8 +913,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.253,
-      "color": "#a1c4ec",
+      "intensity": 0.278,
+      "color": "#95c3ff",
       "pos": [
        0.6,
        -0.15,
@@ -899,8 +923,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.079,
-      "color": "#abc8ec",
+      "intensity": 0.087,
+      "color": "#9fc7ff",
       "pos": [
        0.55,
        0.35,
@@ -909,8 +933,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.528,
-      "color": "#ffd398",
+      "intensity": 0.537,
+      "color": "#f5d9ab",
       "pos": [
        0.2,
        0.35,
@@ -919,8 +943,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.28,
-      "color": "#ffb56e",
+      "intensity": 0.285,
+      "color": "#f5ba7c",
       "pos": [
        -0.2,
        -0.86,
@@ -929,19 +953,19 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.284,
-      "color": "#92b6ec",
+      "intensity": 0.313,
+      "color": "#87b5ff",
       "pos": [
        0,
        1,
        0
       ],
-      "ground": "#373026"
+      "ground": "#32302a"
      }
     ]
    },
-   "exposure": 2.4,
-   "floor": 0.0042,
+   "exposure": 1.58,
+   "floor": 0.0046,
    "sat": 1.12,
    "metalFactor": 1,
    "roughFactor": 1,
@@ -955,8 +979,8 @@
     "lights": [
      {
       "type": "DirectionalLight",
-      "intensity": 1.055,
-      "color": "#ffe4b2",
+      "intensity": 1.074,
+      "color": "#f5eac7",
       "pos": [
        -0.45,
        0.75,
@@ -965,8 +989,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.253,
-      "color": "#a1c4ec",
+      "intensity": 0.278,
+      "color": "#95c3ff",
       "pos": [
        0.6,
        -0.15,
@@ -975,8 +999,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.079,
-      "color": "#abc8ec",
+      "intensity": 0.087,
+      "color": "#9fc7ff",
       "pos": [
        0.55,
        0.35,
@@ -985,8 +1009,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.528,
-      "color": "#ffd398",
+      "intensity": 0.537,
+      "color": "#f5d9ab",
       "pos": [
        0.2,
        0.35,
@@ -995,8 +1019,8 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 0.28,
-      "color": "#ffb56e",
+      "intensity": 0.285,
+      "color": "#f5ba7c",
       "pos": [
        -0.2,
        -0.86,
@@ -1005,8 +1029,120 @@
      },
      {
       "type": "HemisphereLight",
-      "intensity": 0.284,
-      "color": "#92b6ec",
+      "intensity": 0.313,
+      "color": "#87b5ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#32302a"
+     }
+    ]
+   },
+   "exposure": 1.58,
+   "floor": 0.0046,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.9538
+  },
+  {
+   "id": "chao@quebrada",
+   "envMap": "quebrada",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.9,
+      "color": "#eeeef0",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#544f48"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.65,
+      "color": "#ffefd8",
+      "pos": [
+       38,
+       30,
+       -22
+      ]
+     }
+    ]
+   },
+   "exposure": 1.58,
+   "floor": 0.0046,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@fy_escadao",
+   "envMap": "fy_escadao",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.128,
+      "color": "#ffe3b0",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.268,
+      "color": "#a2c4eb",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.084,
+      "color": "#acc8eb",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.564,
+      "color": "#ffd397",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.3,
+      "color": "#ffb46d",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.302,
+      "color": "#92b6eb",
       "pos": [
        0,
        1,
@@ -1016,17 +1152,93 @@
      }
     ]
    },
-   "exposure": 2.4,
-   "floor": 0.0042,
+   "exposure": 1.52,
+   "floor": 0.0048,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@fy_escadao",
+   "envMap": "fy_escadao",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.128,
+      "color": "#ffe3b0",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.268,
+      "color": "#a2c4eb",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.084,
+      "color": "#acc8eb",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.564,
+      "color": "#ffd397",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.3,
+      "color": "#ffb46d",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.302,
+      "color": "#92b6eb",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#373026"
+     }
+    ]
+   },
+   "exposure": 1.52,
+   "floor": 0.0048,
    "sat": 1.12,
    "metalFactor": 0.55,
    "roughFactor": 1,
    "envMapIntensity": 1.2,
-   "lightMul": 3.0658
+   "lightMul": 2.8723
   },
   {
-   "id": "chao@quebrada",
-   "envMap": "quebrada",
+   "id": "chao@fy_escadao",
+   "envMap": "fy_escadao",
    "scene": {
     "lights": [
      {
@@ -1042,612 +1254,770 @@
      },
      {
       "type": "DirectionalLight",
-      "intensity": 1.5,
+      "intensity": 1.65,
       "color": "#ffd9a8",
       "pos": [
-       38,
-       30,
-       -22
-      ]
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vm@posto_treta",
-   "envMap": "posto_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.361,
-      "color": "#ffdea9",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.311,
-      "color": "#a5c3e6",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.097,
-      "color": "#afc7e6",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.681,
-      "color": "#ffce91",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.362,
-      "color": "#ffb069",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.349,
-      "color": "#95b5e6",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#393025"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vmLegado@posto_treta",
-   "envMap": "posto_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.361,
-      "color": "#ffdea9",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.311,
-      "color": "#a5c3e6",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.097,
-      "color": "#afc7e6",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.681,
-      "color": "#ffce91",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.362,
-      "color": "#ffb069",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.349,
-      "color": "#95b5e6",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#393025"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 0.55,
-   "roughFactor": 1,
-   "envMapIntensity": 1.2,
-   "lightMul": 2.4051
-  },
-  {
-   "id": "chao@posto_treta",
-   "envMap": "posto_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "HemisphereLight",
-      "intensity": 1,
-      "color": "#ffe0b0",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#40352a"
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.6,
-      "color": "#ffd39a",
-      "pos": [
-       -38,
-       26,
-       14
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.35,
-      "color": "#bcd0ff",
-      "pos": [
-       20,
-       30,
-       -10
-      ]
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vm@obras_prefeitura",
-   "envMap": "obras_prefeitura",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.242,
-      "color": "#f4ebc4",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.311,
-      "color": "#97c7ff",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.097,
-      "color": "#a0cbff",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.621,
-      "color": "#f4daa8",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.33,
-      "color": "#f4ba7a",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.349,
-      "color": "#88b8ff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#33312a"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vmLegado@obras_prefeitura",
-   "envMap": "obras_prefeitura",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.242,
-      "color": "#f4ebc4",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.311,
-      "color": "#97c7ff",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.097,
-      "color": "#a0cbff",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.621,
-      "color": "#f4daa8",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.33,
-      "color": "#f4ba7a",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.349,
-      "color": "#88b8ff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#33312a"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 0.55,
-   "roughFactor": 1,
-   "envMapIntensity": 1.2,
-   "lightMul": 2.5763
-  },
-  {
-   "id": "chao@obras_prefeitura",
-   "envMap": "obras_prefeitura",
-   "scene": {
-    "lights": [
-     {
-      "type": "HemisphereLight",
-      "intensity": 1.05,
-      "color": "#fff0d8",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#4a4030"
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.5,
-      "color": "#fff0d0",
-      "pos": [
-       24,
+       25,
        40,
-       -14
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.4,
-      "color": "#dfeeff",
-      "pos": [
-       -18,
-       30,
-       12
-      ]
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vm@atacadao_treta",
-   "envMap": "atacadao_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.221,
-      "color": "#e5ebdc",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.397,
-      "color": "#7db1ff",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.124,
-      "color": "#85b4ff",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.611,
-      "color": "#e5dabd",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.324,
-      "color": "#e5bb8a",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.447,
-      "color": "#71a4ff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#292a2a"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 1,
-   "roughFactor": 1,
-   "envMapIntensity": 1,
-   "lightMul": 1
-  },
-  {
-   "id": "vmLegado@atacadao_treta",
-   "envMap": "atacadao_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.221,
-      "color": "#e5ebdc",
-      "pos": [
-       -0.45,
-       0.75,
-       0.55
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.397,
-      "color": "#7db1ff",
-      "pos": [
-       0.6,
-       -0.15,
-       0.5
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.124,
-      "color": "#85b4ff",
-      "pos": [
-       0.55,
-       0.35,
-       0.75
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.611,
-      "color": "#e5dabd",
-      "pos": [
-       0.2,
-       0.35,
-       -0.9
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.324,
-      "color": "#e5bb8a",
-      "pos": [
-       -0.2,
-       -0.86,
-       0.47
-      ]
-     },
-     {
-      "type": "HemisphereLight",
-      "intensity": 0.447,
-      "color": "#71a4ff",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#292a2a"
-     }
-    ]
-   },
-   "exposure": 2.4,
-   "floor": 0.0042,
-   "sat": 1.12,
-   "metalFactor": 0.55,
-   "roughFactor": 1,
-   "envMapIntensity": 1.2,
-   "lightMul": 2.4336
-  },
-  {
-   "id": "chao@atacadao_treta",
-   "envMap": "atacadao_treta",
-   "scene": {
-    "lights": [
-     {
-      "type": "HemisphereLight",
-      "intensity": 1.25,
-      "color": "#f2f7fb",
-      "pos": [
-       0,
-       1,
-       0
-      ],
-      "ground": "#c0c6cc"
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 1.15,
-      "color": "#ffffff",
-      "pos": [
-       -12,
-       42,
-       -20
-      ]
-     },
-     {
-      "type": "DirectionalLight",
-      "intensity": 0.5,
-      "color": "#dfeeff",
-      "pos": [
-       14,
-       30,
        20
       ]
      }
     ]
    },
-   "exposure": 2.4,
-   "floor": 0.0042,
+   "exposure": 1.52,
+   "floor": 0.0048,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@fy_campomorro",
+   "envMap": "fy_campomorro",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.214,
+      "color": "#ffe6b5",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.296,
+      "color": "#a0c5ef",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.092,
+      "color": "#aac9ef",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.607,
+      "color": "#ffd59b",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.322,
+      "color": "#ffb670",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.333,
+      "color": "#91b7ef",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#373027"
+     }
+    ]
+   },
+   "exposure": 1.6,
+   "floor": 0.0048,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@fy_campomorro",
+   "envMap": "fy_campomorro",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.214,
+      "color": "#ffe6b5",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.296,
+      "color": "#a0c5ef",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.092,
+      "color": "#aac9ef",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.607,
+      "color": "#ffd59b",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.322,
+      "color": "#ffb670",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.333,
+      "color": "#91b7ef",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#373027"
+     }
+    ]
+   },
+   "exposure": 1.6,
+   "floor": 0.0048,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.6536
+  },
+  {
+   "id": "chao@fy_campomorro",
+   "envMap": "fy_campomorro",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.16,
+      "color": "#eaf2f6",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#67584a"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.65,
+      "color": "#ffd9a8",
+      "pos": [
+       30,
+       42,
+       10
+      ]
+     }
+    ]
+   },
+   "exposure": 1.6,
+   "floor": 0.0048,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@fy_lajes",
+   "envMap": "fy_lajes",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.278,
+      "color": "#ffe5b4",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.308,
+      "color": "#a1c4ee",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.096,
+      "color": "#abc8ee",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.639,
+      "color": "#ffd49a",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.34,
+      "color": "#ffb56f",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.347,
+      "color": "#91b6ee",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#373026"
+     }
+    ]
+   },
+   "exposure": 1.55,
+   "floor": 0.0047,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@fy_lajes",
+   "envMap": "fy_lajes",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.278,
+      "color": "#ffe5b4",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.308,
+      "color": "#a1c4ee",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.096,
+      "color": "#abc8ee",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.639,
+      "color": "#ffd49a",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.34,
+      "color": "#ffb56f",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.347,
+      "color": "#91b6ee",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#373026"
+     }
+    ]
+   },
+   "exposure": 1.55,
+   "floor": 0.0047,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.5258
+  },
+  {
+   "id": "chao@fy_lajes",
+   "envMap": "fy_lajes",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.18,
+      "color": "#dfe6ee",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#635648"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.75,
+      "color": "#ffd9a8",
+      "pos": [
+       25,
+       45,
+       15
+      ]
+     }
+    ]
+   },
+   "exposure": 1.55,
+   "floor": 0.0047,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@fy_corrego",
+   "envMap": "fy_corrego",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.377,
+      "color": "#ffcc85",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.268,
+      "color": "#b1c1c3",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.084,
+      "color": "#bcc5c3",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.688,
+      "color": "#ffbd72",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.366,
+      "color": "#ffa251",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.302,
+      "color": "#a0b3c3",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#3d2f1e"
+     }
+    ]
+   },
+   "exposure": 1.42,
+   "floor": 0.0054,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@fy_corrego",
+   "envMap": "fy_corrego",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.377,
+      "color": "#ffcc85",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.268,
+      "color": "#b1c1c3",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.084,
+      "color": "#bcc5c3",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.688,
+      "color": "#ffbd72",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.366,
+      "color": "#ffa251",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.302,
+      "color": "#a0b3c3",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#3d2f1e"
+     }
+    ]
+   },
+   "exposure": 1.42,
+   "floor": 0.0054,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.4635
+  },
+  {
+   "id": "chao@fy_corrego",
+   "envMap": "fy_corrego",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.85,
+      "color": "#d8b89a",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#4a3830"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.7,
+      "color": "#ffc888",
+      "pos": [
+       20,
+       35,
+       15
+      ]
+     }
+    ]
+   },
+   "exposure": 1.42,
+   "floor": 0.0054,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vm@fy_mansao",
+   "envMap": "fy_mansao",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.187,
+      "color": "#f6eac5",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.3,
+      "color": "#97c5ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.094,
+      "color": "#a1c9ff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.594,
+      "color": "#f6d9a9",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.315,
+      "color": "#f6ba7b",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.337,
+      "color": "#89b7ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#34312a"
+     }
+    ]
+   },
+   "exposure": 1.36,
+   "floor": 0.0043,
+   "sat": 1.12,
+   "metalFactor": 1,
+   "roughFactor": 1,
+   "envMapIntensity": 1,
+   "lightMul": 1
+  },
+  {
+   "id": "vmLegado@fy_mansao",
+   "envMap": "fy_mansao",
+   "scene": {
+    "lights": [
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.187,
+      "color": "#f6eac5",
+      "pos": [
+       -0.45,
+       0.75,
+       0.55
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.3,
+      "color": "#97c5ff",
+      "pos": [
+       0.6,
+       -0.15,
+       0.5
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.094,
+      "color": "#a1c9ff",
+      "pos": [
+       0.55,
+       0.35,
+       0.75
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.594,
+      "color": "#f6d9a9",
+      "pos": [
+       0.2,
+       0.35,
+       -0.9
+      ]
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 0.315,
+      "color": "#f6ba7b",
+      "pos": [
+       -0.2,
+       -0.86,
+       0.47
+      ]
+     },
+     {
+      "type": "HemisphereLight",
+      "intensity": 0.337,
+      "color": "#89b7ff",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#34312a"
+     }
+    ]
+   },
+   "exposure": 1.36,
+   "floor": 0.0043,
+   "sat": 1.12,
+   "metalFactor": 0.55,
+   "roughFactor": 1,
+   "envMapIntensity": 1.2,
+   "lightMul": 2.6884
+  },
+  {
+   "id": "chao@fy_mansao",
+   "envMap": "fy_mansao",
+   "scene": {
+    "lights": [
+     {
+      "type": "HemisphereLight",
+      "intensity": 1.02,
+      "color": "#f6f3ea",
+      "pos": [
+       0,
+       1,
+       0
+      ],
+      "ground": "#665c50"
+     },
+     {
+      "type": "DirectionalLight",
+      "intensity": 1.8,
+      "color": "#ffefd8",
+      "pos": [
+       15,
+       30,
+       -15
+      ]
+     }
+    ]
+   },
+   "exposure": 1.36,
+   "floor": 0.0043,
    "sat": 1.12,
    "metalFactor": 1,
    "roughFactor": 1,

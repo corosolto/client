@@ -1,0 +1,176 @@
+{
+  "provider": "openrouter",
+  "model": "openai/whisper-large-v3",
+  "generatedAt": "2026-08-11T21:37:28.289Z",
+  "note": "STT prova conteúdo aproximado; timbre, interpretação e aprovação continuam humanos.",
+  "results": [
+    {
+      "characterId": "mago-cobre",
+      "key": "select-01",
+      "file": "audio/characters/mago-cobre/select/select-01.mp3",
+      "expected": "O cobre conduz meu destino.",
+      "transcript": "O cobre conduz meu destino.",
+      "wordEdits": 0,
+      "expectedWords": 5,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.76,
+        "silenceSeconds": 0.684,
+        "silenceRatio": 0.248,
+        "maxVolumeDb": -2.9,
+        "meanVolumeDb": -16.6
+      },
+      "usage": {
+        "seconds": 2.76,
+        "cost": 0.000069
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "select-02",
+      "file": "audio/characters/mago-cobre/select/select-02.mp3",
+      "expected": "A bobina escolheu você.",
+      "transcript": "A bobina escolheu você.",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.4,
+        "silenceSeconds": 0.595,
+        "silenceRatio": 0.248,
+        "maxVolumeDb": -3.5,
+        "meanVolumeDb": -16.9
+      },
+      "usage": {
+        "seconds": 2.4,
+        "cost": 0.00006
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "kill-01",
+      "file": "audio/characters/mago-cobre/kill/kill-01.mp3",
+      "expected": "Deu curto!",
+      "transcript": "Deu curto!",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.68,
+        "silenceSeconds": 0.514,
+        "silenceRatio": 0.306,
+        "maxVolumeDb": -2.1,
+        "meanVolumeDb": -17
+      },
+      "usage": {
+        "seconds": 1.68,
+        "cost": 0.000042
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "kill-02",
+      "file": "audio/characters/mago-cobre/kill/kill-02.mp3",
+      "expected": "Circuito fechado!",
+      "transcript": "Circuito fechado.",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 1.96,
+        "silenceSeconds": 0.536,
+        "silenceRatio": 0.274,
+        "maxVolumeDb": -2.5,
+        "meanVolumeDb": -17.7
+      },
+      "usage": {
+        "seconds": 1.96025,
+        "cost": 0.00004900625
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "kill-03",
+      "file": "audio/characters/mago-cobre/kill/kill-03.mp3",
+      "expected": "Faísca certeira!",
+      "transcript": "Faísca Certeira",
+      "wordEdits": 0,
+      "expectedWords": 2,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.08,
+        "silenceSeconds": 0.529,
+        "silenceRatio": 0.254,
+        "maxVolumeDb": -2.4,
+        "meanVolumeDb": -17.5
+      },
+      "usage": {
+        "seconds": 2.08,
+        "cost": 0.000052
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "radio-contato",
+      "file": "audio/characters/mago-cobre/radio/radio-contato.mp3",
+      "expected": "Corrente estranha no setor!",
+      "transcript": "Corrente estranha no setor",
+      "wordEdits": 0,
+      "expectedWords": 4,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.36,
+        "silenceSeconds": 0.609,
+        "silenceRatio": 0.258,
+        "maxVolumeDb": -2,
+        "meanVolumeDb": -17.8
+      },
+      "usage": {
+        "seconds": 2.36,
+        "cost": 0.000059
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "radio-avanco",
+      "file": "audio/characters/mago-cobre/radio/radio-avanco.mp3",
+      "expected": "Conduzam o avanço!",
+      "transcript": "Conduzam o avanço.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.04,
+        "silenceSeconds": 0.564,
+        "silenceRatio": 0.276,
+        "maxVolumeDb": -4.6,
+        "meanVolumeDb": -16.7
+      },
+      "usage": {
+        "seconds": 2.04,
+        "cost": 0.000051
+      }
+    },
+    {
+      "characterId": "mago-cobre",
+      "key": "radio-cobertura",
+      "file": "audio/characters/mago-cobre/radio/radio-cobertura.mp3",
+      "expected": "Aterramento garantindo cobertura!",
+      "transcript": "Aterramento garantindo cobertura.",
+      "wordEdits": 0,
+      "expectedWords": 3,
+      "wordErrorRate": 0,
+      "audio": {
+        "durationSeconds": 2.92,
+        "silenceSeconds": 0.554,
+        "silenceRatio": 0.19,
+        "maxVolumeDb": -2.3,
+        "meanVolumeDb": -16.9
+      },
+      "usage": {
+        "seconds": 2.917875,
+        "cost": 0.000072946875
+      }
+    }
+  ]
+}

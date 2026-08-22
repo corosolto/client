@@ -1,0 +1,102 @@
+{
+  "character": "public/models/characters/doidinho-bairro.glb",
+  "characterSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
+  "weapon": "p90",
+  "weaponFile": "public/models/weapons/p90.glb",
+  "weaponSha256": "ffa8c0396cf834fd25064e28b98c56d48414151c7c5e68e4c911eddd96929fe4",
+  "animations": {
+    "walk": {
+      "file": "public/models/anims/doidinho-bairro/walk.glb",
+      "sha256": "cf8c5934f07de339b56a48869af9acad024e0d47f7ab96a602937ed8cd044fbe"
+    },
+    "crouch": {
+      "file": "public/models/anims/doidinho-bairro/crouch.glb",
+      "sha256": "067e2cd0c395b74db857f985c8c53b247ce8c911341d2e0ad18bfa4e187ee60d"
+    }
+  },
+  "blender": "5.2.0 LTS",
+  "method": "clipe glTF importado no armature; p90 em 0.52 m; IK posicional dos dois braços até anchors de empunhadura/guarda-mão",
+  "limitation": "evidência offline de asset/clipe/pegada; o porte cruzado reproduz o contrato de mount+IK, mas não substitui recaptura do runtime no browser",
+  "poses": {
+    "walk": {
+      "clip": "walk",
+      "frame": 15,
+      "handSpan": 0.241114,
+      "weaponScale": 0.521018,
+      "rightHand": [
+        -0.195519,
+        -0.226315,
+        1.057094
+      ],
+      "leftHand": [
+        -0.10475,
+        -0.445896,
+        1.016092
+      ],
+      "rightAnchor": [
+        -0.195519,
+        -0.226315,
+        1.057094
+      ],
+      "leftAnchor": [
+        -0.110141,
+        -0.446826,
+        1.018027
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.005803,
+      "render": "tools/eval/asset-evidence/doidinho-bairro/grip/doidinho-bairro-walk-p90.png",
+      "gripRender": "tools/eval/asset-evidence/doidinho-bairro/grip/doidinho-bairro-grip-a-p90.png",
+      "mutant": {
+        "operation": "weapon.location += [0, 0.18, 0.05]",
+        "offset": [
+          0.0,
+          0.18,
+          0.05
+        ],
+        "rightAnchor": [
+          -0.195519,
+          -0.046315,
+          1.107094
+        ],
+        "leftAnchor": [
+          -0.110141,
+          -0.266826,
+          1.068027
+        ],
+        "rightDistance": 0.186816,
+        "leftDistance": 0.186528,
+        "render": "tools/eval/asset-evidence/doidinho-bairro/grip/doidinho-bairro-grip-b-mutant-p90.png"
+      }
+    },
+    "crouch": {
+      "clip": "crouch",
+      "frame": 15,
+      "handSpan": 0.254068,
+      "weaponScale": 0.521018,
+      "rightHand": [
+        -0.16981,
+        -0.276371,
+        0.672824
+      ],
+      "leftHand": [
+        -0.130516,
+        -0.527246,
+        0.68108
+      ],
+      "rightAnchor": [
+        -0.16981,
+        -0.276371,
+        0.672824
+      ],
+      "leftAnchor": [
+        -0.111305,
+        -0.508783,
+        0.671156
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.028433,
+      "render": "tools/eval/asset-evidence/doidinho-bairro/grip/doidinho-bairro-crouch-p90.png"
+    }
+  }
+}

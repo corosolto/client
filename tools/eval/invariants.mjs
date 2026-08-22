@@ -1454,10 +1454,16 @@ function runNode(script, env = {}, args = []) {
   // ARM3 — nenhuma arma pode ser desproporcionalmente "alta". Foi a causa real
   // da "uzi maior que o corpo do hipster": o len normaliza o COMPRIMENTO e a
   // altura vinha junto.
+  const gameplayIds = new Set(linhas.map((line) => line.trim().split(':')[0]));
   const lens = [...wsrc.matchAll(/(\w+):\s*\{\s*len:\s*([\d.]+)/g)].map((m) => [m[1], parseFloat(m[2])]);
-  const gigantes = lens.filter(([k, v]) => !/knife|pistol|deagle|revolver/.test(k) && v > 1.25);
+  // weapons.js também guarda CFG de props cênicos usados por glbchars.js. ARM4 mede
+  // apenas a população balística declarada em game.js; o mutante prova que reincluir
+  // o mosquete de apresentação volta a acender a régua.
+  const mutateDisplayIntoWeapons = process.argv.includes('--mutante=display-no-fpvm');
+  const measuredLens = lens.filter(([id]) => mutateDisplayIntoWeapons || gameplayIds.has(id));
+  const gigantes = measuredLens.filter(([k, v]) => !/knife|pistol|deagle|revolver/.test(k) && v > 1.25);
   put('ARM4', 'nenhuma arma longa demais (len ≤ 1,25 m fora de sniper de ferrolho)',
-    gigantes.length === 0, gigantes.length ? gigantes.map(([k, v]) => `${k}=${v}`).join(', ') : `${lens.length} armas`, 'warn');
+    gigantes.length === 0, gigantes.length ? gigantes.map(([k, v]) => `${k}=${v}`).join(', ') : `${measuredLens.length} armas`, 'warn');
 
   // ARM5 — 1 killfeed por morte. "voce viu que tem 2 me eliminando esta confuso".
   const feedCalls = (gsrc.match(/this\._feed\(/g) || []).length;

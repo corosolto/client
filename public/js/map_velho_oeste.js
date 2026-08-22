@@ -1,5 +1,7 @@
 // Velho Oeste da Treta: cidade de madeira ao pôr do sol, com três rotas e cobertura baixa.
 import * as THREE from 'three';
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
@@ -384,7 +386,7 @@ export function buildVelhoOeste(scene) {
   const hemi = new THREE.HemisphereLight(0xffd2a3, 0x5b3828, 1.45); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffc27b, 2.05); sun.position.set(-35, 42, -28); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48; sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045; scene.add(sun);
-  const fill = new THREE.DirectionalLight(0x86a5c9, .42); fill.position.set(24, 22, 35); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0x86a5c9, .34); fill.position.set(24, 22, 35); scene.add(fill);
 
   const groundHeightAt = () => 0;
   const slowAt = () => false;
@@ -417,7 +419,21 @@ export function buildVelhoOeste(scene) {
 
   update(0, 0);
 
+  /* BUG-57: cidade de faroeste tem ave de poleiro e rato de saloon. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'velho_oeste',
+    rats: [
+      { pos: [-16, 0, -34], to: [-13.5, 0, -31.5], phase: .3 },
+      { pos: [16, 0, 34], to: [13.5, 0, 31.5], phase: 1.5 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
+      { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
+    ],
+  });
+
   return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.3},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:70,vol:.2}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, hemi, update,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),

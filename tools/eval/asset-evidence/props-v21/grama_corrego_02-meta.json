@@ -1,0 +1,27 @@
+{
+  "glb": "public/models/props/grama_corrego_02.glb",
+  "out": "tools/eval/asset-evidence/props-v21/grama_corrego_02.png",
+  "frame": "1536x1024",
+  "dist": 2.2,
+  "trianglesRasterizados": 4046,
+  "silhueta": {
+    "minX": 506,
+    "minY": 194,
+    "maxX": 1011,
+    "maxY": 571,
+    "px": 92618,
+    "cobertura": 5.89,
+    "bbox_m": 0.409,
+    "proporcao_largura_altura": 1.34
+  },
+  "paleta_top": [
+    "#505030 30.8%",
+    "#707050 18.6%",
+    "#707030 15.0%",
+    "#909050 7.6%",
+    "#507030 7.0%",
+    "#303030 6.0%",
+    "#303010 5.0%",
+    "#101010 3.2%"
+  ]
+}

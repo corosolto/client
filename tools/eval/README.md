@@ -20,11 +20,16 @@ com código 1 em falha crítica.
 | `vm-mint-audit.mjs` | Enquadramento do viewmodel arma por arma, nos 26 GLBs reais. Mede a seção transversal perto de cada ponta em Z pra descobrir se a arma está de ré. | `vm_mint_audit.json` (**versionado — sem ele as invariantes VM1–VM6/VM9/VM10 viram PULADAS, que é portão verde por ausência de dado**) |
 | `vm-kick-sim.mjs` | Coice do viewmodel: near plane + pitch em rajada. Prova que a coronha não atravessa a lente no pico. | `vm_kick_sim.json` |
 | `botsim.mjs` | Navegação dos bots: 60 s × 5 mapas com sementes fixas. Roda a classe `Game` de verdade com os mapas de verdade. | `npm run eval:bots` |
+| `texel-check.mjs` | **Densidade de texel (px/m) dos 10 mapas**, mediana ponderada por ÁREA, contra a banda 64–512 do BAR §1.8 e a dispersão de 1,5× da BAR-CONSISTENCIA §3.1. Sobe os mapas reais e resolve no disco a textura que o `TextureLoader` não carrega em node. TEXEL6 é a cláusula irmã: vigia se o conserto de densidade borrou textura marcada `ClampToEdge`. | `node tools/eval/texel-check.mjs [--json]` → `texel_check.json` |
+| `texel-tetos.mjs` | Os limiares de densidade em UM lugar (BAR §1.8 / §3.1). Importado pelo check; `TEXEL_ALVO` é conferido contra `ALVO_PXM` do `public/js/vao.js` em tempo de execução, então os dois não podem divergir calados. | — |
+| `texel-mutantes.mjs` | O teste do teste: injeta de volta cada defeito de densidade (UV fixa, tile gigante, anisotropia 1, canvas pequeno) e exige que a cláusula certa fique vermelha. Morre se o mutante não casar. | `node tools/eval/texel-mutantes.mjs` |
+| `texel-custo.mjs` | O PREÇO da nitidez, **no Chrome real** (custo não se mede no stub): draw calls, triângulos, objetos de textura, programas e heap por mapa, em A/B contra um baseline. | `node tools/eval/texel-custo.mjs --saida=x.json [--contra=y.json]` |
 | `release-check.mjs` | Release usa o nome CSBR e as notas nativas do GitHub, que preservam PRs e contribuidores. | `npm run eval:release` |
 | `error-provenance-check.mjs` | Preserva erro externo no console/banco sem atribuí-lo ao jogo ou abrir issue automática. | `npm run eval:error-origin` |
 | `shader-budget-check.mjs` | Deriva do GLB real o orçamento de varyings da urna e protege fog/triplanar no piso WebGL1. | `npm run eval:shaderbudget` |
 | `map-rotation-check.mjs` | Sugestão inicial de mapa: link manda, escolha do carrossel fica, e quem não escolhe roda pelos 5 mapas. | `npm run eval:maprotate` |
 | `../gen-arch.mjs` | (fora deste diretório) Gera e valida o `ARCH.md`. `--check` reprova se estiver desatualizado. | `npm run arch` |
+| `gen-asset-pbr-check.mjs` | Impede o Meshy de baixar a etapa `preview` sem textura como artefato final; cobra `refine`, PBR e textura 2K. | `npm run eval:asset-gen` |
 
 ## 2. Documentos — leitura, não execução
 
@@ -40,8 +45,27 @@ com código 1 em falha crítica.
 
 | Arquivo | O que mede |
 |---|---|
-| `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade. |
+| `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade e ≥2 rotas CTF separadas por 6 m (`--mutante=rota-unica` prova o portão). |
 | `probe-grafite.mjs` | Sonda descartável da passada viva de grafite: abre `mapview?grafite=vivo` e despeja âncoras (com `__grafiteDebug`), contadores de recusa e superfícies por mapa. Diagnóstico, não é régua. |
+| `map-source-check.mjs` | Procedência por SHA e uso efetivo dos materiais/céus dos mapas novos (`--mutante=hash-falso` e `asset-desligado`). |
+| `campo-contract-check.mjs` | Assimetria campo×galpão, convergência, visadas, cover, abertura `field-mouth` e iluminação declarada do interior. |
+| `relevo-check.mjs` | Cota do chão na área ANDÁVEL (alagamento pelo `_freeSpot` real): amplitude, fração plana, declive, subida contínua a pé e silhueta. Só o `fy_campomorro` tem contrato; os demais saem informativos. Mutantes: `terreno-plano`, `silhueta-rasa`, `degrau-unico`. |
+| `lajes-rooftop-check.mjs` + `lajes-gap-check.mjs` | Detalhe cultural, vãos nas malhas e bordas/linhas que tornam os saltos legíveis no frame. |
+| `ambience-check.mjs` | Abre os GLBs reais de rato/pombo em `fy_lajes`, `fy_corrego` e `fy_escadao`; mede determinismo, reação a tiro pelo `Game`, degradação LOWQ, custo e largura/duração do traçante. `--fotos` captura 3:2; mutantes por cláusula. |
+| `mansao-water-check.mjs` | **Piscina ENTRÁVEL com anti-trap** (BUG-67: decisão do dono 18/08 inverteu o contrato; `agua-bloqueada` volta a tampa e tem que ficar vermelho), espelho d'água NÃO entrável, frota GLB, jardim tropical e interior mobiliado. Mutantes: `agua-bloqueada`, `borda-alta`, `sem-parede`, `piscina-sem-cuba`, `piscina-cuba-curta` + os de frota/jardim/interior. |
+| `mansao-garden-check.mjs` | Jardim da Mansão com variedade, composição e escala (BUG-67: "o jardim esta bizarro"): G1 teto de 30 instâncias por malha + tint/escala por instância + colônia same-mesh ≤8 em 6 m; G2 cadeia de pedras portão→porta, rota porta→piscina pelo A* do mapa e plantio fora do caminho; G3 dossel 0,50–2,60 m e árvores 3,0–6,8 m contra o jogador de 1,70 m. Mutantes: `clona-tudo`, `planta-no-caminho`, `planta-gigante`, `sem-pedras`. |
+| `corrego-contract-check.mjs` + `escadao-contract-check.mjs` | Lentidão, escala/anatomia da fauna do Córrego e flancos/caveirão do Escadão, com mutantes por cláusula. |
+| `mantle-check.mjs` | **Subir em beirada (mantling), nos 10 mapas.** MNT1 toda queda de mão única de escala humana é reversível a pé em ≤ 2 s; MNT2 toda beirada com apoio no topo é escalável, verificado **andando o `_updatePlayer`**; MNT3 o mantle não abre **nenhuma** célula nova — sem esta cláusula o conserto vira exploit. Node puro, ~4 s. O A/B é `SIM_QS='?mantle=0'` (o mesmo kill-switch do jogo). Mutantes: `beirada-baixa`, `beirada-alta`, `canal-fechado`. `npm run eval:mantle` |
+| `map-evidence-contract-check.mjs` | Falha fechado se PNG, fonte, GLB, câmera ou viewport 3:2 divergir do manifest. A recaptura é `npm run capture:map-evidence`; `--plan` não abre browser. |
+| `char-thumbnail-contract-check.mjs` | Arma canônica, SHA e dimensão 360×463 dos thumbnails dos pilotos registrados (`--mutante=arma-trocada`). |
+| `char-hard-surface-check.mjs` | Materiais rígidos do Motoca, forma frontal e contrato de casca full-face contínua com visor único; mutantes recompõem lâmina, halo, aro e peças empilhadas. |
+| `camera-grip-evidence-check.mjs` | SHA de Câmera/M4, walk/crouch e contato das duas mãos nos anchors da evidência Blender (`--mutante=arma-deslocada`). |
+| `pilot-system-check.mjs` | Caneca/teclado do Programador; M4 do Designer; P90/gambiarra do Doidinho; cadastro, M4, pacote animado e sockets Hips/Spine01 dos props da Lenda. Mutantes causais por defeito. |
+| `pilot-grip-evidence-check.mjs` | Recibos Blender do Programador/Designer/Lenda com M4 e Doidinho com P90: SHA, sockets, duas mãos em walk/crouch/3/4 e mutante visual real de arma deslocada. |
+| `motoca-visual-check.mjs` | Máscara Blender 360×463 mede casca full-face/visor único, abertura/continuidade do capacete e corpo/suporte/brilho do telefone; mutantes de projeção. |
+| `mint-asset-integrity-check.mjs` | Compara o GLB final ao `finalSha256` do registro Mint/Tripo/Meshy (`--mutante=sha-trocado`). |
+| `gltf-validator-check.mjs` | Validador oficial Khronos nos artefatos finais tipados como `model/gltf-binary`; a enumeração é compartilhada com integridade (`--mutante=cabecalho` e `--mutante=inclui-imagem`). |
+| `character-voice-contract-check.mjs` | Oito falas por slice, hooks por personagem, fallback e gerador seguro (`--mutante=fala-longa`). |
 | `mode-check.mjs` | Rounds × CTF: o modo abre e termina em todos os mapas. |
 | `ctf-verify.mjs` | Bandeiras alcançáveis a partir dos dois spawns. |
 | `fv-verify.mjs` | Específico do Ferro Velho (A*/waypoints/LOS com o cânion BECO OESTE). |
@@ -51,6 +75,7 @@ com código 1 em falha crítica.
 | `bot-routes.mjs`, `botdiag.mjs` | Diagnóstico de rota e de estado dos bots (complementam o `botsim`). |
 | `stance-speed.mjs` | Velocidade por postura (andar/correr/agachar). |
 | `loadout-test.mjs` | Loadout por personagem/facção. |
+| `vertical-slice-abilities-check.mjs` | Mecânicas executáveis dos três slices: Stack Trace com LOS, carga/ping de rota do Motoca e interação de objetivo do Doidinho, incluindo mutantes. `npm run eval:slice-abilities` |
 
 ## 4. Viewmodel e rig — a família mais densa
 
@@ -65,6 +90,8 @@ com código 1 em falha crítica.
 | `fparms-capture.mjs` | Captura dos braços de 1ª pessoa. |
 | `mount-capture.mjs` | Captura do ponto de mount. |
 | `weapon-capture.mjs` | Captura arma a arma. |
+| `select-mount.mjs` | Contato e orientação da arma no caminho real da seleção; usa o shell mínimo de personagem do `serve.mjs`. |
+| `select-inflate.mjs` | Deformação da skin depois de animação, curl e IK da seleção; `--fotos[=dir]` renderiza a pose medida e `--diagnose` atribui arestas ruins ao osso dominante. |
 | `char-probe.mjs`, `char_probe.py`, `char_sim.py` | Sondas de personagem (proporção, escala, palma). |
 | `mixamo-capture.mjs`, `mixamo-measure.mjs` | Clipes do pack Mixamo. |
 

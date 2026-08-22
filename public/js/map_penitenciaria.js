@@ -1,5 +1,7 @@
 // Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
 import * as THREE from 'three';
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
@@ -73,7 +75,7 @@ export function buildPenitenciaria(scene) {
     yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x8b8f89, roughness: 1 }),
     steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x8a9292, metalness: .72, roughness: .5 }),
     rust: new THREE.MeshStandardMaterial({ color: 0x714529, metalness: .42, roughness: .82 }),
-    white: new THREE.MeshStandardMaterial({ color: 0xe6e2cf, roughness: .75 }),
+    white: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .025, color: 0xe6e2cf, roughness: .75 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xe5a92f, roughness: .7 }),
     red: new THREE.MeshStandardMaterial({ color: 0xb42d25, roughness: .65 }),
     blue: new THREE.MeshStandardMaterial({ color: 0x173f79, roughness: .5 }),
@@ -240,7 +242,22 @@ export function buildPenitenciaria(scene) {
   for(let i=0;i<nodes.length;i++)if(adj[i].length===0){let nearest=-1,distance=Infinity;for(let j=0;j<nodes.length;j++){if(i===j||!clear(nodes[i],nodes[j]))continue;const dx=nodes[i].x-nodes[j].x,dz=nodes[i].z-nodes[j].z,d=dx*dx+dz*dz;if(d<distance){distance=d;nearest=j;}}if(nearest>=0){adj[i].push(nearest);adj[nearest].push(i);}}
   function nearestWaypoint(x,z){let best=0,distance=Infinity;for(let i=0;i<nodes.length;i++){const dx=nodes[i].x-x,dz=nodes[i].z-z,d=dx*dx+dz*dz;if(d<distance){distance=d;best=i;}}return best;}
   function findPath(fromIdx,toIdx){if(fromIdx===toIdx)return[toIdx];const prev=new Int16Array(nodes.length).fill(-1),queue=[fromIdx];prev[fromIdx]=fromIdx;while(queue.length){const n=queue.shift();for(const next of adj[n])if(prev[next]<0){prev[next]=n;if(next===toIdx){const path=[next];let p=n;while(p!==fromIdx){path.unshift(p);p=prev[p];}path.unshift(fromIdx);return path;}queue.push(next);}}return[fromIdx];}
-  return {root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
+  /* BUG-57: pombo de pátio de presídio e rato de cela. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'penitenciaria',
+    rats: [
+      { pos: [-18, 0, -38], to: [-15.5, 0, -35.5], phase: .3 },
+      { pos: [18, 0, 38], to: [15.5, 0, 35.5], phase: 1.4 },
+      { pos: [-3, 0, 8], to: [-.5, 0, 10.5], phase: 2.2 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [-12, 0, 6], phase: .5 }, { mode: 'ground', pos: [12, 0, -6], phase: 1.6 },
+      { mode: 'ground', pos: [-10.8, 0, 5], phase: .8 },
+    ],
+  });
+
+  return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
     ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
