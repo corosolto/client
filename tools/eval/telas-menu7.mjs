@@ -21,9 +21,7 @@ const ONLY = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
 const want = (id) => !ONLY || ONLY.has(id);
 
 const gRoot = execSync('npm root -g').toString().trim();
-let _pw;
-try { _pw = await import('playwright'); }
-catch { _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href); }
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 mkdirSync(OUT, { recursive: true });
 

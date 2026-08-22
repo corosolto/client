@@ -52,8 +52,6 @@ const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   velho_oeste:   { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   penitenciaria: { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   parque_treta:  { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
-  // Vilarejo central enquadrado entre as duas guaritas, com mata e ponte em profundidade.
-  treta_vietnan: { pos: [0, 8.5, 26], pitch: -0.26, yaw: -0.4 },
 };
 const NOPOSE = process.env.NOPOSE === '1';   // captura do spawn, sem pino de posição
 const TAG = process.env.TAG || '';
@@ -75,9 +73,7 @@ if (process.argv[2] === '--write') {
 const LIST = (process.argv[2] || 'praca_poderes,piscina_treta,loja_h,ferro_velho,quebrada').split(',');
 const YAWS = (process.argv[3] || '-2.4,-1.8,-1.2,-0.6,0,0.6,1.2,1.8,2.4,3.0').split(',').map(Number);
 const gRoot = execSync('npm root -g').toString().trim();
-let _pw;
-try { _pw = await import('playwright'); }
-catch { _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href); }
+const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
 const chromium = _pw.chromium || _pw.default?.chromium;
 
 mkdirSync(OUT, { recursive: true });
@@ -100,7 +96,7 @@ page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); }
 for (const mapId of LIST) {
   await page.goto(`${BASE}/?debug=1&auto=P,mst&map=${mapId}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
-  await page.addStyleTag({ content: '#hud,astro-dev-toolbar{display:none!important}' });
+  await page.addStyleTag({ content: '#hud{display:none!important}' });
   await page.evaluate((pose) => {
     const g = window.__game;
     g.player.hp = 1e9;
@@ -129,11 +125,6 @@ for (const mapId of LIST) {
         if (gg.vmScene) gg.vmScene.visible = false;
         for (const b of gg.bots || []) if (b.mesh?.group) mute(b.mesh.group);
         if (gg.drops) for (const d of gg.drops) if (d.mesh) mute(d.mesh);
-        if (window.__pin.pos && gg.camera && gg.renderer) {
-          gg.camera.position.set(window.__pin.pos[0], window.__pin.pos[1] + 1.62, window.__pin.pos[2]);
-          gg.camera.rotation.set(window.__pin.pitch, window.__pin.yaw, 0);
-          gg.renderer.render(gg.scene, gg.camera);
-        }
       }
       requestAnimationFrame(tick);
     };
