@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.170`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.175`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,31 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.175] — 2026-08-22
+
+### Mudado
+- fix(régua): prova de mordida que não morde passa a REPROVAR (#416)
+
+## [2.0.0-alpha.174] — 2026-08-22
+
+### Mudado
+- fix(regua): DOCSAUT deixa de reprovar branch de PR com autor novo (#415)
+
+## [2.0.0-alpha.173] — 2026-08-21
+
+### Mudado
+- perf(armas): a partida carrega as armas dela — 26 no bloqueante viram 9 (#410)
+
+## [2.0.0-alpha.172] — 2026-08-21
+
+### Mudado
+- fix: importmap do Layout e CVEs altas nas dependências (#363)
+
+## [2.0.0-alpha.171] — 2026-08-21
+
+### Mudado
+- feat: kill replay cam com hit-stop (#364)
 
 ## [2.0.0-alpha.170] — 2026-08-21
 

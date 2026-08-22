@@ -582,7 +582,7 @@ const loadingCharacterIds = [...loading3d.matchAll(/[EBUCF]: '([^']+)'/g)].map((
 const loadingCanvas3d = /id="load-character-3d"[^>]*><\/canvas>/.test(astro)
   && !/id="load-char" class="loading-runner"/.test(astro)
   && /export class LoadingCharacterStage/.test(loading3d)
-  && /preloadCharacterAssets\(\[id\]\)/.test(loading3d)
+  && /preloadCharacterAssets\(\[id\](,\s*\{[\s\S]*?\})?\)/.test(loading3d)
   && /buildCharacterModel\(def, \{ weaponId: charWeapon\(id\), preview: true \}\)/.test(loading3d)
   && /criaRenderer\(\{ canvas, alpha: true/.test(loading3d)
   && /this\.renderer\.render\(this\.scene, this\.camera\)/.test(loading3d);

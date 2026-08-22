@@ -70,5 +70,8 @@ console.log(`  armas ${armas.n} arq → ${mb(armas.vram).toFixed(0)} MB · perso
   `(${(mb(chars.vram) / chars.n).toFixed(1)} MB cada) · PARTIDA ≈ ${vramPartida.toFixed(0)} MB de ${TETO_MB}`);
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m VRAM textura no teto de ${TETO_LADO}px e partida dentro do orçamento`);
-if (MUT && !falhas.length) console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+if (MUT && !falhas.length) {
+  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
+}
 process.exit(falhas.length ? 1 : 0);

@@ -30,8 +30,17 @@ export { WEAPONS };
    ?pace=0  -> round volta a ser SÓ tempo (sem alvo de abates, sem match point)
    ?move=0  -> movimento volta ao modelo antigo (4.7 base, sprint 6.6, sem counter-strafe)
    ?killcam=0 -> sem painel/câmera de morte
+   ?replaycam=0 -> sem replay cam ao matar (câmera orbital na vítima)
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+const REPLAY_CAM = QS.get('replaycam') !== '0';
+/* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
+   janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
+const REPLAY_DUR = 1.2;
+const REPLAY_SLOWMO = 0.18;
+const REPLAY_SLOWMO_DUR = 0.2;
+const REPLAY_ORBIT_R = 3.2;
+const REPLAY_ORBIT_H = 1.8;
 // ?vmlab=1 usa o viewmodel afinado; sem a flag mantém o calibrado.
 const VMLAB = QS.get('vmlab') === '1';
 /* KILL-SWITCH DA RODADA DE MATERIAL: ?vmmat=legacy devolve, de uma vez, o clamp
@@ -559,9 +568,25 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   };
 }
 
+/* Pool dos bots em modo `all`: uma fonte só para o sorteio da partida (pickMatchWeapons) e
+   para o fallback do Game — duas listas divergiriam em silêncio e furariam o preload. */
+const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
+  'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
+
+/* Armas da partida sorteadas ANTES do preload, pelo mesmo motivo do roster: o main.js precisa
+   saber o que carregar, e re-sortear no Game poria arma de caixa em bot. Régua: ARM1. */
+export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
+  const um = () => (mode === 'awp' ? 'awp' : mode === 'knife' ? 'knife'
+    : mode === 'pistols' ? (Math.random() < 0.5 ? 'pistol' : 'deagle')
+    : BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0]);
+  return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
+}
+
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
     this._ctfOpt = ctf;
+    this._matchWeapons = matchWeapons;
+    this._armaN = 0;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
@@ -710,7 +735,9 @@ export class Game {
     // tem elenco — ver pickMatchRoster) vem sorteado do main.js ou é sorteado aqui (arnês/testes).
     const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId);
     const mkBot = (def, team, i) => {
-      const wpn = this._botWeapon();
+      // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
+      // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
+      const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
       const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
@@ -3233,6 +3260,13 @@ export class Game {
         mk.best = Math.max(mk.best || 0, mk.count);
         const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
         if (kind) { this._mkBanner(MK_LABELS[kind]); this.sfx.general(kind); }
+        if (REPLAY_CAM && head && ent.pos) {
+          this._replayCam = {
+            t: 0,
+            victimPos: ent.pos.clone(),
+            killerYaw: attacker.yaw,
+          };
+        }
       }
     }
     if (ent.isPlayer) {
@@ -4727,11 +4761,45 @@ export class Game {
       c.rotation.x += (wantPitch - c.rotation.x) * Math.min(1, dt * 3.5);
     }
   }
+  _updateReplayCam(dt) {
+    const rc = this._replayCam;
+    if (!rc) return;
+    rc.t += dt;
+    if (rc.t >= REPLAY_DUR) {
+      this._replayCam = null;
+      const p = this.player;
+      const tFov = p.scoped ? this._zoomFov(p.weapon) : 70;
+      this.camera.fov = tFov;
+      this.camera.updateProjectionMatrix();
+      this._fovFrom = undefined;
+      return;
+    }
+    const progress = rc.t / REPLAY_DUR;
+    const angle = rc.killerYaw + Math.PI + progress * 1.2;
+    const ease = 1 - (1 - progress) * (1 - progress);
+    const r = REPLAY_ORBIT_R * (0.6 + 0.4 * ease);
+    const cx = rc.victimPos.x + Math.sin(angle) * r;
+    const cz = rc.victimPos.z + Math.cos(angle) * r;
+    const cy = rc.victimPos.y + REPLAY_ORBIT_H - ease * 0.4;
+    this.camera.position.set(cx, cy, cz);
+    const lookY = rc.victimPos.y + 1.2;
+    const dx = rc.victimPos.x - cx, dz = rc.victimPos.z - cz;
+    this.camera.rotation.set(
+      Math.atan2(lookY - cy, Math.hypot(dx, dz)),
+      Math.atan2(-dx, -dz),
+      0
+    );
+    this.camera.fov = 50;
+    this.camera.updateProjectionMatrix();
+    if (this.vm?.root) this.vm.root.visible = false;
+    if (this.el.crosshair) this.el.crosshair.style.display = 'none';
+  }
   _updatePlayer(dt) {
     const p = this.player;
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
+      if (this._replayCam) this._replayCam = null;
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
@@ -5036,6 +5104,7 @@ export class Game {
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
+    this._updateReplayCam(dt);
   }
   // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without
@@ -5199,9 +5268,7 @@ export class Game {
     if (mode === 'awp') return 'awp';
     if (mode === 'knife') return 'knife';
     if (mode === 'pistols') return Math.random() < 0.5 ? 'pistol' : 'deagle';
-    const pool = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
-      'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
-    return pool[(Math.random() * pool.length) | 0];
+    return BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0];
   }
   // Modo restrito não tem pickup de outra arma no mapa, então reserva finita = partida
   // acabada quando zera. Fica infinita a RESERVA, não o pente: a recarga segue cobrando.
@@ -6730,6 +6797,11 @@ export class Game {
   /* ================= main update ================= */
   update(dt, render = true) {
     if (this.paused) return;
+    // Hit-stop: scale dt during replay cam slowmo phase (uses wall-clock time, not game time)
+    if (this._replayCam) {
+      const wallT = this._replayCam._wallT = (this._replayCam._wallT || 0) + dt;
+      if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
+    }
     this.time += dt;
     if (this.state === 'countdown' && this.time >= this.stateUntil) {
       this.state = 'live';
