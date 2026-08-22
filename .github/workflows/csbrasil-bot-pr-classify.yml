@@ -11,6 +11,13 @@ on:
     types: [submitted, dismissed]
   pull_request_review_comment:
     types: [created]
+  # Varredura: em PR vindo de FORK, os dois gatilhos de review acima rodam SEM os
+  # secrets do repositório (regra do GitHub), e o job abaixo não pode nem se
+  # identificar. O sweep roda no contexto base, com token, e reclassifica os PRs
+  # abertos pelo `workflow_dispatch` — é o que devolve a cobertura pós-CodeRabbit
+  # que os gatilhos de review davam nos PRs de casa.
+  schedule:
+    - cron: '7,37 * * * *'
   workflow_dispatch:
     inputs:
       pr_number:
@@ -31,7 +38,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # PORTÃO QUE NÃO PODE MEDIR NÃO VOTA (mesma regra do #402 para o portão de autoria em
+  # clone raso). `pull_request_review` e `pull_request_review_comment` num PR de FORK não
+  # recebem secret nenhum: o job não tem como se identificar, falhava no guard e pintava
+  # de vermelho um PR cujo autor não tem o que consertar. Medido em 11 dos 14 PRs de fork
+  # dos últimos 29 - e em 0 dos 15 de casa. O run de `pull_request_target` do MESMO commit
+  # passa e é ele que vale; para o resto, o sweep de meia em meia hora cobre.
   classify:
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -153,3 +170,27 @@ jobs:
           subprocess.run(['gh', 'api', '-X', 'POST', f"repos/${{ github.repository }}/issues/{os.environ['PR_NUMBER']}/comments", '--input', '-'],
                          input=json.dumps({'body': body}), text=True, check=True)
           PY
+
+  # Reclassifica os PRs abertos pelo caminho que TEM secret. Idempotente: o classify
+  # dedupe rótulo e comentário, então rodar de novo não polui o PR.
+  sweep:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Guard de identidade
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::CSBRASIL_BOT_TOKEN ausente — o sweep precisa do PAT para disparar o classify."
+            exit 1
+          fi
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Dispara o classify de cada PR aberto
+        run: |
+          for pr in $(gh pr list --repo "$REPO" --state open --limit 50 --json number --jq '.[].number'); do
+            gh workflow run csbrasil-bot-pr-classify.yml --repo "$REPO" -f pr_number="$pr" \
+              || echo "::warning::não deu para reclassificar o PR #$pr"
+          done
