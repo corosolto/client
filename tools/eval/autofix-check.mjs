@@ -17,6 +17,15 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
+   AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
+         releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
+         gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
+         quem está parado esperando revisão, que é justamente quem precisa.
+   AF5 · o resolvedor de conflito passa pela MESMA trava e ABORTA quando sobra
+         conflito fora dela. Resolver conflito de arquivo gerado é mecânico (todo
+         `chore(release)` reabre um em cada PR aberto); resolver conflito de código
+         é julgamento. Sem o `git merge --abort` no caminho de exceção, o bot
+         resolveria código escolhendo um lado no escuro.
 
    Uso: node tools/eval/autofix-check.mjs [--mutante=<nome>]
    ============================================================================ */
@@ -29,6 +38,8 @@ const MUTANTES = {
   'lista-abre-workflow': 'AF2',
   'autofix-mergeia': 'AF3',
   'automerge-volta': 'AF4',
+  'resolve-conflito-de-codigo': 'AF5',
+  'sem-varredura-pos-release': 'AF6',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -79,6 +90,33 @@ else {
 if (/gh pr merge/.test(wf)) {
   falhas.push('AF3 autofix.yml mergeia PR — o autofix deixa pronto, quem fecha é gente');
 }
+
+/* ---- AF5: o resolvedor de conflito aborta quando o conflito é de gente ---- */
+if (MUT === 'resolve-conflito-de-codigo') {
+  wf = wf.replace(/\s*git merge --abort\n/, '\n');
+}
+const resolveConflito = /--caminhos/.test(wf) && /git checkout --theirs/.test(wf);
+if (resolveConflito) {
+  const trecho = wf.slice(wf.indexOf('diff-filter=U'), wf.indexOf('git checkout --theirs'));
+  if (!/autofix_allowlist\.py --caminhos/.test(trecho)) {
+    falhas.push('AF5 o resolvedor escolhe lado do conflito sem consultar a lista de permissão');
+  }
+  if (!/git merge --abort/.test(trecho)) {
+    falhas.push('AF5 o resolvedor não aborta o merge quando sobra conflito fora da lista — passaria a decidir código no escuro');
+  }
+  if (!/--caminhos/.test(ler('scripts/ci/autofix_allowlist.py'))) {
+    falhas.push('AF5 autofix_allowlist.py não entende `--caminhos`, que é como o resolvedor o consulta');
+  }
+}
+
+/* ---- AF6: a varredura pós-release existe e enxerga quem ficou para trás ---- */
+if (MUT === 'sem-varredura-pos-release') wf = wf.replace(/\n  push:\n    branches: \[main\]/, '');
+const temPush = /^\s{2}push:\n\s{4}branches: \[main\]/m.test(wf);
+const temVarredura = /varredura:\n\s+if: github\.event_name == 'push'/.test(wf);
+const filtraAtrasado = /mergeable != "MERGEABLE"/.test(wf) && /gh workflow run autofix\.yml/.test(wf);
+if (!temPush) falhas.push('AF6 autofix.yml não acorda quando a main anda — PR parado esperando revisão nunca é consertado');
+else if (!temVarredura) falhas.push('AF6 o gatilho de push existe mas não há job de varredura');
+else if (!filtraAtrasado) falhas.push('AF6 a varredura não seleciona os PRs desatualizados nem dispara o autofix de cada um');
 
 /* ---- AF4: e nenhum outro workflow mergeia tampouco ---- */
 const WORKFLOWS = readdirSync('.github/workflows').filter((f) => /\.ya?ml$/.test(f));
