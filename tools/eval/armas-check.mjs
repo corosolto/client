@@ -84,5 +84,8 @@ await browser.close();
 srv.kill();
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m ARM partida carrega as armas dela, nenhum bot com caixa e o resto chega em ocioso');
-if (MUT && !falhas.length) console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+if (MUT && !falhas.length) {
+  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso
+}
 process.exit(falhas.length ? 1 : 0);
