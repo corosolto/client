@@ -70,6 +70,10 @@ jobs:
             .vercel/output
           retention-days: 3
           if-no-files-found: error
+          # O `upload-artifact` v4 IGNORA arquivo oculto por padrão, e o build da Vercel
+          # é cheio deles: sem isto o `.vc-config.json` de cada função fica de fora e o
+          # deploy morre com "Could not load function config".
+          include-hidden-files: true
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -79,3 +83,4 @@ jobs:
             /tmp/pr-sha.txt
           retention-days: 3
           if-no-files-found: error
+          include-hidden-files: true
