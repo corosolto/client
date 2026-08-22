@@ -568,9 +568,25 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
   };
 }
 
+/* Pool dos bots em modo `all`: uma fonte só para o sorteio da partida (pickMatchWeapons) e
+   para o fallback do Game — duas listas divergiriam em silêncio e furariam o preload. */
+const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
+  'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
+
+/* Armas da partida sorteadas ANTES do preload, pelo mesmo motivo do roster: o main.js precisa
+   saber o que carregar, e re-sortear no Game poria arma de caixa em bot. Régua: ARM1. */
+export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
+  const um = () => (mode === 'awp' ? 'awp' : mode === 'knife' ? 'knife'
+    : mode === 'pistols' ? (Math.random() < 0.5 ? 'pistol' : 'deagle')
+    : BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0]);
+  return Array.from({ length: Math.max(1, teamSize) * 2 }, um);
+}
+
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
     this._ctfOpt = ctf;
+    this._matchWeapons = matchWeapons;
+    this._armaN = 0;
     this.renderer = renderer;
     this.sfx = sfx;
     this.settings = settings;
@@ -719,7 +735,9 @@ export class Game {
     // tem elenco — ver pickMatchRoster) vem sorteado do main.js ou é sorteado aqui (arnês/testes).
     const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId);
     const mkBot = (def, team, i) => {
-      const wpn = this._botWeapon();
+      // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
+      // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
+      const wpn = this._matchWeapons?.[this._armaN++] || this._botWeapon();
       const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
@@ -5256,9 +5274,7 @@ export class Game {
     if (mode === 'awp') return 'awp';
     if (mode === 'knife') return 'knife';
     if (mode === 'pistols') return Math.random() < 0.5 ? 'pistol' : 'deagle';
-    const pool = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
-      'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
-    return pool[(Math.random() * pool.length) | 0];
+    return BOT_WEAPON_POOL[(Math.random() * BOT_WEAPON_POOL.length) | 0];
   }
   // Modo restrito não tem pickup de outra arma no mapa, então reserva finita = partida
   // acabada quando zera. Fica infinita a RESERVA, não o pente: a recarga segue cobrando.
