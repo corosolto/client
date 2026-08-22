@@ -19,3 +19,10 @@ O recibo, prompt e imagens de inspeção ficam em `references/viewmodel-maos/`, 
 O seed Meshy e seu rig foram preservados apenas em `/tmp/csbrasil-vm-pilot/` para
 comparação; não são artefatos de entrega. A revisão independente e os IDs das tarefas
 ficam em `tools/eval/asset-evidence/viewmodel-maos/REVIEW-SEED-2026-08-22.md`.
+
+## Base isolada reprovada em 2026-08-22
+
+O segundo candidato acertou o recorte e o orçamento, mas não tem pose de pegada,
+skin, juntas, clipes ou materiais de facção. Pode servir de insumo para rig/manual
+somente depois de reposar; a revisão independente está em
+`tools/eval/asset-evidence/viewmodel-maos/REVIEW-ISOLATED-2026-08-22.md`.
