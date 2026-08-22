@@ -42,6 +42,7 @@ ordem.
 | [`ROADMAP.md`](ROADMAP.md) | **Para onde o projeto vai**, o recorte da v2, o que foi substituído, e o risco de merge entre `main` e `v2/alpha`. Aponta para o `plans/08`; não o duplica. |
 | [`../plans/08-RELEASE-PROFISSIONAL.md`](../plans/08-RELEASE-PROFISSIONAL.md) | O roadmap **executável**: degraus 0-10, com o corte defendido e as perguntas abertas para o dono. |
 | [`LICENCA.md`](LICENCA.md) | A migração MIT → AGPL aplicada em 07/08/2026 e a separação código × arte paga × marca. **Não é publicado no site**: quem declara é o `LICENSE`, e a tabela de superfícies é gerada no `CONTRIBUTING.md`. |
+| [`SEO-AEO.md`](SEO-AEO.md) | Contrato do que crawlers e assistentes recebem no build, as fontes de verdade e os checks antes de publicar. |
 | [`IDEAS.md`](IDEAS.md) | Ideias soltas, não priorizadas. Bom lugar pra achar o que fazer. |
 | [`QUALITY.md`](QUALITY.md) | Critérios de qualidade do produto. |
 | [`TRIBOS-URBANAS.md`](TRIBOS-URBANAS.md) | O documento de design da facção Tribos Urbanas. |

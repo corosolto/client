@@ -19,9 +19,10 @@
        campos são obrigatórios pra um FAQ virar card, por exemplo) são política
        do Google, não do schema.org, e não estão neste vocabulário;
      · não valida os valores (não sabe se `price: "0"` é plausível);
-     · não vê as páginas SSR (`/ranking`, `/mapa`, `/u/*`), que não têm HTML em
-       dist/. Elas usam o MESMO Layout, então os nós de site/página são os
-       mesmos já validados aqui.
+   · não vê as páginas SSR (`/`, `/ranking`, `/mapa`, `/u/*`), que não têm HTML
+     em `dist/`. O jogo na raiz é SSR porque escolhe o idioma por cabeçalho;
+     valide-o num smoke HTTP separado. As páginas estáticas abaixo exercitam o
+     mesmo Layout e o grafo base que ele usa.
 
    FONTE
      https://schema.org/version/latest/schemaorg-current-https.jsonld
@@ -78,7 +79,7 @@ const ancestrais = (t, vistos = new Set()) => {
   return vistos;
 };
 
-const paginas = ['index.html', 'armas/index.html', 'mapas/index.html', 'personagens/index.html',
+const paginas = ['armas/index.html', 'mapas/index.html', 'personagens/index.html',
                  'como-jogar/index.html', 'sobre/index.html', 'changelog/index.html'];
 
 const problemas = [];
