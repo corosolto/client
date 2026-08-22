@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "provider": "OpenRouter",
+  "model": "google/lyria-3-clip-preview",
+  "startedAt": "2026-08-22T01:28:25.465Z",
+  "completedAt": "2026-08-22T01:28:25.469Z",
+  "status": "complete",
+  "maxCostUsd": 3,
+  "totalCostUsd": 0.2,
+  "accountPlan": "pending confirmation",
+  "commercialUse": false,
+  "note": "Pilotos de escuta. Plano, termos e direito comercial não foram confirmados; não integrar ao pacote/publicação.",
+  "preflight": {
+    "endpointCount": 1,
+    "pricing": {
+      "prompt": "0",
+      "completion": "0"
+    }
+  },
+  "completed": [
+    {
+      "id": "pilot-asfalto-e-viola",
+      "file": "public/audio/soundtrack/pilot-asfalto-e-viola.mp3",
+      "sha256": "977244ff04ed233d3ff5cca62d7e216c31743f0e5bd975ed23f7996d0555fbcc",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787361976-F8SszbK4ETp0WxeVSzwC",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:26:34.999Z",
+      "prompt": "Brazilian urban instrumental for a fast first-person shooter: viola caipira lead over punchy electronic breakbeat, dry hand percussion, warm electric bass, 124 BPM, subtle São Paulo street energy. Strong rhythmic loop, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-maracatu-noturno",
+      "file": "public/audio/soundtrack/pilot-maracatu-noturno.mp3",
+      "sha256": "ad5b2c1065b9f23ca14b055796952eac26fcca198f1b0532c7ab6952bf3ae20b",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787361995-z5jJ3jkqpO1vCXlv6LSM",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:26:55.039Z",
+      "prompt": "Original Brazilian cinematic game soundtrack instrumental: maracatu alfaia drums, agogo accents, dark synth bass, tense minor harmony, 118 BPM, night match atmosphere. Rhythmic and loop-friendly, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-baile-subterraneo",
+      "file": "public/audio/soundtrack/pilot-baile-subterraneo.mp3",
+      "sha256": "86f00192d15e39db21b9b92cd8166fc9fef1e3d0a95de407c21cd04c816dfc25",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787362015-hOuYf550sl2cVSpSpi6a",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:27:11.924Z",
+      "prompt": "Original Brazilian baile funk game soundtrack instrumental: dry tamborzao rhythm, deep but controlled sub bass, metallic percussion, sparse synth stabs, 132 BPM, raw underground club energy. No vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-concreto-e-metais",
+      "file": "public/audio/soundtrack/pilot-concreto-e-metais.mp3",
+      "sha256": "8ac64401f61495cfc5d902d8000cb1fb46a9ba37d624d59984b139df88be70e3",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787362038-94CUoNdN9mVc6RnaCuvX",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:27:38.610Z",
+      "prompt": "Original Brazilian street march instrumental for a multiplayer FPS: tight caixa snare, surdo pulse, short brass stabs, distorted guitar texture, determined energy, 126 BPM. Designed as background gameplay music, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    },
+    {
+      "id": "pilot-floresta-eletrica",
+      "file": "public/audio/soundtrack/pilot-floresta-eletrica.mp3",
+      "sha256": "5e3c867779ac0ac00cd6021a733afbb08ac7e4fb20e29f2af004a8ea187e885f",
+      "durationSeconds": 30.772,
+      "generationId": "gen-1787362058-kvnMtfnM5VD1cZxGvOMH",
+      "costUsd": 0.04,
+      "costReceiptError": null,
+      "generatedAt": "2026-08-22T01:27:59.013Z",
+      "prompt": "Original Brazilian Amazon-inspired electronic game soundtrack instrumental: hand percussion, wooden flute-like synth texture, electric guitar swells, humid ambience, driving bass, 120 BPM. Focused action loop with no vocals, no spoken words, no artist imitation, no melody from an existing song."
+    }
+  ],
+  "failures": []
+}
