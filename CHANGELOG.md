@@ -63,6 +63,22 @@
 ### Mudado
 - fix: importmap do Layout e CVEs altas nas dependências (#363)
 
+- fix(webgl): compila preview em renderers distintos
+- fix(audio): associa bordoes aos personagens
+- fix(ui): fecha telas finais e contrato de rounds
+- feat(audio): personagens falam ao clicar no avatar
+- feat(ui): fecha redesign AAA e opções da partida
+- docs(changelog): rodada do cronista — 70 commits
+- docs(contributing): quem conserta o quê — csbrasil-bot é pipeline, estraga-codigo conserta
+- fix(menu): convida jogador a enviar feedback
+- fix(ci): valida animacoes antes do deploy
+- fix(ui): fecha fundos responsivos do redesign
+- fix(docs): ignora arquivos locais nas métricas
+- docs: atualiza contratos gerados
+- fix(eval): mede cache injetado pelo build
+- fix(client): bundle público não nomeia o backend — régua eval:backendhints
+- fix(apoie): URLs de apoio resolvidas pelo servidor no menu do jogo, aria-pressed, bandeira/globo nos botões
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.172).
 ## [2.0.0-alpha.171] — 2026-08-21
 
 ### Mudado
