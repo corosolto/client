@@ -78,6 +78,8 @@ def selftest() -> int:
         ("package.json NÃO passa", ["package.json"], False),
         ("uma proibida contamina o lote", ["STATUS.md", "public/js/game.js"], False),
         ("nada mexido é lote vazio", [], True),
+        ("CHANGELOG não é gerado por ferramenta nossa", ["CHANGELOG.md"], False),
+        ("lote típico de release só toca gerado", ["README.md", "STATUS.md", "docs/docs/comecando.md"], True),
     ]
     erros = 0
     for nome, caminhos, esperado in casos:
@@ -100,7 +102,12 @@ def selftest() -> int:
 def main() -> int:
     if "--selftest" in sys.argv:
         return selftest()
-    caminhos = caminhos_do_porcelain(sys.stdin.read())
+    # `--caminhos`: a entrada já é uma lista crua (o `git diff --name-only` do merge),
+    # e não o porcelain. É o modo que o resolvedor de conflito usa.
+    if "--caminhos" in sys.argv:
+        caminhos = [l.strip() for l in sys.stdin.read().splitlines() if l.strip()]
+    else:
+        caminhos = caminhos_do_porcelain(sys.stdin.read())
     ok, fora = separa(caminhos)
     if fora:
         print("BLOQUEADO: o conserto encostou em arquivo que o bot não pode reescrever:")
