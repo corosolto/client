@@ -1,8 +1,5 @@
-/* KTX2/Basis: textura que chega COMPRIMIDA na GPU. Um 1024² RGBA8 ocupa 5,6 MB de VRAM com
-   mipmaps; transcodificado para BC/ASTC/ETC cai para ~0,7 MB — 8×. O preço é download
-   (+45% por textura) e 571 KB de transcoder, então quem manda é a régua KTX1, não o gosto.
-   O loader precisa do RENDERER para saber que formato a GPU aceita; por isso este módulo
-   guarda a instância e main.js a arma no boot. Sem armar, GLB com KHR_texture_basisu não abre. */
+/* Textura que chega COMPRIMIDA na GPU: 1024² RGBA8+mips custa 5,6 MB de VRAM, transcodificado
+   cai a ~0,7 MB. Números e o preço em download: docs/LICOES.md e o PR do KTX2. */
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 
 let _ktx2 = null;
