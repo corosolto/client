@@ -55,6 +55,11 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
          `pull_request_target`), e nenhuma referência a `secrets.` no arquivo;
     PRV2 quem PUBLICA roda no contexto base (`workflow_run`), que é o que lhe dá o
          segredo mesmo vindo de fork;
+    PRV4 quem PUBLICA não interpola `${{ }}` dentro de `run:`. A expressão é substituída
+         no TEXTO do script antes do shell existir, então valor com aspas ou `$(...)` vira
+         comando — e no caminho de deploy os valores vêm de fora (o número do PR atravessa
+         um artefato escrito por job que rodou código do fork, a URL é saída de comando).
+         O CodeQL pegou exatamente isso aqui, como injeção crítica, antes do merge.
     PRV3 quem PUBLICA não executa NADA do PR: sem checkout da branch do fork, sem
          `npm ci`, sem `npm run`, e o deploy é `--prebuilt` (só envia arquivo).
          Furar isto devolve o token para as mãos de quem abriu o PR.
@@ -82,6 +87,20 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
         errors.append('PRV2 o job que PUBLICA não roda em workflow_run — sem contexto base não há segredo em PR de fork')
     if 'secrets.VERCEL_TOKEN' not in deploy:
         errors.append('PRV2 o job que PUBLICA não usa o token da Vercel')
+
+    # PRV4: `${{ }}` só pode aparecer em `env:`/`with:`/`if:`, nunca dentro do script.
+    dentro_de_run = False
+    for linha in deploy.splitlines():
+        despido = linha.strip()
+        if re.match(r'run:\s*\|', despido):
+            dentro_de_run = True
+            continue
+        if dentro_de_run:
+            # o bloco acaba quando a indentação volta para o nível da chave do passo
+            if despido and not linha.startswith('          '):
+                dentro_de_run = False
+            elif '${{' in linha:
+                errors.append(f'PRV4 `{despido[:60]}` interpola expressão dentro de run: — passe por env:')
 
     if '--prebuilt' not in deploy:
         errors.append('PRV3 o deploy não é --prebuilt: estaria construindo, e construir é executar código do PR')
@@ -132,6 +151,7 @@ def selftest(source: str) -> list[str]:
         'publica-sem-run': (build, deploy.replace('  workflow_run:', '  schedule:')),
         'publica-faz-checkout': (build, deploy + '\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n'),
         'publica-constroi': (build, deploy.replace('--prebuilt', '')),
+        'publica-interpola': (build, deploy.replace('gh pr comment "$PR_NUM"', 'gh pr comment "${{ steps.pr.outputs.numero }}"')),
     }
     missed_sep = [n for n, (b, d) in separacao.items() if not separacao_failures(b, d)]
 

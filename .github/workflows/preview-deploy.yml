@@ -80,10 +80,17 @@ jobs:
           URL=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN")
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
+      # `${{ }}` dentro de `run:` é substituído no TEXTO do script antes do shell existir:
+      # valor com aspas ou `$(...)` vira comando. Aqui os dois vêm de fora — o número
+      # atravessou um artefato escrito por job que rodou código do fork, e a URL é saída
+      # de comando. Por isso descem por ENV, que o shell trata como dado. (CodeQL pegou
+      # esta linha; ela estava interpolada direto.)
       - name: Comenta a URL
         if: steps.pr.outputs.pular != '1'
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_NUM: ${{ steps.pr.outputs.numero }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
         run: |
-          gh pr comment "${{ steps.pr.outputs.numero }}" --repo "$GITHUB_REPOSITORY" \
-            --body "🤖 **preview** no ar → ${{ steps.deploy.outputs.url }}"
+          gh pr comment "$PR_NUM" --repo "$GITHUB_REPOSITORY" \
+            --body "🤖 **preview** no ar → $PREVIEW_URL"
