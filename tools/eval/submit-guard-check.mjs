@@ -275,6 +275,49 @@ for (const { arq } of ALVOS) {
 }
 console.log('');
 
+/* ═══ SG6 · O TETO DE KILLS NÃO RECUSA O QUE O CAPTURA PRODUZ (issue #116) ═══════
+   Palavras de quem reportou: *"stats não enviados: kills além do fisicamente
+   possível. No final da partida eu estava com 95 kills e 6 mortes."* No CAPTURA a
+   partida inteira são 2 rodadas (CTF_ROUNDS_TO_WIN), então o teto `45 * rounds`
+   dava 90 — o modo fechar em 2 rodadas virou acusação de trainer. Mesma premissa
+   errada do #87: a régua de kills nasceu do ABATE, onde rodada É uma janela.
+   No CAPTURA o limitante físico é o RESPAWN_DELAY: ninguém mata mais que 1 por
+   respawn, então o teto honesto é SEGUNDOS / respawn, não rounds × 45. */
+console.log('SG6 · o teto de kills aceita partida de captura que o jogo produz');
+const GAME = path.join(RAIZ, 'public/js/game.js');
+const RESP = Number((fs.readFileSync(GAME, 'utf8').match(/RESPAWN_DELAY = ([\d.]+)/) || [])[1]);
+if (!RESP) { falhas.push('SG6: não li RESPAWN_DELAY do game.js — a física do teto não tem fonte'); }
+const ALVOS_KILLS = [
+  { arq: 'supabase/schema.sql', flag: '_flag' },
+  { arq: 'supabase/migrations/024_submit_guard_kills.sql', flag: '_flag' },
+  { arq: 'supabase/opcional/012_ofuscacao_schema.sql', flag: 'fn_f9c' },
+];
+const CASO_116 = { kills: 95, rounds: 2, seconds: 480 };   // 95 kills · 2 rodadas · meia partida de 960 s
+const IMPOSSIVEL = { kills: 150, rounds: 2, seconds: 30 }; // trainer: 5 kills/s sustentados
+for (const { arq, flag } of ALVOS_KILLS) {
+  const p = path.join(DB, arq);
+  if (!fs.existsSync(p)) { console.log(`   ${arq.padEnd(48)} AUSENTE`); continue; }
+  const txt = semComentario(fs.readFileSync(p, 'utf8'));
+  const i = txt.search(/if\s+p_kills\s*>[\s\S]{0,400}?fisicamente/i);
+  if (i < 0) { falhas.push(`SG6 ${arq}: não achei a cláusula do teto de kills — foi renomeada ou sumiu`); console.log(`   ${arq.padEnd(48)} CLÁUSULA NÃO ENCONTRADA`); continue; }
+  const fim = txt.indexOf('end if;', i);
+  let bloco = txt.slice(i, fim < 0 ? i + 400 : fim);
+  if (new RegExp(`\\b${flag}\\s*\\(`).test(bloco)) falhas.push(`SG6 ${arq}: o teto de kills ainda chama ${flag}() — falso-positivo comprovado (#116) alimentando shadowban`);
+  /* O teto sob teste: mutação devolve o mundo de `45 * rounds` puro. */
+  const novo = bloco.match(/p_kills\s*>\s*greatest\(\s*45\s*\*\s*greatest\(p_rounds,\s*1\)\s*,\s*floor\(p_seconds\s*\/\s*([\d.]+)\s*\)\s*\)/);
+  const velho = bloco.match(/p_kills\s*>\s*(\d+)\s*\*\s*greatest\(p_rounds,\s*1\)/);
+  const teto = (c) => MUT === 'kills45'
+    ? 45 * Math.max(c.rounds, 1)
+    : (novo ? Math.max(45 * Math.max(c.rounds, 1), Math.floor(c.seconds / Number(novo[1]))) : Number(velho?.[1] ?? 0) * Math.max(c.rounds, 1));
+  const recusaKills = (c) => c.kills > teto(c);
+  if (novo && RESP && Number(novo[1]) < RESP) falhas.push(`SG6 ${arq}: divisor ${novo[1]} s/kill é MAIS APERTADO que o RESPAWN_DELAY ${RESP} s do jogo — o teto nega a física que ele dizia medir`);
+  if (!novo && !velho) { falhas.push(`SG6 ${arq}: o teto de kills não está em nenhuma forma conhecida`); continue; }
+  if (recusaKills(CASO_116)) falhas.push(`SG6 ${arq}: a partida REPORTADA na #116 (${CASO_116.kills} kills, ${CASO_116.rounds} rodadas de captura) é recusada — teto ${teto(CASO_116)}`);
+  if (!recusaKills(IMPOSSIVEL)) falhas.push(`SG6 ${arq}: trainer de ${IMPOSSIVEL.kills} kills em ${IMPOSSIVEL.seconds} s PASSA — o teto não morde nada`);
+  console.log(`   ${arq.padEnd(48)} ${novo ? `seconds/${novo[1]}` : `ANTIGO ${velho?.[1]}×rounds`} · caso #116 ${recusaKills(CASO_116) ? 'RECUSADO' : 'ok'} · impossível ${recusaKills(IMPOSSIVEL) ? 'recusado' : 'PASSA'}`);
+}
+console.log('');
+
 /* ═══ SG2 / SG3 · A AMOSTRA ══════════════════════════════════════════════════════
    Cara (~10 min). Fica atrás de --amostra para o portão continuar sendo segundos; o
    número dela vive na entrada do KNOWN-BUGS.md com o comando que reproduz. */

@@ -2236,10 +2236,14 @@ function runNode(script, env = {}, args = []) {
 }
 
 // ── 10. INVARIANTES QUE EXIGEM PIXEL (marcadas, não rodadas aqui) ───────────
-skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — use tools/eval/motion.mjs');
-skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — use tools/eval/motion.mjs');
-skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — use tools/eval/motion.mjs');
-skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser');
+// Sem arnês de browser para viewmodel hoje (o antigo `tools/eval/motion.mjs`
+// citado aqui NUNCA existiu no git — ponteiro fantasma). O que roda em browser
+// no CI é o portao-browser (boot real + grafite + silhueta da seleção); estas
+// PX continuam pendentes de arnês dedicado (ver KNOWN-BUGS, dívida PX).
+skip('PX1', 'no ADS o jogador vê a arma E a mira', 'exige browser — sem arnês dedicado (divida PX)');
+skip('PX2', 'silhuetas das 26 armas diferem (IoU par a par < 0,85)', 'exige browser — sem arnês dedicado (divida PX)');
+skip('PX3', 'mão travada no grip em todo frame de toda animação', 'exige browser/traço — sem arnês dedicado (divida PX)');
+skip('PX4', 'aliado × inimigo distinguíveis em 1 frame a 5/20/40 m', 'exige browser — sem arnês dedicado (divida PX)');
 
 // ── RELATÓRIO ───────────────────────────────────────────────────────────────
 /* KNOWN-RED.json: dívidas conhecidas viram DÍVIDA (não reprovam); crítica

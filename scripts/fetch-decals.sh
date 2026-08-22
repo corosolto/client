@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 # e com eles sumiam 513 das 4.671 peças de grafite dos 5 mapas (30% da Quebrada). Ninguém
 # tinha como ver isso até o `npm run assert:assets` do T1, que agora reprova o build se o
 # pacote vier atrás do que o jogo pede.
-URL="${DECALS_PACK_URL:-https://github.com/rubenmarcus/csbrasil/releases/download/decals-pack-v2/decals-pack.zip}"
+URL="${DECALS_PACK_URL:-https://github.com/corosolto/client/releases/download/decals-pack-v2/decals-pack.zip}"
 DEST="public/img/decals"
 
 # Sentinela conta só o ACERVO baixável (exclui os `or-*.png`, que são obra própria
@@ -24,6 +24,6 @@ if [ -d "$DEST" ] && [ "$(ls -1 "$DEST"/*.png 2>/dev/null | grep -cv '/or-')" -g
 fi
 mkdir -p "$DEST"
 echo "Baixando decalques de: $URL"
-curl -fsSL "$URL" -o /tmp/csbrasil-decals.zip
+curl --retry 5 --retry-delay 3 --retry-all-errors --connect-timeout 20 -fsSL "$URL" -o /tmp/csbrasil-decals.zip
 unzip -o -q /tmp/csbrasil-decals.zip -d "$DEST/"
 echo "Pronto. $(ls -1 "$DEST"/*.png | wc -l | tr -d ' ') decalques em $DEST/."

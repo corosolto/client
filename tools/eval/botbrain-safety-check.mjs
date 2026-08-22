@@ -11,6 +11,8 @@ let page = read('src/pages/index.astro');
 let docker = read('docker/botbrain.Dockerfile');
 let compose = read('docker-compose.botbrain.yml');
 let trainer = read('tools/eval/bot-train.mjs');
+let recorder = read('tools/eval/bot-record.mjs');
+let evaluator = read('tools/eval/bot-brain-check.mjs');
 let brain = read('public/js/botbrain/brain.js');
 let sense = read('public/js/botbrain/sense.js');
 let cachedModules = moduleCacheManifest().modules;
@@ -23,10 +25,26 @@ else if (mutant === 'root') docker = docker.replace('USER node', '');
 else if (mutant === 'poison') trainer = trainer.replace('MAX_BATCHES_PER_PLAYER', 'UNLIMITED_BATCHES_PER_PLAYER');
 else if (mutant === 'localsink') {
   api = api.replaceAll('MAX_LOCAL_FILE_BYTES', 'UNLIMITED_LOCAL_FILE_BYTES');
-  compose = compose.replace('127.0.0.1:4321:4321', '4321:4321');
+  compose = compose.replace('127.0.0.1:', '');
 }
 else if (mutant === 'stale') sense = sense.replace('else if (!best) mem.target = null;', '');
+else if (mutant === 'eval-leak') evaluator = evaluator.replace(
+  'const EVAL_SEEDS = [101, 202, 303];',
+  'const EVAL_SEEDS = [1, 2, 3];');
+else if (mutant === 'eval-usa-treino') evaluator = evaluator.replace(
+  'for (const seed of EVAL_SEEDS)',
+  'for (const seed of [1, 2, 3])');
+else if (mutant === 'treino-usa-eval') recorder = recorder.replace(
+  'for (const seed of TRAIN_SEEDS)',
+  'for (const seed of [101, 202, 303])');
 else if (mutant) throw new Error(`mutante desconhecido: ${mutant}`);
+
+function seedList(source, preferred, fallback) {
+  const named = source.match(new RegExp(`const ${preferred} = \\[([^\\]]+)\\];`));
+  const legacy = source.match(new RegExp(`const ${fallback} = \\[([^\\]]+)\\];`));
+  const match = named || legacy;
+  return match ? [...match[1].matchAll(/\d+/g)].map((item) => Number(item[0])) : [];
+}
 
 const failures = [];
 if (!api.includes('resolvePlayerIdentity') || !api.includes('validUid') || !api.includes('nick: null')
@@ -53,10 +71,21 @@ if (!trainer.includes('MAX_BATCHES_PER_PLAYER') || !trainer.includes('player_id'
 if (!api.includes('MAX_REQUEST_BYTES') || !api.includes('MAX_LOCAL_FILE_BYTES')
     || !api.includes('sanitizeMeta') || !api.includes('localRateLimit') || !api.includes('validLocalOrigin'))
   failures.push('BB9 sink local não limita corpo, metadados, taxa e quota em disco');
-if (!compose.includes('127.0.0.1:4321:4321'))
+if (!compose.includes('127.0.0.1:') || compose.includes('0.0.0.0:'))
   failures.push('BB9 serviço local expõe o sink de treino fora do loopback');
 if (!sense.includes('else if (!best) mem.target = null;'))
   failures.push('BB10 memória neural conserva alvo morto ou fora do grace');
+const trainSeeds = seedList(recorder, 'TRAIN_SEEDS', 'SEEDS');
+const evalSeeds = seedList(evaluator, 'EVAL_SEEDS', 'SEEDS');
+const seedOverlap = trainSeeds.filter((seed) => evalSeeds.includes(seed));
+const splitDeclared = recorder.includes('const TRAIN_SEEDS =') && evaluator.includes('const EVAL_SEEDS =')
+  && trainSeeds.length && evalSeeds.length;
+const splitWired = recorder.includes('for (const seed of TRAIN_SEEDS)')
+  && evaluator.includes('for (const seed of EVAL_SEEDS)');
+if (!splitDeclared || !splitWired || seedOverlap.length) {
+  const detail = seedOverlap.join(', ') || (splitDeclared ? 'split não aplicado' : 'split não declarado');
+  failures.push(`BB11 avaliação reutiliza sementes do treino (${detail})`);
+}
 
 for (const failure of failures) console.error(`  \x1b[31m✗\x1b[0m ${failure}`);
 if (mutant && !failures.length) failures.push(`mutação ${mutant} não foi detectada`);
@@ -65,5 +94,5 @@ if (failures.length) {
   console.error(`\x1b[31mBOTBRAIN SAFETY ${failures.length} VERMELHA(S)\x1b[0m${mutant ? ` (mutante=${mutant})` : ''}`);
   process.exitCode = 1;
 } else {
-  console.error('\x1b[32mBOTBRAIN SAFETY verde: UID, consentimento, CTF, cache, contêiner e corpus protegidos\x1b[0m');
+  console.error('\x1b[32mBOTBRAIN SAFETY verde: UID, consentimento, CTF, cache, contêiner, corpus e avaliação holdout protegidos\x1b[0m');
 }

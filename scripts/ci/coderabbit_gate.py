@@ -1,50 +1,60 @@
 #!/usr/bin/env python3
-"""Gate de presença dos revisores-bot (CodeRabbit + estraga-codigo).
-
-PR com review/comentário de bot revisor ganha `needs-coderabbit-resolution` — o
-automerge (check_automerge.py) fica bloqueado até o maintainer confirmar com
-`coderabbit-resolved`. A confirmação é MANUAL de propósito: threads resolvidas
-via API por um agente também valem, o maintainer é o arbítrio final.
-
-O estraga-codigo posta REVIEW (não issue-comment), então o payload precisa trazer
-`reviews` além de `comments` — sem isso ele era invisível ao gate (PRs #302/#303
-passaram sem trava nenhuma em 16/08).
-"""
 import json
 import sys
 
-REVISORES = ("coderabbit", "estraga-codigo")
 
-
-def main() -> int:
-    payload = json.load(sys.stdin)
+def decide(payload: dict) -> dict:
     comments = payload.get("comments", [])
-    reviews = payload.get("reviews", [])
     status_rollup = payload.get("statusCheckRollup", [])
-
-    def eh_bot(login):
-        return any(rev in (login or "").lower() for rev in REVISORES)
 
     has_coderabbit_check = any(
         item.get("__typename") == "CheckRun" and "coderabbit" in (item.get("name") or "").lower()
         for item in status_rollup
     )
-    has_bot_comment = any(
-        eh_bot((comment.get("author") or {}).get("login")) for comment in comments
-    )
-    has_bot_review = any(
-        eh_bot((review.get("author") or {}).get("login")) for review in reviews
+    has_coderabbit_comment = any(
+        "coderabbit" in ((comment.get("author") or {}).get("login") or "").lower()
+        for comment in comments
     )
 
-    print(
-        json.dumps(
-            {
-                "needs_resolution": bool(has_coderabbit_check or has_bot_comment or has_bot_review),
-                "labels_add": ["needs-coderabbit-resolution"] if (has_coderabbit_check or has_bot_comment or has_bot_review) else [],
-                "labels_remove": ["coderabbit-resolved"] if (has_coderabbit_check or has_bot_comment or has_bot_review) else [],
-            }
-        )
-    )
+    precisa = bool(has_coderabbit_check or has_coderabbit_comment)
+    return {
+        "needs_resolution": precisa,
+        "labels_add": ["needs-coderabbit-resolution"] if precisa else [],
+        "labels_remove": ["coderabbit-resolved"] if precisa else [],
+    }
+
+
+def selftest() -> int:
+    """O que este portão erra é caro nos dois sentidos: falso negativo deixa PR com
+    revisão pendente virar automerge; falso positivo trava PR que ninguém revisou.
+    Fixtures portadas do greptile_gate.py, que ganhou as mesmas no PR #209."""
+    casos = [
+        ("check do coderabbit exige resolução",
+         {"statusCheckRollup": [{"__typename": "CheckRun", "name": "CodeRabbit"}]}, True),
+        ("comentário do bot exige resolução",
+         {"comments": [{"author": {"login": "coderabbitai[bot]"}, "body": "achei isso"}]}, True),
+        ("check legado do greptile não confunde",
+         {"statusCheckRollup": [{"__typename": "CheckRun", "name": "Greptile Review"}]}, False),
+        ("PR sem coderabbit não exige nada", {"comments": [], "statusCheckRollup": []}, False),
+        ("outro check não confunde",
+         {"statusCheckRollup": [{"__typename": "CheckRun", "name": "build"}]}, False),
+        ("author nulo não explode",
+         {"comments": [{"author": None, "body": "texto qualquer"}]}, False),
+        ("payload vazio não explode", {}, False),
+    ]
+    erros = 0
+    for nome, payload, esperado in casos:
+        d = decide(payload)
+        ok = d["needs_resolution"] == esperado and bool(d["labels_add"]) == esperado
+        erros += 0 if ok else 1
+        print(f"  {'ok  ' if ok else 'FALHOU'} {nome}: {d['needs_resolution']}")
+    return 0 if not erros else 1
+
+
+def main() -> int:
+    if "--selftest" in sys.argv:
+        return selftest()
+    print(json.dumps(decide(json.load(sys.stdin))))
     return 0
 
 

@@ -36,7 +36,8 @@ const SECS = parseFloat(process.argv[2] || '60');
 const ONLY = process.argv[3] || 'all';
 const MAPS_ALL = ['dust2', 'praca_poderes', 'loja_h', 'piscinao'];
 const MAPS = ONLY === 'all' ? MAPS_ALL : [ONLY];
-const SEEDS = [1, 2, 3];
+// Bootstrap versionado; BB11 impede o gate funcional de reutilizar estas trajetórias.
+const TRAIN_SEEDS = [1, 2, 3];
 
 function wrapAngle(a) { while (a > Math.PI) a -= Math.PI * 2; while (a < -Math.PI) a += Math.PI * 2; return a; }
 function toLocal(dx, dz, yaw) { const s = Math.sin(yaw), c = Math.cos(yaw); return { x: dx * c - dz * s, z: dx * s + dz * c }; }
@@ -115,7 +116,7 @@ const lines = [];
 let grand = 0;
 for (const mapId of MAPS) {
   const textures = h.initTextures(h.makeRenderer());
-  for (const seed of SEEDS) {
+  for (const seed of TRAIN_SEEDS) {
     const frames = runOne(mapId, textures, seed);
     grand += frames.length;
     lines.push(JSON.stringify(serialize(frames, { map: mapId, seed, source: 'scripted' })));
