@@ -94,7 +94,10 @@ jobs:
           {
             echo "HEAD_REF=$(jq -r .headRefName /tmp/pr.json)"
             echo "HEAD_REPO=$(jq -r '.headRepositoryOwner.login + "/" + .headRepository.name' /tmp/pr.json)"
-            echo "PODE_EDITAR=$(jq -r .maintainerCanModify /tmp/pr.json)"
+            # `maintainerCanModify` é FALSE por definição quando o PR não vem de fork —
+            # a opção nem existe ali. Sem esta conta o bot nunca empurrava em PR de casa,
+            # que é justamente onde ele sempre pode (medido no #425).
+            echo "PODE_EDITAR=$(jq -r 'if (.headRepositoryOwner.login + "/" + .headRepository.name) == env.REPO then "true" else (.maintainerCanModify|tostring) end' /tmp/pr.json)"
           } >> "$GITHUB_ENV"
 
       # Checa o código do PR para poder REGERAR a doc a partir dele. Nada do fork é
@@ -109,12 +112,48 @@ jobs:
           token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
           fetch-depth: 0
 
+      - name: Traz a base e resolve conflito de arquivo gerado
+        if: env.pular != '1'
+        id: merge
+        run: |
+          git config user.name  "csbrasil-bot"
+          git config user.email "csbrasil-bot@users.noreply.github.com"
+          git remote add base "https://github.com/$REPO.git" 2>/dev/null || true
+          BASE="${{ github.event.pull_request.base.ref || 'main' }}"
+          git fetch base "$BASE"
+          # A mensagem vai EXPLÍCITA mesmo quando o merge não conflita: `--no-edit` usa a
+          # mensagem automática do git, que não leva `Agent:` nem `Signed-off-by` — e aí o
+          # bot conserta o PR e o dco reprova o commit que ele mesmo fez (medido no #406).
+          if git merge --no-edit -m "Merge da base (autofix)" \
+                       -m "Agent: csbrasil-bot (autofix)" \
+                       -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>" FETCH_HEAD; then
+            git diff --quiet HEAD@{1} HEAD || echo "mesclou=1" >> "$GITHUB_OUTPUT"
+            echo "PR já está em cima da base (ou mesclou limpo)."
+            exit 0
+          fi
+          git diff --name-only --diff-filter=U > /tmp/conflitos.txt
+          echo "conflitos:"; cat /tmp/conflitos.txt
+          # A trava é lida da BASE, não do PR: um PR que reescrevesse o allowlist
+          # liberaria a si mesmo. Extrair para /tmp mantém a árvore limpa para o merge.
+          git show FETCH_HEAD:scripts/ci/autofix_allowlist.py > /tmp/allowlist-base.py
+          if ! python3 /tmp/allowlist-base.py --caminhos < /tmp/conflitos.txt; then
+            git merge --abort
+            echo "humano=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Só gerado: fica o da BASE, e os geradores re-derivam logo abaixo.
+          xargs -a /tmp/conflitos.txt -r git checkout --theirs --
+          xargs -a /tmp/conflitos.txt -r git add --
+          git commit --no-edit -m "Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)" \
+                     -m "Agent: csbrasil-bot (autofix)" \
+                     -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
+          echo "mesclou=1" >> "$GITHUB_OUTPUT"
+
       # As ferramentas que vão rodar têm de ser as da BASE, nunca as do fork — senão
       # um PR malicioso reescreve o gerador e o bot executa o que ele mandar.
       - name: Restaura as ferramentas da base
         if: env.pular != '1'
         run: |
-          git remote add base "https://github.com/$REPO.git" 2>/dev/null || true
           git fetch base "${{ github.event.pull_request.base.ref || 'main' }}"
           # O lock vem JUNTO com o package.json: `npm ci` exige que os dois batam, e
           # restaurar só um deles quebra a instalação (medido em 22/08, 2 de 10 runs).
@@ -138,39 +177,6 @@ jobs:
       # A trava é a MESMA do resto do autofix. Sobrou UM conflito fora da lista, o bot
       # aborta o merge e devolve para gente — conflito de código é julgamento, e
       # julgamento não é dele.
-      - name: Traz a base e resolve conflito de arquivo gerado
-        if: env.pular != '1'
-        id: merge
-        run: |
-          git config user.name  "csbrasil-bot"
-          git config user.email "csbrasil-bot@users.noreply.github.com"
-          BASE="${{ github.event.pull_request.base.ref || 'main' }}"
-          git fetch base "$BASE"
-          # A mensagem vai EXPLÍCITA mesmo quando o merge não conflita: `--no-edit` usa a
-          # mensagem automática do git, que não leva `Agent:` nem `Signed-off-by` — e aí o
-          # bot conserta o PR e o dco reprova o commit que ele mesmo fez (medido no #406).
-          if git merge --no-edit -m "Merge da base (autofix)" \
-                       -m "Agent: csbrasil-bot (autofix)" \
-                       -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>" FETCH_HEAD; then
-            git diff --quiet HEAD@{1} HEAD || echo "mesclou=1" >> "$GITHUB_OUTPUT"
-            echo "PR já está em cima da base (ou mesclou limpo)."
-            exit 0
-          fi
-          git diff --name-only --diff-filter=U > /tmp/conflitos.txt
-          echo "conflitos:"; cat /tmp/conflitos.txt
-          if ! python3 scripts/ci/autofix_allowlist.py --caminhos < /tmp/conflitos.txt; then
-            git merge --abort
-            echo "humano=1" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Só gerado: fica o da BASE, e os geradores re-derivam logo abaixo.
-          xargs -a /tmp/conflitos.txt -r git checkout --theirs --
-          xargs -a /tmp/conflitos.txt -r git add --
-          git commit --no-edit -m "Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)" \
-                     -m "Agent: csbrasil-bot (autofix)" \
-                     -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
-          echo "mesclou=1" >> "$GITHUB_OUTPUT"
-
       - name: Comenta quando o conflito é de gente
         if: env.pular != '1' && steps.merge.outputs.humano == '1'
         run: |

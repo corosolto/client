@@ -103,9 +103,15 @@ if (MUT === 'resolve-conflito-de-codigo') {
   wf = wf.replace(/\s*git merge --abort\n/, '\n');
 }
 const resolveConflito = /--caminhos/.test(wf) && /git checkout --theirs/.test(wf);
+if (resolveConflito && !/git show FETCH_HEAD:scripts\/ci\/autofix_allowlist\.py/.test(wf)) {
+  falhas.push('AF5 a trava consultada no merge não vem da BASE — um PR que reescrevesse o allowlist liberaria a si mesmo');
+}
 if (resolveConflito) {
   const trecho = wf.slice(wf.indexOf('diff-filter=U'), wf.indexOf('git checkout --theirs'));
-  if (!/autofix_allowlist\.py --caminhos/.test(trecho)) {
+  /* Vale tanto o script do repositório quanto a cópia da BASE extraída para /tmp — a
+     segunda é MAIS segura, porque um PR que reescrevesse o allowlist liberaria a si
+     mesmo. O que a régua recusa é escolher lado sem consultar trava nenhuma. */
+  if (!/(?:autofix_allowlist|allowlist-base)\.py --caminhos/.test(trecho)) {
     falhas.push('AF5 o resolvedor escolhe lado do conflito sem consultar a lista de permissão');
   }
   if (!/git merge --abort/.test(trecho)) {
