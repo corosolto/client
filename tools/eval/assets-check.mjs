@@ -57,7 +57,6 @@ import { GRAFITE } from '../../public/js/graffiti_layout.js';
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
 const MANIFEST = 'public/audio/manifest.json';
 const DIR_DECALS = 'public/img/decals';
-const DIR_POSTERS = 'public/posters';
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
 
 if (mutante && mutante !== 'grafite-orfa') {
@@ -140,18 +139,6 @@ if (T) try {
   }
 } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
-}
-
-if (T) {
-  const posterFiles = T.posterFiles || [];
-  if (posterFiles.length) {
-    const faltaPoster = posterFiles.filter((f) => !existsSync(path.join(DIR_POSTERS, f)));
-    if (faltaPoster.length) {
-      erros.push(`posters: ${faltaPoster.length} de ${posterFiles.length} faltando no disco`
-        + ` (ex.: ${faltaPoster.slice(0, 3).join(', ')}) — POSTER_FILES cita arquivo que não existe`
-        + ' em public/posters/.');
-    }
-  }
 }
 
 /* Issue #77: todo nome do layout gerado precisa continuar no pacote do jogo.

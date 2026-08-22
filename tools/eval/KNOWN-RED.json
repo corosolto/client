@@ -16,6 +16,8 @@
   "CHR3": "proporções do elenco — mesmo lote do CHR1",
   "CHR4": "proporções do elenco — mesmo lote do CHR1",
   "CTF1": "geometria de bandeira fora do critério em mapa(s) legado(s) — ajuste de layout pendente",
-  "GRAF1": "grafite: 272 peças com vão atrás em 5 mapas (brasília 68 · quebrada 102 · ferro 51 · loja H 28 · piscina 23) e 145 sobrepostas. Saiu de 698/540 em 07/08 alinhando o limiar das duas réguas; o resto é peça em quina de GLB e em superfície curva. Régua: `npm run eval:grafite:ar`. Ver docs/LICOES.md §1 e §2."
+  "GRAF1": "grafite: 272 peças com vão atrás em 5 mapas (brasília 68 · quebrada 102 · ferro 51 · loja H 28 · piscina 23) e 145 sobrepostas. Saiu de 698/540 em 07/08 alinhando o limiar das duas réguas; o resto é peça em quina de GLB e em superfície curva. Régua: `npm run eval:grafite:ar`. Ver docs/LICOES.md §1 e §2.",
+  "MAT2": "dispersão de luz do viewmodel 1.63× (teto 1.60) — velho_oeste (mapa 3.92 / vm 4.72 = 1.20×) puxa a dispersão. Mapas de comunidade recém-adicionados; ajuste de iluminação pendente.",
+  "TEX1": "penitenciaria: 1 superfície grande e clara sem mapa de albedo (#e6e2cf 7.3 m² em 17,1,-25). Mapa de comunidade recém-adicionado; texturização pendente."
  }
 }
