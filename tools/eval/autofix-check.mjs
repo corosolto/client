@@ -47,6 +47,7 @@ const MUTANTES = {
   'sem-varredura-pos-release': 'AF6',
   'commit-sem-trailer': 'AF7',
   'merge-sem-trailer': 'AF7',
+  'trava-do-pr': 'AF5',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
@@ -103,7 +104,8 @@ if (MUT === 'resolve-conflito-de-codigo') {
   wf = wf.replace(/\s*git merge --abort\n/, '\n');
 }
 const resolveConflito = /--caminhos/.test(wf) && /git checkout --theirs/.test(wf);
-if (resolveConflito && !/git show FETCH_HEAD:scripts\/ci\/autofix_allowlist\.py/.test(wf)) {
+if (MUT === 'trava-do-pr') wf = wf.replace(/git show "base\/\$BASE:scripts\/ci\/autofix_allowlist\.py"[\s\S]*?allowlist-base\.py\n/, '');
+if (resolveConflito && !/git show ["']?base\/\$BASE:scripts\/ci\/autofix_allowlist\.py/.test(wf)) {
   falhas.push('AF5 a trava consultada no merge não vem da BASE — um PR que reescrevesse o allowlist liberaria a si mesmo');
 }
 if (resolveConflito) {
