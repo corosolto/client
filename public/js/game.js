@@ -2323,10 +2323,17 @@ export class Game {
       // fechou no ALVO de abates (antes do tempo) vs ganhou no relógio — informação diferente
       const byTarget = PACE && !this.ctf && Math.max(p, b) >= this.killsToWin;
       this._resultadoDaRodada(`${this._teamName(winner)} LEVARAM O ROUND`, `${placar} ` + (byTarget ? '— fecharam no alvo' : mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche'));
+      this._roundWinnerVoice(winner);
       if (!this.sfx.roundSound(this._voiceKey(winner))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     }
     if (this._fimDaPartida())
       this.stateUntil = this.time + 4.5; // then match end
+  }
+  _roundWinnerVoice(team) {
+    const characterId = team === this.playerTeam
+      ? this.playerCharId
+      : this.bots.find((bot) => bot.team === team)?.def?.id;
+    this.sfx.characterVoice(characterId, 'round', { fallbackFaction: this._voiceKey(team), interrupt: false });
   }
   /* FIM DA PARTIDA — uma condição só, usada pelo _endRound (pra esticar a pausa) e pelo
      update() (pra chamar o _endMatch). Vale IGUAL nos dois modos: antes o `_endMatch` era
@@ -4139,6 +4146,7 @@ export class Game {
     this._ensureDolly();
     const mine = team === this.playerTeam;
     this._resultadoDaRodada(`${this._teamName(team)} DOMINARAM AS BANDEIRAS`, mine ? 'capturou tudo! 🏆' : 'corre pra retomar!');
+    this._roundWinnerVoice(team);
     if (!this.sfx.roundSound(this._voiceKey(team))) mine ? this.sfx.roundWin() : this.sfx.roundLose();
     // dominação é vitória INSTANTÂNEA da rodada, mas continua sendo uma RODADA: se ela foi
     // a 3ª vitória (ou a 5ª rodada), a pausa estica pra tela de fim, igual ao _endRound.

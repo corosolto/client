@@ -94,7 +94,7 @@ if (existsSync(VOICE_LINES)) {
   const voiceSource = JSON.parse(readFileSync(VOICE_LINES, 'utf8'));
   for (const [id, character] of Object.entries(voiceSource.characters || {}).sort(([a], [b]) => a.localeCompare(b))) {
     out.characterVoice[id] = {};
-    for (const event of ['select', 'kill', 'radio']) {
+    for (const event of ['select', 'kill', 'radio', 'round']) {
       const files = take(listAudio(join(AUDIO, 'characters', id, event)));
       out.characterVoice[id][event] = files;
     }

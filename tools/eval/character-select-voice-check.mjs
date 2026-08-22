@@ -5,7 +5,7 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo'].includes(mutante)) {
+if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo', 'sem-propria'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
@@ -74,6 +74,28 @@ if (typeof probe.characterSelectVoice === 'function') {
 } else {
   failures.push('VOICE5 Sfx.characterSelectVoice não existe');
 }
+
+const ownVoiceProbe = new Sfx();
+ownVoiceProbe.pack = {
+  characterVoice: { alfa: { select: ['audio/alfa-select.mp3'] } },
+  characterVoiceText: { 'audio/alfa-select.mp3': 'fala própria' },
+  voice: { T: ['audio/t-0.mp3', 'audio/t-1.mp3'] },
+};
+const ownVoicePlayed = [];
+let ownVoiceEvent = null;
+ownVoiceProbe._sample = (file) => { ownVoicePlayed.push(file); return { pause() {} }; };
+ownVoiceProbe.onCharacterVoice = (event) => { ownVoiceEvent = event; };
+if (mutante === 'sem-propria') {
+  ownVoiceProbe.characterSelectVoice = function (characterId, faction) {
+    const file = this.pack.voice[faction]?.[0];
+    this._characterSelectAudio = file ? this._sample(file) : null;
+    return !!this._characterSelectAudio;
+  };
+}
+expect(ownVoiceProbe.characterSelectVoice('alfa', 'T', ['alfa', 'beta']) && ownVoicePlayed[0] === 'audio/alfa-select.mp3',
+  'VOICE13 a seleção ignorou a fala própria do personagem');
+expect(ownVoiceEvent?.event === 'select' && ownVoiceEvent?.text === 'fala própria',
+  'VOICE14 a seleção própria não entregou legenda para a interface');
 
 const voice = {
   E: [

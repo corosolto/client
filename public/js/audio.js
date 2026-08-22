@@ -141,15 +141,23 @@ export class Sfx {
     if (!this.speechEnabled) return false;
     const rosterSlot = rosterIds?.indexOf(characterId) ?? -1;
     if (rosterSlot < 0) return false;
+    const ownSelect = this.pack?.characterVoice?.[characterId]?.select;
+    if (ownSelect?.length) {
+      if (this._characterSelectAudio) this._characterSelectAudio.pause();
+      const file = ownSelect[rosterSlot % ownSelect.length];
+      this._characterSelectAudio = this._sample(file);
+      const text = this.pack?.characterVoiceText?.[file] || null;
+      if (this.onCharacterVoice) { try { this.onCharacterVoice({ characterId, event: 'select', text, file }); } catch {} }
+      return !!this._characterSelectAudio;
+    }
     const pool = this.pack?.voice?.[faction];
-    const characterVoice = { ...CHARACTER_SELECT_VOICE, ...this.pack?.characterVoice };
-    let file = characterVoice[characterId];
+    let file = CHARACTER_SELECT_VOICE[characterId];
     if (!file) {
       const reserved = new Set(rosterIds
-        .map((id) => characterVoice[id])
+        .map((id) => CHARACTER_SELECT_VOICE[id])
         .filter((candidate) => pool?.includes(candidate)));
       const fallbackSlot = rosterIds
-        .filter((id) => !characterVoice[id])
+        .filter((id) => !CHARACTER_SELECT_VOICE[id])
         .indexOf(characterId);
       file = pool?.filter((candidate) => !reserved.has(candidate))[fallbackSlot];
     }

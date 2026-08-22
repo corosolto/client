@@ -25,15 +25,20 @@ const roster = {
   N: ['programador-virado', 'designer-ux', 'streamer-tiltado', 'otaku-bairro', 'mestre-rpg', 'lenda-lanhouse', 'hacker-wifi', 'formata-vinte'],
   R: ['motoca-cachorro-loko', 'tia-pastel', 'motorista-app', 'motorista-onibus', 'pedreiro-grau', 'camelo-ambulante', 'feirante-grito', 'frentista-posto'],
   O: ['doidinho-bairro', 'noia-esquina', 'fumador-pendrive', 'mago-cobre', 'dj-bluetooth', 'profeta-calcada', 'ciclista-sem-freio', 'homem-carrinho'],
+  F: ['mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'],
 };
 const ids = Object.values(roster).flat();
 const factionById = new Map(Object.entries(roster).flatMap(([faction, factionIds]) => factionIds.map((id) => [id, faction])));
 const pilotIds = new Set(['camera-roxa', 'programador-virado', 'motoca-cachorro-loko', 'doidinho-bairro']);
 const expectedKeys = ['select-01', 'select-02', 'kill-01', 'kill-02', 'kill-03', 'radio-contato', 'radio-avanco', 'radio-cobertura'];
+const expectedKeysFor = (id) => factionById.get(id) === 'F'
+  ? ['select-01', 'kill-01', 'radio-contato', 'round-01'] : expectedKeys;
 const MUT = process.argv.includes('--mutante=fala-longa');
 const MUT_STIGMA = process.argv.includes('--mutante=estigma');
 const MUT_SPEC_STIGMA = process.argv.includes('--mutante=spec-estigma');
 const MUT_RELEASE_HASH = process.argv.includes('--mutante=release-hash');
+const MUT_FUNKEIRO = process.argv.includes('--mutante=funkeiro-sem-radio');
+const MUT_FUNKEIRO_ROUND = process.argv.includes('--mutante=funkeiro-sem-round');
 const RELEASE = process.argv.includes('--release') || MUT_RELEASE_HASH;
 const GENERATED = process.argv.includes('--generated');
 const VERIFY_OUTPUTS = RELEASE || GENERATED;
@@ -50,7 +55,9 @@ if (RELEASE) {
 
 for (const [charIndex, id] of ids.entries()) {
   const character = data.characters?.[id] || {};
-  const lines = character.lines || [];
+  const lines = (MUT_FUNKEIRO || MUT_FUNKEIRO_ROUND) && id === 'mandrake'
+    ? (character.lines || []).filter((line) => line.event !== (MUT_FUNKEIRO ? 'radio' : 'round'))
+    : character.lines || [];
   if (character.faction !== factionById.get(id))
     failures.push(`${id}: facção ${character.faction || 'ausente'}, esperado ${factionById.get(id)}`);
   if (!character.voiceId) failures.push(`${id}: voiceId sintético ausente`);
@@ -58,8 +65,12 @@ for (const [charIndex, id] of ids.entries()) {
     failures.push(`${id}: voiceDesign precisa vedar imitação/clone/referência pessoal`);
   const counts = Object.fromEntries(['select', 'kill', 'radio'].map((event) =>
     [event, lines.filter((line) => line.event === event).length]));
-  if (counts.select !== 2 || counts.kill !== 3 || counts.radio !== 3)
-    failures.push(`${id}: select/kill/radio ${counts.select}/${counts.kill}/${counts.radio}, esperado 2/3/3`);
+  const expectedCounts = factionById.get(id) === 'F' ? [1, 1, 1, 1] : [2, 3, 3, 0];
+  const roundCount = lines.filter((line) => line.event === 'round').length;
+  if (counts.select !== expectedCounts[0] || counts.kill !== expectedCounts[1] || counts.radio !== expectedCounts[2])
+    failures.push(`${id}: select/kill/radio ${counts.select}/${counts.kill}/${counts.radio}, esperado ${expectedCounts.join('/')}`);
+  if (roundCount !== expectedCounts[3])
+    failures.push(`${id}: round ${roundCount}, esperado ${expectedCounts[3]}`);
   for (const [lineIndex, line] of lines.entries()) {
     const text = MUT && charIndex === 0 && lineIndex === 0
       ? Array(30).fill('demorada').join(' ')
@@ -98,8 +109,9 @@ for (const [charIndex, id] of ids.entries()) {
     }
   }
   const keys = lines.map((line) => line.key);
-  if (JSON.stringify(keys) !== JSON.stringify(expectedKeys))
-    failures.push(`${id}: chaves/ordem ${keys.join(',') || 'ausentes'}, esperado ${expectedKeys.join(',')}`);
+  const expectedForCharacter = expectedKeysFor(id);
+  if (JSON.stringify(keys) !== JSON.stringify(expectedForCharacter))
+    failures.push(`${id}: chaves/ordem ${keys.join(',') || 'ausentes'}, esperado ${expectedForCharacter.join(',')}`);
   if (RELEASE && character.status !== 'approved') failures.push(`${id}: status ${character.status || 'ausente'}, esperado approved após escuta`);
   if (GENERATED && character.status !== 'generated') failures.push(`${id}: status ${character.status || 'ausente'}, esperado generated (escuta pendente)`);
 }
@@ -133,7 +145,7 @@ const clauses = [
   ['VOICE2 seleção dispara voz do personagem', /characterVoice\(c\.id,\s*'select'/.test(main)],
   ['VOICE3 kill usa attacker.def.id', /characterVoice\(attacker\.def\?\.id,\s*'kill'/.test(game)],
   ['VOICE4 rádio usa playerCharId e b.def.id', /characterVoice\(this\.playerCharId,\s*'radio'/.test(game) && /characterVoice\(b\.def\?\.id,\s*'radio'/.test(game)],
-  ['VOICE5 manifest varre characters/', /characterVoice/.test(manifest) && /audio[^\n]*characters|characters[^\n]*audio/i.test(manifest)],
+  ['VOICE5 manifest varre characters e eventos de round', /characterVoice/.test(manifest) && /'round'/.test(manifest) && /audio[^\n]*characters|characters[^\n]*audio/i.test(manifest)],
   ['VOICE6 gerador tem dry-run e não sobrescreve sem force', /--dry-run/.test(generator) && /--force/.test(generator)],
 ];
 globalThis.location ||= { search: '' };
@@ -145,10 +157,11 @@ probe._sample = (path) => (sampled = path, { pause: () => { paused = true; } });
 const ownOk = probe.characterVoice('teste', 'select', { fallbackFaction: 'T', interrupt: true }) && sampled === 'audio/own.mp3';
 probe.characterVoice('ausente', 'select', { fallbackFaction: 'T', interrupt: true });
 clauses.push(['VOICE7 runtime prefere personagem, interrompe e cai na facção', ownOk && paused && sampled === 'audio/fallback.mp3']);
+clauses.push(['VOICE8 vencedor dispara fala final curta', /_roundWinnerVoice\(winner\)/.test(game) && /_roundWinnerVoice\(team\)/.test(game) && /characterVoice\(characterId, 'round'/.test(game)]);
 for (const [name, ok] of clauses) if (!ok) failures.push(name);
 
 if (failures.length) {
   failures.forEach((failure) => console.error(`✗ ${failure}`));
   process.exit(1);
 }
-console.log(`CHARACTER-VOICE ✓ ${ids.length} personagens × 8 falas + runtime/fallback/gerador${VERIFY_OUTPUTS ? ` + ${RELEASE ? 'release aprovado' : 'generated/escuta pendente'}/licença/SHA/manifest/recibos` : ''}`);
+console.log(`CHARACTER-VOICE ✓ ${ids.length} personagens (32 × 8 + Funkeiros × 4) + runtime/fallback/gerador${VERIFY_OUTPUTS ? ` + ${RELEASE ? 'release aprovado' : 'generated/escuta pendente'}/licença/SHA/manifest/recibos` : ''}`);
