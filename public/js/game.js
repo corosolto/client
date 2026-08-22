@@ -4466,7 +4466,8 @@ export class Game {
     while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
     const cturn = dy * Math.min(1, dt * 8);
     b.yaw += BOT_MOVE2 ? Math.max(-YAW_CAP * dt, Math.min(YAW_CAP * dt, cturn)) : cturn;
-    const bSlow = this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1;
+    const bSlow = this.world.speedMulAt?.(b.pos.x, b.pos.z)
+      ?? (this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1);
     const px = b.pos.x, pz = b.pos.z;
     b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
     b.pos.z += Math.cos(b.yaw) * BOT_SPEED * bSlow * dt;
@@ -4823,7 +4824,8 @@ export class Game {
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
     const walking = MOVE2 && !!(this.keys.ShiftLeft || this.keys.ShiftRight);   // Shift = ANDAR (silencioso)
     const sprint = !MOVE2 && !!(this.keys.ShiftLeft || this.keys.ShiftRight) && p.crouchF < 0.3;
-    const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
+    const slowMul = this.world.speedMulAt?.(p.pos.x, p.pos.z)
+      ?? (this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1);  // terreno específico ou água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
     const maxSp = MOVE2
@@ -4933,7 +4935,11 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete');
+      if (prev >= 0 && now < 0) {
+        const surface = this.world.surfaceAt?.(p.pos.x, p.pos.z)
+          ?? (this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete');
+        this.sfx.step(surface);
+      }
     }
     // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
     // Every other weapon does light iron-sight ADS — the gun stays on screen and the
@@ -6252,7 +6258,8 @@ export class Game {
           // 180° custa ~0,9 s e lê como uma curva de pessoa.
           const turn = dy * Math.min(1, dt * (BOT_MOVE2 ? 6 : 12));
           b.yaw += BOT_MOVE2 ? Math.max(-YAW_CAP * dt, Math.min(YAW_CAP * dt, turn)) : turn;
-          const bSlow = this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1;  // bots também vadear
+          const bSlow = this.world.speedMulAt?.(b.pos.x, b.pos.z)
+            ?? (this.world.slowAt && this.world.slowAt(b.pos.x, b.pos.z) ? 0.5 : 1);  // bots também respeitam o terreno
           const px = b.pos.x, pz = b.pos.z;
           b.pos.x += Math.sin(b.yaw) * BOT_SPEED * bSlow * dt;
           b.pos.z += Math.cos(b.yaw) * BOT_SPEED * bSlow * dt;
