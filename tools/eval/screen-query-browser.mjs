@@ -99,27 +99,25 @@ try {
 
   await open('menu', '01', '#main-menu');
   const menuProfile = await page.evaluate(() => {
-    const version = document.getElementById('mf-ver');
-    const versionStyle = getComputedStyle(version);
-    const versionRect = version.getBoundingClientRect();
+    const social = document.querySelector('.menu-footer .mf-social');
+    const socialStyle = social ? getComputedStyle(social) : null;
+    const socialRect = social?.getBoundingClientRect();
     return {
       avatar: getComputedStyle(document.getElementById('pp-avatar')).backgroundImage,
       avatarText: document.getElementById('pp-avatar').textContent,
       support: document.querySelector('.cs-item[data-act="feedback"]')?.textContent.trim(),
-      version: {
-        text: version.textContent,
-        position: versionStyle.position,
-        right: parseFloat(versionStyle.right),
-        bottom: parseFloat(versionStyle.bottom),
-        rightGap: innerWidth - versionRect.right,
-        bottomGap: innerHeight - versionRect.bottom,
-      },
+      versionAbsent: !document.getElementById('mf-ver'),
+      footerBottomGap: innerHeight - document.querySelector('.menu-footer').getBoundingClientRect().bottom,
+      social: social && socialStyle && socialRect ? {
+        position: socialStyle.position,
+        top: socialRect.top,
+        rightGap: innerWidth - socialRect.right,
+      } : null,
     };
   });
   if (!menuProfile.avatar.includes('/img/chars/avatars/') || menuProfile.avatarText || menuProfile.support !== '▸ENVIE SEU FEEDBACK'
-    || !menuProfile.version.text.startsWith('CORO SOLTO v') || menuProfile.version.position !== 'fixed'
-    || Math.abs(menuProfile.version.right - menuProfile.version.rightGap) > 1
-    || Math.abs(menuProfile.version.bottom - menuProfile.version.bottomGap) > 1) {
+    || !menuProfile.versionAbsent || Math.abs(menuProfile.footerBottomGap - 18) > 1
+    || menuProfile.social?.position !== 'fixed' || menuProfile.social.top < 40 || menuProfile.social.rightGap < 20) {
     throw new Error(`perfil/suporte do menu inválido: ${JSON.stringify(menuProfile)}`);
   }
   const registeredMaps = await page.evaluate(async () => (await import('/js/maps.js')).MAP_IDS.length);
