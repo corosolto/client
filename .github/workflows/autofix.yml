@@ -121,6 +121,12 @@ jobs:
           git remote add base "https://github.com/$REPO.git" 2>/dev/null || true
           BASE="${{ github.event.pull_request.base.ref || 'main' }}"
           git fetch base "$BASE"
+          # A trava é extraída AQUI, logo depois do fetch: mais adiante o `FETCH_HEAD` já
+          # pode ter sido sobrescrito, e o `git show` falhava com "exists on disk, but not
+          # in FETCH_HEAD" (medido no #397). Vem da BASE porque um PR que reescrevesse o
+          # allowlist liberaria a si mesmo.
+          git show "base/$BASE:scripts/ci/autofix_allowlist.py" > /tmp/allowlist-base.py \
+            || git show FETCH_HEAD:scripts/ci/autofix_allowlist.py > /tmp/allowlist-base.py
           # A mensagem vai EXPLÍCITA mesmo quando o merge não conflita: `--no-edit` usa a
           # mensagem automática do git, que não leva `Agent:` nem `Signed-off-by` — e aí o
           # bot conserta o PR e o dco reprova o commit que ele mesmo fez (medido no #406).
@@ -133,9 +139,6 @@ jobs:
           fi
           git diff --name-only --diff-filter=U > /tmp/conflitos.txt
           echo "conflitos:"; cat /tmp/conflitos.txt
-          # A trava é lida da BASE, não do PR: um PR que reescrevesse o allowlist
-          # liberaria a si mesmo. Extrair para /tmp mantém a árvore limpa para o merge.
-          git show FETCH_HEAD:scripts/ci/autofix_allowlist.py > /tmp/allowlist-base.py
           if ! python3 /tmp/allowlist-base.py --caminhos < /tmp/conflitos.txt; then
             git merge --abort
             echo "humano=1" >> "$GITHUB_OUTPUT"
