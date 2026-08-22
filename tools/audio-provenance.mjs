@@ -50,7 +50,11 @@ function sha256(file) {
 }
 
 function loadLedger(root, folder, problems) {
-  const file = join(root, folder, 'SOURCES.md');
+  // Áudio e seus recibos ficam fora do Git público. Quando existe, o ledger
+  // local acompanha o lote instalado sem poluir o template versionado; num
+  // clone limpo, SOURCES.md continua sendo a documentação/contrato vazio.
+  const localFile = join(root, folder, 'SOURCES.local.md');
+  const file = existsSync(localFile) ? localFile : join(root, folder, 'SOURCES.md');
   if (!existsSync(file)) {
     problems.push(`${folder}/SOURCES.md ausente`);
     return { file, assets: [] };

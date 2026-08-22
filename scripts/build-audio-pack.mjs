@@ -32,6 +32,16 @@ const PACK = path.join(OUT, 'pack');
 mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
+// Este comando cria o artefato que vai para o CDN/lojas. Não pode transformar
+// um manifest local antigo em publicação por acidente: a origem aprovada é
+// declarada antes de opacificar os nomes dentro do ZIP.
+if (manifesto.licenseProfile !== 'release-safe') {
+  throw new Error('manifest.json não declara licenseProfile: "release-safe"; pré-voo de procedência obrigatório');
+}
+const manifestText = JSON.stringify(manifesto);
+if (/counter[ -]?strike|half[ -]?life|\bvalve\b|\b(?:ut|unreal tournament)[-_ ]/i.test(manifestText)) {
+  throw new Error('manifest.json contém referência de origem proibida para o pacote de lançamento');
+}
 let copiados = 0, faltando = [];
 const nomesOpacos = new Map();
 const hashNome = (rel) => {
