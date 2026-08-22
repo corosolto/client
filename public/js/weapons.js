@@ -237,8 +237,11 @@ function buildMag(id) {
 
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
-export async function preloadWeapons() {
-  await Promise.all([...WEAPON_IDS, ...DISPLAY_MODEL_IDS].map(async (id) => {
+/* `ids` opcional: a partida carrega SÓ as armas que ela sorteou (ver pickMatchWeapons), e o
+   resto chega em ocioso. Sem lista = elenco inteiro MAIS os modelos que só aparecem em
+   vitrine (o mosquete do bandeirante), que é o caminho do arnês e do menu. */
+export async function preloadWeapons(ids) {
+  await Promise.all((ids && ids.length ? ids : [...WEAPON_IDS, ...DISPLAY_MODEL_IDS]).map(async (id) => {
     const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
     if (_cache.has(src)) return;
     try { const g = await loadGLB(`models/weapons/${src}.glb?v=${VERSION}`); _cache.set(src, g.scene); }

@@ -9,8 +9,9 @@ import { preloadAmbientLife } from './ambientlife.js';
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
+import { preloadWeapons } from './weapons.js';
 import { Sfx } from './audio.js';
-import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster } from './game.js';
+import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
@@ -1120,10 +1121,14 @@ async function _startGame(team, charId, enemyFaction) {
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
   const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
+  /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
+     e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
+  const matchWeapons = pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.min(8, settings.bots || 4)) });
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
-        preloadCharacterAssets(_charsToLoad),
+        preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
@@ -1134,7 +1139,7 @@ async function _startGame(team, charId, enemyFaction) {
   game = new Game({
     renderer, textures, sfx, settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
-    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster,
+    nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
@@ -1142,6 +1147,19 @@ async function _startGame(team, charId, enemyFaction) {
     onTrainingFrames: sendTrainingFrames,
   });
   window.__game = game;
+  /* Resto das armas em ocioso: o drop do chão e a troca no meio da partida precisam de malha
+     real, senão vira caixa procedural. Falha calada — é disponibilidade, não requisito. */
+  if (!navOnly && params.get('armaslazy') !== '0') {
+    const meuJogo = game;
+    let tentativas = 0;
+    const espera = setInterval(() => {
+      if (window.__game !== meuJogo || ++tentativas > 240) { clearInterval(espera); return; }
+      if (meuJogo.state !== 'live') return;
+      clearInterval(espera);
+      const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
+      ocioso(() => preloadWeapons().catch(() => {}));
+    }, 250);
+  }
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)

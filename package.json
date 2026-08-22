@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.172",
+  "version": "2.0.0-alpha.173",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -70,6 +70,8 @@
     "bot:brain:check": "node tools/eval/bot-brain-check.mjs",
     "eval:botbrain": "node tools/eval/botbrain-safety-check.mjs",
     "eval:preload": "node tools/eval/preload-check.mjs",
+    "eval:armas": "node tools/eval/armas-check.mjs",
+    "eval:comentario": "node tools/eval/comentario-check.mjs",
     "eval:posters": "node tools/eval/poster-aspect-check.mjs",
     "eval:ui": "node tools/eval/ui-check.mjs all",
     "eval:redesign": "node tools/eval/redesign-check.mjs",

@@ -81,7 +81,9 @@ export class LoadingCharacterStage {
     this.canvas.dataset.ready = '0';
     if (!this.renderer) return;
     if (!this.cache.has(id)) {
-      await preloadCharacterAssets([id]);
+      /* Só a arma DESTE preview: sem a lista, o bootstrap puxava as 26 antes de a partida
+         existir — 7,5 MB e ~164 MB de VRAM na tela de carregamento. Régua: ARM1. */
+      await preloadCharacterAssets([id], { weapons: [charWeapon(id)] });
       if (token !== this.token || !this.active) return;
       const def = CHARACTERS.find((character) => character.id === id);
       const built = def && hasModel(id)
