@@ -4812,6 +4812,726 @@
           }
         }
       ]
+    },
+    "mandrake": {
+      "faction": "F",
+      "voiceId": "Fenrir",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro urbano, grave e confiante, cadência curta de arena e sorriso discreto; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Visão, mandrake chegou. Tô na atividade.",
+          "direction": "calmo, seguro, sem gritar",
+          "output": {
+            "file": "audio/characters/mandrake/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Fenrir",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:04:44.957Z",
+            "duration": 3.939252,
+            "generationId": "gen-tts-1787364273-tS590Etyo7A2JsRKud7Y",
+            "costUsd": 0.002251,
+            "sha256": "1eafb75fa074b190b16a60d22557ba5303ae0daed246e36f0af0d63c746ec59d"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Bota a cara. O bonde respondeu.",
+          "direction": "provocação curta, brincalhona",
+          "output": {
+            "file": "audio/characters/mandrake/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Fenrir",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:04:56.285Z",
+            "duration": 2.92,
+            "generationId": "gen-tts-1787364284-qkM0X3HE9EQ9OSE4uY8d",
+            "costUsd": 0.001471,
+            "sha256": "7b074dafe6d08fda4096518d859486fd93315f5dd685e60f41435aacc499acff"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Tem um na quebra. Fecha comigo!",
+          "direction": "alerta direto, ritmo rápido",
+          "output": {
+            "file": "audio/characters/mandrake/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Fenrir",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:05:07.053Z",
+            "duration": 2.68,
+            "generationId": "gen-tts-1787364296-VltBhmEY1u2bzYQ0zPQ6",
+            "costUsd": 0.001349,
+            "sha256": "b0673acd9eb6aff81b1075bf9f4203ff23038f59a3a18c41f98e906b1fec90c4"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Fecha o bonde. Esse round é nosso.",
+          "direction": "vitória firme, sem gritar",
+          "output": {
+            "file": "audio/characters/mandrake/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Fenrir",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:29:36.091Z",
+            "duration": 2.93576,
+            "generationId": "gen-tts-1787437763-Q8jpvSh6zBNVSFbVKXmV",
+            "costUsd": 0.00165,
+            "sha256": "c34ed2217b323050b5ce980197fd80215a11df06684cda198f1f8ca69a6ea217"
+          }
+        }
+      ]
+    },
+    "raul": {
+      "faction": "F",
+      "voiceId": "Puck",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro paulista, leve e vaidosa, ironia bem-humorada; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Franja no lugar. Agora é só jogar bonito.",
+          "direction": "vaidoso e descontraído",
+          "output": {
+            "file": "audio/characters/raul/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Puck",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:05:18.448Z",
+            "duration": 3.92,
+            "generationId": "gen-tts-1787364307-rbmdpKi1zVheRkxa9wm0",
+            "costUsd": 0.001971,
+            "sha256": "608ef198652acaedd788b8e7f42e0b17656c25b2d58ffe03e56fdc668671f493"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Sarneou na mira. Já era, parceiro.",
+          "direction": "surpresa divertida, sem agressividade",
+          "output": {
+            "file": "audio/characters/raul/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Puck",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:05:33.971Z",
+            "duration": 2.928753,
+            "generationId": "gen-tts-1787364318-Tz00kadStjhJ0OuGgMlx",
+            "costUsd": 0.001832,
+            "sha256": "0189c62b4979938ffcc7dc209c759ddf7c9e828bb32b618470ac4d0c22d61aa2"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Ó o pico ali. Vem na resenha!",
+          "direction": "chamado animado e curto",
+          "output": {
+            "file": "audio/characters/raul/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Puck",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:05:44.665Z",
+            "duration": 2.8,
+            "generationId": "gen-tts-1787364334-l7KBbS9aBAoELjnBlzlB",
+            "costUsd": 0.001411,
+            "sha256": "296d62af800f2780f7fc3aafba8b0c509dd5bb5d758a1ae768672e52ad083d32"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Franja intacta. Round bonito, parceiro.",
+          "direction": "sorriso leve, celebração curta",
+          "output": {
+            "file": "audio/characters/raul/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Puck",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:29:53.874Z",
+            "duration": 2.929501,
+            "generationId": "gen-tts-1787437776-RUfvQdtiPGg9g6VV3WZj",
+            "costUsd": 0.003831,
+            "sha256": "79f62f0d54dd1bf2a10173c1d2249d9300f2baf0f432df816fdbd289137f8d2e"
+          }
+        }
+      ]
+    },
+    "oakley": {
+      "faction": "F",
+      "voiceId": "Orus",
+      "voiceDesign": "Voz sintética fictícia de adulto, português brasileiro urbano, baixa, firme e estratégica; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Corre alinhado. Eu seguro a frente.",
+          "direction": "baixo, concentrado, tático",
+          "output": {
+            "file": "audio/characters/oakley/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Orus",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:05:56.204Z",
+            "duration": 2.96,
+            "generationId": "gen-tts-1787364344-HAeXjpIUZjWb9f2QDN9L",
+            "costUsd": 0.00149,
+            "sha256": "af045122753afc2eed57cb35db4c61e305a5ebf80f2b5573fc8cde6a7f0b3edf"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Vacilou no passo. Leitura feita.",
+          "direction": "frio, sem comemoração",
+          "output": {
+            "file": "audio/characters/oakley/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Orus",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:06:07.224Z",
+            "duration": 2.930544,
+            "generationId": "gen-tts-1787364356-tYbCsvNAQzuQPfViVTVx",
+            "costUsd": 0.00169,
+            "sha256": "f443fd9c7fae0e3c27ad8098ec5728a992d41de043e65c468fcce31e9679d413"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Contato na direita. Não dá mole.",
+          "direction": "alerta preciso e urgente",
+          "output": {
+            "file": "audio/characters/oakley/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Orus",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:06:18.171Z",
+            "duration": 2.6,
+            "generationId": "gen-tts-1787364367-LM0NEP53CzmZj0jnDGPs",
+            "costUsd": 0.001308,
+            "sha256": "800acc9e4c3c5e9702ac137035243679140ba7d945b1bf1edb1eb4419d665410"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Posição mantida. Round controlado.",
+          "direction": "baixo, técnico e contido",
+          "output": {
+            "file": "audio/characters/oakley/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Orus",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:30:23.234Z",
+            "duration": 2.925079,
+            "generationId": "gen-tts-1787437805-6S7BpfhjUzP145EqYbcs",
+            "costUsd": 0.003608,
+            "sha256": "88edec885245ca2787360af81b281f0dae91bb58462e3307ceb4022e3b19b983"
+          }
+        }
+      ]
+    },
+    "criarj": {
+      "faction": "F",
+      "voiceId": "Achird",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro carioca, calorosa, rápida e competitiva; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "É cria. Hoje ninguém segura o morro.",
+          "direction": "energético, orgulho de time, sem caricatura",
+          "output": {
+            "file": "audio/characters/criarj/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Achird",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:06:29.765Z",
+            "duration": 4,
+            "generationId": "gen-tts-1787364378-KI59ajG7p6gtpOq9XjlJ",
+            "costUsd": 0.00201,
+            "sha256": "ab04d14d4a14c45cc49dd162c69e35b07442a6eb5472028bfd05a5cf6bddc9dd"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Tá com medo? Então recua, mano.",
+          "direction": "provocação esportiva, leve",
+          "output": {
+            "file": "audio/characters/criarj/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Achird",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:06:41.150Z",
+            "duration": 2.924649,
+            "generationId": "gen-tts-1787364389-d7gE28nLuaxnXFlyxNzL",
+            "costUsd": 0.00155,
+            "sha256": "056da99035d02042110c974046e8bfbcb2797c7add74acc8affe28211a799b74"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Tem contato no alto. Vamo subir!",
+          "direction": "grito de aviso objetivo",
+          "output": {
+            "file": "audio/characters/criarj/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Achird",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:06:52.056Z",
+            "duration": 2.8,
+            "generationId": "gen-tts-1787364401-Q72n5x8ypYdNxGr4jHLJ",
+            "costUsd": 0.001409,
+            "sha256": "978954734b4b9e9ffbed444fb51aec2bb6f64924ef99021e3f4ff65951c30656"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Boa, tropa. Virada no alto!",
+          "direction": "caloroso e competitivo, sem caricatura",
+          "output": {
+            "file": "audio/characters/criarj/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Achird",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:30:35.691Z",
+            "duration": 3,
+            "generationId": "gen-tts-1787437823-lzOw5Rwt5KJoTEVeW6WX",
+            "costUsd": 0.00151,
+            "sha256": "af3ecb2d825c7ed7e3f4bb051d9d352ee4766a3096359789457554fdc062b816"
+          }
+        }
+      ]
+    },
+    "chave": {
+      "faction": "F",
+      "voiceId": "Charon",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro da periferia paulista, serena, seca e articulada; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Tá chave. Joga simples e fecha o round.",
+          "direction": "tranquilo, liderança discreta",
+          "output": {
+            "file": "audio/characters/chave/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Charon",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:07:03.469Z",
+            "duration": 3.6,
+            "generationId": "gen-tts-1787364412-vmE4gypNApIjTAyugRHp",
+            "costUsd": 0.001811,
+            "sha256": "b75c4b8eec5e0d9adcb6d04d72913bbe93b98281a8a07b808551a5b9c2bff399"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Mira firme. Foi limpo.",
+          "direction": "ironia seca, breve",
+          "output": {
+            "file": "audio/characters/chave/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Charon",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:14:37.682Z",
+            "duration": 2.56,
+            "generationId": "gen-tts-1787364866-swglVv4XcONbDlHrPyFg",
+            "costUsd": 0.001287,
+            "sha256": "b06e7386bb11a0c3d82448c249b6f1fcbbf589e2bcd13affaa9397262e789820"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Dois no corredor. Segura essa visão.",
+          "direction": "informação clara e curta",
+          "output": {
+            "file": "audio/characters/chave/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Charon",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:08:35.177Z",
+            "duration": 2.921905,
+            "generationId": "gen-tts-1787364503-dMUdrEpChLBbuYHSapGN",
+            "costUsd": 0.00171,
+            "sha256": "845263f68d704ad223c40de6cc3bfaa906281f55d1f7240e4f4611f20c77d45b"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "No simples. Round fechado.",
+          "direction": "sereno, liderança discreta",
+          "output": {
+            "file": "audio/characters/chave/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Charon",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:30:59.447Z",
+            "duration": 2.902517,
+            "generationId": "gen-tts-1787437847-JRMfEbhrAQISl9LO9nYf",
+            "costUsd": 0.002967,
+            "sha256": "2488b81ece79be88727f6dfc09598bcc2f5b3b02d89e71c440d6e7cad04891a5"
+          }
+        }
+      ]
+    },
+    "funkraiz": {
+      "faction": "F",
+      "voiceId": "Kore",
+      "voiceDesign": "Voz sintética fictícia de adulto, português brasileiro, rouca, festiva e rítmica, com presença de mestre de cerimônia sem cantar; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Tamborzão no peito. Vambora, bonde!",
+          "direction": "ritmado, enérgico, sem cantar",
+          "output": {
+            "file": "audio/characters/funkraiz/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Kore",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:08:46.978Z",
+            "duration": 4,
+            "generationId": "gen-tts-1787364515-OaOhh2qmiSigSKkOVn5s",
+            "costUsd": 0.002014,
+            "sha256": "f7ea31ace262cd496c7c23766a69033e6c5124d354317c2f8e5655636ca440eb"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Passinho encaixou. Ponto pro bonde!",
+          "direction": "celebração contagiante, curta",
+          "output": {
+            "file": "audio/characters/funkraiz/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Kore",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:09:39.997Z",
+            "duration": 2.924694,
+            "generationId": "gen-tts-1787364568-S9vJ4qWpTUsog87LWHuP",
+            "costUsd": 0.001692,
+            "sha256": "69d53517d93ea2e2c920e792924f334f82ec3a2dba9a2e99a86cfadc5cf92c7c"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Contato no meio!",
+          "direction": "alerta musical, mas inteligível",
+          "output": {
+            "file": "audio/characters/funkraiz/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Kore",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:10:11.802Z",
+            "duration": 2,
+            "generationId": "gen-tts-1787364601-VosZoIcpKnjbHeFkkTNQ",
+            "costUsd": 0.001924,
+            "sha256": "a7d0e990de07fb941174691e7262e75087a2716dcd548765f2ef5c42df0821b4"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Bonde levou!",
+          "direction": "festivo e rítmico, sem cantar",
+          "output": {
+            "file": "audio/characters/funkraiz/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Kore",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:31:39.643Z",
+            "duration": 2,
+            "generationId": "gen-tts-1787437888-QV8qMsghiyh588udgHka",
+            "costUsd": 0.001004,
+            "sha256": "a830a8d88a3663b538460b1fb5f618a052024f5208c01446006a05c7a98b333b"
+          }
+        }
+      ]
+    },
+    "trapfunk": {
+      "faction": "F",
+      "voiceId": "Algenib",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro urbano, grave, econômica e contemporânea; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Grave no peito. Foco no objetivo.",
+          "direction": "grave, minimalista, controlado",
+          "output": {
+            "file": "audio/characters/trapfunk/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Algenib",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:10:27.661Z",
+            "duration": 3.76,
+            "generationId": "gen-tts-1787364611-pWNQHqP1LK8WeLQiVVQS",
+            "costUsd": 0.003731,
+            "sha256": "36c290febbe05bb4de7cfe14f6dda269dde6ac0b3f886d851a5739a8f7833530"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Caiu no drop. Round continua.",
+          "direction": "curto e impassível",
+          "output": {
+            "file": "audio/characters/trapfunk/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Algenib",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:10:43.336Z",
+            "duration": 2.64,
+            "generationId": "gen-tts-1787364627-LZ5aGHDX5THhGmKqqR63",
+            "costUsd": 0.001329,
+            "sha256": "a4115e1f7aa7033afa77c2a422758138d9213f1daa0bb024ff83edecad66383b"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Marca no radar. Vem pela lateral.",
+          "direction": "rápido, informação tática",
+          "output": {
+            "file": "audio/characters/trapfunk/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Algenib",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:10:55.643Z",
+            "duration": 2.72,
+            "generationId": "gen-tts-1787364643-uHFjG7eAdJ5NAta820KP",
+            "costUsd": 0.001368,
+            "sha256": "dbf2e96e09569be33d35fee444de2da679ae95149f8be7911239d5aeee7dcfd4"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Drop limpo. Próximo round.",
+          "direction": "grave, econômico e curto",
+          "output": {
+            "file": "audio/characters/trapfunk/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Algenib",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:31:56.294Z",
+            "duration": 2.88,
+            "generationId": "gen-tts-1787437904-0ylFS83xLs4DPdfV3p5J",
+            "costUsd": 0.002889,
+            "sha256": "cfa4782f0399d78b64f7e0ee5196a6e23b0f0095d2299c53c9439e9cca8dfc02"
+          }
+        }
+      ]
+    },
+    "fluxo": {
+      "faction": "F",
+      "voiceId": "Rasalgethi",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro urbano, viva, ágil e sociável, sem exagerar sotaque; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "No fluxo, na mira. Bora movimentar!",
+          "direction": "animado e rápido",
+          "output": {
+            "file": "audio/characters/fluxo/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Rasalgethi",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:11:12.023Z",
+            "duration": 3.84,
+            "generationId": "gen-tts-1787364655-Fyn5dAl8Jz4iBsdEAnqE",
+            "costUsd": 0.00193,
+            "sha256": "bbebadae5df4cad515842f8e0bc639baddcc2bdcfc8a332e795c791a5b95c570"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Foi de base no giro, cria!",
+          "direction": "brincalhão, sem hostilidade",
+          "output": {
+            "file": "audio/characters/fluxo/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Rasalgethi",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:11:23.489Z",
+            "duration": 2.68,
+            "generationId": "gen-tts-1787364672-KsP723fZKt8wTPEjwwRG",
+            "costUsd": 0.001348,
+            "sha256": "eb553e32fd109ff9a4df5718e0b0df9b912b578ea6fce93727fc9750f459d0ae"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Movimento no fundo. Cola no bonde!",
+          "direction": "aviso acelerado e claro",
+          "output": {
+            "file": "audio/characters/fluxo/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Rasalgethi",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:11:34.903Z",
+            "duration": 2.92263,
+            "generationId": "gen-tts-1787364683-avBpTjUgGiubNppLQg2n",
+            "costUsd": 0.00177,
+            "sha256": "021ad8e14f4b5fef0ef9c2c3e5730fae2e05dd921ef4a94d7f6c242fd92cc300"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Boa, bonde!",
+          "direction": "ágil, sociável e claro",
+          "output": {
+            "file": "audio/characters/fluxo/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Rasalgethi",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:32:37.886Z",
+            "duration": 1.72,
+            "generationId": "gen-tts-1787437941-IY9AbyEuLrqCSnL0WxG7",
+            "costUsd": 0.001765,
+            "sha256": "8b61ff98595d9d41c46c52d4d59383defb90fbf4dc393fb47b8a89afcc876907"
+          }
+        }
+      ]
+    },
+    "ostentacao": {
+      "faction": "F",
+      "voiceId": "Sadachbia",
+      "voiceDesign": "Voz sintética fictícia de adulto jovem, português brasileiro, elegante, bem-humorada e segura; sem imitar, copiar ou clonar pessoa real, artista ou personagem existente.",
+      "status": "generated",
+      "lines": [
+        {
+          "key": "select-01",
+          "event": "select",
+          "text": "Brilho no kit, precisão no jogo.",
+          "direction": "confiante, sorriso discreto",
+          "output": {
+            "file": "audio/characters/ostentacao/select/select-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Sadachbia",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:11:47.073Z",
+            "duration": 3.36,
+            "generationId": "gen-tts-1787364694-P7tPlz5a2BYjZaA6rdVh",
+            "costUsd": 0.003351,
+            "sha256": "a30cef835798779d102c2931375d17abb8bd960780d62e477f516627fbd110f2"
+          }
+        },
+        {
+          "key": "kill-01",
+          "event": "kill",
+          "text": "Classe não erra. Próximo lance.",
+          "direction": "vitória elegante, breve",
+          "output": {
+            "file": "audio/characters/ostentacao/kill/kill-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Sadachbia",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:12:00.092Z",
+            "duration": 3,
+            "generationId": "gen-tts-1787364707-czSYaYcB3pspMpy6sCIb",
+            "costUsd": 0.00151,
+            "sha256": "fa3682de34d639c65d914ec63d7ca678c51826f3165a3f3585cb17d15106fd9a"
+          }
+        },
+        {
+          "key": "radio-contato",
+          "event": "radio",
+          "text": "Contato à frente!",
+          "direction": "humor rápido, alerta nítido",
+          "output": {
+            "file": "audio/characters/ostentacao/radio/radio-contato.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Sadachbia",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T02:12:15.841Z",
+            "duration": 1.960249,
+            "generationId": "gen-tts-1787364720-UgDkTvOWx5DbQ7gVdQqn",
+            "costUsd": 0.001844,
+            "sha256": "8ff364356e21904d348fc03e7905ebb2f68be5e0e5059f92b4e79a5c4a46fbe3"
+          }
+        },
+        {
+          "key": "round-01",
+          "event": "round",
+          "text": "Classe no fim. Round na conta.",
+          "direction": "elegante, bem-humorado e breve",
+          "output": {
+            "file": "audio/characters/ostentacao/round/round-01.mp3",
+            "provider": "openrouter",
+            "modelId": "google/gemini-3.1-flash-tts-preview",
+            "voiceId": "Sadachbia",
+            "license": "gemini-api-generated-content-2026-03-23-via-openrouter-paid",
+            "generatedAt": "2026-08-22T22:32:53.600Z",
+            "duration": 2.925488,
+            "generationId": "gen-tts-1787437961-2EqpM78hSC7QJg4vXCrz",
+            "costUsd": 0.003368,
+            "sha256": "e9db25bc622ce1a5a2da2ec0d77bb2b5470b4887e77c714b09f9f2f11a44be3f"
+          }
+        }
+      ]
     }
   }
 }
