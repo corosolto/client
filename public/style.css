@@ -2031,12 +2031,10 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-arrow{width:100%;height:26px;font-size:12px;line-height:1;background:rgba(var(--bg-900-rgb),.85);
   border:1px solid var(--line-2);color:var(--am)}
 .ms-arrow:hover{background:var(--am);color:#141216}
-/* rodapé do menu: online + links de dev (substitui a frase de sátira) */
-.menu-footer{position:fixed;right:min(4vw,42px);bottom:48px;z-index:60;
+/* Links ficam na última linha; as redes sobem para perto da navegação. */
+.menu-footer{position:fixed;right:min(4vw,42px);bottom:14px;z-index:60;
   display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:flex-end;
   font-size:12px;color:var(--ink-300);text-align:right;max-width:min(70vw,760px)}
-.menu-version{position:fixed;right:min(4vw,42px);bottom:14px;z-index:60;color:var(--ink-200);
-  font-size:12px;font-weight:700;letter-spacing:1px;text-align:right}
 /* Bolinha virou LOSANGO: o redesign proíbe raio, e o losango já é o sinal de
    "isto está vivo/é você" em três outros lugares (você no radar, thumb do slider,
    canto do card selecionado). Trocar por quadrado puro perderia essa rima. */
@@ -2046,9 +2044,8 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .menu-footer a{color:var(--ink-200);text-decoration:none;border-bottom:0}
 .menu-footer a:hover{color:var(--am)}
 .menu-footer .mf-online{color:var(--verde,#7dc98f);font-weight:700}
-/* `flex-basis:100%` dá linha própria sem sair do flex-wrap do rodapé. */
-.menu-footer .mf-social{flex-basis:100%;display:flex;gap:10px;align-items:center;
-  justify-content:inherit;margin-top:2px}
+.menu-footer .mf-social{position:fixed;top:clamp(46px,7vh,84px);right:min(4vw,42px);z-index:60;
+  display:flex;gap:10px;align-items:center;justify-content:flex-end;margin:0}
 .menu-footer .mf-social a{display:inline-flex;width:30px;height:30px;border-bottom:0;
   align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
 .menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
@@ -2065,7 +2062,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   #main-menu{display:block}
   .menu-footer{position:static;justify-content:flex-start;text-align:left;
     max-width:none;padding:18px var(--s-5) 24px}
-  .menu-version{position:static;display:block;padding:0 var(--s-5) 24px;text-align:right}
+  .menu-footer .mf-social{position:static;flex-basis:100%;justify-content:flex-start;margin-top:2px}
 }
 
 /* =========================================================================
@@ -2369,6 +2366,7 @@ body[data-cine-screen] #cine-chrome{opacity:1}
 .home-broadcast .home-service-strip .cs-item:hover,.home-broadcast .home-service-strip .cs-item:focus-visible,
 .home-broadcast .home-service-strip .cs-item[aria-current="true"]{transform:none;background:var(--ink-100);color:var(--bg-900);border-color:var(--ink-100)}
 .home-broadcast .menu-footer{right:clamp(52px,6vw,96px);bottom:18px}
+.home-broadcast .menu-footer .mf-social{right:clamp(52px,6vw,96px)}
 #main-menu:has(.mission-cut.open) .home-broadcast{opacity:.16;transform:translateX(-5vw);filter:saturate(.25);pointer-events:none}
 
 /* MISSÃO — cartaz full-height à esquerda, console de decisão à direita. */

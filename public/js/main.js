@@ -373,7 +373,7 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
   })
 ))).catch((error) => console.warn('[facções] preload parcial', error));
 
-/* Wallpapers rotativos (wall-1..9): 1 por tela no fluxo home→setup→lado→personagem, sem
+/* Wallpapers rotativos (wall-10..28): 1 por tela no fluxo home→setup→lado→personagem, sem
    repetir; o offset rotaciona a cada acesso (localStorage) pra variar entre visitas.
 
    Estes arrays são fallback do primeiro quadro. A fonte de verdade é
@@ -383,9 +383,11 @@ const factionArtReady = Promise.all(factionArtImages.map((image) => (
    Servidos em .webp desde 07/08: os PNG de 2–2,6 MB viraram ~250 KB (ffmpeg libwebp q85,
    comparado lado a lado antes da troca — texto do cartaz e grão idênticos). Os .png ficam
    na pasta como fonte; wallpaper novo entra como PNG e vira .webp no mesmo commit. */
-const WALLS = ['/img/wall-1.webp', '/img/wall-2.webp', '/img/wall-3.webp', '/img/wall-4.webp',
-  '/img/wall-5.webp', '/img/wall-6.webp', '/img/wall-7.webp', '/img/wall-8.webp',
-  '/img/wall-9.webp'];
+const WALLS = ['/img/wall-10.webp', '/img/wall-11.webp', '/img/wall-12.webp', '/img/wall-13.webp',
+  '/img/wall-14.webp', '/img/wall-15.webp', '/img/wall-16.webp', '/img/wall-17.webp',
+  '/img/wall-18.webp', '/img/wall-19.webp', '/img/wall-20.webp', '/img/wall-21.webp',
+  '/img/wall-22.webp', '/img/wall-23.webp', '/img/wall-24.webp', '/img/wall-25.webp',
+  '/img/wall-26.webp', '/img/wall-27.webp', '/img/wall-28.webp'];
 let _wallVisit = 0;
 try {
   _wallVisit = parseInt(localStorage.getItem('cs_wallK') || '-1', 10) + 1;
@@ -821,7 +823,6 @@ let heartbeatOff = false;
 /* CONTADOR "N ONLINE" do rodapé do menu (pedido do dono, 06/08). GET /api/online lê a
    view online_now (heartbeat < 2 min). `hidden` até ter número: rodapé nunca mostra
    zero mentiroso quando o backend está fora/local. Atualiza a cada 60 s só no menu. */
-{ const v = document.getElementById('mf-ver'); if (v) v.textContent = `CORO SOLTO v${VERSION}`; }
 // o idioma por país resolve ANTES de traduzir o menu (o fetch começou no <head>)
 await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)

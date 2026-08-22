@@ -91,7 +91,7 @@ const alvoPorMutante = {
   'faccao-mostra-antes-da-arte': 'UIR39',
   'troca-m-abre-pausa': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
-  'versao-menu-volta-rodape': 'UIR42',
+  'versao-menu-volta-home': 'UIR42',
   'sem-autoria': 'UIR43',
   'filtro-autor-morto': 'UIR4',   // mistura comunidade nos OFICIAIS de novo (reverte o #368)
   'sem-badge-oficial': 'UIR43',
@@ -317,9 +317,9 @@ css = muta('resultado-corta-personagem', css,
 css = muta('resultado-emenda-volta', css,
   '.me-wrap{position:relative;',
   '.me-wrap::after{content:"";position:absolute;inset:0 0 0 44%;background:radial-gradient(ellipse at 88% 58%,rgba(73,168,70,.2),transparent 78%)}\n.me-wrap{position:relative;');
-astro = muta('versao-menu-volta-rodape', astro,
-  '<span class="menu-version" id="mf-ver"></span>',
-  '<span class="mf-ver" id="mf-ver"></span>');
+astro = muta('versao-menu-volta-home', astro,
+  '<!-- PAINEL DE SETUP - dois PASSOS',
+  '<span class="menu-version" id="mf-ver"></span>\n\n  <!-- PAINEL DE SETUP - dois PASSOS');
 css = muta('loading-volta-grande', css,
   'width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;',
   'width:min(430px,34vw);height:min(720px,76vh);pointer-events:none;');
@@ -909,9 +909,10 @@ const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
   && !/--me-accent-rgb/.test(`${css}\n${main}\n${game}`);
 /* Aceita as duas árvores do menu (a da main fechava em </div></div>; a do
    cinematic-ui fecha em </section>) — a cláusula real é a camada própria + CSS fixo. */
-const versaoMenuNoCanto = /(?:<\/div>|<\/section>)\s*<span class="menu-version" id="mf-ver"><\/span>\s*(?:<\/div>)?\s*<!-- PAINEL DE SETUP/.test(astro)
-  && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
-  && /\.menu-footer\{[^}]*bottom:48px/.test(css);
+const versaoForaDaHome = !/id="mf-ver"/.test(astro)
+  && !/\.menu-version\{/.test(css)
+  && /\.menu-footer\{[^}]*bottom:14px/.test(css)
+  && /\.menu-footer \.mf-social\{[^}]*position:fixed[^}]*top:clamp\(46px,7vh,84px\)/.test(css);
 /* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
    e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
    do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
@@ -1021,8 +1022,8 @@ const resultados = [
     'o jogo pausa antes do pointer lock sair; seleção usa enemyFaction e VOLTAR retoma a partida'],
   ['UIR41', 'resultado usa um único fundo preto contínuo atrás da arte alpha', resultadoFundoContinuo,
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
-  ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
-    'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
+  ['UIR42', 'home não exibe versão; links ficam na última linha e redes no canto superior direito', versaoForaDaHome,
+    'a versão saiu da home; rodapé e redes ocupam posições próprias'],
   ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE (sub-filtro de autor removido, #368)', autoriaNaFicha,
     'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; sem marcação morta de chips de autor'],
 ];

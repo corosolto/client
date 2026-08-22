@@ -83,6 +83,10 @@ async function renderIndex() {
   });
   return defineVars(attrs(
     src.replace(/<script type="importmap"[^>]*><\/script>/, `<script type="importmap">${importmap}</script>`)
+      .replace(
+        /src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/,
+        `src="/js/main.js?v=${V}-${JS_REV}"`,
+      )
       /* CSS com hash de CONTEÚDO (regra da main, mantida ANTES da varredura genérica):
          a versão do package.json não muda entre commits de trabalho e o navegador
          servia style.css do cache — o JS novo chegava e o CSS não. */
