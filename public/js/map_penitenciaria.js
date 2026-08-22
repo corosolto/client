@@ -1,4 +1,4 @@
-// Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
+// Complexo de Bangu: pátio central exposto, celas transitáveis e flancos de serviço.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
@@ -8,7 +8,12 @@ const HALF_Z = 48;
 
 export function buildPenitenciaria(scene) {
   const root = new THREE.Group();
-  root.name = 'penitenciaria-da-treta';
+  root.name = 'complexo-de-bangu';
+  root.userData.theme = {
+    id: 'bangu-zona-oeste',
+    palette: ['cimento-quente', 'ocre', 'verde-patina'],
+    landmarks: ['portao-do-complexo', 'patio-do-sol', 'ala-de-visitas'],
+  };
   scene.add(root);
   const colliders = [], occluders = [], pickups = [];
   const geometryCache = new Map();
@@ -63,17 +68,17 @@ export function buildPenitenciaria(scene) {
     texture.wrapS=texture.wrapT=THREE.RepeatWrapping; texture.anisotropy=8; return texture;
   }
   const tex = {
-    concrete: proceduralTexture('penitenciaria-concreto', '#777b78', '#343936', 'concrete', 6),
-    darkConcrete: proceduralTexture('penitenciaria-concreto-escuro', '#343a3b', '#15191a', 'concrete', 5),
-    yard: proceduralTexture('penitenciaria-patio-concreto-gasto', '#555957', '#262a29', 'concrete', 8),
-    steel: proceduralTexture('penitenciaria-aco-enferrujado', '#565d5e', '#8b6b49', 'metal', 3),
+    concrete: proceduralTexture('bangu-concreto-quente', '#8a8072', '#54483f', 'concrete', 6),
+    darkConcrete: proceduralTexture('bangu-concreto-escuro', '#4b4942', '#262522', 'concrete', 5),
+    yard: proceduralTexture('bangu-patio-gasto', '#6d6559', '#3c3730', 'concrete', 8),
+    steel: proceduralTexture('bangu-ferro-patina', '#59645c', '#8b6b49', 'metal', 3),
     ammo: ammoCrateTexture(),
   };
   const MAT = {
-    concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .045, color: 0xb8bbb5, roughness: .93 }),
-    darkConcrete: new THREE.MeshStandardMaterial({ map: tex.darkConcrete, bumpMap: tex.darkConcrete, bumpScale: .035, color: 0x747b7b, roughness: .97 }),
-    yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x8b8f89, roughness: 1 }),
-    steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x8a9292, metalness: .72, roughness: .5 }),
+    concrete: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .045, color: 0xc9bda5, roughness: .93 }),
+    darkConcrete: new THREE.MeshStandardMaterial({ map: tex.darkConcrete, bumpMap: tex.darkConcrete, bumpScale: .035, color: 0x756e61, roughness: .97 }),
+    yard: new THREE.MeshStandardMaterial({ map: tex.yard, bumpMap: tex.yard, bumpScale: .055, color: 0x9a8d76, roughness: 1 }),
+    steel: new THREE.MeshStandardMaterial({ map: tex.steel, bumpMap: tex.steel, bumpScale: .025, color: 0x78877c, metalness: .35, roughness: .78 }),
     rust: new THREE.MeshStandardMaterial({ color: 0x714529, metalness: .42, roughness: .82 }),
     white: new THREE.MeshStandardMaterial({ map: tex.concrete, bumpMap: tex.concrete, bumpScale: .025, color: 0xe6e2cf, roughness: .75 }),
     yellow: new THREE.MeshStandardMaterial({ color: 0xe5a92f, roughness: .7 }),
@@ -103,8 +108,30 @@ export function buildPenitenciaria(scene) {
     if (opts.collide) { const collider = { minX: x-r, maxX: x+r, minY: y, maxY: y+h, minZ: z-r, maxZ: z+r, tag: opts.tag }; colliders.push(collider); mesh.userData.collider = collider; }
     return mesh;
   }
+  function banguSignTexture(title, sub = '') {
+    const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 180;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#d9c9a4'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#5f735f'; ctx.fillRect(0, 0, canvas.width, 30);
+    ctx.strokeStyle = '#75472f'; ctx.lineWidth = 12; ctx.strokeRect(8, 8, 624, 164);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#3f3329';
+    ctx.font = '900 50px Arial,sans-serif'; ctx.fillText(title, 320, sub ? 80 : 100);
+    if (sub) { ctx.font = '700 23px Arial,sans-serif'; ctx.fillText(sub, 320, 135); }
+    const texture = new THREE.CanvasTexture(canvas); texture.name = `bangu-placa-${title}`; texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }
+  function addBanguSign(index, title, sub, x, y, z, ry, width = 6, height = 1.7) {
+    const material = new THREE.MeshStandardMaterial({ map: banguSignTexture(title, sub), roughness: .9 });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
+    sign.name = `bangu-placa-${index}`; sign.userData = { identity: 'bangu-zona-oeste', title, sub };
+    sign.position.set(x, y, z); sign.rotation.y = ry; root.add(sign); return sign;
+  }
+  function addBanguBand(index, x, y, z, width, ry) {
+    const band = addBox(width, .24, .04, MAT.steel, x, y, z, { ry, collide: false, cast: false });
+    band.name = `bangu-faixa-pintada-${index}`; band.userData.identity = 'cimento-e-patina'; return band;
+  }
 
-  scene.background = new THREE.Color(0xa8b5b7); scene.fog = new THREE.Fog(0x9aa7a8, 82, 165);
+  scene.background = new THREE.Color(0xd3c29f); scene.fog = new THREE.Fog(0xc4b28e, 82, 165);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 175), MAT.darkConcrete); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
 
   // Muro maciço impede fuga; a tela metálica e o arame farpado dão a leitura prisional.
@@ -112,8 +139,13 @@ export function buildPenitenciaria(scene) {
   addBox(76, 5.8, 1, MAT.concrete, 0, 0, HALF_Z, { tag: 'muro-norte' });
   addBox(1, 5.8, 96, MAT.concrete, -HALF_X, 0, 0, { tag: 'muro-oeste' });
   addBox(1, 5.8, 96, MAT.concrete, HALF_X, 0, 0, { tag: 'muro-leste' });
+  addBanguSign(0, 'COMPLEXO DE BANGU', 'ZONA OESTE · RIO DE JANEIRO', 0, 4.2, -47.45, 0, 13, 2.7);
+  addBanguSign(1, 'PÁTIO DO SOL', 'VISITAS E OFICINAS', 0, 3.8, 21.5, Math.PI, 8, 1.8);
+  addBanguSign(2, 'ALA DE VISITAS', 'ACESSO PELO CORREDOR', -37.45, 3.5, 0, Math.PI / 2, 7, 1.65);
+  addBanguSign(3, 'PORTÃO DA ZONA OESTE', 'CUIDADO COM A SAÍDA', 37.45, 3.5, 0, -Math.PI / 2, 7, 1.65);
+  addBanguBand(0, 0, 2.1, -47.42, 24, 0); addBanguBand(1, 0, 2.1, 47.42, 24, 0);
   function fence(name, axis, fixed, from, to) {
-    const group = new THREE.Group(); group.name = `penitenciaria-cerca-${name}`; root.add(group);
+    const group = new THREE.Group(); group.name = `bangu-cerca-${name}`; root.add(group);
     for (let p = from; p <= to; p += 3) {
       const mesh = axis === 'x' ? addBox(.08, 2.5, .08, MAT.steel, p, 5.8, fixed, { collide: false }) : addBox(.08, 2.5, .08, MAT.steel, fixed, 5.8, p, { collide: false }); group.add(mesh); root.remove(mesh);
     }
@@ -127,7 +159,7 @@ export function buildPenitenciaria(scene) {
   fence('oeste', 'z', -HALF_X, -HALF_Z, HALF_Z); fence('leste', 'z', HALF_X, -HALF_Z, HALF_Z);
 
   function guardTower(index, x, z) {
-    const group = new THREE.Group(); group.name = `penitenciaria-guarita-${index}`; root.add(group);
+    const group = new THREE.Group(); group.name = `bangu-guarita-${index}`; root.add(group);
     const sx = Math.sign(x), sz = Math.sign(z);
     for (const dx of [-1.8, 1.8]) for (const dz of [-1.8, 1.8]) addBox(.38, 7.2, .38, MAT.steel, x+dx, 0, z+dz, { tag: `guarita-${index}` });
     addBox(4.8, .45, 4.8, MAT.concrete, x, 6.5, z, { tag: `guarita-${index}` });
@@ -140,7 +172,7 @@ export function buildPenitenciaria(scene) {
 
   function cell(side, index, z) {
     const faceX = side * 25, backX = side * 34.2, insideX = side * 29.3;
-    const group = new THREE.Group(); group.name = `penitenciaria-cela-aberta-${side < 0 ? 'o' : 'l'}-${index}`;
+    const group = new THREE.Group(); group.name = `bangu-cela-aberta-${side < 0 ? 'o' : 'l'}-${index}`;
     group.userData = { doorwayX: side * 24.8, doorwayZ: z, insideX, insideZ: z }; root.add(group);
     addBox(9.2, .35, 7.2, MAT.concrete, (faceX+backX)/2, 4.1, z, { collide: false });
     addBox(.5, 4.1, 7.2, MAT.concrete, backX, 0, z);
@@ -155,7 +187,7 @@ export function buildPenitenciaria(scene) {
   [-30,-20,-10,10,20,30].forEach((z, i) => { cell(-1, i, z); cell(1, i, z); });
 
   // Pátio bruto: concreto remendado, manchas de umidade e drenagem, sem marcação esportiva.
-  const yard = new THREE.Mesh(new THREE.PlaneGeometry(35, 43), MAT.yard); yard.name = 'penitenciaria-patio'; yard.rotation.x = -Math.PI/2; yard.position.y = .018; yard.receiveShadow = true; root.add(yard);
+  const yard = new THREE.Mesh(new THREE.PlaneGeometry(35, 43), MAT.yard); yard.name = 'bangu-patio-do-sol'; yard.userData.identity = 'bangu-zona-oeste'; yard.rotation.x = -Math.PI/2; yard.position.y = .018; yard.receiveShadow = true; root.add(yard);
   for (const [x,z,sx,sz] of [[-11,-14,4,1.8],[9,-12,5,2.4],[-13,10,3,5],[11,14,5,2],[-2,17,7,1.4]]) {
     const stain = new THREE.Mesh(new THREE.CircleGeometry(1,18), new THREE.MeshBasicMaterial({color:0x252c27,transparent:true,opacity:.2,depthWrite:false}));
     stain.scale.set(sx,sz,1); stain.rotation.x=-Math.PI/2; stain.position.set(x,.032,z); root.add(stain);
@@ -163,7 +195,7 @@ export function buildPenitenciaria(scene) {
   for (const z of [-18,18]) { addBox(29,.055,.22,MAT.steel,0,.02,z,{collide:false,cast:false}); for(let x=-13;x<=13;x+=1.1)addBox(.06,.065,1.1,MAT.black,x,.025,z,{collide:false,cast:false}); }
 
   function ammoCrate(index, x, z, ry=0) {
-    const group = new THREE.Group(); group.name = `penitenciaria-caixa-municao-${index}`; root.add(group);
+    const group = new THREE.Group(); group.name = `bangu-caixa-municao-${index}`; root.add(group);
     const body = addBox(2.2, 1.25, 1.55, MAT.ammo, x, 0, z, { ry, tag: `municao-${index}` }); group.userData.collider = body.userData.collider;
     for (const y of [.18,.92]) addBox(2.28,.1,1.63,MAT.steel,x,y,z,{ry,collide:false});
     for (const dx of [-.65,0,.65]) addBox(.08,.7,1.65,MAT.black,x+dx*Math.cos(ry),.27,z-dx*Math.sin(ry),{ry,collide:false});
@@ -171,7 +203,7 @@ export function buildPenitenciaria(scene) {
   [[-8,-7,.2],[8,-7,-.2],[-8,7,-.15],[8,7,.15],[-16,0,1.57],[16,0,1.57]].forEach((p,i)=>ammoCrate(i,...p));
 
   function centerObstacle(index, kind, x, z, ry=0) {
-    const marker = new THREE.Group(); marker.name = `penitenciaria-obstaculo-centro-${index}-${kind}`; marker.position.set(x,0,z); root.add(marker);
+    const marker = new THREE.Group(); marker.name = `bangu-obstaculo-centro-${index}-${kind}`; marker.position.set(x,0,z); root.add(marker);
     if (kind === 'barreira') {
       addBox(4.2,1.25,.75,MAT.concrete,x,0,z,{ry,tag:`centro-${index}`});
       addBox(3.7,.16,.82,MAT.yellow,x,1.04,z,{ry,collide:false});
@@ -190,7 +222,7 @@ export function buildPenitenciaria(scene) {
   [['barreira',-12,-16,.15],['barris',11,-16,0],['gaiola',-14,-2,-.2],['entulho',13,1,.25],['barreira',-11,16,-.18],['barris',12,16,0],['gaiola',-3,-13,.12],['entulho',4,13,-.2],['barreira',-2,7,1.45],['gaiola',3,-6,1.5]].forEach((p,i)=>centerObstacle(i,...p));
 
   function policeCar(x,z,ry) {
-    const group = new THREE.Group(); group.name = 'penitenciaria-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
+    const group = new THREE.Group(); group.name = 'bangu-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
     const part=(w,h,d,m,px,py,pz)=>{const mesh=new THREE.Mesh(boxGeo(w,h,d),m);mesh.position.set(px,py+h/2,pz);mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;};
     part(2.7,.75,5.4,MAT.white,0,.55,0); part(2.55,.12,3.4,MAT.blue,0,1.05,0); part(2.35,1.05,2.65,MAT.white,0,1.12,.05);
     part(2.38,.72,.08,MAT.glass,0,1.35,-1.35); part(2.38,.72,.08,MAT.glass,0,1.35,1.35);
@@ -202,21 +234,21 @@ export function buildPenitenciaria(scene) {
   policeCar(17,-25,-.35);
 
   function punchingBag(index,x,z) {
-    const group=new THREE.Group();group.name=`penitenciaria-saco-boxe-${index}`;root.add(group);
+    const group=new THREE.Group();group.name=`bangu-saco-boxe-${index}`;root.add(group);
     addBox(3.6,.25,2.4,MAT.steel,x,3.4,z,{collide:false}); addBox(.22,3.5,.22,MAT.steel,x-1.55,0,z); addBox(.22,3.5,.22,MAT.steel,x+1.55,0,z);
     addCylinder(.08,.85,MAT.steel,x,2.9,z,{collide:false}); addCylinder(.48,1.9,MAT.red,x,1,z,{collide:true,tag:`saco-${index}`});
   }
   punchingBag(0,-18,38); punchingBag(1,-13,38);
 
   function dynamite(index,x,z,ry=0) {
-    const group=new THREE.Group();group.name=`penitenciaria-dinamite-${index}`;group.position.set(x,0,z);group.rotation.y=ry;root.add(group);
+    const group=new THREE.Group();group.name=`bangu-dinamite-${index}`;group.position.set(x,0,z);group.rotation.y=ry;root.add(group);
     for(let i=0;i<6;i++){const stick=new THREE.Mesh(cylGeo(.11,1.25,8),MAT.red);stick.rotation.z=Math.PI/2;stick.position.set(0,.18+(i%2)*.2,(i-2.5)*.24);group.add(stick);} const band=new THREE.Mesh(boxGeo(.18,.65,1.65),MAT.black);band.position.y=.25;group.add(band);
   }
   dynamite(0,-19,-16,.2); dynamite(1,19,17,-.25); dynamite(2,4,23,1.1);
 
   // Bancos externos e barreiras quebram linhas longas sem fechar as três rotas.
   [[-18,-26],[18,27],[-18,24],[18,-20]].forEach(([x,z],i)=>{
-    addBox(4.4,.38,1.05,MAT.concrete,x,.72,z,{name:`penitenciaria-banco-patio-${i}`});
+    addBox(4.4,.38,1.05,MAT.concrete,x,.72,z,{name:`bangu-banco-patio-${i}`});
     for(const dx of [-1.65,1.65]) addBox(.45,.72,.8,MAT.darkConcrete,x+dx,0,z);
   });
 
@@ -259,6 +291,6 @@ export function buildPenitenciaria(scene) {
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
-    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
+    ctfPoints:[{id:'E',label:'PORTÃO SUL',x:0,z:-39},{id:'MID',label:'PÁTIO DO SOL',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
 }

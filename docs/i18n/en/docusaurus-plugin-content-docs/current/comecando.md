@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 40,549 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 40,580 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **6,891** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,729 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -238,8 +238,8 @@ The maps registered today, and which mode each one opens in:
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 276 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 426 |
-| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 449 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 264 |
+| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 447 |
+| `penitenciaria` | Complexo de Bangu | **capture** | `map_penitenciaria.js` | 296 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 20 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 

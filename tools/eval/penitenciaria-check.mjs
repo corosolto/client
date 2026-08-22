@@ -13,19 +13,23 @@ const named = prefix => {
   world.root.traverse(object => { if (object.name?.startsWith(prefix)) found.push(object); });
   return found;
 };
-const cells = named('penitenciaria-cela-aberta-');
-const benches = named('penitenciaria-banco-');
-const ammo = named('penitenciaria-caixa-municao-');
-const bags = named('penitenciaria-saco-boxe-');
-const towers = named('penitenciaria-guarita-');
-const fences = named('penitenciaria-cerca-');
-const dynamite = named('penitenciaria-dinamite-');
-const policeCars = named('penitenciaria-carro-policia');
-const centerObstacles = named('penitenciaria-obstaculo-centro-');
+const cells = named('bangu-cela-aberta-');
+const benches = named('bangu-banco-');
+const ammo = named('bangu-caixa-municao-');
+const bags = named('bangu-saco-boxe-');
+const towers = named('bangu-guarita-');
+const fences = named('bangu-cerca-');
+const dynamite = named('bangu-dinamite-');
+const policeCars = named('bangu-carro-policia');
+const centerObstacles = named('bangu-obstaculo-centro-');
+const signs = named('bangu-placa-');
+const bands = named('bangu-faixa-pintada-');
 if (mutante === 'fecha-celas') cells.length = 0;
 if (mutante === 'sem-guaritas') towers.length = 0;
 if (mutante === 'sem-obstaculos') { ammo.length = 0; policeCars.length = 0; }
 if (mutante === 'centro-aberto') centerObstacles.length = 0;
+if (mutante === 'sem-placas') signs.length = 0;
+if (mutante === 'sem-faixas') bands.length = 0;
 const ammoTextures = new Set();
 world.root.traverse(object => {
   if (!object.isMesh) return;
@@ -34,9 +38,12 @@ world.root.traverse(object => {
 });
 if (mutante === 'sem-textura-municao') ammoTextures.clear();
 
-const themeOk = cells.length >= 8 && benches.length >= 4 && bags.length >= 2
+if (mutante === 'tema-generica') world.root.userData.theme.id = 'penitenciaria-generica';
+const theme = world.root.userData.theme || {};
+const themeOk = theme.id === 'bangu-zona-oeste' && Array.isArray(theme.palette) && theme.palette.includes('cimento-quente')
+  && cells.length >= 8 && benches.length >= 4 && bags.length >= 2
   && towers.length === 4 && fences.length >= 4 && dynamite.length >= 2 && policeCars.length >= 1;
-const yardOk = named('penitenciaria-patio').length === 1
+const yardOk = named('bangu-patio-do-sol').length === 1
   && named('penitenciaria-quadra').length === 0 && named('penitenciaria-gol-').length === 0;
 const cellsOpen = cells.length >= 8 && cells.every(cell => {
   const { doorwayX, doorwayZ, insideX, insideZ } = cell.userData;
@@ -64,10 +71,20 @@ const to = world.nearestWaypoint(world.spawns.B[0].x, world.spawns.B[0].z);
 const path = world.findPath(from, to);
 const routesOk = nodes.length >= 100 && path.length > 2 && path.every(i => Number.isInteger(i) && nodes[i]);
 const ctfOk = world.ctfPoints?.length === 3 && world.spawns?.E?.length === 4 && world.spawns?.B?.length === 4;
+const banguIdentityOk = signs.length === 4 && bands.length === 2
+  && signs.some(sign => sign.userData.title === 'COMPLEXO DE BANGU')
+  && signs.every(sign => sign.userData.identity === 'bangu-zona-oeste')
+  && bands.every(band => band.userData.identity === 'cimento-e-patina');
+const layoutOk = JSON.stringify(world.spawns) === JSON.stringify({
+  E: [-15, -5, 5, 15].map(x => ({ x, z: -42, yaw: 0 })),
+  B: [15, 5, -5, -15].map(x => ({ x, z: 42, yaw: Math.PI })),
+}) && world.ctfPoints.map(point => `${point.id}:${point.x}:${point.z}`).join('|') === 'E:0:-39|MID:0:0|B:0:39';
 
-console.log(`PEN1 ${themeOk ? 'PASSA' : 'FALHA'} — ${cells.length} celas · ${benches.length} bancos · ${towers.length} guaritas · ${fences.length} cercas`);
-console.log(`PEN2 ${cellsOpen ? 'PASSA' : 'FALHA'} — ${cells.length} celas com porta e interior transitáveis`);
-console.log(`PEN3 ${obstaclesBlock && ammoTextureOk ? 'PASSA' : 'FALHA'} — ${ammo.length} caixas de munição texturizadas + ${policeCars.length} carro policial com colisão`);
-console.log(`PEN4 ${yardOk && arsenalOk && centerDensityOk ? 'PASSA' : 'FALHA'} — pátio sem campo · ${centerObstacles.length} obstáculos · ${centerWeapons.length} armas no miolo`);
-console.log(`PEN5 ${routesOk && ctfOk ? 'PASSA' : 'FALHA'} — ${nodes.length} nós · rota ${path.length} passos · 3 pontos CTF`);
-process.exit(themeOk && cellsOpen && obstaclesBlock && ammoTextureOk && yardOk && arsenalOk && centerDensityOk && routesOk && ctfOk ? 0 : 1);
+console.log(`BAN1 ${themeOk ? 'PASSA' : 'FALHA'} — ${cells.length} celas · ${benches.length} bancos · ${towers.length} guaritas · ${fences.length} cercas`);
+console.log(`BAN2 ${cellsOpen ? 'PASSA' : 'FALHA'} — ${cells.length} celas com porta e interior transitáveis`);
+console.log(`BAN3 ${obstaclesBlock && ammoTextureOk ? 'PASSA' : 'FALHA'} — ${ammo.length} caixas de munição texturizadas + ${policeCars.length} carro policial com colisão`);
+console.log(`BAN4 ${yardOk && arsenalOk && centerDensityOk ? 'PASSA' : 'FALHA'} — pátio sem campo · ${centerObstacles.length} obstáculos · ${centerWeapons.length} armas no miolo`);
+console.log(`BAN5 ${routesOk && ctfOk ? 'PASSA' : 'FALHA'} — ${nodes.length} nós · rota ${path.length} passos · 3 pontos CTF`);
+console.log(`BAN6 ${banguIdentityOk ? 'PASSA' : 'FALHA'} — ${signs.length}/4 placas autorais · ${bands.length}/2 faixas de pátio`);
+console.log(`BAN7 ${layoutOk ? 'PASSA' : 'FALHA'} — bases e coordenadas de objetivo preservadas`);
+process.exit(themeOk && cellsOpen && obstaclesBlock && ammoTextureOk && yardOk && arsenalOk && centerDensityOk && routesOk && ctfOk && banguIdentityOk && layoutOk ? 0 : 1);

@@ -1,4 +1,4 @@
-// Velho Oeste da Treta: cidade de madeira ao pôr do sol, com três rotas e cobertura baixa.
+// Sertão da Treta: rua de feira no semiárido, com três rotas e cobertura baixa.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
@@ -11,7 +11,12 @@ export function buildVelhoOeste(scene) {
   const occluders = [];
   const pickups = [];
   const root = new THREE.Group();
-  root.name = 'velho-oeste-da-treta';
+  root.name = 'sertao-da-treta';
+  root.userData.theme = {
+    id: 'sertao-nordestino',
+    palette: ['barro', 'cal', 'azul-anil'],
+    landmarks: ['mercado-da-feira', 'casa-de-farinha', 'cisterna'],
+  };
   scene.add(root);
 
   const geometryCache = new Map();
@@ -79,7 +84,7 @@ export function buildVelhoOeste(scene) {
       ctx.globalAlpha = 1;
     }
     const t = new THREE.CanvasTexture(canvas); t.colorSpace = THREE.SRGBColorSpace;
-    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = 4; t.name = `oeste-${kind}`;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat, repeat); t.anisotropy = 4; t.name = `sertao-${kind}`;
     return t;
   }
 
@@ -95,20 +100,20 @@ export function buildVelhoOeste(scene) {
     loaded.repeat.set(repeatX, repeatY); loaded.anisotropy = 8; loaded.name = name; return loaded;
   }
   if (typeof window !== 'undefined') {
-    TX.wood = realTexture('wood-real-v1.webp', 'oeste-wood-real', 3, 5);
-    TX.paleWood = realTexture('wood-real-v1.webp', 'oeste-wood-pale-real', 3, 5);
-    TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 12, 14);
-    TX.roof = realTexture('roof-real-v1.webp', 'oeste-roof-real', 4, 7);
-    TX.cactus = realTexture('cactus-real-v1.webp', 'oeste-cactus-real', 2, 4);
-    TX.hay = realTexture('hay-real-v1.webp', 'oeste-hay-real', 3, 3);
-    TX.metal = realTexture('metal-real-v1.webp', 'oeste-metal-real', 3, 4);
+    TX.wood = realTexture('wood-real-v1.webp', 'sertao-madeira', 3, 5);
+    TX.paleWood = realTexture('wood-real-v1.webp', 'sertao-cal-e-madeira', 3, 5);
+    TX.sand = realTexture('dirt-real-v1.webp', 'sertao-chao-de-barro', 12, 14);
+    TX.roof = realTexture('roof-real-v1.webp', 'sertao-telha', 4, 7);
+    TX.cactus = realTexture('cactus-real-v1.webp', 'sertao-mandacaru', 2, 4);
+    TX.hay = realTexture('hay-real-v1.webp', 'sertao-palha', 3, 3);
+    TX.metal = realTexture('metal-real-v1.webp', 'sertao-ferro', 3, 4);
   }
   const mat = (color, map = TX.wood, roughness = .9, metalness = 0, bumpScale = .045) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale, roughness, metalness });
   const MAT = {
-    sand: mat(0xffffff, TX.sand, 1, 0, .12), wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
-    roof: mat(0xffffff, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
-    black: mat(0x191411, TX.metal, .6, .25), cactus: mat(0xffffff, TX.cactus, 1, 0, .075), cactusLight: mat(0xaed09a, TX.cactus, 1, 0, .075),
-    hay: mat(0xffffff, TX.hay, 1, 0, .09), red: mat(0x7e271f, TX.wood), blue: mat(0x2d5361, TX.wood), glass: mat(0x87b2ba, TX.metal, .25, .05, .01),
+    sand: mat(0xd19a57, TX.sand, 1, 0, .12), wood: mat(0xa85b33), pale: mat(0xe2d2ad, TX.paleWood), dark: mat(0x493021),
+    roof: mat(0xc46b3b, TX.roof, .94, 0, .1), trim: mat(0xe8d8b5, TX.paleWood), metal: mat(0x70665b, TX.metal, .55, .35, .035),
+    black: mat(0x28231f, TX.metal, .6, .25), cactus: mat(0x719255, TX.cactus, 1, 0, .075), cactusLight: mat(0xb1bd75, TX.cactus, 1, 0, .075),
+    hay: mat(0xd1a850, TX.hay, 1, 0, .09), red: mat(0xa3492f, TX.wood), blue: mat(0x356b79, TX.wood), glass: mat(0x8ea6a1, TX.metal, .25, .05, .01),
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
   };
 
@@ -134,17 +139,17 @@ export function buildVelhoOeste(scene) {
   }
   function signTexture(title, sub = '') {
     const c = document.createElement('canvas'); c.width = 512; c.height = 180; const x = c.getContext('2d');
-    x.fillStyle = '#3a1c10'; x.fillRect(0, 0, c.width, c.height); x.strokeStyle = '#d6a35e'; x.lineWidth = 12; x.strokeRect(8, 8, 496, 164);
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#f0c87d';
-    x.font = 'bold 58px Georgia,serif'; x.fillText(title, 256, sub ? 70 : 90);
-    if (sub) { x.font = 'bold 25px Georgia,serif'; x.fillText(sub, 256, 132); }
+    x.fillStyle = '#e7d6aa'; x.fillRect(0, 0, c.width, c.height); x.strokeStyle = '#8e432a'; x.lineWidth = 12; x.strokeRect(8, 8, 496, 164);
+    x.fillStyle = '#356b79'; x.fillRect(20, 20, 472, 28); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#3e2b20';
+    x.font = '900 52px Arial,sans-serif'; x.fillText(title, 256, sub ? 78 : 98);
+    if (sub) { x.font = '700 23px Arial,sans-serif'; x.fillText(sub, 256, 135); }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   function addSign(title, sub, x, y, z, ry = 0, w = 6, h = 2.1) {
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: signTexture(title, sub), roughness: .85 }));
     mesh.position.set(x, y, z); mesh.rotation.y = ry; root.add(mesh); return mesh;
   }
-  function wantedTexture(outlaw, reward, seed, portraitIndex, gender) {
+  function feiraNoticeTexture(title, subtitle, seed) {
     const c = document.createElement('canvas'); c.width = 384; c.height = 512; const x = c.getContext('2d');
     const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
     let texture;
@@ -153,40 +158,33 @@ export function buildVelhoOeste(scene) {
       x.fillStyle = paper; x.fillRect(0, 0, 384, 512);
       for (let i = 0; i < 950; i++) { const shade = rand() > .5 ? 58 : 238; x.fillStyle = `rgba(${shade},${Math.floor(shade * .72)},${Math.floor(shade * .4)},${.025 + rand() * .07})`; x.fillRect(rand() * 384, rand() * 512, 1 + rand() * 4, 1 + rand() * 3); }
       x.strokeStyle = '#4b2b16'; x.lineWidth = 11; x.strokeRect(13, 13, 358, 486); x.lineWidth = 3; x.strokeRect(25, 25, 334, 462);
-      const heading = gender === 'feminino' ? 'PROCURADA' : 'PROCURADO';
-      x.textAlign = 'center'; x.fillStyle = '#3b2113'; x.font = '900 52px Georgia,serif'; x.fillText(heading, 192, 75);
-      x.font = 'bold 20px Georgia,serif'; x.fillText('VIVO OU DESARMADO', 192, 106);
-      x.fillStyle = '#4b2b16'; x.fillRect(66, 122, 252, 222);
-      if (atlas) {
-        const cellW = atlas.width / 4, cellH = atlas.height / 2, col = portraitIndex % 4, row = Math.floor(portraitIndex / 4);
-        x.drawImage(atlas, col * cellW + 3, row * cellH + 3, cellW - 6, cellH - 6, 72, 128, 240, 210);
-      } else { x.fillStyle = '#b58b51'; x.fillRect(72, 128, 240, 210); }
-      x.fillStyle = '#3b2113'; x.font = '900 29px Georgia,serif'; x.fillText(outlaw.toUpperCase(), 192, 382);
-      const danger = gender === 'feminino' ? 'PERIGOSA' : 'PERIGOSO';
-      x.font = 'bold 19px Georgia,serif'; x.fillText(`${danger} · BOM DE MIRA`, 192, 414);
-      x.font = '900 27px Georgia,serif'; x.fillText(`RECOMPENSA $${reward}`, 192, 462);
+      x.textAlign = 'center'; x.fillStyle = '#3e2b20'; x.font = '900 45px Arial,sans-serif'; x.fillText('FEIRA DO SERTÃO', 192, 75);
+      x.font = '700 18px Arial,sans-serif'; x.fillText('TRABALHO · ÁGUA · FORRÓ', 192, 106);
+      x.fillStyle = '#356b79'; x.fillRect(66, 122, 252, 142);
+      x.fillStyle = '#e9d6a6'; x.font = '900 31px Arial,sans-serif'; x.fillText(title.toUpperCase(), 192, 172);
+      x.font = '700 19px Arial,sans-serif'; x.fillText(subtitle.toUpperCase(), 192, 211);
+      x.fillStyle = '#a3492f'; x.fillRect(66, 278, 252, 42);
+      x.fillStyle = '#3e2b20'; x.font = '900 26px Arial,sans-serif'; x.fillText('RESPEITE A CAATINGA', 192, 382);
+      x.font = 'bold 18px Arial,sans-serif'; x.fillText('SOMBRA É BEM COMUM', 192, 414);
+      x.font = '900 23px Arial,sans-serif'; x.fillText('ÁGUA É VIDA', 192, 462);
       if (texture) texture.needsUpdate = true;
     };
     draw(null);
-    texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8; texture.name = `oeste-procurado-${outlaw}`;
-    if (typeof Image !== 'undefined') { const atlas = new Image(); atlas.onload = () => draw(atlas); atlas.src = '/img/textures/velho_oeste/procurados-atlas-v1.jpg'; }
+    texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8; texture.name = `sertao-aviso-${title}`;
     return texture;
   }
-  function addWanted(index, outlaw, reward, gender, side, x, y, z) {
+  function addFeiraNotice(index, title, subtitle, side, x, y, z) {
     addBox(.18, 2.35, 2.05, MAT.dark, x, .15, z, { collide: false });
     for (const dz of [-.87, .87]) addBox(.16, 2.7, .16, MAT.pale, x + side * .05, 0, z + dz, { collide: false });
-    const material = new THREE.MeshBasicMaterial({ map: wantedTexture(outlaw, reward, 1776 + index * 97, index, gender), polygonOffset: true, polygonOffsetFactor: -2 });
+    const material = new THREE.MeshBasicMaterial({ map: feiraNoticeTexture(title, subtitle, 1776 + index * 97), polygonOffset: true, polygonOffsetFactor: -2 });
     const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 1.8), material);
-    poster.name = `procurado-${index}`; poster.userData = {
-      outlaw, gender, heading: gender === 'feminino' ? 'PROCURADA' : 'PROCURADO', danger: gender === 'feminino' ? 'PERIGOSA' : 'PERIGOSO', reward,
-      portraitIndex: index, portraitAsset: 'procurados-atlas-v1.jpg',
-    }; poster.position.set(x - side * .1, y, z);
+    poster.name = `sertao-aviso-feira-${index}`; poster.userData = { title, subtitle, identity: 'feira-sertaneja' }; poster.position.set(x - side * .1, y, z);
     poster.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2; poster.receiveShadow = true; root.add(poster);
   }
-  let westernWindowIndex = 0;
-  function westernWindow(x, y, z, ry, w, h) {
-    const index = westernWindowIndex++, state = index % 2 ? 'aberta' : 'fechada';
-    const group = new THREE.Group(); group.name = `janela-oeste-${index}`; group.userData = { state, material: 'madeira' }; group.position.set(x, y + h / 2, z); group.rotation.y = ry; root.add(group);
+  let sertaoWindowIndex = 0;
+  function sertaoWindow(x, y, z, ry, w, h) {
+    const index = sertaoWindowIndex++, state = index % 2 ? 'aberta' : 'fechada';
+    const group = new THREE.Group(); group.name = `janela-sertaneja-${index}`; group.userData = { state, material: 'madeira-e-cal' }; group.position.set(x, y + h / 2, z); group.rotation.y = ry; root.add(group);
     const piece = (pw, ph, pd, material, px, py, pz) => {
       const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material); mesh.position.set(px, py, pz); mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
     };
@@ -213,20 +211,20 @@ export function buildVelhoOeste(scene) {
     addBox(2.5, h + 1.5, .28, MAT.trim, faceX, 0, z, { collide: false, ry });
     addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z, { collide: false, ry });
     if (doors > 1) addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z + 2.4, { collide: false, ry });
-    for (const wz of [-w * .3, w * .3]) westernWindow(faceX - side * .05, 2.2, z + wz, ry, 1.35, 1.25);
+    for (const wz of [-w * .3, w * .3]) sertaoWindow(faceX - side * .05, 2.2, z + wz, ry, 1.35, 1.25);
     for (let pz = z - w / 2; pz <= z + w / 2; pz += 2.3) addCylinder(.12, 1.4, MAT.dark, faceX - side * 2.3, 0, pz, { collide: false });
     addBox(.22, .22, w + .8, MAT.pale, faceX - side * 2.2, 1.4, z, { tag: `varanda-${title.toLowerCase()}` });
-    addSign(title, title === 'SALOON' ? 'BEBIDA · BARALHO · TRETA' : '', faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
+    addSign(title, title === 'MERCADO' ? 'FEIRA · CAFÉ · PROSA' : '', faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
     return g;
   }
-  building(-1, -29, 12, 8, 6.6, 'SALOON', MAT.red, 2);
-  building(-1, -11, 11, 7, 5.8, 'BANCO', MAT.pale);
+  building(-1, -29, 12, 8, 6.6, 'MERCADO', MAT.red, 2);
+  building(-1, -11, 11, 7, 5.8, 'CASA DE FARINHA', MAT.pale);
   building(-1, 8, 12, 8, 6.2, 'ARMAZÉM', MAT.wood);
-  building(-1, 29, 12, 7, 5.5, 'HOTEL', MAT.blue, 2);
-  building(1, -28, 12, 8, 5.8, 'XERIFE', MAT.pale);
-  building(1, -9, 12, 7, 5.6, 'BARBEIRO', MAT.blue);
-  building(1, 11, 12, 8, 6.2, 'EMPÓRIO', MAT.wood, 2);
-  building(1, 31, 10, 7, 5.5, 'ESTÁBULO', MAT.red, 2);
+  building(-1, 29, 12, 7, 5.5, 'POUSADA', MAT.blue, 2);
+  building(1, -28, 12, 8, 5.8, 'CISTERNA', MAT.pale);
+  building(1, -9, 12, 7, 5.6, 'BARBEARIA', MAT.blue);
+  building(1, 11, 12, 8, 6.2, 'BODEGA', MAT.wood, 2);
+  building(1, 31, 10, 7, 5.5, 'CASA DO VAQUEIRO', MAT.red, 2);
 
   function streetHouse(side, z, title, color) {
     const x = side * 15, faceX = x - side * 2.78, ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
@@ -234,24 +232,24 @@ export function buildVelhoOeste(scene) {
     addBox(5.5, 4.7, 7.2, color, x, 0, z);
     addBox(6.2, .38, 8, MAT.roof, x, 4.7, z, { collide: false });
     addBox(1.35, 2.35, .28, MAT.dark, faceX, 0, z, { collide: false, ry });
-    for (const dz of [-2.2, 2.2]) westernWindow(faceX - side * .03, 2, z + dz, ry, 1.15, 1.05);
+    for (const dz of [-2.2, 2.2]) sertaoWindow(faceX - side * .03, 2, z + dz, ry, 1.15, 1.05);
     addBox(.22, .22, 7.6, MAT.pale, faceX - side * 1.05, 1.25, z, { tag: `varanda-${title.toLowerCase()}` });
     addBox(2.3, .22, 8, MAT.roof, faceX - side * 1.05, 3.05, z, { collide: false });
     for (const dz of [-3.35, 3.35]) addBox(.18, 3.05, .18, MAT.dark, faceX - side * 1.9, 0, z + dz, { collide: false });
-    addSign(title, 'CASA DE MADEIRA', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
+    addSign(title, 'CASA DE TAIPA', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
   }
   streetHouse(-1, -20, 'OFICINA', MAT.pale);
-  streetHouse(1, -20, 'CASA DO FERREIRO', MAT.wood);
+  streetHouse(1, -20, 'CASA DE REDE', MAT.wood);
   streetHouse(-1, 20, 'PENSÃO', MAT.blue);
-  streetHouse(1, 20, 'CASA DO PISTOLEIRO', MAT.red);
+  streetHouse(1, 20, 'CASA DO VAQUEIRO', MAT.red);
 
-  const wanted = [
-    ['Zé Faísca', 500, 'masculino', -1, -18.5, 1.55, -34], ['Lola Fumaça', 900, 'feminino', 1, 18.5, 1.55, -34],
-    ['Neco Cascavel', 750, 'masculino', -1, -18.5, 1.55, -8], ['Cida Cartucho', 1200, 'feminino', 1, 18.5, 1.55, -8],
-    ['Beto Poeira', 400, 'masculino', -1, -18.5, 1.55, 8], ['Joana Brasa', 1100, 'feminino', 1, 18.5, 1.55, 8],
-    ['Tonho Espora', 800, 'masculino', -1, -18.5, 1.55, 34], ['Rita Bala', 1500, 'feminino', 1, 18.5, 1.55, 34],
+  const feiraNotices = [
+    ['MANDACARU', 'SOMBRA NA PRAÇA', -1, -18.5, 1.55, -34], ['FEIRA LIVRE', 'TODO SÁBADO', 1, 18.5, 1.55, -34],
+    ['ÁGUA DA CISTERNA', 'USE COM CUIDADO', -1, -18.5, 1.55, -8], ['BANDA DE PÍFANO', 'AO PÔR DO SOL', 1, 18.5, 1.55, -8],
+    ['CASA DE FARINHA', 'TRADIÇÃO DA TERRA', -1, -18.5, 1.55, 8], ['REDE E DESCANSO', 'CHEGUE MAIS', 1, 18.5, 1.55, 8],
+    ['SERTÃO VIVO', 'CAATINGA EM PÉ', -1, -18.5, 1.55, 34], ['FORRÓ NA PRAÇA', 'DEPOIS DA CHUVA', 1, 18.5, 1.55, 34],
   ];
-  wanted.forEach((poster, index) => addWanted(index, ...poster));
+  feiraNotices.forEach((notice, index) => addFeiraNotice(index, ...notice));
 
   // Cercas delimitam a arena, mas deixam duas entradas por ponta e flancos amplos.
   for (const sx of [-1, 1]) for (let z = -HALF_Z; z <= HALF_Z; z += 4) {
@@ -260,23 +258,24 @@ export function buildVelhoOeste(scene) {
   }
   for (const z of [-HALF_Z, HALF_Z]) {
     addBox(22, 1.5, .22, MAT.pale, -22, 0, z); addBox(22, 1.5, .22, MAT.pale, 22, 0, z);
-    addSign('VELHO OESTE', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
+    addSign('SERTÃO', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
     for (const x of [-6, 6]) addBox(.35, 7.6, .35, MAT.dark, x, 0, z);
     addBox(12.4, .35, .35, MAT.dark, 0, 7.3, z, { collide: false });
   }
 
-  function cactus(x, z, scale = 1, light = false) {
+  function mandacaru(index, x, z, scale = 1, light = false) {
+    const group = new THREE.Group(); group.name = `sertao-mandacaru-${index}`; root.add(group);
     const material = light ? MAT.cactusLight : MAT.cactus;
-    addCylinder(.38 * scale, 3.8 * scale, material, x, 0, z, { collide: true, segments: 10 });
+    const trunk = addCylinder(.38 * scale, 3.8 * scale, material, x, 0, z, { collide: true, segments: 10 }); group.add(trunk); root.remove(trunk);
     for (const dir of [-1, 1]) {
-      addCylinder(.22 * scale, 1.5 * scale, material, x + dir * .65 * scale, 1.35 * scale, z, { segments: 9 });
-      const arm = addCylinder(.2 * scale, .85 * scale, material, x + dir * .35 * scale, 1.25 * scale, z, { segments: 9 }); arm.rotation.z = Math.PI / 2;
+      const branch = addCylinder(.22 * scale, 1.5 * scale, material, x + dir * .65 * scale, 1.35 * scale, z, { segments: 9 }); group.add(branch); root.remove(branch);
+      const arm = addCylinder(.2 * scale, .85 * scale, material, x + dir * .35 * scale, 1.25 * scale, z, { segments: 9 }); arm.rotation.z = Math.PI / 2; group.add(arm); root.remove(arm);
     }
   }
-  [[-21,-39,1], [22,-38,.8], [-22,-20,.7], [23,1,1], [-21,18,.9], [22,41,1.1], [17,24,.65], [-18,40,.7]].forEach((p, i) => cactus(...p, i % 2));
+  [[-21,-39,1], [22,-38,.8], [-22,-20,.7], [23,1,1], [-21,18,.9], [22,41,1.1], [17,24,.65], [-18,40,.7]].forEach((p, i) => mandacaru(i, ...p, i % 2));
 
   function wagon(x, z, ry = 0) {
-    const g = new THREE.Group(); g.name = 'carroca'; g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
+    const g = new THREE.Group(); g.name = 'sertao-carroca-feira'; g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
     const box = (w, h, d, material, px, py, pz) => { const m = new THREE.Mesh(boxGeo(w, h, d), material); m.position.set(px, py, pz); m.castShadow = true; g.add(m); };
     box(3.8, .65, 2.2, MAT.pale, 0, 1.25, 0); box(.18, .25, 5, MAT.dark, 0, .8, -2.3);
     for (const wx of [-1.7, 1.7]) for (const wz of [-.9, .9]) {
@@ -308,17 +307,17 @@ export function buildVelhoOeste(scene) {
   }
 
   // Coberturas do miolo: quatro silhuetas distintas, espaçadas para manter três corredores.
-  obstacle('bebedouro', -8, 1, .08, 2.25, .85, 1.05, (part) => {
+  obstacle('cisterna', -8, 1, .08, 2.25, .85, 1.05, (part) => {
     part(4.5, .28, 1.7, MAT.dark, 0, 0, 0); part(4.15, .55, .16, MAT.pale, 0, .28, -.75); part(4.15, .55, .16, MAT.pale, 0, .28, .75);
     for (const px of [-2.05, 2.05]) part(.16, .55, 1.35, MAT.pale, px, .28, 0);
     part(3.8, .04, 1.15, MAT.glass, 0, .31, 0); for (const px of [-1.65, 1.65]) part(.18, .5, .18, MAT.dark, px, 0, 0);
   });
-  obstacle('caixas-dinamite', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
+  obstacle('caixas-feira', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
     part(1.8, 1.05, 1.55, MAT.pale, -.45, 0, 0); part(1.35, .85, 1.35, MAT.wood, .65, 1.02, .05);
     for (const pz of [-.42, 0, .42]) cylinder(.09, .9, MAT.red, .65, 1.43, pz, { rz: Math.PI / 2, segments: 8 });
     part(1.42, .08, .12, MAT.dark, .65, 1.84, 0);
   });
-  obstacle('amarra-cavalos', 4, -8, .04, 2.7, .35, 1.45, (part) => {
+  obstacle('banco-da-praca', 4, -8, .04, 2.7, .35, 1.45, (part) => {
     for (const px of [-2.35, 0, 2.35]) { part(.25, 1.45, .25, MAT.dark, px, 0, 0); part(.46, .12, .46, MAT.metal, px, 1.45, 0); }
     part(5.2, .22, .22, MAT.pale, 0, .88, 0); part(5.2, .12, .12, MAT.dark, 0, 1.08, 0);
   });
@@ -354,10 +353,10 @@ export function buildVelhoOeste(scene) {
     addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
   }
 
-  // Plantas rolantes: malhas abertas, sem colisão, atravessando a rua com rajadas diferentes.
-  const tumbleweeds = [];
-  function tumbleweed(index, z, radius) {
-    const group = new THREE.Group(); group.name = `tumbleweed-${index}`; root.add(group);
+  // Poeira de estrada percorre a rua com rajadas diferentes; o corpo mantém a cobertura existente.
+  const dustRolls = [];
+  function dustRoll(index, z, radius) {
+    const group = new THREE.Group(); group.name = `sertao-poeira-${index}`; root.add(group);
     const twigMat = new THREE.MeshStandardMaterial({ color: 0x76502a, roughness: 1 });
     for (let i = 0; i < 9; i++) {
       const ring = new THREE.Mesh(new THREE.TorusGeometry(radius * (.62 + (i % 3) * .15), .035, 5, 14), twigMat);
@@ -366,9 +365,9 @@ export function buildVelhoOeste(scene) {
     const collider = { minX: 0, maxX: 0, minY: 0, maxY: radius * 2 + .36, minZ: 0, maxZ: 0 };
     group.userData = { index, z, radius, speed: 3.2 + index * .65, phase: index * 19.7, collider };
     colliders.push(collider);
-    tumbleweeds.push(group); return group;
+    dustRolls.push(group); return group;
   }
-  tumbleweed(0, -12, .75); tumbleweed(1, 9, .58); tumbleweed(2, 32, .88);
+  dustRoll(0, -12, .75); dustRoll(1, 9, .58); dustRoll(2, 32, .88);
 
   const GM = { dark: MAT.black, steel: MAT.metal, wood: MAT.pale };
   function gun(kind, x, z, yaw) {
@@ -405,7 +404,7 @@ export function buildVelhoOeste(scene) {
     return [fromIdx];
   }
   function update(dt, elapsed) {
-    for (const weed of tumbleweeds) {
+    for (const weed of dustRolls) {
       const { index, z, radius, speed, phase, collider } = weed.userData;
       weed.position.x = -29 + ((elapsed * speed + phase) % 58);
       weed.position.z = z + Math.sin(elapsed * .72 + index * 2.3) * 2.1;
@@ -419,7 +418,6 @@ export function buildVelhoOeste(scene) {
 
   update(0, 0);
 
-  /* BUG-57: cidade de faroeste tem ave de poleiro e rato de saloon. */
   const ambience = createFavelaAmbience(root, {
     map: 'velho_oeste',
     rats: [
@@ -440,9 +438,9 @@ export function buildVelhoOeste(scene) {
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),
     },
     ctfPoints: [
-      { id: 'E', label: 'SALOON', x: -12, z: -34 },
-      { id: 'MID', label: 'RUA PRINCIPAL', x: 0, z: 0 },
-      { id: 'B', label: 'ESTÁBULO', x: 12, z: 34 },
+      { id: 'E', label: 'MERCADO', x: -12, z: -34 },
+      { id: 'MID', label: 'PRAÇA DA CISTERNA', x: 0, z: 0 },
+      { id: 'B', label: 'CASA DO VAQUEIRO', x: 12, z: 34 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath, bounds,
   };
