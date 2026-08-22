@@ -83,6 +83,12 @@ def separacao_failures(build: str, deploy: str) -> list[str]:
     if 'secrets.' in build:
         errors.append('PRV1 o job que COMPILA referencia `secrets.` — ele roda código do fork e não pode ter o que roubar')
 
+    # PRV5: o artefato tem de carregar arquivo OCULTO. O build da Vercel guarda a
+    # configuração de cada função em `.vc-config.json`, e o upload-artifact v4 ignora
+    # dotfile por padrão — o deploy morria com "Could not load function config".
+    if 'upload-artifact' in build and 'include-hidden-files: true' not in build:
+        errors.append('PRV5 o artefato do build não inclui arquivo oculto — o .vc-config.json fica de fora e o deploy falha')
+
     if 'workflow_run:' not in deploy:
         errors.append('PRV2 o job que PUBLICA não roda em workflow_run — sem contexto base não há segredo em PR de fork')
     if 'secrets.VERCEL_TOKEN' not in deploy:
@@ -151,6 +157,7 @@ def selftest(source: str) -> list[str]:
         'publica-sem-run': (build, deploy.replace('  workflow_run:', '  schedule:')),
         'publica-faz-checkout': (build, deploy + '\n      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n'),
         'publica-constroi': (build, deploy.replace('--prebuilt', '')),
+        'artefato-sem-oculto': (build.replace('include-hidden-files: true', ''), deploy),
         'publica-interpola': (build, deploy.replace('gh pr comment "$PR_NUM"', 'gh pr comment "${{ steps.pr.outputs.numero }}"')),
     }
     missed_sep = [n for n, (b, d) in separacao.items() if not separacao_failures(b, d)]
