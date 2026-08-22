@@ -73,5 +73,8 @@ if (usaEtiqueta && !criaEtiqueta) {
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log(`  \x1b[32m✓\x1b[0m DG o PR é bloqueado pelo build do CI; download tem retry (${FETCHERS.length} fetchers); etiqueta de preview existe`);
-if (MUT && !falhas.length) console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
+if (MUT && !falhas.length) {
+  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso (MC1)
+}
 process.exit(falhas.length ? 1 : 0);
