@@ -54,7 +54,19 @@ const _derivaDoRoster = (expr) => {
   }
   return false;
 };
-const _chamadas = [...main.matchAll(/preloadCharacterAssets\(([^)]*(?:\([^)]*\))?[^)]*)\)/g)].map((m) => m[1]);
+/* Só o PRIMEIRO argumento: a chamada ganhou um 2º (a lista de armas da partida), e seguir a
+   cadeia do texto inteiro dava a lista errada. Vírgula de topo, sem entrar em {...} nem (...). */
+const _primeiro = (txt) => {
+  let prof = 0;
+  for (let i = 0; i < txt.length; i++) {
+    const c = txt[i];
+    if ('([{'.includes(c)) prof++;
+    else if (')]}'.includes(c)) prof--;
+    else if (c === ',' && prof === 0) return txt.slice(0, i);
+  }
+  return txt;
+};
+const _chamadas = [...main.matchAll(/preloadCharacterAssets\(([\s\S]*?)\)[,;\s]/g)].map((m) => _primeiro(m[1]));
 if (!_chamadas.length) falhas.push('PL1 nenhum preload de personagem no main.js');
 if (_chamadas.some((a) => /GLB_CHARS/.test(a)))
   falhas.push('PL1 preload voltou a subir o elenco inteiro (44 GLBs no boot da partida)');
@@ -75,6 +87,8 @@ if (!/hasModel\(c\.id\)/.test(game))
 
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m PL1 preload da partida = roster sorteado (~8 GLBs), Game honra, M não materializa fora do carregado');
-if (MUT && !falhas.length)
+if (MUT && !falhas.length) {
   console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');   // prova que não morde é vermelho, não aviso
+}
 process.exit(falhas.length ? 1 : 0);
