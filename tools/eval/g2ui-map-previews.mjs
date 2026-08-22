@@ -52,8 +52,6 @@ const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   velho_oeste:   { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   penitenciaria: { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   parque_treta:  { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
-  // Vista diagonal elevada como a referência: fortaleza central, bastiões e rotas laterais.
-  treta_no_gelo: { pos: [32, 8.0, 32], pitch: -0.24, yaw: 0.78 },
 };
 const NOPOSE = process.env.NOPOSE === '1';   // captura do spawn, sem pino de posição
 const TAG = process.env.TAG || '';
@@ -98,7 +96,7 @@ page.on('pageerror', e => { errors++; console.error('[pageerror]', e.message); }
 for (const mapId of LIST) {
   await page.goto(`${BASE}/?debug=1&auto=P,mst&map=${mapId}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 180000 });
-  await page.addStyleTag({ content: '#hud,#hud-shortcuts{display:none!important}' });
+  await page.addStyleTag({ content: '#hud{display:none!important}' });
   await page.evaluate((pose) => {
     const g = window.__game;
     g.player.hp = 1e9;
