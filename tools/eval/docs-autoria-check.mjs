@@ -46,11 +46,17 @@ if (sujo) {
   process.exit(1);
 }
 
-// Linha de base: medir mutação sobre árvore já desatualizada dá veredito sem valor.
-if (spawnSync('node', [GERADOR, '--check', '--autoria'], { encoding: 'utf8' }).status !== 0) {
+/* Linha de base SEM `--autoria`: com ele, qualquer branch de PR que traga autor novo no
+   histórico reprovava aqui — o contrato do #398 é que autoria só é derivável na main, e a régua
+   estava cobrando o contrário do que guarda (bateu em #375, #372, #399). */
+if (spawnSync('node', [GERADOR, '--check'], { encoding: 'utf8' }).status !== 0) {
   console.log('  \x1b[31m✗\x1b[0m DOCSAUT não dá para medir: os blocos gerados já estão desatualizados (rode: npm run docs)');
   process.exit(1);
 }
+
+/* A DOCSAUT2 pergunta se `--autoria` MORDE a autoria torta. Numa branch onde ela já está torta
+   por si, a pergunta não tem resposta: pular dizendo isso é honesto, cobrar não. */
+const autoriaMedivel = spawnSync('node', [GERADOR, '--check', '--autoria'], { encoding: 'utf8' }).status === 0;
 
 const original = readFileSync(ALVO, 'utf8');
 const geradorOriginal = readFileSync(GERADOR, 'utf8');
@@ -75,7 +81,8 @@ try {
   if (comAutoriaTorta === original) throw new Error('não achei a frase de autoria para mutar');
   writeFileSync(ALVO, comAutoriaTorta);
   if (!rodar([])) falhas.push('DOCSAUT1 autoria torta REPROVOU o PR — cobra de quem não pode consertar (só é derivável após o squash)');
-  if (rodar(['--autoria'])) falhas.push('DOCSAUT2 autoria torta PASSOU com --autoria — o portão da main está cego para o único lugar onde o número é derivável');
+  if (!autoriaMedivel) console.log('  \x1b[33m⚠\x1b[0m DOCSAUT2 pulada: a autoria já está torta nesta branch (autor novo no histórico), então a mutação não é medível aqui');
+  if (autoriaMedivel && rodar(['--autoria'])) falhas.push('DOCSAUT2 autoria torta PASSOU com --autoria — o portão da main está cego para o único lugar onde o número é derivável');
   writeFileSync(ALVO, original);
 
   // ---- mutação de OUTRO bloco: a tolerância não pode ter vazado para o resto
