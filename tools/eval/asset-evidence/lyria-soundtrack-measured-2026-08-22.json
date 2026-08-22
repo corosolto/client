@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "kind": "listening-pilots",
+  "provider": "OpenRouter",
+  "model": "google/lyria-3-clip-preview",
+  "costUsd": 0.2,
+  "commercialUse": false,
+  "rightsStatus": "pending confirmation",
+  "measurement": {
+    "tool": "tools/eval/trilha-medida.py",
+    "referenceCorpus": "acervo local anterior; características extraídas localmente, sem reenvio ou imitação de faixas",
+    "bpmRange": [86, 152],
+    "modeCount": 2,
+    "minorPercent": 40,
+    "result": "sem convergência óbvia; ainda exige escuta humana"
+  },
+  "pilots": [
+    { "path": "public/audio/soundtrack/pilot-boombap-menor.mp3", "brief": "break gasto, baixo elétrico e piano esparso", "bpm": 152, "mode": "frígio", "brightnessHz": 1600, "percussive": 0.78 },
+    { "path": "public/audio/soundtrack/pilot-hardcore-industrial.mp3", "brief": "riff grave mecânico e sala de ensaio áspera", "bpm": 108, "mode": "frígio", "brightnessHz": 2507, "percussive": 0.32 },
+    { "path": "public/audio/soundtrack/pilot-reggae-rock-frigio.mp3", "brief": "contratempo abafado, baixo dub e ponte stop-start", "bpm": 86, "mode": "menor harmônica", "brightnessHz": 1811, "percussive": 0.44 },
+    { "path": "public/audio/soundtrack/pilot-mandelao-escuro.mp3", "brief": "tamborzão seco, subgrave único e síntese filtrada", "bpm": 129, "mode": "menor harmônica", "brightnessHz": 2850, "percussive": 0.44 },
+    { "path": "public/audio/soundtrack/pilot-forro-rua.mp3", "brief": "zabumba, triângulo, acordeon curto e baixo elétrico", "bpm": 152, "mode": "menor harmônica", "brightnessHz": 3028, "percussive": 0.62 }
+  ]
+}

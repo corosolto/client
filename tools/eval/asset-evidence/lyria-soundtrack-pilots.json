@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "provider": "OpenRouter",
   "model": "google/lyria-3-clip-preview",
-  "startedAt": "2026-08-22T01:28:25.465Z",
-  "completedAt": "2026-08-22T01:28:25.469Z",
+  "startedAt": "2026-08-22T01:51:56.289Z",
+  "completedAt": "2026-08-22T01:52:34.024Z",
   "status": "complete",
-  "maxCostUsd": 3,
-  "totalCostUsd": 0.2,
+  "maxCostUsd": 0.1,
+  "totalCostUsd": 0.08,
   "accountPlan": "pending confirmation",
   "commercialUse": false,
   "note": "Pilotos de escuta. Plano, termos e direito comercial não foram confirmados; não integrar ao pacote/publicação.",
@@ -19,59 +19,26 @@
   },
   "completed": [
     {
-      "id": "pilot-asfalto-e-viola",
-      "file": "public/audio/soundtrack/pilot-asfalto-e-viola.mp3",
-      "sha256": "977244ff04ed233d3ff5cca62d7e216c31743f0e5bd975ed23f7996d0555fbcc",
+      "id": "pilot-mandelao-escuro",
+      "file": "public/audio/soundtrack/pilot-mandelao-escuro.mp3",
+      "sha256": "bbf5ccb69318181b84c372c8fb76fbf87f461e365c8713f4b56c94cec5f7dc10",
       "durationSeconds": 30.772,
-      "generationId": "gen-1787361976-F8SszbK4ETp0WxeVSzwC",
+      "generationId": "gen-1787363516-4WCo2ZiPpvpiBLGqNTWq",
       "costUsd": 0.04,
       "costReceiptError": null,
-      "generatedAt": "2026-08-22T01:26:34.999Z",
-      "prompt": "Brazilian urban instrumental for a fast first-person shooter: viola caipira lead over punchy electronic breakbeat, dry hand percussion, warm electric bass, 124 BPM, subtle São Paulo street energy. Strong rhythmic loop, no vocals, no spoken words, no artist imitation, no melody from an existing song."
+      "generatedAt": "2026-08-22T01:52:14.836Z",
+      "prompt": "129 BPM original Brazilian mandelao gameplay instrumental. Hard dry tamborzao and caixa pattern, one dark 808 sub note, low-pass distorted vocal-free texture made from original synthesis, minimal percussion breaks and a raw bedroom-speaker mix. Keep the rhythm Brazilian baile, not reggaeton or generic Latin dance; no melodic lead, no vocals, no spoken words, no artist imitation, no melody from an existing song."
     },
     {
-      "id": "pilot-maracatu-noturno",
-      "file": "public/audio/soundtrack/pilot-maracatu-noturno.mp3",
-      "sha256": "ad5b2c1065b9f23ca14b055796952eac26fcca198f1b0532c7ab6952bf3ae20b",
+      "id": "pilot-forro-rua",
+      "file": "public/audio/soundtrack/pilot-forro-rua.mp3",
+      "sha256": "c9e69f250e186ed6fe98ee84efe326dc17b8987bc100fce0cdaf24d0f9321477",
       "durationSeconds": 30.772,
-      "generationId": "gen-1787361995-z5jJ3jkqpO1vCXlv6LSM",
+      "generationId": "gen-1787363536-T6zo89AEJhPnEpcxqo1j",
       "costUsd": 0.04,
       "costReceiptError": null,
-      "generatedAt": "2026-08-22T01:26:55.039Z",
-      "prompt": "Original Brazilian cinematic game soundtrack instrumental: maracatu alfaia drums, agogo accents, dark synth bass, tense minor harmony, 118 BPM, night match atmosphere. Rhythmic and loop-friendly, no vocals, no spoken words, no artist imitation, no melody from an existing song."
-    },
-    {
-      "id": "pilot-baile-subterraneo",
-      "file": "public/audio/soundtrack/pilot-baile-subterraneo.mp3",
-      "sha256": "86f00192d15e39db21b9b92cd8166fc9fef1e3d0a95de407c21cd04c816dfc25",
-      "durationSeconds": 30.772,
-      "generationId": "gen-1787362015-hOuYf550sl2cVSpSpi6a",
-      "costUsd": 0.04,
-      "costReceiptError": null,
-      "generatedAt": "2026-08-22T01:27:11.924Z",
-      "prompt": "Original Brazilian baile funk game soundtrack instrumental: dry tamborzao rhythm, deep but controlled sub bass, metallic percussion, sparse synth stabs, 132 BPM, raw underground club energy. No vocals, no spoken words, no artist imitation, no melody from an existing song."
-    },
-    {
-      "id": "pilot-concreto-e-metais",
-      "file": "public/audio/soundtrack/pilot-concreto-e-metais.mp3",
-      "sha256": "8ac64401f61495cfc5d902d8000cb1fb46a9ba37d624d59984b139df88be70e3",
-      "durationSeconds": 30.772,
-      "generationId": "gen-1787362038-94CUoNdN9mVc6RnaCuvX",
-      "costUsd": 0.04,
-      "costReceiptError": null,
-      "generatedAt": "2026-08-22T01:27:38.610Z",
-      "prompt": "Original Brazilian street march instrumental for a multiplayer FPS: tight caixa snare, surdo pulse, short brass stabs, distorted guitar texture, determined energy, 126 BPM. Designed as background gameplay music, no vocals, no spoken words, no artist imitation, no melody from an existing song."
-    },
-    {
-      "id": "pilot-floresta-eletrica",
-      "file": "public/audio/soundtrack/pilot-floresta-eletrica.mp3",
-      "sha256": "5e3c867779ac0ac00cd6021a733afbb08ac7e4fb20e29f2af004a8ea187e885f",
-      "durationSeconds": 30.772,
-      "generationId": "gen-1787362058-kvnMtfnM5VD1cZxGvOMH",
-      "costUsd": 0.04,
-      "costReceiptError": null,
-      "generatedAt": "2026-08-22T01:27:59.013Z",
-      "prompt": "Original Brazilian Amazon-inspired electronic game soundtrack instrumental: hand percussion, wooden flute-like synth texture, electric guitar swells, humid ambience, driving bass, 120 BPM. Focused action loop with no vocals, no spoken words, no artist imitation, no melody from an existing song."
+      "generatedAt": "2026-08-22T01:52:34.022Z",
+      "prompt": "112 BPM original Brazilian urban forro gameplay instrumental. Zabumba low pulse, sharp triangle syncopation, compact accordion phrases and dry electric-bass response, bright major harmony with a slightly dirty street-recording texture. It should drive an FPS round, not a tourist postcard: no EDM drop, no pan-Latin rhythm, no vocals, no spoken words, no artist imitation, no melody from an existing song."
     }
   ],
   "failures": []

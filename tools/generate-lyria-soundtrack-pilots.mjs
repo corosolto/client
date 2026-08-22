@@ -23,24 +23,24 @@ const BEGIN = '<!-- AUDIO-PROVENANCE:BEGIN -->';
 const END = '<!-- AUDIO-PROVENANCE:END -->';
 const PILOTS = [
   {
-    id: 'pilot-asfalto-e-viola',
-    prompt: 'Brazilian urban instrumental for a fast first-person shooter: viola caipira lead over punchy electronic breakbeat, dry hand percussion, warm electric bass, 124 BPM, subtle São Paulo street energy. Strong rhythmic loop, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
+    id: 'pilot-boombap-menor',
+    prompt: '78 BPM original Brazilian street-rap gameplay instrumental. Minor-key vinyl-worn drum break, deliberate kick and snare, low electric bass, sparse two-note piano motif, short turntable-like texture made from original sound design, tense nighttime São Paulo concrete mood. Leave space between hits; no trap hi-hat rolls, no reggaeton/dembow, no salsa or Latin-pop brass, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
   },
   {
-    id: 'pilot-maracatu-noturno',
-    prompt: 'Original Brazilian cinematic game soundtrack instrumental: maracatu alfaia drums, agogo accents, dark synth bass, tense minor harmony, 118 BPM, night match atmosphere. Rhythmic and loop-friendly, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
+    id: 'pilot-hardcore-industrial',
+    prompt: '161 BPM original Brazilian hardcore-industrial FPS instrumental. Down-tuned distorted guitar plays a short mechanical two-bar riff; dry floor-tom and snare attack, clipped bass, brief machine-stop breaks, abrasive rehearsal-room recording, no polished trailer orchestra. Make it confrontational and physical, not metal virtuoso; no vocals, no spoken words, no artist imitation, no melody from an existing song.',
   },
   {
-    id: 'pilot-baile-subterraneo',
-    prompt: 'Original Brazilian baile funk game soundtrack instrumental: dry tamborzao rhythm, deep but controlled sub bass, metallic percussion, sparse synth stabs, 132 BPM, raw underground club energy. No vocals, no spoken words, no artist imitation, no melody from an existing song.',
+    id: 'pilot-reggae-rock-frigio',
+    prompt: '108 BPM original Brazilian street reggae-rock gameplay instrumental in a dark Phrygian color. Offbeat muted electric-guitar chops, dub bass pulse, restrained Brazilian percussion, one rough guitar hook, roomy street-band recording and a tense stop-start bridge. Avoid tropical resort mood, ska cheerfulness, Latin-pop horns and glossy EDM; no vocals, no spoken words, no artist imitation, no melody from an existing song.',
   },
   {
-    id: 'pilot-concreto-e-metais',
-    prompt: 'Original Brazilian street march instrumental for a multiplayer FPS: tight caixa snare, surdo pulse, short brass stabs, distorted guitar texture, determined energy, 126 BPM. Designed as background gameplay music, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
+    id: 'pilot-mandelao-escuro',
+    prompt: '129 BPM original Brazilian mandelao gameplay instrumental. Hard dry tamborzao and caixa pattern, one dark 808 sub note, low-pass distorted vocal-free texture made from original synthesis, minimal percussion breaks and a raw bedroom-speaker mix. Keep the rhythm Brazilian baile, not reggaeton or generic Latin dance; no melodic lead, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
   },
   {
-    id: 'pilot-floresta-eletrica',
-    prompt: 'Original Brazilian Amazon-inspired electronic game soundtrack instrumental: hand percussion, wooden flute-like synth texture, electric guitar swells, humid ambience, driving bass, 120 BPM. Focused action loop with no vocals, no spoken words, no artist imitation, no melody from an existing song.',
+    id: 'pilot-forro-rua',
+    prompt: '112 BPM original Brazilian urban forro gameplay instrumental. Zabumba low pulse, sharp triangle syncopation, compact accordion phrases and dry electric-bass response, bright major harmony with a slightly dirty street-recording texture. It should drive an FPS round, not a tourist postcard: no EDM drop, no pan-Latin rhythm, no vocals, no spoken words, no artist imitation, no melody from an existing song.',
   },
 ];
 
@@ -56,6 +56,13 @@ const preflightOnly = args.includes('--preflight');
 const model = value('--model', DEFAULT_MODEL);
 const maxCostUsd = Number(value('--max-cost-usd', '3'));
 const envFile = value('--env', '.env');
+const only = new Set(String(value('--only', '')).split(',').map((id) => id.trim()).filter(Boolean));
+if (only.size) {
+  const unknown = [...only].filter((id) => !PILOTS.some((pilot) => pilot.id === id));
+  if (unknown.length) throw new Error(`--only desconhece: ${unknown.join(', ')}`);
+  const chosen = PILOTS.filter((pilot) => only.has(pilot.id));
+  PILOTS.splice(0, PILOTS.length, ...chosen);
+}
 if (!Number.isFinite(maxCostUsd) || maxCostUsd <= 0) throw new Error('--max-cost-usd precisa ser positivo');
 
 function loadEnv(file) {

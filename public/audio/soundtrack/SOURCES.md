@@ -14,69 +14,69 @@ dados de pagamento aqui.
   "schema": 1,
   "assets": [
     {
-      "path": "soundtrack/pilot-asfalto-e-viola.mp3",
+      "path": "soundtrack/pilot-boombap-menor.mp3",
       "kind": "generated",
       "provider": "OpenRouter",
       "model": "google/lyria-3-clip-preview",
       "accountPlan": "pending confirmation",
-      "generatedAt": "2026-08-22T01:26:34.999Z",
-      "generationId": "gen-1787361976-F8SszbK4ETp0WxeVSzwC",
+      "generatedAt": "2026-08-22T01:49:36.562Z",
+      "generationId": "gen-1787363359-neNiMbFThVOsHTgb3oUA",
       "termsUrl": "https://openrouter.ai/terms",
       "commercialUse": false,
       "rightsBasis": "Piloto gerado; plano da conta e direito comercial pendentes de confirmação humana antes de distribuição.",
-      "sha256": "977244ff04ed233d3ff5cca62d7e216c31743f0e5bd975ed23f7996d0555fbcc"
+      "sha256": "713289d35626c5117c943e164905586db1a18490e5404a46b8c9228f107716d8"
     },
     {
-      "path": "soundtrack/pilot-maracatu-noturno.mp3",
+      "path": "soundtrack/pilot-hardcore-industrial.mp3",
       "kind": "generated",
       "provider": "OpenRouter",
       "model": "google/lyria-3-clip-preview",
       "accountPlan": "pending confirmation",
-      "generatedAt": "2026-08-22T01:26:55.039Z",
-      "generationId": "gen-1787361995-z5jJ3jkqpO1vCXlv6LSM",
+      "generatedAt": "2026-08-22T01:50:10.987Z",
+      "generationId": "gen-1787363392-ZNGXMtBr78wM2zUHMbug",
       "termsUrl": "https://openrouter.ai/terms",
       "commercialUse": false,
       "rightsBasis": "Piloto gerado; plano da conta e direito comercial pendentes de confirmação humana antes de distribuição.",
-      "sha256": "ad5b2c1065b9f23ca14b055796952eac26fcca198f1b0532c7ab6952bf3ae20b"
+      "sha256": "0dbdb24751e3aec624948c0992958115cc382a7a78aad3e2ba213c7caeb46637"
     },
     {
-      "path": "soundtrack/pilot-baile-subterraneo.mp3",
+      "path": "soundtrack/pilot-reggae-rock-frigio.mp3",
       "kind": "generated",
       "provider": "OpenRouter",
       "model": "google/lyria-3-clip-preview",
       "accountPlan": "pending confirmation",
-      "generatedAt": "2026-08-22T01:27:11.924Z",
-      "generationId": "gen-1787362015-hOuYf550sl2cVSpSpi6a",
+      "generatedAt": "2026-08-22T01:50:28.400Z",
+      "generationId": "gen-1787363411-AG8Tal64DdEIUaKzg0zg",
       "termsUrl": "https://openrouter.ai/terms",
       "commercialUse": false,
       "rightsBasis": "Piloto gerado; plano da conta e direito comercial pendentes de confirmação humana antes de distribuição.",
-      "sha256": "86f00192d15e39db21b9b92cd8166fc9fef1e3d0a95de407c21cd04c816dfc25"
+      "sha256": "67d7fa378b69b4608c1f2f4ea28741ba160e6a10082c8880892f6eac4bc8878c"
     },
     {
-      "path": "soundtrack/pilot-concreto-e-metais.mp3",
+      "path": "soundtrack/pilot-mandelao-escuro.mp3",
       "kind": "generated",
       "provider": "OpenRouter",
       "model": "google/lyria-3-clip-preview",
       "accountPlan": "pending confirmation",
-      "generatedAt": "2026-08-22T01:27:38.610Z",
-      "generationId": "gen-1787362038-94CUoNdN9mVc6RnaCuvX",
+      "generatedAt": "2026-08-22T01:52:14.836Z",
+      "generationId": "gen-1787363516-4WCo2ZiPpvpiBLGqNTWq",
       "termsUrl": "https://openrouter.ai/terms",
       "commercialUse": false,
       "rightsBasis": "Piloto gerado; plano da conta e direito comercial pendentes de confirmação humana antes de distribuição.",
-      "sha256": "8ac64401f61495cfc5d902d8000cb1fb46a9ba37d624d59984b139df88be70e3"
+      "sha256": "bbf5ccb69318181b84c372c8fb76fbf87f461e365c8713f4b56c94cec5f7dc10"
     },
     {
-      "path": "soundtrack/pilot-floresta-eletrica.mp3",
+      "path": "soundtrack/pilot-forro-rua.mp3",
       "kind": "generated",
       "provider": "OpenRouter",
       "model": "google/lyria-3-clip-preview",
       "accountPlan": "pending confirmation",
-      "generatedAt": "2026-08-22T01:27:59.013Z",
-      "generationId": "gen-1787362058-kvnMtfnM5VD1cZxGvOMH",
+      "generatedAt": "2026-08-22T01:52:34.022Z",
+      "generationId": "gen-1787363536-T6zo89AEJhPnEpcxqo1j",
       "termsUrl": "https://openrouter.ai/terms",
       "commercialUse": false,
       "rightsBasis": "Piloto gerado; plano da conta e direito comercial pendentes de confirmação humana antes de distribuição.",
-      "sha256": "5e3c867779ac0ac00cd6021a733afbb08ac7e4fb20e29f2af004a8ea187e885f"
+      "sha256": "c9e69f250e186ed6fe98ee84efe326dc17b8987bc100fce0cdaf24d0f9321477"
     }
   ]
 }
