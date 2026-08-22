@@ -13,18 +13,35 @@
 // O que NÃO entra: soundtrack/ (fontes com nome comercial), TRACKS.txt, qualquer arquivo
 // não referenciado.
 //
-// Uso: node scripts/build-audio-pack.mjs <outDir>
-//   -> <outDir>/pack/  (conteúdo) e <outDir>/audio-pack.zip
+// Uso: node scripts/build-audio-pack.mjs <outDir> [--profile steam|web-meme]
+//      [--audio-root /pasta/preparada/public/audio] [--allow-web-meme]
+//   -> <outDir>/pack/  (conteúdo) e <outDir>/audio-pack-<perfil>.zip
+//
+// PERFIS
+//   steam    usa somente a base `release-safe` (CC0/original/licenciada).
+//   web-meme é um pacote separado para a experiência meme; exige opt-in
+//            explícito e NUNCA deve ser enviado como build Steam.
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import { rewriteAudioManifest } from './audio-pack-rewrite.mjs';
 
-const OUT = process.argv[2];
-if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir>'); process.exit(1); }
+const argv = process.argv.slice(2);
+const OUT = argv.find((entry) => !entry.startsWith('--'));
+const option = (name) => {
+  const index = argv.indexOf(name);
+  return index < 0 ? null : argv[index + 1];
+};
+if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir> [--profile steam|web-meme]'); process.exit(1); }
 const RAIZ = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
-const AUDIO = path.join(RAIZ, 'public', 'audio');
+const PROFILE = option('--profile') || 'steam';
+if (!['steam', 'web-meme'].includes(PROFILE)) {
+  throw new Error(`perfil desconhecido: ${PROFILE}. Use steam ou web-meme.`);
+}
+const AUDIO = option('--audio-root')
+  ? path.resolve(process.cwd(), option('--audio-root'))
+  : path.join(RAIZ, 'public', 'audio');
 const PACK = path.join(OUT, 'pack');
 // LAYOUT DO ZIP: entradas SEM o prefixo audio/ — o fetch-audio.sh descompacta
 // DENTRO de public/audio/, então 'a/x.mp3' vira public/audio/a/x.mp3, que é o que a
@@ -32,21 +49,34 @@ const PACK = path.join(OUT, 'pack');
 mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
-// Este comando cria o artefato que vai para o CDN/lojas. Não pode transformar
-// um manifest local antigo em publicação por acidente: a origem aprovada é
-// declarada antes de opacificar os nomes dentro do ZIP.
-if (manifesto.licenseProfile !== 'release-safe') {
-  throw new Error('manifest.json não declara licenseProfile: "release-safe"; pré-voo de procedência obrigatório');
-}
 const manifestText = JSON.stringify(manifesto);
+// Nenhum perfil novo carrega legado Valve/CS/UT. O perfil web só altera a
+// camada de humor, nunca a origem de armas ou de trilha.
 if (/counter[ -]?strike|half[ -]?life|\bvalve\b|\b(?:ut|unreal tournament)[-_ ]/i.test(manifestText)) {
-  throw new Error('manifest.json contém referência de origem proibida para o pacote de lançamento');
+  throw new Error('manifest.json contém referência Valve/CS/UT, proibida em todos os perfis');
+}
+if (PROFILE === 'steam') {
+  // Este comando cria o artefato que vai para a loja. Não pode transformar um
+  // manifest local antigo em publicação por acidente.
+  if (manifesto.licenseProfile !== 'release-safe') {
+    throw new Error('perfil steam exige licenseProfile: "release-safe"; pré-voo de procedência obrigatório');
+  }
+  if (/audio\/(?:capture|memes|third-party|terceiros)\//i.test(manifestText)) {
+    throw new Error('perfil steam não pode referenciar capture/memes; monte a base segura antes de empacotar');
+  }
+} else {
+  if (manifesto.licenseProfile !== 'web-meme') {
+    throw new Error('perfil web-meme exige licenseProfile: "web-meme" no manifest preparado');
+  }
+  if (!argv.includes('--allow-web-meme')) {
+    throw new Error('perfil web-meme exige --allow-web-meme; ele não é um pacote de loja');
+  }
 }
 let copiados = 0, faltando = [];
 const nomesOpacos = new Map();
 const hashNome = (rel) => {
   if (nomesOpacos.has(rel)) return nomesOpacos.get(rel);
-  const src = path.join(RAIZ, 'public', rel);
+  const src = path.join(AUDIO, rel.replace(/^audio\//, ''));
   if (!existsSync(src)) { faltando.push(rel); return rel; }
   const h = createHash('sha1').update(readFileSync(src)).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;
@@ -57,6 +87,12 @@ const hashNome = (rel) => {
 };
 const novoManifesto = rewriteAudioManifest(manifesto, hashNome);
 writeFileSync(path.join(PACK, 'manifest.json'), JSON.stringify(novoManifesto, null, 1));
+writeFileSync(path.join(PACK, 'audio-profile.json'), JSON.stringify({
+  schema: 1,
+  profile: PROFILE,
+  storeEligible: PROFILE === 'steam',
+  sourceLicenseProfile: manifesto.licenseProfile,
+}, null, 1));
 
 // menu-music: nomes já opacos (m01..mNN); o mapa de nomes reais fica de fora.
 const MM = path.join(AUDIO, 'menu-music');
@@ -68,7 +104,8 @@ for (const f of readdirSync(MM)) {
   menu++;
 }
 
-execSync(`cd "${PACK}" && zip -q -r ../audio-pack.zip .`, { stdio: 'inherit' });
-const mb = (execSync(`du -m "${path.join(OUT, 'audio-pack.zip')}" | cut -f1`).toString().trim());
-console.log(`PACK: ${copiados} arquivos hasheados + ${menu} de menu | faltando: ${faltando.length} | zip: ${mb} MB`);
+const zipName = `audio-pack-${PROFILE}.zip`;
+execSync(`cd "${PACK}" && zip -q -r "../${zipName}" .`, { stdio: 'inherit' });
+const mb = (execSync(`du -m "${path.join(OUT, zipName)}" | cut -f1`).toString().trim());
+console.log(`PACK ${PROFILE}: ${copiados} arquivos hasheados + ${menu} de menu | faltando: ${faltando.length} | zip: ${mb} MB`);
 if (faltando.length) { console.log('FALTANDO (manifesto aponta e o disco não tem):'); for (const f of faltando) console.log('  ' + f); process.exitCode = 1; }

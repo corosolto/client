@@ -95,6 +95,8 @@
     "check:web": "node tools/eval/runner.mjs eval:grafite eval:select",
     "audio": "node tools/gen-audio-manifest.mjs",
     "audio:check": "node tools/gen-audio-manifest.mjs --check",
+    "audio:pack:steam": "node scripts/build-audio-pack.mjs release/audio-steam --profile steam",
+    "audio:pack:web-meme": "node scripts/build-audio-pack.mjs release/audio-web-meme --profile web-meme --allow-web-meme",
     "audio:provenance": "node tools/audio-provenance.mjs --report",
     "audio:preflight": "node tools/audio-provenance.mjs --strict",
     "eval:audio-provenance": "node tools/eval/audio-provenance-check.mjs",
