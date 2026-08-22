@@ -13,3 +13,9 @@ integrá-lo:
 
 O recibo, prompt e imagens de inspeção ficam em `references/viewmodel-maos/`, que
 é insumo de trabalho local e não é redistribuído pelo repositório.
+
+## Candidato rejeitado em 2026-08-22
+
+O seed Meshy e seu rig foram preservados apenas em `/tmp/csbrasil-vm-pilot/` para
+comparação; não são artefatos de entrega. A revisão independente e os IDs das tarefas
+ficam em `tools/eval/asset-evidence/viewmodel-maos/REVIEW-SEED-2026-08-22.md`.
