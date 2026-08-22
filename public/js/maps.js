@@ -90,8 +90,9 @@ export const MAPS = {
   // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
-  velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
-  penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
+  // IDs ficam por compatibilidade de links e partidas antigas; a leitura no jogo é brasileira.
+  velho_oeste: { name: 'Sertão da Treta', build: buildVelhoOeste, ctfMode: true },
+  penitenciaria: { name: 'Complexo de Bangu', build: buildPenitenciaria, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
