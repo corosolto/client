@@ -26,6 +26,14 @@ jobs:
           REPO: ${{ github.repository }}
         run: gh pr edit "$PR" --repo "$REPO" --remove-label "preview-autorizado" 2>/dev/null || true
 
+      # O job `preview` abaixo só dispara em `labeled` com esta etiqueta. Ela nunca foi
+      # criada no repositório, então o caminho inteiro era código morto: o bot pedia um
+      # rótulo que ninguém tinha como aplicar. Criar aqui é o que liga o mecanismo.
+      - name: garante a etiqueta que autoriza o preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci/ensure_labels.py preview-autorizado
+
       - name: classifica o diff sem executar código do fork
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,50 +51,9 @@ jobs:
           fi
           gh pr comment "$PR" --repo "$REPO" --body "🤖 **cs-brasil-ai-bot**: $TEXTO \`preview-autorizado\`."
 
-  preview:
-    if: >-
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      github.event.action == 'labeled' &&
-      github.event.label.name == 'preview-autorizado'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    environment: preview-forks
-    steps:
-      - name: confirma mantenedor, label e SHA aprovado
-        env:
-          GH_TOKEN: ${{ github.token }}
-          ACTOR: ${{ github.actor }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-          EVENT_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          PERMISSION=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq .permission 2>/dev/null || echo none)
-          case "$PERMISSION" in admin|maintain|write) ;; *) echo "ator sem permissão de mantenedor"; exit 1 ;; esac
-          API_SHA=$(gh api "repos/$REPO/pulls/$PR" --jq .head.sha)
-          [ "$API_SHA" = "$EVENT_SHA" ]
-          gh api "repos/$REPO/issues/$PR/labels" --jq 'any(.[]; .name == "preview-autorizado")' | grep -qx true
-
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-          allow-unsafe-pr-checkout: true
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with: { node-version: 22 }
-      - run: npm i -g vercel@58.9.0
-      - name: publica preview
-        id: deploy
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
-          vercel build --token "$VERCEL_TOKEN"
-          URL=$(vercel deploy --prebuilt --token "$VERCEL_TOKEN")
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-      - name: comenta URL
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body "🤖 **cs-brasil-ai-bot**: preview no ar → ${{ steps.deploy.outputs.url }}"
+# O JOB `preview` SAIU DAQUI (22/08). Ele publicava com `vercel build`, ou seja,
+# executava o build do fork com o VERCEL_TOKEN no ambiente — e era por isso que
+# exigia um mantenedor aprovar cada push. O preview agora é feito em duas metades
+# que não precisam de aprovação nenhuma: `preview-build.yml` compila o código do
+# fork SEM segredo, e `preview-deploy.yml` publica COM segredo sem executar nada
+# do PR. Este arquivo ficou só com a classificação do diff, que continua útil.
