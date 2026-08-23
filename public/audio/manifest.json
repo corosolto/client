@@ -1,0 +1,1343 @@
+{
+ "voice": {
+  "E": [],
+  "B": [],
+  "U": [],
+  "C": [],
+  "F": [],
+  "N": [],
+  "R": [],
+  "O": [],
+  "T": []
+ },
+ "round": {
+  "E": [],
+  "B": [],
+  "U": [],
+  "C": [],
+  "F": [],
+  "N": [],
+  "R": [],
+  "O": [],
+  "T": []
+ },
+ "characterVoice": {
+  "camelo-ambulante": {
+   "select": [
+    "audio/characters/camelo-ambulante/select/select-01.mp3",
+    "audio/characters/camelo-ambulante/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/camelo-ambulante/kill/kill-01.mp3",
+    "audio/characters/camelo-ambulante/kill/kill-02.mp3",
+    "audio/characters/camelo-ambulante/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/camelo-ambulante/radio/radio-avanco.mp3",
+    "audio/characters/camelo-ambulante/radio/radio-cobertura.mp3",
+    "audio/characters/camelo-ambulante/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "camera-roxa": {
+   "select": [
+    "audio/characters/camera-roxa/select/select-01.mp3",
+    "audio/characters/camera-roxa/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/camera-roxa/kill/kill-01.mp3",
+    "audio/characters/camera-roxa/kill/kill-02.mp3",
+    "audio/characters/camera-roxa/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/camera-roxa/radio/radio-avanco.mp3",
+    "audio/characters/camera-roxa/radio/radio-cobertura.mp3",
+    "audio/characters/camera-roxa/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "capivara-reporter": {
+   "select": [
+    "audio/characters/capivara-reporter/select/select-01.mp3",
+    "audio/characters/capivara-reporter/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/capivara-reporter/kill/kill-01.mp3",
+    "audio/characters/capivara-reporter/kill/kill-02.mp3",
+    "audio/characters/capivara-reporter/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/capivara-reporter/radio/radio-avanco.mp3",
+    "audio/characters/capivara-reporter/radio/radio-cobertura.mp3",
+    "audio/characters/capivara-reporter/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "chave": {
+   "select": [
+    "audio/characters/chave/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/chave/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/chave/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/chave/round/round-01.mp3"
+   ]
+  },
+  "chroma-rex": {
+   "select": [
+    "audio/characters/chroma-rex/select/select-01.mp3",
+    "audio/characters/chroma-rex/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/chroma-rex/kill/kill-01.mp3",
+    "audio/characters/chroma-rex/kill/kill-02.mp3",
+    "audio/characters/chroma-rex/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/chroma-rex/radio/radio-avanco.mp3",
+    "audio/characters/chroma-rex/radio/radio-cobertura.mp3",
+    "audio/characters/chroma-rex/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "ciclista-sem-freio": {
+   "select": [
+    "audio/characters/ciclista-sem-freio/select/select-01.mp3",
+    "audio/characters/ciclista-sem-freio/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/ciclista-sem-freio/kill/kill-01.mp3",
+    "audio/characters/ciclista-sem-freio/kill/kill-02.mp3",
+    "audio/characters/ciclista-sem-freio/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/ciclista-sem-freio/radio/radio-avanco.mp3",
+    "audio/characters/ciclista-sem-freio/radio/radio-cobertura.mp3",
+    "audio/characters/ciclista-sem-freio/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "claquete-verde": {
+   "select": [
+    "audio/characters/claquete-verde/select/select-01.mp3",
+    "audio/characters/claquete-verde/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/claquete-verde/kill/kill-01.mp3",
+    "audio/characters/claquete-verde/kill/kill-02.mp3",
+    "audio/characters/claquete-verde/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/claquete-verde/radio/radio-avanco.mp3",
+    "audio/characters/claquete-verde/radio/radio-cobertura.mp3",
+    "audio/characters/claquete-verde/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "controlino": {
+   "select": [
+    "audio/characters/controlino/select/select-01.mp3",
+    "audio/characters/controlino/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/controlino/kill/kill-01.mp3",
+    "audio/characters/controlino/kill/kill-02.mp3",
+    "audio/characters/controlino/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/controlino/radio/radio-avanco.mp3",
+    "audio/characters/controlino/radio/radio-cobertura.mp3",
+    "audio/characters/controlino/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "criarj": {
+   "select": [
+    "audio/characters/criarj/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/criarj/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/criarj/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/criarj/round/round-01.mp3"
+   ]
+  },
+  "designer-ux": {
+   "select": [
+    "audio/characters/designer-ux/select/select-01.mp3",
+    "audio/characters/designer-ux/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/designer-ux/kill/kill-01.mp3",
+    "audio/characters/designer-ux/kill/kill-02.mp3",
+    "audio/characters/designer-ux/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/designer-ux/radio/radio-avanco.mp3",
+    "audio/characters/designer-ux/radio/radio-cobertura.mp3",
+    "audio/characters/designer-ux/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "dj-bluetooth": {
+   "select": [
+    "audio/characters/dj-bluetooth/select/select-01.mp3",
+    "audio/characters/dj-bluetooth/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/dj-bluetooth/kill/kill-01.mp3",
+    "audio/characters/dj-bluetooth/kill/kill-02.mp3",
+    "audio/characters/dj-bluetooth/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/dj-bluetooth/radio/radio-avanco.mp3",
+    "audio/characters/dj-bluetooth/radio/radio-cobertura.mp3",
+    "audio/characters/dj-bluetooth/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "doidinho-bairro": {
+   "select": [
+    "audio/characters/doidinho-bairro/select/select-01.mp3",
+    "audio/characters/doidinho-bairro/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/doidinho-bairro/kill/kill-01.mp3",
+    "audio/characters/doidinho-bairro/kill/kill-02.mp3",
+    "audio/characters/doidinho-bairro/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/doidinho-bairro/radio/radio-avanco.mp3",
+    "audio/characters/doidinho-bairro/radio/radio-cobertura.mp3",
+    "audio/characters/doidinho-bairro/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "fantoche-ibope": {
+   "select": [
+    "audio/characters/fantoche-ibope/select/select-01.mp3",
+    "audio/characters/fantoche-ibope/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/fantoche-ibope/kill/kill-01.mp3",
+    "audio/characters/fantoche-ibope/kill/kill-02.mp3",
+    "audio/characters/fantoche-ibope/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/fantoche-ibope/radio/radio-avanco.mp3",
+    "audio/characters/fantoche-ibope/radio/radio-cobertura.mp3",
+    "audio/characters/fantoche-ibope/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "feirante-grito": {
+   "select": [
+    "audio/characters/feirante-grito/select/select-01.mp3",
+    "audio/characters/feirante-grito/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/feirante-grito/kill/kill-01.mp3",
+    "audio/characters/feirante-grito/kill/kill-02.mp3",
+    "audio/characters/feirante-grito/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/feirante-grito/radio/radio-avanco.mp3",
+    "audio/characters/feirante-grito/radio/radio-cobertura.mp3",
+    "audio/characters/feirante-grito/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "fluxo": {
+   "select": [
+    "audio/characters/fluxo/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/fluxo/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/fluxo/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/fluxo/round/round-01.mp3"
+   ]
+  },
+  "formata-vinte": {
+   "select": [
+    "audio/characters/formata-vinte/select/select-01.mp3",
+    "audio/characters/formata-vinte/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/formata-vinte/kill/kill-01.mp3",
+    "audio/characters/formata-vinte/kill/kill-02.mp3",
+    "audio/characters/formata-vinte/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/formata-vinte/radio/radio-avanco.mp3",
+    "audio/characters/formata-vinte/radio/radio-cobertura.mp3",
+    "audio/characters/formata-vinte/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "frentista-posto": {
+   "select": [
+    "audio/characters/frentista-posto/select/select-01.mp3",
+    "audio/characters/frentista-posto/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/frentista-posto/kill/kill-01.mp3",
+    "audio/characters/frentista-posto/kill/kill-02.mp3",
+    "audio/characters/frentista-posto/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/frentista-posto/radio/radio-avanco.mp3",
+    "audio/characters/frentista-posto/radio/radio-cobertura.mp3",
+    "audio/characters/frentista-posto/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "fumador-pendrive": {
+   "select": [
+    "audio/characters/fumador-pendrive/select/select-01.mp3",
+    "audio/characters/fumador-pendrive/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/fumador-pendrive/kill/kill-01.mp3",
+    "audio/characters/fumador-pendrive/kill/kill-02.mp3",
+    "audio/characters/fumador-pendrive/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/fumador-pendrive/radio/radio-avanco.mp3",
+    "audio/characters/fumador-pendrive/radio/radio-cobertura.mp3",
+    "audio/characters/fumador-pendrive/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "funkraiz": {
+   "select": [
+    "audio/characters/funkraiz/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/funkraiz/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/funkraiz/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/funkraiz/round/round-01.mp3"
+   ]
+  },
+  "hacker-wifi": {
+   "select": [
+    "audio/characters/hacker-wifi/select/select-01.mp3",
+    "audio/characters/hacker-wifi/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/hacker-wifi/kill/kill-01.mp3",
+    "audio/characters/hacker-wifi/kill/kill-02.mp3",
+    "audio/characters/hacker-wifi/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/hacker-wifi/radio/radio-avanco.mp3",
+    "audio/characters/hacker-wifi/radio/radio-cobertura.mp3",
+    "audio/characters/hacker-wifi/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "homem-carrinho": {
+   "select": [
+    "audio/characters/homem-carrinho/select/select-01.mp3",
+    "audio/characters/homem-carrinho/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/homem-carrinho/kill/kill-01.mp3",
+    "audio/characters/homem-carrinho/kill/kill-02.mp3",
+    "audio/characters/homem-carrinho/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/homem-carrinho/radio/radio-avanco.mp3",
+    "audio/characters/homem-carrinho/radio/radio-cobertura.mp3",
+    "audio/characters/homem-carrinho/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "lenda-lanhouse": {
+   "select": [
+    "audio/characters/lenda-lanhouse/select/select-01.mp3",
+    "audio/characters/lenda-lanhouse/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/lenda-lanhouse/kill/kill-01.mp3",
+    "audio/characters/lenda-lanhouse/kill/kill-02.mp3",
+    "audio/characters/lenda-lanhouse/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/lenda-lanhouse/radio/radio-avanco.mp3",
+    "audio/characters/lenda-lanhouse/radio/radio-cobertura.mp3",
+    "audio/characters/lenda-lanhouse/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "mago-cobre": {
+   "select": [
+    "audio/characters/mago-cobre/select/select-01.mp3",
+    "audio/characters/mago-cobre/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/mago-cobre/kill/kill-01.mp3",
+    "audio/characters/mago-cobre/kill/kill-02.mp3",
+    "audio/characters/mago-cobre/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/mago-cobre/radio/radio-avanco.mp3",
+    "audio/characters/mago-cobre/radio/radio-cobertura.mp3",
+    "audio/characters/mago-cobre/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "mandrake": {
+   "select": [
+    "audio/characters/mandrake/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/mandrake/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/mandrake/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/mandrake/round/round-01.mp3"
+   ]
+  },
+  "mestre-rpg": {
+   "select": [
+    "audio/characters/mestre-rpg/select/select-01.mp3",
+    "audio/characters/mestre-rpg/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/mestre-rpg/kill/kill-01.mp3",
+    "audio/characters/mestre-rpg/kill/kill-02.mp3",
+    "audio/characters/mestre-rpg/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/mestre-rpg/radio/radio-avanco.mp3",
+    "audio/characters/mestre-rpg/radio/radio-cobertura.mp3",
+    "audio/characters/mestre-rpg/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "microfonildo": {
+   "select": [
+    "audio/characters/microfonildo/select/select-01.mp3",
+    "audio/characters/microfonildo/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/microfonildo/kill/kill-01.mp3",
+    "audio/characters/microfonildo/kill/kill-02.mp3",
+    "audio/characters/microfonildo/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/microfonildo/radio/radio-avanco.mp3",
+    "audio/characters/microfonildo/radio/radio-cobertura.mp3",
+    "audio/characters/microfonildo/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "motoca-cachorro-loko": {
+   "select": [
+    "audio/characters/motoca-cachorro-loko/select/select-01.mp3",
+    "audio/characters/motoca-cachorro-loko/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/motoca-cachorro-loko/kill/kill-01.mp3",
+    "audio/characters/motoca-cachorro-loko/kill/kill-02.mp3",
+    "audio/characters/motoca-cachorro-loko/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/motoca-cachorro-loko/radio/radio-avanco.mp3",
+    "audio/characters/motoca-cachorro-loko/radio/radio-cobertura.mp3",
+    "audio/characters/motoca-cachorro-loko/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "motorista-app": {
+   "select": [
+    "audio/characters/motorista-app/select/select-01.mp3",
+    "audio/characters/motorista-app/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/motorista-app/kill/kill-01.mp3",
+    "audio/characters/motorista-app/kill/kill-02.mp3",
+    "audio/characters/motorista-app/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/motorista-app/radio/radio-avanco.mp3",
+    "audio/characters/motorista-app/radio/radio-cobertura.mp3",
+    "audio/characters/motorista-app/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "motorista-onibus": {
+   "select": [
+    "audio/characters/motorista-onibus/select/select-01.mp3",
+    "audio/characters/motorista-onibus/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/motorista-onibus/kill/kill-01.mp3",
+    "audio/characters/motorista-onibus/kill/kill-02.mp3",
+    "audio/characters/motorista-onibus/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/motorista-onibus/radio/radio-avanco.mp3",
+    "audio/characters/motorista-onibus/radio/radio-cobertura.mp3",
+    "audio/characters/motorista-onibus/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "noia-esquina": {
+   "select": [
+    "audio/characters/noia-esquina/select/select-01.mp3",
+    "audio/characters/noia-esquina/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/noia-esquina/kill/kill-01.mp3",
+    "audio/characters/noia-esquina/kill/kill-02.mp3",
+    "audio/characters/noia-esquina/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/noia-esquina/radio/radio-avanco.mp3",
+    "audio/characters/noia-esquina/radio/radio-cobertura.mp3",
+    "audio/characters/noia-esquina/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "nuvem-tempo": {
+   "select": [
+    "audio/characters/nuvem-tempo/select/select-01.mp3",
+    "audio/characters/nuvem-tempo/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/nuvem-tempo/kill/kill-01.mp3",
+    "audio/characters/nuvem-tempo/kill/kill-02.mp3",
+    "audio/characters/nuvem-tempo/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/nuvem-tempo/radio/radio-avanco.mp3",
+    "audio/characters/nuvem-tempo/radio/radio-cobertura.mp3",
+    "audio/characters/nuvem-tempo/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "oakley": {
+   "select": [
+    "audio/characters/oakley/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/oakley/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/oakley/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/oakley/round/round-01.mp3"
+   ]
+  },
+  "ostentacao": {
+   "select": [
+    "audio/characters/ostentacao/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/ostentacao/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/ostentacao/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/ostentacao/round/round-01.mp3"
+   ]
+  },
+  "otaku-bairro": {
+   "select": [
+    "audio/characters/otaku-bairro/select/select-01.mp3",
+    "audio/characters/otaku-bairro/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/otaku-bairro/kill/kill-01.mp3",
+    "audio/characters/otaku-bairro/kill/kill-02.mp3",
+    "audio/characters/otaku-bairro/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/otaku-bairro/radio/radio-avanco.mp3",
+    "audio/characters/otaku-bairro/radio/radio-cobertura.mp3",
+    "audio/characters/otaku-bairro/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "pedreiro-grau": {
+   "select": [
+    "audio/characters/pedreiro-grau/select/select-01.mp3",
+    "audio/characters/pedreiro-grau/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/pedreiro-grau/kill/kill-01.mp3",
+    "audio/characters/pedreiro-grau/kill/kill-02.mp3",
+    "audio/characters/pedreiro-grau/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/pedreiro-grau/radio/radio-avanco.mp3",
+    "audio/characters/pedreiro-grau/radio/radio-cobertura.mp3",
+    "audio/characters/pedreiro-grau/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "profeta-calcada": {
+   "select": [
+    "audio/characters/profeta-calcada/select/select-01.mp3",
+    "audio/characters/profeta-calcada/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/profeta-calcada/kill/kill-01.mp3",
+    "audio/characters/profeta-calcada/kill/kill-02.mp3",
+    "audio/characters/profeta-calcada/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/profeta-calcada/radio/radio-avanco.mp3",
+    "audio/characters/profeta-calcada/radio/radio-cobertura.mp3",
+    "audio/characters/profeta-calcada/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "programador-virado": {
+   "select": [
+    "audio/characters/programador-virado/select/select-01.mp3",
+    "audio/characters/programador-virado/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/programador-virado/kill/kill-01.mp3",
+    "audio/characters/programador-virado/kill/kill-02.mp3",
+    "audio/characters/programador-virado/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/programador-virado/radio/radio-avanco.mp3",
+    "audio/characters/programador-virado/radio/radio-cobertura.mp3",
+    "audio/characters/programador-virado/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "raul": {
+   "select": [
+    "audio/characters/raul/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/raul/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/raul/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/raul/round/round-01.mp3"
+   ]
+  },
+  "streamer-tiltado": {
+   "select": [
+    "audio/characters/streamer-tiltado/select/select-01.mp3",
+    "audio/characters/streamer-tiltado/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/streamer-tiltado/kill/kill-01.mp3",
+    "audio/characters/streamer-tiltado/kill/kill-02.mp3",
+    "audio/characters/streamer-tiltado/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/streamer-tiltado/radio/radio-avanco.mp3",
+    "audio/characters/streamer-tiltado/radio/radio-cobertura.mp3",
+    "audio/characters/streamer-tiltado/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "tia-pastel": {
+   "select": [
+    "audio/characters/tia-pastel/select/select-01.mp3",
+    "audio/characters/tia-pastel/select/select-02.mp3"
+   ],
+   "kill": [
+    "audio/characters/tia-pastel/kill/kill-01.mp3",
+    "audio/characters/tia-pastel/kill/kill-02.mp3",
+    "audio/characters/tia-pastel/kill/kill-03.mp3"
+   ],
+   "radio": [
+    "audio/characters/tia-pastel/radio/radio-avanco.mp3",
+    "audio/characters/tia-pastel/radio/radio-cobertura.mp3",
+    "audio/characters/tia-pastel/radio/radio-contato.mp3"
+   ],
+   "round": []
+  },
+  "trapfunk": {
+   "select": [
+    "audio/characters/trapfunk/select/select-01.mp3"
+   ],
+   "kill": [
+    "audio/characters/trapfunk/kill/kill-01.mp3"
+   ],
+   "radio": [
+    "audio/characters/trapfunk/radio/radio-contato.mp3"
+   ],
+   "round": [
+    "audio/characters/trapfunk/round/round-01.mp3"
+   ]
+  }
+ },
+ "characterVoiceText": {
+  "audio/characters/camelo-ambulante/select/select-01.mp3": "Olha a oportunidade!",
+  "audio/characters/camelo-ambulante/select/select-02.mp3": "Chegou novidade. Pode escolher.",
+  "audio/characters/camelo-ambulante/kill/kill-01.mp3": "É o último, chefe!",
+  "audio/characters/camelo-ambulante/kill/kill-02.mp3": "Oferta encerrada!",
+  "audio/characters/camelo-ambulante/kill/kill-03.mp3": "Levou na hora!",
+  "audio/characters/camelo-ambulante/radio/radio-contato.mp3": "Movimento perto da banca!",
+  "audio/characters/camelo-ambulante/radio/radio-avanco.mp3": "Aproveita e avança!",
+  "audio/characters/camelo-ambulante/radio/radio-cobertura.mp3": "Seguro a mercadoria aqui!",
+  "audio/characters/camera-roxa/select/select-01.mp3": "Câmera pronta. A transmissão começou.",
+  "audio/characters/camera-roxa/select/select-02.mp3": "Enquadramento firme. Vamos ao vivo.",
+  "audio/characters/camera-roxa/kill/kill-01.mp3": "Corta para o replay. Quadro limpo.",
+  "audio/characters/camera-roxa/kill/kill-02.mp3": "Foco certo. Próximo plano.",
+  "audio/characters/camera-roxa/kill/kill-03.mp3": "Tomada definitiva.",
+  "audio/characters/camera-roxa/radio/radio-contato.mp3": "Contato no quadro!",
+  "audio/characters/camera-roxa/radio/radio-avanco.mp3": "Avançando com a câmera.",
+  "audio/characters/camera-roxa/radio/radio-cobertura.mp3": "Segura a luz. Eu cubro.",
+  "audio/characters/capivara-reporter/select/select-01.mp3": "Ao vivo direto da arena.",
+  "audio/characters/capivara-reporter/select/select-02.mp3": "Plantão aberto. Vamos aos fatos.",
+  "audio/characters/capivara-reporter/kill/kill-01.mp3": "Notícia confirmada!",
+  "audio/characters/capivara-reporter/kill/kill-02.mp3": "Manchete encerrada!",
+  "audio/characters/capivara-reporter/kill/kill-03.mp3": "Fato apurado!",
+  "audio/characters/capivara-reporter/radio/radio-contato.mp3": "Movimento confirmado no setor.",
+  "audio/characters/capivara-reporter/radio/radio-avanco.mp3": "Equipe, avancem ao vivo.",
+  "audio/characters/capivara-reporter/radio/radio-cobertura.mp3": "Permaneço na cobertura.",
+  "audio/characters/chave/select/select-01.mp3": "Tá chave. Joga simples e fecha o round.",
+  "audio/characters/chave/kill/kill-01.mp3": "Mira firme. Foi limpo.",
+  "audio/characters/chave/radio/radio-contato.mp3": "Dois no corredor. Segura essa visão.",
+  "audio/characters/chave/round/round-01.mp3": "No simples. Round fechado.",
+  "audio/characters/chroma-rex/select/select-01.mp3": "No fundo verde eu desapareço.",
+  "audio/characters/chroma-rex/select/select-02.mp3": "Chroma pronto. Efeito ligado.",
+  "audio/characters/chroma-rex/kill/kill-01.mp3": "Efeito prático!",
+  "audio/characters/chroma-rex/kill/kill-02.mp3": "Recorte perfeito!",
+  "audio/characters/chroma-rex/kill/kill-03.mp3": "Sumiu do quadro!",
+  "audio/characters/chroma-rex/radio/radio-contato.mp3": "Contato fora do chroma!",
+  "audio/characters/chroma-rex/radio/radio-avanco.mp3": "Efeito pronto. Avança!",
+  "audio/characters/chroma-rex/radio/radio-cobertura.mp3": "Faço a máscara daqui!",
+  "audio/characters/ciclista-sem-freio/select/select-01.mp3": "Freio é perda de impulso.",
+  "audio/characters/ciclista-sem-freio/select/select-02.mp3": "Capacete preso. Só pedalar.",
+  "audio/characters/ciclista-sem-freio/kill/kill-01.mp3": "Só vai!",
+  "audio/characters/ciclista-sem-freio/kill/kill-02.mp3": "Passou voando!",
+  "audio/characters/ciclista-sem-freio/kill/kill-03.mp3": "Pedal certeiro!",
+  "audio/characters/ciclista-sem-freio/radio/radio-contato.mp3": "Movimento na ciclovia!",
+  "audio/characters/ciclista-sem-freio/radio/radio-avanco.mp3": "Embala e avança!",
+  "audio/characters/ciclista-sem-freio/radio/radio-cobertura.mp3": "Faço a volta de cobertura!",
+  "audio/characters/claquete-verde/select/select-01.mp3": "Cena um. Confronto valendo.",
+  "audio/characters/claquete-verde/select/select-02.mp3": "Claquete pronta. Pode rodar.",
+  "audio/characters/claquete-verde/kill/kill-01.mp3": "Corta bonito!",
+  "audio/characters/claquete-verde/kill/kill-02.mp3": "Cena encerrada.",
+  "audio/characters/claquete-verde/kill/kill-03.mp3": "Foi de primeira!",
+  "audio/characters/claquete-verde/radio/radio-contato.mp3": "Contato no enquadramento.",
+  "audio/characters/claquete-verde/radio/radio-avanco.mp3": "Valendo. Avança!",
+  "audio/characters/claquete-verde/radio/radio-cobertura.mp3": "Seguro o contracampo.",
+  "audio/characters/controlino/select/select-01.mp3": "Eu escolho o canal.",
+  "audio/characters/controlino/select/select-02.mp3": "Controle na mão. Pode começar.",
+  "audio/characters/controlino/kill/kill-01.mp3": "Troca a cena!",
+  "audio/characters/controlino/kill/kill-02.mp3": "Canal encerrado!",
+  "audio/characters/controlino/kill/kill-03.mp3": "Botão certo!",
+  "audio/characters/controlino/radio/radio-contato.mp3": "Alerta no monitor!",
+  "audio/characters/controlino/radio/radio-avanco.mp3": "Muda o canal. Avança!",
+  "audio/characters/controlino/radio/radio-cobertura.mp3": "Seguro a programação!",
+  "audio/characters/criarj/select/select-01.mp3": "É cria. Hoje ninguém segura o morro.",
+  "audio/characters/criarj/kill/kill-01.mp3": "Tá com medo? Então recua, mano.",
+  "audio/characters/criarj/radio/radio-contato.mp3": "Tem contato no alto. Vamo subir!",
+  "audio/characters/criarj/round/round-01.mp3": "Boa, tropa. Virada no alto!",
+  "audio/characters/designer-ux/select/select-01.mp3": "Esse fluxo precisa de combate.",
+  "audio/characters/designer-ux/select/select-02.mp3": "Teste aberto. Cadê o contraste?",
+  "audio/characters/designer-ux/kill/kill-01.mp3": "Faltou contraste!",
+  "audio/characters/designer-ux/kill/kill-02.mp3": "Fluxo interrompido!",
+  "audio/characters/designer-ux/kill/kill-03.mp3": "Clique confirmado!",
+  "audio/characters/designer-ux/radio/radio-contato.mp3": "Usuário no setor!",
+  "audio/characters/designer-ux/radio/radio-avanco.mp3": "Itera e avança!",
+  "audio/characters/designer-ux/radio/radio-cobertura.mp3": "Seguro a jornada daqui!",
+  "audio/characters/dj-bluetooth/select/select-01.mp3": "Conectou no meu som.",
+  "audio/characters/dj-bluetooth/select/select-02.mp3": "Pareamento feito. Solta a caixa.",
+  "audio/characters/dj-bluetooth/kill/kill-01.mp3": "Estourou a caixa!",
+  "audio/characters/dj-bluetooth/kill/kill-02.mp3": "Grave certeiro!",
+  "audio/characters/dj-bluetooth/kill/kill-03.mp3": "Caiu a conexão!",
+  "audio/characters/dj-bluetooth/radio/radio-contato.mp3": "Ruído no canal esquerdo!",
+  "audio/characters/dj-bluetooth/radio/radio-avanco.mp3": "Aumenta e avança!",
+  "audio/characters/dj-bluetooth/radio/radio-cobertura.mp3": "Seguro o grave daqui!",
+  "audio/characters/doidinho-bairro/select/select-01.mp3": "Hoje eu tô calibrado!",
+  "audio/characters/doidinho-bairro/select/select-02.mp3": "Trouxe a peça certa. Eu acho.",
+  "audio/characters/doidinho-bairro/kill/kill-01.mp3": "A fita isolante segurou!",
+  "audio/characters/doidinho-bairro/kill/kill-02.mp3": "Funcionou. Quase.",
+  "audio/characters/doidinho-bairro/kill/kill-03.mp3": "A gambiarra tinha garantia.",
+  "audio/characters/doidinho-bairro/radio/radio-contato.mp3": "Tem um ali, perto da emenda!",
+  "audio/characters/doidinho-bairro/radio/radio-avanco.mp3": "Montei um caminho. Bora!",
+  "audio/characters/doidinho-bairro/radio/radio-cobertura.mp3": "Segura essa ponta. Eu resolvo.",
+  "audio/characters/fantoche-ibope/select/select-01.mp3": "A audiência decidiu.",
+  "audio/characters/fantoche-ibope/select/select-02.mp3": "Ponteiro subindo. Eu entro!",
+  "audio/characters/fantoche-ibope/kill/kill-01.mp3": "Ponteiro no máximo!",
+  "audio/characters/fantoche-ibope/kill/kill-02.mp3": "Intervalo pra você!",
+  "audio/characters/fantoche-ibope/kill/kill-03.mp3": "Aplauso confirmado!",
+  "audio/characters/fantoche-ibope/radio/radio-contato.mp3": "Audiência no setor!",
+  "audio/characters/fantoche-ibope/radio/radio-avanco.mp3": "Sobe o ponteiro. Avança!",
+  "audio/characters/fantoche-ibope/radio/radio-cobertura.mp3": "Seguro esse programa!",
+  "audio/characters/feirante-grito/select/select-01.mp3": "Chega mais que tá bonito!",
+  "audio/characters/feirante-grito/select/select-02.mp3": "Feira aberta. Escolhe ligeiro!",
+  "audio/characters/feirante-grito/kill/kill-01.mp3": "É hoje, freguesia!",
+  "audio/characters/feirante-grito/kill/kill-02.mp3": "Banca fechada!",
+  "audio/characters/feirante-grito/kill/kill-03.mp3": "Pesou certinho!",
+  "audio/characters/feirante-grito/radio/radio-contato.mp3": "Tem movimento no corredor!",
+  "audio/characters/feirante-grito/radio/radio-avanco.mp3": "Abre caminho e avança!",
+  "audio/characters/feirante-grito/radio/radio-cobertura.mp3": "Seguro o caixote daqui!",
+  "audio/characters/fluxo/select/select-01.mp3": "No fluxo, na mira. Bora movimentar!",
+  "audio/characters/fluxo/kill/kill-01.mp3": "Foi de base no giro, cria!",
+  "audio/characters/fluxo/radio/radio-contato.mp3": "Movimento no fundo. Cola no bonde!",
+  "audio/characters/fluxo/round/round-01.mp3": "Boa, bonde!",
+  "audio/characters/formata-vinte/select/select-01.mp3": "Com backup é mais caro.",
+  "audio/characters/formata-vinte/select/select-02.mp3": "Diagnóstico pronto. É formatação.",
+  "audio/characters/formata-vinte/kill/kill-01.mp3": "Resolvi reiniciando!",
+  "audio/characters/formata-vinte/kill/kill-02.mp3": "Sistema limpo!",
+  "audio/characters/formata-vinte/kill/kill-03.mp3": "Serviço entregue!",
+  "audio/characters/formata-vinte/radio/radio-contato.mp3": "Tem vírus no setor!",
+  "audio/characters/formata-vinte/radio/radio-avanco.mp3": "Reinicia e avança!",
+  "audio/characters/formata-vinte/radio/radio-cobertura.mp3": "Faço o backup daqui!",
+  "audio/characters/frentista-posto/select/select-01.mp3": "Completa ou só vinte?",
+  "audio/characters/frentista-posto/select/select-02.mp3": "Pode encostar. Eu confiro.",
+  "audio/characters/frentista-posto/kill/kill-01.mp3": "Tanque cheio!",
+  "audio/characters/frentista-posto/kill/kill-02.mp3": "Nível conferido!",
+  "audio/characters/frentista-posto/kill/kill-03.mp3": "Serviço completo!",
+  "audio/characters/frentista-posto/radio/radio-contato.mp3": "Movimento na bomba três!",
+  "audio/characters/frentista-posto/radio/radio-avanco.mp3": "Pista livre. Avança!",
+  "audio/characters/frentista-posto/radio/radio-cobertura.mp3": "Seguro o acesso daqui!",
+  "audio/characters/fumador-pendrive/select/select-01.mp3": "Carregou a bateria?",
+  "audio/characters/fumador-pendrive/select/select-02.mp3": "Pendrive ligado. Nuvem pronta.",
+  "audio/characters/fumador-pendrive/kill/kill-01.mp3": "Soltei a atualização!",
+  "audio/characters/fumador-pendrive/kill/kill-02.mp3": "Vapor sincronizado!",
+  "audio/characters/fumador-pendrive/kill/kill-03.mp3": "Bateria fechou!",
+  "audio/characters/fumador-pendrive/radio/radio-contato.mp3": "Bluetooth estranho no setor!",
+  "audio/characters/fumador-pendrive/radio/radio-avanco.mp3": "Atualiza e avança!",
+  "audio/characters/fumador-pendrive/radio/radio-cobertura.mp3": "Faço a nuvem daqui!",
+  "audio/characters/funkraiz/select/select-01.mp3": "Tamborzão no peito. Vambora, bonde!",
+  "audio/characters/funkraiz/kill/kill-01.mp3": "Passinho encaixou. Ponto pro bonde!",
+  "audio/characters/funkraiz/radio/radio-contato.mp3": "Contato no meio!",
+  "audio/characters/funkraiz/round/round-01.mp3": "Bonde levou!",
+  "audio/characters/hacker-wifi/select/select-01.mp3": "A senha ainda é oito números.",
+  "audio/characters/hacker-wifi/select/select-02.mp3": "Rede aberta. Eu já entrei.",
+  "audio/characters/hacker-wifi/kill/kill-01.mp3": "Acesso liberado!",
+  "audio/characters/hacker-wifi/kill/kill-02.mp3": "Sessão encerrada!",
+  "audio/characters/hacker-wifi/kill/kill-03.mp3": "Pacote entregue!",
+  "audio/characters/hacker-wifi/radio/radio-contato.mp3": "Sinal estranho no setor!",
+  "audio/characters/hacker-wifi/radio/radio-avanco.mp3": "Roteia e avança!",
+  "audio/characters/hacker-wifi/radio/radio-cobertura.mp3": "Firewall cobrindo a área!",
+  "audio/characters/homem-carrinho/select/select-01.mp3": "Tenho uma peça pra isso.",
+  "audio/characters/homem-carrinho/select/select-02.mp3": "Meu carrinho resolve tudo.",
+  "audio/characters/homem-carrinho/kill/kill-01.mp3": "Mais um pro carrinho!",
+  "audio/characters/homem-carrinho/kill/kill-02.mp3": "Peça encaixada!",
+  "audio/characters/homem-carrinho/kill/kill-03.mp3": "Achado perfeito!",
+  "audio/characters/homem-carrinho/radio/radio-contato.mp3": "Sino tocou no setor!",
+  "audio/characters/homem-carrinho/radio/radio-avanco.mp3": "Empurra que avança!",
+  "audio/characters/homem-carrinho/radio/radio-cobertura.mp3": "Estaciono e cubro daqui!",
+  "audio/characters/lenda-lanhouse/select/select-01.mp3": "Reserva a máquina oito.",
+  "audio/characters/lenda-lanhouse/select/select-02.mp3": "Sem lag dessa vez.",
+  "audio/characters/lenda-lanhouse/kill/kill-01.mp3": "Placar garantido!",
+  "audio/characters/lenda-lanhouse/kill/kill-02.mp3": "Saiu da sala!",
+  "audio/characters/lenda-lanhouse/kill/kill-03.mp3": "Ping perfeito!",
+  "audio/characters/lenda-lanhouse/radio/radio-contato.mp3": "Tem gente no corredor!",
+  "audio/characters/lenda-lanhouse/radio/radio-avanco.mp3": "Rush na máquina oito!",
+  "audio/characters/lenda-lanhouse/radio/radio-cobertura.mp3": "Seguro a base sem lag!",
+  "audio/characters/mago-cobre/select/select-01.mp3": "O cobre conduz meu destino.",
+  "audio/characters/mago-cobre/select/select-02.mp3": "A bobina escolheu você.",
+  "audio/characters/mago-cobre/kill/kill-01.mp3": "Deu curto!",
+  "audio/characters/mago-cobre/kill/kill-02.mp3": "Circuito fechado!",
+  "audio/characters/mago-cobre/kill/kill-03.mp3": "Faísca certeira!",
+  "audio/characters/mago-cobre/radio/radio-contato.mp3": "Corrente estranha no setor!",
+  "audio/characters/mago-cobre/radio/radio-avanco.mp3": "Conduzam o avanço!",
+  "audio/characters/mago-cobre/radio/radio-cobertura.mp3": "Aterramento garantindo cobertura!",
+  "audio/characters/mandrake/select/select-01.mp3": "Visão, mandrake chegou. Tô na atividade.",
+  "audio/characters/mandrake/kill/kill-01.mp3": "Bota a cara. O bonde respondeu.",
+  "audio/characters/mandrake/radio/radio-contato.mp3": "Tem um na quebra. Fecha comigo!",
+  "audio/characters/mandrake/round/round-01.mp3": "Fecha o bonde. Esse round é nosso.",
+  "audio/characters/mestre-rpg/select/select-01.mp3": "Rolem iniciativa.",
+  "audio/characters/mestre-rpg/select/select-02.mp3": "A campanha começa agora.",
+  "audio/characters/mestre-rpg/kill/kill-01.mp3": "Acerto crítico!",
+  "audio/characters/mestre-rpg/kill/kill-02.mp3": "Encontro vencido!",
+  "audio/characters/mestre-rpg/kill/kill-03.mp3": "O dado decidiu!",
+  "audio/characters/mestre-rpg/radio/radio-contato.mp3": "Inimigo na masmorra!",
+  "audio/characters/mestre-rpg/radio/radio-avanco.mp3": "Grupo, avancem uma casa!",
+  "audio/characters/mestre-rpg/radio/radio-cobertura.mp3": "Faço guarda no portal!",
+  "audio/characters/microfonildo/select/select-01.mp3": "Som na caixa. Retorno limpo.",
+  "audio/characters/microfonildo/select/select-02.mp3": "Microfone aberto. Pode falar.",
+  "audio/characters/microfonildo/kill/kill-01.mp3": "Captou tudo!",
+  "audio/characters/microfonildo/kill/kill-02.mp3": "Sinal perfeito!",
+  "audio/characters/microfonildo/kill/kill-03.mp3": "Nem clipou!",
+  "audio/characters/microfonildo/radio/radio-contato.mp3": "Ruído no setor!",
+  "audio/characters/microfonildo/radio/radio-avanco.mp3": "Aumenta o ganho e avança!",
+  "audio/characters/microfonildo/radio/radio-cobertura.mp3": "Cobertura com áudio limpo!",
+  "audio/characters/motoca-cachorro-loko/select/select-01.mp3": "Endereço confirmado. Partiu entrega.",
+  "audio/characters/motoca-cachorro-loko/select/select-02.mp3": "Capacete fechado. Rota na tela.",
+  "audio/characters/motoca-cachorro-loko/kill/kill-01.mp3": "Entrega concluída!",
+  "audio/characters/motoca-cachorro-loko/kill/kill-02.mp3": "Cheguei antes do seu reflexo.",
+  "audio/characters/motoca-cachorro-loko/kill/kill-03.mp3": "Cancelou o pedido tarde demais.",
+  "audio/characters/motoca-cachorro-loko/radio/radio-contato.mp3": "Contato na próxima esquina.",
+  "audio/characters/motoca-cachorro-loko/radio/radio-avanco.mp3": "Rota livre. Avançando.",
+  "audio/characters/motoca-cachorro-loko/radio/radio-cobertura.mp3": "Segura aí que eu cubro.",
+  "audio/characters/motorista-app/select/select-01.mp3": "Confirma o nome?",
+  "audio/characters/motorista-app/select/select-02.mp3": "Corrida aceita. Pode entrar.",
+  "audio/characters/motorista-app/kill/kill-01.mp3": "Cinco estrelas pra mim!",
+  "audio/characters/motorista-app/kill/kill-02.mp3": "Destino alcançado!",
+  "audio/characters/motorista-app/kill/kill-03.mp3": "Corrida finalizada!",
+  "audio/characters/motorista-app/radio/radio-contato.mp3": "Movimento na próxima rua!",
+  "audio/characters/motorista-app/radio/radio-avanco.mp3": "Rota livre. Avança!",
+  "audio/characters/motorista-app/radio/radio-cobertura.mp3": "Espero no ponto daqui!",
+  "audio/characters/motorista-onibus/select/select-01.mp3": "Segura que vai sair.",
+  "audio/characters/motorista-onibus/select/select-02.mp3": "Linha aberta. Pode embarcar.",
+  "audio/characters/motorista-onibus/kill/kill-01.mp3": "Passou direto!",
+  "audio/characters/motorista-onibus/kill/kill-02.mp3": "Ponto final!",
+  "audio/characters/motorista-onibus/kill/kill-03.mp3": "Viagem encerrada!",
+  "audio/characters/motorista-onibus/radio/radio-contato.mp3": "Passageiro estranho no corredor!",
+  "audio/characters/motorista-onibus/radio/radio-avanco.mp3": "Próxima parada. Avancem!",
+  "audio/characters/motorista-onibus/radio/radio-cobertura.mp3": "Seguro o terminal daqui!",
+  "audio/characters/noia-esquina/select/select-01.mp3": "Eu vi tudo daqui.",
+  "audio/characters/noia-esquina/select/select-02.mp3": "A esquina não perde nada.",
+  "audio/characters/noia-esquina/kill/kill-01.mp3": "Mosqueou, perdeu!",
+  "audio/characters/noia-esquina/kill/kill-02.mp3": "Eu tava de olho!",
+  "audio/characters/noia-esquina/kill/kill-03.mp3": "Passou batido!",
+  "audio/characters/noia-esquina/radio/radio-contato.mp3": "Movimento virando a esquina!",
+  "audio/characters/noia-esquina/radio/radio-avanco.mp3": "Vai que eu aviso!",
+  "audio/characters/noia-esquina/radio/radio-cobertura.mp3": "Seguro esse quarteirão!",
+  "audio/characters/nuvem-tempo/select/select-01.mp3": "Previsão de confronto.",
+  "audio/characters/nuvem-tempo/select/select-02.mp3": "Mapa aberto. Tempo instável.",
+  "audio/characters/nuvem-tempo/kill/kill-01.mp3": "Frente fria chegando!",
+  "audio/characters/nuvem-tempo/kill/kill-02.mp3": "Clima virou!",
+  "audio/characters/nuvem-tempo/kill/kill-03.mp3": "Raio certeiro!",
+  "audio/characters/nuvem-tempo/radio/radio-contato.mp3": "Temporal no setor!",
+  "audio/characters/nuvem-tempo/radio/radio-avanco.mp3": "Vento a favor. Avancem!",
+  "audio/characters/nuvem-tempo/radio/radio-cobertura.mp3": "Cobertura com céu fechado!",
+  "audio/characters/oakley/select/select-01.mp3": "Corre alinhado. Eu seguro a frente.",
+  "audio/characters/oakley/kill/kill-01.mp3": "Vacilou no passo. Leitura feita.",
+  "audio/characters/oakley/radio/radio-contato.mp3": "Contato na direita. Não dá mole.",
+  "audio/characters/oakley/round/round-01.mp3": "Posição mantida. Round controlado.",
+  "audio/characters/ostentacao/select/select-01.mp3": "Brilho no kit, precisão no jogo.",
+  "audio/characters/ostentacao/kill/kill-01.mp3": "Classe não erra. Próximo lance.",
+  "audio/characters/ostentacao/radio/radio-contato.mp3": "Contato à frente!",
+  "audio/characters/ostentacao/round/round-01.mp3": "Classe no fim. Round na conta.",
+  "audio/characters/otaku-bairro/select/select-01.mp3": "Meu arco começa aqui.",
+  "audio/characters/otaku-bairro/select/select-02.mp3": "O bairro entra em cena.",
+  "audio/characters/otaku-bairro/kill/kill-01.mp3": "Final de temporada!",
+  "audio/characters/otaku-bairro/kill/kill-02.mp3": "Arco concluído!",
+  "audio/characters/otaku-bairro/kill/kill-03.mp3": "Cena decisiva!",
+  "audio/characters/otaku-bairro/radio/radio-contato.mp3": "Rival no setor!",
+  "audio/characters/otaku-bairro/radio/radio-avanco.mp3": "Avancem para o próximo arco!",
+  "audio/characters/otaku-bairro/radio/radio-cobertura.mp3": "Protejo este capítulo!",
+  "audio/characters/pedreiro-grau/select/select-01.mp3": "No prumo e no esquadro.",
+  "audio/characters/pedreiro-grau/select/select-02.mp3": "Massa pronta. Bora levantar.",
+  "audio/characters/pedreiro-grau/kill/kill-01.mp3": "Essa parede caiu!",
+  "audio/characters/pedreiro-grau/kill/kill-02.mp3": "Obra concluída!",
+  "audio/characters/pedreiro-grau/kill/kill-03.mp3": "Martelo certeiro!",
+  "audio/characters/pedreiro-grau/radio/radio-contato.mp3": "Movimento no andaime!",
+  "audio/characters/pedreiro-grau/radio/radio-avanco.mp3": "Assenta e avança!",
+  "audio/characters/pedreiro-grau/radio/radio-cobertura.mp3": "Escoro esse lado daqui!",
+  "audio/characters/profeta-calcada/select/select-01.mp3": "A placa já sabia.",
+  "audio/characters/profeta-calcada/select/select-02.mp3": "Minha previsão veio plastificada.",
+  "audio/characters/profeta-calcada/kill/kill-01.mp3": "A profecia bateu!",
+  "audio/characters/profeta-calcada/kill/kill-02.mp3": "Estava na placa!",
+  "audio/characters/profeta-calcada/kill/kill-03.mp3": "Previsão cumprida!",
+  "audio/characters/profeta-calcada/radio/radio-contato.mp3": "Sinal desenhado no setor!",
+  "audio/characters/profeta-calcada/radio/radio-avanco.mp3": "O papelão manda avançar!",
+  "audio/characters/profeta-calcada/radio/radio-cobertura.mp3": "A placa protege este lado!",
+  "audio/characters/programador-virado/select/select-01.mp3": "Só mais um commit. Depois eu durmo.",
+  "audio/characters/programador-virado/select/select-02.mp3": "Cafeína compilada. Pode iniciar.",
+  "audio/characters/programador-virado/kill/kill-01.mp3": "Processo encerrado sem aviso prévio.",
+  "audio/characters/programador-virado/kill/kill-02.mp3": "Seu ping venceu a sua mira.",
+  "audio/characters/programador-virado/kill/kill-03.mp3": "Passou no meu teste!",
+  "audio/characters/programador-virado/radio/radio-contato.mp3": "Stack trace apontou contato.",
+  "audio/characters/programador-virado/radio/radio-avanco.mp3": "Subiu pra produção. Avança.",
+  "audio/characters/programador-virado/radio/radio-cobertura.mp3": "Segura a branch. Eu cubro.",
+  "audio/characters/raul/select/select-01.mp3": "Franja no lugar. Agora é só jogar bonito.",
+  "audio/characters/raul/kill/kill-01.mp3": "Sarneou na mira. Já era, parceiro.",
+  "audio/characters/raul/radio/radio-contato.mp3": "Ó o pico ali. Vem na resenha!",
+  "audio/characters/raul/round/round-01.mp3": "Franja intacta. Round bonito, parceiro.",
+  "audio/characters/streamer-tiltado/select/select-01.mp3": "Chat, presta atenção.",
+  "audio/characters/streamer-tiltado/select/select-02.mp3": "Live aberta. Hoje tem clipe.",
+  "audio/characters/streamer-tiltado/kill/kill-01.mp3": "Clipa isso agora!",
+  "audio/characters/streamer-tiltado/kill/kill-02.mp3": "Foi pro destaque!",
+  "audio/characters/streamer-tiltado/kill/kill-03.mp3": "Chat viu tudo!",
+  "audio/characters/streamer-tiltado/radio/radio-contato.mp3": "Contato no chat!",
+  "audio/characters/streamer-tiltado/radio/radio-avanco.mp3": "Família, avança!",
+  "audio/characters/streamer-tiltado/radio/radio-cobertura.mp3": "Seguro a live daqui!",
+  "audio/characters/tia-pastel/select/select-01.mp3": "Vai com caldo de cana?",
+  "audio/characters/tia-pastel/select/select-02.mp3": "Balcão aberto. Chega mais!",
+  "audio/characters/tia-pastel/kill/kill-01.mp3": "Saiu quentinho!",
+  "audio/characters/tia-pastel/kill/kill-02.mp3": "Pedido entregue!",
+  "audio/characters/tia-pastel/kill/kill-03.mp3": "Fritura certeira!",
+  "audio/characters/tia-pastel/radio/radio-contato.mp3": "Olha o movimento na banca!",
+  "audio/characters/tia-pastel/radio/radio-avanco.mp3": "Passa o pedido e avança!",
+  "audio/characters/tia-pastel/radio/radio-cobertura.mp3": "Seguro o balcão daqui!",
+  "audio/characters/trapfunk/select/select-01.mp3": "Grave no peito. Foco no objetivo.",
+  "audio/characters/trapfunk/kill/kill-01.mp3": "Caiu no drop. Round continua.",
+  "audio/characters/trapfunk/radio/radio-contato.mp3": "Marca no radar. Vem pela lateral.",
+  "audio/characters/trapfunk/round/round-01.mp3": "Drop limpo. Próximo round."
+ },
+ "cs": {},
+ "weapons": {
+  "awp": {
+   "shot": [
+    "audio/cc0/sniper-fps.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "m400": {
+   "shot": [
+    "audio/cc0/sniper-fps-alt.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "mosin": {
+   "shot": [
+    "audio/cc0/sniper-field1.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/single-round.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "rem700": {
+   "shot": [
+    "audio/cc0/sniper-field2.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/single-round.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "ak": {
+   "shot": [
+    "audio/cc0/ak47.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "akm": {
+   "shot": [
+    "audio/cc0/ak47.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "m92": {
+   "shot": [
+    "audio/cc0/m92.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "g3": {
+   "shot": [
+    "audio/cc0/g3.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "m4": {
+   "shot": [
+    "audio/cc0/m16.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "md97": {
+   "shot": [
+    "audio/cc0/m16.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "carbine": {
+   "shot": [
+    "audio/cc0/rifle-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "scar": {
+   "shot": [
+    "audio/cc0/rifle-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "famas": {
+   "shot": [
+    "audio/cc0/rifle-shooting.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "tavor": {
+   "shot": [
+    "audio/cc0/rifle-shooting.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "lmg": {
+   "shot": [
+    "audio/cc0/mg-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "mp5": {
+   "shot": [
+    "audio/cc0/smg-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "uzi": {
+   "shot": [
+    "audio/cc0/smg-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "p90": {
+   "shot": [
+    "audio/cc0/smg-burst.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/magazine-in.wav"
+   ],
+   "bolt": [
+    "audio/weapons/rifle-reload.wav"
+   ]
+  },
+  "shotgun": {
+   "shot": [
+    "audio/cc0/shotgun-fp.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/single-round.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/single-round.wav"
+   ],
+   "bolt": [
+    "audio/weapons/shotgun-pump.wav"
+   ]
+  },
+  "pistol": {
+   "shot": [
+    "audio/cc0/gunshot-pistol.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/pistol-magazine-reload.wav"
+   ],
+   "bolt": [
+    "audio/weapons/pistol-reload.wav"
+   ]
+  },
+  "deagle": {
+   "shot": [
+    "audio/cc0/gunshot-pistol.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/magazine-out.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/pistol-magazine-reload.wav"
+   ],
+   "bolt": [
+    "audio/weapons/pistol-reload.wav"
+   ]
+  },
+  "revolver38": {
+   "shot": [
+    "audio/cc0/gunshot-pistol.mp3"
+   ],
+   "magazineOut": [
+    "audio/weapons/single-round.wav"
+   ],
+   "magazineIn": [
+    "audio/weapons/single-round.wav"
+   ],
+   "bolt": [
+    "audio/weapons/pistol-reload.wav"
+   ]
+  }
+ },
+ "general": {},
+ "weaponSamples": true,
+ "capture": [],
+ "captureByTeam": {},
+ "soundtrack": [
+  "audio/soundtrack/pilot-boombap-menor.mp3",
+  "audio/soundtrack/pilot-forro-feirinha.mp3",
+  "audio/soundtrack/pilot-forro-rua.mp3",
+  "audio/soundtrack/pilot-funk-batida-fina.mp3",
+  "audio/soundtrack/pilot-hardcore-industrial.mp3",
+  "audio/soundtrack/pilot-mandelao-escuro.mp3",
+  "audio/soundtrack/pilot-phonk-automotivo.mp3",
+  "audio/soundtrack/pilot-pisadinha-paredao.mp3",
+  "audio/soundtrack/pilot-piseiro-noturno.mp3",
+  "audio/soundtrack/pilot-rap-consciente.mp3",
+  "audio/soundtrack/pilot-rap-soul-de-rua.mp3",
+  "audio/soundtrack/pilot-reggae-rock-frigio.mp3",
+  "audio/soundtrack/pilot-rock-urbano.mp3",
+  "audio/soundtrack/pilot-sertanejo-raiz.mp3",
+  "audio/soundtrack/pilot-sertanejo-universitario.mp3",
+  "audio/soundtrack/pilot-tamborzao-raiz.mp3",
+  "audio/soundtrack/pilot-thrash-brasileiro.mp3"
+ ],
+ "menuMusic": [
+  "audio/menu-music/m01.mp3",
+  "audio/menu-music/m02.mp3",
+  "audio/menu-music/m03.mp3",
+  "audio/menu-music/m04.mp3",
+  "audio/menu-music/m05.mp3",
+  "audio/menu-music/m06.mp3",
+  "audio/menu-music/m07.mp3",
+  "audio/menu-music/m08.mp3",
+  "audio/menu-music/m09.mp3",
+  "audio/menu-music/m10.mp3",
+  "audio/menu-music/m11.mp3",
+  "audio/menu-music/m12.mp3",
+  "audio/menu-music/m13.mp3",
+  "audio/menu-music/m14.mp3",
+  "audio/menu-music/m15.mp3",
+  "audio/menu-music/m16.mp3",
+  "audio/menu-music/m17.mp3"
+ ]
+}
