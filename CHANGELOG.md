@@ -28,6 +28,7 @@
 ### Mudado
 - fix(ci): o merge limpo do bot também leva os trailers (destrava o #406) (#425)
 
+- [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.179).
 ## [2.0.0-alpha.178] — 2026-08-22
 
 ### Mudado
