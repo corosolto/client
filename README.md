@@ -7,7 +7,7 @@
 [![three.js](https://img.shields.io/badge/jogo-three.js%20r160-000000?logo=three.js)](https://threejs.org)
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
 [![vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel)](https://vercel.com)
-[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/MJq7Csam)
+[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/fmunXnaj)
 [![Telegram](https://img.shields.io/badge/Telegram-entrar-26A5E4?logo=telegram&logoColor=white)](https://t.me/corosolto)
 
 **AI generated & AI friendly** — construído em par com agentes de IA, e cada
@@ -47,7 +47,7 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Scripts do arnês | 201 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 55 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.182` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.183` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
