@@ -25,6 +25,7 @@ export class Sfx {
     this.speechEnabled = true;   // falas dos times (memes) — vitória/UT/arma sempre tocam
     this._lastVoice = 0;
     this._radioAudio = null;
+    this._lastRoundTrack = null;
     this._live = new Set();      // samples HTMLAudio tocando (pra duck de vozes)
     this._stepI = -1;            // round-robin dos passos
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
@@ -184,8 +185,11 @@ export class Sfx {
     // facção está sendo curado, a trilha licenciada/gerada já presente no
     // manifest segura o fim de round; sem este fallback o jogo cai no beep
     // sintético apesar de haver músicas instaladas em soundtrack/.
-    const f = this._pick(this.pack?.round?.[team]) || this._pick(this.pack?.soundtrack);
+    const pool = this.pack?.round?.[team]?.length ? this.pack.round[team] : this.pack?.soundtrack;
+    const choices = pool?.length > 1 ? pool.filter((track) => track !== this._lastRoundTrack) : pool;
+    const f = this._pick(choices);
     if (!f) return false;
+    this._lastRoundTrack = f;
     this.stopRound(0);                       // vinheta anterior nunca acumula com a nova
     const a = this._sample(f);
     if (a) { this._roundAudio = a; this._roundT = setTimeout(() => this.stopRound(1.2), 25000); }

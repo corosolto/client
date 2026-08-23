@@ -446,13 +446,15 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
     if (!musicArmed) startMenuMusic();
   })
   .catch(() => {});
-let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
+let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false, lastMenuTrack = null;
 function _ensureMusic() {
   if (menuMusic && !tracksTrocadas) return menuMusic;
   if (menuMusic) { menuMusic.pause(); menuMusic = null; }
   tracksTrocadas = false;
-  { const _mi = (Math.random() * MENU_TRACKS.length) | 0;
-    const _url = MENU_TRACKS[_mi];
+  { const pool = MENU_TRACKS.length > 1 ? MENU_TRACKS.filter((track) => track !== lastMenuTrack) : MENU_TRACKS;
+    const _mi = (Math.random() * pool.length) | 0;
+    const _url = pool[_mi];
+    lastMenuTrack = _url;
     menuMusic = new Audio(_url);
     // rótulo vem do NOME do arquivo, não do índice: com lista vinda da pasta o índice pode
     // não casar mais com o número da faixa (some uma no meio e o telemetry mentiria).

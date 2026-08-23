@@ -2,6 +2,10 @@
    faltando, silêncio com warn uma vez. Tudo pendura no duckBus do Sfx. Node-safe. */
 
 const A = 'audio/ambiente';
+// Ambiência é textura espacial, não uma trilha concorrente: deixa informação de
+// combate, fala e música de fim de round claramente à frente do mapa.
+const AMBIENCE_MIX = 0.36;
+const AMBIENCE_SHOT_CHANCE = 0.55;
 
 export const AMB_LOOPS = Object.freeze({
   funk: `${A}/funk-bar.mp3`, grilos: `${A}/grilos.mp3`, passaros: `${A}/passaros.mp3`,
@@ -94,18 +98,19 @@ export function createSoundscape(sfx, config) {
       const dx = loop.pos[0] - px, dy = (loop.pos[1] ?? 0) - py, dz = loop.pos[2] - pz;
       const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
       /* ganho ~vol no centro, 0 na borda do raio; expoente 1.5 segura o meio */
-      const g = (loop.vol ?? .4) * Math.pow(Math.max(0, 1 - d / loop.radius), 1.5) * mudo;
+      const g = (loop.vol ?? .4) * AMBIENCE_MIX * Math.pow(Math.max(0, 1 - d / loop.radius), 1.5) * mudo;
       loop.gain.gain.setTargetAtTime(g, state.sfx.ctx.currentTime, .12);
       if (loop.pan && d > .5) loop.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, -dx / 20)), state.sfx.ctx.currentTime, .2);
     }
     if (mudo) for (const shot of state.shots) {
       if (state.time < shot.nextAt) continue;
       shot.nextAt = state.time + shot.minGap + Math.random() * (shot.maxGap - shot.minGap);
+      if (Math.random() > AMBIENCE_SHOT_CHANCE) continue;
       const src = shot.srcs[(Math.random() * shot.srcs.length) | 0];
       const buf = state.buffers.get(src);
       if (!buf) { load(src); continue; }
       const node = state.sfx.ctx.createBufferSource(); node.buffer = buf;
-      const gain = state.sfx.ctx.createGain(); gain.gain.value = shot.vol;
+      const gain = state.sfx.ctx.createGain(); gain.gain.value = shot.vol * AMBIENCE_MIX;
       const pan = state.sfx.ctx.createStereoPanner ? state.sfx.ctx.createStereoPanner() : null;
       node.connect(gain);
       if (pan) { pan.pan.value = Math.random() * 1.6 - .8; gain.connect(pan); pan.connect(state.sfx.duckBus || state.sfx.master); }
@@ -120,7 +125,7 @@ export function createSoundscape(sfx, config) {
        mesmo; o one-shot novo não dispara porque o update cuida do gate `mudo` */
     if (!state.sfx.ctx) return;
     for (const loop of state.loops) {
-      const alvo = v ? 0 : (loop.vol ?? .4);
+      const alvo = v ? 0 : (loop.vol ?? .4) * AMBIENCE_MIX;
       loop.gain.gain.setTargetAtTime(alvo, state.sfx.ctx.currentTime, .1);
     }
   }
