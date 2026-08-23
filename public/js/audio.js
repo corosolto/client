@@ -180,7 +180,11 @@ export class Sfx {
          entrar por cima da rodada nova.
      Fade e não corte seco: som que some no talo lê como bug de áudio. */
   roundSound(team) {
-    const f = this._pick(this.pack?.round?.[team]);
+    // A vinheta própria do time tem prioridade. Enquanto o pacote de cada
+    // facção está sendo curado, a trilha licenciada/gerada já presente no
+    // manifest segura o fim de round; sem este fallback o jogo cai no beep
+    // sintético apesar de haver músicas instaladas em soundtrack/.
+    const f = this._pick(this.pack?.round?.[team]) || this._pick(this.pack?.soundtrack);
     if (!f) return false;
     this.stopRound(0);                       // vinheta anterior nunca acumula com a nova
     const a = this._sample(f);
