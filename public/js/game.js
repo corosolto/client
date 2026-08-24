@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
-import { buildCharacterModel, hasModel } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
@@ -678,6 +678,25 @@ export class Game {
     this.playerDef = byId(playerCharId);
     this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
+
+    // ---- Câmera 3ª pessoa (toggle KeyB) ----------------------------------------
+    // O jogo é 1ª pessoa; os bots já são 3ª pessoa (glbchars.js). Aqui o JOGADOR ganha
+    // um corpo 3ª pessoa (mesmo buildCharacterModel dos bots — a arma monta na mão pelo
+    // MESMO grip procedural: mount no RightHand + IK da mão de apoio + curl dos dedos) e
+    // uma câmera atrás dele. Tecla B alterna. Ver docs/RIG-PEGA-ARMA.md.
+    // V1 DECLARADO: mira/tiro continuam saindo da câmera — em 3ª pessoa a origem do
+    // disparo fica atrás do jogador. É um MODO DE VISÃO, não de combate.
+    // Pré-carrega o modelo do próprio personagem (a 1ª pessoa usa arms.glb, não carrega o
+    // corpo do jogador), senão o corpo TP cai no box procedural.
+    this.camView = 'first';   // 'first' (1ª pessoa) | 'third' (OTS SOCOM) | 'shoulder' (OTS colado)
+    this.playerTP = null;
+    this._tpWeapon = null;
+    this._tpDead = false;
+    this._tpFwd = new THREE.Vector3();
+    this._tpRight = new THREE.Vector3();
+    this._tpEul = new THREE.Euler();
+    this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
+    try { preloadCharacterAssets([playerCharId]); } catch {}
 
     // ---- player ----
     // Spawns holding the SAME weapon shown on the character-select screen (charWeapon).
@@ -1602,6 +1621,8 @@ export class Game {
       }
     }
     // SÓ-ARMA: esconde as mãos procedurais (handR/handL) presas a cada modelo de arma.
+    // (A handR procedural é cápsulas calibradas pra arma-box antiga — na arma Mint cai
+    // torta. Mão boa vem do corpo real do personagem: ver os modos de 3ª pessoa (camView).)
     if (WEAPON_ONLY) for (const k in models) models[k].traverse((o) => { if (o.name === 'handR' || o.name === 'handL') o.visible = false; });
     this._weaponOnly = WEAPON_ONLY;
     // grip/ads expostos no objeto do VM (G3-R1): `grip[id]` é o PONTO DE EMPUNHADURA em
@@ -1811,6 +1832,7 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
+      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª/3ª pessoa on/off
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
@@ -2991,7 +3013,7 @@ export class Game {
     const spreadBase = (GUNFEEL
       ? (w.spreadHip + (spScoped - w.spreadHip) * adsF)
       : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
-    const from = this.camera.getWorldPosition(new THREE.Vector3());
+    const from = this._aimOrigin(new THREE.Vector3());
     const pellets = w.pellets || 1;
     // tracer só em PARTE dos tiros (CS): 1 em 3 na rajada; sniper/shotgun sempre (o tiro é o
     // evento). Antes TODO tiro deixava rastro — vira "chuva de laser" em full-auto.
@@ -3038,7 +3060,7 @@ export class Game {
     if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin' || p.weapon === 'rem700')) this._scope(false, true);
   }
   _meleeHit() {
-    const from = this.camera.getWorldPosition(new THREE.Vector3());
+    const from = this._aimOrigin(new THREE.Vector3());
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     let best = null, bd = WEAPONS.knife.range;
     for (const b of this.bots) {
@@ -3674,11 +3696,26 @@ export class Game {
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
   // pelo tracer e pela luz/faísca do mundo no tiro do jogador (R7.6).
   _muzzleWorld(cls) {
+    if (this.camView !== 'first') {
+      // 3ª pessoa: a câmera está atrás/acima; a boca do cano NÃO pode sair dela (fumaça
+      // nascia lá em cima — bug relatado). Sai do OLHO, na direção da mira, descida pra
+      // altura da arma na mão.
+      const dir = this.camera.getWorldDirection(new THREE.Vector3());
+      const m = this._eyeWorld.clone().addScaledVector(dir, 0.5);
+      m.y -= 0.28;
+      return m;
+    }
     const off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[cls] || this._vmMuzzle.rifle;
     this.vm.root.updateWorldMatrix(true, false);
     const v = off.clone();
     this.vm.root.localToWorld(v);          // vmScene == espaço da câmera (vmCamera na origem)
     return this.camera.localToWorld(v);
+  }
+
+  // Origem do tiro/raycast: olho do jogador. Em 3ª pessoa a câmera está atrás — usar a
+  // câmera faria a bala nascer nas costas. Ver _eyeWorld (capturado no _updatePlayer).
+  _aimOrigin(out) {
+    return this.camView === 'first' ? this.camera.getWorldPosition(out) : out.copy(this._eyeWorld);
   }
   // Porta com SENSOR (Havan): desliza as 2 folhas ao chegar perto (player ou bot). Painéis são
   // só visuais (não colidem), então quando você alcança a porta já está aberta.
@@ -4816,6 +4853,105 @@ export class Game {
     if (this.vm?.root) this.vm.root.visible = false;
     if (this.el.crosshair) this.el.crosshair.style.display = 'none';
   }
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
+  // 3ª pessoa na 1ª vez (lazy).
+  _toggleCamView() {
+    // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
+    // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.
+    const order = ['first', 'third', 'shoulder'];
+    this.camView = order[(order.indexOf(this.camView) + 1) % order.length];
+    if (this.camView !== 'first') this._ensurePlayerTP();
+    this._syncCamViewVis();
+  }
+
+  // Visibilidade base ao alternar: corpo TP em qualquer modo 3ª pessoa. (Os braços FP/
+  // vm.root são governados por frame no _updatePlayer — ver a linha do realScope — pra não
+  // brigar com o force-visible do ADS/luneta.)
+  _syncCamViewVis() {
+    const tp = this.camView !== 'first';
+    if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = tp;
+    if (this.vm && this.vm.root && !tp) this.vm.root.visible = true;
+  }
+
+  // (Re)constrói o corpo 3ª pessoa do jogador com a arma ATUAL montada na mão. Reusa
+  // buildCharacterModel (mesmo caminho dos bots: grip + IK + curl). Se o modelo do
+  // personagem ainda não carregou, cai no buildCharacter (box) e faz upgrade p/ GLB
+  // quando o asset chegar (hasModel). Reconstrói ao trocar de arma.
+  _ensurePlayerTP() {
+    const w = this.player.weapon, def = this.playerDef;
+    const weaponChanged = this.playerTP && this._tpWeapon !== w;
+    const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
+    if (this.playerTP && !weaponChanged && !wantUpgrade) return;
+    // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
+    // evita reconstruir o box a cada frame enquanto os clips não chegam.
+    const glb = buildCharacterModel(def, { weaponId: w });
+    if (!glb && this.playerTP && !weaponChanged) return;
+    if (this.playerTP && this.playerTP.group) {
+      this.scene.remove(this.playerTP.group);
+      if (!this.playerTP.isGLB) this.playerTP.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    }
+    const tp = glb || buildCharacter(def);
+    // O corpo do próprio jogador nunca é alvo/obstáculo de raycast (o hitscan mira só os
+    // grupos dos bots, mas marcamos por garantia — mesmo contrato do gun mount).
+    tp.group.traverse(o => { o.userData.noHit = true; o.userData.selfBody = true; });
+    tp.group.visible = (this.camView === 'third');
+    this.scene.add(tp.group);
+    this.playerTP = tp;
+    this._tpWeapon = w;
+  }
+
+  // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
+  // `sp` = velocidade horizontal real; `eye` = altura do olho já com crouch/dip.
+  _updatePlayerTP(dt, sp, eye) {
+    this._ensurePlayerTP();
+    const tp = this.playerTP, p = this.player;
+    if (!tp) return;
+    // corpo: posição + yaw do jogador (mesma convenção dos bots: rotation.y = yaw).
+    tp.group.visible = true;
+    tp.group.position.copy(p.pos);
+    tp.group.rotation.set(0, p.yaw + Math.PI, 0);   // +180°: o corpo olha pra onde a câmera olha (de costas p/ ela)
+    // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
+    if (tp.ctrl) {
+      tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.aimPitch = p.pitch;
+      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false);
+    } else if (tp.mixer) {
+      tp.mixer.update(dt);
+    }
+    this._tpEul.set(p.pitch, p.yaw, 0, 'YXZ');
+    const fwd = this._tpFwd.set(0, 0, -1).applyEuler(this._tpEul);
+    const right = this._tpRight.set(1, 0, 0).applyEuler(this._tpEul);
+    const cam = this.camera;
+    // 'third' = over-the-shoulder perto, cintura pra cima (estilo SOCOM): ~1,7 m atrás,
+    // ~1,8 m de altura olhando reto → pernas caem fora. 'shoulder' = mais colado ainda.
+    const shoulder = this.camView === 'shoulder';
+    const TP_DIST = shoulder ? 0.85 : 1.7;
+    const TP_UP = shoulder ? 0.10 : 0.18;
+    const TP_SIDE = shoulder ? 0.34 : 0.28;
+    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
+    cam.position.y += TP_UP;
+    const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
+    if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
+    cam.rotation.set(p.pitch, p.yaw, 0);
+  }
+
+  // Morte em 3ª pessoa (e também visível na 1ª, na câmera de morte): toca a animação de
+  // queda no corpo TP e o mantém caindo. Sem isto o boneco ficava de pé (bug relatado).
+  _tpDeath(dt) {
+    this._ensurePlayerTP();
+    const tp = this.playerTP, p = this.player;
+    if (!tp) return;
+    if (!this._tpDead) {
+      this._tpDead = true;
+      tp.group.visible = true;                        // mostra o corpo caindo mesmo em 1ª pessoa
+      tp.group.position.copy(p.pos);
+      tp.group.rotation.set(0, p.yaw + Math.PI, 0);
+      if (tp.ctrl && tp.ctrl.die) tp.ctrl.die();
+    }
+    if (tp.ctrl) tp.ctrl.update(dt, 0, false, 0, false);
+    else if (tp.mixer) tp.mixer.update(dt);
+  }
+
   _updatePlayer(dt) {
     const p = this.player;
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
@@ -4825,10 +4961,17 @@ export class Game {
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
+      this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       if (left <= 0) this._respawnPlayer();
       this.camera.position.y = Math.max(0.5, this.camera.position.y - dt * 2);
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
+    }
+    // ressuscitou: desfaz a morte do corpo TP e ajusta visibilidade ao modo atual.
+    if (this._tpDead) {
+      this._tpDead = false;
+      if (this.playerTP && this.playerTP.ctrl && this.playerTP.ctrl.revive) this.playerTP.ctrl.revive();
+      if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = this.camView !== 'first';
     }
     if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
     // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
@@ -4954,6 +5097,9 @@ export class Game {
     // → lê como "tremida" e não como punch puro. Vale pra mouse E toque (câmera finaliza só aqui).
     const roll = p._rec ? p._rec.sh * Math.sin(this.time * 61) * 0.5 : 0;
     this.camera.rotation.set(p.pitch + rp, p.yaw, roll);
+    this._eyeWorld.copy(this.camera.position);   // olho: origem de tiro/fumaça em 3ª pessoa
+    // 3ª pessoa (longe/ombro): sobrepõe a câmera e anima o corpo TP. No-op na 1ª pessoa.
+    if (this.camView !== 'first') this._updatePlayerTP(dt, sp, eye);
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
     if (moving) {
@@ -5006,7 +5152,8 @@ export class Game {
     // dynamic crosshair gap (movement/spray opens it, crouch + ADS tighten it)
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
-    this.vm.root.visible = !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
+    // 3ª pessoa esconde os braços/arma FP (o corpo TP tem a própria arma na mão).
+    this.vm.root.visible = this.camView === 'first' && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {
