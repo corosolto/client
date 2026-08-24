@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.175`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.184`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,51 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.184] — 2026-08-24
+
+### Mudado
+- chore(portao): co-autoria de agente de IA não entra mais na mensagem (#430)
+
+## [2.0.0-alpha.183] — 2026-08-23
+
+### Mudado
+- fix(site): /discord levava para um convite que não é mais o nosso (#429)
+
+## [2.0.0-alpha.182] — 2026-08-22
+
+### Mudado
+- fix(ci): o artefato de preview perdia os arquivos ocultos (#427)
+
+## [2.0.0-alpha.181] — 2026-08-22
+
+### Mudado
+- perf(vram): armas param de custar 259 MB de textura — 96 MB a menos por partida (#407)
+
+## [2.0.0-alpha.180] — 2026-08-22
+
+### Mudado
+- fix(ci): extrai a trava logo depois do fetch, antes do FETCH_HEAD virar outro (#426)
+
+## [2.0.0-alpha.179] — 2026-08-22
+
+### Mudado
+- fix(ci): o merge limpo do bot também leva os trailers (destrava o #406) (#425)
+
+## [2.0.0-alpha.178] — 2026-08-22
+
+### Mudado
+- fix(ci): o bot para de reprovar o PR que ele acabou de consertar (#424)
+
+## [2.0.0-alpha.177] — 2026-08-22
+
+### Mudado
+- feat(ci): o que ficou de fora do #408 — fase 5, varredura pós-release e preview sem token (#422)
+
+## [2.0.0-alpha.176] — 2026-08-22
+
+### Mudado
+- fix(ci): classify não reprova PR de fork por secret que o gatilho não pode ter (#408)
 
 ## [2.0.0-alpha.175] — 2026-08-22
 

@@ -1,0 +1,245 @@
+# autofix — o bot conserta o MECÂNICO e deixa o PR pronto. Ele NÃO mergeia.
+#
+# POR QUE EXISTE (medido em 21/08/2026, nos últimos 29 PRs): nenhum bot deste
+# repositório jamais commitou um conserto. O #405 ficou vermelho por
+# `DOCS1: documentação DESATUALIZADA`, cujo conserto é `npm run docs` mais um
+# commit — trabalho sem julgamento nenhum, que hoje ou espera um mantenedor ou
+# devolve o PR para o autor.
+#
+# A TRAVA: `scripts/ci/autofix_allowlist.py`. O bot só commita se TUDO que ele
+# mexeu for arquivo gerado. Encostou em qualquer outro caminho, aborta e comenta.
+# Sem essa lista, o primeiro conserto errado reescreve o mapa de um colaborador e
+# ninguém repara — e a confiança de todo mundo de fora vai junto.
+#
+# `pull_request_target` porque é o único gatilho que enxerga secret em PR de fork
+# (ver a régua WSEC1). O checkout é do MERGE do PR e roda apenas ferramentas do
+# repositório base sobre ele — nunca `npm run` de script vindo do fork.
+name: autofix
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  # A MAIN ANDANDO é o que desatualiza PR, não o PR se mexendo. Foram 9 `chore(release)`
+  # em 20 horas, e cada um reescreve README/STATUS/ARCH/docs — reabrindo conflito em TODO
+  # PR aberto ao mesmo tempo. Sem este gatilho o autofix só acorda quando o autor empurra,
+  # ou seja, nunca para quem está parado esperando revisão, que é justamente quem precisa.
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR a consertar
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: autofix-${{ github.event.pull_request.number || inputs.pr_number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  # Varredura pós-release: descobre quem ficou para trás e dispara o autofix de cada um
+  # pelo `workflow_dispatch`, que é o caminho que enxerga secret. Barato — quem já está
+  # em dia sai no primeiro passo do autofix, sem clonar nada pesado.
+  varredura:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Dispara o autofix de quem ficou para trás
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::CSBRASIL_BOT_TOKEN ausente — varredura não roda, e não reprova ninguém."
+            exit 0
+          fi
+          gh pr list --repo "$REPO" --state open --base main \
+            --json number,mergeable,isDraft \
+            --jq '.[] | select(.isDraft | not) | select(.mergeable != "MERGEABLE") | .number' > /tmp/atrasados.txt
+          echo "PRs desatualizados: $(wc -l < /tmp/atrasados.txt)"
+          while read -r pr; do
+            [ -n "$pr" ] || continue
+            echo "  → #$pr"
+            gh workflow run autofix.yml --repo "$REPO" -f pr_number="$pr" \
+              || echo "::warning::não deu para disparar o autofix do #$pr"
+          done < /tmp/atrasados.txt
+
+  autofix:
+    if: github.event_name != 'push' && github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Guard de identidade
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::CSBRASIL_BOT_TOKEN ausente — autofix não roda, e não reprova ninguém por isso."
+            echo "pular=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Dados do PR
+        if: env.pular != '1'
+        run: |
+          gh pr view "$PR_NUMBER" --repo "$REPO" \
+            --json headRefName,headRepository,headRepositoryOwner,maintainerCanModify > /tmp/pr.json
+          {
+            echo "HEAD_REF=$(jq -r .headRefName /tmp/pr.json)"
+            echo "HEAD_REPO=$(jq -r '.headRepositoryOwner.login + "/" + .headRepository.name' /tmp/pr.json)"
+            # `maintainerCanModify` é FALSE por definição quando o PR não vem de fork —
+            # a opção nem existe ali. Sem esta conta o bot nunca empurrava em PR de casa,
+            # que é justamente onde ele sempre pode (medido no #425).
+            echo "PODE_EDITAR=$(jq -r 'if (.headRepositoryOwner.login + "/" + .headRepository.name) == env.REPO then "true" else (.maintainerCanModify|tostring) end' /tmp/pr.json)"
+          } >> "$GITHUB_ENV"
+
+      # Checa o código do PR para poder REGERAR a doc a partir dele. Nada do fork é
+      # executado: os geradores abaixo são os do repositório base, restaurados logo
+      # depois do checkout.
+      - name: Checkout do PR
+        if: env.pular != '1'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: ${{ env.HEAD_REPO }}
+          ref: ${{ env.HEAD_REF }}
+          token: ${{ secrets.CSBRASIL_BOT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Traz a base e resolve conflito de arquivo gerado
+        if: env.pular != '1'
+        id: merge
+        run: |
+          git config user.name  "csbrasil-bot"
+          git config user.email "csbrasil-bot@users.noreply.github.com"
+          git remote add base "https://github.com/$REPO.git" 2>/dev/null || true
+          BASE="${{ github.event.pull_request.base.ref || 'main' }}"
+          git fetch base "$BASE"
+          # A trava é extraída AQUI, logo depois do fetch: mais adiante o `FETCH_HEAD` já
+          # pode ter sido sobrescrito, e o `git show` falhava com "exists on disk, but not
+          # in FETCH_HEAD" (medido no #397). Vem da BASE porque um PR que reescrevesse o
+          # allowlist liberaria a si mesmo.
+          git show "base/$BASE:scripts/ci/autofix_allowlist.py" > /tmp/allowlist-base.py \
+            || git show FETCH_HEAD:scripts/ci/autofix_allowlist.py > /tmp/allowlist-base.py
+          # A mensagem vai EXPLÍCITA mesmo quando o merge não conflita: `--no-edit` usa a
+          # mensagem automática do git, que não leva `Agent:` nem `Signed-off-by` — e aí o
+          # bot conserta o PR e o dco reprova o commit que ele mesmo fez (medido no #406).
+          if git merge --no-edit -m "Merge da base (autofix)" \
+                       -m "Agent: csbrasil-bot (autofix)" \
+                       -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>" FETCH_HEAD; then
+            git diff --quiet HEAD@{1} HEAD || echo "mesclou=1" >> "$GITHUB_OUTPUT"
+            echo "PR já está em cima da base (ou mesclou limpo)."
+            exit 0
+          fi
+          git diff --name-only --diff-filter=U > /tmp/conflitos.txt
+          echo "conflitos:"; cat /tmp/conflitos.txt
+          if ! python3 /tmp/allowlist-base.py --caminhos < /tmp/conflitos.txt; then
+            git merge --abort
+            echo "humano=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Só gerado: fica o da BASE, e os geradores re-derivam logo abaixo.
+          xargs -a /tmp/conflitos.txt -r git checkout --theirs --
+          xargs -a /tmp/conflitos.txt -r git add --
+          git commit --no-edit -m "Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)" \
+                     -m "Agent: csbrasil-bot (autofix)" \
+                     -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
+          echo "mesclou=1" >> "$GITHUB_OUTPUT"
+
+      # As ferramentas que vão rodar têm de ser as da BASE, nunca as do fork — senão
+      # um PR malicioso reescreve o gerador e o bot executa o que ele mandar.
+      - name: Restaura as ferramentas da base
+        if: env.pular != '1'
+        run: |
+          git fetch base "${{ github.event.pull_request.base.ref || 'main' }}"
+          # O lock vem JUNTO com o package.json: `npm ci` exige que os dois batam, e
+          # restaurar só um deles quebra a instalação (medido em 22/08, 2 de 10 runs).
+          git checkout FETCH_HEAD -- tools/ scripts/ package.json package-lock.json
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: env.pular != '1'
+        with: { node-version: 22 }
+      - name: Instala dependências
+        if: env.pular != '1'
+        # `npm ci` morre se lock e manifesto divergirem; aqui a instalação é meio para
+        # rodar o gerador, não o alvo da medição, então cair para `install` é aceitável.
+        run: npm ci --ignore-scripts || npm install --ignore-scripts --no-audit --no-fund
+
+      # RESOLVE CONFLITO DE ARQUIVO GERADO. Todo `chore(release)` na main reescreve
+      # README, STATUS, ARCH e docs/, e reabre conflito em TODO PR aberto ao mesmo
+      # tempo — medido em 21/08: o alpha.173 sozinho pôs quatro PRs em CONFLICTING, e
+      # os nove arquivos do #400 eram gerados, nenhum de código. Resolver isso à mão é
+      # trabalho de Sísifo: o release seguinte desfaz.
+      #
+      # A trava é a MESMA do resto do autofix. Sobrou UM conflito fora da lista, o bot
+      # aborta o merge e devolve para gente — conflito de código é julgamento, e
+      # julgamento não é dele.
+      - name: Comenta quando o conflito é de gente
+        if: env.pular != '1' && steps.merge.outputs.humano == '1'
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "🤖 **autofix**: a base andou e o conflito encostou em arquivo de código — não é meu para resolver. Os arquivos em conflito estão no log do run; rode \`git merge origin/${{ github.event.pull_request.base.ref || 'main' }}\` e decida."
+
+      - name: Conserta o mecânico
+        if: env.pular != '1' && steps.merge.outputs.humano != '1'
+        run: |
+          node tools/gen-docs.mjs   || echo "::warning::gen-docs falhou"
+          node tools/gen-arch.mjs   || echo "::warning::gen-arch falhou"
+
+      # As ferramentas foram restauradas da base só para rodar; o que volta ao PR é
+      # apenas o resultado delas.
+      - name: Devolve as ferramentas ao estado do PR
+        if: env.pular != '1' && steps.merge.outputs.humano != '1'
+        run: git checkout HEAD -- tools/ scripts/ package.json package-lock.json
+
+      - name: A trava — só arquivo gerado pode virar commit
+        if: env.pular != '1' && steps.merge.outputs.humano != '1'
+        id: trava
+        run: |
+          git status --porcelain > /tmp/mexidos.txt
+          if [ ! -s /tmp/mexidos.txt ]; then
+            echo "nada=1" >> "$GITHUB_OUTPUT"
+            echo "PR já está em dia — nada a consertar."
+            exit 0
+          fi
+          if ! python3 scripts/ci/autofix_allowlist.py < /tmp/mexidos.txt > /tmp/permitidos.txt; then
+            cat /tmp/permitidos.txt
+            echo "bloqueado=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "commitar=1" >> "$GITHUB_OUTPUT"
+
+      - name: Comenta quando a trava bloqueia
+        if: env.pular != '1' && steps.trava.outputs.bloqueado == '1'
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "🤖 **autofix**: o conserto encostou em arquivo fora da lista de permissão, então **não commitei nada**. Rode \`npm run docs && node tools/gen-arch.mjs\` e confira o que mudou."
+
+      - name: Empurra o conserto
+        if: env.pular != '1' && (steps.trava.outputs.commitar == '1' || steps.merge.outputs.mesclou == '1') && env.PODE_EDITAR == 'true'
+        run: |
+          git config user.name  "csbrasil-bot"
+          git config user.email "csbrasil-bot@users.noreply.github.com"
+          if [ -s /tmp/permitidos.txt ]; then
+            xargs -a /tmp/permitidos.txt -r git add --
+          fi
+          git diff --cached --quiet || git commit -m "chore(docs): regenera bloco derivado (autofix)" \
+                     -m "Rodado pelo autofix: só arquivo gerado, conferido pela lista de permissão." \
+                     -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
+          git push origin "HEAD:$HEAD_REF"
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "🤖 **autofix**: regenerei os blocos derivados e empurrei o commit. O PR não precisa de mais nada disso."
+
+      # Fork com "allow edits by maintainers" desligado: o bot não tem como empurrar.
+      # Comentar o comando é melhor que um vermelho que o autor não entende.
+      - name: Sem permissão de push — comenta o comando
+        if: env.pular != '1' && (steps.trava.outputs.commitar == '1' || steps.merge.outputs.mesclou == '1') && env.PODE_EDITAR != 'true'
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
+            "🤖 **autofix**: dá para consertar sozinho, mas este PR está com *allow edits by maintainers* desligado. Rode \`npm run docs && node tools/gen-arch.mjs\` e commite — ou ligue a opção e eu faço."
