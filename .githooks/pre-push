@@ -17,6 +17,7 @@ set -uo pipefail
 [ "${PREPUSH:-1}" = "0" ] && exit 0
 
 remoto="$1"
+RAIZ=$(git rev-parse --show-toplevel)
 falhas=()
 t0=$(date +%s)
 
@@ -31,6 +32,12 @@ while read -r _local_ref local_sha _remote_ref remote_sha; do
   for sha in $intervalo; do
     if ! git show -s --format='%B' "$sha" | grep -Eqi '^Agent:[[:space:]]*[^[:space:]]'; then
       falhas+=("commit ${sha:0:8} sem trailer 'Agent:' — $(git show -s --format='%s' "$sha" | cut -c1-50)")
+    fi
+    # `Co-Authored-By:` de agente de IA: o commit-msg já recusa, mas ele não roda em
+    # rebase nem em clone sem `npm run setup`, e `--no-verify` pula os dois. Mesma
+    # lista do commit-msg e do CI — scripts/coautoria-ia.re, lida, não copiada.
+    if ! linha=$(git show -s --format='%B' "$sha" | sh "$RAIZ/scripts/checa-coautoria-ia.sh" 2>&1 >/dev/null); then
+      falhas+=("commit ${sha:0:8} com co-autoria de IA — ${linha%%$'\n'*}")
     fi
   done
 done
