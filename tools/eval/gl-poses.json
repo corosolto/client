@@ -125,7 +125,7 @@
       "oque": "corredor interno de gondolas: o unico lugar do mapa com repeticao densa de detalhe"
     }
   ],
-  "fy_escadao": [
+  "escadao": [
     {
       "p": [
         7.8,
@@ -167,7 +167,7 @@
       "oque": "sob a cobertura, parede pichada + arquibancada em fuga"
     }
   ],
-  "fy_campomorro": [
+  "campomorro": [
     {
       "p": [
         27,
@@ -209,7 +209,7 @@
       "oque": "sob a cobertura metalica olhando a tela e o barracao (viga e mourao no quadro)"
     }
   ],
-  "fy_lajes": [
+  "lajes": [
     {
       "p": [
         5,
@@ -251,7 +251,7 @@
       "oque": "beco lateral com pneus e a lateral cega de um barraco"
     }
   ],
-  "fy_corrego": [
+  "corrego": [
     {
       "p": [
         0,
@@ -293,7 +293,7 @@
       "oque": "rua de barracos com placas e telhados em alturas diferentes"
     }
   ],
-  "fy_mansao": [
+  "mansao": [
     {
       "p": [
         -13.2,

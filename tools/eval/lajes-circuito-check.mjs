@@ -1,4 +1,4 @@
-/* Circuito inferior e camadas de fy_lajes — régua comprada pelo relato do dono em 16/08/2026:
+/* Circuito inferior e camadas de lajes — régua comprada pelo relato do dono em 16/08/2026:
    "tem um ponto que eu ficava caindo pra cima da laje de novo e depois no chao" e
    "vários becos parecem passagem e estão bloqueados".
 
@@ -17,7 +17,7 @@
      LC5 nenhum ponto de referência nasce dentro de sólido (_collide não move);
      LC6 toda aproximação ao limite para em colisor (muro visível) antes do clamp.
    Sempre grava o overlay livre/bloqueado/componente em
-   tools/eval/asset-evidence/maps/fy_lajes/terreo-overlay.png (olhe a figura).
+   tools/eval/asset-evidence/maps/lajes/terreo-overlay.png (olhe a figura).
 
    Mutantes:
      ignora-yref          embrulha groundHeightAt descartando o 3º argumento;
@@ -31,7 +31,7 @@ const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split(
 const conhecidos = new Set(['', 'ignora-yref', 'ramal-fechado', 'rota-inferior-partida', 'limite-invisivel']);
 if (!conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0, seed: 16082026 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0, seed: 16082026 });
 const W = game.world;
 
 if (mutante === 'ignora-yref') {
@@ -168,10 +168,10 @@ try {
     else { px[o] = 170; px[o + 1] = 40; px[o + 2] = 40; }
   }
   const { mkdirSync } = await import('node:fs');
-  mkdirSync('tools/eval/asset-evidence/maps/fy_lajes', { recursive: true });
+  mkdirSync('tools/eval/asset-evidence/maps/lajes', { recursive: true });
   await sharp(px, { raw: { width: nx, height: nz, channels: 3 } })
     .resize(nx * 6, nz * 6, { kernel: 'nearest' })
-    .png().toFile('tools/eval/asset-evidence/maps/fy_lajes/terreo-overlay.png');
+    .png().toFile('tools/eval/asset-evidence/maps/lajes/terreo-overlay.png');
 } catch (e) {
   console.error('overlay não gravado:', e.message);
   process.exitCode = 1;

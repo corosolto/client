@@ -100,7 +100,7 @@ async function renderIndex() {
    PROCESSO INTEIRO morre.
 
    O preço disso não foi uma requisição perdida: foi a bateria de captura toda.
-   Em 12/08 o servidor caiu no meio do `fy_quebrada` e os 5 mapas seguintes
+   Em 12/08 o servidor caiu no meio do `quebrada` e os 5 mapas seguintes
    (escadao, campomorro, lajes, corrego, mansao) saíram com
    ERR_CONNECTION_REFUSED — justamente os 5 que o dono relatou como piores e que
    ninguém tinha frame para julgar. Servidor de arnês que morre falsifica a

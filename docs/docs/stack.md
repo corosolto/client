@@ -17,7 +17,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 44 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 59 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |
@@ -28,7 +28,7 @@ a partir do `package.json`, do `docs/package.json` e do próprio Three.js vendor
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **110** importam Playwright, **39** importam gltf-transform e **4** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **141** importam Playwright, **60** importam gltf-transform e **5** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -127,7 +127,7 @@ hipotético:
 | **Meshy** | props 3D por texto (alternativa) e rig | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | arte 2D (cartaz de facção, wallpaper, splash) | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` registra **7 assets** gerados via Mint (3 `mint-model` · 4 `mint-asset-pack`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
+`mint-assets.json` registra **65 assets** gerados via Mint (19 `openrouter-image-concept` · 2 `openrouter-concept-tripo-blender-model` · 5 `imagegen-concept` · 30 `mint-model` · 2 `tripo3d-task` · 2 `openrouter-concept-meshy-model` · 5 `mint-asset-pack`), cada um com `assetId`, `chatUrl` e notas do que deu errado na tentativa anterior.
 
 As três chaves de API vivem em `.env` na raiz — **gitignored, modo 600, nunca em `argv`** (argv vaza no `ps` de qualquer processo da máquina). Sem elas o jogo roda igual: o pipeline de geração é offline, o resultado é que entra no repositório.
 
@@ -254,9 +254,9 @@ de trabalhar. Elas vivem em `.agents/skills/`, e `.claude/skills/` são symlinks
 
 `.claude/skills/` são **symlinks** para `.agents/skills/` — uma cópia só, dois nomes, porque o Claude Code lê de `.claude/` e outros arnêses leem de `.agents/`.
 
-A skill do loop desta casa, **`gauntlet-fps`**, é a única que nasceu aqui: vive em `.claude/skills/gauntlet-fps/SKILL.md`, não é symlink e não entra no lock.
+⚠️ Nenhuma skill nativa encontrada em `.claude/skills/`.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files .agents/skills · skills-lock.json`
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files .agents/skills · git ls-files .claude/skills · skills-lock.json`
 
 {/* END:GERADO:skills */}
 

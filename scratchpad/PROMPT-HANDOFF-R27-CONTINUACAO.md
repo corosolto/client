@@ -19,10 +19,10 @@ Escreva isto assumindo que você não viu nada da conversa. Leia nesta ordem:
   pilotis — o túnel do MN tem VÃO na parede leste onde o ramal 1 cruza; sem ele a boca
   do ramal era uma parede pelada). Esquinas por mitra de muros visíveis (corta DEPOIS de
   estender, senão a mitra invade poço de escada); muro de perímetro visível nos 4 lados.
-- **Occluder = malha visível** em fy_lajes: casas instanciadas (PropBatch) estão em
+- **Occluder = malha visível** em lajes: casas instanciadas (PropBatch) estão em
   `occluders`; proxies invisíveis de bala eliminados (corpos de bloco são collider puro).
 - **Gate novo (browser)**: `npm run eval:occluders` (`tools/eval/occluder-ray-check.mjs`)
-  — mede hitA (occluders) × hitB (malha visível) em raios dos waypoints. fy_lajes: **0
+  — mede hitA (occluders) × hitB (malha visível) em raios dos waypoints. lajes: **0
   tiro-no-ar / 0 atravessa-parede / 0 grupos** (era 977 tiro-no-ar). FORA do check:fast
   de propósito (browser). Mutantes `occluder-invisivel|proxy-inflado|grupo-sem-raycast|vao-fechado`.
 - **Gate novo (node, no check:fast)**: `npm run eval:lajes-circuito` — LC1 yRef, LC2
@@ -36,15 +36,15 @@ Escreva isto assumindo que você não viu nada da conversa. Leia nesta ordem:
   `ambientlife.js`, rota no beco [-2,12.5]→[-2,18.5], FONTE.md atualizado).
 - **Alívio de térreo** (nasceu da 1ª reprovação do crítico): muros têm porta com batente
   clara+soleira, janela com peitoril, medidor com conduite, remendos — ver `wallWithRelief`
-  no mapa. O crítico APROVOU na 3ª passada ("fy_lajes R27 fecha pela revisão adversarial").
+  no mapa. O crítico APROVOU na 3ª passada ("lajes R27 fecha pela revisão adversarial").
 - **`tools/eval/pickup-check.mjs`**: flood em 2 camadas (térreo/topo) + descida livre
-  (subida ≤0,30). VM14 fy_lajes 31→0 pickups sem alcance. Todos os mapas 0 (corrego tem 2
+  (subida ≤0,30). VM14 lajes 31→0 pickups sem alcance. Todos os mapas 0 (corrego tem 2
   "abaixo do piso" pré-existentes, outra cláusula).
 
 ### Outros mapas já corrigidos (gate 0/0/0)
 - **praca_poderes** (map_brasilia.js): 38 grupos-letra-morta → `occMesh` (malhas filhas);
   proxies de procuração removidos (ministérios, palácio, ônibus); props com `occlude:true`.
-- **fy_escadao** (map_escadao.js): gprop/propAt idem; muros/muretas/degraus/caveirão
+- **escadao** (map_escadao.js): gprop/propAt idem; muros/muretas/degraus/caveirão
   viraram occluders reais. **ATENÇÃO**: `tools/eval/escadao-contract-check.mjs:31-33`
   teve o observador "topo" movido de z=−20 para z=−12 (a visada antiga só media limpa
   porque a bala atravessava o degrau — defeito da classe BUG-54). Ruben precisa saber
@@ -60,10 +60,10 @@ Escreva isto assumindo que você não viu nada da conversa. Leia nesta ordem:
 ## O que FALTA (ordem de trabalho)
 
 1. ~~Wave 2~~ ENTREGUE: ferro_velho 863→0 e loja_h 518→0 (0/0/0 nos dois).
-2. **Wave 3 (rodando)**: `quebrada` (546), `fy_campomorro` (307), `fy_corrego` (89+217),
-   `fy_mansao` (129+81), `piscina_treta` (0/28). Verifique
-   `node tools/eval/occluder-ray-check.mjs --map=quebrada,fy_campomorro,fy_corrego,fy_mansao,piscina_treta`.
-3. **Perf medido em fy_lajes** (16/08, swiftshader, raycast da bala): 0,55-0,58 ms/raio
+2. **Wave 3 (rodando)**: `quebrada` (546), `campomorro` (307), `corrego` (89+217),
+   `mansao` (129+81), `piscina_treta` (0/28). Verifique
+   `node tools/eval/occluder-ray-check.mjs --map=quebrada,campomorro,corrego,mansao,piscina_treta`.
+3. **Perf medido em lajes** (16/08, swiftshader, raycast da bala): 0,55-0,58 ms/raio
    com 1.201 occluders (248 instanciados) contra ~0,08 ms/raio do esquema de caixas. O
    backdrop (cenário além do muro) ficou FORA dos occluders justamente por isso. Custo
    aceitável porque o raio é por evento (tiro/sense-tick de bot), não por frame — mas se
@@ -71,15 +71,15 @@ Escreva isto assumindo que você não viu nada da conversa. Leia nesta ordem:
    `_fireHitscan`/`_losClear` (game.js), não menos malha.
 4. **Cachorro in-game**: `npm run eval:ambience` (browser) nunca rodou com o dog (a régua
    AM1-AM10 não conhece a espécie — não deve quebrar, mas rodar).
-5. **MAP4 do invariants em fy_corrego** (3/62, caixas y≤0,2 m): coberto pela wave 3.
-6. **Capturas de aceite finais**: `tools/eval/asset-evidence/maps/fy_lajes/r27-final3/`
+5. **MAP4 do invariants em corrego** (3/62, caixas y≤0,2 m): coberto pela wave 3.
+6. **Capturas de aceite finais**: `tools/eval/asset-evidence/maps/lajes/r27-final3/`
    é a leva aprovada pelo crítico (3 passadas — 1ª reprovou térreo plano, 2ª aprovou
    empilhamento e pediu alívio de porta/janela, 3ª APROVOU tudo).
 4. **Cachorro in-game**: `npm run eval:ambience` (browser) nunca rodou com o dog.
-5. **MAP4 do invariants em fy_corrego** (3/62, caixas y≤0,2 m): pré-existente, verificar
+5. **MAP4 do invariants em corrego** (3/62, caixas y≤0,2 m): pré-existente, verificar
    na wave 3.
 6. **Capturas finais de aceite** (3:2, jogo real): já existem em
-   `tools/eval/asset-evidence/maps/fy_lajes/r27-final/` (20 poses). Faltam: tiros através
+   `tools/eval/asset-evidence/maps/lajes/r27-final/` (20 poses). Faltam: tiros através
    de vãos com prova visual, quatro limites com enquadramento melhor (limite-sul ficou
    colado no muro), travessia completa das duas rotas de laje. Script:
    `node tools/eval/lajes-evidence-capture.mjs <outdir> <prefixo>` (BASE=127.0.0.1:8124).
@@ -96,16 +96,16 @@ Escreva isto assumindo que você não viu nada da conversa. Leia nesta ordem:
 9. **Bugs adjacentes encontrados (não corrigidos — fora de escopo, registrar)**:
    - `game.js:665`: swap de pickup faz `scene.remove(pk.mesh)` — no-op para placeholders
      pendurados em `root` (7 mapas): a caixa-placeholder renderiza junto do GLB.
-   - fy_corrego: 2 pickups submersos no canal (m400 em (1.4,-11), awp em (-1.4,17),
+   - corrego: 2 pickups submersos no canal (m400 em (1.4,-11), awp em (-1.4,17),
      chão -1,75 m) — cláusula `abaixoDoPiso` do VM14/pickup-check. Pré-existente da R27;
      mexer é 2 linhas de posição em map_corrego.js (fazer DEPOIS da wave 3, que edita
      esse arquivo).
-   - MAP4 em fy_corrego (acima).
+   - MAP4 em corrego (acima).
 
 ## Estado dos gates de Lajes no fim da R27 (todos verdes)
 lajes-spatial (6/6 + 5 mutantes mordem) · lajes-circuito (6/6 + 4 mutantes) · lajes-gap ·
-lajes-authored · lajes-rooftop · map-check fy_lajes (0 FALHA) · eval:spawn (160/160) ·
-pickup-check (0 sem alcance) · eval:occluders fy_lajes (0/0/0).
+lajes-authored · lajes-rooftop · map-check lajes (0 FALHA) · eval:spawn (160/160) ·
+pickup-check (0 sem alcance) · eval:occluders lajes (0/0/0).
 
 ## Não repetir (erros que custaram nesta rodada)
 - Caixa proxy com bounds nativos do GLB cobre pergolado/recuo: bala morre no ar sobre a

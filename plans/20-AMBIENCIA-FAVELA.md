@@ -1,7 +1,7 @@
 <!-- spec:mapa -->
 # 20 — Ambiência viva das favelas
 
-> Sistema transversal para `fy_lajes`, `fy_corrego` e `fy_escadao`. Ele não
+> Sistema transversal para `lajes`, `corrego` e `escadao`. Ele não
 > substitui o trabalho de macro-layout de nenhum mapa.
 
 ## Local real
@@ -35,7 +35,7 @@ pombo sobe e sai do retículo. O traçante permanece curto e quente, perceptíve
 - `references/glb/rat_animated.glb` — Lobbyvictor, CC-BY 4.0; clipe `Run`.
 - `references/glb/pigeon.glb` — kenchoo, CC-BY 4.0; clipe `Animation`.
 - Procedência completa, candidatos recusados e fontes: `references/glb/FONTE.md`.
-- Frame servido: `tools/eval/asset-evidence/maps/fy_lajes/roof-eye.png`, viewport
+- Frame servido: `tools/eval/asset-evidence/maps/lajes/roof-eye.png`, viewport
   1536×1024 (3:2), também contratada por `map-evidence-contract-check.mjs`.
 
 ## Régua de aceite

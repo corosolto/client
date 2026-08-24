@@ -43,7 +43,7 @@ const MUT_BIOMBO_CAIXA = process.argv.includes('--mutante=biombo-caixa');
 const MUT_SEM_BEIRAL = process.argv.includes('--mutante=laje-sem-beiral');
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
-const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
+const game = bootGame('mansao', { textures: initTextures(), ctf: true, seed: 14000 });
 const marcados = [];
 game.world.root.traverse((o) => { if (o.userData?.mansaoFeature) marcados.push(o); });
 game.world.root.updateMatrixWorld(true);

@@ -21,7 +21,7 @@
           do canal e na perna do jogador;
      CW4  onda viva: vertexShader usa uTime E world.update avança o relógio;
      CW5  especular alinhado ao sol do LOOK (look.js, RC1): uSolDir ==
-          normalize(LOOK.fy_corrego.sol.pos);
+          normalize(LOOK.corrego.sol.pos);
      CW6  fio do depth: bloom.js instala o DepthPass para scene.userData.waters
           (nível-declaração: node não tem WebGL; a captura 3:2 é a prova de uso);
      CW7  a ESCALA de profundidade é do canal, não do oceano: uProfEscala ≤ 0,5 m.
@@ -52,7 +52,7 @@ const falhas = [];
 const ok = [];
 
 const T = initTextures();
-const g = bootGame('fy_corrego', { textures: T, ctf: true, seed: 13007 });
+const g = bootGame('corrego', { textures: T, ctf: true, seed: 13007 });
 
 /* CW1 — o mesh existe sob world.root, é shader e é superfície não-sólida */
 let agua = null;
@@ -102,7 +102,7 @@ if (agua && agua.material && agua.material.isShaderMaterial) {
   }
 
   /* CW5 — o sol da água é o sol do LOOK */
-  const sol = LOOK.fy_corrego.sol.pos, L = Math.hypot(...sol);
+  const sol = LOOK.corrego.sol.pos, L = Math.hypot(...sol);
   if (!u.uSolDir) falhas.push('CW5: material sem uSolDir');
   else {
     const d = u.uSolDir.value;

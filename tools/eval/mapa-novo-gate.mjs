@@ -45,10 +45,10 @@
    dois limiares para o mesmo conceito é o instrumento discordando de si)
      · SUP2 e JOG1/JOG2 são CONSUMIDOS de quem já mede (`texel-check`, `map-check`).
      · SUP1 tem que ser medida aqui porque o `corrego-superficie-check.mjs` só
-       cobre `fy_corrego` e não é importável (o corpo do módulo sobe o jogo e chama
+       cobre `corrego` e não é importável (o corpo do módulo sobe o jogo e chama
        `process.exit`). Então o TETO é LIDO DO CÓDIGO-FONTE daquele arquivo — se
        alguém mudar 0,40 lá, este portão segue junto sem ninguém lembrar — e a
-       CONTA foi calibrada contra a saída real dele: `fy_corrego` dá 23/103 = 22,3%
+       CONTA foi calibrada contra a saída real dele: `corrego` dá 23/103 = 22,3%
        nos dois. Teto que não é achado no fonte = VERMELHO, não um valor de reserva.
 
    COMO ELE FALHA QUANDO NÃO SABE MEDIR (pergunta 4 da skill: não saber custa o
@@ -69,7 +69,7 @@
 
    USO
      node tools/eval/mapa-novo-gate.mjs                 # os 10 mapas
-     node tools/eval/mapa-novo-gate.mjs --mapa=fy_lajes # um só
+     node tools/eval/mapa-novo-gate.mjs --mapa=lajes # um só
      node tools/eval/mapa-novo-gate.mjs --json-out=/tmp/x.json
      node tools/eval/mapa-novo-gate.mjs --mutante=<nome>
 
@@ -118,8 +118,8 @@ const SEED = 13007;
    INSTRUMENTO abaixo). Os organicos ficaram em dois grupos separados por uma
    faixa VAZIA, e o teto mora no meio dela — teto colado no medido reprova por
    ruído:
-     passam: ferro_velho 41,1%/46 ang · quebrada 34,1%/46 · fy_mansao 29,7%/31
-     falham: fy_corrego 7,7%/9 · fy_lajes 4,3%/8 · fy_escadao 0,7%/4 · fy_campomorro 0,0%/1
+     passam: ferro_velho 41,1%/46 ang · quebrada 34,1%/46 · mansao 29,7%/31
+     falham: corrego 7,7%/9 · lajes 4,3%/8 · escadao 0,7%/4 · campomorro 0,0%/1
    Entre 29,7% e 7,7% não existe mapa nenhum; entre 31 e 9 ângulos também não. */
 export const ANG_DISTINTOS_MIN = 20;    // ângulos distintos (arredondados ao grau)
 export const FRAC_GIRADA_MIN = 0.15;    // fração da massa fora da grade
@@ -128,7 +128,7 @@ export const ALT_MASSA_MIN = 0.5;       // abaixo disso não é massa construíd
 
 /* ALT1. Vem da fotografia: casa de favela é 3-4 lajes = 9-12 m.
    ATENÇÃO, e está no relatório: este teto NÃO SEPARA mapa bom de mapa ruim nesta
-   base. Medido: passam só `praca_poderes` (15,4) e `fy_campomorro` (9,6) — e o
+   base. Medido: passam só `praca_poderes` (15,4) e `campomorro` (9,6) — e o
    campomorro é um dos que o dono odeia, com 0,0% de massa girada. Reprovam
    `quebrada` (5,1) e `ferro_velho` (4,2), que estão entre os que ele considera
    menos ruins. Ou seja: ALT1 codifica a AMBIÇÃO de fidelidade, não o julgamento
@@ -171,10 +171,10 @@ const classeDe = (id) => CLASSE[id] || 'organico';
    ------------------------------------------------------------------------- */
 export const DIVIDA = {
   // ORT1 — os 4 mapas chapados que o dono reprovou em 12/08.
-  'ORT1:fy_escadao': '0,7% de massa girada e 4 ângulos distintos (piso 15% / 20)',
-  'ORT1:fy_campomorro': '0,0% de massa girada e 1 ângulo distinto — grade perfeita',
-  'ORT1:fy_lajes': '4,3% de massa girada e 8 ângulos distintos',
-  /* ORT1:fy_corrego QUITADA em 12/08/2026 — 66,5% de massa girada e 39 ângulos
+  'ORT1:escadao': '0,7% de massa girada e 4 ângulos distintos (piso 15% / 20)',
+  'ORT1:campomorro': '0,0% de massa girada e 1 ângulo distinto — grade perfeita',
+  'ORT1:lajes': '4,3% de massa girada e 8 ângulos distintos',
+  /* ORT1:corrego QUITADA em 12/08/2026 — 66,5% de massa girada e 39 ângulos
      distintos, contra 7,7%/9 na entrada da dívida. A entrada saiu daqui de propósito:
      dívida paga que continua declarada é dívida que deixa de morder se o mapa
      regredir, e o próprio portão manda removê-la ("QUITADAS — REMOVA a entrada"). */
@@ -183,26 +183,26 @@ export const DIVIDA = {
   'ALT1:loja_h': 'h90 5,0 m (galpão de uma laje)',
   'ALT1:ferro_velho': 'h90 4,2 m (pátio: a massa é pilha de carro)',
   'ALT1:quebrada': 'h90 5,1 m',
-  'ALT1:fy_escadao': 'h90 7,9 m',
-  'ALT1:fy_lajes': 'h90 6,0 m',
-  // ALT1:fy_corrego QUITADA em 12/08/2026 — h90 9,4 m (era 4,7 m). Mesmo motivo acima.
-  'ALT1:fy_mansao': 'h90 4,1 m (casa térrea em plataforma)',
+  'ALT1:escadao': 'h90 7,9 m',
+  'ALT1:lajes': 'h90 6,0 m',
+  // ALT1:corrego QUITADA em 12/08/2026 — h90 9,4 m (era 4,7 m). Mesmo motivo acima.
+  'ALT1:mansao': 'h90 4,1 m (casa térrea em plataforma)',
   // SUP1 — teto 40% (média dos 5 maduros hoje é 31,7%).
   'SUP1:loja_h': '67,6% dos materiais sem `map`',
   'SUP1:quebrada': '41,3% dos materiais sem `map`',
-  'SUP1:fy_escadao': '63,4% dos materiais sem `map`',
-  'SUP1:fy_campomorro': '50,0% dos materiais sem `map`',
-  'SUP1:fy_lajes': '55,6% dos materiais sem `map`',
-  'SUP1:fy_mansao': '97,4% dos materiais sem `map`',
+  'SUP1:escadao': '63,4% dos materiais sem `map`',
+  'SUP1:campomorro': '50,0% dos materiais sem `map`',
+  'SUP1:lajes': '55,6% dos materiais sem `map`',
+  'SUP1:mansao': '97,4% dos materiais sem `map`',
   // SUP2 — teto 6%, derivado NO CÓRREGO (saia + colisor). Sua transferência para
   // mapa fechado é o elo fraco desta régua e está dito no relatório.
   'SUP2:piscina_treta': '20,0% da área sem textura',
   'SUP2:loja_h': '8,3% da área sem textura',
   'SUP2:quebrada': '7,6% da área sem textura',
-  'SUP2:fy_escadao': '13,4% da área sem textura',
-  'SUP2:fy_campomorro': '12,8% da área sem textura',
-  'SUP2:fy_lajes': '17,2% da área sem textura',
-  'SUP2:fy_mansao': '34,9% da área sem textura',
+  'SUP2:escadao': '13,4% da área sem textura',
+  'SUP2:campomorro': '12,8% da área sem textura',
+  'SUP2:lajes': '17,2% da área sem textura',
+  'SUP2:mansao': '34,9% da área sem textura',
   // JOG2 — MAP6 do map-check, que já reprova sozinho lá.
   'JOG2:loja_h': '21 bordas de andar alto sem guarda (MAP6 do map-check)',
   // COB2 — as duas baterias com lista à mão. É a MESMA falha do gl-shots que
@@ -215,7 +215,7 @@ export const DIVIDA = {
    INSTRUMENTO — como o ângulo é lido, e os dois furos que a primeira versão tinha.
    ------------------------------------------------------------------------- */
 /* FURO 1 — ESCALA. `Euler.setFromRotationMatrix` só vale em matriz SEM escala; com
-   escala não-uniforme o ângulo sai errado. E existe escala: 74 malhas no fy_mansao,
+   escala não-uniforme o ângulo sai errado. E existe escala: 74 malhas no mansao,
    16 na praça, 13 no córrego. Aqui a matriz é DECOMPOSTA antes.
    FURO 2 — INSTANCING. `InstancedMesh` é UMA malha com N matrizes próprias. Ler só
    a matriz do pai esconde a rotação de cada instância — e é o pai que os mapas
@@ -589,7 +589,7 @@ const quitados = [];
    CHEGASSE HOJE, ele entrava? A dívida declarada existe para mapa que já está no
    registro; mapa novo não herda desculpa nenhuma. Com a bandeira, as entradas de
    DIVIDA daquele mapa são ignoradas e ele responde como um recém-chegado.
-   Medido em 12/08: `--simular-novo=fy_campomorro` reprova em ORT1, ALT1, SUP1 e
+   Medido em 12/08: `--simular-novo=campomorro` reprova em ORT1, ALT1, SUP1 e
    SUP2 — ou seja, o portão teria barrado na entrada o mapa que o dono reprovou. */
 const SIMULAR_NOVO = arg('simular-novo');
 if (SIMULAR_NOVO && !IDS_REAIS.includes(SIMULAR_NOVO)) {

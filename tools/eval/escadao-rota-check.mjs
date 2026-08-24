@@ -1,4 +1,4 @@
-/* ESCADÃO-ROTA — duas cláusulas para o relato do dono sobre o fy_escadao:
+/* ESCADÃO-ROTA — duas cláusulas para o relato do dono sobre o escadao:
      "tem 3 escadas, 2 não levam pra lugar nenhum, e dá pra ver o andar do respawn de cima".
 
    As duas medem o MOTOR, não a declaração do mapa:
@@ -40,7 +40,7 @@ const ALTO = 1.5;          // altura acima do piso do spawn a partir da qual "se
 const FORA = 6.0;          // distância horizontal a partir da qual já não é a zona de spawn
 const OLHO = 1.62;         // altura dos olhos (mesma de map-check.mjs)
 
-const game = bootGame('fy_escadao', { textures: initTextures(), ctf: true, seed: 8012 });
+const game = bootGame('escadao', { textures: initTextures(), ctf: true, seed: 8012 });
 const W = game.world;
 game.scene.updateMatrixWorld(true);
 

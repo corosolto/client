@@ -88,6 +88,10 @@ const SEM_VARREDURA = [
      do contribuidor daltonfontes — é o nome da contribuição na origem, não código
      vivo. Mesmo motivo de CHANGELOG/KNOWN-BUGS. */
   join('docs', 'LICENCA.md'),
+  /* Relatórios datados (`docs/reports/AAAA-MM-DD-*.md|html`) descrevem o estado do
+     projeto NO DIA em que foram escritos — reescrever id lá é falsificar o que foi
+     medido. Mesmo motivo de CHANGELOG/KNOWN-BUGS; o nome do arquivo carrega a data. */
+  join('docs', 'reports'),
   /* `public/docs` é SAÍDA DE BUILD do Docusaurus (`docs/` -> `npm run build:site`), com
      nome de arquivo por hash. Policiar artefato em vez de fonte deixa a régua vermelha
      toda vez que o bundle publicado ficar uma geração atrás de um rename — que foi
@@ -102,6 +106,10 @@ const SEM_VARREDURA = [
      linha ela se acusa: nove ocorrências, todas dela mesma. Mesmo motivo do `maps.js`,
      que também precisa nomear os antigos para o alias existir. */
   join('tools', 'eval', 'mapa-id-check.mjs'),
+  /* Régua-irmã com o mesmo besoin: `original-map-check.mjs` declara a lista dos mapas
+     ORIGINAIS (`awp_map`, `fy_pool_day`, …) como DADO dela — é contra essa lista que ela
+     confere o que sobrou de cada original. Sem isenção ela acusa a própria tabela-fonte. */
+  join('tools', 'eval', 'original-map-check.mjs'),
   /* WORKTREES. `.claude/worktrees/` está no `.gitignore:129` — o que mora lá NÃO é código
      vivo deste checkout, é trabalho de outra branch parado no disco. Em 12/08 o M1 saiu
      VERMELHO com 12 ocorrências, TODAS de `.claude/worktrees/bugs-87-ctrlw/` (README,

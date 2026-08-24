@@ -3,7 +3,7 @@
    ----------------------------------------------------------------------------
    O defeito que ela PREMIA não existir (frase literal do dono, 19/08): "oceano é
    plano azul morto" / "no mapa do joa parece NES->SNES". Até o RC2 o "mar" do
-   fy_mansao era só a faixa de mar assada no panorama sky_joa.webp — textura
+   mansao era só a faixa de mar assada no panorama sky_joa.webp — textura
    estática, sem onda, sem espuma, sem profundidade. Os prints de referência que o
    dono mandou mostram o alvo: cor por profundidade (turquesa no raso -> escuro no
    fundo), espuma onde a água toca a terra, normal maps em movimento e transparência
@@ -13,7 +13,7 @@
    não um mock — e lê o material VIVO do mesh VIVO na cena, não declaração de arquivo;
    régua que lê declaração em vez de uso é o BUG-02):
 
-     OC1  existe UM mesh oceano na cena do fy_mansao (userData.oceano), com
+     OC1  existe UM mesh oceano na cena do mansao (userData.oceano), com
           ShaderMaterial — água viva é shader, não MeshStandardMaterial azul;
      OC2  depth-fade: o fragmentShader VIVO amostra tDepth E usa a profundidade da
           cena (sceneViewZ) para tinta raso->fundo (uCorRasa/uCorFunda) e para a
@@ -23,7 +23,7 @@
      OC4  onda viva: vertexShader usa uTime e o update() do mundo AVANÇA uTime de
           verdade (medido chamando world.update — uso, não promessa);
      OC5  especular alinhado ao sol do LOOK (look.js, RC1): uSolDir do material ==
-          normalize(LOOK.fy_mansao.sol.pos) — a água não inventa um segundo sol;
+          normalize(LOOK.mansao.sol.pos) — a água não inventa um segundo sol;
      OC6  fio do depth: bloom.js entrega o depthTexture do composer ao material
           (scene.userData.water -> tDepth). Node não tem WebGL: este item lê a
           fonte do bloom.js e está MARCADO como nível-declaração; os itens OC1-5
@@ -62,13 +62,13 @@ const ok = [];
 
 /* ---------- sobe o jogo de verdade ---------- */
 const T = initTextures();
-const g = bootGame('fy_mansao', { textures: T });
+const g = bootGame('mansao', { textures: T });
 
 /* OC1 — o mesh oceano existe na cena e é shader */
 let oceano = null;
 g.scene.traverse((o) => { if (o.isMesh && o.userData && o.userData.aguaViva) oceano = o; });
 if (!oceano) {
-  falhas.push('OC1: nenhum mesh com userData.aguaViva na cena do fy_mansao — o mar segue sendo a foto morta do sky_joa.webp');
+  falhas.push('OC1: nenhum mesh com userData.aguaViva na cena do mansao — o mar segue sendo a foto morta do sky_joa.webp');
 } else if (!oceano.material || !oceano.material.isShaderMaterial) {
   falhas.push('OC1: o oceano não é ShaderMaterial — plano azul morto com outro nome');
 }
@@ -112,7 +112,7 @@ if (oceano && oceano.material && oceano.material.isShaderMaterial) {
   }
 
   /* OC5 — o sol da água é o sol do LOOK (RC1), não um segundo sol */
-  const sol = LOOK.fy_mansao.sol.pos, L = Math.hypot(...sol);
+  const sol = LOOK.mansao.sol.pos, L = Math.hypot(...sol);
   if (!u.uSolDir) falhas.push('OC5: material sem uSolDir — especular sem sol');
   else {
     const d = u.uSolDir.value;

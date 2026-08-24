@@ -67,7 +67,7 @@ frentes - o integrador roda na ordem certa a cada merge (BUG-02/BUG-60).
 
 | Frente | Régua nova (com mutação) |
 |---|---|
-| A | **anti-trap**: flood de fuga - toda célula andável alcançável do spawn tem caminho de VOLTA ao spawn; mutante sela um canto → vermelho. + ESC1-5 do `escala-favela` rodando no fy_lajes |
+| A | **anti-trap**: flood de fuga - toda célula andável alcançável do spawn tem caminho de VOLTA ao spawn; mutante sela um canto → vermelho. + ESC1-5 do `escala-favela` rodando no lajes |
 | B | censo de fauna do córrego lê o **GLB posicionado** (não o procedural); água: cláusula de que o material tem shader de onda (mutante remove `onBeforeCompile` → vermelho) |
 | C | `mansao-water` INVERTIDA: piscina entrável com profundidade mínima (mutante `agua-bloqueada` volta o colisor → vermelho); jardim: teto de clones de folhagem (mutante clona → vermelho) |
 | D | cláusula AR: **nenhuma pomba em voo** em mapa nenhum (mutante adiciona flight → vermelho); jacaré/capivara com clipes tocando (se rig existir) |

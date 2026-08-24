@@ -28,14 +28,14 @@
 import { readFileSync } from 'node:fs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 
-const NOVOS = ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+const NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
 const MUT = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1];
 const layouts = JSON.parse(JSON.stringify(GRAFITE));
 let lajesFonte = readFileSync('public/js/map_lajes.js', 'utf8');
 const corregoFonte = readFileSync('public/js/map_corrego.js', 'utf8');
 const substituicoesLajes = ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'];
 const substituiRick = substituicoesLajes.every((id) => lajesFonte.includes(`'${id}': 'or-mitico-mural.png'`));
-if (substituiRick) layouts.fy_lajes.arquivos = layouts.fy_lajes.arquivos
+if (substituiRick) layouts.lajes.arquivos = layouts.lajes.arquivos
   .map((nome) => substituicoesLajes.includes(nome) ? 'or-mitico-mural.png' : nome);
 const substituicoesCorrego = new Map([
   ['folha-person-02.png','or-mitico-mural.png'],
@@ -47,17 +47,17 @@ const substituicoesCorrego = new Map([
   ['personagens-graffiti-03.png','or-graf-treta.png'],
 ]);
 const substituiCorrego = [...substituicoesCorrego].every(([a,b]) => corregoFonte.includes(`'${a}': '${b}'`));
-if (substituiCorrego) layouts.fy_corrego.arquivos = layouts.fy_corrego.arquivos
+if (substituiCorrego) layouts.corrego.arquivos = layouts.corrego.arquivos
   .map((nome) => substituicoesCorrego.get(nome) || nome);
 
-if (MUT === 'dollynho') layouts.fy_campomorro.arquivos.push('poster:DOLLYNHO.png');
-if (MUT === 'pessoa') layouts.fy_mansao.murais.push(['homenagem-pessoa-real', 0, 2, 0, 0, 5.4, 2.8]);
-if (MUT === 'morte') layouts.fy_mansao.arquivos.push('folha-pixaca-01.png');
-if (MUT === 'rick') layouts.fy_lajes.arquivos.push('folha-person-01.png');
-if (MUT === 'popeye') layouts.fy_lajes.arquivos.push('personagens-graffiti-01.png');
-if (MUT === 'religioso-vulgar') layouts.fy_corrego.arquivos.push('poster:despisque-leao.jpg');
-if (MUT === 'putin') layouts.fy_corrego.arquivos.push('poster:ashtar-meme.jpg');
-if (MUT === 'rostos-carecas') layouts.fy_corrego.arquivos.push('personagens-graffiti-02.png');
+if (MUT === 'dollynho') layouts.campomorro.arquivos.push('poster:DOLLYNHO.png');
+if (MUT === 'pessoa') layouts.mansao.murais.push(['homenagem-pessoa-real', 0, 2, 0, 0, 5.4, 2.8]);
+if (MUT === 'morte') layouts.mansao.arquivos.push('folha-pixaca-01.png');
+if (MUT === 'rick') layouts.lajes.arquivos.push('folha-person-01.png');
+if (MUT === 'popeye') layouts.lajes.arquivos.push('personagens-graffiti-01.png');
+if (MUT === 'religioso-vulgar') layouts.corrego.arquivos.push('poster:despisque-leao.jpg');
+if (MUT === 'putin') layouts.corrego.arquivos.push('poster:ashtar-meme.jpg');
+if (MUT === 'rostos-carecas') layouts.corrego.arquivos.push('personagens-graffiti-02.png');
 
 const falhas = [];
 if (!substituiRick) falhas.push('map_lajes.js: substituição nominal do decal protegido ausente');
@@ -79,15 +79,15 @@ for (const id of NOVOS) {
   /* O veto do MORTE na Mansão vale para o ASSADO também: a fonte foi limpa em
      12/08 mas o layout fóssil seguiu com 18 peças do pixo até 14/08, porque o
      gerador preservava entrada de mapa sem passada. */
-  const morteAssado = id === 'fy_mansao'
+  const morteAssado = id === 'mansao'
     ? (layout.arquivos || []).filter((nome) => nome === 'folha-pixaca-01.png') : [];
-  const personagensProtegidos = id === 'fy_lajes'
+  const personagensProtegidos = id === 'lajes'
     ? (layout.arquivos || []).filter((nome) => ['folha-person-01.png','personagens-graffiti-01.png','folha-person-02.png'].includes(nome)) : [];
-  const religiososVulgares = id === 'fy_corrego'
+  const religiososVulgares = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => nome === 'poster:despisque-leao.jpg') : [];
-  const pessoasReais = id === 'fy_corrego'
+  const pessoasReais = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => ['poster:ashtar-meme.jpg','poster:ashtar.png'].includes(nome)) : [];
-  const rostosHumanos = id === 'fy_corrego'
+  const rostosHumanos = id === 'corrego'
     ? (layout.arquivos || []).filter((nome) => ['personagens-graffiti-02.png','personagens-graffiti-03.png'].includes(nome)) : [];
   if (protegidos.length) falhas.push(`${id}: ${protegidos.join(', ')}`);
   if (pessoas.length) falhas.push(`${id}: ${pessoas.map((m) => m[0]).join(', ')}`);

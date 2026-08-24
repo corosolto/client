@@ -3,7 +3,7 @@
 #  sky_seam.py — MOTOR DE MEDIDA E CONSERTO DA COSTURA DE WRAP DOS CÉUS
 # ----------------------------------------------------------------------------
 #  POR QUE EXISTE
-#  O dono viu uma emenda vertical partindo a tela ao meio no `fy_quebrada`
+#  O dono viu uma emenda vertical partindo a tela ao meio no `quebrada`
 #  (coluna x=812 de um frame 1500x1000): metade esquerda quente/creme, metade
 #  direita cinza-azulada. O palpite óbvio — "é compressão do PNG" ou "é o
 #  `map_sky.js`" — foi REFUTADO antes de qualquer conserto:

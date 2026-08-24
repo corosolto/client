@@ -14,12 +14,12 @@
 
    PROCEDÊNCIA DOS LIMIARES
      O frame 1536×1024 vem de
-     tools/eval/asset-evidence/maps/fy_lajes/roof-eye.png e é contratado por
+     tools/eval/asset-evidence/maps/lajes/roof-eye.png e é contratado por
      map-evidence-contract-check.mjs. Um traço com diâmetro projetado menor que
      um pixel a 15 m não materializa uma coluna completa desse raster. Três
      quadros a 60 Hz são o piso temporal pedido no spec
      plans/20-AMBIENCIA-FAVELA.md. O teto de fauna é POR MAPA (AM7_TETOS): a
-     população autoral do fy_lajes (6 ratos + 7 pombos + 1 cachorro do R27,
+     população autoral do lajes (6 ratos + 7 pombos + 1 cachorro do R27,
      elogiada nominalmente pelo dono em 16/08) mede 84.082 tris / 19 draws, e o
      custo de cena real dos mapas em produção é 650k-1.8M tris por frame
      (tools/eval/cena-tetos.mjs, medição de 11/08) — o teto único de 40k citava
@@ -58,7 +58,7 @@ const mutante = arg('mutante');
 const fotosArg = arg('fotos');
 const fotos = fotosArg ? (fotosArg === true ? '/tmp/ambience-check' : fotosArg) : null;
 const saida = arg('saida');
-const MAPAS = ['fy_lajes', 'fy_corrego', 'fy_escadao'];
+const MAPAS = ['lajes', 'corrego', 'escadao'];
 const esperadoPorMutante = {
   'sem-reacao': 'AM5',
   relogio: 'AM4',
@@ -172,7 +172,7 @@ const browser = await chromium.launch({
 });
 if (fotos) mkdirSync(fotos, { recursive: true });
 const runtime = { maps: {}, lowq: null, game: null };
-const runtimeMaps = mutante ? ['fy_lajes'] : MAPAS;
+const runtimeMaps = mutante ? ['lajes'] : MAPAS;
 
 async function abrirMapa(map, quality = 'med') {
   const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
@@ -325,10 +325,10 @@ async function abrirMapa(map, quality = 'med') {
 }
 
 for (const map of runtimeMaps) runtime.maps[map] = await abrirMapa(map, 'med');
-runtime.lowq = await abrirMapa('fy_lajes', 'low');
+runtime.lowq = await abrirMapa('lajes', 'low');
 
 const gamePage = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
-await gamePage.goto(`${BASE}/?debug=1&nav=1&auto=P,mst&map=fy_lajes&bloom=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
+await gamePage.goto(`${BASE}/?debug=1&nav=1&auto=P,mst&map=lajes&bloom=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
 await gamePage.waitForFunction(() => window.__game?.state === 'live' && window.__game.world?.ambience?.ready === true,
   null, { timeout: 300000 });
 runtime.game = await gamePage.evaluate(async (activeMutant) => {
@@ -385,7 +385,7 @@ runtime.game = await gamePage.evaluate(async (activeMutant) => {
   return { shotCalls, updateCalls, radius, projectedPixels15m, ttl, tracersPorTresTiros,
     mutationApplied: activeMutant !== 'tracer-fino' || Math.abs(radius - .0035) < 1e-6 };
 }, mutante);
-if (fotos) await gamePage.screenshot({ path: `${fotos}/fy_lajes-tracer.png`, timeout: 120000 });
+if (fotos) await gamePage.screenshot({ path: `${fotos}/lajes-tracer.png`, timeout: 120000 });
 await gamePage.close();
 await browser.close();
 
@@ -402,8 +402,8 @@ put('AM5b', 'fauna reage e retoma a rota sem salto maior que 20 cm por quadro',
   Object.entries(runtime.maps).map(([map, item]) => `${map}=${Object.entries(item.continuity).map(([kind, entry]) => `${kind}:${entry.maxStep.toFixed(3)}m`).join(',')}`).join(' '));
 put('AM6', 'LOWQ preserva as duas espécies e reduz instâncias',
   runtime.lowq.report.counts.rat >= 1 && runtime.lowq.report.counts.pigeon >= 1
-    && runtime.lowq.report.counts.total < runtime.maps.fy_lajes.report.counts.total,
-  `full=${runtime.maps.fy_lajes.report.counts.total} low=${runtime.lowq.report.counts.total}`);
+    && runtime.lowq.report.counts.total < runtime.maps.lajes.report.counts.total,
+  `full=${runtime.maps.lajes.report.counts.total} low=${runtime.lowq.report.counts.total}`);
 /* Teto por mapa, medido + folga curta. 17/08: população R27 do lajes media
    84.082 tris/19 draws (com 3 pombos de voo a 10.856 tris cada). 19/08 (v2.1
    frente D): pombo pousado (6.928) no lugar do voo + gato/galinha/vaca mediu
@@ -413,9 +413,9 @@ put('AM6', 'LOWQ preserva as duas espécies e reduz instâncias',
    frente B (jacaré/capivara/grama no córrego) re-mede e rederiva de novo.
    Piora reprova; população nova mede antes. Ver PROCEDÊNCIA DOS LIMIARES. */
 const AM7_TETOS = {
-  fy_lajes: { tris: 78000, meshes: 21 },
-  fy_corrego: { tris: 39000, meshes: 15 },
-  fy_escadao: { tris: 29000, meshes: 6 },
+  lajes: { tris: 78000, meshes: 21 },
+  corrego: { tris: 39000, meshes: 15 },
+  escadao: { tris: 29000, meshes: 6 },
 };
 put('AM7', 'os três mapas desenham GLBs da fauna dentro do orçamento',
   allKinds && reports.every((report) => { const t = AM7_TETOS[report.map]; return t && report.triangles <= t.tris && report.meshes <= t.meshes; }),
@@ -451,10 +451,10 @@ put('AM11', 'nenhuma pomba voa: sem estado fly/takeoff e bob vertical ≤ 0,35 m
 /* AM12 (v2.1): espécies novas por bioma, com rig tocando — gato na favela (lajes),
    galinha no córrego; o clipTime > 0 prova que o AnimationMixer anda (bicho estático
    com mixer nulo é o mutante bicho-estatico). */
-const ESPECIE_ESPERADA = { fy_lajes: ['cat'], fy_corrego: ['chicken'], fy_escadao: [] };
+const ESPECIE_ESPERADA = { lajes: ['cat'], corrego: ['chicken'], escadao: [] };
 const especieFalha = Object.entries(ESPECIE_ESPERADA).flatMap(([map, especies]) => {
   const report = runtime.maps[map]?.report;
-  /* em modo mutante só o fy_lajes abre (runtimeMaps): mapa não aberto não é cláusula */
+  /* em modo mutante só o lajes abre (runtimeMaps): mapa não aberto não é cláusula */
   if (!report || !especies.length) return [];
   const faltam = especies.filter((e) => !(report.counts[e] > 0));
   return faltam.map((e) => `${map} sem ${e}`);

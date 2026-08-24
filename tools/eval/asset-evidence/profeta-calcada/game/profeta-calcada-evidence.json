@@ -1,7 +1,7 @@
 {
   "char": "profeta-calcada",
   "enemy": "O",
-  "map": "fy_quebrada",
+  "map": "quebrada",
   "viewport": "1536x1024 (3:2)",
   "expectedWeapon": "m4",
   "evidenceWeapon": "m4",

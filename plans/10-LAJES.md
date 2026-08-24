@@ -146,7 +146,7 @@ Essa candidata não substitui o contrato original; a rodada seguinte reconstrói
 
 ### Portões específicos desta reconstrução
 
-- `node tools/eval/map-check.mjs fy_lajes` precisa terminar verde, sem nível declarado
+- `node tools/eval/map-check.mjs lajes` precisa terminar verde, sem nível declarado
   inacessível; `--mutante=travessia-falsa` precisa ficar vermelho para provar a cláusula.
 - O caminho Meshy precisa passar `npm run eval:asset-gen`: preview sem textura nunca
   é artefato final; refine PBR 2K é obrigatório.

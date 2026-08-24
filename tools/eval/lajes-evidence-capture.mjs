@@ -1,4 +1,4 @@
-// CAPTURA DE EVIDÊNCIA 3:2 — fy_lajes, nível do jogador (jogo real, não mapview).
+// CAPTURA DE EVIDÊNCIA 3:2 — lajes, nível do jogador (jogo real, não mapview).
 // Nasceu na rodada R27 (BUG-54): o dono aprovou o visual mas reprovou a jogabilidade;
 // toda correção de Lajes precisa de antes×depois no recorte que ele recebe (3:2).
 // Uso: node tools/eval/lajes-evidence-capture.mjs [outDir] [TAG]
@@ -10,7 +10,7 @@ import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const OUT = process.argv[2] || 'tools/eval/asset-evidence/maps/fy_lajes/round';
+const OUT = process.argv[2] || 'tools/eval/asset-evidence/maps/lajes/round';
 const TAG = process.argv[3] || '';
 const BASE = process.env.BASE || 'http://127.0.0.1:8124';
 const VW = 1500, VH = 1000;   // 3:2 — o dono joga e revisa em 3:2
@@ -53,7 +53,7 @@ let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_lajes`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
+  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=lajes`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForTimeout(800);

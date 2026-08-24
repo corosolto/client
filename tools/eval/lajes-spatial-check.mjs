@@ -22,7 +22,7 @@ const conhecidos = new Set(['', 'spawn-beco', 'rota-unica', 'beco-avenida', 'esc
 if (!conhecidos.has(mutante)) throw new Error(`mutante desconhecido: ${mutante}`);
 
 const textures = initTextures();
-const game = bootGame('fy_lajes', { textures, bots: 0, seed: 16082026 });
+const game = bootGame('lajes', { textures, bots: 0, seed: 16082026 });
 const W = game.world;
 const { nodes = [], adj = [] } = W.waypoints || {};
 

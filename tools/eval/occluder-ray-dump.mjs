@@ -1,7 +1,7 @@
 /* occluder-ray-dump.mjs — DIAGNÓSTICO (não é portão): roda a mesma sondagem do
    occluder-ray-check.mjs e despeja TODAS as violações agrupadas por objeto, para
    localizar a geometria responsável antes de mexer no mapa. Não tem teto, não reprova.
-   Uso: node tools/eval/occluder-ray-dump.mjs --map=fy_corrego */
+   Uso: node tools/eval/occluder-ray-dump.mjs --map=corrego */
 import { execSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 

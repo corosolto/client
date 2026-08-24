@@ -86,7 +86,7 @@ validador do builder. Não começa antes da release; o RC5 é o pré-requisito r
 1. **RC1** (look por mapa) — barato, maior delta visual por linha.
 2. **RC2** no Joá — o alvo da frase mais dolorida; referência = print do barco.
 3. **RC3 + RC4** — partículas e vento, independentes, paralelizáveis.
-4. **RC5** — vira portão quando RC1-4 existirem; preview v2 do fy_campomorro (plans/22)
+4. **RC5** — vira portão quando RC1-4 existirem; preview v2 do campomorro (plans/22)
    entra DEPOIS do RC1+RC4, já nascendo no padrão novo (mato com vento, fog assentado).
 5. RC6 contínuo; editor pós-release.
 

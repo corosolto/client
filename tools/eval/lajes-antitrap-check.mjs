@@ -42,7 +42,7 @@
    "Não sei medir" custa o mesmo que estar errado.
 
    AT1: 100% das células andáveis (todas as camadas) alcançam algum spawn.
-   Grava o overlay por camada em tools/eval/asset-evidence/maps/fy_lajes/
+   Grava o overlay por camada em tools/eval/asset-evidence/maps/lajes/
    antitrap-overlay.png — OLHE A FIGURA: ilha vermelha é canto preso.
 
    REPRODUZ:  node tools/eval/lajes-antitrap-check.mjs
@@ -62,7 +62,7 @@ const R = 0.38;               // raio do corpo (game.js _collide)
 const GRID = 0.50;
 const ESCADA = { x0: 3.3, x1: 7.25, z: -10 };   // faixa da ESCADARIA (STAIR_CONFIGS side=1)
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
 const W = game.world;
 
 if (mutante === 'sela-canto') {
@@ -265,10 +265,10 @@ try {
     else if (c === 2) { px[o] = 224; px[o + 1] = 42; px[o + 2] = 42; }
   }
   const { mkdirSync } = await import('node:fs');
-  mkdirSync('tools/eval/asset-evidence/maps/fy_lajes', { recursive: true });
+  mkdirSync('tools/eval/asset-evidence/maps/lajes', { recursive: true });
   await sharp(px, { raw: { width: nx, height: nz, channels: 3 } })
     .resize(nx * 6, nz * 6, { kernel: 'nearest' }).png()
-    .toFile('tools/eval/asset-evidence/maps/fy_lajes/antitrap-overlay.png');
+    .toFile('tools/eval/asset-evidence/maps/lajes/antitrap-overlay.png');
 } catch (e) { console.error('overlay não gravado:', e.message); process.exitCode = 1; }
 
 const fmt = (b) => `${b.cel} cél em (${b.x.toFixed(1)},${b.z.toFixed(1)}) h ${b.hmin.toFixed(1)}–${b.hmax.toFixed(1)}`;

@@ -66,11 +66,11 @@ export const MAPS = {
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
   /* DÍVIDA: renomear o prefixo `fy_` só aqui quebra CALADO — `LOOKS` (bloom.js) cai no
      DEFAULT_LOOK de Brasília. Renome exige mudança própria com régua (PR #200). */
-  fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
-  fy_campomorro: { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
-  fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
-  fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
-  fy_mansao:     { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
+  escadao:       { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
+  campomorro:    { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
+  lajes:         { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
+  corrego:       { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
+  mansao:        { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
   // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
   // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
@@ -123,6 +123,11 @@ export const ALIAS_MAPA = {
   fy_havan: 'loja_h',
   fy_ferrovelho: 'ferro_velho',
   fy_quebrada: 'quebrada',
+  escadao: 'escadao',
+  campomorro: 'campomorro',
+  lajes: 'lajes',
+  corrego: 'corrego',
+  mansao: 'mansao',
 };
 
 export function resolveMapId(id) {

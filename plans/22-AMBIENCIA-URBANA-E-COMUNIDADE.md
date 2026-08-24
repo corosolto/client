@@ -39,9 +39,9 @@ A lição do BUG-57: jacaré e capivara ficaram um ciclo inteiro gerados, otimiz
 
 | Item | Onde | Técnica | Régua |
 |---|---|---|---|
-| Pipa voando (animação) | fy_lajes (12 pipas estáticas de 2 tris, `map_lajes_authored.js:957-975`) | sway/deriva senoidal no `update` do builder (precedente: `map_parque.js:368-373`; `game.js:6931` já chama `world.update`) | sonda: pipa se move, não atravessa laje |
+| Pipa voando (animação) | lajes (12 pipas estáticas de 2 tris, `map_lajes_authored.js:957-975`) | sway/deriva senoidal no `update` do builder (precedente: `map_parque.js:368-373`; `game.js:6931` já chama `world.update`) | sonda: pipa se move, não atravessa laje |
 | Helicóptero | mapas de favela (lajes, corrego, escadao, quebrada) | model 3D + rota em órbita alta, rotor animado | visível do chão, som ambiente opcional |
-| Avião com faixa de praia | mansão do Joá (fy_mansao); cabe no balneário (plans/18) | model 3D + travessia reta + faixa `PlaneGeometry` com `CanvasTexture` (padrão `signTex`) | texto da faixa legível, tema praia/Joá |
+| Avião com faixa de praia | mansão do Joá (mansao); cabe no balneário (plans/18) | model 3D + travessia reta + faixa `PlaneGeometry` com `CanvasTexture` (padrão `signTex`) | texto da faixa legível, tema praia/Joá |
 | Pombas voando | vários | o `pigeon_flight.glb` existia e voava, mas era **arte estática de asas abertas** — removido na frente D a pedido do dono. Volta só com pássaro riggado de verdade (não existe CC0; rig Mint é humanoid-only) | régua de voo com flap visível |
 | Ratos, gatos, fauna urbana | todos os mapas | pipeline Quaternius da frente D (gato/galinha/vaca entregues em `v21/d-fauna`) | AR/AM existentes + espécie por bioma |
 
@@ -58,7 +58,7 @@ ambiente por mapa não existe, 7 mapas sem `low: LOWQ` na fauna.
 **"Mapas da comunidade" = mapas de FÃS (decisão do dono, 19/08).** Hoje não existe
 nenhum (`map_json.js`, o loader de mapa-como-dado, tem zero mapas registrados). Então o
 ciclo tem duas pernas: (1) **preview v2 de mapa existente** — o dono escolheu
-**`fy_campomorro`** como primeiro (pior arte com folga — MATERIAL 1/5 no audit,
+**`campomorro`** como primeiro (pior arte com folga — MATERIAL 1/5 no audit,
 *"precisa ser estruturado visualmente como o lajes"*, campo sem um tufo de mato);
 (2) **habilitar mapas de fãs** — o pipeline `map_json.js` (issue #210) é o habilitador:
 quando a v2 do campomorro provar o padrão de arte, o mesmo padrão vira o contrato de
@@ -71,12 +71,12 @@ qualidade para mapa da comunidade externa.
 
 | Mapa | Lore/tema | Prioridade de encaixe |
 |---|---|---|
-| fy_lajes | comunidade carioca 2 camadas — **a régua visual** | pipa animada, helicóptero, horizonte de morro, caixa d'água nova |
-| fy_corrego | favela SP sobre córrego — *"o mais brasileiro"* | grama de margem (lote E ✓), água com onda (frente B ✓), varal GLB, helicóptero |
-| fy_escadao | escadaria Selarón genérica + caveirão | helicóptero (lore perfeita), azulejo variante, cabos com catenária, caramelo |
-| fy_campomorro | campo de várzea + galpão do baile — **pior arte** | **preview v2 primeiro**: mato no campo, material muro≠chão≠galpão, bandeirinhas |
+| lajes | comunidade carioca 2 camadas — **a régua visual** | pipa animada, helicóptero, horizonte de morro, caixa d'água nova |
+| corrego | favela SP sobre córrego — *"o mais brasileiro"* | grama de margem (lote E ✓), água com onda (frente B ✓), varal GLB, helicóptero |
+| escadao | escadaria Selarón genérica + caveirão | helicóptero (lore perfeita), azulejo variante, cabos com catenária, caramelo |
+| campomorro | campo de várzea + galpão do baile — **pior arte** | **preview v2 primeiro**: mato no campo, material muro≠chão≠galpão, bandeirinhas |
 | quebrada | rua do baile SP | captura 3:2 (dívida), varal, letreiros de comércio, helicóptero |
-| fy_mansao | ultra-luxo Joá | avião-faixa, oceano vivo, gaivota (fauna 2), heliponto do spec |
+| mansao | ultra-luxo Joá | avião-faixa, oceano vivo, gaivota (fauna 2), heliponto do spec |
 | posto_treta | rodovia + greve | urubu circling, faixa GREVE, céu golden hour |
 | upa_24h | pronto-socorro indoor | painel de senha animado, TV da espera, ventilador de teto |
 | obras_prefeitura | canteiro eterno | placa "PREVISÃO: 2031", gancho do guindaste com sway |
@@ -135,7 +135,7 @@ flood), circuito, largura de porta ≥ corpo, spawn fora de sólido. Nunca em lo
 3. Lote fauna 2 + vida 1 (áudio ambiente): continua a frente D.
 4. Água viva (plans/23 RC2): Joá → **córrego** (pedido explícito 19/08) → Brasília →
    piscina.
-5. Preview v2 do fy_campomorro (após RC1+RC4 do plans/23).
+5. Preview v2 do campomorro (após RC1+RC4 do plans/23).
 6. Vida 2 (NPCs de cena) e vida 3 (entráveis), nessa ordem, um piloto por vez.
 7. Série de assets por mapa, na ordem da tabela.
 

@@ -141,7 +141,7 @@ const QUAD_ESPAC = 7.0;         // espaçamento médio máximo entre props do qu
 const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como rotas diferentes
 
 /* ---- MAP6: borda de andar alto não pode despejar o jogador sob a laje.
-   Caso real (screenshot do dono, 09/08/2026): no mirante do fy_escadao, a câmera apareceu
+   Caso real (screenshot do dono, 09/08/2026): no mirante do escadao, a câmera apareceu
    sob o piso vendo bots, pickups e caixas suspensos. A causa imediata era a câmera de morte
    descendo até y global 0,5; a geometria também tinha bordas com queda de 14,28 m sem guarda.
    A régua irmã mede a geometria: toda transição alcançável com queda >= 2 m precisa empurrar
@@ -151,7 +151,7 @@ const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como
 const QUEDA_ANDAR = 2.0;
 
 const textures = initTextures();
-const MAPAS_NOVOS = ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+const MAPAS_NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
 const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : [ONLY];
 const down = new THREE.Vector3(0, -1, 0);
 
@@ -833,9 +833,9 @@ if (!MUTANTE_SEM_GUARDA_ANDAR && bordasAltasAbertas > 0) {
 }
 /* MAP1 SÓ IMPRIMIA. Até 12/08/2026 o critério que o dono relatou primeiro ("os jogadores
    estão SUBMERSOS EMBAIXO DA ESTÁTUA") era o único sem cláusula de reprovação: `map-check`
-   saía 0 com 5 pontos de corpo dentro de sólido no fy_mansao. Régua que não morde não é
+   saía 0 com 5 pontos de corpo dentro de sólido no mansao. Régua que não morde não é
    régua. O teto é ZERO e não precisa de lista de dívida: medido em 12/08, os outros NOVE
-   mapas já estão em zero — o fy_mansao era o único fora. */
+   mapas já estão em zero — o mansao era o único fora. */
 const dentroTotal = mapas.reduce((a, m) => a + (m.corpoDentroDeSolido || 0), 0);
 if (!MUTANTE_SUPERFICIE_SOLIDA && !MUTANTE_PENETRACAO && dentroTotal > 0) {
   const quais = mapas.filter((m) => (m.corpoDentroDeSolido || 0) > 0)

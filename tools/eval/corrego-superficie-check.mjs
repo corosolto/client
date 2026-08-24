@@ -11,7 +11,7 @@
    Nenhuma régua desta árvore mordia isso. O `texel-check.mjs` mede densidade de
    texel (px/m) e é EXCELENTE nisso — mas quem não tem textura nenhuma nem entra
    na conta dele: sai numa linha de diagnóstico que não reprova
-   ("· fy_corrego: 217 malhas sem textura nenhuma (2058 m²) — cor pura, fora da
+   ("· corrego: 217 malhas sem textura nenhuma (2058 m²) — cor pura, fora da
    conta"). Ou seja, a pior superfície do mapa era exatamente a que a régua de
    superfície não conseguia reprovar. O `corrego-contract-check.mjs` cobra
    anatomia de capivara e de rato com detalhe, e não diz UMA palavra sobre o
@@ -46,11 +46,11 @@
    OS TETOS, E DE ONDE VIERAM
    Medido nos 10 mapas em 12/08 (probe de área/material, antes do conserto):
 
-       praca_poderes  15% mats   1,2% área      fy_escadao     63% mats  14,6% área
-       ferro_velho    14% mats   0,4% área      fy_campomorro  53% mats  17,2% área
-       piscina_treta  21% mats  20,0% área      fy_lajes       56% mats  18,0% área
-       quebrada       41% mats   8,6% área      fy_corrego     66% mats  13,1% área
-       loja_h         68% mats   8,7% área      fy_mansao      97% mats  35,9% área
+       praca_poderes  15% mats   1,2% área      escadao     63% mats  14,6% área
+       ferro_velho    14% mats   0,4% área      campomorro  53% mats  17,2% área
+       piscina_treta  21% mats  20,0% área      lajes       56% mats  18,0% área
+       quebrada       41% mats   8,6% área      corrego     66% mats  13,1% área
+       loja_h         68% mats   8,7% área      mansao      97% mats  35,9% área
 
    Os 5 maduros dão média de 31,8% de materiais chapados; os 5 novos, 67%. O teto
    abaixo NÃO é a média dos maduros (teto colado no medido reprova por ruído): é a
@@ -80,7 +80,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
-const MAPA = 'fy_corrego';
+const MAPA = 'corrego';
 
 /* ---------------------------------------------------------------------------
    TETOS — um lugar só. Ver o cabeçalho para a medição que os originou.

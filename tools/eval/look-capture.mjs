@@ -17,12 +17,12 @@ const chromium = _pw.chromium || _pw.default?.chromium;
 // [mapa, rótulo, [x, y, z], yaw, pitch] — elevada de propósito: a costura névoa/céu
 // mora na linha do horizonte, e do chão a maioria dos mapas fecha a vista com muro.
 const SHOTS = [
-  ['fy_mansao', 'mar', [-8, 5, -18], 0, -0.10],
-  ['fy_mansao', 'casa', [0, 4, 30], Math.PI, -0.10],
-  ['fy_corrego', 'norte', [0, 7, -28], 0, -0.08],
-  ['fy_corrego', 'sul', [0, 7, 28], Math.PI, -0.08],
-  ['fy_campomorro', 'norte', [0, 4, 0], 0, -0.06],
-  ['fy_campomorro', 'sul', [0, 4, 0], Math.PI, -0.06],
+  ['mansao', 'mar', [-8, 5, -18], 0, -0.10],
+  ['mansao', 'casa', [0, 4, 30], Math.PI, -0.10],
+  ['corrego', 'norte', [0, 7, -28], 0, -0.08],
+  ['corrego', 'sul', [0, 7, 28], Math.PI, -0.08],
+  ['campomorro', 'norte', [0, 4, 0], 0, -0.06],
+  ['campomorro', 'sul', [0, 4, 0], Math.PI, -0.06],
 ];
 
 rmSync(OUT, { recursive: true, force: true });

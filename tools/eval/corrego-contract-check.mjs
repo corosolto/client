@@ -7,7 +7,7 @@
    - 3–5 ratos têm anatomia legível, patas apoiadas sob o corpo e contexto de lixo;
    - o canal tem lâmina rebaixada e duas paredes verticais visíveis de profundidade.
 
-   Procedência visual: `tmp/map-alpha61-openrouter-review.json`, fy_corrego, itens 1–5.
+   Procedência visual: `tmp/map-alpha61-openrouter-review.json`, corrego, itens 1–5.
    Mutações: sem-lento | capivara-centro | ratos-parados | capivara-gigante | ratos-ovais
    | capivara-brinquedo | ratos-sem-contexto | canal-sem-profundidade
 
@@ -26,7 +26,7 @@
    preload do browser usa (`registerFaunaTemplate`). Isso valida registro, clone,
    normalização de escala, posição e afundamento — todo o código do JOGO. O parse real
    do binário fica coberto por `eval:gltf-validator` (Khronos 0 erros) e pela captura
-   de browser (evidência da frente em tools/eval/asset-evidence/maps/fy_corrego/).
+   de browser (evidência da frente em tools/eval/asset-evidence/maps/corrego/).
 
    ÁGUA VIVA ("o threejs consegue fazer coisa muito melhor que isso", dono 18/08): a
    lâmina base precisa de onBeforeCompile com uniform de tempo (uAgua), geometria
@@ -89,7 +89,7 @@ function registrarStubs() {
 }
 
 /* ══ PASS 1 — SEM templates: proxies procedurais (cláusulas originais) ══ */
-const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world = game.world;
 const slowAt = mutante === 'sem-lento' ? () => false : world.slowAt;
 const fauna = [];
@@ -257,7 +257,7 @@ const checks = [
 
 /* ══ PASS 2 — COM templates de fauna: censo GLB + água viva + grama ══ */
 registrarStubs();
-const game2 = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const game2 = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world2 = game2.world;
 const fauna2 = [], faunaProxy2 = [], canal2 = [];
 world2.root.updateMatrixWorld(true);

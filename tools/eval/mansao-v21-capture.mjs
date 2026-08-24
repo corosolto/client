@@ -37,7 +37,7 @@ let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_mansao`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
+  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=mansao`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForTimeout(800);

@@ -14,7 +14,7 @@ histórica como runtime vigente: `public/js/maps.js` registra
 - gates atuais: `tools/eval/lajes-spatial-check.mjs`, `lajes-gap-check.mjs`,
   `map-check.mjs`, `map-contrato-check.mjs`, `lajes-authored-check.mjs`;
 - contrato e defeito: `plans/10-LAJES.md`, `KNOWN-BUGS.md` BUG-54;
-- evidência antiga do candidato: `tools/eval/asset-evidence/maps/fy_lajes/`;
+- evidência antiga do candidato: `tools/eval/asset-evidence/maps/lajes/`;
 - screenshots do teste do dono: caminhos absolutos listados no handoff visual.
 
 ## Antes de editar
@@ -24,7 +24,7 @@ npm run arch
 graphify query "lajes authored collide occluder spawn respawn bounds roof ground walls blocks beco"
 npm run eval:lajes-spatial
 npm run eval:lajes-gap
-node tools/eval/map-check.mjs fy_lajes
+node tools/eval/map-check.mjs lajes
 ```
 
 O estado recebido passa esses gates e mesmo assim falha no jogo. A próxima régua precisa
@@ -55,9 +55,9 @@ livre/bloqueado/limite; o próximo modelo precisa olhar a figura.
 ```bash
 node tools/eval/serve.mjs 8124
 # jogo real
-open 'http://127.0.0.1:8124/?map=fy_lajes'
+open 'http://127.0.0.1:8124/?map=lajes'
 # revisão isolada
-open 'http://127.0.0.1:8124/mapview.html?map=fy_lajes'
+open 'http://127.0.0.1:8124/mapview.html?map=lajes'
 ```
 
 Um único browser por vez. Capturar sempre 3:2 e no nível do jogador: spawn norte, spawn
@@ -74,10 +74,10 @@ npm run eval:lajes-spatial
 npm run eval:lajes-gap
 npm run eval:lajes-authored
 npm run eval:lajes-rooftop
-node tools/eval/map-check.mjs fy_lajes
+node tools/eval/map-check.mjs lajes
 npm run eval:mapcontrato
 npm run eval:spawn
-node tools/eval/botsim.mjs 30 fy_lajes
+node tools/eval/botsim.mjs 30 lajes
 npm run docs
 npm run docs:check
 npm run arch

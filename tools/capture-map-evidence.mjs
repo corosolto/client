@@ -1,7 +1,7 @@
 // Captura 3:2 da cena real em pontos que PROVAM os landmarks dos cinco mapas novos.
 // Usa mapview.html: mesmo builder, texturas e GLBs do jogo, com câmera livre reprodutível.
 // Diferente de uma câmera aleatória de bot, cada quadro tem intenção declarada e viaja
-// com um manifest JSON. Uso: `ONLY=fy_corrego,fy_mansao node tools/capture-map-evidence.mjs`.
+// com um manifest JSON. Uso: `ONLY=corrego,mansao node tools/capture-map-evidence.mjs`.
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -21,7 +21,7 @@ const propNames = existsSync('public/models/props')
   ? readdirSync('public/models/props').filter((name) => name.endsWith('.glb'))
   : [];
 const sourceFiles = (map) => {
-  const mapFile = map === 'fy_lajes' ? 'public/js/map_lajes_authored.js' : `public/js/map_${map.slice(3)}.js`;
+  const mapFile = map === 'lajes' ? 'public/js/map_lajes_authored.js' : `public/js/map_${map.slice(3)}.js`;
   const src = readFileSync(mapFile, 'utf8');
   const textureFiles = [...src.matchAll(/["']\/(img\/textures\/[^"']+)["']/g)]
     .map((match) => `public/${match[1]}`)

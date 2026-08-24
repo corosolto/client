@@ -1,7 +1,7 @@
-// SONDA EXPLORATÓRIA (não é régua): estado real do térreo de fy_lajes.
+// SONDA EXPLORATÓRIA (não é régua): estado real do térreo de lajes.
 import { bootGame, initTextures, THREE } from '../tools/eval/harness.mjs';
 
-const g = bootGame('fy_lajes', { textures: initTextures(), bots: 0 });
+const g = bootGame('lajes', { textures: initTextures(), bots: 0 });
 const W = g.world;
 console.log('colliders:', W.colliders.length, 'occluders:', W.occluders.length);
 

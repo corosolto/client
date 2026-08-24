@@ -4841,7 +4841,7 @@ export class Game {
     const alt = new Float32Array(nx * nz).fill(NaN);
     const p = new THREE.Vector3();
     /* PONTO REPRESENTATIVO, não o centro: num degrau o centro da célula pode cair no único
-       ponto ruim e a escada inteira aparecer interrompida (caso medido no fy_lajes). */
+       ponto ruim e a escada inteira aparecer interrompida (caso medido no lajes). */
     for (let i = 0; i < nx; i++) for (let k = 0; k < nz; k++) {
       const cx = B.minX + (i + 0.5) * G, cz = B.minZ + (k + 0.5) * G;
       for (const [ox, oz] of [[0, 0], [0.25, 0], [-0.25, 0], [0, 0.25], [0, -0.25]]) {
@@ -4865,7 +4865,7 @@ export class Game {
         const d = j * nz + l;
         if (vis[d] || Number.isNaN(alt[d])) continue;
         /* MESMA regra do corpo (subir só até STEP_H), conferida ao LONGO do trecho:
-           comparar só as pontas aliasa escada — no fy_lajes um degrau entre centros reprovava a laje. */
+           comparar só as pontas aliasa escada — no lajes um degrau entre centros reprovava a laje. */
         const ax0 = B.minX + (i + 0.5) * G, az0 = B.minZ + (k + 0.5) * G;
         let y = alt[c], ok = true;
         for (let s = 1; s <= 3; s++) {

@@ -18,7 +18,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_corrego`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=corrego`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 90000 });
 await page.addStyleTag({ content: '#hud,.screen,#crash-overlay{display:none!important}' });
 const pin = await page.evaluateHandle(() => {
@@ -36,9 +36,9 @@ const pin = await page.evaluateHandle(() => {
   }, 120);
 });
 await page.waitForTimeout(900);
-await page.screenshot({ path: `${OUT}/fy_corrego-pernas-t0.png` });
+await page.screenshot({ path: `${OUT}/corrego-pernas-t0.png` });
 await page.waitForTimeout(1200);
-await page.screenshot({ path: `${OUT}/fy_corrego-pernas-t1.png` });
+await page.screenshot({ path: `${OUT}/corrego-pernas-t1.png` });
 const info = await page.evaluate(() => ({
   depthOn: window.__game.scene.userData.waters?.map((w) => w.material.uniforms.uDepthOn.value),
   botY: window.__game.bots[0].pos.y,

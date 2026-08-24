@@ -8,13 +8,13 @@ const entries = {
     assetId: 'ks77b4qhsj4an75taq2612yxfx8cqcts',
     chatUrl: 'https://mint.gg/chat/ph71907xmzehws02vnam630e6n8cpypj',
     displayName: 'Blocky Belly Caiman (jacaré-do-córrego)',
-    notes: 'BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/jacare_corrego_mint.glb. Estático: pipeline Mint de animação é humanoide e não aplicou em quadrúpede (tentativa 18/08 falhou limpo). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale 1.8 => ~1,8 m (plans/21-FAUNA-CORREGO.md). Ficha: plans/21-FAUNA-CORREGO.md. Referências: references/fauna-corrego/.',
+    notes: 'BUG-57 fauna corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/jacare_corrego_mint.glb. Estático: pipeline Mint de animação é humanoide e não aplicou em quadrúpede (tentativa 18/08 falhou limpo). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale 1.8 => ~1,8 m (plans/21-FAUNA-CORREGO.md). Ficha: plans/21-FAUNA-CORREGO.md. Referências: references/fauna-corrego/.',
   },
   'capivara-corrego': {
     assetId: 'ks79v4k2gay9czmby61jjed1718cp93p',
     chatUrl: 'https://mint.gg/chat/ph74kf2engyr4skt5kxkwxxrgd8cqmqt',
     displayName: 'Sleepy Brown Rodent (capivara do córrego)',
-    notes: 'BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré.',
+    notes: 'BUG-57 fauna corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré.',
   },
 };
 

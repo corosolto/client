@@ -51,6 +51,6 @@ referências `references/fauna-corrego/`.
 1. Render no navegador com o GLTFLoader real do jogo (browser lock estava com
    outra frente do swarm). O raster software usa a mesma matemática, mas não é o
    pipeline three.js de verdade.
-2. Aparência IN-GAME no fy_corrego (luz fog/aerial do mapa,posição na água) —
+2. Aparência IN-GAME no corrego (luz fog/aerial do mapa,posição na água) —
    captura 3:2 no mapa é o fechamento do portão 4, tarefa da integração.
 3. Gusto humano: o dono revisa por screenshot — nada aqui substitui o olho dele.

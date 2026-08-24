@@ -1,4 +1,4 @@
-// Captura 3:2 da POEIRA (RC3, plans/23) no fy_campomorro: motas cruzando a rua
+// Captura 3:2 da POEIRA (RC3, plans/23) no campomorro: motas cruzando a rua
 // com fade suave no contato com o chão. t0/t1 para o diff de movimento.
 import { execSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
@@ -19,7 +19,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_campomorro`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=campomorro`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 90000 });
 await page.addStyleTag({ content: '#hud,.screen,#crash-overlay{display:none!important}' });
 // rua norte, olhando ao longo dela (as motas cruzam rente ao chão)

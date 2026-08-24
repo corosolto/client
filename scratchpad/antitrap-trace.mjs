@@ -3,7 +3,7 @@
 import { THREE, bootGame, initTextures } from '../tools/eval/harness.mjs';
 
 const STEP_H = 0.55, R = 0.38, GRID = 0.5;
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0, seed: 19082026 });
 const W = game.world, B = W.bounds;
 const cx = (i) => B.minX + R + (i + 0.5) * GRID, cz = (k) => B.minZ + R + (k + 0.5) * GRID;
 const q = (h) => Math.round(h * 100);

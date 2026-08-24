@@ -9,7 +9,7 @@ do browser.
 - personagem: `lenda-lanhouse`, SHA no `integration-receipt.json`;
 - arma: `m4`, derivada de `CHAR_WEAPON` (nunca passada manualmente);
 - viewport do jogo: `1536×1024` (3:2);
-- mapa/posição determinísticos: `fy_quebrada`, `x=0`, `z=0`;
+- mapa/posição determinísticos: `quebrada`, `x=0`, `z=0`;
 - cinco estados: `close`, `medium`, `grip`, `walk`, `crouch`;
 - thumbnail canônico: `public/img/chars/lenda-lanhouse.webp`, 360×463, revisado também
   numa cópia de evidência a **150 px de largura**. Não substituir o arquivo canônico pela
@@ -25,7 +25,7 @@ Com o jogo real já servido em `BASE`:
 
 ```bash
 BASE=http://localhost:8123 node tools/capture-char-thumbnail.mjs lenda-lanhouse public/img/chars/lenda-lanhouse.webp
-BASE=http://localhost:8123 node tools/capture-character-game.mjs lenda-lanhouse T tools/eval/asset-evidence/lenda-lanhouse/browser fy_quebrada 0 0
+BASE=http://localhost:8123 node tools/capture-character-game.mjs lenda-lanhouse T tools/eval/asset-evidence/lenda-lanhouse/browser quebrada 0 0
 ```
 
 Depois, sem recapturar:
@@ -41,7 +41,7 @@ O mutante causal de arma deve parar antes de criar screenshots. Rode em destino 
 
 ```bash
 BASE=http://localhost:8123 node tools/capture-character-game.mjs \
-  lenda-lanhouse T /tmp/lenda-lanhouse-mutant fy_quebrada 0 0 \
+  lenda-lanhouse T /tmp/lenda-lanhouse-mutant quebrada 0 0 \
   --mutante=arma-aleatoria
 ```
 

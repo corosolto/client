@@ -7,15 +7,15 @@
     "aspect": "3:2"
   },
   "mapOrder": [
-    "fy_escadao",
-    "fy_campomorro",
-    "fy_lajes",
-    "fy_corrego",
-    "fy_mansao"
+    "escadao",
+    "campomorro",
+    "lajes",
+    "corrego",
+    "mansao"
   ],
   "shots": [
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "spawn-sul",
       "from": [
         0,
@@ -28,7 +28,7 @@
         24
       ],
       "proves": "spawn sul nasce na laje e enquadra as duas saidas de madeira oeste e leste",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/spawn-sul.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/spawn-sul.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -68,7 +68,7 @@
       "errors": []
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "spawn-norte",
       "from": [
         0,
@@ -81,7 +81,7 @@
         -24
       ],
       "proves": "spawn norte nasce na laje e enquadra as duas saidas de madeira oeste e leste",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/spawn-norte.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/spawn-norte.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -121,7 +121,7 @@
       "errors": []
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "escadaria",
       "from": [
         5.35,
@@ -134,7 +134,7 @@
         -7.9
       ],
       "proves": "Escadaria encaixada entre fachadas, com dois lances, giro e patamar vistos de cima",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/escadaria.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/escadaria.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -174,7 +174,7 @@
       "errors": []
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "beco-varal",
       "from": [
         -2,
@@ -187,7 +187,7 @@
         12.2
       ],
       "proves": "Beco do Varal estreito, com drenagem no piso, fachadas proximas e GLB de referencia",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/beco-varal.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/beco-varal.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -227,7 +227,7 @@
       "errors": []
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "laje-caixa",
       "from": [
         -11.7,
@@ -240,7 +240,7 @@
         -26
       ],
       "proves": "Laje da Caixa ocupada, reservatorio, antena, parapeto e tábua ancorada",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/laje-caixa.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/laje-caixa.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -280,7 +280,7 @@
       "errors": []
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "name": "overview",
       "from": [
         28,
@@ -293,7 +293,7 @@
         -4
       ],
       "proves": "duas rotas superiores continuas, miolo denso e beco inferior sinuoso",
-      "file": "tools/eval/asset-evidence/maps/fy_lajes/overview.png",
+      "file": "tools/eval/asset-evidence/maps/lajes/overview.png",
       "viewport": {
         "width": 1536,
         "height": 1024,

@@ -1,4 +1,4 @@
-// CÓRREGO (fy_corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
+// CÓRREGO (corrego) — spec em plans/13-CORREGO.md. Planta: eixo longo = z, norte = −z;
 // córrego em x ∈ [−3, 3] (água rasa), margens em ±[3, 24], pontes em z = −22, 0, 22.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch, StaticBatch, InstBatch } from './mapprops.js';
@@ -59,7 +59,7 @@ export const CORREGO_ARTE_SUBSTITUICOES = Object.freeze({
   'personagens-graffiti-03.png': 'or-graf-treta.png',
 });
 for (const [antes, depois] of Object.entries(CORREGO_ARTE_SUBSTITUICOES)) {
-  const arquivos = GRAFITE?.fy_corrego?.arquivos || [];
+  const arquivos = GRAFITE?.corrego?.arquivos || [];
   for (let i = 0; i < arquivos.length; i++) if (arquivos[i] === antes) arquivos[i] = depois;
 }
 
@@ -302,7 +302,7 @@ export function buildCorrego(scene, T) {
   }
 
   /* ===================== CÉU / LUZ ===================== */
-  const { hemi, sun } = applyLook(scene, T, 'fy_corrego', { nofog: QP.get('nofog') === '1' });
+  const { hemi, sun } = applyLook(scene, T, 'corrego', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
@@ -325,7 +325,7 @@ export function buildCorrego(scene, T) {
   }
   // água viva (RC2, plans/23): shader de depth-fade + espuma + onda da water.js na
   // escala do canal (régua corrego-water); o albedo poluído segue como tMapa.
-  const aguaCorrego = createWater(scene, T, 'fy_corrego', {
+  const aguaCorrego = createWater(scene, T, 'corrego', {
     nivel: CANAL_AGUA, centro: [0, 0], tamanho: [CANAL_ABERTURA, HALF_Z * 2], segmentos: 6,   // célula de 1 m: Gerstner λ=3,3 m não precisa mais; 48 dava 61 mil tris num canal de 6×80
     raso: 0x73927a, fundo: 0x2e4238,   // paleta da lâmina B (0xa0b49a/poças), fundo mais escuro p/ o gradiente
     profEscala: 0.35, espumaFaixa: 0.30, espumaMiolo: 0.10,
@@ -1201,7 +1201,7 @@ export function buildCorrego(scene, T) {
   const D_CARTAZERA = decalIds(T, ['folha-lambes.png', 'folha-stenci.png']);
   const D_ADESIVO = decalIds(T, ['tags-treino-01.png', 'tags-treino-02.png', 'tags-treino-03.png']);
   grafitar({
-    id: 'fy_corrego',
+    id: 'corrego',
     root, T, waypoints: nodes, seed: 13007, passo: 0.95, alcance: 9, cobre: 0.025, minLarg: 0.3,
     /* ZONA LIMPA nos oito largos de spawn: a fileira C virou a parede mais próxima de
        todo spawn — pixo colado no rosto no segundo zero é a reclamação. */
@@ -1225,7 +1225,7 @@ export function buildCorrego(scene, T) {
   });
 
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_corrego', low: LOWQ,
+    map: 'corrego', low: LOWQ,
     rats: [
       { pos: [-16.95, groundHeightAt(-16.95, -2.25), -2.25], to: [-16.45, groundHeightAt(-16.45, -1.55), -1.55], phase: .2 },
       { pos: [-16.95, groundHeightAt(-16.95, -2.85), -2.85], to: [-17.55, groundHeightAt(-17.55, -3.35), -3.35], phase: 1.37 },

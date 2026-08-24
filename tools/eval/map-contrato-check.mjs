@@ -40,12 +40,12 @@ const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
    mapa que ganha nós ilhados mantendo o componente atual passaria. Mapa fora da
    lista tem de ser conexo. Ver docs/quality-gates.md.
    Medição pós-merge da main em 17/08 (os 5 mapas fy_* entraram nesta data):
-   loja_h 491→493 e ferro_velho 15→21 vieram do merge dos dois grafos; o fy_lajes
+   loja_h 491→493 e ferro_velho 15→21 vieram do merge dos dois grafos; o lajes
    241/363 é o grafo em camadas do roof-first — a simplificação do BUG-58 reconstrói
    esse grafo e este teto DESCE junto. */
 const ILHADOS_MAX = {
   loja_h: 493, ferro_velho: 21,
-  fy_escadao: 6, fy_lajes: 241, fy_corrego: 15,
+  escadao: 6, lajes: 241, corrego: 15,
 };
 
 /* BFS do nó 0, mesmo critério da validatePlan de map_json.js.

@@ -22,7 +22,7 @@ const perto = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 const textures = initTextures();
 
 function live(id, { ctf = false } = {}) {
-  const g = bootGame(ctf ? 'fy_corrego' : 'fy_ferrovelho', {
+  const g = bootGame(ctf ? 'corrego' : 'ferro_velho', {
     textures, ctf, seed: 19002, bots: 4, playerCharId: id,
   });
   g.state = 'live'; g.time = 10; g.player.protUntil = 0;

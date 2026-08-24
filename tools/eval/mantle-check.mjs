@@ -14,7 +14,7 @@
    corredor de 5,2 m de largura e 1,75 m de parede (13 cm acima da linha do olho,
    que é 1,62 m: de dentro do canal NÃO SE VÊ a rampa).
 
-   Esta régua é escrita ANTES do conserto e tem que ficar VERMELHA no `fy_corrego`
+   Esta régua é escrita ANTES do conserto e tem que ficar VERMELHA no `corrego`
    antes dele. As três cláusulas:
 
      MNT1  SAIR DE ONDE SE CAI. Onde existe QUEDA DE MÃO ÚNICA de escala humana — uma
@@ -50,8 +50,8 @@
                                Recortar só do lado da régua NÃO bastava: o MNT2 anda o
                                `_updatePlayer` de verdade e passava verde.
      --mutante=beirada-alta    aceita qualquer superfície até 4 m, ignorando a trava de
-                               alcance. -> MNT3 vermelha (fy_lajes 514 células novas,
-                               fy_escadao 4).
+                               alcance. -> MNT3 vermelha (lajes 514 células novas,
+                               escadao 4).
      --mutante=canal-fechado   apaga as 4 rampas do canal do Córrego.
                                -> com `SIM_QS='?mantle=0'`: MNT1 vermelha, 264 células
                                   sem saída nenhuma.
@@ -125,7 +125,7 @@ const LEDGE_MAX = 1.95;
 const PROF_DEP = 1.62;
 /* ---- RAIO_DEP = 3,0 m: depressão é PAREDE PERTO, não "abaixo da mediana do mapa".
    A primeira versão desta régua definia depressão contra a mediana do chão do mapa e
-   acusou 3.538 células no fy_escadao — que é um MORRO: a metade de baixo fica mesmo
+   acusou 3.538 células no escadao — que é um MORRO: a metade de baixo fica mesmo
    abaixo da mediana, e subir o morro é o mapa, não uma armadilha. Com parede local o
    escadão sai da lista e o canal do Córrego continua nela. 3,0 m porque 1,62 m de
    subida em 3 m são 28°: acima disso não é ladeira, é muro. */
@@ -156,7 +156,7 @@ for (const mapId of MAP_IDS) {
   /* MUTANTE canal-fechado: apaga as rampas de acesso do Córrego devolvendo o topo da
      parede na faixa |x| ∈ [3,5]. O canal continua com piso, e sem rampa não há saída
      nenhuma a pé — é o defeito exato que MNT1 tem que enxergar. */
-  if (MUT_CANAL && mapId === 'fy_corrego') {
+  if (MUT_CANAL && mapId === 'corrego') {
     const orig = W.groundHeightAt;
     W.groundHeightAt = (x, z, y) => {
       const ax = Math.abs(x);
@@ -247,7 +247,7 @@ for (const mapId of MAP_IDS) {
          é parede com um pixel de sacada — subir nela entregaria o jogador a uma queda, e é
          justamente o que o MANTLE_APOIO do motor recusa. Sem esta condição a cláusula
          exigiria do conserto algo que o conserto tem razão em não fazer: medido, as duas
-         únicas reprovações restantes de MNT2 (fy_campomorro, cotas 2,40 e 1,69) eram
+         únicas reprovações restantes de MNT2 (campomorro, cotas 2,40 e 1,69) eram
          exatamente isto — o topo é sólido em toda a faixa de 0,83 a 1,58 m à frente e o
          corpo não fica em pé em lugar nenhum dele. Contadas em `semApoio`. */
       const ax = px + dx * 0.50, az = pz + dz * 0.50;
@@ -272,7 +272,7 @@ for (const mapId of MAP_IDS) {
   const repX = new Float32Array(nx * nz), repZ = new Float32Array(nx * nz);
   const idx = (i, k) => i * nz + k;
   /* PONTO REPRESENTATIVO da célula, e não o centro dela. A célula tem 0,5 m; exigir que o
-     CENTRO esteja livre reprovou a escada do fy_lajes num degrau de 25 cm (o beiral da laje
+     CENTRO esteja livre reprovou a escada do lajes num degrau de 25 cm (o beiral da laje
      é um colisor de y 3,38–3,50 e o corpo só o limpa a partir da cota 3,20; o centro caiu
      em 3,10, o único ponto ruim). Consequência medida: as 2.915 células de laje apareciam
      como inalcançáveis a pé e o mantle levava a culpa por 3.813 "células novas" que já eram
@@ -294,7 +294,7 @@ for (const mapId of MAP_IDS) {
      ASSIMETRIA que transforma depressão em armadilha, e é ela que a régua modela. */
   const VIZ = [[1, 0], [-1, 0], [0, 1], [0, -1]];
   /* ARESTA DE CAMINHADA conferida AO LONGO do trecho, não só nas duas pontas. Comparar
-     centros ALIASA escada: no fy_lajes o degrau de 3,27 m cai entre dois centros de grade,
+     centros ALIASA escada: no lajes o degrau de 3,27 m cai entre dois centros de grade,
      a diferença ponta-a-ponta vira 0,74 m (acima de STEP_H) e as 2.915 células de laje
      apareciam como INALCANÇÁVEIS a pé — num mapa chamado "Lajes". Era o instrumento, não o
      mapa: a mesma medição na grade de 0,75 m do jogo achava 1.114 delas alcançáveis. O
@@ -380,7 +380,7 @@ for (const mapId of MAP_IDS) {
        só se pisa caindo de outra ilha — é dívida de MAPA, não de movimento: exigir o
        retorno dela obrigaria o mantle a abrir território e colocaria MNT1 contra MNT3.
        Elas são contadas em `ilhas` e nomeadas no relatório, não varridas para debaixo do
-       tapete. Caso medido: fy_lajes tem 4 células de laje a 3,50 m cuja única chegada é
+       tapete. Caso medido: lajes tem 4 células de laje a 3,50 m cuja única chegada é
        cair da laje-ilha de 4,25 m, e a volta a pé custa 75,5 m. */
     const u = idx(i, k); if (!A.vis[u]) continue;
     for (const [di, dk] of VIZ) {
@@ -550,7 +550,7 @@ function andaContra(g, b) {
   /* ESCALADA EM CURSO É ESTADO, e estado vaza entre amostras: a versão anterior saía do
      laço assim que o corpo chegava em cima e deixava `p.mantle` armado, então a amostra
      SEGUINTE começava com uma escalada pela metade sobrescrevendo a posição — ela reprovava
-     uma beirada que o motor sobe em 10 quadros (medido à parte, no fy_lajes). */
+     uma beirada que o motor sobe em 10 quadros (medido à parte, no lajes). */
   p.mantle = null;
   try {
     // 0,9 m antes da beirada, virado pra ela

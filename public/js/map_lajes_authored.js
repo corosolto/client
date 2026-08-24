@@ -278,7 +278,7 @@ export function buildLajes(scene, T) {
   };
 
   setSky(scene);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_lajes');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('lajes');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x635648, 1.18); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.75); sun.position.set(25, 45, 15); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
@@ -1215,7 +1215,7 @@ export function buildLajes(scene, T) {
   const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);
   const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-money.png']);
   grafitar({
-    id: 'fy_lajes', root, T, waypoints: nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
+    id: 'lajes', root, T, waypoints: nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
     limpo: mapStairs,
     murais: {
       texturas: [T.decals[D_LAJES[0]]],
@@ -1229,7 +1229,7 @@ export function buildLajes(scene, T) {
   });
 
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_lajes', low: LOWQ,
+    map: 'lajes', low: LOWQ,
     rats: [
       { pos: [0, 0, -23], to: [0, 0, -19], phase: .2 }, { pos: [-3, 0, -14], to: [-2.3, 0, -11], phase: 1.1 },
       { pos: [2.5, 0, 5], to: [2.1, 0, 8], phase: 2.1 }, { pos: [-2, 0, 15], to: [-1.7, 0, 19], phase: 2.8 },

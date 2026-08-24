@@ -3,7 +3,7 @@
 
 > Pedido literal do dono (17/08, KNOWN-BUGS BUG-57): *"precisa gerar jacare no mintgg
 > e a capivara, pode usar glbs de mesa de bar"*. Frente B do swarm de 18/08: ENTREGA
-> ASSETS; integração no fy_corrego é de outra mão. Esta ficha é curta porque os
+> ASSETS; integração no corrego é de outra mão. Esta ficha é curta porque os
 > "personagens" são fauna decorativa do `ambientlife.js` — o pipeline de portões
 > (spec → compose → generate → review) vale igual.
 
@@ -33,7 +33,7 @@
   ~0,5 m de cernelha (real: até 1,2 m × 0,6 m — Wikipédia *Capivara*, "maior roedor
   do mundo"). Levemente abaixo do real para ler como vizinha pequena ao lado do
   jogador de 1,7 m de olho.
-- **Papel:** fauna de margem alagada do fy_corrego (plans/13-CORREGO.md: "Capivara
+- **Papel:** fauna de margem alagada do corrego (plans/13-CORREGO.md: "Capivara
   fica ali", margens/trechos alagados).
 - **Arma:** nenhuma.
 - **Mecânica:** idle (olha em volta) + walk lento de pastoreio pela margem; flee ao

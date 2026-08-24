@@ -18,7 +18,7 @@
 */
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0 });
 game.world.root.updateMatrixWorld(true);
 const lajes = new Map(), tabuas = [];
 const edges = [], routes = [], wings = [], cables = [];

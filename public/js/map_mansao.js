@@ -1,4 +1,4 @@
-// MANSAO JOÁ (fy_mansao) — spec plans/14-MANSAO_JOA.md. Eixo longo = z; norte = -z
+// MANSAO JOÁ (mansao) — spec plans/14-MANSAO_JOA.md. Eixo longo = z; norte = -z
 // (terraço/mar, spawn B), sul = +z (portão/jardim, spawn A); planta e dimensões na spec.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
@@ -147,7 +147,7 @@ export function buildMansao(scene, T) {
   };
 
   /* CÉU */
-  const { hemi, sun } = applyLook(scene, T, 'fy_mansao', { nofog: QP.get('nofog') === '1' });
+  const { hemi, sun } = applyLook(scene, T, 'mansao', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
@@ -464,12 +464,12 @@ export function buildMansao(scene, T) {
   addFloor(3.45,13.2,eixoX,24.8,lam({color:0x163f4b,roughness:.5}),-.055);
   const LAMINA = { segmentos: 4, raso: 0x4eaabd, fundo: 0x16323e, profEscala: .3,
     espumaFaixa: .12, espumaMiolo: .05, profFallback: .25, ampEscala: .05, parent: root };
-  const aguaEixo = createWater(scene, T, 'fy_mansao', { nivel: .025, centro: [eixoX, 24.8], tamanho: [3.25, 13.2], ...LAMINA });
+  const aguaEixo = createWater(scene, T, 'mansao', { nivel: .025, centro: [eixoX, 24.8], tamanho: [3.25, 13.2], ...LAMINA });
   aguaEixo.mesh.userData.nonSolidSurface = true;
   for (const x of [eixoX-1.78,eixoX+1.78]) addBox(.16,.08,13.2,TEX.marble,x,.01,24.8,{ collide:false,cast:false,skirt:false });
   // espelho d'água (retangular, raso): cuba escura sob a lâmina viva
   addFloor(6, 4, -8, 25, lam({ color: 0x14313d, roughness: .5 }), -.04);
-  const aguaEspelho = createWater(scene, T, 'fy_mansao', { nivel: .02, centro: [-8, 25], tamanho: [6, 4], ...LAMINA });
+  const aguaEspelho = createWater(scene, T, 'mansao', { nivel: .02, centro: [-8, 25], tamanho: [6, 4], ...LAMINA });
   aguaEspelho.mesh.userData.nonSolidSurface = true;
   col(-11, -5, -0.5, 0.65, 23, 27);  // topo acima dos pés: _collide realmente expulsa o corpo
   // Árvores mantêm o tronco-colisor, mas as copas deixam de ser cubos.
@@ -750,7 +750,7 @@ export function buildMansao(scene, T) {
   paredeCuba(5.75, -29.5, .5, 6);
   // Piscina com a MESMA água viva RC2 (crítico r3: "retângulo turquesa fosco") —
   // fade na profundidade real da cuba (1,93 m); o contrato entrável não muda.
-  const aguaPiscina = createWater(scene, T, 'fy_mansao', { nivel: .08, centro: [0, -29.5], tamanho: [11, 6],
+  const aguaPiscina = createWater(scene, T, 'mansao', { nivel: .08, centro: [0, -29.5], tamanho: [11, 6],
     segmentos: 6, raso: 0x419bb3, fundo: 0x1a5a72, profEscala: 1.9, espumaFaixa: .3, espumaMiolo: .1,
     profFallback: .55, ampEscala: .06, parent: root });
   aguaPiscina.mesh.userData.nonSolidSurface = true;
@@ -800,7 +800,7 @@ export function buildMansao(scene, T) {
       pedra.castShadow = true; root.add(pedra);
     }
   }
-  createWater(scene, T, 'fy_mansao');   // oceano; o update() tica todas as scene.userData.waters
+  createWater(scene, T, 'mansao');   // oceano; o update() tica todas as scene.userData.waters
 
   // Vasos e balizadores dão escala ao deck e às circulações sem virarem paredes de cover.
   const vasos = [
@@ -922,11 +922,11 @@ export function buildMansao(scene, T) {
   /* Pixo no muro externo, sem o folha-pixaca-01 ("MORTE" — veto editorial da mansão,
      cobrado no eval:grafite-editorial). */
   const D_PIXO_M = decalIds(T, ['folha-pixaca-03.png', 'folha-pixaca-04.png', 'folha-pixaca-05.png']);
-  grafitar({ id: 'fy_mansao', root, T, waypoints: nodes, seed: 14000, passo: 1.0, alcance: 4, cobre: 0.01, minLarg: 0.3, bandas: [{ y0: 0.3, y1: 1.5, larg: 1.5, alturas: [0.8], chance: 5, pool: D_PIXO_M }] });
+  grafitar({ id: 'mansao', root, T, waypoints: nodes, seed: 14000, passo: 1.0, alcance: 4, cobre: 0.01, minLarg: 0.3, bandas: [{ y0: 0.3, y1: 1.5, larg: 1.5, alturas: [0.8], chance: 5, pool: D_PIXO_M }] });
 
   /* BUG-57: mansão tem pombo de cobertura e um rato só — no jardim, longe da sala. */
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_mansao',
+    map: 'mansao',
     rats: [{ pos: [-14, 0, 30], to: [-11.5, 0, 32], phase: .7 }],
     pigeons: [
       { mode: 'ground', pos: [6, 0, 33], phase: .4 }, { mode: 'ground', pos: [-16, 0, 20], phase: 1.5 },

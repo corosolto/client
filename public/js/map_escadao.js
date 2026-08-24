@@ -1,4 +1,4 @@
-// ESCADÃO (fy_escadao) — spec plans/12-ESCADAO.md. Invariante CTF2: os dois becos laterais
+// ESCADÃO (escadao) — spec plans/12-ESCADAO.md. Invariante CTF2: os dois becos laterais
 // têm escada própria rua → patamar 1, separados ≥ 6 m do eixo central (2+ rotas spawn→bandeira).
 import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
@@ -218,7 +218,7 @@ export function buildEscadao(scene, T) {
 
   /* ===================== CÉU / LUZ ===================== */
   setMapSky(scene, T, '/img/textures/sky_rj.webp', 0xb9c6d2);
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_escadao');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('escadao');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.65); sun.position.set(25, 40, 20); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
@@ -767,7 +767,7 @@ export function buildEscadao(scene, T) {
   const D_CARTAZERA = decalIds(T, ['folha-lambes.png', 'folha-stenci.png']);
   const D_ADESIVO = decalIds(T, ['tags-treino-01.png', 'tags-treino-02.png', 'tags-treino-03.png']);
   grafitar({
-    id: 'fy_escadao',
+    id: 'escadao',
     root, T, waypoints: nodes, seed: 8012, passo: 0.95, alcance: 9, cobre: 0.03, minLarg: 0.3,
     bandas: [
       { y0: 0.4, y1: 2.6, larg: 1.9, alturas: [1.5, 1.15, 0.85], chance: 30, fonte: 'poster',
@@ -782,7 +782,7 @@ export function buildEscadao(scene, T) {
   });
 
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_escadao', low: LOWQ,
+    map: 'escadao', low: LOWQ,
     rats: [
       { pos: [8.2, groundHeightAt(8.2, 34), 34], to: [9.35, groundHeightAt(9.35, 32.8), 32.8], phase: .45 },
       { pos: [-9.4, groundHeightAt(-9.4, 22.5), 22.5], to: [-8.3, groundHeightAt(-8.3, 21.3), 21.3], phase: 1.7 },

@@ -7,15 +7,15 @@
     "aspect": "3:2"
   },
   "mapOrder": [
-    "fy_escadao",
-    "fy_campomorro",
-    "fy_lajes",
-    "fy_corrego",
-    "fy_mansao"
+    "escadao",
+    "campomorro",
+    "lajes",
+    "corrego",
+    "mansao"
   ],
   "shots": [
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "garden-eye",
       "from": [
         3,
@@ -28,7 +28,7 @@
         8
       ],
       "proves": "maciços tropicais assimetricos e pergolado ancorado vistos a 1,65 m dentro do jardim",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/garden-eye.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/garden-eye.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -72,7 +72,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "cars-front-close",
       "from": [
         0,
@@ -85,7 +85,7 @@
         11
       ],
       "proves": "três carros do acervo em GLB (BUG-56) de frente na garagem: Delorean, Mini Cooper S e Golf R32 em escala de fábrica dentro das vagas",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/cars-front-close.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/cars-front-close.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -129,7 +129,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "facade-garden",
       "from": [
         0,
@@ -142,7 +142,7 @@
         2
       ],
       "proves": "jardim tropical assimetrico, espelho deslocado e fachada modernista",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/facade-garden.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/facade-garden.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -186,7 +186,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "interior",
       "from": [
         11.5,
@@ -199,7 +199,7 @@
         -7.5
       ],
       "proves": "dois grupos de estar, piso de placas grandes, divisoria e mezanino jogaveis",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/interior.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/interior.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -243,7 +243,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "gourmet-eye",
       "from": [
         -13.2,
@@ -256,7 +256,7 @@
         -10
       ],
       "proves": "ilha gourmet inteira vista de dentro da cozinha, sem parede/escada no primeiro plano: bancada, cooktop, cuba, torneira, tres banquetas e pendentes",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/gourmet-eye.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/gourmet-eye.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -300,7 +300,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "theater-eye",
       "from": [
         4.2,
@@ -313,7 +313,7 @@
         -13.8
       ],
       "proves": "home theater com tela, console, quatro recliners e paineis acusticos",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/theater-eye.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/theater-eye.png",
       "viewport": {
         "width": 1536,
         "height": 1024,
@@ -357,7 +357,7 @@
       ]
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "name": "infinity-pool",
       "from": [
         0,
@@ -370,7 +370,7 @@
         -44
       ],
       "proves": "piscina infinita alinhada ao oceano do panorama original",
-      "file": "tools/eval/asset-evidence/bug56-depois/fy_mansao/infinity-pool.png",
+      "file": "tools/eval/asset-evidence/bug56-depois/mansao/infinity-pool.png",
       "viewport": {
         "width": 1536,
         "height": 1024,

@@ -9,7 +9,7 @@
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const game = bootGame('fy_escadao', { textures: initTextures(), ctf: true, seed: 8012 });
+const game = bootGame('escadao', { textures: initTextures(), ctf: true, seed: 8012 });
 game.scene.updateMatrixWorld(true);
 const world = game.world;
 if (mutante === 'sem-bloqueio-flanco') world.occluders.length = 0;

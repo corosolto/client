@@ -36,11 +36,11 @@ export const MAP_SOURCES = {
   loja_h: 'public/js/map_havan.js',
   ferro_velho: 'public/js/map_ferrovelho.js',
   quebrada: 'public/js/map_quebrada.js',
-  fy_escadao: 'public/js/map_escadao.js',
-  fy_campomorro: 'public/js/map_campomorro.js',
-  fy_lajes: 'public/js/map_lajes_authored.js',
-  fy_corrego: 'public/js/map_corrego.js',
-  fy_mansao: 'public/js/map_mansao.js',
+  escadao: 'public/js/map_escadao.js',
+  campomorro: 'public/js/map_campomorro.js',
+  lajes: 'public/js/map_lajes_authored.js',
+  corrego: 'public/js/map_corrego.js',
+  mansao: 'public/js/map_mansao.js',
 };
 export const PASS_FILE = 'public/js/graffiti_pass.js';
 export const TEX_FILE = 'public/js/textures.js';

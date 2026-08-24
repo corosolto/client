@@ -45,7 +45,7 @@ const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('
 const TETO_DE = 8;
 // Piloto do RC1 (plans/23): os 3 primeiros mapas do look por mapa. O rollout
 // estende esta lista aos demais mapas com céu webp.
-const MAPAS = ['fy_mansao', 'fy_corrego', 'fy_campomorro'];
+const MAPAS = ['mansao', 'corrego', 'campomorro'];
 
 /* ---------- sRGB -> Lab (D65), ΔE CIE76 ---------- */
 function srgbParaLab(hex) {

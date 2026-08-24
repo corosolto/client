@@ -120,7 +120,7 @@
     "triangulos": 25956
    },
    {
-    "mapa": "fy_escadao",
+    "mapa": "escadao",
     "materiais": 182,
     "map": 66,
     "normalMap": 5,
@@ -130,7 +130,7 @@
     "triangulos": 18148
    },
    {
-    "mapa": "fy_campomorro",
+    "mapa": "campomorro",
     "materiais": 32,
     "map": 13,
     "normalMap": 5,
@@ -140,7 +140,7 @@
     "triangulos": 24738
    },
    {
-    "mapa": "fy_lajes",
+    "mapa": "lajes",
     "materiais": 167,
     "map": 100,
     "normalMap": 0,
@@ -150,7 +150,7 @@
     "triangulos": 32458
    },
    {
-    "mapa": "fy_corrego",
+    "mapa": "corrego",
     "materiais": 136,
     "map": 94,
     "normalMap": 9,
@@ -160,7 +160,7 @@
     "triangulos": 21078
    },
    {
-    "mapa": "fy_mansao",
+    "mapa": "mansao",
     "materiais": 471,
     "map": 15,
     "normalMap": 0,

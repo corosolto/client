@@ -9,7 +9,7 @@ const OUT = process.argv[2] || '/tmp/newmaps-game';
 const BASE = process.env.BASE || 'http://127.0.0.1:8123';
 const MAPS = process.env.ONLY
   ? process.env.ONLY.split(',').map((id) => id.trim()).filter(Boolean)
-  : ['fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao'];
+  : ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
 mkdirSync(OUT, { recursive: true });
 const root = execSync('npm root -g').toString().trim();
 const pw = await import(pathToFileURL(`${root}/playwright/index.js`).href);
@@ -54,7 +54,7 @@ for (const map of MAPS) {
     return pair;
   });
   // O par móvel cobre gameplay; este ponto fixo prova o landmark que motivou o A/B.
-  if (map === 'fy_escadao') positions.push({ x: -8, y: 6.12, z: -28 });
+  if (map === 'escadao') positions.push({ x: -8, y: 6.12, z: -28 });
   await page.evaluate(() => {
     const game = window.__game;
     for (const bot of game.bots) { bot.pos.set(0, -80, 0); bot.vel?.set?.(0, 0, 0); }

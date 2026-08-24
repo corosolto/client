@@ -10,7 +10,7 @@ este arquivo. Um único browser por vez; servidor de eval em `node tools/eval/se
 1. **Checkpoint do WIP da R27** em 3 commits (lajes/grafites/infra) + wave 3 do BUG-54:
    `eval:occluders` **0/0/0 nos 10 mapas** (mansão 158→0, campomorro 64→0 — o TERRENO do
    morro agora para bala). VM14 verde (2 armas do canal do córrego → cabeceiras das pontes).
-2. **Grafites fechados**: fy_lajes voltou a grafitar (a chamada morreu na troca para
+2. **Grafites fechados**: lajes voltou a grafitar (a chamada morreu na troca para
    `map_lajes_authored.js`), or-hom-* (pessoa real) fora do pool, 5 or-* legítimos restaurados,
    layout reassado com `GRAFITE_FP`.
 3. **Merge da main**: alpha.83 → **alpha.147** (189 commits, 65 conflitos). Registro com

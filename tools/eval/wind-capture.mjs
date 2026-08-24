@@ -1,4 +1,4 @@
-// Captura 3:2 do VENTO (RC4, plans/23) no fy_campomorro — t0/t1 com a câmera
+// Captura 3:2 do VENTO (RC4, plans/23) no campomorro — t0/t1 com a câmera
 // presa: o diff de pixels prova que o mato se move (e onde). Enquadramento na
 // cerca norte, onde o lote de grama do RC4 está plantado.
 import { execSync } from 'node:child_process';
@@ -25,7 +25,7 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_campomorro${process.env.POST === 'output' ? '&post=output' : ''}`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=P,mst&map=campomorro${process.env.POST === 'output' ? '&post=output' : ''}`, { waitUntil: 'load' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 90000 });
 await page.addStyleTag({ content: '#hud,.screen,#crash-overlay{display:none!important}' });
 for (const [label, pos, yaw, pitch] of SHOTS) {

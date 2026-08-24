@@ -186,7 +186,7 @@ for (const mapId of MAP_IDS) {
   /* Grade de DUAS camadas: a de cima (tabelas/telhados/escadas, `gh` sem yRef) e a do
      térreo (`gh(x,z,0)` — embaixo de tábua/mirante/mezanino). A grade de camada única lia
      a tábua sobre o vão e apagava a passagem de baixo: medido na R27, a faixa oeste e a
-     banda do armário de fy_lajes ficavam invisíveis pro flood com o beco caminhável. */
+     banda do armário de lajes ficavam invisíveis pro flood com o beco caminhável. */
   const ghG = (x, z) => (gh.length >= 3 ? gh(x, z, 0) : gh(x, z));
   const andavel = (i, j, L) => {
     if (i < 0 || j < 0 || i >= nGx || j >= nGz) return false;

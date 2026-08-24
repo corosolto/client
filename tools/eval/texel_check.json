@@ -615,7 +615,7 @@
    ]
   },
   {
-   "id": "fy_escadao",
+   "id": "escadao",
    "nome": "Escadão (Morro)",
    "malhas": 755,
    "superficies": 397,
@@ -736,7 +736,7 @@
    ]
   },
   {
-   "id": "fy_campomorro",
+   "id": "campomorro",
    "nome": "Campo do Morro",
    "malhas": 507,
    "superficies": 174,
@@ -857,7 +857,7 @@
    ]
   },
   {
-   "id": "fy_lajes",
+   "id": "lajes",
    "nome": "Lajes (Comunidade)",
    "malhas": 496,
    "superficies": 297,
@@ -978,7 +978,7 @@
    ]
   },
   {
-   "id": "fy_corrego",
+   "id": "corrego",
    "nome": "Córrego (Favela de SP)",
    "malhas": 540,
    "superficies": 403,
@@ -1099,7 +1099,7 @@
    ]
   },
   {
-   "id": "fy_mansao",
+   "id": "mansao",
    "nome": "Mansão do Joá",
    "malhas": 882,
    "superficies": 148,

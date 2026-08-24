@@ -219,7 +219,7 @@
    }
   ]
  },
- "fy_escadao": {
+ "escadao": {
   "total": 419,
   "noAr": 0,
   "tapadas": 0,
@@ -227,7 +227,7 @@
   "piores": [],
   "piorSobrepor": []
  },
- "fy_campomorro": {
+ "campomorro": {
   "total": 55,
   "noAr": 0,
   "tapadas": 0,
@@ -235,7 +235,7 @@
   "piores": [],
   "piorSobrepor": []
  },
- "fy_lajes": {
+ "lajes": {
   "total": 50,
   "noAr": 0,
   "tapadas": 0,
@@ -243,7 +243,7 @@
   "piores": [],
   "piorSobrepor": []
  },
- "fy_corrego": {
+ "corrego": {
   "total": 336,
   "noAr": 1,
   "tapadas": 0,
@@ -263,7 +263,7 @@
   ],
   "piorSobrepor": []
  },
- "fy_mansao": {
+ "mansao": {
   "total": 15,
   "noAr": 0,
   "tapadas": 0,

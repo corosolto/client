@@ -21,11 +21,11 @@ const chromium = _pw.chromium || _pw.default?.chromium;
 
 // [mapa, rótulo, [x, y, z], yaw, pitch]
 const SHOTS = [
-  ['fy_mansao', 'mar', [-8, 5, -18], 0, -0.10],        // MESMO enquadramento do look-capture
-  ['fy_mansao', 'costa', [4, 14, -28], 0, -0.72],      // de cima: espuma, raso, fundo
+  ['mansao', 'mar', [-8, 5, -18], 0, -0.10],        // MESMO enquadramento do look-capture
+  ['mansao', 'costa', [4, 14, -28], 0, -0.72],      // de cima: espuma, raso, fundo
   // RC2 córrego: DENTRO do canal (água entrável, 14 cm) e de cima do canal
-  ['fy_corrego', 'dentro', [0, -0.1, 8], 0, -0.18],    // em pé na lâmina, olhando o canal
-  ['fy_corrego', 'canal', [0, 6, 20], 0, -0.55],       // de cima: margens, pontes, lâmina
+  ['corrego', 'dentro', [0, -0.1, 8], 0, -0.18],    // em pé na lâmina, olhando o canal
+  ['corrego', 'canal', [0, 6, 20], 0, -0.55],       // de cima: margens, pontes, lâmina
 ];
 
 rmSync(OUT, { recursive: true, force: true });

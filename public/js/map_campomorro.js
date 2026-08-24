@@ -1,4 +1,4 @@
-// CAMPO DO MORRO (fy_campomorro) — campo de varzea rebaixado, oito becos
+// CAMPO DO MORRO (campomorro) — campo de varzea rebaixado, oito becos
 // convergentes e galpao do baile elevado. Spec: plans/11-CAMPO-DO-MORRO.md.
 import * as THREE from 'three';
 import { PropBatch, InstBatch, mergeParts, hasProp } from './mapprops.js';
@@ -233,7 +233,7 @@ export function buildCampoMorro(scene, T = {}) {
   const circulo = new THREE.Mesh(new THREE.RingGeometry(2.35, 2.46, 36), cal);
   circulo.rotation.x = -Math.PI / 2; circulo.position.y = FIELD_Y + 0.025; root.add(circulo);
 
-  const { hemi, sun } = applyLook(scene, T, 'fy_campomorro', { nofog: QP.get('nofog') === '1' });
+  const { hemi, sun } = applyLook(scene, T, 'campomorro', { nofog: QP.get('nofog') === '1' });
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
@@ -641,7 +641,7 @@ export function buildCampoMorro(scene, T = {}) {
   const D_PIXO = decalIds(T, ['folha-pixaca-02.png', 'folha-pixaca-03.png']);
   const D_MURAL = decalIds(T, ['or-mitico-mural.png', 'personagem-muro.png']);
   grafitar({
-    id: 'fy_campomorro', root, T, waypoints: nodes, seed: 5077, passo: 1.05, alcance: 8, cobre: 0.045, minLarg: 0.4,
+    id: 'campomorro', root, T, waypoints: nodes, seed: 5077, passo: 1.05, alcance: 8, cobre: 0.045, minLarg: 0.4,
     bandas: [
       { y0: 0.3, y1: 2.4, larg: 3.2, alturas: [1.8, 1.2, 0.8], chance: 24, pool: D_PIXO },
       { y0: 1.6, y1: 3.4, larg: 4.2, alturas: [1.8, 1.3], chance: 28, pool: D_MURAL },
@@ -650,7 +650,7 @@ export function buildCampoMorro(scene, T = {}) {
 
   /* BUG-57: campo de várzea tem caramelo na lateral, pombo na arquibancada e rato no galpão. */
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_campomorro',
+    map: 'campomorro',
     rats: [
       { pos: [24, 1, -18], to: [26.5, 1, -16], phase: .4 },
       { pos: [-25, 0, 12], to: [-22.5, 0, 14.5], phase: 1.5 },

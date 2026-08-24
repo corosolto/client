@@ -32,12 +32,12 @@ Vocabulário do dossiê (§2), usado em todo o audit:
 ## Fontes de evidência
 
 1. **Capturas reais** em `/tmp/review-maps/` (25 PNGs, 1536×1024, 3:2, manifesto de
-   13/08/2026): `fy_escadao` (3), `fy_campomorro` (5), `fy_lajes` (4), `fy_corrego` (6),
-   `fy_mansao` (7). Todas foram olhadas; o que está escrito abaixo é o que se vê nelas.
+   13/08/2026): `escadao` (3), `campomorro` (5), `lajes` (4), `corrego` (6),
+   `mansao` (7). Todas foram olhadas; o que está escrito abaixo é o que se vê nelas.
 2. **Código** em `public/js/map_*.js`: plantas, spawns, waypoints, bandeiras, densidade de
    props e materiais. Registro em `public/js/maps.js`: 10 mapas jogáveis
-   (`praca_poderes`, `piscina_treta`, `loja_h`, `ferro_velho`, `quebrada`, `fy_escadao`,
-   `fy_campomorro`, `fy_lajes`, `fy_corrego`, `fy_mansao`). `map_piscinao_ramos.js` existe
+   (`praca_poderes`, `piscina_treta`, `loja_h`, `ferro_velho`, `quebrada`, `escadao`,
+   `campomorro`, `lajes`, `corrego`, `mansao`). `map_piscinao_ramos.js` existe
    mas está fora do registro (reprovado pelo dono em 31/07) e não entra no audit.
 3. **Referências** `references/mapas/world/*.png`: usadas para ancorar o 5.
 
@@ -49,7 +49,7 @@ foi medido.
 
 ---
 
-## 1. fy_escadao — Escadão (Morro)
+## 1. escadao — Escadão (Morro)
 
 **Fonte:** capturas `bottom-up`, `top-down`, `caveirao` + `map_escadao.js` (840 linhas).
 
@@ -106,7 +106,7 @@ foi medido.
 
 ---
 
-## 2. fy_campomorro — Campo do Morro
+## 2. campomorro — Campo do Morro
 
 **Fonte:** capturas `field-mouth`, `field-eye`, `field-overview`, `galpao-interior`,
 `galpao-eye` + `map_campomorro.js` (643 linhas).
@@ -164,7 +164,7 @@ foi medido.
 
 ---
 
-## 3. fy_lajes — Lajes (Comunidade)
+## 3. lajes — Lajes (Comunidade)
 
 **Fonte:** capturas `roof-eye`, `roof-route`, `layer-overview`, `jump-link` +
 `map_lajes.js` (726 linhas).
@@ -225,7 +225,7 @@ foi medido.
 
 ---
 
-## 4. fy_corrego — Córrego (Favela de SP)
+## 4. corrego — Córrego (Favela de SP)
 
 **Fonte:** capturas `bridge-eye`, `water-bridge`, `canal-overview`, `capivara`,
 `animals`, `rats` + `map_corrego.js` (1550 linhas).
@@ -284,7 +284,7 @@ foi medido.
 
 ---
 
-## 5. fy_mansao — Mansão do Joá
+## 5. mansao — Mansão do Joá
 
 **Fonte:** capturas `facade-garden`, `garden-eye`, `cars-front-close`, `interior`,
 `gourmet-eye`, `theater-eye`, `infinity-pool` + `map_mansao.js` (703 linhas).
@@ -596,16 +596,16 @@ Notas 1–5. `*` = inferida do código, pendente de captura.
 
 | Mapa | IDENTITY | READABILITY | COMBAT FLOW | ENV DETAIL | LIGHTING | MATERIAL | PERFORMANCE | BR AUTH. | Média |
 |---|---|---|---|---|---|---|---|---|---|
-| fy_corrego    | 4 | 3 | 3 | 3 | 2 | 2 | 3* | 4 | 3,00 |
+| corrego    | 4 | 3 | 3 | 3 | 2 | 2 | 3* | 4 | 3,00 |
 | quebrada      | 4 | 3* | 3 | 3* | 2* | 3* | 3* | 4 | 3,00 (parcial) |
 | ferro_velho   | 4 | 3* | 3 | 3* | 3* | 3* | 3* | 4 | 3,13 (parcial) |
 | loja_h        | 4 | 3* | 3 | 3* | 2* | 3* | 3* | 4 | 3,00 (parcial) |
 | praca_poderes | 4 | 3* | 3 | 2* | 2* | 3* | 3* | 5 | 3,00 (parcial) |
-| fy_escadao    | 3 | 3 | 3 | 2 | 2 | 2 | 4* | 3 | 2,75 |
-| fy_mansao     | 3 | 3 | 3 | 2 | 2 | 2 | 4* | 2 | 2,63 |
+| escadao    | 3 | 3 | 3 | 2 | 2 | 2 | 4* | 3 | 2,75 |
+| mansao     | 3 | 3 | 3 | 2 | 2 | 2 | 4* | 2 | 2,63 |
 | piscina_treta | 3 | 4* | 4 | 2* | 2* | 2* | 5* | 1 | 2,88 (parcial) |
-| fy_campomorro | 3 | 2 | 3 | 2 | 2 | 1 | 4* | 3 | 2,50 |
-| fy_lajes      | 3 | 2 | 4 | 1 | 2 | 1 | 4* | 2 | 2,38 |
+| campomorro | 3 | 2 | 3 | 2 | 2 | 1 | 4* | 3 | 2,50 |
+| lajes      | 3 | 2 | 4 | 1 | 2 | 1 | 4* | 2 | 2,38 |
 
 Leitura honesta do conjunto: **nenhum mapa passa de 2 em MATERIAL QUALITY entre os
 capturados**, e LIGHTING é 2 em todos os cinco. O gargalo do projeto não é layout nem
@@ -621,19 +621,19 @@ de decal nascendo no ar — exatamente a classe de defeito que só captura pega.
 
 Ordem de ataque (o dossiê manda fazer UM mapa gold standard antes de propagar):
 
-1. **fy_lajes — o piloto.** Pior média dos capturados (2,38), pior ENV DETAIL (1) e pior
+1. **lajes — o piloto.** Pior média dos capturados (2,38), pior ENV DETAIL (1) e pior
    MATERIAL (1), e é o mapa onde a tese de design (duas camadas) já funciona — o ganho é
    quase todo de pele: material por prédio, caixas d'água/antenas/varais de verdade nas
    lajes (§19), calçada e fiação nos becos (§7), mato (§5), céu e distant world (§24/§29).
    Arquivo pequeno (726 linhas), contido, e o plano da casa já o escolheu como piloto.
-2. **fy_campomorro.** Monocromia de terra é o defeito mais barato de consertar com maior
+2. **campomorro.** Monocromia de terra é o defeito mais barato de consertar com maior
    efeito: separar materiais (muro ≠ chão ≠ galpão), MICRO no campo (mato, lixo, mancha),
    e quebrar a colagem repetida do muro perimetral. Segunda pior média (2,50).
-3. **fy_mansao.** O problema é esterilidade, não estrutura: storytelling de interior
+3. **mansao.** O problema é esterilidade, não estrutura: storytelling de interior
    (§14), transição de luz interna (§20), e o horizonte do oceano. Terceira pior (2,63).
-4. **fy_escadao.** Está perto: precisa de envelhecimento de superfície (§18), variação de
+4. **escadao.** Está perto: precisa de envelhecimento de superfície (§18), variação de
    fachada (§8), cabos com catenária e caça a props flutuantes. Quarta (2,75).
-5. **fy_corrego.** A melhor base (3,00): o trabalho é variação arquitetônica da favela
+5. **corrego.** A melhor base (3,00): o trabalho é variação arquitetônica da favela
    (§8/§9), luz do canal e água. Risco de regressão maior — mexer depois de ter o gold
    standard pronto.
 6. **Os cinco sem captura, na ordem de risco:** `quebrada` (linear + bug de decal no

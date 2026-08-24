@@ -1,7 +1,7 @@
 /* ============================================================================
    death-camera-check.mjs — câmera de morto não atravessa piso multinível.
 
-   Caso real (screenshot do dono, 09/08/2026): morto no mirante do fy_escadao,
+   Caso real (screenshot do dono, 09/08/2026): morto no mirante do escadao,
    o frame mostrava a parte de baixo da laje e bots/pickups suspensos. O piso local
    media 14,28 m; `_updatePlayer()` descia a câmera até y global 0,5.
 

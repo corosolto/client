@@ -152,10 +152,10 @@ npm run eval:lajes-spatial
 npm run eval:lajes-gap
 npm run eval:lajes-authored
 npm run eval:lajes-rooftop
-node tools/eval/map-check.mjs fy_lajes
+node tools/eval/map-check.mjs lajes
 npm run eval:mapcontrato
 npm run eval:spawn
-node tools/eval/botsim.mjs 30 fy_lajes
+node tools/eval/botsim.mjs 30 lajes
 npm run docs
 npm run docs:check
 npm run arch

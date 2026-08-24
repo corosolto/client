@@ -5957,7 +5957,7 @@
    ]
   },
   {
-   "map": "fy_escadao",
+   "map": "escadao",
    "waypoints": 398,
    "pickups": 63,
    "spawnPiorDistWaypoint": 1.43,
@@ -7172,7 +7172,7 @@
    ]
   },
   {
-   "map": "fy_campomorro",
+   "map": "campomorro",
    "waypoints": 598,
    "pickups": 62,
    "spawnPiorDistWaypoint": 1.41,
@@ -8368,7 +8368,7 @@
    ]
   },
   {
-   "map": "fy_lajes",
+   "map": "lajes",
    "waypoints": 363,
    "pickups": 62,
    "spawnPiorDistWaypoint": 1.9,
@@ -9564,7 +9564,7 @@
    ]
   },
   {
-   "map": "fy_corrego",
+   "map": "corrego",
    "waypoints": 584,
    "pickups": 66,
    "spawnPiorDistWaypoint": 1.21,
@@ -10836,7 +10836,7 @@
    ]
   },
   {
-   "map": "fy_mansao",
+   "map": "mansao",
    "waypoints": 375,
    "pickups": 62,
    "spawnPiorDistWaypoint": 2.5,

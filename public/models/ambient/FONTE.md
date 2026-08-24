@@ -26,11 +26,11 @@ de malha skinned.
   controlador `cat` do `ambientlife.js`.
 - `galinha_campo.glb` — “Chicken”, Quaternius (Ultimate Animated Animals),
   [Poly Pizza](https://poly.pizza/m/ineV9pU5VL), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-  v2.1: galinha do campinho (fy_campomorro) e de quintal (fy_corrego); clipes
+  v2.1: galinha do campinho (campomorro) e de quintal (corrego); clipes
   Idle/Walk (o pack não traz Walk+Run separados — flee usa o Walk).
 - `vaca_campo.glb` — “Cow”, Quaternius (Ultimate Animated Animals),
   [Poly Pizza](https://poly.pizza/m/26zM1outCr), [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/).
-  v2.1: vaca da várzea do fy_campomorro; clipes podados para Idle/Walk/Gallop
+  v2.1: vaca da várzea do campomorro; clipes podados para Idle/Walk/Gallop
   (o pack traz 24 — `keepClips` do pipeline corta os que o controlador não toca).
 - `jacare_corrego.glb` — “Blocky Belly Caiman”, Mint text-to-3D (Meshy), gerado
   18/08/2026 para o BUG-57 (pedido do dono: “precisa gerar jacare no mintgg”).
@@ -56,13 +56,13 @@ de malha skinned.
   Mesma licença do jacaré/capivara; registro em `mint-assets.json` (`tatu-campo`).
   Estático — anda pelo `_updateQuad` do `ambientlife.js`. Tatu não existe em
   nenhum pack Quaternius (a varredura 19/08 acima cobre: 12 mamíferos + farm,
-  nenhum xenartro). Call-sites: fy_campomorro, praca_poderes (AR4).
+  nenhum xenartro). Call-sites: campomorro, praca_poderes (AR4).
 - `papagaio_poleiro.glb` — “Yellow Chevron Parrot”, Mint text-to-3D, 19/08/2026
   (vida 1). Chat: <https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4>.
   Registro `papagaio-poleiro`. Estático de poleiro (a barra faz parte da malha)
   com balanço procedural `_updateParrot` — poleiro não precisa de voo, o que
   contorna a dívida de pássaro riggado CC0 registrada na pomba. Call-sites:
-  fy_mansao (balaustrada do terraço), parque_treta (AR4).
+  mansao (balaustrada do terraço), parque_treta (AR4).
 - `barata_urbana.glb` — Mint text-to-3D, 19/08/2026 (vida 1). Barata de esgoto
   do córrego e da doca do atacadão; darta pelo `_updateRat`. Registro
   `barata-urbana`. (Primeira geração bloqueada pela moderação do Mint;

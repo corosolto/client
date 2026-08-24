@@ -1,11 +1,11 @@
 /* SPAWNFACE: o primeiro quadro precisa mostrar a rota, não uma parede a um metro.
-   A captura 3:2 real de 09/08 abriu fy_escadao no spawn E e mostrou somente a empena
+   A captura 3:2 real de 09/08 abriu escadao no spawn E e mostrou somente a empena
    do bar. A sonda usa o yaw da câmera real e intersecta
    a malha visível na altura do peito. Dois metros são corpo + um passo lateral antes de
    qualquer obstáculo. `--mutante=inverte` devolve os pontos antigos e precisa falhar. */
 import { THREE, bootGame, initTextures } from './harness.mjs';
 
-const world = bootGame('fy_escadao', { textures: initTextures(), ctf: true, seed: 12345 }).world;
+const world = bootGame('escadao', { textures: initTextures(), ctf: true, seed: 12345 }).world;
 const mutant = process.argv.includes('--mutante=inverte');
 const MIN = 2;
 

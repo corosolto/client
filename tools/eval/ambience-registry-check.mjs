@@ -49,12 +49,12 @@ const INTERNOS = new Set(['upa_24h']);
 /* Espécie-chave por bioma (v2.1, frente D): gato de telhado na favela, galinha de
    quintal/campinho, vaca na várzea. Mapa novo desse bioma herda a cobrança. */
 const BIOMA_FAUNA = {
-  fy_lajes: ['cat'], quebrada: ['cat'], fy_corrego: ['cat', 'chicken', 'cockroach'],
-  fy_campomorro: ['chicken', 'cow', 'armadillo'],
+  lajes: ['cat'], quebrada: ['cat'], corrego: ['cat', 'chicken', 'cockroach'],
+  campomorro: ['chicken', 'cow', 'armadillo'],
   /* fauna 2 (vida 1, plans/22): tatu no cerrado (campo/Brasília), barata urbana
      (córrego/atacadão), papagaio de poleiro (mansão/parque) */
   praca_poderes: ['armadillo'], atacadao_treta: ['cockroach'],
-  fy_mansao: ['parrot'], parque_treta: ['parrot'],
+  mansao: ['parrot'], parque_treta: ['parrot'],
 };
 const FAUNA2 = new Set(['armadillo', 'cockroach', 'parrot']);
 

@@ -50,7 +50,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 const BASE = process.env.BASE || 'http://localhost:8123';
 const MAPAS = [
   'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
-  'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
+  'escadao', 'campomorro', 'lajes', 'corrego', 'mansao',
 ];
 const argv = process.argv.slice(2);
 /* o número depois de `--fotos` não é mapa: sem o `i !== iFotos + 1`, `--fotos 6`
@@ -81,11 +81,11 @@ const TETO = {
   loja_h: { noAr: 1, sobre: 3 },
   ferro_velho: { noAr: 0, sobre: 0 },
   quebrada: { noAr: 3, sobre: 10 },
-  fy_escadao: { noAr: 0, sobre: 0 },
-  fy_campomorro: { noAr: 0, sobre: 0 },
-  fy_lajes: { noAr: 0, sobre: 0 },
-  fy_corrego: { noAr: 1, sobre: 0 },
-  fy_mansao: { noAr: 0, sobre: 0 },
+  escadao: { noAr: 0, sobre: 0 },
+  campomorro: { noAr: 0, sobre: 0 },
+  lajes: { noAr: 0, sobre: 0 },
+  corrego: { noAr: 1, sobre: 0 },
+  mansao: { noAr: 0, sobre: 0 },
 };
 
 const gRoot = execSync('npm root -g').toString().trim();

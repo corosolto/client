@@ -38,7 +38,7 @@ const BASE = process.env.BASE || 'http://localhost:8123';
 const SAIDA = 'public/js/graffiti_layout.js';
 const MAPAS = [
   'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada',
-  'fy_escadao', 'fy_campomorro', 'fy_lajes', 'fy_corrego', 'fy_mansao',
+  'escadao', 'campomorro', 'lajes', 'corrego', 'mansao',
 ];
 const ONLY = process.argv[2];
 const semPassada = [];

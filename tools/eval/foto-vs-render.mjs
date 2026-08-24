@@ -70,7 +70,7 @@ const AUC_MIN = 0.80;
    e' a mediana do "pior gap" dos 10 mapas vivos (valores medidos na escala n:
    1,1 · 2,0 · 2,1 · 2,5 · 2,8 · 2,8 · 5,1 · 5,4 · 6,7 · 9,6 -> mediana 2,8,
    arredondada para 3,0). Ou seja, hoje ele reprova a metade PIOR do proprio
-   acervo (praca_poderes, fy_escadao, fy_mansao, loja_h) e aprova a metade
+   acervo (praca_poderes, escadao, mansao, loja_h) e aprova a metade
    melhor. E' um piso para impedir que mapa novo nasca abaixo do que ja' existe;
    NAO e' "perto de uma foto". Cada vez que a base melhorar, este numero desce —
    se ele parar de reprovar alguem, virou decoracao. */

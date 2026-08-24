@@ -172,7 +172,7 @@ export const MAPAS: Mapa[] = [
       'ônibus e praça do baile.',
   },
   {
-    id: 'fy_escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
+    id: 'escadao', nome: 'Escadão (Morro)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Comunidade cortada por uma escadaria monumental de azulejo colorido, com caveirão no patamar central.',
     detalhe: 'O mapa de verticalidade pura: um time nasce na rua lá embaixo (bar, mercadinho, carros), ' +
       'o outro nasce no mirante lá em cima (caixa d\'água, mureta). Entre os dois, o escadão - três lances ' +
@@ -181,7 +181,7 @@ export const MAPAS: Mapa[] = [
       'você só enxerga o próximo lance, nunca o escadão inteiro.',
   },
   {
-    id: 'fy_campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
+    id: 'campomorro', nome: 'Campo do Morro', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Campo de várzea no centro de uma comunidade - todos os becos convergem pra ele.',
     detalhe: 'O mapa de convergência: um time nasce no campo (centro, exposto, dono do meio) e ' +
       'o outro nasce no galpão do baile funk (periferia, protegido, paredão de som e portão de aço). ' +
@@ -190,7 +190,7 @@ export const MAPAS: Mapa[] = [
       'Segurar o centro é punição e prêmio ao mesmo tempo: cinco bocas de beco para vigiar.',
   },
   {
-    id: 'fy_lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
+    id: 'lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Comunidade em duas camadas: lajes em cima, becos embaixo - a luta pela vertical.',
     detalhe: 'Um time nasce nas lajes (pula de telhado em telhado, vê longe mas se expõe); o outro ' +
       'nos becos (tem cover mas não vê nada). Quatro escadas conectam as camadas - cada uma é um ' +
@@ -199,7 +199,7 @@ export const MAPAS: Mapa[] = [
       'norte é mais alto - é a posição de sniper do mapa.',
   },
   {
-    id: 'fy_corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
+    id: 'corrego', nome: 'Córrego (Favela de SP)', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Duas margens de palafitas separadas por água poluída e três pontes muito diferentes.',
     detalhe: 'Mapa de travessia e risco: o córrego corre abaixo das margens, com trechos alagados nas pontas, ' +
       'pontes de madeira no meio e casas sobre pilotis. A margem leste e a oeste têm rotas próprias entre ' +
@@ -207,7 +207,7 @@ export const MAPAS: Mapa[] = [
       'Pixação paulistana, zinco, madeira úmida e o céu cinzento separam visualmente este mapa dos morros do Rio.',
   },
   {
-    id: 'fy_mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
+    id: 'mansao', nome: 'Mansão do Joá', modo: 'CTF · rounds opcional', ctf: true,
     resumo: 'Mansão modernista entre jardim tropical e piscina infinita, com interior e mezanino jogáveis.',
     detalhe: 'O time invasor nasce no portão e avança por um jardim geométrico até garagem, hall, sala e cozinha. ' +
       'O defensor ocupa o deck e a piscina diante do oceano. O mezanino a 4,5 m é alcançado por uma escada real ' +

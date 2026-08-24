@@ -37,7 +37,7 @@
  *   node tools/eval/serve.mjs 8123 &
  *   GPU=1 node tools/eval/gl-poses.mjs /tmp/shots/poses            # captura
  *   GPU=1 node tools/eval/gl-poses.mjs /tmp/shots/scout --scout    # procura pose
- *   ... --maps=fy_corrego,quebrada    # recorta a bateria
+ *   ... --maps=corrego,quebrada    # recorta a bateria
  *   ... --aspecto=169                 # só um aspecto (padrão: os dois)
  *
  * UMA SESSÃO HEADLESS POR VEZ. Duas em paralelo derrubam o boot e falsificam a

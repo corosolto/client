@@ -58,7 +58,7 @@ const CUBA = {
 const overlap2d = (c, r) => c.minX < r.x1 && c.maxX > r.x0 && c.minZ < r.z1 && c.maxZ > r.z0;
 const algumMutante = () => process.argv.some((a) => a.startsWith('--mutante='));
 
-const game = bootGame('fy_mansao', { textures: initTextures(), ctf: true, seed: 14000 });
+const game = bootGame('mansao', { textures: initTextures(), ctf: true, seed: 14000 });
 
 /* ── FROTA DA GARAGEM (BUG-56): contrato de fonte + disco ───────────────────
    A frota vive no fonte do mapa como tabela GARAGEM [['id', comprimento, altura]].

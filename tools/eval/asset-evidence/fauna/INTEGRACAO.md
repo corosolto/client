@@ -43,12 +43,12 @@ Assets prontos e revisados (frente B, 18/08). Esta frente NÃO toca em
 
 ## Fechamento dos portões que ficam para a integração
 
-- Portão 4 in-game: captura 3:2 (1536×1024) no fy_corrego com o jogo rodando —
+- Portão 4 in-game: captura 3:2 (1536×1024) no corrego com o jogo rodando —
   `public/faunaview.html?src=models/ambient/jacare_corrego.glb&dist=12` +
   `sh tools/eval/with-browser-lock.sh node tools/capture-fauna-evidence.mjs …`
   (exige `npm run eval:serve`) OU captura direta do mapa. As figuras desta
   frente (raster software, luz calibrada) estão em
   `tools/eval/asset-evidence/fauna/*-{close,dist12}.png` com `-meta.json`.
 - Portão 6: estender o `eval:ambience`/`ambience-registry` para exigir jacaré no
-  fy_corrego (fauna por bioma é cláusula aberta do BUG-57), com mutante
+  corrego (fauna por bioma é cláusula aberta do BUG-57), com mutante
   `sem-jacare` — a régua morde na ausência, não na presença.

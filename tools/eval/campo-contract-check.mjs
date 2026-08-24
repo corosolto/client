@@ -26,7 +26,7 @@ const MUT_BLOCKOUT = process.argv.includes('--mutante=galpao-blockout');
 const MUT_REDES = process.argv.includes('--mutante=traves-sem-rede');
 const MUT_BANCO = process.argv.includes('--mutante=bancada-central');
 const MUT_MARCOS = process.argv.includes('--mutante=marcos-clonados');
-const game = bootGame('fy_campomorro', { textures: initTextures(), bots: 0 });
+const game = bootGame('campomorro', { textures: initTextures(), bots: 0 });
 const luzesGalpao = [], faixasSaida = [], superficiesGalpao = [], framesGalpao = [];
 const redes = [], bancos = [], marcos = [];
 game.scene.traverse((object) => {

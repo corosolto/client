@@ -180,7 +180,7 @@
       }
     },
     {
-      "map": "fy_escadao",
+      "map": "escadao",
       "celulas": 9107,
       "mediana": 2.04,
       "MNT1": "N/A",
@@ -215,7 +215,7 @@
       }
     },
     {
-      "map": "fy_campomorro",
+      "map": "campomorro",
       "celulas": 14024,
       "mediana": 0.4,
       "MNT1": "N/A",
@@ -250,7 +250,7 @@
       }
     },
     {
-      "map": "fy_lajes",
+      "map": "lajes",
       "celulas": 10763,
       "mediana": 0,
       "MNT1": "OK",
@@ -285,7 +285,7 @@
       }
     },
     {
-      "map": "fy_corrego",
+      "map": "corrego",
       "celulas": 12371,
       "mediana": 0,
       "MNT1": "OK",
@@ -320,7 +320,7 @@
       }
     },
     {
-      "map": "fy_mansao",
+      "map": "mansao",
       "celulas": 10653,
       "mediana": 0,
       "MNT1": "OK",

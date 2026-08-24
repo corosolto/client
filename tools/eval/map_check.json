@@ -13,7 +13,7 @@
  },
  "mapas": [
   {
-   "map": "fy_escadao",
+   "map": "escadao",
    "celulasAlcancadas": 31609,
    "amostrasChao": 2003,
    "observadores": 496,
@@ -744,7 +744,7 @@
    "alturaTrianguloMin": 6.77
   },
   {
-   "map": "fy_campomorro",
+   "map": "campomorro",
    "celulasAlcancadas": 52528,
    "amostrasChao": 3218,
    "observadores": 805,
@@ -1358,7 +1358,7 @@
    "alturaTrianguloMin": 11.94
   },
   {
-   "map": "fy_lajes",
+   "map": "lajes",
    "celulasAlcancadas": 8646,
    "amostrasChao": 539,
    "observadores": 134,
@@ -2020,7 +2020,7 @@
    "alturaTrianguloMin": 18.08
   },
   {
-   "map": "fy_corrego",
+   "map": "corrego",
    "celulasAlcancadas": 44907,
    "amostrasChao": 2769,
    "observadores": 698,
@@ -2620,7 +2620,7 @@
    "alturaTrianguloMin": 8.34
   },
   {
-   "map": "fy_mansao",
+   "map": "mansao",
    "celulasAlcancadas": 40371,
    "amostrasChao": 2413,
    "observadores": 600,

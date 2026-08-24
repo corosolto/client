@@ -13,7 +13,7 @@
 */
 import { bootGame, initTextures } from './harness.mjs';
 
-const game = bootGame('fy_lajes', { textures: initTextures(), bots: 0 });
+const game = bootGame('lajes', { textures: initTextures(), bots: 0 });
 const detalhes = [];
 game.world.root.updateMatrixWorld(true);
 game.world.root.traverse((obj) => {

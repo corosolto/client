@@ -1,4 +1,4 @@
-// LAJES (fy_lajes) — spec plans/10-LAJES.md: lajes em cima, becos embaixo; a luta é pela VERTICAL.
+// LAJES (lajes) — spec plans/10-LAJES.md: lajes em cima, becos embaixo; a luta é pela VERTICAL.
 // Multinível como no havan: prédio SÓLIDO com topo andável; groundHeightAt dá 3,5 sobre prédio e 0 no beco.
 import * as THREE from 'three';
 import { placeProp, hasProp, PropBatch } from './mapprops.js';
@@ -60,7 +60,7 @@ export const LAJES_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-pixaca-02.png': 'pixo-lajes-01.png',
 });
 for (const [antes, depois] of Object.entries(LAJES_ARTE_SUBSTITUICOES)) {
-  const arquivos = GRAFITE?.fy_lajes?.arquivos || [];
+  const arquivos = GRAFITE?.lajes?.arquivos || [];
   for (let i = 0; i < arquivos.length; i++) if (arquivos[i] === antes) arquivos[i] = depois;
 }
 
@@ -324,7 +324,7 @@ export function buildLajes(scene, T) {
   /* ===================== CÉU / LUZ ===================== */
   setLajesSky(scene);
   makeHorizon(scene, { seed: 11, chao: 0x7d7560, low: LOWQ });
-  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('fy_lajes');
+  if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('lajes');
   const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x6a5c4c, 1.18); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffd9a8, 1.75); sun.position.set(25, 45, 15); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
@@ -1314,7 +1314,7 @@ export function buildLajes(scene, T) {
   const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);
   const D_TAG = decalIds(T, ['tag-fina.png', 'tag-flop.png', 'tag-larga.png', 'tag-money.png']);
   grafitar({
-    id: 'fy_lajes', root, T, waypoints: nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
+    id: 'lajes', root, T, waypoints: nodes, seed: 6088, passo: 1.2, alcance: 9, cobre: 0.025, minLarg: 0.3,
     limpo: [...stairZones, { x0: 7.7, x1: 9.1, z0: -36.5, z1: -32.4 }],
     murais: {
       texturas: [T.decals[D_LAJES[0]]],
@@ -1328,7 +1328,7 @@ export function buildLajes(scene, T) {
   });
 
   const ambience = createFavelaAmbience(root, {
-    map: 'fy_lajes', low: LOWQ,
+    map: 'lajes', low: LOWQ,
     rats: [
       { pos: [-8.1, groundHeightAt(-8.1, -1.8), -1.8], to: [-7.15, groundHeightAt(-7.15, -.45), -.45], phase: .2 },
       { pos: [8.25, groundHeightAt(8.25, 1.7), 1.7], to: [7.2, groundHeightAt(7.2, .25), .25], phase: 1.35 },
