@@ -264,6 +264,27 @@ sem o trailer, e o portão `Check trailer Agent` do CI cobre o que o hook não
 alcança: clone sem `npm run setup`, `--no-verify` e commit pela interface do
 GitHub.
 
+#### Co-autoria de IA não entra
+
+O `Agent:` é a atribuição desta base, e ele diz **qual** agente. O
+`Co-Authored-By: Claude` que as ferramentas acrescentam sozinhas não diz nada
+que o `Agent:` já não diga, aparece sempre colado nele — **415 dos 1004 commits
+da main** carregam o par — e ainda inventa um co-autor sem conta, que entra no
+"Contributors" do GitHub misturado com gente de verdade.
+
+Os mesmos três portões do `Agent:` recusam essa linha, lendo a lista de agentes
+de `scripts/coautoria-ia.re` (um arquivo só: lista copiada em três lugares
+diverge, e aí a mesma mensagem nasce aprovada num portão e reprovada no outro).
+**Co-autor humano continua valendo** — a régua só morde nome de ferramenta.
+
+Desligue na origem e você nunca vê o portão: o Claude Code já vem desligado por
+`"includeCoAuthoredBy": false` em `.claude/settings.json`; as outras ferramentas
+têm opção equivalente. Se já entrou na mensagem, limpe o intervalo com:
+
+```bash
+git rebase <base> --exec 'git log -1 --format=%B | sh scripts/checa-coautoria-ia.sh --limpa > /tmp/m && git commit --amend --no-edit -F /tmp/m'
+```
+
 ### Commit grande pede motivo
 
 Commit pequeno é o que torna revisão, `git bisect` e reversão baratos, e é a
