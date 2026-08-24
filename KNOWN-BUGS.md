@@ -39,6 +39,116 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-75 · ponte injetada pelo navegador abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 24/08 (issues #428, #379, #380, #381)
+
+**Sintoma (literal, quatro issues abertas pelo `crash-fix.yml`, todas classe `codigo`):**
+
+```
+ReferenceError: Can't find variable: __gCrWeb                                    #428, alpha.182, fingerprint d85ae7e1, origem /:1:9
+ReferenceError: Can't find variable: __firefox__                                 #379, alpha.159, fingerprint 470752a2, origem /:1:12
+TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')   #380, alpha.159, fingerprint 7122f83c, origem /:1:19
+ReferenceError: Can't find variable: DarkReader                                  #381, alpha.159, fingerprint cd468274, origem /:1:11
+Stack (as quatro): global code@https://www.csbrasil.online/:1:N
+```
+
+`__gCrWeb` é a ponte JS do **Chrome para iOS**, `__firefox__` a do **Firefox para iOS**,
+`DarkReader` a da extensão homônima. Nenhuma é código do jogo, e nenhuma tem conserto aqui.
+As três primeiras foram fechadas **à mão** como "ruído externo" — mas nada no código as
+impedia de voltar, e a #428 é a volta.
+
+**Não é defeito do jogo, e a prova é tripla.** (1) `__gCrWeb`, `__firefox__` e `DarkReader`
+**não existem em nenhum arquivo do repositório**, e `git log --all -S` não devolve um único
+commit para nenhum deles. (2) Os quatro fingerprints publicados reproduzem EXATAMENTE
+`crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:N')`, ou seja o
+`e.filename` é a **própria página**. (3) O único frame é `global code@` — nenhum arquivo do
+jogo aparece na pilha.
+
+**Causa raiz — confirmada.** O `isExternalCrash` (`src/lib/error-provenance.mjs`) inocenta
+por **origem**, e o WebKit reporta script injetado no mundo da página com o filename **da
+página**. O atalho
+
+```js
+if (sourceOrigin === ownOrigin) return false;
+```
+
+decidia "é nosso" antes de qualquer outra prova. Daí nenhuma das regex seguintes (`OPAQUE_RE`,
+`AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`, `MEDIA_ABORT_RE`) mordia e o
+`classifyCrash` caía no `return 'codigo'` final — que escala e abre issue. É o MESMO atalho
+que a #403/#404 (carteira cripto) atravessa.
+
+**Por que o corte é por NOME e não pela FORMA — e isto é o parágrafo que decide a entrada.**
+A tentação óbvia é cortar pela forma: "pilha de frame único `global code@<própria-origem>/:1:N`
+não é nossa". Ela reprova, e por medição. A linha 1 do `dist/client/index.html` tem **268
+caracteres**, e o `compressHTML` do Astro cola o `<!DOCTYPE>`, o `<head>`, o comentário e o
+**nosso primeiro `<script is:inline>`** (o do `define:vars` do `__SUPPORT`) todos nela — o
+nosso código começa na **coluna 167 da linha 1**. Um erro ali sai como
+`global code@<origem>/:1:167`: frame único, raiz, linha 1, idêntico à família. O que separa a
+#428 (coluna 9) do nosso código (coluna 167) é o comprimento de um comentário HTML, que é
+resíduo de build e não invariante. Além disso `global code@` é redação **só do WebKit**: a
+mesma extensão no Chrome desktop continuaria abrindo issue. E o corte por forma não tem
+invariante de honestidade possível — ele depende de uma propriedade do artefato buildado, que
+o `check:fast` não constrói. As duas primeiras fixtures negativas do EP16 travam essa decisão
+em régua: têm a MESMA forma da família com global NOSSO e continuam `codigo`.
+
+**Correção, em duas camadas espelhadas** — o mesmo remédio das BUG-51/72/73:
+
+- `src/lib/error-provenance.mjs` — `PONTE_INJETADA_RE` e o ramo em `isExternalCrash`, na
+  **mesma posição e pelo mesmo motivo da `VENDOR_RE`**: antes do atalho same-origin, porque a
+  ponte roda no próprio domínio mas o código é de terceiro. Classe `externo`. A linha continua
+  gravada no `js_error`; some o disparo automático, não o dado.
+- `src/pages/index.astro` — a MESMA redação em `origemDoJogo`. Sem cota nova: ponte cai no
+  balde do `TETO_EXTERNO` que a BUG-51 já abriu. Com `interna === false` o erro também deixa
+  de virar `erroDoBoot` e `lancamento.fail` — hoje uma ponte que estoura durante o boot podia
+  ser acusada de ter derrubado o carregamento do jogo.
+
+O corte é **estreito de propósito**, e em dois eixos: exige o NOME do global de terceiro, e
+exige a **caixa** dele. Identificador JS é sensível a caixa e a mensagem o cita verbatim, então
+`falha ao carregar darkreader.glb` num texto nosso continua `codigo` — é isso que o mutante
+`ponte-insensivel` prova, e é uma divergência deliberada em relação às outras regex do arquivo,
+que usam `/i`. `webkit` solto **não** foi comprado (só `webkit.messageHandlers`), porque o jogo
+usa `window.webkitAudioContext` de verdade. E `__\w+__` genérico está **proibido**: sete globais
+do JOGO são dunder (`__GEO_LANG__`, `__SUPPORT`, `__CS_MAIN_FAILED`, `__CS_MAIN_READY__`,
+`__CS_BOOT_SRC`, `__gameLaunch`, `__semWebgl`) e o corte genérico calaria crash nosso — é o
+mutante `ponte-ampla`. O roster cobre a **família** (ponte de WebView, extensão, hook de
+devtools) e não uma regex por incidente, que é a crítica que a BUG-72 fez ao padrão antigo:
+`webkit.messageHandlers`, `__REACT_DEVTOOLS_GLOBAL_HOOK__` e `__VUE_DEVTOOLS_GLOBAL_HOOK__`
+entram **sem incidente**, pelo mesmo mecanismo.
+
+**Custo declarado, medido na população real e não estimado.** Reclassificando as **96** issues
+`crash-auto` do repositório (mensagem, origem e stack lidos do corpo publicado) com o helper de
+antes e o de depois, exatamente **4** mudam de classe — a #428, a #379, a #380 e a #381,
+`codigo -> externo`:
+
+```
+ANTES : codigo 59 · externo 25 · recuperavel 12
+DEPOIS: codigo 55 · externo 29 · recuperavel 12
+```
+
+As outras 92 ficam idênticas. **Nenhuma outra issue deixa de abrir.**
+
+**Régua:** `EP16` em `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`, já
+no `check:fast` e no `check:deploy` — nenhum passo novo no portão). Classifica os payloads
+REAIS das quatro issues, confere os quatro fingerprints publicados contra a receita (fixture
+"arrumada" deixa de bater e acusa; as fixtures sintéticas não têm `fp` e por isso não podem se
+passar por publicadas), exige que **sete** vizinhas continuem `codigo` — duas delas com a MESMA
+forma da família — e **executa o `origemDoJogo` recortado do fonte**, porque regex de fiação
+sozinha aprovaria `function origemDoJogo(){ return true; }`. Carrega ainda uma **invariante de
+honestidade**: varre `src/` e `public/js/` pela forma de USO (`window.X`, `X.`, `X(`, `X =`) e
+fica VERMELHA no dia em que o jogo falar com uma dessas pontes de verdade, para o corte não
+virar mordaça silenciosa. Ela lê o fonte **mutado**, e não o disco — sem isso nenhum mutante
+conseguiria acendê-la, e régua que ninguém pode quebrar não mede nada. Mutantes novos:
+`sem-ponte`, `ponte-ampla`, `ponte-insensivel`, `sem-ponte-cliente` e `jogo-com-ponte`, todos
+acendendo EP16 e só ele. Cláusulas 15 -> 16, matriz de mutação 44/44.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a reprodução com um Chrome para iOS de
+verdade não foi feita — a régua mede a **classificação**, não a injeção. A tabela `js_error` do
+Supabase não foi consultada. **Pontos cegos declarados:** a invariante de honestidade não varre
+`public/vendor/` (three vendorizado) nem código gerado no build, e não pega acesso por string
+(`window["__gCrWeb"]`) — não existe regex honesta para isso que não acenda no literal do próprio
+corte. E o corte vale em qualquer campo, inclusive na mensagem: um crash NOSSO cujo texto apenas
+cite um dos seis nomes sumiria. É o mesmo furo estrutural que a `EXTENSION_RE` tem desde a
+BUG-51, e a invariante de honestidade é o guarda-corpo.
+
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
 **Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
