@@ -1,8 +1,5 @@
-// SERTÃO DA TRETA (velho_oeste) — retrato do faroeste genérico como sertão
-// nordestino: casario de adobe, mandacaru, poço com roda, capelinha e forró.
-// Retheme, não reautor: rotas/spawns/CTF/colliders do layout original do
-// contribuidor usantos seguem intocados (eval:velhooeste verde; a identidade
-// é medida pela eval:sertao). Spec: ~/map2/prompt-opencode.md.
+// SERTÃO DA TRETA (velho_oeste) — retheme, não reautor: layout/colliders do
+// contribuidor usantos seguem (eval:velhooeste); identidade é a eval:sertao.
 import * as THREE from 'three';
 import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { placeProp, hasProp } from './mapprops.js';
@@ -311,13 +308,8 @@ export function buildVelhoOeste(scene, T) {
     addBox(12.4, .35, .35, MAT.dark, 0, 7.3, z, { collide: false });
   }
 
-  /* ── VEGETAÇÃO E SERTÃO DE VERDADE ──────────────────────────────────────
-     GLB (Mint) OU proxy procedural, nunca os dois: mesh invisível como
-     occluder é o defeito que o MAP4 do map-check pega. O colisor é manual e
-     idêntico nos dois ramos — o layout de navegação não sabe qual visual
-     está servindo. Mandacaru assume as 8 posições (e colliders) dos cactos
-     originais; o resto nasce novo, colisor só onde não muda a malha de
-     waypoints (OESTE4/CTF2 dependem dela — o gate confere). */
+  /* GLB (Mint) OU proxy procedural, nunca os dois: mesh invisível como occluder
+     é o defeito que o MAP4 pega. Colisor manual igual nos dois ramos. */
   function sertaoElement(name, id, x, z, buildProxy, propId, targetH, collider) {
     const group = new THREE.Group(); group.name = `sertao-${name}-${id}`; group.position.set(x, 0, z); root.add(group);
     let visualRoot = group;
@@ -378,9 +370,8 @@ export function buildVelhoOeste(scene, T) {
   [[-27, -31], [27.5, 3], [-27, 38]].forEach((p, i) =>
     sertaoElement('xique', i, p[0], p[1], xiqueProxy, 'sertao_xique_xique', 2.1, [.4, 1.9, .4]));
 
-  /* Pedras de granito com solo rachado — o lagarto baska em duas delas.
-     Colidor cobre o footprint do visual (dodecaedro r com escala .82 em z):
-     colisor menor que a malha é o "anel atravessável" que o MAP1 pega. */
+  /* Pedras de granito; colisor cobre o footprint do visual — menor que a malha
+     é o "anel atravessável" que o MAP1 pega. O lagarto baska em duas delas. */
   const pedras = [[26.5, -25, 1.5, 1.1], [-26.5, -27, 1.2, .9], [26, 36, 1.7, 1.25], [-25, 25, 1.1, .8], [20, -12.5, .9, .65]];
   pedras.forEach((p, i) => sertaoElement('pedra', i, p[0], p[1], (group) => {
     const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(p[2], 0), MAT.pedra);
@@ -600,6 +591,23 @@ export function buildVelhoOeste(scene, T) {
   for (let i = 0; i < nodes.length; i++) adj.push([]);
   const clear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, .25)) return false; } return true; };
   for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z; if (dx * dx + dz * dz <= step * step * 2.25 && clear(nodes[i], nodes[j])) { adj[i].push(j); adj[j].push(i); } }
+  /* Poda de ilhados (MC3): colliders do retheme cercaram células que o grid
+     ainda gera; só o maior componente sobrevive — ilha não é pathfinding. */
+  {
+    const visto = new Uint8Array(nodes.length); let maior = [];
+    for (let i = 0; i < nodes.length; i++) {
+      if (visto[i]) continue;
+      const comp = []; const fila = [i]; visto[i] = 1;
+      while (fila.length) { const n = fila.pop(); comp.push(n); for (const m of adj[n]) if (!visto[m]) { visto[m] = 1; fila.push(m); } }
+      if (comp.length > maior.length) maior = comp;
+    }
+    const mapa = new Int16Array(nodes.length).fill(-1);
+    maior.forEach((velho, novo) => { mapa[velho] = novo; });
+    const novosNodes = maior.map((velho) => nodes[velho]);
+    const novasAdj = maior.map(v => adj[v].map(m => mapa[m]).filter(m => m >= 0));
+    nodes.length = 0; nodes.push(...novosNodes);
+    adj.length = 0; adj.push(...novasAdj);
+  }
   function nearestWaypoint(x, z) { let best = 0, distance = Infinity; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < distance) { distance = d; best = i; } } return best; }
   function findPath(fromIdx, toIdx) {
     if (fromIdx === toIdx) return [toIdx];
