@@ -4,12 +4,14 @@ import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { applyLook } from './map_sky.js';
+import { placeProp } from './mapprops.js';
 
 const HALF_X = 38;
 const HALF_Z = 48;
 
 /* Subset da fauna que o main.js pré-carrega para este mapa (maps.js ambience). */
 export const PENITENCIARIA_AMBIENCE = ['rat', 'pigeonGround'];
+export const PENITENCIARIA_PROPS = ['penitenciaria_guarita'];
 
 export function buildPenitenciaria(scene, T) {
   const root = new THREE.Group();
@@ -310,12 +312,18 @@ export function buildPenitenciaria(scene, T) {
   function guardTower(index, x, z) {
     const group = new THREE.Group(); group.name = `penitenciaria-guarita-${index}`; root.add(group);
     const sx = Math.sign(x), sz = Math.sign(z);
-    for (const dx of [-1.8, 1.8]) for (const dz of [-1.8, 1.8]) addBox(.38, 7.2, .38, MAT.steel, x+dx, 0, z+dz, { tag: `guarita-${index}` });
-    addBox(4.8, .45, 4.8, MAT.concrete, x, 6.5, z, { tag: `guarita-${index}` });
-    addBox(4.2, 2.4, .25, MAT.steel, x, 6.95, z-sz*2, { tag: `guarita-${index}` });
-    addBox(.25, 2.4, 4.2, MAT.steel, x-sx*2, 6.95, z, { tag: `guarita-${index}` });
-    addBox(4.8, .4, 4.8, MAT.darkConcrete, x, 9.35, z, { collide: false });
-    for (const side of [-1, 1]) addBox(.08, 5.8, .08, MAT.steel, x+sx*(2.25+side*.35), .2, z-sz*2.2, { collide: false });
+    /* GLB da torre (Mint, FONTE.md): no arnês node placeProp devolve null e a
+       torre procedural cobre — colisores idênticos nos dois mundos (lição 3). */
+    const glb = placeProp('penitenciaria_guarita', { x, y: 0, z, targetH: 9.6, targetLen: 5.6, ry: Math.atan2(-x, -z) });
+    if (glb) root.add(glb);
+    const pecas = [];
+    for (const dx of [-1.8, 1.8]) for (const dz of [-1.8, 1.8]) pecas.push(addBox(.38, 7.2, .38, MAT.steel, x+dx, 0, z+dz, { tag: `guarita-${index}` }));
+    pecas.push(addBox(4.8, .45, 4.8, MAT.concrete, x, 6.5, z, { tag: `guarita-${index}` }));
+    pecas.push(addBox(4.2, 2.4, .25, MAT.steel, x, 6.95, z-sz*2, { tag: `guarita-${index}` }));
+    pecas.push(addBox(.25, 2.4, 4.2, MAT.steel, x-sx*2, 6.95, z, { tag: `guarita-${index}` }));
+    pecas.push(addBox(4.8, .4, 4.8, MAT.darkConcrete, x, 9.35, z, { collide: false }));
+    for (const side of [-1, 1]) pecas.push(addBox(.08, 5.8, .08, MAT.steel, x+sx*(2.25+side*.35), .2, z-sz*2.2, { collide: false }));
+    if (glb) for (const p of pecas) { p.visible = false; const o = occluders.indexOf(p); if (o >= 0) occluders.splice(o, 1); }
 
     const cabeca = new THREE.Group(); cabeca.name = `penitenciaria-holofote-${index}`;
     cabeca.position.set(x - sx * .8, 8.6, z - sz * .8); root.add(cabeca);

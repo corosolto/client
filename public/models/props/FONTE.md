@@ -174,3 +174,12 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+- `penitenciaria_guarita.glb` — "Weathered Searchlight Guarita", torre de
+  vigilância de presídio com escada metálica, cabine octogonal envidraçada,
+  telhado de zinco e holofote no canto da cabine. 4.749 tris, 1 primitiva,
+  texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para o rebuild USANTOS
+  da penitenciaria. Chat: <https://mint.gg/chat/ph7dbfdzwpfa6mzdh15wx5tprx8d4c3v>.
+  Registro: `guarita-vigilancia-penitenciaria`. Otimizado por
+  `tools/optimize-props.mjs` (1.110 KB → 431 KB). Instanciada nas 4 guaritas;
+  a torre procedural fica de fallback (colisores idênticos) e o SpotLight que
+  varre o pátio (NV2) é sempre procedural — o GLB é só visual.

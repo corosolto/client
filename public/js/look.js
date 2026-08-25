@@ -35,6 +35,9 @@ export const LOOK = {
     sol: { cor: 0x9db8d8, i: 0.55, pos: [25, 40, -18] },
     hemi: { ceu: 0x5e7f9d, chao: 0x2a2b26, i: 0.5 },
     neblina: { d: 0.0085, solDir: [25, 40, -18], forca: 0.6 },
-    grade: { exposicao: 1.50, piso: 0.0055, expAces: 1.60 },
+    /* grade calibrada por medição (25/08): com 1,50 a média dos 4 frames 3:2 media
+       L* 20,1 — buraco preto. Alvo noturno L* ≈ 37 (mapa de dia mira 42-48);
+       piso·exposicao ≈ 0,022 segura blk < 1 % (mesma receita do loja_h R9). */
+    grade: { exposicao: 2.60, piso: 0.0085, expAces: 2.80 },
   },
 };

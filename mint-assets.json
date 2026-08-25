@@ -1883,6 +1883,29 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "guarita-vigilancia-penitenciaria": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/penitenciaria_guarita.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7e9bea6wa7jsvkkhzm8rpy998d5w2v",
+    "chatUrl": "https://mint.gg/chat/ph7dbfdzwpfa6mzdh15wx5tprx8d4c3v",
+    "displayName": "Weathered Searchlight Guarita (torre de vigilância)",
+    "frente": "map2-penitenciaria",
+    "notes": "Torre de vigilância com escada, cabine envidraçada e holofote (4.749 tris). Instanciada nas 4 guaritas do rebuild USANTOS da penitenciaria. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 9,6 / targetLen 5,6)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props.mjs"
+    ],
+    "finalSha256": "8b03c547171285a460f87c4e3b35213b08e8987ac1052ceb5feb7f467074c4ec"
+   }
   }
  }
 }
