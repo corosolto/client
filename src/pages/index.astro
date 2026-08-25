@@ -626,27 +626,22 @@ window.__GEO_LANG__ = (function () {
       <h1 id="home-title">ESCOLHA SUA<br><em>PRÓXIMA TRETA</em></h1>
       <p>Dois modos. Um país inteiro de histórias, mapas e coros.</p>
     </header>
-    <!-- A árvore agora separa a decisão principal dos serviços: não é mais uma lista
-         vertical em que JOGAR e CONFIGURAÇÕES têm o mesmo peso. Os ids/data-act ficam
-         estáveis para preservar teclado, som e roteamento em main.js. -->
-    <nav class="cs-menu" id="cs-menu" aria-label="Menu principal">
-      <div class="home-mode-deck">
-        <button class="cs-item home-mode-card" data-act="sp" type="button">
-          <span class="home-mode-no">01</span><span class="home-mode-copy"><b>ROUNDS</b><small>SINGLE PLAYER · MELHOR DE 5</small></span><span class="cs-tick">JOGAR ▸</span>
-        </button>
-        <button class="cs-item home-mode-card" data-act="ctf" type="button">
-          <span class="home-mode-no">02</span><span class="home-mode-copy"><b>CAPTURA</b><small>BANDEIRAS · MELHOR DE 3</small></span><span class="cs-tick">JOGAR ▸</span>
-        </button>
+    <!-- Menu da main (decisão do dono 25/08 no merge do #399): lista vertical com
+         JOGAR abrindo submenu dos dois modos — os data-act ficam os mesmos do
+         switch do main.js, teclado/roting preservados. Os mode-cards do PR saem. -->
+    <nav class="cs-menu aaa-nav" id="cs-menu" aria-label="Menu principal">
+      <div class="cs-menu-label">// ESCOLHA A TRETA</div>
+      <button class="cs-item" data-act="jogar" type="button"
+              aria-expanded="false" aria-controls="cs-modos"><span class="cs-tick">▸</span>JOGAR</button>
+      <div class="cs-sub" id="cs-modos" hidden>
+        <button class="cs-item cs-sub-item" data-act="sp"  type="button"><span class="cs-tick">▸</span>MATA-MATA</button>
+        <button class="cs-item cs-sub-item" data-act="ctf" type="button"><span class="cs-tick">▸</span>CAPTURE A BANDEIRA</button>
       </div>
-      <!-- FEEDBACK (pedido do dono, 07/08) alimenta a lista da futura newsletter -
-           ver /api/feedback e a migration 013 do banco. -->
-      <div class="home-service-strip" aria-label="Serviços e arquivo">
-        <button class="cs-item" data-act="config" type="button">CONFIGURAÇÕES</button>
-        <button class="cs-item" data-act="ranking" type="button">RANKING</button>
-        <button class="cs-item" data-act="feedback" type="button">FEEDBACK</button>
-        <button class="cs-item" data-act="apoie" type="button">APOIE O JOGO</button>
-        <button class="cs-item" data-act="sobre" type="button">DOSSIÊ DO JOGO</button>
-      </div>
+      <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
+      <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>COMO JOGAR</button>
+      <button class="cs-item" data-act="config" type="button"><span class="cs-tick">▸</span>CONFIGURAÇÕES</button>
+      <button class="cs-item" data-act="feedback" type="button"><span class="cs-tick">▸</span>ENVIE SEU FEEDBACK</button>
+      <button class="cs-item" data-act="apoie" type="button"><span class="cs-tick">▸</span>APOIE O JOGO</button>
     </nav>
     <!-- plate do jogador: nível/XP derivados dos stats locais (mesma fonte do RANKING).
          Clique abre o passo de perfil do setup. -->
@@ -1038,8 +1033,13 @@ window.__GEO_LANG__ = (function () {
     </aside>
     </div>
     <!-- painel de amostra: é uma captura real de mapa do jogo (a mesma família de
-         imagem que a referência usa), decorativa e fora da ordem de foco -->
-    <aside class="set-preview" aria-hidden="true"></aside>
+         imagem que a referência usa), decorativa e fora da ordem de foco.
+         Volta ao formato da main (wrap + legenda): UIR22 ancora a legenda, e o
+         dono escolheu o menu/estrutura da main sobre os cards do PR (25/08). -->
+    <aside class="set-preview-wrap" aria-hidden="true">
+      <div class="set-preview"></div>
+      <div class="set-preview-caption">PRÉVIA · FERRO VELHO DO ZÉ · PADRÃO OURO</div>
+    </aside>
     </div>
     <div class="set-actions">
       <button id="settings-restore" class="set-secondary" type="button">RESTAURAR PADRÃO</button>

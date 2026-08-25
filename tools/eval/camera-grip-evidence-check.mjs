@@ -7,6 +7,12 @@
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 
+/* Teto de contato mão↔anchor: 30 mm por pose. Exceção com procedência (decisão
+   do dono, 25/08): idle da camera-roxa admite 40 mm. Primeira medição do idle —
+   recibo regenerado contra os GLBs pós-#407 (geometria bit-idêntica, hash dos
+   POSITION 1b40659628a8f3d3): o rig robótico de mãos largas apoia a 35,4 mm.
+   40 mm mantém o mutante arma-deslocada (offset de dezenas de cm) mordendo. */
+const TETO_APOIO = (clip) => (clip === 'idle' ? 0.040 : 0.030);
 const MUTANT = process.argv.includes('--mutante=arma-deslocada');
 const evidencePath = 'tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-evidence.json';
 const evidence = JSON.parse(readFileSync(evidencePath, 'utf8'));
@@ -24,7 +30,8 @@ for (const [clip, pose] of Object.entries(evidence.poses)) {
   const right = distance(pose.rightHand, anchors.rightAnchor);
   const left = distance(pose.leftHand, anchors.leftAnchor);
   check(right <= .03, `${clip}: mão direita toca anchor (${right.toFixed(3)} m <= 0,030 m)`);
-  check(left <= .03, `${clip}: mão esquerda toca anchor (${left.toFixed(3)} m <= 0,030 m)`);
+  const teto = TETO_APOIO(clip);
+  check(left <= teto, `${clip}: mão esquerda toca anchor (${left.toFixed(3)} m <= ${(teto * 1000).toFixed(0).replace('.', ',')} m)`);
   check(existsSync(pose.render), `${clip}: render de corpo inteiro existe`);
 }
 check(existsSync(evidence.poses.walk.gripRender), 'grip A limpo existe');
