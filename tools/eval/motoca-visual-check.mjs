@@ -100,13 +100,14 @@ check(materials.has('Motofrete_PhoneMount'), 'MOTO-V6 telefone tem suporte/corre
 check(frameRatio >= .42, 'MOTO-V7 corpo/suporte escuro domina a tela', `${(frameRatio * 100).toFixed(1)}% >= 42,0%`);
 check(screenLuma <= .20, 'MOTO-V8 tela tem brilho fraco, não slab ciano', `luma ${screenLuma.toFixed(3)} <= 0,200`);
 
+let mutacaoCega = false;
 if (mutation) {
   if (!failures.length) {
     console.error(`MUTANTE PASSOU: ${mutation} não acendeu nenhuma cláusula.`);
-    process.exit(1);
+    mutacaoCega = true;
+  } else {
+    console.log(`mutante ${mutation} reprovado como esperado: ${failures.join(', ')}`);
   }
-  console.log(`mutante ${mutation} reprovado como esperado: ${failures.join(', ')}`);
-  process.exit(1);
 }
-if (failures.length) process.exit(1);
+process.exit(mutacaoCega || failures.length ? 1 : 0);
 console.log(`MOTOCA-VISUAL ✓ máscara ${maskPath}; opening ${(openingRatio * 100).toFixed(1)}%; continuidade ${(continuity * 100).toFixed(1)}%`);

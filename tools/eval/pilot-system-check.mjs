@@ -352,13 +352,14 @@ check(meterSelector && chroma(color3(meterSelector)) >= .35,
 check(propWidth <= .14 && propHeight <= .28 && propCenterX <= .10 && propFront <= .02,
   'DPROP4 prop reduzido fica na mochila, fora de ombro/arma', `${propWidth.toFixed(3)}×${propHeight.toFixed(3)} m; centroX ${propCenterX.toFixed(3)}; frenteZ ${propFront.toFixed(3)}`);
 
+let mutacaoCega = false;
 if (mutation) {
   if (!failures.length) {
     console.error(`MUTANTE PASSOU: ${mutation} não acendeu nenhuma cláusula.`);
-    process.exit(1);
+    mutacaoCega = true;
+  } else {
+    console.log(`mutante ${mutation} reprovado como esperado: ${failures.join(', ')}`);
   }
-  console.log(`mutante ${mutation} reprovado como esperado: ${failures.join(', ')}`);
-  process.exit(1);
 }
-if (failures.length) process.exit(1);
+process.exit(mutacaoCega || failures.length ? 1 : 0);
 console.log('PILOT-SYSTEM ✓ pilotos preservados + Microfonildo TV/M4/11 clipes/identidade');
