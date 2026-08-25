@@ -1839,13 +1839,7 @@ export class Game {
       if (e.code === 'Digit3') this._switchWeapon('knife');
       if (e.code === 'KeyQ' && this.player.lastInv && this.player.lastInv !== this.player.weapon)
         this._switchWeapon(this.player.lastInv);   // #261: lastinv - Q alterna as duas últimas
-      if (e.code === 'KeyE' && this.nearPickup) {
-        const { pk, dropIdx } = this.nearPickup;
-        this._grabPickup(pk, this.player, true);
-        // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário)
-        if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
-        this.nearPickup = null;
-      }
+      if (e.code === 'KeyE') this._grabNearPickup();
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
       if (e.code === 'KeyR') this._startReload();
       if (e.code === 'Digit4') this._throwSmoke();   // fumaça no 4 (convenção CS)
@@ -1946,16 +1940,20 @@ export class Game {
       pistol: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 8h14v3h-3l-1 2h-3v5H7v-5H6l-3-2z"/></svg>',
       knife: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 15L14 4l3 3-11 11z"/><rect x="12.5" y="15" width="7" height="2.6" rx="1"/></svg>',
       nade: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="14.5" r="6"/><rect x="10" y="4.5" width="4" height="4"/><rect x="13" y="5" width="6" height="2" rx="1"/></svg>',
+      pickup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10M8 9l4 4 4-4"/><path d="M5 15v4h14v-4"/></svg>',
     };
     root.innerHTML =
       '<div class="touch-look"></div>' +
-      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob"></div></div>' +
-      '<button class="touch-btn touch-fire-l" aria-label="Atirar">' + IC.fire + '</button>' +
-      '<button class="touch-btn touch-fire" aria-label="Atirar">' + IC.fire + '</button>' +
+      // DOIS sticks: esquerdo = andar, direito = olhar. O MIOLO de cada um é gatilho de tiro
+      // (aperta o centro sem arrastar = atira). Por isso o knob leva o ícone de fogo.
+      '<div class="touch-joy touch-joy-l"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
+      '<div class="touch-joy touch-joy-r"><div class="touch-joy-knob">' + IC.fire + '</div></div>' +
       '<button class="touch-btn touch-ads" aria-label="Mirar">' + IC.ads + '</button>' +
       '<button class="touch-btn touch-reload" aria-label="Recarregar">' + IC.reload + '</button>' +
       '<button class="touch-btn touch-crouch" aria-label="Agachar">' + IC.crouch + '</button>' +
       '<button class="touch-btn touch-pause" aria-label="Pausar">II</button>' +
+      // PEGAR arma do chão: substitui a tecla E no toque. Só aparece quando há arma no alcance.
+      '<button class="touch-pickup hidden" aria-label="Pegar arma">' + IC.pickup + '<span class="touch-pick-lbl"></span></button>' +
       '<div class="touch-weps">' +
         '<button class="touch-wep" data-wep="primary" aria-label="Arma primária">' + IC.rifle + '</button>' +
         '<button class="touch-wep" data-wep="secondary" aria-label="Pistola">' + IC.pistol + '</button>' +
@@ -1991,14 +1989,16 @@ export class Game {
 
     // STICKS ANALÓGICOS (esquerdo = andar, direito = mira/câmera). Helper genérico: knob segue
     // o dedo até o raio R, com zona morta; `onVec` recebe o vetor -1..1 COM magnitude.
-    const stick = (sel, onVec) => {
-      const el = q(sel), kn = el.querySelector('.touch-joy-knob'); const R = 56;
+    //  onVec(x,y): vetor -1..1 do stick.  onCenter(dentroDaZonaMorta): miolo pressionado = tiro.
+    const stick = (sel, onVec, onCenter) => {
+      const el = q(sel), kn = el.querySelector('.touch-joy-knob'); const R = 56, DZ = 0.18;
       let id = null, cx = 0, cy = 0;
       const move = (t) => {
         const dx = t.clientX - cx, dy = t.clientY - cy;
         const d = Math.hypot(dx, dy) || 1, cl = Math.min(d, R), nx = dx / d, ny = dy / d, mag = Math.min(1, d / R);
         kn.style.transform = `translate(${nx * cl}px, ${ny * cl}px)`;
-        if (mag < 0.18) onVec(0, 0); else onVec(nx * mag, ny * mag);
+        // dentro da zona morta o dedo está no MIOLO → não anda/olha, mas ATIRA (onCenter true)
+        if (mag < DZ) { onVec(0, 0); onCenter(true); } else { onVec(nx * mag, ny * mag); onCenter(false); }
       };
       el.addEventListener('touchstart', (e) => {
         const t = e.changedTouches[0]; id = t.identifier;
@@ -2006,11 +2006,23 @@ export class Game {
         move(t); e.preventDefault();
       }, { passive: false });
       el.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
-      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); kn.style.transform = ''; } };
+      const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; onVec(0, 0); onCenter(false); kn.style.transform = ''; el.classList.remove('firing'); } };
       el.addEventListener('touchend', end); el.addEventListener('touchcancel', end);
     };
-    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; });   // andar (direção; a velocidade é normalizada no movimento)
-    // MIRA = arraste na tela (sem stick), estilo CoD Mobile — feito na camada .touch-look acima.
+    // TIRO PELO MIOLO DOS DOIS STICKS: cada stick tem seu flag; o gatilho real (mouseDown0) é
+    // o OU dos dois. Assim dá pra ANDAR (stick esq. p/ fora) + ATIRAR (miolo do dir.), e vice-versa.
+    this._fireStick = { l: false, r: false };
+    const setStickFire = (side, on, el) => {
+      if (this._fireStick[side] === on) return;
+      this._fireStick[side] = on;
+      el.classList.toggle('firing', on);
+      const want = this._fireStick.l || this._fireStick.r;
+      if (want && !this.mouseDown0) { if (this._acceptInput()) { this.mouseDown0 = true; this._tryShoot(); } }
+      else if (!want) { this.mouseDown0 = false; }
+    };
+    const joyL = q('.touch-joy-l'), joyR = q('.touch-joy-r');
+    stick('.touch-joy-l', (x, y) => { this.touchMove.x = x; this.touchMove.z = y; }, (c) => setStickFire('l', c, joyL)); // andar
+    stick('.touch-joy-r', (x, y) => { this.touchLook.x = x; this.touchLook.y = y; }, (c) => setStickFire('r', c, joyR)); // olhar
 
     // BOTÕES: cada um com touchstart/end próprios (stopPropagation implícito por serem elementos).
     const on = (sel, start, end) => {
@@ -2018,11 +2030,6 @@ export class Game {
       el.addEventListener('touchstart', (e) => { e.preventDefault(); start(); }, { passive: false });
       if (end) { const h = (e) => { e.preventDefault(); end(); }; el.addEventListener('touchend', h); el.addEventListener('touchcancel', h); }
     };
-    // DOIS botões de ATIRAR (esquerda perto do joystick = hip-fire; direita = principal).
-    const fireStart = () => { if (this._acceptInput()) { this.mouseDown0 = true; this._tryShoot(); } };
-    const fireEnd = () => { this.mouseDown0 = false; };
-    on('.touch-fire', fireStart, fireEnd);
-    on('.touch-fire-l', fireStart, fireEnd);
     on('.touch-reload', () => { if (this._acceptInput()) this._startReload(); });
     on('.touch-ads', () => {
       if (!this._acceptInput()) return;
@@ -2031,6 +2038,9 @@ export class Game {
     }, () => { const w = this.player.weapon; if (!(WEAPONS[w] && WEAPONS[w].scope)) this._scope(false); });
     on('.touch-crouch', () => { if (this._acceptInput()) this.keys.KeyC = true; }, () => { this.keys.KeyC = false; });
     on('.touch-pause', () => { this.setPaused(!this.paused); });
+    // PEGAR (toque) = a tecla E: chama o mesmo caminho. O update() mostra/esconde o botão.
+    this._touchPickBtn = q('.touch-pickup');
+    on('.touch-pickup', () => { if (this._acceptInput()) this._grabNearPickup(); });
     // BARRA DE ARMAS (embaixo): primária / pistola / faca / fumaça / granada
     root.querySelectorAll('.touch-wep').forEach((b) => {
       b.addEventListener('touchstart', (e) => {
@@ -2632,7 +2642,7 @@ export class Game {
     if (this.state !== 'live' && this.state !== 'countdown') v = false;
     const entrou = v && !this.paused;
     this.paused = v;
-    if (v) { this.keys = {}; this.touchMove.x = 0; this.touchMove.z = 0; this.mouseDown0 = false; }
+    if (v) { this.keys = {}; this.touchMove.x = 0; this.touchMove.z = 0; this.touchLook.x = 0; this.touchLook.y = 0; this.mouseDown0 = false; if (this._fireStick) { this._fireStick.l = this._fireStick.r = false; } }
     this.el.pause.classList.toggle('hidden', !v);
     // pausado, o overlay de toque some — senão a camada de OLHAR (tela cheia) tapava o menu
     // de pausa e roubava os toques dos botões dele.
@@ -4999,6 +5009,15 @@ export class Game {
     let iz = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
     // mobile: o joystick de toque manda o vetor (sobrepõe as teclas quando fora da zona morta)
     if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { ix = this.touchMove.x; iz = this.touchMove.z; }
+    // mobile: STICK DIREITO = olhar por TAXA (gira enquanto o dedo empurra, estilo dual-stick
+    // de console). Ao contrário do arraste, o valor é velocidade angular: aplica × dt.
+    if (this.touchLook && (this.touchLook.x || this.touchLook.y) && this._acceptInput()) {
+      const ls = this.settings.sens * 2.6 * dt * (p.scoped ? Math.max(0.3, this.camera.fov / 70) : 1);
+      const invY = this.settings.invertY ? -1 : 1;
+      p.yaw -= this.touchLook.x * ls;
+      p.pitch -= this.touchLook.y * ls * invY;
+      p.pitch = Math.max(-1.45, Math.min(1.45, p.pitch));
+    }
     const il = Math.hypot(ix, iz) || 1; ix /= il; iz /= il;
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
@@ -5396,10 +5415,20 @@ export class Game {
         this._pkHintLivre = this.time + HINT_ON + HINT_OFF;
       }
       if (util && this._pkHintW === w && this.time < (this._pkHintAte || 0)) {
-        // com várias armas ao alcance, o HUD ensina o gesto em vez de deixar o jogador adivinhar
-        this.el.pickupHint.textContent = `[E] PEGAR ${WEAPONS[w].short}` + (inReach > 1 ? ' · mire pra escolher' : '');
+        // com várias armas ao alcance, o HUD ensina o gesto em vez de deixar o jogador adivinhar.
+        // No mobile não existe tecla E — o gesto é o botão PEGAR (abaixo), então o texto tira o "[E]".
+        const pre = this.mobile ? 'PEGAR ' : '[E] PEGAR ';
+        this.el.pickupHint.textContent = pre + WEAPONS[w].short + (inReach > 1 ? ' · mire pra escolher' : '');
         this.el.pickupHint.classList.remove('hidden');
       } else this.el.pickupHint.classList.add('hidden');
+      // BOTÃO PEGAR (toque): visível SEMPRE que há arma útil no alcance (não segue o timer do
+      // texto, que some após lido — a ação precisa ficar acessível enquanto o jogador mira nela).
+      if (this._touchPickBtn) {
+        if (util) {
+          this._touchPickBtn.querySelector('.touch-pick-lbl').textContent = WEAPONS[w].short;
+          this._touchPickBtn.classList.remove('hidden');
+        } else this._touchPickBtn.classList.add('hidden');
+      }
     }
     for (const pk of list) {
       // respawn a taken weapon
@@ -5452,6 +5481,16 @@ export class Game {
     if (mode === 'knife') return false;
     if (mode === 'awp') return w === 'awp';
     return true; // all
+  }
+  // Pega a arma em foco (E no teclado ou botão PEGAR no toque). Extraído do handler do KeyE
+  // pra o mobile chamar o MESMO caminho — nada de duplicar a lógica de consumir o drop.
+  _grabNearPickup() {
+    if (!this.nearPickup) return;
+    const { pk, dropIdx } = this.nearPickup;
+    this._grabPickup(pk, this.player, true);
+    // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário)
+    if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
+    this.nearPickup = null;
   }
   _grabPickup(pk, who, isPlayer) {
     const w = pk.weapon;                           // qualquer arma de WEAPONS

@@ -2409,7 +2409,11 @@ function selectChar(c, row) {
   if (staticPreviews) pvSetVideo(c); else pvStopVideo();
   // rótulo da facção + tamanho do elenco sobre o nome (referência 03: "PALHAÇOS · 8 PERSONAGENS")
   const tagEl = $('char-faction-tag');
-  if (tagEl) tagEl.textContent = `${tr(FACTION_NAME[currentFaction] || '')} · ${CHARACTERS.filter(x => x.team === currentFaction).length} ${tr('PERSONAGENS')}`;
+  // spans separados (não uma string só) pro CSS poder quebrar em 2 linhas no mobile: some o
+  // "·" e joga a contagem pra linha de baixo. No desktop segue inline numa linha.
+  if (tagEl) tagEl.innerHTML = `<span class="cft-fac">${tr(FACTION_NAME[currentFaction] || '')}</span>`
+    + `<span class="cft-sep"> · </span>`
+    + `<span class="cft-count">${CHARACTERS.filter(x => x.team === currentFaction).length} ${tr('PERSONAGENS')}</span>`;
   $('char-info-name').textContent = c.name;
   $('char-info-blurb').textContent = tr(c.blurb);
   renderCharAttrs(c);

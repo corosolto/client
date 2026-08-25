@@ -849,6 +849,7 @@ body:has(#pause-menu:not(.hidden)) #hud{opacity:.12;transition:opacity var(--t) 
 .howto-grid{display:grid;grid-template-columns:auto auto;gap:var(--s-2) var(--s-5);font-size:var(--fs-200);
   font-weight:600;letter-spacing:var(--tr-1);text-align:left;color:var(--ink-200)}
 .howto-grid span:nth-child(odd){color:var(--br-faixa);font-family:var(--mono);font-size:var(--fs-100)}
+.howto-touch{display:none}   /* versão toque: só aparece no mobile (media coarse abaixo) */
 .support-panel{max-width:560px}
 .support-choice{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .support-region{font-size:12px!important;padding:10px 14px!important}
@@ -2332,21 +2333,25 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #touch-ui .touch-look{position:absolute;top:0;bottom:0;right:0;left:42%;pointer-events:auto}
 /* Só o stick ESQUERDO (andar). À direita, o cluster de botões sobre a área de arraste. */
 /* TAMANHOS na proporção da referência CoD Mobile (os nossos estavam ~2× grandes). */
-#touch-ui .touch-joy{position:absolute;bottom:calc(34px + var(--sb));left:calc(32px + var(--sl));width:104px;height:104px;border-radius:50%;
+#touch-ui .touch-joy{position:absolute;bottom:calc(34px + var(--sb));width:104px;height:104px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.06),rgba(255,255,255,.02) 70%,transparent);
   border:2px solid rgba(255,255,255,.14);pointer-events:auto;z-index:2}
-#touch-ui .touch-joy-knob{position:absolute;left:50%;top:50%;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
-  background:rgba(180,217,46,.30);border:2px solid rgba(255,255,255,.32);will-change:transform}
+#touch-ui .touch-joy-l{left:calc(32px + var(--sl))}
+#touch-ui .touch-joy-r{right:calc(32px + var(--sr))}
+#touch-ui .touch-joy-knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;
+  background:rgba(180,217,46,.30);border:2px solid rgba(255,255,255,.32);will-change:transform;
+  display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.62)}
+#touch-ui .touch-joy-knob svg{width:56%;height:56%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6));pointer-events:none}
+/* MIOLO PRESSIONADO = tiro: o knob acende vermelho enquanto atira (feedback do gatilho central) */
+#touch-ui .touch-joy.firing .touch-joy-knob{background:rgba(230,60,50,.55);border-color:rgba(255,150,140,.8);color:#fff}
 #touch-ui .touch-btn{position:absolute;pointer-events:auto;z-index:2;border-radius:50%;color:#fff;
   font:800 11px/1 var(--aaa-font-body,sans-serif);letter-spacing:.3px;
   background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.32);display:flex;align-items:center;justify-content:center}
 #touch-ui .touch-btn:active{background:rgba(180,217,46,.55)}
 #touch-ui .touch-btn svg{width:54%;height:54%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
-/* ESQUERDA: ATIRAR (hip-fire) ao lado do joystick. */
-#touch-ui .touch-fire-l{left:calc(150px + var(--sl));bottom:calc(50px + var(--sb));width:54px;height:54px;background:rgba(230,60,50,.26);border-color:rgba(255,120,110,.45)}
-/* DIREITA: ATIRAR grande; MIRAR em cima; RECARREGAR embaixo-esq. e ABAIXAR ao lado. */
-#touch-ui .touch-fire{right:calc(48px + var(--sr));bottom:calc(52px + var(--sb));width:74px;height:74px;background:rgba(230,60,50,.30);border-color:rgba(255,120,110,.5)}
-#touch-ui .touch-ads{right:calc(56px + var(--sr));bottom:calc(150px + var(--sb));width:54px;height:54px}
+/* TIRO agora é no MIOLO dos dois sticks (não há mais botões de fogo dedicados).
+   DIREITA: MIRAR / RECARREGAR / ABAIXAR ficam ACIMA e à ESQUERDA do stick de olhar. */
+#touch-ui .touch-ads{right:calc(150px + var(--sr));bottom:calc(150px + var(--sb));width:54px;height:54px}
 #touch-ui .touch-reload{right:calc(140px + var(--sr));bottom:calc(50px + var(--sb));width:50px;height:50px}
 #touch-ui .touch-crouch{right:calc(204px + var(--sr));bottom:calc(54px + var(--sb));width:50px;height:50px}
 #touch-ui .touch-pause{right:calc(16px + var(--sr));top:calc(14px + var(--st));width:40px;height:40px;background:rgba(16,16,20,.4);border-color:rgba(255,255,255,.28);color:#ecebe6;font-size:14px}
@@ -2355,6 +2360,17 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 #touch-ui .touch-wep{pointer-events:auto;width:46px;height:46px;padding:0;border-radius:10px;color:#fff;
   background:rgba(16,16,20,.34);border:1px solid rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center}
 #touch-ui .touch-wep svg{width:62%;height:62%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+/* PEGAR arma (toque) = a tecla E. Pílula verde pulsante, centralizada acima da barra de armas;
+   só aparece quando há arma útil no alcance (o game.js tira/põe a classe .hidden). */
+#touch-ui .touch-pickup{position:absolute;left:50%;bottom:calc(64px + var(--sb));transform:translateX(-50%);
+  pointer-events:auto;z-index:3;display:flex;align-items:center;gap:8px;padding:9px 18px;border-radius:999px;
+  color:#0c0c0c;background:rgba(180,217,46,.94);border:2px solid rgba(255,255,255,.55);
+  font:800 13px/1 var(--aaa-font-body,sans-serif);letter-spacing:1px;text-transform:uppercase;
+  box-shadow:0 3px 14px rgba(0,0,0,.45);animation:touchPickPulse 1s ease-in-out infinite}
+#touch-ui .touch-pickup svg{width:20px;height:20px;flex:0 0 auto}
+#touch-ui .touch-pickup:active{background:#cfe84a}
+#touch-ui .touch-pickup.hidden{display:none}
+@keyframes touchPickPulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.06)}}
 #touch-ui .touch-wep:active{background:rgba(180,217,46,.5)}
 /* no mobile: esconde a engrenagem de settings, o ícone de som E os slots de armas laterais
    (1-5) do HUD — a troca de arma/bomba passou pra barra de baixo do touch UI. */
@@ -2390,4 +2406,151 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
     padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
   #settings-panel .set-actions{flex:0 0 auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
   #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
+}
+
+/* ═══════════════ MOBILE / TOQUE — celular deitado (app + web) ═══════════════
+   Camada responsiva das telas de menu/setup/facção/personagem em tela de toque
+   pequena. Não afeta desktop (fine pointer) nem tablet (altura maior). Consolida
+   o que estava sendo injetado pelo app mobile (corosolto/mobile). NÃO mexe no
+   #load-overlay: forçar cover+blur nele sobrecarrega o GPU do celular e trava o
+   carregamento 3D (bug medido no port mobile). */
+@media (pointer: coarse) and (max-height: 560px) {
+  /* MENU: some o rodapé de links, sociais, links externos do topo e o Feedback */
+  .menu-footer, .aaa-links { display: none; }
+  #cs-menu [data-act="feedback"] { display: none; }
+  /* ao abrir JOGAR (submenu visível), foca no modo: some o resto do menu */
+  #cs-menu:has(#cs-modos:not([hidden])) .cs-item:not([data-act="jogar"]):not(.cs-sub-item) { display: none; }
+  .cs-item { min-height: 46px; }
+  .aaa-bottombar button { min-height: 52px; }
+
+  /* SPLASH: texto de toque + fundo cobrindo a tela toda */
+  #splash-enter { font-size: 0; }
+  #splash-enter::after { content: "TOQUE PARA COMEÇAR"; font-size: var(--fs-500); }
+  #boot-splash::after { background-size: cover, cover; }
+  /* CENTRALIZA a barra/status/toque: no desktop a barra é larga e o status usa space-between
+     (rótulo na ponta esq., % na ponta dir.), o que deitado parece "torto/pro lado". Barra
+     estreita centrada + status agrupado no meio = bloco de loading no centro exato da tela. */
+  #boot-splash { justify-content: center !important; align-items: center !important; }
+  #boot-splash .splash-frame { width: 100%; max-width: 420px; margin: 0 auto; align-items: center;
+    text-align: center; padding: 0 16px; }
+  #boot-splash .splash-bar, #boot-splash .splash-status { width: min(280px, 74vw) !important; margin: 0 auto; }
+  #boot-splash .splash-status { justify-content: center; gap: 12px; }
+  #boot-splash #splash-enter { margin-top: var(--s-3); }
+
+  /* SETUP DA PARTIDA: tela cheia (no desktop é coluna lateral que sobrepõe o menu) */
+  #menu-setup.cs-setup { position: fixed; inset: 0; width: 100vw; max-width: none;
+    height: 100%; z-index: 60; overflow-y: auto; }
+  #menu-setup.cs-setup:not(.open) { display: none; }
+
+  /* ESCOLHA SEU LADO: cards de facção menores pra caber deitado */
+  .team-card { height: min(52vh, 360px); }
+
+  /* ESCOLHA SEU PERSONAGEM: SEM o 3D no mobile (pedido do dono). A escolha é pelo
+     carrossel; a ficha vira uma LINHA compacta (nome à esquerda, botão USAR PERSONAGEM
+     à direita) — assim o botão cabe e aparece no espaço curto do celular deitado. O grid
+     precisa das áreas em coluna única, senão o "sheet preview" de 2 colunas some o botão. */
+  .char-preview-box, .pv-hints { display: none; }
+  .char-stage { grid-template-columns: 1fr; grid-template-areas: "sheet" "rail";
+    grid-template-rows: auto var(--char-thumb); }
+  .char-sheet { flex-direction: row; align-items: center; gap: 14px; max-height: none;
+    overflow: visible; padding: var(--s-2) var(--s-4); align-self: start; }
+  /* faixa do meio mais baixa: menos respiro em volta e teto no palco pra não invadir os
+     retratos da fileira de baixo */
+  .char-stage { gap: var(--s-2) var(--s-4); }
+  .char-sheet #char-info-blurb, .char-sheet .char-attrs-block { display: none; }
+  /* a descrição da especialidade quebrava em 2 linhas nos nomes longos e esticava a faixa
+     (o Dollynho, curto, ficava certo). Trava em 1 linha: altura da faixa vira constante. */
+  .char-spec { min-width: 0; flex: 0 1 auto; }
+  .char-spec p { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+    overflow: hidden; }
+  .char-info-head { flex: 1 1 auto; min-width: 0; }
+  #char-info-name { font-size: clamp(18px, 4vw, 26px); }
+  /* "TRIBOS URBANAS · 9 PERSONAGENS" em 2 linhas: some o "·" e a contagem cai pra linha de baixo */
+  #char-faction-tag .cft-sep { display: none; }
+  #char-faction-tag .cft-count { display: block; }
+  #char-confirm { position: static; margin: 0 0 0 auto; align-self: center; flex: 0 0 auto; width: auto; }
+
+  /* CÂMERA/NOTCH: afasta o conteúdo das bordas seguras (em paisagem o notch fica na
+     lateral). Sem isto o título fica embaixo da câmera do iPhone e não se lê. */
+  #main-menu, .screen { padding-left: max(14px, env(safe-area-inset-left)) !important;
+    padding-right: max(14px, env(safe-area-inset-right)) !important; }
+
+  /* PAINÉIS DE FLUXO (APOIE O JOGO, COMO JOGAR, etc.): no desktop a .screen CENTRALIZA um
+     painel; deitado no celular o painel é mais alto que a tela e sobra cortado em cima E
+     embaixo (VOLTAR some, texto do CAPTURA some) — .screen é fixed e não rola. Aqui a tela
+     ROLA e alinha no topo; o painel encolhe e ganha respiro embaixo pra passar da barra. */
+  /* :not(#map-screen) — o #map-screen tem grade própria (auto/1fr/auto) que cabe na tela
+     inteira; se ele também rolar, o scrollIntoway do carrossel empurra o topo (abas/nome/
+     opções) pra fora. Só os painéis de conteúdo ganham rolagem. */
+  .screen:not(#map-screen) { justify-content: flex-start; overflow-y: auto;
+    -webkit-overflow-scrolling: touch; gap: 12px; padding-top: max(12px, env(safe-area-inset-top));
+    padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  .screen .panel { padding: var(--s-3) var(--s-4); max-width: 560px; width: 100%; }
+  .center-panel { gap: 10px; }
+  .center-panel h2 { font-size: var(--fs-500); margin: 0; }
+  #support-panel .fb-note, #support-panel .support-note, #support-region-note,
+  #howto-panel p { font-size: var(--fs-100); line-height: 1.45; margin: 0; }
+  .support-choice { margin: 6px 0; gap: 8px; }
+
+  /* COMO JOGAR: troca a lista de TECLADO pela lista de TOQUE (não existe W/A/S/D no celular) */
+  #howto-panel .howto-keys { display: none; }
+  #howto-panel .howto-touch { display: grid; }
+  .howto-grid { font-size: var(--fs-50); gap: 4px var(--s-3); }
+
+  /* RANKING: números 26px + grade folgada + parágrafo estático que REPETE o #rank-global.
+     Encolhe os stats e ESCONDE a nota estática (o #rank-global já diz o mesmo, ali em cima). */
+  #ranking-panel .rank-stats { font-size: 11px; gap: 8px 14px; }
+  #ranking-panel .rank-stats b { font-size: 18px; }
+  #ranking-panel .rank-note { display: none; }
+  #ranking-panel #rank-global { padding-top: 8px; }
+  #ranking-panel #rank-global h3 { font-size: 12px; }
+
+  /* ESCOLHA DO MAPA (#map-screen): no desktop o cabeçalho (abas + ficha + opções) empilha
+     em coluna única abaixo de 820px e, na altura curta do celular deitado, come TODA a
+     altura — sobra zero pro acervo, e a lista de mapas colapsa (as "duas barras vazias"
+     com ▲▼). Aqui o cabeçalho vira compacto e o carrossel vira uma TIRA HORIZONTAL de
+     cards pequenos que rola com o dedo (as setas ▲▼ eram de rolagem vertical, não servem). */
+  #map-screen { grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+  .ms-topbar { padding: 6px 14px 4px; }
+  .ms-kicker, .ms-cat-desc, .ms-desc, .ms-byline, .ms-meta { display: none; }
+  .ms-head { grid-template-columns: 1fr; gap: 6px; }
+  .ms-tabs { gap: 12px; }
+  .ms-tab { font-size: 12px; letter-spacing: 2px; }
+  .ms-ficha { gap: 4px; }
+  .ms-name { font-size: 20px; }
+  .ms-match-options { padding: 6px 8px; gap: 6px 10px; }
+  .ms-match-options label { min-width: 84px; font-size: 9px; gap: 3px; }
+  .ms-match-options select { height: 30px; }
+  /* .ms-body é display:grid com coluna IMPLÍCITA auto, que CRESCIA pra caber a tira
+     inline-flex (2566px) — então o viewport inflava pra 2654px e o overflow-x:auto NUNCA
+     rolava (os cards além do 4º eram cortados pelo overflow:hidden do #map-screen). Travar
+     a coluna em minmax(0,1fr) e o carrossel/viewport em max-width:100% mantém o viewport na
+     largura da tela e faz a tira REALMENTE rolar. (diagnóstico via browser headless) */
+  .ms-body { padding: 6px 14px 4px; grid-template-columns: minmax(0, 1fr); }
+  .ms-carousel { min-width: 0; max-width: 100%; }
+  /* NAVEGAÇÃO POR SETAS (não por swipe): dentro do WebView com scrollEnabled=false o
+     arrasto horizontal de um div interno trava no meio (rolava só uns cards e parava). As
+     setas #ms-prev/#ms-next são BOTÕES — chamam stepMap() e centralizam o mapa via
+     scrollIntoView (rolagem PROGRAMÁTICA, imune ao touch-action). Viram ◀▶ nas laterais. */
+  .ms-carousel { position: relative; }
+  .ms-dashes { display: none; }
+  .ms-arrow { display: flex; position: absolute; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 60px; margin: 0; max-width: none; z-index: 4; font-size: 0;
+    background: rgba(13,14,17,.82); border-color: #33343b; }
+  #ms-prev { left: 0; }
+  #ms-next { right: 0; }
+  #ms-prev::after { content: "‹"; font-size: 30px; line-height: 1; color: #c9cad0; }
+  #ms-next::after { content: "›"; font-size: 30px; line-height: 1; color: #c9cad0; }
+  .ms-viewport { overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch;
+    touch-action: pan-x; overscroll-behavior-x: contain; padding: 0 44px; min-width: 0; max-width: 100%; }
+  /* inline-flex faz a tira ter a LARGURA DA SOMA dos cards (todos os 13), então o viewport
+     tem o que rolar; cards em px fixo (não vw+max-width, que confundia o cálculo intrínseco). */
+  .ms-strip { display: inline-flex; flex-wrap: nowrap; grid-template-columns: none;
+    width: auto; max-width: none; min-width: 100%; margin: 0; gap: 8px; padding-bottom: 4px; }
+  .ms-thumb { flex: 0 0 190px; max-width: none; }
+  .ms-thumb-img { aspect-ratio: 16 / 9; }
+  .ms-thumb-copy { padding: 5px 8px 6px; }
+  .ms-foot { padding: 6px 14px 10px; }
+  #map-screen .ms-actions .btn-big { padding: 9px 26px; }
+  #map-screen .ms-actions .btn-big > * { font-size: 16px; }
 }
