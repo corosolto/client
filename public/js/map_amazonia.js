@@ -433,13 +433,8 @@ export function buildAmazonia(scene, T) {
       { pos: [-26, 0.95, 20.6], phase: 3.1 },      // caixa d'água da palafita oeste
     ],
     dogs: [{ pos: [-14.8, 0, -20.4], to: [-13.2, 0, -19.2], phase: 0.7 }],
-    /* ── ELENCO DA MATA (PR #439, 9 espécies Mint + vida procedural no
-       ambientlife.js): boto serpenteia o canal (dorso fura a lâmina),
-       cardume de piranha em círculo na água livre entre os booms, araras nos
-       postes das barracas, tucanos nas caixas d'água, preguiça pendurada no
-       beiral (abaixo do AABB do telhado), macaco pulando na cumeeira norte
-       da madeireira e entre as bancadas, onça deitada no tronco da margem
-       leste, antas pastejando na borda da mata, carcará na serragem. ── */
+    /* elenco da mata (PR #439): 9 espécies Mint com vida no ambientlife.js; posições
+       fora de AABB de colisor (AR3) — caixa d'água, poste, beiral e tronco por altura. */
     botos: [{ pos: [2.5, -0.38, -12], to: [2.5, -0.38, 14], phase: 0.4, mode: 'swim' }],
     piranhas: Array.from({ length: 7 }, (_, i) => (
       { pos: [-4, -0.15, -20.5], radius: [1.2 + (i % 3) * 0.35, 1], phase: i * 0.87 }

@@ -49,11 +49,8 @@ const QUAD_SPEED = Object.freeze({
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
   anta: { walk: .55, flee: 3 }, carcara: { walk: .35, flee: 2.2 },
 });
-/* map2/amazonia: len/yawFix das 9 espécies Mint, no idioma do STATIC_FAUNA_META.
-   yawFix derivado GEOMETRICAMENTE (seção da ponta do eixo longo + assimetria
-   vertical, calibrado contra jacare=π/2 e capivara=0) — sem captura 3:2 ainda;
-   bico fino de boto/ave é CABEÇA, ponta fina de cauda é rabo. Convenção da casa:
-   yawFix aponta a CABEÇA para −Z (a locomoção soma π para casar com atan2→+Z). */
+/* map2/amazonia: len/yawFix das 9 espécies Mint (cabeça→−Z), derivados geometricamente
+   e calibrados contra jacare=π/2/capivara=0 — verificação visual 3:2 pendente (PR #439). */
 const AMAZONIA_FAUNA_META = Object.freeze({
   boto: { len: 2.0, yawFix: Math.PI / 2 },
   onca: { len: 1.5, yawFix: Math.PI / 2 },
@@ -208,10 +205,9 @@ function normalizeModel(id, model) {
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
-     comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5.
-     Amazonia (PR #439): boto/onça/anta/piranha/preguiça por COMPRIMENTO,
-     tucano/arara/macaco/carcará por ALTURA — valores no AMAZONIA_FAUNA_META. */
+     comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
   const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34, ...Object.fromEntries(AMAZONIA_FAUNA_ASSETS.map((id) => [id, AMAZONIA_FAUNA_META[id].len])) }[id] || .5;
+  // amazonia: bicho deitado (boto/onça/anta/piranha/preguiça) normaliza por comprimento
   const HORIZONTAIS = new Set(['rat', 'armadillo', 'cockroach', 'boto', 'onca', 'anta', 'piranha', 'preguica']);
   const dimension = HORIZONTAIS.has(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
