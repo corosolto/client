@@ -1883,6 +1883,29 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "caminhao-quentao-gelo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/gelo_quentao.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7415h9jvkf1eswf1m31p5j558d4crq",
+    "chatUrl": "https://mint.gg/chat/ph7812ay1cy3bfftz6zm6znw5h8d47y2",
+    "displayName": "Festive Quentão Vendor (caminhão de quentão)",
+    "frente": "map2-gelo",
+    "notes": "Caminhão de quentão de festa junina com neve no teto e bandeirolas (4.306 tris). Prop herói do mapa gelo (USANTOS). GLB normalizado ~1 m; escala no call-site (targetH 2,6 / targetLen 6,8, ry=π/2)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props.mjs"
+    ],
+    "finalSha256": "5f8f91c7c23599e5686cb2db8d2f7efb7b6a678b033ffda32d27d9bf3c0e070c"
+   }
   }
  }
 }

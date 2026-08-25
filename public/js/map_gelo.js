@@ -8,7 +8,7 @@ import { AMB_LOOPS } from './soundscape.js';
 
 /* o caminhão de quentão (Mint) substitui o procedural no browser; no arnês placeProp devolve
    null e o procedural cobre (lição 3). Sem GLB publicado: sem slot props (eval:props-acervo). */
-export const GELO_PROPS = [];
+export const GELO_PROPS = ['gelo_quentao'];
 export const GELO_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'chicken', 'cow'];
 
 const HALF_X = 32;
@@ -505,20 +505,35 @@ export function buildGelo(scene, T) {
     batPinC.build(root);
   }
 
-  /* A serra em duas camadas no horizonte: fora dos bounds, sem colisor; o fog
-     do LOOK.gelo faz a integração com o céu (a régua eval:look mede o casamento). */
+  /* A serra em camadas no horizonte: PAREDES de crista recortada (matte painting
+     unlit + fog), não cones — o cone de 5 lados lia como pirâmide de primário na
+     captura 3:2 (crítica 25/08). Fora dos bounds, sem colisor. */
   {
+    const serraWall = SURFACE.serra.clone(); serraWall.repeat.set(0.05, 0.05); serraWall.needsUpdate = true;
+    const matPerto = new THREE.MeshBasicMaterial({ map: serraWall, color: 0x6d81a0, side: THREE.DoubleSide });
+    const matLonge = new THREE.MeshBasicMaterial({ map: serraWall, color: 0xa8b9d2, side: THREE.DoubleSide });
     let si = 0;
     const ridge = (x, z, w, h, mat) => {
-      const peak = new THREE.Mesh(new THREE.ConeGeometry(w / 2, h, 5), mat);
-      peak.scale.z = 0.55; peak.position.set(x, h / 2 - 0.6, z);
-      peak.rotation.y = si * 0.7; peak.castShadow = peak.receiveShadow = false;
-      root.add(peak); si++;
+      let seed = 11 + si * 37;
+      const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+      const shape = new THREE.Shape(); shape.moveTo(-w / 2, 0);
+      const n = 6 + (si % 3);
+      for (let i = 0; i <= n; i++) {
+        const px = -w / 2 + (w * i) / n;
+        const py = i === 0 || i === n ? h * 0.28 : h * (0.45 + rand() * 0.55);
+        shape.lineTo(px, py);
+        if (i < n) shape.lineTo(px + w / n / 2, h * (0.3 + rand() * 0.35));
+      }
+      shape.lineTo(w / 2, 0); shape.closePath();
+      const wall = new THREE.Mesh(new THREE.ShapeGeometry(shape), mat);
+      wall.position.set(x, -0.5, z); wall.rotation.y = Math.atan2(-x, -z);
+      wall.castShadow = wall.receiveShadow = false;
+      root.add(wall); si++;
     };
-    ridge(-38, -62, 42, 15, MAT.serra); ridge(-8, -68, 52, 19, MAT.serraLonge); ridge(26, -60, 38, 13, MAT.serra);
-    ridge(58, -34, 34, 12, MAT.serraLonge); ridge(62, 6, 40, 15, MAT.serra); ridge(56, 42, 30, 11, MAT.serraLonge);
-    ridge(38, 62, 42, 15, MAT.serra); ridge(8, 68, 52, 19, MAT.serraLonge); ridge(-26, 60, 38, 13, MAT.serra);
-    ridge(-58, 34, 34, 12, MAT.serraLonge); ridge(-62, -6, 40, 15, MAT.serra); ridge(-56, -42, 30, 11, MAT.serraLonge);
+    ridge(-42, -66, 74, 17, matPerto); ridge(0, -74, 96, 22, matLonge); ridge(46, -64, 68, 15, matPerto);
+    ridge(70, -28, 60, 13, matLonge); ridge(74, 8, 70, 16, matPerto); ridge(64, 46, 56, 12, matLonge);
+    ridge(42, 66, 74, 17, matPerto); ridge(0, 74, 96, 22, matLonge); ridge(-46, 64, 68, 15, matPerto);
+    ridge(-70, 28, 60, 13, matLonge); ridge(-74, -8, 70, 16, matPerto); ridge(-64, -46, 56, 12, matLonge);
   }
 
   const GM = { black: material(0x202735, SURFACE.metal, 0.4, 0.5), steel: material(0xaab4c0, SURFACE.metal, 0.35, 0.6), wood: MAT.madeira, green: material(0x315b43, SURFACE.metal, 0.5, 0.3) };

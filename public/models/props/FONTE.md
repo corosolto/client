@@ -174,3 +174,12 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+- `gelo_quentao.glb` — "Festive Quentão Vendor", caminhão de quentão de festa
+  junina: janela de serviço aberta com panelas e vapor, bandeirolas no teto,
+  painéis pintados verde/amarelo/vermelho, neve acumulada no teto. 4.306 tris,
+  1 primitiva, texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para o
+  mapa gelo ("Treta no Gelo", USANTOS). Chat:
+  <https://mint.gg/chat/ph7812ay1cy3bfftz6zm6znw5h8d47y2>. Registro:
+  `caminhao-quentao-gelo`. Otimizado por `tools/optimize-props.mjs`
+  (1.078 KB → 412 KB). Âncora do flanco B; procedural de fallback com colisores
+  idênticos.

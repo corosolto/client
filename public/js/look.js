@@ -35,8 +35,9 @@ export const LOOK = {
     sol: { cor: 0xd9e6f5, i: 1.1, pos: [-26, 14, 18] },
     hemi: { ceu: 0x9fb8d4, chao: 0x6a7076, i: 0.75 },
     neblina: { d: 0.008, solDir: [-26, 14, 18], forca: 0.7 },
-    /* grade por interpolação medida dos vizinhos: dia soma sol+hemi ≈2,7 com exp ≈1,5 (L* 42-48) e a
-       penitenciaria ≈1,05 com 2,60 (L* 37; com 1,50 mediu L* 20). Gelo soma 1,85 → 1,50 mira L* 33-38. */
-    grade: { exposicao: 1.50, piso: 0.0072, expAces: 1.70 },
+    /* grade MEDIDA em frame (25/08): a interpolação dos vizinhos (1,50) entregou
+       L* 53 na média dos 4 frames 3:2 — dia nublado, não crepúsculo. 1,20 mira
+       L* ~42 e devolve o protagonismo às fogueiras. */
+    grade: { exposicao: 1.20, piso: 0.0072, expAces: 1.35 },
   },
 };

@@ -16,7 +16,7 @@ import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 import { buildParque } from './map_parque.js';
 import { buildVelhoOeste } from './map_velho_oeste.js';
 import { buildPenitenciaria } from './map_penitenciaria.js';
-import { buildGelo, GELO_AMBIENCE } from './map_gelo.js';
+import { buildGelo, GELO_AMBIENCE, GELO_PROPS } from './map_gelo.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -95,7 +95,7 @@ export const MAPS = {
   penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
   // Festa junina de inverno na serra: galpão de forró (E), praça da fogueira, barracas
   // juninas nas rotas e caminhão de quentão (B). Crepúsculo azul-laranja (LOOK.gelo).
-  gelo: { name: 'Treta no Gelo', build: buildGelo, ambience: GELO_AMBIENCE, ctfMode: true },
+  gelo: { name: 'Treta no Gelo', build: buildGelo, props: GELO_PROPS, ambience: GELO_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
