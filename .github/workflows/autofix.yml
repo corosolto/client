@@ -153,9 +153,15 @@ jobs:
           echo "mesclou=1" >> "$GITHUB_OUTPUT"
 
       # As ferramentas que vão rodar têm de ser as da BASE, nunca as do fork — senão
-      # um PR malicioso reescreve o gerador e o bot executa o que ele mandar.
-      - name: Restaura as ferramentas da base
-        if: env.pular != '1'
+      # um PR malicioso reescreve o gerador e o bot executa o que ele mandou.
+      # EXCEÇÃO (25/08, medida no #399): PR de BRANCH DA MESMA CASA mantém as
+      # ferramentas E o package.json do PR. Restaurar os da base aqui regenerava a doc
+      # com a contagem de scripts da MAIN (124) sobre uma árvore que tem os do PR (186)
+      # — o commit do autofix deixava o branch vermelho no próprio docs:check, em loop.
+      # A proteção anti-fork não se aplica: quem abre PR de branch da casa já tem write
+      # no repo e pode editar este workflow diretamente.
+      - name: Restaura as ferramentas da base (somente fork)
+        if: env.pular != '1' && env.HEAD_REPO != env.REPO
         run: |
           git fetch base "${{ github.event.pull_request.base.ref || 'main' }}"
           # O lock vem JUNTO com o package.json: `npm ci` exige que os dois batam, e
@@ -195,7 +201,7 @@ jobs:
       # As ferramentas foram restauradas da base só para rodar; o que volta ao PR é
       # apenas o resultado delas.
       - name: Devolve as ferramentas ao estado do PR
-        if: env.pular != '1' && steps.merge.outputs.humano != '1'
+        if: env.pular != '1' && env.HEAD_REPO != env.REPO && steps.merge.outputs.humano != '1'
         run: git checkout HEAD -- tools/ scripts/ package.json package-lock.json
 
       - name: A trava — só arquivo gerado pode virar commit
