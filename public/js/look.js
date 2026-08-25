@@ -28,4 +28,13 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  penitenciaria: {   // fim de tarde de presídio: azul-chumbo, glow de vapor de sódio; os holofotes quentes carregam a cena
+    sky: '/img/textures/sky_penitenciaria.webp',
+    horizonte: 0x567186,   // look-horizonte.py sobre sky_penitenciaria.webp (banda 498-510 de 1024)
+    zenite: 0x5e85a3,
+    sol: { cor: 0x9db8d8, i: 0.55, pos: [25, 40, -18] },
+    hemi: { ceu: 0x5e7f9d, chao: 0x2a2b26, i: 0.5 },
+    neblina: { d: 0.0085, solDir: [25, 40, -18], forca: 0.6 },
+    grade: { exposicao: 1.50, piso: 0.0055, expAces: 1.60 },
+  },
 };
