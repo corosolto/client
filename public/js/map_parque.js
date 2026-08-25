@@ -128,7 +128,7 @@ export function buildParque(scene, T) {
     green: material(0x3ec67d, SURFACE.paint, 0.55), white: material(0xfff7e8, SURFACE.paint, 0.58), dark: material(0x39445a, SURFACE.metal, 0.34, 0.62),
     wood: material(0xffffff, SURFACE.wood, 0.88), hedge: material(0xffffff, SURFACE.hedge, 1),
     trunk: material(0xffffff, SURFACE.casca, 0.95), leaf: material(0xffffff, SURFACE.folha, 1),
-    dirt: material(0xffffff, SURFACE.terra, 1), awning: material(0xffffff, SURFACE.lona, 0.7),
+    dirt: material(0xffffff, SURFACE.terra, 1),
     roof: material(0xffffff, SURFACE.telhado, 0.82), tin: material(0xffffff, SURFACE.lata, 0.48, 0.35),
     stone: material(0xffffff, SURFACE.pedra, 0.9), asphalt: material(0xffffff, SURFACE.asfalto, 0.95),
     rail: material(0x9aa4ac, SURFACE.metal, 0.3, 0.75),
