@@ -1,10 +1,16 @@
 // Parque da Treta: arena CTF simétrica em fim de tarde, inteiramente procedural.
 // Rebuild USANTOS (régua: tools/eval/parque-vida-check.mjs).
 import * as THREE from 'three';
-import { InstBatch, mergeParts } from './mapprops.js';
+import { InstBatch, mergeParts, placeProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
+
+/* props GLB do mapa (Mint, FONTE.md): o coreto herói substitui o procedural no
+   browser; no arnês node placeProp devolve null e o procedural cobre (mesma
+   estrutura de colisores nos dois mundos — lição 3). */
+export const PARQUE_PROPS = ['parque_coreto'];
+export const PARQUE_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'parrot'];
 
 const HALF_X = 32;
 const HALF_Z = 42;
@@ -408,28 +414,31 @@ export function buildParque(scene, T) {
   // Coreto no quadrante sudoeste: palco octogonal, 8 colunas, telhado e bandeirolas.
   {
     const g = new THREE.Group(); g.name = 'parque-coreto'; g.position.set(CORETO.x, 0, CORETO.z); root.add(g);
-    const stage = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.65, 0.45, 8), MAT.stone);
-    stage.position.y = 0.225; stage.castShadow = stage.receiveShadow = true; g.add(stage);
     colliders.push({ minX: CORETO.x - 2.9, maxX: CORETO.x + 2.9, minY: 0, maxY: 0.45, minZ: CORETO.z - 2.9, maxZ: CORETO.z + 2.9 });
-    occluders.push(stage);
+    const glb = placeProp('parque_coreto', { x: 0, y: 0, z: 0, targetH: 4.4, targetLen: 7.2 });
+    if (glb) g.add(glb);
+    const stage = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.65, 0.45, 8), MAT.stone);
+    stage.position.y = 0.225; stage.castShadow = stage.receiveShadow = true; stage.visible = !glb; g.add(stage);
+    if (!glb) occluders.push(stage);
     const rimTiles = new THREE.Mesh(new THREE.CylinderGeometry(3.42, 3.42, 0.08, 8), MAT.plaza);
-    rimTiles.position.y = 0.49; rimTiles.receiveShadow = true; g.add(rimTiles);
+    rimTiles.position.y = 0.49; rimTiles.receiveShadow = true; rimTiles.visible = !glb; g.add(rimTiles);
     for (let i = 0; i < 8; i++) {
       const a = i * Math.PI / 4 + Math.PI / 8, cx = Math.cos(a) * 2.9, cz = Math.sin(a) * 2.9;
       const col = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.4, 8), MAT.white);
-      col.position.set(cx, 1.65, cz); col.castShadow = true; g.add(col);
+      col.position.set(cx, 1.65, cz); col.castShadow = true; col.visible = !glb; g.add(col);
       colliders.push({ minX: CORETO.x + cx - 0.16, maxX: CORETO.x + cx + 0.16, minY: 0.45, maxY: 2.85, minZ: CORETO.z + cz - 0.16, maxZ: CORETO.z + cz + 0.16 });
-      occluders.push(col);
+      if (!glb) occluders.push(col);
     }
     const roof = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 4.5, 1.7, 8), MAT.roof);
-    roof.position.y = 3.75; roof.castShadow = true; g.add(roof);
-    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), MAT.yellow); finial.position.y = 4.75; g.add(finial);
+    roof.position.y = 3.75; roof.castShadow = true; roof.visible = !glb; g.add(roof);
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), MAT.yellow); finial.position.y = 4.75; finial.visible = !glb; g.add(finial);
     for (let i = 0; i < 8; i++) {
       const a0 = i * Math.PI / 4 + Math.PI / 8, a1 = (i + 1) * Math.PI / 4 + Math.PI / 8;
       for (let k = 1; k <= 3; k++) {
         const a = a0 + (a1 - a0) * k / 4;
         const flag = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.5, 3), COLORS[(i + k) % COLORS.length]);
-        flag.rotation.z = Math.PI; flag.position.set(Math.cos(a) * 2.9, 2.72 - Math.sin(Math.PI * k / 4) * 0.22, Math.sin(a) * 2.9); g.add(flag);
+        flag.rotation.z = Math.PI; flag.position.set(Math.cos(a) * 2.9, 2.72 - Math.sin(Math.PI * k / 4) * 0.22, Math.sin(a) * 2.9);
+        flag.visible = !glb; g.add(flag);
       }
     }
   }

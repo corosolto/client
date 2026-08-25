@@ -174,3 +174,11 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+- `parque_coreto.glb` — "Festive Green Coreto", coreto octogonal de praça com
+  colunas de ferro branco, telhado de zinco verde e bandeirolas juninas. 4.742
+  tris, 1 primitiva, texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para
+  o rebuild USANTOS do parque_treta (pedido do dono: mapas usantos "não podem
+  parecer low poly"). Chat: <https://mint.gg/chat/ph74qprnsd4nzq113248a9sd6s8d4zhk>.
+  Registro: `coreto-praca-parque`. Otimizado por `tools/optimize-props.mjs`
+  (dedup + webp 1024 + prune, 1.107 KB → 448 KB). No mapa, substitui o coreto
+  procedural quando carrega (fallback idêntico em colisores).
