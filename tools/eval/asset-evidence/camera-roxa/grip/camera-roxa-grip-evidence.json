@@ -1,10 +1,29 @@
 {
   "character": "public/models/characters/camera-roxa.glb",
-  "characterSha256": "a976efb8e5731bef14a5111185ec74709ba4b380151812e9953128e65feb44f4",
+  "characterSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
   "weapon": "m4",
   "weaponFile": "public/models/weapons/m4.glb",
-  "weaponSha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677",
+  "weaponSha256": "e0904b474581b66168d2ec6c190e32528ce7c5ad80a98329da1622f548795932",
+  "socketContract": {
+    "triggerHand": "RightHand",
+    "supportHand": "LeftHand",
+    "triggerAnchorLocal": [
+      0.18,
+      0.0,
+      0.0
+    ],
+    "supportAnchorLocal": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "maxHandDistanceMeters": 0.03
+  },
   "animations": {
+    "idle": {
+      "file": "public/models/anims/camera-roxa/idle.glb",
+      "sha256": "9db6ced2aed7ffe71aa0d47215478226b0dfdbf49622fb39d74a1fcca8f547ed"
+    },
     "walk": {
       "file": "public/models/anims/camera-roxa/walk.glb",
       "sha256": "323fba5fe45fe863bba81f936d4da4b9427a6840498e72f2b9b9f34b41d0529a"
@@ -15,9 +34,38 @@
     }
   },
   "blender": "5.2.0 LTS",
-  "method": "clipe glTF importado no armature; M4 em 0,84 m; IK posicional dos dois braços até anchors de empunhadura/guarda-mão",
+  "method": "clipe glTF importado no armature; m4 em 0.84 m; mão de gatilho preservada, IK da mão de apoio e arma alinhada ao vetor final das mãos",
   "limitation": "evidência offline de asset/clipe/pegada; o porte cruzado reproduz o contrato de mount+IK, mas não substitui recaptura do runtime no browser",
   "poses": {
+    "idle": {
+      "clip": "idle",
+      "frame": 15,
+      "handSpan": 0.338441,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.255264,
+        0.033448,
+        0.846369
+      ],
+      "leftHand": [
+        -0.061169,
+        -0.24361,
+        0.856749
+      ],
+      "rightAnchor": [
+        -0.255264,
+        0.033448,
+        0.846369
+      ],
+      "leftAnchor": [
+        -0.081498,
+        -0.21459,
+        0.855662
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.035449,
+      "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-idle-m4.png"
+    },
     "walk": {
       "clip": "walk",
       "frame": 15,
@@ -39,12 +87,12 @@
         0.87404
       ],
       "leftAnchor": [
-        -0.102636,
-        -0.444779,
-        0.846793
+        -0.08604,
+        -0.436051,
+        0.84267
       ],
       "rightDistance": 0.0,
-      "leftDistance": 0.019792,
+      "leftDistance": 0.004238,
       "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-walk-m4.png",
       "gripRender": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-a-m4.png",
       "mutant": {
@@ -60,12 +108,12 @@
           0.92404
         ],
         "leftAnchor": [
-          -0.102636,
-          -0.264779,
-          0.896793
+          -0.08604,
+          -0.256051,
+          0.89267
         ],
         "rightDistance": 0.186815,
-        "leftDistance": 0.184233,
+        "leftDistance": 0.19052,
         "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-grip-b-mutant-m4.png"
       }
     },
@@ -90,12 +138,12 @@
         0.527313
       ],
       "leftAnchor": [
-        -0.125828,
-        -0.527938,
-        0.541011
+        -0.139248,
+        -0.531864,
+        0.546234
       ],
       "rightDistance": 0.0,
-      "leftDistance": 0.016419,
+      "leftDistance": 0.006483,
       "render": "tools/eval/asset-evidence/camera-roxa/grip/camera-roxa-crouch-m4.png"
     }
   }
