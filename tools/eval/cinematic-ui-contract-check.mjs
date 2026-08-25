@@ -138,9 +138,12 @@ put('CINE6', 'pausa e resultado acionam o chrome pelos caminhos reais do jogo', 
    e exige cinco composições novas, cada uma com landmarks próprios. Não tenta dar nota
    estética; prova que a árvore deixou de ser a velha coluna/cards/filmstrip/painel.
    Eram SEIS: o fluxo map-broadcast saiu em 19/08/2026 por decisão do dono — a tela de
-   seleção de mapas volta ao carrossel da main (commit 71c5640); UIR4 é quem a guarda. */
+   seleção de mapas volta ao carrossel da main (commit 71c5640); UIR4 é quem a guarda.
+   Home re-derivada em 25/08 (decisão do dono no merge do #399): os mode-cards saíram e
+   o menu voltou ao formato da main — quem guarda o menu agora são UIR22/26/30; os
+   landmarks da home aqui são a vitrine de temporada/título do home-broadcast. */
 const structuralFlows = [
-  ['home-broadcast', ['home-mode-deck', 'home-service-strip']],
+  ['home-broadcast', ['home-title-block', 'home-season']],
   ['mission-cut', ['mission-visual', 'mission-console']],
   ['faction-editorial', ['faction-index', 'faction-hero']],
   ['cast-stage', ['cast-rail', 'cast-avatar', 'cast-dossier']],
