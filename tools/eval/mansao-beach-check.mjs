@@ -39,6 +39,13 @@
          `world.bounds`, nenhuma está em `world.occluders` (bala não para em
          cenário fora do mapa) e nenhuma virou colisor.
      B7  ORÇAMENTO: praia + horizonte somados cabem no teto de malhas/triângulos.
+     B8  GAIVOTA QUE VOA DE VERDADE: >= 2 gaivotas que MUDAM DE LUGAR em 0,8 s e cuja
+         peça `faunaPart='wing'` MEXE. É a cláusula-irmã da AR5 do ambience-registry:
+         a AR5 proíbe `mode:'flight'` no registro inteiro porque o pombo voador era um
+         GLB estático de asas abertas; espécie voadora nova só entra provando o
+         contrário do defeito, e não trocando o nome do modo.
+     B9  CARANGUEJO NA AREIA: >= 1 caranguejo cuja posição está EM CIMA da areia
+         emersa (sonda vertical contra a própria superfície), não boiando nem no mar.
 
      H1  HORIZONTE EM CAMADAS: morros + ilha + bruma existem na cena, todos dentro
          do alcance da câmera, e em pelo menos duas profundidades distintas —
@@ -97,6 +104,8 @@
      --mutante=praia-invade              puxa uma peça pra dentro dos bounds -> B6
      --mutante=horizonte-raso            uma camada só            -> H1
      --mutante=horizonte-tapa-panorama   morro em cima da terra assada -> H2
+     --mutante=gaivota-pendurada         gaivota parada de asa aberta -> B8
+     --mutante=caranguejo-no-mar         caranguejo fora da faixa seca -> B9
 
    LIMITE CONHECIDO, declarado (Lição 3): esta régua roda em NODE, então nenhum GLB
    carrega. Ela mede a praia PROCEDURAL, que é a que existe em todo lugar. A prova
@@ -108,7 +117,7 @@ import { LOOK } from '../../public/js/look.js';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const MUTANTES = new Set(['sem-areia', 'areia-plana', 'margem-congelada', 'coqueiro-reto',
-  'praia-invade', 'horizonte-raso', 'horizonte-tapa-panorama']);
+  'praia-invade', 'horizonte-raso', 'horizonte-tapa-panorama', 'gaivota-pendurada', 'caranguejo-no-mar']);
 if (MUT && !MUTANTES.has(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(1); }
 
 /* ---------------- tetos, todos com procedência no cabeçalho ---------------- */
@@ -319,6 +328,67 @@ if (MUT === 'horizonte-tapa-panorama') {
   const trisPorSilhueta = frescobol.map((f) => contaTris(f.obj).tris);
   clausula('B5', frescobol.length >= FRESCOBOL_MIN && trisPorSilhueta.every((t) => t <= FRESCOBOL_TRIS),
     `${frescobol.length} silhueta(s) de frescobol [>= ${FRESCOBOL_MIN}] · maior ${Math.max(0, ...trisPorSilhueta)} tris [<= ${FRESCOBOL_TRIS}]`);
+}
+
+/* mutantes de FAUNA: desfazem exatamente o que a AR5 protegia */
+if (MUT === 'gaivota-pendurada') {
+  const amb = g.world.ambience;
+  if (typeof amb?._updateGull !== 'function') morre('a ambiência não tem _updateGull (nenhuma gaivota implementada)');
+  amb._updateGull = () => {};   // volta ao pombo estático de asas abertas pendurado no céu
+}
+if (MUT === 'caranguejo-no-mar') {
+  const caranguejos = (g.world.ambience?.animals || []).filter((a) => a.root?.userData?.fauna === 'caranguejo');
+  if (!caranguejos.length) morre('nenhum caranguejo na ambiência');
+  for (const c of caranguejos) { c.origin.set(0, -3, -70); c.to.copy(c.origin); c.root.position.copy(c.origin); }
+}
+
+/* ============================ B8/B9 — VIDA NA PRAIA ============================
+   A AR5 do ambience-registry existe porque um pombo VOAVA com um GLB estático de asas
+   abertas: bicho pendurado no céu. Espécie voadora nova só é legítima se a régua
+   provar o contrário do defeito — que ela SE MOVE e que a ASA MEXE. Por isso a
+   gaivota não usa `mode: 'flight'` (que a AR5 proíbe no registro inteiro) e sim um
+   modo próprio, com estas duas cláusulas cobrando o que a AR5 protegia. */
+{
+  const amb = g.world.ambience;
+  const bichos = (nome) => (amb?.animals || []).filter((a) => a.root?.userData?.fauna === nome);
+  const gaivotas = bichos('gaivota');
+  const caranguejos = bichos('caranguejo');
+
+  let andou = 0, bateuAsa = 0;
+  if (typeof amb?.update === 'function') {
+    const asaDe = (a) => { let r = null; a.root.traverse((o) => { if (r === null && o.userData?.faunaPart === 'wing') r = o; }); return r; };
+    const antes = gaivotas.map((a) => ({
+      pos: a.root.position.clone(),
+      asa: (() => { const w = asaDe(a); return w ? w.rotation.z : null; })(),
+    }));
+    for (let i = 0; i < 8; i++) amb.update(0.1, null);   // 0,8 s de voo
+    gaivotas.forEach((a, i) => {
+      if (a.root.position.distanceTo(antes[i].pos) > 0.5) andou++;
+      const w = asaDe(a);
+      if (w && antes[i].asa !== null && Math.abs(w.rotation.z - antes[i].asa) > 0.05) bateuAsa++;
+    });
+  }
+  clausula('B8a', gaivotas.length >= 2, `${gaivotas.length} gaivota(s) sobrevoando [>= 2]`);
+  clausula('B8b', gaivotas.length > 0 && andou === gaivotas.length,
+    `${andou}/${gaivotas.length} gaivota(s) MUDARAM de lugar em 0,8 s [> 0,5 m] — bicho parado no céu é o defeito da AR5`);
+  clausula('B8c', gaivotas.length > 0 && bateuAsa === gaivotas.length,
+    `${bateuAsa}/${gaivotas.length} gaivota(s) com a ASA em movimento (faunaPart="wing") — asa aberta e travada é o defeito da AR5`);
+
+  let naAreia = 0;
+  const areias = doTipo(praia, 'areia').map((e) => e.obj);
+  if (areias.length) {
+    const ray = new THREE.Raycaster(); ray.camera = g.camera;
+    for (const c of caranguejos) {
+      const p = c.root.getWorldPosition(new THREE.Vector3());
+      ray.set(new THREE.Vector3(p.x, p.y + 6, p.z), new THREE.Vector3(0, -1, 0));
+      ray.far = 12;
+      let chao = null;
+      for (const a of areias) { const h = ray.intersectObject(a, true)[0]; if (h && (chao === null || h.point.y > chao)) chao = h.point.y; }
+      if (chao !== null && chao > NIVEL_MAR && Math.abs(p.y - chao) < 0.6) naAreia++;
+    }
+  }
+  clausula('B9', caranguejos.length >= 1 && naAreia === caranguejos.length,
+    `${naAreia}/${caranguejos.length} caranguejo(s) EM CIMA da areia emersa [>= 1] — bicho de praia dentro do mar ou flutuando não conta`);
 }
 
 /* ============================ B6 — A PRAIA NÃO ENTRA NO JOGO ============================ */

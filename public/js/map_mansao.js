@@ -858,6 +858,7 @@ export function buildMansao(scene, T) {
     }
   }
   createWater(scene, T, 'mansao');   // oceano; o update() tica todas as scene.userData.waters
+  let praiaAlturaEm = () => 0;
 
   /* ===================== PRAIA (dono 25/08: "a praia") =====================
      O leito da RC2 já descia 0,0995 por metro a partir de z=-35,75; o que faltava era
@@ -881,6 +882,7 @@ export function buildMansao(scene, T) {
       return yLeito(z) + AREIA.folga + duna + berma + baia + onda * (1 - t * .6);
     };
     const ySand = (x, z) => perfil(x, z);
+    praiaAlturaEm = ySand;
     // grão + conchas: 2 m de tile a 128 px (mesma escala do texturaMuro). A cor seca sai
     // do 0x6f6350 que o leito já declara como "areia MOLHADA", clareado 1,62x — é a mesma
     // areia com e sem água, não duas decisões de cor soltas.
@@ -1185,10 +1187,24 @@ export function buildMansao(scene, T) {
     parrots: [
       { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
     ],
+    /* PRAIA (25/08): gaivota planando sobre a enseada e caranguejo na faixa seca. A
+       gaivota NÃO usa `mode: 'flight'` — esse modo é o pombo estático de asas abertas
+       que a AR5 do ambience-registry proíbe no registro inteiro. O que ela faz é
+       planeio com asa batendo, e as cláusulas B8b/B8c do eval:mansao-beach cobram as
+       duas coisas: que a gaivota SAI DO LUGAR e que a ASA MEXE. */
+    gulls: [
+      { pos: [-18, 10.5, -44], to: [14, 10.5, -47], phase: .3 },
+      { pos: [6, 12.8, -42], to: [-10, 12.8, -50], phase: 2.4 },
+      { pos: [22, 9.4, -46], to: [-2, 9.4, -43], phase: 4.1 },
+    ],
+    crabs: [
+      { pos: [-6, praiaAlturaEm(-6, -38.6), -38.6], to: [-3.4, praiaAlturaEm(-3.4, -39.4), -39.4], phase: .8 },
+      { pos: [17.5, praiaAlturaEm(17.5, -40.2), -40.2], to: [20.2, praiaAlturaEm(20.2, -41), -41], phase: 3.3 },
+    ],
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45],radius:35,vol:.4},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
+    ambience,sound:{loops:[{src:AMB_LOOPS.ondas,pos:[0,0,-45.6],radius:44,vol:.46},{src:AMB_LOOPS.piscina,pos:[0,.5,-28],radius:10,vol:.3}],bioma:'praia'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     update(dt) { for (const w of scene.userData.waters || []) w.update(dt); },
     stairs: [{ nome: 'escada do mezanino', ...STAIR, topo: LAJE_H },
