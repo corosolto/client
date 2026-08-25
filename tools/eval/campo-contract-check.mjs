@@ -13,6 +13,7 @@
   luzes e prova que a régua não confunde geometria presente com interior legível.
 */
 import { THREE, bootGame, initTextures } from './harness.mjs';
+import { readFileSync } from 'node:fs';
 import { CAMPO_FIELD_MOUTH } from './map-evidence-views.mjs';
 
 const MUT = process.argv.includes('--mutante=spawn-fora');
@@ -26,9 +27,10 @@ const MUT_BLOCKOUT = process.argv.includes('--mutante=galpao-blockout');
 const MUT_REDES = process.argv.includes('--mutante=traves-sem-rede');
 const MUT_BANCO = process.argv.includes('--mutante=bancada-central');
 const MUT_MARCOS = process.argv.includes('--mutante=marcos-clonados');
+const MUT_TORCIDA = process.argv.includes('--mutante=torcida-sentada');
 const game = bootGame('campomorro', { textures: initTextures(), bots: 0 });
 const luzesGalpao = [], faixasSaida = [], superficiesGalpao = [], framesGalpao = [];
-const redes = [], bancos = [], marcos = [];
+const redes = [], bancos = [], marcos = [], coberturas = [], bancosArq = [], torcidas = [];
 game.scene.traverse((object) => {
   if (object.userData?.mapLight === 'galpao') luzesGalpao.push(object);
   if (object.userData?.galpaoExitBand) faixasSaida.push(object);
@@ -37,6 +39,9 @@ game.scene.traverse((object) => {
   if (object.userData?.goalNet) redes.push(object);
   if (object.userData?.fieldBench) bancos.push(object);
   if (object.userData?.fieldLandmark) marcos.push(object);
+  if (object.userData?.fieldStandRoof) coberturas.push(object);
+  if (object.userData?.fieldStandBench !== undefined) bancosArq.push(object);
+  if (object.userData?.crowdInstanced) torcidas.push(object);
 });
 if (MUT_GALPAO) {
   for (const luz of luzesGalpao) luz.intensity = 0;
@@ -46,6 +51,7 @@ if (MUT_BLOCKOUT) for (const superficie of superficiesGalpao) superficie.materia
 if (MUT_REDES) for (const rede of redes) rede.visible = false;
 if (MUT_BANCO && bancos[0]) bancos[0].position.set(0, bancos[0].position.y, 0);
 if (MUT_MARCOS) for (const marco of marcos) marco.userData.fieldLandmark = 'clonado';
+if (MUT_TORCIDA) game.world.onGoal = () => {};
 const spawns = JSON.parse(JSON.stringify(game.world.spawns));
 if (MUT) spawns.E[0] = { ...spawns.E[0], x: -31, z: 8 };
 
@@ -67,6 +73,16 @@ if (bancos.some((banco) => Math.abs(banco.position.x) < 3 && Math.abs(banco.posi
   falhas.push('bancada invade a faixa central de 6 × 6 m');
 if (new Set(marcos.map((marco) => marco.userData.fieldLandmark)).size < 3)
   falhas.push(`${new Set(marcos.map((m) => m.userData.fieldLandmark)).size}/3 marcos distintos ao redor do campo`);
+game.world.update?.(1 / 60, 0);
+const torcidaSentada = torcidas.length === 1 && torcidas[0].userData.crowdState === 'seated';
+game.world.onGoal?.(); game.world.update?.(1 / 60, .5);
+const torcidaNoGol = torcidas.length === 1 && torcidas[0].userData.crowdState === 'goal-standing';
+if (coberturas.filter((o) => o.visible !== false).length < 1 || bancosArq.filter((o) => o.visible !== false).length < 3)
+  falhas.push(`${coberturas.filter((o) => o.visible !== false).length}/1 cobertura e ${bancosArq.filter((o) => o.visible !== false).length}/3 bancos na arquibancada`);
+if (!torcidaSentada || !torcidaNoGol || torcidas[0]?.count !== 24)
+  falhas.push(`torcida instanciada reage ao gol: sentada=${torcidaSentada} gol=${torcidaNoGol} instâncias=${torcidas[0]?.count || 0}`);
+if (!readFileSync('public/js/game.js', 'utf8').includes('this.world.onGoal?.();'))
+  falhas.push('Game._ctfWin não chama world.onGoal()');
 const noCampo = ({ x, z }) => Math.abs(x) <= 19.4 && Math.abs(z) <= 11.9;
 const noGalpao = ({ x, z }) => x >= 22.4 && x <= 33.6 && z >= -25.6 && z <= -16.4;
 for (const [i, spawn] of (spawns.E || []).entries()) if (!noCampo(spawn))

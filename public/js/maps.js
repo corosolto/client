@@ -5,7 +5,7 @@ import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
 import { buildEscadao, ESCADAO_PROPS, ESCADAO_AMBIENCE } from './map_escadao.js';
-import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
+import { buildCampoMorro, CAMPOMORRO_PROPS, CAMPOMORRO_AMBIENCE } from './map_campomorro.js';
 import { buildLajes, LAJES_PROPS, LAJES_AMBIENCE } from './map_lajes_authored.js';
 import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
 import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
@@ -67,7 +67,7 @@ export const MAPS = {
   /* DÍVIDA: renomear o prefixo `fy_` só aqui quebra CALADO — `LOOKS` (bloom.js) cai no
      DEFAULT_LOOK de Brasília. Renome exige mudança própria com régua (PR #200). */
   escadao:       { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
-  campomorro:    { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
+  campomorro:    { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ambience: CAMPOMORRO_AMBIENCE, ctfMode: true },
   lajes:         { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
   corrego:       { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
   mansao:        { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },

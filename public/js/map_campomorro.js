@@ -8,7 +8,7 @@ import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
 import { aplicaVento, updateVento } from './wind.js';
 import { GPUParticles } from './gpuparticles.js';
-import { createFavelaAmbience } from './ambientlife.js';
+import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -47,6 +47,7 @@ export const CAMPOMORRO_PROPS = [
   // RC4: grama da frente E (e-models) — o piloto do vento mora nela
   'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba',
 ];
+export const CAMPOMORRO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 
 function laneHeight(x, z) {
   for (const l of LANES) {
@@ -330,6 +331,46 @@ export function buildCampoMorro(scene, T = {}) {
   addBox(11.8, 0.55, 3.3, MAT.concrete, -7, gArq, 20, { collide: false, bala: true });
   for (let i = 0; i < 3; i++)
     addBox(11.4 - i * 0.5, 0.34 + i * 0.28, 0.18, MAT.concrete, -7, groundHeightAt(-7, 18.36 + i * 0.08), 18.36 + i * 0.08, { collide: false, bala: true });
+  // Cobertura e bancos fazem a arquibancada ler como estrutura de campo, não um bloco solto.
+  for (const x of [-12, -7, -2]) {
+    addBox(.18, 3.7, .18, MAT.steelRust, x, gArq + .2, 21.4, { collide: false, cast: false });
+    addBox(.18, 3.7, .18, MAT.steelRust, x, gArq + .2, 18.3, { collide: false, cast: false });
+  }
+  const cobertura = addBox(12.8, .18, 3.8, MAT.galpaoRoof, -7, gArq + 3.8, 19.85, { collide: false, cast: false });
+  cobertura.userData.fieldStandRoof = true;
+  for (let fila = 0; fila < 3; fila++) {
+    const banco = addBox(11.1 - fila * .45, .16, .42, MAT.steelRust, -7, gArq + .68 + fila * .33, 19.0 + fila * .64,
+      { collide: false, cast: false });
+    banco.userData.fieldStandBench = fila;
+  }
+  /* Torcida sem indivíduo identificável: uma silhueta compartilhada, 24 matrizes e uma chamada.
+     `onGoal` vem do ponto CTF; fora de gol a torcida senta, no gol ergue corpo e braços. */
+  const corpoTorcida = mergeParts([
+    new THREE.BoxGeometry(.34, .66, .22).translate(0, .38, 0),
+    new THREE.SphereGeometry(.16, 7, 6).translate(0, .86, 0),
+    new THREE.BoxGeometry(.62, .075, .075).translate(0, .58, 0),
+  ]);
+  const torcida = new THREE.InstancedMesh(corpoTorcida, new THREE.MeshStandardMaterial({ color: 0x303438, roughness: 1 }), 24);
+  torcida.userData.crowdInstanced = true; torcida.userData.crowdCount = 24; torcida.castShadow = true; torcida.receiveShadow = true;
+  root.add(torcida);
+  const torcidaSlots = [];
+  for (let fila = 0; fila < 3; fila++) for (let coluna = 0; coluna < 8; coluna++)
+    torcidaSlots.push({ x: -11.35 + coluna * 1.24 + (fila % 2) * .18, y: gArq + .6 + fila * .34, z: 19.0 + fila * .64, phase: fila * 8 + coluna });
+  const dummyTorcida = new THREE.Object3D();
+  let tempoTorcida = 0, golAte = 0;
+  const atualizarTorcida = (time) => {
+    const gol = time < golAte;
+    for (let i = 0; i < torcidaSlots.length; i++) {
+      const slot = torcidaSlots[i], balanco = Math.sin(time * 2.4 + slot.phase) * .035;
+      dummyTorcida.position.set(slot.x, slot.y + balanco + (gol ? .46 + (slot.phase % 3) * .06 : 0), slot.z);
+      dummyTorcida.rotation.set(gol ? Math.sin(time * 9 + slot.phase) * .18 : 0, Math.PI, 0);
+      dummyTorcida.scale.set(1, gol ? 1.18 : .72, 1);
+      dummyTorcida.updateMatrix(); torcida.setMatrixAt(i, dummyTorcida.matrix);
+    }
+    torcida.instanceMatrix.needsUpdate = true;
+    torcida.userData.crowdState = gol ? 'goal-standing' : 'seated';
+  };
+  atualizarTorcida(0);
 
   // Fachadas do beco oeste quebram a visada antes da entrada do campo.
   const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 21], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
@@ -705,7 +746,8 @@ export function buildCampoMorro(scene, T = {}) {
   return {
     ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[28,2,-21],radius:24,vol:.5},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:80,vol:.26}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
-    update(dt) { updateVento(dt); updatePoeira(dt); },
+    onGoal() { golAte = tempoTorcida + 3.2; },
+    update(dt, time = 0) { tempoTorcida = time; updateVento(dt); updatePoeira(dt); atualizarTorcida(time); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     levels: [{ nome: 'galpao', x0: GALPAO.x0, x1: GALPAO.x1, z0: GALPAO.z0, z1: GALPAO.z1, dePartida: 'B' }],
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },
