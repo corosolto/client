@@ -644,7 +644,7 @@ export function buildVelhoOeste(scene, T) {
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22}],bioma:'campo'},
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:26,vol:.4}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),

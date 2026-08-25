@@ -40,3 +40,12 @@ só este FONTE.md é versionado (exceção no `.gitignore`).
   resultado CC0 bom; usado "Water Laps in Tank" da query alternativa "water lapping/pool water loop".
 - `cidade.mp3`: candidatos longos demais (604s, 2585s) foram rejeitados pelo teto de 180s.
 - Nenhum item FALHOU — todos os 16 têm fonte CC0 verificada.
+| sanfona-forro.mp3 | Forró distante (sanfona, zabumba e triângulo, lo-fi de longe) | geração Google Lyria via OpenRouter | https://openrouter.ai/google/lyria-3-clip-preview | n/a (gerado) | n/a | 30.77s |
+
+`sanfona-forro.mp3` (frente map2/velho-oeste, 25/08): geração **Google Lyria**
+(`google/lyria-3-clip-preview`) via OpenRouter — a regra da casa é música fora
+do Mint. Prompt: "A distant melancholic forró loop on accordion (sanfona) with
+soft zabumba drum and triangle, lo-fi dusty ambience as heard from far away
+across a dry sertão field at dusk, slow tempo, instrumental only, seamless
+loop, no vocals". Licença de assinante OpenRouter; shipa pelo audio-pack.zip
+como os demais binários da pasta.

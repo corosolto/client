@@ -7,7 +7,7 @@ export const AMB_LOOPS = Object.freeze({
   funk: `${A}/funk-bar.mp3`, grilos: `${A}/grilos.mp3`, passaros: `${A}/passaros.mp3`,
   vento: `${A}/vento.mp3`, ondas: `${A}/ondas.mp3`, corrego: `${A}/agua-corrego.mp3`,
   piscina: `${A}/piscina.mp3`, cidade: `${A}/cidade.mp3`, obra: `${A}/obra.mp3`,
-  hum: `${A}/hum-indoor.mp3`,
+  hum: `${A}/hum-indoor.mp3`, sanfona: `${A}/sanfona-forro.mp3`,
 });
 
 /* one-shot por bioma: pool compartilhada (o mapa declara só `bioma`). Gaps em
