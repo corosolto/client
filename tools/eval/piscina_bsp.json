@@ -1,0 +1,67 @@
+{
+  "_doc": "Medido de fy_pool_day.bsp por tools/eval/bsp-measure.mjs — NÃO editar à mão.\nConversão: fator único 0.0351 m/unidade, preservando área, ancorado no salão do jogo\n(34x50 m, map_piscina.js@cc7d9940 (HALF_X=17, HALF_Z=25)) contra o pátio\ninterno do BSP (1024x1344u). Fatores por eixo 0.0332/0.0372 divergem\n11% — mesma ordem, âncora coerente. Eixos do jogo: y_bsp -> z_jogo,\norigem no centro do pátio. O check (piscina-bsp-check.mjs) lê ESTE arquivo; regenerar\nrodando o bsp-measure de novo (o BSP fica fora do repo, em ~/map2/).",
+  "fonte": {
+    "arquivo": "fy_pool_day.bsp",
+    "bytes": 853064,
+    "versao_bsp": 30,
+    "ordem_lumps": "Quake-1 (id): 12=edges 13=surfedges 14=models — difere do GoldSrc canônico",
+    "entidades": {
+      "worldspawn": 1,
+      "func_water": 2,
+      "info_player_start": 16,
+      "func_wall": 9,
+      "armoury_entity": 34,
+      "light_environment": 1,
+      "info_player_deathmatch": 16,
+      "func_bomb_target": 1,
+      "func_door_rotating": 6,
+      "func_buyzone": 1,
+      "func_illusionary": 2,
+      "func_button": 3,
+      "ambient_generic": 1
+    }
+  },
+  "fator_m_por_unidade": 0.0351,
+  "salao": {
+    "x": 35.99,
+    "z": 47.24
+  },
+  "piscina": {
+    "cx": 1.12,
+    "cz": 1.12,
+    "hx": 6.75,
+    "hz": 4.5,
+    "profundidade_agua": 3.09
+  },
+  "corredores": {
+    "oeste": 12.37,
+    "leste": 10.12
+  },
+  "decks": {
+    "sul": 20.24,
+    "norte": 17.99
+  },
+  "spawns": {
+    "ct": {
+      "x": 0.75,
+      "z": -16.69,
+      "n": 16
+    },
+    "t": {
+      "x": -0.8,
+      "z": 17.09,
+      "n": 16
+    },
+    "distancia_centroides": 33.82
+  },
+  "estruturas_verticais": 8,
+  "nao_portados": {
+    "segunda_agua": {
+      "cx": 20.24,
+      "cz": 3.37,
+      "lado": 4.5,
+      "por_quê": "fica no anexo leste do mapa original, que não existe no nosso salão fechado"
+    },
+    "profundidade_da_agua": "3.09 m no original; a nossa segue andável em 1,5 m (decisão de gameplay registrada no map_piscina.js)"
+  }
+}
