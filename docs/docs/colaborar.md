@@ -257,7 +257,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
-| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 955 |
+| `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 1.201 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
@@ -266,7 +266,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
 
-**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 21 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 

@@ -379,10 +379,8 @@ export function buildMansao(scene, T) {
   col(-12.1,-11.5,0,.5,-4.0,-3.4); occluders.push(pote);   // a bala para na cerâmica que o corpo já não atravessa
   // As FOLHAS são atravessáveis como todo o paisagismo do arquivo (cluster, palmeira, folhagem).
   for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); folha.userData.nonSolidSurface=true; vaso.add(folha); }
-  /* LUXO BRASILEIRO EXCESSIVO (3 famílias, o teto declarado): lustre de cristal sobre a
-     mesa de jantar, duas poltronas de couro voltadas para o estar e um tríptico na
-     divisória. Tag própria (`luxo-prop`) porque `lived-prop` tem contrato de 6-8 tipos
-     no mansao-water-check e crescer ali reprovaria o mapa por sucesso. */
+  /* Luxo excessivo em 3 famílias (teto 3-5, cobrado no mansao-water-check). Tag própria:
+     `lived-prop` tem contrato de 6-8 tipos e crescer ali reprovaria o mapa por sucesso. */
   const luxo = (object, tipo) => { object.userData.mansaoFeature = 'luxo-prop'; object.userData.luxoType = tipo; return object; };
   {
     // LUSTRE: pendurado na laje leste (y=4,02) sobre a mesa de jantar de (8, 4).
@@ -860,19 +858,14 @@ export function buildMansao(scene, T) {
   createWater(scene, T, 'mansao');   // oceano; o update() tica todas as scene.userData.waters
   let praiaAlturaEm = () => 0;
 
-  /* ===================== PRAIA (dono 25/08: "a praia") =====================
-     O leito da RC2 já descia 0,0995 por metro a partir de z=-35,75; o que faltava era
-     AREIA: uma faixa emersa com duna, berma, baía e a rebentação viva na margem. Toda
-     esta seção vive FORA de `world.bounds` (z < -35,5) — é vista, não arena: sem
-     colisor, sem occluder, sem waypoint. Régua: `npm run eval:mansao-beach`. */
+  /* ===================== PRAIA =====================
+     Vive FORA de `world.bounds` (z < -35,5): sem colisor, occluder nem waypoint.
+     Perfil, tetos e procedência: tools/eval/mansao-beach-check.mjs. */
   {
     const AREIA = { z0: -36.4, z1: -52.4, larg: 150, incl: .0995, zLeito: -35.75, folga: .10 };
     const yLeito = (z) => (z - AREIA.zLeito) * AREIA.incl;
-    /* Perfil de praia real, em três termos somados ao leito:
-         duna  crista de 0,85 m no fundo da faixa (onde entram os coqueiros);
-         berma degrau de 0,35 m no meio (a quebra que a maré alta deixa);
-         baia  o centro afunda 0,25 m, então a linha d'água avança e a orla vira
-               crescente — Joatinga é enseada, não régua. */
+    /* duna (0,85 m ao fundo) + berma (0,35 m no meio) + baía (centro 0,25 m mais baixo,
+       então a orla vira crescente), tudo somado ao leito da RC2. */
     const perfil = (x, z) => {
       const t = (z - AREIA.z0) / (AREIA.z1 - AREIA.z0);
       const duna = .85 * Math.exp(-(((t - .06) / .10) ** 2));
@@ -883,9 +876,8 @@ export function buildMansao(scene, T) {
     };
     const ySand = (x, z) => perfil(x, z);
     praiaAlturaEm = ySand;
-    // grão + conchas: 2 m de tile a 128 px (mesma escala do texturaMuro). A cor seca sai
-    // do 0x6f6350 que o leito já declara como "areia MOLHADA", clareado 1,62x — é a mesma
-    // areia com e sem água, não duas decisões de cor soltas.
+    // grão + conchas, tile de 2 m (escala do texturaMuro). A cor seca é o 0x6f6350 que o
+    // leito já declara como "areia MOLHADA", clareado 1,62x: mesma areia, com e sem água.
     const texturaAreia = () => texProcedural(128, (x, y) => {
       const grao = ((x * 29 + y * 17) % 23) - 11, fino = ((x * 7 + y * 53) % 11) - 5;
       const concha = ((x * 41 + y * 91) % 199) > 195 ? 34 : 0;
@@ -920,9 +912,8 @@ export function buildMansao(scene, T) {
     areia.userData.nonSolidSurface = true;   // fora dos bounds, mas nenhuma sonda a lê como chão
     root.add(areia);
 
-    /* REBENTAÇÃO: lâmina própria em cima do oceano, com espuma de swash apertada e
-       amplitude maior. O plano de oceano tem espumaFaixa 2,4 (mar aberto) — na margem
-       isso vira lençol, não quebra. Mesma família RC2 da água do córrego/piscina. */
+    /* Rebentação: lâmina própria sobre o oceano. O plano de mar aberto tem espumaFaixa
+       2,4, que na margem vira lençol em vez de quebra. Mesma família RC2 do córrego. */
     const rebentacao = createWater(scene, T, 'mansao', {
       nivel: -.86, centro: [0, -45.6], tamanho: [AREIA.larg, 13], segmentos: 40,
       raso: 0x63bccb, fundo: 0x2b7c92, profEscala: 1.1,
@@ -931,15 +922,13 @@ export function buildMansao(scene, T) {
     rebentacao.mesh.userData.praiaFeature = 'rebentacao';
     rebentacao.mesh.userData.nonSolidSurface = true;
 
-    /* COQUEIROS: tronco em curva que inclina para o mar (a copa sai ~18° da vertical —
-       fototropismo de coqueiro de linha de praia). A régua mede a inclinação pela posição
-       MUNDO da copa contra a base, não por um número declarado. */
+    /* Coqueiros: tronco em curva, copa a ~18° da vertical. A régua mede a inclinação pela
+       posição MUNDO da copa contra a base, não por um número declarado. */
     const matTronco = lam({ color: 0x8a7050, roughness: .95 });
     const matFolha = lam({ color: 0x2f6b39, roughness: 1 });
     const matCoco = lam({ color: 0x5d4a30, roughness: .9 });
-    /* ry fica em [-0,5; 0,5] de propósito: a curva do tronco cresce no -z LOCAL, então
-       só assim a copa cai para o MAR. Fora dessa faixa o coqueiro deita para dentro do
-       terraço e a folhagem entra nos bounds jogáveis (cláusula B6a). */
+    /* ry preso a [-0,5; 0,5]: a curva do tronco cresce no -z LOCAL, então só assim a copa
+       cai para o MAR. Fora disso a folhagem entra nos bounds jogáveis (cláusula B6a). */
     const COQUEIROS = [[-34, -39.2, 7.4, .30, .34], [-21, -38.6, 6.2, .26, -.42], [-11, -39.9, 8.1, .33, .18],
       [3, -38.8, 6.8, .24, -.28], [14, -40.1, 7.7, .31, .46], [26, -39.0, 6.5, .28, -.16],
       [39, -39.6, 7.1, .29, .38], [-47, -39.1, 6.6, .27, -.36]];
@@ -977,8 +966,8 @@ export function buildMansao(scene, T) {
       root.add(palma);
     }
 
-    /* BARRACA: lona listrada (procedural, sem marca — linha editorial), balcão, caixa
-       térmica e dois banquinhos. Cinco tipos de peça: caixa com pano em cima não é barraca. */
+    /* Barraca: lona listrada procedural (sem marca real), balcão, isopor e banquinhos.
+       Cinco tipos de peça, porque caixa com pano em cima não é barraca. */
     const texLona = texProcedural(64, (x) => ((x >> 3) & 1 ? [222, 78, 60] : [242, 236, 222]));
     texLona.repeat.set(4, 2);
     const matLona = lam({ map: texLona, roughness: .88, side: THREE.DoubleSide });
@@ -1024,8 +1013,8 @@ export function buildMansao(scene, T) {
       root.add(sol);
     }
 
-    /* FRESCOBOL: dois vultos lá na ponta da enseada (x -44 e -50, ~54 m do spawn B).
-       É silhueta de longe: o orçamento por figura é o que a régua cobra. */
+    /* Frescobol: dois vultos na ponta da enseada, a ~54 m do spawn B. É silhueta de
+       longe, e o orçamento por figura é o que a régua cobra. */
     const matVulto = lam({ color: 0x3b3a3c, roughness: .95 });
     for (const [fx, fz, olhaPara] of [[-44, -43.5, 1], [-50.5, -43.2, -1]]) {
       const vulto = new THREE.Group();
@@ -1187,11 +1176,8 @@ export function buildMansao(scene, T) {
     parrots: [
       { pos: [10, 1.24, -25], phase: .5 }, { pos: [-10, 1.24, -29], phase: 1.9 },
     ],
-    /* PRAIA (25/08): gaivota planando sobre a enseada e caranguejo na faixa seca. A
-       gaivota NÃO usa `mode: 'flight'` — esse modo é o pombo estático de asas abertas
-       que a AR5 do ambience-registry proíbe no registro inteiro. O que ela faz é
-       planeio com asa batendo, e as cláusulas B8b/B8c do eval:mansao-beach cobram as
-       duas coisas: que a gaivota SAI DO LUGAR e que a ASA MEXE. */
+    /* A gaivota NÃO usa `mode: 'flight'` (o pombo travado que a AR5 proíbe): ela planeia
+       com asa batendo, e as cláusulas B8b/B8c do eval:mansao-beach cobram as duas. */
     gulls: [
       { pos: [-18, 10.5, -44], to: [14, 10.5, -47], phase: .3 },
       { pos: [6, 12.8, -42], to: [-10, 12.8, -50], phase: 2.4 },

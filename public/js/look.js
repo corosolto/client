@@ -9,15 +9,8 @@ export const LOOK = {
     hemi: { ceu: 0xf6f3ea, chao: 0x665c50, i: 1.02 },
     neblina: { d: 0.0068, solDir: [30, 32, 24], forca: 0.94 },
     grade: { exposicao: 1.36, piso: 0.0043, expAces: 1.46 },
-    /* HORIZONTE 3D (dono 25/08: "precisava melhorar o horizonte (em todos mapas)").
-       O sky_joa.webp tem mar aberto e VAZIO em todo o setor norte, que é para onde o
-       terraço inteiro olha; a terra assada dele vive fora de azimute -2,83..+0,94 rad
-       (medição por setor em tools/eval/mansao-beach-check.mjs, cláusula H2). Azimute =
-       atan2(z, x), a mesma convenção do EquirectangularReflectionMapping do map_sky.js:
-       -pi/2 é o norte do mapa. `dist` é limitada pelo far=400 da câmera E pela própria
-       névoa: com d=0,0068 sobram 40% da cor própria a 130 m, 16% a 200 m e 2% a 300 m —
-       daí as três camadas, que é o que faz perspectiva aérea em vez de recorte de papel.
-       `mistura` é quanto da cor já nasce puxada para `horizonte` (#b1aca5). */
+    /* Horizonte 3D: az=atan2(z,x) (-pi/2 = norte), `dist` presa entre o far=400 e a
+       névoa. Setor, camadas e tetos: tools/eval/mansao-beach-check.mjs, H1-H3. */
     horizonte3d: {
       ilhas: [{ az: -1.02, dist: 128, r: 20, h: 14, cor: 0x3f5a42, mistura: 0.10, praia: 0xc0b49b }],
       morros: [

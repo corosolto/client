@@ -38,11 +38,8 @@ export function applyLook(scene, T, mapId, { nofog = false } = {}) {
   return { look: L, hemi, sun };
 }
 
-/* HORIZONTE 3D por LOOK (dono 25/08: o horizonte tem que melhorar em TODOS os mapas).
-   Mecanismo, não caso especial: o mapa que declarar `horizonte3d` no look.js ganha
-   morros, ilha e bruma sem uma linha nova no builder dele. Vive em `scene` e nunca em
-   `world.root` — é VISTA, então colisor, decalque, occluder e a sonda vertical do MAP1
-   não a enxergam. Régua: `npm run eval:mansao-beach` (cláusulas H1-H3). */
+/* Mapa que declarar `horizonte3d` no look.js ganha morros/ilha/bruma. Vive em `scene`
+   e nunca em `world.root`: é vista, não geometria de mapa. Régua: eval:mansao-beach. */
 export function buildHorizonte(scene, mapId) {
   const L = LOOK[mapId], H = L && L.horizonte3d;
   if (!H) return null;
@@ -52,9 +49,8 @@ export function buildHorizonte(scene, mapId) {
   scene.add(grupo);
   const doHorizonte = new THREE.Color(L.horizonte ?? 0xb1aca5);
 
-  /* Silhueta > detalhe: a 130-300 m a névoa come a textura e sobra o contorno. Um
-     icosaedro deformado por hash determinístico dá crista assimétrica de morro; esfera
-     lisa lê como bolha e foi o que o crítico reprovou na encosta do jardim. */
+  /* Silhueta > detalhe: a 130-300 m a névoa come a textura e sobra o contorno; o
+     icosaedro deformado evita a bolha lisa que o crítico reprovou na encosta. */
   const massa = (spec, semente) => {
     const geo = new THREE.IcosahedronGeometry(1, 1);
     const p = geo.attributes.position;
@@ -96,9 +92,8 @@ export function buildHorizonte(scene, mapId) {
     grupo.add(ilha);
   });
 
-  /* BRUMA QUENTE: cilindro aberto encostado na linha do mar, opaco embaixo e sumindo
-     para cima (cor por vértice). É o que separa a camada distante da camada média —
-     sem ela os morros do fundo colam nos do meio e o horizonte volta a ter uma camada. */
+  /* Bruma quente: anel encostado na linha do mar, opaco embaixo. É o que separa a
+     camada distante da média; sem ela os morros do fundo colam nos do meio. */
   if (H.bruma) {
     const b = H.bruma;
     const geo = new THREE.CylinderGeometry(b.raio, b.raio, b.altura, 48, 1, true);

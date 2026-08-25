@@ -22,8 +22,8 @@ const ASSETS = Object.freeze({
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-/* vida de PRAIA (25/08): gaivota e caranguejo nao tem GLB no acervo CC0 e ficam
-   procedurais. Sem esta lista o `_add` cai no `|| 'pigeonGround'` e clona um POMBO. */
+/* Gaivota e caranguejo nao tem GLB no acervo CC0 e ficam procedurais. Sem esta lista
+   o `_add` cai no `|| 'pigeonGround'` e clona um POMBO com outro nome. */
 const PROCEDURAIS = new Set(['gull', 'crab']);
 const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', gull: 'gaivota', crab: 'caranguejo' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
@@ -165,9 +165,8 @@ function fallbackParrot() {
   return group;
 }
 
-/* GAIVOTA (praia do Joá, 25/08). A asa e uma peca SEPARADA e marcada `faunaPart:'wing'`
-   de proposito: e nela que a regua mede batida de asa. Bicho de asa aberta e travada
-   pendurado no ceu foi o defeito que comprou a AR5 do ambience-registry. */
+/* Gaivota: a asa e peca SEPARADA marcada `faunaPart:'wing'` porque e nela que a regua
+   mede batida — asa aberta e travada foi o defeito que comprou a AR5 (BUG-57). */
 function fallbackGull() {
   const group = new THREE.Group();
   const pena = new THREE.MeshStandardMaterial({ color: 0xf2f3f0, roughness: .9 });
@@ -512,9 +511,8 @@ class FavelaAmbience {
   }
 
   _updateGull(animal) {
-    /* Planeio em elipse entre `pos` e `to`, com banking na curva e batida de asa
-       lenta (2,1 Hz). Susto perto = sobe e acelera. A ASA e uma peca marcada e ela
-       MEXE: e a diferenca entre esta gaivota e o pombo estatico que a AR5 proibiu. */
+    /* Planeio em elipse entre `pos` e `to`, com banking e asa batendo a 2,1 Hz; susto
+       perto sobe e acelera. Clausulas B8b/B8c do eval:mansao-beach medem as duas. */
     const assustada = this.time < animal.alertUntil;
     const t = (this.time * (assustada ? .28 : .16) + animal.phase) * Math.PI * 2;
     const cx = (animal.origin.x + animal.to.x) / 2, cz = (animal.origin.z + animal.to.z) / 2;
@@ -533,7 +531,7 @@ class FavelaAmbience {
   }
 
   _updateCrab(animal) {
-    /* Caranguejo anda de LADO: o rumo do corpo fica 90 graus do vetor de marcha. */
+    // Caranguejo anda de LADO: o rumo do corpo fica 90 graus do vetor de marcha.
     const alvo = animal.routine;
     if (this.time < animal.alertUntil) {
       const elapsed = this.time - animal.alertAt;
