@@ -130,6 +130,15 @@ O mapa Velho Oeste preserva marcos, janelas de madeira abertas/fechadas, gênero
 npm run eval:velhooeste
 ```
 
+## `eval:sertao`
+
+Frente map2/velho-oeste (retheme Sertão da Treta): mede a IDENTIDADE nordestina sem tocar no layout — elementos de caatinga (`sertao-*`) por contagem e diversidade, adobe em ≥75% das paredes do casario, e tarde quente medida (fog R−B ≥ 60, sol ≤25° de elevação, névoa ≤0,0065). A `eval:velhooeste` continua verde garantindo que o retheme não reautorou nada. Mutantes: sem-sertao|volta-oeste|ceu-frio.
+
+```bash
+npm run eval:sertao
+```
+
+
 ## `eval:penitenciaria`
 
 Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal central, caixas texturizadas, obstáculos densos, quatro guaritas e colisão. Mutantes: fecha-celas|sem-guaritas|sem-obstaculos|centro-aberto|sem-textura-municao.

@@ -31,6 +31,8 @@
     "eval:ambience-registry": "node tools/eval/ambience-registry-check.mjs",
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
+    "//eval:sertao": "frente map2/velho-oeste: o 'não parece velho-oeste genérico, parece sertão' do dono virou número — elementos de caatinga, adobe no casario e tarde quente medida (mutantes provam cada cláusula); a eval:velhooeste segue medindo o LAYOUT intacto",
+    "eval:sertao": "node tools/eval/sertao-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",
