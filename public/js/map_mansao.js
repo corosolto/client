@@ -379,6 +379,59 @@ export function buildMansao(scene, T) {
   col(-12.1,-11.5,0,.5,-4.0,-3.4); occluders.push(pote);   // a bala para na cerâmica que o corpo já não atravessa
   // As FOLHAS são atravessáveis como todo o paisagismo do arquivo (cluster, palmeira, folhagem).
   for(let i=0;i<7;i++){ const folha=new THREE.Mesh(new THREE.SphereGeometry(.25,8,5),lam({color:i%2?0x386b42:0x4e8050,roughness:1})); const a=i*Math.PI*2/7; folha.scale.set(.34,.14,1.4); folha.rotation.y=a; folha.position.set(Math.sin(a)*.25,.78+Math.cos(a)*.08,Math.cos(a)*.25); folha.userData.nonSolidSurface=true; vaso.add(folha); }
+  /* LUXO BRASILEIRO EXCESSIVO (3 famílias, o teto declarado): lustre de cristal sobre a
+     mesa de jantar, duas poltronas de couro voltadas para o estar e um tríptico na
+     divisória. Tag própria (`luxo-prop`) porque `lived-prop` tem contrato de 6-8 tipos
+     no mansao-water-check e crescer ali reprovaria o mapa por sucesso. */
+  const luxo = (object, tipo) => { object.userData.mansaoFeature = 'luxo-prop'; object.userData.luxoType = tipo; return object; };
+  {
+    // LUSTRE: pendurado na laje leste (y=4,02) sobre a mesa de jantar de (8, 4).
+    const lustre = new THREE.Group(); lustre.position.set(8, 0, 4); luxo(lustre, 'lustre');
+    const latao = lam({ color: 0xbd9a52, metalness: .68, roughness: .28 });
+    const cabo = new THREE.Mesh(new THREE.CylinderGeometry(.014, .014, 1.05, 5), latao);
+    cabo.position.y = 3.5; lustre.add(cabo);
+    for (const [r, y, n] of [[.62, 2.98, 12], [.38, 3.24, 8]]) {
+      const anel = new THREE.Mesh(new THREE.TorusGeometry(r, .022, 5, 20), latao);
+      anel.rotation.x = Math.PI / 2; anel.position.y = y; lustre.add(anel);
+      const cristal = lam({ color: 0xdfeaf2, roughness: .08, metalness: .1, transparent: true, opacity: .72,
+        emissive: 0x6a5a34, emissiveIntensity: .3 });
+      const gotas = new THREE.InstancedMesh(new THREE.OctahedronGeometry(.062, 0), cristal, n);
+      const eixo = new THREE.Object3D();
+      for (let i = 0; i < n; i++) {
+        const a = i * Math.PI * 2 / n;
+        eixo.position.set(Math.cos(a) * r, y - .17 - (i % 3) * .07, Math.sin(a) * r);
+        eixo.rotation.set(0, a, .2); eixo.updateMatrix(); gotas.setMatrixAt(i, eixo.matrix);
+      }
+      gotas.instanceMatrix.needsUpdate = true; gotas.castShadow = false; lustre.add(gotas);
+    }
+    const miolo = new THREE.Mesh(new THREE.SphereGeometry(.13, 9, 6),
+      lam({ color: 0xffeec4, emissive: 0xffca6a, emissiveIntensity: .8, roughness: .3 }));
+    miolo.position.y = 3.02; lustre.add(miolo);
+    lustre.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
+    root.add(lustre);
+
+    // POLTRONAS: assento leva o colisor (o resto é silhueta), mesmo padrão do sofá.
+    const couro = lam({ color: 0x6d3b26, roughness: .52 });
+    const pesMetal = lam({ color: 0x2f2c28, metalness: .55, roughness: .4 });
+    for (const [px, pz, pry] of [[1.6, -2.6, .55], [5.9, -2.9, -.42]]) {
+      const assento = addBox(.95, .42, .92, couro, px, 0, pz, { ry: pry });
+      luxo(assento, 'poltrona');
+      solids.push({ x0: px - .48, x1: px + .48, z0: pz - .46, z1: pz + .46 });
+      addBox(.95, .66, .17, couro, px, .42, pz - .38, { collide: false, skirt: false, ry: pry });
+      for (const ax of [-.44, .44]) addBox(.16, .3, .88, couro, px + ax, .4, pz, { collide: false, skirt: false, ry: pry });
+      for (const [ox, oz] of [[-.36, -.32], [.36, -.32], [-.36, .32], [.36, .32]])
+        addBox(.06, .16, .06, pesMetal, px + ox, -.16, pz + oz, { collide: false, skirt: false, cast: false });
+    }
+
+    // TRÍPTICO na face leste da divisória de x=-4 (a parede já é sólida: sem colisor).
+    const moldura = lam({ color: 0x8c6a33, metalness: .4, roughness: .45 });
+    const telas = [0x2d5a63, 0x7b3f2c, 0x3f5c35];
+    telas.forEach((cor, i) => {
+      const z = 2.6 + i * 1.9;
+      luxo(addBox(.05, 1.18, 1.18, moldura, -3.855, 1.5, z, { collide: false, cast: false, skirt: false }), 'triptico');
+      addBox(.02, .98, .98, lam({ color: cor, roughness: .74 }), -3.83, 1.6, z, { collide: false, cast: false, skirt: false });
+    });
+  }
   // Luz quente local impede que a cobertura do mezanino transforme os móveis em
   // silhuetas pretas; sem sombra dinâmica, o custo em mobile é pequeno.
   for (const [x,z] of [[-8,-9],[3,1],[9,-10],[-5,4]]) {

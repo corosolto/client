@@ -17,7 +17,7 @@
    como alias) | borda-alta (saída selada, anti-trap) | sem-parede (cuba não segura) |
    jardim-pobre | interior-vazio | carros-ausentes | carros-glb-ausentes |
    carro-glb-clonado | carro-glb-gigante | vaga-sem-colisor | piscina-sem-cuba |
-   piscina-cuba-curta.
+   piscina-cuba-curta | luxo-vazio.
 */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -46,6 +46,7 @@ const MUT_JARDIM_RARO = process.argv.includes('--mutante=jardim-raro');
 const MUT_PISCINA_SEM_CUBA = process.argv.includes('--mutante=piscina-sem-cuba');
 const MUT_PISCINA_CUBA_CURTA = process.argv.includes('--mutante=piscina-cuba-curta');
 const MUT_ESPELHO_MORTO = process.argv.includes('--mutante=espelho-morto');
+const MUT_LUXO_VAZIO = process.argv.includes('--mutante=luxo-vazio');
 const RAIO = 0.38; // mesmo raio passado por Game.update a _collide
 /* CUBA da piscina: interior jogável (dentro dos muros). As bandas são o contrato da
    decisão do dono 18/08 (plans/13): raso ~0,8-1,0 m andável; fundo ~1,8-2,0 m.
@@ -130,6 +131,7 @@ if (MUT_INTERIOR) for (const o of marcados) if (['ilha-gourmet','estar','divisor
 if (MUT_CARROS) for (const o of marcados) if (o.userData.mansaoFeature === 'carro-generico') o.visible = false;
 if (MUT_CATALOGO) for (const o of marcados) if (o.userData.mansaoFeature === 'tropical-3d') o.visible = false;
 if (MUT_BLOCKOUT) for (const o of marcados) if (o.userData.mansaoFeature === 'lived-prop') o.visible = false;
+if (MUT_LUXO_VAZIO) for (const o of marcados) if (o.userData.mansaoFeature === 'luxo-prop') o.visible = false;
 if (MUT_JARDIM_ESPELHO) for (const o of marcados) if (o.userData.mansaoFeature === 'garden-cluster') {
   const par = Math.floor(o.userData.clusterIndex / 2);
   o.position.set((o.userData.clusterIndex % 2 ? -1 : 1) * (5 + par * 2), o.position.y, 20 + par * 5);
@@ -247,6 +249,8 @@ let falhas = 0;
 const carros = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'carro-generico');
 const propsVividos = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'lived-prop');
 const superficies = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'interior-surface');
+const luxo = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'luxo-prop');
+const luxoTipos = new Set(luxo.map((o) => o.userData.luxoType));
 const luzes = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'interior-fill');
 const clusters = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'garden-cluster');
 const clusterFamilies = new Set(clusters.map((o) => o.userData.gardenFamily).filter(Boolean));
@@ -313,6 +317,10 @@ for (const [nome, ok, medido] of [
   ['props vividos distintos', new Set(propsVividos.map((o) => o.userData.propType)).size >= 6 && new Set(propsVividos.map((o) => o.userData.propType)).size <= 8, `${new Set(propsVividos.map((o) => o.userData.propType)).size}/6–8`],
   ['piso e forro com texturas próprias', new Set(superficies.map((o) => o.userData.surfaceType)).size >= 2 && new Set(superficies.map((o) => o.material?.map?.uuid).filter(Boolean)).size >= 2, `${new Set(superficies.map((o) => o.userData.surfaceType)).size}/2`],
   ['fill interior', luzes.filter((l) => l.intensity >= 1).length >= 3, `${luzes.filter((l) => l.intensity >= 1).length}/3`],
+  /* Luxo brasileiro excessivo (25/08): 3 famílias declaradas como TETO no map_mansao.js
+     ("3-5 props NO MÁXIMO, otimizados"). A faixa é fechada dos dois lados de propósito:
+     abaixo some a decisão, acima vira o showroom que a régua do jardim já reprovou. */
+  ['mobília de luxo distinta (lustre/poltrona/tríptico)', luxoTipos.size >= 3 && luxoTipos.size <= 5, `${luxoTipos.size}/3–5 famílias: ${[...luxoTipos].join(', ') || 'nenhuma'}`],
 ]) {
   if (!ok) falhas++;
   console.log(`${ok ? '✓' : '✗'} ${nome}: ${medido}`);
