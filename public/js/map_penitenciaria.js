@@ -1,7 +1,5 @@
 // Penitenciária da Treta: pátio central exposto, celas transitáveis e flancos de serviço.
-// Rebuild USANTOS (25/08/2026): reboco descascado medido pela NV1, holofotes que varrem
-// o pátio (NV2), varandas com guarda-corpo (NV3), arame em hélice contínua (NV4) e
-// horizonte próprio de fim de tarde azul-chumbo (LOOK.penitenciaria, NV5).
+// Rebuild USANTOS (25/08/2026): reboco, holofotes, varandas, hélice de arame — ver eval:penitenciariavida.
 import * as THREE from 'three';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
@@ -304,9 +302,7 @@ export function buildPenitenciaria(scene, T) {
   }
 
   /* Guaritas com holofote REAL que varre o pátio (NV2). SpotLight SEM sombra e sem
-     .map: o SB2 já mede 8/8 vetores no piso WebGL1 — qualquer linha de sombra/mapa
-     extra estoura o orçamento (mutantes sombra-pontual/spot-map provam). O facho
-     visível é um cone aditivo falso, barato e sem varying novo. */
+     .map: o SB2 já mede 8/8 no piso WebGL1 (mutantes sombra-pontual/spot-map provam). */
   const holofotes = [];
   const coneGeo = new THREE.ConeGeometry(3.4, 30, 12, 1, true);
   coneGeo.translate(0, -15, 0); coneGeo.rotateX(-Math.PI / 2);   // ápice na origem, boca a +Z
