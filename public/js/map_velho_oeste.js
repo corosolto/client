@@ -18,7 +18,7 @@ export function buildVelhoOeste(scene, T) {
   const occluders = [];
   const pickups = [];
   const root = new THREE.Group();
-  root.name = 'sertao-da-treta';
+  root.name = 'velho-oeste-da-treta';   // id do mapa: 'sertao-*' é prefixo da régua ST1
   scene.add(root);
   const GLB_ON = typeof window !== 'undefined';
 

@@ -29,11 +29,12 @@
    PROCEDÊNCIA DOS PISOS (Lei 2 — teto sem procedência é opinião)
      ST1 ≥ 14 e ≥ 6 tipos · ST2 ≥ 75%: piso declarado ANTES do retheme
      (estado atual: 0 elementos, 0% adobe — saída deste script no commit da
-     régua) e ajustado à primeira build que passar no eval:velhooeste SEM
-     mudar layout; contagem fechada da build entregue: 5 mandacarus + 4
-     macambiras + 2 juazeiros + 3 xique-xiques + 5 pedras + poço + capelinha
-     + palhoça + placa = 22 elementos de 9 tipos. Piso 14/6 fica a ~64% da
-     contagem: absorva trocar um juazeiro por pedra sem virar deserto.
+     régua) e ajustado à primeira build que passou no eval:velhooeste SEM
+     mudar layout; contagem fechada da build entregue: 8 mandacarus + 4
+     macambiras + 2 juazeiros + 3 xique-xiques + 5 pedras + 2 lagartos + poço
+     + capelinha + palhoça + placa = 28 elementos de 10 tipos (saída deste
+     script). Piso 14/6 fica a 50%/60% da contagem: absorve trocar metade do
+     elenco sem deixar o mapa virar faroeste de novo.
      ST2: 16 paredes de casario no mapa (12 prédios + 4 casas de rua), todas
      em taipa; piso 75% deixa 4 paredes voltarem a madeira (varanda/estábulo)
      sem perdoar o casario inteiro de adobe.
