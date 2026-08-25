@@ -138,6 +138,14 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:penitenciariavida`
+
+A Penitenciária da Treta não pode parecer low poly (frente USANTOS, dono 25/08/2026: "os mapas do usantos são os mais low poly do jogo"). NV1 reboco descascado medido nos pixels da DataTexture aplicada nos 4 muros (desvio de luminância, baldes de cor, gradiente de umidade), NV2 4 holofotes `penitenciaria-holofote-*` que VARREM o pátio no `update`, NV3 ≥2 varandas `penitenciaria-varanda-*` com guarda-corpo, NV4 arame farpado em hélice contínua nomeada nos 4 lados, NV5 horizonte próprio (skyUrl + LOOK.penitenciaria), NV6 ≥12 texturas distintas em uso. Irmã da `eval:parquevida`. Mutantes: sem-reboco|holofote-parado|sem-varanda.
+
+```bash
+npm run eval:penitenciariavida
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.
