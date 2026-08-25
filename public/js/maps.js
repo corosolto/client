@@ -1,6 +1,6 @@
 // Map registry — single source of truth for selectable arenas.
 import { buildBrasilia } from './map_brasilia.js';
-import { buildPoolDay } from './map_piscina.js';
+import { buildPoolDay, PISCINA_AMBIENCE } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
@@ -52,7 +52,7 @@ export const MAPS = {
          defeito: `resolveMapId` (logo abaixo) devolve o DEFAULT_MAP para id desconhecido,
          então aquela corrida vira uma segunda passada no awp_map em vez de quebrar. O
          arquivo está em mão de outro agente nesta rodada e por isso não foi tocado. */
-  piscina_treta: { name: 'Piscina da Treta',        build: buildPoolDay },   // salão fechado do CS 1.6; a versão Piscinão está em map_piscinao_ramos.js, fora do registro
+  piscina_treta: { name: 'Piscina da Treta',        build: buildPoolDay, ambience: PISCINA_AMBIENCE },   // salão fechado do CS 1.6; a versão Piscinão está em map_piscinao_ramos.js, fora do registro
   // props via getter: a seleção de carros é sorteada por partida (seed no startGame) — peso
   // `ctfMode: true` = ABRE em CTF, mas o jogador pode trocar pra rounds no menu.
   // Era um flag `ctfOnly` que travava o modo. Pedido do dono: "os mapas todos podem ser rounds
