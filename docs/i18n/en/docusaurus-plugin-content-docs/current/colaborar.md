@@ -252,7 +252,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,834 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 874 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 827 |
 | `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,013 |
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,921 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,656 |

@@ -8,12 +8,8 @@
 // as coisas no meio do mapa estão tudo confuso". Decisão dele: voltar para a
 // piscina anterior, sem tema.
 //
-// Este é o mapa original (commit 7871a7b): um salão FECHADO de piscina azulejado —
-// paredes de azulejo branco com faixa azul-marinho, piso branco, piscina funda
-// e ciano, armários de metal como cobertura, espreguiçadeiras, trampolim, boxes
-// de chuveiro e uma clarabóia. Compacto, legível, um material por superfície.
-// É exatamente o que a régua nova pede (BAR-CONSISTENCIA §2/§3):
-// consistência e leitura de espaço acima de riqueza visual.
+// Este é o mapa original (commit 7871a7b): um salão FECHADO de piscina azulejado,
+// compacto e legível — um material por superfície (BAR-CONSISTENCIA §2/§3).
 //
 // LAYOUT MEDIDO do fy_pool_day.bsp (frente map2/piscina): proporções de
 // tools/eval/piscina_bsp.json, cobradas pela régua eval:piscina-bsp (±20%).
