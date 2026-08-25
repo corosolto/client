@@ -18,7 +18,7 @@ export const HALF_X = 18, HALF_Z = 40;
 export const ESCADAO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 
 export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
-  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua'];
+  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02'];
 
 // ---- parâmetros da escada (NBR 9077 / Blondel: 2h+p = 0,63) ----
 const ESC = { larg: 5.0, espelho: 0.17, piso: 0.29, n: 12 };
@@ -539,6 +539,24 @@ export function buildEscadao(scene, T) {
   // Caixa d'água Tripo PBR: o proxy mantém o mesmo cover e é fallback se o GLB não carrega.
   propAt('caixa_dagua', -12, -32, 3.0, 2.5, 2.5,
     lam({ color: 0x1a1a1a, roughness: 0.8 }), 0, H_TOP);
+  /* Varais reais do acervo: roupa é silhueta leve no horizonte, nunca cover nem occluder. */
+  const varal = (id, x, z, h, ry = 0) => {
+    const o = GLB_ON ? placeProp(id, { x, y: H_TOP, z, targetH: h, ry }) : null;
+    if (o) {
+      o.userData.escadaoVaral = id;
+      o.traverse((m) => { if (m.isMesh) m.userData.nonSolidSurface = true; });
+      root.add(o);
+      return;
+    }
+    const linha = new THREE.Mesh(new THREE.BoxGeometry(2.7, .035, .035), lam({ color: 0x1a1817, roughness: 1 }));
+    linha.position.set(x, H_TOP + h * .72, z); linha.rotation.y = ry; linha.userData.escadaoVaral = id; root.add(linha);
+    for (const dx of [-.75, 0, .75]) {
+      const roupa = new THREE.Mesh(new THREE.BoxGeometry(.35, .52, .035), [PAREDES[0], PAREDES[2], PAREDES[3]][Math.round((dx + 1) * 2) % 3]);
+      roupa.position.set(x + Math.cos(ry) * dx, H_TOP + h * .48, z - Math.sin(ry) * dx); roupa.rotation.y = ry; roupa.userData.nonSolidSurface = true; root.add(roupa);
+    }
+  };
+  varal('varal_roupas_01', -5.8, -34.6, 1.5, .12);
+  varal('varal_roupas_02', 8.1, -25.2, 1.45, -Math.PI / 2);
   // barraco de obra (cover)
   casa(12, -33, 5, 4, 3, 3, H_TOP);
   // cobertura lateral preserva a visada do spawn para o cartão-postal central
@@ -792,6 +810,8 @@ export function buildEscadao(scene, T) {
       { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
       { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
+    cats: [{ pos: [10.4, groundHeightAt(10.4, -26), -26], to: [12.1, groundHeightAt(12.1, -29), -29], phase: .65 }],
+    chickens: [{ pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
   });
 
   return {

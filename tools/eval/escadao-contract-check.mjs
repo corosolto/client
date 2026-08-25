@@ -34,6 +34,9 @@ const observadores = [olhos(-4, 8), olhos(4, 8), olhos(0, -12)];
 const angulosAbertos = observadores.filter((origem) => game._losClear(origem, protegido)).length;
 
 let landmark = null;
+const varais = [];
+world.root.traverse((object) => { if (object.userData?.escadaoVaral) varais.push(object); });
+if (mutante === 'varal-sumiu' && varais[0]) varais[0].visible = false;
 world.root.traverse((object) => { if (object.userData?.landmark === 'caveirao') landmark = object; });
 if (mutante === 'caminhao-bau') landmark = null;
 const size = new THREE.Vector3();
@@ -44,6 +47,8 @@ const checks = [
   ['saídas dos dois becos sem LOS de spawn', visadasSpawn === 0, `visadas=${visadasSpawn}`],
   ['caveirão exposto por 2 laterais + topo', angulosAbertos === 3, `ângulos=${angulosAbertos}/3`],
   ['casco blindado monovolume', cascoOk, `bbox=${size.toArray().map((v) => v.toFixed(2)).join('x')}`],
+  ['dois varais visíveis materializam roupa no topo', varais.filter((varal) => varal.visible !== false).length >= 2,
+    `varais=${varais.filter((varal) => varal.visible !== false).length}/2`],
 ];
 let falhas = 0;
 for (const [nome, ok, detalhe] of checks) { if (!ok) falhas++; console.log(`${ok ? '✓' : '✗'} ${nome} (${detalhe})`); }
