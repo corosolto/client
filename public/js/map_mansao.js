@@ -699,6 +699,10 @@ export function buildMansao(scene, T) {
   // Portão de correr: o colisor único 8×3 fica (gameplay); o visual ganha trilho,
   // mourões, motor e folha de aço flutuando 12 cm — a "laje preta" morreu (crítico r3).
   col(-4, 4, 0, 3.0, 33.85, 34.15);
+  // Mourões e motor ficam FORA do colisor do vão e o corpo entrava na geometria
+  // visível (MAP1: ponto (4,5; 34,5) preso no motor, 0,9 m) — ganham colisor próprio.
+  for (const mx of [-4.15, 4.15]) col(mx - .18, mx + .18, 0, 2.6, 33.75, 34.25);
+  col(4.37, 4.87, 0, 0.9, 34.375, 34.725);
   const marcaParte = (o, k, t) => { o.userData[k] = t; return o; };
   marcaParte(addBox(8.3, .05, .14, lam({ color: 0x4a4f55, metalness: .6, roughness: .4 }), 0, 0, 34, { collide: false, cast: false, skirt: false }), 'portaoPart', 'trilho');
   for (const mx of [-4.15, 4.15]) marcaParte(addBox(.35, 2.6, .5, MAT_MURO, mx, 0, 34, { collide: false }), 'portaoPart', 'mourao');

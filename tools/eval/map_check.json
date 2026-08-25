@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-19T22:27:00.791Z",
+ "gerado": "2026-08-25T00:25:20.025Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -1005,7 +1005,7 @@
    "occluderSemMalha": [],
    "occMedidos": 118,
    "occPulados": 7,
-   "fracSemMalha": 0.005,
+   "fracSemMalha": 0.0051,
    "quadrantes": [
     {
      "q": "0,0",
@@ -2621,9 +2621,9 @@
   },
   {
    "map": "mansao",
-   "celulasAlcancadas": 40371,
-   "amostrasChao": 2413,
-   "observadores": 600,
+   "celulasAlcancadas": 40304,
+   "amostrasChao": 2407,
+   "observadores": 598,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -2699,7 +2699,7 @@
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1095,
+     "fracMedia": 0.1093,
      "maiorVisada": 58.2
     }
    ],
@@ -2749,9 +2749,9 @@
      "x": -4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 326,
+     "obsLonge": 324,
      "obsVendo": 49,
-     "frac": 0.1503,
+     "frac": 0.1512,
      "maiorVisada": 57.6
     },
     {
@@ -2759,19 +2759,19 @@
      "x": -1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 309,
-     "obsVendo": 47,
-     "frac": 0.1521,
-     "maiorVisada": 56.8
+     "obsLonge": 307,
+     "obsVendo": 46,
+     "frac": 0.1498,
+     "maiorVisada": 56.6
     },
     {
      "team": "B",
      "x": 1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 310,
+     "obsLonge": 308,
      "obsVendo": 28,
-     "frac": 0.0903,
+     "frac": 0.0909,
      "maiorVisada": 56.5
     },
     {
@@ -2779,9 +2779,9 @@
      "x": 4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 310,
+     "obsLonge": 308,
      "obsVendo": 14,
-     "frac": 0.0452,
+     "frac": 0.0455,
      "maiorVisada": 58.2
     }
    ],
@@ -2790,9 +2790,9 @@
      "team": "E",
      "x": -4.5,
      "z": 32,
-     "folgaParede": 1.95,
-     "dirPior": 73,
-     "areaContigua": 45.3,
+     "folgaParede": 1.8,
+     "dirPior": 79,
+     "areaContigua": 44.8,
      "okFolga": true,
      "okArea": true
     },
@@ -2802,7 +2802,7 @@
      "z": 32,
      "folgaParede": 1.9,
      "dirPior": 79,
-     "areaContigua": 49.3,
+     "areaContigua": 48.8,
      "okFolga": true,
      "okArea": true
     },
@@ -2812,7 +2812,7 @@
      "z": 32,
      "folgaParede": 0.8,
      "dirPior": 34,
-     "areaContigua": 50.2,
+     "areaContigua": 45.6,
      "okFolga": false,
      "okArea": true
     },
@@ -2822,7 +2822,7 @@
      "z": 32,
      "folgaParede": 1.75,
      "dirPior": 309,
-     "areaContigua": 49.6,
+     "areaContigua": 46.4,
      "okFolga": true,
      "okArea": true
     },
@@ -2868,7 +2868,7 @@
     }
    ],
    "piorFolga": 0.8,
-   "piorArea": 45.3,
+   "piorArea": 44.8,
    "escadas": [
     {
      "nome": "escada do mezanino",
@@ -3020,14 +3020,14 @@
      "q": "1,3",
      "x0": -10.8,
      "z0": 17.8,
-     "areaAndavel": 141,
-     "props": 7,
+     "areaAndavel": 138,
+     "props": 8,
      "waypoints": 24,
-     "densProp": 4.97,
-     "densWp": 17.03,
-     "espacamento": 4.49,
-     "razaoProp": 1.13,
-     "razaoWp": 1.1
+     "densProp": 5.79,
+     "densWp": 17.38,
+     "espacamento": 4.15,
+     "razaoProp": 1.32,
+     "razaoWp": 1.12
     },
     {
      "q": "2,0",
@@ -3072,13 +3072,13 @@
      "q": "2,3",
      "x0": 0,
      "z0": 17.8,
-     "areaAndavel": 163,
-     "props": 8,
+     "areaAndavel": 162,
+     "props": 10,
      "waypoints": 30,
-     "densProp": 4.91,
-     "densWp": 18.4,
-     "espacamento": 4.51,
-     "razaoProp": 1.12,
+     "densProp": 6.18,
+     "densWp": 18.55,
+     "espacamento": 4.02,
+     "razaoProp": 1.41,
      "razaoWp": 1.19
     },
     {
