@@ -32,6 +32,8 @@
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
+    "//eval:amazonia": "frente map2/amazonia: o 'não parece low poly' do PR #375 virou número — variedade de material, densidade de cover, água viva e fauna (mutantes provam cada cláusula)",
+    "eval:amazonia": "node tools/eval/amazonia-check.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",
     "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",

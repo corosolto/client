@@ -55,6 +55,9 @@ const BIOMA_FAUNA = {
      (córrego/atacadão), papagaio de poleiro (mansão/parque) */
   praca_poderes: ['armadillo'], atacadao_treta: ['cockroach'],
   mansao: ['parrot'], parque_treta: ['parrot'],
+  /* map2/amazonia: mata tem papagaio de poleiro no market e galinha de quintal
+     na palafita — espécie-chave herda o bioma, não o gosto do autor do mapa. */
+  amazonia: ['parrot', 'chicken'],
 };
 const FAUNA2 = new Set(['armadillo', 'cockroach', 'parrot']);
 

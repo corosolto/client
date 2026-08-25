@@ -395,3 +395,45 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   translucent smoke texture, no text, no other objects". Sem canal alfa — a
   luminância vira alfa no shader (uLumAlpha do gpuparticles.js). SHA-256
   `249621d02702caee19f5cf85c14e1e77c15b92dea56148e2361f7389f311057a`.
+
+<!-- frente map2/amazonia (25/08): céu, materiais e prévia — todos OpenRouter
+     google/gemini-3-pro-image via tools/gen-image.mjs (regra da casa: 2D sai por
+     lá). A cor do horizonte do céu (0xc9d0cd) e do zênite (0x7c919f) foi medida
+     por tools/eval/look-horizonte.py sobre o webp final — é o que o LOOK[amazonia]
+     consome. -->
+- `textures/sky_amazonia.webp`: panorama equiretangular 2:1 do céu equatorial úmido
+  (1774×887). Prompt: "Create a seamless equirectangular 2:1 environment panorama
+  for a stylized-realistic browser FPS set in the Brazilian Amazon. Upper 60 percent
+  is a humid equatorial sky: soft diffused light, layered low cumulus clouds, moist
+  pale greenish-white haze near the horizon, muted blue-grey zenith. Lower 40 percent
+  horizon shows endless flat rainforest canopy of dark green rounded treetops and a
+  thin dark river winding through, all fading into dense water-green atmospheric
+  haze. Overcast humid morning light, no identifiable landmark, no buildings, no
+  people, no text, no watermark, no borders. Output only the panorama."
+  SHA-256 `b7f21ceffb65d139e8efd79b4ff2e172d7b83358f5b41291427dcc74569eaa1e`.
+- `textures/tex_palha.webp` (512×512): palha de telhado de palafita. Prompt:
+  "Top-down seamless texture of weathered dried thatch straw, Amazon palm thatch
+  roof material seen from above, warm ochre tan straw strands laid in parallel
+  directional rows, some strands darker and damp, natural irregularities, even
+  ambient light, photorealistic, no people, no text, no watermark". SHA-256
+  `2d8edcd6b03cdd5995f3f65a8c2e513ddb97729d61d947d929a8e6b754e77fca`.
+- `textures/tex_selva.webp` (512×512): chão de mata. Prompt: "Top-down seamless
+  texture of Amazon rainforest floor, dark wet soil with fallen leaves, broken
+  twigs, moss patches, few roots, damp organic litter, muted browns and deep
+  greens, even ambient light, photorealistic, no people, no text, no watermark".
+  SHA-256 `e51e8050fce458857ee6094863d1bbce413a7dc04bd29cf4676f81989bf2f6a9`.
+- `textures/tex_madeira_serragem.webp` (512×512): piso da madeireira. Prompt:
+  "Top-down seamless texture of abandoned sawmill dirt floor, old grey weathered
+  wooden planks with sawdust, scattered wood chips and sawdust piles, rusty
+  stains, oil marks, worn industrial ground, even ambient light, photorealistic,
+  no people, no text, no watermark". SHA-256
+  `c4bd285b03d27ec1b9469dd7ebd3020961a5bb44e24f49a8b6791beb1c8622ba`.
+- `map-previews/amazonia.jpg` (640×640): cartaz do menu (provisório até captura
+  3:2 do mapa real pela bateria única de browser). Prompt: "Stylized-realistic
+  game map preview, Brazilian Amazon riverside community: a wide igarape river
+  with dark green water crossing the middle, stilt wooden houses (palafitas) with
+  palm thatch roofs on both banks, a floating wooden market with colorful canoes
+  and tarps, an abandoned sawmill shed in the background, dense jungle wall and
+  tall ceiba trees behind, humid hazy green sky, no people, no text, no
+  watermark". SHA-256
+  `7f0a1c3db390e1c30c80434d42a10ba11c3786729773b65e6e69a5ca24fc5efa`.

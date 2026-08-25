@@ -28,4 +28,13 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  amazonia: {   // equador úmido: céu lavado de água, névoa verde densa
+    sky: '/img/textures/sky_amazonia.webp',
+    horizonte: 0xc9d0cd,   // look-horizonte.py sobre sky_amazonia.webp (banda 429-441 de 887)
+    zenite: 0x7c919f,
+    sol: { cor: 0xfff2dc, i: 1.45, pos: [12, 38, 10] },
+    hemi: { ceu: 0xdfe8e4, chao: 0x3d4a33, i: 1.05 },
+    neblina: { d: 0.0112, solDir: [12, 38, 10], forca: 0.92 },
+    grade: { exposicao: 1.50, piso: 0.0050, expAces: 1.60 },
+  },
 };

@@ -16,6 +16,7 @@ import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 import { buildParque } from './map_parque.js';
 import { buildVelhoOeste } from './map_velho_oeste.js';
 import { buildPenitenciaria } from './map_penitenciaria.js';
+import { buildAmazonia, AMAZONIA_PROPS, AMAZONIA_AMBIENCE } from './map_amazonia.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -92,6 +93,10 @@ export const MAPS = {
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
   velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
   penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
+  /* amazonia: retrato do "Treta no Vietnã" (PR #375, rejeitado) como comunidade
+     ribeirinha — igarapé, palafitas de palha, market flutuante e madeireira. Os
+     alias `fy_amazonia` e `vietnam` mantêm link/banco do mapa antigo chegando aqui. */
+  amazonia: { name: 'Treta na Amazônia', build: buildAmazonia, props: AMAZONIA_PROPS, ambience: AMAZONIA_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
@@ -128,6 +133,11 @@ export const ALIAS_MAPA = {
   lajes: 'lajes',
   corrego: 'corrego',
   mansao: 'mansao',
+  /* map2/amazonia: o "Treta no Vietnã" do PR #375 nunca entrou no registro desta
+     árvore, mas links de partida e linhas de banco gravadas no período de review
+     citam `vietnam`; `fy_amazonia` cobre o alias do id próprio na época do PR. */
+  fy_amazonia: 'amazonia',
+  vietnam: 'amazonia',
 };
 
 export function resolveMapId(id) {
