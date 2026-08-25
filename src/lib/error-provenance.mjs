@@ -12,6 +12,9 @@ const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture/i;
 // Abort de mídia: o jogo corta `play()` pendente de propósito (audio.js:97/:119/:159) e a
 // rejeição chega sem stack. ESTREITO de propósito — KNOWN-BUGS.md, BUG-73.
 const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i;
+// Perda de contexto WebGL no MEIO do frame (WebKit, #419/#420): createShader() devolve null
+// antes de o evento webglcontextlost chegar. ESTREITO de propósito — KNOWN-BUGS.md, BUG-75.
+const CONTEXT_LOSS_RE = /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -74,6 +77,7 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';
   if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';
   if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';
+  if (CONTEXT_LOSS_RE.test(evidence)) return 'recuperavel';
   return 'codigo';
 }
 

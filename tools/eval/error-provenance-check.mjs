@@ -14,6 +14,7 @@ const mutants = [
   'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
   'onerror-sem-src', 'boot-sem-migalha', 'payload-sem-migalhas', 'issue-sem-migalhas',
   'sem-midia', 'midia-ampla', 'sem-cota-midia',
+  'sem-contexto', 'contexto-amplo', 'fail-no-contexto',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -167,6 +168,19 @@ if (mutant === 'payload-sem-migalhas') api = mutate(api,
   'client_payload: { fingerprint: chave, message, source, stack, origin,');
 if (mutant === 'issue-sem-migalhas') workflow = mutate(workflow,
   '**Migalhas:**', '**Migalhas removidas:**');
+
+/* BUG-75 · perda de contexto no meio do frame (#419/#420). Os três jeitos de o corte deixar
+   de valer: sumir do helper, ficar LARGO a ponto de engolir a perda persistente deliberada
+   ('contexto WebGL perdido'), e o launch voltar a cair no painel pela corrida. */
+if (mutant === 'sem-contexto') helperSource = mutate(helperSource,
+  "if (CONTEXT_LOSS_RE.test(evidence)) return 'recuperavel';",
+  "if (CONTEXT_LOSS_RE.test(evidence)) return 'codigo';");
+if (mutant === 'contexto-amplo') helperSource = mutate(helperSource,
+  'const CONTEXT_LOSS_RE = ',
+  'const CONTEXT_LOSS_RE = /WebGL/i; const CONTEXT_LOSS_RE_ESTREITA = ');
+if (mutant === 'fail-no-contexto') page = mutate(page,
+  'if (lancamento.ativo && interna && !erroDeContexto(String(msg))) lancamento.fail(',
+  'if (lancamento.ativo && interna) lancamento.fail(');
 
 let classifyCrash = null, shouldDispatchCrash = null, crashFingerprint = null, fingerprintConfere = null, isConsoleLog = null;
 if (helperSource) {
@@ -547,6 +561,52 @@ const cotaMidiaWired = /var TETO_MIDIA = \d+;/.test(page)
   && /\} else if \(erroIgnoravel\(mFinal\)\) \{[\s\S]{0,400}?if \(nMidia >= TETO_MIDIA\) return null;\s*\n\s*nMidia\+\+;/.test(page)
   && /if \(nEnviados >= TETO_SESSAO\) return null;/.test(page);
 
+/* EP16 · BUG-75 (issues #420/#419, WebKit, alpha.176). Perda de contexto WebGL no MEIO do
+   frame: `_isContextLost` do three só vira verdade quando o evento DOM chega (assíncrono);
+   na janela da corrida createShader() (ocorrência única no vendor) devolve null e
+   shaderSource(null,…) lança TypeError — 1 por frame, porque o rAF é a 1ª linha do loop.
+   main.js já recupera (forceContextRestore em 0,5/1,5/4 s; WG7 tranca os listeners) e a SL8
+   fecha a corrida no vendor; a perda PERSISTENTE continua escalando pela mensagem deliberada
+   'contexto WebGL perdido' de main.js — que esta regex NÃO pode casar. */
+const SRC_420 = `${own}/vendor/three.module.js:19355:17`;
+const STACK_420 = `shaderSource@[native code]\nWebGLShader@${SRC_420}`;
+const contextoFixtures = [
+  /* a forma crua da #420 (uncaught, window.onerror) e a prefixada da #419 (lancamento.fail) */
+  { source: SRC_420, stack: STACK_420, message: "TypeError: Argument 1 ('shader') to WebGL2RenderingContext.shaderSource must be an instance of WebGLShader" },
+  { source: SRC_420, stack: STACK_420, message: "Falha ao abrir partida: Argument 1 ('shader') to WebGL2RenderingContext.shaderSource must be an instance of WebGLShader" },
+  /* WebGL1 (fallback do glcontext.js) e outro entry point tipado da mesma família */
+  { source: '', stack: '', message: "Argument 1 ('shader') to WebGLRenderingContext.compileShader must be an instance of WebGLShader" },
+];
+/* Vizinhas que continuam `codigo` DE PROPÓSITO (mutante contexto-amplo): o fatal deliberado
+   da perda persistente, crash real dentro do vendor, e a forma Chrome nunca observada nas
+   crash-auto — largura só entra com dado de campo (molde do BUG-73). */
+const naoContextoFixtures = [
+  { source: 'webgl-context-lost', stack: '', message: 'Falha ao abrir a arena: contexto WebGL perdido' },
+  { source: `${own}/vendor/three.module.js:29975:29`, stack: '', message: "undefined is not an object (evaluating 'material.program')" },
+  { source: '', stack: '', message: "Failed to execute 'shaderSource' on 'WebGL2RenderingContext': parameter 1 is not of type 'WebGLShader'." },
+];
+/* O espelho do cliente EXTRAÍDO e EXECUTADO, como EP6/EP14: regex de fiação sozinha
+   aprovaria `function erroDeContexto(){ return true; }`. */
+let contextoCliente = null;
+const ctxMatch = page.match(/function erroDeContexto\(m\)\{[\s\S]*?\n  \}/);
+if (ctxMatch) {
+  try { contextoCliente = new Function(`${ctxMatch[0]}\nreturn erroDeContexto;`)(); }
+  catch { /* cláusula fica vermelha */ }
+}
+const contextoClienteOk = !!contextoCliente
+  && contextoFixtures.every((f) => contextoCliente(f.message) === true)
+  && naoContextoFixtures.every((f) => contextoCliente(f.message) === false);
+/* O fail() do launch é segurado SÓ para a corrida: erro de contexto não mata a abertura com
+   o restore a 500 ms — o watchdog da etapa e o fatal de 8 s continuam de rede de segurança.
+   O reporta() da linha anterior NÃO é suprimido: a linha segue no js_error. */
+const failContextoWired = /if \(lancamento\.ativo && interna && !erroDeContexto\(String\(msg\)\)\) lancamento\.fail\(/.test(page)
+  && /reporta\('error', msg, loc, e\.error && e\.error\.stack, !interna\);/.test(page);
+/* Procedência (molde da EP12): os fingerprints PUBLICADOS nas #420/#419, reproduzidos pela
+   receita real — se a família mudar de texto, estes números mudam e a cláusula cai. */
+const fingerprintsDaFamilia = typeof crashFingerprint === 'function'
+  && crashFingerprint('error', contextoFixtures[0].message, SRC_420) === '645208c8'
+  && crashFingerprint('error', contextoFixtures[1].message, SRC_420) === '9e9db234';
+
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
@@ -588,6 +648,12 @@ const checks = [
     && shouldDispatchCrash('recuperavel') === false
     && midiaCliente && cotaMidiaWired,
     'abort de mídia (play() cortado por pause(), #389) é recuperável: fica na telemetria, não abre issue e tem cota própria no cliente; crash real dentro do módulo de áudio continua acionável'],
+  ['EP16', contextoFixtures.every((fixture) => classify(fixture) === 'recuperavel')
+    && naoContextoFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('recuperavel') === false
+    && contextoClienteOk && failContextoWired && fingerprintsDaFamilia,
+    'perda de contexto no meio do frame (#419/#420) é recuperável: fica na telemetria, não abre issue nem derruba o launch; a perda persistente (contexto WebGL perdido), crash real no vendor e a forma Chrome não observada continuam acionáveis'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -609,6 +675,7 @@ const mutantClause = {
   'onerror-sem-src': 'EP15', 'boot-sem-migalha': 'EP15',
   'payload-sem-migalhas': 'EP15', 'issue-sem-migalhas': 'EP15',
   'sem-midia': 'EP14', 'midia-ampla': 'EP14', 'sem-cota-midia': 'EP14',
+  'sem-contexto': 'EP16', 'contexto-amplo': 'EP16', 'fail-no-contexto': 'EP16',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);

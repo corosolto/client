@@ -39,6 +39,98 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-75 · perda de contexto WebGL no meio do frame lançava TypeError por frame, matava o launch e abria issue — a flag do three é assíncrona~~ · RESOLVIDO 25/08 (issues #419 e #420)
+
+**Sintoma (literal, issues #420 e #419, mesma sessão, alpha.176, WebKit):**
+*"TypeError: Argument 1 ('shader') to WebGL2RenderingContext.shaderSource must be an
+instance of WebGLShader"*, fingerprints `645208c8` (#420) e `9e9db234` (#419), classe
+`codigo`, origem `vendor/three.module.js:19355:17`, stack
+`shaderSource@[native code] → WebGLShader → WebGLProgram → acquireProgram → getProgram →
+setProgram → renderObject → renderScene → update@game.js → loop@main.js`. A #419 é o
+**mesmo crash** com o prefixo *"Falha ao abrir partida: "* — o handler global
+(`index.astro`) chamou `lancamento.fail()` durante o launch da etapa `partida`
+(`main.js:985`), e o prefixo muda o hash FNV. Duas issues pela mesma corrida.
+
+**Causa raiz — confirmada.** O three r160 vendorizado só se protege pela flag assíncrona
+`_isContextLost` (`three.module.js:28562`), setada quando o evento DOM `webglcontextlost`
+é **despachado** (`:29104`); a guarda única do `render()` era `if ( _isContextLost === true )
+return;` (`:29547`). Entre a perda física do contexto e o despacho do evento,
+`gl.createShader()` (`:19353`, ocorrência única no bundle) devolve `null` e a chamada
+tipada seguinte — `gl.shaderSource(null,…)` — lança TypeError no WebKit. Como o
+`requestAnimationFrame` é a 1ª linha do loop, o jogo não morre: lança **1 TypeError por
+frame** até o evento chegar. Upstream r179 conferido: idêntico ao r160 aqui — não havia
+guarda oficial a portar, a guarda é autoral.
+
+**Palpite óbvio, REFUTADO com leitura medida:** "a recuperação de contexto não existe/não
+roda". Falso — `main.js:80-105` já faz `preventDefault` + `forceContextRestore()` em
+0,5/1,5/4 s com fatal deliberado em 8 s (`'contexto WebGL perdido'`), e a WG7
+(`webgl-compat-check.mjs`) tranca os listeners desde o #303. O defeito não era a
+recuperação: era a **corrida** (a janela entre a perda e o evento), o **rótulo** (o
+`classifyCrash` não batia `OPAQUE_RE`, `AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`
+nem `MEDIA_ABORT_RE` e caía no `return 'codigo'` final, que escala) e o **painel** (o
+`fail()` matava o launch por um erro que ia se recuperar 500 ms depois).
+
+**Correção, em três camadas espelhadas.**
+1. *Vendor fecha a corrida*: a guarda do `render()` consulta a verdade síncrona do driver
+   além da flag — `if ( _isContextLost === true || _gl.isContextLost() === true ) return;`.
+   `isContextLost()` é leitura de flag do wrapper do contexto (setada no instante da perda;
+   é para isso que a API existe), não sync de GPU: 1 chamada por `render()` contra milhares
+   de GL calls. Frame na janela da corrida pula o render inteiro, como o frame seguinte ao
+   evento já pulava.
+2. *Classificação cala o alarme falso*: `CONTEXT_LOSS_RE` estreita em
+   `src/lib/error-provenance.mjs` → classe `recuperavel`. A linha continua gravada no
+   `js_error`; some o disparo automático, não o dado — e o corte vale até para cliente
+   velho em cache, porque `classifyCrash` é fonte única (rota `/api/jserror` e
+   `scripts/classify-crash.mjs` no CI).
+3. *Cliente segura só o painel*: `erroDeContexto()` em `index.astro` (mesma redação da
+   regex, função SEPARADA do `erroIgnoravel` para não desviar o balde `TETO_MIDIA` nem
+   tocar a EP14) guarda apenas o `lancamento.fail()` do handler de erro global. O
+   `reporta()` segue enviando; o watchdog de 60 s da etapa e o fatal de 8 s continuam de
+   rede de segurança — o jogador nunca fica preso.
+
+**Medido antes do conserto (25/08, helper real executado do fonte):**
+
+| | antes | depois |
+|---|---|---|
+| `classifyCrash` das 2 formas de campo | `codigo` 2/2 | `recuperavel` 2/2 |
+| família abre issue automática | 2/2 (#419, #420) | 0/2 |
+| `fail()` derruba o launch na corrida | sim (#419) | não (fatal de 8 s continua) |
+| fingerprints publicados reproduzidos pela receita | 2/2 | 2/2 (inalterados) |
+| cláusulas / mutantes que mordem | EP 15, SL 7 / 39+5 | EP 16, SL 8 / **42+6, matriz completa medida** |
+
+**Custo declarado, na população real.** Das **97** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 25/08), exatamente **2** são desta família
+(#419/#420 — a busca `label:crash-auto "must be an instance"` devolve só as duas). Vizinhas
+que continuam como estão, DE PROPÓSITO: a perda **persistente** (`'contexto WebGL
+perdido'`, o fatal deliberado de `main.js:100`) segue `codigo` — é o mutante
+`contexto-amplo` que tranca isso; a forma Chrome (*"Failed to execute 'shaderSource'…"*)
+**nunca foi observada** em campo e segue `codigo` até haver dado (largura por palpite de
+regex é o arnês aprovando a si mesmo); crash real dentro do vendor segue `codigo`;
+*"THREE.WebGLProgram: Shader Error…"* (#331 etc.) segue no corte de log do BUG-72. No
+cliente, o erro de contexto consome 1 slot do balde de exceção (deduplicado por
+fingerprint — sem balde novo). Perda que acontece DURANTE um `render()` já em andamento
+ainda lança 1 vez (a guarda roda no topo do frame); essa ocorrência única fica no
+`js_error` como `recuperavel`. E o `catch` de `_startGame` (`main.js:1000`) chama o
+`fail()` direto, sem a guarda do handler global — hoje inalcançável para esta família
+(`game.start()` não renderiza; o render vive no `update` do loop), e no pior caso o
+servidor já classifica `recuperavel`: fica anotado, não trancado.
+
+**Não verificado:** sem WebKit/browser nesta máquina, a corrida não foi reproduzida ao
+vivo (o harness node não tem WebGL; `crash-watch.mjs` exige browser) — o que está medido é
+a forma da guarda e a assinatura de campo das duas issues. A garantia de que
+`gl.isContextLost()` é `true` na janela antes do evento é de spec, não medida aqui. A
+frequência da família por sessão no Supabase fica sem número (schema privado, sem
+credencial).
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`): **EP16** executa o helper e o `erroDeContexto`
+extraídos do fonte, ancora os 2 fingerprints publicados e exige as 3 vizinhas `codigo`;
+mutantes `sem-contexto`, `contexto-amplo` e `fail-no-contexto` — **42 de 42 na matriz
+completa**. **E `tools/eval/shader-log-check.mjs`** (`npm run eval:shaderlog`): **SL8**
+tranca presença e posição da guarda síncrona no topo do `render()` (textual-posicional
+como SL4-SL6 — executar o `render()` inteiro exigiria stub do renderer inteiro, e arnês
+desse tamanho mede a si mesmo, lição da EP12); mutante `sem-contexto-sincrono` — 6 de 6.
+
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
 **Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
