@@ -48,7 +48,7 @@ const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').spl
 const MUTANTES_FALLBACK = ['sem-lento', 'capivara-centro', 'ratos-parados', 'capivara-gigante', 'ratos-ovais',
   'capivara-urso', 'capivara-brinquedo', 'capivara-tapir', 'capivara-dois-apoios', 'ratos-clonados',
   'ratos-sem-contexto', 'ratos-sob-lixo', 'canal-preto', 'canal-sem-profundidade', 'ponte-prancha'];
-const MUTANTES_GLB = ['proxy-volta', 'agua-morta', 'grama-sumiu'];
+const MUTANTES_GLB = ['proxy-volta', 'agua-morta', 'grama-sumiu', 'fauna-estatica'];
 if (mutante && !MUTANTES_FALLBACK.includes(mutante) && !MUTANTES_GLB.includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
@@ -341,6 +341,22 @@ const gramaSpotsDentro = gramaSpots.every((s) =>
   s.x >= (b0.minX ?? -Infinity) && s.x <= (b0.maxX ?? Infinity)
   && s.z >= (b0.minZ ?? -Infinity) && s.z <= (b0.maxZ ?? Infinity)
   && Math.abs(s.x) >= 3);   // grama é de MARGEM: nunca no vão do canal
+const faunaGrandeViva = [jacareGlb, capivaraGlb].filter(Boolean);
+const posicoesFauna = faunaGrandeViva.map((animal) => animal.position.clone());
+const maiorDeslocamento = faunaGrandeViva.map(() => 0);
+const estadosFauna = new Set();
+const updateFauna = world2.update.bind(world2);
+world2.update = mutante === 'fauna-estatica' ? () => {} : updateFauna;
+for (const tempo of [0, 2, 7, 10, 15]) {
+  world2.update(.1, tempo);
+  for (const [i, animal] of faunaGrandeViva.entries()) {
+    estadosFauna.add(animal.userData.faunaState);
+    maiorDeslocamento[i] = Math.max(maiorDeslocamento[i], animal.position.distanceTo(posicoesFauna[i]));
+  }
+}
+const faunaDesloca = faunaGrandeViva.length === 2 && faunaGrandeViva.every((animal, i) =>
+  maiorDeslocamento[i] >= .12);
+const faunaCiclo = ['sleeping', 'awake', 'moving'].every((estado) => estadosFauna.has(estado));
 
 checks.push(
   ['jacaré GLB posicionado no canal na escala do Mint (BUG-57)', !!jacareGlb && (() => {
@@ -370,6 +386,7 @@ checks.push(
       animal.traverse((part) => { if (part.isMesh && part.userData.nonSolidSurface !== true) ok = false; });
       return ok;
     })],
+  ['jacaré e capivara GLB nascem vivos: dormem, acordam e se deslocam', faunaDesloca && faunaCiclo],
   ['água com shader de onda (onBeforeCompile + uAgua)', aguaShader],
   ['água com geometria subdividida para a onda de vértice', aguaSegs],
   ['água com relógio vivo (uniform avança entre quadros)', aguaRelogioAnda],

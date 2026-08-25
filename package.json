@@ -162,6 +162,7 @@
     "eval:wind": "node tools/eval/wind-check.mjs",
     "eval:softparticles": "node tools/eval/softparticles-check.mjs",
     "eval:corrego-contract": "node tools/eval/corrego-contract-check.mjs",
+    "eval:fauna": "node tools/eval/ambience-check.mjs",
     "eval:escala-favela": "node tools/eval/escala-favela-check.mjs",
     "eval:occluders": "node tools/eval/occluder-ray-check.mjs",
     "eval:escadao-contract": "node tools/eval/escadao-contract-check.mjs",

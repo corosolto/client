@@ -47,7 +47,8 @@ export const CORREGO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fu
   /* Kit de favela que estava no disco sem nenhum mapa consumindo. `fav_house` já era
      pré-carregada e nunca colocada — peso de download por nada. Agora as três entram
      como VOLUME de fundo (ver o bloco FILEIRA C) e as duas pequenas como vocabulário. */
-  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi'];
+  'fav_brasileira', 'caixa_dagua', 'botijao_gas', 'uno_mille', 'fiat_uno', 'kombi',
+  'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba'];
 
 export const CORREGO_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-person-02.png': 'or-mitico-mural.png',
@@ -423,8 +424,7 @@ export function buildCorrego(scene, T) {
       { collide: false, skirt: false, rx: -sz * Math.atan2(0.05 - CANAL_FUNDO, L) });   // mesmo sinal da rampa
   }
 
-  /* ═══════════ GRAMA_SPOTS — call-site do `grama_corrego.glb` (frente E): sem o prop
-     no acervo nada é colocado e o corrego-contract AVISA (DORMENTE). Decoração: sem collider/occluder. */
+  /* Margem plantada: tufos e taboas reais quebram a faixa de concreto sem virarem cover. */
   const GRAMA_SPOTS = [];
   for (const lado of [-1, 1]) {
     let i = 0;
@@ -437,9 +437,11 @@ export function buildCorrego(scene, T) {
   for (const [sx, sz] of [[-HALF_X + 1.2, -HALF_Z + 1.2], [HALF_X - 1.2, -HALF_Z + 1.2], [-HALF_X + 1.2, HALF_Z - 1.2], [HALF_X - 1.2, HALF_Z - 1.2]])
     GRAMA_SPOTS.push({ x: sx, z: sz, ry: 0.7 });
   const gramaServida = [];
-  if (hasProp('grama_corrego')) {
-    for (const spot of GRAMA_SPOTS) {
-      const tufo = placeProp('grama_corrego', { x: spot.x, z: spot.z, targetH: 0.4, ry: spot.ry });
+  const floraMargem = ['grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba'];
+  if (floraMargem.some(hasProp)) {
+    for (let i = 0; i < GRAMA_SPOTS.length; i++) {
+      const spot = GRAMA_SPOTS[i], id = floraMargem[i % floraMargem.length];
+      const tufo = placeProp(id, { x: spot.x, z: spot.z, targetH: id.includes('planta') ? .85 : .48, ry: spot.ry });
       if (!tufo) continue;
       tufo.userData.nonCollider = true;
       tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
@@ -449,6 +451,7 @@ export function buildCorrego(scene, T) {
   }
 
   /* ===================== JACARÉ (decoração no córrego) ===================== */
+  const faunaViva = [];
   {
     const jx = 0.8, jz = -7;
     const gJacare = new THREE.Group();
@@ -511,8 +514,15 @@ export function buildCorrego(scene, T) {
     root.add(gJacare);
     if (jacareGlb) {
       jacareGlb.userData.fauna = 'jacare'; jacareGlb.userData.nonCollider = true;
+      jacareGlb.userData.faunaMotion = 'sleep-wake-swim';
       root.add(jacareGlb);
       gJacare.visible = false; gJacare.userData.faunaProxy = 'jacare';
+      faunaViva.push({ root: jacareGlb, origin: jacareGlb.position.clone(), yaw: jacareGlb.rotation.y,
+        kind: 'jacare', phase: 0.4, range: .72 });
+    } else {
+      gJacare.userData.faunaMotion = 'sleep-wake-swim';
+      faunaViva.push({ root: gJacare, origin: gJacare.position.clone(), yaw: gJacare.rotation.y,
+        kind: 'jacare', phase: 0.4, range: .72 });
     }
   }
 
@@ -574,8 +584,15 @@ export function buildCorrego(scene, T) {
     root.add(gCap);
     if (capivaraGlb) {
       capivaraGlb.userData.fauna = 'capivara'; capivaraGlb.userData.nonCollider = true;
+      capivaraGlb.userData.faunaMotion = 'sleep-wake-walk';
       root.add(capivaraGlb);
       gCap.visible = false; gCap.userData.faunaProxy = 'capivara';
+      faunaViva.push({ root: capivaraGlb, origin: capivaraGlb.position.clone(), yaw: capivaraGlb.rotation.y,
+        kind: 'capivara', phase: 7.1, range: .9 });
+    } else {
+      gCap.userData.faunaMotion = 'sleep-wake-walk';
+      faunaViva.push({ root: gCap, origin: gCap.position.clone(), yaw: gCap.rotation.y,
+        kind: 'capivara', phase: 7.1, range: .9 });
     }
   }
   // Contexto material do trio: manilha e sacos no canto evitam a leitura de três
@@ -1250,7 +1267,22 @@ export function buildCorrego(scene, T) {
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.corrego,pos:[0,.3,-37],radius:15,vol:.45},{src:AMB_LOOPS.corrego,pos:[0,.3,37],radius:15,vol:.45},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'}, propEscala,
-    update(dt) { aguaCorrego.update(dt); },
+    update(dt, time = 0) {
+      aguaCorrego.update(dt);
+      for (const animal of faunaViva) {
+        const ciclo = (time + animal.phase) % 18;
+        const acordando = ciclo >= 6 && ciclo < 8;
+        const movendo = ciclo >= 8 && ciclo < 14;
+        const retorno = ciclo >= 14;
+        const direcao = animal.kind === 'jacare' ? new THREE.Vector3(.16, 0, 1) : new THREE.Vector3(1, 0, .12);
+        const distancia = movendo ? (ciclo - 8) / 6 * animal.range : retorno ? (18 - ciclo) / 4 * animal.range : 0;
+        animal.root.position.copy(animal.origin).addScaledVector(direcao, distancia);
+        animal.root.rotation.y = animal.yaw + (movendo || retorno ? Math.atan2(direcao.x, direcao.z) * .14 : 0);
+        animal.root.rotation.z = animal.kind === 'jacare' ? Math.sin(time * 1.8 + animal.phase) * .018 : 0;
+        animal.root.position.y += animal.kind === 'capivara' ? Math.sin(time * 1.35 + animal.phase) * .018 : Math.sin(time * 1.1 + animal.phase) * .012;
+        animal.root.userData.faunaState = movendo ? 'moving' : retorno ? 'returning' : acordando ? 'awake' : 'sleeping';
+      }
+    },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     gramaSpots: GRAMA_SPOTS, gramaServida,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

@@ -59,6 +59,7 @@ const fotosArg = arg('fotos');
 const fotos = fotosArg ? (fotosArg === true ? '/tmp/ambience-check' : fotosArg) : null;
 const saida = arg('saida');
 const MAPAS = ['lajes', 'corrego', 'escadao'];
+const MAP_SOURCES = Object.freeze({ lajes: 'map_lajes_authored.js', corrego: 'map_corrego.js', escadao: 'map_escadao.js' });
 const esperadoPorMutante = {
   'sem-reacao': 'AM5',
   relogio: 'AM4',
@@ -106,7 +107,7 @@ const srcAmb = existsSync(`${ROOT}public/js/ambientlife.js`)
 const srcGame = readFileSync(`${ROOT}public/js/game.js`, 'utf8');
 const srcMain = readFileSync(`${ROOT}public/js/main.js`, 'utf8');
 const srcMaps = Object.fromEntries(MAPAS.map((id) => [id,
-  readFileSync(`${ROOT}public/js/map_${id.slice(3)}.js`, 'utf8')]));
+  readFileSync(`${ROOT}public/js/${MAP_SOURCES[id]}`, 'utf8')]));
 const fireBody = corpoMetodo(srcGame, '\n  _fireHitscan(');
 const updateBody = corpoMetodo(srcGame, '\n  update(dt');
 const mapasIntegrados = Object.entries(srcMaps).filter(([, src]) =>
