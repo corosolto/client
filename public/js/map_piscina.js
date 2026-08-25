@@ -15,27 +15,11 @@
 // É exatamente o que a régua nova pede (BAR-CONSISTENCIA §2/§3):
 // consistência e leitura de espaço acima de riqueza visual.
 //
-// LAYOUT MEDIDO DO BSP REAL (frente map2/piscina)
-// As proporções abaixo vêm do fy_pool_day.bsp de verdade, medido por
-// tools/eval/bsp-measure.mjs -> tools/eval/piscina_bsp.json, e cobradas pela
-// régua eval:piscina-bsp (PB1-PB7, ±20% por medida). O original é um pátio
-// ~36x47 m com a piscina 13,5x9 ATRAVESSADA no eixo curto (não ao longo),
-// descentrada 1,1 m pro leste/norte, corredores laterais de 10-12 m e decks
-// fundos nas pontas. A identidade visual continua NOSSA (azulejo, água ciano,
-// objetos BR, grafite); o BSP é régua de PROPORÇÃO, não de asset.
-// NÃO portado (registrado no JSON): o anexo leste com a segunda água e a
-// profundidade de 3,1 m do original — a nossa segue andável em 1,5 m.
-//
-// A versão do Piscinão NÃO foi apagada — está em map_piscinao_ramos.js, fora do
-// registro de mapas. Se um dia for refeita com o espaço de jogo limpo, é só
-// registrar de volta em maps.js.
+// LAYOUT MEDIDO do fy_pool_day.bsp (frente map2/piscina): proporções de
+// tools/eval/piscina_bsp.json, cobradas pela régua eval:piscina-bsp (±20%).
 // ============================================================================
-// piscina_treta homage — the classic CS 1.6 "full weapons" map, rebuilt from the
-// real map: a COMPACT INDOOR tiled swimming-pool hall. White-tile walls with a
-// navy accent band, white-tile floor, a big recessed cyan pool that dominates the
-// room, banks of metal lockers as cover, blue lounge chairs, a white diving board,
-// shower stalls, a glass skylight roof — and rows of weapons on the deck.
-// Same buildWorld contract as map.js.
+// piscina_treta homage — the classic CS 1.6 "full weapons" map: a COMPACT INDOOR
+// tiled swimming-pool hall. Same buildWorld contract as map.js.
 import * as THREE from 'three';
 import { decalIds, paredeAtras } from './map_decals.js';
 import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura medida, não coordenada à mão
@@ -169,17 +153,8 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* ---------------- pool basin (recessed, sloped sides) ----------------
-     LAYOUT MEDIDO DO fy_pool_day.bsp (frente map2/piscina; régua eval:piscina-bsp):
-     a piscina do original é 384x256u = 13,5x9,0 m ATRAVESSADA no eixo curto do
-     pátio, descentrada 32u = 1,1 m pro leste e pro norte — é isso que faz o
-     corredor OESTE (12,4 m) ser mais largo que o leste (10,1 m) e o deck SUL
-     (20,2 m) mais fundo que o norte (18,0 m). A versão anterior (hx 7,5, hz 9,5,
-     cz 0) alongava a piscina no eixo do duelo e a régua provou o desvio: área
-     +142%, aspecto -47%, corredor oeste -23%.
-     A margem `m` (rampa andável de entrada) e a profundidade de 1,5 m são
-     decisões NOSSAS de gameplay (piscina entrável, CTF no fundo) — no original
-     a parede é vertical e a água tem 3,1 m (registrado em piscina_bsp.json). */
+  /* piscina 13,5x9 ATRAVESSADA no eixo curto, +1,1 m leste/norte: medido do BSP
+     (régua eval:piscina-bsp). Rampa e 1,5 m de fundo são gameplay nossos. */
   const POOL = { cx: 1.1, cz: 1.1, hx: 6.75, hz: 4.5, m: 2.5, depth: 1.5 };
   const OUTX = POOL.hx + POOL.m, OUTZ = POOL.hz + POOL.m;
   const nX = POOL.cx + OUTX, sX = POOL.cx - OUTX, nZ = POOL.cz + OUTZ, sZ = POOL.cz - OUTZ;
@@ -208,10 +183,7 @@ export function buildPoolDay(scene, T) {
     addBox(POOL.hx * 2, 0.1, L, MAT.pool, POOL.cx, -POOL.depth / 2, POOL.cz - POOL.hz - POOL.m / 2, { collide: false, rx: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx + POOL.hx + POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: ang, cast: false });
     addBox(L, 0.1, POOL.hz * 2, MAT.pool, POOL.cx - POOL.hx - POOL.m / 2, -POOL.depth / 2, POOL.cz, { collide: false, rz: -ang, cast: false });
-    /* ÁGUA VIVA (water.js, o mesmo shader do córrego/mansão): Gerstner leve de
-       piscina (amp 0,05 — é lâmina de clube, não mar), depth-fade na cuba de
-       1,5 m e DoubleSide porque a piscina é ENTRÁVEL — de dentro, o nadador lê
-       a película da superfície. O ciano 0x36cde4 é o mesmo da lâmina antiga. */
+    /* água viva do water.js (córrego/mansão): amp 0,05, DoubleSide (entrável). */
     aguaPiscina = createWater(scene, T, 'piscina_treta', {
       nivel: -0.4, centro: [POOL.cx, POOL.cz], tamanho: [OUTX * 2 - 0.3, OUTZ * 2 - 0.3], segmentos: 16,
       raso: 0x36cde4, fundo: 0x1a7f96, profEscala: 1.5, espumaFaixa: 0.3, espumaMiolo: 0.12,
@@ -655,26 +627,15 @@ export function buildPoolDay(scene, T) {
     cabine: lam({ color: 0xd8d4cc }),
   };
 
-  /* --- 1. CORREDORES LATERAIS -------------------------------------------------------
-      Medidos do BSP (PB6): corredor OESTE 12,4 m (parede→borda) e LESTE 10,1 m —
-      a piscina descentrada +1,1 m pro leste faz a diferença, e é assim no original.
-      Repartição (lado OESTO, borda em −8,15 · parede em −18,0):
-        promenade da piscina  −8,15 → −12,95   4,80 m  livre de colisor de propósito
-                                                  (é a coluna de waypoints do A*: peça
-                                                  aqui parte o corredor em dois no grafo)
-        pilar de concreto     −14,05 → −12,95   1,10 m
-        alameda das armas     −16,25 → −14,05   2,20 m  (fileira de armas em x=−15,15)
-        parede de armários    −16,95 → −16,25   0,70 m
-      No lado LESTE a borda está em +10,35 e a promenade é menor (2,60 m) — a
-      espreguiçadeira leste senta em +11,6, a oeste em −10,6. */
+  /* --- 1. CORREDORES (PB6: oeste 12,4 m > leste 10,1 m — piscina descentrada):
+     promenade sem colisor · pilar · alameda das armas (x ±15,15) · armários. */
   for (const sx of [-1, 1]) {
     for (const pz of [-17, -6.5, 6.5, 17]) addBox(1.1, 6.5, 1.1, COV.concreto, sx * 13.5, 0, pz);
     for (const bz of [-11, 0, 11]) lockerBank(sx * 16.6, bz, 3, 'z');
     // caixas de material da piscina: cobertura de 1,15 m na alameda das armas (peito agachado)
     for (const cz of [-6, 6]) addBox(1.0, 1.15, 1.0, COV.caixa, sx * 15.2, 0, cz);
-    // espreguiçadeiras: a base é cover baixo de verdade; sem collider o corpo atravessava
-    // assento/encosto em 16 sondas MAP1. O encosto visual fica dentro da mesma pegada.
-    // Linha DESIGUAL de propósito: segue a borda da piscina, que é descentrada (BSP).
+    // espreguiçadeiras: base é cover baixo de verdade (MAP1); encosto dentro da pegada.
+    // Linha desigual de propósito: segue a borda da piscina, descentrada (BSP).
     for (const cz of [-9, -4.5, 4.5, 9]) {
       const cx = sx > 0 ? 11.6 : -10.6;
       addBox(0.85, 0.25, 1.9, MAT.chair, cx, 0.2, cz);
@@ -683,26 +644,16 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* --- 2. RESPAWN: anteparo escalonado -----------------------------------------------
-      Decks medidos do BSP: SUL 20,2 m (PET) · NORTE 18,0 m (BOL) — fundos porque a
-      piscina do original é curta no eixo do duelo. Spawns a z=±16,9 (PB5: 33,8 m
-      entre centróides). Cada faixa de nascimento tem anteparo À FRENTE, escalonado
-      em z para não virar muro:
-        x = ±9  → banco de armários em z = ±13,5
-        x = ±3  → banco de armários em z = ±14,2  (folga 2,4 m do spawn — MAP2B ≥ 1,2)
-        x =  0  → guarita do salva-vidas em z = ±19,6
-      A reta de um respawn ao outro atravessa o banco do PRÓPRIO time antes de
-      sair do deck. O escalonamento não é estética — é o defeito do depósito do
-      loja_h (KNOWN-BUGS / map-check §MAP2B): lá a exposição foi a 0,0% por
-      EMPAREDAMENTO. Aqui sobram vãos de 3,3 m entre peças e o disco de 5 m de
-      cada spawn continua aberto. */
+  /* --- 2. RESPAWN: anteparos escalonados à frente de cada faixa (x ±9 em z ±13,5,
+     x ±3 em z ±14,2 com folga 2,4 m do spawn, guarita em z ±19,6) — mata a visada
+     axial sem emparedar (MAP2B ≥ 1,2; lições do loja_h em KNOWN-BUGS). */
   for (const sz of [-1, 1]) {
     for (const bx of [-9, 9]) lockerBank(bx, sz * 13.5, 3, 'x');
     for (const bx of [-3, 3]) lockerBank(bx, sz * 14.2, 3, 'x');
-    addBox(2.8, 3.0, 2.4, MAT.wall, 0, 0, sz * 19.6);                                  // guarita
-    addBox(3.2, 0.25, 2.8, MAT.navy, 0, 3.0, sz * 19.6, { collide: false });           // beiral
-    addBox(2.5, 0.7, 0.06, lam({ color: 0x9fd4e6 }), 0, 1.5, sz * 18.38, { collide: false }); // vidro
-    for (const tx of [-10, 10]) addBox(0.9, 1.1, 0.9, COV.lixo, tx, 0, sz * 22.4);      // lixeiras de toalha
+    addBox(2.8, 3.0, 2.4, MAT.wall, 0, 0, sz * 19.6);   // guarita do salva-vidas
+    addBox(3.2, 0.25, 2.8, MAT.navy, 0, 3.0, sz * 19.6, { collide: false });
+    addBox(2.5, 0.7, 0.06, lam({ color: 0x9fd4e6 }), 0, 1.5, sz * 18.38, { collide: false });
+    for (const tx of [-10, 10]) addBox(0.9, 1.1, 0.9, COV.lixo, tx, 0, sz * 22.4);
     // boxes de chuveiro: um em cada canto (antes existiam só os dois do canto SE, e as chapas
     // da frente eram collide:false — dava pra atravessar a parede que se enxergava).
     for (const sx of [-1, 1]) {
@@ -803,12 +754,7 @@ export function buildPoolDay(scene, T) {
     return [fromIdx];
   }
 
-  /* spawns nas duas pontas, no deck — z = ±16,9 MEDIDO do BSP (PB5: 33,8 m entre
-     centróides; no original CT −16,7 × T +17,1, aqui simétrico por fair play,
-     dentro do teto). As bandeiras de CTF são DECLARADAS (ctfPoints abaixo), então
-     o z delas não sai de `spawns.X[0] * 0,42` por efeito colateral.
-     O bloco de obstáculos que ficava AQUI subiu para antes da geração de
-     waypoints — ver o comentário "COBERTURA" lá em cima. */
+  /* spawns z ±16,9 medidos do BSP (PB5: 33,8 m); bandeiras declaradas em ctfPoints. */
   const mk = s => [-9, -3, 3, 9].map(x => ({ x, z: SPAWN_Z * s, yaw: s < 0 ? 0 : Math.PI }));
   const spawns = { E: mk(-1), B: mk(1) };
 
@@ -872,14 +818,8 @@ export function buildPoolDay(scene, T) {
     update(dt) { aguaPiscina?.update(dt); },
     ambience,sound:{loops:[{src:AMB_LOOPS.piscina,pos:[1.1,-.4,1.1],radius:30,vol:.3},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:40,vol:.18}],bioma:'indoor'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
-    /* BANDEIRAS DO CTF — DECLARADAS (06/08, defeito do dono: "bandeiras com nome do pátio
-       brasília" jogando aqui). O fallback do game.js punha as 3 bandeiras de spawn×0,42 —
-       que NESTE mapa caíam DENTRO da lâmina d'água: capturável só da beirada, com anel e
-       mastro flutuando na piscina. As três ficam no DECK, em marcos reais do mapa:
-       · PARTIDA   (0, −13,5): o bloco de partida do lado sul (espelho da prancha);
-       · ARMÁRIOS  (13, 0): pista leste, ao lado dos bancos de armário (x 16,6);
-       · TRAMPOLIM (0, 12): o deck norte em frente à prancha (pés em z 9,8).
-       Triângulo com altura 13 m (CTF1 folgada) e nenhuma bandeira a <4,5 m de spawn. */
+    /* CTF declarada em marcos do mapa (o fallback caía na água): triângulo 13 m, sem
+       bandeira a <4,5 m de spawn. */
     ctfPoints: [
       { id: 'E', label: 'PARTIDA', x: 0, z: -13.5 },
       { id: 'MID', label: 'ARMÁRIOS', x: 13, z: 0 },
