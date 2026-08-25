@@ -52,6 +52,8 @@ const POSES = process.env.POSES ? JSON.parse(process.env.POSES) : {
   velho_oeste:   { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   penitenciaria: { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
   parque_treta:  { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
+  // Mesma pose aérea dos irmãos USANTOS: enquadra galpão, praça da fogueira e quentão.
+  gelo:          { pos: [0, 30, -35], pitch: -0.55, yaw: 3.14 },
 };
 const NOPOSE = process.env.NOPOSE === '1';   // captura do spawn, sem pino de posição
 const TAG = process.env.TAG || '';

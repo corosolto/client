@@ -93,9 +93,8 @@ export const MAPS = {
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
   velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
   penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
-  // Festa junina de inverno na serra do sul: galpão de festival com palco de forró (base E),
-  // praça da fogueira no meio, barracas juninas nas rotas e o caminhão de quentão (base B).
-  // Neve pisada, araucárias e a serra no horizonte, crepúsculo azul-laranja (LOOK.gelo).
+  // Festa junina de inverno na serra: galpão de forró (E), praça da fogueira, barracas
+  // juninas nas rotas e caminhão de quentão (B). Crepúsculo azul-laranja (LOOK.gelo).
   gelo: { name: 'Treta no Gelo', build: buildGelo, ambience: GELO_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);

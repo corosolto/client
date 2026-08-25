@@ -1,16 +1,13 @@
-// Treta no Gelo: festa junina de inverno em cidade serrana do sul — arena CTF
-// simétrica (rotação 180°), inteiramente procedural. Rebuild USANTOS (régua:
-// tools/eval/gelo-check.mjs). NÃO é a fortaleza de gelo do PR #372 (rejeitado).
+// Treta no Gelo: festa junina de inverno na serra do sul — arena CTF simétrica (180°), procedural.
+// Frente USANTOS (régua: tools/eval/gelo-check.mjs). NÃO é a fortaleza do PR #372 (rejeitado).
 import * as THREE from 'three';
 import { InstBatch, mergeParts, placeProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
-/* o caminhão de quentão (Mint, FONTE.md) substitui o procedural no browser; no
-   arnês node placeProp devolve null e o procedural cobre (mesma estrutura de
-   colisores nos dois mundos — lição 3). Sem GLB publicado ainda: GELO_PROPS
-   fica vazio e o registro não ganha slot props (eval:props-acervo). */
+/* o caminhão de quentão (Mint) substitui o procedural no browser; no arnês placeProp devolve
+   null e o procedural cobre (lição 3). Sem GLB publicado: sem slot props (eval:props-acervo). */
 export const GELO_PROPS = [];
 export const GELO_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'chicken', 'cow'];
 
@@ -265,10 +262,10 @@ export function buildGelo(scene, T) {
     }
     mouraoBatch.build(root);
   }
-  // Pilhas de neve no rodapé da cerca.
+  // Pilhas de neve no rodapé da cerca (baixas de propósito: o corpo passa por cima — MAP1).
   for (const [x, z, s] of [[-24, -40.6, 1.4], [-6, 40.7, 1.2], [12, -40.5, 1.6], [26, 40.6, 1.3], [-30.6, -18, 1.5], [30.6, 14, 1.4], [-30.7, 26, 1.2], [30.7, -28, 1.5], [4, 41, 1.1], [-14, -41, 1.3]]) {
     const mound = new THREE.Mesh(new THREE.SphereGeometry(1.1, 10, 7), MAT.nevefofa);
-    mound.scale.set(s, s * 0.45, s * 0.8); mound.position.set(x, 0.05, z);
+    mound.scale.set(s, s * 0.16, s * 0.8); mound.position.set(x, 0, z);
     mound.receiveShadow = true; root.add(mound);
   }
 
@@ -396,7 +393,7 @@ export function buildGelo(scene, T) {
     fardoGeo.rotateX(Math.PI / 2);
     const fardoBatch = new InstBatch({ name: 'gelo-palha-lote' });
     const dummy = new THREE.Object3D();
-    for (const [x, z, ry] of [[9, -26, 0.4], [-9, 26, 2.2], [24, -6, 1.1], [-24, 6, 2.8], [20, 18, 0.2], [-20, -18, 1.9], [-22, -30, 0.9], [22, 30, 2.5]]) {
+    for (const [x, z, ry] of [[9, -26, 0.4], [-9, 26, 2.2], [24, -6, 1.1], [-24, 6, 2.8], [20, 18, 0.2], [-20, -18, 1.9], [-22, -30, 0.9], [22, 30, 2.5], [9, -33, 1.5], [-9, 33, 0.6], [-9, -33, 2.9], [9, 33, 1.2]]) {
       dummy.position.set(x, 0.78, z); dummy.rotation.set(0, ry, 0); dummy.scale.setScalar(1); dummy.updateMatrix();
       fardoBatch.add(fardoGeo, MAT.palha, dummy.matrix);
       colliders.push({ minX: x - 0.8, maxX: x + 0.8, minY: 0, maxY: 1.56, minZ: z - 0.65, maxZ: z + 0.65 });
@@ -407,7 +404,8 @@ export function buildGelo(scene, T) {
   // Mesas de festa e bancos: cobertura de cintura rente à praça.
   for (const [x, z] of [[7, -12], [-7, 12], [-7, -12], [7, 12], [-9, 32], [9, -32]]) {
     addCylinder(0.62, 0.08, MAT.madeira, x, 0.72, z, { collide: false, segments: 12 });
-    addCylinder(0.08, 0.72, MAT.casca, x, 0, z, { segments: 8 });
+    addCylinder(0.08, 0.72, MAT.casca, x, 0, z, { collide: false, segments: 8 });
+    colliders.push({ minX: x - 0.62, maxX: x + 0.62, minY: 0, maxY: 0.8, minZ: z - 0.62, maxZ: z + 0.62 });
     for (const s of [-1, 1]) addBox(1.5, 0.42, 0.4, MAT.madeira, x + s * 1.25, 0, z, { collide: true });
   }
   for (const [x, z, ry] of [[-6, 9, 0.3], [6, -9, -2.8], [-6, -9, -0.4], [6, 9, 2.9]]) {

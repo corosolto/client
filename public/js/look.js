@@ -35,12 +35,8 @@ export const LOOK = {
     sol: { cor: 0xd9e6f5, i: 1.1, pos: [-26, 14, 18] },
     hemi: { ceu: 0x9fb8d4, chao: 0x6a7076, i: 0.75 },
     neblina: { d: 0.008, solDir: [-26, 14, 18], forca: 0.7 },
-    /* grade por interpolação MEDIDA dos vizinhos (25/08): dia (mansao/corrego/
-       campomorro) soma sol+hemi ≈ 2,6-2,8 com exposicao 1,36-1,60 (L* 42-48);
-       a penitenciaria noturna soma ≈ 1,05 e precisou de 2,60 para L* 37 (com
-       1,50 mediu L* 20 — buraco preto). O gelo soma 1,85: 2,60×1,05/1,85 ≈ 1,48
-       → 1,50 mira L* 33-38 de crepúsculo. piso·exposicao ≈ 0,011 segura o
-       preto sem lavar (entre o 0,007 do dia e o 0,022 da noite). */
+    /* grade por interpolação medida dos vizinhos: dia soma sol+hemi ≈2,7 com exp ≈1,5 (L* 42-48) e a
+       penitenciaria ≈1,05 com 2,60 (L* 37; com 1,50 mediu L* 20). Gelo soma 1,85 → 1,50 mira L* 33-38. */
     grade: { exposicao: 1.50, piso: 0.0072, expAces: 1.70 },
   },
 };
