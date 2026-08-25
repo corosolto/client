@@ -122,6 +122,14 @@ A roda-gigante gira em torno do cubo; assentos não invadem lateral, base nem ar
 npm run eval:parquewheel
 ```
 
+## `eval:parquevida`
+
+O Parque da Treta não pode parecer low poly (frente USANTOS, dono 25/08/2026: "os mapas do usantos são os mais low poly do jogo"). PV1 mobiliário nomeado (coreto, ≥6 lixeiras, ≥6 bancos, trilho + ≥100 dormentes), PV2 vegetação instanciada (≥40 árvores, ≥60 arbustos), PV3 ≥16 texturas de canvas distintas em uso, PV4 nenhum quadrante 4×4 deserto de cobertura, PV5 horizonte próprio (skyUrl + LOOK.parque_treta). Mutantes: sem-coreto|sem-vegetacao|sem-variedade.
+
+```bash
+npm run eval:parquevida
+```
+
 ## `eval:velhooeste`
 
 O mapa Velho Oeste preserva marcos, janelas de madeira abertas/fechadas, gênero, perigo e recompensas dos cartazes, retratos, densidade, colisões, spawns e rota. Mutantes: sem-saloon|sem-carrocas|sem-tumbleweed|sem-obstaculos-centrais|centro-aberto|sem-cartazes|sem-retratos|cartaz-sobre-janela|genero-unico|janela-verde|todas-fechadas|perigoso-unico|recompensa-repetida|sem-colisao-varanda|sem-colisao-movel|parada|texturas-genericas.
