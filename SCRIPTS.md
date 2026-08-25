@@ -138,6 +138,14 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:gelo`
+
+A Treta no Gelo nasce sem cara de low poly (frente USANTOS) — o PR da fortaleza de gelo genérica foi rejeitado pelo dono. Congela o tema em objetos nomeados (gelo-galpao, gelo-fogueira-*, gelo-barraca-*, gelo-quentao, gelo-palha-*, gelo-arvores-*), fogueira com PointLight que oscila entre updates, textura em ≥85% das malhas, gameplay completo (waypoints conexos, rota E↔B, 3 ctfPoints, 4+4 spawns, arsenal), quadrantes sem deserto e horizonte próprio (sky + LOOK.gelo). Mutantes: sem-fogueira|fogo-parado|sem-galpao.
+
+```bash
+npm run eval:gelo
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.
