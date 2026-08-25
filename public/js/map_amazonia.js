@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { placeProp, hasProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
-import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS, AMAZONIA_FAUNA_ASSETS } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 import { detailFor } from './textures.js';
 
@@ -12,7 +12,7 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 32, HALF_Z = 44;
-export const AMAZONIA_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacaré/capivara (este mapa baixa)
+export const AMAZONIA_AMBIENCE = Object.freeze([...CORREGO_FAUNA_ASSETS, ...AMAZONIA_FAUNA_ASSETS]);   // + jacaré/capivara e o elenco novo (este mapa baixa)
 
 /* ── IGARAPÉ: rio em x ∈ [−9,75, 9,75]; centro fundo (−0,6), margens em rampa até −0,28 —
    quem cai da ponte vadeia e sai pela margem (lição das rampas do córrego). */
@@ -433,6 +433,36 @@ export function buildAmazonia(scene, T) {
       { pos: [-26, 0.95, 20.6], phase: 3.1 },      // caixa d'água da palafita oeste
     ],
     dogs: [{ pos: [-14.8, 0, -20.4], to: [-13.2, 0, -19.2], phase: 0.7 }],
+    /* ── ELENCO DA MATA (PR #439, 9 espécies Mint + vida procedural no
+       ambientlife.js): boto serpenteia o canal (dorso fura a lâmina),
+       cardume de piranha em círculo na água livre entre os booms, araras nos
+       postes das barracas, tucanos nas caixas d'água, preguiça pendurada no
+       beiral (abaixo do AABB do telhado), macaco pulando na cumeeira norte
+       da madeireira e entre as bancadas, onça deitada no tronco da margem
+       leste, antas pastejando na borda da mata, carcará na serragem. ── */
+    botos: [{ pos: [2.5, -0.38, -12], to: [2.5, -0.38, 14], phase: 0.4, mode: 'swim' }],
+    piranhas: Array.from({ length: 7 }, (_, i) => (
+      { pos: [-4, -0.15, -20.5], radius: [1.2 + (i % 3) * 0.35, 1], phase: i * 0.87 }
+    )),
+    araras: [
+      { pos: [4.77, 2.5, 0.6], phase: Math.PI },          // poste da barraca do MID
+      { pos: [7.39, 2.5, -11.04], phase: Math.PI - 0.5 }, // poste do pontão sul
+    ],
+    tucanos: [
+      { pos: [-11.41, 0.92, 22.16], phase: 0 },           // caixa d'água da palafita oeste
+      { pos: [23.76, 0.92, 20.15], phase: Math.PI },      // caixa d'água da palafita leste
+    ],
+    preguicas: [{ pos: [16.2, 5.6, -11.43], phase: 0 }],  // beiral da palafita (15.5, -9)
+    macacos: [
+      { pos: [MX + 0.5, 6.05, 3.5], to: [MX + 7, 6.05, 3.5], phase: 0.8 },        // cumeeira do galpão
+      { pos: [MX - 1.5, 0.95, -1.6], to: [MX + 3.4, 0.95, 1.8], phase: 2.2 },   // bancadas do serrado
+    ],
+    oncas: [{ pos: [12, 0.86, -30.2], phase: 2.4 }],      // tronco caído da margem leste
+    antas: [
+      { pos: [-26.5, 0, -28], to: [-25, 0, -16], phase: 0.5 },
+      { pos: [26, 0, 12], to: [27, 0, 16], phase: 2.8 },
+    ],
+    carcaras: [{ pos: [-20.5, 0, -6.8], to: [-19.8, 0, -6.2], phase: 1.9 }],
   });
 
   function groundHeightAt(x, z) {
