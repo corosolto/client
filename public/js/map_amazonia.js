@@ -1,8 +1,5 @@
-// AMAZONIA (amazonia) — spec: frente map2/amazonia (~/map2/prompt-opencode.md).
-// Retrata o "Treta no Vietnã" (PR #375, rejeitado) como comunidade ribeirinha:
-// igarapé no eixo x (água viva do idioma do córrego), palafitas de palha, market
-// flutuante e madeireira abandonada. Palafitas/market são COVER: os dequees ficam
-// a 2,5 m e não são piso de jogo — quem sobe é telhado, e o guarda-corpo é o rio.
+// AMAZONIA (amazonia) — retrato do "Treta no Vietnã" (PR #375) como comunidade
+// ribeirinha: igarapé, palafitas de palha, market flutuante, madeireira. Spec: ~/map2/prompt-opencode.md.
 import * as THREE from 'three';
 import { placeProp, hasProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
@@ -17,9 +14,8 @@ const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settin
 export const HALF_X = 32, HALF_Z = 44;
 export const AMAZONIA_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacaré/capivara (este mapa baixa)
 
-/* ── IGARAPÉ: eixo longo do mapa é z; o rio corre em x ∈ [−9,75, 9,75]. O centro é
-   fundo (−0,6) e as margens descem em rampa suave até −0,28 — quem cai da ponte
-   vadeia e sai pela margem sem escada invisível (a lição das rampas do córrego). */
+/* ── IGARAPÉ: rio em x ∈ [−9,75, 9,75]; centro fundo (−0,6), margens em rampa até −0,28 —
+   quem cai da ponte vadeia e sai pela margem (lição das rampas do córrego). */
 const RIO_MEIA_LARGURA = 9.75;
 const RIO_FUNDO = -0.6, RIO_MARGEM = -0.28, RIO_AGUA = 0.20;
 const RIO_CAMPO = 6.5;                       // além daqui a rampa começa
@@ -142,9 +138,7 @@ export function buildAmazonia(scene, T) {
     return m;
   }
 
-  /* ── CHÃO: duas faixas de terra batida — o plano NÃO pode passar por baixo do
-     rio: lá o chão de jogo é o fundo do igarapé, e um piso a y=0 sob a água faz o
-     MAP1 acusar 0,6 m de corpo-dentro-de-sólido em TODA a lâmina. */
+  /* ── CHÃO: duas faixas de terra — plano a y=0 sob o rio era 0,6 m de MAP1 em toda a lâmina. */
   const FAIXA = HALF_X - RIO_MEIA_LARGURA;
   addFloor(FAIXA, HALF_Z * 2, matSelva, -(RIO_MEIA_LARGURA + FAIXA / 2), 0, 0);
   addFloor(FAIXA, HALF_Z * 2, matSelva, RIO_MEIA_LARGURA + FAIXA / 2, 0, 0);
@@ -174,9 +168,8 @@ export function buildAmazonia(scene, T) {
      devolve hemi/sun e a névoa densa verde-água. */
   const { hemi, sun } = applyLook(scene, T, 'amazonia', { nofog: QP.get('nofog') === '1' });
 
-  /* ── PONTES: três travessias de tábua (z 0 larga, z ±24 estreitas). O piso da
-     ponte NÃO é colisor: quem anda é o groundHeightAt (a lição do canal do córrego:
-     colisor enchendo o vão é o "trava quando se cai"). */
+  /* ── PONTES: três travessias (z 0 larga, ±24 estreitas); o piso NÃO é colisor —
+     quem anda é o groundHeightAt (lição do canal do córrego: colisor no vão trava). */
   const ponte = (z, w) => {
     addBox(RIO_MEIA_LARGURA * 2 + 3.5, 0.16, w, matDeck, 0, PONTE_Y - 0.16, z, { collide: false });
     for (const sx of [-1, 1]) {
@@ -186,9 +179,8 @@ export function buildAmazonia(scene, T) {
   };
   ponte(0, PONTE_W); ponte(-24, 2.6); ponte(24, 2.6);
 
-  /* ── PALAFITAS: esteios + dequee a 2,5 m + casa de madeira + telhado de palha em
-     duas águas (planos inclinados). O dequee é cover aéreo e mirante de granada —
-     o piso de jogo continua no chão. */
+  /* ── PALAFITAS: esteios + dequee a 2,5 m + casa + telhado de palha em duas águas.
+     O dequee é cover aéreo — o piso de jogo continua no chão. */
   const palafita = ({ x, z, ry, cor }) => {
     const w = 4.6, d = 4.2;
     const cs = Math.cos(ry), sn = Math.sin(ry);
@@ -213,9 +205,8 @@ export function buildAmazonia(scene, T) {
   };
   for (const p of PALAFITAS) palafita(p);
 
-  /* ── MARKET FLUTUANTE: pontões amarrados na margem leste (chega-se andando —
-     degrau de 0,28 m), barracas de lona colorida e canoas. A bandeira MID mora no
-     pontão norte. */
+  /* ── MARKET FLUTUANTE: pontões amarrados na margem leste (degrau de 0,28 m — chega-se
+     andando), barracas de lona e canoas. A bandeira MID mora no pontão norte. */
   const pontoes = [
     { x0: 4.2, x1: 10.4, z0: -2, z1: 3 },     // principal — MID
     { x0: 4.0, x1: 9.6, z0: 8, z1: 13 },
@@ -356,9 +347,8 @@ export function buildAmazonia(scene, T) {
   const capivara2 = placeFauna('capivara', { x: 11.2, y: 0.02, z: -20.5, ry: -0.9, targetLen: 0.95 });
   if (capivara2) root.add(capivara2);
 
-  /* ── PICKUPS: arsenal completo em cada spawn (veto do dono: sem menu de compra,
-     o chão é o arsenal) + miolo no market, na madeireira e nas pontes. Os materiais
-     da arma são COMPARTILHADOS — um material novo por pickup derruba o SUP1. */
+  /* ── PICKUPS: arsenal completo por spawn (veto do dono) + miolo; materiais de arma
+     COMPARTILHADOS — um material novo por pickup derruba o SUP1. */
   const GM = { black: lam({ color: 0x202735 }), steel: lam({ color: 0xaab4c0 }), wood: lam({ color: 0x6b4a2a }), verde: lam({ color: 0x315b43 }) };
   const place = (kind, x, z, yaw = 0) => {
     const g = new THREE.Group();
@@ -378,20 +368,38 @@ export function buildAmazonia(scene, T) {
   place('shotgun', MX + 1, -1.4, 2.2); place('mp5', MX, 18.5, -0.6);  // madeireira
   place('deagle', 0, -24.2, 0); place('m4', 0, 24.2, Math.PI);        // pontes estreitas
 
-  /* ── NAVEGAÇÃO: grade própria (o idioma do parque), o rio vadeável entra na malha. */
+  /* ── NAVEGAÇÃO: grade própria (idioma do parque), rio vadeável incluso. Nó sem
+     vizinho alcançável é PODADO: ilhado reprova o MC3 do map-contrato. */
   const blocked = (x, z, inflate = 0.45) => colliders.some((c) => c.minY < 1.6 && c.maxY > 0.15
     && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
-  const nodes = [], adj = [], STEP = 3.2;
-  for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP) if (!blocked(x, z)) nodes.push({ x, z });
+  const STEP = 3.2;
+  const crusos = [];
+  for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP) if (!blocked(x, z)) crusos.push({ x, z });
   const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.2)) return false; } return true; };
-  for (let i = 0; i < nodes.length; i++) {
-    adj.push([]);
-    for (let j = 0; j < nodes.length; j++) {
+  const vizinhos = (i) => {
+    const out = [];
+    for (let j = 0; j < crusos.length; j++) {
       if (i === j) continue;
-      const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z;
-      if (dx * dx + dz * dz < STEP * STEP * 2.45 && segClear(nodes[i], nodes[j])) adj[i].push(j);
+      const dx = crusos[i].x - crusos[j].x, dz = crusos[i].z - crusos[j].z;
+      if (dx * dx + dz * dz < STEP * STEP * 2.45 && segClear(crusos[i], crusos[j])) out.push(j);
+    }
+    return out;
+  };
+  const adjCrusos = crusos.map((_, i) => vizinhos(i));
+  const componente = new Uint8Array(crusos.length);
+  {
+    const fila = [0]; componente[0] = 1;
+    while (fila.length) {
+      const i = fila.pop();
+      for (const j of adjCrusos[i]) if (!componente[j]) { componente[j] = 1; fila.push(j); }
     }
   }
+  const mantidos = [];
+  for (let i = 0; i < crusos.length; i++) if (componente[i]) mantidos.push(i);
+  const remapa = new Int16Array(crusos.length).fill(-1);
+  mantidos.forEach((i, novo) => { remapa[i] = novo; });
+  const nodes = mantidos.map((i) => crusos[i]);
+  const adj = mantidos.map((i) => adjCrusos[i].map((j) => remapa[j]));
   function nearestWaypoint(x, z) { let best = 0, bd = Infinity; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; best = i; } } return best; }
   function findPath(fromIdx, toIdx) {
     if (fromIdx === toIdx) return [toIdx];
