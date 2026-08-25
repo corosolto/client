@@ -28,4 +28,13 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  parque_treta: {   // fim de tarde no parque: sol baixo a oeste, sombras longas
+    sky: '/img/textures/sky_parque.webp',
+    horizonte: 0x7b739a,   // look-horizonte.py sobre sky_parque.webp (banda 498-510 de 1024)
+    zenite: 0x193660,
+    sol: { cor: 0xffc890, i: 1.75, pos: [-38, 16, -8] },
+    hemi: { ceu: 0xd9c2e0, chao: 0x4f4034, i: 1.0 },
+    neblina: { d: 0.0075, solDir: [-38, 16, -8], forca: 0.88 },
+    grade: { exposicao: 1.42, piso: 0.0050, expAces: 1.52 },
+  },
 };
