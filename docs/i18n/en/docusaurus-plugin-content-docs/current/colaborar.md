@@ -268,7 +268,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 426 |
 | `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 449 |
 | `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 264 |
-| `gelo` | Treta no Gelo | **capture** | `map_gelo.js` | 619 |
+| `gelo` | Treta no Gelo | **capture** | `map_gelo.js` | 617 |
 
 **18 registered maps** - 2 open in rounds and 16 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 21 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
