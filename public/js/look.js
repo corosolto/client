@@ -28,4 +28,19 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  gelo: {   // serra do sul: crepúsculo de inverno — sol baixo frio, fogueiras quentes carregam o quente
+    sky: '/img/textures/sky_gelo.webp',
+    horizonte: 0xbcbebd,   // look-horizonte.py sobre sky_gelo.webp (banda 498-510 de 1024)
+    zenite: 0x2e74a9,
+    sol: { cor: 0xd9e6f5, i: 1.1, pos: [-26, 14, 18] },
+    hemi: { ceu: 0x9fb8d4, chao: 0x6a7076, i: 0.75 },
+    neblina: { d: 0.008, solDir: [-26, 14, 18], forca: 0.7 },
+    /* grade por interpolação MEDIDA dos vizinhos (25/08): dia (mansao/corrego/
+       campomorro) soma sol+hemi ≈ 2,6-2,8 com exposicao 1,36-1,60 (L* 42-48);
+       a penitenciaria noturna soma ≈ 1,05 e precisou de 2,60 para L* 37 (com
+       1,50 mediu L* 20 — buraco preto). O gelo soma 1,85: 2,60×1,05/1,85 ≈ 1,48
+       → 1,50 mira L* 33-38 de crepúsculo. piso·exposicao ≈ 0,011 segura o
+       preto sem lavar (entre o 0,007 do dia e o 0,022 da noite). */
+    grade: { exposicao: 1.50, piso: 0.0072, expAces: 1.70 },
+  },
 };

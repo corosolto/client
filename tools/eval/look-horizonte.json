@@ -1,4 +1,13 @@
 {
+ "sky_gelo.webp": {
+  "banda": [
+   498,
+   510
+  ],
+  "horizonte": "bcbebd",
+  "n": 22620,
+  "zenite": "2e74a9"
+ },
  "sky_joa.webp": {
   "banda": [
    429,
