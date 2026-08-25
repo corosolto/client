@@ -22,12 +22,15 @@ const ASSETS = Object.freeze({
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', pardal: 'pardal' });
+/* pardal (frente map2/piscina): SEM GLB no acervo Quaternius — nasce no fallback
+   procedural de 13 cm. Se um dia entrar GLB, é só acrescentar em TYPE_ASSET que
+   o clone substitui o fallback sem tocar nos mapas. */
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, pardal: 1.6 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
@@ -92,6 +95,25 @@ function fallbackPigeon() {
   for (const side of [-1, 1]) {
     const wing = new THREE.Mesh(new THREE.ConeGeometry(.11, .3, 5), feather);
     wing.rotation.z = side * 1.05; wing.position.set(side * .15, .19, 0); group.add(wing);
+  }
+  return group;
+}
+
+/* pardal: 13 cm, marrom-cinza, bico curto — o passarinho de beiral de clube.
+   Mesma construção do pombo em escala 1/2,2 porque o GLB não existe no acervo. */
+function fallbackPardal() {
+  const group = new THREE.Group();
+  const feather = new THREE.MeshStandardMaterial({ color: 0x6f5b45, roughness: .95 });
+  const belly = new THREE.MeshStandardMaterial({ color: 0xb9a98d, roughness: .95 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.058, 8, 6), feather);
+  body.scale.set(.7, 1, 1.4); body.position.y = .075; group.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.034, 7, 5), feather);
+  head.position.set(0, .14, .05); group.add(head);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(.009, .03, 5), belly);
+  beak.rotation.x = Math.PI / 2; beak.position.set(0, .138, .088); group.add(beak);
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.ConeGeometry(.05, .13, 5), feather);
+    wing.rotation.z = side * 1.1; wing.position.set(side * .062, .085, 0); group.add(wing);
   }
   return group;
 }
@@ -197,7 +219,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], pardals = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -216,6 +238,7 @@ class FavelaAmbience {
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
     const parrotList = low ? parrots.slice(0, 1) : parrots;
+    const pardalList = low ? pardals.slice(0, 1) : pardals;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -226,6 +249,7 @@ class FavelaAmbience {
     armadilloList.forEach((config, index) => this._add('armadillo', config, index));
     cockroachList.forEach((config, index) => this._add('cockroach', config, index));
     parrotList.forEach((config, index) => this._add('parrot', config, index));
+    pardalList.forEach((config, index) => this._add('pardal', config, index));
     this.reset();
   }
 
@@ -257,7 +281,8 @@ class FavelaAmbience {
     } else {
       model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
         : type === 'armadillo' ? fallbackArmadillo() : type === 'cockroach' ? fallbackCockroach()
-        : type === 'parrot' ? fallbackParrot() : fallbackPigeon();
+        : type === 'parrot' ? fallbackParrot() : type === 'pardal' ? fallbackPardal()
+        : fallbackPigeon();
       while (model.children.length) animalRoot.add(model.children[0]);
       model = animalRoot;
     }
@@ -349,7 +374,7 @@ class FavelaAmbience {
         this.onShot(from, animal.root.position.clone());
       }
       if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
-      else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
+      else if (animal.type === 'pigeon' || animal.type === 'pardal') this._updatePigeon(animal, dt);
       else if (animal.type === 'parrot') this._updateParrot(animal, dt);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);

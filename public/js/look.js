@@ -28,4 +28,20 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  /* Piscina (frente map2/piscina): clube suburbano de céu azul forte na linha do
+     horizonte. horizonte/zenite MEDIDOS do sky_pool.webp (look-horizonte.py, banda
+     242-254 — assado no look-horizonte.json). Sol/hemi/neblina/grade carregam os
+     valores já medidos que o mapa usava espalhados (R9/tone_r3 -> grade; r3_fog ->
+     neblina), agora de UMA fonte só — a água viva (water.js) e a fumaça
+     (skyRadiance) passam a ler daqui. O salão é fechado e segue sem fog (indoor
+     proposital); por isso esta entrada NÃO entra na lista de pilotos do look-check. */
+  piscina_treta: {
+    sky: '/img/textures/sky_pool.webp',
+    horizonte: 0x2fa4dc,
+    zenite: 0x0270b0,
+    sol: { cor: 0xffffff, i: 1.4, pos: [10, 45, -6] },
+    hemi: { ceu: 0xf2fbff, chao: 0xb9c6d0, i: 1.3 },
+    neblina: { d: 0.0078, solDir: [14, 76, -9], forca: 0.85 },
+    grade: { exposicao: 1.92, piso: 0.0039, expAces: 1.91 },
+  },
 };
