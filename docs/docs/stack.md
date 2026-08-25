@@ -254,9 +254,9 @@ de trabalhar. Elas vivem em `.agents/skills/`, e `.claude/skills/` são symlinks
 
 `.claude/skills/` são **symlinks** para `.agents/skills/` — uma cópia só, dois nomes, porque o Claude Code lê de `.claude/` e outros arnêses leem de `.agents/`.
 
-A skill do loop desta casa, **`gauntlet-fps`**, é a única que nasceu aqui: vive em `.claude/skills/gauntlet-fps/SKILL.md`, não é symlink e não entra no lock.
+⚠️ Nenhuma skill nativa encontrada em `.claude/skills/`.
 
-> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files .agents/skills · skills-lock.json`
+> Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git ls-files .agents/skills · git ls-files .claude/skills · skills-lock.json`
 
 {/* END:GERADO:skills */}
 
