@@ -483,7 +483,7 @@ export function buildPoolDay(scene, T) {
          face virada pro CENTRO do salão — a outra fica de costas pro time que nasce ali. */
       for (const sz of [-1, 1]) {
         for (const bx of [-9, 9]) decal(D_ADESIVO, bx, 0.5, sz * (13.5 - 0.41), sz > 0 ? Math.PI : 0, 1.2, 1.05);
-        for (const bx of [-3, 3]) decal(D_ADESIVO, bx, 0.5, sz * (16.1 - 0.41), sz > 0 ? Math.PI : 0, 1.2, 1.05);
+        for (const bx of [-3, 3]) decal(D_ADESIVO, bx, 0.5, sz * (14.2 - 0.41), sz > 0 ? Math.PI : 0, 1.2, 1.05);
         // GUARITA do salva-vidas (2,80 × 3,00 × 2,40): as duas laterais. A FRENTE tem o
         // vidro em z = ∓17,28 e decalque em vidro é a reclamação nº 1 do dono — não vai.
         for (const sx of [-1, 1]) decal(D_TAG, sx * 1.46, 0.45, sz * 19.6, sx > 0 ? Math.PI / 2 : -Math.PI / 2, 1.9, 2.0);
