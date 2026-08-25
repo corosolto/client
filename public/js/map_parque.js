@@ -1,6 +1,5 @@
 // Parque da Treta: arena CTF simétrica em fim de tarde, inteiramente procedural.
-// Rebuild USANTOS (25/08): vegetação instanciada, coreto, trenzinho, mobiliário —
-// o mapa não pode mais parecer low poly (régua: tools/eval/parque-vida-check.mjs).
+// Rebuild USANTOS (régua: tools/eval/parque-vida-check.mjs).
 import * as THREE from 'three';
 import { InstBatch, mergeParts } from './mapprops.js';
 import { applyLook } from './map_sky.js';
@@ -535,10 +534,8 @@ export function buildParque(scene, T) {
     occluders.push(g.children[2]);
   });
 
-  /* Vegetação densa instanciada. Troncos têm colisor fino; copas e arbustos não
-     têm colisor nenhum — a grade de waypoints é derivada dos colisores no fim
-     do build e as rotas não podem morrer. Candidatos a árvore ficam a ≥0,9 m
-     do reticulado de nós (STEP 3,2) para não derrubar nó. */
+  /* Vegetação: tronco com colisor fino, copa/arbusto sem colisor (o grafo nasce
+     dos colisores no fim do build); candidatos a ≥0,9 m do reticulado de nós. */
   const jitterGeo = (geo, amp, seed) => {
     let s = seed >>> 0;
     const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
