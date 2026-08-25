@@ -21,9 +21,11 @@
      AMZ3  água VIVA: o igarapé tem que ter a água do idioma do córrego
            (mesh com `aguaViva` registrado em scene.userData.waters), não um
            plano azul parado.
-     AMZ4  fauna ANIMADA em população: ≥ 9 bichos e ≥ 4 espécies (a AR2 do
-           ambience-registry-check pede 2 espécies e 1 exemplar — o piso da
-           frente amazonia é maior, porque o dono pediu "mata viva").
+      AMZ4  fauna ANIMADA em população: o piso sobe com o elenco (PR #439):
+            ≥ 12 espécies e ≥ 24 bichos. Medido no elenco entregue: 28 bichos
+            de 14 espécies (saída deste script; a AR2 do ambience-registry
+            pede 2 espécies — o piso da frente amazonia é maior porque o dono
+            pediu "mata viva").
 
    PROCEDÊNCIA DOS PISOS (Lei 2 — teto sem procedência é opinião)
      AMZ1 ≥ 12 e AMZ2 ≥ 2,0/100 m²: medidos nesta frente ANTES do polimento
@@ -32,9 +34,12 @@
      deste script, reproduzível no commit "wip: amazonia sobe"). Os pisos ficam
      a ~39% e ~71% do medido: piso colado no valor reprova por ruído (a lição
      do ORT1 do mapa-novo-gate) e o mutante é quem prova que o piso morde.
-     AMZ3 e AMZ4: binário/populacional, lidos do contrato dos módulos
-     (water.js marca `aguaViva` em scene.userData.waters; ambientlife.js
-     expõe `ambience.animals`).
+      AMZ3 e AMZ4: binário/populacional, lidos do contrato dos módulos
+      (water.js marca `aguaViva` em scene.userData.waters; ambientlife.js
+      expõe `ambience.animals`). AMZ4 piso 24/12: medido 28 bichos de 14
+      espécies no elenco da frente (PR #439, 9 espécies Mint + as 5 clássicas
+      do mapa); a folga 4/2 absorve um indivíduo a menos por espécie sem
+      deixar o mapa virar deserto de bicho.
 
    AS MUTAÇÕES QUE A DEIXAM VERMELHA (Lei 3 — se não morde, não existe)
      --mutante=monocromia ... troca TODO material por um só chapado   -> AMZ1
@@ -59,7 +64,7 @@ if (MUT && !MUTANTES.includes(MUT)) {
 
 const PISO_MATS = 12;          // AMZ1 — ver procedência no cabeçalho
 const PISO_COVER = 2.0;        // AMZ2 — colisores de cover por 100 m² de bounds
-const PISO_FAUNA_N = 9, PISO_FAUNA_ESP = 4;   // AMZ4
+const PISO_FAUNA_N = 24, PISO_FAUNA_ESP = 12;   // AMZ4 — real 28/14 (elenco PR #439), folga 4/2
 
 const SEED = 13007;            // mesma do mapa-novo-gate: mesmos props sortidos
 
