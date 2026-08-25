@@ -46,6 +46,7 @@ com código 1 em falha crítica.
 | Arquivo | O que mede |
 |---|---|
 | `map-check.mjs` | Geometria do mapa: colisores, spawns, alcançabilidade e ≥2 rotas CTF separadas por 6 m (`--mutante=rota-unica` prova o portão). |
+| `bsp-measure.mjs` + `piscina-bsp-check.mjs` | **Proporções da piscina medidas do fy_pool_day.bsp real** (frente map2/piscina). O primeiro PARSEA o BSP (BSP30 ordem de lumps Quake-1) e assa `piscina_bsp.json`; o segundo (chave `eval:piscina-bsp`, no check:fast) compara o builder vivo — salão, área/aspecto da piscina pelo fundo plano do `groundHeightAt`, distância de spawns, corredores O/L, estruturas verticais — com teto ±20% por medida. Nasceu VERMELHA (4/8) de propósito: o conserto veio depois. Mutantes: `desloca-parede` (PB1), `bsp-furado` (PB3/PB4). |
 | `probe-grafite.mjs` | Sonda descartável da passada viva de grafite: abre `mapview?grafite=vivo` e despeja âncoras (com `__grafiteDebug`), contadores de recusa e superfícies por mapa. Diagnóstico, não é régua. |
 | `map-source-check.mjs` | Procedência por SHA e uso efetivo dos materiais/céus dos mapas novos (`--mutante=hash-falso` e `asset-desligado`). |
 | `campo-contract-check.mjs` | Assimetria campo×galpão, convergência, visadas, cover, abertura `field-mouth` e iluminação declarada do interior. |

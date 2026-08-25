@@ -138,6 +138,14 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:piscina-bsp`
+
+Proporções da Piscina da Treta medidas contra o fy_pool_day.bsp REAL (frente map2/piscina): o mapa era "inspirado", e o BSP medido (tools/eval/bsp-measure.mjs → piscina_bsp.json) mostra outro layout — pátio ~36×47 m, piscina 13,5×9 ATRAVESSADA no eixo curto, corredores de 10-12 m, spawns a 33,8 m. PB1-PB7 comparam o builder vivo (boot no harness, groundHeightAt e colisores, nunca declaração) com o JSON assado, teto ±20% por medida. Nasceu VERMELHA de propósito (4/8: piscina +142% de área, aspecto -47%, spawns +24%, corredor oeste -23%) — o conserto veio depois, sem afrouxar teto. Mutantes: desloca-parede (PB1)|bsp-furado (PB3/PB4, prova que o check LÊ o JSON).
+
+```bash
+npm run eval:piscina-bsp
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.
