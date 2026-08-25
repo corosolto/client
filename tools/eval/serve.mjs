@@ -86,7 +86,12 @@ async function renderIndex() {
       /* CSS com hash de CONTEÚDO (regra da main, mantida ANTES da varredura genérica):
          a versão do package.json não muda entre commits de trabalho e o navegador
          servia style.css do cache — o JS novo chegava e o CSS não. */
-      .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`),
+      .replace(/href=\{`\/style\.css\?v=\$\{V\}`\}/, `href="/style.css?v=${V}-${CSS_REV}"`)
+      /* `src` do main.js com revisão de módulo (BUG-39, regra da main): o importmap
+         sozinho não cobre o bootstrap — sem isto o edge monta a página com JS de
+         deploys diferentes. A varredura genérica resolveria o template, mas o
+         contrato SB7 exige a regra explícita como âncora do mecanismo. */
+      .replace(/src=\{`\/js\/main\.js\?v=\$\{V\}-\$\{JS_REV\}`\}/, `src="/js/main.js?v=${V}-${JS_REV}"`),
   ));
 }
 
