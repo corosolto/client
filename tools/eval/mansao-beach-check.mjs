@@ -189,12 +189,13 @@ if (MUT === 'margem-congelada') {
   if (g.scene.userData.waters.length === antes) morre('a rebentação não estava na lista que o world.update tica');
 }
 if (MUT === 'coqueiro-reto') {
-  const copas = praia.filter((e) => e.obj.userData?.praiaParte === 'copa');
-  if (!copas.length) morre('nenhuma peça praiaParte="copa" na cena');
+  const copas = [];
+  for (const e of doTipo(praia, 'coqueiro')) e.obj.traverse((o) => { if (o.userData?.praiaParte === 'copa') copas.push(o); });
+  if (!copas.length) morre('nenhuma peça praiaParte="copa" nos coqueiros da cena');
   let mexeu = false;
   for (const c of copas) {
-    if (Math.abs(c.obj.position.x) > 1e-4 || Math.abs(c.obj.position.z) > 1e-4) mexeu = true;
-    c.obj.position.x = 0; c.obj.position.z = 0;
+    if (Math.abs(c.position.x) > 1e-4 || Math.abs(c.position.z) > 1e-4) mexeu = true;
+    c.position.x = 0; c.position.z = 0;
   }
   if (!mexeu) morre('as copas já nasciam alinhadas com a base (coqueiros já eram retos)');
   g.scene.updateMatrixWorld(true);
@@ -202,7 +203,9 @@ if (MUT === 'coqueiro-reto') {
 if (MUT === 'praia-invade') {
   const alvo = doTipo(praia, 'coqueiro')[0] || praia.find((e) => e.obj.visible !== false);
   if (!alvo) morre('nenhuma peça de praia na cena');
-  alvo.obj.position.z = 0;   // meio do mapa, dentro dos bounds
+  const antes = alvo.obj.position.clone();
+  alvo.obj.position.set(0, alvo.obj.position.y, 0);   // meio do mapa, dentro dos bounds em X E EM Z
+  if (antes.distanceTo(alvo.obj.position) < 1) morre('a peça escolhida já estava no meio do mapa');
   g.scene.updateMatrixWorld(true);
 }
 if (MUT === 'horizonte-raso') {
@@ -323,9 +326,18 @@ if (MUT === 'horizonte-tapa-panorama') {
   const B = g.world.bounds;
   const occ = new Set(g.world.occluders || []);
   const invasores = [], balas = [];
+  const diagonal = Math.hypot(Math.max(Math.abs(B.minX), B.maxX), Math.max(Math.abs(B.minZ), B.maxZ));
   for (const { obj, tipo } of [...praia, ...horizonte]) {
     if (obj.visible === false) continue;
     const cx = new THREE.Box3().setFromObject(obj);
+    /* A bruma é um ANEL centrado na origem: a caixa dela cobre o mapa por construção e
+       a pergunta certa não é "a caixa cruza os bounds" e sim "a SUPERFÍCIE cruza". Para
+       ela a medida é o raio contra a diagonal do mapa. */
+    if (tipo === 'bruma') {
+      const raio = Math.min((cx.max.x - cx.min.x), (cx.max.z - cx.min.z)) / 2;
+      if (raio <= diagonal) invasores.push(`bruma raio ${raio.toFixed(0)} m <= diagonal ${diagonal.toFixed(0)} m`);
+      continue;
+    }
     if (!cx.isEmpty() && cx.max.z > B.minZ && cx.min.z < B.maxZ && cx.max.x > B.minX && cx.min.x < B.maxX)
       invasores.push(`${tipo}@(${obj.position.x.toFixed(1)},${obj.position.z.toFixed(1)})`);
     obj.traverse((o) => { if (occ.has(o)) balas.push(tipo); });

@@ -806,6 +806,197 @@ export function buildMansao(scene, T) {
   }
   createWater(scene, T, 'mansao');   // oceano; o update() tica todas as scene.userData.waters
 
+  /* ===================== PRAIA (dono 25/08: "a praia") =====================
+     O leito da RC2 já descia 0,0995 por metro a partir de z=-35,75; o que faltava era
+     AREIA: uma faixa emersa com duna, berma, baía e a rebentação viva na margem. Toda
+     esta seção vive FORA de `world.bounds` (z < -35,5) — é vista, não arena: sem
+     colisor, sem occluder, sem waypoint. Régua: `npm run eval:mansao-beach`. */
+  {
+    const AREIA = { z0: -36.4, z1: -52.4, larg: 150, incl: .0995, zLeito: -35.75, folga: .10 };
+    const yLeito = (z) => (z - AREIA.zLeito) * AREIA.incl;
+    /* Perfil de praia real, em três termos somados ao leito:
+         duna  crista de 0,85 m no fundo da faixa (onde entram os coqueiros);
+         berma degrau de 0,35 m no meio (a quebra que a maré alta deixa);
+         baia  o centro afunda 0,25 m, então a linha d'água avança e a orla vira
+               crescente — Joatinga é enseada, não régua. */
+    const perfil = (x, z) => {
+      const t = (z - AREIA.z0) / (AREIA.z1 - AREIA.z0);
+      const duna = .85 * Math.exp(-(((t - .06) / .10) ** 2));
+      const berma = .35 * Math.exp(-(((t - .28) / .13) ** 2));
+      const baia = -.25 * Math.max(0, 1 - (x / 70) ** 2);
+      const onda = Math.sin(x * .09 + 1.3) * .10 + Math.sin(x * .31 - z * .17) * .05;
+      return yLeito(z) + AREIA.folga + duna + berma + baia + onda * (1 - t * .6);
+    };
+    const ySand = (x, z) => perfil(x, z);
+    // grão + conchas: 2 m de tile a 128 px (mesma escala do texturaMuro). A cor seca sai
+    // do 0x6f6350 que o leito já declara como "areia MOLHADA", clareado 1,62x — é a mesma
+    // areia com e sem água, não duas decisões de cor soltas.
+    const texturaAreia = () => texProcedural(128, (x, y) => {
+      const grao = ((x * 29 + y * 17) % 23) - 11, fino = ((x * 7 + y * 53) % 11) - 5;
+      const concha = ((x * 41 + y * 91) % 199) > 195 ? 34 : 0;
+      const b = 180 + grao * .9 + fino * .5 + concha;
+      return [Math.min(255, b), Math.min(255, b - 18 + concha * .4), Math.min(255, b - 48 + concha * .6)];
+    });
+    const texAreia = texturaAreia();
+    texAreia.repeat.set(AREIA.larg / 2, Math.abs(AREIA.z1 - AREIA.z0) / 2);
+    texAreia.wrapS = texAreia.wrapT = THREE.MirroredRepeatWrapping;
+    const NX = 72, NZ = 20;
+    const geoAreia = new THREE.PlaneGeometry(AREIA.larg, AREIA.z0 - AREIA.z1, NX, NZ);
+    const pos = geoAreia.attributes.position;
+    const corAreia = new Float32Array(pos.count * 3);
+    const seca = new THREE.Color(0xffffff), molhada = new THREE.Color(0x8d8272);
+    const tmpCor = new THREE.Color();
+    const zCentro = (AREIA.z0 + AREIA.z1) / 2;
+    for (let i = 0; i < pos.count; i++) {
+      // plano deitado por rotation.x=-PI/2: x local = x mundo, y local = -(z mundo)
+      const wx = pos.getX(i), wz = zCentro - pos.getY(i), h = perfil(wx, wz);
+      pos.setZ(i, h);   // z LOCAL vira a altura do mundo
+      // areia molhada perto da lâmina: gradiente por vértice, não uma segunda textura
+      tmpCor.copy(seca).lerp(molhada, THREE.MathUtils.smoothstep(h, -.55, -1.15));
+      corAreia[i * 3] = tmpCor.r; corAreia[i * 3 + 1] = tmpCor.g; corAreia[i * 3 + 2] = tmpCor.b;
+    }
+    geoAreia.setAttribute('color', new THREE.BufferAttribute(corAreia, 3));
+    geoAreia.computeVertexNormals();
+    const areia = new THREE.Mesh(geoAreia, lam({ map: texAreia, vertexColors: true, roughness: .97 }));
+    areia.rotation.x = -Math.PI / 2;
+    areia.position.set(0, 0, zCentro);
+    areia.receiveShadow = true; areia.castShadow = false;
+    areia.userData.praiaFeature = 'areia';
+    areia.userData.nonSolidSurface = true;   // fora dos bounds, mas nenhuma sonda a lê como chão
+    root.add(areia);
+
+    /* REBENTAÇÃO: lâmina própria em cima do oceano, com espuma de swash apertada e
+       amplitude maior. O plano de oceano tem espumaFaixa 2,4 (mar aberto) — na margem
+       isso vira lençol, não quebra. Mesma família RC2 da água do córrego/piscina. */
+    const rebentacao = createWater(scene, T, 'mansao', {
+      nivel: -.86, centro: [0, -45.6], tamanho: [AREIA.larg, 13], segmentos: 40,
+      raso: 0x63bccb, fundo: 0x2b7c92, profEscala: 1.1,
+      espumaFaixa: .9, espumaMiolo: .22, profFallback: .35, ampEscala: 1.35,
+    });
+    rebentacao.mesh.userData.praiaFeature = 'rebentacao';
+    rebentacao.mesh.userData.nonSolidSurface = true;
+
+    /* COQUEIROS: tronco em curva que inclina para o mar (a copa sai ~18° da vertical —
+       fototropismo de coqueiro de linha de praia). A régua mede a inclinação pela posição
+       MUNDO da copa contra a base, não por um número declarado. */
+    const matTronco = lam({ color: 0x8a7050, roughness: .95 });
+    const matFolha = lam({ color: 0x2f6b39, roughness: 1 });
+    const matCoco = lam({ color: 0x5d4a30, roughness: .9 });
+    /* ry fica em [-0,5; 0,5] de propósito: a curva do tronco cresce no -z LOCAL, então
+       só assim a copa cai para o MAR. Fora dessa faixa o coqueiro deita para dentro do
+       terraço e a folhagem entra nos bounds jogáveis (cláusula B6a). */
+    const COQUEIROS = [[-34, -39.2, 7.4, .30, .34], [-21, -38.6, 6.2, .26, -.42], [-11, -39.9, 8.1, .33, .18],
+      [3, -38.8, 6.8, .24, -.28], [14, -40.1, 7.7, .31, .46], [26, -39.0, 6.5, .28, -.16],
+      [39, -39.6, 7.1, .29, .38], [-47, -39.1, 6.6, .27, -.36]];
+    const nCoqueiros = LOWQ ? 6 : COQUEIROS.length;
+    for (let c = 0; c < nCoqueiros; c++) {
+      const [cx, cz, alt, incl, ry] = COQUEIROS[c];
+      const palma = new THREE.Group();
+      palma.position.set(cx, ySand(cx, cz), cz);
+      palma.rotation.y = ry;
+      palma.userData.praiaFeature = 'coqueiro';
+      const pts = [];
+      for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push(new THREE.Vector3(0, alt * t, -Math.sin(incl) * alt * t * t * 1.15)); }
+      const tronco = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 6, .17, 5), matTronco);
+      tronco.userData.praiaParte = 'tronco'; tronco.userData.nonSolidSurface = true;
+      tronco.castShadow = false; palma.add(tronco);
+      const copa = new THREE.Group();
+      copa.position.copy(pts[6]);
+      copa.userData.praiaParte = 'copa';
+      palma.add(copa);
+      for (let i = 0; i < 7; i++) {
+        const a = i * Math.PI * 2 / 7 + c * .4;
+        const folha = new THREE.Mesh(new THREE.SphereGeometry(.5, 6, 3), matFolha);
+        folha.scale.set(.22, .07, 3.1);
+        folha.rotation.set(-.34 - (i % 3) * .12, a, Math.sin(a) * .2);
+        folha.position.set(Math.sin(a) * .6, -.05, Math.cos(a) * .6);
+        folha.userData.praiaParte = 'folha'; folha.userData.nonSolidSurface = true;
+        folha.castShadow = false; copa.add(folha);
+      }
+      for (const [ox, oz] of [[-.14, .06], [.11, -.09], [.02, .16]]) {
+        const coco = new THREE.Mesh(new THREE.SphereGeometry(.095, 5, 3), matCoco);
+        coco.position.set(ox, -.24, oz);
+        coco.userData.praiaParte = 'coco'; coco.userData.nonSolidSurface = true;
+        coco.castShadow = false; copa.add(coco);
+      }
+      root.add(palma);
+    }
+
+    /* BARRACA: lona listrada (procedural, sem marca — linha editorial), balcão, caixa
+       térmica e dois banquinhos. Cinco tipos de peça: caixa com pano em cima não é barraca. */
+    const texLona = texProcedural(64, (x) => ((x >> 3) & 1 ? [222, 78, 60] : [242, 236, 222]));
+    texLona.repeat.set(4, 2);
+    const matLona = lam({ map: texLona, roughness: .88, side: THREE.DoubleSide });
+    const matPoste = lam({ color: 0x9a8055, roughness: .92 });
+    const matBalcao = lam({ color: 0xb9a276, roughness: .9 });
+    const barraca = new THREE.Group();
+    barraca.position.set(-27.5, ySand(-27.5, -39.6), -39.6);
+    barraca.rotation.y = .22;
+    barraca.userData.praiaFeature = 'barraca';
+    for (const [px, pz] of [[-2.1, -1.5], [2.1, -1.5], [-2.1, 1.5], [2.1, 1.5]]) {
+      const poste = new THREE.Mesh(new THREE.CylinderGeometry(.07, .08, 2.5, 5), matPoste);
+      poste.position.set(px, 1.25, pz);
+      poste.userData.praiaParte = 'poste'; poste.userData.nonSolidSurface = true;
+      barraca.add(poste);
+    }
+    const lona = new THREE.Mesh(new THREE.BoxGeometry(4.8, .06, 3.6), matLona);
+    lona.position.set(0, 2.52, 0); lona.rotation.z = .05;
+    lona.userData.praiaParte = 'cobertura'; lona.userData.nonSolidSurface = true;
+    barraca.add(lona);
+    const balcao = new THREE.Mesh(new THREE.BoxGeometry(4.2, .95, .7), matBalcao);
+    balcao.position.set(0, .48, 1.2);
+    balcao.userData.praiaParte = 'balcao'; balcao.userData.nonSolidSurface = true;
+    barraca.add(balcao);
+    const isopor = new THREE.Mesh(new THREE.BoxGeometry(.9, .6, .6), lam({ color: 0xe6e9ea, roughness: .7 }));
+    isopor.position.set(-1.6, .3, -.9);
+    isopor.userData.praiaParte = 'caixa'; isopor.userData.nonSolidSurface = true;
+    barraca.add(isopor);
+    for (const bx of [1.1, 1.9]) {
+      const banco = new THREE.Mesh(new THREE.CylinderGeometry(.22, .24, .45, 6), matPoste);
+      banco.position.set(bx, .22, 2.1);
+      banco.userData.praiaParte = 'banco'; banco.userData.nonSolidSurface = true;
+      barraca.add(banco);
+    }
+    root.add(barraca);
+    // guarda-sóis soltos: escala e cor na faixa seca, sem virar cláusula de régua
+    for (const [ux, uz, uc] of [[-16.5, -40.4, 0xe2643f], [8.5, -41.2, 0xf0c04a], [31, -40.1, 0x3f8fc2]]) {
+      const sol = new THREE.Group();
+      sol.position.set(ux, ySand(ux, uz), uz);
+      const haste = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, 2.1, 5), matPoste);
+      haste.position.y = 1.05; haste.userData.nonSolidSurface = true; sol.add(haste);
+      const capa = new THREE.Mesh(new THREE.ConeGeometry(1.35, .5, 9), lam({ color: uc, roughness: .9, side: THREE.DoubleSide }));
+      capa.position.y = 2.15; capa.userData.nonSolidSurface = true; sol.add(capa);
+      root.add(sol);
+    }
+
+    /* FRESCOBOL: dois vultos lá na ponta da enseada (x -44 e -50, ~54 m do spawn B).
+       É silhueta de longe: o orçamento por figura é o que a régua cobra. */
+    const matVulto = lam({ color: 0x3b3a3c, roughness: .95 });
+    for (const [fx, fz, olhaPara] of [[-44, -43.5, 1], [-50.5, -43.2, -1]]) {
+      const vulto = new THREE.Group();
+      vulto.position.set(fx, ySand(fx, fz), fz);
+      vulto.rotation.y = olhaPara > 0 ? -Math.PI / 2 : Math.PI / 2;
+      vulto.userData.praiaFeature = 'frescobol';
+      const corpo = new THREE.Mesh(new THREE.CapsuleGeometry(.19, .78, 3, 6), matVulto);
+      corpo.position.y = .96; corpo.userData.nonSolidSurface = true; vulto.add(corpo);
+      const cabeca = new THREE.Mesh(new THREE.SphereGeometry(.14, 6, 4), matVulto);
+      cabeca.position.y = 1.62; cabeca.userData.nonSolidSurface = true; vulto.add(cabeca);
+      for (const [bx, by, bz2, rz] of [[.26, 1.22, .12, -1.1], [-.24, 1.05, -.08, .5]]) {
+        const braco = new THREE.Mesh(new THREE.CylinderGeometry(.055, .05, .62, 4), matVulto);
+        braco.position.set(bx, by, bz2); braco.rotation.z = rz;
+        braco.userData.nonSolidSurface = true; vulto.add(braco);
+      }
+      const raquete = new THREE.Mesh(new THREE.CircleGeometry(.19, 8), lam({ color: 0x2c2b2d, roughness: .9, side: THREE.DoubleSide }));
+      raquete.position.set(.5, 1.5, .18); raquete.rotation.y = Math.PI / 2;
+      raquete.userData.nonSolidSurface = true; vulto.add(raquete);
+      for (const [px, pz] of [[-.09, 0], [.09, 0]]) {
+        const perna = new THREE.Mesh(new THREE.CylinderGeometry(.07, .06, .58, 4), matVulto);
+        perna.position.set(px, .29, pz); perna.userData.nonSolidSurface = true; vulto.add(perna);
+      }
+      root.add(vulto);
+    }
+  }
+
   // Vasos e balizadores dão escala ao deck e às circulações sem virarem paredes de cover.
   const vasos = [
     [-19,-33,1.0],[-19,-29,.8],[-19,-25,.8],[-19,-19,.9],[-10,-34,.8],[-10,-29,.75],[-10,-25,.75],[-10,-19,.8],

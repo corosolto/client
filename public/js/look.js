@@ -9,6 +9,27 @@ export const LOOK = {
     hemi: { ceu: 0xf6f3ea, chao: 0x665c50, i: 1.02 },
     neblina: { d: 0.0068, solDir: [30, 32, 24], forca: 0.94 },
     grade: { exposicao: 1.36, piso: 0.0043, expAces: 1.46 },
+    /* HORIZONTE 3D (dono 25/08: "precisava melhorar o horizonte (em todos mapas)").
+       O sky_joa.webp tem mar aberto e VAZIO em todo o setor norte, que é para onde o
+       terraço inteiro olha; a terra assada dele vive fora de azimute -2,83..+0,94 rad
+       (medição por setor em tools/eval/mansao-beach-check.mjs, cláusula H2). Azimute =
+       atan2(z, x), a mesma convenção do EquirectangularReflectionMapping do map_sky.js:
+       -pi/2 é o norte do mapa. `dist` é limitada pelo far=400 da câmera E pela própria
+       névoa: com d=0,0068 sobram 40% da cor própria a 130 m, 16% a 200 m e 2% a 300 m —
+       daí as três camadas, que é o que faz perspectiva aérea em vez de recorte de papel.
+       `mistura` é quanto da cor já nasce puxada para `horizonte` (#b1aca5). */
+    horizonte3d: {
+      ilhas: [{ az: -1.02, dist: 128, r: 20, h: 14, cor: 0x3f5a42, mistura: 0.10, praia: 0xc0b49b }],
+      morros: [
+        { az: -2.55, dist: 172, r: 50, h: 28, cor: 0x3a5540, mistura: 0.16 },
+        { az: -0.38, dist: 158, r: 44, h: 25, cor: 0x3a5340, mistura: 0.13 },
+        { az: -1.95, dist: 258, r: 90, h: 62, cor: 0x445c46, mistura: 0.36 },
+        { az: -0.82, dist: 222, r: 74, h: 46, cor: 0x3d5742, mistura: 0.28 },
+        { az: -1.42, dist: 298, r: 115, h: 84, cor: 0x4a604c, mistura: 0.46 },
+      ],
+      // bruma quente: mediana do sky_joa.webp na banda do equador, setor +0,79..+1,18 rad
+      bruma: { cor: 0xc5b4a4, y: 2.4, raio: 330, altura: 17, opacidade: 0.34 },
+    },
   },
   corrego: {   // SP abafado: céu cinza de chuva que não cai
     sky: '/img/textures/sky_sp.webp',
