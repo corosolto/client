@@ -133,9 +133,10 @@ if (MUTANTE && !mutanteAplicou) {
     const media = soma / cnt;
     const desvio = Math.sqrt(Math.max(0, soma2 / cnt - media * media));
     const gradiente = Math.abs(somaTopo / cntTopo - somaBase / cntBase);
-    /* medido na textura gerada (rebuild): desvio ≈ 24, baldes ≈ 41, gradiente ≈ 22
-       (reboco creme 205 × concreto 145 × tijolo 120 × umidade −30 % na base).
-       Limiares em ~60 % do medido: ajuste de paleta passa, reboco chapado não. */
+    /* medido na textura gerada (rebuild, 25/08/2026): desvio 46,2 · 44 baldes ·
+       gradiente 60,6 (reboco creme 204 × concreto 146 × tijolo 118 × umidade
+       −34 % na base). Limiares bem abaixo do medido: ajuste de paleta passa,
+       reboco chapado (desvio ≈ 5) e textura sem gradiente não. */
     const falta = [];
     if (desvio < 14) falta.push(`desvio de luminância ${desvio.toFixed(1)}/14 (reboco × substrato exposto = dois estados; chapado não descasca)`);
     if (baldes.size < 20) falta.push(`${baldes.size}/20 baldes de cor (fiadas + nuance + mancha)`);
@@ -173,7 +174,7 @@ if (MUTANTE && !mutanteAplicou) {
 /* ---- NV3 varandas de cela ---- */
 {
   const varandas = [];
-  W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-varanda-')) varandas.push(o); });
+  W.root.traverse((o) => { if (/^penitenciaria-varanda-[a-z]+$/.test(o.name || '')) varandas.push(o); });
   const comGuarda = varandas.filter((v) => {
     let ok = false;
     v.traverse((o) => { if (o.name?.includes('guarda-corpo')) ok = true; });
