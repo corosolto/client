@@ -1883,6 +1883,182 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "sertao-mandacaru": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_mandacaru.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks7epv9ghtz5c8fabqgte1j1ch8d5mra",
+    "chatUrl": "https://mint.gg/chat/ph7f0hkpjjh01qcf95zt46dddd8d43ct",
+    "displayName": "Blue-Green Candelabra Cactus (mandacaru)",
+    "notes": "Vegetacao de caatinga do retheme Sertao da Treta (map2/velho-oeste): mandacaru assume as 8 posicoes dos cactos do layout original. Proxy procedural serve em node/sem GLB; colisor identico nos dois ramos. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "7b442f1abb6ec86a800aef9594c76dd2f9052522b58a9aa8a004449357a9b83f"
+   }
+  },
+  "sertao-macambira": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_macambira.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks7e9pqet1sbvcwayfddb0x0318d5mw8",
+    "chatUrl": "https://mint.gg/chat/ph77kaaqh5ecv3mwaw421gabgx8d52yk",
+    "displayName": "Dusty Sertao Bromeliad (macambira)",
+    "notes": "Vegetacao de caatinga do retheme Sertao da Treta: macambira em 4 moitas com colisor de 1,25 m (MAP1). Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "9522205f3b3f2e2a997f53f828a58b2ae4a8fc6202b71f27c47f0d1d4ca6486e"
+   }
+  },
+  "sertao-juazeiro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_juazeiro.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks759j8fhf1yezybjze0qf8vg98d54bf",
+    "chatUrl": "https://mint.gg/chat/ph72w8yaxsgj6y271nvqjaxr2d8d4rr2",
+    "displayName": "Gnarled Caatinga Skeleton (juazeiro seco)",
+    "notes": "Juazeiro seco sem folha do retheme Sertao da Treta: 2 exemplares, tronco com colisor fino. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "70579e4e2d8e85ffb07a0adfed0e496d99649321eadaccd6dbc033f2a441dbc9"
+   }
+  },
+  "sertao-xique-xique": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_xique_xique.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks73za0ws181wynvwqsn3dap4s8d5nmv",
+    "chatUrl": "https://mint.gg/chat/ph7djxxjydj383me4g5t43r3ps8d5sgc",
+    "displayName": "Silvered Candle Cluster (xique-xique)",
+    "notes": "Xique-xique (Pilosocereus gounellei) do retheme Sertao da Treta: 3 tufos junto as cercas. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "1881c4c579f8fb5e93256ecbb33626ed8dc6f1643c6e8e8feb842566646e29b0"
+   }
+  },
+  "sertao-poco-roda": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_poco_roda.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks74qcvmcfs2ta4ceajggjhq798d542a",
+    "chatUrl": "https://mint.gg/chat/ph78jzf7pmyqqwffg89w8s664h8d41cs",
+    "displayName": "Sertanejo Stone Well (poco com roda d agua)",
+    "notes": "Marco de sertao: poco de pedra com roda d agua e balde, lado oeste da arena. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "28b3427934987e7cfeddb990decd38f9f5455f2c412bd9621ccdcc79a69ac449"
+   }
+  },
+  "sertao-capelinha": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_capelinha.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks735ddr0k5a30npwhwb8td67h8d5bwh",
+    "chatUrl": "https://mint.gg/chat/ph7e200kx20sn17p6cfmn2sc958d4c8h",
+    "displayName": "Weathered Terracotta Chapel (capelinha de beira de estrada)",
+    "notes": "Marco de sertao: capelinha branca de beira de estrada, lado leste sul; abrigo de papagaio de poleiro. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "ee11deecc0da61f3e6559b2be67d5d02c43f700d63ad19b68228f22cdcadb07b"
+   }
+  },
+  "sertao-palhoca-forro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/sertao_palhoca_forro.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks7eqkc0jj7jmnbazd4yvx2me58d4f2d",
+    "chatUrl": "https://mint.gg/chat/ph7dscqp85wk184t4xqw6teq6h8d56bn",
+    "displayName": "Rustic Palapa Dance Stage (quadra de forro)",
+    "notes": "Marco de sertao: palhoca de forro a ceu aberto com palco e bandeirolas; caixa_som_baile do acervo sobe no palco. Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "56e823736b800f1a418dd81183b793c17a20f9f0ab708e4d81b8e8711eafc9a1"
+   }
+  },
+  "lagarto-sertao": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/lagarto_sertao.glb"
+   ],
+   "source": {
+    "kind": "mint-chat",
+    "assetId": "ks7b9n65cxtmvfkxcc8a3rm93d8d4p9j",
+    "chatUrl": "https://mint.gg/chat/ph70g5cch8yt9tqm4aj55n2t9d8d59sj",
+    "displayName": "Russet Head Stone Basker (lagarto de pedra)",
+    "notes": "Fauna estatica do Sertao da Treta: lagarto baskando em duas das cinco pedras de granito; estatico no idioma jacare/capivara (placeFauna). Geracao Mint 25/08, projeto CS BRASIL - Time Mitico; prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (original)",
+    "tools": [
+     "mint.gg",
+     "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+    ],
+    "finalSha256": "5ef08bdcf2390e44a0e1956568392b2f5885fd450257c077257a50c3b5b4650a"
+   }
   }
  }
 }

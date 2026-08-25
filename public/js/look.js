@@ -28,4 +28,13 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  velho_oeste: {   // sertão (map2 retheme): fim de tarde quente, sol baixo raspando, ar seco
+    sky: '/img/textures/sky_sertao.webp',
+    horizonte: 0xa6794d,   // look-horizonte.py sobre sky_sertao.webp (banda 429-441 de 887)
+    zenite: 0x676f72,
+    sol: { cor: 0xffb877, i: 1.9, pos: [-30, 14, -18] },
+    hemi: { ceu: 0xf3d9b8, chao: 0x6b4a33, i: 1.0 },
+    neblina: { d: 0.0056, solDir: [-30, 14, -18], forca: 0.98 },
+    grade: { exposicao: 1.48, piso: 0.0050, expAces: 1.58 },
+  },
 };

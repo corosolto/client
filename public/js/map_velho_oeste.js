@@ -1,18 +1,29 @@
-// Velho Oeste da Treta: cidade de madeira ao pôr do sol, com três rotas e cobertura baixa.
+// SERTÃO DA TRETA (velho_oeste) — retrato do faroeste genérico como sertão
+// nordestino: casario de adobe, mandacaru, poço com roda, capelinha e forró.
+// Retheme, não reautor: rotas/spawns/CTF/colliders do layout original do
+// contribuidor usantos seguem intocados (eval:velhooeste verde; a identidade
+// é medida pela eval:sertao). Spec: ~/map2/prompt-opencode.md.
 import * as THREE from 'three';
-import { createFavelaAmbience } from './ambientlife.js';
+import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { placeProp, hasProp } from './mapprops.js';
+import { applyLook } from './map_sky.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
 
-export function buildVelhoOeste(scene) {
+export const VELHO_OESTE_PROPS = ['sertao_mandacaru', 'sertao_macambira', 'sertao_juazeiro',
+  'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'sertao_palhoca_forro', 'caixa_som_baile'];
+export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto']);
+
+export function buildVelhoOeste(scene, T) {
   const colliders = [];
   const occluders = [];
   const pickups = [];
   const root = new THREE.Group();
-  root.name = 'velho-oeste-da-treta';
+  root.name = 'sertao-da-treta';
   scene.add(root);
+  const GLB_ON = typeof window !== 'undefined';
 
   const geometryCache = new Map();
   const boxGeo = (w, h, d) => {
@@ -83,6 +94,26 @@ export function buildVelhoOeste(scene) {
     return t;
   }
 
+  /* Adobe (taipa): DataTexture no idioma do texturaMuro do map_mansao.js — existe
+     em node, que é onde a ST2 da eval:sertao lê o material da parede. */
+  const texProcedural = (S, fn) => {
+    const data = new Uint8Array(S * S * 4);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) data.set([...fn(x, y)], 255, (y * S + x) * 4);
+    const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true;
+    return t;
+  };
+  const texturaAdobe = () => {
+    const t = texProcedural(128, (x, y) => {
+      const fiada = (y % 21) < 2, palha = ((x * 13 + y * 29) % 37) < 2, n = ((x * 17 + y * 31) % 19) - 9;
+      if (fiada) return [125, 96, 66];
+      if (palha) return [214, 186, 138];
+      const b = 187 + n;
+      return [b, b - 26, b - 58];
+    });
+    t.repeat.set(3, 2); t.name = 'oeste-adobe'; return t;
+  };
+
   const TX = {
     sand: texture('sand', '#b98243', '#704420', 10), wood: texture('wood', '#8a4f28', '#4c2714', 4),
     paleWood: texture('wood-pale', '#b77943', '#69401f', 4), roof: texture('roof', '#71442c', '#3d2419', 5),
@@ -94,7 +125,7 @@ export function buildVelhoOeste(scene) {
     loaded.colorSpace = THREE.SRGBColorSpace; loaded.wrapS = loaded.wrapT = THREE.RepeatWrapping;
     loaded.repeat.set(repeatX, repeatY); loaded.anisotropy = 8; loaded.name = name; return loaded;
   }
-  if (typeof window !== 'undefined') {
+  if (GLB_ON) {
     TX.wood = realTexture('wood-real-v1.webp', 'oeste-wood-real', 3, 5);
     TX.paleWood = realTexture('wood-real-v1.webp', 'oeste-wood-pale-real', 3, 5);
     TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 12, 14);
@@ -102,14 +133,20 @@ export function buildVelhoOeste(scene) {
     TX.cactus = realTexture('cactus-real-v1.webp', 'oeste-cactus-real', 2, 4);
     TX.hay = realTexture('hay-real-v1.webp', 'oeste-hay-real', 3, 3);
     TX.metal = realTexture('metal-real-v1.webp', 'oeste-metal-real', 3, 4);
+    TX.adobe = new THREE.TextureLoader().load('/img/textures/tex_adobe.webp');
+    TX.adobe.colorSpace = THREE.SRGBColorSpace; TX.adobe.wrapS = TX.adobe.wrapT = THREE.RepeatWrapping;
+    TX.adobe.repeat.set(3, 2); TX.adobe.anisotropy = 8; TX.adobe.name = 'oeste-adobe-real';
   }
   const mat = (color, map = TX.wood, roughness = .9, metalness = 0, bumpScale = .045) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale, roughness, metalness });
+  const adobeDe = (color) => mat(color, TX.adobe || (TX.adobe = texturaAdobe()), .96, 0, .05);
   const MAT = {
     sand: mat(0xffffff, TX.sand, 1, 0, .12), wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
     roof: mat(0xffffff, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
     black: mat(0x191411, TX.metal, .6, .25), cactus: mat(0xffffff, TX.cactus, 1, 0, .075), cactusLight: mat(0xaed09a, TX.cactus, 1, 0, .075),
     hay: mat(0xffffff, TX.hay, 1, 0, .09), red: mat(0x7e271f, TX.wood), blue: mat(0x2d5361, TX.wood), glass: mat(0x87b2ba, TX.metal, .25, .05, .01),
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
+    adobe: adobeDe(0xffffff), adobeCaiado: adobeDe(0xf3ecdc), adobeOcre: adobeDe(0xd8b98c),
+    pedra: mat(0x9a8d7c, TX.sand, 1, 0, .14),
   };
 
   function addBox(w, h, d, material, x, y, z, opts = {}) {
@@ -129,6 +166,7 @@ export function buildVelhoOeste(scene) {
     const mesh = new THREE.Mesh(cylGeo(r, h, opts.segments || 12), material); mesh.position.set(x, y + h / 2, z);
     if (opts.rx) mesh.rotation.x = opts.rx; if (opts.rz) mesh.rotation.z = opts.rz;
     mesh.castShadow = true; mesh.receiveShadow = true; root.add(mesh);
+    if (opts.name) mesh.name = opts.name;
     if (opts.collide) { colliders.push({ minX: x - r, maxX: x + r, minY: y, maxY: y + h, minZ: z - r, maxZ: z + r }); occluders.push(mesh); }
     return mesh;
   }
@@ -200,50 +238,58 @@ export function buildVelhoOeste(scene) {
     return group;
   }
 
-  scene.background = new THREE.Color(0xd88b55);
-  scene.fog = new THREE.Fog(0xc7804e, 68, 150);
+  /* CÉU/NÉVOA/SOL do LOOK['velho_oeste'] (fim de tarde de sertão) — o shadow
+     fica aqui porque o builder conhece os limites (idioma do map_mansao.js). */
+  const { sun } = applyLook(scene, T, 'velho_oeste');
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48;
+  sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045;
+
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 180), MAT.sand); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
   for (let z = -HALF_Z; z <= HALF_Z; z += 8) addBox(8, .025, .11, MAT.pale, 0, .02, z, { collide: false, cast: false });
 
-  function building(side, z, w, d, h, title, color = MAT.wood, doors = 1) {
+  function building(side, z, w, d, h, title, sub, color = MAT.adobe, doors = 1) {
     const x = side * (HALF_X - d / 2 - 1); const faceX = x - side * (d / 2 + .03); const ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    const g = new THREE.Group(); g.name = `predio-${title.toLowerCase().replace(/\s/g, '-')}`; root.add(g);
-    addBox(d, h, w, color, x, 0, z);
-    addBox(d + 1.4, .45, w + 1.2, MAT.roof, x, h, z, { collide: false });
+    const slug = title.toLowerCase().replace(/\s/g, '-');
+    const g = new THREE.Group(); g.name = `predio-${slug}`; root.add(g);
+    addBox(d, h, w, color, x, 0, z, { name: `parede-${slug}` });
+    addBox(d + 1.6, .45, w + 1.4, MAT.roof, x, h, z, { collide: false });
     addBox(2.5, h + 1.5, .28, MAT.trim, faceX, 0, z, { collide: false, ry });
     addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z, { collide: false, ry });
     if (doors > 1) addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z + 2.4, { collide: false, ry });
     for (const wz of [-w * .3, w * .3]) westernWindow(faceX - side * .05, 2.2, z + wz, ry, 1.35, 1.25);
     for (let pz = z - w / 2; pz <= z + w / 2; pz += 2.3) addCylinder(.12, 1.4, MAT.dark, faceX - side * 2.3, 0, pz, { collide: false });
-    addBox(.22, .22, w + .8, MAT.pale, faceX - side * 2.2, 1.4, z, { tag: `varanda-${title.toLowerCase()}` });
-    addSign(title, title === 'SALOON' ? 'BEBIDA · BARALHO · TRETA' : '', faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
+    addBox(.22, .22, w + .8, MAT.pale, faceX - side * 2.2, 1.4, z, { tag: `varanda-${slug}` });
+    addSign(title, sub, faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
     return g;
   }
-  building(-1, -29, 12, 8, 6.6, 'SALOON', MAT.red, 2);
-  building(-1, -11, 11, 7, 5.8, 'BANCO', MAT.pale);
-  building(-1, 8, 12, 8, 6.2, 'ARMAZÉM', MAT.wood);
-  building(-1, 29, 12, 7, 5.5, 'HOTEL', MAT.blue, 2);
-  building(1, -28, 12, 8, 5.8, 'XERIFE', MAT.pale);
-  building(1, -9, 12, 7, 5.6, 'BARBEIRO', MAT.blue);
-  building(1, 11, 12, 8, 6.2, 'EMPÓRIO', MAT.wood, 2);
-  building(1, 31, 10, 7, 5.5, 'ESTÁBULO', MAT.red, 2);
+  /* ids internos (predio-saloon, predio-xerife…) preservados: a eval:velhooeste
+     e o teclado de mutantes os leem. Os letreiros viraram sertão. */
+  const gSaloon = building(-1, -29, 12, 8, 6.6, 'CANTINA', 'FORRÓ · CACHAÇA · TRETA', MAT.adobeCaiado, 2); gSaloon.name = 'predio-saloon';
+  const gBanco = building(-1, -11, 11, 7, 5.8, 'BANCO', 'DO SERTÃO', MAT.adobeOcre); gBanco.name = 'predio-banco';
+  const gArmazem = building(-1, 8, 12, 8, 6.2, 'ARMAZÉM', 'DO SEU ZÉ', MAT.adobe); gArmazem.name = 'predio-armazem';
+  const gHotel = building(-1, 29, 12, 7, 5.5, 'PENSÃO', 'REDE E CAFÉ', MAT.adobeCaiado, 2); gHotel.name = 'predio-hotel';
+  const gXerife = building(1, -28, 12, 8, 5.8, 'DELEGACIA', 'A LEI AQUI É OUTRA', MAT.adobeOcre); gXerife.name = 'predio-xerife';
+  const gBarbeiro = building(1, -9, 12, 7, 5.6, 'BARBEIRO', 'NAVALHA E CONVERSA', MAT.adobeCaiado); gBarbeiro.name = 'predio-barbeiro';
+  const gEmporio = building(1, 11, 12, 8, 6.2, 'EMPÓRIO', 'DE TUDO UM POUCO', MAT.adobe, 2); gEmporio.name = 'predio-emporio';
+  const gEstabulo = building(1, 31, 10, 7, 5.5, 'ESTÁBULO', 'VAQUEJADA DA TRETA', MAT.adobeOcre, 2); gEstabulo.name = 'predio-estabulo';
 
   function streetHouse(side, z, title, color) {
     const x = side * 15, faceX = x - side * 2.78, ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    const group = new THREE.Group(); group.name = `predio-${title.toLowerCase().replace(/\s/g, '-')}`; root.add(group);
-    addBox(5.5, 4.7, 7.2, color, x, 0, z);
+    const slug = title.toLowerCase().replace(/\s/g, '-');
+    const group = new THREE.Group(); group.name = `predio-${slug}`; root.add(group);
+    addBox(5.5, 4.7, 7.2, color, x, 0, z, { name: `parede-${slug}` });
     addBox(6.2, .38, 8, MAT.roof, x, 4.7, z, { collide: false });
     addBox(1.35, 2.35, .28, MAT.dark, faceX, 0, z, { collide: false, ry });
     for (const dz of [-2.2, 2.2]) westernWindow(faceX - side * .03, 2, z + dz, ry, 1.15, 1.05);
-    addBox(.22, .22, 7.6, MAT.pale, faceX - side * 1.05, 1.25, z, { tag: `varanda-${title.toLowerCase()}` });
+    addBox(.22, .22, 7.6, MAT.pale, faceX - side * 1.05, 1.25, z, { tag: `varanda-${slug}` });
     addBox(2.3, .22, 8, MAT.roof, faceX - side * 1.05, 3.05, z, { collide: false });
     for (const dz of [-3.35, 3.35]) addBox(.18, 3.05, .18, MAT.dark, faceX - side * 1.9, 0, z + dz, { collide: false });
-    addSign(title, 'CASA DE MADEIRA', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
+    addSign(title, 'CASA DE ADOBE', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
   }
-  streetHouse(-1, -20, 'OFICINA', MAT.pale);
-  streetHouse(1, -20, 'CASA DO FERREIRO', MAT.wood);
-  streetHouse(-1, 20, 'PENSÃO', MAT.blue);
-  streetHouse(1, 20, 'CASA DO PISTOLEIRO', MAT.red);
+  streetHouse(-1, -20, 'OFICINA', MAT.adobeCaiado);
+  streetHouse(1, -20, 'CASA DO FERREIRO', MAT.adobeOcre);
+  streetHouse(-1, 20, 'VIÚVA', MAT.adobeOcre);
+  streetHouse(1, 20, 'CASA DO CANGACEIRO', MAT.adobeCaiado);
 
   const wanted = [
     ['Zé Faísca', 500, 'masculino', -1, -18.5, 1.55, -34], ['Lola Fumaça', 900, 'feminino', 1, 18.5, 1.55, -34],
@@ -260,20 +306,182 @@ export function buildVelhoOeste(scene) {
   }
   for (const z of [-HALF_Z, HALF_Z]) {
     addBox(22, 1.5, .22, MAT.pale, -22, 0, z); addBox(22, 1.5, .22, MAT.pale, 22, 0, z);
-    addSign('VELHO OESTE', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
+    addSign('SERTÃO', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
     for (const x of [-6, 6]) addBox(.35, 7.6, .35, MAT.dark, x, 0, z);
     addBox(12.4, .35, .35, MAT.dark, 0, 7.3, z, { collide: false });
   }
 
-  function cactus(x, z, scale = 1, light = false) {
-    const material = light ? MAT.cactusLight : MAT.cactus;
-    addCylinder(.38 * scale, 3.8 * scale, material, x, 0, z, { collide: true, segments: 10 });
-    for (const dir of [-1, 1]) {
-      addCylinder(.22 * scale, 1.5 * scale, material, x + dir * .65 * scale, 1.35 * scale, z, { segments: 9 });
-      const arm = addCylinder(.2 * scale, .85 * scale, material, x + dir * .35 * scale, 1.25 * scale, z, { segments: 9 }); arm.rotation.z = Math.PI / 2;
+  /* ── VEGETAÇÃO E SERTÃO DE VERDADE ──────────────────────────────────────
+     GLB (Mint) OU proxy procedural, nunca os dois: mesh invisível como
+     occluder é o defeito que o MAP4 do map-check pega. O colisor é manual e
+     idêntico nos dois ramos — o layout de navegação não sabe qual visual
+     está servindo. Mandacaru assume as 8 posições (e colliders) dos cactos
+     originais; o resto nasce novo, colisor só onde não muda a malha de
+     waypoints (OESTE4/CTF2 dependem dela — o gate confere). */
+  function sertaoElement(name, id, x, z, buildProxy, propId, targetH, collider) {
+    const group = new THREE.Group(); group.name = `sertao-${name}-${id}`; group.position.set(x, 0, z); root.add(group);
+    let visualRoot = group;
+    if (GLB_ON && propId && hasProp(propId)) {
+      const prop = placeProp(propId, { x, z, targetH, ry: id * 1.7 });
+      if (prop) { root.add(prop); visualRoot = prop; }
     }
+    if (visualRoot === group) buildProxy(group);
+    if (collider) {
+      colliders.push({ minX: x - collider[0], maxX: x + collider[0], minY: 0, maxY: collider[1], minZ: z - collider[2], maxZ: z + collider[2] });
+      const base = visualRoot === group ? group : visualRoot;
+      occluders.push(base);
+    }
+    return group;
   }
-  [[-21,-39,1], [22,-38,.8], [-22,-20,.7], [23,1,1], [-21,18,.9], [22,41,1.1], [17,24,.65], [-18,40,.7]].forEach((p, i) => cactus(...p, i % 2));
+  const mandacaruProxy = (scale, light) => (group) => {
+    const material = light ? MAT.cactusLight : MAT.cactus;
+    const trunk = new THREE.Mesh(cylGeo(.38 * scale, 3.8 * scale, 10), material); trunk.position.y = 3.8 * scale / 2; trunk.castShadow = true; group.add(trunk);
+    for (const dir of [-1, 1]) {
+      const arm = new THREE.Mesh(cylGeo(.22 * scale, 1.5 * scale, 9), material); arm.position.set(dir * .65 * scale, 1.35 * scale + .75 * scale, 0); arm.castShadow = true; group.add(arm);
+      const elbow = new THREE.Mesh(cylGeo(.2 * scale, .85 * scale, 9), material); elbow.rotation.z = Math.PI / 2; elbow.position.set(dir * .35 * scale, 1.25 * scale + .425 * scale, 0); elbow.castShadow = true; group.add(elbow);
+    }
+  };
+  [[-21,-39,1],[22,-38,.8],[-22,-20,.7],[23,1,1],[-21,18,.9],[22,41,1.1],[17,24,.65],[-18,40,.7]].forEach((p, i) =>
+    sertaoElement('mandacaru', i, p[0], p[1], mandacaruProxy(p[2], i % 2), 'sertao_mandacaru', 3.8 * p[2] + .5, [.38 * p[2], 3.8 * p[2], .38 * p[2]]));
+  const macambiraProxy = (group) => {
+    const material = new THREE.MeshStandardMaterial({ color: 0x93a06b, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .06, roughness: 1 });
+    for (let i = 0; i < 10; i++) {
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(.09, 1.05 + (i % 3) * .22, 5), material);
+      const a = i / 10 * Math.PI * 2;
+      leaf.position.set(Math.cos(a) * .26, .5, Math.sin(a) * .26);
+      leaf.rotation.set(Math.sin(a) * .55, 0, -Math.cos(a) * .55);
+      leaf.castShadow = true; group.add(leaf);
+    }
+  };
+  [[-19.5, -36], [-24, 6], [19.5, -3], [25, 26]].forEach((p, i) =>
+    sertaoElement('macambira', i, p[0], p[1], macambiraProxy, 'sertao_macambira', 1.15, [.55, 1.25, .55]));
+  const juazeiroProxy = (group) => {
+    const bark = new THREE.MeshStandardMaterial({ color: 0x9c8a72, map: TX.wood, bumpMap: TX.wood, bumpScale: .07, roughness: 1 });
+    const trunk = new THREE.Mesh(cylGeo(.3, 3.2, 8), bark); trunk.position.y = 1.6; trunk.rotation.z = .07; trunk.castShadow = true; group.add(trunk);
+    for (const [ax, az, ay, len, tilt] of [[-.9, .5, 3.1, 1.9, .75], [.8, -.6, 3.2, 2.2, -.7], [.2, .9, 3.4, 1.6, .35], [-.4, -.9, 3.5, 1.4, -.3]]) {
+      const branch = new THREE.Mesh(cylGeo(.12, len, 6), bark);
+      branch.position.set(ax * .5, ay + len * .35, az * .5);
+      branch.rotation.set(az * tilt, 0, -ax * tilt);
+      branch.castShadow = true; group.add(branch);
+    }
+  };
+  [[-25.5, -13], [25.5, 14]].forEach((p, i) =>
+    sertaoElement('juazeiro', i, p[0], p[1], juazeiroProxy, 'sertao_juazeiro', 4.6, [.3, 3.2, .3]));
+  const xiqueProxy = (group) => {
+    const material = new THREE.MeshStandardMaterial({ color: 0x5e7d5a, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .05, roughness: 1 });
+    for (let i = 0; i < 7; i++) {
+      const stem = new THREE.Mesh(cylGeo(.07, 1.6 + (i % 3) * .3, 6), material);
+      stem.position.set(Math.cos(i / 7 * Math.PI * 2) * .22, (1.6 + (i % 3) * .3) / 2, Math.sin(i / 7 * Math.PI * 2) * .22);
+      stem.castShadow = true; group.add(stem);
+    }
+  };
+  [[-27, -31], [27.5, 3], [-27, 38]].forEach((p, i) =>
+    sertaoElement('xique', i, p[0], p[1], xiqueProxy, 'sertao_xique_xique', 2.1, [.4, 1.9, .4]));
+
+  /* Pedras de granito com solo rachado — o lagarto baska em duas delas.
+     Colidor cobre o footprint do visual (dodecaedro r com escala .82 em z):
+     colisor menor que a malha é o "anel atravessável" que o MAP1 pega. */
+  const pedras = [[26.5, -25, 1.5, 1.1], [-26.5, -27, 1.2, .9], [26, 36, 1.7, 1.25], [-25, 25, 1.1, .8], [20, -12.5, .9, .65]];
+  pedras.forEach((p, i) => sertaoElement('pedra', i, p[0], p[1], (group) => {
+    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(p[2], 0), MAT.pedra);
+    rock.scale.set(1, p[3] / p[2], .82); rock.position.y = p[3] * .42; rock.rotation.y = i * 1.3;
+    rock.castShadow = true; rock.receiveShadow = true; group.add(rock);
+  }, null, 0, [p[2], p[3] * 1.42, p[2] * .82]));
+  function lagarto(i, pedraIdx) {
+    const [px, pz, , ph] = pedras[pedraIdx];
+    const group = new THREE.Group(); group.name = `sertao-lagarto-${i}`; group.position.set(px, ph * 1.1, pz); root.add(group);
+    const glb = GLB_ON ? placeFauna('lagarto', { x: px, y: ph * 1.1, z: pz, targetLen: .3 }) : null;
+    if (glb) { root.add(glb); return group; }
+    const skin = new THREE.MeshStandardMaterial({ color: 0x8d7a5f, roughness: .9 });
+    const body = new THREE.Mesh(new THREE.SphereGeometry(.09, 8, 6), skin); body.scale.set(.7, .55, 1.5); body.position.y = .05; group.add(body);
+    const head = new THREE.Mesh(new THREE.ConeGeometry(.05, .12, 6), skin); head.rotation.x = Math.PI / 2; head.position.set(0, .05, .17); group.add(head);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(.035, .18, 5), skin); tail.rotation.x = -Math.PI / 2; tail.position.set(0, .04, -.18); group.add(tail);
+    return group;
+  }
+  lagarto(0, 0); lagarto(1, 2);
+
+  /* ── MARCOS DE SERTÃO ─────────────────────────────────────────────────── */
+  const pedraMat = MAT.pedra;
+  sertaoElement('poco', 0, -22, -16, (group) => {
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * Math.PI * 2;
+      const stone = new THREE.Mesh(boxGeo(.8, 1.0, .42), pedraMat);
+      stone.position.set(Math.cos(a) * 1.05, .5, Math.sin(a) * 1.05); stone.rotation.y = -a + Math.PI / 2;
+      stone.castShadow = true; stone.receiveShadow = true; group.add(stone);
+    }
+    for (const sx of [-.85, .85]) {
+      const post = new THREE.Mesh(boxGeo(.18, 2.3, .18), MAT.dark); post.position.set(sx, 1.15, 0); post.castShadow = true; group.add(post);
+    }
+    const beam = new THREE.Mesh(boxGeo(2.1, .16, .16), MAT.dark); beam.position.set(0, 2.25, 0); beam.castShadow = true; group.add(beam);
+    const rope = new THREE.Mesh(cylGeo(.025, 1.1, 4), MAT.black); rope.position.set(.35, 1.7, 0); group.add(rope);
+    const bucket = new THREE.Mesh(cylGeo(.22, .35, 8), MAT.wood); bucket.position.set(.35, 1.1, 0); bucket.castShadow = true; group.add(bucket);
+    const wheel = new THREE.Mesh(new THREE.TorusGeometry(.85, .09, 6, 14), MAT.dark);
+    wheel.position.set(-1.35, .9, 0); wheel.rotation.y = Math.PI / 2; wheel.castShadow = true; group.add(wheel);
+    const wheelSpokes = new THREE.Group(); wheelSpokes.position.copy(wheel.position);
+    for (let i = 0; i < 6; i++) { const spoke = new THREE.Mesh(boxGeo(.06, 1.6, .06), MAT.dark); spoke.rotation.z = i * Math.PI / 6; wheelSpokes.add(spoke); }
+    group.add(wheelSpokes);
+  }, 'sertao_poco_roda', 3.1, [1.6, 2.4, 1.5]);
+
+  sertaoElement('capelinha', 0, 22.5, 30, (group) => {
+    const corpo = new THREE.Mesh(boxGeo(2.4, 2.2, 2.4), MAT.adobeCaiado); corpo.position.y = 1.1; corpo.castShadow = true; corpo.receiveShadow = true; group.add(corpo);
+    const frontao = new THREE.Mesh(new THREE.ConeGeometry(1.9, 1.1, 4), MAT.roof); frontao.position.y = 2.75; frontao.rotation.y = Math.PI / 4; frontao.castShadow = true; group.add(frontao);
+    const porta = new THREE.Mesh(boxGeo(.8, 1.5, .12), MAT.dark); porta.position.set(0, .75, 1.22); group.add(porta);
+    const janela = new THREE.Mesh(boxGeo(.5, .5, .1), MAT.windowVoid); janela.position.set(0, 1.6, 1.22); group.add(janela);
+    const cruzV = new THREE.Mesh(boxGeo(.1, .7, .1), MAT.dark); cruzV.position.set(0, 3.6, 0); group.add(cruzV);
+    const cruzH = new THREE.Mesh(boxGeo(.42, .1, .1), MAT.dark); cruzH.position.set(0, 3.72, 0); group.add(cruzH);
+  }, 'sertao_capelinha', 3.4, [1.3, 2.4, 1.3]);
+
+  sertaoElement('palhoca', 0, -22, 20, (group) => {
+    const piso = new THREE.Mesh(boxGeo(9, .14, 7), MAT.pale); piso.position.y = .07; piso.receiveShadow = true; group.add(piso);
+    const palco = new THREE.Mesh(boxGeo(3.6, .55, 2.2), MAT.wood); palco.position.set(0, .14 + .275, 0); palco.castShadow = true; group.add(palco);
+    for (const px of [-1.55, 1.55]) for (const pz of [-.6, .6]) {
+      const poste = new THREE.Mesh(boxGeo(.16, 2.9, .16), MAT.dark); poste.position.set(px, .69 + 1.45, pz); poste.castShadow = true; group.add(poste);
+    }
+    const telhadoPalha = new THREE.Mesh(new THREE.ConeGeometry(3.1, 1.15, 4), MAT.hay);
+    telhadoPalha.position.set(0, 3.55, 0); telhadoPalha.rotation.y = Math.PI / 4; telhadoPalha.castShadow = true; group.add(telhadoPalha);
+    for (let i = 0; i < 7; i++) {
+      const bandeirola = new THREE.Mesh(new THREE.PlaneGeometry(.22, .3), new THREE.MeshStandardMaterial({ color: [0xc23b4e, 0x2f7fbf, 0xd9a521, 0x3f9455][i % 4], side: THREE.DoubleSide, roughness: .8 }));
+      const fx = -3.9 + i * 1.3;
+      bandeirola.position.set(fx, 2.45, 3.3); bandeirola.rotation.z = .18; group.add(bandeirola);
+      if (i < 6) { const corda = new THREE.Mesh(boxGeo(1.3, .02, .02), MAT.black); corda.position.set(fx + .65, 2.55, 3.3); group.add(corda); }
+    }
+    for (const bx of [-3.4, 3.4]) {
+      const banco = new THREE.Mesh(boxGeo(1.8, .1, .45), MAT.pale); banco.position.set(bx, .14 + .42, 1.6); banco.castShadow = true; group.add(banco);
+      for (const lx of [bx - .75, bx + .75]) { const perna = new THREE.Mesh(boxGeo(.12, .42, .4), MAT.dark); perna.position.set(lx, .14 + .21, 1.6); group.add(perna); }
+    }
+    const caixa = GLB_ON && hasProp('caixa_som_baile') ? placeProp('caixa_som_baile', { x: -22, z: 19.6, y: .69, targetH: 1.05 }) : null;
+    if (caixa) root.add(caixa);
+    else { const caixaProxy = new THREE.Mesh(boxGeo(1.0, .95, .6), MAT.black); caixaProxy.position.set(0, .69 + .475, -.4); caixaProxy.castShadow = true; group.add(caixaProxy); }
+  }, 'sertao_palhoca_forro', 4.4, [1.9, .95, .85]);
+  /* bancos da quadra: colisor próprio — topo .66 m é cover de corpo agachado,
+     atravessá-lo é o mesmo defeito do palco (MAP1). */
+  for (const bx of [-25.4, -18.6]) {
+    colliders.push({ minX: bx - .9, maxX: bx + .9, minY: 0, maxY: .66, minZ: 21.6 - .225, maxZ: 21.6 + .225 });
+  }
+
+  function placaDistancias() {
+    const group = new THREE.Group(); group.name = 'sertao-placa-0'; group.position.set(-13.5, 0, 1.8); root.add(group);
+    const poste1 = new THREE.Mesh(boxGeo(.2, 3.4, .2), MAT.dark); poste1.position.set(-2.1, 1.7, 0); poste1.castShadow = true; group.add(poste1);
+    const poste2 = new THREE.Mesh(boxGeo(.2, 2.7, .2), MAT.dark); poste2.position.set(2.1, 1.35, 0); poste2.castShadow = true; group.add(poste2);
+    const c = document.createElement('canvas'); c.width = 512; c.height = 170; const x = c.getContext('2d');
+    x.fillStyle = '#7a5a33'; x.fillRect(0, 0, 512, 170);
+    for (let i = 0; i < 260; i++) { const v = 70 + (i * 37 % 50); x.fillStyle = `rgba(${v + 60},${v + 30},${v},${.2})`; x.fillRect((i * 89) % 512, (i * 53) % 170, 2, 2); }
+    x.textAlign = 'left'; x.fillStyle = '#2e1c0c'; x.font = 'bold 40px Georgia,serif';
+    x.fillText('SÃO PAULO  3.022 km', 26, 62);
+    x.font = 'bold 40px Georgia,serif'; x.fillText('FORTALEZA  789 km', 26, 116);
+    x.textAlign = 'right'; x.fillStyle = '#5a2e14'; x.font = '900 52px Georgia,serif';
+    x.fillText('TRETA 0 km', 486, 150);
+    x.strokeStyle = '#3d2812'; x.lineWidth = 8; x.strokeRect(6, 6, 500, 158);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.name = 'oeste-placa-distancias';
+    const placa = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 1.55), new THREE.MeshStandardMaterial({ map: t, roughness: .9 }));
+    placa.position.set(0, 2.55, .12); group.add(placa);
+    const seta = new THREE.Mesh(new THREE.ConeGeometry(.5, .9, 3), new THREE.MeshStandardMaterial({ color: 0x6b4a26, roughness: .95 }));
+    seta.rotation.z = -Math.PI / 2; seta.position.set(3.1, 2.55, 0); seta.castShadow = true; group.add(seta);
+    colliders.push({ minX: -15.8, maxX: -15.4, minY: 0, maxY: 3.4, minZ: 1.6, maxZ: 2.0 });
+    colliders.push({ minX: -11.6, maxX: -11.2, minY: 0, maxY: 2.7, minZ: 1.6, maxZ: 2.0 });
+    return group;
+  }
+  placaDistancias();
 
   function wagon(x, z, ry = 0) {
     const g = new THREE.Group(); g.name = 'carroca'; g.position.set(x, 0, z); g.rotation.y = ry; root.add(g);
@@ -383,11 +591,6 @@ export function buildVelhoOeste(scene) {
   arsenal.forEach((kind, i) => gun(kind, 12 - i * 4, 40, Math.PI));
   gun('deagle', -2, 0, Math.PI / 2); gun('shotgun', 2, 0, -Math.PI / 2);
 
-  const hemi = new THREE.HemisphereLight(0xffd2a3, 0x5b3828, 1.45); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc27b, 2.05); sun.position.set(-35, 42, -28); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48; sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045; scene.add(sun);
-  const fill = new THREE.DirectionalLight(0x86a5c9, .34); fill.position.set(24, 22, 35); scene.add(fill);
-
   const groundHeightAt = () => 0;
   const slowAt = () => false;
   const bounds = { minX: -HALF_X + .8, maxX: HALF_X - .8, minZ: -HALF_Z + .8, maxZ: HALF_Z - .8 };
@@ -419,7 +622,8 @@ export function buildVelhoOeste(scene) {
 
   update(0, 0);
 
-  /* BUG-57: cidade de faroeste tem ave de poleiro e rato de saloon. */
+  /* BUG-57: o sertão tem ave de poleiro (na palhoça e na capelinha), galinha
+     de capoeira, rato de armazém e rolinha no terreiro. */
   const ambience = createFavelaAmbience(root, {
     map: 'velho_oeste',
     rats: [
@@ -430,17 +634,24 @@ export function buildVelhoOeste(scene) {
       { mode: 'ground', pos: [-8, 0, -6], phase: .5 }, { mode: 'ground', pos: [4, 0, 14], phase: 1.4 },
       { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
     ],
+    chickens: [
+      { pos: [14.5, 0, 24], to: [16.5, 0, 26], phase: .2 }, { pos: [-14, 0, 28], to: [-12, 0, 30], phase: 1.1 },
+      { pos: [12, 0, 33], to: [14, 0, 35], phase: 2 },
+    ],
+    parrots: [
+      { pos: [-21, 3.4, 17.8], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
+    ],
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.3},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:70,vol:.2}],bioma:'campo'},
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, hemi, update,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22}],bioma:'campo'},
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),
     },
     ctfPoints: [
-      { id: 'E', label: 'SALOON', x: -12, z: -34 },
+      { id: 'E', label: 'CANTINA', x: -12, z: -34 },
       { id: 'MID', label: 'RUA PRINCIPAL', x: 0, z: 0 },
       { id: 'B', label: 'ESTÁBULO', x: 12, z: 34 },
     ],

@@ -395,3 +395,39 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   translucent smoke texture, no text, no other objects". Sem canal alfa — a
   luminância vira alfa no shader (uLumAlpha do gpuparticles.js). SHA-256
   `249621d02702caee19f5cf85c14e1e77c15b92dea56148e2361f7389f311057a`.
+
+<!-- frente map2/velho-oeste → SERTÃO DA TRETA (25/08): céu e adobe — OpenRouter
+     google/gemini-3-pro-image via tools/gen-image.mjs (regra da casa: 2D sai por
+     lá). A cor do horizonte (0xa6794d) e do zênite (0x676f72) foi medida por
+     tools/eval/look-horizonte.py sobre o webp final — é o que o LOOK[velho_oeste]
+     consome. Os 8 GLBs de props/fauna dessa frente são Mint e estão registrados
+     em mint-assets.json (chaves sertao-* e lagarto-sertao). -->
+- `textures/sky_sertao.webp`: panorama equiretangular 2:1 do fim de tarde de
+  sertão (1774×887, recorte 2:1 de 1584×672). Prompt: "Create a seamless
+  equirectangular 2:1 environment panorama for a stylized-realistic browser FPS
+  set in the Brazilian sertao countryside at late afternoon golden hour. Upper
+  55 percent is a hot dry sky: low golden-orange sun close to the horizon, thin
+  stretched clouds in amber and dusty rose, strong warm orange glow along the
+  horizon fading to muted dusty blue-grey zenith. Lower 45 percent shows a dry
+  caatinga horizon band: distant sparse silhouettes of mandacaru cacti and
+  leafless twisted trees over flat cracked reddish-brown earth, all dissolving
+  into warm dry dust haze. No identifiable landmark, no buildings, no people, no
+  text, no watermark, no borders. Output only the panorama." SHA-256
+  `51a071c64aefa65f64ec1cfcbf9a7e1bb3e75b3a7f6f1d329e1963e0d02c97cb`.
+- `textures/tex_adobe.webp` (512×512): taipa/adobe das paredes do casario. Prompt:
+  "Top-down seamless texture of traditional Brazilian northeast adobe wall
+  material (taipa/pau a pique): earthen clay plaster surface in warm tan and
+  light ochre, subtle horizontal construction rows, small embedded straw fibers
+  and tiny pebbles, faint hairline cracks, patches of whitewash worn off, even
+  ambient light, photorealistic, no people, no text, no watermark". SHA-256
+  `e3aa0571084a154961d489476435a18dfda1b55264eb0c46bce7ed910453e069`.
+- `map-previews/velho_oeste.jpg` (640×640): cartaz do menu do Sertão da Treta
+  (provisório até captura 3:2 do mapa real pela bateria única de browser).
+  Prompt: "Stylized-realistic game map preview, Brazilian northeast sertão town
+  at late golden hour: a dusty main street with whitewashed adobe houses with
+  terracotta tile roofs, tall mandacaru cacti and dry juazeiro trees, a stone
+  well with a wooden water wheel, a small white roadside chapel with a cross, an
+  open-air forró dance floor with a thatched stage and colorful bunting, wanted
+  posters on walls, warm orange hazy sky with a low sun, no people, no text, no
+  watermark". SHA-256
+  `a5e6f1cf12c9aecc50a12897067d50f49bccf6eac913e0a1c58b4442b8bbc23c`.

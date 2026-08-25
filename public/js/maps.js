@@ -14,7 +14,7 @@ import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
 import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 import { buildParque } from './map_parque.js';
-import { buildVelhoOeste } from './map_velho_oeste.js';
+import { buildVelhoOeste, VELHO_OESTE_PROPS, VELHO_OESTE_AMBIENCE } from './map_velho_oeste.js';
 import { buildPenitenciaria } from './map_penitenciaria.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
@@ -90,7 +90,10 @@ export const MAPS = {
   // bairro/skyline em volta. A treta é o preço absurdo. Simétrico funcional, A* pelos corredores.
   atacadao_treta: { name: 'Atacadão da Treta', build: buildAtacadao, props: ATACADAO_PROPS, ctfMode: true },
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
-  velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
+  /* velho_oeste: retratado como SERTÃO DA TRETA (map2, retheme — o id não muda
+     porque viaja em link e no banco; a identidade nordestina é medida pela
+     eval:sertao, o layout intacto segue pela eval:velhooeste). */
+  velho_oeste: { name: 'Sertão da Treta', build: buildVelhoOeste, props: VELHO_OESTE_PROPS, ambience: VELHO_OESTE_AMBIENCE, ctfMode: true },
   penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);

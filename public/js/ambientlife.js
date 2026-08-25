@@ -19,6 +19,9 @@ const ASSETS = Object.freeze({
   armadillo: 'models/ambient/tatu_campo.glb',
   cockroach: 'models/ambient/barata_urbana.glb',
   parrot: 'models/ambient/papagaio_poleiro.glb',
+  /* map2/velho-oeste (Sertão da Treta): estático na pedra, escala por
+     comprimento como o jacaré/capivara — não entra no preload default. */
+  lagarto: 'models/ambient/lagarto_sertao.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
 const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
@@ -517,6 +520,7 @@ export function createFavelaAmbience(root, options) {
 const STATIC_FAUNA_META = {
   jacare: { len: 1.8, yawFix: Math.PI / 2 },
   capivara: { len: 1.0, yawFix: 0 },
+  lagarto: { len: 0.3, yawFix: 0 },
 };
 
 export function registerFaunaTemplate(id, scene, meta = {}) {
