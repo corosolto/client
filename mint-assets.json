@@ -1328,16 +1328,214 @@
     "displayName": "Sleepy Brown Rodent (capivara do córrego)",
     "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré."
    },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (normalized original_glb)",
+     "tools": [
+      "mint.gg",
+      "tools/optimize-ambient-fauna.mjs"
+     ],
+     "finalSha256": "d3ab0c0a22bd5e8072e75ec0ce43ccfeefcd0a2eff1160c0375b9dfc48baf227"
+    }
+   },
+   "boto-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/boto_amazonia.glb"
     ],
-    "finalSha256": "d3ab0c0a22bd5e8072e75ec0ce43ccfeefcd0a2eff1160c0375b9dfc48baf227"
-   }
-  },
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks7feskg5kcssx8v92rb5h5hwd8d53k4",
+     "chatUrl": "https://mint.gg/chat/ph76cqeq91vd8ktpat7ents25s8d5zqw",
+     "displayName": "Pink River Dolphin (boto do igarapé)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): boto-cinza rosado low-poly nadando no igarapé. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio (text-to-3d, sem referência de terceiro). Otimizado no padrão gen-asset (dedup + textureCompress webp 1024 + prune). Estático; nado procedural (serpenteio submerso) no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "c84cc4ff23c4da8483030812b28127dc831c1992ea0fa61ffabd676f38fe23cb"
+    }
+   },
+   "onca-pintada-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/onca_pintada.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks7a7gfwpmeze4kypdk7p75grn8d5v1e",
+     "chatUrl": "https://mint.gg/chat/ph7fw0nnwd3r0t3sd3xjd5m0yn8d5y56",
+     "displayName": "Golden Rosetta Jaguar (onça-pintada deitada)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): onça-pintada deitada em tronco à margem, respiração por escala sutil. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizada no padrão gen-asset (dedup + webp 1024 + prune). Estática; procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "a210448f00b82f7e1e8f4a13d46b0fb2c17cfc4b0a30e0eff449b308b72c12fe"
+    }
+   },
+   "arara-vermelha-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/arara_vermelha.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks7dzf3k95me5hf288kdra4bhh8d5pe3",
+     "chatUrl": "https://mint.gg/chat/ph74hq1an9ymzcatgm90vb78zx8d4apw",
+     "displayName": "Scarlet Wing Macaw (arara-vermelha de poleiro)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): arara-vermelha empoleirada nos postes do market flutuante, balanço procedural. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizada no padrão gen-asset (dedup + webp 1024 + prune). Estática; procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "8fa0febb139a27f62ae0a3704cbf73a8f296ccbcc560c62b1ab4a166d126a20d"
+    }
+   },
+   "tucano-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/tucano.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks78kjkm9v47b1r31r4n7ybxkh8d4sky",
+     "chatUrl": "https://mint.gg/chat/ph7dqhakak88w9tnyc5z2r5r0x8d4mre",
+     "displayName": "Green Beak Toucan (tucano de poleiro)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): tucano-de-bico-verde empoleirado nas caixas d'água das palafitas, balanço procedural. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizado no padrão gen-asset (dedup + webp 1024 + prune). Estático; procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "4c5f0b78a48cd160ef9786d688d764543baa8d897ce59c0fcc360f08a7476d22"
+    }
+   },
+   "preguica-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/preguica.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks78j2sc4461g9nkfz43mmn1rd8d48wr",
+     "chatUrl": "https://mint.gg/chat/ph781sy8yevx09m0kxgcxefxvx8d5n9j",
+     "displayName": "Algae Sloth Pendant (preguiça pendurada)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): preguiça pendurada no beiral da palafita, quase parada. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizada no padrão gen-asset (dedup + webp 1024 + prune). Estática; procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "de88a5bfe1e48a132dca9d3f985b7ef0b55133c5e1253bf8f2020d1ceeb09c7d"
+    }
+   },
+   "macaco-prego-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/macaco_prego.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks793sf1tpkvt3pxq7jjhvpam98d5aa9",
+     "chatUrl": "https://mint.gg/chat/ph76c29s8yyr4sy8cqxe36t9v98d4zv5",
+     "displayName": "Golden Tuft Capuchin (macaco-prego saltador)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): macaco-prego pulando entre telhado da madeireira e bancadas. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizado no padrão gen-asset (dedup + webp 1024 + prune). Estático; salto procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "66d4e4423ddf62acc7e22c4c2c399c2f18e008d2bfb83369c1aeadc37f76fd9a"
+    }
+   },
+   "anta-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/anta.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks7ecr51smg0h2f8nsv1h1rdjh8d5frt",
+     "chatUrl": "https://mint.gg/chat/ph7a0wexywqytnxkrjy60bvqd98d47s5",
+     "displayName": "Lowland Tapir Standing (anta da borda da mata)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): anta pastejando na borda da mata, locomoção procedural do idioma quad. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizada no padrão gen-asset (dedup + webp 1024 + prune). Estática."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "5a56336945d1d7db691cd521e149e7c1ae4d6f38a36d5bbe404d62248e5d25c8"
+    }
+   },
+   "piranha-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/piranha.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks70d9arxnzj5y7yvtt8wmnw2d8d5nmv",
+     "chatUrl": "https://mint.gg/chat/ph78k1ydatb41te477m5yf3wq18d5jns",
+     "displayName": "Silver Fang Piranha (piranha do cardume)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): piranha prateada em cardume instanciado (rota circular) no igarapé. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizada no padrão gen-asset (dedup + webp 1024 + prune). Estática; cardume procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "32459720fe88a477eb1e26a67655b87534148867a67368816cf02a7d196d6581"
+    }
+   },
+   "carcara-amazonia": {
+    "artifactType": "model/gltf-binary",
+    "files": [
+     "public/models/ambient/carcara.glb"
+    ],
+    "source": {
+     "kind": "mint-chat",
+     "assetId": "ks70zqfdxbtnvqxpjr78s61wb58d45av",
+     "chatUrl": "https://mint.gg/chat/ph74edcs8540fz6m7dbn8v2bdd8d589h",
+     "displayName": "Striped Breast Caracara (carcará da serragem)",
+     "notes": "Fauna viva do mapa amazonia (PR #439): carcará no chão da madeireira com passo ocasional. Geração Mint 25/08, projeto CS BRASIL - Time Mítico; prompt próprio. Otimizado no padrão gen-asset (dedup + webp 1024 + prune). Estático; procedural no ambientlife.js."
+    },
+    "processing": {
+     "provider": "mint",
+     "model": "mint text-to-3d (original)",
+     "tools": [
+      "mint.gg",
+      "padrão tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+     ],
+     "finalSha256": "0b366c74f4a3df22bf063ae66ba965092bcf11235914daf19a67fdae0350c3af"
+    }
+   },
   "mansao_jardim_pack": {
    "files": [
     "public/models/props/banco_jardim.glb",
