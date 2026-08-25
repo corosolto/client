@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-25T21:44:38.576Z",
+ "gerado": "2026-08-25T22:03:04.435Z",
  "renderer": {
   "toneMappingInicial": "ACESFilmicToneMapping",
   "toneMappingExposureInicial": 1.25,
@@ -830,10 +830,62 @@
      "lum": 0.05,
      "mat": "MeshLambertMaterial",
      "geo": "BoxGeometry",
-     "maiorTri": 37.1,
+     "maiorTri": 35.1,
+     "pos": [
+      -19,
+      0,
+      0
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#24407a",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 35.1,
+     "pos": [
+      19,
+      0,
+      0
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#24407a",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 27.3,
+     "pos": [
+      0,
+      0,
+      -24
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#24407a",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 27.3,
+     "pos": [
+      0,
+      0,
+      24
+     ],
+     "claro": false
+    },
+    {
+     "cor": "#24407a",
+     "lum": 0.05,
+     "mat": "MeshLambertMaterial",
+     "geo": "BoxGeometry",
+     "maiorTri": 14.8,
      "pos": [
       -18,
-      0,
+      2,
       0
      ],
      "claro": false
@@ -843,48 +895,9 @@
      "lum": 0.05,
      "mat": "MeshLambertMaterial",
      "geo": "BoxGeometry",
-     "maiorTri": 37.1,
+     "maiorTri": 14.8,
      "pos": [
       18,
-      0,
-      0
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 25.9,
-     "pos": [
-      0,
-      0,
-      -26
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 25.9,
-     "pos": [
-      0,
-      0,
-      26
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 15.6,
-     "pos": [
-      -17,
       2,
       0
      ],
@@ -895,11 +908,11 @@
      "lum": 0.05,
      "mat": "MeshLambertMaterial",
      "geo": "BoxGeometry",
-     "maiorTri": 15.6,
+     "maiorTri": 11.4,
      "pos": [
-      17,
+      0,
       2,
-      0
+      -24
      ],
      "claro": false
     },
@@ -908,24 +921,11 @@
      "lum": 0.05,
      "mat": "MeshLambertMaterial",
      "geo": "BoxGeometry",
-     "maiorTri": 10.8,
+     "maiorTri": 11.4,
      "pos": [
       0,
       2,
-      -25
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 10.8,
-     "pos": [
-      0,
-      2,
-      25
+      24
      ],
      "claro": false
     },
@@ -938,7 +938,7 @@
      "pos": [
       0,
       4,
-      25
+      24
      ],
      "claro": false
     },
@@ -951,7 +951,7 @@
      "pos": [
       0,
       4,
-      -25
+      -24
      ],
      "claro": false
     },
@@ -964,33 +964,7 @@
      "pos": [
       6,
       4,
-      25
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 6.2,
-     "pos": [
-      10,
-      0,
-      0
-     ],
-     "claro": false
-    },
-    {
-     "cor": "#24407a",
-     "lum": 0.05,
-     "mat": "MeshLambertMaterial",
-     "geo": "BoxGeometry",
-     "maiorTri": 6.2,
-     "pos": [
-      -10,
-      0,
-      0
+      24
      ],
      "claro": false
     }
@@ -999,17 +973,17 @@
     "sprites": 18,
     "raio": 4,
     "duracao": 13,
-    "corSprite": "#81a3c4",
-    "opacidadeSprite": 0.937,
+    "corSprite": "#2890c2",
+    "opacidadeSprite": 0.998,
     "escalaSprite": [
-     3.06,
-     5.16
+     3.08,
+     4.84
     ],
-    "spritesCobrindoCentro": 10,
-    "alfaAcumuladoCentro": 0.9837,
-    "maiorAlfaSprite": 0.719,
-    "radianciaFumaca": 0.3467,
-    "radianciaCeu": 0.4623,
+    "spritesCobrindoCentro": 11,
+    "alfaAcumuladoCentro": 0.9982,
+    "maiorAlfaSprite": 0.794,
+    "radianciaFumaca": 0.2424,
+    "radianciaCeu": 0.3232,
     "razaoFumacaCeu": 0.75,
     "fonteCeu": "bloom.js skyRadiance(piscina_treta) — AERIAL, medida por r3_fog.py"
    },
@@ -1573,14 +1547,14 @@
     "raio": 4,
     "duracao": 13,
     "corSprite": "#9f7d69",
-    "opacidadeSprite": 0.903,
+    "opacidadeSprite": 0.972,
     "escalaSprite": [
-     3.24,
-     5.2
+     3.16,
+     5.12
     ],
-    "spritesCobrindoCentro": 15,
-    "alfaAcumuladoCentro": 0.9975,
-    "maiorAlfaSprite": 0.546,
+    "spritesCobrindoCentro": 8,
+    "alfaAcumuladoCentro": 0.9888,
+    "maiorAlfaSprite": 0.738,
     "radianciaFumaca": 0.2312,
     "radianciaCeu": 0.3082,
     "razaoFumacaCeu": 0.75,
@@ -7195,7 +7169,7 @@
   }
  ],
  "shade": {
-  "gerado": "2026-08-25T21:44:38.576Z",
+  "gerado": "2026-08-25T22:03:04.435Z",
   "armas": [
    {
     "arma": "ak",
