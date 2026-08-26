@@ -544,9 +544,9 @@ export function buildAmazonia(scene, T) {
   const arsenal = ['awp', 'ak', 'm4', 'shotgun', 'mp5', 'deagle', 'pistol'];
   /* Arsenal no pé de cada spawn — o rio corre no meio do mapa, os times nascem
      nas cabeceras NW e SE, em terra (nascer na água foi folga 0,45 m no MAP2B). */
-  for (const sz of [-1, 1]) arsenal.forEach((kind, i) => place(kind, sz < 0 ? -20 + i * 2 : 12 + i * 2, sz * 39, sz < 0 ? 0.6 : Math.PI - 0.6));
+  for (const sz of [-1, 1]) arsenal.forEach((kind, i) => place(kind, sz < 0 ? -21 + i * 1.7 : 12 + i * 2, sz * 39, sz < 0 ? 0.6 : Math.PI - 0.6));
   // miolo: market, madeireira e pontes estreitas
-  place('ak', 5.6, 1.4, 1.2); place('awp', 9.2, -0.2, 0.4);
+  place('ak', 5.6, 1.4, 1.2); place('awp', 7.0, -0.5, 0.4);
   place('shotgun', MX + 1, -1.4, 2.2); place('mp5', MX, 18.5, -0.6);
   place('deagle', 0, -24.2, 0); place('m4', 0, 24.2, Math.PI);
   place('deagle', 0, 6, 0.4);   // platforma do meio do igarapé: a rota alta paga a subida
