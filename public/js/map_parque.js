@@ -6,10 +6,10 @@ import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
-/* props GLB do mapa (Mint, FONTE.md): o coreto herói substitui o procedural no
+/* props GLB do mapa (Mint, FONTE.md): os moldes substituem o procedural no
    browser; no arnês node placeProp devolve null e o procedural cobre (mesma
    estrutura de colisores nos dois mundos — lição 3). */
-export const PARQUE_PROPS = ['parque_coreto'];
+export const PARQUE_PROPS = ['parque_coreto', 'roda_gigante_roda', 'roda_gigante_base', 'carrossel', 'barraca_quermesse', 'predio_artdeco'];
 export const PARQUE_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'parrot'];
 
 const HALF_X = 32;
@@ -17,6 +17,10 @@ const HALF_Z = 42;
 const WHEEL_X = -19;
 const WHEEL_Y = 14.5;
 const WHEEL_FRAME_Z = -1.2;
+/* Molde Mint da roda (split Blender): escala casa o cubo do molde com WHEEL_Y —
+   (0,065-(-0,499))·25,7 = 14,5; hubFrac 0,537 e h 0,938/0,775 medidos nos GLBs. */
+const RODA_ESCALA = 25.7, RODA_HUB_FRAC_Y = 0.537, RODA_Z = 0.55;
+const RODA_H = 0.938 * RODA_ESCALA, RODA_BASE_H = 0.775 * RODA_ESCALA;
 const CORETO = { x: -25, z: -22.5 };
 const ESTACAO = { x: 24.5, z: 16.5 };
 
@@ -287,6 +291,18 @@ export function buildParque(scene, T) {
   addBox(0.8, 2.2, HALF_Z * 2, MAT.hedge, -HALF_X + 0.4, 0, 0);
   addBox(0.8, 2.2, HALF_Z * 2, MAT.hedge, HALF_X - 0.4, 0, 0);
 
+  /* Entorno art-déco (Mint): fecha o quarteirão fora dos bounds jogáveis —
+     sem colisor, o hedge já contém o jogador. 8 instâncias (PV6). */
+  const PREDIOS = [
+    [-36.5, -18, 0.35, 17], [-36.5, 16, -0.25, 19], [36.5, -14, 2.9, 16], [36.5, 20, 3.4, 18],
+    [-14, -46.5, 1.65, 17], [16, -46.5, 1.35, 15], [-16, 46.5, 4.75, 18], [14, 46.5, 4.55, 16],
+  ];
+  PREDIOS.forEach(([px, pz, ry, h], i) => {
+    const wrap = new THREE.Group(); wrap.name = `parque-molde-predio-${i}`; root.add(wrap);
+    const glb = placeProp('predio_artdeco', { x: px, y: 0, z: pz, targetH: h, ry });
+    if (glb) wrap.add(glb);
+  });
+
   // Portal de entrada em cada base.
   for (const sz of [-1, 1]) {
     for (const sx of [-1, 1]) addBox(1.1, 7, 1.1, sx < 0 ? MAT.pink : MAT.blue, sx * 7, 0, sz * 35);
@@ -296,17 +312,21 @@ export function buildParque(scene, T) {
   }
 
   // Carrossel central: marco de orientação e cobertura circular baixa.
-  addCylinder(6.1, 0.55, MAT.purple, 0, 0, 0);
-  addCylinder(0.55, 7.8, MAT.yellow, 0, 0.55, 0);
+  const carrosselBase = addCylinder(6.1, 0.55, MAT.purple, 0, 0, 0);
+  const carrosselMastro = addCylinder(0.55, 7.8, MAT.yellow, 0, 0.55, 0);
   const carousel = new THREE.Group(); carousel.name = 'carrossel-giratorio'; root.add(carousel); animated.carousel = carousel;
+  const moldeCarrossel = new THREE.Group(); moldeCarrossel.name = 'parque-molde-carrossel'; carousel.add(moldeCarrossel);
+  const glbCarrossel = placeProp('carrossel', { targetH: 8.5 });
+  if (glbCarrossel) moldeCarrossel.add(glbCarrossel);
+  carrosselBase.visible = carrosselMastro.visible = !glbCarrossel;
   const canopy = new THREE.Mesh(new THREE.ConeGeometry(7, 3.2, 16), MAT.pink);
-  canopy.position.set(0, 7.2, 0); canopy.castShadow = true; carousel.add(canopy);
+  canopy.position.set(0, 7.2, 0); canopy.castShadow = true; canopy.visible = !glbCarrossel; carousel.add(canopy);
   const canopyTop = new THREE.Mesh(new THREE.ConeGeometry(3.5, 1.7, 16), MAT.yellow);
-  canopyTop.position.set(0, 8.7, 0); carousel.add(canopyTop);
+  canopyTop.position.set(0, 8.7, 0); canopyTop.visible = !glbCarrossel; carousel.add(canopyTop);
   for (let i = 0; i < 8; i++) {
     const a = i * Math.PI / 4, x = Math.cos(a) * 4.25, z = Math.sin(a) * 4.25;
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5.2, 8), MAT.white); pole.position.set(x, 3.15, z); carousel.add(pole);
-    const horse = new THREE.Group(); horse.name = `carrossel-cavalo-${i}`; horse.position.set(x, 2.15, z); horse.rotation.y = -a; carousel.add(horse);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 5.2, 8), MAT.white); pole.position.set(x, 3.15, z); pole.visible = !glbCarrossel; carousel.add(pole);
+    const horse = new THREE.Group(); horse.name = `carrossel-cavalo-${i}`; horse.position.set(x, 2.15, z); horse.rotation.y = -a; horse.visible = !glbCarrossel; carousel.add(horse);
     const horseMat = COLORS[i % COLORS.length];
     const body = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.75, 0.48), horseMat); horse.add(body);
     const neck = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.85, 0.38), horseMat); neck.position.set(0.58, 0.5, 0); neck.rotation.z = -0.35; horse.add(neck);
@@ -316,7 +336,7 @@ export function buildParque(scene, T) {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.72, 0.13), MAT.white); leg.position.set(lx, -0.62, lz); horse.add(leg);
     }
     animated.horses.push({ horse, phase: i * Math.PI / 2, baseY: 2.15 });
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), COLORS[(i + 2) % COLORS.length]); bulb.position.set(Math.cos(a) * 6.15, 6.15, Math.sin(a) * 6.15); carousel.add(bulb);
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), COLORS[(i + 2) % COLORS.length]); bulb.position.set(Math.cos(a) * 6.15, 6.15, Math.sin(a) * 6.15); bulb.visible = !glbCarrossel; carousel.add(bulb);
   }
 
   // Detalhes leves: luminárias, floreiras e bandeirolas sem alterar as rotas do FPS.
@@ -340,19 +360,34 @@ export function buildParque(scene, T) {
   // Roda-gigante no flanco oeste; estrutura visual fica fora do corredor jogável.
   {
     const wheel = new THREE.Group(); wheel.name = 'roda-gigante'; wheel.position.set(WHEEL_X, WHEEL_Y, 0); root.add(wheel); animated.wheel = wheel;
+    /* Molde Mint em 2 GLBs: a roda gira dentro do grupo (a rotação é a do update,
+       rotation.z — nada de órbita nova), a base fica estática no chão. */
+    const moldeRoda = new THREE.Group(); moldeRoda.name = 'parque-molde-roda'; wheel.add(moldeRoda);
+    const glbRoda = placeProp('roda_gigante_roda', { targetH: RODA_H });
+    if (glbRoda) {
+      const b = new THREE.Box3().setFromObject(glbRoda);
+      glbRoda.position.x -= (b.min.x + b.max.x) / 2;
+      glbRoda.position.y -= b.min.y + (b.max.y - b.min.y) * RODA_HUB_FRAC_Y;
+      glbRoda.position.z += WHEEL_FRAME_Z - (b.min.z + b.max.z) / 2;
+      glbRoda.scale.z *= RODA_Z;
+      moldeRoda.add(glbRoda);
+    }
+    const moldeBase = new THREE.Group(); moldeBase.name = 'parque-molde-roda-base'; root.add(moldeBase);
+    const glbBase = placeProp('roda_gigante_base', { x: WHEEL_X, y: 0, z: 0, targetH: RODA_BASE_H });
+    if (glbBase) { glbBase.scale.z *= RODA_Z; moldeBase.add(glbBase); }
     const rimMat = MAT.white, hubMat = MAT.yellow;
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(10, 0.32, 8, 48), rimMat); rim.name = 'roda-aro'; rim.position.z = WHEEL_FRAME_Z; wheel.add(rim);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.4, 12), hubMat); hub.name = 'roda-cubo'; hub.rotation.x = Math.PI / 2; wheel.add(hub);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(10, 0.32, 8, 48), rimMat); rim.name = 'roda-aro'; rim.position.z = WHEEL_FRAME_Z; rim.visible = !glbRoda; wheel.add(rim);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 1.4, 12), hubMat); hub.name = 'roda-cubo'; hub.rotation.x = Math.PI / 2; hub.visible = !glbRoda; wheel.add(hub);
     for (let i = 0; i < 10; i++) {
       const a = i * Math.PI / 5, x = Math.cos(a) * 10, y = 12 + Math.sin(a) * 10;
       const spoke = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 10, 6), MAT.white);
-      spoke.position.set(x / 2, (y - 12) / 2, WHEEL_FRAME_Z); spoke.rotation.z = a - Math.PI / 2; wheel.add(spoke);
-      const hanger = new THREE.Group(); hanger.name = `roda-cadeira-${i}`; hanger.position.set(x, y - 12, 0); wheel.add(hanger);
+      spoke.position.set(x / 2, (y - 12) / 2, WHEEL_FRAME_Z); spoke.rotation.z = a - Math.PI / 2; spoke.visible = !glbRoda; wheel.add(spoke);
+      const hanger = new THREE.Group(); hanger.name = `roda-cadeira-${i}`; hanger.position.set(x, y - 12, 0); hanger.visible = !glbRoda; wheel.add(hanger);
       const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.8, 6), MAT.dark); arm.position.y = -0.9; hanger.add(arm);
       const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.4, 1.5), COLORS[i % COLORS.length]); cabin.name = `roda-cabine-${i}`; cabin.position.y = -2.1; hanger.add(cabin);
       animated.cabins.push({ hanger, phase: a });
     }
-    for (const sx of [-1, 1]) addTube([new THREE.Vector3(WHEEL_X, 0.2, sx * 2.2), new THREE.Vector3(WHEEL_X, WHEEL_Y, 0)], 0.28, MAT.dark, 10);
+    for (const sx of [-1, 1]) addTube([new THREE.Vector3(WHEEL_X, 0.2, sx * 2.2), new THREE.Vector3(WHEEL_X, WHEEL_Y, 0)], 0.28, MAT.dark, 10).visible = !glbBase;
     const wheelBase = addBox(6.5, 1.5, 3.8, MAT.blue, WHEEL_X, 0, 0); wheelBase.name = 'roda-base'; // cobertura jogável sob a atração
   }
 
@@ -382,19 +417,22 @@ export function buildParque(scene, T) {
   for (const p of coasterPoints) addCylinder(0.14, p.y, MAT.trunk, p.x, 0, p.z, { collide: false, segments: 7 });
 
   // Quiosques espelhados dão cobertura de cintura e quebram linhas de tiro; toldo e balcão tiram a cara de caixa.
-  function kiosk(x, z, mat, title) {
-    addBox(5.2, 2.6, 3.8, mat, x, 0, z);
-    addBox(6.0, 0.4, 4.6, MAT.white, x, 2.6, z, { collide: false });
+  function kiosk(x, z, mat, title, idx) {
+    const wrap = new THREE.Group(); wrap.name = `parque-molde-barraca-${idx}`; root.add(wrap);
+    const glb = placeProp('barraca_quermesse', { x, y: 0, z, targetH: 3.2, ry: z < 0 ? 0 : Math.PI });
+    if (glb) wrap.add(glb);
+    const caixa = addBox(5.2, 2.6, 3.8, mat, x, 0, z); caixa.visible = !glb;
+    const toldo = addBox(6.0, 0.4, 4.6, MAT.white, x, 2.6, z, { collide: false }); toldo.visible = !glb;
     const front = z < 0 ? 1 : -1;
-    addBox(4.6, 0.9, 0.5, MAT.wood, x, 0, z + front * 2.05);
+    const balcao = addBox(4.6, 0.9, 0.5, MAT.wood, x, 0, z + front * 2.05); balcao.visible = !glb;
     const awning = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.7), new THREE.MeshStandardMaterial({ map: SURFACE.lona, roughness: 0.7, side: THREE.DoubleSide }));
-    awning.position.set(x, 2.85, z + front * 2.35); awning.rotation.x = front * 1.12; awning.castShadow = true; root.add(awning);
-    for (const sx of [-1, 1]) addCylinder(0.05, 2.5, MAT.dark, x + sx * 2.6, 0, z + front * 2.9, { collide: false, segments: 6 });
+    awning.position.set(x, 2.85, z + front * 2.35); awning.rotation.x = front * 1.12; awning.castShadow = true; awning.visible = !glb; root.add(awning);
+    for (const sx of [-1, 1]) addCylinder(0.05, 2.5, MAT.dark, x + sx * 2.6, 0, z + front * 2.9, { collide: false, segments: 6 }).visible = !glb;
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 1.0), new THREE.MeshLambertMaterial({ map: signTexture(title, 'É AQUI!', '#ff4f9a', '#fff7e8') }));
     sign.position.set(x, 2.15, z + (z < 0 ? 1.93 : -1.93)); sign.rotation.y = z < 0 ? 0 : Math.PI; root.add(sign);
   }
-  kiosk(-13, -19, MAT.blue, 'PIPOCA'); kiosk(13, 19, MAT.green, 'ALGODÃO DOCE');
-  kiosk(13, -19, MAT.pink, 'PESCARIA'); kiosk(-13, 19, MAT.yellow, 'ARGOLA');
+  kiosk(-13, -19, MAT.blue, 'PIPOCA', 0); kiosk(13, 19, MAT.green, 'ALGODÃO DOCE', 1);
+  kiosk(13, -19, MAT.pink, 'PESCARIA', 2); kiosk(-13, 19, MAT.yellow, 'ARGOLA', 3);
 
   // Barreiras de fila formam três rotas legíveis, sem labirinto.
   for (const sz of [-1, 1]) {
