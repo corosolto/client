@@ -26,13 +26,10 @@ export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
   'caixa_dagua', 'botijao_gas', 'pilha_pneus', 'tires', 'dumpster',
   'palafita_pro', 'arvore_mata', 'palmeira_babacu'];
 
-/* ── PALAFITAS DE VERDADE (molde palafita_pro.glb, kit Mint r2): casa sobre estaca com
-    patamar, escada e passarela ANDÁVEIS — o dono pediu "subir na madeira pra atravessar".
-    Cada estação: casa 6×6 (molde, escala s=3), patamar de prancha na direção d (rampa
-    lateral e·p descendo ao chão) e corrimão-collider (tag `passarela`) nas bordas livres.
-    A cadeia rede: A→C→D→M→F é a rota alta — pranchas a DECK_Y cruzando o igarapé por cima. */
-const DECK_Y = 1.8;                 // piso da madeira: corpo (1,5) e sonda (1,4) passam POR BAIXO sem viga
-const PILA_GLB = 0.6;              // molde com pilares cravados: deck dele (40% de 6 m) bate nos 1,8
+/* ── PALAFITAS DE VERDADE (molde palafita_pro.glb): "subir na madeira pra atravessar" —
+    cada estação tem patamar e escada andáveis + corrimão `passarela`; rede = rota alta. */
+const DECK_Y = 1.8;                 // madeira alta: corpo (1,5) e sonda (1,4) passam por baixo, sem viga
+const PILA_GLB = 0.6;              // molde com pilares cravados: o deck dele (40%·6) bate no 1,8
 const CASA_A = 3.0;                 // meia-largura da casa
 const PAT_A = 1.6;                  // meia-largura do patamar (u vai de CASA_A a CASA_A+2·PAT_A)
 const ESC_N = 12, ESC_PISO = 0.26;  // 12 degraus: espelho ~0,15 — 2 espelhos ≤0,30 do pé do corpo
@@ -52,10 +49,10 @@ const ESTACOES = [
 for (const st of ESTACOES) { st.p = [st.d[1], -st.d[0]]; }   // p = lateral esquerda de d
 /* Pranchas da rota alta (eixos alinhados): patamar→patamar/plataforma a DECK_Y. */
 const PONTES_ALTA = [
-  { ax: 9.4, az: -24.4, bx: 9.4, bz: -10.6 },   // A→C (margem leste)
-  { ax: 9.4, az: -7.4, bx: 9.4, bz: 4.4 },      // C→D
-  { ax: 7.8, az: 6, bx: 1.6, bz: 6 },           // D→M (sobre a água)
-  { ax: -1.6, az: 6, bx: -7.8, bz: 6 },         // M→F
+  { ax: 9.4, az: -24.4, bx: 9.4, bz: -10.6 },   // A→C →D →M →F: a travessia alta
+  { ax: 9.4, az: -7.4, bx: 9.4, bz: 4.4 },
+  { ax: 7.8, az: 6, bx: 1.6, bz: 6 },
+  { ax: -1.6, az: 6, bx: -7.8, bz: 6 },
 ];
 const PLATA_M = { x: 0, z: 6 };                 // platforma no meio do igarapé
 
@@ -234,10 +231,8 @@ export function buildAmazonia(scene, T) {
   ];
   const PONTAO_Y = 0.28;
 
-  /* ── ESTAÇÕES DE PALAFITA (molde palafita_pro.glb; bucha procedural no arnês sem GLB):
-     casa sobre estaca + patamar de prancha ANDÁVEL a DECK_Y + escada lateral +
-     corrimão-collider (`passarela`) nas bordas livres. O piso anda no groundHeightAt
-     (idioma das pontes); a 1,8 m, corpo e sonda passam por baixo sem viga (MAP1). */
+/* ── ESTAÇÕES DE PALAFITA (molde palafita_pro.glb; bucha procedural sem GLB): patamar
+     andável no groundHeightAt (idioma das pontes) + corrimão `passarela` nas bordas livres. */
   const PB = new PropBatch({ bucket: 16, shadowMin: 0.02 });
   const SB = new StaticBatch({ name: 'madeira-amazonia' });
   const geoPrancha = new THREE.BoxGeometry(1, 1, 1);
@@ -305,9 +300,10 @@ export function buildAmazonia(scene, T) {
       const v = lado * PAT_A;
       const vaos = [];
       if (st.e === lado) vaos.push(VAN_E);
-      if (st.rede && st.z < -20 && lado === 1) vaos.push(VAN_O);        // A: saída pro sul
-      if (st.rede && st.x === 14 && st.z === -9) vaos.push(VAN_O);      // C: entrada e saída
-      if (st.rede && st.z === 6 && st.x === 14 && lado === -1) vaos.push(VAN_O);   // D: entrada
+      // vãos da rede: A sai pro sul, C entra e sai, D entra
+      if (st.rede && st.z < -20 && lado === 1) vaos.push(VAN_O);
+      if (st.rede && st.x === 14 && st.z === -9) vaos.push(VAN_O);
+      if (st.rede && st.z === 6 && st.x === 14 && lado === -1) vaos.push(VAN_O);
       for (const [u0, u1] of subtrai([[CASA_A, CASA_A + 2 * PAT_A]], vaos)) {
         const [ax, az] = W(u0, v), [bx, bz] = W(u1, v);
         trilhoCol(ax, az, bx, bz);
@@ -324,9 +320,8 @@ export function buildAmazonia(scene, T) {
       }
     }
     if (st.e) {
-      // escada lateral: degraus QUANTIZADOS no gh (idioma do mezanino) + blocos sólidos
-      // embaixo. Espelho ≤ ~0,15: dois espelhos ≤ 0,30 — o pé do corpo sobe cada degrau
-      // sem tomar empurrão do bloco dois lances acima.
+      // escada: degraus quantizados no gh (idioma do mezanino) + bloco sólido embaixo;
+      // espelho <=0,15 -> dois espelhos <=0,30 do pé: sobe sem empurrão do lance de cima
       const g0 = chaoBase(...W(4.4, st.e * (PAT_A + 2.4)));
       const n = Math.max(8, Math.ceil((DECK_Y - g0) / 0.149));
       const esp = (DECK_Y - g0) / n, run = n * ESC_PISO;
@@ -650,9 +645,9 @@ export function buildAmazonia(scene, T) {
     ],
     chickens: [{ pos: [19, 0, 11.4], to: [20.4, 0, 12.6], phase: 1.4 }],
     parrots: [
-      { pos: [5.6, 2.62, 0.4], phase: 0.6 },      // poleiro da barraca do market
-      { pos: [14.1, 0.95, 18.35], phase: 2.4 },   // caixa d'água da palafita (21, 17)
-      { pos: [-7.1, 0.62, -23.35], phase: 3.1 },  // caixa d'água da palafita oeste, na margem
+      { pos: [5.6, 2.62, 0.4], phase: 0.6 },      // poleiro do market
+      { pos: [14.1, 0.95, 18.35], phase: 2.4 },   // caixa d'água (21,17)
+      { pos: [-7.1, 0.62, -23.35], phase: 3.1 },
     ],
     dogs: [{ pos: [-12.6, 0, -17.8], to: [-11.2, 0, -16.9], phase: 0.7 }],
     /* elenco da mata (PR #439): 9 espécies Mint com vida no ambientlife.js; posições
