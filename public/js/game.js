@@ -679,16 +679,9 @@ export class Game {
     this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
 
-    // ---- Câmera 3ª pessoa (toggle KeyB) ----------------------------------------
-    // O jogo é 1ª pessoa; os bots já são 3ª pessoa (glbchars.js). Aqui o JOGADOR ganha
-    // um corpo 3ª pessoa (mesmo buildCharacterModel dos bots — a arma monta na mão pelo
-    // MESMO grip procedural: mount no RightHand + IK da mão de apoio + curl dos dedos) e
-    // uma câmera atrás dele. Tecla B alterna. Ver docs/RIG-PEGA-ARMA.md.
-    // V1 DECLARADO: mira/tiro continuam saindo da câmera — em 3ª pessoa a origem do
-    // disparo fica atrás do jogador. É um MODO DE VISÃO, não de combate.
-    // Pré-carrega o modelo do próprio personagem (a 1ª pessoa usa arms.glb, não carrega o
-    // corpo do jogador), senão o corpo TP cai no box procedural.
-    this.camView = 'first';   // 'first' (1ª pessoa) | 'third' (OTS SOCOM) | 'shoulder' (OTS colado)
+    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
+    // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
+    this.camView = 'first';
     this.playerTP = null;
     this._tpWeapon = null;
     this._tpDead = false;
@@ -1022,11 +1015,8 @@ export class Game {
     // share another (soft smoke) — 1 draw call each, zero per-shot allocation (ring buffer).
     this.flashFx = new GPUParticles(this.scene, this.camera, { tex: this.flashTex, additive: true });
     this.puffFx = new GPUParticles(this.scene, this.camera, { tex: this.puffTex, additive: false });
-    // fumaça do cano: nuvem cinza persistente por tiro. _tintFx compartilha uTime/uScale do puff
-    // (anima sem tick novo) e em quality 'low' devolve o próprio puffFx (degrada sozinho).
-    // sistema CINZA dedicado — NÃO cai no puffFx bege em quality:'low' (o dono joga em máquina
-    // fraca, é justamente onde ele quer ver a fumaça). 1 draw call, ring buffer de 64, compartilha
-    // uTime/uScale do puff (anima sem tick próprio, igual às fx de sangue via _tintFx).
+    // Fumaça do cano: sistema CINZA dedicado, que em quality:'low' NÃO pode cair no puffFx
+    // bege - é justamente na máquina fraca que ela precisa aparecer. Ver docs/RIG-PEGA-ARMA.md.
     this._muzzleSmokeFx = new GPUParticles(this.scene, this.camera, { tex: this._makeSmokeTex(), additive: false, max: 64 });
     if (this.puffFx && this.puffFx.uniforms) {
       this._muzzleSmokeFx.uniforms.uTime = this.puffFx.uniforms.uTime;
@@ -3697,9 +3687,8 @@ export class Game {
   // pelo tracer e pela luz/faísca do mundo no tiro do jogador (R7.6).
   _muzzleWorld(cls) {
     if (this.camView !== 'first') {
-      // 3ª pessoa: a câmera está atrás/acima; a boca do cano NÃO pode sair dela (fumaça
-      // nascia lá em cima — bug relatado). Sai do OLHO, na direção da mira, descida pra
-      // altura da arma na mão.
+      // A câmera está atrás/acima, então a boca do cano NÃO pode sair dela: a fumaça nascia
+      // lá em cima. Sai do OLHO, na direção da mira, descida pra altura da arma na mão.
       const dir = this.camera.getWorldDirection(new THREE.Vector3());
       const m = this._eyeWorld.clone().addScaledVector(dir, 0.5);
       m.y -= 0.28;
@@ -4864,19 +4853,16 @@ export class Game {
     this._syncCamViewVis();
   }
 
-  // Visibilidade base ao alternar: corpo TP em qualquer modo 3ª pessoa. (Os braços FP/
-  // vm.root são governados por frame no _updatePlayer — ver a linha do realScope — pra não
-  // brigar com o force-visible do ADS/luneta.)
+  // Visibilidade base ao alternar: corpo TP em qualquer modo 3ª pessoa. Os braços FP são
+  // governados por frame no _updatePlayer, pra não brigar com o force-visible do ADS.
   _syncCamViewVis() {
     const tp = this.camView !== 'first';
     if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = tp;
     if (this.vm && this.vm.root && !tp) this.vm.root.visible = true;
   }
 
-  // (Re)constrói o corpo 3ª pessoa do jogador com a arma ATUAL montada na mão. Reusa
-  // buildCharacterModel (mesmo caminho dos bots: grip + IK + curl). Se o modelo do
-  // personagem ainda não carregou, cai no buildCharacter (box) e faz upgrade p/ GLB
-  // quando o asset chegar (hasModel). Reconstrói ao trocar de arma.
+  // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
+  // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
   _ensurePlayerTP() {
     const w = this.player.weapon, def = this.playerDef;
     const weaponChanged = this.playerTP && this._tpWeapon !== w;
@@ -5092,9 +5078,8 @@ export class Game {
       camBobLat = Math.sin(p.stepPhase) * 0.009 * amp;
     }
     this.camera.position.set(p.pos.x + Math.cos(p.yaw) * camBobLat, p.pos.y + eye + camBobY, p.pos.z - Math.sin(p.yaw) * camBobLat);
-    const rp = p.recoilP;   // lê o getter 1x (integra/decai o spring do recuo neste frame)
-    // roll leve por tiro: reusa o mesmo st.sh decadente numa freq. diferente do pitch (61 vs 78)
-    // → lê como "tremida" e não como punch puro. Vale pra mouse E toque (câmera finaliza só aqui).
+    const rp = p.recoilP;   // getter lido 1x: integra/decai o spring do recuo neste frame
+    // Roll por tiro na freq. 61 (o pitch usa 78): lê como "tremida", não como punch puro.
     const roll = p._rec ? p._rec.sh * Math.sin(this.time * 61) * 0.5 : 0;
     this.camera.rotation.set(p.pitch + rp, p.yaw, roll);
     this._eyeWorld.copy(this.camera.position);   // olho: origem de tiro/fumaça em 3ª pessoa

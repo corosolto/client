@@ -164,6 +164,20 @@ o mandrake segurando a pistola (o mesmo grip dos bots). Apertar B de novo volta 
 Se o corpo aparecer virado de costas, é só o offset de yaw — trocar `p.yaw` por `p.yaw+Math.PI`
 em `_updatePlayerTP`.
 
+## 5b. Fumaça do cano (implementado)
+
+- Sistema de partículas **CINZA dedicado** (`_muzzleSmokeFx`), 1 draw call, ring buffer de 64.
+- Por que dedicado: em `quality:'low'` o caminho antigo caia no `puffFx` bege, e e justamente
+  na maquina fraca que a fumaca precisa aparecer. O sistema proprio degrada sem trocar de cor.
+- Anima sem tick proprio: compartilha `uTime`/`uScale` do `puffFx`, igual as fx de sangue
+  via `_tintFx`.
+- Formato: 2-3 baforadas lentas subindo/a frente, vida longa, crescendo. Na 1a pessoa
+  (`fpCls`) sai menor e mais perto, pra nao virar blob colado na lente (mesmo cuidado das
+  faiscas, R7.6).
+- Origem em 3a pessoa: `_muzzleWorld` NAO pode usar a camera (ela esta atras/acima, e a
+  fumaca nascia la em cima). Sai do OLHO (`_eyeWorld`), na direcao da mira, descida pra
+  altura da arma na mao.
+
 ## 6. Próximos
 
 - [x] Pega da pistola no mandrake (3ª pessoa, à mão) — números na seção 2, Action `pistol_aim_R`.
