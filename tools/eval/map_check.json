@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-26T02:13:18.027Z",
+ "gerado": "2026-08-26T02:24:37.632Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",

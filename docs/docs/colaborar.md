@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**11 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `matheusgb`, `Maná Soares`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**11 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `Ruben`, `rubenmarcus`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `matheusgb`, `Maná Soares`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -249,7 +249,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 827 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 857 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |

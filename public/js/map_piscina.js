@@ -11,14 +11,8 @@
 // Este é o mapa original (commit 7871a7b): um salão FECHADO de piscina azulejado,
 // compacto e legível — um material por superfície (BAR-CONSISTENCIA §2/§3).
 //
-// LAYOUT MEDIDO do fy_pool_day.bsp (frente map2/piscina): proporções de
-// tools/eval/piscina_bsp.json, cobradas pela régua eval:piscina-bsp.
-//
-// DECISÃO DO DONO (26/08, ronda 2): "o mapa na piscina tinha que continuar
-// igual, a piscina menor, e adicionar corredores, vestiários, banheiro em
-// volta dela como area de respawn". O pátio atravessado do BSP saiu; fica a
-// piscina CENTRAL 10x7 (proporção ~1,5:1 do BSP) com um ANEL de construções
-// em volta — vestiário/banheiro nas cabeceiras, pergolados nos cantos do deck.
+// LAYOUT: decisão do dono 26/08 ("a piscina menor, e adicionar corredores, vestiários,
+// banheiro em volta dela como área de respawn") — piscina central 10x7 + anel. Régua: eval:piscina-bsp.
 // ============================================================================
 // piscina_treta homage — the classic CS 1.6 "full weapons" map: a COMPACT INDOOR
 // tiled swimming-pool hall. Same buildWorld contract as map.js.
@@ -43,9 +37,8 @@ const SPAWN_Z = 13.4;
    registro — sem ele a fauna caía toda no fallback procedural, BUG-57). O pardal
    é procedural (não há GLB no acervo) e não precisa de preload. */
 export const PISCINA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog']);
-/* Moldes Mint do kit da piscina r2 (kits-mint.json): vestiário, pergolado e
-   cadeira de praia. Colisor é DECLARADO À MÃO no call-site — vale mesmo se o
-   GLB não carregar (o padrão `prop` do map_posto.js). */
+/* Moldes Mint do kit piscina r2 (kits-mint.json); colisor declarado à mão no
+ * call-site — vale mesmo se o GLB não carregar (padrão `prop` do map_posto.js). */
 export const PISCINA_PROPS = Object.freeze(['vestiario_clube', 'pergolado_piscina', 'cadeira_praia']);
 
 /* ---------- inline procedural tile textures ---------- */
@@ -161,8 +154,7 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* piscina CENTRAL 10x7 (decisão do dono 26/08: menor que o pátio do BSP e
-     no meio do salão; proporção ~1,5:1 do BSP, cobrada pela PB3/PB4).
+  /* piscina CENTRAL 10x7 (decisão do dono 26/08; proporção ~1,5:1 do BSP — PB3/PB4).
      Rampa e 1,5 m de fundo são gameplay nossos. */
   const POOL = { cx: 0, cz: 0, hx: 5, hz: 3.5, m: 2.5, depth: 1.5 };
   const OUTX = POOL.hx + POOL.m, OUTZ = POOL.hz + POOL.m;
@@ -632,10 +624,8 @@ export function buildPoolDay(scene, T) {
     cabine: lam({ color: 0xd8d4cc }),
   };
 
-  /* --- 1. CORREDORES: promenade sem colisor · pilar · alameda das armas
-     (x ±15,15, agora com ripado sombreado no bloco do anel) · armários.
-     As espreguiçadeiras procedurais saíram: a cadeira de praia GLB do kit
-     assume o posto (mesma pegada de cover baixo, decoração do deck). */
+  /* --- 1. CORREDORES: promenade · pilar · alameda das armas (x ±15,15, com ripado no 2b) · armários.
+     A espreguiçadeira procedural saiu: a cadeira de praia GLB assume a pegada (cover baixo do deck). */
   for (const sx of [-1, 1]) {
     for (const pz of [-17, -6.5, 6.5, 17]) addBox(1.1, 6.5, 1.1, COV.concreto, sx * 13.5, 0, pz);
     for (const bz of [-11, 0, 11]) lockerBank(sx * 16.6, bz, 3, 'z');
@@ -643,16 +633,13 @@ export function buildPoolDay(scene, T) {
     for (const cz of [-6, 6]) addBox(1.0, 1.15, 1.0, COV.caixa, sx * 15.2, 0, cz);
   }
 
-  /* --- 2. RESPAWN DO ANEL: a proteção de quem nasce são os BLOCOS das cabeceiras
-      (2b abaixo) — os anteparos de armário da r1 saíram porque fechavam os funis
-      da malha de waypoints (grade 3,4 m + inflate 0,5) entre o anel e o deck.
-      No meio-campo ficam anteparos BAIXOS (peito agachado) em z ±11,2 — fora
-      das linhas de nós (z 9 e 12,4), sem cortar aresta nenhuma. Guarita recuada
-      em z ±22,3: a lane central (x ∈ [-3,3]) é a saída do spawn atrás dos blocos. */
+  /* --- 2. RESPAWN DO ANEL: a proteção de quem nasce são os BLOCOS do 2b — os armários
+     da r1 saíram porque fechavam os funis da malha (grade 3,4 m + inflate 0,5). Guarita
+     em z ±22,3 deixa a lane central (x ∈ [-3,3]) livre como saída do spawn. */
   for (const sz of [-1, 1]) {
     for (const bx of [-6.3, 6.3]) addBox(2.0, 1.15, 1.0, COV.caixa, bx, 0, sz * 11.2);
-    // caixa de material atrás de cada bloco: povoam as cabeceiras do anel (MAP5)
-    // sem tocar as colunas de nós (x=±8,2 fica entre 7,8 e 9,2/11,2)
+    // caixa de material atrás de cada bloco: povoam as cabeceiras do anel (MAP5),
+    // entre as colunas de nós 7,8 e 9,2/11,2 (nenhuma aresta cortada)
     for (const sx of [-1, 1]) addBox(1.0, 1.15, 1.0, COV.caixa, sx * 8.2, 0, sz * 20.5);
     addBox(2.8, 3.0, 2.4, MAT.wall, 0, 0, sz * 22.3);   // guarita do salva-vidas
     addBox(3.2, 0.25, 2.8, MAT.navy, 0, 3.0, sz * 22.3, { collide: false });
@@ -668,16 +655,10 @@ export function buildPoolDay(scene, T) {
     }
   }
 
-  /* --- 2b. ANEL DO CLUBE (decisão do dono, 26/08): as construções EM VOLTA
-      da piscina viram o respawn — vestiário GLB e banheiro autoral nas
-      cabeceiras (spawn na varanda deles, z ±13,4), pergolado como alpendre
-      dos quatro cantos das cabeceiras, cadeira de praia no deck. Tudo em
-      simetria de ROTAÇÃO 180° (a simetria real do mapa: E em -z, BOL em +z),
-      que é como o resto do arquivo já se organiza.
-
-      Colisor é declarado à mão no `prop` (padrão do map_posto.js): vale mesmo
-      se o GLB não carregar, e cobre a pegada da malha + 10 cm — os waypoints
-      e o MAP1 leem o colisor, a malha nunca vira parede invisível maior que ele. */
+  /* --- 2b. ANEL DO CLUBE (decisão do dono, 26/08): vestiário GLB + banheiro autoral nas
+      cabeceiras, pergolado-alpendre, cadeira no deck — simetria de rotação 180° (E em -z). */
+  /* Colisor do prop é declarado à mão e cobre a pegada da malha + 10 cm: waypoint lê
+     colisor, a malha nunca é parede invisível maior que ele. */
   const prop = (id, x, z, targetH, ry, hx, hz, h) => {
     const o = placeProp(id, { x, z, y: 0, targetH, ry });
     if (o) { root.add(o); occluders.push(o); }
@@ -694,10 +675,8 @@ export function buildPoolDay(scene, T) {
     addPlane(1.1, 2.3, COV.cabine, 5.2 * sz, 1.15, vz - sz * 2.24, sz > 0 ? Math.PI : 0);
     addPlane(2.6, 1.0, signTexture('#1b3566', '#dff2ff', 'BANHEIRO', 'CLUBE DA TRETA'), 5.2 * sz, 3.0, vz - sz * 2.26, sz > 0 ? Math.PI : 0);
   }
-  // alpendres: pergolado na entrada lateral de cada bloco (4 cantos das cabeceiras).
-  // A malha de waypoints é uma grade de 3,4 m com inflate 0,5 — em (±11, ±17,5) cada
-  // um cobre 2 nós mortos e deixa vivos os funis x=±14,6 (alameda), x=±7,8/9,2 (deck)
-  // e x=±12,6 (traseira).
+  // alpendres dos 4 cantos das cabeceiras: cada um cobre 2 nós mortos da grade 3,4 m
+  // e deixa vivos os funis x=±14,6 / ±7,8/9,2 / ±12,6 (o que o MC3 exige: grafo conexo).
   for (const sx of [-1, 1]) for (const sz of [-1, 1])
     prop('pergolado_piscina', 11 * sx, 17.5 * sz, 2.4, sx * sz > 0 ? 0 : Math.PI, 1.65, 1.6, 2.4);
   // cadeiras de praia no deck (GLB Mint): decoração baixa NÃO-bloqueante — colisor
@@ -729,9 +708,8 @@ export function buildPoolDay(scene, T) {
        · `_collide` do game.js é ciente de Y (`pos.y+1.5 > c.minY && pos.y+0.3 < c.maxY`):
          com o jogador no deck (y=0) o teste 0,3 < -0,5 é FALSO, então isto NÃO vira parede
          invisível no deck. Só existe para quem está dentro da piscina (y=-1,5). */
-  /* Na piscina 10×7 só cabem QUATRO muretas (uma por quadrante do fundo): as seis
-     da piscina 13,5×9 escaladas fechavam todos os vãos da grade de nós e o fundo
-     virava labirinto (MC3). As que ficam abrem corredor central e lateral. */
+  /* Na piscina 10×7 só cabem QUATRO muretas: as seis da 13,5×9 escaladas fechavam
+     todos os vãos da grade de nós e o fundo virava labirinto (MC3). */
   for (const sx of [-1, 1]) for (const sz of [-1, 1])
     addBox(2.6, 1.0, 0.55, MAT.pool, sx * 2.6 + POOL.cx, -POOL.depth, POOL.cz + sz * 2.0);
 
@@ -844,9 +822,7 @@ export function buildPoolDay(scene, T) {
   });
 
   /* BUG-57 + frente map2/piscina: rato de vestiário, pombo de borda de piscina,
-     PARDAL no beiral das guaritas (y 3,25) e caramelo passeando no deck sul.
-     Posições fora dos colisores do ANEL (AR3): alpendres em (±11,±17,5) e
-     blocos das cabeceiras em (∓5,2,±17,6). */
+     PARDAL no beiral das guaritas (y 3,25) e caramelo no deck sul (AR3: fora do anel). */
   const ambience = createFavelaAmbience(root, {
     map: 'piscina_treta',
     rats: [
@@ -868,8 +844,8 @@ export function buildPoolDay(scene, T) {
     update(dt) { aguaPiscina?.update(dt); },
     ambience,sound:{loops:[{src:AMB_LOOPS.piscina,pos:[1.1,-.4,1.1],radius:30,vol:.3},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:40,vol:.18}],bioma:'indoor'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
-    /* CTF declarada em marcos do mapa (o fallback caía na água): triângulo 13 m, sem
-       bandeira a <4,5 m de spawn. */
+    /* CTF declarada em marcos do mapa (o fallback caía na água): E/B nas portas dos
+       vestiários do anel, sem bandeira a <4,5 m de spawn (CTF1). */
     ctfPoints: [
       { id: 'E', label: 'VESTIÁRIO A', x: 0, z: -17.5 },
       { id: 'MID', label: 'ARMÁRIOS', x: 13, z: 0 },

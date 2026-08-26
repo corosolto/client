@@ -34,12 +34,12 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 41.148 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 41.178 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.260** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.812 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 151 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
@@ -307,7 +307,7 @@ Os mapas registrados, e em que modo cada um abre:
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
 | `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 827 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 857 |
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |
