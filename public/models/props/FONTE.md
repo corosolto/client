@@ -174,3 +174,19 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## Ronda 2 do amazonia (PR #439) — palafita de verdade e mata densa
+
+Kit de revisão r2 (26/08/2026): o dono pediu palafita com travessia na madeira
+e horizonte de floresta. Mint text-to-3D (Meshy), projeto CS BRASIL - Time
+Mítico, prompt próprio — sem copyright de terceiro. Pipeline `gen-asset`
+(dedup + WebP 1024 + prune). Kit: pack `th74btzfmyqgvrwzv97c3svtad8d7shz`,
+chat <https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye>.
+
+- `palafita_pro.glb` — "Palafita com passarela", casa sobre estacas com
+  passarela e escada (~2,0k tris). Registro: `palafita-pro-amazonia`. Colisor,
+  escada andável e corrimões são dados do `map_amazonia.js` (AMZ5).
+- `arvore_mata.glb` — "Árvore de mata densa", dossel do anel do perímetro
+  (~2,6k tris, 25 instâncias). Registro: `arvore-mata-amazonia` (AMZ6).
+- `palmeira_babacu.glb` — "Palmeira babaçu", sub-bosque (~2,3k tris).
+  Registro: `palmeira-babacu-amazonia`.
