@@ -6,9 +6,9 @@ import { applyLook } from './map_sky.js';
 import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
-/* o caminhão de quentão (Mint) substitui o procedural no browser; no arnês placeProp devolve
+/* os moldes Mint (quentão, galpão) substituem o procedural no browser; no arnês placeProp devolve
    null e o procedural cobre (lição 3). Sem GLB publicado: sem slot props (eval:props-acervo). */
-export const GELO_PROPS = ['gelo_quentao'];
+export const GELO_PROPS = ['gelo_quentao', 'galpao_festival'];
 export const GELO_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'chicken', 'cow'];
 
 const HALF_X = 32;
@@ -270,32 +270,67 @@ export function buildGelo(scene, T) {
   }
 
   /* Galpão de festival (base E): palco de forró no fundo, laterais meio-abertas,
-     telhado de duas águas com neve acumulada na cumeeira e nos beirais. */
+     telhado de duas águas com neve acumulada na cumeeira e nos beirais. No browser
+     o GLB Mint galpao_festival cobre o visual; colisores idênticos nos dois mundos. */
   {
-    const g = new THREE.Group(); g.name = 'gelo-galpao'; root.add(g);
-    for (const sx of [-1, 1]) for (const z of [-36.8, -30.75, -24.7]) addBox(0.36, 4.5, 0.36, MAT.madeira, sx * 13.2, 0, z, { parent: g });
-    addBox(28, 4.2, 0.4, MAT.madeira, 0, 0, -37.7, { parent: g });
-    for (const sx of [-1, 1]) addBox(0.3, 2.4, 7, MAT.madeira, sx * 13.9, 0, -34, { parent: g });
+    const g = new THREE.Group(); g.name = 'gelo-galpao'; g.userData.molde = 'galpao_festival'; root.add(g);
+    const ocBase = occluders.length;
+    const proc = new THREE.Group(); g.add(proc);
+    for (const sx of [-1, 1]) for (const z of [-36.8, -30.75, -24.7]) addBox(0.36, 4.5, 0.36, MAT.madeira, sx * 13.2, 0, z, { parent: proc });
+    addBox(28, 4.2, 0.4, MAT.madeira, 0, 0, -37.7, { parent: proc });
+    for (const sx of [-1, 1]) addBox(0.3, 2.4, 7, MAT.madeira, sx * 13.9, 0, -34, { parent: proc });
     const agua = (zc, ye, sinal) => {
       const comp = Math.hypot(7.4, 2.1);
       const roof = new THREE.Mesh(boxGeometry(29.6, 0.16, comp), MAT.lata);
       roof.position.set(0, (6.35 + ye) / 2 + 0.1, (-30.85 + zc) / 2);
       roof.rotation.x = sinal * Math.atan2(2.1, 7.4);
-      roof.castShadow = true; g.add(roof);
+      roof.castShadow = true; proc.add(roof);
       const neveBeiral = new THREE.Mesh(boxGeometry(29.6, 0.09, 1.1), MAT.nevefofa);
-      neveBeiral.position.set(0, ye + 0.22, zc); neveBeiral.rotation.x = sinal * Math.atan2(2.1, 7.4); g.add(neveBeiral);
+      neveBeiral.position.set(0, ye + 0.22, zc); neveBeiral.rotation.x = sinal * Math.atan2(2.1, 7.4); proc.add(neveBeiral);
     };
     agua(-38.15, 4.25, -1); agua(-23.55, 4.25, 1);
     const cumeeira = new THREE.Mesh(boxGeometry(29.8, 0.34, 0.9), MAT.nevefofa);
-    cumeeira.position.set(0, 6.55, -30.85); cumeeira.castShadow = true; g.add(cumeeira);
+    cumeeira.position.set(0, 6.55, -30.85); cumeeira.castShadow = true; proc.add(cumeeira);
     // Palco de forró: tablado, caixas de som e sanfona de mentira no cavalete.
-    addBox(10, 0.7, 4.6, MAT.madeira, 0, 0, -34.4, { parent: g });
-    addBox(10.4, 0.18, 5, MAT.casca, 0, 0.7, -34.4, { parent: g, collide: false });
+    addBox(10, 0.7, 4.6, MAT.madeira, 0, 0, -34.4, { parent: proc });
+    addBox(10.4, 0.18, 5, MAT.casca, 0, 0.7, -34.4, { parent: proc, collide: false });
     for (const sx of [-1, 1]) {
-      addBox(1.1, 1.9, 0.9, MAT.metal, sx * 6.2, 0, -33.6, { parent: g });
-      addBox(0.7, 0.7, 0.2, MAT.lata, sx * 6.2, 1.15, -33.05, { parent: g, collide: false });
+      addBox(1.1, 1.9, 0.9, MAT.metal, sx * 6.2, 0, -33.6, { parent: proc });
+      addBox(0.7, 0.7, 0.2, MAT.lata, sx * 6.2, 1.15, -33.05, { parent: proc, collide: false });
     }
-    addBox(0.9, 0.6, 0.4, MAT.lona, 1.6, 0.88, -34.6, { parent: g, collide: false });
+    addBox(0.9, 0.6, 0.4, MAT.lona, 1.6, 0.88, -34.6, { parent: proc, collide: false });
+
+    const glb = placeProp('galpao_festival', { x: 0, y: 0, z: -30.85, targetH: 6.7, targetLen: 28.4 });
+    proc.visible = !glb;
+    if (glb) {
+      occluders.length = ocBase; // peça escondida não oclui (padrão gelo-quentao)
+      /* O molde normalizado (~1 m) estica até o volume do procedural: fachada 28,4 m cobre
+         os colisores laterais (±14,05), profundidade 14,6 m = águas -38,15..-23,55, cumeeira
+         6,7 m, deck a 0,12 m do chão. Medidas nativas lidas do accessor POSITION do GLB. */
+      const NAT = { minY: -0.3721, maxY: 0.3721, deckY: -0.205, eaveY: 0.045, sizeX: 0.998, sizeZ: 0.9707 };
+      const sy = (6.7 - 0.12) / (NAT.maxY - NAT.deckY);
+      glb.scale.set(28.4 / NAT.sizeX, sy, 14.6 / NAT.sizeZ);
+      glb.position.y = 0.12 - NAT.deckY * sy;
+      g.add(glb);
+      glb.updateMatrixWorld(true);
+      /* Neve refeita sobre o telhado do GLB (a procedural esconde junto): cumeeira no topo
+         do Box3, beirais na altura medida NAT.eaveY, inclinados no slope derivado. */
+      const bb = new THREE.Box3().setFromObject(glb);
+      const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+      const eaveY = glb.position.y + NAT.eaveY * sy;
+      const meia = (bb.max.x - bb.min.x) / 2;
+      const slope = Math.atan2(bb.max.y - eaveY, meia);
+      const comp = (bb.max.z - bb.min.z) * 0.98;
+      const cum = new THREE.Mesh(boxGeometry(1.1, 0.34, comp), MAT.nevefofa);
+      cum.position.set(cx, bb.max.y + 0.1, cz); cum.castShadow = true; g.add(cum);
+      for (const s of [-1, 1]) {
+        const bx = s * (meia - 0.55);
+        const beiral = new THREE.Mesh(boxGeometry(1.3, 0.1, comp), MAT.nevefofa);
+        beiral.position.set(cx + bx, bb.max.y - Math.tan(slope) * Math.abs(bx) + 0.1, cz);
+        beiral.rotation.z = -s * slope;
+        g.add(beiral);
+      }
+    }
   }
 
   /* Fogueiras: anel de pedras, troncos, brasa emissiva e PointLight quente sem
@@ -358,7 +393,7 @@ export function buildGelo(scene, T) {
   /* Caminhão de quentão: cobertura-âncora do flanco B. GLB do Mint quando
      publicado; procedural caprichado cobre enquanto isso (colisores iguais). */
   {
-    const g = new THREE.Group(); g.name = 'gelo-quentao'; root.add(g);
+    const g = new THREE.Group(); g.name = 'gelo-quentao'; g.userData.molde = 'gelo_quentao'; root.add(g);
     colliders.push({ minX: -3.4, maxX: 3.4, minY: 0, maxY: 2.2, minZ: 26.9, maxZ: 29.1 });
     const glb = placeProp('gelo_quentao', { x: 0, y: 0, z: 28, targetH: 2.6, targetLen: 6.8, ry: Math.PI / 2 });
     if (glb) g.add(glb);
