@@ -35,6 +35,17 @@
      PV5  horizonte próprio: scene.userData.skyUrl gravado pelo setMapSky (a
           régua lê o USO, não a declaração — BUG-02) E entrada LOOK.parque_treta
           em public/js/look.js.
+     PV6  moldes 3D no lugar das primitivas (feedback do dono, 26/08/2026:
+          "parque da treta ainda esta low poly, predios low poly, brinquedos
+          low poly"). Como no arnês node o GLB não baixa, o mapa cria GRUPOS
+          WRAPPER NOMEADOS nos dois mundos (o GLB entra dentro no browser; em
+          node ficam vazios). Mede: ≥ 14 wrappers parque-molde-* no mundo
+          buildado — contagem real do build: 8 prédios + 4 barracas + roda +
+          roda-base + carrossel = 15 (public/js/map_parque.js, blocos
+          PREDIOS/kiosk/roda-gigante/carrossel); PARQUE_PROPS contém os 5 ids
+          novos; e cada models/props/<id>.glb existe em disco. O mutante
+          --mutante=sem-moldes filtra os wrappers do traverse e esvazia os ids
+          em memória → PV6 tem que ficar vermelha.
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, waypoints ausentes ou
    quadrante impossível de classificar reprovam com mensagem de conserto.
@@ -44,16 +55,21 @@
      node tools/eval/parque-vida-check.mjs --mutante=sem-coreto     # PV1
      node tools/eval/parque-vida-check.mjs --mutante=sem-vegetacao  # PV2
      node tools/eval/parque-vida-check.mjs --mutante=sem-variedade  # PV3
+     node tools/eval/parque-vida-check.mjs --mutante=sem-moldes     # PV6
    ============================================================================ */
 import { THREE, MAPS, initTextures } from './harness.mjs';
 import { LOOK } from '../../public/js/look.js';
+import { PARQUE_PROPS } from '../../public/js/map_parque.js';
+import { existsSync } from 'node:fs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-coreto', 'sem-vegetacao', 'sem-variedade']);
+const conhecidos = new Set(['sem-coreto', 'sem-vegetacao', 'sem-variedade', 'sem-moldes']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const MIN_LIXEIRAS = 6, MIN_BANCOS = 6, MIN_DORMENTES = 100;
 const MIN_ARVORES = 40, MIN_ARBUSTOS = 60, MIN_TEXTURAS = 16;
+const MIN_MOLDES = 14;
+const MOLDE_IDS = ['roda_gigante_roda', 'roda_gigante_base', 'carrossel', 'barraca_quermesse', 'predio_artdeco'];
 
 /* instâncias sob um prefixo de nome: InstancedMesh conta `count`, o resto conta 1
    (um Grupo nomeado parque-banco-3 é UM banco, suas tábuas não têm nome) */
@@ -86,6 +102,12 @@ if (MUTANTE === 'sem-coreto') {
 } else if (MUTANTE === 'sem-vegetacao') {
   const alvos = [];
   W.root.traverse((o) => { if (/^parque-(arvores|arbustos|copas)-/.test(o.name || '')) alvos.push(o); });
+  mutanteAplicou = alvos.length > 0;
+  for (const o of alvos) o.parent.remove(o);
+} else if (MUTANTE === 'sem-moldes') {
+  const alvos = [];
+  W.root.traverse((o) => { if ((o.name || '').startsWith('parque-molde-')) alvos.push(o); });
+  PARQUE_PROPS.length = 0;
   mutanteAplicou = alvos.length > 0;
   for (const o of alvos) o.parent.remove(o);
 } else if (MUTANTE === 'sem-variedade') {
@@ -191,9 +213,24 @@ if (MUTANTE && !mutanteAplicou) {
   put('PV5', !falta.length, falta.length ? falta.join(' · ') : `sky ${sky} · fog do look ${look.neblina ? 'ok' : '?'}`);
 }
 
+/* ---- PV6 moldes 3D nomeados ---- */
+{
+  const moldes = contaPorPrefixo(W.root, 'parque-molde-');
+  const idsFaltando = MOLDE_IDS.filter((id) => !PARQUE_PROPS.includes(id));
+  const glbFaltando = MOLDE_IDS.filter((id) => !existsSync(`public/models/props/${id}.glb`));
+  const falta = [];
+  if (moldes < MIN_MOLDES) falta.push(`wrappers parque-molde-* ${moldes}/${MIN_MOLDES}`);
+  if (idsFaltando.length) falta.push(`fora de PARQUE_PROPS: ${idsFaltando.join(', ')}`);
+  if (glbFaltando.length) falta.push(`GLB ausente em disco: ${glbFaltando.join(', ')}`);
+  put('PV6', !falta.length,
+    falta.length
+      ? `${falta.join(' · ')} — primitiva no lugar do molde é o "low poly" que o dono nomeou de novo: crie os wrappers parque-molde-* e registre os ids em PARQUE_PROPS`
+      : `${moldes} wrappers parque-molde-* · ${MOLDE_IDS.length} ids em PARQUE_PROPS · GLBs em disco`);
+}
+
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-coreto': 'PV1', 'sem-vegetacao': 'PV2', 'sem-variedade': 'PV3' };
+const ALVO = { 'sem-coreto': 'PV1', 'sem-vegetacao': 'PV2', 'sem-variedade': 'PV3', 'sem-moldes': 'PV6' };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = vermelhas.some((c) => c.id === esperado);
@@ -203,5 +240,5 @@ if (MUTANTE) {
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-console.log(`\nPARQUE-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · PV1-PV5'}`);
+console.log(`\nPARQUE-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · PV1-PV6'}`);
 process.exit(vermelhas.length ? 1 : 0);
