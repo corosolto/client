@@ -19,6 +19,17 @@
  *  AR5  NENHUM pombo em modo flight no registro inteiro (dono, 18/08: "a pomba
  *       que nao esta com bracos avertos deveria ficar so na ponta das lajes ou
  *       no chao") — pombo voando com GLB estático de asas abertas é o defeito
+ *  CV1  VIDA DE CÉU nos mapas que a declaram (r2, dono: "aviao voando, com
+ *       propaganda no banner + animais como araras, passarinhos voando nao
+ *       presente"): o mapa tem >= 1 avião, >= 2 araras e >= 5 passarinhos, todos
+ *       ACIMA da cabeça (y >= CEU_Y_MIN) e FORA dos bounds jogáveis no caso do avião
+ *  CV2  ELES VOAM DE VERDADE: cada um MUDA DE LUGAR em 0,8 s de simulação e
+ *       percorre um CIRCUITO (volta perto de onde saiu depois de um período) —
+ *       é a mesma pergunta da B8b do mansao-beach, que nasceu do defeito da AR5
+ *       (bicho estático de asas abertas pendurado no céu)
+ *  CV3  BANKING PARA DENTRO DA CURVA: o "cima" do voador aponta para o lado do
+ *       CENTRO do círculo. Avião deitando para FORA é o defeito que um sinal
+ *       trocado produz, e sem esta cláusula ele passa despercebido
  *  AR6  TODO mapa devolve `sound` (vida 1, plans/22, dono 19/08: "cena comuns
  *       do dia-dia animais urbanos ... com audio inclusive"). Forma mínima:
  *       { loops: [{ src, pos:[x,y,z], radius, vol }] } e/ou { bioma: '...' } —
@@ -33,14 +44,20 @@
  *   node tools/eval/ambience-registry-check.mjs --mutante=pomba-voa-de-novo # AR5
  *   node tools/eval/ambience-registry-check.mjs --mutante=sem-som          # AR6
  *   node tools/eval/ambience-registry-check.mjs --mutante=sem-fauna2       # AR4 (tatu/barata/papagaio)
+ *   node tools/eval/ambience-registry-check.mjs --mutante=ceu-vazio        # CV1
+ *   node tools/eval/ambience-registry-check.mjs --mutante=aviao-pendurado  # CV2
+ *   node tools/eval/ambience-registry-check.mjs --mutante=banking-invertido # CV3
  *
- * Horizonte/vida de céu por mapa é a parte 2 do BUG-57 (direção de arte por
- * bioma) e ganha cláusula própria quando o dono aprovar a primeira referência.
+ * Horizonte/vida de céu por mapa era a parte 2 do BUG-57, adiada aqui à espera da
+ * primeira referência aprovada pelo dono. A r2 da mansão do Joá é ela, e as
+ * cláusulas CV1-CV3 acima são a cobrança. Mapa que declarar `ceuVivo` no build
+ * entra na conta sozinho — lista literal foi o furo do gl-shots.
  */
 import { THREE, MAPS, initTextures } from './harness.mjs';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo', 'sem-som', 'sem-fauna2']);
+const conhecidos = new Set(['sem-ambience', 'fauna-em-solido', 'sem-gato', 'pomba-voa-de-novo', 'sem-som', 'sem-fauna2',
+  'ceu-vazio', 'aviao-pendurado', 'banking-invertido']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 /* Mapa 100% interno (sem céu): pombo não entra; rato sim — UPA com rato é a sátira. */
@@ -57,6 +74,18 @@ const BIOMA_FAUNA = {
   mansao: ['parrot'], parque_treta: ['parrot'],
 };
 const FAUNA2 = new Set(['armadillo', 'cockroach', 'parrot']);
+
+/* VIDA DE CÉU (r2). População mínima com a fala do dono ao lado de cada número:
+   "aviao voando" = 1, "araras" (plural) = 2, "passarinhos" em bando = 5.
+   CEU_Y_MIN 8 m: o pé-direito duplo da mansão é 4,5 e o muro 2,5 — abaixo de 8 o
+   bicho não está no CÉU, está na altura da cabeça. CIRCUITO_TOL 0,22 do raio:
+   depois de um período o voador tem de voltar para perto de onde saiu, senão a rota
+   é uma reta que some no infinito. */
+const CEU_MINIMO = Object.freeze({ plane: 1, macaw: 2, songbird: 5 });
+const CEU_TIPOS = Object.freeze(Object.keys(CEU_MINIMO));
+const CEU_Y_MIN = 8;
+const CEU_ANDOU_MIN = 0.5;   // m em 0,8 s — mesmo limiar da cláusula B8b do mansao-beach
+const CIRCUITO_TOL = 0.22;
 
 const T = await initTextures();
 const ids = Object.keys(MAPS);
@@ -109,7 +138,65 @@ for (const id of ids) {
     const c = W.colliders.find((k) => typeof k.minX === 'number' && k.maxY - k.minY > 0.5);
     if (c) emSolido.push({ type: 'mutante', x: (c.minX + c.maxX) / 2, z: (c.minZ + c.maxZ) / 2 });
   }
-  linhas.push({ id, animals: amb.animals.length, por, emSolido, voando, somOk });
+  /* ---------------- CV1/CV2/CV3 — VIDA DE CÉU ----------------
+     Só mapa que TEM voador entra na conta; os outros ficam de fora sem virar falha
+     (a cobrança por bioma é da AR4, não desta). */
+  const voadores = amb.animals.filter((a) => CEU_TIPOS.includes(a.type));
+  let ceu = null;
+  if (voadores.length) {
+    if (MUTANTE === 'ceu-vazio' && !mutanteAplicou) {
+      amb.animals = amb.animals.filter((a) => !CEU_TIPOS.includes(a.type));
+      mutanteAplicou = true;
+    } else {
+      if (MUTANTE === 'aviao-pendurado' && !mutanteAplicou) {
+        // volta ao defeito da AR5: bicho de asa aberta pendurado, parado no céu
+        amb._updateCircuito = function () {};
+        mutanteAplicou = true;
+      }
+      if (MUTANTE === 'banking-invertido' && !mutanteAplicou) {
+        const passo = amb._updateCircuito.bind(amb);
+        amb._updateCircuito = function (a) { passo(a); a.root.rotation.z = -a.root.rotation.z; };
+        mutanteAplicou = true;
+      }
+      amb.reset();
+      const antes = voadores.map((a) => a.root.position.clone());
+      for (let i = 0; i < 48; i++) amb.update(1 / 60);            // 0,8 s
+      const andou = voadores.filter((a, i) => a.root.position.distanceTo(antes[i]) > CEU_ANDOU_MIN).length;
+      /* CV3 lido AQUI, com o voador no meio de uma curva: "cima" do objeto contra a
+         direção do centro do círculo, os dois no plano horizontal. */
+      const cima = new THREE.Vector3();
+      const paraDentro = voadores.filter((a) => {
+        cima.set(0, 1, 0).applyQuaternion(a.root.quaternion);
+        const dx = a.rota.centro[0] - a.root.position.x, dz = a.rota.centro[1] - a.root.position.z;
+        const n = Math.hypot(dx, dz) || 1;
+        return (cima.x * dx + cima.z * dz) / n > 0.02;
+      }).length;
+      /* CV2 (circuito): o período de CADA UM tem de trazer ELE de volta para perto da
+         partida. Medir todos no período do mais lento reprovaria o bando rápido por
+         estar no meio da volta seguinte — erro de sonda, não defeito de rota. */
+      const emCurso = voadores.map((a) => a.root.position.clone());
+      const alvo = voadores.map((a) => Math.round(a.rota.periodo * 60));
+      const voltou = voadores.map(() => false);
+      for (let i = 1; i <= Math.max(...alvo); i++) {
+        amb.update(1 / 60);
+        voadores.forEach((a, k) => {
+          if (alvo[k] !== i) return;
+          voltou[k] = a.root.position.distanceTo(emCurso[k]) < a.rota.raio * CIRCUITO_TOL;
+        });
+      }
+      const fechou = voltou.filter(Boolean).length;
+      const baixos = voadores.filter((a) => a.root.position.y < CEU_Y_MIN).length;
+      const B = W.bounds;
+      const aviaoDentro = B ? voadores.filter((a) => a.type === 'plane'
+        && a.root.position.x > B.minX && a.root.position.x < B.maxX
+        && a.root.position.z > B.minZ && a.root.position.z < B.maxZ).length : 0;
+      const porTipo = {};
+      for (const a of voadores) porTipo[a.type] = (porTipo[a.type] || 0) + 1;
+      const faltam = CEU_TIPOS.filter((t) => (porTipo[t] || 0) < CEU_MINIMO[t]);
+      ceu = { n: voadores.length, porTipo, faltam, baixos, aviaoDentro, andou, fechou, paraDentro };
+    }
+  }
+  linhas.push({ id, animals: amb.animals.length, por, emSolido, voando, somOk, ceu });
 }
 
 const ar1 = linhas.filter((r) => r.erro || r.animals === null || r.animals === 0);
@@ -122,6 +209,14 @@ const ar3 = linhas.filter((r) => r.emSolido && r.emSolido.length);
 const ar4 = linhas.filter((r) => !r.erro && (BIOMA_FAUNA[r.id] || []).some((especie) => !(r.por?.[especie] > 0)));
 const ar5 = linhas.filter((r) => !r.erro && r.voando > 0);
 const ar6 = linhas.filter((r) => !r.erro && !r.somOk);
+const comCeu = linhas.filter((r) => r.ceu);
+const cv1 = comCeu.filter((r) => r.ceu.faltam.length || r.ceu.baixos || r.ceu.aviaoDentro);
+const cv2 = comCeu.filter((r) => r.ceu.andou < r.ceu.n || r.ceu.fechou < r.ceu.n);
+const cv3 = comCeu.filter((r) => r.ceu.paraDentro < r.ceu.n);
+/* Mapa que TINHA vida de céu e ficou sem ela é falha de CV1, não silêncio: senão o
+   mutante ceu-vazio passaria só por remover os voadores da lista. */
+const CEU_ESPERADO = new Set(['mansao']);
+const cvSumiu = linhas.filter((r) => !r.erro && CEU_ESPERADO.has(r.id) && !r.ceu);
 
 console.log(`AMBIÊNCIA NO REGISTRO — ${ids.length} mapas${MUTANTE ? `  [mutante: ${MUTANTE}]` : ''}\n`);
 for (const r of linhas) {
@@ -141,8 +236,19 @@ console.log(`  AR3 fauna fora de sólido          ${ar3.length ? `FALHA — ${ar
 console.log(`  AR4 espécie-chave por bioma       ${ar4.length ? `FALHA — ${f4}` : 'PASSA'}`);
 console.log(`  AR5 nenhuma pomba em voo          ${ar5.length ? `FALHA — ${f5} (mode flight sobreviveu; BUG-57 v2.1)` : 'PASSA'}`);
 console.log(`  AR6 todo mapa tem som ambiente    ${ar6.length ? `FALHA — ${ar6.map((r) => r.id).join(', ')}` : 'PASSA'}`);
+for (const r of comCeu) {
+  const c = r.ceu;
+  console.log(`\n  vida de céu em ${r.id}: ${Object.entries(c.porTipo).map(([k, v]) => `${k}:${v}`).join(' ')}`
+    + `  ·  ${c.andou}/${c.n} andaram em 0,8 s  ·  ${c.fechou}/${c.n} fecharam o circuito  ·  ${c.paraDentro}/${c.n} inclinam para dentro`);
+}
+const f1 = [...cv1.map((r) => `${r.id}(${[r.ceu.faltam.length && `faltam ${r.ceu.faltam.join('+')}`, r.ceu.baixos && `${r.ceu.baixos} abaixo de ${CEU_Y_MIN} m`, r.ceu.aviaoDentro && 'avião dentro dos bounds'].filter(Boolean).join('; ')})`),
+  ...cvSumiu.map((r) => `${r.id}(sem vida de céu)`)].join(', ');
+console.log(`  CV1 vida de céu declarada e alta  ${cv1.length || cvSumiu.length ? `FALHA — ${f1}` : comCeu.length ? 'PASSA' : 'sem mapa com vida de céu'}`);
+console.log(`  CV2 voador voa e fecha circuito   ${cv2.length ? `FALHA — ${cv2.map((r) => `${r.id} ${r.ceu.andou}/${r.ceu.n} andou, ${r.ceu.fechou}/${r.ceu.n} fechou`).join(', ')}` : 'PASSA'}`);
+console.log(`  CV3 banking para DENTRO da curva  ${cv3.length ? `FALHA — ${cv3.map((r) => `${r.id} ${r.ceu.paraDentro}/${r.ceu.n}`).join(', ')}` : 'PASSA'}`);
 
-const MUTANTES = { 'sem-gato': ['AR4', ar4], 'sem-fauna2': ['AR4', ar4], 'pomba-voa-de-novo': ['AR5', ar5], 'sem-som': ['AR6', ar6] };
+const MUTANTES = { 'sem-gato': ['AR4', ar4], 'sem-fauna2': ['AR4', ar4], 'pomba-voa-de-novo': ['AR5', ar5], 'sem-som': ['AR6', ar6],
+  'ceu-vazio': ['CV1', cvSumiu], 'aviao-pendurado': ['CV2', cv2], 'banking-invertido': ['CV3', cv3] };
 if (MUTANTES[MUTANTE]) {
   const [esperado, falhas] = MUTANTES[MUTANTE];
   const mordeu = falhas.length > 0;
@@ -150,9 +256,12 @@ if (MUTANTES[MUTANTE]) {
   if (!mordeu) { console.error(`\nMUTANTE SOBREVIVEU: ${MUTANTE} não acendeu ${esperado}`); process.exit(1); }
   const colaterais = [ar1.length && 'AR1', ar2.length && 'AR2', ar3.length && 'AR3',
     esperado !== 'AR4' && ar4.length && 'AR4', esperado !== 'AR5' && ar5.length && 'AR5',
-    esperado !== 'AR6' && ar6.length && 'AR6'].filter(Boolean);
+    esperado !== 'AR6' && ar6.length && 'AR6',
+    esperado !== 'CV1' && (cv1.length || cvSumiu.length) && 'CV1',
+    esperado !== 'CV2' && cv2.length && 'CV2', esperado !== 'CV3' && cv3.length && 'CV3'].filter(Boolean);
   if (colaterais.length) { console.error(`\nMUTANTE ${MUTANTE} acendeu cláusulas colaterais: ${colaterais.join(', ')}`); process.exit(1); }
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-process.exit(ar1.length || ar2.length || ar3.length || ar4.length || ar5.length || ar6.length ? 1 : 0);
+process.exit(ar1.length || ar2.length || ar3.length || ar4.length || ar5.length || ar6.length
+  || cv1.length || cvSumiu.length || cv2.length || cv3.length ? 1 : 0);

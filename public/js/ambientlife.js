@@ -5,7 +5,11 @@ import { VERSION } from './version.js';
 
 const loader = new GLTFLoader();
 const templates = new Map();
-const ASSETS = Object.freeze({
+/* NÃO congelado de propósito: a região append-only do fim do arquivo (vida de céu do
+   Joá, r2) junta as chaves novas AQUI, e faz isso DEPOIS de `FAVELA_AMBIENCE_ASSETS`
+   já ter tirado o retrato. Assim nenhum mapa que não declara `ambience` no registro
+   passa a baixar arara/pássaro/avião — só quem pede. */
+const ASSETS = ({
   rat: 'models/ambient/rat_animated.glb',
   pigeonGround: 'models/ambient/pigeon_ground.glb',
   dog: 'models/ambient/dog_caramelo.glb',
@@ -21,16 +25,18 @@ const ASSETS = Object.freeze({
   parrot: 'models/ambient/papagaio_poleiro.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
+const TYPE_ASSET = ({ macaw: 'macaw', songbird: 'songbird', plane: 'plane', rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
 /* Gaivota e caranguejo nao tem GLB no acervo CC0 e ficam procedurais. Sem esta lista
    o `_add` cai no `|| 'pigeonGround'` e clona um POMBO com outro nome. */
 const PROCEDURAIS = new Set(['gull', 'crab']);
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', gull: 'gaivota', crab: 'caranguejo' });
+/* vida de céu do Joá (r2): tipos com molde Mint e rota própria — ver a região append-only. */
+const VOADORES = new Set(['macaw', 'songbird', 'plane']);
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', gull: 'gaivota', crab: 'caranguejo', macaw: 'arara', songbird: 'passaro', plane: 'aviao' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, gull: 2.6, crab: 1.6 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, gull: 2.6, crab: 1.6, macaw: 2.4, songbird: 2.2, plane: 0 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
@@ -248,7 +254,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], gulls = [], crabs = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], gulls = [], crabs = [], macaws = [], songbirds = [], planes = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -269,6 +275,10 @@ class FavelaAmbience {
     const parrotList = low ? parrots.slice(0, 1) : parrots;
     const gullList = low ? gulls.slice(0, 2) : gulls;
     const crabList = low ? crabs.slice(0, 1) : crabs;
+    /* Vida de céu (r2): em `low` o bando encolhe mas NÃO some — o avião é uma peça só e
+       fica sempre, porque é ele que o dono pediu pelo nome. */
+    const macawList = low ? macaws.slice(0, 1) : macaws;
+    const songbirdList = low ? songbirds.slice(0, 3) : songbirds;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -281,6 +291,9 @@ class FavelaAmbience {
     parrotList.forEach((config, index) => this._add('parrot', config, index));
     gullList.forEach((config, index) => this._add('gull', config, index));
     crabList.forEach((config, index) => this._add('crab', config, index));
+    macawList.forEach((config, index) => this._add('macaw', config, index));
+    songbirdList.forEach((config, index) => this._add('songbird', config, index));
+    planes.forEach((config, index) => this._add('plane', config, index));
     this.reset();
   }
 
@@ -308,6 +321,8 @@ class FavelaAmbience {
     if (loaded) {
       model = loaded.model;
       normalizeModel(assetId, model);
+      // voador é escalado pelo COMPRIMENTO e girado para a frente do three.js (região append-only)
+      if (VOADORES.has(type)) normalizeVoador(type, model);
       animalRoot.add(model);
     } else {
       model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
@@ -344,14 +359,22 @@ class FavelaAmbience {
         mixer.clipAction(clip).play();
       }
     }
-    const origin = new THREE.Vector3(...config.pos);
-    const to = new THREE.Vector3(...(config.to || config.pos));
+    /* Voador não declara `pos`: a rota É a posição (centro/raio/altura). O ponto de fase 0
+       do circuito faz as vezes de origem, para `snapshot`/`reset` e para a sonda AR3. */
+    const rotaVoo = VOADORES.has(type) ? rotaDeVoo(type, config, index) : null;
+    const partida = rotaVoo
+      ? [rotaVoo.centro[0] + Math.cos(rotaVoo.fase) * rotaVoo.raio, rotaVoo.altura, rotaVoo.centro[1] + Math.sin(rotaVoo.fase) * rotaVoo.raio]
+      : config.pos;
+    const origin = new THREE.Vector3(...partida);
+    const to = new THREE.Vector3(...(config.to || partida));
     this.animals.push({
-      id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : type === 'gull' ? 'planeio' : (config.mode || 'ground'), root: animalRoot, model,
+      id: `${type}-${index}`, type, mode: type === 'pigeon' ? 'ground' : type === 'gull' ? 'planeio'
+        : VOADORES.has(type) ? 'circuito' : (config.mode || 'ground'), root: animalRoot, model,
       origin, to, phase: config.phase || 0, radius: config.radius || [2.4, 1.8],
       source: loaded ? 'gltf' : 'fallback', mixer, actions, action: 'idle', state: 'idle', alertUntil: 0,
       alertAt: 0, alertOrigin: origin.clone(), flee: new THREE.Vector3(1, 0, 0),
       routine: origin.clone(), recoverAt: 0, recoverUntil: 0, recoverFrom: origin.clone(),
+      rota: rotaVoo,
     });
   }
 
@@ -366,8 +389,8 @@ class FavelaAmbience {
       animal.recoverUntil = .8;
       animal.recoverFrom.copy(animal.origin);
       animal.state = 'idle';
-      animal.root.position.copy(animal.origin);
-      animal.root.rotation.set(0, animal.phase, 0);
+      if (animal.rota) { animal.root.rotation.order = 'YXZ'; this._updateCircuito(animal, 0); }
+      else { animal.root.position.copy(animal.origin); animal.root.rotation.set(0, animal.phase, 0); }
       if (animal.actions) {
         animal.mixer.stopAllAction();
         animal.actions.idle.reset().play();
@@ -380,6 +403,7 @@ class FavelaAmbience {
   onShot(start, end) {
     let reacted = 0;
     for (const animal of this.animals) {
+      if (animal.type === 'plane') continue;   // monomotor a 60 m não ouve tiro de pistola
       const position = animal.root.getWorldPosition(new THREE.Vector3());
       if (distanceToSegment(position, start, end) > SHOT_REACTION_RADIUS) continue;
       animal.alertAt = this.time;
@@ -409,6 +433,7 @@ class FavelaAmbience {
       else if (animal.type === 'parrot') this._updateParrot(animal, dt);
       else if (animal.type === 'gull') this._updateGull(animal, dt);
       else if (animal.type === 'crab') this._updateCrab(animal, dt);
+      else if (VOADORES.has(animal.type)) this._updateCircuito(animal, dt);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -599,9 +624,14 @@ class FavelaAmbience {
     const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
     const gull = this.animals.filter((animal) => animal.type === 'gull').length;
     const crab = this.animals.filter((animal) => animal.type === 'crab').length;
+    const macaw = this.animals.filter((animal) => animal.type === 'macaw').length;
+    const songbird = this.animals.filter((animal) => animal.type === 'songbird').length;
+    const plane = this.animals.filter((animal) => animal.type === 'plane').length;
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, gull, crab, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot + gull + crab }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, gull, crab, macaw, songbird, plane,
+        total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot + gull + crab + macaw + songbird + plane },
+      meshes, triangles: Math.round(triangles),
     };
   }
 
@@ -661,4 +691,154 @@ export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerg
     object.receiveShadow = true;
   });
   return root;
+}
+
+/* ===========================================================================
+   VIDA DE CÉU DO JOÁ (r2, região APPEND-ONLY)
+   ---------------------------------------------------------------------------
+   Dono: "aviao voando, com propaganda no banner + animais como araras,
+   passarinhos voando nao presente". A parte 2 do BUG-57 (vida de céu por bioma)
+   estava adiada no cabeçalho do ambience-registry-check à espera da primeira
+   referência aprovada; esta é ela.
+
+   TRÊS DECISÕES, E O PORQUÊ DE CADA UMA
+
+   1. ROTA CIRCULAR PARAMÉTRICA, NÃO `pos`/`to`. A gaivota reaproveita `pos`/`to`
+      e monta uma elipse a partir deles; para o avião isso seria declarar o raio
+      por acidente. Aqui a rota é o que ela é: centro, raio, altura e PERÍODO.
+      O período é o número honesto — "lento" é 90 s para dar a volta, não uma
+      velocidade que ninguém consegue conferir.
+
+   2. BANKING COM O SINAL DEDUZIDO, NÃO CHUTADO. Um bicho (ou avião) que curva
+      inclina PARA DENTRO da curva. Com a convenção do three.js (frente = -Z) e
+      `rotation.order = 'YXZ'`, o roll é o Z local e um roll POSITIVO joga o topo
+      para o -X local, que na volta anti-horária aponta para FORA. Por isso o
+      sinal é negativo: `rotation.z = -banking`. A cláusula CV3 do
+      ambience-registry-check mede o produto escalar entre o "cima" do bicho e a
+      direção do centro do círculo — se algum dia alguém trocar o sinal, ela fica
+      vermelha, porque avião deitando para fora da curva é o defeito.
+
+   3. O MOLDE VEM DEITADO NO EIXO ERRADO E ISSO É MEDIDO, NÃO ASSUMIDO. O
+      `aviao_faixa.glb` tem o NARIZ no -X e a faixa no +X (bbox do nó `corpo`
+      x ∈ [-0,499; -0,009] contra o nó `faixa` x ∈ [-0,011; 0,499], lido com
+      gltf-transform). Girar -PI/2 em Y põe o nariz no -Z, que é a frente do
+      three.js — e só então yaw/roll significam o que o nome diz.
+
+   A faixa ganha textura de propaganda própria (`/img/textures/faixa_aviao.webp`,
+   fictícia: "RÁDIO TRETA FM 99"). As UV são REESCRITAS por projeção planar a
+   partir da posição dos vértices em vez de reaproveitar as do atlas do Mint: a
+   faixa é uma fita quase plana no plano XY, então a projeção é exata e não
+   depende de onde o Mint resolveu assar a ilha de UV.
+   =========================================================================== */
+Object.assign(ASSETS, {
+  macaw: 'models/ambient/arara_voo.glb',
+  songbird: 'models/ambient/passaro_voo.glb',
+  plane: 'models/props/aviao_faixa.glb',
+});
+export const CEU_JOA_ASSETS = Object.freeze(['macaw', 'songbird', 'plane']);
+export const MANSAO_AMBIENCE_ASSETS = Object.freeze([...FAVELA_AMBIENCE_ASSETS, ...CEU_JOA_ASSETS]);
+
+/* Tamanho de mundo (m) pelo EIXO LONGO do molde e giro que põe a frente no -Z.
+   Avião: 12 m de ponta a ponta com a faixa (a nota do Mint pede escala ~12 sobre o
+   molde normalizado em 1 m). Arara 0,95 m de bico a cauda; pássaro 0,30 m. */
+const VOO_MOLDE = Object.freeze({
+  plane: { comprimento: 12, giro: -Math.PI / 2 },
+  macaw: { comprimento: 0.95, giro: 0 },
+  songbird: { comprimento: 0.30, giro: 0 },
+});
+
+/* Rota de circuito. `config` aceita centro/raio/altura/periodo; o que faltar cai num
+   padrão por tipo. `index` abre o bando em leque — mesmo círculo, fases e raios
+   ligeiramente diferentes, senão cinco pássaros viram um pássaro com cinco cópias. */
+function rotaDeVoo(type, config = {}, index = 0) {
+  const padrao = {
+    plane: { centro: [0, -30], raio: 150, altura: 62, periodo: 90, banking: 0.20, sobe: 0 },
+    macaw: { centro: [-6, 6], raio: 26, altura: 17, periodo: 26, banking: 0.34, sobe: 1.1 },
+    songbird: { centro: [4, -18], raio: 14, altura: 12, periodo: 15, banking: 0.40, sobe: 0.8 },
+  }[type] || {};
+  const espalha = index * 0.9;
+  return {
+    centro: config.centro || padrao.centro,
+    raio: (config.raio || padrao.raio) * (1 + (index % 3) * 0.06),
+    altura: (config.altura ?? padrao.altura) + (index % 4) * (type === 'plane' ? 0 : 1.3),
+    periodo: config.periodo || padrao.periodo,
+    banking: config.banking ?? padrao.banking,
+    sobe: config.sobe ?? padrao.sobe,
+    fase: (config.phase || 0) + espalha,
+    sentido: config.sentido || 1,
+  };
+}
+
+/* Um passo do circuito. Determinístico em `this.time` — a régua reproduz o quadro sem
+   guardar estado, do mesmo jeito que faz com a gaivota. */
+FavelaAmbience.prototype._updateCircuito = function _updateCircuito(animal) {
+  const r = animal.rota;
+  const a = r.sentido * ((this.time / r.periodo) * Math.PI * 2 + r.fase);
+  const cx = r.centro[0], cz = r.centro[1];
+  animal.root.position.set(
+    cx + Math.cos(a) * r.raio,
+    r.altura + Math.sin(a * 2 + r.fase) * r.sobe,
+    cz + Math.sin(a) * r.raio,
+  );
+  // tangente do círculo; a frente do three.js é -Z, então o yaw é atan2(-fx, -fz)
+  const fx = -Math.sin(a) * r.sentido, fz = Math.cos(a) * r.sentido;
+  animal.root.rotation.order = 'YXZ';
+  animal.root.rotation.y = Math.atan2(-fx, -fz);
+  animal.root.rotation.x = 0;
+  animal.root.rotation.z = -r.banking * r.sentido;   // inclina PARA DENTRO (decisão 2)
+  // asa batendo só em quem tem asa: o monomotor não bate asa
+  if (animal.type !== 'plane') {
+    const bate = Math.sin(this.time * (animal.type === 'songbird' ? 11.5 : 6.4) + r.fase * 3);
+    for (const parte of animal.root.children) {
+      if (parte.userData?.faunaPart !== 'wing') continue;
+      parte.rotation.z = (parte.userData.wingSide || 1) * (0.1 + bate * 0.42);
+    }
+  }
+  animal.state = 'circuito';
+};
+
+/* O `normalizeModel` do topo escala pela ALTURA e é o certo para bicho que anda. Bicho de
+   asa aberta e avião têm de ser escalados pelo COMPRIMENTO — pela altura, uma arara de
+   asas abertas viraria do tamanho de um pombo. Este hook roda no `_add` via
+   `normalizeVoador`, chamado logo depois do normalizeModel padrão. */
+function normalizeVoador(type, model) {
+  const molde = VOO_MOLDE[type];
+  if (!molde) return;
+  model.scale.setScalar(1);
+  model.rotation.set(0, 0, 0);
+  model.position.set(0, 0, 0);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const escala = molde.comprimento / Math.max(0.001, Math.max(size.x, size.z));
+  model.scale.setScalar(escala);
+  const centro = box.getCenter(new THREE.Vector3());
+  model.position.set(-centro.x * escala, -centro.y * escala, -centro.z * escala);
+  model.rotation.y = molde.giro;
+  if (type === 'plane') pintaFaixa(model);
+}
+
+/* Textura de propaganda na FAIXA. Procura o nó `faixa` do molde (o Mint entrega corpo e
+   faixa separados justamente para isto) e reescreve as UV por projeção planar do XY. */
+function pintaFaixa(model) {
+  if (typeof document === 'undefined') return;
+  let faixa = null;
+  model.traverse((o) => { if (!faixa && o.isMesh && /faixa/i.test(o.name)) faixa = o; });
+  if (!faixa) { console.warn('[ambientlife] aviao_faixa sem nó "faixa" — banner fica sem propaganda'); return; }
+  const geo = faixa.geometry;
+  const pos = geo.attributes.position;
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  const lx = Math.max(1e-6, bb.max.x - bb.min.x), ly = Math.max(1e-6, bb.max.y - bb.min.y);
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    uv[i * 2] = (pos.getX(i) - bb.min.x) / lx;
+    uv[i * 2 + 1] = (pos.getY(i) - bb.min.y) / ly;
+  }
+  geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  const tex = new THREE.TextureLoader().load(`/img/textures/faixa_aviao.webp?v=${VERSION}`);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+  faixa.material = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
+  faixa.userData.faixaPintada = true;
 }

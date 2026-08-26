@@ -7,7 +7,7 @@ import { grafitar } from './graffiti_pass.js';
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { detailFor } from './textures.js';
 import { applyLook } from './map_sky.js';
-import { createFavelaAmbience } from './ambientlife.js';
+import { createFavelaAmbience, MANSAO_AMBIENCE_ASSETS } from './ambientlife.js';
 import { createWater } from './water.js';
 import { AMB_LOOPS } from './soundscape.js';
 
@@ -40,7 +40,10 @@ export const MANSAO_MOBILIA = ['mansao_sofa', 'mansao_poltrona', 'mansao_mesa_ce
 export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id), ...JARDIM_VEG,
   // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
   'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada',
-  ...MANSAO_MOBILIA, 'coqueiro', 'aviao_faixa'];
+  ...MANSAO_MOBILIA, 'coqueiro'];
+/* O avião NÃO entra em MANSAO_PROPS: quem o carrega é o `preloadAmbientLife` pela lista
+   de ambiência abaixo, porque ele é vida de céu (rota no ambientlife.js), não set dressing. */
+export const MANSAO_AMBIENCE = MANSAO_AMBIENCE_ASSETS;
 
 export function buildMansao(scene, T) {
   const colliders = [], occluders = [], pickups = [];
@@ -1265,6 +1268,21 @@ export function buildMansao(scene, T) {
       { pos: [-6, praiaAlturaEm(-6, -38.6), -38.6], to: [-3.4, praiaAlturaEm(-3.4, -39.4), -39.4], phase: .8 },
       { pos: [17.5, praiaAlturaEm(17.5, -40.2), -40.2], to: [20.2, praiaAlturaEm(20.2, -41), -41], phase: 3.3 },
     ],
+    /* VIDA DE CÉU (r2, dono: "aviao voando, com propaganda no banner + animais como
+       araras, passarinhos voando nao presente"). Rota, banking e escala moram na região
+       append-only do ambientlife.js; aqui fica só a POSIÇÃO no mundo do Joá.
+       O avião: raio 150 m em volta de (0,-30), 62 m de altura, 90 s por volta. Nesse raio
+       ele nunca entra nos bounds (22×36) — é vista, como a praia. */
+    planes: [{ centro: [0, -30], raio: 150, altura: 62, periodo: 90, phase: 1.2 }],
+    /* Duas araras em circuito sobre o jardim, alto o bastante para passar por cima do
+       muro de 2,5 m e da sebe, e baixo o bastante para ler a cor. */
+    macaws: [
+      { centro: [-6, 8], raio: 26, altura: 17, periodo: 26, phase: 0 },
+      { centro: [-6, 8], raio: 26, altura: 17, periodo: 26, phase: 2.6 },
+    ],
+    /* Bando de 6 passarinhos sobre o terraço/piscina, circuito curto e rápido. Em `low`
+       o bando cai para 3 (FavelaAmbience), que é o corte de sempre. */
+    songbirds: [0, 1, 2, 3, 4, 5].map((i) => ({ centro: [4, -20], raio: 13, altura: 12, periodo: 15, phase: i * 1.05 })),
   });
 
   return {

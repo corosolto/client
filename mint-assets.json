@@ -2068,6 +2068,29 @@
     ],
     "finalSha256": "323fe81e0bca831611db2e4c5fded13a0211e19d876f37bcb4adf832fe54d197"
    }
+  },
+  "faixa-aviao-propaganda": {
+   "artifactType": "image/webp",
+   "files": [
+    "public/img/textures/faixa_aviao.webp"
+   ],
+   "source": {
+    "kind": "openrouter-image-concept",
+    "assetId": null,
+    "chatUrl": null,
+    "displayName": "Faixa de aviao — propaganda \"RADIO TRETA FM 99\"",
+    "prompt": "A long horizontal aerial advertising banner as towed behind a small plane, photographed straight-on, flat and fully readable. (...) large bold clean sans-serif capital letters in bright red and blue reading exactly: RADIO TRETA FM 99. (...) no logos, no plane, no sky, no background scenery.",
+    "notes": "Emissora FICTICIA — veto editorial de marca real vale aqui como vale no grafite. Duas variacoes geradas e OLHADAS; a v1 foi recortada na faixa de letras e centralizada em tela branca no aspecto da MALHA da faixa (0,510 x 0,094 medidos no aviao_faixa.glb com gltf-transform), para a letra nao esticar. Aplicada em runtime pelo `pintaFaixa()` do ambientlife.js, que reescreve as UV por projecao planar XY em vez de reaproveitar a ilha do atlas do Mint. Recibo visual: render Blender do GLB com a textura, sem browser."
+   },
+   "processing": {
+    "provider": "openrouter",
+    "model": "google/gemini-3-pro-image",
+    "tools": [
+     "tools/gen-image.mjs",
+     "PIL"
+    ],
+    "finalSha256": "7063c08031efea12eef11bca050aea05d20dc97a11ee3684bbec188f875232f9"
+   }
   }
  }
 }

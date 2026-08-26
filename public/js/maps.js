@@ -8,7 +8,7 @@ import { buildEscadao, ESCADAO_PROPS, ESCADAO_AMBIENCE } from './map_escadao.js'
 import { buildCampoMorro, CAMPOMORRO_PROPS } from './map_campomorro.js';
 import { buildLajes, LAJES_PROPS, LAJES_AMBIENCE } from './map_lajes_authored.js';
 import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
-import { buildMansao, MANSAO_PROPS } from './map_mansao.js';
+import { buildMansao, MANSAO_PROPS, MANSAO_AMBIENCE } from './map_mansao.js';
 import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
@@ -70,7 +70,7 @@ export const MAPS = {
   campomorro:    { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
   lajes:         { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
   corrego:       { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
-  mansao:        { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
+  mansao:        { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ambience: MANSAO_AMBIENCE, ctfMode: true },
   // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
   // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
