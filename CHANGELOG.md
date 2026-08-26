@@ -31,6 +31,7 @@
 - [Notas completas do release](https://github.com/rubenmarcus/csbrasil/releases/tag/v2.0.0-alpha.179).
 - docs(changelog): rodada do cronista — 60 commits
 - docs(changelog): rodada do cronista — 54 commits
+- docs(changelog): rodada do cronista — 25 commits
 ## [2.0.0-alpha.178] — 2026-08-22
 
 ### Mudado
