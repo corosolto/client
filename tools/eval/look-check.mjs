@@ -44,8 +44,9 @@ const RAIZ = path.resolve(HERE, '../..');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const TETO_DE = 8;
 // Piloto do RC1 (plans/23): os 3 primeiros mapas do look por mapa. O rollout
-// estende esta lista aos demais mapas com céu webp.
-const MAPAS = ['mansao', 'corrego', 'campomorro'];
+// estende esta lista aos demais mapas com céu webp — velho_oeste entrou na r2
+// da frente map2 (sky_sertao.webp medido por look-horizonte.py: #a6794d).
+const MAPAS = ['mansao', 'corrego', 'campomorro', 'velho_oeste'];
 
 /* ---------- sRGB -> Lab (D65), ΔE CIE76 ---------- */
 function srgbParaLab(hex) {

@@ -31,7 +31,7 @@
     "eval:ambience-registry": "node tools/eval/ambience-registry-check.mjs",
     "eval:parquewheel": "node tools/eval/parque-wheel-check.mjs",
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
-    "//eval:sertao": "frente map2/velho-oeste: o 'não parece velho-oeste genérico, parece sertão' do dono virou número — elementos de caatinga, adobe no casario e tarde quente medida (mutantes provam cada cláusula); a eval:velhooeste segue medindo o LAYOUT intacto",
+    "//eval:sertao": "frente map2/velho-oeste: o feedback r2 do dono ('casas de pau a pique, igrejinha, caminhão antigo, calango, caatinga') virou número — ST1-ST5 exigem arraial com moldes Mint reais, caatinga densa, taipa, tarde quente e calango (mutantes provam cada cláusula); a eval:velhooeste mede GAMEPLAY/ROTAS (CTF, spawns, rota, colisões) — o tema faroeste foi revogado pelo dono",
     "eval:sertao": "node tools/eval/sertao-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",

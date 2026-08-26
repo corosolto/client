@@ -124,7 +124,7 @@ npm run eval:parquewheel
 
 ## `eval:velhooeste`
 
-O mapa Velho Oeste preserva marcos, janelas de madeira abertas/fechadas, gênero, perigo e recompensas dos cartazes, retratos, densidade, colisões, spawns e rota. Mutantes: sem-saloon|sem-carrocas|sem-tumbleweed|sem-obstaculos-centrais|centro-aberto|sem-cartazes|sem-retratos|cartaz-sobre-janela|genero-unico|janela-verde|todas-fechadas|perigoso-unico|recompensa-repetida|sem-colisao-varanda|sem-colisao-movel|parada|texturas-genericas.
+O CONTRATO DE GAMEPLAY/ROTAS da frente map2 (r2): a estética faroeste foi revogada pelo dono e a régua foi re-derivada — o tema é medido pela `eval:sertao`. Ficam, com os mesmos tetos: arraial denso (≥12 estruturas, ≥6 casas, ≥8 obstáculos no miolo), movimento vivo (tumbleweeds + calango em rajada start-stop), CTF/spawns, rota ≥100 nós, texturas dedicadas (adobe/pau-a-pique/solo rachado inclusos), webp real ligados ao fonte, colisor móvel e ≥8 alpendres bloqueando o corpo real. Mutantes: sem-casas|centro-aberto|obstaculos-sem-nome|parada|calango-morto|sem-ctf|rota-cortada|texturas-genericas|sem-colisao-movel|sem-colisao-varanda.
 
 ```bash
 npm run eval:velhooeste
@@ -132,7 +132,7 @@ npm run eval:velhooeste
 
 ## `eval:sertao`
 
-Frente map2/velho-oeste (retheme Sertão da Treta): mede a IDENTIDADE nordestina sem tocar no layout — elementos de caatinga (`sertao-*`) por contagem e diversidade, adobe em ≥75% das paredes do casario, e tarde quente medida (fog R−B ≥ 60, sol ≤25° de elevação, névoa ≤0,0065). A `eval:velhooeste` continua verde garantindo que o retheme não reautorou nada. Mutantes: sem-sertao|volta-oeste|ceu-frio.
+Frente map2/velho-oeste (r2, reconstrução Sertão da Treta): cada substantivo do feedback do dono virou cláusula — ST1 caatinga viva (`sertao-*`, ≥28 elementos ≥8 tipos), ST2 taipa de mão em ≥75% das paredes (pau a pique É taipa), ST3 tarde quente (fog R−B ≥ 60, sol ≤25°, névoa ≤0,0065), ST4 o arraial pedido (≥6 casas pau-a-pique do molde Mint, igrejinha na praça central, caminhão, moldes no fonte+disco+preload), ST5 calango registrado (≥2 vivos + GLB + preload). Mutantes: sem-sertao|volta-oeste|ceu-frio|sem-igrejinha|sem-calango.
 
 ```bash
 npm run eval:sertao
