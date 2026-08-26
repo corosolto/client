@@ -39,6 +39,65 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
+
+**Sintoma (literal, issue #443, aberta pelo `crash-fix.yml` em 25/08 18:05Z):**
+*"SyntaxError: Importing binding name 'resolveGeoLang' is not found."*, fingerprint
+`6b4fb05e`, classe `codigo`, alpha.138, **origem, stack e migalhas vazias**.
+
+**Causa raiz — confirmada, e não é bug de código.** `resolveGeoLang` nasceu no PR #388
+(commit `684c8ca9`, 20/08) e estreou na **alpha.162**; na alpha.138 (`9db03fd4`, 17/08) nem
+o export (`public/js/i18n.js`) nem o import (`public/js/main.js`) existem. **Nenhum deploy
+isolado produz esse erro** — ele só existe na interseção de dois deploys no edge: o
+"alpha.138" do relatório é o `?v=` do HTML **em cache** no navegador (`versao()`,
+`src/pages/index.astro:88-93`), servido junto de módulo de outro deploy sob a mesma URL
+versionada. Reincidência exata do BUG-39 (`edge_ttl` de 1 mês da regra `assets_jogo`,
+`scripts/cloudflare-setup.sh:69-77`) — desta vez na redação do **WebKit**: "Importing
+binding name … is not found." é o que o Safari escreve onde V8/Gecko escrevem "does not
+provide an export". O `CACHE_SPLIT_RE` (`src/lib/error-provenance.mjs:6`) não conhecia essa
+redação, `classifyCrash` devolveu `codigo`, e o `crash-fix.yml` abriu issue em vez de
+disparar **purge do edge + re-probe**, a remediação determinística da classe. O fingerprint
+fecha: `crashFingerprint('error', <mensagem>, null)` = `6b4fb05e`.
+
+**Conserto.** Cinco redações entram no `CACHE_SPLIT_RE`, como substrings literais:
+`Importing binding name` (WebKit, export ausente — cobre também a variante "cannot be
+resolved by star export entries") e as quatro de bare specifier sem import map aplicado —
+`was a bare specifier, but was not remapped` (Gecko), `era um especificador simples, mas não
+foi remapeado` (Gecko **em pt-BR** — a mensagem literal da #362: o navegador entrega o erro
+traduzido no idioma do jogador), `Failed to resolve module specifier` (V8) e
+`Module specifier, .*? does not start with` (WebKit). Quita a dívida anotada na BUG-74
+("`CACHE_SPLIT_RE` só conhece inglês"). A ordem de `classifyCrash` não muda: proveniência
+externa segue vencendo cache-split (a mesma mensagem vinda de `chrome-extension://` continua
+`externo` — fixture nova na EP7), e cache-split vindo do console segue disparando purge
+(decisão do BUG-72, `jserror.ts:78-81`).
+
+**Medido antes do conserto:**
+
+| | antes | depois |
+|---|---|---|
+| redação WebKit de export ausente (#443) | `codigo` → issue falsa | `cache-split` → purge + re-probe |
+| bare specifier sem import map (#362, pt-BR) | `codigo` → issue falsa | `cache-split` → purge + re-probe |
+| fingerprints publicados `6b4fb05e` / `82b4da8e` | — | reproduzidos pela receita (EP16 mede) |
+| cláusulas verdes / mutantes que mordem | 15 / 39 | 16 / 42 |
+
+**Custo declarado:** cada redação nova **alarga o gatilho do purge** (`crash-fix.yml:71-74`
+purga `/js/` e `style.css` do edge), inclusive vindo de `console` — que é deliberado
+(BUG-72). Mitigação: substring literal da mensagem de cada engine, contra-fixtures na régua
+(crash citando o MESMO símbolo, ex. `Can't find variable: resolveGeoLang`, continua
+`codigo`) e proveniência externa por cima de tudo. O pt-BR cobre UMA língua além do inglês:
+outra tradução do Gecko continuará caindo em `codigo` até chegar numa issue com a mensagem
+literal — decisão de não caçar redação que nunca apareceu.
+
+**Não verificado:** a linha completa do `js_error` (hits, user-agent) — sem credencial do
+Supabase nesta máquina, como já registrado na BUG-74. O que foi medido sem banco:
+`node tools/eval/prod-coherence.mjs https://www.csbrasil.online` fechou **verde** em 25/08 —
+o mix da alpha.138 já não está servido e não há purge pendente; o conserto é só o rótulo.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
+`cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
+alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
 **Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
@@ -116,7 +175,8 @@ continua desconhecida e **a gravidade não foi medida** - o schema do Supabase �
 diagnosticável. Fica também anotado, para PR próprio: **`CACHE_SPLIT_RE` só conhece
 inglês**, e foi por isso que a #362 (mensagem do Firefox em pt-BR) também caiu em `codigo`
 em vez de `cache-split` e perdeu o purge automático. Mexer nisso altera a classe que
-dispara purge de edge e merece régua própria.
+dispara purge de edge e merece régua própria. *(Quitado na BUG-75, issue #443: EP16 e
+três mutações próprias.)*
 
 **Não verificado:** o caminho de ponta a ponta (módulo falha → `onerror` → migalha → issue)
 exige navegador e Supabase. O que foi verificado sem navegador: a régua recorta e executa o
