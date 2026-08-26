@@ -182,3 +182,27 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
   Registro: `coreto-praca-parque`. Otimizado por `tools/optimize-props.mjs`
   (dedup + webp 1024 + prune, 1.107 KB → 448 KB). No mapa, substitui o coreto
   procedural quando carrega (fallback idêntico em colisores).
+- `roda_gigante.glb` — "Ferris Wheel", roda-gigante completa (aro duplo, raios,
+  14 gôndolas, pernas em A, plataforma). 3.913 tris. Mint text-to-3D, kit
+  "parque" (26/08/2026, pack th783j3d4kq2saf84wyv3kfpkh8d6fmz). Chat:
+  <https://mint.gg/chat/ph71fzmc1gjm6tvbve4b59x4td8d6gvn>. Registro:
+  `roda-gigante-parque`. Modelo-fonte do split abaixo; o mapa não o carrega.
+- `roda_gigante_roda.glb` — parte ROTATIVA do split (aro duplo + raios +
+  gôndolas). 2.871 tris. Split por componentes conexos em Blender headless
+  (`tools/blender-split-roda-gigante.py`), verificado por render (composite
+  idêntico ao original). Registro: `roda-gigante-roda-parque`. No mapa, filha
+  do grupo `roda-gigante` — gira com a rotação procedural do update.
+- `roda_gigante_base.glb` — parte ESTÁTICA do split (pernas A, pés, plataforma,
+  cabine do operador). 1.042 tris, mesma origem e script. Registro:
+  `roda-gigante-base-parque`. Pés em y=0, mesma escala da parte rotativa.
+- `carrossel.glb` — "Carousel", carrossel com cavalos e cobertura. 4.419 tris,
+  mesmo kit/chat. Registro: `carrossel-parque`. Filho do grupo
+  `carrossel-giratorio` (gira junto); substitui plataforma/cavalos/teto
+  procedurais no browser.
+- `predio_artdeco.glb` — "Art Deco Building", prédio de entorno. 4.297 tris,
+  mesmo kit/chat. Registro: `predio-artdeco-entorno-parque`. 8 instâncias fora
+  dos bounds jogáveis fechando o quarteirão, rotações/alturas variadas.
+- `barraca_quermesse.glb` — "Quermesse Tent", barraca de quermesse. 4.419
+  tris, mesmo kit/chat. Registro: `barraca-quermesse-parque`. Substitui os 4
+  quiosques-caixa (PIPOCA/ALGODÃO DOCE/PESCARIA/ARGOLA); placas signTexture e
+  colisores procedurais mantidos.
