@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-17T12:24:22.647Z",
+ "gerado": "2026-08-26T02:20:46.825Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 62,
@@ -71,53 +71,53 @@
   "porMapa": [
    {
     "mapa": "praca_poderes",
-    "materiais": 97,
-    "map": 83,
+    "materiais": 103,
+    "map": 75,
     "normalMap": 16,
     "roughnessMap": 16,
     "aoMap": 0,
-    "meshes": 169,
-    "triangulos": 3671
+    "meshes": 221,
+    "triangulos": 6737
    },
    {
     "mapa": "piscina_treta",
-    "materiais": 122,
+    "materiais": 129,
     "map": 99,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 469,
-    "triangulos": 5970
+    "meshes": 503,
+    "triangulos": 7412
    },
    {
     "mapa": "loja_h",
-    "materiais": 250,
-    "map": 83,
+    "materiais": 262,
+    "map": 86,
     "normalMap": 21,
     "roughnessMap": 21,
     "aoMap": 0,
-    "meshes": 457,
-    "triangulos": 18592
+    "meshes": 505,
+    "triangulos": 20496
    },
    {
     "mapa": "ferro_velho",
-    "materiais": 272,
-    "map": 235,
+    "materiais": 283,
+    "map": 234,
     "normalMap": 9,
     "roughnessMap": 9,
     "aoMap": 0,
-    "meshes": 671,
-    "triangulos": 22760
+    "meshes": 732,
+    "triangulos": 24836
    },
    {
     "mapa": "quebrada",
-    "materiais": 305,
+    "materiais": 319,
     "map": 179,
     "normalMap": 10,
     "roughnessMap": 10,
     "aoMap": 0,
-    "meshes": 1616,
-    "triangulos": 25956
+    "meshes": 1685,
+    "triangulos": 28262
    },
    {
     "mapa": "escadao",
@@ -127,52 +127,122 @@
     "roughnessMap": 5,
     "aoMap": 0,
     "meshes": 794,
-    "triangulos": 18148
+    "triangulos": 18142
    },
    {
     "mapa": "campomorro",
-    "materiais": 32,
+    "materiais": 50,
     "map": 13,
     "normalMap": 5,
     "roughnessMap": 5,
     "aoMap": 0,
-    "meshes": 504,
-    "triangulos": 24738
+    "meshes": 586,
+    "triangulos": 28180
    },
    {
     "mapa": "lajes",
-    "materiais": 167,
-    "map": 100,
+    "materiais": 174,
+    "map": 106,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 1861,
-    "triangulos": 32458
+    "meshes": 1857,
+    "triangulos": 32574
    },
    {
     "mapa": "corrego",
-    "materiais": 136,
+    "materiais": 140,
     "map": 94,
     "normalMap": 9,
     "roughnessMap": 9,
     "aoMap": 0,
-    "meshes": 417,
-    "triangulos": 21078
+    "meshes": 431,
+    "triangulos": 21854
    },
    {
     "mapa": "mansao",
-    "materiais": 471,
-    "map": 15,
+    "materiais": 509,
+    "map": 22,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 886,
-    "triangulos": 29450
+    "meshes": 985,
+    "triangulos": 41798
+   },
+   {
+    "mapa": "posto_treta",
+    "materiais": 123,
+    "map": 85,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 311,
+    "triangulos": 4424
+   },
+   {
+    "mapa": "upa_24h",
+    "materiais": 96,
+    "map": 52,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 472,
+    "triangulos": 6426
+   },
+   {
+    "mapa": "obras_prefeitura",
+    "materiais": 63,
+    "map": 37,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 313,
+    "triangulos": 13232
+   },
+   {
+    "mapa": "atacadao_treta",
+    "materiais": 105,
+    "map": 73,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 362,
+    "triangulos": 5112
+   },
+   {
+    "mapa": "parque_treta",
+    "materiais": 41,
+    "map": 26,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 396,
+    "triangulos": 17789
+   },
+   {
+    "mapa": "velho_oeste",
+    "materiais": 89,
+    "map": 57,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 947,
+    "triangulos": 25931
+   },
+   {
+    "mapa": "penitenciaria",
+    "materiais": 27,
+    "map": 6,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 1167,
+    "triangulos": 49966
    }
   ],
   "total": {
-   "materiais": 2034,
-   "map": 967,
+   "materiais": 2695,
+   "map": 1310,
    "normalMap": 75,
    "roughnessMap": 75,
    "aoMap": 0

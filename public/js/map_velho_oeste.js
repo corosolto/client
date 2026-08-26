@@ -1,12 +1,5 @@
-// SERTÃO DA TRETA (velho_oeste) — r2: RECONSTRUÇÃO, não repintura. O dono reprovou a
-// r1 ("continua com visual do velho oeste so mudou o nome do mapa"): o casario de
-// fachada faroeste saiu e entrou arraial de pau a pique em volta da praça da matriz
-// (igrejinha no adro é o gesto de cidade PE pequena). Gameplay/rotas seguem medidos
-// pela eval:velhooeste; identidade pela eval:sertao (ST1-ST5). Referências da r2:
-// pau a pique = troncos verticais + barro, caiação clara, base de pedra (Wikipédia
-// "Pau a pique"); caatinga = "mata branca" espinhosa e DENSA, não deserto (idem
-// "Caatinga"); mandacaru = castiçal colunar (idem "Mandacaru"); juazeiro = ramos
-// tortuosos (idem "Juazeiro"); praça brasileira nasce do adro da igreja (idem "Praça").
+// SERTÃO DA TRETA (velho_oeste) — r2: reconstrução do faroeste em arraial de pau
+// a pique (feedback do dono). Gameplay/rotas: eval:velhooeste; identidade: eval:sertao.
 import * as THREE from 'three';
 import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { placeProp, hasProp } from './mapprops.js';
@@ -246,10 +239,8 @@ export function buildVelhoOeste(scene, T) {
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 180), MAT.sand); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
   for (let z = -HALF_Z; z <= HALF_Z; z += 8) addBox(8, .025, .11, MAT.pale, 0, .02, z, { collide: false, cast: false });
 
-  /* ── O ARRAIAL r2 ───────────────────────────────────────────────────────
-     Demolição do faroeste (r1): saloon/banco/delegacia/carroças saíram. No lugar,
-     casa de pau a pique (molde Mint) em 2-3 ruas de terra ao redor da PRAÇA DA
-     MATRIZ — igrejinha de frente pro largo é o gesto de cidade PE pequena. */
+  /* ── O ARRAIAL r2 ── faroeste demolido; casas de pau a pique (Mint) em 2-3
+     ruas de terra ao redor da PRAÇA DA MATRIZ com a igrejinha de landmark. */
 
   // Cercas delimitam a arena, mas deixam duas entradas por ponta e flancos amplos.
   for (const sx of [-1, 1]) for (let z = -HALF_Z; z <= HALF_Z; z += 4) {
@@ -287,10 +278,8 @@ export function buildVelhoOeste(scene, T) {
     return group;
   }
 
-  /* ── CASAS DE PAU A PIQUE — proxy do que o molde Mint desenha: troncos verticais
-     afogados no barro, base de pedra (balança), telhado de telha e alpendre com
-     esteios. A parede principal é mesh nomeado parede-casa-N com taipa oeste-adobe-*,
-     que é o que a ST2 mede em node (GLB é enfeite; posição/colisor são os dois ramos). */
+  /* ── CASAS DE PAU A PIQUE ── a parede `parede-casa-N` em taipa é o que a ST2
+     mede em node; GLB é enfeite, posição/colisor são os dois ramos. */
   const CAIACOES = [MAT.paupiqueCaiado, MAT.paupiqueCru, MAT.paupiqueOcre];
   function casaProxy(group, opts = {}) {
     const cor = CAIACOES[opts.variante ?? 0], w = opts.w ?? 5.4, d = opts.d ?? 6.8, h = 3.1;
@@ -320,24 +309,19 @@ export function buildVelhoOeste(scene, T) {
     const beiral = new THREE.Mesh(boxGeo(w + .7, .16, 1.5), MAT.roof);
     beiral.position.set(0, 2.85, d / 2 + 1.05); beiral.rotation.x = -.14; beiral.castShadow = true; group.add(beiral);
   }
-  /* 8 casas, 3 ruas de terra ao redor da praça. A rotação de cada casa aponta a
-     porta pro largo; a deriva de ±0.2 rad é a tortura de esquadro que o ORT1 cobra
-     de mapa organico — vila de interior não nasce de esquadro. */
+  /* 8 casas, 3 ruas: a porta aponta pro largo e a deriva de ±0,2 rad é a tortura
+     de esquadro que o ORT1 cobra de mapa orgânico. */
   const CASAS = [
-    { x: -9.2, z: -25.5, ry: Math.PI + .12, v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, v: 1 },   // rua de cima, atr´s da matriz
-    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, v: 0 }, // rua do lado oeste
-    { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, v: 2 }, // rua do lado leste
-    { x: -8.4, z: 24.2, ry: .14, v: 2 }, { x: 8.8, z: 24.7, ry: -.1, v: 0 },                       // rua de baixo
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, v: 1 },
+    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, v: 0 },
+    { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, v: 2 },
+    { x: -8.4, z: 24.2, ry: .14, v: 2 }, { x: 8.8, z: 24.7, ry: -.1, v: 0 },
   ];
   CASAS.forEach((c, i) => {
     sertaoElement('casa', i, c.x, c.z, casaProxy, 'casa_pau_a_pique', 4.1 + (i % 3) * .28,
       [2.9, 3.9, 3.55], { ry: c.ry, variante: c.v, id: i, targetLen: 6.6 });
-    /* Alpendre com colisor PRÓPRIO e fino (idioma dos bancos da palhoça e das
-       varandas da r1): o corpo no meio dele é ejetado inteiro numa passada do
-       _collide — no colisor grosso da casa o empurrão para a 0,38 do centro e a
-       cláusula de colisão de alpendre morre (medido: push 0,38 vs ejeção).
-       oz fica FORA da parede (casa vai até 3,55): colisor sobreposto ao da casa
-       espreme o corpo entre os dois AABBs e a ejeção cai a 0,16 (medido). */
+    /* Alpendre com colisor PRÓPRIO e fino (idioma r1): no colisor grosso da casa
+       o _collide ejeta só 0,38 do centro; colador na parede espreme o corpo (0,16). */
     const oz = 4.4, aw = 2.6, ad = .8;
     const cx = c.x + Math.sin(c.ry) * oz, cz = c.z + Math.cos(c.ry) * oz;
     const ca = Math.abs(Math.cos(c.ry)), sa = Math.abs(Math.sin(c.ry));
@@ -370,11 +354,8 @@ export function buildVelhoOeste(scene, T) {
     adro.position.set(0, .09, 5.4); adro.receiveShadow = true; group.add(adro);
   }, 'igrejinha', 7.2, [4.4, 7.4, 6.7], { ry: 0, targetLen: 0 });
 
-  /* ── CAMINHÃO ANTIGO estacionado na lateral leste — cover grande do mapa.
-     Genérico anos 60 SEM marca (linha editorial: nada de marca real). O visual
-     vive num sub-grupo deslocado para o CENTRO do colisor: capô de 4,9 m de
-     bico a caçamba fora de um colisor simétrico era corpo dentro de sólido
-     (MAP1 mediu 1,18 m de penetração antes do conserto). */
+  /* ── CAMINHÃO ANTIGO estacionado na lateral leste (cover grande) — genérico
+     anos 60 SEM marca (linha editorial). Visual centrado no colisor: MAP1. */
   sertaoElement('caminhao', 0, 24.6, -18.6, (group) => {
     const carroceria = new THREE.Group(); carroceria.position.z = -0.9; group.add(carroceria);
     const cabine = new THREE.Mesh(boxGeo(2.3, 1.75, 2.1), MAT.blue);

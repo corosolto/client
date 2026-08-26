@@ -169,12 +169,10 @@ function fallbackParrot() {
   return group;
 }
 
-/* r2 (kit sertão): calango EMPINADO — a pose assinatura do bicho, corpo apoiado
-   nas patas traseiras, cauda longa no chão contrabalançando a cabeça erguida.
-   Materiais em cache: material novo por fallback contava 3× na SUP1 do portão
-   de mapa (a régua conta uuid, não mesh). */
-const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
-  new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
+  /* r2 (kit sertão): calango EMPINADO de pedreira — pose assinatura, cauda no
+     chão contrabalançando a cabeça erguida. Materiais em cache (SUP1 conta uuid). */
+  const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
+    new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
 const CALANGO_BELLY = new THREE.MeshStandardMaterial({ color: 0xc9b78d, roughness: .92 });
 const CALANGO_STRIPE = new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 });
 function fallbackCalango(index) {
