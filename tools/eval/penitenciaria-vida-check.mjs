@@ -39,6 +39,13 @@
           Medido no estado atual: 5 (penitenciaria-aco-enferrujado,
           -caixa-municao, -concreto, -concreto-escuro, -patio-concreto-gasto).
           O rebuild adiciona reboco, galvanizado, arame, grade, poça e pisos.
+     NV7  molde real nas guaritas (dono, 26/08/2026, com estas palavras:
+          "todos os mapas do usantos continuam low poly sem moldes 3d bons"):
+          ≥ 4 wrappers 'penitenciaria-guarita-*' com userData.molde ===
+          'torre_vigilancia' gravado PELO BUILD (a régua lê o uso registrado,
+          não a declaração — BUG-02) E 'torre_vigilancia' em
+          PENITENCIARIA_PROPS E public/models/props/torre_vigilancia.glb em
+          disco. Mutante: --mutante=sem-moldes.
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, textura de muro sem
    pixels legíveis em node ou update ausente reprovam com mensagem de conserto.
@@ -48,12 +55,15 @@
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-reboco      # NV1
      node tools/eval/penitenciaria-vida-check.mjs --mutante=holofote-parado # NV2
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-varanda     # NV3
+     node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-moldes      # NV7
    ============================================================================ */
+import fs from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
 import { LOOK } from '../../public/js/look.js';
+import { PENITENCIARIA_PROPS } from '../../public/js/map_penitenciaria.js';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda']);
+const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda', 'sem-moldes']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const MIN_TEXTURAS = 12;
@@ -91,6 +101,12 @@ if (MUTANTE === 'sem-reboco') {
   W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-varanda-')) alvos.push(o); });
   mutanteAplicou = alvos.length > 0;
   for (const o of alvos) o.parent.remove(o);
+} else if (MUTANTE === 'sem-moldes') {
+  let n = 0;
+  W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-guarita-') && o.userData?.molde) { delete o.userData.molde; n++; } });
+  const i = PENITENCIARIA_PROPS.indexOf('torre_vigilancia');
+  if (i >= 0) PENITENCIARIA_PROPS.splice(i, 1);
+  mutanteAplicou = n > 0;
 }
 if (MUTANTE && !mutanteAplicou) {
   console.error(`MUTANTE NÃO APLICOU: ${MUTANTE} — a régua não mede o que o mutante quebra`);
@@ -133,9 +149,10 @@ if (MUTANTE && !mutanteAplicou) {
     const media = soma / cnt;
     const desvio = Math.sqrt(Math.max(0, soma2 / cnt - media * media));
     const gradiente = Math.abs(somaTopo / cntTopo - somaBase / cntBase);
-    /* medido na textura gerada (rebuild, 25/08/2026): desvio 46,2 · 44 baldes ·
-       gradiente 60,6 (reboco creme 204 × concreto 146 × tijolo 118 × umidade
-       −34 % na base). Limiares bem abaixo do medido: ajuste de paleta passa,
+    /* medido na textura gerada (reboco reforçado, 26/08/2026): desvio 48,6 ·
+       42 baldes · gradiente 56,8 (reboco creme 204 × concreto 146 × tijolo 118
+       × umidade −34 % na base; oitava grossa varia o descascado por trecho).
+       Limiares bem abaixo do medido: ajuste de paleta passa,
        reboco chapado (desvio ≈ 5) e textura sem gradiente não. */
     const falta = [];
     if (desvio < 14) falta.push(`desvio de luminância ${desvio.toFixed(1)}/14 (reboco × substrato exposto = dois estados; chapado não descasca)`);
@@ -226,9 +243,22 @@ if (MUTANTE && !mutanteAplicou) {
     : `${nomes.size}/${MIN_TEXTURAS} texturas distintas (${[...nomes].sort().join(', ') || 'nenhuma'}) — 5 canvas repetidos é a cara low poly; crie superfícies novas (reboco, galvanizado, arame, grade, poça…)`);
 }
 
+/* ---- NV7 molde real nas guaritas ---- */
+{
+  const wrappers = [];
+  W.root.traverse((o) => { if (/^penitenciaria-guarita-\d+$/.test(o.name || '')) wrappers.push(o); });
+  const comMolde = wrappers.filter((o) => o.userData?.molde === 'torre_vigilancia');
+  const glbPath = new URL('../../public/models/props/torre_vigilancia.glb', import.meta.url);
+  const falta = [];
+  if (comMolde.length < 4) falta.push(`${comMolde.length}/4 wrappers 'penitenciaria-guarita-*' com userData.molde='torre_vigilancia' — guarita procedural/caixa é a cara low poly que o dono nomeou; registre o molde no wrapper no build`);
+  if (!PENITENCIARIA_PROPS.includes('torre_vigilancia')) falta.push(`PENITENCIARIA_PROPS sem 'torre_vigilancia' (${PENITENCIARIA_PROPS.join(', ') || 'vazia'}) — sem o id o main.js não pré-carrega o GLB`);
+  if (!fs.existsSync(glbPath)) falta.push('public/models/props/torre_vigilancia.glb ausente em disco');
+  put('NV7', !falta.length, falta.length ? falta.join(' · ') : '4 guaritas com molde torre_vigilancia registrado + prop pré-carregado + GLB em disco');
+}
+
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3' };
+const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3', 'sem-moldes': 'NV7' };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = vermelhas.some((c) => c.id === esperado);
@@ -238,5 +268,5 @@ if (MUTANTE) {
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV6'}`);
+console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV7'}`);
 process.exit(vermelhas.length ? 1 : 0);
