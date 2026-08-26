@@ -180,6 +180,16 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
   texturas WebP 1024. Mint text-to-3D, gerado 25/08/2026 para o rebuild USANTOS
   da penitenciaria. Chat: <https://mint.gg/chat/ph7dbfdzwpfa6mzdh15wx5tprx8d4c3v>.
   Registro: `guarita-vigilancia-penitenciaria`. Otimizado por
-  `tools/optimize-props.mjs` (1.110 KB → 431 KB). Instanciada nas 4 guaritas;
-  a torre procedural fica de fallback (colisores idênticos) e o SpotLight que
+  `tools/optimize-props.mjs` (1.110 KB → 431 KB). Saiu de cena na USANTOS-R2
+  (substituída pela `torre_vigilancia.glb`) e segue no acervo. A torre
+  procedural fica de fallback (colisores idênticos) e o SpotLight que
   varre o pátio (NV2) é sempre procedural — o GLB é só visual.
+- `torre_vigilancia.glb` — "Prison Guard Tower", torre de vigilância de
+  presídio com quatro pernas de concreto em treliça X, escada metálica,
+  varanda com guarda-corpo e cabine envidraçada com telhado. 4.535 tris,
+  1 primitiva. Mint text-to-3D, gerado 26/08/2026 para a frente USANTOS-R2
+  (kit penitenciaria_gelo). Chat:
+  <https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef>. Registro:
+  `torre-vigilancia-penitenciaria`. Substitui o visual da
+  `penitenciaria_guarita.glb` nas 4 guaritas de canto do muro; o fallback
+  procedural e os colisores são os mesmos nos dois mundos.

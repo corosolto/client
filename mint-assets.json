@@ -1906,6 +1906,29 @@
     ],
     "finalSha256": "8b03c547171285a460f87c4e3b35213b08e8987ac1052ceb5feb7f467074c4ec"
    }
+  },
+  "torre-vigilancia-penitenciaria": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/torre_vigilancia.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks79j7c9xgqs48qz8r4cf6gf6d8d6398",
+    "chatUrl": "https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef",
+    "displayName": "Prison Guard Tower (torre_vigilancia)",
+    "frente": "map2-penitenciaria",
+    "notes": "Torre de vigilância com pernas de concreto em treliça X, escada, varanda com guarda-corpo e cabine envidraçada (4.535 tris). Substitui o visual das 4 guaritas de canto do muro (USANTOS-R2); a guarita GLB anterior segue no acervo. GLB normalizado ~1 m, pivô central; escala no call-site (targetH 9,6 / targetLen 5,6)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props.mjs"
+    ],
+    "finalSha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
+   }
   }
  }
 }
