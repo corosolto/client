@@ -30,9 +30,9 @@ export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
     cada estação tem patamar e escada andáveis + corrimão `passarela`; rede = rota alta. */
 const DECK_Y = 1.8;                 // madeira alta: corpo (1,5) e sonda (1,4) passam por baixo, sem viga
 const PILA_GLB = 0.6;              // molde com pilares cravados: o deck dele (40%·6) bate no 1,8
-const CASA_A = 3.0;                 // meia-largura da casa
-const PAT_A = 1.6;                  // meia-largura do patamar (u vai de CASA_A a CASA_A+2·PAT_A)
-const ESC_N = 12, ESC_PISO = 0.26;  // 12 degraus: espelho ~0,15 — 2 espelhos ≤0,30 do pé do corpo
+const CASA_A = 3.0;
+const PAT_A = 1.6;
+const ESC_N = 12, ESC_PISO = 0.26;  // espelho ~0,15: 2 espelhos cabem no pé de 0,30 do corpo
 const ESTACOES = [
   { x: 14, z: -26, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E
   { x: 25, z: -18, d: [-1, 0], e: -1 },
