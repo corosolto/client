@@ -59,10 +59,8 @@ const PONTES_ALTA = [
 ];
 const PLATA_M = { x: 0, z: 6 };                 // platforma no meio do igarapé
 
-/* ── MATA DENSA NO PERÍMETRO (molde arvore_mata.glb + palmeira_babacu.glb): o dono pediu
-    horizonte de FLORESTA, não cidade — fileira de árvores GLB no anel externo com escala
-    variada, babacu no sub-bosque e as sumaúmas nos cantos. Os Arrays alimentam o GLB, o
-    fallback procedural e o AMZ6 (mesma fonte, sem segunda verdade). */
+/* ── MATA DENSA NO PERÍMETRO (arvore_mata.glb + palmeira_babacu.glb): horizonte de
+    floresta — os Arrays alimentam GLB, fallback e AMZ6 (mesma fonte, sem segunda verdade). */
 const MATA_ARVORES = [];
 {
   // W/E pulam o vão do galpão da madeireira (z −3,6..3,6): árvore no telhão é muro atravessando muro
