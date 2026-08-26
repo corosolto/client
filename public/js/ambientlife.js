@@ -170,11 +170,16 @@ function fallbackParrot() {
 }
 
 /* r2 (kit sertão): calango EMPINADO — a pose assinatura do bicho, corpo apoiado
-   nas patas traseiras, cauda longa no chão contrabalançando a cabeça erguida. */
+   nas patas traseiras, cauda longa no chão contrabalançando a cabeça erguida.
+   Materiais em cache: material novo por fallback contava 3× na SUP1 do portão
+   de mapa (a régua conta uuid, não mesh). */
+const CALANGO_SKIN = [new THREE.MeshStandardMaterial({ color: 0x8a7c5e, roughness: .9 }),
+  new THREE.MeshStandardMaterial({ color: 0x77705a, roughness: .9 })];
+const CALANGO_BELLY = new THREE.MeshStandardMaterial({ color: 0xc9b78d, roughness: .92 });
+const CALANGO_STRIPE = new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 });
 function fallbackCalango(index) {
   const group = new THREE.Group();
-  const pele = new THREE.MeshStandardMaterial({ color: index % 2 ? 0x8a7c5e : 0x77705a, roughness: .9 });
-  const barriga = new THREE.MeshStandardMaterial({ color: 0xc9b78d, roughness: .92 });
+  const pele = CALANGO_SKIN[index % 2], barriga = CALANGO_BELLY;
   const body = new THREE.Mesh(new THREE.SphereGeometry(.05, 9, 7), pele);
   body.scale.set(.78, .8, 1.7); body.rotation.x = -.5; body.position.set(0, .075, .02); group.add(body);
   const belly = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), barriga);
@@ -192,7 +197,7 @@ function fallbackCalango(index) {
   const tail = new THREE.Mesh(new THREE.CylinderGeometry(.011, .002, .16, 5), pele);
   tail.rotation.x = Math.PI / 2 - .18; tail.position.set(0, .012, -.075); group.add(tail);
   for (let i = 0; i < 3; i++) {
-    const listra = new THREE.Mesh(new THREE.BoxGeometry(.082, .006, .028), new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 }));
+    const listra = new THREE.Mesh(new THREE.BoxGeometry(.082, .006, .028), CALANGO_STRIPE);
     listra.rotation.x = -.5; listra.position.set(0, .088 + i * .006, -.02 + i * .035); group.add(listra);
   }
   return group;

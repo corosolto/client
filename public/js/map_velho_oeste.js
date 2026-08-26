@@ -308,7 +308,7 @@ export function buildVelhoOeste(scene, T) {
     const porta = new THREE.Mesh(boxGeo(1.15, 2.05, .14), MAT.dark);
     porta.position.set(0, .55 + 1.02, d / 2 + .02); group.add(porta);
     for (const sx of [-1.55, 1.55]) {
-      const jan = new THREE.Mesh(boxGeo(.8, .8, .12), MAT.windowVoid);
+      const jan = new THREE.Mesh(boxGeo(.8, .8, .12), MAT.dark);
       jan.position.set(sx, .55 + 1.9, d / 2 + .02); group.add(jan);
       const moldura = new THREE.Mesh(boxGeo(.98, .98, .1), MAT.pale);
       moldura.position.set(sx, .55 + 1.9, d / 2 - .01); group.add(moldura);
@@ -439,10 +439,11 @@ export function buildVelhoOeste(scene, T) {
       branch.castShadow = true; group.add(branch);
     }
     /* juazeiro é das poucas folhas que ficam na caatinga seca (Wikipédia "Juazeiro"):
-       copa verde-clara miúda por cima dos ramos tortuosos. */
-    const folha = new THREE.MeshStandardMaterial({ color: 0x8fae6f, roughness: 1 });
+       copa verde-clara miúda por cima dos ramos tortuosos. Map TX.cactus: tufo
+       sem textura era material chapado contando na SUP1 do portão de mapa. */
     for (let i = 0; i < 5; i++) {
-      const tufo = new THREE.Mesh(new THREE.SphereGeometry(.62, 7, 5), folha);
+      const tufo = new THREE.Mesh(new THREE.SphereGeometry(.62, 7, 5),
+        new THREE.MeshStandardMaterial({ color: 0x8fae6f, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .05, roughness: 1 }));
       tufo.scale.set(1, .62, 1);
       tufo.position.set(Math.sin(i * 2.1) * .9, 3.9 + (i % 3) * .3, Math.cos(i * 1.7) * .9);
       tufo.castShadow = true; group.add(tufo);

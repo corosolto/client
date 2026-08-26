@@ -172,7 +172,9 @@ const classeDe = (id) => CLASSE[id] || 'organico';
 export const DIVIDA = {
   // ORT1 — os 4 mapas chapados que o dono reprovou em 12/08.
   'ORT1:escadao': '0,7% de massa girada e 4 ângulos distintos (piso 15% / 20)',
-  'ORT1:campomorro': '0,0% de massa girada e 1 ângulo distinto — grade perfeita',
+  // ORT1:campomorro QUITADA antes da r2 do map2 (27,1% de massa girada e 25
+  // ângulos distintos na medição fresca desta árvore) — removida conforme o
+  // contrato QUITADAS/REMOVA do rodapé deste arquivo.
   'ORT1:lajes': '4,3% de massa girada e 8 ângulos distintos',
   /* ORT1:corrego QUITADA em 12/08/2026 — 66,5% de massa girada e 39 ângulos
      distintos, contra 7,7%/9 na entrada da dívida. A entrada saiu daqui de propósito:
@@ -192,7 +194,14 @@ export const DIVIDA = {
   'SUP1:quebrada': '41,3% dos materiais sem `map`',
   'SUP1:escadao': '63,4% dos materiais sem `map`',
   'SUP1:campomorro': '50,0% dos materiais sem `map`',
-  'SUP1:lajes': '55,6% dos materiais sem `map`',
+  // SUP1:lajes QUITADA (medição fresca desta árvore abaixo do teto) — REMOVA.
+  // ALT1:velho_oeste — dívida da frente map2, declarada na r2 com número:
+  // arraial de pau a pique é TÉRREO por pedido do dono (feedback r2: "casas de
+  // pau a pique ... cidade de pernambuco com menos de 3mil habitantes"); o teto
+  // de 9-12 m codifica favela carioca de lajes, não vila sertaneja. Medido:
+  // 3,5 m na r1 (faroeste de fachadas), 4,2 m na r2 (igrejinha de torre chega
+  // a 8,5 m, mas p90 é percentil da MASSA — casario térreo domina o censo).
+  'ALT1:velho_oeste': 'h90 4,2 m — arraial térreo pedido pelo dono (r2 map2); torre da igrejinha 8,5 m não sobe o percentil',
   'SUP1:mansao': '97,4% dos materiais sem `map`',
   // SUP2 — teto 6%, derivado NO CÓRREGO (saia + colisor). Sua transferência para
   // mapa fechado é o elo fraco desta régua e está dito no relatório.
