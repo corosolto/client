@@ -237,6 +237,7 @@ jobs:
           fi
           git diff --cached --quiet || git commit -m "chore(docs): regenera bloco derivado (autofix)" \
                      -m "Rodado pelo autofix: só arquivo gerado, conferido pela lista de permissão." \
+                     -m "Agent: csbrasil-bot (autofix)" \
                      -m "Signed-off-by: csbrasil-bot <csbrasil-bot@users.noreply.github.com>"
           git push origin "HEAD:$HEAD_REF"
           gh pr comment "$PR_NUMBER" --repo "$REPO" --body \
