@@ -789,10 +789,11 @@ export function buildMansao(scene, T) {
   const famB = criaFolhagem(new THREE.ConeGeometry(.30, 1.05, 6));
   // TRÊS malhas próprias para o respawn: com duas o pior aglomerado same-mesh dá 9 e a
   // cláusula G1.iii (teto 8) reprova; com três cai para 6. Medido, não escolhido.
+  // folha larga (costela-de-adão), fronde (samambaia) e touceira baixa de arremate
   const famResp = [
-    criaFolhagem(new THREE.SphereGeometry(.52, 8, 5)),      // folha larga (costela-de-adão)
-    criaFolhagem(new THREE.ConeGeometry(.22, 1.15, 5)),     // fronde (samambaia)
-    criaFolhagem(new THREE.SphereGeometry(.34, 7, 5)),      // touceira baixa de arremate
+    criaFolhagem(new THREE.SphereGeometry(.52, 8, 5)),
+    criaFolhagem(new THREE.ConeGeometry(.22, 1.15, 5)),
+    criaFolhagem(new THREE.SphereGeometry(.34, 7, 5)),
   ];
   const iResp = [0, 0, 0];
   for (const [di, [dx, dz]] of driftsRespawn.entries()) {
@@ -852,8 +853,8 @@ export function buildMansao(scene, T) {
   }
   // muretas dos canteiros (cover agachado); a de (-7,4;22,6) saiu de cima do espelho —
   // sobre a água ela lia como viga flutuando (crítico v2.1)
-  // As muretas ganham a marca `mureta` (sem ela a G9 não tem o que medir); as duas
-  // últimas são novas e emolduram o canteiro do respawn pelos flancos.
+  //
+  // A marca `mureta` é o que a cláusula G9 mede; as duas últimas emolduram o respawn.
   for (const [mx, mz, ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06],
     [-10.6,33.0,.10],[10.6,33.0,-.10]]) {
     addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz, { ry }).userData.mansaoFeature = 'mureta';
