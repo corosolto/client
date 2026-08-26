@@ -57,23 +57,25 @@ export function buildPenitenciaria(scene, T) {
      o tijolo; borda escura no contorno da placa; fiadas de fôrma a cada 32 px;
      umidade escurecendo a base (faixa y<64 — a NV1 mede o gradiente). */
   function texturaReboco() {
-    const S = 256, mancha = valueNoise(S, 6, 1977), grao = valueNoise(S, 28, 3313);
+    const S = 256, mancha = valueNoise(S, 6, 1977), trecho = valueNoise(S, 3, 5551), grao = valueNoise(S, 28, 3313);
     return dataTex('penitenciaria-reboco-descascado', S, (x, y) => {
-      const n = mancha(x, y), g = (grao(x, y) - .5) * 18;
+      /* trecho (oitava grossa) desloca o limiar: uns panos do muro descascam
+         quase inteiros, outros ficam quase intactos — muro uniforme é low poly. */
+      const n = mancha(x, y) + (trecho(x, y) - .5) * .22, g = (grao(x, y) - .5) * 18;
       let r, gg, b;
-      if (n > .74) {                       // tijolo aparente no fundo da placa caída
+      if (n > .68) {                       // tijolo aparente no fundo da placa caída
         const linha = y % 8 < 1, desloca = (Math.floor(y / 8) % 2) * 6;
         const junta = linha || (x + desloca) % 13 < 1;
         const t = junta ? 148 : 118 + g;
         r = t; gg = junta ? 140 : t * .66; b = junta ? 128 : t * .5;
-      } else if (n > .62) {                // concreto do substrato
+      } else if (n > .575) {               // concreto do substrato
         const c = 146 + g * 1.2; r = c; gg = c - 5; b = c - 13;
-      } else if (n > .585) {               // sombra da borda da placa de reboco
+      } else if (n > .54) {                // sombra da borda da placa de reboco
         const c = 118 + g; r = c; gg = c - 4; b = c - 12;
       } else {                             // reboco creme
         const c = 204 + g; r = c; gg = c - 7; b = c - 24;
       }
-      if (y % 32 < 2 && n <= .62) { r -= 16; gg -= 16; b -= 14; }   // fiada de fôrma
+      if (y % 32 < 2 && n <= .54) { r -= 16; gg -= 16; b -= 14; }   // fiada de fôrma
       if (y < 64) {                        // umidade subindo da base
         const u = (64 - y) / 64, f = 1 - .34 * u;
         r = r * f - 6 * u; gg *= f; b = b * f - 10 * u;
