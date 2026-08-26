@@ -1883,6 +1883,30 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "sky-joa-panorama-r2": {
+   "artifactType": "image/webp",
+   "files": [
+    "public/img/textures/sky_joa.webp"
+   ],
+   "source": {
+    "kind": "openrouter-image-concept",
+    "assetId": null,
+    "chatUrl": null,
+    "displayName": "Céu do Joá — panorama equirretangular de mar aberto (r2)",
+    "prompt": "Seamless 360-degree EQUIRECTANGULAR panorama (spherical projection, 2:1) of open tropical ocean at late golden hour, seen from high above the water off Rio de Janeiro. ABSOLUTELY NO foreground objects (...). Flat unbroken horizon line running perfectly straight across the entire width at the vertical centre of the image.",
+    "notes": "Substitui o sky_joa.webp da r1, que NAO era panorama: era foto retilinea de varanda de mansao (deck, piscina, espreguicadeira, coqueiro) esticada para 2:1 — o \"efeito muito estranho\" no horizonte que o dono relatou. Diagnostico e limiar em tools/eval/sky-foreground-check.mjs (desvio de L* na banda do equador: r1 16,76 · r2 3,21 · teto 12,0). Pipeline: tools/gen-image.mjs --n 2 --raw-only (as duas variacoes foram OLHADAS antes de publicar) -> tools/sky-equirect-publica.py (recorte 2:1 com o horizonte alinhado ao equador; desvio medido 0 px) -> tools/eval/sky_seam.py fix --cols 192 (wrap DL* -0,04 / Db* -0,09, a melhor costura da arvore). O sky da r1 fica arquivado em tools/eval/asset-evidence/skies/sky_joa.webp, que o mutante rampa-estreita do sky-seam-check usa."
+   },
+   "processing": {
+    "provider": "openrouter",
+    "model": "google/gemini-3-pro-image",
+    "tools": [
+     "tools/gen-image.mjs",
+     "tools/sky-equirect-publica.py",
+     "tools/eval/sky_seam.py"
+    ],
+    "finalSha256": "9cc6d444facebdfb3b0de2517b5ee7bd41ad70d7847ac0195f805d756f7d4e74"
+   }
   }
  }
 }

@@ -2,9 +2,14 @@
    lugar e bloom.js deriva desta tabela. Cores medidas por tools/eval/look-horizonte.py. */
 export const LOOK = {
   mansao: {   // Joá: sol de fim de tarde sobre o mar
+    /* r2: o sky_joa da r1 NÃO era panorama — era foto retilínea de varanda de mansão
+       (deck de pedra, piscina, espreguiçadeira, coqueiro) esticada para 2:1. Como
+       equirretangular isso vira mobília do tamanho do mundo na altura do olho, que é
+       o "efeito muito estranho" que o dono viu no horizonte. Trocado por panorama de
+       mar aberto sem primeiro plano; medida e limiar em tools/eval/sky-foreground-check.mjs. */
     sky: '/img/textures/sky_joa.webp',
-    horizonte: 0xb1aca5,   // look-horizonte.py sobre sky_joa.webp (banda 429-441 de 887)
-    zenite: 0x6595bf,
+    horizonte: 0xe9c58c,   // look-horizonte.py sobre sky_joa.webp (banda 322-334 de 672)
+    zenite: 0x718ca2,
     sol: { cor: 0xffefd8, i: 1.8, pos: [15, 30, -15] },
     hemi: { ceu: 0xf6f3ea, chao: 0x665c50, i: 1.02 },
     neblina: { d: 0.0068, solDir: [30, 32, 24], forca: 0.94 },
@@ -20,8 +25,8 @@ export const LOOK = {
         { az: -0.82, dist: 222, r: 74, h: 46, cor: 0x3d5742, mistura: 0.28 },
         { az: -1.42, dist: 298, r: 115, h: 84, cor: 0x4a604c, mistura: 0.46 },
       ],
-      // bruma quente: mediana do sky_joa.webp na banda do equador, setor +0,79..+1,18 rad
-      bruma: { cor: 0xc5b4a4, y: 2.4, raio: 330, altura: 17, opacidade: 0.34 },
+      // bruma quente: mediana do sky_joa.webp na banda do equador (re-amostrada na r2)
+      bruma: { cor: 0xe2be89, y: 2.4, raio: 330, altura: 17, opacidade: 0.34 },
     },
   },
   corrego: {   // SP abafado: céu cinza de chuva que não cai
