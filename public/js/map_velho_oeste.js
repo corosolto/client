@@ -1,5 +1,12 @@
-// SERTÃO DA TRETA (velho_oeste) — retheme, não reautor: layout/colliders do
-// contribuidor usantos seguem (eval:velhooeste); identidade é a eval:sertao.
+// SERTÃO DA TRETA (velho_oeste) — r2: RECONSTRUÇÃO, não repintura. O dono reprovou a
+// r1 ("continua com visual do velho oeste so mudou o nome do mapa"): o casario de
+// fachada faroeste saiu e entrou arraial de pau a pique em volta da praça da matriz
+// (igrejinha no adro é o gesto de cidade PE pequena). Gameplay/rotas seguem medidos
+// pela eval:velhooeste; identidade pela eval:sertao (ST1-ST5). Referências da r2:
+// pau a pique = troncos verticais + barro, caiação clara, base de pedra (Wikipédia
+// "Pau a pique"); caatinga = "mata branca" espinhosa e DENSA, não deserto (idem
+// "Caatinga"); mandacaru = castiçal colunar (idem "Mandacaru"); juazeiro = ramos
+// tortuosos (idem "Juazeiro"); praça brasileira nasce do adro da igreja (idem "Praça").
 import * as THREE from 'three';
 import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
 import { placeProp, hasProp } from './mapprops.js';
@@ -10,8 +17,9 @@ const HALF_X = 34;
 const HALF_Z = 46;
 
 export const VELHO_OESTE_PROPS = ['sertao_mandacaru', 'sertao_macambira', 'sertao_juazeiro',
-  'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'sertao_palhoca_forro', 'caixa_som_baile'];
-export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto']);
+  'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'sertao_palhoca_forro', 'caixa_som_baile',
+  'casa_pau_a_pique', 'igrejinha', 'caminhao_antigo'];
+export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto', 'calango']);
 
 export function buildVelhoOeste(scene, T) {
   const colliders = [];
@@ -110,6 +118,50 @@ export function buildVelhoOeste(scene, T) {
     });
     t.repeat.set(3, 2); t.name = 'oeste-adobe'; return t;
   };
+  /* Pau a pique (r2): troncos verticais ~25 cm entre face e face e varas horizontais
+     mais finas achatadas no barro (Wikipédia "Pau a pique"). Nome oeste-adobe-paupique
+     porque pau a pique É taipa de mão — a ST2 da eval:sertao lê o prefixo. */
+  const texturaPaupique = () => {
+    const t = texProcedural(128, (x, y) => {
+      const tronco = (x % 32) < 4, vara = (y % 17) < 2, n = ((x * 23 + y * 11) % 15) - 7;
+      if (tronco) { const b = 112 + n; return [b, b - 24, b - 48]; }
+      if (vara) return [150, 121, 90];
+      const b = 190 + n;
+      return [b, b - 22, b - 52];
+    });
+    t.repeat.set(2, 2); t.name = 'oeste-adobe-paupique'; return t;
+  };
+  /* Solo rachado da caatinga seca (r2): rede de rachaduras poligonais sobre a terra —
+     bump forte no chão, no idioma do texturaMuro/texturaAdobe. */
+  const texturaRachado = () => {
+    const S = 256;
+    const data = new Uint8Array(S * S * 4);
+    const trincha = [];
+    for (let i = 0; i < 46; i++) {
+      const a = (i * 137.5) % 360 * Math.PI / 180;
+      trincha.push({ x: (i * 61) % S, y: (i * 97) % S, dx: Math.cos(a), dy: Math.sin(a), passos: 40 + (i * 31) % 50 });
+    }
+    const altura = new Float32Array(S * S);
+    for (const t of trincha) {
+      let x = t.x, y = t.y;
+      for (let p = 0; p < t.passos; p++) {
+        for (const [ox, oy] of [[0, 0], [S, 0], [-S, 0], [0, S], [0, -S]]) {
+          const px = (x + ox | 0), py = (y + oy | 0);
+          if (px >= 0 && px < S && py >= 0 && py < S) altura[py * S + px] = Math.max(altura[py * S + px], 1 - p / t.passos);
+        }
+        x += t.dx + Math.sin(p * 2.3 + t.passos) * .6; y += t.dy + Math.cos(p * 1.7) * .6;
+      }
+    }
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const i = y * S + x;
+      const v = altura[i] > .34 ? 40 : 165 + ((x * 7 + y * 13) % 21);
+      data.set([v, v - 12, v - 34, 255], i * 4);
+    }
+    const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(6, 7); t.needsUpdate = true; t.name = 'oeste-rachado';
+    return t;
+  };
 
   const TX = {
     sand: texture('sand', '#b98243', '#704420', 10), wood: texture('wood', '#8a4f28', '#4c2714', 4),
@@ -136,13 +188,16 @@ export function buildVelhoOeste(scene, T) {
   }
   const mat = (color, map = TX.wood, roughness = .9, metalness = 0, bumpScale = .045) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale, roughness, metalness });
   const adobeDe = (color) => mat(color, TX.adobe || (TX.adobe = texturaAdobe()), .96, 0, .05);
+  const paupiqueDe = (color) => mat(color, TX.paupique || (TX.paupique = texturaPaupique()), .97, 0, .06);
   const MAT = {
-    sand: mat(0xffffff, TX.sand, 1, 0, .12), wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
+    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: TX.sand, bumpMap: TX.rachado || (TX.rachado = texturaRachado()), bumpScale: .22, roughness: 1, metalness: 0 }),
+    wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
     roof: mat(0xffffff, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
     black: mat(0x191411, TX.metal, .6, .25), cactus: mat(0xffffff, TX.cactus, 1, 0, .075), cactusLight: mat(0xaed09a, TX.cactus, 1, 0, .075),
     hay: mat(0xffffff, TX.hay, 1, 0, .09), red: mat(0x7e271f, TX.wood), blue: mat(0x2d5361, TX.wood), glass: mat(0x87b2ba, TX.metal, .25, .05, .01),
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
     adobe: adobeDe(0xffffff), adobeCaiado: adobeDe(0xf3ecdc), adobeOcre: adobeDe(0xd8b98c),
+    paupiqueCru: paupiqueDe(0xffffff), paupiqueCaiado: paupiqueDe(0xf6efdd), paupiqueOcre: paupiqueDe(0xd8b98c),
     pedra: mat(0x9a8d7c, TX.sand, 1, 0, .14),
   };
 
@@ -179,61 +234,8 @@ export function buildVelhoOeste(scene, T) {
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: signTexture(title, sub), roughness: .85 }));
     mesh.position.set(x, y, z); mesh.rotation.y = ry; root.add(mesh); return mesh;
   }
-  function wantedTexture(outlaw, reward, seed, portraitIndex, gender) {
-    const c = document.createElement('canvas'); c.width = 384; c.height = 512; const x = c.getContext('2d');
-    const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-    let texture;
-    const draw = atlas => {
-      const paper = x.createLinearGradient(0, 0, 384, 512); paper.addColorStop(0, '#e3c27f'); paper.addColorStop(.55, '#cda562'); paper.addColorStop(1, '#b8894e');
-      x.fillStyle = paper; x.fillRect(0, 0, 384, 512);
-      for (let i = 0; i < 950; i++) { const shade = rand() > .5 ? 58 : 238; x.fillStyle = `rgba(${shade},${Math.floor(shade * .72)},${Math.floor(shade * .4)},${.025 + rand() * .07})`; x.fillRect(rand() * 384, rand() * 512, 1 + rand() * 4, 1 + rand() * 3); }
-      x.strokeStyle = '#4b2b16'; x.lineWidth = 11; x.strokeRect(13, 13, 358, 486); x.lineWidth = 3; x.strokeRect(25, 25, 334, 462);
-      const heading = gender === 'feminino' ? 'PROCURADA' : 'PROCURADO';
-      x.textAlign = 'center'; x.fillStyle = '#3b2113'; x.font = '900 52px Georgia,serif'; x.fillText(heading, 192, 75);
-      x.font = 'bold 20px Georgia,serif'; x.fillText('VIVO OU DESARMADO', 192, 106);
-      x.fillStyle = '#4b2b16'; x.fillRect(66, 122, 252, 222);
-      if (atlas) {
-        const cellW = atlas.width / 4, cellH = atlas.height / 2, col = portraitIndex % 4, row = Math.floor(portraitIndex / 4);
-        x.drawImage(atlas, col * cellW + 3, row * cellH + 3, cellW - 6, cellH - 6, 72, 128, 240, 210);
-      } else { x.fillStyle = '#b58b51'; x.fillRect(72, 128, 240, 210); }
-      x.fillStyle = '#3b2113'; x.font = '900 29px Georgia,serif'; x.fillText(outlaw.toUpperCase(), 192, 382);
-      const danger = gender === 'feminino' ? 'PERIGOSA' : 'PERIGOSO';
-      x.font = 'bold 19px Georgia,serif'; x.fillText(`${danger} · BOM DE MIRA`, 192, 414);
-      x.font = '900 27px Georgia,serif'; x.fillText(`RECOMPENSA $${reward}`, 192, 462);
-      if (texture) texture.needsUpdate = true;
-    };
-    draw(null);
-    texture = new THREE.CanvasTexture(c); texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 8; texture.name = `oeste-procurado-${outlaw}`;
-    if (typeof Image !== 'undefined') { const atlas = new Image(); atlas.onload = () => draw(atlas); atlas.src = '/img/textures/velho_oeste/procurados-atlas-v1.jpg'; }
-    return texture;
-  }
-  function addWanted(index, outlaw, reward, gender, side, x, y, z) {
-    addBox(.18, 2.35, 2.05, MAT.dark, x, .15, z, { collide: false });
-    for (const dz of [-.87, .87]) addBox(.16, 2.7, .16, MAT.pale, x + side * .05, 0, z + dz, { collide: false });
-    const material = new THREE.MeshBasicMaterial({ map: wantedTexture(outlaw, reward, 1776 + index * 97, index, gender), polygonOffset: true, polygonOffsetFactor: -2 });
-    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.35, 1.8), material);
-    poster.name = `procurado-${index}`; poster.userData = {
-      outlaw, gender, heading: gender === 'feminino' ? 'PROCURADA' : 'PROCURADO', danger: gender === 'feminino' ? 'PERIGOSA' : 'PERIGOSO', reward,
-      portraitIndex: index, portraitAsset: 'procurados-atlas-v1.jpg',
-    }; poster.position.set(x - side * .1, y, z);
-    poster.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2; poster.receiveShadow = true; root.add(poster);
-  }
-  let westernWindowIndex = 0;
-  function westernWindow(x, y, z, ry, w, h) {
-    const index = westernWindowIndex++, state = index % 2 ? 'aberta' : 'fechada';
-    const group = new THREE.Group(); group.name = `janela-oeste-${index}`; group.userData = { state, material: 'madeira' }; group.position.set(x, y + h / 2, z); group.rotation.y = ry; root.add(group);
-    const piece = (pw, ph, pd, material, px, py, pz) => {
-      const mesh = new THREE.Mesh(boxGeo(pw, ph, pd), material); mesh.position.set(px, py, pz); mesh.castShadow = true; mesh.receiveShadow = true; group.add(mesh);
-    };
-    if (state === 'aberta') {
-      piece(w, h, .08, MAT.windowVoid, 0, 0, -.03);
-      for (const px of [-w * .78, w * .78]) piece(w * .46, h + .08, .16, MAT.pale, px, 0, .01);
-    } else {
-      for (const px of [-w * .25, w * .25]) piece(w * .48, h, .16, px < 0 ? MAT.pale : MAT.wood, px, 0, .01);
-      piece(w * .92, .1, .2, MAT.dark, 0, h * .24, .11); piece(w * .92, .1, .2, MAT.dark, 0, -h * .24, .11);
-    }
-    return group;
-  }
+  /* r2: cartazes de PROCURADO e janelas western SAÍRAM com o saloon — a sátira do
+     sertão é outra (leilão, forró, vaquejada) e o casario agora é molde Mint. */
 
   /* CÉU/NÉVOA/SOL do LOOK['velho_oeste'] (fim de tarde de sertão) — o shadow
      fica aqui porque o builder conhece os limites (idioma do map_mansao.js). */
@@ -244,57 +246,10 @@ export function buildVelhoOeste(scene, T) {
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 180), MAT.sand); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
   for (let z = -HALF_Z; z <= HALF_Z; z += 8) addBox(8, .025, .11, MAT.pale, 0, .02, z, { collide: false, cast: false });
 
-  function building(side, z, w, d, h, title, sub, color = MAT.adobe, doors = 1) {
-    const x = side * (HALF_X - d / 2 - 1); const faceX = x - side * (d / 2 + .03); const ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    const slug = title.toLowerCase().replace(/\s/g, '-');
-    const g = new THREE.Group(); g.name = `predio-${slug}`; root.add(g);
-    addBox(d, h, w, color, x, 0, z, { name: `parede-${slug}` });
-    addBox(d + 1.6, .45, w + 1.4, MAT.roof, x, h, z, { collide: false });
-    addBox(2.5, h + 1.5, .28, MAT.trim, faceX, 0, z, { collide: false, ry });
-    addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z, { collide: false, ry });
-    if (doors > 1) addBox(1.5, 2.55, .32, MAT.dark, faceX - side * .04, 0, z + 2.4, { collide: false, ry });
-    for (const wz of [-w * .3, w * .3]) westernWindow(faceX - side * .05, 2.2, z + wz, ry, 1.35, 1.25);
-    for (let pz = z - w / 2; pz <= z + w / 2; pz += 2.3) addCylinder(.12, 1.4, MAT.dark, faceX - side * 2.3, 0, pz, { collide: false });
-    addBox(.22, .22, w + .8, MAT.pale, faceX - side * 2.2, 1.4, z, { tag: `varanda-${slug}` });
-    addSign(title, sub, faceX - side * .2, h - .55, z, ry, Math.min(7, w - 1), 1.8);
-    return g;
-  }
-  /* ids internos (predio-saloon, predio-xerife…) preservados: a eval:velhooeste
-     e o teclado de mutantes os leem. Os letreiros viraram sertão. */
-  const gSaloon = building(-1, -29, 12, 8, 6.6, 'CANTINA', 'FORRÓ · CACHAÇA · TRETA', MAT.adobeCaiado, 2); gSaloon.name = 'predio-saloon';
-  const gBanco = building(-1, -11, 11, 7, 5.8, 'BANCO', 'DO SERTÃO', MAT.adobeOcre); gBanco.name = 'predio-banco';
-  const gArmazem = building(-1, 8, 12, 8, 6.2, 'ARMAZÉM', 'DO SEU ZÉ', MAT.adobe); gArmazem.name = 'predio-armazem';
-  const gHotel = building(-1, 29, 12, 7, 5.5, 'PENSÃO', 'REDE E CAFÉ', MAT.adobeCaiado, 2); gHotel.name = 'predio-hotel';
-  const gXerife = building(1, -28, 12, 8, 5.8, 'DELEGACIA', 'A LEI AQUI É OUTRA', MAT.adobeOcre); gXerife.name = 'predio-xerife';
-  const gBarbeiro = building(1, -9, 12, 7, 5.6, 'BARBEIRO', 'NAVALHA E CONVERSA', MAT.adobeCaiado); gBarbeiro.name = 'predio-barbeiro';
-  const gEmporio = building(1, 11, 12, 8, 6.2, 'EMPÓRIO', 'DE TUDO UM POUCO', MAT.adobe, 2); gEmporio.name = 'predio-emporio';
-  const gEstabulo = building(1, 31, 10, 7, 5.5, 'ESTÁBULO', 'VAQUEJADA DA TRETA', MAT.adobeOcre, 2); gEstabulo.name = 'predio-estabulo';
-
-  function streetHouse(side, z, title, color) {
-    const x = side * 15, faceX = x - side * 2.78, ry = side > 0 ? -Math.PI / 2 : Math.PI / 2;
-    const slug = title.toLowerCase().replace(/\s/g, '-');
-    const group = new THREE.Group(); group.name = `predio-${slug}`; root.add(group);
-    addBox(5.5, 4.7, 7.2, color, x, 0, z, { name: `parede-${slug}` });
-    addBox(6.2, .38, 8, MAT.roof, x, 4.7, z, { collide: false });
-    addBox(1.35, 2.35, .28, MAT.dark, faceX, 0, z, { collide: false, ry });
-    for (const dz of [-2.2, 2.2]) westernWindow(faceX - side * .03, 2, z + dz, ry, 1.15, 1.05);
-    addBox(.22, .22, 7.6, MAT.pale, faceX - side * 1.05, 1.25, z, { tag: `varanda-${slug}` });
-    addBox(2.3, .22, 8, MAT.roof, faceX - side * 1.05, 3.05, z, { collide: false });
-    for (const dz of [-3.35, 3.35]) addBox(.18, 3.05, .18, MAT.dark, faceX - side * 1.9, 0, z + dz, { collide: false });
-    addSign(title, 'CASA DE ADOBE', faceX - side * .14, 3.8, z, ry, 4.8, 1.25);
-  }
-  streetHouse(-1, -20, 'OFICINA', MAT.adobeCaiado);
-  streetHouse(1, -20, 'CASA DO FERREIRO', MAT.adobeOcre);
-  streetHouse(-1, 20, 'VIÚVA', MAT.adobeOcre);
-  streetHouse(1, 20, 'CASA DO CANGACEIRO', MAT.adobeCaiado);
-
-  const wanted = [
-    ['Zé Faísca', 500, 'masculino', -1, -18.5, 1.55, -34], ['Lola Fumaça', 900, 'feminino', 1, 18.5, 1.55, -34],
-    ['Neco Cascavel', 750, 'masculino', -1, -18.5, 1.55, -8], ['Cida Cartucho', 1200, 'feminino', 1, 18.5, 1.55, -8],
-    ['Beto Poeira', 400, 'masculino', -1, -18.5, 1.55, 8], ['Joana Brasa', 1100, 'feminino', 1, 18.5, 1.55, 8],
-    ['Tonho Espora', 800, 'masculino', -1, -18.5, 1.55, 34], ['Rita Bala', 1500, 'feminino', 1, 18.5, 1.55, 34],
-  ];
-  wanted.forEach((poster, index) => addWanted(index, ...poster));
+  /* ── O ARRAIAL r2 ───────────────────────────────────────────────────────
+     Demolição do faroeste (r1): saloon/banco/delegacia/carroças saíram. No lugar,
+     casa de pau a pique (molde Mint) em 2-3 ruas de terra ao redor da PRAÇA DA
+     MATRIZ — igrejinha de frente pro largo é o gesto de cidade PE pequena. */
 
   // Cercas delimitam a arena, mas deixam duas entradas por ponta e flancos amplos.
   for (const sx of [-1, 1]) for (let z = -HALF_Z; z <= HALF_Z; z += 4) {
@@ -309,22 +264,138 @@ export function buildVelhoOeste(scene, T) {
   }
 
   /* GLB (Mint) OU proxy procedural, nunca os dois: mesh invisível como occluder
-     é o defeito que o MAP4 pega. Colisor manual igual nos dois ramos. */
-  function sertaoElement(name, id, x, z, buildProxy, propId, targetH, collider) {
+     é o defeito que o MAP4 pega. Colisor manual igual nos dois ramos. opts.ry
+     casa o casario com a rua (a r1 girava tudo por id*1.7 — sem controle de face). */
+  function sertaoElement(name, id, x, z, buildProxy, propId, targetH, collider, opts = {}) {
     const group = new THREE.Group(); group.name = `sertao-${name}-${id}`; group.position.set(x, 0, z); root.add(group);
     let visualRoot = group;
     if (GLB_ON && propId && hasProp(propId)) {
-      const prop = placeProp(propId, { x, z, targetH, ry: id * 1.7 });
+      const prop = placeProp(propId, { x, z, targetH: opts.targetH ?? targetH, targetLen: opts.targetLen ?? 0, ry: opts.ry ?? id * 1.7 });
       if (prop) { root.add(prop); visualRoot = prop; }
     }
-    if (visualRoot === group) buildProxy(group);
+    if (visualRoot === group) {
+      group.rotation.y = opts.ry ?? id * 1.7;
+      buildProxy(group, opts);
+    }
     if (collider) {
-      colliders.push({ minX: x - collider[0], maxX: x + collider[0], minY: 0, maxY: collider[1], minZ: z - collider[2], maxZ: z + collider[2] });
+      const c = Math.abs(Math.cos(group.rotation.y)), s = Math.abs(Math.sin(group.rotation.y));
+      const hx = c * collider[0] + s * collider[2], hz = s * collider[0] + c * collider[2];
+      colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: collider[1], minZ: z - hz, maxZ: z + hz, tag: opts.tag });
       const base = visualRoot === group ? group : visualRoot;
       occluders.push(base);
     }
     return group;
   }
+
+  /* ── CASAS DE PAU A PIQUE — proxy do que o molde Mint desenha: troncos verticais
+     afogados no barro, base de pedra (balança), telhado de telha e alpendre com
+     esteios. A parede principal é mesh nomeado parede-casa-N com taipa oeste-adobe-*,
+     que é o que a ST2 mede em node (GLB é enfeite; posição/colisor são os dois ramos). */
+  const CAIACOES = [MAT.paupiqueCaiado, MAT.paupiqueCru, MAT.paupiqueOcre];
+  function casaProxy(group, opts = {}) {
+    const cor = CAIACOES[opts.variante ?? 0], w = opts.w ?? 5.4, d = opts.d ?? 6.8, h = 3.1;
+    const parede = new THREE.Mesh(boxGeo(w, h, d), cor);
+    parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .55 + h / 2;
+    parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
+    const base = new THREE.Mesh(boxGeo(w + .25, .55, d + .25), MAT.pedra);
+    base.position.y = .275; base.castShadow = true; base.receiveShadow = true; group.add(base);
+    for (const sx of [-1, 1]) {
+      const agua = new THREE.Mesh(boxGeo(w * .56, .3, d + 1), MAT.roof);
+      agua.position.set(sx * w * .27, .55 + h + .15, 0); agua.rotation.z = sx * .16; agua.castShadow = true; group.add(agua);
+    }
+    const cumeeira = new THREE.Mesh(boxGeo(.34, .22, d + 1.25), MAT.dark);
+    cumeeira.position.set(0, .55 + h + w * .28, 0); cumeeira.castShadow = true; group.add(cumeeira);
+    const porta = new THREE.Mesh(boxGeo(1.15, 2.05, .14), MAT.dark);
+    porta.position.set(0, .55 + 1.02, d / 2 + .02); group.add(porta);
+    for (const sx of [-1.55, 1.55]) {
+      const jan = new THREE.Mesh(boxGeo(.8, .8, .12), MAT.windowVoid);
+      jan.position.set(sx, .55 + 1.9, d / 2 + .02); group.add(jan);
+      const moldura = new THREE.Mesh(boxGeo(.98, .98, .1), MAT.pale);
+      moldura.position.set(sx, .55 + 1.9, d / 2 - .01); group.add(moldura);
+    }
+    for (const sx of [-1, 1]) {
+      const esteio = new THREE.Mesh(boxGeo(.16, 2.55, .16), MAT.dark);
+      esteio.position.set(sx * (w / 2 - .5), 1.27, d / 2 + 1.1); esteio.castShadow = true; group.add(esteio);
+    }
+    const beiral = new THREE.Mesh(boxGeo(w + .7, .16, 1.5), MAT.roof);
+    beiral.position.set(0, 2.85, d / 2 + 1.05); beiral.rotation.x = -.14; beiral.castShadow = true; group.add(beiral);
+  }
+  /* 8 casas, 3 ruas de terra ao redor da praça. A rotação de cada casa aponta a
+     porta pro largo; a deriva de ±0.2 rad é a tortura de esquadro que o ORT1 cobra
+     de mapa organico — vila de interior não nasce de esquadro. */
+  const CASAS = [
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, v: 1 },   // rua de cima, atr´s da matriz
+    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, v: 0 }, // rua do lado oeste
+    { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, v: 2 }, // rua do lado leste
+    { x: -8.4, z: 24.2, ry: .14, v: 2 }, { x: 8.8, z: 24.7, ry: -.1, v: 0 },                       // rua de baixo
+  ];
+  CASAS.forEach((c, i) => {
+    sertaoElement('casa', i, c.x, c.z, casaProxy, 'casa_pau_a_pique', 4.1 + (i % 3) * .28,
+      [3.5, 3.9, 3.1], { ry: c.ry, variante: c.v, id: i, targetLen: 6.6 });
+    /* Alpendre com colisor PRÓPRIO e fino (idioma dos bancos da palhoça e das
+       varandas da r1): o corpo no meio dele é ejetado inteiro numa passada do
+       _collide — no colisor grosso da casa o empurrão para a 0,38 do centro e a
+       cláusula de colisão de alpendre morre (medido: push 0,38 vs ejeção). */
+    const oz = 3.1 + 1.05, aw = 2.6, ad = .8;
+    const cx = c.x + Math.sin(c.ry) * oz, cz = c.z + Math.cos(c.ry) * oz;
+    const ca = Math.abs(Math.cos(c.ry)), sa = Math.abs(Math.sin(c.ry));
+    colliders.push({ minX: cx - (ca * aw + sa * ad), maxX: cx + (ca * aw + sa * ad), minY: 0, maxY: 2.6,
+      minZ: cz - (sa * aw + ca * ad), maxZ: cz + (sa * aw + ca * ad), tag: `varanda-casa-${i}` });
+  });
+
+  /* ── IGREJINHA DA MATRIZ — landmark da praça, porta pro sul (pro largo). Proxy:
+     nave caiada, porta dupla, torre sineira com cruz. Molde: igrejinha.glb. */
+  sertaoElement('igrejinha', 0, 0, -15.5, (group) => {
+    const nave = new THREE.Mesh(boxGeo(6.4, 4, 8.2), MAT.paupiqueCaiado);
+    nave.name = 'parede-igrejinha-0'; nave.position.y = 2; nave.castShadow = true; nave.receiveShadow = true; group.add(nave);
+    for (const sx of [-1, 1]) {
+      const agua = new THREE.Mesh(boxGeo(3.6, .3, 9), MAT.roof);
+      agua.position.set(sx * 1.65, 4.15, 0); agua.rotation.z = sx * .2; agua.castShadow = true; group.add(agua);
+    }
+    const torre = new THREE.Mesh(boxGeo(2.3, 6.6, 2.3), MAT.paupiqueCaiado);
+    torre.position.set(0, 3.3, 3.4); torre.castShadow = true; group.add(torre);
+    const oculo = new THREE.Mesh(new THREE.CylinderGeometry(.42, .42, .16, 12), MAT.windowVoid);
+    oculo.rotation.x = Math.PI / 2; oculo.position.set(0, 5.4, 4.58); group.add(oculo);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.6, 4), MAT.roof);
+    cone.position.set(0, 7.4, 3.4); cone.rotation.y = Math.PI / 4; cone.castShadow = true; group.add(cone);
+    const cruzV = new THREE.Mesh(boxGeo(.12, .95, .12), MAT.dark); cruzV.position.set(0, 8.55, 3.4); group.add(cruzV);
+    const cruzH = new THREE.Mesh(boxGeo(.55, .12, .12), MAT.dark); cruzH.position.set(0, 8.72, 3.4); group.add(cruzH);
+    for (const sx of [-.75, .75]) {
+      const porta = new THREE.Mesh(boxGeo(1.3, 2.6, .14), MAT.dark);
+      porta.position.set(sx, 1.3, 4.12); group.add(porta);
+    }
+    const adro = new THREE.Mesh(boxGeo(8.6, .18, 2.2), MAT.pedra);
+    adro.position.set(0, .09, 5.4); adro.receiveShadow = true; group.add(adro);
+  }, 'igrejinha', 7.2, [4.1, 7.4, 6.1], { ry: 0, targetLen: 0 });
+
+  /* ── CAMINHÃO ANTIGO estacionado na lateral leste — cover grande do mapa.
+     Genérico anos 60 SEM marca (linha editorial: nada de marca real). */
+  sertaoElement('caminhao', 0, 24.6, -18.6, (group) => {
+    const cabine = new THREE.Mesh(boxGeo(2.3, 1.75, 2.1), MAT.blue);
+    cabine.position.set(0, 1.62, 2.35); cabine.castShadow = true; group.add(cabine);
+    const capo = new THREE.Mesh(boxGeo(2.15, .8, 1.5), MAT.blue);
+    capo.position.set(0, 1.15, 4.05); capo.castShadow = true; group.add(capo);
+    const grade = new THREE.Mesh(boxGeo(1.9, .8, .18), MAT.metal);
+    grade.position.set(0, 1.2, 4.83); group.add(grade);
+    const paraBrisa = new THREE.Mesh(boxGeo(2, .7, .12), MAT.glass);
+    paraBrisa.position.set(0, 2, 3.28); paraBrisa.rotation.x = -.18; group.add(paraBrisa);
+    const cacamba = new THREE.Mesh(boxGeo(2.45, 1.15, 4.1), MAT.pale);
+    cacamba.position.set(0, 1.85, -.95); cacamba.castShadow = true; group.add(cacamba);
+    for (const sx of [-1.28, 1.28]) {
+      const lateral = new THREE.Mesh(boxGeo(.12, .55, 4.1), MAT.dark);
+      lateral.position.set(sx, 2.65, -.95); group.add(lateral);
+    }
+    const tampa = new THREE.Mesh(boxGeo(2.45, .1, 4.1), MAT.wood);
+    tampa.position.set(0, 2.48, -.95); group.add(tampa);
+    for (const [wx, wz] of [[-1.15, 2.5], [1.15, 2.5], [-1.2, -1.5], [1.2, -1.5]]) {
+      const roda = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, .4, 14), MAT.black);
+      roda.rotation.z = Math.PI / 2; roda.position.set(wx, .62, wz); roda.castShadow = true; group.add(roda);
+      const calota = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .44, 10), MAT.metal);
+      calota.rotation.z = Math.PI / 2; calota.position.set(wx, .62, wz); group.add(calota);
+    }
+    const estepe = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .36, 12), MAT.black);
+    estepe.rotation.z = Math.PI / 2; estepe.position.set(0, 1.35, -3.15); group.add(estepe);
+  }, 'caminhao_antigo', 2.9, [3.1, 2.9, 1.45], { ry: .14, targetLen: 6.8 });
   const mandacaruProxy = (scale, light) => (group) => {
     const material = light ? MAT.cactusLight : MAT.cactus;
     const trunk = new THREE.Mesh(cylGeo(.38 * scale, 3.8 * scale, 10), material); trunk.position.y = 3.8 * scale / 2; trunk.castShadow = true; group.add(trunk);
@@ -333,7 +404,12 @@ export function buildVelhoOeste(scene, T) {
       const elbow = new THREE.Mesh(cylGeo(.2 * scale, .85 * scale, 9), material); elbow.rotation.z = Math.PI / 2; elbow.position.set(dir * .35 * scale, 1.25 * scale + .425 * scale, 0); elbow.castShadow = true; group.add(elbow);
     }
   };
-  [[-21,-39,1],[22,-38,.8],[-22,-20,.7],[23,1,1],[-21,18,.9],[22,41,1.1],[17,24,.65],[-18,40,.7]].forEach((p, i) =>
+  /* Caatinga DENSA (r2): "mata branca" espinhosa, não deserto de faroeste — o dono
+     pediu leitura de CATINGA. Mandacaru em moitas, xique-xique em touceira,
+     juazeiro tortuoso e macambira fechando as faixas além do casario. */
+  [[-21,-39,1],[22,-38,.8],[-22,-20,.7],[23,1,1],[-21,18,.9],[22,41,1.1],[17,24,.65],[-18,40,.7],
+   [-28,-33,1.2],[28,-30,.9],[-29,-10,.75],[29,-24,1],[-28,6,1.05],[29,12,.8],[-27,30,.95],[28,34,.7],
+   [-25.5,-22,.85],[25.5,20,1],[-19,-44,.9],[14,-40,.75]].forEach((p, i) =>
     sertaoElement('mandacaru', i, p[0], p[1], mandacaruProxy(p[2], i % 2), 'sertao_mandacaru', 3.8 * p[2] + .5, [.38 * p[2], 3.8 * p[2], .38 * p[2]]));
   const macambiraProxy = (group) => {
     const material = new THREE.MeshStandardMaterial({ color: 0x93a06b, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .06, roughness: 1 });
@@ -345,7 +421,7 @@ export function buildVelhoOeste(scene, T) {
       leaf.castShadow = true; group.add(leaf);
     }
   };
-  [[-19.5, -36], [-24, 6], [19.5, -3], [25, 26]].forEach((p, i) =>
+  [[-19.5, -36], [-24, 6], [19.5, -3], [25, 26], [-27.5, -25], [15.5, 30]].forEach((p, i) =>
     sertaoElement('macambira', i, p[0], p[1], macambiraProxy, 'sertao_macambira', 1.15, [.55, 1.25, .55]));
   const juazeiroProxy = (group) => {
     const bark = new THREE.MeshStandardMaterial({ color: 0x9c8a72, map: TX.wood, bumpMap: TX.wood, bumpScale: .07, roughness: 1 });
@@ -356,8 +432,17 @@ export function buildVelhoOeste(scene, T) {
       branch.rotation.set(az * tilt, 0, -ax * tilt);
       branch.castShadow = true; group.add(branch);
     }
+    /* juazeiro é das poucas folhas que ficam na caatinga seca (Wikipédia "Juazeiro"):
+       copa verde-clara miúda por cima dos ramos tortuosos. */
+    const folha = new THREE.MeshStandardMaterial({ color: 0x8fae6f, roughness: 1 });
+    for (let i = 0; i < 5; i++) {
+      const tufo = new THREE.Mesh(new THREE.SphereGeometry(.62, 7, 5), folha);
+      tufo.scale.set(1, .62, 1);
+      tufo.position.set(Math.sin(i * 2.1) * .9, 3.9 + (i % 3) * .3, Math.cos(i * 1.7) * .9);
+      tufo.castShadow = true; group.add(tufo);
+    }
   };
-  [[-25.5, -13], [25.5, 14]].forEach((p, i) =>
+  [[-25.5, -13], [25.5, 14], [-20.5, 34], [27, -8]].forEach((p, i) =>
     sertaoElement('juazeiro', i, p[0], p[1], juazeiroProxy, 'sertao_juazeiro', 4.6, [.3, 3.2, .3]));
   const xiqueProxy = (group) => {
     const material = new THREE.MeshStandardMaterial({ color: 0x5e7d5a, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .05, roughness: 1 });
@@ -367,7 +452,7 @@ export function buildVelhoOeste(scene, T) {
       stem.castShadow = true; group.add(stem);
     }
   };
-  [[-27, -31], [27.5, 3], [-27, 38]].forEach((p, i) =>
+  [[-27, -31], [27.5, 3], [-27, 38], [24, -33], [-15.5, -40], [20.5, 8]].forEach((p, i) =>
     sertaoElement('xique', i, p[0], p[1], xiqueProxy, 'sertao_xique_xique', 2.1, [.4, 1.9, .4]));
 
   /* Pedras de granito; colisor cobre o footprint do visual — menor que a malha
@@ -506,15 +591,16 @@ export function buildVelhoOeste(scene, T) {
     occluders.push(group); return group;
   }
 
-  // Coberturas do miolo: quatro silhuetas distintas, espaçadas para manter três corredores.
+  // Miolo da praça: mobiliário de largo de interior — bebedouro de gado, banca de
+  // feira, amarra de montaria (vaquejada), barricada, barril d'água, fardos de palha.
   obstacle('bebedouro', -8, 1, .08, 2.25, .85, 1.05, (part) => {
     part(4.5, .28, 1.7, MAT.dark, 0, 0, 0); part(4.15, .55, .16, MAT.pale, 0, .28, -.75); part(4.15, .55, .16, MAT.pale, 0, .28, .75);
     for (const px of [-2.05, 2.05]) part(.16, .55, 1.35, MAT.pale, px, .28, 0);
     part(3.8, .04, 1.15, MAT.glass, 0, .31, 0); for (const px of [-1.65, 1.65]) part(.18, .5, .18, MAT.dark, px, 0, 0);
   });
-  obstacle('caixas-dinamite', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
+  obstacle('caixas-feira', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
     part(1.8, 1.05, 1.55, MAT.pale, -.45, 0, 0); part(1.35, .85, 1.35, MAT.wood, .65, 1.02, .05);
-    for (const pz of [-.42, 0, .42]) cylinder(.09, .9, MAT.red, .65, 1.43, pz, { rz: Math.PI / 2, segments: 8 });
+    for (const pz of [-.42, 0, .42]) cylinder(.16, .35, MAT.red, .65 + (pz === 0 ? .3 : -.1), 1.44, pz, { rz: Math.PI / 2, segments: 9 });
     part(1.42, .08, .12, MAT.dark, .65, 1.84, 0);
   });
   obstacle('amarra-cavalos', 4, -8, .04, 2.7, .35, 1.45, (part) => {
@@ -630,8 +716,9 @@ export function buildVelhoOeste(scene, T) {
 
   update(0, 0);
 
-  /* BUG-57: o sertão tem ave de poleiro (na palhoça e na capelinha), galinha
-     de capoeira, rato de armazém e rolinha no terreiro. */
+  /* BUG-57 + r2: o arraial tem ave de poleiro (palhoça e capelinha), galinha de
+     capoeira, rato de armazém, rolinha no terreiro e CALANGO correndo em rajadas
+     entre as pedras (pedras 0↔4 a leste, 2↔3 pelo sul — o bicho é de pedreira). */
   const ambience = createFavelaAmbience(root, {
     map: 'velho_oeste',
     rats: [
@@ -649,6 +736,11 @@ export function buildVelhoOeste(scene, T) {
     parrots: [
       { pos: [-21, 3.4, 17.8], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
     ],
+    calangos: [
+      { pos: [19.5, 0, -21], to: [20.5, 0, -14.5], phase: .2 },
+      { pos: [25, 0, 33], to: [21, 0, 29], phase: 1.6 },
+      { pos: [-23.5, 0, 23], to: [-20, 0, 27], phase: 2.7 },
+    ],
   });
 
   return {
@@ -659,9 +751,9 @@ export function buildVelhoOeste(scene, T) {
       B: [12, 4, -4, -12].map(x => ({ x, z: 41, yaw: Math.PI })),
     },
     ctfPoints: [
-      { id: 'E', label: 'CANTINA', x: -12, z: -34 },
-      { id: 'MID', label: 'RUA PRINCIPAL', x: 0, z: 0 },
-      { id: 'B', label: 'ESTÁBULO', x: 12, z: 34 },
+      { id: 'E', label: 'ADRO', x: -12, z: -34 },
+      { id: 'MID', label: 'PRAÇA DA MATRIZ', x: 0, z: 2 },
+      { id: 'B', label: 'FORRÓ', x: 12, z: 34 },
     ],
     waypoints: { nodes, adj }, nearestWaypoint, findPath, bounds,
   };

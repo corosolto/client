@@ -20,17 +20,21 @@ const ASSETS = Object.freeze({
   cockroach: 'models/ambient/barata_urbana.glb',
   parrot: 'models/ambient/papagaio_poleiro.glb',
   /* map2/velho-oeste (Sertão da Treta): estático na pedra, escala por
-     comprimento como o jacaré/capivara — não entra no preload default. */
+      comprimento como o jacaré/capivara — não entra no preload default. */
   lagarto: 'models/ambient/lagarto_sertao.glb',
+  /* r2: calango de pedreira (Mint, kit sertao) — corre em rajadas empinado.
+     Idem lagarto: escala por comprimento; o tipo `calango` do FavelaAmbience
+     cuida do start-stop procedural (aqui é só o GLB). */
+  calango: 'models/ambient/calango.glb',
 });
 export const FAVELA_AMBIENCE_ASSETS = Object.freeze(Object.keys(ASSETS));
-const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot' });
-const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio' });
+const TYPE_ASSET = Object.freeze({ rat: 'rat', pigeon: 'pigeonGround', dog: 'dog', cat: 'cat', chicken: 'chicken', cow: 'cow', armadillo: 'armadillo', cockroach: 'cockroach', parrot: 'parrot', calango: 'calango' });
+const FAUNA_NAME = Object.freeze({ rat: 'rato', pigeon: 'pomba', dog: 'cachorro', cat: 'gato', chicken: 'galinha', cow: 'vaca', armadillo: 'tatu', cockroach: 'barata', parrot: 'papagaio', calango: 'calango' });
 const QUADS = new Set(['dog', 'cat', 'chicken', 'cow', 'armadillo']);
 const SHOT_REACTION_RADIUS = 13;
 const DOG_IDLE_TIME = 3;
 /* por tipo: duração do susto e velocidade de fuga/caminhada (vaca larga, gato rápido) */
-const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3 });
+const ALERT_TIME = Object.freeze({ rat: 2.1, dog: 2.6, cat: 2.4, chicken: 2.8, cow: 3.2, pigeon: 3.2, armadillo: 2.4, cockroach: 1.8, parrot: 1.3, calango: 1.1 });
 const QUAD_SPEED = Object.freeze({
   dog: { walk: 1, flee: 3.2 }, cat: { walk: 1.1, flee: 3.6 }, chicken: { walk: .55, flee: 2.6 }, cow: { walk: .75, flee: 2.4 },
   armadillo: { walk: .4, flee: 1.5 },   // tatu é bicho de passo curto; fuga é um trote rápido
@@ -165,6 +169,35 @@ function fallbackParrot() {
   return group;
 }
 
+/* r2 (kit sertão): calango EMPINADO — a pose assinatura do bicho, corpo apoiado
+   nas patas traseiras, cauda longa no chão contrabalançando a cabeça erguida. */
+function fallbackCalango(index) {
+  const group = new THREE.Group();
+  const pele = new THREE.MeshStandardMaterial({ color: index % 2 ? 0x8a7c5e : 0x77705a, roughness: .9 });
+  const barriga = new THREE.MeshStandardMaterial({ color: 0xc9b78d, roughness: .92 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.05, 9, 7), pele);
+  body.scale.set(.78, .8, 1.7); body.rotation.x = -.5; body.position.set(0, .075, .02); group.add(body);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), barriga);
+  belly.scale.set(.66, .66, 1.5); belly.rotation.x = -.5; belly.position.set(0, .066, .028); group.add(belly);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.028, 8, 6), pele);
+  head.position.set(0, .135, .1); group.add(head);
+  const focinho = new THREE.Mesh(new THREE.ConeGeometry(.014, .03, 6), pele);
+  focinho.rotation.x = Math.PI / 2 - .35; focinho.position.set(0, .128, .126); group.add(focinho);
+  for (const side of [-1, 1]) {
+    const perna = new THREE.Mesh(new THREE.CylinderGeometry(.007, .009, .05, 5), pele);
+    perna.rotation.z = side * .3; perna.position.set(side * .021, .028, -.015); group.add(perna);
+    const braco = new THREE.Mesh(new THREE.CylinderGeometry(.004, .005, .03, 5), pele);
+    braco.rotation.set(.4, 0, side * .35); braco.position.set(side * .03, .055, .05); group.add(braco);
+  }
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(.011, .002, .16, 5), pele);
+  tail.rotation.x = Math.PI / 2 - .18; tail.position.set(0, .012, -.075); group.add(tail);
+  for (let i = 0; i < 3; i++) {
+    const listra = new THREE.Mesh(new THREE.BoxGeometry(.082, .006, .028), new THREE.MeshStandardMaterial({ color: 0x4f4636, roughness: .9 }));
+    listra.rotation.x = -.5; listra.position.set(0, .088 + i * .006, -.02 + i * .035); group.add(listra);
+  }
+  return group;
+}
+
 function cloneAsset(id) {  const template = templates.get(id);
   if (!template) return null;
   return {
@@ -179,8 +212,8 @@ function normalizeModel(id, model) {
   const size = box.getSize(new THREE.Vector3());
   /* alvo em metros de mundo: altura para bichos que andam de lado pro jogador,
      comprimento para rato (silhueta deitada). Vaca 1,75 / gato 0,48 / galinha 0,5. */
-  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34 }[id] || .5;
-  const dimension = ['rat', 'armadillo', 'cockroach'].includes(id) ? Math.max(size.x, size.z) : size.y;
+  const target = { rat: .36, pigeonGround: .29, dog: 1, cat: .48, chicken: .5, cow: 1.75, armadillo: .55, cockroach: .14, parrot: .34, calango: .38 }[id] || .5;
+  const dimension = ['rat', 'armadillo', 'cockroach', 'calango'].includes(id) ? Math.max(size.x, size.z) : size.y;
   const scale = target / Math.max(.001, dimension);
   // dog: altura 1 m => cernelha ~0,6 (ombro 1,83 de 3,09 de altura no GLB bruto)
   const center = box.getCenter(new THREE.Vector3());
@@ -200,7 +233,7 @@ function distanceToSegment(point, start, end) {
 }
 
 class FavelaAmbience {
-  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [] }) {
+  constructor(root, { map, low = false, rats = [], pigeons = [], dogs = [], cats = [], chickens = [], cows = [], armadillos = [], cockroaches = [], parrots = [], calangos = [] }) {
     this.map = map;
     this.low = low;
     this.time = 0;
@@ -219,6 +252,7 @@ class FavelaAmbience {
     const armadilloList = low ? armadillos.slice(0, 1) : armadillos;
     const cockroachList = low ? cockroaches.slice(0, 1) : cockroaches;
     const parrotList = low ? parrots.slice(0, 1) : parrots;
+    const calangoList = low ? calangos.slice(0, 1) : calangos;
     this.animals = [];
     ratList.forEach((config, index) => this._add('rat', config, index));
     pigeonList.forEach((config, index) => this._add('pigeon', config, index));
@@ -229,6 +263,7 @@ class FavelaAmbience {
     armadilloList.forEach((config, index) => this._add('armadillo', config, index));
     cockroachList.forEach((config, index) => this._add('cockroach', config, index));
     parrotList.forEach((config, index) => this._add('parrot', config, index));
+    calangoList.forEach((config, index) => this._add('calango', config, index));
     this.reset();
   }
 
@@ -260,7 +295,8 @@ class FavelaAmbience {
     } else {
       model = type === 'rat' ? fallbackRat(index) : type === 'dog' ? fallbackDog()
         : type === 'armadillo' ? fallbackArmadillo() : type === 'cockroach' ? fallbackCockroach()
-        : type === 'parrot' ? fallbackParrot() : fallbackPigeon();
+        : type === 'parrot' ? fallbackParrot() : type === 'calango' ? fallbackCalango(index)
+        : fallbackPigeon();
       while (model.children.length) animalRoot.add(model.children[0]);
       model = animalRoot;
     }
@@ -354,6 +390,7 @@ class FavelaAmbience {
       if (animal.type === 'rat' || animal.type === 'cockroach') this._updateRat(animal, dt);
       else if (animal.type === 'pigeon') this._updatePigeon(animal, dt);
       else if (animal.type === 'parrot') this._updateParrot(animal, dt);
+      else if (animal.type === 'calango') this._updateCalango(animal, dt);
       else this._updateQuad(animal, dt);
       animal.mixer?.update(dt);
     }
@@ -455,6 +492,37 @@ class FavelaAmbience {
     animal.state = 'idle';
   }
 
+  _updateCalango(animal) {
+    /* r2 (pedido do dono): corre EMPINADO em rajadas e para bruscamente — é o
+       bicho de pedreira termorregulando. Rajada 1,2 s atravessando o vão,
+       parada 2,2 s espreitando, próxima rajada inverte o rumo. */
+    if (this.time < animal.alertUntil) {
+      const elapsed = this.time - animal.alertAt;
+      animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, Math.min(3.2, elapsed * 3.2));
+      animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
+      animal.root.rotation.x = -.42;
+      animal.state = 'flee';
+      return;
+    }
+    const ciclo = 4.2, fase = (this.time + animal.phase) % ciclo;
+    const rajada = fase < 1.6;
+    const dir = Math.floor((this.time + animal.phase) / ciclo) % 2 === 0 ? 1 : -1;
+    const from = dir > 0 ? animal.origin : animal.to;
+    const target = dir > 0 ? animal.to : animal.origin;
+    if (rajada) {
+      const t = fase / 1.6;
+      animal.routine.lerpVectors(from, target, t);
+      const heading = target.clone().sub(from);
+      if (heading.lengthSq() > .001) animal.root.rotation.y = Math.atan2(heading.x, heading.z);
+      animal.root.rotation.x = -.42 + Math.sin(fase * 22) * .06;
+    } else {
+      animal.root.rotation.x = 0;
+      animal.root.rotation.y += Math.sin((this.time + animal.phase) * .7) * .02;
+    }
+    const recovering = this._recoverToRoute(animal, animal.routine, 1.2);
+    animal.state = recovering ? 'recover' : rajada ? 'run' : 'idle';
+  }
+
   _recoverToRoute(animal, target, duration) {
     if (animal.alertUntil > 0 && this.time >= animal.alertUntil && animal.recoverUntil === 0) {
       animal.recoverAt = this.time;
@@ -499,9 +567,10 @@ class FavelaAmbience {
     const armadillo = this.animals.filter((animal) => animal.type === 'armadillo').length;
     const cockroach = this.animals.filter((animal) => animal.type === 'cockroach').length;
     const parrot = this.animals.filter((animal) => animal.type === 'parrot').length;
+    const calango = this.animals.filter((animal) => animal.type === 'calango').length;
     return {
       map: this.map, low: this.low, gltf: this.animals.length > 0 && this.animals.every((animal) => animal.source === 'gltf'),
-      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot }, meshes, triangles: Math.round(triangles),
+      counts: { rat, pigeon, dog, cat, chicken, cow, armadillo, cockroach, parrot, calango, total: rat + pigeon + dog + cat + chicken + cow + armadillo + cockroach + parrot + calango }, meshes, triangles: Math.round(triangles),
     };
   }
 
