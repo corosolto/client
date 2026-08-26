@@ -32,9 +32,15 @@ export const PISCINA = { x0: -5.5, x1: 5.5, z0: -32.5, z1: -26.5, raso: -0.85, f
    procedural vira fallback de node/?glb=0 — zonas e colisores não mudam. */
 const JARDIM_VEG = ['palmeira_imperial', 'palmeira_ravenala', 'heliconia', 'costela_adao', 'bananeira', 'ixora', 'agave', 'samambaia'];
 
+/* r2 (dono: "areas internas da casa toda low poly ainda, precisa de moldes novos" e
+   "na area externa pro mar, coqueiros low poly"): kits Mint `mansao_interior` e
+   `mansao_exterior` do kits-mint.json. Cada peça procedural correspondente vira
+   FALLBACK de node/`?glb=0` — colisor e marca de régua não dependem do download. */
+export const MANSAO_MOBILIA = ['mansao_sofa', 'mansao_poltrona', 'mansao_mesa_centro', 'mansao_lustre'];
 export const MANSAO_PROPS = ['mesa_guardasol', 'guarda_sol', ...GARAGEM.map(([id]) => id), ...JARDIM_VEG,
   // BUG-56, pack Mint "Mansão do Joá — jardim e casa": set dressing de jardim/fachada
-  'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada'];
+  'banco_jardim', 'poste_jardim', 'escultura_jardim', 'vaso_tropical', 'lounge_externo', 'lampiao_fachada',
+  ...MANSAO_MOBILIA, 'coqueiro', 'aviao_faixa'];
 
 export function buildMansao(scene, T) {
   const colliders = [], occluders = [], pickups = [];
@@ -144,6 +150,28 @@ export function buildMansao(scene, T) {
     const [w, d, h] = fb || [0.6, 0.6, targetH];
     addBox(w, h, d, lam({ color: 0x8a7654, roughness: .8 }), x, y, z, { ry, collide: false });
     return false;
+  };
+
+  /* MOBÍLIA GLB (r2). Troca um GRUPO de peças procedurais por um molde do kit Mint e
+     leva a MARCA DE RÉGUA junto: sem isso o browser mostra o GLB e a régua continua
+     medindo a caixa escondida — verde sobre o defeito, que é o BUG-02 desta base.
+     O colisor NÃO muda de dono: quem o declara é o procedural, que continua no grafo
+     (só invisível), então corpo e bala seguem batendo onde a régua mede.
+     `alturaAlvo` é a altura de MUNDO da malha; a pegada que ela produz está tabelada em
+     tools/eval/mansao-glb-fit.mjs, que é quem prova malha <= colisor. */
+  const mobilia = (id, { x, y = 0, z, alturaAlvo, ry = 0, bala = true }, procedurais, marca) => {
+    const obj = GLB_ON && hasProp(id) ? placeProp(id, { x, y, z, targetH: alturaAlvo, ry }) : null;
+    if (!obj) return null;
+    for (const peca of procedurais) {
+      if (!peca) continue;
+      peca.visible = false;
+      const i = occluders.indexOf(peca); if (i >= 0) occluders.splice(i, 1);
+      for (const k of Object.keys(peca.userData)) if (k !== 'nonSolidSurface') delete peca.userData[k];
+    }
+    Object.assign(obj.userData, marca);
+    obj.traverse((m) => { if (!m.isMesh) return; if (bala) occluders.push(m); else m.userData.nonSolidSurface = true; });
+    root.add(obj);
+    return obj;
   };
 
   /* CÉU */
@@ -311,15 +339,26 @@ export function buildMansao(scene, T) {
   /* COVER INTERIOR: móveis de luxo */
   const tecidoClaro = lam({ color: 0x77756f, roughness: .78 });
   const tecidoEscuro = lam({ color: 0x31333a, roughness: .82 });
-  // sofá (sala)
-  const estarA = addBox(4.0, 0.8, 1.5, tecidoClaro, 4, 0, 0); estarA.userData.mansaoFeature = 'estar';
-  const estarB = addBox(2.4, 0.82, 1.5, tecidoEscuro, 0, 0, 4); estarB.userData.mansaoFeature = 'estar';
-  solids.push({ x0: 2, x1: 6, z0: -0.75, z1: 0.75 }, { x0: -1.2, x1: 1.2, z0: 3.25, z1: 4.75 });
-  // Encostos, braços e tapetes dão silhueta de mobiliário em vez de caixas soltas.
-  for (const [x,z,w,d,ry,mat] of [[4,-.62,3.7,.18,0,tecidoClaro],[2.12,0,.18,1.35,0,tecidoClaro],[5.88,0,.18,1.35,0,tecidoClaro],
-    [0,3.38,2.2,.18,0,tecidoEscuro],[-1.12,4,.18,1.3,0,tecidoEscuro],[1.12,4,.18,1.3,0,tecidoEscuro]])
-    addBox(w, .72, d, mat, x, .5, z, { collide: false, skirt: false, ry });
+  /* SALA — dois grupos de estar. O colisor encolheu de 4,00x1,50 para 2,30x1,10 porque
+     o sofá do kit Mint mede 2,20x1,00 de mundo em 0,95 m de altura (mansao-glb-fit):
+     colisor maior que a malha visível é parede invisível, que é o defeito que a régua
+     de fit existe para impedir. Encolher só abre passagem — não fecha rota. */
+  const estarA = addBox(2.3, 0.8, 1.1, tecidoClaro, 4, 0, 0); estarA.userData.mansaoFeature = 'estar';
+  const estarB = addBox(2.3, 0.82, 1.1, tecidoEscuro, 0, 0, 4); estarB.userData.mansaoFeature = 'estar';
+  solids.push({ x0: 2.85, x1: 5.15, z0: -0.55, z1: 0.55 }, { x0: -1.15, x1: 1.15, z0: 3.45, z1: 4.55 });
+  // Encostos e braços: silhueta de mobiliário no fallback procedural (node/?glb=0).
+  const silhuetaEstar = [];
+  for (const [x,z,w,d,ry,mat] of [[4,-.47,2.1,.18,0,tecidoClaro],[2.96,0,.18,.95,0,tecidoClaro],[5.04,0,.18,.95,0,tecidoClaro],
+    [0,3.53,2.1,.18,0,tecidoEscuro],[-1.04,4,.18,.95,0,tecidoEscuro],[1.04,4,.18,.95,0,tecidoEscuro]])
+    silhuetaEstar.push(addBox(w, .72, d, mat, x, .5, z, { collide: false, skirt: false, ry }));
   addFloor(5.6, 3.4, 3.1, 1.55, lam({ color: 0x9a744f, roughness: .92 }), .035);
+  /* Sofá de couro do kit Mint no lugar da caixa de tecido. `ry` = PI no grupo de z=+4
+     porque a frente do molde olha para +Z (medido em tools/blender-prop-orient-render.py)
+     e aquele sofá encosta na divisória do norte. */
+  mobilia('mansao_sofa', { x: 4, z: 0, alturaAlvo: .95, ry: 0 },
+    [estarA, silhuetaEstar[0], silhuetaEstar[1], silhuetaEstar[2]], { mansaoFeature: 'estar' });
+  mobilia('mansao_sofa', { x: 0, z: 4, alturaAlvo: .95, ry: Math.PI },
+    [estarB, silhuetaEstar[3], silhuetaEstar[4], silhuetaEstar[5]], { mansaoFeature: 'estar' });
   const gourmetPart=(object,tipo)=>{ object.userData.mansaoFeature='gourmet-part'; object.userData.gourmetPart=tipo; return object; };
   const theaterPart=(object,tipo)=>{ object.userData.mansaoFeature='theater-part'; object.userData.theaterPart=tipo; return object; };
   // Ilha gourmet funcional: bancada inteira, cuba/torneira, cooktop, três
@@ -345,11 +384,16 @@ export function buildMansao(scene, T) {
   // recliners com encosto/braços, não quatro caixas sem contexto.
   const tela=theaterPart(addBox(5.1,2.35,.08,lam({color:0x090b0d,roughness:.18}),9,.65,-14.55,{collide:false,cast:false,skirt:false}),'screen');
   const consoleMidia=theaterPart(addBox(3.4,.42,.48,lam({color:0x2c2724,roughness:.5}),9,0,-14.08,{collide:false}),'media-console');
+  /* Quatro poltronas do kit Mint viradas para a tela (z=-14,55, ao norte): a frente do
+     molde olha para +Z, então `ry` = PI. Malha de mundo 0,94x0,90 dentro do colisor de
+     1,08x1,02 — a conta está tabelada em mansao-glb-fit. */
   for(const [px,pz] of [[8,-9.2],[10,-9.2],[8,-11.35],[10,-11.35]]) {
     const cadeira=theaterPart(addBox(1.08,.52,1.02,tecidoEscuro,px,0,pz),'recliner');
-    addBox(.96,.86,.24,tecidoEscuro,px,.42,pz-.39,{collide:false,skirt:false});
-    for(const ax of [-.53,.53]) addBox(.16,.62,.9,tecidoEscuro,px+ax,.05,pz,{collide:false,skirt:false});
+    const encosto=addBox(.96,.86,.24,tecidoEscuro,px,.42,pz-.39,{collide:false,skirt:false});
+    const bracos=[-.53,.53].map((ax)=>addBox(.16,.62,.9,tecidoEscuro,px+ax,.05,pz,{collide:false,skirt:false}));
     solids.push({x0:px-.62,x1:px+.62,z0:pz-.58,z1:pz+.58});
+    mobilia('mansao_poltrona',{x:px,z:pz,alturaAlvo:.98,ry:Math.PI+(px*.11+pz*.07)%.18},
+      [cadeira,encosto,...bracos],{mansaoFeature:'theater-part',theaterPart:'recliner'});
   }
   for(const x of [6.75,9,11.25]) theaterPart(addBox(1.55,1.25,.06,lam({color:0x465056,roughness:.86}),x,2.05,-14.46,{collide:false,cast:false,skirt:false}),'acoustic-panel');
   // mesa de jantar
@@ -407,18 +451,36 @@ export function buildMansao(scene, T) {
     miolo.position.y = 3.02; lustre.add(miolo);
     lustre.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
     root.add(lustre);
+    /* Lustre de latão do kit Mint: pendurado pelo TOPO. `placeProp` ancora pela BASE, então
+       y = teto - altura (4,05 - 1,10). Fora de `occluders`: cristal pendurado não para bala. */
+    mobilia('mansao_lustre', { x: 8, y: 4.05 - 1.10, z: 4, alturaAlvo: 1.10, bala: false },
+      [lustre], { mansaoFeature: 'luxo-prop', luxoType: 'lustre' });
 
     // POLTRONAS: assento leva o colisor (o resto é silhueta), mesmo padrão do sofá.
     const couro = lam({ color: 0x6d3b26, roughness: .52 });
     const pesMetal = lam({ color: 0x2f2c28, metalness: .55, roughness: .4 });
-    for (const [px, pz, pry] of [[1.6, -2.6, .55], [5.9, -2.9, -.42]]) {
-      const assento = addBox(.95, .42, .92, couro, px, 0, pz, { ry: pry });
+    /* Poltronas: duas na sala e duas no ESCRITÓRIO do mezanino (y = LAJE_H), que estava
+       sem uma peça de mobília desde a v2.1 — "areas internas da casa toda low poly". */
+    for (const [px, py, pz, pry] of [[1.6, 0, -2.6, .55], [5.9, 0, -2.9, -.42],
+      [-9.2, LAJE_H, -13.1, 2.35], [-6.4, LAJE_H, -13.4, 3.62]]) {
+      const assento = addBox(.95, .42, .92, couro, px, py, pz, { ry: pry });
       luxo(assento, 'poltrona');
       solids.push({ x0: px - .48, x1: px + .48, z0: pz - .46, z1: pz + .46 });
-      addBox(.95, .66, .17, couro, px, .42, pz - .38, { collide: false, skirt: false, ry: pry });
-      for (const ax of [-.44, .44]) addBox(.16, .3, .88, couro, px + ax, .4, pz, { collide: false, skirt: false, ry: pry });
+      const partes = [assento, addBox(.95, .66, .17, couro, px, py + .42, pz - .38, { collide: false, skirt: false, ry: pry })];
+      for (const ax of [-.44, .44]) partes.push(addBox(.16, .3, .88, couro, px + ax, py + .4, pz, { collide: false, skirt: false, ry: pry }));
       for (const [ox, oz] of [[-.36, -.32], [.36, -.32], [-.36, .32], [.36, .32]])
-        addBox(.06, .16, .06, pesMetal, px + ox, -.16, pz + oz, { collide: false, skirt: false, cast: false });
+        partes.push(addBox(.06, .16, .06, pesMetal, px + ox, py - .16, pz + oz, { collide: false, skirt: false, cast: false }));
+      mobilia('mansao_poltrona', { x: px, y: py, z: pz, alturaAlvo: .98, ry: pry + Math.PI },
+        partes, { mansaoFeature: 'luxo-prop', luxoType: 'poltrona' });
+    }
+    /* MESA DE CENTRO (4ª família de luxo; o teto do mansao-water-check é 3-5): uma por
+       grupo de estar e uma no escritório. Tampo baixo, colisor rente à malha. */
+    for (const [mx, my, mz, mry] of [[4, 0, 1.5, 0], [0, 0, 2.5, 1.57], [-7.8, LAJE_H, -12.2, .4]]) {
+      const tampo = addBox(1.0, .45, .6, lam({ color: 0x5a3f2b, roughness: .42 }), mx, my, mz, { ry: mry });
+      luxo(tampo, 'mesa-centro');
+      solids.push({ x0: mx - .5, x1: mx + .5, z0: mz - .3, z1: mz + .3 });
+      mobilia('mansao_mesa_centro', { x: mx, y: my, z: mz, alturaAlvo: .45, ry: mry },
+        [tampo], { mansaoFeature: 'luxo-prop', luxoType: 'mesa-centro' });
     }
 
     // TRÍPTICO na face leste da divisória de x=-4 (a parede já é sólida: sem colisor).
@@ -964,6 +1026,22 @@ export function buildMansao(scene, T) {
         coco.castShadow = false; copa.add(coco);
       }
       root.add(palma);
+      /* r2 (dono: "coqueiros low poly"): molde do kit Mint `mansao_exterior` por cima da
+         palma procedural, que vira fallback de node/`?glb=0`. Altura e giro variam por
+         instância (a lista COQUEIROS já traz os dois) mais um jitter de escala de ±6%,
+         senão oito clones idênticos viram o "catálogo" que o crítico reprovou no jardim.
+         FORA de `occluders` e de `colliders`: a praia é vista, não arena (cláusulas
+         B6a/B6b). A inclinação do molde é medida no ARQUIVO por mansao-glb-fit. */
+      const glbPalma = GLB_ON && hasProp('coqueiro')
+        ? placeProp('coqueiro', { x: cx, y: ySand(cx, cz), z: cz,
+            targetH: alt * (1 + ((c * 37) % 13 - 6) / 100), ry: ry + c * 1.31 })
+        : null;
+      if (glbPalma) {
+        palma.visible = false;
+        glbPalma.userData.praiaFeature = 'coqueiro';
+        glbPalma.traverse((m) => { if (m.isMesh) { m.userData.nonSolidSurface = true; m.castShadow = false; } });
+        root.add(glbPalma);
+      }
     }
 
     /* Barraca: lona listrada procedural (sem marca real), balcão, isopor e banquinhos.

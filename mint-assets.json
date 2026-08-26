@@ -1907,6 +1907,167 @@
     ],
     "finalSha256": "9cc6d444facebdfb3b0de2517b5ee7bd41ad70d7847ac0195f805d756f7d4e74"
    }
+  },
+  "mansao-sofa": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/mansao_sofa.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7e8mz9xaahxwezbp8fs6hq7h8d74jk",
+    "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+    "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+    "displayName": "mansao_sofa",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Sofá de couro de 3 lugares (sala). Serve `mobilia()` no map_mansao.js com alturaAlvo 0,95 -> malha de mundo 2,20x1,00, dentro do colisor 2,30x1,10 (tools/eval/mansao-glb-fit.mjs). Frente do molde para +Z, medida em tools/blender-prop-orient-render.py."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "926dea2a4e0ff695cf5e96ddd0ce79404fd3f9b4cf3854b8c3941b85d9673197"
+   }
+  },
+  "mansao-lustre": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/mansao_lustre.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7968911swqbrasqxt023eqqn8d7vzw",
+    "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+    "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+    "displayName": "mansao_lustre",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Lustre de latão com cristais e roseta de teto. Pendurado pelo TOPO: `placeProp` ancora pela base, então y = 4,05 - 1,10. Fora de occluders (cristal não para bala)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "7222d24fc10c2d7a1da69514f4c8aa2d30b4a1f2b44a689a31c884386f18d755"
+   }
+  },
+  "mansao-poltrona": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/mansao_poltrona.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks79p2vv2cf5d7fzab1t5vnhzx8d7a0e",
+    "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+    "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+    "displayName": "mansao_poltrona",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Poltrona de madeira e couro capitonê. Serve as 4 do home theater, as 2 de luxo da sala e as 2 novas do escritório do mezanino. alturaAlvo 0,98 -> 0,94x0,90 dentro do colisor 1,08x1,02."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "9630e545dd2e7a9765e9ba67472ca51507df8338cb79415e319a797c59ab30ad"
+   }
+  },
+  "mansao-mesa-centro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/mansao_mesa_centro.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7abc1zgnf3d45dcv1jqs95898d76as",
+    "packAssetId": "th789df01rjqd0qzj2mfe8zjw18d7b1c",
+    "chatUrl": "https://mint.gg/chat/ph701643a4t37097hg56aw5rfx8d6ggk",
+    "displayName": "mansao_mesa_centro",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `mansao_interior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Mesa de centro de madeira torneada com gaveta. 4ª família de `luxo-prop` (o teto do mansao-water-check é 3-5). alturaAlvo 0,45 -> 0,99x0,59 dentro do colisor 1,00x0,60."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "2683b62c9a1ceb73642dcd07da1a6e733a3c6ffaf0390f9e6ec34fb00430a7ee"
+   }
+  },
+  "coqueiro": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/coqueiro.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks70kgvnr356rb8v8hk06v3dys8d62jz",
+    "packAssetId": "th72ef577hwy32a3de33eyymrs8d7vgc",
+    "chatUrl": "https://mint.gg/chat/ph70czc6er55wjdad98yn53dx58d73qt",
+    "displayName": "coqueiro",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `mansao_exterior` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Coqueiro de tronco curvo com cocos, para a faixa de praia do Joá (dono r2: \"coqueiros low poly\"). Oito instâncias com altura, giro e escala variados sobre a palma procedural, que vira fallback de node/?glb=0. Inclinação da copa medida NO ARQUIVO em 14,0° com a vertical (mínimo 8°, mesmo limiar da cláusula B3 do mansao-beach-check)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "8a384ba903c55e228cfdeebc6b019a946061b809d6698cf833473664b96c4e2f"
+   }
+  },
+  "arara-voo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/arara_voo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks771w92vb973f6pj7acx41y7x8d7088",
+    "packAssetId": "th73jczawhd93sgrq9p7e10h118d68nv",
+    "chatUrl": "https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709",
+    "displayName": "arara_voo",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `aves_voo` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Arara-vermelha em pose de voo, asas abertas. Fauna de céu do Joá; locomoção procedural com banking no ambientlife.js."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "3e386353f48fdee2b186194dd5839ab7a56ddc8b6932847cb66e155b8d9759ab"
+   }
+  },
+  "passaro-voo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/passaro_voo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7dsk0738faf0ytv09jyt7amh8d62kx",
+    "packAssetId": "th73jczawhd93sgrq9p7e10h118d68nv",
+    "chatUrl": "https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709",
+    "displayName": "passaro_voo",
+    "frente": "r2-mapas",
+    "notes": "Kit Mint `aves_voo` do kits-mint.json (gerado 2026-08-26, projeto zd7cbsyxbzmf05b3w084t51ymd8c5hfr). Pássaro pequeno em pose de voo, asas abertas. Bando de 5-8 no céu do Joá; locomoção procedural no ambientlife.js."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (padrao gen-asset: webp 1024, ~4-5k tris)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "323fe81e0bca831611db2e4c5fded13a0211e19d876f37bcb4adf832fe54d197"
+   }
   }
  }
 }
