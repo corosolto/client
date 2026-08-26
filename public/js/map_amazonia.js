@@ -86,11 +86,8 @@ const BOOMS = [
   { z: 12, x0: -8.6, n: 6 }, { z: 26, x0: -9.4, n: 8 }, { z: 33, x0: 2.2, n: 6 },
 ];
 
-/* ── MATA INTERIOR (ronda 3): "a amazonia precisava de mais matas, no mapa em si
-     jogável" — o anel do perímetro fecha o horizonte, aqui é o chão que se pisa.
-     Mata COMPOSTA, não derramada: grade jitterizada peneirada pelas zonas vivas
-     (spawn, bandeira, palafita+escada, margem do igarapé, madeireira) — a fresta
-     de tiro fica onde o jogo já é. Os Arrays alimentam GLB, colisor e AMZ7. */
+/* ── MATA INTERIOR (ronda 3): "mais matas, no mapa em si jogável" — grade peneirada
+     pelas zonas vivas; os Arrays alimentam GLB, colisor e AMZ7 (mesma fonte). */
 const MX = -24.5;
 const fract = (v) => v - Math.floor(v);
 const SPAWN_E = [[-15, -40], [-12, -39.3], [-18, -39.3], [-13.5, -37.9], [-16.5, -37.9]];

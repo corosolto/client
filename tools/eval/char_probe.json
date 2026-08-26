@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-26T13:57:08.699Z",
+ "gerado": "2026-08-26T14:12:52.874Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 62,
@@ -241,18 +241,18 @@
    },
    {
     "mapa": "amazonia",
-    "materiais": 71,
-    "map": 33,
+    "materiais": 72,
+    "map": 34,
     "normalMap": 1,
     "roughnessMap": 1,
     "aoMap": 0,
-    "meshes": 674,
-    "triangulos": 25552
+    "meshes": 691,
+    "triangulos": 26088
    }
   ],
   "total": {
-   "materiais": 2724,
-   "map": 1322,
+   "materiais": 2725,
+   "map": 1323,
    "normalMap": 76,
    "roughnessMap": 76,
    "aoMap": 0

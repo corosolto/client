@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-26T13:57:02.417Z",
+ "gerado": "2026-08-26T14:12:46.438Z",
  "criterios": {
   "chaoMinimoM": -0.1,
   "vaoMaximoM": 0.05,
@@ -20975,13 +20975,13 @@
   },
   {
    "map": "amazonia",
-   "waypoints": 506,
+   "waypoints": 487,
    "pickups": 71,
    "spawnPiorDistWaypoint": 2.27,
-   "celulasAlcancadas": 65256,
+   "celulasAlcancadas": 62899,
    "semAlcance": 1,
    "semAlcanceWpVelho": 1,
-   "semAlcanceRetaVelho": 7,
+   "semAlcanceRetaVelho": 8,
    "piorDistAndavel": 2.05,
    "abaixoDoPiso": 6,
    "flutuando": 0,
@@ -21247,10 +21247,10 @@
      "vaoOrigem": 0.07,
      "baseMesh": 0.01,
      "vao": 0.01,
-     "distAndavel": 0.07,
-     "retaDoSpawn": true,
+     "distAndavel": 0.21,
+     "retaDoSpawn": false,
      "okAlcanceWpVelho": true,
-     "okAlcanceRetaVelho": true,
+     "okAlcanceRetaVelho": false,
      "okAlcance": true,
      "okNivel": true,
      "okAssentada": true

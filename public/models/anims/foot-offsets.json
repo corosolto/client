@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-26T13:57:08.699Z",
+ "gerado": "2026-08-26T14:12:52.874Z",
  "fonte": "tools/eval/char_probe.json (C3.porPose) — via tools/gen-foot-offsets.mjs",
  "nota": "offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.",
  "tolerancia": 0.01,
