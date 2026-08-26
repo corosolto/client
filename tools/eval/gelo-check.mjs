@@ -33,6 +33,14 @@
           mesmo algoritmo da PV4) + ≥ 12 texturas distintas em uso.
      GL7  horizonte próprio: scene.userData.skyUrl gravado pelo applyLook/
           setMapSky (a régua lê o USO — BUG-02) E LOOK.gelo em public/js/look.js.
+     GL8  moldes de verdade, não caixa (dono, 26/08: "parque da treta ainda esta
+          low poly, predios low poly, brinquedos low poly tem que corrigir isso,
+          todos os mapas do usantos continuam low poly sem moldes 3d bons"):
+          ≥2 heróis do mapa são GLB Mint REGISTRADOS — grupo nomeado com
+          userData.molde = id do prop + id presente em GELO_PROPS + GLB em disco.
+          Contam gelo-galpao (galpao_festival) e gelo-quentao (gelo_quentao):
+          os dois são molde Mint, então o limiar é 2 — um mapa que esquece o
+          userData ou o slot de preload reprova.
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, waypoints ausentes,
    update ausente ou quadrante impossível de classificar reprovam com mensagem
@@ -43,12 +51,15 @@
      node tools/eval/gelo-check.mjs --mutante=sem-fogueira  # GL2+GL3
      node tools/eval/gelo-check.mjs --mutante=fogo-parado   # GL3
      node tools/eval/gelo-check.mjs --mutante=sem-galpao    # GL2
+     node tools/eval/gelo-check.mjs --mutante=sem-moldes    # GL8
    ============================================================================ */
+import { existsSync } from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
 import { LOOK } from '../../public/js/look.js';
+import { GELO_PROPS } from '../../public/js/map_gelo.js';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-fogueira', 'fogo-parado', 'sem-galpao']);
+const conhecidos = new Set(['sem-fogueira', 'fogo-parado', 'sem-galpao', 'sem-moldes']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const MIN_FOGUEIRAS = 3, MIN_BARRACAS = 4, MIN_PALHAS = 6, MIN_ARVORES = 12;
@@ -97,6 +108,10 @@ if (MUTANTE === 'sem-fogueira') {
   const galpao = W.root.getObjectByName('gelo-galpao');
   mutanteAplicou = !!galpao;
   if (galpao) galpao.parent.remove(galpao);
+} else if (MUTANTE === 'sem-moldes') {
+  let n = 0;
+  W.root.traverse((o) => { if (o.userData?.molde) { delete o.userData.molde; n++; } });
+  mutanteAplicou = n > 0;
 }
 if (MUTANTE && !mutanteAplicou) {
   console.error(`MUTANTE NÃO APLICOU: ${MUTANTE} — a régua não mede o que o mutante quebra`);
@@ -247,9 +262,29 @@ if (MUTANTE && !mutanteAplicou) {
   put('GL7', !falta.length, falta.length ? falta.join(' · ') : `sky ${sky} · LOOK.gelo ok`);
 }
 
+/* ---- GL8 moldes Mint registrados (grupo + userData.molde + GELO_PROPS + disco) ---- */
+{
+  /* Grupo ausente é falha da GL2 (sem colateral); aqui só conta o registro do molde.
+     O par (galpao_festival, gelo_quentao) registrado é o estado que o mutante
+     sem-moldes quebra — por isso a cláusula exige os dois presentes E registrados. */
+  const ESPERADOS = [['gelo-galpao', 'galpao_festival'], ['gelo-quentao', 'gelo_quentao']];
+  const falta = [];
+  for (const [grupo, molde] of ESPERADOS) {
+    const o = W.root.getObjectByName(grupo);
+    if (!o) continue; // grupo ausente é falha da GL2, não daqui (sem colateral)
+    if (o.userData?.molde !== molde) { falta.push(`${grupo} sem userData.molde="${molde}" — marque o grupo no build (a régua lê o USO, não a intenção)`); continue; }
+    if (!GELO_PROPS.includes(molde)) { falta.push(`${molde} fora de GELO_PROPS — sem o slot o preload não baixa o GLB e o procedural low poly volta`); continue; }
+    if (!existsSync(`public/models/props/${molde}.glb`)) { falta.push(`public/models/props/${molde}.glb ausente no disco`); continue; }
+  }
+  put('GL8', !falta.length,
+    falta.length
+      ? falta.join(' · ')
+      : '2 moldes Mint registrados (galpao_festival + gelo_quentao: grupo + userData.molde + GELO_PROPS + GLB em disco)');
+}
+
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-fogueira': ['GL2', 'GL3'], 'fogo-parado': ['GL3'], 'sem-galpao': ['GL2'] };
+const ALVO = { 'sem-fogueira': ['GL2', 'GL3'], 'fogo-parado': ['GL3'], 'sem-galpao': ['GL2'], 'sem-moldes': ['GL8'] };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = esperado.every((id) => vermelhas.some((c) => c.id === id));
@@ -259,5 +294,5 @@ if (MUTANTE) {
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado.join('+')}`);
   process.exit(0);
 }
-console.log(`\nGELO ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · GL1-GL7'}`);
+console.log(`\nGELO ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · GL1-GL8'}`);
 process.exit(vermelhas.length ? 1 : 0);
