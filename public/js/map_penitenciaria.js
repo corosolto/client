@@ -11,7 +11,7 @@ const HALF_Z = 48;
 
 /* Subset da fauna que o main.js pré-carrega para este mapa (maps.js ambience). */
 export const PENITENCIARIA_AMBIENCE = ['rat', 'pigeonGround'];
-export const PENITENCIARIA_PROPS = ['penitenciaria_guarita'];
+export const PENITENCIARIA_PROPS = ['torre_vigilancia'];
 
 export function buildPenitenciaria(scene, T) {
   const root = new THREE.Group();
@@ -311,10 +311,11 @@ export function buildPenitenciaria(scene, T) {
   const coneMat = new THREE.MeshBasicMaterial({ color: 0xffc07a, transparent: true, opacity: .055, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
   function guardTower(index, x, z) {
     const group = new THREE.Group(); group.name = `penitenciaria-guarita-${index}`; root.add(group);
+    group.userData.molde = 'torre_vigilancia';   // NV7: a régua lê o USO registrado, não a declaração
     const sx = Math.sign(x), sz = Math.sign(z);
     /* GLB da torre (Mint, FONTE.md): no arnês node placeProp devolve null e a
        torre procedural cobre — colisores idênticos nos dois mundos (lição 3). */
-    const glb = placeProp('penitenciaria_guarita', { x, y: 0, z, targetH: 9.6, targetLen: 5.6, ry: Math.atan2(-x, -z) });
+    const glb = placeProp('torre_vigilancia', { x, y: 0, z, targetH: 9.6, targetLen: 5.6, ry: Math.atan2(-x, -z) });
     if (glb) root.add(glb);
     const pecas = [];
     for (const dx of [-1.8, 1.8]) for (const dz of [-1.8, 1.8]) pecas.push(addBox(.38, 7.2, .38, MAT.steel, x+dx, 0, z+dz, { tag: `guarita-${index}` }));
