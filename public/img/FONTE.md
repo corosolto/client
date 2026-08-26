@@ -362,22 +362,34 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   PBR-friendly natural lighting, restrained contrast, horizon perfectly level, left
   and right edges seamless, no sun disk, no fisheye distortion, no frame or border.
   Output only the panorama."
-- `textures/sky_joa.webp` — source `exec-96737cf4-2c4d-408b-83b8-6cbf1297d1cb`,
-  SHA-256 do PNG `0de83ba0cf362c1f8575887db6cf49f227ee227389d7d6257900e8935624887b`,
-  SHA-256 final `c8da24302739aa588524efd57107831aebcad94392a22fe12335b01a3d40a7fa`
-  (regerado em 8c5cfad, 12/08, para fechar a costura de wrap; hash anterior `872bb146…`).
-  Prompt: "Create a seamless equirectangular 2:1 environment panorama for a
-  stylized-realistic browser FPS set at a fictional ultra-modern coastal house on a
-  tropical Brazilian hillside. Upper 72% is a clear warm late-afternoon sky with
-  delicate cirrus; lower horizon shows a broad deep-blue Atlantic ocean, atmospheric
-  coastal headlands, green slopes and a few tiny generic hillside homes. The ocean
-  must remain unmistakably visible behind an infinity pool. No identifiable real
-  landmark, no people, no text, no logos, no flags, no brands, no copyrighted
-  artwork. PBR-friendly natural lighting, restrained contrast, horizon perfectly
-  level, left and right edges seamless, no sun disk, no fisheye distortion, no frame
-  or border. Output only the panorama." O processamento recortou o centro superior
-  `1240×620+480+190` antes do resize; o enquadramento coloca o horizonte na faixa
-  visível atrás da piscina real e remove o landmark montanhoso da borda esquerda.
+- `textures/sky_joa.webp` — regerado na r2 da mansão (26/08). O arquivo da r1
+  (`c8da2430…`, fica arquivado em `tools/eval/asset-evidence/skies/sky_joa.webp`)
+  NÃO era panorama: apesar de o prompt pedir equirretangular, o modelo devolveu uma
+  foto RETILÍNEA de varanda de mansão — deck de pedra, piscina de borda infinita,
+  espreguiçadeiras, jardineira e um coqueiro — e ela foi publicada sem verificação
+  visual. Servida como equirretangular, a metade de baixo vira deck do tamanho do
+  mundo e a folha de coqueiro fica na altura do olho: é o "efeito muito estranho" no
+  horizonte que o dono relatou. Diagnóstico, medida e limiar em
+  `tools/eval/sky-foreground-check.mjs` e em `docs/maps/MANSAO-R2.md`.
+  SHA-256 do PNG cru `f07afdcda0c43709c18e22572b7e44ab97fc0b295d2b768ae4975b6f8e2f4d7c`,
+  SHA-256 final `9cc6d444facebdfb3b0de2517b5ee7bd41ad70d7847ac0195f805d756f7d4e74`.
+  Prompt: "Seamless 360-degree EQUIRECTANGULAR panorama (spherical projection, 2:1)
+  of open tropical ocean at late golden hour, seen from high above the water off Rio
+  de Janeiro. ABSOLUTELY NO foreground objects: no terrace, no pool, no deck, no
+  furniture, no chairs, no palm trees, no plants, no railings, no buildings, no
+  people, no boats, no text. The lower half is only open sea stretching to the
+  horizon in every direction. The upper half is open sky with high wispy cirrus
+  clouds, warm cream-gold near the horizon fading to clear blue at the zenith. Flat
+  unbroken horizon line running perfectly straight across the entire width at the
+  vertical centre of the image. Uniform lighting all around, no strong sun disc.
+  Photorealistic, clean, no vignette, no letterbox, no borders."
+  Duas variações foram geradas com `--n 2 --raw-only` e OLHADAS antes de publicar.
+  Processamento: `tools/sky-equirect-publica.py` recorta 2:1 alinhando a linha do
+  horizonte ao equador (desvio medido 0 px — a r1 não fechava essa conta, e o
+  `look-horizonte.py` já amostra assumindo o alinhamento), e
+  `tools/eval/sky_seam.py fix --cols 192` fecha o wrap em ΔL* -0,04 / Δb* -0,09, a
+  melhor costura da árvore. Desvio de L* na banda do equador: 16,76 na r1, 3,21 aqui
+  (teto 12,0).
 - `textures/water_normal_a.webp` e `textures/water_normal_b.webp` (RC2, 19/08):
   normal maps da água viva, derivados por sobel da luminância da textura de
   superfície gerada via OpenRouter (`tools/gen-image.mjs`, modelo

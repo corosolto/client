@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-25T01:19:40.585Z",
+ "gerado": "2026-08-26T02:51:34.041Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -2621,9 +2621,9 @@
   },
   {
    "map": "mansao",
-   "celulasAlcancadas": 40304,
-   "amostrasChao": 2407,
-   "observadores": 598,
+   "celulasAlcancadas": 40033,
+   "amostrasChao": 2382,
+   "observadores": 593,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -2692,14 +2692,14 @@
      "team": "E",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.112,
+     "fracMedia": 0.1126,
      "maiorVisada": 66.6
     },
     {
      "team": "B",
      "chaoMin": 0,
      "chaoMax": 0,
-     "fracMedia": 0.1093,
+     "fracMedia": 0.1096,
      "maiorVisada": 58.2
     }
    ],
@@ -2709,9 +2709,9 @@
      "x": -4.5,
      "z": 32,
      "chao": 0,
-     "obsLonge": 391,
+     "obsLonge": 389,
      "obsVendo": 83,
-     "frac": 0.2123,
+     "frac": 0.2134,
      "maiorVisada": 66.1
     },
     {
@@ -2719,9 +2719,9 @@
      "x": -1.5,
      "z": 32,
      "chao": 0,
-     "obsLonge": 381,
+     "obsLonge": 379,
      "obsVendo": 6,
-     "frac": 0.0157,
+     "frac": 0.0158,
      "maiorVisada": 29.6
     },
     {
@@ -2729,9 +2729,9 @@
      "x": 1.5,
      "z": 32,
      "chao": 0,
-     "obsLonge": 379,
+     "obsLonge": 377,
      "obsVendo": 42,
-     "frac": 0.1108,
+     "frac": 0.1114,
      "maiorVisada": 43
     },
     {
@@ -2739,9 +2739,9 @@
      "x": 4.5,
      "z": 32,
      "chao": 0,
-     "obsLonge": 385,
+     "obsLonge": 383,
      "obsVendo": 42,
-     "frac": 0.1091,
+     "frac": 0.1097,
      "maiorVisada": 66.6
     },
     {
@@ -2749,9 +2749,9 @@
      "x": -4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 324,
+     "obsLonge": 321,
      "obsVendo": 49,
-     "frac": 0.1512,
+     "frac": 0.1526,
      "maiorVisada": 57.6
     },
     {
@@ -2759,9 +2759,9 @@
      "x": -1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 307,
+     "obsLonge": 304,
      "obsVendo": 46,
-     "frac": 0.1498,
+     "frac": 0.1513,
      "maiorVisada": 56.6
     },
     {
@@ -2769,9 +2769,9 @@
      "x": 1.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 308,
+     "obsLonge": 305,
      "obsVendo": 28,
-     "frac": 0.0909,
+     "frac": 0.0918,
      "maiorVisada": 56.5
     },
     {
@@ -2779,9 +2779,9 @@
      "x": 4.5,
      "z": -22,
      "chao": 0,
-     "obsLonge": 308,
-     "obsVendo": 14,
-     "frac": 0.0455,
+     "obsLonge": 305,
+     "obsVendo": 13,
+     "frac": 0.0426,
      "maiorVisada": 58.2
     }
    ],
@@ -2822,7 +2822,7 @@
      "z": 32,
      "folgaParede": 1.75,
      "dirPior": 309,
-     "areaContigua": 46.4,
+     "areaContigua": 45.6,
      "okFolga": true,
      "okArea": true
     },
@@ -2921,9 +2921,9 @@
    ],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 323,
+   "occMedidos": 332,
    "occPulados": 0,
-   "fracSemMalha": 0.0012,
+   "fracSemMalha": 0.0011,
    "quadrantes": [
     {
      "q": "0,0",
@@ -2949,7 +2949,7 @@
      "densWp": 16.31,
      "espacamento": 4.95,
      "razaoProp": 0.93,
-     "razaoWp": 1.05
+     "razaoWp": 1.04
     },
     {
      "q": "0,2",
@@ -2968,12 +2968,12 @@
      "q": "0,3",
      "x0": -21.5,
      "z0": 17.8,
-     "areaAndavel": 155,
+     "areaAndavel": 153,
      "props": 6,
      "waypoints": 24,
-     "densProp": 3.88,
-     "densWp": 15.5,
-     "espacamento": 5.08,
+     "densProp": 3.92,
+     "densWp": 15.69,
+     "espacamento": 5.05,
      "razaoProp": 0.89,
      "razaoWp": 1
     },
@@ -2994,14 +2994,14 @@
      "q": "1,1",
      "x0": -10.8,
      "z0": -17.8,
-     "areaAndavel": 161,
+     "areaAndavel": 153,
      "props": 25,
-     "waypoints": 38,
-     "densProp": 15.57,
-     "densWp": 23.67,
-     "espacamento": 2.53,
-     "razaoProp": 3.55,
-     "razaoWp": 1.52
+     "waypoints": 37,
+     "densProp": 16.29,
+     "densWp": 24.11,
+     "espacamento": 2.48,
+     "razaoProp": 3.72,
+     "razaoWp": 1.54
     },
     {
      "q": "1,2",
@@ -3010,8 +3010,8 @@
      "areaAndavel": 147,
      "props": 9,
      "waypoints": 19,
-     "densProp": 6.14,
-     "densWp": 12.95,
+     "densProp": 6.12,
+     "densWp": 12.92,
      "espacamento": 4.04,
      "razaoProp": 1.4,
      "razaoWp": 0.83
@@ -3020,14 +3020,14 @@
      "q": "1,3",
      "x0": -10.8,
      "z0": 17.8,
-     "areaAndavel": 138,
-     "props": 8,
+     "areaAndavel": 136,
+     "props": 9,
      "waypoints": 24,
-     "densProp": 5.79,
-     "densWp": 17.38,
-     "espacamento": 4.15,
-     "razaoProp": 1.32,
-     "razaoWp": 1.12
+     "densProp": 6.61,
+     "densWp": 17.63,
+     "espacamento": 3.89,
+     "razaoProp": 1.51,
+     "razaoWp": 1.13
     },
     {
      "q": "2,0",
@@ -3040,46 +3040,46 @@
      "densWp": 25.14,
      "espacamento": 4.62,
      "razaoProp": 1.07,
-     "razaoWp": 1.62
+     "razaoWp": 1.61
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -17.8,
-     "areaAndavel": 167,
+     "areaAndavel": 164,
      "props": 8,
      "waypoints": 33,
-     "densProp": 4.8,
-     "densWp": 19.78,
-     "espacamento": 4.57,
-     "razaoProp": 1.1,
-     "razaoWp": 1.27
+     "densProp": 4.88,
+     "densWp": 20.12,
+     "espacamento": 4.53,
+     "razaoProp": 1.11,
+     "razaoWp": 1.29
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 138,
+     "areaAndavel": 139,
      "props": 8,
      "waypoints": 20,
-     "densProp": 5.79,
-     "densWp": 14.47,
-     "espacamento": 4.16,
-     "razaoProp": 1.32,
-     "razaoWp": 0.93
+     "densProp": 5.75,
+     "densWp": 14.37,
+     "espacamento": 4.17,
+     "razaoProp": 1.31,
+     "razaoWp": 0.92
     },
     {
      "q": "2,3",
      "x0": 0,
      "z0": 17.8,
-     "areaAndavel": 162,
-     "props": 10,
+     "areaAndavel": 159,
+     "props": 11,
      "waypoints": 30,
-     "densProp": 6.18,
-     "densWp": 18.55,
-     "espacamento": 4.02,
-     "razaoProp": 1.41,
-     "razaoWp": 1.19
+     "densProp": 6.9,
+     "densWp": 18.83,
+     "espacamento": 3.81,
+     "razaoProp": 1.58,
+     "razaoWp": 1.21
     },
     {
      "q": "3,0",
@@ -3092,7 +3092,7 @@
      "densWp": 11.61,
      "espacamento": 5.72,
      "razaoProp": 0.7,
-     "razaoWp": 0.75
+     "razaoWp": 0.74
     },
     {
      "q": "3,1",
@@ -3105,7 +3105,7 @@
      "densWp": 24.54,
      "espacamento": 2.53,
      "razaoProp": 3.58,
-     "razaoWp": 1.58
+     "razaoWp": 1.57
     },
     {
      "q": "3,2",
@@ -3124,18 +3124,18 @@
      "q": "3,3",
      "x0": 10.8,
      "z0": 17.8,
-     "areaAndavel": 168,
+     "areaAndavel": 166,
      "props": 5,
      "waypoints": 21,
-     "densProp": 2.97,
-     "densWp": 12.49,
-     "espacamento": 5.8,
-     "razaoProp": 0.68,
-     "razaoWp": 0.8
+     "densProp": 3.01,
+     "densWp": 12.65,
+     "espacamento": 5.76,
+     "razaoProp": 0.69,
+     "razaoWp": 0.81
     }
    ],
    "medianaProp": 4.38,
-   "medianaWp": 15.525,
+   "medianaWp": 15.620000000000001,
    "piorRazaoProp": 0.55,
    "piorRazaoWp": 0.55,
    "piorEspacamento": 6.43,
@@ -3178,7 +3178,7 @@
      "rotas": 2,
      "comprimentos": [
       66.1,
-      70.7
+      70.1
      ]
     },
     {
@@ -3186,7 +3186,7 @@
      "bandeira": "R",
      "rotas": 2,
      "comprimentos": [
-      56.1,
+      55.5,
       71.6
      ]
     },
