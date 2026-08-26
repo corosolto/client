@@ -39,12 +39,12 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 41.826 linhas em 60 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 42.087 linhas em 60 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.260** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.812 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 151 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 18 | objeto `MAPS` de `maps.js` |
@@ -238,7 +238,7 @@ Os mapas registrados hoje, e em que modo cada um abre:
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
-| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 501 |
+| `amazonia` | Treta na Amazônia | **captura** | `map_amazonia.js` | 762 |
 
 **18 mapas registrados** — 2 abrem em rodadas e 16 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 21 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
