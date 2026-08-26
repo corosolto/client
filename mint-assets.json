@@ -1883,6 +1883,69 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "vestiario-clube": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/vestiario_clube.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack",
+    "assetId": "ks729z8jed5zj55kgf26ecnr918d783x",
+    "chatUrl": "https://mint.gg/chat/ph7ba3xzxcq6rqd3qgndhhqgxs8d73w2",
+    "displayName": "Vestiário do clube",
+    "notes": "Kit \"piscina\" da r2 dos mapas (~/map2/kits-mint.json, pack th7deq97zkdv56g25b6r9nk8v18d6nnk): moldes do anel da Piscina da Treta — vestiário/banheiro nas cabeceiras, pergolado-alpendre, cadeira no deck (map_piscina.js, frente map2/piscina). Otimizado no padrão gen-asset (webp 1024, ~4-5k tris, 1 material)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (asset pack item, otimizado)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "d531b160e907894267bad224cb2a93e3f83dd233d54ea4ceedbc1e184ac5b233"
+   }
+  },
+  "pergolado-piscina": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/pergolado_piscina.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack",
+    "assetId": "ks7630nkrpy93dwxbtejwpcc298d6aty",
+    "chatUrl": "https://mint.gg/chat/ph7ba3xzxcq6rqd3qgndhhqgxs8d73w2",
+    "displayName": "Pergolado de piscina",
+    "notes": "Kit \"piscina\" da r2 dos mapas (~/map2/kits-mint.json, pack th7deq97zkdv56g25b6r9nk8v18d6nnk): moldes do anel da Piscina da Treta — vestiário/banheiro nas cabeceiras, pergolado-alpendre, cadeira no deck (map_piscina.js, frente map2/piscina). Otimizado no padrão gen-asset (webp 1024, ~4-5k tris, 1 material)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (asset pack item, otimizado)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "cd51f32038863125e1d9fc5d3ba37a3f050120771935e104b6db6c6c4c793eca"
+   }
+  },
+  "cadeira-praia": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/cadeira_praia.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack",
+    "assetId": "ks76tk5c0crhs0edxtsbmj4xz18d6jdx",
+    "chatUrl": "https://mint.gg/chat/ph7ba3xzxcq6rqd3qgndhhqgxs8d73w2",
+    "displayName": "Cadeira de praia",
+    "notes": "Kit \"piscina\" da r2 dos mapas (~/map2/kits-mint.json, pack th7deq97zkdv56g25b6r9nk8v18d6nnk): moldes do anel da Piscina da Treta — vestiário/banheiro nas cabeceiras, pergolado-alpendre, cadeira no deck (map_piscina.js, frente map2/piscina). Otimizado no padrão gen-asset (webp 1024, ~4-5k tris, 1 material)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (asset pack item, otimizado)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "bf41efd7e46a2f6cf50d57214cb1b0ad1632578c43d785d162f2daab18273663"
+   }
   }
  }
 }
