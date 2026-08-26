@@ -753,7 +753,30 @@ export function buildMansao(scene, T) {
     [-17.6, 16.8], [-13.2, 18.6], [-18.4, 24.9], [-14.1, 33.6], [-8.3, 33.2],
     [16.8, 17.8], [12.1, 19.9], [18.2, 27.4], [14.8, 33.9], [7.6, 32.7], [-9.8, 28.3],
   ];
+  /* CANTEIROS DO RESPAWN (r2, dono: "areas low poly no jardim do respawn ... peso
+     vegetal (costela-de-adão/samambaia já existem no acervo props - densidade)").
+     Seis touceiras GORDAS (5-6 plantas contra as 3-4 do resto) na faixa z >= 29, que
+     é o que o jogador de spawn A vê nos primeiros dois segundos de partida.
+     Todas com |x| >= 10: o corredor central e as duas linhas de waypoint do portão
+     (x = ±4,5, z 26,5→32) ficam intocados, senão a rota do CTF morre por paisagismo. */
+  const driftsRespawn = [
+    [-10.2, 29.6], [-17.4, 31.4], [-11.6, 34.8],
+    [10.4, 29.8], [17.2, 31.6], [11.8, 34.9],
+  ];
   if (GLB_ON && hasProp('samambaia') && hasProp('ixora') && hasProp('heliconia')) {
+    /* Respawn: costela-de-adão e samambaia alternadas, com uma ixora de cor a cada três.
+       São as duas espécies que o dono nomeou, e as duas de folha larga do acervo — é
+       folha larga que tira o canteiro da leitura de "cone verde". */
+    for (const [di, [dx, dz]] of driftsRespawn.entries()) {
+      const n = LOWQ ? 3 : 6;
+      for (let i = 0; i < n; i++) {
+        const a = i * 2.399963 + rndJardim() * .5, r = .42 * Math.sqrt(i + .5) + rndJardim() * .25;
+        const fx = dx + Math.cos(a) * r, fz = dz + Math.sin(a) * r, fry = rndJardim() * 6.283;
+        if (i % 3 === 2) PB.add('ixora', { x: fx, z: fz, targetH: .8 + rndJardim() * .3, ry: fry });
+        else if ((i + di) % 2 === 0) PB.add('costela_adao', { x: fx, z: fz, targetH: 1.0 + rndJardim() * .45, ry: fry });
+        else PB.add('samambaia', { x: fx, z: fz, targetH: .7 + rndJardim() * .35, ry: fry });
+      }
+    }
     for (const [dx, dz] of driftsJardim) {
       const n = LOWQ ? 2 : 3;
       for (let i = 0; i < n; i++) {
@@ -778,6 +801,45 @@ export function buildMansao(scene, T) {
   const corFolha = new THREE.Color();
   const famA = criaFolhagem(new THREE.SphereGeometry(.48, 8, 5));
   const famB = criaFolhagem(new THREE.ConeGeometry(.30, 1.05, 6));
+  /* Duas malhas PRÓPRIAS para o respawn: enfiar as touceiras novas em famA/famB
+     estouraria o teto de 30 instâncias por malha da cláusula G1.i — que existe porque
+     72 clones num mesh só foi o "jardim bizarro" que o dono nomeou. Folha LARGA
+     (elipsoide achatado) e fronde (cone fino), que é a silhueta de costela-de-adão e
+     samambaia no fallback de node/?glb=0. */
+  /* TRÊS malhas, não duas: com duas, uma touceira de 6 põe 3 da MESMA malha num raio de
+     1 m, e duas touceiras vizinhas somam 9 — o que reprova na cláusula G1.iii (teto 8),
+     medido. Com três, cada touceira contribui 2, e o pior aglomerado cai para 4. A
+     G1.iii existe porque colônia mecânica da mesma malha é o que lê como catálogo. */
+  const famResp = [
+    criaFolhagem(new THREE.SphereGeometry(.52, 8, 5)),      // folha larga (costela-de-adão)
+    criaFolhagem(new THREE.ConeGeometry(.22, 1.15, 5)),     // fronde (samambaia)
+    criaFolhagem(new THREE.SphereGeometry(.34, 7, 5)),      // touceira baixa de arremate
+  ];
+  const iResp = [0, 0, 0];
+  for (const [di, [dx, dz]] of driftsRespawn.entries()) {
+    const n = LOWQ ? 3 : 6;
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.399963 + rndJardim() * .5, r = .42 * Math.sqrt(i + .5) + rndJardim() * .25;
+      dummyFolha.position.set(dx + Math.cos(a) * r, .52 + rndJardim() * .28, dz + Math.sin(a) * r);
+      dummyFolha.rotation.set(rndJardim() * .35, rndJardim() * Math.PI * 2, rndJardim() * .35);
+      // o achatamento acompanha o ÍNDICE, não a malha: preso à malha, a G1.ii perderia spread
+      const s = .7 + rndJardim() * .85, largo = i % 2 === 0 ? 1.35 : .85;
+      dummyFolha.scale.set(s * largo, s * (.9 + rndJardim() * .3), s * largo);
+      dummyFolha.updateMatrix();
+      const k = (i + di) % 3, idx = iResp[k];
+      if (idx >= 30) continue;
+      iResp[k]++;
+      famResp[k].setMatrixAt(idx, dummyFolha.matrix);
+      corFolha.copy(paletaFolha[Math.floor(rndJardim() * paletaFolha.length)])
+        .offsetHSL((rndJardim() - .5) * .03, (rndJardim() - .5) * .15, (rndJardim() - .5) * .08);
+      famResp[k].setColorAt(idx, corFolha);
+    }
+  }
+  famResp.forEach((mesh, k) => {
+    mesh.count = iResp[k];
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  });
   let iA = 0, iB = 0;
   for (const [dx, dz] of driftsJardim) {
     const n = 4 + Math.floor(rndJardim() * 3);   // drift de 4-6 plantas misturando famílias
@@ -811,7 +873,16 @@ export function buildMansao(scene, T) {
   }
   // muretas dos canteiros (cover agachado); a de (-7,4;22,6) saiu de cima do espelho —
   // sobre a água ela lia como viga flutuando (crítico v2.1)
-  for (const [mx, mz,ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06]]) { addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz,{ry}); solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 }); }
+  /* r2: as muretas ganham MARCA (`mureta`) — sem ela a cláusula G9 do
+     mansao-garden-check não tem o que medir, e "tem mureta" viraria palavra. As duas
+     últimas são novas e emolduram o canteiro do respawn pelos flancos, fora do
+     corredor central e dos nós de grade (a inflação de 0,5 m do blocked() foi conferida
+     contra gz=30,6 e gz=34,0). */
+  for (const [mx, mz, ry] of [[5.4,23.3,.08],[-7.4,22.55,-.12],[7.1,30.5,.16],[-4.8,29.1,-.06],
+    [-10.6,33.0,.10],[10.6,33.0,-.10]]) {
+    addBox(3.0, 0.6, 0.4, lam({ map: texturaMuro(), roughness: .9 }), mx, 0, mz, { ry }).userData.mansaoFeature = 'mureta';
+    solids.push({ x0: mx - 1.5, x1: mx + 1.5, z0: mz - 0.2, z1: mz + 0.2 });
+  }
   // Portão de correr: o colisor único 8×3 fica (gameplay); o visual ganha trilho,
   // mourões, motor e folha de aço flutuando 12 cm — a "laje preta" morreu (crítico r3).
   col(-4, 4, 0, 3.0, 33.85, 34.15);

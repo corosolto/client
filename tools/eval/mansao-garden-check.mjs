@@ -14,12 +14,21 @@
    passos ≤ 3,0 m cobrindo z de ~31 a ~19); (b) de porta a piscina se CHEGA andando
    (sonda de desvio com _collide real); (c) nenhum plantio em cima do caminho
    (distância mínima 0,8 m das pedras).
+   G9 JARDIM DO RESPAWN (r2, dono: "areas low poly no jardim do respawn"): a faixa
+   z >= 29 — o que o jogador de spawn A vê nos dois primeiros segundos — tem de ter
+   PESO VEGETAL e ALVENARIA, não gramado com quatro cones. Teto medido, não chutado:
+   antes da r2 a faixa tinha 9 plantios e 2 muretas SEM MARCA (então zero medíveis);
+   o mínimo é 24 plantios e 2 muretas marcadas, e o corredor de spawn (|x| <= 6,5,
+   z 26,5..33,5) tem de continuar LIMPO — paisagismo em cima do spawn é pior que
+   gramado pelado, e a rota do CTF passa ali.
    G3 ESCALA: planta contra o jogador de 1,70 m — dossel (bromélia/maciço/massa)
    0,50–2,60 m; forração instanciada 0,20–2,60 m; árvore 3,0–6,8 m.
 
    Mutantes (todos PROVAM que aplicaram — skill regua): clona-tudo (instâncias
    idênticas em grade, sem cor) | planta-no-caminho (bromélia em cima da pedrada) |
-   planta-gigante (bromélia 3× = 2,7 m) | sem-pedras | jardim-primitivo (tira as
+   planta-gigante (bromélia 3× = 2,7 m) | respawn-pelado (esvazia a faixa do respawn
+   e apaga as muretas — G9) | respawn-entulhado (joga uma touceira em cima do corredor
+   de spawn — G9) | sem-pedras | jardim-primitivo (tira as
    espécies GLB do preload — o defeito do BUG-64: jardim 100% primitiva chapada) |
    hardscape-chapado (tira o map de muro/biombo/portão — o "40% do quadro Minecraft"
    do crítico v2.1) | portao-laje (some trilho/mourão/motor) | biombo-caixa (some
@@ -36,6 +45,8 @@ const MUT_CLONA = process.argv.includes('--mutante=clona-tudo');
 const MUT_CAMINHO = process.argv.includes('--mutante=planta-no-caminho');
 const MUT_GIGANTE = process.argv.includes('--mutante=planta-gigante');
 const MUT_SEM_PEDRAS = process.argv.includes('--mutante=sem-pedras');
+const MUT_RESP_PELADO = process.argv.includes('--mutante=respawn-pelado');
+const MUT_RESP_ENTULHO = process.argv.includes('--mutante=respawn-entulhado');
 const MUT_SEM_GLB = process.argv.includes('--mutante=jardim-primitivo');
 const MUT_CHAPADO = process.argv.includes('--mutante=hardscape-chapado');
 const MUT_PORTAO_LAJE = process.argv.includes('--mutante=portao-laje');
@@ -52,6 +63,41 @@ game.world.root.updateMatrixWorld(true);
 const folhagens = marcados.filter((o) => o.isInstancedMesh && ['folhagem-instanciada', 'tropical-3d'].includes(o.userData.mansaoFeature));
 const pedras = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'pedra-caminho');
 const arvores = marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'arvore');
+const muretas = () => marcados.filter((o) => o.visible !== false && o.userData.mansaoFeature === 'mureta');
+
+/* G9 — faixa do respawn e corredor de spawn. Números na cabeça do arquivo. */
+const G9_Z = 29, G9_PLANTIOS_MIN = 24, G9_MURETAS_MIN = 2;
+/* Meia-largura do corredor DERIVADA do mapa, não escolhida: os spawns de A estão em
+   x = ±4,5/±1,5 e as duas linhas de waypoint do portão em x = ±4,5 com inflação de
+   0,2 m no `blocked()`, então a faixa que precisa ficar livre é |x| <= 4,7; 5,5 dá
+   0,8 m de folga, que é o corpo do jogador (raio ~0,4) passando raspando dos dois
+   lados. A bromélia herdada em (-6,1; 31,2) fica 0,6 m FORA disso — e é por isso que
+   ela não é falha: a régua mede a faixa de caminhada, não o gosto do canteiro. */
+const G9_CORREDOR = { x: 5.5, z0: 26.5, z1: 33.5 };
+if (MUT_RESP_PELADO) {
+  const alvos = marcados.filter((o) => o.userData.mansaoFeature === 'mureta' && o.position.z >= G9_Z);
+  if (!alvos.length || !folhagens.length) { console.error('MUTANTE respawn-pelado NÃO APLICOU'); process.exit(1); }
+  for (const o of alvos) o.visible = false;
+  // esvazia as instâncias que caem na faixa do respawn, sem tocar no resto do jardim
+  for (const mesh of folhagens) {
+    const mantidas = [];
+    for (let i = 0; i < mesh.count; i++) {
+      const m = new THREE.Matrix4(); mesh.getMatrixAt(i, m);
+      if (new THREE.Vector3().setFromMatrixPosition(m).z < G9_Z) mantidas.push(m);
+    }
+    mantidas.forEach((m, i) => mesh.setMatrixAt(i, m));
+    mesh.count = mantidas.length;
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+}
+if (MUT_RESP_ENTULHO) {
+  const mesh = folhagens.find((m) => m.count > 0);
+  if (!mesh) { console.error('MUTANTE respawn-entulhado NÃO APLICOU'); process.exit(1); }
+  const m = new THREE.Matrix4(); mesh.getMatrixAt(0, m);
+  m.setPosition(0, 0.5, 30);   // em cima do eixo do portão, onde o spawn A caminha
+  mesh.setMatrixAt(0, m);
+  mesh.instanceMatrix.needsUpdate = true;
+}
 
 if (MUT_CLONA) {
   if (!folhagens.length) { console.error('MUTANTE clona-tudo NÃO APLICOU (nenhuma folhagem instanciada)'); process.exit(1); }
@@ -244,6 +290,10 @@ const foraForra = forra.filter((pl) => pl.h < 0.2 || pl.h > 2.6);
 const alturasArvores = arvores.map((a) => { const b = new THREE.Box3().setFromObject(a); return b.max.y - b.min.y; });
 const foraArvore = alturasArvores.filter((h) => h < 3 || h > 6.8);
 
+const noRespawn = plantios().filter((pl) => pl.p.z >= G9_Z);
+const noCorredor = plantios().filter((pl) => Math.abs(pl.p.x) <= G9_CORREDOR.x && pl.p.z >= G9_CORREDOR.z0 && pl.p.z <= G9_CORREDOR.z1);
+const muretasRespawn = muretas().filter((o) => o.position.z >= G9_Z);
+
 let falhas = 0;
 for (const [nome, ok, medido] of [
   ['G1.i teto de instâncias por malha de folhagem (≤30)', dados.length > 0 && g1count <= 30, dados.length ? `${dados.map((d) => d.n).join('+')} = ${g1total} instâncias (pior malha ${g1count}) — 72 num só mesh era o "jardim bizarro"` : 'nenhuma folhagem instanciada marcada (folhagem-instanciada/tropical-3d)'],
@@ -259,6 +309,9 @@ for (const [nome, ok, medido] of [
   ['G5 hardscape texturizado (muro-perimetro/biombo/portao com material.map)', tiposHard.size >= 3 && hardscape.length >= 5 && semMapa.length === 0, hardscape.length ? `${hardscape.length} peças (${[...tiposHard].join('+')}) · chapadas: ${semMapa.length}` : 'sem hardscape marcado — muro/biombo/portão de cor chapada era 40% do quadro (crítico v2.1)'],
   ['G6 portão de correr estruturado (trilho, 2 mourões, motor, folha)', vivos((o) => o.userData.portaoPart === 'trilho') >= 1 && vivos((o) => o.userData.portaoPart === 'mourao') >= 2 && vivos((o) => o.userData.portaoPart === 'motor') >= 1 && vivos((o) => o.userData.portaoPart === 'folha') >= 1, `trilho ${vivos((o) => o.userData.portaoPart === 'trilho')} · mourão ${vivos((o) => o.userData.portaoPart === 'mourao')} · motor ${vivos((o) => o.userData.portaoPart === 'motor')} · folha ${vivos((o) => o.userData.portaoPart === 'folha')} — laje preta chapada foi reprovo do crítico`],
   ['G7 biombos com estrutura (mourões + travessa por painel)', vivos((o) => o.userData.biomboPart === 'mourao') >= 8 && vivos((o) => o.userData.biomboPart === 'travessa') >= 4, `mourões ${vivos((o) => o.userData.biomboPart === 'mourao')}/8 · travessas ${vivos((o) => o.userData.biomboPart === 'travessa')}/4 — "caixa flutuando com textura clonada"`],
+  [`G9 jardim do respawn com peso (≥${G9_PLANTIOS_MIN} plantios e ≥${G9_MURETAS_MIN} muretas em z≥${G9_Z}) e corredor de spawn limpo`,
+    noRespawn.length >= G9_PLANTIOS_MIN && muretasRespawn.length >= G9_MURETAS_MIN && noCorredor.length === 0,
+    `${noRespawn.length} plantios · ${muretasRespawn.length} mureta(s) marcada(s) · ${noCorredor.length} plantio(s) em cima do corredor de spawn (|x|≤${G9_CORREDOR.x}, z ${G9_CORREDOR.z0}–${G9_CORREDOR.z1}) — antes da r2 eram 9 plantios e 0 muretas medíveis`],
   ['G8 lajes com beiral fino de acabamento (≥6)', vivos((o) => o.userData.mansaoFeature === 'beiral') >= 6, `${vivos((o) => o.userData.mansaoFeature === 'beiral')} beirais — aérea lia placa sem acabamento`],
 ]) {
   if (!ok) falhas++;
