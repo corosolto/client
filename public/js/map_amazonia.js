@@ -1,7 +1,7 @@
 // AMAZONIA (amazonia) — retrato do "Treta no Vietnã" (PR #375) como comunidade
 // ribeirinha: igarapé, palafitas de palha, market flutuante, madeireira. Spec: ~/map2/prompt-opencode.md.
 import * as THREE from 'three';
-import { placeProp, hasProp } from './mapprops.js';
+import { placeProp, hasProp, PropBatch, StaticBatch } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { createWater } from './water.js';
 import { createFavelaAmbience, placeFauna, CORREGO_FAUNA_ASSETS, AMAZONIA_FAUNA_ASSETS } from './ambientlife.js';
@@ -23,19 +23,67 @@ const PONTE_W = 3.4, PONTE_Y = 0.18;
 
 export const AMAZONIA_PROPS = ['samambaia', 'heliconia', 'planta_corrego_taboa',
   'planta_corrego_taioba', 'grama_corrego_01', 'grama_corrego_02', 'stall', 'arara_roupas',
-  'caixa_dagua', 'botijao_gas', 'pilha_pneus', 'tires', 'dumpster'];
+  'caixa_dagua', 'botijao_gas', 'pilha_pneus', 'tires', 'dumpster',
+  'palafita_pro', 'arvore_mata', 'palmeira_babacu'];
 
-/* Palafitas: (x, z, ry). Espalhadas pelas duas margens para o MAP5 não ter quadrante
-   deserto — os esteios finos são a densidade de cover barata e legível do mapa. */
-const PALAFITAS = [
-  { x: 14, z: -26, ry: 0.21, cor: 0xc4a577 }, { x: 21, z: -18, ry: -0.14, cor: 0xb39468 },
-  { x: 27, z: -7, ry: 0.09, cor: 0xcdaf7f }, { x: 15.5, z: -9, ry: 0.28, cor: 0xbd9d6d },
-  { x: 14, z: 9, ry: -0.19, cor: 0xc9a97a }, { x: 21, z: 17, ry: 0.15, cor: 0xb6975f },
-  { x: 27, z: 7, ry: -0.26, cor: 0xc0a06c }, { x: 15.5, z: 26, ry: 0.11, cor: 0xccae7d },
-  { x: -14, z: -22, ry: 0.18, cor: 0xb99a66 }, { x: -15, z: 20, ry: -0.16, cor: 0xc7a878 },
-  { x: -27, z: -25, ry: 0.24, cor: 0xbf9f6a },
+/* ── PALAFITAS DE VERDADE (molde palafita_pro.glb, kit Mint r2): casa sobre estaca com
+    patamar, escada e passarela ANDÁVEIS — o dono pediu "subir na madeira pra atravessar".
+    Cada estação: casa 6×6 (molde, escala s=3), patamar de prancha na direção d (rampa
+    lateral e·p descendo ao chão) e corrimão-collider (tag `passarela`) nas bordas livres.
+    A cadeia rede: A→C→D→M→F é a rota alta — pranchas a DECK_Y cruzando o igarapé por cima. */
+const DECK_Y = 1.8;                 // piso da madeira: corpo (1,5) e sonda (1,4) passam POR BAIXO sem viga
+const PILA_GLB = 0.6;              // molde com pilares cravados: deck dele (40% de 6 m) bate nos 1,8
+const CASA_A = 3.0;                 // meia-largura da casa
+const PAT_A = 1.6;                  // meia-largura do patamar (u vai de CASA_A a CASA_A+2·PAT_A)
+const ESC_N = 12, ESC_PISO = 0.26;  // 12 degraus: espelho ~0,15 — 2 espelhos ≤0,30 do pé do corpo
+const ESTACOES = [
+  { x: 14, z: -26, d: [-1, 0], e: -1, rede: true },   // A — pé da bandeira E
+  { x: 25, z: -18, d: [-1, 0], e: -1 },
+  { x: 14, z: -9, d: [-1, 0], e: 0, rede: true },     // C — passagem (sem escada: sobe pela rede)
+  { x: 14, z: 6, d: [-1, 0], e: 1, rede: true },      // D — virada pro igarapé
+  { x: 21, z: 17, d: [-1, 0], e: 1 },
+  { x: 27, z: 7, d: [-1, 0], e: 1 },
+  { x: 17, z: 29, d: [-1, 0], e: 1 },
+  { x: 27, z: -7, d: [-1, 0], e: 1 },
+  { x: -14, z: 6, d: [1, 0], e: -1, rede: true },     // F — cabeça oeste da travessia
+  { x: -14, z: -22, d: [1, 0], e: -1 },
+  { x: -27, z: -25, d: [1, 0], e: -1 },
 ];
-const ESTACA_H = 2.5, DECK_E = 0.4;          // dequee em ESTACA_H, espessura DECK_E
+for (const st of ESTACOES) { st.p = [st.d[1], -st.d[0]]; }   // p = lateral esquerda de d
+/* Pranchas da rota alta (eixos alinhados): patamar→patamar/plataforma a DECK_Y. */
+const PONTES_ALTA = [
+  { ax: 9.4, az: -24.4, bx: 9.4, bz: -10.6 },   // A→C (margem leste)
+  { ax: 9.4, az: -7.4, bx: 9.4, bz: 4.4 },      // C→D
+  { ax: 7.8, az: 6, bx: 1.6, bz: 6 },           // D→M (sobre a água)
+  { ax: -1.6, az: 6, bx: -7.8, bz: 6 },         // M→F
+];
+const PLATA_M = { x: 0, z: 6 };                 // platforma no meio do igarapé
+
+/* ── MATA DENSA NO PERÍMETRO (molde arvore_mata.glb + palmeira_babacu.glb): o dono pediu
+    horizonte de FLORESTA, não cidade — fileira de árvores GLB no anel externo com escala
+    variada, babacu no sub-bosque e as sumaúmas nos cantos. Os Arrays alimentam o GLB, o
+    fallback procedural e o AMZ6 (mesma fonte, sem segunda verdade). */
+const MATA_ARVORES = [];
+{
+  // W/E pulam o vão do galpão da madeireira (z −3,6..3,6): árvore no telhão é muro atravessando muro
+  const fileira = (fix, axis, posicoes) => {
+    for (let i = 0; i < posicoes.length; i++) {
+      const v = posicoes[i], jit = Math.sin(i * 12.9898 + v * 78.233 + fix) * 1.3;
+      const s = 7 + ((i * 37 + Math.abs(Math.round(fix))) % 5) * 1.1;
+      MATA_ARVORES.push(axis === 'x' ? { x: v + jit, z: fix, s } : { x: fix + jit, z: v, s });
+    }
+  };
+  fileira(-43.2, 'x', [-24, -8, 8, 24]);
+  fileira(43.2, 'x', [-24, -8, 8, 24]);
+  fileira(-30.6, 'z', [-38, -28, -19, -10, 10, 19, 28, 38]);
+  fileira(30.6, 'z', [-38, -28, -18, -9, 0, 9, 18, 28, 38]);
+}
+const MATA_PALMEIRAS = [
+  { x: -26.5, z: -40, s: 5.5 }, { x: 26.5, z: -40, s: 6 }, { x: -26.5, z: 40, s: 6.5 }, { x: 26.5, z: 40, s: 5.5 },
+  { x: -28.8, z: -14, s: 5 }, { x: 28.8, z: -10, s: 6 }, { x: -28.8, z: 12, s: 5.5 }, { x: 28.8, z: 16, s: 5 },
+  { x: -12, z: -41.5, s: 6 }, { x: 12, z: 41.5, s: 5.5 }, { x: 20, z: -41.5, s: 5 }, { x: -20, z: 41.5, s: 6 },
+  { x: -30, z: 26, s: 5.5 }, { x: 30, z: -26, s: 6 },
+];
 /* Booms de lenha boiando: cada tronco é colisor de verdade — a travessia de barco
    do igarapé é cover no meio da água (MAP5 cobra o quadrante do rio também). */
 const BOOMS = [
@@ -179,39 +227,160 @@ export function buildAmazonia(scene, T) {
   };
   ponte(0, PONTE_W); ponte(-24, 2.6); ponte(24, 2.6);
 
-  /* ── PALAFITAS: esteios + dequee a 2,5 m + casa + telhado de palha em duas águas.
-     O dequee é cover aéreo — o piso de jogo continua no chão. */
-  const palafita = ({ x, z, ry, cor }) => {
-    const w = 4.6, d = 4.2;
-    const cs = Math.cos(ry), sn = Math.sin(ry);
-    const local = (lx, lz) => [x + lx * cs - lz * sn, z + lx * sn + lz * cs];
-    for (const [lx, lz] of [[-w / 2 + 0.3, -d / 2 + 0.3], [w / 2 - 0.3, -d / 2 + 0.3], [-w / 2 + 0.3, d / 2 - 0.3], [w / 2 - 0.3, d / 2 - 0.3], [0, 0]])
-      addCyl(0.16, ESTACA_H, matPoste, ...local(lx, lz), { seg: 6 });
-    addBox(w, DECK_E, d, matDeck, x, ESTACA_H, z, { ry, collide: false });
-    const parede = lam({ map: texDe(TEX.madeira, 3, 2) || T.dirt, color: cor, roughness: 0.95 });
-    addBox(w, 2.7, d, parede, x, ESTACA_H + DECK_E, z, { ry });
-    // beiral de palha: dois planos inclinados — nunca colisor, sempre ocorrível
-    for (const s of [-1, 1]) {
-      const telhado = new THREE.Mesh(new THREE.BoxGeometry(w + 1.3, 0.09, d / 2 + 0.9), matPalha);
-      const [cx, cz] = local(0, s * d / 4);
-      telhado.position.set(cx, ESTACA_H + DECK_E + 2.7 + 0.62, cz);
-      telhado.rotation.y = ry; telhado.rotation.x = s * 0.42;
-      telhado.castShadow = true; telhado.receiveShadow = true;
-      root.add(telhado); occluders.push(telhado);
-      colliders.push({ minX: cx - (w / 2 + 0.6), maxX: cx + (w / 2 + 0.6), minY: telhado.position.y - 0.3, maxY: telhado.position.y + 0.35, minZ: cz - (d / 2 + 0.6), maxZ: cz + (d / 2 + 0.6) });
-    }
-    // caixa d'água e varal de rede: quintal de ribeirinho
-    addCyl(0.55, 0.9, matZinco, ...local(w / 2 + 0.9, d / 2 + 0.6), { seg: 10 });
+  /* ── PONTÕES DO MARKET: guardados antes das estações porque o pé da escada de
+     palafita mede o chão-base (pontão conta como chão) no momento do build. */
+  const pontoes = [
+    { x0: 4.2, x1: 8.0, z0: -2, z1: 3 },     // principal — MID (x1 < corredor da rota alta)
+    { x0: 4.0, x1: 8.6, z0: 8, z1: 13 },
+    { x0: 3.8, x1: 7.8, z0: -16, z1: -11 },
+  ];
+  const PONTAO_Y = 0.28;
+
+  /* ── ESTAÇÕES DE PALAFITA (molde palafita_pro.glb; bucha procedural no arnês sem GLB):
+     casa sobre estaca + patamar de prancha ANDÁVEL a DECK_Y + escada lateral +
+     corrimão-collider (`passarela`) nas bordas livres. O piso anda no groundHeightAt
+     (idioma das pontes); a 1,8 m, corpo e sonda passam por baixo sem viga (MAP1). */
+  const PB = new PropBatch({ bucket: 16, shadowMin: 0.02 });
+  const SB = new StaticBatch({ name: 'madeira-amazonia' });
+  const geoPrancha = new THREE.BoxGeometry(1, 1, 1);
+  const pieceBox = (mat, w, h, d, x, y, z, ry = 0) => {
+    const m = new THREE.Matrix4().makeRotationY(ry).setPosition(x, y, z);
+    m.scale(new THREE.Vector3(w, h, d));
+    SB.add(geoPrancha, m, mat);
   };
-  for (const p of PALAFITAS) palafita(p);
+  const trilhoCol = (x0, z0, x1, z1) => {
+    colliders.push({
+      minX: Math.min(x0, x1) - 0.14, maxX: Math.max(x0, x1) + 0.14,
+      minZ: Math.min(z0, z1) - 0.14, maxZ: Math.max(z0, z1) + 0.14,
+      minY: DECK_Y, maxY: DECK_Y + 0.52, passarela: true,
+    });
+  };
+  const CAIXAS_AGUA = [];
+  const estacao = (st) => {
+    const [dx, dz] = st.d, [px, pz] = st.p;
+    const W = (u, v) => [st.x + dx * u + px * v, st.z + dz * u + pz * v];
+    const yaw = Math.atan2(-dz, dx);
+    if (hasProp('palafita_pro')) PB.add('palafita_pro', { x: st.x, z: st.z, y: PILA_GLB, targetH: 6.0, ry: dx < 0 ? 0 : Math.PI });
+    else {
+      // bucha do arnês: mesmas medidas do molde (6×6, deck a DECK_Y) — a régua mede isto
+      for (const [u, v] of [[-2.6, -2.6], [2.6, -2.6], [-2.6, 2.6], [2.6, 2.6], [0, 0]]) {
+        const [cx, cz] = W(u, v);
+        addCyl(0.16, DECK_Y, matPoste, cx, 0, cz, { seg: 6 });
+      }
+      const parede = lam({ map: texDe(TEX.madeira, 3, 2) || T.dirt, color: 0xc4a577, roughness: 0.95 });
+      addBox(5.4, 3.2, 5.4, parede, st.x, DECK_Y, st.z);
+      for (const s of [-1, 1]) {
+        const telhado = new THREE.Mesh(new THREE.BoxGeometry(6.7, 0.09, 3.2), matPalha);
+        telhado.position.set(st.x, DECK_Y + 3.2 + 0.62, st.z + s * 1.55);
+        telhado.rotation.x = s * 0.42;
+        telhado.castShadow = true; telhado.receiveShadow = true;
+        root.add(telhado); occluders.push(telhado);
+        colliders.push({ minX: st.x - 3.35, maxX: st.x + 3.35, minY: DECK_Y + 3.4, maxY: DECK_Y + 4.3, minZ: st.z - 3.2, maxZ: st.z + 3.2 });
+      }
+    }
+    colliders.push({ minX: st.x - 2.7, maxX: st.x + 2.7, minY: DECK_Y, maxY: DECK_Y + 3.2, minZ: st.z - 2.7, maxZ: st.z + 2.7 });
+    // patamar: prancha a DECK_Y + viga embaixo (corpo não anda sob a madeira)
+    const [pcx, pcz] = W(CASA_A + PAT_A, 0);
+    pieceBox(matDeck, 2 * PAT_A + 0.4, 0.12, 2 * PAT_A, pcx, DECK_Y - 0.06, pcz, yaw);
+    for (const [u, v] of [[CASA_A + 0.2, -PAT_A + 0.2], [CASA_A + 2 * PAT_A - 0.2, -PAT_A + 0.2], [CASA_A + 0.2, PAT_A - 0.2], [CASA_A + 2 * PAT_A - 0.2, PAT_A - 0.2]]) {
+      const [cx, cz] = W(u, v);
+      addCyl(0.13, DECK_Y + 0.7, matPoste, cx, -0.6, cz, { seg: 6, collide: false });
+    }
+    // corrimões: laterais com vão da escada/das pranchas, testa (u+) inteira menos vão da rede
+    const subtrai = (pecas, vao) => {
+      const out = [];
+      for (const [a, b] of pecas) {
+        const cortes = [[a, b]];
+        for (const [g0, g1] of vao) for (let i = cortes.length - 1; i >= 0; i--) {
+          const [c0, c1] = cortes[i];
+          if (g1 <= c0 || g0 >= c1) continue;
+          cortes.splice(i, 1);
+          if (c0 < g0 - 0.05) cortes.push([c0, g0]);
+          if (g1 < c1 - 0.05) cortes.push([g1, c1]);
+        }
+        out.push(...cortes);
+      }
+      return out;
+    };
+    const VAN_O = [3.5, 5.7], VAN_E = [3.55, 5.25];   // vão da prancha da rede / da escada
+    for (const lado of [-1, 1]) {
+      const v = lado * PAT_A;
+      const vaos = [];
+      if (st.e === lado) vaos.push(VAN_E);
+      if (st.rede && st.z < -20 && lado === 1) vaos.push(VAN_O);        // A: saída pro sul
+      if (st.rede && st.x === 14 && st.z === -9) vaos.push(VAN_O);      // C: entrada e saída
+      if (st.rede && st.z === 6 && st.x === 14 && lado === -1) vaos.push(VAN_O);   // D: entrada
+      for (const [u0, u1] of subtrai([[CASA_A, CASA_A + 2 * PAT_A]], vaos)) {
+        const [ax, az] = W(u0, v), [bx, bz] = W(u1, v);
+        trilhoCol(ax, az, bx, bz);
+        pieceBox(matPoste, u1 - u0, 0.16, 0.14, (ax + bx) / 2, DECK_Y + 0.44, (az + bz) / 2, yaw);
+      }
+    }
+    {
+      const uf = CASA_A + 2 * PAT_A;
+      const vaos = st.rede && (st.x === 14 ? st.z === 6 : true) ? [[-1.25, 1.25]] : [];   // D e F: testa abre pr'as pranchas
+      for (const [v0, v1] of subtrai([[-PAT_A, PAT_A]], vaos)) {
+        const [ax, az] = W(uf, v0), [bx, bz] = W(uf, v1);
+        trilhoCol(ax, az, bx, bz);
+        pieceBox(matPoste, 0.14, 0.16, v1 - v0, (ax + bx) / 2, DECK_Y + 0.44, (az + bz) / 2, yaw);
+      }
+    }
+    if (st.e) {
+      // escada lateral: degraus QUANTIZADOS no gh (idioma do mezanino) + blocos sólidos
+      // embaixo. Espelho ≤ ~0,15: dois espelhos ≤ 0,30 — o pé do corpo sobe cada degrau
+      // sem tomar empurrão do bloco dois lances acima.
+      const g0 = chaoBase(...W(4.4, st.e * (PAT_A + 2.4)));
+      const n = Math.max(8, Math.ceil((DECK_Y - g0) / 0.149));
+      const esp = (DECK_Y - g0) / n, run = n * ESC_PISO;
+      for (let i = 0; i < n; i++) {
+        const vC = st.e * (PAT_A + (i + 0.5) * ESC_PISO);
+        const top = g0 + esp * (n - i);
+        const [cx, cz] = W(4.4, vC);
+        colliders.push({ minX: cx - 0.65, maxX: cx + 0.65, minY: g0 - 0.6, maxY: top, minZ: cz - 0.19, maxZ: cz + 0.19 });
+        pieceBox(matDeck, 1.3, 0.09, 0.3, cx, top - 0.045, cz, yaw);
+      }
+      st.escada = { g0, esp, n, run };
+    }
+    CAIXAS_AGUA.push(W(CASA_A + 2 * PAT_A + 0.7, st.e * 1.35));
+  };
+  for (const st of ESTACOES) estacao(st);
+
+  /* ── ROTA ALTA: pranchas A→C→D→M→F a DECK_Y — a travessia do igarapé POR CIMA da
+     madeira. Corrimão-collider dos dois lados; embaixo só travessa visual (1,45 m) —
+     quem vadeia o igarapé passa por baixo, sem parede invisível (CTF2). */
+  for (const p of PONTES_ALTA) {
+    const L = Math.hypot(p.bx - p.ax, p.bz - p.az);
+    const dir = [(p.bx - p.ax) / L, (p.bz - p.az) / L], per = [dir[1], -dir[0]];
+    const yaw = Math.atan2(-dir[1], dir[0]);
+    for (let s = 0.28; s < L; s += 0.56) pieceBox(matDeck, 0.5, 0.09, 2.2, p.ax + dir[0] * s, DECK_Y - 0.045, p.az + dir[1] * s, yaw);
+    for (const lado of [-1, 1]) for (let s = 0; s < L; s += 2.3) {
+      const e = Math.min(s + 2.3, L), half = (e - s) / 2;
+      const cx = p.ax + dir[0] * (s + half) + per[0] * lado * 1.1, cz = p.az + dir[1] * (s + half) + per[1] * lado * 1.1;
+      trilhoCol(cx - dir[0] * half, cz - dir[1] * half, cx + dir[0] * half, cz + dir[1] * half);
+      pieceBox(matPoste, e - s, 0.16, 0.14, cx, DECK_Y + 0.44, cz, yaw);
+    }
+    for (let s = 0.8; s < L; s += 1.6) pieceBox(matPoste, 0.16, 0.14, 2.4, p.ax + dir[0] * s, DECK_Y - 0.30, p.az + dir[1] * s, yaw);
+    for (let s = 0.9; s < L; s += 2.9) for (const lado of [-1, 1])
+      addCyl(0.13, DECK_Y + 0.6, matPoste, p.ax + dir[0] * s + per[0] * lado, -0.6, p.az + dir[1] * s + per[1] * lado, { seg: 6, collide: false });
+  }
+  // platforma no meio do igarapé: patamar sem casa — desembarque da travessia alta
+  pieceBox(matDeck, 3.2, 0.12, 3.2, PLATA_M.x, DECK_Y - 0.06, PLATA_M.z);
+  for (const zz of [PLATA_M.z - 1.6, PLATA_M.z + 1.6]) {
+    trilhoCol(PLATA_M.x - 1.6, zz, PLATA_M.x + 1.6, zz);
+    pieceBox(matPoste, 3.2, 0.16, 0.14, PLATA_M.x, DECK_Y + 0.44, zz);
+  }
+  for (const sx of [-1.5, 1.5]) for (const sz of [PLATA_M.z - 1.4, PLATA_M.z + 1.4])
+    addCyl(0.15, DECK_Y + 0.6, matPoste, PLATA_M.x + sx, -0.6, sz, { seg: 6, collide: false });
+  for (const [cx, cz] of CAIXAS_AGUA) addCyl(0.5, 0.9, matZinco, cx, chaoBase(cx, cz) - 0.05, cz, { seg: 10 });
+  const preMadeira = new Set(root.children);
+  PB.build(root); SB.build(root);
+  for (const c of root.children) {
+    if (preMadeira.has(c)) continue;
+    if (c.isInstancedMesh || c.isMesh) occluders.push(c);   // molde e madeira seguram bala (idioma da mansão)
+  }
 
   /* ── MARKET FLUTUANTE: pontões amarrados na margem leste (degrau de 0,28 m — chega-se
-     andando), barracas de lona e canoas. A bandeira MID mora no pontão norte. */
-  const pontoes = [
-    { x0: 4.2, x1: 10.4, z0: -2, z1: 3 },     // principal — MID
-    { x0: 4.0, x1: 9.6, z0: 8, z1: 13 },
-    { x0: 4.4, x1: 9.8, z0: -14, z1: -9 },
-  ];
+      andando), barracas de lona e canoas. A bandeira MID mora no pontão norte. */
   const barraca = (x, z, ry, cor) => {
     addBox(1.9, 0.85, 1.1, matDeck, x, 0.4, z, { ry });
     for (const s of [-1, 1]) addCyl(0.07, 2.1, matPoste, x + s * 0.85 * Math.cos(ry), 0.4, z - s * 0.85 * Math.sin(ry), { seg: 5 });
@@ -219,7 +388,6 @@ export function buildAmazonia(scene, T) {
     tarp.position.set(x, 2.55, z); tarp.rotation.y = ry; tarp.rotation.z = 0.16;
     tarp.castShadow = true; root.add(tarp); occluders.push(tarp);
   };
-  const PONTAO_Y = 0.28;
   const pontao = ({ x0, x1, z0, z1 }, stalls) => {
     const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, w = x1 - x0, d = z1 - z0;
     addBox(w, 0.14, d, matDeck, cx, PONTAO_Y - 0.14, cz, { collide: false });
@@ -232,16 +400,16 @@ export function buildAmazonia(scene, T) {
     stalls();
   };
   pontao(pontoes[0], () => {
-    barraca(5.6, 0.4, 0.24, matLona[0]); barraca(7.4, 1.8, -0.18, matLona[1]); barraca(9.2, 0.2, 0.31, matLona[2]);
+    barraca(5.4, 0.3, 0.24, matLona[0]); barraca(6.9, 1.9, -0.18, matLona[1]); barraca(5.1, -0.9, 0.31, matLona[2]);
   });
   pontao(pontoes[1], () => { barraca(5.4, 9.2, -0.26, matLona[3]); barraca(7.8, 11.6, 0.2, matLona[0]); });
-  pontao(pontoes[2], () => { barraca(5.8, -12.6, 0.15, matLona[2]); barraca(8.2, -10.8, -0.29, matLona[1]); });
+  pontao(pontoes[2], () => { barraca(5.2, -14.8, 0.15, matLona[2]); barraca(6.6, -12.4, -0.29, matLona[1]); });
   // canoas amarradas: casco de tábua com banco
   const canoa = (x, z, ry, cor) => {
     addBox(3.4, 0.5, 0.9, lam({ map: texDe(TEX.madeira, 3, 1) || T.dirt, color: cor, roughness: 0.9 }), x, RIO_AGUA - 0.2, z, { ry });
     addBox(0.9, 0.08, 0.8, matPoste, x, RIO_AGUA + 0.3, z, { ry, collide: false, cast: false });
   };
-  canoa(-3.2, -24.5, 0.34, 0xb54a3c); canoa(2.6, 18.5, -0.22, 0x3c6fb0); canoa(-5.2, 6.5, 1.35, 0xb5892e);
+  canoa(-3.2, -24.5, 0.34, 0xb54a3c); canoa(2.6, 18.5, -0.22, 0x3c6fb0); canoa(-4.5, 15, 1.35, 0xb5892e);
   canoa(11.8, -4.6, 0.42, 0x4a8a5c); canoa(-2.2, -6.5, 1.52, 0x8a5a2e);
   // booms de lenha: troncos amarrados boiando — cover no meio do canal
   for (const b of BOOMS) for (let i = 0; i < b.n; i++) {
@@ -274,7 +442,7 @@ export function buildAmazonia(scene, T) {
   pilhaTora(MX + 7.5, -6, 0.12); pilhaTora(MX + 7.5, 6, -0.18); pilhaTora(MX, 18, 0.24); pilhaTora(24, -33, -0.3);
   // pranchas empilhadas
   const pranchas = (x, z, ry) => { for (let i = 0; i < 4; i++) addBox(2.6, 0.14, 0.9, matDeck, x, 0.14 * i, z, { ry: ry + i * 0.04 }); };
-  pranchas(MX - 6.5, -4.5, 0.34); pranchas(MX + 4.5, -4.8, -0.28); pranchas(20.5, 30, 0.18);
+  pranchas(MX - 6.5, -4.5, 0.34); pranchas(MX + 4.5, -4.8, -0.28); pranchas(23, 33, 0.18);
   // scrap da madeireira: pneus e entulho herdam o vocabulário do ferro-velho
   for (const [id, x, z, h, ry] of [['pilha_pneus', MX - 8.5, 5.5, 1.1, 0.2], ['dumpster', MX + 9.8, 0, 1.4, -0.34], ['tires', 12.5, -33.5, 0.8, 0.4], ['pilha_pneus', 25, 20, 1.1, -0.26]]) {
     if (hasProp(id)) { const p = placeProp(id, { x, z, y: 0, targetH: h, ry }); if (p) { root.add(p); colliders.push({ minX: x - 1.2, maxX: x + 1.2, minY: 0, maxY: h, minZ: z - 1.2, maxZ: z + 1.2 }); occluders.push(p); } }
@@ -298,6 +466,19 @@ export function buildAmazonia(scene, T) {
     // copa em sanfona quebra a silhueta de muro
     addBox(3.4, 2.2, 2.8, matMataEscura, x + Math.sin(ry * 7 + z) * 1.4, h, z + Math.cos(ry * 5 + x) * 1.1, { ry: ry + 0.4, collide: false, cast: true });
   }
+
+  /* ── MATA DENSA (molde arvore_mata.glb + palmeira_babacu.glb, kit Mint r2): fileira
+     de árvores de verdade por cima da cerca — o horizonte vira floresta, não cidade.
+     Instanciado no PropBatch (1 draw call por material) e com tronco-collider. */
+  const PBM = new PropBatch({ bucket: 18 });
+  for (const a of MATA_ARVORES) {
+    if (PBM.add('arvore_mata', { x: a.x, z: a.z, y: 0, targetH: a.s }))
+      colliders.push({ minX: a.x - 0.45, maxX: a.x + 0.45, minY: 0, maxY: 2.6, minZ: a.z - 0.45, maxZ: a.z + 0.45 });
+  }
+  for (const pa of MATA_PALMEIRAS) PBM.add('palmeira_babacu', { x: pa.x, z: pa.z, y: 0, targetH: pa.s });
+  const preMata = new Set(root.children);
+  PBM.build(root);
+  for (const c of root.children) if (!preMata.has(c) && c.isInstancedMesh) occluders.push(c);
 
   /* ── SUMAÚMAS: tronco alto + copa em guardanapo — seis marcos de silhueta. */
   const sumauma = (x, z, s) => {
@@ -336,7 +517,7 @@ export function buildAmazonia(scene, T) {
   const troncoNoChao = (x, z, ry, len = 4.4, r = 0.42) => {
     addCyl(r, len, matCasca, x, 0, z, { rx: Math.PI / 2, ry, seg: 8 });
   };
-  troncoNoChao(-13, -12, 0.32); troncoNoChao(13, 13, -0.38); troncoNoChao(-12, 30, 1.22); troncoNoChao(12, -30, 0.44, 5);
+  troncoNoChao(-13, -12, 0.32); troncoNoChao(13, 13, -0.38); troncoNoChao(-12, 30, 1.22); troncoNoChao(11.5, -31.5, 0.44, 5);
   troncoNoChao(-22, 30, 0.18); troncoNoChao(22, 10, 1.38); troncoNoChao(-20, -30, 0.5); troncoNoChao(20, 32, -0.2);
 
   /* ── FAUNA ESTÁTICA: jacaré no igarapé, capivaras na margem (o sistema do córrego). */
@@ -368,21 +549,56 @@ export function buildAmazonia(scene, T) {
   place('ak', 5.6, 1.4, 1.2); place('awp', 9.2, -0.2, 0.4);
   place('shotgun', MX + 1, -1.4, 2.2); place('mp5', MX, 18.5, -0.6);
   place('deagle', 0, -24.2, 0); place('m4', 0, 24.2, Math.PI);
+  place('deagle', 0, 6, 0.4);   // platforma do meio do igarapé: a rota alta paga a subida
 
-  /* ── NAVEGAÇÃO: grade própria (idioma do parque), rio vadeável incluso. Nó sem
-     vizinho alcançável é PODADO: ilhado reprova o MC3 do map-contrato. */
-  const blocked = (x, z, inflate = 0.45) => colliders.some((c) => c.minY < 1.6 && c.maxY > 0.15
-    && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
+  /* ── NAVEGAÇÃO: grade de chão + nós NA MADEIRA (patamar, prancha, escada) com y —
+     idioma do mezanino da mansão. Nó sem vizinho alcançável é PODADO: ilhado reprova
+     o MC3 do map-contrato. */
+  const blocked = (x, z, inflate = 0.45, yRef = 0) => {
+    const g = groundHeightAt(x, z, yRef);
+    return colliders.some((c) => c.minY < g + 1.5 && c.maxY > g + 0.3
+      && x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate);
+  };
   const STEP = 3.2;
   const crusos = [];
-  for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP) if (!blocked(x, z)) crusos.push({ x, z });
-  const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6; if (blocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t, 0.2)) return false; } return true; };
+  for (let x = -HALF_X + 2.5; x <= HALF_X - 2.5; x += STEP) for (let z = -HALF_Z + 2.5; z <= HALF_Z - 2.5; z += STEP)
+    if (!blocked(x, z)) crusos.push({ x, z, y: groundHeightAt(x, z, 0) });
+  for (const st of ESTACOES) {
+    const uc = CASA_A + PAT_A;
+    for (const [u, v] of [[uc, 0], [uc + 1.1, 0], [uc - 1.1, 0], [uc, 1.0], [uc, -1.0]])
+      if (!blocked(st.x + st.d[0] * u + st.p[0] * v, st.z + st.d[1] * u + st.p[1] * v, 0.3, DECK_Y))
+        crusos.push({ x: st.x + st.d[0] * u + st.p[0] * v, z: st.z + st.d[1] * u + st.p[1] * v, y: DECK_Y });
+    if (st.escada) {
+      const run = st.escada.run;
+      for (const d of [0, run * 0.25, run * 0.5, run * 0.75, run, run + 0.8]) {
+        const v = st.e * (PAT_A + d);
+        const x = st.x + st.d[0] * 4.4 + st.p[0] * v, z = st.z + st.d[1] * 4.4 + st.p[1] * v;
+        const y = groundHeightAt(x, z, 99);   // altura do PRÓPRIO degrau, não do chão-base
+        if (!blocked(x, z, 0.3, y)) crusos.push({ x, z, y });
+      }
+    }
+  }
+  for (const p of PONTES_ALTA) {
+    const L = Math.hypot(p.bx - p.ax, p.bz - p.az), n = Math.max(1, Math.round(L / 2.2));
+    for (let i = 0; i <= n; i++) {
+      const x = p.ax + (p.bx - p.ax) * i / n, z = p.az + (p.bz - p.az) * i / n;
+      if (!blocked(x, z, 0.3, DECK_Y)) crusos.push({ x, z, y: DECK_Y });
+    }
+  }
+  if (!blocked(PLATA_M.x, PLATA_M.z, 0.3, DECK_Y)) crusos.push({ x: PLATA_M.x, z: PLATA_M.z, y: DECK_Y });
+  const segClear = (a, b) => {
+    for (let i = 1; i < 6; i++) {
+      const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t;
+      if (blocked(x, z, 0.2, a.y + (b.y - a.y) * t)) return false;
+    }
+    return true;
+  };
   const vizinhos = (i) => {
     const out = [];
     for (let j = 0; j < crusos.length; j++) {
       if (i === j) continue;
-      const dx = crusos[i].x - crusos[j].x, dz = crusos[i].z - crusos[j].z;
-      if (dx * dx + dz * dz < STEP * STEP * 2.45 && segClear(crusos[i], crusos[j])) out.push(j);
+      const dx = crusos[i].x - crusos[j].x, dz = crusos[i].z - crusos[j].z, dy = Math.abs(crusos[i].y - crusos[j].y);
+      if (dy <= 0.75 && dx * dx + dz * dz < STEP * STEP * 2.45 && segClear(crusos[i], crusos[j])) out.push(j);
     }
     return out;
   };
@@ -401,7 +617,15 @@ export function buildAmazonia(scene, T) {
   mantidos.forEach((i, novo) => { remapa[i] = novo; });
   const nodes = mantidos.map((i) => crusos[i]);
   const adj = mantidos.map((i) => adjCrusos[i].map((j) => remapa[j]));
-  function nearestWaypoint(x, z) { let best = 0, bd = Infinity; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; best = i; } } return best; }
+  function nearestWaypoint(x, z, yRef) {
+    const y = groundHeightAt(x, z, yRef);
+    let best = 0, bd = Infinity;
+    for (let i = 0; i < nodes.length; i++) {
+      const dx = nodes[i].x - x, dz = nodes[i].z - z, dy = nodes[i].y - y, d = dx * dx + dz * dz + dy * dy * 4;
+      if (d < bd) { bd = d; best = i; }
+    }
+    return best;
+  }
   function findPath(fromIdx, toIdx) {
     if (fromIdx === toIdx) return [toIdx];
     const prev = new Int16Array(nodes.length).fill(-1), queue = [fromIdx]; prev[fromIdx] = fromIdx;
@@ -426,13 +650,13 @@ export function buildAmazonia(scene, T) {
       { mode: 'ground', pos: [-22.5, 0, -6.2], phase: 0.9 },
       { mode: 'ground', pos: [-29.5, 0, -6.5], phase: 2.1 },
     ],
-    chickens: [{ pos: [16.8, 0, 7.4], to: [18.4, 0, 8.8], phase: 1.4 }],
+    chickens: [{ pos: [19, 0, 11.4], to: [20.4, 0, 12.6], phase: 1.4 }],
     parrots: [
       { pos: [5.6, 2.62, 0.4], phase: 0.6 },      // poleiro da barraca do market
-      { pos: [21.6, 2.62, 17.4], phase: 2.4 },
-      { pos: [-26, 0.95, 20.6], phase: 3.1 },      // caixa d'água da palafita oeste
+      { pos: [14.1, 0.95, 18.35], phase: 2.4 },   // caixa d'água da palafita (21, 17)
+      { pos: [-7.1, 0.62, -23.35], phase: 3.1 },  // caixa d'água da palafita oeste, na margem
     ],
-    dogs: [{ pos: [-14.8, 0, -20.4], to: [-13.2, 0, -19.2], phase: 0.7 }],
+    dogs: [{ pos: [-12.6, 0, -17.8], to: [-11.2, 0, -16.9], phase: 0.7 }],
     /* elenco da mata (PR #439): 9 espécies Mint com vida no ambientlife.js; posições
        fora de AABB de colisor (AR3) — caixa d'água, poste, beiral e tronco por altura. */
     botos: [{ pos: [2.5, -0.38, -12], to: [2.5, -0.38, 14], phase: 0.4, mode: 'swim' }],
@@ -441,26 +665,28 @@ export function buildAmazonia(scene, T) {
     )),
     araras: [
       { pos: [4.77, 2.5, 0.6], phase: Math.PI },          // poste da barraca do MID
-      { pos: [7.39, 2.5, -11.04], phase: Math.PI - 0.5 }, // poste do pontão sul
+      { pos: [7.38, 2.5, -12.63], phase: Math.PI - 0.5 }, // poste do pontão sul
     ],
     tucanos: [
-      { pos: [-11.41, 0.92, 22.16], phase: 0 },           // caixa d'água da palafita oeste
-      { pos: [23.76, 0.92, 20.15], phase: Math.PI },      // caixa d'água da palafita leste
+      { pos: [-7.1, 0.58, 4.65], phase: 0 },              // caixa d'água da cabeceira oeste (F)
+      { pos: [20.1, 0.92, 8.35], phase: Math.PI },        // caixa d'água da palafita (27, 7)
     ],
-    preguicas: [{ pos: [16.2, 5.6, -11.43], phase: 0 }],  // beiral da palafita (15.5, -9)
+    preguicas: [{ pos: [16.2, 6.2, -7.4], phase: 0 }],    // beiral da palafita C (14, -9)
     macacos: [
       { pos: [MX + 0.5, 6.05, 3.5], to: [MX + 7, 6.05, 3.5], phase: 0.8 },        // cumeeira do galpão
       { pos: [MX - 1.5, 0.95, -1.6], to: [MX + 3.4, 0.95, 1.8], phase: 2.2 },   // bancadas do serrado
     ],
-    oncas: [{ pos: [12, 0.86, -30.2], phase: 2.4 }],      // tronco caído da margem leste
+    oncas: [{ pos: [11.5, 0.86, -31.5], phase: 2.4 }],    // tronco caído da margem leste
     antas: [
-      { pos: [-26.5, 0, -28], to: [-25, 0, -16], phase: 0.5 },
+      { pos: [-25.5, 0, -31.5], to: [-25, 0, -16], phase: 0.5 },
       { pos: [26, 0, 12], to: [27, 0, 16], phase: 2.8 },
     ],
     carcaras: [{ pos: [-20.5, 0, -6.8], to: [-19.8, 0, -6.2], phase: 1.9 }],
   });
 
-  function groundHeightAt(x, z) {
+  /* ── CHÃO MULTINÍVEL (idioma da mansão): chãoBase = pontões/pontes/igarapé; a madeira
+     da palafita entra por CIMA quando o pé de quem pergunta já está na altura dela. */
+  function chaoBase(x, z) {
     for (const p of pontoes) if (x >= p.x0 && x <= p.x1 && z >= p.z0 && z <= p.z1) return PONTAO_Y;
     for (const pz of [0, -24, 24]) if (Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 && Math.abs(x) <= RIO_MEIA_LARGURA + 1.75) return PONTE_Y;
     const ax = Math.abs(x);
@@ -468,7 +694,40 @@ export function buildAmazonia(scene, T) {
     if (ax <= RIO_CAMPO) return RIO_FUNDO;
     return RIO_FUNDO + (ax - RIO_CAMPO) / (RIO_MEIA_LARGURA - RIO_CAMPO) * (RIO_MARGEM - RIO_FUNDO);
   }
-  const slowAt = (x, z) => Math.abs(x) <= RIO_MEIA_LARGURA + 0.6 && Math.abs(z) < HALF_Z - 2
+  function madeiraAt(x, z) {
+    for (const st of ESTACOES) {
+      const rx = x - st.x, rz = z - st.z;
+      const u = rx * st.d[0] + rz * st.d[1], v = rx * st.p[0] + rz * st.p[1];
+      if (u >= CASA_A && u <= CASA_A + 2 * PAT_A && Math.abs(v) <= PAT_A) return DECK_Y;
+      if (st.escada && v * st.e > 0 && Math.abs(v) >= PAT_A && Math.abs(v) <= PAT_A + st.escada.run
+        && u >= 3.7 && u <= 5.1) {
+        const i = Math.min(st.escada.n - 1, Math.floor((Math.abs(v) - PAT_A) / ESC_PISO));
+        return st.escada.g0 + st.escada.esp * (st.escada.n - i);
+      }
+    }
+    if (Math.abs(x - PLATA_M.x) <= 1.6 && Math.abs(z - PLATA_M.z) <= 1.6) return DECK_Y;
+    for (const p of PONTES_ALTA) {
+      const dx = p.bx - p.ax, dz = p.bz - p.az, L2 = dx * dx + dz * dz;
+      let t = L2 ? ((x - p.ax) * dx + (z - p.az) * dz) / L2 : 0;
+      t = t < 0 ? 0 : t > 1 ? 1 : t;
+      const qx = p.ax + dx * t - x, qz = p.az + dz * t - z;
+      if (qx * qx + qz * qz <= 1.21) return DECK_Y;
+    }
+    return null;
+  }
+  function groundHeightAt(x, z, yRef) {
+    const m = madeiraAt(x, z);
+    if (m === null) return chaoBase(x, z);
+    if (yRef === undefined || yRef >= m - 0.35) return m;   // na madeira: a um degrau da superfície dela
+    return chaoBase(x, z);
+  }
+  const naMadeiraAlta = (x, z) => PONTES_ALTA.some((p) => {
+    const dx = p.bx - p.ax, dz = p.bz - p.az, L2 = dx * dx + dz * dz;
+    let t = L2 ? ((x - p.ax) * dx + (z - p.az) * dz) / L2 : 0;
+    t = t < 0 ? 0 : t > 1 ? 1 : t;
+    return (p.ax + dx * t - x) ** 2 + (p.az + dz * t - z) ** 2 <= 2.9;
+  });
+  const slowAt = (x, z) => !naMadeiraAlta(x, z) && Math.abs(x) <= RIO_MEIA_LARGURA + 0.6 && Math.abs(z) < HALF_Z - 2
     && ![0, -24, 24].some((pz) => Math.abs(z - pz) < (pz === 0 ? PONTE_W : 2.6) / 2 + 0.4);
 
   return {
@@ -485,6 +744,15 @@ export function buildAmazonia(scene, T) {
       { id: 'B', label: 'MADEIREIRA', x: MX, z: 18 },
     ],
     pickups, sun, hemi, ambience,
+    amazonia: {
+      deckY: DECK_Y,
+      estacoes: ESTACOES.map(({ x, z, d, rede, escada }) => ({
+        x, z, rede, temEscada: !!escada,
+        patamar: { x: x + d[0] * (CASA_A + PAT_A), z: z + d[1] * (CASA_A + PAT_A) },
+      })),
+      pontes: PONTES_ALTA,
+      perimetro: { arvores: MATA_ARVORES, palmeiras: MATA_PALMEIRAS },
+    },
     sound: {
       loops: [
         { src: AMB_LOOPS.corrego, pos: [0, 0.3, -22], radius: 26, vol: 0.38 },
