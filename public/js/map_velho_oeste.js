@@ -331,12 +331,14 @@ export function buildVelhoOeste(scene, T) {
   ];
   CASAS.forEach((c, i) => {
     sertaoElement('casa', i, c.x, c.z, casaProxy, 'casa_pau_a_pique', 4.1 + (i % 3) * .28,
-      [3.5, 3.9, 3.1], { ry: c.ry, variante: c.v, id: i, targetLen: 6.6 });
+      [2.9, 3.9, 3.55], { ry: c.ry, variante: c.v, id: i, targetLen: 6.6 });
     /* Alpendre com colisor PRÓPRIO e fino (idioma dos bancos da palhoça e das
        varandas da r1): o corpo no meio dele é ejetado inteiro numa passada do
        _collide — no colisor grosso da casa o empurrão para a 0,38 do centro e a
-       cláusula de colisão de alpendre morre (medido: push 0,38 vs ejeção). */
-    const oz = 3.1 + 1.05, aw = 2.6, ad = .8;
+       cláusula de colisão de alpendre morre (medido: push 0,38 vs ejeção).
+       oz fica FORA da parede (casa vai até 3,55): colisor sobreposto ao da casa
+       espreme o corpo entre os dois AABBs e a ejeção cai a 0,16 (medido). */
+    const oz = 4.4, aw = 2.6, ad = .8;
     const cx = c.x + Math.sin(c.ry) * oz, cz = c.z + Math.cos(c.ry) * oz;
     const ca = Math.abs(Math.cos(c.ry)), sa = Math.abs(Math.sin(c.ry));
     colliders.push({ minX: cx - (ca * aw + sa * ad), maxX: cx + (ca * aw + sa * ad), minY: 0, maxY: 2.6,
@@ -366,36 +368,40 @@ export function buildVelhoOeste(scene, T) {
     }
     const adro = new THREE.Mesh(boxGeo(8.6, .18, 2.2), MAT.pedra);
     adro.position.set(0, .09, 5.4); adro.receiveShadow = true; group.add(adro);
-  }, 'igrejinha', 7.2, [4.1, 7.4, 6.1], { ry: 0, targetLen: 0 });
+  }, 'igrejinha', 7.2, [4.4, 7.4, 6.7], { ry: 0, targetLen: 0 });
 
   /* ── CAMINHÃO ANTIGO estacionado na lateral leste — cover grande do mapa.
-     Genérico anos 60 SEM marca (linha editorial: nada de marca real). */
+     Genérico anos 60 SEM marca (linha editorial: nada de marca real). O visual
+     vive num sub-grupo deslocado para o CENTRO do colisor: capô de 4,9 m de
+     bico a caçamba fora de um colisor simétrico era corpo dentro de sólido
+     (MAP1 mediu 1,18 m de penetração antes do conserto). */
   sertaoElement('caminhao', 0, 24.6, -18.6, (group) => {
+    const carroceria = new THREE.Group(); carroceria.position.z = -0.9; group.add(carroceria);
     const cabine = new THREE.Mesh(boxGeo(2.3, 1.75, 2.1), MAT.blue);
-    cabine.position.set(0, 1.62, 2.35); cabine.castShadow = true; group.add(cabine);
+    cabine.position.set(0, 1.62, 2.35); cabine.castShadow = true; carroceria.add(cabine);
     const capo = new THREE.Mesh(boxGeo(2.15, .8, 1.5), MAT.blue);
-    capo.position.set(0, 1.15, 4.05); capo.castShadow = true; group.add(capo);
+    capo.position.set(0, 1.15, 4.05); capo.castShadow = true; carroceria.add(capo);
     const grade = new THREE.Mesh(boxGeo(1.9, .8, .18), MAT.metal);
-    grade.position.set(0, 1.2, 4.83); group.add(grade);
+    grade.position.set(0, 1.2, 4.83); carroceria.add(grade);
     const paraBrisa = new THREE.Mesh(boxGeo(2, .7, .12), MAT.glass);
-    paraBrisa.position.set(0, 2, 3.28); paraBrisa.rotation.x = -.18; group.add(paraBrisa);
+    paraBrisa.position.set(0, 2, 3.28); paraBrisa.rotation.x = -.18; carroceria.add(paraBrisa);
     const cacamba = new THREE.Mesh(boxGeo(2.45, 1.15, 4.1), MAT.pale);
-    cacamba.position.set(0, 1.85, -.95); cacamba.castShadow = true; group.add(cacamba);
+    cacamba.position.set(0, 1.85, -.95); cacamba.castShadow = true; carroceria.add(cacamba);
     for (const sx of [-1.28, 1.28]) {
       const lateral = new THREE.Mesh(boxGeo(.12, .55, 4.1), MAT.dark);
-      lateral.position.set(sx, 2.65, -.95); group.add(lateral);
+      lateral.position.set(sx, 2.65, -.95); carroceria.add(lateral);
     }
     const tampa = new THREE.Mesh(boxGeo(2.45, .1, 4.1), MAT.wood);
-    tampa.position.set(0, 2.48, -.95); group.add(tampa);
+    tampa.position.set(0, 2.48, -.95); carroceria.add(tampa);
     for (const [wx, wz] of [[-1.15, 2.5], [1.15, 2.5], [-1.2, -1.5], [1.2, -1.5]]) {
       const roda = new THREE.Mesh(new THREE.CylinderGeometry(.62, .62, .4, 14), MAT.black);
-      roda.rotation.z = Math.PI / 2; roda.position.set(wx, .62, wz); roda.castShadow = true; group.add(roda);
+      roda.rotation.z = Math.PI / 2; roda.position.set(wx, .62, wz); roda.castShadow = true; carroceria.add(roda);
       const calota = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .44, 10), MAT.metal);
-      calota.rotation.z = Math.PI / 2; calota.position.set(wx, .62, wz); group.add(calota);
+      calota.rotation.z = Math.PI / 2; calota.position.set(wx, .62, wz); carroceria.add(calota);
     }
     const estepe = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .36, 12), MAT.black);
-    estepe.rotation.z = Math.PI / 2; estepe.position.set(0, 1.35, -3.15); group.add(estepe);
-  }, 'caminhao_antigo', 2.9, [3.1, 2.9, 1.45], { ry: .14, targetLen: 6.8 });
+    estepe.rotation.z = Math.PI / 2; estepe.position.set(0, 1.35, -3.15); carroceria.add(estepe);
+  }, 'caminhao_antigo', 2.9, [1.55, 2.9, 3.45], { ry: .14, targetLen: 6.8 });
   const mandacaruProxy = (scale, light) => (group) => {
     const material = light ? MAT.cactusLight : MAT.cactus;
     const trunk = new THREE.Mesh(cylGeo(.38 * scale, 3.8 * scale, 10), material); trunk.position.y = 3.8 * scale / 2; trunk.castShadow = true; group.add(trunk);
