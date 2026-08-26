@@ -1906,6 +1906,29 @@
     ],
     "finalSha256": "5f8f91c7c23599e5686cb2db8d2f7efb7b6a678b033ffda32d27d9bf3c0e070c"
    }
+  },
+  "galpao-festival-gelo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/galpao_festival.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7ds6b1vz4d8yt64yfkwxzg598d7dkb",
+    "chatUrl": "https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef",
+    "displayName": "Galpão de festival (galpão de festa junina)",
+    "frente": "map2-gelo",
+    "notes": "Galpão de festival junino: estrutura de madeira aparente com treliças, telhado metálico claro de duas águas, bandeirolas, salão fechado no fundo e varanda aberta na frente (4.563 tris). Centro do festival no mapa gelo (USANTOS) — substitui o visual do galpão procedural no browser. GLB normalizado ~1 m; escala não-uniforme no call-site (28,4 × 14,6 m, cumeeira 6,7 m, deck afundado a 0,12 m). Item do pack penitenciaria_gelo (packAssetId th78j9sdh2qdhxh37dtvfvqass8d6ngm)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/optimize-props.mjs"
+    ],
+    "finalSha256": "e8d16bfac2626166b57842d8d5b0d3f26a6f14acb1ce117eca25b558f204bccb"
+   }
   }
  }
 }

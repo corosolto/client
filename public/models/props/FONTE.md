@@ -183,3 +183,14 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
   `caminhao-quentao-gelo`. Otimizado por `tools/optimize-props.mjs`
   (1.078 KB → 412 KB). Âncora do flanco B; procedural de fallback com colisores
   idênticos.
+- `galpao_festival.glb` — "Galpão de festival", galpão de festa junina:
+  estrutura de madeira aparente com treliças no telhado de duas águas, telhado
+  metálico claro, bandeirolas, salão fechado no fundo e varanda aberta na
+  frente. 4.563 tris, 1 primitiva, texturas WebP. Mint text-to-3D, gerado
+  26/08/2026 para o mapa gelo ("Treta no Gelo", USANTOS) — item do pack
+  penitenciaria_gelo. Chat:
+  <https://mint.gg/chat/ph73cszyryt8jreekq64vj4s1x8d66ef>. Registro:
+  `galpao-festival-gelo`. Centro do festival (miolo CTF): substitui o visual
+  do galpão procedural no browser com escala não-uniforme no call-site
+  (28,4 × 14,6 m, cumeeira 6,7 m); colisores procedurais idênticos nos dois
+  mundos; neve da cumeeira/beirais refeita sobre o telhado do GLB.
