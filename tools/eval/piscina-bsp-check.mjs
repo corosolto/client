@@ -1,45 +1,43 @@
 /* ============================================================================
-   piscina-bsp-check.mjs — O LAYOUT DA PISCINA É MEDIDO DO fy_pool_day, NÃO CHUTADO.
+   piscina-bsp-check.mjs — PISCINA CENTRAL + ANEL, DECISÃO DO DONO (26/08).
    ----------------------------------------------------------------------------
-   POR QUE EXISTE — a "Piscina da Treta" sempre foi "inspirada" no fy_pool_day:
-   salão 34x50 com piscina 15x19 no eixo comprido. Medido o BSP real
-   (tools/eval/bsp-measure.mjs -> piscina_bsp.json), o original é OUTRO mapa de
-   proporções: pátio ~36x47 m com piscina 13,5x9 ATRAVESSADA no eixo curto, decks
-   fundos (18-20 m) nas pontas e corredores laterais largos (10-12 m). A piscina
-   "que domina a sala no eixo comprido" era invenção nossa.
+   PROCEDÊNCIA DA DECISÃO
+   O re-authoring pelo BSP (r2) saiu com a piscina 13,5x9 ATRAVESSADA no eixo
+   curto e descentrada — o pátio do fy_pool_day. O dono jogou e reprovou, com
+   estas palavras (26/08): "adicionou layout no meio da piscina, e nao em volta
+   dela, ficou super esquisito, o mapa na piscina tinha que continuar igual, a
+   piscina menor, e adicionar corredores, vestiários, banheiro em volta dela
+   como area de respawn". Decisão derivada daí: piscina CENTRAL e MENOR
+   (~10x7 m), o espaço negativo vira um ANEL de construções (vestiário,
+   banheiro, corredores cobertos) servindo de respawn e flanqueio.
 
-   LEI 1 EM AÇÃO: esta régua NASCEU reprovando o builder que existia quando o BSP
-   foi medido (commit regua(piscina) — PB3/PB4/PB5/PB6o vermelhas: piscina +134%
-   de área, aspecto -47%, spawns +24%, corredor oeste -23%). O re-authoring que
-   veio depois fecha as cláusulas SEM afrouxar teto — quem quiser conferir, o
-   git log tem o antes e o depois.
+   O BSP (tools/eval/piscina_bsp.json, medido por bsp-measure.mjs) SEGUE como
+   referência — da PISCINA, não do anel: proporção ~1,5:1 (hx/hz do BSP) é o
+   que sobrevive da medição. As PB antigas que mediam o pátio atravessado
+   (salão × BSP, corredores laterais, estruturas verticais do func_wall)
+   saem: codificavam o layout rejeitado.
 
-   O QUE MEDE (tudo no MUNDO REAL: buildPoolDay de verdade via harness, régua que
-   lê uso não declaração):
-     PB1 salão X (vão interno, das bounds + a margem de 0,5)     ±20%
-     PB2 salão Z (idem)                                          ±20%
-     PB3 área da piscina — o FONDO PLANO via groundHeightAt (o
-         platô de profundidade máxima é exatamente hx×hz)        ±20%
-     PB4 aspecto da piscina X/Z (a orientação: atravessada
-         no eixo curto, não ao longo)                            ±20%
-     PB5 distância entre centróides dos spawns E × B             ±20%
-     PB6 corredores laterais: parede interna -> borda do fundo
-         plano, OESTE e LESTE separados (a assimetria do
-         original: piscina descentrada 1,1 m pro leste)          ±20% cada
-     PB7 estruturas verticais internas: colisores livres com
-         h>=3 m e pegada 0,5-4,5 m2 (pilar nosso <-> func_wall
-         vertical do BSP; a guarita tem pegada 6,7 m2 e fica
-         fora da conta de propósito)                             ±20% (inteiro)
+   O QUE MEDE (mundo real: buildPoolDay via harness, uso e não declaração)
+     PB1 centro X da piscina   |cx| ≤ 3 m  ("~0,0 ±3 m" do dono)
+     PB2 centro Z da piscina   |cz| ≤ 3 m
+     PB3 área do fundo plano   ≤ 71 m² (10x7 + 2% de folga da amostragem 0,25 m)
+     PB4 aspecto X/Z           1,5 ±20% (hx/hz LIDO do piscina_bsp.json)
+     PB5 spawns E × B          ≥ 25 m e em lados opostos do anel (z de sinais
+                               contrários, folga 5 m do centro)
+     PB6 anel ≥ 3 estruturas   colisores h ≥ 2,4 m e pegada ≥ 4 m² FORA do
+                               miolo do deck (|cx|>8,5 ou |cz|>10) — vestiário,
+                               banheiro, corredor/guarita contam; pilar (1,2 m²)
+                               e armário avulso (0,9 m²) não
 
-   O teto ±20% é o mesmo do pedido da régua (frente map2/piscina): margem para
-   arredondamento de construção (5 cm) e para a escolha de spawns SIMÉTRICOS
-   contra centróides assimétricos do original — sem nunca deixar passar uma
-   parede deslocada ou a piscina virada.
+   LEI 1: nasceu reprovando o builder atravessado (PB3 +121% de área, PB6 com
+   2 estruturas de anel — vermelha no commit em que entrou). LEI 3: as três
+   mutações abaixo têm que acender as cláusulas certas.
 
    USO
      node tools/eval/piscina-bsp-check.mjs
-     node tools/eval/piscina-bsp-check.mjs --mutar=desloca-parede   # PB1 tem que acender
-     node tools/eval/piscina-bsp-check.mjs --mutar=bsp-furado       # PB3/PB4 tem que acender
+     node tools/eval/piscina-bsp-check.mjs --mutar=desloca-parede  # PB1 acende
+     node tools/eval/piscina-bsp-check.mjs --mutar=bsp-furado      # PB4 acende
+     node tools/eval/piscina-bsp-check.mjs --mutar=sem-anel        # PB6 acende
    ============================================================================ */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -48,11 +46,14 @@ import { bootGame, initTextures } from './harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MUTAR = (process.argv.find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || null;
-if (MUTAR && !['desloca-parede', 'bsp-furado'].includes(MUTAR)) throw new Error(`mutação desconhecida: ${MUTAR}`);
-const TETO = 0.20;
+if (MUTAR && !['desloca-parede', 'bsp-furado', 'sem-anel'].includes(MUTAR)) throw new Error(`mutação desconhecida: ${MUTAR}`);
 
+/* piscina_bsp.json continua sendo A referência da proporção da piscina. */
 const bsp = JSON.parse(readFileSync(path.join(HERE, 'piscina_bsp.json'), 'utf8'));
 if (MUTAR === 'bsp-furado') bsp.piscina.hx *= 0.3;   // medida do JSON corrompida: o check tem que LER o JSON
+
+const AREA_MAX = 71;          // 10x7 (decisão do dono) + 2% de folga da amostragem
+const TETO = 0.20;
 
 const T = await initTextures();
 const g = bootGame('piscina_treta', { textures: T });
@@ -60,78 +61,79 @@ const W = g.world;
 
 /* ── medidas do builder ────────────────────────────────────────────────────── */
 const medido = {};
-medido.salao = {
-  x: (W.bounds.maxX - W.bounds.minX) + 1.0,   // bounds = vão jogável (meia-parede pra dentro)
-  z: (W.bounds.maxZ - W.bounds.minZ) + 1.0,
-};
-const paredeOeste = W.bounds.minX - 0.5, paredeLeste = W.bounds.maxX + 0.5;
 
-/* fundo plano da piscina: platô da profundidade máxima via groundHeightAt */
+/* fundo plano da piscina: platô da profundidade máxima via groundHeightAt.
+   Área e aspecto pelos EXTENTOS do platô (±meio passo), não pela contagem de
+   células — a contagem infla ~6% pelas células de borda e morreria no teto. */
 const PASSO = 0.25;
-let hmin = 0, flatMinX = 0, flatMaxX = 0, flatMinZ = 0, flatMaxZ = 0, flatN = 0;
+let hmin = 0, flatMinX = 0, flatMaxX = 0, flatMinZ = 0, flatMaxZ = 0;
 for (let x = W.bounds.minX; x <= W.bounds.maxX; x += PASSO) {
   for (let z = W.bounds.minZ; z <= W.bounds.maxZ; z += PASSO) {
     const h = W.groundHeightAt(x, z);
-    if (h < hmin - 1e-9) { hmin = h; flatMinX = flatMaxX = x; flatMinZ = flatMaxZ = z; flatN = 1; }
+    if (h < hmin - 1e-9) { hmin = h; flatMinX = flatMaxX = x; flatMinZ = flatMaxZ = z; }
     else if (h <= hmin + 0.03 && h < -0.2) {
       flatMinX = Math.min(flatMinX, x); flatMaxX = Math.max(flatMaxX, x);
-      flatMinZ = Math.min(flatMinZ, z); flatMaxZ = Math.max(flatMaxZ, z); flatN++;
+      flatMinZ = Math.min(flatMinZ, z); flatMaxZ = Math.max(flatMaxZ, z);
     }
   }
 }
 if (hmin > -0.2) { console.error('PISCINA-BSP VERMELHA · não achei piscina (nenhum ponto rebaixado no groundHeightAt)'); process.exit(1); }
 medido.piscina = {
-  area: flatN * PASSO * PASSO,
+  cx: (flatMinX + flatMaxX) / 2,
+  cz: (flatMinZ + flatMaxZ) / 2,
+  area: (flatMaxX - flatMinX) * (flatMaxZ - flatMinZ),
   aspecto: (flatMaxX - flatMinX) / Math.max(0.01, flatMaxZ - flatMinZ),
 };
-medido.corredores = { oeste: flatMinX - paredeOeste, leste: paredeLeste - flatMaxX };
 
 const cen = (lst) => lst.reduce((a, s) => ({ x: a.x + s.x / lst.length, z: a.z + s.z / lst.length }), { x: 0, z: 0 });
 const cE = cen(W.spawns.E), cB = cen(W.spawns.B);
-medido.spawns = Math.hypot(cB.x - cE.x, cB.z - cE.z);
+medido.spawns = {
+  dist: Math.hypot(cB.x - cE.x, cB.z - cE.z),
+  opostos: cE.z < -5 && cB.z > 5,
+};
 
-medido.estruturas = W.colliders.filter((c) => {
+/* anel: estruturas altas FORA do miolo do deck (piscina + passagem) */
+medido.anel = W.colliders.filter((c) => {
   if (typeof c.minX !== 'number') return false;
   const h = c.maxY - c.minY, pegada = (c.maxX - c.minX) * (c.maxZ - c.minZ);
   const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
-  return h >= 3 && c.maxY > 0.5 && pegada >= 0.5 && pegada <= 4.5
-    && Math.abs(cx) < medido.salao.x / 2 - 2 && Math.abs(cz) < medido.salao.z / 2 - 2;
+  return h >= 2.4 && c.maxY > 0.5 && pegada >= 4 && (Math.abs(cx) > 8.5 || Math.abs(cz) > 10)
+    && Math.abs(cx) < W.bounds.maxX - 1 && Math.abs(cz) < W.bounds.maxZ - 1;
 }).length;
 
-/* ── mutação desloca-parede: a parede leste 25% do salão ALÉM DA POSIÇÃO MEDIDA
-      no BSP. Simulação absoluta (âncora na referência, não no estado do builder),
-      senão o tamanho do desvio dependeria de quão errado o mapa já está — mutante
-      que às vezes morde não é mutante. PB1 acende com 25% > 20% sempre. */
-if (MUTAR === 'desloca-parede') medido.salao.x = bsp.salao.x * 1.25;
+/* ── mutação desloca-parede: a parede oeste empurra a piscina pra fora do
+       centro. Simulação ABSOLUTA (+6 m > que a tolerância de 3 m do dono),
+       senão o tamanho do desvio dependeria de quão errado o mapa já está. */
+if (MUTAR === 'desloca-parede') medido.piscina.cx += 6;
+/* ── mutação sem-anel: o anel inteiro some (o layout voltou a ser piscina
+       atravessada sem construções em volta — exatamente o que o dono reprovou). */
+if (MUTAR === 'sem-anel') medido.anel = 0;
 
 /* ── comparação ────────────────────────────────────────────────────────────── */
-const dev = (a, b) => Math.abs(a - b) / Math.abs(b);
-const clausulas = [
-  ['PB1', 'salão X', medido.salao.x, bsp.salao.x, 'm'],
-  ['PB2', 'salão Z', medido.salao.z, bsp.salao.z, 'm'],
-  ['PB3', 'área da piscina', medido.piscina.area, 4 * bsp.piscina.hx * bsp.piscina.hz, 'm²'],
-  ['PB4', 'aspecto piscina X/Z', medido.piscina.aspecto, bsp.piscina.hx / bsp.piscina.hz, ''],
-  ['PB5', 'distância spawns', medido.spawns, bsp.spawns.distancia_centroides, 'm'],
-  ['PB6o', 'corredor oeste', medido.corredores.oeste, bsp.corredores.oeste, 'm'],
-  ['PB6l', 'corredor leste', medido.corredores.leste, bsp.corredores.leste, 'm'],
-  ['PB7', 'estruturas verticais', medido.estruturas, bsp.estruturas_verticais, ''],
-];
-let verdes = 0;
+const verdes = [];
 const vermelhas = [];
-console.log(`PISCINA × BSP fy_pool_day  (fator ${bsp.fator_m_por_unidade} m/u, salão ${bsp.salao.x}×${bsp.salao.z} m)${MUTAR ? `  [mutação: ${MUTAR}]` : ''}\n`);
-for (const [id, nome, jog, bspV, un] of clausulas) {
-  const d = dev(jog, bspV), ok = d <= TETO;
-  if (ok) verdes++; else vermelhas.push(id);
-  console.log(`  ${ok ? 'ok' : 'x '} ${id} ${nome.padEnd(20)} jogo ${(+jog).toFixed(2).padStart(7)} ${un} · bsp ${(+bspV).toFixed(2).padStart(7)}  desvio ${(d * 100).toFixed(0).padStart(4)}% ${ok ? '' : `> ${TETO * 100}%  ← VERMELHA`}`);
-}
+const cl = (id, nome, ok) => { (ok ? verdes : vermelhas).push(id); console.log(`  ${ok ? 'ok' : 'x '} ${id} ${nome}`); };
+console.log(`PISCINA · piscina central 10x7 + anel (decisão do dono 26/08; aspecto do BSP ${bsp.piscina.hx}/${bsp.piscina.hz})${MUTAR ? `  [mutação: ${MUTAR}]` : '\n'}`);
+cl('PB1', `centro X            jogo ${medido.piscina.cx.toFixed(2)} m (tolerância ±3)`, Math.abs(medido.piscina.cx) <= 3);
+cl('PB2', `centro Z            jogo ${medido.piscina.cz.toFixed(2)} m (tolerância ±3)`, Math.abs(medido.piscina.cz) <= 3);
+cl('PB3', `área da piscina     jogo ${medido.piscina.area.toFixed(1)} m² ≤ ${AREA_MAX}`, medido.piscina.area <= AREA_MAX);
+cl('PB4', `aspecto X/Z         jogo ${medido.piscina.aspecto.toFixed(2)} · bsp ${(bsp.piscina.hx / bsp.piscina.hz).toFixed(2)} ±20%`,
+  Math.abs(medido.piscina.aspecto - bsp.piscina.hx / bsp.piscina.hz) / (bsp.piscina.hx / bsp.piscina.hz) <= TETO);
+cl('PB5', `spawns E×B          jogo ${medido.spawns.dist.toFixed(1)} m, lados opostos=${medido.spawns.opostos} (≥25 m)`,
+  medido.spawns.dist >= 25 && medido.spawns.opostos);
+cl('PB6', `estruturas do anel  jogo ${medido.anel} ≥ 3 (vestiário/banheiro/corredor)`, medido.anel >= 3);
+
 const verde = vermelhas.length === 0;
-console.log(`\nPISCINA-BSP ${verde ? 'ok' : 'VERMELHA'} · ${verdes}/${clausulas.length} cláusulas (teto ±${TETO * 100}% por medida)`);
+console.log(`\nPISCINA-BSP ${verde ? 'ok' : 'VERMELHA'} · ${verdes.length}/${verdes.length + vermelhas.length} cláusulas`);
 
 if (MUTAR === 'desloca-parede' && !vermelhas.includes('PB1')) {
   console.error('mutação desloca-parede não acendeu PB1 — a régua não morde'); process.exit(1);
 }
-if (MUTAR === 'bsp-furado' && !(vermelhas.includes('PB3') || vermelhas.includes('PB4'))) {
-  console.error('mutação bsp-furado não acendeu PB3/PB4 — o check não está lendo o JSON'); process.exit(1);
+if (MUTAR === 'bsp-furado' && !vermelhas.includes('PB4')) {
+  console.error('mutação bsp-furado não acendeu PB4 — o check não está lendo o JSON'); process.exit(1);
+}
+if (MUTAR === 'sem-anel' && !vermelhas.includes('PB6')) {
+  console.error('mutação sem-anel não acendeu PB6 — a régua não morde'); process.exit(1);
 }
 if (MUTAR) {
   if (verde) { console.error(`mutação ${MUTAR} passou verde — a régua NÃO morde`); process.exit(1); }
