@@ -3,9 +3,9 @@
    ----------------------------------------------------------------------------
    POR QUE EXISTE
 
-   O PR #375 ("Treta no Vietnã") foi rejeitado pelo dono com a alegação "não
-   parece low poly" — frase que, sem instrumento, vira gosto. Esta régua traduz a
-   alegação em QUATRO medidas no mundo construído (bootGame real, node puro),
+    O PR #375 ("Treta no Vietnã") foi rejeitado pelo dono com a alegação "não
+    parece low poly" — frase que, sem instrumento, vira gosto. Esta régua traduz a
+    alegação em SETE medidas no mundo construído (bootGame real, node puro),
    escolhidas para NÃO duplicar cláusula existente (LIÇÃO 2 do docs/LICOES.md:
    dois limiares para o mesmo conceito é o instrumento discordando de si):
 
@@ -35,13 +35,28 @@
              na platforma M (meio do igarapé) e no patamar de F (oeste);
              (c) corrimão-collider (`passarela: true`) presente: ≥2 por
              estação e ≥2 por vão de prancha. Sem (c) o deck é chão fantasma.
-      AMZ6  MATA DENSA no perímetro (ronda 2): "o horizonte não é cidade, se
-             não floresta". Medido no manifesto que INSTANCIA os GLBs (mesma
-             fonte que desenha — declaração paralela seria segunda verdade):
-             ≥18 arvore_mata no anel externo (|x|≥29 ou |z|≥41,5), cobertura
-             angular sem buraco >45°, escala variada ≥1,25× e ≥10 babacus de
-             sub-bosque. Em node o GLB não carrega: a cerca viva procedural
-             continua lá e o manifesto é o que o browser instancia.
+       AMZ6  MATA DENSA no perímetro (ronda 2): "o horizonte não é cidade, se
+              não floresta". Medido no manifesto que INSTANCIA os GLBs (mesma
+              fonte que desenha — declaração paralela seria segunda verdade):
+              ≥18 arvore_mata no anel externo (|x|≥29 ou |z|≥41,5), cobertura
+              angular sem buraco >45°, escala variada ≥1,25× e ≥10 babacus de
+              sub-bosque. Em node o GLB não carrega: a cerca viva procedural
+              continua lá e o manifesto é o que o browser instancia.
+       AMZ7  MATA DENSA no INTERIOR jogável (ronda 3): "a amazonia precisava de
+              mais matas, no mapa em si jogável" — o anel do AMZ6 fecha o horizonte,
+              aqui é o chão que se pisa. Medido no mesmo manifesto que instancia:
+              (a) ≥48 arvore_mata dentro do retângulo jogável (|x|<29 e |z|<41,5,
+              o complemento EXATO da faixa do AMZ6 — árvore é do anel OU do
+              interior, sem terra de ninguém); (b) nenhuma instância no leito do
+              igarapé (|x|>10,4); (c) árvore a ≥6 m de cada slot de spawn e ≥5 m
+              de cada bandeira — mata composta, não derramada em cima do jogo;
+              (d) cobertura por quadrante no idioma do MAP5 do map-check (grade
+              4×4, densidade por 100 m² de TERRA — leito não é mata —, razão
+              contra a mediana do próprio mapa) com o MESMO piso 0,35× e teto de
+              espaçamento 12 m (mata ABERTA de várzea: fresta de tiro entre
+              troncos, não paredão). Limite declarado: serapilheira/raízes são
+              chão visual e não têm cláusula própria — o sub-bosque entra como
+              número-reportado no valor da cláusula.
 
     PROCEDÊNCIA DOS PISOS (Lei 2 — teto sem procedência é opinião)
       AMZ1 ≥ 12 e AMZ2 ≥ 2,0/100 m²: medidos nesta frente ANTES do polimento
@@ -60,18 +75,27 @@
        vãos de prancha, 87 corrimões `passarela` (saída deste script na ronda 2).
        Pisos 1 célula/2 corrimões/2 por vão: o mínimo que ainda é "atravessável"
        com redundância (1 só corrimão não cerca borda nenhuma).
-       AMZ6 piso 18: 22 árvores instanciadas na ronda 2 (15-25 pedidos); folga
-       de 4 remoções sem abrir buraco de horizonte. Gaps e escala medidos na
-       mesma saída: pior vão angular ~20° (teto 45° = mais que o dobro), escala
-       7,0-11,4 m (razão 1,63 ≥ piso 1,25).
+        AMZ6 piso 18: 22 árvores instanciadas na ronda 2 (15-25 pedidos); folga
+        de 4 remoções sem abrir buraco de horizonte. Gaps e escala medidos na
+        mesma saída: pior vão angular ~20° (teto 45° = mais que o dobro), escala
+        7,0-11,4 m (razão 1,63 ≥ piso 1,25).
+        AMZ7 piso 48: 63 árvores entregues na ronda 3 (saída deste script), folga
+        de 15 remoções ~24% — a ronda 2 provou que piso colado no entregue reprova
+        por ruído de composição. Quadrantes: 16 de terra, pior 0,67× da mediana
+        (piso 0,35× é o MESMO número do MAP5 do map-check — língua compartilhada,
+        não teto novo) e pior espaçamento 7,8 m (teto 12 = folga 1,5×; mata aberta
+        de várzea tem tronco a cada ~5-7 m no miolo dos bosques). Clearances 6/5 m:
+        medidos 6,8 m do spawn mais próximo e 5,4 m da bandeira — a folga cobre o
+        re-jitter de capão sem deixar árvore nascer no nascedouro.
 
     AS MUTAÇÕES QUE A DEIXAM VERMELHA (Lei 3 — se não morde, não existe)
       --mutante=monocromia ... troca TODO material por um só chapado   -> AMZ1
       --mutante=deserto ..... mantém 1 a cada 4 colisores de cover      -> AMZ2
       --mutante=agua-morta ... desregistra as águas vivas da cena       -> AMZ3
       --mutante=fauna-unica .. deixa só os ratos                        -> AMZ4
-      --mutante=palafita-morta  apaga os corrimões `passarela`          -> AMZ5
-      --mutante=desmata ......... esvazia o anel de árvores do perímetro -> AMZ6
+       --mutante=palafita-morta  apaga os corrimões `passarela`          -> AMZ5
+       --mutante=desmata ......... esvazia o anel de árvores do perímetro -> AMZ6
+       --mutante=desmata-interior  esvazia o manifesto do interior       -> AMZ7
       Cada mutante tem que acender SÓ a cláusula dele (mutação que acende
       duas não prova nenhuma). Os corrimões têm 0,52 m de altura: abaixo do
       piso de cover do AMZ2 de propósito — derrubar a palafita não pode
@@ -84,7 +108,7 @@
 import { THREE, MAPS, initTextures, bootGame } from './harness.mjs';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=') || a.startsWith('--mutar=')) || '').split('=')[1] || '';
-const MUTANTES = ['monocromia', 'deserto', 'agua-morta', 'fauna-unica', 'palafita-morta', 'desmata'];
+const MUTANTES = ['monocromia', 'deserto', 'agua-morta', 'fauna-unica', 'palafita-morta', 'desmata', 'desmata-interior'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}\nconhecidos: ${MUTANTES.join(' | ')}`);
   process.exit(2);
@@ -93,6 +117,9 @@ if (MUT && !MUTANTES.includes(MUT)) {
 const PISO_MATS = 12;          // AMZ1 — ver procedência no cabeçalho
 const PISO_COVER = 2.0;        // AMZ2 — colisores de cover por 100 m² de bounds
 const PISO_FAUNA_N = 24, PISO_FAUNA_ESP = 12;   // AMZ4 — real 28/14 (elenco PR #439), folga 4/2
+const PISO_INT_ARV = 48;       // AMZ7 — entregue 63 na ronda 3, folga 15
+const QUAD_INT_FRAC = 0.35;    // AMZ7 — o MESMO piso do MAP5 do map-check (língua compartilhada)
+const QUAD_INT_ESP = 12;       // AMZ7 — mata aberta: medido pior 7,8 m, folga 1,5×
 
 const SEED = 13007;            // mesma do mapa-novo-gate: mesmos props sortidos
 
@@ -219,6 +246,37 @@ const amz5ok = decksAcessiveis.length === META.estacoes.length && travessia
   && estacoesComCorrimao.length === META.estacoes.length && vaosComCorrimao.length === META.pontes.length;
 const amz6ok = anel.length >= 18 && noAnel && piorVao <= 45 && razaoEsc >= 1.25 && META.perimetro.palmeiras.length >= 10;
 
+/* ── AMZ7: mata densa no INTERIOR jogável — mesmo manifesto que instancia ── */
+let interior = META.interior || { arvores: [], palmeiras: [] };
+if (MUT === 'desmata-interior') interior = { arvores: [], palmeiras: [] };
+const instancias = [...interior.arvores, ...interior.palmeiras];
+const foraDoLeito = instancias.every((a) => Math.abs(a.x) > 10.4);
+const dentroDoRet = instancias.every((a) => Math.abs(a.x) < 29 && Math.abs(a.z) < 41.5);
+const slotsSpawn = Object.values(W.spawns || {}).flat();
+const longeDoSpawn = instancias.every((a) => slotsSpawn.every((s) => Math.hypot(a.x - s.x, a.z - s.z) >= 6));
+const bandeiras = g.ctfPts || [];
+const longeDaBandeira = interior.arvores.every((a) => bandeiras.every((p) => Math.hypot(a.x - p.x, a.z - p.z) >= 5));
+const quadsInt = [];
+{
+  const qx = 58 / 4, qz = 83 / 4;
+  for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) {
+    const x0 = -29 + a * qx, x1 = x0 + qx, z0 = -41.5 + b * qz, z1 = z0 + qz;
+    let terra = 0;
+    for (const [e0, e1] of [[x0, Math.min(x1, -9.75)], [Math.max(x0, 9.75), x1]]) terra += Math.max(0, e1 - e0) * (z1 - z0);
+    if (terra < 40) continue;   // mesmo corte do MAP5: quadrante sem chão não é deserto
+    const n = instancias.filter((p) => p.x >= x0 && p.x < x1 && p.z >= z0 && p.z < z1).length;
+    const d = n / terra * 100;
+    quadsInt.push({ q: `${a},${b}`, n, d, esp: n ? Math.sqrt(100 / d) : Infinity, raz: 0 });
+  }
+  const dens = quadsInt.map((q) => q.d).sort((x, y) => x - y);
+  const med = dens.length ? (dens.length % 2 ? dens[(dens.length - 1) / 2] : (dens[dens.length / 2 - 1] + dens[dens.length / 2]) / 2) : 0;
+  for (const q of quadsInt) q.raz = med ? q.d / med : 1;
+}
+const piorRazaoInt = quadsInt.length ? Math.min(...quadsInt.map((q) => q.raz)) : 0;
+const piorEspInt = quadsInt.length ? Math.max(...quadsInt.map((q) => q.esp)) : Infinity;
+const amz7ok = interior.arvores.length >= PISO_INT_ARV && foraDoLeito && dentroDoRet && longeDoSpawn
+  && longeDaBandeira && quadsInt.length === 16 && piorRazaoInt >= QUAD_INT_FRAC && piorEspInt <= QUAD_INT_ESP;
+
 /* ── veredito ── */
 const clausulas = [
   { id: 'AMZ1 variedade de material texturizado', ok: matsTexturizados >= PISO_MATS,
@@ -233,6 +291,8 @@ const clausulas = [
     valor: `${decksAcessiveis.length}/${META.estacoes.length} patamares alcançados · travessia ${travessia ? 'A→M→F ok' : 'CORTADA'} · ${estacoesComCorrimao.length}/${META.estacoes.length} estações e ${vaosComCorrimao.length}/${META.pontes.length} vãos com corrimão (${corrimoes.length} colliders)` },
   { id: 'AMZ6 mata densa no perímetro', ok: amz6ok,
     valor: `${anel.length} árvores no anel + ${META.perimetro.palmeiras.length} babacus · pior vão ${piorVao.toFixed(0)}° ≤45 · escala ${razaoEsc.toFixed(2)}× (pisos 18/10/45°/1,25×)` },
+  { id: 'AMZ7 mata densa no interior', ok: amz7ok,
+    valor: `${interior.arvores.length} árvores + ${interior.palmeiras.length} palmeiras no retângulo jogável (piso ${PISO_INT_ARV}) · sub-bosque ${META.interior?.subbosque ?? 0} · ${quadsInt.length} quadrantes de terra, pior ${piorRazaoInt.toFixed(2)}× da mediana [≥${QUAD_INT_FRAC}] e ${Number.isFinite(piorEspInt) ? piorEspInt.toFixed(1) + ' m' : '∞'} entre instâncias [≤${QUAD_INT_ESP}] · ${foraDoLeito && dentroDoRet && longeDoSpawn && longeDaBandeira ? 'leito/spawn/bandeira limpos' : 'HÁ instância em cima do jogo (leito/spawn/bandeira)'}` },
 ];
 
 console.log(`AMAZONIA — régua da frente  ${MUT ? `[mutante: ${MUT}]` : ''}`);
@@ -240,7 +300,7 @@ for (const c of clausulas) console.log(`  ${c.ok ? 'PASSA' : 'FALHA'}  ${c.id.pa
 const vermelhas = clausulas.filter((c) => !c.ok);
 
 if (MUT) {
-  const esperado = { monocromia: 'AMZ1', deserto: 'AMZ2', 'agua-morta': 'AMZ3', 'fauna-unica': 'AMZ4', 'palafita-morta': 'AMZ5', desmata: 'AMZ6' }[MUT];
+  const esperado = { monocromia: 'AMZ1', deserto: 'AMZ2', 'agua-morta': 'AMZ3', 'fauna-unica': 'AMZ4', 'palafita-morta': 'AMZ5', desmata: 'AMZ6', 'desmata-interior': 'AMZ7' }[MUT];
   if (vermelhas.length !== 1 || !vermelhas[0].id.startsWith(esperado)) {
     console.error(`\nMUTANTE ${MUT} ${vermelhas.length ? `acendeu ${vermelhas.map((v) => v.id.split(' ')[0]).join(', ')} em vez de ${esperado}` : 'SOBREVIVEU'} — a régua não mede o que diz medir.`);
     process.exit(1);
@@ -252,4 +312,4 @@ if (vermelhas.length) {
   console.error(`\n✗ AMAZONIA: ${vermelhas.length} cláusula(s) vermelha(s) — "low poly" tem número, e ele está aqui.`);
   process.exit(1);
 }
-console.log('\n✓ AMAZONIA ok — variedade, cover, água viva, fauna, madeira atravessável e mata no horizonte.');
+console.log('\n✓ AMAZONIA ok — variedade, cover, água viva, fauna, madeira atravessável, mata no horizonte e mata no chão que se pisa.');
