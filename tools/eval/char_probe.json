@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-25T22:01:16.013Z",
+ "gerado": "2026-08-27T02:00:54.621Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 62,
@@ -81,13 +81,13 @@
    },
    {
     "mapa": "piscina_treta",
-    "materiais": 130,
-    "map": 94,
+    "materiais": 131,
+    "map": 92,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 514,
-    "triangulos": 6940
+    "meshes": 511,
+    "triangulos": 7208
    },
    {
     "mapa": "loja_h",
@@ -241,8 +241,8 @@
    }
   ],
   "total": {
-   "materiais": 2654,
-   "map": 1284,
+   "materiais": 2655,
+   "map": 1282,
    "normalMap": 75,
    "roughnessMap": 75,
    "aoMap": 0
