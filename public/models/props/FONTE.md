@@ -174,3 +174,33 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## v2.1 — lote 4: armazém do Atacadão (frente ATACADAO, map2/atacadao)
+
+Pedido do dono (27/08/2026): *"os mapas do emerson acho que da pra fazer models
+no mintgg e deixar mais realista, especialmente o do atacadao"*. Kit `atacadao_r3`
+do Mint (`kits-mint-r3.json`, pack `th7dnpa6tmkqv43k7s3458exmx8d79aq`, chat
+<https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv>), otimizado na onda
+r3-parte2 (WebP 1024, ~4-5k tris). Licença de uso do assinante Mint Pro — asset
+original gerado por prompt, sem copyright de terceiros. Convenção do acervo: GLB
+normalizado ~1 m, pivô na base, escala no call-site via `placeProp({ targetH })`.
+Os três entram no `mint-assets.json` com `source.frente: "v21-e-models"`, então
+caem no `eval:props-acervo`, no `eval:asset-integrity` e no `eval:gltf-validator`.
+
+- `estante_pallets.glb` — rack de pallet de clube de atacado, estrutura metálica
+  de três níveis com carga encolhida em filme stretch. 4.565 tris. Registro:
+  `estante-pallets`. Item: `ks7d5h0jrqz526fsqjtmed8d8s8d6780`. Usado em
+  `public/js/map_atacadao.js` como molde das 6 fileiras do labirinto (48
+  instâncias, `targetH` 3,0, `ry` PI/2 — o eixo longo do GLB é o X).
+- `freezer.glb` — freezer horizontal de ilha, tampa de vidro corrediça e adesivo
+  de promoção descascando. 4.486 tris. Registro: `freezer-atacadao`. Item:
+  `ks7fwtjj0r7fy6fqce79scb0y18d6yja`. Parede fria da lateral leste (6 instâncias,
+  `targetH` 2,2).
+- `ilha_caixas.glb` — ilha de promoção, caixas de papelão abertas sobre pallet
+  baixo. 4.424 tris. Registro: `ilha-caixas`. Item:
+  `ks77jm9rp5ek9an2s31q8608rx8d71a1`. Cover de meia-altura (`targetH` 1,15, 12
+  instâncias) na boca dos vãos alternados — cobrado pela ATA2 da
+  `tools/eval/atacadao-check.mjs`.
+
+Contagem de triângulos medida com `@gltf-transform/core` (NodeIO com
+`ALL_EXTENSIONS` + decoder do meshopt), não estimada.

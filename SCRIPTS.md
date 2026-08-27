@@ -773,6 +773,10 @@ Máscara Blender 360x463 mede abertura/continuidade do capacete e moldura/brilho
 
 Veto editorial dos cinco mapas novos: layout efetivo e pool-fonte não podem conter mascote/personagem protegido, homenagem real, pôster religioso/vulgar, MORTE ou carros reconhecíveis. Mutantes incluem popeye, religioso-vulgar e vw.
 
+## `eval:atacadao`
+
+Atacadão da Treta é armazém, não loja de departamento (recusa do dono, 27/08/2026). ATA1 deriva as fileiras de rack das marcas e exige 4 fileiras de 8–14 unidades e 3 corredores de vão andável 2,2–5,0 m; ATA2 cobra 5 ilhas de meia-altura com colisor que empurra o corpo; ATA3, freezer na lateral fria com luz fria; ATA4, luminária pendurada e luz local (idioma do galpão do campomorro); ATA5 mede a LOS média na altura do olho contra teto de 10,50 m. Mutantes: `--mutar=sem-racks` e `--mutar=aberto`.
+
 ## `eval:campo-contract`
 
 Campo: assimetria e boca oeste 80%; galpão exige fill, piso/forro texturizados, batentes/faixas ancoradas; traves têm redes e campo mantém três marcos distintos. Mutantes por cláusula.

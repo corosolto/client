@@ -1883,6 +1883,81 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "estante-pallets": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/estante_pallets.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack-item",
+    "frente": "v21-e-models",
+    "assetId": "ks7d5h0jrqz526fsqjtmed8d8s8d6780",
+    "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+    "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+    "displayName": "Estante de pallets de atacadão",
+    "prompt": "Rack de pallet de clube de atacado: estrutura metálica laranja de três níveis com pallets de madeira carregados de fardos e caixas encolhidas em filme stretch, desgaste de empilhadeira nas colunas. Normalizado ~1 m de altura, pivô na base.",
+    "notes": "Molde das 6 fileiras do labirinto do Atacadão da Treta (48 instâncias). Colocado com targetH 3,0 e ry=PI/2 — o eixo longo do GLB é o X, então a fileira corre em Z. A carga paletizada atrás do rack é BoxGeometry do mapa, não GLB: o bloco de 2,3 m que fecha a linha de visão é rack + carga, medido pela ATA1 de tools/eval/atacadao-check.mjs."
+   },
+   "processing": {
+    "modelProvider": "mint.gg",
+    "pack": "atacadao_r3",
+    "tools": [
+     "mint.gg text-to-3D",
+     "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+    ],
+    "finalSha256": "7c49c3a17a7118437fd4804397305c6a024e6c5d3da1ac7a99e2f11735c14368"
+   }
+  },
+  "freezer-atacadao": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/freezer.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack-item",
+    "frente": "v21-e-models",
+    "assetId": "ks7fwtjj0r7fy6fqce79scb0y18d6yja",
+    "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+    "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+    "displayName": "Freezer horizontal de ilha fria",
+    "prompt": "Freezer horizontal de supermercado brasileiro: gabinete branco esmaltado com tampa de vidro corrediça, moldura de alumínio, adesivos de promoção descascando e grade de condensador na base. Normalizado ~1 m de altura, pivô na base.",
+    "notes": "Parede fria da lateral leste do Atacadão da Treta (6 instâncias em x=24,2, targetH 2,2, ry=-PI/2). Cobrado pela ATA3 de tools/eval/atacadao-check.mjs junto das 3 luzes frias."
+   },
+   "processing": {
+    "modelProvider": "mint.gg",
+    "pack": "atacadao_r3",
+    "tools": [
+     "mint.gg text-to-3D",
+     "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+    ],
+    "finalSha256": "86d7cbd7f7b9441d26576cec93b8364b3239f41fd21649d93d166cf75d0d077e"
+   }
+  },
+  "ilha-caixas": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/ilha_caixas.glb"
+   ],
+   "source": {
+    "kind": "mint-asset-pack-item",
+    "frente": "v21-e-models",
+    "assetId": "ks77jm9rp5ek9an2s31q8608rx8d71a1",
+    "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq",
+    "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv",
+    "displayName": "Ilha de caixas de promoção",
+    "prompt": "Ilha de promoção de atacado: caixas de papelão abertas empilhadas sobre pallet baixo, produtos aparecendo na boca das caixas, cantoneira de papelão amassada. Normalizado ~1 m de altura, pivô na base.",
+    "notes": "Cover de meia-altura (targetH 1,15) na boca dos vãos alternados e nas pontas do galpão (12 instâncias). Cobrado pela ATA2 de tools/eval/atacadao-check.mjs, que exige altura de mundo entre 0,85 e 1,45 m e colisor que empurra o corpo de raio 0,38."
+   },
+   "processing": {
+    "modelProvider": "mint.gg",
+    "pack": "atacadao_r3",
+    "tools": [
+     "mint.gg text-to-3D",
+     "otimização do pack r3-parte2 (WebP 1024, ~4-5k tris)"
+    ],
+    "finalSha256": "d8332cc0d92c122abe01d9a840eac85e1e4fe7b4085dda3244f1e58d766e4c5b"
+   }
   }
  }
 }

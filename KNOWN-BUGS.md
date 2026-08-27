@@ -3755,6 +3755,25 @@ Dois problemas dentro de um:
    `soundtrack/` são de faixas comerciais (Sepultura, Racionais, Charlie Brown Jr, O Rappa,
    Fatboy Slim, Ramones), e num repo público eles são a própria lista de denúncia.
 
+### BUG-70 · Atacadão não tem o anúncio de alto-falante do galpão · Régua: nenhuma
+
+A frente ATACADAO (27/08/2026, `map2/atacadao`) pedia, além da ventilação, **anúncio de
+alto-falante distorcido sem palavra reconhecível** — o som que faz um clube de atacado
+soar como clube de atacado. Entregue: só a ventilação, como dois loops posicionais de
+`AMB_LOOPS.hum` em `public/js/map_atacadao.js` (miolo das fileiras e compressor da parede
+fria). O PA **não** entrou.
+
+Por quê: `public/audio/` não é versionado (licenciamento — ver BUG-19) e vem do release
+`audio-pack-v6` via `scripts/fetch-audio.sh`; não existe nele nenhuma faixa de PA, e
+`AMB_LOOPS` (`public/js/soundscape.js:6`) só expõe funk, grilos, passaros, vento, ondas,
+corrego, piscina, cidade, obra e hum. Declarar um `src` que o manifesto não serve daria
+404 silencioso — que é exatamente o BUG-19 — então preferiu-se a pendência explícita.
+
+Para fechar: gerar a faixa (ruído de banda estreita modulado, sem fonema reconhecível),
+publicá-la no próximo `audio-pack`, acrescentar a chave em `AMB_LOOPS` e um terceiro loop
+posicional no teto do galpão. A régua correspondente é uma cláusula ATA6 em
+`tools/eval/atacadao-check.mjs` cobrando o loop pelo `src`, com mutante `sem-pa`.
+
 ### ~~BUG-20 · PDFs pessoais dentro de `public/`~~ · RESOLVIDO 04/08
 
 `public/audio/soundtrack/` continha `Numa_Interview_Pack_v1.pdf`,
