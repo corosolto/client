@@ -59,7 +59,7 @@ const desc = sala
   <div class="cv">
     {sala ? (
       <>
-        <p class="cv-ctx">{sala.map} · {sala.ctf ? 'CAPTURA' : 'MATA-MATA'} · {sala.players}/{sala.max} jogando</p>
+        <p class="cv-ctx">{sala.mapNome || sala.map} · {sala.ctf ? 'CAPTURA' : 'MATA-MATA'} · {sala.players}/{sala.max} jogando</p>
 
         {/* A disputa, no mesmo vocabulario da lista de salas do jogo: pino cheio = pessoa dentro. */}
         <div class="cv-disputa">

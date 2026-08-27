@@ -2787,7 +2787,7 @@ async function mpAtualizarSalas() {
       `<div class="mp-sala-nome">${r.name}${tags}</div>`
       + `<div class="mp-lot"><b>${r.players}</b>/${r.max}${r.spectators ? ` <span style="opacity:.6">+${r.spectators} 👁</span>` : ''}</div>`
       + `<div class="mp-acoes"></div>`
-      + `<div class="mp-sala-sub">${MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`;
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`;
     const acoes = div.querySelector('.mp-acoes');
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
        quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
