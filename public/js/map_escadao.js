@@ -610,8 +610,8 @@ export function buildEscadao(scene, T) {
   propAt('caixa_dagua', -12, -32, 3.0, 2.5, 2.5,
     lam({ color: 0x1a1a1a, roughness: 0.8 }), 0, H_TOP);
   /* Varais reais do acervo: roupa é silhueta leve no horizonte, nunca cover nem occluder. */
-  const varal = (id, x, z, h, ry = 0) => {
-    const o = GLB_ON ? placeProp(id, { x, y: H_TOP, z, targetH: h, ry }) : null;
+  const varal = (id, x, z, h, ry = 0, y = H_TOP) => {
+    const o = GLB_ON ? placeProp(id, { x, y, z, targetH: h, ry }) : null;
     if (o) {
       o.userData.escadaoVaral = id;
       o.traverse((m) => { if (m.isMesh) m.userData.nonSolidSurface = true; });
@@ -619,14 +619,27 @@ export function buildEscadao(scene, T) {
       return;
     }
     const linha = new THREE.Mesh(new THREE.BoxGeometry(2.7, .035, .035), lam({ color: 0x1a1817, roughness: 1 }));
-    linha.position.set(x, H_TOP + h * .72, z); linha.rotation.y = ry; linha.userData.escadaoVaral = id; root.add(linha);
+    linha.position.set(x, y + h * .72, z); linha.rotation.y = ry; linha.userData.escadaoVaral = id;
+    /* Corda é corda: sem esta marca a sonda MAP1 do map-check lê o varal como geometria
+       visível com o corpo dentro (era o único ponto vermelho do escadão, 1,098 m — a
+       altura exata desta linha sobre o mirante). As roupas já nasciam marcadas. */
+    linha.userData.nonSolidSurface = true;
+    root.add(linha);
     for (const dx of [-.75, 0, .75]) {
       const roupa = new THREE.Mesh(new THREE.BoxGeometry(.35, .52, .035), [PAREDES[0], PAREDES[2], PAREDES[3]][Math.round((dx + 1) * 2) % 3]);
-      roupa.position.set(x + Math.cos(ry) * dx, H_TOP + h * .48, z - Math.sin(ry) * dx); roupa.rotation.y = ry; roupa.userData.nonSolidSurface = true; root.add(roupa);
+      roupa.position.set(x + Math.cos(ry) * dx, y + h * .48, z - Math.sin(ry) * dx); roupa.rotation.y = ry; roupa.userData.nonSolidSurface = true; root.add(roupa);
     }
   };
   varal('varal_roupas_01', -5.8, -34.6, 1.5, .12);
   varal('varal_roupas_02', 8.1, -25.2, 1.45, -Math.PI / 2);
+  /* Varal do kit Mint `favela_r3` espalhado FORA do mirante: dois nos corredores de beco e
+     dois nas lajes baixas (chegada do beco oeste e plataforma de conexão leste). O dono,
+     20/08: "so o lajes tem cordao de roupas do model". Nenhum ganha colisor — roupa é
+     silhueta, nunca cover (mesma doutrina dos dois do topo). */
+  varal('varal_roupas', -12.6, 12.6, 1.55, -Math.PI / 2, 0);
+  varal('varal_roupas', 11.6, 12.9, 1.5, Math.PI / 2, 0);
+  varal('varal_roupas', -12, 6.6, 1.5, .05, RISE);
+  varal('varal_roupas', 6.2, 9.2, 1.45, -.08, RISE);
   // barraco de obra (cover)
   casa(12, -33, 5, 4, 3.05, 3, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: 0.024 });
   // cobertura lateral preserva a visada do spawn para o cartão-postal central
