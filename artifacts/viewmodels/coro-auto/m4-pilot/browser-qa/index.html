@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>M4 pilot browser QA</title>
+  <style>
+    html,body{margin:0;height:100%;background:#07111d;color:#dce9f7;font:14px system-ui;overflow:hidden}
+    canvas{display:block;width:100%;height:100%}
+    #panel{position:fixed;left:16px;top:16px;padding:12px;background:#07111ddd;border:1px solid #31506d;border-radius:8px;z-index:2}
+    button,input{margin:4px} #status{color:#8ed5ff}
+  </style>
+  <script type="importmap">{"imports":{"three":"/public/vendor/three.module.js"}}</script>
+</head>
+<body>
+  <div id="panel">
+    <div id="status">carregando GLB…</div>
+    <button data-clip="Idle">Idle</button><button data-clip="Shoot">Shoot</button><button data-clip="Reload">Reload</button><button id="pause">Pausar</button>
+    <label>tempo <input id="time" type="range" min="0" max="1" step="0.05" value="0"></label>
+    <span id="readout">0.000 s</span>
+  </div>
+  <script type="module">
+    import * as THREE from 'three';
+    import {GLTFLoader} from '/public/vendor/addons/loaders/GLTFLoader.js';
+    const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight); renderer.outputColorSpace=THREE.SRGBColorSpace;
+    renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.75;
+    document.body.appendChild(renderer.domElement);
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x07111d);
+    scene.add(new THREE.AmbientLight(0xb9dcff,2.4));
+    scene.add(new THREE.HemisphereLight(0xf0f7ff,0x59432c,3.8));
+    const key=new THREE.DirectionalLight(0xffd4a8,4.2); key.position.set(-2,-1,4); scene.add(key);
+    let camera=new THREE.PerspectiveCamera(58,innerWidth/innerHeight,.03,100);
+    let mixer,active,clips={}; const clock=new THREE.Clock(); let scrubbing=false,paused=false;
+    window.qa={loaded:false,current:null,time:0,duration:0,clips:[]};
+    function choose(name){
+      if(!clips[name])return; if(active)active.stop(); active=mixer.clipAction(clips[name]); active.reset().play();
+      window.qa.current=name; window.qa.duration=clips[name].duration; document.querySelector('#time').value='0';
+      document.querySelector('#status').textContent=`${name} — ${clips[name].duration.toFixed(3)} s`;
+    }
+    new GLTFLoader().load('/public/models/viewmodels/coro-auto/m4-pilot.glb',gltf=>{
+      scene.add(gltf.scene); mixer=new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach(c=>clips[c.name]=c);
+      if(gltf.cameras.length){camera=gltf.cameras[0]; camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix()}
+      const headlight=new THREE.PointLight(0xffffff,18,8,1.5); headlight.position.set(0,0,0); camera.add(headlight);
+      window.qa.loaded=true; window.qa.clips=Object.keys(clips); choose('Idle');
+    },undefined,error=>{document.querySelector('#status').textContent=String(error);window.qa.error=String(error)});
+    document.querySelectorAll('button').forEach(button=>button.onclick=()=>choose(button.dataset.clip));
+    document.querySelector('#pause').onclick=event=>{paused=!paused;event.currentTarget.textContent=paused?'Retomar':'Pausar'};
+    const slider=document.querySelector('#time');
+    slider.addEventListener('pointerdown',()=>scrubbing=true); slider.addEventListener('pointerup',()=>scrubbing=false);
+    slider.addEventListener('input',()=>{if(active){active.time=Number(slider.value)*active.getClip().duration;mixer.update(0)}});
+    function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);if(mixer&&!scrubbing&&!paused)mixer.update(dt);
+      if(active){window.qa.time=active.time;slider.value=String(active.time/active.getClip().duration);document.querySelector('#readout').textContent=`${active.time.toFixed(3)} s`}
+      renderer.render(scene,camera)} frame();
+    addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+  </script>
+</body>
+</html>

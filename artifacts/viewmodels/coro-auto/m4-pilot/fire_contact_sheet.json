@@ -9,12 +9,12 @@
     {
       "from": "shoot_000.png",
       "to": "shoot_005.png",
-      "mean_rgb_diff": 2.9547716049382715
+      "mean_rgb_diff": 4.522733950617284
     },
     {
       "from": "shoot_005.png",
       "to": "shoot_010.png",
-      "mean_rgb_diff": 2.95958024691358
+      "mean_rgb_diff": 4.515570987654321
     }
   ],
   "warnings": []

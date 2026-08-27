@@ -1,0 +1,41 @@
+{
+  "schema": "coro_auto_browser_qa_evidence.v1",
+  "url": "http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-pilot/browser-qa/index.html",
+  "asset": "public/models/viewmodels/coro-auto/m4-pilot.glb",
+  "clip": "Reload",
+  "duration_s": 3.333,
+  "states": [
+    {
+      "name": "release",
+      "normalized_time": 0.25,
+      "time_s": 0.833,
+      "frame": 20,
+      "screenshot": "reload-release.png"
+    },
+    {
+      "name": "carry",
+      "normalized_time": 0.4,
+      "time_s": 1.333,
+      "frame": 32,
+      "screenshot": "reload-carry.png"
+    },
+    {
+      "name": "insert",
+      "normalized_time": 0.65,
+      "time_s": 2.167,
+      "frame": 52,
+      "screenshot": "reload-insert.png"
+    },
+    {
+      "name": "final",
+      "normalized_time": 1.0,
+      "time_s": 3.333,
+      "frame": 80,
+      "screenshot": "reload-final.png"
+    }
+  ],
+  "lighting": "QA-only camera headlight plus ACES exposure; distributable GLB unchanged",
+  "contact_sheet": "reload-four-state-contact-sheet.png",
+  "contact_sheet_warnings": 0,
+  "decision": "evidence_generated_visual_approval_pending_family_propagation_blocked"
+}

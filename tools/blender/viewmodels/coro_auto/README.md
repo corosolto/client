@@ -15,6 +15,19 @@ The build writes the distributable GLB to
 with the `animation-quality-gate` skill's `animation_contact_sheet.py`, using
 the matching `idle_*`, `shoot_*`, or `reload_*` frame set.
 
+Validate the exported bone registration, surface contact, and recoil envelope:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender \
+  --background \
+  --python tools/blender/viewmodels/coro_auto/validate_m4_pilot.py
+```
+
+For browser QA, serve the worktree root and open
+`http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-pilot/browser-qa/index.html`.
+The four retained reload states and their exact times are recorded in
+`browser-qa/evidence.json`.
+
 The builder reads the accepted rifle rig from the advanced source tree, deletes
 every source weapon object, then imports and splits the project's own
 `public/models/weapons/m4.glb`. It exports only the rig, project anatomy, M4
