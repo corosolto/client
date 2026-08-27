@@ -644,7 +644,14 @@ export function buildVelhoOeste(scene, T) {
       for (let i = 0; i < 8; i++) { const spoke = new THREE.Mesh(boxGeo(.05, 1.2, .05), MAT.dark); spoke.position.set(wx, .75, wz); spoke.rotation.x = i * Math.PI / 4; g.add(spoke); }
     }
     const hx = Math.abs(Math.cos(ry)) * 2.3 + Math.abs(Math.sin(ry)) * 3.2, hz = Math.abs(Math.sin(ry)) * 2.3 + Math.abs(Math.cos(ry)) * 3.2;
-    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz }); occluders.push(g); return g;
+    colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz });
+    /* lança (tração) tem colisor PRÓPRIO: ela sai ~1,6 m da caixa acima e o MAP1
+       pega corpo sob a ponta (r3b: ponto andável a pen 0,925 m na carroça sul). */
+    const lx = x - 2.3 * Math.sin(ry), lz = z - 2.3 * Math.cos(ry);
+    const shx = Math.abs(Math.cos(ry)) * .14 + Math.abs(Math.sin(ry)) * 2.55;
+    const shz = Math.abs(Math.sin(ry)) * .14 + Math.abs(Math.cos(ry)) * 2.55;
+    colliders.push({ minX: lx - shx, maxX: lx + shx, minY: 0, maxY: 1.1, minZ: lz - shz, maxZ: lz + shz });
+    occluders.push(g); return g;
   }
   wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
 
