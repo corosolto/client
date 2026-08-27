@@ -70,9 +70,18 @@ export function createSoundscape(sfx, config) {
       if (!buf || !state.started) continue;
       const src = state.sfx.ctx.createBufferSource();
       src.buffer = buf; src.loop = true;
+      /* `rate` desafina o loop e `lowpass` abafa como som que atravessa parede. Os
+         dois são opcionais: loop sem eles soa exatamente como antes. */
+      if (loop.rate) src.playbackRate.value = loop.rate;
       const gain = state.sfx.ctx.createGain(); gain.gain.value = 0;
       const pan = state.sfx.ctx.createStereoPanner ? state.sfx.ctx.createStereoPanner() : null;
-      src.connect(gain);
+      let head = src;
+      if (loop.lowpass && state.sfx.ctx.createBiquadFilter) {
+        const lp = state.sfx.ctx.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = loop.lowpass; lp.Q.value = loop.q ?? 0.7;
+        src.connect(lp); head = lp;
+      }
+      head.connect(gain);
       if (pan) { gain.connect(pan); pan.connect(bus); } else gain.connect(bus);
       src.start();
       state.loops.push({ ...loop, srcNode: src, gain, pan });
