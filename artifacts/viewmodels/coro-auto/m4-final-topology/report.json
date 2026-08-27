@@ -1,0 +1,14 @@
+{
+  "all_mag": {
+    "faces": 225,
+    "vertices": 367
+  },
+  "center_mag": {
+    "faces": 232,
+    "vertices": 375
+  },
+  "all_tight": {
+    "faces": 688,
+    "vertices": 1064
+  }
+}

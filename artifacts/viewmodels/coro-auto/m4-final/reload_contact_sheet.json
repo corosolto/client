@@ -1,0 +1,27 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_010.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_016.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_028.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_038.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "reload_010.png",
+      "to": "reload_016.png",
+      "mean_rgb_diff": 5.465832638888888
+    },
+    {
+      "from": "reload_016.png",
+      "to": "reload_028.png",
+      "mean_rgb_diff": 5.587977430555555
+    },
+    {
+      "from": "reload_028.png",
+      "to": "reload_038.png",
+      "mean_rgb_diff": 3.9999899305555555
+    }
+  ],
+  "warnings": []
+}

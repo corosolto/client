@@ -1,0 +1,28 @@
+{
+  "schema": "coro_auto_m4_final_build.v1",
+  "hands_source": "/Users/ruben/csbrasil/client/public/models/viewmodels/coro/pistol-hires.glb",
+  "literal_hand_mesh": "coro_solto_hires_pistol_hands_literal",
+  "hand_vertices": 7438,
+  "hand_materials": [
+    "CoroSolto_FP_Gloves"
+  ],
+  "visible_hand_mesh_count": 1,
+  "weapon_source": "public/models/weapons/m4.glb",
+  "magazine_strategy": "exact original curved M4 faces; no approximation",
+  "magazine_vertices": 367,
+  "rendered": [
+    "artifacts/viewmodels/coro-auto/m4-final/renders/idle_000.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/idle_040.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/idle_080.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_000.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_003.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_006.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_010.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_016.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_028.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/reload_038.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/ads_000.png"
+  ],
+  "glb": "candidate removed after visual rejection; no distributable GLB integrated",
+  "visual_status": "rejected; source M4 magazine and dedicated rifle hand rig need remodeling"
+}

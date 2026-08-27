@@ -1,0 +1,21 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_000.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_003.png",
+    "artifacts/viewmodels/coro-auto/m4-final/renders/shoot_006.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "shoot_000.png",
+      "to": "shoot_003.png",
+      "mean_rgb_diff": 3.595429861111111
+    },
+    {
+      "from": "shoot_003.png",
+      "to": "shoot_006.png",
+      "mean_rgb_diff": 7.5e-05
+    }
+  ],
+  "warnings": []
+}
