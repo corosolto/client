@@ -216,6 +216,80 @@ const [tX, tZ] = conv(tC[0], tC[1]);
 const agua2 = aguas[1] || null;
 const [a2x, a2z] = agua2 ? conv((agua2.mins[0] + agua2.maxs[0]) / 2, (agua2.mins[1] + agua2.maxs[1]) / 2) : [null, null];
 
+/* ── teto do pátio (r3, "corredores fechados como a fy_poolday"): forro real por região.
+   Normal calibrada pelo lump PLANE de cada face (planenum u16@0, side u16@2) — winding
+   mentiu na primeira análise; o plano não. Chão de referência = maior piso ≤ 48u (as
+   entidades do pátio nascem a 16..88u, a piscina desce a -128); teto = menor face -z
+   com z ≥ chão+64u (exclui tampo de mesa/dossel) e z < 300u — acima disso é a casca do
+   céu do mapa (316u), que não é forro. */
+const planes = [];
+for (let i = 0; i < LUMP.planes.len / 12; i++) {
+  const o = LUMP.planes.off + i * 12;
+  planes.push([f32(o), f32(o + 4), f32(o + 8)]);
+}
+const inPoly = (pts, x, y) => {
+  let dentro = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    if ((pts[i][1] > y) !== (pts[j][1] > y) &&
+      x < ((pts[j][0] - pts[i][0]) * (y - pts[i][1])) / (pts[j][1] - pts[i][1]) + pts[i][0]) dentro = !dentro;
+  }
+  return dentro;
+};
+const horiz = [];
+for (let fi = 0; fi < LUMP.faces.len / 20; fi++) {
+  const o = LUMP.faces.off + fi * 20;
+  const pl = planes[u16(o)], side = u16(o + 2);
+  if (!pl || Math.abs(side ? -pl[2] : pl[2]) < 0.9) continue;
+  const pts = facePts(fi);
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const p of pts) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+  if (x1 < salaoU.minX || x0 > salaoU.maxX || y1 < salaoU.minY || y0 > salaoU.maxY) continue;
+  horiz.push({ piso: (side ? -pl[2] : pl[2]) > 0, z: Math.max(...pts.map((p) => p[2])), pts, x0, x1, y0, y1 });
+}
+const CEL_TETO = 32;
+const tetoPorRegiao = {};
+{
+  const regiao = (x, y) => {
+    if (x >= piscinaX[0] && x <= piscinaX[1] && y >= piscinaY[0] && y <= piscinaY[1]) return 'piscina';
+    if (x < piscinaX[0]) return 'corredor_oeste';
+    if (x > piscinaX[1]) return 'corredor_leste';
+    return y < piscinaY[0] ? 'deck_sul' : 'deck_norte';
+  };
+  const stats = {};
+  for (let x = salaoU.minX + 16; x < salaoU.maxX; x += CEL_TETO) {
+    for (let y = salaoU.minY + 16; y < salaoU.maxY; y += CEL_TETO) {
+      let chao = -1e9;
+      for (const f of horiz) {
+        if (!f.piso || f.z > 48 || x < f.x0 || x > f.x1 || y < f.y0 || y > f.y1 || !inPoly(f.pts, x, y)) continue;
+        chao = Math.max(chao, f.z);
+      }
+      if (chao === -1e9) continue;
+      let teto = 1e9;
+      for (const f of horiz) {
+        if (f.piso || f.z <= chao + 64 || f.z >= 300 || x < f.x0 || x > f.x1 || y < f.y0 || y > f.y1 || !inPoly(f.pts, x, y)) continue;
+        teto = Math.min(teto, f.z);
+      }
+      const r = stats[regiao(x, y)] || (stats[regiao(x, y)] = { cel: 0, cobertas: 0, zs: [] });
+      r.cel++;
+      if (teto < 1e9) { r.cobertas++; r.zs.push(teto); }
+    }
+  }
+  const moda = (a) => {
+    if (!a.length) return null;
+    const m = new Map(); let best = 0, bv = 0;
+    for (const v of a) { const c = (m.get(v) || 0) + 1; m.set(v, c); if (c > best) { best = c; bv = v; } }
+    return bv;
+  };
+  for (const [k, r] of Object.entries(stats)) {
+    tetoPorRegiao[k] = {
+      celulas: r.cel,
+      frac_coberta: r4(r.cobertas / r.cel),
+      teto_moda_u: moda(r.zs),
+      teto_moda_m: r2(moda(r.zs) * F),
+    };
+  }
+}
+
 const medidas = {
   _doc: [
     `Medido de ${path.basename(BSP_PATH)} por tools/eval/bsp-measure.mjs — NÃO editar à mão.`,
@@ -240,6 +314,11 @@ const medidas = {
   corredores: {
     oeste: r2((piscinaX[0] - salaoU.minX) * F),
     leste: r2((salaoU.maxX - piscinaX[1]) * F),
+    /* r3: o que prova o "corredor FECHADO" do original — forro contínuo sobre as
+       laterais e decks, piscina a céu aberto. É a procedência da cláusula PB7 do
+       piscina-bsp-check (cobertura ≥80% no NOSSO corredor; a altura de 3,0 m lá é
+       decisão nossa de leitura de clube, mais baixa que a do original). */
+    teto: tetoPorRegiao,
   },
   decks: {
     sul: r2((piscinaY[0] - salaoU.minY) * F),

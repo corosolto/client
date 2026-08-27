@@ -35,7 +35,39 @@
   },
   "corredores": {
     "oeste": 12.37,
-    "leste": 10.12
+    "leste": 10.12,
+    "teto": {
+      "corredor_oeste": {
+        "celulas": 366,
+        "frac_coberta": 1,
+        "teto_moda_u": 192,
+        "teto_moda_m": 6.75
+      },
+      "deck_sul": {
+        "celulas": 158,
+        "frac_coberta": 0.9873,
+        "teto_moda_u": 192,
+        "teto_moda_m": 6.75
+      },
+      "piscina": {
+        "celulas": 96,
+        "frac_coberta": 0.0208,
+        "teto_moda_u": 12,
+        "teto_moda_m": 0.42
+      },
+      "deck_norte": {
+        "celulas": 156,
+        "frac_coberta": 1,
+        "teto_moda_u": 192,
+        "teto_moda_m": 6.75
+      },
+      "corredor_leste": {
+        "celulas": 284,
+        "frac_coberta": 0.993,
+        "teto_moda_u": 192,
+        "teto_moda_m": 6.75
+      }
+    }
   },
   "decks": {
     "sul": 20.24,
