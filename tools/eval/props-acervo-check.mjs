@@ -12,8 +12,8 @@
    licença, nem se o arquivo foi refeito depois do registro.
 
    ── COMO ELA MEDE ──────────────────────────────────────────────────────────
-   Escopo por marcador, não por pasta: entradas do `mint-assets.json` com
-   `source.frente === 'v21-e-models'`. O legado sem registro fica fora (regularizar
+   Escopo por marcador, não por pasta: entradas do `mint-assets.json` cuja
+   `source.frente` está em FRENTES (v21-e-models, atacadao-secoes). O legado fica fora (regularizar
    98 GLBs é outra frente); o que a frente E entrega entra com o marcador e cai
    nas três cláusulas:
      PAC1 · files[0] é .glb, artifactType model/gltf-binary, e o arquivo existe;
@@ -38,8 +38,13 @@ if (mutante && !MUTANTES.has(mutante)) {
 }
 
 const registry = JSON.parse(readFileSync('mint-assets.json', 'utf8'));
+/* Escopo por marcador. Começou só com a frente E da v2.1; a frente das seções do
+   atacadão entrou com provedor DIFERENTE (Replicate, não Mint) e tem exatamente a
+   mesma necessidade de FONTE+SHA, então ganha marcador próprio dentro do mesmo
+   escopo em vez de mentir a frente para caber na régua. */
+const FRENTES = new Set(['v21-e-models', 'atacadao-secoes']);
 const entradas = Object.entries(registry.assets || {})
-  .filter(([, asset]) => asset.source?.frente === 'v21-e-models');
+  .filter(([, asset]) => FRENTES.has(asset.source?.frente));
 
 const fonte = existsSync(FONTE) ? readFileSync(FONTE, 'utf8') : '';
 const erros = [];

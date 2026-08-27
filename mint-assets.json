@@ -1958,6 +1958,90 @@
     ],
     "finalSha256": "d8332cc0d92c122abe01d9a840eac85e1e4fe7b4085dda3244f1e58d766e4c5b"
    }
+  },
+  "balcao-acougue": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/balcao_acougue.glb"
+   ],
+   "source": {
+    "kind": "replicate-gen",
+    "displayName": "Balcão de açougue (atacadão)",
+    "frente": "atacadao-secoes",
+    "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção AÇOUGUE (4 instâncias, targetH 1,15 m => 1,13 × 0,89 m cada). Proporção medida 0,908 × 0,925 × 0,715 e distribuição de geometria em linha com o acervo bom (31% de face horizontal, banda 10-90 de 76%). 12.000 tris."
+   },
+   "processing": {
+    "provider": "replicate",
+    "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+    "tools": [
+     "tools/gen-asset.mjs --provider replicate",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "54162fc6a9f5151f2264de2c4df63388508cee5b327b1efc3a91e8e45f3698e3"
+   }
+  },
+  "balcao-padaria": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/balcao_padaria.glb"
+   ],
+   "source": {
+    "kind": "replicate-gen",
+    "displayName": "Balcão/ilha de padaria (atacadão)",
+    "frente": "atacadao-secoes",
+    "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção PADARIA (3 instâncias, targetH 1,10 m). Proporção medida 0,284 × 0,151 × 0,285: planta QUADRADA e meia-altura, então entra como ILHA de exposição, que é o que a malha é de fato — não como balcão linear. 12.000 tris."
+   },
+   "processing": {
+    "provider": "replicate",
+    "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+    "tools": [
+     "tools/gen-asset.mjs --provider replicate",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "8f2a25fa9c02b2d5958c48353a2a645a0c7931657098d32dc01c518ee0fc4242"
+   }
+  },
+  "ilha-hortifruti": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/ilha_hortifruti.glb"
+   ],
+   "source": {
+    "kind": "replicate-gen",
+    "displayName": "Ilha de hortifrúti (atacadão)",
+    "frente": "atacadao-secoes",
+    "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, seção HORTIFRÚTI (4 instâncias, targetH 1,20 m). Bbox cúbico 0,989³, banda 10-90 de 96%: malha cheia e bem distribuída. 12.000 tris."
+   },
+   "processing": {
+    "provider": "replicate",
+    "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+    "tools": [
+     "tools/gen-asset.mjs --provider replicate",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "01d1c0736151491050b15dde70085133894d343850787e9d24ad42f0d51422ad"
+   }
+  },
+  "geladeira-bebidas": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/geladeira_bebidas.glb"
+   ],
+   "source": {
+    "kind": "replicate-gen",
+    "displayName": "Geladeira vertical de bebidas (atacadão)",
+    "frente": "atacadao-secoes",
+    "notes": "Lote \"seções do atacadão\" (27/08/2026). NÃO É ASSET MINT: gerado por tools/gen-asset.mjs --provider replicate, na conta Replicate do dono — texto -> imagem com black-forest-labs/flux-schnell, imagem -> malha com ndreca/hunyuan3d-2. Pós-processado pelo mesmo otimizador do acervo (dedup/prune + WebP 1024). GLB normalizado ~1 m, pivô central: escalar no call-site com placeProp({targetH}). Reconstrução de imagem única, então a PROPORÇÃO do bbox é o que manda, não o nome — medir com tools/inspect-glb.mjs antes de posicionar. Usado em map_atacadao.js, parede de BEBIDAS (4 instâncias, targetH 2,00 m => 1,56 × 0,67 m cada). Pedido explícito do dono (\"precisa de geladeiras de bebidas\"). Proporção medida 0,770 × 0,990 × 0,334: mais alta que larga e rasa, que é a proporção certa de expositor de porta de vidro — o `freezer` do acervo é ilha HORIZONTAL e não serve para isso. CUSTO: 22.158 tris, ~5× um prop do kit Mint; por isso 4 instâncias e não uma parede inteira (89 k tris no total)."
+   },
+   "processing": {
+    "provider": "replicate",
+    "model": "black-forest-labs/flux-schnell -> ndreca/hunyuan3d-2",
+    "tools": [
+     "tools/gen-asset.mjs --provider replicate",
+     "tools/optimize-props-v21.mjs"
+    ],
+    "finalSha256": "0521658c629dd048f0be681cbbf41505c016ec9f9d0a647192c9d21e018563bd"
+   }
   }
  }
 }

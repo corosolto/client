@@ -204,3 +204,56 @@ caem no `eval:props-acervo`, no `eval:asset-integrity` e no `eval:gltf-validator
 
 Contagem de triângulos medida com `@gltf-transform/core` (NodeIO com
 `ALL_EXTENSIONS` + decoder do meshopt), não estimada.
+
+## Seções do atacadão — lote Replicate (27/08/2026)
+
+**Este lote NÃO é Mint.** Foi gerado por `tools/gen-asset.mjs --provider replicate`
+na conta Replicate do dono: texto → imagem com `black-forest-labs/flux-schnell`,
+imagem → malha com `ndreca/hunyuan3d-2`, e depois o mesmo otimizador do acervo
+(dedup/prune + WebP 1024). No `mint-assets.json` isso aparece honestamente como
+`source.kind: "replicate-gen"` e `processing.provider: "replicate"` — o arquivo é de
+proveniência, declarar um pipeline que não foi usado seria o pior defeito possível
+nele. O marcador é `source.frente: "atacadao-secoes"`, e o `eval:props-acervo` passou
+a cobrir esse marcador junto com o `v21-e-models`.
+
+Reconstrução de imagem ÚNICA tem um custo que o nome do arquivo não conta: a malha
+sai como um bloco fechado. Medido com `tools/inspect-glb.mjs` mais uma sonda de
+ocupação, os sete saíram entre 78% e 100% de planta ocupada, contra 39–63% dos props
+bons do acervo (`moto_cg` 39%, `estante_pallets` 58%, `freezer` 63%). Para um balcão,
+que É um caixote, isso é aceitável. Para um objeto vazado, não é.
+
+### Entraram (4)
+
+- `balcao_acougue.glb` — 12.000 tris. Registro: `balcao-acougue`. Bbox 0,908 × 0,925
+  × 0,715; 31% de face horizontal e banda 10–90 de 76%, em linha com o acervo bom.
+  Seção AÇOUGUE do `map_atacadao.js` (4 instâncias, `targetH` 1,15).
+- `balcao_padaria.glb` — 12.000 tris. Registro: `balcao-padaria`. Bbox 0,284 × 0,151
+  × 0,285: planta quadrada e meia-altura, então entra como ILHA de exposição, que é o
+  que a malha é — não como balcão linear. Seção PADARIA (3 instâncias, `targetH` 1,10).
+- `ilha_hortifruti.glb` — 12.000 tris. Registro: `ilha-hortifruti`. Bbox cúbico
+  0,989³, banda 10–90 de 96%. Seção HORTIFRÚTI (4 instâncias, `targetH` 1,20).
+- `geladeira_bebidas.glb` — 22.158 tris. Registro: `geladeira-bebidas`. Bbox 0,770 ×
+  0,990 × 0,334 — mais alta que larga e rasa, a proporção certa de expositor de porta
+  de vidro. Atende ao "precisa de geladeiras de bebidas" do dono, que o `freezer`
+  (ilha HORIZONTAL) não atende. É o mais pesado do lote: 4 instâncias = 89 k tris.
+
+### Reprovados na medição e NÃO integrados (3)
+
+Ficaram de fora de propósito. O dono acabou de reclamar em outro mapa que "os models
+que colocaram estão horríveis sem definição nenhuma": molde ruim colocado é pior que
+seção ausente. Os arquivos foram removidos do worktree — a receita acima reproduz.
+
+- `balcao_peixaria.glb` — bbox 0,750 × **0,136** × 0,989. A altura é 14% da planta:
+  é uma panqueca, não um balcão. Normalizado para 1,05 m de altura viraria um móvel
+  de 5,8 × 7,6 m. 55% da área em face horizontal (o acervo bom fica em 31–47%).
+  A peixaria do mapa segue procedural, com azulejo branco e cartaz.
+- `cancela_estacionamento.glb` — planta ocupada **98%** e bbox quadrado em XZ
+  (0,989 × 0,989). Cancela é braço fino mais base: tem de ocupar pouca planta, como a
+  `moto_cg` (39%). 98% num bbox quadrado é relevo visto de cima, não cancela. As duas
+  cancelas do mapa seguem procedurais.
+- `lava_rapido.glb` — 80% dos vértices dentro de **1%** da altura do bbox
+  (banda 10–90 = 1%). É uma chapa plana com algumas pontas definindo o bbox. A baia
+  de lava-rápido do mapa segue procedural (três paredes, telha e piso molhado).
+
+Contagem de triângulos e proporções medidas com `@gltf-transform/core` (NodeIO com
+`ALL_EXTENSIONS`), não estimadas.
