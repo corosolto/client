@@ -4,11 +4,23 @@
    não podem ver nenhum slot de spawn; quem se protege atrás do blindado ainda deve
    estar exposto por dois ângulos laterais e pelo topo.
 
+   Varal (dono, 20/08: "so o lajes tem cordao de roupas do model"): roupa no morro não é
+   enfeite de mirante. Além dos dois do topo, o mapa tem de espalhar varal pelos becos e
+   lajes baixas — a cláusula cobra 5 no total e 3 FORA do mirante (base abaixo da cota do
+   mirante), que é onde o jogador passa a maior parte da rota.
+
    Mutações: --mutante=sem-bloqueio-flanco | caveirao-perfeito | caminhao-bau
+             --mutante=varal-sumiu (esconde um varal) | varal-so-no-topo (apaga os de baixo)
+   Mutante desconhecido sai com código 2.
 */
 import { THREE, initTextures, bootGame } from './harness.mjs';
 
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
+const CONHECIDOS = new Set(['sem-bloqueio-flanco', 'caveirao-perfeito', 'caminhao-bau', 'varal-sumiu', 'varal-so-no-topo']);
+if (mutante && !CONHECIDOS.has(mutante)) {
+  console.error(`mutante desconhecido: ${mutante} (conhecidos: ${[...CONHECIDOS].join(', ')})`);
+  process.exit(2);
+}
 const game = bootGame('escadao', { textures: initTextures(), ctf: true, seed: 8012 });
 game.scene.updateMatrixWorld(true);
 const world = game.world;
@@ -36,7 +48,18 @@ const angulosAbertos = observadores.filter((origem) => game._losClear(origem, pr
 let landmark = null;
 const varais = [];
 world.root.traverse((object) => { if (object.userData?.escadaoVaral) varais.push(object); });
-if (mutante === 'varal-sumiu' && varais[0]) varais[0].visible = false;
+/* A cota do mirante é medida no próprio mapa (groundHeightAt no meio do topo), não copiada
+   do fonte. Varal com base meio metro abaixo dela está em beco ou laje baixa. */
+const alturaTopo = world.groundHeightAt(0, -30);
+const noMirante = (varal) => varal.position.y >= alturaTopo - 0.5;
+/* `varal-sumiu` some com um varal DO MIRANTE: é ele que a cláusula original guarda. Depois
+   que o mapa passou de 2 para 6 varais, sumir com um qualquer deixava as duas cláusulas
+   verdes — mutante que não morde mais é régua que parou de medir. */
+if (mutante === 'varal-sumiu') { const alvo = varais.find(noMirante); if (alvo) alvo.visible = false; }
+if (mutante === 'varal-so-no-topo') { for (const varal of varais) if (!noMirante(varal)) varal.visible = false; }
+const visiveis = varais.filter((varal) => varal.visible !== false);
+const doTopo = visiveis.filter(noMirante);
+const espalhados = visiveis.filter((varal) => !noMirante(varal));
 world.root.traverse((object) => { if (object.userData?.landmark === 'caveirao') landmark = object; });
 if (mutante === 'caminhao-bau') landmark = null;
 const size = new THREE.Vector3();
@@ -47,8 +70,9 @@ const checks = [
   ['saídas dos dois becos sem LOS de spawn', visadasSpawn === 0, `visadas=${visadasSpawn}`],
   ['caveirão exposto por 2 laterais + topo', angulosAbertos === 3, `ângulos=${angulosAbertos}/3`],
   ['casco blindado monovolume', cascoOk, `bbox=${size.toArray().map((v) => v.toFixed(2)).join('x')}`],
-  ['dois varais visíveis materializam roupa no topo', varais.filter((varal) => varal.visible !== false).length >= 2,
-    `varais=${varais.filter((varal) => varal.visible !== false).length}/2`],
+  ['dois varais visíveis materializam roupa no topo', doTopo.length >= 2, `varais no mirante=${doTopo.length}/2`],
+  ['varal espalhado: 5 no mapa, 3 fora do mirante', visiveis.length >= 5 && espalhados.length >= 3,
+    `total=${visiveis.length}/5 · fora do mirante=${espalhados.length}/3`],
 ];
 let falhas = 0;
 for (const [nome, ok, detalhe] of checks) { if (!ok) falhas++; console.log(`${ok ? '✓' : '✗'} ${nome} (${detalhe})`); }
