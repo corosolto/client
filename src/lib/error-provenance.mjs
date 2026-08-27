@@ -27,6 +27,9 @@ const OPAQUE_RE = /uncaught exception: undefined|illegal character\s+U\+[0-9a-f]
    e já exibiu o painel amigável (BUG-44). É ambiente do jogador, não defeito de código —
    não abre issue (#277/#276/#274: 3 issues automáticas pela mesma causa num dia). */
 const AMBIENTE_RE = /^sem_webgl:/i;
+// Carteira cripto injeta script inline no documento e o filename vira a própria página:
+// same-origin não inocenta. Estreito, exige o nome do global (KNOWN-BUGS.md, BUG-75).
+const CARTEIRA_RE = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
 
 const normalizedOrigin = (value, base) => {
   if (!value) return null;
@@ -40,6 +43,9 @@ export function isExternalCrash({ message = '', source = '', stack = '' } = {}, 
   if (EXTENSION_RE.test(sourceText)) return true;
   // Vale antes do atalho same-origin: /_vercel/ é próprio domínio, mas terceiro.
   if (VENDOR_RE.test(sourceText) || VENDOR_RE.test(String(stack || ''))) return true;
+  // Mesmo motivo e mesmo lugar da VENDOR_RE: próprio domínio, código de terceiro.
+  // Vale em qualquer campo — o nome do global É a proveniência (BUG-75).
+  if (CARTEIRA_RE.test(evidence)) return true;
 
   const sourceOrigin = /^https?:\/\//i.test(sourceText)
     ? normalizedOrigin(sourceText, ownOrigin)
