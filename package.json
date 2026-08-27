@@ -142,6 +142,8 @@
     "eval:char-thumbnail": "node tools/eval/char-thumbnail-contract-check.mjs",
     "eval:character-game-evidence": "node tools/eval/character-game-evidence-contract-check.mjs",
     "eval:map-new": "node tools/eval/map-check.mjs novos",
+    "//eval:sitio": "resgate do Sítio da Treta (PR #4): registro+alias fy_sitio, lago com pato NADANDO, kit sitio_fauna_r3 inteiro, piso de armas do pickup-arma-check e prévia. Mutantes: sem-map|lago-morto|fauna-unica.",
+    "eval:sitio": "node tools/eval/sitio-check.mjs",
     "eval:asset-integrity": "node tools/eval/mint-asset-integrity-check.mjs",
     "eval:asset-gen": "node tools/eval/gen-asset-pbr-check.mjs",
     "eval:gltf-validator": "node tools/eval/gltf-validator-check.mjs",
