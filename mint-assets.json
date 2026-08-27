@@ -2147,6 +2147,72 @@
         ],
         "finalSha256": "0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07"
       }
+    },
+    "casa-pedra": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_pedra.glb"
+      ],
+      "source": {
+        "kind": "mint-chat",
+        "assetId": "ks7e1dx5vzctmbe1qesp5fmhad8d63eg",
+        "chatUrl": "https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy",
+        "displayName": "Granite Stone Cottage (casa de pedra)",
+        "notes": "Casario r3b do Sertao da Treta: casa de pedra da baixada do forro (lado sul do arraial, 2 instancias). Feedback do dono r3: \"o mapa do sertao seria legal ter mais variacoes de casas\". kit sertao_r3b do pack th7c4h3pwm471ntmps53y0d8a18d7089 (revisao r3b map2/velho-oeste). Prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (original)",
+        "tools": [
+          "mint.gg",
+          "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+        ],
+        "finalSha256": "b1ad7443257c9e608050dd40057937a5554d3e19c5b5776eb3f04142d913a578"
+      }
+    },
+    "casa-platibanda": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_platibanda.glb"
+      ],
+      "source": {
+        "kind": "mint-chat",
+        "assetId": "ks77rz2hj7kenbdpgm0z9tf72d8d6yek",
+        "chatUrl": "https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy",
+        "displayName": "Whitewashed Parapet Townhouse (casa de platibanda)",
+        "notes": "Casario r3b do Sertao da Treta: casa caiada de platibanda (parapeito alto de fachada) no lado urbano da rua da igrejinha (2 instancias flanqueando a praca da matriz). Feedback do dono r3: \"o mapa do sertao seria legal ter mais variacoes de casas\". kit sertao_r3b do pack th7c4h3pwm471ntmps53y0d8a18d7089 (revisao r3b map2/velho-oeste). Prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (original)",
+        "tools": [
+          "mint.gg",
+          "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+        ],
+        "finalSha256": "770b0dec15c3e8593c1ca338111e4e8a7b5c6cbf269dec603f90770b907be48f"
+      }
+    },
+    "casa-geminada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_geminada.glb"
+      ],
+      "source": {
+        "kind": "mint-chat",
+        "assetId": "ks72vcqrhyehnsm5mky7ppe5198d7pp6",
+        "chatUrl": "https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy",
+        "displayName": "Twin Row Houses (casa geminada)",
+        "notes": "Casario r3b do Sertao da Treta: par geminado de casas coladas fechando o eixo central sul do arraial (vista fechada a partir da praca, 1 instancia). Feedback do dono r3: \"o mapa do sertao seria legal ter mais variacoes de casas\". kit sertao_r3b do pack th7c4h3pwm471ntmps53y0d8a18d7089 (revisao r3b map2/velho-oeste). Prompt proprio (text-to-3d, sem referencia de terceiro). Otimizado no padrao gen-asset (dedup + textureCompress webp 1024 + prune)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (original)",
+        "tools": [
+          "mint.gg",
+          "padrao tools/gen-asset.mjs (dedup/textureCompress webp 1024/prune)"
+        ],
+        "finalSha256": "bc7a2b9149b4139e9f446b9c5ce44807a64b4a304f28da68808542752e3f4673"
+      }
     }
   }
 }
