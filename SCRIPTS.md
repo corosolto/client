@@ -138,6 +138,14 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:posto`
+
+Contrato do Posto da Treta depois dos moldes do kit posto_obras_r3: ilha de bomba central com o molde de verdade, loja com sala andável (gôndolas, duas aberturas, nós de waypoint, loot), cobertura metálica sem colisor sobre as três ilhas, linha de visão do pátio abaixo do teto medido, cover de peito e os dois loops de som (bomba grave, rádio abafado). Mutantes: bomba-caixa|loja-macica|sem-cobertura|patio-aberto|patio-limpo|radio-limpo (`--mutar=` é apelido de `--mutante=`).
+
+```bash
+npm run eval:posto
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.

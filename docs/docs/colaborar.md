@@ -258,7 +258,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 955 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 701 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 276 |
