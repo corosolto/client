@@ -132,7 +132,7 @@ npm run eval:velhooeste
 
 ## `eval:sertao`
 
-Frente map2/velho-oeste (r2, reconstrução Sertão da Treta): cada substantivo do feedback do dono virou cláusula — ST1 caatinga viva (`sertao-*`, ≥28 elementos ≥8 tipos), ST2 taipa de mão em ≥75% das paredes (pau a pique É taipa), ST3 tarde quente (fog R−B ≥ 60, sol ≤25°, névoa ≤0,0065), ST4 o arraial pedido (≥6 casas pau-a-pique do molde Mint, igrejinha na praça central, caminhão, moldes no fonte+disco+preload), ST5 calango registrado (≥2 vivos + GLB + preload). Mutantes: sem-sertao|volta-oeste|ceu-frio|sem-igrejinha|sem-calango.
+Frente map2/velho-oeste (r2, reconstrução Sertão da Treta; ST6 na r3b): cada substantivo do feedback do dono virou cláusula — ST1 caatinga viva (`sertao-*`, ≥28 elementos ≥8 tipos), ST2 taipa de mão em ≥75% das paredes (pau a pique É taipa; parede de casa_de_pedra é pedra por identidade, a folga do piso engole as 2), ST3 tarde quente (fog R−B ≥ 60, sol ≤25°, névoa ≤0,0065), ST4 o arraial pedido (≥6 casas pau-a-pique do molde Mint, igrejinha na praça central, caminhão, moldes no fonte+disco+preload), ST5 calango registrado (≥2 vivos + GLB + preload), ST6 variedade de casario do feedback r3 (≥3 famílias `sertao-casa-<fam>-*` instanciadas, nenhuma com >60% do total, molde real por família). Mutantes: sem-sertao|volta-oeste|ceu-frio|sem-igrejinha|sem-calango|monocultura.
 
 ```bash
 npm run eval:sertao

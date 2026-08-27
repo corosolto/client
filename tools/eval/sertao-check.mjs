@@ -34,14 +34,18 @@
            casamento fog==horizonte é cláusula do eval:look (não duplicada
            aqui — LIÇÃO 2: dois limiares pro mesmo conceito é instrumento
            discordando de si).
-     ST4  O ARRAIAL PEDIDO PELO DONO (r2): ≥6 casas de pau a pique instanciadas
-           (`sertao-casa-*`), igrejinha na praça central (grupo `sertao-igrejinha-*`
-           a ≤16 m do centro do mapa) e caminhão antigo presente — os três
-           MOLDES REAIS: o fonte do mapa instancia via placeProp e os GLB
-           existem em public/models/props/ e estão no preload (VELHO_OESTE_PROPS).
-     ST5  calango registrado: o mapa tem ≥2 calangos vivos na ambiência E o
-           molde calango.glb existe em public/models/ambient/ e está no
-           preload (VELHO_OESTE_AMBIENCE).
+      ST4  O ARRAIAL PEDIDO PELO DONO (r2): ≥6 casas de pau a pique instanciadas
+            (`sertao-casa-*`), igrejinha na praça central (grupo `sertao-igrejinha-*`
+            a ≤16 m do centro do mapa) e caminhão antigo presente — os três
+            MOLDES REAIS: o fonte do mapa instancia via placeProp e os GLB
+            existem em public/models/props/ e estão no preload (VELHO_OESTE_PROPS).
+      ST5  calango registrado: o mapa tem ≥2 calangos vivos na ambiência E o
+            molde calango.glb existe em public/models/ambient/ e está no
+            preload (VELHO_OESTE_AMBIENCE).
+      ST6  VARIEDADE DE CASARIO (r3): ≥3 famílias de casa distintas instanciadas
+            (`sertao-casa-<familia>-<id>`) e nenhuma família com >60% do total.
+            Cada família instanciada tem molde real (GLB em disco + placeProp no
+            fonte + preload), no mesmo idioma da ST4.
 
    PROCEDÊNCIA DOS PISOS (Lei 2 — teto sem procedência é opinião)
      ST1 ≥28 e ≥8 tipos · contagem fechada da build r2 (saída deste script):
@@ -55,22 +59,38 @@
      ST3 R−B ≥ 60 (medido 89 no fog, 166-77=89… valor fresco abaixo na saída);
      elevação ≤25° (medido 21,8°); névoa ≤0,0065 (medido 0,0056 — o LOOK mais
      seco da casa era o mansao com 0,0068: sertão pede AR SECO).
-     ST4 ≥6 casas: o dono pediu "6-10 casas" → piso é o mínimo do pedido;
-     igrejinha ≤16 m do centro: a igreja está a 15,5 m (0,-15,5) de frente pro
-     largo — praça da matriz é o gesto de cidade PE pequena que ele citou.
-     ST5 ≥2 calangos: 3 vivos na build; piso 2 sobrevive a um ajuste de rota.
+      ST4 ≥6 casas: o dono pediu "6-10 casas" → piso é o mínimo do pedido;
+      igrejinha ≤16 m do centro: a igreja está a 15,5 m (0,-15,5) de frente pro
+      largo — praça da matriz é o gesto de cidade PE pequena que ele citou.
+      ST5 ≥2 calangos: 3 vivos na build; piso 2 sobrevive a um ajuste de rota.
+      ST6 ≥3 famílias e ≤60% de dominância (r3, feedback verbatim do dono:
+      "o mapa do sertao seria legal ter mais variacoes de casas"): a r2 media
+      8/8 casas = 100% numa família só (pau a pique, saída deste próprio
+      script). O mix r3b instancia 4 famílias (10 casas: 5 pau a pique,
+      2 pedra, 2 platibanda, 1 geminada) — maior família 50%. Piso 3 absorve
+      perder UMA família sem voltar ao monocultivo; teto 60% reprova a r2
+      (100%) e qualquer 7/10 — o faroeste monocultivo voltar tem que acender.
+      ST2 re-derivado na r3b: paredes de casa_de_pedra são PEDRA por identidade
+      da família (construto sertanejo legítimo, não "madeira de faroeste"):
+      10/12 paredes em taipa = 83%, as 2 de pedra são exatamente a folga que
+      o piso de 75% já documentava ("deixa 2 paredes saírem sem perdoar o
+      arraial inteiro").
 
-   AS MUTAÇÕES QUE A DEIXAM VERMELHA (Lei 3 — se não morde, não existe)
-     --mutante=sem-sertao ...... remove a CAATINGA (mandacaru, macambira,
-                                  juazeiro, xique-xique)           -> ST1
-     --mutante=volta-oeste ..... devolve TODA parede à madeira       -> ST2
-     --mutante=ceu-frio ........ névoa do jogo vira azul frio        -> ST3
-     --mutante=sem-igrejinha ... remove o grupo `sertao-igrejinha-*` -> ST4
-     --mutante=sem-calango ..... zera os calangos da ambiência       -> ST5
-     Cada mutante tem que acender SÓ a cláusula dele. Na r2 o casario entrou no
-     elenco `sertao-*`: um mutante que removesse TUDO derrubaria ST2 e ST4
-     junto, e mutante que acende três cláusulas não prova nenhuma — por isso
-     sem-sertao remove só a vegetação, que é o miolo da contagem (57-36=21 < 28).
+    AS MUTAÇÕES QUE A DEIXAM VERMELHA (Lei 3 — se não morde, não existe)
+      --mutante=sem-sertao ...... remove a CAATINGA (mandacaru, macambira,
+                                   juazeiro, xique-xique)           -> ST1
+      --mutante=volta-oeste ..... devolve TODA parede à madeira       -> ST2
+      --mutante=ceu-frio ........ névoa do jogo vira azul frio        -> ST3
+      --mutante=sem-igrejinha ... remove o grupo `sertao-igrejinha-*` -> ST4
+      --mutante=sem-calango ..... zera os calangos da ambiência       -> ST5
+      --mutante=monocultura ..... renomeia TODO sertao-casa-* para a
+                                   família pau a pique               -> ST6
+      Cada mutante tem que acender SÓ a cláusula dele. Na r2 o casario entrou no
+      elenco `sertao-*`: um mutante que removesse TUDO derrubaria ST2 e ST4
+      junto, e mutante que acende três cláusulas não prova nenhuma — por isso
+      sem-sertao remove só a vegetação, que é o miolo da contagem (57-36=21 < 28),
+      e monocultura RENOMEIA em vez de remover: casario continua no mundo
+      (ST1/ST2/ST4 intactas), só a variedade morre.
 
    USO
      node tools/eval/sertao-check.mjs
@@ -82,7 +102,7 @@ import { LOOK } from '../../public/js/look.js';
 import { VELHO_OESTE_PROPS, VELHO_OESTE_AMBIENCE } from '../../public/js/map_velho_oeste.js';
 
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
-const MUTANTES = ['sem-sertao', 'volta-oeste', 'ceu-frio', 'sem-igrejinha', 'sem-calango'];
+const MUTANTES = ['sem-sertao', 'volta-oeste', 'ceu-frio', 'sem-igrejinha', 'sem-calango', 'monocultura'];
 if (MUT && !MUTANTES.includes(MUT)) {
   console.error(`mutante desconhecido: ${MUT}\nconhecidos: ${MUTANTES.join(' | ')}`);
   process.exit(2);
@@ -95,6 +115,7 @@ const TETO_ELEV = 25;                         // ST3 — graus: sol raspando, n�
 const TETO_NEBLINA = 0.0065;                  // ST3 — mais seco que o mansao (0,0068)
 const PISO_CASAS = 6, RAIO_PRACA = 16;        // ST4 — "6-10 casas" do dono; igreja a 15,5 m
 const PISO_CALANGOS = 2;                      // ST5 — 3 vivos na build
+const PISO_FAMILIAS = 3, TETO_DOMINANCIA = 0.60;  // ST6 — ver procedência no cabeçalho
 
 const scene = new THREE.Scene();
 const world = MAPS.velho_oeste.build(scene, await initTextures());
@@ -189,6 +210,34 @@ if (MUT === 'sem-calango') {
 }
 const calangoRegistrado = calangos.length >= PISO_CALANGOS && calangoGlb && calangoNoPreload;
 
+/* ── ST6: variedade de casario — família no 3º segmento: sertao-casa-<fam>-<id> ── */
+const FAMILIAS_CASA = {
+  paupique: 'casa_pau_a_pique', pedra: 'casa_pedra',
+  platibanda: 'casa_platibanda', geminada: 'casa_geminada',
+};
+const porFamilia = {};
+world.root.traverse((o) => {
+  const m = /^sertao-casa-([a-z]+)-/.exec(o.name || '');
+  if (m) porFamilia[m[1]] = (porFamilia[m[1]] || 0) + 1;
+});
+if (MUT === 'monocultura') {
+  /* RENOMEIA em vez de remover (ver cabeçalho): o casario inteiro vira pau a
+     pique — contagem ST1/ST2/ST4 não se mexe, só a variedade morre. */
+  const casasFam = [];
+  world.root.traverse((o) => { if (/^sertao-casa-/.test(o.name || '')) casasFam.push(o); });
+  if (!casasFam.length) { console.error('MUTANTE NÃO APLICOU: nenhuma sertao-casa-* no mundo'); process.exit(1); }
+  for (const o of casasFam) o.name = o.name.replace(/^sertao-casa-(?:[a-z]+-)?/, 'sertao-casa-paupique-');
+  for (const k of Object.keys(porFamilia)) delete porFamilia[k];
+  porFamilia.paupique = casasFam.length;
+}
+const totalCasasFam = Object.values(porFamilia).reduce((a, b) => a + b, 0);
+const familiasDistintas = Object.keys(porFamilia).length;
+const piorDominancia = Math.max(0, ...Object.values(porFamilia));
+const moldesFamiliares = Object.keys(porFamilia).every((f) => FAMILIAS_CASA[f]
+  && existsSync(new URL(`../../public/models/props/${FAMILIAS_CASA[f]}.glb`, import.meta.url))
+  && mapSource.includes(`'${FAMILIAS_CASA[f]}'`)
+  && VELHO_OESTE_PROPS.includes(FAMILIAS_CASA[f]));
+
 /* ── veredito ── */
 const clausulas = [
   { id: 'ST1 elementos-sertão', ok: elementos.length >= PISO_ELEMENTOS && tipos.size >= PISO_TIPOS,
@@ -201,6 +250,10 @@ const clausulas = [
     valor: `${casas.length} casas (piso ${PISO_CASAS}) · igrejinha ${igrejaNaPraca ? `na praça (≤${RAIO_PRACA} m)` : igrejinhas.length ? 'FORA da praça' : 'AUSENTE'} · caminhão ${caminhoes.length ? 'presente' : 'AUSENTE'} · moldes reais ${moldesReais ? 'no fonte+disco+preload' : 'AUSENTES'}` },
   { id: 'ST5 calango registrado', ok: calangoRegistrado,
     valor: `${calangos.length} vivos (piso ${PISO_CALANGOS}) · calango.glb ${calangoGlb ? 'existe' : 'AUSENTE'} · preload ${calangoNoPreload ? 'sim' : 'NÃO'}` },
+  { id: 'ST6 variedade de casario',
+    ok: familiasDistintas >= PISO_FAMILIAS && totalCasasFam > 0
+      && piorDominancia <= TETO_DOMINANCIA * totalCasasFam && moldesFamiliares,
+    valor: `${totalCasasFam} casas em ${familiasDistintas} famílias (${Object.entries(porFamilia).map(([f, n]) => `${f} ${n}`).join(', ') || 'nenhuma'}) · maior família ${totalCasasFam ? Math.round(100 * piorDominancia / totalCasasFam) : 0}% (teto 60%) · moldes ${moldesFamiliares ? 'fonte+disco+preload' : 'AUSENTES'}` },
 ];
 
 console.log(`SERTÃO — régua da frente  ${MUT ? `[mutante: ${MUT}]` : ''}`);
@@ -208,7 +261,7 @@ for (const c of clausulas) console.log(`  ${c.ok ? 'PASSA' : 'FALHA'}  ${c.id.pa
 const vermelhas = clausulas.filter((c) => !c.ok);
 
 if (MUT) {
-  const esperado = { 'sem-sertao': 'ST1', 'volta-oeste': 'ST2', 'ceu-frio': 'ST3', 'sem-igrejinha': 'ST4', 'sem-calango': 'ST5' }[MUT];
+  const esperado = { 'sem-sertao': 'ST1', 'volta-oeste': 'ST2', 'ceu-frio': 'ST3', 'sem-igrejinha': 'ST4', 'sem-calango': 'ST5', 'monocultura': 'ST6' }[MUT];
   if (vermelhas.length !== 1 || !vermelhas[0].id.startsWith(esperado)) {
     console.error(`\nMUTANTE ${MUT} ${vermelhas.length ? `acendeu ${vermelhas.map((v) => v.id.split(' ')[0]).join(', ')} em vez de ${esperado}` : 'SOBREVIVEU'} — a régua não mede o que diz medir.`);
     process.exit(1);
