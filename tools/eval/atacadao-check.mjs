@@ -32,22 +32,46 @@
      ATA5 · LOS média <= TETO_LOS m: 12 direções na altura do olho (1,62 m) em
             todo nó andável de dentro do galpão, contra a malha VISÍVEL de
             `world.root` (raycast, então batch/merge e collide:false não enganam).
+     ATA6 · seções nomeadas: >= 4 placas `atacadaoSecao` com nome do vocabulário de
+            supermercado (AÇOUGUE, PADARIA, HORTIFRÚTI, PEIXARIA, BEBIDAS...), nomes
+            DISTINTOS, penduradas acima da cabeça (y >= 2,4) e dentro do galpão. A
+            reclamação era "sessao de legumes e frutas... padaria, peixaria, sessao
+            de carnes": a régua conta seção RECONHECÍVEL, não balcão anônimo.
+     ATA7 · frente de caixa: >= 4 checkouts `atacadaoCaixa` com colisor que empurra o
+            corpo E com nó andável a <= 3,2 m ligado ao MESMO componente do grafo em
+            que os spawns nascem. Caixa que o bot não alcança é cenário.
+     ATA8 · NADA DE CINZA CHAPADO em superfície grande: toda malha marcada
+            `atacadaoSuperficie` (piso, parede, fachada, doca, asfalto) precisa de
+            material COM textura, e piso/parede/fachada/doca não podem compartilhar a
+            MESMA textura. Era esse o defeito: os quatro caíam em T.concrete e a loja
+            inteira lia cinza ("a faixada da loja ta cinza, o chao ta cinza").
 
    ── AS MUTAÇÕES QUE PROVAM QUE ELA MORDE ───────────────────────────────────
      --mutar=sem-racks .. tira os racks da cena e dos colisores → ATA1 e ATA5 vermelhas
      --mutar=aberto ..... tira racks E ilhas (o átrio de loja de departamento que o
                           dono recusou) → ATA1, ATA2 e ATA5 vermelhas
-   As duas falham com código 2 se não acharem o que remover: régua por vacuidade é
-   proibida nesta base (docs/LICOES.md).
+     --mutar=sem-secoes . tira as placas de seção → ATA6 vermelha
+     --mutar=sem-caixas . tira a frente de caixa da cena e dos colisores → ATA7 vermelha
+     --mutar=cinza ...... devolve as superfícies grandes ao cinza: tira o `.map` dos
+                          materiais marcados, que é exatamente o estado anterior desta
+                          frente → ATA8 vermelha
+   As cinco falham com código 2 se não acharem o que remover, e mutante desconhecido
+   também sai com 2: régua por vacuidade é proibida nesta base (docs/LICOES.md).
+
+   MORDIDA MEDIDA (27/08/2026, todas com código 1):
+     sem-racks  -> ATA1 0/4 fileiras, 0/3 corredores; ATA5 LOS 9,75 -> 12,93 m
+     aberto     -> o de cima + ATA2 0/5 ilhas
+     sem-secoes -> ATA6 0/4 seções
+     sem-caixas -> ATA7 0/4 caixas alcançáveis
+     cinza      -> ATA8 11 superfícies sem textura + os 4 tipos obrigatórios ausentes
 
    USO
      node tools/eval/atacadao-check.mjs
-     node tools/eval/atacadao-check.mjs --mutar=sem-racks
-     node tools/eval/atacadao-check.mjs --mutar=aberto
+     node tools/eval/atacadao-check.mjs --mutar=sem-racks|aberto|sem-secoes|sem-caixas|cinza
    ============================================================================ */
 import { THREE, bootGame, initTextures, Game } from './harness.mjs';
 
-const MUTANTES = new Set(['sem-racks', 'aberto']);
+const MUTANTES = new Set(['sem-racks', 'aberto', 'sem-secoes', 'sem-caixas', 'cinza']);
 const MUTAR = (process.argv.find((a) => a.startsWith('--mutar=')) || '').split('=')[1] || '';
 if (MUTAR && !MUTANTES.has(MUTAR)) { console.error(`mutante desconhecido: ${MUTAR}`); process.exit(2); }
 
@@ -65,11 +89,15 @@ game.scene.updateMatrixWorld(true);
 W.root.updateMatrixWorld(true);
 
 const racks = [], ilhas = [], freezers = [], luminarias = [], luzesGalpao = [], luzesFrias = [];
+const secoes = [], caixas = [], superficies = [];
 W.root.traverse((o) => {
   if (o.userData?.atacadaoRack) racks.push(o);
   if (o.userData?.atacadaoCover) ilhas.push(o);
   if (o.userData?.atacadaoFreezer !== undefined) freezers.push(o);
   if (o.userData?.atacadaoLuminaire) luminarias.push(o);
+  if (o.userData?.atacadaoSecao) secoes.push(o);
+  if (o.userData?.atacadaoCaixa) caixas.push(o);
+  if (o.userData?.atacadaoSuperficie) superficies.push(o);
 });
 game.scene.traverse((o) => {
   if (o.userData?.mapLight === 'atacadao-galpao') luzesGalpao.push(o);
@@ -91,6 +119,15 @@ function sumir(lista) {
 }
 if (MUTAR === 'sem-racks') sumir(racks);
 if (MUTAR === 'aberto') { sumir(racks); sumir(ilhas); }
+if (MUTAR === 'sem-secoes') sumir(secoes);
+if (MUTAR === 'sem-caixas') sumir(caixas);
+if (MUTAR === 'cinza') {
+  /* O estado ANTERIOR desta frente: superfície grande sem textura própria. Tirar o
+     `.map` devolve o material ao cinza chapado que o dono reclamou. */
+  for (const o of superficies) for (const m of [].concat(o.material || [])) {
+    if (m && m.map) { m.map = null; m.needsUpdate = true; removidos.push(o); }
+  }
+}
 if (MUTAR && !removidos.length) {
   console.error(`MUTANTE NÃO APLICOU: --mutar=${MUTAR} não achou nada para remover.`);
   process.exit(2);
@@ -173,6 +210,7 @@ if (acesas < 8) falhas.push(`ATA4 — ${acesas}/8 luzes locais acesas no galpão
 const solidos = [];
 W.root.traverse((o) => { if (o.isMesh && o.visible) solidos.push(o); });
 const DENTRO = W.lojaZ || { z0: -6, z1: 33 };
+const DENTRO_Z0 = DENTRO.z0, DENTRO_Z1 = DENTRO.z1;
 const nosLoja = nos.filter((n) => n.z > DENTRO.z0 && n.z < DENTRO.z1);
 const ray = new THREE.Raycaster(); ray.camera = game.camera; ray.far = LONGE;
 let soma = 0, tiros = 0;
@@ -186,14 +224,77 @@ const losMedia = tiros ? soma / tiros : LONGE;
 if (!nosLoja.length) falhas.push('ATA5 — nenhum nó andável dentro do galpão: medida vazia não vale');
 if (losMedia > TETO_LOS) falhas.push(`ATA5 — LOS média ${losMedia.toFixed(2)} m > teto ${TETO_LOS.toFixed(2)} m: o galpão ainda é átrio aberto`);
 
+/* ---------------- ATA6 · seções nomeadas e reconhecíveis -------------------- */
+const VOCAB = ['AÇOUGUE', 'PADARIA', 'HORTIFRÚTI', 'PEIXARIA', 'BEBIDAS', 'FRIOS', 'MERCEARIA', 'CONGELADOS'];
+const nomesSecao = new Set();
+for (const o of secoes) {
+  const nome = String(o.userData.atacadaoSecao || '').toUpperCase();
+  if (!VOCAB.includes(nome)) continue;
+  const b = bbox(o);
+  const c = b.getCenter(new THREE.Vector3());
+  if (b.min.y < 2.4) continue;                                   // placa tem de ficar acima da cabeça
+  if (!(c.z > DENTRO_Z0 && c.z < DENTRO_Z1)) continue;           // e dentro do galpão
+  nomesSecao.add(nome);
+}
+if (nomesSecao.size < 4) falhas.push(`ATA6 — ${nomesSecao.size}/4 seções nomeadas e reconhecíveis (${secoes.length} placas marcadas): ${[...nomesSecao].join(', ') || '—'}`);
+
+/* ---------------- ATA7 · frente de caixa alcançável ------------------------- */
+/* Componente conexo em que os spawns nascem: caixa fora dele é decoração. */
+const adj = W.waypoints?.adj || [];
+const vistos = new Set();
+{
+  const fila = [];
+  for (const lado of Object.values(W.spawns || {})) for (const sp of lado) {
+    const i = W.nearestWaypoint(sp.x, sp.z);
+    if (!vistos.has(i)) { vistos.add(i); fila.push(i); }
+  }
+  while (fila.length) { const n = fila.shift(); for (const m of (adj[n] || [])) if (!vistos.has(m)) { vistos.add(m); fila.push(m); } }
+}
+const R_CAIXA = 3.2;
+const caixasOk = caixas.filter((o) => {
+  const c = o.userData.collider;
+  if (!c || !W.colliders.includes(c) || !empurra(c)) return false;
+  const cx = (c.minX + c.maxX) / 2, cz = (c.minZ + c.maxZ) / 2;
+  return nos.some((n, i) => vistos.has(i) && Math.hypot(n.x - cx, n.z - cz) <= R_CAIXA);
+});
+if (caixasOk.length < 4) falhas.push(`ATA7 — ${caixasOk.length}/4 caixas com colisor que empurra e nó andável conexo a <= ${R_CAIXA} m (${caixas.length} marcadas)`);
+
+/* ---------------- ATA8 · superfície grande sem cinza chapado ---------------- */
+const PRECISA = ['piso', 'parede', 'fachada', 'doca'];
+const porTipo = new Map();
+const semMapa = [];
+for (const o of superficies) {
+  const tipo = o.userData.atacadaoSuperficie;
+  for (const m of [].concat(o.material || [])) {
+    if (!m) continue;
+    if (!m.map) { semMapa.push(`${tipo}`); continue; }
+    if (!porTipo.has(tipo)) porTipo.set(tipo, new Set());
+    porTipo.get(tipo).add(m.map.uuid);
+  }
+}
+const faltando = PRECISA.filter((t) => !porTipo.has(t));
+/* Textura COMPARTILHADA entre dois tipos é o defeito original (todos em T.concrete). */
+const donos = new Map();
+for (const t of PRECISA) for (const uuid of (porTipo.get(t) || [])) {
+  if (!donos.has(uuid)) donos.set(uuid, new Set());
+  donos.get(uuid).add(t);
+}
+const compartilhadas = [...donos.values()].filter((set) => set.size > 1).map((set) => [...set].join('+'));
+if (semMapa.length) falhas.push(`ATA8 — ${semMapa.length} superfície(s) grande(s) sem textura (cinza chapado): ${[...new Set(semMapa)].join(', ')}`);
+if (faltando.length) falhas.push(`ATA8 — superfície grande sem malha marcada: ${faltando.join(', ')}`);
+if (compartilhadas.length) falhas.push(`ATA8 — superfícies grandes dividindo a MESMA textura: ${compartilhadas.join(' / ')}`);
+
 /* ---------------- saída ---------------------------------------------------- */
 console.log(`ATA1 ${filasOk.length} fileiras de 8–14 racks · ${corredores.length} corredores (vão ${corredores.map((c) => c.vao.toFixed(1)).join('/') || '—'} m) · ${racks.length} racks`);
 console.log(`ATA2 ${coversOk.length} ilhas de meio-altura com colisor que empurra`);
 console.log(`ATA3 ${naParede} freezers na lateral fria · ${friasAcesas} luzes frias`);
 console.log(`ATA4 ${penduradas.length} luminárias penduradas · ${acesas} luzes de galpão acesas`);
 console.log(`ATA5 LOS média ${losMedia.toFixed(2)} m / teto ${TETO_LOS.toFixed(2)} m em ${nosLoja.length} nós × ${RAIOS} raios`);
+console.log(`ATA6 ${nomesSecao.size} seções nomeadas: ${[...nomesSecao].join(', ') || '—'}`);
+console.log(`ATA7 ${caixasOk.length} caixas alcançáveis de ${caixas.length} marcadas`);
+console.log(`ATA8 ${superficies.length} superfícies grandes texturadas · tipos ${[...porTipo.keys()].join(', ') || '—'} · 0 textura compartilhada`);
 if (falhas.length) {
   falhas.forEach((f) => console.error(`✗ ${f}`));
   process.exit(1);
 }
-console.log('ATACADAO ✓ armazém de corredores de rack: fileiras, cover de peito, parede fria, luz de galpão e LOS curta');
+console.log('ATACADAO ✓ armazém de corredores de rack + chão de loja: fileiras, cover, parede fria, luz de galpão, LOS curta, seções nomeadas, frente de caixa alcançável e superfície grande sem cinza');
