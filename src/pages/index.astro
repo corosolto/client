@@ -193,6 +193,10 @@ window.__GEO_LANG__ = (function () {
     var vendor = /\/_vercel\//i;
     if (extensao.test(sourceText)) return false;
     if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return false;
+    // MESMA redação da `CARTEIRA_RE` de `src/lib/error-provenance.mjs` - se os dois lados
+    // discordarem, a carteira volta a comer cota aqui ou a abrir issue lá (BUG-75).
+    var carteira = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
+    if (carteira.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
