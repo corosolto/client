@@ -16,6 +16,7 @@ import { buildAtacadao, ATACADAO_PROPS } from './map_atacadao.js';
 import { buildParque } from './map_parque.js';
 import { buildVelhoOeste } from './map_velho_oeste.js';
 import { buildPenitenciaria } from './map_penitenciaria.js';
+import { buildSitio, SITIO_PROPS, SITIO_AMBIENCE } from './map_sitio.js';
 
 /* IDS SEM NOME DE COUNTER-STRIKE (rodada de 11/08).
    ═══════════════════════════════════════════════════════════════════════════════════
@@ -92,6 +93,11 @@ export const MAPS = {
   parque_treta: { name: 'Parque da Treta', build: buildParque, ctfMode: true },
   velho_oeste: { name: 'Velho Oeste da Treta', build: buildVelhoOeste, ctfMode: true },
   penitenciaria: { name: 'Penitenciária da Treta', build: buildPenitenciaria, ctfMode: true },
+  /* Resgate do mapa do PR #4 (fechado): Sítio da Treta em Atibaia — casa com
+     varanda, lago com pedalinhos e patos NADANDO (kit Mint sitio_fauna_r3),
+     horta com galinha-d'angola, pomar com cavalinho, muro de pedra e porteira.
+     Id antigo do PR #4 resolve no ALIAS_MAPA embaixo. */
+  sitio: { name: 'Sítio da Treta (Atibaia)', build: buildSitio, props: SITIO_PROPS, ambience: SITIO_AMBIENCE, ctfMode: true },
 };
 export const MAP_IDS = Object.keys(MAPS);
 export const DEFAULT_MAP = 'praca_poderes';
@@ -123,6 +129,7 @@ export const ALIAS_MAPA = {
   fy_havan: 'loja_h',
   fy_ferrovelho: 'ferro_velho',
   fy_quebrada: 'quebrada',
+  fy_sitio: 'sitio',   // id do PR #4: link e ranking do banco continuam chegando aqui
   escadao: 'escadao',
   campomorro: 'campomorro',
   lajes: 'lajes',

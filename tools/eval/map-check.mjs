@@ -151,7 +151,7 @@ const SEP_ROTA = 6.0;           // m de afastamento pra duas rotas contarem como
 const QUEDA_ANDAR = 2.0;
 
 const textures = initTextures();
-const MAPAS_NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao'];
+const MAPAS_NOVOS = ['escadao', 'campomorro', 'lajes', 'corrego', 'mansao', 'sitio'];
 const MAP_IDS = ONLY === 'all' ? Object.keys(MAPS) : ONLY === 'novos' ? MAPAS_NOVOS : [ONLY];
 const down = new THREE.Vector3(0, -1, 0);
 

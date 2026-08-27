@@ -28,4 +28,13 @@ export const LOOK = {
     neblina: { d: 0.0082, solDir: [28, 38, 18], forca: 0.84 },
     grade: { exposicao: 1.60, piso: 0.0048, expAces: 1.70 },
   },
+  sitio: {   // Atibaia: manhã clara de serra verde — horizonte/zenite medidos do sky_sitio.webp
+    sky: '/img/textures/sky_sitio.webp',
+    horizonte: 0xa0b8d2,
+    zenite: 0x045a94,
+    sol: { cor: 0xfff0cc, i: 1.75, pos: [28, 40, -12] },
+    hemi: { ceu: 0xdfeaf6, chao: 0x5f7a4a, i: 1.1 },
+    neblina: { d: 0.0075, solDir: [28, 40, -12], forca: 0.8 },
+    grade: { exposicao: 1.55, piso: 0.0046, expAces: 1.66 },
+  },
 };

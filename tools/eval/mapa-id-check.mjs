@@ -61,8 +61,9 @@ const PREVIEWS = 'public/img/map-previews';
 
 /* Os ids antigos, escritos aqui de propósito: é a lista contra a qual o M2 cobra a
    cobertura do ALIAS_MAPA. Se um mapa novo for renomeado no futuro, ele entra aqui E no
-   alias — e a régua reprova enquanto só um dos dois tiver sido feito. */
-const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada'];
+   alias — e a régua reprova enquanto só um dos dois tiver sido feito.
+   fy_sitio entrou no resgate do PR #4 (27/08): o id antigo viajava em link/banco. */
+const IDS_ANTIGOS = ['awp_map', 'fy_pool_day', 'fy_havan', 'fy_ferrovelho', 'fy_quebrada', 'fy_sitio'];
 
 /* A FORMA de um id do Counter-Strike, e não uma lista de nomes. Lista de nome fechada
    envelhece — foi exatamente assim que o `[PBUCF]` dentro de um regex cegou o C3 do
@@ -101,11 +102,14 @@ const SEM_VARREDURA = [
      próximo build. Mesmo motivo de `dist/` já estar nesta lista. */
   join('public', 'docs'),
   join('public', 'js', 'maps.js'),
-  /* A PRÓPRIA RÉGUA. Ela precisa citar os ids antigos — em `IDS_ANTIGOS`, que é a lista
+  /* A PRÓPRIA RÉGULA. Ela precisa citar os ids antigos — em `IDS_ANTIGOS`, que é a lista
      contra a qual o M2 cobra cobertura, e no cabeçalho que explica o rename. Sem esta
      linha ela se acusa: nove ocorrências, todas dela mesma. Mesmo motivo do `maps.js`,
      que também precisa nomear os antigos para o alias existir. */
   join('tools', 'eval', 'mapa-id-check.mjs'),
+  /* Régua-irmã do resgate do Sítio (sitio-check.mjs): cita fy_sitio como DADO — é o
+     id que ela injeta para provar que o alias resolve. Mesma isenção da própria régua. */
+  join('tools', 'eval', 'sitio-check.mjs'),
   /* Régua-irmã com o mesmo besoin: `original-map-check.mjs` declara a lista dos mapas
      ORIGINAIS (`awp_map`, `fy_pool_day`, …) como DADO dela — é contra essa lista que ela
      confere o que sobrou de cada original. Sem isenção ela acusa a própria tabela-fonte. */

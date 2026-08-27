@@ -395,3 +395,16 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   translucent smoke texture, no text, no other objects". Sem canal alfa — a
   luminância vira alfa no shader (uLumAlpha do gpuparticles.js). SHA-256
   `249621d02702caee19f5cf85c14e1e77c15b92dea56148e2361f7389f311057a`.
+- `textures/sky_sitio.webp` (resgate do Sítio, 27/08): panorama 2:1 da manhã
+  clara de Atibaia com serra verde, gerado via OpenRouter (`tools/gen-image.mjs`,
+  google/gemini-3-pro-image; 21:9 nativo do modelo, recortado 2:1 pelo pipeline).
+  Prompt: "Seamless equirectangular 360 panorama sky, clear bright morning in
+  the countryside of Atibaia, Brazil: deep blue zenith fading to pale warm
+  blue-white at the horizon, a distant green mountain ridge (serra) silhouette
+  wrapping the lower band, a few soft cumulus clouds near the horizon line,
+  warm morning sunlight from one side, photorealistic skybox texture, no sun
+  glare hotspot, no text". Horizonte `a0b8d2` / zenite `045a94` medidos por
+  `tools/eval/look-horizonte.py` (assado em `tools/eval/look-horizonte.json`).
+  SHA-256 `c87006bcf67073b899906bc48ac8f0086e6589d0440696acb369abb13f0dc443`.
+  PROVISÓRIO: sem browser nesta frente, a imagem não foi inspecionada —
+  revisar por screenshot e regenerar se a costura/serra ler torta.
