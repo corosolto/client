@@ -20,10 +20,12 @@ export const ATACADAO_PROPS = [
 const HALF_X = 26, WALL_H = 11, PARK_H = 2.4;   // WALL_H 8 -> 11: pé-direito de galpão
 /* Tudo em múltiplo de 1,6 m: prop a menos de 0,95 m de uma linha de nó apaga o nó.
    Fileiras nos x ímpares do lattice, corredores nos pares — docs/mapa-atacadao.md. */
-const FILA_X = [-17.6, -11.2, -4.8, 4.8, 11.2, 17.6];   // 6 fileiras de rack
-const RACK_Z = [1.6, 4.8, 8.0, 11.2, 14.4, 17.6, 20.8, 24.0, 27.2];   // 9 slots por fileira
-const VAO_PAR = 11.2, VAO_IMPAR = 20.8;   // slot vazado: entrada ALTERNADA por fileira
-const RACK_HX = 1.15, RACK_HZ = 1.6, RACK_H = 3.0;   // meio-bloco: rack GLB + pallets atrás
+/* 6 fileiras x 9 slots, um vazado por fileira (entrada alternada); meio-bloco de
+   1,15 m = rack GLB + carga paletizada atrás. */
+const FILA_X = [-17.6, -11.2, -4.8, 4.8, 11.2, 17.6];
+const RACK_Z = [1.6, 4.8, 8.0, 11.2, 14.4, 17.6, 20.8, 24.0, 27.2];
+const VAO_PAR = 11.2, VAO_IMPAR = 20.8;
+const RACK_HX = 1.15, RACK_HZ = 1.6, RACK_H = 3.0;
 
 const ZF = -12;   // fachada. Era -6: a praça não cabia no lattice (MC3, 22 nós ilhados)
 const ZN = 36.2; // fundo (norte). Era 33: doca de 3,8 m reprovava a MAP2B (40 m² por slot)
@@ -88,10 +90,11 @@ export function buildAtacadao(scene, T) {
   /* Perímetro FECHADO: a vitrine de vidro de 5,4 m saiu inteira — era ela que fazia
      a loja ler como shopping. Sobra alvenaria cega, laje opaca e treliça. */
   addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN);                          // parede norte
-  for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);  // laterais (loja)
+  for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);
   addBox(HALF_X * 2, 0.5, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // laje opaca
-  for (let z = ZF + 3; z <= ZN; z += 6.4) addBox(HALF_X * 2, 0.34, 0.34, MAT.metal, 0, WALL_H - 0.5, z, { collide: false, cast: false });   // terças
-  const vigas = [];   // tirante de 5 m: o VIGAMENTO onde a pomba pousa (ambiência, adiante)
+  for (let z = ZF + 3; z <= ZN; z += 6.4) addBox(HALF_X * 2, 0.34, 0.34, MAT.metal, 0, WALL_H - 0.5, z, { collide: false, cast: false });
+  /* Tirante de 5 m: o VIGAMENTO onde a pomba pousa (ambiência, adiante). */
+  const vigas = [];
   for (const z of [1.6, 14.4, 27.2]) vigas.push(addBox(HALF_X * 2 - 2, 0.26, 0.26, MAT.metal, 0, 5.0, z, { collide: false, cast: false }));
   for (const px of [-22.4, 22.4]) for (const pz of [1.6, 14.4, 27.2]) { addBox(0.7, WALL_H, 0.7, MAT.pilar, px, 0, pz); addBox(0.9, 0.5, 0.9, MAT.pilarBase, px, 0, pz, { collide: false }); }
 
