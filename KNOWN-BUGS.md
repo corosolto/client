@@ -4015,3 +4015,38 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fixo. O CHR5B contava ARQUIVO, o jogador via CONSTANTE. Corrigido junto.
 - **C10** — `_freeSpot` (`game.js`) ignora colisores com `minY ≥ 1,5`; no mezanino não empurra
   arma para fora de parede. Não mordeu ainda; é armadilha para o próximo mapa com andar de cima.
+
+- **~~BUG-66 · "os mapas de favela so o lajes tem cordao de roupas do model, os outros nao e
+  tudo generico low poly" + "tem que ver a escala dos predios sempre"~~ (dono, 26/08) ·
+  RESOLVIDO 27/08 no córrego.** Duas coisas, uma causa: nenhuma régua olhava para prop de
+  CASA. A `eval:escala-favela` (BUG-55) mede os barracos procedurais — malha de vão,
+  colisor de puxadinho, corpo de palafita — e não vê GLB nenhum, porque em node o
+  GLTFLoader trava no caminho de textura (`EXT_texture_webp` → `ImageBitmap`/DOM). Prop de
+  casa entrava por um `targetH` escrito à mão e `targetH` errado não reprovava nada.
+  - **A armadilha da escala uniforme.** O molde do Mint chega normalizado num cubo de ~1 m
+    (medido no accessor POSITION do binário: `casa_favela_azul` 0,955 × 0,998 × 0,764 m;
+    `casa_favela_tijolo` 0,943 × 0,936 × 0,998). Casa de favela tem fachada de 4,0-5,6 m
+    com pé-direito de 2,6-3,2 m por pavimento — 1,4:1 a 1,7:1. Com `placeProp` (escala
+    uniforme) **não existe número que feche as duas faixas**: 4,4 m de fachada obrigam
+    4,6 m de pé-direito, que é a casa de gigante que o dono nomeou. Por isso as casas
+    entram por `placePropCaixa` (`mapprops.js`), que escala larg/alt/prof por eixo.
+  - **A régua morta que veio antes.** A tentativa de 26/08 declarou `fachada: 4.6` num
+    manifesto e conferiu o manifesto contra ele mesmo — número que não vem de geometria
+    nenhuma. Régua que lê a própria declaração não mede, ecoa. A que ficou
+    (`eval:escala-favela-glb`) lê os bounds do binário, planta template via
+    `registerPropTemplate`, sobe o mapa com `bootGame` e mede a **transform resultante** de
+    cada casa no referencial do próprio objeto (o giro é desfeito antes da `Box3`, senão a
+    AABB de uma casa girada 8° devolve fachada que não existe).
+  - **Onde o casario coube sem mexer em rota.** O GLB entra no lugar da MALHA, nunca do
+    COLISOR: as 6 palafitas sobre o canal empurram exatamente o colisor que a caixa
+    empurrava, e o morro do fundo (16 casas, |z| ≥ 48 contra `bounds` em 39,5) não empurra
+    nenhum. **Nenhuma casa de molde entrou nas fileiras A, B e C**: com fachada mínima de
+    4 m e a faixa do muro medindo 1,5 m de profundidade, casa de verdade ali obrigaria a
+    mover colisor e refazer rota, CTF e spawn — foi trade declarado, não esquecimento.
+  - **Custo declarado:** o corpo da palafita era 2,40-2,80 m e passou a 2,60-2,80 —
+    interseção da faixa da ESC4 com a faixa nova, para as duas réguas concordarem no número.
+    Colisor sobe no máximo 0,40 m e continua começando em 2,20 m (acima da cabeça).
+  Régua: `npm run eval:escala-favela-glb`; mutantes `ana` (escala 0,6 → ESCGLB2+ESCGLB3),
+  `molde-unico` (→ ESCGLB1), `laje-unica` (→ ESCGLB2+ESCGLB4), `varal-baixo` (→ ESCGLB5);
+  mutante desconhecido sai com código 2. **Escadão e campomorro continuam devendo** o
+  cordão de roupas do modelo — são outras frentes, em outros worktrees.

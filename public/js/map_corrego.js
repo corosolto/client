@@ -306,19 +306,8 @@ export function buildCorrego(scene, T) {
     return proxy;
   }
 
-  /* ═════════════ CASARIO E VARAL DE MOLDE (kit favela_r3 do Mint) ═════════════
-     O que o dono pediu em 26/08: casa de favela DE MODELO no lugar da caixa genérica,
-     e cordão de roupas do modelo em todo mapa de favela (hoje só o lajes tem).
-
-     REGRA DE OURO DESTE BLOCO: o GLB entra no lugar da MALHA, nunca no lugar do
-     COLISOR. Cada chamada abaixo empurra exatamente o mesmo colisor que a caixa
-     empurrava — rota, CTF, spawn e A* medem o mesmo mundo com e sem o acervo, e o
-     `?glb=0` continua sendo um A/B honesto. Sem template o fallback procedural sobe
-     inteiro (é o que node e o modo de baixa banda veem).
-
-     ESCALA (régua eval:escala-favela-glb): pé-direito 2,6–3,2 m POR PAVIMENTO e
-     fachada >= 4,0 m. Por isso `placePropCaixa` (escala por eixo) e não `placeProp`:
-     o molde vem num cubo de 1 m e escala uniforme não fecha as duas faixas juntas. */
+  /* CASARIO E VARAL DE MOLDE (kit favela_r3). O GLB entra no lugar da MALHA, nunca do
+     COLISOR; a conta de escala e o trade estao no BUG-66. Regua: eval:escala-favela-glb. */
   const casarioGlb = [], varalGlb = [];
   const MOLDES_CASA = ['casa_favela_azul', 'casa_favela_tijolo'];
   function casaGlb({ x, y = 0, z, larg, prof, pavimentos, peDireito, ry, molde, sombra = true }) {
@@ -327,8 +316,7 @@ export function buildCorrego(scene, T) {
     const o = placePropCaixa(molde, { x, y, z, larg, alt, prof, ry });
     if (!o) return null;
     o.name = `casa_glb:${molde}`;
-    /* Declaração de USO lida pela régua junto com a medida do mundo: a régua compara
-       a transform REAL contra a faixa, e usa `pavimentos` para dividir a altura. */
+    // Declaracao de USO: a regua compara a transform REAL contra a faixa; `pavimentos` divide.
     o.userData.casaGlb = { molde, pavimentos, peDireitoAlvo: peDireito, largAlvo: larg, profAlvo: prof };
     o.userData.nonCollider = true;
     if (!sombra) o.traverse((m) => { if (m.isMesh) m.castShadow = false; });
@@ -336,9 +324,8 @@ export function buildCorrego(scene, T) {
     casarioGlb.push(o);
     return o;
   }
-  /* Varal: escala UNIFORME de propósito. O molde já nasce com a proporção certa de
-     corda (0,998 m de vão para 0,697 m de altura de peça pendurada); esticar o eixo
-     da corda deformaria a roupa, que é o detalhe que o dono elogiou no lajes. */
+  /* Varal: escala UNIFORME de proposito — esticar o eixo da corda deforma a roupa, que e
+     o detalhe que o dono elogiou no lajes. */
   function varalGlbPlace({ x, y, z, alt, ry }) {
     if (!GLB_ON) return null;
     const o = placeProp('varal_roupas', { x, y, z, targetH: alt, ry });
@@ -892,11 +879,8 @@ export function buildCorrego(scene, T) {
      sobre a calha e a escora cair sobre a água; o passeio da beira passa por baixo, entre as estacas. */
   /* h = corpo + pilotis: corpo (h−0,4) fica na faixa 2,40–2,80 m de pé-direito (BUG-55,
      régua ESC4 — os 3,2 m de corpo liam como sobrado, não palafita). */
-  /* h AJUSTADO em 27/08 (frente CÓRREGO/casario): o corpo (h−0,4) era 2,40–2,80 m e
-     agora é 2,60–2,80 m — interseção da faixa da ESC4 (2,40–2,80) com a faixa nova de
-     pé-direito por pavimento da eval:escala-favela-glb (2,60–3,20). As duas réguas
-     medem a MESMA coisa e agora concordam no número; o colisor sobe no máximo 0,40 m
-     e continua começando em 2,20 m (acima da cabeça — não muda passagem nenhuma). */
+  /* h ajustado: o corpo (h-0,4) e 2,60-2,80 m, intersecao da faixa da ESC4 com a do
+     pe-direito por pavimento da eval:escala-favela-glb (custo declarado no BUG-66). */
   for (const [iPal, [x, z, w, d, h]] of [
     [-5.4, -27, 4.4, 4.2, 3.00], [5.5, -19, 4.6, 4.4, 3.10],
     [-5.6, 18, 4.5, 4.0, 3.05], [5.3, 24, 4.3, 4.6, 3.20],
@@ -905,14 +889,13 @@ export function buildCorrego(scene, T) {
     const ry = angAnexo(), baseY = 2.2;
     for (const px2 of [-w * .40, w * .40]) for (const pz2 of [-d * .40, d * .40])
       addBoxI(.18, baseY, .18, matPilar, x + px2, 0, z + pz2, { ry, collide: true });
-    /* A CASA SOBRE O CANAL É A MAIS VISTA DO MAPA (as três pontes e os dois passeios
-       olham para ela), então é ela que ganha o molde. Colisor idêntico ao da caixa. */
+    /* A casa sobre o canal e a mais vista do mapa (as tres pontes olham para ela): e ela
+       que ganha o molde. Colisor identico ao da caixa que ela substitui. */
     const corpo = h - 0.4;
     const palGlb = casaGlb({ x, y: baseY, z, larg: w, prof: d, pavimentos: 1, peDireito: corpo, ry, molde: MOLDES_CASA[iPal % 2] });
     if (palGlb) {
       colRot(x, z, w / 2, d / 2, baseY, baseY + corpo, ry);
-      /* A malha visível vira occluder — é o mesmo motivo do bloco PB/IB lá embaixo
-         ("a bala atravessava carro e palafita que o corpo respeita"). */
+      // Malha visivel vira occluder: mesmo motivo do bloco PB/IB (bala nao atravessa palafita).
       palGlb.traverse((m) => { if (m.isMesh) occluders.push(m); });
     } else addBoxSB(w, corpo, d, MURO[Math.abs(Math.round(x + z)) % MURO.length], x, baseY, z, { skirt: false, ry });
     for (const lado of [-1, 1])
@@ -1023,22 +1006,14 @@ export function buildCorrego(scene, T) {
   // Varal atravessado no beco, com roupa — foto_012. Plano pequeno e colorido no meio do vão.
   // cor pura: 2 cm de espessura com textura é o pior caso do texel-check (ver matCano)
   const matRoupa = [0xd8d2c4, 0x8fa9c8, 0xc06a6a, 0xd8c46a, 0x7f9e78, 0xc9a2c2].map((color) => lam({ color, roughness: 1 }));
-  /* CINCO destes doze vãos passam a receber o MOLDE (`varal_roupas.glb`, kit favela_r3):
-     é o pedido literal do dono — "os mapas de favela só o lajes tem cordão de roupas do
-     model". Ficam nos becos 1 (|x| = 13,65) e no passeio da beira (|x| = 6,0), que é onde
-     a foto_012 põe varal. Nenhum dos dois caminhos tem colisor, então o mundo medido pelas
-     réguas de rota é byte a byte o mesmo; o que muda é só a malha. Régua: eval:escala-favela-glb. */
+  /* Cinco dos doze vaos recebem o MOLDE (pedido literal do dono, BUG-66). Nenhum dos dois
+     caminhos tem colisor: o mundo que as reguas de rota medem nao muda. */
   const VARAL_MOLDE = new Set(['-1|-18.4', '1|-3.2', '-1|16.8', '1|28.4', '-1|-29']);
   for (const lado of [-1, 1]) for (const [z, xv] of [[-18.4, 13.65], [-3.2, 13.65], [16.8, 13.65], [28.4, 13.65], [-29.0, 6.0], [9.6, 6.0]]) {
-    /* base 1,95 m: o olho do jogador em pé está a 1,62 m (game.js) — a roupa mais baixa
-       fica 33 cm acima da cabeça e o cordão a 3,50 m, na mesma linha dos fios da rua
-       (o cabo procedural que ele substitui estava a 3,20 m). A escala é uniforme, então
-       1,55 m de altura de peça = 2,22 m de vão de corda — acima do mínimo de 2,0 m da
-       ESCGLB5 e abaixo dos 4,2 m do cabo procedural, que é corda de varal, não de ponte. */
-    /* Os 6 ângulos saem da TABELA ANTES do desvio: `angAnexo()` é um cursor compartilhado
-       com o camelô e o pórtico (que TÊM colisor), e consumir um número diferente com e
-       sem acervo faria o mundo do `?glb=0` divergir do mundo do browser em colisor. */
+    /* Os 6 angulos saem da tabela ANTES do desvio: `angAnexo()` e cursor compartilhado com
+       o camelo e o portico, que TEM colisor — consumir numero diferente divergiria o ?glb=0. */
     const angs = [0, 1, 2, 3, 4, 5].map(() => angAnexo());
+    /* base 1,95 m contra olho de 1,62 m (game.js); alt 1,55 m da vao de 2,22 m de corda. */
     if (VARAL_MOLDE.has(`${lado}|${z}`) && varalGlbPlace({ x: lado * xv, y: 1.95, z, alt: 1.55, ry: Math.PI / 2 + angs[0] * 0.1 })) continue;
     addBox(0.02, 0.02, 4.2, matCabo, lado * xv, 3.2, z, { collide: false, cast: false, skirt: false });
     for (let k = 0; k < 6; k++)
@@ -1116,23 +1091,8 @@ export function buildCorrego(scene, T) {
     }
   }
 
-  /* ═════════════════ MORRO DO FUNDO — CASARIO DE MOLDE ═════════════════
-     O muro de 7,4-8,5 m fecha o horizonte, e o que aparece por cima dele hoje é céu.
-     Nas duas PONTAS de z (que é para onde se olha: o canal é o eixo longo e as três
-     pontes enquadram exatamente esta direção) sobe um morro de duas bancadas com casa
-     DE MOLDE em cima — o casario de verdade que o dono cobrou, no único lugar do mapa
-     onde cabe fachada de 4 m sem tirar 1 cm de rota.
-
-     FORA DO JOGÁVEL, DE PROPÓSITO: |z| >= 48 contra `bounds` em 39,5 e muro em 40.
-     Nada aqui empurra colisor, occluder, waypoint ou spawn — o mundo que as réguas de
-     rota medem é idêntico ao de antes desta frente (é a razão de o casario jogável ter
-     ficado só nas palafitas, onde o colisor já existia e não mudou de forma).
-
-     A CONTA DA VISIBILIDADE (é o que decide as alturas, não o gosto): olho a 1,62 m
-     (game.js) no meio do mapa, muro a 8 m em z = 40 → a linha de visada passa em
-     y = 1,62 + 0,16·z. Em z = 50 ela está a 9,6 m e em z = 60 a 11,2 m. Bancada 1
-     (6,0 m) com casa de 2 pavimentos chega a ~11,8 m; bancada 2 (10,5 m) chega a
-     ~16 m. As duas aparecem — e só elas, o resto o muro come. */
+  /* MORRO DO FUNDO: casario de molde atras do muro, |z| >= 48 contra `bounds` em 39,5 —
+     fora do jogavel, sem colisor. Conta da visibilidade e alturas no BUG-66. */
   {
     const morroMat = (k) => MURO[(k * 7 + 3) % MURO.length];
     const BANCADAS = [{ dz: 10, h: 6.0 }, { dz: 20, h: 10.5 }];
@@ -1145,9 +1105,8 @@ export function buildCorrego(scene, T) {
           const x = -28 + k * 8;
           addBoxSB(SEG, banc.h, SEG + 2, morroMat(k + b), x, 0, zc, { collide: false, skirt: false, cast: false });
         }
-        /* Casas em cima. Pavimento alterna 1/2 e o molde alterna azul/tijolo — a régua
-           cobra as duas variações (ESCGLB4/ESCGLB1) porque fileira de clone é o "tudo
-           genérico" com outro nome. Fachada 4,4-5,6 m, pé-direito 2,7-3,1 m. */
+        /* Pavimento alterna 1/2 e o molde alterna azul/tijolo — a regua cobra as duas
+           variacoes: fileira de clone e o "tudo generico" com outro nome. */
         for (let k = 0; k < 4; k++) {
           const x = -24 + k * 15 + (b ? 6 : 0);
           const pav = ((k + b) % 2) ? 2 : 1;
@@ -1390,10 +1349,7 @@ export function buildCorrego(scene, T) {
     /* BUG-57 v2.1 (frente D — só o bloco AMBIENCE): gato da margem + galinha de quintal */
     cats: [{ pos: [12, groundHeightAt(12, 8), 8], to: [14.5, groundHeightAt(14.5, 10), 10], phase: .9 }],
     chickens: [{ pos: [10.5, groundHeightAt(10.5, 12), 12], to: [12, groundHeightAt(12, 13.5), 13.5], phase: 2.2 }],
-    /* 27/08 (frente CÓRREGO): +2 espécies que já estavam no acervo `public/models/ambient/`
-       e que este mapa já BAIXAVA sem usar (CORREGO_FAUNA_ASSETS = FAVELA_AMBIENCE_ASSETS
-       inteiro) — peso de download por nada, que é o mesmo defeito do `fav_house`.
-       Cachorro caramelo no largo do spawn leste e papagaio no mato da ponta alagada. */
+    /* +2 especies que o mapa JA BAIXAVA e nao usava (peso de download por nada). */
     dogs: [{ pos: [20.5, groundHeightAt(20.5, 3.5), 3.5], to: [19.2, groundHeightAt(19.2, 6.5), 6.5], phase: 1.8 }],
     parrots: [{ pos: [-6.4, groundHeightAt(-6.4, 34.5) + 0.9, 34.5], phase: 2.9 }],
   });
@@ -1401,11 +1357,9 @@ export function buildCorrego(scene, T) {
   const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,    /* SOM AMBIENTE revisado em 27/08 junto com a fauna: a água do córrego passa a ter
-       um foco no MEIO do canal também (as duas pontas cobriam 15 m cada num eixo de 80 m
-       — quem estava na ponte central não ouvia córrego nenhum), e as duas pontas alagadas,
-       onde entram o papagaio e o mato, ganham `passaros` de raio curto. `cidade` fica como
-       colchão do mapa inteiro. Forma cobrada pelo AR6 do eval:ambience-registry. */
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,
+    /* Som revisado: foco de agua no MEIO do canal (as pontas cobriam 15 m num eixo de 80 m)
+       e `passaros` nas pontas alagadas, onde o papagaio entrou. Forma cobrada pelo AR6. */
     sound: {
       loops: [
         { src: AMB_LOOPS.corrego, pos: [0, .3, -37], radius: 15, vol: .45 },

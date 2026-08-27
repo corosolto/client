@@ -64,15 +64,8 @@ export function placeProp(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 
   return o;
 }
 
-/* ===================== CASARIO: ESCALA POR EIXO =====================
-   O molde do Mint chega normalizado num cubo de ~1 m (medido em casa_favela_azul:
-   0,955 x 0,998 x 0,764 m; casa_favela_tijolo: 0,943 x 0,936 x 0,998). Casa de
-   favela NAO e cubica: a regua da frente pede fachada >= 4,0 m com pe-direito de
-   2,6-3,2 m por pavimento, isto e, 1,4:1 a 1,7:1 num pavimento. Com `placeProp`
-   (escala UNIFORME) nenhum dos dois moldes fecha as duas coisas ao mesmo tempo —
-   4,4 m de fachada no azul obriga 4,6 m de pe-direito. Por isso este placer escala
-   cada eixo para a medida de USO: larg -> X local, alt -> Y, prof -> Z.
-   Devolve null sem template (node, ?glb=0) — o chamador cai no fallback dele. */
+/* Escala por EIXO (larg/alt/prof): o molde vem num cubo de ~1 m e casa de favela nao e
+   cubica — a conta e o trade estao no BUG-66 do KNOWN-BUGS.md. null sem template. */
 export function placePropCaixa(id, { x = 0, y = 0, z = 0, larg = 4, alt = 2.8, prof = 4, ry = 0 } = {}) {
   const tpl = _base.get(id);
   if (!tpl) return null;
@@ -88,12 +81,8 @@ export function placePropCaixa(id, { x = 0, y = 0, z = 0, larg = 4, alt = 2.8, p
   return o;
 }
 
-/* GANCHO DE REGUA (mesmo padrao de `registerFaunaTemplate` do ambientlife.js): planta
-   um template sem passar pelo GLTFLoader. Existe porque o loader TRAVA em node no
-   caminho de textura (EXT_texture_webp -> ImageBitmap/DOM; medido e registrado no
-   cabecalho do corrego-contract-check). Sem isto nenhuma regua de node consegue medir
-   o mundo com os GLB colocados — mediria so a declaracao, que e o furo que a rodada
-   anterior desta frente cavou. Producao nao chama: quem carrega e `preloadMapProps`. */
+/* Gancho de regua irmao do `registerFaunaTemplate`: em node o GLTFLoader trava na
+   textura (BUG-66). Producao nao chama — quem carrega e `preloadMapProps`. */
 export function registerPropTemplate(id, scene) {
   if (!scene) _base.delete(id); else _base.set(id, scene);
 }
