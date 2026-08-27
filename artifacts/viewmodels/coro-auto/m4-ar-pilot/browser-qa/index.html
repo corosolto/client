@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>M4 AR pilot — browser QA</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#8fb8d8;color:#102236;font:14px system-ui}
+    canvas{display:block;width:100%;height:100%}
+    #panel{position:fixed;left:16px;top:16px;z-index:2;padding:12px 14px;background:#eef8ffed;border:1px solid #456a87;border-radius:8px;box-shadow:0 6px 20px #16334d44}
+    button,input{margin:4px} #status{font-weight:700;color:#174c70} #verdict{color:#9b1c1c}
+  </style>
+  <script type="importmap">{"imports":{"three":"/public/vendor/three.module.js"}}</script>
+</head>
+<body>
+  <div id="panel">
+    <div id="status">carregando candidato…</div>
+    <div><button data-clip="Idle">Idle</button><button data-fire="0.50">Fire pico</button><button data-clip="Reload">Reload</button><button id="ads">ADS</button></div>
+    <div><button data-reload="0.30">Soltar</button><button data-reload="0.50">Carregar</button><button data-reload="0.70">Inserir</button><button data-reload="1.00">Final</button></div>
+    <label>tempo <input id="time" type="range" min="0" max="1" step="0.001" value="0"></label>
+    <span id="readout">0.000 s</span>
+    <div id="verdict">CANDIDATO — NÃO INTEGRADO</div>
+  </div>
+  <script type="module">
+    import * as THREE from 'three';
+    import {GLTFLoader} from '/public/vendor/addons/loaders/GLTFLoader.js';
+    const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight);
+    renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.65;
+    document.body.appendChild(renderer.domElement);
+    const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8fb8d8);
+    scene.add(new THREE.AmbientLight(0xd8edff,3.4)); scene.add(new THREE.HemisphereLight(0xffffff,0x4d6b82,4.8));
+    const key=new THREE.DirectionalLight(0xffe1bd,5.2); key.position.set(-3,3,6); scene.add(key);
+    let camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.03,1000),normalCamera,adsCamera,mixer,active;
+    const clips={}; const slider=document.querySelector('#time');
+    window.qa={loaded:false,current:null,normalized:0,cameras:[],clips:[]};
+    function useCamera(mode){camera=mode==='ads'?adsCamera:normalCamera;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();window.qa.camera=mode;}
+    function choose(name,normalized=0,mode='normal'){
+      if(!clips[name])return false;
+      if(active)active.stop(); active=mixer.clipAction(clips[name]); active.reset().play(); active.paused=true;
+      active.time=clips[name].duration*normalized; mixer.update(0); useCamera(mode); slider.value=String(normalized);
+      window.qa.current=name; window.qa.normalized=normalized;
+      document.querySelector('#status').textContent=`${name} ${(normalized*100).toFixed(0)}% · ${mode.toUpperCase()}`;
+      document.querySelector('#readout').textContent=`${active.time.toFixed(3)} s`; return true;
+    }
+    window.qa.setState=choose;
+    new GLTFLoader().load('/artifacts/viewmodels/coro-auto/m4-ar-pilot/candidate-m4-ar-pilot.glb',gltf=>{
+      scene.add(gltf.scene); mixer=new THREE.AnimationMixer(gltf.scene); gltf.animations.forEach(clip=>clips[clip.name]=clip);
+      normalCamera=gltf.cameras.find(item=>item.name.includes('FP_Camera'))||gltf.cameras[0];
+      adsCamera=gltf.cameras.find(item=>item.name.includes('ADS_Camera'))||normalCamera;
+      for(const item of new Set([normalCamera,adsCamera])){const light=new THREE.PointLight(0xffffff,24,90,1.4);item.add(light)}
+      window.qa.loaded=true; window.qa.clips=Object.keys(clips); window.qa.cameras=gltf.cameras.map(item=>item.name); choose('Idle',0,'normal');
+    },undefined,error=>{document.querySelector('#status').textContent=String(error);window.qa.error=String(error)});
+    document.querySelectorAll('[data-clip]').forEach(button=>button.onclick=()=>choose(button.dataset.clip,0,'normal'));
+    document.querySelectorAll('[data-fire]').forEach(button=>button.onclick=()=>choose('Shoot',Number(button.dataset.fire),'normal'));
+    document.querySelectorAll('[data-reload]').forEach(button=>button.onclick=()=>choose('Reload',Number(button.dataset.reload),'normal'));
+    document.querySelector('#ads').onclick=()=>choose('Idle',0,'ads');
+    slider.addEventListener('input',()=>choose(window.qa.current||'Idle',Number(slider.value),window.qa.camera||'normal'));
+    function frame(){requestAnimationFrame(frame);renderer.render(scene,camera)} frame();
+    addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+  </script>
+</body>
+</html>

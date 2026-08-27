@@ -1,0 +1,27 @@
+{
+  "schema": "coro_auto.m4_ar.visual_review.v1",
+  "review_surface": "Chrome browser at http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/index.html",
+  "reviewed_evidence": "browser-qa/browser-contact-sheet.png",
+  "status": "FAIL",
+  "propagation": "BLOCKED",
+  "gates": {
+    "single_literal_pistol_hand_mesh": "PASS",
+    "short_readable_recoil": "PASS",
+    "weapon_and_hands_present_through_fire": "PASS",
+    "weapon_remains_fixed_in_dominant_hand": "FAIL",
+    "dominant_hand_reads_as_pistol_grip_with_trigger_index": "FAIL",
+    "support_hand_reads_on_handguard_at_idle_and_final": "FAIL",
+    "authored_magazine_reads_as_curved_finished_m4_magazine": "FAIL",
+    "support_hand_visibly_maintains_magazine_contact_detach_to_insert": "FAIL",
+    "reload_insert_is_unambiguous": "FAIL",
+    "ads_sight_picture_is_clear_and_unobstructed": "FAIL"
+  },
+  "observations": [
+    "The exported candidate has one hand mesh and no duplicated third hand, but the dominant fingers do not read as a firm rifle grip or a trigger-index pose.",
+    "The validator measures a 3.2880 maximum matrix delta between the dominant wrist and weapon across sampled actions, so the weapon-fixed-to-strong-hand contract is not met.",
+    "At detach and carry the magazine is visible, yet its camera-facing silhouette is dominated by the feed tower and floor components and reads as stacked gray boxes rather than a finished curved M4 magazine.",
+    "At insert the magazine is mostly hidden behind the support hand and receiver, so contact and insertion cannot be verified visually.",
+    "The final state returns to the same ambiguous dominant grip and oversized support-hand silhouette.",
+    "ADS is centered and does not clip the camera, but the rear sight/carry-handle assembly and hands obstruct the sight picture."
+  ]
+}

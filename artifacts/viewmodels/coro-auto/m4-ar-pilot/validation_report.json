@@ -1,0 +1,76 @@
+{
+  "schema": "coro_auto.m4_ar.validation.v1",
+  "candidate": "artifacts/viewmodels/coro-auto/m4-ar-pilot/candidate-m4-ar-pilot.glb",
+  "structural_status": "FAIL",
+  "visual_status": "FAIL",
+  "overall_status": "FAIL",
+  "propagation": "BLOCKED",
+  "checks": {
+    "literal_hand_mesh": {
+      "pass": true,
+      "count": 1,
+      "vertices": 7438,
+      "material": "CoroSolto_FP_Gloves"
+    },
+    "actions": {
+      "pass": true,
+      "names": [
+        "Idle",
+        "Reload",
+        "Shoot"
+      ]
+    },
+    "candidate_objects": {
+      "pass": true,
+      "names": [
+        "coro_auto_m4_ar_dedicated_rig",
+        "coro_solto_pistol_hands_geometry_literal",
+        "coro_auto_project_m4_ar_body",
+        "coro_auto_m4_ar_closed_magazine"
+      ]
+    },
+    "authored_magazine_structure": {
+      "pass": true,
+      "vertices": 2076,
+      "source_boundary_edges": 0,
+      "note": "glTF import splits vertices at normals/skin seams; closure is measured on the authored source before export.",
+      "armature_modifiers": 1,
+      "m4_magazine_group_present": true,
+      "material": "CoroAuto_M4_AR_AuthoredMagazine"
+    },
+    "dominant_wrist_fixed_to_weapon": {
+      "pass": false,
+      "max_matrix_delta": 3.2880234718322754
+    },
+    "fire_recoil_motion": {
+      "pass": true,
+      "frame_0_to_4_distance": 1.4150969583634072
+    },
+    "reload_magazine_path": {
+      "pass": true,
+      "bone_path_span": 10.73545323360786,
+      "support_wrist_to_magazine_aabb": {
+        "12": 4.490007400512695,
+        "24": 4.490007400512695,
+        "40": 3.1421804428100586,
+        "56": 4.220274925231934,
+        "64": 4.490007400512695
+      },
+      "note": "AABB proximity is structural evidence only; visible contact remains a visual gate."
+    },
+    "browser_visual_gate": {
+      "pass": false,
+      "status": "FAIL",
+      "failures": [
+        "weapon_remains_fixed_in_dominant_hand",
+        "dominant_hand_reads_as_pistol_grip_with_trigger_index",
+        "support_hand_reads_on_handguard_at_idle_and_final",
+        "authored_magazine_reads_as_curved_finished_m4_magazine",
+        "support_hand_visibly_maintains_magazine_contact_detach_to_insert",
+        "reload_insert_is_unambiguous",
+        "ads_sight_picture_is_clear_and_unobstructed"
+      ],
+      "evidence": "browser-qa/browser-contact-sheet.png"
+    }
+  }
+}

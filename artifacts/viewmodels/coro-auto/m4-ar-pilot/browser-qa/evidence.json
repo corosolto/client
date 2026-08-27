@@ -1,0 +1,20 @@
+{
+  "schema": "coro_auto.m4_ar.browser_evidence.v1",
+  "url": "http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/index.html",
+  "browser": "Chrome extension session",
+  "asset": "/artifacts/viewmodels/coro-auto/m4-ar-pilot/candidate-m4-ar-pilot.glb",
+  "exported_actions": ["Idle", "Reload", "Shoot"],
+  "exported_cameras": ["CoroAuto_M4_AR_FP_Camera", "CoroAuto_M4_AR_ADS_Camera"],
+  "captures": {
+    "idle": "idle.png",
+    "fire_peak_50_percent": "fire-recoil.png",
+    "reload_detach_30_percent": "reload-detach.png",
+    "reload_carry_50_percent": "reload-carry.png",
+    "reload_insert_70_percent": "reload-insert.png",
+    "reload_final_100_percent": "reload-final.png",
+    "ads": "ads.png",
+    "contact_sheet": "browser-contact-sheet.png"
+  },
+  "verdict": "FAIL",
+  "propagation": "BLOCKED"
+}
