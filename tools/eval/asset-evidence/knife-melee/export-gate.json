@@ -1,0 +1,43 @@
+{
+  "pass": true,
+  "checks": {
+    "animations_exact": true,
+    "three_visible_mesh_nodes": true,
+    "single_exported_camera": true,
+    "camera_aspect_3_2": true,
+    "camera_near_safe": true,
+    "project_materials_only": true,
+    "project_textures_packed": true,
+    "web_size_under_5mb": true
+  },
+  "actions": {
+    "Draw": [
+      0.0,
+      16.0
+    ],
+    "Idle": [
+      0.0,
+      48.0
+    ],
+    "Slash": [
+      0.0,
+      17.600000381469727
+    ],
+    "Stab": [
+      0.0,
+      19.200000762939453
+    ]
+  },
+  "meshes": [
+    "coro_solto_melee_hand_forearm.L",
+    "coro_solto_melee_hand_forearm.R",
+    "coro_solto_project_knife"
+  ],
+  "camera": {
+    "aspectRatio": 1.5,
+    "yfov": 0.5565993219125207,
+    "zfar": 20,
+    "znear": 0.029999999329447746
+  },
+  "size_bytes": 771400
+}

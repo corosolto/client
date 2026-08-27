@@ -1,0 +1,253 @@
+{
+  "pass": true,
+  "checks": {
+    "render_count": true,
+    "minimum_nonempty_samples": true,
+    "minimum_top_margin_px": true,
+    "motion_present": true,
+    "idle_not_static_noise": true
+  },
+  "records": [
+    {
+      "frame": "idle_000.png",
+      "bbox": [
+        113,
+        441,
+        1200,
+        800
+      ],
+      "top_margin_px": 441,
+      "bbox_occupancy": 0.4065,
+      "difference_from_previous": null
+    },
+    {
+      "frame": "idle_015.png",
+      "bbox": [
+        116,
+        453,
+        1200,
+        800
+      ],
+      "top_margin_px": 453,
+      "bbox_occupancy": 0.3918,
+      "difference_from_previous": 0.04433
+    },
+    {
+      "frame": "idle_030.png",
+      "bbox": [
+        118,
+        465,
+        1200,
+        800
+      ],
+      "top_margin_px": 465,
+      "bbox_occupancy": 0.3776,
+      "difference_from_previous": 0.04451
+    },
+    {
+      "frame": "idle_045.png",
+      "bbox": [
+        116,
+        453,
+        1200,
+        800
+      ],
+      "top_margin_px": 453,
+      "bbox_occupancy": 0.3918,
+      "difference_from_previous": 0.04451
+    },
+    {
+      "frame": "idle_060.png",
+      "bbox": [
+        113,
+        441,
+        1200,
+        800
+      ],
+      "top_margin_px": 441,
+      "bbox_occupancy": 0.4065,
+      "difference_from_previous": 0.04433
+    },
+    {
+      "frame": "draw_000.png",
+      "bbox": null,
+      "top_margin_px": null,
+      "bbox_occupancy": 0,
+      "difference_from_previous": null
+    },
+    {
+      "frame": "draw_003.png",
+      "bbox": [
+        121,
+        680,
+        1200,
+        800
+      ],
+      "top_margin_px": 680,
+      "bbox_occupancy": 0.1349,
+      "difference_from_previous": 0.03927
+    },
+    {
+      "frame": "draw_007.png",
+      "bbox": [
+        124,
+        453,
+        1200,
+        800
+      ],
+      "top_margin_px": 453,
+      "bbox_occupancy": 0.3889,
+      "difference_from_previous": 0.13871
+    },
+    {
+      "frame": "draw_014.png",
+      "bbox": [
+        104,
+        448,
+        1200,
+        800
+      ],
+      "top_margin_px": 448,
+      "bbox_occupancy": 0.4019,
+      "difference_from_previous": 0.12554
+    },
+    {
+      "frame": "draw_020.png",
+      "bbox": [
+        111,
+        451,
+        1200,
+        800
+      ],
+      "top_margin_px": 451,
+      "bbox_occupancy": 0.3959,
+      "difference_from_previous": 0.07325
+    },
+    {
+      "frame": "slash_000.png",
+      "bbox": [
+        111,
+        451,
+        1200,
+        800
+      ],
+      "top_margin_px": 451,
+      "bbox_occupancy": 0.3959,
+      "difference_from_previous": null
+    },
+    {
+      "frame": "slash_004.png",
+      "bbox": [
+        47,
+        387,
+        1200,
+        800
+      ],
+      "top_margin_px": 387,
+      "bbox_occupancy": 0.496,
+      "difference_from_previous": 0.1539
+    },
+    {
+      "frame": "slash_009.png",
+      "bbox": [
+        294,
+        363,
+        1200,
+        800
+      ],
+      "top_margin_px": 363,
+      "bbox_occupancy": 0.4124,
+      "difference_from_previous": 0.24589
+    },
+    {
+      "frame": "slash_014.png",
+      "bbox": [
+        265,
+        484,
+        1200,
+        800
+      ],
+      "top_margin_px": 484,
+      "bbox_occupancy": 0.3078,
+      "difference_from_previous": 0.20186
+    },
+    {
+      "frame": "slash_022.png",
+      "bbox": [
+        111,
+        451,
+        1200,
+        800
+      ],
+      "top_margin_px": 451,
+      "bbox_occupancy": 0.3959,
+      "difference_from_previous": 0.15945
+    },
+    {
+      "frame": "stab_000.png",
+      "bbox": [
+        111,
+        451,
+        1200,
+        800
+      ],
+      "top_margin_px": 451,
+      "bbox_occupancy": 0.3959,
+      "difference_from_previous": null
+    },
+    {
+      "frame": "stab_005.png",
+      "bbox": [
+        59,
+        475,
+        1200,
+        800
+      ],
+      "top_margin_px": 475,
+      "bbox_occupancy": 0.3863,
+      "difference_from_previous": 0.13665
+    },
+    {
+      "frame": "stab_010.png",
+      "bbox": [
+        221,
+        313,
+        1079,
+        800
+      ],
+      "top_margin_px": 313,
+      "bbox_occupancy": 0.4353,
+      "difference_from_previous": 0.2029
+    },
+    {
+      "frame": "stab_015.png",
+      "bbox": [
+        188,
+        405,
+        1200,
+        800
+      ],
+      "top_margin_px": 405,
+      "bbox_occupancy": 0.4164,
+      "difference_from_previous": 0.17435
+    },
+    {
+      "frame": "stab_024.png",
+      "bbox": [
+        111,
+        451,
+        1200,
+        800
+      ],
+      "top_margin_px": 451,
+      "bbox_occupancy": 0.3959,
+      "difference_from_previous": 0.14995
+    }
+  ],
+  "mask_method": "RGB distance from top-left background, threshold 18",
+  "allowed_entry_edges": [
+    "bottom",
+    "left",
+    "right"
+  ]
+}
