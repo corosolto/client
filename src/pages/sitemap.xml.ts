@@ -29,6 +29,7 @@
 import type { APIRoute } from 'astro';
 import { supabaseAdmin } from '../lib/supabase';
 import { SITE, RANKING_ON } from '../lib/site';
+import { PT_EN_PAIRS } from '../lib/i18n-pairs';
 import { FACCOES } from '../data/jogo';
 import {
   POR_PAGINA, numeroDePaginas, offsetDaPagina, xmlUrlset, xmlIndex,
@@ -61,6 +62,7 @@ export const STATIC: [string, string, string][] = [
   ['/sobre',       '0.7', 'monthly'],
   ['/mapa',        '0.6', 'daily'],
   ['/changelog',   '0.5', 'weekly'],
+  ...PT_EN_PAIRS.map(([, en]) => [en, '0.5', 'weekly'] as [string, string, string]),
 ];
 
 export const GET: APIRoute = async () => {
