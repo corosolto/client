@@ -1,0 +1,25 @@
+{
+  "schema": "coro_auto.m4_retarget.visual_review.v1",
+  "status": "FAIL",
+  "propagation": "BLOCKED",
+  "browser_url": "http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/index.html",
+  "evidence": "browser-qa/browser-contact-sheet.png",
+  "gates": {
+    "donor_visual_assets_absent": "PASS",
+    "single_approved_hand_mesh": "PASS",
+    "explicit_socket_bones_exported": "PASS",
+    "short_readable_donor_fire_motion": "PASS",
+    "dominant_grip_and_trigger_index_read_clearly": "FAIL",
+    "support_hand_stays_in_visible_contact_with_magazine": "FAIL",
+    "reload_five_states_remain_framed": "FAIL",
+    "magazine_insertion_is_unambiguous": "FAIL",
+    "ads_is_clear_and_intersection_free": "FAIL"
+  },
+  "observations": [
+    "The GLB contains only the project M4, the approved Coro Solto hand mesh, and the authored curved magazine; donor meshes and donor materials are absent.",
+    "The fire peak is legible, but the dominant fingers cover the receiver and do not prove a stable pistol-grip/trigger-index relationship.",
+    "R9, R18 and R26 move with donor timing, but the support palm and the magazine are visibly separated rather than maintaining a grasp.",
+    "R18 pushes the weapon to the right edge, weakening the action silhouette and making insertion ambiguous.",
+    "ADS is centered but the rear sight/carry-handle mass and hands obstruct the sight picture."
+  ]
+}

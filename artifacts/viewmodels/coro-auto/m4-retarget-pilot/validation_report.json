@@ -1,0 +1,76 @@
+{
+  "schema": "coro_auto.m4_retarget.validation.v1",
+  "candidate": "artifacts/viewmodels/coro-auto/m4-retarget-pilot/candidate-m4-retarget-pilot.glb",
+  "structural_status": "FAIL",
+  "visual_status": "FAIL",
+  "overall_status": "FAIL",
+  "propagation": "BLOCKED",
+  "checks": {
+    "no_donor_visual_assets": {
+      "pass": true,
+      "meshes": [
+        "coro_auto_m4_retarget_closed_magazine",
+        "coro_auto_project_m4_retarget_body",
+        "coro_solto_pistol_hands_geometry_literal",
+        "Icosphere"
+      ],
+      "materials": [
+        "assault_m4 Material",
+        "CoroAuto_M4_Retarget_Magazine",
+        "CoroSolto_FP_Gloves"
+      ]
+    },
+    "approved_hands": {
+      "pass": true,
+      "vertices": 7438
+    },
+    "actions": {
+      "pass": true,
+      "names": [
+        "Idle",
+        "Reload",
+        "Shoot"
+      ]
+    },
+    "sockets": {
+      "pass": true,
+      "present": [
+        "GripSocket",
+        "M4MagazinePivot",
+        "MagwellSocket",
+        "SupportSocket",
+        "TriggerSocket"
+      ]
+    },
+    "closed_project_magazine": {
+      "pass": true,
+      "export_vertices": 1536
+    },
+    "dominant_socket_stability": {
+      "pass": false,
+      "wrist_matrix_delta": 9.803635597229004,
+      "trigger_index_matrix_delta": 18.359923481941223
+    },
+    "support_magazine_socket_distance": {
+      "pass": false,
+      "distances": {
+        "9": 16.869235770887027,
+        "18": 17.64113343877078,
+        "26": 17.558318648341984
+      },
+      "note": "Stable bone distance cannot override visible palm separation in the browser gate."
+    },
+    "browser_visual_gate": {
+      "pass": false,
+      "status": "FAIL",
+      "failures": [
+        "dominant_grip_and_trigger_index_read_clearly",
+        "support_hand_stays_in_visible_contact_with_magazine",
+        "reload_five_states_remain_framed",
+        "magazine_insertion_is_unambiguous",
+        "ads_is_clear_and_intersection_free"
+      ],
+      "evidence": "browser-qa/browser-contact-sheet.png"
+    }
+  }
+}

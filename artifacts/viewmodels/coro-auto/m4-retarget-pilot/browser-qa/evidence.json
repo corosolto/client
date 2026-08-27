@@ -1,0 +1,10 @@
+{
+  "schema": "coro_auto.m4_retarget.browser_evidence.v1",
+  "url": "http://127.0.0.1:8877/artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/index.html",
+  "browser": "Chrome extension session",
+  "asset": "/artifacts/viewmodels/coro-auto/m4-retarget-pilot/candidate-m4-retarget-pilot.glb",
+  "states": ["idle", "fire", "r0", "r9", "r18", "r26", "r44", "ads"],
+  "contact_sheet": "browser-contact-sheet.png",
+  "verdict": "FAIL",
+  "propagation": "BLOCKED"
+}

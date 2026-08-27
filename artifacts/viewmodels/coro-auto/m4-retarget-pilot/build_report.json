@@ -1,0 +1,49 @@
+{
+  "schema": "coro_auto.m4_retarget.build.v1",
+  "integration": "artifact_candidate_only",
+  "motion_donor": "/Users/ruben/Downloads/m4a1_animated_low_poly.glb",
+  "motion_donor_usage": [
+    "Fire action",
+    "Reload action",
+    "Gun_052",
+    "Mag_054",
+    "l_wrist_031 trajectory and timing"
+  ],
+  "donor_visual_assets_exported": false,
+  "hands_source": "/Users/ruben/csbrasil/client/public/models/viewmodels/coro/pistol-hires.glb",
+  "hand_meshes": 1,
+  "hand_vertices": 7438,
+  "hand_material": "CoroSolto_FP_Gloves",
+  "weapon_source": "public/models/weapons/m4.glb",
+  "socket_bones": [
+    "GripSocket",
+    "TriggerSocket",
+    "SupportSocket",
+    "MagwellSocket",
+    "M4MagazinePivot"
+  ],
+  "magazine": {
+    "closed": true,
+    "source_vertices": 384,
+    "material": "CoroAuto_M4_Retarget_Magazine"
+  },
+  "actions": [
+    "Idle",
+    "Shoot",
+    "Reload"
+  ],
+  "rendered": [
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/idle_000.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/shoot_000.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/shoot_004.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/shoot_008.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_000.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_009.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_018.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_026.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_044.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/ads_000.png"
+  ],
+  "candidate_glb": "artifacts/viewmodels/coro-auto/m4-retarget-pilot/candidate-m4-retarget-pilot.glb",
+  "visual_status": "FAIL — browser gate blocks integration and propagation"
+}

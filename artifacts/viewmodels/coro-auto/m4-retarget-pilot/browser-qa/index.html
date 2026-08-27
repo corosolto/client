@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>M4 retarget pilot — browser QA</title>
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#9ec3dc;color:#102236;font:14px system-ui}canvas{display:block;width:100%;height:100%}
+    #panel{position:fixed;left:16px;top:16px;z-index:2;padding:12px;background:#eff9ffef;border:1px solid #426986;border-radius:8px;box-shadow:0 6px 20px #16334d44}
+    button{margin:3px}#status{font-weight:700;color:#174c70}#verdict{color:#9b1c1c}
+  </style>
+  <script type="importmap">{"imports":{"three":"/public/vendor/three.module.js"}}</script>
+</head>
+<body>
+  <div id="panel"><div id="status">carregando…</div>
+    <div><button data-state="idle">Idle</button><button data-state="fire">Fire pico</button><button data-state="ads">ADS</button></div>
+    <div><button data-state="r0">R0</button><button data-state="r9">R9</button><button data-state="r18">R18</button><button data-state="r26">R26</button><button data-state="r44">R44</button></div>
+    <div id="verdict">CANDIDATO — NÃO INTEGRADO</div>
+  </div>
+  <script type="module">
+    import * as THREE from 'three'; import {GLTFLoader} from '/public/vendor/addons/loaders/GLTFLoader.js';
+    const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.6;document.body.appendChild(renderer.domElement);
+    const scene=new THREE.Scene();scene.background=new THREE.Color(0x9ec3dc);scene.add(new THREE.AmbientLight(0xe5f4ff,3.2));scene.add(new THREE.HemisphereLight(0xffffff,0x48677f,4.6));const key=new THREE.DirectionalLight(0xffdfba,5);key.position.set(-3,3,6);scene.add(key);
+    let camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.03,1000),normalCamera,adsCamera,mixer,active;const clips={};
+    const states={idle:['Idle',0,'normal'],fire:['Shoot',.5,'normal'],ads:['Idle',0,'ads'],r0:['Reload',0,'normal'],r9:['Reload',9/44,'normal'],r18:['Reload',18/44,'normal'],r26:['Reload',26/44,'normal'],r44:['Reload',1,'normal']};
+    window.qa={loaded:false,clips:[],cameras:[],current:null};
+    function choose(key){const [name,t,mode]=states[key];if(active)active.stop();active=mixer.clipAction(clips[name]);active.reset().play();active.paused=true;active.time=clips[name].duration*t;mixer.update(0);camera=mode==='ads'?adsCamera:normalCamera;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();window.qa.current=key;document.querySelector('#status').textContent=`${key.toUpperCase()} · ${name} ${(t*100).toFixed(0)}% · ${mode.toUpperCase()}`}
+    new GLTFLoader().load('/artifacts/viewmodels/coro-auto/m4-retarget-pilot/candidate-m4-retarget-pilot.glb',gltf=>{scene.add(gltf.scene);mixer=new THREE.AnimationMixer(gltf.scene);gltf.animations.forEach(clip=>clips[clip.name]=clip);normalCamera=gltf.cameras.find(item=>item.name.includes('FP_Camera'))||gltf.cameras[0];adsCamera=gltf.cameras.find(item=>item.name.includes('ADS_Camera'))||normalCamera;for(const item of new Set([normalCamera,adsCamera]))item.add(new THREE.PointLight(0xffffff,24,90,1.4));window.qa.loaded=true;window.qa.clips=Object.keys(clips);window.qa.cameras=gltf.cameras.map(item=>item.name);choose('idle')},undefined,error=>{window.qa.error=String(error);document.querySelector('#status').textContent=String(error)});
+    document.querySelectorAll('[data-state]').forEach(button=>button.onclick=()=>choose(button.dataset.state));
+    function frame(){requestAnimationFrame(frame);renderer.render(scene,camera)}frame();addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+  </script>
+</body>
+</html>
