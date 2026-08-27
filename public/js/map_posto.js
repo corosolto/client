@@ -9,6 +9,9 @@ import { AMB_LOOPS } from './soundscape.js';
 
 // props GLB que este mapa usa (main.js pré-carrega MAPS[id].props)
 export const POSTO_PROPS = [
+  // MOLDES do kit posto_obras_r3 (Mint): ilha de bomba e corpo da loja são modelo
+  // de verdade, não caixa pintada. Régua: tools/eval/posto-check.mjs.
+  'bombas_combustivel', 'loja_conveniencia',
   'kombi', 'saveiro', 'fusca', 'dumpster', 'quiosque', 'botijao_gas',
   'jersey_barrier', 'concrete_roadblock', 'sandbags', 'pilha_pneus', 'tires',
   // fila/congestionamento fora do posto (a treta) + mais carros no pátio
@@ -19,6 +22,8 @@ export const POSTO_PROPS = [
   'vw_9150', 'manequim',
   // BAIRRO em volta (casas de favela peekando por cima do muro) + fila de caminhão na pista
   'fav_house', 'fav_modular', 'fav_brasileira', 'fachada_comercio', 'bus', 'onibus_urbano',
+  // jardineira do pátio (menos asfalto aberto): vegetação do acervo v2.1
+  'ixora', 'agave', 'samambaia',
 ];
 
 const HALF_X = 28, HALF_Z = 36;
@@ -83,7 +88,6 @@ export function buildPosto(scene, T) {
     marquise: lam(tex('concrete', 0xd7dbe0)),
     marquiseBaixo: lam(tex('concrete', 0xb8bdc4)),
     fascia: lam({ color: 0xe03c3c }),
-    pilar: lam({ color: 0xe9ecef }),
     bomba: lam({ color: 0xcf3b3b }),
     bombaTopo: lam({ color: 0x1b1d21 }),
     aco: lam({ color: 0x8a9096 }),
@@ -143,48 +147,157 @@ export function buildPosto(scene, T) {
   addBox(0.35, 1.4, HALF_Z * 2, MAT.aco, wX, 0, 0);       // guarda-corpo leste: a RODOVIA fica visível além (bounds seguram o player)
   addBox(0.6, 3.2, HALF_Z * 2, MAT.loja, -wX, 0, 0);
 
-  /* ---------------- LOJA DE CONVENIÊNCIA (corredor oeste, fundo de cover) ----------------
-     Volume de 8×24 encostado no muro oeste, fachada de vidro virada pro pátio (+x). Deixa
-     um vão de porta no centro (z ∈ [-2,2]) pra não virar um paredão de 24 m. */
+  /* LOJA DE CONVENIÊNCIA — fecha o lado oeste com o molde do kit nas duas pontas e
+     uma SALA ANDÁVEL no meio. Por que assim: tools/eval/posto-check.mjs (POSTO2). */
+  // eixo da fachada, profundidade, altura; paredes N/S da sala; face leste, fundo, pé-direito
+  const LX = -21, LD = 8, LH = 5;
+  const LOJA_Z0 = -5.8, LOJA_Z1 = 5.8;
+  const LOJA_FACE = LX + LD / 2;
+  const LOJA_FUNDO = LX - LD / 2;
+  const LOJA_TETO = 3.6;
+  const lojaInterior = new THREE.Group(); lojaInterior.name = 'posto-loja-interior';
+  root.add(lojaInterior);
   {
-    const LX = -21, LD = 8, LH = 5;
-    // paredes: duas metades deixando a porta central
-    for (const [z0, z1] of [[-12, -2], [2, 12]]) {
-      const len = z1 - z0, cz = (z0 + z1) / 2;
-      addBox(LD, LH, len, MAT.loja, LX, 0, cz);
+    const MURO = 0.4;
+    // piso de granilite da sala (acima do pátio: sem z-fight)
+    const piso = addFloor(LD - MURO, LOJA_Z1 - LOJA_Z0 - MURO, lam({ color: 0xcfc9bb }), LX, 0, 0.06);
+    piso.name = 'posto-loja-piso';
+    // paredes: fundo (oeste), norte e sul inteiras; a fachada leste vem em 3 pedaços
+    addBox(MURO, LOJA_TETO, LOJA_Z1 - LOJA_Z0, MAT.loja, LOJA_FUNDO, 0, 0);
+    for (const zw of [LOJA_Z0, LOJA_Z1]) addBox(LD, LOJA_TETO, MURO, MAT.loja, LX, 0, zw);
+    // fachada leste com DUAS aberturas: sala de um vão só vira ratoeira
+    const PORTA = [[-4.2, -1.6], [1.6, 4.2]];
+    const cheios = [[LOJA_Z0, PORTA[0][0]], [PORTA[0][1], PORTA[1][0]], [PORTA[1][1], LOJA_Z1]];
+    for (const [z0, z1] of cheios) addBox(MURO, LOJA_TETO, z1 - z0, MAT.loja, LOJA_FACE, 0, (z0 + z1) / 2);
+    // verga sobre cada abertura (fecha o vão até o teto sem fechar a passagem)
+    for (const [z0, z1] of PORTA) addBox(MURO, LOJA_TETO - 2.4, z1 - z0, MAT.loja, LOJA_FACE, 2.4, (z0 + z1) / 2, { collide: false });
+    // vidro só na vitrine do norte (a do sul está quebrada — por isso dá pra entrar)
+    addBox(0.08, 2.2, PORTA[1][1] - PORTA[1][0] - 0.5, MAT.vidro, LOJA_FACE, 0.2, (PORTA[1][0] + PORTA[1][1]) / 2, { collide: false });
+    // teto da sala (é o que faz dela INTERIOR e não um pátio cercado)
+    const teto = addBox(LD, 0.25, LOJA_Z1 - LOJA_Z0, MAT.marquiseBaixo, LX, LOJA_TETO, 0, { collide: false });
+    teto.name = 'posto-loja-teto';
+    lojaInterior.add(teto);
+
+    /* GÔNDOLAS PROCEDURAIS — cover de peito (1,25 m), longas em X, com coxia em
+       z ≈ -3,4 / 0 / +3,4: é onde a grade de waypoints (STEP 3,4) tem nó. */
+    const gondMat = lam({ color: 0x8d949b }), prateleira = lam({ color: 0xd9d3c6 });
+    const MERCH = [0xc0392b, 0xe0a020, 0x2e8b57, 0x1f5fbf, 0xe4dccb, 0xe0551e];
+    const GOND_X0 = -24.4, GOND_X1 = -18.6, GOND_L = GOND_X1 - GOND_X0, GOND_CX = (GOND_X0 + GOND_X1) / 2;
+    [-4.6, -1.9, 1.9, 4.6].forEach((gz, gi) => {
+      const g = addBox(GOND_L, 1.25, 0.7, gondMat, GOND_CX, 0, gz);
+      g.name = `posto-loja-gondola-${gi}`;
+      lojaInterior.add(g);
+      // duas bandejas + mercadoria colorida (o que faz a gôndola parecer cheia)
+      for (const gy of [0.55, 1.25]) addBox(GOND_L, 0.06, 0.78, prateleira, GOND_CX, gy, gz, { collide: false, cast: false });
+      for (let i = 0; i < 9; i++) {
+        const mx = GOND_X0 + 0.4 + i * (GOND_L - 0.8) / 8;
+        addBox(0.34, 0.3, 0.34, lam({ color: MERCH[(gi * 3 + i) % MERCH.length] }), mx, 1.31, gz + ((i % 2) ? 0.12 : -0.12), { collide: false });
+        addBox(0.3, 0.26, 0.3, lam({ color: MERCH[(gi * 5 + i + 2) % MERCH.length] }), mx, 0.61, gz + ((i % 2) ? -0.1 : 0.1), { collide: false });
+      }
+    });
+    /* Balcão e carrinho encostados na parede, FORA das coxias: móvel em cima de nó
+       de waypoint tranca a rota do bot dentro da loja (2 nós em vez de 6). */
+    const balcao = addBox(1.2, 1.1, 0.9, lam({ color: 0x7a5326 }), -18.0, 0, -5.0);
+    balcao.name = 'posto-loja-balcao'; lojaInterior.add(balcao);
+    for (const gz of [-2.2, 0.4]) {
+      const gel = addBox(0.7, 2.0, 1.9, lam({ color: 0xb9c6cc }), LOJA_FUNDO + 0.55, 0, gz);
+      gel.name = 'posto-loja-geladeira'; lojaInterior.add(gel);
+      addBox(0.1, 1.5, 1.6, MAT.vidro, LOJA_FUNDO + 0.92, 0.3, gz, { collide: false });
     }
-    addBox(LD, LH, 24, MAT.loja, LX, 0, 0, { collide: false, cast: false });   // fundo/teto visual
-    addBox(LD + 0.6, 0.5, 25, MAT.lojaBanda, LX, LH, 0, { collide: false });   // beiral vermelho
-    // fachada de vidro virada pro pátio (face leste), nas duas metades
-    for (const cz of [-7, 7]) addBox(0.1, 3.2, 9, MAT.vidro, LX + LD / 2, 0.2, cz, { collide: false });
+    // carrinho largado, encostado na vitrine (fora da coxia)
+    prop('shopping_cart', -17.9, 4.8, 1.0, 1.2, 0.4, 0.4, 0.9);
+
+    /* CORPOS FECHADOS: o molde nas duas pontas, com colisor manual — a loja fecha o
+       oeste mesmo sem o GLB carregar (contrato de prop opcional do mapprops). */
+    for (const lz of [-11, 11]) {
+      const corpo = new THREE.Group(); corpo.name = `posto-loja-corpo-${lz < 0 ? 'sul' : 'norte'}`;
+      root.add(corpo);
+      const glb = placeProp('loja_conveniencia', { x: LX, z: lz, y: 0, targetH: 5.0 });
+      if (glb) { corpo.add(glb); occluders.push(glb); }
+      else {
+        // fallback procedural com a MESMA pegada do molde
+        const cx2 = addBox(4.9, 5.0, 5.4, MAT.loja, LX, 0, lz, { collide: false });
+        corpo.add(cx2);
+      }
+      col(LX, lz, 2.45, 2.7, 5.0);
+      corpo.userData.molde = 'loja_conveniencia';
+    }
+
+    // laje + banda vermelha CONTÍNUAS: os três corpos leem como um prédio só
+    addBox(LD + 0.6, 0.45, 28, MAT.marquise, LX, LH, 0, { collide: false });
+    addBox(LD + 0.9, 0.55, 28.4, MAT.lojaBanda, LX, LH - 0.5, 0, { collide: false });
     // letreiro "POSTO DA TRETA" no topo da fachada (canvas com aspecto casado = não corta)
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.4), new THREE.MeshLambertMaterial({ map: signTex('#111417', '#ffd23f', 'POSTO DA TRETA', 'CONVENIÊNCIA 24H', 792, 172) }));
-    sign.position.set(LX + LD / 2 + 0.05, 4.2, 0); sign.rotation.y = Math.PI / 2; root.add(sign);
+    sign.position.set(LOJA_FACE + 0.5, 4.2, 0); sign.rotation.y = Math.PI / 2; root.add(sign);
   }
 
-  /* ---------------- MARQUISE central sobre as ilhas de bomba (corredor central) ----------------
-     Teto plano a 5,5 m sobre 6 pilares. Teto e fáscia collide:false (passa por baixo);
-     os 6 pilares colidem. É o pátio disputado — a bandeira MID mora aqui. */
+  /* COBERTURA METÁLICA sobre as bombas: telha trapezoidal, treliça aparente e fáscia
+     de aço. Só os 6 pilares colidem (BUG-21). Régua: posto-check.mjs (POSTO3). */
+  const COB_CX = 4, COB_CY = 5.5;
+  const cobertura = new THREE.Group(); cobertura.name = 'posto-cobertura';
+  root.add(cobertura);
   {
-    const CY = 5.5, cx = 4;
-    addBox(20, 0.5, 22, MAT.marquise, cx, CY, 0, { collide: false });
-    addBox(19.2, 0.08, 21.2, MAT.marquiseBaixo, cx, CY - 0.09, 0, { collide: false, cast: false });   // forro
-    for (const bz of [-9, -3, 3, 9]) addBox(19.2, 0.18, 0.2, MAT.aco, cx, CY - 0.2, bz, { collide: false, cast: false });   // vigas do forro
-    for (const s of [-1, 1]) {   // fáscia (borda) N/S e L/O
-      addBox(20, 0.9, 0.4, MAT.fascia, cx, CY - 0.2, s * 11, { collide: false });
-      addBox(0.4, 0.9, 22, MAT.fascia, cx + s * 10, CY - 0.2, 0, { collide: false });
+    const cx = COB_CX, CY = COB_CY;
+    // telha de aço galvanizado, nervura da trapezoidal e forro branco de baixo
+    MAT.telha = lam({ color: 0xb9c0c7 });
+    MAT.telhaNerv = lam({ color: 0x98a0a8 });
+    MAT.forroAco = lam({ color: 0xd3d8dd });
+    const telha = addBox(20, 0.22, 22, MAT.telha, cx, CY, 0, { collide: false });
+    telha.name = 'posto-cobertura-telha'; cobertura.add(telha);
+    const forro = addBox(19.2, 0.07, 21.2, MAT.forroAco, cx, CY - 0.1, 0, { collide: false, cast: false });
+    cobertura.add(forro);
+    // NERVURA trapezoidal: o que faz a chapa parecer telha e não laje
+    for (let nx = -9.4; nx <= 9.4; nx += 0.8) cobertura.add(addBox(0.26, 0.12, 22, MAT.telhaNerv, cx + nx, CY + 0.22, 0, { collide: false, cast: false }));
+    // fáscia de metal com tarja vermelha nas quatro bordas
+    for (const sgn of [-1, 1]) {
+      cobertura.add(addBox(20.4, 0.75, 0.35, MAT.aco, cx, CY - 0.55, sgn * 11, { collide: false }));
+      cobertura.add(addBox(20.4, 0.3, 0.4, MAT.fascia, cx, CY - 0.25, sgn * 11, { collide: false }));
+      cobertura.add(addBox(0.35, 0.75, 22.4, MAT.aco, cx + sgn * 10, CY - 0.55, 0, { collide: false }));
+      cobertura.add(addBox(0.4, 0.3, 22.4, MAT.fascia, cx + sgn * 10, CY - 0.25, 0, { collide: false }));
     }
-    for (const px of [cx - 8, cx + 8]) for (const pz of [-9, 0, 9]) {
-      addBox(0.55, CY, 0.55, MAT.pilar, px, 0, pz);   // pilar (colide)
-    }
-    // 3 ILHAS DE BOMBA sob a marquise (cover de peito): meio-fio + 2 bombas cada
-    for (const iz of [-8, 0, 8]) {
-      addBox(4.4, 0.22, 1.8, MAT.curb, cx, 0, iz, { collide: false });        // meio-fio baixo (não trava tiro)
-      for (const dx of [-1.1, 1.1]) {
-        addBox(0.7, 1.5, 0.55, MAT.bomba, cx + dx, 0.22, iz);                 // corpo da bomba (colide)
-        addBox(0.72, 0.4, 0.57, MAT.bombaTopo, cx + dx, 1.72, iz, { collide: false });   // visor
-        const mang = addBox(0.08, 0.9, 0.08, MAT.aco, cx + dx + 0.4, 0.5, iz, { collide: false }); mang.rotation.z = 0.3;
+    /* TRELIÇA: banzo superior/inferior, montantes e diagonais. Só malha girada
+       (rotation.z) — nenhum colisor girado, que é o BUG-21. */
+    const treli = (x0, x1, z, y) => {
+      const L = x1 - x0, mx = (x0 + x1) / 2;
+      cobertura.add(addBox(L, 0.1, 0.1, MAT.aco, mx, y, z, { collide: false, cast: false }));
+      cobertura.add(addBox(L, 0.1, 0.1, MAT.aco, mx, y - 0.62, z, { collide: false, cast: false }));
+      for (let d = 0; d <= L; d += 1.6) {
+        cobertura.add(addBox(0.07, 0.62, 0.07, MAT.aco, x0 + d, y - 0.62, z, { collide: false, cast: false }));
+        const dg = addBox(0.06, 0.95, 0.06, MAT.aco, x0 + d + 0.8, y - 0.62, z, { collide: false, cast: false });
+        dg.rotation.z = 0.62; cobertura.add(dg);
       }
+    };
+    for (const tz of [-9, 0, 9]) treli(cx - 8, cx + 8, tz, CY - 0.12);
+    // PILARES de aço (os únicos que colidem) + sapata de concreto na base
+    for (const px of [cx - 8, cx + 8]) for (const pz of [-9, 0, 9]) {
+      const pil = addBox(0.5, CY, 0.5, MAT.aco, px, 0, pz);
+      pil.name = 'posto-cobertura-pilar'; cobertura.add(pil);
+      addBox(0.9, 0.25, 0.9, MAT.apron, px, 0, pz, { collide: false });
+    }
+    // luminárias sob o forro (a luz de posto de estrada à noite)
+    for (const lz of [-7, -2.5, 2.5, 7]) for (const lx of [cx - 4, cx + 4]) {
+      const lum = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff2c4 }));
+      lum.position.set(lx, CY - 0.18, lz); cobertura.add(lum);
+    }
+
+    /* 3 ILHAS DE BOMBA com o molde `bombas_combustivel.glb`. A do meio é a hero:
+       mora sob a bandeira MID. Sem o GLB cai no par procedural, mesma pegada. */
+    for (const iz of [-8, 0, 8]) {
+      const ilha = new THREE.Group();
+      ilha.name = iz === 0 ? 'posto-ilha-bomba-central' : `posto-ilha-bomba-${iz < 0 ? 'sul' : 'norte'}`;
+      ilha.userData.molde = 'bombas_combustivel';
+      root.add(ilha);
+      addBox(4.4, 0.22, 1.8, MAT.curb, cx, 0, iz, { collide: false });        // meio-fio baixo (não trava tiro)
+      const glb = placeProp('bombas_combustivel', { x: cx, z: iz, y: 0.22, targetH: 2.0 });
+      if (glb) { ilha.add(glb); occluders.push(glb); }
+      else for (const dx of [-1.1, 1.1]) {   // fallback procedural (mesma silhueta, mesma pegada)
+        ilha.add(addBox(0.7, 1.5, 0.55, MAT.bomba, cx + dx, 0.22, iz, { collide: false }));
+        ilha.add(addBox(0.72, 0.4, 0.57, MAT.bombaTopo, cx + dx, 1.72, iz, { collide: false }));
+      }
+      // colisor da pegada do molde (2,47 × 0,94 m em targetH 2,0), sempre presente
+      col(cx, iz, 1.3, 0.6, 2.22);
+      // mangueira pendurada nas pontas (detalhe que o molde não traz)
+      for (const dx of [-1.35, 1.35]) { const mg = addBox(0.07, 0.85, 0.07, MAT.aco, cx + dx, 0.7, iz, { collide: false }); mg.rotation.z = 0.28; ilha.add(mg); }
     }
   }
 
@@ -273,6 +386,75 @@ export function buildPosto(scene, T) {
     drum.position.set(-15.5 + d * 0.75, 0.45, sz * 10.5); drum.castShadow = true; root.add(drum);
     col(-15.5 + d * 0.75, sz * 10.5, 0.4, 0.4, 0.9);
   }
+
+  /* MENOS ASFALTO ABERTO: mureta de peito, jardineira e pneu. Todas caem ENTRE duas
+     linhas da grade de waypoints, então cortam o tiro sem matar a rota (POSTO4). */
+  MAT.mureta = lam(tex('concrete', 0xc3bcae));
+  MAT.muretaTopo = lam({ color: 0x8f887c });
+  MAT.terraCanteiro = lam({ color: 0x53412c });
+  const mureta = (x, z, dimX, dimZ, nome) => {
+    const m = addBox(dimX, 1.1, dimZ, MAT.mureta, x, 0, z);
+    m.name = nome || 'posto-mureta';
+    addBox(dimX + 0.12, 0.12, dimZ + 0.12, MAT.muretaTopo, x, 1.1, z, { collide: false });
+    return m;
+  };
+  // corredor OESTE (entre a loja e a cobertura), em z ≈ ∓5,1
+  for (const sz of [-1, 1]) mureta(-11.5, sz * 5.1, 5.0, 0.4, 'posto-mureta-oeste');
+
+  // pátio LESTE: longas em z, entre as colunas 11,4 e 14,8 da grade
+  for (const sz of [-1, 1]) mureta(13.1, sz * 6.0, 0.4, 6.0, 'posto-mureta-leste');
+
+  // aproximação do totem: quebra o corredor de tiro da rodovia às bombas
+  for (const sz of [-1, 1]) mureta(19.9, sz * 2.6, 0.4, 4.4, 'posto-mureta-totem');
+
+  // "L" na boca de cada entrada: tira o tiro direto do spawn pro meio
+  for (const sz of [-1, 1]) {
+    mureta(-2.2, sz * 18.7, 4.6, 0.4, 'posto-mureta-entrada');
+    mureta(9.7, sz * 18.7, 0.4, 4.0, 'posto-mureta-entrada');
+  }
+
+  /* A coxia oeste da cobertura tinha 71 linhas livres de mais de 20 m passando pela
+     célula (-2, 0) — tiro reto de spawn a spawn. Estes três põem curva nela. */
+  {
+    // ilha de AR E ÁGUA no meio da coxia (o calibrador de pneu de todo posto)
+    const ilhaAr = new THREE.Group(); ilhaAr.name = 'posto-ilha-ar-agua'; root.add(ilhaAr);
+    ilhaAr.add(addBox(3.0, 0.3, 1.7, MAT.curb, -2.5, 0, 0, { collide: false }));
+    ilhaAr.add(addBox(0.5, 1.5, 0.5, MAT.aco, -3.4, 0.3, 0, { collide: false }));
+    // totem do calibrador e tanque de água
+    ilhaAr.add(addBox(0.62, 0.5, 0.6, MAT.fascia, -3.4, 1.8, 0, { collide: false }));
+    ilhaAr.add(addBox(0.9, 1.0, 0.9, lam({ color: 0x2e6f9e }), -1.6, 0.3, 0, { collide: false }));
+    col(-2.5, 0, 1.6, 0.95, 1.7);
+
+    // muretas escalonadas nas duas metades da coxia oeste e na coxia leste
+    for (const sz of [-1, 1]) mureta(-3.4, sz * 8.5, 5.2, 0.4, 'posto-mureta-coxia');
+    for (const sz of [-1, 1]) mureta(9.7, sz * 8.5, 4.4, 0.4, 'posto-mureta-coxia');
+  }
+
+  // JARDINEIRAS — canteiro de meio-fio com terra e vegetação do acervo v2.1
+  const PLANTAS = ['ixora', 'agave', 'samambaia'];
+  let pi = 0;
+  const jardineira = (x, z, r = 1.6) => {
+    const g = new THREE.Group(); g.name = 'posto-jardineira'; root.add(g);
+    // meio-fio em quatro trechos: o canteiro é um retângulo vazado
+    for (const sgn of [-1, 1]) {
+      g.add(addBox(r * 2 + 0.5, 0.5, 0.25, MAT.curb, x, 0, z + sgn * r, { collide: false }));
+      g.add(addBox(0.25, 0.5, r * 2, MAT.curb, x + sgn * r, 0, z, { collide: false }));
+    }
+    g.add(addBox(r * 2, 0.42, r * 2, MAT.terraCanteiro, x, 0, z, { collide: false, cast: false }));
+    col(x, z, r + 0.12, r + 0.12, 0.6);
+    for (let k = 0; k < 3; k++) {
+      const a = k * 2.1, px = x + Math.cos(a) * r * 0.5, pz = z + Math.sin(a) * r * 0.5;
+      const pl = placeProp(PLANTAS[pi++ % PLANTAS.length], { x: px, z: pz, y: 0.42, targetH: 0.9 + (k % 2) * 0.35, ry: a });
+      if (pl) { g.add(pl); occluders.push(pl); }
+      else g.add(addBox(0.5, 0.9, 0.5, MAT.grama, px, 0.42, pz, { collide: false }));
+    }
+    return g;
+  };
+  for (const sz of [-1, 1]) { jardineira(18, sz * 16); jardineira(-6.5, sz * 15, 1.4); }
+
+  // PILHAS DE PNEUS extras nos vazios (cover redondo, altura de peito)
+  for (const sz of [-1, 1]) { prop('pilha_pneus', -12, sz * 19, 1.5, 0, 1.0, 1.0, 1.4); prop('pilha_pneus', 21, sz * 9, 1.5, 0.4, 1.0, 1.0, 1.4); }
+  for (const sz of [-1, 1]) prop('tires', 10.5, sz * 15, 0.8, 0.7, 0.8, 0.8, 0.7);
 
   /* ---------------- PLACAS (totem de preço, rótulos das bombas, avisos, outdoor) ---------------- */
   // placa de DOIS LADOS: duas faces costa-a-costa (cada uma FrontSide), então o texto lê
@@ -381,6 +563,9 @@ export function buildPosto(scene, T) {
   }
   // 2 fuzis DISPUTADOS no centro (sob a marquise) — o motivo de correr pro meio
   place('ak', 1, -2, 0); place('m4', 7, 2, 0);
+  /* LOOT DA LOJA: sala andável só vale a visita com o que pegar. Nas coxias das
+     gôndolas (z ≈ ∓3,4), onde a grade tem nó — então o bot entra também. */
+  place('shotgun', LX + 0.6, -3.4, -Math.PI / 2); place('mp5', LX - 1.8, 3.4, -Math.PI / 2);
 
   /* ---------------- luz de fim de tarde ---------------- */
   const hemi = new THREE.HemisphereLight(0xffe0b0, 0x40352a, 1.0);
@@ -492,7 +677,17 @@ export function buildPosto(scene, T) {
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:75,vol:.24},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:75,vol:.26}],bioma:'urbano'},
+    /* SOM: `hum` desafinado pra grave vira bomba ligada na ilha do meio; `funk`
+       (tamborzão instrumental, sem letra) com lowpass vira rádio abafado da loja. */
+    ambience, sound: {
+      loops: [
+        { src: AMB_LOOPS.vento, pos: [0, 3, 0], radius: 75, vol: .24 },
+        { src: AMB_LOOPS.cidade, pos: [0, 3, 0], radius: 75, vol: .26 },
+        { src: AMB_LOOPS.hum, pos: [COB_CX, 1.2, 0], radius: 9, vol: .30, rate: .72, tag: 'bomba-ligada' },
+        { src: AMB_LOOPS.funk, pos: [LX, 1.6, 0], radius: 11, vol: .26, lowpass: 620, tag: 'radio-loja' },
+      ],
+      bioma: 'urbano',
+    },
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     // triângulo (NÃO-colinear): MID sob a marquise (x=4), E/B no pátio oeste (x=-10)
     ctfPoints: [
