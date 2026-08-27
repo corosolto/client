@@ -21,13 +21,8 @@ export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fu
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
   'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas'];
 
-/* PROPORÇÃO NATURAL DOS MOLDES DE CASA (kit Mint `favela_r3`).
-   bbox do GLB em disco, medido com @gltf-transform em 27/08/2026 — os moldes vêm
-   normalizados em ~1 m no maior eixo, então o que importa aqui é a RAZÃO entre eixos:
-   é dela que sai o quanto cada instância precisa esticar para caber na planta pedida.
-   `eval:escala-casario` relê os dois arquivos e reprova se estes números derivarem —
-   trocar o GLB por outro sem reconferir a escala é exatamente o defeito que o dono
-   apontou ("tem que ver a escala dos predios sempre"). */
+/* bbox dos moldes (GLB em disco): é a razão entre eixos que decide o quanto cada
+   instância estica. `eval:escala-casario` relê os arquivos e reprova se derivar. */
 export const CASARIO_MOLDES = Object.freeze({
   casa_favela_azul: { larg: 0.955, alt: 0.998, prof: 0.764 },
   casa_favela_tijolo: { larg: 0.943, alt: 0.936, prof: 0.998 },
@@ -246,20 +241,14 @@ export function buildEscadao(scene, T) {
   addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, H_TOP + 0.02);
 
   /* ===================== HELPERS DE GEOMETRIA ===================== */
-  /* ===================== CASARIO DE MOLDE (kit Mint favela_r3) =====================
-     O dono, 20/08: "os mapas de favela so o lajes tem cordao de roupas do model, os
-     outros nao e tudo generico low poly". As casas do escadão continuam sendo o MESMO
-     volume de jogo (o colisor não muda de dono): o molde entra como pele por cima do
-     prisma, que fica invisível mas SEGUE em `occluders` — bala e linha de visão param
-     onde sempre pararam, e não na malha vazada do GLB (a lição do BUG-54 ao contrário).
-     Sem GLB (node, `?glb=0`, molde que não baixou) a fachada procedural de sempre volta.
-     O registro `casario` guarda a REFERÊNCIA do colisor: é por ele que a régua
-     `eval:escala-casario` mede pé-direito, fachada e distorção no mundo construído. */
+  /* ===== CASARIO DE MOLDE (kit Mint favela_r3) =====
+     O molde é pele sobre o prisma: o colisor invisível segue em `occluders` (BUG-54) e
+     sem GLB a fachada procedural volta. Régua: `eval:escala-casario`, via `casario`. */
   const casario = [];
   function instanciaCasa(spec, x, z, y, w, h, d, col) {
     const nat = CASARIO_MOLDES[spec.molde];
     const sy = h / nat.alt;                       // placeProp já escala uniforme pela altura
-    // Duas orientações cabem na mesma planta; fica a que menos distorce o molde.
+    // Duas orientações cabem na planta; fica a que menos distorce o molde.
     const opcao = (alvoX, alvoZ) => ({ sx: alvoX / (nat.larg * sy), sz: alvoZ / (nat.prof * sy) });
     const desvio = (e) => Math.max(e.sx, e.sz) / Math.min(e.sx, e.sz);
     const reto = opcao(w, d), girado = opcao(d, w);
@@ -470,12 +459,8 @@ export function buildEscadao(scene, T) {
 
   /* ===================== CASAS LATERAIS ===================== */
   // Cada par acompanha o nível do lance vizinho; o embasamento fecha o volume até a rua.
-  /* A planta segue estreita (3,0 × 4,4 m): mexer no x destas seis abriria/estreitaria o
-     corredor do lance. Quem varia é a ALTURA — sobrado de 2×2,95 m de um lado, casa de
-     um pavimento (3,05 m) do outro, alternando de nível em nível. É a escada de laje que
-     o dono cobra, e é também a proporção em que cada molde cabe sem virar panqueca: o
-     tijolo (planta quase quadrada) não entra em 3,0 m de frente com 5,9 m de altura sem
-     ser espremido a 0,50× — foi a régua `eval:escala-casario` que disse isso, não o olho. */
+  /* Planta estreita fixa (mexer no x fecharia o lance): quem varia é a ALTURA, sobrado
+     de 2×2,95 m alternando com casa de 3,05 m — o tijolo não cabe em 3,0 m × 5,9 m. */
   for (const [z, y, ml, mr, alto] of [[12, 0, 1, 0, -1], [5, RISE, 0, 2, 1], [-3.7, RISE * 2, 2, 1, -1]]) {
     const sobrado = { molde: 'casa_favela_azul', pav: 2 }, terreo = { molde: 'casa_favela_tijolo', pav: 1 };
     const esq = alto < 0 ? sobrado : terreo, dir = alto < 0 ? terreo : sobrado;
@@ -563,9 +548,8 @@ export function buildEscadao(scene, T) {
   addBox(2.5, 1.2, 0.8, lam({ color: 0x4a4a3a, roughness: 0.8 }), 1.5, 0, 14.5);
 
   /* ===================== BASE (rua) ====================== */
-  /* Bar e mercadinho viram DUAS geminadas cada um: a fita de 6 m de fachada é o que a
-     rua tem, mas um molde só esticado nela viraria galpão. Duas casas de 3,0 × 4,6 m
-     dividem a mesma frente e mantêm o volume que tampa a visão dos becos. */
+  /* Bar e mercadinho viram DUAS geminadas cada um: 6 m de frente com um molde só
+     esticado viraria galpão; o volume que tampa a visão dos becos é o mesmo. */
   // bar de esquina (bloqueia visão do beco oeste)
   casa(-13.5, 32, 3, 4.6, 3.05, 0, 0, { molde: 'casa_favela_azul', pav: 1, ry: -0.03 });
   casa(-10.5, 32, 3, 4.6, 3.05, 2, 0, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.022 });
@@ -620,9 +604,7 @@ export function buildEscadao(scene, T) {
     }
     const linha = new THREE.Mesh(new THREE.BoxGeometry(2.7, .035, .035), lam({ color: 0x1a1817, roughness: 1 }));
     linha.position.set(x, y + h * .72, z); linha.rotation.y = ry; linha.userData.escadaoVaral = id;
-    /* Corda é corda: sem esta marca a sonda MAP1 do map-check lê o varal como geometria
-       visível com o corpo dentro (era o único ponto vermelho do escadão, 1,098 m — a
-       altura exata desta linha sobre o mirante). As roupas já nasciam marcadas. */
+    // Sem esta marca a corda vira "corpo dentro de sólido" no MAP1 (o ponto de 1,098 m).
     linha.userData.nonSolidSurface = true;
     root.add(linha);
     for (const dx of [-.75, 0, .75]) {
@@ -632,10 +614,8 @@ export function buildEscadao(scene, T) {
   };
   varal('varal_roupas_01', -5.8, -34.6, 1.5, .12);
   varal('varal_roupas_02', 8.1, -25.2, 1.45, -Math.PI / 2);
-  /* Varal do kit Mint `favela_r3` espalhado FORA do mirante: dois nos corredores de beco e
-     dois nas lajes baixas (chegada do beco oeste e plataforma de conexão leste). O dono,
-     20/08: "so o lajes tem cordao de roupas do model". Nenhum ganha colisor — roupa é
-     silhueta, nunca cover (mesma doutrina dos dois do topo). */
+  /* Varal do kit Mint fora do mirante: dois becos e duas lajes baixas, sem colisor
+     (roupa é silhueta, nunca cover). Cobrado por `eval:escadao-contract`. */
   varal('varal_roupas', -12.6, 12.6, 1.55, -Math.PI / 2, 0);
   varal('varal_roupas', 11.6, 12.9, 1.5, Math.PI / 2, 0);
   varal('varal_roupas', -12, 6.6, 1.5, .05, RISE);
@@ -893,14 +873,12 @@ export function buildEscadao(scene, T) {
       { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
       { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
-    /* O gato andava em (10,4;-26) → (12,1;-29): a casa de molde do mirante leste passou a
-       ocupar essa planta (4,2 × 4,2 m) e o AR3 do ambience-registry acendeu na hora. Ele
-       mudou para a faixa livre entre a mureta e a caçamba, mesma cota. */
+    /* O gato mudou de faixa: a casa de molde do mirante leste ocupou a planta antiga e o
+       AR3 do ambience-registry acendeu. Agora anda entre a mureta e a caçamba. */
     cats: [{ pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
     chickens: [{ pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
-    /* Duas espécies novas, as duas já no acervo `public/models/ambient/`: o caramelo é o
-       bicho de rua do morro (um na calçada do bar, outro tomando sol no mirante) e a
-       barata mora onde tem lixo — ao lado das caçambas do topo e no beco leste. */
+    /* Duas espécies novas do acervo `models/ambient/`: caramelo na calçada e no mirante,
+       barata onde tem lixo (caçamba do topo e beco leste). */
     dogs: [
       { pos: [-8.6, groundHeightAt(-8.6, 26.5), 26.5], to: [-7.2, groundHeightAt(-7.2, 24.2), 24.2], phase: .35 },
       { pos: [3.6, groundHeightAt(3.6, -31.4), -31.4], to: [2.1, groundHeightAt(2.1, -29.6), -29.6], phase: 2.2 },
@@ -913,10 +891,8 @@ export function buildEscadao(scene, T) {
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience, casario, casarioMoldes: CASARIO_MOLDES,
-    /* Som revisado (vida 1): as duas fontes moravam no centro do mapa com raio 70 m, então
-       o funk do baile e os pássaros tocavam IGUAL no beco lá embaixo e no mirante 6 m acima
-       — mapa de três cotas com som chapado apaga a subida. Agora cada fonte fica onde a
-       cena está: baile na rua (z≈30), rumor da cidade subindo do vale e passarada no topo. */
+    /* Som por cota: duas fontes no centro com raio 70 m tocavam igual no beco e no
+       mirante. Agora baile na rua, cidade subindo do vale e passarada no topo. */
     sound: { loops: [
       { src: AMB_LOOPS.funk, pos: [0, 3, 30], radius: 42, vol: .34 },
       { src: AMB_LOOPS.cidade, pos: [0, 2, 38], radius: 55, vol: .16 },
