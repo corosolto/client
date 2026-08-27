@@ -370,6 +370,14 @@ Contrato de produção do BotBrain: coleta opt-in autenticada por UID, limites c
 npm run eval:botbrain
 ```
 
+## `eval:i18ntwins`
+
+Pares PT↔EN numa tabela só (`src/lib/i18n-pairs.ts`): hreflang, `html lang`, og:locale, sitemap e o parser único do changelog. A gêmea do `/changelog` é `/whats-new`; o cromo é EN e o corpo continua o `CHANGELOG.md`. Mutantes: sem-par|sem-redirect|chrome-pt|lang-pt|sem-sitemap|parser-dup.
+
+```bash
+npm run eval:i18ntwins
+```
+
 ## `eval:posters`
 
 O aspecto declarado de cada cartaz em POSTER_FILES (textures.js) bate com o pixel do arquivo em public/posters/? Erro >6% = arte esticada na parede (issue #79). `--mutate` estraga um número e prova que a régua morde.
