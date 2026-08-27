@@ -20,9 +20,30 @@
    de cada peça.
 
    QUANDO RODAR: depois de mexer em geometria de mapa, em pool de decalque ou nas
-   bandas da passada. Se não rodar, o layout fica velho e a peça pode sobrar no ar —
-   e é a `graffiti-census` que cobra isso (ela conta arte sem parede atrás na cena
-   real, e é por isso que ela mede o jogo e não este arquivo).
+   bandas da passada. Se não rodar, o layout fica velho e a peça pode sobrar no ar.
+
+   ── CORREÇÃO (27/08, frente map2/piscina) ──────────────────────────────────
+   Este cabeçalho dizia que quem cobra a peça no ar é a `graffiti-census` ("ela
+   conta arte sem parede atrás na cena real"). ISSO NÃO É VERDADE, e a frase custou
+   caro: o dono jogou o Piscinão e reportou "ta cheio de poster e grafite soltado no
+   ar" com o portão inteiro verde.
+   A `graffiti-census` mede COBERTURA — placas de parede visíveis que TÊM tinta,
+   pintadas/placas, e reprova quando o número fica ABAIXO da meta. Uma peça
+   pendurada no vazio não pinta placa nenhuma: ela não entra no numerador nem no
+   denominador. Ela é INVISÍVEL para essa régua. A censura mede o oposto do que
+   esta frase prometia, e ninguém estava contando peça órfã em lugar nenhum.
+
+   Quem cobra hoje, e o que falta:
+     · `eval:grafitelayout` F2 — hash do `map_*.js` contra o gravado no layout.
+       Pega "geometria mudou e não reassaram", que é a CAUSA. É o mecanismo real.
+     · `eval:piscina-bsp` PB11 — conta arte sem parede atrás, mas só a colada pelo
+       builder e só no Piscinão; a passada assada fica fora porque em node os GLB
+       não carregam (o critério aplicado a ela acusa 100% de órfãs em praca_poderes,
+       que tem bake fresco — mede o instrumento, não o mapa).
+     · FALTA: uma cláusula de órfã DENTRO da `graffiti-census`, que roda no
+       navegador e é o único lugar onde a pergunta pode ser respondida para a
+       passada. O lugar é o laço das placas: hoje ele caminha placa→arte; falta o
+       caminho inverso, arte→placa, contando os quads que não acham superfície.
 
    Uso:
      npm run eval:serve &
