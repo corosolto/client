@@ -509,12 +509,8 @@ export function buildPenitenciaria(scene, T) {
     fio.castShadow = false; root.add(fio);
   }
 
-  /* ===== CARANDIRU (r3; dono, 27/08: "o penitenciaria podia ter carandiru como
-     referencia") =====
-     Pavilhão de celas no centro do pátio com galeria externa gradeada percorrível,
-     portão principal no muro norte, torres de muro flanqueando o portão e o campo
-     de futebol pichado no pátio norte. Moldes do kit carandiru_r3b (FONTE.md); no
-     arnês node o procedural cobre — colisores idênticos nos dois mundos (NV8). */
+  /* ===== CARANDIRU (r3) — moldes do kit carandiru_r3b (FONTE.md); no arnês o
+     procedural cobre, colisores idênticos. A cláusula NV8 conta o porquê. ===== */
   {
     // Pavilhão central (bloco_celas.glb): massa de 2 pavimentos; o jogador circula
     // pela galeria de 2,2 m entre o bloco e a grade.
