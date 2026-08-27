@@ -42,6 +42,32 @@ Loja: `x ∈ [-25,5, 25,5]`, `z ∈ [ZF = -12, ZN = 36,2]`. Estacionamento ao su
 | Freezers (`freezer.glb`) | 6 | parede fria leste, `x = 24,2` |
 | Luminárias industriais penduradas | 15 | `y = 7,6 m`, 9 com luz local |
 | Torres de promoção no eixo `x = 0` | 5 | 2,4 m |
+| Frente de caixa (`caixa_cobranca.glb`) | 6 | 1,40 × 1,84 m, `ry` PI/2 |
+| Gôndolas (`gondola_mercado` / `gondola_eletro`) | 4 + 2 | 2,86 e 2,50 m de face |
+| Seções de perímetro | 5 | HORTIFRÚTI, PEIXARIA, PADARIA, AÇOUGUE, BEBIDAS |
+| Geladeira vertical (`geladeira_bebidas.glb`) | 4 | 1,56 × 0,67 m, 2,0 m de altura |
+| Motos sob cobertura (`moto_cg.glb`) | 8 | flanco leste do pátio |
+| Postes e lixeiras do pátio | 9 + 4 | poste 5,5 m |
+
+### As superfícies grandes
+
+Piso, parede, pilar, fachada e muro caíam **todos no mesmo `T.concrete`** (um cinza
+`#9a938a`), e num fallback `color:` cinza quando `T` não vinha. Cinco superfícies
+enormes com a mesma cara é o que o dono viu: *"a faixada da loja ta cinza, o chao ta
+cinza"*. Cada uma passou a ter canvas próprio, desenhado no mapa com LCG semeado
+(determinístico, então a régua mede sempre o mesmo mundo):
+
+| Superfície | Textura |
+| --- | --- |
+| Piso da loja | granilite creme com agregado e junta serrada |
+| Doca | concreto sujo com mancha de óleo — área de serviço não é o salão |
+| Fachada | listra vermelha/amarela/azul de atacarejo, junta de ACM |
+| Parede interna | branco com barra azul de rodapé |
+| Peixaria / açougue | azulejo 20×20 / inox escovado |
+
+A cláusula **ATA8** cobra isso: superfície marcada `atacadaoSuperficie` precisa de
+material COM textura, os quatro tipos têm de existir, e dois tipos não podem dividir
+a mesma textura. `--mutar=cinza` tira o `.map` e reprova.
 
 O rack é **GLB + carga paletizada em `BoxGeometry` atrás dele**. Um rack sozinho
 tem 1,1 m de profundidade e o jogador enxerga o corredor seguinte por cima da
@@ -88,6 +114,10 @@ Nada disso estava no plano; tudo saiu de régua vermelha.
 | `map-check` CTF2 | par `B→E` caiu para 1 rota separada: a fileira de vaga do fundo fazia funil | ela abre uma **baia** em torno da bandeira E |
 | `invariants` MAP2B | doca de 3,8 m não dava 40 m² contíguos por slot | `ZN` de 33 para 36,2 (doca de 7 m) + fila de fardo no meio |
 | `eval:atacadao` ATA5 | com a praça de caixas mais funda a LOS voltou a 10,46 m contra teto 10,50 | terceira fila de fardo na praça |
+| `map-check` CTF2 | `E→E`, `E→MID` e `E→B` caíram para 1 rota: o cluster de sorvete/mesa/corral nasceu no meio da pista de 2,8 m entre fileiras de vaga e tampou. Bisseccionado — moto, cancela e lava-rápido estavam inocentes | cluster para o extremo leste, 25 m livres |
+| `map-check` MAP2B | poste a 0,78 m do spawn E derrubou a folga de 1,85 m para 0,70 m (mínimo 1,20) | esse poste saiu de vez |
+| `map-check` MAP5 | poste em coordenada fora do lattice apagava nó: `z = -24,0` e `-36,8` são LINHA de nó, não o meio dela | poste vai para `z = -25,6 / -28,8 / -35,2` |
+| `map-check` MAP5 | os 2 quadrantes do pátio a 0,16× da mediana de prop (piso 0,35×) e 9,98 m de espaçamento (teto 7,0) | moto, cancela, lava-rápido, sorvete, 9 postes, 4 lixeiras e 4 balizadores: 0,49× e 5,16 m |
 
 De brinde, os três slots do time E que já estavam vermelhos na base (folga 0 m)
 saíram: o atacadão não aparece mais na lista da MAP2B.
