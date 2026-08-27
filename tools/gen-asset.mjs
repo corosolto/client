@@ -47,7 +47,7 @@ function loadEnv(file = '.env') {
 }
 const ENV = { ...loadEnv(), ...process.env };
 
-const SECRETS = [ENV.TRIPO_API_KEY, ENV.MESHY_API_KEY, ENV.OPENROUTER_API_KEY].filter(s => s && s.length > 8);
+const SECRETS = [ENV.TRIPO_API_KEY, ENV.MESHY_API_KEY, ENV.OPENROUTER_API_KEY, ENV.REPLICATE_API_TOKEN].filter(s => s && s.length > 8);
 const redact = (s) => {
   let t = String(s ?? '');
   for (const k of SECRETS) t = t.split(k).join('***REDACTED***');
@@ -72,20 +72,22 @@ const OUT_DIR = arg('out', 'public/models/props');
 const FACE_LIMIT = parseInt(arg('face-limit', '12000'), 10);
 const TIMEOUT_S = parseInt(arg('timeout', '900'), 10);
 const RAW_DIR = '/tmp/gen-asset';
+const MESH_MODEL = arg('mesh-model', 'ndreca/hunyuan3d-2');   // provider replicate: imagem -> malha
 
 const BALANCE_ONLY = flag('balance');
 if (!BALANCE_ONLY && !ID) die('faltou --id (nome do arquivo final, sem .glb)');
 if (ID && !/^[a-z0-9_]+$/.test(ID)) die(`--id inválido: "${ID}" (use só a-z, 0-9 e _)`);
 if (!BALANCE_ONLY && !PROMPT && !RESUME) die('faltou --prompt (ou --resume <task_id>)');
-if (!['tripo', 'meshy'].includes(PROVIDER)) die(`--provider desconhecido: ${PROVIDER}`);
+if (!['tripo', 'meshy', 'replicate'].includes(PROVIDER)) die(`--provider desconhecido: ${PROVIDER}`);
 
-const KEY = PROVIDER === 'tripo' ? ENV.TRIPO_API_KEY : ENV.MESHY_API_KEY;
-if (!KEY) die(`${PROVIDER === 'tripo' ? 'TRIPO_API_KEY' : 'MESHY_API_KEY'} não está no .env`);
+const KEY_NAME = { tripo: 'TRIPO_API_KEY', meshy: 'MESHY_API_KEY', replicate: 'REPLICATE_API_TOKEN' }[PROVIDER];
+const KEY = ENV[KEY_NAME];
+if (!KEY) die(`${KEY_NAME} não está no .env`);
 
 /* ------------------------------ HTTP com trava ------------------------------ */
 // Allowlist de host por provedor. Sem isto, um redirect (ou um campo de URL vindo da
 // própria resposta) bastaria pra reenviar a chave pra outro domínio.
-const API_HOSTS = { tripo: 'api.tripo3d.ai', meshy: 'api.meshy.ai' };
+const API_HOSTS = { tripo: 'api.tripo3d.ai', meshy: 'api.meshy.ai', replicate: 'api.replicate.com' };
 
 async function apiFetch(url, opts = {}) {
   const host = new URL(url).host;
@@ -143,6 +145,62 @@ const PROVIDERS = {
       };
     },
   },
+  // Replicate não tem texto->3D direto com qualidade de prop de jogo: o caminho é
+  // texto->imagem (flux-schnell) e imagem->malha texturizada (hunyuan3d-2). O start
+  // faz a etapa da imagem de forma síncrona (`Prefer: wait`) e devolve o id da etapa
+  // 3D, para caber na mesma interface start/poll dos outros dois provedores.
+  replicate: {
+    async start(prompt) {
+      // A imagem manda na malha: objeto único, centrado, inteiro no quadro e fundo liso.
+      // Sem isso o hunyuan reconstrói o cenário junto e o prop sai com chão colado.
+      const look = `${prompt}, objeto único centralizado, produto inteiro visível, vista 3/4, `
+        + 'fundo cinza liso, luz de estúdio difusa, sem pessoas, sem texto, sem moldura';
+      let img = await apiFetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+        method: 'POST',
+        headers: { Prefer: 'wait' },
+        body: JSON.stringify({ input: { prompt: look, aspect_ratio: '1:1', output_format: 'png', num_outputs: 1, megapixels: '1' } }),
+      });
+      // `Prefer: wait` segura a conexão até 60s, mas devolve em "starting" se a GPU
+      // estiver fria — e aí `output` vem null. Espera de verdade em vez de confiar nela.
+      const tImg = Date.now();
+      while (['starting', 'processing'].includes(img.status) && (Date.now() - tImg) < 300000) {
+        await sleep(3000);
+        img = await apiFetch(`https://api.replicate.com/v1/predictions/${encodeURIComponent(img.id)}`);
+      }
+      if (img.status !== 'succeeded') die(`flux terminou em "${img.status}": ${JSON.stringify(img.error ?? img).slice(0, 300)}`);
+      const url = Array.isArray(img.output) ? img.output[0] : img.output;
+      if (!url) die(`flux não devolveu imagem: ${JSON.stringify(img).slice(0, 400)}`);
+      say(`  imagem de referência pronta (host ${new URL(url).host})`);
+      // `/models/{owner}/{name}/predictions` só atende modelo OFICIAL da Replicate; o
+      // hunyuan é da comunidade e responde 404 lá. Para esses, o caminho é `/predictions`
+      // com o id da versão — que se lê do próprio modelo, sem fixar hash no código.
+      const meta = await apiFetch(`https://api.replicate.com/v1/models/${MESH_MODEL}`);
+      const version = meta.latest_version?.id;
+      if (!version) die(`sem latest_version para ${MESH_MODEL}`);
+      const j = await apiFetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        // max_facenum é o orçamento de faces DA GERAÇÃO (padrão do modelo: 40000). O
+        // acervo é mais magro que isso — kits Mint ~4-5k tris — mas o hunyuan RECUSA
+        // abaixo de 10000 (422). Fica no piso: gerar no piso e não simplificar depois
+        // preserva a silhueta, que é o que se perde no decimador.
+        body: JSON.stringify({ version, input: { image: url, max_facenum: Math.max(10000, FACE_LIMIT), steps: 50, octree_resolution: 512, remove_background: true } }),
+      });
+      if (!j.id) die(`resposta inesperada do Replicate: ${JSON.stringify(j).slice(0, 400)}`);
+      return j.id;
+    },
+    async poll(taskId) {
+      const j = await apiFetch(`https://api.replicate.com/v1/predictions/${encodeURIComponent(taskId)}`);
+      const o = j.output;
+      const url = (o && typeof o === 'object' && !Array.isArray(o)) ? (o.mesh || o.glb || o.model_file || null)
+        : Array.isArray(o) ? o[0] : (typeof o === 'string' ? o : null);
+      return {
+        status: j.status, progress: j.status === 'processing' ? 50 : j.status === 'succeeded' ? 100 : 0,
+        done: j.status === 'succeeded' && !!url,
+        failed: ['failed', 'canceled'].includes(j.status),
+        url, raw: j,
+      };
+    },
+  },
   meshy: {
     async start(prompt) {
       const j = await apiFetch('https://api.meshy.ai/openapi/v2/text-to-3d', {
@@ -172,6 +230,11 @@ if (flag('balance')) {
   if (PROVIDER === 'tripo') {
     const j = await apiFetch('https://api.tripo3d.ai/v2/openapi/user/balance');
     say('tripo balance:', JSON.stringify(j.data ?? j));
+  } else if (PROVIDER === 'replicate') {
+    // A Replicate não expõe saldo pela API; /account confirma que a chave vale, que é
+    // metade do motivo de existir esta flag (separar "chave errada" de "sem crédito").
+    const j = await apiFetch('https://api.replicate.com/v1/account');
+    say('replicate account:', JSON.stringify(j), '(a API não expõe saldo — cobrança por segundo de GPU)');
   } else {
     const j = await apiFetch('https://api.meshy.ai/openapi/v1/balance');
     say('meshy balance:', JSON.stringify(j));
