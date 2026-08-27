@@ -8,7 +8,7 @@
      3. `translateDom(root)`: varre nós de texto e atributos (placeholder/title/aria) do
         menu ESTÁTICO uma vez no boot — zero mudança no index.astro;
      4. `frase(id, ...args)`: os textos DINÂMICOS do game.js (banner, HUD) com template.
-   Páginas do site e docs em EN são outra frente (issue #54). */
+   Páginas do site e docs em EN são outra frente (issue #54; changelog já tem /whats-new). */
 
 let _lang = null;
 // ?lang=pt|en na URL vence tudo (teste/demonstração — ex.: a live mostra EN sem mexer em config)
