@@ -1,0 +1,30 @@
+{
+  "schema": "coro_auto_viewmodel_reference.v1",
+  "pilot": "m4",
+  "project_weapon_source": "public/models/weapons/m4.glb",
+  "animation_structure_source": "/Users/ruben/csbrasil/client/public/models/viewmodels/coro/ak-hires.glb",
+  "forbidden_export_content": [
+    "source weapon mesh",
+    "source weapon material",
+    "source weapon skin"
+  ],
+  "required_actions": [
+    "Idle",
+    "Reload",
+    "Shoot"
+  ],
+  "required_project_weapon_objects": [
+    "coro_auto_project_m4_body",
+    "coro_auto_project_m4_magazine",
+    "coro_auto_project_m4_replacement_magazine"
+  ],
+  "visual_gate": {
+    "aspect": "3:2",
+    "states": [
+      "Idle",
+      "Reload",
+      "Shoot"
+    ],
+    "hard_requirement": "contact sheets must be inspected before propagation"
+  }
+}

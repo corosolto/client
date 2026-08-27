@@ -1,0 +1,21 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_000.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_005.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_010.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "shoot_000.png",
+      "to": "shoot_005.png",
+      "mean_rgb_diff": 2.9547716049382715
+    },
+    {
+      "from": "shoot_005.png",
+      "to": "shoot_010.png",
+      "mean_rgb_diff": 2.95958024691358
+    }
+  ],
+  "warnings": []
+}

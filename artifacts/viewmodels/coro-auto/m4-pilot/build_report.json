@@ -1,0 +1,35 @@
+{
+  "schema": "coro_auto_viewmodel_build_report.v1",
+  "pilot": "m4",
+  "magazine_split": {
+    "vertices": 207,
+    "shells": 19
+  },
+  "idle_min_hand_to_weapon_distance_m": {
+    "left": 0.000819,
+    "right": 0.003976
+  },
+  "rendered_frames": [
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_000.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_040.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_080.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_000.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_005.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_010.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_000.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_012.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_024.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_036.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_048.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_060.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_072.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_080.png"
+  ],
+  "structural_checks": {
+    "required_actions_present": true,
+    "source_weapon_objects_exported": 0,
+    "weapon_geometry_origin": "public/models/weapons/m4.glb",
+    "two_project_magazines": true
+  },
+  "visual_status": "pending_contact_sheet_inspection"
+}

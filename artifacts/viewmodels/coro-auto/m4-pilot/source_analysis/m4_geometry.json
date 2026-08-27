@@ -1,0 +1,12 @@
+{
+  "schema": "coro_auto_source_geometry.v1",
+  "source": "public/models/weapons/m4.glb",
+  "mesh_count": 1,
+  "vertex_count": 7468,
+  "bounds": {
+    "min": [-0.499023, -0.047852, -0.172852],
+    "max": [0.499023, 0.047852, 0.172852],
+    "size": [0.998047, 0.095703, 0.345703]
+  },
+  "analysis": "The source is transformed and split by complete loose shells; it is not reconstructed from a donor weapon."
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "coro_auto_family_inventory.v1",
+  "registry_source": "public/js/data/weapons.js",
+  "model_source": "public/models/weapons",
+  "scope_rule": "rifles, SMGs and LMGs with auto: true; AK and AKM excluded; scoped semi-auto rifles excluded",
+  "weapons": [
+    { "id": "m4", "class": "rifle", "model": "public/models/weapons/m4.glb", "bytes": 321516, "pilot": true },
+    { "id": "g3", "class": "rifle", "model": "public/models/weapons/g3.glb", "bytes": 913728 },
+    { "id": "md97", "class": "rifle", "model": "public/models/weapons/md97.glb", "bytes": 285240 },
+    { "id": "scar", "class": "rifle", "model": "public/models/weapons/scar.glb", "bytes": 341408 },
+    { "id": "tavor", "class": "rifle", "model": "public/models/weapons/tavor.glb", "bytes": 306300 },
+    { "id": "famas", "class": "rifle", "model": "public/models/weapons/famas.glb", "bytes": 289476 },
+    { "id": "m92", "class": "rifle", "model": "public/models/weapons/m92.glb", "bytes": 1075608 },
+    { "id": "mp5", "class": "smg", "model": "public/models/weapons/mp5.glb", "bytes": 285596 },
+    { "id": "uzi", "class": "smg", "model": "public/models/weapons/uzi.glb", "bytes": 274592 },
+    { "id": "p90", "class": "smg", "model": "public/models/weapons/p90.glb", "bytes": 257860 },
+    { "id": "lmg", "class": "lmg", "model": "public/models/weapons/lmg.glb", "bytes": 360264 }
+  ],
+  "excluded": [
+    { "id": "ak", "reason": "separate pilot" },
+    { "id": "akm", "reason": "separate pilot" },
+    { "id": "carbine", "reason": "registry does not declare auto: true" },
+    { "id": "m400", "reason": "scoped rifle outside automatic-family asset pass" },
+    { "id": "svd", "reason": "scoped semi-auto family" },
+    { "id": "g3sg1", "reason": "scoped semi-auto family" },
+    { "id": "sks", "reason": "scoped semi-auto family" }
+  ]
+}

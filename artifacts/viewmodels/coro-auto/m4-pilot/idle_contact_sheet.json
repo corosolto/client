@@ -1,0 +1,21 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_000.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_040.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_080.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "idle_000.png",
+      "to": "idle_040.png",
+      "mean_rgb_diff": 0.0
+    },
+    {
+      "from": "idle_040.png",
+      "to": "idle_080.png",
+      "mean_rgb_diff": 0.0
+    }
+  ],
+  "warnings": []
+}

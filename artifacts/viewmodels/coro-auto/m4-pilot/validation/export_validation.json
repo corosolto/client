@@ -1,0 +1,22 @@
+{
+  "schema": "coro_auto_export_validation.v1",
+  "asset": "public/models/viewmodels/coro-auto/m4-pilot.glb",
+  "bytes": 2268616,
+  "animations": ["Idle", "Reload", "Shoot"],
+  "camera_count": 1,
+  "mesh_count": 6,
+  "project_weapon_nodes": [
+    "coro_auto_project_m4_body",
+    "coro_auto_project_m4_magazine",
+    "coro_auto_project_m4_replacement_magazine"
+  ],
+  "materials": [
+    "CoroAuto_ProjectM4_assault_m4 Material",
+    "CoroSolto_FP_Gloves",
+    "CoroSolto_Mandrake_Sleeves",
+    "CoroSolto_FP_Watch"
+  ],
+  "forbidden_ak_or_donor_named_nodes": [],
+  "validator": "GLB JSON chunk inspection plus clean Blender 5.2 import",
+  "official_validator_status": "not run: local gltf-validator dependency is absent"
+}
