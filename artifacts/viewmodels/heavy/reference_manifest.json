@@ -1,0 +1,33 @@
+{
+  "family": "heavy",
+  "inventory": [
+    "awp",
+    "g3sg1",
+    "mosin",
+    "rem700",
+    "svd",
+    "shotgun"
+  ],
+  "pilots": [
+    "awp",
+    "shotgun"
+  ],
+  "source_roles": {
+    "public/models/weapons/*.glb": "project geometry allowed in export",
+    "~/Downloads/*sniper*.glb, fps_50cal.glb, shotgun_animated.glb": "motion reference only; forbidden from export"
+  },
+  "hard_gates": {
+    "actions_exact": [
+      "Idle",
+      "Fire",
+      "Reload"
+    ],
+    "two_hand_contact_max_m": 0.004,
+    "aspect_ratio": "3:2",
+    "contact_sheet_required": true
+  },
+  "expected_mechanics": {
+    "awp": "right hand follows bolt rearward and returns",
+    "shotgun": "support hand follows pump rearward and returns"
+  }
+}
