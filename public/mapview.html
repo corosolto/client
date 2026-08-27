@@ -15,6 +15,8 @@ import * as THREE from 'three';
 import { initTextures } from './js/textures.js';
 import { MAPS, resolveMapId } from './js/maps.js';
 import { preloadMapProps } from './js/mapprops.js';
+import { preloadAmbientLife } from './js/ambientlife.js';
+import { lookAtual } from './js/bloom.js';
 
 const qp = new URLSearchParams(location.search);
 const MAP = resolveMapId(qp.get('map'));
@@ -27,6 +29,9 @@ const hud = document.getElementById('hud');
 
 const renderer = new THREE.WebGLRenderer({ antialias:true });
 renderer.setSize(W,H); renderer.setPixelRatio(1); renderer.shadowMap.enabled = true;
+// a mesma curva e exposição do jogo (bloom.js LOOKS), senão a captura mede outro jogo
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = lookAtual().expAces;
 document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
 const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
@@ -34,25 +39,67 @@ const cam = new THREE.PerspectiveCamera(55, W/H, 0.1, 2000);
 // união dos props globais (main.js MAP_PROPS) + props por-mapa (Havan/Ferro Velho)
 const GLOBAL_PROPS = ['congresso','catedral','ministerio','palacio','justica','tires','stall','tent','bus','drinkstand','urna','towner',
   'quiosque','skate_ramp','lifeguard_tower','guarda_sol','arquibancada'];
-const allProps = [...new Set([...GLOBAL_PROPS, ...Object.values(MAPS).flatMap(m => m.props || [])])];
+const allProps = [...new Set([...GLOBAL_PROPS, ...(MAPS[MAP].props || [])])];
 
 window.MAPEVAL = {
   ready:false,
   view(from, look){ cam.position.set(...from); cam.lookAt(...look); renderer.render(scene,cam); },
+  cam, renderer,
+  /* POSE DE JOGADOR (yaw/pitch em rad, ordem YXZ) — o MESMO contrato de câmera do
+     game.js:4713. `view(from,look)` não serve para procurar enquadramento: lookAt
+     não diz "para onde o jogador está virado", e é exatamente esse o eixo que a
+     captura precisa declarar. `fov` entra porque o mapview nasceu com 55 e o jogo
+     joga em outro — enquadrar aqui com lente diferente da do jogo é escolher pose
+     no escuro. Usado por tools/eval/gl-poses.mjs --scout. */
+  pose(x, y, z, yaw, pitch, fov){
+    if (fov && Math.abs(cam.fov - fov) > 0.01){ cam.fov = fov; cam.updateProjectionMatrix(); }
+    cam.rotation.order = 'YXZ';
+    cam.position.set(x, y, z);
+    cam.rotation.set(pitch || 0, yaw || 0, 0);
+    cam.updateMatrixWorld(true);
+    renderer.render(scene, cam);
+  },
 };
+// `?hud=0` tira o texto de diagnóstico do canto: ele é DOM por cima do canvas e
+// qualquer medida de pixel feita neste quadro o contaria como parte do mapa.
+if (qp.get('hud') === '0') hud.style.display = 'none';
 
 (async ()=>{
   const T = initTextures();
-  await preloadMapProps(allProps);
+  await Promise.all([
+    preloadMapProps(allProps),
+    preloadAmbientLife(MAPS[MAP].ambience || []),
+  ]);
   const _tb = performance.now();
   const world = MAPS[MAP].build(scene, T);
   window.__buildMs = Math.round(performance.now() - _tb);   // custo total do build, p/ régua de tempo
   window.__world = { spawns: world.spawns, bounds: world.bounds, ctf: world.ctfPoints, nodes: world.waypoints.nodes.length };
   window.__scene = scene;
   window.__gworld = world;   // colliders/waypoints/findPath p/ checagens de LOS e conectividade
-  cam.position.set(0, 80, 60); cam.lookAt(0, 0, 0); renderer.render(scene, cam);
+  // Captura reproduzível na altura do jogador: ?from=x,y,z&look=x,y,z.
+  // Sem parâmetros mantém a vista aérea histórica usada pelas réguas existentes.
+  const xyz = (key, fallback) => {
+    const v = (qp.get(key) || '').split(',').map(Number);
+    return v.length === 3 && v.every(Number.isFinite) ? v : fallback;
+  };
+  const from = xyz('from', [0, 80, 60]), look = xyz('look', [0, 0, 0]);
+  cam.position.set(...from); cam.lookAt(...look); renderer.render(scene, cam);
   hud.textContent = `${MAP} loaded · ${world.waypoints.nodes.length} waypoints`;
   window.MAPEVAL.ready = true;
+  // TextureLoader/GLTFLoader concluem depois do primeiro frame. Sem redesenhar,
+  // o auditor captura o fallback preto/cinza e mede um mapa diferente do jogo.
+  let frames = 0;
+  let lastFrame = performance.now();
+  const redrawWhileLoading = () => {
+    const now = performance.now(), dt = Math.min(.05, (now - lastFrame) / 1000); lastFrame = now;
+    if (!qp.has('capture') && world.ambience && !world.ambience.paused) world.ambience.update(dt, null);
+    /* world.update também, não só a ambiência: é onde vivem a água e a vida de céu.
+       Auditor que captura o mundo estático não pode julgar movimento. */
+    if (!qp.has('capture')) { window.__t = (window.__t || 0) + dt; world.update?.(dt, window.__t); }
+    renderer.render(scene, cam);
+    if (++frames < 360) requestAnimationFrame(redrawWhileLoading);
+  };
+  requestAnimationFrame(redrawWhileLoading);
 })().catch(e => { hud.textContent = 'ERR ' + (e && e.message); console.error(e); });
 </script>
 </body>
