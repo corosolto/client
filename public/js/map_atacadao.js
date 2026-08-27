@@ -46,6 +46,82 @@ function signTex(bg, fg, title, sub, W = 512, H = 160) {
   return t;
 }
 
+/* ---------------------------------------------------------------------------
+   SUPERFÍCIE GRANDE TEM TEXTURA PRÓPRIA.
+   O mapa mandava piso, parede, pilar, fachada e muro para o MESMO `T.concrete`
+   (um cinza #9a938a) e, quando T não vinha, para um `color:` cinza chapado. Cinco
+   superfícies enormes com a mesma cara é literalmente a reclamação do dono ("a
+   faixada da loja ta cinza, o chao ta cinza"). Cada uma passa a ter canvas
+   próprio: não depende de T, não repete a textura da vizinha, e a cláusula ATA8
+   reprova se alguma voltar a ser material sem mapa ou a compartilhar textura.
+   Desenho determinístico (LCG semeado) para a régua medir sempre o mesmo mundo.
+--------------------------------------------------------------------------- */
+const rng = (s) => () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
+function canvasTex(W, H, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  draw(c.getContext('2d'), W, H);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
+  return t;
+}
+const salpico = (x, W, H, n, cores, semente, smin = 1, smax = 3) => {
+  const r = rng(semente);
+  for (let i = 0; i < n; i++) { x.fillStyle = cores[(r() * cores.length) | 0]; const s = smin + r() * (smax - smin); x.fillRect(r() * W, r() * H, s, s); }
+};
+/* Piso de loja: granilite creme com agregado e junta de dilatação. */
+const pisoLojaTex = (rx, ry) => canvasTex(512, 512, (x, W, H) => {
+  x.fillStyle = '#cfc6b2'; x.fillRect(0, 0, W, H);
+  salpico(x, W, H, 6000, ['#a89678', '#e8e1cf', '#8d7f66', '#c3b79c', '#6f6455'], 9311, 1, 3.2);
+  const r = rng(4177);
+  x.globalAlpha = 0.35;                                     // polimento/tráfego
+  for (let i = 0; i < 30; i++) { x.fillStyle = '#b6ab93'; x.beginPath(); x.arc(r() * W, r() * H, 16 + r() * 44, 0, 6.2832); x.fill(); }
+  x.globalAlpha = 1;
+  x.strokeStyle = '#8e836c'; x.lineWidth = 3;               // junta serrada
+  for (let i = 0; i <= 2; i++) { const p = (i * W) / 2; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H); x.moveTo(0, p); x.lineTo(W, p); x.stroke(); }
+}, rx, ry);
+/* Parede interna de atacarejo: branco em cima, barra azul embaixo, junta de painel. */
+const paredeLojaTex = (rx, ry) => canvasTex(256, 512, (x, W, H) => {
+  x.fillStyle = '#eef1ee'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#1f5fbf'; x.fillRect(0, H * 0.74, W, H * 0.26);           // barra de rodapé
+  x.fillStyle = '#e0b83a'; x.fillRect(0, H * 0.71, W, H * 0.03);           // filete amarelo
+  salpico(x, W, H * 0.7, 900, ['#e2e6e2', '#f6f8f6', '#d6dbd7'], 2251, 1, 2.4);
+  x.strokeStyle = '#cfd5d0'; x.lineWidth = 2;
+  for (let i = 1; i < 4; i++) { const p = (i * W) / 4; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H * 0.74); x.stroke(); }
+}, rx, ry);
+/* Fachada: identidade de atacarejo — listra vermelha/amarela e painel metálico. */
+const fachadaTex = (rx, ry) => canvasTex(512, 256, (x, W, H) => {
+  x.fillStyle = '#c0392b'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#e0b83a'; x.fillRect(0, H * 0.52, W, H * 0.16);
+  x.fillStyle = '#1f5fbf'; x.fillRect(0, H * 0.68, W, H * 0.10);
+  x.fillStyle = '#a52f22'; for (let i = 0; i < 10; i++) x.fillRect((i * W) / 10, 0, W * 0.012, H * 0.52);  // junta de ACM
+  x.fillStyle = '#d8543f'; x.fillRect(0, 0, W, H * 0.06);
+  salpico(x, W, H, 700, ['#b23324', '#cc4331'], 6607, 1, 2.2);
+}, rx, ry);
+/* Doca/área de serviço: concreto sujo, escuro, com mancha de óleo — NÃO é o piso interno. */
+const docaTex = (rx, ry) => canvasTex(512, 512, (x, W, H) => {
+  x.fillStyle = '#7c766c'; x.fillRect(0, 0, W, H);
+  salpico(x, W, H, 5200, ['#6a655c', '#8d877c', '#5a554d', '#948d80'], 8123, 1, 3.4);
+  const r = rng(3907);
+  x.globalAlpha = 0.55;
+  for (let i = 0; i < 18; i++) { x.fillStyle = '#3a372f'; x.beginPath(); x.arc(r() * W, r() * H, 8 + r() * 30, 0, 6.2832); x.fill(); }   // óleo
+  x.globalAlpha = 1;
+  x.strokeStyle = '#5f5a52'; x.lineWidth = 4;
+  for (let i = 0; i <= 1; i++) { const p = i * W; x.beginPath(); x.moveTo(p, 0); x.lineTo(p, H); x.stroke(); }
+}, rx, ry);
+/* Azulejo branco 20×20 da peixaria. */
+const azulejoTex = (rx, ry) => canvasTex(256, 256, (x, W, H) => {
+  x.fillStyle = '#bcc6c4'; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.fillStyle = (i + j) % 7 === 0 ? '#dfe9e6' : '#f2f6f4'; x.fillRect(i * W / 4 + 2, j * H / 4 + 2, W / 4 - 4, H / 4 - 4); }
+  salpico(x, W, H, 400, ['#e8eeec', '#ffffff'], 1511, 1, 2);
+}, rx, ry);
+/* Inox escovado do açougue. */
+const inoxTex = (rx, ry) => canvasTex(128, 128, (x, W, H) => {
+  x.fillStyle = '#b8bec4'; x.fillRect(0, 0, W, H);
+  const r = rng(7717);
+  for (let i = 0; i < 300; i++) { x.fillStyle = r() > .5 ? '#c9ced3' : '#a3a9af'; x.fillRect(0, r() * H, W, 0.6 + r()); }
+}, rx, ry);
+
 export function buildAtacadao(scene, T) {
   const colliders = [];
   const occluders = [];
@@ -54,14 +130,33 @@ export function buildAtacadao(scene, T) {
   scene.add(root);
 
   const lam = (opts) => new THREE.MeshLambertMaterial(opts);
-  const tex = (k, fallback) => (T && T[k]) ? { map: T[k] } : { color: fallback };
-  const MAT = {
-    piso: lam(tex('concrete', 0xcfd3d8)), parede: lam(tex('concrete', 0xb9bdc2)), metal: lam({ color: 0x9aa0a6 }),
-    pilar: lam(tex('concrete', 0xdfe3e7)), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
-    caixa: lam({ color: 0x2e6f9e }), esteira: lam({ color: 0x2a2d31 }), faixa: lam({ color: 0xe0b83a }),
-    asfalto: lam(tex('asphalt', 0x2b2e33)), muro: lam(tex('concrete', 0xc2b8a6)), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
-    predio: lam({ color: 0xa7a29a }), janela: lam({ color: 0x35404e }), faixaRua: lam({ color: 0xd8b83a }),
+  /* Cada superfície grande tem canvas PRÓPRIO — nada de cair todo mundo em T.concrete.
+     `superficie()` marca a malha para a ATA8 conferir mapa presente e textura distinta. */
+  const TX = {
+    piso: pisoLojaTex(13, 12),        // 52 × 48 m de loja: ladrilho de ~4 m
+    parede: paredeLojaTex(13, 2),
+    fachada: fachadaTex(8, 1),
+    doca: docaTex(6, 3),
+    pilar: paredeLojaTex(1, 3),       // mesmo desenho, OUTRA instância e outro repeat
+    azulejo: azulejoTex(6, 3),
+    inox: inoxTex(4, 2),
+    muro: docaTex(10, 1),
   };
+  const MAT = {
+    piso: lam({ map: TX.piso }), parede: lam({ map: TX.parede }), metal: lam({ color: 0x9aa0a6 }),
+    pilar: lam({ map: TX.pilar }), pilarBase: lam({ color: 0xe0b83a }), prat: lam({ color: 0x8a9096 }),
+    caixa: lam({ color: 0x2e6f9e }), esteira: lam({ color: 0x2a2d31 }), faixa: lam({ color: 0xe0b83a }),
+    asfalto: lam((T && T.asphalt) ? { map: T.asphalt } : { map: docaTex(14, 12) }),
+    muro: lam({ map: TX.muro }), vidro: lam({ color: 0x9fd0e6, transparent: true, opacity: 0.45 }),
+    predio: lam({ color: 0xa7a29a }), janela: lam({ color: 0x35404e }), faixaRua: lam({ color: 0xd8b83a }),
+    fachada: lam({ map: TX.fachada }), doca: lam({ map: TX.doca }),
+    azulejo: lam({ map: TX.azulejo }), inox: lam({ map: TX.inox }),
+    frioVidro: lam({ color: 0xbfe4f2, transparent: true, opacity: 0.42 }),
+    hortiVerde: lam({ color: 0x2f7d46 }), padariaMadeira: lam({ color: 0x8a5a2b }), carneVermelho: lam({ color: 0x8d2733 }),
+  };
+  /* Marcação de superfície grande: a ATA8 lê estas malhas e exige mapa + textura única. */
+  const superficies = [];
+  const marcarSuperficie = (m, tipo) => { m.userData.atacadaoSuperficie = tipo; superficies.push(m); return m; };
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -84,13 +179,21 @@ export function buildAtacadao(scene, T) {
   const wX = HALF_X - 0.5;
 
   scene.background = new THREE.Color(0xdfe6ec); scene.fog = null;
-  addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2);       // loja
-  addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2);    // estacionamento
+  marcarSuperficie(addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2), 'piso');          // loja: granilite creme
+  marcarSuperficie(addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2), 'asfalto');    // estacionamento
+  /* Doca é ÁREA DE SERVIÇO: concreto sujo, não o granilite da loja. Fica 1 cm acima
+     do piso para ganhar do z-fighting sem virar degrau que o corpo sinta. */
+  marcarSuperficie(addFloor(HALF_X * 2 - 1, 6.2, MAT.doca, 0, ZN - 3.1, 0.02), 'doca');
+  /* Faixa amarela de circulação: o corredor central e a transversal da doca, como em
+     galpão de verdade. Fina e sem colisor — é pintura no chão, não obstáculo. */
+  for (const fz of [ZF + 12, ZF + 24, ZF + 36]) for (const sx of [-1, 1])
+    addBox(HALF_X * 2 - 4, 0.02, 0.16, MAT.faixa, 0, 0.04, fz + sx * 1.9, { collide: false, cast: false });
+  for (const fx of [-2.2, 2.2]) addBox(0.16, 0.02, ZN - ZF - 6, MAT.faixa, fx, 0.04, (ZF + ZN) / 2 + 1, { collide: false, cast: false });
 
   /* Perímetro FECHADO: a vitrine de vidro de 5,4 m saiu inteira — era ela que fazia
      a loja ler como shopping. Sobra alvenaria cega, laje opaca e treliça. */
-  addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN);                          // parede norte
-  for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);
+  marcarSuperficie(addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN), 'parede');            // parede norte
+  for (const sx of [-1, 1]) marcarSuperficie(addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2), 'parede');
   addBox(HALF_X * 2, 0.5, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // laje opaca
   for (let z = ZF + 3; z <= ZN; z += 6.4) addBox(HALF_X * 2, 0.34, 0.34, MAT.metal, 0, WALL_H - 0.5, z, { collide: false, cast: false });
   /* Tirante de 5 m: o VIGAMENTO onde a pomba pousa (ambiência, adiante). */
@@ -103,11 +206,15 @@ export function buildAtacadao(scene, T) {
     const gaps = [[-15, -9], [-3, 3], [9, 15]];   // 3 vãos: esq, CENTRO (libera 2ª rota CTF2 pelo corredor central), dir
     let xc = -wX;
     for (const [g0, g1] of gaps) {
-      if (g0 > xc) { addBox(g0 - xc, 2.6, 0.6, MAT.parede, (xc + g0) / 2, 0, ZF); addBox(g0 - xc, WALL_H - 2.6, 0.6, MAT.parede, (xc + g0) / 2, 2.6, ZF, { collide: false }); }
-      addBox(g1 - g0, WALL_H - 3, 0.6, MAT.parede, (g0 + g1) / 2, 3, ZF, { collide: false });   // verga sobre a porta
+      if (g0 > xc) { addBox(g0 - xc, 2.6, 0.6, MAT.fachada, (xc + g0) / 2, 0, ZF); marcarSuperficie(addBox(g0 - xc, WALL_H - 2.6, 0.6, MAT.fachada, (xc + g0) / 2, 2.6, ZF, { collide: false }), 'fachada'); }
+      addBox(g1 - g0, WALL_H - 3, 0.6, MAT.fachada, (g0 + g1) / 2, 3, ZF, { collide: false });   // verga sobre a porta
       xc = g1;
     }
-    if (wX > xc) { addBox(wX - xc, 2.6, 0.6, MAT.parede, (xc + wX) / 2, 0, ZF); addBox(wX - xc, WALL_H - 2.6, 0.6, MAT.parede, (xc + wX) / 2, 2.6, ZF, { collide: false }); }
+    if (wX > xc) { addBox(wX - xc, 2.6, 0.6, MAT.fachada, (xc + wX) / 2, 0, ZF); marcarSuperficie(addBox(wX - xc, WALL_H - 2.6, 0.6, MAT.fachada, (xc + wX) / 2, 2.6, ZF, { collide: false }), 'fachada'); }
+    /* Marquise e lampião da fachada: a listra vermelha/amarela ganha sombra e volume,
+       senão a parede colorida ainda lê como painel chapado de longe. */
+    addBox(HALF_X * 2, 0.5, 2.2, MAT.metal, 0, 4.4, ZF - 1.1, { collide: false, cast: false });
+    for (const lx of [-21, -6, 6, 21]) gprop('lampiao_fachada', lx, ZF - 1.6, 1.5);
     // portais de ENTRADA e SAÍDA
     signMesh(5.4, 1.0, signTex('#1f5fbf', '#ffffff', 'ENTRADA', 'ENTRE E TRETE', 640, 160), -12, 3.3, ZF - 0.1, 0);
     signMesh(5.4, 1.0, signTex('#1f5fbf', '#ffffff', 'SAÍDA', 'JÁ VAI?', 640, 160), 12, 3.3, ZF - 0.1, 0);
