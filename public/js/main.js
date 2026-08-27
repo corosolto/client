@@ -1580,47 +1580,9 @@ const MAP_DESC = {
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
 };
-/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
- * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
- * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
- * arquivo do mapa); OFICIAL é o autor da casa. */
-const MAP_CATS = {
-  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
-  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
-  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
-  parque_treta: ['ARENA', 'COMUNIDADE'],
-  velho_oeste: ['ARENA', 'COMUNIDADE'],
-  penitenciaria: ['ARENA', 'COMUNIDADE'],
-  upa_24h: ['ARENA', 'COMUNIDADE'],
-  obras_prefeitura: ['ARENA', 'COMUNIDADE'],
-};
-const MAP_AUTOR = {
-  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
-  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
-  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
-  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
-  upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
-};
-const MAP_DATA = {
-  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
-  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
-  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
-  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
-  upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
-};
-const CAT_DESC = {
-  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
-  OFICIAIS: 'Mapas oficiais da casa.',
-  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
-  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
-  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
-  COMUNIDADE: 'Mapas feitos pela comunidade.',
-  AI: 'Construídos pelos agentes de IA da casa.',
-};
-const AUTOR_CASA = 'Ruben Marcus';
-const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
-const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
-const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
+/* Catálogo de mapas (categoria/autoria/data): fonte única em mapcat.js — o servidor do
+   multiplayer importa a MESMA tabela para as rotações das salas oficiais. */
+import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, oficialDe } from './mapcat.js';
 let mapCategory = 'TODOS';
 let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
