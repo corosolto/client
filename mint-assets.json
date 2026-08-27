@@ -1883,6 +1883,52 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "andaime-obras": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/andaime.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks72da37yam3djef241kms73498d6rrk",
+    "packAssetId": "th74q1agb8zfn1hnfbqmmrhd998d6fj6",
+    "chatUrl": "https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t",
+    "displayName": "Andaime de obra (andaime)",
+    "frente": "v21-e-models",
+    "notes": "Torre de andaime tubular com plataformas e travessas (4.299 tris, WebP 1024). Molde das duas torres escaláveis das Obras da Prefeitura — o piso alto (5,6 m) e o baixo (2,8 m) são andáveis pelo groundHeightAt multinível. GLB normalizado ~1 m, pivô central: targetH 8,4 ⇒ 3,78 × 3,44 m."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (kit posto_obras_r3, normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "f118b319e4f0a4452b5ec7293470dc5e3d8a2675833b0599179fd66e8f5ce8f0"
+   }
+  },
+  "container-escritorio-obras": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/container_escritorio.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7dzxqex8hhmqpgj3tnrys3a58d7xzw",
+    "packAssetId": "th74q1agb8zfn1hnfbqmmrhd998d6fj6",
+    "chatUrl": "https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t",
+    "displayName": "Container escritório (container_escritorio)",
+    "frente": "v21-e-models",
+    "notes": "Container marítimo convertido em escritório de canteiro, com porta e janela (4.406 tris, WebP 1024). Bunker de spawn das Obras da Prefeitura: quatro unidades ladeando os dois spawns. GLB normalizado ~1 m, pivô central: targetH 3,0 ⇒ 5,08 × 3,66 m."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (kit posto_obras_r3, normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "537ff936b913b1c2efdd9b6cb836949353408824574059f4c216331460b79fb5"
+   }
   }
  }
 }

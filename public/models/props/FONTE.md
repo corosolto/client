@@ -174,3 +174,19 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## r3 — kit `posto_obras_r3`, parte OBRAS (frente map2/obras)
+
+Mesma origem, mesmo pack e mesma licença da seção do POSTO acima (kit Mint
+`th74q1agb8zfn1hnfbqmmrhd998d6fj6`, chat
+<https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t>, otimização do próprio
+Mint em WebP 1024 / ~4-5k tris, licença de assinante Mint Pro). Estes dois itens
+entram pela frente `map2/obras`; `bombas_combustivel.glb` e
+`loja_conveniencia.glb` entram pelo PR irmão `map2/posto`.
+
+- `andaime.glb` — "Andaime de obra", torre tubular com plataformas e travessas.
+  4.299 tris. Registro: `andaime-obras`. Escala usada em `map_obras.js`:
+  `targetH` 8,4 na torre alta e 5,6 na baixa ⇒ pegada de 3,78 × 3,44 m.
+- `container_escritorio.glb` — "Container escritório", container marítimo
+  convertido em escritório de canteiro. 4.406 tris. Registro:
+  `container-escritorio-obras`. Escala usada: `targetH` 3,0 ⇒ 5,08 × 3,66 m.
