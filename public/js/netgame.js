@@ -1,11 +1,5 @@
-/* NETCODE DO CLIENTE (multiplayer) — todo isolado aqui, fora do game.js.
-   Interpolação de entidade, predição + reconciliação do jogador local, aplicação de snapshot,
-   sons/vozes remotos, morte/respawn vindos do servidor, câmera de espectador e o overlay de
-   diagnóstico de rede.
-
-   O game.js só chama ganchos `this._mp?.xxx()`; sem este módulo (single-player) `_mp` é null e
-   nenhuma linha de rede executa. Quem injeta é o main.js, via `new Game({ mpFactory, net })` —
-   o game.js nunca importa este arquivo. */
+/* NETCODE DO CLIENTE. O game.js só chama ganchos `this._mp?.xxx()` e nunca importa este
+   arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
 
@@ -50,10 +44,8 @@ class Netcode {
     if (this.espectador) return;
     if (this._srvHas) {
       const err = Math.hypot(this._srvX - p.pos.x, this._srvZ - p.pos.z);
-      /* A predição fica ~1 snapshot À FRENTE da pose autoritativa (o servidor está atrás pelo
-         RTT). Corrigir esse adiantamento NORMAL é exatamente o rubber-banding que as pessoas
-         chamam de "lag". Só corrige desync REAL (parede atravessada, teleporte); abaixo do
-         limiar confia 100% na predição local e o movimento fica liso. */
+      /* Só corrige desync REAL: o adiantamento normal da predição é esperado, e "corrigi-lo"
+         é justamente o rubber-banding que as pessoas chamam de lag. */
       if (err > 2.5) { p.pos.set(this._srvX, this._srvY, this._srvZ); p.vel.set(0, 0, 0); }
     }
     // px/py/pz = a posição PREDITA de onde você mira. O servidor atira DESTA origem (validada
@@ -71,11 +63,8 @@ class Netcode {
   _casar(snap) {
     const game = this.game, net = this.net;
     const livres = [...game.bots];
-    /* O elenco local foi montado a partir do roster do SERVIDOR, então dá para casar pelo
-       PERSONAGEM — casamento exato, e não "um inimigo qualquer". Isso é o que faz o nome do
-       killfeed bater com o rosto que apareceu na tela.
-       Personagem primeiro, time depois (rede de segurança se o roster faltar), e qualquer
-       corpo livre por último — nunca deixar entidade sem corpo, que é boneco invisível. */
+    /* Casa por PERSONAGEM (exato), time como rede de segurança, qualquer corpo por último —
+       entidade sem corpo é boneco invisível. Ver docs/MULTIPLAYER.md. */
     const roster = (net.meta && net.meta.roster) || [];
     const charDe = (id) => { const r = roster.find((x) => x.id === id); return r && r.char; };
     const pega = (team, id) => {
@@ -142,10 +131,8 @@ class Netcode {
         this._srvX = e.x; this._srvY = e.y; this._srvZ = e.z; this._srvHas = 1;   // campos planos: zero alocação no hot path
         continue;
       }
-      /* INTERPOLAÇÃO DE ENTIDADE: guarda os DOIS últimos snapshots (prev/cur) e renderiza a
-         entidade viajando de prev->cur, ~1 snapshot no passado. CONTÍNUO entre pacotes — não
-         reinicia da posição atual a cada um, o que quebrava a velocidade e picotava os bonecos.
-         Campos PLANOS de propósito: um {x,y,z} por entidade × 20 Hz gerava GC que trava o vsync. */
+      /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
+         propósito: um {x,y,z} por ent × 20 Hz gera GC que trava o vsync. */
       if (ent._ipT1 == null) {
         ent._ipx0 = ent._ipx1 = e.x; ent._ipy0 = ent._ipy1 = e.y; ent._ipz0 = ent._ipz1 = e.z;
         ent._ipyaw0 = ent._ipyaw1 = e.yaw; ent._ipT0 = nowMs - 50; ent._ipT1 = nowMs;

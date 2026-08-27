@@ -102,6 +102,11 @@ if (MUTANTE && !alvoPorMutante[MUTANTE]) {
 }
 
 let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
+/* O catálogo dos mapas (categoria/autoria/data) saiu do main.js para o mapcat.js quando o
+   servidor de multiplayer passou a precisar do MESMO recorte oficial/comunidade — main.js é
+   código de tela e não sobe fora do navegador. As cobranças abaixo seguem as mesmas, só
+   apontam para onde a tabela mora agora. */
+let mapcat = readFileSync(join(ROOT, 'public/js/mapcat.js'), 'utf8');
 let css = readFileSync(join(ROOT, 'public/style.css'), 'utf8');
 let i18n = readFileSync(join(ROOT, 'public/js/i18n.js'), 'utf8');
 let astro = readFileSync(join(ROOT, 'src/pages/index.astro'), 'utf8');
@@ -615,9 +620,9 @@ const previewPausa = /id !== 'char-select'[\s\S]{0,60}pvStopVideo\(\)/.test(func
   && /function pvStopVideo\(\)[\s\S]{0,180}video\.pause\(\)/.test(main);
 const strip = (css.match(/\.ms-strip\{([^}]*)\}/) || [])[1] || '';
 const fundoMapa = (css.match(/\.ms-bg\{([^}]*)\}/) || [])[1] || '';
-const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
-  && /const MAP_DATA = \{/.test(main)
-  && /const AUTOR_CASA = 'Ruben Marcus';/.test(main)
+const autoriaNaFicha = /const MAP_AUTOR = \{/.test(mapcat)
+  && /const MAP_DATA = \{/.test(mapcat)
+  && /const AUTOR_CASA = 'Ruben Marcus';/.test(mapcat)
   && /const byline = \$\('ms-byline'\);/.test(funcMap)
   && /\$\{autorDe\(currentMap\)\}<\/strong> · \$\{MAP_DATA\[currentMap\] \|\| ''\}/.test(funcMap)
   && /ms-badge-oficial/.test(funcMap)
@@ -626,11 +631,15 @@ const autoriaNaFicha = /const MAP_AUTOR = \{/.test(main)
   // agora guarda a AUSÊNCIA dele (marcação morta é lixo que confunde quem lê — achado do #368).
   && !/ms-authors/.test(astro)
   && !/ms-authors/.test(main)
+  && !/ms-authors/.test(mapcat)
   && !/ms-authors/.test(css);
 const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
-  && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(main)
-  && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(main)
-  && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(main)
+  && /ferro_velho: \['ARENA'\], quebrada: \['FAVELA'\]/.test(mapcat)
+  && /piscina_treta: \['ARENA', 'COMUNIDADE'\], posto_treta: \['ARENA', 'COMUNIDADE'\], atacadao_treta: \['ARENA', 'COMUNIDADE'\]/.test(mapcat)
+  && /const catsDe = \(id\) => MAP_CATS\[id\] \|\| \['ARENA'\];/.test(mapcat)
+  /* main.js consome do catálogo em vez de guardar uma segunda cópia: duas tabelas fariam a
+     sala oficial do multiplayer sortear um mapa que a tela chama de comunidade. */
+  && /import \{[^}]*MAP_CATS[^}]*\} from '\.\/mapcat\.js';/.test(main)
   /* TODOS voltou a ser o acervo INTEIRO (21/08) e ordena por partidas jogadas; OFICIAIS
      virou aba própria. Sem o desempate por índice a lista dança entre renders. */
   && /if \(mapCategory === 'TODOS'\) \{[\s\S]{0,220}playsDe\(b\) - playsDe\(a\) \|\| MAP_IDS\.indexOf\(a\) - MAP_IDS\.indexOf\(b\)/.test(main)

@@ -1,25 +1,15 @@
-/* TRANSPORTE DE REDE DO CLIENTE (multiplayer).
-   WebSocket puro, zero-build, atrás de uma interface pequena (connect / sendInput / últimos
-   snapshots) — de propósito, para trocar por WebTransport depois sem tocar no jogo.
-   O servidor é a autoridade; daqui só sai INPUT.
-
-   Aqui também mora a lista de nós (servidores por região) e a medição de ping, porque é isso
-   que decide onde um jogador de Portugal ou dos EUA vai jogar: um nó só em São Paulo dá
-   ~180 ms pra Lisboa, e nenhum netcode conserta distância. A sala vive inteira dentro de um
-   nó (afinidade de sala), então região é só mais uma coluna da lista. */
+/* TRANSPORTE DE REDE. WebSocket puro atrás de uma interface pequena (trocável por
+   WebTransport). Daqui só sai INPUT. Nós por região e ping: docs/MULTIPLAYER.md. */
 
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
 export const NOS = [
-  { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.online/ws' },
-  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.online/ws' },
-  { id: 'eu', nome: 'Europa · Bélgica', url: 'wss://eu.corosolto.online/ws' },
+  { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
+  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
+  { id: 'eu', nome: 'Europa · Bélgica', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
-/* Deriva as URLs HTTP (lobby) e WS (jogo) do que veio do menu/URL:
-     '1'            -> ws://<host>:8787   (servidor local de desenvolvimento)
-     'host:porta'   -> ws://host:porta
-     'wss://x/ws'   -> deriva o http correspondente  */
+// URLs de lobby e jogo a partir do menu/URL: '1' = local, 'host:porta', ou 'wss://...'
 export function mpUrls(v) {
   const host = (typeof location !== 'undefined' && location.hostname) || 'localhost';
   if (/^wss?:\/\//.test(v)) {
@@ -70,9 +60,10 @@ export class NetClient {
     this.yourEnt = null;     // id do combatente que ESTE cliente controla (null = espectador)
     this.yourTeam = null;
     this.espectador = true;
-    this.meta = null;        // welcome (mapa, ctf, facções, teamSize)
-    this.snap = null;        // snapshot mais recente
-    this.prev = null;        // penúltimo (para interpolar)
+    // welcome (meta) + os dois últimos snapshots, que é o que a interpolação consome.
+    this.meta = null;
+    this.snap = null;
+    this.prev = null;
     this.seq = 0;
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onClose = null;
     // ── diagnóstico de rede (overlay do jogo) ──

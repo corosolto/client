@@ -1,14 +1,6 @@
-/* CATÁLOGO DOS MAPAS — categoria, autoria e data. FONTE ÚNICA.
-   Morava dentro do main.js, que é código de tela (toca DOM na primeira linha) e por isso é
-   inimportável fora do navegador. O servidor autoritativo do multiplayer precisa do MESMO
-   recorte para as rotações de mapa das salas oficiais ("mapas oficiais" / "comunidade" /
-   "randômicos"). Duas tabelas seriam duas verdades: no dia em que um mapa novo entrasse só numa
-   delas, a sala oficial sortearia um mapa que a tela chama de comunidade. Aqui é uma só —
-   dados puros, sem import de nada, importável do browser e do node. */
-/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
- * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
- * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
- * arquivo do mapa); OFICIAL é o autor da casa. */
+/* CATÁLOGO DOS MAPAS (categoria/autoria/data). Fonte única: a tela e o servidor de
+   multiplayer leem daqui. Dados puros, importável do browser e do node. Ver docs/MULTIPLAYER.md. */
+/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE. OFICIAL é o autor da casa. */
 const MAP_CATS = {
   praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
   ferro_velho: ['ARENA'], quebrada: ['FAVELA'],

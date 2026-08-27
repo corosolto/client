@@ -681,16 +681,11 @@ export class Game {
     this.playerDef = byId(playerCharId);
     this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
-    /* SERVIDOR DEDICADO: o Game sempre constrói um `this.player`, mas num servidor autoritativo
-       ninguém o controla. Deixá-lo em campo (como fazia o módulo antigo) cria um corpo parado e
-       imortal que os inimigos abatem em loop — placar envenenado e o tal "bot bugado ali".
-       Aqui ele fica FORA do elenco: não entra no scoreboard, não é alvo, não é atualizado. As
-       dez vagas da sala são dez corpos de bot, todos ocupáveis por gente. */
+    /* Servidor dedicado: o `player` que ninguém controla fica FORA do elenco, senão vira corpo
+       parado e imortal que os inimigos abatem em loop. Ver docs/MULTIPLAYER.md. */
     this.dedicated = !!dedicated;
-    /* MULTIPLAYER: `online` é o interruptor único. Ligado, a AUTORIDADE é do servidor — a
-       máquina de rodada local se cala, o dano local não é aplicado, e morte/respawn/placar
-       chegam pelo snapshot. `_mp` (o netcode) é INJETADO pelo main.js; este arquivo nunca
-       importa o módulo de rede. Em single-player `_mp` é null e nenhuma linha de rede roda. */
+    /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
+       importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
     this.online = !!(mpFactory && net);
     this._mp = null;
     this._mpPend = this.online ? { mpFactory, net } : null;
@@ -3058,13 +3053,8 @@ export class Game {
     }
     if (best) { this.sfx.knifeHit(); this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
   }
-  /* DANO DE UM TIRO: base × falloff por classe de balística × multiplicador de headshot.
-     Extraído do _fireHitscan porque o servidor autoritativo do multiplayer precisa da MESMA
-     conta — o cliente só desenha o tracer, quem decide o dano é o servidor, e as duas contas
-     têm que ser a mesma função e não duas cópias que envelhecem separadas.
-     falloff: o raycast ia a 200 m com dano constante (P90 a 40 m = AWP). Sniper não tem queda.
-     Headshot é MULTIPLICADOR por classe — era `dmg = 100` fixo em qualquer arma, o que apagava
-     a identidade das 26. */
+  /* Dano de um tiro: base × falloff por classe × multiplicador de headshot. O servidor usa a
+     MESMA conta — duas cópias envelheceriam separadas. Ver docs/MULTIPLAYER.md. */
   _shotDamage(dmg, wid, dist, head) {
     let d = dmg;
     if (GUNFEEL && wid) {
@@ -3094,10 +3084,8 @@ export class Game {
       if (bot) {
         if (bot.team === shooter.team) { /* friendly fire off */ }
         else {
-          /* MULTIPLAYER: o cliente NÃO aplica dano. Ele desenha o impacto (senão atirar em
-             alguém não teria retorno nenhum na tela) e o servidor decide se acertou e quanto
-             tirou — o hp chega no próximo snapshot. Aplicar aqui também seria contar o dano
-             duas vezes e mostrar um alvo morto que no servidor está vivo. */
+          /* Online: o cliente desenha o impacto mas NÃO aplica dano — o hp vem no snapshot.
+             Aplicar aqui contaria o dano duas vezes. Ver docs/MULTIPLAYER.md. */
           if (!this.online) this._damage(bot, this._shotDamage(dmg, wid, hC.distance, head), shooter, weap, head, end);
           this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
         }
@@ -3263,10 +3251,8 @@ export class Game {
     }
     if (ent.hp <= 0) this._kill(ent, attacker, weap, head);
   }
-  /* Tomou dano no MULTIPLAYER. O `_damage` local não roda para o jogador (o hp vem do
-     servidor), então o feedback de "levei tiro" — vinheta, som, tremida — precisa ser
-     disparado por quem percebe a QUEDA de hp no snapshot: o netcode. Sem isto o jogador
-     morria sem nunca ver que estava apanhando. */
+  /* Feedback de "levei tiro" no online: o `_damage` local não roda, então quem dispara é o
+     netcode ao ver a queda de hp no snapshot. */
   _playerHurtFx() {
     try { this.sfx.hurt?.(); } catch { /* ctx mudo */ }
     this._tintFx(0xff2222, false, 96);
@@ -4836,16 +4822,11 @@ export class Game {
     if (this.vm?.root) this.vm.root.visible = false;
     if (this.el.crosshair) this.el.crosshair.style.display = 'none';
   }
-  /* FÍSICA DE CORPO DE JOGADOR — extraída do _updatePlayer para o multiplayer.
-     O servidor autoritativo aplica ESTA MESMA função ao slot remoto: se a física do servidor
-     fosse uma segunda implementação, a predição do cliente e a autoridade do servidor
-     divergiriam a cada passo e o jogo viveria em rubber-band. Um instrumento só.
-
-     `inp` é o input já abstraído do teclado/toque — { ax, az, crouch, shift, jump } — que é
-     exatamente o que trafega pela rede. Nada aqui lê `this.keys`.
-     Congelada pela régua `tools/eval/movimento-golden.mjs` (mutação de 0,01% no accel do chão
-     já reprova). Devolve o que o chamador precisa para câmera/bob/FOV. */
+  /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
+     implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
   _moveEntity(p, inp, dt) {
+    // Crouch (CTRL/C) vale NO AR também, e a transição é assimétrica como no CS2.
+    // Números e motivo: docs/MULTIPLAYER.md.
     const wantCrouch = !!inp.crouch;
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
     const walking = MOVE2 && !!inp.shift;   // Shift = ANDAR (silencioso)
@@ -4947,19 +4928,16 @@ export class Game {
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
     }
-    if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
+    if (this.mobile && this.state === 'live') this._aimAssist(dt);
+
     // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
     // o _damage fica fora desta região de edição, então não dá pra marcar o timestamp lá.
     if (p.hp < (p._lastHp === undefined ? 100 : p._lastHp)) p._hurtAt = this.time;
     p._lastHp = p.hp;
     if (REGEN && p.hp > 0 && p.hp < 100 && this.time - (p._hurtAt || -99) > REGEN_DELAY)
       p.hp = Math.min(100, p.hp + dt * REGEN_RATE);
-    // crouch (CTRL ou C). Agora vale NO AR também (crouch-jump é movimento básico de FPS —
-    // encolhe a silhueta no pulo e ajuda a subir degrau). Transição ASSIMÉTRICA como no CS2:
-    // agacha rápido (7/s ≈ 140ms) e levanta devagar (4.2/s ≈ 240ms), o que tira o
-    // crouch-spam de graça e dá peso ao movimento.
-    // Teclado/toque -> input abstrato. É o MESMO formato que o cliente manda pela rede no
-    // multiplayer, e o que o servidor aplica ao slot remoto (ver _moveEntity).
+    // Teclado/toque -> input abstrato: o MESMO formato que trafega pela rede no multiplayer
+    // e que o servidor aplica ao slot remoto (ver _moveEntity).
     let _ax = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
     let _az = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
     if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { _ax = this.touchMove.x; _az = this.touchMove.z; }
@@ -4970,9 +4948,8 @@ export class Game {
       jump: !!this.keys.Space,
     };
     const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
-    /* PREDIÇÃO: o movimento acima JÁ aconteceu na tela (por isso o jogo responde na hora,
-       mesmo com 200 ms de ping). Aqui o netcode reconcilia com a pose autoritativa e manda o
-       mesmo input pro servidor, que roda esta MESMA função. */
+    /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
+       input pro servidor, que roda esta MESMA função. */
     if (this.online) this._mp?.stepPlayer(p, _inp);
     // auto-fire (ak/m4/mp5) enquanto o botão está segurado
     if (WEAPONS[p.weapon].auto && this.mouseDown0 && p.alive) this._tryShoot();
@@ -5476,9 +5453,8 @@ export class Game {
     return best || list[0];
   }
   _respawnPlayer() {
-    /* No MULTIPLAYER quem revive é o SERVIDOR: a posição, o hp e o instante chegam no
-       snapshot. Renascer localmente aqui teleportaria o jogador para um spawn que o servidor
-       não escolheu — e o próximo snapshot o arrastaria de volta (o rubber-band clássico). */
+    /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
+       escolheu, e o próximo snapshot arrastaria o jogador de volta. */
     if (this.online) return;
     const p = this.player;
     const s = this._pickSpawn(p.team);
@@ -5632,33 +5608,22 @@ export class Game {
     T.set(b, now + BOT_TOKEN_HOLD);
     return true;
   }
-  /* RENASCER UM CORPO. Extraído de dentro do _updateBot porque no MULTIPLAYER o corpo de um
-     jogador tem a IA desligada — e com o respawn preso na IA, quem morria online ficava morto
-     PARA SEMPRE, com a tela travada em "Respawn em 0.0s". Achado jogando, não lendo: nenhuma
-     régua pegava, porque as réguas mediam o corpo VIVO.
-     Aqui não há nada de multiplayer: é o mesmo respawn de sempre, agora chamável dos dois
-     caminhos (IA e slot de gente). */
+  /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
+     no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
   _respawnEntity(b) {
     const g = b.mesh.group;
     const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
     b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
-    /* RENASCER NO MESMO PIXEL: o _pickSpawn devolve o ponto MAIS SEGURO, e ele é o mesmo
-       pra todo mundo que morreu junto — 3 bots renascem exatamente sobrepostos. Tentei
-       afastar com um jitter de 0,6-1,4 m e o harness reprovou pelo mesmo motivo do
-       _resetPositions: o spawn da Loja H é um bolsão de gôndolas, e empurrar o bot pra
-       fora do ponto custa segundos de contorno (time da loja na metade inimiga 19,9% ->
-       13,8%, rota falhando 18,5% -> 30,0%, 40 corridas × 150 s). Quem desempilha aqui é a
-       DESPENETRAÇÃO do _botSeparation — ela age no 1º frame e não tira ninguém do bolsão. */
+    /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
+       desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
     b.protUntil = this.time + SPAWN_PROT;
     b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
     b.target = null; b.path = null; b.yaw = b.team === 'E' ? 0 : Math.PI;
-    b.laneX = undefined; b.roamUntil = 0;   // re-sorteia a coluna A CADA VIDA -> rotas variam (não "sempre a mesma")
-    b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;   // limpa estado de rota/juke da vida anterior (G2-R6A)
-    // rumo suavizado e turno de duelo também são estado de vida: nascer com o _hdg da
-    // vida anterior faz o bot sair do spawn girando pra alinhar com um rumo de outro
-    // lugar do mapa — de novo a pirueta, só que no respawn.
+    // Coluna, rota, juke e rumo são estado de VIDA: herdá-los repete rota e gira no spawn.
+    b.laneX = undefined; b.roamUntil = 0;
+    b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;
     b._hdg = undefined; b._tokRest = 0; b._repathMin = 0;
     if (this._duelTok) this._duelTok.delete(b);
     b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
@@ -5667,17 +5632,10 @@ export class Game {
   }
 
   _updateBot(b, dt) {
-    /* SLOT REMOTO (multiplayer): este corpo é dirigido por uma PESSOA, não pela IA.
-       No servidor autoritativo ele chega com `_netInput` (o input que veio pela rede) e anda
-       com a MESMA física do jogador local — é isso que faz a predição do cliente bater com a
-       autoridade do servidor. No cliente ele chega sem `_netInput`: a pose vem interpolada do
-       snapshot, então aqui não se faz nada. Em single-player `_remote` nunca é setado e esta
-       guarda custa uma comparação por bot. */
+
     if (b._remote) {
-      /* CORPO COM DONO (multiplayer). No CLIENTE a pose vem interpolada do snapshot. No
-         SERVIDOR a IA está calada, mas o resto do ciclo de vida continua sendo dele: morte e
-         RESPAWN são autoridade do servidor, e é por isso que o respawn é chamado aqui —
-         estava preso lá embaixo, no caminho da IA, e quem morria online não voltava mais. */
+      /* Corpo com dono: cliente interpola do snapshot; servidor cuida do ciclo de vida dele.
+         O respawn é chamado AQUI porque corpo de gente não passa pela IA. Ver docs/MULTIPLAYER.md. */
       if (this.online) { this._mp?.updateRemoteBot(b, dt); return; }
       if (!b.alive) {
         b.deadT = (b.deadT || 0) + dt;
@@ -6907,13 +6865,10 @@ export class Game {
       if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
     }
     this.time += dt;
-    /* SNAPSHOT ANTES DE TUDO: as poses, o placar, o relógio e o estado da rodada deste frame
-       vêm do servidor. Aplicar depois de mover seria renderizar um frame com o mundo de ontem. */
+    // Snapshot ANTES de mover: aplicar depois renderizaria o frame com o mundo de ontem.
     if (this.online) this._mp?.applySnapshot();
-    /* A MÁQUINA DE RODADA LOCAL SÓ RODA OFFLINE. No multiplayer ela é a autoridade do
-       SERVIDOR (state/timeLeft/roundNum/placar chegam no snapshot). Deixar as duas girando
-       é ter dois árbitros: o cliente fecharia o round no seu próprio relógio e mostraria um
-       placar que ninguém mais vê. */
+    /* Máquina de rodada local só roda OFFLINE: duas girando são dois árbitros, e o cliente
+       mostraria um placar que ninguém mais vê. */
     if (this.online) { /* servidor manda */ }
     else if (this.state === 'countdown' && this.time >= this.stateUntil) {
       this.state = 'live';

@@ -1055,10 +1055,8 @@ async function _startGame(team, charId, enemyFaction) {
   setHavanCarSeed((Math.random() * 1e9) | 0);
   /* SÓ OS PERSONAGENS DA PARTIDA: o roster é sorteado ANTES do preload e só esses GLBs sobem
      (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
-  /* TAMANHO DO TIME: no multiplayer quem manda é o SERVIDOR (welcome.teamSize), nunca o
-     ajuste local de bots. Medido: com "8 bots" salvo nas configurações e uma sala 5v5, o
-     cliente montava 15 corpos para as 10 entidades do servidor — cinco bonecos sobrando,
-     que viram fantasmas invisíveis, e o casamento de ids fica adivinhando. */
+  /* Tamanho do time é do SERVIDOR, nunca do ajuste local de bots (senão sobram corpos e o
+     casamento de ids fica adivinhando). */
   const tamanhoTime = mpSessao ? mpSessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
   /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
@@ -1092,10 +1090,8 @@ async function _startGame(team, charId, enemyFaction) {
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
-    /* MULTIPLAYER. `mpFactory`+`net` ligam a autoridade do servidor (ver `online` no
-       game.js). ESPECTADOR roda `dedicated`: sem jogador local, os DEZ corpos da sala são
-       bots ocupáveis e todos aparecem na tela — com jogador local sobrariam só nove bots
-       para dez combatentes do servidor, e um jogador ficaria invisível na arquibancada. */
+    /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
+       sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
     mpFactory: mpSessao ? makeNetcode : null,
     net: mpSessao ? mpSessao.net : null,
     dedicated: !!(mpSessao && mpSessao.net.espectador),
@@ -2685,23 +2681,11 @@ if (inspectionScreen) {
   startGame(team || 'E', char || CHARACTERS[0].id);
 }
 
-/* ============================================================================
-   MULTIPLAYER — navegador de servidores, salas e sessão de rede.
-   ----------------------------------------------------------------------------
-   O jogo é o MESMO: o multiplayer não é um modo paralelo com regras próprias, é o
-   single-player com a AUTORIDADE do lado do servidor (ver `online` no game.js). Aqui só
-   escolhemos ONDE jogar, EM QUE sala, e abrimos o socket antes de chamar o startGame.
+/* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
+   EM QUE sala; a autoridade é do servidor. Desenho e decisões: docs/MULTIPLAYER.md. */
 
-   A escolha de REGIÃO é o que essa tela tem de mais importante. Um nó só em São Paulo dá
-   ~120 ms pros EUA e ~180 ms pra Portugal, e nenhum netcode conserta distância — a sala
-   vive inteira dentro de um nó (afinidade de sala), então a única saída é ter nó perto e
-   deixar o jogador ver o ping antes de entrar.
-   ============================================================================ */
-
-/* Monta o `matchRoster` a partir do elenco que o servidor mandou. O Game espera defs de
-   CHARACTERS (não ids), e o jogador local não entra nos aliados — ele É um dos corpos.
-   Personagem que o servidor cita e que este cliente não conhece cai no fallback do elenco
-   geral, em vez de sumir e desalinhar todo o casamento de ids. */
+/* `matchRoster` a partir do elenco do servidor. Personagem desconhecido cai no fallback em
+   vez de sumir e desalinhar o casamento de ids. */
 function rosterDoServidor(lado, charId) {
   const roster = mpSessao.net.meta.roster || [];
   const meu = mpSessao.net.yourEnt;
