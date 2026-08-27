@@ -43,9 +43,20 @@ const MAPAS = [
 const ONLY = process.argv[2];
 const semPassada = [];
 
-const gRoot = execSync('npm root -g').toString().trim();
-const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
-const chromium = _pw.chromium || _pw.default?.chromium;
+/* PLAYWRIGHT: o do REPO primeiro, o global só como plano B. `playwright` é
+   devDependency declarada (package.json) e está em node_modules; resolver só pelo
+   `npm root -g` amarra a ferramenta ao node que estiver no PATH — com o node 23.6
+   (o único que passa o portão inteiro) o root global não tem playwright e a
+   derivação do layout ficava impossível de rodar. Medido em 27/08 na frente
+   CÓRREGO: mexer na geometria do mapa exige regerar o layout, e sem isto o
+   eval:grafitelayout fica vermelho sem conserto possível. */
+async function carregaChromium() {
+  try { const m = await import('playwright'); return m.chromium || m.default?.chromium; } catch (e) { /* plano B abaixo */ }
+  const gRoot = execSync('npm root -g').toString().trim();
+  const m = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
+  return m.chromium || m.default?.chromium;
+}
+const chromium = await carregaChromium();
 
 /* Layout anterior preservado por mapa: rodar só um mapa não pode apagar os outros
    quatro (regra da casa: nada destrutivo por efeito colateral). */
