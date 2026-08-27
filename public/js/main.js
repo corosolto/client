@@ -761,9 +761,9 @@ await resolveGeoLang();
 // EN por camada: varre o menu estático UMA vez (PT é a fonte; i18n.js explica o desenho)
 translateDom(document.body);
 // links do rodapé por idioma: EN vai pras gêmeas que EXISTEM (characters, how-to-play,
-// weapons, maps, about, docs/en); /changelog e /mapa continuam só PT (issue #54)
+// weapons, maps, about, whats-new, docs/en); /mapa continua só PT (issue #54)
 if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) {
-  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/docs/': '/docs/en/' };
+  const GEMEA = { '/personagens': '/characters', '/como-jogar': '/how-to-play', '/armas': '/weapons', '/mapas': '/maps', '/sobre': '/about', '/changelog': '/whats-new', '/docs/': '/docs/en/' };
   const h = a.getAttribute('href');
   if (GEMEA[h]) a.setAttribute('href', GEMEA[h]);
 }
