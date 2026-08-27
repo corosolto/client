@@ -386,10 +386,8 @@ export function buildVelhoOeste(scene, T) {
     const testeira = new THREE.Mesh(boxGeo(w + .4, .3, .3), MAT.trim);
     testeira.position.set(0, .45 + h + .12, d / 2 + .05); testeira.castShadow = true; group.add(testeira);
   }
-  /* r3b · mix de 4 famílias (feedback: "mais variacoes de casas"): 5 pau a pique
-     nas ruas leste/oeste, 2 platibanda no lado urbano da igrejinha, 2 pedra na
-     baixada do forró e 1 geminada fechando o eixo sul da praça. Porta pro largo
-     e deriva ±0,2 rad: a tortura de esquadro que o ORT1 cobra. */
+  /* r3b · mix de 4 famílias ("mais variacoes de casas"): 5 pau a pique leste/oeste,
+     2 platibanda na rua da igrejinha, 2 pedra na baixada, 1 geminada fecha o eixo sul. */
   const CASAS = [
     { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1 },
     { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
