@@ -1,0 +1,10 @@
+
+> coro-solto@2.0.0-alpha.167 dev
+> npm run copy-wasm && astro dev
+
+
+> coro-solto@2.0.0-alpha.167 copy-wasm
+> node scripts/copy-wasm.mjs
+
+[copy-wasm] ok: /Users/ruben/game4/node_modules/@resvg/resvg-wasm/index_bg.wasm -> public/wasm/resvg.wasm
+{"message":"Dev server running at http://localhost:4323 (pid 73669)\n  Stop:   astro dev stop\n  Status: astro dev status\n  Logs:   astro dev logs","label":"SKIP_FORMAT","level":"info"}
