@@ -811,14 +811,14 @@ export function buildVelhoOeste(scene, T) {
       { mode: 'ground', pos: [-6.8, 0, -5], phase: .9 },
     ],
     chickens: [
-      { pos: [14.5, 0, 24], to: [16.5, 0, 26], phase: .2 }, { pos: [-14, 0, 28], to: [-12, 0, 30], phase: 1.1 },
+      { pos: [14.5, 0, 24], to: [16.5, 0, 26], phase: .2 }, { pos: [-11, 0, 31], to: [-9, 0, 33], phase: 1.1 },
       { pos: [12, 0, 33], to: [14, 0, 35], phase: 2 },
     ],
     parrots: [
       { pos: [-21, 3.4, 17.8], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
     ],
     calangos: [
-      { pos: [19.5, 0, -21], to: [20.5, 0, -14.5], phase: .2 },
+      { pos: [21.6, 0, -21], to: [21.8, 0, -14.8], phase: .2 },
       { pos: [25, 0, 33], to: [21, 0, 29], phase: 1.6 },
       { pos: [-23.5, 0, 23], to: [-20, 0, 27], phase: 2.7 },
     ],
