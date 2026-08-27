@@ -174,3 +174,45 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## v2.1 — lote 5: casario e varal de favela (frente CÓRREGO, kit `favela_r3`)
+
+Pedido do dono (26/08/2026), duas frases: *"os mapas de favela so o lajes tem
+cordao de roupas do model, os outros nao e tudo generico low poly"* e *"tem que
+ver a escala dos predios sempre"*. Mint text-to-3D, licença de uso do assinante
+Mint Pro (asset original gerado por prompt, sem copyright de terceiros). Os três
+saíram do mesmo pack: `favela_r3`, packAssetId `th7395mdsfsgrt1dxb4zc3my2s8d6snr`,
+chat <https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq> (índice do kit em
+`/Users/ruben/map2/kits-mint-r3.json`, fora do repo). Otimizados na origem
+(WebP 1024 via `EXT_texture_webp`, ~4-5 k tris) — não passaram pelo
+`tools/optimize-props-v21.mjs`.
+
+**Convenção QUEBRADA de propósito neste lote.** O acervo integra prop com escala
+UNIFORME (`placeProp`, um `targetH`). Para casa isso não fecha: o molde do Mint
+chega quase cúbico (medido no accessor POSITION do binário: azul 0,955 × 0,998 ×
+0,764 m; tijolo 0,943 × 0,936 × 0,998 m) e casa de favela tem fachada de 4,0-5,6 m
+com pé-direito de 2,6-3,2 m por pavimento — 1,4:1 a 1,7:1. Com escala uniforme,
+4,4 m de fachada obrigariam 4,6 m de pé-direito (casa de gigante, que é o defeito
+que o dono nomeou). Por isso as casas entram por `placePropCaixa`
+(`public/js/mapprops.js`), que escala larg/alt/prof por eixo. O varal continua
+uniforme — esticar o eixo da corda deforma a roupa.
+
+- `casa_favela_azul.glb` — "Blue Favela House", sobradinho de alvenaria pintada
+  de azul com laje e caixa d'água. 4.780 tris. Item `ks7fet6qkrzjrs9jk2zsqsh0rh8d78by`
+  do pack. Registro: `casa-favela-azul`. Uso: `map_corrego.js` (palafitas do
+  canal e morro do fundo), 1-2 pavimentos, fachada 4,2-5,6 m.
+- `casa_favela_tijolo.glb` — "Brick Favela House", casa de tijolo cru sem reboco.
+  4.181 tris. Item `ks77wm8m73833tvn9edhztpkx98d6dtx`. Registro:
+  `casa-favela-tijolo`. Par obrigatório do azul: a régua `eval:escala-favela-glb`
+  cobra os dois moldes por mapa, nenhum abaixo de 30% das casas.
+- `varal_roupas.glb` — "Favela Clothesline", corda com roupa colorida em
+  prendedores (a corda corre no eixo X local; normalizado pela largura, 0,998 ×
+  0,697 × 0,326 m). 4.677 tris. Item `ks77x28h86c6wvx3xzr996npdh8d7bv8`.
+  Registro: `varal-roupas-favela`. Uso: `map_corrego.js`, 5 vãos de beco e beira
+  com `targetH` 1,55 m ⇒ vão de 2,22 m e cordão a 3,50 m.
+
+Régua deste lote: `npm run eval:escala-favela-glb` (mede a transform REAL de cada
+casa no mundo bootado, não a declaração; mutantes `ana`, `molde-unico`,
+`laje-unica`, `varal-baixo`). NÃO há evidência de render em
+`tools/eval/asset-evidence/` para este lote — o slot de browser não era desta
+frente; a leitura visual (qual face do molde é a fachada com porta) está aberta.

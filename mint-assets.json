@@ -1883,6 +1883,75 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "casa-favela-azul": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_azul.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Blue Favela House (casa de favela azul)",
+    "frente": "v21-e-models",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "notes": "Kit `favela_r3` do Mint (pack th7395mdsfsgrt1dxb4zc3my2s8d6snr). Pedido do dono 26/08/2026: \"os mapas de favela so o lajes tem cordao de roupas do model, os outros nao e tudo generico low poly\" + \"tem que ver a escala dos predios sempre\". GLB normalizado no cubo unitario do Mint: 0,955 x 0,998 x 0,764 m, 4.780 tris, EXT_texture_webp. NAO se integra com escala uniforme: casa de favela tem fachada de 4,0-5,6 m com pe-direito de 2,6-3,2 m por pavimento (1,4:1 a 1,7:1) e o molde e quase cubico. Entra por `placePropCaixa` (mapprops.js), que escala larg/alt/prof por eixo. Uso: map_corrego.js (palafitas do canal e morro do fundo). Regua: eval:escala-favela-glb."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92"
+   }
+  },
+  "casa-favela-tijolo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_tijolo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77wm8m73833tvn9edhztpkx98d6dtx",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Brick Favela House (casa de favela de tijolo)",
+    "frente": "v21-e-models",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "notes": "Kit `favela_r3` do Mint. Par do casa_favela_azul: a regua eval:escala-favela-glb cobra os DOIS moldes em cada mapa (nenhum abaixo de 30% das casas) porque fileira de clone e o \"tudo generico low poly\" com outro nome. GLB normalizado: 0,943 x 0,936 x 0,998 m, 4.181 tris, EXT_texture_webp. Mesma integracao por eixo do azul."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016"
+   }
+  },
+  "varal-roupas-favela": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/varal_roupas.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77x28h86c6wvx3xzr996npdh8d7bv8",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Favela Clothesline (varal de roupas de beco)",
+    "frente": "v21-e-models",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "notes": "Kit `favela_r3` do Mint. E o \"cordao de roupas do model\" que o dono so via no lajes. GLB normalizado pela largura: 0,998 x 0,697 x 0,326 m (a corda corre no eixo X local), 4.677 tris, EXT_texture_webp. Integra com escala UNIFORME (`placeProp`) de proposito — esticar o eixo da corda deforma a roupa, que e justamente o detalhe elogiado no lajes. Uso: map_corrego.js, 5 vaos de beco/beira com alt 1,55 m => vao de 2,22 m e cordao a 3,50 m. Regua: eval:escala-favela-glb (ESCGLB5)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf"
+   }
   }
  }
 }
