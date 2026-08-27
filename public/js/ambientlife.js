@@ -19,9 +19,9 @@ const DOG_IDLE_TIME = 3;
 const loadGLB = (url) => new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
 
 export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
-  await Promise.all([...new Set(ids)].filter((id) => ASSETS[id] && !templates.has(id)).map(async (id) => {
+  await Promise.all([...new Set(ids)].filter((id) => faunaAssetUrl(id) && !templates.has(id)).map(async (id) => {
     try {
-      const gltf = await loadGLB(`${ASSETS[id]}?v=${VERSION}`);
+      const gltf = await loadGLB(`${faunaAssetUrl(id)}?v=${VERSION}`);
       let skinned = false;
       gltf.scene.traverse((object) => {
         if (!object.isMesh) return;
@@ -29,7 +29,7 @@ export async function preloadAmbientLife(ids = FAVELA_AMBIENCE_ASSETS) {
         object.material.metalness = 0;
         object.material.roughness = Math.max(.72, object.material.roughness ?? .72);
       });
-      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned });
+      templates.set(id, { scene: gltf.scene, clips: gltf.animations, skinned, meta: { ...(STATIC_FAUNA_META[id] || {}) } });
     } catch (error) {
       console.warn('[ambientlife] GLB não carregou', id, error);
     }
@@ -407,4 +407,65 @@ class FavelaAmbience {
 
 export function createFavelaAmbience(root, options) {
   return new FavelaAmbience(root, options);
+}
+
+/* ---------------------------------------------------------------------------
+   FAUNA ESTÁTICA POSICIONÁVEL — região append-only
+   GLB sem rig, escala por comprimento, posto à mão pelo builder do mapa (o córrego
+   põe um jacaré no leito e uma capivara na margem). Fica FORA de `ASSETS` de
+   propósito: `FAVELA_AMBIENCE_ASSETS` alimenta o preload de TODO mapa de favela e
+   não pode crescer, senão todo mapa passa a baixar bicho que não usa.
+   --------------------------------------------------------------------------- */
+const STATIC_FAUNA = Object.freeze({
+  jacare: 'models/ambient/jacare_corrego.glb',
+  capivara: 'models/ambient/capivara_corrego.glb',
+});
+/* len = comprimento alvo em metros; yawFix gira o modelo até a CARA olhar pro +Z,
+   que é a convenção de `placeFauna` (o `ry` do caller soma em cima disso). */
+const STATIC_FAUNA_META = Object.freeze({
+  jacare: { len: 1.8, yawFix: Math.PI / 2 },
+  capivara: { len: 1.0, yawFix: 0 },
+});
+
+export function faunaAssetUrl(id) { return ASSETS[id] || STATIC_FAUNA[id] || null; }
+
+export const CORREGO_FAUNA_ASSETS = Object.freeze([
+  ...FAVELA_AMBIENCE_ASSETS, 'jacare', 'capivara',
+]);
+
+/* Gancho de régua: em node o GLTFLoader trava na textura, então o harness injeta a
+   cena à mão. Produção NÃO chama — quem carrega é `preloadAmbientLife`, e ele aplica
+   o MESMO STATIC_FAUNA_META, senão régua e jogo mediriam escalas diferentes. */
+export function registerFaunaTemplate(id, scene, meta = {}) {
+  if (!scene) { templates.delete(id); return; }
+  templates.set(id, { scene, clips: [], skinned: false, meta: { ...(STATIC_FAUNA_META[id] || {}), ...meta } });
+}
+
+// Retorna o Group clonado na base `y` (com `submerge` m afundados) ou null sem
+// template — o caller decide o fallback procedural.
+export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerge = 0 } = {}) {
+  const template = templates.get(id);
+  if (!template) return null;
+  const model = template.scene.clone(true);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const alvo = targetLen || template.meta?.len;
+  const len = Math.max(size.x, size.z) || 1;
+  const s = (alvo && alvo > 0) ? alvo / len : 1;
+  model.scale.setScalar(s);
+  const yawFix = template.meta?.yawFix || 0;
+  const root = new THREE.Group();
+  root.position.set(x, y - box.min.y * s - submerge, z);
+  root.rotation.y = ry + yawFix;
+  root.userData.faunaAsset = id;
+  root.userData.source = 'gltf';
+  root.add(model);
+  root.traverse((object) => {
+    if (!object.isMesh) return;
+    object.userData.nonSolidSurface = true;
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+  return root;
 }

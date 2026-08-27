@@ -64,6 +64,29 @@ export function placeProp(id, { x = 0, y = 0, z = 0, targetH = 2.4, targetLen = 
   return o;
 }
 
+/* Escala por EIXO (larg/alt/prof): o molde vem num cubo de ~1 m e casa de favela nao e
+   cubica — a conta e o trade estao no BUG-66 do KNOWN-BUGS.md. null sem template. */
+export function placePropCaixa(id, { x = 0, y = 0, z = 0, larg = 4, alt = 2.8, prof = 4, ry = 0 } = {}) {
+  const tpl = _base.get(id);
+  if (!tpl) return null;
+  const o = tpl.clone(true);
+  o.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(o);
+  const bw = (box.max.x - box.min.x) || 1, bh = (box.max.y - box.min.y) || 1, bd = (box.max.z - box.min.z) || 1;
+  const sy = alt / bh;
+  o.scale.set(larg / bw, sy, prof / bd);
+  o.position.set(x, y - box.min.y * sy, z);
+  o.rotation.y = ry;
+  o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; m.frustumCulled = PROP_CULL; } });
+  return o;
+}
+
+/* Gancho de regua irmao do `registerFaunaTemplate`: em node o GLTFLoader trava na
+   textura (BUG-66). Producao nao chama — quem carrega e `preloadMapProps`. */
+export function registerPropTemplate(id, scene) {
+  if (!scene) _base.delete(id); else _base.set(id, scene);
+}
+
 /* ---------------------------------------------------------------------------
    NORMALIZACAO DE GEOMETRIA PARA MERGE/INSTANCING
    mergeGeometries() exige que todas as geometrias tenham EXATAMENTE o mesmo conjunto

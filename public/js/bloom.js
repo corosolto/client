@@ -24,6 +24,8 @@ import { UnrealBloomPass } from '../vendor/addons/postprocessing/UnrealBloomPass
 import { ShaderPass } from '../vendor/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from '../vendor/addons/postprocessing/OutputPass.js';
 import { Pass, FullScreenQuad } from '../vendor/addons/postprocessing/Pass.js';
+import { LOOK } from './look.js';
+import { DepthPass, WATER_LAYER, SOFT_LAYER } from './water.js';
 
 const QP = () => new URLSearchParams(location.search);
 
@@ -91,7 +93,11 @@ function currentQuality() {
 
 function currentLook() {
   const id = currentMapId();
-  const base = LOOKS[id] || DEFAULT_LOOK;
+  /* piloto RC1: mapa com entrada no LOOK (look.js) tira grade E névoa de LÁ — uma
+     fonte só, senão a cor do céu e a cor da névoa divergem sem ninguém ver. Mapa
+     fora do LOOK segue na tabela LOOKS/AERIAL abaixo, byte por byte como antes. */
+  const L = LOOK[id];
+  const base = L ? { exposure: L.grade.exposicao, floor: L.grade.piso, expAces: L.grade.expAces } : (LOOKS[id] || DEFAULT_LOOK);
   const q = QP();
   const exp = parseFloat(q.get('exp'));
   const flo = parseFloat(q.get('floor'));
@@ -114,6 +120,14 @@ const AERIAL = {
   ferro_velho: { d: 0.0112, color: 0xa5c5e5, sun: [-46, 20, 32], dir: 1.00 },
 };
 const AERIAL_DEFAULT = AERIAL.praca_poderes;
+
+/* A entrada de névoa de um mapa, de UMA fonte só: os pilotos do RC1 vêm do LOOK
+   (a cor é o `horizonte` medido do webp); os demais seguem na tabela acima. */
+function aerialEntry(mapId) {
+  const L = LOOK[mapId];
+  if (L) return { d: L.neblina.d, color: L.horizonte, sun: L.neblina.solDir, dir: L.neblina.forca };
+  return AERIAL[mapId] || AERIAL_DEFAULT;
+}
 
 // TypedArray permanece compartilhado por `cloneUniforms`: xyz é o sol no mundo e w sua força.
 const _fogSun = new Float32Array([0, 1, 0, 0]);
@@ -207,7 +221,7 @@ patchFogChunks();
    ilumina, que é o "a tela lava pra branco" do dono. Uma fonte só, medida, para os dois.
    `new THREE.Color(hex)` converte sRGB -> linear de trabalho, então o retorno já é radiância. */
 export function skyRadiance(mapId) {
-  return new THREE.Color((AERIAL[mapId] || AERIAL_DEFAULT).color);
+  return new THREE.Color(aerialEntry(mapId).color);
 }
 
 /* A tabela, exportada para LEITURA. Quem quer a cor do céu de um mapa continua chamando
@@ -225,7 +239,7 @@ export const AERIAL_TABELA = AERIAL;
    deixar de ser. Nenhum chamador de produção passa `over`. */
 export function makeAerialFog(mapId, over = null) {
   const q = QP();
-  const A = over ? { ...(AERIAL[mapId] || AERIAL_DEFAULT), ...over } : (AERIAL[mapId] || AERIAL_DEFAULT);
+  const A = over ? { ...aerialEntry(mapId), ...over } : aerialEntry(mapId);
   const dOv = parseFloat(q.get('fogd'));
   const d = isFinite(dOv) ? dOv : A.d;
   // sem o patch (vendor diferente / ?fog2=0) a exponencial mudaria o look sem a cor
@@ -980,6 +994,26 @@ export function enableLightBloom(renderer, opts = {}) {
       cp.setSize(innerWidth, innerHeight);
       cp._w = innerWidth; cp._h = innerHeight;
       cp.addPass(new RenderPass(scene, camera));
+      /* Água viva: com composer a lâmina migra pra camada WATER e o DepthPass assume —
+         amostrar o depth do PRÓPRIO readBuffer seria laço. Guardado por
+         `scene.userData.waters`: cena sem água (todo mapa de hoje menos o córrego)
+         não ganha passe nenhum e a corrente fica byte por byte a de antes. */
+      const ws = scene.userData.waters || [];
+      const ss_ = scene.userData.softs || [];
+      if (ws.length || ss_.length) {
+        if (!cp.renderTarget1.depthTexture) attachDepth(cp);
+        for (const w of ws) {
+          w.mesh.layers.set(WATER_LAYER);
+          w.material.depthTest = false;
+          w.material.uniforms.uDepthOn.value = 1;
+        }
+        for (const s2 of ss_) {
+          s2.points.layers.set(SOFT_LAYER);
+          s2.uniforms.uDepthOn.value = 1;
+        }
+        cp._water = new DepthPass(scene, camera, rawRender, ws, ss_);
+        cp.addPass(cp._water);
+      }
       // threshold alto (0.85): só picos de brilho (sol, flash de tiro, speculars) — "bloom leve"
       const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.25, 0.45, 0.85);
       // A máscara de personagem tem que vir AQUI, colada no RenderPass: é o único ponto da
