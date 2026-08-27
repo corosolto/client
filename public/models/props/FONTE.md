@@ -174,3 +174,25 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+- `casa_favela_azul.glb` — "Casa de favela azul", alvenaria de morro com reboco
+  azul, laje e caixa d'água. 4.780 tris, texturas WebP 1024. Mint text-to-3D,
+  gerado 26/08/2026 — item do pack favela_r3. Chat:
+  <https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq>. Registro:
+  `casa_favela_azul-favela-r3`. Instanciada 6× no casario do campomorro
+  (campomorro-casa-* pares), alternando com a de tijolo. Normalizada ~1 m
+  (medido 0,955 × 0,998 × 0,764) e quase cúbica: a escala de USO mora no
+  call-site do `map_campomorro.js` (pavimentos × pé-direito), e o barraco de um
+  pavimento é alargado em x/z porque escala uniforme daria 2,9 m de fachada.
+- `casa_favela_tijolo.glb` — "Casa de favela em tijolo aparente", tijolo baiano
+  sem reboco com laje de topo. 4.181 tris, texturas WebP 1024. Mint text-to-3D,
+  gerado 26/08/2026 — item do pack favela_r3. Mesmo chat do kit. Registro:
+  `casa_favela_tijolo-favela-r3`. Instanciada 5× no casario do campomorro
+  (campomorro-casa-* ímpares). Normalizada ~1 m (medido 0,943 × 0,936 × 0,998).
+- `varal_roupas.glb` — "Varal de roupas de beco", cordão de roupas entre
+  mourões. 4.677 tris, texturas WebP 1024. Mint text-to-3D, gerado 26/08/2026 —
+  item do pack favela_r3. Mesmo chat do kit. Registro: `varal_roupas-favela-r3`.
+  É o "cordao de roupas do model" que o dono cobrou em TODO mapa de favela (só o
+  lajes tinha). Instanciado 5× nos becos e na laje baixa do campomorro
+  (campomorro-varal-*), altura de uso 2,15 m e SEM colisor — varal é vestido de
+  beco, não obstáculo: rota, CTF e waypoints seguem vendo o beco vazio.
+  Normalizado ~1 m (medido 0,998 × 0,697 × 0,326).

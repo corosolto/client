@@ -1883,6 +1883,72 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "casa_favela_azul-favela-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_azul.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Casa de favela azul (kit favela_r3)",
+    "frente": "map2-campomorro",
+    "notes": "Casa de morro de alvenaria com reboco azul, laje e caixa d’água. Instanciada 6× no casario do campomorro (campomorro-casa-* pares), alternando com a de tijolo. GLB normalizado ~1 m (medido 0,955×0,998×0,764), pivô central; a escala de USO vem do call-site em map_campomorro.js (pavimentos × pé-direito 2,70-3,14 m, fachada 4,60-5,95 m) e é cobrada pela CM-M2 do campomorro-molde-check. 4.780 tris, texturas WebP 1024. Item do pack favela_r3 (packAssetId th7395mdsfsgrt1dxb4zc3my2s8d6snr)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92"
+   }
+  },
+  "casa_favela_tijolo-favela-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_tijolo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77wm8m73833tvn9edhztpkx98d6dtx",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Casa de favela em tijolo aparente (kit favela_r3)",
+    "frente": "map2-campomorro",
+    "notes": "Casa de morro em tijolo baiano aparente, sem reboco, com laje de topo. Instanciada 5× no casario do campomorro (campomorro-casa-* ímpares). GLB normalizado ~1 m (medido 0,943×0,936×0,998), pivô central; escala de USO no call-site, cobrada pela CM-M2. 4.181 tris, texturas WebP 1024. Item do pack favela_r3 (packAssetId th7395mdsfsgrt1dxb4zc3my2s8d6snr)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016"
+   }
+  },
+  "varal_roupas-favela-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/varal_roupas.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77x28h86c6wvx3xzr996npdh8d7bv8",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Varal de roupas de beco (kit favela_r3)",
+    "frente": "map2-campomorro",
+    "notes": "Cordão de roupas entre mourões — o \"cordao de roupas do model\" que o dono cobrou em todo mapa de favela. Instanciado 5× nos becos e na laje baixa do campomorro (campomorro-varal-*), altura de uso 2,15 m, SEM colisor (vestido de beco, não obstáculo). GLB normalizado ~1 m (medido 0,998×0,697×0,326). 4.677 tris, texturas WebP 1024. Item do pack favela_r3 (packAssetId th7395mdsfsgrt1dxb4zc3my2s8d6snr)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf"
+   }
   }
  }
 }
