@@ -1,0 +1,22 @@
+{
+  "gerado": "2026-08-26",
+  "projeto": "zd7cbsyxbzmf05b3w084t51ymd8c5hfr",
+  "meta": "Kits da onda r3-parte2. Otimizados (webp 1024, ~4-5k tris). Item: assetId do item do pack.",
+  "kits": {
+    "carandiru_r3b": { "packAssetId": "th7fkxdza9fd93fxc84xrnemy18d6r1v", "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt", "itens": {
+      "bloco_celas.glb": "ks7ad5wz2hcf78xfnwtxb1xfkd8d69pv", "portao_penitenciaria.glb": "ks75stmhnwxtapdam0mz8mqmgn8d6013" },
+      "solto": { "guarita_muro.glb": { "modelAssetId": "ks7a33yhwearthy8y6gmh98f358d7jtv", "chatUrl": "https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t" } } },
+    "festa_r3": { "packAssetId": "th753veb8adgvyjwfe1ccd3xcs8d6t7q", "chatUrl": "https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4", "itens": {
+      "fogueira.glb": "ks77asyr7b94tt26c7y3zsx1qd8d7a93", "poste_junino.glb": "ks70sps9r39htbmnvsex0gxnsx8d6s37", "barraca_quentao.glb": "ks7d8cg7j74nc69t7xtz2mejvn8d7h0h" } },
+    "favela_r3": { "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr", "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq", "itens": {
+      "casa_favela_azul.glb": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by", "casa_favela_tijolo.glb": "ks77wm8m73833tvn9edhztpkx98d6dtx", "varal_roupas.glb": "ks77x28h86c6wvx3xzr996npdh8d7bv8" } },
+    "sertao_r3b": { "packAssetId": "th7c4h3pwm471ntmps53y0d8a18d7089", "chatUrl": "https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy", "itens": {
+      "casa_pedra.glb": "ks7e1dx5vzctmbe1qesp5fmhad8d63eg", "casa_platibanda.glb": "ks77rz2hj7kenbdpgm0z9tf72d8d6yek", "casa_geminada.glb": "ks72vcqrhyehnsm5mky7ppe5198d7pp6" } },
+    "atacadao_r3": { "packAssetId": "th7dnpa6tmkqv43k7s3458exmx8d79aq", "chatUrl": "https://mint.gg/chat/ph7emw51xss7hs3n3war213h618d7ayv", "itens": {
+      "estante_pallets.glb": "ks7d5h0jrqz526fsqjtmed8d8s8d6780", "freezer.glb": "ks7fwtjj0r7fy6fqce79scb0y18d6yja", "ilha_caixas.glb": "ks77jm9rp5ek9an2s31q8608rx8d71a1" } },
+    "posto_obras_r3": { "packAssetId": "th74q1agb8zfn1hnfbqmmrhd998d6fj6", "chatUrl": "https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t", "itens": {
+      "bombas_combustivel.glb": "ks7bh1nbqc6pas5384dpbw68k98d6ft7", "loja_conveniencia.glb": "ks7cs6vm1q8shyaqwztk8qt3cn8d7hz9", "andaime.glb": "ks72da37yam3djef241kms73498d6rrk", "container_escritorio.glb": "ks7dzxqex8hhmqpgj3tnrys3a58d7xzw" } },
+    "sitio_fauna_r3": { "packAssetId": "th79gx9yvqsyac9a067c0ggzq18d623r", "chatUrl": "https://mint.gg/chat/ph7cty1skh0bnrzwtergh2w01x8d7fk6", "itens": {
+      "pato_lago.glb": "ks70r6rydsez0kbkb3rr25fz2d8d7g00", "galinha_angola.glb": "ks7crtq8cj2jse86h06wmrrj8s8d66v7", "cavalinho.glb": "ks7dydcdc7pzs2d5ky37v17bn58d7rjd" } }
+  }
+}

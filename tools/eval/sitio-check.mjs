@@ -67,8 +67,8 @@ const MIN_PATOS = 2;
 const MIN_ESPECIES_SITIO = ['pato', 'galinha_angola', 'cavalinho'];
 const PASSO_VIVO = 0.30;
 const Y_TOL = 0.25;
-const DT = 1.2;
-const CICLOS = 3;
+const DT = 0.05;      // o update do ambientlife clampa dt em 0,05 s — dt maior não simula mais
+const CICLOS = 120;   // 6 s de simulação: pato em drift (0,17 m/s) anda ~1 m, bem acima do passo
 
 const falhas = [];
 const reprova = (clauso, motivo) => { falhas.push(`${clauso}: ${motivo}`); };

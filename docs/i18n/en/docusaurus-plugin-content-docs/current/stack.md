@@ -20,7 +20,7 @@ from `package.json`, `docs/package.json` and the vendored Three.js itself.
 | Layer | Tool | Version |
 |---|---|---|
 | 3D engine (WebGL) | **Three.js**, vendored | `r160` |
-| Game | vanilla ES modules, **zero build** | 59 files |
+| Game | vanilla ES modules, **zero build** | 60 files |
 | Site | **Astro** with SSR | `^7.1.1` |
 | Hosting | **Vercel** adapter | `^11.0.6` |
 | Database | **managed Postgres** (RLS; private schema) | `^2.110.7` |
@@ -126,7 +126,7 @@ hypothetical one:
 | **Meshy** | 3D props and rigging | `tools/gen-asset.mjs --provider meshy` | `MESHY_API_KEY` |
 | **OpenRouter** | 2D art | `tools/gen-image.mjs` | `OPENROUTER_API_KEY` |
 
-`mint-assets.json` records **65 assets** generated through Mint (19 `openrouter-image-concept` · 2 `openrouter-concept-tripo-blender-model` · 5 `imagegen-concept` · 30 `mint-model` · 2 `tripo3d-task` · 2 `openrouter-concept-meshy-model` · 5 `mint-asset-pack`).
+`mint-assets.json` records **68 assets** generated through Mint (19 `openrouter-image-concept` · 2 `openrouter-concept-tripo-blender-model` · 5 `imagegen-concept` · 33 `mint-model` · 2 `tripo3d-task` · 2 `openrouter-concept-meshy-model` · 5 `mint-asset-pack`).
 
 API keys live in the gitignored root `.env`; generation is offline and the game runs without them.
 
