@@ -40,3 +40,11 @@ só este FONTE.md é versionado (exceção no `.gitignore`).
   resultado CC0 bom; usado "Water Laps in Tank" da query alternativa "water lapping/pool water loop".
 - `cidade.mp3`: candidatos longos demais (604s, 2585s) foram rejeitados pelo teto de 180s.
 - Nenhum item FALHOU — todos os 16 têm fonte CC0 verificada.
+
+## Dívidas do audio-pack
+
+- `eco-patio.mp3` — loop de eco de pátio de presídio (referência Carandiru,
+  mapa penitenciária, r3 27/08/2026). **Pendente de seleção CC0** (Freesound,
+  mesma regra da tabela acima): o `soundscape.js` já aponta para o arquivo e
+  cai em silêncio com warn uma vez enquanto o pack não ganha o binário —
+  dívida registrada, não defeito de build.

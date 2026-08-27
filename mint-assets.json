@@ -1929,6 +1929,72 @@
     ],
     "finalSha256": "45943077f7b998cbc3daa5ab5ef6788a0e7483999b2ef161ec126c45128ac31d"
    }
+  },
+  "bloco-celas-carandiru": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/bloco_celas.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7ad5wz2hcf78xfnwtxb1xfkd8d69pv",
+    "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+    "displayName": "Bloco de celas (kit carandiru_r3b)",
+    "frente": "map2-penitenciaria",
+    "notes": "Pavilhão de celas de 2 pavimentos com galeria e grades (3.988 tris, texturas WebP 1024). Pavilhão central do mapa penitenciária (referência Carandiru, dono 27/08/2026): o jogador circula pela galeria externa gradeada ao redor do bloco. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "1560055af1eb9268ad7257843890ab28974d64f94634b54cb0f09d58873b5a4d"
+   }
+  },
+  "portao-penitenciaria-carandiru": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/portao_penitenciaria.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks75stmhnwxtapdam0mz8mqmgn8d6013",
+    "chatUrl": "https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt",
+    "displayName": "Portão de penitenciária (kit carandiru_r3b)",
+    "frente": "map2-penitenciaria",
+    "notes": "Portão principal de penitenciária com pilastras e folha de grade fechada (4.491 tris, texturas WebP 1024). Embutido no muro norte do mapa penitenciária (referência Carandiru) — portão fechado, o colisor sela o vão. Item do pack carandiru_r3b (packAssetId th7fkxdza9fd93fxc84xrnemy18d6r1v). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 5,6 / targetLen 11)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "df2052512e03649fbec7dd85ee12beaabe17ca2d2e422d67bd0a4b7bf078e669"
+   }
+  },
+  "guarita-muro-carandiru": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/guarita_muro.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7a33yhwearthy8y6gmh98f358d7jtv",
+    "chatUrl": "https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t",
+    "displayName": "Guarita de muro (carandiru_r3b, item solto)",
+    "frente": "map2-penitenciaria",
+    "notes": "Guarita de muro de presídio com cabine envidraçada sobre estrutura de concreto (4.827 tris, texturas WebP 1024). Duas instâncias flanqueando o portão norte do mapa penitenciária — a frente não tinha vigia entre as 4 guaritas de canto (torre_vigilancia). Modelo solto da onda carandiru_r3b (chat próprio). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 8,2 / targetLen 5,6, ry=π)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "26a8a5fcac3089a955f204e9e3b265dd1084cbba5ff4317a47f4ea9cacd5006d"
+   }
   }
  }
 }

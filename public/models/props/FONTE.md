@@ -193,3 +193,24 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
   `torre-vigilancia-penitenciaria`. Substitui o visual da
   `penitenciaria_guarita.glb` nas 4 guaritas de canto do muro; o fallback
   procedural e os colisores são os mesmos nos dois mundos.
+- `bloco_celas.glb` — "Bloco de celas", pavilhão de 2 pavimentos com galeria
+  e grades. 3.988 tris, texturas WebP 1024. Mint text-to-3D, gerado 26/08/2026 —
+  item do pack carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt>. Registro:
+  `bloco-celas-carandiru`. Pavilhão central do mapa penitenciária (referência
+  Carandiru): escala não-uniforme no call-site (9 × 15 m de planta, 6,6 m);
+  o jogador circula pela galeria externa gradeada ao redor; procedural de
+  tijolo com janelas de grade cobre o arnês (colisor idêntico).
+- `portao_penitenciaria.glb` — "Portão de penitenciária", portão principal
+  com pilastras e folha de grade fechada. 4.491 tris, texturas WebP 1024.
+  Mint text-to-3D, gerado 26/08/2026 — item do pack carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph7en60deef2j48p2mwg3ztfdx8d68dt>. Registro:
+  `portao-penitenciaria-carandiru`. Embutido no muro norte do mapa
+  penitenciária; portão fechado — o colisor sela o vão.
+- `guarita_muro.glb` — "Guarita de muro", cabine envidraçada sobre estrutura
+  de concreto. 4.827 tris, texturas WebP 1024. Mint text-to-3D, gerado
+  26/08/2026 — modelo solto da onda carandiru_r3b. Chat:
+  <https://mint.gg/chat/ph77vksqsbvk24d8gv6zkytdtn8d7f7t>. Registro:
+  `guarita-muro-carandiru`. 2 instâncias flanqueando o portão norte do mapa
+  penitenciária (a frente sem vigia entre as guaritas de canto); fallback
+  procedural de pernas+cabine no arnês.
