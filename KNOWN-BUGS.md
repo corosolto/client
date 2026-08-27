@@ -1647,6 +1647,66 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-79 · Córrego: grama nunca foi servida e as rampas do canal mostram o céu
+
+**Reportado (27/08/2026, palavras literais do dono):**
+
+> *"o detalhe de grama que te pedi na capivara e na outra ara de grama e pelo corrego
+> tambem nao refletiram"* · *"as rampas nas laterais do corrego ainda estao mostrando o
+> horizonte esta super esqusiito"* · *"ter grama realistica nas beradas do corrego e
+> tambem no chao do mapa ter bastante grama difusa nao só terra"* · *"num geral o mapa
+> esta muito bom falta as alteracoes visuais qu eeu ja tinha pedido e nao se refletiram"*
+
+Pedido ANTERIOR, registrado em `plans/13-VISUAL-V2.1.md:33` como frente B:
+*"faltou tambem usar os glbs de grama"*. A frente entregou os GLBs e ninguém ligou.
+
+**A · Grama: dois furos independentes, os dois silenciosos.**
+
+| medida | valor |
+|---|---|
+| spots de grama reservados (`world.gramaSpots`) | 26 |
+| grama SERVIDA na cena (`world.gramaServida`) | **0** |
+| ids de vegetação em `CORREGO_PROPS` | **0** — nunca baixa |
+| `hasProp('grama_corrego')` | **false** |
+| GLBs no disco | `grama_corrego_01`, `grama_corrego_02`, `planta_corrego_taboa`, `planta_corrego_taioba` |
+
+`map_corrego.js:443` pede `grama_corrego`; o acervo tem `grama_corrego_01`/`_02`. O `if`
+nunca entra. E como `CORREGO_PROPS` não declara vegetação, o `preloadMapProps` nem baixa
+— então mesmo com o id certo não apareceria nada.
+
+**Por que o portão estava VERDE.** O `corrego-contract-check` imprime, com todas as
+letras, `GRAMA: prop grama_corrego ausente no acervo — cláusula de presença DORMENTE` e
+passa no `✓ grama: terreno reservado nas margens (>= 12 spots)`. Ele cobra a INTENÇÃO
+(spots) e não o RESULTADO (grama na tela). A pendência que justificava a cláusula
+dormente já não existia: a frente E entregou os GLBs. Régua verde medindo a coisa errada
+— o corolário da lei 1 da `bug-hunt`.
+
+**B · Rampas do canal: 40,3% dos raios saem para o céu.**
+
+As paredes do canal são construídas em `trechos` que PULAM a faixa da rampa
+(`map_corrego.js:366-377`). No lugar sobra só a laje inclinada de 0,22 m
+(`addBoxSB`, `:384`) e uma mureta de 0,5 m — acima e abaixo dela o vão é aberto, e de
+dentro do canal se vê o skybox.
+
+| raio horizontal do fundo do canal para fora | furos |
+|---|---|
+| rampa oeste z[−33,−27] | 17/44 |
+| rampa leste z[−13,−7] | 18/44 |
+| rampa oeste z[9,15] | 17/44 |
+| rampa leste z[29,35] | 19/44 |
+| **total** | **71/176 = 40,3%** |
+| **controle** (trecho sem rampa) | **0/32** |
+
+O controle limpo refuta o palpite óbvio de *face virada / culling*: se fosse isso, o
+trecho sem rampa vazaria também.
+
+**Figura:** `/tmp/ceu/rampa-de-dentro-do-canal.png` — duas faixas de céu atravessando a
+parede, exatamente o relato.
+
+**Régua:** `eval:corrego-contract` (cláusulas novas) — e o `eval:corrego-superficie`, que
+existia como ARQUIVO mas nunca esteve no `package.json`, foi ligado ao `check:fast`.
+
+
 ### ~~BUG-54 · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
 
 **Evidência antes.** `BASE=http://localhost:4322 OUT=/tmp/bug292-before npm run
