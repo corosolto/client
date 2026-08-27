@@ -3,10 +3,11 @@
 
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
+/* Só entram aqui nós que EXISTEM. Servidor que nunca respondeu não é informação, é ruído —
+   e a lista já mostra "fora do ar" para quem caiu, que é outra coisa. O deploy/subir-no.sh
+   imprime a linha a colar aqui quando uma região nova sobe. */
 export const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
-  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
-  { id: 'eu', nome: 'Europa · Bélgica', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
 // URLs de lobby e jogo a partir do menu/URL: '1' = local, 'host:porta', ou 'wss://...'

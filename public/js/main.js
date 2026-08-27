@@ -2724,9 +2724,11 @@ async function abrirMultiplayer() {
   mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
   const local = new URLSearchParams(location.search).get('mp');
   if (local) {
-    // desenvolvimento: ?mp=1 ou ?mp=host:porta aponta pro servidor da máquina
+    // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
     const u = mpUrls(local);
-    mpNos.unshift({ id: 'local', nome: 'LOCAL (desenvolvimento)', url: u.ws, http: u.http, ping: 0, online: true, jogadores: 0, salas: 0 });
+    const nome = local === '1' ? 'LOCAL (desenvolvimento)' : `SERVIDOR DA URL · ${local}`;
+    const sonda = await sondarNos([{ id: 'url', nome, url: u.ws }]);
+    mpNos.unshift(sonda[0]);
   }
   mpDesenharNos();
   const primeiro = mpNos.find((n) => n.online) || mpNos[0];
