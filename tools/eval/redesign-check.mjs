@@ -105,7 +105,9 @@ let main = readFileSync(join(ROOT, 'public/js/main.js'), 'utf8');
 let css = readFileSync(join(ROOT, 'public/style.css'), 'utf8');
 let i18n = readFileSync(join(ROOT, 'public/js/i18n.js'), 'utf8');
 let astro = readFileSync(join(ROOT, 'src/pages/index.astro'), 'utf8');
-let mapPlaysApi = readFileSync(join(ROOT, 'src/pages/api/map-plays.ts'), 'utf8');
+/* A rota /api/map-plays saiu deste repositório (ver docs/APIS.md). O que ela faz por dentro
+   agora é cobrado no backend; aqui fica o que é do CLIENTE: que a tela chame a rota e aguente
+   a resposta não chegar. */
 const characters = readFileSync(join(ROOT, 'public/js/characters.js'), 'utf8');
 let videoGenerator = readFileSync(join(ROOT, 'tools/eval/char-native-vids.mjs'), 'utf8');
 let game = readFileSync(join(ROOT, 'public/js/game.js'), 'utf8');
@@ -245,7 +247,8 @@ main = muta('mapa-plays-inventado', main,      // zero vira "0 partidas" em vez 
 main = muta('mapa-todos-sem-ranking', main,    // TODOS deixa de ordenar por partidas jogadas
   'return MAP_IDS.slice().sort((a, b) => playsDe(b) - playsDe(a) || MAP_IDS.indexOf(a) - MAP_IDS.indexOf(b));',
   'return MAP_IDS.slice();');
-mapPlaysApi = muta('mapa-plays-sem-guarda', mapPlaysApi,   // sem banco, a rota passa a estourar
+// (mutante 'mapa-plays-sem-guarda' foi junto com a rota, para o backend)
+const _mapPlaysApiRemovido = muta('mapa-plays-sem-guarda', '',   // sem banco, a rota passa a estourar
   '  if (!supabaseAdmin) return resposta({ plays: {} });',
   '  // guarda removida');
 css = muta('mapa-card-achatado', css,          // volta ao px fixo: o card deixa de ser quadrado
@@ -638,11 +641,10 @@ const mapaReferencia = /const shown = visibleMapIds\(\);/.test(funcMap)
   && /return MAP_IDS\.filter\(\(id\) => catsDe\(id\)\.includes\(mapCategory\)\)/.test(main)
   /* a estatística sai do contador REAL (picks_daily via /api/pick), nunca de número local,
      e a tela tem de abrir sem ela: rede caída não pode derrubar a escolha de mapa. */
-  && /fetch\('\/api\/map-plays'\)/.test(main)
+  && /fetch\(apiUrl\('\/api\/map-plays'\)\)/.test(main)
   && /let mapPlays = \{\};/.test(main)
   && /\.catch\(\(\) => \{ \/\* sem banco\/rede/.test(main)
-  && /\.from\('picks_daily'\)[\s\S]{0,120}\.eq\('kind', 'mapa'\)/.test(mapPlaysApi)
-  && /if \(!supabaseAdmin\) return resposta\(\{ plays: \{\} \}\);/.test(mapPlaysApi)
+
   /* zero partidas é AUSÊNCIA de medida, não medida de zero: o crachá some em vez de mentir */
   && /plays\.hidden = !n;/.test(funcMap)
   && /function stepMap\(dir, ids = MAP_IDS\)/.test(main)
