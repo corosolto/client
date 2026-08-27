@@ -459,7 +459,6 @@ export function buildEscadao(scene, T) {
 
   /* ===================== CASAS LATERAIS ===================== */
   // Cada par acompanha o nível do lance vizinho; o embasamento fecha o volume até a rua.
-  // Planta estreita fixa; quem varia é a altura: sobrado de 2×2,95 m x casa de 3,05 m.
   for (const [z, y, ml, mr, alto] of [[12, 0, 1, 0, -1], [5, RISE, 0, 2, 1], [-3.7, RISE * 2, 2, 1, -1]]) {
     const sobrado = { molde: 'casa_favela_azul', pav: 2 }, terreo = { molde: 'casa_favela_tijolo', pav: 1 };
     const esq = alto < 0 ? sobrado : terreo, dir = alto < 0 ? terreo : sobrado;
