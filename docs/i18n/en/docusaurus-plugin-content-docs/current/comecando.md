@@ -41,12 +41,12 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 41,546 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 41,639 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,260** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,812 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 161 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 164 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 62, in 10 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
@@ -238,7 +238,7 @@ The maps registered today, and which mode each one opens in:
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
 | `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 276 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 426 |
-| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 748 |
+| `velho_oeste` | Sertão da Treta | **capture** | `map_velho_oeste.js` | 841 |
 | `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 264 |
 
 **17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 20 `map_*.js` files on disk, so a file alone does **not** make a map playable.
