@@ -8,6 +8,9 @@ import { createFavelaAmbience } from './ambientlife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 export const OBRAS_PROPS = [
+  // MOLDES do kit posto_obras_r3 (Mint): torre escalável e bunker de spawn são
+  // modelo de verdade, não caixa pintada. Régua: tools/eval/obras-check.mjs.
+  'andaime', 'container_escritorio',
   'construction_rubble', 'guindaste', 'concrete_roadblock', 'jersey_barrier', 'sandbags',
   'dumpster', 'botijao_gas', 'pilha_pneus', 'vw_9150', 'kombi',
   // entorno
@@ -58,13 +61,30 @@ export function buildObras(scene, T) {
 
   // O grafo de waypoints depende destes dois números: exclui célula < -1,0 m e corta ladeira > 0,7 m.
   const PITS = [[-7, -15, 7, 1.6], [12, -2, 6.5, 1.5], [-13, 12, 6, 1.4], [8, 20, 6.5, 1.5]];
-  function groundHeightAt(x, z) {
+  // `terreno` é o chão de barro. O andar de cima (decks do andaime) entra no
+  // groundHeightAt lá embaixo, com a regra de yRef da laje do map_lajes.
+  function terreno(x, z) {
     const edge = Math.max(0, Math.min(1, (HALF_X - 3 - Math.abs(x)) / 7)) * Math.max(0, Math.min(1, (HALF_Z - 3 - Math.abs(z)) / 7));
     let h = (Math.sin(x * 0.17) * 0.3 + Math.sin(z * 0.15 + 1.3) * 0.3 + Math.sin((x + z) * 0.09) * 0.18) * edge;
     for (const [cx, cz, r, d] of PITS) { const dist = Math.hypot(x - cx, z - cz); if (dist < r) h -= d * (0.5 + 0.5 * Math.cos(Math.PI * dist / r)); }
     return h;
   }
-  const gy = (x, z) => groundHeightAt(x, z);
+  const gy = (x, z) => terreno(x, z);
+  /* DECKS: pegada andável acima do barro. `h1` faz rampa linear em x (mesma forma
+     do `inFootprint` do lajes). Preenchido pela torre de andaime, mais abaixo. */
+  const decks = [];
+  function alturaDeck(x, z) {
+    for (const d of decks) if (x >= d.x0 && x <= d.x1 && z >= d.z0 && z <= d.z1)
+      return d.h1 === undefined ? d.h : d.h + (d.h1 - d.h) * (d.eixo === 'z' ? (z - d.z0) / (d.z1 - d.z0) : (x - d.x0) / (d.x1 - d.x0));
+    return null;
+  }
+  function groundHeightAt(x, z, yRef) {
+    const d = alturaDeck(x, z);
+    /* Com o corpo embaixo (yRef < deck - 1,2) o chão daqui é o barro: é o que
+       deixa passar POR BAIXO do andaime em vez de subir sozinho. */
+    if (d !== null && !(yRef != null && yRef < d - 1.2)) return d;
+    return terreno(x, z);
+  }
 
   function addBox(w, h, d, mat, x, y, z, opts = {}) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -84,14 +104,14 @@ export function buildObras(scene, T) {
     g.add(f, bk); g.position.set(x, y, z); g.rotation.y = ry; root.add(g); return g;
   };
   // placa em poste (mastro termina na base — não corta o texto)
-  const postSign = (x, z, cy, w, h, tx2, ry) => { const b = groundHeightAt(x, z); addBox(0.16, cy - h / 2, 0.16, MAT.metal, x, b, z); signMesh(w, h, tx2, x, b + cy, z, ry); };
+  const postSign = (x, z, cy, w, h, tx2, ry) => { const b = terreno(x, z); addBox(0.16, cy - h / 2, 0.16, MAT.metal, x, b, z); signMesh(w, h, tx2, x, b + cy, z, ry); };
   const wX = HALF_X - 0.5, wZ = HALF_Z - 0.5;
 
   scene.background = new THREE.Color(0xc7bfa8); scene.fog = new THREE.Fog(0xc7bfa8, 70, 160);
   {
     const geo = new THREE.PlaneGeometry(HALF_X * 2, HALF_Z * 2, 56, 70); geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position;
-    for (let i = 0; i < pos.count; i++) pos.setY(i, groundHeightAt(pos.getX(i), pos.getZ(i)));
+    for (let i = 0; i < pos.count; i++) pos.setY(i, terreno(pos.getX(i), pos.getZ(i)));
     geo.computeVertexNormals();
     const ground = new THREE.Mesh(geo, MAT.terra); ground.receiveShadow = true; root.add(ground);
   }
@@ -123,7 +143,139 @@ export function buildObras(scene, T) {
     for (const dx of [-w / 2, w / 2]) for (const dz of [-d / 2, d / 2]) addBox(0.14, h, 0.14, MAT.metal, x + dx, gy(x + dx, z + dz), z + dz);   // montantes (colidem)
     for (let y = 1.9; y < h; y += 1.9) { addBox(w, 0.08, 0.08, MAT.metal, x, b + y, z - d / 2, { collide: false }); addBox(w, 0.08, 0.08, MAT.metal, x, b + y, z + d / 2, { collide: false }); addBox(w, 0.1, d, MAT.tabua, x, b + y, z, { collide: false, cast: false }); }
   };
-  scaffold(-16, -8, 3, 2, 5.7); scaffold(-16, 8, 3, 2, 5.7); scaffold(16, 6, 3, 2, 5.7);
+  scaffold(16, 6, 3, 2, 5.7);
+
+  /* TORRE DE ANDAIME ESCALÁVEL — o molde `andaime.glb` com ANDAR ANDÁVEL de verdade.
+     Pedido do dono: mais realista e mais complexo, não tão aberto. */
+  const torres = [];
+  function torreAndaime(tx, tz) {
+    const g = new THREE.Group(); g.name = `obras-torre-andaime-${tz < 0 ? 'sul' : 'norte'}`;
+    g.userData.molde = 'andaime'; g.userData.pos = [tx, tz]; root.add(g); torres.push(g);
+    const ALTA = 5.6, BAIXA = 2.8, TOPO = 8.4;
+    const xAlta = tx, xBaixa = tx + 10.0;
+    /* Duas torres de altura diferente ligadas por prancha: é assim que o piso de
+       cima fica alcançável sem escada (o groundHeightAt não sabe subir escada). */
+    const monta = (cx, h, alturaGlb) => {
+      const glb = placeProp('andaime', { x: cx, z: tz, y: terreno(cx, tz), targetH: alturaGlb });
+      if (glb) { g.add(glb); occluders.push(glb); }
+      else for (const dx of [-2.1, 2.1]) for (const dz of [-1.9, 1.9])   // fallback: montantes
+        g.add(addBox(0.14, alturaGlb, 0.14, MAT.metal, cx + dx, terreno(cx + dx, tz + dz), tz + dz, { collide: false }));
+      for (const dx of [-2.1, 2.1]) for (const dz of [-1.9, 1.9]) col(cx + dx, tz + dz, 0.16, 0.16, alturaGlb);
+      // tábua do piso + guarda-corpo (o guarda-corpo colide: ninguém cai do deck)
+      g.add(addBox(4.4, 0.12, 4.0, MAT.tabua, cx, h - 0.12, tz, { collide: false }));
+      for (const dz of [-1, 1]) addBox(4.4, 1.0, 0.12, MAT.metal, cx, h, tz + dz * 2);
+      decks.push({ x0: cx - 2.2, x1: cx + 2.2, z0: tz - 2, z1: tz + 2, h });
+    };
+    monta(xAlta, ALTA, TOPO);
+    monta(xBaixa, BAIXA, ALTA);
+    // prancha entre as duas torres (5,6 -> 2,8) e rampa do chão até a torre baixa
+    /* Comprimento das duas pranchas é régua, não estética: com o teto de 1,0 m de
+       desnível por aresta, rampa curta demais desliga a rota do bot (5,6 -> 2,8 em
+       3,2 m dava 1,23 m por passo e a torre virava andar só do jogador). */
+    decks.push({ x0: xAlta + 2.2, x1: xBaixa - 2.2, z0: tz - 0.9, z1: tz + 0.9, h: ALTA, h1: BAIXA });
+    decks.push({ x0: xBaixa + 2.2, x1: xBaixa + 11.6, z0: tz - 0.9, z1: tz + 0.9, h: BAIXA, h1: terreno(xBaixa + 11.6, tz) });
+    for (const [x0, x1] of [[xAlta + 2.2, xBaixa - 2.2], [xBaixa + 2.2, xBaixa + 11.6]]) {
+      const n = Math.round((x1 - x0) / 0.8);
+      for (let i = 0; i <= n; i++) {
+        const px = x0 + (x1 - x0) * i / n;
+        g.add(addBox(0.85, 0.1, 1.8, MAT.tabua, px, alturaDeck(px, tz) - 0.1, tz, { collide: false, cast: false }));
+      }
+    }
+    return g;
+  }
+  for (const sz of [-1, 1]) torreAndaime(-18, sz * 11);
+
+  /* BUNKER DE SPAWN — `container_escritorio.glb` ladeando cada spawn. O container é
+     sólido: cobre o nascimento do tiro que vem do meio, sem mexer nos spawns. */
+  const bunkers = [];
+  for (const sz of [-1, 1]) for (const bx of [-13, 15]) {
+    const b = new THREE.Group(); b.name = `obras-bunker-${sz < 0 ? 'sul' : 'norte'}`;
+    b.userData.molde = 'container_escritorio'; root.add(b); bunkers.push(b);
+    const bz = sz * 31, base = terreno(bx, bz);
+    b.userData.pos = [bx, bz];
+    const glb = placeProp('container_escritorio', { x: bx, z: bz, y: base, targetH: 3.0 });
+    if (glb) { b.add(glb); occluders.push(glb); }
+    else b.add(addBox(5.1, 3.0, 3.7, MAT.metal, bx, base, bz, { collide: false }));
+    col(bx, bz, 2.55, 1.85, 3.0);
+    // degrau da porta + saco de areia na frente (o parapeito do bunker)
+    b.add(addBox(1.2, 0.35, 0.8, MAT.concRaw, bx, base, bz - sz * 2.2, { collide: false }));
+    prop('sandbags', bx - 3.4, bz - sz * 1.2, 0.9, Math.PI / 2, 0.8, 1.6, 0.85);
+  }
+
+  /* TÉRREO: tubo e saco de cimento como cover de MEIA ALTURA (0,9-1,2 m) */
+  const sacos = (x, z, n, ry) => {
+    const b = terreno(x, z);
+    for (let i = 0; i < n; i++) for (let j = 0; j < 2; j++) {
+      const sx = x + (ry ? 0 : (i - (n - 1) / 2) * 0.78), sz2 = z + (ry ? (i - (n - 1) / 2) * 0.78 : 0);
+      addBox(ry ? 0.55 : 0.72, 0.3, ry ? 0.72 : 0.55, MAT.areia, sx, b + j * 0.32, sz2, { collide: false });
+    }
+    col(x, z, ry ? 0.4 : n * 0.42, ry ? n * 0.42 : 0.4, 0.95);
+  };
+  const tuboBaixo = (x, z, ry) => {
+    const b = terreno(x, z);
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 2 - (i % 2); j++) {
+      const t2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.6, 12), MAT.concreto);
+      t2.rotation.x = Math.PI / 2; if (ry) t2.rotation.y = Math.PI / 2;
+      const off = (j - (i % 2) * 0.5) * 0.64;
+      t2.position.set(x + (ry ? 0 : off), b + 0.3 + i * 0.52, z + (ry ? off : 0));
+      t2.castShadow = true; root.add(t2);
+    }
+    col(x, z, ry ? 1.3 : 0.8, ry ? 0.8 : 1.3, 1.15);
+  };
+  for (const sz of [-1, 1]) {
+    sacos(-3, sz * 5, 4, false); sacos(9, sz * 12, 4, true); sacos(-9, sz * 24, 3, false);
+    tuboBaixo(3, sz * 9, true); tuboBaixo(-15, sz * 2, false); tuboBaixo(14, sz * 20, false);
+    sacos(17, sz * 3, 3, true); tuboBaixo(-6, sz * 17, true);
+  }
+
+  /* MIOLO MENOS ABERTO — o centro era uma bacia limpa: 131 linhas livres de mais de
+     20 m passavam pela célula (0,0). Núcleo de escada + tapume escalonado põem
+     curva no eixo do duelo sem fechá-lo (as rotas contornam pelos dois lados). */
+  {
+    // núcleo de escada em concreto bruto (o marco do meio de todo prédio em obra)
+    const nuc = new THREE.Group(); nuc.name = 'obras-nucleo-escada'; root.add(nuc);
+    const b0 = terreno(0, 0);
+    for (const [nx, nz, w2, d2] of [[0, -2.0, 4.4, 0.4], [0, 2.0, 4.4, 0.4], [-2.0, 0, 0.4, 3.6], [2.0, 0, 0.4, 3.6]])
+      nuc.add(addBox(w2, 5.0, d2, MAT.concRaw, nx, b0, nz));
+    // laje de patamar e vergalhão saindo do topo
+    nuc.add(addBox(4.4, 0.3, 4.4, MAT.concRaw, 0, b0 + 2.4, 0, { collide: false, cast: false }));
+    for (const [rx, rz] of [[-1.5, -1.5], [1.5, 1.5], [-1.5, 1.5], [1.5, -1.5]]) {
+      const r2 = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 5), MAT.rebar);
+      r2.position.set(rx, b0 + 5.5, rz); nuc.add(r2);
+    }
+    // faixa de perigo na boca do vão (o núcleo tem entrada pelos dois lados curtos)
+    for (const sgn of [-1, 1]) nuc.add(addBox(0.5, 0.5, 3.6, MAT.hazard, sgn * 2.0, b0 + 5.0, 0, { collide: false }));
+
+    /* TAPUME INTERNO escalonado: painel de 2,6 m, curto, sempre deixando volta.
+       Alternado em x e em z pra o corredor virar ziguezague em vez de túnel. */
+    const painel = (x, z, dimX, dimZ) => {
+      const t2 = addBox(dimX, 2.6, dimZ, MAT.tapume, x, terreno(x, z), z);
+      t2.name = 'obras-tapume-interno';
+      addBox(dimX + 0.05, 0.45, dimZ + 0.05, MAT.hazard, x, terreno(x, z) + 2.15, z, { collide: false });
+      return t2;
+    };
+    for (const sz of [-1, 1]) {
+      painel(-7.5, sz * 6.5, 7.0, 0.25);
+      painel(7.5, sz * 3.5, 7.0, 0.25);
+      painel(sz * 12.5, 8.0, 0.25, 6.5);
+      painel(-13.0, sz * 17.0, 6.0, 0.25);
+      painel(4.0, sz * 14.0, 0.25, 5.5);
+    }
+  }
+
+  /* GRUAS NO SKYLINE — fora dos bounds, sem colisor: só silhueta de canteiro grande */
+  const gruas = [];
+  for (const [gx, gz, gh] of [[-38, -20, 26], [34, -6, 23], [-30, 24, 24], [40, 26, 21]]) {
+    const g = new THREE.Group(); g.name = 'obras-grua-skyline'; root.add(g); gruas.push(g);
+    const glb = placeProp('guindaste', { x: gx, z: gz, y: 0, targetH: gh, ry: gx < 0 ? 0.6 : -0.9 });
+    if (glb) g.add(glb);
+    else {   // fallback: mastro + lança, a silhueta que importa no horizonte
+      g.add(addBox(1.1, gh, 1.1, MAT.metal, gx, 0, gz, { collide: false }));
+      g.add(addBox(gh * 0.8, 0.9, 0.9, MAT.hazard, gx + gh * 0.2, gh - 1.2, gz, { collide: false }));
+    }
+    g.userData.altura = gh; g.userData.pos = [gx, gz];
+  }
+
 
   const monteAreia = (x, z, r) => { const m = new THREE.Mesh(new THREE.ConeGeometry(r, r * 0.8, 12), MAT.areia); m.position.set(x, gy(x, z) + r * 0.4, z); m.castShadow = true; root.add(m); col(x, z, r * 0.8, r * 0.8, r * 0.6); };
   const canos = (x, z) => { const b = gy(x, z); for (let i = 0; i < 3; i++) for (let j = 0; j < 2 - (i % 2); j++) { const c2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.6, 12), MAT.concreto); c2.rotation.x = Math.PI / 2; c2.position.set(x + (j - (i % 2) * 0.5) * 0.75, b + 0.35 + i * 0.62, z); c2.castShadow = true; root.add(c2); } col(x, z, 1.0, 1.8, 1.8); };
@@ -186,14 +338,54 @@ export function buildObras(scene, T) {
   sun.shadow.camera.far = 150; sun.shadow.bias = -0.0004; scene.add(sun);
   const fill = new THREE.DirectionalLight(0xdfeeff, 0.4); fill.position.set(-18, 30, 12); scene.add(fill);
 
-  const slowAt = (x, z) => groundHeightAt(x, z) < -0.7;   // lama no fundo dos buracos
+  const slowAt = (x, z) => terreno(x, z) < -0.7;   // lama no fundo dos buracos
 
   const nodes = [], adj = [];
   const STEP = 3.2;
-  const blocked = (x, z, inflate) => { const g = groundHeightAt(x, z); for (const c of colliders) if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < g + 1.6 && c.maxY > g + 0.15) return true; return false; };
-  for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP) for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP) if (!blocked(gx, gz, 0.5) && groundHeightAt(gx, gz) > -1.1) nodes.push({ x: gx, z: gz });
-  const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; if (Math.abs(groundHeightAt(x, z) - groundHeightAt(a.x, a.z)) > 0.75) return false; } return true; };
-  for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z, d2 = dx * dx + dz * dz; if (d2 < STEP * STEP * 2.4 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
+  /* Bloqueio NA ALTURA h (não no barro): é o que o multinível exige. */
+  const blocQuota = (x, z, h, inflate) => {
+    for (const c of colliders) if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < h + 1.6 && c.maxY > h + 0.15) return true;
+    return false;
+  };
+  const blocked = (x, z, inflate) => { const g = terreno(x, z); for (const c of colliders) if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < g + 1.6 && c.maxY > g + 0.15) return true; return false; };
+  for (let gx = -HALF_X + 2; gx <= HALF_X - 2; gx += STEP) for (let gz = -HALF_Z + 2; gz <= HALF_Z - 2; gz += STEP) if (!blocked(gx, gz, 0.5) && terreno(gx, gz) > -1.1 && alturaDeck(gx, gz) === null) nodes.push({ x: gx, z: gz, y: terreno(gx, gz) });
+  /* Nós do ANDAR DE CIMA: a grade do chão não alcança deck nenhum, e sem estes o
+     bot nunca sobe a torre — andar andável que só o jogador usa é meio andar. */
+  for (const d of decks) for (let x = d.x0 + 0.7; x <= d.x1 - 0.5; x += 1.4) for (let z = d.z0 + 0.7; z <= d.z1 - 0.5; z += 1.4) {
+    const h = alturaDeck(x, z);
+    if (h !== null && !blocQuota(x, z, h, 0.25)) nodes.push({ x, z, y: h });
+  }
+  /* segClear mede NA ALTURA dos dois nós, não sempre no barro: a prancha do andaime
+     passa 2 m acima de um bloco de concreto, e o teste rasteiro lia esse bloco como
+     parede — era o que deixava a torre sul inteira fora do grafo. */
+  const segClear = (a, b) => {
+    const ya = a.y || 0, yb = b.y || 0;
+    for (let i = 1; i < 6; i++) {
+      const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t, y = ya + (yb - ya) * t;
+      if (blocQuota(x, z, y, 0.25)) return false;
+      // ladeira só reprova no chão: no deck a altura é a do piso, não a do barro
+      if (y < 0.8 && Math.abs(terreno(x, z) - terreno(a.x, a.z)) > 0.75) return false;
+    }
+    return true;
+  };
+  /* Vizinhança 2D mais degrau: sem o teto de 1,0 m de desnível o bot liga um nó do
+     chão direto no deck de 5,6 m e "sobe" andando na vertical. */
+  for (let i = 0; i < nodes.length; i++) { adj.push([]); for (let j = 0; j < nodes.length; j++) { if (i === j) continue; const dx = nodes[i].x - nodes[j].x, dz = nodes[i].z - nodes[j].z, d2 = dx * dx + dz * dz; if (d2 < STEP * STEP * 2.4 && Math.abs((nodes[i].y || 0) - (nodes[j].y || 0)) <= 1.0 && segClear(nodes[i], nodes[j])) adj[i].push(j); } }
+  /* Só o maior componente (mesma poda do posto): a grade deixa nó isolado em bolsão
+     de colisor, e nó sem rota é bot parado olhando pra parede. */
+  {
+    const par = nodes.map((_, i) => i);
+    const f = (a) => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+    for (let i = 0; i < adj.length; i++) for (const j of adj[i]) { const ri = f(i), rj = f(j); if (ri !== rj) par[ri] = rj; }
+    const cnt = new Map(); for (let i = 0; i < nodes.length; i++) { const r = f(i); cnt.set(r, (cnt.get(r) || 0) + 1); }
+    let big = 0, bn = -1; for (const [r, c] of cnt) if (c > bn) { bn = c; big = r; }
+    const keep = nodes.map((_, i) => f(i) === big);
+    const idx = new Int32Array(nodes.length); let n = 0;
+    for (let i = 0; i < nodes.length; i++) idx[i] = keep[i] ? n++ : -1;
+    const nn = [], na = [];
+    for (let i = 0; i < nodes.length; i++) if (keep[i]) { nn.push(nodes[i]); na.push(adj[i].filter((j) => keep[j]).map((j) => idx[j])); }
+    nodes.length = 0; nodes.push(...nn); adj.length = 0; adj.push(...na);
+  }
   function nearestWaypoint(x, z) { let best = 0, bd = 1e9; for (let i = 0; i < nodes.length; i++) { const dx = nodes[i].x - x, dz = nodes[i].z - z, d = dx * dx + dz * dz; if (d < bd) { bd = d; best = i; } } return best; }
   function findPath(fromIdx, toIdx) {
     if (fromIdx === toIdx) return [toIdx];
