@@ -374,27 +374,11 @@ export function buildCampoMorro(scene, T = {}) {
   };
   atualizarTorcida(0);
 
-  /* CASARIO DE MOLDE (kit favela_r3, Mint) — o dono: "os mapas de favela so o lajes
-     tem cordao de roupas do model, os outros nao e tudo generico low poly" e "tem que
-     ver a escala dos predios sempre". As 11 casas deixam de ser caixa+fachada pintada
-     e viram instância de casa_favela_azul / casa_favela_tijolo alternadas.
-
-     ESCALA É DECLARADA, NÃO SORTEADA: cada casa nasce de (pavimentos × pé-direito), com
-     pé-direito entre 2,60 e 3,20 m e fachada ≥ 4 m — a faixa que a CM-M2 do
-     campomorro-molde-check cobra. O volume ANTIGO era 3,6 m de pé-direito num
-     pavimento só: casa de gigante, exatamente o defeito reclamado.
-
-     O molde vem normalizado em ~1 m e quase cúbico (medido: azul 0,955×0,998×0,764;
-     tijolo 0,943×0,936×0,998). Escala uniforme casa 2 pavimentos de graça, mas num
-     pavimento só daria 2,9 m de fachada — abaixo do piso de 4 m. Por isso o barraco
-     térreo é ALARGADO em x/z depois da normalização (barraco largo e baixo é a
-     silhueta certa); o preço é estiramento de textura na fachada térrea. */
+  /* Casario de molde (kit favela_r3): escala = pavimentos x pé-direito, faixa cobrada
+     pela CM-M2 do campomorro-molde-check.mjs, que traz a referência e o porquê. */
   const casario = [];
-  /* A casa 5 desceu de z=21 para z=20,3: com a fachada virada para o campo o
-     footprint dela ficou mais FUNDO em z (5,05 m contra os 4,5 m do bloco antigo) e
-     encostava em z=23,5, que é justo o ponto onde o nó (30,24) da grade de waypoints
-     nasce. Sem esse nó o bolsão nordeste (30,27)-(33,21..27) virava ilha e a MC3 do
-     mapcontrato reprovava com "campomorro 4 ilhados". Medido, não chutado. */
+  /* casa 5 recuada para z=20,3: em z=21 o footprint comia o nó (30,24) da grade
+     e ilhava o bolsão nordeste (MC3 do mapcontrato: "campomorro 4 ilhados"). */
   const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 20.3], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
   /* Molde normalizado + alargamento em x/z: placeProp deixa a escala uniforme, então a
      largura de fachada vem de uma segunda passada medida no Box3 real da cópia. */
@@ -445,19 +429,11 @@ export function buildCampoMorro(scene, T = {}) {
       tanque.position.set(x + (i % 2 ? 1.25 : -1.25), base + alturaTotal + 0.66, z); tanque.castShadow = true; root.add(tanque);
     }
   }
-  /* VARAL DE ROUPAS (kit favela_r3, Mint) — o dono: "os mapas de favela so o lajes tem
-     cordao de roupas do model, os outros nao e tudo generico low poly". Cinco cordões
-     nos becos entre o casario e numa laje baixa do flanco sul.
-
-     SEM COLISOR DE PROPÓSITO: varal é vestido de beco, não obstáculo. Rota, CTF e os
-     waypoints continuam vendo o beco vazio — nenhuma das cinco posições entra na boca
-     de lane (as lanes têm meia-largura de 2 m e os cordões ficam fora do |v| delas). */
+  /* Varal de roupas (kit favela_r3) nos becos e numa laje baixa. SEM COLISOR: varal é
+     vestido de beco, não obstáculo — rota, CTF e waypoints seguem vendo o beco vazio. */
   const VARAIS = [
-    [-32.0, 10.0, Math.PI / 2],   // beco oeste, entre as duas casas de x=-32
-    [-19.0, 23.5, 0],             // beco noroeste, entre a casa 2 e a casa 3
-    [13.0, 23.0, 0],              // beco nordeste, atrás da casa de [7,24]
-    [-23.0, -21.0, Math.PI / 2],  // beco sudoeste, ao lado da casa de [-27,-21]
-    [2.5, -24.5, 0],              // laje baixa do sul, entre as casas de [-8,-24] e [13,-24]
+    [-32.0, 10.0, Math.PI / 2], [-19.0, 23.5, 0], [13.0, 23.0, 0],
+    [-23.0, -21.0, Math.PI / 2], [2.5, -24.5, 0],
   ];
   VARAIS.forEach(([x, z, ry], n) => {
     const base = groundHeightAt(x, z), alturaVaral = 2.15;
@@ -797,9 +773,8 @@ export function buildCampoMorro(scene, T = {}) {
       { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
-    /* +2 tipos (vida 1): gato de telhado e papagaio de poleiro, os dois já no acervo
-       public/models/ambient/. O gato anda na laje da casa 3 e na base da arquibancada;
-       o papagaio pousa no varal do beco noroeste e no poste do galpão. */
+    /* +2 tipos (vida 1): gato na laje da casa 2 e na arquibancada; papagaio no varal
+       do beco noroeste e no poste do galpão. AR4 do ambience-registry cobra os dois. */
     cats: [
       { pos: [-24.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], to: [-21.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], phase: .7 },
       { pos: [-13.5, groundHeightAt(-13.5, 20.6), 20.6], to: [-10.5, groundHeightAt(-10.5, 20.6), 20.6], phase: 2.2 },
@@ -846,11 +821,8 @@ export function buildCampoMorro(scene, T = {}) {
   }
 
   return {
-    /* SOM REVISADO: o funk do galpão continua sendo o marco sonoro do baile, mas o
-       morro estava mudo — entram o burburinho de cidade sobre o casario (raio grande,
-       volume baixo) e os pássaros do beco arborizado do flanco oeste. O bioma vira
-       'favela': a pool de one-shots dele tem latido, galo e panela, que é a assinatura
-       de morro; 'campo' só trazia galo e passarinho. */
+    /* bioma 'favela' (latido/galo/panela) e não 'campo': é a assinatura sonora de morro.
+       Cidade sobre o casario e pássaros no beco oeste tiram o mudo do flanco. */
     ambience,sound:{loops:[
       {src:AMB_LOOPS.funk,pos:[28,2,-21],radius:24,vol:.5},
       {src:AMB_LOOPS.grilos,pos:[0,3,0],radius:80,vol:.22},
