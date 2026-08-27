@@ -50,7 +50,9 @@ const INTERNOS = new Set(['upa_24h']);
    quintal/campinho, vaca na várzea. Mapa novo desse bioma herda a cobrança. */
 const BIOMA_FAUNA = {
   lajes: ['cat'], quebrada: ['cat'], corrego: ['cat', 'chicken', 'cockroach'],
-  campomorro: ['chicken', 'cow', 'armadillo'],
+  /* campomorro (r3): o morro ganhou gato de telhado e papagaio de poleiro — favela
+     com laje pede gato, e o poleiro do beco é do papagaio. */
+  campomorro: ['chicken', 'cow', 'armadillo', 'cat', 'parrot'],
   /* fauna 2 (vida 1, plans/22): tatu no cerrado (campo/Brasília), barata urbana
      (córrego/atacadão), papagaio de poleiro (mansão/parque) */
   praca_poderes: ['armadillo'], atacadao_treta: ['cockroach'],
