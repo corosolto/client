@@ -11,7 +11,7 @@ const HALF_Z = 46;
 
 export const VELHO_OESTE_PROPS = ['sertao_mandacaru', 'sertao_macambira', 'sertao_juazeiro',
   'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'sertao_palhoca_forro', 'caixa_som_baile',
-  'casa_pau_a_pique', 'igrejinha', 'caminhao_antigo'];
+  'casa_pau_a_pique', 'casa_pedra', 'casa_platibanda', 'casa_geminada', 'igrejinha', 'caminhao_antigo'];
 export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto', 'calango']);
 
 export function buildVelhoOeste(scene, T) {
@@ -278,8 +278,8 @@ export function buildVelhoOeste(scene, T) {
     return group;
   }
 
-  /* ── CASAS DE PAU A PIQUE ── a parede `parede-casa-N` em taipa é o que a ST2
-     mede em node; GLB é enfeite, posição/colisor são os dois ramos. */
+  /* ── O CASARIO ── a parede `parede-casa-N` é o que a ST2 mede em node; GLB é
+     enfeite, posição/colisor são os dois ramos. */
   const CAIACOES = [MAT.paupiqueCaiado, MAT.paupiqueCru, MAT.paupiqueOcre];
   function casaProxy(group, opts = {}) {
     const cor = CAIACOES[opts.variante ?? 0], w = opts.w ?? 5.4, d = opts.d ?? 6.8, h = 3.1;
@@ -309,17 +309,105 @@ export function buildVelhoOeste(scene, T) {
     const beiral = new THREE.Mesh(boxGeo(w + .7, .16, 1.5), MAT.roof);
     beiral.position.set(0, 2.85, d / 2 + 1.05); beiral.rotation.x = -.14; beiral.castShadow = true; group.add(beiral);
   }
-  /* 8 casas, 3 ruas: a porta aponta pro largo e a deriva de ±0,2 rad é a tortura
-     de esquadro que o ORT1 cobra de mapa orgânico. */
+  /* r3b: as 3 famílias novas do mix (feedback r3). Pedra usa MAT.pedra de propósito —
+     casa de pedra é construto sertanejo; a ST2 da eval:sertao conta a folga. */
+  function casaPedraProxy(group, opts = {}) {
+    const w = 6.0, d = 6.0, h = 3.0;
+    const parede = new THREE.Mesh(boxGeo(w, h, d), MAT.pedra);
+    parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .3 + h / 2;
+    parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
+    const base = new THREE.Mesh(boxGeo(w + .3, .3, d + .3), MAT.pedra);
+    base.position.y = .15; base.castShadow = true; base.receiveShadow = true; group.add(base);
+    for (const sx of [-1, 1]) {
+      const agua = new THREE.Mesh(boxGeo(w * .56, .32, d + .8), MAT.roof);
+      agua.position.set(sx * w * .27, .3 + h + .16, 0); agua.rotation.z = sx * .15; agua.castShadow = true; group.add(agua);
+    }
+    const cumeeira = new THREE.Mesh(boxGeo(.36, .24, d + 1), MAT.dark);
+    cumeeira.position.set(0, .3 + h + w * .26, 0); cumeeira.castShadow = true; group.add(cumeeira);
+    const porta = new THREE.Mesh(boxGeo(1.2, 2.0, .16), MAT.dark);
+    porta.position.set(0, .3 + 1.0, d / 2 + .03); group.add(porta);
+    for (const sx of [-1.7, 1.7]) {
+      const jan = new THREE.Mesh(boxGeo(.75, .85, .14), MAT.dark);
+      jan.position.set(sx, .3 + 1.85, d / 2 + .03); group.add(jan);
+      const verga = new THREE.Mesh(boxGeo(1.0, .22, .18), MAT.pale);
+      verga.position.set(sx, .3 + 2.42, d / 2 + .06); verga.castShadow = true; group.add(verga);
+    }
+  }
+  function casaPlatibandaProxy(group, opts = {}) {
+    const cor = opts.variante ? MAT.adobeOcre : MAT.adobeCaiado, w = 7.8, d = 6.4, h = 3.6;
+    const parede = new THREE.Mesh(boxGeo(w, h, d), cor);
+    parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .5 + h / 2;
+    parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
+    const base = new THREE.Mesh(boxGeo(w + .25, .5, d + .25), MAT.pedra);
+    base.position.y = .25; base.castShadow = true; base.receiveShadow = true; group.add(base);
+    const platibanda = new THREE.Mesh(boxGeo(w + .35, .85, .32), cor);
+    platibanda.position.set(0, .5 + h + .42, d / 2 - .12); platibanda.castShadow = true; group.add(platibanda);
+    const cornija = new THREE.Mesh(boxGeo(w + .5, .14, .48), MAT.trim);
+    cornija.position.set(0, .5 + h + .88, d / 2 - .12); cornija.castShadow = true; group.add(cornija);
+    const oitao = new THREE.Mesh(boxGeo(w + .4, .2, d + .5), MAT.roof);
+    oitao.position.set(0, .5 + h - .3, 0); oitao.rotation.x = -.07; oitao.castShadow = true; group.add(oitao);
+    const porta = new THREE.Mesh(boxGeo(1.3, 2.25, .16), MAT.dark);
+    porta.position.set(0, .5 + 1.12, d / 2 + .03); group.add(porta);
+    const bandeira = new THREE.Mesh(boxGeo(.7, .5, .12), MAT.dark);
+    bandeira.position.set(0, .5 + 2.6, d / 2 + .03); group.add(bandeira);
+    for (const sx of [-2.4, 2.4]) {
+      const jan = new THREE.Mesh(boxGeo(.95, 1.15, .14), MAT.dark);
+      jan.position.set(sx, .5 + 1.95, d / 2 + .03); group.add(jan);
+      const moldura = new THREE.Mesh(boxGeo(1.2, 1.4, .1), MAT.trim);
+      moldura.position.set(sx, .5 + 1.95, d / 2 - .01); group.add(moldura);
+      const peitoril = new THREE.Mesh(boxGeo(1.3, .12, .2), MAT.trim);
+      peitoril.position.set(sx, .5 + 1.28, d / 2 + .06); peitoril.castShadow = true; group.add(peitoril);
+    }
+  }
+  function casaGeminadaProxy(group, opts = {}) {
+    const w = 6.6, d = 6.2, h = 3.1, metade = (w - .3) / 2;
+    const base = new THREE.Mesh(boxGeo(w + .25, .45, d + .25), MAT.pedra);
+    base.position.y = .225; base.castShadow = true; base.receiveShadow = true; group.add(base);
+    for (const sx of [-1, 1]) {
+      const cor = sx < 0 ? MAT.adobeCaiado : MAT.adobeOcre;
+      const parede = new THREE.Mesh(boxGeo(metade, h, d), cor);
+      parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.set(sx * (metade / 2 + .15), .45 + h / 2, 0);
+      parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
+      const agua = new THREE.Mesh(boxGeo(metade * .58, .3, d + .7), MAT.roof);
+      agua.position.set(sx * (metade / 2 + .15) + sx * metade * .28, .45 + h + .15 + (sx < 0 ? 0 : .12), 0);
+      agua.rotation.z = sx * .16; agua.castShadow = true; group.add(agua);
+      const cumeeira = new THREE.Mesh(boxGeo(.32, .2, d + .95), MAT.dark);
+      cumeeira.position.set(sx * (metade / 2 + .15), .45 + h + metade * .27 + (sx < 0 ? 0 : .12), 0);
+      cumeeira.castShadow = true; group.add(cumeeira);
+      const porta = new THREE.Mesh(boxGeo(1.1, 2.0, .15), MAT.dark);
+      porta.position.set(sx * (metade / 2 + .15), .45 + 1.0, d / 2 + .03); group.add(porta);
+      const jan = new THREE.Mesh(boxGeo(.8, .9, .13), MAT.dark);
+      jan.position.set(sx * (metade / 2 + .15) - sx * 1.45, .45 + 1.85, d / 2 + .03); group.add(jan);
+      const moldura = new THREE.Mesh(boxGeo(1.0, 1.1, .1), MAT.pale);
+      moldura.position.set(sx * (metade / 2 + .15) - sx * 1.45, .45 + 1.85, d / 2 - .01); group.add(moldura);
+    }
+    const pilar = new THREE.Mesh(boxGeo(.32, h + .45, d + .1), MAT.pedra);
+    pilar.position.set(0, .45 + (h + .45) / 2, 0); pilar.castShadow = true; group.add(pilar);
+    const testeira = new THREE.Mesh(boxGeo(w + .4, .3, .3), MAT.trim);
+    testeira.position.set(0, .45 + h + .12, d / 2 + .05); testeira.castShadow = true; group.add(testeira);
+  }
+  /* r3b · mix de 4 famílias (feedback: "mais variacoes de casas"): 5 pau a pique
+     nas ruas leste/oeste, 2 platibanda no lado urbano da igrejinha, 2 pedra na
+     baixada do forró e 1 geminada fechando o eixo sul da praça. Porta pro largo
+     e deriva ±0,2 rad: a tortura de esquadro que o ORT1 cobra. */
   const CASAS = [
-    { x: -9.2, z: -25.5, ry: Math.PI + .12, v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, v: 1 },
-    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, v: 0 },
-    { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, v: 2 },
-    { x: -8.4, z: 24.2, ry: .14, v: 2 }, { x: 8.8, z: 24.7, ry: -.1, v: 0 },
+    { x: -9.2, z: -25.5, ry: Math.PI + .12, fam: 'platibanda', v: 0 }, { x: 9.6, z: -26, ry: Math.PI - .17, fam: 'platibanda', v: 1 },
+    { x: -17.2, z: -7, ry: Math.PI / 2 + .08, fam: 'paupique', v: 2 }, { x: -17.6, z: 7.5, ry: Math.PI / 2 - .13, fam: 'paupique', v: 0 },
+    { x: 17.1, z: -7.4, ry: -Math.PI / 2 - .09, fam: 'paupique', v: 1 }, { x: 17.5, z: 7, ry: -Math.PI / 2 + .15, fam: 'paupique', v: 2 },
+    { x: 17.2, z: -20.6, ry: -Math.PI / 2 + .07, fam: 'paupique', v: 0 },
+    { x: -8.4, z: 24.2, ry: .14, fam: 'pedra' }, { x: 9.1, z: 24.7, ry: -.1, fam: 'pedra' },
+    { x: -0.4, z: 26.2, ry: Math.PI - .06, fam: 'geminada' },
   ];
+  const FAMILIAS_CASA = {
+    paupique: { prop: 'casa_pau_a_pique', proxy: casaProxy, h: (i) => 4.1 + (i % 3) * .28, col: [2.9, 3.9, 3.55], len: 6.6 },
+    pedra: { prop: 'casa_pedra', proxy: casaPedraProxy, h: () => 4.2, col: [3.05, 4.3, 3.1], len: 6.2 },
+    platibanda: { prop: 'casa_platibanda', proxy: casaPlatibandaProxy, h: () => 4.5, col: [3.95, 4.7, 3.3], len: 7.2 },
+    geminada: { prop: 'casa_geminada', proxy: casaGeminadaProxy, h: () => 4.4, col: [3.35, 4.6, 3.2], len: 8.0 },
+  };
   CASAS.forEach((c, i) => {
-    sertaoElement('casa', i, c.x, c.z, casaProxy, 'casa_pau_a_pique', 4.1 + (i % 3) * .28,
-      [2.9, 3.9, 3.55], { ry: c.ry, variante: c.v, id: i, targetLen: 6.6 });
+    const F = FAMILIAS_CASA[c.fam];
+    sertaoElement(`casa-${c.fam}`, i, c.x, c.z, F.proxy, F.prop, F.h(i),
+      F.col, { ry: c.ry, variante: c.v ?? 0, id: i, targetLen: F.len });
     /* Alpendre com colisor PRÓPRIO e fino (idioma r1): no colisor grosso da casa
        o _collide ejeta só 0,38 do centro; colador na parede espreme o corpo (0,16). */
     const oz = 4.4, aw = 2.6, ad = .8;
@@ -558,7 +646,7 @@ export function buildVelhoOeste(scene, T) {
     const hx = Math.abs(Math.cos(ry)) * 2.3 + Math.abs(Math.sin(ry)) * 3.2, hz = Math.abs(Math.sin(ry)) * 2.3 + Math.abs(Math.cos(ry)) * 3.2;
     colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: 2, minZ: z - hz, maxZ: z + hz }); occluders.push(g); return g;
   }
-  wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-5, 25, 2.9);
+  wagon(-6, -20, .18); wagon(7, 2, -2.7); wagon(-14.2, 25.4, 2.9);
 
   function obstacle(name, x, z, ry, hx, hz, height, build) {
     const group = new THREE.Group(); group.name = `obstaculo-${name}`; group.position.set(x, 0, z); group.rotation.y = ry; root.add(group);
