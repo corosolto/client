@@ -174,3 +174,25 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## r3 — kit `posto_obras_r3`, parte POSTO (frente map2/posto)
+
+Pedido do dono (26/08/2026): *"os mapas do emerson acho que da pra fazer models
+no mintgg e deixar mais realista, especialmente... posto da treta"*. Kit gerado
+no Mint (projeto `zd7cbsyxbzmf05b3w084t51ymd8c5hfr`), pack
+`th74q1agb8zfn1hnfbqmmrhd998d6fj6`, otimizado pelo próprio Mint (WebP 1024,
+~4-5k tris) — sem passo local, por isso `processing.tools` traz só `mint.gg`.
+Licença de uso do assinante Mint Pro (asset original gerado por prompt, sem
+copyright de terceiros). Chat do kit:
+<https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t>. Convenção do acervo
+mantida: GLB normalizado ~1 m, pivô central, escala no call-site.
+
+Os outros dois itens do mesmo kit (`andaime.glb`, `container_escritorio.glb`)
+entram pela frente `map2/obras`, que é o PR irmão.
+
+- `bombas_combustivel.glb` — "Bombas de combustível", ilha de duas bombas com
+  visor, mangueira e coluna. 5.081 tris. Registro: `bombas-combustivel-posto`.
+  Escala usada em `map_posto.js`: `targetH` 2,0 ⇒ 2,47 × 0,94 m sobre o meio-fio.
+- `loja_conveniencia.glb` — "Loja de conveniência", corpo de loja de posto com
+  vitrine e testeira. 4.369 tris. Registro: `loja-conveniencia-posto`. Escala
+  usada: `targetH` 5,0 ⇒ 4,9 × 5,4 m, um corpo em cada ponta da fachada oeste.

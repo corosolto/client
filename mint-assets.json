@@ -1883,6 +1883,52 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "bombas-combustivel-posto": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/bombas_combustivel.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7bh1nbqc6pas5384dpbw68k98d6ft7",
+    "packAssetId": "th74q1agb8zfn1hnfbqmmrhd998d6fj6",
+    "chatUrl": "https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t",
+    "displayName": "Bombas de combustível (bombas_combustivel)",
+    "frente": "v21-e-models",
+    "notes": "Ilha de duas bombas de posto com visor, mangueira e coluna (5.081 tris, WebP 1024). Molde das três ilhas do Posto da Treta — a do meio fica sob a bandeira MID. GLB normalizado ~1 m, pivô central: targetH 2,0 ⇒ 2,47 × 0,94 m."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (kit posto_obras_r3, normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "788bdaa8f22b37cbfad9e73561e1f248470430fc7adf25b360409ec5790a27e3"
+   }
+  },
+  "loja-conveniencia-posto": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/loja_conveniencia.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7cs6vm1q8shyaqwztk8qt3cn8d7hz9",
+    "packAssetId": "th74q1agb8zfn1hnfbqmmrhd998d6fj6",
+    "chatUrl": "https://mint.gg/chat/ph70t6mnh0164gg0ej3dg6te4s8d6w0t",
+    "displayName": "Loja de conveniência (loja_conveniencia)",
+    "frente": "v21-e-models",
+    "notes": "Corpo de loja de conveniência de posto, com vitrine e testeira (4.369 tris, WebP 1024). Fecha o lado oeste do Posto da Treta nas duas pontas da fachada; a sala andável do meio é procedural. GLB normalizado ~1 m, pivô central: targetH 5,0 ⇒ 4,9 × 5,4 m."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (kit posto_obras_r3, normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "2a471a5a5ceee2e27c117ecffe58b8c0a7bf5a0255db282001424353a6883826"
+   }
   }
  }
 }
