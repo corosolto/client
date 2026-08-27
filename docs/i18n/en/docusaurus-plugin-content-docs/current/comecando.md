@@ -41,7 +41,7 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 41,317 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 41,289 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,261** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,812 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
@@ -229,7 +229,7 @@ The maps registered today, and which mode each one opens in:
 | `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,921 |
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,656 |
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 813 |
-| `campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 870 |
+| `campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 842 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,258 |
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 955 |
