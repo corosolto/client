@@ -2,11 +2,12 @@
   "pass": true,
   "checks": {
     "animations_exact": true,
-    "three_visible_mesh_nodes": true,
+    "professional_hands_plus_project_knife": true,
     "single_exported_camera": true,
     "camera_aspect_3_2": true,
     "camera_near_safe": true,
-    "project_materials_only": true,
+    "approved_pistol_hand_material": true,
+    "donor_knife_materials_absent": true,
     "project_textures_packed": true,
     "web_size_under_5mb": true
   },
@@ -29,15 +30,14 @@
     ]
   },
   "meshes": [
-    "coro_solto_melee_hand_forearm.L",
-    "coro_solto_melee_hand_forearm.R",
+    "coro_solto_hires_melee_hands",
     "coro_solto_project_knife"
   ],
   "camera": {
     "aspectRatio": 1.5,
-    "yfov": 0.5565993219125207,
-    "zfar": 20,
+    "yfov": 0.5103647708892822,
+    "zfar": 200,
     "znear": 0.029999999329447746
   },
-  "size_bytes": 771400
+  "size_bytes": 1057476
 }

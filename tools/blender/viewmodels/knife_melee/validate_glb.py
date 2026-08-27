@@ -64,11 +64,19 @@ def main() -> None:
     camera_json = document["cameras"][0]["perspective"]
     checks = {
         "animations_exact": set(actions) == {"Idle", "Draw", "Slash", "Stab"},
-        "three_visible_mesh_nodes": len(meshes) == 3,
+        "professional_hands_plus_project_knife": set(meshes) == {
+            "coro_solto_hires_melee_hands", "coro_solto_project_knife"
+        },
         "single_exported_camera": len(document.get("cameras", [])) == 1,
         "camera_aspect_3_2": math.isclose(camera_json.get("aspectRatio", 0), 1.5, abs_tol=1e-6),
         "camera_near_safe": camera_json.get("znear", 0) >= 0.029,
-        "project_materials_only": not any("armmesh" in material.name.lower() for material in bpy.data.materials),
+        "approved_pistol_hand_material": "CoroSolto_FP_Gloves" in {
+            material.name for material in bpy.data.materials
+        },
+        "donor_knife_materials_absent": not any(
+            token in material.name.lower() for material in bpy.data.materials
+            for token in ("armmesh", "knife_knife_0")
+        ),
         "project_textures_packed": len(bpy.data.images) == 3,
         "web_size_under_5mb": GLB.stat().st_size < 5_000_000,
     }

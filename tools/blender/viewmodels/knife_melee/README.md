@@ -1,13 +1,17 @@
 # Piloto de faca/melee
 
-Pipeline exclusivo da família melee. Ele gera um GLB com a faca própria do jogo,
-duas mãos e antebraços autorados no projeto, câmera 3:2 e as ações `Idle`, `Draw`,
-`Slash` e `Stab`.
+Pipeline exclusivo da família melee. O GLB combina a faca própria de
+`public/models/weapons/knife.glb` com o mesh, o material e o rig de mãos já
+aprovados no `pistol-hires`. O resultado contém uma câmera 3:2 e somente as ações
+`Idle`, `Draw`, `Slash` e `Stab`.
 
 ## Reproduzir
 
+Enquanto a pistola estiver em outra branch, indique explicitamente o GLB aprovado:
+
 ```bash
-/Applications/Blender.app/Contents/MacOS/Blender --background \
+CORO_VM_APPROVED_PISTOL=/caminho/para/pistol-hires.glb \
+  /Applications/Blender.app/Contents/MacOS/Blender --background \
   --python tools/blender/viewmodels/knife_melee/build.py
 /Applications/Blender.app/Contents/MacOS/Blender --background \
   artifacts/viewmodels/knife-melee-pilot/knife-melee-pilot.blend \
@@ -15,37 +19,42 @@ duas mãos e antebraços autorados no projeto, câmera 3:2 e as ações `Idle`, 
 /Applications/Blender.app/Contents/MacOS/Blender --background \
   --python tools/blender/viewmodels/knife_melee/validate_glb.py
 python3 tools/blender/viewmodels/knife_melee/contact_sheet.py
+python3 tools/blender/viewmodels/knife_melee/runtime_contact_sheet.py
+npm run eval:knife-melee
 ```
 
-O builder nunca importa `~/Downloads/knife_animated.glb`. Esse arquivo serve só
-como referência local de ritmo, rig e composição; nenhuma malha, textura, material
-ou skin dele entra na cena. A arma visível vem de
-`public/models/weapons/knife.glb`; mãos, dedos, punhos, mangas e rig são gerados
-pelo próprio script.
+Depois do merge da família pistola, o builder usa por padrão
+`public/models/viewmodels/coro/pistol-hires.glb`.
+
+`~/Downloads/knife_animated.glb` é apenas referência local de ritmo e composição.
+O builder não o importa. Nenhuma malha, textura, skin ou material dessa faca doadora
+entra no `.blend` ou no GLB. A única arma visível vem do acervo do projeto.
 
 ## Portões e falhas registradas
 
-A primeira passada foi reprovada por pele/manga estouradas, punho sem leitura e
-dois quadros iniciais vazios no draw. A luz, os materiais e a entrada da animação
-foram corrigidos antes da evidência versionada.
+As primeiras versões foram rejeitadas visualmente: mãos procedurais simplificadas,
+apoio em leque estático, recoloração vermelha chapada, escala excessiva e picos de
+`Slash`/`Stab` quase iguais. O piloto atual passou a herdar a topologia profissional
+de 7.438 vértices e o rig de 52 ossos da pistola. O corte move braço dominante e faca
+num arco horizontal; a estocada move o mesmo conjunto para a frente com eixo vertical;
+a mão de apoio fica baixa/esquerda e tem contramovimento separado.
 
-- `tools/eval/asset-evidence/knife-melee/contact-sheet.png`: sequência Blender.
+- `tools/eval/asset-evidence/knife-melee/contact-sheet.png`: 20 frames Blender.
 - `tools/eval/asset-evidence/knife-melee/export-truth.png`: GLB reimportado.
-- `tools/eval/asset-evidence/knife-melee/*-gate.json`: estrutura, pixel e export.
+- `tools/eval/asset-evidence/knife-melee/*-gate.json`: estrutura, pixels e export.
+- `tools/eval/asset-evidence/knife-melee-runtime/contact-sheet.png`: cinco frames do jogo real.
+- `tools/eval/asset-evidence/knife-melee-runtime/REPORT.md`: método e ressalvas do browser.
 
-Os números são auxiliares. A inspeção visual confirma lâmina legível, mão forte
-fechada no cabo, mão livre como contrapeso e arcos distintos de corte e estocada.
-Os gates também foram provados com mutações controladas: remover `Draw`, retirar
-um render da sequência e trocar o aspecto exportado de 3:2 para 1.6 fizeram,
-respectivamente, os três validadores ficarem vermelhos antes da execução final.
+Os números são auxiliares e não aprovam o visual. O piloto permanece bloqueado para
+propagação até revisão explícita da prancha final.
 
 ## Limitações deliberadas
 
-- O asset não está ligado ao runtime; esta frente não edita JavaScript nem HUD.
-- Não houve captura no jogo ou comparação Blender↔navegador, porque navegador está
-  fora do escopo desta frente.
-- Falta revisão adversarial independente e aprovação do dono. Portanto este piloto
-  não libera arremessáveis nem pode ser chamado de pronto para produção.
-- O exportador repete o aviso de múltiplos nós de imagem do material original da
-  faca; o reimport preserva as texturas empacotadas e o resultado visual, mas uma
-  revisão futura pode simplificar esse material na fonte.
+- A integração JavaScript existe apenas como bancada do piloto; não deve ser promovida
+  enquanto a revisão visual estiver pendente.
+- O modo `?meleeqa=1` só alonga a duração dos mesmos clips para capturar exatamente os
+  frames de pico; o caminho normal mantém 0,28 s no draw e 0,52 s nos ataques.
+- Nenhuma outra melee ou arremessável foi criada ou ligada.
+- O exportador repete o aviso de múltiplos nós de imagem do material original da faca;
+  o reimport preserva as texturas empacotadas, mas a fonte da arma ainda pode ser
+  simplificada em uma frente própria.

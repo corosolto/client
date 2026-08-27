@@ -33,6 +33,7 @@
     "eval:velhooeste": "node tools/eval/velho-oeste-check.mjs",
     "eval:penitenciaria": "node tools/eval/penitenciaria-check.mjs",
     "eval:vminspect": "node tools/eval/vm-inspect-check.mjs",
+    "eval:knife-melee": "node tools/eval/knife-melee-runtime-check.mjs",
     "eval:pegada": "node tools/eval/pegada-check.mjs",
     "eval:dmgdir": "node tools/eval/dmgdir-check.mjs",
     "eval:ctflabels": "node tools/eval/ctf-labels-check.mjs",

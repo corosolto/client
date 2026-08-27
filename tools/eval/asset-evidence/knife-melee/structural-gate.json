@@ -2,15 +2,16 @@
   "pass": true,
   "checks": {
     "actions_exact": true,
-    "required_bones": true,
-    "two_authored_arm_meshes": true,
-    "project_knife_present": true,
+    "approved_rig_bones": true,
+    "single_professional_hand_mesh": true,
+    "professional_topology": true,
+    "approved_pistol_material": true,
+    "approved_source_recorded": true,
+    "project_knife_recorded": true,
+    "donor_knife_absent": true,
     "camera_export_contract": true,
-    "donor_geometry_absent": true,
-    "donor_materials_absent": true,
-    "finger_controls_complete": true,
-    "contact_all_measured": true,
-    "contact_max_gap": true,
+    "strong_fingers_sampled": true,
+    "strong_grip_surface_contact": true,
     "public_glb_under_5mb": true
   },
   "actions": [
@@ -19,31 +20,18 @@
     "Slash",
     "Stab"
   ],
-  "bones": 37,
+  "bones": 52,
   "meshes": [
-    "coro_solto_melee_hand_forearm.L",
-    "coro_solto_melee_hand_forearm.R",
+    "coro_solto_hires_melee_hands",
     "coro_solto_project_knife"
   ],
   "materials": [
-    "CoroSolto_Melee_Accent",
-    "CoroSolto_Melee_Cuff",
-    "CoroSolto_Melee_Skin",
-    "CoroSolto_Melee_Sleeve",
+    "CoroSolto_FP_Gloves",
     "knife Material"
   ],
-  "packed_images": [
-    "Color_0bc52faf-9d4a-42d0-8820-30403423f7a5",
-    "NormalGL_0bc52faf-9d4a-42d0-8820-30403423f7a5",
-    "ORM_0bc52faf-9d4a-42d0-8820-30403423f7a5",
-    "Render Result"
-  ],
-  "strong_hand_surface_gap_m": {
-    "index": 0.004611,
-    "middle": 0.004691,
-    "ring": 0.004434,
-    "pinky": 0.005138,
-    "thumb": 0.012387
-  },
-  "max_contact_gap_m": 0.012387
+  "professional_hand_vertices": 7438,
+  "strong_finger_vertices": 1473,
+  "strong_finger_vertices_within_1_1cm": 616,
+  "minimum_grip_gap_cm": 0.000382,
+  "p10_grip_gap_cm": 0.227603
 }

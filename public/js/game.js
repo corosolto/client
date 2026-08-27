@@ -13,6 +13,7 @@ import { GPUParticles } from './gpuparticles.js';
 import { skyRadiance } from './bloom.js';
 import { RecoilAxis, ViewModelRig } from './springs.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { KnifeMeleeViewModel } from './meleevm.js';
 import { frase, tr } from './i18n.js';   // EN por camada — o crash 'frase is not defined' de 06/08 foi este import faltando
 // cor de facção: UMA origem, importada também por brasoes.js e characters.js. O espelho
 // que este import substitui apagou a bandeira do jogador em 07/08 — ver paleta.js.
@@ -989,6 +990,20 @@ export class Game {
       this._fxTune = { light: 1, flash: 1, spark: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
+    this.vm.melee = new KnifeMeleeViewModel({
+      parent: this.vmScene,
+      profile: {
+        id: this.playerCharId,
+        skin: this.playerDef?.pal?.skin,
+        sleeve: this.playerDef?.pal?.shirt,
+        accent: factionColor(this.playerFaction),
+      },
+      onReady: () => {
+        if (this._disposed) return;
+        this._applyVmVisibility();
+        if (this.player.weapon === 'knife') this.vm.melee.draw();
+      },
+    });
 
     // ---- fx pools ----
     this.tracers = [];
@@ -2516,6 +2531,7 @@ export class Game {
     // viewmodel estático Tripo por classe (mesma regra do _switchWeapon, agora num método
     // só — cobre também o lazy-load: classe não carregada cai no procedural e carrega).
     this._applyVmVisibility();
+    if (this.vm.melee?.active) this.vm.melee.draw();
     // BUG-04: início de round/respawn zera o rig e SACA — sem isso o viewmodel podia
     // reaparecer no meio de uma recarga interrompida pela morte.
     this.vm.rig.reset(); this.vm.rig.startDraw();
@@ -2816,7 +2832,11 @@ export class Game {
   onResize() {
     this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
-    if (this.vmCamera) { this.vmCamera.aspect = this.camera.aspect; this.vmCamera.fov = vmFovForAspect(this.camera.aspect); this.vmCamera.updateProjectionMatrix(); }
+    if (this.vmCamera) {
+      this.vmCamera.aspect = this.camera.aspect;
+      this.vmCamera.fov = this.vm?.melee?.active ? this.vm.melee.cameraFov : vmFovForAspect(this.camera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
   }
 
   /* ================= team switch (M) ================= */
@@ -2872,8 +2892,13 @@ export class Game {
   // 07/08/2026 — o histórico está no git.
   _applyVmVisibility() {
     const w = this.player.weapon;
-    if (this.vm.arms) this.vm.arms.group.visible = true;
-    for (const k in this.vm.models) this.vm.models[k].visible = k === w;
+    const authoredKnife = this.vm.melee?.setWeapon(w) === true;
+    if (this.vm.arms) this.vm.arms.group.visible = !authoredKnife;
+    for (const k in this.vm.models) this.vm.models[k].visible = !authoredKnife && k === w;
+    if (this.vmCamera) {
+      const fov = authoredKnife ? this.vm.melee.cameraFov : vmFovForAspect(this.camera.aspect);
+      if (Math.abs(this.vmCamera.fov - fov) > 0.01) { this.vmCamera.fov = fov; this.vmCamera.updateProjectionMatrix(); }
+    }
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -2982,6 +3007,7 @@ export class Game {
     this.bloom = 0;
     this._scope(false, true);
     this._applyVmVisibility();
+    if (this.vm.melee?.active) this.vm.melee.draw();
     this.el.weaponName.textContent = WEAPONS[w].name;
     this.el.reloadNote.classList.add('hidden');
     if (w === 'knife') this.sfx.knifeDeploy(); else this._deploySfx(_dcls);
@@ -3112,7 +3138,7 @@ export class Game {
     if (p.weapon === 'knife') {
       p.nextShotAt = this.time + w.rate;
       this.vm.recoil.kick(1); this.sfx.knife();
-      this.vm.swingAt = this.time;   // dispara o SWING (arco de faca estilo CS)
+      if (!this.vm.melee?.attack()) this.vm.swingAt = this.time;   // fallback procedural
       this._meleeHit();
       return;
     }
@@ -5087,6 +5113,7 @@ export class Game {
     this.camera.fov = 50;
     this.camera.updateProjectionMatrix();
     if (this.vm?.root) this.vm.root.visible = false;
+    this.vm?.melee?.setSuspended(true);
     if (this.el.crosshair) this.el.crosshair.style.display = 'none';
   }
   _updatePlayer(dt) {
@@ -5094,6 +5121,7 @@ export class Game {
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
     if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
     if (!p.alive) {
+      this.vm.melee?.setSuspended(true);
       /* Morrer APAGA a escalada em curso. Sem isto ela retomaria depois do respawn e
          teleportaria o corpo novo para a beirada onde o corpo velho morreu. */
       p.mantle = null;
@@ -5111,6 +5139,7 @@ export class Game {
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
     }
+    this.vm.melee?.setSuspended(false);
     if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
     // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
     // o _damage fica fora desta região de edição, então não dá pra marcar o timestamp lá.
@@ -5311,7 +5340,7 @@ export class Game {
     // dynamic crosshair gap (movement/spray opens it, crouch + ADS tighten it)
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
-    this.vm.root.visible = !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
+    this.vm.root.visible = !this.vm.melee?.active && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {
@@ -5434,6 +5463,7 @@ export class Game {
       const wg = this.vm.models[p.weapon];
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
     }
+    this.vm.melee?.update(dt);
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
     this._updateReplayCam(dt);
   }
@@ -7252,6 +7282,7 @@ export class Game {
     this.el.scoreboard.classList.add('hidden');
     this.el.vignette.style.opacity = 0;
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
+    this.vm?.melee?.dispose();
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
