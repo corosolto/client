@@ -16,6 +16,10 @@ const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search
 const LOWQ = (() => { try { return JSON.parse(localStorage.getItem('awpbr_settings') || '{}').quality === 'low'; } catch (e) { return false; } })();
 
 export const HALF_X = 24, HALF_Z = 40;
+/* Meia-largura do piso ALAGADO das duas pontas. É a fonte única de "onde molha":
+   `groundHeightAt` levanta o piso aqui e o `slowAt` freia aqui — os dois liam 5 e 7
+   antes, e a diferença era margem seca lenta. */
+export const ALAGADO_X = 5;
 export const CORREGO_AMBIENCE = CORREGO_FAUNA_ASSETS;   // + jacare/capivara (só este mapa baixa)
 const CORREGO_W = 10;         // eixo largo o bastante para dominar a leitura aérea e em FPS
 const CORREGO_X0 = -CORREGO_W / 2, CORREGO_X1 = CORREGO_W / 2;
@@ -41,6 +45,27 @@ const RAMPAS = [
   { lado: 1, zAlto: 29, zBaixo: 35 },
 ];
 const RAMPA_X0 = CANAL_X1, RAMPA_X1 = CORREGO_X1;   // 3 → 5
+
+/* BOCA DA RAMPA — corredor que NÃO pode receber prop com colisor.
+   Sair do leito exige um degrau lateral <= STEP_H (0,55 m, game.js), e isso só
+   acontece nos ~1,9 m finais da rampa: mais acima a rampa está alta demais em
+   relação ao fundo. Se um prop ocupa essa janela, aquele trecho de leito vira
+   sala fechada — dá pra CAIR da ponte pra dentro e não dá pra sair. Foi o que
+   prendeu o jogador em 47 m² entre z=-33,8 e z=-23,8 (corrego-preso-check).
+   A folga é o raio do corpo mais meia célula da grade da régua. */
+const BOCA_FOLGA = 0.38 + 0.125;
+const BOCA_ALCANCE = 2.8;   // quanto da rampa, a partir do pé, tem que ficar limpo
+function naBocaDaRampa(x, z) {
+  for (const r of RAMPAS) {
+    if (Math.sign(x) !== r.lado) continue;
+    const dir = Math.sign(r.zBaixo - r.zAlto);
+    const za = Math.min(r.zBaixo, r.zBaixo - dir * BOCA_ALCANCE) - BOCA_FOLGA;
+    const zb = Math.max(r.zBaixo, r.zBaixo - dir * BOCA_ALCANCE) + BOCA_FOLGA;
+    if (z < za || z > zb) continue;
+    if (Math.abs(x) <= RAMPA_X1 + BOCA_FOLGA) return true;
+  }
+  return false;
+}
 
 export const CORREGO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
   'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_som', 'fav_house',
@@ -949,6 +974,8 @@ export function buildCorrego(scene, T) {
     const z = -35 + k * 3.3, lado = k % 2 ? 1 : -1, x = lado * (1.75 + (k % 3) * 0.25);
     const base = Math.abs(z) > 32 ? CANAL_FUNDO + (Math.abs(z) - 32) / 3 * 1.8 : CANAL_FUNDO;
     if (Math.abs(z) > 33.5) continue;
+    if (naBocaDaRampa(x, z)) continue;   // entulho no pé da rampa lacra o leito
+
     if (k % 4 === 0) manilha(x, z, angAnexo(), base);
     else if (k % 4 === 1) entulho(x, z, angAnexo(), base, 0.95 + (k % 3) * 0.2);
     else if (k % 4 === 2) pilhaTijolo(x, z, angAnexo(), base);
@@ -1131,7 +1158,7 @@ export function buildCorrego(scene, T) {
        assoreamento das pontas está por cima do fundo, a rampa está no lugar da parede. */
     const ponte = ax <= CORREGO_W / 2 + 0.2 && (Math.abs(z + 22) <= 1.6 || Math.abs(z) <= 1.0 || Math.abs(z - 22) <= 1.6);
     if (ponte) return 0.15;
-    if (ax <= 5 && Math.abs(z) >= HALF_Z - 6) return 0.05;
+    if (ax <= ALAGADO_X && Math.abs(z) >= HALF_Z - 6) return 0.05;
     // rampa de acesso: faixa da parede (|x| ∈ [3, 5]) descendo ao longo de z
     if (ax >= RAMPA_X0 && ax <= RAMPA_X1) {
       for (const r of RAMPAS) {
@@ -1354,7 +1381,12 @@ export function buildCorrego(scene, T) {
     parrots: [{ pos: [-6.4, groundHeightAt(-6.4, 34.5) + 0.9, 34.5], phase: 2.9 }],
   });
 
-  const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= CORREGO_W / 2 + 2;
+  /* LENTIDÃO SÓ ONDE MOLHA (relato do dono: "a pessoa anda mais devagar e nao devia").
+     O `slowAt` pegava |x| <= CORREGO_W/2 + 2 = 7 m, mas quem levanta o piso alagado é o
+     `groundHeightAt` com `ax <= 5`. A faixa |x| ∈ (5, 7] é calçada SECA nas duas pontas:
+     48 m² de margem em que o jogador levava 0,45× de velocidade (game.js `slowMul`) sem
+     nada molhado embaixo. O limite agora é o MESMO do piso alagado — uma fonte só. */
+  const slowAt = (x, z) => Math.abs(z) >= HALF_Z - 6 && Math.abs(x) <= ALAGADO_X;
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups, ctfPoints, ambience,

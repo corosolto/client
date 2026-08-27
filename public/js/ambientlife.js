@@ -119,7 +119,13 @@ function normalizeModel(id, model) {
   const center = box.getCenter(new THREE.Vector3());
   model.scale.setScalar(scale);
   model.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
-  if (id === 'rat') model.rotation.y = -Math.PI / 2;
+  /* RATO DE COSTAS (relato do dono no córrego): a cara do rat_animated.glb aponta
+     pro -X local — medido no binário, não no olho: partindo a nuvem de vértices no
+     meio do eixo longo, a metade -X tem espessura média 0,666 (corpo/cabeça) contra
+     0,528 da metade +X (a cauda que afina). O heading de `_updateRat` é
+     `atan2(dir.x, dir.z)`, que é a fórmula de quem olha pro +Z. Com -PI/2 o -X ia
+     parar no -Z: o bicho andava exatamente 180° virado. +PI/2 leva -X pro +Z. */
+  if (id === 'rat') model.rotation.y = Math.PI / 2;
 }
 
 function distanceToSegment(point, start, end) {
