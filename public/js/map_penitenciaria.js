@@ -11,7 +11,7 @@ const HALF_Z = 48;
 
 /* Subset da fauna que o main.js pré-carrega para este mapa (maps.js ambience). */
 export const PENITENCIARIA_AMBIENCE = ['rat', 'pigeonGround'];
-export const PENITENCIARIA_PROPS = ['torre_vigilancia'];
+export const PENITENCIARIA_PROPS = ['torre_vigilancia', 'bloco_celas', 'portao_penitenciaria', 'guarita_muro'];
 
 export function buildPenitenciaria(scene, T) {
   const root = new THREE.Group();
@@ -417,7 +417,7 @@ export function buildPenitenciaria(scene, T) {
     for (const y of [.18,.92]) ibox(2.28,.1,1.63,MAT.steel,x,y,z,{ry});
     for (const dx of [-.65,0,.65]) ibox(.08,.7,1.65,MAT.black,x+dx*Math.cos(ry),.27,z-dx*Math.sin(ry),{ry});
   }
-  [[-8,-7,.2],[8,-7,-.2],[-8,7,-.15],[8,7,.15],[-16,0,1.57],[16,0,1.57]].forEach((p,i)=>ammoCrate(i,...p));
+  [[-11.5,-7,.2],[11.5,-7,-.2],[-11.5,7,-.15],[11.5,7,.15],[-16,0,1.57],[16,0,1.57]].forEach((p,i)=>ammoCrate(i,...p));
 
   function centerObstacle(index, kind, x, z, ry=0) {
     const marker = new THREE.Group(); marker.name = `penitenciaria-obstaculo-centro-${index}-${kind}`; marker.position.set(x,0,z); root.add(marker);
@@ -436,7 +436,7 @@ export function buildPenitenciaria(scene, T) {
       addBox(2.8,.8,1.8,MAT.darkConcrete,x,.35,z,{ry}); addBox(2.3,.65,1.5,MAT.concrete,x,.95,z,{ry});
     }
   }
-  [['barreira',-12,-16,.15],['barris',11,-16,0],['gaiola',-14,-2,-.2],['entulho',13,1,.25],['barreira',-11,16,-.18],['barris',12,16,0],['gaiola',-3,-13,.12],['entulho',4,13,-.2],['barreira',-2,7,1.45],['gaiola',3,-6,1.5]].forEach((p,i)=>centerObstacle(i,...p));
+  [['barreira',-12,-16,.15],['barris',11,-16,0],['gaiola',-14,-2,-.2],['entulho',13,1,.25],['barreira',-11,16,-.18],['barris',12,16,0],['gaiola',-3,-13,.12],['entulho',4,13,-.2],['barreira',-15,7,1.45],['gaiola',15,-6,1.5]].forEach((p,i)=>centerObstacle(i,...p));
 
   function policeCar(x,z,ry) {
     const group = new THREE.Group(); group.name = 'penitenciaria-carro-policia'; group.position.set(x,0,z); group.rotation.y=ry; root.add(group);
@@ -509,11 +509,105 @@ export function buildPenitenciaria(scene, T) {
     fio.castShadow = false; root.add(fio);
   }
 
+  /* ===== CARANDIRU (r3; dono, 27/08: "o penitenciaria podia ter carandiru como
+     referencia") =====
+     Pavilhão de celas no centro do pátio com galeria externa gradeada percorrível,
+     portão principal no muro norte, torres de muro flanqueando o portão e o campo
+     de futebol pichado no pátio norte. Moldes do kit carandiru_r3b (FONTE.md); no
+     arnês node o procedural cobre — colisores idênticos nos dois mundos (NV8). */
+  {
+    // Pavilhão central (bloco_celas.glb): massa de 2 pavimentos; o jogador circula
+    // pela galeria de 2,2 m entre o bloco e a grade.
+    const pav = new THREE.Group(); pav.name = 'penitenciaria-pavilhao'; pav.userData.molde = 'bloco_celas'; root.add(pav);
+    colliders.push({ minX: -4.5, maxX: 4.5, minY: 0, maxY: 6.6, minZ: -7.5, maxZ: 7.5, tag: 'pavilhao' });
+    const glbPav = placeProp('bloco_celas', { x: 0, y: 0, z: 0 });
+    const pecasPav = [
+      addBox(9, 6.6, 15, MAT.tijolo, 0, 0, 0, { collide: false }),
+      addBox(9.4, .3, 15.4, MAT.darkConcrete, 0, 6.6, 0, { collide: false }),
+    ];
+    for (const yy of [1.9, 4.6]) for (const zz of [-5, -1.7, 1.7, 5]) for (const sx of [-1, 1])
+      pecasPav.push(addBox(.1, 1.3, 1.7, MAT.grade, sx * 4.51, yy, zz, { collide: false, cast: false }));
+    if (glbPav) {
+      /* molde normalizado (~1 m) esticado ao volume do pavilhão: 9 × 15 m de planta,
+         6,6 m — medidas nativas do accessor POSITION (mesmo padrão do galpão do gelo). */
+      const NAT = { minY: -0.2236, sizeX: 0.3886, sizeY: 0.4472, sizeZ: 0.998 };
+      const sy = 6.6 / NAT.sizeY;
+      glbPav.scale.set(9 / NAT.sizeX, sy, 15 / NAT.sizeZ);
+      glbPav.position.y = -NAT.minY * sy;
+      pav.add(glbPav); occluders.push(glbPav);
+      for (const p of pecasPav) p.visible = false;
+    } else occluders.push(...pecasPav);
+
+    // Galeria externa gradeada: anel de 2,2 m entre o pavilhão e a grade de 1,1 m,
+    // com 4 passagens (meio de cada lado) — a circulação do pátio do Carandiru.
+    let gi = 0;
+    const gradeGaleria = (w, d, x, z) => addBox(w, 1.1, d, MAT.grade, x, 0, z, { name: `penitenciaria-galeria-grade-${gi++}`, cast: false });
+    for (const sz of [-1, 1]) {
+      gradeGaleria(5.6, .12, -3.9, sz * 9.7); gradeGaleria(5.6, .12, 3.9, sz * 9.7);
+      gradeGaleria(.12, 5.6, sz * 6.7, -3.9); gradeGaleria(.12, 5.6, sz * 6.7, 3.9);
+    }
+
+    // Portão principal no muro norte (portao_penitenciaria.glb): portão fechado —
+    // visual embutido no muro e o colisor sela o vão (a prisão não abre).
+    const portao = new THREE.Group(); portao.name = 'penitenciaria-portao'; portao.userData.molde = 'portao_penitenciaria'; root.add(portao);
+    colliders.push({ minX: -5.5, maxX: 5.5, minY: 0, maxY: 5.6, minZ: 46.3, maxZ: 47.6, tag: 'portao' });
+    const glbPort = placeProp('portao_penitenciaria', { x: 0, y: 0, z: 47.2, targetH: 5.6, targetLen: 11 });
+    const pecasPort = [
+      addBox(.8, 5.6, 1.2, MAT.concrete, -5.1, 0, 47.2, { collide: false }),
+      addBox(.8, 5.6, 1.2, MAT.concrete, 5.1, 0, 47.2, { collide: false }),
+      addBox(9.4, 4.6, .18, MAT.grade, 0, 0, 47.2, { collide: false, cast: false }),
+      addBox(11, .5, 1.4, MAT.darkConcrete, 0, 5.6, 47.2, { collide: false }),
+    ];
+    if (glbPort) { portao.add(glbPort); occluders.push(glbPort); for (const p of pecasPort) p.visible = false; }
+    else occluders.push(...pecasPort);
+
+    // Torres de muro flanqueando o portão (guarita_muro.glb): a frente não tinha
+    // vigia entre as guaritas das quinas.
+    for (const [i, tx] of [[0, -9], [1, 9]]) {
+      const torre = new THREE.Group(); torre.name = `penitenciaria-torre-muro-${i}`; torre.userData.molde = 'guarita_muro'; root.add(torre);
+      colliders.push({ minX: tx - 2.8, maxX: tx + 2.8, minY: 0, maxY: 8.2, minZ: 43.9, maxZ: 46.8, tag: 'torre-muro' });
+      const glbTorre = placeProp('guarita_muro', { x: tx, y: 0, z: 45.35, targetH: 8.2, targetLen: 5.6, ry: Math.PI });
+      if (glbTorre) { torre.add(glbTorre); occluders.push(glbTorre); continue; }
+      const pecas = [];
+      for (const dx of [-2.2, 2.2]) for (const dz of [-1, 1]) pecas.push(addBox(.3, 7, .3, MAT.galvanizado, tx + dx, 0, 45.35 + dz, { collide: false }));
+      pecas.push(addBox(5.2, 2.2, 2.6, MAT.steel, tx, 7, 45.35, { collide: false }));
+      pecas.push(addBox(5.6, .3, 3, MAT.darkConcrete, tx, 9.2, 45.35, { collide: false }));
+      occluders.push(...pecas);
+    }
+
+    // O campo do Carandiru: marcações de futebol PICHADAS no concreto do pátio
+    // norte — tinta gasta, sem trave nem quadra (o recorte da PEN4 segue intacto).
+    const texPichacao = dataTex('penitenciaria-pichacao-tinta', 64, (x, y) => {
+      const c = 168 + (valueNoise(64, 10, 909)(x, y) - .5) * 56;
+      return [c, c, c - 10].map((v) => Math.max(0, Math.min(255, Math.round(v))));
+    }, 1, 1);
+    const matPichacao = new THREE.MeshBasicMaterial({ map: texPichacao, transparent: true, opacity: .62, depthWrite: false });
+    const faixa = (nome, w, d, x, z) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), matPichacao);
+      m.name = nome; m.rotation.x = -Math.PI / 2; m.position.set(x, .034, z); root.add(m);
+    };
+    faixa('penitenciaria-pichacao-faixa-norte', 22, .14, 0, 23.5);
+    faixa('penitenciaria-pichacao-faixa-sul', 22, .14, 0, 11.5);
+    faixa('penitenciaria-pichacao-faixa-leste', .14, 12, 11, 17.5);
+    faixa('penitenciaria-pichacao-faixa-oeste', .14, 12, -11, 17.5);
+    faixa('penitenciaria-pichacao-meio', .14, 12, 0, 17.5);
+    const circ = new THREE.Mesh(new THREE.RingGeometry(1.68, 1.86, 36), matPichacao);
+    circ.name = 'penitenciaria-pichacao-circulo'; circ.rotation.x = -Math.PI / 2; circ.position.set(0, .034, 17.5); root.add(circ);
+    for (const [ala, sx] of [['leste', 1], ['oeste', -1]]) {
+      const area = new THREE.Group(); area.name = `penitenciaria-pichacao-area-${ala}`; root.add(area);
+      for (const [w, d, x, z] of [[3, .14, sx * 9.5, 14], [3, .14, sx * 9.5, 21], [.14, 7.14, sx * 8, 17.5]]) {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), matPichacao);
+        m.rotation.x = -Math.PI / 2; m.position.set(x, .034, z); area.add(m);
+      }
+    }
+  }
+
   const GM={dark:MAT.black,steel:MAT.steel,wood:MAT.rust};
   function gun(kind,x,z,yaw){const g=new THREE.Group();g.name=`arma-central-${kind}`;g.position.set(x,.1,z);g.rotation.y=yaw;root.add(g);const long=['awp','ak','m4','shotgun','mp5'].includes(kind);const body=new THREE.Mesh(boxGeo(.13,.13,long?1:.42),kind==='shotgun'?GM.wood:GM.dark);body.position.y=.1;g.add(body);if(long){const barrel=new THREE.Mesh(boxGeo(.08,.08,.55),GM.steel);barrel.position.set(0,.13,-.62);g.add(barrel);}const grip=new THREE.Mesh(boxGeo(.11,.25,.14),GM.wood);grip.position.set(0,-.02,long?.25:.12);g.add(grip);pickups.push({x,z,kind,weapon:kind,readyAt:0,mesh:g});}
   /* `kind` é ID de arma (chave de WEAPONS), não CLASSE: o 8º era 'smg' e crashava
-     o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. */
-  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>gun(kind,-10+i*(20/7),i%2?-2.2:2.2,i*.42));
+     o `_updatePickups` todo quadro. KNOWN-BUGS BUG-70 / #366. As 8 do miolo flanqueiam
+     a galeria do pavilhão (Carandiru r3) — continuam |x|≤12, |z|≤12 (PEN4). */
+  ['awp','ak','m4','shotgun','mp5','deagle','pistol','uzi'].forEach((kind,i)=>gun(kind,i%2?10.4:-10.4,-4.9+i*1.4,i*.42));
   ['ak','m4','shotgun','deagle'].forEach((kind,i)=>{gun(kind,-15+i*10,-41,0);gun(kind,15-i*10,41,Math.PI);});
 
   buildInstanced();
@@ -539,23 +633,27 @@ export function buildPenitenciaria(scene, T) {
   for(let i=0;i<nodes.length;i++)if(adj[i].length===0){let nearest=-1,distance=Infinity;for(let j=0;j<nodes.length;j++){if(i===j||!clear(nodes[i],nodes[j]))continue;const dx=nodes[i].x-nodes[j].x,dz=nodes[i].z-nodes[j].z,d=dx*dx+dz*dz;if(d<distance){distance=d;nearest=j;}}if(nearest>=0){adj[i].push(nearest);adj[nearest].push(i);}}
   function nearestWaypoint(x,z){let best=0,distance=Infinity;for(let i=0;i<nodes.length;i++){const dx=nodes[i].x-x,dz=nodes[i].z-z,d=dx*dx+dz*dz;if(d<distance){distance=d;best=i;}}return best;}
   function findPath(fromIdx,toIdx){if(fromIdx===toIdx)return[toIdx];const prev=new Int16Array(nodes.length).fill(-1),queue=[fromIdx];prev[fromIdx]=fromIdx;while(queue.length){const n=queue.shift();for(const next of adj[n])if(prev[next]<0){prev[next]=n;if(next===toIdx){const path=[next];let p=n;while(p!==fromIdx){path.unshift(p);p=prev[p];}path.unshift(fromIdx);return path;}queue.push(next);}}return[fromIdx];}
-  /* BUG-57: pombo de pátio de presídio e rato de cela. */
+  /* BUG-57: pombo de pátio de presídio e rato de cela. r3 Carandiru: o bando
+     toma o campo pichado do pátio norte; o rato do miolo saiu do pé do pavilhão. */
   const ambience = createFavelaAmbience(root, {
     map: 'penitenciaria',
     rats: [
       { pos: [-18, 0, -38], to: [-15.5, 0, -35.5], phase: .3 },
       { pos: [18, 0, 38], to: [15.5, 0, 35.5], phase: 1.4 },
-      { pos: [-3, 0, 8], to: [-.5, 0, 10.5], phase: 2.2 },
+      { pos: [-12, 0, 8], to: [-9.5, 0, 10.5], phase: 2.2 },
     ],
     pigeons: [
       { mode: 'ground', pos: [-12, 0, 6], phase: .5 }, { mode: 'ground', pos: [12, 0, -6], phase: 1.6 },
       { mode: 'ground', pos: [-10.8, 0, 5], phase: .8 },
+      { mode: 'ground', pos: [0, 0, 15], phase: .1 }, { mode: 'ground', pos: [3, 0, 19.5], phase: 1.1 },
+      { mode: 'ground', pos: [-4, 0, 20], phase: 2.0 }, { mode: 'ground', pos: [6, 0, 14], phase: 2.7 },
+      { mode: 'ground', pos: [-2, 0, 22.5], phase: 3.3 },
     ],
   });
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.hum,pos:[0,3,0],radius:70,vol:.16},{src:AMB_LOOPS.eco,pos:[0,4,0],radius:55,vol:.13}],bioma:'urbano'},root,colliders,occluders,decalSolids:[root],groundHeightAt,slowAt,update,pickups,sun,hemi,
     spawns:{E:[-15,-5,5,15].map(x=>({x,z:-42,yaw:0})),B:[15,5,-5,-15].map(x=>({x,z:42,yaw:Math.PI}))},
-    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:0},{id:'B',label:'ALA NORTE',x:0,z:39}],
+    ctfPoints:[{id:'E',label:'ALA SUL',x:0,z:-39},{id:'MID',label:'PÁTIO',x:0,z:14},{id:'B',label:'ALA NORTE',x:0,z:39}],
     waypoints:{nodes,adj},nearestWaypoint,findPath,bounds};
 }
