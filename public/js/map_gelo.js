@@ -703,8 +703,8 @@ export function buildGelo(scene, T) {
       { pos: [10, 0, 22], to: [8.5, 0, 20.5], phase: 2.2 },
     ],
     cows: [
-      { pos: [-24, 0, -33], phase: 1.1 },
-      { pos: [24, 0, 33], phase: 2.7 },
+      { pos: [-20, 0, -35.5], phase: 1.1 },
+      { pos: [20, 0, 35.5], phase: 2.7 },
     ],
   });
 
