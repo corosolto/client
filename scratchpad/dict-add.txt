@@ -1,0 +1,106 @@
+  /* --- varredura de 21/08: as sobras PT que apareciam no meio do EN (tela 04 e vizinhas).
+     Personagem, facção e nome de mapa continuam PT nos dois idiomas — é sabor, decisão do dono. */
+  // boot / erro
+  'CARREGANDO MAPA': 'LOADING MAP',
+  'A TRETA DEU UMA PAUSA': 'THE FIGHT TOOK A BREAK',
+  'A ARENA NÃO ABRIU': 'THE ARENA DID NOT OPEN',
+  'Alguma coisa travou durante o carregamento. O erro já foi registrado automaticamente, sem pedir senha.':
+    'Something jammed while loading. The error was logged automatically, no password needed.',
+  'RELATÓRIO LOCAL': 'LOCAL REPORT',
+  'TENTAR DE NOVO': 'TRY AGAIN',
+  'REPORTAR ERRO': 'REPORT ERROR',
+  'Se quiser, confirme o envio pelo botão acima.': 'If you like, confirm the submission with the button above.',
+  'DICA': 'TIP', 'CORRIDA': 'RUN',
+  // aviso de desktop
+  'Este jogo foi feito para': 'This game was built for',
+  '(mouse + teclado).': '(mouse + keyboard).',
+  'Jogar num PC ou notebook é': 'Playing on a PC or laptop is',
+  'recomendado': 'recommended',
+  '. No celular a treta não flui.': '. On a phone the fight does not flow.',
+  // menu principal / perfil
+  'RANKING GLOBAL': 'GLOBAL LEADERBOARD',
+  'MAPA DA TRETA': 'THE MAP',
+  'SOBRE': 'ABOUT',
+  'ENVIE SEU FEEDBACK': 'SEND YOUR FEEDBACK',
+  'EDITAR PERFIL': 'EDIT PROFILE',
+  'NÍVEL 1': 'LEVEL 1',
+  '▶ JOGAR': '▶ PLAY',
+  'CONFIG.': 'SETTINGS',
+  'SEU NICK': 'YOUR NICK',
+  'REDES SOCIAIS (OPCIONAL)': 'SOCIAL LINKS (OPTIONAL)',
+  '+ REDE SOCIAL': '+ SOCIAL LINK',
+  '+ FOTO DE PERFIL': '+ PROFILE PHOTO',
+  'É esse nome que aparece no killfeed. Escolha com carinho - a treta é pública.':
+    'This is the name that shows up in the killfeed. Choose it well — the fight is public.',
+  'ex: Zé do AWP': 'e.g. AWP Joe',
+  // tela 04 · escolha do mapa
+  '04 · ESCOLHA DO MAPA': '04 · PICK THE MAP',
+  'Categorias de mapa': 'Map categories',
+  'Opções da partida': 'Match options',
+  'Mapa anterior': 'Previous map', 'mapa anterior': 'previous map',
+  'Próximo mapa': 'Next map', 'próximo mapa': 'next map',
+  'Ver mapa em tela cheia': 'View map full screen',
+  'Escolher o mapa da partida': 'Pick the match map',
+  'Escolher as armas da partida': 'Pick the match weapons',
+  'Clique pra trocar entre ROUNDS e CAPTURE THE FLAG': 'Click to switch between ROUNDS and CAPTURE THE FLAG',
+  // fichas dos mapas que faltavam (as antigas já estavam acima)
+  'Galpão de atacado em guerra: gôndolas apertadas, caixas de cobertura e o estacionamento disputado carrinho por carrinho.':
+    'A wholesale warehouse at war: tight aisles, crates for cover and a parking lot contested cart by cart.',
+  'Um parque de diversões em guerra de confete: carrossel no centro, roda-gigante, castelo colorido e três rotas de ataque.':
+    'An amusement park in a confetti war: carousel at the center, ferris wheel, colorful castle and three attack routes.',
+  'Duelo na cidade empoeirada: saloon, banco, carroças e tumbleweeds cruzando três rotas entre casas de madeira.':
+    'A duel in the dusty town: saloon, bank, wagons and tumbleweeds crossing three routes between wooden houses.',
+  'Rebelião no pátio: celas abertas, concreto gasto, guaritas e barricadas policiais entre três rotas de confronto.':
+    'Yard riot: open cells, worn concrete, watchtowers and police barricades across three routes.',
+  'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.':
+    'A packed emergency room: real wards, a cross-shaped corridor and a fight under fluorescent light — fully indoors.',
+  'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.':
+    'An eternal construction site: uneven ground, dig pits, hoardings and the fight over the missing budget.',
+  // personagem / config / como jogar
+  'personagem anterior': 'previous character', 'próximo personagem': 'next character',
+  'Categorias de configuração': 'Settings categories',
+  'Configurações': 'Settings',
+  'Escolha sua região': 'Choose your region',
+  'Liga/desliga as falas (memes)': 'Toggle the meme voice lines',
+  'FECHAR': 'CLOSE', 'JOGABILIDADE': 'GAMEPLAY',
+  'QUALIDADE GRÁFICA': 'GRAPHICS QUALITY',
+  'SENSIBILIDADE DO MOUSE': 'MOUSE SENSITIVITY',
+  'LIGADO': 'ON', 'DESLIGADO': 'OFF',
+  'VOLUME GERAL': 'MASTER VOLUME',
+  'FALAS DOS MEMES': 'MEME VOICE LINES',
+  'COR DA MIRA': 'CROSSHAIR COLOR',
+  'AJUDAR A TREINAR OS BOTS': 'HELP TRAIN THE BOTS',
+  '“Padrão ouro” liga sombras e neblina. Em notebook de reunião, escolha “Batata”.':
+    '“Gold standard” turns on shadows and fog. On a meeting laptop, pick “Potato”.',
+  'PRÉVIA · FERRO VELHO DO ZÉ · PADRÃO OURO': 'PREVIEW · FERRO VELHO DO ZÉ · GOLD STANDARD',
+  'RESTAURAR PADRÃO': 'RESTORE DEFAULTS',
+  'APLICAR': 'APPLY', 'SALVAR': 'SAVE',
+  'Estes stats ficam': 'These stats live', 'neste navegador': 'in this browser',
+  '. O ranking global está desligado enquanto o jogo está em alpha - volta quando o placar for confiável.':
+    '. The global leaderboard is off while the game is in alpha — it returns when the scoreboard is trustworthy.',
+  'O CORO SOLTO ainda está em alpha. Se você curte a ideia, qualquer apoio ajuda a pagar servidor, domínio e as próximas melhorias.':
+    'CORO SOLTO is still in alpha. If you like the idea, any support helps pay for the server, the domain and the next improvements.',
+  '🇧🇷 SOU DO BRASIL': '🇧🇷 I AM IN BRAZIL',
+  '🌐 FORA DO BRASIL': '🌐 OUTSIDE BRAZIL',
+  'ABRIR PÁGINA DE APOIO': 'OPEN THE SUPPORT PAGE',
+  'AWP / Pistola / Faca': 'AWP / Pistol / Knife',
+  'com respawn: cada round dura 1:39 ou fecha quando um time chega no alvo de abates; o time com mais kills leva o round. Por padrão, vence quem ganhar 3 rounds (melhor de 5); o teto pode ser escolhido na tela de mapas.':
+    'with respawn: each round lasts 1:39 or ends when a team hits the kill target; the team with more kills takes the round. By default the first to 3 rounds wins (best of 5); the cap can be chosen on the map screen.',
+  'não tem cronômetro de round: a rodada acaba quando um time captura 3 bandeiras (ou domina todas de uma vez). Vence quem ganhar 2 rodadas (melhor de 3). A partida tem um limite de 8 minutos, que só aparece no HUD no último minuto.':
+    'has no round clock: the round ends when a team captures 3 flags (or holds them all at once). First to 2 rounds wins (best of 3). The match has an 8-minute cap that only shows on the HUD in the final minute.',
+  // HUD / placar
+  'PROTEGIDO': 'PROTECTED',
+  'RECARREGANDO…': 'RELOADING…',
+  'Z/X/V RÁDIO': 'Z/X/V RADIO', 'TAB PLACAR': 'TAB SCOREBOARD', 'M TROCAR DE TIME': 'M SWITCH TEAM',
+  'CLIQUE PARA ATIVAR A MIRA': 'CLICK TO LOCK THE CROSSHAIR',
+  'Se o navegador bloquear, clique de novo. Em iframe/preview, abra o jogo em aba própria.':
+    'If the browser blocks it, click again. Inside an iframe/preview, open the game in its own tab.',
+  'ELIMINADO': 'ELIMINATED',
+  'CORO SOLTO - PLACAR': 'CORO SOLTO — SCOREBOARD',
+  'SEGURAR PARA VER': 'HOLD TO VIEW', 'ATIVAR CURSOR': 'ENABLE CURSOR',
+  'Armas e utilitários': 'Weapons and utilities',
+  'Fumaça (tecla 4)  ·  Frag (tecla 5)': 'Smoke (key 4)  ·  Frag (key 5)',
+  // rodapé / links
+  'Links do jogo': 'Game links', 'Menu principal': 'Main menu', 'Abrir seu perfil': 'Open your profile',
+  'Discord do CORO SOLTO': 'CORO SOLTO Discord', 'Telegram do CORO SOLTO': 'CORO SOLTO Telegram',
+  'Código no GitHub': 'Source on GitHub',
