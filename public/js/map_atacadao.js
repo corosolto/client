@@ -41,7 +41,8 @@ const RACK_HX = 1.15, RACK_HZ = 1.6, RACK_H = 3.0;   // meio-bloco: rack GLB + p
 
 const ZF = -12;   // fachada (separa estacionamento × loja). Era -6: a praça de caixas
                   // não cabia no lattice de navegação e o flanco oeste virava componente ilhado.
-const ZN = 33;    // fundo da loja (norte)
+const ZN = 36.2; // fundo da loja (norte). Era 33: a doca ficava com 3,8 m e nenhum slot de
+                  // spawn B alcançava os 40 m² de chão contíguo da MAP2B (medido: 34,5 a 36,8 m²).
 const ZS = -42;   // fundo do estacionamento (sul, a rua)
 const LOJA_Z0 = ZF, LOJA_Z1 = ZN;   // faixa que a régua ATA5 chama de "dentro do galpão"
 
@@ -272,11 +273,18 @@ export function buildAtacadao(scene, T) {
 
   /* ── DOCA (z de 28,8 a 32,6): fundo do galpão, spawn B ─────────────────────── */
   for (const [dx, dh] of [[-19.2, 2.6], [-9.6, 2.2], [3.2, 2.8], [12.8, 2.2], [22.4, 2.6]]) {
-    addBox(2.6, dh, 1.2, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 32.0);
-    addBox(2.7, 0.16, 1.3, MAT.metal, dx, dh, 32.0, { collide: false, cast: false });
+    addBox(2.6, dh, 0.8, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 35.4);
+    addBox(2.7, 0.16, 0.9, MAT.metal, dx, dh, 35.4, { collide: false, cast: false });
   }
   prop('vw_9150', -25.0, 24.0, 3.0, 0, 0, 0, 0);   // carreta encostada na doca oeste, fora da faixa andável
-  prop('dumpster', 19.2, 32.0, 1.7, 0, 1.0, 0.7, 1.6);
+  prop('dumpster', 21.6, 32.0, 1.7, 0, 1.0, 0.7, 1.6);
+  /* Fila de fardo no meio da doca: 7 m de faixa livre por 51 m de parede a parede é o
+     mesmo átrio que o dono recusou, só que no fundo. Largura 2,0 m para a linha de nó
+     vizinha sobrar com 0,6 m de folga (o `blocked()` do grafo usa 0,5). */
+  for (const dx of [-22.4, -12.8, 0, 12.8, 22.4]) {
+    addBox(2.0, 2.4, 1.2, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 32.0);
+    addBox(2.1, 0.14, 1.3, MAT.metal, dx, 2.4, 32.0, { collide: false, cast: false });
+  }
   prop('pilha_pneus', -21.6, 2.4, 1.5, 0, 1.0, 1.0, 1.4);
 
   /* ── FLANCO OESTE: travessas que impedem a pista lateral de virar corredor de
@@ -292,9 +300,18 @@ export function buildAtacadao(scene, T) {
     for (let x = -28; x <= 28; x += 4) addBox(2.2, 0.02, 0.35, MAT.faixa, x, 0.03, ZS - 9, { collide: false, cast: false }); }   // faixa central da rua (ao longo de X)
   const cars = ['kombi', 'saveiro', 'opala', 'fiat_uno', 'chevette', 'brasilia_vw'];
   let cix = 0;
-  for (const fz of [ZF - 8, ZF - 16, ZF - 24]) {                                                  // 3 fileiras de vaga
+  /* ZF - 6/13/20 e não - 8/16/24: com ZF em -12 a terceira fileira ia para z=-36 e o carro
+     de x=-9,1 engolia a AK do armário do time E em (-9, -35) — VM14, 1 pickup sem alcance. */
+  for (const fz of [ZF - 6, ZF - 13, ZF - 20]) {                                                  // 3 fileiras de vaga
     for (let x = -22; x <= 22; x += 5.2) addBox(0.14, 0.02, 4.4, MAT.faixa, x, 0.03, fz, { collide: false, cast: false });
-    for (let x = -19.5; x <= 19.5; x += 5.2) prop(cars[cix++ % cars.length], x, fz, 1.6, (cix % 2) ? 0 : Math.PI, 1.0, 2.1, 1.5);   // carros COLIDEM (cover)
+    /* A fileira do fundo abre uma BAIA em torno da bandeira E (-8, -30): com ela cheia, a
+       única forma de sair da doca até a bandeira era um corredor só, e o CTF2 do map-check
+       caía de 2 rotas separadas para 1 no par B->E. Carro é cover, não funil. */
+    const baia = fz <= ZF - 20;
+    for (let x = -19.5; x <= 19.5; x += 5.2) {
+      if (baia && x > -16 && x < -2) continue;
+      prop(cars[cix++ % cars.length], x, fz, 1.6, (cix % 2) ? 0 : Math.PI, 1.0, 2.1, 1.5);   // carros COLIDEM (cover)
+    }
   }
   prop('fileira_carros', 0, ZS + 3, 2.0, 0, 1.6, 6, 1.9);
   // faixa de pedestre da fachada (entrada da loja)
@@ -350,7 +367,7 @@ export function buildAtacadao(scene, T) {
   ARSENAL.forEach((k, i) => place(k, EX[i], ZS + 7, 0));
   // Time B (doca): a faixa livre entre a ponta das fileiras (z=28,8) e a parede norte.
   // Antes ficavam em z=ZN-4=29 espalhados de 3 em 3 — dentro do rack no layout novo.
-  ARSENAL.forEach((k, i) => place(k, -18 + i * 6, 29.6, Math.PI));
+  ARSENAL.forEach((k, i) => place(k, -18 + i * 6, 30.4, Math.PI));
   // disputadas na fachada (a porta)
   place('ak', -12, ZF - 1, 0); place('m4', 12, ZF - 1, 0);
 
@@ -399,7 +416,7 @@ export function buildAtacadao(scene, T) {
 
   const spawns = {
     E: [6, 14, -6, -14].map(x => ({ x, z: ZS + 5, yaw: 0 })),     // estacionamento, olhando pra loja
-    B: [-14.4, -4.8, 6.4, 16.0].map(x => ({ x, z: 30.2, yaw: Math.PI })), // doca do galpão, olhando pros corredores
+    B: [-17.6, -8.0, 8.0, 17.6].map(x => ({ x, z: 33.2, yaw: Math.PI })), // doca do galpão, olhando pros corredores
   };
 
   /* BUG-57 + frente ATACADÃO: rato e barata na doca, e a POMBA NO VIGAMENTO — bicho de
