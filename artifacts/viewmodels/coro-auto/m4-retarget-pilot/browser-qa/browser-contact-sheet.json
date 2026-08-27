@@ -1,0 +1,53 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/idle.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/fire.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/r0.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/r9.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/r18.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/r26.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/r44.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/browser-qa/ads.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "idle.png",
+      "to": "fire.png",
+      "mean_rgb_diff": 9.27363070425813
+    },
+    {
+      "from": "fire.png",
+      "to": "r0.png",
+      "mean_rgb_diff": 9.277841947473254
+    },
+    {
+      "from": "r0.png",
+      "to": "r9.png",
+      "mean_rgb_diff": 10.542660298751287
+    },
+    {
+      "from": "r9.png",
+      "to": "r18.png",
+      "mean_rgb_diff": 18.560031748313335
+    },
+    {
+      "from": "r18.png",
+      "to": "r26.png",
+      "mean_rgb_diff": 12.300469893290073
+    },
+    {
+      "from": "r26.png",
+      "to": "r44.png",
+      "mean_rgb_diff": 12.291914789489175
+    },
+    {
+      "from": "r44.png",
+      "to": "ads.png",
+      "mean_rgb_diff": 52.242009019122
+    }
+  ],
+  "warnings": [
+    "High frame-to-frame visual jump: 52.24"
+  ]
+}

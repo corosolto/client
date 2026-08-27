@@ -1,0 +1,33 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_000.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_009.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_018.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_026.png",
+    "artifacts/viewmodels/coro-auto/m4-retarget-pilot/renders/reload_044.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "reload_000.png",
+      "to": "reload_009.png",
+      "mean_rgb_diff": 5.721285069444444
+    },
+    {
+      "from": "reload_009.png",
+      "to": "reload_018.png",
+      "mean_rgb_diff": 11.892680902777778
+    },
+    {
+      "from": "reload_018.png",
+      "to": "reload_026.png",
+      "mean_rgb_diff": 7.758139930555555
+    },
+    {
+      "from": "reload_026.png",
+      "to": "reload_044.png",
+      "mean_rgb_diff": 7.371684375
+    }
+  ],
+  "warnings": []
+}
