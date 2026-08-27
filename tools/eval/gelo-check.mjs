@@ -35,12 +35,14 @@
           setMapSky (a régua lê o USO — BUG-02) E LOOK.gelo em public/js/look.js.
      GL8  moldes de verdade, não caixa (dono, 26/08: "parque da treta ainda esta
           low poly, predios low poly, brinquedos low poly tem que corrigir isso,
-          todos os mapas do usantos continuam low poly sem moldes 3d bons"):
+          todos os mapas do usantos continuam low poly sem moldes 3d bons"; reforço
+          r3, 27/08: "o da neve e o mais lowpoly ainda"):
           ≥2 heróis do mapa são GLB Mint REGISTRADOS — grupo nomeado com
-          userData.molde = id do prop + id presente em GELO_PROPS + GLB em disco.
-          Contam gelo-galpao (galpao_festival) e gelo-quentao (gelo_quentao):
-          os dois são molde Mint, então o limiar é 2 — um mapa que esquece o
-          userData ou o slot de preload reprova.
+          userData.molde = id do prop + id presente em GELO_PROPS + GLB em disco
+          (gelo-galpao/galpao_festival e gelo-quentao/gelo_quentao) — E o mapa
+          soma ≥6 instâncias Mint no total (os heróis + o kit festa_r3: fogueira,
+          poste_junino, barraca_quentao). Um mapa que esquece o userData, o slot
+          de preload ou para de instanciar o kit reprova.
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, waypoints ausentes,
    update ausente ou quadrante impossível de classificar reprovam com mensagem
@@ -52,6 +54,7 @@
      node tools/eval/gelo-check.mjs --mutante=fogo-parado   # GL3
      node tools/eval/gelo-check.mjs --mutante=sem-galpao    # GL2
      node tools/eval/gelo-check.mjs --mutante=sem-moldes    # GL8
+     node tools/eval/gelo-check.mjs --mutante=lista-zerada  # GL8 (zera GELO_PROPS)
    ============================================================================ */
 import { existsSync } from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
@@ -59,11 +62,12 @@ import { LOOK } from '../../public/js/look.js';
 import { GELO_PROPS } from '../../public/js/map_gelo.js';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-fogueira', 'fogo-parado', 'sem-galpao', 'sem-moldes']);
+const conhecidos = new Set(['sem-fogueira', 'fogo-parado', 'sem-galpao', 'sem-moldes', 'lista-zerada']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const MIN_FOGUEIRAS = 3, MIN_BARRACAS = 4, MIN_PALHAS = 6, MIN_ARVORES = 12;
 const MIN_TEXTURAS = 12, MIN_WAYPOINTS = 100, MIN_PICKUPS = 16, MIN_TIPOS_ARMA = 6;
+const MIN_INSTANCIAS_MINT = 6;
 
 /* instâncias sob um prefixo de nome: InstancedMesh conta `count`, o resto conta 1
    (um Grupo nomeado gelo-barraca-3 é UMA barraca, suas tábuas não têm nome) */
@@ -112,6 +116,10 @@ if (MUTANTE === 'sem-fogueira') {
   let n = 0;
   W.root.traverse((o) => { if (o.userData?.molde) { delete o.userData.molde; n++; } });
   mutanteAplicou = n > 0;
+} else if (MUTANTE === 'lista-zerada') {
+  /* zera a lista de slots de preload: sem GELO_PROPS nenhum molde é registrado */
+  mutanteAplicou = GELO_PROPS.length > 0;
+  GELO_PROPS.length = 0;
 }
 if (MUTANTE && !mutanteAplicou) {
   console.error(`MUTANTE NÃO APLICOU: ${MUTANTE} — a régua não mede o que o mutante quebra`);
@@ -262,29 +270,36 @@ if (MUTANTE && !mutanteAplicou) {
   put('GL7', !falta.length, falta.length ? falta.join(' · ') : `sky ${sky} · LOOK.gelo ok`);
 }
 
-/* ---- GL8 moldes Mint registrados (grupo + userData.molde + GELO_PROPS + disco) ---- */
+/* ---- GL8 moldes Mint: heróis registrados + ≥6 instâncias do kit no mapa ---- */
 {
   /* Grupo ausente é falha da GL2 (sem colateral); aqui só conta o registro do molde.
-     O par (galpao_festival, gelo_quentao) registrado é o estado que o mutante
-     sem-moldes quebra — por isso a cláusula exige os dois presentes E registrados. */
+     O mutante sem-moldes apaga TODO userData.molde (heróis E kit); o lista-zerada
+     esvazia GELO_PROPS — os dois quebram esta cláusula, e só ela. */
   const ESPERADOS = [['gelo-galpao', 'galpao_festival'], ['gelo-quentao', 'gelo_quentao']];
   const falta = [];
+  let instancias = 0;
+  W.root.traverse((o) => {
+    const molde = o.userData?.molde;
+    if (!molde) return;
+    if (!GELO_PROPS.includes(molde)) { falta.push(`${o.name || molde}: molde "${molde}" fora de GELO_PROPS — sem o slot o preload não baixa o GLB e o procedural low poly volta`); return; }
+    if (!existsSync(`public/models/props/${molde}.glb`)) { falta.push(`public/models/props/${molde}.glb ausente no disco`); return; }
+    instancias++;
+  });
   for (const [grupo, molde] of ESPERADOS) {
     const o = W.root.getObjectByName(grupo);
     if (!o) continue; // grupo ausente é falha da GL2, não daqui (sem colateral)
-    if (o.userData?.molde !== molde) { falta.push(`${grupo} sem userData.molde="${molde}" — marque o grupo no build (a régua lê o USO, não a intenção)`); continue; }
-    if (!GELO_PROPS.includes(molde)) { falta.push(`${molde} fora de GELO_PROPS — sem o slot o preload não baixa o GLB e o procedural low poly volta`); continue; }
-    if (!existsSync(`public/models/props/${molde}.glb`)) { falta.push(`public/models/props/${molde}.glb ausente no disco`); continue; }
+    if (o.userData?.molde !== molde) falta.push(`${grupo} sem userData.molde="${molde}" — marque o grupo no build (a régua lê o USO, não a intenção)`);
   }
+  if (instancias < MIN_INSTANCIAS_MINT) falta.push(`${instancias}/${MIN_INSTANCIAS_MINT} instâncias Mint registradas — o gelo sem o kit festa_r3 (fogueira/poste_junino/barraca_quentao) é o "mais lowpoly ainda" do dono (r3, 27/08)`);
   put('GL8', !falta.length,
     falta.length
       ? falta.join(' · ')
-      : '2 moldes Mint registrados (galpao_festival + gelo_quentao: grupo + userData.molde + GELO_PROPS + GLB em disco)');
+      : `${instancias} instâncias Mint registradas (heróis galpao_festival+gelo_quentao e kit festa_r3: grupo + userData.molde + GELO_PROPS + GLB em disco)`);
 }
 
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-fogueira': ['GL2', 'GL3'], 'fogo-parado': ['GL3'], 'sem-galpao': ['GL2'], 'sem-moldes': ['GL8'] };
+const ALVO = { 'sem-fogueira': ['GL2', 'GL3'], 'fogo-parado': ['GL3'], 'sem-galpao': ['GL2'], 'sem-moldes': ['GL8'], 'lista-zerada': ['GL8'] };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = esperado.every((id) => vermelhas.some((c) => c.id === id));
