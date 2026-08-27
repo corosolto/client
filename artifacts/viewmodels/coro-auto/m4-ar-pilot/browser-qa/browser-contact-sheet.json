@@ -1,0 +1,45 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/idle.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/fire-recoil.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/reload-detach.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/reload-carry.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/reload-insert.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/reload-final.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/browser-qa/ads.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "idle.png",
+      "to": "fire-recoil.png",
+      "mean_rgb_diff": 9.515486219658666
+    },
+    {
+      "from": "fire-recoil.png",
+      "to": "reload-detach.png",
+      "mean_rgb_diff": 12.517921965621918
+    },
+    {
+      "from": "reload-detach.png",
+      "to": "reload-carry.png",
+      "mean_rgb_diff": 1.6384638717047408
+    },
+    {
+      "from": "reload-carry.png",
+      "to": "reload-insert.png",
+      "mean_rgb_diff": 3.0832700394073487
+    },
+    {
+      "from": "reload-insert.png",
+      "to": "reload-final.png",
+      "mean_rgb_diff": 3.1815334008468543
+    },
+    {
+      "from": "reload-final.png",
+      "to": "ads.png",
+      "mean_rgb_diff": 36.09317844361765
+    }
+  ],
+  "warnings": []
+}

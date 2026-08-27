@@ -1,0 +1,27 @@
+{
+  "schema": "animation_contact_sheet_report.v1",
+  "frames": [
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/renders/reload_024.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/renders/reload_040.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/renders/reload_056.png",
+    "artifacts/viewmodels/coro-auto/m4-ar-pilot/renders/reload_080.png"
+  ],
+  "frame_diff": [
+    {
+      "from": "reload_024.png",
+      "to": "reload_040.png",
+      "mean_rgb_diff": 1.2522395833333333
+    },
+    {
+      "from": "reload_040.png",
+      "to": "reload_056.png",
+      "mean_rgb_diff": 2.514989583333333
+    },
+    {
+      "from": "reload_056.png",
+      "to": "reload_080.png",
+      "mean_rgb_diff": 2.5361743055555555
+    }
+  ],
+  "warnings": []
+}
