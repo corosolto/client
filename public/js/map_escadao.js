@@ -18,7 +18,20 @@ export const HALF_X = 18, HALF_Z = 40;
 export const ESCADAO_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 
 export const ESCADAO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fusca',
-  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02'];
+  'mesa_guardasol', 'guarda_sol', 'stall', 'arara_roupas', 'caixa_dagua', 'varal_roupas_01', 'varal_roupas_02',
+  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas'];
+
+/* PROPORÇÃO NATURAL DOS MOLDES DE CASA (kit Mint `favela_r3`).
+   bbox do GLB em disco, medido com @gltf-transform em 27/08/2026 — os moldes vêm
+   normalizados em ~1 m no maior eixo, então o que importa aqui é a RAZÃO entre eixos:
+   é dela que sai o quanto cada instância precisa esticar para caber na planta pedida.
+   `eval:escala-casario` relê os dois arquivos e reprova se estes números derivarem —
+   trocar o GLB por outro sem reconferir a escala é exatamente o defeito que o dono
+   apontou ("tem que ver a escala dos predios sempre"). */
+export const CASARIO_MOLDES = Object.freeze({
+  casa_favela_azul: { larg: 0.955, alt: 0.998, prof: 0.764 },
+  casa_favela_tijolo: { larg: 0.943, alt: 0.936, prof: 0.998 },
+});
 
 // ---- parâmetros da escada (NBR 9077 / Blondel: 2h+p = 0,63) ----
 const ESC = { larg: 5.0, espelho: 0.17, piso: 0.29, n: 12 };
@@ -233,13 +246,56 @@ export function buildEscadao(scene, T) {
   addFloor(HALF_X * 2, 40 - Math.abs(TOP_Z), 0, (TOP_Z + (-40)) / 2, MAT.concrete, H_TOP + 0.02);
 
   /* ===================== HELPERS DE GEOMETRIA ===================== */
+  /* ===================== CASARIO DE MOLDE (kit Mint favela_r3) =====================
+     O dono, 20/08: "os mapas de favela so o lajes tem cordao de roupas do model, os
+     outros nao e tudo generico low poly". As casas do escadão continuam sendo o MESMO
+     volume de jogo (o colisor não muda de dono): o molde entra como pele por cima do
+     prisma, que fica invisível mas SEGUE em `occluders` — bala e linha de visão param
+     onde sempre pararam, e não na malha vazada do GLB (a lição do BUG-54 ao contrário).
+     Sem GLB (node, `?glb=0`, molde que não baixou) a fachada procedural de sempre volta.
+     O registro `casario` guarda a REFERÊNCIA do colisor: é por ele que a régua
+     `eval:escala-casario` mede pé-direito, fachada e distorção no mundo construído. */
+  const casario = [];
+  function instanciaCasa(spec, x, z, y, w, h, d, col) {
+    const nat = CASARIO_MOLDES[spec.molde];
+    const sy = h / nat.alt;                       // placeProp já escala uniforme pela altura
+    // Duas orientações cabem na mesma planta; fica a que menos distorce o molde.
+    const opcao = (alvoX, alvoZ) => ({ sx: alvoX / (nat.larg * sy), sz: alvoZ / (nat.prof * sy) });
+    const desvio = (e) => Math.max(e.sx, e.sz) / Math.min(e.sx, e.sz);
+    const reto = opcao(w, d), girado = opcao(d, w);
+    const usaGirado = desvio(girado) < desvio(reto);
+    const e = usaGirado ? girado : reto;
+    const ry = (spec.ry || 0) + (usaGirado ? Math.PI / 2 : 0);
+    const obj = GLB_ON ? placeProp(spec.molde, { y, targetH: h, ry: 0 }) : null;
+    if (obj) {
+      obj.scale.x *= e.sx; obj.scale.z *= e.sz;
+      obj.rotation.y = ry;
+      obj.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(obj);
+      obj.position.x += x - (b.min.x + b.max.x) / 2;
+      obj.position.z += z - (b.min.z + b.max.z) / 2;
+      obj.userData.casario = spec.molde;
+      root.add(obj);
+    }
+    const reg = { molde: spec.molde, pav: spec.pav, x, z, y, ry, larg: w, prof: d, alt: h, sx: e.sx, sz: e.sz, col, obj };
+    casario.push(reg);
+    return reg;
+  }
+
   // casa sólida (mesmo motivo do quebrada: nenhum interior acessível)
-  function casa(x, z, w, d, h, matIdx, y = 0) {
+  function casa(x, z, w, d, h, matIdx, y = 0, glb = null) {
     const mat = PAREDES[matIdx % PAREDES.length];
     // A fundação vira fachada inferior vista do vale e impede casa flutuante nos terraços.
     if (y > 0.05) addBox(w, y, d, MAT.concreteDark, x, 0, z);
-    addBox(w, h, d, mat, x, y, z);
+    const corpo = addBox(w, h, d, mat, x, y, z);
+    const col = colliders[colliders.length - 1];
     solids.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 });
+    if (glb) {
+      const reg = instanciaCasa(glb, x, z, y, w, h, d, col);
+      // O molde traz porta, janela, telhado e beiral próprios: a fachada procedural sai
+      // de cena inteira, senão viram duas portas na mesma parede.
+      if (reg.obj) { corpo.visible = false; return; }
+    }
     addBox(w + 0.3, 0.12, d + 0.3, MAT.concreteDark, x, y + h, z, { collide: false });
     // Fachada rasa: porta, janela com verga e marquise quebram a leitura de caixa sem
     // acrescentar volume de gameplay ao prédio sólido.
@@ -414,8 +470,17 @@ export function buildEscadao(scene, T) {
 
   /* ===================== CASAS LATERAIS ===================== */
   // Cada par acompanha o nível do lance vizinho; o embasamento fecha o volume até a rua.
-  for (const [z, y, ml, mr] of [[12, 0, 1, 0], [5, RISE, 0, 2], [-3.7, RISE * 2, 2, 1]]) {
-    casa(-5.5, z, 3, 4, 4, ml, y); casa(5.5, z, 3, 4, 4, mr, y);
+  /* A planta segue estreita (3,0 × 4,4 m): mexer no x destas seis abriria/estreitaria o
+     corredor do lance. Quem varia é a ALTURA — sobrado de 2×2,95 m de um lado, casa de
+     um pavimento (3,05 m) do outro, alternando de nível em nível. É a escada de laje que
+     o dono cobra, e é também a proporção em que cada molde cabe sem virar panqueca: o
+     tijolo (planta quase quadrada) não entra em 3,0 m de frente com 5,9 m de altura sem
+     ser espremido a 0,50× — foi a régua `eval:escala-casario` que disse isso, não o olho. */
+  for (const [z, y, ml, mr, alto] of [[12, 0, 1, 0, -1], [5, RISE, 0, 2, 1], [-3.7, RISE * 2, 2, 1, -1]]) {
+    const sobrado = { molde: 'casa_favela_azul', pav: 2 }, terreo = { molde: 'casa_favela_tijolo', pav: 1 };
+    const esq = alto < 0 ? sobrado : terreo, dir = alto < 0 ? terreo : sobrado;
+    casa(-5.5, z, 3, 4.4, esq.pav === 2 ? 5.9 : 3.05, ml, y, { ...esq, ry: 0.028 });
+    casa(5.5, z, 3, 4.4, dir.pav === 2 ? 5.9 : 3.05, mr, y, { ...dir, ry: -0.034 });
     fachadaEscada(-5.5, z, 4, 4, -1, y, ml); fachadaEscada(5.5, z, 4, 4, 1, y, mr);
   }
 
@@ -498,15 +563,20 @@ export function buildEscadao(scene, T) {
   addBox(2.5, 1.2, 0.8, lam({ color: 0x4a4a3a, roughness: 0.8 }), 1.5, 0, 14.5);
 
   /* ===================== BASE (rua) ====================== */
+  /* Bar e mercadinho viram DUAS geminadas cada um: a fita de 6 m de fachada é o que a
+     rua tem, mas um molde só esticado nela viraria galpão. Duas casas de 3,0 × 4,6 m
+     dividem a mesma frente e mantêm o volume que tampa a visão dos becos. */
   // bar de esquina (bloqueia visão do beco oeste)
-  casa(-12, 32, 6, 5, 3.5, 0);
-  addBox(6, 0.8, 0.3, lam({ color: 0x8a4a2a }), -12, 3.5, 29.8, { collide: false });
+  casa(-13.5, 32, 3, 4.6, 3.05, 0, 0, { molde: 'casa_favela_azul', pav: 1, ry: -0.03 });
+  casa(-10.5, 32, 3, 4.6, 3.05, 2, 0, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.022 });
+  addBox(6, 0.8, 0.3, lam({ color: 0x8a4a2a }), -12, 3.05, 29.6, { collide: false });
   // mercadinho (bloqueia visão do beco leste)
-  casa(12, 34, 6, 5, 3.5, 2);
-  addBox(6, 0.8, 0.3, lam({ color: 0x2a6a4a }), 12, 3.5, 31.8, { collide: false });
+  casa(10.5, 34, 3, 4.6, 3.05, 2, 0, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.031 });
+  casa(13.5, 34, 3, 4.6, 3.05, 0, 0, { molde: 'casa_favela_azul', pav: 1, ry: -0.019 });
+  addBox(6, 0.8, 0.3, lam({ color: 0x2a6a4a }), 12, 3.05, 31.6, { collide: false });
   // BLOQUEIO CENTRAL: prédio entre a escada e o spawn (corta a linha de visão do escadão)
-  casa(-5, 22, 4, 5, 4, 1);
-  casa(5, 22, 4, 5, 4, 0);
+  casa(-5, 22, 4, 5, 5.9, 1, 0, { molde: 'casa_favela_tijolo', pav: 2, ry: 0.017 });
+  casa(5, 22, 4, 5, 5.9, 0, 0, { molde: 'casa_favela_azul', pav: 2, ry: -0.026 });
 
   /* ---- LAJE SOBRE A BOCA DO ESCADÃO (abrigo do spawn E; BUG-32, régua escadao-rota) ----
      Invariante: NÃO é piso — `groundHeightAt` não a conhece, senão vira plataforma sem saída. */
@@ -558,12 +628,12 @@ export function buildEscadao(scene, T) {
   varal('varal_roupas_01', -5.8, -34.6, 1.5, .12);
   varal('varal_roupas_02', 8.1, -25.2, 1.45, -Math.PI / 2);
   // barraco de obra (cover)
-  casa(12, -33, 5, 4, 3, 3, H_TOP);
+  casa(12, -33, 5, 4, 3.05, 3, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: 0.024 });
   // cobertura lateral preserva a visada do spawn para o cartão-postal central
-  casa(-7, -24, 4, 4, 3.5, 1, H_TOP);
-  casa(7, -24, 4, 4, 3.5, 0, H_TOP);
-  casa(-12, -26, 3, 4, 3, 0, H_TOP);
-  casa(12, -27, 3, 4, 3, 1, H_TOP);
+  casa(-7, -24, 4.2, 4.2, 3.1, 1, H_TOP, { molde: 'casa_favela_tijolo', pav: 1, ry: -0.021 });
+  casa(7, -24, 4.2, 4.2, 3.1, 0, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: 0.033 });
+  casa(-12, -26, 4.2, 4.2, 3.05, 0, H_TOP, { molde: 'casa_favela_tijolo', pav: 1, ry: 0.015 });
+  casa(12, -27, 4.2, 4.2, 3.05, 1, H_TOP, { molde: 'casa_favela_azul', pav: 1, ry: -0.028 });
   // muretas de mirante (cover agachado), afastadas dos slots centrais de spawn
   for (const [mx, mz] of [[6, -38], [-6, -38], [9, -22], [-9, -22]])
     addBox(2.0, 1.0, 0.5, MAT.concrete, mx, H_TOP, mz);
@@ -597,8 +667,8 @@ export function buildEscadao(scene, T) {
       m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize()); root.add(m);
     }
   };
-  fio(-15, 5.2, 32, 15, 5.5, 34); fio(-15, 5.0, 12, 15, 5.3, 12);
-  fio(-6, 7.0, 7, 6, 7.2, 7); fio(-6, 12.0, -4, 6, 12.2, -4);
+  fio(-15, 5.2, 32, 15, 5.5, 34); fio(-15, 6.6, 12, 15, 6.9, 12);
+  fio(-6, 8.6, 7, 6, 8.8, 7); fio(-6, 12.0, -4, 6, 12.2, -4);
   fio(-14, H_TOP + 5.0, -27, 14, H_TOP + 5.2, -27);
   fio(-14, H_TOP + 5.4, -36, 14, H_TOP + 5.1, -34);
 
