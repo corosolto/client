@@ -79,6 +79,29 @@ export const CORREGO_PROPS = ['pilha_pneus', 'tires', 'dumpster', 'moto_cg', 'fu
      escala dos predios sempre". Regua: eval:escala-favela-glb. */
   'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas'];
 
+/* OS VEÍCULOS, de UMA fonte só. O dono viu grafite e pixação em cima do carro e da
+   kombi: a passada acha parede por raycast e pinta o que encontrar, inclusive lataria.
+   Quem PINTA (o `evitar` do grafitar, abaixo), quem MEDE (corrego-grafite-check) e
+   quem COLOCA leem esta mesma lista — duas listas divergem calado. */
+export const CORREGO_VEICULOS = Object.freeze([
+  ['uno_mille', 17.8, -30.6, 0.55], ['fusca', 17.8, -10.6, -0.5], ['fiat_uno', 17.8, 20.6, 0.45],
+  ['fusca', -17.8, 29.4, 2.6], ['uno_mille', -17.8, 0.6, 3.6], ['kombi', -17.8, -19.4, 2.55],
+]);
+/* meia-caixa do corpo do veículo (o colisor é colRot 0,85 × 1,95), com folga: peça
+   ancorada dentro disto está na lataria, não em parede. */
+export const VEICULO_HX = 1.05, VEICULO_HZ = 2.15, VEICULO_ALT = 2.2;
+
+/* O ponto cai na lataria de algum veículo? Uma conta só, usada pela passada de
+   grafite (via `excluir`), pela régua e pelo filtro do layout assado. */
+export function veiculoNoPonto(x, y, z) {
+  for (const [, vx, vz, ry] of CORREGO_VEICULOS) {
+    const dx = x - vx, dz = z - vz, c = Math.cos(-ry), sn = Math.sin(-ry);
+    const lx = dx * c - dz * sn, lz = dx * sn + dz * c;
+    if (Math.abs(lx) <= VEICULO_HX && Math.abs(lz) <= VEICULO_HZ && y >= 0 && y <= VEICULO_ALT) return true;
+  }
+  return false;
+}
+
 export const CORREGO_ARTE_SUBSTITUICOES = Object.freeze({
   'folha-person-02.png': 'or-mitico-mural.png',
   'personagens-graffiti-01.png': 'or-mitico-mural.png',
@@ -1107,10 +1130,7 @@ export function buildCorrego(scene, T) {
   /* Ficam DENTRO do largo (|x| ≈ 17,8), não na pista de 3,1 m: um carro de 1,7 m numa
      rua de 3,1 m deixa 1,0 m de vão e foi assim que a primeira tentativa cortou rota.
      E ficam a ≥ 5,5 m do ponto de spawn, fora do disco que o MAP2B mede. */
-  for (const [id, x, z, ry] of [
-    ['uno_mille', 17.8, -30.6, 0.55], ['fusca', 17.8, -10.6, -0.5], ['fiat_uno', 17.8, 20.6, 0.45],
-    ['fusca', -17.8, 29.4, 2.6], ['uno_mille', -17.8, 0.6, 3.6], ['kombi', -17.8, -19.4, 2.55],
-  ]) {
+  for (const [id, x, z, ry] of CORREGO_VEICULOS) {
     const h = id === 'kombi' ? 2.0 : 1.42;
     propEscala.push({ id, h });
     if (!PB.add(id, { x, z, targetH: h, ry })) addBox(1.7, 1.4, 4.0, matEletro, x, 0, z, { ry });
@@ -1376,6 +1396,12 @@ export function buildCorrego(scene, T) {
       { x0: 18.0, x1: HALF_X, z0: z - 4.5, z1: z + 4.5 },
       { x0: -HALF_X, x1: -18.0, z0: z - 4.5, z1: z + 4.5 },
     ]),
+    /* "tem grafites e pixacoes num carro, na kombi onde nao deveria" (dono). A passada
+       acha parede por RAYCAST e pinta o que o raio encontrar — lataria de Kombi de pé é
+       uma parede perfeita pro teste de planura. `limpo` resolve "aqui não" (por região);
+       isto resolve "NISTO não". Vale para qualquer re-assada futura; o layout que já
+       está assado foi filtrado pela mesma conta (corrego-grafite-check). */
+    excluir: (px, py, pz) => veiculoNoPonto(px, py, pz),
     murais: { texturas: (T && T.muraisHom) || [], nomes: (T && T.muraisHomNomes) || [], seed: 13, separacao: 15 },
     bandas: [
       /* chance 30 → 12: o cartaz era a banda mais frequente e a que o dono nomeou
