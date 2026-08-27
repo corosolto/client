@@ -46,6 +46,18 @@
           não a declaração — BUG-02) E 'torre_vigilancia' em
           PENITENCIARIA_PROPS E public/models/props/torre_vigilancia.glb em
           disco. Mutante: --mutante=sem-moldes.
+     NV8  CARANDIRU (dono, 27/08/2026: "o penitenciaria podia ter carandiru
+          como referencia"): pavilhão central 'penitenciaria-pavilhao' com
+          userData.molde='bloco_celas' + portão 'penitenciaria-portao' +
+          ≥2 torres 'penitenciaria-torre-muro-*' (molde guarita_muro), todos
+          em PENITENCIARIA_PROPS com GLB em disco; GALERIA EXTERNA PERCORRÍVEL
+          — ≥6 segmentos 'penitenciaria-galeria-grade-*' E 8 sondas do anel
+          (faces do colisor 'pavilhao' + 1,1 m, quatro lados e quatro quinas)
+          fora de qualquer sólido: grade que fecha o anel reprova; e o campo
+          do Carandiru: ≥6 decalques 'penitenciaria-pichacao-*' no pátio
+          (pichado, sem trave — a PEN4 segue proibindo quadra/gol).
+          Mutantes: --mutante=sem-carandiru (zera os moldes do kit) e
+          --mutante=galeria-fechada (muro cobre o anel da galeria).
 
    FALHA = NÃO SABER MEDIR (lição 5): build que lança, textura de muro sem
    pixels legíveis em node ou update ausente reprovam com mensagem de conserto.
@@ -56,6 +68,8 @@
      node tools/eval/penitenciaria-vida-check.mjs --mutante=holofote-parado # NV2
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-varanda     # NV3
      node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-moldes      # NV7
+     node tools/eval/penitenciaria-vida-check.mjs --mutante=sem-carandiru   # NV8
+     node tools/eval/penitenciaria-vida-check.mjs --mutante=galeria-fechada # NV8
    ============================================================================ */
 import fs from 'node:fs';
 import { THREE, MAPS, initTextures } from './harness.mjs';
@@ -63,7 +77,7 @@ import { LOOK } from '../../public/js/look.js';
 import { PENITENCIARIA_PROPS } from '../../public/js/map_penitenciaria.js';
 
 const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
-const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda', 'sem-moldes']);
+const conhecidos = new Set(['sem-reboco', 'holofote-parado', 'sem-varanda', 'sem-moldes', 'sem-carandiru', 'galeria-fechada']);
 if (MUTANTE && !conhecidos.has(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 
 const MIN_TEXTURAS = 12;
@@ -107,6 +121,20 @@ if (MUTANTE === 'sem-reboco') {
   const i = PENITENCIARIA_PROPS.indexOf('torre_vigilancia');
   if (i >= 0) PENITENCIARIA_PROPS.splice(i, 1);
   mutanteAplicou = n > 0;
+} else if (MUTANTE === 'sem-carandiru') {
+  let n = 0;
+  W.root.traverse((o) => {
+    if (/^penitenciaria-(pavilhao|portao|torre-muro-)/.test(o.name || '') && o.userData?.molde) { delete o.userData.molde; n++; }
+  });
+  for (const id of ['bloco_celas', 'portao_penitenciaria', 'guarita_muro']) {
+    const i = PENITENCIARIA_PROPS.indexOf(id);
+    if (i >= 0) PENITENCIARIA_PROPS.splice(i, 1);
+  }
+  mutanteAplicou = n > 0;
+} else if (MUTANTE === 'galeria-fechada') {
+  /* muro de obra tapando o anel inteiro da galeria (as 8 sondas da NV8 caem dentro) */
+  mutanteAplicou = (W.colliders || []).some((c) => c.tag === 'pavilhao');
+  if (mutanteAplicou) W.colliders.push({ minX: -6.8, maxX: 6.8, minY: 0, maxY: 1.2, minZ: -9.8, maxZ: 9.8, tag: 'mutante-galeria' });
 }
 if (MUTANTE && !mutanteAplicou) {
   console.error(`MUTANTE NÃO APLICOU: ${MUTANTE} — a régua não mede o que o mutante quebra`);
@@ -256,9 +284,57 @@ if (MUTANTE && !mutanteAplicou) {
   put('NV7', !falta.length, falta.length ? falta.join(' · ') : '4 guaritas com molde torre_vigilancia registrado + prop pré-carregado + GLB em disco');
 }
 
+/* ---- NV8 carandiru: pavilhão com galeria percorrível + portão + torres + campo pichado ---- */
+{
+  const falta = [];
+  const glbExiste = (id) => fs.existsSync(new URL(`../../public/models/props/${id}.glb`, import.meta.url));
+  const moldeOk = (nome, id) => {
+    const o = W.root.getObjectByName(nome);
+    if (!o) { falta.push(`grupo '${nome}' ausente no build`); return; }
+    if (o.userData?.molde !== id) { falta.push(`${nome} sem userData.molde="${id}" — a régua lê o USO registrado (BUG-02)`); return; }
+    if (!PENITENCIARIA_PROPS.includes(id)) { falta.push(`'${id}' fora de PENITENCIARIA_PROPS — sem o slot o main.js não pré-carrega o GLB`); return; }
+    if (!glbExiste(id)) falta.push(`public/models/props/${id}.glb ausente em disco`);
+  };
+  moldeOk('penitenciaria-pavilhao', 'bloco_celas');
+  moldeOk('penitenciaria-portao', 'portao_penitenciaria');
+  const torres = [];
+  W.root.traverse((o) => { if (/^penitenciaria-torre-muro-\d+$/.test(o.name || '')) torres.push(o); });
+  if (torres.length < 2) falta.push(`${torres.length}/2 torres 'penitenciaria-torre-muro-*' — a frente (muro do portão) sem vigia entre as guaritas das quinas`);
+  else for (const t of torres) {
+    if (t.userData?.molde !== 'guarita_muro') { falta.push(`${t.name} sem userData.molde="guarita_muro"`); break; }
+  }
+  if (torres.length >= 2 && torres.every((t) => t.userData?.molde === 'guarita_muro')) {
+    if (!PENITENCIARIA_PROPS.includes('guarita_muro')) falta.push(`'guarita_muro' fora de PENITENCIARIA_PROPS`);
+    else if (!glbExiste('guarita_muro')) falta.push('public/models/props/guarita_muro.glb ausente em disco');
+  }
+  // galeria percorrível: anel entre o colisor do pavilhão e a grade, 8 sondas
+  const grades = [];
+  W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-galeria-grade-')) grades.push(o); });
+  if (grades.length < 6) falta.push(`${grades.length}/6 segmentos 'penitenciaria-galeria-grade-*' — a galeria externa gradeada é a circulação do pátio do Carandiru`);
+  const pav = (W.colliders || []).find((c) => c.tag === 'pavilhao');
+  if (!pav) {
+    falta.push(`não sei medir: colisor tag 'pavilhao' ausente — sem o bloco central não há anel para sondar`);
+  } else {
+    const livre = (x, z) => !(W.colliders || []).some((c) => x > c.minX && x < c.maxX && z > c.minZ && z < c.maxZ && c.minY < 1.7 && c.maxY > .1);
+    const sondas = [];
+    for (const sz of [-1, 1]) {
+      sondas.push([0, sz * (pav.maxZ + 1.1)], [(pav.maxX + 1.1) * sz, 0]);
+      for (const sx of [-1, 1]) sondas.push([sx * (pav.maxX + 1.1), sz * (pav.maxZ + 1.1)]);
+    }
+    const tapadas = sondas.filter(([x, z]) => !livre(x, z));
+    if (tapadas.length) falta.push(`galeria FECHADA em ${tapadas.length}/8 sondas do anel (${tapadas.slice(0, 3).map(([x, z]) => `(${x.toFixed(1)},${z.toFixed(1)})`).join(' ')}) — o jogador circula o pavilhão pela galeria; grade/muro no anel reprova`);
+  }
+  // o campo do Carandiru: marcações pichadas no pátio (decalque, não quadra)
+  const pichacoes = [];
+  W.root.traverse((o) => { if (o.name?.startsWith('penitenciaria-pichacao-')) pichacoes.push(o); });
+  if (pichacoes.length < 6) falta.push(`${pichacoes.length}/6 decalques 'penitenciaria-pichacao-*' — o campo pichado do pátio é a cena do Carandiru (faixas, meio, círculo, áreas)`);
+  put('NV8', !falta.length, falta.length ? falta.join(' · ')
+    : `pavilhão bloco_celas + portão + ${torres.length} torres-muro registrados · galeria com ${grades.length} grades e 8/8 sondas livres · ${pichacoes.length} decalques pichados`);
+}
+
 /* ---- placar e veredito dos mutantes ---- */
 const vermelhas = clausulas.filter((c) => !c.ok);
-const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3', 'sem-moldes': 'NV7' };
+const ALVO = { 'sem-reboco': 'NV1', 'holofote-parado': 'NV2', 'sem-varanda': 'NV3', 'sem-moldes': 'NV7', 'sem-carandiru': 'NV8', 'galeria-fechada': 'NV8' };
 if (MUTANTE) {
   const esperado = ALVO[MUTANTE];
   const acertou = vermelhas.some((c) => c.id === esperado);
@@ -268,5 +344,5 @@ if (MUTANTE) {
   console.log(`\nMUTANTE MORDIDO: ${MUTANTE} -> ${esperado}`);
   process.exit(0);
 }
-console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV7'}`);
+console.log(`\nPENITENCIARIA-VIDA ${vermelhas.length ? `VERMELHA · ${vermelhas.map((c) => c.id).join(', ')}` : 'ok · NV1-NV8'}`);
 process.exit(vermelhas.length ? 1 : 0);
