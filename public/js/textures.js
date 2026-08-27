@@ -745,6 +745,10 @@ export function initTextures() {
      references/. Bloco separado do gerado de propósito: o gen-graffiti-decals reescreve
      a lista acima e não pode engolir estes. */
   DECAL_FILES.push(
+    /* mural do córrego: o layout assado do mapa cita esta peça, então ela TEM que
+       viver no pool — nome fora do pool sai na graffiti-layout-check como "peça no
+       lugar errado". Entra no bloco à mão porque não veio do gen-graffiti-decals. */
+    ['or-mitico-mural.png', 1.0, 'peca', 0],
     ['or-graf-treta.png', 1.99, 'peca', 0],
     ['or-graf-coro.png', 2.163, 'peca', 0],
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
