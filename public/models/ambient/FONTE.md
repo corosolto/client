@@ -20,3 +20,15 @@ de malha skinned.
   export original foi removido (hint que o three.js ignora).
 
 Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs`.
+
+## Fauna estática do córrego (mapa `corrego`)
+
+Sem rig: o builder do mapa posiciona por `placeFauna` e a locomoção é procedural.
+Proveniência completa (assetId, chat, sha256 do binário) em `mint-assets.json`,
+packs `jacare-corrego` e `capivara-corrego`.
+
+- `jacare_corrego.glb` — Mint text-to-3D (mint.gg), pack `jacare-corrego`.
+- `capivara_corrego.glb` — Mint text-to-3D (mint.gg), pack `capivara-corrego`,
+  “Sleepy Brown Rodent”. 0,998 m de comprimento no binário; o mapa serve a 1,0 m.
+
+Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs`.

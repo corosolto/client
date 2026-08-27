@@ -111,6 +111,241 @@
         "displayName": "Piscinão de Ramos — props",
         "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
       }
+    },
+    "casa-favela-azul": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_favela_azul.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Blue Favela House (casa de favela azul)",
+        "frente": "v21-e-models",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "notes": "Kit `favela_r3` do Mint (pack th7395mdsfsgrt1dxb4zc3my2s8d6snr). Pedido do dono 26/08/2026: \"os mapas de favela so o lajes tem cordao de roupas do model, os outros nao e tudo generico low poly\" + \"tem que ver a escala dos predios sempre\". GLB normalizado no cubo unitario do Mint: 0,955 x 0,998 x 0,764 m, 4.780 tris, EXT_texture_webp. NAO se integra com escala uniforme: casa de favela tem fachada de 4,0-5,6 m com pe-direito de 2,6-3,2 m por pavimento (1,4:1 a 1,7:1) e o molde e quase cubico. Entra por `placePropCaixa` (mapprops.js), que escala larg/alt/prof por eixo. Uso: map_corrego.js (palafitas do canal e morro do fundo). Regua: eval:escala-favela-glb."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92"
+      }
+    },
+    "casa-favela-tijolo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/casa_favela_tijolo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77wm8m73833tvn9edhztpkx98d6dtx",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Brick Favela House (casa de favela de tijolo)",
+        "frente": "v21-e-models",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "notes": "Kit `favela_r3` do Mint. Par do casa_favela_azul: a regua eval:escala-favela-glb cobra os DOIS moldes em cada mapa (nenhum abaixo de 30% das casas) porque fileira de clone e o \"tudo generico low poly\" com outro nome. GLB normalizado: 0,943 x 0,936 x 0,998 m, 4.181 tris, EXT_texture_webp. Mesma integracao por eixo do azul."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016"
+      }
+    },
+    "varal-roupas-favela": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77x28h86c6wvx3xzr996npdh8d7bv8",
+        "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+        "displayName": "Favela Clothesline (varal de roupas de beco)",
+        "frente": "v21-e-models",
+        "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+        "notes": "Kit `favela_r3` do Mint. E o \"cordao de roupas do model\" que o dono so via no lajes. GLB normalizado pela largura: 0,998 x 0,697 x 0,326 m (a corda corre no eixo X local), 4.677 tris, EXT_texture_webp. Integra com escala UNIFORME (`placeProp`) de proposito — esticar o eixo da corda deforma a roupa, que e justamente o detalhe elogiado no lajes. Uso: map_corrego.js, 5 vaos de beco/beira com alt 1,55 m => vao de 2,22 m e cordao a 3,50 m. Regua: eval:escala-favela-glb (ESCGLB5)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf"
+      }
+    },
+    "capivara-corrego": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/capivara_corrego.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79v4k2gay9czmby61jjed1718cp93p",
+        "chatUrl": "https://mint.gg/chat/ph74kf2engyr4skt5kxkwxxrgd8cqmqt",
+        "displayName": "Sleepy Brown Rodent (capivara do córrego)",
+        "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "d3ab0c0a22bd5e8072e75ec0ce43ccfeefcd0a2eff1160c0375b9dfc48baf227"
+      }
+    },
+    "jacare-corrego": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/jacare_corrego.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77b4qhsj4an75taq2612yxfx8cqcts",
+        "chatUrl": "https://mint.gg/chat/ph71907xmzehws02vnam630e6n8cpypj",
+        "displayName": "Blocky Belly Caiman (jacaré-do-córrego)",
+        "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/jacare_corrego_mint.glb. Estático: pipeline Mint de animação é humanoide e não aplicou em quadrúpede (tentativa 18/08 falhou limpo). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale 1.8 => ~1,8 m (plans/21-FAUNA-CORREGO.md). Ficha: plans/21-FAUNA-CORREGO.md. Referências: references/fauna-corrego/."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "4b77865d7dfd47a24a08d49fd59566000b1dc5ca03a84a8e5dc397bfc3fe674b"
+      }
+    },
+    "grama-corrego-01": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/grama_corrego_01.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks705h592kaq9f0nb9958hvqnh8cr3za",
+        "chatUrl": "https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj",
+        "displayName": "Arching Guinea Grass Tuft (capim alto de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1 (plans/13: \"faltou tambem usar os glbs de grama\"). Tufo de capim-colonião alto com palhas secas na base. GLB normalizado Mint (0,967 m de altura): integrar com scale ~0,72 => ~0,70 m. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_01-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "061a6302c0c6380cd11dbd436f7526a0053af5500d1e905d2a0e0f6dafe8354c"
+      }
+    },
+    "grama-corrego-02": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/grama_corrego_02.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7ad08zxczjzpywjqnges9eb18csm41",
+        "chatUrl": "https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2",
+        "displayName": "Urban Creekside Weeds (capim rasteiro de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Moita baixa e larga de capim rasteiro amarelado com folhas de mato. GLB normalizado pela largura (0,998 m): integrar com scale ~0,6 => ~0,60 m largo × ~0,37 m alto. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_02-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "cd24a8276e0e6e5339398a5d86b1cfa77b5d552e0ec7086eee6eed904cee550f"
+      }
+    },
+    "planta-corrego-taboa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/planta_corrego_taboa.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks753dc0a7hfg2dz4shrb0cyan8cr0ye",
+        "chatUrl": "https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718",
+        "displayName": "Brown Spike Cattail (taboa de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Taboa (Typha) com duas espigas marrons, clássica de beira de córrego urbano. GLB normalizado (0,998 m de altura): integrar com scale ~1,4 => ~1,40 m. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taboa-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2adc0485a0abba8dd37c0cfac12e0b9e9ad20ce357ceb4a22e658ed4d8e580a6"
+      }
+    },
+    "planta-corrego-taioba": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/planta_corrego_taioba.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7cb0vyms9gpcftq95yvjkgf18cs8cv",
+        "chatUrl": "https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4",
+        "displayName": "Heart Leaf Taioba (taioba de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Taioba (Xanthosoma) de folhas cordiformes. Primeira geração (asset ks7ac74ys39n51d9ktjvb0q1yh8csmne) falhou no estágio final do Mint e o retry_generation exigiu prompt novo em chat novo — esta é a v2. GLB normalizado pela profundidade (0,998 m; 0,963 m de altura): integrar com scale ~0,95 => ~0,90 m de altura. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taioba-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2028681d3244aec692bd498b77681111268e3f7b7a87279a336c7a0082c699d7"
+      }
+    },
+    "caixa-dagua": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_dagua.glb"
+      ],
+      "source": {
+        "kind": "tripo3d-task",
+        "assetId": "f38947f5-391b-495a-9e43-cebe3a26242d",
+        "displayName": "Caixa d'água de laje brasileira",
+        "prompt": "Brazilian rooftop water tank (caixa d'agua), black cylindrical plastic water tank mounted on a simple metal stand, very common on Brazilian favela rooftops, weathered plastic, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+        "rawModel": "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d-pbr_model.glb",
+        "rawModelSha256": "b0d9a65f0174cf0e055d64807ca8fccca9f0422b98655f6a83971b7ab2f9b440",
+        "taskRecordSha256": "a3b872110867dcd74215c08e8907833adc9b026da041c8a451cfde6cbb72ad53",
+        "renderedImageSha256": "729336b26edc89e254898ec728ee7a5fc1dfed5ca1856d87a0b574f82648caee",
+        "notes": " [PR do córrego: só o GLB otimizado é versionado aqui; os brutos do Mint (2 arquivo(s)) ficaram fora do PR de mapa.]"
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelVersion": "v3.1-20260211",
+        "modelTaskId": "f38947f5-391b-495a-9e43-cebe3a26242d",
+        "modelCostCredits": 50,
+        "tools": [
+          "tools/optimize-static.mjs",
+          "gltf-transform 4.4.1",
+          "sharp WebP"
+        ],
+        "finalSha256": "9988a7f76ad860fdbd652c4321ad820250ea0cc201d08e98d61a4308a2ff1201",
+        "notes": "O PBR bruto do Tripo tinha 1.875.081 triângulos, três JPEG 4096² e 55.086.080 bytes. A entrega estática preserva albedo, normal e metal/rough em três WebP 512², 18.749 triângulos, um material e 638.592 bytes; LANDMARK4 mede os canais PBR no GLB que o Escadão desenha."
+      }
     }
   }
 }
