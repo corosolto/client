@@ -831,11 +831,18 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
-const modoMapaPadrao = /<button class="cs-item cs-sub-item" data-act="sp"[^>]*>[\s\S]*?MATA-MATA<\/button>/.test(astro)
+/* JOGAR abre DUAS opções, MULTIPLAYER primeiro (decisão do dono, 27/08/2026). A ordem é
+   cobrada porque ela É a decisão — trocar de lugar reverte o pedido em silêncio.
+   CAPTURE A BANDEIRA saiu do menu e virou o botão de modo (#map-mode) na tela de mapas, que é
+   onde a escolha de modo sempre morou de verdade; o invariante desta cláusula continua sendo
+   que os DOIS modos entram por lá, e não que exista um item de menu para cada um. */
+const modoMapaPadrao = /<button class="cs-item cs-sub-item" data-act="mp"[^>]*>[\s\S]*?MULTIPLAYER<\/button>\s*\n\s*<button class="cs-item cs-sub-item" data-act="sp"[^>]*>[\s\S]*?SINGLE PLAYER<\/button>/.test(astro)
   && !/>ABATE<\/button>/.test(astro)
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
-  && /case 'sp':\s+openModeMap\('rounds', 'MATA-MATA', 'sp'\); break;/.test(main)
-  && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main);
+  && /case 'sp':\s+openModeMap\('rounds', 'SINGLE PLAYER', 'sp'\); break;/.test(main)
+  && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main)
+  // o modo continua alternável pelo jogador, senão o CTF vira inalcançável ao sair do menu
+  && /matchMode = matchMode === 'ctf' \? 'rounds' : 'ctf';/.test(main);
 const personagemSemDificuldade = !!funcAttrs && !/attr-dif|DIFICULDADE|undefined/.test(funcAttrs);
 const perfilComAvatar = /const PLAYER_AVATAR_KEY = 'awpbr_player_avatar'/.test(main)
   && /function fallbackPlayerAvatar\(seed\)[\s\S]{0,420}\/img\/chars\/avatars\/\$\{character\.id\}\.webp/.test(main)
@@ -996,7 +1003,7 @@ const resultados = [
     'vida e munição 42px; nome 11px; vinheta e vermelho crítico medidos na tela 05'],
   ['UIR25', 'killfeed usa a mesma silhueta 2D alfa da arma que realizou o abate', killfeedArma2D,
     'short da arma resolve o WebP publicado; máscara monocromática substitui o SVG no evento real'],
-  ['UIR26', 'Mata-mata e CTF entram pela seleção de mapas em tela cheia', modoMapaPadrao,
+  ['UIR26', 'JOGAR abre MULTIPLAYER e SINGLE PLAYER; os dois modos entram pela seleção de mapas', modoMapaPadrao,
     'os dois modos preservam seu estado no setup e abrem a tela 04 antes de facção/personagem'],
   ['UIR27', 'ficha do personagem não inventa dificuldade sem contrato', personagemSemDificuldade,
     'renderCharAttrs publica somente VIDA, VELOCIDADE, PRECISÃO e MEME; nenhum undefined'],

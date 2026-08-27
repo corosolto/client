@@ -1,0 +1,125 @@
+---
+// /sala/<REGIAO-CODIGO> - convite de sala. Mostra o que a pessoa vai encontrar ANTES de
+// mandar entrar. Por que mora no site e nao no servidor: docs/MULTIPLAYER.md.
+import Layout from '../../layouts/Layout.astro';
+import { BRAND_FULL, abs } from '../../lib/site';
+
+export const prerender = false;
+
+// Registro de nos: a MESMA lista de public/js/nos.js. Duas listas fariam um link cair num
+// no que a outra nao conhece.
+const NOS = [
+  { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
+];
+
+const bruto = String(Astro.params.codigo || '').trim().toUpperCase();
+const casado = bruto.match(/^([A-Z]{2})[-_]?([A-Z0-9]{3,8})$/);
+const no = casado ? NOS.find((n) => n.id.toUpperCase() === casado[1]) : null;
+const convite = no && casado ? `${casado[1]}-${casado[2]}` : bruto;
+
+let sala: any = null;
+let erro = '';
+if (!no || !casado) {
+  erro = 'Esse convite não tem um formato que eu reconheça. Ele parece com BR-7K3M.';
+} else {
+  const http = no.url.replace(/^ws/, 'http').replace(/\/ws.*$/, '');
+  try {
+    // Timeout curto: convite que fica girando é pior que convite que diz "não deu".
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const r = await fetch(`${http}/sala/${encodeURIComponent(casado[2])}`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) sala = (await r.json()).sala;
+    else if (r.status === 404) erro = 'Essa sala não existe mais. Sala de jogador some quando o último jogador sai.';
+    else erro = 'O servidor dessa sala respondeu com erro.';
+  } catch {
+    erro = 'Não consegui falar com o servidor dessa sala. Ele pode estar fora do ar.';
+  }
+}
+
+// Sem cache: lotação muda a cada segundo, e convite cacheado mente sobre quem está dentro.
+Astro.response.headers.set('cache-control', 'no-store');
+if (!sala) Astro.response.status = 404;
+
+const usadoE = sala ? Math.max(0, (sala.max / 2) - (sala.livre?.E ?? 0)) : 0;
+const usadoB = sala ? Math.max(0, (sala.max / 2) - (sala.livre?.B ?? 0)) : 0;
+const porLado = sala ? sala.max / 2 : 5;
+const pinos = (usado: number) => Array.from({ length: porLado }, (_, i) => i < usado);
+
+const titulo = sala ? `${sala.name} - sala ${convite}` : `Sala ${convite}`;
+const desc = sala
+  ? `${sala.nomeE} x ${sala.nomeB} - ${sala.players}/${sala.max} jogando. Entre gratis no navegador.`
+  : 'Convite de sala do CORO SOLTO: Treta Suprema.';
+---
+<Layout title={titulo} description={desc} noindex={true} h1={sala ? sala.name : `SALA ${convite}`} kicker="CONVITE DE SALA">
+  <meta slot="head" property="og:url" content={abs(`/sala/${convite}`)} />
+
+  <div class="cv">
+    {sala ? (
+      <>
+        <p class="cv-ctx">{sala.map} · {sala.ctf ? 'CAPTURA' : 'MATA-MATA'} · {sala.players}/{sala.max} jogando</p>
+
+        {/* A disputa, no mesmo vocabulario da lista de salas do jogo: pino cheio = pessoa dentro. */}
+        <div class="cv-disputa">
+          <div class="cv-lado">
+            <span class="cv-time" data-f={sala.faccaoE}>{sala.nomeE}</span>
+            <div class="cv-pinos">{pinos(usadoE).map((cheio) => <i class:list={[{ on: cheio }]} data-f={sala.faccaoE}></i>)}</div>
+          </div>
+          <span class="cv-vs">VS</span>
+          <div class="cv-lado">
+            <span class="cv-time" data-f={sala.faccaoB}>{sala.nomeB}</span>
+            <div class="cv-pinos">{pinos(usadoB).map((cheio) => <i class:list={[{ on: cheio }]} data-f={sala.faccaoB}></i>)}</div>
+          </div>
+        </div>
+
+        <dl class="cv-dados">
+          <div><dt>SALA</dt><dd class="cv-cod">{convite}</dd></div>
+          <div><dt>SERVIDOR</dt><dd>{no!.nome}</dd></div>
+        </dl>
+
+        {sala.private && <p class="cv-aviso">Sala trancada - vao te pedir a senha ao entrar.</p>}
+
+        <a class="btn cv-cta" href={`/?sala=${encodeURIComponent(convite)}`}>ENTRAR NA SALA</a>
+        <p class="cv-nota">Sem download, sem cadastro. Abre direto no navegador.</p>
+      </>
+    ) : (
+      <>
+        <p class="cv-erro">{erro}</p>
+        <a class="btn cv-cta" href="/">VER AS SALAS ABERTAS</a>
+      </>
+    )}
+  </div>
+</Layout>
+
+<style>
+  .cv{display:flex;flex-direction:column;gap:var(--s-5);align-items:center;text-align:center;
+    max-width:520px;margin:0 auto;padding:var(--s-6) 0}
+  .cv-ctx{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);letter-spacing:.5px;margin:0}
+
+  .cv-disputa{display:flex;align-items:center;gap:var(--s-4);width:100%;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:var(--s-5) 0}
+  .cv-lado{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:var(--s-2)}
+  .cv-time{font-family:var(--font);font-weight:700;font-size:var(--fs-300);letter-spacing:var(--tr-2)}
+  .cv-vs{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink3)}
+  .cv-pinos{display:flex;gap:var(--s-1)}
+  /* Um pino por vaga do lado: cheio = tem gente, vazio = cabe voce. Responde "cabe eu?" sem
+     obrigar a fazer subtracao de cabeca, e responde POR LADO, que e o que a pessoa quer saber. */
+  .cv-pinos i{width:11px;height:11px;border:1px solid var(--line-2);
+    clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
+  .cv-time[data-f="E"],.cv-pinos i.on[data-f="E"]{color:var(--team-e);background:var(--team-e);border-color:var(--team-e)}
+  .cv-time[data-f="B"],.cv-pinos i.on[data-f="B"]{color:var(--team-b);background:var(--team-b);border-color:var(--team-b)}
+  .cv-time[data-f="U"],.cv-pinos i.on[data-f="U"]{color:var(--team-u);background:var(--team-u);border-color:var(--team-u)}
+  .cv-time[data-f="C"],.cv-pinos i.on[data-f="C"]{color:var(--team-c);background:var(--team-c);border-color:var(--team-c)}
+  .cv-time[data-f="F"],.cv-pinos i.on[data-f="F"]{color:var(--team-f);background:var(--team-f);border-color:var(--team-f)}
+  .cv-time{background:none!important}
+
+  .cv-dados{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-4);width:100%;margin:0}
+  .cv-dados dt{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);letter-spacing:var(--tr-2)}
+  .cv-dados dd{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink1);margin:var(--s-1) 0 0}
+  .cv-cod{color:var(--cs)!important;font-size:var(--fs-300)!important}
+
+  .cv-cta{width:100%;text-align:center}
+  .cv-nota,.cv-aviso{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);margin:0;line-height:var(--lh-base)}
+  .cv-aviso{color:var(--am)}
+  .cv-erro{font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);margin:0}
+</style>

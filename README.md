@@ -34,9 +34,9 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 33.237 linhas em 49 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **6.980** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.946 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 33.314 linhas em 50 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **6.988** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.990 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 49 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 50 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |

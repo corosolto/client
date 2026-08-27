@@ -19,7 +19,7 @@ import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient } from './net.js';
+import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -1342,7 +1342,7 @@ csItems.forEach((it) => {
     ui.click();
     switch (it.dataset.act) {
       case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
-      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
+      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
@@ -2679,6 +2679,12 @@ if (inspectionScreen) {
 } else if (testMode && params.get('auto')) {
   const [team, char] = params.get('auto').split(',');
   startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
 }
 
 /* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
@@ -2772,7 +2778,6 @@ async function mpAtualizarSalas() {
   salas.sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players));
   box.innerHTML = '';
   for (const r of salas) {
-    const vagas = (r.livre?.E || 0) + (r.livre?.B || 0);
     const div = document.createElement('div');
     div.className = 'mp-sala';
     const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
@@ -2784,19 +2789,58 @@ async function mpAtualizarSalas() {
       + `<div class="mp-acoes"></div>`
       + `<div class="mp-sala-sub">${MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`;
     const acoes = div.querySelector('.mp-acoes');
-    const entrar = document.createElement('button');
-    entrar.className = 'mp-entrar'; entrar.type = 'button';
-    entrar.textContent = vagas ? 'ENTRAR' : 'SEM VAGA';
-    entrar.disabled = !vagas;
-    entrar.onclick = () => { ui.click(); mpEntrar(r, 'auto'); };
+    /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
+       quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
+       cheio apaga em vez de sumir, senão a sala parece ter menos opção do que tem. */
+    for (const lado of ['E', 'B']) {
+      const livres = (r.livre && r.livre[lado]) || 0;
+      const b = document.createElement('button');
+      b.className = 'mp-entrar'; b.type = 'button';
+      b.dataset.lado = lado;
+      b.textContent = `${lado === 'E' ? r.nomeE : r.nomeB} ${livres}`;
+      b.title = livres ? `Entrar no time ${lado === 'E' ? r.nomeE : r.nomeB} (${livres} vaga(s))` : 'Esse lado está cheio';
+      b.disabled = !livres;
+      b.onclick = () => { ui.click(); mpEntrar(r, lado); };
+      acoes.appendChild(b);
+    }
     const assistir = document.createElement('button');
     assistir.className = 'mp-assistir'; assistir.type = 'button'; assistir.textContent = 'ASSISTIR';
     assistir.title = 'Entrar como espectador — dá pra ir pro time depois, quando abrir vaga';
     assistir.onclick = () => { ui.click(); mpEntrar(r, 'spec'); };
-    acoes.append(entrar, assistir);
+    const convite = document.createElement('button');
+    convite.className = 'mp-assistir'; convite.type = 'button'; convite.textContent = r.convite || 'CONVITE';
+    convite.title = 'Copiar o link de convite desta sala';
+    convite.onclick = () => { ui.click(); mpCopiarConvite(r.convite, convite); };
+    acoes.append(assistir, convite);
     box.appendChild(div);
   }
 }
+
+/* Copia o link e CONFIRMA na própria etiqueta. Botão de copiar sem retorno visual é o caso
+   clássico de a pessoa clicar três vezes sem saber se funcionou. */
+async function mpCopiarConvite(convite, botao) {
+  if (!convite) return;
+  const link = linkDeConvite(convite);
+  const antes = botao ? botao.textContent : '';
+  try { await navigator.clipboard.writeText(link); if (botao) botao.textContent = 'COPIADO!'; }
+  catch { if (botao) botao.textContent = convite; mpErro(`Copie à mão: ${link}`); }
+  if (botao) setTimeout(() => { botao.textContent = antes; }, 1600);
+}
+
+/* Entrada por LINK (?sala=BR-7K3M). É o caminho de quem recebeu o convite no zap: abre o jogo
+   já dentro da sala, sem passar pela lista. Sala privada ainda pede senha — o link diz ONDE é
+   a sala, não que você tem permissão. */
+async function mpEntrarPorConvite(txt) {
+  const alvo = parseConvite(txt);
+  show('mp-panel'); mpMontarFormulario();
+  if (!alvo) return mpErro(`Convite inválido: "${txt}". O formato é REGIÃO-CÓDIGO, tipo BR-7K3M.`);
+  const http = httpDoNo(alvo.no);
+  mpNoAtual = { ...alvo.no, http };
+  const sala = await salaPorConvite(http, alvo.codigo);
+  if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
+  mpEntrar(sala, 'auto');
+}
+window.__mpConvite = mpEntrarPorConvite;
 
 function mpMontarFormulario() {
   const e = mpEl('mp-fac-e'), b = mpEl('mp-fac-b');

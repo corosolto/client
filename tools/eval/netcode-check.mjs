@@ -204,6 +204,22 @@ console.log('\n· espectador');
   net.enviados.length = 0;
   g._mp.stepPlayer(g.player, { ax: 1, az: 1, crouch: false, shift: false, jump: false });
   cobra(net.enviados.length === 0, 'espectador NÃO manda input (ele não tem corpo; mandar seria mover o de outro)');
+
+  /* O QUE O DONO RELATOU JOGANDO: "a função de assistir não funciona muito bem, ele atira e
+     não deixa escolher o time". Eram os dois lados do mesmo esquecimento — o espectador
+     continuava passando pelo caminho de jogador: o pointer lock prendia o cursor (e sem
+     cursor não dá para clicar em ENTRAR NO TIME) e o gatilho ainda disparava som e tracer
+     saindo de um corpo que não existe. */
+  cobra(g.espectando() === true, 'o Game se reconhece como espectador');
+  let pediuLock = 0;
+  g.renderer.domElement.requestPointerLock = () => { pediuLock++; };
+  g._requestLock();
+  cobra(pediuLock === 0, 'espectador NÃO captura o mouse — sem cursor não dá para clicar em ENTRAR NO TIME');
+  g.state = 'live';
+  const municao = g.player.ammo[g.player.weapon].mag;
+  g.player.nextShotAt = 0; g.player.drawUntil = 0;
+  g._tryShoot();
+  cobra(g.player.ammo[g.player.weapon].mag === municao, 'espectador NÃO atira (o tiro sairia de um corpo que não existe)');
   g.dispose();
 }
 

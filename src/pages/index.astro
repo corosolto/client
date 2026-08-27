@@ -643,10 +643,12 @@ window.__GEO_LANG__ = (function () {
       <div class="cs-menu-label">// ESCOLHA A TRETA</div>
       <button class="cs-item" data-act="jogar" type="button"
               aria-expanded="false" aria-controls="cs-modos"><span class="cs-tick">▸</span>JOGAR</button>
+      <!-- Duas opcoes, MULTIPLAYER primeiro (decisao do dono). CAPTURE A BANDEIRA nao sumiu:
+           ele virou o interruptor de modo dentro do fluxo de SINGLE PLAYER, na tela de mapa,
+           que e onde a escolha de modo ja morava de verdade. -->
       <div class="cs-sub" id="cs-modos" hidden>
-        <button class="cs-item cs-sub-item" data-act="sp"  type="button"><span class="cs-tick">▸</span>MATA-MATA</button>
-        <button class="cs-item cs-sub-item" data-act="ctf" type="button"><span class="cs-tick">▸</span>CAPTURE A BANDEIRA</button>
         <button class="cs-item cs-sub-item" data-act="mp"  type="button"><span class="cs-tick">▸</span>MULTIPLAYER</button>
+        <button class="cs-item cs-sub-item" data-act="sp"  type="button"><span class="cs-tick">▸</span>SINGLE PLAYER</button>
       </div>
       <button class="cs-item" data-act="ranking" type="button"><span class="cs-tick">▸</span>RANKING</button>
       <button class="cs-item" data-act="sobre" type="button"><span class="cs-tick">▸</span>COMO JOGAR</button>

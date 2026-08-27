@@ -3,12 +3,9 @@
 
 /* NÓS OFICIAIS. Cada um é um processo do servidor numa região. Acrescentar região é
    acrescentar uma linha aqui e subir a VM com o mesmo script de deploy. */
-/* Só entram aqui nós que EXISTEM. Servidor que nunca respondeu não é informação, é ruído —
-   e a lista já mostra "fora do ar" para quem caiu, que é outra coisa. O deploy/subir-no.sh
-   imprime a linha a colar aqui quando uma região nova sobe. */
-export const NOS = [
-  { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
-];
+// Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
+export { NOS, parseConvite, linkDeConvite, httpDoNo } from './nos.js';
+import { NOS } from './nos.js';
 
 // URLs de lobby e jogo a partir do menu/URL: '1' = local, 'host:porta', ou 'wss://...'
 export function mpUrls(v) {
@@ -27,6 +24,9 @@ const j = async (url, opt) => {
   return r.json();
 };
 export const listRooms = (httpBase) => j(`${httpBase}/rooms`).then((x) => x.rooms || []);
+// Uma sala pelo código do convite. 404 vira null: sala que acabou não é erro, é sala que acabou.
+export const salaPorConvite = (httpBase, codigo) =>
+  j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala).catch(() => null);
 export const listMaps = (httpBase) => j(`${httpBase}/maps`).then((x) => x.maps || []);
 export const health = (httpBase) => j(`${httpBase}/health`);
 export const createRoom = (httpBase, cfg) => j(`${httpBase}/rooms`, {
@@ -53,8 +53,8 @@ export async function sondarNos(nos = NOS, timeoutMs = 2500) {
 }
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, pw = '', team = 'auto' } = {}) {
-    const qs = new URLSearchParams({ team, ...(room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}) });
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto' } = {}) {
+    const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}) });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
     this.ws = null;
     this.connected = false;

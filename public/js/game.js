@@ -2059,6 +2059,9 @@ export class Game {
 
   _requestLock() {
     if (this.mobile) return;   // sem pointer lock no toque
+    /* ESPECTADOR NÃO PRENDE O MOUSE. Ele não mira nada, e a barra de espectador (trocar de
+       alvo, entrar no time) só é clicável com cursor livre. */
+    if (this.espectando()) return;
     try { this.renderer.domElement.requestPointerLock()?.catch?.(() => {}); } catch {}
     this._travaAtalhos();
   }
@@ -2088,6 +2091,10 @@ export class Game {
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
   }
+  /* Está ASSISTINDO? No multiplayer o servidor pode não ter dado corpo (sala cheia, ou o
+     jogador pediu para assistir). Sem corpo não há mira, tiro, arma nem pointer lock. */
+  espectando() { return !!(this.online && this._mp && this._mp.espectador); }
+
   _acceptInput() {
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
     return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
@@ -2960,6 +2967,7 @@ export class Game {
   }
   _tryShoot() {
     const p = this.player, w = WEAPONS[p.weapon];
+    if (this.espectando()) return;   // quem assiste não tem corpo: o tiro sairia do nada
     if (!p.alive || this.state !== 'live') return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     if (p.weapon === 'knife') {
