@@ -8,7 +8,7 @@ import { AMB_LOOPS } from './soundscape.js';
 
 /* os moldes Mint (quentão, galpão) substituem o procedural no browser; no arnês placeProp devolve
    null e o procedural cobre (lição 3). Sem GLB publicado: sem slot props (eval:props-acervo). */
-export const GELO_PROPS = ['gelo_quentao', 'galpao_festival'];
+export const GELO_PROPS = ['gelo_quentao', 'galpao_festival', 'fogueira', 'poste_junino', 'barraca_quentao'];
 export const GELO_AMBIENCE = ['rat', 'pigeonGround', 'dog', 'chicken', 'cow'];
 
 const HALF_X = 32;
@@ -334,24 +334,28 @@ export function buildGelo(scene, T) {
   }
 
   /* Fogueiras: anel de pedras, troncos, brasa emissiva e PointLight quente sem
-     sombra (o SB2 já está 8/8 no piso WebGL1) com flicker no update — GL3. */
+     sombra (o SB2 já está 8/8 no piso WebGL1) com flicker no update — GL3. O molde
+     Mint fogueira.glb cobre o visual no browser; o procedural cobre no arnês. */
   function fogueira(nome, x, z, escala, fase) {
-    const g = new THREE.Group(); g.name = nome; root.add(g);
+    const g = new THREE.Group(); g.name = nome; g.userData.molde = 'fogueira'; root.add(g);
+    const glb = placeProp('fogueira', { x, y: 0, z, targetH: 1.05 * escala, targetLen: 3.1 * escala });
+    const proc = new THREE.Group(); proc.visible = !glb; g.add(proc);
+    if (glb) g.add(glb);
     for (let i = 0; i < 9; i++) {
       const a = i * Math.PI * 2 / 9;
       const pedra = new THREE.Mesh(boxGeometry(0.5, 0.34, 0.4), MAT.pedra);
       pedra.position.set(x + Math.cos(a) * 1.5 * escala, 0.17, z + Math.sin(a) * 1.5 * escala);
-      pedra.rotation.y = a; pedra.castShadow = true; g.add(pedra);
+      pedra.rotation.y = a; pedra.castShadow = true; proc.add(pedra);
     }
     for (let i = 0; i < 5; i++) {
       const a = i * Math.PI * 2 / 5 + 0.4;
       const tronco = new THREE.Mesh(cylinderGeometry(0.11, 1.5 * escala, 8), MAT.casca);
       tronco.position.set(x + Math.cos(a) * 0.42, 0.5, z + Math.sin(a) * 0.42);
       tronco.rotation.z = Math.cos(a) * 0.85; tronco.rotation.x = -Math.sin(a) * 0.85;
-      tronco.castShadow = true; g.add(tronco);
+      tronco.castShadow = true; proc.add(tronco);
     }
     const brasa = new THREE.Mesh(cylinderGeometry(0.85 * escala, 0.22, 16), MAT.brasa.clone());
-    brasa.position.set(x, 0.14, z); g.add(brasa);
+    brasa.position.set(x, 0.14, z); proc.add(brasa);
     const luz = new THREE.PointLight(0xff8c3a, 14, 16 * escala, 2);
     luz.position.set(x, 1.15, z); g.add(luz);
     const fumaca = [];
@@ -421,6 +425,55 @@ export function buildGelo(scene, T) {
       occluders.push(...pecas);
     }
   }
+
+  /* Postes juninos do kit festa_r3 tracejando o caminho principal (rota C) e as
+     laterais: é deles que as bandeirinhas saem. Molde Mint no browser; mourão +
+     travessa procedural no arnês. Colisor fino — poste não fecha rota. */
+  function posteJunino(nome, x, z) {
+    const g = new THREE.Group(); g.name = nome; g.userData.molde = 'poste_junino'; root.add(g);
+    const glb = placeProp('poste_junino', { x, y: 0, z, targetH: 4.3 });
+    if (glb) { g.add(glb); occluders.push(glb); }
+    const proc = new THREE.Group(); proc.visible = !glb; g.add(proc);
+    if (!glb) {
+      const mourao = new THREE.Mesh(cylinderGeometry(0.09, 4.3, 8), MAT.casca);
+      mourao.position.set(x, 2.15, z); mourao.castShadow = true; proc.add(mourao);
+      const travessa = new THREE.Mesh(boxGeometry(1.5, 0.09, 0.09), MAT.casca);
+      travessa.position.set(x, 3.9, z); travessa.castShadow = true; proc.add(travessa);
+      occluders.push(mourao);
+    }
+    colliders.push({ minX: x - 0.16, maxX: x + 0.16, minY: 0, maxY: 4.3, minZ: z - 0.16, maxZ: z + 0.16 });
+  }
+  posteJunino('gelo-poste-0', -2.8, -27); posteJunino('gelo-poste-1', 2.8, 27);
+  posteJunino('gelo-poste-2', 2.8, -9); posteJunino('gelo-poste-3', -2.8, 9);
+  posteJunino('gelo-poste-4', -27, -14); posteJunino('gelo-poste-5', 27, 14);
+
+  /* Barracas de quentão do kit festa_r3 fechando os dois cantos vazios como
+     cobertura de corpo inteiro (espelhadas 180°). Neve refeita no telhado —
+     medida do Box3 do GLB, mesmo padrão da cumeeira do galpão. */
+  function barracaQuentao(nome, x, z, ry) {
+    const g = new THREE.Group(); g.name = nome; g.userData.molde = 'barraca_quentao'; root.add(g);
+    colliders.push({ minX: x - 2.1, maxX: x + 2.1, minY: 0, maxY: 2.5, minZ: z - 1.6, maxZ: z + 1.6 });
+    const glb = placeProp('barraca_quentao', { x, y: 0, z, targetH: 2.6, targetLen: 4.3, ry });
+    const proc = new THREE.Group(); proc.visible = !glb; g.add(proc);
+    if (glb) {
+      g.add(glb); occluders.push(glb);
+      glb.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(glb);
+      const neve = new THREE.Mesh(boxGeometry((bb.max.x - bb.min.x) * 0.86, 0.09, (bb.max.z - bb.min.z) * 0.86), MAT.nevefofa);
+      neve.position.set((bb.min.x + bb.max.x) / 2, bb.max.y + 0.03, (bb.min.z + bb.max.z) / 2);
+      neve.rotation.y = ry; neve.castShadow = true; g.add(neve);
+    } else {
+      const balcao = addBox(4.2, 1.05, 0.7, MAT.madeira, x, 0, z + 0.9, { parent: proc, collide: false, ry });
+      const fundo = addBox(4.2, 2.2, 0.3, MAT.madeira, x, 0, z - 1.3, { parent: proc, collide: false, ry });
+      const telhado = new THREE.Mesh(boxGeometry(4.5, 0.12, 3.1), MAT.lona);
+      telhado.position.set(x, 2.55, z); telhado.rotation.y = ry; telhado.castShadow = true; proc.add(telhado);
+      const neve = new THREE.Mesh(boxGeometry(4.3, 0.09, 2.9), MAT.nevefofa);
+      neve.position.set(x, 2.66, z); neve.rotation.y = ry; proc.add(neve);
+      occluders.push(balcao, fundo, telhado);
+    }
+  }
+  barracaQuentao('gelo-barraca-quentao-0', -25.5, -34, 0.5);
+  barracaQuentao('gelo-barraca-quentao-1', 25.5, 34, 0.5 + Math.PI);
 
   // Fardos de palha instanciados: cobertura baixa espalhada pelos quatro cantos.
   {
@@ -569,6 +622,12 @@ export function buildGelo(scene, T) {
     ridge(70, -28, 60, 13, matLonge); ridge(74, 8, 70, 16, matPerto); ridge(64, 46, 56, 12, matLonge);
     ridge(42, 66, 74, 17, matPerto); ridge(0, 74, 96, 22, matLonge); ridge(-46, 64, 68, 15, matPerto);
     ridge(-70, 28, 60, 13, matLonge); ridge(-74, -8, 70, 16, matPerto); ridge(-64, -46, 56, 12, matLonge);
+    /* 3ª camada, a mais longe e mais lavada (idioma do skyline do ferro_velho:
+       perto escura → longe clara → fundo quase cor do fog). Tapa os vãos entre
+       as cristas do anel interno — horizonte fechado em todas as direções. */
+    const matFundo = new THREE.MeshBasicMaterial({ map: serraWall, color: 0xccd9ea, side: THREE.DoubleSide });
+    ridge(0, -104, 150, 30, matFundo); ridge(98, -42, 110, 24, matFundo); ridge(92, 58, 120, 26, matFundo);
+    ridge(0, 104, 150, 30, matFundo); ridge(-98, 42, 110, 24, matFundo); ridge(-92, -58, 120, 26, matFundo);
   }
 
   const GM = { black: material(0x202735, SURFACE.metal, 0.4, 0.5), steel: material(0xaab4c0, SURFACE.metal, 0.35, 0.6), wood: MAT.madeira, green: material(0x315b43, SURFACE.metal, 0.5, 0.3) };
