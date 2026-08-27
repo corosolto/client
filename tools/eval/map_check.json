@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-25T01:19:40.585Z",
+ "gerado": "2026-08-27T04:08:57.918Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -2272,9 +2272,9 @@
    "escadas": [],
    "travessia": [],
    "occluderSemMalha": [],
-   "occMedidos": 108,
+   "occMedidos": 116,
    "occPulados": 62,
-   "fracSemMalha": 0.0037,
+   "fracSemMalha": 0.0024,
    "quadrantes": [
     {
      "q": "0,0",
