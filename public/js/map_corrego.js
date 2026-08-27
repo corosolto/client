@@ -447,6 +447,19 @@ export function buildCorrego(scene, T) {
       // Mureta baixa do lado do vão: a rampa é uma calçada, não um trampolim.
       addBox(0.22, 0.5, hip * 0.94, matReboco, lado * (RAMPA_X0 + 0.11), CANAL_FUNDO / 2 - 0.2, (r.zAlto + r.zBaixo) / 2,
         { collide: false, skirt: false });
+      /* FECHAMENTO DA FACE EXTERNA (o "horizonte nas escadas" do dono).
+         O trecho de parede é CORTADO onde entra a rampa, e a laje inclinada só
+         cobre o PISO. Debaixo dela, a faixa |x| ∈ [3,5] ficava aberta pro lado de
+         fora entre a cota do fundo e a cota 0 — e o asfalto de fora é um plano de
+         face única virado pra cima, que não tapa nada visto por baixo. Resultado:
+         do leito via-se o `scene.background` por uma cunha, visível de baixo (nas
+         escadas) e não do topo. Aqui a parede externa do canal CONTINUA por trás
+         da rampa e fecha o mundo. Sem colisor: quem manda na navegação é o
+         `groundHeightAt`, e um colisor novo aqui poderia relacrar o leito. */
+      const skin = addBox(0.22, -CANAL_FUNDO, L, matParedeCanal,
+        lado * (RAMPA_X1 - 0.11), CANAL_FUNDO, (r.zAlto + r.zBaixo) / 2,
+        { collide: false, skirt: false });
+      skin.userData.corregoRampaSkin = true;
     }
   }
   for (const x of [CANAL_X0 - 0.18, CANAL_X1 + 0.18]) addBox(0.36, 0.08, HALF_Z * 2, matLimo, x, -0.04, 0, { collide: false, cast: false });
@@ -487,11 +500,32 @@ export function buildCorrego(scene, T) {
   }
 
   /* Margem plantada: tufos e taboas reais quebram a faixa de concreto sem virarem cover. */
+  /* "o corrego nao tem gramas nas laterais" (dono). E não tinha mesmo: TODO tufo
+     nascia em |x| ∈ {5,5 · 5,85 · 6,2}, ou seja do lado da RUA, além da aresta da
+     parede. O talude — a faixa |x| ∈ [3, 5] entre a água e a calçada, que é o que
+     o olho chama de "lateral do córrego" — estava pelado nos 80 m, e a fileira
+     única deixava 43,6 m dos 80 (54 %) sem nada em z.
+     Agora são DUAS fileiras por margem: uma no talude, escalonada, e a antiga do
+     lado da rua, mais rala. Passo de 2,15 m no talude contra os 5,2 m de antes.
+     Tufo não é cover: entra sem colisor (`nonCollider`), então adensar aqui não
+     mexe na navegação — a régua corrego-preso confere isso. */
   const GRAMA_SPOTS = [];
+  const naPonte = (z) => [-22, 0, 22].some((bz) => Math.abs(z - bz) < 2.4);
+  const naRampa = (x, z) => RAMPAS.some((r) => Math.sign(x) === r.lado
+    && z >= Math.min(r.zAlto, r.zBaixo) - 0.6 && z <= Math.max(r.zAlto, r.zBaixo) + 0.6);
   for (const lado of [-1, 1]) {
     let i = 0;
+    // fileira do TALUDE: onde a margem encontra a água
+    for (let z = -37.4; z <= 37.4; z += 2.15) {
+      if (naPonte(z)) continue;                 // vão das pontes livre
+      const x = lado * (i % 2 ? 3.45 : 4.55);   // escalonada, dentro de [3, 5]
+      if (naRampa(x, z)) continue;              // a rampa é calçada, não canteiro
+      GRAMA_SPOTS.push({ x, z, ry: (i * 2.399) % 6.283 });
+      i++;
+    }
+    // fileira da RUA: a que já existia, agora como segundo plano
     for (let z = -36; z <= 36; z += 5.2) {
-      if ([-22, 0, 22].some((bz) => Math.abs(z - bz) < 2.4)) continue;   // vão das pontes livre
+      if (naPonte(z)) continue;
       GRAMA_SPOTS.push({ x: lado * (5.5 + (i % 3) * 0.35), z, ry: (i * 2.399) % 6.283 });
       i++;
     }
@@ -506,6 +540,7 @@ export function buildCorrego(scene, T) {
       const tufo = placeProp(id, { x: spot.x, z: spot.z, targetH: id.includes('planta') ? .85 : .48, ry: spot.ry });
       if (!tufo) continue;
       tufo.userData.nonCollider = true;
+      tufo.userData.corregoFlora = id;   // a régua da margem conta POR AQUI
       tufo.traverse((o) => { if (o.isMesh) o.userData.nonSolidSurface = true; });
       root.add(tufo);
       gramaServida.push(tufo);
