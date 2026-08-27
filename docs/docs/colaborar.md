@@ -260,7 +260,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 955 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 449 |
 | `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 276 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
