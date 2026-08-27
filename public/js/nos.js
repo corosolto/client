@@ -5,6 +5,8 @@
    diferente de "caiu agora", que a lista de servidores mostra. */
 export const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
+  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
+  { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
 /* Um convite é `<REGIAO>-<CODIGO>` (ex.: BR-7K3M). A região não é enfeite: ela diz em qual nó

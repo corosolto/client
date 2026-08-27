@@ -10,6 +10,8 @@ export const prerender = false;
 // no que a outra nao conhece.
 const NOS = [
   { id: 'br', nome: 'Brasil · São Paulo', url: 'wss://br.corosolto.com.br/ws' },
+  { id: 'us', nome: 'EUA · Carolina do Sul', url: 'wss://us.corosolto.com.br/ws' },
+  { id: 'eu', nome: 'Europa · Madri', url: 'wss://eu.corosolto.com.br/ws' },
 ];
 
 const bruto = String(Astro.params.codigo || '').trim().toUpperCase();
