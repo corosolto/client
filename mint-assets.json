@@ -1883,6 +1883,75 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "casa-favela-azul": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_azul.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7fet6qkrzjrs9jk2zsqsh0rh8d78by",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Casa de favela azul",
+    "frente": "v21-e-models",
+    "notes": "Kit `favela_r3` (dono, 20/08: \"os mapas de favela so o lajes tem cordao de roupas do model, os outros nao e tudo generico low poly\"). Casario do escadao: molde de casa de alvenaria pintada de azul, 4.780 tris, 1 no. GLB normalizado em ~1 m no maior eixo — bbox 0,955 x 0,998 x 0,764 (larg x alt x prof). A razao entre eixos esta declarada em CASARIO_MOLDES (public/js/map_escadao.js) e a regua eval:escala-casario rele este arquivo para conferir: trocar o GLB sem reconferir a escala reprova."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c311fd2a66e7aeeb8c218cfd74b4a8e0dcb79130f62766451eb4b2b5ffc4ae92"
+   }
+  },
+  "casa-favela-tijolo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/casa_favela_tijolo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77wm8m73833tvn9edhztpkx98d6dtx",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Casa de favela tijolo",
+    "frente": "v21-e-models",
+    "notes": "Kit `favela_r3`, par do casa_favela_azul: mesma familia em tijolo aparente, 4.181 tris, 1 no. bbox 0,943 x 0,936 x 0,998 — planta quase quadrada, entao ele mora nas plantas quadradas do mirante e nas casas de 1 pavimento (a regua eval:escala-casario reprovou o tijolo numa planta 3,0 x 4,4 m com 5,9 m de altura: ficava espremido a 0,50x o fator vertical)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "c6d26492a9d5a5b2a0676169de4f43ad5e67ac83bafda8ba6f7e0e9171e15016"
+   }
+  },
+  "varal-roupas-favela": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/varal_roupas.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77x28h86c6wvx3xzr996npdh8d7bv8",
+    "packAssetId": "th7395mdsfsgrt1dxb4zc3my2s8d6snr",
+    "chatUrl": "https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq",
+    "displayName": "Varal de roupas",
+    "frente": "v21-e-models",
+    "notes": "Kit `favela_r3`. Varal com roupa pendurada, 4.677 tris, bbox 0,998 x 0,697 x 0,326. Espalhado pelos becos e lajes baixas do escadao (4 instancias) alem dos dois varal_roupas_0X do mirante. NUNCA ganha colisor: roupa e silhueta, nao cover — todas as malhas levam nonSolidSurface."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (pack favela_r3, otimizado webp 1024)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "0cd259177b239c7198b8158195c82a493480c69846f210981faeb87eac2c89bf"
+   }
   }
  }
 }

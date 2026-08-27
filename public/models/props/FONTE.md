@@ -174,3 +174,36 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## Casario e varal do escadão (kit Mint `favela_r3`)
+
+Pedido do dono (20/08/2026), literal: *"os mapas de favela so o lajes tem cordao de
+roupas do model, os outros nao e tudo generico low poly"* e *"tem que ver a escala
+dos predios sempre"*. Kit `favela_r3` do pacote r3-parte2 (`kits-mint-r3.json` na
+raiz: `packAssetId` `th7395mdsfsgrt1dxb4zc3my2s8d6snr`, chat
+<https://mint.gg/chat/ph75rmydefr3btvm85a61hra6h8d74qq>), licença de uso do
+assinante Mint Pro — asset original gerado por prompt, sem copyright de terceiros.
+Otimizado pelo próprio pacote (WebP 1024, ~4-5k tris); não passou pelo
+`optimize-props-v21.mjs` porque já veio no orçamento do acervo.
+
+Convenção nova deste lote: as casas NÃO são escaladas só pela altura como os props
+soltos. A planta pedida pelo mapa é retangular e o molde não é, então
+`instanciaCasa` (em `public/js/map_escadao.js`) escolhe entre duas orientações a que
+menos distorce e aplica os fatores horizontais por cima da escala de altura. Os
+limites dessa distorção, o pé-direito por pavimento (2,60–3,20 m) e a fachada mínima
+(4,00 m) são cobrados por `npm run eval:escala-casario`, que **relê estes GLBs em
+disco** para conferir as proporções declaradas em `CASARIO_MOLDES`.
+
+- `casa_favela_azul.glb` — "Casa de favela azul", alvenaria pintada, 4.780 tris,
+  1 nó. bbox 0,955 × 0,998 × 0,764 m (larg × alt × prof). Item
+  `ks7fet6qkrzjrs9jk2zsqsh0rh8d78by`. Registro: `casa-favela-azul`. 9 instâncias no
+  escadão (1 e 2 pavimentos).
+- `casa_favela_tijolo.glb` — "Casa de favela tijolo", tijolo aparente, 4.181 tris,
+  1 nó. bbox 0,943 × 0,936 × 0,998 m — planta quase quadrada, por isso mora nas
+  plantas quadradas do mirante e nas casas de 1 pavimento. Item
+  `ks77wm8m73833tvn9edhztpkx98d6dtx`. Registro: `casa-favela-tijolo`. 8 instâncias.
+- `varal_roupas.glb` — "Varal de roupas", 4.677 tris, bbox 0,998 × 0,697 × 0,326 m.
+  Item `ks77x28h86c6wvx3xzr996npdh8d7bv8`. Registro: `varal-roupas-favela`. 4
+  instâncias nos becos e lajes baixas do escadão, além dos dois `varal_roupas_0X`
+  do mirante. Sem colisor, todas as malhas com `nonSolidSurface`: roupa é
+  silhueta, nunca cover.
