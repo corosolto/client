@@ -559,3 +559,316 @@ export function placeFauna(id, { x = 0, y = 0, z = 0, ry = 0, targetLen, submerg
   });
   return root;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FAUNA DO SÍTIO (resgate do PR #4, kit Mint r3 sitio_fauna_r3) — região
+   append-only. Pato NADA no lago (y preso à lâmina), galinha-d'angola CISCA
+   na horta e cavalinho PASTA no pomar: GLB estático + locomoção procedural,
+   mesma doutrina do jacaré/capivara. Fachada `createSitioAmbience` expõe o
+   contrato que o game.js consome (update/onShot/dispose/animals) somando a
+   base FavelaAmbience (rato+pombo — AR2 do ambience-registry-check).
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SITIO_ASSETS = Object.freeze({
+  pato: 'models/ambient/pato_lago.glb',
+  galinha_angola: 'models/ambient/galinha_angola.glb',
+  cavalinho: 'models/ambient/cavalinho.glb',
+});
+/* alvo em metros de mundo: pato/cavalinho por COMPRIMENTO (max x,z), angola por
+   ALTURA (bbox dela é vertical — pescoçuda na pose do Mint). */
+const SITIO_SPEC = Object.freeze({
+  pato: { len: .52, alt: 0 },
+  galinha_angola: { len: 0, alt: .38 },
+  cavalinho: { len: 1.6, alt: 0 },
+});
+const SITIO_NAME = Object.freeze({ pato: 'pato', galinha_angola: 'galinha-d\'angola', cavalinho: 'cavalinho' });
+const SITIO_ALERT = Object.freeze({ pato: 2.4, galinha_angola: 2.8, cavalinho: 3.4 });
+const SITIO_SPEED = Object.freeze({
+  pato: { walk: .55, flee: 1.9, drift: .2 },   // drift: pato nunca PARA de remar
+  galinha_angola: { walk: .5, flee: 2.4, drift: 0 },
+  cavalinho: { walk: .6, flee: 3, drift: .06 },
+});
+
+export const SITIO_FAUNA_ASSETS = Object.freeze([...FAVELA_AMBIENCE_ASSETS, ...Object.keys(SITIO_ASSETS)]);
+
+export async function loadSitioFauna() {
+  /* Request não existe no harness node (document lá é stub) — é o guarda que
+     separa browser de arnês sem tocar em quem chama. */
+  if (typeof document === 'undefined' || typeof Request === 'undefined') return;
+  await Promise.all(Object.entries(SITIO_ASSETS).map(async ([id, url]) => {
+    if (templates.has(id)) return;
+    try {
+      const gltf = await loadGLB(`${url}?v=${VERSION}`);
+      gltf.scene.traverse((object) => {
+        if (!object.isMesh) return;
+        object.material.metalness = 0;
+        object.material.roughness = Math.max(.72, object.material.roughness ?? .72);
+      });
+      registerFaunaTemplate(id, gltf.scene, {});
+    } catch (error) {
+      console.warn('[ambientlife] GLB do sítio não carregou', id, error);
+    }
+  }));
+}
+
+function sitioFallback(type, index) {
+  const group = new THREE.Group();
+  const std = (hex, rough = .92) => new THREE.MeshStandardMaterial({ color: hex, roughness: rough });
+  if (type === 'pato') {
+    const bico = std(0xe8a13a, .7);
+    const corpo = new THREE.Mesh(new THREE.SphereGeometry(.14, 10, 8), std(0x6d5a48));
+    corpo.scale.set(1, .78, 1.55); corpo.position.y = .1; group.add(corpo);
+    const peito = new THREE.Mesh(new THREE.SphereGeometry(.1, 8, 6), std(0x8d7a62));
+    peito.scale.set(.9, .8, 1.1); peito.position.set(0, .1, .17); group.add(peito);
+    const cabeca = new THREE.Mesh(new THREE.SphereGeometry(.062, 8, 6), std(0x2c4a38));
+    cabeca.position.set(0, .25, .2); group.add(cabeca);
+    const bicoM = new THREE.Mesh(new THREE.ConeGeometry(.028, .1, 6), bico);
+    bicoM.rotation.x = Math.PI / 2; bicoM.position.set(0, .24, .3); group.add(bicoM);
+    const cola = new THREE.Mesh(new THREE.ConeGeometry(.05, .16, 6), std(0x4a3d30));
+    cola.rotation.x = -Math.PI / 2 - .3; cola.position.set(0, .12, -.24); group.add(cola);
+  } else if (type === 'galinha_angola') {
+    const pena = std(index % 2 ? 0x4a5468 : 0x555f74);
+    const corpo = new THREE.Mesh(new THREE.SphereGeometry(.14, 10, 8), pena);
+    corpo.scale.set(1, .9, 1.35); corpo.position.y = .16; group.add(corpo);
+    for (let i = 0; i < 14; i++) {
+      const ponto = new THREE.Mesh(new THREE.SphereGeometry(.016, 5, 4), std(0xd8d8d0));
+      ponto.position.set((i % 2 ? .07 : -.07), .18 + (i % 3) * .07, -.08 + (i / 5 - .5) * .3);
+      ponto.scale.set(1, .7, 1); group.add(ponto);
+    }
+    const cabeca = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), std(0x3c4658));
+    cabeca.position.set(0, .34, .14); group.add(cabeca);
+    const bico = new THREE.Mesh(new THREE.ConeGeometry(.02, .07, 5), std(0xe8b04a, .7));
+    bico.rotation.x = Math.PI / 2; bico.position.set(0, .33, .21); group.add(bico);
+    const topete = new THREE.Mesh(new THREE.SphereGeometry(.03, 6, 5), std(0x2c3648));
+    topete.scale.set(1, 1.4, 1); topete.position.set(0, .4, .12); group.add(topete);
+  } else {
+    const pelo = std(index % 2 ? 0x7a5238 : 0x6d4a32);
+    const corpo = new THREE.Mesh(new THREE.SphereGeometry(.34, 10, 8), pelo);
+    corpo.scale.set(1, 1.05, 1.8); corpo.position.y = .78; group.add(corpo);
+    const pescoco = new THREE.Mesh(new THREE.CylinderGeometry(.1, .13, .44, 8), pelo);
+    pescoco.rotation.x = .5; pescoco.position.set(0, 1.06, .52); group.add(pescoco);
+    const cabeca = new THREE.Mesh(new THREE.BoxGeometry(.17, .16, .3), pelo);
+    cabeca.position.set(0, 1.26, .74); group.add(cabeca);
+    const juba = new THREE.Mesh(new THREE.SphereGeometry(.16, 8, 6), std(0x4a3424));
+    juba.scale.set(1, 1.2, 1.15); juba.position.set(0, 1.18, .5); group.add(juba);
+    for (const [lx, lz] of [[-.16, .48], [.16, .48], [-.16, -.5], [.16, -.5]]) {
+      const perna = new THREE.Mesh(new THREE.CylinderGeometry(.045, .035, .62, 6), std(0x5a4028));
+      perna.position.set(lx, .31, lz); group.add(perna);
+    }
+    const cola = new THREE.Mesh(new THREE.ConeGeometry(.07, .34, 6), std(0x4a3424));
+    cola.rotation.x = Math.PI / 2 + .5; cola.position.set(0, .96, -.72); group.add(cola);
+  }
+  return group;
+}
+
+function cloneSitioModel(type) {
+  const template = templates.get(type);
+  if (!template) return null;
+  const model = template.scene.clone(true);
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const spec = SITIO_SPEC[type];
+  const s = spec.len ? spec.len / Math.max(.001, Math.max(size.x, size.z))
+    : spec.alt / Math.max(.001, size.y);
+  model.scale.setScalar(s);
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.set(-center.x * s, -box.min.y * s, -center.z * s);
+  return { model, scale: s };
+}
+
+class SitioFauna {
+  constructor(root, { map = 'sitio', lake = null, patos = [], angolas = [], cavalos = [], base }) {
+    this.map = map;
+    this.lake = lake;
+    this.base = base;
+    this.time = 0;
+    this.paused = false;
+    this.group = new THREE.Group();
+    this.group.name = `SITIO_LIFE_${map}`;
+    this.group.userData.ambientLife = true;
+    root.add(this.group);
+    this.bichos = [];
+    patos.forEach((config, index) => this._add('pato', config, index));
+    angolas.forEach((config, index) => this._add('galinha_angola', config, index));
+    cavalos.forEach((config, index) => this._add('cavalinho', config, index));
+    this.animals = (base ? base.animals : []).concat(this.bichos);
+    this.reset();
+  }
+
+  _add(type, config, index) {
+    const animalRoot = new THREE.Group();
+    animalRoot.name = `${type}:${this.map}:${index}`;
+    animalRoot.userData.fauna = SITIO_NAME[type];
+    animalRoot.userData.nonCollider = true;
+    animalRoot.userData.motion = 'deterministic-run-idle';
+    const cloned = cloneSitioModel(type);
+    let model;
+    if (cloned) {
+      model = cloned.model;
+      animalRoot.add(model);
+    } else {
+      model = sitioFallback(type, index);
+      while (model.children.length) animalRoot.add(model.children[0]);
+      model = animalRoot;
+    }
+    animalRoot.traverse((object) => {
+      if (!object.isMesh) return;
+      object.userData.nonSolidSurface = true;
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+    this.group.add(animalRoot);
+    const origin = new THREE.Vector3(...config.pos);
+    const to = new THREE.Vector3(...(config.to || config.pos));
+    this.bichos.push({
+      id: `${type}-${index}`, type, mode: 'ground', root: animalRoot, model,
+      origin, to, phase: config.phase || 0,
+      source: cloned ? 'gltf' : 'fallback',
+      state: 'idle', alertUntil: 0, alertAt: 0, alertOrigin: origin.clone(),
+      flee: new THREE.Vector3(1, 0, 0),
+    });
+  }
+
+  setPaused(value) { this.paused = !!value; this.base?.setPaused(value); }
+
+  /* O GLB do kit chega DEPOIS do build (loadSitioFauna é async e o build é sync):
+     o bicho nasce no fallback procedural e troca de pele no primeiro update em
+     que o template já está registrado. Em node isso nunca roda — proxy para sempre. */
+  _swapModels() {
+    if (typeof document === 'undefined') { this._swapped = true; return; }
+    let pendentes = 0;
+    for (const animal of this.bichos) {
+      if (animal.source !== 'fallback' || !templates.has(animal.type)) continue;
+      const cloned = cloneSitioModel(animal.type);
+      if (!cloned) continue;
+      for (const child of [...animal.root.children]) animal.root.remove(child);
+      animal.root.add(cloned.model);
+      animal.model = cloned.model;
+      animal.source = 'gltf';
+      animal.root.traverse((object) => {
+        if (!object.isMesh) return;
+        object.userData.nonSolidSurface = true;
+        object.castShadow = true;
+        object.receiveShadow = true;
+      });
+      pendentes++;
+    }
+    if (!pendentes) this._swapped = true;
+  }
+
+  reset() {
+    this.time = 0;
+    for (const animal of this.bichos) {
+      animal.alertUntil = 0;
+      animal.state = 'idle';
+      animal.root.position.copy(animal.origin);
+      animal.root.rotation.set(0, animal.phase, 0);
+    }
+    this.base?.reset();
+  }
+
+  onShot(start, end) {
+    const reacted = this.base ? this.base.onShot(start, end) : 0;
+    for (const animal of this.bichos) {
+      if (distanceToSegment(animal.root.position, start, end) > SHOT_REACTION_RADIUS) continue;
+      animal.alertAt = this.time;
+      animal.alertUntil = this.time + SITIO_ALERT[animal.type];
+      animal.alertOrigin.copy(animal.root.position);
+      animal.flee.copy(animal.root.position).sub(start).setY(0);
+      if (animal.flee.lengthSq() < .01) animal.flee.set(Math.sin(animal.phase + 1), 0, Math.cos(animal.phase + 1));
+      animal.flee.normalize();
+      animal.state = 'flee';
+    }
+    return reacted;
+  }
+
+  update(dt, playerPosition) {
+    const step = Math.max(0, Math.min(.05, dt));
+    this.time += step;
+    if (!this._swapped) this._swapModels();
+    this.base?.update(dt, playerPosition);
+    for (const animal of this.bichos) {
+      const speed = SITIO_SPEED[animal.type];
+      const inAlert = this.time < animal.alertUntil;
+      if (inAlert) {
+        const elapsed = this.time - animal.alertAt;
+        const distance = Math.min(speed.flee * 2, elapsed * speed.flee);
+        animal.root.position.copy(animal.alertOrigin).addScaledVector(animal.flee, distance);
+        animal.root.rotation.y = Math.atan2(animal.flee.x, animal.flee.z);
+        animal.state = 'flee';
+      } else {
+        const span = animal.origin.distanceTo(animal.to);
+        const leg = span > .05 ? span / speed.walk : 0;
+        const idleTime = animal.type === 'cavalinho' ? 6 : animal.type === 'pato' ? 1.6 : 2.6;
+        const cycle = (this.time + animal.phase) % (2 * (idleTime + leg));
+        let moving = false;
+        let direction = null;
+        let target;
+        if (cycle < idleTime) target = animal.origin;
+        else if (cycle < idleTime + leg) {
+          target = animal.origin.clone().lerp(animal.to, (cycle - idleTime) / leg);
+          moving = span > .05;
+          direction = animal.to.clone().sub(animal.origin);
+        } else if (cycle < 2 * idleTime + leg) target = animal.to;
+        else {
+          target = animal.to.clone().lerp(animal.origin, (cycle - 2 * idleTime - leg) / leg);
+          moving = span > .05;
+          direction = animal.origin.clone().sub(animal.to);
+        }
+        if (!moving && speed.drift > 0) {
+          const angle = (this.time * .22 + animal.phase) * Math.PI * 2;
+          target = animal.origin.clone();
+          target.x += Math.sin(angle) * (speed.drift * 4);
+          target.z += Math.cos(angle) * (speed.drift * 4) * .7;
+          direction = target.clone().sub(animal.root.position);
+        }
+        if (direction && direction.lengthSq() > .001) {
+          const yaw = Math.atan2(direction.x, direction.z);
+          let delta = yaw - animal.root.rotation.y;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          while (delta < -Math.PI) delta += Math.PI * 2;
+          animal.root.rotation.y += delta * Math.min(1, step * 4);
+        }
+        animal.root.position.lerp(target, moving ? Math.min(1, step * 1.4) : Math.min(1, step * .6));
+        animal.state = moving ? 'walk' : speed.drift > 0 ? 'drift' : 'idle';
+      }
+      if (animal.type === 'pato' && this.lake) {
+        animal.root.position.y = this.lake.aguaY + Math.sin(this.time * 1.8 + animal.phase * 5) * .018;
+        const lx = Math.max(this.lake.minX + .8, Math.min(this.lake.maxX - .8, animal.root.position.x));
+        const lz = Math.max(this.lake.minZ + .8, Math.min(this.lake.maxZ - .8, animal.root.position.z));
+        animal.root.position.x = lx;
+        animal.root.position.z = lz;
+      }
+    }
+  }
+
+  snapshot() {
+    const base = this.base ? this.base.snapshot() : [];
+    return base.concat(this.bichos.map((animal) => ({
+      id: animal.id, type: animal.type, state: animal.state,
+      x: +animal.root.position.x.toFixed(4), y: +animal.root.position.y.toFixed(4), z: +animal.root.position.z.toFixed(4),
+    })));
+  }
+
+  report() {
+    const base = this.base ? this.base.report() : { counts: {}, meshes: 0, triangles: 0 };
+    let meshes = base.meshes || 0, triangles = base.triangles || 0;
+    for (const animal of this.bichos) animal.root.traverse((object) => {
+      if (!object.isMesh || !object.geometry) return;
+      meshes++;
+      triangles += (object.geometry.index?.count || object.geometry.attributes.position?.count || 0) / 3;
+    });
+    const counts = { ...base.counts };
+    for (const animal of this.bichos) counts[animal.type] = (counts[animal.type] || 0) + 1;
+    return { map: this.map, gltf: this.bichos.every((a) => a.source === 'gltf'), counts, meshes, triangles: Math.round(triangles) };
+  }
+
+  dispose() {
+    this.base?.dispose();
+    this.group.removeFromParent();
+  }
+}
+
+export function createSitioAmbience(root, options) {
+  return new SitioFauna(root, options);
+}
