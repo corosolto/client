@@ -1,0 +1,82 @@
+{
+  "schema": "coro_auto_m4_contract_validation.v1",
+  "asset": "public/models/viewmodels/coro-auto/m4-pilot.glb",
+  "contract_source": "/Users/ruben/csbrasil/client/artifacts/pistol-pilot-14/browser-qa/visual-qa.md",
+  "checks": {
+    "one_armature": true,
+    "one_camera": true,
+    "required_actions": true,
+    "project_weapon_objects": true,
+    "no_donor_weapon_objects": true,
+    "strong_hand_fixed_to_weapon": true,
+    "support_hand_fixed_during_fire": true,
+    "fire_recoil_short_readable_and_returns": true,
+    "removal_contact_transform_continuous": true,
+    "insertion_contact_transform_continuous": true,
+    "strong_hand_surface_contact": true,
+    "support_hand_surface_contact": true,
+    "removal_mag_surface_contact": true,
+    "insertion_mag_surface_contact": true
+  },
+  "metrics": {
+    "strong_hand_relative_drift": {
+      "Idle": {
+        "max_translation_m": 0.0,
+        "max_rotation_deg": 0.0
+      },
+      "Shoot": {
+        "max_translation_m": 1.97e-05,
+        "max_rotation_deg": 0.0
+      },
+      "Reload": {
+        "max_translation_m": 0.0015986,
+        "max_rotation_deg": 0.24708
+      }
+    },
+    "support_fire_relative_drift": {
+      "max_translation_m": 0.001805,
+      "max_rotation_deg": 0.20174
+    },
+    "fire_recoil_extent": {
+      "max_translation_m": 0.058732,
+      "max_rotation_deg": 3.41463,
+      "return_translation_m": 0.0,
+      "return_rotation_deg": 0.0
+    },
+    "removal_relative_drift": {
+      "max_translation_m": 1.1e-06,
+      "max_rotation_deg": 0.0
+    },
+    "insertion_relative_drift": {
+      "max_translation_m": 1.2e-06,
+      "max_rotation_deg": 0.0
+    },
+    "strong_hand_surface_distance_m": {
+      "0": 0.00238,
+      "5": 0.002381,
+      "10": 0.00238
+    },
+    "support_hand_surface_distance_m": {
+      "0": 0.000844,
+      "5": 0.001152,
+      "10": 0.00083
+    },
+    "removal_mag_surface_distance_m": {
+      "20": 0.002471,
+      "24": 0.00173,
+      "28": 0.002472,
+      "32": 0.002471
+    },
+    "insertion_mag_surface_distance_m": {
+      "36": 0.002469,
+      "40": 0.002469,
+      "44": 0.002469,
+      "48": 0.00247,
+      "52": 0.002469,
+      "56": 0.00247,
+      "60": 0.004933
+    }
+  },
+  "visual_gate": "manual_contact_sheet_inspection_required",
+  "passed": true
+}

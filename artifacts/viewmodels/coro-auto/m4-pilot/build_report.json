@@ -2,12 +2,12 @@
   "schema": "coro_auto_viewmodel_build_report.v1",
   "pilot": "m4",
   "magazine_split": {
-    "vertices": 207,
-    "shells": 19
+    "vertices": 326,
+    "shells": 71
   },
   "idle_min_hand_to_weapon_distance_m": {
     "left": 0.000819,
-    "right": 0.003976
+    "right": 0.002676
   },
   "rendered_frames": [
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/idle_000.png",
@@ -18,10 +18,18 @@
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/shoot_010.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_000.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_012.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_020.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_024.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_028.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_032.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_036.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_040.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_044.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_048.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_052.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_056.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_060.png",
+    "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_064.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_072.png",
     "artifacts/viewmodels/coro-auto/m4-pilot/renders/reload_080.png"
   ],
@@ -29,7 +37,13 @@
     "required_actions_present": true,
     "source_weapon_objects_exported": 0,
     "weapon_geometry_origin": "public/models/weapons/m4.glb",
-    "two_project_magazines": true
+    "two_project_magazines": true,
+    "strong_hand_rifle_registration_m": [
+      -0.03500000014901161,
+      0.0,
+      0.0
+    ],
+    "reload_visible_magazine_strategy": "one continuous project M4 magazine; replacement hidden"
   },
-  "visual_status": "pending_contact_sheet_inspection"
+  "visual_status": "contact_sheets_and_browser_evidence_inspected; external_approval_pending; family_propagation_blocked"
 }
