@@ -52,3 +52,8 @@ const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
 export const ehComunidade = (id) => catsDe(id).includes('COMUNIDADE');
 export const ehOficial = (id) => !ehComunidade(id);
 export { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, oficialDe };
+
+/* Nomes de facção como a TELA os escreve. Mora aqui, junto do catálogo, porque o servidor
+   de multiplayer mostra os mesmos rótulos na lista de salas — dois dicionários virariam
+   "PALHAÇOS" numa tela e "Palhaços" na outra. Espelha game.js:_teamName. */
+export const FACCAO_NOME_UI = { E: 'TIME E', B: 'TIME B', F: 'FUNKEIROS', C: 'PALHAÇOS', U: 'TRIBOS URBANAS' };

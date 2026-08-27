@@ -2391,3 +2391,80 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   #settings-panel .set-actions{flex:0 0 auto;padding-bottom:max(18px,env(safe-area-inset-bottom))}
   #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
 }
+
+/* ---------- MULTIPLAYER (navegador de servidores + salas) ----------
+   Só tokens: a paleta é travada por régua (nenhum hex literal novo entra aqui). O ping é
+   a informação de maior peso da tela — é ele que decide se o jogo é jogável pra quem está
+   fora do Brasil — então ele ganha cor semântica (--ok / --am / --crit) e não cinza. */
+.mp-panel{max-width:760px;width:min(760px,92vw);gap:var(--s-5);text-align:left}
+.mp-bloco{width:100%;display:flex;flex-direction:column;gap:var(--s-3)}
+.mp-titulo{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-2);
+  color:var(--ink3);display:flex;align-items:center;gap:var(--s-3);text-transform:uppercase}
+.mp-dica{color:var(--ink3);opacity:.7;letter-spacing:var(--tr-tight);text-transform:none}
+.mp-mini{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  color:var(--cs);background:transparent;border:1px solid var(--line);padding:3px 9px;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-mini:hover,.mp-mini:focus-visible{border-color:var(--cs);color:var(--ink-100)}
+
+.mp-nos{display:flex;gap:var(--s-2);flex-wrap:wrap}
+.mp-no{flex:1 1 190px;display:flex;flex-direction:column;gap:2px;padding:var(--s-3) var(--s-4);
+  background:rgba(var(--bg-700-rgb),.7);border:1px solid var(--line);clip-path:var(--cut-sm);
+  cursor:pointer;text-align:left;transition:border-color var(--t) var(--ease)}
+.mp-no:hover,.mp-no:focus-visible{border-color:var(--line-hi)}
+.mp-no[aria-checked="true"]{border-color:var(--cs);background:rgba(var(--bg-600-rgb),.85)}
+.mp-no-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);letter-spacing:var(--tr-1)}
+.mp-no-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-ping{font-family:var(--mono);font-weight:700}
+.mp-ping[data-q="bom"]{color:var(--ok)} .mp-ping[data-q="medio"]{color:var(--am)} .mp-ping[data-q="ruim"]{color:var(--crit)}
+.mp-no[data-online="0"]{opacity:.55}
+
+.mp-salas{display:flex;flex-direction:column;gap:var(--s-2);max-height:38vh;overflow-y:auto}
+.mp-sala{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:var(--s-3);
+  padding:var(--s-3) var(--s-4);background:rgba(var(--bg-700-rgb),.6);border:1px solid var(--line);
+  clip-path:var(--cut-sm);text-align:left}
+.mp-sala-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);
+  letter-spacing:var(--tr-1);display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
+.mp-tag{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);padding:1px 6px;
+  border:1px solid var(--line-2);color:var(--ink3)}
+.mp-tag[data-t="oficial"]{border-color:var(--cs);color:var(--cs)}
+.mp-tag[data-t="privada"]{border-color:var(--am);color:var(--am)}
+.mp-sala-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);grid-column:1;margin-top:2px}
+.mp-lot{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink2);white-space:nowrap}
+.mp-lot b{color:var(--ink-100)}
+.mp-acoes{display:flex;gap:var(--s-2)}
+.mp-entrar,.mp-assistir{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--line-2);
+  background:transparent;color:var(--ink2)}
+.mp-entrar{border-color:var(--cs);color:var(--cs)}
+.mp-entrar:hover,.mp-entrar:focus-visible{background:var(--cs);color:var(--dark)}
+.mp-entrar[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}
+.mp-assistir:hover,.mp-assistir:focus-visible{border-color:var(--ink-100);color:var(--ink-100)}
+
+.mp-criar summary{cursor:pointer;list-style:none}
+.mp-criar summary::-webkit-details-marker{display:none}
+.mp-criar summary::before{content:'▸ ';color:var(--cs)}
+.mp-criar[open] summary::before{content:'▾ '}
+.mp-form{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-3);margin-top:var(--s-3)}
+.mp-form label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);
+  font-size:var(--fs-50);letter-spacing:var(--tr-1);color:var(--ink3)}
+.mp-form input[type=text],.mp-form select{font-family:var(--mono);font-size:var(--fs-100);
+  color:var(--ink-100);background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:6px 8px}
+.mp-form input:focus-visible,.mp-form select:focus-visible{border-color:var(--cs);outline:none}
+.mp-check{flex-direction:row!important;align-items:center;gap:var(--s-2)!important}
+.mp-form .btn{grid-column:1/-1}
+.mp-erro{width:100%;font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);
+  border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm)}
+.mp-vazio{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);padding:var(--s-4);text-align:center}
+
+/* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
+   visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
+#mp-spec-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;
+  display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-5);
+  background:rgba(var(--bg-900-rgb),.88);border:1px solid var(--line-2);clip-path:var(--cut-sm);
+  font-family:var(--mono);font-size:var(--fs-100);color:var(--ink2);letter-spacing:var(--tr-1)}
+#mp-spec-bar b{color:var(--ink-100)}
+#mp-spec-bar button{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:4px 9px;border:1px solid var(--cs);color:var(--cs);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+#mp-spec-bar button:hover:not([disabled]){background:var(--cs);color:var(--dark)}
+#mp-spec-bar button[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}
