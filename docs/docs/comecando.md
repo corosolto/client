@@ -39,9 +39,9 @@ esta página envelhecia no primeiro commit — ver
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 32.430 linhas em 46 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **6.910** linhas | `wc -l public/js/game.js` |
-| `main.js` | 2.698 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 33.234 linhas em 49 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **6.980** linhas | `wc -l public/js/game.js` |
+| `main.js` | 2.944 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 108 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -49,7 +49,7 @@ esta página envelhecia no primeiro commit — ver
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 12 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 204 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 206 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 55 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.189` | `public/js/version.js` e `package.json` (batem) |
