@@ -10,6 +10,16 @@ import { AMB_LOOPS } from './soundscape.js';
 export const ATACADAO_PROPS = [
   // armazém (kit atacadao_r3, Mint ~4,5k tris cada)
   'estante_pallets', 'freezer', 'ilha_caixas',
+  /* chão de loja: os quatro primeiros vieram no pack da Havan (mint-assets.json,
+     `havan_loja_pack`) e este mapa nunca carregou nenhum — a frente de caixa e as
+     gôndolas eram BoxGeometry. `stall` é o molde de feira do acervo antigo. */
+  'caixa_cobranca', 'gondola_mercado', 'gondola_eletro', 'lampiao_fachada', 'stall',
+  /* seções: lote Replicate de 27/08/2026 (flux-schnell -> hunyuan3d-2), procedência
+     em FONTE.md. `balcao_peixaria`, `cancela_estacionamento` e `lava_rapido` do mesmo
+     lote FICARAM DE FORA — medidos e reprovados, motivo registrado no FONTE.md. */
+  'balcao_acougue', 'balcao_padaria', 'ilha_hortifruti', 'geladeira_bebidas',
+  // estacionamento: moto, banca de sorvete e sombra
+  'moto_cg', 'drinkstand', 'guarda_sol', 'mesa_guardasol',
   // doca e chão de loja
   'shopping_cart', 'cooler', 'pilha_pneus', 'dumpster', 'vw_9150',
   // estacionamento + entorno (bairro/cidade de fundo)
@@ -301,6 +311,89 @@ export function buildAtacadao(scene, T) {
   }
   prop('cooler', 21.2, 27.2, 1.3, 0, 0.8, 0.6, 1.2);
 
+  /* ---------------------------------------------------------------------------
+     SEÇÕES DE PERÍMETRO — hortifrúti, açougue, padaria e peixaria.
+     Açougue, padaria e hortifrúti usam molde de verdade (`balcao_acougue`,
+     `balcao_padaria`, `ilha_hortifruti`, lote Replicate de 27/08 — procedência em
+     FONTE.md). A PEIXARIA continua procedural DE PROPÓSITO: o `balcao_peixaria.glb`
+     foi medido e reprovado (ver FONTE.md), então ali o que faz a seção é o azulejo
+     branco e o cartaz, não uma silhueta emprestada de outro balcão.
+     Quando o molde não carrega (harness sem GLB), o balcão vira caixa com o mesmo
+     colisor — as réguas medem a mesma ocupação nos dois caminhos.
+     As quatro encostam na parede (2,2 m de profundidade) porque só a coluna de nó
+     em |x|=24 morre — a de |x|=20,8 sobrevive e o flanco continua andável.
+  --------------------------------------------------------------------------- */
+  const secoes = [];
+  function secao({ nome, sub, cor, mat, x, z, comp, luz, molde, n = 3, hb = 1.05 }) {
+    const lado = Math.sign(x), prof = 2.2;
+    /* Colisor SEMPRE pela geometria declarada, molde ou não: é ele que as réguas de
+       navegação leem, e ele não pode depender de um GLB ter carregado. */
+    let comMolde = false;
+    if (molde) for (let i = 0; i < n; i++) {
+      const iz = z - comp / 2 + (comp * (i + 0.5)) / n;
+      const o = placeProp(molde, { x, z: iz, y: 0, targetH: hb, ry: -lado * Math.PI / 2 });
+      if (o) { root.add(o); occluders.push(o); comMolde = true; }
+    }
+    if (!comMolde) addBox(prof, hb, comp, mat, x, 0, z, { collide: false });                        // balcão procedural
+    col(x, z, prof / 2, comp / 2, hb);
+    addBox(prof * 0.86, 0.5, comp * 0.96, MAT.frioVidro, x - lado * 0.1, hb, z, { collide: false, cast: false });  // vidro do refrigerado
+    addBox(prof * 0.9, 0.12, comp, MAT.metal, x, hb + 0.5, z, { collide: false, cast: false });        // testeira de inox
+    addBox(0.25, 2.4, comp, mat, x + lado * 0.95, 1.6, z, { collide: false, cast: false });        // painel de fundo, acima do olho
+    addBox(prof + 0.5, 0.14, comp, MAT.metal, x - lado * 0.2, 3.4, z, { collide: false, cast: false }); // aba/marquise do balcão
+    const s = signMesh(Math.min(comp, 5.0), 1.15, signTex(cor, '#ffffff', nome, sub, 640, 200), x - lado * 1.3, 3.95, z, -lado * Math.PI / 2);
+    s.userData.atacadaoSecao = nome;
+    secoes.push(s);
+    const pl = new THREE.PointLight(luz, 1.15, 13, 1.6);
+    pl.position.set(x - lado * 1.2, 3.2, z); pl.userData.mapLight = 'atacadao-secao'; scene.add(pl);
+    return s;
+  }
+  secao({ nome: 'HORTIFRÚTI', sub: 'LEGUMES E FRUTAS', cor: '#2f7d46', mat: MAT.hortiVerde, x: -23.9, z: -8.5, comp: 5.0, luz: 0xd8ffcf, molde: 'ilha_hortifruti', n: 4, hb: 1.2 });
+  secao({ nome: 'PEIXARIA', sub: 'PEIXE FRESCO DO DIA', cor: '#1f5fbf', mat: MAT.azulejo, x: -23.9, z: -1.5, comp: 5.0, luz: 0xcfeaff });
+  secao({ nome: 'PADARIA', sub: 'PÃO QUENTE DE HORA EM HORA', cor: '#8a5a2b', mat: MAT.padariaMadeira, x: 23.9, z: -8.5, comp: 5.0, luz: 0xffe0a8, molde: 'balcao_padaria', n: 3, hb: 1.1 });
+  secao({ nome: 'AÇOUGUE', sub: 'CARNE NO OSSO E NA BANDEJA', cor: '#8d2733', mat: MAT.inox, x: 23.9, z: -1.5, comp: 5.0, luz: 0xffd2d2, molde: 'balcao_acougue', n: 4, hb: 1.15 });
+
+  /* ---- GELADEIRA DE BEBIDAS (pedido explícito do dono) --------------------
+     `freezer` é um freezer HORIZONTAL de ilha (medido: 1,00 × 0,64 × 0,52) — de pé
+     ele não vira geladeira de porta de vidro, viraria um caixote deitado. A parede
+     fria do flanco leste continua sendo dele, que é o uso honesto. A geladeira
+     VERTICAL é `geladeira_bebidas` (0,77 × 0,99 × 0,33: mais alta que larga e rasa,
+     que é a proporção certa de um expositor de porta de vidro).
+     CUSTO: 22.158 tris cada, contra ~4,5 k dos kits Mint. Por isso são QUATRO e não
+     uma parede inteira — 4 × 22 k = 89 k tris, ~5% do que os 48 racks já custam.
+     Encostam na coluna de nó x=-24, que as travessas do flanco já interrompem; a
+     coluna x=-20,8 (o corredor de fato) fica livre. */
+  const geladeiras = [];
+  [10.4, 12.1, 13.8, 19.4].forEach((gz, i) => {
+    const o = placeProp('geladeira_bebidas', { x: -24.5, z: gz, y: 0, targetH: 2.0, ry: Math.PI / 2 });
+    const alvo = o || addBox(0.68, 2.0, 1.56, MAT.frioVidro, -24.5, 0, gz, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    const c = { minX: -24.9, maxX: -24.1, minY: 0, maxY: 2.0, minZ: gz - 0.82, maxZ: gz + 0.82 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoGeladeira = i;
+    geladeiras.push(alvo);
+  });
+  {
+    const s = signMesh(4.2, 1.15, signTex('#1f5fbf', '#ffffff', 'BEBIDAS', 'GELADA NA PORTA DE VIDRO', 640, 200), -23.4, 3.95, 13.0, Math.PI / 2);
+    s.userData.atacadaoSecao = 'BEBIDAS';
+    secoes.push(s);
+    const pl = new THREE.PointLight(0x9fd8ff, 1.15, 13, 1.6);
+    pl.position.set(-23.2, 3.2, 13.0); pl.userData.mapLight = 'atacadao-secao'; scene.add(pl);
+  }
+
+  /* Banca de feira do hortifrúti: `stall` (Striped Market Stall) é o único molde do
+     acervo que lê como feira — 2,16 × 1,88 m a 2,4 m de altura. Duas bancas + engradado
+     colorido dão o volume que o balcão de 1,05 m não dá (balcão não fecha visada). */
+  for (const [sx, sz] of [[-21.4, -10.2], [-21.4, -6.6]]) {
+    const o = placeProp('stall', { x: sx, z: sz, y: 0, targetH: 2.4, ry: Math.PI / 2 });
+    if (o) { root.add(o); occluders.push(o); } else addBox(1.88, 2.4, 2.16, MAT.hortiVerde, sx, 0, sz, { collide: false });
+    col(sx, sz, 0.95, 1.1, 2.4);
+  }
+  const ENGRADADO = [lam({ color: 0xd8621f }), lam({ color: 0x2f7d46 }), lam({ color: 0xc0392b }), lam({ color: 0xe0b83a })];
+  for (let i = 0; i < 6; i++) {                                   // engradado de fruta empilhado (cor é o que lê como hortifrúti)
+    const ex = -21.4 + (i % 2 ? 0.62 : -0.62), ez = -9.06 + Math.floor(i / 2) * 0.66;
+    addBox(0.56, 0.3, 0.56, ENGRADADO[i % 4], ex, (i % 3) * 0.3, ez, { collide: false, cast: false });
+  }
+  col(-21.4, -8.4, 1.0, 0.75, 0.9);
+
   /* Idioma do galpão do campomorro: teto opaco tem luminária local, não fé no sol.
      15 penduradas, 9 com PointLight — 24 luzes dinâmicas custam mais do que iluminam. */
   const LUMI = lam({ color: 0xfff4e0, emissive: 0xffe8bc, emissiveIntensity: 0.95 });
@@ -317,11 +410,29 @@ export function buildAtacadao(scene, T) {
   /* Balcão de 1 m não quebra visada (o olho está a 1,62): quem fecha a praça no eixo
      X são os painéis de oferta de 2,8 m entre os caixas. */
   const ZCAIXA = ZF + 5.6, ZPAINEL = ZF + 2.4;   // múltiplos de 3,2: caem no meio de duas linhas de nó
+  /* FRENTE DE CAIXA. `caixa_cobranca` estava no acervo desde o pack da Havan e este
+     mapa nunca usou — a frente inteira era BoxGeometry azul. Normalizado, a 1,10 m de
+     altura o molde mede 1,40 (X) × 1,84 (Z) com ry=π/2, que é o sentido em que o
+     cliente anda (norte → sul, para a porta).
+     ARMADILHA REGISTRADA: esteira e divisória ficam ACIMA de 0,3 m do chão. Se o
+     colisor da baia não cobrir as duas, nasce nó andável embaixo delas e a MAP1
+     acusa "corpo dentro de sólido" — foi exatamente assim que os 14 pontos dentro da
+     esteira apareceram na rodada anterior. O colisor abaixo cobre balcão + esteira +
+     divisória, e nenhuma das duas peças passa dele. */
+  const caixas = [];
   for (const cx of [-19.2, -12.8, -6.4, 6.4, 12.8, 19.2]) {
-    addBox(1.4, 1.0, 1.8, MAT.caixa, cx, 0, ZCAIXA);
-    addBox(1.2, 0.06, 1.6, MAT.esteira, cx, 1.0, ZCAIXA, { collide: false });
-    signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', String(90 + Math.abs(cx | 0)), 260, 360), cx + 0.9, 2.2, ZCAIXA, 0);
+    const o = placeProp('caixa_cobranca', { x: cx, z: ZCAIXA, y: 0, targetH: 1.1, ry: Math.PI / 2 });
+    const alvo = o || addBox(1.4, 1.1, 1.84, MAT.caixa, cx, 0, ZCAIXA, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    addBox(0.55, 0.08, 1.5, MAT.esteira, cx + 0.78, 0.95, ZCAIXA, { collide: false, cast: false });   // esteira
+    addBox(0.08, 1.1, 1.5, MAT.metal, cx - 0.86, 0, ZCAIXA, { collide: false, cast: false });         // divisória da baia
+    const c = { minX: cx - 1.05, maxX: cx + 1.1, minY: 0, maxY: 1.15, minZ: ZCAIXA - 1.0, maxZ: ZCAIXA + 1.0 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoCaixa = true;
+    caixas.push(alvo);
+    signMesh(0.7, 1.0, signTex('#111417', '#ff4d4d', 'CAIXA', String(90 + Math.abs(cx | 0)), 260, 360), cx + 1.3, 2.2, ZCAIXA, 0);
   }
+  // Faixa de "PAGUE MENOS" atravessando a frente de caixa, na altura da testeira.
+  signMesh(15, 1.4, signTex('#e0b83a', '#c0392b', 'PAGUE MENOS', 'FEIRA DO MÊS NO ATACADÃO', 900, 200), 0, 5.6, ZCAIXA + 1.6, 0);
   const PROMO = ['LEVE 3 PAGUE 5', 'ARROZ R$ 49,90', 'SÓ HOJE: MAIS CARO', 'FEIJÃO A OURO', 'FARDO DE TRETA', 'PIX NÃO PARCELA'];
   [-22.4, -16.0, -6.4, 6.4, 16.0, 22.4].forEach((px, i) => {
     addBox(3.0, 2.8, 0.5, MAT.parede, px, 0, ZPAINEL);
@@ -330,11 +441,35 @@ export function buildAtacadao(scene, T) {
   for (const [cx, cz] of [[-9.6, ZF + 3.2], [3.2, ZF + 4.0], [9.6, ZF + 1.6]]) prop('shopping_cart', cx, cz, 1.0, (cx * 7) % 3, 0.4, 0.4, 0.9);
   /* Terceira fila da praça: sem ela a LOS média voltava a 10,46 m contra teto de 10,50.
      Fica fora da boca das portas (x∈[-15,-9], [-3,3], [9,15]) por causa do CTF2. */
-  for (const [fx, fz, fw] of [[-21.6, ZF + 8.8, 2.8], [-6.4, ZF + 8.8, 2.8], [6.4, ZF + 8.8, 2.8], [21.6, ZF + 8.8, 2.8],
-                              [-19.2, ZF + 2.4, 2.0], [-6.4, ZF + 2.4, 2.0], [6.4, ZF + 2.4, 2.0], [19.2, ZF + 2.4, 2.0]]) {
-    const h = fw > 2.4 ? 2.4 : 2.0;
-    addBox(fw, h, 1.2, PALLET[(Math.abs(fx) | 0) % PALLET.length], fx, 0, fz);
-    addBox(fw + 0.1, 0.14, 1.3, MAT.metal, fx, h, fz, { collide: false, cast: false });
+  /* GÔNDOLA DE VERDADE no lugar do caixote. `gondola_mercado` e `gondola_eletro`
+     também vieram no pack da Havan e nunca foram usadas aqui — esta fila era
+     BoxGeometry com uma tampa de metal. Com ry=π/2 o eixo longo do molde cai em X,
+     que é como a gôndola encara quem entra pela porta. As medidas do colisor saem
+     do molde normalizado (tools/inspect-glb.mjs), não do nome:
+       gondola_mercado @2,4 m -> 2,86 (X) × 1,55 (Z)
+       gondola_eletro  @2,0 m -> 2,50 (X) × 1,03 (Z) */
+  const gondolas = [];
+  const gondola = (id, gx, gz, alturaAlvo, larg, prof, cartaz) => {
+    const o = placeProp(id, { x: gx, z: gz, y: 0, targetH: alturaAlvo, ry: Math.PI / 2 });
+    const alvo = o || addBox(larg, alturaAlvo, prof, PALLET[(Math.abs(gx) | 0) % PALLET.length], gx, 0, gz, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    const c = { minX: gx - larg / 2, maxX: gx + larg / 2, minY: 0, maxY: alturaAlvo, minZ: gz - prof / 2, maxZ: gz + prof / 2 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoGondola = true;
+    gondolas.push(alvo);
+    // splash de preço na ponta da gôndola: é o que faz ler como oferta e não como estante
+    if (cartaz) signMesh(1.5, 0.85, signTex('#ffe11a', '#c0392b', cartaz[0], cartaz[1], 360, 200), gx, alturaAlvo + 0.55, gz, 0);
+    return alvo;
+  };
+  for (const [gx, cartaz] of [[-19.8, ['R$ 9,90', 'O QUILO']], [-6.4, ['3 POR 10', 'ENQUANTO DURAR']],
+                              [6.4, ['LEVE 2', 'PAGUE 4']], [19.8, ['R$ 19,90', 'A CAIXA']]])
+    gondola('gondola_mercado', gx, ZF + 8.8, 2.4, 2.86, 1.6, cartaz);
+  for (const gx of [-19.2, 19.2]) gondola('gondola_eletro', gx, ZF + 2.4, 2.0, 2.5, 1.2, ['OFERTA', 'SÓ HOJE']);
+  /* Cesta de promoção ENCOSTADA no painel de oferta (z=-8,6, o painel está em -9,6):
+     antes havia um caixote de 2 m ENTERRADO dentro do painel em x=±6,4. Cesta baixa
+     não custa LOS — quem fecha a visada ali é o painel de 2,8 m atrás dela. */
+  for (const bx of [-6.4, 6.4]) {
+    addBox(2.0, 0.95, 1.0, MAT.hortiVerde, bx, 0, ZPAINEL + 1.0);
+    addBox(1.8, 0.12, 0.85, MAT.faixa, bx, 0.95, ZPAINEL + 1.0, { collide: false, cast: false });
   }
 
   /* Doca: fundo do galpão, spawn B. */
@@ -378,6 +513,123 @@ export function buildAtacadao(scene, T) {
     }
   }
   prop('fileira_carros', 0, ZS + 3, 2.0, 0, 1.6, 6, 1.9);
+
+  /* =========================================================================
+     ESTACIONAMENTO DE ATACAREJO: vaga de moto coberta, cancela, lava-rápido e
+     banca de sorvete. Além do pedido do dono, é o que tira os quadrantes do sul
+     do vermelho da MAP5 — q0,0/q1,0/q2,0/q3,0 estavam a 0,16× da mediana de props
+     porque o pátio era asfalto vazio com três fileiras de carro.
+     MOLDE QUE NÃO EXISTE (declarado, não disfarçado): cancela e lava-rápido não
+     têm GLB no acervo — a estrutura é geometria do mapa com material honesto.
+  ========================================================================= */
+
+  /* --- vaga de MOTO coberta, flanco leste (q3,0) --------------------------- */
+  const MOTO_X = 22.8, MOTO_Z = [-24.0, -25.1, -26.2, -27.3, -28.4, -29.5, -30.6, -31.7];
+  const motos = [];
+  MOTO_Z.forEach((mz, i) => {
+    addBox(2.4, 0.02, 0.1, MAT.faixa, MOTO_X, 0.03, mz - 0.55, { collide: false, cast: false });   // vaga demarcada
+    const o = placeProp('moto_cg', { x: MOTO_X, z: mz, y: 0, targetH: 1.1, ry: i % 2 ? 0 : Math.PI });
+    const alvo = o || addBox(1.84, 1.1, 0.82, MAT.metal, MOTO_X, 0, mz, { collide: false });
+    if (o) { root.add(o); occluders.push(o); }
+    const c = { minX: MOTO_X - 0.95, maxX: MOTO_X + 0.95, minY: 0, maxY: 1.1, minZ: mz - 0.45, maxZ: mz + 0.45 };
+    colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoMoto = i;
+    motos.push(alvo);
+  });
+  // cobertura: pilar fora da faixa de nó, telha ACIMA da cabeça (sem colisor, não é teto jogável)
+  for (const pz of [-23.4, -32.3]) for (const px of [MOTO_X - 1.6, MOTO_X + 1.6]) addBox(0.22, 2.7, 0.22, MAT.metal, px, 0, pz, { collide: false, cast: false });
+  addBox(4.4, 0.16, 9.6, MAT.metal, MOTO_X, 2.7, -27.85, { collide: false, cast: false });
+  signMesh(3.6, 0.9, signTex('#1f5fbf', '#ffffff', 'MOTOS', 'VAGA EXCLUSIVA', 512, 150), MOTO_X, 3.3, -23.2, 0);
+
+  /* --- CANCELA na entrada e na saída (sem molde: estrutura procedural) ------ */
+  const cancelas = [];
+  for (const [cx, txt] of [[-11, 'ENTRADA'], [11, 'SAÍDA']]) {
+    const gx = cx + (cx < 0 ? -4.4 : 4.4);                       // guarita ao lado da pista, fora do eixo do portal
+    addBox(1.5, 2.5, 1.7, MAT.parede, gx, 0, -39.6);             // guarita
+    addBox(1.2, 0.6, 1.4, MAT.vidro, gx, 1.3, -39.6, { collide: false, cast: false });
+    addBox(1.8, 0.14, 2.0, MAT.metal, gx, 2.5, -39.6, { collide: false, cast: false });
+    addBox(0.28, 1.0, 0.28, MAT.metal, cx + (cx < 0 ? -2.4 : 2.4), 0, -39.6, { collide: false });   // base da cancela
+    /* Braço BAIXADO em z=-39,6: fica entre a linha de nó z=-38,4 e o limite sul dos
+       bounds, então o colisor do braço não apaga nó nenhum. Braço acima de 0,3 m SEM
+       colisor é o bug do "corpo dentro da esteira" de novo — este tem colisor. */
+    const b0 = cx < 0 ? cx - 2.4 : cx + 2.4, b1 = cx;
+    const bm = (b0 + b1) / 2, bw = Math.abs(b1 - b0);
+    addBox(bw, 0.14, 0.16, MAT.faixa, bm, 1.0, -39.6, { collide: false, cast: false });
+    const c = { minX: Math.min(b0, b1) - 0.1, maxX: Math.max(b0, b1) + 0.1, minY: 0, maxY: 1.15, minZ: -40.0, maxZ: -39.2 };
+    colliders.push(c); cancelas.push(c);
+    signMesh(2.0, 0.7, signTex('#e0b83a', '#111417', txt, 'PARE E RETIRE', 400, 140), gx, 3.2, -39.6, 0);
+  }
+
+  /* --- LAVA-RÁPIDO no canto sudoeste (q0,0; sem molde: baia procedural) ----- */
+  {
+    const LX = -22.0, LZ = -37.4;                                 // centro da baia
+    addBox(0.3, 3.0, 6.0, MAT.parede, LX - 2.9, 0, LZ);           // parede lateral oeste
+    addBox(0.3, 3.0, 6.0, MAT.parede, LX + 2.9, 0, LZ);           // parede lateral leste
+    addBox(6.1, 3.0, 0.3, MAT.parede, LX, 0, LZ - 2.9);           // fundo
+    addBox(6.4, 0.18, 6.4, MAT.metal, LX, 3.0, LZ, { collide: false, cast: false });   // telha
+    marcarSuperficie(addFloor(5.8, 5.8, MAT.doca, LX, LZ, 0.03), 'doca');              // piso molhado da baia
+    addBox(0.5, 1.1, 0.5, MAT.caixa, LX + 2.2, 0, LZ + 1.9, { collide: false });       // carretel de mangueira
+    for (const bz of [LZ + 2.0, LZ + 2.6]) addBox(0.42, 0.5, 0.42, MAT.hortiVerde, LX - 2.2, 0, bz, { collide: false, cast: false });  // baldes
+    prop('fiat_uno', LX, LZ - 0.6, 1.6, Math.PI / 2, 1.0, 2.1, 1.5);                   // carro na lavagem
+    signMesh(5.2, 1.3, signTex('#1f5fbf', '#ffffff', 'LAVA-RÁPIDO', 'CARRO E MOTO · A SECO OU NA MANGUEIRA', 700, 190), LX, 3.7, LZ + 2.95, 0);
+  }
+
+  /* --- BANCA DE SORVETE e mesinhas, na ilha entre fileiras de vaga ---------- */
+  /* A ilha entre a 2ª e a 3ª fileira de vaga é uma PISTA leste-oeste de 2,8 m (as
+     vagas ocupam z -27,1..-22,9 e -34,1..-29,9). O cluster nasceu no MEIO dela,
+     ocupando x de 0,5 a 8,6, e TAMPOU a pista: E→E, E→MID e E→B caíram de 2 rotas
+     separadas para 1. Bisseccionado com map-check, não deduzido — moto, cancela e
+     lava-rápido estavam inocentes. As três peças foram para o extremo leste e
+     sobram ~25 m livres (x de -16 a 9,5), além da BAIA da bandeira E que já tinha
+     de ficar vazia pelo mesmo motivo. */
+  gprop('drinkstand', 11.0, -28.5, 2.6);
+  col(11.0, -28.5, 1.15, 1.15, 2.2);
+  signMesh(2.4, 0.8, signTex('#c0392b', '#ffe11a', 'SORVETE', 'PICOLÉ 2 POR 5', 420, 150), 11.0, 3.3, -28.5, 0);
+  gprop('mesa_guardasol', 14.6, -28.5, 2.3);
+  col(14.6, -28.5, 1.0, 1.0, 2.0);
+  gprop('guarda_sol', 17.4, -28.5, 2.4);
+  col(17.4, -28.5, 0.9, 0.9, 2.2);
+  /* Corral de carrinho: o carrinho volta pra algum lugar num atacarejo de verdade. */
+  for (const sx of [-1, 1]) addBox(0.1, 1.0, 2.2, MAT.metal, -19.0 + sx * 0.9, 0, -28.5, { collide: false });
+  for (const cz of [-29.3, -28.5, -27.7]) gprop('shopping_cart', -19.0, cz, 1.0, 0);
+  col(-19.0, -28.5, 1.05, 1.2, 1.05);
+  signMesh(1.8, 0.6, signTex('#1f5fbf', '#ffffff', 'CARRINHOS', '', 380, 130), -19.0, 2.2, -30.1, 0);
+  /* --- POSTE E LIXEIRA: mobiliário de pátio ------------------------------
+     Pátio de atacarejo sem poste de iluminação é o que faz o estacionamento ler
+     como "asfalto vazio". Também é o que a MAP5 mede: prop = colisor de 0,60 m ou
+     mais. O quadrante q1,0 (x -12,8..0, z -41..-22) estava a 0,16× da mediana
+     porque a BAIA da bandeira E o mantém vazio de carro — a densidade tem de vir de
+     peça FINA, que não fecha rota. Cada poste ocupa 0,46 m²: conta como prop e não
+     tampa pista nenhuma. Posição sempre no VÃO entre duas vagas, como na vida real. */
+  /* COORDENADA DO POSTE NÃO É ESTÉTICA, É ARITMÉTICA. O lattice põe nó em
+     x ≡ z ≡ 1,6 (mod 3,2) e apaga o nó a menos de 0,5 m de um colisor. Poste em
+     x=-11,9 apagava o nó de x=-11,2 e a fileira inteira de z=-25 virava peneira:
+     medi E→E e B→E caindo para 1 rota. Logo o poste vai para x ≡ 0 (mod 3,2), que
+     é o MEIO entre duas colunas de nó. Em z a conta é a mesma e eu errei o sinal na
+     primeira tentativa: as LINHAS caem em -24,0 / -27,2 / -30,4 / -33,6 / -36,8, então
+     -24,0 e -36,8 eram exatamente cima do nó. O meio é -25,6 / -28,8 / -35,2.
+     O poste fica no vão ENTRE duas vagas, nunca dentro de uma. O de (-6,5,-36) saiu
+     de vez: ficava a 0,78 m do spawn E e derrubava a folga da MAP2B de 1,85 m para
+     0,70 m (mínimo 1,20). */
+  const POSTES = [[-12.8, -25.6], [-6.4, -25.6], [3.2, -25.6], [9.6, -25.6], [14.4, -25.6],
+                  [-16.0, -25.6], [-19.0, -35.2], [19.0, -35.2], [14.4, -19.2]];
+  for (const [px, pz] of POSTES) {
+    addBox(0.28, 5.5, 0.28, MAT.metal, px, 0, pz, { collide: false, cast: false });
+    col(px, pz, 0.34, 0.34, 5.5);
+    addBox(1.5, 0.22, 0.4, lam({ color: 0xfff4e0, emissive: 0xffe8bc, emissiveIntensity: 0.8 }), px, 5.3, pz, { collide: false, cast: false });
+  }
+  /* Balizador na pista livre a z=-28,8: q1,0 é o quadrante que a BAIA da bandeira E
+     obriga a manter vazio de carro, e ele parava a 0,16× da mediana de prop (piso
+     0,35×). Quatro peças de 0,64 m espaçadas de 3,2 m deixam vão de 2,56 m: levantam
+     a densidade para 0,49× sem tampar a pista que já custou duas rodadas de CTF2
+     (medido — com o cluster de sorvete aqui, E→E caía para 1 rota). */
+  for (const [bz2, bx2] of [[-28.8, -12.8], [-28.8, -9.6], [-28.8, -6.4], [-28.8, -3.2]]) {
+    addBox(0.34, 1.0, 0.34, MAT.faixa, bx2, 0, bz2, { collide: false, cast: false });
+    col(bx2, bz2, 0.32, 0.32, 1.0);
+  }
+  for (const [bx, bz] of [[-6.4, -21.0], [-12.8, -21.0], [3.2, -21.0], [-16.0, -21.0]]) {
+    addBox(0.7, 1.05, 0.7, MAT.hortiVerde, bx, 0, bz);                                   // lixeira (colide)
+    addBox(0.78, 0.1, 0.78, MAT.metal, bx, 1.05, bz, { collide: false, cast: false });
+  }
   // faixa de pedestre da fachada (entrada da loja)
   for (let i = -3; i <= 3; i++) addBox(0.5, 0.02, 2.4, lam({ color: 0xd8d2c0 }), i * 0.9, 0.04, ZF - 3, { collide: false, cast: false });
   // portais de ENTRADA/SAÍDA na rua (sul)
