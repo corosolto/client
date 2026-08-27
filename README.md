@@ -34,17 +34,17 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 41.159 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| Código do jogo | 41.259 linhas em 59 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7.260** linhas | `wc -l public/js/game.js` |
 | `main.js` | 2.812 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props em GLB | 151 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props em GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Clipes de animação versionados | 681 | `git ls-files public/models/anims \| wc -l` |
 | Personagens jogáveis | 62, em 10 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 17 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 16 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 300 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts do arnês | 301 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
 | Scripts de pipeline | 77 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.184` | `public/js/version.js` e `package.json` (batem) |
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **141** importam Playwright, **60** importam gltf-transform e **5** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **141** importam Playwright, **61** importam gltf-transform e **5** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 
@@ -311,7 +311,7 @@ Os mapas registrados, e em que modo cada um abre:
 | `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
 | `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
 | `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |
-| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 813 |
+| `escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 913 |
 | `campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
 | `lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
