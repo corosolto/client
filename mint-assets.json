@@ -1,1888 +1,1951 @@
 {
- "registryVersion": 1,
- "assetRoot": "public/models/characters",
- "mintProject": {
-  "projectId": "zd7cbsyxbzmf05b3w084t51ymd8c5hfr",
-  "name": "CS BRASIL - Time Mítico"
- },
- "assets": {
-  "designer-ux-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/designer-ux.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786471325-0iw3L3GKBd0QKp1IhGrN",
-    "chatUrl": null,
-    "displayName": "Designer de UX — concept v2",
-    "sha256": "1f374dbf0ab0418a5645cbdc4eb2650507150a934e09ca4ad979b359952e6d0a",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/designer-ux.md",
-    "notes": "Concept original aprovado por crítico externo após mover o tablet do antebraço para o quadril, separar tablet/leque e ampliar a leitura brasileira da garrafa térmica de pressão. PNG e recibo completos ficam em references/nerdolas/designer-ux/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0687805,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "sharp"
-    ],
-    "finalSha256": "d0f4ad77d590fecdf0c30127fbca3406d7fac2d45d01e03b953cde7e1eabacf7"
-   }
-  },
-  "lenda-lanhouse-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/lenda-lanhouse.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786471750-NXbAp4f8L8A8EWeGd0Ry",
-    "chatUrl": null,
-    "displayName": "Lenda da Lan House — concept v2",
-    "sha256": "264cc734f857c1dde598e22ef4e07ad1a0b02896809be167edf125b1c6a001f0",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/lenda-lanhouse.md",
-    "notes": "Concept original aprovado por crítico externo após mover o headset do pescoço para as orelhas, liberar clavículas/ombros para ADS e reforçar azul/verde/amarelo a 150 px. PNG e recibo completos ficam em references/nerdolas/lenda-lanhouse/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0688055,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "sharp"
-    ],
-    "finalSha256": "879f1b863b1b48feb97136d16f9f9ef2aa10ea6e2c224e3ee7ebede6d92c859f"
-   }
-  },
-  "mestre-rpg-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/mestre-rpg.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786472284-TcfXR82W5RAIIfH9ZIup",
-    "chatUrl": null,
-    "displayName": "Mestre do RPG — concept v1",
-    "sha256": "3c032cba5e4031403388c59ae31413fac3995867847370960251dbdf2a92b621",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/mestre-rpg.md",
-    "notes": "Concept original aprovado pelo crítico externo no review do lote Nerdolas a 150 px. PNG e recibo completos ficam em references/nerdolas/mestre-rpg/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.067898,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp"
-    ],
-    "finalSha256": "d9270d4bbe4eb0173ef9c4a0d84988feb7d8d69d0725e31ca1b41da5f2ac2b28"
-   }
-  },
-  "formata-vinte-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/formata-vinte.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786472332-xIMg2rCNrxHLpcOBmvkK",
-    "chatUrl": null,
-    "displayName": "Técnico que Formata por 20 — concept v1",
-    "sha256": "50adb9ec1ef07e480d5cd62eeb99dc04934907449664052df928174fc2cf50a6",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/formata-vinte.md",
-    "notes": "Concept original aprovado pelo crítico externo no review do lote Nerdolas a 150 px. PNG e recibo completos ficam em references/nerdolas/formata-vinte/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.068862,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp"
-    ],
-    "finalSha256": "a0f426c7ec7761647aa306f7219584e30de58b1fc21911d8c6579d66e7f22081"
-   }
-  },
-  "hacker-wifi-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/hacker-wifi.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786472716-l5cJrSDMmxvbN4I0B8HD",
-    "chatUrl": null,
-    "displayName": "Hacker do Wi-Fi — concept v2",
-    "sha256": "2a412c7e32982d96b1d6d369efb9acfca65ccfdd1a84be1e0283b3179c806ef4",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/hacker-wifi.md",
-    "notes": "Concept original aprovado pelo crítico externo após mover roteador e antenas para o backpack, bobina para o quadril esquerdo e reforçar blocos verde/amarelo/azul sem ocupar arma/ADS. PNG e recibo completos ficam em references/nerdolas/hacker-wifi/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.069009,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp"
-    ],
-    "finalSha256": "06dc5a27cceb600c188d382bd396eb67d713701939120988087c766f4b7e22f5"
-   }
-  },
-  "profeta-calcada-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/profeta-calcada.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786485672-BS7EnQjMQfVPGTJ5Tjmq",
-    "chatUrl": null,
-    "displayName": "Profeta da Calçada — concept v2",
-    "sha256": "66b24a09f719a41d7de73a4a330b60b54910fb8cfda2cdb877def57db2630807",
-    "styleReference": "references/noias/profeta-calcada/profeta-calcada-concept-v1.png",
-    "factionReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/profeta-calcada-v2.md",
-    "sourceRecord": "references/noias/profeta-calcada/FONTE.md",
-    "receipt": "references/noias/profeta-calcada/profeta-calcada-concept-v2.png.json",
-    "notes": "Concept original aprovado por crítico externo: três placas coloridas no lado anatômico esquerdo, ombro direito e mãos livres, humor absurdo sem estigma, pessoa real, texto ou símbolo político."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0689555,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "ImageMagick WebP quality 88"
-    ],
-    "finalSha256": "4e6e0e7bf2ed97b8793ef3a9465a4aa753b280c9402e6f251e2fd6512341f2b3"
-   }
-  },
-  "profeta-calcada": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/profeta-calcada.glb",
-    "public/img/chars/profeta-calcada.webp",
-    "public/img/source-concepts/profeta-calcada.webp",
-    "public/models/anims/profeta-calcada/idle.glb",
-    "public/models/anims/profeta-calcada/walk.glb",
-    "public/models/anims/profeta-calcada/run.glb",
-    "public/models/anims/profeta-calcada/shoot.glb",
-    "public/models/anims/profeta-calcada/death.glb",
-    "public/models/anims/profeta-calcada/crouch.glb",
-    "public/models/anims/profeta-calcada/crouchwalk.glb",
-    "public/models/anims/profeta-calcada/jump.glb",
-    "public/models/anims/profeta-calcada/idle1h.glb",
-    "public/models/anims/profeta-calcada/walk1h.glb",
-    "public/models/anims/profeta-calcada/walkfire.glb",
-    "public/models/anims/profeta-calcada.glb"
-   ],
-   "source": {
-    "kind": "openrouter-concept-tripo-blender-model",
-    "assetId": "b5fda366-1488-4360-9557-f73c7a43cf5f",
-    "chatUrl": null,
-    "displayName": "Profeta da Calçada",
-    "sha256": "66b24a09f719a41d7de73a4a330b60b54910fb8cfda2cdb877def57db2630807",
-    "conceptPreview": "public/img/source-concepts/profeta-calcada.webp",
-    "conceptPreviewSha256": "4e6e0e7bf2ed97b8793ef3a9465a4aa753b280c9402e6f251e2fd6512341f2b3",
-    "styleReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/profeta-calcada-v2.md",
-    "sourceRecord": "references/noias/profeta-calcada/FONTE.md",
-    "notes": "Concept v2 aprovado por crítico externo: três placas coloridas no lado anatômico esquerdo abaixo do ombro, ombro direito e mãos livres, humor absurdo sem estigma, pessoa real, marca ou texto político. Procedência integral em references/noias/profeta-calcada/FONTE.md."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "b5fda366-1488-4360-9557-f73c7a43cf5f",
-    "modelCostCredits": 60,
-    "alternateModelProvider": "meshy",
-    "alternateModelTaskId": "019ff2e6-ea23-7e82-8cf2-e710335f54c3",
-    "alternateModelCostCredits": 15,
-    "rigProvider": "meshy",
-    "rigTaskId": "019ff2ee-e8f9-7edb-a5e4-a3bc7f8a3e1f",
-    "rigCostCredits": 5,
-    "tools": [
-     "references/noias/profeta-calcada/3d/separate-props-sockets.py",
-     "tools/retarget-glb.mjs",
-     "references/noias/profeta-calcada/3d/ground-clamp.mjs",
-     "references/noias/profeta-calcada/3d/contract-animation-v2.mjs",
-     "dedup+textureCompress(webp 1024)+prune(keepLeaves) via @gltf-transform — padrão tools/optimize-tribos.mjs",
-     "tools/merge-anims.mjs",
-     "tools/eval/char-probe.mjs",
-     "tools/gen-foot-offsets.mjs",
-     "tools/eval/select-mount.mjs",
-     "tools/eval/prop-hitbox-probe.mjs",
-     "tools/capture-char-thumbnail.mjs",
-     "tools/capture-character-game.mjs"
-    ],
-    "finalSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
-    "sourceFinalSha256": "dddbe95df8a6544cbc10a2a0173463a0f06c9cb945bc886da23b7b6b93223628",
-    "notes": "Candidato v2 (rig/animação refeitos) aprovado em revisão adversarial limpa; malha/textura da v1 preservadas (14.405 tris, 24 joints). A entrega em public/ aplica SÓ a otimização padrão da casa (textura 4096 PNG → 1024 WebP, dedup+prune com keepLeaves para não podar os sockets de mão vazios): 14.176 KB → 616 KB; os 11 clipes são byte-idênticos ao recibo blender-v2. Contrato v2 re-rodado VERDE no arquivo de entrega. Props rígidos (placas/case) fora do hitbox por guarda em glbchars.js (probe com mutante em tools/eval/asset-evidence/profeta-calcada/). Grip medido no caminho da seleção (select-mount): dMaoR=0, dMaoL=0,003. Pés: walk -0,0278 / run -0,0242 na tabela gerada. Aprovação cobre pré-integração; capturas runtime 1536×1024 aguardam revisor limpo."
-   }
-  },
-  "mago-cobre-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/mago-cobre.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786486643-EPnkQjbzQhOPMhEVBbXW",
-    "chatUrl": null,
-    "displayName": "Mago do Cobre — concept v4",
-    "sha256": "87b7c5e815de34ee13ddf2947f7433bc02b22437f9bf9d7f216170d8230b1f46",
-    "styleReference": "references/noias/mago-cobre/mago-cobre-concept-v3.png",
-    "factionReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/mago-cobre-v4.md",
-    "sourceRecord": "references/noias/mago-cobre/FONTE.md",
-    "receipt": "references/noias/mago-cobre/mago-cobre-concept-v4.png.json",
-    "notes": "Concept original aprovado por crítico externo: bobinas, sucata, bainha/alicate e pingente reunidos no quadril anatômico esquerdo, com peito, braços, mãos e ADS livres."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0684375,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "ImageMagick WebP quality 88"
-    ],
-    "finalSha256": "42ec99159954e5b031865f4e24e07eb0f3e01e6f7024c1ad5876f2608e09e29f"
-   }
-  },
-  "dj-bluetooth-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/dj-bluetooth.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786486652-NsK1hkZNMA6QZUVPitVP",
-    "chatUrl": null,
-    "displayName": "DJ do Bluetooth — concept v4",
-    "sha256": "e0e3dfc09a097b494ad2a91393563c0ea6af86e7acb002baaf8f741117ac6927",
-    "styleReference": "references/noias/dj-bluetooth/dj-bluetooth-concept-v3.png",
-    "factionReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/dj-bluetooth-v4.md",
-    "sourceRecord": "references/noias/dj-bluetooth/FONTE.md",
-    "receipt": "references/noias/dj-bluetooth/dj-bluetooth-concept-v4.png.json",
-    "notes": "Concept original aprovado por crítico externo: caixa, knobs e cabo agrupados no dorso/quadril anatômico esquerdo, com peito, mãos e lado oposto livres."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.068573,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "ImageMagick WebP quality 88"
-    ],
-    "finalSha256": "c5b4602632e9712ccf31c23a259ba9797e8e06068ad42de40dc322f18c06ec52"
-   }
-  },
-  "noia-esquina-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/noia-esquina.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786486987-PU77xFhW0yz0bmcfPLlz",
-    "chatUrl": null,
-    "displayName": "Nóia da Esquina — concept v5",
-    "sha256": "78ebe7389a280ed2e6cfc20a0c179f85d5b4a46c28d87270fdef032da40631bf",
-    "styleReference": "references/noias/noia-esquina/noia-esquina-concept-v4.png",
-    "factionReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/noia-esquina-v5.md",
-    "sourceRecord": "references/noias/noia-esquina/FONTE.md",
-    "receipt": "references/noias/noia-esquina/noia-esquina-concept-v5.png.json",
-    "notes": "Concept original aprovado por crítico externo: rádio, antena, cabo curto e pochete agrupados no quadril anatômico esquerdo, sem cruzar peito, mãos ou ADS."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.067934,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "ImageMagick WebP quality 88"
-    ],
-    "finalSha256": "3278f20a2f2ee802ea756eb5a6285a41837835b9fcd8a286da9b9c3d86d87105"
-   }
-  },
-  "ciclista-sem-freio-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/ciclista-sem-freio.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786487372-z8ykjUyDrfm0j4LzOW1Q",
-    "chatUrl": null,
-    "displayName": "Ciclista Sem Freio — concept v6",
-    "sha256": "11fea8b044bf22102d9c30b197a958df2e4f36f58d6d43e4046305756390ef50",
-    "styleReference": "references/noias/ciclista-sem-freio/ciclista-sem-freio-concept-v5.png",
-    "factionReference": "public/img/faccoes/noias.webp",
-    "prompt": "prompts/noias/ciclista-sem-freio-v6.md",
-    "sourceRecord": "references/noias/ciclista-sem-freio/FONTE.md",
-    "receipt": "references/noias/ciclista-sem-freio/ciclista-sem-freio-concept-v6.png.json",
-    "notes": "Concept original aprovado por crítico externo: dois meio-arcos abertos aninhados e V curto no dorso/anca anatômica esquerda, com peito, mãos, ADS e lado oposto livres."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0681715,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "ImageMagick WebP quality 88"
-    ],
-    "finalSha256": "fbd79f8d2645448d414c501969a01567fbc52bbf7d4a1915d32a26268defffa4"
-   }
-  },
-  "otaku-bairro-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/otaku-bairro.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786473307-VUay7r3nETWSkxs56XN1",
-    "chatUrl": null,
-    "displayName": "Otaku do Bairro — concept v3",
-    "sha256": "931cc34adb28f6ead3fffdae6f022088691a883dbaaec6c2077a32931a3c281a",
-    "styleReference": "references/nerdolas/otaku-bairro/otaku-bairro-concept-v2.png",
-    "prompt": "prompts/nerdolas/otaku-bairro.md",
-    "notes": "Concept original aprovado pelo crítico externo após concentrar os quatro pins na alça esquerda do personagem e liberar por completo a alça/ombro direitos para coronha e ADS. PNG e recibo completos ficam em references/nerdolas/otaku-bairro/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.067885,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp"
-    ],
-    "finalSha256": "80fcba5d05d883c2535da252562a6bdd03c3b1d0e59a3ce95d041e0fcac78d6a"
-   }
-  },
-  "streamer-tiltado-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/streamer-tiltado.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786472096-93DXJq7LahEXH8JIHa5X",
-    "chatUrl": null,
-    "displayName": "Streamer Tiltado — concept v2",
-    "sha256": "6ba3997de6f62f6765f53c5b34367d0fc898ac952f8dfe3b879dfb414a393e0e",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/streamer-tiltado.md",
-    "notes": "Concept original aprovado pelo crítico externo após rigidificar ring light e webcam no mount traseiro, afastar ambos do plano do tronco e ampliar emissivos legíveis a 150 px, preservando ombros, braços e ADS livres. PNG e recibo completos ficam em references/nerdolas/streamer-tiltado/."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0680215,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "sharp"
-    ],
-    "finalSha256": "d3d0fd4725fde16f512ae102661ee73015f65ca9800c219ae522bd19d8e40b61"
-   }
-  },
-  "camera-roxa-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/camera-roxa.webp"
-   ],
-   "source": {
-    "kind": "imagegen-concept",
-    "assetId": "019fedfa-e6fa-7073-9b13-c445713213cf",
-    "chatUrl": null,
-    "displayName": "Câmera Roxa — concept v1",
-    "sha256": "f15efe1fdf0f98dc62048fe461c694902bb40710360f41bd801ad6d9c57f5677",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/camera-roxa.md",
-    "notes": "Concept original rastreado do piloto Câmera Roxa; pessoa, emissora, texto, logotipo e personagem protegido foram vetados no prompt. PNG e recibo completos ficam em references/tv/camera-roxa/."
-   },
-   "processing": {
-    "provider": "imagegen",
-    "model": null,
-    "reportedCostUsd": null,
-    "tools": [
-     "sharp"
-    ],
-    "finalSha256": "7c7f3929dcd9171b02d9fed06592678a7ce5b5b1bf8be86649943ca0e8124cdc"
-   }
-  },
-  "claquete-verde-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/claquete-verde.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482872-L6j2afmfTd6BWnxIQl2f",
-    "chatUrl": null,
-    "displayName": "Claquete Verde — concept v3",
-    "sha256": "0d375c19821370b0ac1ba84267414d9db7899de1841e85cb9b15abbd3f688dad",
-    "styleReference": "references/tv/claquete-verde/claquete-verde-concept-v2.png",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/claquete-verde-v3.md",
-    "sourceRecord": "references/tv/claquete-verde/FONTE.md",
-    "receipt": "references/tv/claquete-verde/claquete-verde-concept-v3.png.json",
-    "notes": "Concept original aprovado por crítico externo após integrar a borda listrada numa única ombreira e compactar as pernas. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0687095,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "2c2b5b39f37154911ea0255172e97a863d8df06329fc8af70e823c163c664c35"
-   }
-  },
-  "microfonildo-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/microfonildo.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786481950-27A1uFFoi8T8ukFSAvue",
-    "chatUrl": null,
-    "displayName": "Microfonildo — concept v1",
-    "sha256": "c8df3621e8c07de404dda05547bf7ed53e8c7b3936d296421843f79c86ae0412",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/microfonildo.md",
-    "sourceRecord": "references/tv/microfonildo/FONTE.md",
-    "receipt": "references/tv/microfonildo/microfonildo-concept-v1.png.json",
-    "notes": "Concept original aprovado por crítico externo no lote TV, com boom preso à mochila e membros livres para rig. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0679395,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "a85cb9095f4d687baee349087a96f91ab675c930dd5025d94488beb00ed67d20"
-   }
-  },
-  "controlino-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/controlino.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482502-z9ABk81t1FfwrCOeU9aD",
-    "chatUrl": null,
-    "displayName": "Controlino — concept v2",
-    "sha256": "81ffeb1a8ebc5bc42f210606cb166a08accd04680c96840e60eb4b641202faf6",
-    "styleReference": "references/tv/controlino/controlino-concept-v1.png",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/controlino-v2.md",
-    "sourceRecord": "references/tv/controlino/FONTE.md",
-    "receipt": "references/tv/controlino/controlino-concept-v2.png.json",
-    "notes": "Concept original aprovado por crítico externo após tornar o torso uma caixa rasa com painel e controles táteis dominantes. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.067924,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "1ea5d608e83c1194c3ee9412faa49173011a06cdb645fa1bf6adf07b26eb0216"
-   }
-  },
-  "capivara-reporter-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/capivara-reporter.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482881-56oH2DFgwfhnoRIpcLSd",
-    "chatUrl": null,
-    "displayName": "Capivara Repórter — concept v3",
-    "sha256": "7a94d77111c633ec38962d48e13895dab2f580ac1cc1f8a30b5efdaa460ad3d6",
-    "styleReference": "references/tv/capivara-reporter/capivara-reporter-concept-v2.png",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/capivara-reporter-v3.md",
-    "sourceRecord": "references/tv/capivara-reporter/FONTE.md",
-    "receipt": "references/tv/capivara-reporter/capivara-reporter-concept-v3.png.json",
-    "notes": "Concept original aprovado por crítico externo após mover o microfone para a alça esquerda anatômica e preservar mãos animais de quatro dígitos. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0679265,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "096feb1375b8479fb327bfdcc5c82ef2fec637ef55b3295917b1704b2d9b865a"
-   }
-  },
-  "chroma-rex-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/chroma-rex.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482001-t65jyhsc7ptGfZc8pjJg",
-    "chatUrl": null,
-    "displayName": "Chroma Rex — concept v1",
-    "sha256": "ca4bd22b63cc80291d4c522eafaa034daf789c2289390afcc09e5981d179cdfa",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/chroma-rex.md",
-    "sourceRecord": "references/tv/chroma-rex/FONTE.md",
-    "receipt": "references/tv/chroma-rex/chroma-rex-concept-v1.png.json",
-    "notes": "Concept original aprovado por crítico externo no lote TV, com crista geométrica, cauda curta e anatomia livre para rig. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.068811,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "b9c8a45454dc47b6f9e4d06a0e09552aef9a2e4e4d488b05ea335cf4107a0fac"
-   }
-  },
-  "fantoche-ibope-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/fantoche-ibope.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482528-DPE8rtJ4oFqFVuTruM4d",
-    "chatUrl": null,
-    "displayName": "Fantoche do Ibope — concept v2",
-    "sha256": "040026d756d2a2deac74c98b0763bbe19b2e321a7c04b434d590279ea2cbf6be",
-    "styleReference": "references/tv/fantoche-ibope/fantoche-ibope-concept-v1.png",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/fantoche-ibope-v2.md",
-    "sourceRecord": "references/tv/fantoche-ibope/FONTE.md",
-    "receipt": "references/tv/fantoche-ibope/fantoche-ibope-concept-v2.png.json",
-    "notes": "Concept original aprovado por crítico externo após embutir o mostrador no colete e mover a manivela ao quadril traseiro. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.0685965,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "c64e4dd9752896d45b66deb28a95424fc8612d653c66ccc7f509ad5c33f073b1"
-   }
-  },
-  "nuvem-tempo-concept": {
-   "artifactType": "image/webp",
-   "files": [
-    "public/img/source-concepts/nuvem-tempo.webp"
-   ],
-   "source": {
-    "kind": "openrouter-image-concept",
-    "assetId": "gen-1786482020-KZF2pYJJ8u3knM6e67Uq",
-    "chatUrl": null,
-    "displayName": "Nuvem do Tempo — concept v1",
-    "sha256": "e2d3f6ce765c45a9c003f230b2425e358b70ac743521acd9163c8a3e2117d2b4",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "factionReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/nuvem-tempo.md",
-    "sourceRecord": "references/tv/nuvem-tempo/FONTE.md",
-    "receipt": "references/tv/nuvem-tempo/nuvem-tempo-concept-v1.png.json",
-    "notes": "Concept original aprovado por crítico externo no lote TV, com capa curta, relâmpago montado e mapa no cinto. Sem marca, pessoa real ou personagem protegido."
-   },
-   "processing": {
-    "provider": "openrouter",
-    "model": "google/gemini-3.1-flash-image",
-    "reportedCostUsd": 0.06795,
-    "tools": [
-     "tools/gen-character-concept-openrouter.mjs",
-     "tools/concept-contact-sheet.mjs",
-     "sharp WebP quality 92"
-    ],
-    "finalSha256": "311d8a90491d3e9e4ea5a316f57af0a1251f126421ec5cf7f8473306b900c7bb"
-   }
-  },
-  "bozo": {
-   "files": [
-    "public/models/characters/bozo.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks75fkrm2j1yyyf6tka5zmb99d8b15y0",
-    "chatUrl": "https://mint.gg/chat/ph7ayd0zemw2qzgxdssjhq2nkh8b1k98",
-    "displayName": "Red Wing Clown (v1)",
-    "notes": "v1 shipped — rig Meshy compatível, anims OK. v2 semi-real (ks77tampj9a7ga8kwas1kfams58b0jnv) veio com rig quebrado (A-pose) e foi descartado; raws em /tmp/bozo-v2-raw.glb."
-   }
-  },
-  "canarinho": {
-   "files": [
-    "public/models/characters/canarinho.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks75jx39ypybs5hdvy34ej7fzh8b0cey",
-    "chatUrl": "https://mint.gg/chat/ph7amtaa6jc8bxf0wwsd70m9t58b0kcf",
-    "animationBatchId": "w577yjh3ypmh3v8m8kj6j94j018b04jw",
-    "displayName": "Crested Canary Striker (v2 semi-real)",
-    "notes": "v2 shipped. v1 (ks7acwqj31393mw93gxmszzfz18b1jmj) no histórico do chat; raw /tmp/canarinho-rigged-raw.glb."
-   },
-   "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
-  },
-  "proerd": {
-   "files": [
-    "public/models/characters/proerd.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks76jjngk5k8zpata2gaanbbns8b04wk",
-    "chatUrl": "https://mint.gg/chat/ph7ck93xmx6f615je4c95t95bd8b036w",
-    "animationBatchId": "w572044nc1wjf3whbhtpzshhcs8b1mbf",
-    "displayName": "Proerd Mane Lion (v2 camisa preta)",
-    "notes": "v2 shipped. v1 camisa branca (ks7c0tp5f9r4fnn3gz706jjwgx8b02mf) no histórico; raw /tmp/proerd-rigged-v2-raw.glb."
-   },
-   "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
-  },
-  "lobisomem": {
-   "files": [
-    "public/models/characters/lobisomem.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7c1p1aw78eexhnr7h669c7c98c45xp",
-    "chatUrl": "https://mint.gg/chat/ph75mntjhvedtew13r7kr9cvw18c48yf",
-    "animationBatchId": "w57f7ebe35rqaj14d713y224f18c5x69",
-    "displayName": "Midnight Fang Berserker",
-    "notes": "Lobo preto, forte e dentuço conforme references/mitico/lobisomem/. Prévia visual aprovada pelo dono em 10/08; GLB Mint PBR com skin nativa."
-   }
-  },
-  "bandeirante": {
-   "files": [
-    "public/models/characters/bandeirante.glb",
-    "public/models/anims/bandeirante/idle.glb",
-    "public/models/anims/bandeirante/walk.glb",
-    "public/models/anims/bandeirante/run.glb",
-    "public/models/anims/bandeirante/shoot.glb",
-    "public/models/anims/bandeirante/death.glb",
-    "public/models/anims/bandeirante/crouch.glb",
-    "public/models/anims/bandeirante/crouchwalk.glb",
-    "public/models/anims/bandeirante/jump.glb",
-    "public/models/anims/bandeirante/walk1h.glb",
-    "public/models/anims/bandeirante/walkfire.glb",
-    "public/models/anims/bandeirante/idle1h.glb",
-    "public/models/anims/bandeirante.glb",
-    "public/models/weapons/mosquete.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": null,
-    "chatUrl": null,
-    "displayName": "Bandeirante sombrio",
-    "notes": "Malha PBR gerada no Mint e introduzida em 4e198df; o assetId/chatUrl da geracao original nao foram registrados naquela sessao. Referencia e limite historico recuperados em references/mitico/bandeirante/FONTE.md. A ilha desconectada que atravessava o tronco foi removida no Blender 5.2."
-   },
-   "processing": {
-    "rigProvider": "meshy",
-    "rigTaskId": "019fee0d-4fc1-7bb2-b513-c5caea1bf69d",
-    "rigCostCredits": 5,
-    "tools": [
-     "tools/blender-loose-parts.py",
-     "tools/blender-static-decimate.py",
-     "tools/rig-meshy.mjs",
-     "tools/rig-tex-restore.mjs",
-     "tools/retarget-glb.mjs",
-     "tools/merge-anims.mjs"
-    ],
-    "notes": "Meshy forneceu skin humanoide; as texturas PBR compactas do Mint foram restauradas e os 11 clipes compartilhados foram retargetados por nome de osso. O GLB mesclado foi regenerado. Na terceira pessoa o personagem usa o mosquete Tripo histórico sem óptica; a balística permanece no id mosin."
-   }
-  },
-  "mosquete-bandeirante": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/weapons/mosquete.glb",
-    "references/mitico/bandeirante/mosquete/task.json",
-    "references/mitico/bandeirante/mosquete/rendered.webp"
-   ],
-   "source": {
-    "kind": "tripo3d-task",
-    "assetId": "dbdb0611-f804-4d05-9ef3-765bb8827207",
-    "displayName": "Mosquete histórico do Bandeirante",
-    "prompt": "game-ready original seventeenth-century Portuguese-Brazilian frontier matchlock musket, one isolated historical firearm, no scope, no optics, long dark hand-forged iron barrel, aged hardwood stock, simple period lock mechanism, no bayonet, no logo, no text, readable stylized low-poly silhouette for a CS 1.6-inspired browser game, centered pivot, horizontal object, physically based materials",
-    "taskRecordSha256": "34b8f0a1f98e8ceccb62de29e7b53bed438322e493ef5336b705e2da359a2f55",
-    "renderedImageSha256": "491ca3c5420f77c814d68234f34dc64f939cf915bfd97aa987dab3a212da5529"
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelVersion": "v3.1-20260211",
-    "modelTaskId": "dbdb0611-f804-4d05-9ef3-765bb8827207",
-    "modelCostCredits": 50,
-    "tools": [
-     "threejs-3d-generator",
-     "tools/blender-static-decimate.py",
-     "tools/optimize-props.mjs",
-     "Blender 5.2"
-    ],
-    "finalSha256": "b38531bc2a47026ffa2af1e72244e5ea228f7321ac97002a6030eb27876c11f0",
-    "notes": "O bruto Tripo tinha 1.741.330 triângulos e 51.833.604 bytes. Blender reduziu para 11.999 triângulos; texturas PBR foram compactadas para WebP 1024². Entrega final: um mesh, um material e 605.944 bytes. Asset de apresentação, não uma nova arma competitiva."
-   }
-  },
-  "caixa-dagua": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/caixa_dagua.glb",
-    "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d.json",
-    "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d-rendered_image.webp"
-   ],
-   "source": {
-    "kind": "tripo3d-task",
-    "assetId": "f38947f5-391b-495a-9e43-cebe3a26242d",
-    "displayName": "Caixa d'água de laje brasileira",
-    "prompt": "Brazilian rooftop water tank (caixa d'agua), black cylindrical plastic water tank mounted on a simple metal stand, very common on Brazilian favela rooftops, weathered plastic, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
-    "rawModel": "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d-pbr_model.glb",
-    "rawModelSha256": "b0d9a65f0174cf0e055d64807ca8fccca9f0422b98655f6a83971b7ab2f9b440",
-    "taskRecordSha256": "a3b872110867dcd74215c08e8907833adc9b026da041c8a451cfde6cbb72ad53",
-    "renderedImageSha256": "729336b26edc89e254898ec728ee7a5fc1dfed5ca1856d87a0b574f82648caee"
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelVersion": "v3.1-20260211",
-    "modelTaskId": "f38947f5-391b-495a-9e43-cebe3a26242d",
-    "modelCostCredits": 50,
-    "tools": [
-     "tools/optimize-static.mjs",
-     "gltf-transform 4.4.1",
-     "sharp WebP"
-    ],
-    "finalSha256": "9988a7f76ad860fdbd652c4321ad820250ea0cc201d08e98d61a4308a2ff1201",
-    "notes": "O PBR bruto do Tripo tinha 1.875.081 triângulos, três JPEG 4096² e 55.086.080 bytes. A entrega estática preserva albedo, normal e metal/rough em três WebP 512², 18.749 triângulos, um material e 638.592 bytes; LANDMARK4 mede os canais PBR no GLB que o Escadão desenha."
-   }
-  },
-  "camera-roxa": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/camera-roxa.glb",
-    "public/img/chars/camera-roxa.webp",
-    "public/models/anims/camera-roxa/idle.glb",
-    "public/models/anims/camera-roxa/walk.glb",
-    "public/models/anims/camera-roxa/run.glb",
-    "public/models/anims/camera-roxa/shoot.glb",
-    "public/models/anims/camera-roxa/death.glb",
-    "public/models/anims/camera-roxa/crouch.glb",
-    "public/models/anims/camera-roxa/crouchwalk.glb",
-    "public/models/anims/camera-roxa/jump.glb",
-    "public/models/anims/camera-roxa/idle1h.glb",
-    "public/models/anims/camera-roxa/walk1h.glb",
-    "public/models/anims/camera-roxa/walkfire.glb",
-    "public/models/anims/camera-roxa.glb"
-   ],
-   "source": {
-    "kind": "imagegen-concept",
-    "assetId": "019fedfa-e6fa-7073-9b13-c445713213cf",
-    "chatUrl": null,
-    "displayName": "Câmera Roxa",
-    "sha256": "f15efe1fdf0f98dc62048fe461c694902bb40710360f41bd801ad6d9c57f5677",
-    "conceptPreview": "public/img/source-concepts/camera-roxa.webp",
-    "conceptPreviewSha256": "7c7f3929dcd9171b02d9fed06592678a7ce5b5b1bf8be86649943ca0e8124cdc",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "prompt": "Robo humanoide alto de estudio de televisao, inteiramente original. Uma lente profissional unica e grande forma a cabeca e domina a silhueta. Carcaca roxa, modulos compactos de camera nos ombros, pequena luz vermelha de gravacao, juntas pretas praticas e maos articuladas de cinco dedos separados. Proporcoes humanas, pose A neutra, pernas separadas e pes paralelos. PBR semi-realista com formas legiveis de FPS classico e acabamento moderno. Sem arma fundida, cabo entre membros, texto, logotipo, marca, emissora, personagem protegido ou corpo de vidro.",
-    "notes": "Concept original do jogo, gerado a partir da direção visual aprovada da capa da TV. Prompt e hash do insumo estão em references/tv/camera-roxa/FONTE.md e prompts/tv/camera-roxa.md."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "f97ae748-4271-4288-9bda-97f36d5f0bdd",
-    "modelCostCredits": 30,
-    "rigProvider": "meshy",
-    "rigTaskId": "019fee1f-77f2-7e75-a070-4c9149ea7678",
-    "rigCostCredits": 5,
-    "discardedRigAttempts": [
-     {
-      "provider": "meshy",
-      "taskId": "019fee19-2d7d-7135-a008-4be35a621418",
-      "reason": "A régua real de seleção reprovou em 28,3 arestas ruins por 10 mil."
-     },
-     {
-      "provider": "tripo3d",
-      "taskId": "6f7eb606-3c61-4c50-b11a-5ea310243e59",
-      "costCredits": 25,
-      "reason": "Rig v2.5 degenerado: apenas seis ossos e um único lado do corpo."
-     }
-    ],
-    "tools": [
-     "tools/blender-character-prepare.py",
-     "tools/blender-character-audit.py",
-     "tools/blender-sharpen-skin.py",
-     "tools/blender-add-tv-badge.py",
-     "tools/rig-meshy.mjs",
-     "tools/retarget-glb.mjs",
-     "tools/eval/build-camera-grip-source.mjs",
-     "tools/blender-camera-grip-evidence.py",
-     "tools/eval/camera-grip-evidence-check.mjs"
-    ],
-    "finalSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
-    "notes": "Tripo v3.1 gerou o PBR; Blender 5.2 normalizou frente/piso, suavizou pesos com expoente 0,75 e incorporou o brasão original CRT+antenas+estrela da TV ao peito; Meshy forneceu a skin humanoide; os 11 clipes foram retargetados por personagem. A Icosphere vista no Blender é apenas o custom-shape que o importador cria para visualizar ossos, não conteúdo do GLB. Auditoria Blender rastreada em tools/eval/asset-evidence/camera-roxa/: 11.954 triângulos, 4 materiais, 1 skin/24 juntas, bounds 1,70 m e 1.363.256 bytes. Evidência Blender adicional preserva o GLB final e cobre M4 canônica, walk/crouch e grip A/B; o mutante desloca somente a arma e reprova contato. A investigação do volume preto encontrou uma única mesh glTF (char1), nenhum attachment node, e contrato/thumbnail/mount convergentes em M4; portanto o GLB não foi remodelado sem recaptura causal. Resultado real de seleção: P99 0,487 e 17,4 arestas ruins/10k, abaixo dos tetos 0,675 e 23,6. Repinado em 25/08/2026: o merge com a main trouxe o GLB recomprimido do #407 (geometria bit-idêntica, hash 1b40659628a8f3d3 nos POSITION); recibo Blender regenerado em tools/eval/asset-evidence/camera-roxa/grip."
-   }
-  },
-  "designer-ux": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/designer-ux.glb",
-    "public/img/chars/designer-ux.webp",
-    "public/img/source-concepts/designer-ux.webp",
-    "public/models/anims/designer-ux/idle.glb",
-    "public/models/anims/designer-ux/walk.glb",
-    "public/models/anims/designer-ux/run.glb",
-    "public/models/anims/designer-ux/shoot.glb",
-    "public/models/anims/designer-ux/death.glb",
-    "public/models/anims/designer-ux/crouch.glb",
-    "public/models/anims/designer-ux/crouchwalk.glb",
-    "public/models/anims/designer-ux/jump.glb",
-    "public/models/anims/designer-ux/idle1h.glb",
-    "public/models/anims/designer-ux/walk1h.glb",
-    "public/models/anims/designer-ux/walkfire.glb",
-    "public/models/anims/designer-ux.glb"
-   ],
-   "source": {
-    "kind": "openrouter-concept-meshy-model",
-    "assetId": "019ff23d-d83f-77e4-afff-7b5dd92748c3",
-    "chatUrl": null,
-    "displayName": "Designer de UX",
-    "sha256": "1f374dbf0ab0418a5645cbdc4eb2650507150a934e09ca4ad979b359952e6d0a",
-    "conceptPreview": "public/img/source-concepts/designer-ux.webp",
-    "conceptPreviewSha256": "d0f4ad77d590fecdf0c30127fbca3406d7fac2d45d01e03b953cde7e1eabacf7",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/designer-ux.md",
-    "notes": "Conceito original aprovado antes do 3D. A direção preserva roupa preta, óculos, tablet, leque de cores e garrafa térmica genérica, sem marca, pessoa real ou personagem protegido. Recibos e iterações ficam em references/nerdolas/designer-ux/."
-   },
-   "processing": {
-    "modelProvider": "meshy",
-    "modelTaskId": "019ff23d-d83f-77e4-afff-7b5dd92748c3",
-    "modelCostCredits": 15,
-    "rigProvider": "meshy",
-    "rigTaskId": "019ff266-62f0-72f0-a9c9-32e3faa30c58",
-    "rigCostCredits": 5,
-    "alternateModelProvider": "tripo3d",
-    "alternateModelTaskId": "dc1578a9-a3cc-4c9c-a144-08715063b344",
-    "alternateModelCostCredits": 60,
-    "tools": [
-     "tools/blender-character-audit.py",
-     "tools/blender-loose-parts.py",
-     "tmp/blender-designer-ux-v6-finish.py",
-     "tools/blender-alpha62-runtime-fixes.py",
-     "tools/eval/pilot-runtime-alpha62-check.mjs",
-     "tmp/designer-zero-specular.mjs",
-     "tmp/build-designer-posed-source.mjs",
-     "tmp/blender-designer-pose-evidence.py",
-     "tools/merge-anims.mjs",
-     "tools/eval/pose-inflate.mjs"
-    ],
-    "finalSha256": "77d1d5d6c6f7cce58846797bea4db5ffe21160f22f1880a7f440b8b1fdccfb07",
-    "notes": "O candidato Meshy venceu o Tripo no gate visual. Blender 5.2 restaurou a direção de materiais, rigidificou props e refez mãos/coque. O passe alpha.62 remove causalmente todo o componente cru Material_1 (placa traseira e janela), preserva um único tablet no quadril, reconstrói a térmica como metal opaco com tampa arredondada/bomba preta e amplia/desloca o leque para fora da perna. Rig, clipes, M4 e corpo ficaram fora da seleção. Recibo, mutante geométrico e views Blender ficam em tools/eval/asset-evidence/designer-ux/. Recaptura e nota externa continuam obrigatórias."
-   }
-  },
-  "lenda-lanhouse": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/lenda-lanhouse.glb",
-    "public/img/source-concepts/lenda-lanhouse.webp",
-    "public/models/anims/lenda-lanhouse/idle.glb",
-    "public/models/anims/lenda-lanhouse/walk.glb",
-    "public/models/anims/lenda-lanhouse/run.glb",
-    "public/models/anims/lenda-lanhouse/shoot.glb",
-    "public/models/anims/lenda-lanhouse/death.glb",
-    "public/models/anims/lenda-lanhouse/crouch.glb",
-    "public/models/anims/lenda-lanhouse/crouchwalk.glb",
-    "public/models/anims/lenda-lanhouse/jump.glb",
-    "public/models/anims/lenda-lanhouse/idle1h.glb",
-    "public/models/anims/lenda-lanhouse/walk1h.glb",
-    "public/models/anims/lenda-lanhouse/walkfire.glb",
-    "public/models/anims/lenda-lanhouse.glb"
-   ],
-   "source": {
-    "kind": "openrouter-concept-meshy-model",
-    "assetId": "019ff299-4947-7300-bf91-8e60bf775532",
-    "chatUrl": null,
-    "displayName": "Lenda da Lan House",
-    "sha256": "264cc734f857c1dde598e22ef4e07ad1a0b02896809be167edf125b1c6a001f0",
-    "conceptPreview": "public/img/source-concepts/lenda-lanhouse.webp",
-    "conceptPreviewSha256": "879f1b863b1b48feb97136d16f9f9ef2aa10ea6e2c224e3ee7ebede6d92c859f",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "prompts/nerdolas/lenda-lanhouse.md",
-    "notes": "Personagem original aprovado no concept v2: headset antigo sobre o boné, fichas, mouse de bolinha com cabo, cabo azul e torre genérica, sem marca, pessoa real ou personagem protegido. Procedência integral em references/nerdolas/lenda-lanhouse/FONTE.md."
-   },
-   "processing": {
-    "modelProvider": "meshy",
-    "modelTaskId": "019ff299-4947-7300-bf91-8e60bf775532",
-    "modelCostCredits": 15,
-    "rigProvider": "meshy",
-    "rigTaskId": "019ff29c-5a2f-7f9e-a649-ef0cd5c8c373",
-    "rigCostCredits": 5,
-    "alternateModelProvider": "tripo3d",
-    "alternateModelTaskId": "fd257481-3974-49e7-8cd8-236d7871017a",
-    "alternateModelCostCredits": 60,
-    "tools": [
-     "tmp/blender-lenda-lanhouse-finalize.py",
-     "tmp/make-lenda-lanhouse-v4-anims.mjs",
-     "tmp/blender-lenda-lanhouse-v4-inspect.py",
-     "tmp/lenda-lanhouse-v4-critic-contract.mjs",
-     "tools/blender-character-audit.py",
-     "tools/merge-anims.mjs",
-     "tools/eval/pose-inflate.mjs"
-    ],
-    "finalSha256": "19c0eabefc93a6c0acda0f25631cb7b3ca7d69806ab17abba844be6e94a969a0",
-    "notes": "Meshy forneceu modelo e rig; Blender removeu a mochila inventada, preservou headset e reconstruiu torre, mouse, fichas e cabo. A v4 fixa props baixos rigidamente em Hips, mantém a torre em Spine01, substitui somente crouch/death e preserva os demais clipes byte a byte. Crítico externo aprovou a correção offline; thumbnail e cinco capturas 1536x1024 continuam no handoff do agente único de browser."
-   }
-  },
-  "microfonildo": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/microfonildo.glb",
-    "public/img/source-concepts/microfonildo.webp",
-    "public/models/anims/microfonildo/idle.glb",
-    "public/models/anims/microfonildo/walk.glb",
-    "public/models/anims/microfonildo/run.glb",
-    "public/models/anims/microfonildo/shoot.glb",
-    "public/models/anims/microfonildo/death.glb",
-    "public/models/anims/microfonildo/crouch.glb",
-    "public/models/anims/microfonildo/crouchwalk.glb",
-    "public/models/anims/microfonildo/jump.glb",
-    "public/models/anims/microfonildo/idle1h.glb",
-    "public/models/anims/microfonildo/walk1h.glb",
-    "public/models/anims/microfonildo/walkfire.glb",
-    "public/models/anims/microfonildo.glb"
-   ],
-   "source": {
-    "kind": "openrouter-concept-tripo-blender-model",
-    "assetId": "a1224a28-61d1-40a0-98e0-ea2202f1599a",
-    "chatUrl": null,
-    "displayName": "Microfonildo",
-    "sha256": "c8df3621e8c07de404dda05547bf7ed53e8c7b3936d296421843f79c86ae0412",
-    "conceptPreview": "public/img/source-concepts/microfonildo.webp",
-    "conceptPreviewSha256": "a85cb9095f4d687baee349087a96f91ab675c930dd5025d94488beb00ed67d20",
-    "styleReference": "public/img/faccoes/tv.webp",
-    "prompt": "prompts/tv/microfonildo.md",
-    "notes": "Concept original aprovado no lote TV: criatura felpuda amarela com fones e boom dorsal, sem marca, pessoa real ou personagem protegido. Procedência integral em references/tv/microfonildo/FONTE.md."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "a1224a28-61d1-40a0-98e0-ea2202f1599a",
-    "modelCostCredits": 20,
-    "alternateModelProvider": "meshy",
-    "alternateModelTaskId": "019ff2b6-73bc-7b5d-ba33-cfd2694f4654",
-    "alternateModelCostCredits": 20,
-    "rigProvider": "meshy",
-    "rigTaskId": "019ff2be-7bd7-7b61-b6a3-62e932e702aa",
-    "rigCostCredits": 5,
-    "tools": [
-     "Blender 5.2.0 LTS",
-     "tmp/blender-microfonildo-build.py",
-     "tmp/blender-microfonildo-skin.py",
-     "tmp/microfonildo-v2-contract.mjs",
-     "tools/merge-anims.mjs",
-     "tools/eval/char-probe.mjs",
-     "tools/gen-foot-offsets.mjs",
-     "tools/eval/build-camera-grip-source.mjs",
-     "tools/blender-camera-grip-evidence.py",
-     "tools/eval/pilot-system-check.mjs",
-     "tools/eval/pilot-grip-evidence-check.mjs"
-    ],
-    "finalSha256": "7e45cde94e8faf3afcd133832440af2a015b8aabc9cb711eb65dfcdfe057e609",
-    "notes": "O candidato Tripo venceu o A/B e guiou uma reconstrução causal no Blender; a skin final usa esqueleto Meshy estável e pesos determinísticos por componente. O v2 preserva 11.388 triângulos, 12 materiais e 24 ossos; pelo angular, largura compacta e reels volumétricos são cobrados por mutantes reais. Os 11 clipes e o pack mesclado foram integrados; pés vêm do char-probe. Evidência Blender offline liga a M4 canônica às duas mãos em idle/walk/crouch e inclui A/B arma deslocada. A aprovação recebida cobre a pré-integração; thumbnail e cinco estados 1536×1024 no runtime continuam pendentes do agente único de browser."
-   }
-  },
-  "programador-virado": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/programador-virado.glb",
-    "public/img/chars/programador-virado.webp",
-    "public/img/source-concepts/programador-virado.webp",
-    "public/models/anims/programador-virado/idle.glb",
-    "public/models/anims/programador-virado/walk.glb",
-    "public/models/anims/programador-virado/run.glb",
-    "public/models/anims/programador-virado/shoot.glb",
-    "public/models/anims/programador-virado/death.glb",
-    "public/models/anims/programador-virado/crouch.glb",
-    "public/models/anims/programador-virado/crouchwalk.glb",
-    "public/models/anims/programador-virado/jump.glb",
-    "public/models/anims/programador-virado/idle1h.glb",
-    "public/models/anims/programador-virado/walk1h.glb",
-    "public/models/anims/programador-virado/walkfire.glb",
-    "public/models/anims/programador-virado.glb"
-   ],
-   "source": {
-    "kind": "imagegen-concept",
-    "assetId": "exec-2b10f8d1-8daa-47d5-8798-789db4063f42",
-    "chatUrl": null,
-    "displayName": "Programador Virado",
-    "sha256": "5c89542269c00b991c9924e1bd64f4371180c8dee4c703257788d1e50435924a",
-    "conceptPreview": "public/img/source-concepts/programador-virado.webp",
-    "conceptPreviewSha256": "cb48799ef8be9080b088b5b44b823126695c62d78262f1cb27ef9d68bb854d19",
-    "styleReference": "public/img/faccoes/nerdolas.webp",
-    "prompt": "Adulto brasileiro ficticio, cansado e com olheiras; cabelo cacheado baguncado, moletom preto, camiseta teal, calca de pijama xadrez, tenis gastos, teclado preso verticalmente a mochila compacta e caneca metalica generica no quadril. Corpo inteiro em A-pose simetrica, membros separados, cinco dedos, PBR estilizado-realista, sem arma, marca, texto, pessoa real ou personagem protegido.",
-    "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "6ae8a12f-3683-4c96-825e-da90f24aeb44",
-    "modelCostCredits": 30,
-    "rigProvider": "meshy",
-    "rigTaskId": "019fee2f-84bc-7482-995e-9c77e6c15097",
-    "rigCostCredits": 5,
-    "tools": [
-     "tools/blender-character-prepare.py",
-     "tools/blender-character-audit.py",
-     "tools/blender-add-cultural-gear.py",
-     "tools/blender-refine-cultural-gear.py",
-     "tools/blender-final-cultural-gear.py",
-     "tools/blender-programador-prop-sockets.py",
-     "tools/blender-pilot-model-final-fixes.py",
-     "tools/blender-pilot-causal-cleanup.py",
-     "tools/blender-alpha62-runtime-fixes.py",
-     "tools/blender-pilot-3q-renders.py",
-     "tools/blender-camera-grip-evidence.py",
-     "tools/rig-meshy.mjs",
-     "tools/rig-tex-restore.mjs",
-     "tools/retarget-glb.mjs",
-     "tools/finger-curl.mjs",
-     "tools/compact-curl-tips.mjs",
-     "tools/optimize-tribos.mjs",
-     "tools/rigidify-diagnostic-vertices.mjs",
-     "tools/capture-char-thumbnail.mjs",
-     "tools/eval/grip-ab-capture.mjs",
-     "tools/eval/select-mount.mjs",
-     "tools/eval/pilot-system-check.mjs",
-     "tools/eval/pilot-grip-evidence-check.mjs",
-     "tools/eval/pilot-runtime-alpha62-check.mjs"
-    ],
-    "finalSha256": "7468d7e4a693443a0d6597c24106c5e4c7756c7410c85f623173df9e1c87bce9",
-    "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide; os clipes foram retargetados sobre o GLB final. O passe alpha.62 apagou os materiais/componente conectados das asas, barras e teclado horizontal antes de reconstruir um único teclado vertical preso por suporte estreito à mochila. A caneca foi movida 4 cm para dentro e o elo Hips caiu a 0,034 m, em contato. Corpo, M4, rig e clipes ficaram fora da seleção. O GLB anterior real é o mutante programador-legado; recibos, audit, 3/4 e grip idle/walk/crouch ficam em tools/eval/asset-evidence/programador-virado/. Recaptura e nota externa continuam obrigatórias."
-   }
-  },
-  "motoca-cachorro-loko": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/motoca-cachorro-loko.glb",
-    "public/img/chars/motoca-cachorro-loko.webp",
-    "public/img/source-concepts/motoca-cachorro-loko.webp",
-    "public/models/anims/motoca-cachorro-loko/idle.glb",
-    "public/models/anims/motoca-cachorro-loko/walk.glb",
-    "public/models/anims/motoca-cachorro-loko/run.glb",
-    "public/models/anims/motoca-cachorro-loko/shoot.glb",
-    "public/models/anims/motoca-cachorro-loko/death.glb",
-    "public/models/anims/motoca-cachorro-loko/crouch.glb",
-    "public/models/anims/motoca-cachorro-loko/crouchwalk.glb",
-    "public/models/anims/motoca-cachorro-loko/jump.glb",
-    "public/models/anims/motoca-cachorro-loko/idle1h.glb",
-    "public/models/anims/motoca-cachorro-loko/walk1h.glb",
-    "public/models/anims/motoca-cachorro-loko/walkfire.glb",
-    "public/models/anims/motoca-cachorro-loko.glb"
-   ],
-   "source": {
-    "kind": "imagegen-concept",
-    "assetId": null,
-    "chatUrl": null,
-    "displayName": "Motoca Cachorro Loko",
-    "sha256": "346da522131a75c09fb397034c3b8277e6543336455302f6d57c6cbc792b87b4",
-    "conceptPreview": "public/img/source-concepts/motoca-cachorro-loko.webp",
-    "conceptPreviewSha256": "6d0d60b9978c72760490c799a713f30b9bc04e1c7211ca1a660ae8cdf4752905",
-    "styleReference": "public/img/faccoes/profissionais.webp",
-    "prompt": "Entregador brasileiro adulto ficticio, magro e atletico; capacete preto generico com viseira levantada, jaqueta impermeavel amarela com faixas refletivas, calca reforcada, botas gastas, luvas sem dedos, bag termica vermelho-laranja sem marca e suporte de telefone no peito. Corpo inteiro em A-pose simetrica, PBR estilizado-realista, sem moto, arma, marca, texto ou pessoa real.",
-    "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "d81e23c1-12ab-49b5-8a6b-673cd876a99a",
-    "modelCostCredits": 30,
-    "rigProvider": "meshy",
-    "rigTaskId": "019fee2f-84b0-749e-9d7e-078c57260d94",
-    "rigCostCredits": 5,
-    "tools": [
-     "tools/blender-character-prepare.py",
-     "tools/blender-character-audit.py",
-     "tools/blender-add-cultural-gear.py",
-     "tools/blender-refine-cultural-gear.py",
-     "tools/blender-final-cultural-gear.py",
-     "tools/blender-motoca-front-profile.py",
-     "tools/blender-motoca-rebuild-helmet-phone.py",
-     "tools/blender-pilot-model-final-fixes.py",
-     "tools/blender-pilot-causal-cleanup.py",
-     "tools/blender-alpha62-runtime-fixes.py",
-     "tools/blender-pilot-3q-renders.py",
-     "tools/blender-camera-grip-evidence.py",
-     "tools/blender-motoca-visual-mask.py",
-     "tools/rig-meshy.mjs",
-     "tools/rig-tex-restore.mjs",
-     "tools/retarget-glb.mjs",
-     "tools/finger-curl.mjs",
-     "tools/compact-curl-tips.mjs",
-     "tools/optimize-tribos.mjs",
-     "tools/rigidify-diagnostic-vertices.mjs",
-     "tools/capture-char-thumbnail.mjs",
-     "tools/eval/grip-ab-capture.mjs",
-     "tools/eval/select-mount.mjs",
-     "tools/eval/char-hard-surface-check.mjs",
-     "tools/eval/motoca-visual-check.mjs",
-     "tools/eval/pilot-grip-evidence-check.mjs",
-     "tools/eval/pilot-runtime-alpha62-check.mjs"
-    ],
-    "finalSha256": "e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b",
-    "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide. A casca full-face e o visor único já aprovados foram congelados por fingerprint geométrico. O passe alpha.62 removeu apenas telefone/tela/berço baixos e os recriou menores no alto do peito, com borda inferior do suporte a 1,279 m. Bag, jaqueta, capacete, corpo, rig, M4 e clipes ficaram fora da seleção. O GLB anterior real é o mutante motoca-telefone-baixo; HARD1-HARD10 preservam a casca e o grip Blender mede gatilho/foregrip em idle, walk e crouch, com mutante de arma deslocada. Recibos e views ficam em tools/eval/asset-evidence/motoca-cachorro-loko/. Recaptura e nota externa continuam obrigatórias."
-   }
-  },
-  "doidinho-bairro": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/characters/doidinho-bairro.glb",
-    "public/img/chars/doidinho-bairro.webp",
-    "public/img/source-concepts/doidinho-bairro.webp",
-    "public/models/anims/doidinho-bairro/idle.glb",
-    "public/models/anims/doidinho-bairro/walk.glb",
-    "public/models/anims/doidinho-bairro/run.glb",
-    "public/models/anims/doidinho-bairro/shoot.glb",
-    "public/models/anims/doidinho-bairro/death.glb",
-    "public/models/anims/doidinho-bairro/crouch.glb",
-    "public/models/anims/doidinho-bairro/crouchwalk.glb",
-    "public/models/anims/doidinho-bairro/jump.glb",
-    "public/models/anims/doidinho-bairro/idle1h.glb",
-    "public/models/anims/doidinho-bairro/walk1h.glb",
-    "public/models/anims/doidinho-bairro/walkfire.glb",
-    "public/models/anims/doidinho-bairro.glb"
-   ],
-   "source": {
-    "kind": "imagegen-concept",
-    "assetId": null,
-    "chatUrl": null,
-    "displayName": "Doidinho do Bairro",
-    "sha256": "2c09dd267df5eb842f72fe274c476258c9d6e7e53c41d68c09f1102014dc6670",
-    "conceptPreview": "public/img/source-concepts/doidinho-bairro.webp",
-    "conceptPreviewSha256": "44ce6cba736f14574365e12732a03dd1007adfa988554fea195557079aae2891",
-    "styleReference": "public/img/faccoes/noias.webp",
-    "prompt": "Adulto brasileiro ficticio, magro, alegre e respeitoso; bone teal torto, roupa incompatível em teal, laranja, verde-lima e roxo, colete utilitario, fios, bobinas e medidores inofensivos, mochila improvisada e tenis desencontrados. Corpo inteiro em A-pose simetrica, PBR estilizado-realista, sem estigma medico, arma, marca, texto, pessoa real ou personagem protegido.",
-    "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
-   },
-   "processing": {
-    "modelProvider": "tripo3d",
-    "modelTaskId": "f17e5cfc-9936-4fcc-ba0f-656cd5605850",
-    "modelCostCredits": 30,
-    "rigProvider": "meshy",
-    "rigTaskId": "019fee2f-84b5-76cf-a17f-8e5affe91dca",
-    "rigCostCredits": 5,
-    "tools": [
-     "tools/blender-character-prepare.py",
-     "tools/blender-character-audit.py",
-     "tools/blender-add-cultural-gear.py",
-     "tools/blender-final-cultural-gear.py",
-     "tools/blender-camera-grip-evidence.py",
-     "tools/blender-doidinho-meter-prop.py",
-     "tools/rig-meshy.mjs",
-     "tools/rig-tex-restore.mjs",
-     "tools/retarget-glb.mjs",
-     "tools/finger-curl.mjs",
-     "tools/compact-curl-tips.mjs",
-     "tools/optimize-tribos.mjs",
-     "tools/rigidify-diagnostic-vertices.mjs",
-     "tools/capture-char-thumbnail.mjs",
-     "tools/eval/grip-ab-capture.mjs",
-     "tools/eval/select-mount.mjs",
-     "tools/eval/pilot-system-check.mjs",
-     "tools/eval/pilot-grip-evidence-check.mjs"
-    ],
-    "finalSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
-    "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide. O laudo externo confirmou que a P90 raw já tinha carregador superior, corpo bullpup e arcos, mas o porte funcional global de 4 graus a projetava como apenas 0,110 m no frame servido. O mount visual específico do Doidinho agora usa -18 graus e projeta 0,292 m, acima dos 0,178 m da M4 aprovada, sem alterar roster, escala ou balística. Um segundo crítico isolou o grande disco branco da gambiarra como placeholder: o passe Blender compactou somente os materiais Gambiarra a 0,72x, moveu o conjunto para o centro traseiro da mochila e trocou creme por carcaça teal, aro cobre, mostrador escuro e seletor colorido. P90, roupa, corpo, rig e animações ficaram fora da seleção. Recibo/backup e figuras Blender 3/4/walk/crouch estão em tools/eval/asset-evidence/doidinho-bairro/; eval:pilot-system e eval:pilot-grip incluem mutantes causais. Recaptura do runtime e nota externa continuam obrigatórias."
-   }
-  },
-  "ferro_velho_pack": {
-   "files": [
-    "public/models/props/muro_carros.glb",
-    "public/models/props/fileira_carros.glb",
-    "public/models/props/monte_carros.glb",
-    "public/models/props/guindaste.glb",
-    "public/models/props/prensa_carros.glb",
-    "public/models/props/pilha_pneus.glb"
-   ],
-   "source": {
-    "kind": "mint-asset-pack",
-    "assetId": "th7cgpxf57s7twyjcj093qgryd8bad0k",
-    "chatUrl": "https://mint.gg/chat/ph71r1m6b16360w76zqqcrgv0x8bac0z",
-    "displayName": "Ferro Velho — pilhas e máquinas",
-    "notes": "6 itens estilizados (muro/fileira/monte de carros esmagados, guindaste, prensa, pneus). Substituem os photoscans Sketchfab (wall_of_cars 16MB, crushed_classic 13MB) — pack inteiro otimizado ≈ 1.7MB."
-   }
-  },
-  "havan_loja_pack": {
-   "files": [
-    "public/models/props/gondola_mercado.glb",
-    "public/models/props/gondola_eletro.glb",
-    "public/models/props/arara_roupas.glb",
-    "public/models/props/caixa_cobranca.glb",
-    "public/models/props/painel_tvs.glb",
-    "public/models/props/manequim.glb"
-   ],
-   "source": {
-    "kind": "mint-asset-pack",
-    "assetId": "th740djrzedmygcxze9g6gm77n8bakz8",
-    "chatUrl": "https://mint.gg/chat/ph77wh2w8c51eshb7qe6mragpx8ba18w",
-    "displayName": "Havan — loja de departamentos",
-    "notes": "6 itens (gôndolas cheias mercado/eletro, arara, caixa de cobrança, painel de TVs, manequim). Enchem a loja que era caixas cinzas."
-   }
-  },
-  "carros_br_pack": {
-   "files": [
-    "public/models/props/kombi.glb",
-    "public/models/props/opala.glb",
-    "public/models/props/chevette.glb",
-    "public/models/props/brasilia_vw.glb",
-    "public/models/props/saveiro.glb",
-    "public/models/props/fusca.glb",
-    "public/models/props/moto_cg.glb",
-    "public/models/props/onibus_urbano.glb"
-   ],
-   "source": {
-    "kind": "mint-asset-pack",
-    "assetId": "th79jvsrbgpr605gj2sf5p1f3x8bazc0",
-    "chatUrl": "https://mint.gg/chat/ph781r8fzxtc9stms7adfke76h8ba9ec",
-    "displayName": "Carros brasileiros clássicos",
-    "notes": "8 veículos BR estilizados a pedido do dono (look mais brasileiro). Sempre entram na seleção da Havan (MINT_BR em map_havan.js)."
-   }
-  },
-  "piscinao_pack": {
-   "files": [
-    "public/models/props/churrasqueira.glb",
-    "public/models/props/mesa_guardasol.glb",
-    "public/models/props/cooler.glb",
-    "public/models/props/boia.glb",
-    "public/models/props/placa_piscina.glb",
-    "public/models/props/caixa_som.glb"
-   ],
-   "source": {
-    "kind": "mint-asset-pack",
-    "assetId": "th7eg134zfrsmpzg4tb3rwr3b18ba3jb",
-    "chatUrl": "https://mint.gg/chat/ph73qfvhgzbtsvr2ezgrvzwswx8bbm9p",
-    "displayName": "Piscinão de Ramos — props",
-    "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
-   }
-  },
-  "jacare-corrego": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/ambient/jacare_corrego.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks77b4qhsj4an75taq2612yxfx8cqcts",
-    "chatUrl": "https://mint.gg/chat/ph71907xmzehws02vnam630e6n8cpypj",
-    "displayName": "Blocky Belly Caiman (jacaré-do-córrego)",
-    "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/jacare_corrego_mint.glb. Estático: pipeline Mint de animação é humanoide e não aplicou em quadrúpede (tentativa 18/08 falhou limpo). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale 1.8 => ~1,8 m (plans/21-FAUNA-CORREGO.md). Ficha: plans/21-FAUNA-CORREGO.md. Referências: references/fauna-corrego/."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
-    ],
-    "finalSha256": "4b77865d7dfd47a24a08d49fd59566000b1dc5ca03a84a8e5dc397bfc3fe674b"
-   }
-  },
-  "capivara-corrego": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/ambient/capivara_corrego.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks79v4k2gay9czmby61jjed1718cp93p",
-    "chatUrl": "https://mint.gg/chat/ph74kf2engyr4skt5kxkwxxrgd8cqmqt",
-    "displayName": "Sleepy Brown Rodent (capivara do córrego)",
-    "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
-    ],
-    "finalSha256": "d3ab0c0a22bd5e8072e75ec0ce43ccfeefcd0a2eff1160c0375b9dfc48baf227"
-   }
-  },
-  "mansao_jardim_pack": {
-   "files": [
-    "public/models/props/banco_jardim.glb",
-    "public/models/props/poste_jardim.glb",
-    "public/models/props/escultura_jardim.glb",
-    "public/models/props/vaso_tropical.glb",
-    "public/models/props/lounge_externo.glb",
-    "public/models/props/lampiao_fachada.glb"
-   ],
-   "source": {
-    "kind": "mint-asset-pack",
-    "assetId": "th72555dzek1m12a075crrrsbx8cp6zg",
-    "chatUrl": "https://mint.gg/chat/ph7c8dwhs8tg2vc9yapr267gy18cqdyx",
-    "displayName": "Mansão do Joá — jardim e casa",
-    "notes": "6 props (banco modernista, poste de jardim, escultura abstrata, vaso tropical, lounge externo, lampião de fachada). BUG-56: dono pediu models Mint pro jardim/casa. Otimizados via tools/optimize-props.mjs (webp 1024, ~1.6MB total, 1 material cada). Previews em tools/eval/asset-evidence/bug56-mint/."
-   }
-  },
-  "grama-corrego-01": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/grama_corrego_01.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks705h592kaq9f0nb9958hvqnh8cr3za",
-    "chatUrl": "https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj",
-    "displayName": "Arching Guinea Grass Tuft (capim alto de córrego)",
-    "frente": "v21-e-models",
-    "notes": "Lote 1 da frente E v2.1 (plans/13: \"faltou tambem usar os glbs de grama\"). Tufo de capim-colonião alto com palhas secas na base. GLB normalizado Mint (0,967 m de altura): integrar com scale ~0,72 => ~0,70 m. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_01-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "061a6302c0c6380cd11dbd436f7526a0053af5500d1e905d2a0e0f6dafe8354c"
-   }
-  },
-  "grama-corrego-02": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/grama_corrego_02.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7ad08zxczjzpywjqnges9eb18csm41",
-    "chatUrl": "https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2",
-    "displayName": "Urban Creekside Weeds (capim rasteiro de córrego)",
-    "frente": "v21-e-models",
-    "notes": "Lote 1 da frente E v2.1. Moita baixa e larga de capim rasteiro amarelado com folhas de mato. GLB normalizado pela largura (0,998 m): integrar com scale ~0,6 => ~0,60 m largo × ~0,37 m alto. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_02-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "cd24a8276e0e6e5339398a5d86b1cfa77b5d552e0ec7086eee6eed904cee550f"
-   }
-  },
-  "planta-corrego-taboa": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/planta_corrego_taboa.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks753dc0a7hfg2dz4shrb0cyan8cr0ye",
-    "chatUrl": "https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718",
-    "displayName": "Brown Spike Cattail (taboa de córrego)",
-    "frente": "v21-e-models",
-    "notes": "Lote 1 da frente E v2.1. Taboa (Typha) com duas espigas marrons, clássica de beira de córrego urbano. GLB normalizado (0,998 m de altura): integrar com scale ~1,4 => ~1,40 m. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taboa-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "2adc0485a0abba8dd37c0cfac12e0b9e9ad20ce357ceb4a22e658ed4d8e580a6"
-   }
-  },
-  "caixa-dagua-azul": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/caixa_dagua_azul.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7ct1jdj0ns0x8ppepbgea4cd8csxf4",
-    "chatUrl": "https://mint.gg/chat/ph7c3scfqprd8jp9bn92279kwx8csbkq",
-    "displayName": "Blue Ribbed Water Tank (caixa d'água azul de laje)",
-    "frente": "v21-e-models",
-    "notes": "Lote 2 da frente E v2.1 (pedido do dono: \"a caixa da agua ta horrivel ... fazer variacoes\"). Tanque azul de polietileno com tampa azul-escura e bocal, sobre tábua apoiada em blocos de concreto. GLB normalizado (0,998 m): integrar com scale ~1,4 => ~1,40 m com a base. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_azul-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "efa77a883b7609167d51bf4887b26c77451f45ace9ee8c6a9b914b9004470221"
-   }
-  },
-  "caixa-dagua-preta": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/caixa_dagua_preta.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7bnjam9pb489v7mg490a23z58crd1e",
-    "chatUrl": "https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv",
-    "displayName": "Ribbed Black Water Tank (caixa d'água preta de laje)",
-    "frente": "v21-e-models",
-    "notes": "Lote 2 da frente E v2.1. Tanque preto com tampa e extravasor, sobre anel de concreto. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_preta-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "d6cd1d44354f6cee66ef197f3f5ad2acb50c2e7ca7d9e34151b9946a17ba9bad"
-   }
-  },
-  "planta-corrego-taioba": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/planta_corrego_taioba.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7cb0vyms9gpcftq95yvjkgf18cs8cv",
-    "chatUrl": "https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4",
-    "displayName": "Heart Leaf Taioba (taioba de córrego)",
-    "frente": "v21-e-models",
-    "notes": "Lote 1 da frente E v2.1. Taioba (Xanthosoma) de folhas cordiformes. Primeira geração (asset ks7ac74ys39n51d9ktjvb0q1yh8csmne) falhou no estágio final do Mint e o retry_generation exigiu prompt novo em chat novo — esta é a v2. GLB normalizado pela profundidade (0,998 m; 0,963 m de altura): integrar com scale ~0,95 => ~0,90 m de altura. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taioba-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "2028681d3244aec692bd498b77681111268e3f7b7a87279a336c7a0082c699d7"
-   }
-  },
-  "caixa-dagua-fibra": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/caixa_dagua_fibra.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks748e4cqwpghd7aazkk4gc0t18cs8ss",
-    "chatUrl": "https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg",
-    "displayName": "Weathered Favela Water Tank (caixa d'água de fibra amarelada)",
-    "frente": "v21-e-models",
-    "notes": "Lote 2 da frente E v2.1. Fibrocimento amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto - a caixa das lajes mais antigas. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_fibra-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "69acf07a5f895426bbc0acc0e0c0d2a8b0744e298c2f741bb962ce2ec55c726d"
-   }
-  },
-  "varal-roupas-01": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/varal_roupas_01.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7dtxhh7gbkyf8941pet5vav58crdye",
-    "chatUrl": "https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p",
-    "displayName": "Colorful Laundry Varal (varal de corda)",
-    "frente": "v21-e-models",
-    "notes": "Lote 3 da frente E v2.1 (dono: \"as roupas penduradas no corrego, quebrada e campinho tao ruins, na laje tao bons, fazer variacoes\"). Corda com 6 peças coloridas em prendedores entre ganchos. GLB normalizado pela largura (1,0 m; 0,28 m de altura): integrar com scale ~3,0 => 3,0 m x 0,84 m. Calibrado pelo lajes_varal.glb (o varal bom do dono). Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_01-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52"
-   }
-  },
-  "varal-roupas-02": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/varal_roupas_02.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks75rz911e611m14c0pbah8c2h8crgr1",
-    "chatUrl": "https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg",
-    "displayName": "Colorful Laundry Varal (varal de chão)",
-    "frente": "v21-e-models",
-    "notes": "Lote 3 da frente E v2.1. Varal de chão em T de alumínio, 2 linhas com camisetas, jeans, meias e fronha. GLB normalizado pela largura (1,0 m; 0,81 m de altura): integrar com scale ~1,8 => 1,8 m x 1,46 m. Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_02-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969"
-   }
-  },
-  "pipa-papel": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/pipa_papel.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks73xs6xv6x07h45qp44r5w3en8cs1m1",
-    "chatUrl": "https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5",
-    "displayName": "Yellow Green Pipa",
-    "frente": "v21-e-models",
-    "notes": "Lote 3 da frente E v2.1 (dono: \"o lajes tem pipa mas nao tem animacao do pipa voando\"). Losango amarelo/verde com varetas em cruz e rabiola de 5 lacinhos. Rabiola é NÓ SEPARADO (\"rabiola\", 4.452 tris) com pivô na ponta inferior da vela T=(0,14;-0,12;0,02) para sway procedural - split por tools/split-props-v21.mjs. GLB normalizado pela altura total (1,0 m): integrar com scale ~1,6 => vela ~0,74 m. Evidência: tools/eval/asset-evidence/props-v21/pipa_papel-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/split-props-v21.mjs",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "3eb30ff784be191f42cd43667db94a619d19c3c42991dd871e0c666d57eea82f"
-   }
-  },
-  "helicoptero-pm": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/helicoptero_pm.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks75eehczen48e5qsvsygy4abh8cs92f",
-    "chatUrl": "https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0",
-    "displayName": "Blue White Police Copter",
-    "frente": "v21-e-models",
-    "notes": "Lote 3 da frente E v2.1 (dono: \"podemos por helicoptero\"). JetRanger azul/branco genérico, SEM logo/texto (veto editorial). Rotores são NÓS SEPARADOS com pivô no eixo: \"rotor_main\" (287 tris, T=(0,08;0,17;0), gira em Y) e \"rotor_tail\" (75 tris, T=(-0,44;0,02;-0,05), gira em Z) - split por tools/split-props-v21.mjs (malha Meshy vem em 1.155 ilhas; regra por centróide calibrada no render). GLB normalizado pelo comprimento (1,0 m): integrar com scale ~10 => ~10 m, disco ~8,7 m. Evidência: tools/eval/asset-evidence/props-v21/helicoptero_pm-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/split-props-v21.mjs",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "47ffa24e6d2e88b74d928b0df70c00f2de7356fe29b16c550ae1c055eb4d5773"
-   }
-  },
-  "aviao-faixa": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/aviao_faixa.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7cpept2cp0585aefgpq14t2n8crs4b",
-    "chatUrl": "https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r",
-    "displayName": "Red Stripe Sky Advertiser",
-    "frente": "v21-e-models",
-    "notes": "Lote 3 da frente E v2.1 (dono: \"aviao com faixa da praia, no caso da mansao do joa\"). Monomotor asa alta branco/vermelho puxando faixa em branco. Faixa é NÓ SEPARADO (\"faixa\", 1.397 tris, T=(0;0;-0,095)) para receber textura de texto via OpenRouter (outra frente) - split por tools/split-props-v21.mjs. GLB normalizado pelo comprimento total (1,0 m): integrar com scale ~12 => envergadura ~10,7 m, avião ~6 m, faixa ~6 m. Evidência: tools/eval/asset-evidence/props-v21/aviao_faixa-corrigido.png."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/split-props-v21.mjs",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "304d9c2bcd44d88fd0dd61fb739d0ed0e309da2563a3d81938061945f9a07aac"
-   }
-  },
-  "tatu-campo": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/ambient/tatu_campo.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks74gmjb885gffbbjekvc6xqs58csx4s",
-    "chatUrl": "https://mint.gg/chat/ph763essssxnfef5n923a7gn5d8crckr",
-    "displayName": "Segmented Tatu Walker (tatu do cerrado)",
-    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): tatu para fy_campomorro e praca_poderes. Mint text-to-3D (projeto CSBRASIL Audio Original); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/tatu_campo_mint.glb. Estático — locomoção procedural no ambientlife.js (_updateQuad). Quaternius não tem tatu em nenhum pack (varredura 19/08, FONTE.md do acervo). GLB normalizado: eixo longo no X, gira -PI/2 no normalizeModel."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
-    ],
-    "finalSha256": "ac3f9b6a8c597c8d3e00e0dedf782e0e46de49d2dc536d432e5fb60964fda08c"
-   }
-  },
-  "papagaio-poleiro": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/ambient/papagaio_poleiro.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks75k731vrspaapj5zfgtge68n8crdya",
-    "chatUrl": "https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4",
-    "displayName": "Yellow Chevron Parrot (papagaio de poleiro)",
-    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): papagaio de poleiro para fy_mansao (terraço) e parque_treta. Mint text-to-3D; mesmo pipeline do tatu. Estático — balanço procedural no ambientlife.js (_updateParrot): poleiro não precisa de voo, contornando a dívida de pássaro riggado CC0 (BUG-57). Modelo inclui o poleiro (barra) na malha."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
-    ],
-    "finalSha256": "57e9629fb044b11d4d3bd679c562c6e041edef762b53adf025b7ba0f463cf7dc"
-   }
-  },
-  "barata-urbana": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/ambient/barata_urbana.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks74jpd1cwg0xz1r5hx0j5yqs58crym6",
-    "chatUrl": "https://mint.gg/chat/ph7as0a36mqhp9rkcwz6c9mva58crs75",
-    "displayName": "Curved Antenna Ladybug (barata urbana)",
-    "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): barata para fy_corrego e atacadao_treta. Primeira geração (Rust Antenna Roach) bloqueada pela moderação do Mint; regenerada com prompt de garden beetle — saiu marrom-avermelhada oval com antenas longas, lê como barata americana na escala de 14 cm. Pipeline idem tatu. Estática — darta pelo _updateRat do ambientlife.js. Eixo longo no Z (sem rotação no normalizeModel). Textura ajustada (brighten 0,85 + saturate 0,5, só na baseColor — o modulate não toca Normal/ORM): o vermelho glossy do Mint saturava ainda mais sob o sol laranja do córrego (medido em captura); ficou o marrom-avermelhado da barata americana."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-ambient-fauna.mjs"
-    ],
-    "finalSha256": "c64ca20aa950077189fc75c9272da42ebc174fcb023ff8eec89e67ba6b271280"
-   }
-  },
-  "palmeira-imperial-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/palmeira_imperial.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7epscg489gta2x7zzm7he5398cvnfj",
-    "chatUrl": "https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw",
-    "displayName": "Imperial Grey Palm (palmeira-imperial)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site. Tronco escurecido no pipeline (trunkShade 0,55/0,47/0,40 nos 42% inferiores — tronco branco-liso reprovado pelo crítico)."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "d7d109d83dd0be4ab9e8a4df384cadac9d4e9099405fb8a899251e42ef42e625"
-   }
-  },
-  "palmeira-ravenala-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/palmeira_ravenala.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks72t6bgnx7ww5azs74rvbbpnh8cvv8a",
-    "chatUrl": "https://mint.gg/chat/ph7by8184sbqmx1ev8j068pvm58ctqm0",
-    "displayName": "Dramatic Fan Palm (ravenala, palmeira-leque)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Ravenala em leque vertical (4.428 tris). Par assimétrico enquadrando a fachada sul (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "c707dc3fbcec4d63ec2313f93eeecf29dcc1d5aaef5ba1de6fc889f336047d85"
-   }
-  },
-  "heliconia-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/heliconia.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks79v1kkj8c32e71yyab27bqds8cvm8a",
-    "chatUrl": "https://mint.gg/chat/ph7cp8y6gyxt9gg461m4rcg8th8ctwfd",
-    "displayName": "Red Claw Heliconia (helicônia)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Heliconia com brácteas vermelho-amarelas pendentes (4.052 tris). Maciços florais e drifts do jardim (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "88cd13ab1bde0723e58df647b5f79e6da28f68007bc8c13496546de9afdd60f7"
-   }
-  },
-  "costela-adao-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/costela_adao.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7csdx865mvkee2aa3chszfns8ct9qv",
-    "chatUrl": "https://mint.gg/chat/ph7byt97jw52ykdjrzezvwhsvn8cvsje",
-    "displayName": "Perforated Monstera Bush (costela-de-adão)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Monstera deliciosa de folhas fenestradas (3.472 tris). Massa de dossel dos maciços (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "82c5f004f3e8497398c0ba7299ed6239ffe514c461b9886ad933e8526246a277"
-   }
-  },
-  "bananeira-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/bananeira.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7b9rr467gcfq4yrk6bv9ds0x8cva40",
-    "chatUrl": "https://mint.gg/chat/ph71fmfkb7fb4433vac33xghd58cttan",
-    "displayName": "Drooping Paddle Banana Plant (bananeira)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Bananeira de pseudocaule verde e folhas-pá (4.684 tris). Substitui as bananeiras de esferas achatadas (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "b4b5e40537b248a02a4442803baf34c648bfcd035179f7abac0edfb7bcce4d5d"
-   }
-  },
-  "ixora-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/ixora.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7f812b4388pzarx4wekxf8g98ct1en",
-    "chatUrl": "https://mint.gg/chat/ph7dcr7emj3jkafn0yq98gantx8cvtvs",
-    "displayName": "Crimson Ixora Bloom (ixora)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Ixora arbustiva com buquês vermelho-alaranjados (4.496 tris). Manchas floridas nos canteiros, no lugar das bromélias de cone (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "b2bcbf7458f5f3052b35805cf57c9955177f2f52adaa23112762e6a973eb0710"
-   }
-  },
-  "agave-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/agave.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks79jrvhxqhgpb3nc92vtbz7v58cthdg",
-    "chatUrl": "https://mint.gg/chat/ph777k51x3zm7rh2p92m2yferh8cv41j",
-    "displayName": "Blue-Green Agave Rosette (agave)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Agave azul-esverdeada em roseta (4.688 tris). Acentos esculturais dos maciços e encosta (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "2f0c046535ee11fda49d4f2d8c40300e7946c4454fa89675196d843cb7ad314d"
-   }
-  },
-  "samambaia-jardim": {
-   "artifactType": "model/gltf-binary",
-   "files": [
-    "public/models/props/samambaia.glb"
-   ],
-   "source": {
-    "kind": "mint-model",
-    "assetId": "ks7966nvp1k21fd5e12aqq5cxn8cvq8f",
-    "chatUrl": "https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0",
-    "displayName": "Emerald Feather Clump (samambaia)",
-    "frente": "v21-c-mansao-jardim",
-    "notes": "Samambaia espada em touceira densa (3.757 tris). Forração instanciada dos drifts de borda (BUG-64). GLB normalizado ~1 m, pivô central."
-   },
-   "processing": {
-    "provider": "mint",
-    "model": "mint text-to-3d (normalized original_glb)",
-    "tools": [
-     "mint.gg",
-     "tools/optimize-props-v21.mjs"
-    ],
-    "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
-   }
+  "registryVersion": 1,
+  "assetRoot": "public/models/characters",
+  "mintProject": {
+    "projectId": "zd7cbsyxbzmf05b3w084t51ymd8c5hfr",
+    "name": "CS BRASIL - Time Mítico"
+  },
+  "assets": {
+    "designer-ux-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/designer-ux.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786471325-0iw3L3GKBd0QKp1IhGrN",
+        "chatUrl": null,
+        "displayName": "Designer de UX — concept v2",
+        "sha256": "1f374dbf0ab0418a5645cbdc4eb2650507150a934e09ca4ad979b359952e6d0a",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/designer-ux.md",
+        "notes": "Concept original aprovado por crítico externo após mover o tablet do antebraço para o quadril, separar tablet/leque e ampliar a leitura brasileira da garrafa térmica de pressão. PNG e recibo completos ficam em references/nerdolas/designer-ux/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0687805,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "sharp"
+        ],
+        "finalSha256": "d0f4ad77d590fecdf0c30127fbca3406d7fac2d45d01e03b953cde7e1eabacf7"
+      }
+    },
+    "lenda-lanhouse-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/lenda-lanhouse.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786471750-NXbAp4f8L8A8EWeGd0Ry",
+        "chatUrl": null,
+        "displayName": "Lenda da Lan House — concept v2",
+        "sha256": "264cc734f857c1dde598e22ef4e07ad1a0b02896809be167edf125b1c6a001f0",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/lenda-lanhouse.md",
+        "notes": "Concept original aprovado por crítico externo após mover o headset do pescoço para as orelhas, liberar clavículas/ombros para ADS e reforçar azul/verde/amarelo a 150 px. PNG e recibo completos ficam em references/nerdolas/lenda-lanhouse/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0688055,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "sharp"
+        ],
+        "finalSha256": "879f1b863b1b48feb97136d16f9f9ef2aa10ea6e2c224e3ee7ebede6d92c859f"
+      }
+    },
+    "mestre-rpg-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/mestre-rpg.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786472284-TcfXR82W5RAIIfH9ZIup",
+        "chatUrl": null,
+        "displayName": "Mestre do RPG — concept v1",
+        "sha256": "3c032cba5e4031403388c59ae31413fac3995867847370960251dbdf2a92b621",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/mestre-rpg.md",
+        "notes": "Concept original aprovado pelo crítico externo no review do lote Nerdolas a 150 px. PNG e recibo completos ficam em references/nerdolas/mestre-rpg/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.067898,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp"
+        ],
+        "finalSha256": "d9270d4bbe4eb0173ef9c4a0d84988feb7d8d69d0725e31ca1b41da5f2ac2b28"
+      }
+    },
+    "formata-vinte-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/formata-vinte.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786472332-xIMg2rCNrxHLpcOBmvkK",
+        "chatUrl": null,
+        "displayName": "Técnico que Formata por 20 — concept v1",
+        "sha256": "50adb9ec1ef07e480d5cd62eeb99dc04934907449664052df928174fc2cf50a6",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/formata-vinte.md",
+        "notes": "Concept original aprovado pelo crítico externo no review do lote Nerdolas a 150 px. PNG e recibo completos ficam em references/nerdolas/formata-vinte/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.068862,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp"
+        ],
+        "finalSha256": "a0f426c7ec7761647aa306f7219584e30de58b1fc21911d8c6579d66e7f22081"
+      }
+    },
+    "hacker-wifi-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/hacker-wifi.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786472716-l5cJrSDMmxvbN4I0B8HD",
+        "chatUrl": null,
+        "displayName": "Hacker do Wi-Fi — concept v2",
+        "sha256": "2a412c7e32982d96b1d6d369efb9acfca65ccfdd1a84be1e0283b3179c806ef4",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/hacker-wifi.md",
+        "notes": "Concept original aprovado pelo crítico externo após mover roteador e antenas para o backpack, bobina para o quadril esquerdo e reforçar blocos verde/amarelo/azul sem ocupar arma/ADS. PNG e recibo completos ficam em references/nerdolas/hacker-wifi/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.069009,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp"
+        ],
+        "finalSha256": "06dc5a27cceb600c188d382bd396eb67d713701939120988087c766f4b7e22f5"
+      }
+    },
+    "profeta-calcada-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/profeta-calcada.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786485672-BS7EnQjMQfVPGTJ5Tjmq",
+        "chatUrl": null,
+        "displayName": "Profeta da Calçada — concept v2",
+        "sha256": "66b24a09f719a41d7de73a4a330b60b54910fb8cfda2cdb877def57db2630807",
+        "styleReference": "references/noias/profeta-calcada/profeta-calcada-concept-v1.png",
+        "factionReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/profeta-calcada-v2.md",
+        "sourceRecord": "references/noias/profeta-calcada/FONTE.md",
+        "receipt": "references/noias/profeta-calcada/profeta-calcada-concept-v2.png.json",
+        "notes": "Concept original aprovado por crítico externo: três placas coloridas no lado anatômico esquerdo, ombro direito e mãos livres, humor absurdo sem estigma, pessoa real, texto ou símbolo político."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0689555,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "ImageMagick WebP quality 88"
+        ],
+        "finalSha256": "4e6e0e7bf2ed97b8793ef3a9465a4aa753b280c9402e6f251e2fd6512341f2b3"
+      }
+    },
+    "profeta-calcada": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/profeta-calcada.glb",
+        "public/img/chars/profeta-calcada.webp",
+        "public/img/source-concepts/profeta-calcada.webp",
+        "public/models/anims/profeta-calcada/idle.glb",
+        "public/models/anims/profeta-calcada/walk.glb",
+        "public/models/anims/profeta-calcada/run.glb",
+        "public/models/anims/profeta-calcada/shoot.glb",
+        "public/models/anims/profeta-calcada/death.glb",
+        "public/models/anims/profeta-calcada/crouch.glb",
+        "public/models/anims/profeta-calcada/crouchwalk.glb",
+        "public/models/anims/profeta-calcada/jump.glb",
+        "public/models/anims/profeta-calcada/idle1h.glb",
+        "public/models/anims/profeta-calcada/walk1h.glb",
+        "public/models/anims/profeta-calcada/walkfire.glb",
+        "public/models/anims/profeta-calcada.glb"
+      ],
+      "source": {
+        "kind": "openrouter-concept-tripo-blender-model",
+        "assetId": "b5fda366-1488-4360-9557-f73c7a43cf5f",
+        "chatUrl": null,
+        "displayName": "Profeta da Calçada",
+        "sha256": "66b24a09f719a41d7de73a4a330b60b54910fb8cfda2cdb877def57db2630807",
+        "conceptPreview": "public/img/source-concepts/profeta-calcada.webp",
+        "conceptPreviewSha256": "4e6e0e7bf2ed97b8793ef3a9465a4aa753b280c9402e6f251e2fd6512341f2b3",
+        "styleReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/profeta-calcada-v2.md",
+        "sourceRecord": "references/noias/profeta-calcada/FONTE.md",
+        "notes": "Concept v2 aprovado por crítico externo: três placas coloridas no lado anatômico esquerdo abaixo do ombro, ombro direito e mãos livres, humor absurdo sem estigma, pessoa real, marca ou texto político. Procedência integral em references/noias/profeta-calcada/FONTE.md."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "b5fda366-1488-4360-9557-f73c7a43cf5f",
+        "modelCostCredits": 60,
+        "alternateModelProvider": "meshy",
+        "alternateModelTaskId": "019ff2e6-ea23-7e82-8cf2-e710335f54c3",
+        "alternateModelCostCredits": 15,
+        "rigProvider": "meshy",
+        "rigTaskId": "019ff2ee-e8f9-7edb-a5e4-a3bc7f8a3e1f",
+        "rigCostCredits": 5,
+        "tools": [
+          "references/noias/profeta-calcada/3d/separate-props-sockets.py",
+          "tools/retarget-glb.mjs",
+          "references/noias/profeta-calcada/3d/ground-clamp.mjs",
+          "references/noias/profeta-calcada/3d/contract-animation-v2.mjs",
+          "dedup+textureCompress(webp 1024)+prune(keepLeaves) via @gltf-transform — padrão tools/optimize-tribos.mjs",
+          "tools/merge-anims.mjs",
+          "tools/eval/char-probe.mjs",
+          "tools/gen-foot-offsets.mjs",
+          "tools/eval/select-mount.mjs",
+          "tools/eval/prop-hitbox-probe.mjs",
+          "tools/capture-char-thumbnail.mjs",
+          "tools/capture-character-game.mjs"
+        ],
+        "finalSha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+        "sourceFinalSha256": "dddbe95df8a6544cbc10a2a0173463a0f06c9cb945bc886da23b7b6b93223628",
+        "notes": "Candidato v2 (rig/animação refeitos) aprovado em revisão adversarial limpa; malha/textura da v1 preservadas (14.405 tris, 24 joints). A entrega em public/ aplica SÓ a otimização padrão da casa (textura 4096 PNG → 1024 WebP, dedup+prune com keepLeaves para não podar os sockets de mão vazios): 14.176 KB → 616 KB; os 11 clipes são byte-idênticos ao recibo blender-v2. Contrato v2 re-rodado VERDE no arquivo de entrega. Props rígidos (placas/case) fora do hitbox por guarda em glbchars.js (probe com mutante em tools/eval/asset-evidence/profeta-calcada/). Grip medido no caminho da seleção (select-mount): dMaoR=0, dMaoL=0,003. Pés: walk -0,0278 / run -0,0242 na tabela gerada. Aprovação cobre pré-integração; capturas runtime 1536×1024 aguardam revisor limpo."
+      }
+    },
+    "mago-cobre-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/mago-cobre.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786486643-EPnkQjbzQhOPMhEVBbXW",
+        "chatUrl": null,
+        "displayName": "Mago do Cobre — concept v4",
+        "sha256": "87b7c5e815de34ee13ddf2947f7433bc02b22437f9bf9d7f216170d8230b1f46",
+        "styleReference": "references/noias/mago-cobre/mago-cobre-concept-v3.png",
+        "factionReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/mago-cobre-v4.md",
+        "sourceRecord": "references/noias/mago-cobre/FONTE.md",
+        "receipt": "references/noias/mago-cobre/mago-cobre-concept-v4.png.json",
+        "notes": "Concept original aprovado por crítico externo: bobinas, sucata, bainha/alicate e pingente reunidos no quadril anatômico esquerdo, com peito, braços, mãos e ADS livres."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0684375,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "ImageMagick WebP quality 88"
+        ],
+        "finalSha256": "42ec99159954e5b031865f4e24e07eb0f3e01e6f7024c1ad5876f2608e09e29f"
+      }
+    },
+    "dj-bluetooth-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/dj-bluetooth.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786486652-NsK1hkZNMA6QZUVPitVP",
+        "chatUrl": null,
+        "displayName": "DJ do Bluetooth — concept v4",
+        "sha256": "e0e3dfc09a097b494ad2a91393563c0ea6af86e7acb002baaf8f741117ac6927",
+        "styleReference": "references/noias/dj-bluetooth/dj-bluetooth-concept-v3.png",
+        "factionReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/dj-bluetooth-v4.md",
+        "sourceRecord": "references/noias/dj-bluetooth/FONTE.md",
+        "receipt": "references/noias/dj-bluetooth/dj-bluetooth-concept-v4.png.json",
+        "notes": "Concept original aprovado por crítico externo: caixa, knobs e cabo agrupados no dorso/quadril anatômico esquerdo, com peito, mãos e lado oposto livres."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.068573,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "ImageMagick WebP quality 88"
+        ],
+        "finalSha256": "c5b4602632e9712ccf31c23a259ba9797e8e06068ad42de40dc322f18c06ec52"
+      }
+    },
+    "noia-esquina-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/noia-esquina.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786486987-PU77xFhW0yz0bmcfPLlz",
+        "chatUrl": null,
+        "displayName": "Nóia da Esquina — concept v5",
+        "sha256": "78ebe7389a280ed2e6cfc20a0c179f85d5b4a46c28d87270fdef032da40631bf",
+        "styleReference": "references/noias/noia-esquina/noia-esquina-concept-v4.png",
+        "factionReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/noia-esquina-v5.md",
+        "sourceRecord": "references/noias/noia-esquina/FONTE.md",
+        "receipt": "references/noias/noia-esquina/noia-esquina-concept-v5.png.json",
+        "notes": "Concept original aprovado por crítico externo: rádio, antena, cabo curto e pochete agrupados no quadril anatômico esquerdo, sem cruzar peito, mãos ou ADS."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.067934,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "ImageMagick WebP quality 88"
+        ],
+        "finalSha256": "3278f20a2f2ee802ea756eb5a6285a41837835b9fcd8a286da9b9c3d86d87105"
+      }
+    },
+    "ciclista-sem-freio-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/ciclista-sem-freio.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786487372-z8ykjUyDrfm0j4LzOW1Q",
+        "chatUrl": null,
+        "displayName": "Ciclista Sem Freio — concept v6",
+        "sha256": "11fea8b044bf22102d9c30b197a958df2e4f36f58d6d43e4046305756390ef50",
+        "styleReference": "references/noias/ciclista-sem-freio/ciclista-sem-freio-concept-v5.png",
+        "factionReference": "public/img/faccoes/noias.webp",
+        "prompt": "prompts/noias/ciclista-sem-freio-v6.md",
+        "sourceRecord": "references/noias/ciclista-sem-freio/FONTE.md",
+        "receipt": "references/noias/ciclista-sem-freio/ciclista-sem-freio-concept-v6.png.json",
+        "notes": "Concept original aprovado por crítico externo: dois meio-arcos abertos aninhados e V curto no dorso/anca anatômica esquerda, com peito, mãos, ADS e lado oposto livres."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0681715,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "ImageMagick WebP quality 88"
+        ],
+        "finalSha256": "fbd79f8d2645448d414c501969a01567fbc52bbf7d4a1915d32a26268defffa4"
+      }
+    },
+    "otaku-bairro-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/otaku-bairro.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786473307-VUay7r3nETWSkxs56XN1",
+        "chatUrl": null,
+        "displayName": "Otaku do Bairro — concept v3",
+        "sha256": "931cc34adb28f6ead3fffdae6f022088691a883dbaaec6c2077a32931a3c281a",
+        "styleReference": "references/nerdolas/otaku-bairro/otaku-bairro-concept-v2.png",
+        "prompt": "prompts/nerdolas/otaku-bairro.md",
+        "notes": "Concept original aprovado pelo crítico externo após concentrar os quatro pins na alça esquerda do personagem e liberar por completo a alça/ombro direitos para coronha e ADS. PNG e recibo completos ficam em references/nerdolas/otaku-bairro/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.067885,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp"
+        ],
+        "finalSha256": "80fcba5d05d883c2535da252562a6bdd03c3b1d0e59a3ce95d041e0fcac78d6a"
+      }
+    },
+    "streamer-tiltado-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/streamer-tiltado.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786472096-93DXJq7LahEXH8JIHa5X",
+        "chatUrl": null,
+        "displayName": "Streamer Tiltado — concept v2",
+        "sha256": "6ba3997de6f62f6765f53c5b34367d0fc898ac952f8dfe3b879dfb414a393e0e",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/streamer-tiltado.md",
+        "notes": "Concept original aprovado pelo crítico externo após rigidificar ring light e webcam no mount traseiro, afastar ambos do plano do tronco e ampliar emissivos legíveis a 150 px, preservando ombros, braços e ADS livres. PNG e recibo completos ficam em references/nerdolas/streamer-tiltado/."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0680215,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "sharp"
+        ],
+        "finalSha256": "d3d0fd4725fde16f512ae102661ee73015f65ca9800c219ae522bd19d8e40b61"
+      }
+    },
+    "camera-roxa-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/camera-roxa.webp"
+      ],
+      "source": {
+        "kind": "imagegen-concept",
+        "assetId": "019fedfa-e6fa-7073-9b13-c445713213cf",
+        "chatUrl": null,
+        "displayName": "Câmera Roxa — concept v1",
+        "sha256": "f15efe1fdf0f98dc62048fe461c694902bb40710360f41bd801ad6d9c57f5677",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/camera-roxa.md",
+        "notes": "Concept original rastreado do piloto Câmera Roxa; pessoa, emissora, texto, logotipo e personagem protegido foram vetados no prompt. PNG e recibo completos ficam em references/tv/camera-roxa/."
+      },
+      "processing": {
+        "provider": "imagegen",
+        "model": null,
+        "reportedCostUsd": null,
+        "tools": [
+          "sharp"
+        ],
+        "finalSha256": "7c7f3929dcd9171b02d9fed06592678a7ce5b5b1bf8be86649943ca0e8124cdc"
+      }
+    },
+    "claquete-verde-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/claquete-verde.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482872-L6j2afmfTd6BWnxIQl2f",
+        "chatUrl": null,
+        "displayName": "Claquete Verde — concept v3",
+        "sha256": "0d375c19821370b0ac1ba84267414d9db7899de1841e85cb9b15abbd3f688dad",
+        "styleReference": "references/tv/claquete-verde/claquete-verde-concept-v2.png",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/claquete-verde-v3.md",
+        "sourceRecord": "references/tv/claquete-verde/FONTE.md",
+        "receipt": "references/tv/claquete-verde/claquete-verde-concept-v3.png.json",
+        "notes": "Concept original aprovado por crítico externo após integrar a borda listrada numa única ombreira e compactar as pernas. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0687095,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "2c2b5b39f37154911ea0255172e97a863d8df06329fc8af70e823c163c664c35"
+      }
+    },
+    "microfonildo-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/microfonildo.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786481950-27A1uFFoi8T8ukFSAvue",
+        "chatUrl": null,
+        "displayName": "Microfonildo — concept v1",
+        "sha256": "c8df3621e8c07de404dda05547bf7ed53e8c7b3936d296421843f79c86ae0412",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/microfonildo.md",
+        "sourceRecord": "references/tv/microfonildo/FONTE.md",
+        "receipt": "references/tv/microfonildo/microfonildo-concept-v1.png.json",
+        "notes": "Concept original aprovado por crítico externo no lote TV, com boom preso à mochila e membros livres para rig. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0679395,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "a85cb9095f4d687baee349087a96f91ab675c930dd5025d94488beb00ed67d20"
+      }
+    },
+    "controlino-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/controlino.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482502-z9ABk81t1FfwrCOeU9aD",
+        "chatUrl": null,
+        "displayName": "Controlino — concept v2",
+        "sha256": "81ffeb1a8ebc5bc42f210606cb166a08accd04680c96840e60eb4b641202faf6",
+        "styleReference": "references/tv/controlino/controlino-concept-v1.png",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/controlino-v2.md",
+        "sourceRecord": "references/tv/controlino/FONTE.md",
+        "receipt": "references/tv/controlino/controlino-concept-v2.png.json",
+        "notes": "Concept original aprovado por crítico externo após tornar o torso uma caixa rasa com painel e controles táteis dominantes. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.067924,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "1ea5d608e83c1194c3ee9412faa49173011a06cdb645fa1bf6adf07b26eb0216"
+      }
+    },
+    "capivara-reporter-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/capivara-reporter.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482881-56oH2DFgwfhnoRIpcLSd",
+        "chatUrl": null,
+        "displayName": "Capivara Repórter — concept v3",
+        "sha256": "7a94d77111c633ec38962d48e13895dab2f580ac1cc1f8a30b5efdaa460ad3d6",
+        "styleReference": "references/tv/capivara-reporter/capivara-reporter-concept-v2.png",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/capivara-reporter-v3.md",
+        "sourceRecord": "references/tv/capivara-reporter/FONTE.md",
+        "receipt": "references/tv/capivara-reporter/capivara-reporter-concept-v3.png.json",
+        "notes": "Concept original aprovado por crítico externo após mover o microfone para a alça esquerda anatômica e preservar mãos animais de quatro dígitos. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0679265,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "096feb1375b8479fb327bfdcc5c82ef2fec637ef55b3295917b1704b2d9b865a"
+      }
+    },
+    "chroma-rex-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/chroma-rex.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482001-t65jyhsc7ptGfZc8pjJg",
+        "chatUrl": null,
+        "displayName": "Chroma Rex — concept v1",
+        "sha256": "ca4bd22b63cc80291d4c522eafaa034daf789c2289390afcc09e5981d179cdfa",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/chroma-rex.md",
+        "sourceRecord": "references/tv/chroma-rex/FONTE.md",
+        "receipt": "references/tv/chroma-rex/chroma-rex-concept-v1.png.json",
+        "notes": "Concept original aprovado por crítico externo no lote TV, com crista geométrica, cauda curta e anatomia livre para rig. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.068811,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "b9c8a45454dc47b6f9e4d06a0e09552aef9a2e4e4d488b05ea335cf4107a0fac"
+      }
+    },
+    "fantoche-ibope-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/fantoche-ibope.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482528-DPE8rtJ4oFqFVuTruM4d",
+        "chatUrl": null,
+        "displayName": "Fantoche do Ibope — concept v2",
+        "sha256": "040026d756d2a2deac74c98b0763bbe19b2e321a7c04b434d590279ea2cbf6be",
+        "styleReference": "references/tv/fantoche-ibope/fantoche-ibope-concept-v1.png",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/fantoche-ibope-v2.md",
+        "sourceRecord": "references/tv/fantoche-ibope/FONTE.md",
+        "receipt": "references/tv/fantoche-ibope/fantoche-ibope-concept-v2.png.json",
+        "notes": "Concept original aprovado por crítico externo após embutir o mostrador no colete e mover a manivela ao quadril traseiro. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.0685965,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "c64e4dd9752896d45b66deb28a95424fc8612d653c66ccc7f509ad5c33f073b1"
+      }
+    },
+    "nuvem-tempo-concept": {
+      "artifactType": "image/webp",
+      "files": [
+        "public/img/source-concepts/nuvem-tempo.webp"
+      ],
+      "source": {
+        "kind": "openrouter-image-concept",
+        "assetId": "gen-1786482020-KZF2pYJJ8u3knM6e67Uq",
+        "chatUrl": null,
+        "displayName": "Nuvem do Tempo — concept v1",
+        "sha256": "e2d3f6ce765c45a9c003f230b2425e358b70ac743521acd9163c8a3e2117d2b4",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "factionReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/nuvem-tempo.md",
+        "sourceRecord": "references/tv/nuvem-tempo/FONTE.md",
+        "receipt": "references/tv/nuvem-tempo/nuvem-tempo-concept-v1.png.json",
+        "notes": "Concept original aprovado por crítico externo no lote TV, com capa curta, relâmpago montado e mapa no cinto. Sem marca, pessoa real ou personagem protegido."
+      },
+      "processing": {
+        "provider": "openrouter",
+        "model": "google/gemini-3.1-flash-image",
+        "reportedCostUsd": 0.06795,
+        "tools": [
+          "tools/gen-character-concept-openrouter.mjs",
+          "tools/concept-contact-sheet.mjs",
+          "sharp WebP quality 92"
+        ],
+        "finalSha256": "311d8a90491d3e9e4ea5a316f57af0a1251f126421ec5cf7f8473306b900c7bb"
+      }
+    },
+    "bozo": {
+      "files": [
+        "public/models/characters/bozo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75fkrm2j1yyyf6tka5zmb99d8b15y0",
+        "chatUrl": "https://mint.gg/chat/ph7ayd0zemw2qzgxdssjhq2nkh8b1k98",
+        "displayName": "Red Wing Clown (v1)",
+        "notes": "v1 shipped — rig Meshy compatível, anims OK. v2 semi-real (ks77tampj9a7ga8kwas1kfams58b0jnv) veio com rig quebrado (A-pose) e foi descartado; raws em /tmp/bozo-v2-raw.glb."
+      }
+    },
+    "canarinho": {
+      "files": [
+        "public/models/characters/canarinho.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75jx39ypybs5hdvy34ej7fzh8b0cey",
+        "chatUrl": "https://mint.gg/chat/ph7amtaa6jc8bxf0wwsd70m9t58b0kcf",
+        "animationBatchId": "w577yjh3ypmh3v8m8kj6j94j018b04jw",
+        "displayName": "Crested Canary Striker (v2 semi-real)",
+        "notes": "v2 shipped. v1 (ks7acwqj31393mw93gxmszzfz18b1jmj) no histórico do chat; raw /tmp/canarinho-rigged-raw.glb."
+      },
+      "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
+    },
+    "proerd": {
+      "files": [
+        "public/models/characters/proerd.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks76jjngk5k8zpata2gaanbbns8b04wk",
+        "chatUrl": "https://mint.gg/chat/ph7ck93xmx6f615je4c95t95bd8b036w",
+        "animationBatchId": "w572044nc1wjf3whbhtpzshhcs8b1mbf",
+        "displayName": "Proerd Mane Lion (v2 camisa preta)",
+        "notes": "v2 shipped. v1 camisa branca (ks7c0tp5f9r4fnn3gz706jjwgx8b02mf) no histórico; raw /tmp/proerd-rigged-v2-raw.glb."
+      },
+      "removed": "RESTAURADO 22/07 (o usuário quis remover Tia Zilá e Influencer, não estes — leitura corrigida)"
+    },
+    "lobisomem": {
+      "files": [
+        "public/models/characters/lobisomem.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7c1p1aw78eexhnr7h669c7c98c45xp",
+        "chatUrl": "https://mint.gg/chat/ph75mntjhvedtew13r7kr9cvw18c48yf",
+        "animationBatchId": "w57f7ebe35rqaj14d713y224f18c5x69",
+        "displayName": "Midnight Fang Berserker",
+        "notes": "Lobo preto, forte e dentuço conforme references/mitico/lobisomem/. Prévia visual aprovada pelo dono em 10/08; GLB Mint PBR com skin nativa."
+      }
+    },
+    "bandeirante": {
+      "files": [
+        "public/models/characters/bandeirante.glb",
+        "public/models/anims/bandeirante/idle.glb",
+        "public/models/anims/bandeirante/walk.glb",
+        "public/models/anims/bandeirante/run.glb",
+        "public/models/anims/bandeirante/shoot.glb",
+        "public/models/anims/bandeirante/death.glb",
+        "public/models/anims/bandeirante/crouch.glb",
+        "public/models/anims/bandeirante/crouchwalk.glb",
+        "public/models/anims/bandeirante/jump.glb",
+        "public/models/anims/bandeirante/walk1h.glb",
+        "public/models/anims/bandeirante/walkfire.glb",
+        "public/models/anims/bandeirante/idle1h.glb",
+        "public/models/anims/bandeirante.glb",
+        "public/models/weapons/mosquete.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": null,
+        "chatUrl": null,
+        "displayName": "Bandeirante sombrio",
+        "notes": "Malha PBR gerada no Mint e introduzida em 4e198df; o assetId/chatUrl da geracao original nao foram registrados naquela sessao. Referencia e limite historico recuperados em references/mitico/bandeirante/FONTE.md. A ilha desconectada que atravessava o tronco foi removida no Blender 5.2."
+      },
+      "processing": {
+        "rigProvider": "meshy",
+        "rigTaskId": "019fee0d-4fc1-7bb2-b513-c5caea1bf69d",
+        "rigCostCredits": 5,
+        "tools": [
+          "tools/blender-loose-parts.py",
+          "tools/blender-static-decimate.py",
+          "tools/rig-meshy.mjs",
+          "tools/rig-tex-restore.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/merge-anims.mjs"
+        ],
+        "notes": "Meshy forneceu skin humanoide; as texturas PBR compactas do Mint foram restauradas e os 11 clipes compartilhados foram retargetados por nome de osso. O GLB mesclado foi regenerado. Na terceira pessoa o personagem usa o mosquete Tripo histórico sem óptica; a balística permanece no id mosin."
+      }
+    },
+    "mosquete-bandeirante": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/weapons/mosquete.glb",
+        "references/mitico/bandeirante/mosquete/task.json",
+        "references/mitico/bandeirante/mosquete/rendered.webp"
+      ],
+      "source": {
+        "kind": "tripo3d-task",
+        "assetId": "dbdb0611-f804-4d05-9ef3-765bb8827207",
+        "displayName": "Mosquete histórico do Bandeirante",
+        "prompt": "game-ready original seventeenth-century Portuguese-Brazilian frontier matchlock musket, one isolated historical firearm, no scope, no optics, long dark hand-forged iron barrel, aged hardwood stock, simple period lock mechanism, no bayonet, no logo, no text, readable stylized low-poly silhouette for a CS 1.6-inspired browser game, centered pivot, horizontal object, physically based materials",
+        "taskRecordSha256": "34b8f0a1f98e8ceccb62de29e7b53bed438322e493ef5336b705e2da359a2f55",
+        "renderedImageSha256": "491ca3c5420f77c814d68234f34dc64f939cf915bfd97aa987dab3a212da5529"
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelVersion": "v3.1-20260211",
+        "modelTaskId": "dbdb0611-f804-4d05-9ef3-765bb8827207",
+        "modelCostCredits": 50,
+        "tools": [
+          "threejs-3d-generator",
+          "tools/blender-static-decimate.py",
+          "tools/optimize-props.mjs",
+          "Blender 5.2"
+        ],
+        "finalSha256": "b38531bc2a47026ffa2af1e72244e5ea228f7321ac97002a6030eb27876c11f0",
+        "notes": "O bruto Tripo tinha 1.741.330 triângulos e 51.833.604 bytes. Blender reduziu para 11.999 triângulos; texturas PBR foram compactadas para WebP 1024². Entrega final: um mesh, um material e 605.944 bytes. Asset de apresentação, não uma nova arma competitiva."
+      }
+    },
+    "caixa-dagua": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_dagua.glb",
+        "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d.json",
+        "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d-rendered_image.webp"
+      ],
+      "source": {
+        "kind": "tripo3d-task",
+        "assetId": "f38947f5-391b-495a-9e43-cebe3a26242d",
+        "displayName": "Caixa d'água de laje brasileira",
+        "prompt": "Brazilian rooftop water tank (caixa d'agua), black cylindrical plastic water tank mounted on a simple metal stand, very common on Brazilian favela rooftops, weathered plastic, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+        "rawModel": "public/models/props/caixa_dagua/f38947f5-391b-495a-9e43-cebe3a26242d-pbr_model.glb",
+        "rawModelSha256": "b0d9a65f0174cf0e055d64807ca8fccca9f0422b98655f6a83971b7ab2f9b440",
+        "taskRecordSha256": "a3b872110867dcd74215c08e8907833adc9b026da041c8a451cfde6cbb72ad53",
+        "renderedImageSha256": "729336b26edc89e254898ec728ee7a5fc1dfed5ca1856d87a0b574f82648caee"
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelVersion": "v3.1-20260211",
+        "modelTaskId": "f38947f5-391b-495a-9e43-cebe3a26242d",
+        "modelCostCredits": 50,
+        "tools": [
+          "tools/optimize-static.mjs",
+          "gltf-transform 4.4.1",
+          "sharp WebP"
+        ],
+        "finalSha256": "9988a7f76ad860fdbd652c4321ad820250ea0cc201d08e98d61a4308a2ff1201",
+        "notes": "O PBR bruto do Tripo tinha 1.875.081 triângulos, três JPEG 4096² e 55.086.080 bytes. A entrega estática preserva albedo, normal e metal/rough em três WebP 512², 18.749 triângulos, um material e 638.592 bytes; LANDMARK4 mede os canais PBR no GLB que o Escadão desenha."
+      }
+    },
+    "camera-roxa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/camera-roxa.glb",
+        "public/img/chars/camera-roxa.webp",
+        "public/models/anims/camera-roxa/idle.glb",
+        "public/models/anims/camera-roxa/walk.glb",
+        "public/models/anims/camera-roxa/run.glb",
+        "public/models/anims/camera-roxa/shoot.glb",
+        "public/models/anims/camera-roxa/death.glb",
+        "public/models/anims/camera-roxa/crouch.glb",
+        "public/models/anims/camera-roxa/crouchwalk.glb",
+        "public/models/anims/camera-roxa/jump.glb",
+        "public/models/anims/camera-roxa/idle1h.glb",
+        "public/models/anims/camera-roxa/walk1h.glb",
+        "public/models/anims/camera-roxa/walkfire.glb",
+        "public/models/anims/camera-roxa.glb"
+      ],
+      "source": {
+        "kind": "imagegen-concept",
+        "assetId": "019fedfa-e6fa-7073-9b13-c445713213cf",
+        "chatUrl": null,
+        "displayName": "Câmera Roxa",
+        "sha256": "f15efe1fdf0f98dc62048fe461c694902bb40710360f41bd801ad6d9c57f5677",
+        "conceptPreview": "public/img/source-concepts/camera-roxa.webp",
+        "conceptPreviewSha256": "7c7f3929dcd9171b02d9fed06592678a7ce5b5b1bf8be86649943ca0e8124cdc",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "prompt": "Robo humanoide alto de estudio de televisao, inteiramente original. Uma lente profissional unica e grande forma a cabeca e domina a silhueta. Carcaca roxa, modulos compactos de camera nos ombros, pequena luz vermelha de gravacao, juntas pretas praticas e maos articuladas de cinco dedos separados. Proporcoes humanas, pose A neutra, pernas separadas e pes paralelos. PBR semi-realista com formas legiveis de FPS classico e acabamento moderno. Sem arma fundida, cabo entre membros, texto, logotipo, marca, emissora, personagem protegido ou corpo de vidro.",
+        "notes": "Concept original do jogo, gerado a partir da direção visual aprovada da capa da TV. Prompt e hash do insumo estão em references/tv/camera-roxa/FONTE.md e prompts/tv/camera-roxa.md."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "f97ae748-4271-4288-9bda-97f36d5f0bdd",
+        "modelCostCredits": 30,
+        "rigProvider": "meshy",
+        "rigTaskId": "019fee1f-77f2-7e75-a070-4c9149ea7678",
+        "rigCostCredits": 5,
+        "discardedRigAttempts": [
+          {
+            "provider": "meshy",
+            "taskId": "019fee19-2d7d-7135-a008-4be35a621418",
+            "reason": "A régua real de seleção reprovou em 28,3 arestas ruins por 10 mil."
+          },
+          {
+            "provider": "tripo3d",
+            "taskId": "6f7eb606-3c61-4c50-b11a-5ea310243e59",
+            "costCredits": 25,
+            "reason": "Rig v2.5 degenerado: apenas seis ossos e um único lado do corpo."
+          }
+        ],
+        "tools": [
+          "tools/blender-character-prepare.py",
+          "tools/blender-character-audit.py",
+          "tools/blender-sharpen-skin.py",
+          "tools/blender-add-tv-badge.py",
+          "tools/rig-meshy.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/eval/build-camera-grip-source.mjs",
+          "tools/blender-camera-grip-evidence.py",
+          "tools/eval/camera-grip-evidence-check.mjs"
+        ],
+        "finalSha256": "8af17491600d5aa64a0234dffa0f261bbc71e93c32507791a107eb1f05348081",
+        "notes": "Tripo v3.1 gerou o PBR; Blender 5.2 normalizou frente/piso, suavizou pesos com expoente 0,75 e incorporou o brasão original CRT+antenas+estrela da TV ao peito; Meshy forneceu a skin humanoide; os 11 clipes foram retargetados por personagem. A Icosphere vista no Blender é apenas o custom-shape que o importador cria para visualizar ossos, não conteúdo do GLB. Auditoria Blender rastreada em tools/eval/asset-evidence/camera-roxa/: 11.954 triângulos, 4 materiais, 1 skin/24 juntas, bounds 1,70 m e 1.363.256 bytes. Evidência Blender adicional preserva o GLB final e cobre M4 canônica, walk/crouch e grip A/B; o mutante desloca somente a arma e reprova contato. A investigação do volume preto encontrou uma única mesh glTF (char1), nenhum attachment node, e contrato/thumbnail/mount convergentes em M4; portanto o GLB não foi remodelado sem recaptura causal. Resultado real de seleção: P99 0,487 e 17,4 arestas ruins/10k, abaixo dos tetos 0,675 e 23,6. Repinado em 25/08/2026: o merge com a main trouxe o GLB recomprimido do #407 (geometria bit-idêntica, hash 1b40659628a8f3d3 nos POSITION); recibo Blender regenerado em tools/eval/asset-evidence/camera-roxa/grip."
+      }
+    },
+    "designer-ux": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/designer-ux.glb",
+        "public/img/chars/designer-ux.webp",
+        "public/img/source-concepts/designer-ux.webp",
+        "public/models/anims/designer-ux/idle.glb",
+        "public/models/anims/designer-ux/walk.glb",
+        "public/models/anims/designer-ux/run.glb",
+        "public/models/anims/designer-ux/shoot.glb",
+        "public/models/anims/designer-ux/death.glb",
+        "public/models/anims/designer-ux/crouch.glb",
+        "public/models/anims/designer-ux/crouchwalk.glb",
+        "public/models/anims/designer-ux/jump.glb",
+        "public/models/anims/designer-ux/idle1h.glb",
+        "public/models/anims/designer-ux/walk1h.glb",
+        "public/models/anims/designer-ux/walkfire.glb",
+        "public/models/anims/designer-ux.glb"
+      ],
+      "source": {
+        "kind": "openrouter-concept-meshy-model",
+        "assetId": "019ff23d-d83f-77e4-afff-7b5dd92748c3",
+        "chatUrl": null,
+        "displayName": "Designer de UX",
+        "sha256": "1f374dbf0ab0418a5645cbdc4eb2650507150a934e09ca4ad979b359952e6d0a",
+        "conceptPreview": "public/img/source-concepts/designer-ux.webp",
+        "conceptPreviewSha256": "d0f4ad77d590fecdf0c30127fbca3406d7fac2d45d01e03b953cde7e1eabacf7",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/designer-ux.md",
+        "notes": "Conceito original aprovado antes do 3D. A direção preserva roupa preta, óculos, tablet, leque de cores e garrafa térmica genérica, sem marca, pessoa real ou personagem protegido. Recibos e iterações ficam em references/nerdolas/designer-ux/."
+      },
+      "processing": {
+        "modelProvider": "meshy",
+        "modelTaskId": "019ff23d-d83f-77e4-afff-7b5dd92748c3",
+        "modelCostCredits": 15,
+        "rigProvider": "meshy",
+        "rigTaskId": "019ff266-62f0-72f0-a9c9-32e3faa30c58",
+        "rigCostCredits": 5,
+        "alternateModelProvider": "tripo3d",
+        "alternateModelTaskId": "dc1578a9-a3cc-4c9c-a144-08715063b344",
+        "alternateModelCostCredits": 60,
+        "tools": [
+          "tools/blender-character-audit.py",
+          "tools/blender-loose-parts.py",
+          "tmp/blender-designer-ux-v6-finish.py",
+          "tools/blender-alpha62-runtime-fixes.py",
+          "tools/eval/pilot-runtime-alpha62-check.mjs",
+          "tmp/designer-zero-specular.mjs",
+          "tmp/build-designer-posed-source.mjs",
+          "tmp/blender-designer-pose-evidence.py",
+          "tools/merge-anims.mjs",
+          "tools/eval/pose-inflate.mjs"
+        ],
+        "finalSha256": "77d1d5d6c6f7cce58846797bea4db5ffe21160f22f1880a7f440b8b1fdccfb07",
+        "notes": "O candidato Meshy venceu o Tripo no gate visual. Blender 5.2 restaurou a direção de materiais, rigidificou props e refez mãos/coque. O passe alpha.62 remove causalmente todo o componente cru Material_1 (placa traseira e janela), preserva um único tablet no quadril, reconstrói a térmica como metal opaco com tampa arredondada/bomba preta e amplia/desloca o leque para fora da perna. Rig, clipes, M4 e corpo ficaram fora da seleção. Recibo, mutante geométrico e views Blender ficam em tools/eval/asset-evidence/designer-ux/. Recaptura e nota externa continuam obrigatórias."
+      }
+    },
+    "lenda-lanhouse": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/lenda-lanhouse.glb",
+        "public/img/source-concepts/lenda-lanhouse.webp",
+        "public/models/anims/lenda-lanhouse/idle.glb",
+        "public/models/anims/lenda-lanhouse/walk.glb",
+        "public/models/anims/lenda-lanhouse/run.glb",
+        "public/models/anims/lenda-lanhouse/shoot.glb",
+        "public/models/anims/lenda-lanhouse/death.glb",
+        "public/models/anims/lenda-lanhouse/crouch.glb",
+        "public/models/anims/lenda-lanhouse/crouchwalk.glb",
+        "public/models/anims/lenda-lanhouse/jump.glb",
+        "public/models/anims/lenda-lanhouse/idle1h.glb",
+        "public/models/anims/lenda-lanhouse/walk1h.glb",
+        "public/models/anims/lenda-lanhouse/walkfire.glb",
+        "public/models/anims/lenda-lanhouse.glb"
+      ],
+      "source": {
+        "kind": "openrouter-concept-meshy-model",
+        "assetId": "019ff299-4947-7300-bf91-8e60bf775532",
+        "chatUrl": null,
+        "displayName": "Lenda da Lan House",
+        "sha256": "264cc734f857c1dde598e22ef4e07ad1a0b02896809be167edf125b1c6a001f0",
+        "conceptPreview": "public/img/source-concepts/lenda-lanhouse.webp",
+        "conceptPreviewSha256": "879f1b863b1b48feb97136d16f9f9ef2aa10ea6e2c224e3ee7ebede6d92c859f",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "prompts/nerdolas/lenda-lanhouse.md",
+        "notes": "Personagem original aprovado no concept v2: headset antigo sobre o boné, fichas, mouse de bolinha com cabo, cabo azul e torre genérica, sem marca, pessoa real ou personagem protegido. Procedência integral em references/nerdolas/lenda-lanhouse/FONTE.md."
+      },
+      "processing": {
+        "modelProvider": "meshy",
+        "modelTaskId": "019ff299-4947-7300-bf91-8e60bf775532",
+        "modelCostCredits": 15,
+        "rigProvider": "meshy",
+        "rigTaskId": "019ff29c-5a2f-7f9e-a649-ef0cd5c8c373",
+        "rigCostCredits": 5,
+        "alternateModelProvider": "tripo3d",
+        "alternateModelTaskId": "fd257481-3974-49e7-8cd8-236d7871017a",
+        "alternateModelCostCredits": 60,
+        "tools": [
+          "tmp/blender-lenda-lanhouse-finalize.py",
+          "tmp/make-lenda-lanhouse-v4-anims.mjs",
+          "tmp/blender-lenda-lanhouse-v4-inspect.py",
+          "tmp/lenda-lanhouse-v4-critic-contract.mjs",
+          "tools/blender-character-audit.py",
+          "tools/merge-anims.mjs",
+          "tools/eval/pose-inflate.mjs"
+        ],
+        "finalSha256": "19c0eabefc93a6c0acda0f25631cb7b3ca7d69806ab17abba844be6e94a969a0",
+        "notes": "Meshy forneceu modelo e rig; Blender removeu a mochila inventada, preservou headset e reconstruiu torre, mouse, fichas e cabo. A v4 fixa props baixos rigidamente em Hips, mantém a torre em Spine01, substitui somente crouch/death e preserva os demais clipes byte a byte. Crítico externo aprovou a correção offline; thumbnail e cinco capturas 1536x1024 continuam no handoff do agente único de browser."
+      }
+    },
+    "microfonildo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/microfonildo.glb",
+        "public/img/source-concepts/microfonildo.webp",
+        "public/models/anims/microfonildo/idle.glb",
+        "public/models/anims/microfonildo/walk.glb",
+        "public/models/anims/microfonildo/run.glb",
+        "public/models/anims/microfonildo/shoot.glb",
+        "public/models/anims/microfonildo/death.glb",
+        "public/models/anims/microfonildo/crouch.glb",
+        "public/models/anims/microfonildo/crouchwalk.glb",
+        "public/models/anims/microfonildo/jump.glb",
+        "public/models/anims/microfonildo/idle1h.glb",
+        "public/models/anims/microfonildo/walk1h.glb",
+        "public/models/anims/microfonildo/walkfire.glb",
+        "public/models/anims/microfonildo.glb"
+      ],
+      "source": {
+        "kind": "openrouter-concept-tripo-blender-model",
+        "assetId": "a1224a28-61d1-40a0-98e0-ea2202f1599a",
+        "chatUrl": null,
+        "displayName": "Microfonildo",
+        "sha256": "c8df3621e8c07de404dda05547bf7ed53e8c7b3936d296421843f79c86ae0412",
+        "conceptPreview": "public/img/source-concepts/microfonildo.webp",
+        "conceptPreviewSha256": "a85cb9095f4d687baee349087a96f91ab675c930dd5025d94488beb00ed67d20",
+        "styleReference": "public/img/faccoes/tv.webp",
+        "prompt": "prompts/tv/microfonildo.md",
+        "notes": "Concept original aprovado no lote TV: criatura felpuda amarela com fones e boom dorsal, sem marca, pessoa real ou personagem protegido. Procedência integral em references/tv/microfonildo/FONTE.md."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "a1224a28-61d1-40a0-98e0-ea2202f1599a",
+        "modelCostCredits": 20,
+        "alternateModelProvider": "meshy",
+        "alternateModelTaskId": "019ff2b6-73bc-7b5d-ba33-cfd2694f4654",
+        "alternateModelCostCredits": 20,
+        "rigProvider": "meshy",
+        "rigTaskId": "019ff2be-7bd7-7b61-b6a3-62e932e702aa",
+        "rigCostCredits": 5,
+        "tools": [
+          "Blender 5.2.0 LTS",
+          "tmp/blender-microfonildo-build.py",
+          "tmp/blender-microfonildo-skin.py",
+          "tmp/microfonildo-v2-contract.mjs",
+          "tools/merge-anims.mjs",
+          "tools/eval/char-probe.mjs",
+          "tools/gen-foot-offsets.mjs",
+          "tools/eval/build-camera-grip-source.mjs",
+          "tools/blender-camera-grip-evidence.py",
+          "tools/eval/pilot-system-check.mjs",
+          "tools/eval/pilot-grip-evidence-check.mjs"
+        ],
+        "finalSha256": "7e45cde94e8faf3afcd133832440af2a015b8aabc9cb711eb65dfcdfe057e609",
+        "notes": "O candidato Tripo venceu o A/B e guiou uma reconstrução causal no Blender; a skin final usa esqueleto Meshy estável e pesos determinísticos por componente. O v2 preserva 11.388 triângulos, 12 materiais e 24 ossos; pelo angular, largura compacta e reels volumétricos são cobrados por mutantes reais. Os 11 clipes e o pack mesclado foram integrados; pés vêm do char-probe. Evidência Blender offline liga a M4 canônica às duas mãos em idle/walk/crouch e inclui A/B arma deslocada. A aprovação recebida cobre a pré-integração; thumbnail e cinco estados 1536×1024 no runtime continuam pendentes do agente único de browser."
+      }
+    },
+    "programador-virado": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/programador-virado.glb",
+        "public/img/chars/programador-virado.webp",
+        "public/img/source-concepts/programador-virado.webp",
+        "public/models/anims/programador-virado/idle.glb",
+        "public/models/anims/programador-virado/walk.glb",
+        "public/models/anims/programador-virado/run.glb",
+        "public/models/anims/programador-virado/shoot.glb",
+        "public/models/anims/programador-virado/death.glb",
+        "public/models/anims/programador-virado/crouch.glb",
+        "public/models/anims/programador-virado/crouchwalk.glb",
+        "public/models/anims/programador-virado/jump.glb",
+        "public/models/anims/programador-virado/idle1h.glb",
+        "public/models/anims/programador-virado/walk1h.glb",
+        "public/models/anims/programador-virado/walkfire.glb",
+        "public/models/anims/programador-virado.glb"
+      ],
+      "source": {
+        "kind": "imagegen-concept",
+        "assetId": "exec-2b10f8d1-8daa-47d5-8798-789db4063f42",
+        "chatUrl": null,
+        "displayName": "Programador Virado",
+        "sha256": "5c89542269c00b991c9924e1bd64f4371180c8dee4c703257788d1e50435924a",
+        "conceptPreview": "public/img/source-concepts/programador-virado.webp",
+        "conceptPreviewSha256": "cb48799ef8be9080b088b5b44b823126695c62d78262f1cb27ef9d68bb854d19",
+        "styleReference": "public/img/faccoes/nerdolas.webp",
+        "prompt": "Adulto brasileiro ficticio, cansado e com olheiras; cabelo cacheado baguncado, moletom preto, camiseta teal, calca de pijama xadrez, tenis gastos, teclado preso verticalmente a mochila compacta e caneca metalica generica no quadril. Corpo inteiro em A-pose simetrica, membros separados, cinco dedos, PBR estilizado-realista, sem arma, marca, texto, pessoa real ou personagem protegido.",
+        "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "6ae8a12f-3683-4c96-825e-da90f24aeb44",
+        "modelCostCredits": 30,
+        "rigProvider": "meshy",
+        "rigTaskId": "019fee2f-84bc-7482-995e-9c77e6c15097",
+        "rigCostCredits": 5,
+        "tools": [
+          "tools/blender-character-prepare.py",
+          "tools/blender-character-audit.py",
+          "tools/blender-add-cultural-gear.py",
+          "tools/blender-refine-cultural-gear.py",
+          "tools/blender-final-cultural-gear.py",
+          "tools/blender-programador-prop-sockets.py",
+          "tools/blender-pilot-model-final-fixes.py",
+          "tools/blender-pilot-causal-cleanup.py",
+          "tools/blender-alpha62-runtime-fixes.py",
+          "tools/blender-pilot-3q-renders.py",
+          "tools/blender-camera-grip-evidence.py",
+          "tools/rig-meshy.mjs",
+          "tools/rig-tex-restore.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/finger-curl.mjs",
+          "tools/compact-curl-tips.mjs",
+          "tools/optimize-tribos.mjs",
+          "tools/rigidify-diagnostic-vertices.mjs",
+          "tools/capture-char-thumbnail.mjs",
+          "tools/eval/grip-ab-capture.mjs",
+          "tools/eval/select-mount.mjs",
+          "tools/eval/pilot-system-check.mjs",
+          "tools/eval/pilot-grip-evidence-check.mjs",
+          "tools/eval/pilot-runtime-alpha62-check.mjs"
+        ],
+        "finalSha256": "7468d7e4a693443a0d6597c24106c5e4c7756c7410c85f623173df9e1c87bce9",
+        "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide; os clipes foram retargetados sobre o GLB final. O passe alpha.62 apagou os materiais/componente conectados das asas, barras e teclado horizontal antes de reconstruir um único teclado vertical preso por suporte estreito à mochila. A caneca foi movida 4 cm para dentro e o elo Hips caiu a 0,034 m, em contato. Corpo, M4, rig e clipes ficaram fora da seleção. O GLB anterior real é o mutante programador-legado; recibos, audit, 3/4 e grip idle/walk/crouch ficam em tools/eval/asset-evidence/programador-virado/. Recaptura e nota externa continuam obrigatórias."
+      }
+    },
+    "motoca-cachorro-loko": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/motoca-cachorro-loko.glb",
+        "public/img/chars/motoca-cachorro-loko.webp",
+        "public/img/source-concepts/motoca-cachorro-loko.webp",
+        "public/models/anims/motoca-cachorro-loko/idle.glb",
+        "public/models/anims/motoca-cachorro-loko/walk.glb",
+        "public/models/anims/motoca-cachorro-loko/run.glb",
+        "public/models/anims/motoca-cachorro-loko/shoot.glb",
+        "public/models/anims/motoca-cachorro-loko/death.glb",
+        "public/models/anims/motoca-cachorro-loko/crouch.glb",
+        "public/models/anims/motoca-cachorro-loko/crouchwalk.glb",
+        "public/models/anims/motoca-cachorro-loko/jump.glb",
+        "public/models/anims/motoca-cachorro-loko/idle1h.glb",
+        "public/models/anims/motoca-cachorro-loko/walk1h.glb",
+        "public/models/anims/motoca-cachorro-loko/walkfire.glb",
+        "public/models/anims/motoca-cachorro-loko.glb"
+      ],
+      "source": {
+        "kind": "imagegen-concept",
+        "assetId": null,
+        "chatUrl": null,
+        "displayName": "Motoca Cachorro Loko",
+        "sha256": "346da522131a75c09fb397034c3b8277e6543336455302f6d57c6cbc792b87b4",
+        "conceptPreview": "public/img/source-concepts/motoca-cachorro-loko.webp",
+        "conceptPreviewSha256": "6d0d60b9978c72760490c799a713f30b9bc04e1c7211ca1a660ae8cdf4752905",
+        "styleReference": "public/img/faccoes/profissionais.webp",
+        "prompt": "Entregador brasileiro adulto ficticio, magro e atletico; capacete preto generico com viseira levantada, jaqueta impermeavel amarela com faixas refletivas, calca reforcada, botas gastas, luvas sem dedos, bag termica vermelho-laranja sem marca e suporte de telefone no peito. Corpo inteiro em A-pose simetrica, PBR estilizado-realista, sem moto, arma, marca, texto ou pessoa real.",
+        "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "d81e23c1-12ab-49b5-8a6b-673cd876a99a",
+        "modelCostCredits": 30,
+        "rigProvider": "meshy",
+        "rigTaskId": "019fee2f-84b0-749e-9d7e-078c57260d94",
+        "rigCostCredits": 5,
+        "tools": [
+          "tools/blender-character-prepare.py",
+          "tools/blender-character-audit.py",
+          "tools/blender-add-cultural-gear.py",
+          "tools/blender-refine-cultural-gear.py",
+          "tools/blender-final-cultural-gear.py",
+          "tools/blender-motoca-front-profile.py",
+          "tools/blender-motoca-rebuild-helmet-phone.py",
+          "tools/blender-pilot-model-final-fixes.py",
+          "tools/blender-pilot-causal-cleanup.py",
+          "tools/blender-alpha62-runtime-fixes.py",
+          "tools/blender-pilot-3q-renders.py",
+          "tools/blender-camera-grip-evidence.py",
+          "tools/blender-motoca-visual-mask.py",
+          "tools/rig-meshy.mjs",
+          "tools/rig-tex-restore.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/finger-curl.mjs",
+          "tools/compact-curl-tips.mjs",
+          "tools/optimize-tribos.mjs",
+          "tools/rigidify-diagnostic-vertices.mjs",
+          "tools/capture-char-thumbnail.mjs",
+          "tools/eval/grip-ab-capture.mjs",
+          "tools/eval/select-mount.mjs",
+          "tools/eval/char-hard-surface-check.mjs",
+          "tools/eval/motoca-visual-check.mjs",
+          "tools/eval/pilot-grip-evidence-check.mjs",
+          "tools/eval/pilot-runtime-alpha62-check.mjs"
+        ],
+        "finalSha256": "e5a31ca1d72b6a4cb3231757c6a9ad075c3713e8a32722a665f10b3a7f4a177b",
+        "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide. A casca full-face e o visor único já aprovados foram congelados por fingerprint geométrico. O passe alpha.62 removeu apenas telefone/tela/berço baixos e os recriou menores no alto do peito, com borda inferior do suporte a 1,279 m. Bag, jaqueta, capacete, corpo, rig, M4 e clipes ficaram fora da seleção. O GLB anterior real é o mutante motoca-telefone-baixo; HARD1-HARD10 preservam a casca e o grip Blender mede gatilho/foregrip em idle, walk e crouch, com mutante de arma deslocada. Recibos e views ficam em tools/eval/asset-evidence/motoca-cachorro-loko/. Recaptura e nota externa continuam obrigatórias."
+      }
+    },
+    "doidinho-bairro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/characters/doidinho-bairro.glb",
+        "public/img/chars/doidinho-bairro.webp",
+        "public/img/source-concepts/doidinho-bairro.webp",
+        "public/models/anims/doidinho-bairro/idle.glb",
+        "public/models/anims/doidinho-bairro/walk.glb",
+        "public/models/anims/doidinho-bairro/run.glb",
+        "public/models/anims/doidinho-bairro/shoot.glb",
+        "public/models/anims/doidinho-bairro/death.glb",
+        "public/models/anims/doidinho-bairro/crouch.glb",
+        "public/models/anims/doidinho-bairro/crouchwalk.glb",
+        "public/models/anims/doidinho-bairro/jump.glb",
+        "public/models/anims/doidinho-bairro/idle1h.glb",
+        "public/models/anims/doidinho-bairro/walk1h.glb",
+        "public/models/anims/doidinho-bairro/walkfire.glb",
+        "public/models/anims/doidinho-bairro.glb"
+      ],
+      "source": {
+        "kind": "imagegen-concept",
+        "assetId": null,
+        "chatUrl": null,
+        "displayName": "Doidinho do Bairro",
+        "sha256": "2c09dd267df5eb842f72fe274c476258c9d6e7e53c41d68c09f1102014dc6670",
+        "conceptPreview": "public/img/source-concepts/doidinho-bairro.webp",
+        "conceptPreviewSha256": "44ce6cba736f14574365e12732a03dd1007adfa988554fea195557079aae2891",
+        "styleReference": "public/img/faccoes/noias.webp",
+        "prompt": "Adulto brasileiro ficticio, magro, alegre e respeitoso; bone teal torto, roupa incompatível em teal, laranja, verde-lima e roxo, colete utilitario, fios, bobinas e medidores inofensivos, mochila improvisada e tenis desencontrados. Corpo inteiro em A-pose simetrica, PBR estilizado-realista, sem estigma medico, arma, marca, texto, pessoa real ou personagem protegido.",
+        "notes": "Conceito original do jogo. O prompt integral e o hash do insumo ficam nesta entrada rastreada; o PNG e a ficha local em references/ são insumos de trabalho ignorados pelo git."
+      },
+      "processing": {
+        "modelProvider": "tripo3d",
+        "modelTaskId": "f17e5cfc-9936-4fcc-ba0f-656cd5605850",
+        "modelCostCredits": 30,
+        "rigProvider": "meshy",
+        "rigTaskId": "019fee2f-84b5-76cf-a17f-8e5affe91dca",
+        "rigCostCredits": 5,
+        "tools": [
+          "tools/blender-character-prepare.py",
+          "tools/blender-character-audit.py",
+          "tools/blender-add-cultural-gear.py",
+          "tools/blender-final-cultural-gear.py",
+          "tools/blender-camera-grip-evidence.py",
+          "tools/blender-doidinho-meter-prop.py",
+          "tools/rig-meshy.mjs",
+          "tools/rig-tex-restore.mjs",
+          "tools/retarget-glb.mjs",
+          "tools/finger-curl.mjs",
+          "tools/compact-curl-tips.mjs",
+          "tools/optimize-tribos.mjs",
+          "tools/rigidify-diagnostic-vertices.mjs",
+          "tools/capture-char-thumbnail.mjs",
+          "tools/eval/grip-ab-capture.mjs",
+          "tools/eval/select-mount.mjs",
+          "tools/eval/pilot-system-check.mjs",
+          "tools/eval/pilot-grip-evidence-check.mjs"
+        ],
+        "finalSha256": "9d65fc624e894f23f1e029309dca0130e68a582bf70a172bfd09804fc53a6153",
+        "notes": "Tripo v3.1 gerou o PBR e Meshy forneceu a skin humanoide. O laudo externo confirmou que a P90 raw já tinha carregador superior, corpo bullpup e arcos, mas o porte funcional global de 4 graus a projetava como apenas 0,110 m no frame servido. O mount visual específico do Doidinho agora usa -18 graus e projeta 0,292 m, acima dos 0,178 m da M4 aprovada, sem alterar roster, escala ou balística. Um segundo crítico isolou o grande disco branco da gambiarra como placeholder: o passe Blender compactou somente os materiais Gambiarra a 0,72x, moveu o conjunto para o centro traseiro da mochila e trocou creme por carcaça teal, aro cobre, mostrador escuro e seletor colorido. P90, roupa, corpo, rig e animações ficaram fora da seleção. Recibo/backup e figuras Blender 3/4/walk/crouch estão em tools/eval/asset-evidence/doidinho-bairro/; eval:pilot-system e eval:pilot-grip incluem mutantes causais. Recaptura do runtime e nota externa continuam obrigatórias."
+      }
+    },
+    "ferro_velho_pack": {
+      "files": [
+        "public/models/props/muro_carros.glb",
+        "public/models/props/fileira_carros.glb",
+        "public/models/props/monte_carros.glb",
+        "public/models/props/guindaste.glb",
+        "public/models/props/prensa_carros.glb",
+        "public/models/props/pilha_pneus.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th7cgpxf57s7twyjcj093qgryd8bad0k",
+        "chatUrl": "https://mint.gg/chat/ph71r1m6b16360w76zqqcrgv0x8bac0z",
+        "displayName": "Ferro Velho — pilhas e máquinas",
+        "notes": "6 itens estilizados (muro/fileira/monte de carros esmagados, guindaste, prensa, pneus). Substituem os photoscans Sketchfab (wall_of_cars 16MB, crushed_classic 13MB) — pack inteiro otimizado ≈ 1.7MB."
+      }
+    },
+    "havan_loja_pack": {
+      "files": [
+        "public/models/props/gondola_mercado.glb",
+        "public/models/props/gondola_eletro.glb",
+        "public/models/props/arara_roupas.glb",
+        "public/models/props/caixa_cobranca.glb",
+        "public/models/props/painel_tvs.glb",
+        "public/models/props/manequim.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th740djrzedmygcxze9g6gm77n8bakz8",
+        "chatUrl": "https://mint.gg/chat/ph77wh2w8c51eshb7qe6mragpx8ba18w",
+        "displayName": "Havan — loja de departamentos",
+        "notes": "6 itens (gôndolas cheias mercado/eletro, arara, caixa de cobrança, painel de TVs, manequim). Enchem a loja que era caixas cinzas."
+      }
+    },
+    "carros_br_pack": {
+      "files": [
+        "public/models/props/kombi.glb",
+        "public/models/props/opala.glb",
+        "public/models/props/chevette.glb",
+        "public/models/props/brasilia_vw.glb",
+        "public/models/props/saveiro.glb",
+        "public/models/props/fusca.glb",
+        "public/models/props/moto_cg.glb",
+        "public/models/props/onibus_urbano.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th79jvsrbgpr605gj2sf5p1f3x8bazc0",
+        "chatUrl": "https://mint.gg/chat/ph781r8fzxtc9stms7adfke76h8ba9ec",
+        "displayName": "Carros brasileiros clássicos",
+        "notes": "8 veículos BR estilizados a pedido do dono (look mais brasileiro). Sempre entram na seleção da Havan (MINT_BR em map_havan.js)."
+      }
+    },
+    "piscinao_pack": {
+      "files": [
+        "public/models/props/churrasqueira.glb",
+        "public/models/props/mesa_guardasol.glb",
+        "public/models/props/cooler.glb",
+        "public/models/props/boia.glb",
+        "public/models/props/placa_piscina.glb",
+        "public/models/props/caixa_som.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th7eg134zfrsmpzg4tb3rwr3b18ba3jb",
+        "chatUrl": "https://mint.gg/chat/ph73qfvhgzbtsvr2ezgrvzwswx8bbm9p",
+        "displayName": "Piscinão de Ramos — props",
+        "notes": "6 itens (churrasqueira, mesa c/ guarda-sol, cooler, boia, placa, caixa de som). Set dressing da festa de piscina BR."
+      }
+    },
+    "jacare-corrego": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/jacare_corrego.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks77b4qhsj4an75taq2612yxfx8cqcts",
+        "chatUrl": "https://mint.gg/chat/ph71907xmzehws02vnam630e6n8cpypj",
+        "displayName": "Blocky Belly Caiman (jacaré-do-córrego)",
+        "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/jacare_corrego_mint.glb. Estático: pipeline Mint de animação é humanoide e não aplicou em quadrúpede (tentativa 18/08 falhou limpo). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale 1.8 => ~1,8 m (plans/21-FAUNA-CORREGO.md). Ficha: plans/21-FAUNA-CORREGO.md. Referências: references/fauna-corrego/."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "4b77865d7dfd47a24a08d49fd59566000b1dc5ca03a84a8e5dc397bfc3fe674b"
+      }
+    },
+    "capivara-corrego": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/capivara_corrego.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79v4k2gay9czmby61jjed1718cp93p",
+        "chatUrl": "https://mint.gg/chat/ph74kf2engyr4skt5kxkwxxrgd8cqmqt",
+        "displayName": "Sleepy Brown Rodent (capivara do córrego)",
+        "notes": "BUG-57 fauna fy_corrego. Mint text-to-3D (projeto First Project, 18/08/2026); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/capivara_corrego_mint.glb. Estático (idem jacaré). Escala de mundo: 0,998 m comprimento no GLB; integrar com scale ~1.05 => ~1,05 m comp × 0,61 m altura de bbox (plans/21-FAUNA-CORREGO.md). Ficha e referências idem jacaré."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "d3ab0c0a22bd5e8072e75ec0ce43ccfeefcd0a2eff1160c0375b9dfc48baf227"
+      }
+    },
+    "mansao_jardim_pack": {
+      "files": [
+        "public/models/props/banco_jardim.glb",
+        "public/models/props/poste_jardim.glb",
+        "public/models/props/escultura_jardim.glb",
+        "public/models/props/vaso_tropical.glb",
+        "public/models/props/lounge_externo.glb",
+        "public/models/props/lampiao_fachada.glb"
+      ],
+      "source": {
+        "kind": "mint-asset-pack",
+        "assetId": "th72555dzek1m12a075crrrsbx8cp6zg",
+        "chatUrl": "https://mint.gg/chat/ph7c8dwhs8tg2vc9yapr267gy18cqdyx",
+        "displayName": "Mansão do Joá — jardim e casa",
+        "notes": "6 props (banco modernista, poste de jardim, escultura abstrata, vaso tropical, lounge externo, lampião de fachada). BUG-56: dono pediu models Mint pro jardim/casa. Otimizados via tools/optimize-props.mjs (webp 1024, ~1.6MB total, 1 material cada). Previews em tools/eval/asset-evidence/bug56-mint/."
+      }
+    },
+    "grama-corrego-01": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/grama_corrego_01.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks705h592kaq9f0nb9958hvqnh8cr3za",
+        "chatUrl": "https://mint.gg/chat/ph71dz35n7h5sygreq303bjye58crhzj",
+        "displayName": "Arching Guinea Grass Tuft (capim alto de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1 (plans/13: \"faltou tambem usar os glbs de grama\"). Tufo de capim-colonião alto com palhas secas na base. GLB normalizado Mint (0,967 m de altura): integrar com scale ~0,72 => ~0,70 m. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_01-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "061a6302c0c6380cd11dbd436f7526a0053af5500d1e905d2a0e0f6dafe8354c"
+      }
+    },
+    "grama-corrego-02": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/grama_corrego_02.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7ad08zxczjzpywjqnges9eb18csm41",
+        "chatUrl": "https://mint.gg/chat/ph78r1m1pa8zyrhsvw0nwz4b1x8crrg2",
+        "displayName": "Urban Creekside Weeds (capim rasteiro de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Moita baixa e larga de capim rasteiro amarelado com folhas de mato. GLB normalizado pela largura (0,998 m): integrar com scale ~0,6 => ~0,60 m largo × ~0,37 m alto. Evidência: tools/eval/asset-evidence/props-v21/grama_corrego_02-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "cd24a8276e0e6e5339398a5d86b1cfa77b5d552e0ec7086eee6eed904cee550f"
+      }
+    },
+    "planta-corrego-taboa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/planta_corrego_taboa.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks753dc0a7hfg2dz4shrb0cyan8cr0ye",
+        "chatUrl": "https://mint.gg/chat/ph72y6pxj76ky56x90cwrc1h7h8cs718",
+        "displayName": "Brown Spike Cattail (taboa de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Taboa (Typha) com duas espigas marrons, clássica de beira de córrego urbano. GLB normalizado (0,998 m de altura): integrar com scale ~1,4 => ~1,40 m. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taboa-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2adc0485a0abba8dd37c0cfac12e0b9e9ad20ce357ceb4a22e658ed4d8e580a6"
+      }
+    },
+    "caixa-dagua-azul": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_dagua_azul.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7ct1jdj0ns0x8ppepbgea4cd8csxf4",
+        "chatUrl": "https://mint.gg/chat/ph7c3scfqprd8jp9bn92279kwx8csbkq",
+        "displayName": "Blue Ribbed Water Tank (caixa d'água azul de laje)",
+        "frente": "v21-e-models",
+        "notes": "Lote 2 da frente E v2.1 (pedido do dono: \"a caixa da agua ta horrivel ... fazer variacoes\"). Tanque azul de polietileno com tampa azul-escura e bocal, sobre tábua apoiada em blocos de concreto. GLB normalizado (0,998 m): integrar com scale ~1,4 => ~1,40 m com a base. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_azul-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "efa77a883b7609167d51bf4887b26c77451f45ace9ee8c6a9b914b9004470221"
+      }
+    },
+    "caixa-dagua-preta": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_dagua_preta.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7bnjam9pb489v7mg490a23z58crd1e",
+        "chatUrl": "https://mint.gg/chat/ph75dwttq4rqsgn45418bf3m458cs3kv",
+        "displayName": "Ribbed Black Water Tank (caixa d'água preta de laje)",
+        "frente": "v21-e-models",
+        "notes": "Lote 2 da frente E v2.1. Tanque preto com tampa e extravasor, sobre anel de concreto. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_preta-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "d6cd1d44354f6cee66ef197f3f5ad2acb50c2e7ca7d9e34151b9946a17ba9bad"
+      }
+    },
+    "planta-corrego-taioba": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/planta_corrego_taioba.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7cb0vyms9gpcftq95yvjkgf18cs8cv",
+        "chatUrl": "https://mint.gg/chat/ph7bt423mvd2mkq60j8xws2an58csnn4",
+        "displayName": "Heart Leaf Taioba (taioba de córrego)",
+        "frente": "v21-e-models",
+        "notes": "Lote 1 da frente E v2.1. Taioba (Xanthosoma) de folhas cordiformes. Primeira geração (asset ks7ac74ys39n51d9ktjvb0q1yh8csmne) falhou no estágio final do Mint e o retry_generation exigiu prompt novo em chat novo — esta é a v2. GLB normalizado pela profundidade (0,998 m; 0,963 m de altura): integrar com scale ~0,95 => ~0,90 m de altura. Evidência: tools/eval/asset-evidence/props-v21/planta_corrego_taioba-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2028681d3244aec692bd498b77681111268e3f7b7a87279a336c7a0082c699d7"
+      }
+    },
+    "caixa-dagua-fibra": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/caixa_dagua_fibra.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks748e4cqwpghd7aazkk4gc0t18cs8ss",
+        "chatUrl": "https://mint.gg/chat/ph72pgyxr7v54g3vn5w7az62z58csyjg",
+        "displayName": "Weathered Favela Water Tank (caixa d'água de fibra amarelada)",
+        "frente": "v21-e-models",
+        "notes": "Lote 2 da frente E v2.1. Fibrocimento amarelado com escorrido, tampa entreaberta, sobre duas vigas de concreto - a caixa das lajes mais antigas. GLB normalizado (0,998 m): integrar com scale ~1,2 => ~1,20 m. Evidência: tools/eval/asset-evidence/props-v21/caixa_dagua_fibra-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "69acf07a5f895426bbc0acc0e0c0d2a8b0744e298c2f741bb962ce2ec55c726d"
+      }
+    },
+    "varal-roupas-01": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas_01.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7dtxhh7gbkyf8941pet5vav58crdye",
+        "chatUrl": "https://mint.gg/chat/ph7cqm9tnn58h1sxznpq26wgax8cr51p",
+        "displayName": "Colorful Laundry Varal (varal de corda)",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1 (dono: \"as roupas penduradas no corrego, quebrada e campinho tao ruins, na laje tao bons, fazer variacoes\"). Corda com 6 peças coloridas em prendedores entre ganchos. GLB normalizado pela largura (1,0 m; 0,28 m de altura): integrar com scale ~3,0 => 3,0 m x 0,84 m. Calibrado pelo lajes_varal.glb (o varal bom do dono). Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_01-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "3ea3085f1c0f0729b0563b3a9c6e9330a39c4a7da720592d931ef1681edb1a52"
+      }
+    },
+    "varal-roupas-02": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/varal_roupas_02.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75rz911e611m14c0pbah8c2h8crgr1",
+        "chatUrl": "https://mint.gg/chat/ph79avg70bbmppdah59xczz0m58cr0dg",
+        "displayName": "Colorful Laundry Varal (varal de chão)",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1. Varal de chão em T de alumínio, 2 linhas com camisetas, jeans, meias e fronha. GLB normalizado pela largura (1,0 m; 0,81 m de altura): integrar com scale ~1,8 => 1,8 m x 1,46 m. Evidência: tools/eval/asset-evidence/props-v21/varal_roupas_02-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "389993f574d3dcfabca27109268ce50a47438c72618f6b0c057a647ceaf89969"
+      }
+    },
+    "pipa-papel": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/pipa_papel.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks73xs6xv6x07h45qp44r5w3en8cs1m1",
+        "chatUrl": "https://mint.gg/chat/ph77ctevcka9b4khfrkhkpg2wd8cr9b5",
+        "displayName": "Yellow Green Pipa",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1 (dono: \"o lajes tem pipa mas nao tem animacao do pipa voando\"). Losango amarelo/verde com varetas em cruz e rabiola de 5 lacinhos. Rabiola é NÓ SEPARADO (\"rabiola\", 4.452 tris) com pivô na ponta inferior da vela T=(0,14;-0,12;0,02) para sway procedural - split por tools/split-props-v21.mjs. GLB normalizado pela altura total (1,0 m): integrar com scale ~1,6 => vela ~0,74 m. Evidência: tools/eval/asset-evidence/props-v21/pipa_papel-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/split-props-v21.mjs",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "3eb30ff784be191f42cd43667db94a619d19c3c42991dd871e0c666d57eea82f"
+      }
+    },
+    "helicoptero-pm": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/helicoptero_pm.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75eehczen48e5qsvsygy4abh8cs92f",
+        "chatUrl": "https://mint.gg/chat/ph76rk8v51359p9cd6rk249j5x8crxq0",
+        "displayName": "Blue White Police Copter",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1 (dono: \"podemos por helicoptero\"). JetRanger azul/branco genérico, SEM logo/texto (veto editorial). Rotores são NÓS SEPARADOS com pivô no eixo: \"rotor_main\" (287 tris, T=(0,08;0,17;0), gira em Y) e \"rotor_tail\" (75 tris, T=(-0,44;0,02;-0,05), gira em Z) - split por tools/split-props-v21.mjs (malha Meshy vem em 1.155 ilhas; regra por centróide calibrada no render). GLB normalizado pelo comprimento (1,0 m): integrar com scale ~10 => ~10 m, disco ~8,7 m. Evidência: tools/eval/asset-evidence/props-v21/helicoptero_pm-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/split-props-v21.mjs",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "47ffa24e6d2e88b74d928b0df70c00f2de7356fe29b16c550ae1c055eb4d5773"
+      }
+    },
+    "aviao-faixa": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/aviao_faixa.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7cpept2cp0585aefgpq14t2n8crs4b",
+        "chatUrl": "https://mint.gg/chat/ph75y9xxqg1t82rhmfjxjkm6cx8crz6r",
+        "displayName": "Red Stripe Sky Advertiser",
+        "frente": "v21-e-models",
+        "notes": "Lote 3 da frente E v2.1 (dono: \"aviao com faixa da praia, no caso da mansao do joa\"). Monomotor asa alta branco/vermelho puxando faixa em branco. Faixa é NÓ SEPARADO (\"faixa\", 1.397 tris, T=(0;0;-0,095)) para receber textura de texto via OpenRouter (outra frente) - split por tools/split-props-v21.mjs. GLB normalizado pelo comprimento total (1,0 m): integrar com scale ~12 => envergadura ~10,7 m, avião ~6 m, faixa ~6 m. Evidência: tools/eval/asset-evidence/props-v21/aviao_faixa-corrigido.png."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/split-props-v21.mjs",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "304d9c2bcd44d88fd0dd61fb739d0ed0e309da2563a3d81938061945f9a07aac"
+      }
+    },
+    "tatu-campo": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/tatu_campo.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks74gmjb885gffbbjekvc6xqs58csx4s",
+        "chatUrl": "https://mint.gg/chat/ph763essssxnfef5n923a7gn5d8crckr",
+        "displayName": "Segmented Tatu Walker (tatu do cerrado)",
+        "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): tatu para fy_campomorro e praca_poderes. Mint text-to-3D (projeto CSBRASIL Audio Original); otimizado em tools/optimize-ambient-fauna.mjs (WebP 256², dedup/prune) a partir de references/glb/tatu_campo_mint.glb. Estático — locomoção procedural no ambientlife.js (_updateQuad). Quaternius não tem tatu em nenhum pack (varredura 19/08, FONTE.md do acervo). GLB normalizado: eixo longo no X, gira -PI/2 no normalizeModel."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "ac3f9b6a8c597c8d3e00e0dedf782e0e46de49d2dc536d432e5fb60964fda08c"
+      }
+    },
+    "papagaio-poleiro": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/papagaio_poleiro.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks75k731vrspaapj5zfgtge68n8crdya",
+        "chatUrl": "https://mint.gg/chat/ph73z314p21j55zt11pa040frh8cstk4",
+        "displayName": "Yellow Chevron Parrot (papagaio de poleiro)",
+        "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): papagaio de poleiro para fy_mansao (terraço) e parque_treta. Mint text-to-3D; mesmo pipeline do tatu. Estático — balanço procedural no ambientlife.js (_updateParrot): poleiro não precisa de voo, contornando a dívida de pássaro riggado CC0 (BUG-57). Modelo inclui o poleiro (barra) na malha."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "57e9629fb044b11d4d3bd679c562c6e041edef762b53adf025b7ba0f463cf7dc"
+      }
+    },
+    "barata-urbana": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/barata_urbana.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks74jpd1cwg0xz1r5hx0j5yqs58crym6",
+        "chatUrl": "https://mint.gg/chat/ph7as0a36mqhp9rkcwz6c9mva58crs75",
+        "displayName": "Curved Antenna Ladybug (barata urbana)",
+        "notes": "Vida 1 fauna 2 (plans/22, 19/08/2026): barata para fy_corrego e atacadao_treta. Primeira geração (Rust Antenna Roach) bloqueada pela moderação do Mint; regenerada com prompt de garden beetle — saiu marrom-avermelhada oval com antenas longas, lê como barata americana na escala de 14 cm. Pipeline idem tatu. Estática — darta pelo _updateRat do ambientlife.js. Eixo longo no Z (sem rotação no normalizeModel). Textura ajustada (brighten 0,85 + saturate 0,5, só na baseColor — o modulate não toca Normal/ORM): o vermelho glossy do Mint saturava ainda mais sob o sol laranja do córrego (medido em captura); ficou o marrom-avermelhado da barata americana."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-ambient-fauna.mjs"
+        ],
+        "finalSha256": "c64ca20aa950077189fc75c9272da42ebc174fcb023ff8eec89e67ba6b271280"
+      }
+    },
+    "palmeira-imperial-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/palmeira_imperial.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7epscg489gta2x7zzm7he5398cvnfj",
+        "chatUrl": "https://mint.gg/chat/ph70gyyyc7qvvem3mm8t0a29y98cv0tw",
+        "displayName": "Imperial Grey Palm (palmeira-imperial)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Palmeira-imperial com tronco anelado cinza e crownshaft verde (3.637 tris). Substitui as árvores pirulito do jardim (BUG-64). GLB normalizado ~1 m, pivô central; escala no call-site. Tronco escurecido no pipeline (trunkShade 0,55/0,47/0,40 nos 42% inferiores — tronco branco-liso reprovado pelo crítico)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "d7d109d83dd0be4ab9e8a4df384cadac9d4e9099405fb8a899251e42ef42e625"
+      }
+    },
+    "palmeira-ravenala-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/palmeira_ravenala.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks72t6bgnx7ww5azs74rvbbpnh8cvv8a",
+        "chatUrl": "https://mint.gg/chat/ph7by8184sbqmx1ev8j068pvm58ctqm0",
+        "displayName": "Dramatic Fan Palm (ravenala, palmeira-leque)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Ravenala em leque vertical (4.428 tris). Par assimétrico enquadrando a fachada sul (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "c707dc3fbcec4d63ec2313f93eeecf29dcc1d5aaef5ba1de6fc889f336047d85"
+      }
+    },
+    "heliconia-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/heliconia.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79v1kkj8c32e71yyab27bqds8cvm8a",
+        "chatUrl": "https://mint.gg/chat/ph7cp8y6gyxt9gg461m4rcg8th8ctwfd",
+        "displayName": "Red Claw Heliconia (helicônia)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Heliconia com brácteas vermelho-amarelas pendentes (4.052 tris). Maciços florais e drifts do jardim (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "88cd13ab1bde0723e58df647b5f79e6da28f68007bc8c13496546de9afdd60f7"
+      }
+    },
+    "costela-adao-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/costela_adao.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7csdx865mvkee2aa3chszfns8ct9qv",
+        "chatUrl": "https://mint.gg/chat/ph7byt97jw52ykdjrzezvwhsvn8cvsje",
+        "displayName": "Perforated Monstera Bush (costela-de-adão)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Monstera deliciosa de folhas fenestradas (3.472 tris). Massa de dossel dos maciços (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "82c5f004f3e8497398c0ba7299ed6239ffe514c461b9886ad933e8526246a277"
+      }
+    },
+    "bananeira-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/bananeira.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7b9rr467gcfq4yrk6bv9ds0x8cva40",
+        "chatUrl": "https://mint.gg/chat/ph71fmfkb7fb4433vac33xghd58cttan",
+        "displayName": "Drooping Paddle Banana Plant (bananeira)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Bananeira de pseudocaule verde e folhas-pá (4.684 tris). Substitui as bananeiras de esferas achatadas (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "b4b5e40537b248a02a4442803baf34c648bfcd035179f7abac0edfb7bcce4d5d"
+      }
+    },
+    "ixora-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/ixora.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7f812b4388pzarx4wekxf8g98ct1en",
+        "chatUrl": "https://mint.gg/chat/ph7dcr7emj3jkafn0yq98gantx8cvtvs",
+        "displayName": "Crimson Ixora Bloom (ixora)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Ixora arbustiva com buquês vermelho-alaranjados (4.496 tris). Manchas floridas nos canteiros, no lugar das bromélias de cone (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "b2bcbf7458f5f3052b35805cf57c9955177f2f52adaa23112762e6a973eb0710"
+      }
+    },
+    "agave-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/agave.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks79jrvhxqhgpb3nc92vtbz7v58cthdg",
+        "chatUrl": "https://mint.gg/chat/ph777k51x3zm7rh2p92m2yferh8cv41j",
+        "displayName": "Blue-Green Agave Rosette (agave)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Agave azul-esverdeada em roseta (4.688 tris). Acentos esculturais dos maciços e encosta (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "2f0c046535ee11fda49d4f2d8c40300e7946c4454fa89675196d843cb7ad314d"
+      }
+    },
+    "samambaia-jardim": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/props/samambaia.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7966nvp1k21fd5e12aqq5cxn8cvq8f",
+        "chatUrl": "https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0",
+        "displayName": "Emerald Feather Clump (samambaia)",
+        "frente": "v21-c-mansao-jardim",
+        "notes": "Samambaia espada em touceira densa (3.757 tris). Forração instanciada dos drifts de borda (BUG-64). GLB normalizado ~1 m, pivô central."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (normalized original_glb)",
+        "tools": [
+          "mint.gg",
+          "tools/optimize-props-v21.mjs"
+        ],
+        "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
+      }
+    },
+    "sitio-pato": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/pato_lago.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks70r6rydsez0kbkb3rr25fz2d8d7g00",
+        "chatUrl": "https://mint.gg/chat/ph7cty1skh0bnrzwtergh2w01x8d7fk6",
+        "displayName": "Mallard (pato-do-lago) (pato_lago)",
+        "notes": "Resgate do Sítio da Treta (PR #4, Atibaia). Kit Mint sitio_fauna_r3 (pack th79gx9yvqsyac9a067c0ggzq18d623r), item otimizado r3 (WebP 1024, ~1,2-1,9k tris). Estático — locomoção procedural no ambientlife.js (pato nada, angola cisca, cavalinho pasta)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (kit r3 otimizado)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "e811968c505cea30bd845947453a607607a0a62eaea5c910e05600a26dae61a9"
+      }
+    },
+    "sitio-galinha-angola": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/galinha_angola.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7crtq8cj2jse86h06wmrrj8s8d66v7",
+        "chatUrl": "https://mint.gg/chat/ph7cty1skh0bnrzwtergh2w01x8d7fk6",
+        "displayName": "Guinea Fowl (galinha-d’angola) (galinha_angola)",
+        "notes": "Resgate do Sítio da Treta (PR #4, Atibaia). Kit Mint sitio_fauna_r3 (pack th79gx9yvqsyac9a067c0ggzq18d623r), item otimizado r3 (WebP 1024, ~1,2-1,9k tris). Estático — locomoção procedural no ambientlife.js (pato nada, angola cisca, cavalinho pasta)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (kit r3 otimizado)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "783c14d3100271daf9ff250ecc7bfc276d050f4ba2a19dc46c0d437cbc9054a9"
+      }
+    },
+    "sitio-cavalinho": {
+      "artifactType": "model/gltf-binary",
+      "files": [
+        "public/models/ambient/cavalinho.glb"
+      ],
+      "source": {
+        "kind": "mint-model",
+        "assetId": "ks7dydcdc7pzs2d5ky37v17bn58d7rjd",
+        "chatUrl": "https://mint.gg/chat/ph7cty1skh0bnrzwtergh2w01x8d7fk6",
+        "displayName": "Shetland Pony (cavalinho-do-pomar) (cavalinho)",
+        "notes": "Resgate do Sítio da Treta (PR #4, Atibaia). Kit Mint sitio_fauna_r3 (pack th79gx9yvqsyac9a067c0ggzq18d623r), item otimizado r3 (WebP 1024, ~1,2-1,9k tris). Estático — locomoção procedural no ambientlife.js (pato nada, angola cisca, cavalinho pasta)."
+      },
+      "processing": {
+        "provider": "mint",
+        "model": "mint text-to-3d (kit r3 otimizado)",
+        "tools": [
+          "mint.gg"
+        ],
+        "finalSha256": "6a000a5ee8bf6b5003572c36f28bf3b686af3a9438e67bca1cee49dbabb784d4"
+      }
+    }
   }
- }
 }

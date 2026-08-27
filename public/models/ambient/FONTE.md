@@ -73,3 +73,12 @@ Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
 espécies v2.1). Referências de silhueta/procedência de medidas:
 `references/fauna-corrego/FONTE.md`; ficha: `plans/21-FAUNA-CORREGO.md`;
 evidência e revisão: `tools/eval/asset-evidence/fauna/`.
+- `pato_lago.glb` · `galinha_angola.glb` · `cavalinho.glb` — kit **sitio_fauna_r3**
+  (Mint, 26/08/2026): “Mallard”, “Guinea Fowl” e “Shetland Pony”, gerados por prompt
+  para o resgate do Sítio da Treta (PR #4, Atibaia). Chat do pack:
+  <https://mint.gg/chat/ph7cty1skh0bnrzwtergh2w01x8d7fk6> · licença de uso do
+  assinante Mint Pro (sem copyright de terceiros). Itens r3 já otimizados (WebP,
+  1,2-1,9k tris); registros `sitio-pato`/`sitio-galinha-angola`/`sitio-cavalinho`
+  em `mint-assets.json`. Estáticos: pato NADA no lago, angola CISCA na horta e
+  cavalinho PASTA no pomar — locomoção procedural no `ambientlife.js`
+  (`createSitioAmbience`). Call-site: `map_sitio.js`.
