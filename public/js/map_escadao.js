@@ -893,12 +893,35 @@ export function buildEscadao(scene, T) {
       { mode: 'ground', pos: [-3.4, groundHeightAt(-3.4, -35), -35], phase: 1.1 },
       { mode: 'ground', pos: [-.6, groundHeightAt(-.6, -34.6), -34.6], phase: 2.9 },
     ],
-    cats: [{ pos: [10.4, groundHeightAt(10.4, -26), -26], to: [12.1, groundHeightAt(12.1, -29), -29], phase: .65 }],
+    /* O gato andava em (10,4;-26) → (12,1;-29): a casa de molde do mirante leste passou a
+       ocupar essa planta (4,2 × 4,2 m) e o AR3 do ambience-registry acendeu na hora. Ele
+       mudou para a faixa livre entre a mureta e a caçamba, mesma cota. */
+    cats: [{ pos: [10.8, groundHeightAt(10.8, -22.8), -22.8], to: [11.9, groundHeightAt(11.9, -20.9), -20.9], phase: .65 }],
     chickens: [{ pos: [-9.4, groundHeightAt(-9.4, -30), -30], to: [-7.8, groundHeightAt(-7.8, -32), -32], phase: 1.9 }],
+    /* Duas espécies novas, as duas já no acervo `public/models/ambient/`: o caramelo é o
+       bicho de rua do morro (um na calçada do bar, outro tomando sol no mirante) e a
+       barata mora onde tem lixo — ao lado das caçambas do topo e no beco leste. */
+    dogs: [
+      { pos: [-8.6, groundHeightAt(-8.6, 26.5), 26.5], to: [-7.2, groundHeightAt(-7.2, 24.2), 24.2], phase: .35 },
+      { pos: [3.6, groundHeightAt(3.6, -31.4), -31.4], to: [2.1, groundHeightAt(2.1, -29.6), -29.6], phase: 2.2 },
+    ],
+    cockroaches: [
+      { pos: [12.6, groundHeightAt(12.6, -30.2), -30.2], to: [11.9, groundHeightAt(11.9, -29.5), -29.5], phase: 1.05 },
+      { pos: [-13.2, groundHeightAt(-13.2, 13.1), 13.1], to: [-13.8, groundHeightAt(-13.8, 12.4), 12.4], phase: 2.6 },
+    ],
   });
 
   return {
-    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:70,vol:.32},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.18}],bioma:'favela'},
+    root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints, ambience, casario, casarioMoldes: CASARIO_MOLDES,
+    /* Som revisado (vida 1): as duas fontes moravam no centro do mapa com raio 70 m, então
+       o funk do baile e os pássaros tocavam IGUAL no beco lá embaixo e no mirante 6 m acima
+       — mapa de três cotas com som chapado apaga a subida. Agora cada fonte fica onde a
+       cena está: baile na rua (z≈30), rumor da cidade subindo do vale e passarada no topo. */
+    sound: { loops: [
+      { src: AMB_LOOPS.funk, pos: [0, 3, 30], radius: 42, vol: .34 },
+      { src: AMB_LOOPS.cidade, pos: [0, 2, 38], radius: 55, vol: .16 },
+      { src: AMB_LOOPS.passaros, pos: [0, H_TOP + 3, -30], radius: 45, vol: .22 },
+    ], bioma: 'favela' },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: [
       // Inclui um piso da chegada inferior: ele é a superfície antes do primeiro dos 12
