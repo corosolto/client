@@ -259,7 +259,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 813 |
 | `campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 713 |
 | `lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
-| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,258 |
+| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,440 |
 | `mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 955 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
