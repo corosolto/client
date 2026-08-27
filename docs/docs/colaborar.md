@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**12 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `Agent: Claude Code`, `matheusgb`, `Maná Soares`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**12 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `William Oliveira`, `Juan Versolato Lopes`, `Agent: Claude Code`, `daeeseD`, `matheusgb`, `Maná Soares`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -261,7 +261,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 453 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 415 |
 | `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
 | `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
 | `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
