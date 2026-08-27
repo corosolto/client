@@ -186,9 +186,13 @@ window.__GEO_LANG__ = (function () {
     if (extensao.test(sourceText)) return false;
     if (vendor.test(sourceText) || vendor.test(String(stack || ''))) return false;
     // MESMA redação da `CARTEIRA_RE` de `src/lib/error-provenance.mjs` - se os dois lados
-    // discordarem, a carteira volta a comer cota aqui ou a abrir issue lá (BUG-75).
+    // discordarem, a carteira volta a comer cota aqui ou a abrir issue lá (BUG-78).
     var carteira = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
     if (carteira.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
+    // MESMA redação da `PONTE_INJETADA_RE` de `src/lib/error-provenance.mjs` - se os dois
+    // lados discordarem, a ponte come cota aqui ou volta a abrir issue lá (BUG-76).
+    var injetado = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
+    if (injetado.test(sourceText + '\n' + String(stack || '') + '\n' + String(mensagem || ''))) return false;
     var propria = location.origin;
     if (sourceText && /^https?:\/\//i.test(sourceText)) {
       try {
