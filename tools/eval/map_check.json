@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-25T01:19:40.585Z",
+ "gerado": "2026-08-27T04:10:24.612Z",
  "criterios": {
   "map1": "corpo dentro de sólido: raycast do peito (1.4 m) até o chão; sólido com topo > 0.3 m acima do chão local reprova",
   "map2": "exposição: fração dos pontos andáveis a ≥ 25 m com _losClear até a cabeça (1.62 m) de quem nasce",
@@ -14,9 +14,9 @@
  "mapas": [
   {
    "map": "escadao",
-   "celulasAlcancadas": 31609,
-   "amostrasChao": 2003,
-   "observadores": 496,
+   "celulasAlcancadas": 31420,
+   "amostrasChao": 1982,
+   "observadores": 491,
    "corpoDentroDeSolido": 0,
    "submersosAcimaDoPeito": 0,
    "piorPenetracao": 0,
@@ -92,7 +92,7 @@
      "team": "B",
      "chaoMin": 6.12,
      "chaoMax": 6.12,
-     "fracMedia": 0.1611,
+     "fracMedia": 0.1564,
      "maiorVisada": 74
     }
    ],
@@ -102,7 +102,7 @@
      "x": -2.4,
      "z": 26,
      "chao": 0,
-     "obsLonge": 274,
+     "obsLonge": 273,
      "obsVendo": 0,
      "frac": 0,
      "maiorVisada": 0
@@ -142,9 +142,9 @@
      "x": -4.5,
      "z": -34,
      "chao": 6.12,
-     "obsLonge": 314,
-     "obsVendo": 51,
-     "frac": 0.1624,
+     "obsLonge": 309,
+     "obsVendo": 49,
+     "frac": 0.1586,
      "maiorVisada": 45.6
     },
     {
@@ -152,9 +152,9 @@
      "x": -1.5,
      "z": -34,
      "chao": 6.12,
-     "obsLonge": 305,
-     "obsVendo": 52,
-     "frac": 0.1705,
+     "obsLonge": 300,
+     "obsVendo": 50,
+     "frac": 0.1667,
      "maiorVisada": 66
     },
     {
@@ -162,9 +162,9 @@
      "x": 1.5,
      "z": -34,
      "chao": 6.12,
-     "obsLonge": 308,
-     "obsVendo": 61,
-     "frac": 0.1981,
+     "obsLonge": 303,
+     "obsVendo": 57,
+     "frac": 0.1881,
      "maiorVisada": 74
     },
     {
@@ -172,9 +172,9 @@
      "x": 4.5,
      "z": -34,
      "chao": 6.12,
-     "obsLonge": 308,
-     "obsVendo": 35,
-     "frac": 0.1136,
+     "obsLonge": 303,
+     "obsVendo": 34,
+     "frac": 0.1122,
      "maiorVisada": 45.2
     }
    ],
@@ -387,28 +387,28 @@
    "travessia": [
     {
      "nivel": "mirante",
-     "celulasAlcancadas": 13724,
-     "waypointsNoNivel": 126,
+     "celulasAlcancadas": 13556,
+     "waypointsNoNivel": 125,
      "aEstrelaChega": true
     }
    ],
    "occluderSemMalha": [],
-   "occMedidos": 443,
+   "occMedidos": 445,
    "occPulados": 0,
-   "fracSemMalha": 0.0014,
+   "fracSemMalha": 0.0019,
    "quadrantes": [
     {
      "q": "0,0",
      "x0": -17.5,
      "z0": -39.5,
-     "areaAndavel": 112,
+     "areaAndavel": 107,
      "props": 7,
      "waypoints": 32,
-     "densProp": 6.26,
-     "densWp": 28.62,
-     "espacamento": 4,
-     "razaoProp": 1.56,
-     "razaoWp": 1.39
+     "densProp": 6.52,
+     "densWp": 29.78,
+     "espacamento": 3.92,
+     "razaoProp": 1.52,
+     "razaoWp": 1.46
     },
     {
      "q": "0,1",
@@ -420,8 +420,8 @@
      "densProp": 9.07,
      "densWp": 24.2,
      "espacamento": 3.32,
-     "razaoProp": 2.26,
-     "razaoWp": 1.18
+     "razaoProp": 2.12,
+     "razaoWp": 1.19
     },
     {
      "q": "0,2",
@@ -433,21 +433,21 @@
      "densProp": 10.32,
      "densWp": 27.78,
      "espacamento": 3.11,
-     "razaoProp": 2.57,
-     "razaoWp": 1.35
+     "razaoProp": 2.41,
+     "razaoWp": 1.36
     },
     {
      "q": "0,3",
      "x0": -17.5,
      "z0": 19.8,
-     "areaAndavel": 113,
-     "props": 5,
+     "areaAndavel": 116,
+     "props": 6,
      "waypoints": 31,
-     "densProp": 4.43,
-     "densWp": 27.46,
-     "espacamento": 4.75,
-     "razaoProp": 1.1,
-     "razaoWp": 1.33
+     "densProp": 5.18,
+     "densWp": 26.75,
+     "espacamento": 4.39,
+     "razaoProp": 1.21,
+     "razaoWp": 1.31
     },
     {
      "q": "1,0",
@@ -459,34 +459,34 @@
      "densProp": 3.74,
      "densWp": 12.71,
      "espacamento": 5.17,
-     "razaoProp": 0.93,
+     "razaoProp": 0.87,
      "razaoWp": 0.62
     },
     {
      "q": "1,1",
      "x0": -8.8,
      "z0": -19.8,
-     "areaAndavel": 131,
+     "areaAndavel": 130,
      "props": 4,
      "waypoints": 14,
-     "densProp": 3.05,
-     "densWp": 10.67,
-     "espacamento": 5.73,
-     "razaoProp": 0.76,
-     "razaoWp": 0.52
+     "densProp": 3.07,
+     "densWp": 10.74,
+     "espacamento": 5.71,
+     "razaoProp": 0.72,
+     "razaoWp": 0.53
     },
     {
      "q": "1,2",
      "x0": -8.8,
      "z0": 0,
-     "areaAndavel": 83,
+     "areaAndavel": 80,
      "props": 14,
-     "waypoints": 21,
-     "densProp": 16.93,
-     "densWp": 25.4,
-     "espacamento": 2.43,
-     "razaoProp": 4.21,
-     "razaoWp": 1.23
+     "waypoints": 20,
+     "densProp": 17.45,
+     "densWp": 24.92,
+     "espacamento": 2.39,
+     "razaoProp": 4.08,
+     "razaoWp": 1.22
     },
     {
      "q": "1,3",
@@ -498,8 +498,8 @@
      "densProp": 2.36,
      "densWp": 12.57,
      "espacamento": 6.51,
-     "razaoProp": 0.59,
-     "razaoWp": 0.61
+     "razaoProp": 0.55,
+     "razaoWp": 0.62
     },
     {
      "q": "2,0",
@@ -511,34 +511,34 @@
      "densProp": 3.7,
      "densWp": 20,
      "espacamento": 5.2,
-     "razaoProp": 0.92,
-     "razaoWp": 0.97
+     "razaoProp": 0.86,
+     "razaoWp": 0.98
     },
     {
      "q": "2,1",
      "x0": 0,
      "z0": -19.8,
-     "areaAndavel": 142,
+     "areaAndavel": 140,
      "props": 4,
      "waypoints": 28,
-     "densProp": 2.81,
-     "densWp": 19.7,
-     "espacamento": 5.96,
-     "razaoProp": 0.7,
-     "razaoWp": 0.96
+     "densProp": 2.85,
+     "densWp": 19.95,
+     "espacamento": 5.92,
+     "razaoProp": 0.67,
+     "razaoWp": 0.98
     },
     {
      "q": "2,2",
      "x0": 0,
      "z0": 0,
-     "areaAndavel": 110,
+     "areaAndavel": 107,
      "props": 15,
-     "waypoints": 38,
-     "densProp": 13.62,
-     "densWp": 34.51,
-     "espacamento": 2.71,
-     "razaoProp": 3.39,
-     "razaoWp": 1.68
+     "waypoints": 37,
+     "densProp": 14.04,
+     "densWp": 34.62,
+     "espacamento": 2.67,
+     "razaoProp": 3.28,
+     "razaoWp": 1.7
     },
     {
      "q": "2,3",
@@ -550,21 +550,21 @@
      "densProp": 2.34,
      "densWp": 20.3,
      "espacamento": 6.53,
-     "razaoProp": 0.58,
-     "razaoWp": 0.99
+     "razaoProp": 0.55,
+     "razaoWp": 1
     },
     {
      "q": "3,0",
      "x0": 8.8,
      "z0": -39.5,
-     "areaAndavel": 100,
+     "areaAndavel": 95,
      "props": 8,
-     "waypoints": 24,
-     "densProp": 8.03,
-     "densWp": 24.09,
-     "espacamento": 3.53,
-     "razaoProp": 2,
-     "razaoWp": 1.17
+     "waypoints": 23,
+     "densProp": 8.41,
+     "densWp": 24.18,
+     "espacamento": 3.45,
+     "razaoProp": 1.96,
+     "razaoWp": 1.19
     },
     {
      "q": "3,1",
@@ -576,7 +576,7 @@
      "densProp": 2.7,
      "densWp": 8.78,
      "espacamento": 6.08,
-     "razaoProp": 0.67,
+     "razaoProp": 0.63,
      "razaoWp": 0.43
     },
     {
@@ -589,26 +589,26 @@
      "densProp": 4.3,
      "densWp": 14.32,
      "espacamento": 4.83,
-     "razaoProp": 1.07,
+     "razaoProp": 1,
      "razaoWp": 0.7
     },
     {
      "q": "3,3",
      "x0": 8.8,
      "z0": 19.8,
-     "areaAndavel": 115,
-     "props": 4,
+     "areaAndavel": 117,
+     "props": 5,
      "waypoints": 24,
-     "densProp": 3.48,
-     "densWp": 20.86,
-     "espacamento": 5.36,
-     "razaoProp": 0.87,
-     "razaoWp": 1.01
+     "densProp": 4.26,
+     "densWp": 20.46,
+     "espacamento": 4.84,
+     "razaoProp": 1,
+     "razaoWp": 1
     }
    ],
-   "medianaProp": 4.02,
-   "medianaWp": 20.58,
-   "piorRazaoProp": 0.58,
+   "medianaProp": 4.279999999999999,
+   "medianaWp": 20.380000000000003,
+   "piorRazaoProp": 0.55,
    "piorRazaoWp": 0.43,
    "piorEspacamento": 6.53,
    "bordasSemGuarda": [],
@@ -619,7 +619,7 @@
      "rotas": 2,
      "comprimentos": [
       53,
-      67.3
+      90.4
      ]
     },
     {
@@ -628,8 +628,8 @@
      "rotas": 3,
      "comprimentos": [
       35.5,
-      38.5,
-      64.5
+      38.6,
+      64.6
      ]
     },
     {
@@ -668,11 +668,10 @@
     {
      "time": "B",
      "bandeira": "E",
-     "rotas": 3,
+     "rotas": 2,
      "comprimentos": [
-      44.1,
-      53.6,
-      85
+      46.2,
+      84.1
      ]
     },
     {
@@ -681,7 +680,7 @@
      "rotas": 2,
      "comprimentos": [
       51,
-      69.8
+      69.9
      ]
     },
     {
