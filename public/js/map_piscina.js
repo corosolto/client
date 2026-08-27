@@ -11,10 +11,8 @@
 // Este é o mapa original (commit 7871a7b): um salão FECHADO de piscina azulejado,
 // compacto e legível — um material por superfície (BAR-CONSISTENCIA §2/§3).
 //
-// LAYOUT: decisão do dono 26/08 ("a piscina menor, e adicionar corredores, vestiários,
-// banheiro em volta dela como área de respawn") — piscina central 10x7 + anel. Régua: eval:piscina-bsp.
-// r3 (27/08): "corredores fechados como a fy_poolday" — alamedas abertas viram galeria
-// fechada (parede interna com janelas altas + teto 3,0 m), mira a PB7 do eval:piscina-bsp.
+// LAYOUT r2/r3/r4 (decisões do dono 26 e 27/08): piscina central 10x7, galeria fechada
+// nas laterais, respawn emparedado. Procedência e números: docstring do eval:piscina-bsp.
 // ============================================================================
 // piscina_treta homage — the classic CS 1.6 "full weapons" map: a COMPACT INDOOR
 // tiled swimming-pool hall. Same buildWorld contract as map.js.
@@ -40,8 +38,7 @@ const SPAWN_Z = 13.4;
    é procedural (não há GLB no acervo) e não precisa de preload. */
 export const PISCINA_AMBIENCE = Object.freeze(['rat', 'pigeonGround', 'dog']);
 /* Moldes Mint do kit piscina r2 (kits-mint.json); colisor declarado à mão no
- * call-site — vale mesmo se o GLB não carregar (padrão `prop` do map_posto.js).
- * O pergolado saiu na r3: alpendre aberto não vive num anel fechado. */
+ * call-site — vale mesmo se o GLB não carregar (padrão `prop` do map_posto.js). */
 export const PISCINA_PROPS = Object.freeze(['vestiario_clube', 'cadeira_praia']);
 
 /* ---------- inline procedural tile textures ---------- */
@@ -264,16 +261,11 @@ export function buildPoolDay(scene, T) {
        vira parede invisível (a lição do ônibus da Brasília, BUG-21);
      · nada em x ∈ [3, 9] na parede norte: é onde moram o relógio e a placa PISCINÃO;
      · aspecto vem de `T.posterAspects` — esticar cartaz de protesto real fica óbvio. */
-  /* ── VAGAS DE ARTE DE PAREDE, UMA LISTA SÓ ──────────────────────────────────────
-     Cartaz, mural e decalque disputam a MESMA placa de azulejo. Até a r3 cada leva
-     tinha a sua contabilidade (o `_usados` do bloco de decalque) e o cartaz era
-     colocado antes, às cegas: a lista de vagas do cartaz era "medida contra" a do
-     decalque À MÃO, em comentário. Agora as três levas escrevem aqui, e a checagem
-     de sobreposição é a mesma para todas. */
+  /* Vagas de arte de parede, UMA lista só: cartaz, mural e decalque disputam a mesma
+     placa de azulejo e agora dividem a mesma checagem de sobreposição. */
   const _artUsadas = [];
-  /* Sobreposição no MESMO plano (mesma parede, ±30 cm de profundidade): lambe em cima
-     de lambe lê como bug. Mesma conta do bloco de decalque, extraída para servir aos
-     três. `ry` define o eixo do plano: `s` corre na parede, `d` é a profundidade. */
+  /* Sobreposição no MESMO plano (±30 cm de profundidade): `s` corre na parede, `d` é a
+     profundidade. Mesma conta do bloco de decalque, extraída para servir às três levas. */
   const _vagaLivre = (x, y, z, ry, w, h) => {
     const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
     const s = x * lx + z * lz, d = x * nx + z * nz;
@@ -285,25 +277,8 @@ export function buildPoolDay(scene, T) {
     const nx = Math.sin(ry), nz = Math.cos(ry), lx = Math.cos(ry), lz = -Math.sin(ry);
     _artUsadas.push({ i, x, z, w, h, y, s: x * lx + z * lz, d: x * nx + z * nz });
   };
-  /* ── ANCORAGEM: A VAGA É PROCURADA, NUNCA DECRETADA ─────────────────────────────
-     O DEFEITO (dono, 27/08): "ta cheio de poster e grafite soltado no ar". Cartaz e
-     mural entravam por `addPlane` com coordenada na mão e SEM `paredeAtras` — o único
-     bloco deste arquivo que testava sólido atrás era o do decalque. Enquanto a planta
-     não mudava, a coordenada na mão calhava de cair no azulejo; quando a r2 virou anel
-     e a r3 virou galeria, as paredes andaram e os cartazes ficaram órfãos no vazio.
-     Coordenada na mão é uma verdade que envelhece sem avisar.
-
-     O CONSERTO É DE MECANISMO: esta função recebe uma vaga DESEJADA e procura, a
-     partir dela, a primeira posição que tenha superfície atrás — deslizando ao longo
-     da parede (a arte anda no plano em que ela vive) e, se não achar, encolhendo (nunca
-     esticando, a regra do aspecto continua). Se nenhuma candidata tiver parede atrás,
-     a peça NÃO É DESENHADA. Com isso "cartaz sem parede" deixa de ser possível por
-     construção, e a próxima mudança de planta reacomoda tudo sozinha.
-
-     `paredeAtras([root], …)` mede a MALHA DESENHADA, não a lista de colisores: é o
-     critério honesto (vidro e vão de piloti não são parede pra tinta) e é o mesmo que
-     o bloco de decalque já usava. Por isso as três levas rodam DIFERIDAS, depois que o
-     último volume do mapa existe — ver a chamada de `pintaArteDeParede`. */
+  /* ANCORAGEM (BUG-70a): a vaga é PROCURADA, nunca decretada — desliza no plano da
+     parede e encolhe até achar sólido atrás; sem parede, não desenha. Régua: PB11. */
   const ancorar = (desejada, ry, w0, h0, desenhar) => {
     const [px, py, pz] = desejada;
     const lx = Math.cos(ry), lz = -Math.sin(ry);
@@ -360,11 +335,8 @@ export function buildPoolDay(scene, T) {
      São as únicas peças COLORIDAS grandes do salão — exceção deliberada do dono à regra
      "só pixação" deste mapa; ficam na lateral, fora do plano de fundo do duelo axial. */
   {
-    /* r3: a lateral do salão é a parede do corredor fechado — o mural de 2,3 m não cabe
-       sob o forro e vai na FACE DO MIOLO dessa parede, 2,6×1,4 m mantendo o aspecto
-       1408×768 medido (nunca estica), lendo por baixo do clerestório (2,45).
-       r4: a parede do corredor nasce ~400 linhas ABAIXO — antes deste bloco ela não
-       existia e nenhum `paredeAtras` aqui teria achado sólido. Por isso é diferido. */
+    /* Mural na face do miolo da parede da galeria, 2,6×1,4 (aspecto 1408×768 medido,
+       nunca estica). Diferido: essa parede nasce ~400 linhas abaixo. */
     const MH = 1.4, MW = MH * 1.8333, MY = 0.95 + MH / 2, MOFF = 0.06;
     const mural = (tex, nome, mx, mz, ry) => arteDiferida.push(() => {
       if (!tex) return;
@@ -712,22 +684,10 @@ export function buildPoolDay(scene, T) {
     cabine: lam({ color: 0xd8d4cc }),
   };
 
-  /* --- 1. CORREDORES: galeria fechada (r3) · alameda das armas DENTRO do corredor
-      (x ±15,15) · caixas de material junto à parede externa. Os 8 pilares de concreto
-      saíram: a parede interna do corredor assumiu o papel.
-      ARMÁRIOS MUDARAM DE CASA: no corredor (x ±16,6) eles caíam em cima da coluna de
-      nós x −16 e, com a parede interna bloqueando as diagonais, ilhavam o meio da
-      galeria (MC3). Foram pra CABECEIRA, encostados na parede externa — vestiário de
-      clube de verdade, e cover atrás de quem nasce. */
-  /* Caixas de material ENCOSTADAS na parede externa (face ±17,5), não no meio da
-     galeria. Em ±16,4 com 1,0 m elas cortavam a coluna de nós do corredor OESTE em
-     DOIS pontos (z −8→−4,6 e 2,2→9,0): a grade de waypoints é assimétrica — passo 3,4
-     a partir de −16 põe a coluna oeste em x=−16 e a leste em x=14,6, e só a de −16 cai
-     dentro do inflate de 0,5 m da caixa. Efeito: o corredor oeste existia na tela e não
-     existia pro A*, e o `eval:mapcontrato` continuava VERDE porque o grafo seguia conexo
-     PELA ARENA — o mapa perdia a rota fechada sem nenhuma régua reclamar. É a PB9 que
-     cobra isso agora. Em ±17,1 com 0,80 m o keep-out fica em 16,2..18,0 e a coluna de
-     −16 passa com 0,20 m de folga. */
+  /* --- 1. GALERIA: armas dentro do corredor (x ±15,15) e caixas junto à parede
+      externa. Armários foram pra cabeceira: em ±16,6 ilhavam o meio da galeria (MC3). */
+  /* Caixas ENCOSTADAS na parede externa: em ±16,4 cortavam a coluna de nós do corredor
+     oeste (x=−16) em dois pontos. ±17,1 × 0,80 deixa 0,20 m de folga. Régua: PB9. */
   for (const sx of [-1, 1]) {
     for (const cz of [-6, 6]) addBox(0.8, 1.15, 1.0, COV.caixa, sx * 17.1, 0, cz);
   }
@@ -769,35 +729,19 @@ export function buildPoolDay(scene, T) {
     addPlane(1.1, 2.3, COV.cabine, 5.2 * sz, 1.15, vz - sz * 2.24, sz > 0 ? Math.PI : 0);
     addPlane(2.6, 1.0, signTexture('#1b3566', '#dff2ff', 'BANHEIRO', 'CLUBE DA TRETA'), 5.2 * sz, 3.0, vz - sz * 2.26, sz > 0 ? Math.PI : 0);
   }
-  // alpendres/pergolados saíram na r3: eram a cara da alameda aberta que o dono reprovou.
   // cadeiras de praia no deck (GLB Mint): decoração baixa NÃO-bloqueante — colisor
   // de 0,5 m (abaixo do peito: não fecha visada nem lane, só não deixa atravessar)
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     prop('cadeira_praia', sx * 10.3, sz * 3.6, 0.62, sx > 0 ? -Math.PI / 2 : Math.PI / 2, 1.1, 0.55, 0.5);
     prop('cadeira_praia', sx * 9.6, sz * 8.6, 0.62, sx > 0 ? 0 : Math.PI, 0.55, 1.1, 0.5);
   }
-  /* --- 4. CORREDORES FECHADOS (r3): "eu queria corredores fechados como a fy_poolday
-      mesmo" — no BSP original o pátio é anel coberto com a piscina a céu aberto
-      (piscina_bsp.json.corredores.teto). Aqui: parede interna contínua com janelas altas
-      de vidro (1,9-2,7), laje a 3,0 m com luminárias, bocas nas duas pontas (z ±18,5) e
-      vão central (z ±2) pra piscina. Régua: PB7 do eval:piscina-bsp (teto + paredes).
-      Pilastras caem NOS MEIOS da grade de nós (passo 3,4) — em cima delas matariam a
-      coluna de waypoints do corredor leste (x 14,6). */
+  /* --- 4. GALERIA FECHADA: parede interna com clerestório, laje a 3,0 m, bocas em
+      z ±18,5 e vão central em z ±2. Régua: PB7. Pilastras caem entre nós da grade. */
   {
     const CX = 13.85;                 // centro da parede interna (faces 13,7 · 14,0)
     const PIL_SUL = [-16.5, -13.1, -9.7, -6.3, -2.9], PIL_NORTE = [3.9, 7.3, 10.7, 14.1, 17.5];
-    /* r4 — PORTA DE SERVIÇO DO RESPAWN (z = ±12,4, vão de 1,6 m).
-       O dono pediu rota fechada de um respawn ao outro e "não virar corredor único".
-       Com a parede interna inteira, a ÚNICA entrada de cada galeria era a boca da
-       cabeceira (z ±18,5): quem nascia tinha um caminho só, e ele passava por um
-       ponto que dá pra segurar com um tiro. A porta abre a SEGUNDA entrada por lado,
-       e ela nasce coberta dos dois lados (forro do respawn a 3,35 · laje da galeria
-       a 3,35), então a rota inteira spawn→spawn passa a ser fechada.
-       z = 12,4 é a fileira de nós da grade (passo 3,4): a porta cai EM CIMA da aresta
-       (11,2 ↔ 14,6) que o A* precisa, e não entre duas. Vão 11,6..13,2 dá 0,55 m de
-       folga sobre o inflate de 0,25 do `segClear`. As pilastras de 10,7 e 14,1 ficam
-       fora do vão e viram os batentes.
-       A PB7b conhece este rasgo e o exclui da amostra — porta é porta, não fresta. */
+    /* PORTA DE SERVIÇO do respawn (z ±12,4, vão 11,6..13,2): a SEGUNDA entrada de cada
+       galeria, coberta. Cai na fileira de nós 12,4, sobre a aresta 11,2↔14,6. Ver PB9. */
     const VAOS = { neg: [[-18.5, -13.2], [-11.6, -2]], pos: [[2, 11.6], [13.2, 18.5]] };
     const PORTA = [11.6, 13.2];
     for (const sx of [-1, 1]) for (const lado of ['neg', 'pos']) {
@@ -831,42 +775,12 @@ export function buildPoolDay(scene, T) {
       addBox(0.9, 0.08, 0.32, lumMat, sx * 15.75, 2.9, z, { collide: false, cast: false });
   }
 
-  /* --- 5. RESPAWN PROTEGIDO (r4, dono 27/08) ---------------------------------------
-      "a parte do respawn nao ser de frente pra piscina, ele ter acesso a piscina mas
-       ser protegido por paredes, e tem que ter uma estrutura boa"
-
-      A r3 fechou os CORREDORES e deixou a cabeceira como pátio: o spawn (z ±13,4)
-      olhava a lâmina d'água por 7,4 m de deck limpo — MEDIDO, 1144/1440 raios de
-      spawn até a água passavam livres (79,4%). Quem nascia estava sob mira de quem
-      estava do outro lado da piscina. Isto aqui é o conserto de PLANTA, não de
-      decoração: uma PAREDE TRANSVERSAL fecha a sala de nascimento, e o acesso à
-      piscina passa a ser por DUAS BOCAS laterais que não olham a água.
-
-      POR QUE z = ±10 E POR QUE AS BOCAS FICAM EM |x| ∈ [9,4 · 13,7]
-      · a grade de waypoints tem passo 3,4 a partir de −HALF_Z+2: as fileiras vizinhas
-        são z = ±9,0 e ±12,4. A parede cai ENTRE elas (não mata nó) e o `segClear`
-        (inflate 0,25) a atravessa em z = ±10,13 (corta a aresta). É o que faz a
-        parede ser parede pro A* sem ilhar ninguém — MC3 é a armadilha desta frente.
-      · as colunas de nó dentro da boca são x = 11,2 (leste) e x = −12,6 (oeste): a
-        boca de 4,3 m cobre as duas com folga de inflate, então o grafo continua conexo
-        por UM par de nós de cada lado, e a rota spawn→deck existe.
-      · GEOMETRIA DA VISADA: o ponto mais a leste da lâmina é (7,5 · 6,0) e o spawn
-        mais a leste é (9 · 13,4). A reta entre eles cruza z=10 em x = 8,31 — DENTRO
-        do trecho maciço (|x| ≤ 9,4), com 1,1 m de folga. Nenhum raio spawn→água
-        passa pela boca porque a boca está a LESTE do spawn mais a leste: sair por ela
-        é andar para longe da água, não olhar para dentro dela. Régua: PB8.
-
-      ESTRUTURA (o "tem que ter uma estrutura boa"): a parede é volume construído —
-      2 pilastras salientes que servem de cover na saída, verga de portal sobre cada
-      boca (2,60 m de vão livre, altura de porta), faixa navy nas duas faces (a linha
-      de leitura do mapa) e FORRO de laje sobre a sala inteira, contínuo com a laje do
-      corredor em x ±13,7. A sala de nascimento vira interior coberto, não pátio. */
+  /* --- 5. RESPAWN PROTEGIDO: parede transversal em z ±10 (maciça em |x| ≤ 9,4) com
+      duas bocas laterais, pilastra de cover, verga de portal e forro de laje. Por que
+      z ±10 e por que a visada spawn→lâmina fecha: docstring da PB8 do eval:piscina-bsp. */
   {
-    const PZ = 10;                          // linha da parede (entre os nós 9,0 e 12,4)
-    const MACICO = 9.4;                     // meia-largura do trecho sem boca
-    const BOCA_FIM = 13.7;                  // a boca morre na face da parede do corredor
-    const ALT = 3.35;                       // mesma altura do corredor: o forro é um só
-    const VERGA = 2.6;                      // vão livre da boca (porta), verga acima
+    // PZ cai entre os nós 9,0 e 12,4; a boca vai de MACICO até a face da galeria.
+    const PZ = 10, MACICO = 9.4, BOCA_FIM = 13.7, ALT = 3.35, VERGA = 2.6;
     const lumMat2 = new THREE.MeshBasicMaterial({ color: 0xfff2d8 });
     for (const sz of [-1, 1]) {
       const z = sz * PZ;
@@ -912,11 +826,8 @@ export function buildPoolDay(scene, T) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1])
     addBox(2.6, 1.0, 0.55, MAT.pool, sx * 2.6 + POOL.cx, -POOL.depth, POOL.cz + sz * 2.0);
 
-  /* ── ARTE DE PAREDE, AGORA QUE O MAPA INTEIRO EXISTE ────────────────────────────
-     Último volume desenhado acima; daqui pra baixo só há luz, chão e navegação. É o
-     ÚNICO instante em que `paredeAtras` responde a verdade sobre qualquer ponto do
-     mapa — e é por isso que cartaz e mural desceram até aqui (r4). Rodam ANTES da
-     passada de grafite (fim do arquivo) para que a passada receba as vagas já tomadas. */
+  /* Arte de parede: só aqui `paredeAtras` responde a verdade sobre qualquer ponto do
+     mapa (último volume desenhado acima). Roda antes da passada de grafite. */
   for (const f of arteDiferida) f();
 
   /* ---------------- lighting: bright, even, indoor ---------------- */

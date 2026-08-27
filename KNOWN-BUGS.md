@@ -3772,6 +3772,35 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-70 · "ta cheio de poster e grafite soltado no ar" no Piscinão, com o portão inteiro verde~~ · PARCIAL 27/08.**
+  Palavras do dono (27/08): *"o mapa da piscina da treta ficou uma merda, continua aberto sem corredores fechadas e
+  ta cheio de poster e grafite soltado no ar"*. **Duas causas independentes.**
+  **(a) Cartaz e mural do builder, sem âncora nenhuma.** Em `public/js/map_piscina.js` as duas levas entravam por
+  `addPlane` com coordenada NA MÃO e **nunca** passavam por `paredeAtras`; o único bloco que testava sólido atrás
+  era o do decalque. Enquanto a planta não mudava, a coordenada calhava de cair no azulejo — quando a r2 virou anel
+  e a r3 virou galeria, as paredes andaram e a arte ficou órfã. Medido antes do conserto: 1 cartaz órfão (0 · 2,60 ·
+  −23,54; a marquise da guarita entrou na frente dele). **RESOLVIDO**: o helper `ancorar` recebe a vaga DESEJADA e
+  procura a primeira posição com superfície atrás, deslizando no plano da parede e encolhendo (nunca esticando);
+  sem parede, não desenha. As levas passaram a rodar diferidas, depois do último volume do mapa. Régua: **PB11** do
+  `eval:piscina-bsp`, mutante `parede-afastada`.
+  **(b) Passada de grafite assada VELHA — aberto.** `public/js/graffiti_layout.js` é assado no NAVEGADOR e
+  congela ~2.000 retângulos. Geometria de mapa que muda sem reassar deixa a tinta onde a parede estava ontem.
+  A r3+r4 mudaram a planta inteira do Piscinão, então o bake está velho por construção. **Fecha com uma rodada
+  com browser: `node tools/eval/serve.mjs 8305 &` + `BASE=http://localhost:8305 node tools/gen-graffiti-layout.mjs
+  piscina_treta`.** Cobrado hoje pela **F2** do `eval:grafitelayout` (vermelha, por hash), que é quem pega a CAUSA.
+- **BUG-71 · a régua que prometia contar peça no ar não contava — e é por isso que o BUG-70 chegou ao dono com o
+  portão verde.** O cabeçalho do `tools/gen-graffiti-layout.mjs` afirmava: *"é a `graffiti-census` que cobra isso
+  (ela conta arte sem parede atrás na cena real)"*. **Lido o código, ela não conta.** `tools/eval/graffiti-census.mjs`
+  mede COBERTURA — placas de parede visíveis que TÊM tinta (`pintadas/placas`) — e reprova quando o número fica
+  ABAIXO da meta. Uma peça pendurada no vazio não pinta placa nenhuma: não entra no numerador nem no denominador,
+  é **invisível** para ela. A régua mede o oposto do que a frase prometia, e não havia contador de peça órfã em
+  lugar nenhum do arnês. Cabeçalho corrigido em 27/08. **Falta**: a cláusula de órfã DENTRO da própria census — é o
+  único lugar onde a pergunta pode ser respondida para a passada, porque só no navegador os GLB existem. O laço
+  dela hoje caminha placa→arte; falta o inverso, arte→placa, contando os quads que não acham superfície.
+  Cuidado ao escrever: o mesmo critério rodado em **node** acusa `praca_poderes` 276/276 órfãs (bake fresco,
+  ninguém reclama), `quebrada` 641/894, `ferro_velho` 277/413 — em node nenhum GLB carrega e a medida vira retrato
+  do instrumento. `Régua: parcial (F2 do eval:grafitelayout + PB11 do eval:piscina-bsp)`.
+
 - **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
 - **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
   dono: *"ele comenta a mesma coisa varias vezes e idealmente usaria o csbrasil-BOT"*. Evidência: PR #348 com 5
