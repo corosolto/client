@@ -1,16 +1,5 @@
-// Atacadão da Treta: ARMAZÉM DE CLUBE DE ATAQUE. O dono recusou o átrio de loja de
-// departamento em 27/08/2026 — "nao deixar tanto aberto, e sim colocar mais elementos
-// pro mapa aumentar um pouco de complexidade" e "o atacadao nao queria tanto igual o
-// lojas havan, tem que fazer algo de diferente". A resposta não é decoração: o miolo
-// virou LABIRINTO DE RACK DE PALLET (estante_pallets.glb, kit atacadao_r3 do Mint),
-// seis fileiras de 3 m de altura formando corredores de ~4 m com ENTRADAS ALTERNADAS,
-// ilha de caixa como cover de peito nos cruzamentos e parede fria de freezer na
-// lateral leste. Perímetro FECHADO de galpão (sem vitrine de vidro), pé-direito de
-// 11 m e luminária industrial pendurada — idioma emprestado do galpão do campomorro
-// (public/js/map_campomorro.js:355), porque teto opaco não pode depender do sol.
-// O estacionamento ao sul (spawn E) e a rua de fundo continuam iguais: é lá que o
-// CTF respira. Régua: tools/eval/atacadao-check.mjs (ATA1..ATA5, LOS média <= 10,5 m).
-// Colisão só AABB. Mesmo contrato de build(scene, T) da Loja H.
+// Atacadão da Treta: ARMAZÉM DE CLUBE DE ATAQUE — labirinto de rack de pallet, não
+// átrio de loja. Projeto, lattice e medidas: docs/mapa-atacadao.md. Régua: eval:atacadao.
 import * as THREE from 'three';
 import { placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
@@ -28,23 +17,18 @@ export const ATACADAO_PROPS = [
   'fav_house', 'fav_modular', 'fav_brasileira', 'fachada_comercio',
 ];
 
-const HALF_X = 26, WALL_H = 11, PARK_H = 2.4;   // WALL_H 8 -> 11: pé-direito de galpão, o rack tem 3 m
-/* ── LATTICE DO ARMAZÉM ─────────────────────────────────────────────────────────
-   Tudo aqui é múltiplo de STEP/2 = 1,6 m DE PROPÓSITO. O grafo de navegação deste
-   mapa é uma grade de 3,2 m; se a fileira de rack cai em cima do nó, o corredor
-   existe na imagem e não existe para o bot (e a régua ATA1 exige nó andável dentro
-   do vão). Fileiras nos x ÍMPARES do lattice, corredores nos PARES. */
+const HALF_X = 26, WALL_H = 11, PARK_H = 2.4;   // WALL_H 8 -> 11: pé-direito de galpão
+/* Tudo em múltiplo de 1,6 m: prop a menos de 0,95 m de uma linha de nó apaga o nó.
+   Fileiras nos x ímpares do lattice, corredores nos pares — docs/mapa-atacadao.md. */
 const FILA_X = [-17.6, -11.2, -4.8, 4.8, 11.2, 17.6];   // 6 fileiras de rack
 const RACK_Z = [1.6, 4.8, 8.0, 11.2, 14.4, 17.6, 20.8, 24.0, 27.2];   // 9 slots por fileira
 const VAO_PAR = 11.2, VAO_IMPAR = 20.8;   // slot vazado: entrada ALTERNADA por fileira
 const RACK_HX = 1.15, RACK_HZ = 1.6, RACK_H = 3.0;   // meio-bloco: rack GLB + pallets atrás
 
-const ZF = -12;   // fachada (separa estacionamento × loja). Era -6: a praça de caixas
-                  // não cabia no lattice de navegação e o flanco oeste virava componente ilhado.
-const ZN = 36.2; // fundo da loja (norte). Era 33: a doca ficava com 3,8 m e nenhum slot de
-                  // spawn B alcançava os 40 m² de chão contíguo da MAP2B (medido: 34,5 a 36,8 m²).
+const ZF = -12;   // fachada. Era -6: a praça não cabia no lattice (MC3, 22 nós ilhados)
+const ZN = 36.2; // fundo (norte). Era 33: doca de 3,8 m reprovava a MAP2B (40 m² por slot)
 const ZS = -42;   // fundo do estacionamento (sul, a rua)
-const LOJA_Z0 = ZF, LOJA_Z1 = ZN;   // faixa que a régua ATA5 chama de "dentro do galpão"
+const LOJA_Z0 = ZF, LOJA_Z1 = ZN;   // faixa que a ATA5 chama de "dentro do galpão"
 
 function signTex(bg, fg, title, sub, W = 512, H = 160) {
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -101,16 +85,13 @@ export function buildAtacadao(scene, T) {
   addFloor(HALF_X * 2, ZN - ZF, MAT.piso, 0, (ZF + ZN) / 2);       // loja
   addFloor(HALF_X * 2, ZF - ZS, MAT.asfalto, 0, (ZS + ZF) / 2);    // estacionamento
 
-  /* ── CASCA DO GALPÃO ────────────────────────────────────────────────────────
-     Perímetro FECHADO: a vitrine de vidro de 5,4 m que existia sobre as portas era
-     o que fazia a loja ler como shopping. Some inteira; sobra alvenaria cega até os
-     11 m, laje opaca (sem o plano de "céu" que entrava pelo teto) e treliça. */
+  /* Perímetro FECHADO: a vitrine de vidro de 5,4 m saiu inteira — era ela que fazia
+     a loja ler como shopping. Sobra alvenaria cega, laje opaca e treliça. */
   addBox(HALF_X * 2, WALL_H, 0.8, MAT.parede, 0, 0, ZN);                          // parede norte
   for (const sx of [-1, 1]) addBox(0.8, WALL_H, ZN - ZF, MAT.parede, sx * wX, 0, (ZF + ZN) / 2);  // laterais (loja)
   addBox(HALF_X * 2, 0.5, ZN - ZF, MAT.metal, 0, WALL_H, (ZF + ZN) / 2, { collide: false, cast: false });   // laje opaca
   for (let z = ZF + 3; z <= ZN; z += 6.4) addBox(HALF_X * 2, 0.34, 0.34, MAT.metal, 0, WALL_H - 0.5, z, { collide: false, cast: false });   // terças
-  /* Tirante baixo a 5 m: é o VIGAMENTO onde a pomba de galpão pousa (ambiência, adiante). */
-  const vigas = [];
+  const vigas = [];   // tirante de 5 m: o VIGAMENTO onde a pomba pousa (ambiência, adiante)
   for (const z of [1.6, 14.4, 27.2]) vigas.push(addBox(HALF_X * 2 - 2, 0.26, 0.26, MAT.metal, 0, 5.0, z, { collide: false, cast: false }));
   for (const px of [-22.4, 22.4]) for (const pz of [1.6, 14.4, 27.2]) { addBox(0.7, WALL_H, 0.7, MAT.pilar, px, 0, pz); addBox(0.9, 0.5, 0.9, MAT.pilarBase, px, 0, pz, { collide: false }); }
 
@@ -133,22 +114,12 @@ export function buildAtacadao(scene, T) {
   // parede de fundo (norte) também com o letreiro
   signMesh(16, 3.0, signTex('#c0392b', '#ffd23f', 'ATACADÃO DA TRETA', 'ABERTO ATÉ A TRETA ACABAR', 900, 180), 0, 7.2, ZN - 0.5, Math.PI);
 
-  /* ══════════════════════════════════════════════════════════════════════════
-     LABIRINTO DE RACK — o coração da frente.
-     Cada SLOT é rack de pallet (GLB, 3 m) + carga paletizada encostada atrás: o
-     bloco fica com 2,3 m de profundidade, que é o que fecha a linha de visão de
-     verdade. Um rack sozinho tem 1,1 m e o jogador enxerga o corredor seguinte
-     por cima da carga — foi o primeiro layout medido e a LOS mal caiu.
-     ENTRADA ALTERNADA: fileira par vaza o slot z=11,2; ímpar vaza o z=20,8. Quem
-     corre um corredor inteiro não sai do outro lado no mesmo lugar do vizinho.
-     ══════════════════════════════════════════════════════════════════════════ */
+  /* LABIRINTO DE RACK. Cada slot é GLB de 3 m + carga paletizada atrás: são os 2,3 m
+     do conjunto que fecham a visada, não o rack de 1,1 m sozinho (docs/mapa-atacadao.md). */
   const PALLET = [lam({ color: 0x8a6a3c }), lam({ color: 0xb8b2a4 }), lam({ color: 0x2e6f9e }), lam({ color: 0xc0392b })];
   const racks = [];
-  /* A geometria do slot mora DENTRO do Group marcado, não solta no `root`. Não é
-     arrumação: a régua (e qualquer mutação futura) remove o Group para provar que o
-     labirinto é o que fecha a linha de visão. Com as malhas soltas no root, tirar o
-     marcador não tirava um pixel e a ATA5 media a mesma LOS com e sem rack — número
-     de instrumento quebrado é pior que número nenhum (docs/LICOES.md). */
+  /* A geometria mora DENTRO do Group marcado: a mutação --mutar=sem-racks remove o
+     Group, e com as malhas soltas no root a ATA5 media a mesma LOS com e sem rack. */
   const rackBox = (g, w, h, d, mat, dx, dy, dz, sombra = true) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(dx, dy + h / 2, dz); m.castShadow = sombra; m.receiveShadow = true;
@@ -163,7 +134,7 @@ export function buildAtacadao(scene, T) {
       const estante = placeProp('estante_pallets', { x: -paraDentro * 0.58, z: 0, y: 0, targetH: RACK_H, ry: Math.PI / 2 });
       if (estante) { g.add(estante); occluders.push(estante); }
       else rackBox(g, 1.1, RACK_H, 3.1, MAT.prat, -paraDentro * 0.58, 0, 0);
-      // carga paletizada: altura alternada dá silhueta e evita parede lisa de 3 m
+      // altura alternada dá silhueta e evita parede lisa de 3 m
       const hCarga = [2.5, 1.9, 2.9][(fi + zi) % 3];
       rackBox(g, 1.12, hCarga, 2.9, PALLET[(fi + zi) % PALLET.length], paraDentro * 0.58, 0, 0);
       rackBox(g, 1.16, 0.16, 3.0, MAT.metal, paraDentro * 0.58, hCarga, 0, false);
@@ -176,18 +147,15 @@ export function buildAtacadao(scene, T) {
     signMesh(2.6, 0.8, signTex('#1f5fbf', '#ffffff', ['MERCEARIA', 'BEBIDAS', 'LIMPEZA', 'HORTIFRÚTI', 'BAZAR', 'DESCARTÁVEL'][fi], '', 512, 150), fx, 4.2, -0.6, 0);
   });
 
-  /* Espinha central: torre de promoção no eixo x=0. Sem ela o "corredor central" que a
-     rota CTF2 usa vira um tubo de 39 m com visada limpa da porta até a doca. A torre é
-     estreita (0,9 m de meia-largura) de propósito: os nós do grafo em x=±1,6 continuam
-     andáveis, então sobram duas pistas de 2,7 m em vez de um átrio. */
+  /* Espinha central: sem ela o corredor que a rota CTF2 usa vira um tubo de visada
+     limpa da porta até a doca. Estreita (0,9 m) para os nós em x=±1,6 sobreviverem. */
   for (const tz of [3.2, 9.6, 16.0, 22.4, 28.8]) {
     addBox(1.8, 2.4, 2.2, PALLET[(tz | 0) % PALLET.length], 0, 0, tz);
     addBox(1.9, 0.14, 2.3, MAT.metal, 0, 2.4, tz, { collide: false, cast: false });
   }
 
-  /* ── ILHAS DE CAIXA: cover de PEITO (1,15 m) nos cruzamentos ────────────────
-     Meia-altura de verdade: cobre o corpo e não a cabeça, então dá para trocar tiro
-     por cima. Ficam na boca de cada vão alternado e nas duas pontas do galpão. */
+  /* Cover de PEITO (1,15 m): cobre o corpo e não a cabeça, dá para trocar tiro por
+     cima. Fica na boca de cada vão alternado e nas duas pontas do galpão. */
   const ilhas = [];
   const ilha = (x, z) => {
     const o = placeProp('ilha_caixas', { x, z, y: 0, targetH: 1.15, ry: (x * 3 + z) % 2 ? 0 : Math.PI / 2 });
@@ -197,12 +165,8 @@ export function buildAtacadao(scene, T) {
     colliders.push(c); alvo.userData.collider = c; alvo.userData.atacadaoCover = true;
     ilhas.push(alvo); return alvo;
   };
-  /* ONDE a ilha pode ficar não é gosto: o grafo é uma grade de 3,2 m e o `blocked()`
-     usa folga de 0,5 m, então prop a menos de 0,95 m de uma linha de nó APAGA o nó. No
-     corredor de 4,1 m só existe UMA linha de nó (o eixo), e apagá-la corta o corredor em
-     dois. Por isso toda ilha entra encostada na face do rack, a 1,5 m do eixo: sobra
-     3,1 m de passagem livre e o nó continua de pé. Foi o que partiu o flanco oeste em
-     componente ilhado na primeira medição (eval:mapcontrato, MC3: 22 nós). */
+  /* Encostada na face do rack, a 1,5 m do eixo: no corredor de 4,1 m existe UMA linha
+     de nó e apagá-la corta o corredor em dois (MC3, 22 nós na primeira medição). */
   FILA_X.forEach((fx, fi) => {
     const vz = fi % 2 === 0 ? VAO_PAR : VAO_IMPAR;
     const eixo = fx + (fx < 0 ? 3.2 : -3.2);          // eixo do corredor vizinho ao vão
@@ -210,7 +174,7 @@ export function buildAtacadao(scene, T) {
   });
   for (const [ix, iz] of [[-6.4, ZF + 8.0], [6.4, ZF + 8.0], [-8.0, 28.8], [8.0, 28.8], [-22.6, 11.2], [-22.6, 20.8]]) ilha(ix, iz);
 
-  /* ── PAREDE FRIA: corrida de freezer na lateral leste ──────────────────────── */
+  /* Parede fria: corrida de freezer na lateral leste. */
   const freezers = [];
   [3.2, 7.2, 11.2, 15.2, 19.2, 23.2].forEach((fz, i) => {
     const o = placeProp('freezer', { x: 24.2, z: fz, y: 0, targetH: 2.2, ry: -Math.PI / 2 });
@@ -227,10 +191,8 @@ export function buildAtacadao(scene, T) {
   }
   prop('cooler', 21.2, 27.2, 1.3, 0, 0.8, 0.6, 1.2);
 
-  /* ── LUZ DE GALPÃO ─────────────────────────────────────────────────────────
-     Idioma do galpão do campomorro: teto opaco tem luminária local, não fé no sol.
-     15 luminárias penduradas por haste; 9 delas carregam PointLight (o resto é
-     desenho — 24 luzes dinâmicas num mapa custam mais do que iluminam). */
+  /* Idioma do galpão do campomorro: teto opaco tem luminária local, não fé no sol.
+     15 penduradas, 9 com PointLight — 24 luzes dinâmicas custam mais do que iluminam. */
   const LUMI = lam({ color: 0xfff4e0, emissive: 0xffe8bc, emissiveIntensity: 0.95 });
   for (const lx of [-14.4, -8.0, 0, 8.0, 14.4]) for (const lz of [4.8, 14.4, 24.0]) {
     addBox(0.12, 3.2, 0.12, MAT.metal, lx, 7.8, lz, { collide: false, cast: false });    // haste
@@ -242,11 +204,9 @@ export function buildAtacadao(scene, T) {
     }
   }
 
-  /* ── FRENTE DE CAIXA (z de -6 a 0) ─────────────────────────────────────────
-     Balcão de 1 m não quebra visada (o olho está a 1,62). Os PAINÉIS DE OFERTA de
-     2,8 m entre os caixas é que fecham a faixa da frente no eixo X — sem eles a
-     entrada inteira é uma linha limpa de 50 m de parede a parede. */
-  const ZCAIXA = ZF + 5.6, ZPAINEL = ZF + 2.4;   // múltiplos de 3,2: caem NO MEIO de duas linhas de nó
+  /* Balcão de 1 m não quebra visada (o olho está a 1,62): quem fecha a praça no eixo
+     X são os painéis de oferta de 2,8 m entre os caixas. */
+  const ZCAIXA = ZF + 5.6, ZPAINEL = ZF + 2.4;   // múltiplos de 3,2: caem no meio de duas linhas de nó
   for (const cx of [-19.2, -12.8, -6.4, 6.4, 12.8, 19.2]) {
     addBox(1.4, 1.0, 1.8, MAT.caixa, cx, 0, ZCAIXA);
     addBox(1.2, 0.06, 1.6, MAT.esteira, cx, 1.0, ZCAIXA, { collide: false });
@@ -258,12 +218,8 @@ export function buildAtacadao(scene, T) {
     signMesh(2.6, 1.1, signTex('#e0b83a', '#c0392b', PROMO[i], '', 512, 220), px, 2.0, ZPAINEL - 0.3, 0);
   });
   for (const [cx, cz] of [[-9.6, ZF + 3.2], [3.2, ZF + 4.0], [9.6, ZF + 1.6]]) prop('shopping_cart', cx, cz, 1.0, (cx * 7) % 3, 0.4, 0.4, 0.9);
-  /* TERCEIRA FILA DA PRAÇA: pilha de fardo de 2,4 m entre a porta e a boca dos corredores.
-     Sem ela a praça de caixas (12 × 51 m) devolvia sozinha quase todo o ganho do labirinto —
-     a LOS média voltava a 10,46 m contra um teto de 10,50, margem que não é margem. Fica nos
-     x que NÃO são boca de porta (as portas são x∈[-15,-9], [-3,3], [9,15]) para não mexer nas
-     duas rotas separadas que o CTF2 exige. Todos os z em múltiplo de 3,2: caem no meio de
-     duas linhas de nó e não apagam nenhuma. */
+  /* Terceira fila da praça: sem ela a LOS média voltava a 10,46 m contra teto de 10,50.
+     Fica fora da boca das portas (x∈[-15,-9], [-3,3], [9,15]) por causa do CTF2. */
   for (const [fx, fz, fw] of [[-21.6, ZF + 8.8, 2.8], [-6.4, ZF + 8.8, 2.8], [6.4, ZF + 8.8, 2.8], [21.6, ZF + 8.8, 2.8],
                               [-19.2, ZF + 2.4, 2.0], [-6.4, ZF + 2.4, 2.0], [6.4, ZF + 2.4, 2.0], [19.2, ZF + 2.4, 2.0]]) {
     const h = fw > 2.4 ? 2.4 : 2.0;
@@ -271,24 +227,23 @@ export function buildAtacadao(scene, T) {
     addBox(fw + 0.1, 0.14, 1.3, MAT.metal, fx, h, fz, { collide: false, cast: false });
   }
 
-  /* ── DOCA (z de 28,8 a 32,6): fundo do galpão, spawn B ─────────────────────── */
+  /* Doca: fundo do galpão, spawn B. */
   for (const [dx, dh] of [[-19.2, 2.6], [-9.6, 2.2], [3.2, 2.8], [12.8, 2.2], [22.4, 2.6]]) {
     addBox(2.6, dh, 0.8, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 35.4);
     addBox(2.7, 0.16, 0.9, MAT.metal, dx, dh, 35.4, { collide: false, cast: false });
   }
-  prop('vw_9150', -25.0, 24.0, 3.0, 0, 0, 0, 0);   // carreta encostada na doca oeste, fora da faixa andável
+  prop('vw_9150', -25.0, 24.0, 3.0, 0, 0, 0, 0);   // carreta encostada na doca oeste
   prop('dumpster', 21.6, 32.0, 1.7, 0, 1.0, 0.7, 1.6);
-  /* Fila de fardo no meio da doca: 7 m de faixa livre por 51 m de parede a parede é o
-     mesmo átrio que o dono recusou, só que no fundo. Largura 2,0 m para a linha de nó
-     vizinha sobrar com 0,6 m de folga (o `blocked()` do grafo usa 0,5). */
+  /* Fila de fardo: 7 m livres por 51 m de parede a parede é o mesmo átrio, só que no
+     fundo. Largura 2,0 m para a linha de nó vizinha sobrar com 0,6 m de folga. */
   for (const dx of [-22.4, -12.8, 0, 12.8, 22.4]) {
     addBox(2.0, 2.4, 1.2, PALLET[(Math.abs(dx) | 0) % PALLET.length], dx, 0, 32.0);
     addBox(2.1, 0.14, 1.3, MAT.metal, dx, 2.4, 32.0, { collide: false, cast: false });
   }
   prop('pilha_pneus', -21.6, 2.4, 1.5, 0, 1.0, 1.0, 1.4);
 
-  /* ── FLANCO OESTE: travessas que impedem a pista lateral de virar corredor de
-     39 m com visada limpa (o flanco leste já é fechado pela parede de freezer). */
+  /* Flanco oeste: travessas para a pista lateral não virar corredor de 45 m com visada
+     limpa (o flanco leste já é fechado pela parede de freezer). */
   for (const tz of [6.4, 16.0, 25.6]) addBox(2.7, 2.6, 1.2, MAT.prat, -23.75, 0, tz);
   for (const tz of [9.6, 22.4]) addBox(1.9, 2.2, 1.2, PALLET[(tz | 0) % PALLET.length], -22.4, 0, tz);
 
@@ -300,13 +255,12 @@ export function buildAtacadao(scene, T) {
     for (let x = -28; x <= 28; x += 4) addBox(2.2, 0.02, 0.35, MAT.faixa, x, 0.03, ZS - 9, { collide: false, cast: false }); }   // faixa central da rua (ao longo de X)
   const cars = ['kombi', 'saveiro', 'opala', 'fiat_uno', 'chevette', 'brasilia_vw'];
   let cix = 0;
-  /* ZF - 6/13/20 e não - 8/16/24: com ZF em -12 a terceira fileira ia para z=-36 e o carro
-     de x=-9,1 engolia a AK do armário do time E em (-9, -35) — VM14, 1 pickup sem alcance. */
+  /* ZF-6/13/20 e não -8/16/24: com ZF em -12 a terceira fileira engolia a AK do armário
+     do time E em (-9, -35) — VM14, 1 pickup sem alcance. */
   for (const fz of [ZF - 6, ZF - 13, ZF - 20]) {                                                  // 3 fileiras de vaga
     for (let x = -22; x <= 22; x += 5.2) addBox(0.14, 0.02, 4.4, MAT.faixa, x, 0.03, fz, { collide: false, cast: false });
-    /* A fileira do fundo abre uma BAIA em torno da bandeira E (-8, -30): com ela cheia, a
-       única forma de sair da doca até a bandeira era um corredor só, e o CTF2 do map-check
-       caía de 2 rotas separadas para 1 no par B->E. Carro é cover, não funil. */
+    /* A fileira do fundo abre uma BAIA em torno da bandeira E: cheia, ela derrubava o par
+       B->E do CTF2 de 2 rotas separadas para 1. Carro é cover, não funil. */
     const baia = fz <= ZF - 20;
     for (let x = -19.5; x <= 19.5; x += 5.2) {
       if (baia && x > -16 && x < -2) continue;
@@ -386,10 +340,8 @@ export function buildAtacadao(scene, T) {
   const STEP = 3.2;
   const B = { minX: -HALF_X + 2, maxX: HALF_X - 2, minZ: ZS + 2, maxZ: ZN - 2 };
   const blocked = (x, z, inflate) => { for (const c of colliders) if (x > c.minX - inflate && x < c.maxX + inflate && z > c.minZ - inflate && z < c.maxZ + inflate && c.minY < 1.6 && c.maxY > 0.15) return true; return false; };
-  /* A grade nasce ANCORADA no lattice do armazém (múltiplos de 1,6 m a partir de
-     x=1,6), não na borda do mapa. Ancorada na borda, os nós caíam a 0,45 m da face
-     do rack e o `blocked(...,0.5)` derrubava o corredor inteiro: o labirinto existia
-     na imagem e não existia para o bot. Ver tools/eval/atacadao-check.mjs (ATA1). */
+  /* Grade ANCORADA no lattice do armazém, não na borda: ancorada na borda os nós caíam
+     a 0,45 m da face do rack e o corredor inteiro sumia do grafo. */
   const ancora = (v) => Math.ceil((v - 1.6) / STEP) * STEP + 1.6;
   for (let gx = ancora(B.minX); gx <= B.maxX; gx += STEP) for (let gz = ancora(B.minZ); gz <= B.maxZ; gz += STEP) if (!blocked(gx, gz, 0.5)) nodes.push({ x: gx, z: gz });
   const segClear = (a, b) => { for (let i = 1; i < 6; i++) { const t = i / 6, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t; if (blocked(x, z, 0.25)) return false; } return true; };
@@ -419,11 +371,8 @@ export function buildAtacadao(scene, T) {
     B: [-17.6, -8.0, 8.0, 17.6].map(x => ({ x, z: 33.2, yaw: Math.PI })), // doca do galpão, olhando pros corredores
   };
 
-  /* BUG-57 + frente ATACADÃO: rato e barata na doca, e a POMBA NO VIGAMENTO — bicho de
-     galpão de atacado mora no tirante, não no chão da gôndola. Os tirantes de 5 m
-     (`vigas`, acima) existem em z = 1,6 / 14,4 / 27,2; a pomba pousa no topo (y = 5,13).
-     Modo continua 'ground' de propósito: `flight` está depreciado desde o BUG-57 (AR5 da
-     eval:ambience-registry) porque o GLB de voo é estático de asas abertas. */
+  /* BUG-57: pomba NO VIGAMENTO (topo do tirante, y=5,13), rato e barata na doca. Modo
+     continua 'ground' — `flight` é depreciado desde o BUG-57 (AR5). */
   const ambience = createFavelaAmbience(root, {
     map: 'atacadao_treta',
     rats: [
@@ -432,30 +381,23 @@ export function buildAtacadao(scene, T) {
     ],
     /* vida 1: barata da doca do atacadão (fauna 2) */
     cockroaches: [
-      { pos: [-15, 0, -26], to: [-12.8, 0, -23.8], phase: .8 },
+      { pos: [-20.8, 0, -14], to: [-18.6, 0, -16.2], phase: .8 },
       { pos: [22.6, 0, 25.6], to: [20.4, 0, 27.2], phase: 2.2 },     // pé da parede fria
     ],
     pigeons: [
-      { mode: 'ground', pos: [-8.0, 5.13, 14.4], to: [-4.8, 5.13, 14.4], phase: .4 },   // vigamento central
-      { mode: 'ground', pos: [8.0, 5.13, 27.2], to: [11.2, 5.13, 27.2], phase: 1.3 },   // vigamento da doca
-      { mode: 'ground', pos: [1.2, 0, -9], phase: .8 },                                  // estacionamento
+      { mode: 'ground', pos: [-8.0, 5.13, 14.4], to: [-4.8, 5.13, 14.4], phase: .4 },
+      { mode: 'ground', pos: [8.0, 5.13, 27.2], to: [11.2, 5.13, 27.2], phase: 1.3 },
+      { mode: 'ground', pos: [1.2, 0, -14], phase: .8 },
     ],
   });
 
   return {
-    /* AMBIÊNCIA SONORA. `hum` (hum-indoor) é a ventilação de galpão: um loop no miolo
-       das fileiras e outro COLADO na parede fria, que é onde o compressor do freezer
-       ronca — dois pontos posicionais dão ao jogador a noção de que ele está andando de
-       um clima para o outro. `cidade` fica no estacionamento, não no centro do mapa.
-       PENDÊNCIA DECLARADA: o anúncio de alto-falante distorcido SEM palavra reconhecível
-       (pedido da frente) não entrou. O pacote de áudio não vem no git por licenciamento
-       (scripts/fetch-audio.sh, release audio-pack-v6) e não existe nele nenhuma faixa de
-       PA; declarar um `src` que o manifesto não serve daria 404 silencioso, que é o
-       BUG-19 de novo. Registrado no KNOWN-BUGS.md em vez de fingido aqui. */
+    /* Ventilação do miolo + compressor da parede fria. O anúncio de alto-falante NÃO
+       entrou: não há faixa de PA no audio-pack — pendência no KNOWN-BUGS.md, BUG-70. */
     ambience, sound: { loops: [
-      { src: AMB_LOOPS.hum, pos: [0, 3.4, 14.4], radius: 46, vol: .22 },       // ventilação do galpão
-      { src: AMB_LOOPS.hum, pos: [23.4, 2.6, 13.2], radius: 20, vol: .26 },    // compressor da parede fria
-      { src: AMB_LOOPS.cidade, pos: [0, 3, ZS + 10], radius: 52, vol: .18 },   // rua/estacionamento
+      { src: AMB_LOOPS.hum, pos: [0, 3.4, 14.4], radius: 46, vol: .22 },
+      { src: AMB_LOOPS.hum, pos: [23.4, 2.6, 13.2], radius: 20, vol: .26 },
+      { src: AMB_LOOPS.cidade, pos: [0, 3, ZS + 10], radius: 52, vol: .18 },
     ], bioma: 'urbano' },
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, spawns, sun, hemi, pickups,
     ctfPoints: [
