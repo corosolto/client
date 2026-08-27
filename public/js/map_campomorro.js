@@ -1,7 +1,7 @@
 // CAMPO DO MORRO (campomorro) — campo de varzea rebaixado, oito becos
 // convergentes e galpao do baile elevado. Spec: plans/11-CAMPO-DO-MORRO.md.
 import * as THREE from 'three';
-import { PropBatch, InstBatch, mergeParts, hasProp } from './mapprops.js';
+import { PropBatch, InstBatch, mergeParts, hasProp, placeProp } from './mapprops.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { detailFor } from './textures.js';
@@ -44,6 +44,8 @@ const morroBase = (x, z) => FIELD_Y
 export const CAMPOMORRO_PROPS = [
   'arquibancada', 'junkyard_container', 'caixa_som_baile', 'stall',
   'fav_house', 'pilha_pneus', 'moto_cg', 'fusca',
+  // kit favela_r3 (Mint): o casario do morro e o cordao de roupas dos becos
+  'casa_favela_azul', 'casa_favela_tijolo', 'varal_roupas',
   // RC4: grama da frente E (e-models) — o piloto do vento mora nela
   'grama_corrego_01', 'grama_corrego_02', 'planta_corrego_taboa', 'planta_corrego_taioba',
 ];
@@ -372,20 +374,109 @@ export function buildCampoMorro(scene, T = {}) {
   };
   atualizarTorcida(0);
 
-  // Fachadas do beco oeste quebram a visada antes da entrada do campo.
-  const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 21], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
+  /* CASARIO DE MOLDE (kit favela_r3, Mint) — o dono: "os mapas de favela so o lajes
+     tem cordao de roupas do model, os outros nao e tudo generico low poly" e "tem que
+     ver a escala dos predios sempre". As 11 casas deixam de ser caixa+fachada pintada
+     e viram instância de casa_favela_azul / casa_favela_tijolo alternadas.
+
+     ESCALA É DECLARADA, NÃO SORTEADA: cada casa nasce de (pavimentos × pé-direito), com
+     pé-direito entre 2,60 e 3,20 m e fachada ≥ 4 m — a faixa que a CM-M2 do
+     campomorro-molde-check cobra. O volume ANTIGO era 3,6 m de pé-direito num
+     pavimento só: casa de gigante, exatamente o defeito reclamado.
+
+     O molde vem normalizado em ~1 m e quase cúbico (medido: azul 0,955×0,998×0,764;
+     tijolo 0,943×0,936×0,998). Escala uniforme casa 2 pavimentos de graça, mas num
+     pavimento só daria 2,9 m de fachada — abaixo do piso de 4 m. Por isso o barraco
+     térreo é ALARGADO em x/z depois da normalização (barraco largo e baixo é a
+     silhueta certa); o preço é estiramento de textura na fachada térrea. */
+  const casario = [];
+  /* A casa 5 desceu de z=21 para z=20,3: com a fachada virada para o campo o
+     footprint dela ficou mais FUNDO em z (5,05 m contra os 4,5 m do bloco antigo) e
+     encostava em z=23,5, que é justo o ponto onde o nó (30,24) da grade de waypoints
+     nasce. Sem esse nó o bolsão nordeste (30,27)-(33,21..27) virava ilha e a MC3 do
+     mapcontrato reprovava com "campomorro 4 ilhados". Medido, não chutado. */
+  const CASAS = [[-32, 2], [-32, 18], [-24.5, 23], [-13, 24], [7, 24], [29, 20.3], [31, -5], [13, -24], [-8, -24], [-27, -21], [-33, -10]];
+  /* Molde normalizado + alargamento em x/z: placeProp deixa a escala uniforme, então a
+     largura de fachada vem de uma segunda passada medida no Box3 real da cópia. */
+  const casaMolde = (molde, x, z, base, alturaTotal, larg, prof, ry) => {
+    const o = placeProp(molde, { x: 0, y: 0, z: 0, targetH: alturaTotal });
+    if (!o) return null;
+    o.updateMatrixWorld(true);
+    const b1 = new THREE.Box3().setFromObject(o);
+    o.scale.x *= larg / ((b1.max.x - b1.min.x) || 1);
+    o.scale.z *= prof / ((b1.max.z - b1.min.z) || 1);
+    o.rotation.y = ry;
+    o.updateMatrixWorld(true);
+    const b2 = new THREE.Box3().setFromObject(o);
+    o.position.x += x - (b2.min.x + b2.max.x) / 2;
+    o.position.z += z - (b2.min.z + b2.max.z) / 2;
+    o.position.y += base - b2.min.y;
+    return o;
+  };
   for (let i = 0; i < CASAS.length; i++) {
-    const [x, z] = CASAS[i], base = groundHeightAt(x, z), w = 5.5, d = 4.5;
-    // Casa de morro ganha laje: quem está no alto do flanco cresce mais um pavimento.
-    // É o que faz a encosta LER como favela empilhada em vez de fileira de blocos.
-    const h = 3.6 + ((x + z) & 1) + (base > 2 ? 2.7 : 0);
-    addBox(w, h, d, MAT.wall, x, base, z);
-    fachadaCasa(x, z, w, d, h, i, base);
+    const [x, z] = CASAS[i], base = groundHeightAt(x, z);
+    const molde = i % 2 ? 'casa_favela_tijolo' : 'casa_favela_azul';
+    // Quem está no alto do flanco (ou cai no terço de sorteio) sobe o segundo pavimento:
+    // é o que faz a encosta LER como favela empilhada em vez de fileira de blocos.
+    const pav = (base > 2 || i % 3 === 0) ? 2 : 1;
+    const peDireito = 2.70 + ((i * 7) % 5) * 0.11;      // 2,70..3,14 m — dentro de CM-M2
+    const alturaTotal = pav * peDireito;
+    const larg = 4.60 + ((i * 5) % 4) * 0.45;           // 4,60..5,95 m de fachada
+    const prof = 4.20 + ((i * 3) % 3) * 0.40;
+    // Fachada virada para o campo, travada no quadrante (o AABB só troca w/d em ±90°).
+    const ry = Math.abs(x) > Math.abs(z) ? (x > 0 ? Math.PI / 2 : -Math.PI / 2) : (z > 0 ? Math.PI : 0);
+    const viraEixo = Math.abs(Math.sin(ry)) > 0.5;
+    const bw = viraEixo ? prof : larg, bd = viraEixo ? larg : prof;
+    const g = new THREE.Group(); g.name = `campomorro-casa-${i}`; g.userData.molde = molde; root.add(g);
+    // O AABB é o mesmo com ou sem GLB: o corpo e a bala não mudam de contrato (BUG-54).
+    const caixa = addBox(bw, alturaTotal, bd, MAT.wall, x, base, z);
+    const glb = QP.get('glb') === '0' ? null : casaMolde(molde, x, z, base, alturaTotal, larg, prof, ry);
+    if (glb) {
+      g.add(glb); occluders.push(glb);
+      caixa.visible = false;
+      const k = occluders.indexOf(caixa); if (k >= 0) occluders.splice(k, 1);
+    } else {
+      // Sem o molde (arnês node, ?glb=0) a fachada pintada segue dando porta e janela.
+      fachadaCasa(x, z, bw, bd, alturaTotal, i, base);
+    }
+    casario.push({ i, molde, x, z, base, pav, peDireito, alturaTotal, larg, prof, ry, glb: !!glb });
     if (i % 4 === 1) {
       const tanque = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.66, 1.15, 12), MAT.proxy);
-      tanque.position.set(x + (i % 2 ? 1.25 : -1.25), base + h + 0.66, z); tanque.castShadow = true; root.add(tanque);
+      tanque.position.set(x + (i % 2 ? 1.25 : -1.25), base + alturaTotal + 0.66, z); tanque.castShadow = true; root.add(tanque);
     }
   }
+  /* VARAL DE ROUPAS (kit favela_r3, Mint) — o dono: "os mapas de favela so o lajes tem
+     cordao de roupas do model, os outros nao e tudo generico low poly". Cinco cordões
+     nos becos entre o casario e numa laje baixa do flanco sul.
+
+     SEM COLISOR DE PROPÓSITO: varal é vestido de beco, não obstáculo. Rota, CTF e os
+     waypoints continuam vendo o beco vazio — nenhuma das cinco posições entra na boca
+     de lane (as lanes têm meia-largura de 2 m e os cordões ficam fora do |v| delas). */
+  const VARAIS = [
+    [-32.0, 10.0, Math.PI / 2],   // beco oeste, entre as duas casas de x=-32
+    [-19.0, 23.5, 0],             // beco noroeste, entre a casa 2 e a casa 3
+    [13.0, 23.0, 0],              // beco nordeste, atrás da casa de [7,24]
+    [-23.0, -21.0, Math.PI / 2],  // beco sudoeste, ao lado da casa de [-27,-21]
+    [2.5, -24.5, 0],              // laje baixa do sul, entre as casas de [-8,-24] e [13,-24]
+  ];
+  VARAIS.forEach(([x, z, ry], n) => {
+    const base = groundHeightAt(x, z), alturaVaral = 2.15;
+    const g = new THREE.Group(); g.name = `campomorro-varal-${n}`; g.userData.molde = 'varal_roupas'; root.add(g);
+    const usaGLB = QP.get('glb') !== '0' && PB.add('varal_roupas', { x, y: base, z, targetH: alturaVaral, ry });
+    if (!usaGLB) {
+      // Sem o molde: dois mourões, o cordão e quatro panos — o beco não fica pelado.
+      const dx = Math.abs(Math.sin(ry)) > 0.5 ? 0 : 1, dz = dx ? 0 : 1;
+      for (const s2 of [-1, 1])
+        addBox(0.08, alturaVaral, 0.08, MAT.steel, x + dx * s2 * 1.5, base, z + dz * s2 * 1.5, { collide: false, cast: false });
+      addBox(dx ? 3.0 : 0.04, 0.035, dz ? 3.0 : 0.04, MAT.steel, x, base + alturaVaral - 0.1, z, { collide: false, cast: false });
+      for (let k = 0; k < 4; k++) {
+        const t = (k - 1.5) * 0.62;
+        addBox(dx ? 0.5 : 0.06, 0.62, dz ? 0.5 : 0.06, k % 2 ? MAT.roof : MAT.concrete,
+          x + dx * t, base + alturaVaral - 0.78, z + dz * t, { collide: false, cast: false });
+      }
+    }
+  });
+
   for (const [x, z] of [[-24, 12], [-16, 18], [5, 18], [27, 14], [29, 1], [16, -19], [4, -22], [-18, -18], [-29, -15]])
     addBox(1.8, 1.1, 1.4, MAT.concrete, x, groundHeightAt(x, z), z);
   addBox(0.35, 3, 7, MAT.wall, -24, groundHeightAt(-24, 10.5), 10.5);
@@ -706,6 +797,17 @@ export function buildCampoMorro(scene, T = {}) {
       { pos: [8, 0, 18], to: [10.5, 0, 19.5], phase: .3 }, { pos: [-8, 0, 19], to: [-5.5, 0, 20.5], phase: 1.9 },
     ],
     cows: [{ pos: [-20, 0, 17], to: [-15, 0, 17], phase: 1.1 }],
+    /* +2 tipos (vida 1): gato de telhado e papagaio de poleiro, os dois já no acervo
+       public/models/ambient/. O gato anda na laje da casa 3 e na base da arquibancada;
+       o papagaio pousa no varal do beco noroeste e no poste do galpão. */
+    cats: [
+      { pos: [-24.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], to: [-21.5, groundHeightAt(-24.5, 23) + 5.4, 20.4], phase: .7 },
+      { pos: [-13.5, groundHeightAt(-13.5, 20.6), 20.6], to: [-10.5, groundHeightAt(-10.5, 20.6), 20.6], phase: 2.2 },
+    ],
+    parrots: [
+      { pos: [-19, groundHeightAt(-19, 23.5) + 2.05, 23.5], phase: .5 },
+      { pos: [26.5, 1 + 3.1, -16.5], phase: 1.8 },
+    ],
     /* tatu: posições usam groundHeightAt — y=0 cravado enterrava o bicho na encosta. */
     armadillos: [
       { pos: [11, groundHeightAt(11, 20), 20], to: [13.5, groundHeightAt(13.5, 21.5), 21.5], phase: .9 },
@@ -744,8 +846,21 @@ export function buildCampoMorro(scene, T = {}) {
   }
 
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[28,2,-21],radius:24,vol:.5},{src:AMB_LOOPS.grilos,pos:[0,3,0],radius:80,vol:.26}],bioma:'campo'},
+    /* SOM REVISADO: o funk do galpão continua sendo o marco sonoro do baile, mas o
+       morro estava mudo — entram o burburinho de cidade sobre o casario (raio grande,
+       volume baixo) e os pássaros do beco arborizado do flanco oeste. O bioma vira
+       'favela': a pool de one-shots dele tem latido, galo e panela, que é a assinatura
+       de morro; 'campo' só trazia galo e passarinho. */
+    ambience,sound:{loops:[
+      {src:AMB_LOOPS.funk,pos:[28,2,-21],radius:24,vol:.5},
+      {src:AMB_LOOPS.grilos,pos:[0,3,0],radius:80,vol:.22},
+      {src:AMB_LOOPS.cidade,pos:[-28,4,6],radius:46,vol:.16},
+      {src:AMB_LOOPS.passaros,pos:[-24,3,22],radius:26,vol:.2},
+    ],bioma:'favela'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
+    /* registro de USO do casario (pavimentos, pé-direito, fachada) — a CM-M2 mede daqui
+       e confere contra o colisor real; ver tools/eval/campomorro-molde-check.mjs */
+    casario,
     onGoal() { golAte = tempoTorcida + 3.2; },
     update(dt, time = 0) { tempoTorcida = time; updateVento(dt); updatePoeira(dt); atualizarTorcida(time); },
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
