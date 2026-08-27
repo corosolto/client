@@ -97,6 +97,83 @@ o mix da alpha.138 já não está servido e não há purge pendente; o conserto 
 `check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
 `cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
 alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
+
+**Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**
+
+```
+TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')   #403, fingerprint ab1ad30e
+TypeError: undefined is not an object (evaluating 'window.ethereum.emit')                          #404, fingerprint e32cd1e4
+Origem: https://www.csbrasil.online/:1:16
+Stack:  global code@https://www.csbrasil.online/:1:16
+```
+
+**Não é defeito do jogo, e a prova é tripla.** (1) `window.ethereum`, `selectedAddress` e
+qualquer identificador web3 **não existem em nenhum arquivo do repositório**, e
+`git log --all -S "window.ethereum"` / `-S "selectedAddress"` não devolvem um único commit —
+o `mint-assets.json` é o registro do gerador de modelos 3D (mint.gg), não tem web3. (2) O
+fingerprint publicado reproduz EXATAMENTE
+`crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:16')`, ou seja o
+`e.filename` é a **própria página**, `lineno=1`, `colno=16`. (3) O único frame é
+`global code@` — nenhum arquivo do jogo aparece na pilha.
+
+É extensão de carteira cripto injetando script **inline no documento**. O próprio
+`index.astro` já dizia isso em comentário desde antes: *"extensões de carteira injetam
+vários"*.
+
+**Causa raiz — confirmada.** O `isExternalCrash` (`src/lib/error-provenance.mjs`) inocenta
+por **origem**. O Safari reporta script de extensão injetado no mundo da página com o
+filename **da página**, então o atalho
+
+```js
+if (sourceOrigin === ownOrigin) return false;
+```
+
+decidia "é nosso" antes de qualquer outra prova. Daí nenhuma das regex seguintes
+(`OPAQUE_RE`, `AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`, `MEDIA_ABORT_RE`) mordia e
+o `classifyCrash` caía no `return 'codigo'` final — que escala e abre issue.
+
+As irmãs **#138** (`Cannot redefine property: ethereum`) e **#166**
+(`Failed to connect to MetaMask`) são a mesma família, mas traziam `chrome-extension://` no
+source/stack e já caíam na `EXTENSION_RE`. O que era novo em #403/#404 é a forma **sem
+esquema de extensão em campo nenhum**.
+
+**Correção, em duas camadas espelhadas** — o mesmo remédio das BUG-51/72/73:
+
+- `src/lib/error-provenance.mjs` — `CARTEIRA_RE` e o ramo em `isExternalCrash`, na **mesma
+  posição e pelo mesmo motivo da `VENDOR_RE`**: antes do atalho same-origin, porque a
+  carteira roda no próprio domínio mas o código é de terceiro. Classe `externo`. A linha
+  continua gravada no `js_error`; some o disparo automático, não o dado.
+- `src/pages/index.astro` — a MESMA redação em `origemDoJogo`. Sem cota nova: carteira cai
+  no balde do `TETO_EXTERNO` que a BUG-51 já abriu (ao contrário do `TETO_MIDIA`, que a
+  BUG-73 precisou criar). Com `interna === false` o erro também deixa de virar `erroDoBoot`
+  e `lancamento.fail` — hoje uma carteira que estoura durante o boot podia ser acusada de
+  ter derrubado o carregamento do jogo.
+
+O corte é **estreito de propósito**: exige o NOME do global injetado
+(`window.`/`globalThis.`/`self.` + `ethereum|solana|tronWeb|…`), nunca a forma da mensagem.
+`ethereum` como palavra solta num texto nosso continua `codigo`, e é isso que o mutante
+`carteira-ampla` prova. Cobre a **família** de carteiras e não uma regex por incidente, que
+é a crítica que a BUG-72 fez ao padrão antigo.
+
+**Custo declarado, medido na população real e não estimado.** Reclassificando as **90**
+issues `crash-auto` do repositório com o helper de antes e o de depois, exatamente **2**
+mudam de classe — a #403 e a #404, `codigo -> externo`. As outras 88 ficam idênticas
+(51 `codigo`, 25 `externo`, 12 `recuperavel`). **Nenhuma outra issue deixa de abrir.**
+
+**Régua:** `EP16` em `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`,
+já no `check:fast` e no `check:deploy` — nenhum passo novo no portão). Classifica os
+payloads REAIS das duas issues (com os fingerprints publicados conferidos contra a receita),
+exige que 5 mensagens vizinhas continuem `codigo`, e **executa o `origemDoJogo` recortado do
+fonte** — regex de fiação sozinha aprovaria `function origemDoJogo(){ return true; }`.
+Carrega ainda uma **invariante de honestidade**: varre `src/` e `public/js/` e fica VERMELHA
+no dia em que o jogo passar a ter um `window.ethereum` de verdade, para o corte não virar
+mordaça silenciosa sobre código nosso. Mutantes novos: `sem-carteira`, `carteira-ampla` e
+`sem-carteira-cliente`, todos acendendo EP16. Cláusulas 15 -> 16, matriz de mutação 42/42.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a reprodução com uma extensão de
+carteira de verdade não foi feita — a régua mede a **classificação**, não a injeção. A
+tabela `js_error` do Supabase também não foi consultada.
 
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
