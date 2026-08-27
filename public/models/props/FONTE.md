@@ -194,3 +194,23 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
   do galpão procedural no browser com escala não-uniforme no call-site
   (28,4 × 14,6 m, cumeeira 6,7 m); colisores procedurais idênticos nos dois
   mundos; neve da cumeeira/beirais refeita sobre o telhado do GLB.
+- `fogueira.glb` — "Fogueira de festa junina", anel de pedras com troncos e
+  brasa. 4.591 tris, texturas WebP 1024. Mint text-to-3D, gerado 26/08/2026 —
+  item do pack festa_r3. Chat:
+  <https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4>. Registro:
+  `fogueira-festa-r3`. Visual das 3 gelo-fogueira-* do mapa gelo (a PointLight
+  pulsante e a fumaça ficam no build); procedural de anel+troncos cobre o arnês.
+- `poste_junino.glb` — "Poste junino", poste de madeira com travessa e
+  bandeirinhas. 4.743 tris, texturas WebP 1024. Mint text-to-3D, gerado
+  26/08/2026 — item do pack festa_r3. Chat:
+  <https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4>. Registro:
+  `poste-junino-festa-r3`. 6 instâncias tracejando o caminho principal e as
+  laterais do mapa gelo (colisor fino); mourão+travessa procedural no arnês.
+- `barraca_quentao.glb` — "Barraca de quentão", barraca junina com toldo e
+  balcão. 4.660 tris, texturas WebP 1024. Mint text-to-3D, gerado 26/08/2026 —
+  item do pack festa_r3. Chat:
+  <https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4>. Registro:
+  `barraca-quentao-festa-r3`. 2 instâncias espelhadas 180° fechando os cantos
+  do mapa gelo como cobertura; neve refeita no telhado por Box3 no call-site.
+  2 normais degeneradas corrigidas em 27/08/2026 (Khronos
+  ACCESSOR_VECTOR3_NON_UNIT).

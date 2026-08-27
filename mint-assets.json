@@ -1929,6 +1929,73 @@
     ],
     "finalSha256": "e8d16bfac2626166b57842d8d5b0d3f26a6f14acb1ce117eca25b558f204bccb"
    }
+  },
+  "fogueira-festa-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/fogueira.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks77asyr7b94tt26c7y3zsx1qd8d7a93",
+    "chatUrl": "https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4",
+    "displayName": "Fogueira de festa junina (kit festa_r3)",
+    "frente": "map2-gelo",
+    "notes": "Fogueira junina com anel de pedras, troncos e brasa (4.591 tris, texturas WebP 1024). Ponto quente do mapa gelo: instância visual das 3 gelo-fogueira-* (a PointLight pulsante e a fumaça ficam no build). Item do pack festa_r3 (packAssetId th753veb8adgvyjwfe1ccd3xcs8d6t7q). GLB normalizado ~1 m, pivô central."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "256a1aabc684491785d01d851dbcd89f7cafa678747205bff790e07cb0a8dc93"
+   }
+  },
+  "poste-junino-festa-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/poste_junino.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks70sps9r39htbmnvsex0gxnsx8d6s37",
+    "chatUrl": "https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4",
+    "displayName": "Poste junino com bandeirinhas (kit festa_r3)",
+    "frente": "map2-gelo",
+    "notes": "Poste de madeira com travessa e bandeirinhas de festa junina (4.743 tris, texturas WebP 1024). Traceja o caminho principal e as laterais do mapa gelo (6 instâncias, colisor fino). Item do pack festa_r3 (packAssetId th753veb8adgvyjwfe1ccd3xcs8d6t7q). GLB normalizado ~1 m, pivô central; escala no call-site (targetH 4,3 m)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg"
+    ],
+    "finalSha256": "b2cff375fba6374693c06953996a6e0fca1a76fd886130d0d27807f555725604"
+   }
+  },
+  "barraca-quentao-festa-r3": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/barraca_quentao.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks7d8cg7j74nc69t7xtz2mejvn8d7h0h",
+    "chatUrl": "https://mint.gg/chat/ph77vce5bm6jtgkm1d2mdtb8z98d6hh4",
+    "displayName": "Barraca de quentão (kit festa_r3)",
+    "frente": "map2-gelo",
+    "notes": "Barraca de quentão de festa junina com toldo e balcão (4.660 tris, texturas WebP 1024). Fecha os cantos vazios do mapa gelo como cobertura de corpo inteiro (2 instâncias espelhadas 180°); neve refeita no telhado por Box3 no call-site. Item do pack festa_r3 (packAssetId th753veb8adgvyjwfe1ccd3xcs8d6t7q). GLB normalizado ~1 m, pivô central. 2 normais degeneradas (zero-length) corrigidas em 27/08/2026 por scratchpad/fix-normals.mjs — Khronos ACCESSOR_VECTOR3_NON_UNIT."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "scratchpad/fix-normals.mjs"
+    ],
+    "finalSha256": "95f81233b180a5d913c8a542fba6782cd9f4812278f75715f0660457900896d5"
+   }
   }
  }
 }
