@@ -17,11 +17,13 @@
          workflow pode chamar `gh pr merge`. O `csbrasil-bot-automerge` chamava, e
          era a única coisa que um bot daqui fazia sozinho — justamente a que não
          devia. Ele agora aplica `pronto-pra-merge` e o botão continua humano.
-   AF7 · todo commit que o bot faz - `git commit` E `git merge` - carrega os trailers que
-         o CI cobra de gente: `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem
-         `-m`, o `git merge` escreve a mensagem automática, que não leva trailer nenhum -
-         e aí o bot conserta o PR e o dco reprova o commit que ele mesmo fez. Medido no
-         #406, onde o merge limpo do autofix travou o PR inteiro.
+   AF7 · todo commit que o bot faz - `git commit` E `git merge`, inclusive a chamada
+         GUARDADA (`… || git commit`) - carrega os trailers que o CI cobra de gente:
+         `Agent:` (agente_check) e `Signed-off-by:` (dco_check). Sem `-m`, o `git merge`
+         escreve a mensagem automática, que não leva trailer nenhum - e aí o bot conserta
+         o PR e o dco reprova o commit que ele mesmo fez. Medido no #406 (merge limpo) e
+         de novo no #450, onde o commit "regenera bloco derivado" saiu sem `Agent:` e
+         reprovou a PR #448.
    AF6 · o autofix acorda quando a MAIN anda, não só quando o PR se mexe. Foram 9
          releases em 20 horas e cada um reabre conflito em todo PR aberto; sem o
          gatilho de push o bot só conserta quem empurra commit — ou seja, nunca
@@ -47,6 +49,7 @@ const MUTANTES = {
   'sem-varredura-pos-release': 'AF6',
   'commit-sem-trailer': 'AF7',
   'merge-sem-trailer': 'AF7',
+  'commit-guardado-sem-trailer': 'AF7',
   'trava-do-pr': 'AF5',
 };
 if (MUT && !MUTANTES[MUT]) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
@@ -127,10 +130,26 @@ if (resolveConflito) {
 /* ---- AF7: os commits do bot levam os trailers que o CI cobra ---- */
 if (MUT === 'commit-sem-trailer') wf = wf.replace(/\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/g, '');
 if (MUT === 'merge-sem-trailer') wf = wf.replace(/git merge --no-edit -m[\s\S]*?FETCH_HEAD; then/, 'git merge --no-edit FETCH_HEAD; then');
+if (MUT === 'commit-guardado-sem-trailer') wf = wf.replace(/(\|\| git commit[\s\S]*?)\n\s*-m "Agent: csbrasil-bot \(autofix\)" \\/, '$1');
 /* Só a CHAMADA conta. `git merge` citado dentro de `--body` é instrução que o bot manda
-   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. */
-for (const trecho of [...wf.matchAll(/^\s*(?:if )?git (?:commit|merge)[\s\S]{0,600}?(?=\n\s{0,10}[a-z-]+:|\n\s*$)/gm)].map((m) => m[0])) {
-  if (/--abort/.test(trecho)) continue;                   // abortar não cria commit
+   para o humano ler, não comando que ele roda — contá-la acusaria quem documentou. O
+   recorte é a chamada INTEIRA: a linha do `git commit`/`git merge` — inclusive guardada
+   por `… ||` — mais as continuações de `\`, que é onde os trailers moram. O recorte
+   antigo ("600 chars até a próxima chave YAML") não alcançava parada nenhuma dentro dos
+   blocos `run:`: as chamadas reais ficavam FORA do recorte, a régua media só o `--abort`
+   e os dois mutantes de trailer estavam cegos — foi assim que o commit "regenera bloco
+   derivado" saiu sem `Agent:` e o dco reprovou a PR #448 (issue #450). */
+const chamadas = [...wf.matchAll(/^[^\S\n]*(?:if !? ?)?(?:[^\n#]*?(?:\|\||&&|;)[^\S\n]*)?git (?:commit|merge)(?:[^\n]*\\\n)*[^\n]*/gm)]
+  .map((m) => m[0])
+  .filter((t) => !/--abort/.test(t))                      // abortar não cria commit
+  .filter((t) => !/^[^\S\n]*["']/.test(t));               // linha de string de `--body`: citação, não chamada
+/* Não saber medir é o mesmo vermelho de medir errado: foi um recorte que não achava
+   chamada NENHUMA que cegou os dois mutantes de trailer (#450). O autofix tem 3
+   chamadas reais; achar menos é recorte quebrado, não workflow limpo. */
+if (chamadas.length < 3) {
+  falhas.push(`AF7 o recorte achou ${chamadas.length} chamada(s) de \`git commit\`/\`git merge\` no autofix.yml, e existem 3 — o recorte está cego: conserte a regex da AF7 (ou atualize a contagem se uma chamada saiu de propósito) antes de confiar no verde`);
+}
+for (const trecho of chamadas) {
   if (!/Agent:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Agent:` — o agente_check reprova o PR que ele acabou de consertar');
   if (!/Signed-off-by:/.test(trecho)) falhas.push('AF7 um `git commit`/`git merge` do bot não leva `Signed-off-by:` — o dco reprova o PR que ele acabou de consertar');
 }

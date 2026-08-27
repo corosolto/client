@@ -76,5 +76,11 @@ await browser.close();
 srv.kill();
 for (const f of falhas) console.log(`  \x1b[31m✗\x1b[0m ${f}`);
 if (!falhas.length) console.log('  \x1b[32m✓\x1b[0m TELA elenco na tela dentro do tempo medido na main');
-if (MUT && !falhas.length) falhas.push(`mutação '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+/* Mesma forma do telemetry-check: ANUNCIA e só então empurra na lista. Anunciar
+   depois do laço que imprime as falhas deixava o aviso mudo, e sair por
+   `falhas.length` — zero por definição no caso cego — saía VERDE (MC1). */
+if (MUT && !falhas.length) {
+  console.log(`  \x1b[31m✗\x1b[0m MUTAÇÃO '${MUT}' não acendeu nenhuma cláusula — portão cego (lei 3)`);
+  falhas.push('mutacao-cega');
+}
 process.exit(falhas.length ? 1 : 0);

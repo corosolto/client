@@ -14,6 +14,7 @@ const mutants = [
   'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
   'onerror-sem-src', 'boot-sem-migalha', 'payload-sem-migalhas', 'issue-sem-migalhas',
   'sem-midia', 'midia-ampla', 'sem-cota-midia',
+  'cache-sem-binding', 'cache-so-ingles', 'cache-sem-especificador',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -78,6 +79,14 @@ if (mutant === 'sem-vercel-cliente') page = mutate(page,
 if (mutant === 'cache-antes-origem') helperSource = mutate(helperSource,
   "if (isExternalCrash(payload, ownOrigin)) return 'externo';\n  if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';",
   "if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';\n  if (isExternalCrash(payload, ownOrigin)) return 'externo';");
+/* Redações por engine do MESMO split (#443/#362): cada mutante apaga UMA alternativa do
+   CACHE_SPLIT_RE e a EP16 tem que morder — senão a redação entrou na regex sem régua. */
+if (mutant === 'cache-sem-binding') helperSource = mutate(helperSource,
+  'Importing binding name|', '');
+if (mutant === 'cache-so-ingles') helperSource = mutate(helperSource,
+  'era um especificador simples, mas não foi remapeado|', '');
+if (mutant === 'cache-sem-especificador') helperSource = mutate(helperSource,
+  'Failed to resolve module specifier|', '');
 if (mutant === 'sem-recuperavel') helperSource = mutate(helperSource,
   "if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';",
   "if (RECOVERABLE_RE.test(evidence)) return 'codigo';");
@@ -255,6 +264,27 @@ const externalCacheFixtures = [
   { source: 'moz-extension://abc/inpage.js:1:2', message: 'Importing a module script failed' },
   { stack: 'Error at safari-web-extension://abc/app.js:1:2', message: 'error loading dynamically imported module' },
   { source: 'https://static.cloudflareinsights.com/beacon.js:1:2', message: 'prod-coherence reprovou' },
+  { source: 'chrome-extension://abc/inpage.js:1:2', message: "Importing binding name 'x' is not found." },
+];
+/* O split do BUG-39 nas redações que a regex NÃO conhecia (#443/#362): WebKit para export
+   ausente (a alpha.138 nem continha `resolveGeoLang` — o erro só existe na interseção de
+   dois deploys no edge) e bare specifier sem import map nas quatro redações conhecidas — a
+   da #362 chegou em pt-BR, traduzida pelo Firefox do jogador. Todas viram purge, não issue.
+   As duas primeiras e a da #362 são as mensagens LITERAIS publicadas nas issues. */
+const cacheSplitFixtures = [
+  { source: '', stack: '', message: "SyntaxError: Importing binding name 'resolveGeoLang' is not found." },
+  { source: '', stack: '', message: "SyntaxError: Importing binding name 'default' cannot be resolved by star export entries." },
+  { source: `${own}/js/main.js?v=2.0.0-alpha.157-c722ebcb6f3a:2:24`, message: 'TypeError: O especificador “three” era um especificador simples, mas não foi remapeado para nada. Especificadores de módulo relativos devem começar com “./”, “../” ou “/”.' },
+  { message: 'TypeError: The specifier “three” was a bare specifier, but was not remapped to anything. Relative module specifiers must start with “./”, “../” or “/”.' },
+  { message: 'TypeError: Failed to resolve module specifier "three". Relative references must start with either "/", "./", or "../".' },
+  { message: `TypeError: Module specifier, 'three' does not start with "/", "./", or "../". Referenced from ${own}/js/main.js` },
+];
+/* O corte continua estreito: crash citando o MESMO símbolo, ou palavra solta das redações,
+   segue acionável — purge por engano esconderia bug de código atrás de remediação de cache. */
+const naoCacheSplitFixtures = [
+  { source: `${own}/js/i18n.js:1:2`, message: "ReferenceError: Can't find variable: resolveGeoLang" },
+  { source: '', stack: '', message: 'binding lost' },
+  { source: '', stack: '', message: 'invalid module specifier' },
 ];
 
 /* EP4 precisa provar o early-return real: um único ponto de dispatch, depois
@@ -588,6 +618,15 @@ const checks = [
     && shouldDispatchCrash('recuperavel') === false
     && midiaCliente && cotaMidiaWired,
     'abort de mídia (play() cortado por pause(), #389) é recuperável: fica na telemetria, não abre issue e tem cota própria no cliente; crash real dentro do módulo de áudio continua acionável'],
+  ['EP16', cacheSplitFixtures.every((fixture) => classify(fixture) === 'cache-split')
+    && naoCacheSplitFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof crashFingerprint === 'function'
+    /* mesma trava do EP12: a receita tem que reproduzir os fingerprints PUBLICADOS. */
+    && crashFingerprint('error', cacheSplitFixtures[0].message, null) === '6b4fb05e'
+    && crashFingerprint('error', cacheSplitFixtures[2].message, cacheSplitFixtures[2].source) === '82b4da8e'
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('cache-split') === true,
+    'redações do WebKit para export ausente (#443) e de bare specifier sem import map (#362, inclusive pt-BR) são cache-split — purge do edge, não issue; crash citando o mesmo símbolo continua codigo'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -609,6 +648,7 @@ const mutantClause = {
   'onerror-sem-src': 'EP15', 'boot-sem-migalha': 'EP15',
   'payload-sem-migalhas': 'EP15', 'issue-sem-migalhas': 'EP15',
   'sem-midia': 'EP14', 'midia-ampla': 'EP14', 'sem-cota-midia': 'EP14',
+  'cache-sem-binding': 'EP16', 'cache-so-ingles': 'EP16', 'cache-sem-especificador': 'EP16',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);

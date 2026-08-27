@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.179`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.186`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,41 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.186] — 2026-08-26
+
+### Mudado
+- fix(crash): redações do WebKit e do Firefox pt-BR entram no CACHE_SPLIT_RE (#443) (#448)
+
+## [2.0.0-alpha.185] — 2026-08-26
+
+### Mudado
+- fix(ci): o commit "regenera bloco derivado" leva o trailer Agent, e a AF7 volta a morder (#450) (#452)
+
+## [2.0.0-alpha.184] — 2026-08-24
+
+### Mudado
+- chore(portao): co-autoria de agente de IA não entra mais na mensagem (#430)
+
+## [2.0.0-alpha.183] — 2026-08-23
+
+### Mudado
+- fix(site): /discord levava para um convite que não é mais o nosso (#429)
+
+## [2.0.0-alpha.182] — 2026-08-22
+
+### Mudado
+- fix(ci): o artefato de preview perdia os arquivos ocultos (#427)
+
+## [2.0.0-alpha.181] — 2026-08-22
+
+### Mudado
+- perf(vram): armas param de custar 259 MB de textura — 96 MB a menos por partida (#407)
+
+## [2.0.0-alpha.180] — 2026-08-22
+
+### Mudado
+- fix(ci): extrai a trava logo depois do fetch, antes do FETCH_HEAD virar outro (#426)
 
 ## [2.0.0-alpha.179] — 2026-08-22
 

@@ -7,7 +7,7 @@
 [![three.js](https://img.shields.io/badge/jogo-three.js%20r160-000000?logo=three.js)](https://threejs.org)
 [![supabase](https://img.shields.io/badge/ranking-supabase-3fcf8e?logo=supabase&logoColor=white)](https://supabase.com)
 [![vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel)](https://vercel.com)
-[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/MJq7Csam)
+[![Discord](https://img.shields.io/badge/Discord-entrar-5865F2?logo=discord&logoColor=white)](https://discord.gg/fmunXnaj)
 [![Telegram](https://img.shields.io/badge/Telegram-entrar-26A5E4?logo=telegram&logoColor=white)](https://t.me/corosolto)
 
 **AI generated & AI friendly** — construído em par com agentes de IA, e cada
@@ -44,10 +44,10 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 12 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 201 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 55 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 202 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 56 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.179` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.186` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
@@ -100,7 +100,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Esta documentação | **Docusaurus** | `3.6.3` |
 | Runtime de CI | **Node** | `22` |
 
-Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **111** importam Playwright, **38** importam gltf-transform e **5** importam meshoptimizer.
+Three.js sai de `public/vendor/three.module.js` (**sem CDN, sem npm no runtime**). Astro e Vercel de `package.json` + `astro.config.mjs` + `vercel.json`. Dos scripts de `tools/`, **111** importam Playwright, **40** importam gltf-transform e **5** importam meshoptimizer.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `dependencies/devDependencies do package.json · REVISION de public/vendor/three.module.js`
 

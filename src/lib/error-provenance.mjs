@@ -3,7 +3,9 @@ const EXTENSION_RE = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
 // servidos do próprio domínio, mas o código é de terceiro. Crash deles não é bug do jogo
 // e não tem conserto no nosso fonte.
 const VENDOR_RE = /\/_vercel\//i;
-const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|prod-coherence/i;
+/* Uma redação por engine (e por língua: a #362 chegou em pt-BR) do MESMO split do BUG-39.
+   Substrings literais de propósito — cache-split purga o edge, largo purga por engano (BUG-75). */
+const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Importing binding name|was a bare specifier, but was not remapped|era um especificador simples, mas não foi remapeado|Failed to resolve module specifier|Module specifier, .*? does not start with|prod-coherence/i;
 // Aviso RECUPERÁVEL do carregador do three: uma textura embutida (webp) do GLB não
 // decodifica em navegador minoritário (createImageBitmap), o three loga com console.error
 // mas o modelo CARREGA sem aquele mapa — o jogo não trava. É ambiental (não é defeito de
