@@ -41,12 +41,12 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 41,298 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| Game code | 41,587 lines in 59 files | `git ls-files public/js/*.js \| xargs wc -l` |
 | `game.js` | **7,260** lines | `wc -l public/js/game.js` |
 | `main.js` | 2,812 lines | `wc -l public/js/main.js` |
 | Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | Character GLBs | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 154 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Props in GLB | 158 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
 | Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
 | Playable characters | 62, in 10 factions | `CHARACTERS` array in `characters.js` |
 | Maps in the registry | 17 | `MAPS` object in `maps.js` |
@@ -236,7 +236,7 @@ The maps registered today, and which mode each one opens in:
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 415 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 704 |
 | `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 426 |
 | `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 449 |
 | `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 264 |
