@@ -138,6 +138,14 @@ Contrato jogável da penitenciária: celas abertas, pátio sem campo, arsenal ce
 npm run eval:penitenciaria
 ```
 
+## `eval:obras`
+
+Contrato das Obras da Prefeitura depois dos moldes do kit posto_obras_r3: torre de andaime com dois pisos andáveis e rota de bot até o alto, container como bunker de spawn, térreo com cover de meia altura, gruas no skyline fora dos bounds, miolo abaixo do teto de linha de visão medido e vão por baixo do deck. Mutantes: plano|sem-bunker|terreo-liso|sem-grua|miolo-aberto|deck-macico (`--mutante=` é apelido de `--mutar=`).
+
+```bash
+npm run eval:obras
+```
+
 ## `eval:vminspect`
 
 O default do vm-inspect precisa ser uma arma publicada, existente e versionada. Nasceu do #141: o caminho antigo dava 404; a primeira correção apontava para o corpo do doador e mostrava pernas/botas. --mutante=fantasma|corpo prova as duas cláusulas.
