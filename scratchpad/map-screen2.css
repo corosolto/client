@@ -1,0 +1,114 @@
+/* ============ MAP SCREEN ============ */
+/* Redesign de 21/08, 3ª rodada: a tela é CABEÇALHO + ACERVO + RODAPÉ, em faixas.
+   O cabeçalho carrega tudo que não é lista (abas, ficha do mapa em foco, opções da
+   partida) e o corpo inteiro fica para a grade de mapas — que é o que a tela existe
+   para mostrar. O palco é o WALLPAPER do setup: a foto do mapa em foco já está no card
+   selecionado, e repetida em tela cheia ela brigava com a grade. */
+#map-screen{padding:0;gap:0;background:#08080a;font-family:var(--aaa-font-body);
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto;grid-template-columns:minmax(0,1fr);
+  justify-content:stretch;align-items:stretch;justify-items:stretch}
+/* mesmo tratamento do .cs-wallpaper do menu: borrão cobrindo a tela + arte inteira por cima */
+.ms-bg{position:absolute;inset:0;overflow:hidden;border:0;background:var(--bg-900);z-index:0;isolation:isolate}
+.ms-bg::before,.ms-bg::after{content:"";position:absolute;pointer-events:none;
+  background-image:var(--wall);background-position:center;background-repeat:no-repeat}
+.ms-bg::before{inset:-24px;background-size:cover;filter:blur(20px) brightness(.4) saturate(.7)}
+.ms-bg::after{inset:0;background-size:cover;opacity:.5}
+.ms-bg img{display:none}          /* o `src` serve à sonda de tela, não ao olho */
+.ms-scrim{position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,rgba(8,8,10,.9) 0%,rgba(8,8,10,.72) 46%,rgba(8,8,10,.66) 100%),linear-gradient(0deg,rgba(8,8,10,.92) 0%,rgba(8,8,10,.6) 30%,rgba(8,8,10,.88) 100%),repeating-linear-gradient(0deg,transparent 0 3px,rgba(0,0,0,.05) 3px 4px)}
+/* ---- faixa 1: cabeçalho ---- */
+.ms-topbar{position:relative;z-index:2;padding:20px 40px 16px;
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  border-bottom:1px solid rgba(236,235,230,.1)}
+.ms-kicker{font-family:var(--aaa-font-body);font-weight:600;font-size:12px;letter-spacing:4px;
+  color:var(--br-faixa);text-transform:uppercase}
+.ms-tabs{display:flex;gap:24px;flex-wrap:wrap}
+.ms-tab{padding:6px 2px;font:600 14px/1 var(--aaa-font-body);letter-spacing:3px;color:#5c5d63;
+  background:transparent;border:0;border-bottom:2px solid transparent;cursor:pointer}
+.ms-tab:hover,.ms-tab:focus-visible{color:#ecebe6}
+.ms-tab.on{font-weight:700;color:#b4d92e;border-bottom-color:#b4d92e}
+.ms-cat-desc{max-width:640px;margin:0;font:400 13px/1.5 var(--aaa-font-body);letter-spacing:.4px;color:#8a8b91}
+.ms-author{padding:5px 12px;font:600 11px/1 var(--aaa-font-body);letter-spacing:2px;color:#5c5d63;background:rgba(16,16,20,.7);border:1px solid #2a2b31;border-radius:999px;cursor:pointer;text-transform:uppercase}
+.ms-author:hover,.ms-author:focus-visible{color:#ecebe6}
+.ms-author.on{color:#2e9ed8;border-color:#2e9ed8}
+/* ficha e opções dividem a linha do cabeçalho: nome/descrição à esquerda, controles à direita */
+.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;margin-top:4px}
+.ms-ficha{min-width:0;flex:1 1 460px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left}
+.ms-tagrow{display:flex;align-items:center;justify-content:flex-start;gap:10px;flex-wrap:wrap}
+.ms-cat{font-size:11px;font-weight:700;letter-spacing:3px;padding:3px 10px;border:1px solid}
+.ms-cat[data-cat="FAVELA"]{color:#e0762a;border-color:rgba(224,118,42,.5)}
+.ms-cat[data-cat="ARENA"]{color:#8b8c92;border-color:rgba(139,140,146,.5)}
+.ms-cat[data-cat="CIDADES"]{color:#8258d8;border-color:rgba(130,88,216,.5)}.ms-cat[data-cat="COMUNIDADE"]{color:#2e9ed8;border-color:rgba(46,158,216,.5)}
+.ms-cat[data-cat="AI"]{color:#d8c02e;border-color:rgba(216,192,46,.5)}
+/* o crachá de partidas jogadas — só existe quando o contador respondeu */
+.ms-plays{font-family:var(--font);font-weight:700;font-size:11px;letter-spacing:2px;color:#b4d92e}
+.ms-plays[hidden]{display:none}
+.ms-byline{margin:0;font:400 12px/1.4 var(--aaa-font-body);letter-spacing:.6px;color:#8a8b91}
+.ms-byline strong{color:#b9babf;font-weight:600}
+.ms-badge-oficial{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#b4d92e;border:1px solid rgba(180,217,46,.5);border-radius:3px;text-transform:uppercase}
+.ms-badge-comunidade{display:inline-block;margin-left:8px;padding:2px 8px;font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#2e9ed8;border:1px solid rgba(46,158,216,.5);border-radius:3px;text-transform:uppercase}
+.ms-count{font-family:var(--font);font-weight:600;font-size:11px;letter-spacing:2px;color:#5c5d63}
+.ms-name{margin:0;font-family:var(--aaa-font-display);font-weight:400;font-size:40px;
+  line-height:1;letter-spacing:1px;text-transform:uppercase;color:var(--ink-100);
+  text-shadow:2px 2px 0 rgba(0,0,0,.5)}
+.ms-meta{margin:0;font-family:var(--font);font-weight:700;font-size:12px;letter-spacing:2.4px;color:var(--ink-100)}
+.ms-meta .ms-sep{color:var(--br-faixa);margin:0 8px}
+.ms-desc{margin:0;font-size:13px;font-weight:400;color:#b9b9be;max-width:62ch;line-height:1.7}
+.ms-match-options{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;margin:0;padding:12px 14px;
+  background:rgba(16,16,20,.8);border-left:2px solid var(--br-faixa)}
+.ms-match-options label{display:flex;flex-direction:column;gap:6px;min-width:112px;
+  font:700 10px/1 var(--aaa-font-body);letter-spacing:2px;color:#8b8c92;text-transform:uppercase}
+.ms-match-options select{height:32px;padding:0 28px 0 9px;border:1px solid rgba(236,235,230,.2);border-radius:0;
+  background:#111216;color:#ecebe6;font:700 12px/1 var(--aaa-font-body);letter-spacing:1px;cursor:pointer}
+.ms-match-options select:focus{outline:1px solid var(--br-faixa);border-color:var(--br-faixa)}
+/* ---- faixa 2: o acervo, dono do corpo ---- */
+.ms-body{position:relative;z-index:2;min-height:0;display:grid;padding:18px 40px 10px}
+.ms-carousel{min-height:0;display:flex;flex-direction:column;gap:8px}
+.ms-arrow{flex:0 0 auto;width:100%;height:26px;display:flex;align-items:center;justify-content:center;
+  background:rgba(13,14,17,.7);border:1px solid #26272d;color:#9a9ba1;font-size:12px;line-height:1;cursor:pointer}
+.ms-arrow:hover,.ms-arrow:focus-visible{border-color:#b4d92e;color:#ecebe6;background:rgba(13,14,17,.9)}
+.ms-viewport{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#33343b transparent}
+.ms-viewport::-webkit-scrollbar{width:6px}
+.ms-viewport::-webkit-scrollbar-thumb{background:#33343b}
+/* a grade cresce com a tela: `auto-fill` decide o número de colunas pela largura real,
+   e o teto de 3 vem do max-width da faixa — card largo demais deixa de ser quadrado. */
+.ms-strip{--map-count:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));justify-content:stretch;gap:14px;width:100%;max-width:1320px;margin:0 auto;scroll-behavior:smooth}
+.ms-thumb{position:relative;width:100%;min-width:0;padding:0;display:flex;flex-direction:column;cursor:pointer;
+  background:rgba(16,16,20,.86);border:1px solid rgba(236,235,230,.12);opacity:.8;
+  font-family:var(--aaa-font-body);text-align:left;text-transform:uppercase;
+  transition:border-color var(--t) var(--ease),filter var(--t) var(--ease),opacity var(--t) var(--ease)}
+.ms-thumb:hover,.ms-thumb:focus-visible{filter:brightness(1.15);opacity:1}
+.ms-thumb.on{border:2px solid #b4d92e;opacity:1;box-shadow:0 0 26px rgba(180,217,46,.3)}
+.ms-thumb-img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.ms-thumb-copy{display:flex;flex-direction:column;gap:3px;padding:8px 11px 10px;background:rgba(10,10,12,.85)}
+.ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-thumb.on .ms-thumb-name{color:#b4d92e}
+.ms-thumb-sub{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ms-thumb-cat{font-weight:600;font-size:9px;letter-spacing:2px}
+.ms-thumb-cat[data-cat="FAVELA"]{color:#e0762a}
+.ms-thumb-cat[data-cat="ARENA"]{color:#8b8c92}
+.ms-thumb-cat[data-cat="CIDADES"]{color:#8258d8}
+/* partidas jogadas no card: número seco, sem rótulo — a coluna inteira é a mesma unidade */
+.ms-thumb-plays{font-family:var(--font);font-weight:700;font-size:10px;letter-spacing:1.5px;color:#7d8a52}
+.ms-thumb.on .ms-thumb-plays{color:#b4d92e}
+.ms-diamond{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--br-faixa);transform:rotate(45deg)}
+.ms-dashes{flex:0 0 auto;display:flex;justify-content:center;gap:6px}
+.ms-dashes i{width:18px;height:3px;background:#33343b}.ms-dashes i.on{background:#b4d92e}
+/* ---- faixa 3: rodapé, VOLTAR num canto e CONTINUAR no outro ---- */
+.ms-foot{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  gap:18px;padding:14px 40px 22px}
+.ms-actions{position:static}
+#map-screen .ms-actions .btn-big{transform:skewX(-8deg);background:linear-gradient(180deg,#cfe84a,#b4d92e);padding:12px 40px;border:0}
+#map-screen .ms-actions .btn-big>*{display:block;transform:skewX(8deg);font:400 20px/1 var(--aaa-font-display);letter-spacing:3px;color:#131313;padding:0}
+@media(max-height:780px){
+  .ms-topbar{padding:14px 32px 12px;gap:8px}
+  .ms-body{padding:12px 32px 8px}
+  .ms-name{font-size:30px}
+  .ms-desc{display:none}
+  .ms-match-options{padding:9px 11px}.ms-match-options select{height:28px}
+  .ms-foot{padding:10px 32px 14px}
+}
+@media(max-width:820px){
+  .ms-strip{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+}
