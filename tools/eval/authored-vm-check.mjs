@@ -24,7 +24,7 @@ if (mutant === 'sem-familia') families.delete('ak');
 check(gameplay.length === 26, 'arsenal mantém 26 armas', `weapons=${gameplay.length}`);
 check(missing.length === 0, '25 armas de fogo possuem família paga', missing.join(', '));
 check(families.size === 15, 'catálogo deduplica o arsenal em 15 famílias mecânicas', `families=${families.size}`);
-check(Object.keys(AUTHORED_VM_URLS).length === 15, 'cada família possui uma URL privada');
+check(Object.keys(AUTHORED_VM_URLS).length === 16, '15 famílias e utilitários possuem URL privada');
 check(Object.values(AUTHORED_VM_URLS).every((url) => url.startsWith('/private-assets/viewmodels/')),
   'binários licenciados são servidos fora do código público');
 check(!/weaponModel\s*\(/.test(runtime), 'runtime não desmonta nem remonta armas por inferência');
@@ -41,6 +41,10 @@ check(/a\.mag === 0/.test(game), 'game informa ao rig quando o carregador está 
 check(/authoredCharacterHand/.test(runtime) && /profile\.sleeve/.test(runtime),
   'mãos e mangas recebem identidade do personagem');
 check(/dispose\(\)/.test(runtime), 'GPU resources possuem ciclo de descarte');
+check(/throwUtility/.test(runtime) && /UTILITY_/.test(runtime) && /utilityModels/.test(runtime),
+  'pack pago de granadas mantém três modelos e arremesso autorado');
+check(/throwUtility\('smoke'/.test(game) && /throwUtility\('frag'/.test(game),
+  'smoke e frag aguardam o release da animação');
 
 console.log(JSON.stringify({ mutant, weapons: gameplay.length, families: families.size, failures }, null, 2));
 process.exit(failures ? 1 : 0);

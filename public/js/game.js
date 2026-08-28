@@ -4132,16 +4132,24 @@ export class Game {
     const p = this.player;
     if (!p.alive || (p.smokes | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.smokes--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'smoke', p);
+    const release = () => {
+      if (!p.alive) return;
+      const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
+      this._spawnGrenade(this.camera.position, dir, 'smoke', p);
+    };
+    if (!this.vm.authored?.throwUtility('smoke', 1.05, release)) release();
   }
 
   _throwFrag() {
     const p = this.player;
     if (!p.alive || (p.frags | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.frags--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'frag', p);
+    const release = () => {
+      if (!p.alive) return;
+      const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
+      this._spawnGrenade(this.camera.position, dir, 'frag', p);
+    };
+    if (!this.vm.authored?.throwUtility('frag', 1.05, release)) release();
   }
 
   // Explosão de frag: dano em área SÓ nos inimigos do dono (sem fogo amigo, arcade), com

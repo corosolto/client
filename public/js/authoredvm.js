@@ -16,7 +16,7 @@ export const AUTHORED_VM_MODELS = Object.freeze({
 
 const CATALOG_VERSION = 'paid-aaa-1';
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
-  [...new Set(Object.values(AUTHORED_VM_MODELS))]
+  [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
 ));
 
@@ -40,6 +40,7 @@ const FAMILY_FRAME = Object.freeze({
   bolt:    { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
   lmg:     { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
   p90:     { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
+  grenade: { x: 0.045, y: -0.035, z: -0.080, fov: 84 },
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
 
@@ -89,7 +90,13 @@ function cameraSpacePackage(gltf, profile, parent, family) {
 
   const handMeshes = [];
   const weaponMeshes = [];
+  const utilityModels = new Map();
   scene.traverse((object) => {
+    const utility = /^UTILITY_(HE|FLASH|SMOKE)$/.exec(object.name);
+    if (utility) {
+      utilityModels.set(utility[1].toLowerCase(), object);
+      object.visible = false;
+    }
     if (!object.isMesh) return;
     object.frustumCulled = false;
     object.castShadow = false;
@@ -111,7 +118,7 @@ function cameraSpacePackage(gltf, profile, parent, family) {
       }
     }
   });
-  return { scene, mount, cameraFov: Math.max(cameraFov, frame.fov), frame, handMeshes, weaponMeshes };
+  return { scene, mount, cameraFov: Math.max(cameraFov, frame.fov), frame, handMeshes, weaponMeshes, utilityModels };
 }
 
 export class AuthoredViewModels {
@@ -123,6 +130,8 @@ export class AuthoredViewModels {
     this.entries = new Map();
     this.pending = new Map();
     this.weapon = '';
+    this.utility = null;
+    this._utilityPrime = null;
     this._disposed = false;
   }
 
@@ -130,6 +139,10 @@ export class AuthoredViewModels {
     // Families are loaded on first equip. Loading all 15 up front would transfer more
     // than 300 MB and stall the main thread before the match starts.
     if (this.onReady) queueMicrotask(() => this.onReady(this));
+    const prime = () => { if (!this._disposed) this._loadFamily('grenade'); };
+    this._utilityPrime = typeof requestIdleCallback === 'function'
+      ? requestIdleCallback(prime, { timeout: 2400 })
+      : setTimeout(prime, 1400);
     return this;
   }
 
@@ -149,7 +162,7 @@ export class AuthoredViewModels {
       this.entries.set(family, entry);
       this.pending.delete(family);
       this._idle(entry);
-      if (familyFor(this.weapon) === family) entry.mount.visible = true;
+      if (familyFor(this.weapon) === family && !this.utility) entry.mount.visible = true;
       console.info('[paid-viewmodel] ready', family, [...clips.keys()]);
       if (this.onReady) this.onReady(this);
       return entry;
@@ -173,7 +186,9 @@ export class AuthoredViewModels {
     const previous = this.weapon;
     this.weapon = id;
     const family = familyFor(id);
-    for (const entry of this.entries.values()) entry.mount.visible = entry.family === family;
+    for (const entry of this.entries.values()) {
+      entry.mount.visible = this.utility ? entry === this.utility.entry : entry.family === family;
+    }
     if (!family) return false;
     const entry = this.entries.get(family);
     if (!entry) {
@@ -191,9 +206,27 @@ export class AuthoredViewModels {
   }
 
   update(dt) {
+    const step = Math.min(0.05, Math.max(0, Number(dt) || 0));
+    if (this.utility) {
+      const utility = this.utility;
+      utility.entry.mixer.update(step);
+      utility.elapsed += step;
+      if (!utility.released && utility.elapsed >= utility.releaseAt) {
+        utility.released = true;
+        utility.onRelease?.();
+      }
+      if (utility.elapsed >= utility.duration) {
+        utility.entry.mount.visible = false;
+        this._idle(utility.entry);
+        this.utility = null;
+        const weaponEntry = this.entry();
+        if (weaponEntry) weaponEntry.mount.visible = true;
+        if (this.onReady) this.onReady(this);
+      }
+      return;
+    }
     const entry = this.entry();
     if (!entry?.mount.visible) return;
-    const step = Math.min(0.05, Math.max(0, Number(dt) || 0));
     entry.mixer.update(step);
     if (entry.drawTime < entry.drawDuration) {
       entry.drawTime = Math.min(entry.drawDuration, entry.drawTime + step);
@@ -237,6 +270,23 @@ export class AuthoredViewModels {
   shoot(id) {
     const entry = this.entry(id);
     return entry?.clips.has('shoot') ? this._play(entry, 'shoot', { fade: 0.01 }) : false;
+  }
+
+  throwUtility(kind, duration = 1.05, onRelease = null) {
+    const entry = this.entries.get('grenade');
+    const model = entry?.utilityModels.get(kind === 'frag' ? 'he' : kind);
+    if (!entry || !model || this.utility) return false;
+    for (const candidate of this.entries.values()) candidate.mount.visible = candidate === entry;
+    for (const candidate of entry.utilityModels.values()) candidate.visible = candidate === model;
+    const names = ['throw_start', 'throw_loop', 'throw_end'].filter((name) => entry.clips.has(name));
+    if (!names.length) return false;
+    const actualDuration = Math.max(0.7, Number(duration) || 1.05);
+    this.utility = {
+      entry, elapsed: 0, duration: actualDuration,
+      releaseAt: actualDuration * 0.58, released: false, onRelease,
+    };
+    this._sequence(entry, names, actualDuration);
+    return true;
   }
 
   _sequence(entry, names, duration) {
@@ -288,6 +338,12 @@ export class AuthoredViewModels {
 
   dispose() {
     this._disposed = true;
+    if (this._utilityPrime != null) {
+      if (typeof cancelIdleCallback === 'function') cancelIdleCallback(this._utilityPrime);
+      else clearTimeout(this._utilityPrime);
+    }
+    if (this.utility && !this.utility.released) this.utility.onRelease?.();
+    this.utility = null;
     for (const entry of this.entries.values()) {
       entry.mixer.stopAllAction();
       entry.mount.removeFromParent();
