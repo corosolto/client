@@ -93,14 +93,34 @@ async function main() {
     invariant(familyNames.has(mapping.family), `${weapon} maps to missing family ${mapping.family}`);
   }
 
+  // Orçamentos pós-de-dup (M4): braços compartilhados 1× em shared/, GLB de
+  // família só com o próprio conteúdo — a troca de arma parou de baixar 23 MB.
+  const shared = JSON.parse(await fs.readFile(path.join(privateRoot, 'shared/shared-manifest.json'), 'utf8'));
+  const sharedNames = Object.keys(shared);
+  invariant(sharedNames.length === 9, `expected 9 shared arm textures, found ${sharedNames.length}`);
+  let sharedTotal = 0;
+  for (const [name, entry] of Object.entries(shared)) {
+    const stat = await fs.stat(path.join(privateRoot, 'shared', `${name}.webp`));
+    invariant(stat.size === entry.bytes, `shared texture ${name} drifted from its manifest`);
+    sharedTotal += stat.size;
+  }
+  invariant(sharedTotal <= 6 * 1024 * 1024, `shared arm set exceeds 6 MiB (${sharedTotal})`);
+
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
-  const report = { schemaVersion: 1, privateRoot, weapons: 26, families: [], utilities: [] };
+  const report = { schemaVersion: 1, privateRoot, weapons: 26, families: [], utilities: [], sharedBytes: sharedTotal };
+  let catalogTotal = 0;
   for (const family of catalog.families) {
     const source = path.join(privateRoot, family.family, `${family.family}-runtime.glb`);
     const stat = await fs.stat(source);
-    invariant(stat.size < 32 * 1024 * 1024, `${family.family} exceeds 32 MiB runtime budget`);
+    invariant(stat.size < 8 * 1024 * 1024, `${family.family} exceeds 8 MiB runtime budget (${stat.size})`);
+    catalogTotal += stat.size;
     const document = await io.read(source);
     const root = document.getRoot();
+    for (const texture of root.listTextures()) {
+      const bytes = texture.getImage()?.byteLength ?? 0;
+      invariant(bytes <= 300 * 1024,
+        `${family.family}: embedded texture ${texture.getName()} is ${bytes} B (arm set must live in shared/)`);
+    }
     const animations = new Map(root.listAnimations().map((animation) => [animation.getName(), animation]));
     const required = REQUIRED_SPECIAL[family.family] || ['idle', 'reload_tactical', 'reload_empty'];
     for (const clip of required) invariant(animations.has(clip), `${family.family} is missing ${clip}`);
@@ -166,10 +186,12 @@ async function main() {
       reloadDrivesIkHandGun: [...ikDriven].sort(),
     });
   }
+  invariant(catalogTotal + sharedTotal <= 100 * 1024 * 1024,
+    `weapon catalog exceeds 100 MiB (${catalogTotal + sharedTotal})`);
   invariant(catalog.utilities?.length === 1, 'expected one paid utility family');
   const utilityPath = path.join(privateRoot, 'grenade/grenade-runtime.glb');
   const utilityStat = await fs.stat(utilityPath);
-  invariant(utilityStat.size < 32 * 1024 * 1024, 'grenade family exceeds 32 MiB runtime budget');
+  invariant(utilityStat.size < 8 * 1024 * 1024, 'grenade family exceeds 8 MiB runtime budget');
   const utilityDocument = await io.read(utilityPath);
   const utilityRoot = utilityDocument.getRoot();
   const utilityClips = new Set(utilityRoot.listAnimations().map((animation) => animation.getName()));

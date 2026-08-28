@@ -123,7 +123,23 @@ try {
       const realDim = m ? Math.max(
         m.box.max.x - m.box.min.x, m.box.max.y - m.box.min.y, m.box.max.z - m.box.min.z,
       ) : 0;
-      return { packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim };
+
+      /* M4: o GLB viaja com placeholder 1×1; o shared/ religa por nome ANTES da
+         primeira pintura — material de mão com imagem ≤4 px é regressão. */
+      const maosPlaceholder = [];
+      for (const mesh of entry.handMeshes) {
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const material of materials) {
+          if (!/CoroSolto_FP_/.test(material?.name || '')) continue;
+          const image = material.map?.image || material.map?.source?.data;
+          const width = image?.width ?? 0;
+          if (width <= 4) maosPlaceholder.push(`${material.name}:${width}px`);
+        }
+      }
+      const familyBytes = performance.getEntriesByType('resource')
+        .filter((r) => r.name.includes('-runtime.glb'))
+        .reduce((worst, r) => Math.max(worst, r.encodedBodySize || r.transferSize || 0), 0);
+      return { packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim, maosPlaceholder, familyBytes };
     }, [id, MUT]);
 
     check(medida.packVisiveis.length === 0, `ID1 ${id}: pack invisível`, medida.packVisiveis.join(', '));
@@ -131,6 +147,10 @@ try {
     check(medida.muzzleDentro, `ID3 ${id}: muzzle dentro da arma Mint`);
     const razao = medida.realDim > 0 ? medida.worldDim / medida.realDim : Infinity;
     check(razao >= 0.8 && razao <= 1.2, `ID4 ${id}: escala em mundo ±20%`, `razão ${razao.toFixed(3)}`);
+    check(medida.maosPlaceholder.length === 0, `ID5 ${id}: mãos com textura real (shared religado)`,
+      medida.maosPlaceholder.join(', '));
+    check(medida.familyBytes > 0 && medida.familyBytes < 8 * 1024 * 1024,
+      `ID6 ${id}: download da família < 8 MiB`, `${(medida.familyBytes / 1048576).toFixed(1)} MiB`);
     resultados.push({ id, familia, ...medida, razao: Number(razao.toFixed(3)) });
     await page.close();
   }

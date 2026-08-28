@@ -10,6 +10,7 @@ import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.j
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
 import { preloadWeapons, WEAPON_IDS } from './weapons.js';
+import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
@@ -1136,6 +1137,9 @@ async function _startGame(team, charId, enemyFaction) {
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
+        // Famílias PRONTAS do loadout + texturas de braço compartilhadas (~3 MB
+        // pós-de-dup): mata o pop legado→autorado do primeiro saque (BUG-75 M4).
+        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1162,6 +1166,9 @@ async function _startGame(team, charId, enemyFaction) {
       clearInterval(espera);
       const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
       ocioso(() => preloadWeapons().catch(() => {}));
+      // Famílias autoradas restantes (só as ready) no mesmo ocioso — troca de
+      // arma no meio da partida não baixa nada na hora do saque.
+      ocioso(() => preloadAuthoredFamilies(authoredBootFamilies(WEAPON_IDS)).catch(() => {}));
     }, 250);
   }
   submitted = false;

@@ -39,10 +39,70 @@ function skeletonCloneOf(scene) {
   }
   return skeletonClonePromise.then((clone) => clone(scene));
 }
-// Aquecimento de famílias antes da partida (chamado pelo boot do main.js em M4).
+// Texturas de braço saem UMA vez de shared/ (o GLB de família leva placeholder
+// 1×1 com o mesmo nome); religadas por nome de material no load — fim dos 23 MB.
+const SHARED_ARM_TEXTURES = Object.freeze([
+  'T_Arm01_B', 'T_Arm01_N', 'T_Arm01_ORM',
+  'T_Cloth01_B', 'T_Cloth01_N', 'T_Cloth01_ORM',
+  'T_Glove01_B', 'T_Glove01_N', 'T_Glove01_ORM',
+]);
+const MATERIAL_TEXTURE_BASE = Object.freeze({ Hand: 'T_Arm01', Glove: 'T_Glove01', Cloth: 'T_Cloth01' });
+let sharedArmPromise = null;
+function sharedArmTextures() {
+  if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
+  if (!sharedArmPromise) {
+    const loader = new THREE.TextureLoader();
+    sharedArmPromise = Promise.all(SHARED_ARM_TEXTURES.map((name) => loader
+      .loadAsync(`/private-assets/viewmodels/shared/${name}.webp?v=${CATALOG_VERSION}`)
+      .then((texture) => {
+        texture.name = name;
+        texture.flipY = false;
+        texture.colorSpace = name.endsWith('_B') ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return [name, texture];
+      })))
+      .then((pairs) => new Map(pairs))
+      .catch((error) => {
+        console.error('[paid-viewmodel] shared arm textures', error);
+        return null;
+      });
+  }
+  return sharedArmPromise;
+}
+function bindSharedArmTextures(handMeshes, shared) {
+  if (!shared) return;
+  for (const mesh of handMeshes) {
+    for (const material of materialsOf(mesh)) {
+      const kind = /CoroSolto_FP_(Hand|Glove|Cloth)/.exec(material?.name || '')?.[1];
+      if (!kind) continue;
+      const base = MATERIAL_TEXTURE_BASE[kind];
+      material.map = shared.get(`${base}_B`) || material.map;
+      material.normalMap = shared.get(`${base}_N`) || material.normalMap;
+      const orm = shared.get(`${base}_ORM`);
+      if (orm) {
+        material.metalnessMap = orm;
+        material.roughnessMap = orm;
+      }
+      material.needsUpdate = true;
+    }
+  }
+}
+
+// Aquecimento de famílias + texturas compartilhadas antes da partida (boot M4).
 export function preloadAuthoredFamilies(families = []) {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve([]);
-  return Promise.allSettled(families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf));
+  return Promise.allSettled([
+    sharedArmTextures(),
+    ...families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf),
+  ]);
+}
+
+// Famílias que o boot deve esperar: as READY do loadout + granada (se aberta).
+export function authoredBootFamilies(weaponIds = []) {
+  const families = new Set(weaponIds.map((id) => familyFor(id)).filter(Boolean));
+  if (familyReady('grenade')) families.add('grenade');
+  return [...families];
 }
 
 const HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)/i;
@@ -187,12 +247,13 @@ export class AuthoredViewModels {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!family || this.entries.has(family)) return this.entries.get(family) || null;
     if (this.pending.has(family)) return this.pending.get(family);
-    const pending = loadFamilyGltf(family).then(async (gltf) => {
+    const pending = Promise.all([loadFamilyGltf(family), sharedArmTextures()]).then(async ([gltf, shared]) => {
       if (this._disposed) return null;
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
       const scene = await skeletonCloneOf(gltf.scene);
       const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family);
+      bindSharedArmTextures(visual.handMeshes, shared);
       const mixer = new THREE.AnimationMixer(visual.scene);
       const clips = new Map(gltf.animations.map((clip) => [clipKey(clip.name), clip]));
       const entry = {
