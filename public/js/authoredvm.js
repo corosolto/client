@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { attachMintWeapon, mintPointWorld } from './vmweapon.js';
+import { VmRecoil } from './vmrecoil.js';
 
 // Contrato do catálogo KINEMATION: binários licenciados ficam no armazenamento privado.
 // O mapa arma→família vem de data/vmconfig.js, a fonte única do viewmodel autorado.
@@ -89,11 +90,28 @@ function bindSharedArmTextures(handMeshes, shared) {
   }
 }
 
+// Parâmetros de recuo extraídos do pack (recoil.json) — um fetch por sessão.
+let recoilParamsPromise = null;
+function recoilParams() {
+  if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
+  if (!recoilParamsPromise) {
+    recoilParamsPromise = fetch(`/private-assets/viewmodels/recoil.json?v=${CATALOG_VERSION}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => data?.families || null)
+      .catch((error) => {
+        console.error('[paid-viewmodel] recoil.json', error);
+        return null;
+      });
+  }
+  return recoilParamsPromise;
+}
+
 // Aquecimento de famílias + texturas compartilhadas antes da partida (boot M4).
 export function preloadAuthoredFamilies(families = []) {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve([]);
   return Promise.allSettled([
     sharedArmTextures(),
+    recoilParams(),
     ...families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf),
   ]);
 }
@@ -105,6 +123,8 @@ export function authoredBootFamilies(weaponIds = []) {
   return [...families];
 }
 
+const _pivot = new THREE.Vector3();
+const _pivotRotated = new THREE.Vector3();
 const HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)/i;
 const SKIN_MATERIAL = /CoroSolto_FP_Hand/i;
 const GLOVE_MATERIAL = /CoroSolto_FP_Glove/i;
@@ -223,6 +243,10 @@ export class AuthoredViewModels {
     this.profile = profile;
     this.adsAmount = 0;
     this._ctx = {};
+    this._time = 0;
+    this.recoil = new VmRecoil();
+    this._recoilParams = null;
+    this._recoilFamily = '';
     this.entries = new Map();
     this.pending = new Map();
     this.weapon = '';
@@ -234,6 +258,11 @@ export class AuthoredViewModels {
   async load() {
     // Famílias entram no primeiro uso; baixar as 15 no boot custaria mais de 300 MB.
     if (this.onReady) queueMicrotask(() => this.onReady(this));
+    recoilParams().then((params) => {
+      if (this._disposed || !params) return;
+      this._recoilParams = params;
+      this._applyRecoilFamily();
+    });
     if (!NODE_RUNTIME && !AUTHORED_KILLED && familyReady('grenade')) {
       const prime = () => { if (!this._disposed) this._loadFamily('grenade'); };
       this._utilityPrime = typeof requestIdleCallback === 'function'
@@ -319,7 +348,15 @@ export class AuthoredViewModels {
     }
     if (previous !== id) this._idle(entry);
     if (family !== 'grenade') attachMintWeapon(entry, id);
+    this._applyRecoilFamily();
     return true;
+  }
+
+  _applyRecoilFamily() {
+    const family = familyFor(this.weapon);
+    if (!family || !this._recoilParams || family === this._recoilFamily) return;
+    this._recoilFamily = family;
+    this.recoil.setFamily(this._recoilParams, family, VM_WEAPON[this.weapon]?.recoilScale ?? 1);
   }
 
   setAim(id = this.weapon, amount = 0) {
@@ -357,21 +394,28 @@ export class AuthoredViewModels {
     }
     if (!active?.mount.visible) return;
     active.mixer.update(step);
-    // Dono único do transform do mount: base ∘ arco de draw (ADS/recoil: M5/M6).
+    this._time += step;
+    // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
+    let drawY = 0;
+    let drawRx = 0;
     if (active.drawTime < active.drawDuration) {
       active.drawTime = Math.min(active.drawDuration, active.drawTime + step);
       const t = active.drawTime / active.drawDuration;
       const eased = 1 - Math.pow(1 - t, 3);
-      active.mount.position.set(
-        active.frame.x,
-        active.frame.y + THREE.MathUtils.lerp(-0.22, 0, eased),
-        active.frame.z,
-      );
-      active.mount.rotation.x = THREE.MathUtils.lerp(0.24, 0, eased);
-    } else {
-      active.mount.position.set(active.frame.x, active.frame.y, active.frame.z);
-      active.mount.rotation.set(0, 0, 0);
+      drawY = THREE.MathUtils.lerp(-0.22, 0, eased);
+      drawRx = THREE.MathUtils.lerp(0.24, 0, eased);
     }
+    const recoil = this.recoil.update(step, this.adsAmount);
+    active.mount.rotation.set(drawRx + recoil.rx, recoil.ry, recoil.rz);
+    // Recuo gira em torno do pivô autoral: corrige a translação que a rotação
+    // fora do pivô induziria (a coronha recua, o cano sobe — não o contrário).
+    _pivot.set(recoil.pivot[0], recoil.pivot[1], recoil.pivot[2]);
+    _pivotRotated.copy(_pivot).applyEuler(active.mount.rotation);
+    active.mount.position.set(
+      active.frame.x + recoil.px + (_pivot.x - _pivotRotated.x),
+      active.frame.y + drawY + recoil.py + (_pivot.y - _pivotRotated.y),
+      active.frame.z + recoil.pz + (_pivot.z - _pivotRotated.z),
+    );
   }
 
   // Boca do cano da arma VISÍVEL em world space (tracer/flash nascem nela, não na
@@ -452,7 +496,13 @@ export class AuthoredViewModels {
 
   shoot(id) {
     const entry = this.entry(id);
-    return entry?.clips.has('shoot') ? this._play(entry, 'shoot', { fade: 0.01 }) : false;
+    if (!entry) return false;
+    // Recuo procedural em TODO tiro (12/15 famílias não têm clipe de fire);
+    // clipe assado entra por cima onde existe, e a shotgun toca o pump.
+    this.recoil.shoot(this._time);
+    if (entry.clips.has('shoot')) return this._play(entry, 'shoot', { fade: 0.01 });
+    if (entry.clips.has('pump')) return this._play(entry, 'pump', { fade: 0.02 });
+    return true;
   }
 
   inspect(id = this.weapon) {

@@ -42,7 +42,9 @@ export const VM_WEAPON = {
   m4: W('ar'),
   mp5: W('mp5'),
   shotgun: W('shotgun'),
-  deagle: W('deagle'),
+  // O pack autora a Deagle com 23–27° de pitch (hand cannon); no nosso mount o
+  // teto de leitura é 12° (RS1) — a escala doma sem perder a assinatura.
+  deagle: W('deagle', { recoilScale: 0.45 }),
   pistol: W('pistol'),
   m92: W('ak'),
   akm: W('ak'),
