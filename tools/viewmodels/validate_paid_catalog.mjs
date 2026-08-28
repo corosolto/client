@@ -40,7 +40,7 @@ async function main() {
   }
 
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
-  const report = { schemaVersion: 1, privateRoot, weapons: 26, families: [] };
+  const report = { schemaVersion: 1, privateRoot, weapons: 26, families: [], utilities: [] };
   for (const family of catalog.families) {
     const source = path.join(privateRoot, family.family, `${family.family}-runtime.glb`);
     const stat = await fs.stat(source);
@@ -78,6 +78,27 @@ async function main() {
       clips: [...animations.keys()],
     });
   }
+  invariant(catalog.utilities?.length === 1, 'expected one paid utility family');
+  const utilityPath = path.join(privateRoot, 'grenade/grenade-runtime.glb');
+  const utilityStat = await fs.stat(utilityPath);
+  invariant(utilityStat.size < 32 * 1024 * 1024, 'grenade family exceeds 32 MiB runtime budget');
+  const utilityDocument = await io.read(utilityPath);
+  const utilityRoot = utilityDocument.getRoot();
+  const utilityClips = new Set(utilityRoot.listAnimations().map((animation) => animation.getName()));
+  for (const clip of ['idle', 'throw_start', 'throw_loop', 'throw_end']) {
+    invariant(utilityClips.has(clip), `grenade family is missing ${clip}`);
+  }
+  const utilityModels = new Set(utilityRoot.listNodes().map((node) => node.getName()));
+  for (const model of ['UTILITY_HE', 'UTILITY_FLASH', 'UTILITY_SMOKE']) {
+    invariant(utilityModels.has(model), `grenade family is missing ${model}`);
+  }
+  const utilityArms = utilityRoot.listSkins().find((skin) => skin.getName() === 'RIG_FP_ARMS');
+  invariant(utilityArms?.listJoints().length === 67, 'grenade family has invalid arms skeleton');
+  invariant(utilityRoot.listCameras().length === 1, 'grenade family must contain one authored camera');
+  report.utilities.push({
+    family: 'grenade', bytes: utilityStat.size,
+    clips: [...utilityClips], models: [...utilityModels].filter((name) => name.startsWith('UTILITY_')),
+  });
   const reportPath = path.join(privateRoot, 'validation-report.json');
   await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
   console.log(`CORO_PAID_VIEWMODEL_VALIDATION=${JSON.stringify({ reportPath, families: report.families.length, weapons: report.weapons })}`);

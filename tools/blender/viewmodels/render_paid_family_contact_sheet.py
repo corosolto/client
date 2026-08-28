@@ -18,6 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--samples", type=int, default=7)
+    parser.add_argument("--utility", choices=("he", "flash", "smoke"))
     return parser.parse_args(values)
 
 
@@ -68,6 +69,11 @@ def main() -> None:
     bpy.ops.wm.read_factory_settings(use_empty=True)
     bpy.ops.import_scene.gltf(filepath=str(source))
     scene = bpy.context.scene
+    if args.utility:
+        selected = f"UTILITY_{args.utility.upper()}"
+        for obj in scene.objects:
+            if obj.name.startswith("UTILITY_"):
+                obj.hide_render = obj.name != selected
     camera = next((obj for obj in scene.objects if obj.type == "CAMERA" and "VIEWMODEL" in obj.name), None)
     if camera is None:
         raise RuntimeError(f"{source} has no embedded VIEWMODEL camera")

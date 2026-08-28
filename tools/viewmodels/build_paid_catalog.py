@@ -43,15 +43,16 @@ def main() -> int:
         key: value for key, value in manifest["families"].items()
         if not value.get("externalWeapon")
     }
-    selected = args.family or list(available)
-    unknown = sorted(set(selected) - set(available))
+    external = {key: value for key, value in manifest["families"].items() if value.get("externalWeapon")}
+    selected = args.family or [*available, *external]
+    unknown = sorted(set(selected) - set(available) - set(external))
     if unknown:
-        raise SystemExit(f"unknown or external families: {', '.join(unknown)}")
+        raise SystemExit(f"unknown families: {', '.join(unknown)}")
 
     if args.extract:
         run([sys.executable, "tools/viewmodels/extract_paid_unitypackage.py", "--all"])
 
-    for family in selected:
+    for family in [name for name in selected if name in available]:
         run([
             str(args.blender), "-b",
             "--python", "tools/blender/viewmodels/build_paid_family.py",
@@ -61,6 +62,13 @@ def main() -> int:
             "node", "tools/viewmodels/assemble_paid_family.mjs",
             "--family", family, "--manifest", str(manifest_path),
         ])
+    if "grenade" in selected:
+        run([
+            str(args.blender), "-b",
+            "--python", "tools/blender/viewmodels/build_paid_grenade.py",
+            "--", "--manifest", str(manifest_path),
+        ])
+        run(["node", "tools/viewmodels/bind_paid_grenade.mjs"])
     results = []
     for family in available:
         family_root = private_root / family
@@ -79,11 +87,23 @@ def main() -> int:
             "camera": build["camera"],
         })
 
+    utility_report = private_root / "grenade/assembly-report.json"
+    utilities = []
+    if utility_report.is_file():
+        utility = json.loads(utility_report.read_text(encoding="utf-8"))
+        utilities.append({
+            "family": "grenade",
+            "url": f'{manifest["output"]["runtimeUrl"]}/grenade/grenade-runtime.glb',
+            "bytes": utility["bytes"],
+            "clips": utility["clips"],
+            "models": utility["models"],
+        })
     catalog = {
         "schemaVersion": 1,
         "license": manifest["source"]["license"],
         "redistributableAsSource": False,
         "families": results,
+        "utilities": utilities,
         "weapons": manifest["weapons"],
         "grenades": manifest["grenades"],
     }
