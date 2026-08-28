@@ -5478,7 +5478,7 @@ export class Game {
     this.vm.authored?.update(dt);
     if (authoredActive || meleeActive) {
       // O clipe já inclui perspectiva e movimento; somar IK ou offsets quebraria contatos.
-      this.vm.root.position.set(0, 0, 0);
+      this.vm.root.position.setScalar(0);
       this.vm.root.rotation.set(0, 0, 0);
       this.vm.root.scale.setScalar(1);
     } else {
