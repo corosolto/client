@@ -79,18 +79,18 @@ def main() -> None:
     scene.render.image_settings.file_format = "PNG"
     scene.render.film_transparent = False
     scene.view_settings.look = "AgX - Medium High Contrast"
-    scene.view_settings.exposure = 0.15
+    scene.view_settings.exposure = -1.0
 
     world = bpy.data.worlds.new("Viewmodel_QA_World")
     world.use_nodes = True
     background = world.node_tree.nodes.get("Background")
     background.inputs["Color"].default_value = (0.006, 0.009, 0.014, 1.0)
-    background.inputs["Strength"].default_value = 0.18
+    background.inputs["Strength"].default_value = 0.08
     scene.world = world
     target = (0.0, -0.12, 1.30)
-    add_area("QA_Key", (0.75, 0.45, 1.85), target, 165, 0.75, (1.0, 0.88, 0.72))
-    add_area("QA_Fill", (-0.75, 0.15, 1.55), target, 72, 1.10, (0.68, 0.82, 1.0))
-    add_area("QA_Rim", (0.10, -0.95, 1.80), target, 110, 0.55, (0.55, 0.72, 1.0))
+    add_area("QA_Key", (0.75, 0.45, 1.85), target, 30, 0.75, (1.0, 0.88, 0.72))
+    add_area("QA_Fill", (-0.75, 0.15, 1.55), target, 8, 1.10, (0.68, 0.82, 1.0))
+    add_area("QA_Rim", (0.10, -0.95, 1.80), target, 18, 0.55, (0.55, 0.72, 1.0))
 
     records = []
     for action in sorted(bpy.data.actions, key=lambda value: value.name):
