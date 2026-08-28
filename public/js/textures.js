@@ -2,26 +2,40 @@
 import * as THREE from 'three';
 
 function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+/* Anisotropia 8 (4 em `q=low`): sem ela o chão visto em ângulo rasteiro vira papa.
+   Espelho dos tetos: tools/eval/texel-tetos.mjs (ANISO_ALVO/ANISO_MIN); kill-switch `?texel=0`. */
+const _texQS = (() => { try { return new URLSearchParams(location.search); } catch (e) { return new URLSearchParams(''); } })();
+const TEXEL_ON = _texQS.get('texel') !== '0';
+const ANISO_TEX = !TEXEL_ON ? 1 : (_texQS.get('q') === 'low' ? 4 : 8);
+
 function tex(c, repeat = 1, ry = null) {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.magFilter = THREE.NearestFilter;           // retro CS 1.6 pixel look
+  /* NearestFilter fica: decisão travada de direção de arte (look pixel CS 1.6);
+     trocar por Linear mudaria o look do jogo inteiro. */
+  t.magFilter = THREE.NearestFilter;
   t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.anisotropy = ANISO_TEX;
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.repeat.set(repeat, ry === null ? repeat : ry);
   return t;
 }
-/* ================================================================
-   DETALHE DE SUPERFÍCIE (R7 — crítica: "materiais chapados, tiling visível")
-   O mundo inteiro era cor+albedo puro: `grep normalMap public/js/*.js` só achava o
-   viewmodel. Sem normal map nenhuma superfície reage ao sol, e sem variação de macro-escala
-   o olho enxerga o tile se repetindo. Aqui geramos, a partir do MESMO canvas do albedo:
-     - normalMap por Sobel da luminância (relevo grátis, sem asset externo);
-     - roughnessMap (escuro = mais áspero) — quebra o especular chapado sob o env map novo.
-   Ficam registrados em WeakMaps indexados pela textura de albedo, então quem cria material
-   só precisa chamar detailFor(t) — ver `lam()` no map.js. Custo de boot: os mapas são
-   gerados em no máx. 512² (relevo não precisa de resolução de albedo).
-   ================================================================ */
+
+/* TILE PURO: declara que a textura não tem desenho (só ruído/mancha), então o vao.js
+   pode recortar a UV além da guarda MIN_TILES. Contexto: texel-check TEXEL3b, BAR-CONSISTENCIA §3.1. */
+function puro(t) {
+  if (Array.isArray(t)) { t.forEach(puro); return t; }
+  if (t) t.userData.tilePuro = true;
+  return t;
+}
+
+/* CHÃO é PlaneGeometry com UV 0→1 criada em cada map_*.js: a única alavanca dos 10
+   mapas é o `repeat` daqui (caixas têm densidade via aoBoxGeo no vao.js). Banda: BAR §1.8. */
+const CHAO_PX = 512;
+
+/* DETALHE DE SUPERFÍCIE: normalMap (Sobel do albedo) e roughnessMap derivados do MESMO
+   canvas, cacheados em WeakMaps por textura. Quem cria material chama detailFor(t) — ver `lam()` no map.js. */
 const NORMALS = new WeakMap();
 const ROUGHS = new WeakMap();
 // indexado pelo `source` da textura (o que o `clone()` compartilha) — ver detailFor
@@ -115,6 +129,9 @@ export function registerDetail(t, canvas, strength = 2.2, lo = 0.55, hi = 0.98) 
    mesmos WeakMaps). */
 export function detailFor(t) {
   if (!t) return null;
+  /* Alavanca comum dos 10 mapas: texturas nascidas fora de `tex()` (4 mapas montam
+     canvas próprio) também ganham anisotropia aqui. Só sobe quem está no default (1). */
+  if (TEXEL_ON && t.anisotropy <= 1) t.anisotropy = ANISO_TEX;
   let n = NORMALS.get(t), r = ROUGHS.get(t);
   if (!n && !r && t.source && BY_SOURCE.has(t.source)) {
     const d = BY_SOURCE.get(t.source);
@@ -325,42 +342,59 @@ export function initTextures() {
     // do mesmo 1024 num piso de 180 m liam como xadrez)
     macro(x, 1024, 1024, 7, ['rgba(120,110,95,0.20)', 'rgba(70,64,56,0.16)', 'rgba(150,142,128,0.14)']);
   }
-  T.ground = withDetail(tex(gc, 10, 10), gc, 2.6, 0.60, 0.98);
+  T.ground = puro(withDetail(tex(gc, 10, 10), gc, 2.6, 0.60, 0.98));
 
-  { const c = concreteBase(); T.concrete = withDetail(tex(c, 1, 1), c, 2.4, 0.58, 0.97); }
-  { const c = concreteBase(256, 256, '#6f6a62', '#57534c'); T.concreteDark = withDetail(tex(c, 1, 1), c, 2.4, 0.60, 0.98); }
+  /* T.concrete FICA em 256²: a família se espalha de 28 a 314 px/m (campomorro sem aoBoxGeo,
+     escadão a 7,3), e nenhum K global cabe na banda 64-512 da BAR §1.8 — conserto é por superfície no map_*.js. */
+  { const c = concreteBase(); T.concrete = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.58, 0.97)); }
+  { /* T.concreteDark SOBE para 512²: o piso de 36×240 m do praca_poderes (76% da área abaixo
+       do piso do mapa) só é alcançado pelo canvas; 1024 jogaria a piscina acima do teto 512 — ver texel-custo.mjs. */
+    /* Gated pelo TEXEL_ON: `?texel=0` tem que devolver o comportamento antigo INTEIRO,
+       senão o A/B mede meia mudança. (Dívida não consertada: CHAO_PX não é gated.) */
+    const CD_PX = TEXEL_ON ? 512 : 256;
+    const c = concreteBase(CD_PX, CD_PX, '#6f6a62', '#57534c');
+    T.concreteDark = puro(withDetail(tex(c, 1, 1), c, 2.4, 0.60, 0.98));
+  }
 
-  { // asphalt for central lane
-    const c = canvas(256, 256), x = c.getContext('2d');
-    x.fillStyle = '#5c5a58'; x.fillRect(0, 0, 256, 256);
-    noiseOver(x, 256, 256, 0.3, ['#4c4a48', '#6b6967', '#413f3d']);
+  { /* asphalt — CHÃO: canvas 512² e repeat 4. Dobrar o canvas basta para trazer as 8
+       extensões medidas (14-127 m) para dentro da banda 64-512 px/m da BAR §1.8. */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = '#5c5a58'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.3, ['#4c4a48', '#6b6967', '#413f3d']);
     // 2ª oitava fina: o asfalto tinha sd de luminância ~1.7 (alvo do crítico: > 2 em
     // qualquer região que ocupe > 5 % do frame)
-    noiseOver(x, 256, 256, 0.18, ['#6f6d6b', '#3a3836']);
-    stains(x, 256, 256, 4, 'rgba(30,28,26,0.3)');
-    macro(x, 256, 256, 5, ['rgba(150,148,146,0.13)', 'rgba(25,24,23,0.16)']);
-    T.asphalt = withDetail(tex(c, 4, 4), c, 2.0, 0.66, 0.99);
+    noiseOver(x, P, P, 0.18, ['#6f6d6b', '#3a3836']);
+    stains(x, P, P, 4, 'rgba(30,28,26,0.3)');
+    macro(x, P, P, 5, ['rgba(150,148,146,0.13)', 'rgba(25,24,23,0.16)']);
+    T.asphalt = puro(withDetail(tex(c, 4, 4), c, 2.0, 0.66, 0.99));
   }
   { /* dirt (MST camp) — R3: base #8a6b48 tinha S 0,478. Terra é a superfície mais EXTENSA
        onde ela aparece, e croma de albedo multiplica croma de luz (todos os mapas têm sol
        quente): 0,478 no albedo vira 0,65+ na tela e sozinha estoura o teto de 5 % de C2.
        Alvo do gabarito para textura base de terra/areia/asfalto: S 0,20-0,30. Aqui: 0,26,
        matiz 31° intacto — é o hue que diz "terra brasileira", não a saturação. */
-    const c = canvas(256, 256), x = c.getContext('2d');
-    x.fillStyle = TEX_SAT_HOT ? '#8a6b48' : '#8a7866'; x.fillRect(0, 0, 256, 256);
-    noiseOver(x, 256, 256, 0.35, TEX_SAT_HOT ? ['#75583a', '#9c7d56', '#63482e'] : ['#756654', '#9c8e7c', '#63584a']);
-    macro(x, 256, 256, 5, TEX_SAT_HOT ? ['rgba(60,44,26,0.22)', 'rgba(170,140,100,0.16)'] : ['rgba(60,50,38,0.22)', 'rgba(170,152,128,0.16)']);
-    T.dirt = withDetail(tex(c, 3, 3), c, 3.0, 0.80, 1.0);
+    /* CHÃO: canvas 512² e repeat 17 põem as 5 extensões medidas (28-94 m) na banda 64-512 da BAR §1.8.
+       17 É TETO: subir acende a dispersão de 1,5× do escadão/campomorro (BAR-CONSISTENCIA §3.1). */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = TEX_SAT_HOT ? '#8a6b48' : '#8a7866'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.35, TEX_SAT_HOT ? ['#75583a', '#9c7d56', '#63482e'] : ['#756654', '#9c8e7c', '#63584a']);
+    macro(x, P, P, 5, TEX_SAT_HOT ? ['rgba(60,44,26,0.22)', 'rgba(170,140,100,0.16)'] : ['rgba(60,50,38,0.22)', 'rgba(170,152,128,0.16)']);
+    T.dirt = puro(withDetail(tex(c, TEXEL_ON ? 17 : 3, TEXEL_ON ? 17 : 3), c, 3.0, 0.80, 1.0));
   }
   { /* grass patches — R3: base #5f7d3a tinha S 0,536. Mato é o único verde do cenário e
        precisa contrastar com a terra, mas esse contraste vem do MATIZ (85° contra 31°),
        não do croma. S 0,32: fica acima do teto de terra (é vegetação viva) e ainda assim
        longe de 0,55, que fica reservado a bandeira/placa/barril/cone. */
-    const c = canvas(128, 128), x = c.getContext('2d');
-    x.fillStyle = TEX_SAT_HOT ? '#5f7d3a' : '#677d55'; x.fillRect(0, 0, 128, 128);
-    noiseOver(x, 128, 128, 0.4, TEX_SAT_HOT ? ['#4c682e', '#73924a', '#87a355'] : ['#556848', '#7b9265', '#8ea37a']);
-    macro(x, 128, 128, 4, TEX_SAT_HOT ? ['rgba(40,58,24,0.24)', 'rgba(140,160,90,0.14)'] : ['rgba(46,58,38,0.24)', 'rgba(148,160,124,0.14)']);
-    T.grass = withDetail(tex(c, 2, 2), c, 2.4, 0.80, 1.0);
+    /* CHÃO: canvas 512² e repeat 30, mirados no gramado de 158 m (25 000 dos 29 700 m² do
+       jogo): ele fica a 97 px/m e os canteiros (31-38 m) cabem abaixo do teto de 512. */
+    const P = CHAO_PX;
+    const c = canvas(P, P), x = c.getContext('2d');
+    x.fillStyle = TEX_SAT_HOT ? '#5f7d3a' : '#677d55'; x.fillRect(0, 0, P, P);
+    noiseOver(x, P, P, 0.4, TEX_SAT_HOT ? ['#4c682e', '#73924a', '#87a355'] : ['#556848', '#7b9265', '#8ea37a']);
+    macro(x, P, P, 4, TEX_SAT_HOT ? ['rgba(40,58,24,0.24)', 'rgba(140,160,90,0.14)'] : ['rgba(46,58,38,0.24)', 'rgba(148,160,124,0.14)']);
+    T.grass = puro(withDetail(tex(c, TEXEL_ON ? 30 : 2, TEXEL_ON ? 30 : 2), c, 2.4, 0.80, 1.0));
   }
   { // Caixa dos Correios (SEDEX) — papelão com a faixa amarela e o "C" azul
     const correiosBox = (label, sub) => {
@@ -464,14 +498,11 @@ export function initTextures() {
     poster('#2b4d8f', '#fff', ['CANDIDATO', 'FICTÍCIO', 'PROMETO NADA']),
   ];
 
-  // --- real poster art (public/posters) — curated satirical posters for the map walls.
-  // [file, aspect w/h]. Priority first (DOLLYNHO + New Project), then the rest.
-  // Reproduz dimensões, aspecto real e desvio: node tools/eval/poster-aspect-check.mjs --json
+  // --- poster art (public/posters): pool satírico; personagens e marcas protegidas não entram.
+  // Dimensões/aspecto reproduzidos por `node tools/eval/poster-aspect-check.mjs --json`.
   const POSTER_FILES = [
-    ['ashtar.png', 0.5625, 1.35], ['ashtar.png', 0.5625, 1.35],
-    ['ashtar-meme.jpg', 0.98, 1.2],   // o MEME original — o dono mandou voltar ('estava bom tb')
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
-    ['DOLLYNHO.png', 0.5625], ['New Project (1).png', 0.5625],
+    ['New Project (1).png', 0.5625],
     ['New Project (2).png', 0.5625], ['New Project (3).png', 0.5625],
     ['25c9112229edfcfbb1eae4137ecc151a.jpg', 0.6],
     ['26268061ca13b4dc4a871c1163cbeb6d.jpg', 1.0],
@@ -747,43 +778,172 @@ export function initTextures() {
   DECAL_FILES.push(
     ['or-graf-treta.png', 1.99, 'peca', 0],
     ['or-graf-coro.png', 2.163, 'peca', 0],
+    ['or-mitico-mural.png', 1.0, 'peca', 0],
     ['or-stencil-capivara.png', 1.0, 'ilustracao', 0],
     ['or-stencil-pomba.png', 1.181, 'ilustracao', 0],
-    // homenagens póstumas a ídolos da música BR (07/08) — versão SOLTA (alpha) pros
-    // mapas que não são o quebrada; a versão de tijolo vira mural em or-mural-*.jpg
-    ['or-hom-chorao.png', 1.49, 'peca', 0],
-    ['or-hom-champignon.png', 1.07, 'peca', 0],
-    ['or-hom-tim-maia.png', 1.411, 'peca', 0],
-    ['or-hom-rita-lee.png', 1.49, 'peca', 0],
-    ['or-hom-raul.png', 1.63, 'peca', 0],
-    ['or-hom-sabotage.png', 1.466, 'peca', 0],
-    ['or-hom-yuka.png', 1.059, 'peca', 0],
-    ['or-hom-chico.png', 0.906, 'peca', 0],
   );
-  /* GALERIA DE HOMENAGENS do quebrada (versão tijolo, opaca) — lazy igual aos decals:
-     8 jpg de 1408×768 só devem baixar quando o quebrada monta a galeria. */
-  /* ── OS `or-hom-*.png` SAÍRAM DOS POOLS (07/08) ────────────────────────────
-     Reprovação do dono: "as homenagens aos outros artistas ficaram muito pequenas e
-     só no mapa piscina" e "o do chorão está com um fundo branco".
-
-     As duas coisas eram o MESMO arquivo. A homenagem existia em duas formas: estes
-     murais de tijolo (`or-mural-*.jpg`, grandes, certos) e uns recortes `or-hom-*.png`
-     que entravam nos pools de tag — ou seja, sorteados contra 15 outras artes e do
-     tamanho de um adesivo. E MEDIDO nos 8: `or-hom-chorao.png` e `or-hom-rita-lee.png`
-     têm fundo 100% OPACO (quina 239,239,240) — o recorte falhou quando eles foram
-     gerados, e na parede aquilo desenha um retângulo cinza-claro com um adesivo no
-     meio. Era literalmente o "fundo branco".
-
-     Tentar re-recortar não resolve: o fundo é um gradiente de estúdio, não uma cor
-     chapada — flood fill da borda tira 2/3 e deixa o miolo (conferido).
-     Então a homenagem passa a existir SÓ como mural, que é a forma que o dono
-     aprovou ("o grafite do sabotage ficou demais"), agora em 5,4 × 2,8 m e nos 5
-     mapas via `pendurarMurais`. Os PNG ficam no disco, intactos, sem pool.        */
-  const MURAIS_HOM = ['chorao', 'champignon', 'tim-maia', 'rita-lee', 'raul', 'sabotage', 'yuka', 'chico'];
-  /* A ORDEM É CONTRATO: `T.muraisHom[i]` é o artista `T.muraisHomNomes[i]`. Os 5 mapas
-     pendem essas telas pelo nome (`mural:homenagem-<artista>`), e o layout assado do
-     grafite guarda o NOME, não o índice — se a lista fosse copiada em cada mapa, mexer
-     nela renomearia mural em silêncio num mapa e não no outro. */
+  /* PACK PIXO SP×RJ (frente F, v2.1): obra própria, estilo sem assinatura — references/graffiti/PIXACAO-SP-RJ.md.
+     5º campo = cidade (portão GRAFFITI-EDITORIAL). GERADO por tools/gen-graffiti-decals.mjs --pack — edite o script. */
+  /* PIXO-PACK:GERADO-INICIO */
+  DECAL_FILES.push(
+    ['or-pixo-rj-alto.png', 3.346, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-areia.png', 2.86, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-arena.png', 3.346, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-asa.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-baile.png', 3.122, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-baixada.png', 3.303, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-barco.png', 2.709, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bike.png', 2.142, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bola.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-bonde.png', 2.709, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-brisa.png', 2.599, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-calcada.png', 2.599, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-calor.png', 2.943, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-campo.png', 2.723, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-coco.png', 2.681, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-colina.png', 4.096, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-descida.png', 3.18, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duna.png', 3.282, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-letra.png', 2.547, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-mancha.png', 2.96, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-rabisco.png', 2.783, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-spray.png', 2.535, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-duo-traco.png', 2.813, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-baile-funk.png', 3.765, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-praia-mar.png', 3.18, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-dupla-zn-zs.png', 2.86, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-encosta.png', 4.491, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-estacao.png', 3.391, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-faixa.png', 2.626, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-ferro.png', 2.876, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-fundo.png', 3.938, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-funk.png', 2.977, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-grau.png', 2.016, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-lagoa.png', 3.048, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-leste.png', 2.404, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-mare.png', 3.122, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-mureta.png', 3.303, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-norte.png', 3.22, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-oeste.png', 2.844, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-onda.png', 1.882, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-ce.png', 0.939, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-copa.png', 1.145, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-lua.png', 1.101, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-rio.png', 1.191, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-sol.png', 1.03, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-voo.png', 1.177, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-zn.png', 0.977, 'peca', 0, 'RJ'],
+    ['or-pixo-rj-pedra.png', 2.909, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pier.png', 3.938, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pipa.png', 2.723, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pique.png', 2.438, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-pista.png', 3.368, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-praia.png', 2.473, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-prancha.png', 3.325, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-quadra.png', 3.765, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-raia.png', 2.133, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-rede.png', 2.573, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-regata.png', 2.639, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-remo.png', 2.359, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sal.png', 2.612, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-samba.png', 2.427, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sinal.png', 2.612, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-skate.png', 3.483, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-solto.png', 2.081, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-subida.png', 4.096, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-suburbio.png', 3.58, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-sul.png', 2.876, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-surfe.png', 3.793, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-torcida.png', 2.798, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trem.png', 2.098, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trilha.png', 4.491, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-trilho.png', 2.738, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-vela.png', 2.462, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-vento.png', 2.485, 'tag', 0, 'RJ'],
+    ['or-pixo-rj-verao.png', 2.926, 'tag', 0, 'RJ'],
+    ['or-pixo-sp-andaime.png', 1.193, 'tag', 0, 'SP'],
+    ['or-pixo-sp-antena.png', 0.75, 'tag', 0, 'SP'],
+    ['or-pixo-sp-asfalto.png', 1.862, 'tag', 0, 'SP'],
+    ['or-pixo-sp-avenida.png', 0.686, 'tag', 0, 'SP'],
+    ['or-pixo-sp-beco.png', 1.24, 'tag', 0, 'SP'],
+    ['or-pixo-sp-bloco.png', 0.57, 'tag', 0, 'SP'],
+    ['or-pixo-sp-caixa.png', 0.873, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cal.png', 0.496, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cerca.png', 0.625, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cimento.png', 0.973, 'tag', 0, 'SP'],
+    ['or-pixo-sp-cinza.png', 0.777, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coluna.png', 0.939, 'tag', 0, 'SP'],
+    ['or-pixo-sp-concreto.png', 1.004, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coro.png', 1.33, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-alicate.png', 1.255, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-chave.png', 0.836, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-martelo.png', 1.082, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-serrote.png', 1.018, 'tag', 0, 'SP'],
+    ['or-pixo-sp-duo-trator.png', 1.135, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-garoa-cinza.png', 1.816, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-portao-grade.png', 1.809, 'tag', 0, 'SP'],
+    ['or-pixo-sp-dupla-viaduto-tunel.png', 2.286, 'tag', 0, 'SP'],
+    ['or-pixo-sp-escada.png', 0.58, 'tag', 0, 'SP'],
+    ['or-pixo-sp-esquina.png', 0.826, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ferrugem.png', 1.225, 'tag', 0, 'SP'],
+    ['or-pixo-sp-fumaca.png', 0.953, 'tag', 0, 'SP'],
+    ['or-pixo-sp-galpao.png', 0.775, 'tag', 0, 'SP'],
+    ['or-pixo-sp-garoa.png', 0.863, 'tag', 0, 'SP'],
+    ['or-pixo-sp-giz.png', 0.445, 'tag', 0, 'SP'],
+    ['or-pixo-sp-grade.png', 0.873, 'tag', 0, 'SP'],
+    ['or-pixo-sp-guincho.png', 0.74, 'tag', 0, 'SP'],
+    ['or-pixo-sp-janela.png', 0.793, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ladeira.png', 0.836, 'tag', 0, 'SP'],
+    ['or-pixo-sp-laje.png', 1.467, 'tag', 0, 'SP'],
+    ['or-pixo-sp-lata.png', 0.848, 'tag', 0, 'SP'],
+    ['or-pixo-sp-marginal.png', 1.261, 'tag', 0, 'SP'],
+    ['or-pixo-sp-mercado.png', 1.182, 'tag', 0, 'SP'],
+    ['or-pixo-sp-morro.png', 1.561, 'tag', 0, 'SP'],
+    ['or-pixo-sp-muro.png', 0.736, 'tag', 0, 'SP'],
+    ['or-pixo-sp-obra.png', 0.586, 'tag', 0, 'SP'],
+    ['or-pixo-sp-oficina.png', 0.93, 'tag', 0, 'SP'],
+    ['or-pixo-sp-padaria.png', 1.299, 'tag', 0, 'SP'],
+    ['or-pixo-sp-coroa.png', 0.574, 'peca', 0, 'SP'],
+    ['or-pixo-sp-estrela.png', 0.857, 'peca', 0, 'SP'],
+    ['or-pixo-sp-flecha.png', 1.202, 'peca', 0, 'SP'],
+    ['or-pixo-sp-leste26.png', 0.549, 'peca', 0, 'SP'],
+    ['or-pixo-sp-norte26.png', 0.596, 'peca', 0, 'SP'],
+    ['or-pixo-sp-raio.png', 0.635, 'peca', 0, 'SP'],
+    ['or-pixo-sp-zl26.png', 0.334, 'peca', 0, 'SP'],
+    ['or-pixo-sp-pilar.png', 0.91, 'tag', 0, 'SP'],
+    ['or-pixo-sp-pintura.png', 1.188, 'tag', 0, 'SP'],
+    ['or-pixo-sp-poco.png', 0.527, 'tag', 0, 'SP'],
+    ['or-pixo-sp-poeira.png', 0.844, 'tag', 0, 'SP'],
+    ['or-pixo-sp-ponte.png', 0.738, 'tag', 0, 'SP'],
+    ['or-pixo-sp-porta.png', 0.895, 'tag', 0, 'SP'],
+    ['or-pixo-sp-portao.png', 0.895, 'tag', 0, 'SP'],
+    ['or-pixo-sp-porteira.png', 1.45, 'tag', 0, 'SP'],
+    ['or-pixo-sp-prumo.png', 0.709, 'tag', 0, 'SP'],
+    ['or-pixo-sp-quintal.png', 0.934, 'tag', 0, 'SP'],
+    ['or-pixo-sp-reboco.png', 0.916, 'tag', 0, 'SP'],
+    ['or-pixo-sp-risco.png', 0.541, 'tag', 0, 'SP'],
+    ['or-pixo-sp-rodovia.png', 0.996, 'tag', 0, 'SP'],
+    ['or-pixo-sp-rolo.png', 0.801, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tampa.png', 1.228, 'tag', 0, 'SP'],
+    ['or-pixo-sp-telha.png', 0.781, 'tag', 0, 'SP'],
+    ['or-pixo-sp-telhado.png', 1.004, 'tag', 0, 'SP'],
+    ['or-pixo-sp-terra.png', 0.637, 'tag', 0, 'SP'],
+    ['or-pixo-sp-terreno.png', 0.982, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tijolo.png', 0.73, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tinta.png', 0.844, 'tag', 0, 'SP'],
+    ['or-pixo-sp-travessa.png', 0.977, 'tag', 0, 'SP'],
+    ['or-pixo-sp-tunel.png', 0.912, 'tag', 0, 'SP'],
+    ['or-pixo-sp-varal.png', 0.754, 'tag', 0, 'SP'],
+    ['or-pixo-sp-viaduto.png', 0.846, 'tag', 0, 'SP'],
+    ['or-pixo-sp-viga.png', 0.795, 'tag', 0, 'SP'],
+  );
+  /* PIXO-PACK:GERADO-FIM */
+  /* As homenagens or-hom-* (pessoa real) saíram do pool E do disco em 17/08 —
+     contrato editorial; o portão GRAFFITI-EDITORIAL impede a reintrodução. */
+  /* Galeria desativada por contrato editorial: os mapas não geram arte de pessoa
+     real. Os arquivos históricos permanecem no disco por enquanto, fora de todos
+     os pools; o portão GRAFFITI-EDITORIAL impede a reintrodução no jogo. */
+  const MURAIS_HOM = [];
   T.muraisHomNomes = MURAIS_HOM.map((n) => 'homenagem-' + n);
   T.muraisHom = [];
   MURAIS_HOM.forEach((n, i) => {
@@ -830,6 +990,8 @@ export function initTextures() {
   T.decalTipos = DECAL_FILES.map(([, , k]) => k);
   T.decalClaro = DECAL_FILES.map(([, , , c]) => !!c);
   T.decalFiles = DECAL_FILES.map(([f]) => f);
+  /* 'SP' | 'RJ' | null — só o pack or-pixo-* declara (5º campo); o resto é null. */
+  T.decalCidades = DECAL_FILES.map(([, , , , cd]) => cd || null);
   /* Índices de um tipo — `T.decalsDoTipo('tag')`. Devolve índice, não textura, de
      propósito: assim dá pra sortear e carregar só o que a parede vai usar. */
   T.decalsDoTipo = (tipo) => T.decalTipos.reduce((a, k, i) => (k === tipo && a.push(i), a), []);

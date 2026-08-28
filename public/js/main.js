@@ -5,6 +5,7 @@ import { CHARACTERS, buildCharacter, charWeapon } from './characters.js';
 import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from './glbchars.js';
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
+import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -1064,6 +1065,10 @@ async function _startGame(team, charId, enemyFaction) {
       await Promise.all([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
+        /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
+           no fallback procedural sem textura — verde na régua de registro, feio na tela.
+           Foi literalmente o BUG-57. Lista vazia é tratada como "tudo" no ambientlife. */
+        preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
       ]);
     }

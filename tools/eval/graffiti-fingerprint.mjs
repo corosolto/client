@@ -36,6 +36,7 @@ export const MAP_SOURCES = {
   loja_h: 'public/js/map_havan.js',
   ferro_velho: 'public/js/map_ferrovelho.js',
   quebrada: 'public/js/map_quebrada.js',
+  corrego: 'public/js/map_corrego.js',
 };
 export const PASS_FILE = 'public/js/graffiti_pass.js';
 export const TEX_FILE = 'public/js/textures.js';
