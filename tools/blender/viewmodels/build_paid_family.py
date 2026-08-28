@@ -241,18 +241,21 @@ def discover_actions(folder: Path, preferred_idle: str) -> dict[str, Path]:
 
 
 def add_viewmodel_camera() -> bpy.types.Object:
+    # FPSPlayer.prefab is the source of truth: Unity camera local position
+    # (0.012, 1.654, 0.06), identity rotation and vertical FOV 80.  Unity's +Z
+    # forward becomes Blender's -Y after FBX import, while +Y becomes +Z.
     data = bpy.data.cameras.new("VIEWMODEL_CAMERA_DATA")
-    data.lens = 32.0
-    data.sensor_width = 36.0
+    data.sensor_fit = "VERTICAL"
+    data.sensor_height = 24.0
+    data.lens = (data.sensor_height * 0.5) / math.tan(math.radians(80.0) * 0.5)
     data.clip_start = 0.01
     data.clip_end = 50.0
     camera = bpy.data.objects.new("VIEWMODEL_CAMERA", data)
     bpy.context.collection.objects.link(camera)
-    camera.location = (0.0, 0.3, 1.59)
-    camera.rotation_euler = (1.44109, 0.0, -math.pi)
-    # Three.PerspectiveCamera.fov is vertical.  Store Blender's vertical angle so
-    # browser framing is identical instead of accidentally using the wider X FOV.
-    camera["viewmodel_fov"] = math.degrees(data.angle_y)
+    camera.location = (0.012, -0.06, 1.654)
+    camera.rotation_euler = ((Vector((0.012, -1.06, 1.654)) - camera.location).to_track_quat("-Z", "Y").to_euler())
+    camera["viewmodel_fov"] = 80.0
+    camera["viewmodel_camera_source"] = "FPSPlayer.prefab"
     bpy.context.scene.camera = camera
     return camera
 
@@ -323,11 +326,11 @@ def build() -> None:
     weapon_root.matrix_parent_inverse = arms_rig.matrix_world.inverted()
     weapon_root.matrix_world = socket_matrix
 
-    weapon_actions = discover_actions(asset_root / "Weapon", "")
+    # The weapon idle FBX carries an object-level 0.01 import scale.  Reusing that
+    # action on the already converted base rig applies the FBX scale twice and makes
+    # the gun one hundredth of its authored size.  Idle weapon parts are static; the
+    # assembler adds only normalized bone motion for shoot/reload clips later.
     weapon_report = {}
-    weapon_idle = weapon_actions.get("idle")
-    if weapon_idle and weapon_idle != asset_root / "Weapon" / config["weaponHint"]:
-        weapon_report["idle"] = transfer_fbx_action(weapon_idle, weapon_rig, "idle")
 
     camera = add_viewmodel_camera()
     scene["viewmodel_family"] = args.family
@@ -365,6 +368,8 @@ def build() -> None:
             "name": camera.name,
             "lens": camera.data.lens,
             "fov": camera["viewmodel_fov"],
+            "source": camera["viewmodel_camera_source"],
+            "position": list(camera.location),
         },
         "arms": {"bones": len(arms_rig.data.bones), "clips": character_report},
         "weapon": {"bones": len(weapon_rig.data.bones), "clips": weapon_report},
