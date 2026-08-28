@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>FP arms rig viewer</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#9aa6b2}#hud{position:fixed;left:12px;top:12px;color:white;font:14px monospace}</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js?h=919693a84f08","three/addons/":"./vendor/addons/"}}</script>
+</head><body><div id="hud">loading</div><script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { preloadFPArms, buildFPArms, poseToWeapon } from './js/fpsrig.js';
+import { preloadWeapons, weaponModel, weaponCFG, WEAPON_IDS } from './js/weapons.js';
+const params=new URLSearchParams(location.search); const weaponId=WEAPON_IDS.includes(params.get('weapon'))?params.get('weapon'):'ak';
+const reloadK=Math.max(0,Math.min(1,Number(params.get('reload'))||0));
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(2,devicePixelRatio)); renderer.setSize(innerWidth,innerHeight); renderer.outputColorSpace=THREE.SRGBColorSpace; document.body.append(renderer.domElement);
+const scene=new THREE.Scene(); scene.add(new THREE.HemisphereLight(0xffffff,0x334455,3));
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.01,20); camera.position.set(0,0,0); camera.lookAt(0,0,-1);
+const weapon=new THREE.Group(); weapon.position.set(.28,-.22,-.58); scene.add(weapon);
+await preloadWeapons([weaponId]); const rw=weaponModel(weaponId); rw.name='rw'; rw.rotation.y=Math.PI;
+rw.scale.multiplyScalar(.72*(weaponCFG(weaponId).vm??1)); weapon.add(rw);
+await preloadFPArms(); const arms=buildFPArms({id:'mandrake',skin:0xb77955}); if(arms)scene.add(arms.group);
+window.__arms=arms;
+if (arms) document.getElementById('hud').textContent='rig OK';
+else {
+  const raw=await new GLTFLoader().loadAsync('/models/viewmodels/fp-arms.glb'); const rows=[];
+  raw.scene.traverse(o=>{if(o.isBone||o.isMesh)rows.push(`${o.type}:${o.name}:${!!o.isSkinnedMesh}`)});
+  document.getElementById('hud').textContent='NO RIG '+rows.join(' | ');
+}
+renderer.setAnimationLoop(()=>{if(arms){poseToWeapon(arms,weapon,weaponId,reloadK,weaponId==='knife'?.65:0);const e=arms.gripError();let skinned=0;arms.model.traverse(o=>{if(o.isSkinnedMesh)skinned++});window.__fpRigState={weaponId,reloadK,phase:arms.phase,sourceId:arms.sourceId,err:e,skinned,weaponVisible:rw.visible&&weapon.visible,magazineVisible:arms.magProp.visible};document.getElementById('hud').textContent=`${weaponId} ${arms.phase} src=${arms.sourceId} r=${e.r.toFixed(4)} l=${e.l.toFixed(4)} reach=${arms.reachR.toFixed(3)}/${arms.reachL.toFixed(3)} dist=${arms.debug.dR.toFixed(3)}/${arms.debug.dL.toFixed(3)}`;}renderer.render(scene,camera)});
+addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix()});
+</script></body></html>

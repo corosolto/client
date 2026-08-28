@@ -573,10 +573,13 @@ export const VM_FRAME = {
        O que NÃO fechou está declarado no relatório: pistola e faca (sem foto de referência)
        e a borda esquerda de 5 armas. */
     rifle:   { roll: -0.070, pitch: 0.1571, yaw: 0.2793, tanH: 0.360, clear: 0.020, minz: 0.3450, fwdTan: 1.60 },
-    sniper:  { roll: -0.055, pitch: 0.1571, yaw: 0.2094, tanH: 0.360, clear: 0.020, minz: 0.3350, fwdTan: 1.60 },
+    sniper:  { roll: 0.580, pitch: 0.1571, yaw: 0.2094, tanH: 0.360, clear: 0.020, minz: 0.3350, fwdTan: 1.60 },
     shotgun: { roll: -0.078, pitch: 0.1047, yaw: 0.3491, tanH: 0.360, clear: 0.020, minz: 0.3450, fwdTan: 1.60 },
     smg:     { roll: -0.085, pitch: 0.4189, yaw: 0.4887, tanH: 0.360, clear: 0.020, minz: 0.3500, fwdTan: 1.60 },
-    pistol:  { roll: -0.050, pitch: 0.4712, yaw: 0.5585, tanH: 0.280, clear: 0.020, minz: 0.2700, fwdTan: 1.60 },
+    // Armas curtas: cant leve e natural, semelhante ao viewmodel clássico.  A pose
+    // anterior (27°/32°) fazia uma PT-38 atravessar a tela na diagonal e escondia a
+    // mão que segura o cabo; esta mantém a boca à esquerda sem parecer uma arma caída.
+    pistol:  { roll: -0.105, pitch: 0.1745, yaw: 0.3142, tanH: 0.285, clear: 0.020, minz: 0.3500, fwdTan: 1.45 },
     knife:   { roll: 0, pitch: 0.000, yaw: 0.000, tanH: 0.240, clear: 0.020, minz: 0.3100, fwdTan: 1.60 },   // pitch/yaw n/a: a faca usa knifeRot
   },
   // A faca não tem cano: em vez do cant ela leva a pose CS clássica (lâmina atravessada,
@@ -607,14 +610,19 @@ export const VM_FRAME = {
      A RÉGUA QUE FALTA e que este defeito exige: nenhuma invariante mede direção de lâmina.
      Enquanto não existir, qualquer solver que mexer aqui pode virar a faca de novo e passar
      verde. É o item de maior risco de regressão do viewmodel. */
-  knifeRot: [0.45, 0.90, -0.30],
+  // Lâmina lateral e baixa: punho no canto direito, ponta voltada para dentro da
+  // tela.  Menos yaw que a revisão anterior evita a faca "deitada" na diagonal.
+  knifeRot: [-0.10, 0.50, -0.48],
   /* zMul VAZIO — as 5 exceções por arma (m92/p90/uzi/famas/tavor) FORAM REMOVIDAS, não
      substituídas. Elas empurravam armas atarracadas p/ o fundo para corrigir tamanho
      aparente; com minz uniforme o Zg já é o mesmo (0,500-0,503) para as 26, e cada entrada
      que sobrasse só tiraria o grip da banda da VM9 (m92 com 1,12 ia a Zg 0,560 e o grip
      saía por 0,0009). DÍVIDA REMOVIDA: 5 exceções por arma -> 0. Se alguém precisar de uma,
      o custo é medido: a janela inteira de Zg da VM9 é [0,445 ; 0,558], ou seja ±11%. */
-  zMul: {},
+  // Compactas têm caixa muito alta para o comprimento. Afastá-las em torno do grip
+  // preserva o ponto onde a mão entra no quadro, mas impede UZI/P90 de parecerem maiores
+  // que um fuzil comprido na lente de primeira pessoa.
+  zMul: { uzi: 1.34, p90: 1.16, mp5: 1.08 },
   // classe de ENQUADRAMENTO (≠ STATIC_CLASS do pipeline Tripo, ≠ BALL_CLASS da balística)
   classOf: {
     ak: 'rifle', akm: 'rifle', m4: 'rifle', m92: 'rifle', g3: 'rifle', carbine: 'rifle',
