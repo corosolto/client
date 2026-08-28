@@ -11,6 +11,7 @@ import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DE
 import { GPUParticles } from './gpuparticles.js';
 // radiância do céu MEDIDA por mapa (r3_fog.py) — teto de brilho da fumaça, ver _corDaFumaca
 import { skyRadiance } from './bloom.js';
+import { createSoundscape } from './soundscape.js';   // áudio ambiente por mapa (world.sound do córrego)
 import { RecoilAxis, ViewModelRig } from './springs.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { frase, tr } from './i18n.js';   // EN por camada — o crash 'frase is not defined' de 06/08 foi este import faltando
@@ -3105,6 +3106,7 @@ export class Game {
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
     }
+    this.world.ambience?.onShot(from, end);
     if (byPlayer && tracer) {
       const muzzle = this._muzzleWorld(STATIC_CLASS[this.player.weapon] || 'rifle');
       this._tracer(muzzle, end);
@@ -6633,6 +6635,7 @@ export class Game {
     const hw = this.ray.intersectObjects(this.world.occluders, false)[0];
     if (hw && hw.distance < tdist - 0.4) hit = false;   // parede na frente: bala morre lá
     const end = hit ? teye : (hw ? hw.point : from.clone().add(dir.clone().multiplyScalar(120)));
+    this.world.ambience?.onShot(from, end);
     if (hit) {
       let dmg = (Wb.dmg || 30) * (Wb.pellets ? Math.min(Wb.pellets, 6) * 0.55 : 1);
       const fo = DMG_FALLOFF[bcls];
@@ -7025,6 +7028,9 @@ export class Game {
       r.autoClear = true;
     }
     this._tickDolly(dt);
+    this.world.ambience?.update(dt, this.player.pos);
+    if (!this.soundscape && this.world.sound) this.soundscape = createSoundscape(this.sfx, this.world.sound);
+    this.soundscape?.update(dt, this.player.pos);
     this.world.update?.(dt, this.time);
   }
 
@@ -7062,6 +7068,8 @@ export class Game {
     this.el.scoreboard.classList.add('hidden');
     this.el.vignette.style.opacity = 0;
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
+    this.world.ambience?.dispose();
+    this.soundscape?.dispose(); this.soundscape = null;
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }
