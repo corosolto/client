@@ -74,7 +74,9 @@ def append_grenade_models(path: Path) -> dict[str, bpy.types.Object]:
 def place_at_grip(root: bpy.types.Object) -> None:
     # The glTF post-process parents this world-space registration under hand_r. Doing
     # that after export avoids Blender's bone-tail parent convention changing the socket.
-    root.matrix_world = Matrix.Translation((-0.080, -0.372, 1.500))
+    # hand_r wrist is (-0.287, -0.260, 1.443) in the authored pose; the palm/fingers
+    # close around this offset while hand_l remains free to pull the pin.
+    root.matrix_world = Matrix.Translation((-0.255, -0.305, 1.525))
 
 
 def build() -> None:
@@ -135,11 +137,29 @@ def build() -> None:
         export_optimize_animation_size=True, export_optimize_animation_keep_anim_armature=True,
         export_yup=True,
     )
+    # Small world-space pack: thrown projectiles reuse the paid geometry instead of
+    # reverting to the old low-poly sphere after leaving the player's hand.
+    for obj in scene.objects:
+        obj.select_set(False)
+    for root in roots.values():
+        root.matrix_world = Matrix.Identity(4)
+        root.select_set(True)
+        for child in root.children_recursive:
+            child.select_set(True)
+    world_path = output / "grenades-world.glb"
+    bpy.ops.export_scene.gltf(
+        filepath=str(world_path), export_format="GLB", use_selection=True,
+        export_cameras=False, export_lights=False, export_animations=False,
+        export_skins=False, export_morph=False, export_materials="EXPORT",
+        export_image_format="WEBP", export_image_quality=78, export_yup=True,
+    )
     report = {
         "schemaVersion": 1,
         "family": "grenade",
         "glb": str(glb_path),
         "glbBytes": glb_path.stat().st_size,
+        "worldGlb": str(world_path),
+        "worldGlbBytes": world_path.stat().st_size,
         "camera": {"name": camera.name, "fov": camera["viewmodel_fov"]},
         "arms": {"bones": len(arms.data.bones), "clips": clips},
         "models": sorted(roots),

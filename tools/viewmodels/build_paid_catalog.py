@@ -91,12 +91,15 @@ def main() -> int:
     utilities = []
     if utility_report.is_file():
         utility = json.loads(utility_report.read_text(encoding="utf-8"))
+        utility_build = json.loads((private_root / "grenade/build-report.json").read_text(encoding="utf-8"))
         utilities.append({
             "family": "grenade",
             "url": f'{manifest["output"]["runtimeUrl"]}/grenade/grenade-runtime.glb',
             "bytes": utility["bytes"],
             "clips": utility["clips"],
             "models": utility["models"],
+            "worldUrl": f'{manifest["output"]["runtimeUrl"]}/grenade/grenades-world.glb',
+            "worldBytes": utility_build["worldGlbBytes"],
         })
     catalog = {
         "schemaVersion": 1,

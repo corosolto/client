@@ -99,6 +99,15 @@ async function main() {
     family: 'grenade', bytes: utilityStat.size,
     clips: [...utilityClips], models: [...utilityModels].filter((name) => name.startsWith('UTILITY_')),
   });
+  const worldPath = path.join(privateRoot, 'grenade/grenades-world.glb');
+  const worldStat = await fs.stat(worldPath);
+  invariant(worldStat.size < 8 * 1024 * 1024, 'world grenade pack exceeds 8 MiB budget');
+  const worldDocument = await io.read(worldPath);
+  const worldNames = new Set(worldDocument.getRoot().listNodes().map((node) => node.getName()));
+  for (const model of ['UTILITY_HE', 'UTILITY_FLASH', 'UTILITY_SMOKE']) {
+    invariant(worldNames.has(model), `world grenade pack is missing ${model}`);
+  }
+  report.utilities[0].worldBytes = worldStat.size;
   const reportPath = path.join(privateRoot, 'validation-report.json');
   await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
   console.log(`CORO_PAID_VIEWMODEL_VALIDATION=${JSON.stringify({ reportPath, families: report.families.length, weapons: report.weapons })}`);
