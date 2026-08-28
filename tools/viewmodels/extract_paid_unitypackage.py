@@ -76,7 +76,11 @@ def package_entries(package: Path) -> dict[str, tuple[tarfile.TarInfo, str]]:
 def selected_prefixes(manifest: dict, family_keys: Iterable[str]) -> tuple[list[str], list[str]]:
     asset_root = manifest["source"]["assetRoot"].rstrip("/")
     families = manifest["families"]
-    prefixes = ["Assets/KINEMATION/FPSAnimationPack/Character/Textures/"]
+    # The animation FBXs contain an Unreal mannequin as their motion carrier.  The
+    # production mesh is SK_Arms_Mono.fbx, with its own skin/cloth/glove materials.
+    # Always extract the complete Character subtree so builds never accidentally
+    # render the mannequin or lose the authored first-person hand textures.
+    prefixes = ["Assets/KINEMATION/FPSAnimationPack/Character/"]
     selected_sources: list[str] = []
     for key in family_keys:
         family = families.get(key)
