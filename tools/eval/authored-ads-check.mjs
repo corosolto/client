@@ -76,6 +76,11 @@ try {
         wrap.updateWorldMatrix(true, false);
         const sight = metrics.sight.clone().divideScalar(metrics.norm || 1);
         wrap.localToWorld(sight);
+        // AD3: colinearidade REAL — ângulo entre (boca−alça) e o eixo óptico.
+        const muzzle = metrics.muzzle.clone().divideScalar(metrics.norm || 1);
+        wrap.localToWorld(muzzle);
+        const axis = muzzle.clone().sub(sight).normalize();
+        const barrelAngleDeg = Math.acos(Math.min(1, Math.max(-1, -axis.z))) * 180 / Math.PI;
         const ndc = sight.clone().project(g.vmCamera);
 
         let minX = Infinity;
@@ -99,7 +104,7 @@ try {
         });
         const clip = (value) => Math.min(1, Math.max(-1, value));
         const areaFrac = ((clip(maxX) - clip(minX)) / 2) * ((clip(maxY) - clip(minY)) / 2);
-        return { ndcX: ndc.x, ndcY: ndc.y, areaFrac, adsF: g.vm.adsF ?? 0 };
+        return { ndcX: ndc.x, ndcY: ndc.y, areaFrac, adsF: g.vm.adsF ?? 0, barrelAngleDeg };
       }, id);
 
       const offCenter = Math.hypot(medida.ndcX, medida.ndcY);
@@ -112,6 +117,13 @@ try {
           `desvio ${offCenter.toFixed(3)} (adsF ${medida.adsF.toFixed(2)})`);
       }
       check(medida.areaFrac >= 0.02, `AD2 ${label}: arma na tela`, `área ${(medida.areaFrac * 100).toFixed(1)}%`);
+      if (MUT === 'sem-ads') {
+        check(medida.barrelAngleDeg > 2, `AD3 ${label}: SEM ads o cano fica fora do eixo (mutante)`,
+          `${medida.barrelAngleDeg.toFixed(1)}°`);
+      } else {
+        check(medida.barrelAngleDeg <= 2, `AD3 ${label}: cano COLINEAR com o eixo óptico`,
+          `${medida.barrelAngleDeg.toFixed(2)}°`);
+      }
       resultados.push({ id, viewport: viewport.name, ...medida, offCenter: Number(offCenter.toFixed(4)) });
       await page.close();
     }

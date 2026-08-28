@@ -463,17 +463,22 @@ export class AuthoredViewModels {
     if (ads > 0.001 && adsConfig && wrap) {
       if (adsConfig.auto) {
         active.mount.updateWorldMatrix(true, true);
-        wrap.getWorldQuaternion(_adsQuat);
-        _adsForward.set(0, 0, 1).applyQuaternion(_adsQuat).normalize();
-        _adsAlign.setFromUnitVectors(_adsForward, _ADS_AXIS);
-        _adsBlend.identity().slerp(_adsAlign, ads);
-        _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsBlend);
-        active.mount.rotation.setFromQuaternion(_adsQuat);
-        active.mount.updateWorldMatrix(true, true);
-        const sight = mintPointScene(active, 'sight');
-        if (sight) {
-          active.mount.position.x += -sight.x * ads;
-          active.mount.position.y += -sight.y * ads;
+        // Eixo do cano MEDIDO (boca − alça, ambos da malha Mint) — sem assumir
+        // convenção de eixo do wrap; é o mesmo par de pontos que o slide usa.
+        const muzzlePoint = mintPointScene(active, 'muzzle');
+        const sightPoint = mintPointScene(active, 'sight');
+        if (muzzlePoint && sightPoint) {
+          _adsForward.copy(muzzlePoint).sub(sightPoint).normalize();
+          _adsAlign.setFromUnitVectors(_adsForward, _ADS_AXIS);
+          _adsBlend.identity().slerp(_adsAlign, ads);
+          _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsBlend);
+          active.mount.rotation.setFromQuaternion(_adsQuat);
+          active.mount.updateWorldMatrix(true, true);
+          const sight = mintPointScene(active, 'sight');
+          if (sight) {
+            active.mount.position.x += -sight.x * ads;
+            active.mount.position.y += -sight.y * ads;
+          }
         }
       }
       active.mount.position.x += adsConfig.off[0] * ads;

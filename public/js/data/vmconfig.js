@@ -4,9 +4,9 @@
 // Por família: mount (socket→gun-space, +Z=cano, autorado no editor), equip
 // (par General rifle|pistol), camShake (preset do recoil.json), reloadStyle.
 export const VM_FAMILY = {
-  // Resíduo medido na rodada 2 do crítico: guarda-mão da AKM 5 cm atrás da
-  // luva de apoio na pose hip (AK-200 do pack tem o guarda-mão mais à frente).
-  ak:       { ready: false, mount: { pos: [0, 0.01, -0.05], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
+  // Resíduo da rodada 3 do crítico: a fresta mão-de-apoio↔guarda-mão é
+  // TRANSVERSAL (madeira acima/à direita da luva bakada) — desce/esquerda.
+  ak:       { ready: false, mount: { pos: [-0.02, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
   ar:       { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
   mp5:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
   smg:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
