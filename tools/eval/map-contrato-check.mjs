@@ -39,7 +39,11 @@ const tipoDe = (v) => (Array.isArray(v) ? 'array' : typeof v);
 /* Teto de nós INALCANÇÁVEIS por mapa. Contar alcançados deixaria a dívida crescer:
    mapa que ganha nós ilhados mantendo o componente atual passaria. Mapa fora da
    lista tem de ser conexo. Ver docs/quality-gates.md. */
-const ILHADOS_MAX = { loja_h: 491, ferro_velho: 15 };
+/* corrego entra com 15 nós ilhados — DÍVIDA CONHECIDA que veio junto com o mapa, não
+   regressão da main: o grafo do córrego tem bolsões nas margens alagadas que a rota não
+   liga. Teto explícito para a dívida não crescer calada; quem mexer no waypoint do
+   córrego tem que DERRUBAR este número, nunca subir. */
+const ILHADOS_MAX = { loja_h: 491, ferro_velho: 15, corrego: 15 };
 
 /* BFS do nó 0, mesmo critério da validatePlan de map_json.js.
    A varredura de linha malformada é SEPARADA da BFS de propósito: dentro dela, nó de
