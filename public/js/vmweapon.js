@@ -170,15 +170,21 @@ export function attachMintWeapon(entry, weaponId) {
   return wrap;
 }
 
-// Ponto medido (muzzle|sight) da arma Mint ativa em espaço de MUNDO — flash,
-// tracer e ADS nascem da arma visível. metrics.norm cancela a escala do wrap.
-export function mintPointWorld(entry, kind, camera) {
+// Ponto medido (muzzle|sight) da arma Mint ativa no espaço da CÂMERA (vmScene).
+// metrics.norm cancela a escala do wrap para a medida não entrar duas vezes.
+export function mintPointScene(entry, kind) {
   const wrap = entry.mint?.active;
   const metrics = wrap?.userData?.metrics;
-  if (!wrap || !metrics || !camera) return null;
+  if (!wrap || !metrics) return null;
   const point = (kind === 'sight' ? metrics.sight : metrics.muzzle).clone()
     .divideScalar(metrics.norm || 1);
   wrap.updateWorldMatrix(true, false);
-  wrap.localToWorld(point);          // vmScene == espaço da câmera
-  return camera.localToWorld(point);
+  return wrap.localToWorld(point);   // vmScene == espaço da câmera
+}
+
+// Mesmo ponto em espaço de MUNDO — flash e tracer nascem da arma visível.
+export function mintPointWorld(entry, kind, camera) {
+  if (!camera) return null;
+  const point = mintPointScene(entry, kind);
+  return point ? camera.localToWorld(point) : null;
 }

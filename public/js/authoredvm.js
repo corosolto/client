@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
-import { attachMintWeapon, mintPointWorld } from './vmweapon.js';
+import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
+
+const DEG2RAD = Math.PI / 180;
 
 // Contrato do catálogo KINEMATION: binários licenciados ficam no armazenamento privado.
 // O mapa arma→família vem de data/vmconfig.js, a fonte única do viewmodel autorado.
@@ -416,6 +418,23 @@ export class AuthoredViewModels {
       active.frame.y + drawY + recoil.py + (_pivot.y - _pivotRotated.y),
       active.frame.z + recoil.pz + (_pivot.z - _pivotRotated.z),
     );
+    // ADS (M6): a alça MEDIDA da arma Mint vai ao eixo da câmera, com resíduo
+    // manual do vmconfig por cima; blend pelo `a` suavizado que o game entrega.
+    const ads = this.adsAmount;
+    const adsConfig = VM_WEAPON[this.weapon]?.ads;
+    if (ads > 0.001 && adsConfig && active.mint?.active) {
+      const sight = mintPointScene(active, 'sight');
+      if (sight) {
+        const alignX = adsConfig.auto ? -sight.x : 0;
+        const alignY = adsConfig.auto ? -sight.y : 0;
+        active.mount.position.x += (alignX + adsConfig.off[0]) * ads;
+        active.mount.position.y += (alignY + adsConfig.off[1]) * ads;
+        active.mount.position.z += (adsConfig.pull + adsConfig.off[2]) * ads;
+        active.mount.rotation.x += adsConfig.rotDeg[0] * DEG2RAD * ads;
+        active.mount.rotation.y += adsConfig.rotDeg[1] * DEG2RAD * ads;
+        active.mount.rotation.z += adsConfig.rotDeg[2] * DEG2RAD * ads;
+      }
+    }
   }
 
   // Boca do cano da arma VISÍVEL em world space (tracer/flash nascem nela, não na

@@ -36,6 +36,7 @@
       <button data-act="reloadEmpty">Recarga vazia</button>
       <button data-act="shoot">Tiro</button>
       <button data-act="inspect">Inspecionar</button>
+      <button data-act="ads" id="adsBtn">ADS: off</button>
     </div>
     <div id="status">carregando…</div>
     <h3>vmconfig da seleção</h3>
@@ -163,6 +164,7 @@
       buildSliders();
       apply();
     };
+    let adsHold = false;
     for (const button of document.querySelectorAll('#actions button')) {
       button.onclick = () => {
         const id = weaponSelect.value;
@@ -173,6 +175,10 @@
         else if (act === 'reloadEmpty') vm.reload(id, 3.2, true);
         else if (act === 'shoot') vm.shoot(id);
         else if (act === 'inspect') vm.inspect(id);
+        else if (act === 'ads') {
+          adsHold = !adsHold;
+          button.textContent = `ADS: ${adsHold ? 'on' : 'off'}`;
+        }
       };
     }
 
@@ -185,6 +191,7 @@
 
     const clock = new THREE.Clock();
     renderer.setAnimationLoop(() => {
+      vm.setAim(weaponSelect.value, adsHold ? 1 : 0);
       vm.update(Math.min(0.05, clock.getDelta()), {});
       renderer.render(scene, camera);
     });
