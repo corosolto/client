@@ -1,10 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// Runtime contract for the licensed KINEMATION catalog. Binaries are served from
-// private storage and never committed to the AGPL repository. Multiple gameplay
-// weapons intentionally share one authored mechanical family; no mesh is detached,
-// inferred or re-mounted in the browser.
+// Contrato do catálogo KINEMATION: binários licenciados ficam no armazenamento privado.
+// Armas compartilham famílias mecânicas completas, sem desmontagem no navegador.
 export const AUTHORED_VM_MODELS = Object.freeze({
   awp: 'sniper', ak: 'ak', m4: 'ar', mp5: 'mp5', shotgun: 'shotgun',
   deagle: 'deagle', pistol: 'pistol', m92: 'ak', akm: 'ak', g3: 'g3',
@@ -15,6 +13,7 @@ export const AUTHORED_VM_MODELS = Object.freeze({
 });
 
 const CATALOG_VERSION = 'paid-aaa-1';
+const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
@@ -29,9 +28,8 @@ const CLIP_ALIASES = Object.freeze({
   pumpempty: 'pump_empty',
 });
 
-// Whole-package optical framing. These offsets never touch an arm, weapon or prop
-// independently, so the authored hand contacts remain exact. Long guns need a little
-// more eye relief than the Unity preview camera provides at a browser's wide aspect.
+// O enquadramento move o pacote inteiro e preserva contatos. Armas longas ganham
+// distância ocular para o aspecto largo do navegador.
 const FAMILY_FRAME = Object.freeze({
   pistol:  { x: 0.080, y: -0.040, z: -0.100, fov: 84 },
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
@@ -136,17 +134,19 @@ export class AuthoredViewModels {
   }
 
   async load() {
-    // Families are loaded on first equip. Loading all 15 up front would transfer more
-    // than 300 MB and stall the main thread before the match starts.
+    // Famílias entram no primeiro uso; baixar as 15 no boot custaria mais de 300 MB.
     if (this.onReady) queueMicrotask(() => this.onReady(this));
-    const prime = () => { if (!this._disposed) this._loadFamily('grenade'); };
-    this._utilityPrime = typeof requestIdleCallback === 'function'
-      ? requestIdleCallback(prime, { timeout: 2400 })
-      : setTimeout(prime, 1400);
+    if (!NODE_RUNTIME) {
+      const prime = () => { if (!this._disposed) this._loadFamily('grenade'); };
+      this._utilityPrime = typeof requestIdleCallback === 'function'
+        ? requestIdleCallback(prime, { timeout: 2400 })
+        : setTimeout(prime, 1400);
+    }
     return this;
   }
 
   async _loadFamily(family) {
+    if (NODE_RUNTIME) return null;
     if (!family || this.entries.has(family)) return this.entries.get(family) || null;
     if (this.pending.has(family)) return this.pending.get(family);
     const pending = this.loader.loadAsync(AUTHORED_VM_URLS[family]).then((gltf) => {
@@ -200,8 +200,7 @@ export class AuthoredViewModels {
   }
 
   setAim() {
-    // The paid clips and embedded camera already share one optical space. World-camera
-    // zoom remains in Game; moving individual bones here would break authored contacts.
+    // Clipes e câmera paga compartilham o espaço óptico; mover ossos quebraria contatos.
     return this.active();
   }
 
@@ -362,7 +361,7 @@ export function createAuthoredViewModels(parent, onReady, profile = {}) {
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debug') === '1') {
     window.__authoredVm = controller;
   }
-  const runningInNode = typeof window === 'undefined' || typeof document === 'undefined';
+  const runningInNode = NODE_RUNTIME || typeof window === 'undefined' || typeof document === 'undefined';
   if (!runningInNode) controller.load();
   else if (onReady) queueMicrotask(() => onReady(controller));
   return controller;

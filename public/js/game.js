@@ -40,6 +40,7 @@ export { WEAPONS };
    ?replaycam=0 -> sem replay cam ao matar (câmera orbital na vítima)
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
+const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 const REPLAY_CAM = QS.get('replaycam') !== '0';
 /* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
    janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
@@ -810,9 +811,8 @@ export class Game {
     // composer desenha essa cena por cima do mundo (RenderPass clear=false/clearDepth=
     // true, ver bloom.js/stylize.js); sem pós (quality low/?bloom=0) há fallback no tick.
     // vm.root continua recebendo os mesmos transforms em view space (kick/bob/sway/ADS).
-    // Os moldes autorados completos preservam o volume óptico do Blender. A pistola
-    // profissional fica entre 5 e 8 unidades depois da normalização da câmera; o far=5
-    // antigo a cortava inteira mesmo com pose, escala e enquadramento corretos.
+    // Os moldes autorados chegam a oito unidades após normalizar a câmera; far=50 evita
+    // cortar a arma sem alterar pose, escala ou enquadramento.
     this.vmCamera = new THREE.PerspectiveCamera(vmFovForAspect(this.camera.aspect), this.camera.aspect, 0.01, 50);
     /* RE-ENQUADRA com a lente de verdade: o 1º _vmFrame(true) rodou DENTRO do
        _buildViewModels (linha 622), ANTES desta vmCamera existir — a trava de borda usou o
@@ -1120,13 +1120,15 @@ export class Game {
     this._grenMat = new THREE.MeshStandardMaterial({ color: 0x38472c, metalness: 0.2, roughness: 0.8 });
     this._fragMat = new THREE.MeshStandardMaterial({ color: 0x4a2018, metalness: 0.5, roughness: 0.55 });   // HE frag (marrom-metálico)
     this._grenTemplates = {};
-    new GLTFLoader().load('/private-assets/viewmodels/grenade/grenades-world.glb?v=paid-aaa-1', (gltf) => {
-      if (this._disposed) return;
-      this._grenTemplates.frag = gltf.scene.getObjectByName('UTILITY_HE') || null;
-      this._grenTemplates.smoke = gltf.scene.getObjectByName('UTILITY_SMOKE') || null;
-      this._grenTemplates.flash = gltf.scene.getObjectByName('UTILITY_FLASH') || null;
-      for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
-    }, undefined, () => {});
+    if (!NODE_RUNTIME) {
+      new GLTFLoader().load('/private-assets/viewmodels/grenade/grenades-world.glb?v=paid-aaa-1', (gltf) => {
+        if (this._disposed) return;
+        this._grenTemplates.frag = gltf.scene.getObjectByName('UTILITY_HE') || null;
+        this._grenTemplates.smoke = gltf.scene.getObjectByName('UTILITY_SMOKE') || null;
+        this._grenTemplates.flash = gltf.scene.getObjectByName('UTILITY_FLASH') || null;
+        for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
+      }, undefined, () => {});
+    }
     this._smokeTex = this._makeSmokeTex();
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
@@ -1568,12 +1570,7 @@ export class Game {
         }
         const gx = Zg * tanH, gy = -gx * tanB;
         g.position.set(gx, gy, -Zg);
-        // A lâmina é curta e gira em torno do punho; sem este enquadramento próprio o
-        // giro joga justamente a mão para fora da borda inferior.  Sobe e afasta um pouco
-        // a faca para que punho, guarda e lâmina sejam lidos como um conjunto no canto.
-        // Knife sits low/right like the classic CS viewmodel.  The former
-        // positive Y lift put the blade across the upper-right HUD and made the
-        // gripping hand look detached from the bottom of the screen.
+        // A faca sobe e afasta para manter punho, guarda e lâmina juntos no canto.
         if (id === 'knife') g.position.add(new THREE.Vector3(.045, .035, 0));
         /* INCLINAÇÃO PRÓPRIA DA ARMA (RODADA DO GRIP + PITCH). Antes daqui só existia o
            `roll`; pitch e yaw eram literais zero, e era isso que amarrava rigidamente a boca
@@ -1612,9 +1609,7 @@ export class Game {
       }
       if (this._vmMuzzle) Object.assign(this._vmMuzzle, this._vmMuzzleExt || {});
     };
-    // Braços FP: clone rigado do personagem escolhido. Não existe fallback visual para
-    // as cápsulas procedurais: se o rig não carregar, mostrar só a arma é menos enganoso
-    // que ressuscitar a mão genérica que o BUG-75 proíbe.
+    // Braços FP vêm do personagem; se falharem, mostramos só a arma, nunca mãos genéricas.
     let arms = null;
     const _qsHands = new URLSearchParams(location.search).get('hands');
     // O viewmodel completo é padrão; `?hands=0` mantém só-a-arma para diagnóstico.
@@ -5482,15 +5477,14 @@ export class Game {
     this.vm.authored?.setAim(p.weapon, a);
     this.vm.authored?.update(dt);
     if (authoredActive || meleeActive) {
-      // A origem, a perspectiva e o movimento já fazem parte do clipe autorado. Somar aqui
-      // VM_OFF, IK, arco procedural de recarga ou inclinação de classe reproduziria exatamente
-      // os defeitos do BUG-75 (braço alongado, arma torta e recarga que sai da tela).
+      // O clipe já inclui perspectiva e movimento; somar IK ou offsets quebraria contatos.
       this.vm.root.position.set(0, 0, 0);
       this.vm.root.rotation.set(0, 0, 0);
       this.vm.root.scale.setScalar(1);
     } else {
       this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
-      this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;   // subida do cano + ADS + golpe da faca + rig (recarga/saque/respiração)
+      // Coice, ADS, faca e rig compõem a rotação apenas no caminho legado.
+      this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;
       this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;                            // yaw do coice/ADS + varredura da faca
       this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;                                          // roll do coice + giro da lâmina + sway
       this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);                                          // scale-down do VM em ADS
