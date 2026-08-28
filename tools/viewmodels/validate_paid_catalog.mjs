@@ -12,6 +12,10 @@ import { ALL_EXTENSIONS } from '../../node_modules/@gltf-transform/extensions/di
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '../..');
 const PRIVATE_ROOT = '/Users/ruben/csbrasil-private-assets/generated/viewmodels';
+// Posições de socket medidas ANTES do conserto do bone-parent (BUG-75): a arma
+// nova tem que cair no mesmo lugar com o idle aplicado, agora seguindo o bone.
+const SOCKET_BASELINE_PATH = path.join(SCRIPT_DIR, 'vm-socket-baseline.json');
+const SOCKET_POS_TOLERANCE = 2e-3;
 const REQUIRED_SPECIAL = Object.freeze({
   shotgun: ['idle', 'reload_start', 'reload_loop', 'reload_end', 'pump', 'pump_empty'],
   bolt: ['idle', 'reload_empty', 'reload_start', 'reload_loop', 'reload_end', 'shoot'],
@@ -27,10 +31,60 @@ function finiteArray(array) {
   return true;
 }
 
+function quatScaleMatrix(t, q, s) {
+  const [x, y, z, w] = q;
+  const R = [
+    [1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+    [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+    [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)],
+  ];
+  const M = R.map((row, i) => [...row.map((v, j) => v * s[j]), t[i]]);
+  M.push([0, 0, 0, 1]);
+  return M;
+}
+
+function matMul(A, B) {
+  return A.map((row, i) => row.map((_, j) => row.reduce((acc, _v, k) => acc + A[i][k] * B[k][j], 0)));
+}
+
+/* Anda da raiz até o nó aplicando o primeiro keyframe do idle em cada ancestral:
+   é a pose que o jogo mostra de fato (em rest, o socket agora vive no head do bone). */
+function idleWorldPosition(root, targetNode) {
+  const parentOf = new Map();
+  for (const node of root.listNodes()) {
+    for (const child of node.listChildren()) parentOf.set(child, node);
+  }
+  const idle = root.listAnimations().find((animation) => animation.getName() === 'idle');
+  const override = new Map();
+  for (const channel of idle?.listChannels() ?? []) {
+    const node = channel.getTargetNode();
+    if (!node) continue;
+    const output = channel.getSampler()?.getOutput()?.getArray();
+    if (!output) continue;
+    const size = channel.getTargetPath() === 'rotation' ? 4 : 3;
+    if (!override.has(node)) override.set(node, {});
+    override.get(node)[channel.getTargetPath()] = Array.from(output.slice(0, size));
+  }
+  const chain = [targetNode];
+  while (parentOf.has(chain[0])) chain.unshift(parentOf.get(chain[0]));
+  let world = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+  for (const node of chain) {
+    const o = override.get(node) || {};
+    const local = quatScaleMatrix(
+      o.translation || node.getTranslation(),
+      o.rotation || node.getRotation(),
+      o.scale || node.getScale(),
+    );
+    world = matMul(world, local);
+  }
+  return [world[0][3], world[1][3], world[2][3]];
+}
+
 async function main() {
   const privateRoot = path.resolve(process.argv[2] || PRIVATE_ROOT);
   invariant(path.relative(REPO_ROOT, privateRoot).startsWith('..'), 'licensed catalog must stay outside public repository');
   const catalog = JSON.parse(await fs.readFile(path.join(privateRoot, 'catalog.json'), 'utf8'));
+  const socketBaseline = JSON.parse(await fs.readFile(SOCKET_BASELINE_PATH, 'utf8'));
   invariant(Object.keys(catalog.weapons).length === 26, `expected 26 weapon mappings, found ${Object.keys(catalog.weapons).length}`);
   invariant(catalog.families.length === 15, `expected 15 built families, found ${catalog.families.length}`);
   const familyNames = new Set(catalog.families.map((family) => family.family));
@@ -54,6 +108,36 @@ async function main() {
     invariant(arms?.listJoints().length === 67, `${family.family} has invalid arms skeleton`);
     invariant(root.listCameras().length === 1, `${family.family} must contain exactly one authored camera`);
 
+    // BUG-75: a raiz da arma tem que descer de ik_hand_gun (bone ANIMADO) e cair,
+    // com o idle aplicado, onde o weld estático antigo a deixava — senão flutua.
+    const baselineEntry = socketBaseline[family.family];
+    invariant(baselineEntry, `${family.family} has no socket baseline in vm-socket-baseline.json`);
+    const weaponRoot = root.listNodes().find((node) => node.getName() === baselineEntry.node);
+    invariant(weaponRoot, `${family.family} lost weapon root node ${baselineEntry.node}`);
+    const parentOf = new Map();
+    for (const node of root.listNodes()) {
+      for (const child of node.listChildren()) parentOf.set(child, node);
+    }
+    let ikAncestor = false;
+    for (let node = parentOf.get(weaponRoot); node; node = parentOf.get(node)) {
+      if (node.getName() === 'ik_hand_gun') { ikAncestor = true; break; }
+    }
+    invariant(ikAncestor, `${family.family}: ${baselineEntry.node} is not parented under ik_hand_gun`);
+    const idlePos = idleWorldPosition(root, weaponRoot);
+    const idleDelta = Math.hypot(...idlePos.map((v, i) => v - baselineEntry.worldIdlePos[i]));
+    invariant(
+      idleDelta <= SOCKET_POS_TOLERANCE,
+      `${family.family}: weapon root drifted ${idleDelta.toFixed(4)} m from the authored idle position`,
+    );
+    const ikDriven = new Set();
+    for (const animation of root.listAnimations()) {
+      if (!animation.getName().startsWith('reload')) continue;
+      for (const channel of animation.listChannels()) {
+        if (channel.getTargetNode()?.getName() === 'ik_hand_gun') ikDriven.add(animation.getName());
+      }
+    }
+    invariant(ikDriven.size > 0, `${family.family}: no reload clip animates ik_hand_gun (gun would stay welded)`);
+
     for (const [name, animation] of animations) {
       const targets = new Set();
       for (const channel of animation.listChannels()) {
@@ -76,6 +160,10 @@ async function main() {
       skins: root.listSkins().length,
       armsJoints: arms.listJoints().length,
       clips: [...animations.keys()],
+      weaponRoot: baselineEntry.node,
+      ikHandGunAncestor: ikAncestor,
+      idlePosDeltaM: Number(idleDelta.toFixed(6)),
+      reloadDrivesIkHandGun: [...ikDriven].sort(),
     });
   }
   invariant(catalog.utilities?.length === 1, 'expected one paid utility family');

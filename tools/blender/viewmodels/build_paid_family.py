@@ -18,7 +18,7 @@ import re
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -227,7 +227,9 @@ def clip_name(path: Path) -> str | None:
         return "pump"
     if "fire" in name or "firing" in name:
         return "shoot"
-    if "pose" in name or "idle" in name or "inspect" in name or "bullets" in name:
+    if "inspect" in name:
+        return "inspect"
+    if "pose" in name or "idle" in name or "bullets" in name:
         return "idle"
     return None
 
@@ -323,16 +325,21 @@ def build() -> None:
             obj.name = f"GEO_WEAPON_{args.family.upper()}_{obj.name}"
     setup_weapon_materials(weapon_objects, asset_root / "Weapon/Materials_URP")
 
-    # Unity anchors the weapon at the origin of ik_hand_gun.  Bone parenting in
-    # Blender uses the tail, so copy the evaluated matrix exactly as the source pilot.
+    # Unity ancora a arma na origem do ik_hand_gun, que os clipes ANIMAM: o parent
+    # precisa ser o BONE (BUG-75: com "OBJECT" a arma ficava soldada no ar em rest pose).
     socket_bone = arms_rig.pose.bones.get("ik_hand_gun")
     if socket_bone is None:
         raise RuntimeError("authored arms rig has no ik_hand_gun")
     socket_matrix = (arms_rig.matrix_world @ socket_bone.matrix).copy()
     weapon_root.parent = arms_rig
-    weapon_root.parent_type = "OBJECT"
-    weapon_root.matrix_parent_inverse = arms_rig.matrix_world.inverted()
-    weapon_root.matrix_world = socket_matrix
+    weapon_root.parent_type = "BONE"
+    weapon_root.parent_bone = "ik_hand_gun"
+    bpy.context.view_layer.update()
+    # Blender pendura filho de bone no TAIL; compensa via parent_inverse para a arma
+    # cair exatamente na cabeça do bone (mesma posição do weld antigo, agora animada).
+    tail_world = arms_rig.matrix_world @ socket_bone.matrix @ Matrix.Translation((0.0, socket_bone.length, 0.0))
+    weapon_root.matrix_basis = Matrix.Identity(4)
+    weapon_root.matrix_parent_inverse = tail_world.inverted() @ socket_matrix
 
     # The weapon idle FBX carries an object-level 0.01 import scale.  Reusing that
     # action on the already converted base rig applies the FBX scale twice and makes

@@ -39,6 +39,7 @@ const CLIP_PATTERNS = [
   ['pump_empty', [/pump[_-]?empty/i]],
   ['pump', [/pump(?![_-]?empty)/i]],
   ['shoot', [/fir(?:e|ing)/i]],
+  ['inspect', [/inspect/i]],
 ];
 
 function parseArgs(argv) {
@@ -271,22 +272,31 @@ async function main() {
   for (const [clipName, tests] of CLIP_PATTERNS) {
     const characterFbx = await findClip(path.join(familyRoot, 'Character'), tests);
     const weaponFbx = await findClip(path.join(familyRoot, 'Weapon'), tests);
-    if (!characterFbx || !weaponFbx) continue;
+    // Lado da arma é opcional (ex.: Inspect só existe para os braços — a arma
+    // inteira já viaja no ik_hand_gun); sem o lado dos braços não há clipe.
+    if (!characterFbx) continue;
     const characterGlb = path.join(rawRoot, `${clipName}-arms.glb`);
-    const weaponGlb = path.join(rawRoot, `${clipName}-weapon.glb`);
     convertFbx(characterFbx, characterGlb);
-    convertFbx(weaponFbx, weaponGlb);
-    await Promise.all([stripRenderables(characterGlb), stripRenderables(weaponGlb)]);
-    const [character, weapon] = await Promise.all([loadAnimation(characterGlb), loadAnimation(weaponGlb)]);
+    await stripRenderables(characterGlb);
+    const character = await loadAnimation(characterGlb);
     const armsSample = sampleTargets(character, armsTargets, { foldRoot: true, targetNodes: targetsByName });
-    const weaponSample = sampleTargets(weapon, weaponTargets, { targetNodes: targetsByName });
-    const animation = mergeSamples(document, clipName, [armsSample, weaponSample], targetsByName);
+    const samples = [armsSample];
+    let weaponSample = null;
+    if (weaponFbx) {
+      const weaponGlb = path.join(rawRoot, `${clipName}-weapon.glb`);
+      convertFbx(weaponFbx, weaponGlb);
+      await stripRenderables(weaponGlb);
+      const weapon = await loadAnimation(weaponGlb);
+      weaponSample = sampleTargets(weapon, weaponTargets, { targetNodes: targetsByName });
+      samples.push(weaponSample);
+    }
+    const animation = mergeSamples(document, clipName, samples, targetsByName);
     report.clips.push({
       name: clipName,
-      duration: Math.max(armsSample.duration, weaponSample.duration),
+      duration: Math.max(armsSample.duration, weaponSample?.duration ?? 0),
       channels: animation.listChannels().length,
       arms: armsSample.tracks.size,
-      weapon: weaponSample.tracks.size,
+      weapon: weaponSample?.tracks.size ?? 0,
     });
   }
   if (report.clips.length === 0) throw new Error(`no paired character/weapon clips found for ${args.family}`);

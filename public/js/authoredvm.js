@@ -12,7 +12,7 @@ export const AUTHORED_VM_MODELS = Object.freeze({
   sks: 'marksman',
 });
 
-const CATALOG_VERSION = 'paid-aaa-1';
+const CATALOG_VERSION = 'paid-aaa-2';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
