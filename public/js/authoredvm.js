@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
+import { attachMintWeapon, mintPointWorld } from './vmweapon.js';
 
 // Contrato do catálogo KINEMATION: binários licenciados ficam no armazenamento privado.
 // O mapa arma→família vem de data/vmconfig.js, a fonte única do viewmodel autorado.
@@ -68,7 +69,12 @@ const FAMILY_FRAME = Object.freeze({
 });
 
 // Portão de rollout: família só serve o jogo depois de `ready:true` no vmconfig.
-const familyReady = (family) => Boolean(family) && VM_FAMILY[family]?.ready === true;
+// ?vmready=ak,pistol é o override DEV para calibrar/A-B sem abrir o portão no repo.
+const READY_OVERRIDE = new Set(typeof window !== 'undefined'
+  ? (new URLSearchParams(window.location.search).get('vmready') || '').split(',').filter(Boolean)
+  : []);
+const familyReady = (family) => Boolean(family)
+  && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
@@ -197,6 +203,13 @@ export class AuthoredViewModels {
       this.entries.set(family, entry);
       this.pending.delete(family);
       this._idle(entry);
+      // Identidade Mint: a genérica do pack some e a arma do jogador entra no socket.
+      if (family !== 'grenade') {
+        const owner = familyFor(this.weapon) === family
+          ? this.weapon
+          : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family);
+        if (owner) attachMintWeapon(entry, owner);
+      }
       if (familyFor(this.weapon) === family && !this.utility) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
@@ -244,6 +257,7 @@ export class AuthoredViewModels {
       return false;
     }
     if (previous !== id) this._idle(entry);
+    if (family !== 'grenade') attachMintWeapon(entry, id);
     return true;
   }
 
@@ -304,12 +318,21 @@ export class AuthoredViewModels {
   muzzleWorld(id = this.weapon, camera = null) {
     const entry = this.entry(id);
     if (!entry?.mount.visible || !camera) return null;
+    // Arma Mint montada tem boca MEDIDA (weaponMetrics); o bbox é só fallback.
+    const mint = mintPointWorld(entry, 'muzzle', camera);
+    if (mint) return mint;
     if (!entry.muzzleLocal) entry.muzzleLocal = this._gunPoint(entry, 'muzzle');
     if (!entry.muzzleLocal) return null;
     entry.scene.updateWorldMatrix(true, false);
     const v = entry.muzzleLocal.clone();
     entry.scene.localToWorld(v);
     return camera.localToWorld(v);
+  }
+
+  sightWorld(id = this.weapon, camera = null) {
+    const entry = this.entry(id);
+    if (!entry?.mount.visible || !camera) return null;
+    return mintPointWorld(entry, 'sight', camera);
   }
 
   ejectWorld(id = this.weapon, camera = null) {
@@ -369,6 +392,11 @@ export class AuthoredViewModels {
   shoot(id) {
     const entry = this.entry(id);
     return entry?.clips.has('shoot') ? this._play(entry, 'shoot', { fade: 0.01 }) : false;
+  }
+
+  inspect(id = this.weapon) {
+    const entry = this.entry(id);
+    return entry?.clips.has('inspect') ? this._play(entry, 'inspect', { fade: 0.05 }) : false;
   }
 
   throwUtility(kind, duration = 1.05, onRelease = null) {

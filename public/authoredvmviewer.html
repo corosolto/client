@@ -3,78 +3,197 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Viewmodel composto — bancada</title>
+  <title>Editor de calibração — viewmodel autorado (BUG-75)</title>
   <style>
-    html,body{margin:0;height:100%;overflow:hidden;background:#93a8b7;font:14px system-ui;color:#fff}
+    html,body{margin:0;height:100%;overflow:hidden;background:#26313c;color:#eef5ff;font:13px system-ui}
     canvas{display:block;width:100%;height:100%}
-    #hud{position:fixed;left:14px;top:14px;padding:10px 12px;background:#101820cc;border:1px solid #ffffff33;border-radius:8px}
+    .panel{position:fixed;top:14px;display:grid;gap:8px;padding:12px;background:#101820e0;border:1px solid #ffffff2b;border-radius:10px;backdrop-filter:blur(10px);max-height:calc(100vh - 40px);overflow:auto}
+    #left{left:14px;width:280px}
+    #right{right:14px;width:320px}
+    h3{margin:2px 0;font-size:13px;color:#8fd8ff}
+    select,button{border:1px solid #ffffff38;border-radius:7px;background:#263a4b;color:white;padding:6px 9px;cursor:pointer;font:inherit}
+    button:hover{background:#34546c}
+    #actions{display:flex;gap:6px;flex-wrap:wrap}
+    .row{display:grid;grid-template-columns:64px 1fr 58px;gap:6px;align-items:center}
+    .row input[type=range]{width:100%}
+    .row output{text-align:right;color:#bcd0df;font-variant-numeric:tabular-nums}
+    #status{color:#bcd0df;max-width:280px}
+    #json{width:100%;height:120px;background:#0a1118;color:#c8e6c9;border:1px solid #ffffff2b;border-radius:7px;font:11px ui-monospace,monospace;padding:6px;white-space:pre}
+    #crosshair{position:fixed;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);pointer-events:none}
+    #crosshair:before,#crosshair:after{content:"";position:absolute;background:#4fe8e0}
+    #crosshair:before{left:8px;top:0;width:2px;height:18px}#crosshair:after{left:0;top:8px;width:18px;height:2px}
   </style>
 </head>
 <body>
-  <div id="hud"></div>
+  <div id="left" class="panel">
+    <h3>Família / arma</h3>
+    <select id="family"></select>
+    <select id="weapon"></select>
+    <div id="actions">
+      <button data-act="idle">Idle</button>
+      <button data-act="draw">Sacar</button>
+      <button data-act="reload">Recarga</button>
+      <button data-act="reloadEmpty">Recarga vazia</button>
+      <button data-act="shoot">Tiro</button>
+      <button data-act="inspect">Inspecionar</button>
+    </div>
+    <div id="status">carregando…</div>
+    <h3>vmconfig da seleção</h3>
+    <textarea id="json" readonly></textarea>
+    <button id="copy">Copiar JSON</button>
+    <button id="reset">Zerar ajustes</button>
+  </div>
+  <div id="right" class="panel">
+    <h3>Família · mount (socket→arma)</h3>
+    <div id="familySliders"></div>
+    <h3>Arma · trim (fino, por arma)</h3>
+    <div id="weaponSliders"></div>
+  </div>
+  <div id="crosshair"></div>
   <script type="importmap">
     {"imports":{"three":"./vendor/three.module.js?h=919693a84f08","three/addons/":"./vendor/addons/"}}
   </script>
   <script type="module">
     import * as THREE from 'three';
-    import { createAuthoredViewModels, authoredVmFovForAspect } from './js/authoredvm.js';
-    import { byId } from './js/characters.js';
+    import { VM_FAMILY, VM_WEAPON } from './js/data/vmconfig.js';
+    import { AuthoredViewModels } from './js/authoredvm.js';
+    import { attachMintWeapon } from './js/vmweapon.js';
+    import { preloadWeapons } from './js/weapons.js';
 
-    const q = new URLSearchParams(location.search);
-    const weapon = q.get('weapon') || 'ak';
-    const character = q.get('character') || 'mandrake';
-    const clipName = q.get('clip') || 'idle';
-    const debug = q.get('debug') === '1';
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // Bench de calibração: todas as famílias abertas AQUI (o portão do jogo não muda).
+    for (const family of Object.values(VM_FAMILY)) family.ready = true;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+    renderer.setSize(innerWidth, innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    document.body.append(renderer.domElement);
+    document.body.prepend(renderer.domElement);
+
     const scene = new THREE.Scene();
-    scene.add(new THREE.HemisphereLight(0xdcecff, 0x25313a, 2.3));
-    const key = new THREE.DirectionalLight(0xfff1dc, 3.5); key.position.set(-2, 3, 4); scene.add(key);
-    const camera = new THREE.PerspectiveCamera(67.38, 1.5, 0.005, 10);
-    const root = new THREE.Group(); scene.add(root);
-    const def = byId(character);
-    const pal = def?.pal || { skin: 0xd19a72, shirt: 0x27364a };
-    const authored = createAuthoredViewModels(root, async () => {
-      await authored.ensureSkin(weapon);
-      authored.setWeapon(weapon);
-      if (clipName === 'reload') authored.reload(weapon, 2.1);
-      else if (clipName === 'shoot') authored.shoot(weapon);
-      const entry = authored.entry(weapon);
-      const mounted = entry?.skins.get(weapon);
-      if (q.get('donor') === '1') entry?.weaponMeshes.forEach((mesh) => {
-        mesh.visible = true;
-        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        for (const material of materials) { material.wireframe = true; material.color?.set(0xff1744); }
-      });
-      const scale = mounted?.visual?.scale.x || 0;
-      const action = entry?.action?.getClip()?.name?.split('-').at(-1) || '';
-      const p = mounted?.object?.position || new THREE.Vector3();
-      const g = entry?.anchor.grip || new THREE.Vector3();
-      const c = entry?.anchor.sampledContact || new THREE.Vector3();
-      root.updateWorldMatrix(true, true);
-      const box = mounted?.visual ? new THREE.Box3().setFromObject(mounted.visual) : new THREE.Box3();
-      const size = box.getSize(new THREE.Vector3());
-      const identity = `${weapon} próprio · animação CC0 · pele/roupa ${character}`;
-      document.querySelector('#hud').textContent = debug
-        ? `${identity} · ação ${action} · span ${entry?.anchor.span.toFixed(3)} · escala ${scale.toExponential(2)} · grip ${g.toArray().map(v=>v.toFixed(3))} · contato ${c.toArray().map(v=>v.toFixed(3))} · pivot ${p.toArray().map(v=>v.toFixed(3))} · bbox ${size.toArray().map(v=>v.toExponential(2))}`
-        : identity;
-    }, { id: character, skin: pal.skin, sleeve: pal.shirt, accent: pal.pants });
-    // Bancada auditável: permite provar no navegador, sem depender de screenshots, que
-    // cada ID monta sua arma própria e mantém toda aparência doadora invisível.
-    window.__authoredViewer = { authored, root, weapon, character };
-    const clock = new THREE.Clock();
-    function size(){
-      renderer.setSize(innerWidth, innerHeight, false);
-      camera.aspect = innerWidth / innerHeight;
-      camera.fov = authoredVmFovForAspect(camera.aspect);
-      camera.updateProjectionMatrix();
+    scene.background = new THREE.Color(0x26313c);
+    const camera = new THREE.PerspectiveCamera(84, innerWidth / innerHeight, 0.01, 50);
+    scene.add(new THREE.HemisphereLight(0xdfeaf5, 0x2a3138, 1.15));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(1.4, 1.8, 0.8);
+    scene.add(sun);
+
+    const parent = new THREE.Group();
+    scene.add(parent);
+    const status = document.getElementById('status');
+    const vm = new AuthoredViewModels(parent, () => { refresh(); }, { skin: 0xc9895f, sleeve: 0x27364a, accent: 0x202735 });
+    vm.load();
+
+    const familySelect = document.getElementById('family');
+    const weaponSelect = document.getElementById('weapon');
+    const families = Object.keys(VM_FAMILY).filter((name) => name !== 'grenade');
+    familySelect.innerHTML = families.map((name) => `<option>${name}</option>`).join('');
+
+    const weaponsOf = (family) => Object.keys(VM_WEAPON).filter((id) => VM_WEAPON[id].family === family);
+
+    function sliderRow(label, min, max, step, get, set) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const value = get();
+      row.innerHTML = `<span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}" value="${value}"><output>${value}</output>`;
+      const input = row.querySelector('input');
+      const output = row.querySelector('output');
+      input.oninput = () => { set(Number(input.value)); output.value = input.value; apply(); };
+      row.sync = () => { input.value = get(); output.value = String(get()); };
+      return row;
     }
-    addEventListener('resize', size); size();
-    renderer.setAnimationLoop(() => { authored.update(clock.getDelta()); renderer.render(scene, camera); });
+
+    const familyBox = document.getElementById('familySliders');
+    const weaponBox = document.getElementById('weaponSliders');
+    let rows = [];
+
+    function buildSliders() {
+      familyBox.innerHTML = '';
+      weaponBox.innerHTML = '';
+      rows = [];
+      const mount = VM_FAMILY[familySelect.value].mount;
+      const trim = VM_WEAPON[weaponSelect.value].trim;
+      const axes = ['x', 'y', 'z'];
+      axes.forEach((axis, lane) => familyBox.appendChild(track(sliderRow(`pos ${axis}`, -0.25, 0.25, 0.002, () => mount.pos[lane], (v) => { mount.pos[lane] = v; }))));
+      axes.forEach((axis, lane) => familyBox.appendChild(track(sliderRow(`rot ${axis}°`, -180, 180, 0.5, () => mount.rotDeg[lane], (v) => { mount.rotDeg[lane] = v; }))));
+      familyBox.appendChild(track(sliderRow('scale', 0.4, 2.2, 0.01, () => mount.scale, (v) => { mount.scale = v; })));
+      axes.forEach((axis, lane) => weaponBox.appendChild(track(sliderRow(`pos ${axis}`, -0.12, 0.12, 0.001, () => trim.pos[lane], (v) => { trim.pos[lane] = v; }))));
+      axes.forEach((axis, lane) => weaponBox.appendChild(track(sliderRow(`rot ${axis}°`, -45, 45, 0.25, () => trim.rotDeg[lane], (v) => { trim.rotDeg[lane] = v; }))));
+      weaponBox.appendChild(track(sliderRow('scale', 0.7, 1.4, 0.005, () => trim.scale, (v) => { trim.scale = v; })));
+    }
+    function track(row) { rows.push(row); return row; }
+
+    function snippet() {
+      const family = familySelect.value;
+      const weapon = weaponSelect.value;
+      return JSON.stringify({
+        VM_FAMILY: { [family]: { mount: VM_FAMILY[family].mount } },
+        VM_WEAPON: { [weapon]: { trim: VM_WEAPON[weapon].trim, ads: VM_WEAPON[weapon].ads } },
+      }, null, 2);
+    }
+
+    function apply() {
+      const entry = vm.entries.get(familySelect.value);
+      if (entry) attachMintWeapon(entry, weaponSelect.value);
+      document.getElementById('json').value = snippet();
+    }
+
+    async function refresh() {
+      const family = familySelect.value;
+      const ids = weaponsOf(family);
+      if (!ids.includes(weaponSelect.value)) weaponSelect.innerHTML = ids.map((id) => `<option>${id}</option>`).join('');
+      status.textContent = `carregando ${family}…`;
+      await preloadWeapons(ids);
+      vm.setWeapon(weaponSelect.value);
+      const entry = await vm._loadFamily(family);
+      if (!entry) { status.textContent = `família ${family} indisponível (private-assets?)`; return; }
+      vm.setWeapon(weaponSelect.value);
+      camera.fov = vm.fov(weaponSelect.value, camera.aspect);
+      camera.updateProjectionMatrix();
+      status.textContent = `${family} · ${weaponSelect.value} — clipes: ${[...entry.clips.keys()].join(', ')}`;
+      apply();
+      rows.forEach((row) => row.sync());
+    }
+
+    familySelect.onchange = () => { buildSliders(); refresh(); };
+    weaponSelect.onchange = () => { buildSliders(); refresh(); };
+    document.getElementById('copy').onclick = () => navigator.clipboard.writeText(snippet());
+    document.getElementById('reset').onclick = () => {
+      VM_FAMILY[familySelect.value].mount = { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 };
+      VM_WEAPON[weaponSelect.value].trim = { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 };
+      buildSliders();
+      apply();
+    };
+    for (const button of document.querySelectorAll('#actions button')) {
+      button.onclick = () => {
+        const id = weaponSelect.value;
+        const act = button.dataset.act;
+        if (act === 'idle') vm._idle(vm.entries.get(familySelect.value));
+        else if (act === 'draw') vm.draw(id, 0.38);
+        else if (act === 'reload') vm.reload(id, 2.6, false);
+        else if (act === 'reloadEmpty') vm.reload(id, 3.2, true);
+        else if (act === 'shoot') vm.shoot(id);
+        else if (act === 'inspect') vm.inspect(id);
+      };
+    }
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('family') && families.includes(params.get('family'))) familySelect.value = params.get('family');
+    weaponSelect.innerHTML = weaponsOf(familySelect.value).map((id) => `<option>${id}</option>`).join('');
+    if (params.get('weapon') && VM_WEAPON[params.get('weapon')]) weaponSelect.value = params.get('weapon');
+    buildSliders();
+    refresh();
+
+    const clock = new THREE.Clock();
+    renderer.setAnimationLoop(() => {
+      vm.update(Math.min(0.05, clock.getDelta()), {});
+      renderer.render(scene, camera);
+    });
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.fov = vm.fov(weaponSelect.value, camera.aspect);
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
   </script>
 </body>
 </html>
