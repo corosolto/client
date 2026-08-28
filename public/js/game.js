@@ -3895,6 +3895,10 @@ export class Game {
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
   // pelo tracer e pela luz/faísca do mundo no tiro do jogador (R7.6).
   _muzzleWorld(cls) {
+    // Caminho autorado: a boca vem da arma VISÍVEL (a legada fica oculta e o
+    // _vmMuzzle dela apontaria flash/tracer para um cano que não está na tela).
+    const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
+    if (authored) return authored;
     const off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[cls] || this._vmMuzzle.rifle;
     this.vm.root.updateWorldMatrix(true, false);
     const v = off.clone();
@@ -5475,7 +5479,11 @@ export class Game {
     this.vm.melee?.update(dt);
     const authoredActive = !meleeActive && (this.vm.authored?.active(p.weapon) || false);
     this.vm.authored?.setAim(p.weapon, a);
-    this.vm.authored?.update(dt);
+    // O rig procedural (rg) e o estado do frame viram contexto do mount autorado:
+    // sway/ADS/recoil compõem lá dentro (dono único do transform — M5/M6 do BUG-75).
+    this.vm.authored?.update(dt, {
+      ads: a, sway: rg, speed: sp, grounded: p.grounded !== false, scoped: !!p.scoped,
+    });
     if (authoredActive || meleeActive) {
       // O clipe já inclui perspectiva e movimento; somar IK ou offsets quebraria contatos.
       this.vm.root.position.setScalar(0);

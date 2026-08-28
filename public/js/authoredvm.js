@@ -1,16 +1,12 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 
 // Contrato do catálogo KINEMATION: binários licenciados ficam no armazenamento privado.
-// Armas compartilham famílias mecânicas completas, sem desmontagem no navegador.
-export const AUTHORED_VM_MODELS = Object.freeze({
-  awp: 'sniper', ak: 'ak', m4: 'ar', mp5: 'mp5', shotgun: 'shotgun',
-  deagle: 'deagle', pistol: 'pistol', m92: 'ak', akm: 'ak', g3: 'g3',
-  revolver38: 'revolver', md97: 'ar', carbine: 'ar', m400: 'sniper',
-  mosin: 'bolt', rem700: 'sniper', lmg: 'lmg', scar: 'ar', tavor: 'ar',
-  famas: 'ar', uzi: 'smg', p90: 'p90', svd: 'svd', g3sg1: 'marksman',
-  sks: 'marksman',
-});
+// O mapa arma→família vem de data/vmconfig.js, a fonte única do viewmodel autorado.
+export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
+  Object.entries(VM_WEAPON).map(([weapon, config]) => [weapon, config.family]),
+));
 
 const CATALOG_VERSION = 'paid-aaa-2';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
@@ -18,6 +14,35 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
 ));
+
+// Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
+const AUTHORED_KILLED = typeof window !== 'undefined'
+  && new URLSearchParams(window.location.search).get('vmauthored') === '0';
+
+// Cache de GLTF parseado no nível do módulo: o preload do boot aquece aqui e
+// _loadFamily consome clone — o mesmo download serve qualquer instância de Game.
+const GLTF_CACHE = new Map();
+let skeletonClonePromise = null;
+function loadFamilyGltf(family) {
+  if (!GLTF_CACHE.has(family)) {
+    GLTF_CACHE.set(family, new GLTFLoader().loadAsync(AUTHORED_VM_URLS[family]).catch((error) => {
+      GLTF_CACHE.delete(family);
+      throw error;
+    }));
+  }
+  return GLTF_CACHE.get(family);
+}
+function skeletonCloneOf(scene) {
+  if (!skeletonClonePromise) {
+    skeletonClonePromise = import('three/addons/utils/SkeletonUtils.js').then((m) => m.clone);
+  }
+  return skeletonClonePromise.then((clone) => clone(scene));
+}
+// Aquecimento de famílias antes da partida (chamado pelo boot do main.js em M4).
+export function preloadAuthoredFamilies(families = []) {
+  if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve([]);
+  return Promise.allSettled(families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf));
+}
 
 const HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)/i;
 const SKIN_MATERIAL = /CoroSolto_FP_Hand/i;
@@ -42,7 +67,13 @@ const FAMILY_FRAME = Object.freeze({
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
 
-const familyFor = (weapon) => AUTHORED_VM_MODELS[weapon] || '';
+// Portão de rollout: família só serve o jogo depois de `ready:true` no vmconfig.
+const familyReady = (family) => Boolean(family) && VM_FAMILY[family]?.ready === true;
+const familyFor = (weapon) => {
+  if (AUTHORED_KILLED) return '';
+  const family = AUTHORED_VM_MODELS[weapon] || '';
+  return familyReady(family) ? family : '';
+};
 const clipKey = (name = '') => {
   const key = name.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_');
   return CLIP_ALIASES[key.replaceAll('_', '')] || key;
@@ -124,7 +155,8 @@ export class AuthoredViewModels {
     this.parent = parent;
     this.onReady = onReady;
     this.profile = profile;
-    this.loader = new GLTFLoader();
+    this.adsAmount = 0;
+    this._ctx = {};
     this.entries = new Map();
     this.pending = new Map();
     this.weapon = '';
@@ -136,7 +168,7 @@ export class AuthoredViewModels {
   async load() {
     // Famílias entram no primeiro uso; baixar as 15 no boot custaria mais de 300 MB.
     if (this.onReady) queueMicrotask(() => this.onReady(this));
-    if (!NODE_RUNTIME) {
+    if (!NODE_RUNTIME && !AUTHORED_KILLED && familyReady('grenade')) {
       const prime = () => { if (!this._disposed) this._loadFamily('grenade'); };
       this._utilityPrime = typeof requestIdleCallback === 'function'
         ? requestIdleCallback(prime, { timeout: 2400 })
@@ -146,23 +178,30 @@ export class AuthoredViewModels {
   }
 
   async _loadFamily(family) {
-    if (NODE_RUNTIME) return null;
+    if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!family || this.entries.has(family)) return this.entries.get(family) || null;
     if (this.pending.has(family)) return this.pending.get(family);
-    const pending = this.loader.loadAsync(AUTHORED_VM_URLS[family]).then((gltf) => {
+    const pending = loadFamilyGltf(family).then(async (gltf) => {
       if (this._disposed) return null;
-      const visual = cameraSpacePackage(gltf, this.profile, this.parent, family);
+      // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
+      // mesmo parse pode servir outra instância de Game depois.
+      const scene = await skeletonCloneOf(gltf.scene);
+      const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family);
       const mixer = new THREE.AnimationMixer(visual.scene);
       const clips = new Map(gltf.animations.map((clip) => [clipKey(clip.name), clip]));
       const entry = {
         family, ...visual, mixer, clips, action: null, queue: [], serial: 0,
-        drawTime: 1, drawDuration: 0.32,
+        drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
       };
       mixer.addEventListener('finished', () => this._continue(entry));
       this.entries.set(family, entry);
       this.pending.delete(family);
       this._idle(entry);
-      if (familyFor(this.weapon) === family && !this.utility) entry.mount.visible = true;
+      if (familyFor(this.weapon) === family && !this.utility) {
+        // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
+        entry.mount.visible = true;
+        this.draw(this.weapon);
+      }
       console.info('[paid-viewmodel] ready', family, [...clips.keys()]);
       if (this.onReady) this.onReady(this);
       return entry;
@@ -177,9 +216,15 @@ export class AuthoredViewModels {
 
   entry(id = this.weapon) { return this.entries.get(familyFor(id)); }
   active(id = this.weapon) { return Boolean(this.entry(id)); }
-  fov(id = this.weapon) {
-    const fov = this.entry(id)?.cameraFov;
-    return Number.isFinite(fov) ? fov : 80;
+  fov(id = this.weapon, aspect = 16 / 9) {
+    // Espelho do vmFovForAspect: meia-tangente HORIZONTAL constante — o FOV autorado
+    // vale no aspecto 16:9 e converte para o aspecto corrente (3:2 não pode regredir).
+    const authored = this.entry(id)?.cameraFov;
+    const v0 = ((Number.isFinite(authored) ? authored : 80) * Math.PI) / 180;
+    const ref = 16 / 9;
+    const a = Number.isFinite(aspect) && aspect > 0 ? aspect : ref;
+    const halfH = Math.atan(Math.tan(v0 / 2) * ref);
+    return (2 * Math.atan(Math.tan(halfH) / a) * 180) / Math.PI;
   }
 
   setWeapon(id) {
@@ -187,7 +232,10 @@ export class AuthoredViewModels {
     this.weapon = id;
     const family = familyFor(id);
     for (const entry of this.entries.values()) {
-      entry.mount.visible = this.utility ? entry === this.utility.entry : entry.family === family;
+      const visible = this.utility ? entry === this.utility.entry : entry.family === family;
+      // Entrada que sai de cena volta ao idle: fila/pose de reload não fica presa.
+      if (!visible && entry.mount.visible) this._idle(entry);
+      entry.mount.visible = visible;
     }
     if (!family) return false;
     const entry = this.entries.get(family);
@@ -199,13 +247,15 @@ export class AuthoredViewModels {
     return true;
   }
 
-  setAim() {
-    // Clipes e câmera paga compartilham o espaço óptico; mover ossos quebraria contatos.
-    return this.active();
+  setAim(id = this.weapon, amount = 0) {
+    // Guarda o blend do botão direito; a pose de ADS entra no stack do mount (M6).
+    this.adsAmount = Math.min(1, Math.max(0, Number(amount) || 0));
+    return this.active(id);
   }
 
-  update(dt) {
+  update(dt, ctx = {}) {
     const step = Math.min(0.05, Math.max(0, Number(dt) || 0));
+    this._ctx = ctx;
     if (this.utility) {
       const utility = this.utility;
       utility.entry.mixer.update(step);
@@ -224,23 +274,73 @@ export class AuthoredViewModels {
       }
       return;
     }
-    const entry = this.entry();
-    if (!entry?.mount.visible) return;
-    entry.mixer.update(step);
-    if (entry.drawTime < entry.drawDuration) {
-      entry.drawTime = Math.min(entry.drawDuration, entry.drawTime + step);
-      const t = entry.drawTime / entry.drawDuration;
-      const eased = 1 - Math.pow(1 - t, 3);
-      entry.mount.position.set(
-        entry.frame.x,
-        entry.frame.y + THREE.MathUtils.lerp(-0.22, 0, eased),
-        entry.frame.z,
-      );
-      entry.mount.rotation.x = THREE.MathUtils.lerp(0.24, 0, eased);
-    } else {
-      entry.mount.position.set(entry.frame.x, entry.frame.y, entry.frame.z);
-      entry.mount.rotation.set(0, 0, 0);
+    const active = this.entry();
+    for (const entry of this.entries.values()) {
+      if (entry === active && entry.mount.visible) continue;
+      // Fila/ação pendente termina mesmo com o mount escondido — sem pose presa.
+      if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) entry.mixer.update(step);
     }
+    if (!active?.mount.visible) return;
+    active.mixer.update(step);
+    // Dono único do transform do mount: base ∘ arco de draw (ADS/recoil: M5/M6).
+    if (active.drawTime < active.drawDuration) {
+      active.drawTime = Math.min(active.drawDuration, active.drawTime + step);
+      const t = active.drawTime / active.drawDuration;
+      const eased = 1 - Math.pow(1 - t, 3);
+      active.mount.position.set(
+        active.frame.x,
+        active.frame.y + THREE.MathUtils.lerp(-0.22, 0, eased),
+        active.frame.z,
+      );
+      active.mount.rotation.x = THREE.MathUtils.lerp(0.24, 0, eased);
+    } else {
+      active.mount.position.set(active.frame.x, active.frame.y, active.frame.z);
+      active.mount.rotation.set(0, 0, 0);
+    }
+  }
+
+  // Boca do cano da arma VISÍVEL em world space (tracer/flash nascem nela, não na
+  // arma legada oculta). Cache do ponto local; M3 troca a fonte pela malha Mint.
+  muzzleWorld(id = this.weapon, camera = null) {
+    const entry = this.entry(id);
+    if (!entry?.mount.visible || !camera) return null;
+    if (!entry.muzzleLocal) entry.muzzleLocal = this._gunPoint(entry, 'muzzle');
+    if (!entry.muzzleLocal) return null;
+    entry.scene.updateWorldMatrix(true, false);
+    const v = entry.muzzleLocal.clone();
+    entry.scene.localToWorld(v);
+    return camera.localToWorld(v);
+  }
+
+  ejectWorld(id = this.weapon, camera = null) {
+    const entry = this.entry(id);
+    if (!entry?.mount.visible || !camera) return null;
+    if (!entry.ejectLocal) entry.ejectLocal = this._gunPoint(entry, 'eject');
+    if (!entry.ejectLocal) return null;
+    entry.scene.updateWorldMatrix(true, false);
+    const v = entry.ejectLocal.clone();
+    entry.scene.localToWorld(v);
+    return camera.localToWorld(v);
+  }
+
+  _gunPoint(entry, kind) {
+    const box = new THREE.Box3();
+    const meshBox = new THREE.Box3();
+    entry.scene.updateWorldMatrix(true, true);
+    const inverse = entry.scene.matrixWorld.clone().invert();
+    for (const mesh of entry.weaponMeshes) {
+      if (!mesh.geometry) continue;
+      if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+      meshBox.copy(mesh.geometry.boundingBox)
+        .applyMatrix4(mesh.matrixWorld)
+        .applyMatrix4(inverse);
+      box.union(meshBox);
+    }
+    if (box.isEmpty()) return null;
+    const center = box.getCenter(new THREE.Vector3());
+    if (kind === 'eject') return new THREE.Vector3(box.max.x, center.y, center.z);
+    // -Z é a frente no espaço da câmera autorada: a boca fica na face frontal.
+    return new THREE.Vector3(center.x, center.y, box.min.z);
   }
 
   draw(id, duration = 0.32) {
@@ -296,7 +396,7 @@ export class AuthoredViewModels {
   }
 
   _continue(entry) {
-    if (!entry.mount.visible) return;
+    // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
     else this._idle(entry);

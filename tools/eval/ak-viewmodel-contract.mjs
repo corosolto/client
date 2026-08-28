@@ -123,29 +123,21 @@ const frontOccluder = mutantFrontHole ? null : (gltf.nodes || []).find((node) =>
 check(!isAkm || frontOccluder,
   'AKM não possui vedação interna identificada para impedir céu visível pela frente');
 
+// Contrato de ADS pós-BUG-75: a pose por arma vive em data/vmconfig.js (auto +
+// trim residual, M6); aqui a régua cobra o encanamento — config presente, setAim
+// consumindo o amount e o game.js alimentando o blend a cada frame.
 const authoredVmSource = fs.readFileSync(path.join(root, 'public/js/authoredvm.js'), 'utf8');
 const gameSource = fs.readFileSync(path.join(root, 'public/js/game.js'), 'utf8');
-const akmAdsBlock = authoredVmSource.match(
-  /'akm-hires'\s*:\s*Object\.freeze\(\{([\s\S]*?)\}\),/,
-)?.[1] || '';
-const akmAdsYaw = Number(akmAdsBlock.match(
-  /rotation:\s*new THREE\.Euler\(\s*[^,]+,\s*([^,]+)/,
-)?.[1]);
-const exportedAkmAdsX = Number(akmAdsBlock.match(
-  /position:\s*new THREE\.Vector3\(\s*([^,]+)/,
-)?.[1]);
-const akmAdsX = mutantAdsCropped ? -0.30 : exportedAkmAdsX;
+const vmconfigSource = fs.readFileSync(path.join(root, 'public/js/data/vmconfig.js'), 'utf8');
 const hasAkmAds = !mutantAds
-  && /SELF_CONTAINED_ADS\s*=\s*Object\.freeze\([\s\S]*?'akm-hires'\s*:/.test(authoredVmSource)
-  && Number.isFinite(akmAdsYaw)
-  && akmAdsYaw <= -0.50
-  && Number.isFinite(akmAdsX)
-  && akmAdsX >= -1.20
-  && akmAdsX <= -0.80
-  && /setAim\s*\(id,\s*amount\)/.test(authoredVmSource)
+  && !mutantAdsCropped
+  && /akm:\s*W\('ak'\)/.test(vmconfigSource)
+  && /ads:\s*\{\s*auto:\s*true/.test(vmconfigSource)
+  && /setAim\(id[^)]*amount/.test(authoredVmSource)
+  && /this\.adsAmount/.test(authoredVmSource)
   && /authored\?\.setAim\(p\.weapon,\s*a\)/.test(gameSource);
 check(!isAkm || hasAkmAds,
-  `AKM autorada não possui pose ADS frontal e enquadrada durante o botão direito (yaw ${Number.isFinite(akmAdsYaw) ? akmAdsYaw.toFixed(3) : 'ausente'} rad, x ${Number.isFinite(akmAdsX) ? akmAdsX.toFixed(3) : 'ausente'})`);
+  'AKM autorada não possui encanamento de ADS (vmconfig.ads + setAim(id, amount) + blend do game.js)');
 
 const idleMagazineScale = animationTrack('Idle', 'Mag_metarig', 'scale')[0];
 const shootMagazineScale = animationTrack('Shoot', 'Mag_metarig', 'scale')
@@ -170,8 +162,6 @@ const result = {
   triggerContactMm: Number.isFinite(triggerContact) ? Number((triggerContact * 1000).toFixed(3)) : null,
   frontOccluder: frontOccluder?.name || null,
   authoredAds: hasAkmAds,
-  authoredAdsYawRad: Number.isFinite(akmAdsYaw) ? Number(akmAdsYaw.toFixed(3)) : null,
-  authoredAdsX: Number.isFinite(akmAdsX) ? Number(akmAdsX.toFixed(3)) : null,
   ok: failures.length === 0,
   failures,
 };

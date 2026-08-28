@@ -48,5 +48,27 @@ check(/throwUtility\('smoke'/.test(game) && /throwUtility\('frag'/.test(game),
 check(/grenades-world\.glb/.test(game) && /template\.clone\(true\)/.test(game),
   'projétil lançado mantém a geometria paga no mundo');
 
+// Contrato M2 do BUG-75: config única, portão de rollout, kill-switch e o mount
+// como dono do transform — com as réguas atualizadas no MESMO commit da API.
+const vmconfig = fs.readFileSync(path.join(ROOT, 'public/js/data/vmconfig.js'), 'utf8');
+check(/from '\.\/data\/vmconfig\.js'/.test(runtime), 'mapa arma→família vem de data/vmconfig.js');
+check(/VM_FAMILY\[family\]\?\.ready === true/.test(runtime),
+  'família só substitui o legado atrás do portão ready:true');
+check((vmconfig.match(/ready: false/g) || []).length === 15 && /grenade:\s*\{ ready: true/.test(vmconfig),
+  '15 famílias de arma nascem fechadas; granada preserva o arremesso que já funciona');
+check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
+check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
+  'setAim(id, amount) consome o blend do botão direito');
+check(/update\(dt, ctx = \{\}\)/.test(runtime) && /authored\?\.update\(dt, \{/.test(game),
+  'game entrega contexto (ads/sway/speed) ao dono único do transform');
+check(/fov\(id = this\.weapon, aspect/.test(runtime) && /Math\.atan\(Math\.tan\(halfH\) \/ a\)/.test(runtime),
+  'fov(id, aspect) preserva a meia-tangente horizontal (3:2 não regride)');
+check(!/_continue\(entry\)\s*\{\s*if\s*\(!entry\.mount\.visible\)/.test(runtime),
+  'fila de animação não encalha com o mount escondido');
+check(/muzzleWorld\(id = this\.weapon/.test(runtime) && /authored\?\.muzzleWorld\?\./.test(game),
+  'flash/tracer nascem no cano da arma visível, não na legada oculta');
+check(/preloadAuthoredFamilies/.test(runtime) && /GLTF_CACHE/.test(runtime),
+  'boot pode aquecer famílias do loadout num cache de módulo');
+
 console.log(JSON.stringify({ mutant, weapons: gameplay.length, families: families.size, failures }, null, 2));
 process.exit(failures ? 1 : 0);
