@@ -86,6 +86,7 @@ def selected_prefixes(manifest: dict, family_keys: Iterable[str]) -> tuple[list[
         # They are tiny text assets and prevent Blender from guessing mount transforms.
         "Assets/KINEMATION/FPSAnimationPack/Prefabs/",
         "Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/",
+        "Assets/KINEMATION/FPSAnimationPack/Settings/Player/",
     ]
     selected_sources: list[str] = []
     for key in family_keys:
