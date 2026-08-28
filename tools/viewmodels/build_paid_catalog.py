@@ -51,7 +51,6 @@ def main() -> int:
     if args.extract:
         run([sys.executable, "tools/viewmodels/extract_paid_unitypackage.py", "--all"])
 
-    results = []
     for family in selected:
         run([
             str(args.blender), "-b",
@@ -62,9 +61,15 @@ def main() -> int:
             "node", "tools/viewmodels/assemble_paid_family.mjs",
             "--family", family, "--manifest", str(manifest_path),
         ])
+    results = []
+    for family in available:
         family_root = private_root / family
-        build = json.loads((family_root / "build-report.json").read_text(encoding="utf-8"))
-        assembly = json.loads((family_root / "assembly-report.json").read_text(encoding="utf-8"))
+        build_path = family_root / "build-report.json"
+        assembly_path = family_root / "assembly-report.json"
+        if not build_path.is_file() or not assembly_path.is_file():
+            continue
+        build = json.loads(build_path.read_text(encoding="utf-8"))
+        assembly = json.loads(assembly_path.read_text(encoding="utf-8"))
         results.append({
             "family": family,
             "source": available[family]["source"],
