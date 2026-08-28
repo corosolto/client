@@ -196,12 +196,16 @@ def setup_weapon_materials(objects: list[bpy.types.Object], material_root: Path)
             source = material_files.get(material.name.lower())
             color, metallic, smoothness = unity_material_values(source) if source else ((0.12, 0.13, 0.14, 1.0), 0.55, 0.55)
             material.use_nodes = True
-            shader = material.node_tree.nodes.get("Principled BSDF")
-            if shader:
-                set_principled_input(shader, "Base Color", color)
-                set_principled_input(shader, "Metallic", metallic)
-                set_principled_input(shader, "Roughness", 1.0 - smoothness)
-                set_principled_input(shader, "Coat Weight", 0.12 if metallic > 0.2 else 0.04)
+            nodes = material.node_tree.nodes
+            links = material.node_tree.links
+            nodes.clear()
+            output = nodes.new("ShaderNodeOutputMaterial")
+            shader = nodes.new("ShaderNodeBsdfPrincipled")
+            links.new(shader.outputs["BSDF"], output.inputs["Surface"])
+            set_principled_input(shader, "Base Color", color)
+            set_principled_input(shader, "Metallic", metallic)
+            set_principled_input(shader, "Roughness", 1.0 - smoothness)
+            set_principled_input(shader, "Coat Weight", 0.12 if metallic > 0.2 else 0.04)
             material.name = f"CoroSolto_{material.name}"
 
 
