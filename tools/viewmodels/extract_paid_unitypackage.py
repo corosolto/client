@@ -80,7 +80,13 @@ def selected_prefixes(manifest: dict, family_keys: Iterable[str]) -> tuple[list[
     # production mesh is SK_Arms_Mono.fbx, with its own skin/cloth/glove materials.
     # Always extract the complete Character subtree so builds never accidentally
     # render the mannequin or lose the authored first-person hand textures.
-    prefixes = ["Assets/KINEMATION/FPSAnimationPack/Character/"]
+    prefixes = [
+        "Assets/KINEMATION/FPSAnimationPack/Character/",
+        # Unity prefabs/settings preserve authored sockets, offsets and clip semantics.
+        # They are tiny text assets and prevent Blender from guessing mount transforms.
+        "Assets/KINEMATION/FPSAnimationPack/Prefabs/",
+        "Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/",
+    ]
     selected_sources: list[str] = []
     for key in family_keys:
         family = families.get(key)
