@@ -2987,4 +2987,3 @@ function mpSair() {
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('main-menu');
 }
-window.__mpSair = mpSair;
