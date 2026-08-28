@@ -36,6 +36,13 @@ const ROTEIRO = [
   [330, { KeyW: 1, KeyA: 1, Space: 1 }],
 ];
 
+/* Ponto de partida FIXO por mapa (antes vinha do sorteio de spawn, que qualquer objeto
+   THREE novo no construtor deslocava). Valores do baseline de 28/08, mapa jogável. */
+const POS0 = {
+  praca_poderes: [-8.999258, 0, 61.568891],
+  piscinao_ramos: [-9.123785, 0, 62.462876],
+};
+
 function rodar(mapId, seed) {
   seedRandom(seed);
   const g = new Game({
@@ -44,7 +51,17 @@ function rodar(mapId, seed) {
     nickname: 'GOLDEN', mapId, ctf: false, testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g._ensureDolly = () => {};
+  /* Re-semeia DEPOIS da construção e do round. Sem isto a régua era refém do
+     `THREE.MathUtils.generateUUID()`, que gasta 4 saques de Math.random por objeto
+     criado: o #405 acrescentou 5 objetos no construtor (a fumaça do cano), gastou 20
+     saques, deslocou a torrente ANTES do sorteio de spawn e pintou a régua de vermelho
+     com a física byte a byte idêntica. Medido: o pré-merge com 20 saques queimados
+     reproduz o spawn do merge casa por casa. O que esta régua mede é TRAJETÓRIA, não
+     sorteio de spawn — então o ponto de partida é fixado à mão. */
   g.start ? g.start() : g._startRound();
+  g.player.pos.set(...POS0[mapId]);
+  g.player.vel.set(0, 0, 0);
+  seedRandom(seed);
   g.scene.updateMatrixWorld(true); g.world.root.updateMatrixWorld(true);
   if (MUT) g.__mutAccel = MUT;   // consumido pelo _moveEntity quando existir (ver --mutar)
 
@@ -79,17 +96,23 @@ if (WRITE) {
 if (!fs.existsSync(BASELINE)) { console.error('[movimento-golden] sem baseline — rode com --write'); process.exit(2); }
 const base = JSON.parse(fs.readFileSync(BASELINE, 'utf8'));
 let falhas = 0;
+/* O contador de impressão é POR CASO. A versão antiga usava o contador global e cortava
+   o caso inteiro no 13º erro: `praca_poderes` sozinho gastava a cota, e `piscinao_ramos`
+   aparecia com UMA divergência quando na verdade divergia nas 36 amostras. Régua que
+   mente sobre o escopo do estrago custou meia hora de diagnóstico. */
 for (const k of Object.keys(base)) {
   const a = base[k], b = atual[k];
   if (!b) { console.error(`[movimento-golden] caso sumiu: ${k}`); falhas++; continue; }
+  let doCaso = 0, impressas = 0;
   for (let i = 0; i < a.length; i++) {
     for (let j = 0; j < a[i].length; j++) {
       if (Math.abs(a[i][j] - b[i][j]) > 1e-6) {
-        console.error(`[movimento-golden] ${k} amostra ${i} campo ${j}: ${a[i][j]} -> ${b[i][j]}`);
-        if (++falhas > 12) { console.error('  (…truncado)'); i = a.length; break; }
+        doCaso++; falhas++;
+        if (impressas < 6) { console.error(`[movimento-golden] ${k} amostra ${i} campo ${j}: ${a[i][j]} -> ${b[i][j]}`); impressas++; }
       }
     }
   }
+  if (doCaso) console.error(`[movimento-golden] ${k}: ${doCaso} divergência(s) em ${a.length} amostras${doCaso > impressas ? ` (${impressas} impressas)` : ''}`);
 }
 if (falhas) { console.error(`[movimento-golden] REPROVADO — ${falhas} divergência(s)`); process.exit(1); }
 console.log(`[movimento-golden] OK — ${Object.keys(base).length} casos, trajetória idêntica`);
