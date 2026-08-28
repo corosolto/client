@@ -1634,6 +1634,28 @@ dominam o quadro e os contatos mecânicos não são demonstrados com clareza. O
 `eval:pistol-pilot` existente valida contrato/estrutura do arquivo; seu PASS não equivale a
 aprovação visual no navegador.
 
+**Rodada 28/08 (pack pago) — régua antes do conserto, causas MEDIDAS.** A integração do
+KINEMATION (29 commits em ~90 min, sem portões) trocou 25/26 armas pela malha genérica do
+pack e quebrou o resto por quatro causas confirmadas lendo o binário dos GLBs e o código:
+(1) `build_paid_family.py` parenteava a arma no OBJETO armature com matriz de rest
+congelada — os clipes animam `ik_hand_gun` e a arma ficava soldada no ar (consertado:
+bone-parent com compensação de tail; delta de posição com idle aplicado ≤1e-6 m nas 15
+famílias; régua no `validate_paid_catalog` com baseline versionado e mutante provado);
+(2) as mesmas 9 texturas de braço (18,3 MB) embutidas nos 16 GLBs — troca de arma baixava
+23 MB (consertado: shared/ + placeholder 1×1 religado por nome; família 2,9–7,5 MiB,
+catálogo 345→68 MB; ID5/ID6 na `authored-identity-check`); (3) sem clipe de fire em 12/15
+famílias e o kick legado zerado — arma parada atirando (consertado: `vmrecoil.js` com as
+curvas e amplitudes do RecoilAnimData extraídas do pack; `vmrecoil-sim` 42/42, pico AK
+medido no jogo 1,50° vs 1,55° da simulação); (4) `setAim()` no-op (consertado: alça MEDIDA
+da arma Mint alinhada ao eixo da vmCamera; `authored-ads-check` em 16:9 e 3:2, desvio
+0.000). A identidade voltou: `vmweapon.js` monta a malha Mint no socket com base automática
+de encaixe (contra-escala razão 1,001) e a genérica do pack fica oculta — tudo atrás do
+portão `ready` por família no `vmconfig.js` (o jogo segue 100% legado até a onda flipar) e
+do kill-switch `?vmauthored=0`. Idle respira (ID7), fila não encalha com mount oculto
+(ID8), fuzil saca com o clipe `equip_rifle` do General/ e a faca ganhou dono (meleevm
+construído; `melee-vm-check` 6/6). Suíte local: `npm run check:vm`; matriz visual por arma
+em `viewmodel-visual-matrix.mjs` para o A/B da onda contra o golden gen-2.
+
 ### ~~BUG-59 · 18 personagens desta branch sem mídia do redesign (avatar/webm/resultado)~~ · RESOLVIDO 18/08 (mídia)
 
 **Evidência:** `eval:redesign` UIA1/UIA4/UIR1 vermelhas desde o merge da main (alpha.147,
