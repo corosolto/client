@@ -68,7 +68,7 @@ try {
     /* Dá dois frames para _applyVmVisibility assentar depois do onReady. */
     await page.waitForTimeout(400);
 
-    const medida = await page.evaluate(([weapon, mutante]) => {
+    const medida = await page.evaluate(async ([weapon, mutante]) => {
       const vm = window.__authoredVm;
       const g = window.__game;
       const entry = vm.entry(weapon);
@@ -137,9 +137,38 @@ try {
         }
       }
       const familyBytes = performance.getEntriesByType('resource')
-        .filter((r) => r.name.includes('-runtime.glb'))
+        .filter((r) => r.name.includes('-runtime.glb') && !r.name.includes('general'))
         .reduce((worst, r) => Math.max(worst, r.encodedBodySize || r.transferSize || 0), 0);
-      return { packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim, maosPlaceholder, familyBytes };
+
+      /* M7: idle respira — a mão muda de pose com o relógio andando. */
+      const hand = entry.scene.getObjectByName('hand_l');
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const handAt = () => {
+        entry.scene.updateWorldMatrix(true, true);
+        const p = v.clone();
+        hand.getWorldPosition(p);
+        return [p.x, p.y, p.z];
+      };
+      const breath0 = handAt();
+      await sleep(1300);
+      const breath1 = handAt();
+      const breathDelta = Math.hypot(
+        breath1[0] - breath0[0], breath1[1] - breath0[1], breath1[2] - breath0[2],
+      );
+
+      /* M2/M7: recarga escondida no meio não encalha — volta ao idle sozinha. */
+      vm.reload(weapon, 1.0, false);
+      await sleep(150);
+      entry.mount.visible = false;
+      await sleep(1800);
+      entry.mount.visible = true;
+      await sleep(120);
+      const strandRecovered = entry.action?.getClip?.().name === 'idle' && entry.queue.length === 0;
+
+      return {
+        packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim,
+        maosPlaceholder, familyBytes, breathDelta, strandRecovered,
+      };
     }, [id, MUT]);
 
     check(medida.packVisiveis.length === 0, `ID1 ${id}: pack invisível`, medida.packVisiveis.join(', '));
@@ -151,6 +180,9 @@ try {
       medida.maosPlaceholder.join(', '));
     check(medida.familyBytes > 0 && medida.familyBytes < 8 * 1024 * 1024,
       `ID6 ${id}: download da família < 8 MiB`, `${(medida.familyBytes / 1048576).toFixed(1)} MiB`);
+    check(medida.breathDelta > 0.0004, `ID7 ${id}: idle respira`,
+      `mão moveu ${(medida.breathDelta * 1000).toFixed(2)} mm em 1,3 s`);
+    check(medida.strandRecovered, `ID8 ${id}: recarga escondida volta ao idle sem encalhar`);
     resultados.push({ id, familia, ...medida, razao: Number(razao.toFixed(3)) });
     await page.close();
   }

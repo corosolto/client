@@ -87,6 +87,10 @@ def selected_prefixes(manifest: dict, family_keys: Iterable[str]) -> tuple[list[
         "Assets/KINEMATION/FPSAnimationPack/Prefabs/",
         "Assets/KINEMATION/FPSAnimationPack/Settings/Weapons/",
         "Assets/KINEMATION/FPSAnimationPack/Settings/Player/",
+        # Clipes COMPARTILHADOS (idle-respiração, walk/sprint, equip, jump): são a
+        # cobertura de estados do BUG-75 M7 e valem para todas as famílias.
+        "Assets/KINEMATION/FPSAnimationPack/Animations/General/",
+        "Assets/KINEMATION/FPSAnimationPack/Animations/Jump/",
     ]
     selected_sources: list[str] = []
     for key in family_keys:

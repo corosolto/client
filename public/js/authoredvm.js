@@ -92,6 +92,23 @@ function bindSharedArmTextures(handMeshes, shared) {
   }
 }
 
+// Clipes gerais compartilhados (respiração/walk/sprint/equip) — um download,
+// tracks por NOME de bone: o mesmo rig UE em todas as famílias os aceita.
+let generalMotionsPromise = null;
+function generalMotions() {
+  if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve(null);
+  if (!generalMotionsPromise) {
+    generalMotionsPromise = new GLTFLoader()
+      .loadAsync(`/private-assets/viewmodels/shared/general-runtime.glb?v=${CATALOG_VERSION}`)
+      .then((gltf) => new Map(gltf.animations.map((clip) => [clip.name, clip])))
+      .catch((error) => {
+        console.error('[paid-viewmodel] general-runtime', error);
+        return null;
+      });
+  }
+  return generalMotionsPromise;
+}
+
 // Parâmetros de recuo extraídos do pack (recoil.json) — um fetch por sessão.
 let recoilParamsPromise = null;
 function recoilParams() {
@@ -114,6 +131,7 @@ export function preloadAuthoredFamilies(families = []) {
   return Promise.allSettled([
     sharedArmTextures(),
     recoilParams(),
+    generalMotions(),
     ...families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf),
   ]);
 }
@@ -278,7 +296,8 @@ export class AuthoredViewModels {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!family || this.entries.has(family)) return this.entries.get(family) || null;
     if (this.pending.has(family)) return this.pending.get(family);
-    const pending = Promise.all([loadFamilyGltf(family), sharedArmTextures()]).then(async ([gltf, shared]) => {
+    const pending = Promise.all([loadFamilyGltf(family), sharedArmTextures(), generalMotions()])
+      .then(async ([gltf, shared, general]) => {
       if (this._disposed) return null;
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
@@ -292,6 +311,7 @@ export class AuthoredViewModels {
         drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
       };
       mixer.addEventListener('finished', () => this._continue(entry));
+      this._setupGeneralMotion(entry, general);
       this.entries.set(family, entry);
       this.pending.delete(family);
       this._idle(entry);
@@ -395,6 +415,18 @@ export class AuthoredViewModels {
       if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) entry.mixer.update(step);
     }
     if (!active?.mount.visible) return;
+    // Camadas de movimento por contexto: respira parado, embala andando/correndo;
+    // ADS acalma tudo para a alça não dançar no eixo.
+    if (active.motion) {
+      const speed = Number(ctx.speed) || 0;
+      const moving = ctx.grounded !== false && speed > 0.5;
+      const runF = Math.min(1, Math.max(0, (speed - 4.2) / 1.8));
+      const walkF = moving ? Math.min(1, speed / 3.5) * (1 - runF) : 0;
+      const calm = 1 - 0.75 * this.adsAmount;
+      this._motionWeight(active.motion.breathe, (1 - 0.6 * walkF - 0.8 * runF) * calm, step);
+      this._motionWeight(active.motion.walk, walkF * calm, step);
+      this._motionWeight(active.motion.sprint, runF * (this.adsAmount > 0.3 ? 0 : 1), step);
+    }
     active.mixer.update(step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
@@ -493,6 +525,12 @@ export class AuthoredViewModels {
   draw(id, duration = 0.32) {
     const entry = this.entry(id);
     if (!entry) return false;
+    // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
+    // famílias de pistola (o pack não traz equip de pistola) e como fallback.
+    if (VM_FAMILY[entry.family]?.equip !== 'pistol' && entry.clips.has('equip_rifle')) {
+      entry.drawTime = entry.drawDuration;
+      return this._play(entry, 'equip_rifle', { duration: Math.max(0.3, duration), fade: 0.03 });
+    }
     entry.drawDuration = Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
     return true;
@@ -560,6 +598,37 @@ export class AuthoredViewModels {
     else this._idle(entry);
   }
 
+  _setupGeneralMotion(entry, general) {
+    if (!general) return;
+    entry.generalClips = general;
+    // One-shots gerais entram no mapa de clipes da família: _play/fila/finished
+    // funcionam igual para eles (equip de fuzil, pickup...).
+    for (const name of ['equip_rifle', 'unequip_rifle', 'unequip_pistol', 'pickup']) {
+      const clip = general.get(name);
+      if (clip && !entry.clips.has(name)) entry.clips.set(name, clip);
+    }
+    const additive = (name) => {
+      const clip = general.get(name);
+      if (!clip) return null;
+      const layered = THREE.AnimationUtils.makeClipAdditive(clip.clone());
+      const action = entry.mixer.clipAction(layered);
+      action.play();
+      action.setEffectiveWeight(0);
+      return { action, weight: 0 };
+    };
+    entry.motion = {
+      breathe: additive('idle_breath'),
+      walk: additive('walk'),
+      sprint: additive('sprint'),
+    };
+  }
+
+  _motionWeight(layer, target, step) {
+    if (!layer) return;
+    layer.weight += (target - layer.weight) * Math.min(1, step * 8);
+    layer.action.setEffectiveWeight(layer.weight);
+  }
+
   _idle(entry) {
     const clip = entry.clips.get('idle');
     if (!clip) return false;
@@ -568,6 +637,12 @@ export class AuthoredViewModels {
     const action = entry.mixer.clipAction(clip);
     action.reset().play();
     action.paused = true;
+    // As camadas aditivas (respiração/walk/sprint) sobrevivem ao reset do idle.
+    if (entry.motion) {
+      for (const layer of Object.values(entry.motion)) {
+        if (layer) layer.action.reset().play().setEffectiveWeight(layer.weight);
+      }
+    }
     entry.mixer.update(0);
     entry.action = action;
     return true;

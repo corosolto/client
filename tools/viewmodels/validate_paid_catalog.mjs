@@ -106,6 +106,17 @@ async function main() {
   }
   invariant(sharedTotal <= 6 * 1024 * 1024, `shared arm set exceeds 6 MiB (${sharedTotal})`);
 
+  // M7: clipes gerais compartilhados (respiração/locomoção/equip) bakados 1×.
+  const generalPath = path.join(privateRoot, 'shared/general-runtime.glb');
+  const generalStat = await fs.stat(generalPath);
+  invariant(generalStat.size <= 12 * 1024 * 1024, `general-runtime exceeds 12 MiB (${generalStat.size})`);
+  const generalDoc = await new NodeIO().registerExtensions(ALL_EXTENSIONS).read(generalPath);
+  const generalClips = new Set(generalDoc.getRoot().listAnimations().map((animation) => animation.getName()));
+  for (const clip of ['idle_breath', 'walk', 'sprint', 'equip_rifle']) {
+    invariant(generalClips.has(clip), `general-runtime is missing ${clip}`);
+  }
+  invariant(generalDoc.getRoot().listMeshes().length === 0, 'general-runtime must be skeleton-only');
+
   const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
   const report = { schemaVersion: 1, privateRoot, weapons: 26, families: [], utilities: [], sharedBytes: sharedTotal };
   let catalogTotal = 0;
