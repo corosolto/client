@@ -260,7 +260,7 @@ npm run eval:error-console
 
 ## `eval:error-origin`
 
-Erros de extensão e scripts cross-origin continuam brutos, mas não acionam watchdog, dispatch ou issue do jogo. Mutantes: sem-extensao|sem-cross-origin|filtro-amplo|sem-api|sem-early-return|sem-workflow|abre-externo|sem-cliente|cliente-mensagem-url|sem-teto-externo|debug-externo|cache-antes-origem.
+Erros de extensão e scripts cross-origin continuam brutos, mas não acionam watchdog, dispatch ou issue do jogo. Mutantes: sem-extensao|sem-cross-origin|filtro-amplo|sem-api|sem-early-return|sem-workflow|abre-externo|sem-cliente|cliente-mensagem-url|sem-teto-externo|debug-externo|console-sem-origem|cache-antes-origem|sem-recuperavel|sem-opaco|opaco-sem-guarda|sem-vercel-helper|sem-vercel-cliente|sem-webgl|sem-fingerprint|escala-incoerente|grava-forjado|receita-imul|cliente-hash-bruto|cliente-sem-retrim|sem-log|log-amplo|log-sobre-tudo|log-nao-corta|sem-teto-console|pilha-so-no-primeiro|times-sem-erro|onerror-sem-src|boot-sem-migalha|payload-sem-migalhas|issue-sem-migalhas|sem-midia|midia-ampla|sem-cota-midia|cache-sem-binding|cache-so-ingles|cache-sem-especificador|sem-ponte|ponte-ampla|ponte-insensivel|sem-ponte-cliente|jogo-com-ponte|sem-capacidade|capacidade-ampla|lock-sem-catch.
 
 ```bash
 npm run eval:error-origin

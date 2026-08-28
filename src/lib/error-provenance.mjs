@@ -14,6 +14,9 @@ const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture/i;
 // Abort de mídia: o jogo corta `play()` pendente de propósito (audio.js:97/:119/:159) e a
 // rejeição chega sem stack. ESTREITO de propósito — KNOWN-BUGS.md, BUG-73.
 const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i;
+// Capacidade que o navegador não tem: o `lock()` de main.js:1037 rejeita e o jogo segue sem
+// a trava (o overlay "gire o celular" é a rede). ESTREITA — KNOWN-BUGS.md, BUG-80.
+const CAPACIDADE_RE = /screen\.orientation\.lock\(\) is not available on this device/i;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -88,6 +91,7 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';
   if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';
   if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';
+  if (CAPACIDADE_RE.test(evidence)) return 'recuperavel';
   return 'codigo';
 }
 

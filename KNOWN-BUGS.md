@@ -39,6 +39,74 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
+
+**Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**
+*"screen.orientation.lock() is not available on this device."* (fingerprint `df013498`,
+origem `promise`) e *"Falha ao abrir partida: screen.orientation.lock() is not available on
+this device."* (fingerprint `342e306c`, origem vazia). Alpha.183, **sem stack e sem source**,
+e as migalhas das duas são **idênticas** (01:54:04 a 01:55:18, terminando em
+`clique #char-confirm` / `clique #btn-team-b`): é a MESMA sessão e a MESMA rejeição. Duas
+fingerprints porque o prefixo do `lancamento.fail()` muda o hash FNV — a forma da #419/#420.
+
+**Causa raiz — defeito de código, `public/js/main.js:1037`.** A linha era
+`fs.then(() => { try { screen.orientation?.lock?.('landscape'); } catch {} }).catch(() => {})`.
+O `lock()` devolve **promessa**, e ela não é devolvida nem capturada: o `try/catch` ao redor
+pega throw **síncrono**, e o `.catch` do fim da linha é do `requestFullscreen`, não do
+`lock`. No aparelho do relato a promessa **rejeita** — a frase é redação do navegador e não
+nossa (não existe essa string no repo) —, a rejeição vira `unhandledrejection`, e
+`origemDoJogo(null, undefined, mensagem)` (`index.astro:180`) devolve `true`: sem stack e
+sem source, nada prova terceiro. Com `interna === true`, `index.astro:347` chama
+`lancamento.fail()`, e a etapa `'partida'` está
+aberta desde `main.js:986` com janela de **60 s**: o painel "Falha ao abrir partida" cobre
+uma partida que ia carregar sozinha. O comentário do próprio trecho afirmava que esse
+navegador apenas **ignora** a trava; o relato mostra que ele **rejeita**, e ignorar em
+silêncio nunca teria aberto issue nenhuma — o comentário foi corrigido junto.
+
+**Conserto.** Uma linha: `?.catch?.(() => {})` colado na chamada do `lock()`. É o idioma
+que as outras TRÊS promessas de capacidade do jogo já usavam — `main.js:998`,
+`main.js:1185` e `game.js:2071`; a do `lock` era a única sem. `src/lib/error-provenance.mjs`
+ganha a `CAPACIDADE_RE` com a redação exata, classificando a família como `recuperavel`:
+é **rede para a janela do cache-split** (BUG-39), onde um `main.js` velho do edge ainda
+roda com HTML novo — não é o conserto.
+
+**Medido (sem browser, lendo o fonte e executando o helper real):**
+
+| | antes | depois |
+|---|---|---|
+| as 2 formas de campo classificadas | `codigo` → 2 issues | `recuperavel` → 0 issues |
+| `fail()` derruba o launch na rejeição | sim (#431) | não — a promessa já nasce capturada |
+| sítios de capacidade com catch colado | 3 de 4 | 4 de 4 |
+| fingerprints publicados reproduzidos | — | 2/2 (`df013498`, `342e306c`) |
+
+**Custo declarado, na população real:** das **99** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 28/08), exatamente **2** são desta família
+— e a busca por `not available` na mesma população devolve só essas duas. **Vizinhas que
+continuam como estão, DE PROPÓSITO:** `index.astro` NÃO ganhou guarda no
+`unhandledrejection` — consertada a origem, ela seria código morto, ao contrário da #420,
+onde o vendor ainda lança; `screen.orientation.lock() failed because the page is not
+fullscreen` (redação diferente, nunca observada) segue `codigo`; e qualquer crash que apenas
+CITE "is not available" segue acionável (contra-fixture na régua, mutante `capacidade-ampla`).
+Sem a trava de orientação, o overlay "gire o celular" do CSS continua sendo a rede — como
+sempre foi nos navegadores que nunca tiveram a API.
+
+**Não verificado:** sem browser nesta máquina a rejeição não foi reproduzida ao vivo, e o
+aparelho não está na issue — o que o relato prova é o ramo que rodou (`pointer: coarse` com
+`requestFullscreen` disponível, `main.js:1033-1037`), não a marca do navegador. A frequência
+da família por sessão no Supabase fica sem número (schema privado, sem credencial). O que está medido é a forma da
+guarda (EP18), os 2 fingerprints de campo e o fato de as outras 3 promessas de capacidade já
+usarem o mesmo idioma.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, já no
+`check:fast` e no `check:deploy` — nenhum passo novo no portão). Cláusula **EP18**: varre
+`src/` e `public/js/` e exige catch **colado na chamada** das quatro APIs de capacidade que
+devolvem promessa (`orientation.lock`, `requestPointerLock`, `requestFullscreen`,
+`exitFullscreen`), com UMA exceção declarada — o `const fs = …requestFullscreen?.()` de
+`main.js:1034`, cuja promessa os dois ramos das linhas seguintes capturam. Por linha não
+serviria: no `:1037` o `.catch` do `requestFullscreen` mora na MESMA linha e aprovaria o
+defeito de volta. **3 mutações novas:** `sem-capacidade`, `capacidade-ampla` e
+`lock-sem-catch`.
+
 ### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
 
 **Sintoma (literal, issue #443, aberta pelo `crash-fix.yml` em 25/08 18:05Z):**
