@@ -7,6 +7,12 @@ import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 const DEG = Math.PI / 180;
 const _q = new THREE.Quaternion();
 const _scale = new THREE.Vector3();
+const _palmWorld = new THREE.Vector3();
+const _mountOffset = new THREE.Vector3();
+const _packBox = new THREE.Box3();
+const _meshBox = new THREE.Box3();
+const _mintCenter = new THREE.Vector3();
+const _packCenter = new THREE.Vector3();
 const _x = new THREE.Vector3();
 const _y = new THREE.Vector3();
 const _z = new THREE.Vector3();
@@ -143,8 +149,7 @@ export function attachMintWeapon(entry, weaponId) {
     familyConfig.mount.rotDeg[2] * DEG,
   ));
   mint.holder.quaternion.copy(basis.multiply(mountRot));
-  // mount.pos é dado em METROS; o socket vive na escala da armature (÷worldScale).
-  mint.holder.position.set(...familyConfig.mount.pos).divideScalar(worldScale);
+  mint.holder.position.set(0, 0, 0);
   mint.holder.scale.setScalar(familyConfig.mount.scale / worldScale);
 
   let wrap = mint.wraps.get(weaponId);
@@ -167,6 +172,32 @@ export function attachMintWeapon(entry, weaponId) {
   }
   mint.weaponId = weaponId;
   mint.active = wrap;
+
+  // Âncora DEFINITIVA: o centro da arma do PACK (oculta) — é onde as mãos
+  // autorais seguram de verdade. O centro do wrap Mint vai para o mesmo lugar.
+  entry.scene.updateMatrixWorld(true);
+  _packBox.makeEmpty();
+  for (const mesh of entry.weaponMeshes) {
+    if (/^UTILITY_/.test(mesh.name) || !mesh.geometry) continue;
+    if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+    _meshBox.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+    _packBox.union(_meshBox);
+  }
+  if (!_packBox.isEmpty()) {
+    const metrics = wrap.userData.metrics;
+    _mintCenter.copy(metrics.box.getCenter(_palmWorld)).divideScalar(metrics.norm || 1);
+    wrap.updateWorldMatrix(true, false);
+    wrap.localToWorld(_mintCenter);
+    _packBox.getCenter(_packCenter);
+    socket.worldToLocal(_packCenter);
+    socket.worldToLocal(_mintCenter);
+    mint.holder.position.add(_packCenter).sub(_mintCenter);
+  }
+  // mount.pos em METROS no EIXO DA ARMA (+Z = cano): resíduo manual por cima.
+  _mountOffset.set(...familyConfig.mount.pos)
+    .applyQuaternion(mint.holder.quaternion)
+    .divideScalar(worldScale);
+  mint.holder.position.add(_mountOffset);
   return wrap;
 }
 

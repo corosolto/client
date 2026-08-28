@@ -65,8 +65,21 @@ try {
     };
 
     await snap('idle');
-    await page.evaluate((weapon) => window.__authoredVm.shoot(weapon), id);
-    await page.waitForTimeout(70);
+    // Tiro REAL pelo caminho do jogo (a munição TEM que cair — régua do crítico);
+    // vm.shoot() sozinho só anima e a célula saía idêntica ao idle.
+    const magazine = await page.evaluate(() => {
+      const g = window.__game;
+      const before = g.player.ammo?.[g.player.weapon]?.mag ?? null;
+      g.player.scoped = false;
+      g.mouseDown0 = true;
+      g._tryShoot();
+      g.mouseDown0 = false;
+      return { before, after: g.player.ammo?.[g.player.weapon]?.mag ?? null };
+    });
+    if (magazine.before !== null && magazine.after === magazine.before) {
+      console.warn(`aviso: célula tiro de ${id} sem disparo real (municão ${magazine.before}→${magazine.after})`);
+    }
+    await page.waitForTimeout(55);
     await snap('tiro');
     await page.evaluate((weapon) => window.__authoredVm.reload(weapon, 2.4, false), id);
     await page.waitForTimeout(1000);
