@@ -145,6 +145,11 @@ export function authoredBootFamilies(weaponIds = []) {
 
 const _pivot = new THREE.Vector3();
 const _pivotRotated = new THREE.Vector3();
+const _adsQuat = new THREE.Quaternion();
+const _adsAlign = new THREE.Quaternion();
+const _adsBlend = new THREE.Quaternion();
+const _adsForward = new THREE.Vector3();
+const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
 const HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)/i;
 const SKIN_MATERIAL = /CoroSolto_FP_Hand/i;
 const GLOVE_MATERIAL = /CoroSolto_FP_Glove/i;
@@ -450,22 +455,33 @@ export class AuthoredViewModels {
       active.frame.y + drawY + recoil.py + (_pivot.y - _pivotRotated.y),
       active.frame.z + recoil.pz + (_pivot.z - _pivotRotated.z),
     );
-    // ADS (M6): a alça MEDIDA da arma Mint vai ao eixo da câmera, com resíduo
-    // manual do vmconfig por cima; blend pelo `a` suavizado que o game entrega.
+    // ADS (M6): o CANO fica colinear com o eixo óptico (rotação do mount) e só
+    // então a alça MEDIDA desliza ao centro — não um ponto cruzando em diagonal.
     const ads = this.adsAmount;
     const adsConfig = VM_WEAPON[this.weapon]?.ads;
-    if (ads > 0.001 && adsConfig && active.mint?.active) {
-      const sight = mintPointScene(active, 'sight');
-      if (sight) {
-        const alignX = adsConfig.auto ? -sight.x : 0;
-        const alignY = adsConfig.auto ? -sight.y : 0;
-        active.mount.position.x += (alignX + adsConfig.off[0]) * ads;
-        active.mount.position.y += (alignY + adsConfig.off[1]) * ads;
-        active.mount.position.z += (adsConfig.pull + adsConfig.off[2]) * ads;
-        active.mount.rotation.x += adsConfig.rotDeg[0] * DEG2RAD * ads;
-        active.mount.rotation.y += adsConfig.rotDeg[1] * DEG2RAD * ads;
-        active.mount.rotation.z += adsConfig.rotDeg[2] * DEG2RAD * ads;
+    const wrap = active.mint?.active;
+    if (ads > 0.001 && adsConfig && wrap) {
+      if (adsConfig.auto) {
+        active.mount.updateWorldMatrix(true, true);
+        wrap.getWorldQuaternion(_adsQuat);
+        _adsForward.set(0, 0, 1).applyQuaternion(_adsQuat).normalize();
+        _adsAlign.setFromUnitVectors(_adsForward, _ADS_AXIS);
+        _adsBlend.identity().slerp(_adsAlign, ads);
+        _adsQuat.setFromEuler(active.mount.rotation).premultiply(_adsBlend);
+        active.mount.rotation.setFromQuaternion(_adsQuat);
+        active.mount.updateWorldMatrix(true, true);
+        const sight = mintPointScene(active, 'sight');
+        if (sight) {
+          active.mount.position.x += -sight.x * ads;
+          active.mount.position.y += -sight.y * ads;
+        }
       }
+      active.mount.position.x += adsConfig.off[0] * ads;
+      active.mount.position.y += adsConfig.off[1] * ads;
+      active.mount.position.z += (adsConfig.pull + adsConfig.off[2]) * ads;
+      active.mount.rotation.x += adsConfig.rotDeg[0] * DEG2RAD * ads;
+      active.mount.rotation.y += adsConfig.rotDeg[1] * DEG2RAD * ads;
+      active.mount.rotation.z += adsConfig.rotDeg[2] * DEG2RAD * ads;
     }
   }
 
