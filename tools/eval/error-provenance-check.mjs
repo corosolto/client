@@ -16,6 +16,7 @@ const mutants = [
   'sem-midia', 'midia-ampla', 'sem-cota-midia',
   'cache-sem-binding', 'cache-so-ingles', 'cache-sem-especificador',
   'sem-ponte', 'ponte-ampla', 'ponte-insensivel', 'sem-ponte-cliente', 'jogo-com-ponte',
+  'sem-webglstate', 'webglstate-amplo',
   'sem-capacidade', 'capacidade-ampla', 'lock-sem-catch',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
@@ -193,6 +194,14 @@ if (mutant === 'jogo-com-ponte') page = mutate(page,
   'window.__gameLaunch = lancamento;',
   "window.__gameLaunch = lancamento; window.__gCrWeb.postMessage('ping');");
 
+/* BUG-81 · a redação do WebKit sai da RECOVERABLE_RE e o aviso que o three ENGOLIU volta
+   a escalar como bug do jogo. */
+if (mutant === 'sem-webglstate') helperSource = mutate(helperSource,
+  "|THREE\\.WebGLState: Type error", '');
+/* O corte largo: qualquer `THREE.WebGLState:` vira recuperável — inclusive `Invalid
+   blending`, que é constante inválida NOSSA e não erro engolido do driver. */
+if (mutant === 'webglstate-amplo') helperSource = mutate(helperSource,
+  'THREE\\.WebGLState: Type error/i', 'THREE\\.WebGLState:/i');
 /* BUG-80 · sem o ramo, a rejeição de capacidade volta a escalar. */
 if (mutant === 'sem-capacidade') helperSource = mutate(helperSource,
   "if (CAPACIDADE_RE.test(evidence)) return 'recuperavel';",
@@ -279,6 +288,23 @@ const opaqueFixtures = [
 const recoverableFixtures = [
   { source: '', stack: '', message: "THREE.GLTFLoader: Couldn't load texture blob:https://www.csbrasil.online/bbaced98-44e1-4922-83b1-4564e004a737" },
   { message: "THREE.GLTFLoader: Couldn't load texture models/characters/mst.glb" },
+  /* BUG-81 · issue #465, PUBLICADA: `console.error` que o PRÓPRIO three emite de dentro do
+     `try/catch` do `WebGLState` (`vendor/three.module.js:23761`, e mais 9 irmãos `tex*` entre
+     `:23650` e `:23785`). O quadro TERMINOU — a pilha veio pelo argumento `Error` que o hook
+     do `console.error` lê (`index.astro:411`), e é ela que faz o corte do BUG-72 não pegar.
+     `fp` é o hash de `console|<message>|` e a cláusula EP8 confere. */
+  { fp: 'c2d5e2c2', kind: 'console', source: '', message: 'THREE.WebGLState: Type error',
+    stack: `texImage2D@[native code]\ntexImage2D@${own}/vendor/three.module.js:23766:23\nupdate@${own}/js/loading3d.js:146:25` },
+];
+/* O corte é ESTREITO: exige o prefixo `THREE.WebGLState:` E a redação do WebKit. Estas três
+   seguem `codigo` — a 1ª é a que trava a decisão, porque é a ÚNICA outra mensagem com esse
+   prefixo no bundle (`three.module.js:23345` e `:23371`) e é constante inválida NOSSA, não
+   erro engolido do driver. A redação do Chrome nunca foi observada e fica de fora por
+   decisão, não por medição: sem dado de campo, ela continua acionável. */
+const naoRecuperavelFixtures = [
+  { source: '', stack: '', message: 'THREE.WebGLState: Invalid blending:  201' },
+  { source: '', stack: '', message: "THREE.WebGLState: TypeError: Failed to execute 'texImage2D' on 'WebGL2RenderingContext'" },
+  { source: `${own}/vendor/three.module.js:29975:29`, stack: '', message: "TypeError: undefined is not an object (evaluating 'material.map.source')" },
 ];
 /* BUG-80 · issues #431 e #432, PUBLICADAS e da MESMA sessão (as migalhas são idênticas, das
    01:54 às 01:55). Uma causa, duas fingerprints: a #432 é a rejeição crua (`index.astro:346`)
@@ -717,11 +743,13 @@ const injetadoProcede = typeof crashFingerprint === 'function'
   && injetadoFixtures.filter((f) => f.fp).length === 4
   && injetadoFixtures.filter((f) => f.fp).every((f) => crashFingerprint('error', f.message, f.source) === f.fp);
 
-/* PROCEDÊNCIA, mesma trava do EP12 e do EP17: os fingerprints PUBLICADOS nas duas issues são
+/* PROCEDÊNCIA, mesma trava do EP12 e do EP17: os fingerprints PUBLICADOS nas três issues são
    o hash EXATO de `<kind>|<message>|<source>`. Se alguém "arrumar" a fixture, o número deixa
    de bater e a cláusula acusa que ela não é mais o que a produção mandou. */
 const procedeFp = (f) => typeof crashFingerprint === 'function'
   && crashFingerprint(f.kind, f.message, f.source) === f.fp;
+const webglStateProcede = recoverableFixtures.filter((f) => f.fp).length === 1
+  && recoverableFixtures.filter((f) => f.fp).every(procedeFp);
 const capacidadeProcede = capacidadeFixtures.length === 2 && capacidadeFixtures.every(procedeFp);
 
 /* EP18 · BUG-80 (issues #431 e #432). `screen.orientation.lock()` devolve PROMESSA, e a
@@ -768,10 +796,13 @@ const checks = [
     && classify({ source: `${own}/js/main.js`, stack: 'at chrome-extension://abc/inpage.js', message: 'boom' }) === 'codigo'
     && classify({ message: 'prod-coherence reprovou' }) === 'cache-split', 'proveniência externa vence cache-split e origem própria vence evidência secundária'],
   ['EP8', recoverableFixtures.every((fixture) => classify(fixture) === 'recuperavel')
+    && naoRecuperavelFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && webglStateProcede
     && classify({ source: `${own}/js/game.js:1:2`, message: 'boom' }) === 'codigo'
     && typeof shouldDispatchCrash === 'function'
     && shouldDispatchCrash('recuperavel') === false
-    && shouldDispatchCrash('codigo') === true, 'aviso recuperável de textura fica na telemetria mas não vira bug do jogo'],
+    && shouldDispatchCrash('codigo') === true,
+    'aviso recuperável de textura e o erro que o three ENGOLE no WebGLState (#465) ficam na telemetria mas não viram bug do jogo; `Invalid blending`, que é constante inválida nossa, continua acionável'],
   ['EP4', apiWired, 'API grava o erro e o early-return externo é o único corte antes do dispatch único'],
   ['EP5', workflowWired, 'workflow classifica externo sem abrir issue, em nenhum OR da condição'],
   ['EP6', clientBehavior && clientWired, 'cliente executado: mensagem não é proveniência, overlay/cota de externo são separados'],
@@ -843,6 +874,7 @@ const mutantClause = {
   'cache-sem-binding': 'EP16', 'cache-so-ingles': 'EP16', 'cache-sem-especificador': 'EP16',
   'sem-ponte': 'EP17', 'ponte-ampla': 'EP17', 'ponte-insensivel': 'EP17',
   'sem-ponte-cliente': 'EP17', 'jogo-com-ponte': 'EP17',
+  'sem-webglstate': 'EP8', 'webglstate-amplo': 'EP8',
   'sem-capacidade': 'EP18', 'capacidade-ampla': 'EP18', 'lock-sem-catch': 'EP18',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {

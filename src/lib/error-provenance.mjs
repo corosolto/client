@@ -10,7 +10,9 @@ const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically i
 // decodifica em navegador minoritário (createImageBitmap), o three loga com console.error
 // mas o modelo CARREGA sem aquele mapa — o jogo não trava. É ambiental (não é defeito de
 // código) e não tem conserto no repo, então fica na telemetria bruta mas NÃO abre issue.
-const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture/i;
+// A 2ª redação é o TypeError do `texImage2D` que o PRÓPRIO three engole no try/catch dele
+// (`vendor/three.module.js:23761`): o quadro termina e o jogo segue — KNOWN-BUGS.md, BUG-81.
+const RECOVERABLE_RE = /THREE\.[^:]*: Couldn't load texture|THREE\.WebGLState: Type error/i;
 // Abort de mídia: o jogo corta `play()` pendente de propósito (audio.js:97/:119/:159) e a
 // rejeição chega sem stack. ESTREITO de propósito — KNOWN-BUGS.md, BUG-73.
 const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i;

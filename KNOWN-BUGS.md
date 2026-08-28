@@ -107,6 +107,74 @@ serviria: no `:1037` o `.catch` do `requestFullscreen` mora na MESMA linha e apr
 defeito de volta. **3 mutações novas:** `sem-capacidade`, `capacidade-ampla` e
 `lock-sem-catch`.
 
+### ~~BUG-81 · erro que o próprio three ENGOLE virava issue de crash do jogo~~ · RESOLVIDO 28/08 (issue #465)
+
+**Sintoma (literal, issue #465, aberta pelo `crash-fix.yml` em 28/08 07:34Z):**
+*"THREE.WebGLState: Type error"*, fingerprint `c2d5e2c2`, classe `codigo`, alpha.192,
+**origem vazia**, com stack do WebKit terminando em
+`update@…/js/loading3d.js:146:25` → `loop@…/js/main.js:2586:22`.
+
+**Causa raiz — não é exceção, é linha de log.** `crashFingerprint('console',
+'THREE.WebGLState: Type error', '')` devolve exatamente `c2d5e2c2`: o relato entrou pelo
+hook do `console.error` (`index.astro:397`), não pelo `window.onerror`. E quem emite é o
+**próprio three, de dentro de um `try/catch` seu**: `public/vendor/three.module.js:23761`
+embrulha `gl.texImage2D` e loga `console.error('THREE.WebGLState:', error)` — são **10
+irmãos** entre `:23650` e `:23785`, todos `tex*`/`compressedTex*`. O quadro **termina**: o
+`uploadTexture` segue, o `render()` retorna e o jogo continua sem aquele mapa. A pilha chegou
+junto porque o hook lê o argumento `Error` (`index.astro:411`, conserto do BUG-72) — e é
+justamente ela que faz `isConsoleLog()` devolver `false`, o corte do BUG-72 não pegar e o
+`classifyCrash` cair no `return 'codigo'` final. Pior: com pilha, o relato **não** cai no
+`TETO_CONSOLE`; come 1 dos 10 slots de exceção real do `TETO_SESSAO`.
+
+**Refutado antes de agir.** O palpite óbvio era "é a mesma textura webp da `RECOVERABLE_RE`":
+os GLBs de personagem são mesmo `EXT_texture_webp` (medido: `gotinha`, `canarinho` e
+`blackmetal` trazem 3 imagens `image/webp` cada, e `gotinha` é justo o modelo da tela de
+carregamento, `loading3d.js:7`). **Refutado por leitura:** quando a imagem não decodifica,
+`GLTFLoader.js:3178` resolve `null` e `assignTexture` (`:3290`) faz `if (!texture) return
+null` — o mapa nunca é atribuído, então não existe upload e não existe `texImage2D`. A #465
+**não** é a irmã tardia da #110.
+
+**Conserto.** A redação entra na `RECOVERABLE_RE` de `src/lib/error-provenance.mjs`, ao lado
+do `Couldn't load texture` que já mora lá: aviso do three que o próprio three engoliu fica na
+telemetria bruta e não dispara issue. Fonte única (`jserror.ts` e `scripts/classify-crash.mjs`
+no CI), então o corte vale até para cliente velho em cache. **O que NÃO foi consertado, e por
+quê:** o balde do cliente continua o do BUG-72 — `console` COM pilha segue no `TETO_SESSAO`.
+Mudar isso é rever a decisão do BUG-72 inteira, e uma ocorrência não paga essa conta.
+
+**Dívida declarada.** A mensagem do three **não diz qual textura**: ele loga só o `error`, sem
+nome, sem formato e sem o tipo do `image`. Por isso o relato é inacionável por construção —
+não dá para consertar a origem a partir dele. Se a família voltar com frequência, o próximo
+passo é instrumentar o `uploadTexture` do vendor para dizer QUAL textura falhou, e aí a linha
+volta a ser acionável.
+
+**Medido (helper real, executado do fonte, sem browser):**
+
+| | antes | depois |
+|---|---|---|
+| a forma de campo da #465 classificada | `codigo` → issue automática | `recuperavel` → só telemetria |
+| `THREE.WebGLState: Invalid blending:` | `codigo` | `codigo` (contra-fixture) |
+| fingerprint publicado reproduzido | — | `c2d5e2c2` (EP8 mede) |
+| cláusulas verdes / mutantes que mordem | 17 / 47 | 18 / 52 |
+
+**Custo declarado, na população real:** das **99** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 28/08), exatamente **1** é desta família.
+**Vizinhas que continuam como estão, DE PROPÓSITO:** `THREE.WebGLState: Invalid blending:`
+(`three.module.js:23345` e `:23371`) é a ÚNICA outra mensagem com esse prefixo no bundle e é
+constante inválida **nossa** — segue `codigo`, e é a contra-fixture que trava o corte; a
+redação do Chrome (`Failed to execute 'texImage2D'…`) nunca foi observada e fica de fora por
+decisão, não por medição; `THREE.WebGLProgram: Shader Error…` segue no corte de log do
+BUG-72; e crash real dentro do vendor, com `source` same-origin, segue acionável.
+
+**Não verificado:** qual textura falhou (a mensagem não diz — ver a dívida acima) e em qual
+navegador: a issue veio sem user-agent, e `Type error` é redação do motor, não nossa. A linha
+completa do `js_error`, com `hits`, segue sem número: schema privado, sem credencial aqui.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, já no
+`check:fast` e no `check:deploy`). Cláusula **EP8**, agora com o payload PUBLICADO da #465
+(o fingerprint tem que ser reproduzido pela receita, mesma trava do EP12/EP17) e três
+contra-fixtures. **2 mutações novas:** `sem-webglstate` e `webglstate-amplo`. Matriz
+completa: **52 de 52 mordidos**.
+
 ### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
 
 **Sintoma (literal, issue #443, aberta pelo `crash-fix.yml` em 25/08 18:05Z):**
