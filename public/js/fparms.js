@@ -1,9 +1,5 @@
-// Viewmodel de braços em primeira pessoa.
-//
-// A fonte é o MESMO personagem selecionado e o MESMO esqueleto usado na terceira
-// pessoa. A arma continua sendo posicionada pelo enquadramento do game.js; os braços
-// são posados por IK no espaço da arma. Durante a recarga a mão de apoio percorre
-// foregrip -> carregador -> ferrolho, em vez de esconder/abaixar o conjunto inteiro.
+// Viewmodel de braços 1P: MESMO personagem/esqueleto da 3ª pessoa, braços posados
+// por IK no espaço da arma; na recarga a mão percorre foregrip→carregador→ferrolho.
 import * as THREE from 'three';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { getCharTemplate, getCharClips, measurePalmLocal } from './glbchars.js';

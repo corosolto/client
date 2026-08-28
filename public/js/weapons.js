@@ -258,12 +258,8 @@ export const ONE_HANDED = new Set(['pistol', 'deagle', 'revolver38', 'knife']);
 // Sidearm slot (tecla 2). Everything else except the knife is a primary (tecla 1).
 export const PISTOLS = new Set(['pistol', 'deagle', 'revolver38']);
 
-// Cada malha tem guarda-mão e proporções próprios.  O valor padrão deixa a mão
-// no último terço do guarda-mão; rifles excepcionalmente longos/altos precisam
-// de um ponto dedicado para o cotovelo não esticar e a palma não se soltar.
-// Estes três valores foram medidos com o rig FP articulado (erro do socket da
-// palma, não ajuste visual por tentativa): AWP 0,0547 m, SVD 0,0286 m e MD97
-// 0,0179 m antes da correção.
+// Rifles longos/altos pedem ponto de apoio dedicado (padrão: último terço do guarda-mão).
+// Medido por erro de socket no rig FP: AWP 0,0547 m, SVD 0,0286 m, MD97 0,0179 m.
 const SUPPORT_FORE = {
   awp: 0.62,
   mosin: 0.66,
@@ -282,11 +278,8 @@ export function gripPoints(id) {
   const cfg = weaponCFG(id);
   return {
     grip: new THREE.Vector3(0, 0, 0),
-    // The former 0.59× front-span target landed on the magazine well.  A real
-    // support hand sits near the last third of the handguard (CS 1.6 silhouette).
-    // weaponModel leaves `gripZ * len` in front of the origin (toward the
-    // muzzle); `(1 - gripZ)` is the stock span behind it.  The old formula used
-    // the stock span here and therefore selected the magazine, not handguard.
+    // Mão de apoio no último terço do guarda-mão (silhueta CS 1.6): à frente da
+    // origem há gripZ*len; a fórmula antiga usava o vão da coronha e caía no carregador.
     fore: ONE_HANDED.has(id) ? null : new THREE.Vector3(
       0.005,
       -0.045,

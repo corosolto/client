@@ -145,9 +145,8 @@ export class KnifeMeleeViewModel {
         ? object.material.map((material) => approvedGloveMaterial(material, this.profile))
         : approvedGloveMaterial(object.material, this.profile);
     });
-    // A raiz da cena recebe tracks de animação e não pode carregar a escala de
-    // enquadramento: o mixer a restauraria a cada frame. O wrapper não animado reduz
-    // mãos e faca como uma unidade, preservando todos os contatos do rig aprovado.
+    // A raiz recebe tracks do mixer (que restauraria a escala a cada frame):
+    // o enquadramento vive no wrapper não animado, mãos e faca como unidade.
     const packageRoot = new THREE.Group();
     packageRoot.name = 'knife_melee_package';
     packageRoot.scale.setScalar(PACKAGE_SCALE);

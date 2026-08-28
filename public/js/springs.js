@@ -194,9 +194,8 @@ export class ViewModelRig {
       const k = this.dur > 0 ? clamp(this.t / this.dur, 0, 1) : 1;
       if (this.state === 'reload') {
         this.reloadK = k;
-        // O conjunto não é abaixado durante a recarga. A leitura agora vem do rig
-        // esquelético: uma mão sai do apoio, visita carregador/ferrolho e volta,
-        // enquanto a outra mantém a arma visível e ancorada no quadro.
+        // Recarga não abaixa o conjunto: o rig esquelético conta a história —
+        // uma mão visita carregador/ferrolho, a outra ancora a arma no quadro.
         const dip = smooth(clamp(k / 0.18, 0, 1)) * (1 - smooth(clamp((k - 0.82) / 0.18, 0, 1)));
         stPos.y = 0; stPos.z = 0; stPos.x = 0;
         stRot.x = -0.018 * dip; stRot.y = 0.010 * dip; stRot.z = 0.016 * dip;
