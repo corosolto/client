@@ -148,7 +148,7 @@ hipóteses.
 | Régua | O que cobra |
 |---|---|
 | `tools/eval/movimento-golden.mjs` | a trajetória do jogador não mudou com a extração da física |
-| `tools/eval/netcode-check.mjs` | 32 cobranças do netcode, headless, com snapshots fabricados |
+| `tools/eval/netcode-check.mjs` | 35 cobranças do netcode, headless, com snapshots fabricados |
 | `server/smoke.mjs` | 51 cobranças do servidor de ponta a ponta, incluindo morte→respawn do slot |
 | `server/bench.mjs` | ms/tick → dimensionamento da VM |
 

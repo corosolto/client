@@ -4853,7 +4853,9 @@ export class Game {
     const wx = ix * cos + iz * sin, wz = -ix * sin + iz * cos;
     // CoD tuning (port tuning.js): chão 92 m/s² (velocidade cheia em ~50ms = "tight");
     // ar = 25% de autoridade e NÃO ganha velocidade além da que saiu do chão (cap).
-    const accel = p.grounded ? 92 : 23;
+    // `__mutAccel`: gancho da movimento-golden. Sem ele o `--mutar=n` era setado e nunca
+    // lido, e a régua passava verde com a física mudada. Zero em produção.
+    const accel = (p.grounded ? 92 : 23) + (this.__mutAccel || 0);
     const spBefore = Math.hypot(p.vel.x, p.vel.z);
     p.vel.x += wx * accel * dt; p.vel.z += wz * accel * dt;
     if (!p.grounded) {
