@@ -111,6 +111,8 @@ export class KnifeMeleeViewModel {
     this.basePosition = PACKAGE_OFFSET.clone();
     this.suspended = false;
     this.error = null;
+    // Harness em Node boota o Game sem rede: sem load, a faca fica no fallback.
+    if (typeof process !== 'undefined' && process.versions?.node) return;
     new GLTFLoader().load(KNIFE_URL, (gltf) => this._accept(gltf), undefined, (error) => {
       this.error = error;
       console.error('[melee-vm] faca não carregou; fallback procedural mantido', error);

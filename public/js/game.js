@@ -12,6 +12,7 @@ import { GPUParticles } from './gpuparticles.js';
 // radiância do céu MEDIDA por mapa (r3_fog.py) — teto de brilho da fumaça, ver _corDaFumaca
 import { skyRadiance } from './bloom.js';
 import { RecoilAxis, ViewModelRig } from './springs.js';
+import { KnifeMeleeViewModel } from './meleevm.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { frase, tr } from './i18n.js';   // EN por camada — o crash 'frase is not defined' de 06/08 foi este import faltando
 // cor de facção: UMA origem, importada também por brasoes.js e characters.js. O espelho
@@ -1004,6 +1005,22 @@ export class Game {
       this._fxTune = { light: 1, flash: 1, spark: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
+    // Faca melee autossuficiente (piloto knife-hires, BUG-75 M8): o módulo já
+    // estava na árvore e o game referenciava vm.melee em 12 pontos sem construí-lo.
+    this.vm.melee = new KnifeMeleeViewModel({
+      parent: this.vmScene,
+      profile: {
+        id: this.playerCharId,
+        skin: this.playerDef?.pal?.skin,
+        sleeve: this.playerDef?.pal?.shirt,
+        accent: factionColor(this.playerFaction),
+      },
+      onReady: () => {
+        if (this._disposed) return;
+        this._applyVmVisibility();
+        if (this.player.weapon === 'knife') this.vm.melee.draw();
+      },
+    });
 
     // ---- fx pools ----
     this.tracers = [];
