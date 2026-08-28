@@ -4,6 +4,7 @@ import { buildPoolDay } from './map_piscina.js';
 import { buildHavan, havanPropsForMatch } from './map_havan.js';
 import { buildFerroVelho, FERRO_PROPS } from './map_ferrovelho.js';
 import { buildQuebrada, QUEBRADA_PROPS } from './map_quebrada.js';
+import { buildCorrego, CORREGO_PROPS, CORREGO_AMBIENCE } from './map_corrego.js';
 import { buildObras, OBRAS_PROPS } from './map_obras.js';
 import { buildPosto, POSTO_PROPS } from './map_posto.js';
 import { buildUpa, UPA_PROPS } from './map_upa.js';
@@ -59,6 +60,9 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
+  /* DÍVIDA herdada: o prefixo `fy_` faz parte do id e renomear só aqui quebra CALADO —
+     `LOOKS`/`LOOK` caem no default de Brasília. Renome exige mudança própria com régua. */
+  corrego:  { name: 'Córrego (Favela de SP)', build: buildCorrego, props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
   // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
   // simétrico em z=0. Procedural (marquise/bombas/loja/totem) + props (kombi/fusca/pneus/casas).
@@ -111,6 +115,10 @@ export const ALIAS_MAPA = {
   fy_havan: 'loja_h',
   fy_ferrovelho: 'ferro_velho',
   fy_quebrada: 'quebrada',
+  /* O córrego nasceu `fy_corrego` na branch de origem e chega na main já renomeado — o
+     M1 do mapa-id-check não deixa id no estilo CS entrar. O alias existe porque link e
+     linha de banco gravados com o nome antigo NÃO podem cair no mapa padrão calados. */
+  fy_corrego: 'corrego',
 };
 
 export function resolveMapId(id) {
