@@ -5483,11 +5483,11 @@ export class Game {
       this.vm.root.scale.setScalar(1);
     } else {
       this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
-      // Coice, ADS, faca e rig compõem a rotação apenas no caminho legado.
+      // Coice, ADS, faca, rig e escala compõem apenas o caminho legado.
       this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;
-      this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;                            // yaw do coice/ADS + varredura da faca
-      this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;                                          // roll do coice + giro da lâmina + sway
-      this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);                                          // scale-down do VM em ADS
+      this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;
+      this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;
+      this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);
     }
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
