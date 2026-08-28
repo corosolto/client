@@ -45,6 +45,8 @@ check(/throwUtility/.test(runtime) && /UTILITY_/.test(runtime) && /utilityModels
   'pack pago de granadas mantém três modelos e arremesso autorado');
 check(/throwUtility\('smoke'/.test(game) && /throwUtility\('frag'/.test(game),
   'smoke e frag aguardam o release da animação');
+check(/grenades-world\.glb/.test(game) && /template\.clone\(true\)/.test(game),
+  'projétil lançado mantém a geometria paga no mundo');
 
 console.log(JSON.stringify({ mutant, weapons: gameplay.length, families: families.size, failures }, null, 2));
 process.exit(failures ? 1 : 0);

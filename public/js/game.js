@@ -1119,6 +1119,14 @@ export class Game {
     this._grenGeo = new THREE.SphereGeometry(0.06, 8, 6);
     this._grenMat = new THREE.MeshStandardMaterial({ color: 0x38472c, metalness: 0.2, roughness: 0.8 });
     this._fragMat = new THREE.MeshStandardMaterial({ color: 0x4a2018, metalness: 0.5, roughness: 0.55 });   // HE frag (marrom-metálico)
+    this._grenTemplates = {};
+    new GLTFLoader().load('/private-assets/viewmodels/grenade/grenades-world.glb?v=paid-aaa-1', (gltf) => {
+      if (this._disposed) return;
+      this._grenTemplates.frag = gltf.scene.getObjectByName('UTILITY_HE') || null;
+      this._grenTemplates.smoke = gltf.scene.getObjectByName('UTILITY_SMOKE') || null;
+      this._grenTemplates.flash = gltf.scene.getObjectByName('UTILITY_FLASH') || null;
+      for (const model of Object.values(this._grenTemplates)) model?.traverse((object) => { object.castShadow = true; });
+    }, undefined, () => {});
     this._smokeTex = this._makeSmokeTex();
     // modo Capture the Flag (?ctf=1): 3 pontos (2 spawns + meio); time vence o round segurando
     // os 3 ao mesmo tempo. Rounds SEM FIM (sem _endMatch). Captura = ~3s na zona sem inimigo.
@@ -4118,7 +4126,10 @@ export class Game {
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
   _spawnGrenade(origin, dir, kind, owner) {
-    const mesh = new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : this._grenMat);
+    const template = this._grenTemplates[kind];
+    const mesh = template
+      ? template.clone(true)
+      : new THREE.Mesh(this._grenGeo, kind === 'frag' ? this._fragMat : this._grenMat);
     mesh.position.copy(origin).addScaledVector(dir, 0.5);
     this.scene.add(mesh);
     this._grenades.push({
@@ -4231,6 +4242,8 @@ export class Game {
       const g = this._grenades[i];
       g.fuse -= dt; g.v.y -= 12 * dt;
       g.mesh.position.addScaledVector(g.v, dt);
+      g.mesh.rotation.x += dt * 8.5;
+      g.mesh.rotation.z += dt * 5.5;
       if (g.mesh.position.y < 0.1) { g.mesh.position.y = 0.1; g.v.y = Math.abs(g.v.y) * 0.4; g.v.x *= 0.6; g.v.z *= 0.6; }
       if (g.fuse <= 0) {
         if (g.kind === 'frag') this._explodeFrag(g.mesh.position.clone(), g.owner);
@@ -7323,6 +7336,11 @@ export class Game {
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
     this.vm?.melee?.dispose();
+    for (const model of Object.values(this._grenTemplates || {})) model?.traverse((object) => {
+      object.geometry?.dispose?.();
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) material?.dispose?.();
+    });
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }
