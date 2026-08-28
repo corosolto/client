@@ -29,6 +29,20 @@ const CLIP_ALIASES = Object.freeze({
   pumpempty: 'pump_empty',
 });
 
+// Whole-package optical framing. These offsets never touch an arm, weapon or prop
+// independently, so the authored hand contacts remain exact. Long guns need a little
+// more eye relief than the Unity preview camera provides at a browser's wide aspect.
+const FAMILY_FRAME = Object.freeze({
+  pistol:  { x: 0.080, y: -0.040, z: -0.100, fov: 84 },
+  revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
+  shotgun: { x: 0.050, y: -0.045, z: -0.200, fov: 84 },
+  sniper:  { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
+  bolt:    { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
+  lmg:     { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
+  p90:     { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
+  default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
+});
+
 const familyFor = (weapon) => AUTHORED_VM_MODELS[weapon] || '';
 const clipKey = (name = '') => {
   const key = name.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_');
@@ -64,9 +78,12 @@ function cameraSpacePackage(gltf, profile, parent, family) {
   authoredCamera.removeFromParent();
   scene.applyMatrix4(cameraInverse);
 
+  const frame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
+
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
   mount.add(scene);
+  mount.position.set(frame.x, frame.y, frame.z);
   mount.visible = false;
   parent.add(mount);
 
@@ -94,7 +111,7 @@ function cameraSpacePackage(gltf, profile, parent, family) {
       }
     }
   });
-  return { scene, mount, cameraFov, handMeshes, weaponMeshes };
+  return { scene, mount, cameraFov: Math.max(cameraFov, frame.fov), frame, handMeshes, weaponMeshes };
 }
 
 export class AuthoredViewModels {
@@ -182,10 +199,14 @@ export class AuthoredViewModels {
       entry.drawTime = Math.min(entry.drawDuration, entry.drawTime + step);
       const t = entry.drawTime / entry.drawDuration;
       const eased = 1 - Math.pow(1 - t, 3);
-      entry.mount.position.y = THREE.MathUtils.lerp(-0.22, 0, eased);
+      entry.mount.position.set(
+        entry.frame.x,
+        entry.frame.y + THREE.MathUtils.lerp(-0.22, 0, eased),
+        entry.frame.z,
+      );
       entry.mount.rotation.x = THREE.MathUtils.lerp(0.24, 0, eased);
     } else {
-      entry.mount.position.set(0, 0, 0);
+      entry.mount.position.set(entry.frame.x, entry.frame.y, entry.frame.z);
       entry.mount.rotation.set(0, 0, 0);
     }
   }
