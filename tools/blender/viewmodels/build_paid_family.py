@@ -308,8 +308,12 @@ def build() -> None:
         weapon_rig.animation_data_clear()
     weapon_root = next((obj for obj in weapon_objects if obj.parent is None and obj.type == "EMPTY"), None)
     if weapon_root is None:
-        raise RuntimeError("weapon FBX has no authored root transform")
-    weapon_root.name = f"SOCKET_WEAPON_{args.family.upper()}"
+        # Some newer pack families export the armature itself as the FBX root.
+        # Its 0.01 transform is the authored unit conversion, so it can be mounted
+        # directly without inventing another scaled parent.
+        weapon_root = weapon_rig
+    else:
+        weapon_root.name = f"SOCKET_WEAPON_{args.family.upper()}"
     for obj in weapon_objects:
         if obj.type == "MESH":
             obj.name = f"GEO_WEAPON_{args.family.upper()}_{obj.name}"
