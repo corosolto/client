@@ -39,7 +39,9 @@ const RAMPAS = [
   { lado: -1, zAlto: -33, zBaixo: -27 },
   { lado: 1, zAlto: -13, zBaixo: -7 },
   { lado: -1, zAlto: 9, zBaixo: 15 },
-  { lado: 1, zAlto: 29, zBaixo: 35 },
+  /* z[26,32] e nao [29,35]: em 35 o pe caia na faixa assoreada e dava 1,435 m de
+     degrau no meio da rampa (teto 0,55). BUG-80. */
+  { lado: 1, zAlto: 26, zBaixo: 32 },
 ];
 const RAMPA_X0 = CANAL_X1, RAMPA_X1 = CORREGO_X1;   // 3 → 5
 
@@ -1048,12 +1050,14 @@ export function buildCorrego(scene, T) {
   }
 
   /* ===================== GROUND HEIGHT ===================== */
-  function groundHeightAt(x, z) {
+  function groundHeightAt(x, z, yRef) {
     const ax = Math.abs(x);
     /* ORDEM IMPORTA, e é a ordem física: o tablado da ponte está POR CIMA do vão, o
        assoreamento das pontas está por cima do fundo, a rampa está no lugar da parede. */
     const ponte = ax <= CORREGO_W / 2 + 0.2 && (Math.abs(z + 22) <= 1.6 || Math.abs(z) <= 1.0 || Math.abs(z - 22) <= 1.6);
-    if (ponte) return 0.15;
+    /* CHAO MULTINIVEL (convencao do map_havan.js): quem pergunta de DENTRO do canal
+       recebe o fundo. Sem yRef devolve a camada de cima, como antes. BUG-80. */
+    if (ponte && !(yRef !== undefined && yRef < CANAL_FUNDO + 0.9)) return 0.15;
     if (ax <= 5 && Math.abs(z) >= HALF_Z - 6) return 0.05;
     // rampa de acesso: faixa da parede (|x| ∈ [3, 5]) descendo ao longo de z
     if (ax >= RAMPA_X0 && ax <= RAMPA_X1) {
