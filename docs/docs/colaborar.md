@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**12 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `Maná Soares`, `matheusgb`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**12 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `Maná Soares`, `matheusgb`, `nunreasonable`, `daltonfontes`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -235,10 +235,6 @@ O pipeline é data-driven a partir do GLB. Os GLBs de arma vivem em `public/mode
    - `CHR6` — nenhum par com a mesma silhueta (IoU ≤ 0,98).
 
 ## Como adicionar um mapa
-
-Para um roteiro orientado a agentes — incluindo ficha de design, prompt reutilizável,
-mutantes, preview e revisão adversarial — consulte
-[Criar mapa usando IA](./criar-mapa-com-ia.md).
 
 Hoje mapas são **código**, não dado: cada `map_*.js` é geometria declarada à mão, e os
 maiores rivalizam em tamanho com os módulos de sistema. Migrar isso para JSON é a Fase 2
