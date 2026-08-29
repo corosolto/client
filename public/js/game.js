@@ -722,7 +722,9 @@ export class Game {
     this._tpRight = new THREE.Vector3();
     this._tpEul = new THREE.Euler();
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
-    try { preloadCharacterAssets([playerCharId]); } catch {}
+    // Só a arma DESTE personagem: sem a lista, o bootstrap puxava as 27 no
+    // bloqueante (régua ARM1; o boot do main.js já carrega as da partida).
+    try { preloadCharacterAssets([playerCharId], { weapons: [charWeapon(playerCharId)] }); } catch {}
 
     // ---- player ----
     // Spawns holding the SAME weapon shown on the character-select screen (charWeapon).
