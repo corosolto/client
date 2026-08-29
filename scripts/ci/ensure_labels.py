@@ -20,10 +20,24 @@ LABELS = {
 }
 
 
+def rotulos_validos(argv: list) -> list:
+    return [label for label in argv if label in LABELS]
+
+
+def selftest() -> int:
+    # hermético: valida a tabela e o filtro sem chamar o gh.
+    for nome, (cor, descricao) in LABELS.items():
+        assert len(cor) == 6 and int(cor, 16) >= 0, (nome, cor)
+        assert descricao.strip(), nome
+    assert rotulos_validos(["target:main", "inventado"]) == ["target:main"]
+    print("selftest ok")
+    return 0
+
+
 def main() -> int:
-    for label in sys.argv[1:]:
-        if label not in LABELS:
-            continue
+    if "--selftest" in sys.argv:
+        return selftest()
+    for label in rotulos_validos(sys.argv[1:]):
         color, description = LABELS[label]
         subprocess.run(
             ["gh", "label", "create", label, "--color", color, "--description", description, "--force"],

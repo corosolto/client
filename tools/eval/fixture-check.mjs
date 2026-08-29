@@ -35,9 +35,7 @@ const base = arg('base') || 'origin/main';
 /* Dívida herdada: script de decisão que nasceu sem fixture. A lista só encolhe.
    Quem tocar num destes escreve o `--selftest` no mesmo PR. */
 const SEM_FIXTURE = new Set([
-  'scripts/ci/ensure_labels.py',
   'scripts/ci/issue_triage.py',
-  'scripts/ci/pr_classify.py',
   'scripts/ci/pr_route.py',
 ]);
 
