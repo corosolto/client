@@ -2789,12 +2789,31 @@ medidos:
 
 1. **A razão título/corpo não fechou.** Falta ~35%. Subir mais em px cria o problema oposto em
    tela baixa: a referência é uma FRAÇÃO da altura e o jogo é PX FIXO, então a proporção só bate
-   numa resolução. A correção certa é escala fluida (`clamp()`/`vh`), e ela **está bloqueada pela
-   régua**: `caixaDe()` (`tools/eval/ui-check.mjs:563`) lê `font-size` com `parseFloat`, e a UI3
-   só isenta elemento de canto ancorado em PX (`emPx`, mesma linha de raciocínio em :637).
-   Com `vh`/`clamp()` a UI3 mede caixa de 3,9 px e fica **cega**. **Ordem correta: ensinar
-   `px()`/`caixaDe()` a resolver `clamp()/min()/max()/vh` — com mutação — e só depois tornar a
-   escala fluida.**
+   numa resolução. A correção certa é escala fluida (`clamp()`/`vh`), e ela **estava bloqueada
+   pela régua**: `caixaDe()` lia `font-size` com `parseFloat`, e com `vh`/`clamp()` a UI3 media
+   caixa de 3,9 px e ficava **cega**.
+
+   **RÉGUA DESBLOQUEADA (29/08, branch `fix/ui-check-clamp`).** `resolvePx()`
+   (`tools/eval/ui-check.mjs`, ao lado de `caixaDe()`) agora resolve `clamp()/min()/max()/calc()`
+   e `vh/vw/rem/em` de forma determinística contra o viewport de medição da própria régua
+   (VW×VH = 1008×655; rem = 16 px, o `<html>` não declara `font-size`). Declarado-e-não-resolvível
+   virou VERMELHO (cláusula `fsCego` — "não sei medir" custa o mesmo que estar errado), e 7
+   `PROBAS_PX` na UI3 conferem o resolvedor a cada execução. **Mutação:**
+   `node tools/eval/ui-check.mjs ui3 --mutante=cego-a-clamp` restaura o parseFloat puro e acende
+   as 7 PROBAS_PX — e só elas (o CSS do HUD hoje é 100% px, então nenhum veredito de elemento
+   muda; exit 1 com a mensagem certa). Com a régua nova e o CSS atual, a razão título/corpo medida
+   segue **40/13 ≈ 3,08** (fs-700/fs-200, mesmos px de antes — a régua nova é no-op de veredito
+   sobre CSS em px, como deve ser num PR de régua) contra **3,33-5,00** da referência: a dívida de
+   ~35% está intacta e agora DESTRAVADA pra escala fluida.
+
+   **Vermelho pré-existente encontrado nesta rodada (não é deste PR, registrado pra não se
+   perder):** `npm run eval:ui` já estava vermelho na `main` por dois motivos alheios ao clamp —
+   (a) **UI4**: o jogo passou a usar `roundKills.E/B` e `killsToWin = Infinity` por padrão
+   (`?pace=1` devolve o alvo, game.js:742), e a régua ainda lê `roundKills.P` e cobra alvo finito
+   no ABATE — 4 casos DM reprovam com `alvoDeclarado=NENHUM / maiorPlacarDeRodada=NaN`;
+   (b) **UI1**: 10 itens abaixo do mínimo — `#hud-shortcuts` (1,96:1), cabeçalho/rodapé do
+   `#scoreboard` novo (1,5-3,84:1), `#rounds-row` (3,84:1) e uma linha de killfeed (4,3:1).
+   O `eval:ui` não é passo do `check:fast`, então esse vermelho não derrubava o gate.
 2. **`corpoFracMediana` (o -20% do menor corpo) não foi perseguido de propósito.** O piso de
    11 px está documentado como "legível em 1280×720" e o desvio repousa numa banda que o próprio
    `ref-ui.py` admite medir com ±12% de erro a 512 px (docstring). Encolher legibilidade por
