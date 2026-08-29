@@ -14,7 +14,7 @@ O número abaixo não é retórica, e não é escrito à mão: sai de `git short
 
 {/* BEGIN:GERADO:pessoas — não edite à mão, rode `npm run docs` */}
 
-**13 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben`, `Emerson Garrido`, `rubenmarcus`, `Ruben Marcus`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `Maná Soares`, `matheusgb`, `nunreasonable`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
+**13 identidades de autoria humana** assinam commit no histórico **desta branch**: `ruben-cytonic`, `Ruben Marcus`, `rubenmarcus`, `Ruben`, `Emerson Garrido`, `William Oliveira`, `Juan Versolato Lopes`, `daeeseD`, `Maná Soares`, `matheusgb`, `nunreasonable`, `daltonfontes`, `usantos`. O resto dos commits é assinado por agentes de IA. Branch não é repositório: quem contribuiu num ramo que esta branch não contém **não aparece aqui**.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `git shortlog -sn --no-merges (descontando autores que são agentes)`
 
@@ -248,21 +248,25 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 
 | Id | Nome no menu | Abre em | Arquivo em `public/js/` | Linhas |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.830 |
-| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 1.964 |
-| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.888 |
-| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.599 |
+| `praca_poderes` | Praça dos Três Poderes | rodadas | `map_brasilia.js` | 1.834 |
+| `piscina_treta` | Piscina da Treta | rodadas | `map_piscina.js` | 874 |
+| `loja_h` | Loja H (Estacionamento) | **captura** | `map_havan.js` | 2.013 |
+| `ferro_velho` | Ferro Velho do Zé | **captura** | `map_ferrovelho.js` | 1.921 |
+| `quebrada` | Quebrada (Rua do Baile) | **captura** | `map_quebrada.js` | 1.656 |
+| `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 813 |
+| `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
+| `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
 | `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |
-| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 247 |
+| `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 951 |
+| `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
+| `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
+| `obras_prefeitura` | Obras da Prefeitura | **captura** | `map_obras.js` | 257 |
+| `atacadao_treta` | Atacadão da Treta | **captura** | `map_atacadao.js` | 276 |
+| `parque_treta` | Parque da Treta | **captura** | `map_parque.js` | 426 |
+| `velho_oeste` | Velho Oeste da Treta | **captura** | `map_velho_oeste.js` | 449 |
+| `penitenciaria` | Penitenciária da Treta | **captura** | `map_penitenciaria.js` | 264 |
 
-**13 mapas registrados** — 2 abrem em rodadas e 11 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 15 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
+**17 mapas registrados** — 2 abrem em rodadas e 15 em captura. `ctfMode` **abre** o mapa em captura, não prende: o jogador troca no menu (é a `MOD1`). Há 20 arquivos `map_*.js` em `public/js/` — arquivo no disco **não** implica mapa jogável.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `objeto MAPS de public/js/maps.js`
 
