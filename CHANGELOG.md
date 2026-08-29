@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.193`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.194`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,15 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.194] — 2026-08-29
+
+### Mudado
+- feat(docs): como criar mapa com IA (#373 com DCO) (#469)
+- fix(csp): connect-src passa a casar wss — sem isto o multiplayer nao conecta (#471)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Documentação de como criar mapa com IA.
 
 ## [2.0.0-alpha.193] — 2026-08-29
 
