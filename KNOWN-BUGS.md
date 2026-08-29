@@ -845,7 +845,7 @@ O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conse
 `undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
 sobra quando alguém "conserta" o crash com `?.`.
 
-### BUG-51 · erro de extensão ou beacon virava bug do jogo
+### ~~BUG-51 · erro de extensão ou beacon virava bug do jogo~~ · FECHADO 29/08 — o que a entrada exigia já estava tudo no código (BUG-72..80), conferido cláusula a cláusula
 
 **Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
 `chrome-extension://` ou `moz-extension://` na origem, stack ou mensagem. #142 e #144
@@ -899,6 +899,32 @@ terceiro mesmo sendo same-origin, no helper (`VENDOR_RE`) e no cliente (`vendor`
 provado em `source` e em `stack`. EP8 executa o classificador real e a `origemDoJogo`
 inline contra o par de fixtures das duas issues e confirma que `/js/` do jogo segue
 `codigo`; mutantes `sem-vercel-helper` e `sem-vercel-cliente` guardam cada lado.
+
+**Fechamento (29/08).** A entrada estava aberta por inércia: cada exigência da régua
+prescrita acima já existe no código, com cláusula e mutante — o conserto foi FECHAR com
+evidência, não escrever código de novo (lei do `bug-hunt`: conferir antes de "consertar" o
+que já está consertado). Conferido item a item, com `arquivo:linha`:
+
+| exigência da entrada | onde mora | cláusula |
+|---|---|---|
+| esquema de extensão é externo (#138/#152/#156/#166) | `EXTENSION_RE`, `src/lib/error-provenance.mjs:1` | EP1 |
+| URL cross-origin é externa (beacon Cloudflare, #142/#144) | `isExternalCrash`, `src/lib/error-provenance.mjs:64`; fixtures `static.cloudflareinsights.com` na régua | EP2 |
+| esquema de extensão vale na mensagem, URL http não (#157) | `src/lib/error-provenance.mjs:69-74` | EP3 + EP6 |
+| same-origin e sinal opaco não são descartados | `isOpaqueNoise`, `src/lib/error-provenance.mjs:83-85` | EP3 + EP9 |
+| API grava ANTES de filtrar o dispatch, early-return único | `src/pages/api/jserror.ts:103` | EP4 |
+| workflow não abre issue para externo, em nenhum OR | `.github/workflows/crash-fix.yml` (step `cls` + condição da issue) | EP5 |
+| cliente não atribui externo ao lançamento, cota `TETO_EXTERNO`, overlay só interno | `origemDoJogo` inline de `src/pages/index.astro` (executada pela régua) | EP6 |
+
+**Medido no fechamento (29/08, nesta árvore):** `npm run eval:error-origin` — **EP1..EP18
+todas verdes**; matriz de mutação completa executada: **52 de 52 mutantes acendem vermelho**
+(`node tools/eval/error-provenance-check.mjs --mutante=<cada um da lista do próprio
+script>`), zero furos. A população que a entrada denunciava está reclassificada: as 7
+ocorrências originais (extensão + beacon) têm fixture na régua e caem em `externo` sem
+issue; as famílias vizinhas que a mesma entrada gerou viraram BUG-71..78/80/81, cada uma
+fechada com suas próprias cláusulas. Custo declarado: nenhum novo — este fechamento não
+mudou código, só mediu; os custos de cada camada estão declarados nas entradas que as
+construíram (ex.: alargamento do purge na BUG-75, cota própria de externo na revisão
+adversarial acima).
 
 ### ~~BUG-50 · WeakMap do Three derrubava o loop quando createFramebuffer falhava~~ · RESOLVIDO 12/08 (issue #171)
 
@@ -1164,7 +1190,7 @@ corrompido.
 
 ---
 
-### BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro
+### ~~BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro~~ · CONSERTO NO REPO 29/08 — aplicação na zona PENDENTE (`bash scripts/cloudflare-setup.sh` com credencial)
 
 **Evidência (08/08, ~03:14, print do jogador + curl).** Boot morto em
 `https://www.csbrasil.online` com o banner vermelho:
@@ -1193,6 +1219,52 @@ manhã do incidente, com o site quebrado, ele saía 1 citando `CONFIRM_MAX_MS`. 
 
 **Remediação manual restante:** purge do edge (`/js/*`) com token da Cloudflare — sem o
 `CF_API_TOKEN` cadastrado, o purge automático dos workflows é pulado.
+
+**Conserto na CAUSA (29/08).** O palpite óbvio — "o manifesto por conteúdo do BUG-48 já
+mitigou, é só fechar" — foi refutado com dado de campo: a **BUG-75 (issue #443, 25/08) é
+reincidência exata desta classe COM o manifesto no ar** desde 11/08. O mecanismo residual:
+o `?v=` por conteúdo protege quem chega com HTML novo, mas HTML velho em cache de
+navegador pede a URL `?v=` antiga; quando o edge a reabastece, a origem (que ignora a
+query) devolve o conteúdo NOVO sob a URL VELHA — e o `edge_ttl` de 1 mês servia esse mix
+por até 30 dias. A segunda via sugerida — purge automático em todo deploy — não fecha
+sozinha: o deploy normal é a integração Git da Vercel e **não passa por workflow nenhum**;
+só o fallback manual (`deploy-prod.yml`) tem onde pendurar purge.
+
+Duas mudanças versionadas, ambas travadas por régua:
+
+1. `scripts/cloudflare-setup.sh` — a regra `assets_jogo` foi partida: `assets_midia`
+   (áudio/modelos/img/fontes/posters) mantém os 2.592.000 s; **`assets_js` segura `/js/`
+   por 600 s**. Qualquer mix agora se autocura em ≤ 10 min — mais curto que a volta do
+   `prod-watch` (cron de 15 min), que segue como rede reativa (purge via `crash-fix.yml`).
+2. `.github/workflows/deploy-prod.yml` — o fallback manual purga os prefixos `/js/` e
+   `style.css` depois do `vercel deploy`, com o mesmo contrato do `crash-fix.yml`
+   (sem `CF_API_TOKEN` o passo é pulado, nunca vermelho por secret).
+
+| | antes | depois |
+|---|---|---:|
+| `edge_ttl` de `/js/` na config versionada | 2.592.000 s (1 mês) | 600 s |
+| janela máxima de mix main.js × fparms.js no edge | ~30 dias | ≤ 10 min |
+| deploy manual purga o edge | não | sim (pulado sem token) |
+| régua verde / mutantes que mordem | — (nenhuma régua lia a config) | EC1..EC3 / **4 de 4** |
+
+**Régua: `npm run eval:edgecache`** (`tools/eval/edge-cache-check.mjs`, no `check:fast` e
+no `check:deploy`). Vermelha ANTES do conserto nesta árvore (EC1: `assets_jogo` com
+2.592.000 s; EC3: deploy sem purge); verde depois. EC1 reprova qualquer cache rule que
+cubra `/js/` com `edge_ttl > 600 s`; EC2 é a anti-vacuidade (apagar a regra de `/js/` não
+aprova); EC3 exige o purge no `deploy-prod.yml`. Mutantes `ttl-mes`, `js-na-midia`,
+`sem-regra-js` e `sem-purge-deploy` — cada um acende a cláusula certa e o script se
+autodenuncia se a mutação passar.
+
+**Custo declarado.** O hit-ratio de `/js/` no edge cai: cada URL versionada volta à origem
+a cada 10 min em vez de 1 mês (a Vercel vira a fonte quente de `/js/`; mídia pesada segue
+1 mês). E a regra nova **só vale na zona depois que alguém com credencial rodar
+`bash scripts/cloudflare-setup.sh`** — até lá o edge real continua com o TTL de 1 mês e a
+entrada fica em "aplicação pendente", como a migration da BUG-54.
+
+**Não verificado:** o estado real da zona Cloudflare e a existência do `CF_API_TOKEN` nos
+secrets do repo (sem credencial local, e `gh secret list` bloqueado nesta sessão); o purge
+novo do `deploy-prod.yml` não foi executado (é `workflow_dispatch`). O que está medido é a
+config versionada, a régua e os 4 mutantes.
 
 ---
 
