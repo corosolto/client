@@ -51,6 +51,7 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+<<<<<<< HEAD
 ### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
 
 **Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
@@ -72,6 +73,143 @@ Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
 exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
 normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
 Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+=======
+### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
+
+**Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**
+*"screen.orientation.lock() is not available on this device."* (fingerprint `df013498`,
+origem `promise`) e *"Falha ao abrir partida: screen.orientation.lock() is not available on
+this device."* (fingerprint `342e306c`, origem vazia). Alpha.183, **sem stack e sem source**,
+e as migalhas das duas são **idênticas** (01:54:04 a 01:55:18, terminando em
+`clique #char-confirm` / `clique #btn-team-b`): é a MESMA sessão e a MESMA rejeição. Duas
+fingerprints porque o prefixo do `lancamento.fail()` muda o hash FNV — a forma da #419/#420.
+
+**Causa raiz — defeito de código, `public/js/main.js:1037`.** A linha era
+`fs.then(() => { try { screen.orientation?.lock?.('landscape'); } catch {} }).catch(() => {})`.
+O `lock()` devolve **promessa**, e ela não é devolvida nem capturada: o `try/catch` ao redor
+pega throw **síncrono**, e o `.catch` do fim da linha é do `requestFullscreen`, não do
+`lock`. No aparelho do relato a promessa **rejeita** — a frase é redação do navegador e não
+nossa (não existe essa string no repo) —, a rejeição vira `unhandledrejection`, e
+`origemDoJogo(null, undefined, mensagem)` (`index.astro:180`) devolve `true`: sem stack e
+sem source, nada prova terceiro. Com `interna === true`, `index.astro:347` chama
+`lancamento.fail()`, e a etapa `'partida'` está
+aberta desde `main.js:986` com janela de **60 s**: o painel "Falha ao abrir partida" cobre
+uma partida que ia carregar sozinha. O comentário do próprio trecho afirmava que esse
+navegador apenas **ignora** a trava; o relato mostra que ele **rejeita**, e ignorar em
+silêncio nunca teria aberto issue nenhuma — o comentário foi corrigido junto.
+
+**Conserto.** Uma linha: `?.catch?.(() => {})` colado na chamada do `lock()`. É o idioma
+que as outras TRÊS promessas de capacidade do jogo já usavam — `main.js:998`,
+`main.js:1185` e `game.js:2071`; a do `lock` era a única sem. `src/lib/error-provenance.mjs`
+ganha a `CAPACIDADE_RE` com a redação exata, classificando a família como `recuperavel`:
+é **rede para a janela do cache-split** (BUG-39), onde um `main.js` velho do edge ainda
+roda com HTML novo — não é o conserto.
+
+**Medido (sem browser, lendo o fonte e executando o helper real):**
+
+| | antes | depois |
+|---|---|---|
+| as 2 formas de campo classificadas | `codigo` → 2 issues | `recuperavel` → 0 issues |
+| `fail()` derruba o launch na rejeição | sim (#431) | não — a promessa já nasce capturada |
+| sítios de capacidade com catch colado | 3 de 4 | 4 de 4 |
+| fingerprints publicados reproduzidos | — | 2/2 (`df013498`, `342e306c`) |
+
+**Custo declarado, na população real:** das **99** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 28/08), exatamente **2** são desta família
+— e a busca por `not available` na mesma população devolve só essas duas. **Vizinhas que
+continuam como estão, DE PROPÓSITO:** `index.astro` NÃO ganhou guarda no
+`unhandledrejection` — consertada a origem, ela seria código morto, ao contrário da #420,
+onde o vendor ainda lança; `screen.orientation.lock() failed because the page is not
+fullscreen` (redação diferente, nunca observada) segue `codigo`; e qualquer crash que apenas
+CITE "is not available" segue acionável (contra-fixture na régua, mutante `capacidade-ampla`).
+Sem a trava de orientação, o overlay "gire o celular" do CSS continua sendo a rede — como
+sempre foi nos navegadores que nunca tiveram a API.
+
+**Não verificado:** sem browser nesta máquina a rejeição não foi reproduzida ao vivo, e o
+aparelho não está na issue — o que o relato prova é o ramo que rodou (`pointer: coarse` com
+`requestFullscreen` disponível, `main.js:1033-1037`), não a marca do navegador. A frequência
+da família por sessão no Supabase fica sem número (schema privado, sem credencial). O que está medido é a forma da
+guarda (EP18), os 2 fingerprints de campo e o fato de as outras 3 promessas de capacidade já
+usarem o mesmo idioma.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, já no
+`check:fast` e no `check:deploy` — nenhum passo novo no portão). Cláusula **EP18**: varre
+`src/` e `public/js/` e exige catch **colado na chamada** das quatro APIs de capacidade que
+devolvem promessa (`orientation.lock`, `requestPointerLock`, `requestFullscreen`,
+`exitFullscreen`), com UMA exceção declarada — o `const fs = …requestFullscreen?.()` de
+`main.js:1034`, cuja promessa os dois ramos das linhas seguintes capturam. Por linha não
+serviria: no `:1037` o `.catch` do `requestFullscreen` mora na MESMA linha e aprovaria o
+defeito de volta. **3 mutações novas:** `sem-capacidade`, `capacidade-ampla` e
+`lock-sem-catch`.
+
+### ~~BUG-81 · erro que o próprio three ENGOLE virava issue de crash do jogo~~ · RESOLVIDO 28/08 (issue #465)
+
+**Sintoma (literal, issue #465, aberta pelo `crash-fix.yml` em 28/08 07:34Z):**
+*"THREE.WebGLState: Type error"*, fingerprint `c2d5e2c2`, classe `codigo`, alpha.192,
+**origem vazia**, com stack do WebKit terminando em
+`update@…/js/loading3d.js:146:25` → `loop@…/js/main.js:2586:22`.
+
+**Causa raiz — não é exceção, é linha de log.** `crashFingerprint('console',
+'THREE.WebGLState: Type error', '')` devolve exatamente `c2d5e2c2`: o relato entrou pelo
+hook do `console.error` (`index.astro:397`), não pelo `window.onerror`. E quem emite é o
+**próprio three, de dentro de um `try/catch` seu**: `public/vendor/three.module.js:23761`
+embrulha `gl.texImage2D` e loga `console.error('THREE.WebGLState:', error)` — são **10
+irmãos** entre `:23650` e `:23785`, todos `tex*`/`compressedTex*`. O quadro **termina**: o
+`uploadTexture` segue, o `render()` retorna e o jogo continua sem aquele mapa. A pilha chegou
+junto porque o hook lê o argumento `Error` (`index.astro:411`, conserto do BUG-72) — e é
+justamente ela que faz `isConsoleLog()` devolver `false`, o corte do BUG-72 não pegar e o
+`classifyCrash` cair no `return 'codigo'` final. Pior: com pilha, o relato **não** cai no
+`TETO_CONSOLE`; come 1 dos 10 slots de exceção real do `TETO_SESSAO`.
+
+**Refutado antes de agir.** O palpite óbvio era "é a mesma textura webp da `RECOVERABLE_RE`":
+os GLBs de personagem são mesmo `EXT_texture_webp` (medido: `gotinha`, `canarinho` e
+`blackmetal` trazem 3 imagens `image/webp` cada, e `gotinha` é justo o modelo da tela de
+carregamento, `loading3d.js:7`). **Refutado por leitura:** quando a imagem não decodifica,
+`GLTFLoader.js:3178` resolve `null` e `assignTexture` (`:3290`) faz `if (!texture) return
+null` — o mapa nunca é atribuído, então não existe upload e não existe `texImage2D`. A #465
+**não** é a irmã tardia da #110.
+
+**Conserto.** A redação entra na `RECOVERABLE_RE` de `src/lib/error-provenance.mjs`, ao lado
+do `Couldn't load texture` que já mora lá: aviso do three que o próprio three engoliu fica na
+telemetria bruta e não dispara issue. Fonte única (`jserror.ts` e `scripts/classify-crash.mjs`
+no CI), então o corte vale até para cliente velho em cache. **O que NÃO foi consertado, e por
+quê:** o balde do cliente continua o do BUG-72 — `console` COM pilha segue no `TETO_SESSAO`.
+Mudar isso é rever a decisão do BUG-72 inteira, e uma ocorrência não paga essa conta.
+
+**Dívida declarada.** A mensagem do three **não diz qual textura**: ele loga só o `error`, sem
+nome, sem formato e sem o tipo do `image`. Por isso o relato é inacionável por construção —
+não dá para consertar a origem a partir dele. Se a família voltar com frequência, o próximo
+passo é instrumentar o `uploadTexture` do vendor para dizer QUAL textura falhou, e aí a linha
+volta a ser acionável.
+
+**Medido (helper real, executado do fonte, sem browser):**
+
+| | antes | depois |
+|---|---|---|
+| a forma de campo da #465 classificada | `codigo` → issue automática | `recuperavel` → só telemetria |
+| `THREE.WebGLState: Invalid blending:` | `codigo` | `codigo` (contra-fixture) |
+| fingerprint publicado reproduzido | — | `c2d5e2c2` (EP8 mede) |
+| cláusulas verdes / mutantes que mordem | 17 / 47 | 18 / 52 |
+
+**Custo declarado, na população real:** das **99** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 28/08), exatamente **1** é desta família.
+**Vizinhas que continuam como estão, DE PROPÓSITO:** `THREE.WebGLState: Invalid blending:`
+(`three.module.js:23345` e `:23371`) é a ÚNICA outra mensagem com esse prefixo no bundle e é
+constante inválida **nossa** — segue `codigo`, e é a contra-fixture que trava o corte; a
+redação do Chrome (`Failed to execute 'texImage2D'…`) nunca foi observada e fica de fora por
+decisão, não por medição; `THREE.WebGLProgram: Shader Error…` segue no corte de log do
+BUG-72; e crash real dentro do vendor, com `source` same-origin, segue acionável.
+
+**Não verificado:** qual textura falhou (a mensagem não diz — ver a dívida acima) e em qual
+navegador: a issue veio sem user-agent, e `Type error` é redação do motor, não nossa. A linha
+completa do `js_error`, com `hits`, segue sem número: schema privado, sem credencial aqui.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, já no
+`check:fast` e no `check:deploy`). Cláusula **EP8**, agora com o payload PUBLICADO da #465
+(o fingerprint tem que ser reproduzido pela receita, mesma trava do EP12/EP17) e três
+contra-fixtures. **2 mutações novas:** `sem-webglstate` e `webglstate-amplo`. Matriz
+completa: **52 de 52 mordidos**.
+>>>>>>> origin/main
 
 ### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
 
