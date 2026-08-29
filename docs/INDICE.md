@@ -26,14 +26,15 @@ ordem.
 | 7 | [`../tools/eval/BAR-CONSISTENCIA.md`](../tools/eval/BAR-CONSISTENCIA.md) | A régua vigente: 25 critérios de consistência e flow. **Tem precedência** sobre a `BAR.md`. |
 | 8 | [`../tools/eval/BAR.md`](../tools/eval/BAR.md) | A régua de fidelidade visual. Consulta, não leitura obrigatória. |
 | 9 | [`../tools/eval/README.md`](../tools/eval/README.md) | Catálogo do arnês: o que cada script mede, e quais estão obsoletos. |
+| 10 | [`docs/criar-mapa-com-ia.md`](docs/criar-mapa-com-ia.md) | Fluxo completo para especificar, implementar, integrar e validar mapas com assistência de IA. |
 
 ### 3. Vai mexer no SITE ou no BANCO
 
 | # | Arquivo | Por quê |
 |---|---|---|
-| 10 | [`seguranca.md`](seguranca.md) | O que foi fechado no pré-release, onde estava e como testar. Leia antes de mexer em `/api/*` ou em `supabase/`. |
-| 11 | [`../supabase/README.md`](../supabase/README.md) | Como aplicar as migrations. |
-| 12 | [`../supabase/opcional/OFUSCACAO-README.md`](../supabase/opcional/OFUSCACAO-README.md) | A ofuscação de schema entregue pronta e **não aplicada**. |
+| 11 | [`seguranca.md`](seguranca.md) | O que foi fechado no pré-release, onde estava e como testar. Leia antes de mexer em `/api/*` ou em `supabase/`. |
+| 12 | [`../supabase/README.md`](../supabase/README.md) | Como aplicar as migrations. |
+| 13 | [`../supabase/opcional/OFUSCACAO-README.md`](../supabase/opcional/OFUSCACAO-README.md) | A ofuscação de schema entregue pronta e **não aplicada**. |
 
 ### 4. Contexto e direção
 
