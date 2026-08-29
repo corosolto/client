@@ -63,6 +63,20 @@ de malha skinned.
   com balanço procedural `_updateParrot` — poleiro não precisa de voo, o que
   contorna a dívida de pássaro riggado CC0 registrada na pomba. Call-sites:
   mansao (balaustrada do terraço), parque_treta (AR4).
+- `arara_voo.glb` — “Arara em voo”, Mint text-to-3D, 27/08/2026 (lote céu).
+  Chat: <https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709>. Registro
+  `arara-voo`. **Paga a dívida registrada acima na pomba**: a presença aérea
+  acabou na v2.1 porque o `pigeon_flight.glb` era ave de asas abertas PARADA, e o
+  plans/22 condicionou a volta a "pássaro riggado de verdade". O rig do Mint
+  continua sendo só humanoid, então a solução foi a mesma do tatu e da pipa —
+  **asa vira NÓ, o bater é procedural**: `tools/split-props-v21.mjs arara_voo`
+  separa `asa-esquerda`/`asa-direita` com pivô na raiz (regra medida no bruto:
+  |z| > 0,10 é asa; 512/515 tris cada, simétrico), e o `skylife.js` gira as duas
+  em sentidos opostos, curso ~33°. Nariz em −X (`BIRD_FORWARD_X`), medido pela
+  densidade de triângulos: a ponta −x tem a cabeça compacta, a +x afina no rabo.
+  2.951 tris após `simplify .6`. Call-sites: corrego (bando de 3), lajes
+  (par). NÃO é fauna de chão: não entra no `ambientlife.js` nem no censo do
+  `ambience-registry` — vive no `skylife.js`, sem colisão e sem reação a tiro.
 - `barata_urbana.glb` — Mint text-to-3D, 19/08/2026 (vida 1). Barata de esgoto
   do córrego e da doca do atacadão; darta pelo `_updateRat`. Registro
   `barata-urbana`. (Primeira geração bloqueada pela moderação do Mint;

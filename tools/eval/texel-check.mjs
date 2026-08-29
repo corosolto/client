@@ -164,7 +164,7 @@ const { THREE, MAPS, initTextures, bootGame } = await import('./harness.mjs');
 }
 
 /* INSTRUMENTO: TextureLoader que resolve no DISCO em vez de na rede.
-   Sem isto, 71% da área do lajes, 92% do corrego e 89% do mansao saem como
+   Sem isto, 71% da área do fy_lajes, 92% do corrego e 89% do fy_mansao saem como
    `naoMedido` — esses três mapas usam textura externa (/img/textures/*.webp), o
    TextureLoader em node nunca completa e `map.image` fica null. Medir só o que carrega
    seria a LIÇÃO 3 outra vez (decal-probe jurando 334 decalques onde havia 96), com o

@@ -64,8 +64,6 @@ export const MAPS = {
   // 4 bandeiras (campinho · bar de esquina · ponto de ônibus · praça do baile). Spec do dono
   // em HANDOFF.md §A0.10. As vielas de fundo (x = ∓23) são requisito da CTF2, não decoração.
   quebrada:    { name: 'Quebrada (Rua do Baile)', build: buildQuebrada, props: QUEBRADA_PROPS, ctfMode: true },
-  /* DÍVIDA: renomear o prefixo `fy_` só aqui quebra CALADO — `LOOKS` (bloom.js) cai no
-     DEFAULT_LOOK de Brasília. Renome exige mudança própria com régua (PR #200). */
   escadao:       { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   campomorro:    { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
   lajes:         { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
@@ -123,11 +121,13 @@ export const ALIAS_MAPA = {
   fy_havan: 'loja_h',
   fy_ferrovelho: 'ferro_velho',
   fy_quebrada: 'quebrada',
-  escadao: 'escadao',
-  campomorro: 'campomorro',
-  lajes: 'lajes',
-  corrego: 'corrego',
-  mansao: 'mansao',
+  /* Os 5 mapas novos nasceram `fy_*` na branch de origem (o M1 não deixa id no estilo
+     CS entrar). Sem alias, link e banco com o nome antigo caem no mapa padrão CALADOS. */
+  fy_escadao: 'escadao',
+  fy_campomorro: 'campomorro',
+  fy_lajes: 'lajes',
+  fy_corrego: 'corrego',
+  fy_mansao: 'mansao',
 };
 
 export function resolveMapId(id) {

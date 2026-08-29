@@ -5,7 +5,7 @@
 <title>mapview — eval genérico de mapa</title>
 <style>html,body{margin:0;height:100%;background:#8fb7e0;overflow:hidden}#hud{position:fixed;left:6px;top:6px;font:11px monospace;color:#012;z-index:9}</style>
 <script type="importmap">
-{ "imports": { "three": "./vendor/three.module.js?h=919693a84f08", "three/addons/": "./vendor/addons/" } }
+{ "imports": { "three": "./vendor/three.module.js?h=a47c475b7bea", "three/addons/": "./vendor/addons/" } }
 </script>
 </head>
 <body>
@@ -93,6 +93,9 @@ if (qp.get('hud') === '0') hud.style.display = 'none';
   const redrawWhileLoading = () => {
     const now = performance.now(), dt = Math.min(.05, (now - lastFrame) / 1000); lastFrame = now;
     if (!qp.has('capture') && world.ambience && !world.ambience.paused) world.ambience.update(dt, null);
+    /* world.update também, não só a ambiência: é onde vivem a água e a vida de céu.
+       Auditor que captura o mundo estático não pode julgar movimento. */
+    if (!qp.has('capture')) { window.__t = (window.__t || 0) + dt; world.update?.(dt, window.__t); }
     renderer.render(scene, cam);
     if (++frames < 360) requestAnimationFrame(redrawWhileLoading);
   };

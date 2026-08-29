@@ -41,8 +41,14 @@ const MANIFEST = join(AUDIO, 'manifest.json');
 const CHECK = process.argv.includes('--check');
 
 // facção em disco -> letra de time usada pelo jogo (game.js/characters.js)
+/* PENDÊNCIA (vozes do time M): a pasta public/audio/miticos/ ainda não existe — as
+   falas dos 9 personagens do TIME MÍTICO não foram gravadas/geradas. Sem ela o pool
+   'M' sai VAZIO daqui e o jogo cai em silêncio: audio.js:104-110 devolve false quando
+   `voice['M']` é undefined/vazio (sem exceção, sem warn). É o fallback explícito
+   aceito POR ORA; quando as vozes entrarem no disco este manifesto passa a emiti-las
+   sem mais nenhuma mudança. */
 const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F',
-  nerdolas: 'N', profissionais: 'R', noias: 'O', tv: 'T' };
+  nerdolas: 'N', profissionais: 'R', noias: 'O', tv: 'T', miticos: 'M' };
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
 const VOICE_LINES = join(ROOT, 'content', 'voice-lines.json');
 

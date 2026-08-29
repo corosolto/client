@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.185`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.201`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,119 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.201] — 2026-08-29
+
+### Mudado
+- Dois P0 saem da lista: BUG-36 (Ctrl+W) e BUG-03 (bot mudo) rebaixados com medição (#480)
+- docs(bugs): BUG-36 e BUG-03 saem do P0 — mitigação/conserto já na main, rebaixados com medição
+
+## [2.0.0-alpha.200] — 2026-08-29
+
+### Mudado
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05) (#479)
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05)
+
+## [2.0.0-alpha.199] — 2026-08-29
+
+### Mudado
+- fix(edge+telemetria): os dois P0 — /js/ sai do TTL de 1 mês no edge (BUG-39) e BUG-51 fecha com evidência (#476)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(edge+telemetria): /js/ sai do TTL de 1 mês no edge e o BUG-51 fecha com evidência
+
+## [2.0.0-alpha.198] — 2026-08-29
+
+### Mudado
+- feat(audio): músicas do menu trocadas pela leva Suno — audio-pack-v7 (#473)
+- feat(audio): menu 100% Suno — pack v7 no ar e a URL aponta pra ele
+
+## [2.0.0-alpha.197] — 2026-08-29
+
+### Mudado
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85) (#478)
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85)
+
+## [2.0.0-alpha.196] — 2026-08-29
+
+### Mudado
+- docs: fecha BUG-01 — HUD de CTF já tem guarda, limpeza e régua (5/5) (#475)
+- docs: fechar BUG-01 — a faixa de CTF ja tem guarda de modo, limpeza e regua
+
+## [2.0.0-alpha.195] — 2026-08-29
+
+### Mudado
+- fix(three): render() pergunta ao driver se o contexto vive — a corrida da perda no meio do frame (#420)
+- fix: invariantes MAT2/TEX1, poster duplicado e check de posters (#365 + main) (#470)
+- fix(crash): perda de contexto WebGL no meio do frame (#444 + main) (#472)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): perda de contexto no meio do frame é recuperável — TypeError do WebKit não abre issue nem derruba o launch (#419 #420)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- fix: invariantes MAT2/TEX1, poster duplicado, check de posters e limpeza de PNGs
+
+## [2.0.0-alpha.194] — 2026-08-29
+
+### Mudado
+- feat(docs): como criar mapa com IA (#373 com DCO) (#469)
+- fix(csp): connect-src passa a casar wss — sem isto o multiplayer nao conecta (#471)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Documentação de como criar mapa com IA.
+
+## [2.0.0-alpha.193] — 2026-08-29
+
+### Mudado
+- fix(crash): erro que o próprio three ENGOLE não é bug do jogo — WebGLState fica na telemetria (#465)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(mobile): a promessa do orientation.lock chega com catch — a rejeição para de derrubar o launch (#431 #432)
+
+## [2.0.0-alpha.192] — 2026-08-28
+
+### Mudado
+- map: Córrego entra na main sozinho — e paga a dívida do prefixo fy_ (#460)
+
+## [2.0.0-alpha.191] — 2026-08-28
+
+### Mudado
+- feat: fumaça do cano + tranco e cápsulas mais fortes no tiro (#405)
+
+## [2.0.0-alpha.190] — 2026-08-28
+
+### Mudado
+- fix(autofix): branch da mesma casa mantém as ferramentas do PR (#434)
+- fix(ci): o bootstrap do issues-bot leva o trailer Agent, e a AF7 varre todos os workflows (#451) (#455)
+
+## [2.0.0-alpha.189] — 2026-08-27
+
+### Mudado
+- fix(crash): ponte injetada pelo navegador não é bug do jogo — __gCrWeb para de abrir issue (#428) (#433)
+
+## [2.0.0-alpha.188] — 2026-08-27
+
+### Mudado
+- feat(i18n): gêmea EN do /changelog e idioma honesto nas rotas EN (#400)
+
+## [2.0.0-alpha.187] — 2026-08-27
+
+### Mudado
+- fix(crash): carteira cripto injetada não é bug do jogo — window.ethereum para de abrir issue (#403) (#406)
+
+## [2.0.0-alpha.186] — 2026-08-26
+
+### Mudado
+- fix(crash): redações do WebKit e do Firefox pt-BR entram no CACHE_SPLIT_RE (#443) (#448)
 
 ## [2.0.0-alpha.185] — 2026-08-26
 

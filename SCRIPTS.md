@@ -260,7 +260,7 @@ npm run eval:error-console
 
 ## `eval:error-origin`
 
-Erros de extensão e scripts cross-origin continuam brutos, mas não acionam watchdog, dispatch ou issue do jogo. Mutantes: sem-extensao|sem-cross-origin|filtro-amplo|sem-api|sem-early-return|sem-workflow|abre-externo|sem-cliente|cliente-mensagem-url|sem-teto-externo|debug-externo|cache-antes-origem.
+Erros de extensão e scripts cross-origin continuam brutos, mas não acionam watchdog, dispatch ou issue do jogo. Mutantes: sem-extensao|sem-cross-origin|filtro-amplo|sem-api|sem-early-return|sem-workflow|abre-externo|sem-cliente|cliente-mensagem-url|sem-teto-externo|debug-externo|console-sem-origem|cache-antes-origem|sem-recuperavel|sem-opaco|opaco-sem-guarda|sem-vercel-helper|sem-vercel-cliente|sem-webgl|sem-fingerprint|escala-incoerente|grava-forjado|receita-imul|cliente-hash-bruto|cliente-sem-retrim|sem-log|log-amplo|log-sobre-tudo|log-nao-corta|sem-teto-console|pilha-so-no-primeiro|times-sem-erro|onerror-sem-src|boot-sem-migalha|payload-sem-migalhas|issue-sem-migalhas|sem-midia|midia-ampla|sem-cota-midia|cache-sem-binding|cache-so-ingles|cache-sem-especificador|sem-ponte|ponte-ampla|ponte-insensivel|sem-ponte-cliente|jogo-com-ponte|sem-webglstate|webglstate-amplo|sem-capacidade|capacidade-ampla|lock-sem-catch.
 
 ```bash
 npm run eval:error-origin
@@ -284,7 +284,7 @@ npm run eval:webglguard
 
 ## `eval:shaderlog`
 
-Logs WebGL nulos viram string vazia antes de trim; framebuffer nulo não derruba o WeakMap de drawBuffers; rotas usam versão, arnêses usam hash do core e addons sem URL própria revalidam na origem/CDN. Mutantes: sem-guardas|sem-cache-bust|addons-immutable|cloudflare-vendor|framebuffer-nulo.
+Logs WebGL nulos viram string vazia antes de trim; framebuffer nulo não derruba o WeakMap de drawBuffers; o render() consulta gl.isContextLost() além da flag assíncrona (perda de contexto no meio do frame, #419/#420); rotas usam versão, arnêses usam hash do core e addons sem URL própria revalidam na origem/CDN. Mutantes: sem-guardas|sem-cache-bust|addons-immutable|cloudflare-vendor|framebuffer-nulo|sem-contexto-sincrono.
 
 ```bash
 npm run eval:shaderlog
@@ -368,6 +368,14 @@ Contrato de produção do BotBrain: coleta opt-in autenticada por UID, limites c
 
 ```bash
 npm run eval:botbrain
+```
+
+## `eval:i18ntwins`
+
+Pares PT↔EN numa tabela só (`src/lib/i18n-pairs.ts`): hreflang, `html lang`, og:locale, sitemap e o parser único do changelog. A gêmea do `/changelog` é `/whats-new`; o cromo é EN e o corpo continua o `CHANGELOG.md`. Mutantes: sem-par|sem-redirect|chrome-pt|lang-pt|sem-sitemap|parser-dup.
+
+```bash
+npm run eval:i18ntwins
 ```
 
 ## `eval:posters`

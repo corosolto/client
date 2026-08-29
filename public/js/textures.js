@@ -501,6 +501,8 @@ export function initTextures() {
   // --- poster art (public/posters): pool satírico; personagens e marcas protegidas não entram.
   // Dimensões/aspecto reproduzidos por `node tools/eval/poster-aspect-check.mjs --json`.
   const POSTER_FILES = [
+    ['ashtar.png', 0.5625, 1.35],
+    ['ashtar-meme.jpg', 0.98, 1.2],   // o MEME original — o dono mandou voltar ('estava bom tb')
     ['despisque-leao.jpg', 0.86, 1.2], // o par do meme (leão 'despisque') — voltou junto, pedido de 06/08
     ['New Project (1).png', 0.5625],
     ['New Project (2).png', 0.5625], ['New Project (3).png', 0.5625],

@@ -1,6 +1,6 @@
 {
   "name": "coro-solto",
-  "version": "2.0.0-alpha.185",
+  "version": "2.0.0-alpha.201",
   "license": "AGPL-3.0-only",
   "description": "CORO SOLTO: Treta Suprema (ex-CS BRASIL) — FPS satírico de navegador com 5 facções brasileiras (site Astro + jogo vanilla em Three.js), gerado em par com agentes de IA (AI generated & AI friendly)",
   "scripts": {
@@ -55,6 +55,7 @@
     "eval:identity": "node tools/eval/identity-check.mjs",
     "eval:error-console": "node tools/eval/error-console-check.mjs",
     "eval:error-origin": "node tools/eval/error-provenance-check.mjs",
+    "eval:edgecache": "node tools/eval/edge-cache-check.mjs",
     "eval:webgl": "node tools/eval/webgl-compat-check.mjs",
     "eval:webglguard": "node tools/eval/webgl-guard-check.mjs",
     "eval:shaderlog": "node tools/eval/shader-log-check.mjs",
@@ -177,8 +178,8 @@
     "spec:check": "node tools/spec.mjs check plans/ && node tools/spec.mjs check --mutante",
     "skills:sync": "node tools/sync-skills.mjs",
     "skills:check": "node tools/sync-skills.mjs --check",
-    "check:deploy": "node tools/eval/runner.mjs syntax eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
-    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:props-acervo eval:propsuv1 eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:mansao-water eval:mansao-garden eval:corrego-contract eval:corrego-water eval:look eval:mansao-ocean eval:wind eval:softparticles eval:escala-favela eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check eval:pickuparma eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
+    "check:deploy": "node tools/eval/runner.mjs syntax eval:telemetry eval:identity eval:error-console eval:error-origin eval:edgecache eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam",
+    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:ambience-registry eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:charhard eval:charpbr eval:motoca-visual eval:camera-grip eval:pilot-system eval:pilot-grip eval:char-thumbnail eval:asset-integrity eval:gltf-validator eval:props-acervo eval:propsuv1 eval:character-voice eval:audio-pack-character-voice eval:cinematic-ui eval:grafite-editorial eval:map-source eval:map-new eval:campo-contract eval:lajes-rooftop eval:lajes-visual eval:lajes-authored eval:lajes-spatial eval:lajes-gap eval:lajes-circuito eval:lajes-antitrap eval:mansao-water eval:mansao-garden eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:look eval:mansao-ocean eval:wind eval:softparticles eval:escala-favela eval:escadao-contract eval:slice-abilities eval:faction-registry eval:mapview eval:devport spec:check skills:check eval:pickuparma eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam eval:skylife",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
     "eval:deps": "node tools/eval/deps-check.mjs",
@@ -189,7 +190,12 @@
     "eval:wfsecret": "node tools/eval/workflow-secret-check.mjs",
     "eval:deploygate": "node tools/eval/deploy-gate-check.mjs",
     "eval:autofix": "node tools/eval/autofix-check.mjs",
-    "eval:portaointeiro": "node tools/eval/portao-inteiro-check.mjs"
+    "eval:portaointeiro": "node tools/eval/portao-inteiro-check.mjs",
+    "eval:corrego-contract": "node tools/eval/corrego-contract-check.mjs",
+    "eval:corrego-water": "node tools/eval/corrego-water-check.mjs",
+    "eval:corrego-superficie": "node tools/eval/corrego-superficie-check.mjs",
+    "eval:skylife": "node tools/eval/skylife-check.mjs",
+    "eval:texel": "node tools/eval/texel-check.mjs"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,160 @@
+---
+// /whats-new - gêmea EM INGLÊS do /changelog (issue #54): mesmo CHANGELOG.md e mesmo
+// renderizador, só o cromo traduzido. As notas seguem em PT - traduzi-las é outra frente.
+import Layout from '../layouts/Layout.astro';
+import { BRAND_FULL, GAME_ID, abs } from '../lib/site';
+import { parseChangelog } from '../lib/changelog';
+
+/* Mesmo `?raw` do /changelog: o prerender mora em dist/server e um readFileSync
+   por import.meta.url quebraria o build (BUG documentado na irmã PT). */
+import md from '../../CHANGELOG.md?raw';
+
+const { versoes, recentes, atualVer } = parseChangelog(md);
+
+const jsonld = [
+  {
+    '@type': 'ItemList',
+    '@id': abs('/whats-new') + '#lista',
+    name: `${BRAND_FULL} version history`,
+    numberOfItems: recentes.length,
+    itemListElement: recentes.map((v, i) => ({
+      '@type': 'ListItem', position: i + 1, name: `v${v.versao}`,
+    })),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') },
+      { '@type': 'ListItem', position: 2, name: 'Changelog', item: abs('/whats-new') },
+    ],
+  },
+  { '@id': GAME_ID, softwareVersion: atualVer },
+];
+---
+<Layout
+  title={`Changelog - what changed (v${atualVer}) | ${BRAND_FULL}`}
+  description={`Version history of ${BRAND_FULL}: new factions, maps, weapons, viewmodel tweaks, bots and fixes, version by version.`}
+  jsonld={jsonld}
+  h1="Changelog"
+  kicker={`production version · v${atualVer}`}
+  heroImg="/img/map-previews/piscina_treta.jpg"
+  heroPos="46%">
+  <Fragment slot="sub">
+    Everything that changed, version by version. Production is <strong>v{atualVer}</strong>.
+    The full file lives in <code>CHANGELOG.md</code> in the repository - this page is that
+    file, rendered.
+  </Fragment>
+
+  <div id="cl-busca-slot"></div>
+
+  {recentes.map((v, i) => (
+    <details id={`v${v.versao}`} open={i < 3} data-versao={v.versao}>
+      <summary>
+        <strong>v{v.versao}</strong>
+        {v.data && <span style="color:var(--bone-dim);font-size:11px;letter-spacing:2px"> · {v.data}</span>}
+        <a class="cl-perma" href={`#v${v.versao}`} title={`Permalink to v${v.versao}`}
+           aria-label={`Copy permalink for version ${v.versao}`}>#</a>
+      </summary>
+      <div class="cl" set:html={v.html} />
+    </details>
+  ))}
+
+  {versoes.length > recentes.length && (
+    <p style="margin-top:18px">
+      Versions older than v{recentes[recentes.length - 1].versao} live in
+      <a href="https://github.com/corosolto/client/blob/main/CHANGELOG.md" rel="noopener"> CHANGELOG.md</a>.
+    </p>
+  )}
+</Layout>
+
+<style is:global>
+#main details[id^="v"]{scroll-margin-top:calc(var(--topo) + 12px)}
+.cl-perma{margin-left:8px;color:var(--bone-dim);text-decoration:none;font-weight:bold;
+  opacity:0;transition:opacity .12s}
+summary:hover .cl-perma,summary:focus-within .cl-perma,.cl-perma:focus-visible{opacity:1}
+.cl-perma.copiado{color:var(--amber);opacity:1}
+#cl-busca{width:100%;max-width:340px;margin-bottom:16px;background:var(--panel-2);
+  border:1px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:12px;
+  padding:8px 10px}
+#cl-busca::placeholder{color:var(--bone-dim)}
+.cl-vazio{color:var(--bone-dim);font-size:13px;margin-bottom:16px}
+.cl h3{margin:16px 0 6px;color:var(--amber);font-size:12px}
+.cl ul{margin:4px 0 4px 4px}
+.cl li{font-size:13px;line-height:1.55}
+.cl p{font-size:13px;margin:6px 0}
+</style>
+
+<script is:inline>
+(function () {
+  var versoes = Array.prototype.slice.call(document.querySelectorAll('details[data-versao]'));
+  if (!versoes.length) return;
+
+  function abrePeloHash() {
+    var h = location.hash.replace(/^#/, '');
+    if (!h) return;
+    var el = document.getElementById(h);
+    if (!el || el.tagName !== 'DETAILS') return;
+    el.open = true;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  abrePeloHash();
+  addEventListener('hashchange', abrePeloHash);
+
+  versoes.forEach(function (d) {
+    var a = d.querySelector('.cl-perma');
+    if (!a) return;
+    a.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var url = location.origin + location.pathname + '#' + d.id;
+      history.replaceState(null, '', '#' + d.id);
+      d.open = true;
+      var antes = a.textContent;
+      function ok() { a.textContent = 'copied'; a.classList.add('copiado');
+        setTimeout(function () { a.textContent = antes; a.classList.remove('copiado'); }, 1400); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(ok, function () { prompt('Copy the link:', url); });
+      } else { prompt('Copy the link:', url); }
+    });
+  });
+
+  var slot = document.getElementById('cl-busca-slot');
+  if (!slot) return;
+  var input = document.createElement('input');
+  input.type = 'search'; input.id = 'cl-busca';
+  input.placeholder = 'filter versions… (e.g. bots, viewmodel, 3.3)';
+  input.setAttribute('aria-label', 'Filter changelog versions by text');
+  var vazio = document.createElement('p');
+  vazio.className = 'cl-vazio'; vazio.hidden = true;
+  slot.appendChild(input); slot.appendChild(vazio);
+
+  var textos = versoes.map(function (d) {
+    return (d.getAttribute('data-versao') + ' ' + (d.textContent || '')).toLowerCase();
+  });
+  var abertoAntes = versoes.map(function (d) { return d.open; });
+
+  input.addEventListener('input', function () {
+    var q = input.value.trim().toLowerCase();
+    var achou = 0;
+    versoes.forEach(function (d, i) {
+      if (!q) { d.hidden = false; d.open = abertoAntes[i]; achou++; return; }
+      var casa = textos[i].indexOf(q) !== -1;
+      d.hidden = !casa;
+      if (casa) { d.open = true; achou++; }
+    });
+    vazio.hidden = !q || achou > 0;
+    if (!vazio.hidden) vazio.textContent = 'No version mentions "' + input.value.trim() + '".';
+  });
+})();
+</script>
+
+<script>
+  // espelho do /changelog: usuário em pt cai na gêmea PT (mesmas regras do i18n.js)
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    const ls = localStorage.getItem('cs_lang');
+    const lang = (q === 'pt' || q === 'en') ? q : (ls === 'pt' || ls === 'en') ? ls
+      : (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+    if (lang === 'pt') location.replace('/changelog');
+  } catch { /* fica */ }
+</script>

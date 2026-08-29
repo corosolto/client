@@ -3,8 +3,8 @@
 export const LOOK = {
   mansao: {   // Joá: sol de fim de tarde sobre o mar
     sky: '/img/textures/sky_joa.webp',
-    horizonte: 0xb1aca5,   // look-horizonte.py sobre sky_joa.webp (banda 429-441 de 887)
-    zenite: 0x6595bf,
+    horizonte: 0xc7a378,   // look-horizonte.py sobre sky_joa.webp (banda 498-510 de 1024)
+    zenite: 0x7fadc7,
     sol: { cor: 0xffefd8, i: 1.8, pos: [15, 30, -15] },
     hemi: { ceu: 0xf6f3ea, chao: 0x665c50, i: 1.02 },
     neblina: { d: 0.0068, solDir: [30, 32, 24], forca: 0.94 },

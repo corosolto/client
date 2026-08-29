@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
+    env:
+      # No `if:` de step o env de STEP não existe ainda — job-level, como no crash-fix.yml.
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -36,3 +39,16 @@ jobs:
           vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
           vercel build --prod --token "$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+
+      # BUG-39: sem purge, o edge segue servindo /js/ do deploy anterior até o TTL
+      # vencer — main.js de um deploy com fparms.js de outro. Mesmo contrato do
+      # crash-fix.yml: sem CF_API_TOKEN o passo é PULADO, nunca vermelho por secret.
+      - name: purge do edge Cloudflare (/js/ do deploy anterior)
+        if: env.CF_API_TOKEN != ''
+        run: |
+          ZONE_ID=$(curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=csbrasil.online" \
+            | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result[0].id))")
+          curl -sS -X POST -H "Authorization: Bearer $CF_API_TOKEN" -H "Content-Type: application/json" \
+            --data '{"prefixes":["www.csbrasil.online/js/","www.csbrasil.online/style.css"]}' \
+            "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/purge_cache"
