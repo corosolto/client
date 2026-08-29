@@ -1035,8 +1035,8 @@ async function _startGame(team, charId, enemyFaction) {
     try {
       const fs = document.documentElement.requestFullscreen?.();
       // trava de orientação só depois da tela cheia (a API exige fullscreen). Android respeita;
-      // iOS ignora — daí o overlay "gire o celular" (CSS) como rede. Falhar é aceitável.
-      if (TOUCH && fs?.then) fs.then(() => { try { screen.orientation?.lock?.('landscape'); } catch {} }).catch(() => {});
+      // WebKit REJEITA a promessa, e sem o catch a rejeição derrubava o launch (#431/#432).
+      if (TOUCH && fs?.then) fs.then(() => { try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch {} }).catch(() => {});
       else fs?.catch?.(() => {});
     } catch {}
   }
