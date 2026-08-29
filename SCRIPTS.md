@@ -284,7 +284,7 @@ npm run eval:webglguard
 
 ## `eval:shaderlog`
 
-Logs WebGL nulos viram string vazia antes de trim; framebuffer nulo não derruba o WeakMap de drawBuffers; rotas usam versão, arnêses usam hash do core e addons sem URL própria revalidam na origem/CDN. Mutantes: sem-guardas|sem-cache-bust|addons-immutable|cloudflare-vendor|framebuffer-nulo.
+Logs WebGL nulos viram string vazia antes de trim; framebuffer nulo não derruba o WeakMap de drawBuffers; o render() consulta gl.isContextLost() além da flag assíncrona (perda de contexto no meio do frame, #419/#420); rotas usam versão, arnêses usam hash do core e addons sem URL própria revalidam na origem/CDN. Mutantes: sem-guardas|sem-cache-bust|addons-immutable|cloudflare-vendor|framebuffer-nulo|sem-contexto-sincrono.
 
 ```bash
 npm run eval:shaderlog
