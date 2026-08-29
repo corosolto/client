@@ -51,7 +51,6 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
-<<<<<<< HEAD
 ### ~~BUG-71 · shader `'uv1' undeclared` — PropBatch jogava fora o TEXCOORD_1 do GLB~~ · RESOLVIDO 20/08
 
 **Sintoma:** toda captura da mansão (bug64-mansao-v21/depois) saía com o console de
@@ -73,7 +72,7 @@ Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
 exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
 normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
 Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
-=======
+
 ### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
 
 **Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**
@@ -209,7 +208,6 @@ completa do `js_error`, com `hits`, segue sem número: schema privado, sem crede
 (o fingerprint tem que ser reproduzido pela receita, mesma trava do EP12/EP17) e três
 contra-fixtures. **2 mutações novas:** `sem-webglstate` e `webglstate-amplo`. Matriz
 completa: **52 de 52 mordidos**.
->>>>>>> origin/main
 
 ### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
 
