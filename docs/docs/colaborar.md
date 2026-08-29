@@ -30,7 +30,7 @@ qualquer decisão de licença está no `CONTRIBUTING.md` (seção de licença e 
 :::
 
 Isso é relevante pra você de duas formas opostas. A ruim: se o seu PR travar, pode
-demorar. A boa: **quase toda a régua é máquina.** `npm run check` te dá o mesmo veredito
+demorar. A boa: **quase toda a régua é máquina.** `npm run check:fast` te dá o mesmo veredito
 que o mantenedor daria, antes de você abrir o PR, sem esperar ninguém. A barreira é baixa
 **de propósito** — é um dos princípios que não mudam do
 [`docs/ROADMAP.md`](https://github.com/rubenmarcus/csbrasil/blob/main/docs/ROADMAP.md).
@@ -68,7 +68,7 @@ Use `npm run dev`. Detalhes e prova em
 npm run eval:vm                          # OBRIGATÓRIO ANTES — ver o aviso abaixo
 node tools/eval/invariants.mjs           # o quality gate inteiro
 node tools/eval/invariants.mjs --json    # saída pra máquina
-npm run check                            # syntax + vm + quality gate + coice + bots
+npm run check:fast                       # syntax + quality gate (réguas de node puro)
 ```
 
 :::danger `eval:vm` roda ANTES de `invariants.mjs`. Sempre.
@@ -256,7 +256,7 @@ O registro, gerado do `MAPS` de `public/js/maps.js`:
 | `fy_escadao` | Escadão (Morro) | **captura** | `map_escadao.js` | 813 |
 | `fy_campomorro` | Campo do Morro | **captura** | `map_campomorro.js` | 713 |
 | `fy_lajes` | Lajes (Comunidade) | **captura** | `map_lajes_authored.js` | 1.263 |
-| `fy_corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.258 |
+| `corrego` | Córrego (Favela de SP) | **captura** | `map_corrego.js` | 1.345 |
 | `fy_mansao` | Mansão do Joá | **captura** | `map_mansao.js` | 951 |
 | `posto_treta` | Posto da Treta | **captura** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **captura** | `map_upa.js` | 302 |
@@ -347,9 +347,12 @@ em `git ls-files public/models/anims`). Doc que manda fazer o que já foi feito 
 primeira contribuição de alguém; por isso a lista virou ponteiro para `docs/issues/`,
 que é mantida.
 
-O único item da lista antiga que **continua valendo**: a mensagem das invariantes
-PX1–PX4 manda usar `tools/eval/motion.mjs`, que não existe (`ls` confirma). Apontar para
-o arnês certo, ou marcar como "arnês a escrever", é um PR de 15 minutos.
+O único item da lista antiga que **continua valendo** — e agora está consertado:
+a mensagem das invariantes PX1–PX4 apontava para `tools/eval/motion.mjs`, que
+nunca existiu no git (ponteiro fantasma). Hoje as skips declaram honestamente
+"sem arnês dedicado (dívida PX)": o que existe de browser no CI é o
+`portao-browser` (boot real do jogo + grafite + silhueta da seleção), e um
+arnês de viewmodel dedicado continua sendo trabalho aberto.
 :::
 
 ### Trabalho de verdade, ainda acessível

@@ -259,7 +259,7 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 813 |
 | `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 713 |
 | `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
-| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,258 |
+| `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,345 |
 | `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 951 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
@@ -350,9 +350,12 @@ in `git ls-files public/models/anims`). A doc that tells you to do what has alre
 someone's first contribution; that is why the list became a pointer to `docs/issues/`,
 which is maintained.
 
-The only item from the old list that **still stands**: the message of invariants
-PX1–PX4 tells you to use `tools/eval/motion.mjs`, which does not exist (`ls` confirms). Pointing to
-the right harness, or marking it as "harness to be written", is a 15-minute PR.
+The only item from the old list that **still stands** — and is now fixed: the
+message of invariants PX1–PX4 pointed to `tools/eval/motion.mjs`, which never
+existed in git (a phantom pointer). The skips now honestly declare "no dedicated
+harness (PX debt)": what runs in CI browsers today is `portao-browser` (real game
+boot + graffiti + selection-screen silhouette), and a dedicated viewmodel
+harness remains open work.
 :::
 
 ### Real work, still accessible {#real-work-still-accessible}

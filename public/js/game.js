@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { MAPS, resolveMapId } from './maps.js';
 import { buildCharacter, poseCharacter, byId, CHARACTERS, buildRifle, charWeapon } from './characters.js';
-import { buildCharacterModel, hasModel } from './glbchars.js';
+import { buildCharacterModel, hasModel, preloadCharacterAssets } from './glbchars.js';
 import { weaponModel, weaponCFG, ONE_HANDED, WEAPON_IDS, PISTOLS, gripPoints } from './weapons.js';
 import { buildFPArms, poseToWeapon, FP_OFF } from './fparms.js';
 import { VM_FRAME } from './vmattach.js';
@@ -712,6 +712,18 @@ export class Game {
     this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
 
+    // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
+    // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
+    this.camView = 'first';
+    this.playerTP = null;
+    this._tpWeapon = null;
+    this._tpDead = false;
+    this._tpFwd = new THREE.Vector3();
+    this._tpRight = new THREE.Vector3();
+    this._tpEul = new THREE.Euler();
+    this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
+    try { preloadCharacterAssets([playerCharId]); } catch {}
+
     // ---- player ----
     // Spawns holding the SAME weapon shown on the character-select screen (charWeapon).
     // primary/secondary remember the last weapon of each slot for the 1/2 keys.
@@ -1002,7 +1014,7 @@ export class Game {
       this._vmFlashLight.position.set(0.1, -0.06, -0.75);   // boca do cano em view space (pose GAUNTLET 2.0)
       this.vmScene.add(this._vmFlashLight);
       this._vmFlash = { t: 1, life: 0.045, peak: 1.6 };
-      this._fxTune = { light: 1, flash: 1, spark: 1 };   // multiplicadores de FX (dev.html game-backed)
+      this._fxTune = { light: 1, flash: 1, spark: 1, smoke: 1 };   // multiplicadores de FX (dev.html game-backed)
     }
     this.scene.userData.vmPass = { scene: this.vmScene, camera: this.vmCamera };
     // Faca melee autossuficiente (piloto knife-hires, BUG-75 M8): o módulo já
@@ -1061,6 +1073,13 @@ export class Game {
     // share another (soft smoke) — 1 draw call each, zero per-shot allocation (ring buffer).
     this.flashFx = new GPUParticles(this.scene, this.camera, { tex: this.flashTex, additive: true });
     this.puffFx = new GPUParticles(this.scene, this.camera, { tex: this.puffTex, additive: false });
+    // Fumaça do cano: sistema CINZA dedicado, que em quality:'low' NÃO pode cair no puffFx
+    // bege - é justamente na máquina fraca que ela precisa aparecer. Ver docs/RIG-PEGA-ARMA.md.
+    this._muzzleSmokeFx = new GPUParticles(this.scene, this.camera, { tex: this._makeSmokeTex(), additive: false, max: 64 });
+    if (this.puffFx && this.puffFx.uniforms) {
+      this._muzzleSmokeFx.uniforms.uTime = this.puffFx.uniforms.uTime;
+      this._muzzleSmokeFx.uniforms.uScale = this.puffFx.uniforms.uScale;
+    }
     // Muzzle flash (R7.5): 2 SPRITES additivos por tiro — estrela irregular com ruído +
     // núcleo branco-quente — compactos (0.35-0.5m), na boca do VM (baixo-direita), vida
     // ≤3 frames (~50ms). Era um cone de 8 segmentos + icosaedro escalado até 1.4 spawnado
@@ -1128,8 +1147,8 @@ export class Game {
     // arma→fallback no _muzzleWorld.
     Object.assign(this._vmMuzzle, this._vmMuzzleExt || {});
     // cápsulas (brass) ejetadas a cada tiro — geo/mat compartilhados, pool reusado
-    this._casingGeo = new THREE.CylinderGeometry(0.011, 0.011, 0.034, 6);
-    this._casingMat = new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 0.85, roughness: 0.4 });
+    this._casingGeo = new THREE.CylinderGeometry(0.016, 0.016, 0.05, 8);
+    this._casingMat = new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1.0, roughness: 0.35, emissive: 0x3a2a10, emissiveIntensity: 0.4 });
     this._casings = []; this._casingPool = [];
     // granada de fumaça: projétil (mesh) + nuvem de sprites billboard que bloqueia a visão dos bots
     this._grenades = []; this._smokes = [];
@@ -1629,15 +1648,27 @@ export class Game {
     // Braços FP vêm do personagem; se falharem, mostramos só a arma, nunca mãos genéricas.
     let arms = null;
     const _qsHands = new URLSearchParams(location.search).get('hands');
-    // O viewmodel completo é padrão; `?hands=0` mantém só-a-arma para diagnóstico.
-    const WEAPON_ONLY = _qsHands === '0';
-    if (!FP_OFF && !WEAPON_ONLY) arms = buildFPArms({ id: this.playerCharId, team: this.playerFaction, skin: pal.skin, sleeve: pal.shirt });
-    if (arms) root.add(arms.group);
-    // As cápsulas ainda existem só como geometria de compatibilidade dos grupos antigos,
-    // mas nunca são desenhadas. O caminho normal usa o SkinnedMesh do personagem.
-    for (const k in models) models[k].traverse((o) => {
-      if (o.name === 'handR' || o.name === 'handL') o.visible = false;
-    });
+    // SÓ-ARMA por padrão, estilo UNREAL TOURNAMENT (dono é fã de UT — arcade, só a arma no
+    // canto, sem mão). As mãos ficavam esquisitas/centralizadas. ?hands=1 liga o braço FP.
+    const WEAPON_ONLY = _qsHands !== '1';
+    if (!FP_OFF && !WEAPON_ONLY) arms = buildFPArms({ id: this.playerCharId, team: this.playerFaction });
+    if (arms) {
+      root.add(arms.group);
+      // Quem posiciona as armas é o _vmFrame, que deriva o ponto POR ARMA de len/gripZ e
+      // garante alcance do braço arma a arma (medido em vm-mint-audit.mjs: folga mínima
+      // 0,117 m em 26). A tabela antiga de 3 mounts fixos por classe pendurava uma AWP e
+      // uma UZI no MESMO ponto — daí "mão solta no ar". Foi embora com o caminho Tripo.
+      for (const k in models) {
+        const g = models[k];
+        const hR = g.getObjectByName('handR'), hL = g.getObjectByName('handL');
+        if (hR) hR.visible = false;
+        if (hL) hL.visible = false;
+      }
+    }
+    // SÓ-ARMA: esconde as mãos procedurais (handR/handL) presas a cada modelo de arma.
+    // (A handR procedural é cápsulas calibradas pra arma-box antiga — na arma Mint cai
+    // torta. Mão boa vem do corpo real do personagem: ver os modos de 3ª pessoa (camView).)
+    if (WEAPON_ONLY) for (const k in models) models[k].traverse((o) => { if (o.name === 'handR' || o.name === 'handL') o.visible = false; });
     this._weaponOnly = WEAPON_ONLY;
     // grip/ads expostos no objeto do VM (G3-R1): `grip[id]` é o PONTO DE EMPUNHADURA em
     // espaço do vm.root — contrato combinado com o agente de animação, que prende a mão nele
@@ -1846,6 +1877,7 @@ export class Game {
       if (e.code === 'KeyZ') { this._radioShow('z'); return; }
       if (e.code === 'KeyX') { this._radioShow('x'); return; }
       if (e.code === 'KeyV') { this._radioShow('c'); return; }
+      if (e.code === 'KeyB') { this._toggleCamView(); return; }   // 1ª/3ª pessoa on/off
       // slot memory: 1 = last primary held, 2 = last sidearm held (not a hardcoded reset)
       if (e.code === 'Digit1') this._switchWeapon(this.player.primary || 'awp');
       if (e.code === 'Digit2') this._switchWeapon(this.player.secondary || 'pistol');
@@ -3173,7 +3205,7 @@ export class Game {
     p.pitch = Math.max(-1.45, Math.min(1.45, p.pitch + vy * REC.perm));   // mesmo clamp do mouse-look
     p.yaw -= hx * REC.perm;
     st.last = this.time;
-    st.sh = Math.min(0.013, st.sh + g * 0.16);
+    st.sh = Math.min(0.020, st.sh + g * 0.22);
   }
   _tryShoot() {
     const p = this.player, w = WEAPONS[p.weapon];
@@ -3210,7 +3242,7 @@ export class Game {
     const spreadBase = (GUNFEEL
       ? (w.spreadHip + (spScoped - w.spreadHip) * adsF)
       : (p.weapon === 'awp' ? (p.scoped ? w.spreadScope : w.spreadHip) : w.spreadHip)) * crouchMul * moveMul;
-    const from = this.camera.getWorldPosition(new THREE.Vector3());
+    const from = this._aimOrigin(new THREE.Vector3());
     const pellets = w.pellets || 1;
     // Pedido do dono (17/08), "todos os tiros traçados": o rastro é segmento curto
     // viajante (~50 ms), não laser contínuo — por isso o antigo 1-em-3 saiu.
@@ -3273,7 +3305,7 @@ export class Game {
     return true;
   }
   _meleeHit() {
-    const from = this.camera.getWorldPosition(new THREE.Vector3());
+    const from = this._aimOrigin(new THREE.Vector3());
     const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
     let best = null, bd = WEAPONS.knife.range;
     for (const b of this.bots) {
@@ -3923,6 +3955,18 @@ export class Game {
       this.flashFx.spawn(pos, { vel: v, life: 0.06 + Math.random() * 0.05, size: fpCls ? 0.07 : 0.11, grow: -0.4 });
     }
     this.puffFx.spawn(pos.clone().addScaledVector(d, 0.18), { vel: d.clone().multiplyScalar(1.2), life: 0.3, size: fpCls ? 0.16 : 0.28, grow: 0.9 });
+    // fumaça do cano: 2-3 baforadas lentas subindo/à frente, vida longa, crescendo. Menor e mais
+    // perto na 1ª pessoa (fpCls) pra não virar blob colado na lente (mesmo cuidado das faíscas, R7.6).
+    const smokeN = fpCls ? 3 : 4;
+    const smokeSize = fpCls ? 0.2 : 0.32;
+    const smU = new THREE.Vector3(0, 1, 0);
+    for (let i = 0; i < Math.round(smokeN * ((this._fxTune && this._fxTune.smoke) ?? 1)); i++) {
+      const sv = d.clone().multiplyScalar(0.6 + Math.random() * 0.5)
+        .addScaledVector(smU, 0.5 + Math.random() * 0.4)
+        .add(new THREE.Vector3((Math.random() - 0.5) * 0.5, 0, (Math.random() - 0.5) * 0.5));
+      this._muzzleSmokeFx.spawn(pos.clone().addScaledVector(d, 0.10 + Math.random() * 0.1),
+        { vel: sv, life: 0.45 + Math.random() * 0.35, size: smokeSize, grow: 1.6 });
+    }
   }
   // Boca do cano em WORLD SPACE no instante do tiro: offset local da classe transformada
   // pelo matrixWorld ATUAL do vm.root (com o kick acumulado) e depois pela câmera — usado
@@ -3932,11 +3976,25 @@ export class Game {
     // _vmMuzzle dela apontaria flash/tracer para um cano que não está na tela).
     const authored = this.vm.authored?.muzzleWorld?.(this.player?.weapon, this.camera);
     if (authored) return authored;
+    if (this.camView !== 'first') {
+      // A câmera está atrás/acima, então a boca do cano NÃO pode sair dela: a fumaça nascia
+      // lá em cima. Sai do OLHO, na direção da mira, descida pra altura da arma na mão.
+      const dir = this.camera.getWorldDirection(new THREE.Vector3());
+      const m = this._eyeWorld.clone().addScaledVector(dir, 0.5);
+      m.y -= 0.28;
+      return m;
+    }
     const off = this._vmMuzzle[this.player?.weapon] || this._vmMuzzle[cls] || this._vmMuzzle.rifle;
     this.vm.root.updateWorldMatrix(true, false);
     const v = off.clone();
     this.vm.root.localToWorld(v);          // vmScene == espaço da câmera (vmCamera na origem)
     return this.camera.localToWorld(v);
+  }
+
+  // Origem do tiro/raycast: olho do jogador. Em 3ª pessoa a câmera está atrás — usar a
+  // câmera faria a bala nascer nas costas. Ver _eyeWorld (capturado no _updatePlayer).
+  _aimOrigin(out) {
+    return this.camView === 'first' ? this.camera.getWorldPosition(out) : out.copy(this._eyeWorld);
   }
   // Porta com SENSOR (Havan): desliza as 2 folhas ao chegar perto (player ou bot). Painéis são
   // só visuais (não colidem), então quando você alcança a porta já está aberta.
@@ -4015,10 +4073,10 @@ export class Game {
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
     const back = new THREE.Vector3(0, 0, 1).applyQuaternion(q);
-    c.v.copy(right).multiplyScalar(2.2 + Math.random() * 0.9).addScaledVector(up, 1.7 + Math.random() * 0.6).addScaledVector(back, 0.5 + Math.random() * 0.4);
+    c.v.copy(right).multiplyScalar(2.2 + Math.random() * 0.9).addScaledVector(up, 2.0 + Math.random() * 0.6).addScaledVector(back, 0.5 + Math.random() * 0.4);
     c.av.set((Math.random() - 0.5) * 24, (Math.random() - 0.5) * 24, (Math.random() - 0.5) * 24);
     c.m.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
-    c.m.scale.setScalar(1); c.ttl = 1.6;
+    c.m.scale.setScalar(1); c.ttl = 2.2;
     this.scene.add(c.m); this._casings.push(c);
   }
 
@@ -5188,6 +5246,102 @@ export class Game {
     if (this.vm?.root) this.vm.root.visible = false;
     if (this.el.crosshair) this.el.crosshair.style.display = 'none';
   }
+  // Cicla 1ª → 3ª (longe) → ombro (perto, vê braços) → 1ª (tecla B). Constrói o corpo
+  // 3ª pessoa na 1ª vez (lazy).
+  _toggleCamView() {
+    // first = 1ª pessoa (só-arma, padrão do jogo) · third = OTS SOCOM (cintura pra cima) ·
+    // shoulder = OTS colado (vê a arma de perto). A 1ª-pessoa-com-corpo (fpbody) foi removida.
+    const order = ['first', 'third', 'shoulder'];
+    this.camView = order[(order.indexOf(this.camView) + 1) % order.length];
+    if (this.camView !== 'first') this._ensurePlayerTP();
+    this._syncCamViewVis();
+  }
+
+  // Visibilidade base ao alternar: corpo TP em qualquer modo 3ª pessoa. Os braços FP são
+  // governados por frame no _updatePlayer, pra não brigar com o force-visible do ADS.
+  _syncCamViewVis() {
+    const tp = this.camView !== 'first';
+    if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = tp;
+    if (this.vm && this.vm.root && !tp) this.vm.root.visible = true;
+  }
+
+  // (Re)constrói o corpo TP com a arma ATUAL na mão, pelo mesmo caminho dos bots. Sem GLB
+  // ainda, cai no box e faz upgrade quando o asset chegar. Ver docs/RIG-PEGA-ARMA.md.
+  _ensurePlayerTP() {
+    const w = this.player.weapon, def = this.playerDef;
+    const weaponChanged = this.playerTP && this._tpWeapon !== w;
+    const wantUpgrade = this.playerTP && !this.playerTP.isGLB && hasModel(def.id);
+    if (this.playerTP && !weaponChanged && !wantUpgrade) return;
+    // Tenta o GLB (grip real). Se ainda não carregou e já temos algo, mantém o atual —
+    // evita reconstruir o box a cada frame enquanto os clips não chegam.
+    const glb = buildCharacterModel(def, { weaponId: w });
+    if (!glb && this.playerTP && !weaponChanged) return;
+    if (this.playerTP && this.playerTP.group) {
+      this.scene.remove(this.playerTP.group);
+      if (!this.playerTP.isGLB) this.playerTP.group.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+    }
+    const tp = glb || buildCharacter(def);
+    // O corpo do próprio jogador nunca é alvo/obstáculo de raycast (o hitscan mira só os
+    // grupos dos bots, mas marcamos por garantia — mesmo contrato do gun mount).
+    tp.group.traverse(o => { o.userData.noHit = true; o.userData.selfBody = true; });
+    tp.group.visible = (this.camView === 'third');
+    this.scene.add(tp.group);
+    this.playerTP = tp;
+    this._tpWeapon = w;
+  }
+
+  // Anima o corpo TP a partir do estado do jogador e põe a câmera atrás dele.
+  // `sp` = velocidade horizontal real; `eye` = altura do olho já com crouch/dip.
+  _updatePlayerTP(dt, sp, eye) {
+    this._ensurePlayerTP();
+    const tp = this.playerTP, p = this.player;
+    if (!tp) return;
+    // corpo: posição + yaw do jogador (mesma convenção dos bots: rotation.y = yaw).
+    tp.group.visible = true;
+    tp.group.position.copy(p.pos);
+    tp.group.rotation.set(0, p.yaw + Math.PI, 0);   // +180°: o corpo olha pra onde a câmera olha (de costas p/ ela)
+    // animação: locomoção pela velocidade + agachado + mira da cabeça pelo pitch.
+    if (tp.ctrl) {
+      tp.ctrl.setCrouch?.(p.crouchF > 0.5);
+      tp.ctrl.aimPitch = p.pitch;
+      tp.ctrl.update(dt, sp > 0.6 ? 1 : 0, false, sp, false);
+    } else if (tp.mixer) {
+      tp.mixer.update(dt);
+    }
+    this._tpEul.set(p.pitch, p.yaw, 0, 'YXZ');
+    const fwd = this._tpFwd.set(0, 0, -1).applyEuler(this._tpEul);
+    const right = this._tpRight.set(1, 0, 0).applyEuler(this._tpEul);
+    const cam = this.camera;
+    // 'third' = over-the-shoulder perto, cintura pra cima (estilo SOCOM): ~1,7 m atrás,
+    // ~1,8 m de altura olhando reto → pernas caem fora. 'shoulder' = mais colado ainda.
+    const shoulder = this.camView === 'shoulder';
+    const TP_DIST = shoulder ? 0.85 : 1.7;
+    const TP_UP = shoulder ? 0.10 : 0.18;
+    const TP_SIDE = shoulder ? 0.34 : 0.28;
+    cam.position.set(p.pos.x, p.pos.y + eye, p.pos.z).addScaledVector(fwd, -TP_DIST).addScaledVector(right, TP_SIDE);
+    cam.position.y += TP_UP;
+    const gy = this.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
+    if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
+    cam.rotation.set(p.pitch, p.yaw, 0);
+  }
+
+  // Morte em 3ª pessoa (e também visível na 1ª, na câmera de morte): toca a animação de
+  // queda no corpo TP e o mantém caindo. Sem isto o boneco ficava de pé (bug relatado).
+  _tpDeath(dt) {
+    this._ensurePlayerTP();
+    const tp = this.playerTP, p = this.player;
+    if (!tp) return;
+    if (!this._tpDead) {
+      this._tpDead = true;
+      tp.group.visible = true;                        // mostra o corpo caindo mesmo em 1ª pessoa
+      tp.group.position.copy(p.pos);
+      tp.group.rotation.set(0, p.yaw + Math.PI, 0);
+      if (tp.ctrl && tp.ctrl.die) tp.ctrl.die();
+    }
+    if (tp.ctrl) tp.ctrl.update(dt, 0, false, 0, false);
+    else if (tp.mixer) tp.mixer.update(dt);
+  }
+
   _updatePlayer(dt) {
     const p = this.player;
     this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
@@ -5200,6 +5354,7 @@ export class Game {
       const left = p.respawnAt - this.time;
       this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
       this._deathFeedback(dt);
+      this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
       if (left <= 0) this._respawnPlayer();
       // Em mapa multinível, um piso global atravessa a laje do andar alto (caso: mirante
       // do Escadão) — a queda da câmera termina acima do piso LOCAL onde o corpo morreu.
@@ -5209,6 +5364,12 @@ export class Game {
       this.camera.position.y = Math.max(deathFloor, this.camera.position.y - dt * 2);
       this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
       return;
+    }
+    // ressuscitou: desfaz a morte do corpo TP e ajusta visibilidade ao modo atual.
+    if (this._tpDead) {
+      this._tpDead = false;
+      if (this.playerTP && this.playerTP.ctrl && this.playerTP.ctrl.revive) this.playerTP.ctrl.revive();
+      if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = this.camView !== 'first';
     }
     if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
     // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
@@ -5347,7 +5508,13 @@ export class Game {
       camBobLat = Math.sin(p.stepPhase) * 0.009 * amp;
     }
     this.camera.position.set(p.pos.x + Math.cos(p.yaw) * camBobLat, p.pos.y + eye + camBobY, p.pos.z - Math.sin(p.yaw) * camBobLat);
-    this.camera.rotation.set(p.pitch + p.recoilP, p.yaw, 0);
+    const rp = p.recoilP;   // getter lido 1x: integra/decai o spring do recuo neste frame
+    // Roll por tiro na freq. 61 (o pitch usa 78): lê como "tremida", não como punch puro.
+    const roll = p._rec ? p._rec.sh * Math.sin(this.time * 61) * 0.5 : 0;
+    this.camera.rotation.set(p.pitch + rp, p.yaw, roll);
+    this._eyeWorld.copy(this.camera.position);   // olho: origem de tiro/fumaça em 3ª pessoa
+    // 3ª pessoa (longe/ombro): sobrepõe a câmera e anima o corpo TP. No-op na 1ª pessoa.
+    if (this.camView !== 'first') this._updatePlayerTP(dt, sp, eye);
     // footsteps + view bob
     const moving = sp > 0.6 && p.grounded;
     const running = moving && !p.scoped && p.crouchF < 0.2 && slowMul === 1 && sp >= maxSp * 0.88;
@@ -5410,7 +5577,8 @@ export class Game {
     // dynamic crosshair gap (movement/spray opens it, crouch + ADS tighten it)
     const gap = precAds ? 3 : Math.max(3, Math.min(26, 5 + sp * 1.15 + this.vm.kick * 20 - p.crouchF * 2.5 - (p.scoped ? 4 : 0)));
     this.el.crosshair.style.setProperty('--ch', gap.toFixed(1) + 'px');
-    this.vm.root.visible = !this.vm.melee?.active && !(realScope && mask > 0.55);   // a arma só sai de cena depois que a luneta cobre
+    // 3ª pessoa esconde FP; melee idem; luneta cobre por último.
+    this.vm.root.visible = this.camView === 'first' && !this.vm.melee?.active && !(realScope && mask > 0.55);
     // reload completion — RELÓGIO DE JOGO (devolve a munição). A ANIMAÇÃO é do rig e usa a
     // mesma duração da tabela, então as duas pontas chegam no mesmo quadro (BUG-04).
     if (!this._reloading() && p.reloadUntil > 0) {

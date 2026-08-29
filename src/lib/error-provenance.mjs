@@ -3,7 +3,9 @@ const EXTENSION_RE = /(?:chrome|moz|safari-web|safari)-extension:\/\//i;
 // servidos do próprio domínio, mas o código é de terceiro. Crash deles não é bug do jogo
 // e não tem conserto no nosso fonte.
 const VENDOR_RE = /\/_vercel\//i;
-const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|prod-coherence/i;
+/* Uma redação por engine (e por língua: a #362 chegou em pt-BR) do MESMO split do BUG-39.
+   Substrings literais de propósito — cache-split purga o edge, largo purga por engano (BUG-75). */
+const CACHE_SPLIT_RE = /does not provide an export|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Importing binding name|was a bare specifier, but was not remapped|era um especificador simples, mas não foi remapeado|Failed to resolve module specifier|Module specifier, .*? does not start with|prod-coherence/i;
 // Aviso RECUPERÁVEL do carregador do three: uma textura embutida (webp) do GLB não
 // decodifica em navegador minoritário (createImageBitmap), o three loga com console.error
 // mas o modelo CARREGA sem aquele mapa — o jogo não trava. É ambiental (não é defeito de
@@ -25,6 +27,12 @@ const OPAQUE_RE = /uncaught exception: undefined|illegal character\s+U\+[0-9a-f]
    e já exibiu o painel amigável (BUG-44). É ambiente do jogador, não defeito de código —
    não abre issue (#277/#276/#274: 3 issues automáticas pela mesma causa num dia). */
 const AMBIENTE_RE = /^sem_webgl:/i;
+// Carteira cripto injeta script inline no documento e o filename vira a própria página:
+// same-origin não inocenta. Estreito, exige o nome do global (KNOWN-BUGS.md, BUG-78).
+const CARTEIRA_RE = /\b(?:window|globalThis|self)\.(?:ethereum|solana|tronWeb|tronLink|phantom|keplr|BinanceChain|coinbaseWalletExtension|web3)\b|\bCannot redefine property:\s*(?:ethereum|solana|web3)\b|\bFailed to connect to MetaMask\b/i;
+// Ponte de navegador/WebView/extensão injetada no documento: o filename vira a própria
+// página, e same-origin não inocenta. Nome de terceiro, com a caixa dele (BUG-76).
+const PONTE_INJETADA_RE = /\b(?:__gCrWeb[A-Za-z0-9_$]*|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__|webkit\.messageHandlers)\b/;
 
 const normalizedOrigin = (value, base) => {
   if (!value) return null;
@@ -38,6 +46,12 @@ export function isExternalCrash({ message = '', source = '', stack = '' } = {}, 
   if (EXTENSION_RE.test(sourceText)) return true;
   // Vale antes do atalho same-origin: /_vercel/ é próprio domínio, mas terceiro.
   if (VENDOR_RE.test(sourceText) || VENDOR_RE.test(String(stack || ''))) return true;
+  // Mesmo motivo e mesmo lugar da VENDOR_RE: próprio domínio, código de terceiro.
+  // Vale em qualquer campo — o nome do global É a proveniência (BUG-78).
+  if (CARTEIRA_RE.test(evidence)) return true;
+  // Mesmo motivo e mesmo lugar da VENDOR_RE: própria origem, código de terceiro. Vale em
+  // qualquer campo — o NOME do global É a proveniência (BUG-76).
+  if (PONTE_INJETADA_RE.test(evidence)) return true;
 
   const sourceOrigin = /^https?:\/\//i.test(sourceText)
     ? normalizedOrigin(sourceText, ownOrigin)

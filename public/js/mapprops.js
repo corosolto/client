@@ -40,6 +40,13 @@ export async function preloadMapProps(ids) {
 
 export function hasProp(id) { return _base.has(id); }
 
+/* Registra um template de prop no mesmo registro do `preloadMapProps`. Existe para a
+   régua: sem isto, em node, toda cláusula de prop passa por vacuidade (BUG-72). */
+export function registerPropTemplate(id, scene) {
+  if (!scene) { _base.delete(id); return; }
+  _base.set(id, scene);
+}
+
 // Clone a prop, normalized so its height == targetH (metres), feet at y (default 0),
 // centred on (x,z) and yawed by ry. Returns the Object3D, or null if not loaded.
 //

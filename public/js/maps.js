@@ -69,7 +69,7 @@ export const MAPS = {
   fy_escadao:    { name: 'Escadão (Morro)',        build: buildEscadao,    props: ESCADAO_PROPS, ambience: ESCADAO_AMBIENCE, ctfMode: true },
   fy_campomorro: { name: 'Campo do Morro',         build: buildCampoMorro, props: CAMPOMORRO_PROPS, ctfMode: true },
   fy_lajes:      { name: 'Lajes (Comunidade)',     build: buildLajes,      props: LAJES_PROPS, ambience: LAJES_AMBIENCE, ctfMode: true },
-  fy_corrego:    { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
+  corrego:       { name: 'Córrego (Favela de SP)', build: buildCorrego,    props: CORREGO_PROPS, ambience: CORREGO_AMBIENCE, ctfMode: true },
   fy_mansao:     { name: 'Mansão do Joá',          build: buildMansao,     props: MANSAO_PROPS,     ctfMode: true },
   // Posto de gasolina de beira de estrada na hora dourada, cercado de casas de favela e com a
   // greve dos caminhoneiros travando a pista. 3 corredores (loja O · marquise C · pátio L),
@@ -123,6 +123,10 @@ export const ALIAS_MAPA = {
   fy_havan: 'loja_h',
   fy_ferrovelho: 'ferro_velho',
   fy_quebrada: 'quebrada',
+  /* O córrego nasceu `fy_corrego` na branch de origem e chega na main já renomeado — o
+     M1 do mapa-id-check não deixa id no estilo CS entrar. O alias existe porque link e
+     linha de banco gravados com o nome antigo NÃO podem cair no mapa padrão calados. */
+  fy_corrego: 'corrego',
 };
 
 export function resolveMapId(id) {

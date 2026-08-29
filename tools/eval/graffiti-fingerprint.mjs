@@ -39,7 +39,7 @@ export const MAP_SOURCES = {
   fy_escadao: 'public/js/map_escadao.js',
   fy_campomorro: 'public/js/map_campomorro.js',
   fy_lajes: 'public/js/map_lajes_authored.js',
-  fy_corrego: 'public/js/map_corrego.js',
+  corrego: 'public/js/map_corrego.js',
   fy_mansao: 'public/js/map_mansao.js',
 };
 export const PASS_FILE = 'public/js/graffiti_pass.js';

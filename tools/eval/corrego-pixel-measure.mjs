@@ -1,4 +1,4 @@
-// MEDIÇÃO DE PIXEL da frente B (fy_corrego) — prova de browser para a régua:
+// MEDIÇÃO DE PIXEL da frente B (corrego) — prova de browser para a régua:
 //   1. censo: o jacaré/capivara GLB está NO JOGO REAL (loader de verdade, com textura);
 //   2. água: com a pose CONGELADA (re-afirmada antes de cada shot), frames a 1,2 s
 //      mudam pixels da faixa do canal com ?agua=1 e não mudam com ?agua=0;
@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8131';
-const OUT = 'tools/eval/asset-evidence/maps/fy_corrego';
+const OUT = 'tools/eval/asset-evidence/maps/corrego';
 const VW = 1500, VH = 1000;
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -28,7 +28,7 @@ page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message);
 
 async function boot(qs) {
   for (let att = 0; att < 3; att++) {
-    try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_corrego${qs}`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { if (att === 2) throw e; }
+    try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=corrego${qs}`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { if (att === 2) throw e; }
   }
   await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
   await page.waitForTimeout(1800);

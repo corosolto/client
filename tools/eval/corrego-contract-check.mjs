@@ -7,7 +7,7 @@
    - 3–5 ratos têm anatomia legível, patas apoiadas sob o corpo e contexto de lixo;
    - o canal tem lâmina rebaixada e duas paredes verticais visíveis de profundidade.
 
-   Procedência visual: `tmp/map-alpha61-openrouter-review.json`, fy_corrego, itens 1–5.
+   Procedência visual: `tmp/map-alpha61-openrouter-review.json`, corrego, itens 1–5.
    Mutações: sem-lento | capivara-centro | ratos-parados | capivara-gigante | ratos-ovais
    | capivara-brinquedo | ratos-sem-contexto | canal-sem-profundidade
 
@@ -26,7 +26,7 @@
    preload do browser usa (`registerFaunaTemplate`). Isso valida registro, clone,
    normalização de escala, posição e afundamento — todo o código do JOGO. O parse real
    do binário fica coberto por `eval:gltf-validator` (Khronos 0 erros) e pela captura
-   de browser (evidência da frente em tools/eval/asset-evidence/maps/fy_corrego/).
+   de browser (evidência da frente em tools/eval/asset-evidence/maps/corrego/).
 
    ÁGUA VIVA ("o threejs consegue fazer coisa muito melhor que isso", dono 18/08): a
    lâmina base precisa de onBeforeCompile com uniform de tempo (uAgua), geometria
@@ -35,20 +35,26 @@
    abaixo das fitas de brilho, que estão a +3 cm da lâmina).
    Mutações: agua-morta (remove onBeforeCompile e congela o relógio → vermelho).
 
-   GRAMA (lote E-B, frente E): o mundo expõe `gramaSpots` (terreno reservado) e
-   `gramaServida` (meshes colocados quando o prop `grama_corrego` existir no acervo).
-   Sem o prop, a cláusula de presença fica DORMENTE e AVISA (pendência da frente E);
-   com o prop, >= 90% dos spots servidos. Mutante grama-sumiu (só aplica com prop).
+   GRAMA (BUG-72): a dormência da cláusula vem do ACERVO EM DISCO, nunca de
+   `gramaServida.length` — a versão antiga era circular e deixou o mapa um ciclo inteiro
+   sem uma folha, com portão verde. Havendo GLB de vegetação em public/models/props, a
+   presença é COBRADA. Mutantes: grama-sumiu (esconde o que foi plantado) e
+   veg-nao-carrega (tira os templates do registro = a forma exata do defeito original).
+
+   RAMPA (BUG-72): raio horizontal do fundo do canal para fora, nas 4 rampas, 4 alturas.
+   Antes do conserto 71/176 (40,3%) escapavam para o skybox; controle em trecho sem
+   rampa 0/32 — é o controle que refuta "face virada". Mutante rampa-vazada.
 */
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { THREE, initTextures, bootGame } from './harness.mjs';
 import { registerFaunaTemplate } from '../../public/js/ambientlife.js';
+import { registerPropTemplate } from '../../public/js/mapprops.js';
 
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || null;
 const MUTANTES_FALLBACK = ['sem-lento', 'capivara-centro', 'ratos-parados', 'capivara-gigante', 'ratos-ovais',
   'capivara-urso', 'capivara-brinquedo', 'capivara-tapir', 'capivara-dois-apoios', 'ratos-clonados',
   'ratos-sem-contexto', 'ratos-sob-lixo', 'canal-preto', 'canal-sem-profundidade', 'ponte-prancha'];
-const MUTANTES_GLB = ['proxy-volta', 'agua-morta', 'grama-sumiu'];
+const MUTANTES_GLB = ['proxy-volta', 'agua-morta', 'grama-sumiu', 'veg-nao-carrega', 'rampa-vazada'];
 if (mutante && !MUTANTES_FALLBACK.includes(mutante) && !MUTANTES_GLB.includes(mutante)) {
   throw new Error(`mutante desconhecido: ${mutante}`);
 }
@@ -73,6 +79,29 @@ function glbBounds(file) {
   }
   return { min: mn, max: mx };
 }
+/* BUG-72: sem os props de vegetação registrados, `hasProp` é false em node e TODA
+   cláusula de grama passa por vacuidade — foi exatamente assim que o defeito viveu um
+   ciclo inteiro atrás de um portão verde. Os bounds vêm do binário real. */
+function registrarVegetacao(remover = false) {
+  for (const arquivo of readdirSync(new URL('../../public/models/props', import.meta.url))
+    .filter((f) => /^(grama_corrego|planta_corrego)[\w-]*\.glb$/.test(f))) {
+    const id = arquivo.replace(/\.glb$/, '');
+    if (remover) { registerPropTemplate(id, null); continue; }
+    const b = glbBounds(`public/models/props/${arquivo}`);
+    const geo = new THREE.BoxGeometry(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]);
+    geo.translate((b.max[0] + b.min[0]) / 2, (b.max[1] + b.min[1]) / 2, (b.max[2] + b.min[2]) / 2);
+    const cena = new THREE.Group();
+    /* O stub leva um `map` de 1 px de propósito: sem ele estes 4 props entravam na conta
+       de "materiais sem map" do corrego-superficie e empurravam 36% -> 39% contra um teto
+       de 40%. Régua não pode mover o número de OUTRA régua — o GLB real é texturizado. */
+    const mat = new THREE.MeshStandardMaterial({ color: 0x5f7a44 });
+    mat.map = new THREE.DataTexture(new Uint8Array([95, 122, 68, 255]), 1, 1);
+    mat.map.needsUpdate = true;
+    cena.add(new THREE.Mesh(geo, mat));
+    registerPropTemplate(id, cena);
+  }
+}
+
 function registrarStubs() {
   for (const [id, file, alvoLen, yawFix] of [
     ['jacare', 'public/models/ambient/jacare_corrego.glb', 1.8, Math.PI / 2],   // focinho -X no GLB → +Z após o fix
@@ -89,7 +118,7 @@ function registrarStubs() {
 }
 
 /* ══ PASS 1 — SEM templates: proxies procedurais (cláusulas originais) ══ */
-const game = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+const game = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world = game.world;
 const slowAt = mutante === 'sem-lento' ? () => false : world.slowAt;
 const fauna = [];
@@ -257,7 +286,11 @@ const checks = [
 
 /* ══ PASS 2 — COM templates de fauna: censo GLB + água viva + grama ══ */
 registrarStubs();
-const game2 = bootGame('fy_corrego', { textures: initTextures(), ctf: true, seed: 13007 });
+/* `veg-nao-carrega` tira os templates de vegetação do registro — é EXATAMENTE a forma do
+   BUG-72 (o id pedido não existia, então o prop nunca carregava). Com a cláusula antiga,
+   ligada a `gramaServida.length > 0`, isto passava verde; agora reprova. */
+registrarVegetacao(mutante === 'veg-nao-carrega');
+const game2 = bootGame('corrego', { textures: initTextures(), ctf: true, seed: 13007 });
 const world2 = game2.world;
 const fauna2 = [], faunaProxy2 = [], canal2 = [];
 world2.root.updateMatrixWorld(true);
@@ -333,7 +366,14 @@ try {
 } catch { aguaRelogioAnda = false; }
 const aguaAmpOk = !lamina?.userData?.aguaAmp || (lamina.userData.aguaAmp > 0 && lamina.userData.aguaAmp <= 0.03);   // brilho está a +3 cm da lâmina: crista tem de ficar abaixo
 const gramaSpots = world2.gramaSpots || [];
-const gramaAtiva = gramaServida.length > 0;
+/* BUG-72: `gramaAtiva = gramaServida.length > 0` era CIRCULAR — sem grama servida a
+   cláusula ficava dormente e o portão passava verde justamente no caso que ele existe
+   para pegar. O mesmo id errado (`grama_corrego` contra `grama_corrego_01/_02` no disco)
+   impedia a grama E calava a régua. Agora a dormência vem do ACERVO EM DISCO: se existe
+   GLB de vegetação, a cláusula é COBRADA — id errado não se esconde mais atrás dela. */
+const acervoVegetacao = readdirSync(new URL('../../public/models/props', import.meta.url))
+  .filter((f) => /^(grama_corrego|planta_corrego)[\w-]*\.glb$/.test(f));
+const gramaAtiva = acervoVegetacao.length > 0;
 const gramaVisivel = gramaServida.filter((g) => g.visible !== false).length;
 // dentro do mapa PELOS BOUNDS do próprio world — número de outra fonte é teto órfão
 const b0 = world2.bounds || {};
@@ -377,9 +417,50 @@ checks.push(
   ['grama: terreno reservado nas margens (>= 12 spots dentro do mapa)', gramaSpots.length >= 12 && gramaSpotsDentro],
 );
 if (!gramaAtiva) {
-  console.log('· GRAMA: prop grama_corrego ausente no acervo — cláusula de presença DORMENTE (pendência da frente E, lote E-B)');
+  console.log('· GRAMA: nenhum GLB de vegetação no acervo — cláusula DORMENTE (e agora isso é verificável em disco)');
 } else {
-  checks.push(['grama servida e visível em >= 90% dos spots', gramaVisivel / Math.max(1, gramaServida.length) >= 0.9]);
+  console.log(`· GRAMA: ${acervoVegetacao.length} GLB(s) de vegetação no acervo (${acervoVegetacao.join(', ')}) — cláusula COBRADA`);
+  checks.push([`grama SERVIDA na cena (acervo tem ${acervoVegetacao.length} GLB; servidos ${gramaServida.length} de ${gramaSpots.length} spots)`,
+    gramaServida.length >= Math.ceil(gramaSpots.length * 0.6)]);
+  checks.push(['grama servida e visível em >= 90% do que foi servido',
+    gramaServida.length > 0 && gramaVisivel / Math.max(1, gramaServida.length) >= 0.9]);
+}
+
+/* BUG-72 · RAMPA: de dentro do canal se via o CÉU através da parede. As paredes são
+   construídas em trechos que PULAM a faixa da rampa (map_corrego.js), e no lugar sobrava
+   só a laje inclinada de 0,22 m — vão aberto acima e abaixo dela. Medido antes do
+   conserto: 71/176 raios (40,3%) escapavam; controle em trecho sem rampa: 0/32.
+   O controle é o que refuta "face virada/culling": se fosse isso, o controle vazaria. */
+{
+  /* mutante rampa-vazada: derruba o arrimo e devolve o defeito original do BUG-72 */
+  if (mutante === 'rampa-vazada') {
+    let n = 0;
+    world2.root.traverse((o) => { if (o.userData?.corregoRampaArrimo) { o.visible = false; n++; } });
+    if (!n) throw new Error('MUTANTE NAO APLICOU: nenhum arrimo de rampa encontrado');
+  }
+  const alvosRaio = [];
+  world2.root.traverse((o) => { if (o.isMesh && o.visible !== false) alvosRaio.push(o); });
+  const raio = new THREE.Raycaster(); raio.far = 60;
+  const RAMPAS_Z = [[-1, -33, -27], [1, -13, -7], [-1, 9, 15], [1, 29, 35]];
+  const FUNDO = -1.75;
+  const conta = (faixas) => {
+    let furos = 0, total = 0;
+    for (const [lado, za, zb] of faixas)
+      for (let z = Math.min(za, zb) + 0.5; z <= Math.max(za, zb) - 0.5; z += 0.5)
+        for (const alt of [0.25, 0.6, 1.0, 1.4]) {
+          raio.set(new THREE.Vector3(0, FUNDO + alt, z), new THREE.Vector3(lado, 0, 0));
+          total++;
+          if (!raio.intersectObjects(alvosRaio, false)[0]) furos++;
+        }
+    return { furos, total };
+  };
+  const naRampa = conta(RAMPAS_Z);
+  const controle = conta([[-1, -21, -19], [1, -3, -1], [-1, 3, 5], [1, 21, 23]]);
+  const pct = (100 * naRampa.furos) / Math.max(1, naRampa.total);
+  checks.push([`rampa não mostra o céu: ${naRampa.furos}/${naRampa.total} raios escapam (${pct.toFixed(1)}%, teto 2%)`, pct <= 2]);
+  /* O controle é cláusula PRÓPRIA: se ele vazar, o defeito não é da rampa e a régua
+     acima está acusando o inocente. Régua sem controle é régua que não sabe errar. */
+  checks.push([`controle: trecho sem rampa é opaco (${controle.furos}/${controle.total} furos)`, controle.furos === 0]);
 }
 
 let falhas = 0;

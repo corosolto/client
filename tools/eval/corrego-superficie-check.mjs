@@ -11,7 +11,7 @@
    Nenhuma régua desta árvore mordia isso. O `texel-check.mjs` mede densidade de
    texel (px/m) e é EXCELENTE nisso — mas quem não tem textura nenhuma nem entra
    na conta dele: sai numa linha de diagnóstico que não reprova
-   ("· fy_corrego: 217 malhas sem textura nenhuma (2058 m²) — cor pura, fora da
+   ("· corrego: 217 malhas sem textura nenhuma (2058 m²) — cor pura, fora da
    conta"). Ou seja, a pior superfície do mapa era exatamente a que a régua de
    superfície não conseguia reprovar. O `corrego-contract-check.mjs` cobra
    anatomia de capivara e de rato com detalhe, e não diz UMA palavra sobre o
@@ -49,7 +49,7 @@
        praca_poderes  15% mats   1,2% área      fy_escadao     63% mats  14,6% área
        ferro_velho    14% mats   0,4% área      fy_campomorro  53% mats  17,2% área
        piscina_treta  21% mats  20,0% área      fy_lajes       56% mats  18,0% área
-       quebrada       41% mats   8,6% área      fy_corrego     66% mats  13,1% área
+       quebrada       41% mats   8,6% área      corrego     66% mats  13,1% área
        loja_h         68% mats   8,7% área      fy_mansao      97% mats  35,9% área
 
    Os 5 maduros dão média de 31,8% de materiais chapados; os 5 novos, 67%. O teto
@@ -80,7 +80,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..', '..');
-const MAPA = 'fy_corrego';
+const MAPA = 'corrego';
 
 /* ---------------------------------------------------------------------------
    TETOS — um lugar só. Ver o cabeçalho para a medição que os originou.
@@ -147,9 +147,16 @@ function areaDe(o) {
 
 const fauna = [];
 const materiais = new Map();   // uuid -> { map: bool, malhas, area }
+/* VIDA DE CÉU fora do censo de superfície, pelo MESMO motivo que o parque-wheel-check
+   tira a fauna do dele: no arnês node os GLBs não baixam, os proxies procedurais entram
+   sem textura e mexem numa razão que mede SUPERFÍCIE DE MAPA. Pipa a 18 m de altura não
+   é parede. Medido: com os proxies dentro, 31,4% -> 39,0% contra teto de 40% — a régua
+   estaria reprovando o céu achando que reprovava o barraco. */
+const doCeu = (o) => { for (let p = o; p; p = p.parent) if (p.userData?.skyLife) return true; return false; };
 root.traverse((o) => {
   if (o.userData?.fauna) fauna.push(o);
   if (!o.isMesh || o.visible === false) return;
+  if (doCeu(o)) return;
   const arr = Array.isArray(o.material) ? o.material : [o.material];
   const m = arr.find((x) => x && x.map) || arr[0];
   if (!m || m.visible === false) return;   // colisor invisível da ponte: não chega no olho

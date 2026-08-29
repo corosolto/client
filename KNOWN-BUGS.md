@@ -72,6 +72,247 @@ Peugeot 3008, broken_car_2) — o defeito não era só da mansão.
 exige conjunto idêntico de atributos). Régua: `eval:propsuv1` (UV1-1 chama o
 normalizeGeo REAL; UV1-2 mede o raio no acervo), mutante `--mutante=dropa-uv1` morde.
 Figura (Lei 4): mesma captura da mansão refeita depois — overlay zerado, Mini renderiza.
+
+### ~~BUG-75 · a redação do WebKit para export ausente caía em `codigo` — Safari nunca acionava o purge do edge~~ · RESOLVIDO 25/08 (issue #443)
+
+**Sintoma (literal, issue #443, aberta pelo `crash-fix.yml` em 25/08 18:05Z):**
+*"SyntaxError: Importing binding name 'resolveGeoLang' is not found."*, fingerprint
+`6b4fb05e`, classe `codigo`, alpha.138, **origem, stack e migalhas vazias**.
+
+**Causa raiz — confirmada, e não é bug de código.** `resolveGeoLang` nasceu no PR #388
+(commit `684c8ca9`, 20/08) e estreou na **alpha.162**; na alpha.138 (`9db03fd4`, 17/08) nem
+o export (`public/js/i18n.js`) nem o import (`public/js/main.js`) existem. **Nenhum deploy
+isolado produz esse erro** — ele só existe na interseção de dois deploys no edge: o
+"alpha.138" do relatório é o `?v=` do HTML **em cache** no navegador (`versao()`,
+`src/pages/index.astro:88-93`), servido junto de módulo de outro deploy sob a mesma URL
+versionada. Reincidência exata do BUG-39 (`edge_ttl` de 1 mês da regra `assets_jogo`,
+`scripts/cloudflare-setup.sh:69-77`) — desta vez na redação do **WebKit**: "Importing
+binding name … is not found." é o que o Safari escreve onde V8/Gecko escrevem "does not
+provide an export". O `CACHE_SPLIT_RE` (`src/lib/error-provenance.mjs:6`) não conhecia essa
+redação, `classifyCrash` devolveu `codigo`, e o `crash-fix.yml` abriu issue em vez de
+disparar **purge do edge + re-probe**, a remediação determinística da classe. O fingerprint
+fecha: `crashFingerprint('error', <mensagem>, null)` = `6b4fb05e`.
+
+**Conserto.** Cinco redações entram no `CACHE_SPLIT_RE`, como substrings literais:
+`Importing binding name` (WebKit, export ausente — cobre também a variante "cannot be
+resolved by star export entries") e as quatro de bare specifier sem import map aplicado —
+`was a bare specifier, but was not remapped` (Gecko), `era um especificador simples, mas não
+foi remapeado` (Gecko **em pt-BR** — a mensagem literal da #362: o navegador entrega o erro
+traduzido no idioma do jogador), `Failed to resolve module specifier` (V8) e
+`Module specifier, .*? does not start with` (WebKit). Quita a dívida anotada na BUG-74
+("`CACHE_SPLIT_RE` só conhece inglês"). A ordem de `classifyCrash` não muda: proveniência
+externa segue vencendo cache-split (a mesma mensagem vinda de `chrome-extension://` continua
+`externo` — fixture nova na EP7), e cache-split vindo do console segue disparando purge
+(decisão do BUG-72, `jserror.ts:78-81`).
+
+**Medido antes do conserto:**
+
+| | antes | depois |
+|---|---|---|
+| redação WebKit de export ausente (#443) | `codigo` → issue falsa | `cache-split` → purge + re-probe |
+| bare specifier sem import map (#362, pt-BR) | `codigo` → issue falsa | `cache-split` → purge + re-probe |
+| fingerprints publicados `6b4fb05e` / `82b4da8e` | — | reproduzidos pela receita (EP16 mede) |
+| cláusulas verdes / mutantes que mordem | 15 / 39 | 16 / 42 |
+
+**Custo declarado:** cada redação nova **alarga o gatilho do purge** (`crash-fix.yml:71-74`
+purga `/js/` e `style.css` do edge), inclusive vindo de `console` — que é deliberado
+(BUG-72). Mitigação: substring literal da mensagem de cada engine, contra-fixtures na régua
+(crash citando o MESMO símbolo, ex. `Can't find variable: resolveGeoLang`, continua
+`codigo`) e proveniência externa por cima de tudo. O pt-BR cobre UMA língua além do inglês:
+outra tradução do Gecko continuará caindo em `codigo` até chegar numa issue com a mensagem
+literal — decisão de não caçar redação que nunca apareceu.
+
+**Não verificado:** a linha completa do `js_error` (hits, user-agent) — sem credencial do
+Supabase nesta máquina, como já registrado na BUG-74. O que foi medido sem banco:
+`node tools/eval/prod-coherence.mjs https://www.csbrasil.online` fechou **verde** em 25/08 —
+o mix da alpha.138 já não está servido e não há purge pendente; o conserto é só o rótulo.
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`). Cláusula **EP16**, **3 mutações novas**:
+`cache-sem-binding`, `cache-so-ingles` e `cache-sem-especificador` — cada uma apaga uma
+alternativa da regex e acende EP16. Matriz completa: **42 de 42 mordidos**.
+### ~~BUG-78 · carteira cripto injetada no documento abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 21/08 (issues #403 e #404)
+
+**Sintoma (literal, issues #403 e #404, abertas pelo `crash-fix.yml` em alpha.172):**
+
+```
+TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')   #403, fingerprint ab1ad30e
+TypeError: undefined is not an object (evaluating 'window.ethereum.emit')                          #404, fingerprint e32cd1e4
+Origem: https://www.csbrasil.online/:1:16
+Stack:  global code@https://www.csbrasil.online/:1:16
+```
+
+**Não é defeito do jogo, e a prova é tripla.** (1) `window.ethereum`, `selectedAddress` e
+qualquer identificador web3 **não existem em nenhum arquivo do repositório**, e
+`git log --all -S "window.ethereum"` / `-S "selectedAddress"` não devolvem um único commit —
+o `mint-assets.json` é o registro do gerador de modelos 3D (mint.gg), não tem web3. (2) O
+fingerprint publicado reproduz EXATAMENTE
+`crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:16')`, ou seja o
+`e.filename` é a **própria página**, `lineno=1`, `colno=16`. (3) O único frame é
+`global code@` — nenhum arquivo do jogo aparece na pilha.
+
+É extensão de carteira cripto injetando script **inline no documento**. O próprio
+`index.astro` já dizia isso em comentário desde antes: *"extensões de carteira injetam
+vários"*.
+
+**Causa raiz — confirmada.** O `isExternalCrash` (`src/lib/error-provenance.mjs`) inocenta
+por **origem**. O Safari reporta script de extensão injetado no mundo da página com o
+filename **da página**, então o atalho
+### ~~BUG-76 · ponte injetada pelo navegador abria issue de crash como se fosse bug do jogo~~ · RESOLVIDO 24/08 (issues #428, #379, #380, #381)
+
+**Sintoma (literal, quatro issues abertas pelo `crash-fix.yml`, todas classe `codigo`):**
+
+```
+ReferenceError: Can't find variable: __gCrWeb                                    #428, alpha.182, fingerprint d85ae7e1, origem /:1:9
+ReferenceError: Can't find variable: __firefox__                                 #379, alpha.159, fingerprint 470752a2, origem /:1:12
+TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')   #380, alpha.159, fingerprint 7122f83c, origem /:1:19
+ReferenceError: Can't find variable: DarkReader                                  #381, alpha.159, fingerprint cd468274, origem /:1:11
+Stack (as quatro): global code@https://www.csbrasil.online/:1:N
+```
+
+`__gCrWeb` é a ponte JS do **Chrome para iOS**, `__firefox__` a do **Firefox para iOS**,
+`DarkReader` a da extensão homônima. Nenhuma é código do jogo, e nenhuma tem conserto aqui.
+As três primeiras foram fechadas **à mão** como "ruído externo" — mas nada no código as
+impedia de voltar, e a #428 é a volta.
+
+**Não é defeito do jogo, e a prova é tripla.** (1) `__gCrWeb`, `__firefox__` e `DarkReader`
+**não existem em nenhum arquivo do repositório**, e `git log --all -S` não devolve um único
+commit para nenhum deles. (2) Os quatro fingerprints publicados reproduzem EXATAMENTE
+`crashFingerprint('error', <mensagem>, 'https://www.csbrasil.online/:1:N')`, ou seja o
+`e.filename` é a **própria página**. (3) O único frame é `global code@` — nenhum arquivo do
+jogo aparece na pilha.
+
+**Causa raiz — confirmada.** O `isExternalCrash` (`src/lib/error-provenance.mjs`) inocenta
+por **origem**, e o WebKit reporta script injetado no mundo da página com o filename **da
+página**. O atalho
+
+```js
+if (sourceOrigin === ownOrigin) return false;
+```
+
+decidia "é nosso" antes de qualquer outra prova. Daí nenhuma das regex seguintes
+(`OPAQUE_RE`, `AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`, `MEDIA_ABORT_RE`) mordia e
+o `classifyCrash` caía no `return 'codigo'` final — que escala e abre issue.
+
+As irmãs **#138** (`Cannot redefine property: ethereum`) e **#166**
+(`Failed to connect to MetaMask`) são a mesma família, mas traziam `chrome-extension://` no
+source/stack e já caíam na `EXTENSION_RE`. O que era novo em #403/#404 é a forma **sem
+esquema de extensão em campo nenhum**.
+
+**Correção, em duas camadas espelhadas** — o mesmo remédio das BUG-51/72/73:
+
+- `src/lib/error-provenance.mjs` — `CARTEIRA_RE` e o ramo em `isExternalCrash`, na **mesma
+  posição e pelo mesmo motivo da `VENDOR_RE`**: antes do atalho same-origin, porque a
+  carteira roda no próprio domínio mas o código é de terceiro. Classe `externo`. A linha
+  continua gravada no `js_error`; some o disparo automático, não o dado.
+- `src/pages/index.astro` — a MESMA redação em `origemDoJogo`. Sem cota nova: carteira cai
+  no balde do `TETO_EXTERNO` que a BUG-51 já abriu (ao contrário do `TETO_MIDIA`, que a
+  BUG-73 precisou criar). Com `interna === false` o erro também deixa de virar `erroDoBoot`
+  e `lancamento.fail` — hoje uma carteira que estoura durante o boot podia ser acusada de
+  ter derrubado o carregamento do jogo.
+
+O corte é **estreito de propósito**: exige o NOME do global injetado
+(`window.`/`globalThis.`/`self.` + `ethereum|solana|tronWeb|…`), nunca a forma da mensagem.
+`ethereum` como palavra solta num texto nosso continua `codigo`, e é isso que o mutante
+`carteira-ampla` prova. Cobre a **família** de carteiras e não uma regex por incidente, que
+é a crítica que a BUG-72 fez ao padrão antigo.
+
+**Custo declarado, medido na população real e não estimado.** Reclassificando as **90**
+issues `crash-auto` do repositório com o helper de antes e o de depois, exatamente **2**
+mudam de classe — a #403 e a #404, `codigo -> externo`. As outras 88 ficam idênticas
+(51 `codigo`, 25 `externo`, 12 `recuperavel`). **Nenhuma outra issue deixa de abrir.**
+
+**Régua:** `EP16` em `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`,
+já no `check:fast` e no `check:deploy` — nenhum passo novo no portão). Classifica os
+payloads REAIS das duas issues (com os fingerprints publicados conferidos contra a receita),
+exige que 5 mensagens vizinhas continuem `codigo`, e **executa o `origemDoJogo` recortado do
+fonte** — regex de fiação sozinha aprovaria `function origemDoJogo(){ return true; }`.
+Carrega ainda uma **invariante de honestidade**: varre `src/` e `public/js/` e fica VERMELHA
+no dia em que o jogo passar a ter um `window.ethereum` de verdade, para o corte não virar
+mordaça silenciosa sobre código nosso. Mutantes novos: `sem-carteira`, `carteira-ampla` e
+`sem-carteira-cliente`, todos acendendo EP16. Cláusulas 15 -> 16, matriz de mutação 42/42.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a reprodução com uma extensão de
+carteira de verdade não foi feita — a régua mede a **classificação**, não a injeção. A
+tabela `js_error` do Supabase também não foi consultada.
+decidia "é nosso" antes de qualquer outra prova. Daí nenhuma das regex seguintes (`OPAQUE_RE`,
+`AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`, `MEDIA_ABORT_RE`) mordia e o
+`classifyCrash` caía no `return 'codigo'` final — que escala e abre issue. É o MESMO atalho
+que a #403/#404 (carteira cripto) atravessa.
+
+**Por que o corte é por NOME e não pela FORMA — e isto é o parágrafo que decide a entrada.**
+A tentação óbvia é cortar pela forma: "pilha de frame único `global code@<própria-origem>/:1:N`
+não é nossa". Ela reprova, e por medição. A linha 1 do `dist/client/index.html` tem **268
+caracteres**, e o `compressHTML` do Astro cola o `<!DOCTYPE>`, o `<head>`, o comentário e o
+**nosso primeiro `<script is:inline>`** (o do `define:vars` do `__SUPPORT`) todos nela — o
+nosso código começa na **coluna 167 da linha 1**. Um erro ali sai como
+`global code@<origem>/:1:167`: frame único, raiz, linha 1, idêntico à família. O que separa a
+#428 (coluna 9) do nosso código (coluna 167) é o comprimento de um comentário HTML, que é
+resíduo de build e não invariante. Além disso `global code@` é redação **só do WebKit**: a
+mesma extensão no Chrome desktop continuaria abrindo issue. E o corte por forma não tem
+invariante de honestidade possível — ele depende de uma propriedade do artefato buildado, que
+o `check:fast` não constrói. As duas primeiras fixtures negativas do EP17 travam essa decisão
+em régua: têm a MESMA forma da família com global NOSSO e continuam `codigo`.
+
+**Correção, em duas camadas espelhadas** — o mesmo remédio das BUG-51/72/73:
+
+- `src/lib/error-provenance.mjs` — `PONTE_INJETADA_RE` e o ramo em `isExternalCrash`, na
+  **mesma posição e pelo mesmo motivo da `VENDOR_RE`**: antes do atalho same-origin, porque a
+  ponte roda no próprio domínio mas o código é de terceiro. Classe `externo`. A linha continua
+  gravada no `js_error`; some o disparo automático, não o dado.
+- `src/pages/index.astro` — a MESMA redação em `origemDoJogo`. Sem cota nova: ponte cai no
+  balde do `TETO_EXTERNO` que a BUG-51 já abriu. Com `interna === false` o erro também deixa
+  de virar `erroDoBoot` e `lancamento.fail` — hoje uma ponte que estoura durante o boot podia
+  ser acusada de ter derrubado o carregamento do jogo.
+
+O corte é **estreito de propósito**, e em dois eixos: exige o NOME do global de terceiro, e
+exige a **caixa** dele. Identificador JS é sensível a caixa e a mensagem o cita verbatim, então
+`falha ao carregar darkreader.glb` num texto nosso continua `codigo` — é isso que o mutante
+`ponte-insensivel` prova, e é uma divergência deliberada em relação às outras regex do arquivo,
+que usam `/i`. `webkit` solto **não** foi comprado (só `webkit.messageHandlers`), porque o jogo
+usa `window.webkitAudioContext` de verdade. E `__\w+__` genérico está **proibido**: sete globais
+do JOGO são dunder (`__GEO_LANG__`, `__SUPPORT`, `__CS_MAIN_FAILED`, `__CS_MAIN_READY__`,
+`__CS_BOOT_SRC`, `__gameLaunch`, `__semWebgl`) e o corte genérico calaria crash nosso — é o
+mutante `ponte-ampla`. O roster cobre a **família** (ponte de WebView, extensão, hook de
+devtools) e não uma regex por incidente, que é a crítica que a BUG-72 fez ao padrão antigo:
+`webkit.messageHandlers`, `__REACT_DEVTOOLS_GLOBAL_HOOK__` e `__VUE_DEVTOOLS_GLOBAL_HOOK__`
+entram **sem incidente**, pelo mesmo mecanismo.
+
+**Custo declarado, medido na população real e não estimado.** Reclassificando as **96** issues
+`crash-auto` do repositório (mensagem, origem e stack lidos do corpo publicado) com o helper de
+antes e o de depois, exatamente **4** mudam de classe — a #428, a #379, a #380 e a #381,
+`codigo -> externo`:
+
+```
+ANTES : codigo 59 · externo 25 · recuperavel 12
+DEPOIS: codigo 55 · externo 29 · recuperavel 12
+```
+
+As outras 92 ficam idênticas. **Nenhuma outra issue deixa de abrir.**
+
+**Régua:** `EP17` em `tools/eval/error-provenance-check.mjs` (`npm run eval:error-origin`, já
+no `check:fast` e no `check:deploy` — nenhum passo novo no portão). Classifica os payloads
+REAIS das quatro issues, confere os quatro fingerprints publicados contra a receita (fixture
+"arrumada" deixa de bater e acusa; as fixtures sintéticas não têm `fp` e por isso não podem se
+passar por publicadas), exige que **sete** vizinhas continuem `codigo` — duas delas com a MESMA
+forma da família — e **executa o `origemDoJogo` recortado do fonte**, porque regex de fiação
+sozinha aprovaria `function origemDoJogo(){ return true; }`. Carrega ainda uma **invariante de
+honestidade**: varre `src/` e `public/js/` pela forma de USO (`window.X`, `X.`, `X(`, `X =`) e
+fica VERMELHA no dia em que o jogo falar com uma dessas pontes de verdade, para o corte não
+virar mordaça silenciosa. Ela lê o fonte **mutado**, e não o disco — sem isso nenhum mutante
+conseguiria acendê-la, e régua que ninguém pode quebrar não mede nada. Mutantes novos:
+`sem-ponte`, `ponte-ampla`, `ponte-insensivel`, `sem-ponte-cliente` e `jogo-com-ponte`, todos
+acendendo EP17 e só ele. Cláusulas 16 -> 17, matriz de mutação 47/47.
+
+**NÃO VERIFICADO:** não há browser nesta máquina, então a reprodução com um Chrome para iOS de
+verdade não foi feita — a régua mede a **classificação**, não a injeção. A tabela `js_error` do
+Supabase não foi consultada. **Pontos cegos declarados:** a invariante de honestidade não varre
+`public/vendor/` (three vendorizado) nem código gerado no build, e não pega acesso por string
+(`window["__gCrWeb"]`) — não existe regex honesta para isso que não acenda no literal do próprio
+corte. E o corte vale em qualquer campo, inclusive na mensagem: um crash NOSSO cujo texto apenas
+cite um dos seis nomes sumiria. É o mesmo furo estrutural que a `EXTENSION_RE` tem desde a
+BUG-51, e a invariante de honestidade é o guarda-corpo.
+
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
 **Sintoma (literal, issue #386, aberta pelo `crash-fix.yml` em 19/08 20:51:29Z):**
@@ -149,7 +390,8 @@ continua desconhecida e **a gravidade não foi medida** - o schema do Supabase �
 diagnosticável. Fica também anotado, para PR próprio: **`CACHE_SPLIT_RE` só conhece
 inglês**, e foi por isso que a #362 (mensagem do Firefox em pt-BR) também caiu em `codigo`
 em vez de `cache-split` e perdeu o purge automático. Mexer nisso altera a classe que
-dispara purge de edge e merece régua própria.
+dispara purge de edge e merece régua própria. *(Quitado na BUG-75, issue #443: EP16 e
+três mutações próprias.)*
 
 **Não verificado:** o caminho de ponta a ponta (módulo falha → `onerror` → migalha → issue)
 exige navegador e Supabase. O que foi verificado sem navegador: a régua recorta e executa o
@@ -2130,6 +2372,68 @@ cabeceiras das pontes). O grafite do fy_lajes voltou (a chamada morreu na troca 
 > com o sufixo `(main)` — não confundir com os BUG-52..58 desta árvore.
 
 ### ~~BUG-54 (main) · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
+
+### BUG-79 · Córrego: grama nunca foi servida e as rampas do canal mostram o céu
+
+**Reportado (27/08/2026, palavras literais do dono):**
+
+> *"o detalhe de grama que te pedi na capivara e na outra ara de grama e pelo corrego
+> tambem nao refletiram"* · *"as rampas nas laterais do corrego ainda estao mostrando o
+> horizonte esta super esqusiito"* · *"ter grama realistica nas beradas do corrego e
+> tambem no chao do mapa ter bastante grama difusa nao só terra"* · *"num geral o mapa
+> esta muito bom falta as alteracoes visuais qu eeu ja tinha pedido e nao se refletiram"*
+
+Pedido ANTERIOR, registrado em `plans/13-VISUAL-V2.1.md:33` como frente B:
+*"faltou tambem usar os glbs de grama"*. A frente entregou os GLBs e ninguém ligou.
+
+**A · Grama: dois furos independentes, os dois silenciosos.**
+
+| medida | valor |
+|---|---|
+| spots de grama reservados (`world.gramaSpots`) | 26 |
+| grama SERVIDA na cena (`world.gramaServida`) | **0** |
+| ids de vegetação em `CORREGO_PROPS` | **0** — nunca baixa |
+| `hasProp('grama_corrego')` | **false** |
+| GLBs no disco | `grama_corrego_01`, `grama_corrego_02`, `planta_corrego_taboa`, `planta_corrego_taioba` |
+
+`map_corrego.js:443` pede `grama_corrego`; o acervo tem `grama_corrego_01`/`_02`. O `if`
+nunca entra. E como `CORREGO_PROPS` não declara vegetação, o `preloadMapProps` nem baixa
+— então mesmo com o id certo não apareceria nada.
+
+**Por que o portão estava VERDE.** O `corrego-contract-check` imprime, com todas as
+letras, `GRAMA: prop grama_corrego ausente no acervo — cláusula de presença DORMENTE` e
+passa no `✓ grama: terreno reservado nas margens (>= 12 spots)`. Ele cobra a INTENÇÃO
+(spots) e não o RESULTADO (grama na tela). A pendência que justificava a cláusula
+dormente já não existia: a frente E entregou os GLBs. Régua verde medindo a coisa errada
+— o corolário da lei 1 da `bug-hunt`.
+
+**B · Rampas do canal: 40,3% dos raios saem para o céu.**
+
+As paredes do canal são construídas em `trechos` que PULAM a faixa da rampa
+(`map_corrego.js:366-377`). No lugar sobra só a laje inclinada de 0,22 m
+(`addBoxSB`, `:384`) e uma mureta de 0,5 m — acima e abaixo dela o vão é aberto, e de
+dentro do canal se vê o skybox.
+
+| raio horizontal do fundo do canal para fora | furos |
+|---|---|
+| rampa oeste z[−33,−27] | 17/44 |
+| rampa leste z[−13,−7] | 18/44 |
+| rampa oeste z[9,15] | 17/44 |
+| rampa leste z[29,35] | 19/44 |
+| **total** | **71/176 = 40,3%** |
+| **controle** (trecho sem rampa) | **0/32** |
+
+O controle limpo refuta o palpite óbvio de *face virada / culling*: se fosse isso, o
+trecho sem rampa vazaria também.
+
+**Figura:** `/tmp/ceu/rampa-de-dentro-do-canal.png` — duas faixas de céu atravessando a
+parede, exatamente o relato.
+
+**Régua:** `eval:corrego-contract` (cláusulas novas) — e o `eval:corrego-superficie`, que
+existia como ARQUIVO mas nunca esteve no `package.json`, foi ligado ao `check:fast`.
+
+
+### ~~BUG-54 · wallpaper do loading quebra em alta resolução (#292)~~ · RESOLVIDO 16/08
 
 **Evidência antes.** `BASE=http://localhost:4322 OUT=/tmp/bug292-before npm run
 eval:loadingwall` abriu splash e loading reais em 16:9/3:2, DPR 1/2, e reprovou as oito

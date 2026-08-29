@@ -1,11 +1,11 @@
-// CAPTURA DE EVIDÊNCIA 3:2 — fy_corrego (frente B do swarm v2.1.0: fauna GLB + água).
+// CAPTURA DE EVIDÊNCIA 3:2 — corrego (frente B do swarm v2.1.0: fauna GLB + água).
 // Mesmo padrão do lajes-evidence-capture (jogo real, não mapview): o dono revisa em 3:2.
 // Uso: BASE=http://127.0.0.1:8131 node tools/eval/corrego-evidence-capture.mjs [outDir] [TAG]
 import { execSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
-const OUT = process.argv[2] || 'tools/eval/asset-evidence/maps/fy_corrego/round';
+const OUT = process.argv[2] || 'tools/eval/asset-evidence/maps/corrego/round';
 const TAG = process.argv[3] || '';
 const BASE = process.env.BASE || 'http://127.0.0.1:8131';
 const VW = 1500, VH = 1000;   // 3:2 — o recorte em que o dono revisa
@@ -38,7 +38,7 @@ let errors = 0;
 page.on('console', (m) => { if (m.type() === 'error') { errors++; console.error('[console-err]', m.text()); } });
 page.on('pageerror', (e) => { errors++; console.error('[pageerror]', e.message); });
 for (let att = 0; att < 3; att++) {
-  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=fy_corrego`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
+  try { await page.goto(`${BASE}/?debug=1&auto=P,mst&map=corrego`, { waitUntil: 'domcontentloaded', timeout: 120000 }); break; } catch (e) { console.log('goto retry', att); if (att === 2) throw e; }
 }
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 300000 });
 await page.waitForTimeout(1500);   // GLBs de fauna/prps terminam de assentar

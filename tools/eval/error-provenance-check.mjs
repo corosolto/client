@@ -14,6 +14,8 @@ const mutants = [
   'sem-log', 'log-amplo', 'log-sobre-tudo', 'log-nao-corta', 'sem-teto-console', 'pilha-so-no-primeiro', 'times-sem-erro',
   'onerror-sem-src', 'boot-sem-migalha', 'payload-sem-migalhas', 'issue-sem-migalhas',
   'sem-midia', 'midia-ampla', 'sem-cota-midia',
+  'cache-sem-binding', 'cache-so-ingles', 'cache-sem-especificador',
+  'sem-ponte', 'ponte-ampla', 'ponte-insensivel', 'sem-ponte-cliente', 'jogo-com-ponte',
 ];
 if (mutant && !mutants.includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 
@@ -78,6 +80,14 @@ if (mutant === 'sem-vercel-cliente') page = mutate(page,
 if (mutant === 'cache-antes-origem') helperSource = mutate(helperSource,
   "if (isExternalCrash(payload, ownOrigin)) return 'externo';\n  if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';",
   "if (CACHE_SPLIT_RE.test(evidence)) return 'cache-split';\n  if (isExternalCrash(payload, ownOrigin)) return 'externo';");
+/* Redações por engine do MESMO split (#443/#362): cada mutante apaga UMA alternativa do
+   CACHE_SPLIT_RE e a EP16 tem que morder — senão a redação entrou na regex sem régua. */
+if (mutant === 'cache-sem-binding') helperSource = mutate(helperSource,
+  'Importing binding name|', '');
+if (mutant === 'cache-so-ingles') helperSource = mutate(helperSource,
+  'era um especificador simples, mas não foi remapeado|', '');
+if (mutant === 'cache-sem-especificador') helperSource = mutate(helperSource,
+  'Failed to resolve module specifier|', '');
 if (mutant === 'sem-recuperavel') helperSource = mutate(helperSource,
   "if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';",
   "if (RECOVERABLE_RE.test(evidence)) return 'codigo';");
@@ -154,6 +164,32 @@ if (mutant === 'midia-ampla') helperSource = mutate(helperSource,
 if (mutant === 'sem-cota-midia') page = mutate(page,
   'if (nMidia >= TETO_MIDIA) return null;',
   'if (nMidia < 0) return null;');
+
+/* BUG-75 · ponte injetada por navegador/WebView/extensão (#428/#379/#380/#381). Os cinco
+   mutantes cobrem os cinco jeitos de o corte deixar de valer: sumir do helper, ficar LARGO a
+   ponto de engolir global NOSSO, perder a sensibilidade a caixa, sumir do cliente (que é onde
+   a cota e o painel de falha são decididos) e a invariante de honestidade nunca poder acender. */
+if (mutant === 'sem-ponte') helperSource = mutate(helperSource,
+  'if (PONTE_INJETADA_RE.test(evidence)) return true;',
+  'if (PONTE_INJETADA_RE.test(evidence)) return false;');
+/* O corte largo é a armadilha REAL desta família, e ela tem nome: sete globais do JOGO são
+   dunder (`__GEO_LANG__`, `__CS_MAIN_FAILED`, `__SUPPORT`…). `__\w+__` calaria crash nosso. */
+if (mutant === 'ponte-ampla') helperSource = mutate(helperSource,
+  'const PONTE_INJETADA_RE = ',
+  'const PONTE_INJETADA_RE = /__\\w+__|reader|webkit/i; const PONTE_INJETADA_RE_ESTREITO = ');
+/* Identificador JS é sensível a caixa e a mensagem o cita verbatim: com `i`, `darkreader.glb`
+   num texto nosso viraria externo. É a divergência deliberada em relação à MEDIA_ABORT_RE. */
+if (mutant === 'ponte-insensivel') helperSource = mutate(helperSource,
+  '|webkit\\.messageHandlers)\\b/;',
+  '|webkit\\.messageHandlers)\\b/i;');
+if (mutant === 'sem-ponte-cliente') page = mutate(page,
+  "if (injetado.test(sourceText + '\\n' + String(stack || '') + '\\n' + String(mensagem || ''))) return false;",
+  'if (false) return false;');
+/* A invariante de honestidade tem que PODER ficar vermelha: o dia em que o jogo falar com a
+   ponte. O `jogoSemPonte` lê o fonte MUTADO por isso — régua que ninguém quebra não mede. */
+if (mutant === 'jogo-com-ponte') page = mutate(page,
+  'window.__gameLaunch = lancamento;',
+  "window.__gameLaunch = lancamento; window.__gCrWeb.postMessage('ping');");
 
 /* BUG-74 · o `onerror` da tag do módulo guardava um booleano e jogava fora o ErrorEvent,
    inclusive o `src` com o `?v=`. O relatório virava paráfrase nossa, sem evidência nenhuma. */
@@ -249,12 +285,89 @@ const naoMidiaFixtures = [
   { source: '', stack: '', message: 'Match interrupted by host' },
   { source: '', stack: '', message: 'The upload was aborted' },
 ];
+/* BUG-75 · ponte injetada por navegador/WebView/extensão no mundo da página (issues #428,
+   #379, #380 e #381; as irmãs #138 e #166 são a mesma ideia, mas traziam `chrome-extension://`
+   e já caíam na EXTENSION_RE).
+   PROCEDÊNCIA: as QUATRO primeiras são o payload PUBLICADO nas issues, campo por campo — o
+   fingerprint de cada uma é o hash EXATO de `error|<message>|<source>`, e é isso que a
+   cláusula confere abaixo. O WebKit reporta o script injetado como frame único `global code@`
+   com o filename da PRÓPRIA PÁGINA: same-origin, e por isso o atalho de origem acusava o jogo. */
+const injetadoFixtures = [
+  { fp: 'd85ae7e1', source: `${own}/:1:9`,  stack: `global code@${own}/:1:9`,  message: "ReferenceError: Can't find variable: __gCrWeb" },
+  { fp: '470752a2', source: `${own}/:1:12`, stack: `global code@${own}/:1:12`, message: "ReferenceError: Can't find variable: __firefox__" },
+  { fp: '7122f83c', source: `${own}/:1:19`, stack: `global code@${own}/:1:19`, message: "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')" },
+  { fp: 'cd468274', source: `${own}/:1:11`, stack: `global code@${own}/:1:11`, message: "ReferenceError: Can't find variable: DarkReader" },
+  /* SINTÉTICAS, e marcadas como tal (sem `fp`, porque nunca abriram issue): a próxima ponte
+     não deve precisar de PR. O corte é por FAMÍLIA e não uma regex por incidente — a crítica
+     que a BUG-72 fez ao padrão antigo. Misturar sintético com publicado é justo o vetor de
+     "fixture arrumada" que o EP12 existe para pegar, por isso o `fp` é que separa os dois. */
+  { source: `${own}/:1:23`, stack: `global code@${own}/:1:23`, message: "TypeError: undefined is not an object (evaluating 'webkit.messageHandlers.cs.postMessage')" },
+  { source: `${own}/:1:15`, stack: `global code@${own}/:1:15`, message: "ReferenceError: Can't find variable: __gCrWebForms" },
+];
+/* O corte é ESTREITO: exige o NOME do global de terceiro, e a caixa dele. Estas sete
+   continuam `codigo`, e as duas primeiras são as que travam a decisão de cortar por NOME e
+   não por FORMA: têm a MESMA forma da família (raiz do documento, frame único `global code@`)
+   com global NOSSO. A linha 1 do `dist/client/index.html` tem 268 chars e o nosso primeiro
+   `<script is:inline>` começa na coluna 167 dela — `:1:N` NÃO é prova de terceiro. */
+const naoInjetadoFixtures = [
+  { source: `${own}/:1:9`,  stack: `global code@${own}/:1:9`,  message: "TypeError: undefined is not an object (evaluating 'window.__game.start')" },
+  { source: `${own}/:1:167`, stack: `global code@${own}/:1:167`, message: "TypeError: undefined is not an object (evaluating 'window.__SUPPORT.br')" },
+  { source: `${own}/js/glcontext.js:12:3`, stack: '', message: "TypeError: undefined is not an object (evaluating 'window.__webglTentativa.push')" },
+  /* o MESMO idioma de mensagem da #428, com global nosso: a forma da frase não é proveniência. */
+  { source: `${own}/js/main.js:1:2`, stack: '', message: "ReferenceError: Can't find variable: __GEO_LANG__" },
+  /* caixa baixa: `DarkReader` só vale como IDENTIFICADOR (mutante `ponte-insensivel`). */
+  { source: `${own}/js/game.js:1:2`, stack: '', message: 'falha ao carregar darkreader.glb' },
+  /* `webkit` solto NÃO foi comprado, e este é o preço de ter comprado `webkit.messageHandlers`:
+     o jogo usa `window.webkitAudioContext` de verdade (audio.js). */
+  { source: `${own}/js/audio.js:1:2`, stack: '', message: "TypeError: undefined is not an object (evaluating 'window.webkitAudioContext')" },
+  { source: '', stack: '', message: "TypeError: undefined is not an object (evaluating 'window.__CS_MAIN_FAILED')" },
+];
+/* INVARIANTE DE HONESTIDADE. O corte acima só é legítimo porque o jogo NÃO fala com ponte
+   nenhuma: no dia em que alguém escrever `window.DarkReader` de verdade, esta cláusula fica
+   VERMELHA e obriga a revisar o corte, em vez de ele virar mordaça silenciosa sobre código
+   nosso. Varre pela forma de USO (`window.X`, `X.`, `X(`, `X =`) e NÃO pelo nome solto: o
+   literal da própria regex traz os nomes, e nome solto deixaria a cláusula vermelha desde o
+   primeiro dia — foi de graça na BUG-51 porque lá o nome vem prefixado, aqui não vem.
+   Lê o fonte MUTADO do `index.astro` e do helper: sem isso nenhum mutante consegue acendê-la,
+   e régua que ninguém pode quebrar não mede nada. O escopo é o JOGO (`src/`, `public/js/`) e
+   não `tools/`: as fixtures desta régua carregam o payload da #428 de propósito. PONTO CEGO
+   DECLARADO: `public/vendor/` (three vendorizado) fica fora, igual ao resto das réguas daqui. */
+const USO_DE_PONTE = /(?:window|globalThis|self)\.(?:__gCrWeb|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__)|\b(?:__gCrWeb|__firefox__|DarkReader|__REACT_DEVTOOLS_GLOBAL_HOOK__|__VUE_DEVTOOLS_GLOBAL_HOOK__)\s*[.(=]|webkit\.messageHandlers/;
+const fontesDoJogo = spawnSync('git', ['ls-files', 'src', 'public/js'], { encoding: 'utf8' })
+  .stdout.split('\n').filter((f) => /\.(?:m?js|ts|astro)$/.test(f));
+const textoDoJogo = (f) => {
+  if (f === 'src/pages/index.astro') return page;
+  if (f === helperPath) return helperSource;
+  try { return readFileSync(f, 'utf8'); } catch { return ''; }
+};
+const jogoSemPonte = fontesDoJogo.length > 0 && fontesDoJogo.every((f) => !USO_DE_PONTE.test(textoDoJogo(f)));
 const externalCacheFixtures = [
   { source: 'chrome-extension://abc/inpage.js:1:2', message: 'does not provide an export' },
   { source: 'https://cdn.example.invalid/chunk.js:1:2', message: 'Failed to fetch dynamically imported module' },
   { source: 'moz-extension://abc/inpage.js:1:2', message: 'Importing a module script failed' },
   { stack: 'Error at safari-web-extension://abc/app.js:1:2', message: 'error loading dynamically imported module' },
   { source: 'https://static.cloudflareinsights.com/beacon.js:1:2', message: 'prod-coherence reprovou' },
+  { source: 'chrome-extension://abc/inpage.js:1:2', message: "Importing binding name 'x' is not found." },
+];
+/* O split do BUG-39 nas redações que a regex NÃO conhecia (#443/#362): WebKit para export
+   ausente (a alpha.138 nem continha `resolveGeoLang` — o erro só existe na interseção de
+   dois deploys no edge) e bare specifier sem import map nas quatro redações conhecidas — a
+   da #362 chegou em pt-BR, traduzida pelo Firefox do jogador. Todas viram purge, não issue.
+   As duas primeiras e a da #362 são as mensagens LITERAIS publicadas nas issues. */
+const cacheSplitFixtures = [
+  { source: '', stack: '', message: "SyntaxError: Importing binding name 'resolveGeoLang' is not found." },
+  { source: '', stack: '', message: "SyntaxError: Importing binding name 'default' cannot be resolved by star export entries." },
+  { source: `${own}/js/main.js?v=2.0.0-alpha.157-c722ebcb6f3a:2:24`, message: 'TypeError: O especificador “three” era um especificador simples, mas não foi remapeado para nada. Especificadores de módulo relativos devem começar com “./”, “../” ou “/”.' },
+  { message: 'TypeError: The specifier “three” was a bare specifier, but was not remapped to anything. Relative module specifiers must start with “./”, “../” or “/”.' },
+  { message: 'TypeError: Failed to resolve module specifier "three". Relative references must start with either "/", "./", or "../".' },
+  { message: `TypeError: Module specifier, 'three' does not start with "/", "./", or "../". Referenced from ${own}/js/main.js` },
+];
+/* O corte continua estreito: crash citando o MESMO símbolo, ou palavra solta das redações,
+   segue acionável — purge por engano esconderia bug de código atrás de remediação de cache. */
+const naoCacheSplitFixtures = [
+  { source: `${own}/js/i18n.js:1:2`, message: "ReferenceError: Can't find variable: resolveGeoLang" },
+  { source: '', stack: '', message: 'binding lost' },
+  { source: '', stack: '', message: 'invalid module specifier' },
 ];
 
 /* EP4 precisa provar o early-return real: um único ponto de dispatch, depois
@@ -547,6 +660,30 @@ const cotaMidiaWired = /var TETO_MIDIA = \d+;/.test(page)
   && /\} else if \(erroIgnoravel\(mFinal\)\) \{[\s\S]{0,400}?if \(nMidia >= TETO_MIDIA\) return null;\s*\n\s*nMidia\+\+;/.test(page)
   && /if \(nEnviados >= TETO_SESSAO\) return null;/.test(page);
 
+/* EP17 executa o `origemDoJogo` recortado do fonte com os payloads REAIS, como o EP6 e o EP14
+   fazem: regex de fiação sozinha aprovaria `function origemDoJogo(){ return true; }`. É no
+   cliente que se decide a cota (`TETO_EXTERNO`), o overlay e — o que mais importa aqui — se o
+   erro vira `erroDoBoot`/`lancamento.fail`: hoje uma ponte que estoura durante o boot pode ser
+   acusada de ter derrubado o carregamento do jogo. */
+const injetadoCliente = !!origemCliente
+  && injetadoFixtures.every((f) => origemCliente(f.source, f.stack, f.message) === false)
+  /* e o corte NÃO pode cegar o cliente para crash NOSSO: as sete vizinhas seguem internas,
+     inclusive as que estouram no script inline da própria página — é ali que mora o código de
+     boot do `index.astro`, e cegar isso apagaria o painel de falha. */
+  && naoInjetadoFixtures.every((f) => origemCliente(f.source, f.stack, f.message) === true);
+/* Nenhuma cota nova: ponte é externo e cai no balde do `TETO_EXTERNO` que a BUG-51 já abriu —
+   ao contrário do `TETO_MIDIA`, que a BUG-73 precisou criar. */
+const injetadoNoBaldeExterno = /var TETO_EXTERNO = \d+;/.test(page)
+  && /if \(nExternos >= TETO_EXTERNO\) return null;/.test(page)
+  && /var injetado = \/.*__gCrWeb.*\/;/.test(page);
+/* PROCEDÊNCIA: os quatro fingerprints PUBLICADOS nas issues são o hash exato de
+   `error|<message>|<source>`. Se algum dia alguém "arrumar" a fixture, o número deixa de bater
+   e a cláusula acusa que ela não é mais o que a produção mandou. As sintéticas não têm `fp` e
+   por isso não podem se passar por publicadas. */
+const injetadoProcede = typeof crashFingerprint === 'function'
+  && injetadoFixtures.filter((f) => f.fp).length === 4
+  && injetadoFixtures.filter((f) => f.fp).every((f) => crashFingerprint('error', f.message, f.source) === f.fp);
+
 const checks = [
   ['EP1', extensionFixtures.every((fixture) => classify(fixture) === 'externo'), 'esquemas de extensão são externos'],
   ['EP2', crossOriginFixtures.every((fixture) => classify(fixture) === 'externo'), 'scripts cross-origin são externos'],
@@ -588,6 +725,21 @@ const checks = [
     && shouldDispatchCrash('recuperavel') === false
     && midiaCliente && cotaMidiaWired,
     'abort de mídia (play() cortado por pause(), #389) é recuperável: fica na telemetria, não abre issue e tem cota própria no cliente; crash real dentro do módulo de áudio continua acionável'],
+  ['EP16', cacheSplitFixtures.every((fixture) => classify(fixture) === 'cache-split')
+    && naoCacheSplitFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof crashFingerprint === 'function'
+    /* mesma trava do EP12: a receita tem que reproduzir os fingerprints PUBLICADOS. */
+    && crashFingerprint('error', cacheSplitFixtures[0].message, null) === '6b4fb05e'
+    && crashFingerprint('error', cacheSplitFixtures[2].message, cacheSplitFixtures[2].source) === '82b4da8e'
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('cache-split') === true,
+    'redações do WebKit para export ausente (#443) e de bare specifier sem import map (#362, inclusive pt-BR) são cache-split — purge do edge, não issue; crash citando o mesmo símbolo continua codigo'],
+  ['EP17', injetadoFixtures.every((fixture) => classify(fixture) === 'externo')
+    && naoInjetadoFixtures.every((fixture) => classify(fixture) === 'codigo')
+    && typeof shouldDispatchCrash === 'function'
+    && shouldDispatchCrash('externo') === false
+    && injetadoProcede && injetadoCliente && injetadoNoBaldeExterno && jogoSemPonte,
+    'ponte injetada por navegador/WebView/extensão (#428/#379/#380/#381) é externa mesmo com filename same-origin e frame único `global code@`: fica na telemetria, não abre issue e cai no balde de externo; crash NOSSO na MESMA forma (window.__game, window.__SUPPORT no script inline da própria página) continua acionável, e o jogo segue sem falar com ponte nenhuma'],
 ];
 const failed = checks.filter(([, ok]) => !ok);
 for (const [id, ok, description] of checks) console.log(`${ok ? '\x1b[32m✓' : '\x1b[31m✗'} ${id} ${description}\x1b[0m`);
@@ -609,6 +761,9 @@ const mutantClause = {
   'onerror-sem-src': 'EP15', 'boot-sem-migalha': 'EP15',
   'payload-sem-migalhas': 'EP15', 'issue-sem-migalhas': 'EP15',
   'sem-midia': 'EP14', 'midia-ampla': 'EP14', 'sem-cota-midia': 'EP14',
+  'cache-sem-binding': 'EP16', 'cache-so-ingles': 'EP16', 'cache-sem-especificador': 'EP16',
+  'sem-ponte': 'EP17', 'ponte-ampla': 'EP17', 'ponte-insensivel': 'EP17',
+  'sem-ponte-cliente': 'EP17', 'jogo-com-ponte': 'EP17',
 };
 if (mutant && !failed.some(([id]) => id === mutantClause[mutant])) {
   failed.push(['MUT', false, `mutação ${mutant} não acendeu ${mutantClause[mutant]}`]);
