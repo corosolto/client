@@ -29,7 +29,8 @@ check(Object.values(AUTHORED_VM_URLS).every((url) => url.startsWith('/private-as
   'binários licenciados são servidos fora do código público');
 check(!/weaponModel\s*\(/.test(runtime), 'runtime não desmonta nem remonta armas por inferência');
 check(!/PCA|principalComponents|contactPoint/.test(runtime), 'runtime não usa PCA ou busca de contato');
-check(/loadAsync\(AUTHORED_VM_URLS\[family\]\)/.test(runtime), 'famílias carregam sob demanda');
+check(/loadAsync\(urlForKey\(key\)\)/.test(runtime) && /GLTF_CACHE\.has\(key\)/.test(runtime),
+  'famílias carregam sob demanda (chave por arma quando o GLB é assado)');
 check(!/Promise\.all\([^)]*AUTHORED_VM_URLS/.test(runtime), 'boot não baixa o catálogo inteiro');
 check(/authoredCamera\.matrixWorld\.clone\(\)\.invert\(\)/.test(runtime),
   'câmera exportada define o espaço óptico do pacote');

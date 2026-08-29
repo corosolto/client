@@ -205,8 +205,13 @@ export function attachMintWeapon(entry, weaponId) {
 }
 
 // Ponto medido (muzzle|sight) da arma Mint ativa no espaço da CÂMERA (vmScene).
-// metrics.norm cancela a escala do wrap para a medida não entrar duas vezes.
+// GLB assado traz sockets NOMEADOS do contrato; senão, métricas do wrap ÷ norm.
 export function mintPointScene(entry, kind) {
+  const socket = entry.sockets?.[kind];
+  if (socket) {
+    socket.updateWorldMatrix(true, false);
+    return socket.getWorldPosition(new THREE.Vector3());
+  }
   const wrap = entry.mint?.active;
   const metrics = wrap?.userData?.metrics;
   if (!wrap || !metrics) return null;

@@ -40,9 +40,9 @@ const W = (family, extra = {}) => ({
 
 export const VM_WEAPON = {
   awp: W('sniper'),
-  // Tier 2: caixa do carregador MEDIDA (bloco MAG de weapons.js, gun-space em
-  // metros) reparentada ao bone Mag do pack — o pente sai na mão na recarga.
-  ak: W('ak', { parts: { mag: { box: { min: [-0.0165, -0.133, 0.015], max: [0.0165, 0.015, 0.191] }, bone: 'Mag' } } }),
+  // baked: o GLB é assado OFFLINE com a Mint dentro (pente separado no Blender,
+  // sockets nomeados) — o runtime só toca clipes, zero matemática de encaixe.
+  ak: W('ak', { baked: true, parts: { mag: { box: { min: [-0.0165, -0.133, 0.015], max: [0.0165, 0.015, 0.191] }, bone: 'Mag' } } }),
   m4: W('ar'),
   mp5: W('mp5'),
   shotgun: W('shotgun'),

@@ -72,13 +72,22 @@ try {
         const vm = window.__authoredVm;
         const entry = vm.entry(weapon);
         const wrap = entry.mint.active;
-        const metrics = wrap.userData.metrics;
+        const metrics = wrap.userData.metrics || null;
         wrap.updateWorldMatrix(true, false);
-        const sight = metrics.sight.clone().divideScalar(metrics.norm || 1);
-        wrap.localToWorld(sight);
+        // GLB assado traz sockets nomeados; wrap ao vivo traz metrics medidas.
+        const ponto = (kind) => {
+          const socket = entry.sockets?.[kind];
+          if (socket) {
+            socket.updateWorldMatrix(true, false);
+            return socket.getWorldPosition(wrap.position.clone());
+          }
+          const p = (kind === 'sight' ? metrics.sight : metrics.muzzle).clone()
+            .divideScalar(metrics.norm || 1);
+          return wrap.localToWorld(p);
+        };
+        const sight = ponto('sight');
         // AD3: colinearidade REAL — ângulo entre (boca−alça) e o eixo óptico.
-        const muzzle = metrics.muzzle.clone().divideScalar(metrics.norm || 1);
-        wrap.localToWorld(muzzle);
+        const muzzle = ponto('muzzle');
         const axis = muzzle.clone().sub(sight).normalize();
         const barrelAngleDeg = Math.acos(Math.min(1, Math.max(-1, -axis.z))) * 180 / Math.PI;
         const ndc = sight.clone().project(g.vmCamera);

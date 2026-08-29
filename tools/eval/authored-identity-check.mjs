@@ -23,6 +23,7 @@ import { execSync, spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 import { VM_WEAPON } from '../../public/js/data/vmconfig.js';
+import { weaponCFG } from '../../public/js/weapons.js';
 
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const MUT = arg('mutante');
@@ -67,6 +68,7 @@ try {
     );
     /* Dá dois frames para _applyVmVisibility assentar depois do onReady. */
     await page.waitForTimeout(400);
+    await page.evaluate((len) => { window.__vmLenEsperado = len; }, weaponCFG(id).len);
 
     const medida = await page.evaluate(async ([weapon, mutante]) => {
       const vm = window.__authoredVm;
@@ -80,14 +82,22 @@ try {
         for (let node = object; node; node = node.parent) if (!node.visible) return false;
         return true;
       };
-      /* Mesma fonte de verdade do esconderijo: a lista weaponMeshes classificada
-         no load (o prefixo GEO_WEAPON_ fica no nó pai, não no mesh). */
-      const packVisiveis = entry.weaponMeshes
-        .filter((mesh) => !/^UTILITY_/.test(mesh.name) && !mesh.userData?.mintWrap && efetivamenteVisivel(mesh))
-        .map((mesh) => mesh.name || '(sem nome)');
+      /* Genérica do pack = malha DESCENDENTE de nó GEO_WEAPON_* (no assado o
+         pack nem existe; a Mint é a arma legítima e não conta). */
+      const soPack = (object) => {
+        for (let node = object; node; node = node.parent) {
+          if (/^GEO_WEAPON_/.test(node.name || '')) return true;
+        }
+        return false;
+      };
+      const packVisiveis = [];
+      entry.scene.traverse((o) => {
+        if (o.isMesh && soPack(o) && efetivamenteVisivel(o)) packVisiveis.push(o.name || '(sem nome)');
+      });
 
       const mintVisivel = efetivamenteVisivel(wrap)
-        && wrap.name === `mint_weapon_${weapon}`;
+        && (wrap.name === `mint_weapon_${weapon}`
+          || wrap.name === `MINT_WEAPON_${weapon.toUpperCase()}`);
 
       wrap.updateWorldMatrix(true, true);
       const min = [Infinity, Infinity, Infinity];
@@ -120,9 +130,11 @@ try {
 
       const worldDim = Math.max(max[0] - min[0], max[1] - min[1], max[2] - min[2]);
       const m = wrap.userData.metrics;
+      // GLB assado não tem metrics de wrap: o tamanho real vem do len esperado
+      // (injetado pelo Node) — mesma régua de ±20% sobre a medida em mundo.
       const realDim = m ? Math.max(
         m.box.max.x - m.box.min.x, m.box.max.y - m.box.min.y, m.box.max.z - m.box.min.z,
-      ) : 0;
+      ) : (window.__vmLenEsperado || 0);
 
       /* M4: o GLB viaja com placeholder 1×1; o shared/ religa por nome ANTES da
          primeira pintura — material de mão com imagem ≤4 px é regressão. */

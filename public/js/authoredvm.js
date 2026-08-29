@@ -27,14 +27,14 @@ const AUTHORED_KILLED = typeof window !== 'undefined'
 // _loadFamily consome clone — o mesmo download serve qualquer instância de Game.
 const GLTF_CACHE = new Map();
 let skeletonClonePromise = null;
-function loadFamilyGltf(family) {
-  if (!GLTF_CACHE.has(family)) {
-    GLTF_CACHE.set(family, new GLTFLoader().loadAsync(AUTHORED_VM_URLS[family]).catch((error) => {
-      GLTF_CACHE.delete(family);
+function loadFamilyGltf(key) {
+  if (!GLTF_CACHE.has(key)) {
+    GLTF_CACHE.set(key, new GLTFLoader().loadAsync(urlForKey(key)).catch((error) => {
+      GLTF_CACHE.delete(key);
       throw error;
     }));
   }
-  return GLTF_CACHE.get(family);
+  return GLTF_CACHE.get(key);
 }
 function skeletonCloneOf(scene) {
   if (!skeletonClonePromise) {
@@ -126,21 +126,22 @@ function recoilParams() {
 }
 
 // Aquecimento de famílias + texturas compartilhadas antes da partida (boot M4).
-export function preloadAuthoredFamilies(families = []) {
+export function preloadAuthoredFamilies(keys = []) {
   if (NODE_RUNTIME || AUTHORED_KILLED) return Promise.resolve([]);
   return Promise.allSettled([
     sharedArmTextures(),
     recoilParams(),
     generalMotions(),
-    ...families.filter((family) => AUTHORED_VM_URLS[family]).map(loadFamilyGltf),
+    ...keys.filter((key) => urlForKey(key)).map(loadFamilyGltf),
   ]);
 }
 
-// Famílias que o boot deve esperar: as READY do loadout + granada (se aberta).
+// Chaves que o boot deve esperar: as READY do loadout (arma assada tem chave
+// própria — família#arma) + granada, se aberta.
 export function authoredBootFamilies(weaponIds = []) {
-  const families = new Set(weaponIds.map((id) => familyFor(id)).filter(Boolean));
-  if (familyReady('grenade')) families.add('grenade');
-  return [...families];
+  const keys = new Set(weaponIds.map((id) => entryKeyFor(id)).filter(Boolean));
+  if (familyReady('grenade')) keys.add('grenade');
+  return [...keys];
 }
 
 const _pivot = new THREE.Vector3();
@@ -187,6 +188,20 @@ const familyFor = (weapon) => {
   if (AUTHORED_KILLED) return '';
   const family = AUTHORED_VM_MODELS[weapon] || '';
   return familyReady(family) ? family : '';
+};
+// Arma "baked" tem GLB próprio (Mint assada dentro, offline): entry por ARMA.
+const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
+const entryKeyFor = (weapon) => {
+  const family = familyFor(weapon);
+  if (!family) return '';
+  return weaponBaked(weapon) ? `${family}#${weapon}` : family;
+};
+const urlForKey = (key) => {
+  if (key.includes('#')) {
+    const [family, weapon] = key.split('#');
+    return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
+  }
+  return AUTHORED_VM_URLS[key];
 };
 const clipKey = (name = '') => {
   const key = name.toLowerCase().replace(/[\s-]+/g, '_').replace(/_+/g, '_');
@@ -300,11 +315,13 @@ export class AuthoredViewModels {
     return this;
   }
 
-  async _loadFamily(family) {
+  async _loadFamily(key) {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
-    if (!family || this.entries.has(family)) return this.entries.get(family) || null;
-    if (this.pending.has(family)) return this.pending.get(family);
-    const pending = Promise.all([loadFamilyGltf(family), sharedArmTextures(), generalMotions()])
+    if (!key || this.entries.has(key)) return this.entries.get(key) || null;
+    if (this.pending.has(key)) return this.pending.get(key);
+    const family = key.split('#')[0];
+    const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
+    const pending = Promise.all([loadFamilyGltf(key), sharedArmTextures(), generalMotions()])
       .then(async ([gltf, shared, general]) => {
       if (this._disposed) return null;
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
@@ -315,39 +332,48 @@ export class AuthoredViewModels {
       const mixer = new THREE.AnimationMixer(visual.scene);
       const clips = new Map(gltf.animations.map((clip) => [clipKey(clip.name), clip]));
       const entry = {
-        family, ...visual, mixer, clips, action: null, queue: [], serial: 0,
+        key, family, ...visual, mixer, clips, action: null, queue: [], serial: 0,
         drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
       };
       mixer.addEventListener('finished', () => this._continue(entry));
       this._setupGeneralMotion(entry, general);
-      this.entries.set(family, entry);
-      this.pending.delete(family);
+      this.entries.set(key, entry);
+      this.pending.delete(key);
       this._idle(entry);
-      // Identidade Mint: a genérica do pack some e a arma do jogador entra no socket.
-      if (family !== 'grenade') {
-        const owner = familyFor(this.weapon) === family
+      if (bakedWeapon) {
+        // GLB assado: a Mint já está DENTRO (offline) com sockets nomeados —
+        // nada de montagem ao vivo; só referencia os nós do contrato.
+        const mint = visual.scene.getObjectByName(`MINT_WEAPON_${bakedWeapon.toUpperCase()}`);
+        if (mint) entry.mint = { active: mint, wraps: new Map(), weaponId: bakedWeapon };
+        entry.sockets = {
+          muzzle: visual.scene.getObjectByName('SOCKET_MINT_MUZZLE') || null,
+          sight: visual.scene.getObjectByName('SOCKET_MINT_SIGHT') || null,
+        };
+      } else if (family !== 'grenade') {
+        // Identidade Mint montada ao vivo (famílias ainda não assadas).
+        const owner = entryKeyFor(this.weapon) === key
           ? this.weapon
-          : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family);
+          : Object.keys(VM_WEAPON).find((id) => VM_WEAPON[id].family === family && !weaponBaked(id));
         if (owner) attachMintWeapon(entry, owner);
       }
-      if (familyFor(this.weapon) === family && !this.utility) {
+      if (entryKeyFor(this.weapon) === key && !this.utility) {
         // Chegada tardia entra SUBINDO pelo arco de draw, nunca trocando no meio do idle.
         entry.mount.visible = true;
         this.draw(this.weapon);
       }
-      console.info('[paid-viewmodel] ready', family, [...clips.keys()]);
+      console.info('[paid-viewmodel] ready', key, [...clips.keys()]);
       if (this.onReady) this.onReady(this);
       return entry;
     }).catch((error) => {
-      this.pending.delete(family);
-      console.error(`[paid-viewmodel] ${family}`, error);
+      this.pending.delete(key);
+      console.error(`[paid-viewmodel] ${key}`, error);
       return null;
     });
-    this.pending.set(family, pending);
+    this.pending.set(key, pending);
     return pending;
   }
 
-  entry(id = this.weapon) { return this.entries.get(familyFor(id)); }
+  entry(id = this.weapon) { return this.entries.get(entryKeyFor(id)); }
   active(id = this.weapon) { return Boolean(this.entry(id)); }
   fov(id = this.weapon, aspect = 16 / 9) {
     // Espelho do vmFovForAspect: meia-tangente HORIZONTAL constante — o FOV autorado
@@ -363,21 +389,21 @@ export class AuthoredViewModels {
   setWeapon(id) {
     const previous = this.weapon;
     this.weapon = id;
-    const family = familyFor(id);
+    const key = entryKeyFor(id);
     for (const entry of this.entries.values()) {
-      const visible = this.utility ? entry === this.utility.entry : entry.family === family;
+      const visible = this.utility ? entry === this.utility.entry : entry.key === key;
       // Entrada que sai de cena volta ao idle: fila/pose de reload não fica presa.
       if (!visible && entry.mount.visible) this._idle(entry);
       entry.mount.visible = visible;
     }
-    if (!family) return false;
-    const entry = this.entries.get(family);
+    if (!key) return false;
+    const entry = this.entries.get(key);
     if (!entry) {
-      this._loadFamily(family);
+      this._loadFamily(key);
       return false;
     }
     if (previous !== id) this._idle(entry);
-    if (family !== 'grenade') attachMintWeapon(entry, id);
+    if (entry.family !== 'grenade' && !key.includes('#')) attachMintWeapon(entry, id);
     this._applyRecoilFamily();
     return true;
   }
