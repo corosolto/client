@@ -165,11 +165,18 @@ try {
       const reloadIniciou = vm.reload(weapon, 1.0, false);
       await sleep(150);
       entry.mount.visible = false;
-      await sleep(1800);
+      /* Headless com swiftshader roda a ~6 fps e o dt clampa em 50 ms: espera
+         por TEMPO SIMULADO (updates×50 ms ≥ 1,5 s), não por tempo de parede. */
+      let updatesEscondido = 0;
+      const updateOriginal = vm.update.bind(vm);
+      vm.update = (dtFrame, ctxFrame) => { updatesEscondido += 1; return updateOriginal(dtFrame, ctxFrame); };
+      for (let waited = 0; updatesEscondido < 30 && waited < 12000; waited += 200) await sleep(200);
+      vm.update = updateOriginal;
       entry.mount.visible = true;
-      await sleep(120);
+      await sleep(300);
       const strandInfo = {
         reloadIniciou,
+        updatesEscondido,
         acao: entry.action?.getClip?.().name ?? null,
         pausada: entry.action?.paused ?? null,
         fila: entry.queue.length,

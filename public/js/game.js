@@ -28,7 +28,7 @@ import { buildState } from './botbrain/features.js';       // BOTBRAIN: monta o 
 import { sense } from './botbrain/sense.js';               // BOTBRAIN: percepção (jogo→features)
 import { BotBrain } from './botbrain/brain.js';            // BOTBRAIN: inferência (rede treinada rodando no bot)
 import { createSoundscape } from './soundscape.js';        // vida 1: áudio ambiente por mapa (world.sound)
-import { createAuthoredViewModels } from './authoredvm.js';
+import { createAuthoredViewModels, AUTHORED_VM_MODELS } from './authoredvm.js';
 
 import { WEAPONS } from './data/weapons.js';
 // Reexporta pra não quebrar quem já consumia a tabela daqui: server/room.js (servidor
@@ -2913,6 +2913,22 @@ export class Game {
     if (this.vm.arms) this.vm.arms.group.visible = !authored && !melee;
     for (const k in this.vm.models) this.vm.models[k].visible = !authored && !melee && k === w;
     this.vm.root.visible = !melee;
+    // Selo de debug (achado do dono, 29/08): o fallback silencioso fazia todo
+    // mundo julgar o viewmodel errado sem saber qual caminho estava na tela.
+    if (this.testMode) {
+      let badge = document.getElementById('vm-debug-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'vm-debug-badge';
+        badge.style.cssText = 'position:fixed;left:8px;bottom:96px;z-index:60;font:11px ui-monospace,monospace;'
+          + 'padding:2px 7px;border-radius:5px;background:#000a;color:#9fe8ff;pointer-events:none';
+        document.body.appendChild(badge);
+      }
+      badge.textContent = melee ? 'vm: faca (piloto)' : authored
+        ? `vm: AUTORADO (${AUTHORED_VM_MODELS[w] || '?'})`
+        : 'vm: LEGADO';
+      badge.style.color = authored || melee ? '#8effa9' : '#ffd27d';
+    }
     if (this.vmCamera) {
       this.vmCamera.fov = melee
         ? this.vm.melee.cameraFov

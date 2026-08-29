@@ -162,9 +162,8 @@ const CLIP_ALIASES = Object.freeze({
 // O enquadramento move o pacote inteiro e preserva contatos. Armas longas ganham
 // distância ocular para o aspecto largo do navegador.
 const FAMILY_FRAME = Object.freeze({
-  // ak: âncora estilo CS 1.6 (dono, 29/08): arma BAIXA no canto direito, só o
-  // dorso no quadro. rotDeg gira o PACOTE (mãos+arma juntas) — pitch levanta a
-  // boca, yaw leva a boca à mira, roll mostra o topo do receiver como no 1.6.
+  // ak: âncora CS 1.6 (dono, 29/08) — arma baixa no canto, só o dorso no quadro;
+  // rotDeg gira o PACOTE inteiro (pitch=boca sobe, yaw=boca à mira, roll=dorso).
   ak:      { x: 0.092, y: -0.112, z: -0.150, fov: 84, rotDeg: [7, 13, -5] },
   pistol:  { x: 0.080, y: -0.040, z: -0.100, fov: 84 },
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
@@ -617,10 +616,8 @@ export class AuthoredViewModels {
   }
 
   _setupGeneralMotion(entry, general) {
-    // Camadas aditivas e one-shots dos clipes General DESLIGADOS (prints do
-    // dono, 29/08, com o jogador PARADO): o A_FP_Idle genérico tem floreio de
-    // braços no meio do ciclo e o delta aditivo arrancava o braço da pose da
-    // família. Só voltam com retarget de base por família. Estável > quebrado.
+    // Camadas General DESLIGADAS (prints do dono 29/08, PARADO): o A_FP_Idle tem
+    // floreio no ciclo e o delta aditivo arrancava o braço. Estável > quebrado.
     if (general) entry.generalClips = general;
   }
 
