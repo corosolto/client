@@ -163,16 +163,24 @@ const CLIP_ALIASES = Object.freeze({
 // O enquadramento move o pacote inteiro e preserva contatos. Armas longas ganham
 // distância ocular para o aspecto largo do navegador.
 const FAMILY_FRAME = Object.freeze({
-  // ak: âncora CS 1.6 (dono, 29/08) — arma baixa no canto, só o dorso no quadro;
-  // rotDeg gira o PACOTE inteiro (pitch=boca sobe, yaw=boca à mira, roll=dorso).
-  ak:      { x: 0.092, y: -0.112, z: -0.150, fov: 84, rotDeg: [7, 13, -5] },
-  pistol:  { x: 0.080, y: -0.040, z: -0.100, fov: 84 },
+  // Âncoras MEDIDAS nos gabaritos CS 1.6 (vm-cs16-frames.mjs, razão angular
+  // alvo 1,00; relatórios em baked-preview/<arma>-cs16-template-report.json).
+  ak:      { x: 0.112, y: -0.068, z: -0.199, fov: 84, rotDeg: [0.6, -0.1, -5] },
+  ar:      { x: 0.096, y: -0.129, z: -0.198, fov: 84, rotDeg: [-8.0, 0.9, 0] },
+  mp5:     { x: 0.091, y: -0.187, z: -0.204, fov: 84, rotDeg: [-10.1, 0, 0] },
+  deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
+  smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
+  p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
+  pistol:  { x: 0.036, y: -0.095, z: -0.085, fov: 84, rotDeg: [-9.7, -0.1, 0] },
+  shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },
+  sniper:  { x: 0.118, y: -0.128, z: 0.029, fov: 84, rotDeg: [-11.9, 0, 0] },
+  bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },
+  g3:      { x: 0.117, y: -0.062, z: -0.202, fov: 84, rotDeg: [1.0, -0.2, 0] },
+  marksman:{ x: 0.107, y: -0.07, z: -0.187, fov: 84, rotDeg: [0.5, -0.3, 0] },
+  svd:     { x: 0.107, y: -0.06, z: -0.419, fov: 84, rotDeg: [1.9, 0.5, 0] },
+  lmg:     { x: 0.153, y: -0.116, z: -0.409, fov: 84, rotDeg: [-5.2, -0.3, 0] },
+  // revolver: sem doador CS 1.6 (não existe no jogo fonte) — fica no olho antigo.
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
-  shotgun: { x: 0.050, y: -0.045, z: -0.200, fov: 84 },
-  sniper:  { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
-  bolt:    { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
-  lmg:     { x: 0.045, y: -0.040, z: -0.180, fov: 84 },
-  p90:     { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
   grenade: { x: 0.045, y: -0.035, z: -0.080, fov: 84 },
   default: { x: 0.050, y: -0.040, z: -0.140, fov: 84 },
 });
@@ -334,6 +342,7 @@ export class AuthoredViewModels {
       const entry = {
         key, family, ...visual, mixer, clips, action: null, queue: [], serial: 0,
         drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
+        state: 'idle', stateUntil: 0, shootCycle: 0,
       };
       mixer.addEventListener('finished', () => this._continue(entry));
       this._setupGeneralMotion(entry, general);
@@ -375,6 +384,8 @@ export class AuthoredViewModels {
 
   entry(id = this.weapon) { return this.entries.get(entryKeyFor(id)); }
   active(id = this.weapon) { return Boolean(this.entry(id)); }
+  // Estado corrente da máquina (cs16: um de idle|draw|reload|shoot1|shoot2|shoot3).
+  state(id = this.weapon) { return this.entry(id)?.state || 'idle'; }
   fov(id = this.weapon, aspect = 16 / 9) {
     // Espelho do vmFovForAspect: meia-tangente HORIZONTAL constante — o FOV autorado
     // vale no aspecto 16:9 e converte para o aspecto corrente (3:2 não pode regredir).
@@ -443,6 +454,12 @@ export class AuthoredViewModels {
       return;
     }
     const active = this.entry();
+    // Estados por cadência (cs16: shoot1-3 e o draw procedural de pistola)
+    // expiram pelo relógio do QC e voltam a idle — não há clipe para "terminar".
+    if (active?.stateUntil && this._time >= active.stateUntil && /^(shoot|draw)/.test(active.state || '')) {
+      active.state = 'idle';
+      active.stateUntil = 0;
+    }
     for (const entry of this.entries.values()) {
       if (entry === active && entry.mount.visible) continue;
       // Fila/ação pendente termina mesmo com o mount escondido — sem pose presa.
@@ -568,20 +585,41 @@ export class AuthoredViewModels {
   draw(id, duration = 0.32) {
     const entry = this.entry(id);
     if (!entry) return false;
+    const cs16 = VM_FAMILY[entry.family]?.cs16;
     // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
     if (VM_FAMILY[entry.family]?.equip !== 'pistol' && entry.clips.has('equip_rifle')) {
       entry.drawTime = entry.drawDuration;
-      return this._play(entry, 'equip_rifle', { duration: Math.max(0.3, duration), fade: 0.03 });
+      const tocou = this._play(entry, 'equip_rifle', {
+        duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,
+      });
+      if (tocou) entry.state = 'draw';
+      return tocou;
     }
-    entry.drawDuration = Math.max(0.12, duration || 0.32);
+    // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
+    // expiração no update (não há clipe para "terminar"). Revisão 29/08.
+    entry.drawDuration = cs16 ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
+    if (cs16) {
+      entry.state = 'draw';
+      entry.stateUntil = this._time + entry.drawDuration;
+    }
     return true;
   }
 
   reload(id, duration, empty = false) {
     const entry = this.entry(id);
     if (!entry) return false;
+    const cs16 = VM_FAMILY[entry.family]?.cs16;
+    // Sem cadência de reload no QC fonte (shotgun: recarga é laço de cartucho),
+    // a duração do jogo segue valendo.
+    if (cs16?.reload) {
+      // cadência do QC vale para o TÁTICO; o empty escala pelo MESMO
+      // timeScale (forçar 2,43s no empty o acelerava 27%).
+      const tactical = entry.clips.get('reload_tactical');
+      const alvo = empty && entry.clips.has('reload_empty') ? entry.clips.get('reload_empty') : tactical;
+      duration = tactical && alvo ? cs16.reload * (alvo.duration / tactical.duration) : cs16.reload;
+    }
     const direct = empty && entry.clips.has('reload_empty')
       ? 'reload_empty'
       : entry.clips.has('reload_tactical')
@@ -589,14 +627,34 @@ export class AuthoredViewModels {
       : entry.clips.has('reload_empty')
       ? 'reload_empty'
       : '';
-    if (direct) return this._play(entry, direct, { duration, fade: 0.025 });
-    const sequence = ['reload_start', 'reload_loop', 'reload_end'].filter((name) => entry.clips.has(name));
-    return sequence.length ? this._sequence(entry, sequence, duration) : false;
+    // Estado só DEPOIS do play dar certo: setar antes deixava 'reload' preso
+    // para sempre numa família sem clipe (revisão 29/08).
+    const tocou = direct
+      ? this._play(entry, direct, { duration, fade: 0.025 })
+      : (() => {
+        const sequence = ['reload_start', 'reload_loop', 'reload_end'].filter((name) => entry.clips.has(name));
+        return sequence.length ? this._sequence(entry, sequence, duration) : false;
+      })();
+    if (tocou && cs16) entry.state = 'reload';
+    return tocou;
   }
 
   shoot(id) {
     const entry = this.entry(id);
     if (!entry) return false;
+    const cs16 = VM_FAMILY[entry.family]?.cs16;
+    if (cs16) {
+      // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências
+      // originais; recuo SÓ na câmera (GUNFEEL do game.js) — o mount não recua.
+      entry.shootCycle = ((entry.shootCycle || 0) % 3) + 1;
+      entry.state = `shoot${entry.shootCycle}`;
+      entry.stateUntil = this._time + cs16.shoot;
+      if (entry.clips.has('shoot')) return this._play(entry, 'shoot', { fade: 0.01 });
+      // shotgun: o shoot 1,156s do QC da m3 É o pump — sem este fallback a
+      // família que a máquina cronometra ficava muda no tiro (revisão 29/08).
+      if (entry.clips.has('pump')) return this._play(entry, 'pump', { fade: 0.02 });
+      return true;
+    }
     // Recuo procedural em TODO tiro (12/15 famílias não têm clipe de fire);
     // clipe assado entra por cima onde existe, e a shotgun toca o pump.
     this.recoil.shoot(this._time);
@@ -638,24 +696,42 @@ export class AuthoredViewModels {
     // Sem guarda de visibilidade: fila encalhada com mount oculto era pose congelada.
     const next = entry.queue.shift();
     if (next) this._play(entry, next.name, { timeScale: next.timeScale, preserveQueue: true });
-    else this._idle(entry);
+    // fim de clipe volta ao idle com FADE: o último frame não fecha nos
+    // twists do braço e o snap seco era um pop no fim de toda recarga.
+    else this._idle(entry, 0.15);
   }
 
   _setupGeneralMotion(entry, general) {
     // Camadas General DESLIGADAS (prints do dono 29/08, PARADO): o A_FP_Idle tem
     // floreio no ciclo e o delta aditivo arrancava o braço. Estável > quebrado.
     if (general) entry.generalClips = general;
+    // cs16: o estado draw usa o equip_rifle do General como animação única
+    // (tracks por nome de bone); nenhuma camada aditiva entra junto.
+    const cs16 = VM_FAMILY[entry.family]?.cs16;
+    if (cs16 && general?.has('equip_rifle') && !entry.clips.has('equip_rifle')) {
+      entry.clips.set('equip_rifle', general.get('equip_rifle'));
+    }
   }
 
-  _idle(entry) {
+  _idle(entry, fade = 0) {
     const clip = entry.clips.get('idle');
     if (!clip) return false;
+    entry.state = 'idle';
     entry.queue = [];
-    entry.mixer.stopAllAction();
+    const previous = entry.action;
     const action = entry.mixer.clipAction(clip);
-    action.reset().play();
-    action.paused = true;
-    entry.mixer.update(0);
+    if (fade > 0 && previous && previous !== action) {
+      // pose congelada do idle entrando por peso: a ação pausada segura o frame
+      // 0 enquanto o crossfade dilui a pose final do clipe anterior.
+      action.reset().play();
+      action.paused = true;
+      action.crossFadeFrom(previous, fade, false);
+    } else {
+      entry.mixer.stopAllAction();
+      action.reset().play();
+      action.paused = true;
+      entry.mixer.update(0);
+    }
     entry.action = action;
     return true;
   }

@@ -44,6 +44,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--residuo", default="0,0,0")
     parser.add_argument("--magbox", default="")
     parser.add_argument("--render-only", action="store_true")
+    # Gabarito CS 1.6 (SMD decompilado): entra SÓ como referência de
+    # posicionamento em espaço de câmera, rende um overlay de QA e um relatório
+    # de correção de FAMILY_FRAME, e é APAGADO antes do export — nenhuma
+    # geometria, material ou keyframe do gabarito sobrevive no GLB.
+    parser.add_argument("--template", type=Path, default=None)
+    parser.add_argument("--template-pose", type=Path, default=None)
+    parser.add_argument("--template-origin", default="0,0,0")
+    parser.add_argument("--template-scale", type=float, default=1.0)
+    parser.add_argument("--bst", type=Path, default=None)
     return parser.parse_args(values)
 
 
@@ -60,6 +69,180 @@ def world_bbox(objects, depsgraph):
             hi = Vector(map(max, hi, p))
         ev.to_mesh_clear()
     return lo, hi
+
+
+GOLDSRC_INCH = 0.0254
+
+
+def _cs16_template_pass(args, scene, camera, mint_meshes) -> None:
+    """Gabarito de posicionamento: importa o SMD de referência via Blender
+    Source Tools, posa com o frame 0 do idle (posicionamento estático, nunca
+    exportado), converte GoldSrc→espaço da câmera da família e mede o desvio
+    do pacote. Tudo do gabarito é apagado antes do export; uma asserção fecha
+    a porta."""
+    if not args.bst:
+        raise RuntimeError("--template exige --bst=<checkout do BlenderSourceTools>")
+    sys.path.insert(0, str(args.bst))
+    import io_scene_valvesource
+    try:
+        io_scene_valvesource.register()
+    except ValueError:
+        pass  # já registrado
+
+    antes = set(scene.objects)
+    # Sem seleção ativa + NEW_ARMATURE: senão o BST "appenda" a malha do
+    # gabarito no rig da família (escala 0,01) e o gabarito nasce contaminado.
+    for obj in scene.objects:
+        obj.select_set(False)
+    bpy.context.view_layer.objects.active = None
+    result = bpy.ops.import_scene.smd(
+        filepath=str(args.template), doAnim=False, createCollections=False,
+        makeCamera=False, upAxis="Z", append="NEW_ARMATURE")
+    if "FINISHED" not in result:
+        raise RuntimeError(f"import do gabarito falhou: {result}")
+    template_objs = [o for o in set(scene.objects) - antes]
+    template_arm = next((o for o in template_objs if o.type == "ARMATURE"), None)
+    template_meshes = [o for o in template_objs if o.type == "MESH"]
+    if not template_meshes:
+        raise RuntimeError("gabarito sem malha")
+    if args.template_pose and template_arm:
+        # Pose estática do frame 0: só coloca o gabarito onde o jogo o desenha.
+        bpy.context.view_layer.objects.active = template_arm
+        for obj in scene.objects:
+            obj.select_set(obj is template_arm)
+        bpy.ops.import_scene.smd(
+            filepath=str(args.template_pose), doAnim=True,
+            createCollections=False, makeCamera=False, upAxis="Z", append="APPEND")
+        scene.frame_set(0)
+
+    # GoldSrc v_ view-space (como o SMD chega, pós-idle): cano ao longo de −Y,
+    # topo +Z, e o modelo é AUTORADO CANHOTO (o engine espelha para cl_righthand).
+    # Câmera Blender: −Z frente, +Y topo, +X direita. Conversão (com o espelho
+    # do righthand): cam_local = (−x, z, y) · polegada. $origin entra no mesmo
+    # mapa, $scale multiplica tudo.
+    origem = Vector([float(v) for v in args.template_origin.split(",")])
+    s = GOLDSRC_INCH * args.template_scale
+    # X POSITIVO = o espelho do cl_righthand (o SMD cru é canhoto); det<0 é
+    # aceitável num gabarito descartável. $origin desloca o modelo por -valor.
+    conv = Matrix((
+        (s, 0, 0, -origem.x * s),
+        (0, 0, s, -origem.z * s),
+        (0, s, 0, -origem.y * s),
+        (0, 0, 0, 1),
+    ))
+    # matriz da câmera SEM escala: a câmera do pack chega com escala do glTF e
+    # contaminaria a conversão (fator 1/2,54 visto na prática).
+    cam_sem_escala = Matrix.LocRotScale(
+        camera.matrix_world.translation, camera.matrix_world.to_quaternion(), None)
+    root_para_mundo = cam_sem_escala @ conv
+    for obj in template_objs:
+        if obj.parent is None:
+            obj.matrix_world = root_para_mundo @ obj.matrix_world
+
+    bpy.context.view_layer.update()
+    deps = bpy.context.evaluated_depsgraph_get()
+    gab_lo, gab_hi = world_bbox(template_meshes, deps)
+    mint_lo, mint_hi = world_bbox(mint_meshes, deps)
+    cam_inv = cam_sem_escala.inverted()
+    gab_centro = cam_inv @ ((gab_lo + gab_hi) * 0.5)
+    mint_centro = cam_inv @ ((mint_lo + mint_hi) * 0.5)
+    # Boca de referência = centro do gabarito empurrado meia-extensão para a
+    # frente da CÂMERA (o $attachment do QC é em base de bone convertida pelo
+    # BST — não confiável aqui).
+    boca_cs16 = Vector((gab_centro.x, gab_centro.y, gab_centro.z - (gab_hi - gab_lo).length * 0.5))
+    delta = gab_centro - mint_centro
+
+    # Eixo do cano em espaço de câmera (centroide dos 10% frontais − traseiros
+    # ao longo da profundidade): vira pitch/yaw comparáveis com o rotDeg do
+    # FAMILY_FRAME (pitch>0 = boca sobe, yaw>0 = boca à esquerda/mira).
+    def eixo_cam(objetos):
+        pontos = []
+        dg = bpy.context.evaluated_depsgraph_get()
+        for obj in objetos:
+            ev = obj.evaluated_get(dg)
+            me = ev.to_mesh()
+            mw = cam_inv @ ev.matrix_world
+            passo = max(1, len(me.vertices) // 8000)
+            for i in range(0, len(me.vertices), passo):
+                pontos.append(mw @ me.vertices[i].co)
+            ev.to_mesh_clear()
+        zs = sorted(p.z for p in pontos)
+        z_frente = zs[max(0, int(len(zs) * 0.10))]
+        z_tras = zs[min(len(zs) - 1, int(len(zs) * 0.90))]
+        frente = [p for p in pontos if p.z <= z_frente]
+        tras = [p for p in pontos if p.z >= z_tras]
+        d = (sum(frente, Vector()) / len(frente)) - (sum(tras, Vector()) / len(tras))
+        return d.normalized()
+
+    eixo_gab = eixo_cam(template_meshes)
+    eixo_mint = eixo_cam(mint_meshes)
+    def pitch_yaw(v):
+        return (math.degrees(math.atan2(v.y, -v.z)), math.degrees(math.atan2(-v.x, -v.z)))
+    pg, yg = pitch_yaw(eixo_gab)
+    pm, ym = pitch_yaw(eixo_mint)
+    relatorio = {
+        "gabarito_centro_cam": [round(v, 4) for v in gab_centro],
+        "gabarito_dim_m": [round(v, 4) for v in (gab_hi - gab_lo)],
+        "mint_centro_cam": [round(v, 4) for v in mint_centro],
+        "frame_delta_sugerido": [round(v, 4) for v in delta],
+        "boca_cs16_cam": [round(v, 4) for v in boca_cs16] if boca_cs16 else None,
+        "cano_gabarito_pitch_yaw_deg": [round(pg, 2), round(yg, 2)],
+        "cano_mint_pitch_yaw_deg": [round(pm, 2), round(ym, 2)],
+        "rot_delta_sugerido_deg": [round(pg - pm, 2), round(yg - ym, 2)],
+    }
+    print("CORO_CS16_TEMPLATE=" + json.dumps(relatorio))
+    out_dir = PRIVATE_ROOT / args.familia / "baked-preview"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / f"{args.arma}-cs16-template-report.json").write_text(json.dumps(relatorio, indent=1))
+
+    # Overlay de QA: gabarito em vermelho translúcido por cima da cena.
+    vermelho = bpy.data.materials.new("GABARITO_CS16")
+    vermelho.use_nodes = True
+    bsdf = vermelho.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = (1.0, 0.08, 0.08, 1.0)
+    bsdf.inputs["Emission Color"].default_value = (1.0, 0.1, 0.1, 1.0)
+    bsdf.inputs["Emission Strength"].default_value = 1.2
+    bsdf.inputs["Alpha"].default_value = 0.55
+    vermelho.blend_method = "BLEND"
+    for obj in template_meshes:
+        obj.data.materials.clear()
+        obj.data.materials.append(vermelho)
+    scene.render.resolution_x = 960
+    scene.render.resolution_y = 540
+    scene.render.engine = "BLENDER_EEVEE"
+    scene.camera = camera
+    # luz própria do overlay (a do contact sheet só nasce depois): sem ela a
+    # cena da família sai preta e o olho não compara nada.
+    mundo_qa = bpy.data.worlds.new("QA_GABARITO")
+    mundo_qa.color = (0.35, 0.38, 0.42)
+    scene.world = mundo_qa
+    sol_qa = bpy.data.objects.new("SOL_QA", bpy.data.lights.new("SOL_QA", type="SUN"))
+    sol_qa.data.energy = 3.0
+    sol_qa.rotation_euler = (math.radians(50), 0, math.radians(30))
+    scene.collection.objects.link(sol_qa)
+    scene.render.filepath = str(out_dir / f"{args.arma}-cs16-overlay.png")
+    bpy.ops.render.render(write_still=True)
+    bpy.data.objects.remove(sol_qa, do_unlink=True)
+
+    # APAGA o gabarito: objetos, malhas, armature, materiais e imagens BMP.
+    nomes_pose = {Path(str(p)).stem.lower() for p in (args.template_pose,) if p}
+    for obj in template_objs:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    for action in [a for a in bpy.data.actions if a.name.lower() in nomes_pose]:
+        bpy.data.actions.remove(action)
+    for _ in range(4):
+        bpy.data.orphans_purge(do_recursive=True)
+    # "ref_" cobre o caminho ref_*.smd (deagle) — a asserção só com "template"
+    # ficava cega para ele (revisão 29/08).
+    sobras = [o.name for o in bpy.data.objects
+              if "template" in o.name.lower() or o.name.lower().startswith("ref_")]
+    sobras += [a.name for a in bpy.data.actions if a.name.lower() in nomes_pose]
+    sobras += [m.name for m in bpy.data.materials if m.name.lower().endswith(".bmp")]
+    sobras += [i.name for i in bpy.data.images if i.name.lower().endswith(".bmp")]
+    sobras += [a.name for a in bpy.data.actions if "template" in a.name.lower()]
+    if sobras:
+        raise RuntimeError(f"gabarito sobrou na cena — export abortado: {sobras}")
+    print("CORO_CS16_TEMPLATE_LIMPO=1")
 
 
 def main() -> None:
@@ -169,7 +352,33 @@ def main() -> None:
         bm = bmesh.new()
         bm.from_mesh(corpo.data)
         mw = corpo.matrix_world
-        faces_mag = [f for f in bm.faces if dentro(mw @ f.calc_center_median())]
+        # ILHAS conectadas, não faces soltas: o corte por centroide-na-caixa
+        # rasgava o pente (metade das faces ficava no corpo — "pente duplo" e
+        # renda de triângulos voando, crítico 29/08). Ilha com maioria das
+        # faces na caixa sai INTEIRA; o corpo fica fechado.
+        bm.faces.ensure_lookup_table()
+        semente = [f for f in bm.faces if dentro(mw @ f.calc_center_median())]
+        visitado = set()
+        faces_mag = []
+        for f0 in bm.faces:
+            if f0.index in visitado:
+                continue
+            ilha = []
+            fila = [f0]
+            visitado.add(f0.index)
+            while fila:
+                f = fila.pop()
+                ilha.append(f)
+                for e in f.edges:
+                    for lf in e.link_faces:
+                        if lf.index not in visitado:
+                            visitado.add(lf.index)
+                            fila.append(lf)
+            na_caixa = sum(1 for f in ilha if dentro(mw @ f.calc_center_median()))
+            if na_caixa > len(ilha) * 0.5:
+                faces_mag.extend(ilha)
+        print("CORO_MAG_ILHAS=" + json.dumps({
+            "semente": len(semente), "ilhas_mag_faces": len(faces_mag)}))
         amostra = [mw @ f.calc_center_median() - grip for f in bm.faces[:0]] or None
         gs = [Vector(((mw @ f.calc_center_median() - grip).dot(eixos[0]),
                       (mw @ f.calc_center_median() - grip).dot(eixos[1]),
@@ -199,7 +408,17 @@ def main() -> None:
             mag_obj.data.materials.append(corpo.data.materials[0] if corpo.data.materials else None)
             scene.collection.objects.link(mag_obj)
             mag_obj.matrix_world = corpo.matrix_world.copy()
+            # costura do poço: arestas que separam pente×corpo viram borda
+            # aberta após o corte — sem tampa, o poço mostra "dentes" (interior
+            # com backface) quando o pente sai na recarga. Tapa SÓ essas.
+            alvo_mag = set(faces_mag)
+            costura = list({e for f in faces_mag for e in f.edges
+                            if any(lf not in alvo_mag for lf in e.link_faces)})
             bmesh.ops.delete(bm, geom=faces_mag, context="FACES")
+            costura = [e for e in costura if e.is_valid and e.is_boundary]
+            if costura:
+                bmesh.ops.holes_fill(bm, edges=costura, sides=0)
+                bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
             bm.to_mesh(corpo.data)
             # pente vai para o bone Mag do pack (anima na recarga)
             mag_bone = next((b.name for b in rig.pose.bones if b.name.lower() == "mag"), None)
@@ -213,11 +432,21 @@ def main() -> None:
                 mag_obj.parent = alvo_rig
                 mag_obj.parent_type = "BONE"
                 mag_obj.parent_bone = mag_bone
+                # REST pose antes de ler pb.matrix: a pose corrente do frame de
+                # bake contaminava o inverse (crítico 29/08 mediu T local de
+                # 79,8 unidades no GLB — o pente orbitava longe da mão).
+                pose_antes = alvo_rig.data.pose_position
+                alvo_rig.data.pose_position = "REST"
                 bpy.context.view_layer.update()
                 pb = alvo_rig.pose.bones[mag_bone]
-                tail = alvo_rig.matrix_world @ pb.matrix @ Matrix.Translation((0.0, pb.length, 0.0))
+                # HEAD do bone, sem Matrix.Translation(0,length,0): o exportador
+                # glTF já faz a própria conversão head/tail ao reparentar no
+                # joint — compensar o tail aqui contava o comprimento 2 vezes.
+                head = alvo_rig.matrix_world @ pb.matrix
                 mag_obj.matrix_basis = Matrix.Identity(4)
-                mag_obj.matrix_parent_inverse = tail.inverted() @ keep_mag
+                mag_obj.matrix_parent_inverse = head.inverted() @ keep_mag
+                alvo_rig.data.pose_position = pose_antes
+                bpy.context.view_layer.update()
         bm.free()
 
     # ---- sockets do contrato: boca e alça MEDIDOS nos vértices (porta do
@@ -241,6 +470,12 @@ def main() -> None:
     boca = sum(frente_pts, Vector()) / max(1, len(frente_pts))
     z_alca = z_max * 0.45
     faixa = [(p, (p - grip0).dot(up)) for p, z in zip(pontos, ao_longo) if 0 <= z <= z_alca]
+    if not faixa:
+        # arma com grip atrás de todo o corpo (m3): janela [0, 45%] fica vazia —
+        # cai para a metade traseira do comprimento medido.
+        faixa = [(p, (p - grip0).dot(up)) for p, z in zip(pontos, ao_longo) if z <= z_alca]
+    if not faixa:
+        faixa = [(p, (p - grip0).dot(up)) for p in pontos]
     topo = max(h for _, h in faixa)
     topo_pts = [p for p, h in faixa if h > topo - 0.012]
     alca = sum(topo_pts, Vector()) / max(1, len(topo_pts))
@@ -257,6 +492,11 @@ def main() -> None:
         keep_socket = empty.matrix_world.copy()
         empty.parent = holder
         empty.matrix_world = keep_socket
+
+    # ---- gabarito CS 1.6 (opcional): posiciona o SMD no espaço da câmera da
+    # família, mede o desvio Mint↔gabarito, rende overlay de QA e APAGA tudo.
+    if args.template:
+        _cs16_template_pass(args, scene, camera, mint_meshes)
 
     # ---- contact sheet ANTES do export (o olho decide)
     out_dir = PRIVATE_ROOT / args.familia / "baked-preview"

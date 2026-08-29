@@ -38,6 +38,28 @@ if (config.parts?.mag?.box) {
   argumentos.push(`--magbox=${[...config.parts.mag.box.min, ...config.parts.mag.box.max].join(',')}`);
 }
 if (flag('render-only')) argumentos.push('--render-only');
+// Gabarito CS 1.6 (--template=<dir com .smd + QC>): referência de posicionamento
+// apagada antes do export; --bst aponta o checkout do Blender Source Tools.
+const templateDir = arg('template');
+if (templateDir) {
+  const bst = arg('bst');
+  if (!bst) throw new Error('--template exige --bst=<BlenderSourceTools>');
+  const { readdirSync } = await import('node:fs');
+  const arquivos = readdirSync(templateDir);
+  // malha SÓ da arma: f_*_template.smd (padrão dos fontes) ou ref_*.smd (deagle)
+  const templateSmd = arquivos.find((f) => /^f_.*_template\.smd$/i.test(f))
+    || arquivos.find((f) => /^ref_.*\.smd$/i.test(f) && !/hand/i.test(f));
+  if (!templateSmd) throw new Error(`nenhum f_*_template.smd/ref_*.smd em ${templateDir}`);
+  const poseSmd = arquivos.find((f) => /^idle1?\.smd$/i.test(f));
+  if (!poseSmd) throw new Error(`nenhum idle*.smd em ${templateDir}`);
+  argumentos.push(
+    `--template=${path.join(templateDir, templateSmd)}`,
+    `--template-pose=${path.join(templateDir, poseSmd)}`,
+    `--template-origin=${arg('template-origin') || '0,0,0'}`,
+    `--template-scale=${arg('template-scale') || '1'}`,
+    `--bst=${bst}`,
+  );
+}
 
 const blender = spawnSync(BLENDER, [
   '-b', '--python-exit-code', '1',

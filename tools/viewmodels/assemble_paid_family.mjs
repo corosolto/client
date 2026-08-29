@@ -74,6 +74,20 @@ function convertFbx(source, output) {
   }
 }
 
+// Clipes de ARMA convertem via BLENDER, não Assimp: o rig alvo nasceu do import
+// FBX do Blender, e o Assimp monta o frame local dos bones com outra convenção —
+// o delta do Mag saía girado (pente a 1 m da mão na recarga, medido 29/08).
+const BLENDER = '/Applications/Blender.app/Contents/MacOS/Blender';
+function convertWeaponFbx(source, output) {
+  const script = path.join(REPO_ROOT, 'tools/blender/viewmodels/convert_weapon_clip_fbx.py');
+  const result = spawnSync(BLENDER, [
+    '-b', '--python-exit-code', '1', '--python', script, '--', source, output,
+  ], { encoding: 'utf8' });
+  if (result.status !== 0 || !result.stdout.includes('CORO_WEAPON_CLIP_GLB=')) {
+    throw new Error(`Blender failed for ${source}:\n${result.stdout.slice(-800)}\n${result.stderr.slice(-400)}`);
+  }
+}
+
 async function stripRenderables(source) {
   const glb = await fs.readFile(source);
   if (glb.readUInt32LE(0) !== 0x46546c67 || glb.readUInt32LE(4) !== 2) {
@@ -176,8 +190,14 @@ function sampleTargets(gltf, targetNames, { foldRoot = false, targetNodes = null
     if (!source) continue;
     source.updateMatrix();
     const target = foldRoot ? null : targetNodes?.get(name);
+    // Rebase preservando o PIVÔ da fonte: newLocal = posed ∘ srcRest⁻¹ ∘ targetRest.
+    // A forma antiga (targetRest ∘ srcRest⁻¹ ∘ posed) aplicava o delta no frame
+    // LOCAL do bone alvo — com o bone Mag do rig da arma a ~0,8 m da geometria
+    // (no FBX de animação a cabeça fica a 3 cm do pente), uma rotação de 50°
+    // virava um arco de 0,66 m: o pente voava a 1 m da mão (medido 29/08).
+    // Delta no frame do PARENT mantém o arco onde o pack o autorou.
     const conversion = target
-      ? nodeMatrix(target).multiply(source.matrix.clone().invert())
+      ? { srcRestInv: source.matrix.clone().invert(), targetRest: nodeMatrix(target) }
       : null;
     tracks.set(name, { translation: [], rotation: [], scale: [], previous: null, source, conversion });
   }
@@ -191,7 +211,9 @@ function sampleTargets(gltf, targetNames, { foldRoot = false, targetNodes = null
         matrix.multiplyMatrices(axisConversion, track.source.matrix);
         matrix.decompose(position, quaternion, scale);
       } else if (track.conversion) {
-        matrix.multiplyMatrices(track.conversion, track.source.matrix);
+        matrix.copy(track.source.matrix)
+          .multiply(track.conversion.srcRestInv)
+          .multiply(track.conversion.targetRest);
         matrix.decompose(position, quaternion, scale);
       } else {
         position.copy(track.source.position);
@@ -284,8 +306,7 @@ async function main() {
     let weaponSample = null;
     if (weaponFbx) {
       const weaponGlb = path.join(rawRoot, `${clipName}-weapon.glb`);
-      convertFbx(weaponFbx, weaponGlb);
-      await stripRenderables(weaponGlb);
+      convertWeaponFbx(weaponFbx, weaponGlb);
       const weapon = await loadAnimation(weaponGlb);
       weaponSample = sampleTargets(weapon, weaponTargets, { targetNodes: targetsByName });
       samples.push(weaponSample);

@@ -42,6 +42,7 @@
     "eval:maprotate": "node tools/eval/map-rotation-check.mjs",
     "eval:submitguard": "node tools/eval/submit-guard-check.mjs",
     "eval:ctrlw": "node tools/eval/ctrlw-check.mjs",
+    "eval:cs16": "node tools/eval/vm-cs16-check.mjs",
     "eval:boot": "node tools/eval/boot-check.mjs",
     "eval:ssr": "node tools/eval/ssr-render-check.mjs",
     "eval:build": "npm run build && npm run eval:ssr",
