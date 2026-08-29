@@ -414,6 +414,97 @@ Supabase não foi consultada. **Pontos cegos declarados:** a invariante de hones
 corte. E o corte vale em qualquer campo, inclusive na mensagem: um crash NOSSO cujo texto apenas
 cite um dos seis nomes sumiria. É o mesmo furo estrutural que a `EXTENSION_RE` tem desde a
 BUG-51, e a invariante de honestidade é o guarda-corpo.
+### ~~BUG-82 · perda de contexto WebGL no meio do frame lançava TypeError por frame, matava o launch e abria issue — a flag do three é assíncrona~~ · RESOLVIDO 25/08 (issues #419 e #420)
+
+**Sintoma (literal, issues #420 e #419, mesma sessão, alpha.176, WebKit):**
+*"TypeError: Argument 1 ('shader') to WebGL2RenderingContext.shaderSource must be an
+instance of WebGLShader"*, fingerprints `645208c8` (#420) e `9e9db234` (#419), classe
+`codigo`, origem `vendor/three.module.js:19355:17`, stack
+`shaderSource@[native code] → WebGLShader → WebGLProgram → acquireProgram → getProgram →
+setProgram → renderObject → renderScene → update@game.js → loop@main.js`. A #419 é o
+**mesmo crash** com o prefixo *"Falha ao abrir partida: "* — o handler global
+(`index.astro`) chamou `lancamento.fail()` durante o launch da etapa `partida`
+(`main.js:985`), e o prefixo muda o hash FNV. Duas issues pela mesma corrida.
+
+**Causa raiz — confirmada.** O three r160 vendorizado só se protege pela flag assíncrona
+`_isContextLost` (`three.module.js:28562`), setada quando o evento DOM `webglcontextlost`
+é **despachado** (`:29104`); a guarda única do `render()` era `if ( _isContextLost === true )
+return;` (`:29547`). Entre a perda física do contexto e o despacho do evento,
+`gl.createShader()` (`:19353`, ocorrência única no bundle) devolve `null` e a chamada
+tipada seguinte — `gl.shaderSource(null,…)` — lança TypeError no WebKit. Como o
+`requestAnimationFrame` é a 1ª linha do loop, o jogo não morre: lança **1 TypeError por
+frame** até o evento chegar. Upstream r179 conferido: idêntico ao r160 aqui — não havia
+guarda oficial a portar, a guarda é autoral.
+
+**Palpite óbvio, REFUTADO com leitura medida:** "a recuperação de contexto não existe/não
+roda". Falso — `main.js:80-105` já faz `preventDefault` + `forceContextRestore()` em
+0,5/1,5/4 s com fatal deliberado em 8 s (`'contexto WebGL perdido'`), e a WG7
+(`webgl-compat-check.mjs`) tranca os listeners desde o #303. O defeito não era a
+recuperação: era a **corrida** (a janela entre a perda e o evento), o **rótulo** (o
+`classifyCrash` não batia `OPAQUE_RE`, `AMBIENTE_RE`, `CACHE_SPLIT_RE`, `RECOVERABLE_RE`
+nem `MEDIA_ABORT_RE` e caía no `return 'codigo'` final, que escala) e o **painel** (o
+`fail()` matava o launch por um erro que ia se recuperar 500 ms depois).
+
+**Correção, em três camadas espelhadas.**
+1. *Vendor fecha a corrida*: a guarda do `render()` consulta a verdade síncrona do driver
+   além da flag — `if ( _isContextLost === true || _gl.isContextLost() === true ) return;`.
+   `isContextLost()` é leitura de flag do wrapper do contexto (setada no instante da perda;
+   é para isso que a API existe), não sync de GPU: 1 chamada por `render()` contra milhares
+   de GL calls. Frame na janela da corrida pula o render inteiro, como o frame seguinte ao
+   evento já pulava.
+2. *Classificação cala o alarme falso*: `CONTEXT_LOSS_RE` estreita em
+   `src/lib/error-provenance.mjs` → classe `recuperavel`. A linha continua gravada no
+   `js_error`; some o disparo automático, não o dado — e o corte vale até para cliente
+   velho em cache, porque `classifyCrash` é fonte única (rota `/api/jserror` e
+   `scripts/classify-crash.mjs` no CI).
+3. *Cliente segura só o painel*: `erroDeContexto()` em `index.astro` (mesma redação da
+   regex, função SEPARADA do `erroIgnoravel` para não desviar o balde `TETO_MIDIA` nem
+   tocar a EP14) guarda apenas o `lancamento.fail()` do handler de erro global. O
+   `reporta()` segue enviando; o watchdog de 60 s da etapa e o fatal de 8 s continuam de
+   rede de segurança — o jogador nunca fica preso.
+
+**Medido antes do conserto (25/08, helper real executado do fonte):**
+
+| | antes | depois |
+|---|---|---|
+| `classifyCrash` das 2 formas de campo | `codigo` 2/2 | `recuperavel` 2/2 |
+| família abre issue automática | 2/2 (#419, #420) | 0/2 |
+| `fail()` derruba o launch na corrida | sim (#419) | não (fatal de 8 s continua) |
+| fingerprints publicados reproduzidos pela receita | 2/2 | 2/2 (inalterados) |
+| cláusulas / mutantes que mordem | EP 15, SL 7 / 39+5 | EP 16, SL 8 / **42+6, matriz completa medida** |
+
+**Custo declarado, na população real.** Das **97** issues `crash-auto`
+(`gh issue list --label crash-auto --state all`, 25/08), exatamente **2** são desta família
+(#419/#420 — a busca `label:crash-auto "must be an instance"` devolve só as duas). Vizinhas
+que continuam como estão, DE PROPÓSITO: a perda **persistente** (`'contexto WebGL
+perdido'`, o fatal deliberado de `main.js:100`) segue `codigo` — é o mutante
+`contexto-amplo` que tranca isso; a forma Chrome (*"Failed to execute 'shaderSource'…"*)
+**nunca foi observada** em campo e segue `codigo` até haver dado (largura por palpite de
+regex é o arnês aprovando a si mesmo); crash real dentro do vendor segue `codigo`;
+*"THREE.WebGLProgram: Shader Error…"* (#331 etc.) segue no corte de log do BUG-72. No
+cliente, o erro de contexto consome 1 slot do balde de exceção (deduplicado por
+fingerprint — sem balde novo). Perda que acontece DURANTE um `render()` já em andamento
+ainda lança 1 vez (a guarda roda no topo do frame); essa ocorrência única fica no
+`js_error` como `recuperavel`. E o `catch` de `_startGame` (`main.js:1000`) chama o
+`fail()` direto, sem a guarda do handler global — hoje inalcançável para esta família
+(`game.start()` não renderiza; o render vive no `update` do loop), e no pior caso o
+servidor já classifica `recuperavel`: fica anotado, não trancado.
+
+**Não verificado:** sem WebKit/browser nesta máquina, a corrida não foi reproduzida ao
+vivo (o harness node não tem WebGL; `crash-watch.mjs` exige browser) — o que está medido é
+a forma da guarda e a assinatura de campo das duas issues. A garantia de que
+`gl.isContextLost()` é `true` na janela antes do evento é de spec, não medida aqui. A
+frequência da família por sessão no Supabase fica sem número (schema privado, sem
+credencial).
+
+**Régua: `tools/eval/error-provenance-check.mjs`** (`npm run eval:error-origin`, no
+`check:fast` e no `check:deploy`): **EP19** executa o helper e o `erroDeContexto`
+extraídos do fonte, ancora os 2 fingerprints publicados e exige as 3 vizinhas `codigo`;
+mutantes `sem-contexto`, `contexto-amplo` e `fail-no-contexto` — **42 de 42 na matriz
+completa**. **E `tools/eval/shader-log-check.mjs`** (`npm run eval:shaderlog`): **SL8**
+tranca presença e posição da guarda síncrona no topo do `render()` (textual-posicional
+como SL4-SL6 — executar o `render()` inteiro exigiria stub do renderer inteiro, e arnês
+desse tamanho mede a si mesmo, lição da EP12); mutante `sem-contexto-sincrono` — 6 de 6.
 
 ### ~~BUG-74 · o watchdog de boot relatava uma paráfrase nossa e jogava fora o erro do navegador~~ · RESOLVIDO 19/08 (issue #386)
 
@@ -845,7 +936,7 @@ O `?.` não conserta o defeito: troca um crash por uma mentira. Por isso o conse
 `undefined` no template (mentira), não exceção. PA2 pega o crash, PA1 pega a mentira que
 sobra quando alguém "conserta" o crash com `?.`.
 
-### BUG-51 · erro de extensão ou beacon virava bug do jogo
+### ~~BUG-51 · erro de extensão ou beacon virava bug do jogo~~ · FECHADO 29/08 — o que a entrada exigia já estava tudo no código (BUG-72..80), conferido cláusula a cláusula
 
 **Evidência antes.** #138, #152, #156, #157 e #166 têm esquema
 `chrome-extension://` ou `moz-extension://` na origem, stack ou mensagem. #142 e #144
@@ -899,6 +990,32 @@ terceiro mesmo sendo same-origin, no helper (`VENDOR_RE`) e no cliente (`vendor`
 provado em `source` e em `stack`. EP8 executa o classificador real e a `origemDoJogo`
 inline contra o par de fixtures das duas issues e confirma que `/js/` do jogo segue
 `codigo`; mutantes `sem-vercel-helper` e `sem-vercel-cliente` guardam cada lado.
+
+**Fechamento (29/08).** A entrada estava aberta por inércia: cada exigência da régua
+prescrita acima já existe no código, com cláusula e mutante — o conserto foi FECHAR com
+evidência, não escrever código de novo (lei do `bug-hunt`: conferir antes de "consertar" o
+que já está consertado). Conferido item a item, com `arquivo:linha`:
+
+| exigência da entrada | onde mora | cláusula |
+|---|---|---|
+| esquema de extensão é externo (#138/#152/#156/#166) | `EXTENSION_RE`, `src/lib/error-provenance.mjs:1` | EP1 |
+| URL cross-origin é externa (beacon Cloudflare, #142/#144) | `isExternalCrash`, `src/lib/error-provenance.mjs:64`; fixtures `static.cloudflareinsights.com` na régua | EP2 |
+| esquema de extensão vale na mensagem, URL http não (#157) | `src/lib/error-provenance.mjs:69-74` | EP3 + EP6 |
+| same-origin e sinal opaco não são descartados | `isOpaqueNoise`, `src/lib/error-provenance.mjs:83-85` | EP3 + EP9 |
+| API grava ANTES de filtrar o dispatch, early-return único | `src/pages/api/jserror.ts:103` | EP4 |
+| workflow não abre issue para externo, em nenhum OR | `.github/workflows/crash-fix.yml` (step `cls` + condição da issue) | EP5 |
+| cliente não atribui externo ao lançamento, cota `TETO_EXTERNO`, overlay só interno | `origemDoJogo` inline de `src/pages/index.astro` (executada pela régua) | EP6 |
+
+**Medido no fechamento (29/08, nesta árvore):** `npm run eval:error-origin` — **EP1..EP18
+todas verdes**; matriz de mutação completa executada: **52 de 52 mutantes acendem vermelho**
+(`node tools/eval/error-provenance-check.mjs --mutante=<cada um da lista do próprio
+script>`), zero furos. A população que a entrada denunciava está reclassificada: as 7
+ocorrências originais (extensão + beacon) têm fixture na régua e caem em `externo` sem
+issue; as famílias vizinhas que a mesma entrada gerou viraram BUG-71..78/80/81, cada uma
+fechada com suas próprias cláusulas. Custo declarado: nenhum novo — este fechamento não
+mudou código, só mediu; os custos de cada camada estão declarados nas entradas que as
+construíram (ex.: alargamento do purge na BUG-75, cota própria de externo na revisão
+adversarial acima).
 
 ### ~~BUG-50 · WeakMap do Three derrubava o loop quando createFramebuffer falhava~~ · RESOLVIDO 12/08 (issue #171)
 
@@ -1164,7 +1281,7 @@ corrompido.
 
 ---
 
-### BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro
+### ~~BUG-39 · site fora do ar: edge servindo main.js de um deploy com fparms.js de outro~~ · CONSERTO NO REPO 29/08 — aplicação na zona PENDENTE (`bash scripts/cloudflare-setup.sh` com credencial)
 
 **Evidência (08/08, ~03:14, print do jogador + curl).** Boot morto em
 `https://www.csbrasil.online` com o banner vermelho:
@@ -1193,6 +1310,52 @@ manhã do incidente, com o site quebrado, ele saía 1 citando `CONFIRM_MAX_MS`. 
 
 **Remediação manual restante:** purge do edge (`/js/*`) com token da Cloudflare — sem o
 `CF_API_TOKEN` cadastrado, o purge automático dos workflows é pulado.
+
+**Conserto na CAUSA (29/08).** O palpite óbvio — "o manifesto por conteúdo do BUG-48 já
+mitigou, é só fechar" — foi refutado com dado de campo: a **BUG-75 (issue #443, 25/08) é
+reincidência exata desta classe COM o manifesto no ar** desde 11/08. O mecanismo residual:
+o `?v=` por conteúdo protege quem chega com HTML novo, mas HTML velho em cache de
+navegador pede a URL `?v=` antiga; quando o edge a reabastece, a origem (que ignora a
+query) devolve o conteúdo NOVO sob a URL VELHA — e o `edge_ttl` de 1 mês servia esse mix
+por até 30 dias. A segunda via sugerida — purge automático em todo deploy — não fecha
+sozinha: o deploy normal é a integração Git da Vercel e **não passa por workflow nenhum**;
+só o fallback manual (`deploy-prod.yml`) tem onde pendurar purge.
+
+Duas mudanças versionadas, ambas travadas por régua:
+
+1. `scripts/cloudflare-setup.sh` — a regra `assets_jogo` foi partida: `assets_midia`
+   (áudio/modelos/img/fontes/posters) mantém os 2.592.000 s; **`assets_js` segura `/js/`
+   por 600 s**. Qualquer mix agora se autocura em ≤ 10 min — mais curto que a volta do
+   `prod-watch` (cron de 15 min), que segue como rede reativa (purge via `crash-fix.yml`).
+2. `.github/workflows/deploy-prod.yml` — o fallback manual purga os prefixos `/js/` e
+   `style.css` depois do `vercel deploy`, com o mesmo contrato do `crash-fix.yml`
+   (sem `CF_API_TOKEN` o passo é pulado, nunca vermelho por secret).
+
+| | antes | depois |
+|---|---|---:|
+| `edge_ttl` de `/js/` na config versionada | 2.592.000 s (1 mês) | 600 s |
+| janela máxima de mix main.js × fparms.js no edge | ~30 dias | ≤ 10 min |
+| deploy manual purga o edge | não | sim (pulado sem token) |
+| régua verde / mutantes que mordem | — (nenhuma régua lia a config) | EC1..EC3 / **4 de 4** |
+
+**Régua: `npm run eval:edgecache`** (`tools/eval/edge-cache-check.mjs`, no `check:fast` e
+no `check:deploy`). Vermelha ANTES do conserto nesta árvore (EC1: `assets_jogo` com
+2.592.000 s; EC3: deploy sem purge); verde depois. EC1 reprova qualquer cache rule que
+cubra `/js/` com `edge_ttl > 600 s`; EC2 é a anti-vacuidade (apagar a regra de `/js/` não
+aprova); EC3 exige o purge no `deploy-prod.yml`. Mutantes `ttl-mes`, `js-na-midia`,
+`sem-regra-js` e `sem-purge-deploy` — cada um acende a cláusula certa e o script se
+autodenuncia se a mutação passar.
+
+**Custo declarado.** O hit-ratio de `/js/` no edge cai: cada URL versionada volta à origem
+a cada 10 min em vez de 1 mês (a Vercel vira a fonte quente de `/js/`; mídia pesada segue
+1 mês). E a regra nova **só vale na zona depois que alguém com credencial rodar
+`bash scripts/cloudflare-setup.sh`** — até lá o edge real continua com o TTL de 1 mês e a
+entrada fica em "aplicação pendente", como a migration da BUG-54.
+
+**Não verificado:** o estado real da zona Cloudflare e a existência do `CF_API_TOKEN` nos
+secrets do repo (sem credencial local, e `gh secret list` bloqueado nesta sessão); o purge
+novo do `deploy-prod.yml` não foi executado (é `workflow_dispatch`). O que está medido é a
+config versionada, a régua e os 4 mutantes.
 
 ---
 
@@ -1338,82 +1501,6 @@ A rota mantém a cascata de compatibilidade, então cliente com JS velho continu
   ao aplicar; é ele que vai no comentário de fechamento da issue #87.
 - A partida de captura curta de verdade, no navegador, com nick registrado. A régua mede o
   motor e o SQL, não o caminho HTTP inteiro.
-
-### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux)
-
-**Palavras de quem reportou** (Daniel Diniz, 07/08, LinkedIn): *"quando fica muito tempo
-com a tecla Control pressionada a página fecha"* · *"Testei no Windows, mas posso ver no
-Mac"* · *"Não acontece no Mac 🤔, mas pode ser o chrome desatualizado!"* · *"testei em
-outros Browser e tem o mesmo problema. É alguma treta do Windows mesmo"*.
-
-**Não é treta do Windows, e não é o Control sozinho.** Agachar é
-`ControlLeft`/`ControlRight` e andar pra frente é `W` (`game.js`, `wantCrouch`). **Agachar
-andando pra frente É Ctrl+W**, que no Windows e no Linux fecha a aba. No Mac o atalho é
-Cmd+W — por isso o dono, que joga no Mac, nunca reproduziu. Mesma família: Ctrl+1/2/3 troca
-de aba do navegador, e 1/2/3 é a troca de arma.
-
-**Por que o código já sabia e não resolvia.** O `_kd` (`game.js:1969`) engolia
-`ctrlKey`/`metaKey` em pointer lock, e o comentário dele registrava a derrota: *"Ctrl+W o
-Chrome não deixa prevenir, use C pra agachar"*. Ctrl+W é atalho RESERVADO — `preventDefault`
-não alcança. Dizer ao jogador pra não usar a tecla padrão de FPS não é conserto, é aviso.
-
-**Conserto, duas camadas porque nenhuma sozinha cobre todo mundo.**
-1. `_travaAtalhos()` (`game.js`, dentro do `_requestLock`): `navigator.keyboard.lock()` com
-   `KeyW`/`KeyT`/`KeyN`/`KeyR`/`Digit1-3`. É a única API que captura Ctrl+W — e **só
-   funciona em tela cheia**, por isso a tela cheia entra junto, pedida cedo no `startGame`
-   (`main.js`), enquanto o clique ainda vale como gesto do usuário: depois do
-   `await sfxReady` e do `Promise.all` dos GLBs a ativação transiente já queimou. Escape
-   fica fora da lista de propósito (travado, exigiria toque longo, e Escape é o menu de
-   pausa). Solta no `dispose()` e no `setPaused(true)` — segurar o navegador de quem está
-   tentando sair seria hostil. Chromium só.
-2. O `beforeunload` do `main.js` passa a pedir confirmação **enquanto a partida está viva**.
-   Cobre Firefox, Safari e todo caso em que a tela cheia não pegou.
-
-**De quebra:** o `requestPointerLock` estava duplicado (`main.js:596` e o `_requestLock` do
-`game.js`), e era a duplicata que deixava a trava sem lugar pra morar no COMEÇO da partida
-— o RETOMAR passava pelo funil, o COMEÇAR não. Agora é um funil só.
-
-**Régua nova:** `tools/eval/ctrlw-check.mjs` (`npm run eval:ctrlw`), quatro cláusulas:
-
-| | o que mede | estado em 07/08 | mutação |
-|---|---|---|---|
-| CW4 | `_travaAtalhos` chama `keyboard.lock` com as teclas certas (node puro) | **VERDE** — pediu `KeyW,KeyT,KeyN,KeyR,Digit1-3` | `semtravar` → `[]`, FALHA ✓ |
-| CW3 | no MENU o `beforeunload` fica calado | **VERDE** | `promptsempre` → FALHA ✓ |
-| CW2 | com partida viva o `beforeunload` confirma | verde numa corrida, **não reproduzido** | `semprompt` (não executada) |
-| CW1 | tela cheia + trava ao ENTRAR na partida | **não medida** | `semlock` (não executada) |
-
-A CW3 é a que protege o conserto de si mesmo: confirmação que aparece sempre vira praga, e
-praga alguém arranca inteira em duas semanas, levando o conserto junto. A CW4 nasceu porque
-o caminho de navegador não fechava nesta máquina e a pergunta mais direta — *a trava chama
-mesmo a API, e com quais teclas?* — não podia ficar sem resposta esperando por ele. As
-mutações de arquivo servido morrem se não casarem o texto (`MUTANTE NÃO APLICOU`): mutação
-que passa de largo devolve verde, e esse verde é lido como "o guarda funciona".
-
-**O arnês fornece o ambiente, e isso está às claras no cabeçalho da régua:** Chrome
-headless não concede tela cheia de verdade nem expõe `navigator.keyboard`, então a régua
-planta os dois e mede o CÓDIGO DO JOGO. Ela não prova nada sobre o navegador hospedeiro.
-
-**QUATRO DEFEITOS DE INSTRUMENTO pagos escrevendo esta régua** (lei 7 da `bug-hunt`, e os
-quatro acusaram código inocente):
-1. media no `state` do jogo em vez do fim do `startGame` — `game.start()` põe `countdown`
-   ~20 linhas ANTES do `_requestLock`, então CW1 reprovava algo que ainda não tinha sido
-   tentado;
-2. `getElementById('loading')` quando o overlay é `load-overlay` — o `?.` devolvia
-   `undefined` e a condição nunca fechava;
-3. `waitForFunction` polla em `requestAnimationFrame` por padrão, e o rAF fica estrangulado
-   justamente durante o preload pesado que se está esperando (`polling: 250` resolve);
-4. `.catch(() => false)` cego no `waitForFunction`, que transformou exceção do Playwright
-   em "não ficou pronto" e escondeu (3) por três corridas.
-
-**NÃO VERIFICADO — e o primeiro item é o que fecha o defeito, não a régua:**
-- **Windows + Chrome com Ctrl+W de verdade.** Só quem tem Windows fecha isto: entrar na
-  partida, segurar Ctrl e andar com W por vários segundos, e a aba não pode fechar. **Pedir
-  ao Daniel Diniz**, que reportou.
-- Firefox e Safari: espera-se o diálogo de confirmação, não o fechamento seco. Não testado.
-- CW1 e CW2 não fecharam nesta máquina: o `/` em dev leva minutos pra compilar e o preload
-  do elenco derruba o renderer headless. A régua reprova por isso e **diz que reprovou** —
-  não conta como aprovação. Rodar em máquina mais folgada, ou com `BASE=` apontando pra um
-  preview já construído.
 
 ### ~~BUG-29 · "o jogo tá reiniciando do nada, estava num CTF no ferro velho do Zé"~~ · RESOLVIDO 05/08
 
@@ -1688,29 +1775,13 @@ cria um caminho automático sem escrever parênteses).
 
 ---
 
-### BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas
+### ~~BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas~~ · RESOLVIDO 29/08
 
-**Sintoma (do dono):** mapas em modo *rounds* mostram a faixa de bandeiras no HUD, sem existir
-captura nenhuma.
-
-**Causa raiz — confirmada.** `#ctf-hud` nasce escondido (`src/pages/index.astro:589`,
-`class="hidden"`) e `_updateCtfHud()` faz `classList.remove('hidden')`
-(`public/js/game.js:4161`) **sem nenhuma guarda**. Não existe, em lugar nenhum do repo,
-um `add('hidden')` para esse elemento — `grep -rn "ctfHud\|ctf-hud" public/ src/` devolve 5
-ocorrências e nenhuma esconde. O `if (this.ctf)` de `game.js:2011` protege só a *criação* das
-bandeiras (`_initCTF`), não a visibilidade do HUD.
-
-**Reprodução:** jogar uma partida de CTF → voltar ao menu → iniciar partida de *rounds*
-**sem recarregar a página**. A faixa continua visível, com o HTML da partida anterior.
-Efeito colateral visível: `public/style.css:578` (`#ctf-hud:not(.hidden) ~ #killfeed{top:114px}`)
-empurra o killfeed 38 px para baixo no modo errado.
-
-**Correção:** guardar a exibição por modo em `_updateCtfHud()` e esconder + limpar o
-`innerHTML` na saída de partida (junto do bloco `game.js:6112-6124`, que já esconde 12 outros
-elementos e esqueceu este).
-
-**Régua:** nenhuma. `tools/eval/mode-check.mjs` passa 16/16 porque compara *modo escolhido ×
-modo jogado*, não *modo jogado × HUD desenhado*. Precisa de cláusula nova (`UI`), com mutação.
+Já estava corrigido na árvore de 29/08: `_hideCtfHud()` esconde e limpa a faixa
+(`public/js/game.js:4557`), `_updateCtfHud()` guarda modo e presença de bandeiras
+(`public/js/game.js:4563`) e `dispose()` chama a limpeza ao sair da partida
+(`public/js/game.js:7058`). `node tools/eval/ctfhud-check.mjs`: **CTFHUD 5/5 casos**;
+`--mutate` removeu a guarda e derrubou **3 casos**, provando que a régua morde.
 
 ---
 
@@ -1745,29 +1816,6 @@ A `AUD1` — que o `HANDOFF.md` manda manter verde — detectou o problema corre
 
 ---
 
-### BUG-03 · BOT8 — bot com linha de visão no jogador por segundos, sem atirar
-
-**Medido:** `4 episódios | maior silêncio 4,23 s | 690 s em condição`. Vermelha desde o
-baseline, nunca atacada (era C9 no handoff anterior, com 2,7 episódios / 3,03 s — **piorou**).
-
-**Causa raiz — confirmada.** `public/js/game.js:5361`:
-
-```js
-const hasTurn = !(BOT_FAIR && e.isPlayer) || this._duelToken(b);
-```
-
-Essa `const` é avaliada **todo frame, para todo bot cujo alvo é o jogador**, antes de qualquer
-gate de "pode atirar" (o `if` só vem em `game.js:5363`). E `_duelToken` não consulta: ele
-**reserva** o token por `BOT_TOKEN_HOLD`. Um bot em atraso de reação, recarregando, ou sem
-linha de tiro, rouba um dos 2 tokens e o segura. Os outros recebem `hasTurn === false`,
-continuam avançando e **atravessam o campo de visão sem disparar**.
-
-**Correção:** mover a chamada para dentro do `if`, depois dos gates de munição/LOS/mira.
-
-**Régua:** BOT8 já existe e morde. Basta rodar depois.
-
----
-
 ### BUG-04 · `ViewModelRig` está escrito, testado — e nunca foi importado
 
 `public/js/springs.js:94` exporta uma máquina de estados completa de viewmodel: idle com
@@ -1782,6 +1830,165 @@ mudar.
 ---
 
 ## P1 — o jogador vê
+
+### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux) — MITIGADO, limite de plataforma
+
+**REBAIXADO P0 → P1 em 29/08 — a mitigação de duas camadas JÁ ESTÁ NA MAIN e o que
+resta é limite de plataforma.** Nenhum navegador deixa uma página bloquear Ctrl+W de
+verdade fora do par tela-cheia + Chromium (Keyboard Lock API); o padrão dos jogos web —
+confirmar no `beforeunload` com partida viva — está aplicado. Evidência, conferida linha a
+linha em 29/08 na `origin/main` (a.195):
+
+- `_travaAtalhos`/`_soltaAtalhos`: `public/js/game.js:2093-2098`, com guarda de `testMode`
+  e de `fullscreenElement` na primeira linha (`game.js:2094`) — arnês e harness não ganham
+  trava nem diálogo;
+- armada no funil único `_requestLock` (`game.js:2072`); solta no `setPaused(true)`
+  (`game.js:2636`) e no `dispose()` (`game.js:7051`) — sem vazamento de handler;
+- `beforeunload` gateado por `emPartida()` (`public/js/main.js:2102-2119`; a função em
+  `main.js:2081`) — no menu, nada arma.
+
+**Medido em 29/08, contra preview construído** (`npm run build` + `python3 -m http.server
+4399 -d dist/client` + `BASE=http://localhost:4399 node tools/eval/ctrlw-check.mjs`): as
+QUATRO cláusulas passam — CW1 (`requestFullscreen` 1×, `keyboard.lock` 1× com
+`KeyW,KeyT,KeyN,KeyR,Digit1-3`), CW2 (`countdown` → confirmação `true`), CW3 (menu →
+confirmação `false`), CW4. É a primeira corrida em que CW1 e CW2 fecham nesta máquina — o
+caminho era o `BASE=` num preview construído, exatamente como a entrada previa. Mutação
+`--mutante=semprompt` executada na mesma corrida: CW2 **FALHA** (*"confirmação: false"*,
+`✗ CTRLW 1 reprovação`) — a cláusula que faltava exercitar morde.
+
+**Por que P1 e não fechado:** a confirmação manual em Windows + Chrome (segurar Ctrl e
+andar com W numa partida, a aba não pode fechar) segue pendente — só ela fecha a entrada,
+e é do Daniel Diniz, que reportou. Firefox/Safari (espera-se o diálogo, não o fechamento
+seco) também seguem não testados. Diagnóstico original e histórico da régua abaixo.
+
+**Palavras de quem reportou** (Daniel Diniz, 07/08, LinkedIn): *"quando fica muito tempo
+com a tecla Control pressionada a página fecha"* · *"Testei no Windows, mas posso ver no
+Mac"* · *"Não acontece no Mac 🤔, mas pode ser o chrome desatualizado!"* · *"testei em
+outros Browser e tem o mesmo problema. É alguma treta do Windows mesmo"*.
+
+**Não é treta do Windows, e não é o Control sozinho.** Agachar é
+`ControlLeft`/`ControlRight` e andar pra frente é `W` (`game.js`, `wantCrouch`). **Agachar
+andando pra frente É Ctrl+W**, que no Windows e no Linux fecha a aba. No Mac o atalho é
+Cmd+W — por isso o dono, que joga no Mac, nunca reproduziu. Mesma família: Ctrl+1/2/3 troca
+de aba do navegador, e 1/2/3 é a troca de arma.
+
+**Por que o código já sabia e não resolvia.** O `_kd` (`game.js:1969`) engolia
+`ctrlKey`/`metaKey` em pointer lock, e o comentário dele registrava a derrota: *"Ctrl+W o
+Chrome não deixa prevenir, use C pra agachar"*. Ctrl+W é atalho RESERVADO — `preventDefault`
+não alcança. Dizer ao jogador pra não usar a tecla padrão de FPS não é conserto, é aviso.
+
+**Conserto, duas camadas porque nenhuma sozinha cobre todo mundo.**
+1. `_travaAtalhos()` (`game.js`, dentro do `_requestLock`): `navigator.keyboard.lock()` com
+   `KeyW`/`KeyT`/`KeyN`/`KeyR`/`Digit1-3`. É a única API que captura Ctrl+W — e **só
+   funciona em tela cheia**, por isso a tela cheia entra junto, pedida cedo no `startGame`
+   (`main.js`), enquanto o clique ainda vale como gesto do usuário: depois do
+   `await sfxReady` e do `Promise.all` dos GLBs a ativação transiente já queimou. Escape
+   fica fora da lista de propósito (travado, exigiria toque longo, e Escape é o menu de
+   pausa). Solta no `dispose()` e no `setPaused(true)` — segurar o navegador de quem está
+   tentando sair seria hostil. Chromium só.
+2. O `beforeunload` do `main.js` passa a pedir confirmação **enquanto a partida está viva**.
+   Cobre Firefox, Safari e todo caso em que a tela cheia não pegou.
+
+**De quebra:** o `requestPointerLock` estava duplicado (`main.js:596` e o `_requestLock` do
+`game.js`), e era a duplicata que deixava a trava sem lugar pra morar no COMEÇO da partida
+— o RETOMAR passava pelo funil, o COMEÇAR não. Agora é um funil só.
+
+**Régua nova:** `tools/eval/ctrlw-check.mjs` (`npm run eval:ctrlw`), quatro cláusulas:
+
+| | o que mede | estado em 07/08 | mutação |
+|---|---|---|---|
+| CW4 | `_travaAtalhos` chama `keyboard.lock` com as teclas certas (node puro) | **VERDE** — pediu `KeyW,KeyT,KeyN,KeyR,Digit1-3` | `semtravar` → `[]`, FALHA ✓ |
+| CW3 | no MENU o `beforeunload` fica calado | **VERDE** | `promptsempre` → FALHA ✓ |
+| CW2 | com partida viva o `beforeunload` confirma | verde numa corrida, **não reproduzido** | `semprompt` (não executada) |
+| CW1 | tela cheia + trava ao ENTRAR na partida | **não medida** | `semlock` (não executada) |
+
+A CW3 é a que protege o conserto de si mesmo: confirmação que aparece sempre vira praga, e
+praga alguém arranca inteira em duas semanas, levando o conserto junto. A CW4 nasceu porque
+o caminho de navegador não fechava nesta máquina e a pergunta mais direta — *a trava chama
+mesmo a API, e com quais teclas?* — não podia ficar sem resposta esperando por ele. As
+mutações de arquivo servido morrem se não casarem o texto (`MUTANTE NÃO APLICOU`): mutação
+que passa de largo devolve verde, e esse verde é lido como "o guarda funciona".
+
+**O arnês fornece o ambiente, e isso está às claras no cabeçalho da régua:** Chrome
+headless não concede tela cheia de verdade nem expõe `navigator.keyboard`, então a régua
+planta os dois e mede o CÓDIGO DO JOGO. Ela não prova nada sobre o navegador hospedeiro.
+
+**QUATRO DEFEITOS DE INSTRUMENTO pagos escrevendo esta régua** (lei 7 da `bug-hunt`, e os
+quatro acusaram código inocente):
+1. media no `state` do jogo em vez do fim do `startGame` — `game.start()` põe `countdown`
+   ~20 linhas ANTES do `_requestLock`, então CW1 reprovava algo que ainda não tinha sido
+   tentado;
+2. `getElementById('loading')` quando o overlay é `load-overlay` — o `?.` devolvia
+   `undefined` e a condição nunca fechava;
+3. `waitForFunction` polla em `requestAnimationFrame` por padrão, e o rAF fica estrangulado
+   justamente durante o preload pesado que se está esperando (`polling: 250` resolve);
+4. `.catch(() => false)` cego no `waitForFunction`, que transformou exceção do Playwright
+   em "não ficou pronto" e escondeu (3) por três corridas.
+
+**NÃO VERIFICADO — e o primeiro item é o que fecha o defeito, não a régua:**
+- **Windows + Chrome com Ctrl+W de verdade.** Só quem tem Windows fecha isto: entrar na
+  partida, segurar Ctrl e andar com W por vários segundos, e a aba não pode fechar. **Pedir
+  ao Daniel Diniz**, que reportou.
+- Firefox e Safari: espera-se o diálogo de confirmação, não o fechamento seco. Não testado.
+- CW1 e CW2 não fecharam nesta máquina: o `/` em dev leva minutos pra compilar e o preload
+  do elenco derruba o renderer headless. A régua reprova por isso e **diz que reprovou** —
+  não conta como aprovação. Rodar em máquina mais folgada, ou com `BASE=` apontando pra um
+  preview já construído.
+
+### BUG-03 · BOT8 — bot com linha de visão no jogador por segundos, sem atirar — REBAIXADO P0 → P1 29/08
+
+**A entrada estava VELHA — o conserto real já mora na main, e a correção que ela
+prescrevia foi REFUTADA com medição.** Conferido em 29/08 na `origin/main` (a.195):
+
+- A prescrição antiga (*"mover a chamada do `_duelToken` pra dentro do `if`, depois dos
+  gates"*) foi medida e **PIORA**: 3,8 epi | 6,73 s contra 2,6 | 5,23 do código de então
+  (botdiag `SIM_SHOOTGATE`, 9 sementes × 4 mapas × 180 s). Chamada todo frame também é
+  FILA — atrás do `if` ela vira DISPUTA no instante do gatilho, e quem perde come 1,6 s de
+  silêncio. A refutação inteira está escrita no código: `public/js/game.js:6057-6070`.
+- O conserto aplicado tem duas metades: só quem PODE atirar concorre ao token
+  (`canUse && this._duelToken(b)`, `game.js:6071-6072`) e o holder que não pode mais
+  atirar DEVOLVE o token na hora (`_duelToken`, `game.js:5706-5716`). Medido na época:
+  2,6 epi | 5,23 s → **2,0 epi | 4,73 s**.
+- **`origin/feat/times-e-mapas-completo` NÃO traz conserto adicional** (verificado 29/08):
+  o diff de `game.js` contra a main troca o áudio de voz (`sfx.voice`/`radioVoice` →
+  `characterVoice`) e não toca `_duelToken`, `hasTurn` nem os gates de fogo. Nada a
+  cherry-pickar.
+
+**Medido HOJE (29/08, árvore = `origin/main` a.195):**
+
+| protocolo | episódios mudos | maior silêncio | tempo em condição | % tempo mudo |
+|---|---|---|---|---|
+| portão (`SIM_SHOOTGATE=1 node tools/eval/botdiag.mjs 180 all`, 3 sementes) | **1** | 3,03 s | 460 s | 1,5% |
+| 9 sementes (`SIM_SEEDS=12345,777,4242,11,222,3333,44,555,6666`, idem) | **2,3** | 5,52 s | 442 s | 12% |
+
+(Contra o `4 episódios | 4,23 s` do cabeçalho antigo desta entrada.) O motivo predominante
+dos quadros mudos não é mais o token: `nextShotAt`/`focusUntil`/`reactAt` (cadência, foco e
+reação — mecânicas intencionais de fairness) somam 56-64%; `hasTurn` responde por 19-27%.
+
+**Por que P1 e não P0:** não quebra o jogo nem mente pra quem mede. BOT8 continua VERMELHA
+como dívida declarada em `tools/eval/KNOWN-RED.json`, com o teto ZERO **intacto** (não foi
+afrouxado — o veto do dono vale); o resíduo é evento raro (1-2,3 episódios em ~450 s de
+condição de tiro, somando todos os mapas) e o caminho "óbvio" de zerá-lo já foi medido uma
+vez e piora. Zerar de verdade exige redesenhar a interação token × cadência — trabalho de
+`gauntlet-fps`, não de conserto.
+
+<details><summary>Diagnóstico original (histórico — a prescrição dele foi refutada)</summary>
+
+**Medido:** `4 episódios | maior silêncio 4,23 s | 690 s em condição`. Vermelha desde o
+baseline, nunca atacada (era C9 no handoff anterior, com 2,7 episódios / 3,03 s — piorou).
+
+**Causa raiz — confirmada.** `hasTurn = !(BOT_FAIR && e.isPlayer) || this._duelToken(b)`
+era avaliada todo frame, para todo bot cujo alvo é o jogador, antes de qualquer gate de
+"pode atirar" — e `_duelToken` não consulta: **reserva** por `BOT_TOKEN_HOLD`. Um bot em
+atraso de reação, recarregando ou sem linha de tiro roubava um dos 2 tokens e o segurava;
+os outros atravessavam o campo de visão sem disparar.
+
+**Correção (prescrita e depois REFUTADA):** mover a chamada para dentro do `if` — piora,
+ver acima.
+
+</details>
+
+---
 
 ### BUG-79 · Córrego: grama nunca foi servida e as rampas do canal mostram o céu
 
@@ -2642,12 +2849,31 @@ medidos:
 
 1. **A razão título/corpo não fechou.** Falta ~35%. Subir mais em px cria o problema oposto em
    tela baixa: a referência é uma FRAÇÃO da altura e o jogo é PX FIXO, então a proporção só bate
-   numa resolução. A correção certa é escala fluida (`clamp()`/`vh`), e ela **está bloqueada pela
-   régua**: `caixaDe()` (`tools/eval/ui-check.mjs:563`) lê `font-size` com `parseFloat`, e a UI3
-   só isenta elemento de canto ancorado em PX (`emPx`, mesma linha de raciocínio em :637).
-   Com `vh`/`clamp()` a UI3 mede caixa de 3,9 px e fica **cega**. **Ordem correta: ensinar
-   `px()`/`caixaDe()` a resolver `clamp()/min()/max()/vh` — com mutação — e só depois tornar a
-   escala fluida.**
+   numa resolução. A correção certa é escala fluida (`clamp()`/`vh`), e ela **estava bloqueada
+   pela régua**: `caixaDe()` lia `font-size` com `parseFloat`, e com `vh`/`clamp()` a UI3 media
+   caixa de 3,9 px e ficava **cega**.
+
+   **RÉGUA DESBLOQUEADA (29/08, branch `fix/ui-check-clamp`).** `resolvePx()`
+   (`tools/eval/ui-check.mjs`, ao lado de `caixaDe()`) agora resolve `clamp()/min()/max()/calc()`
+   e `vh/vw/rem/em` de forma determinística contra o viewport de medição da própria régua
+   (VW×VH = 1008×655; rem = 16 px, o `<html>` não declara `font-size`). Declarado-e-não-resolvível
+   virou VERMELHO (cláusula `fsCego` — "não sei medir" custa o mesmo que estar errado), e 7
+   `PROBAS_PX` na UI3 conferem o resolvedor a cada execução. **Mutação:**
+   `node tools/eval/ui-check.mjs ui3 --mutante=cego-a-clamp` restaura o parseFloat puro e acende
+   as 7 PROBAS_PX — e só elas (o CSS do HUD hoje é 100% px, então nenhum veredito de elemento
+   muda; exit 1 com a mensagem certa). Com a régua nova e o CSS atual, a razão título/corpo medida
+   segue **40/13 ≈ 3,08** (fs-700/fs-200, mesmos px de antes — a régua nova é no-op de veredito
+   sobre CSS em px, como deve ser num PR de régua) contra **3,33-5,00** da referência: a dívida de
+   ~35% está intacta e agora DESTRAVADA pra escala fluida.
+
+   **Vermelho pré-existente encontrado nesta rodada (não é deste PR, registrado pra não se
+   perder):** `npm run eval:ui` já estava vermelho na `main` por dois motivos alheios ao clamp —
+   (a) **UI4**: o jogo passou a usar `roundKills.E/B` e `killsToWin = Infinity` por padrão
+   (`?pace=1` devolve o alvo, game.js:742), e a régua ainda lê `roundKills.P` e cobra alvo finito
+   no ABATE — 4 casos DM reprovam com `alvoDeclarado=NENHUM / maiorPlacarDeRodada=NaN`;
+   (b) **UI1**: 10 itens abaixo do mínimo — `#hud-shortcuts` (1,96:1), cabeçalho/rodapé do
+   `#scoreboard` novo (1,5-3,84:1), `#rounds-row` (3,84:1) e uma linha de killfeed (4,3:1).
+   O `eval:ui` não é passo do `check:fast`, então esse vermelho não derrubava o gate.
 2. **`corpoFracMediana` (o -20% do menor corpo) não foi perseguido de propósito.** O piso de
    11 px está documentado como "legível em 1280×720" e o desvio repousa numa banda que o próprio
    `ref-ui.py` admite medir com ±12% de erro a 512 px (docstring). Encolher legibilidade por
@@ -3319,6 +3545,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **~~BUG-85 · `eval:armas` vermelho na main: o preload bloqueante voltou às 26 armas~~ · RESOLVIDO 30/08.**
+  Palavras literais do CI (`portao-browser.yml`, vermelho desde 28/08 06:30Z, último verde
+  06:17Z): `✗ ARM1 preload bloqueante com 26 armas (teto 12)` e `✗ ARM3 carga tardia não
+  chegou: parou em 26 armas`. **Palpite óbvio REFUTADO:** o reporte apontava o merge do
+  Córrego (`dec46d5b`, #460) — mas a janela alpha.190→alpha.191 do CI contém só o
+  `1623beaa` (#405, fumaça do cano); o córrego entrou depois, na alpha.192. Medido em
+  30/08 com `node tools/eval/armas-check.mjs --porta=8147` em worktrees limpos:
+  `96ecadfa` (pai do #405) **VERDE, ARM1=8**; `1623beaa` **VERMELHO, ARM1=26**. Causa
+  raiz: o #405 acrescentou `preloadCharacterAssets([playerCharId])` no construtor do
+  `Game` (pré-carga do corpo para a tecla B) **sem** `opts.weapons` — e desde o #410 o
+  `preloadCharacterAssets` chama `preloadWeapons(opts.weapons)` em TODA chamada
+  (`public/js/glbchars.js:285`); `preloadWeapons(undefined)` cai em `WEAPON_IDS` inteiro
+  (`public/js/weapons.js:237`) e as 26 armas entravam na janela bloqueante, sobrando zero
+  para a carga tardia (por isso ARM3 caía junto). Correção na causa, sem tocar no teto:
+  a chamada passa `{ weapons: [charWeapon(playerCharId)] }` (`public/js/game.js:695`),
+  mesmo padrão do `loading3d.js:86`. Antes×depois na main: ARM1 26 → **6**, ARM3
+  "parou em 26" → **26 em 2 s de ocioso**. Mutante existente `--mutante=sem-lazy`
+  conferido no depois: ARM3 acende (parou em 8). Cláusula nova: nenhuma. Custo declarado:
+  a arma do personagem entra no preload da partida — que já a continha via
+  `_armasDaPartida`, logo zero request extra.
 
 - **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
 - **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do

@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.194`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.201`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,67 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.201] — 2026-08-29
+
+### Mudado
+- Dois P0 saem da lista: BUG-36 (Ctrl+W) e BUG-03 (bot mudo) rebaixados com medição (#480)
+- docs(bugs): BUG-36 e BUG-03 saem do P0 — mitigação/conserto já na main, rebaixados com medição
+
+## [2.0.0-alpha.200] — 2026-08-29
+
+### Mudado
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05) (#479)
+- fix(eval): régua de UI deixa de ser cega a font-size fluida (BUG-05)
+
+## [2.0.0-alpha.199] — 2026-08-29
+
+### Mudado
+- fix(edge+telemetria): os dois P0 — /js/ sai do TTL de 1 mês no edge (BUG-39) e BUG-51 fecha com evidência (#476)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(edge+telemetria): /js/ sai do TTL de 1 mês no edge e o BUG-51 fecha com evidência
+
+## [2.0.0-alpha.198] — 2026-08-29
+
+### Mudado
+- feat(audio): músicas do menu trocadas pela leva Suno — audio-pack-v7 (#473)
+- feat(audio): menu 100% Suno — pack v7 no ar e a URL aponta pra ele
+
+## [2.0.0-alpha.197] — 2026-08-29
+
+### Mudado
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85) (#478)
+- fix(armas): o preload do corpo (tecla B) puxava as 26 armas bloqueando (BUG-85)
+
+## [2.0.0-alpha.196] — 2026-08-29
+
+### Mudado
+- docs: fecha BUG-01 — HUD de CTF já tem guarda, limpeza e régua (5/5) (#475)
+- docs: fechar BUG-01 — a faixa de CTF ja tem guarda de modo, limpeza e regua
+
+## [2.0.0-alpha.195] — 2026-08-29
+
+### Mudado
+- fix(three): render() pergunta ao driver se o contexto vive — a corrida da perda no meio do frame (#420)
+- fix: invariantes MAT2/TEX1, poster duplicado e check de posters (#365 + main) (#470)
+- fix(crash): perda de contexto WebGL no meio do frame (#444 + main) (#472)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): perda de contexto no meio do frame é recuperável — TypeError do WebKit não abre issue nem derruba o launch (#419 #420)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- fix: invariantes MAT2/TEX1, poster duplicado, check de posters e limpeza de PNGs
 
 ## [2.0.0-alpha.194] — 2026-08-29
 
