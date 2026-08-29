@@ -1430,82 +1430,6 @@ A rota mantém a cascata de compatibilidade, então cliente com JS velho continu
 - A partida de captura curta de verdade, no navegador, com nick registrado. A régua mede o
   motor e o SQL, não o caminho HTTP inteiro.
 
-### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux)
-
-**Palavras de quem reportou** (Daniel Diniz, 07/08, LinkedIn): *"quando fica muito tempo
-com a tecla Control pressionada a página fecha"* · *"Testei no Windows, mas posso ver no
-Mac"* · *"Não acontece no Mac 🤔, mas pode ser o chrome desatualizado!"* · *"testei em
-outros Browser e tem o mesmo problema. É alguma treta do Windows mesmo"*.
-
-**Não é treta do Windows, e não é o Control sozinho.** Agachar é
-`ControlLeft`/`ControlRight` e andar pra frente é `W` (`game.js`, `wantCrouch`). **Agachar
-andando pra frente É Ctrl+W**, que no Windows e no Linux fecha a aba. No Mac o atalho é
-Cmd+W — por isso o dono, que joga no Mac, nunca reproduziu. Mesma família: Ctrl+1/2/3 troca
-de aba do navegador, e 1/2/3 é a troca de arma.
-
-**Por que o código já sabia e não resolvia.** O `_kd` (`game.js:1969`) engolia
-`ctrlKey`/`metaKey` em pointer lock, e o comentário dele registrava a derrota: *"Ctrl+W o
-Chrome não deixa prevenir, use C pra agachar"*. Ctrl+W é atalho RESERVADO — `preventDefault`
-não alcança. Dizer ao jogador pra não usar a tecla padrão de FPS não é conserto, é aviso.
-
-**Conserto, duas camadas porque nenhuma sozinha cobre todo mundo.**
-1. `_travaAtalhos()` (`game.js`, dentro do `_requestLock`): `navigator.keyboard.lock()` com
-   `KeyW`/`KeyT`/`KeyN`/`KeyR`/`Digit1-3`. É a única API que captura Ctrl+W — e **só
-   funciona em tela cheia**, por isso a tela cheia entra junto, pedida cedo no `startGame`
-   (`main.js`), enquanto o clique ainda vale como gesto do usuário: depois do
-   `await sfxReady` e do `Promise.all` dos GLBs a ativação transiente já queimou. Escape
-   fica fora da lista de propósito (travado, exigiria toque longo, e Escape é o menu de
-   pausa). Solta no `dispose()` e no `setPaused(true)` — segurar o navegador de quem está
-   tentando sair seria hostil. Chromium só.
-2. O `beforeunload` do `main.js` passa a pedir confirmação **enquanto a partida está viva**.
-   Cobre Firefox, Safari e todo caso em que a tela cheia não pegou.
-
-**De quebra:** o `requestPointerLock` estava duplicado (`main.js:596` e o `_requestLock` do
-`game.js`), e era a duplicata que deixava a trava sem lugar pra morar no COMEÇO da partida
-— o RETOMAR passava pelo funil, o COMEÇAR não. Agora é um funil só.
-
-**Régua nova:** `tools/eval/ctrlw-check.mjs` (`npm run eval:ctrlw`), quatro cláusulas:
-
-| | o que mede | estado em 07/08 | mutação |
-|---|---|---|---|
-| CW4 | `_travaAtalhos` chama `keyboard.lock` com as teclas certas (node puro) | **VERDE** — pediu `KeyW,KeyT,KeyN,KeyR,Digit1-3` | `semtravar` → `[]`, FALHA ✓ |
-| CW3 | no MENU o `beforeunload` fica calado | **VERDE** | `promptsempre` → FALHA ✓ |
-| CW2 | com partida viva o `beforeunload` confirma | verde numa corrida, **não reproduzido** | `semprompt` (não executada) |
-| CW1 | tela cheia + trava ao ENTRAR na partida | **não medida** | `semlock` (não executada) |
-
-A CW3 é a que protege o conserto de si mesmo: confirmação que aparece sempre vira praga, e
-praga alguém arranca inteira em duas semanas, levando o conserto junto. A CW4 nasceu porque
-o caminho de navegador não fechava nesta máquina e a pergunta mais direta — *a trava chama
-mesmo a API, e com quais teclas?* — não podia ficar sem resposta esperando por ele. As
-mutações de arquivo servido morrem se não casarem o texto (`MUTANTE NÃO APLICOU`): mutação
-que passa de largo devolve verde, e esse verde é lido como "o guarda funciona".
-
-**O arnês fornece o ambiente, e isso está às claras no cabeçalho da régua:** Chrome
-headless não concede tela cheia de verdade nem expõe `navigator.keyboard`, então a régua
-planta os dois e mede o CÓDIGO DO JOGO. Ela não prova nada sobre o navegador hospedeiro.
-
-**QUATRO DEFEITOS DE INSTRUMENTO pagos escrevendo esta régua** (lei 7 da `bug-hunt`, e os
-quatro acusaram código inocente):
-1. media no `state` do jogo em vez do fim do `startGame` — `game.start()` põe `countdown`
-   ~20 linhas ANTES do `_requestLock`, então CW1 reprovava algo que ainda não tinha sido
-   tentado;
-2. `getElementById('loading')` quando o overlay é `load-overlay` — o `?.` devolvia
-   `undefined` e a condição nunca fechava;
-3. `waitForFunction` polla em `requestAnimationFrame` por padrão, e o rAF fica estrangulado
-   justamente durante o preload pesado que se está esperando (`polling: 250` resolve);
-4. `.catch(() => false)` cego no `waitForFunction`, que transformou exceção do Playwright
-   em "não ficou pronto" e escondeu (3) por três corridas.
-
-**NÃO VERIFICADO — e o primeiro item é o que fecha o defeito, não a régua:**
-- **Windows + Chrome com Ctrl+W de verdade.** Só quem tem Windows fecha isto: entrar na
-  partida, segurar Ctrl e andar com W por vários segundos, e a aba não pode fechar. **Pedir
-  ao Daniel Diniz**, que reportou.
-- Firefox e Safari: espera-se o diálogo de confirmação, não o fechamento seco. Não testado.
-- CW1 e CW2 não fecharam nesta máquina: o `/` em dev leva minutos pra compilar e o preload
-  do elenco derruba o renderer headless. A régua reprova por isso e **diz que reprovou** —
-  não conta como aprovação. Rodar em máquina mais folgada, ou com `BASE=` apontando pra um
-  preview já construído.
-
 ### ~~BUG-29 · "o jogo tá reiniciando do nada, estava num CTF no ferro velho do Zé"~~ · RESOLVIDO 05/08
 
 **NÃO era o BUG-00 de volta.** O menu de pausa continua consertado: `pause-check.mjs`
@@ -1836,29 +1760,6 @@ A `AUD1` — que o `HANDOFF.md` manda manter verde — detectou o problema corre
 
 ---
 
-### BUG-03 · BOT8 — bot com linha de visão no jogador por segundos, sem atirar
-
-**Medido:** `4 episódios | maior silêncio 4,23 s | 690 s em condição`. Vermelha desde o
-baseline, nunca atacada (era C9 no handoff anterior, com 2,7 episódios / 3,03 s — **piorou**).
-
-**Causa raiz — confirmada.** `public/js/game.js:5361`:
-
-```js
-const hasTurn = !(BOT_FAIR && e.isPlayer) || this._duelToken(b);
-```
-
-Essa `const` é avaliada **todo frame, para todo bot cujo alvo é o jogador**, antes de qualquer
-gate de "pode atirar" (o `if` só vem em `game.js:5363`). E `_duelToken` não consulta: ele
-**reserva** o token por `BOT_TOKEN_HOLD`. Um bot em atraso de reação, recarregando, ou sem
-linha de tiro, rouba um dos 2 tokens e o segura. Os outros recebem `hasTurn === false`,
-continuam avançando e **atravessam o campo de visão sem disparar**.
-
-**Correção:** mover a chamada para dentro do `if`, depois dos gates de munição/LOS/mira.
-
-**Régua:** BOT8 já existe e morde. Basta rodar depois.
-
----
-
 ### BUG-04 · `ViewModelRig` está escrito, testado — e nunca foi importado
 
 `public/js/springs.js:94` exporta uma máquina de estados completa de viewmodel: idle com
@@ -1873,6 +1774,165 @@ mudar.
 ---
 
 ## P1 — o jogador vê
+
+### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux) — MITIGADO, limite de plataforma
+
+**REBAIXADO P0 → P1 em 29/08 — a mitigação de duas camadas JÁ ESTÁ NA MAIN e o que
+resta é limite de plataforma.** Nenhum navegador deixa uma página bloquear Ctrl+W de
+verdade fora do par tela-cheia + Chromium (Keyboard Lock API); o padrão dos jogos web —
+confirmar no `beforeunload` com partida viva — está aplicado. Evidência, conferida linha a
+linha em 29/08 na `origin/main` (a.195):
+
+- `_travaAtalhos`/`_soltaAtalhos`: `public/js/game.js:2093-2098`, com guarda de `testMode`
+  e de `fullscreenElement` na primeira linha (`game.js:2094`) — arnês e harness não ganham
+  trava nem diálogo;
+- armada no funil único `_requestLock` (`game.js:2072`); solta no `setPaused(true)`
+  (`game.js:2636`) e no `dispose()` (`game.js:7051`) — sem vazamento de handler;
+- `beforeunload` gateado por `emPartida()` (`public/js/main.js:2102-2119`; a função em
+  `main.js:2081`) — no menu, nada arma.
+
+**Medido em 29/08, contra preview construído** (`npm run build` + `python3 -m http.server
+4399 -d dist/client` + `BASE=http://localhost:4399 node tools/eval/ctrlw-check.mjs`): as
+QUATRO cláusulas passam — CW1 (`requestFullscreen` 1×, `keyboard.lock` 1× com
+`KeyW,KeyT,KeyN,KeyR,Digit1-3`), CW2 (`countdown` → confirmação `true`), CW3 (menu →
+confirmação `false`), CW4. É a primeira corrida em que CW1 e CW2 fecham nesta máquina — o
+caminho era o `BASE=` num preview construído, exatamente como a entrada previa. Mutação
+`--mutante=semprompt` executada na mesma corrida: CW2 **FALHA** (*"confirmação: false"*,
+`✗ CTRLW 1 reprovação`) — a cláusula que faltava exercitar morde.
+
+**Por que P1 e não fechado:** a confirmação manual em Windows + Chrome (segurar Ctrl e
+andar com W numa partida, a aba não pode fechar) segue pendente — só ela fecha a entrada,
+e é do Daniel Diniz, que reportou. Firefox/Safari (espera-se o diálogo, não o fechamento
+seco) também seguem não testados. Diagnóstico original e histórico da régua abaixo.
+
+**Palavras de quem reportou** (Daniel Diniz, 07/08, LinkedIn): *"quando fica muito tempo
+com a tecla Control pressionada a página fecha"* · *"Testei no Windows, mas posso ver no
+Mac"* · *"Não acontece no Mac 🤔, mas pode ser o chrome desatualizado!"* · *"testei em
+outros Browser e tem o mesmo problema. É alguma treta do Windows mesmo"*.
+
+**Não é treta do Windows, e não é o Control sozinho.** Agachar é
+`ControlLeft`/`ControlRight` e andar pra frente é `W` (`game.js`, `wantCrouch`). **Agachar
+andando pra frente É Ctrl+W**, que no Windows e no Linux fecha a aba. No Mac o atalho é
+Cmd+W — por isso o dono, que joga no Mac, nunca reproduziu. Mesma família: Ctrl+1/2/3 troca
+de aba do navegador, e 1/2/3 é a troca de arma.
+
+**Por que o código já sabia e não resolvia.** O `_kd` (`game.js:1969`) engolia
+`ctrlKey`/`metaKey` em pointer lock, e o comentário dele registrava a derrota: *"Ctrl+W o
+Chrome não deixa prevenir, use C pra agachar"*. Ctrl+W é atalho RESERVADO — `preventDefault`
+não alcança. Dizer ao jogador pra não usar a tecla padrão de FPS não é conserto, é aviso.
+
+**Conserto, duas camadas porque nenhuma sozinha cobre todo mundo.**
+1. `_travaAtalhos()` (`game.js`, dentro do `_requestLock`): `navigator.keyboard.lock()` com
+   `KeyW`/`KeyT`/`KeyN`/`KeyR`/`Digit1-3`. É a única API que captura Ctrl+W — e **só
+   funciona em tela cheia**, por isso a tela cheia entra junto, pedida cedo no `startGame`
+   (`main.js`), enquanto o clique ainda vale como gesto do usuário: depois do
+   `await sfxReady` e do `Promise.all` dos GLBs a ativação transiente já queimou. Escape
+   fica fora da lista de propósito (travado, exigiria toque longo, e Escape é o menu de
+   pausa). Solta no `dispose()` e no `setPaused(true)` — segurar o navegador de quem está
+   tentando sair seria hostil. Chromium só.
+2. O `beforeunload` do `main.js` passa a pedir confirmação **enquanto a partida está viva**.
+   Cobre Firefox, Safari e todo caso em que a tela cheia não pegou.
+
+**De quebra:** o `requestPointerLock` estava duplicado (`main.js:596` e o `_requestLock` do
+`game.js`), e era a duplicata que deixava a trava sem lugar pra morar no COMEÇO da partida
+— o RETOMAR passava pelo funil, o COMEÇAR não. Agora é um funil só.
+
+**Régua nova:** `tools/eval/ctrlw-check.mjs` (`npm run eval:ctrlw`), quatro cláusulas:
+
+| | o que mede | estado em 07/08 | mutação |
+|---|---|---|---|
+| CW4 | `_travaAtalhos` chama `keyboard.lock` com as teclas certas (node puro) | **VERDE** — pediu `KeyW,KeyT,KeyN,KeyR,Digit1-3` | `semtravar` → `[]`, FALHA ✓ |
+| CW3 | no MENU o `beforeunload` fica calado | **VERDE** | `promptsempre` → FALHA ✓ |
+| CW2 | com partida viva o `beforeunload` confirma | verde numa corrida, **não reproduzido** | `semprompt` (não executada) |
+| CW1 | tela cheia + trava ao ENTRAR na partida | **não medida** | `semlock` (não executada) |
+
+A CW3 é a que protege o conserto de si mesmo: confirmação que aparece sempre vira praga, e
+praga alguém arranca inteira em duas semanas, levando o conserto junto. A CW4 nasceu porque
+o caminho de navegador não fechava nesta máquina e a pergunta mais direta — *a trava chama
+mesmo a API, e com quais teclas?* — não podia ficar sem resposta esperando por ele. As
+mutações de arquivo servido morrem se não casarem o texto (`MUTANTE NÃO APLICOU`): mutação
+que passa de largo devolve verde, e esse verde é lido como "o guarda funciona".
+
+**O arnês fornece o ambiente, e isso está às claras no cabeçalho da régua:** Chrome
+headless não concede tela cheia de verdade nem expõe `navigator.keyboard`, então a régua
+planta os dois e mede o CÓDIGO DO JOGO. Ela não prova nada sobre o navegador hospedeiro.
+
+**QUATRO DEFEITOS DE INSTRUMENTO pagos escrevendo esta régua** (lei 7 da `bug-hunt`, e os
+quatro acusaram código inocente):
+1. media no `state` do jogo em vez do fim do `startGame` — `game.start()` põe `countdown`
+   ~20 linhas ANTES do `_requestLock`, então CW1 reprovava algo que ainda não tinha sido
+   tentado;
+2. `getElementById('loading')` quando o overlay é `load-overlay` — o `?.` devolvia
+   `undefined` e a condição nunca fechava;
+3. `waitForFunction` polla em `requestAnimationFrame` por padrão, e o rAF fica estrangulado
+   justamente durante o preload pesado que se está esperando (`polling: 250` resolve);
+4. `.catch(() => false)` cego no `waitForFunction`, que transformou exceção do Playwright
+   em "não ficou pronto" e escondeu (3) por três corridas.
+
+**NÃO VERIFICADO — e o primeiro item é o que fecha o defeito, não a régua:**
+- **Windows + Chrome com Ctrl+W de verdade.** Só quem tem Windows fecha isto: entrar na
+  partida, segurar Ctrl e andar com W por vários segundos, e a aba não pode fechar. **Pedir
+  ao Daniel Diniz**, que reportou.
+- Firefox e Safari: espera-se o diálogo de confirmação, não o fechamento seco. Não testado.
+- CW1 e CW2 não fecharam nesta máquina: o `/` em dev leva minutos pra compilar e o preload
+  do elenco derruba o renderer headless. A régua reprova por isso e **diz que reprovou** —
+  não conta como aprovação. Rodar em máquina mais folgada, ou com `BASE=` apontando pra um
+  preview já construído.
+
+### BUG-03 · BOT8 — bot com linha de visão no jogador por segundos, sem atirar — REBAIXADO P0 → P1 29/08
+
+**A entrada estava VELHA — o conserto real já mora na main, e a correção que ela
+prescrevia foi REFUTADA com medição.** Conferido em 29/08 na `origin/main` (a.195):
+
+- A prescrição antiga (*"mover a chamada do `_duelToken` pra dentro do `if`, depois dos
+  gates"*) foi medida e **PIORA**: 3,8 epi | 6,73 s contra 2,6 | 5,23 do código de então
+  (botdiag `SIM_SHOOTGATE`, 9 sementes × 4 mapas × 180 s). Chamada todo frame também é
+  FILA — atrás do `if` ela vira DISPUTA no instante do gatilho, e quem perde come 1,6 s de
+  silêncio. A refutação inteira está escrita no código: `public/js/game.js:6057-6070`.
+- O conserto aplicado tem duas metades: só quem PODE atirar concorre ao token
+  (`canUse && this._duelToken(b)`, `game.js:6071-6072`) e o holder que não pode mais
+  atirar DEVOLVE o token na hora (`_duelToken`, `game.js:5706-5716`). Medido na época:
+  2,6 epi | 5,23 s → **2,0 epi | 4,73 s**.
+- **`origin/feat/times-e-mapas-completo` NÃO traz conserto adicional** (verificado 29/08):
+  o diff de `game.js` contra a main troca o áudio de voz (`sfx.voice`/`radioVoice` →
+  `characterVoice`) e não toca `_duelToken`, `hasTurn` nem os gates de fogo. Nada a
+  cherry-pickar.
+
+**Medido HOJE (29/08, árvore = `origin/main` a.195):**
+
+| protocolo | episódios mudos | maior silêncio | tempo em condição | % tempo mudo |
+|---|---|---|---|---|
+| portão (`SIM_SHOOTGATE=1 node tools/eval/botdiag.mjs 180 all`, 3 sementes) | **1** | 3,03 s | 460 s | 1,5% |
+| 9 sementes (`SIM_SEEDS=12345,777,4242,11,222,3333,44,555,6666`, idem) | **2,3** | 5,52 s | 442 s | 12% |
+
+(Contra o `4 episódios | 4,23 s` do cabeçalho antigo desta entrada.) O motivo predominante
+dos quadros mudos não é mais o token: `nextShotAt`/`focusUntil`/`reactAt` (cadência, foco e
+reação — mecânicas intencionais de fairness) somam 56-64%; `hasTurn` responde por 19-27%.
+
+**Por que P1 e não P0:** não quebra o jogo nem mente pra quem mede. BOT8 continua VERMELHA
+como dívida declarada em `tools/eval/KNOWN-RED.json`, com o teto ZERO **intacto** (não foi
+afrouxado — o veto do dono vale); o resíduo é evento raro (1-2,3 episódios em ~450 s de
+condição de tiro, somando todos os mapas) e o caminho "óbvio" de zerá-lo já foi medido uma
+vez e piora. Zerar de verdade exige redesenhar a interação token × cadência — trabalho de
+`gauntlet-fps`, não de conserto.
+
+<details><summary>Diagnóstico original (histórico — a prescrição dele foi refutada)</summary>
+
+**Medido:** `4 episódios | maior silêncio 4,23 s | 690 s em condição`. Vermelha desde o
+baseline, nunca atacada (era C9 no handoff anterior, com 2,7 episódios / 3,03 s — piorou).
+
+**Causa raiz — confirmada.** `hasTurn = !(BOT_FAIR && e.isPlayer) || this._duelToken(b)`
+era avaliada todo frame, para todo bot cujo alvo é o jogador, antes de qualquer gate de
+"pode atirar" — e `_duelToken` não consulta: **reserva** por `BOT_TOKEN_HOLD`. Um bot em
+atraso de reação, recarregando ou sem linha de tiro roubava um dos 2 tokens e o segurava;
+os outros atravessavam o campo de visão sem disparar.
+
+**Correção (prescrita e depois REFUTADA):** mover a chamada para dentro do `if` — piora,
+ver acima.
+
+</details>
+
+---
 
 ### BUG-79 · Córrego: grama nunca foi servida e as rampas do canal mostram o céu
 
