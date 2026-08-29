@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-08-12T01:40:00Z",
+  "approvalScope": "candidato 3D v2 aprovado em pre-integracao por critico limpo; capturas runtime entregues SEM nota do integrador — revisor limpo decide",
+  "character": {
+    "file": "public/models/characters/profeta-calcada.glb",
+    "bytes": 630628,
+    "sha256": "09f5055d124ca3421316aecbd84e2cfdb9fc01f202d37802e6c8ef48813bb471",
+    "source": "references/noias/profeta-calcada/3d/blender-v2/profeta-calcada-v2.glb",
+    "sourceSha256": "dddbe95df8a6544cbc10a2a0173463a0f06c9cb945bc886da23b7b6b93223628",
+    "sourceByteIdentical": false,
+    "deliveryTransform": "dedup + textureCompress(webp, 1024) + prune(keepLeaves) — padrao tools/optimize-tribos.mjs; textura 4096 PNG 13,6 MB -> 1024 WebP; sockets de mao preservados (prune sem keepLeaves os podava — detectado e corrigido); contrato v2 re-rodado VERDE no arquivo de entrega"
+  },
+  "weapon": {
+    "id": "m4",
+    "file": "public/models/weapons/m4.glb",
+    "sha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677"
+  },
+  "animations": {
+    "idle": "ca38e0dd65e3025e7f32229adb64515b0c00caf19968561a26b629bfa53139d5",
+    "walk": "ee6e29db60247bb36be1f71e9c9911384a37406348de5e61490813bca0d9a644",
+    "run": "9eb42befd5e7f4bd80eea938707d27c08b975eb943eb71be95276589e93e1ac8",
+    "shoot": "163f5f4a6c47a942b33b9a7a12719dddac8f295376c16c8d3312020c5408c26d",
+    "death": "97d206943b9402ac034dbced58df45a855dc3c15b99bf7f28cd8612cf5a7343c",
+    "crouch": "731dcf2f941fe5e72cea92f7ab3a6a057428c5fc471f1c0c4b8651e04b869cf9",
+    "crouchwalk": "64285e590d63ea33c3e966097a243009a5893f0122029f3582b5d6e945606abd",
+    "jump": "4065846577e3ce94351e07254b10f19206717cba9f474adbb9d79fef28dcbc58",
+    "idle1h": "7797279fb118d0b92b126ce91f46d079aeeff8691f28a9219e1e6ad9baf86af8",
+    "walk1h": "001b8c4bdedb8df9d7e41cc4e9b477df9578461bbddbd9839f481f63ebf0a60f",
+    "walkfire": "41c5e6ffde39bdecc223417d96fcf50e00d13f43279959624c837ed2cb427130",
+    "note": "11 clipes byte-identicos ao recibo blender-v2 (SHA confere com artifact-receipt.json)",
+    "merged": {
+      "file": "public/models/anims/profeta-calcada.glb",
+      "bytes": 350008,
+      "sha256": "b2e5cce3ab3000cc0de4e73587a53595128a8bf77b8ce7f52f7d36064a7fe958"
+    }
+  },
+  "feet": {
+    "bind": 0,
+    "offsetsMeters": {
+      "walk": -0.0278,
+      "run": -0.0242
+    },
+    "source": "tools/eval/char_probe.json",
+    "table": "public/models/anims/foot-offsets.json"
+  },
+  "registration": {
+    "charactersJs": "CHARACTERS (team O / tribe noias) + CHAR_WEAPON m4",
+    "glbChars": "GLB_CHARS em glbchars.js",
+    "hitboxGuard": "glbchars.js buildCharacterModel: mesh nao-skinnado (props em socket) com raycast desligado — no-op medido no resto do elenco (nenhum outro GLB tem mesh rigido)",
+    "factions": "noias ja listava Profeta da Calcada; ready:false ate 8/8 — sem lista paralela criada"
+  },
+  "gates": {
+    "contractV2OnDelivery": "VERDE (references/noias/profeta-calcada/3d/contract-animation-v2.mjs contra public/)",
+    "propHitboxProbe": "limpo exit 0 (4 props fora do hitbox, corpo+cabeca intactos); mutante semguarda exit 1 com 3 props absorvendo tiro",
+    "selectMount": "profeta ok — frenteZ 0.145, canoZ 0.992, dMaoR 0, dMaoL 0.003 (teto do mandrake x1,25); elenco 60/61 (bandeirante MÃO-L, pre-existente, rig provisorio)",
+    "khronos": "modelo entrega 0 erros 1 aviso; merged + 11 clipes 0 erros 0 avisos",
+    "mintAssetIntegrity": "30 artefatos finais conferem (inclui profeta-calcada)",
+    "gltfValidator": "10 GLBs finais, 0 erros",
+    "charGameEvidence": "contrato OK com --char=profeta-calcada (5 estados, SHA, estabilidade)",
+    "preExistingRed": [
+      "anims:check/merge:check A4 'nao versionado' — vale para os 9 slices nesta arvore nao commitada; resolve no git add (integrador nao commita por regra da frente)",
+      "eval:char-thumbnail — lenda-lanhouse sem thumbnail (frente alheia, IDS fixo nao inclui profeta)",
+      "select-mount bandeirante MÃO-L (rig provisorio, frente alheia)"
+    ]
+  },
+  "captures1536x1024": {
+    "selecao": "tools/eval/asset-evidence/profeta-calcada/selecao-1536x1024.png",
+    "game": "tools/eval/asset-evidence/profeta-calcada/game/profeta-calcada-{close,medium,grip,walk,crouch}.png",
+    "death": "tools/eval/asset-evidence/profeta-calcada/death-1536x1024.png",
+    "thumbnail360x463": "public/img/chars/profeta-calcada.webp (+ .json com SHA)"
+  },
+  "version": "2.0.0-alpha.66"
+}

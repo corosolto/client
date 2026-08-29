@@ -34,11 +34,12 @@ def target_label(base_branch: str) -> str:
     return "target:main"
 
 
-def main() -> int:
-    payload = json.load(sys.stdin)
-    files = [f["path"] for f in payload.get("files", [])]
-    additions = int(payload.get("additions", 0))
-    deletions = int(payload.get("deletions", 0))
+def classify(payload: dict) -> dict:
+    # PR conflitante/gigante devolve files: null na API — sem o guarda, o
+    # classify morria com TypeError em vez de classificar com o que tem.
+    files = [f["path"] for f in (payload.get("files") or [])]
+    additions = int(payload.get("additions") or 0)
+    deletions = int(payload.get("deletions") or 0)
     changed_files = int(payload.get("changedFiles", len(files)))
     base_branch = payload.get("baseRefName") or "main"
 
@@ -76,10 +77,37 @@ def main() -> int:
     labels_add.append(branch_target)
     labels_remove.extend({"target:main", "target:staging", "target:release"} - {branch_target})
 
-    print(json.dumps({
+    return {
         "labels_add": sorted(set(labels_add)),
         "labels_remove": sorted(set(labels_remove)),
-    }))
+    }
+
+
+def selftest() -> int:
+    # regressão do #468: PR conflitante devolve files/additions nulos —
+    # classifica com o que tem em vez de morrer com TypeError.
+    nulo = classify({"files": None, "additions": None, "baseRefName": "main"})
+    assert nulo["labels_add"] == ["target:main"], nulo
+    doc = classify({
+        "files": [{"path": "docs/comecando.md"}], "additions": 10,
+        "deletions": 2, "changedFiles": 1, "baseRefName": "main",
+    })
+    assert "safe-automerge" in doc["labels_add"], doc
+    jogo = classify({
+        "files": [{"path": "public/js/game.js"}], "additions": 300,
+        "deletions": 10, "changedFiles": 1, "baseRefName": "staging",
+    })
+    assert "needs-human-gameplay" in jogo["labels_add"], jogo
+    assert "safe-automerge" in jogo["labels_remove"], jogo
+    assert "target:staging" in jogo["labels_add"], jogo
+    print("selftest ok")
+    return 0
+
+
+def main() -> int:
+    if "--selftest" in sys.argv:
+        return selftest()
+    print(json.dumps(classify(json.load(sys.stdin))))
     return 0
 
 

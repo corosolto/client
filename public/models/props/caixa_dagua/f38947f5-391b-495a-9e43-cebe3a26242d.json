@@ -1,0 +1,37 @@
+{
+  "task_id": "f38947f5-391b-495a-9e43-cebe3a26242d",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "prompt": "Brazilian rooftop water tank (caixa d'agua), black cylindrical plastic water tank mounted on a simple metal stand, very common on Brazilian favela rooftops, weathered plastic, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+    "model_version": "v3.1-20260211",
+    "texture": true,
+    "pbr": true,
+    "texture_quality": "detailed",
+    "texture_alignment": "geometry",
+    "export_uv": true,
+    "geometry_quality": "detailed"
+  },
+  "output": {
+    "pbr_model": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/tripo_pbr_model_f38947f5-391b-495a-9e43-cebe3a26242d.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL3RyaXBvX3Bicl9tb2RlbF9mMzg5NDdmNS0zOTFiLTQ5NWEtOWU0My1jZWJlM2EyNjI0MmQuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MzIwMDAwfX19XX0_&Signature=g7nEsops2HX1nnr-FgTBsgMGbtyJ5Qaoe9xGdAvm0RomJesAkz8ck7WX3rnHrMR-sdDjTZA04CJCp-28nslBun4E91akAtvEwpMBgTY9FiWDzIghNT6gHHV4QJqoXl1PwhtWAqE1ILTlcmK~TFizFdPaQKVCi9IS5T7TnI4yMF1YeQ1gtGqe6WFa9NSgL5UBF3i0FomT228agVGpValomFEXhyT96oF9zA113JosI3ZwAIm9P1x~GhOoiHPQW59KngnL~-V9TZYWTrt07LR3AYiEp3Rq4xbKrroyMUBcWfrK7ikORRyJRsYWh03qKWhHvhBXy9jKUCOxDhU2t4720w__",
+    "generated_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/text2image_f38947f5-391b-495a-9e43-cebe3a26242d.jpeg?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL3RleHQyaW1hZ2VfZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkLmpwZWciLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=BA5LDPThIjk4OJaFd1jRQkK77Bt9ZEZOPkoKVEWfLhO4jpu5JJk4w96hVtaanQXwOba8INO-aErkmNGYnTOJfdOdqZKC~QTcOYkF7-YE0lIhaneqpMSc78wBPGi-XJMbGX3SGe7qF6u7NDzmFHshEaLe9w6Gr5fP3v4Bo1PDHCZiY~~l6CejM-1OzgJMRHXXIvT8m3mMu8xfV5X4YM-2GJebvfKakMl~29KJ3GIPCHK26-R~hrZO2uhGhASNAGh4V1Xxd12inos8RbSxl6FKe0hBUPyT~on0eluJXO-ZrJ5p47Gyt9iGmqFh2~NnQjhTVXy8g9y1Iaxk8PAsmJr3IA__",
+    "rendered_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=lda61XHfEftQS05N6VTcnVhRL8TG-9P3suWmO5Y5tf3XeCHSUHU4herj-I-p1AJCJ~5wREAjktnTmw03QhkwWTQ3MiSWjpTeo-6dmZrttas8fj99giCbNRgnbBEmHSiBI2n1Gr3sFsWTyF10op4p3QWtzOiVwMTe1m1p1eBJPLaM6aOeRw8IM0j88Chi36HN8sRslJ~HFqMj8cf6nqua3eX1vStesLK9Qdx5jbD6nfX1aQ4nvKEa-lTInWQhauONtlPHUzFGBZ9wkQFx5RnvV81R9b3iRVdbrM6kRJdb4ZDJ3EOchm2c4spY55IF3EUKJQk8HnMOISJc5n9yk9kv7Q__"
+  },
+  "progress": 100,
+  "create_time": 1786244681,
+  "consumed_credit": 50,
+  "prompt": "Brazilian rooftop water tank (caixa d'agua), black cylindrical plastic water tank mounted on a simple metal stand, very common on Brazilian favela rooftops, weathered plastic, game-ready low-poly 3D asset, clean topology, PBR materials, centered pivot at base, real-world scale",
+  "thumbnail": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=lda61XHfEftQS05N6VTcnVhRL8TG-9P3suWmO5Y5tf3XeCHSUHU4herj-I-p1AJCJ~5wREAjktnTmw03QhkwWTQ3MiSWjpTeo-6dmZrttas8fj99giCbNRgnbBEmHSiBI2n1Gr3sFsWTyF10op4p3QWtzOiVwMTe1m1p1eBJPLaM6aOeRw8IM0j88Chi36HN8sRslJ~HFqMj8cf6nqua3eX1vStesLK9Qdx5jbD6nfX1aQ4nvKEa-lTInWQhauONtlPHUzFGBZ9wkQFx5RnvV81R9b3iRVdbrM6kRJdb4ZDJ3EOchm2c4spY55IF3EUKJQk8HnMOISJc5n9yk9kv7Q__",
+  "queuing_num": -1,
+  "running_left_time": -1,
+  "result": {
+    "pbr_model": {
+      "type": "glb",
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/tripo_pbr_model_f38947f5-391b-495a-9e43-cebe3a26242d.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL3RyaXBvX3Bicl9tb2RlbF9mMzg5NDdmNS0zOTFiLTQ5NWEtOWU0My1jZWJlM2EyNjI0MmQuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzg2MzIwMDAwfX19XX0_&Signature=g7nEsops2HX1nnr-FgTBsgMGbtyJ5Qaoe9xGdAvm0RomJesAkz8ck7WX3rnHrMR-sdDjTZA04CJCp-28nslBun4E91akAtvEwpMBgTY9FiWDzIghNT6gHHV4QJqoXl1PwhtWAqE1ILTlcmK~TFizFdPaQKVCi9IS5T7TnI4yMF1YeQ1gtGqe6WFa9NSgL5UBF3i0FomT228agVGpValomFEXhyT96oF9zA113JosI3ZwAIm9P1x~GhOoiHPQW59KngnL~-V9TZYWTrt07LR3AYiEp3Rq4xbKrroyMUBcWfrK7ikORRyJRsYWh03qKWhHvhBXy9jKUCOxDhU2t4720w__"
+    },
+    "rendered_image": {
+      "type": "webp",
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_4de4509a44da4b06a08ba5ae3ef1a8b6/20260809/f38947f5-391b-495a-9e43-cebe3a26242d/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfNGRlNDUwOWE0NGRhNGIwNmEwOGJhNWFlM2VmMWE4YjYvMjAyNjA4MDkvZjM4OTQ3ZjUtMzkxYi00OTVhLTllNDMtY2ViZTNhMjYyNDJkL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODYzMjAwMDB9fX1dfQ__&Signature=lda61XHfEftQS05N6VTcnVhRL8TG-9P3suWmO5Y5tf3XeCHSUHU4herj-I-p1AJCJ~5wREAjktnTmw03QhkwWTQ3MiSWjpTeo-6dmZrttas8fj99giCbNRgnbBEmHSiBI2n1Gr3sFsWTyF10op4p3QWtzOiVwMTe1m1p1eBJPLaM6aOeRw8IM0j88Chi36HN8sRslJ~HFqMj8cf6nqua3eX1vStesLK9Qdx5jbD6nfX1aQ4nvKEa-lTInWQhauONtlPHUzFGBZ9wkQFx5RnvV81R9b3iRVdbrM6kRJdb4ZDJ3EOchm2c4spY55IF3EUKJQk8HnMOISJc5n9yk9kv7Q__"
+    }
+  }
+}

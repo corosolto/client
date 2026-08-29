@@ -91,7 +91,7 @@ const alvoPorMutante = {
   'faccao-mostra-antes-da-arte': 'UIR39',
   'troca-m-abre-pausa': 'UIR40',
   'resultado-emenda-volta': 'UIR41',
-  'versao-menu-volta-rodape': 'UIR42',
+  'versao-menu-volta-home': 'UIR42',
   'sem-autoria': 'UIR43',
   'filtro-autor-morto': 'UIR4',   // mistura comunidade nos OFICIAIS de novo (reverte o #368)
   'sem-badge-oficial': 'UIR43',
@@ -317,9 +317,9 @@ css = muta('resultado-corta-personagem', css,
 css = muta('resultado-emenda-volta', css,
   '.me-wrap{position:relative;',
   '.me-wrap::after{content:"";position:absolute;inset:0 0 0 44%;background:radial-gradient(ellipse at 88% 58%,rgba(73,168,70,.2),transparent 78%)}\n.me-wrap{position:relative;');
-astro = muta('versao-menu-volta-rodape', astro,
-  '<span class="menu-version" id="mf-ver"></span>',
-  '<span class="mf-ver" id="mf-ver"></span>');
+astro = muta('versao-menu-volta-home', astro,
+  '<!-- PAINEL DE SETUP - dois PASSOS',
+  '<span class="menu-version" id="mf-ver"></span>\n\n  <!-- PAINEL DE SETUP - dois PASSOS');
 css = muta('loading-volta-grande', css,
   'width:min(86px,6.8vw);height:min(144px,15.2vh);pointer-events:none;',
   'width:min(430px,34vw);height:min(720px,76vh);pointer-events:none;');
@@ -790,12 +790,12 @@ const loadingCompactoDireita = /width:min\(86px,6\.8vw\)/.test(loadingStageCss)
   && /#load-character-action\{[^}]*display:none/.test(css);
 const configuracoesReferencia = /id="settings-close"/.test(astro)
   && /id="settings-restore"/.test(astro) && /id="settings-apply"/.test(astro)
-  && /class="set-preview-caption"/.test(astro)
+  && /class="settings-cockpit"/.test(astro) && /class="settings-workbench"/.test(astro)
   && /#settings-panel\{[^}]*font-family:var\(--aaa-font-body\)/.test(css)
-  && /#settings-panel \.settings-wrap\{[^}]*width:980px[^}]*background:rgba\(16,17,20,\.96\)[^}]*clip-path:var\(--aaa-cut-lg\)/.test(css)
-  && /#settings-panel \.set-cols\{[^}]*gap:36px[^}]*padding:26px 32px/.test(css)
-  && /#settings-panel \.set-preview\{[^}]*width:360px[^}]*height:200px/.test(css)
-  && /#settings-panel \.set-actions\{[^}]*padding:18px 32px 22px/.test(css)
+  && /\.settings-cockpit\{[^}]*grid-template-columns:minmax\(210px,18vw\) minmax\(0,1fr\)/.test(css)
+  && /\.settings-workbench\{[^}]*display:flex[^}]*overflow:auto/.test(css)
+  && /class="set-preview" aria-hidden="true"/.test(astro)
+  && /class="set-actions"/.test(astro)
   && /\$\('set-quality'\)\.value = 'high'; show\('settings-panel'\); return;/.test(main);
 const placarReferencia = /class="sb-clock"/.test(game)
   && /class="sb-team-name"/.test(game) && /class="sb-score-num"/.test(game)
@@ -822,8 +822,8 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
-const modoMapaPadrao = /<button class="cs-item cs-sub-item" data-act="sp"[^>]*>[\s\S]*?MATA-MATA<\/button>/.test(astro)
-  && !/>ABATE<\/button>/.test(astro)
+const modoMapaPadrao = /<button class="cs-item home-mode-card" data-act="sp"[^>]*>[\s\S]*?<b>ROUNDS<\/b>/.test(astro)
+  && /<button class="cs-item home-mode-card" data-act="ctf"[^>]*>[\s\S]*?<b>CAPTURA<\/b>/.test(astro)
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
   && /case 'sp':\s+openModeMap\('rounds', 'MATA-MATA', 'sp'\); break;/.test(main)
   && /case 'ctf':\s+openModeMap\('ctf', 'CAPTURE THE FLAG', 'ctf'\); break;/.test(main);
@@ -834,7 +834,7 @@ const perfilComAvatar = /const PLAYER_AVATAR_KEY = 'awpbr_player_avatar'/.test(m
   && /applyPlayerAvatar\(\$\('pp-avatar'\), nick\);/.test(main)
   && /res && res\.ok && res\.url[\s\S]{0,220}localStorage\.setItem\(PLAYER_AVATAR_KEY, res\.url\)[\s\S]{0,160}renderPlayerPlate\(\)/.test(main)
   && /#menu-bottombar \.pp-avatar\{[^}]*background-size:cover[^}]*background-position:center/.test(css);
-const suporteNoMenu = /<button class="cs-item" data-act="feedback" type="button"><span class="cs-tick">▸<\/span>ENVIE SEU FEEDBACK<\/button>/.test(astro)
+const suporteNoMenu = /<button class="cs-item" data-act="feedback" type="button">FEEDBACK<\/button>/.test(astro)
   && /case 'feedback': markCurrent\('feedback'\); show\('feedback-panel'\); break;/.test(main);
 const mouseVerticalConfiguravel = /invertY: false/.test(main)
   && /id="set-invert-y" type="checkbox"/.test(astro)
@@ -907,9 +907,12 @@ const trocaMConsistente = /game\.onRequestSwitch = \(\) => \{[\s\S]{0,180}game\.
   && /const oldFaction = this\.playerFaction;[\s\S]{0,160}this\.playerFaction = this\.enemyFaction;[\s\S]{0,80}this\.enemyFaction = oldFaction;/.test(game);
 const resultadoFundoContinuo = !/\.me-(?:wrap|hero)::after\{/.test(css)
   && !/--me-accent-rgb/.test(`${css}\n${main}\n${game}`);
-const versaoMenuNoCanto = /<\/div>\s*<span class="menu-version" id="mf-ver"><\/span>\s*<\/div>\s*<!-- PAINEL DE SETUP/.test(astro)
-  && /\.menu-version\{[^}]*position:fixed[^}]*right:min\(4vw,42px\)[^}]*bottom:14px/.test(css)
-  && /\.menu-footer\{[^}]*bottom:48px/.test(css);
+/* Aceita as duas árvores do menu (a da main fechava em </div></div>; a do
+   cinematic-ui fecha em </section>) — a cláusula real é a camada própria + CSS fixo. */
+const versaoForaDaHome = !/id="mf-ver"/.test(astro)
+  && !/\.menu-version\{/.test(css)
+  && /\.menu-footer\{[^}]*bottom:14px/.test(css)
+  && /\.menu-footer \.mf-social\{[^}]*position:fixed[^}]*top:clamp\(46px,7vh,84px\)/.test(css);
 /* UIR20 — home ESTÁTICA com idioma por país. O Stateloop só publica build estático
    e a home SSR não emite dist/client/index.html, então a decisão de idioma migrou
    do frontmatter para o /api/geo-lang: o fetch começa no <head>, o i18n resolve
@@ -979,8 +982,8 @@ const resultados = [
     'home estática; /api/geo-lang decide pelo país antes do boot; sem API (host estático) cai no navegador'],
   ['UIR21', 'loading ocupa um quinto do palco anterior e olha para o avanço da barra', loadingCompactoDireita,
     'palco 86×144 no desktop; yaw positivo acompanha a barra da esquerda para a direita'],
-  ['UIR22', 'configurações reproduzem painel 980px, prévia 360×200, cabeçalho e rodapé da tela 07', configuracoesReferencia,
-    'Barlow no corpo; ESC, restaurar, aplicar e salvar presentes'],
+  ['UIR22', 'configurações preservam cockpit responsivo, prévia, navegação e ações da tela 07', configuracoesReferencia,
+    'Barlow no corpo; ESC, restaurar, aplicar e salvar presentes no cockpit'],
   ['UIR23', 'placar reproduz cabeçalho e duas tabelas translúcidas da tela 08', placarReferencia,
     'fundo de jogo borrado; rodada no topo; JOGADOR/K/D/SCORE/PING em duas colunas'],
   ['UIR24', 'HUD usa Barlow no corpo e Rajdhani nos números, com estado de vida baixa', hudTipografiaReferencia,
@@ -1019,8 +1022,8 @@ const resultados = [
     'o jogo pausa antes do pointer lock sair; seleção usa enemyFaction e VOLTAR retoma a partida'],
   ['UIR41', 'resultado usa um único fundo preto contínuo atrás da arte alpha', resultadoFundoContinuo,
     'nenhum halo ou degradê limitado à metade direita pode criar emenda no palco do personagem'],
-  ['UIR42', 'menu preenche o viewport e fixa a versão no canto inferior direito', versaoMenuNoCanto,
-    'a versão fica em camada própria abaixo do rodapé, sem participar da fileira de links'],
+  ['UIR42', 'home não exibe versão; links ficam na última linha e redes no canto superior direito', versaoForaDaHome,
+    'a versão saiu da home; rodapé e redes ocupam posições próprias'],
   ['UIR43', 'ficha do mapa traz autor, data e crachá OFICIAL/COMUNIDADE (sub-filtro de autor removido, #368)', autoriaNaFicha,
     'MAP_AUTOR/MAP_DATA por mapa; byline renderiza; badge OFICIAL pra casa e COMUNIDADE pra fora; sem marcação morta de chips de autor'],
 ];

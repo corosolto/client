@@ -12,6 +12,7 @@
 // A FAQ também tinha número errado ("18 personagens" num parágrafo e "8" na
 // lista); os números agora saem de src/data/jogo.ts, copiado do código do jogo.
 import Layout from '../layouts/Layout.astro';
+import pkg from '../../package.json';
 import { ARMAS, MAPAS, PERSONAGENS, FACCOES } from '../data/jogo';
 import { BRAND_FULL, BRAND_ALT, DESC_LONG, GAME_ID, abs } from '../lib/site';
 
@@ -74,6 +75,7 @@ const jsonld = [
     <a class="btn-cta btn-2" href="/como-jogar">Como jogar</a>
   </div>
   <p style="font-size:12px;color:var(--bone-dim);margin-top:10px">Roda no navegador de desktop. Sem instalação, sem cadastro.</p>
+  <p style="font-size:12px;color:var(--bone-dim);margin-top:4px">Versão atual: {pkg.version}</p>
 
   <div class="tstat" style="margin-top:26px">
     <div><b>{PERSONAGENS.length}</b><span>personagens</span></div>

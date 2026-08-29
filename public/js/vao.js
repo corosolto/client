@@ -35,6 +35,70 @@ const _only = _qp.get('vao');
 export const VAO_BANDS = VAO_ON && _only !== 'skirt';
 export const VAO_SKIRT = VAO_ON && _only !== 'band';
 
+/* ESCALA DE TEXEL — a UV da caixa passa a saber o tamanho do mundo. Defeito, conta e
+   guardas: BAR-CONSISTENCIA §3.1 e tools/eval/texel-check.mjs. Kill-switch: `?texel=0`. */
+export const TEXEL_ON = _qp.get('texel') !== '0';
+/* 128 px/m: exemplo literal da BAR-CONSISTENCIA §3.1; o espelho deste número mora em
+   tools/eval/texel-tetos.mjs e a régua morre se os dois divergirem. */
+export const ALVO_PXM = 128;
+/* Teto de hero prop da BAR §1.8 (512-1024 px/m): acima dele a UV é recortada até
+   encostar no teto — só em prop menor que o tile; arte desenhada que tila fica de fora. */
+export const TETO_PXM = 512;
+const MIN_TILES = 2;
+
+/* Handoff de UMA posição entre `aoBoxGeo` e `aoMat` (a escala precisa do material, que
+   só aparece depois). `geo.userData.texelEscalada` torna a operação idempotente. */
+let _pendente = null;
+
+/* Fator de UV de um eixo: r = voltas pedidas (extensão/tile), px = canvas × repeat,
+   ext = metros, puro = textura-ruído (textures.js `puro()`). Regimes: régua texel. */
+function fator(r, px, ext, puro) {
+  if (r >= MIN_TILES) return r;
+  if (puro) return r;
+  const natural = px / ext;                       // densidade se a UV ficar 0→1
+  if (natural > TETO_PXM) return TETO_PXM * ext / px;
+  return 1;
+}
+
+function escalaUVporMundo(geo, w, h, d, mat) {
+  if (!TEXEL_ON || !geo || geo.userData.texelEscalada) return false;
+  const t = mat && mat.map;
+  if (!t || !t.image || !t.image.width || !t.image.height) return false;
+  // guarda (a): o autor do mapa declarou que esta textura não tila
+  if (t.wrapS !== THREE.RepeatWrapping || t.wrapT !== THREE.RepeatWrapping) return false;
+  const uv = geo.attributes.uv, idx = geo.index;
+  if (!uv || !idx || !geo.groups.length) return false;
+
+  const pxU = t.image.width * (t.repeat ? t.repeat.x : 1);
+  const pxV = t.image.height * (t.repeat ? t.repeat.y : 1);
+  if (!(pxU > 0) || !(pxV > 0)) return false;
+  const tileU = pxU / ALVO_PXM, tileV = pxV / ALVO_PXM;   // metros por volta de UV
+
+  /* Extensão (u, v) por par de faces na ordem da BoxGeometry (+X,-X,+Y,-Y,+Z,-Z),
+     indexado por `materialIndex` para não depender da ordem interna do three. */
+  const EXT = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  const visto = new Uint8Array(uv.count);   // o índice repete vértice entre os 2 triângulos
+  const ehPuro = !!(t.userData && t.userData.tilePuro);
+  let mudou = false;
+  for (const gp of geo.groups) {
+    const e = EXT[gp.materialIndex | 0];
+    if (!e) continue;
+    const fu = fator(e[0] / tileU, pxU, e[0], ehPuro);
+    const fv = fator(e[1] / tileV, pxV, e[1], ehPuro);
+    if (fu === 1 && fv === 1) continue;
+    const fim = gp.start + gp.count;
+    for (let k = gp.start; k < fim; k++) {
+      const vi = idx.getX(k);
+      if (visto[vi]) continue;
+      visto[vi] = 1;
+      uv.setXY(vi, uv.getX(vi) * fu, uv.getY(vi) * fv);
+    }
+    mudou = true;
+  }
+  if (mudou) { uv.needsUpdate = true; geo.userData.texelEscalada = true; }
+  return mudou;
+}
+
 /* ---------------------------------------------------------------------------
    CALIBRAÇÃO DOS MULTIPLICADORES — feita por INVERSÃO NUMÉRICA do pipeline real,
    não a olho. Script: tools/eval/vao_predict.py (replica o COMPOSITE do bloom.js —
@@ -117,6 +181,9 @@ export function aoBoxGeo(w, h, d, opts = {}) {
   }
   pos.needsUpdate = true; uv.needsUpdate = true;
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  /* deixa a caixa "pendurada" para a próxima chamada de aoMat, que é quem enxerga o
+     material e portanto a resolução, o `repeat` e o `wrapS` da textura */
+  _pendente = TEXEL_ON ? { geo, w, h, d } : null;
   return geo;
 }
 
@@ -138,6 +205,12 @@ export function aoMatFactory() {
     return a;
   };
   return (m) => {
+    /* Consome o handoff de aoBoxGeo ANTES de clonar: a UV é da geometria. Array de
+       materiais escala pela primeira face com mapa (as 6 usam a mesma família aqui). */
+    const p = _pendente;
+    _pendente = null;
+    if (p) escalaUVporMundo(p.geo, p.w, p.h, p.d, Array.isArray(m) ? m.find((x) => x && x.map) : m);
+
     if (Array.isArray(m)) {
       let a = cache.get(m);
       if (!a) { a = m.map(one); cache.set(m, a); }

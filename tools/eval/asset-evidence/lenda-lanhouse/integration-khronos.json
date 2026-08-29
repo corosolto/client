@@ -1,0 +1,633 @@
+{
+  "validator": "Khronos gltf-validator",
+  "files": [
+    {
+      "file": "public/models/characters/lenda-lanhouse.glb",
+      "errors": 0,
+      "warnings": 2,
+      "infos": 0,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "MESH_PRIMITIVE_GENERATED_TANGENT_SPACE",
+          "message": "Material requires a tangent space but the mesh primitive does not provide it. Runtime-generated tangent space may be non-portable across implementations.",
+          "severity": 1,
+          "pointer": "/meshes/0/primitives/0/material"
+        },
+        {
+          "code": "NODE_SKINNED_MESH_NON_ROOT",
+          "message": "Node with a skinned mesh is not root. Parent transforms will not affect a skinned mesh.",
+          "severity": 1,
+          "pointer": "/nodes/24"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/idle.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/walk.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/run.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/shoot.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/death.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/crouch.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/crouchwalk.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/jump.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/idle1h.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/walk1h.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse/walkfire.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 7,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/1"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/6"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/10"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/17"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/21"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/25"
+        }
+      ]
+    },
+    {
+      "file": "public/models/anims/lenda-lanhouse.glb",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 6,
+      "hints": 0,
+      "messages": [
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/5"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/9"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/16"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/19"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/20"
+        },
+        {
+          "code": "NODE_EMPTY",
+          "message": "Empty node encountered.",
+          "severity": 2,
+          "pointer": "/nodes/24"
+        }
+      ]
+    }
+  ],
+  "totalErrors": 0
+}

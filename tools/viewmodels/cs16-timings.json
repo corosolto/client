@@ -1,0 +1,1319 @@
+{
+ "fonte": "cs16_widescreen_src.zip \u2014 parametros ($origin, fps, frames) extraidos dos QC/SMD; nenhum keyframe",
+ "reproduzir": "python3 tools/viewmodels/extract_cs16_timings.py <dir do unzip>",
+ "familias": {
+  "ak": {
+   "doador": "v_ak47",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 2.432,
+    "shoot": 0.8
+   }
+  },
+  "ar": {
+   "doador": "v_m4a1",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 3.054,
+    "shoot": 1.5
+   }
+  },
+  "mp5": {
+   "doador": "v_mp5",
+   "cs16": {
+    "draw": 0.857,
+    "reload": 2.632,
+    "shoot": 0.667
+   }
+  },
+  "smg": {
+   "doador": "v_mac10",
+   "cs16": {
+    "draw": 0.909,
+    "reload": 3.143,
+    "shoot": 0.926
+   }
+  },
+  "p90": {
+   "doador": "v_p90",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 3.375,
+    "shoot": 0.467
+   }
+  },
+  "g3": {
+   "doador": "v_g3sg1",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 4.667,
+    "shoot": 0.5
+   }
+  },
+  "marksman": {
+   "doador": "v_g3sg1",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 4.667,
+    "shoot": 0.5
+   }
+  },
+  "svd": {
+   "doador": "v_g3sg1",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 4.667,
+    "shoot": 0.5
+   }
+  },
+  "sniper": {
+   "doador": "v_awp",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 2.9,
+    "shoot": 1.171
+   }
+  },
+  "bolt": {
+   "doador": "v_scout",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 2.0,
+    "shoot": 1.286
+   }
+  },
+  "deagle": {
+   "doador": "v_deagle",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 2.167,
+    "shoot": 0.575
+   }
+  },
+  "pistol": {
+   "doador": "v_usp",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 2.703,
+    "shoot": 1.0
+   }
+  },
+  "shotgun": {
+   "doador": "v_m3",
+   "cs16": {
+    "draw": 1.0,
+    "shoot": 1.156
+   }
+  },
+  "lmg": {
+   "doador": "v_m249",
+   "cs16": {
+    "draw": 1.0,
+    "reload": 4.667,
+    "shoot": 0.5
+   }
+  }
+ },
+ "modelos": {
+  "v_ak47": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 30,
+     "frames": 17,
+     "dur": 0.533
+    },
+    "reload": {
+     "fps": 37,
+     "frames": 91,
+     "dur": 2.432
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot1": {
+     "fps": 20,
+     "frames": 17,
+     "dur": 0.8
+    },
+    "shoot2": {
+     "fps": 20,
+     "frames": 17,
+     "dur": 0.8
+    },
+    "shoot3": {
+     "fps": 20,
+     "frames": 17,
+     "dur": 0.8
+    }
+   }
+  },
+  "v_aug": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 9,
+     "dur": 0.267
+    },
+    "reload": {
+     "fps": 40,
+     "frames": 133,
+     "dur": 3.3
+    },
+    "draw": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot1": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot2": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot3": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    }
+   }
+  },
+  "v_awp": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 9,
+     "dur": 0.5
+    },
+    "shoot1": {
+     "fps": 35,
+     "frames": 42,
+     "dur": 1.171
+    },
+    "shoot2": {
+     "fps": 35,
+     "frames": 42,
+     "dur": 1.171
+    },
+    "shoot3": {
+     "fps": 35,
+     "frames": 42,
+     "dur": 1.171
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 88,
+     "dur": 2.9
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_c4": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 12,
+     "frames": 31,
+     "dur": 2.5
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "drop": {
+     "fps": 30,
+     "frames": 46,
+     "dur": 1.5
+    },
+    "pressbutton": {
+     "fps": 33,
+     "frames": 101,
+     "dur": 3.03
+    }
+   }
+  },
+  "v_deagle": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 2,
+     "dur": 0.062
+    },
+    "shoot1": {
+     "fps": 40,
+     "frames": 24,
+     "dur": 0.575
+    },
+    "shoot2": {
+     "fps": 40,
+     "frames": 24,
+     "dur": 0.575
+    },
+    "shoot_empty": {
+     "fps": 40,
+     "frames": 24,
+     "dur": 0.575
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 66,
+     "dur": 2.167
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_elite": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 16,
+     "frames": 9,
+     "dur": 0.5
+    },
+    "idle_leftempty": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot_left1": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_left2": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_left3": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_left4": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_left5": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_leftlast": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_right1": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_right2": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_right3": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_right4": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_right5": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "shoot_rightlast": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 138,
+     "dur": 4.567
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 33,
+     "dur": 1.067
+    }
+   }
+  },
+  "v_famas": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 2,
+     "dur": 0.033
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 91,
+     "dur": 3.0
+    },
+    "draw": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot1": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot2": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot3": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    }
+   }
+  },
+  "v_fiveseven": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 3,
+     "dur": 0.125
+    },
+    "shoot1": {
+     "fps": 36,
+     "frames": 24,
+     "dur": 0.639
+    },
+    "shoot2": {
+     "fps": 36,
+     "frames": 24,
+     "dur": 0.639
+    },
+    "shoot_empty": {
+     "fps": 36,
+     "frames": 24,
+     "dur": 0.639
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 97,
+     "dur": 3.2
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_flashbang": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 11,
+     "dur": 0.333
+    },
+    "pullpin": {
+     "fps": 41,
+     "frames": 41,
+     "dur": 0.976
+    },
+    "throw": {
+     "fps": 30,
+     "frames": 24,
+     "dur": 0.767
+    },
+    "deploy": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    }
+   }
+  },
+  "v_g3sg1": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "shoot2": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 141,
+     "dur": 4.667
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_galil": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 2,
+     "dur": 0.033
+    },
+    "reload": {
+     "fps": 35,
+     "frames": 91,
+     "dur": 2.571
+    },
+    "draw": {
+     "fps": 35,
+     "frames": 36,
+     "dur": 1.0
+    },
+    "shoot1": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot2": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot3": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    }
+   }
+  },
+  "v_glock18": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "idle2": {
+     "fps": 20,
+     "frames": 11,
+     "dur": 0.5
+    },
+    "idle3": {
+     "fps": 18,
+     "frames": 11,
+     "dur": 0.556
+    },
+    "shoot": {
+     "fps": 40,
+     "frames": 31,
+     "dur": 0.75
+    },
+    "shoot2": {
+     "fps": 40,
+     "frames": 31,
+     "dur": 0.75
+    },
+    "shoot3": {
+     "fps": 40,
+     "frames": 21,
+     "dur": 0.5
+    },
+    "shoot_empty": {
+     "fps": 35,
+     "frames": 21,
+     "dur": 0.571
+    },
+    "reload": {
+     "fps": 35,
+     "frames": 76,
+     "dur": 2.143
+    },
+    "draw": {
+     "fps": 45,
+     "frames": 50,
+     "dur": 1.089
+    },
+    "holster": {
+     "fps": 25,
+     "frames": 27,
+     "dur": 1.04
+    },
+    "add_silencer": {
+     "fps": 20,
+     "frames": 27,
+     "dur": 1.3
+    },
+    "draw2": {
+     "fps": 45,
+     "frames": 50,
+     "dur": 1.089
+    },
+    "reload2": {
+     "fps": 30,
+     "frames": 76,
+     "dur": 2.5
+    }
+   }
+  },
+  "v_hegrenade": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 11,
+     "dur": 0.333
+    },
+    "pullpin": {
+     "fps": 41,
+     "frames": 41,
+     "dur": 0.976
+    },
+    "throw": {
+     "fps": 30,
+     "frames": 24,
+     "dur": 0.767
+    },
+    "deploy": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    }
+   }
+  },
+  "v_knife": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 12,
+     "frames": 151,
+     "dur": 12.5
+    },
+    "slash1": {
+     "fps": 30,
+     "frames": 2,
+     "dur": 0.033
+    },
+    "slash2": {
+     "fps": 30,
+     "frames": 2,
+     "dur": 0.033
+    },
+    "draw": {
+     "fps": 45,
+     "frames": 46,
+     "dur": 1.0
+    },
+    "stab": {
+     "fps": 35,
+     "frames": 47,
+     "dur": 1.314
+    },
+    "stab_miss": {
+     "fps": 40,
+     "frames": 61,
+     "dur": 1.5
+    },
+    "midslash1": {
+     "fps": 55,
+     "frames": 66,
+     "dur": 1.182
+    },
+    "midslash2": {
+     "fps": 55,
+     "frames": 66,
+     "dur": 1.182
+    }
+   }
+  },
+  "v_knife_r": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle3": {
+     "fps": 15,
+     "frames": 61,
+     "dur": 4.0
+    },
+    "slash1": {
+     "fps": 37,
+     "frames": 31,
+     "dur": 0.811
+    },
+    "slash2": {
+     "fps": 37,
+     "frames": 31,
+     "dur": 0.811
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "stab": {
+     "fps": 37,
+     "frames": 45,
+     "dur": 1.189
+    },
+    "stab_miss": {
+     "fps": 37,
+     "frames": 31,
+     "dur": 0.811
+    },
+    "midslash1": {
+     "fps": 37,
+     "frames": 26,
+     "dur": 0.676
+    },
+    "midslash2": {
+     "fps": 37,
+     "frames": 26,
+     "dur": 0.676
+    }
+   }
+  },
+  "v_m249": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot1": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "shoot2": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 141,
+     "dur": 4.667
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_m3": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 12,
+     "frames": 11,
+     "dur": 0.833
+    },
+    "shoot1": {
+     "fps": 32,
+     "frames": 38,
+     "dur": 1.156
+    },
+    "shoot2": {
+     "fps": 37,
+     "frames": 38,
+     "dur": 1.0
+    },
+    "insert": {
+     "fps": 65,
+     "frames": 28,
+     "dur": 0.415
+    },
+    "after_reload": {
+     "fps": 38,
+     "frames": 34,
+     "dur": 0.868
+    },
+    "start_reload": {
+     "fps": 30,
+     "frames": 16,
+     "dur": 0.5
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_m4a1": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 16,
+     "frames": 9,
+     "dur": 0.5
+    },
+    "shoot1": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "shoot2": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "shoot3": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "reload": {
+     "fps": 37,
+     "frames": 114,
+     "dur": 3.054
+    },
+    "draw": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "add_silencer": {
+     "fps": 30,
+     "frames": 61,
+     "dur": 2.0
+    },
+    "idle_unsil": {
+     "fps": 16,
+     "frames": 9,
+     "dur": 0.5
+    },
+    "shoot1_unsil": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "shoot2_unsil": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "shoot3_unsil": {
+     "fps": 20,
+     "frames": 31,
+     "dur": 1.5
+    },
+    "reload_unsil": {
+     "fps": 37,
+     "frames": 114,
+     "dur": 3.054
+    },
+    "draw_unsil": {
+     "fps": 40,
+     "frames": 41,
+     "dur": 1.0
+    },
+    "detach_silencer": {
+     "fps": 30,
+     "frames": 61,
+     "dur": 2.0
+    }
+   }
+  },
+  "v_mac10": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 12,
+     "frames": 9,
+     "dur": 0.667
+    },
+    "reload": {
+     "fps": 35,
+     "frames": 111,
+     "dur": 3.143
+    },
+    "draw": {
+     "fps": 33,
+     "frames": 31,
+     "dur": 0.909
+    },
+    "shoot1": {
+     "fps": 27,
+     "frames": 26,
+     "dur": 0.926
+    },
+    "shoot2": {
+     "fps": 27,
+     "frames": 26,
+     "dur": 0.926
+    },
+    "shoot3": {
+     "fps": 27,
+     "frames": 26,
+     "dur": 0.926
+    }
+   }
+  },
+  "v_mp5": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 12,
+     "frames": 9,
+     "dur": 0.667
+    },
+    "reload": {
+     "fps": 38,
+     "frames": 101,
+     "dur": 2.632
+    },
+    "draw": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot1": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    },
+    "shoot2": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    },
+    "shoot3": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    }
+   }
+  },
+  "v_p228": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot1": {
+     "fps": 34,
+     "frames": 26,
+     "dur": 0.735
+    },
+    "shoot2": {
+     "fps": 34,
+     "frames": 26,
+     "dur": 0.735
+    },
+    "shoot3": {
+     "fps": 34,
+     "frames": 26,
+     "dur": 0.735
+    },
+    "shoot_empty": {
+     "fps": 34,
+     "frames": 26,
+     "dur": 0.735
+    },
+    "reload": {
+     "fps": 35,
+     "frames": 96,
+     "dur": 2.714
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_p90": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 9,
+     "dur": 0.267
+    },
+    "reload": {
+     "fps": 40,
+     "frames": 136,
+     "dur": 3.375
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot1": {
+     "fps": 30,
+     "frames": 13,
+     "dur": 0.4
+    },
+    "shoot2": {
+     "fps": 30,
+     "frames": 15,
+     "dur": 0.467
+    },
+    "shoot3": {
+     "fps": 30,
+     "frames": 15,
+     "dur": 0.467
+    }
+   }
+  },
+  "v_scout": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot_1": {
+     "fps": 35,
+     "frames": 46,
+     "dur": 1.286
+    },
+    "shoot_2": {
+     "fps": 35,
+     "frames": 46,
+     "dur": 1.286
+    },
+    "reload": {
+     "fps": 30,
+     "frames": 61,
+     "dur": 2.0
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_sg550": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 16,
+     "frames": 3,
+     "dur": 0.125
+    },
+    "shoot": {
+     "fps": 45,
+     "frames": 46,
+     "dur": 1.0
+    },
+    "shoot2": {
+     "fps": 45,
+     "frames": 46,
+     "dur": 1.0
+    },
+    "reload": {
+     "fps": 28,
+     "frames": 107,
+     "dur": 3.786
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  },
+  "v_sg552": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 9,
+     "dur": 0.267
+    },
+    "reload": {
+     "fps": 37,
+     "frames": 119,
+     "dur": 3.189
+    },
+    "draw": {
+     "fps": 37,
+     "frames": 38,
+     "dur": 1.0
+    },
+    "shoot1": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot2": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    },
+    "shoot3": {
+     "fps": 35,
+     "frames": 31,
+     "dur": 0.857
+    }
+   }
+  },
+  "v_smokegrenade": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 30,
+     "frames": 11,
+     "dur": 0.333
+    },
+    "pullpin": {
+     "fps": 41,
+     "frames": 41,
+     "dur": 0.976
+    },
+    "throw": {
+     "fps": 30,
+     "frames": 24,
+     "dur": 0.767
+    },
+    "deploy": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    }
+   }
+  },
+  "v_tmp": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 12,
+     "frames": 9,
+     "dur": 0.667
+    },
+    "reload": {
+     "fps": 25,
+     "frames": 54,
+     "dur": 2.12
+    },
+    "draw": {
+     "fps": 18,
+     "frames": 17,
+     "dur": 0.889
+    },
+    "shoot_1": {
+     "fps": 15,
+     "frames": 13,
+     "dur": 0.8
+    },
+    "shoot_2": {
+     "fps": 15,
+     "frames": 13,
+     "dur": 0.8
+    },
+    "shoot_3": {
+     "fps": 15,
+     "frames": 13,
+     "dur": 0.8
+    }
+   }
+  },
+  "v_ump45": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle1": {
+     "fps": 12,
+     "frames": 3,
+     "dur": 0.167
+    },
+    "reload": {
+     "fps": 33,
+     "frames": 116,
+     "dur": 3.485
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot1": {
+     "fps": 32,
+     "frames": 15,
+     "dur": 0.438
+    },
+    "shoot2": {
+     "fps": 32,
+     "frames": 15,
+     "dur": 0.438
+    },
+    "shoot3": {
+     "fps": 32,
+     "frames": 15,
+     "dur": 0.438
+    }
+   }
+  },
+  "v_usp": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 16,
+     "frames": 11,
+     "dur": 0.625
+    },
+    "shoot1": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot2": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot3": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shootlast": {
+     "fps": 32,
+     "frames": 31,
+     "dur": 0.938
+    },
+    "reload": {
+     "fps": 37,
+     "frames": 101,
+     "dur": 2.703
+    },
+    "draw": {
+     "fps": 48,
+     "frames": 49,
+     "dur": 1.0
+    },
+    "add_silencer": {
+     "fps": 37,
+     "frames": 116,
+     "dur": 3.108
+    },
+    "idle_unsil": {
+     "fps": 16,
+     "frames": 31,
+     "dur": 1.875
+    },
+    "shoot1_unsil": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot2_unsil": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shoot3_unsil": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    },
+    "shootlast_unsil": {
+     "fps": 32,
+     "frames": 31,
+     "dur": 0.938
+    },
+    "reload_unsil": {
+     "fps": 37,
+     "frames": 101,
+     "dur": 2.703
+    },
+    "draw_unsil": {
+     "fps": 48,
+     "frames": 49,
+     "dur": 1.0
+    },
+    "detach_silencer": {
+     "fps": 37,
+     "frames": 116,
+     "dur": 3.108
+    }
+   }
+  },
+  "v_xm1014": {
+   "origin": "0 3 0",
+   "seqs": {
+    "idle": {
+     "fps": 12,
+     "frames": 9,
+     "dur": 0.667
+    },
+    "shoot1": {
+     "fps": 40,
+     "frames": 21,
+     "dur": 0.5
+    },
+    "shoot2": {
+     "fps": 40,
+     "frames": 21,
+     "dur": 0.5
+    },
+    "insert": {
+     "fps": 90,
+     "frames": 36,
+     "dur": 0.389
+    },
+    "after_reload": {
+     "fps": 30,
+     "frames": 13,
+     "dur": 0.4
+    },
+    "start_reload": {
+     "fps": 30,
+     "frames": 21,
+     "dur": 0.667
+    },
+    "draw": {
+     "fps": 30,
+     "frames": 31,
+     "dur": 1.0
+    }
+   }
+  }
+ }
+}

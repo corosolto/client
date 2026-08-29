@@ -11,6 +11,9 @@ export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pisto
   'm92', 'akm', 'g3', 'revolver38', 'md97', 'carbine', 'm400', 'mosin', 'rem700',
   'lmg', 'scar', 'tavor', 'famas', 'uzi', 'p90',
   'svd', 'g3sg1', 'sks'];   // snipers semi-auto (reusam o modelo de outra arma via MODEL_ALIAS)
+// Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
+// o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
+const DISPLAY_MODEL_IDS = ['mosquete'];
 
 // Snipers semi-auto novas reaproveitam a MALHA de uma arma existente (sem asset novo):
 // SVD←SCAR, G3SG1←G3, SKS←carabina. weaponModel/preload usam este alias.
@@ -49,14 +52,14 @@ const CFG = {
      muda o tamanho ANGULAR na tela (na maioria a fórmula de enquadramento é invariante à
      escala). Os valores saem de uma varredura de vm por arma sujeita à VM8 (coronha ≤ −0,05
      no pico do coice); o pior que sobrou é a carbine, com folga de 3 mm. */
-  deagle:  { len: 0.30, rot: [0, 90, 0], gripZ: 0.7, vm: 0.94 },
-  pistol:  { len: 0.26, rot: [0, 90, 0], gripZ: 0.7, vm: 1.10 },
+  deagle:  { len: 0.30, rot: [0, 90, 0], gripZ: 0.7, vm: 0.84 },
+  pistol:  { len: 0.26, rot: [0, 90, 0], gripZ: 0.7, vm: 0.80 },
   // vm 2,2 (RODADA DO GRIP + PITCH): a faca é a única arma cujo Zg é travado pelo `minz` da
   // classe e não pela própria geometria, e por isso ela é a única em que a ESCALA muda o
   // tamanho na tela (nas outras a fórmula é invariante à escala — ver o bloco RECUO DE
   // TAMANHO APARENTE em game.js). Com vm 1 a faca ocupava 1,4% da tela contra o piso de 6%
   // da VM5; com 2,2 vai a 7,2%/6,4%. A coronha no pico do coice fica em −0,094 (teto −0,05).
-  knife:   { len: 0.30, rot: [0, 270, 0], gripZ: 0.6, vm: 2.2 },  // +180: lâmina estava pra trás (medição -Z)
+  knife:   { len: 0.30, rot: [0, 270, 0], gripZ: 0.6, vm: 1.15 }, // ponta para dentro, sem dominar o quadro
   // arsenal-2 (Brazilian-flavored)
   /* m92 vm 1 -> 0,90 (RODADA DO ESCORÇO). É A ARMA QUE O DONO NOMEOU POR TAMANHO:
      "a ak 47 e a zastava toma a tela inteira". Medida: 14,50% de tela em 16:9 (12,65% em
@@ -85,11 +88,14 @@ const CFG = {
   m92:       { len: 0.76, rot: [0, 270, 0], gripZ: 0.6, vm: 0.90 },   // +180: Zastava M92 estava invertido
   g3:        { len: 1.10, rot: [0, 270, 0], gripZ: 0.58, vm: 0.75 },  // +180: HK G3 estava invertido
   akm:       { len: 0.88, rot: [0, 90, 0], gripZ: 0.62 },
-  revolver38:{ len: 0.24, rot: [0, 270, 0], gripZ: 0.68, vm: 1.30 },  // +180: medição -Z (invertido)
+  revolver38:{ len: 0.24, rot: [0, 270, 0], gripZ: 0.68, vm: 0.92 },  // arma curta: deixa as duas mãos legíveis
   md97:      { len: 1.05, rot: [0, 270, 0], gripZ: 0.62, vm: 0.87 },  // +180: estava invertido
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
   m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
+  /* mosquete: o cano já nasce no eixo Z no GLB (medido; maior eixo, como nas outras) —
+     rot em X jogava a seção transversal no eixo da normalização. Régua: weapon-scale-check. */
+  mosquete:  { len: 1.45, rot: [0, 0, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
@@ -232,9 +238,10 @@ function buildMag(id) {
 const loadGLB = (url) => new Promise((res, rej) => loader.load(url, res, undefined, rej));
 
 /* `ids` opcional: a partida carrega SÓ as armas que ela sorteou (ver pickMatchWeapons), e o
-   resto chega em ocioso. Sem lista = elenco inteiro, que é o caminho do arnês e do menu. */
+   resto chega em ocioso. Sem lista = elenco inteiro MAIS os modelos que só aparecem em
+   vitrine (o mosquete do bandeirante), que é o caminho do arnês e do menu. */
 export async function preloadWeapons(ids) {
-  await Promise.all((ids && ids.length ? ids : WEAPON_IDS).map(async (id) => {
+  await Promise.all((ids && ids.length ? ids : [...WEAPON_IDS, ...DISPLAY_MODEL_IDS]).map(async (id) => {
     const src = MODEL_ALIAS[id] || id;    // snipers reusadas carregam a malha da arma-fonte
     if (_cache.has(src)) return;
     try { const g = await loadGLB(`models/weapons/${src}.glb?v=${VERSION}`); _cache.set(src, g.scene); }
@@ -251,6 +258,16 @@ export const ONE_HANDED = new Set(['pistol', 'deagle', 'revolver38', 'knife']);
 // Sidearm slot (tecla 2). Everything else except the knife is a primary (tecla 1).
 export const PISTOLS = new Set(['pistol', 'deagle', 'revolver38']);
 
+// Rifles longos/altos pedem ponto de apoio dedicado (padrão: último terço do guarda-mão).
+// Medido por erro de socket no rig FP: AWP 0,0547 m, SVD 0,0286 m, MD97 0,0179 m.
+const SUPPORT_FORE = {
+  awp: 0.62,
+  mosin: 0.66,
+  rem700: 0.66,
+  svd: 0.66,
+  md97: 0.68,
+};
+
 // Pontos de empunhadura no espaço local do grupo do weaponModel() (grip na origem,
 // cano apontando +Z). ÚNICA FONTE usada por: alignHands (game.js, mãos procedurais),
 // IK dos braços FP (fparms.js) e IK da mão de apoio em 3ª pessoa (glbchars.js).
@@ -261,7 +278,13 @@ export function gripPoints(id) {
   const cfg = weaponCFG(id);
   return {
     grip: new THREE.Vector3(0, 0, 0),
-    fore: ONE_HANDED.has(id) ? null : new THREE.Vector3(0.005, -0.045, 0.82 * cfg.len * (1 - cfg.gripZ) * 0.72),
+    // Mão de apoio no último terço do guarda-mão (silhueta CS 1.6): à frente da
+    // origem há gripZ*len; a fórmula antiga usava o vão da coronha e caía no carregador.
+    fore: ONE_HANDED.has(id) ? null : new THREE.Vector3(
+      0.005,
+      -0.045,
+      (SUPPORT_FORE[id] ?? 0.72) * cfg.len * cfg.gripZ,
+    ),
   };
 }
 
@@ -322,7 +345,10 @@ export function weaponModel(id) {
   wrap.add(model);
   wrap.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(wrap);
-  const zlen = (box.max.z - box.min.z) || 1;
+  /* Normaliza pelo MAIOR eixo, não só por Z: um `rot` errado deixa a arma torta (a régua
+     de orientação pega), mas nunca gigante. Régua: tools/eval/weapon-scale-check.mjs. */
+  const dx = box.max.x - box.min.x, dy = box.max.y - box.min.y, dz = box.max.z - box.min.z;
+  const zlen = Math.max(dx, dy, dz) || 1;
   const s = Math.min(8, Math.max(0.05, cfg.len / zlen)); // guard against a bad bbox → giant gun
   wrap.scale.setScalar(s);
   // shift so the grip point (gripZ along the barrel) sits at the origin

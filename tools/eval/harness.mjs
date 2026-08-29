@@ -159,11 +159,12 @@ export function seedRandom(seed) {
 
 /* Game com o round JÁ INICIADO: antes do _startRound não existem spawns aplicados nem
    armário montado, e medir ali seria medir o mapa vazio. */
-export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, roundsMax } = {}) {
+export function bootGame(mapId, { textures, ctf = false, seed = 12345, bots = 4, playerCharId = PCHAR, roundsMax } = {}) {
   seedRandom(seed);
+  const playerDef = CHARACTERS.find(c => c.id === playerCharId) || CHARACTERS.find(c => c.id === PCHAR);
   const g = new Game({
     renderer, textures, sfx, settings: { bots, quality: 'low', difficulty: 'normal', sens: 1 },
-    playerCharId: PCHAR, playerTeam: 'E', playerFaction: 'E', enemyFaction: 'B',
+    playerCharId: playerDef.id, playerTeam: 'E', playerFaction: playerDef.team, enemyFaction: 'B',
     nickname: 'SIM', mapId, ctf, roundsMax, testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g._ensureDolly = () => {};        // a câmera de fim de round cria um WebGLRenderer — não existe aqui

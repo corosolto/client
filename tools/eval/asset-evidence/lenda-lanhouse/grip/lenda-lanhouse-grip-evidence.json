@@ -1,0 +1,117 @@
+{
+  "character": "public/models/characters/lenda-lanhouse.glb",
+  "characterSha256": "19c0eabefc93a6c0acda0f25631cb7b3ca7d69806ab17abba844be6e94a969a0",
+  "weapon": "m4",
+  "weaponFile": "public/models/weapons/m4.glb",
+  "weaponSha256": "b03516d557e2ecb61de3997e339d59be9e35d69bc3b5e23c09cb7dd69cb7a677",
+  "socketContract": {
+    "triggerHand": "RightHand",
+    "supportHand": "LeftHand",
+    "triggerAnchorLocal": [
+      0.18,
+      0.0,
+      0.0
+    ],
+    "supportAnchorLocal": [
+      -0.18,
+      0.0,
+      0.0
+    ],
+    "maxHandDistanceMeters": 0.03
+  },
+  "animations": {
+    "walk": {
+      "file": "public/models/anims/lenda-lanhouse/walk.glb",
+      "sha256": "ae4288276c06bf374128d7753c264f58a20b70e2ef4ab809446150f49a74e78d"
+    },
+    "crouch": {
+      "file": "public/models/anims/lenda-lanhouse/crouch.glb",
+      "sha256": "8610466c2a44fd6cfe3a65aee268f59ce6809a6063f9dea756b5cc3502838286"
+    }
+  },
+  "blender": "5.2.0 LTS",
+  "method": "clipe glTF importado no armature; m4 em 0.84 m; mão de gatilho preservada, IK da mão de apoio e arma alinhada ao vetor final das mãos",
+  "limitation": "evidência offline de asset/clipe/pegada; o porte cruzado reproduz o contrato de mount+IK, mas não substitui recaptura do runtime no browser",
+  "poses": {
+    "walk": {
+      "clip": "walk",
+      "frame": 15,
+      "handSpan": 0.302101,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.246504,
+        -0.240371,
+        1.043703
+      ],
+      "leftHand": [
+        -0.099685,
+        -0.499237,
+        0.991762
+      ],
+      "rightAnchor": [
+        -0.246504,
+        -0.240371,
+        1.043703
+      ],
+      "leftAnchor": [
+        -0.099252,
+        -0.5,
+        0.991609
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.000891,
+      "render": "tools/eval/asset-evidence/lenda-lanhouse/grip/lenda-lanhouse-walk-m4.png",
+      "gripRender": "tools/eval/asset-evidence/lenda-lanhouse/grip/lenda-lanhouse-grip-a-m4.png",
+      "mutant": {
+        "operation": "weapon.location += [0, 0.18, 0.05]",
+        "offset": [
+          0.0,
+          0.18,
+          0.05
+        ],
+        "rightAnchor": [
+          -0.246504,
+          -0.060371,
+          1.093703
+        ],
+        "leftAnchor": [
+          -0.099252,
+          -0.32,
+          1.041609
+        ],
+        "rightDistance": 0.186816,
+        "leftDistance": 0.18604,
+        "render": "tools/eval/asset-evidence/lenda-lanhouse/grip/lenda-lanhouse-grip-b-mutant-m4.png"
+      }
+    },
+    "crouch": {
+      "clip": "crouch",
+      "frame": 15,
+      "handSpan": 0.309047,
+      "weaponScale": 0.841644,
+      "rightHand": [
+        -0.301583,
+        -0.434514,
+        0.863786
+      ],
+      "leftHand": [
+        -0.170582,
+        -0.713814,
+        0.845343
+      ],
+      "rightAnchor": [
+        -0.301583,
+        -0.434514,
+        0.863786
+      ],
+      "leftAnchor": [
+        -0.173149,
+        -0.708342,
+        0.845704
+      ],
+      "rightDistance": 0.0,
+      "leftDistance": 0.006055,
+      "render": "tools/eval/asset-evidence/lenda-lanhouse/grip/lenda-lanhouse-crouch-m4.png"
+    }
+  }
+}

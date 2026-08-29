@@ -36,7 +36,6 @@ const base = arg('base') || 'origin/main';
    Quem tocar num destes escreve o `--selftest` no mesmo PR. */
 const SEM_FIXTURE = new Set([
   'scripts/ci/issue_triage.py',
-  'scripts/ci/pr_classify.py',
   'scripts/ci/pr_route.py',
 ]);
 

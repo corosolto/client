@@ -23,6 +23,9 @@ import { grafitar, esconderSeFaltar } from './graffiti_pass.js';   // cobertura 
 import { VAO_BANDS, aoBoxGeo, aoMatFactory, ContactSkirt, BASE_FLOATING, onGround } from './vao.js';
 import { makeAerialFog } from './bloom.js';
 import { detailFor } from './textures.js';
+import { setMapSky } from './map_sky.js';
+import { createFavelaAmbience } from './ambientlife.js';
+import { AMB_LOOPS } from './soundscape.js';
 
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -93,7 +96,7 @@ export function buildQuebrada(scene, T) {
   // então não pode produzir "marca de tiro no ar" (MAP4).
   const col = (x0, x1, y0, y1, z0, z1) => colliders.push({ minX: Math.min(x0, x1), maxX: Math.max(x0, x1), minY: y0, maxY: y1, minZ: Math.min(z0, z1), maxZ: Math.max(z0, z1) });
   const addFloor = (w, d, x, z, mat, y = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; root.add(m); return m; };
-  const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) root.add(o); return !!o; };
+  const gprop = (id, x, z, h, ry = 0) => { const o = placeProp(id, { x, z, targetH: h, ry }); if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); } return !!o; };
 
   /* ===================== ACABAMENTO GLB =====================
      O dono reprovou a 1ª versão deste mapa com estas palavras: "está tudo lowpoly, a
@@ -102,19 +105,15 @@ export function buildQuebrada(scene, T) {
      com textura de canvas. Os quatro grupos que ele nomeou viraram GLB gerado no Tripo
      (tools/gen-asset.mjs).
 
-     A REGRA DESTA TROCA, e é o que a torna reversível e segura: **o GLB entra só na IMAGEM**.
-     A caixa procedural continua sendo criada e continua registrada em `colliders`,
-     `occluders` e `solids` — ela só deixa de ser DESENHADA (`visible = false`). O Raycaster
-     do three NÃO testa `visible` (public/vendor/three.module.js:51042 — `intersectObject` só
-     consulta `layers` antes de chamar `raycast`), então bala, marca de tiro e linha de visão
-     dos bots continuam batendo exatamente onde batiam antes. Consequência: map-check.mjs e
-     pickup-check.mjs não PODEM mudar de número, porque nenhuma geometria de JOGO mudou —
-     e é por isso que esta troca pode ser grande sem virar aposta.
+      A REGRA DESTA TROCA, e é o que a torna reversível e segura: **o GLB entra só na IMAGEM**.
+      A caixa procedural continua sendo criada e continua registrada em `colliders` e
+      `solids` — ela só deixa de ser DESENHADA (`visible = false`). Em node (réguas) nada
+      muda: GLB nenhum carrega e o mapa medido continua sendo o procedural de sempre.
 
-     POR QUE NÃO EMPURRAR O GLB PARA `occluders`: o raycast dos occluders é força bruta e roda
-     na checagem de visão de cada bot. Trocar caixa de 12 triângulos por malha de 4 mil
-     multiplicaria por ~300 o custo de CPU do `_canSee`. A caixa invisível é o proxy de
-     colisão clássico, e aqui ela sai de graça porque já existia.
+      BUG-54 (R27) tirou o fallback escondido de `occluders`: a caixa cobria porta e janela
+      do GLB e a bala morria no ar antes da superfície vista (546 raios neste mapa na régua
+      `eval:occluders`). Desde então a bala raycasta a malha visível (traverse do gprop/gpropC
+      + lote do PB no build); o custo é por evento, não por frame — números no BUG-54.
 
      `?glb=0` desliga tudo e devolve o mapa procedural — é o A/B que o capturador usa para
      provar que a troca é só de pixel. Em node (réguas) nenhum GLB carrega, `hasProp` é
@@ -159,7 +158,7 @@ export function buildQuebrada(scene, T) {
     if (!useGlb(id)) return false;
     const [px, pz] = centro(id, x, z, h, ry);
     const o = placeProp(id, { x: px, z: pz, targetH: h, ry });
-    if (o) root.add(o);
+    if (o) { root.add(o); o.traverse((m) => { if (m.isMesh) occluders.push(m); }); }
     return !!o;
   };
   // idem para o lote instanciado
@@ -196,15 +195,20 @@ export function buildQuebrada(scene, T) {
   }
 
   /* ===================== CÉU / LUZ ===================== */
-  scene.background = T.sky || new THREE.Color(0xb9c6d2);
+  setMapSky(scene, T, '/img/textures/sky_quebrada.webp', 0xb9c6d2);
   if (QP.get('nofog') !== '1') scene.fog = makeAerialFog('quebrada');
-  const hemi = new THREE.HemisphereLight(0xdfe6ee, 0x54483c, 0.9); scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd9a8, 1.5); sun.position.set(38, 30, -22); sun.castShadow = true;
+  const hemi = new THREE.HemisphereLight(0xeeeef0, 0x544f48, 0.9); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffefd8, 1.65); sun.position.set(38, 30, -22); sun.castShadow = true;
   sun.shadow.mapSize.set(LOWQ ? 1024 : 2048, LOWQ ? 1024 : 2048);
   sun.shadow.camera.left = -HALF_X; sun.shadow.camera.right = HALF_X;
   sun.shadow.camera.top = HALF_Z; sun.shadow.camera.bottom = -HALF_Z;
   sun.shadow.camera.far = 160; sun.shadow.bias = -0.0006;
   scene.add(sun); scene.add(sun.target);
+
+  /* TERREIRO VIZINHO — cenário sem física, rebaixado 12 cm. O chão jogável acabava em
+     x=±28/z=±47 e revelava uma borda retangular contra o céu; este avental prolonga a terra
+     da comunidade até o horizonte próximo sem criar rota, collider ou occluder. */
+  addFloor(76, 116, 0, 0, MAT.dirt, -0.13);
 
   // chão base: terra/laje batida sob tudo (a rua, a praça e o campinho pintam por cima)
   addFloor(HALF_X * 2, HALF_Z * 2, 0, 0, MAT.dirt, -0.01);
@@ -481,7 +485,14 @@ export function buildQuebrada(scene, T) {
        carrega e o proxy fica visível de material cru, o que enchia o TEX1 de
        superfície branca que jogador nenhum vê. A marca é estática (independe do
        GLB ter carregado) justamente para valer no node. */
-    const vis = (m) => { m.userData.glbFallback = true; return glb ? hide(m) : m; };
+    /* GLB carregado = fallback sai de `occluders` junto com a tela (BUG-54): a bala
+       passa a testar a malha visível do lote/fachada. Colisor continua sendo a caixa. */
+    const vis = (m) => {
+      m.userData.glbFallback = true;
+      if (!glb) return m;
+      const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1);
+      return hide(m);
+    };
     vis(addBox(w, h, d, o.mat || MAT_BARRACO[k % MAT_BARRACO.length], cx, 0, cz));
     const temUp = o.up !== false && (k >> 3) % 3 !== 0;
     /* LAJE ou FIBROCIMENTO, e a escolha não é sorteio decorativo: quem vai levantar outro
@@ -647,18 +658,16 @@ export function buildQuebrada(scene, T) {
      peça girada vai com `collide:false` + `colRot`, e a malha é empurrada À MÃO pra
      `occluders` — senão a bala atravessa o carro (occluder é o que a bala testa, não o
      colisor). */
-  const occ = (m) => { occluders.push(m); return m; };
+  const occ = (m) => { if (m.visible !== false) occluders.push(m); return m; };   // fallback escondido não é occluder (BUG-54)
   const MAT_PNEU = lam({ color: 0x1c1e22, roughness: 0.9 });
   const MAT_VIDRO = lam({ color: 0x1b2430, roughness: 0.22, metalness: 0.4 });
   function carroTunado(cx, cz, ry, cor) {
     /* GLB `tiara_gt83` (references/favela — cupê rebaixado). Ele já vem em ESCALA DE MUNDO
        (4,17 × 1,22 × 1,74 m) e com o comprimento no X local, que é a mesma convenção da
        caixa procedural (4,4 × 0,62 × 1,82) — então não há rotação de correção, e a 1,25 m de
-       altura ele dá 4,28 × 1,79 m, praticamente o volume que o `colRot` já cobria.
-       A caixa continua existindo, invisível, como occluder: é ela que a bala testa
-       (ver "ACABAMENTO GLB"). */
+       altura ele dá 4,28 × 1,79 m, praticamente o volume que o `colRot` já cobria. */
     const glbCar = useGlb('tiara_gt83');
-    const vis = (m) => { m.userData.glbFallback = true; return glbCar ? hide(m) : m; };  // ver barraco()
+    const vis = (m) => { m.userData.glbFallback = true; if (!glbCar) return m; const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); return hide(m); };  // ver barraco()
     if (glbCar) pbAdd(PBC, 'tiara_gt83', { x: cx, z: cz, targetH: 1.25, ry, color: cor });
     const pint = lam({ color: cor, roughness: 0.28, metalness: 0.55, envMapIntensity: 1.6 });
     occ(vis(addBox(4.4, 0.62, 1.82, pint, cx, 0.28, cz, { ry, collide: false })));        // lataria rebaixada
@@ -702,7 +711,7 @@ export function buildQuebrada(scene, T) {
        aparecia na captura como uma caixinha solta no chão em vez de um paredão. */
     if (!gpropC('caixa_som_baile', cx, cz, H, ry)) for (let i = 0; i < n; i++) {
       const y = i * (H / n);
-      addBox(W, H / n, D, MAT_CAIXA, cx, y, cz, { ry, collide: false });
+      occ(addBox(W, H / n, D, MAT_CAIXA, cx, y, cz, { ry, collide: false }));
       occ(addBox(W * 0.62, W * 0.62, 0.06, MAT_CONE, cx + Math.sin(ry) * (D / 2 + 0.03), y + H / (n * 2) - W * 0.31, cz + Math.cos(ry) * (D / 2 + 0.03), { ry, collide: false, cast: false }));
     }
     colRot(cx, cz, W, D, 0, H, ry, 2, 3);
@@ -732,9 +741,26 @@ export function buildQuebrada(scene, T) {
     const circ = new THREE.Mesh(new THREE.RingGeometry(4.3, 4.55, 32), cal);
     circ.rotation.x = -Math.PI / 2; circ.position.set(0, 0.02, 37); root.add(circ);
   }
-  const MAT_MURO = lam({ map: T.concrete, color: 0x9a9184, roughness: 0.97 });
+  const MAT_MURO = lam({ map: T.concrete, color: 0xb5aa99, emissive: 0x25180d, emissiveIntensity: 0.45, roughness: 0.97 });
   for (const [mx0, mx1] of [[-22, -15], [-9, 9], [15, 22]])
     addBox(mx1 - mx0, 2.2, 0.34, MAT_MURO, (mx0 + mx1) / 2, 0, 28);
+  // Da linha do spawn, o anteparo central lia como um bloco preto sem saída. Os dois
+  // painéis deixam explícitos os portões laterais que já existem e mantêm a proteção MAP2.
+  const rotaMuro = (lado) => {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 192;
+    const x = c.getContext('2d');
+    x.fillStyle = lado < 0 ? '#0d5266' : '#a94122'; x.fillRect(0, 0, c.width, c.height);
+    x.strokeStyle = '#f2c94c'; x.lineWidth = 14; x.strokeRect(10, 10, 492, 172);
+    x.fillStyle = '#f7e7b1'; x.textAlign = 'center'; x.font = '900 60px Impact,sans-serif';
+    x.fillText(lado < 0 ? '← BECO' : 'BECO →', 256, 118);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    return new THREE.MeshBasicMaterial({ map: t });
+  };
+  for (const lado of [-1, 1]) {
+    const placa = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 1.55), rotaMuro(lado));
+    placa.position.set(lado * 5.2, 1.12, 28.19); root.add(placa);
+  }
+  addBox(18.4, 0.16, 0.42, lam({ color: 0xe0b632, emissive: 0x4a3000, emissiveIntensity: 0.35 }), 0, 2.2, 28, { collide: false, cast: false });
   // TRAVES — dois postes e um travessão por gol. O poste é fino (0,14 m) e não esconde
   // ninguém, mas é peça de cobertura pra MAP5 e referência de leitura do campo.
   const MAT_TRAVE = lam({ color: 0xe6e2d6, roughness: 0.8 });
@@ -825,7 +851,7 @@ export function buildQuebrada(scene, T) {
        A PORTA DE AÇO CONTINUA SENDO CRIADA em qualquer modo: o decalque de pixo (`decal`)
        é ancorado nela, e escondê-la deixaria a pichação flutuando na calçada. */
     const glbFach = useGlb('fachada_comercio');
-    const visC = (m) => { m.userData.glbFallback = true; return glbFach ? hide(m) : m; };  // ver barraco()
+    const visC = (m) => { m.userData.glbFallback = true; if (!glbFach) return m; const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); return hide(m); };  // ver barraco()
     addBox(0.12, 0.95, d * 0.94, placa, fx + out, 2.62, cz, { collide: false, cast: false });
     visC(addBox(1.5, 0.1, d * 0.9, lam({ color: bgHex, roughness: 0.8 }), fx - side * 0.75, 2.5, cz, { collide: false }));
     addBox(0.1, 2.1, d * 0.42, lam({ color: 0x2b2926, roughness: 0.6, metalness: 0.3 }), fx + out, 0, cz, { collide: false, cast: false });   // porta de aço
@@ -867,7 +893,7 @@ export function buildQuebrada(scene, T) {
     addBox(0.86, 0.72, 0.86, MAT_PLAST, mx, 0, mz, { cast: true });
     for (const [dx, dz] of [[0.78, 0], [-0.78, 0], [0, 0.78], [0, -0.78]]) {
       addBox(0.44, 0.44, 0.44, MAT_PLAST, mx + dx, 0, mz + dz);                        // assento
-      addBox(0.44, 0.46, 0.08, MAT_PLAST, mx + dx, 0.44, mz + dz + (dz > 0 ? 0.18 : -0.18), { collide: false, cast: false });
+      occ(addBox(0.44, 0.46, 0.08, MAT_PLAST, mx + dx, 0.44, mz + dz + (dz > 0 ? 0.18 : -0.18), { collide: false, cast: false }));   // encosto: bala para, corpo degrau
     }
   }
   mesaBar(9.6, 2.2); mesaBar(9.6, 9.0); mesaBar(11.2, 10.6);
@@ -907,7 +933,7 @@ export function buildQuebrada(scene, T) {
        modos, e o GLB é que é encaixado neles. */
     const BX = -5.6, BZ = -6, BW = 2.28, BL = 8.76, BH = 3.1;
     const glbBus = useGlb('onibus_sptrans');
-    const visB = (m) => { m.userData.glbFallback = true; return glbBus ? hide(m) : m; };  // ver barraco()
+    const visB = (m) => { m.userData.glbFallback = true; if (!glbBus) return m; const i = occluders.indexOf(m); if (i >= 0) occluders.splice(i, 1); return hide(m); };  // ver barraco()
     if (glbBus) {
       // ry = +π/2: o comprimento do modelo está no X local e a rua corre em Z.
       gpropC('onibus_sptrans', BX, BZ, BH, Math.PI / 2);
@@ -1071,7 +1097,7 @@ export function buildQuebrada(scene, T) {
   // SORVETERIA / AÇAÍ: freezer de porta de vidro na calçada (cover baixo de 1,0 m)
   for (const [fx2, fz2] of [[-11.6, -5.2], [-11.6, 7.4]]) {
     addBox(0.7, 1.0, 1.5, lam({ color: 0xe8e6e0, roughness: 0.5, metalness: 0.15 }), fx2, 0, fz2);
-    addBox(0.72, 0.34, 1.3, MAT_VIDRO, fx2, 0.62, fz2, { collide: false, cast: false });
+    occ(addBox(0.72, 0.34, 1.3, MAT_VIDRO, fx2, 0.62, fz2, { collide: false, cast: false }));
   }
   // MÓVEIS E ELETRO: mercadoria na calçada é o cartão de visita da loja
   if (!gprop('arara_roupas', -11.5, 12.2, 1.7)) addBox(1.1, 1.7, 1.6, MAT_CAIXOTE, -11.5, 0, 12.2);
@@ -1106,6 +1132,7 @@ export function buildQuebrada(scene, T) {
       for (let i = 0; i < 3; i++) addBox(0.9, 0.42, 0.62, MAT_BARRACO[5], x0 + 1.0 + i * 0.5, i * 0.42, bz + 1.2);
       const cd = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.46, 0.9, 12), MAT_CXDAGUA);
       cd.position.set(x1 - 1.5, 0.45, bz - 1.15); cd.castShadow = true; root.add(cd);
+      occ(cd);
       col(x1 - 2.0, x1 - 1.0, 0, 0.9, bz - 1.65, bz - 0.65);
     } else if (k === 3) {
       // LONA AZUL esticada por cima (só silhueta, a 2,7 m) + tambor de lixo queimado
@@ -1173,7 +1200,7 @@ export function buildQuebrada(scene, T) {
       for (const ry of [Math.PI / 2, -Math.PI / 2]) {
         const mm = new THREE.Mesh(new THREE.PlaneGeometry(FW, FH), lam({ map: texM }));
         mm.position.set(fx, FY, fz); mm.rotation.y = ry; mm.renderOrder = 2;
-        mm.name = 'mural:' + nome;
+        mm.name = 'faixa:' + nome;   // pano pendurado em arame: não é mural de parede (audit/census leem decal:/mural:)
         mm.receiveShadow = true;
         root.add(mm);
       }
@@ -1225,11 +1252,12 @@ export function buildQuebrada(scene, T) {
   {
     const TX = -5.6, TZ = 3.2, TH = 3.0, TW = 1.96, TL = 6.19;   // 3,0 m de altura × aspecto medido
     const glbT = gpropC('vw_9150', TX, TZ, TH);
-    // a caixa continua existindo como OCCLUDER mesmo com o GLB na tela: é ela que a bala
-    // testa, e um baú de 6 m que a bala atravessa seria pior que um baú de caixa (§ACABAMENTO)
+    // a caixa existe como fallback visível (node) e some quando o GLB carrega; a bala
+    // testa quem está na tela — o baú GLB entrou em `occluders` pelo gpropC (BUG-54)
     const bau = addBox(TW, TH, TL, lam({ color: 0xdcdad4, roughness: 0.55, metalness: 0.2 }), TX, 0, TZ, { collide: false });
     bau.userData.glbFallback = true;  // ver barraco(): proxy que some quando o GLB carrega
-    occ(bau); if (glbT) hide(bau);
+    if (glbT) hide(bau);
+    occ(bau);
     col(TX - TW / 2, TX + TW / 2, 0, TH, TZ - TL / 2, TZ + TL / 2);
   }
 
@@ -1281,7 +1309,7 @@ export function buildQuebrada(scene, T) {
       const lado = rr();
       const x = lado < 0.5 ? (rr() < 0.5 ? -21.4 : -24.6) : (rr() < 0.5 ? 21.4 : 24.6);
       const z = -38 + rr() * 66, y = 0.32;
-      for (const rot of [0, Math.PI / 2]) { const m = new THREE.Mesh(geo, matoMat); m.position.set(x + (rr() - 0.5) * 0.5, y, z); m.rotation.y = rot + rr(); root.add(m); }
+      for (const rot of [0, Math.PI / 2]) { const m = new THREE.Mesh(geo, matoMat); m.position.set(x + (rr() - 0.5) * 0.5, y, z); m.rotation.y = rot + rr(); m.userData.nonSolidSurface = true; root.add(m); }
     }
   }
 
@@ -1531,9 +1559,18 @@ export function buildQuebrada(scene, T) {
   place('ak', 10.5, 34);         place('m4', -10.5, 40);
   place('mp5', -20, 26);         place('deagle', 20, 26);
 
+  const preLote = new Set(root.children);
   PBC.build(root);      // carros pintados por instância
   PB.build(root);       // instancia barraco e fachada: 1 draw call por (material, bloco de 24 m)
   SKIRT.build(root);
+  /* O lote nasce InstancedMesh visível em root e FORA de `occluders`: sem isto a bala
+     atravessaria barraco/fachada/carro que o corpo respeita — e era isso que o proxy
+     glbFallback tapava (BUG-54). Transparente fica de fora, mesmo teste da régua. */
+  for (const c of root.children) {
+    if (preLote.has(c) || !c.isInstancedMesh) continue;
+    const ms = Array.isArray(c.material) ? c.material : [c.material];
+    if (ms.some((m) => m && m.visible !== false && !(m.transparent && (m.opacity === undefined || m.opacity < 0.9)))) occluders.push(c);
+  }
 
   /* ═══ A PASSADA DE GRAFITE — E POR QUE ELA VEM DEPOIS DO `PB.build` ═══════════
      Este mapa colava ~334 decalques e o dono, andando nele, contou "10-15% de arte
@@ -1591,7 +1628,27 @@ export function buildQuebrada(scene, T) {
     ],
   });
 
+  /* BUG-57: rua de baile tem caramelo em dupla, rato de esquina e pombo de fiação. */
+  const ambience = createFavelaAmbience(root, {
+    map: 'quebrada',
+    rats: [
+      { pos: [-1, 0, -15.5], to: [1.5, 0, -13], phase: .3 }, { pos: [4, 0, 13.5], to: [6, 0, 15.5], phase: 1.2 },
+      { pos: [-15, 0, 4], to: [-13, 0, 6.5], phase: 2.2 },
+    ],
+    pigeons: [
+      { mode: 'ground', pos: [10, 0, -8], phase: .5 }, { mode: 'ground', pos: [-21.5, 0, 17.5], phase: 1.6 },
+      { mode: 'ground', pos: [8.6, 0, -7], phase: .9 },
+    ],
+    dogs: [
+      { pos: [-6.5, 0, -23.5], to: [-2.5, 0, -23.5], phase: .5 },
+      { pos: [9.5, 0, -33.5], to: [6, 0, -33.5], phase: 2.1 },
+    ],
+    /* BUG-57 v2.1: gato de telhado da rua do baile (Quaternius CC0) */
+    cats: [{ pos: [-12, 0, -12], to: [-11, 0, -10], phase: 1.8 }],
+  });
+
   return {
+    ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[-19,2,-42],radius:26,vol:.5},{src:AMB_LOOPS.cidade,pos:[0,3,0],radius:80,vol:.22}],bioma:'favela'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi, pickups, ctfPoints,
     waypoints: { nodes, adj }, nearestWaypoint, findPath,
     bounds: { minX: -HALF_X + 0.5, maxX: HALF_X - 0.5, minZ: -HALF_Z + 0.5, maxZ: HALF_Z - 0.5 },

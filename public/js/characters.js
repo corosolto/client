@@ -1,7 +1,9 @@
 // 8 fictional satirical archetypes — procedural low-poly meshes.
 import * as THREE from 'three';
-// cor de facção: UMA origem, a mesma de game.js e brasoes.js — ver paleta.js.
-import { PALETA, num } from './paleta.js';
+// cor de facção: UMA origem, a mesma de game.js e brasoes.js — `factions.js` cobre o
+// elenco inteiro (Míticos incluídos); `paleta.js` só cobre as 5 primeiras facções.
+import { faction, factionColor } from './factions.js';
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    CLAREZA COMPETITIVA DO PERSONAGEM  (critério C1 do BAR + A2 p/ personagens)
@@ -54,6 +56,11 @@ export const CHAR_FX = {
   recv:    _cqp.get('charrecv') !== '0' && !_lowQ,     // personagem RECEBE a sombra do sol (off em low)
   mats:    _cqp.get('charmat') !== '0',                // kill-switch da correção do material do GLB
   low:     _lowQ,
+  /* ── INSTRUMENTOS DE MEDIÇÃO (padrão = comportamento de hoje, byte a byte) ──
+     `charrough` = rugosidade; `charregion=0` tira a reescrita por albedo; `charprobe=rough` cospe a rugosidade efetiva como cor. */
+  rough:   _cnum('charrough', 0.86),
+  region:  _cqp.get('charregion') !== '0',             // kill-switch da rugosidade por região (CS_REGION)
+  probe:   _cqp.get('charprobe') || '',                // 'rough' = cospe roughnessFactor como cor (só medição)
   // ── clamp de ambiente: unidades de IRRADIÂNCIA do three (useLegacyLights=false),
   // não de cor final. O ambiente difuso real medido nos mapas (hemi 0.52 no piscinão a
   // 1.0 no ferro velho, mais o IBL do PMREM) dá ~1,0. 1.85 é portanto uma decisão de
@@ -69,9 +76,12 @@ export const CHAR_FX = {
   floorIrr: _cnum('charfloor', 1.15),                  // piso de irradiância indireta (perto)
   floorFar: _cnum('charfloorfar', 1.55),               // piso a 45 m+ (era 3.0 = fantasma branco distante)
   ceilIrr:  _cnum('charceil', 4.5),                    // teto: céu HDR não pode estourar o personagem
-  albMin:   _cnum('charalbmin', 0.09),                 // valor mínimo do albedo, por ESCALA (matiz/S intactos)
+  /* Piso medido (tools/eval/char-plastico.mjs): 0,065 é o menor valor que segura C1 (clareza)
+     e C10a (char-floor.mjs, perda de contraste <= 10%) ao mesmo tempo. `?charalbmin=` faz A/B. */
+  albMin:   _cnum('charalbmin', 0.065),               // valor mínimo do albedo, por ESCALA (matiz/S intactos)
   /* PISO DE ALBEDO NA BANDA BAIXA, não no texel (C10 / char-floor.mjs).
-     `albMin` é 0,09 LINEAR — que é sRGB 0,332 = byte 85 = L* 36, um CINZA MÉDIO, não
+     `albMin` é 0,045 LINEAR (era 0,09; ver a tabela medida logo acima) — que é sRGB
+     0,240 = byte 61 = L* 25, e o 0,09 antigo era sRGB 0,332 = byte 85 = L* 36, não
      um "preto levantado". Aplicado por texel (`max(V, albMin)`) ele é um DEGRAU: todo
      texel abaixo do ponto sai com o MESMO valor. Medido nas texturas reais dos 45 GLB:
      94,1 % do albedo do trapfunk está abaixo do piso, 90,4 % do palhaço mal, 86,6 % do
@@ -104,25 +114,23 @@ export const CHAR_FX = {
 // 0.35 (era 0.45 na R2): com o piso agora multiplicativo o rim voltou a ser o único
 // termo aditivo do personagem, e cada ponto que ele anda na direção do branco é croma
 // que ele TIRA do boneco. Medido no char_sim: 0.45 custava ~1,5 de C* sem ganhar ΔL*.
-/* Braçadeira: qual TOM cada facção usa. Os hexes vêm de `paleta.js`; o que fica aqui é só
-   a escolha de tom, que não é uniforme (ver o bloco no ponto de uso, em `buildCharacter`).
-   Facção desconhecida cai no base de U, que é o `else` que a régua F1 declara. */
+/* Braçadeira: TOM por facção (os hexes vêm de `factions.js`). Comparação no `team` CRU,
+   como a main escreveu, para não mudar tom de ninguém; desconhecida cai no base de U da F1. */
 function bracadeiraDaFaccao(team) {
-  const p = PALETA[team];
-  if (!p) return PALETA.U.base;
-  return (team === 'F' || team === 'U') ? p.base : p.escura;
+  const f = faction(team);
+  if (!f) return factionColor('U');
+  return (team === 'F' || team === 'U') ? f.color : f.dark;
 }
 
 // A tabela literal saiu daqui (07/08): o rename Time E a deixou para trás e os palhaços
 // nunca entraram nela. `TEAM_RIM[team] || 0xffffff` não dava erro — dava contorno BRANCO,
-// que parece decisão de arte. Agora a cor vem de `paleta.js`, a mesma que a bandeira e o
-// `_teamColor` usam, e facção nova entra nas três de uma vez.
+// que parece decisão de arte. Agora a cor vem do registro do elenco, a mesma que a
+// bandeira e o `_teamColor` usam, e facção nova entra nas três de uma vez.
 // O `|| 0xffffff` continua: facção desconhecida cai em BRANCO como sempre caiu, e não no
-// cinza do NEUTRO de paleta.js. Unificar origem não é hora de mudar pixel — se o branco
-// for defeito, é conserto com régua própria. Por isso lê `PALETA` direto, e não `tons()`.
+// cinza do NEUTRO — por isso lê o registro direto, e não `factionColor()`, que devolve o cinza.
 export function charRimColor(def) {
-  const p = PALETA[(def && def.team) || 'E'];
-  const c = new THREE.Color(p ? num(p.base) : 0xffffff);
+  const f = faction((def && def.team) || 'E');
+  const c = new THREE.Color(f ? f.color : 0xffffff);
   return c.lerp(new THREE.Color(0xffffff), 0.35);
 }
 
@@ -295,6 +303,13 @@ const CS_SSS = `
 const CS_END = `	}
 `;
 
+/* ── SONDA DE RUGOSIDADE EFETIVA (?charprobe=rough) ── injetada DEPOIS de
+   <dithering_fragment>, último chunk do main(): o byte lido é `roughnessFactor * 255` exato. */
+const CS_PROBE_ROUGH = `
+	gl_FragColor = vec4(vec3(roughnessFactor), 1.0);
+`;
+
+
 // Instala a injeção num MeshStandardMaterial de personagem. Idempotente.
 export function applyCharFX(mat, rimColor) {
   if (!CHAR_FX.on || !mat || !mat.isMeshStandardMaterial || mat.userData.csFx) return mat;
@@ -322,7 +337,9 @@ export function applyCharFX(mat, rimColor) {
     // não existe é instrução que não custa — e o kill-switch fica sendo prova de que
     // o clamp é a causa, não um palpite (o A/B vira "com bloco" x "sem bloco").
     let f = CS_PARS + shader.fragmentShader
-      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n' + CS_REGION)
+      // ?charregion=0 REMOVE o bloco (não zera): mesma doutrina do charclamp — o A/B
+      // vira "com bloco" × "sem bloco", que é prova de causa e não palpite.
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>' + (CHAR_FX.region ? '\n' + CS_REGION : ''))
       .replace('#include <opaque_fragment>',
         (CHAR_FX.low ? CS_CLARITY_LOW : CS_CLARITY) + (CHAR_FX.low ? '' : CS_SSS) + CS_END + '\n#include <opaque_fragment>');
     if (clampOn) {
@@ -332,6 +349,7 @@ export function applyCharFX(mat, rimColor) {
         .replace('#include <lights_fragment_end>',
           CS_AMB.replace('CS_AMB_FILL', CHAR_FX.ambChroma ? CS_FILL_CROMA : CS_FILL_BRANCO) + '\n#include <lights_fragment_end>');
     }
+    if (CHAR_FX.probe === 'rough') f = f.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n' + CS_PROBE_ROUGH);
     shader.fragmentShader = f;
   };
   // Sem chave própria o three pode reaproveitar o programa de um material SEM a
@@ -339,7 +357,10 @@ export function applyCharFX(mat, rimColor) {
   // propósito: todos os personagens compartilham UM programa, só os uniforms mudam.
   // O sufixo muda com a variante do FONTE (low corta SSS+banda fina; charclamp=0
   // corta albedo+ambiente) — se não mudasse, o three serviria o programa errado.
-  mat.customProgramCacheKey = () => 'csCharFx4' + (CHAR_FX.low ? 'L' : 'H') + (clampOn ? 'C' : 'c') + (regOn ? 'R' : 'r') + (CHAR_FX.ambChroma ? 'K' : 'k');
+  mat.customProgramCacheKey = () => 'csCharFx4' + (CHAR_FX.low ? 'L' : 'H') + (clampOn ? 'C' : 'c') + (regOn ? 'R' : 'r') + (CHAR_FX.ambChroma ? 'K' : 'k')
+    // A chave TEM que enxergar os dois blocos novos: os dois mudam o FONTE, e chave que
+    // não muda faz o three servir o programa do outro lado do A/B (bug de cache).
+    + (CHAR_FX.region ? 'G' : 'g') + (CHAR_FX.probe === 'rough' ? 'P' : 'p');
   mat.needsUpdate = true;
   return mat;
 }
@@ -355,11 +376,16 @@ export function applyCharFX(mat, rimColor) {
 // (Na R1 esse emissivo é que segurava o croma alto: o personagem era literalmente
 // o albedo cru na tela. Bonito de cor, zero volume — e a régua cobrou volume.)
 export function upgradeCharMaterial(src, rimColor) {
+  // Acessório rígido declara este prefixo no material do GLB: o shader de personagem (piso
+  // de albedo, SSS, rim) é pra pele/roupa — contrato genérico do asset, não exceção por personagem.
+  const hardSurface = /^CS_HARD_/i.test(src.name || '');
   const m = new THREE.MeshStandardMaterial({
     map: src.map || null,
     color: src.color ? src.color.clone() : new THREE.Color(0xffffff),
     metalness: 0.0,
-    roughness: 0.86,
+    // Era o literal 0.86. Virou alavanca (`?charrough=`) com o MESMO padrão para
+    // que o número tenha antes/depois medido em vez de defesa por comentário.
+    roughness: CHAR_FX.rough,
     side: src.side,
     transparent: !!src.transparent,
     alphaTest: src.alphaTest || 0,
@@ -388,7 +414,7 @@ export function upgradeCharMaterial(src, rimColor) {
   // Se a injeção estiver desligada (?charfx=0) o clamp não existe: devolve um resto
   // de emissivo pro personagem não afundar em preto na sombra. Degradação segura.
   if (!CHAR_FX.on) { m.emissive = new THREE.Color(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.10; }
-  return applyCharFX(m, rimColor);
+  return hardSurface ? m : applyCharFX(m, rimColor);
 }
 
 /* ── SOMBRA DE CONTATO ──────────────────────────────────────────────────────
@@ -580,6 +606,68 @@ export const CHARACTERS = [
   { id: 'ostentacao', team: 'F', tribe: 'funkeiros', name: 'Ostentação',
     blurb: 'Corrente, anel e relógio brilhando. Se é pra atirar, que seja com estilo.',
     pal: { skin: 0xd9a066, shirt: 0xf0f0f0, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0xffd23f } },
+
+  // ── TIME MÍTICO (M) — heróis históricos, folclore e literatura brasileira.
+  //    Nenhum personagem da atualidade, nenhum copyright. Spec: plans/09-TIME-MITICO.md
+  { id: 'mariabonita', team: 'M', tribe: 'mitico', name: 'Maria Bonita',
+    blurb: 'Cangaceira de precisão. Parou, mirou, acertou — a rainha do primeiro tiro.',
+    pal: { skin: 0xc49070, shirt: 0xb04020, pants: 0x6a3020, hair: 0x1a0a00, boots: 0x4a2a1a } },
+  { id: 'saci', team: 'M', tribe: 'mitico', name: 'Saci-Pererê',
+    blurb: 'Moleque de uma perna só. Redemoinho de fumaça e some — o gorro vermelho é hitbox.',
+    pal: { skin: 0x8d6a4f, shirt: 0xc01010, pants: 0xc01010, hair: 0xc01010, boots: 0x1a1a1a } },
+  { id: 'lampiao', team: 'M', tribe: 'mitico', name: 'Lampião',
+    blurb: 'Cangaço no gatilho. Quanto mais segura o tiro, mais dano faz — Virgem Maria!',
+    pal: { skin: 0xb0805a, shirt: 0x8a4a2a, pants: 0x5a3a1a, hair: 0x1a0a00, boots: 0x3a2a1a } },
+  { id: 'lobisomem', team: 'M', tribe: 'mitico', name: 'Lobisomem',
+    blurb: 'Sétimo filho, maldição da encruzilhada. O lobo preto acorda forte, dentuço e sem coleira.',
+    pal: { skin: 0x9a8a7a, shirt: 0x1a1a2a, pants: 0x1a1a1a, hair: 0x1a1a1a, boots: 0x2a2a2a } },
+  { id: 'bandeirante', team: 'M', tribe: 'mitico', name: 'Bandeirante',
+    blurb: 'Caçador de pegadas. Vê onde o inimigo pisou — o vilão que o time tolera.',
+    pal: { skin: 0xc09070, shirt: 0x4a3a2a, pants: 0x3a2a1a, hair: 0x4a3a2a, boots: 0x2a1a0a } },
+  { id: 'boto', team: 'M', tribe: 'mitico', name: 'Boto Cor de Rosa',
+    blurb: 'Golfinho rosa do Amazonas. Sai da cobertura, encanta a mira inimiga e responde de Deagle.',
+    pal: { skin: 0xffaaaa, shirt: 0xffffff, pants: 0xffffff, hair: 0x6a4a3a, boots: 0xffffff } },
+  { id: 'zumbi', team: 'M', tribe: 'mitico', name: 'Zumbi dos Palmares',
+    blurb: 'Capitão quilombola. O grito de Palmares ecoa e acelera a recarga dos aliados.',
+    pal: { skin: 0x4a3020, shirt: 0x8b0000, pants: 0x3a2a1a, hair: 0x1a0a00, boots: 0x2a1a0a } },
+  { id: 'cuca', team: 'M', tribe: 'mitico', name: 'Cuca',
+    blurb: 'A bruxa de Lobato. Lança poção de lentidão e visão embaralhada — "dorme com o medo".',
+    pal: { skin: 0x4a6a4a, shirt: 0x2a3a2a, pants: 0x3a2a3a, hair: 0x2a2a1a, boots: 0x1a2a1a } },
+  { id: 'curupira', team: 'M', tribe: 'mitico', name: 'Curupira',
+    blurb: 'Menino de cabelo de fogo, pés virados. As pegadas apontam pro lado errado.',
+    pal: { skin: 0xb88a5a, shirt: 0x4a6a3a, pants: 0x3a4a2a, hair: 0xff4400, boots: 0x3a2a1a } },
+
+  // ── NOVAS FACÇÕES — fatias verticais da spec 0002. A facção permanece `ready:false`
+  // até os oito integrantes existirem; cadastrar aqui permite validar o caminho real.
+  { id: 'camera-roxa', team: 'T', tribe: 'tv', name: 'Câmera Roxa',
+    blurb: 'Robô de estúdio com lente única e rig no ombro. A transmissão começou.',
+    pal: { skin: 0x272331, shirt: 0x6325a8, pants: 0x24172f, hair: 0x31d9ff, boots: 0x16131c } },
+  { id: 'microfonildo', team: 'T', tribe: 'tv', name: 'Microfonildo',
+    blurb: 'Criatura felpuda com fones e boom dorsal. Som rodando!',
+    pal: { skin: 0xc28b25, shirt: 0xd9a42f, pants: 0x795019, hair: 0xe2b33f, boots: 0x224f56 } },
+  /* GIL BOMES — repórter policial, PRIMEIRO humano fotorrealista da facção: divergência de
+     direção conhecida (pedido do dono). `pal` = fallback procedural. Ver BAR-CONSISTENCIA.md. */
+  { id: 'gilbomes', team: 'T', tribe: 'tv', name: 'Gil Bomes',
+    blurb: 'Repórter policial dos anos 90. Chega antes da polícia e narra com gosto.',
+    pal: { skin: 0xc99a76, shirt: 0x7b1f2b, pants: 0x1c1b22, hair: 0x241a14, boots: 0x14110f } },
+  { id: 'programador-virado', team: 'N', tribe: 'nerdolas', name: 'Programador Virado',
+    blurb: 'Moletom, olheiras e teclado nas costas. Só mais um commit.',
+    pal: { skin: 0xa88068, shirt: 0x303039, pants: 0x56515f, hair: 0x3a302d, boots: 0xe8e3d8 } },
+  { id: 'designer-ux', team: 'N', tribe: 'nerdolas', name: 'Designer de UX',
+    blurb: 'Roupa preta, tablet e leque de cores. Esse fluxo precisa de combate.',
+    pal: { skin: 0x86543f, shirt: 0x071329, pants: 0x071329, hair: 0x100b12, boots: 0x071021 } },
+  { id: 'lenda-lanhouse', team: 'N', tribe: 'nerdolas', name: 'Lenda da Lan House',
+    blurb: 'Headset antigo, fichas e mouse de bolinha. Reserva a máquina oito.',
+    pal: { skin: 0xa9775f, shirt: 0x5474a8, pants: 0x626a69, hair: 0x352e2b, boots: 0xd8d7ca } },
+  { id: 'motoca-cachorro-loko', team: 'R', tribe: 'profissionais', name: 'Motoca Cachorro Loko',
+    blurb: 'Capacete, refletivo e bag térmica. Endereço confirmado.',
+    pal: { skin: 0x78503c, shirt: 0xe5aa32, pants: 0x34383d, hair: 0x171719, boots: 0x292a2d } },
+  { id: 'doidinho-bairro', team: 'O', tribe: 'noias', name: 'Doidinho do Bairro',
+    blurb: 'Camadas incompatíveis e invenções nas costas. Hoje eu tô calibrado!',
+    pal: { skin: 0xb98966, shirt: 0xf18d5a, pants: 0x3f887f, hair: 0x3d332d, boots: 0x3b9990 } },
+  { id: 'profeta-calcada', team: 'O', tribe: 'noias', name: 'Profeta da Calçada',
+    blurb: 'Placas de papelão com previsões absurdas e case de feira. Já aconteceu semana que vem.',
+    pal: { skin: 0xc89168, shirt: 0x2a3040, pants: 0x23282e, hair: 0x1c1a18, boots: 0x3a3f45 } },
 ];
 export const byId = id => CHARACTERS.find(c => c.id === id);
 
@@ -594,6 +682,15 @@ export const CHAR_WEAPON = {
   palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
+  // Time Mítico
+  mariabonita: 'awp', saci: 'mp5', lampiao: 'm4', lobisomem: 'shotgun',
+  bandeirante: 'mosin', boto: 'deagle', zumbi: 'ak', cuca: 'shotgun', curupira: 'mp5',
+  // TV — fatia vertical
+  'camera-roxa': 'm4', 'microfonildo': 'm4', 'gilbomes': 'm4',
+  // Novas facções — fatias verticais da spec 0002
+  'programador-virado': 'm4', 'designer-ux': 'm4', 'lenda-lanhouse': 'm4',
+  'motoca-cachorro-loko': 'm4', 'doidinho-bairro': 'p90',
+  'profeta-calcada': 'm4',
 };
 export const charWeapon = (id) => CHAR_WEAPON[id] || 'ak';
 
@@ -774,8 +871,11 @@ export function buildCharacter(def) {
      dizer se foi decisão de arte ou resíduo do mesmo rename — os dois que fogem do padrão
      são justamente as facções adicionadas depois. Unificar a ORIGEM da cor não é hora de
      mudar pixel, então a mistura continua explícita aqui em vez de virar `.escura` para
-     todo mundo. Se for para padronizar, é mudança visual com A/B próprio. */
-  const band = num(bracadeiraDaFaccao(def.team));
+     todo mundo. Se for para padronizar, é mudança visual com A/B próprio.
+
+     As facções do elenco que NÃO estão nesse `if` (M, N, R, O, T) caem no tom escuro,
+     que é o padrão da maioria — antes deste merge elas caíam no azul de Tribos. */
+  const band = Number.parseInt(bracadeiraDaFaccao(def.team).slice(1), 16);
   parts.armL.add(marcaAdereco(box(D.bracoW + 0.02, 0.08, D.bracoD + 0.02, band, 0, -bracoLen * 0.24, 0)));
 
   addAccessories(def, parts, torsoW);

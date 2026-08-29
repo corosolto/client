@@ -15,10 +15,15 @@ cd "$(dirname "$0")/.."
 URL="${DECALS_PACK_URL:-https://github.com/corosolto/client/releases/download/decals-pack-v2/decals-pack.zip}"
 DEST="public/img/decals"
 
-# Sentinela conta só o ACERVO baixável (exclui os `or-*.png`, que são obra própria
-# VERSIONADA e vêm no clone — sem esta exclusão, qualquer clone fresco tem >0 PNG,
-# o early-exit dispara e o pacote do acervo nunca baixa na Vercel).
-if [ -d "$DEST" ] && [ "$(ls -1 "$DEST"/*.png 2>/dev/null | grep -cv '/or-')" -gt 0 ]; then
+# Sentinela exige o acervo completo. `pixo-lajes-01.png` é versionado mas integra a
+# mesma lista do acervo; os outros 196 chegam no zip. Qualquer contagem menor deixa
+# mapas sem grafite em clone limpo, mesmo que a pasta já exista.
+EXPECTED_DECALS=197
+decal_count=0
+if [ -d "$DEST" ]; then
+  decal_count="$(find "$DEST" -maxdepth 1 -type f -name '*.png' ! -name 'or-*.png' | wc -l | tr -d ' ')"
+fi
+if [ "$decal_count" -ge "$EXPECTED_DECALS" ]; then
   echo "decals/ já configurado — nada a fazer."
   exit 0
 fi

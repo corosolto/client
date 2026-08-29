@@ -41,18 +41,18 @@ this page was aging at the very first commit — see
 
 | What | How much | Where to check |
 |---|---:|---|
-| Game code | 35,185 lines in 51 files | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7,076** lines | `wc -l public/js/game.js` |
-| `main.js` | 2,703 lines | `wc -l public/js/main.js` |
-| Weapons with GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
-| Character GLBs | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
-| Props in GLB | 116 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
-| Versioned animation clips | 573 | `git ls-files public/models/anims \| wc -l` |
-| Playable characters | 44, in 5 factions | `CHARACTERS` array in `characters.js` |
-| Maps in the registry | 13 | `MAPS` object in `maps.js` |
-| Visual harnesses in HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Harness scripts | 212 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Pipeline scripts | 57 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Game code | 43,709 lines in 65 files | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7,552** lines | `wc -l public/js/game.js` |
+| `main.js` | 2,826 lines | `wc -l public/js/main.js` |
+| Weapons with GLB | 27 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
+| Character GLBs | 63 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
+| Props in GLB | 151 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
+| Versioned animation clips | 681 | `git ls-files public/models/anims \| wc -l` |
+| Playable characters | 62, in 10 factions | `CHARACTERS` array in `characters.js` |
+| Maps in the registry | 17 | `MAPS` object in `maps.js` |
+| Visual harnesses in HTML | 19 | `git ls-files 'public/*.html' \| wc -l` |
+| Harness scripts | 318 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Pipeline scripts | 77 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Written entry tasks | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Version | `2.0.0-alpha.196` | `public/js/version.js` and `package.json` (match) |
 
@@ -67,8 +67,8 @@ And the match rules that move around the most, all read from the constants in
 
 | Rule | Value | Constant |
 |---|---|---|
-| Factions · characters | 5 · 44 (B 9 · C 9 · E 8 · F 9 · U 9) | `CHARACTERS` |
-| Maps in the menu | 13 - 2 open in rounds, **11 in capture** | `MAPS` / `ctfMode` |
+| Factions · characters | 10 · 62 (B 9 · C 9 · E 8 · F 9 · M 9 · N 3 · O 2 · R 1 · T 3 · U 9) | `CHARACTERS` |
+| Maps in the menu | 17 - 2 open in rounds, **15 in capture** | `MAPS` / `ctfMode` |
 | Respawn | 2.2 s | `RESPAWN_DELAY` |
 | Round | 99 s, 3 wins | `ROUND_TIME` / `ROUNDS_TO_WIN` |
 | Capture | target = **all flags on the map**, 2 rounds (480 s safety net) | `capsToWin = ctfPts.length` / `CTF_ROUNDS_TO_WIN` |
@@ -223,21 +223,25 @@ The maps registered today, and which mode each one opens in:
 
 | Id | Menu name | Opens in | File in `public/js/` | Lines |
 |---|---|---|---|---:|
-| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,830 |
-| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 810 |
-| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 1,964 |
-| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,888 |
-| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,599 |
+| `praca_poderes` | Praça dos Três Poderes | rounds | `map_brasilia.js` | 1,834 |
+| `piscina_treta` | Piscina da Treta | rounds | `map_piscina.js` | 874 |
+| `loja_h` | Loja H (Estacionamento) | **capture** | `map_havan.js` | 2,013 |
+| `ferro_velho` | Ferro Velho do Zé | **capture** | `map_ferrovelho.js` | 1,921 |
+| `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,656 |
+| `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 813 |
+| `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 713 |
+| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
 | `corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,345 |
-| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 489 |
-| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 288 |
-| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 240 |
-| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 255 |
-| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 402 |
-| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 433 |
-| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 247 |
+| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 951 |
+| `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
+| `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
+| `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
+| `atacadao_treta` | Atacadão da Treta | **capture** | `map_atacadao.js` | 276 |
+| `parque_treta` | Parque da Treta | **capture** | `map_parque.js` | 426 |
+| `velho_oeste` | Velho Oeste da Treta | **capture** | `map_velho_oeste.js` | 449 |
+| `penitenciaria` | Penitenciária da Treta | **capture** | `map_penitenciaria.js` | 264 |
 
-**13 registered maps** - 2 open in rounds and 11 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 15 `map_*.js` files on disk, so a file alone does **not** make a map playable.
+**17 registered maps** - 2 open in rounds and 15 in capture. `ctfMode` sets the initial mode; it does not lock it. There are 20 `map_*.js` files on disk, so a file alone does **not** make a map playable.
 
 > Block generated by `node tools/gen-docs.mjs`. Source: `objeto MAPS de public/js/maps.js`
 
@@ -281,7 +285,7 @@ And the two gates, with the exact list of what each one runs — straight from `
 npm run check:fast   # node tools/eval/runner.mjs syntax eval:release eval:telemetry eval:identity eval:error-console eval:error-origin eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:botbrain eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:replaycam eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife
 ```
 
-`package.json` has **129 scripts**; the reason behind each one lives in `SCRIPTS.md`.
+`package.json` has **198 scripts**; the reason behind each one lives in `SCRIPTS.md`.
 
 > Block generated by `node tools/gen-docs.mjs`. Source: `node -p "Object.keys(require('./package.json').scripts)"`
 

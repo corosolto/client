@@ -71,9 +71,9 @@ await page.waitForTimeout(1400);
 await page.screenshot({ path: `${OUT}/09_resultado.png` });
 console.log('shot 09 resultado');
 
-/* ---- 08b PLACAR NO CTF ---- a coluna CAP. só existe no CTF e o game.js liga/desliga o
-   #sb-cap-h por id; o CSS espelha isso nos rótulos duplicados com :has(). Se essa captura
-   sair com CAP. sem número (ou número sem rótulo), o espelho quebrou. */
+/* ---- 08b PLACAR NO CTF ---- o DOM vigente cria duas `.sb-col.ctf`; cada linha ganha a
+   quinta célula CAP. O arnês antigo ainda procurava #sb-cap-h, removido junto da tabela
+   única, e por isso quebrava depois de já ter gravado 08/09. */
 const ctf = await page.evaluate(() => {
   const g = window.__game;
   document.getElementById('match-end').classList.add('hidden');   // a tela 09 é .screen z-40 e taparia o placar
@@ -102,7 +102,9 @@ const over = await page.evaluate(() => {
   const g = window.__game;
   document.getElementById('match-end').classList.remove('hidden');
   const r = (el) => { const b = el.getBoundingClientRect(); return [b.left < -1, b.right > innerWidth + 1, b.bottom > innerHeight + 1]; };
-  return { matchWrap: r(document.querySelector('.me-wrap')), stats: r(document.getElementById('match-stats')),
+  /* .me-wrap é a moldura full-bleed e pode exceder 1 px durante a animação da própria
+     screen; o que pode cortar conteúdo é a coluna editorial, não o bleed decorativo. */
+  return { matchContent: r(document.querySelector('.me-col')), stats: r(document.getElementById('match-stats')),
            actions: r(document.querySelector('.me-actions')),
            docOverflowX: document.documentElement.scrollWidth > innerWidth };
 });

@@ -32,6 +32,8 @@
  *   node tools/eval/char-probe.mjs      (gera tools/eval/char_probe.json — a fonte)
  *   node tools/gen-foot-offsets.mjs             escreve a tabela
  *   node tools/gen-foot-offsets.mjs --check     sai 1 se estiver defasada
+ *   node tools/gen-foot-offsets.mjs --check --mutante=semverificados
+ *                                               remove as excecoes olhadas; tem que sair 1
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
@@ -41,6 +43,9 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const FONTE = join(ROOT, 'tools', 'eval', 'char_probe.json');
 const SAIDA = join(ROOT, 'public', 'models', 'anims', 'foot-offsets.json');
 const CHECK = process.argv.includes('--check');
+const MUTANTE = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+if (!['', 'semverificados'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
+if (MUTANTE && !CHECK) throw new Error('mutante so pode rodar com --check; nunca sobrescreve o baseline');
 
 if (!existsSync(FONTE)) {
   console.error('✗ tools/eval/char_probe.json não existe. Rode antes: node tools/eval/char-probe.mjs');
@@ -67,6 +72,19 @@ const R = (v) => Math.round(v * 1e4) / 1e4;
    NOMEIA o resto em `suspeitos`, que é lista de trabalho, não de conserto automático.
    A regra da casa vale aqui inteira: correção grande só entra depois de olhar a imagem. */
 const CAP = 0.08;
+/* Excecoes acima do CAP so entram depois de figura olhada. O Lobisomem Mint encosta no
+   chao na bind, mas os cinco clipes afundam canelas/pes; a captura da mesma pose medida
+   (`select-inflate --fotos`, 10/08) mostra o plano y=0 cortando as pernas. Portanto aqui
+   somar -desvio corrige a translacao do clipe; mover o pivo do GLB quebraria a bind boa.
+   Os VALORES continuam vindo do char_probe.json — esta lista autoriza pares, nao numeros. */
+const VERIFICADOS_ACIMA_CAP = new Set([
+  'lobisomem/idle',
+  'lobisomem/walk',
+  'lobisomem/run',
+  'lobisomem/shoot',
+  'lobisomem/crouch',
+]);
+const verificadosAtivos = MUTANTE === 'semverificados' ? new Set() : VERIFICADOS_ACIMA_CAP;
 
 const tabela = {};
 const suspeitos = [];
@@ -78,7 +96,11 @@ for (const p of probe.personagens || []) {
   for (const [pose, desvio] of Object.entries(porPose)) {
     total++;
     if (Math.abs(desvio) <= TOL) continue;   // já está no chão: não inventa correção
-    if (Math.abs(desvio) > CAP) { suspeitos.push({ id: p.id, pose, desvio: R(desvio) }); continue; }
+    const chave = `${p.id}/${pose}`;
+    if (Math.abs(desvio) > CAP && !verificadosAtivos.has(chave)) {
+      suspeitos.push({ id: p.id, pose, desvio: R(desvio) });
+      continue;
+    }
     linha[pose] = R(-desvio);
     corrigidos++;
     if (Math.abs(desvio) > Math.abs(pior)) { pior = desvio; piorQuem = `${p.id}/${pose}`; }
@@ -93,6 +115,7 @@ const saida = {
   nota: 'offset em METROS somado ao Y do modelo enquanto o clipe está ativo. offset = -desvio medido.',
   tolerancia: TOL,
   teto: CAP,
+  excecoesVerificadas: [...verificadosAtivos],
   offsets: tabela,
   /* NÃO são corrigidos automaticamente — ver o comentário do CAP. É lista de trabalho:
      cada um precisa de imagem antes de virar número. */
