@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.194`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.195`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,29 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.195] — 2026-08-29
+
+### Mudado
+- fix(three): render() pergunta ao driver se o contexto vive — a corrida da perda no meio do frame (#420)
+- fix: invariantes MAT2/TEX1, poster duplicado e check de posters (#365 + main) (#470)
+- fix(crash): perda de contexto WebGL no meio do frame (#444 + main) (#472)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- fix(crash): perda de contexto no meio do frame é recuperável — TypeError do WebKit não abre issue nem derruba o launch (#419 #420)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- Merge da base (conflito só em arquivo gerado, resolvido pelo autofix)
+- fix: invariantes MAT2/TEX1, poster duplicado, check de posters e limpeza de PNGs
 
 ## [2.0.0-alpha.194] — 2026-08-29
 
