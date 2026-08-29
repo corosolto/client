@@ -1703,29 +1703,13 @@ cria um caminho automático sem escrever parênteses).
 
 ---
 
-### BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas
+### ~~BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas~~ · RESOLVIDO 29/08
 
-**Sintoma (do dono):** mapas em modo *rounds* mostram a faixa de bandeiras no HUD, sem existir
-captura nenhuma.
-
-**Causa raiz — confirmada.** `#ctf-hud` nasce escondido (`src/pages/index.astro:589`,
-`class="hidden"`) e `_updateCtfHud()` faz `classList.remove('hidden')`
-(`public/js/game.js:4161`) **sem nenhuma guarda**. Não existe, em lugar nenhum do repo,
-um `add('hidden')` para esse elemento — `grep -rn "ctfHud\|ctf-hud" public/ src/` devolve 5
-ocorrências e nenhuma esconde. O `if (this.ctf)` de `game.js:2011` protege só a *criação* das
-bandeiras (`_initCTF`), não a visibilidade do HUD.
-
-**Reprodução:** jogar uma partida de CTF → voltar ao menu → iniciar partida de *rounds*
-**sem recarregar a página**. A faixa continua visível, com o HTML da partida anterior.
-Efeito colateral visível: `public/style.css:578` (`#ctf-hud:not(.hidden) ~ #killfeed{top:114px}`)
-empurra o killfeed 38 px para baixo no modo errado.
-
-**Correção:** guardar a exibição por modo em `_updateCtfHud()` e esconder + limpar o
-`innerHTML` na saída de partida (junto do bloco `game.js:6112-6124`, que já esconde 12 outros
-elementos e esqueceu este).
-
-**Régua:** nenhuma. `tools/eval/mode-check.mjs` passa 16/16 porque compara *modo escolhido ×
-modo jogado*, não *modo jogado × HUD desenhado*. Precisa de cláusula nova (`UI`), com mutação.
+Já estava corrigido na árvore de 29/08: `_hideCtfHud()` esconde e limpa a faixa
+(`public/js/game.js:4557`), `_updateCtfHud()` guarda modo e presença de bandeiras
+(`public/js/game.js:4563`) e `dispose()` chama a limpeza ao sair da partida
+(`public/js/game.js:7058`). `node tools/eval/ctfhud-check.mjs`: **CTFHUD 5/5 casos**;
+`--mutate` removeu a guarda e derrubou **3 casos**, provando que a régua morde.
 
 ---
 
@@ -3470,6 +3454,27 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **~~BUG-85 · `eval:armas` vermelho na main: o preload bloqueante voltou às 26 armas~~ · RESOLVIDO 30/08.**
+  Palavras literais do CI (`portao-browser.yml`, vermelho desde 28/08 06:30Z, último verde
+  06:17Z): `✗ ARM1 preload bloqueante com 26 armas (teto 12)` e `✗ ARM3 carga tardia não
+  chegou: parou em 26 armas`. **Palpite óbvio REFUTADO:** o reporte apontava o merge do
+  Córrego (`dec46d5b`, #460) — mas a janela alpha.190→alpha.191 do CI contém só o
+  `1623beaa` (#405, fumaça do cano); o córrego entrou depois, na alpha.192. Medido em
+  30/08 com `node tools/eval/armas-check.mjs --porta=8147` em worktrees limpos:
+  `96ecadfa` (pai do #405) **VERDE, ARM1=8**; `1623beaa` **VERMELHO, ARM1=26**. Causa
+  raiz: o #405 acrescentou `preloadCharacterAssets([playerCharId])` no construtor do
+  `Game` (pré-carga do corpo para a tecla B) **sem** `opts.weapons` — e desde o #410 o
+  `preloadCharacterAssets` chama `preloadWeapons(opts.weapons)` em TODA chamada
+  (`public/js/glbchars.js:285`); `preloadWeapons(undefined)` cai em `WEAPON_IDS` inteiro
+  (`public/js/weapons.js:237`) e as 26 armas entravam na janela bloqueante, sobrando zero
+  para a carga tardia (por isso ARM3 caía junto). Correção na causa, sem tocar no teto:
+  a chamada passa `{ weapons: [charWeapon(playerCharId)] }` (`public/js/game.js:695`),
+  mesmo padrão do `loading3d.js:86`. Antes×depois na main: ARM1 26 → **6**, ARM3
+  "parou em 26" → **26 em 2 s de ocioso**. Mutante existente `--mutante=sem-lazy`
+  conferido no depois: ARM3 acende (parou em 8). Cláusula nova: nenhuma. Custo declarado:
+  a arma do personagem entra no preload da partida — que já a continha via
+  `_armasDaPartida`, logo zero request extra.
 
 - **~~BUG-69 · triage de issue morria em toda issue não-crash~~ · RESOLVIDO 18/08.** Evidência: `csbrasil-bot-issue-triage` com **8 failures consecutivos** (17/08 23:06 → 18/08 05:42), todos em issues `[plantão]`/`[invariante]` do estraga-codigo, todos no passo "Suggest crash duplicate": `line 17: /tmp/crashes.json: No such file or directory`. Causa: o guarda `raise SystemExit(0)` dentro do heredoc python encerra o INTERPRETADOR, não o PASSO — a shell seguia para `crash_dedupe.py < /tmp/crashes.json` que jamais fora escrito. Labels e comentário de review eram aplicados antes do passo final, então o defeito passava despercebido: vermelho silencioso em toda issue de bot desde 17/08. Correção: guarda na SHELL (`if [ ! -f /tmp/crashes.json ]`) + `rm -f` pré-heredoc; aplicado no `csbrasil-bot-issue-triage.yml` e no `issues-bot.yml` (consolidação local). Mutante: remover o `if` reabre o `No such file or directory` na próxima issue não-crash.
 - **~~BUG-68 · classify postava comentários repetidos como `github-actions[bot]`~~ · RESOLVIDO 18/08.** Palavras do
