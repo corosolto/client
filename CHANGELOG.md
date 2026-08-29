@@ -34,6 +34,7 @@
 - docs(changelog): rodada do cronista — 25 commits
 - docs(changelog): rodada do cronista — 24 commits
 - docs(changelog): rodada do cronista — 23 commits
+- docs(changelog): rodada do cronista — 13 commits
 ## [2.0.0-alpha.178] — 2026-08-22
 
 ### Mudado
