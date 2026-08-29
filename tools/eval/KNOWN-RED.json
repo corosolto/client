@@ -13,7 +13,7 @@
   "VM20": "enquadramento viewmodel — mesmo lote do VM1",
   "BOT8": "comportamento de bot fora do alvo no protocolo botsim — backlog de rotas/mira",
   "CHR1": "antropometria do elenco Mint fora de ±35% (cabeça/ombro/perna) — corrigir exigiria re-gerar/escalar o roster",
-  "CHR3": "proporções do elenco — mesmo lote do CHR1",
+  "CHR3": "pés no chão: restam 2 afundando (ancap -0,131 walk · esbirro -0,134 run) — raiz do clipe oscila 8-11 cm no ciclo, offset constante trocaria afundar por flutuar; exige clipe novo. Em 30/08: afundando 5 → 2 (proerd/canarinho eram o rabo, não o pé — régua passou a medir o pé; dollynho/ancap/esbirro crouch compensados por constância comprovada). Ver KNOWN-BUGS.md BUG-10/CHR3.",
   "CHR4": "proporções do elenco — mesmo lote do CHR1",
   "CTF1": "geometria de bandeira fora do critério em mapa(s) legado(s) — ajuste de layout pendente",
   "GRAF1": "grafite: 272 peças com vão atrás em 5 mapas (brasília 68 · quebrada 102 · ferro 51 · loja H 28 · piscina 23) e 145 sobrepostas. Saiu de 698/540 em 07/08 alinhando o limiar das duas réguas; o resto é peça em quina de GLB e em superfície curva. Régua: `npm run eval:grafite:ar`. Ver docs/LICOES.md §1 e §2.",

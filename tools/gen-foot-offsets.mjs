@@ -10,19 +10,17 @@
  *
  *     bind = 0.000   em TODOS os 44
  *
- * O rig está certo. Quem tira o pé do chão é o CLIPE: `walk ≈ -0,028`, `run ≈ -0,018`,
- * `crouch ≈ -0,017`, `shoot ≈ +0,015`. E o probe registra que **38 dos 44 têm os mesmos
- * números** — "no caminho procedural o ciclo de passo é o MESMO pra todos". Ou seja: um
- * punhado de clipes compartilhados, cada um com seu deslocamento de raiz, herdado do pack
- * de animação.
- *
- * Isso derruba a hipótese que estava no handoff ("é rig a refazer, 18 personagens"). Não é:
- * é uma constante por (personagem, clipe), e uma tabela conserta o elenco inteiro.
+ * O rig está certo. Quem tira o pé do chão é o CLIPE. Desde 30/08 a sonda mede o PÉ
+ * (vértices cuja junta dominante é de canela/pé — RX_PE no char-probe.mjs), não a base
+ * da bbox inteira: rabo/casaco cruzando o chão não é "pé fora do chão" (proerd/canarinho
+ * no crouch eram exatamente isso, com os pés plantados).
  *
  * A CORREÇÃO
  * offset = -desvio. Para um ciclo de locomoção isso é exatamente o certo: sobe o corpo até
  * o pé mais baixo do ciclo encostar no chão. Não é "empurrar pra dentro do tapete" — o pé
- * que planta passa a plantar, e a fase aérea sobe junto, como tem que ser.
+ * que planta passa a plantar, e a fase aérea sobe junto, como tem que ser. Desvio GRANDE
+ * só entra com constância comprovada (amplitude ≤ 2 cm no clipe inteiro) — ver o bloco
+ * "O QUE SEPARA COMPENSÁVEL DE NÃO-COMPENSÁVEL" abaixo.
  *
  * POR QUE TABELA GERADA E NÃO NÚMERO NO CÓDIGO
  * Mesmo motivo do manifest de áudio e do ARCH.md: clipe novo ou personagem novo muda os
@@ -51,22 +49,31 @@ const probe = JSON.parse(readFileSync(FONTE, 'utf8'));
 const TOL = 0.01;            // a mesma tolerância da CHR3
 const R = (v) => Math.round(v * 1e4) / 1e4;
 
-/* TETO DE CORREÇÃO — 8 cm. Não é número redondo por acaso, e não é o teto da CHR3:
-   é a linha que separa DOIS defeitos diferentes que a medição estava somando num número só.
+/* O QUE SEPARA COMPENSÁVEL DE NÃO-COMPENSÁVEL (reescrito em 30/08, depois de medir
+   a cauda que o teto antigo de 8 cm deixava de fora — e de OLHAR a imagem de cada um):
 
-   A massa do elenco tem desvio de 3-4 cm (mediana por pose: walk 4,3 · crouch 4,4 · run 3,6 ·
-   shoot 3,0 · idle 2,5 cm). Isso é pé fora do chão, e somar a constante conserta.
+   A régua agora mede o PÉ (vértices de canela/pé), não a bbox inteira — ver RX_PE no
+   char-probe.mjs. Com isso a antiga cauda se divide em TRÊS classes, medidas quadro a
+   quadro no clipe inteiro:
 
-   Mas há uma cauda de outra natureza — `proerd/crouch 43 cm`, `canarinho/crouch 37 cm`,
-   `ancap` em quatro poses. Meio corpo de deslocamento não é "pé flutuando": é o clipe
-   descendo a RAIZ inteira, provavelmente agachamento feito baixando o boneco em vez de
-   dobrar o joelho. Somar +43 cm ali não conserta nada — troca um boneco enterrado por um
-   boneco voando, e ainda faz a régua ficar verde mentindo.
+   (a) PÉ PLANTADO, corpo cruzando o chão — proerd/crouch (bbox -0,43; pé +0,003) e
+       canarinho/crouch (bbox -0,37; pé -0,007): era o RABO, skinado em Hips. Não é "pé
+       fora do chão", a régua de bbox é que mentia. Sumiram daqui ao medir o pé certo.
+   (b) PÉ ENTERRADO COM DESVIO CONSTANTE — esbirro/crouch (-0,143), ancap/crouch
+       (-0,140), dollynho/crouch (-0,106): variação ≤ 5 mm no clipe INTEIRO (6,7 s).
+       O clipe desce a raiz um valor fixo; somar a constante oposta recoloca o pé no
+       chão em TODO quadro, sem criar voo em nenhum. Compensável, sem teto de magnitude:
+       quem garante que o offset não vira "boneco voando" é a constância, não o tamanho.
+   (c) RAIZ OSCILANDO — ancap/walk (-0,037…-0,131), ancap/run (-0,026…-0,106),
+       esbirro/run (-0,029…-0,137): o pé afunda no meio do ciclo. Um offset constante
+       pelo pior ponto ergueria a fase de apoio ~9 cm no ar — troca afundar por flutuar.
+       NÃO compensável por tabela; é defeito do clipe. Fica em `suspeitos`, com a
+       amplitude medida, como lista de trabalho (exige clipe novo, não número).
 
-   Então a tabela aplica até 8 cm (tornozelo; acima disso não é mais "quase no chão") e
-   NOMEIA o resto em `suspeitos`, que é lista de trabalho, não de conserto automático.
-   A regra da casa vale aqui inteira: correção grande só entra depois de olhar a imagem. */
+   Regra: desvio ≤ CAP compensa (massa do elenco, amplitude pequena); desvio > CAP só
+   compensa com constância comprovada (amplitude ≤ AMP_TOL na faixa medida pela sonda). */
 const CAP = 0.08;
+const AMP_TOL = 0.02;   // ≤ 2 cm de variação no clipe = desvio constante (os da classe (b) medem ≤ 5 mm)
 
 const tabela = {};
 const suspeitos = [];
@@ -78,7 +85,13 @@ for (const p of probe.personagens || []) {
   for (const [pose, desvio] of Object.entries(porPose)) {
     total++;
     if (Math.abs(desvio) <= TOL) continue;   // já está no chão: não inventa correção
-    if (Math.abs(desvio) > CAP) { suspeitos.push({ id: p.id, pose, desvio: R(desvio) }); continue; }
+    const fx = p.C3?.faixaPorPose?.[pose];
+    const amp = fx ? fx[1] - fx[0] : null;
+    const constante = amp != null && amp <= AMP_TOL;
+    if (Math.abs(desvio) > CAP && !constante) {
+      suspeitos.push({ id: p.id, pose, desvio: R(desvio), amplitude: amp != null ? R(amp) : null });
+      continue;
+    }
     linha[pose] = R(-desvio);
     corrigidos++;
     if (Math.abs(desvio) > Math.abs(pior)) { pior = desvio; piorQuem = `${p.id}/${pose}`; }
@@ -94,8 +107,9 @@ const saida = {
   tolerancia: TOL,
   teto: CAP,
   offsets: tabela,
-  /* NÃO são corrigidos automaticamente — ver o comentário do CAP. É lista de trabalho:
-     cada um precisa de imagem antes de virar número. */
+  /* NÃO compensáveis por constante — raiz oscilando dentro do clipe (amplitude > 2 cm
+     com desvio > 8 cm). Defeito DO CLIPE: exige clipe novo, não offset. Lista de
+     trabalho documentada, com a amplitude medida. */
   suspeitos,
 };
 

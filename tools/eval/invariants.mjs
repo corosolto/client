@@ -1556,7 +1556,8 @@ function runNode(script, env = {}, args = []) {
       + (P.map((c) => [c.id, c.C2 && c.C2.adereçoAcima]).filter((x) => x[1] > 0.02).sort((a, b) => b[1] - a[1]).slice(0, 3).map((x) => `${x[0]} +${(x[1] * 100).toFixed(0)}cm`).join(', ') || 'nenhum'));
 
     /* ── CHR3 PÉS NO CHÃO ──────────────────────────────────────────────────────
-       MEDE O QUE O JOGO DESENHA, NÃO O QUE O CLIPE TRAZ (04/08).
+       MEDE O QUE O JOGO DESENHA, NÃO O QUE O CLIPE TRAZ (04/08). E MEDE O PÉ, NÃO
+       A BBOX INTEIRA (30/08).
 
        O defeito é do CLIPE: o probe mede `bind = 0.000` nos 44, e o desvio nasce em
        walk/run/crouch. A correção não podia ser no GLB (38 personagens compartilham os
@@ -1570,10 +1571,19 @@ function runNode(script, env = {}, args = []) {
        É a Lei 1 da casa ao contrário: régua que não enxerga a correção também mente.
        Então aqui o desvio efetivo é `desvio + offset aplicado`.
 
-       O que a tabela NÃO corrige continua vermelho, e tem que continuar: os 6 pares acima
-       do teto de 8 cm (proerd/crouch -43 cm, canarinho/crouch -37 cm, ancap em 4 poses)
-       não são pé fora do chão, são clipe descendo a raiz inteira — outro defeito, que
-       exige olhar imagem antes de virar número. Ver tools/gen-foot-offsets.mjs. */
+       A revisão de 30/08 (rodada fix/chr3-pes-no-chao): a régua lia a base da BBOX e
+       por isso chamava de "afundando" dois personagens com os pés PLANTADOS — proerd
+       (-0,43) e canarinho (-0,37) no crouch, onde quem cruza o chão é o RABO, skinado
+       em Hips (pé medido a +0,003 e -0,007). O offset de +43 cm que a leitura antiga
+       sugeriria faria os dois VOAREM. A sonda passou a medir o vértice mais baixo
+       ENTRE OS DE CANELA/PÉ (RX_PE no char-probe.mjs) e a registrar a faixa [min,max]
+       do clipe; o gerador compensa desvio grande SÓ com constância comprovada
+       (amplitude ≤ 2 cm) e nomeia o resto em `suspeitos`. Ver tools/gen-foot-offsets.mjs
+       e a entrada CHR3 do KNOWN-BUGS.md.
+
+       O que a tabela NÃO corrige continua vermelho, e tem que continuar: ancap/walk,
+       ancap/run e esbirro/run têm a raiz OSCILANDO 9-11 cm dentro do ciclo — constante
+       nenhuma resolve sem criar voo; é defeito do clipe, exige clipe novo. */
     const TOL3 = 0.01;
     let footOff = {};
     try {
