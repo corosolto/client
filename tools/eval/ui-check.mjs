@@ -29,7 +29,7 @@
    UI4 RITMO      — a partida FECHA no tempo/alvo declarado. PEGA O DEFEITO 3
                     (placar 65 × 53 num modo CAPTURA).
 
-   Uso:  node tools/eval/ui-check.mjs [ui1|ui2|ui3|ui4|all] [--json]
+   Uso:  node tools/eval/ui-check.mjs [ui1|ui2|ui3|ui4|all] [--json] [--mutante=<nome>]
          MUT=<nome> node tools/eval/ui-check.mjs   (mutação: ver MUTACOES lá embaixo)
    ============================================================================ */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -43,7 +43,10 @@ const ASTRO_PATH = path.join(ROOT, 'src/pages/index.astro');
 const GAME_PATH = path.join(ROOT, 'public/js/game.js');
 const ALVO = (process.argv[2] || 'all').toLowerCase();
 const JSON_OUT = process.argv.includes('--json');
-const MUT = process.env.MUT || '';
+const MUT = process.env.MUT || (process.argv.find(a => a.startsWith('--mutante=')) || '').split('=')[1] || '';
+/* MUTAÇÃO DA PRÓPRIA RÉGUA (não do CSS nem do jogo): restaura o parseFloat puro no
+   resolvedor de comprimentos. Ver resolvePx() e a entrada `cego-a-clamp` em MUTACOES. */
+const MUT_CEGO_CLAMP = MUT === 'cego-a-clamp';
 
 /* ==========================================================================
    0. PARÂMETROS COM PROCEDÊNCIA — cada número aqui tem uma fonte, não um gosto
@@ -60,6 +63,11 @@ const CENA_PIOR = [214, 196, 164];
    usa pra rodar o jogo em node, e é aspecto 1,539 — entre 3:2 (1,5) e 16:9 (1,778).
    Todo % de tela abaixo é convertido com estes números. */
 const VW = 1008, VH = 655;
+
+/* BASE DO rem: o CSS não declara `font-size` no <html> (style.css:300 declara só
+   largura/altura/fundo no `html,body`), então vale o default do browser: 16 px.
+   Determinístico por construção — não depende de browser, só deste arquivo e do CSS. */
+const REM_PX = 16;
 
 /* ZONA DA ARMA (viewmodel). Fonte 1: tools/eval/vm_mint_audit.json — a silhueta do
    viewmodel DO JOGO medida nas 26 armas; em 3:2 o MENOR `silBordaEsq` é 0,525 e o
@@ -541,6 +549,76 @@ function ui1(ctxCss) {
 /* ==========================================================================
    5. UI3 — ÁREA MORTA (geometria do HUD resolvida a partir do CSS)
    ========================================================================== */
+/* resolvePx — o parseFloat que enxerga TIPOGRAFIA FLUIDA (BUG-05, item ABERTO 1).
+   ---------------------------------------------------------------------------
+   caixaDe() lia `font-size` com parseFloat puro: `clamp(40px,6vh,76px)` virava NaN→16px
+   e `1.2vh` virava 1,2px — no dia em que a escala fluida entrasse no CSS a UI3 mediria
+   caixas de 3,9 px e ficaria CEGA (medido: é o que o BUG-05 registra como bloqueio da
+   correção de tipografia). Aqui todo comprimento do CSS resolve de forma DETERMINÍSTICA
+   contra o viewport de medição (VW×VH = 1008×655, declarado no topo): clamp/min/max/calc
+   (+ e -), %, px, vw, vh, rem/em. O que não resolve devolve null — e null vira VERMELHO
+   na UI3 (cláusula fsCego + PROBAS_PX), nunca fallback silencioso: régua que não sabe
+   medir está errada. A mutação `cego-a-clamp` liga o ramo `cego` = o parseFloat puro de
+   antes, e TEM que acender as PROBAS_PX — é a prova de que este resolvedor morde. */
+function divideTopo(s) {
+  const out = []; let d = 0, cur = '';
+  for (const ch of s) {
+    if (ch === '(') d++;
+    else if (ch === ')') d--;
+    if (ch === ',' && d === 0) { out.push(cur); cur = ''; } else cur += ch;
+  }
+  out.push(cur);
+  return out.map(x => x.trim()).filter(Boolean);
+}
+function calcPx(corpo, base) {
+  // + e - no nível superior; `*` e `/` não aparecem nos comprimentos do CSS desta base
+  const termos = []; let d = 0, cur = '', sinal = 1;
+  const fecha = () => { const t = cur.trim(); if (t) termos.push([sinal, t]); cur = ''; };
+  for (const ch of corpo) {
+    if (ch === '(') d++;
+    if (ch === ')') d--;
+    if (d === 0 && (ch === '+' || ch === '-')) { fecha(); sinal = ch === '+' ? 1 : -1; }
+    else cur += ch;
+  }
+  fecha();
+  let acc = 0;
+  for (const [s, t] of termos) { const r = resolvePx(t, base); if (r === null) return null; acc += s * r; }
+  return acc;
+}
+function resolvePx(v, base, cego = MUT_CEGO_CLAMP) {
+  if (v === undefined || v === null) return null;
+  const s = String(v).trim();
+  if (!s || s === 'auto') return null;
+  if (cego) {   // o regime anterior ao BUG-05: parseFloat + vw/vh, cego pra função e rem
+    if (s.endsWith('%')) return parseFloat(s) / 100 * base;
+    if (s.endsWith('px')) return parseFloat(s);
+    if (s.endsWith('vw')) return parseFloat(s) / 100 * VW;
+    if (s.endsWith('vh')) return parseFloat(s) / 100 * VH;
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  const f = /^(clamp|min|max|calc)\(([\s\S]*)\)$/.exec(s);
+  if (f) {
+    const [, fn, corpo] = f;
+    if (fn === 'calc') return calcPx(corpo, base);
+    const args = divideTopo(corpo).map(a => resolvePx(a, base));
+    if (args.some(a => a === null)) return null;
+    if (fn === 'min') return Math.min(...args);
+    if (fn === 'max') return Math.max(...args);
+    return args.length === 3 ? Math.min(Math.max(args[1], args[0]), args[2]) : null;
+  }
+  const t = /^(-?(?:\d+\.?\d*|\.\d+))(px|%|vw|vh|rem|em)?$/.exec(s);
+  if (!t) return null;
+  const n = parseFloat(t[1]);
+  switch (t[2]) {
+    case '%': return n / 100 * base;
+    case 'vw': return n / 100 * VW;
+    case 'vh': return n / 100 * VH;
+    case 'rem': case 'em': return n * REM_PX;
+    default: return n;
+  }
+}
+
 /* ISENÇÕES, cada uma com o MOTIVO — sem isso a régua reprovaria a própria camada de
    mira e viraria ruído. A regra que sobra é: elemento CENTRADO/FLUTUANTE não pode
    invadir as duas zonas; elemento ancorado na BORDA (left/right/top/bottom em px) é
@@ -561,22 +639,22 @@ const ISENTOS = {
   'mk-banner': 'anúncio de multi-kill: é a recompensa, dura 0,16 s de transição.',
 };
 function caixaDe(comp, texto) {
-  const px = (v, base) => {
-    if (v === undefined || v === null || v === 'auto') return null;
-    const s = String(v).trim();
-    if (s.endsWith('%')) return parseFloat(s) / 100 * base;
-    if (s.endsWith('px')) return parseFloat(s);
-    if (s.endsWith('vw')) return parseFloat(s) / 100 * VW;
-    if (s.endsWith('vh')) return parseFloat(s) / 100 * VH;
-    return parseFloat(s);
-  };
+  const px = (v, base) => resolvePx(v, base);
   const pad = (comp['padding'] || '0').split(/\s+/).map(v => px(v, VW) || 0);
   const padX = pad.length > 1 ? pad[1] : pad[0], padY = pad[0];
   const bw = /solid|px/.test(comp['border'] || '') ? (parseFloat(comp['border']) || 0) : 0;
-  const fs = parseFloat(comp['font-size']) || 16;
-  const lh = comp['line-height'] && !isNaN(parseFloat(comp['line-height']))
-    ? (String(comp['line-height']).endsWith('px') ? parseFloat(comp['line-height']) : parseFloat(comp['line-height']) * fs)
-    : fs * 1.2;
+  /* font-size RESOLVIDO, não parseFloat: declarado e não-resolvível é a régua CEGA —
+     vira falha da UI3 (fsCego), não o 16px silencioso de antes (BUG-05). */
+  const fsDecl = comp['font-size'];
+  const fsRes = resolvePx(fsDecl, VH);
+  const fsCego = fsDecl !== undefined && fsRes === null;
+  const fs = fsRes ?? 16;
+  /* line-height: número sem unidade é MULTIPLICADOR do font-size (CSS); com unidade ou
+     função, resolve como comprimento. */
+  const lhDecl = comp['line-height'];
+  const lh = lhDecl === undefined ? fs * 1.2
+    : /^-?[\d.]+$/.test(String(lhDecl).trim()) ? parseFloat(lhDecl) * fs
+      : (resolvePx(lhDecl, VH) ?? fs * 1.2);
   /* LARGURA. Sem browser não existe medida de texto exata. Uso DOIS números e digo qual
      é qual: `largMin` = só padding+borda (EXATO, não depende de fonte nenhuma) e
      `largEst` = estimativa com o avanço da fonte. O veredito da UI3 usa a REGRA QUE NÃO
@@ -587,9 +665,9 @@ function caixaDe(comp, texto) {
   const largMin = 2 * padX + 2 * bw;
   const largEst = largMin + (texto ? texto.length * (fs * avanco + ls) : 0);
   const decl = px(comp['width'], VW);
-  /* max-width: `min(38vw,380px)` etc. — pego o MENOR dos termos, que é o que o browser faz */
-  const mw = comp['max-width'];
-  const maxLarg = mw ? Math.min(...String(mw).replace(/^min\(|\)$/g, '').split(',').map(v => px(v.trim(), VW)).filter(Number.isFinite)) : null;
+  /* max-width: `min(38vw,380px)` etc. — resolvePx já aplica o MENOR dos termos, que é
+     o que o browser faz; `none`/não-resolvível vira null (= sem teto), não NaN. */
+  const maxLarg = resolvePx(comp['max-width'], VW);
   /* ALTURA: com max-width o texto QUEBRA. Sem contar as linhas, um prompt de 2 linhas
      seria medido com a altura de 1 e a caixa da UI3 mentiria pra baixo. */
   const linhas = (maxLarg && largEst > maxLarg && !/nowrap/.test(comp['white-space'] || '')) ? Math.ceil(largEst / maxLarg) : 1;
@@ -599,12 +677,33 @@ function caixaDe(comp, texto) {
   const tr = comp['transform'] || '';
   const centrX = /translateX\(-50%\)|translate\(-50%/.test(tr);
   const centrY = /translateY\(-50%\)|translate\([^,]*,\s*-50%/.test(tr);
-  return { padX, padY, bw, fs, lh, alt, linhas, largMin, largEst, decl, maxLarg, x, y, centrX, centrY, mono };
+  return { padX, padY, bw, fs, fsCego, lh, alt, linhas, largMin, largEst, decl, maxLarg, x, y, centrX, centrY, mono };
 }
 function ui3(ctxCss) {
   const { regras, vars, arvore, textos = {} } = ctxCss;
   const nos = achata(arvore).filter(n => n.id);
   const achados = [];
+  /* PROBAS DO RESOLVEDOR — a cláusula que a mutação `cego-a-clamp` TEM que acender.
+     Cada prova resolve uma expressão fluida contra VW×VH e compara com o valor que o
+     browser calcularia nesse viewport (conferido à mão: 2vh de 655 = 13,1; 38vw de
+     1008 = 383,04). Se o resolvedor regredir pro parseFloat puro, as provas com função
+     ou unidade fluida viram null e a UI3 fica VERMELHA na hora — régua cega não passa
+     de graça. São 7 e cobrem os três ramos do clamp, min, max, rem e calc. */
+  const PROBAS_PX = [
+    ['clamp(13px,2vh,21px)', VH, 0.02 * VH],    // o VALOR do meio manda
+    ['clamp(40px,1vh,76px)', VH, 40],           // 1vh = 6,55: o PISO manda
+    ['clamp(40px,20vh,76px)', VH, 76],          // 20vh = 131: o TETO manda
+    ['min(38vw,380px)', VW, 380],
+    ['max(10px,2vw)', VW, 0.02 * VW],
+    ['2rem', VH, 2 * REM_PX],
+    ['calc(100% - 28px)', VW, VW - 28],
+  ];
+  for (const [expr, base, esperado] of PROBAS_PX) {
+    const medido = resolvePx(expr, base);
+    achados.push({ alvo: `probe ${expr}`, probe: true, esperado: +esperado.toFixed(2),
+      medido: medido === null ? null : +medido.toFixed(2),
+      ok: medido !== null && Math.abs(medido - esperado) < 0.01 });
+  }
   const emPx = v => v !== undefined && /px$/.test(String(v).trim());
   const cruza = (a, z) => a.x1 > z.x0 && a.x0 < z.x1 && a.y1 > z.y0 && a.y0 < z.y1;
   for (const n of nos) {
@@ -615,6 +714,14 @@ function ui3(ctxCss) {
        #pickup-hint nasce VAZIO no HTML e é preenchido em runtime; medir o HTML daria
        uma caixa de 38 px (só o padding) que nunca existe na tela. */
     const b = caixaDe(c, textos[n.id] ?? n.texto);
+    /* CEGO = VERMELHO. font-size declarado que o resolvedor não entende derrubaria a
+       caixa pra um chute silencioso (era o 16px do parseFloat||16): a régua mediria
+       errado COM CARA de medida certa. Não saber medir custa o mesmo que estar errado. */
+    if (b.fsCego) {
+      achados.push({ alvo: '#' + n.id, fonte: 'public/style.css', cego: true,
+        invade: `MEDIÇÃO CEGA — font-size "${c['font-size']}" não resolve pra px no viewport ${VW}×${VH}; estenda resolvePx() (BUG-05)`, ok: false });
+      continue;
+    }
 
     /* ---- Y: exato. top/bottom + altura de linha declarada. ---- */
     let y0 = b.y.topo != null ? b.y.topo : (b.y.base != null ? VH - b.y.base - b.alt : null);
@@ -1049,6 +1156,14 @@ async function ui4(H) {
    memória; `sim` mexe no objeto Game já bootado (pra desfazer coisa que mora no game.js
    sem ter que reescrever o arquivo em disco no meio de uma rodada com outros agentes). */
 const MUTACOES = {
+  /* A MUTAÇÃO DA PRÓPRIA RÉGUA. Não toca no CSS nem no jogo: liga MUT_CEGO_CLAMP e o
+     resolvePx() volta ao parseFloat puro de antes do BUG-05. TEM que acender as
+     PROBAS_PX da UI3 e SÓ elas — o CSS atual do HUD é 100% px, então nenhum veredito
+     de elemento muda; se um dia mudar, a mutação denuncia que a régua voltou a medir
+     caixa por achismo. */
+  'cego-a-clamp': {
+    portao: 'UI3', o_que: 'restaura o parseFloat puro no resolvedor de comprimentos — clamp()/min()/max()/calc()/rem viram null e as PROBAS_PX têm que ficar VERMELHAS',
+  },
   /* A MUTAÇÃO QUE PROVA A CLÁUSULA b*. Devolve o triplo azul de antes do BUG-05. Como o
      style.css agora DERIVA token e scrim do mesmo `--bg-900-rgb`, uma linha desfaz a
      rodada inteira — que é exatamente por isso que ela é o teste certo. Sem `UI5_B_MIN`
@@ -1163,6 +1278,11 @@ if (MUT) {
     cssTxt = m.css(cssTxt);
     if (cssTxt === antes) { console.error(`mutação ${MUT} não casou com nada — o CSS mudou de forma`); process.exit(2); }
   }
+  /* mutação de RÉGUA também tem que provar que aplicou: se o ramo cego resolve o mesmo
+     que o resolvedor novo, o mutante é decorativo e a régua não morde. */
+  if (MUT_CEGO_CLAMP && resolvePx('clamp(13px,2vh,21px)', VH) === resolvePx('clamp(13px,2vh,21px)', VH, false)) {
+    console.error('mutante cego-a-clamp NÃO APLICOU — o resolvedor mudou de forma'); process.exit(2);
+  }
   console.log(`### MUTAÇÃO ATIVA: ${MUT} (espera ${m.portao} VERMELHA) — ${m.o_que}\n`);
 }
 const regras = parseCss(cssTxt);
@@ -1211,6 +1331,8 @@ for (const r of res) {
     console.log(`   ${r.achados.length} itens medidos, ${r.falhas.length} abaixo do mínimo`);
   } else if (r.nome === 'UI3') {
     for (const a of r.achados) {
+      if (a.probe) { console.log(`   ${a.ok ? '·' : '✗'} PROBE ${a.alvo.slice(6).padEnd(24)} = ${a.medido === null ? 'NÃO RESOLVE' : a.medido + 'px'} (esperado ${a.esperado}px)`); continue; }
+      if (a.cego) { console.log(`   ✗ ${a.alvo}  ${a.invade}`); continue; }
       if (a.isento) { console.log(`   · ISENTO ${a.alvo} — ${a.isento}`); continue; }
       console.log(`   ${a.ok ? '·' : '✗'} ${a.alvo.padEnd(18)} caixa=[${a.caixa}]  larg=${a.largPx}px (piso ${a.largMinPx}px; limiar arma ${a.limiarArmaPx}px / mira ${a.limiarMiraPx}px)  ${a.ancorado ? 'canto' : a.centrado ? 'centrado' : 'flutuante'}${a.invade ? '  ✗ INVADE ' + a.invade : ''}`);
     }
