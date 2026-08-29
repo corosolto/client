@@ -19,6 +19,9 @@ const MEDIA_ABORT_RE = /The play\(\) request was interrupted|(?:fetching process
 // Capacidade que o navegador não tem: o `lock()` de main.js:1037 rejeita e o jogo segue sem
 // a trava (o overlay "gire o celular" é a rede). ESTREITA — KNOWN-BUGS.md, BUG-80.
 const CAPACIDADE_RE = /screen\.orientation\.lock\(\) is not available on this device/i;
+// Perda de contexto WebGL no MEIO do frame (WebKit, #419/#420): createShader() devolve null
+// antes de o evento webglcontextlost chegar. ESTREITO de propósito — KNOWN-BUGS.md, BUG-82.
+const CONTEXT_LOSS_RE = /to WebGL2?RenderingContext\.\w+ must be an instance of WebGLShader\b/i;
 const HTTP_URL_RE = /https?:\/\/[^\s)'"<>]+/gi;
 /* Assinaturas opacas de terceiro/extensão/resposta corrompida: mensagens sem
    pilha e sem nome de arquivo do próprio jogo que o navegador entrega já
@@ -94,6 +97,7 @@ export function classifyCrash(payload = {}, ownOrigin = '') {
   if (RECOVERABLE_RE.test(evidence)) return 'recuperavel';
   if (MEDIA_ABORT_RE.test(evidence)) return 'recuperavel';
   if (CAPACIDADE_RE.test(evidence)) return 'recuperavel';
+  if (CONTEXT_LOSS_RE.test(evidence)) return 'recuperavel';
   return 'codigo';
 }
 
