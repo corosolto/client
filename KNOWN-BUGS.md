@@ -1779,29 +1779,13 @@ cria um caminho automático sem escrever parênteses).
 
 ---
 
-### BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas
+### ~~BUG-01 · Bandeiras de CTF aparecem no HUD em partida de rodadas~~ · RESOLVIDO 29/08
 
-**Sintoma (do dono):** mapas em modo *rounds* mostram a faixa de bandeiras no HUD, sem existir
-captura nenhuma.
-
-**Causa raiz — confirmada.** `#ctf-hud` nasce escondido (`src/pages/index.astro:589`,
-`class="hidden"`) e `_updateCtfHud()` faz `classList.remove('hidden')`
-(`public/js/game.js:4161`) **sem nenhuma guarda**. Não existe, em lugar nenhum do repo,
-um `add('hidden')` para esse elemento — `grep -rn "ctfHud\|ctf-hud" public/ src/` devolve 5
-ocorrências e nenhuma esconde. O `if (this.ctf)` de `game.js:2011` protege só a *criação* das
-bandeiras (`_initCTF`), não a visibilidade do HUD.
-
-**Reprodução:** jogar uma partida de CTF → voltar ao menu → iniciar partida de *rounds*
-**sem recarregar a página**. A faixa continua visível, com o HTML da partida anterior.
-Efeito colateral visível: `public/style.css:578` (`#ctf-hud:not(.hidden) ~ #killfeed{top:114px}`)
-empurra o killfeed 38 px para baixo no modo errado.
-
-**Correção:** guardar a exibição por modo em `_updateCtfHud()` e esconder + limpar o
-`innerHTML` na saída de partida (junto do bloco `game.js:6112-6124`, que já esconde 12 outros
-elementos e esqueceu este).
-
-**Régua:** nenhuma. `tools/eval/mode-check.mjs` passa 16/16 porque compara *modo escolhido ×
-modo jogado*, não *modo jogado × HUD desenhado*. Precisa de cláusula nova (`UI`), com mutação.
+Já estava corrigido na árvore de 29/08: `_hideCtfHud()` esconde e limpa a faixa
+(`public/js/game.js:4557`), `_updateCtfHud()` guarda modo e presença de bandeiras
+(`public/js/game.js:4563`) e `dispose()` chama a limpeza ao sair da partida
+(`public/js/game.js:7058`). `node tools/eval/ctfhud-check.mjs`: **CTFHUD 5/5 casos**;
+`--mutate` removeu a guarda e derrubou **3 casos**, provando que a régua morde.
 
 ---
 
