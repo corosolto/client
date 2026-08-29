@@ -140,7 +140,9 @@ try {
         .filter((r) => r.name.includes('-runtime.glb') && !r.name.includes('general'))
         .reduce((worst, r) => Math.max(worst, r.encodedBodySize || r.transferSize || 0), 0);
 
-      /* M7: idle respira — a mão muda de pose com o relógio andando. */
+      /* Lição dos prints do dono (29/08): parado, a mão NÃO pode vagar — o
+         aditivo genérico arrancava o braço da pose. Amostra 8× em 3,5 s e mede
+         o MAIOR desvio da mão de apoio em relação à primeira amostra. */
       const hand = entry.scene.getObjectByName('hand_l');
       const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       const handAt = () => {
@@ -149,25 +151,37 @@ try {
         hand.getWorldPosition(p);
         return [p.x, p.y, p.z];
       };
-      const breath0 = handAt();
-      await sleep(1300);
-      const breath1 = handAt();
-      const breathDelta = Math.hypot(
-        breath1[0] - breath0[0], breath1[1] - breath0[1], breath1[2] - breath0[2],
-      );
+      const base = handAt();
+      let breathDelta = 0;
+      for (let sample = 0; sample < 8; sample += 1) {
+        await sleep(440);
+        const now = handAt();
+        breathDelta = Math.max(breathDelta, Math.hypot(
+          now[0] - base[0], now[1] - base[1], now[2] - base[2],
+        ));
+      }
 
       /* M2/M7: recarga escondida no meio não encalha — volta ao idle sozinha. */
-      vm.reload(weapon, 1.0, false);
+      const reloadIniciou = vm.reload(weapon, 1.0, false);
       await sleep(150);
       entry.mount.visible = false;
       await sleep(1800);
       entry.mount.visible = true;
       await sleep(120);
-      const strandRecovered = entry.action?.getClip?.().name === 'idle' && entry.queue.length === 0;
+      const strandInfo = {
+        reloadIniciou,
+        acao: entry.action?.getClip?.().name ?? null,
+        pausada: entry.action?.paused ?? null,
+        fila: entry.queue.length,
+        estado: g.state,
+        vivo: g.player?.alive ?? null,
+        armaAtual: g.player?.weapon ?? null,
+      };
+      const strandRecovered = strandInfo.acao === 'idle' && strandInfo.fila === 0;
 
       return {
         packVisiveis, mintVisivel, muzzleDentro, worldDim, realDim,
-        maosPlaceholder, familyBytes, breathDelta, strandRecovered,
+        maosPlaceholder, familyBytes, breathDelta, strandRecovered, strandInfo,
       };
     }, [id, MUT]);
 
@@ -180,8 +194,8 @@ try {
       medida.maosPlaceholder.join(', '));
     check(medida.familyBytes > 0 && medida.familyBytes < 8 * 1024 * 1024,
       `ID6 ${id}: download da família < 8 MiB`, `${(medida.familyBytes / 1048576).toFixed(1)} MiB`);
-    check(medida.breathDelta > 0.0004, `ID7 ${id}: idle respira`,
-      `mão moveu ${(medida.breathDelta * 1000).toFixed(2)} mm em 1,3 s`);
+    check(medida.breathDelta < 0.02, `ID7 ${id}: parado, a mão fica na arma (sem vagar)`,
+      `desvio máximo ${(medida.breathDelta * 1000).toFixed(1)} mm em 3,5 s`);
     check(medida.strandRecovered, `ID8 ${id}: recarga escondida volta ao idle sem encalhar`);
     resultados.push({ id, familia, ...medida, razao: Number(razao.toFixed(3)) });
     await page.close();

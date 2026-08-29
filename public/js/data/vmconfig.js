@@ -4,8 +4,8 @@
 // Por família: mount (socket→gun-space, +Z=cano, autorado no editor), equip
 // (par General rifle|pistol), camShake (preset do recoil.json), reloadStyle.
 export const VM_FAMILY = {
-  // Resíduo da rodada 3 do crítico: a fresta mão-de-apoio↔guarda-mão é
-  // TRANSVERSAL (madeira acima/à direita da luva bakada) — desce/esquerda.
+  // Resíduo transversal da rodada 3 do crítico (arma↔mão). A inclinação CS do
+  // PACOTE inteiro vive no FAMILY_FRAME do authoredvm, não aqui.
   ak:       { ready: false, mount: { pos: [-0.02, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
   ar:       { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
   mp5:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag' },
@@ -40,7 +40,9 @@ const W = (family, extra = {}) => ({
 
 export const VM_WEAPON = {
   awp: W('sniper'),
-  ak: W('ak'),
+  // Tier 2: caixa do carregador MEDIDA (bloco MAG de weapons.js, gun-space em
+  // metros) reparentada ao bone Mag do pack — o pente sai na mão na recarga.
+  ak: W('ak', { parts: { mag: { box: { min: [-0.0165, -0.133, 0.015], max: [0.0165, 0.015, 0.191] }, bone: 'Mag' } } }),
   m4: W('ar'),
   mp5: W('mp5'),
   shotgun: W('shotgun'),
@@ -49,7 +51,7 @@ export const VM_WEAPON = {
   deagle: W('deagle', { recoilScale: 0.45 }),
   pistol: W('pistol'),
   m92: W('ak'),
-  akm: W('ak'),
+  akm: W('ak', { parts: { mag: { box: { min: [-0.0145, -0.132, 0.015], max: [0.0145, 0.018, 0.184] }, bone: 'Mag' } } }),
   g3: W('g3'),
   revolver38: W('revolver'),
   md97: W('ar'),

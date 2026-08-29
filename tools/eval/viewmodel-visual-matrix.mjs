@@ -65,6 +65,23 @@ try {
     };
 
     await snap('idle');
+    /* ANDANDO — a classe de estado que o print do dono (29/08) provou que a
+       matriz não cobria: registro mão↔arma tem que sobreviver ao movimento. */
+    const andou = await page.evaluate(() => {
+      const g = window.__game;
+      const antes = { x: g.player.pos.x, z: g.player.pos.z };
+      document.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyW', bubbles: true }));
+      return antes;
+    });
+    await page.waitForTimeout(700);
+    await snap('andando');
+    const movimento = await page.evaluate((antes) => {
+      const g = window.__game;
+      document.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyW', bubbles: true }));
+      return Math.hypot(g.player.pos.x - antes.x, g.player.pos.z - antes.z);
+    }, andou);
+    if (movimento < 0.5) console.warn(`aviso: célula andando de ${id} sem movimento real (${movimento.toFixed(2)} m)`);
+    await page.waitForTimeout(400);
     // Tiro REAL pelo caminho do jogo (a munição TEM que cair — régua do crítico);
     // vm.shoot() sozinho só anima e a célula saía idêntica ao idle.
     const magazine = await page.evaluate(() => {
@@ -82,8 +99,10 @@ try {
     await page.waitForTimeout(55);
     await snap('tiro');
     await page.evaluate((weapon) => window.__authoredVm.reload(weapon, 2.4, false), id);
-    await page.waitForTimeout(1000);
-    await snap('recarga');
+    await page.waitForTimeout(850);
+    await snap('recarga (saque do pente)');
+    await page.waitForTimeout(750);
+    await snap('recarga (encaixe)');
     /* ADS: dirige o blend direto no controlador — o probe não tem mouse. */
     await page.evaluate((weapon) => { window.__game.player.scoped = true; }, id);
     await page.waitForTimeout(500);
@@ -100,12 +119,14 @@ try {
       }])
       .png()
       .toBuffer()));
+    const columns = cells.length > 4 ? 3 : 2;
+    const rows = Math.ceil(cells.length / columns);
     const sheet = await sharp({
-      create: { width: CELL.width * 2, height: CELL.height * 2, channels: 3, background: '#101418' },
+      create: { width: CELL.width * columns, height: CELL.height * rows, channels: 3, background: '#101418' },
     }).composite(labelled.map((input, index) => ({
       input,
-      left: (index % 2) * CELL.width,
-      top: Math.floor(index / 2) * CELL.height,
+      left: (index % columns) * CELL.width,
+      top: Math.floor(index / columns) * CELL.height,
     }))).png().toBuffer();
     const target = path.join(OUT, `${id}.png`);
     await fs.writeFile(target, sheet);

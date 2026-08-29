@@ -162,6 +162,10 @@ const CLIP_ALIASES = Object.freeze({
 // O enquadramento move o pacote inteiro e preserva contatos. Armas longas ganham
 // distância ocular para o aspecto largo do navegador.
 const FAMILY_FRAME = Object.freeze({
+  // ak: âncora estilo CS 1.6 (dono, 29/08): arma BAIXA no canto direito, só o
+  // dorso no quadro. rotDeg gira o PACOTE (mãos+arma juntas) — pitch levanta a
+  // boca, yaw leva a boca à mira, roll mostra o topo do receiver como no 1.6.
+  ak:      { x: 0.092, y: -0.112, z: -0.150, fov: 84, rotDeg: [7, 13, -5] },
   pistol:  { x: 0.080, y: -0.040, z: -0.100, fov: 84 },
   revolver:{ x: 0.075, y: -0.042, z: -0.110, fov: 84 },
   shotgun: { x: 0.050, y: -0.045, z: -0.200, fov: 84 },
@@ -420,18 +424,6 @@ export class AuthoredViewModels {
       if (entry.queue.length > 0 || (entry.action && !entry.action.paused)) entry.mixer.update(step);
     }
     if (!active?.mount.visible) return;
-    // Camadas de movimento por contexto: respira parado, embala andando/correndo;
-    // ADS acalma tudo para a alça não dançar no eixo.
-    if (active.motion) {
-      const speed = Number(ctx.speed) || 0;
-      const moving = ctx.grounded !== false && speed > 0.5;
-      const runF = Math.min(1, Math.max(0, (speed - 4.2) / 1.8));
-      const walkF = moving ? Math.min(1, speed / 3.5) * (1 - runF) : 0;
-      const calm = 1 - 0.75 * this.adsAmount;
-      this._motionWeight(active.motion.breathe, (1 - 0.6 * walkF - 0.8 * runF) * calm, step);
-      this._motionWeight(active.motion.walk, walkF * calm, step);
-      this._motionWeight(active.motion.sprint, runF * (this.adsAmount > 0.3 ? 0 : 1), step);
-    }
     active.mixer.update(step);
     this._time += step;
     // Dono único do transform do mount: base ∘ arco de draw ∘ recuo (ADS: M6).
@@ -445,7 +437,12 @@ export class AuthoredViewModels {
       drawRx = THREE.MathUtils.lerp(0.24, 0, eased);
     }
     const recoil = this.recoil.update(step, this.adsAmount);
-    active.mount.rotation.set(drawRx + recoil.rx, recoil.ry, recoil.rz);
+    const baseRot = active.frame.rotDeg;
+    active.mount.rotation.set(
+      (baseRot ? baseRot[0] * DEG2RAD : 0) + drawRx + recoil.rx,
+      (baseRot ? baseRot[1] * DEG2RAD : 0) + recoil.ry,
+      (baseRot ? baseRot[2] * DEG2RAD : 0) + recoil.rz,
+    );
     // Recuo gira em torno do pivô autoral: corrige a translação que a rotação
     // fora do pivô induziria (a coronha recua, o cano sobe — não o contrário).
     _pivot.set(recoil.pivot[0], recoil.pivot[1], recoil.pivot[2]);
@@ -620,34 +617,11 @@ export class AuthoredViewModels {
   }
 
   _setupGeneralMotion(entry, general) {
-    if (!general) return;
-    entry.generalClips = general;
-    // One-shots gerais entram no mapa de clipes da família: _play/fila/finished
-    // funcionam igual para eles (equip de fuzil, pickup...).
-    for (const name of ['equip_rifle', 'unequip_rifle', 'unequip_pistol', 'pickup']) {
-      const clip = general.get(name);
-      if (clip && !entry.clips.has(name)) entry.clips.set(name, clip);
-    }
-    const additive = (name) => {
-      const clip = general.get(name);
-      if (!clip) return null;
-      const layered = THREE.AnimationUtils.makeClipAdditive(clip.clone());
-      const action = entry.mixer.clipAction(layered);
-      action.play();
-      action.setEffectiveWeight(0);
-      return { action, weight: 0 };
-    };
-    entry.motion = {
-      breathe: additive('idle_breath'),
-      walk: additive('walk'),
-      sprint: additive('sprint'),
-    };
-  }
-
-  _motionWeight(layer, target, step) {
-    if (!layer) return;
-    layer.weight += (target - layer.weight) * Math.min(1, step * 8);
-    layer.action.setEffectiveWeight(layer.weight);
+    // Camadas aditivas e one-shots dos clipes General DESLIGADOS (prints do
+    // dono, 29/08, com o jogador PARADO): o A_FP_Idle genérico tem floreio de
+    // braços no meio do ciclo e o delta aditivo arrancava o braço da pose da
+    // família. Só voltam com retarget de base por família. Estável > quebrado.
+    if (general) entry.generalClips = general;
   }
 
   _idle(entry) {
@@ -658,12 +632,6 @@ export class AuthoredViewModels {
     const action = entry.mixer.clipAction(clip);
     action.reset().play();
     action.paused = true;
-    // As camadas aditivas (respiração/walk/sprint) sobrevivem ao reset do idle.
-    if (entry.motion) {
-      for (const layer of Object.values(entry.motion)) {
-        if (layer) layer.action.reset().play().setEffectiveWeight(layer.weight);
-      }
-    }
     entry.mixer.update(0);
     entry.action = action;
     return true;

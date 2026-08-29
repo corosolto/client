@@ -65,9 +65,12 @@ export function splitParts(entry, wrap, partsCfg) {
     const mesh = wrap.getObjectByProperty('isMesh', true);
     if (!bone || !mesh?.geometry) continue;
     try {
+      // A caixa da spec está em METROS gun-space; o teste roda em wrap-local
+      // (unidades pré-normalização) — divide pelo norm, como muzzle/sight.
+      const norm = wrap.userData.metrics?.norm || 1;
       const box = new THREE.Box3(
-        new THREE.Vector3(...spec.box.min),
-        new THREE.Vector3(...spec.box.max),
+        new THREE.Vector3(...spec.box.min).divideScalar(norm),
+        new THREE.Vector3(...spec.box.max).divideScalar(norm),
       );
       const source = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry;
       const pos = source.attributes.position;
