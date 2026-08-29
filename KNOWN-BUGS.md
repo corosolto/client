@@ -3091,7 +3091,9 @@ Três invariantes vermelhas, todas medidas no GLB, 44/44 personagens:
 - **CHR1** — mediana fora da antropometria em 3 índices (cabeça/altura 0,223 vs 0,13;
   cintura/ombro 1,081 vs 0,74; braço/altura 0,278 vs 0,44). "Balão": ancap 1,93×,
   caminhoneiro 1,58×, sindicato 1,56× (+7).
-- **CHR3** — pés fora do chão: 24 afundando, 32 flutuando.
+- **CHR3** — pés fora do chão. Era 24 afundando/32 flutuando; depois da tabela e da
+  revisão de 30/08 (régua passou a medir o PÉ, não a bbox) restam **2 afundando**,
+  ambos por clipe com a raiz oscilando — ver a subseção CHR3 abaixo.
 - **CHR4** — 3 personagens com a palma nascendo **dentro** da silhueta do corpo.
 
 A causa de fundo é o re-rig (C1 do handoff): 18 modelos compartilham **um único esqueleto**
@@ -3130,6 +3132,55 @@ transplantada: 0,150 → 0,078 (critério era ≤ 0,10). Guarda: **invariante CH
 
 **Continua aberto:** a POSTURA encurvada (o personagem anda dobrado pra frente) é outro
 defeito, do retarget de clipe (C2 do handoff), e aparece igual antes e depois do reskin.
+
+#### CHR3 — a régua media casaco, não pé (REVISADO 30/08, branch fix/chr3-pes-no-chao)
+
+**Antes:** `afundando 5` — proerd -0,433 · canarinho -0,367 · ancap -0,140 · esbirro -0,138 ·
+dollynho -0,098 (mínimo por personagem, já com a tabela somada). O diagnóstico vigente era
+"clipe descendo a raiz inteira, não compensável". Ele estava **errado em 4 dos 5** — medido
+quadro a quadro no clipe inteiro (21 amostras), com a junta dominante de cada vértice:
+
+- **proerd/crouch e canarinho/crouch: os pés NUNCA saíram do chão.** Pé a **+0,003** e
+  **-0,007** respectivamente, constantes nos 6,7 s do clipe. Quem cruza o chão é o **rabo**,
+  skinado em `Hips`: bbox -0,433/-0,367. A régua lia a base da bbox e chamava de "afundando";
+  o offset de +43 cm que a leitura sugeriria faria os dois **voarem**. Imagem:
+  `scratchpad/shots/chr3_proerd_crouch_antes.png` — pé plantado, rabo atravessando o piso.
+- **dollynho/crouch -0,098, ancap/crouch -0,140, esbirro/crouch -0,138: pé enterrado com
+  desvio CONSTANTE** (amplitude ≤ 1 mm no clipe inteiro). O clipe desce a raiz um valor fixo;
+  o offset constante oposto recoloca o pé no chão em todo quadro, sem criar voo. O teto de
+  8 cm do gerador barrava esses três por magnitude — mas quem garante que offset grande não
+  vira "boneco voando" é a **constância**, não o tamanho. Entraram na tabela.
+- **ancap/walk (-0,052…-0,131), ancap/run (-0,022…-0,109), esbirro/run (-0,037…-0,134):
+  raiz OSCILANDO 8-11 cm dentro do ciclo.** Constante nenhuma resolve: pelo pior ponto, a
+  fase de apoio ficaria ~9 cm no ar — troca afundar por flutuar e a régua ficaria verde
+  mentindo. **Defeito do clipe, exige clipe novo** (mexer no GLB é proibido). Documentados
+  em `suspeitos` no `foot-offsets.json`, com a amplitude. Imagem do que restou:
+  `scratchpad/shots/chr3_ancap_walk_aberto.png`.
+
+**O que mudou no código:** a sonda (`char-probe.mjs`) mede o vértice mais baixo **entre os
+de canela/pé** (`RX_PE` — 44/44 têm 1 skin e as 8 juntas mixamo de perna, conferido) e grava
+a faixa `[min,max]` do pé por clipe em `faixaPorPose`; quando a bbox diverge do pé em > 5 cm
+grava `corpoPorPose` (é onde o rabo do proerd/canarinho ficou registrado: -0,433/-0,367).
+O gerador (`gen-foot-offsets.mjs`) compensa desvio > 8 cm **só com constância comprovada**
+(amplitude ≤ 2 cm) e nomeia o resto em `suspeitos`. Runtime (`glbchars.js`) não mudou: a
+tabela já era por personagem × clipe.
+
+**Depois:** `afundando 2` [ancap -0,131 (walk), esbirro -0,134 (run)] · flutuando 0.
+proerd, canarinho e dollynho **zerados**.
+
+**Mutação (Lei 3):** `offsets.dollynho.crouch = 0` → CHR3 acende `afundando 3` com
+`dollynho -0,098`. Re-gerar (`npm run feet`) volta a 2. A prova de que a régua nova não é
+afrouxamento é o esbirro/crouch: pé medido a -0,138 com a bbox a -0,143 — o caminho do pé
+continua mordendo quem afunda de verdade.
+
+**Antes × depois por personagem** (mínimo efetivo, m): proerd -0,433 → 0,000 ·
+canarinho -0,367 → 0,000 · dollynho -0,098 → 0,000 · ancap -0,140 → -0,131 (walk, clipe) ·
+esbirro -0,138 → -0,134 (run, clipe). Depois: `chr3_ancap_crouch_depois.png` e
+`chr3_esbirro_crouch_depois.png` (boneco erguido, pé na grade — o capuz encosta no HUD).
+
+**Segue aberto:** (1) os 3 clipes de locomoção oscilantes acima; (2) o rabo do
+proerd/canarinho cruzando o chão no crouch — outro defeito (malha × piso, não "pé fora do
+chão"), registrado em `corpoPorPose` e sem régua própria ainda.
 
 #### BUG-25 · O balão CONTINUA na tela de seleção, e a régua do reskin é cega para ele
 
