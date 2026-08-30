@@ -19,6 +19,11 @@ import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
+/* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
+   (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
+import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo } from './net.js';
+import { makeNetcode } from './netgame.js';
+import { FACCAO_NOME_UI } from './mapcat.js';
 
 /* ---------------- settings & nickname ---------------- */
 const SETTINGS_KEY = 'awpbr_settings';
@@ -282,7 +287,7 @@ function rebuildMenuBackdrop() {
 preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady(); }).catch(() => _splashSetReady());
 
 /* ---------------- screens ---------------- */
-const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
+const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
@@ -1052,14 +1057,24 @@ async function _startGame(team, charId, enemyFaction) {
   setHavanCarSeed((Math.random() * 1e9) | 0);
   /* SÓ OS PERSONAGENS DA PARTIDA: o roster é sorteado ANTES do preload e só esses GLBs sobem
      (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
-  const matchRoster = pickMatchRoster(faction, enemyFac, Math.max(1, Math.min(8, settings.bots || 4)), charId);
+  /* Tamanho do time é do SERVIDOR, nunca do ajuste local de bots (senão sobram corpos e o
+     casamento de ids fica adivinhando). */
+  const tamanhoTime = mpSessao ? mpSessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
+  /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
+     cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
+     rosto que apareceu na tela. Fora do multiplayer, sorteio normal. */
+  const matchRoster = mpSessao ? rosterDoServidor(side, charId) : pickMatchRoster(faction, enemyFac, tamanhoTime, charId);
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
   const _charsToLoad = _rosterGlb.length ? _rosterGlb : [...GLB_CHARS];
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
-  const matchWeapons = pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.min(8, settings.bots || 4)) });
+  /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
+     Pré-carregar as erradas faria a arma certa chegar como caixa procedural no meio do tiroteio. */
+  const matchWeapons = mpSessao
+    ? mpSessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
+    : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: tamanhoTime });
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
   try {
     if (!navOnly) {
@@ -1076,10 +1091,16 @@ async function _startGame(team, charId, enemyFaction) {
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
-    renderer, textures, sfx, settings,
+    renderer, textures, sfx,
+    settings: mpSessao ? { ...settings, bots: tamanhoTime } : settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
+    /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
+       sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
+    mpFactory: mpSessao ? makeNetcode : null,
+    net: mpSessao ? mpSessao.net : null,
+    dedicated: !!(mpSessao && mpSessao.net.espectador),
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
@@ -1327,8 +1348,9 @@ csItems.forEach((it) => {
     ui.click();
     switch (it.dataset.act) {
       case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
-      case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;
+      case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
+      case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
       /* MAPA saiu (mapa se escolhe no fluxo de partida); FEEDBACK entrou (07/08) */
       case 'feedback': markCurrent('feedback'); show('feedback-panel'); break;
       case 'apoie': markCurrent('apoie'); showSupport(); break;
@@ -1586,47 +1608,9 @@ const MAP_DESC = {
   upa_24h: 'Pronto-socorro lotado: salas de verdade, corredor em cruz e treta no fluorescente — 100% interno.',
   obras_prefeitura: 'Canteiro de obra eterna: terreno ondulado, buracos de escavação, tapumes e a treta do desvio de verba.',
 };
-/* Categoria é LISTA: um mapa pode ser ARENA e COMUNIDADE ao mesmo tempo.
- * 'AI' entra aqui no dia em que o primeiro mapa de agente chegar — o filtro,
- * a ficha e as tabs já entendem. Autor/data vêm do git (git log --follow do
- * arquivo do mapa); OFICIAL é o autor da casa. */
-const MAP_CATS = {
-  praca_poderes: ['CIDADES'], loja_h: ['CIDADES'],
-  ferro_velho: ['ARENA'], quebrada: ['FAVELA'],
-  piscina_treta: ['ARENA', 'COMUNIDADE'], posto_treta: ['ARENA', 'COMUNIDADE'], atacadao_treta: ['ARENA', 'COMUNIDADE'],
-  parque_treta: ['ARENA', 'COMUNIDADE'],
-  velho_oeste: ['ARENA', 'COMUNIDADE'],
-  penitenciaria: ['ARENA', 'COMUNIDADE'],
-  upa_24h: ['ARENA', 'COMUNIDADE'],
-  obras_prefeitura: ['ARENA', 'COMUNIDADE'],
-};
-const MAP_AUTOR = {
-  praca_poderes: 'Ruben Marcus', loja_h: 'Ruben Marcus',
-  ferro_velho: 'Ruben Marcus', quebrada: 'Ruben Marcus', atacadao_treta: 'Emerson Garrido',
-  piscina_treta: 'Dalton Fontes', posto_treta: 'Emerson Garrido',
-  parque_treta: 'Ubiracy Santos', velho_oeste: 'Ubiracy Santos', penitenciaria: 'Ubiracy Santos',
-  upa_24h: 'Emerson Garrido', obras_prefeitura: 'Emerson Garrido',
-};
-const MAP_DATA = {
-  praca_poderes: '19/07/2026', loja_h: '31/07/2026', ferro_velho: '31/07/2026',
-  quebrada: '04/08/2026', atacadao_treta: '14/08/2026',
-  piscina_treta: '17/07/2026', posto_treta: '13/08/2026',
-  parque_treta: '17/08/2026', velho_oeste: '17/08/2026', penitenciaria: '17/08/2026',
-  upa_24h: '13/08/2026', obras_prefeitura: '13/08/2026',
-};
-const CAT_DESC = {
-  TODOS: 'O acervo inteiro, do mais jogado ao menos jogado.',
-  OFICIAIS: 'Mapas oficiais da casa.',
-  ARENA: 'Combate fechado e simétrico — o duelo de angulação clássico.',
-  FAVELA: 'Verticalidade de laje, beco e sombra: quem domina o alto dita o round.',
-  CIDADES: 'Marcos do Brasil em escala de treta: concreto, calçada e linha reta.',
-  COMUNIDADE: 'Mapas feitos pela comunidade.',
-  AI: 'Construídos pelos agentes de IA da casa.',
-};
-const AUTOR_CASA = 'Ruben Marcus';
-const catsDe = (id) => MAP_CATS[id] || ['ARENA'];
-const autorDe = (id) => MAP_AUTOR[id] || AUTOR_CASA;
-const oficialDe = (id) => autorDe(id) === AUTOR_CASA;
+/* Catálogo de mapas (categoria/autoria/data): fonte única em mapcat.js — o servidor do
+   multiplayer importa a MESMA tabela para as rotações das salas oficiais. */
+import { MAP_CATS, MAP_AUTOR, MAP_DATA, CAT_DESC, AUTOR_CASA, catsDe, autorDe, oficialDe } from './mapcat.js';
 let mapCategory = 'TODOS';
 let mapAutorFiltro = 'TODOS';
 function autoresDeComunidade() {
@@ -2701,4 +2685,311 @@ if (inspectionScreen) {
 } else if (testMode && params.get('auto')) {
   const [team, char] = params.get('auto').split(',');
   startGame(team || 'E', char || CHARACTERS[0].id);
+} else if (params.get('sala')) {
+  /* Chegou por LINK de convite (/sala/BR-7K3M redireciona pra cá). Espera a splash sair antes
+     de abrir a rede: sem gesto do usuário o áudio nem inicia e o jogo abre mudo. */
+  const entrarQuandoPuder = () => window.__mpConvite?.(params.get('sala'));
+  if (document.getElementById('boot-splash')) document.addEventListener('click', entrarQuandoPuder, { once: true });
+  else entrarQuandoPuder();
+}
+
+/* MULTIPLAYER — navegador de servidores, salas e sessão de rede. Aqui só se escolhe ONDE e
+   EM QUE sala; a autoridade é do servidor. Desenho e decisões: docs/MULTIPLAYER.md. */
+
+/* `matchRoster` a partir do elenco do servidor. Personagem desconhecido cai no fallback em
+   vez de sumir e desalinhar o casamento de ids. */
+function rosterDoServidor(lado, charId) {
+  const roster = mpSessao.net.meta.roster || [];
+  const meu = mpSessao.net.yourEnt;
+  const def = (r) => CHARACTERS.find((c) => c.id === r.char) || CHARACTERS[0];
+  return {
+    allyDefs: roster.filter((r) => r.team === lado && r.id !== meu).map(def),
+    enemyDefs: roster.filter((r) => r.team !== lado).map(def),
+  };
+}
+
+/* Sessão de rede em curso. `null` = single-player, e é o estado normal: nada de rede roda
+   até alguém entrar numa sala. */
+let mpSessao = null;
+let mpNoAtual = null;
+let mpNos = [];
+let mpTimerLista = null;
+
+const mpEl = (id) => document.getElementById(id);
+function mpErro(msg) {
+  const e = mpEl('mp-erro'); if (!e) return;
+  e.hidden = !msg; e.textContent = msg || '';
+}
+// Faixas de ping: o limiar não é gosto — acima de ~120 ms o tiro passa a depender de
+// lag compensation pra tudo, e é aí que começa o "morri atrás da parede".
+const mpQualidade = (ms) => (ms == null ? 'ruim' : ms <= 60 ? 'bom' : ms <= 120 ? 'medio' : 'ruim');
+
+async function abrirMultiplayer() {
+  show('mp-panel');
+  mpErro('');
+  mpMontarFormulario();
+  const nos = mpEl('mp-nos');
+  if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
+  mpEl('mp-salas').innerHTML = '';
+  mpNos = await sondarNos(NOS);
+  // ordena por ping: o servidor do jogador tem que ser o PRIMEIRO da lista, não o do dono
+  mpNos.sort((a, b) => (a.ping == null ? 1e9 : a.ping) - (b.ping == null ? 1e9 : b.ping));
+  const local = new URLSearchParams(location.search).get('mp');
+  if (local) {
+    // ?mp=1 é a máquina local; ?mp=host:porta é um servidor apontado à mão (não confundir os dois).
+    const u = mpUrls(local);
+    const nome = local === '1' ? 'LOCAL (desenvolvimento)' : `SERVIDOR DA URL · ${local}`;
+    const sonda = await sondarNos([{ id: 'url', nome, url: u.ws }]);
+    mpNos.unshift(sonda[0]);
+  }
+  mpDesenharNos();
+  const primeiro = mpNos.find((n) => n.online) || mpNos[0];
+  if (primeiro) mpSelecionarNo(primeiro);
+  else mpErro('Nenhum servidor respondeu. Pode ser a sua conexão, ou os servidores estão fora do ar.');
+}
+
+function mpDesenharNos() {
+  const box = mpEl('mp-nos'); if (!box) return;
+  box.innerHTML = '';
+  for (const n of mpNos) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mp-no'; b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', String(mpNoAtual && mpNoAtual.id === n.id));
+    b.dataset.online = n.online ? '1' : '0';
+    const ping = n.online ? `<span class="mp-ping" data-q="${mpQualidade(n.ping)}">${n.ping} ms</span>` : '<span class="mp-ping" data-q="ruim">fora do ar</span>';
+    b.innerHTML = `<span class="mp-no-nome">${n.nome}</span>`
+      + `<span class="mp-no-sub">${ping} · ${n.jogadores} jogando · ${n.salas} sala(s)</span>`;
+    b.onclick = () => { ui.click(); mpSelecionarNo(n); };
+    box.appendChild(b);
+  }
+}
+
+function mpSelecionarNo(no) {
+  mpNoAtual = no;
+  mpDesenharNos();
+  mpAtualizarSalas();
+  // a lista se refaz sozinha: lotação muda o tempo todo e uma lista velha manda o jogador
+  // pra uma sala que já encheu.
+  clearInterval(mpTimerLista);
+  mpTimerLista = setInterval(() => { if (!document.getElementById('mp-panel').classList.contains('hidden')) mpAtualizarSalas(); }, 5000);
+}
+
+async function mpAtualizarSalas() {
+  const box = mpEl('mp-salas'); if (!box || !mpNoAtual) return;
+  let salas;
+  try { salas = await listRooms(mpNoAtual.http); }
+  catch { box.innerHTML = '<div class="mp-vazio">não deu pra falar com esse servidor.</div>'; return; }
+  if (!salas.length) { box.innerHTML = '<div class="mp-vazio">nenhuma sala aberta. crie a sua abaixo.</div>'; return; }
+  // oficiais primeiro, depois as mais cheias (sala com gente é sala boa de entrar)
+  salas.sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players));
+  box.innerHTML = '';
+  for (const r of salas) {
+    const div = document.createElement('div');
+    div.className = 'mp-sala';
+    const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
+      + (r.private ? '<span class="mp-tag" data-t="privada">🔒 PRIVADA</span>' : '')
+      + (r.ctf ? '<span class="mp-tag">CTF</span>' : '');
+    div.innerHTML =
+      `<div class="mp-sala-nome">${r.name}${tags}</div>`
+      + `<div class="mp-lot"><b>${r.players}</b>/${r.max}${r.spectators ? ` <span style="opacity:.6">+${r.spectators} 👁</span>` : ''}</div>`
+      + `<div class="mp-acoes"></div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`;
+    const acoes = div.querySelector('.mp-acoes');
+    /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
+       quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
+       cheio apaga em vez de sumir, senão a sala parece ter menos opção do que tem. */
+    for (const lado of ['E', 'B']) {
+      const livres = (r.livre && r.livre[lado]) || 0;
+      const b = document.createElement('button');
+      b.className = 'mp-entrar'; b.type = 'button';
+      b.dataset.lado = lado;
+      b.textContent = `${lado === 'E' ? r.nomeE : r.nomeB} ${livres}`;
+      b.title = livres ? `Entrar no time ${lado === 'E' ? r.nomeE : r.nomeB} (${livres} vaga(s))` : 'Esse lado está cheio';
+      b.disabled = !livres;
+      b.onclick = () => { ui.click(); mpEntrar(r, lado); };
+      acoes.appendChild(b);
+    }
+    const assistir = document.createElement('button');
+    assistir.className = 'mp-assistir'; assistir.type = 'button'; assistir.textContent = 'ASSISTIR';
+    assistir.title = 'Entrar como espectador — dá pra ir pro time depois, quando abrir vaga';
+    assistir.onclick = () => { ui.click(); mpEntrar(r, 'spec'); };
+    const convite = document.createElement('button');
+    convite.className = 'mp-assistir'; convite.type = 'button'; convite.textContent = r.convite || 'CONVITE';
+    convite.title = 'Copiar o link de convite desta sala';
+    convite.onclick = () => { ui.click(); mpCopiarConvite(r.convite, convite); };
+    acoes.append(assistir, convite);
+    box.appendChild(div);
+  }
+}
+
+/* Copia o link e CONFIRMA na própria etiqueta. Botão de copiar sem retorno visual é o caso
+   clássico de a pessoa clicar três vezes sem saber se funcionou. */
+async function mpCopiarConvite(convite, botao) {
+  if (!convite) return;
+  const link = linkDeConvite(convite);
+  const antes = botao ? botao.textContent : '';
+  try { await navigator.clipboard.writeText(link); if (botao) botao.textContent = 'COPIADO!'; }
+  catch { if (botao) botao.textContent = convite; mpErro(`Copie à mão: ${link}`); }
+  if (botao) setTimeout(() => { botao.textContent = antes; }, 1600);
+}
+
+/* Entrada por LINK (?sala=BR-7K3M). É o caminho de quem recebeu o convite no zap: abre o jogo
+   já dentro da sala, sem passar pela lista. Sala privada ainda pede senha — o link diz ONDE é
+   a sala, não que você tem permissão. */
+async function mpEntrarPorConvite(txt) {
+  const alvo = parseConvite(txt);
+  show('mp-panel'); mpMontarFormulario();
+  if (!alvo) return mpErro(`Convite inválido: "${txt}". O formato é REGIÃO-CÓDIGO, tipo BR-7K3M.`);
+  const http = httpDoNo(alvo.no);
+  mpNoAtual = { ...alvo.no, http };
+  const sala = await salaPorConvite(http, alvo.codigo);
+  if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
+  mpEntrar(sala, 'auto');
+}
+window.__mpConvite = mpEntrarPorConvite;
+
+function mpMontarFormulario() {
+  const e = mpEl('mp-fac-e'), b = mpEl('mp-fac-b');
+  if (e && !e.options.length) {
+    for (const [id, nome] of Object.entries(FACCAO_NOME_UI)) {
+      e.add(new Option(nome, id)); b.add(new Option(nome, id));
+    }
+    e.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
+    b.add(new Option('SORTEAR A CADA PARTIDA', 'random'));
+    e.value = 'E'; b.value = 'B';
+  }
+  const priv = mpEl('mp-privada'), wrap = mpEl('mp-senha-wrap');
+  if (priv && wrap) priv.onchange = () => { wrap.hidden = !priv.checked; };
+  const criar = mpEl('mp-criar');
+  if (criar) criar.onclick = async () => {
+    ui.click(); mpErro('');
+    if (!mpNoAtual) return mpErro('Escolha um servidor primeiro.');
+    const privada = mpEl('mp-privada').checked;
+    const senha = mpEl('mp-senha').value.trim();
+    if (privada && !senha) return mpErro('Sala privada precisa de senha.');
+    try {
+      const sala = await createRoom(mpNoAtual.http, {
+        name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
+        faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
+        ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+      });
+      mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto', senha);
+    } catch (err) {
+      mpErro(err && err.message === 'http_429'
+        ? 'Esse servidor está no limite de salas. Tente outra região.'
+        : 'Não deu pra criar a sala. Tente de novo.');
+    }
+  };
+  const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
+  const back = mpEl('mp-back'); if (back) back.onclick = () => { ui.click(); clearInterval(mpTimerLista); show('main-menu'); };
+}
+
+/* Abre o socket e SÓ ENTÃO começa a partida. A ordem importa: o welcome traz o mapa, as
+   facções e o modo que o servidor está rodando — é ele que manda, não o que estava
+   escolhido no menu. Começar antes seria carregar o mapa errado e trocar na cara do jogador. */
+async function mpEntrar(sala, team = 'auto', senha = '') {
+  mpErro('');
+  const nick = ($('nick-input').value || '').trim();
+  if (sala.private && !senha) {
+    senha = (prompt('Essa sala é privada. Senha:') || '').trim();
+    if (!senha) return;
+  }
+  const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
+    nome: nick || null, room: sala.id, pw: senha, team,
+  });
+  let welcome;
+  try { welcome = await net.connect(); }
+  catch (err) {
+    const m = String(err && err.message || '');
+    return mpErro(m.includes('bad_password') ? 'Senha errada.'
+      : m.includes('room_full') ? 'Sala cheia.'
+      : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : 'Não deu pra conectar nesse servidor.');
+  }
+  clearInterval(mpTimerLista);
+  mpSessao = { net, sala, no: mpNoAtual };
+  /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê. */
+  if (MAPS[welcome.map]) currentMap = welcome.map;
+  matchMode = welcome.ctf ? 'ctf' : 'rounds';
+  modoEscolhido = true;
+  net.onClose = () => mpDesconectou();
+  net.onSlot = (m) => mpAtualizarBarraSpec(m);
+  // o lado do jogador vem do servidor; a facção também (a sala LIVRE sorteia)
+  const lado = welcome.yourTeam === 'B' ? 'B' : 'E';
+  const faccaoMinha = lado === 'B' ? welcome.faccaoB : welcome.faccaoE;
+  const faccaoDele = lado === 'B' ? welcome.faccaoE : welcome.faccaoB;
+  /* Seu personagem é o do CORPO que o servidor te deu — no multiplayer o corpo vem antes da
+     escolha (você entra numa vaga que já existe, com um sujeito dentro). Espectador não tem
+     corpo: usa qualquer um da facção só para o preload não ficar vazio. */
+  const meuNoRoster = (welcome.roster || []).find((r) => r.id === welcome.yourEnt);
+  const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
+    || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
+  await startGame(lado, personagem, faccaoDele);
+  mpAtualizarBarraSpec(welcome);
+}
+
+/* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
+   o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
+function mpDesconectou() {
+  if (!mpSessao) return;
+  mpSessao = null;
+  mpFecharBarraSpec();
+  try { if (game) game.dispose(); } catch { /* já foi */ }
+  game = null; window.__game = null;
+  try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
+  show('mp-panel');
+  mpErro('A conexão com o servidor caiu. Entre de novo.');
+  abrirMultiplayer();
+}
+
+/* Barra do espectador: quem está assistindo tem que saber que está assistindo, de quem é a
+   visão, e como entrar em campo quando abrir vaga. Sem ela o modo espectador é
+   indistinguível de "o jogo travou olhando pro outro". */
+function mpAtualizarBarraSpec(estado) {
+  if (!mpSessao) return;
+  const espectando = !!(estado && estado.espectador);
+  let bar = document.getElementById('mp-spec-bar');
+  if (!espectando) { mpFecharBarraSpec(); return; }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'mp-spec-bar';
+    bar.innerHTML = '<span>ASSISTINDO <b id="mp-spec-quem">—</b></span>'
+      + '<button id="mp-spec-prev" type="button">◂ ANTERIOR</button>'
+      + '<button id="mp-spec-next" type="button">PRÓXIMO ▸</button>'
+      + '<button id="mp-spec-e" type="button">ENTRAR NO TIME E</button>'
+      + '<button id="mp-spec-b" type="button">ENTRAR NO TIME B</button>'
+      + '<button id="mp-spec-sair" type="button">SAIR</button>';
+    document.body.appendChild(bar);
+    bar.querySelector('#mp-spec-prev').onclick = () => window.__game?._mp?.trocarAlvo(-1);
+    bar.querySelector('#mp-spec-next').onclick = () => window.__game?._mp?.trocarAlvo(1);
+    bar.querySelector('#mp-spec-e').onclick = () => mpSessao?.net.pedirTime('E');
+    bar.querySelector('#mp-spec-b').onclick = () => mpSessao?.net.pedirTime('B');
+    bar.querySelector('#mp-spec-sair').onclick = () => { mpSair(); };
+    /* Atualiza a lotação dos botões pelo SNAPSHOT (é o servidor que diz se há vaga). Um botão
+       "ENTRAR" que está sempre aceso e não faz nada é pior que um botão apagado. */
+    bar._timer = setInterval(() => {
+      const mp = window.__game?._mp;
+      const vagas = mp?.vagas;
+      const quem = document.getElementById('mp-spec-quem');
+      if (quem) quem.textContent = mp?.nomeAlvo || '—';
+      const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
+      if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR NO TIME E${vagas ? ` (${vagas.E})` : ''}`; }
+      if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR NO TIME B${vagas ? ` (${vagas.B})` : ''}`; }
+    }, 400);
+  }
+}
+function mpFecharBarraSpec() {
+  const bar = document.getElementById('mp-spec-bar');
+  if (bar) { clearInterval(bar._timer); bar.remove(); }
+}
+/* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
+   liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
+function mpSair() {
+  const s = mpSessao; mpSessao = null;
+  mpFecharBarraSpec();
+  try { s?.net.close(); } catch { /* já fechado */ }
+  try { if (game) game.dispose(); } catch { /* já foi */ }
+  game = null; window.__game = null;
+  try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
+  show('main-menu');
 }
