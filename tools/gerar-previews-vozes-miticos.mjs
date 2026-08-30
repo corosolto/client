@@ -33,20 +33,25 @@ const DESIGNS = [
   // TEXTO de amostra carrega as expressões regionais (sotaque também vem
   // do texto no TTS). Maria Bonita: redesign do zero — firme, seca, deboche,
   // NUNCA doce/locutora.
+  // Última rodada (30/08): Lampião r2-p1 e Maria r1-p2 "mais próximo, mas
+  // falta o sotaque puxado do interior de Pernambuco". Três alavancas:
+  // descrição EXAGERANDO o sotaque (arquétipos culturais — repentista,
+  // cordel, feira — nunca pessoa específica), TEXTO grafado em dialeto
+  // (a pronúncia sai da grafia) e guidance_scale alto pra colar na descrição.
   {
     id: 'lampiao',
-    texto: 'Ôxente! Arre égua! Aqui é o cangaço, cabra frouxo! Vixe Maria! Lascou-se! Quem mandou pisar no meu sertão?',
+    texto: 'Ôxente, môço! Vôte! Arre égua, cabra da peste! Aqui é o cangaço, visse?! Lascô-se! Óia pra isso, home!',
     rodadas: [
-      'An older, deeper Brazilian bandit leader from the arid Pernambuco backlands with a THICK heavy rural Northeastern Brazilian sertanejo accent, NOT neutral Brazilian Portuguese: hard unpalatalized t/d, open stressed vowels, fast clipped machine-gun delivery typical of sertão speech. Gravelly weathered voice with a low growl that snaps into sharp barked commands. Dusty, dangerous, charismatic.',
-      'A weathered cangaço outlaw chief from the deep rural sertão of Pernambuco, Brazil. Very strong regional Northeastern sertanejo accent — hard t and d never palatalized, wide open vowels, rapid-fire clipped staccato phrasing of backlands speech. Raspy sun-dried voice, commanding theatrical menace with folk cordel musicality.',
+      'An older, deeper Brazilian bandit leader from the arid Pernambuco backlands with an EXTREMELY thick, exaggerated rural Pernambuco backlands (sertão/agreste) Brazilian Portuguese accent — the strong regional accent of traditional repentista and cordel singers and rural feira vendors from interior Pernambuco. Heavily nasal open vowels, hard unpalatalized t/d, clipped rapid-fire delivery. The accent must be UNMISTAKABLE, not neutral Brazilian at all. Gravelly weathered voice with a low growl that snaps into sharp barked commands.',
+      'A weathered cangaço outlaw chief who speaks exactly like a traditional repentista challenge-singer at a rural interior-Pernambuco feira: extremely marked, exaggerated sertão/agreste accent with heavy nasal twang, wide open vowels, hard t and d never palatalized, machine-gun clipped syllables and improvised-verse musicality. Nothing neutral about the accent — pure deep-backlands Pernambuco. Raspy, sun-dried, dangerous and charismatic.',
     ],
   },
   {
     id: 'mariabonita',
-    texto: 'Ôxente, caiu foi ligeiro! Assina embaixo: Maria. Um tiro só, cabra — mais que isso é desperdício. Vixe!',
+    texto: 'Ôxente, caiu foi ligeiro, visse? Assina embaixo: Maria. Vôte! Um tiro só, cabra — mais qui isso é disperdício.',
     rodadas: [
-      'A Brazilian woman around thirty from the rural Pernambuco sertão, outlaw queen of the cangaço. THICK Northeastern sertanejo accent, NOT neutral: hard unpalatalized t/d, open stressed vowels, quick clipped regional phrasing. Firm, dry, commanding voice of a woman who gives orders, a thread of mockery underneath, gritty low timbre. Never sweet, never announcer-like.',
-      'A tough Brazilian outlaw woman from the northeastern backlands, early thirties. Strong rural sertanejo accent with hard t and d and open stressed vowels, fast sharp delivery. Bone-dry sarcastic confidence, slightly husky voice with sun and dust in it, quiet authority that cuts — no softness, no sweetness, no politeness.',
+      'A Brazilian woman around thirty from the rural Pernambuco sertão, outlaw queen of the cangaço, with an EXTREMELY thick, exaggerated rural interior-Pernambuco (sertão/agreste) accent — the unmistakable regional speech of rural feira vendors and cordel reciters from the Pernambuco backlands, NOT neutral Brazilian at all. Heavily nasal open vowels, hard unpalatalized t/d, quick clipped phrasing. Firm, dry, commanding voice of a woman who gives orders, a thread of mockery underneath, gritty low timbre. Never sweet, never announcer-like.',
+      'A tough Brazilian outlaw woman from the deep Pernambuco backlands, early thirties, who talks like the women selling at a rural agreste feira: exaggerated, unmistakable interior-Pernambuco accent with heavy nasal twang, wide open vowels, hard t/d, rapid clipped sertão phrasing. Bone-dry sarcastic confidence, slightly husky sun-and-dust voice, quiet cutting authority — no softness, no sweetness, nothing neutral in the accent.',
     ],
   },
   {
@@ -130,7 +135,8 @@ for (const p of lote) {
         const res = await fetch(`${API}/text-to-voice/create-previews`, {
           method: 'POST',
           headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ voice_description: desc, text: p.texto }),
+          // guidance_scale alto = colar mais na descrição (aceito pela API; medido 30/08).
+          body: JSON.stringify({ voice_description: desc, text: p.texto, guidance_scale: 40 }),
         });
         if (res.status === 401 || res.status === 403) {
           const corpo = (await res.text()).slice(0, 250);

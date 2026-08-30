@@ -31,31 +31,35 @@ rachada de chefe de bando, sotaque sertanejo pernambucano CARREGADO (t/d
 duros, vogais abertas), fala RÁPIDA e cortada de sertão (tom da r2-p1
 aprovado; empurrar sotaque e expressões regionais).
 
+Grafia dialetal de propósito — no TTS a pronúncia sai da grafia.
+
 | slug | fala | direção de performance |
 |---|---|---|
 | oxente (kill) | "Ôxente!" | espanto-deboche rápido, meio riso |
+| vote (kill) | "Vôte!" | interjeição seca de espanto, cuspida |
 | arre-egua (kill) | "Arre égua!" | exclamação de impacto, seca e alta |
-| cabra-frouxo (kill) | "Cabra frouxo!" | desprezo staccato, cusparada de som |
-| vixe (kill) | "Vixe!" | curtíssimo, quase riso engolido |
-| lascou-se (kill) | "Lascou-se!" | sentença alegre, rápida |
-| ave-maria (kill) | "Ave Maria!" | vitória beata de arma na mão |
-| cordel (rara) | "Mais um pro cordel." | narrador de feira, rápido e cantado |
-| pisar (rara) | "Quem mandou pisar no meu sertão?" | pergunta retórica em rajada, ameaça mansa |
+| cabra-da-peste (kill) | "Cabra da peste!" | desprezo staccato, rajada |
+| visse (kill) | "Visse?!" | provocação curta, riso engolido |
+| lascou-se (kill) | "Lascô-se!" | sentença alegre, rápida |
+| oia (rara) | "Óia pra isso, môço!" | deboche de feira, cantado |
+| pisar (rara) | "Quem mandou pisá no meu sertão?" | pergunta retórica em rajada, ameaça mansa |
 
 ## Maria Bonita (`mariabonita`)
 **Casting (redesign do zero 30/08):** Voice Design — mulher sertaneja do
 cangaço, ~30 anos, MESMA família de sotaque do Lampião, voz firme e SECA de
 quem comanda, um fio de deboche — NUNCA doce, NUNCA locutora.
 
+Grafia dialetal de propósito — no TTS a pronúncia sai da grafia.
+
 | slug | fala | direção de performance |
 |---|---|---|
-| caiu-ligeiro (kill) | "Caiu ligeiro!" | constatação rápida e cortada, deboche seco |
+| caiu-ligeiro (kill) | "Caiu ligeiro, visse?" | constatação rápida e cortada, deboche seco |
 | assina-maria (kill) | "Assina: Maria." | carimbo de autoria, sem festejar |
 | um-tiro (kill) | "Um tiro só." | fria, era óbvio |
-| vixe-errou (kill) | "Vixe, errou!" | deboche curto pro alvo que atirou antes |
+| vote-errou (kill) | "Vôte, errou!" | deboche curto pro alvo que atirou antes |
 | arretada (kill) | "Arretada, eu." | orgulho sertanejo, ombro erguido |
 | de-nada-cabra (kill) | "De nada, cabra." | ironia seca, favor prestado |
-| oxente-rara (rara) | "Ôxente, caiu foi ligeiro! Assina embaixo: Maria." | rajada sertaneja + assinatura |
+| oxente-rara (rara) | "Ôxente, caiu foi ligeiro, visse? Assina embaixo: Maria." | rajada sertaneja + assinatura |
 
 ## Saci-Pererê (`saci`)
 **Casting:** moleque travesso, agudo e rápido, risada sempre engatilhada.
@@ -111,9 +115,9 @@ quem comanda, um fio de deboche — NUNCA doce, NUNCA locutora.
 
 ## Lobisomem (`lobisomem`) — SEM FALA HUMANA
 **Direção (veredito 30/08):** o Lobisomem não fala — só uiva, rosna e late.
-Set de SFX via ElevenLabs Sound Effects (`tools/gerar-sfx-lobisomem.mjs`),
-2 tomadas por som; comparação com eleven_v3 de onomatopeia gerada junto
-(`--fallback-v3`).
+Set de SFX via ElevenLabs Sound Effects (`tools/gerar-sfx-lobisomem.mjs`).
+**SET FINAL APROVADO: as tomadas `*-t2.mp3`** (as t1 e a comparação
+eleven_v3 ficam só de arquivo).
 
 | slug | som | uso |
 |---|---|---|

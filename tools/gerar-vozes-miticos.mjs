@@ -58,27 +58,28 @@ const MITICOS = [
   // dono escolher os previews. Falas já com as expressões regionais.
   {
     id: 'lampiao', vozes: ['silas', 'jose-rural'],
+    // Grafia dialetal de propósito — a pronúncia sai da grafia no TTS.
     falas: [
       ['oxente', 'Ôxente!'],
+      ['vote', 'Vôte!'],
       ['arre-egua', 'Arre égua!'],
-      ['cabra-frouxo', 'Cabra frouxo!'],
-      ['vixe', 'Vixe!'],
-      ['lascou-se', 'Lascou-se!'],
-      ['ave-maria', 'Ave Maria!'],
-      ['cordel', 'Mais um pro cordel.'],
-      ['pisar', 'Quem mandou pisar no meu sertão?'],
+      ['cabra-da-peste', 'Cabra da peste!'],
+      ['visse', 'Visse?!'],
+      ['lascou-se', 'Lascô-se!'],
+      ['oia', 'Óia pra isso, môço!'],
+      ['pisar', 'Quem mandou pisá no meu sertão?'],
     ],
   },
   {
     id: 'mariabonita', vozes: ['nayara', 'marina'],
     falas: [
-      ['caiu-ligeiro', 'Caiu ligeiro!'],
+      ['caiu-ligeiro', 'Caiu ligeiro, visse?'],
       ['assina-maria', 'Assina: Maria.'],
       ['um-tiro', 'Um tiro só.'],
-      ['vixe-errou', 'Vixe, errou!'],
+      ['vote-errou', 'Vôte, errou!'],
       ['arretada', 'Arretada, eu.'],
       ['de-nada-cabra', 'De nada, cabra.'],
-      ['oxente-rara', 'Ôxente, caiu foi ligeiro! Assina embaixo: Maria.'],
+      ['oxente-rara', 'Ôxente, caiu foi ligeiro, visse? Assina embaixo: Maria.'],
     ],
   },
   {
