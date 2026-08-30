@@ -41,8 +41,8 @@ expect(!/characterSelectVoice/.test(selectBody),
   'VOICE3 selectChar fala durante a montagem automática da tela');
 expect(!/row\?\.click\(\)/.test(main),
   'VOICE4 a query string simula clique humano e dispara fala');
-expect(/releases\/download\/audio-pack-v7\/audio-pack\.zip/.test(fetchAudio),
-  'VOICE12 o build não baixa o pacote com a voz corrigida do Faria Limer (e o menu Suno do v7)');
+expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
+  'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
 
 globalThis.location ||= { search: '' };
 const { Sfx } = await import('../../public/js/audio.js');
