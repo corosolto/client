@@ -123,7 +123,7 @@ try {
     throw new Error(`perfil/suporte do menu inválido: ${JSON.stringify(menuProfile)}`);
   }
   const registeredMaps = await page.evaluate(async () => (await import('/js/maps.js')).MAP_IDS.length);
-  await page.click('.cs-item[data-act="jogar"]');
+  // SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
   await page.click('.cs-item[data-act="sp"]');
   await page.waitForSelector('#map-screen', { state: 'visible' });
   const modeMap = await page.evaluate(() => ({
@@ -151,8 +151,8 @@ try {
   }
   await page.screenshot({ path: `${OUT}/01_mata-mata-abre-mapas.png` });
   await open('menu', '01', '#main-menu');
-  await page.click('.cs-item[data-act="jogar"]');
-  await page.click('.cs-item[data-act="ctf"]');
+  await page.click('.cs-item[data-act="sp"]');
+  await page.evaluate(() => document.getElementById('map-mode')?.click());   // CTF entra pelo interruptor de modo da tela de mapa
   await page.waitForSelector('#map-screen', { state: 'visible' });
   const ctfMap = await page.evaluate(() => ({
     mode: document.getElementById('setup-title')?.textContent,

@@ -1329,25 +1329,15 @@ function openModeMap(mode, title, act) {
   renderMapScreen();
   show('map-screen');
 }
-/* JOGAR abre os DOIS modos num submenu em vez de ocupar duas linhas da lista: o
-   redesign fecha o menu principal em 4 itens, e os modos são escolha de segundo
-   nível. `sp` e `ctf` seguem exatamente como estavam — só ganharam um pai. */
-const csJogar = document.querySelector('.cs-item[data-act="jogar"]');
-const csModos = $('cs-modos');
-function abreModos(abrir) {
-  if (!csModos || !csJogar) return;
-  const on = abrir === undefined ? csModos.hidden : abrir;
-  csModos.hidden = !on;
-  csJogar.setAttribute('aria-expanded', String(on));
-  csJogar.classList.toggle('is-open', on);
-}
+/* MULTIPLAYER e SINGLE PLAYER são PRIMEIRA INSTÂNCIA do menu (pedido do dono, 30/08):
+   o degrau "JOGAR ▸ submenu" saiu — quem abre o jogo escolhe o modo no primeiro clique.
+   `sp` e `ctf` seguem exatamente como estavam; só o caso 'jogar' morreu com o botão. */
 csItems.forEach((it) => {
   it.onmouseenter = () => ui.hover();
   it.onclick = () => {
     if (performance.now() - _entradaEm < ENTRADA_MS) return;
     ui.click();
     switch (it.dataset.act) {
-      case 'jogar': abreModos(); markCurrent(csModos && !csModos.hidden ? 'jogar' : null); break;
       case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;
       case 'ctf':   openModeMap('ctf', 'CAPTURE THE FLAG', 'ctf'); break;
       case 'mp':    markCurrent('mp'); abrirMultiplayer(); break;
@@ -2716,9 +2706,24 @@ let mpNos = [];
 let mpTimerLista = null;
 
 const mpEl = (id) => document.getElementById(id);
-function mpErro(msg) {
+function mpErro(msg, comRetry = false) {
   const e = mpEl('mp-erro'); if (!e) return;
   e.hidden = !msg; e.textContent = msg || '';
+  /* erro com saída, não beco: quando a falha é de rede o botão TENTAR DE NOVO refaz a
+     sondagem inteira — sem ele a única saída era VOLTAR e entrar de novo no painel. */
+  if (msg && comRetry) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'mp-retry'; b.textContent = 'TENTAR DE NOVO';
+    b.onclick = () => { ui.click(); abrirMultiplayer(); };
+    e.appendChild(b);
+  }
+}
+/* Chip de estado da conexão (#mp-estado). Um lugar só e sempre visível: "medindo",
+   "online em tal região", "conectando na sala" e "fora do ar" são estados diferentes
+   e a tela antiga não distinguia nenhum deles de "travou". */
+function mpEstado(s, txt) {
+  const e = mpEl('mp-estado'); if (!e) return;
+  e.dataset.s = s; e.textContent = txt;
 }
 // Faixas de ping: o limiar não é gosto — acima de ~120 ms o tiro passa a depender de
 // lag compensation pra tudo, e é aí que começa o "morri atrás da parede".
@@ -2728,6 +2733,7 @@ async function abrirMultiplayer() {
   show('mp-panel');
   mpErro('');
   mpMontarFormulario();
+  mpEstado('sondando', 'MEDINDO O PING…');
   const nos = mpEl('mp-nos');
   if (nos) nos.innerHTML = '<div class="mp-vazio">medindo o ping dos servidores…</div>';
   mpEl('mp-salas').innerHTML = '';
@@ -2744,8 +2750,28 @@ async function abrirMultiplayer() {
   }
   mpDesenharNos();
   const primeiro = mpNos.find((n) => n.online) || mpNos[0];
-  if (primeiro) mpSelecionarNo(primeiro);
-  else mpErro('Nenhum servidor respondeu. Pode ser a sua conexão, ou os servidores estão fora do ar.');
+  if (primeiro && primeiro.online) mpSelecionarNo(primeiro);
+  else {
+    mpEstado('erro', 'SERVIDORES FORA DO AR');
+    mpErro('Nenhum servidor respondeu. Pode ser a sua conexão, ou os servidores estão fora do ar.', true);
+    if (primeiro) mpSelecionarNo(primeiro);
+  }
+}
+
+/* Bandeira em CSS (`.mp-flag[data-r]`) — o redesign proíbe emoji, e a bandeira não é
+   enfeite: com três regiões o olho acha "a minha" pela cor antes de ler o nome. */
+function mpCartaoNoHTML(n) {
+  const q = n.online ? mpQualidade(n.ping) : 'ruim';
+  const ping = n.online ? `${n.ping} ms` : 'fora do ar';
+  /* medidor de sinal: 3 barras (bom) / 2 (médio) / 1 (ruim) — o número em ms é exato,
+     as barras são a leitura de longe, mesma faixa do limiar do mpQualidade */
+  const acesas = q === 'bom' ? 3 : q === 'medio' ? 2 : 1;
+  const barras = [1, 2, 3].map((i) => `<i class="${i <= acesas ? 'on' : ''}"></i>`).join('');
+  return `<span class="mp-flag" data-r="${n.id}" aria-hidden="true"></span>`
+    + `<span class="mp-no-info"><span class="mp-no-nome">${n.nome}</span>`
+    + `<span class="mp-no-sub">${n.jogadores} jogando · ${n.salas} sala(s)</span></span>`
+    + `<span class="mp-sinal" data-q="${q}" aria-hidden="true">${barras}</span>`
+    + `<span class="mp-ping" data-q="${q}">${ping}</span>`;
 }
 
 function mpDesenharNos() {
@@ -2756,9 +2782,7 @@ function mpDesenharNos() {
     b.type = 'button'; b.className = 'mp-no'; b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', String(mpNoAtual && mpNoAtual.id === n.id));
     b.dataset.online = n.online ? '1' : '0';
-    const ping = n.online ? `<span class="mp-ping" data-q="${mpQualidade(n.ping)}">${n.ping} ms</span>` : '<span class="mp-ping" data-q="ruim">fora do ar</span>';
-    b.innerHTML = `<span class="mp-no-nome">${n.nome}</span>`
-      + `<span class="mp-no-sub">${ping} · ${n.jogadores} jogando · ${n.salas} sala(s)</span>`;
+    b.innerHTML = mpCartaoNoHTML(n);
     b.onclick = () => { ui.click(); mpSelecionarNo(n); };
     box.appendChild(b);
   }
@@ -2766,6 +2790,7 @@ function mpDesenharNos() {
 
 function mpSelecionarNo(no) {
   mpNoAtual = no;
+  if (no.online) mpEstado('on', `ONLINE · ${no.nome.split('·')[0].trim()} · ${no.ping} ms`);
   mpDesenharNos();
   mpAtualizarSalas();
   // a lista se refaz sozinha: lotação muda o tempo todo e uma lista velha manda o jogador
@@ -2786,14 +2811,19 @@ async function mpAtualizarSalas() {
   for (const r of salas) {
     const div = document.createElement('div');
     div.className = 'mp-sala';
+    /* sem emoji (regra do redesign): PRIVADA e espectador viram texto/tag */
     const tags = (r.oficial ? '<span class="mp-tag" data-t="oficial">OFICIAL</span>' : '')
-      + (r.private ? '<span class="mp-tag" data-t="privada">🔒 PRIVADA</span>' : '')
+      + (r.private ? '<span class="mp-tag" data-t="privada">PRIVADA</span>' : '')
       + (r.ctf ? '<span class="mp-tag">CTF</span>' : '');
+    /* lotação como BARRA além do número: sala meio cheia e sala lotada se distinguem
+       de longe, sem ler fração nenhuma */
+    const frac = r.max ? Math.min(1, r.players / r.max) : 0;
     div.innerHTML =
-      `<div class="mp-sala-nome">${r.name}${tags}</div>`
-      + `<div class="mp-lot"><b>${r.players}</b>/${r.max}${r.spectators ? ` <span style="opacity:.6">+${r.spectators} 👁</span>` : ''}</div>`
-      + `<div class="mp-acoes"></div>`
-      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`;
+      `<div class="mp-sala-top"><div class="mp-sala-nome">${r.name}${tags}</div>`
+      + `<div class="mp-lot"><span class="mp-lot-bar"><i style="width:${Math.round(frac * 100)}%"></i></span>`
+      + `<b>${r.players}</b>/${r.max}${r.spectators ? `<span class="mp-lot-spec">+${r.spectators} assistindo</span>` : ''}</div></div>`
+      + `<div class="mp-sala-sub">${r.mapNome || MAPS[r.map]?.name || r.map} · ${r.nomeE} × ${r.nomeB}</div>`
+      + `<div class="mp-acoes"></div>`;
     const acoes = div.querySelector('.mp-acoes');
     /* UM BOTÃO POR LADO, e não um "ENTRAR" que balanceia sozinho: o jogador quer escolher com
        quem joga, e a facção é metade da graça do jogo. O número é a vaga daquele lado — lado
@@ -2814,7 +2844,7 @@ async function mpAtualizarSalas() {
     assistir.title = 'Entrar como espectador — dá pra ir pro time depois, quando abrir vaga';
     assistir.onclick = () => { ui.click(); mpEntrar(r, 'spec'); };
     const convite = document.createElement('button');
-    convite.className = 'mp-assistir'; convite.type = 'button'; convite.textContent = r.convite || 'CONVITE';
+    convite.className = 'mp-convite-chip'; convite.type = 'button'; convite.textContent = r.convite || 'CONVITE';
     convite.title = 'Copiar o link de convite desta sala';
     convite.onclick = () => { ui.click(); mpCopiarConvite(r.convite, convite); };
     acoes.append(assistir, convite);
@@ -2840,6 +2870,7 @@ async function mpEntrarPorConvite(txt) {
   const alvo = parseConvite(txt);
   show('mp-panel'); mpMontarFormulario();
   if (!alvo) return mpErro(`Convite inválido: "${txt}". O formato é REGIÃO-CÓDIGO, tipo BR-7K3M.`);
+  mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
   mpNoAtual = { ...alvo.no, http };
   const sala = await salaPorConvite(http, alvo.codigo);
@@ -2882,6 +2913,42 @@ function mpMontarFormulario() {
   };
   const at = mpEl('mp-atualizar'); if (at) at.onclick = () => { ui.click(); mpAtualizarSalas(); };
   const back = mpEl('mp-back'); if (back) back.onclick = () => { ui.click(); clearInterval(mpTimerLista); show('main-menu'); };
+  /* JOGO RÁPIDO: a melhor sala aberta do nó de menor ping — oficiais primeiro, depois as
+     mais cheias (mesmo critério da lista). Sem sala com vaga, CRIA uma pública padrão:
+     "rápido" que devolve "não achei nada" não é rápido, é beco. */
+  const quick = mpEl('mp-quick');
+  if (quick) quick.onclick = async () => {
+    ui.click(); mpErro('');
+    if (!mpNoAtual || !mpNoAtual.online) return mpErro('Nenhum servidor online agora.');
+    mpEstado('conectando', 'PROCURANDO SALA…');
+    let salas = [];
+    try { salas = await listRooms(mpNoAtual.http); } catch { /* lista fora = cria sala */ }
+    const aberta = salas
+      .filter((r) => !r.private && ((r.livre?.E || 0) + (r.livre?.B || 0)) > 0)
+      .sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players))[0];
+    if (aberta) return mpEntrar(aberta, 'auto');
+    try {
+      const sala = await createRoom(mpNoAtual.http, {
+        name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
+        ctf: false, private: false, password: '', maxPlayers: 10,
+      });
+      mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto');
+    } catch {
+      mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
+      mpErro('Não deu pra entrar agora. Tente uma sala da lista.');
+    }
+  };
+  /* entrada por CÓDIGO (BR-7K3M): o caminho de quem recebeu convite fora do link */
+  const form = mpEl('mp-convite-form');
+  if (form && !form._ok) {
+    form._ok = true;
+    form.onsubmit = (e) => {
+      e.preventDefault(); ui.click();
+      const txt = (mpEl('mp-convite-in')?.value || '').trim();
+      if (!txt) return mpErro('Digite o código do convite (formato REGIÃO-CÓDIGO, tipo BR-7K3M).');
+      mpEntrarPorConvite(txt);
+    };
+  }
 }
 
 /* Abre o socket e SÓ ENTÃO começa a partida. A ordem importa: o welcome traz o mapa, as
@@ -2894,6 +2961,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     senha = (prompt('Essa sala é privada. Senha:') || '').trim();
     if (!senha) return;
   }
+  mpEstado('conectando', `CONECTANDO · ${sala.name || sala.convite || 'SALA'}…`);
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
     nome: nick || null, room: sala.id, pw: senha, team,
   });
@@ -2901,11 +2969,14 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   try { welcome = await net.connect(); }
   catch (err) {
     const m = String(err && err.message || '');
+    if (mpNoAtual.online) mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
+    else mpEstado('erro', 'SERVIDORES FORA DO AR');
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
       : 'Não deu pra conectar nesse servidor.');
   }
+  mpEstado('on', `NA SALA · ${sala.name || sala.convite || ''}`);
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê. */
@@ -2938,8 +3009,9 @@ function mpDesconectou() {
   game = null; window.__game = null;
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }
   show('mp-panel');
-  mpErro('A conexão com o servidor caiu. Entre de novo.');
-  abrirMultiplayer();
+  /* o aviso entra DEPOIS da sondagem: abrirMultiplayer começa com mpErro('') — na ordem
+     antiga a mensagem "caiu" vivia um frame e era apagada antes de alguém ler */
+  abrirMultiplayer().then(() => mpErro('A conexão com o servidor caiu. Entre de novo.'));
 }
 
 /* Barra do espectador: quem está assistindo tem que saber que está assistindo, de quem é a

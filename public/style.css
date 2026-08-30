@@ -205,20 +205,24 @@ html[data-ui="legacy"]{--br-faixa:var(--br-faixa-legacy)}
 }
 .aaa-card-cut{clip-path:var(--aaa-cut-sm);border-radius:0}
 
-/* ---- submenu de modos (JOGAR ▸ ABATE / CAPTURE A BANDEIRA) ----
-   Recuo de 14px + filete à esquerda: o submenu tem de ler como SEGUNDO NÍVEL sem
-   repetir a placa do acento, que é reservada ao item ativo da lista principal. */
-/* `.cs-menu` na frente de tudo aqui é PROPOSITAL, não estilo: o bloco `.cs-item` /
-   `.cs-tick` mora ~1200 linhas ABAIXO deste ponto do arquivo, então com a mesma
-   especificidade quem ganha é ele. Subir para (0,3,1) faz a regra valer sem
-   depender da ordem — e sem ter de espalhar o redesign no meio do CSS antigo. */
-.cs-menu .cs-sub{display:flex;flex-direction:column;margin:2px 0 2px 14px;
-  border-left:1px solid rgba(236,235,230,.14)}
-.cs-menu .cs-sub[hidden]{display:none}
-.cs-menu .cs-sub-item{font-size:var(--fs-300);padding-top:8px;padding-bottom:8px;opacity:.92}
-.cs-menu .cs-sub-item:hover,.cs-menu .cs-sub-item:focus-visible{opacity:1}
-/* O ▸ do JOGAR gira quando abre — é o único aviso de que ali tem mais coisa. */
-.cs-menu .cs-item.is-open .cs-tick{transform:rotate(90deg);width:22px;opacity:1;margin-right:6px}
+/* ---- PRIMEIRA INSTÂNCIA (pedido do dono, 30/08): MULTIPLAYER e SINGLE PLAYER ----
+   Os dois modos são as duas primeiras entradas do menu, GRANDES (display Bebas, um
+   degrau acima dos itens comuns) e com subtítulo que diz o que cada porta abre. O
+   submenu "JOGAR ▸" morreu — primeira instância é primeira instância.
+   `.cs-menu` na frente é PROPOSITAL: o bloco `.cs-item` mora ~1200 linhas ABAIXO
+   deste ponto do arquivo; (0,2,0) garante a vitória sem depender da ordem. */
+.cs-menu .cs-prime{display:flex;align-items:center;margin:2px 0;
+  font-family:var(--aaa-font-display);font-weight:400;font-size:clamp(28px,4.4vh,42px);
+  letter-spacing:var(--tr-2);padding:8px var(--s-4) 10px var(--s-3)}
+.cs-menu .cs-prime .cs-prime-txt{display:flex;flex-direction:column;gap:3px;line-height:var(--lh-tight)}
+.cs-menu .cs-prime small{font:600 var(--fs-100)/1.1 var(--aaa-font-body);
+  letter-spacing:var(--tr-2);color:var(--ink-300);text-transform:uppercase}
+.cs-menu .cs-prime:hover small,.cs-menu .cs-prime:focus-visible small{color:var(--ink-200)}
+/* dentro da barra cheia (item atual, ou o primeiro por padrão) o subtítulo escurece
+   junto com o título — âmbar com texto claro em cima é o defeito, não o desenho */
+.cs-menu .cs-item[aria-current="true"] .cs-prime-txt small,
+.cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-item:first-of-type .cs-prime-txt small{
+  color:rgba(var(--bg-900-rgb),.78)}
 
 /* ---- chips de link do topo-direito (tela 01 do redesign) ----
    z-index 4 porque a coluna da esquerda e o setup vivem em 3; sem isto os chips
@@ -2392,46 +2396,121 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
   #settings-panel .set-head{padding-top:max(14px,env(safe-area-inset-top))}
 }
 
-/* ---------- MULTIPLAYER (navegador de servidores + salas) ----------
-   Só tokens: a paleta é travada por régua (nenhum hex literal novo entra aqui). O ping é
-   a informação de maior peso da tela — é ele que decide se o jogo é jogável pra quem está
-   fora do Brasil — então ele ganha cor semântica (--ok / --am / --crit) e não cinza. */
-.mp-panel{max-width:760px;width:min(760px,92vw);gap:var(--s-5);text-align:left}
+/* ---------- MULTIPLAYER (tela cheia: servidores + entrada + salas) ----------
+   Redesign 30/08 ("a UI de multiplayer está ruim"): de cartão central 760px pra tela
+   cheia no padrão das outras (mesma família do settings/map-screen). Paleta só por
+   token — a ÚNICA exceção são as BANDEIRAS (.mp-flag), que usam cor do MUNDO REAL
+   (bandeira é bandeira, como o mural e o lambe usam a cor do muro), não papel de UI:
+   nenhum desses hex entra em texto nem superfície. O ping segue sendo a informação de
+   maior peso — cor semântica (--ok / --am / --crit), nunca cinza. */
+.mp-shell{width:min(1180px,94vw);max-height:92vh;display:flex;flex-direction:column;
+  gap:var(--s-5);text-align:left}
+.mp-head{display:flex;align-items:center;gap:var(--s-5);width:100%;
+  border-bottom:1px solid var(--line);padding-bottom:var(--s-4)}
+.mp-head-txt{display:flex;flex-direction:column;gap:2px;margin-right:auto}
+.mp-kicker{font:600 var(--fs-100)/1 var(--aaa-font-body);letter-spacing:var(--tr-4);
+  color:var(--ink-300);text-transform:uppercase}
+.mp-title{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-700);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100);margin:0}
+/* chip de ESTADO: um lugar só, sempre visível; a cor é o estado (regra "cor=significado") */
+.mp-estado{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-1);
+  padding:7px 12px;border:1px solid var(--line-2);color:var(--ink2);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mp-estado::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--ink-400)}
+.mp-estado[data-s="sondando"]{color:var(--am);border-color:var(--am)}
+.mp-estado[data-s="sondando"]::before{background:var(--am);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="conectando"]{color:var(--sys);border-color:var(--sys)}
+.mp-estado[data-s="conectando"]::before{background:var(--sys);animation:mp-pulse 1s infinite}
+.mp-estado[data-s="on"]{color:var(--ok);border-color:var(--ok)}
+.mp-estado[data-s="on"]::before{background:var(--ok)}
+.mp-estado[data-s="erro"]{color:var(--crit);border-color:var(--crit)}
+.mp-estado[data-s="erro"]::before{background:var(--crit)}
+/* o VOLTAR mora NO cabeçalho (o .btn-back global é absoluto pro canto da tela) */
+.mp-head .btn-back{position:static;top:auto;left:auto}
+@keyframes mp-pulse{50%{opacity:.25}}
+
+/* duas colunas: decisões à esquerda, salas (o acervo) à direita — mesma lógica da
+   tela de mapas: cabeçalho decide, corpo mostra */
+.mp-grid{display:grid;grid-template-columns:minmax(320px,380px) 1fr;gap:var(--s-6);
+  width:100%;min-height:0;flex:1}
+.mp-lado{display:flex;flex-direction:column;gap:var(--s-5);min-width:0;overflow-y:auto}
+.mp-corpo{display:flex;flex-direction:column;gap:var(--s-3);min-width:0;min-height:0}
+@media (max-width:900px){.mp-grid{grid-template-columns:1fr}.mp-shell{max-height:none}}
+
 .mp-bloco{width:100%;display:flex;flex-direction:column;gap:var(--s-3)}
 .mp-titulo{font-family:var(--mono);font-size:var(--fs-100);letter-spacing:var(--tr-2);
   color:var(--ink3);display:flex;align-items:center;gap:var(--s-3);text-transform:uppercase}
 .mp-dica{color:var(--ink3);opacity:.7;letter-spacing:var(--tr-tight);text-transform:none}
+.mp-dica2{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);margin:0}
 .mp-mini{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
   color:var(--cs);background:transparent;border:1px solid var(--line);padding:3px 9px;
   clip-path:var(--cut-sm);cursor:pointer}
 .mp-mini:hover,.mp-mini:focus-visible{border-color:var(--cs);color:var(--ink-100)}
 
-.mp-nos{display:flex;gap:var(--s-2);flex-wrap:wrap}
-.mp-no{flex:1 1 190px;display:flex;flex-direction:column;gap:2px;padding:var(--s-3) var(--s-4);
+/* ---- cartões de região: bandeira | nome | sinal | ping ---- */
+.mp-nos{display:flex;flex-direction:column;gap:var(--s-2)}
+.mp-no{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);
   background:rgba(var(--bg-700-rgb),.7);border:1px solid var(--line);clip-path:var(--cut-sm);
-  cursor:pointer;text-align:left;transition:border-color var(--t) var(--ease)}
+  cursor:pointer;text-align:left;transition:border-color var(--t) var(--ease),background var(--t) var(--ease)}
 .mp-no:hover,.mp-no:focus-visible{border-color:var(--line-hi)}
 .mp-no[aria-checked="true"]{border-color:var(--cs);background:rgba(var(--bg-600-rgb),.85)}
+.mp-no-info{display:flex;flex-direction:column;gap:2px;min-width:0;margin-right:auto}
 .mp-no-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);letter-spacing:var(--tr-1)}
 .mp-no-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
-.mp-ping{font-family:var(--mono);font-weight:700}
+.mp-ping{font-family:var(--mono);font-weight:700;white-space:nowrap}
 .mp-ping[data-q="bom"]{color:var(--ok)} .mp-ping[data-q="medio"]{color:var(--am)} .mp-ping[data-q="ruim"]{color:var(--crit)}
 .mp-no[data-online="0"]{opacity:.55}
+/* bandeira desenhada em CSS (o redesign proíbe emoji). 30×20, achatada como etiqueta:
+   BR = tricolor verde/ouro/azul, US = listras + cantão, EU = azul com miolo ouro.
+   É identificação de longe, não heráldica — o nome por extenso está do lado. */
+.mp-flag{flex:0 0 30px;width:30px;height:20px;border:1px solid rgba(0,0,0,.5);
+  box-shadow:0 0 0 1px var(--line);background:var(--bg-600)}
+.mp-flag[data-r="br"]{background:linear-gradient(180deg,#1faa4d 0 33%,#f8d92c 33% 67%,#20389c 67%)}
+.mp-flag[data-r="us"]{background:
+  linear-gradient(90deg,#25316e 0 40%,rgba(0,0,0,0) 40%) top left/100% 55% no-repeat,
+  repeating-linear-gradient(180deg,#c02637 0 3px,#f0f0ed 3px 6px)}
+.mp-flag[data-r="eu"]{background:radial-gradient(circle at 50% 50%,#f8d92c 0 4px,#20389c 5px)}
+/* medidor de sinal: a leitura de longe do ping (3 barras boas / 2 médias / 1 ruim) */
+.mp-sinal{display:flex;align-items:flex-end;gap:2px;height:14px}
+.mp-sinal i{width:4px;background:var(--bg-500)}
+.mp-sinal i:nth-child(1){height:6px}.mp-sinal i:nth-child(2){height:10px}.mp-sinal i:nth-child(3){height:14px}
+.mp-sinal[data-q="bom"] i.on{background:var(--ok)}
+.mp-sinal[data-q="medio"] i.on{background:var(--am)}
+.mp-sinal[data-q="ruim"] i.on{background:var(--crit)}
 
-.mp-salas{display:flex;flex-direction:column;gap:var(--s-2);max-height:38vh;overflow-y:auto}
-.mp-sala{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:var(--s-3);
+/* ---- entrada: jogo rápido + código de convite ---- */
+.mp-quick{width:100%}
+.mp-convite{display:flex;gap:var(--s-2)}
+.mp-convite input{flex:1;min-width:0;font-family:var(--mono);font-size:var(--fs-300);
+  letter-spacing:var(--tr-2);text-transform:uppercase;color:var(--ink-100);
+  background:rgba(var(--bg-900-rgb),.7);border:1px solid var(--line);padding:8px 10px}
+.mp-convite input:focus-visible{border-color:var(--cs);outline:none}
+.mp-convite input::placeholder{color:var(--ink-400);letter-spacing:var(--tr-2)}
+.mp-convite .btn{flex:0 0 auto}
+
+/* ---- cartões de sala ---- */
+.mp-salas{display:flex;flex-direction:column;gap:var(--s-2);min-height:0;flex:1;overflow-y:auto}
+.mp-sala{display:flex;flex-direction:column;gap:var(--s-2);
   padding:var(--s-3) var(--s-4);background:rgba(var(--bg-700-rgb),.6);border:1px solid var(--line);
-  clip-path:var(--cut-sm);text-align:left}
-.mp-sala-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-200);color:var(--ink-100);
+  clip-path:var(--cut-sm);text-align:left;transition:border-color var(--t) var(--ease)}
+.mp-sala:hover{border-color:var(--line-2)}
+.mp-sala-top{display:flex;align-items:center;gap:var(--s-3);justify-content:space-between}
+.mp-sala-nome{font-family:var(--font);font-weight:700;font-size:var(--fs-300);color:var(--ink-100);
   letter-spacing:var(--tr-1);display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap}
 .mp-tag{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);padding:1px 6px;
   border:1px solid var(--line-2);color:var(--ink3)}
 .mp-tag[data-t="oficial"]{border-color:var(--cs);color:var(--cs)}
 .mp-tag[data-t="privada"]{border-color:var(--am);color:var(--am)}
-.mp-sala-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3);grid-column:1;margin-top:2px}
-.mp-lot{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink2);white-space:nowrap}
+.mp-sala-sub{font-family:var(--mono);font-size:var(--fs-50);color:var(--ink3)}
+.mp-lot{font-family:var(--mono);font-size:var(--fs-200);color:var(--ink2);white-space:nowrap;
+  display:flex;align-items:center;gap:var(--s-2)}
 .mp-lot b{color:var(--ink-100)}
-.mp-acoes{display:flex;gap:var(--s-2)}
+/* barra de lotação: sala vazia × meio cheia × lotada se distinguem sem ler fração */
+.mp-lot-bar{width:56px;height:6px;background:rgba(var(--bg-900-rgb),.8);border:1px solid var(--line);
+  display:inline-block;overflow:hidden}
+.mp-lot-bar i{display:block;height:100%;background:var(--ok)}
+.mp-lot-spec{font-size:var(--fs-50);color:var(--ink3);margin-left:4px}
+.mp-acoes{display:flex;gap:var(--s-2);flex-wrap:wrap}
 .mp-entrar,.mp-assistir{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
   padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--line-2);
   background:transparent;color:var(--ink2)}
@@ -2439,6 +2518,12 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-entrar:hover,.mp-entrar:focus-visible{background:var(--cs);color:var(--dark)}
 .mp-entrar[disabled]{opacity:var(--op-disabled);cursor:not-allowed;border-color:var(--line);color:var(--ink3)}
 .mp-assistir:hover,.mp-assistir:focus-visible{border-color:var(--ink-100);color:var(--ink-100)}
+/* chip do CONVITE: é um CÓDIGO (mono, âmbar) e um botão de copiar ao mesmo tempo —
+   o clique confirma na própria etiqueta ("COPIADO!") */
+.mp-convite-chip{margin-left:auto;font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-2);
+  padding:5px 10px;clip-path:var(--cut-sm);cursor:pointer;border:1px solid var(--am);
+  background:transparent;color:var(--am)}
+.mp-convite-chip:hover,.mp-convite-chip:focus-visible{background:var(--am);color:var(--dark)}
 
 .mp-criar summary{cursor:pointer;list-style:none}
 .mp-criar summary::-webkit-details-marker{display:none}
@@ -2453,7 +2538,13 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-check{flex-direction:row!important;align-items:center;gap:var(--s-2)!important}
 .mp-form .btn{grid-column:1/-1}
 .mp-erro{width:100%;font-family:var(--mono);font-size:var(--fs-100);color:var(--crit);
-  border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm)}
+  border:1px solid var(--crit);padding:var(--s-3);clip-path:var(--cut-sm);
+  display:flex;align-items:center;gap:var(--s-3);flex-wrap:wrap}
+.mp-erro[hidden]{display:none}   /* display:flex venceria o atributo hidden sem isto */
+.mp-retry{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-1);
+  padding:5px 10px;border:1px solid var(--crit);color:var(--crit);background:transparent;
+  clip-path:var(--cut-sm);cursor:pointer}
+.mp-retry:hover,.mp-retry:focus-visible{background:var(--crit);color:var(--dark)}
 .mp-vazio{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);padding:var(--s-4);text-align:center}
 
 /* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
