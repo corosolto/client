@@ -223,5 +223,136 @@ console.log('\n· espectador');
   g.dispose();
 }
 
+/* BUG-86 — "o personagem estava bugado, depois de morrer ficava deitado". No online morte e
+   respawn chegam por SNAPSHOT e não passam por _kill/_respawnPlayer — o corpo TP do jogador
+   ficava com a pose de morte armada (`_tpDead`) e o clipe de queda segurado pra sempre,
+   sendo arrastado pelo mundo (frames f01–f05 do relato de 30/08). */
+console.log('\n· morte→respawn por snapshot RESETA o corpo TP do jogador (BUG-86)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  net.snap = snapshot(400, 1);
+  g._mp.applySnapshot();
+  g.camView = 'third';            // o cenário dos frames: jogando com o corpo TP na tela
+  g._ensurePlayerTP();
+  net.snap = snapshot(400.05, 2, { matarVoce: true });
+  g._mp.applySnapshot();
+  g._tpDeath(1 / 60);             // é o que o _updatePlayer roda todo frame enquanto !alive
+  cobra(g._tpDead === true, 'a morte pelo snapshot ARMA a pose de morte do corpo TP');
+  net.snap = snapshot(400.10, 3);
+  g._mp.applySnapshot();          // respawn do servidor (alive volta a true)
+  cobra(g._tpDead === false, 'o respawn pelo snapshot DESARMA a pose de morte — sem isto o corpo fica deitado sendo arrastado');
+  const ctrl = g.playerTP && g.playerTP.ctrl;
+  if (ctrl) cobra(ctrl.dead === false, 'o mixer do corpo TP foi revivido (revive), não segue preso no clipe de queda');
+  cobra(!!(g.playerTP && g.playerTP.group && g.playerTP.group.visible) === (g.camView !== 'first'),
+    'a visibilidade do corpo TP volta a obedecer o modo de câmera');
+  g.dispose();
+
+  // MUTANTE: reintroduz o defeito (o reset não roda). A régua TEM que ficar vermelha —
+  // padrão do ctfhud-check: se a mutação passar, este script sai 1.
+  const net2 = fakeNet(1);
+  const g2 = montaJogo(net2);
+  net2.snap = snapshot(400, 1); g2._mp.applySnapshot();
+  g2.camView = 'third'; g2._ensurePlayerTP();
+  net2.snap = snapshot(400.05, 2, { matarVoce: true }); g2._mp.applySnapshot();
+  g2._tpDeath(1 / 60);
+  g2._tpRevive = () => {};        // o mutante: respawn sem o reset do corpo
+  net2.snap = snapshot(400.10, 3); g2._mp.applySnapshot();
+  cobra(g2._tpDead === true, 'MUTANTE sem o reset deixa a régua vermelha (a cláusula acima morde)');
+  g2.dispose();
+}
+
+/* BUG-87 — "Lags". A interpolação antiga viajava prev→cur no gap de CHEGADA (~50 ms):
+   qualquer snapshot atrasado clampava no último ponto e o boneco CONGELAVA até o próximo
+   pacote — a 20 Hz com jitter real isso lê como lag mesmo com rede boa. O buffer de
+   ~120 ms renderiza o remoto no passado, então um pacote atrasado ainda tem estrada
+   pela frente. Só visual de REMOTOS: a física local não muda. */
+console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não congela o boneco (BUG-87)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  let agora = 1000;
+  g._mp._now = () => agora;       // relógio da régua: jitter fabricado, determinístico
+  net.snap = snapshot(500.00, 1);
+  g._mp.applySnapshot();
+  const b = g._mp._netMap.get(6);
+  const x0 = b._ipx1;
+  agora = 1050;
+  net.snap = snapshot(500.05, 2, { mover: 1 });
+  g._mp.applySnapshot();
+  const x1 = b._ipx1;
+  agora = 1145;                   // render em 1145-120=1025: MEIO do segmento [1000,1050]
+  g._mp.updateRemoteBot(b, 1 / 60);
+  cobra(b.pos.x > x0 + 0.01 && b.pos.x < x1 - 0.01,
+    `existe posição INTERMEDIÁRIA entre dois snapshots (x=${b.pos.x.toFixed(2)} entre ${x0.toFixed(2)} e ${x1.toFixed(2)})`);
+  /* pacote ATRASADO: o 3º snapshot só chega em 1150 (gap de 100 ms). Entre 1130 e 1160 o
+     esquema sem buffer já estava clampado no 2º ponto — boneco congelado. Com o buffer o
+     boneco segue andando. */
+  const posEm = (t) => { agora = t; g._mp.updateRemoteBot(b, 1 / 60); return b.pos.x; };
+  const xa = posEm(1130);
+  agora = 1150;
+  net.snap = snapshot(500.10, 3, { mover: 2 });
+  g._mp.applySnapshot();
+  const xb = posEm(1160);
+  cobra(xb > xa + 0.01, `com pacote 50 ms ATRASADO o boneco segue andando dentro do buffer (${xa.toFixed(2)} → ${xb.toFixed(2)}) em vez de congelar`);
+  // lag comp: o `rt` enviado ao servidor tem que ser o instante do SERVIDOR que está na tela
+  agora = 1145;
+  const rt = g._mp.renderTime();
+  cobra(rt > 500.00 - 1e-6 && rt < 500.05 + 1e-6, `renderTime() devolve o instante do servidor DENTRO do segmento renderizado (${rt.toFixed(3)})`);
+  cobra(g._mp.renderTime() <= 500.10 + 1e-6, 'renderTime() nunca está à frente do último snapshot (extrapolar o rewind é tiro em fantasma)');
+  g.dispose();
+
+  // MUTANTE: desliga o buffer (atraso 0 → renderiza colado no agora, que clampa no último
+  // ponto conhecido). A cláusula da posição intermediária TEM que ficar vermelha.
+  const net2 = fakeNet(1);
+  const g2 = montaJogo(net2);
+  let agora2 = 1000;
+  g2._mp._now = () => agora2;
+  g2._mp.interpAtrasoMs = 0;      // o mutante
+  net2.snap = snapshot(500.00, 1); g2._mp.applySnapshot();
+  const c = g2._mp._netMap.get(6);
+  const c0 = c._ipx1;
+  agora2 = 1050;
+  net2.snap = snapshot(500.05, 2, { mover: 1 }); g2._mp.applySnapshot();
+  const c1 = c._ipx1;
+  agora2 = 1145;
+  g2._mp.updateRemoteBot(c, 1 / 60);
+  cobra(!(c.pos.x > c0 + 0.01 && c.pos.x < c1 - 0.01),
+    'MUTANTE sem buffer NÃO produz posição intermediária (a cláusula acima morde)');
+  g2.dispose();
+}
+
+/* BUG-88 — "Problemas na hora de jogar". Um nó que aceita o TCP e nunca manda o `welcome`
+   deixava o connect() PENDENTE pra sempre: sem erro, sem mensagem, o jogador clicava em
+   ENTRAR e nada acontecia. O welcome tem prazo. */
+console.log('\n· connect() tem PRAZO: nó que aceita e não responde vira erro, não espera eterna (BUG-88)');
+{
+  const { NetClient } = await import('../../public/js/net.js');
+  // WebSocket de mentira: abre e fica MUDO (o modo de falha do relato)
+  globalThis.WebSocket = class {
+    constructor() { setTimeout(() => this.onopen && this.onopen(), 1); }
+    send() {} close() { setTimeout(() => this.onclose && this.onclose(), 1); }
+  };
+  const net = new NetClient('ws://x/ws', { nome: 'EU' });
+  const t0 = Date.now();
+  // corrida com prazo PRÓPRIO: antes do conserto o connect ficava pendente pra sempre, e a
+  // régua tem que medir isso como VERMELHO, não travar o processo junto.
+  const res = await Promise.race([
+    net.connect(250).then(() => null, (e) => e),
+    new Promise((r) => setTimeout(() => r(new Error('pendente_para_sempre')), 1500)),
+  ]);
+  const erro = res;
+  cobra(!!erro && String(erro.message).includes('timeout'), `welcome que não chega dentro do prazo REJEITA com timeout (deu: ${erro && erro.message})`);
+  cobra(Date.now() - t0 < 2000, 'e rejeita no prazo pedido, não no infinito');
+
+  // MUTANTE: sem prazo (Infinity) o connect fica pendente — prova que é o prazo que morde.
+  const net2 = new NetClient('ws://x/ws', { nome: 'EU' });
+  let assentou = false;
+  net2.connect(Infinity).then(() => { assentou = true; }, () => { assentou = true; });
+  await new Promise((r) => setTimeout(r, 600));
+  cobra(!assentou, 'MUTANTE sem prazo fica pendente pra sempre (a cláusula acima morde)');
+  net2.close();
+}
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

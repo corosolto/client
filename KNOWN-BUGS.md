@@ -39,6 +39,75 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, testador do preview MP contra o nó br, 30/08):** *"o personagem estava
+bugado, depois de morrer ficava deitado"*. **Evidência:** frames `f01–f05` do vídeo do
+testador (scratchpad `mp-video/`) — em modo de câmera 3ª pessoa, o corpo do próprio jogador
+segue na pose de morte (de costas, pernas pro ar) na MESMA posição de tela por 8 s de partida
+(relógio 1:00 → 0:52), ou seja, colado ao jogador enquanto ele anda.
+
+**Causa raiz — o desarme da pose de morte não existia.** `_tpDeath` (`public/js/game.js:4966`)
+arma `_tpDead = true` e toca `ctrl.die()` — cujo clipe segura o último quadro em peso cheio
+para sempre (`public/js/glbchars.js:705-708`). Nenhum caminho desarmava: `_tpDead` tinha
+**3 ocorrências no arquivo e nenhuma o zerava**, e `ctrl.revive()` nunca era chamado no corpo
+TP do jogador. No online morde SEMPRE porque o respawn chega por snapshot
+(`netgame.js playerRespawned`) e não passa pelo `_respawnPlayer`; em 3ª pessoa o
+`_updatePlayerTP` segue copiando `p.pos` todo frame — o cadáver anda junto. Em 1ª pessoa o
+cadáver ficava visível e abandonado no ponto da morte (o `_tpDeath` força
+`group.visible = true` e ninguém revertia). O mesmo defeito NÃO existe para remotos: o
+`updateRemoteBot` (`netgame.js:277`) já chama `revive()` na transição morto→vivo.
+
+**Conserto:** `_tpRevive()` (`public/js/game.js:4984`) — zera `_tpDead`, chama
+`ctrl.revive()` e devolve a visibilidade ao contrato do `camView`. Chamado do
+`_respawnPlayer` (SP, `game.js:5644`) e do `playerRespawned` (MP, `netgame.js:241`).
+
+**Régua:** `tools/eval/netcode-check.mjs` (`npm run eval:netcode`), bloco BUG-86 — morte e
+respawn por snapshot no harness; mutante que remove o reset (`_tpRevive` no-op) deixa a régua
+vermelha. Antes: 2 cláusulas FALHA; depois: 47/47 ok. Custo declarado: nenhum.
+
+### ~~BUG-87 · "Lags": a interpolação de remotos congelava a cada snapshot atrasado (sem buffer)~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, mesmo relato):** *"Lags"*. **Refutação do palpite óbvio:** a hipótese
+"não há interpolação nenhuma" é FALSA — o cliente já interpolava (cláusulas verdes no
+`netcode-check`). O defeito era o ESQUEMA: viajar prev→cur no gap de CHEGADA (~50 ms) com
+`a = (now − arrCur)/span` clampado em 1 — qualquer pacote atrasado deixava o boneco
+CONGELADO no último ponto até o próximo pacote. A 20 Hz com jitter real (o próprio overlay
+de rede amarela em gap > 70 ms), isso lê como lag mesmo com rede boa.
+
+**Conserto:** buffer de interpolação de **120 ms** (`netgame.js:18`, `interpAtrasoMs`) —
+amostras em arrays planos por eixo (cap 10, zero objeto por snapshot no hot path), render do
+remoto no passado com clamp nas duas pontas (nunca extrapola), teleporte esvazia o buffer.
+`renderTime()` (`netgame.js:41`) passou a mapear o MESMO instante renderizado para o relógio
+do servidor — o rewind do lag comp cai exatamente no que a tela mostrou (janela do servidor é
+0,25 s; 120 ms cabem). Só visual de REMOTOS: física local e predição intactas
+(`movimento-golden` OK, trajetória idêntica).
+
+**Régua:** `netcode-check.mjs`, bloco BUG-87 — relógio estubado (`_now`), snapshot atrasado
+50 ms fabricado; cobra posição INTERMEDIÁRIA entre dois snapshots e movimento contínuo
+durante o atraso; mutante `interpAtrasoMs = 0` deixa a régua vermelha. Antes: 2 FALHA
+(x clampado em 11.00; renderTime fora do segmento); depois: x=10.50, renderTime=500.025,
+47/47. **Custo declarado:** remotos são vistos ~70 ms mais no passado que antes (120 ms vs
+~50 ms) — compensado no hit reg pelo `rt`, mas quem foge de você ganha esses ms na sua tela.
+
+### ~~BUG-88 · "Problemas na hora de jogar": connect() sem prazo e sem feedback — nó mudo deixava o clique em ENTRAR "não fazer nada"~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, mesmo relato):** *"Problemas na hora de jogar"*. **Causa raiz:** o
+`NetClient.connect()` só assentava a promessa em `welcome`/`error`/`close` — um nó que aceita
+o TCP e nunca manda o `welcome` deixava o connect **pendente para sempre**, sem erro e sem
+mensagem (`public/js/net.js:97`); e o `mpEntrar` limpava o `mp-erro` e esperava em silêncio —
+segundos de tela parada entre o clique e o welcome numa região longe.
+
+**Conserto:** prazo de 8 s no `connect(timeoutMs)` com `timeout` como rejeição
+(`net.js:97-106`), mensagem própria no `mpEntrar` (*"O servidor demorou demais…"*), feedback
+*"Conectando na sala…"* durante a espera (`main.js:2905`) e trava de reentrada
+(`mpConectando`, `main.js:2715`) — dois cliques não abrem dois sockets.
+
+**Régua:** `netcode-check.mjs`, bloco BUG-88 — WebSocket estubado que abre e fica MUDO;
+cobra rejeição com `timeout` dentro do prazo; mutante sem prazo (Infinity) fica pendente e
+deixa a régua vermelha. Antes: 1 FALHA (`pendente_para_sempre`); depois: 47/47. Custo
+declarado: conexão legítima mais lenta que 8 s agora vira erro com "tente de novo".
+
 ### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
 
 **Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**

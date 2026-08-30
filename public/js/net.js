@@ -94,21 +94,28 @@ export class NetClient {
   }
   stopPing() { if (this._pingTimer) { clearInterval(this._pingTimer); this._pingTimer = null; } }
 
-  connect() {
+  connect(timeoutMs = 8000) {
     return new Promise((resolve, reject) => {
       let done = false;
-      try { this.ws = new WebSocket(this.url); } catch (e) { reject(e); return; }
+      /* Welcome tem PRAZO: um nó que aceita o TCP e nunca responde deixava o connect()
+         pendente pra sempre — sem erro, sem mensagem, o clique em ENTRAR "não fazia nada"
+         (BUG-88). Régua: tools/eval/netcode-check.mjs. */
+      const prazo = Number.isFinite(timeoutMs)
+        ? setTimeout(() => { if (!done) { done = true; try { this.ws?.close(); } catch { /* já fechado */ } reject(new Error('timeout')); } }, timeoutMs)
+        : null;
+      const assenta = (fn, v) => { if (done) return; done = true; if (prazo) clearTimeout(prazo); fn(v); };
+      try { this.ws = new WebSocket(this.url); } catch (e) { assenta(reject, e); return; }
       this.ws.onopen = () => { this.connected = true; };
-      this.ws.onerror = () => { if (!done) { done = true; reject(new Error('ws_error')); } };
-      this.ws.onclose = () => { this.connected = false; this.onClose?.(); if (!done) { done = true; reject(new Error('closed')); } };
+      this.ws.onerror = () => { assenta(reject, new Error('ws_error')); };
+      this.ws.onclose = () => { this.connected = false; this.onClose?.(); assenta(reject, new Error('closed')); };
       this.ws.onmessage = (ev) => {
         let m; try { m = JSON.parse(ev.data); } catch { return; }
         if (m.type === 'welcome') {
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.onWelcome?.(m);
-          if (!done) { done = true; resolve(m); }
+          assenta(resolve, m);
         } else if (m.type === 'error') {
-          if (!done) { done = true; reject(new Error(m.error || 'erro')); }
+          assenta(reject, new Error(m.error || 'erro'));
         } else if (m.type === 'pong') {
           this.stats.ping = performance.now() - m.t;
         } else if (m.type === 'slot') {
