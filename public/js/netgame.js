@@ -161,10 +161,9 @@ class Netcode {
       const salto = Math.hypot(ent._ipx1 - ent._ipx0, ent._ipz1 - ent._ipz0);
       if (salto > 3) { ent._ipx0 = ent._ipx1; ent._ipy0 = ent._ipy1; ent._ipz0 = ent._ipz1; ent._ipyaw0 = ent._ipyaw1; }  // respawn/teleporte: colapsa
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);   // alimenta a animação de andar
-      /* BUFFER de amostras (BUG-87): arrays planos por eixo, capados em 10 — nada de um
-         {x,y,z} por ent × 20 Hz (GC no hot path). Teleporte esvazia: interpolar através de
-         um respawn seria o boneco varrendo o mapa em linha reta. */
       if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; }
+      /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
+         hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
       if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
       ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
       if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
@@ -252,10 +251,8 @@ class Netcode {
     if (!g) return;
     if (b._remote === 'ghost') { g.visible = false; return; }
     if (b._bufAt && b._bufAt.length) {
-      /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando dentro do buffer de
-         amostras. É o que absorve o jitter da chegada (BUG-87): o esquema antigo viajava
-         prev→cur no gap de ~50 ms e qualquer pacote atrasado clampava no último ponto —
-         boneco CONGELADO até o próximo. Clampa nas duas pontas: NUNCA extrapola. */
+      /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando no buffer: absorve o
+         jitter que congelava o boneco a cada pacote atrasado (BUG-87). NUNCA extrapola. */
       const at = b._bufAt, n = at.length;
       const rAt = this._now() - this.interpAtrasoMs;
       let j, a = 0;
