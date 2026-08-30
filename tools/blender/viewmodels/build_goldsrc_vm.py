@@ -42,7 +42,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--mint", type=Path, required=True)
     p.add_argument("--len", dest="length", type=float, required=True)
     p.add_argument("--gripz", type=float, default=0.6)
-    p.add_argument("--rot", default="0,0,0")  # weaponCFG.rot (espaço three, cano canônico +Z)
+    p.add_argument("--rot", default="0,0,0")
+    p.add_argument("--escala-extra", dest="escala_extra", type=float, default=1.0)  # weaponCFG.rot (espaço three, cano canônico +Z)
     p.add_argument("--magbox", default="")
     p.add_argument("--saida", type=Path, required=True)
     return p.parse_args(values)
@@ -230,6 +231,15 @@ def main() -> None:
     bpy.context.view_layer.update()
 
     bone_arma = bone_dominante(template, arm) or arm.pose.bones[0].name
+    if abs(args.escala_extra - 1.0) > 1e-3:
+        # override por arma (molde com attachment embutido, ex. USP+silenciador):
+        # escala ancorada no HEAD do bone da arma — o punho fica na mão.
+        pb0 = arm.pose.bones[bone_arma]
+        piv = arm.matrix_world @ pb0.matrix.translation
+        holder.scale = tuple(v * args.escala_extra for v in holder.scale)
+        holder.location = piv + (holder.location - piv) * args.escala_extra
+        bpy.context.view_layer.update()
+        print("CORO_GS_ESCALA_EXTRA=" + json.dumps({"fator": args.escala_extra}))
     parentear_no_bone(holder, arm, bone_arma)
     print("CORO_GS_VM=" + json.dumps({
         "cs": args.cs, "arma": args.arma, "bone_arma": bone_arma,

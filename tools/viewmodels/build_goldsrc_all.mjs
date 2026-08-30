@@ -24,6 +24,16 @@ export const DOADORES = {
   shotgun: 'm3', lmg: 'm249', knife: 'knife',
 };
 
+// overrides visuais por arma (calibrados contra a referência — folhas par5)
+const AJUSTES = {
+  pistol: { escala: 0.55 },   // molde USP traz silenciador no comprimento
+  m92: { escala: 0.55 },
+  mosin: { escala: 0.72 },
+  m400: { escala: 0.72 },
+  scar: { escala: 0.72 },
+  tavor: { escala: 0.72 },
+};
+
 const pedidos = (process.argv[2] || '').split(',').filter(Boolean);
 const armas = pedidos.length ? pedidos : Object.keys(DOADORES);
 let falhas = 0;
@@ -38,6 +48,7 @@ for (const arma of armas) {
     `--cs=${cs}`, `--arma=${arma}`,
     `--mint=${path.join(ROOT, `public/models/weapons/${arma}.glb`)}`,
     `--len=${cfg.len || 1}`, `--gripz=${cfg.gripZ ?? 0.6}`, `--rot=${rot}`,
+    `--escala-extra=${AJUSTES[arma]?.escala ?? 1}`,
     `--saida=${SAIDA}`,
   ], { encoding: 'utf8' });
   const ok = r.status === 0 && r.stdout.includes('CORO_GS_BUILD=');
