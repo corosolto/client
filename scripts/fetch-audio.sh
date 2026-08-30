@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 # Pacote completo — vozes/rounds/SFX/menu/ingame — com nomes hasheados
 # (decisão do dono: nenhum título legível em URL/zip). Fecha o BUG-19
 # (produção servia o pack de julho e todo som novo dava 404).
-URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v7/audio-pack.zip}"
+URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v8/audio-pack.zip}"
 DEST="public/audio"
 
 if [ -f "$DEST/manifest.json" ]; then
