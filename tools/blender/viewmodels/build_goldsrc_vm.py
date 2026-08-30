@@ -108,9 +108,22 @@ def main() -> None:
     arm = next(o for o in scene.objects if o.type == "ARMATURE")
     template = next((o for o in scene.objects if o.type == "MESH"
                      and ("template" in o.name.lower() or o.name.lower().startswith("ref_"))), None)
+    so_arma_idx = None
     if template is None:
         maos = {"lhand", "rhand"}
         template = next(o for o in scene.objects if o.type == "MESH" and o.name.lower() not in maos)
+        # mesh único (famas): arma e mãos juntas — mede só vértices cujo bone
+        # dominante NÃO é de mão/braço (senão o bbox vira um cubo e o centro
+        # desloca a Mint pra perto da câmera — inflava 2x na tela, 30/08)
+        nomes_g = {g.index: g.name.lower() for g in template.vertex_groups}
+        so_arma_idx = set()
+        for i, v in enumerate(template.data.vertices):
+            dom = max(v.groups, key=lambda g: g.weight, default=None)
+            nome = nomes_g.get(dom.group, "") if dom else ""
+            if not any(t in nome for t in ("hand", "arm", "finger", "thumb", "bip")):
+                so_arma_idx.add(i)
+        print("CORO_GS_TEMPLATE_FILTRO=" + json.dumps({
+            "verts_arma": len(so_arma_idx), "verts_total": len(template.data.vertices)}))
 
     # pose do idle frame 0 (é o quadro que o jogo mostra parado)
     idle = next((a for a in bpy.data.actions if a.name.lower().startswith("idle")), None)
@@ -129,8 +142,16 @@ def main() -> None:
     # covariância, orientado para LONGE da câmera (-Y).
     ev_t = template.evaluated_get(deps)
     me_t = ev_t.to_mesh()
-    pts_t = [ev_t.matrix_world @ v.co for v in me_t.vertices]
+    pts_t = [ev_t.matrix_world @ v.co for i, v in enumerate(me_t.vertices)
+             if so_arma_idx is None or i in so_arma_idx]
     ev_t.to_mesh_clear()
+    if so_arma_idx is not None and pts_t:
+        lo2 = Vector((min(p.x for p in pts_t), min(p.y for p in pts_t), min(p.z for p in pts_t)))
+        hi2 = Vector((max(p.x for p in pts_t), max(p.y for p in pts_t), max(p.z for p in pts_t)))
+        t_lo, t_hi = lo2, hi2
+        t_centro = (t_lo + t_hi) * 0.5
+        t_dim = t_hi - t_lo
+        eixo_i = max(range(3), key=lambda i: t_dim[i])
     medio = sum(pts_t, Vector()) / len(pts_t)
     import numpy as _np
     M = _np.array([[p.x - medio.x, p.y - medio.y, p.z - medio.z] for p in pts_t])
@@ -186,6 +207,23 @@ def main() -> None:
     len_m = max(proj_m) - min(proj_m)
     escala_cs = len_t / max(len_m, 1e-6)
     holder.scale = (escala_cs,) * 3
+    # régua interna de paridade: comprimento re-medido PÓS-escala na direção do
+    # cano — razão ≠1 aqui denuncia eixo/canonização errada antes de ir pro olho
+    deps2 = bpy.context.evaluated_depsgraph_get()
+    reproj = []
+    for o in mint_meshes:
+        ev2 = o.evaluated_get(deps2)
+        me2 = ev2.to_mesh()
+        passo2 = max(1, len(me2.vertices) // 8000)
+        for i in range(0, len(me2.vertices), passo2):
+            reproj.append((ev2.matrix_world @ me2.vertices[i].co).dot(cano))
+        ev2.to_mesh_clear()
+    len_pos = max(reproj) - min(reproj)
+    # extensão TOTAL (qualquer direção) pra pegar arma atravessada no eixo
+    import numpy as _np2
+    print("CORO_GS_PARIDADE=" + json.dumps({
+        "len_template": round(len_t, 2), "len_mint_pos_escala": round(len_pos, 2),
+        "razao_interna": round(len_pos / max(len_t, 1e-6), 3)}))
     deps = bpy.context.evaluated_depsgraph_get()
     m_lo, m_hi = bbox_mundo(mint_meshes, deps)
     holder.location += t_centro - (m_lo + m_hi) * 0.5
