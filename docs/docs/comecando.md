@@ -50,9 +50,9 @@ esta página envelhecia no primeiro commit — ver
 | Mapas no registro | 13 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
 | Scripts do arnês | 213 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 57 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts de pipeline | 58 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
-| Versão | `2.0.0-alpha.202` | `public/js/version.js` e `package.json` (batem) |
+| Versão | `2.0.0-alpha.205` | `public/js/version.js` e `package.json` (batem) |
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `o comando da coluna direita de cada linha`
 
