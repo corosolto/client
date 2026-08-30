@@ -42,6 +42,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--mint", type=Path, required=True)
     p.add_argument("--len", dest="length", type=float, required=True)
     p.add_argument("--gripz", type=float, default=0.6)
+    p.add_argument("--rot", default="0,0,0")  # weaponCFG.rot (espaço three, cano canônico +Z)
     p.add_argument("--magbox", default="")
     p.add_argument("--saida", type=Path, required=True)
     return p.parse_args(values)
@@ -123,13 +124,20 @@ def main() -> None:
     t_centro = (t_lo + t_hi) * 0.5
     t_dim = t_hi - t_lo
     eixo_i = max(range(3), key=lambda i: t_dim[i])
-    cano = Vector((0, 0, 0))
-    cano[eixo_i] = 1.0
-    # boca = extremo mais LONGE da câmera (origem, olhando -Y): mais negativo em Y
-    if eixo_i == 1 and t_hi.y > -t_lo.y:
-        cano.y = -1.0
-    if eixo_i == 1 and abs(t_lo.y) > abs(t_hi.y):
-        cano = Vector((0, -1, 0))
+    # eixo do cano por PCA dos vértices POSADOS (bbox mentia na MAC-10: a
+    # diagonal corpo+coronha ganhava do cano) — autovetor dominante da
+    # covariância, orientado para LONGE da câmera (-Y).
+    ev_t = template.evaluated_get(deps)
+    me_t = ev_t.to_mesh()
+    pts_t = [ev_t.matrix_world @ v.co for v in me_t.vertices]
+    ev_t.to_mesh_clear()
+    medio = sum(pts_t, Vector()) / len(pts_t)
+    import numpy as _np
+    M = _np.array([[p.x - medio.x, p.y - medio.y, p.z - medio.z] for p in pts_t])
+    _, _, Vt = _np.linalg.svd(M, full_matrices=False)
+    cano = Vector(Vt[0]).normalized()
+    if cano.y > 0:
+        cano = -cano
 
     # ---- Mint alinhada ao template (cano +X do GLB cru -> cano; topo +Z)
     antes = set(scene.objects)
@@ -142,19 +150,41 @@ def main() -> None:
         if o.parent is None:
             o.parent = holder
     up = Vector((0, 0, 1))
-    rot = Vector((1, 0, 0)).rotation_difference(cano).to_matrix().to_4x4()
+    # normalização MEDIDA da arma (weaponCFG.rot, espaço three: cano canônico
+    # +Z, topo +Y). Em Blender (glTF Y-up→Z-up): canônico fica cano -Y, topo +Z.
+    from math import radians as _rad
+    rx, ry, rz = (float(v) for v in args.rot.split(","))
+    from mathutils import Euler as _Euler
+    R3 = _Euler((_rad(rx), _rad(ry), _rad(rz)), "XYZ").to_matrix().to_4x4()
+    C = Matrix(((1, 0, 0, 0), (0, 0, -1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    canon = C @ R3 @ C.inverted()
+    # alinha o canônico (-Y) ao cano do molde, mantendo o topo (+Z) para cima
+    rot = Vector((0, -1, 0)).rotation_difference(cano).to_matrix().to_4x4()
     topo = rot @ Vector((0, 0, 1))
     ang = topo.angle(up) if topo.length > 1e-6 else 0.0
     if ang > 1e-3:
         eixo = topo.cross(up)
         if eixo.length > 1e-6:
             rot = Matrix.Rotation(ang if eixo.dot(cano) >= 0 else -ang, 4, cano) @ rot
-    holder.matrix_world = rot
+    holder.matrix_world = rot @ canon
     deps = bpy.context.evaluated_depsgraph_get()
     m_lo, m_hi = bbox_mundo(mint_meshes, deps)
     escala = args.length / max(m_hi - m_lo)
-    # comprimento do TEMPLATE manda: paridade visual com o CS (não o len real)
-    escala_cs = t_dim[eixo_i] / max(m_hi - m_lo)
+    # comprimento por PROJEÇÃO no eixo do cano dos dois lados (bbox superestima
+    # em arma atarracada — UZI saía 25% maior, crítico 30/08)
+    proj_t = [p.dot(cano) for p in pts_t]
+    len_t = max(proj_t) - min(proj_t)
+    pontos_m = []
+    for o in mint_meshes:
+        ev_m = o.evaluated_get(deps)
+        me_m = ev_m.to_mesh()
+        passo = max(1, len(me_m.vertices) // 20000)
+        for i in range(0, len(me_m.vertices), passo):
+            pontos_m.append(ev_m.matrix_world @ me_m.vertices[i].co)
+        ev_m.to_mesh_clear()
+    proj_m = [p.dot(cano) for p in pontos_m]
+    len_m = max(proj_m) - min(proj_m)
+    escala_cs = len_t / max(len_m, 1e-6)
     holder.scale = (escala_cs,) * 3
     deps = bpy.context.evaluated_depsgraph_get()
     m_lo, m_hi = bbox_mundo(mint_meshes, deps)
@@ -319,6 +349,18 @@ def main() -> None:
     cam.rotation_euler = (math.radians(90), 0, math.radians(180))
     scene.camera = cam
     cam["viewmodel_fov"] = 84.0
+
+    # ---- keyframes normalizados: primeira chave em 0 — o exportador glTF
+    # preserva o tempo absoluto da action e o runtime segurava a primeira pose
+    # (fase do reload +33% na AWP/UZI, crítico 30/08).
+    for a in bpy.data.actions:
+        f0 = a.frame_range[0]
+        if abs(f0) > 1e-6:
+            for fc in a.fcurves:
+                for k in fc.keyframe_points:
+                    k.co.x -= f0
+                    k.handle_left.x -= f0
+                    k.handle_right.x -= f0
 
     # ---- clipes renomeados para o contrato (prefixo idle-/idle1- cai fora;
     # doadores com idle.smd geram "idle-reload" em vez de "idle1-reload")
