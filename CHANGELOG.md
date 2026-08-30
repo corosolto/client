@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.202`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.203`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -22,6 +22,19 @@
 > das três tem tag git** (a última tag é `v1.12.4`). "v3" nunca existiu como coisa publicada.
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
+
+## [2.0.0-alpha.203] — 2026-08-30
+
+### Mudado
+- chore: APIs saem do cliente (#462 + main) (#474)
+- fix(smoke): contrato de /api/leaderboard vira o da rede de segurança — 307 pro backend
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado após o merge da alpha.201
+- fix(ci+boot): import do apibase que faltava e workflows apontam para as réguas que restaram
+- chore(docs): regenera bloco derivado após o merge
+- chore(docs): regenera bloco derivado (autofix)
+- chore(docs): regenera bloco derivado (autofix)
+- chore(api): as 18 rotas de banco saem do cliente e vão para o backend privado
 
 ## [2.0.0-alpha.202] — 2026-08-29
 
