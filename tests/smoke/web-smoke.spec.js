@@ -56,7 +56,6 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
   await page.locator('#ranking-back').click();
   await expect(page.locator('#main-menu')).toBeVisible();
 
-  await page.locator('.cs-item[data-act="jogar"]').click();
   await page.locator('.cs-item[data-act="sp"]').click();
   await expect(page.locator('#map-screen')).toBeVisible();
   await page.locator('#ms-continue').click();

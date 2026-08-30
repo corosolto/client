@@ -356,8 +356,8 @@ game = muta('killfeed-volta-svg', game,
   '${this._killfeedWeaponIcon(weap)}',
   '${this._wpnIcon(weap)}');
 main = muta('modo-volta-setup', main,
-  "case 'sp':    openModeMap('rounds', 'MATA-MATA', 'sp'); break;",
-  "case 'sp':    openSetup('rounds', 'MATA-MATA', 'sp'); break;");
+  "case 'sp':    openModeMap('rounds', 'SINGLE PLAYER', 'sp'); break;",
+  "case 'sp':    openSetup('rounds', 'SINGLE PLAYER', 'sp'); break;");
 main = muta('personagem-dificuldade-volta', main,
   ".map(([l, v]) => `<div class=\"attr\"><span>${tr(l)}</span><div class=\"attr-bar\"><i style=\"width:${v * 20}%\"></i></div><b>${v}</b></div>`).join('');",
   ".map(([l, v]) => `<div class=\"attr\"><span>${tr(l)}</span><div class=\"attr-bar\"><i style=\"width:${v * 20}%\"></i></div><b>${v}</b></div>`).join('') + `<div class=\"attr attr-dif\">DIFICULDADE</div>`;");
@@ -833,12 +833,16 @@ const killfeedArma2D = /_killfeedWeaponIcon\(short\) \{/.test(game)
   && /\.kf-weapon-mask\{[^}]*background:currentColor[^}]*mask:var\(--weapon-mask\) center\/contain no-repeat/.test(css)
   && /\.kf-weapon-2d:has\(\.kf-weapon-mask\) \.kf-fallback\{display:none\}/.test(css);
 const funcAttrs = blocoFuncao(main, 'renderCharAttrs');
-/* JOGAR abre DUAS opções, MULTIPLAYER primeiro (decisão do dono, 27/08/2026). A ordem é
-   cobrada porque ela É a decisão — trocar de lugar reverte o pedido em silêncio.
-   CAPTURE A BANDEIRA saiu do menu e virou o botão de modo (#map-mode) na tela de mapas, que é
+/* MULTIPLAYER e SINGLE PLAYER são PRIMEIRA INSTÂNCIA do menu (decisão do dono, 30/08/2026:
+   "SINGLEPLAYER e MULTIPLAYER tem que ser opcoes de primeira instancia no menu") — o degrau
+   "JOGAR ▸ submenu" de 27/08 morreu; a ordem MULTIPLAYER primeiro (27/08) fica. A ordem é
+   cobrada porque ela É a decisão — trocar de lugar reverte o pedido em silêncio; a ausência
+   de data-act="jogar" também, senão o degrau volta por cima dos cartões.
+   CAPTURE A BANDEIRA segue como o botão de modo (#map-mode) na tela de mapas, que é
    onde a escolha de modo sempre morou de verdade; o invariante desta cláusula continua sendo
    que os DOIS modos entram por lá, e não que exista um item de menu para cada um. */
-const modoMapaPadrao = /<button class="cs-item cs-sub-item" data-act="mp"[^>]*>[\s\S]*?MULTIPLAYER<\/button>\s*\n\s*<button class="cs-item cs-sub-item" data-act="sp"[^>]*>[\s\S]*?SINGLE PLAYER<\/button>/.test(astro)
+const modoMapaPadrao = /<button class="cs-item cs-prime" data-act="mp"[^>]*>[\s\S]*?MULTIPLAYER[\s\S]*?<\/button>\s*\n\s*<button class="cs-item cs-prime" data-act="sp"[^>]*>[\s\S]*?SINGLE PLAYER[\s\S]*?<\/button>/.test(astro)
+  && !/data-act="jogar"/.test(astro)
   && !/>ABATE<\/button>/.test(astro)
   && /function openModeMap\(mode, title, act\) \{[\s\S]{0,180}openSetup\(mode, title, act\);[\s\S]{0,100}renderMapScreen\(\);[\s\S]{0,80}show\('map-screen'\);/.test(main)
   && /case 'sp':\s+openModeMap\('rounds', 'SINGLE PLAYER', 'sp'\); break;/.test(main)
@@ -1005,7 +1009,7 @@ const resultados = [
     'vida e munição 42px; nome 11px; vinheta e vermelho crítico medidos na tela 05'],
   ['UIR25', 'killfeed usa a mesma silhueta 2D alfa da arma que realizou o abate', killfeedArma2D,
     'short da arma resolve o WebP publicado; máscara monocromática substitui o SVG no evento real'],
-  ['UIR26', 'JOGAR abre MULTIPLAYER e SINGLE PLAYER; os dois modos entram pela seleção de mapas', modoMapaPadrao,
+  ['UIR26', 'MULTIPLAYER e SINGLE PLAYER são primeira instância do menu (sem degrau JOGAR); os dois modos entram pela seleção de mapas', modoMapaPadrao,
     'os dois modos preservam seu estado no setup e abrem a tela 04 antes de facção/personagem'],
   ['UIR27', 'ficha do personagem não inventa dificuldade sem contrato', personagemSemDificuldade,
     'renderCharAttrs publica somente VIDA, VELOCIDADE, PRECISÃO e MEME; nenhum undefined'],
