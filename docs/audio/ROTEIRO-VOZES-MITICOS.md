@@ -26,31 +26,36 @@ Notação: `[tag]` = audio tag do eleven_v3 (não é falada). **(kill)** ≤ 2 s
 ---
 
 ## Lampião (`lampiao`)
-**Casting:** homem adulto, voz seca e rouca de sertão, autoridade de chefe de bando.
+**Casting (redesign 30/08):** Voice Design — homem mais velho, voz grave e
+rachada de chefe de bando, sotaque sertanejo pernambucano CARREGADO (t/d
+duros, vogais abertas), fala RÁPIDA e cortada de sertão (tom da r2-p1
+aprovado; empurrar sotaque e expressões regionais).
 
 | slug | fala | direção de performance |
 |---|---|---|
-| arreda (kill) | "[shouts] Arreda!" | grito seco de cangaço, uma cusparada de som |
-| virgem-maria (kill) | "Virgem Maria!" | exclamação de vitória, quase riso no fim |
-| cangaco (kill) | "[shouts] Cangaço!" | grito de guerra, peito estufado |
-| deitou (kill) | "Deitou." | seco, satisfeito, sem pressa — sentença dada |
-| no-chao (kill) | "No chão, moço!" | ordem cumprida, desdém de quem já sabia |
-| sertao-manda (kill) | "Sertão manda!" | orgulho territorial, voz aberta |
-| cordel (rara) | "Mais um pro cordel." | narrador de feira, meio cantado, saboreando |
-| pisar (rara) | "Quem mandou pisar no meu sertão?" | pergunta retórica, ameaça mansa |
+| oxente (kill) | "Ôxente!" | espanto-deboche rápido, meio riso |
+| arre-egua (kill) | "Arre égua!" | exclamação de impacto, seca e alta |
+| cabra-frouxo (kill) | "Cabra frouxo!" | desprezo staccato, cusparada de som |
+| vixe (kill) | "Vixe!" | curtíssimo, quase riso engolido |
+| lascou-se (kill) | "Lascou-se!" | sentença alegre, rápida |
+| ave-maria (kill) | "Ave Maria!" | vitória beata de arma na mão |
+| cordel (rara) | "Mais um pro cordel." | narrador de feira, rápido e cantado |
+| pisar (rara) | "Quem mandou pisar no meu sertão?" | pergunta retórica em rajada, ameaça mansa |
 
 ## Maria Bonita (`mariabonita`)
-**Casting:** mulher adulta, nordestina, calma e afiada, sorriso no canto da voz.
+**Casting (redesign do zero 30/08):** Voice Design — mulher sertaneja do
+cangaço, ~30 anos, MESMA família de sotaque do Lampião, voz firme e SECA de
+quem comanda, um fio de deboche — NUNCA doce, NUNCA locutora.
 
 | slug | fala | direção de performance |
 |---|---|---|
-| acertou-eu (kill) | "Acertou? Eu." | pergunta e resposta no mesmo fôlego, deboche fino |
-| primeiro-tiro (kill) | "Primeiro tiro." | constatação fria, sem celebração — era óbvio |
-| bonita-ne (kill) | "Bonita, né?" | charme com veneno, sorriso audível |
-| caiu (kill) | "Caiu." | quase sussurrado, definitivo |
-| mira-e-dom (kill) | "Mira é dom." | falsa modéstia, ombro erguido |
-| de-nada (kill) | "De nada." | ironia educada, como quem fez um favor |
-| assina (rara) | "Parou, mirou, acertou. Assina: Maria." | ritmo de três batidas + assinatura |
+| caiu-ligeiro (kill) | "Caiu ligeiro!" | constatação rápida e cortada, deboche seco |
+| assina-maria (kill) | "Assina: Maria." | carimbo de autoria, sem festejar |
+| um-tiro (kill) | "Um tiro só." | fria, era óbvio |
+| vixe-errou (kill) | "Vixe, errou!" | deboche curto pro alvo que atirou antes |
+| arretada (kill) | "Arretada, eu." | orgulho sertanejo, ombro erguido |
+| de-nada-cabra (kill) | "De nada, cabra." | ironia seca, favor prestado |
+| oxente-rara (rara) | "Ôxente, caiu foi ligeiro! Assina embaixo: Maria." | rajada sertaneja + assinatura |
 
 ## Saci-Pererê (`saci`)
 **Casting:** moleque travesso, agudo e rápido, risada sempre engatilhada.
@@ -104,18 +109,22 @@ Notação: `[tag]` = audio tag do eleven_v3 (não é falada). **(kill)** ≤ 2 s
 | rosa-vence (kill) | "Rosa vence." | vaidade cromática, definitivo |
 | danca (rara) | "A dança acabou, meu bem. Volto pro fundo." | despedida de festa, charme escorrendo |
 
-## Lobisomem (`lobisomem`)
-**Casting:** homem grave, gutural, rosnado no fundo da voz.
+## Lobisomem (`lobisomem`) — SEM FALA HUMANA
+**Direção (veredito 30/08):** o Lobisomem não fala — só uiva, rosna e late.
+Set de SFX via ElevenLabs Sound Effects (`tools/gerar-sfx-lobisomem.mjs`),
+2 tomadas por som; comparação com eleven_v3 de onomatopeia gerada junto
+(`--fallback-v3`).
 
-| slug | fala | direção de performance |
+| slug | som | uso |
 |---|---|---|
-| mordi (kill) | "[growls] Mordi." | rosnado curto + palavra mastigada |
-| uivo (kill) | "Auuuu!" | uivo curto de vitória, não de dor |
-| lua-cheia (kill) | "Lua cheia!" | brinde selvagem à lua |
-| meu (kill) | "Meu." | possessivo, baixo, ponto final |
-| caca-encerrada (kill) | "Caça encerrada." | fôlego pesado, satisfação de predador |
-| cheiro-medo (kill) | "Cheirinho de medo." | farejando, deleite mórbido leve |
-| setimo (rara) | "Sétimo filho... primeira mordida da noite." | lenda contada por ele mesmo, devagar |
+| uivo-lua | uivo longo à lua cheia (4 s) | raro/spawn |
+| uivo-vitoria | uivo curto triunfante (2 s) | kill |
+| rosnado-baixo | rosnado grave de ameaça (2,5 s) | kill/ameaça |
+| rosnado-agressivo | rosnado de ataque, dentes à mostra (2 s) | kill |
+| latido-duplo | dois latidos secos agressivos (1,5 s) | kill |
+| bufo | bufo/fungada farejando (1,5 s) | provocação |
+| mordida | bote de mordida com rosnado (1,5 s) | kill |
+| rosnado-uivo | rosnado subindo pra uivo curto (2,5 s) | kill |
 
 ## Bandeirante (`bandeirante`)
 **Casting:** homem maduro, cascalho na voz, deadpan arrogante.

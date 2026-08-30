@@ -52,15 +52,19 @@ const VOZES = {
 // Falas: [slug, texto-com-tags-v3]. Tags [assim] só valem no eleven_v3; no
 // fallback multilingual_v2 são removidas do texto antes de enviar.
 const MITICOS = [
+  // Lampião e Maria Bonita: reprovados no casting da library (30/08) —
+  // as vozes definitivas virão do Voice Design (tools/gerar-previews-vozes-
+  // miticos.mjs); troque `vozes` pelos apelidos das vozes fixadas quando o
+  // dono escolher os previews. Falas já com as expressões regionais.
   {
     id: 'lampiao', vozes: ['silas', 'jose-rural'],
     falas: [
-      ['arreda', '[shouts] Arreda!'],
-      ['virgem-maria', 'Virgem Maria!'],
-      ['cangaco', '[shouts] Cangaço!'],
-      ['deitou', 'Deitou.'],
-      ['no-chao', 'No chão, moço!'],
-      ['sertao-manda', 'Sertão manda!'],
+      ['oxente', 'Ôxente!'],
+      ['arre-egua', 'Arre égua!'],
+      ['cabra-frouxo', 'Cabra frouxo!'],
+      ['vixe', 'Vixe!'],
+      ['lascou-se', 'Lascou-se!'],
+      ['ave-maria', 'Ave Maria!'],
       ['cordel', 'Mais um pro cordel.'],
       ['pisar', 'Quem mandou pisar no meu sertão?'],
     ],
@@ -68,13 +72,13 @@ const MITICOS = [
   {
     id: 'mariabonita', vozes: ['nayara', 'marina'],
     falas: [
-      ['acertou-eu', 'Acertou? Eu.'],
-      ['primeiro-tiro', 'Primeiro tiro.'],
-      ['bonita-ne', 'Bonita, né?'],
-      ['caiu', '[whispers] Caiu.'],
-      ['mira-e-dom', 'Mira é dom.'],
-      ['de-nada', 'De nada.'],
-      ['assina', 'Parou, mirou, acertou. Assina: Maria.'],
+      ['caiu-ligeiro', 'Caiu ligeiro!'],
+      ['assina-maria', 'Assina: Maria.'],
+      ['um-tiro', 'Um tiro só.'],
+      ['vixe-errou', 'Vixe, errou!'],
+      ['arretada', 'Arretada, eu.'],
+      ['de-nada-cabra', 'De nada, cabra.'],
+      ['oxente-rara', 'Ôxente, caiu foi ligeiro! Assina embaixo: Maria.'],
     ],
   },
   {
@@ -125,18 +129,8 @@ const MITICOS = [
       ['danca', 'A dança acabou, meu bem. Volto pro fundo.'],
     ],
   },
-  {
-    id: 'lobisomem', vozes: ['otto', 'adriano'],
-    falas: [
-      ['mordi', '[growls] Mordi.'],
-      ['uivo', 'Auuuu!'],
-      ['lua-cheia', 'Lua cheia!'],
-      ['meu', 'Meu.'],
-      ['caca-encerrada', 'Caça encerrada.'],
-      ['cheiro-medo', 'Cheirinho de medo.'],
-      ['setimo', 'Sétimo filho... primeira mordida da noite.'],
-    ],
-  },
+  // Lobisomem saiu do lote TTS (30/08): SEM fala humana — só sons de lobo,
+  // gerados por tools/gerar-sfx-lobisomem.mjs (Sound Effects API).
   {
     id: 'bandeirante', vozes: ['manoel', 'artur'],
     falas: [

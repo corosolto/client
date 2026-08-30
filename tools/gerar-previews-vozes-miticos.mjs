@@ -28,20 +28,25 @@ const NOMES = {
 
 // 2 rodadas por personagem: descrição base + variação de idade/peso.
 const DESIGNS = [
+  // Rodada final (30/08): dono aprovou tom/idade da r2-p1 do Lampião mas
+  // pediu o sotaque nordestino MESMO — a descrição empurra o sotaque e o
+  // TEXTO de amostra carrega as expressões regionais (sotaque também vem
+  // do texto no TTS). Maria Bonita: redesign do zero — firme, seca, deboche,
+  // NUNCA doce/locutora.
   {
     id: 'lampiao',
-    texto: 'Arreda, moço! Aqui quem manda é o cangaço. Virgem Maria! No sertão, quem atira primeiro é quem conta a história.',
+    texto: 'Ôxente! Arre égua! Aqui é o cangaço, cabra frouxo! Vixe Maria! Lascou-se! Quem mandou pisar no meu sertão?',
     rodadas: [
-      'A rough middle-aged Brazilian man from the rural northeastern sertão backlands. Dry, raspy, sun-cracked voice. Hard unpalatalized T and D consonants, open pretonic vowels, clipped staccato rhythm like an outlaw chief barking short orders. Commanding, theatrical, slightly nasal cordel-singer melody that rises and falls.',
-      'An older, deeper Brazilian bandit leader from the arid northeastern sertão. Gravelly weathered voice with a low growl, hard T and D consonants never palatalized, open vowels, slow menacing delivery that snaps into sharp barked commands. Dusty, dangerous, charismatic.',
+      'An older, deeper Brazilian bandit leader from the arid Pernambuco backlands with a THICK heavy rural Northeastern Brazilian sertanejo accent, NOT neutral Brazilian Portuguese: hard unpalatalized t/d, open stressed vowels, fast clipped machine-gun delivery typical of sertão speech. Gravelly weathered voice with a low growl that snaps into sharp barked commands. Dusty, dangerous, charismatic.',
+      'A weathered cangaço outlaw chief from the deep rural sertão of Pernambuco, Brazil. Very strong regional Northeastern sertanejo accent — hard t and d never palatalized, wide open vowels, rapid-fire clipped staccato phrasing of backlands speech. Raspy sun-dried voice, commanding theatrical menace with folk cordel musicality.',
     ],
   },
   {
     id: 'mariabonita',
-    texto: 'Parou, mirou, acertou. Assina embaixo: Maria. Um tiro só, meu bem — mais que isso é desperdício. Bonita, né?',
+    texto: 'Ôxente, caiu foi ligeiro! Assina embaixo: Maria. Um tiro só, cabra — mais que isso é desperdício. Vixe!',
     rodadas: [
-      'An adult Brazilian woman from the northeastern sertão. Warm but steel-cored low feminine voice, strong sertanejo accent with open pretonic vowels and hard unpalatalized T and D consonants, unhurried confident delivery with a sly smile in the voice, rising-falling northeastern melody.',
-      'A younger sharp-witted Brazilian woman from the rural northeast backlands. Clear cutting voice with grit, open vowels and hard T/D of the sertão accent, quick teasing delivery, cool sniper confidence, a mocking edge that never raises its volume.',
+      'A Brazilian woman around thirty from the rural Pernambuco sertão, outlaw queen of the cangaço. THICK Northeastern sertanejo accent, NOT neutral: hard unpalatalized t/d, open stressed vowels, quick clipped regional phrasing. Firm, dry, commanding voice of a woman who gives orders, a thread of mockery underneath, gritty low timbre. Never sweet, never announcer-like.',
+      'A tough Brazilian outlaw woman from the northeastern backlands, early thirties. Strong rural sertanejo accent with hard t and d and open stressed vowels, fast sharp delivery. Bone-dry sarcastic confidence, slightly husky voice with sun and dust in it, quiet authority that cuts — no softness, no sweetness, no politeness.',
     ],
   },
   {
@@ -55,12 +60,14 @@ const DESIGNS = [
       'A feral trickster spirit of the Brazilian Amazon forest, light nimble adult male voice pitched unusually high, Pará accent with hissing final S and drawn nasal NH sounds, eerie sing-song cadence that swings between playful chant and sudden quiet menace. Bright, quick, otherworldly.',
     ],
   },
+  // Cuca: dono gostou da r1-p2, pediu mais ROUCA e mais MAQUIAVÉLICA —
+  // descrição da r1 intensificada nas duas rodadas.
   {
     id: 'cuca',
-    texto: 'Dorme, neném... que a Cuca já chegou. Nana, nenê... a poção já tá no teu ar. Hora de dormir. Mais um dormiu.',
+    texto: 'Nana neném... que a Cuca vem pegar... papai foi pra roça... mamãe foi trabalhar... dorme logo, neném... [laughs]',
     rodadas: [
-      'A very old Brazilian witch crone. Cracked, hoarse, gravelly elderly female voice with wheezing breath, slow dragging delivery with a soft rural Minas Gerais countryside lilt, sinister lullaby singsong cadence, theatrical horror-comedy menace, gleeful croak at phrase ends.',
-      'An ancient swampy Brazilian sorceress, deep for a female voice, extremely raspy and phlegmy, very slow hypnotic lullaby rhythm that suddenly sharpens, long drawn vowels, quiet cruel amusement, crackling texture like dry leaves.',
+      'A very old Brazilian witch crone. Much raspier, gravelly BROKEN crone voice, wheezing cracked texture on every word, slow Machiavellian relish, cruel delighted cackle bubbling under the words, sinister lullaby singsong with a soft rural Minas Gerais countryside lilt, theatrical horror menace savored syllable by syllable.',
+      'An ancient Brazilian hag sorceress with a destroyed, extremely hoarse rasping voice, almost a croak, phlegmy and crackling like dry leaves. Very slow scheming Machiavellian delivery, hypnotic evil lullaby rhythm that sharpens into cruel glee, wicked chuckle underneath, savoring every threat.',
     ],
   },
   {
