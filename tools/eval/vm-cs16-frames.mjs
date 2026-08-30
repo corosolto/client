@@ -197,6 +197,12 @@ try {
 
   // ---- recarga determinística: action pausada, varredura de action.time
   const duracao = await page.evaluate((arma) => {
+    // captura mede o AUTORADO: só os pedaços LEGADOS saem do quadro (o
+    // autorado também mora em vm.root — esconder o root apagava tudo, 30/08)
+    const vmg = window.__game.vm;
+    for (const k of ['awp', 'pistol', 'knife']) vmg[k] && (vmg[k].visible = false);
+    if (vmg.models) for (const m of Object.values(vmg.models)) m && (m.visible = false);
+    if (vmg.arms?.group) vmg.arms.group.visible = false;
     const e = window.__authoredVm.entry(arma);
     const clip = e.clips.get('reload_tactical') || e.clips.get('reload_empty')
       || e.clips.get('reload_start') || e.clips.get('pump');
@@ -216,6 +222,11 @@ try {
       e.action.time = Math.min(t, e.action.getClip().duration - 1e-4);
     }, { arma: ARMA, t });
     await page.waitForTimeout(250);
+    const estadoReal = await page.evaluate((arma) => {
+      const e = window.__authoredVm.entry(arma);
+      return { clipe: e.action?.getClip?.().name, tempo: +(e.action?.time ?? -1).toFixed(3), pausado: e.action?.paused };
+    }, ARMA);
+    console.log(`frame ${i}: ${JSON.stringify(estadoReal)}`);
     await page.screenshot({ path: path.join(OUT, `reload-${String(i).padStart(2, '0')}-t${t.toFixed(2)}.png`) });
   }
   console.log(`frames: ${N_FRAMES} em ${OUT} (clipe ${duracao.toFixed(2)}s)`);
