@@ -32,7 +32,9 @@ const FISH_API = 'https://api.fish.audio/v1/tts';
 const VOZES = {
   'fish-vaqueiro': { backend: 'fish', ref: '80dfc9e3e97b45ff94978b3eff801855', nome: 'Vaqueiro Nordestino Animado (Fish)' },
   'fish-nordestino': { backend: 'fish', ref: '9968a7351f6f4abda63be69518c29414', nome: 'Nordestino meia-idade (Fish)' },
-  'fish-nordestina': { backend: 'fish', ref: 'e2415382319c40f4bdc9c5baa314cd76', nome: 'NORDESTINA MENINA (Fish)' },
+  // Trocada 30/08: o dono achou a NORDESTINA MENINA (e2415382319c40f4bdc9c5baa314cd76)
+  // menos clara; modelo novo escolhido por ele:
+  'fish-nordestina': { backend: 'fish', ref: '0f49c094859440a5b69c421a8ce2a570', nome: 'Nordestina clara (Fish, modelo do dono)' },
   'cuca-vd': { backend: 'eleven', ref: 'TmfHJ19kMzZYALkBuv81', nome: 'Cuca (Mitico CS) — Voice Design r2-p3' },
   'curupira-vd': { backend: 'eleven', ref: 'zKlPFm3CStZ8TNJn803F', nome: 'Curupira (Mitico CS) — Voice Design r2-p2' },
   'boto-vd': { backend: 'eleven', ref: 'fLvlBA4sutzLZYXaKz0H', nome: 'Boto Cor de Rosa (Mitico CS) — Voice Design r2-p3' },

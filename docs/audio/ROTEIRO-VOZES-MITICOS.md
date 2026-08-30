@@ -19,15 +19,20 @@ Gerador: `tools/gerar-vozes-miticos.mjs` (embute esta tabela; flags `--dry`,
 `eleven_v3`; no Fish são removidas do texto. 2 tomadas por fala →
 `public/audio/ia/miticos/<id>/<slug>-tN-<voz>.mp3` (gitignorado; mp3 fora do git).
 
-Notação: `[tag]` = audio tag do eleven_v3 (não é falada). **(kill)** ≤ 2 s;
-**(rara)** = variação média.
+Notação: `[tag]` = audio tag do eleven_v3 (não é falada).
+
+**REGRA DE DESTINO (decisão do dono, 30/08):** "frases finais longas ficam na
+TELA DE SELEÇÃO de personagem; as expressões (curtas) vão no GAME".
+- **(kill)** = INGAME, ≤ 2 s → `public/audio/miticos/ingame/` → pool `voice.M`
+- **(rara)** = SELEÇÃO → `public/audio/characters/<id>/select/` → `characterVoice.<id>`
+  (layout do gen-audio-manifest do PR #481/merge-399, onde `miticos → M` já está no mapa)
 
 ## CASTING FINAL (veredito do dono, 30/08)
 
 | Personagem | Backend | Voz/modelo | id |
 |---|---|---|---|
 | Lampião | Fish Audio | A/B: "Vaqueiro Nordestino Animado" e "Nordestino" (meia-idade) | `80dfc9e3e97b45ff94978b3eff801855` / `9968a7351f6f4abda63be69518c29414` |
-| Maria Bonita | Fish Audio | "NORDESTINA MENINA" | `e2415382319c40f4bdc9c5baa314cd76` |
+| Maria Bonita | Fish Audio | modelo novo do dono ("mais clara" que a NORDESTINA MENINA) | `0f49c094859440a5b69c421a8ce2a570` |
 | Saci-Pererê | ElevenLabs (library) | Açougueirão - Evil Cartoon Character | `PSkrmGGNwoOIKXqzUWs9` |
 | Curupira | ElevenLabs (Voice Design r2-p2) | Curupira (Mitico CS) | `zKlPFm3CStZ8TNJn803F` |
 | Cuca | ElevenLabs (Voice Design r2-p3) | Cuca (Mitico CS) | `TmfHJ19kMzZYALkBuv81` |
@@ -36,11 +41,16 @@ Notação: `[tag]` = audio tag do eleven_v3 (não é falada). **(kill)** ≤ 2 s
 | Bandeirante | ElevenLabs (library) | Artur Mechedjiana | `DFbzZEWhyi2l6rU3obC8` |
 | Zumbi dos Palmares | ElevenLabs (library) | Carlos - Resonant & Majestic Storyteller | `NFmEzNOony1UsEJGXLth` |
 
-Pilotos de upgrade dos times existentes (Fish, só audição — packs atuais
-intactos): `tools/gerar-pilotos-fish.mjs` — cria do RJ funk (pool F)
-`cf4a65e7fff3408aa30982d4ddfbddb2`, Mandrake (F)
-`6a27a3ab74af45cb8890a6974e9eeb06`, Pagodeiro (U)
-`c481e5eba6254be49de0f33af6736085`.
+**TOMADAS FINAIS aprovadas (30/08):** cuca=t2 · curupira=t2 · saci=t2 ·
+lampiao=t2 (fish-nordestino `9968a735...`) · boto=t1 · bandeirante=t1 ·
+zumbi=t1 · mariabonita=modelo novo (regravada) · lobisomem=SFX t2.
+Estrutura fonte do pack v8: `public/audio/miticos/ingame/` (kills) +
+`public/audio/characters/<id>/select/` (raras) — montada por
+`tools/montar-pack-miticos.mjs` a partir das tomadas aprovadas.
+
+Upgrade dos FUNKEIROS (Fish, staging separado — pack F atual intacto):
+roteiro em `docs/audio/ROTEIRO-FUNKEIROS-UPGRADE.md`, gerador
+`tools/gerar-pilotos-fish.mjs`, saída em `public/audio/ia/funkeiros-upgrade/`.
 
 ---
 
