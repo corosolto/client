@@ -42,7 +42,12 @@ const hashNome = (rel) => {
   return novo;
 };
 const reescreve = (o) => {
-  if (Array.isArray(o)) return o.map((v) => (typeof v === 'string' && v.startsWith('audio/') ? hashNome(v) : v));
+  // String em QUALQUER posição (array OU valor de objeto). Antes só o caso de array
+  // era coberto: `characterVoice.<id>` é string solta e passava reto sem hashear nem
+  // copiar — o manifest do zip apontava pra um caminho que não estava no zip. Foi a
+  // classe do arquivo faltando do v7; o probe refs×zip do v8 pegou de novo (30/08).
+  if (typeof o === 'string') return o.startsWith('audio/') ? hashNome(o) : o;
+  if (Array.isArray(o)) return o.map(reescreve);
   if (o && typeof o === 'object') { const r = {}; for (const [k, v] of Object.entries(o)) r[k] = reescreve(v); return r; }
   return o;
 };
