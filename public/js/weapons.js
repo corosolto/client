@@ -93,9 +93,12 @@ const CFG = {
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
   m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
-  /* mosquete: o cano já nasce no eixo Z no GLB (medido; maior eixo, como nas outras) —
-     rot em X jogava a seção transversal no eixo da normalização. Régua: weapon-scale-check. */
-  mosquete:  { len: 1.45, rot: [0, 0, 0], gripZ: 0.68 },
+  /* mosquete: o cano nasce no eixo Z no GLB, mas apontando −Z (medido por seção
+     transversal: a ponta +Z crua tem 2,84× a área da −Z — é a CORONHA). Com rot [0,0,0]
+     o Bandeirante segurava o mosquete ao contrário (dono, 30/08). O +180° põe a boca em
+     +Z como o contrato pede. rot em X jogava a seção transversal no eixo da normalização.
+     Régua: weapon-scale-check (cláusula C; mutante `flip` devolve este defeito). */
+  mosquete:  { len: 1.45, rot: [0, 180, 0], gripZ: 0.68 },
   rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela

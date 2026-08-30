@@ -20,9 +20,18 @@
 //      Ela é o valor MEDIDO do normalizador por maior-eixo: com o `rot` errado E o
 //      normalizador por maior-eixo, a arma fica torta mas NÃO fica gigante (mutante `rot`);
 //      com o `rot` errado E o normalizador só-Z, ela fica gigante (mutante `ambos`).
+//   C) BOCA NA FRENTE    áreaSeção(+Z) / áreaSeção(−Z) ≤ 2.0
+//      DEFEITO QUE ELA NASCEU PARA MORDER (30/08): o dono viu o Bandeirante segurando o
+//      mosquete AO CONTRÁRIO — coronha pra frente. O contrato "cano em +Z" tem DIREÇÃO,
+//      e A/B são cegas a ela (girar 180° em Y preserva dz). A seção transversal denuncia:
+//      boca de cano é fina, coronha é grossa. Medido nos 26 jogáveis + mosquete: toda
+//      arma correta fica ≤ 1,62 (pior: mp5, guarda-mão gordo na frente); o mosquete
+//      invertido dava 2,84. Teto = 1,62 × 1,25 (folga da casa) ≈ 2,0. tp-mount-probe e
+//      select-mount ficaram VERDES nesse defeito — elas medem o MOUNT, não a malha;
+//      régua de mount verde + arma de costas foi exatamente o corolário da Lei 1.
 //
 // USO
-//   node tools/eval/weapon-scale-check.mjs [--mutante=rot|zlen|ambos] [--json=arquivo.json]
+//   node tools/eval/weapon-scale-check.mjs [--mutante=rot|zlen|ambos|flip] [--json=arquivo.json]
 //   BASE=http://localhost:8123 (padrão)   — precisa do tools/eval/serve.mjs de pé.
 //
 // MUTANTES (prova de que a régua morde; injetam o defeito de volta SEM tocar no arquivo —
@@ -32,6 +41,7 @@
 //          o laudo abaixo): com todos os canos em +Z, `max(dx,dy,dz)` É `dz`. Fica VERDE de
 //          propósito, e a régua GRITA isso em vez de deixar passar como se tivesse mordido.
 //   ambos  devolve os dois = o defeito original             → A e B vermelhas, 7,856 m no Y
+//   flip   devolve o mosquete de coronha pra frente ([0,180,0] -> [0,0,0]) → C vermelha
 // Um mutante que não encontra o padrão no fonte sai com código 2 (MUTANTE INERTE): mutação
 // que passa de largo devolve verde, e esse verde seria lido como "o guarda funciona".
 import { execSync } from 'node:child_process';
@@ -48,16 +58,22 @@ const args = process.argv.slice(2);
 const arg = (n) => { const a = args.find(x => x.startsWith(`--${n}=`)); return a ? a.slice(n.length + 3) : null; };
 const MUT = arg('mutante');
 const JSONOUT = arg('json');
-if (MUT && !['rot', 'zlen', 'ambos'].includes(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
+if (MUT && !['rot', 'zlen', 'ambos', 'flip'].includes(MUT)) { console.error(`mutante desconhecido: ${MUT}`); process.exit(2); }
 
 /* ---------- mutação da fonte (só em memória; servida por route interception) ---------- */
 function mutate(src, kind) {
   let out = src, hits = 0;
   if (kind === 'rot' || kind === 'ambos') {
-    // devolve o rot quebrado do mosquete: [0,0,0] -> [-90,0,0]
-    const re = /(mosquete:\s*\{[^}\n]*?rot:\s*)\[\s*0\s*,\s*0\s*,\s*0\s*\]/;
-    if (!re.test(out)) { console.error('MUTANTE INERTE: não achei `mosquete: { ... rot: [0,0,0] }` em weapons.js'); process.exit(2); }
+    // devolve o rot quebrado do mosquete: [0,180,0] -> [-90,0,0]
+    const re = /(mosquete:\s*\{[^}\n]*?rot:\s*)\[\s*0\s*,\s*180\s*,\s*0\s*\]/;
+    if (!re.test(out)) { console.error('MUTANTE INERTE: não achei `mosquete: { ... rot: [0,180,0] }` em weapons.js'); process.exit(2); }
     out = out.replace(re, '$1[-90, 0, 0]'); hits++;
+  }
+  if (kind === 'flip') {
+    // devolve o defeito do Bandeirante: mosquete de coronha pra frente
+    const re = /(mosquete:\s*\{[^}\n]*?rot:\s*)\[\s*0\s*,\s*180\s*,\s*0\s*\]/;
+    if (!re.test(out)) { console.error('MUTANTE INERTE: não achei `mosquete: { ... rot: [0,180,0] }` em weapons.js'); process.exit(2); }
+    out = out.replace(re, '$1[0, 0, 0]'); hits++;
   }
   if (kind === 'zlen' || kind === 'ambos') {
     // devolve a normalização só-Z
@@ -107,9 +123,27 @@ const rows = await page.evaluate(async ({ display }) => {
     if (!wm) { out.push({ id, missing: true, len: cfg.len }); continue; }
     wm.updateMatrixWorld(true);
     const b = new THREE.Box3().setFromObject(wm);
+    // C) seção transversal nas duas pontas (10% do comprimento cada): boca fina, coronha grossa.
+    const v = new THREE.Vector3();
+    const L = (b.max.z - b.min.z) || 1e-4;
+    const zf = b.max.z - L * 0.10, zt = b.min.z + L * 0.10;
+    const f = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9 }, t = { x0: 1e9, x1: -1e9, y0: 1e9, y1: -1e9 };
+    wm.traverse((o) => {
+      const pos = o.isMesh && o.geometry && o.geometry.attributes && o.geometry.attributes.position;
+      if (!pos) return;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+        const s = v.z >= zf ? f : (v.z <= zt ? t : null);
+        if (!s) continue;
+        if (v.x < s.x0) s.x0 = v.x; if (v.x > s.x1) s.x1 = v.x;
+        if (v.y < s.y0) s.y0 = v.y; if (v.y > s.y1) s.y1 = v.y;
+      }
+    });
+    const area = (s) => (s.x1 > s.x0 && s.y1 > s.y0) ? (s.x1 - s.x0) * (s.y1 - s.y0) : 0;
     out.push({
       id, len: cfg.len, rot: cfg.rot.slice(),
       dx: b.max.x - b.min.x, dy: b.max.y - b.min.y, dz: b.max.z - b.min.z,
+      bocaRazao: area(t) > 0 ? area(f) / area(t) : null,
     });
   }
   return out;
@@ -120,22 +154,26 @@ await browser.close();
 const R = (n) => n.toFixed(3);
 let bad = 0;
 const report = [];
+const BOCA_TETO = 2.0;   // pior arma correta (mp5, 1.62) × 1.25 — procedência no cabeçalho
 console.log(`RÉGUA DE ESCALA DAS ARMAS  (tol ${TOL} m)${MUT ? `   [MUTANTE=${MUT}]` : ''}`);
 console.log('  A) |dz − len| ≤ tol        cano em +Z, comprimento real');
 console.log('  B) max(dx,dy,dz) ≤ len+tol nenhum eixo maior que o comprimento declarado');
-console.log('id            len     dx      dy      dz     maxEixo  eixo  errA    veredito');
+console.log(`  C) boca na frente          áreaSeção(+Z)/áreaSeção(−Z) ≤ ${BOCA_TETO} (coronha não vai na frente)`);
+console.log('id            len     dx      dy      dz     maxEixo  eixo  errA    boca    veredito');
 for (const r of rows) {
-  if (r.missing) { bad++; console.log(`${r.id.padEnd(12)} ${R(r.len)}   —       —       —       —       —     —       VERMELHA (modelo não carregou)`); report.push({ ...r, ok: false }); continue; }
+  if (r.missing) { bad++; console.log(`${r.id.padEnd(12)} ${R(r.len)}   —       —       —       —       —     —       —       VERMELHA (modelo não carregou)`); report.push({ ...r, ok: false }); continue; }
   const mx = Math.max(r.dx, r.dy, r.dz);
   const eixo = mx === r.dx ? 'X' : (mx === r.dy ? 'Y' : 'Z');
   const errA = Math.abs(r.dz - r.len);
   const okA = errA <= TOL;
   const okB = mx <= r.len + TOL;
-  const ok = okA && okB;
+  // bocaRazao null = ponta sem área medível (não acusa: régua não inventa vermelho onde não mediu — mas registra)
+  const okC = r.bocaRazao === null || r.bocaRazao <= BOCA_TETO;
+  const ok = okA && okB && okC;
   if (!ok) bad++;
-  const why = ok ? 'ok' : `VERMELHA${okA ? '' : ' A'}${okB ? '' : ' B'}`;
-  console.log(`${r.id.padEnd(12)} ${R(r.len)}   ${R(r.dx)}   ${R(r.dy)}   ${R(r.dz)}   ${R(mx)}    ${eixo}     ${R(errA)}   ${why}`);
-  report.push({ ...r, max: mx, eixo, errA, okA, okB, ok });
+  const why = ok ? 'ok' : `VERMELHA${okA ? '' : ' A'}${okB ? '' : ' B'}${okC ? '' : ' C'}`;
+  console.log(`${r.id.padEnd(12)} ${R(r.len)}   ${R(r.dx)}   ${R(r.dy)}   ${R(r.dz)}   ${R(mx)}    ${eixo}     ${R(errA)}   ${r.bocaRazao === null ? '  —  ' : R(r.bocaRazao)}   ${why}`);
+  report.push({ ...r, max: mx, eixo, errA, okA, okB, okC, ok });
 }
 if (JSONOUT) writeFileSync(JSONOUT, JSON.stringify({ tol: TOL, mutante: MUT || null, rows: report }, null, 2));
 console.log(`\n${bad ? `VERMELHA: ${bad}/${rows.length} arma(s) fora do contrato` : `VERDE: ${rows.length}/${rows.length} armas dentro do contrato`}`);
