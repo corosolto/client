@@ -4978,6 +4978,20 @@ export class Game {
     else if (tp.mixer) tp.mixer.update(dt);
   }
 
+  /* Desarma o _tpDeath no respawn. No online o respawn vem por SNAPSHOT e não passa pelo
+     _respawnPlayer — sem esta reversão o corpo TP ficava DEITADO pra sempre, arrastado pelo
+     mundo (BUG-86, KNOWN-BUGS.md). Chamado pelo _respawnPlayer (SP) e pelo netgame (MP). */
+  _tpRevive() {
+    this._tpDead = false;
+    const tp = this.playerTP;
+    if (!tp) return;
+    if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
+    if (tp.group) {
+      tp.group.visible = this.camView !== 'first';
+      tp.group.rotation.set(0, this.player.yaw + Math.PI, 0);
+    }
+  }
+
   /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
      implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
   _moveEntity(p, inp, dt) {
@@ -5627,6 +5641,7 @@ export class Game {
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
     p._lifeDmg = 0;
+    this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;

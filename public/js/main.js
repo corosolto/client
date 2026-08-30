@@ -2712,6 +2712,7 @@ function rosterDoServidor(lado, charId) {
    até alguém entrar numa sala. */
 let mpSessao = null;
 let mpNoAtual = null;
+let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
 let mpNos = [];
 let mpTimerLista = null;
 
@@ -2888,6 +2889,7 @@ function mpMontarFormulario() {
    facções e o modo que o servidor está rodando — é ele que manda, não o que estava
    escolhido no menu. Começar antes seria carregar o mapa errado e trocar na cara do jogador. */
 async function mpEntrar(sala, team = 'auto', senha = '') {
+  if (mpConectando) return;   // dois cliques em ENTRAR não podem abrir dois sockets
   mpErro('');
   const nick = ($('nick-input').value || '').trim();
   if (sala.private && !senha) {
@@ -2897,15 +2899,23 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
     nome: nick || null, room: sala.id, pw: senha, team,
   });
+  /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
+     mensagem lê como "cliquei e não aconteceu nada" (BUG-88). O prazo é do net.connect(). */
+  mpConectando = true;
+  mpErro(`Conectando na sala ${sala.name || sala.id}…`);
   let welcome;
   try { welcome = await net.connect(); }
   catch (err) {
+    mpConectando = false;
     const m = String(err && err.message || '');
     return mpErro(m.includes('bad_password') ? 'Senha errada.'
       : m.includes('room_full') ? 'Sala cheia.'
       : m.includes('room_not_found') ? 'Essa sala não existe mais.'
+      : m.includes('timeout') ? 'O servidor demorou demais pra responder. Tente de novo ou escolha outra região.'
       : 'Não deu pra conectar nesse servidor.');
   }
+  mpConectando = false;
+  mpErro('');
   clearInterval(mpTimerLista);
   mpSessao = { net, sala, no: mpNoAtual };
   /* O SERVIDOR dita o cenário. `currentMap`/`matchMode` são as variáveis que o startGame lê. */

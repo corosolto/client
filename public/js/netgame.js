@@ -12,6 +12,11 @@ class Netcode {
     this._netMap = new Map();   // id do servidor -> entidade local
     this._netTick = -1;
     this._alvoSpec = null;      // quem o espectador está seguindo
+    /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots a 20 Hz). Renderizar o remoto ~120 ms no
+       passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
+       pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
+    this.interpAtrasoMs = 120;
+    this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => this.updateStats(), 250);
@@ -27,15 +32,26 @@ class Netcode {
 
   get espectador() { return this.net.espectador || this.net.yourEnt == null; }
 
+  // Relógio de parede do netcode — indireção para a régua fabricar jitter determinístico.
+  _now() { return performance.now(); }
+
   /* Tempo-de-SERVIDOR que o cliente está renderizando os remotos AGORA (entre os dois últimos
      snapshots). Vai no input para o servidor rebobinar as hitboxes exatamente para cá (lag
      compensation) — é o que faz o tiro cair onde você VIU o alvo, e não onde ele já está. */
   renderTime() {
-    if (this._snapCurT == null || this._snapPrevT == null) return this._snapCurT || 0;
-    const span = Math.max(1, this._snapArrCur - this._snapArrPrev);
-    const nowMs = performance.now();
-    const a = Math.max(0, Math.min(1, (nowMs - this._snapArrCur) / span));
-    return this._snapPrevT + (this._snapCurT - this._snapPrevT) * a;
+    /* Mapeia o instante RENDERIZADO (agora − buffer) para o relógio do servidor pela mesma
+       tabela chegada↔t que a interpolação usa — o rewind cai exatamente no que a tela mostrou. */
+    const at = this._tAt, t = this._tT;
+    if (at.length) {
+      const rAt = this._now() - this.interpAtrasoMs;
+      if (rAt <= at[0]) return t[0];
+      if (rAt >= at[at.length - 1]) return t[t.length - 1];   // clampa: nunca à frente do último snapshot
+      let j = at.length - 2;
+      while (j > 0 && at[j] > rAt) j--;
+      const a = (rAt - at[j]) / Math.max(1, at[j + 1] - at[j]);
+      return t[j] + (t[j + 1] - t[j]) * a;
+    }
+    return this._snapCurT || 0;
   }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
@@ -109,12 +125,13 @@ class Netcode {
 
     if (snap.tick === this._netTick) return;
     this._netTick = snap.tick;
-    const nowMs = performance.now();
-    /* Tempos do LAG COMP: guarda o tempo-de-servidor (snap.t) e o instante de CHEGADA dos dois
-       últimos snapshots. Com isso o cliente sabe exatamente que instante do servidor ele está
-       renderizando, e pede o rewind para lá. */
+    const nowMs = this._now();
+    /* Tempos do LAG COMP: chegada ↔ tempo-de-servidor dos últimos snapshots. É desta tabela
+       que o renderTime() deriva o instante do servidor que a tela está mostrando. */
     this._snapPrevT = this._snapCurT; this._snapArrPrev = this._snapArrCur;
     this._snapCurT = snap.t; this._snapArrCur = nowMs;
+    this._tAt.push(nowMs); this._tT.push(snap.t);
+    if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
 
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
@@ -144,6 +161,13 @@ class Netcode {
       const salto = Math.hypot(ent._ipx1 - ent._ipx0, ent._ipz1 - ent._ipz0);
       if (salto > 3) { ent._ipx0 = ent._ipx1; ent._ipy0 = ent._ipy1; ent._ipz0 = ent._ipz1; ent._ipyaw0 = ent._ipyaw1; }  // respawn/teleporte: colapsa
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);   // alimenta a animação de andar
+      /* BUFFER de amostras (BUG-87): arrays planos por eixo, capados em 10 — nada de um
+         {x,y,z} por ent × 20 Hz (GC no hot path). Teleporte esvazia: interpolar através de
+         um respawn seria o boneco varrendo o mapa em linha reta. */
+      if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; }
+      if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
+      ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
+      if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
       if (e.fire && ent.alive) this.gunshot(ent);
       if (e.voice) this.voice(ent, e.voice);
     }
@@ -212,6 +236,9 @@ class Netcode {
   }
   playerRespawned() {
     const game = this.game;
+    // o corpo TP do jogador: no online o respawn NÃO passa pelo _respawnPlayer, e sem este
+    // reset o corpo ficava deitado pra sempre, arrastado pelo mundo (BUG-86).
+    try { game._tpRevive(); } catch { /* corpo ainda não construído */ }
     if (game.el.respawn) game.el.respawn.classList.add('hidden');
     if (game._deathPanel) { try { game._deathPanel.remove(); } catch { /* já foi */ } game._deathPanel = null; }
     game._lastHit = null;
@@ -224,17 +251,27 @@ class Netcode {
     const g = b.mesh && b.mesh.group;
     if (!g) return;
     if (b._remote === 'ghost') { g.visible = false; return; }
-    if (b._ipT1 != null) {
-      // viaja de prev -> cur por RELÓGIO DE PAREDE, ~1 snapshot no passado. Contínuo entre
-      // pacotes (a velocidade não quebra) = boneco LISO em vez de picotado.
-      const nowMs = performance.now();
-      const span = Math.max(1, b._ipT1 - b._ipT0);
-      const a = Math.max(0, Math.min(1, (nowMs - b._ipT1) / span));
-      b.pos.x = b._ipx0 + (b._ipx1 - b._ipx0) * a;
-      b.pos.y = b._ipy0 + (b._ipy1 - b._ipy0) * a;
-      b.pos.z = b._ipz0 + (b._ipz1 - b._ipz0) * a;
-      let dy = b._ipyaw1 - b._ipyaw0; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
-      b.yaw = b._ipyaw0 + dy * a;
+    if (b._bufAt && b._bufAt.length) {
+      /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando dentro do buffer de
+         amostras. É o que absorve o jitter da chegada (BUG-87): o esquema antigo viajava
+         prev→cur no gap de ~50 ms e qualquer pacote atrasado clampava no último ponto —
+         boneco CONGELADO até o próximo. Clampa nas duas pontas: NUNCA extrapola. */
+      const at = b._bufAt, n = at.length;
+      const rAt = this._now() - this.interpAtrasoMs;
+      let j, a = 0;
+      if (rAt <= at[0]) j = 0;
+      else if (rAt >= at[n - 1]) j = n - 1;
+      else {
+        j = n - 2;
+        while (j > 0 && at[j] > rAt) j--;
+        a = (rAt - at[j]) / Math.max(1, at[j + 1] - at[j]);
+      }
+      const k = a > 0 ? j + 1 : j;
+      b.pos.x = b._bufX[j] + (b._bufX[k] - b._bufX[j]) * a;
+      b.pos.y = b._bufY[j] + (b._bufY[k] - b._bufY[j]) * a;
+      b.pos.z = b._bufZ[j] + (b._bufZ[k] - b._bufZ[j]) * a;
+      let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
+      b.yaw = b._bufYaw[j] + dy * a;
     }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
