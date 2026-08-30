@@ -19,6 +19,11 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
 ));
 
+// Fonte alternativa (?vmfonte=goldsrc): viewmodel dos moldes CS 1.6 (CC0,
+// FONTE.md) com a arma Mint — protótipo da trilha de paridade.
+const VM_FONTE = typeof window !== 'undefined'
+  ? (new URLSearchParams(window.location.search).get('vmfonte') || '')
+  : '';
 // Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
 const AUTHORED_KILLED = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('vmauthored') === '0';
@@ -202,9 +207,13 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
+  if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
+  if (key.startsWith('gs#')) {
+    return `/private-assets/viewmodels/goldsrc-vm/${key.slice(3)}-runtime.glb?v=${CATALOG_VERSION}`;
+  }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
     return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
@@ -245,12 +254,19 @@ function cameraSpacePackage(gltf, profile, parent, family) {
   authoredCamera.removeFromParent();
   scene.applyMatrix4(cameraInverse);
 
-  const frame = FAMILY_FRAME[family] || FAMILY_FRAME.default;
+  const frame = VM_FONTE === 'goldsrc'
+    ? { x: 0, y: 0, z: 0, fov: 74 }
+    : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
 
   const mount = new THREE.Group();
   mount.name = `paid_viewmodel_mount_${family}`;
   mount.add(scene);
   mount.position.set(frame.x, frame.y, frame.z);
+  if (VM_FONTE === 'goldsrc') {
+    // espelho do cl_righthand: o molde cru é canhoto; det<0 exige DoubleSide.
+    mount.scale.x = -1;
+    scene.traverse((o) => { if (o.isMesh) materialsOf(o).forEach((m) => { if (m) m.side = THREE.DoubleSide; }); });
+  }
   mount.visible = false;
   parent.add(mount);
 
