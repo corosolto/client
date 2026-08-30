@@ -123,7 +123,9 @@ const GUN_SCALE = parseFloat(qp.get('guns')) || 1.0;
 const LOBI_HAND_R = _num3(qp.get('lobirh'), [0, 0, 0]).map((d) => d * Math.PI / 180);
 const LOBI_HAND_L = _num3(qp.get('lobilh'), [0, 0, 0]).map((d) => d * Math.PI / 180);
 const LOBI_CURL_Q = parseFloat(qp.get('lobcurl'));
-const LOBI_CURL = Number.isFinite(LOBI_CURL_Q) ? LOBI_CURL_Q : 0.7;
+// 0,7 -> 0,35 (30/08): o curl fechado rasgava a pele das garras — select-inflate 32,6 -> 19,3
+// ruins/1e4 (teto 23,6). Diagnóstico e A/B na entrada BUG-86 do KNOWN-BUGS.md.
+const LOBI_CURL = Number.isFinite(LOBI_CURL_Q) ? LOBI_CURL_Q : 0.35;
 const LOBI_CURL_R = _num3(qp.get('lobcurlr'), [LOBI_CURL, 0, 0]);
 const LOBI_CURL_L = _num3(qp.get('lobcurll'), [LOBI_CURL, 0, 0]);
 // Rigs Meshy de palma plana: o curl combina duas falanges + compactação distal. No Programador
