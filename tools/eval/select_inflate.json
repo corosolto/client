@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-13T18:49:57.748Z",
+ "gerado": "2026-08-30T03:17:54.514Z",
  "mutante": null,
  "refs": [
   "mandrake",
@@ -1205,96 +1205,6 @@
      "neck",
      8.1,
      44.7
-    ]
-   ]
-  },
-  {
-   "id": "lobisomem",
-   "arma": "shotgun",
-   "oneHanded": false,
-   "ik": true,
-   "arestas": 8291,
-   "p95": 0.306,
-   "p99": 0.628,
-   "p999": 1.423,
-   "max": 2.43,
-   "pct25": 7.02,
-   "ruins1e4": 32.6,
-   "ruinsPorOsso": [
-    [
-     "Head",
-     13
-    ],
-    [
-     "LeftHand",
-     12
-    ],
-    [
-     "Curl_R",
-     6
-    ],
-    [
-     "Curl_L",
-     6
-    ],
-    [
-     "LeftForeArm",
-     5
-    ],
-    [
-     "RightHand",
-     3
-    ],
-    [
-     "RightForeArm",
-     2
-    ],
-    [
-     "RightShoulder",
-     2
-    ]
-   ],
-   "semcurlDesfez": null,
-   "girouGraus": [
-    [
-     "Head",
-     47.9,
-     35.1
-    ],
-    [
-     "LeftHand",
-     107.4,
-     150.5
-    ],
-    [
-     "Curl_R",
-     40.1,
-     117.2
-    ],
-    [
-     "Curl_L",
-     40.1,
-     176.8
-    ],
-    [
-     "LeftForeArm",
-     46.4,
-     100.5
-    ],
-    [
-     "RightHand",
-     59.5,
-     115.7
-    ],
-    [
-     "RightForeArm",
-     68.6,
-     62.8
-    ],
-    [
-     "RightShoulder",
-     11.3,
-     57.9
     ]
    ]
   },
@@ -2609,6 +2519,96 @@
      "LeftHand",
      66.2,
      155.3
+    ]
+   ]
+  },
+  {
+   "id": "lobisomem",
+   "arma": "shotgun",
+   "oneHanded": false,
+   "ik": true,
+   "arestas": 8291,
+   "p95": 0.255,
+   "p99": 0.491,
+   "p999": 1.276,
+   "max": 2.43,
+   "pct25": 5.22,
+   "ruins1e4": 19.3,
+   "ruinsPorOsso": [
+    [
+     "Head",
+     13
+    ],
+    [
+     "LeftForeArm",
+     5
+    ],
+    [
+     "LeftHand",
+     4
+    ],
+    [
+     "RightForeArm",
+     2
+    ],
+    [
+     "RightShoulder",
+     2
+    ],
+    [
+     "LeftUpLeg",
+     1
+    ],
+    [
+     "RightUpLeg",
+     1
+    ],
+    [
+     "RightHand",
+     1
+    ]
+   ],
+   "semcurlDesfez": null,
+   "girouGraus": [
+    [
+     "Head",
+     47.9,
+     35.1
+    ],
+    [
+     "LeftForeArm",
+     46.4,
+     100.5
+    ],
+    [
+     "LeftHand",
+     107.4,
+     150.5
+    ],
+    [
+     "RightForeArm",
+     68.6,
+     62.8
+    ],
+    [
+     "RightShoulder",
+     11.3,
+     57.9
+    ],
+    [
+     "LeftUpLeg",
+     44.6,
+     5.6
+    ],
+    [
+     "RightUpLeg",
+     24.1,
+     57.8
+    ],
+    [
+     "RightHand",
+     59.5,
+     115.7
     ]
    ]
   },

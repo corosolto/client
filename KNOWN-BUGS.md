@@ -1909,6 +1909,67 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-86 · Time Mítico "balaozado", Cuca gigante/disforme e o mosquete do Bandeirante ao contrário
+
+**Palavras de quem reportou** (dono, 30/08, jogando o preview do PR #481): *"estao bons no
+geral, mas estao balaozados"*; *"CUCA está totalmente gigante e disforme (nem cabe na tela
+de seleção)"*; *"o bandeirante segura o rifle ao contrario"* (screenshot: mosin de coronha
+pra frente na 3ª pessoa).
+
+São TRÊS defeitos com três causas. Medição de 30/08, todas reprodutíveis por comando.
+
+**(a) Bandeirante rifle ao contrário — RESOLVIDO 30/08.** Causa raiz: `public/js/weapons.js`
+(CFG do `mosquete`, o modelo de vitrine que `buildCharacterModel` põe no corpo dele —
+`public/js/glbchars.js:398`) declarava `rot: [0, 0, 0]`, mas o GLB nasce com a BOCA em −Z:
+seção transversal da ponta +Z crua = 2,84× a área da −Z (é a coronha; numa arma correta o
+pior é 1,62, mp5). Corrigido para `rot: [0, 180, 0]`. Por que TODA régua estava VERDE com a
+arma de costas (corolário da Lei 1): `tp-mount-probe`/`select-mount` medem a orientação do
+MOUNT, não a malha da arma — o mount apontava certo e a arma dentro dele nascia girada.
+Régua nova: **cláusula C (BOCA NA FRENTE) na `weapon-scale-check`** — áreaSeção(+Z)/(−Z)
+≤ 2,0 nas 27 armas (teto = pior correta 1,62 × 1,25). Antes: mosquete 2,839 VERMELHA C;
+depois: 0,352, 27/27 VERDE. Mutante novo `--mutante=flip` devolve o defeito → VERMELHA C.
+A/B por figura: scratchpad fotos/bandeirante.png (coronha pra frente) × fotos-depois (boca
+pra frente). FP intocado (mosquete não está em `WEAPON_IDS`; a balística segue `mosin`).
+
+**(b) Cuca gigante e disforme — É O RIG DO GLB, não a normalização; PENDÊNCIA DE REGERAÇÃO
+(Mint).** A normalização CHR2 está aplicada e correta: estatura anatômica (pé→`head_end`)
+= 1,720 m exatos nos 9, `char-escala-check` G1a verde 62/62. O que a conta anatômica não
+vê: o `head_end` dela termina DENTRO do crânio de jacaré — Head em 1,709, `head_end` em
+1,792, topo da malha em **2,220 m**. São 0,43 m de crânio/crista acima do osso (pior
+"adereço" legítimo dos 44 da main: moicano do punk, 0,24 m, 109 vértices, todos no Head).
+Na Cuca são **1.995 vértices acima do head_end, e 555+163 deles com peso dominante nos
+OMBROS** (RightShoulder/LeftShoulder) — pintura de peso transplantada errada, não chapéu.
+Resultado: corpo de 2,20-2,25 m posado contra 1,67 do mandrake no mesmo enquadramento
+(sonda scratchpad pose-bbox/cuca-film, fotos film/cuca-t2.png × film/mandrake-t2.png) —
+é o "nem cabe na tela". Mais números do mesmo rig: `select-inflate` 309,5 ruins/1e4 (teto
+23,6) · `select-mount` MÃO-R dMaoR 0,044 (única reprovada de 62) · C7 pior junta Hips
+desalinhada 0,42 · cintura não mensurável (`cinturaLargura: null` no char_probe). Re-rig
+automático já foi tentado e REVERTIDO (BUG-25: 310→1040 ruins). Não há knob de entrada
+que conserte pintura de peso: precisa de GLB novo (malha+rig) na frente Mint.
+
+**(c) "Balaozados" — rasgo de pele no caminho da seleção; lista pronta para a frente Mint.**
+`select-inflate` nos 9 (teto: p99 ≤ 0,675 · ruins/1e4 ≤ 23,6), 30/08:
+
+| id | p99 | ruins/1e4 | ablação (semik/semtudo) | destino |
+|---|---|---|---|---|
+| saci | 4,289 | 607,1 | não move (606) | regeração Mint (BUG-25: rig novo melhorou número e piorou NO OLHO) |
+| cuca | 3,588 | 309,5 | não move | regeração Mint (item b) |
+| lampiao | 1,121 | 121,5 | não move (125) | regeração Mint (BUG-25: rig novo segue vermelho) |
+| mariabonita | 0,731 | 47,5 | não move (53) | regeração Mint |
+| zumbi | 0,656 | 36,3 | não move (29-36) | regeração Mint |
+| lobisomem | 0,628 → **0,491** | 32,6 → **19,3 VERDE** | curl 40° era o vilão | **RESOLVIDO 30/08**: `LOBI_CURL` 0,7→0,35 (glbchars.js) — custo declarado: garras menos fechadas na arma |
+| curupira | 0,598 | 32,1 | não move | regeração Mint |
+| boto | 0,611 | 21,6 | — | verde (BUG-25 já tinha resolvido) |
+| bandeirante | 0,393 | 3,7 | — | verde |
+| Critério CHR1 (`indiceBalao` ≤ 1,35, char_probe): lampiao 1,361 ✗ · lobisomem 1,507 ✗ · demais 7 ok. |
+
+A ablação que não move é o diagnóstico da casa (BUG-25): o balão é clipe+skin do rig
+transplantado, e parâmetro de runtime não conserta pintura de peso — nenhum foi inventado.
+
+**Régua:** `node tools/eval/weapon-scale-check.mjs` cláusula C (nova; browser+serve.mjs,
+como as irmãs de seleção) · `select-inflate`/`select-mount` (baselines completos
+re-escritos em `tools/eval/select_inflate.json`/`select_mount.json`).
+
 ### BUG-36 · Ctrl+W fecha a aba no meio da partida (Windows/Linux) — MITIGADO, limite de plataforma
 
 **REBAIXADO P0 → P1 em 29/08 — a mitigação de duas camadas JÁ ESTÁ NA MAIN e o que

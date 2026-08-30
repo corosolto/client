@@ -11,11 +11,11 @@
 |---|---:|---:|
 | `public/js/game.js` | 7421 | 279 |
 | `public/js/main.js` | 2816 | 259 |
-| `public/js/glbchars.js` | 969 | 68 |
+| `public/js/glbchars.js` | 971 | 68 |
 | `public/js/characters.js` | 1169 | 41 |
 | `public/js/vmattach.js` | 629 | 4 |
 | `public/js/springs.js` | 261 | 28 |
-| `public/js/weapons.js` | 357 | 21 |
+| `public/js/weapons.js` | 360 | 21 |
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
