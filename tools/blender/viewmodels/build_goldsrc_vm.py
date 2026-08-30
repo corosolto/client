@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -167,23 +168,59 @@ def main() -> None:
         "template_dim": [round(v, 3) for v in t_dim], "escala_cs": round(escala_cs, 4),
     }))
 
-    # ---- pente: ilhas da magbox no MINT + bone dominante da região no TEMPLATE
-    if args.magbox:
-        m = [float(x) for x in args.magbox.split(",")]
-        deps = bpy.context.evaluated_depsgraph_get()
-        m_lo, m_hi = bbox_mundo(mint_meshes, deps)
-        centro = (m_lo + m_hi) * 0.5
-        lateral = cano.cross(up).normalized()
-        grip = centro + cano * (t_dim[eixo_i] * (0.5 - args.gripz))
-        eixos = (lateral, up, cano)
+    # ---- pente: bone e CAIXA derivados do próprio molde (vértices dominados
+    # pelo bone do pente → bbox posado) — zero medição manual por arma.
+    ev = template.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    me_pos = ev.to_mesh()
+    mesmo_n = len(me_pos.vertices) == len(template.data.vertices)
+    posados_t = [(ev.matrix_world @ me_pos.vertices[i].co) if mesmo_n else (template.matrix_world @ v.co)
+                 for i, v in enumerate(template.data.vertices)]
+    ev.to_mesh_clear()
 
-        def dentro(p):
-            d = p - grip
-            g = Vector((d.dot(eixos[0]), d.dot(eixos[1]), d.dot(eixos[2])))
-            k = escala_cs / max(escala, 1e-9)  # caixa medida na escala len; aqui é escala_cs
-            return (m[0] * k - 5e-3 <= g.x <= m[3] * k + 5e-3
-                    and m[1] * k - 5e-3 <= g.y <= m[4] * k + 5e-3
-                    and m[2] * k - 5e-3 <= g.z <= m[5] * k + 5e-3)
+    def filtro_regiao(pnt):
+        d = pnt - t_centro
+        return abs(d.dot(cano)) < t_dim[eixo_i] * 0.30 and d.dot(up) < -t_dim[2] * 0.15
+    bone_mag_auto = bone_dominante(template, arm, filtro_regiao, posados_t)
+    caixa_auto = None
+    if bone_mag_auto and bone_mag_auto != bone_arma:
+        nomes_grp = {g.index: g.name for g in template.vertex_groups}
+        pts = []
+        for i, v in enumerate(template.data.vertices):
+            dom = max(v.groups, key=lambda g: g.weight, default=None)
+            if dom and nomes_grp.get(dom.group) == bone_mag_auto:
+                pts.append(posados_t[i])
+        if len(pts) >= 8:
+            lo = Vector((min(q.x for q in pts), min(q.y for q in pts), min(q.z for q in pts)))
+            hi = Vector((max(q.x for q in pts), max(q.y for q in pts), max(q.z for q in pts)))
+            folga = (hi - lo) * 0.15
+            caixa_auto = (lo - folga, hi + folga)
+            print("CORO_GS_CAIXA_AUTO=" + json.dumps({
+                "bone": bone_mag_auto, "verts": len(pts),
+                "lo": [round(v, 2) for v in caixa_auto[0]], "hi": [round(v, 2) for v in caixa_auto[1]]}))
+
+    if args.magbox or caixa_auto:
+        if caixa_auto:
+            c_lo, c_hi = caixa_auto
+
+            def dentro(p):
+                return (c_lo.x <= p.x <= c_hi.x and c_lo.y <= p.y <= c_hi.y
+                        and c_lo.z <= p.z <= c_hi.z)
+        else:
+            m = [float(x) for x in args.magbox.split(",")]
+            deps = bpy.context.evaluated_depsgraph_get()
+            m_lo, m_hi = bbox_mundo(mint_meshes, deps)
+            centro = (m_lo + m_hi) * 0.5
+            lateral = cano.cross(up).normalized()
+            grip = centro + cano * (t_dim[eixo_i] * (0.5 - args.gripz))
+            eixos = (lateral, up, cano)
+
+            def dentro(p):
+                d = p - grip
+                g = Vector((d.dot(eixos[0]), d.dot(eixos[1]), d.dot(eixos[2])))
+                k = escala_cs / max(escala, 1e-9)
+                return (m[0] * k - 5e-3 <= g.x <= m[3] * k + 5e-3
+                        and m[1] * k - 5e-3 <= g.y <= m[4] * k + 5e-3
+                        and m[2] * k - 5e-3 <= g.z <= m[5] * k + 5e-3)
 
         corpo = mint_meshes[0]
         bm = bmesh.new()
@@ -235,19 +272,7 @@ def main() -> None:
             if costura:
                 bmesh.ops.holes_fill(bm, edges=costura, sides=0)
             bm.to_mesh(corpo.data)
-            # bone do pente = dominante da região POSADA do template
-            ev = template.evaluated_get(bpy.context.evaluated_depsgraph_get())
-            me_pos = ev.to_mesh()
-            posados = [template.matrix_world @ v.co if len(me_pos.vertices) != len(template.data.vertices)
-                       else ev.matrix_world @ me_pos.vertices[i].co
-                       for i, v in enumerate(template.data.vertices)]
-            ev.to_mesh_clear()
-            t_centro_pos = t_centro
-
-            def filtro_regiao(p):
-                d = p - t_centro_pos
-                return abs(d.dot(cano)) < t_dim[eixo_i] * 0.30 and d.dot(up) < -t_dim[2] * 0.15
-            bone_mag = bone_dominante(template, arm, filtro_regiao, posados) or bone_arma
+            bone_mag = bone_mag_auto or bone_arma
             parentear_no_bone(mag_obj, arm, bone_mag)
             print("CORO_GS_MAG_BONE=" + json.dumps({"bone": bone_mag}))
         bm.free()
@@ -295,10 +320,24 @@ def main() -> None:
     scene.camera = cam
     cam["viewmodel_fov"] = 84.0
 
-    # ---- clipes renomeados para o contrato
+    # ---- clipes renomeados para o contrato (prefixo idle-/idle1- cai fora;
+    # doadores com idle.smd geram "idle-reload" em vez de "idle1-reload")
     for a in bpy.data.actions:
         chave = a.name.lower().split("|")[-1]
-        novo = RENOMES.get(chave)
+        chave = re.sub(r"^idle1?-", "", chave)
+        if chave in ("idle", "idle1"):
+            novo = "idle"
+        else:
+            novo = {"reload": "reload_tactical", "draw": "equip_rifle",
+                    "shoot1": "shoot", "shoot_1": "shoot", "shoot": "shoot",
+                    "shoot2": "shoot2", "shoot_2": "shoot2", "shoot3": "shoot3",
+                    "shoot1_unsil": None, "shoot2_unsil": None, "shoot3_unsil": None,
+                    "shoot_empty": "shoot_empty", "shootlast": None,
+                    "reload_unsil": None, "draw_unsil": None,
+                    "pump": "pump", "insert": "reload_loop",
+                    "after_reload": "reload_end", "start_reload": "reload_start",
+                    "slash1": "shoot", "slash2": "shoot2", "stab": "shoot3",
+                    }.get(chave)
         if novo:
             a.name = novo
     if "reload_tactical" in bpy.data.actions and "reload_empty" not in bpy.data.actions:
