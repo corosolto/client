@@ -125,22 +125,19 @@ const CONTRATO = [
     checa: ({ status }) => (status === 200 ? null : `status ${status}`),
   })),
 
-  // Com o ranking DESLIGADO a rota responde 200 {disabled:true} de propósito —
-  // está comentado nela: `disabled` diz "de propósito", um erro diria "quebrou",
-  // e o jogador entenderia bug onde é escolha. O 503 not_configured que a issue
-  // pede é o contrato do ranking LIGADO sem envs.
-  { rota: '/api/leaderboard',
-    esperado: RANKING_ON ? '503 not_configured' : '200 {disabled:true}',
-    checa: ({ status, corpo }) => {
-      let j;
-      try { j = JSON.parse(corpo); } catch { return `corpo não é JSON: ${corpo.slice(0, 60)}`; }
-      if (RANKING_ON) {
-        if (status !== 503) return `status ${status} (esperado 503 sem envs, ranking ligado)`;
-        if (j.error !== 'not_configured') return `body.error = ${JSON.stringify(j.error)}`;
-      } else {
-        if (status !== 200) return `status ${status} (esperado 200 com ranking desligado)`;
-        if (j.disabled !== true) return `esperado {disabled:true}, veio ${JSON.stringify(j).slice(0, 60)}`;
-      }
+  /* MIGRADA (PR #462): /api/leaderboard mora no corosolto/backend; o que o CLIENTE
+     serve aqui é a rede de segurança de src/pages/api/[rota].ts — 307 para o backend,
+     preservando método e corpo, para quem ainda tem o JS antigo em cache (docs/APIS.md).
+     O contrato de resposta ({disabled:true} / 503 not_configured) viajou com a rota e é
+     medido lá. `redirect: 'manual'` de propósito: seguir o 307 faria este portão medir
+     a REDE do CI (DNS do backend) em vez do contrato do cliente. */
+  { rota: '/api/leaderboard', redirect: 'manual',
+    esperado: '307 -> backend/api/leaderboard (rede de segurança da rota migrada)',
+    checa: ({ status, headers }) => {
+      if (status !== 307) return `status ${status} (esperado 307 da rede de segurança)`;
+      const loc = headers.get('location') || '';
+      if (!/^https?:\/\/[^/]+\/api\/leaderboard(?:$|\?)/.test(loc)) return `Location = ${JSON.stringify(loc)}`;
+      if ((headers.get('cache-control') || '') !== 'no-store') return `cache-control = ${JSON.stringify(headers.get('cache-control'))} — 307 cacheado prende o cliente na rota antiga`;
       return null;
     } },
 
@@ -156,8 +153,8 @@ const PAGINAS_JSONLD = ['/', '/ranking', '/como-jogar', '/mapas', '/armas', '/pe
 // ---------------------------------------------------------------------------
 const RE_JSONLD = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
 
-async function pegar(rota) {
-  const r = await fetch(BASE + rota, { redirect: 'follow' });
+async function pegar(rota, redirect = 'follow') {
+  const r = await fetch(BASE + rota, { redirect });
   return { status: r.status, corpo: await r.text(), headers: r.headers };
 }
 
@@ -217,7 +214,7 @@ try {
   for (const c of CONTRATO) {
     let falha = null;
     try {
-      const res = await pegar(c.rota);
+      const res = await pegar(c.rota, c.redirect);
       falha = c.checa(res);
       if (!falha && PAGINAS_JSONLD.includes(c.rota) && /text\/html/i.test(res.headers.get('content-type') || '')) {
         const { n, erros } = checaJsonLd(c.rota, res.corpo);
@@ -240,7 +237,7 @@ if (JSON_OUT) {
 } else {
   console.log('\n=============== SMOKE DO SITE — CORO SOLTO ===============');
   console.log(`alvo: ${BASE}${EXTERNO ? ' (externo, via SITE_URL)' : ' (astro dev, subido por este script)'}`);
-  console.log(`RANKING_ON: ${RANKING_ON} (src/lib/site.ts) — muda o contrato de /api/leaderboard e do sitemap`);
+  console.log(`RANKING_ON: ${RANKING_ON} (src/lib/site.ts) — muda o contrato do sitemap (/api/leaderboard migrou pro backend, PR #462)`);
   if (MUTANTE) console.log(`MUTANTE ATIVO: ${MUTANTE} — este run DEVE falhar`);
   console.log('');
   for (const r of resultados) {

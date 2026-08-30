@@ -31,10 +31,13 @@ jobs:
         run: npm run eval:release
       - name: Syntax check do jogo (public/js)
         run: npm run syntax
-      - name: Telemetria wired, idempotente, atômica e monitorada
-        run: npm run eval:telemetry
-      - name: Proveniência de erros externos
-        run: npm run eval:error-origin
+      # As réguas de telemetria/identidade/proveniência migraram com as rotas para o
+      # corosolto/backend (api/reguas/); aqui fica o portão de que a migração não regride
+      # e o pedaço da proveniência que continua no cliente (hook de console.error).
+      - name: Rotas de banco fora do cliente (18 migradas, 307 em dia)
+        run: npm run eval:apis
+      - name: Proveniência de erros — lado do cliente (hook de console)
+        run: npm run eval:error-console
       - name: UUID compatível com navegadores antigos
         run: npm run eval:uuid
       - name: Acúmulo de armas no chão tem teto

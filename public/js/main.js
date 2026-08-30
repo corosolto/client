@@ -6,6 +6,7 @@ import { preloadCharacterAssets, buildCharacterModel, hasModel, GLB_CHARS } from
 import { preloadFPArms } from './fparms.js';
 import { preloadMapProps } from './mapprops.js';
 import { preloadAmbientLife } from './ambientlife.js';   // fauna do mapa (MAPS[id].ambience)
+import { apiUrl } from './apibase.js';   // rotas /api de banco moram no backend (docs/APIS.md)
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
@@ -746,7 +747,7 @@ function sendTelemetry() {
   };
   try {
     const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    if (!navigator.sendBeacon('/api/telemetry', blob)) api('/api/telemetry', payload);
+    if (!navigator.sendBeacon(apiUrl('/api/telemetry'), blob)) api('/api/telemetry', payload);
   } catch { try { api('/api/telemetry', payload); } catch {} }
 }
 let registeredNick = ''; // nick canônico devolvido pelo registro do UID
@@ -781,10 +782,10 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
 /* PICKS — "o que as pessoas escolhem" (dono, 06/08). sendBeacon: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
-  try { navigator.sendBeacon('/api/pick', new Blob([JSON.stringify({ kind, key })], { type: 'application/json' })); } catch { /* sem beacon: paciência */ }
+  try { navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({ kind, key })], { type: 'application/json' })); } catch { /* sem beacon: paciência */ }
 }
 function _picks(lote) {
-  try { navigator.sendBeacon('/api/pick', new Blob([JSON.stringify({ picks: lote })], { type: 'application/json' })); } catch { /* idem */ }
+  try { navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({ picks: lote })], { type: 'application/json' })); } catch { /* idem */ }
 }
 /* PRESENÇA ANÔNIMA — o que o "N online" do rodapé passou a contar (07/08).
    Antes o único sinal de presença era o `/api/heartbeat`, que exige nick + token e
@@ -804,7 +805,7 @@ function _pingPresenca() {
   const payload = JSON.stringify({ anonId: getAnonId() });
   try {
     const blob = new Blob([payload], { type: 'application/json' });
-    if (!navigator.sendBeacon('/api/presence', blob)) api('/api/presence', JSON.parse(payload));
+    if (!navigator.sendBeacon(apiUrl('/api/presence'), blob)) api('/api/presence', JSON.parse(payload));
   } catch { /* presença nunca atrapalha o jogador */ }
 }
 
@@ -817,7 +818,7 @@ function _pingPresenca() {
 function _funnel(step) {
   if (testMode) return;
   try {
-    navigator.sendBeacon('/api/funnel', new Blob([
+    navigator.sendBeacon(apiUrl('/api/funnel'), new Blob([
       JSON.stringify({ step, sessionId: getSessionId() }),
     ], { type: 'application/json' }));
   } catch { /* fail-silent */ }
@@ -840,7 +841,7 @@ async function _sendAcquisition() {
        não devolve resposta — marcar cs_acq sem saber se o servidor gravou
        aposentava a 1ª aquisição para sempre num 503/stored:false (P1 da review,
        PR #92). keepalive mantém a entrega mesmo se a aba fechar no meio. */
-    const resp = await fetch('/api/acquisition', {
+    const resp = await fetch(apiUrl('/api/acquisition'), {
       method: 'POST', keepalive: true,
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
@@ -897,7 +898,7 @@ function _perfFinish(bootMs, frames) {
     connection: conn?.effectiveType || null,
     quality: settings.quality || null,
   };
-  try { navigator.sendBeacon('/api/perf', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  try { navigator.sendBeacon(apiUrl('/api/perf'), new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
 }
 // MATCH EVENT (016): evento RICO por partida (anônimo), carrega arma/personagem/placar/
 // resultado. Complementa o submit-match (só registrado) e a telemetria agregada (012).
@@ -924,7 +925,7 @@ function sendMatchEvent(result) {
     topWeapon: top, weaponKills: wk, botCount: g.bots?.length || 0,
     nick: registeredNick || null,
   };
-  try { navigator.sendBeacon('/api/match', new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
+  try { navigator.sendBeacon(apiUrl('/api/match'), new Blob([JSON.stringify(payload)], { type: 'application/json' })); } catch { /* fail-silent */ }
 }
 function sendTrainingFrames(blob) {
   if (testMode || !blob || !registeredNick || !trainingEnabled()) return;
@@ -945,7 +946,7 @@ function sendTrainingFrames(blob) {
 
 async function _refreshOnline() {
   try {
-    const r = await fetch('/api/online');
+    const r = await fetch(apiUrl('/api/online'));
     const { online } = await r.json();
     const box = document.getElementById('mf-online'), n = document.getElementById('mf-online-n');
     if (box && n && typeof online === 'number' && online > 0) { n.textContent = online; box.hidden = false; }
@@ -1636,7 +1637,7 @@ function autoresDeComunidade() {
    e quando chega redesenha. Nada aqui pode depender do número existir. */
 let mapPlays = {};
 const playsDe = (id) => mapPlays[id] || 0;
-fetch('/api/map-plays')
+fetch(apiUrl('/api/map-plays'))
   .then((r) => (r.ok ? r.json() : null))
   .then((j) => {
     if (!j || !j.plays || typeof j.plays !== 'object') return;
@@ -2058,7 +2059,7 @@ function getToken() {
 }
 async function api(path, body) {
   try {
-    const r = await fetch(path, body
+    const r = await fetch(apiUrl(path), body
       ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
       : undefined);
     const j = await r.json().catch(() => ({}));
@@ -2103,7 +2104,7 @@ addEventListener('beforeunload', (e) => {
   sendTelemetry();   // aba fechando no meio da partida ainda conta como tempo jogado
   if (emPartida()) { sendMatchEvent('quit'); _funnel('quit'); }   // feat/telemetria
   const pl = partialPayload();
-  if (pl) navigator.sendBeacon('/api/submit-match', new Blob([JSON.stringify(pl)], { type: 'application/json' }));
+  if (pl) navigator.sendBeacon(apiUrl('/api/submit-match'), new Blob([JSON.stringify(pl)], { type: 'application/json' }));
   /* SEGUNDA CAMADA CONTRA O CTRL+W (relato do Daniel Diniz: *"quando fica muito tempo com
      a tecla Control pressionada a página fecha"* — é agachar + andar pra frente formando
      Ctrl+W no Windows). A trava de atalho do game.js resolve de verdade, mas é Chromium e
