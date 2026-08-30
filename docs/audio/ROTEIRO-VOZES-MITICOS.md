@@ -1,4 +1,4 @@
-# ROTEIRO — Vozes do Time Mítico (IA/TTS via ElevenLabs)
+# ROTEIRO — Vozes do Time Mítico (IA/TTS — elenco misto Fish Audio + ElevenLabs)
 
 Kill-shouts para os 9 personagens do Time Mítico (folclore + história BR):
 reação rápida no MOMENTO DE KILL, **1 a 3 palavras**, personagem inteiro na voz
@@ -14,14 +14,33 @@ Regras da casa:
   e liberdade, **sem** caricatura étnica.
 - Bandeirante é "o vilão que o time tolera": a sátira mira a arrogância dele.
 
-Gerador: `tools/gerar-vozes-miticos.mjs` (ElevenLabs; embute esta tabela).
-Modelo `eleven_v3` quando a conta tem (tags de expressão tipo `[laughs]`,
-`[whispers]` no texto), senão `eleven_multilingual_v2` (tags removidas
-automaticamente). 2 tomadas por fala = 2 vozes do casting por personagem →
+Gerador: `tools/gerar-vozes-miticos.mjs` (embute esta tabela; flags `--dry`,
+`--so=`, `--backend=fish|eleven`, `--faltantes`). Tags `[assim]` valem no
+`eleven_v3`; no Fish são removidas do texto. 2 tomadas por fala →
 `public/audio/ia/miticos/<id>/<slug>-tN-<voz>.mp3` (gitignorado; mp3 fora do git).
 
 Notação: `[tag]` = audio tag do eleven_v3 (não é falada). **(kill)** ≤ 2 s;
 **(rara)** = variação média.
+
+## CASTING FINAL (veredito do dono, 30/08)
+
+| Personagem | Backend | Voz/modelo | id |
+|---|---|---|---|
+| Lampião | Fish Audio | A/B: "Vaqueiro Nordestino Animado" e "Nordestino" (meia-idade) | `80dfc9e3e97b45ff94978b3eff801855` / `9968a7351f6f4abda63be69518c29414` |
+| Maria Bonita | Fish Audio | "NORDESTINA MENINA" | `e2415382319c40f4bdc9c5baa314cd76` |
+| Saci-Pererê | ElevenLabs (library) | Açougueirão - Evil Cartoon Character | `PSkrmGGNwoOIKXqzUWs9` |
+| Curupira | ElevenLabs (Voice Design r2-p2) | Curupira (Mitico CS) | `zKlPFm3CStZ8TNJn803F` |
+| Cuca | ElevenLabs (Voice Design r2-p3) | Cuca (Mitico CS) | `TmfHJ19kMzZYALkBuv81` |
+| Boto Cor de Rosa | ElevenLabs (Voice Design r2-p3) | Boto Cor de Rosa (Mitico CS) | `fLvlBA4sutzLZYXaKz0H` |
+| Lobisomem | ElevenLabs Sound Effects | set final = tomadas `*-t2.mp3` (sem fala humana) | — |
+| Bandeirante | ElevenLabs (library) | Artur Mechedjiana | `DFbzZEWhyi2l6rU3obC8` |
+| Zumbi dos Palmares | ElevenLabs (library) | Carlos - Resonant & Majestic Storyteller | `NFmEzNOony1UsEJGXLth` |
+
+Pilotos de upgrade dos times existentes (Fish, só audição — packs atuais
+intactos): `tools/gerar-pilotos-fish.mjs` — cria do RJ funk (pool F)
+`cf4a65e7fff3408aa30982d4ddfbddb2`, Mandrake (F)
+`6a27a3ab74af45cb8890a6974e9eeb06`, Pagodeiro (U)
+`c481e5eba6254be49de0f33af6736085`.
 
 ---
 
