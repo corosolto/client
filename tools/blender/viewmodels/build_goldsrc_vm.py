@@ -353,14 +353,33 @@ def main() -> None:
     # ---- keyframes normalizados: primeira chave em 0 — o exportador glTF
     # preserva o tempo absoluto da action e o runtime segurava a primeira pose
     # (fase do reload +33% na AWP/UZI, crítico 30/08).
+    def _curvas(acao):
+        # Blender 5.2: ação slotted não tem .fcurves — vem por layers/strips.
+        if getattr(acao, "fcurves", None):
+            return list(acao.fcurves)
+        out = []
+        for slot in getattr(acao, "slots", []):
+            bag = acao.layers[0].strips[0].channelbag(slot)
+            if bag:
+                out.extend(bag.fcurves)
+        return out
+
     for a in bpy.data.actions:
-        f0 = a.frame_range[0]
+        curvas = _curvas(a)
+        xs = [k.co.x for fc in curvas for k in fc.keyframe_points]
+        if not xs:
+            continue
+        # extensão REAL de chaves (frame_range pode ter padding manual — a AWP
+        # e a Deagle chegavam no t=100% ainda na pose de ~75%, crítico 30/08)
+        f0 = min(xs)
         if abs(f0) > 1e-6:
-            for fc in a.fcurves:
+            for fc in curvas:
                 for k in fc.keyframe_points:
                     k.co.x -= f0
                     k.handle_left.x -= f0
                     k.handle_right.x -= f0
+        if getattr(a, "use_frame_range", False):
+            a.frame_range = (0.0, max(xs) - f0)
 
     # ---- clipes renomeados para o contrato (prefixo idle-/idle1- cai fora;
     # doadores com idle.smd geram "idle-reload" em vez de "idle1-reload")
