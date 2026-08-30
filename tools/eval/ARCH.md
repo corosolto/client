@@ -15,7 +15,7 @@
 | `public/js/characters.js` | 1169 | 41 |
 | `public/js/vmattach.js` | 629 | 4 |
 | `public/js/springs.js` | 261 | 28 |
-| `public/js/weapons.js` | 360 | 21 |
+| `public/js/weapons.js` | 357 | 21 |
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
