@@ -9,7 +9,7 @@ const loader = new GLTFLoader();
 const _cache = new Map();
 export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pistol', 'knife',
   'm92', 'revolver38', 'md97', 'carbine', 'mosin', 'lmg', 'scar', 'famas', 'uzi', 'p90',
-  'svd', 'sks'];   // snipers semi-auto (modelo via MODEL_ALIAS)
+  'svd', 'sks'];
 // Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
 // o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
 const DISPLAY_MODEL_IDS = ['mosquete'];

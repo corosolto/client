@@ -136,6 +136,7 @@
     "eval:ambience-registry": "node tools/eval/ambience-registry-check.mjs",
     "eval:mapanovo": "node tools/eval/mapa-novo-gate.mjs",
     "eval:cs16": "node tools/eval/vm-cs16-check.mjs",
+    "eval:goldsrc": "node tools/eval/vm-goldsrc-check.mjs",
     "eval:build": "npm run build && npm run eval:ssr",
     "eval:mantle": "node tools/eval/mantle-check.mjs all",
     "eval:authored-vm": "node tools/eval/authored-vm-check.mjs",

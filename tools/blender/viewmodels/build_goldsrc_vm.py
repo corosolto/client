@@ -99,7 +99,8 @@ def parentear_no_bone(obj, arm, bone):
     bpy.context.view_layer.update()
 
 
-def bone_mag_por_movimento(arm, bone_arma, template=None, arma_len=None, limiar=0.18):
+def bone_mag_por_movimento(arm, bone_arma, template=None, arma_len=None,
+                           limiar=0.18, so_arma_idx=None):
     """Bone que mais se desloca EM RELAÇÃO ao bone da arma no clipe de recarga.
 
     Devolve None quando nenhum bone se solta o suficiente (arma sem pente
@@ -127,7 +128,11 @@ def bone_mag_por_movimento(arm, bone_arma, template=None, arma_len=None, limiar=
     if template is not None:
         nomes_g = {g.index: g.name for g in template.vertex_groups}
         peso = {}
-        for v in template.data.vertices:
+        # molde de MESH ÚNICO (famas): a malha inclui as mãos, então os dedos
+        # pesavam e "Bip01 R Finger02" ganhava a disputa de pente (31/08).
+        vertices = ([template.data.vertices[i] for i in so_arma_idx]
+                    if so_arma_idx else template.data.vertices)
+        for v in vertices:
             for g in v.groups:
                 nome = nomes_g.get(g.group)
                 if nome:
@@ -326,7 +331,8 @@ def main() -> None:
     # recarga. A heurística geométrica só achava o bone quando ele calhava de
     # dominar a região de baixo — em 16 das 26 armas ela falhava e o pente
     # ficava preso, deixando a mão esquerda agarrando o vazio (dono, 30/08).
-    bone_mag_auto = bone_mag_por_movimento(arm, bone_arma, template, t_dim[eixo_i])
+    bone_mag_auto = bone_mag_por_movimento(arm, bone_arma, template, t_dim[eixo_i],
+                                          so_arma_idx=so_arma_idx)
     if bone_mag_auto is None:
         bone_mag_auto = bone_dominante(template, arm, filtro_regiao, posados_t)
     caixa_auto = None
@@ -392,7 +398,10 @@ def main() -> None:
                             visitado.add(lf.index)
                             fila.append(lf)
             na_caixa = sum(1 for f in ilha if dentro(mw @ f.calc_center_median()))
-            if na_caixa > len(ilha) * 0.5:
+            # ilha pequena e majoritariamente dentro, OU ilha grande com muitas
+            # faces dentro: a caixa da lmg é fina e o critério de maioria pura
+            # descartava a peça inteira (31/08).
+            if na_caixa > len(ilha) * 0.5 or (na_caixa >= 8 and len(ilha) <= 400):
                 faces_mag.extend(ilha)
         print("CORO_GS_MAG_ILHAS=" + json.dumps({"faces": len(faces_mag)}))
         if faces_mag:
@@ -452,6 +461,12 @@ def main() -> None:
         alca = sum(crista, Vector()) / max(1, len(crista))
     else:
         alca = boca - cano * (t_dim[eixo_i] * 0.6) + up * (t_dim[2] * 0.5)
+    # piso de altura: molde de crista rasa (m3) deixava a alça quase no eixo do
+    # cano e o ADS voltava a olhar para dentro da arma.
+    eixo_prov = boca + cano * ((alca - boca).dot(cano))
+    minimo = t_dim[2] * 0.15
+    if (alca - eixo_prov).dot(up) < minimo:
+        alca = eixo_prov + up * minimo
     eixo_no_ponto = boca + cano * ((alca - boca).dot(cano))
     print("CORO_GS_ALCA=" + json.dumps({
         "altura_sobre_o_cano": round((alca - eixo_no_ponto).dot(up), 3),

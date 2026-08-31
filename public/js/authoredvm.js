@@ -344,9 +344,8 @@ export class AuthoredViewModels {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!key || this.entries.has(key)) return this.entries.get(key) || null;
     if (this.pending.has(key)) return this.pending.get(key);
-    // Na trilha goldsrc a chave é `gs#<arma>`: a família REAL é a da arma, não
-    // o prefixo 'gs'. Sem isto VM_FAMILY['gs'] era undefined e a família não
-    // valia nada — nem reloadStyle, nem as cadências cs16 (31/08).
+    // Chave goldsrc é `gs#<arma>`: família REAL vem da arma. Com 'gs' o
+    // VM_FAMILY dava undefined e nada da família valia (31/08).
     const bruta = key.split('#')[0];
     const armaDaChave = key.includes('#') ? key.split('#')[1] : '';
     const family = bruta === 'gs' ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
@@ -651,12 +650,8 @@ export class AuthoredViewModels {
       : entry.clips.has('reload_empty')
       ? 'reload_empty'
       : '';
-    // Estado só DEPOIS do play dar certo: setar antes deixava 'reload' preso
-    // para sempre numa família sem clipe (revisão 29/08).
-    // reloadStyle deixa de ser documentação morta: 'pump_loop' (shotgun) e
-    // 'bolt_loop' repetem o laço UMA VEZ POR MUNIÇÃO, que é como o CS 1.6
-    // recarrega cartucho a cartucho — antes tocava a sequência uma vez só e o
-    // dono via 'a shotgun não recarrega assim' (30/08).
+    // 'pump_loop'/'bolt_loop' repetem o laço UMA VEZ POR MUNIÇÃO — é assim
+    // que o CS 1.6 recarrega cartucho a cartucho.
     const estilo = VM_FAMILY[entry.family]?.reloadStyle;
     const emLaco = estilo === 'pump_loop' || estilo === 'bolt_loop';
     const tocou = direct && !emLaco
