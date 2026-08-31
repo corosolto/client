@@ -19,6 +19,7 @@
     "docs:check:autoria": "node tools/gen-docs.mjs --check --autoria",
     "eval:docsautoria": "node tools/eval/docs-autoria-check.mjs",
     "syntax": "for f in public/js/*.js public/js/botbrain/*.js; do node --input-type=module --check < \"$f\" || exit 1; done",
+    "context:check": "node tools/eval/context-budget-check.mjs",
     "eval:invariants": "node tools/eval/invariants.mjs",
     "prod:coherence": "node tools/eval/prod-coherence.mjs",
     "eval:release": "node tools/eval/release-check.mjs",
