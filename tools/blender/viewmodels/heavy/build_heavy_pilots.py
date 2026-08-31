@@ -414,7 +414,7 @@ def export_glb(pilot: Pilot, rig, actions):
     bpy.ops.export_scene.gltf(
         filepath=str(path), export_format="GLB", export_apply=False,
         export_animations=True, export_animation_mode="ACTIONS", export_extra_animations=True,
-        export_cameras=False, export_lights=False, export_skins=True, export_materials="EXPORT",
+        export_cameras=True, export_lights=False, export_skins=True, export_materials="EXPORT",
         export_draco_mesh_compression_enable=False, export_extras=True,
     )
     return path
