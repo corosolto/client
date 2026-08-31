@@ -4,7 +4,7 @@
 /* Migradas. O portão `eval:apis` cobra que esta lista não divirja da rede de segurança 307. */
 const NO_BACKEND = new Set([
   'acquisition', 'avatar', 'feedback', 'funnel', 'health', 'heartbeat', 'jserror',
-  'leaderboard', 'map-plays', 'match', 'online', 'perf', 'pick', 'presence', 'register',
+  'leaderboard', 'map-plays', 'match', 'mp-ticket', 'online', 'perf', 'pick', 'presence', 'register',
   'submit-match', 'telemetry', 'train-frames',
 ]);
 
@@ -14,8 +14,9 @@ const BASE = (() => {
   try {
     const forcado = new URLSearchParams(location.search).get('api');
     if (forcado) return forcado === '1' ? 'http://localhost:8080' : forcado.replace(/\/$/, '');
+    if (location.hostname?.endsWith('.vercel.app')) return '';
   } catch { /* sem location (harness) */ }
-  return 'https://api.corosolto.com.br';
+  return 'https://csbrasil-backend-hupd3weo5q-rj.a.run.app';
 })();
 
 export function apiUrl(caminho) {

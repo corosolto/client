@@ -21,7 +21,7 @@ import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
-import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo } from './net.js';
+import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
 import { makeNetcode } from './netgame.js';
 import { FACCAO_NOME_UI } from './mapcat.js';
 
@@ -983,7 +983,7 @@ const _menuOnce = () => { if (_menuFuneled) return; _menuFuneled = true; _funnel
 addEventListener('pointerdown', _menuOnce);
 addEventListener('keydown', _menuOnce);
 
-async function startGame(team, charId, enemyFaction) {
+async function startGame(team, charId, enemyFaction, online = false) {
   /* #241: em rede lenta o preload dos GLBs passa de 60 s COM progresso andando
      (_lstat.loaded sobe a cada arquivo do DefaultLoadingManager). O watchdog
      renova enquanto há movimento e só falha se o progresso PARAR — travamento
@@ -994,7 +994,7 @@ async function startGame(team, charId, enemyFaction) {
     return !!(window.__game && window.__game.state === 'live');
   });
   try {
-    await _startGame(team, charId, enemyFaction);
+    await _startGame(team, charId, enemyFaction, online);
     window.__gameLaunch?.ready('partida');
   } catch (e) {
     try { hideLoading(); } catch {}
@@ -1007,13 +1007,13 @@ async function startGame(team, charId, enemyFaction) {
     window.__gameLaunch?.fail(e, 'main.js:startGame');
   }
 }
-async function _startGame(team, charId, enemyFaction) {
+async function _startGame(team, charId, enemyFaction, online = false) {
   // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
   // "gire o celular" (CSS) cobre a tela até deitar.
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
   // default = oposto político. Mesma facção dos dois lados = mirror (inimigo roxo no HUD).
   const faction = (CHARACTERS.find(c => c.id === charId) || {}).team || team || 'E';
-  const side = faction === 'B' ? 'B' : 'E';
+  const side = resolvePlayerSide(team, faction, online);
   const enemyFac = enemyFaction || currentEnemyFaction || (side === 'B' ? 'E' : 'B');
   currentFaction = faction; currentTeam = side; currentChar = charId; currentEnemyFaction = enemyFac;
   // o lote de escolha da partida — 5 contadores numa chamada (ver /api/pick)
@@ -1117,7 +1117,12 @@ async function _startGame(team, charId, enemyFaction) {
       if (meuJogo.state !== 'live') return;
       clearInterval(espera);
       const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
-      ocioso(() => preloadWeapons().catch(() => {}));
+      ocioso(async () => {
+        try {
+          await preloadWeapons();
+          if (window.__game === meuJogo) meuJogo.refreshPickupModels();
+        } catch { /* disponibilidade: o fallback procedural continua jogável */ }
+      });
     }, 250);
   }
   submitted = false;
@@ -1892,14 +1897,14 @@ function needsConfirm(btn, run) {
 }
 const resetConfirms = () => { for (const r of confirmables) r(); };
 // Mesma chamada da REVANCHE do match-end: recomeça a partida com time/personagem/adversário atuais.
-needsConfirm($('btn-restart'), () => startGame(currentTeam, currentChar));
+needsConfirm($('btn-restart'), () => startGame(currentTeam, currentChar, undefined, !!mpSessao));
 needsConfirm($('btn-quit'), () => {
   sendTelemetry();   // fora do `if (pl)`: partialPayload() devolve null sem nick, telemetria não depende disso
   const pl = partialPayload();
   if (pl) { submitted = true; submitGlobal(pl); }
   quitToMenu();
 });
-$('btn-again').onclick = () => { sfx.uiClick(); startGame(currentTeam, currentChar); };
+$('btn-again').onclick = () => { sfx.uiClick(); startGame(currentTeam, currentChar, undefined, !!mpSessao); };
 $('btn-menu').onclick = () => { sfx.uiClick(); quitToMenu(); };
 // M in-game: escolhe o personagem do novo time antes de trocar
 let switchMode = false;
@@ -2706,6 +2711,19 @@ let mpConectando = false;   // trava de reentrada do mpEntrar (BUG-88)
 let mpNos = [];
 let mpTimerLista = null;
 
+async function obterMpTicket(action) {
+  const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
+  if (!/^[a-z]{2}$/.test(node)) return '';
+  const r = await fetch(apiUrl('/api/mp-ticket'), {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ node, action }),
+  });
+  if (!r.ok) throw new Error(`ticket_${r.status}`);
+  const body = await r.json();
+  if (!body.ticket) throw new Error('ticket_ausente');
+  return body.ticket;
+}
+
 const mpEl = (id) => document.getElementById(id);
 function mpErro(msg, comRetry = false) {
   const e = mpEl('mp-erro'); if (!e) return;
@@ -2922,7 +2940,7 @@ async function mpEntrarPorConvite(txt) {
   if (!alvo) return mpErro(`Convite inválido: "${txt}". O formato é REGIÃO-CÓDIGO, tipo BR-7K3M.`);
   mpEstado('conectando', `PROCURANDO ${alvo.convite}…`);
   const http = httpDoNo(alvo.no);
-  mpNoAtual = { ...alvo.no, http };
+  mpNoAtual = { ...alvo.no, http, ticketNode: alvo.no.id };
   const sala = await salaPorConvite(http, alvo.codigo);
   if (!sala) { await abrirMultiplayer(); return mpErro(`A sala ${alvo.convite} não existe mais. Escolha outra abaixo.`); }
   mpEntrar(sala, 'auto');
@@ -2949,11 +2967,12 @@ function mpMontarFormulario() {
     const senha = mpEl('mp-senha').value.trim();
     if (privada && !senha) return mpErro('Sala privada precisa de senha.');
     try {
+      const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
         name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
-      });
+      }, ticket);
       let cheia = { ...sala, id: sala.room || sala.id };
       /* o convite pode não vir no POST — a lista é a fonte que já o carrega; busca a sala
          recém-criada lá antes de mostrar o modal, que existe PARA o copy do código */
@@ -2987,10 +3006,11 @@ function mpMontarFormulario() {
       .sort((a, b) => (b.oficial - a.oficial) || (b.players - a.players))[0];
     if (aberta) return mpEntrar(aberta, 'auto');
     try {
+      const ticket = await obterMpTicket('create');
       const sala = await createRoom(mpNoAtual.http, {
         name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
         ctf: false, private: false, password: '', maxPlayers: 10,
-      });
+      }, ticket);
       mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto');
     } catch {
       mpEstado('on', `ONLINE · ${mpNoAtual.nome.split('·')[0].trim()} · ${mpNoAtual.ping} ms`);
@@ -3022,12 +3042,18 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
     if (!senha) return;
   }
   mpEstado('conectando', `CONECTANDO · ${sala.name || sala.convite || 'SALA'}…`);
+  mpConectando = true;
+  let ticket;
+  try { ticket = await obterMpTicket('connect'); }
+  catch {
+    mpConectando = false;
+    return mpErro('Não deu para autorizar a conexão. Tente novamente.');
+  }
   const net = new NetClient(mpNoAtual.url.replace(/\/ws.*$/, '') + '/ws', {
-    nome: nick || null, room: sala.id, pw: senha, team,
+    nome: nick || null, room: sala.id, pw: senha, team, ticket,
   });
   /* Espera COM feedback: o connect pode levar segundos numa região longe, e tela parada sem
      mensagem lê como "cliquei e não aconteceu nada" (BUG-88). O prazo é do net.connect(). */
-  mpConectando = true;
   mpErro(`Conectando na sala ${sala.name || sala.id}…`);
   let welcome;
   try { welcome = await net.connect(); }
@@ -3052,7 +3078,16 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   matchMode = welcome.ctf ? 'ctf' : 'rounds';
   modoEscolhido = true;
   net.onClose = () => mpDesconectou();
-  net.onSlot = (m) => mpAtualizarBarraSpec(m);
+  net.onSlot = async (m) => {
+    await transitionSlot(m, net.meta, {
+      team: currentTeam, faction: currentFaction, enemyFaction: currentEnemyFaction, char: currentChar,
+    }, (id) => CHARACTERS.some((c) => c.id === id), async (next) => {
+      currentTeam = next.team; currentFaction = next.faction;
+      currentEnemyFaction = next.enemyFaction; currentChar = next.char;
+      mpAtualizarBarraSpec(m);
+      if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
+    });
+  };
   // o lado do jogador vem do servidor; a facção também (a sala LIVRE sorteia)
   const lado = welcome.yourTeam === 'B' ? 'B' : 'E';
   const faccaoMinha = lado === 'B' ? welcome.faccaoB : welcome.faccaoE;
@@ -3063,7 +3098,7 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   const meuNoRoster = (welcome.roster || []).find((r) => r.id === welcome.yourEnt);
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
-  await startGame(lado, personagem, faccaoDele);
+  await startGame(lado, personagem, faccaoDele, true);
   mpAtualizarBarraSpec(welcome);
 }
 

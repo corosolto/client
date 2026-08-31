@@ -312,7 +312,9 @@ export function weaponMetrics(id) { return _metrics.get(id) || null; }
 // Returns a THREE.Group holding the weapon, scaled to real size, barrel pointing +Z,
 // grip roughly at the group origin (so it sits in a hand placed at origin).
 export function weaponModel(id) {
-  const tpl = _cache.get(MODEL_ALIAS[id] || id) || _cache.get('awp');
+  const requested = MODEL_ALIAS[id] || id;
+  const source = _cache.has(requested) ? requested : null;
+  const tpl = source ? _cache.get(source) : null;
   if (!tpl) return null;
   const cfg = CFG[id] || CFG.awp;
   const model = tpl.clone(true);
@@ -341,6 +343,8 @@ export function weaponModel(id) {
   const mag = buildMag(id);
   if (mag) { mag.scale.setScalar(1 / s); wrap.add(mag); }
   wrap.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.frustumCulled = false; } });
+  wrap.userData.weaponSource = source;
+  wrap.userData.weaponRequested = requested;
   wrap.userData.metrics = measureGun(id, wrap);   // boca/alça/caixa medidas (ver measureGun)
   return wrap;
 }

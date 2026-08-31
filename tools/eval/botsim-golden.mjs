@@ -8,12 +8,15 @@
    byte a byte idêntico à main nos 3 mapas do relato), mas o buraco de cobertura
    é real e é este arquivo que o fecha.
 
-   COMO mede: roda o botsim REAL (child process, semeado, determinístico) em 2
+   COMO mede: roda o botsim REAL (child process, semeado, determinístico) em 3
    mapas e compara as métricas de "bot maluco" com o baseline congelado:
      spinTurns/spinRoam  — girando parado (a "roda" do relato)
      latFlips            — ziguezague lateral
      stuckPct            — bot travado
      eff                 — deslocamento líquido / caminho (0 = milling)
+     laneSpread          — faixa lateral coberta pelo time / largura do mapa
+     laneTargetSpread    — faixa dos destinos de roam realmente escolhidos / largura
+     roamDepthSpread     — profundidades diferentes visitadas sem alvo
    A banda é LARGA de propósito (ver LIMITES): o fluxo do Math.random semeado
    muda com qualquer textura/objeto novo no construtor (BUG do movimento-golden
    #405), então banda apertada viraria vermelho de prosa — e "vermelho que não
@@ -24,6 +27,8 @@
      node tools/eval/botsim-golden.mjs               # compara com o baseline
      node tools/eval/botsim-golden.mjs --write       # congela o baseline
      node tools/eval/botsim-golden.mjs --mutante=pirueta
+     node tools/eval/botsim-golden.mjs --mutante=faixas-aleatorias
+     node tools/eval/botsim-golden.mjs --mutante=profundidades-fixas
        # reintroduz o defeito (deriva de rumo 3 rad/s via SIM_MUT_YAW, o gancho
        # __mutBotYaw do _updateBot) e EXIGE vermelho — sai 1 se a régua não morder.
    ============================================================================ */
@@ -39,7 +44,9 @@ const WRITE = args.includes('--write');
 const MUTANTE = (args.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 
 const SECS = 60;                              // 60 s × 9 sementes ≈ 7 s de parede por mapa
-const MAPAS = ['velho_oeste', 'upa_24h'];     // os mapas dos screenshots do relato de 31/08
+const MAPAS = ['velho_oeste', 'upa_24h', 'piscina_treta'];
+const LANE_SPREAD_MIN = 0.55;                  // margem de 18% de cada lado deixa 64% úteis
+const ROAM_DEPTH_MIN = 0.15;                   // três faixas ocupam 42%, 65% e 86% da metade inimiga
 
 /* Direção do defeito + folga. `rel` multiplica o baseline, `abs` é o piso pra métrica
    quase-zero (spinRoam 0.03 não pode ter banda proporcional — 10% de 0.03 é ruído de
@@ -52,9 +59,11 @@ const LIMITES = {
   eff:       { rel: 0.5, abs: 0.01, dir: 'min' },
 };
 
-function roda(mapId, mutYaw = 0) {
+function roda(mapId, mutante = '') {
   const env = { ...process.env };
-  if (mutYaw) env.SIM_MUT_YAW = String(mutYaw);
+  if (mutante === 'pirueta') env.SIM_MUT_YAW = '3';
+  if (mutante === 'faixas-aleatorias') env.SIM_MUT_LANES = '1';
+  if (mutante === 'profundidades-fixas') env.SIM_MUT_DEPTH = '1';
   const saida = execFileSync(process.execPath, [path.join(HERE, 'botsim.mjs'), String(SECS), mapId],
     { env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 1 << 24 });
   // o botsim loga "[times] ..." antes do JSON — o payload começa na linha que é só "["
@@ -79,13 +88,19 @@ function compara(base, atual) {
         if (a[k] < piso) erros.push(`${m}.${k}: ${a[k]} < piso ${piso.toFixed(3)} (baseline ${b[k]}) — bot rende menos caminho que o congelado`);
       }
     }
+    if (!(a.laneSpread >= LANE_SPREAD_MIN))
+      erros.push(`${m}.laneSpread: ${a.laneSpread} < piso ${LANE_SPREAD_MIN} — o time ocupa menos que a faixa útil do mapa`);
+    if (!(a.laneTargetSpread > b.laneTargetSpread))
+      erros.push(`${m}.laneTargetSpread: ${a.laneTargetSpread} não supera o defeito congelado ${b.laneTargetSpread} — declarar laneX sem usá-la não conta`);
+    if (!(a.roamDepthSpread >= ROAM_DEPTH_MIN))
+      erros.push(`${m}.roamDepthSpread: ${a.roamDepthSpread} < piso ${ROAM_DEPTH_MIN} — destinos colapsaram na mesma profundidade`);
   }
   return erros;
 }
 
-const mutYaw = MUTANTE === 'pirueta' ? 3 : MUTANTE ? (() => { throw new Error(`mutante desconhecido: ${MUTANTE}`); })() : 0;
+if (MUTANTE && !['pirueta', 'faixas-aleatorias', 'profundidades-fixas'].includes(MUTANTE)) throw new Error(`mutante desconhecido: ${MUTANTE}`);
 const atual = {};
-for (const m of MAPAS) atual[m] = roda(m, mutYaw);
+for (const m of MAPAS) atual[m] = roda(m, MUTANTE);
 
 if (WRITE) {
   fs.writeFileSync(BASELINE, JSON.stringify(atual, null, 1));

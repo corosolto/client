@@ -22,13 +22,24 @@ class Netcode {
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => this.updateStats(), 250);
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
-    net.onSlot = () => { this._netMap.clear(); this._srvHas = 0; };
+    this._prevOnSlot = net.onSlot;
+    this._onSlot = (m) => {
+      this._netMap.clear(); this._srvHas = 0;
+      if (m.yourTeam === 'E' || m.yourTeam === 'B') {
+        this.game.playerTeam = m.yourTeam;
+        this.game.enemyTeam = m.yourTeam === 'B' ? 'E' : 'B';
+        if (this.game.player) this.game.player.team = m.yourTeam;
+      }
+      this._prevOnSlot?.(m);
+    };
+    net.onSlot = this._onSlot;
   }
 
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
     try { this.net.stopPing(); } catch { /* já fechada */ }
     if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; }
+    if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
   }
 
   get espectador() { return this.net.espectador || this.net.yourEnt == null; }

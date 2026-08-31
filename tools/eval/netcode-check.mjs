@@ -322,6 +322,25 @@ console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não 
   g2.dispose();
 }
 
+console.log('\n· troca de vaga preserva UI e remonta o casamento de corpos');
+{
+  const net = fakeNet(1);
+  let uiSlots = 0;
+  const uiHandler = () => { uiSlots++; };
+  net.onSlot = uiHandler;
+  const g = montaJogo(net);
+  g._mp._netMap.set(99, g.player);
+  g._mp._srvHas = 1;
+  net.onSlot({ yourEnt: 6, yourTeam: 'B', espectador: false });
+  cobra(uiSlots === 1, 'o handler da UI continua recebendo slot depois de o netcode instalar o seu');
+  cobra(g._mp._netMap.size === 0 && g._mp._srvHas === 0,
+    'trocar de time limpa casamento e reconciliação antigos antes do próximo snapshot');
+  cobra(g.playerTeam === 'B' && g.enemyTeam === 'E' && g.player.team === 'B',
+    'a vaga confirmada muda imediatamente o lado físico do Game e do jogador local');
+  g.dispose();
+  cobra(net.onSlot === uiHandler, 'dispose restaura o handler e não acumula wrappers a cada restart');
+}
+
 /* BUG-88 — "Problemas na hora de jogar". Um nó que aceita o TCP e nunca manda o `welcome`
    deixava o connect() PENDENTE pra sempre: sem erro, sem mensagem, o jogador clicava em
    ENTRAR e nada acontecia. O welcome tem prazo. */
@@ -352,6 +371,95 @@ console.log('\n· connect() tem PRAZO: nó que aceita e não responde vira erro,
   await new Promise((r) => setTimeout(r, 600));
   cobra(!assentou, 'MUTANTE sem prazo fica pendente pra sempre (a cláusula acima morde)');
   net2.close();
+}
+
+console.log('\n· server browser mede RTT aquecido, não o custo único de TLS');
+{
+  const { NetClient, createRoom, sondarNos } = await import('../../public/js/net.js');
+  const fetchReal = globalThis.fetch;
+  let chamadas = 0;
+  const fetchSonda = async () => {
+    chamadas++;
+    await new Promise((r) => setTimeout(r, chamadas === 1 ? 180 : 20));
+    return new Response(JSON.stringify({ ok: true, players: 2, rooms: 4, regiao: 'eu' }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    });
+  };
+  globalThis.fetch = fetchSonda;
+  const [no] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 1000);
+  cobra(chamadas >= 2, `a sonda aquece a conexão antes de dar nota (${chamadas} chamada(s))`);
+  cobra(no.ping < 80, `o ping publicado exclui o handshake único (${no.ping} ms, RTT fabricado 20 ms)`);
+  cobra(no.ticketNode === 'eu', 'a autorização usa a região declarada pelo nó, não um apelido inventado pelo cliente');
+
+  let autorizacao = '';
+  globalThis.fetch = async (_url, init = {}) => {
+    autorizacao = new Headers(init.headers).get('authorization') || '';
+    return new Response('{"room":"r1"}', { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  await createRoom('https://eu.example', { name: 'teste' }, 'ticket-criar');
+  cobra(autorizacao === 'Bearer ticket-criar', 'criar sala envia o ticket no Authorization');
+  const socket = new NetClient('wss://eu.example/ws', { room: 'r1', ticket: 'ticket-conectar' });
+  cobra(new URL(socket.url).searchParams.get('ticket') === 'ticket-conectar', 'WebSocket leva o ticket curto na abertura');
+  const mutanteTicket = new NetClient('wss://eu.example/ws', { room: 'r1' });
+  cobra(!new URL(mutanteTicket.url).searchParams.has('ticket'), 'MUTANTE sem ticket fica distinguível e seria recusado pelo nó');
+
+  chamadas = 0;
+  globalThis.fetch = fetchSonda;
+  const [mutante] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 1000, 1);
+  cobra(mutante.ping >= 150, `MUTANTE com uma amostra volta a misturar TLS no ping (${mutante.ping} ms)`);
+
+  globalThis.fetch = async (_url, { signal } = {}) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(new Response(JSON.stringify({ players: 0, rooms: 0 }), {
+      status: 200, headers: { 'content-type': 'application/json' },
+    })), 80);
+    signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('aborted', 'AbortError')); }, { once: true });
+  });
+  const totalT0 = performance.now();
+  const [expirou] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
+  const totalDt = performance.now() - totalT0;
+  cobra(!expirou.online && totalDt < 145,
+    `o prazo cobre a sonda inteira, não reinicia por amostra (${totalDt.toFixed(0)} ms)`);
+  globalThis.fetch = fetchReal;
+}
+
+console.log('\n· lado físico do multiplayer vem do servidor, não da facção visual');
+{
+  const fs = await import('node:fs');
+  const { resolvePlayerSide, transitionSlot } = await import('../../public/js/net.js');
+  const main = fs.readFileSync('public/js/main.js', 'utf8');
+  let remontou = 0, terminou = false;
+  const next = await transitionSlot(
+    { yourEnt: 6, yourTeam: 'B', espectador: false },
+    { faccaoE: 'F', faccaoB: 'C', roster: [{ id: 6, char: 'palhaco-mau' }] },
+    { team: 'E', faction: 'F', enemyFaction: 'C', char: 'mandrake' },
+    (id) => id === 'palhaco-mau',
+    async (identidade) => {
+      remontou++;
+      await new Promise((r) => setTimeout(r, 5));
+      terminou = identidade.team === 'B' && identidade.faction === 'C'
+        && identidade.enemyFaction === 'F' && identidade.char === 'palhaco-mau';
+    },
+  );
+  cobra(remontou === 1 && terminou && next.team === 'B' && next.char === 'palhaco-mau',
+    'transição espectador→vaga executa e aguarda remount com lado, facção e corpo do servidor');
+  cobra(/const side = resolvePlayerSide\(team, faction, online\);/.test(main),
+    'o start real resolve lado E/B com a sessão do servidor');
+  cobra(/startGame\(lado, personagem, faccaoDele, true\)/.test(main),
+    'a entrada multiplayer marca explicitamente o start como online');
+  cobra(/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(main),
+    'o handler real liga a transição executável ao remount do Game');
+  cobra(resolvePlayerSide('B', 'C', true) === 'B', 'lado B continua B mesmo quando a facção é Palhaços');
+  cobra(resolvePlayerSide('E', 'F', true) === 'E', 'lado E continua E mesmo quando a facção é Funkeiros');
+  cobra(resolvePlayerSide('B', 'C', false) === 'E', 'single-player preserva a regra visual anterior da facção');
+  const mutante = main.replace(
+    'const side = resolvePlayerSide(team, faction, online);',
+    "const side = faction === 'B' ? 'B' : 'E';",
+  );
+  cobra(!/const side = resolvePlayerSide\(team, faction, online\);/.test(mutante),
+    'MUTANTE que volta a inferir lado pela facção acende a cláusula de integração');
+  const mutSlot = main.replace('await startGame(currentTeam, currentChar, currentEnemyFaction, true);', '');
+  cobra(!/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(mutSlot),
+    'MUTANTE sem remount deixa a cláusula espectador→vaga vermelha');
 }
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);

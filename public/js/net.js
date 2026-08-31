@@ -6,6 +6,23 @@
 // Registro de nós em nos.js: a página de convite do site lê a MESMA lista.
 export { NOS, parseConvite, linkDeConvite, httpDoNo } from './nos.js';
 import { NOS } from './nos.js';
+import { decodeSnapshot, MAX_SNAPSHOT_BYTES, SNAPSHOT_PROTOCOLS } from './netcodec.js';
+
+export const resolvePlayerSide = (team, faction, online) =>
+  online ? (team === 'B' ? 'B' : 'E') : (faction === 'B' ? 'B' : 'E');
+
+export async function transitionSlot(m, meta, current, validChar, remount) {
+  const next = { ...current, spectator: !!m.espectador };
+  if (!next.spectator && (m.yourTeam === 'E' || m.yourTeam === 'B')) {
+    next.team = m.yourTeam;
+    next.faction = next.team === 'B' ? meta.faccaoB : meta.faccaoE;
+    next.enemyFaction = next.team === 'B' ? meta.faccaoE : meta.faccaoB;
+    const corpo = (meta.roster || []).find((r) => r.id === m.yourEnt);
+    if (corpo && validChar(corpo.char)) next.char = corpo.char;
+  }
+  await remount(next);
+  return next;
+}
 
 // URLs de lobby e jogo a partir do menu/URL: '1' = local, 'host:porta', ou 'wss://...'
 export function mpUrls(v) {
@@ -29,32 +46,36 @@ export const salaPorConvite = (httpBase, codigo) =>
   j(`${httpBase}/sala/${encodeURIComponent(codigo)}`).then((x) => x.sala).catch(() => null);
 export const listMaps = (httpBase) => j(`${httpBase}/maps`).then((x) => x.maps || []);
 export const health = (httpBase) => j(`${httpBase}/health`);
-export const createRoom = (httpBase, cfg) => j(`${httpBase}/rooms`, {
-  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cfg),
+export const createRoom = (httpBase, cfg, ticket = '') => j(`${httpBase}/rooms`, {
+  method: 'POST', headers: { 'content-type': 'application/json', ...(ticket ? { authorization: `Bearer ${ticket}` } : {}) }, body: JSON.stringify(cfg),
 });
 
 /* Sonda TODOS os nós em paralelo e devolve cada um com ping e lotação. É a coluna de ping do
    server browser — sem ela o jogador não tem como saber que o nó da Europa é o dele. Nó que
    não responde volta com ping null e NÃO some da lista: sumir esconde a queda do servidor. */
-export async function sondarNos(nos = NOS, timeoutMs = 2500) {
+export async function sondarNos(nos = NOS, timeoutMs = 2500, amostras = 2) {
   return Promise.all(nos.map(async (no) => {
     const { http } = mpUrls(no.url);
-    const t0 = performance.now();
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeoutMs);
     try {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), timeoutMs);
-      const h = await j(`${http}/health`, { signal: ctrl.signal });
-      clearTimeout(t);
-      return { ...no, http, ping: Math.round(performance.now() - t0), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
+      let h = null, ping = 0;
+      const n = Math.max(1, Math.min(3, amostras | 0));
+      for (let i = 0; i < n; i++) {
+        const t0 = performance.now();
+        h = await j(`${http}/health`, { signal: ctrl.signal });
+        ping = performance.now() - t0;
+      }
+      return { ...no, http, ticketNode: h.regiao || no.id, ping: Math.round(ping), online: true, jogadores: h.players | 0, salas: h.rooms | 0 };
     } catch {
       return { ...no, http, ping: null, online: false, jogadores: 0, salas: 0 };
-    }
+    } finally { clearTimeout(t); }
   }));
 }
 
 export class NetClient {
-  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto' } = {}) {
-    const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}) });
+  constructor(url, { nome = null, room = null, codigo = null, pw = '', team = 'auto', ticket = '' } = {}) {
+    const qs = new URLSearchParams({ team, ...(codigo ? { codigo } : room ? { room } : {}), ...(pw ? { pw } : {}), ...(nome ? { nome } : {}), ...(ticket ? { ticket } : {}) });
     this.url = `${url}${url.includes('?') ? '&' : '?'}${qs}`;
     this.ws = null;
     this.connected = false;
@@ -104,12 +125,18 @@ export class NetClient {
         ? setTimeout(() => { if (!done) { done = true; try { this.ws?.close(); } catch { /* já fechado */ } reject(new Error('timeout')); } }, timeoutMs)
         : null;
       const assenta = (fn, v) => { if (done) return; done = true; if (prazo) clearTimeout(prazo); fn(v); };
-      try { this.ws = new WebSocket(this.url); } catch (e) { assenta(reject, e); return; }
+      try { this.ws = new WebSocket(this.url, SNAPSHOT_PROTOCOLS); } catch (e) { assenta(reject, e); return; }
+      this.ws.binaryType = 'arraybuffer';
       this.ws.onopen = () => { this.connected = true; };
       this.ws.onerror = () => { assenta(reject, new Error('ws_error')); };
       this.ws.onclose = () => { this.connected = false; this.onClose?.(); assenta(reject, new Error('closed')); };
       this.ws.onmessage = (ev) => {
-        let m; try { m = JSON.parse(ev.data); } catch { return; }
+        const binary = typeof ev.data !== 'string';
+        const bytes = binary ? (ev.data?.byteLength ?? ev.data?.size ?? 0) : ev.data.length;
+        if (binary && bytes > MAX_SNAPSHOT_BYTES) { this.ws.close(1009, 'snapshot_too_large'); return; }
+        let m;
+        try { m = binary ? decodeSnapshot(ev.data) : JSON.parse(ev.data); }
+        catch { if (binary) this.ws.close(1002, 'snapshot_invalid'); return; }
         if (m.type === 'welcome') {
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.onWelcome?.(m);
@@ -124,7 +151,7 @@ export class NetClient {
           this.onSlot?.(m);
         } else if (m.type === 'snapshot') {
           this.prev = this.snap; this.snap = m;
-          const now = performance.now(), bytes = (ev.data && ev.data.length) || 0;
+          const now = performance.now();
           this.stats.tick = m.tick | 0; this.stats.ents = (m.ents && m.ents.length) || 0;
           if (this._lastSnapT) { const gap = now - this._lastSnapT; this.stats.gapMax = Math.max(gap, this.stats.gapMax * 0.92); }
           this._lastSnapT = now;

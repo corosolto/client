@@ -643,7 +643,7 @@ export class Game {
           const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
           if (rw && pk.mesh) {
             // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
-            rw.rotation.set(0, pk.mesh.rotation.y || Math.random() * 6.28, 0.12);
+            rw.rotation.set(0, pk.mesh.rotation.y, 0.12);
             rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
             pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
           }
@@ -5551,9 +5551,34 @@ export class Game {
     mesh.updateWorldMatrix(true, true);
     return mesh.position.y;
   }
+  refreshPickupModels() {
+    const replace = (pk, mapPickup) => {
+      if (!pk.mesh) return;
+      if (pk.mesh.userData.weaponSource && pk.mesh.userData.weaponRequested === pk.mesh.userData.weaponSource) return;
+      const rw = weaponModel(pk.weapon);
+      if (!rw) return;
+      rw.rotation.set(0, pk.mesh.rotation.y, mapPickup ? 0.12 : pk.mesh.rotation.z);
+      rw.visible = pk.mesh.visible;
+      rw.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      pk.mesh.removeFromParent();
+      this.scene.add(rw);
+      pk.mesh = rw;
+      this._assentarNoChao(rw, pk.x, pk.z, pk.folga ?? 0.01);
+    };
+    for (const pk of this.world.pickups || []) replace(pk, true);
+    for (const pk of this.drops || []) replace(pk, false);
+    const pendentes = [...(this.world.pickups || []), ...(this.drops || [])]
+      .some((pk) => pk.mesh?.userData.weaponProceduralFallback);
+    if (!pendentes && this._pickupFallbackTpl) {
+      this._pickupFallbackTpl.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+      this._pickupFallbackTpl = null;
+    }
+  }
   // CS: morto larga a arma no chão
   _dropWeapon(x, z, weapon, rack = false, folga = 0.01, expiraEm = 0) {
-    const mesh = weaponModel(weapon) || buildRifle();  // real GLB on the ground
+    const loaded = weaponModel(weapon);
+    const mesh = loaded || (this._pickupFallbackTpl ||= buildRifle()).clone(true);
+    if (!loaded) mesh.userData.weaponProceduralFallback = true;
     // lay it FLAT on its side (roll 90° about the barrel) so it rests on the ground
     // instead of standing on its belly. Rack drops (spawn weapon rows) get an aligned
     // yaw so they read as a tidy line; death drops/scatter get a random yaw.
@@ -5562,7 +5587,7 @@ export class Game {
     this._assentarNoChao(mesh, x, z, folga);
     mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
     this.scene.add(mesh);
-    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, expiraEm });
+    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, folga, expiraEm });
     // só quem tem prazo entra na fila do teto: rack de spawn e troca de arma nunca são despejados
     if (expiraEm) {
       const comPrazo = [];
@@ -5953,8 +5978,13 @@ export class Game {
       // BOUNDS REAIS do mapa, com 12% de margem pra não colar na parede.
       const B = this.world.bounds;
       const m = (B.maxX - B.minX) * 0.18;   // margem: a 12% a coluna encostava no muro do perímetro e o bot raspava
-      b.laneX = BOT_MOVE2 ? (B.minX + m) + ((B.maxX - m) - (B.minX + m)) * Math.random() : -10.5 + 21 * Math.random();
-      b.roamSeed = (Math.random() * 3) | 0;   // varia a profundidade-alvo (deepZ) também
+      const mates = this.bots.filter((o) => o.team === b.team);
+      const ord = Math.max(0, mates.indexOf(b)), n = Math.max(1, mates.length);
+      const x0 = B.minX + m, x1 = B.maxX - m;
+      b.laneX = this.__mutBotLanes
+        ? x0 + (x1 - x0) * Math.random()
+        : x0 + (x1 - x0) * (n === 1 ? 0.5 : ord / (n - 1));
+      b.roamSeed = ord;
     }
     let moving = 0;
     if (b.target) {
@@ -6328,17 +6358,16 @@ export class Game {
           // direita. Agora cada bot recebe uma coluna x fixa e espalhada por toda a largura,
           // e o alvo é o nó da metade inimiga mais perto de (laneX, z-profundo) — força a
           // ocupar esquerda/centro/direita e evita o "andam em bando".
-          if (b.laneX === undefined) {
-            const mates = this.bots.filter(o => o.team === b.team);
-            const ord = mates.indexOf(b), n = Math.max(1, mates.length);
-            b.laneX = -18 + 36 * (n === 1 ? 0.5 : ord / (n - 1)) + (Math.random() * 4 - 2);
-            b.roamSeed = this.bots.indexOf(b);
-          }
           // z-alvo: fundo da metade inimiga, alternando profundidade por bot E POR DESTINO
           // (anti-milling G2-R6A: chegando ao fundo, o mesmo nó era re-alvejado pra sempre
           // com o jitter ±4 flipando entre 2 vizinhos — "andando pro lado e pro outro").
           b._roamN = (b._roamN || 0) + 1;
-          const deepZ = sign * (22 + ((b.roamSeed + b._roamN) % 3) * 16);
+          const zi = (b.roamSeed + b._roamN) % 3;
+          const midZ = (W.bounds.minZ + W.bounds.maxZ) * 0.5;
+          const edgeZ = sign > 0 ? W.bounds.maxZ : W.bounds.minZ;
+          const deepZ = this.__mutBotDepth
+            ? sign * (22 + zi * 16)
+            : midZ + (edgeZ - midZ) * [0.42, 0.65, 0.86][zi];
           if (b._unreach && b._unreach.size > 12) b._unreach.clear();   // não esgota o mapa
           let best = -1, bd = 1e9, bestAny = -1, bdAny = 1e9;
           let bestFar = -1, bdFar = 1e9, bestFree = -1, bdFree = 1e9;   // fora da ilha do bot (fallback)
@@ -7164,6 +7193,7 @@ export class Game {
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
+    this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }

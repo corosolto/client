@@ -147,6 +147,8 @@ function runMap(mapId, textures, seed) {
   // SIM_MUT_YAW: mutante da botsim-golden (deriva de rumo em rad/s no _updateBot) — a régua
   // exige que isto pinte o placar de vermelho. Ver tools/eval/botsim-golden.mjs.
   if (process.env.SIM_MUT_YAW) g.__mutBotYaw = +process.env.SIM_MUT_YAW || 0;
+  if (process.env.SIM_MUT_LANES) g.__mutBotLanes = true;
+  if (process.env.SIM_MUT_DEPTH) g.__mutBotDepth = true;
   g.killsToWin = Infinity;          // sem alvo de abates: a amostra tem que durar a corrida inteira
   g.start ? g.start() : g._startRound();
   /* MATRIZES DE MUNDO: sem renderer ninguém chama updateMatrixWorld, e o Raycaster do three
@@ -184,7 +186,10 @@ function runMap(mapId, textures, seed) {
     g.player.pos.set(0, -400, 0); g.player.hp = 1e9; g.player.alive = true;
   }
   const tr = new Map();
-  for (const b of g.bots) tr.set(b, { lp: { x: b.pos.x, z: b.pos.z }, ly: b.yaw, lat: 0, fwd: 0, latF: 0, latFc: 0, fwdF: 0, fwdFc: 0, spin: 0, spinR: 0, latAbs: 0, mvAbs: 0, stuck: 0, n: 0, nR: 0, path: 0, x0: b.pos.x, z0: b.pos.z });
+  for (const b of g.bots) tr.set(b, { lp: { x: b.pos.x, z: b.pos.z }, ly: b.yaw, lat: 0, fwd: 0, latF: 0, latFc: 0, fwdF: 0, fwdFc: 0, spin: 0, spinR: 0, latAbs: 0, mvAbs: 0, stuck: 0, n: 0, nR: 0, path: 0, x0: b.pos.x, z0: b.pos.z, roamZMin: Infinity, roamZMax: -Infinity });
+  const mapWidth = Math.max(0.001, g.world.bounds.maxX - g.world.bounds.minX);
+  const mapDepth = Math.max(0.001, g.world.bounds.maxZ - g.world.bounds.minZ);
+  let laneSpreadSum = 0, laneSpreadN = 0;
   const steps = Math.round(SECS / DT);
   for (let i = 0; i < steps; i++) {
     // DUELO: o jogador fica GRUDADO no meio do mapa. Parado no spawn ele às vezes passava a
@@ -229,11 +234,22 @@ function runMap(mapId, textures, seed) {
          delas era desproporcional. Contar isso como travamento é medir o bot pelo relógio
          da partida, não pela navegação. */
       const roaming = !b.target && b._ctfMoving !== 0 && g.state === 'live';
+      if (roaming && Number.isInteger(b.roamIdx)) {
+        const rz = g.world.waypoints.nodes[b.roamIdx]?.z;
+        if (Number.isFinite(rz)) { s.roamZMin = Math.min(s.roamZMin, rz); s.roamZMax = Math.max(s.roamZMax, rz); }
+      }
       if (spd < 0.5) { s.spin += Math.abs(dy); if (roaming) s.spinR += Math.abs(dy); }
       if (roaming) { s.nR++; if (spd < 0.5) s.stuck++; }
       s.latAbs += Math.abs(lat) * dts; s.mvAbs += d;
       s.n++; s.path += d;
       s.lp = { x: b.pos.x, z: b.pos.z }; s.ly = b.yaw;
+    }
+    for (const team of ['E', 'B']) {
+      const xs = g.bots
+        .filter((b) => b.team === team && !b.target && Number.isInteger(b.roamIdx))
+        .map((b) => g.world.waypoints.nodes[b.roamIdx]?.x)
+        .filter(Number.isFinite);
+      if (xs.length > 1) { laneSpreadSum += (Math.max(...xs) - Math.min(...xs)) / mapWidth; laneSpreadN++; }
     }
   }
   let latAbs = 0, mvAbs = 0, latF = 0, latFc = 0, fwdF = 0, fwdFc = 0, spin = 0, spinR = 0, stuck = 0, n = 0, nR = 0, path = 0, net = 0;
@@ -243,6 +259,14 @@ function runMap(mapId, textures, seed) {
     net += Math.hypot(b.pos.x - s.x0, b.pos.z - s.z0);
   }
   const nb = g.bots.length, mins = SECS / 60;
+  const laneSpans = ['E', 'B'].map((team) => {
+    const xs = g.bots.filter((b) => b.team === team && Number.isFinite(b.laneX)).map((b) => b.laneX);
+    return xs.length > 1 ? (Math.max(...xs) - Math.min(...xs)) / mapWidth : 0;
+  });
+  const roamDepthSpread = g.bots.reduce((sum, b) => {
+    const s = tr.get(b);
+    return sum + (Number.isFinite(s.roamZMin) && Number.isFinite(s.roamZMax) ? (s.roamZMax - s.roamZMin) / mapDepth : 0);
+  }, 0) / nb;
   if (DUEL) return {
     map: mapId, bots: nb, tirosBot: D.shots, acertos: D.hits,
     taxaAcerto: +(D.hits / Math.max(1, D.shots)).toFixed(3),
@@ -265,6 +289,9 @@ function runMap(mapId, textures, seed) {
     spinRoam: +(spinR / (Math.PI * 2) / nb / mins).toFixed(2),
     stuckPct: +(100 * stuck / Math.max(1, nR)).toFixed(1),
     eff: +(net / Math.max(1, path)).toFixed(3),
+    laneSpread: +Math.min(...laneSpans).toFixed(3),
+    laneTargetSpread: +(laneSpreadSum / Math.max(1, laneSpreadN)).toFixed(3),
+    roamDepthSpread: +roamDepthSpread.toFixed(3),
   };
 }
 
@@ -298,7 +325,7 @@ for (const id of ids) {
     const ts = ok.reduce((a, r) => a + r.ttkSum, 0), tn = ok.reduce((a, r) => a + r.ttkN, 0);
     out.push({ map: id, tirosBot: m('tirosBot'), acertos: m('acertos'), taxaAcerto: m('taxaAcerto'), fracCabeca: m('fracCabeca'), mortesPorMin: m('mortesPorMin'), janelaAteMorrer: +(tn ? ts / tn : 0).toFixed(2), ttkSum: ts, ttkN: tn }); continue;
   }
-  out.push({ map: id, bots: ok[0].bots, latFlips: m('latFlips'), latFlipsCombat: m('latFlipsCombat'), latShare: m('latShare'), fwdFlips: m('fwdFlips'), fwdFlipsCombat: m('fwdFlipsCombat'), spinTurns: m('spinTurns'), spinRoam: m('spinRoam'), stuckPct: m('stuckPct'), eff: m('eff') });
+  out.push({ map: id, bots: ok[0].bots, latFlips: m('latFlips'), latFlipsCombat: m('latFlipsCombat'), latShare: m('latShare'), fwdFlips: m('fwdFlips'), fwdFlipsCombat: m('fwdFlipsCombat'), spinTurns: m('spinTurns'), spinRoam: m('spinRoam'), stuckPct: m('stuckPct'), eff: m('eff'), laneSpread: m('laneSpread'), laneTargetSpread: m('laneTargetSpread'), roamDepthSpread: m('roamDepthSpread') });
 }
 console.log(JSON.stringify(out, null, 1));
 const avg = (k) => +(out.filter(o => !o.err).reduce((a, o) => a + o[k], 0) / Math.max(1, out.filter(o => !o.err).length)).toFixed(3);

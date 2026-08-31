@@ -9,13 +9,14 @@ Tirar o `SUPABASE_SERVICE_ROLE_KEY` das variáveis de ambiente da Vercel. Ele é
 ignora RLS: quem a tem faz o que quiser no banco. Ela estava num projeto de front-end público,
 ao lado do código do jogo.
 
-## As 18 que saíram
+## Rotas servidas pelo backend
 
 `acquisition` · `avatar` · `feedback` · `funnel` · `health` · `heartbeat` · `jserror` ·
-`leaderboard` · `map-plays` · `match` · `online` · `perf` · `pick` · `presence` · `register` ·
+`leaderboard` · `map-plays` · `match` · `mp-ticket` · `online` · `perf` · `pick` · `presence` · `register` ·
 `submit-match` · `telemetry` · `train-frames`
 
-Agora em `corosolto/backend`, em `api/`. **A lógica de negócio não foi reescrita**: as rotas do
+Agora em `corosolto/backend`, em `api/`. `mp-ticket` nasceu ali; as demais vieram do cliente.
+**A lógica de negócio migrada não foi reescrita**: as rotas do
 Astro já usavam `Request`/`Response` padrão da Web, que o Node tem nativo, então o que mudou foi
 o transporte — os arquivos foram copiados e só os `import` e a fonte das variáveis de ambiente
 mudaram. Trocar código provado em produção por código novo no mesmo commit em que ele muda de
@@ -31,13 +32,17 @@ casa seria misturar dois riscos.
 
 ## Como o cliente escolhe o destino
 
-`public/js/apibase.js` — `apiUrl('/api/x')` devolve o backend para as migradas e caminho
-relativo para o resto. Rota desconhecida cai em relativo de propósito: o padrão seguro é "fica
-onde sempre esteve". `?api=1` aponta para `localhost:8080`; `?api=<url>` para outro backend.
+`public/js/apibase.js` — `apiUrl('/api/x')` devolve o Cloud Run do backend para as migradas em
+produção e caminho relativo nos previews `*.vercel.app`. Rota desconhecida cai em relativo de
+propósito: o padrão seguro é "fica onde sempre esteve". `?api=1` aponta para
+`localhost:8080`; `?api=<url>` para outro backend. A régua cobra os dois caminhos.
 
-`src/pages/api/[rota].ts` é rede de segurança, não caminho normal: ela devolve **307** para o
-backend. Existe para o cliente que está com o JS antigo em cache e ainda pede a rota aqui. 307
-preserva método e corpo, então um POST de telemetria continua sendo um POST.
+`src/pages/api/[rota].ts` é rede de segurança para cliente antigo e o caminho normal do
+preview: faz proxy server-side para o backend, preservando método, corpo e query. Só repassa
+`content-type` e o IP obtido pelo SSR; cookies, `authorization` e headers arbitrários do
+navegador não atravessam. Assim o preview usa caminho relativo — inclusive com Deployment
+Protection — sem abrir o CORS do Cloud Run para origens dinâmicas e sem receber credencial do
+Supabase.
 
 Ela é `[rota]` e não `[...rota]` porque o coringa de múltiplos segmentos **engolia**
 `og/<tipo>.png` e `badge/<...>.png` — medido: o 404 que voltava vinha dela. Um segmento só
@@ -53,7 +58,8 @@ duas fontes existem, e vale a de quem atendeu.
 
 ## O que esta migração NÃO resolveu
 
-**O `service_role` continua necessário na Vercel.** O site lê o banco fora das rotas de API:
+**O `service_role` continua necessário na Vercel de produção.** Ele já foi removido do escopo
+Preview, mas o site publicado lê o banco fora das rotas de API:
 `ranking.astro`, `mapa.astro`, `u/[...path].astro`, os dois sitemaps e o `badge`. São páginas
 renderizadas no servidor, não APIs, e não entraram neste recorte.
 

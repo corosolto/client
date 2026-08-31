@@ -3666,6 +3666,92 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-97 · snapshots completos em JSON repetem estado estático e ampliam tráfego e alocação
+  do multiplayer · RESOLVIDO NO CÓDIGO 31/08; ROLLOUT PENDENTE.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] tirando o fly.io
+  deixe tudo no gcp"*, após aprovar snapshots binários sobre o WebSocket atual. Reprodução real
+  no nó brasileiro, como espectador da sala `livre`: 20 snapshots com 10 entidades deram mediana
+  de 2.152 bytes, equivalentes a 42 KiB/s por cliente a 20 Hz. Um encoder-sonda com os mesmos
+  campos e regras de wire compatíveis com proto3 deu 624 bytes. O codec de produção agora negocia
+  `coro-snapshot-v2` no WebSocket e preserva `coro-json-v1`: no smoke com os dois clientes na mesma
+  sala, o frame real caiu de 1.992 para 522 bytes (26,2%). `eval:netcodecbin` passou 13/13 e
+  `game/protocol-check.mjs` passou 5/5; mutantes sem negociação, decoder, encoder e downgrade deixam
+  as respectivas réguas vermelhas. O painel mede frames/bytes binários e JSON separadamente.
+
+- **BUG-96 · scheduler do nó autoritativo acumula passos de 60 Hz e todas as salas oficiais
+  simulam vazias · RESOLVIDO NO CÓDIGO 31/08; ROLLOUT PENDENTE.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] deixe tudo no gcp"*,
+  após aceitar a correção do scheduler e suspensão de sala vazia. Reprodução estática em
+  `backend/game/index.js`: `setInterval(..., 50)` envolve o acumulador de `DT=1/60`, portanto a
+  volta normal executa três `room.step()` consecutivos; o laço percorre `rooms.values()` antes de
+  conferir `clients.size`, então as salas oficiais vazias também avançam. Agora o scheduler de
+  60 Hz tem relógio próprio, catch-up limitado a quatro passos e broadcast independente a 20 Hz;
+  salas vazias permanecem publicadas, mas suspensas. `runtime-check.mjs` passou 8/8, o smoke real
+  passou 70/70 e `/metrics` expõe atraso do event loop, passos executados/descartados e salas
+  ativas/pausadas. Os mutantes de relógio do broadcast e simulação vazia deixam a régua vermelha.
+
+- **BUG-94 · preview da Vercel não consegue testar as APIs migradas e a ingestão
+  `mp-metrics` aceita remetente sem identidade · API E PREVIEW IMPLANTADOS; NÓS PENDENTES.**
+  Pergunta literal do dono, 31/08:
+  *"pra testarmos tudo no preview do game da vercel como faz? voce ve algum risco de
+  seguranca?"* Reprodução: o cliente aponta as rotas migradas direto para o Cloud Run,
+  cujo CORS aceita apenas os domínios de produção; o fallback da Vercel devolve 307, então o
+  navegador termina no mesmo bloqueio cross-origin. Separadamente, um POST sem credencial a
+  `/api/mp-metrics` gravou uma linha de smoke no banco de produção — CORS não autentica
+  processos fora do navegador. O preview agora usa `/api` same-origin e a rota Astro faz o
+  proxy no servidor sem encaminhar cookie, `Authorization` nem cabeçalhos arbitrários do
+  browser. `eval:apis` cobre as rotas migradas, reprova o mutante que volta a apontar direto para o
+  Cloud Run e o que vaza cookie. A ingestão exige `MP_METRICS_TOKEN`, comparado em tempo
+  constante; o nó só envia com bearer e os caminhos de Cloud Run e VM recebem o mesmo segredo.
+  `api/smoke.mjs`, `game/telemetry-smoke.mjs` e `deploy-check.mjs` reprovam ausência de token.
+  A API de hash `e7b0571fa097b5d9` está em produção: POST sem identidade devolveu 401. O Preview
+  protegido respondeu 200 pelo proxy e contém somente a anon key. Os nós v6 ainda não receberam
+  a identidade nova, portanto o flush para o banco continua pendente do rollout coordenado.
+
+- **BUG-95 · fronteiras de segurança do multiplayer atravessam vários projetos sem um rollout
+  atômico documentado · CLIENTE/API/INFRA PRONTOS; CANÁRIO DOS NÓS PENDENTE.** Pedido literal do dono, 31/08: *"vamos implementar tudo isso da
+  seguranca, a questao e que serao em varios projetos ne precisava entender a arquitetura"*.
+  Reprodução inicial: Preview continha segredos de produção; API e nó dependiam do mesmo token
+  sem versão implantada; rate limit aceita o primeiro `x-forwarded-for`; WebSocket aceita origem
+  arbitrária e criação de sala não exigia ticket. **Conserto:** tickets HMAC de 60 s presos a
+  região e ação, nonce descartável, Origin fechado no WebSocket, IP derivado do salto confiável,
+  rate limit fail-closed para emissão e service account exclusiva das VMs. Segredos saíram da
+  metadata e são lidos do Secret Manager no boot. `eval:security` e seis mutantes cobrem a cadeia;
+  o smoke real recusa ausência, reuso, ação/região erradas, expiração e origem hostil. A API está
+  implantada e o Preview novo emite ticket; os nós v6 continuam abertos para não quebrar o cliente
+  de produção antes do canário. Deployments Preview antigos seguem protegidos, mas devem ser
+  removidos ou as credenciais históricas rotacionadas.
+
+- **~~BUG-93 · navegador de servidores mostra ~200 ms em Madrid, mas dentro da partida o HUD
+  mostra ~20 ms~~ · RESOLVIDO 31/08.** Eram duas medidas com o mesmo rótulo: `sondarNos`
+  cronometrava o primeiro `/health`, incluindo DNS/TCP/TLS; o HUD cronometra `ping→pong` no
+  WebSocket já aberto. Medido de Lisboa no mesmo processo: Madrid 59–89 ms no primeiro HTTP,
+  21–22 ms no HTTP aquecido e 17–21 ms no WS. Brasil: 631–719 / 210–227 / 209–211 ms;
+  EUA: 327–350 / 106–118 / 106–109 ms. A sonda agora aquece a conexão e publica a segunda
+  amostra, sob um único prazo total. `eval:netcode` fabrica 180 ms de handshake + 20 ms de RTT:
+  antes publicava 180; depois publica 20–21. Mutante de uma amostra volta a 181–182 ms.
+
+- **~~BUG-92 · Piscina da Treta começa fora/na arena errada no multiplayer~~ · RESOLVIDO
+  31/08.** Os pontos do mapa foram refutados: `eval:spawn` deixou verdes as 208 colocações de
+  jogador+bot nos 13 mapas, inclusive os 16 casos da Piscina. A causa estava antes do mapa:
+  `_startGame` deduzia o lado físico pela facção do personagem. Em sala FNK×PLH, por exemplo,
+  o servidor podia atribuir lado B e o cliente reconstruía o jogador no lado E; o snapshot
+  depois o arrastava para a posição autoritativa. Online agora confia em `welcome.yourTeam`;
+  offline preserva a regra anterior. A confirmação posterior de vaga também preserva o
+  callback da UI e remonta o `Game`, porque promover um espectador in-place deixava o estado
+  `dedicated` sem input. `eval:netcode` cobre B+Palhaços, E+Funkeiros, troca de vaga, o caminho
+  real de entrada e mutantes que retiram a autoridade do servidor ou o remount.
+
+- **~~BUG-91 · mapas com AWPs gigantes/apontadas para cima~~ · RESOLVIDO 31/08.** Durante o
+  preload tardio, `weaponModel(id)` devolvia `_cache.get(id) || _cache.get('awp')`: qualquer
+  pickup cujo GLB ainda não tivesse chegado recebia uma AWP com a rotação/escala da arma
+  pedida, e nunca era corrigido. Existência de malha não media identidade, então ARM2 ficava
+  verde. `weaponModel` agora só devolve o modelo pedido e cada instância registra origem e
+  pedido; após a carga ociosa, `refreshPickupModels()` troca os fallbacks procedurais do mapa
+  e dos armários pelo GLB certo. ARM4/ARM5 ficaram em zero modelo errado ou ausente. O fallback
+  procedural dos armários também compartilha as seis geometrias do molde; ARM6 reprova o
+  mutante não-compartilhado, que aloca uma cópia por arma. O mutante que reintroduz a AWP deixa
+  pickups com o GLB errado e reprova ARM4. Figura de navegador olhada: AK e M4 distintos,
+  deitados no deck da Piscina, ambos em escala de arma de chão (`--foto=/tmp/armas.png`).
+
 - **BUG-89 · "eu testei o singleplayer dessa branch tambem e os bots estao malucos andando em
   roda, esta tudo meio doido nessa branch"** (dono, 31/08, com screenshots de velho_oeste,
   upa_24h e piscina_treta; branch merge/461 do multiplayer #483). **NÃO REPRODUZIDO no
@@ -3682,9 +3768,23 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   precedente: (a) checkout velho servido na porta de teste (já aconteceu — ver memória "portas
   de medição sequestradas"); (b) defeito só-browser que o headless não vê (BUG-28 é o
   precedente); (c) o milling que JÁ existe na main (eff 0.04–0.06 é baixo nos dois lados) lido
-  como novidade. Régua nova para o buraco de cobertura que este relato expôs:
-  `tools/eval/botsim-golden.mjs` (abaixo). *Régua: botsim-golden. Estado: aberto como
-  não-reproduzido; reabrir com repro de browser se voltar.*
+  como novidade.
+
+  **Reaberto pelo navegador, 31/08; resolução parcial medida.** O `bot-routes` existente
+  plantava o jogador imortal no centro: 63–93% das amostras tinham alvo, então o desenho que
+  parecia rota media sobretudo strafe de combate. O instrumento agora exclui o jogador e
+  separa `MODE=match` de `MODE=roam`. Isso revelou duas contradições reais no `_updateBot`:
+  (1) `laneX` era preenchido aleatoriamente antes do bloco que prometia distribuição ordinal,
+  tornando esse bloco inalcançável — os times cobriam só 23,9–27,2% da largura; (2) as três
+  profundidades de roam eram os literais 22/38/54 m, que na Piscina colapsavam na mesma fileira
+  de waypoints (spread 0,043). Agora as faixas são ordinais e derivadas dos bounds (spread
+  0,640), os destinos realmente escolhidos também superam o defeito congelado, e as
+  profundidades são 42/65/86% da metade inimiga (Piscina 0,191). Na simulação da
+  Piscina: latFlips 10,978→10,622, fwdFlips 9,344→9,000, spinRoam 0,040→0,036 e eficiência
+  0,147→0,152; custo observado: stuck 4,289→5,144%. Os mutantes `faixas-aleatorias` e
+  `profundidades-fixas` deixam o golden vermelho. A captura final ainda mostra voltas curtas
+  ao redor de alguns destinos; portanto o relato continua **ABERTO para aceite visual**, não
+  deve ser marcado como curado só pelo placar.
 
 - **BUG-90 · MP: "os bots andam devagar" + "morri várias vezes sem ver e matei várias vezes
   sem ver"** (dono, 31/08, mesma sessão do BUG-89). **Causa raiz encontrada e medida — é o
