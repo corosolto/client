@@ -19,11 +19,11 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
     .map((family) => [family, `/private-assets/viewmodels/${family}/${family}-runtime.glb?v=${CATALOG_VERSION}`]),
 ));
 
-// Fonte alternativa (?vmfonte=goldsrc): viewmodel dos moldes CS 1.6 (CC0,
-// FONTE.md) com a arma Mint — protótipo da trilha de paridade.
-const VM_FONTE = typeof window !== 'undefined'
-  ? (new URLSearchParams(window.location.search).get('vmfonte') || '')
-  : '';
+// ?vmfonte=goldsrc: viewmodel dos moldes CS 1.6 (CC0, FONTE.md) com a arma
+// Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
+const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const CS16_TUDO = _QS?.get('cs16') === '1';
+const VM_FONTE = CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
 // Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
 const AUTHORED_KILLED = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('vmauthored') === '0';
@@ -192,9 +192,10 @@ const FAMILY_FRAME = Object.freeze({
 
 // Portão de rollout: família só serve o jogo depois de `ready:true` no vmconfig.
 // ?vmready=ak,pistol é o override DEV para calibrar/A-B sem abrir o portão no repo.
-const READY_OVERRIDE = new Set(typeof window !== 'undefined'
-  ? (new URLSearchParams(window.location.search).get('vmready') || '').split(',').filter(Boolean)
-  : []);
+const READY_OVERRIDE = new Set(
+  CS16_TUDO
+    ? Object.keys(VM_FAMILY)
+    : (_QS?.get('vmready') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
   && (VM_FAMILY[family]?.ready === true || READY_OVERRIDE.has(family));
 const familyFor = (weapon) => {
