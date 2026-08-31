@@ -118,7 +118,7 @@
     "eval:ctfwin": "node tools/eval/ctf-win-check.mjs",
     "eval:spawn": "node tools/eval/spawn-settle-check.mjs",
     "check:deploy": "node tools/eval/runner.mjs syntax eval:error-console eval:edgecache eval:webgl eval:webglguard eval:shaderlog eval:shaderbudget eval:prune eval:vmlabhud eval:vminspect eval:redesign eval:charvoice eval:screenquery arch:check docs:check media:check menuwalls:check anims:check anims:merge:check travessao:check eval:medianet eval:posters eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:apis eval:nosgemeos eval:docsautoria eval:replaycam",
-    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:movimento eval:replaycam eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife",
+    "check:fast": "node tools/eval/runner.mjs syntax eval:release eval:error-console eval:edgecache eval:webgl eval:webglguard eval:maprotate eval:shaderlog eval:shaderbudget eval:prune eval:vminspect eval:faccao eval:mapid eval:mapjson eval:mapcontrato eval:pickuparma eval:parquewheel eval:redesign eval:matchoptions eval:charvoice eval:screenquery docs:check arch:check audio:check feet:check eval:vmlabhud eval:ctfhud eval:pause eval:ctfround eval:ctfwin eval:spawn eval:regen eval:pegada eval:dmgdir eval:ctflabels anims:check anims:merge:check walls:check media:check menuwalls:check travessao:check eval:medianet eval:posters eval:grafitelayout eval:simclock eval:backendhints changelog:check eval:velhooeste eval:penitenciaria eval:mutcega eval:autofix eval:deploygate eval:portaointeiro eval:wfsecret eval:comentario eval:fixture eval:preload eval:docsautoria eval:netcode eval:movimento eval:botsim-golden eval:replaycam eval:corrego-contract eval:corrego-water eval:corrego-superficie eval:skylife",
     "eval:tags": "node tools/eval/tag-main-check.mjs",
     "eval:simclock": "node tools/eval/sim-clock-check.mjs",
     "eval:mutcega": "node tools/eval/mutacao-cega-check.mjs",
@@ -133,7 +133,8 @@
     "eval:texel": "node tools/eval/texel-check.mjs",
     "eval:nosgemeos": "node tools/eval/nos-gemeos-check.mjs",
     "eval:netcode": "node tools/eval/netcode-check.mjs",
-    "eval:movimento": "node tools/eval/movimento-golden.mjs"
+    "eval:movimento": "node tools/eval/movimento-golden.mjs",
+    "eval:botsim-golden": "node tools/eval/botsim-golden.mjs"
   },
   "repository": {
     "type": "git",

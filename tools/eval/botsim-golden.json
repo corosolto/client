@@ -1,0 +1,28 @@
+{
+ "velho_oeste": {
+  "map": "velho_oeste",
+  "bots": 7,
+  "latFlips": 6.478,
+  "latFlipsCombat": 4.044,
+  "latShare": 0.145,
+  "fwdFlips": 5.722,
+  "fwdFlipsCombat": 4.356,
+  "spinTurns": 0.27,
+  "spinRoam": 0.031,
+  "stuckPct": 2.622,
+  "eff": 0.232
+ },
+ "upa_24h": {
+  "map": "upa_24h",
+  "bots": 7,
+  "latFlips": 12.467,
+  "latFlipsCombat": 4.178,
+  "latShare": 0.15,
+  "fwdFlips": 7.011,
+  "fwdFlipsCombat": 3.878,
+  "spinTurns": 0.214,
+  "spinRoam": 0.068,
+  "stuckPct": 7.033,
+  "eff": 0.256
+ }
+}

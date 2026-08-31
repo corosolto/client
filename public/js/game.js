@@ -5826,6 +5826,9 @@ export class Game {
       if (b._netInput) this._moveEntity(b, b._netInput, dt);
       return;
     }
+    // `__mutBotYaw`: gancho da botsim-golden (mesmo precedente do __mutAccel) — deriva o rumo
+    // do bot pra régua provar que morde. Zero em produção.
+    if (this.__mutBotYaw && b.alive) b.yaw += this.__mutBotYaw * dt;
     const g = b.mesh.group;
     // Sem alvo no CTF, mantém a navegação roteirizada até o objetivo.
     if (this._botBrain && this._botBrain.ready && this.botBrainMix > 0 && b.alive && this.state === 'live'

@@ -144,6 +144,9 @@ function runMap(mapId, textures, seed) {
     nickname: 'SIM', mapId, ctf: process.env.SIM_CTF === '1', testMode: true, onQuit() {}, onMatchEnd() {},
   });
   g._ensureDolly = () => {};        // a câmera de fim de round cria um WebGLRenderer — não existe aqui
+  // SIM_MUT_YAW: mutante da botsim-golden (deriva de rumo em rad/s no _updateBot) — a régua
+  // exige que isto pinte o placar de vermelho. Ver tools/eval/botsim-golden.mjs.
+  if (process.env.SIM_MUT_YAW) g.__mutBotYaw = +process.env.SIM_MUT_YAW || 0;
   g.killsToWin = Infinity;          // sem alvo de abates: a amostra tem que durar a corrida inteira
   g.start ? g.start() : g._startRound();
   /* MATRIZES DE MUNDO: sem renderer ninguém chama updateMatrixWorld, e o Raycaster do three
