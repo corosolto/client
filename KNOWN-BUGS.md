@@ -3666,6 +3666,14 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-98 · Preview limpo confundia o manifest versionado com o pacote de áudio
+  instalado~~ · RESOLVIDO 31/08.** O deploy `5DdL9r1renbn2X3VhpR9obwFojZR` parou no
+  `assert:assets`: 73 caminhos contra o piso do gate. A release `audio-pack-v8` foi conferida
+  separadamente e contém 445 arquivos e 434 caminhos no manifest; o defeito era o early-exit
+  de `fetch-audio.sh`, acionado pelo `public/audio/manifest.json` que já vem do Git. Na Vercel
+  o pacote agora é sempre baixado; em desenvolvimento o cache local continua preservado.
+  `eval:assetfetch` fica no `check:deploy`, e o mutante que restaura o early-exit fica vermelho.
+
 - **BUG-97 · snapshots completos em JSON repetem estado estático e ampliam tráfego e alocação
   do multiplayer · RESOLVIDO NO CÓDIGO 31/08; ROLLOUT PENDENTE.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] tirando o fly.io
   deixe tudo no gcp"*, após aprovar snapshots binários sobre o WebSocket atual. Reprodução real
