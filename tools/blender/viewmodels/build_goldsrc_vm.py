@@ -531,7 +531,10 @@ def main() -> None:
     # ---- clipes renomeados para o contrato (prefixo idle-/idle1- cai fora;
     # doadores com idle.smd geram "idle-reload" em vez de "idle1-reload")
     lixo = []
-    for a in bpy.data.actions:
+    # SNAPSHOT: renomear reordena bpy.data.actions (ordenada por nome) e o
+    # iterador revisitava a ação já renomeada — 'reload_loop' não está no
+    # dicionário, então a shotgun perdia a própria recarga (31/08).
+    for a in list(bpy.data.actions):
         chave = a.name.lower().split("|")[-1]
         chave = re.sub(r"^idle1?-", "", chave)
         if chave in ("idle", "idle1"):

@@ -344,7 +344,12 @@ export class AuthoredViewModels {
     if (NODE_RUNTIME || AUTHORED_KILLED) return null;
     if (!key || this.entries.has(key)) return this.entries.get(key) || null;
     if (this.pending.has(key)) return this.pending.get(key);
-    const family = key.split('#')[0];
+    // Na trilha goldsrc a chave é `gs#<arma>`: a família REAL é a da arma, não
+    // o prefixo 'gs'. Sem isto VM_FAMILY['gs'] era undefined e a família não
+    // valia nada — nem reloadStyle, nem as cadências cs16 (31/08).
+    const bruta = key.split('#')[0];
+    const armaDaChave = key.includes('#') ? key.split('#')[1] : '';
+    const family = bruta === 'gs' ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
     const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
     const pending = Promise.all([loadFamilyGltf(key), sharedArmTextures(), generalMotions()])
       .then(async ([gltf, shared, general]) => {
@@ -534,10 +539,8 @@ export class AuthoredViewModels {
           if (sight) {
             active.mount.position.x += -sight.x * ads;
             active.mount.position.y += -sight.y * ads;
-            // NOTA: recuar a alça para uma distância-alvo (55% do comprimento,
-            // proporção do CS) foi testado em 31/08 e jogou a arma para fora do
-            // quadro — o mount já vem posicionado pelo molde. Fica como
-            // calibração fina por família, não como fórmula global.
+            // Recuar a alça para distância-alvo joga a arma fora do quadro
+            // (testado 31/08): calibração fina por família, não fórmula.
           }
         }
       }
@@ -628,7 +631,7 @@ export class AuthoredViewModels {
     return true;
   }
 
-  reload(id, duration, empty = false) {
+  reload(id, duration, empty = false, faltamBalas = 1) {
     const entry = this.entry(id);
     if (!entry) return false;
     const cs16 = VM_FAMILY[entry.family]?.cs16;
@@ -650,11 +653,28 @@ export class AuthoredViewModels {
       : '';
     // Estado só DEPOIS do play dar certo: setar antes deixava 'reload' preso
     // para sempre numa família sem clipe (revisão 29/08).
-    const tocou = direct
+    // reloadStyle deixa de ser documentação morta: 'pump_loop' (shotgun) e
+    // 'bolt_loop' repetem o laço UMA VEZ POR MUNIÇÃO, que é como o CS 1.6
+    // recarrega cartucho a cartucho — antes tocava a sequência uma vez só e o
+    // dono via 'a shotgun não recarrega assim' (30/08).
+    const estilo = VM_FAMILY[entry.family]?.reloadStyle;
+    const emLaco = estilo === 'pump_loop' || estilo === 'bolt_loop';
+    const tocou = direct && !emLaco
       ? this._play(entry, direct, { duration, fade: 0.025 })
       : (() => {
         const sequence = ['reload_start', 'reload_loop', 'reload_end'].filter((name) => entry.clips.has(name));
-        return sequence.length ? this._sequence(entry, sequence, duration) : false;
+        if (!sequence.length) {
+          return direct ? this._play(entry, direct, { duration, fade: 0.025 }) : false;
+        }
+        if (emLaco && entry.clips.has('reload_loop')) {
+          const faltam = Math.max(1, Math.min(8, Math.round(Number(faltamBalas) || 1)));
+          const nomes = [];
+          if (entry.clips.has('reload_start')) nomes.push('reload_start');
+          for (let i = 0; i < faltam; i += 1) nomes.push('reload_loop');
+          if (entry.clips.has('reload_end')) nomes.push('reload_end');
+          return this._sequence(entry, nomes, duration);
+        }
+        return this._sequence(entry, sequence, duration);
       })();
     if (tocou && cs16) entry.state = 'reload';
     return tocou;

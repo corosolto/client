@@ -2433,10 +2433,10 @@ export class Game {
     // FULL arsenal available AT each respawn — no map-wide scatter. Organized in rows by
     // category (snipers → rifles → bullpups/SMG → sidearms) like a spawn weapon rack.
     const rackRows = [
-      ['awp', 'mosin', 'svd', 'sks'],  // snipers (+ semi-auto)
-      ['ak', 'm4', 'md97', 'scar', 'carbine', 'm92'], // rifles
-      ['famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],   // bullpups / SMG / shotgun / LMG
-      ['deagle', 'revolver38', 'pistol'],                        // sidearms
+      ['awp', 'mosin', 'svd', 'sks'],
+      ['ak', 'm4', 'md97', 'scar', 'carbine', 'm92'],
+      ['famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],
+      ['deagle', 'revolver38', 'pistol'],
     ].map(row => row.filter(w => this._pickupAllowed(w)));
     /* ARMÁRIO DO SPAWN — POSIÇÃO MEDIDA CONTRA A GEOMETRIA DO MAPA (P3, 01/08).
        BUG DO DONO (print 20:38, ferro_velho): "as armas não dá pra pegar, a segunda
@@ -3134,7 +3134,9 @@ export class Game {
     p.reloadUntil = this.time + WEAPONS[w].reload;
     // BUG-04: MESMA duração da tabela de armas nos dois lados — o relógio de jogo
     // (reloadUntil, que devolve a munição) e a animação terminam no mesmo quadro.
-    if (this.vm.authored?.active(w)) this.vm.authored.reload(w, WEAPONS[w].reload, a.mag === 0);
+    // faltam = cartuchos que vão entrar; a shotgun repete o laço um por um.
+    const faltam = Math.max(1, Math.min(WEAPONS[w].mag - a.mag, a.res));
+    if (this.vm.authored?.active(w)) this.vm.authored.reload(w, WEAPONS[w].reload, a.mag === 0, faltam);
     else this.vm.rig.startReload(WEAPONS[w].reload);
     p.sprayI = 0;   // recarregou = rajada nova (padrão de recuo do tiro 1)
     this.el.reloadNote.classList.remove('hidden');
