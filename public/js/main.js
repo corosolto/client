@@ -2759,8 +2759,13 @@ async function abrirMultiplayer() {
   }
 }
 
-/* Bandeira em CSS (`.mp-flag[data-r]`) — o redesign proíbe emoji, e a bandeira não é
-   enfeite: com três regiões o olho acha "a minha" pela cor antes de ler o nome. */
+/* Bandeiras REAIS (dono, 31/08: "seria legal se fossem as REAIS, é só baixar e por"):
+   WebP local dos SVGs oficiais do Commons — procedência em public/img/flags/FONTE.md. */
+const MP_BANDEIRAS = {
+  br: { img: 'br', pais: 'Brasil' },
+  us: { img: 'us', pais: 'Estados Unidos' },
+  eu: { img: 'es', pais: 'Espanha' },   // o nó "Europa" vive em Madri; nó novo = linha nova
+};
 function mpCartaoNoHTML(n) {
   const q = n.online ? mpQualidade(n.ping) : 'ruim';
   const ping = n.online ? `${n.ping} ms` : 'fora do ar';
@@ -2768,7 +2773,11 @@ function mpCartaoNoHTML(n) {
      as barras são a leitura de longe, mesma faixa do limiar do mpQualidade */
   const acesas = q === 'bom' ? 3 : q === 'medio' ? 2 : 1;
   const barras = [1, 2, 3].map((i) => `<i class="${i <= acesas ? 'on' : ''}"></i>`).join('');
-  return `<span class="mp-flag" data-r="${n.id}" aria-hidden="true"></span>`
+  const band = MP_BANDEIRAS[n.id];
+  const flag = band
+    ? `<img class="mp-flag" src="/img/flags/${band.img}.webp" width="30" height="20" alt="${band.pais}">`
+    : '<span class="mp-flag" aria-hidden="true"></span>';   // nó fora do mapa (ex.: ?mp=1 local)
+  return flag
     + `<span class="mp-no-info"><span class="mp-no-nome">${n.nome}</span>`
     + `<span class="mp-no-sub">${n.jogadores} jogando · ${n.salas} sala(s)</span></span>`
     + `<span class="mp-sinal" data-q="${q}" aria-hidden="true">${barras}</span>`

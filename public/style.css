@@ -2399,10 +2399,9 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 /* ---------- MULTIPLAYER (tela cheia: servidores + entrada + salas) ----------
    Redesign 30/08 ("a UI de multiplayer está ruim"): de cartão central 760px pra tela
    cheia no padrão das outras (mesma família do settings/map-screen). Paleta só por
-   token — a ÚNICA exceção são as BANDEIRAS (.mp-flag), que usam cor do MUNDO REAL
-   (bandeira é bandeira, como o mural e o lambe usam a cor do muro), não papel de UI:
-   nenhum desses hex entra em texto nem superfície. O ping segue sendo a informação de
-   maior peso — cor semântica (--ok / --am / --crit), nunca cinza. */
+   token — as bandeiras dos nós são IMAGENS reais (public/img/flags/, FONTE.md lá),
+   não cor de UI. O ping segue sendo a informação de maior peso — cor semântica
+   (--ok / --am / --crit), nunca cinza. */
 .mp-shell{width:min(1180px,94vw);max-height:92vh;display:flex;flex-direction:column;
   gap:var(--s-5);text-align:left}
 .mp-head{display:flex;align-items:center;gap:var(--s-5);width:100%;
@@ -2460,16 +2459,11 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-ping{font-family:var(--mono);font-weight:700;white-space:nowrap}
 .mp-ping[data-q="bom"]{color:var(--ok)} .mp-ping[data-q="medio"]{color:var(--am)} .mp-ping[data-q="ruim"]{color:var(--crit)}
 .mp-no[data-online="0"]{opacity:.55}
-/* bandeira desenhada em CSS (o redesign proíbe emoji). 30×20, achatada como etiqueta:
-   BR = tricolor verde/ouro/azul, US = listras + cantão, EU = azul com miolo ouro.
-   É identificação de longe, não heráldica — o nome por extenso está do lado. */
-.mp-flag{flex:0 0 30px;width:30px;height:20px;border:1px solid rgba(0,0,0,.5);
-  box-shadow:0 0 0 1px var(--line);background:var(--bg-600)}
-.mp-flag[data-r="br"]{background:linear-gradient(180deg,#1faa4d 0 33%,#f8d92c 33% 67%,#20389c 67%)}
-.mp-flag[data-r="us"]{background:
-  linear-gradient(90deg,#25316e 0 40%,rgba(0,0,0,0) 40%) top left/100% 55% no-repeat,
-  repeating-linear-gradient(180deg,#c02637 0 3px,#f0f0ed 3px 6px)}
-.mp-flag[data-r="eu"]{background:radial-gradient(circle at 50% 50%,#f8d92c 0 4px,#20389c 5px)}
+/* bandeira REAL (dono, 31/08): <img> WebP local dos SVGs oficiais do Commons — a
+   procedência mora em public/img/flags/FONTE.md. Mesma área da versão CSS (30×20),
+   cantos levemente arredondados; alt com o país (não é mais decoração muda). */
+.mp-flag{flex:0 0 30px;width:30px;height:20px;object-fit:cover;border-radius:var(--r-1);
+  border:1px solid rgba(0,0,0,.5);box-shadow:0 0 0 1px var(--line);background:var(--bg-600)}
 /* medidor de sinal: a leitura de longe do ping (3 barras boas / 2 médias / 1 ruim) */
 .mp-sinal{display:flex;align-items:flex-end;gap:2px;height:14px}
 .mp-sinal i{width:4px;background:var(--bg-500)}
