@@ -534,6 +534,10 @@ export class AuthoredViewModels {
           if (sight) {
             active.mount.position.x += -sight.x * ads;
             active.mount.position.y += -sight.y * ads;
+            // NOTA: recuar a alça para uma distância-alvo (55% do comprimento,
+            // proporção do CS) foi testado em 31/08 e jogou a arma para fora do
+            // quadro — o mount já vem posicionado pelo molde. Fica como
+            // calibração fina por família, não como fórmula global.
           }
         }
       }
