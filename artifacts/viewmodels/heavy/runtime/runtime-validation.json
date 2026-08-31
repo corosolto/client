@@ -1,0 +1,39 @@
+{
+  "viewport": "1500x1000 (3:2)",
+  "server": "http://127.0.0.1:8126",
+  "urls": {
+    "awp": "http://127.0.0.1:8126/?debug=1&auto=M,mariabonita&map=piscina_treta",
+    "shotgun": "http://127.0.0.1:8126/?debug=1&auto=E,sindicato&map=piscina_treta",
+    "isolation_control": "http://127.0.0.1:8126/?debug=1&auto=P,mst&map=piscina_treta"
+  },
+  "frame_order": ["hip", "fire", "reload", "ads"],
+  "results": {
+    "awp": {
+      "hip": "pass: clear crosshair, two hands remain on the package",
+      "fire": "pass: right hand follows the bolt while the support hand remains planted",
+      "reload": "pass: left hand leaves the support point and follows the magazine",
+      "ads": "pass: authored package yields to the existing circular scope overlay"
+    },
+    "shotgun": {
+      "hip": "pass: barrel axis reaches the crosshair and both hands remain attached",
+      "fire": "pass: support hand follows the pump and returns",
+      "reload": "pass: support hand follows the shell insertion path; right hand stays on grip",
+      "ads": "not accepted: the in-app driver emits right-button down/up as one click, so hold ADS returned to hip before capture"
+    },
+    "isolation": "pass: AK remained on the pre-existing procedural viewmodel path"
+  },
+  "runtime_console": {
+    "authored_viewmodel_errors": 0,
+    "unrelated_warnings": [
+      "missing optional piscina_treta decal bitmaps",
+      "missing optional piscina and hum-indoor ambient audio"
+    ]
+  },
+  "real_failures_and_limits": [
+    "The first coordinate click entered pointer-lock handling and interrupted automation; semantic canvas clicks recovered fire tests.",
+    "Shotgun hold ADS is wired but lacks accepted visual evidence in this run; shotgun-ads-click.png is intentionally retained as the failed capture.",
+    "The project shotgun source remains visually coarse and its metallic receiver clips under the existing viewmodel lighting in the reload frame.",
+    "The pilots contain only Idle, Fire and Reload, so weapon draw uses Idle instead of a dedicated Draw clip.",
+    "No heavy-family weapon beyond the AWP and shotgun pilots was mapped or replicated."
+  ]
+}
