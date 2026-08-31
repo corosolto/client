@@ -99,6 +99,69 @@ def parentear_no_bone(obj, arm, bone):
     bpy.context.view_layer.update()
 
 
+def bone_mag_por_movimento(arm, bone_arma, template=None, arma_len=None, limiar=0.18):
+    """Bone que mais se desloca EM RELAÇÃO ao bone da arma no clipe de recarga.
+
+    Devolve None quando nenhum bone se solta o suficiente (arma sem pente
+    destacável: awp/scout/m3/knife) — aí o chamador cai na heurística velha.
+    """
+    # a m3 chama o laço de cartucho de "insert"/"start_reload" — sem isso a
+    # shotgun ficava sem cartucho-objeto e a mão subia vazia (dono, 30/08).
+    def _chave(a):
+        return re.sub(r"^idle1?-", "", a.name.lower().split("|")[-1])
+    acao = next((a for a in bpy.data.actions if _chave(a) == "reload"), None)
+    if acao is None:
+        acao = next((a for a in bpy.data.actions if _chave(a) in ("insert", "start_reload")), None)
+    if acao is None or bone_arma not in arm.pose.bones:
+        return None
+    antes = arm.animation_data.action if arm.animation_data else None
+    if arm.animation_data is None:
+        arm.animation_data_create()
+    arm.animation_data.action = acao
+    scene = bpy.context.scene
+    f0, f1 = (int(acao.frame_range[0]), int(acao.frame_range[1]))
+    ref = arm.pose.bones[bone_arma]
+    # SÓ bones que pesam na malha da ARMA: os das mãos também se soltam muito
+    # na recarga e venciam a disputa (mediu Bone41/Bone43 = dedos, 31/08).
+    candidatos = set()
+    if template is not None:
+        nomes_g = {g.index: g.name for g in template.vertex_groups}
+        peso = {}
+        for v in template.data.vertices:
+            for g in v.groups:
+                nome = nomes_g.get(g.group)
+                if nome:
+                    peso[nome] = peso.get(nome, 0.0) + g.weight
+        total = sum(peso.values()) or 1.0
+        candidatos = {n for n, w in peso.items() if w / total >= 0.01}
+    trilhas = {b.name: [] for b in arm.pose.bones
+               if b.name != bone_arma and (not candidatos or b.name in candidatos)}
+    if not trilhas:
+        return None
+    quadros = [f0 + round((f1 - f0) * i / 12) for i in range(13)]
+    for f in quadros:
+        scene.frame_set(f)
+        base = (arm.matrix_world @ ref.matrix).translation
+        for nome in trilhas:
+            pos = (arm.matrix_world @ arm.pose.bones[nome].matrix).translation
+            trilhas[nome].append(pos - base)
+    # excursão relativa ao COMPRIMENTO DA ARMA: pente que sai anda ~20-40% dela,
+    # ferrolho que só corre no trilho anda ~5-10% (awp/mosin dariam falso-pente).
+    escala_ref = max(arma_len if arma_len else ref.length, 1e-6)
+    melhor, melhor_exc = None, 0.0
+    for nome, serie in trilhas.items():
+        lo = Vector((min(v.x for v in serie), min(v.y for v in serie), min(v.z for v in serie)))
+        hi = Vector((max(v.x for v in serie), max(v.y for v in serie), max(v.z for v in serie)))
+        exc = (hi - lo).length / escala_ref
+        if exc > melhor_exc:
+            melhor, melhor_exc = nome, exc
+    arm.animation_data.action = antes
+    scene.frame_set(0)
+    print("CORO_GS_MAG_MOVIMENTO=" + json.dumps({
+        "bone": melhor, "excursao": round(melhor_exc, 3), "limiar": limiar}))
+    return melhor if melhor_exc >= limiar else None
+
+
 def main() -> None:
     args = parse_args()
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -258,7 +321,14 @@ def main() -> None:
     def filtro_regiao(pnt):
         d = pnt - t_centro
         return abs(d.dot(cano)) < t_dim[eixo_i] * 0.30 and d.dot(up) < -t_dim[2] * 0.15
-    bone_mag_auto = bone_dominante(template, arm, filtro_regiao, posados_t)
+
+    # O pente é, por DEFINIÇÃO, o que se move em relação à arma durante a
+    # recarga. A heurística geométrica só achava o bone quando ele calhava de
+    # dominar a região de baixo — em 16 das 26 armas ela falhava e o pente
+    # ficava preso, deixando a mão esquerda agarrando o vazio (dono, 30/08).
+    bone_mag_auto = bone_mag_por_movimento(arm, bone_arma, template, t_dim[eixo_i])
+    if bone_mag_auto is None:
+        bone_mag_auto = bone_dominante(template, arm, filtro_regiao, posados_t)
     caixa_auto = None
     if bone_mag_auto and bone_mag_auto != bone_arma:
         nomes_grp = {g.index: g.name for g in template.vertex_groups}
@@ -370,9 +440,22 @@ def main() -> None:
     z_max = max(ao_longo)
     frente = [p for p, z in zip(pontos, ao_longo) if z >= z_max - t_dim[eixo_i] * 0.02]
     boca = sum(frente, Vector()) / max(1, len(frente))
-    tras = [p for p, z in zip(pontos, ao_longo) if z <= z_max - t_dim[eixo_i] * 0.5]
-    alto = max((p.dot(up) for p in tras), default=0)
-    alca = boca - cano * (t_dim[eixo_i] * 0.6) + up * 0.0
+    # ALÇA = topo do receiver na metade traseira, não um ponto no eixo do cano.
+    # O `up * 0.0` de antes punha a mira DENTRO do cano: no ADS o runtime
+    # centraliza esse ponto e a câmera passava a olhar para dentro da arma —
+    # era o "miro com zoom e some a visão" (dono, 30/08).
+    meia = z_max - t_dim[eixo_i] * 0.5
+    tras = [p for p, z in zip(pontos, ao_longo) if z <= meia]
+    if tras:
+        topo = max(p.dot(up) for p in tras)
+        crista = [p for p in tras if p.dot(up) >= topo - t_dim[2] * 0.08]
+        alca = sum(crista, Vector()) / max(1, len(crista))
+    else:
+        alca = boca - cano * (t_dim[eixo_i] * 0.6) + up * (t_dim[2] * 0.5)
+    eixo_no_ponto = boca + cano * ((alca - boca).dot(cano))
+    print("CORO_GS_ALCA=" + json.dumps({
+        "altura_sobre_o_cano": round((alca - eixo_no_ponto).dot(up), 3),
+        "altura_da_arma": round(t_dim[2], 3)}))
     for nome, pos in (("SOCKET_MINT_MUZZLE", boca), ("SOCKET_MINT_SIGHT", alca)):
         e = bpy.data.objects.new(nome, None)
         e.empty_display_size = 0.01
@@ -382,8 +465,24 @@ def main() -> None:
         e.parent = holder
         e.matrix_world = keep
 
-    # ---- template FORA (a Mint é a identidade)
-    bpy.data.objects.remove(template, do_unlink=True)
+    # ---- template FORA (a Mint é a identidade). Em molde de MESH ÚNICO
+    # (famas/knife) a arma e as mãos moram na mesma malha: apagar o objeto
+    # levava as mãos junto e a arma flutuava sozinha (dono, 30/08). Aqui
+    # apagamos só os vértices da ARMA e preservamos lhand/rhand.
+    if so_arma_idx:
+        bm_t = bmesh.new()
+        bm_t.from_mesh(template.data)
+        bm_t.verts.ensure_lookup_table()
+        alvo = [v for v in bm_t.verts if v.index in so_arma_idx]
+        bmesh.ops.delete(bm_t, geom=alvo, context="VERTS")
+        bm_t.to_mesh(template.data)
+        bm_t.free()
+        template.data.update()
+        template.name = "GS_HANDS"
+        print("CORO_GS_MAOS_PRESERVADAS=" + json.dumps({
+            "verts_restantes": len(template.data.vertices)}))
+    else:
+        bpy.data.objects.remove(template, do_unlink=True)
     for _ in range(3):
         bpy.data.orphans_purge(do_recursive=True)
 
@@ -431,6 +530,7 @@ def main() -> None:
 
     # ---- clipes renomeados para o contrato (prefixo idle-/idle1- cai fora;
     # doadores com idle.smd geram "idle-reload" em vez de "idle1-reload")
+    lixo = []
     for a in bpy.data.actions:
         chave = a.name.lower().split("|")[-1]
         chave = re.sub(r"^idle1?-", "", chave)
@@ -449,8 +549,32 @@ def main() -> None:
                     }.get(chave)
         if novo:
             a.name = novo
+        elif chave not in ("idle",):
+            # clipe sem destino no contrato (add_silencer, idle_unsil, …)
+            # sobrevivia com o nome original e poluía o GLB: 9-11 por arma.
+            lixo.append(a)
     if "reload_tactical" in bpy.data.actions and "reload_empty" not in bpy.data.actions:
         pass  # runtime cai no tactical quando o empty falta
+
+    # ---- materiais das mãos no CONTRATO da casa: o tint por personagem casa
+    # /CoroSolto_FP_(Hand|Glove|Cloth)/ e os moldes CS chamam view_skin.bmp —
+    # por isso a mão saía branca com relógio gringo (dono, 30/08).
+    CONTRATO = {"view_skin": "CoroSolto_FP_Hand", "view_finger": "CoroSolto_FP_Hand",
+                "view_glove": "CoroSolto_FP_Glove"}
+    renomeados = []
+    for mat in bpy.data.materials:
+        base = mat.name.lower().rsplit(".", 1)[0].replace(".bmp", "")
+        alvo = CONTRATO.get(base)
+        if alvo and not mat.name.startswith("CoroSolto_FP_"):
+            mat.name = alvo
+            renomeados.append(alvo)
+    if renomeados:
+        print("CORO_GS_MATERIAIS=" + json.dumps({"renomeados": sorted(set(renomeados))}))
+
+    for a in lixo:
+        bpy.data.actions.remove(a)
+    if lixo:
+        print("CORO_GS_CLIPES_LIXO=" + json.dumps({"removidos": len(lixo)}))
 
     args.saida.mkdir(parents=True, exist_ok=True)
     alvo = args.saida / f"{args.arma}-runtime.glb"

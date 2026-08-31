@@ -24,12 +24,9 @@ export const DOADORES = {
   shotgun: 'm3', lmg: 'm249', knife: 'knife',
 };
 
-// overrides visuais por arma (calibrados contra a referência — folhas par5)
-const AJUSTES = {
-  pistol: { escala: 0.55 },   // molde USP traz silenciador no comprimento
-  mosin: { escala: 0.72 },
-  scar: { escala: 0.72 },
-};
+// A escala por arma vem de weaponCFG.vm — a calibração que a base já mediu e
+// pagou (0,71–1,22). A tabela ad-hoc anterior tinha 6 linhas, saía de sincronia
+// com os assets (3 GLBs stale em 30/08) e ignorava esse número.
 
 const pedidos = (process.argv[2] || '').split(',').filter(Boolean);
 const armas = pedidos.length ? pedidos : Object.keys(DOADORES);
@@ -45,7 +42,7 @@ for (const arma of armas) {
     `--cs=${cs}`, `--arma=${arma}`,
     `--mint=${path.join(ROOT, `public/models/weapons/${arma}.glb`)}`,
     `--len=${cfg.len || 1}`, `--gripz=${cfg.gripZ ?? 0.6}`, `--rot=${rot}`,
-    `--escala-extra=${AJUSTES[arma]?.escala ?? 1}`,
+    `--escala-extra=${cfg.vm ?? 1}`,
     `--saida=${SAIDA}`,
   ], { encoding: 'utf8' });
   const ok = r.status === 0 && r.stdout.includes('CORO_GS_BUILD=');
