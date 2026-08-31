@@ -3666,6 +3666,17 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-100 · os campos novos de runtime/protocolo ainda não entram na visão diária.** A
+  migration incremental `~/db-privado/supabase/migrations/027_mp_runtime_protocol_metrics.sql`
+  está pronta e o contrato SQL passou 11/11, inclusive mutantes de RLS e frames binários, mas
+  não foi aplicada: esta máquina não tem token da CLI Supabase, senha Postgres nem navegador
+  conectado com sessão administrativa. A migration 026 continua recebendo as janelas antigas —
+  `/api/health` já marca `multiplayer` como fresco — e ignora com compatibilidade os campos
+  extras. Até aplicar a 027, o painel publicado não consegue mostrar por dia event-loop lag,
+  passos descartados, bytes, adoção binária e SHAs, embora esses valores já apareçam ao vivo em
+  `/metrics` de cada nó. **Régua:** `node supabase/verify-mp-runtime-migration.mjs` na base
+  privada; falta o smoke contra o banco depois do DDL.
+
 - **~~BUG-99 · build da Vercel executava réguas que exigem o repositório Git~~ · RESOLVIDO
   31/08.** O deploy `8nDm8KfBu61ToheWiqrBaE16dYCK` recebeu o pack completo, mas cinco
   cláusulas ficaram vermelhas porque o sandbox não contém `.git` nem `origin/main`; uma delas
@@ -3682,8 +3693,8 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   o pacote agora é sempre baixado; em desenvolvimento o cache local continua preservado.
   `eval:assetfetch` fica no `check:deploy`, e o mutante que restaura o early-exit fica vermelho.
 
-- **BUG-97 · snapshots completos em JSON repetem estado estático e ampliam tráfego e alocação
-  do multiplayer · RESOLVIDO NO CÓDIGO 31/08; ROLLOUT PENDENTE.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] tirando o fly.io
+- **~~BUG-97 · snapshots completos em JSON repetem estado estático e ampliam tráfego e alocação
+  do multiplayer~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] tirando o fly.io
   deixe tudo no gcp"*, após aprovar snapshots binários sobre o WebSocket atual. Reprodução real
   no nó brasileiro, como espectador da sala `livre`: 20 snapshots com 10 entidades deram mediana
   de 2.152 bytes, equivalentes a 42 KiB/s por cliente a 20 Hz. Um encoder-sonda com os mesmos
@@ -3692,9 +3703,11 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   sala, o frame real caiu de 1.992 para 522 bytes (26,2%). `eval:netcodecbin` passou 13/13 e
   `game/protocol-check.mjs` passou 5/5; mutantes sem negociação, decoder, encoder e downgrade deixam
   as respectivas réguas vermelhas. O painel mede frames/bytes binários e JSON separadamente.
+  Em produção, dois clientes Lisboa→Madri negociaram v2 e mediram 17,1/22,5 ms no ping aquecido;
+  o nó registrou 4/4 frames binários na primeira amostra.
 
-- **BUG-96 · scheduler do nó autoritativo acumula passos de 60 Hz e todas as salas oficiais
-  simulam vazias · RESOLVIDO NO CÓDIGO 31/08; ROLLOUT PENDENTE.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] deixe tudo no gcp"*,
+- **~~BUG-96 · scheduler do nó autoritativo acumula passos de 60 Hz e todas as salas oficiais
+  simulam vazias~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] deixe tudo no gcp"*,
   após aceitar a correção do scheduler e suspensão de sala vazia. Reprodução estática em
   `backend/game/index.js`: `setInterval(..., 50)` envolve o acumulador de `DT=1/60`, portanto a
   volta normal executa três `room.step()` consecutivos; o laço percorre `rooms.values()` antes de
@@ -3703,9 +3716,10 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   salas vazias permanecem publicadas, mas suspensas. `runtime-check.mjs` passou 8/8, o smoke real
   passou 70/70 e `/metrics` expõe atraso do event loop, passos executados/descartados e salas
   ativas/pausadas. Os mutantes de relógio do broadcast e simulação vazia deixam a régua vermelha.
+  Os três nós GCE expõem 60/20 Hz e iniciaram com 0 salas ativas e 4 pausadas.
 
-- **BUG-94 · preview da Vercel não consegue testar as APIs migradas e a ingestão
-  `mp-metrics` aceita remetente sem identidade · API E PREVIEW IMPLANTADOS; NÓS PENDENTES.**
+- **~~BUG-94 · preview da Vercel não consegue testar as APIs migradas e a ingestão
+  `mp-metrics` aceita remetente sem identidade~~ · RESOLVIDO 31/08.**
   Pergunta literal do dono, 31/08:
   *"pra testarmos tudo no preview do game da vercel como faz? voce ve algum risco de
   seguranca?"* Reprodução: o cliente aponta as rotas migradas direto para o Cloud Run,
@@ -3718,12 +3732,13 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   Cloud Run e o que vaza cookie. A ingestão exige `MP_METRICS_TOKEN`, comparado em tempo
   constante; o nó só envia com bearer e os caminhos de Cloud Run e VM recebem o mesmo segredo.
   `api/smoke.mjs`, `game/telemetry-smoke.mjs` e `deploy-check.mjs` reprovam ausência de token.
-  A API de hash `e7b0571fa097b5d9` está em produção: POST sem identidade devolveu 401. O Preview
-  protegido respondeu 200 pelo proxy e contém somente a anon key. Os nós v6 ainda não receberam
-  a identidade nova, portanto o flush para o banco continua pendente do rollout coordenado.
+  A API está na revisão `csbrasil-backend-00004-j4g`, com SHA `71e0449f…`; POST sem identidade
+  devolve 401. O Preview `dpl_6Fq25JziQQbWEUtWQb7VYxKoEypm` respondeu 200 pelo proxy e contém
+  somente a anon key. Os três nós receberam a identidade dedicada e o pipeline `multiplayer`
+  passou de `never` para fresco no `/api/health` depois do primeiro flush.
 
-- **BUG-95 · fronteiras de segurança do multiplayer atravessam vários projetos sem um rollout
-  atômico documentado · CLIENTE/API/INFRA PRONTOS; CANÁRIO DOS NÓS PENDENTE.** Pedido literal do dono, 31/08: *"vamos implementar tudo isso da
+- **~~BUG-95 · fronteiras de segurança do multiplayer atravessam vários projetos sem um rollout
+  atômico documentado~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos implementar tudo isso da
   seguranca, a questao e que serao em varios projetos ne precisava entender a arquitetura"*.
   Reprodução inicial: Preview continha segredos de produção; API e nó dependiam do mesmo token
   sem versão implantada; rate limit aceita o primeiro `x-forwarded-for`; WebSocket aceita origem
@@ -3731,10 +3746,11 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   região e ação, nonce descartável, Origin fechado no WebSocket, IP derivado do salto confiável,
   rate limit fail-closed para emissão e service account exclusiva das VMs. Segredos saíram da
   metadata e são lidos do Secret Manager no boot. `eval:security` e seis mutantes cobrem a cadeia;
-  o smoke real recusa ausência, reuso, ação/região erradas, expiração e origem hostil. A API está
-  implantada e o Preview novo emite ticket; os nós v6 continuam abertos para não quebrar o cliente
-  de produção antes do canário. Deployments Preview antigos seguem protegidos, mas devem ser
-  removidos ou as credenciais históricas rotacionadas.
+  o smoke real recusa ausência, reuso, ação/região erradas, expiração e origem hostil. API,
+  produção Vercel e os três nós foram implantados nessa ordem. O canário BR recusou criação sem
+  ticket com 401 e aceitou criação+WebSocket v2 com tickets distintos; EUA e Madri só foram
+  reiniciados depois. Deployments Preview antigos seguem protegidos, mas as credenciais históricas
+  privilegiadas já não existem no ambiente Preview.
 
 - **~~BUG-93 · navegador de servidores mostra ~200 ms em Madrid, mas dentro da partida o HUD
   mostra ~20 ms~~ · RESOLVIDO 31/08.** Eram duas medidas com o mesmo rótulo: `sondarNos`
