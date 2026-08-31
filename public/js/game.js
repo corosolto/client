@@ -9,6 +9,7 @@ import { VM_FRAME } from './vmattach.js';
 import { vmlabPose, VMLAB_SCOPED, VMLAB_NO_ALIGN } from './vmlab.js';
 import { buildRecoilPattern, RECOIL_PARAMS, RECOIL_PATTERN, RECOIL_CLASS, REC_DEG, REC } from './recoil.js';
 import { GPUParticles } from './gpuparticles.js';
+import { createAuthoredViewModels } from './authoredvm.js';
 // radiância do céu MEDIDA por mapa (r3_fog.py) — teto de brilho da fumaça, ver _corDaFumaca
 import { skyRadiance } from './bloom.js';
 import { RecoilAxis, ViewModelRig } from './springs.js';
@@ -815,6 +816,11 @@ export class Game {
     this.vmScene = new THREE.Scene();
     this.vmScene.environment = this.scene.environment;   // mesmo IBL do mapa (metais leem)
     this.vmScene.add(this.vm.root);
+    this.vm.authored = createAuthoredViewModels(this.vm.root, () => {
+      this._applyVmVisibility();
+      const fov = this.vm.authored?.fov(this.player.weapon);
+      if (Number.isFinite(fov)) { this.vmCamera.fov = fov; this.vmCamera.updateProjectionMatrix(); }
+    });
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -2518,7 +2524,8 @@ export class Game {
     this._applyVmVisibility();
     // BUG-04: início de round/respawn zera o rig e SACA — sem isso o viewmodel podia
     // reaparecer no meio de uma recarga interrompida pela morte.
-    this.vm.rig.reset(); this.vm.rig.startDraw();
+    this.vm.rig.reset();
+    if (!this.vm.authored?.draw(this.player.weapon)) this.vm.rig.startDraw();
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
     for (const b of this.bots) {
@@ -2816,7 +2823,11 @@ export class Game {
   onResize() {
     this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
-    if (this.vmCamera) { this.vmCamera.aspect = this.camera.aspect; this.vmCamera.fov = vmFovForAspect(this.camera.aspect); this.vmCamera.updateProjectionMatrix(); }
+    if (this.vmCamera) {
+      this.vmCamera.aspect = this.camera.aspect;
+      this.vmCamera.fov = this.vm.authored?.fov(this.player.weapon) ?? vmFovForAspect(this.camera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
   }
 
   /* ================= team switch (M) ================= */
@@ -2872,8 +2883,14 @@ export class Game {
   // 07/08/2026 — o histórico está no git.
   _applyVmVisibility() {
     const w = this.player.weapon;
-    if (this.vm.arms) this.vm.arms.group.visible = true;
-    for (const k in this.vm.models) this.vm.models[k].visible = k === w;
+    const authored = this.vm.authored?.setWeapon(w) || false;
+    if (this.vm.arms) this.vm.arms.group.visible = !authored;
+    for (const k in this.vm.models) this.vm.models[k].visible = !authored && k === w;
+    if (this.vmCamera) {
+      this.vmCamera.fov = this.vm.authored?.fov(w) ?? vmFovForAspect(this.vmCamera.aspect);
+      this.vmCamera.updateProjectionMatrix();
+    }
+    return authored;
   }
   // ?vmlab=1 usa um viewmodel isolado e criado sob demanda.
   _vmlabEnsure(id) {
@@ -2978,7 +2995,8 @@ export class Game {
     // trocar no meio da recarga. Sem `startSwap` de propósito: o holster do rig exige adiar
     // a TROCA DA MALHA até o fundo do arco, e a malha visível é lida por `poseToWeapon`,
     // pelo flash de boca e pelo ADS a partir de `p.weapon` — adiar isso é outra tarefa.
-    this.vm.rig.startDraw(GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28);
+    const drawDur = GUNFEEL ? (DEPLOY[_dcls] || 0.38) : 0.28;
+    if (!this.vm.authored?.draw(w, drawDur)) this.vm.rig.startDraw(drawDur);
     this.bloom = 0;
     this._scope(false, true);
     this._applyVmVisibility();
@@ -3031,7 +3049,7 @@ export class Game {
     p.reloadUntil = this.time + WEAPONS[w].reload;
     // BUG-04: MESMA duração da tabela de armas nos dois lados — o relógio de jogo
     // (reloadUntil, que devolve a munição) e a animação terminam no mesmo quadro.
-    this.vm.rig.startReload(WEAPONS[w].reload);
+    if (!this.vm.authored?.reload(w, WEAPONS[w].reload)) this.vm.rig.startReload(WEAPONS[w].reload);
     p.sprayI = 0;   // recarregou = rajada nova (padrão de recuo do tiro 1)
     this.el.reloadNote.classList.remove('hidden');
     this.sfx.reloadStart();
@@ -3119,6 +3137,7 @@ export class Game {
     const a = p.ammo[p.weapon];
     if (a.mag <= 0) { this.sfx.dryFire(); this._startReload(); return; }
     a.mag--;
+    this.vm.authored?.shoot(p.weapon);
     p.nextShotAt = this.time + w.rate;
     p.revealedAt = this.time;
     if (p.weapon === 'awp') setTimeout(() => this.sfx.bolt(), 420);
@@ -5348,6 +5367,9 @@ export class Game {
     }
     const a0 = this.vm.adsF;
     const a = a0 * a0 * (3 - 2 * a0);   // smoothstep: entra sem estalo, sem overshoot
+    const authoredActive = this.vm.authored?.active(p.weapon) || false;
+    this.vm.authored?.setAim(p.weapon, a);
+    this.vm.authored?.update(dt);
     /* ===== RIG PROCEDURAL DO VIEWMODEL (BUG-04) =====
        `rg.pos`/`rg.rot` são OFFSETS somados ao enquadramento — nunca posição absoluta —, e
        valem ZERO em repouso. É isso que deixa o enquadramento medido (VM1/VM5/VM9/VM12/…)
@@ -5409,11 +5431,16 @@ export class Game {
     // Os ganhos abaixo mantêm a MESMA forma de curva (mesma mola, mesma assinatura por
     // arma), só reduzem a amplitude cosmética. Esta camada NÃO mexe na mira: o recuo de
     // câmera é _shotRecoil/_installRecoil e continua intocado.
-    this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
-    this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;   // subida do cano + ADS + golpe da faca + rig (recarga/saque/respiração)
-    this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;                            // yaw do coice/ADS + varredura da faca
-    this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;                                          // roll do coice + giro da lâmina + sway
-    this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);                                          // scale-down do VM em ADS
+    if (authoredActive) {
+      this.vm.root.position.set(0, 0, 0);
+      this.vm.root.rotation.set(0, 0, 0);
+      this.vm.root.scale.setScalar(1);
+    } else {
+      this.vm.root.position.set(VM_OFF[0] + pose.x * a + bobX + rg.pos.x, vmOffY((this.vmCamera && this.vmCamera.aspect) || this.camera.aspect) + bobY - p.crouchF * 0.02 + pose.y * a + k * 0.015 + rg.pos.y, VM_OFF[2] + k * 0.050 + pose.z * a - swPz + rg.pos.z);
+      this.vm.root.rotation.x = k * 0.070 + pose.rx * a + swRx + rg.rot.x;   // subida do cano + ADS + golpe da faca + rig (recarga/saque/respiração)
+      this.vm.root.rotation.y = ks * k * 0.018 + pose.ry * a + swRy + rg.rot.y;                            // yaw do coice/ADS + varredura da faca
+      this.vm.root.rotation.z = ks * k * 0.022 + swRz + rg.rot.z;                                          // roll do coice + giro da lâmina + sway
+      this.vm.root.scale.setScalar(1 - (1 - pose.s) * a);                                          // scale-down do VM em ADS
     /* ADS ZERA O PITCH/YAW PRÓPRIOS DA ARMA (RODADA DO GRIP + PITCH).
        O `_adsPose` acima gira o vm.root INTEIRO (rx/ry por classe) e não enxerga a
        inclinação que o `_vmFrame` deu ao GRUPO da arma. Com pitch de ~12° e o ADS entrando,
@@ -5433,6 +5460,7 @@ export class Game {
     if (this.vm.arms && this.vm.root.visible) {
       const wg = this.vm.models[p.weapon];
       if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
+    }
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
     this._updateReplayCam(dt);
