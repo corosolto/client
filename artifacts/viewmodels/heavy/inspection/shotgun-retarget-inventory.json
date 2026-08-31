@@ -1,0 +1,159 @@
+{
+  "status": "inspection_only",
+  "candidate_generated": false,
+  "runtime_integrated": false,
+  "sources": {
+    "motion_donor_read_only": "/Users/ruben/Downloads/shotgun_animated.glb",
+    "project_weapon": "public/models/weapons/shotgun.glb",
+    "approved_project_hands": "tools/blender/viewmodels/heavy/sources/approved-project-hands.glb"
+  },
+  "donor_policy": {
+    "allowed": ["rig hierarchy", "animation timing", "mechanical pivots", "socket reference transforms"],
+    "forbidden": ["weapon geometry", "hand geometry", "materials", "textures", "skins"]
+  },
+  "motion_donor": {
+    "bytes": 7561232,
+    "clip_count": 1,
+    "clips": [
+      {
+        "name": "allanims",
+        "duration_seconds": 6.0,
+        "channel_count": 69,
+        "interpolation": "LINEAR",
+        "inferred_segments": [
+          {"range_seconds": [0.0, 0.433], "role": "trigger/fire", "confidence": "high"},
+          {"range_seconds": [0.467, 1.133], "role": "pump cycle", "confidence": "high"},
+          {"range_seconds": [1.167, 2.933], "role": "single-shell reload", "confidence": "high"},
+          {"range_seconds": [3.0, 4.233], "role": "large weapon motion plus second pump cycle", "confidence": "medium"},
+          {"range_seconds": [4.3, 5.3], "role": "idle sway", "confidence": "medium"},
+          {"range_seconds": [5.367, 6.0], "role": "equip/inspect motion", "confidence": "medium"}
+        ],
+        "note": "The donor contains one concatenated clip, not separately named production actions. Segment names are inferred from mechanical-node motion and must be cut explicitly during retarget."
+      }
+    ],
+    "skin_joint_count": 49,
+    "root_joint": "_rootJoint",
+    "arm_controls": ["L_arm_Pole", "R_arm_Pole"],
+    "mechanical_parts": {
+      "base": {
+        "world_pivot_gltf": [0.0, 5.889426, 0.362912],
+        "animated": false
+      },
+      "trigger": {
+        "world_pivot_gltf": [0.0, 10.640971, 4.835823],
+        "motion_window_seconds": [0.0, 0.433],
+        "rotation": "approximately 7.6 degrees around local X, returning to rest"
+      },
+      "pump": {
+        "world_pivot_gltf": [0.0, 11.306182, 43.997897],
+        "motion_windows_seconds": [[0.6, 0.967], [3.633, 4.0]],
+        "travel_local_z": -10.5744
+      },
+      "lid": {
+        "world_pivot_gltf": [0.0, 9.981452, 18.270217],
+        "motion_window_seconds": [1.7, 2.167],
+        "translation_delta_local": [0.0, 0.7507, -0.2352],
+        "rotation": "approximately -17.4 degrees around local X"
+      },
+      "slug": {
+        "world_pivot_gltf": [0.0, 11.152108, 24.066756],
+        "carry_start_seconds": 1.6,
+        "insert_end_seconds": 1.933,
+        "start_translation_local": [15.1901, -20.6397, 9.4015],
+        "end_translation_local": [0.0, 6.498, 23.8821],
+        "role": "donor cartridge pivot/path reference only"
+      }
+    }
+  },
+  "project_weapon": {
+    "bytes": 241836,
+    "node": "shotgun",
+    "mesh": "shotgun Mesh",
+    "material": "shotgun Material",
+    "skins": 0,
+    "clips": 0,
+    "parts": "single monolithic mesh",
+    "primitive_bounds_gltf": {
+      "min": [-0.024414, -0.100586, -0.499023],
+      "max": [0.024414, 0.100586, 0.499023],
+      "long_axis": "+/- Z"
+    },
+    "implication": "Pump, loading port and tube sockets do not exist as authored nodes. They must be added as non-rendering control bones/empties after visual registration against the intact project mesh; the mesh itself must not be replaced or split by donor geometry."
+  },
+  "approved_hands": {
+    "mesh": "coro_solto_heavy_hands",
+    "material": "CoroSolto_FP_Gloves",
+    "skin_joint_count": 52,
+    "clips": [
+      {"name": "Equip", "duration_seconds": 0.375},
+      {"name": "Idle", "duration_seconds": 3.333333},
+      {"name": "Reload", "duration_seconds": 1.583333},
+      {"name": "Shoot", "duration_seconds": 0.25}
+    ],
+    "existing_controls": ["CoroWeapon", "CoroMagazine", "CoroFreshMagazine"],
+    "dominant_chain": ["R_arm_024", "R_elbow_025", "R_wrist_026"],
+    "support_chain": ["L_arm_01", "L_elbow_00", "L_wrist_02"]
+  },
+  "bone_mapping": {
+    "exact": [
+      "_rootJoint",
+      "L_arm_01",
+      "L_point1_07", "L_point2_08", "L_point3_09", "Joint_3_2_010",
+      "L_middle1_011", "L_middle2_012", "L_middle3_013", "Joint_3_3_014",
+      "L_palm_015",
+      "L_ring1_016", "L_ring2_017", "L_ring3_018", "Joint_3_4_019",
+      "L_pink1_020", "L_pink2_021", "L_pink3_022", "Joint_3_5_023",
+      "R_arm_024", "R_elbow_025", "R_wrist_026",
+      "R_thumb1_027", "R_thumb2_028", "R_thumb3_029", "Joint_3_6_030",
+      "R_point1_031", "R_point2_032", "R_point3_033", "Joint_3_7_034",
+      "R_middle1_035", "R_middle2_036", "R_middle3_037", "Joint_3_8_038",
+      "R_palm_039",
+      "R_ring1_040", "R_ring2_041", "R_ring3_042", "Joint_3_9_043",
+      "R_pink1_044", "R_pink2_045", "R_pink3_046", "Joint_3_10_047"
+    ],
+    "renamed": {
+      "L_elbow_02": "L_elbow_00",
+      "L_wrist_03": "L_wrist_02",
+      "L_thumb1_04": "L_thumb1_03",
+      "L_thumb2_05": "L_thumb2_04",
+      "L_thumb3_06": "L_thumb3_05",
+      "Joint_3_00": "Joint_3_06"
+    },
+    "donor_only_not_retargeted": ["L_arm_Pole", "R_arm_Pole", "shotgun", "base", "lid", "trigger", "slug", "pump"]
+  },
+  "socket_registration": {
+    "donor_reference_axis": "base-to-pump along donor +Z",
+    "normalized_reference_positions": {
+      "trigger": 0.1025,
+      "loading_lid": 0.4104,
+      "shell_insert_end": 0.5432,
+      "pump": 1.0
+    },
+    "project_socket_targets": [
+      "ShotgunGrip at the project trigger/grip",
+      "ShotgunPump at the visible project fore-end center",
+      "ShotgunPort at the visible loading window",
+      "ShotgunTube just inside the port along the magazine-tube axis",
+      "ShotgunShellPivot parented to the approved support wrist during carry"
+    ],
+    "warning": "Normalized donor values are only initial search coordinates. Final sockets require direct visual registration on the project mesh because the donor and project proportions differ."
+  },
+  "retarget_plan": [
+    "Import donor motion into an isolated temporary collection and delete/disable all donor meshes, materials, images and skins before export selection.",
+    "Cut allanims into explicit Fire 0.000-1.133 and Reload 1.167-2.933 working ranges; keep later inferred ranges out until independently identified.",
+    "Retarget donor arm transforms to the approved project rig using the exact/renamed mapping, preserving the approved project hand mesh and CoroSolto_FP_Gloves material.",
+    "Lock R_arm_024/R_elbow_025/R_wrist_026 to a single registered ShotgunGrip pose for every Reload frame; only recoil may affect the weapon/root during Fire.",
+    "Register ShotgunPump, ShotgunPort and ShotgunTube sockets on the intact project shotgun mesh. Do not copy donor base/lid/pump geometry.",
+    "Create a closed project-authored shell mesh with its origin at ShotgunShellPivot. Parent its rigid control to L_wrist_02 from pickup through carry.",
+    "At insert, constrain the shell pivot continuously between the support-hand grip offset and ShotgunPort, ending just inside ShotgunTube. Hide it only after the center crosses the port plane.",
+    "Drive pump motion through a non-rendering control and the support hand; if the monolithic project mesh cannot expose a safe pump sub-part without destructive geometry edits, animate the hand gesture only and record the mechanical limitation.",
+    "Export only the project weapon, approved project hands, project-authored shell and actions. Reject the export if any donor mesh/material/texture/skin name survives.",
+    "Validate with deterministic carry, approach, contact and post-insert frames. Any positive shell-to-hand gap before contact or shell-to-port gap at insertion fails the gate."
+  ],
+  "decision": "ready_for_retarget_experiment_not_candidate",
+  "limitations": [
+    "The donor exposes one concatenated clip; segment labels after 2.933 seconds remain inferred.",
+    "The project shotgun is monolithic and contains no authored pump or loading-port nodes.",
+    "Socket coordinates cannot be transferred 1:1 because donor and project weapon proportions differ."
+  ]
+}

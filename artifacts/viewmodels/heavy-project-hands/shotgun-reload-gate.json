@@ -1,0 +1,16 @@
+{
+  "pilot": "shotgun",
+  "scope": "isolated four-state reload sheet",
+  "accepted": false,
+  "source_weapon": "public/models/weapons/shotgun.glb",
+  "hand_source": "approved project pistol viewmodel hands",
+  "sheet": "artifacts/viewmodels/heavy-project-hands/contact_sheets/shotgun-reload-4-state-rejected-3x2.png",
+  "states": [
+    "support hand leaves pump",
+    "support hand brings shell",
+    "shell approaches loading port",
+    "support hand returns"
+  ],
+  "failure": "The shell remains visibly separated from the support hand in states 2 and 3 and never establishes continuous contact with the loading port. The pilot therefore fails the requested visual proof.",
+  "bad_request_diagnosis": "Not reproduced locally: Blender completed and emitted all four deterministic frames. The earlier Bad Request was external/transient rather than a scene or render failure."
+}

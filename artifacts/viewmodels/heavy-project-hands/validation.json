@@ -1,0 +1,13 @@
+{
+  "hand_template": "tools/blender/viewmodels/heavy/sources/approved-project-hands.glb",
+  "pilots": [
+    {
+      "pilot": "shotgun",
+      "glb": "public/models/viewmodels/coro/heavy/shotgun-pilot.glb",
+      "bytes": 1041984,
+      "contact_sheet": "artifacts/viewmodels/heavy-project-hands/contact_sheets/shotgun-project-hands.png"
+    }
+  ],
+  "accepted": false,
+  "gate": "browser visual comparison against pistol required"
+}
