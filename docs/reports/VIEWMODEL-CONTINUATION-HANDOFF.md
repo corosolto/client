@@ -3,6 +3,12 @@
 Estado verificado em 31/08/2026. Este arquivo é o ponto de entrada para continuar o
 trabalho sem abrir ou reprocessar sessões antigas do Codex.
 
+## Objetivo do programa
+
+Concluir viewmodels aprovados para **todas as famílias de armas**, usando a AK golden
+como referência de qualidade. Separar uma família por tarefa é apenas uma barreira de
+contexto e risco; não reduz o escopo global à pistola, AWP ou shotgun.
+
 ## Linha canônica
 
 - A AK golden está aprovada, commitada e publicada na branch
@@ -37,7 +43,8 @@ Worktree: `/Users/ruben/csbrasil-worktrees/vm-heavy`.
 1. Continuar somente a pistola até a revisão visual e o mesmo contrato da AK passarem.
 2. Abrir uma tarefa nova para a AWP, reaproveitando o contrato aprovado da pistola.
 3. Abrir outra tarefa para a shotgun e começar pela falha de contato já documentada.
-4. Só depois expandir para outra família; não processar o arsenal inteiro em um chat.
+4. Continuar pelas demais famílias, mantendo aqui a fila, os checkpoints e o estado
+   de aprovação. Não processar o arsenal inteiro em um único contexto ativo.
 
 No começo e no fim de cada tarefa:
 

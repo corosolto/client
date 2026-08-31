@@ -171,12 +171,16 @@ fixed_tools:
 - insert_after_symbol
 - insert_before_symbol
 - list_dir
+- list_memories
 - read_file
+- read_memory
 - rename_symbol
 - replace_content
 - replace_symbol_body
 - safe_delete_symbol
 - search_for_pattern
+- edit_memory
+- write_memory
 
 # list of mode names that are to be activated by default, overriding the setting in the global configuration.
 # The full set of modes to be activated is base_modes (from global config) + default_modes + added_modes.
@@ -199,8 +203,12 @@ initial_prompt: >-
   Use symbol and reference tools before reading complete files. Keep responses
   compact and never inspect generated artifacts, media, models, dependency
   folders, build output, or graphify-out. Graphify is the architecture map;
-  Serena is for precise symbol navigation and edits. Read tools/eval/ARCH.md
-  before editing public/js/game.js. Work on one weapon family per task.
+  Serena is for precise symbol navigation, edits, and concise project memory.
+  For viewmodel work, read mem:viewmodel-program and
+  docs/reports/VIEWMODEL-CONTINUATION-HANDOFF.md before investigating old chat
+  history. Read tools/eval/ARCH.md before editing public/js/game.js. The overall
+  objective covers every weapon family; working on one family per task is only
+  a context boundary and must not narrow that objective.
 
 # time budget (seconds) per tool call for the retrieval of additional symbol information
 # such as docstrings or parameter information.
