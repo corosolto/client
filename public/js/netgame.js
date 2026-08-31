@@ -172,19 +172,15 @@ class Netcode {
       if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
       if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); }
       if (e.voice) this.voice(ent, e.voice);
-      /* KILLFEED do multiplayer: quem mata é o servidor, então o `_kill` local (que alimenta
-         o `_feed` no SP) nunca roda. A transição vivo->morto do snapshot é o evento de morte;
-         `killedBy` diz o assassino. Sem isto, "matei várias vezes sem ver" — o jogador não
-         tinha NENHUM registro de abate na tela (relato do dono, 31/08). */
+      /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
+         snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
       if (!primeiroSnap && wasAlive && !e.alive) {
         const att = this._corpoPorNome(e.killedBy);
         try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
       }
     }
-    /* ARCO DE DANO (o SP dispara no `_damage`, que não roda online): atribui o tiro ao inimigo
-       mais próximo que atirou nos últimos 600 ms e aponta o arco do HUD pra ele. Heurística —
-       o snapshot não diz QUEM acertou (pendência registrada no KNOWN-BUGS) — mas devolve a
-       direção na maioria dos tiros, que é o que faltava pro "morri sem ver". */
+    /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
+       QUEM acertou; causa, medição e pendência de protocolo no BUG-90 (KNOWN-BUGS.md). */
     if (dorDoJogador > 0 && !this.espectador) {
       const att = this._atacanteProvavel(nowMs);
       if (att) {
