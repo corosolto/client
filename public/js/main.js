@@ -2864,6 +2864,46 @@ async function mpCopiarConvite(convite, botao) {
   if (botao) setTimeout(() => { botao.textContent = antes; }, 1600);
 }
 
+/* MODAL "SALA CRIADA" (dono, 31/08): o convite nasce aqui e se copia ANTES de entrar.
+   Fechar (ESC/clique fora) não desfaz a criação — a lista é atualizada pra provar. */
+function mpModalSalaCriada(sala, senha = '') {
+  const m = mpEl('mp-modal');
+  if (!m || !sala.convite) return mpEntrar(sala, 'auto', senha);   // sem modal ou sem código, o fluxo antigo vale
+  mpEl('mp-modal-convite').textContent = sala.convite;
+  const lot = mpEl('mp-modal-lot');
+  if (lot) lot.textContent = `${sala.players | 0}/${sala.max || 10} na sala · ${sala.name || 'SALA'}`;
+  const fecha = () => {
+    m.classList.add('hidden');
+    removeEventListener('keydown', escFecha, true);
+    mpAtualizarSalas();   // a sala nova aparece na lista = prova de que fechar não cancelou
+  };
+  const escFecha = (e) => {
+    if (e.key !== 'Escape' || m.classList.contains('hidden')) return;
+    e.preventDefault(); e.stopPropagation(); ui.back(); fecha();
+  };
+  /* capture=true: o ESC do modal tem de vencer os outros atalhos de ESC do menu */
+  addEventListener('keydown', escFecha, true);
+  m.onpointerdown = (e) => { if (!e.target.closest('.mp-modal-card')) { ui.back(); fecha(); } };
+  const rotula = (b, txt) => { const antes = b.textContent; b.textContent = txt; setTimeout(() => { b.textContent = antes; }, 1600); };
+  const codigo = mpEl('mp-modal-copiar-codigo');
+  if (codigo) codigo.onclick = async () => {
+    ui.click();
+    try { await navigator.clipboard.writeText(sala.convite); rotula(codigo, 'COPIADO!'); }
+    catch { mpErro(`Copie à mão: ${sala.convite}`); fecha(); }
+  };
+  const link = mpEl('mp-modal-copiar-link');
+  if (link) link.onclick = async () => {
+    ui.click();
+    try { await navigator.clipboard.writeText(linkDeConvite(sala.convite)); rotula(link, 'COPIADO!'); }
+    catch { mpErro(`Copie à mão: ${linkDeConvite(sala.convite)}`); fecha(); }
+  };
+  const entrar = mpEl('mp-modal-entrar');
+  if (entrar) entrar.onclick = () => { ui.click(); fecha(); mpEntrar(sala, 'auto', senha); };
+  m.classList.remove('hidden');
+  entrar?.focus();
+}
+window.__mpModalSala = mpModalSalaCriada;   // sonda/captura, mesmo precedente do __mpConvite
+
 /* Entrada por LINK (?sala=BR-7K3M). É o caminho de quem recebeu o convite no zap: abre o jogo
    já dentro da sala, sem passar pela lista. Sala privada ainda pede senha — o link diz ONDE é
    a sala, não que você tem permissão. */
@@ -2905,7 +2945,16 @@ function mpMontarFormulario() {
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
       });
-      mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto', senha);
+      let cheia = { ...sala, id: sala.room || sala.id };
+      /* o convite pode não vir no POST — a lista é a fonte que já o carrega; busca a sala
+         recém-criada lá antes de mostrar o modal, que existe PARA o copy do código */
+      if (!cheia.convite) {
+        try {
+          const daLista = (await listRooms(mpNoAtual.http)).find((r) => r.id === cheia.id);
+          if (daLista) cheia = { ...daLista, ...cheia, convite: daLista.convite };
+        } catch { /* sem lista, o modal mostra a sala sem código */ }
+      }
+      mpModalSalaCriada(cheia, senha);
     } catch (err) {
       mpErro(err && err.message === 'http_429'
         ? 'Esse servidor está no limite de salas. Tente outra região.'

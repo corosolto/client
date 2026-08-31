@@ -1133,6 +1133,27 @@ window.__GEO_LANG__ = (function () {
   </div>
 </div>
 
+<!-- MODAL "SALA CRIADA" (pedido do dono, 31/08: "ao clicar em CRIAR SALA, abrir um MODAL -
+     fica melhor a visualização e ter o copy do id da sala"). Mesmo idioma do #launch-error
+     (overlay + cartão chanfrado com filete no topo), acento ÂMBAR porque convite é
+     OBJETIVO/conquista, não erro. O código BR-XXXX é o protagonista: display grande, os
+     dois copiar embaixo, ENTRAR NA SALA como ação primária. Fechar NÃO desfaz a criação -
+     o microcopy diz isso, senão o jogador acha que cancelou. -->
+<div id="mp-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="mp-modal-title">
+  <div class="mp-modal-card">
+    <div class="mp-modal-kicker">// TRETA ONLINE</div>
+    <h2 id="mp-modal-title">SALA CRIADA</h2>
+    <div id="mp-modal-convite" class="mp-modal-convite" title="O código da sua sala">BR-XXXX</div>
+    <p id="mp-modal-lot" class="mp-modal-lot"></p>
+    <div class="mp-modal-copy">
+      <button id="mp-modal-copiar-codigo" class="btn" type="button">COPIAR CÓDIGO</button>
+      <button id="mp-modal-copiar-link" class="btn" type="button">COPIAR LINK</button>
+    </div>
+    <button id="mp-modal-entrar" class="btn btn-big" type="button">▶ ENTRAR NA SALA</button>
+    <p class="mp-modal-nota">ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.</p>
+  </div>
+</div>
+
 <div id="ranking-panel" class="screen hidden">
   <div class="panel center-panel">
     <h2>RANKING</h2>

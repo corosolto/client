@@ -2547,6 +2547,32 @@ html[data-ui="legacy"] #load-map{font-family:var(--font);font-weight:700}
 .mp-retry:hover,.mp-retry:focus-visible{background:var(--crit);color:var(--dark)}
 .mp-vazio{font-family:var(--mono);font-size:var(--fs-100);color:var(--ink3);padding:var(--s-4);text-align:center}
 
+/* ---- modal SALA CRIADA ----
+   Mesmo idioma do #launch-error (overlay escuro + cartão chanfrado com filete no topo),
+   trocando o acento pra ÂMBAR: convite é OBJETIVO/conquista (--am), não erro. O código
+   é o herói do cartão — display Bebas no degrau de número-herói (--fs-800). */
+#mp-modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(var(--bg-900-rgb),.86);backdrop-filter:blur(6px)}
+#mp-modal.hidden{display:none}
+.mp-modal-card{width:min(520px,calc(100vw - 32px));padding:clamp(26px,4vw,44px);text-align:center;
+  background:linear-gradient(155deg,rgba(var(--bg-700-rgb),.98),rgba(var(--bg-900-rgb),.99));
+  border:1px solid var(--line-2);border-top:4px solid var(--am);clip-path:var(--cut);
+  box-shadow:var(--sh-2);display:flex;flex-direction:column;align-items:center;gap:var(--s-3)}
+.mp-modal-kicker{font-family:var(--mono);font-size:var(--fs-50);letter-spacing:var(--tr-4);
+  color:var(--am);text-transform:uppercase}
+.mp-modal-card h2{margin:0;font-family:var(--aaa-font-display);font-weight:400;
+  font-size:var(--fs-600);line-height:var(--lh-tight);letter-spacing:var(--tr-4);color:var(--ink-100)}
+.mp-modal-convite{font-family:var(--aaa-font-display);font-weight:400;font-size:var(--fs-800);
+  line-height:var(--lh-tight);letter-spacing:var(--tr-6);color:var(--am);
+  padding:var(--s-2) var(--s-5);border:1px solid var(--am);clip-path:var(--cut-sm);
+  background:rgba(var(--bg-900-rgb),.7);user-select:all}
+.mp-modal-lot{margin:0;font-family:var(--mono);font-size:var(--fs-100);color:var(--ink-300);letter-spacing:var(--tr-1)}
+.mp-modal-copy{display:flex;gap:var(--s-3);flex-wrap:wrap;justify-content:center}
+.mp-modal-copy .btn{min-width:170px}
+.mp-modal-card .btn-big{min-width:280px;margin-top:var(--s-2)}
+.mp-modal-nota{margin:0;max-width:44ch;font:600 var(--fs-50)/var(--lh-base) var(--font);color:var(--ink-300)}
+@media(max-width:560px){.mp-modal-copy{flex-direction:column;width:100%}.mp-modal-copy .btn,.mp-modal-card .btn-big{width:100%;min-width:0}}
+
 /* Faixa do ESPECTADOR: quem está assistindo precisa saber que está assistindo, de quem é a
    visão, e como entrar em campo. Sem isso o modo espectador é indistinguível de um bug. */
 #mp-spec-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:99999;

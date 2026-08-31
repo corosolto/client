@@ -92,6 +92,12 @@ const DICT = {
   'NOME': 'NAME', 'MAPAS': 'MAPS', 'MODO': 'MODE', 'SENHA': 'PASSWORD',
   'SALA PRIVADA (só com senha)': 'PRIVATE ROOM (password only)',
   'CRIAR E ENTRAR': 'CREATE AND JOIN',
+  'SALA CRIADA': 'ROOM CREATED',
+  'COPIAR CÓDIGO': 'COPY CODE',
+  'COPIAR LINK': 'COPY LINK',
+  '▶ ENTRAR NA SALA': '▶ JOIN THE ROOM',
+  'ESC ou clique fora só fecham este aviso - a sala continua criada, na lista.':
+    'ESC or clicking outside only closes this notice - the room stays created, in the list.',
   // setup da partida
   'PASSO 1 · A PARTIDA': 'STEP 1 · THE MATCH',
   'PASSO 2 · O SEU LADO': 'STEP 2 · YOUR SIDE',
