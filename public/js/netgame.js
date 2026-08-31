@@ -2,6 +2,7 @@
    arquivo; quem injeta é o main.js. Desenho e decisões: docs/MULTIPLAYER.md. */
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
+import { WEAPONS } from './game.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
@@ -133,6 +134,8 @@ class Netcode {
     this._tAt.push(nowMs); this._tT.push(snap.t);
     if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
 
+    const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
+    let dorDoJogador = 0;
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
       if (!ent) continue;
@@ -141,7 +144,7 @@ class Netcode {
       ent.kills = e.k | 0; ent.deaths = e.d | 0;     // scoreboard vem do servidor
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
-        if (game.state === 'live' && e.alive && e.hp < wasHp - 0.5) game._playerHurtFx();
+        if (game.state === 'live' && e.alive && e.hp < wasHp - 0.5) { game._playerHurtFx(); dorDoJogador = wasHp - e.hp; }
         if (wasAlive && !e.alive) this.playerDied(e, snap);
         else if (!wasAlive && e.alive) this.playerRespawned();
         if (e.respawnIn != null) game.player.respawnAt = game.time + e.respawnIn;
@@ -167,10 +170,53 @@ class Netcode {
       if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
       ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
       if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
-      if (e.fire && ent.alive) this.gunshot(ent);
+      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); }
       if (e.voice) this.voice(ent, e.voice);
+      /* KILLFEED do multiplayer: quem mata é o servidor, então o `_kill` local (que alimenta
+         o `_feed` no SP) nunca roda. A transição vivo->morto do snapshot é o evento de morte;
+         `killedBy` diz o assassino. Sem isto, "matei várias vezes sem ver" — o jogador não
+         tinha NENHUM registro de abate na tela (relato do dono, 31/08). */
+      if (!primeiroSnap && wasAlive && !e.alive) {
+        const att = this._corpoPorNome(e.killedBy);
+        try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+      }
+    }
+    /* ARCO DE DANO (o SP dispara no `_damage`, que não roda online): atribui o tiro ao inimigo
+       mais próximo que atirou nos últimos 600 ms e aponta o arco do HUD pra ele. Heurística —
+       o snapshot não diz QUEM acertou (pendência registrada no KNOWN-BUGS) — mas devolve a
+       direção na maioria dos tiros, que é o que faltava pro "morri sem ver". */
+    if (dorDoJogador > 0 && !this.espectador) {
+      const att = this._atacanteProvavel(nowMs);
+      if (att) {
+        try { game._dmgArc(att, game.player, dorDoJogador); } catch { /* HUD ainda não montado */ }
+        game._noteHit(att, this._armaCurta(att.weapon), dorDoJogador, false,
+          Math.hypot(att.pos.x - game.player.pos.x, att.pos.z - game.player.pos.z));
+      }
     }
     if (this.espectador) this.cameraEspectador();
+  }
+
+  // corpo local (ou o próprio jogador) pelo NOME que o servidor mandou no killedBy
+  _corpoPorNome(nome) {
+    if (!nome) return null;
+    const game = this.game;
+    if (game.player && game.player.name === nome) return game.player;
+    for (const b of this._netMap.values()) if (b !== game.player && b.name === nome) return b;
+    return null;
+  }
+  // rótulo curto da arma pro killfeed/painel (mesmo formato que o _damage usa no SP)
+  _armaCurta(wid) { const W = wid && WEAPONS[wid]; return (W && (W.short || W.name)) || wid || ''; }
+  // inimigo vivo mais próximo que atirou há <600 ms — a melhor aproximação de "quem me acertou"
+  _atacanteProvavel(nowMs) {
+    const game = this.game, p = game.player;
+    let melhor = null, md = 1e9;
+    for (const b of this._netMap.values()) {
+      if (b === p || !b.alive || b.team === p.team) continue;
+      if (!b._fireAtMs || nowMs - b._fireAtMs > 600) continue;
+      const d = Math.hypot(b.pos.x - p.pos.x, b.pos.z - p.pos.z);
+      if (d < md) { melhor = b; md = d; }
+    }
+    return melhor;
   }
 
   /* CÂMERA DE ESPECTADOR. Segue um jogador em 1ª pessoa (o mais "quente" por padrão: quem
@@ -226,6 +272,10 @@ class Netcode {
     try { game.sfx.death(); } catch { /* ctx mudo */ }
     // o assassino vem como NOME; procuramos o corpo dele no snapshot para a killcam apontar.
     const nome = e && e.killedBy;
+    /* Se o _noteHit do arco de dano já registrou este assassino há <3 s, o painel de morte
+       fica com o registro RICO (arma, dano, quadrante) em vez do esqueleto abaixo. */
+    const h = game._lastHit;
+    if (h && nome && h.name === nome && game.time - h.at < 3) return;
     const alvo = nome && snap ? snap.ents.find((x) => x.name === nome && x.alive) : null;
     game._lastHit = {
       at: game.time, name: nome || 'INIMIGO', tier: '', weap: '', dmg: 0, head: false,

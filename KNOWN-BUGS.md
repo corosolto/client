@@ -3666,6 +3666,53 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-89 · "eu testei o singleplayer dessa branch tambem e os bots estao malucos andando em
+  roda, esta tudo meio doido nessa branch"** (dono, 31/08, com screenshots de velho_oeste,
+  upa_24h e piscina_treta; branch merge/461 do multiplayer #483). **NÃO REPRODUZIDO no
+  instrumento — e a refutação é medida, não opinião.** `node tools/eval/botsim.mjs 180 <mapa>`
+  (9 sementes, determinístico) nos 3 mapas do relato, merge/461 × origin/main (`888928f7`,
+  worktrees limpos, 31/08): **todas as métricas idênticas até a 3ª casa** (velho_oeste
+  spinTurns 0.199/spinRoam 0.014/latFlips 5.0/stuck 2.5%/eff 0.061; upa_24h 0.211/0.078/
+  13.033/6.556%/0.06; piscina_treta 0.32/0.031/10.889/3.833%/0.04 — iguais nas duas árvores).
+  O instrumento MORDE nesta árvore: mutante de deriva de rumo (3 rad/s) injetado à mão levou
+  spinTurns de 0.199 → 1.847 (9×). A suspeita nº 1 (extração de `_moveEntity`/`_shotDamage`/
+  `_respawnEntity` do feat/multiplayer) foi conferida linha a linha contra o `_updatePlayer`
+  da main E pelo A/B acima: a extração preserva comportamento; o caminho offline dos bots não
+  toca `_ip*`/`_buf*`/`_remote`. Hipóteses restantes para o que o dono viu, por ordem de
+  precedente: (a) checkout velho servido na porta de teste (já aconteceu — ver memória "portas
+  de medição sequestradas"); (b) defeito só-browser que o headless não vê (BUG-28 é o
+  precedente); (c) o milling que JÁ existe na main (eff 0.04–0.06 é baixo nos dois lados) lido
+  como novidade. Régua nova para o buraco de cobertura que este relato expôs:
+  `tools/eval/botsim-golden.mjs` (abaixo). *Régua: botsim-golden. Estado: aberto como
+  não-reproduzido; reabrir com repro de browser se voltar.*
+
+- **BUG-90 · MP: "os bots andam devagar" + "morri várias vezes sem ver e matei várias vezes
+  sem ver"** (dono, 31/08, mesma sessão do BUG-89). **Causa raiz encontrada e medida — é o
+  BUG-28 propagado ao servidor v5.** O `game/room.js` do backend constrói o `Game` direto
+  (sem o `bootGame` do harness, que tem a correção) e nunca chama `updateMatrixWorld` — e o
+  Dockerfile do v5 clona exatamente merge/461. Medido em 31/08 com boot igual ao do servidor
+  (`dedicated:true`, 10 s de update): **velho_oeste 67/67 occluders com `matrixWorld`
+  identidade** (piscina_treta 14/92, upa_24h 0/122 — mapa-dependente, pior justamente no mapa
+  do screenshot). Consequência dupla: (1) a oclusão do `_scanHit` (tiro dos slots humanos)
+  raycasta geometria fantasma NA ORIGEM → parede não segura tiro = "morri/matei sem ver";
+  (2) a `_losClear` dos bots idem → bots em modo combate contra alvos fantasmas
+  (movimento de combate é `BOT_SPEED*0.55` = "andam devagar"). Junto: `_firedSnap` só era
+  setado no tiro HUMANO — todo tiro de bot chegava ao cliente sem `fire=1` (tiroteio mudo).
+  **Correção na causa: backend `2d0e04f`** (`game/room.js`: `updateMatrixWorld` no boot da
+  sala + wrapper de `_fireHitscan` marcando `_firedSnap` de bot; `game/smoke.mjs` 63/63 nos
+  runs verdes — a trinca "movimento/dano autoritativo" flakeia COM E SEM a mudança, 1/8 no
+  baseline: o smoke não é semeado). **No cliente (esta árvore):** o MP não tinha killfeed nem
+  direção de dano — `_kill`/`_damage` não rodam online. `netgame.js` agora: (a) killfeed pela
+  transição vivo→morto do snapshot + `killedBy`; (b) arco de dano (`_dmgArc`) e registro
+  `_noteHit` atribuídos ao inimigo mais próximo que atirou há <600 ms — HEURÍSTICA, porque o
+  snapshot não diz quem acertou; (c) painel de morte preserva o registro rico do `_noteHit`
+  quando o assassino confere. Tela de morte com QUEM matou já existia (`playerDied` → BUG-86).
+  **Pendência MP (recorte exato):** o servidor deveria mandar o evento de acerto (id do
+  atacante, arma, headshot) no snapshot — aí o arco deixa de ser heurística e o killfeed ganha
+  caveira de headshot. É mudança de protocolo (backend + cliente), não coube aqui. *Régua:
+  `game/smoke.mjs` (backend) cobre o respawn/tiro; a atribuição de dano do cliente fica sem
+  régua até o evento de acerto existir. Requer redeploy do servidor v5 para valer em produção.*
+
 - **~~BUG-85 · `eval:armas` vermelho na main: o preload bloqueante voltou às 26 armas~~ · RESOLVIDO 30/08.**
   Palavras literais do CI (`portao-browser.yml`, vermelho desde 28/08 06:30Z, último verde
   06:17Z): `✗ ARM1 preload bloqueante com 26 armas (teto 12)` e `✗ ARM3 carga tardia não
