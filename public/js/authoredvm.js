@@ -23,7 +23,11 @@ export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
 // Mint; ?cs16=1 é o atalho que liga todas as famílias + a fonte de uma vez.
 const _QS = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const CS16_TUDO = _QS?.get('cs16') === '1';
-const VM_FONTE = CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
+// ?vmfonte=retarget (?rt=1): braços pagos sobre movimento CS 1.6 retargetado.
+// Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.
+const RETARGET_TUDO = _QS?.get('rt') === '1';
+const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
+const GOLDEN_AK = _QS?.get('vmgolden') !== '0';
 // Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
 const AUTHORED_KILLED = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('vmauthored') === '0';
@@ -156,10 +160,11 @@ const _adsAlign = new THREE.Quaternion();
 const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
-const HAND_MATERIAL = /CoroSolto_FP_(?:Hand|Glove|Cloth)/i;
+const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
 const SKIN_MATERIAL = /CoroSolto_FP_Hand/i;
-const GLOVE_MATERIAL = /CoroSolto_FP_Glove/i;
+const GLOVE_MATERIAL = /CoroSolto_FP_Gloves?/i;
 const CLIP_ALIASES = Object.freeze({
+  equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
   reloadtactical: 'reload_tactical', reloadempty: 'reload_empty',
   reloadstart: 'reload_start', reloadloop: 'reload_loop', reloadend: 'reload_end',
   pumpempty: 'pump_empty',
@@ -193,7 +198,7 @@ const FAMILY_FRAME = Object.freeze({
 // Portão de rollout: família só serve o jogo depois de `ready:true` no vmconfig.
 // ?vmready=ak,pistol é o override DEV para calibrar/A-B sem abrir o portão no repo.
 const READY_OVERRIDE = new Set(
-  CS16_TUDO
+  CS16_TUDO || RETARGET_TUDO
     ? Object.keys(VM_FAMILY)
     : (_QS?.get('vmready') || '').split(',').filter(Boolean));
 const familyReady = (family) => Boolean(family)
@@ -208,12 +213,18 @@ const weaponBaked = (weapon) => VM_WEAPON[weapon]?.baked === true;
 const entryKeyFor = (weapon) => {
   const family = familyFor(weapon);
   if (!family) return '';
+  if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
+  if (GOLDEN_AK && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
-  if (key.startsWith('gs#')) {
-    return `/private-assets/viewmodels/goldsrc-vm/${key.slice(3)}-runtime.glb?v=${CATALOG_VERSION}`;
+  if (key.startsWith('gold#')) {
+    return `/models/viewmodels/coro/${key.slice(5)}-hires.glb?v=golden-ak-4`;
+  }
+  if (key.startsWith('gs#') || key.startsWith('rt#')) {
+    const dir = key.startsWith('rt#') ? 'retarget-vm' : 'goldsrc-vm';
+    return `/private-assets/viewmodels/${dir}/${key.slice(3)}-runtime.glb?v=${CATALOG_VERSION}`;
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
@@ -227,12 +238,21 @@ const clipKey = (name = '') => {
 };
 const materialsOf = (object) => Array.isArray(object.material) ? object.material : [object.material];
 
+// Tint multiplica a textura; estes pesos preservam a camuflagem de luva e manga.
+// Evidência da manga chapada: docs/reports/GOLDEN-AK-DECISION.md.
+const PESO_TINT = Object.freeze({ pele: 1, luva: 0.55, manga: 0.5 });
+
 function tintHandMaterial(material, profile) {
   const copy = material.clone();
   if (copy.color) {
-    if (SKIN_MATERIAL.test(copy.name)) copy.color.set(profile.skin ?? 0xd19a72);
-    else if (GLOVE_MATERIAL.test(copy.name)) copy.color.set(profile.accent ?? 0x202735);
-    else copy.color.set(profile.sleeve ?? 0x27364a);
+    // O tint antecede bindSharedArmTextures; `copy.map` ainda é null neste ponto.
+    const aplica = (hex, peso) => {
+      copy.color.set(hex);
+      if (peso < 1) copy.color.lerp(new THREE.Color(0xffffff), 1 - peso);
+    };
+    if (SKIN_MATERIAL.test(copy.name)) aplica(profile.skin ?? 0xd19a72, PESO_TINT.pele);
+    else if (GLOVE_MATERIAL.test(copy.name)) aplica(profile.accent ?? 0x202735, PESO_TINT.luva);
+    else aplica(profile.sleeve ?? 0x27364a, PESO_TINT.manga);
   }
   copy.roughness = Math.max(0.48, copy.roughness ?? 0.6);
   copy.metalness = Math.min(0.08, copy.metalness ?? 0);
@@ -240,7 +260,7 @@ function tintHandMaterial(material, profile) {
   return copy;
 }
 
-function cameraSpacePackage(gltf, profile, parent, family) {
+function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   const scene = gltf.scene;
   scene.name = `paid_viewmodel_${family}`;
   scene.updateMatrixWorld(true);
@@ -251,11 +271,16 @@ function cameraSpacePackage(gltf, profile, parent, family) {
   if (!authoredCamera) throw new Error(`${family}: embedded VIEWMODEL camera is missing`);
   authoredCamera.updateMatrixWorld(true);
   const cameraFov = authoredCamera.fov;
+  const cameraAspect = authoredCamera.aspect;
   const cameraInverse = authoredCamera.matrixWorld.clone().invert();
   authoredCamera.removeFromParent();
   scene.applyMatrix4(cameraInverse);
 
-  const frame = VM_FONTE === 'goldsrc'
+  const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
+  const golden = sourceKey.startsWith('gold#');
+  const frame = golden
+    ? { x: 0, y: 0, z: 0, fov: cameraFov }
+    : molde
     ? { x: 0, y: 0, z: 0, fov: 74 }
     : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
 
@@ -263,7 +288,7 @@ function cameraSpacePackage(gltf, profile, parent, family) {
   mount.name = `paid_viewmodel_mount_${family}`;
   mount.add(scene);
   mount.position.set(frame.x, frame.y, frame.z);
-  if (VM_FONTE === 'goldsrc') {
+  if (molde) {
     // espelho do cl_righthand: o molde cru é canhoto; det<0 exige DoubleSide.
     mount.scale.x = -1;
     scene.traverse((o) => { if (o.isMesh) materialsOf(o).forEach((m) => { if (m) m.side = THREE.DoubleSide; }); });
@@ -287,10 +312,12 @@ function cameraSpacePackage(gltf, profile, parent, family) {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      object.material = Array.isArray(object.material)
-        ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
-          ? tintHandMaterial(material, profile) : material)
-        : tintHandMaterial(object.material, profile);
+      if (!golden) {
+        object.material = Array.isArray(object.material)
+          ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
+            ? tintHandMaterial(material, profile) : material)
+          : tintHandMaterial(object.material, profile);
+      }
       object.userData.authoredCharacterHand = profile.id || 'player';
     } else {
       weaponMeshes.push(object);
@@ -301,7 +328,10 @@ function cameraSpacePackage(gltf, profile, parent, family) {
       }
     }
   });
-  return { scene, mount, cameraFov: Math.max(cameraFov, frame.fov), frame, handMeshes, weaponMeshes, utilityModels };
+  return {
+    scene, mount, cameraFov: Math.max(cameraFov, frame.fov), cameraAspect,
+    frame, handMeshes, weaponMeshes, utilityModels,
+  };
 }
 
 export class AuthoredViewModels {
@@ -348,24 +378,32 @@ export class AuthoredViewModels {
     // VM_FAMILY dava undefined e nada da família valia (31/08).
     const bruta = key.split('#')[0];
     const armaDaChave = key.includes('#') ? key.split('#')[1] : '';
-    const family = bruta === 'gs' ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
+    const family = (bruta === 'gs' || bruta === 'rt' || bruta === 'gold')
+      ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
     const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
-    const pending = Promise.all([loadFamilyGltf(key), sharedArmTextures(), generalMotions()])
+    const golden = key.startsWith('gold#');
+    const pending = Promise.all([
+      loadFamilyGltf(key),
+      golden ? Promise.resolve(null) : sharedArmTextures(),
+      golden ? Promise.resolve(null) : generalMotions(),
+    ])
       .then(async ([gltf, shared, general]) => {
       if (this._disposed) return null;
       // Clone do cache do módulo: o pacote é mutado (câmera removida, tint) e o
       // mesmo parse pode servir outra instância de Game depois.
       const scene = await skeletonCloneOf(gltf.scene);
-      const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family);
-      bindSharedArmTextures(visual.handMeshes, shared);
+      const visual = cameraSpacePackage({ scene, animations: gltf.animations }, this.profile, this.parent, family, key);
+      if (!golden) bindSharedArmTextures(visual.handMeshes, shared);
       const mixer = new THREE.AnimationMixer(visual.scene);
       const clips = new Map(gltf.animations.map((clip) => [clipKey(clip.name), clip]));
       const entry = {
-        key, family, ...visual, mixer, clips, action: null, queue: [], serial: 0,
+        key, family, golden: key.startsWith('gold#'), ...visual, mixer, clips, action: null, queue: [], serial: 0,
         drawTime: 1, drawDuration: 0.32, muzzleLocal: null, ejectLocal: null,
         state: 'idle', stateUntil: 0, shootCycle: 0,
       };
-      mixer.addEventListener('finished', () => this._continue(entry));
+      mixer.addEventListener('finished', (event) => {
+        if (event.action === entry.action) this._continue(entry);
+      });
       this._setupGeneralMotion(entry, general);
       this.entries.set(key, entry);
       this.pending.delete(key);
@@ -409,10 +447,10 @@ export class AuthoredViewModels {
   state(id = this.weapon) { return this.entry(id)?.state || 'idle'; }
   fov(id = this.weapon, aspect = 16 / 9) {
     // Espelho do vmFovForAspect: meia-tangente HORIZONTAL constante — o FOV autorado
-    // vale no aspecto 16:9 e converte para o aspecto corrente (3:2 não pode regredir).
+    // parte do aspecto gravado pela câmera GLB e converte para o aspecto corrente.
     const authored = this.entry(id)?.cameraFov;
     const v0 = ((Number.isFinite(authored) ? authored : 80) * Math.PI) / 180;
-    const ref = 16 / 9;
+    const ref = this.entry(id)?.cameraAspect || 16 / 9;
     const a = Number.isFinite(aspect) && aspect > 0 ? aspect : ref;
     const halfH = Math.atan(Math.tan(v0 / 2) * ref);
     return (2 * Math.atan(Math.tan(halfH) / a) * 180) / Math.PI;
@@ -636,7 +674,7 @@ export class AuthoredViewModels {
     const cs16 = VM_FAMILY[entry.family]?.cs16;
     // Sem cadência de reload no QC fonte (shotgun: recarga é laço de cartucho),
     // a duração do jogo segue valendo.
-    if (cs16?.reload) {
+    if (!entry.golden && cs16?.reload) {
       // cadência do QC vale para o TÁTICO; o empty escala pelo MESMO
       // timeScale (forçar 2,43s no empty o acelerava 27%).
       const tactical = entry.clips.get('reload_tactical');
@@ -679,6 +717,10 @@ export class AuthoredViewModels {
     const entry = this.entry(id);
     if (!entry) return false;
     const cs16 = VM_FAMILY[entry.family]?.cs16;
+    if (entry.golden) {
+      entry.state = 'fire';
+      return this._play(entry, 'shoot', { fade: 0.01 });
+    }
     if (cs16) {
       // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências
       // originais; recuo SÓ na câmera (GUNFEEL do game.js) — o mount não recua.
@@ -756,6 +798,18 @@ export class AuthoredViewModels {
     entry.queue = [];
     const previous = entry.action;
     const action = entry.mixer.clipAction(clip);
+    if (entry.golden) {
+      entry.mixer.stopAllAction();
+      action.reset().setLoop(THREE.LoopRepeat, Infinity);
+      action.enabled = true;
+      action.paused = false;
+      action.setEffectiveWeight(1);
+      action.setEffectiveTimeScale(1);
+      action.play();
+      entry.mixer.update(0);
+      entry.action = action;
+      return true;
+    }
     if (fade > 0 && previous && previous !== action) {
       // pose congelada do idle entrando por peso: a ação pausada segura o frame
       // 0 enquanto o crossfade dilui a pose final do clipe anterior.
@@ -778,12 +832,28 @@ export class AuthoredViewModels {
     if (!preserveQueue) entry.queue = [];
     const previous = entry.action;
     const action = entry.mixer.clipAction(clip);
+    const playbackRate = timeScale || (duration > 0 ? Math.max(0.01, clip.duration / duration) : 1);
+    if (entry.golden) {
+      entry.mixer.stopAllAction();
+      action.reset();
+      action.enabled = true;
+      action.paused = false;
+      action.clampWhenFinished = true;
+      action.setLoop(THREE.LoopOnce, 1);
+      action.setEffectiveWeight(1);
+      action.setEffectiveTimeScale(playbackRate);
+      action.play();
+      entry.mixer.update(0);
+      entry.action = action;
+      entry.serial += 1;
+      return true;
+    }
     action.reset();
     action.paused = false;
     action.enabled = true;
     action.clampWhenFinished = true;
     action.setLoop(THREE.LoopOnce, 1);
-    action.timeScale = timeScale || (duration > 0 ? Math.max(0.01, clip.duration / duration) : 1);
+    action.timeScale = playbackRate;
     if (previous && previous !== action && fade > 0) action.crossFadeFrom(previous, fade, false);
     else if (previous && previous !== action) previous.stop();
     action.play();

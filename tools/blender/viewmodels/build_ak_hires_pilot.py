@@ -1,13 +1,18 @@
 """Build the high-resolution AK FPS pilot using project geometry only.
 
 The supplied CC0 AK-12 file contributes its high-resolution first-person hand
-topology, rig and action structure. Every donor weapon mesh and donor material
-is deleted. The project AK is fitted in donor rig-local space and attached to
-the donor Rifle/Mag anchors so the existing contact animation drives our asset.
+topology, rig, action structure and neutral sleeve normal map. Donor weapon
+geometry, branded glove maps and watch are deleted. The project AK is fitted in
+donor rig-local space and attached to its Rifle/Mag animation anchors.
 """
 from __future__ import annotations
 
+import argparse
+import hashlib
+import json
 import math
+import shutil
+import sys
 from pathlib import Path
 
 import bpy
@@ -22,6 +27,38 @@ OUT = ROOT / "artifacts" / "viewmodels" / "ak-hires-pilot"
 BLEND = OUT / "ak-hires-pilot.blend"
 GLB = OUT / "ak-hires-pilot.glb"
 RENDERS = OUT / "renders"
+PUBLIC_GLB = ROOT / "public" / "models" / "viewmodels" / "coro" / "ak-hires.glb"
+GLOVE_NORMAL = ROOT / "public" / "img" / "textures" / "pbr_paintedplaster017_normal.webp"
+CAMERA_LATERAL_SHIFT = 0.23
+CAMERA_VERTICAL_SHIFT = 0.08
+
+
+def parse_args() -> argparse.Namespace:
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--doador", type=Path, default=DONOR)
+    parser.add_argument("--arma", type=Path, default=PROJECT_AK)
+    parser.add_argument("--saida", type=Path, default=OUT)
+    parser.add_argument("--publicar", action="store_true")
+    return parser.parse_args(argv)
+
+
+def configure_paths(args: argparse.Namespace) -> None:
+    global DONOR, PROJECT_AK, OUT, BLEND, GLB, RENDERS
+    DONOR = args.doador.resolve()
+    PROJECT_AK = args.arma.resolve()
+    OUT = args.saida.resolve()
+    BLEND = OUT / "ak-hires-pilot.blend"
+    GLB = OUT / "ak-hires-pilot.glb"
+    RENDERS = OUT / "renders"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 # Measured registration delta between the project AK magazine centroid and the
 # CC0 animation's hidden magazine proxy. This is animation metadata only: the
@@ -65,14 +102,39 @@ def material(name: str, color: tuple[float, float, float, float], roughness: flo
     return mat
 
 
-def tattoo_material() -> bpy.types.Material:
-    # Keep the pilot material inside glTF's supported Principled subset.  The
-    # earlier procedural Noise -> ColorRamp graph rendered brown in Blender,
-    # but the exporter could not serialize it and the browser showed white
-    # donor sleeves.  A constant project-skin colour is intentionally plain,
-    # but survives Blender -> GLB -> Three.js exactly.  Tattoo decals come only
-    # after anatomy/contact approval and will use an exportable texture map.
-    return material("CoroSolto_Mandrake_Sleeves", (0.018, 0.045, 0.075, 1.0), 0.74)
+def normal_image(obj: bpy.types.Object) -> bpy.types.Image:
+    for slot in obj.material_slots:
+        source = slot.material
+        if not source or not source.use_nodes:
+            continue
+        for node in source.node_tree.nodes:
+            if node.type != "NORMAL_MAP" or not node.inputs["Color"].links:
+                continue
+            texture = node.inputs["Color"].links[0].from_node
+            if texture.type == "TEX_IMAGE" and texture.image:
+                return texture.image.copy()
+    raise RuntimeError(f"No neutral normal map in {obj.name}")
+
+
+def normal_mapped_material(
+    name: str,
+    color: tuple[float, float, float, float],
+    roughness: float,
+    image: bpy.types.Image,
+    strength: float,
+) -> bpy.types.Material:
+    mat = material(name, color, roughness)
+    image.name = f"{name}_Normal"
+    image.colorspace_settings.name = "Non-Color"
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    texture = nodes.new("ShaderNodeTexImage")
+    texture.image = image
+    normal = nodes.new("ShaderNodeNormalMap")
+    normal.inputs["Strength"].default_value = strength
+    links.new(texture.outputs["Color"], normal.inputs["Color"])
+    links.new(normal.outputs["Normal"], nodes["Principled BSDF"].inputs["Normal"])
+    return mat
 
 
 def replace_material(obj: bpy.types.Object, mat: bpy.types.Material) -> None:
@@ -196,9 +258,10 @@ def load_anatomy_rig() -> bpy.types.Object:
     rig = next(obj for obj in imported if obj.type == "ARMATURE")
     hands = next(obj for obj in imported if obj.name == "Requests_Studio_Hands_0")
     forearms = next(obj for obj in imported if obj.name == "Requests_Studio_Hands_1")
-    watch = next(obj for obj in imported if obj.name == "watch_0")
+    sleeve_normal = normal_image(forearms)
+    glove_normal = bpy.data.images.load(str(GLOVE_NORMAL), check_existing=False)
 
-    keep = {rig, hands, forearms, watch}
+    keep = {rig, hands, forearms}
     # Preserve the empty parent chain because it contains the donor coordinate
     # conversion used by the rig and its animation actions.
     parent = rig.parent
@@ -209,17 +272,19 @@ def load_anatomy_rig() -> bpy.types.Object:
         if obj not in keep:
             bpy.data.objects.remove(obj, do_unlink=True)
 
-    replace_material(hands, material("CoroSolto_FP_Gloves", (0.018, 0.028, 0.040, 1.0), 0.70))
-    replace_material(forearms, tattoo_material())
+    replace_material(hands, normal_mapped_material(
+        "CoroSolto_FP_Gloves", (0.018, 0.028, 0.040, 1.0), 0.70, glove_normal, 0.22,
+    ))
+    replace_material(forearms, normal_mapped_material(
+        "CoroSolto_Mandrake_Sleeves", (0.018, 0.045, 0.075, 1.0), 0.74, sleeve_normal, 0.32,
+    ))
     trim_upper_arms(forearms, rig)
-    replace_material(watch, material("CoroSolto_FP_Watch", (0.12, 0.14, 0.16, 1.0), 0.30, 0.65))
     hands.name = "coro_solto_hires_gloved_hands"
     forearms.name = "coro_solto_hires_project_sleeves"
-    watch.name = "coro_solto_hires_watch"
     rig.name = "coro_solto_hires_fp_rig"
     rig["geometry_origin"] = "project-ak-only"
     rig["anatomy_origin"] = "cc0-hires-topology-reskinned"
-    rig["reference_policy"] = "donor-weapon-and-textures-deleted"
+    rig["reference_policy"] = "donor-weapon-branded-glove-maps-and-watch-deleted"
     return rig
 
 
@@ -428,6 +493,39 @@ def rebuild_idle_from_valid_contact_pose(rig: bpy.types.Object) -> dict[str, Mat
     idle["visual_gate"] = "two-hand contact verified in donor diagnostic"
     bpy.data.actions.remove(rejected)
     return pose
+
+
+def rebuild_equip_from_idle(rig: bpy.types.Object, hold_pose: dict[str, Matrix]) -> None:
+    """Author a single continuous rise from below frame into the hold pose."""
+    rejected = bpy.data.actions.get("Equip")
+    if rejected is None:
+        raise RuntimeError("Expected donor Equip action")
+    rejected.name = "Equip_DonorRejected"
+    equip = bpy.data.actions.new("Equip")
+    rig.animation_data.action = equip
+
+    camera_location = Vector((0.21, 0.31, 4.48))
+    camera_target = Vector((0.16, -1.35, 4.00))
+    camera_rotation = (camera_target - camera_location).to_track_quat("-Z", "Y")
+    screen_down_world = camera_rotation @ Vector((0.0, -1.0, 0.0))
+    screen_down_armature = (
+        rig.matrix_world.to_3x3().inverted() @ screen_down_world
+    ).normalized()
+    root = rig.pose.bones["metarig_rootJoint"]
+    fresh_mag = rig.pose.bones["Mag.001_metarig"]
+    for frame, offset in ((0, 0.62), (6, 0.47), (14, 0.22), (24, -0.025), (30, 0.0)):
+        bpy.context.scene.frame_set(frame)
+        for bone in rig.pose.bones:
+            bone.matrix_basis = hold_pose[bone.name]
+        fresh_mag.scale = Vector((0.001, 0.001, 0.001))
+        bpy.context.view_layer.update()
+        root.matrix = Matrix.Translation(screen_down_armature * offset) @ root.matrix
+        bpy.context.view_layer.update()
+        for bone in rig.pose.bones:
+            key_pose_bone(bone, frame)
+    equip["source_pose"] = "exported Idle hold"
+    equip["draw_path"] = "rigid camera-space rise from 0.62 m below frame with 0.025 m settle"
+    bpy.data.actions.remove(rejected)
 
 
 def close_reload_on_hold_pose(rig: bpy.types.Object, hold_pose: dict[str, Matrix]) -> None:
@@ -858,7 +956,7 @@ def dampen_shoot_recoil(rig: bpy.types.Object, hold_pose: dict[str, Matrix]) -> 
         source[frame] = {bone.name: bone.matrix_basis.copy() for bone in rig.pose.bones}
 
     full_motion = {"Bolt_metarig", "Trigger_metarig", "Mag.001_metarig"}
-    recoil_gain = 0.55
+    recoil_gain = 0.82
     for frame in frames:
         bpy.context.scene.frame_set(int(frame), subframe=frame % 1.0)
         for bone in rig.pose.bones:
@@ -887,6 +985,49 @@ def dampen_shoot_recoil(rig: bpy.types.Object, hold_pose: dict[str, Matrix]) -> 
     shoot["recoil_gate"] = (
         "structural motion damped; bolt/trigger/fingers preserved; installed "
         "magazine rigid on rifle with idle scale"
+    )
+
+
+def close_shoot_on_idle(rig: bpy.types.Object) -> None:
+    """Return the firing action to the exact exported idle pose."""
+    shoot = bpy.data.actions.get("Shoot")
+    idle = bpy.data.actions.get("Idle")
+    if shoot is None or idle is None:
+        raise RuntimeError("Expected Shoot and Idle actions")
+
+    def blend_matrix(start: Matrix, end: Matrix, factor: float) -> Matrix:
+        start_location, start_rotation, start_scale = start.decompose()
+        end_location, end_rotation, end_scale = end.decompose()
+        return Matrix.LocRotScale(
+            start_location.lerp(end_location, factor),
+            start_rotation.slerp(end_rotation, factor),
+            start_scale.lerp(end_scale, factor),
+        )
+
+    rig.animation_data.action = idle
+    bpy.context.scene.frame_set(0)
+    bpy.context.view_layer.update()
+    idle_pose = {bone.name: bone.matrix_basis.copy() for bone in rig.pose.bones}
+
+    end = int(math.ceil(shoot.frame_range[1]))
+    closure_start = max(int(math.floor(shoot.frame_range[0])), end - 5)
+    rig.animation_data.action = shoot
+    bpy.context.scene.frame_set(closure_start)
+    bpy.context.view_layer.update()
+    start_pose = {bone.name: bone.matrix_basis.copy() for bone in rig.pose.bones}
+    for frame in range(closure_start, end + 1):
+        phase = (frame - closure_start) / max(1, end - closure_start)
+        eased = phase * phase * (3.0 - 2.0 * phase)
+        bpy.context.scene.frame_set(frame)
+        for bone in rig.pose.bones:
+            bone.matrix_basis = blend_matrix(start_pose[bone.name], idle_pose[bone.name], eased)
+            key_pose_bone(bone, frame)
+    bpy.context.scene.frame_set(int(math.floor(shoot.frame_range[0])))
+    for bone in rig.pose.bones:
+        bone.matrix_basis = idle_pose[bone.name]
+        key_pose_bone(bone, shoot.frame_range[0])
+    shoot["closure_fix"] = (
+        f"all controls start on Idle and blend back from {closure_start} through {end}"
     )
 
 
@@ -1458,6 +1599,8 @@ def setup_camera_and_lights() -> None:
     # lower-right quadrant instead of covering the crosshair region.
     target = Vector((0.16, -1.35, 4.00))
     camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.location -= camera.rotation_euler.to_matrix() @ Vector((CAMERA_LATERAL_SHIFT, 0, 0))
+    camera.location += camera.rotation_euler.to_matrix() @ Vector((0, CAMERA_VERTICAL_SHIFT, 0))
     data.sensor_fit = "VERTICAL"
     data.angle_y = math.radians(58.0)
     # Camera.shift_x is not serialized by glTF. Keeping it here made Blender
@@ -1541,19 +1684,25 @@ def export(rig: bpy.types.Object) -> None:
 
 
 def main() -> None:
+    args = parse_args()
+    configure_paths(args)
+    if not DONOR.is_file() or not PROJECT_AK.is_file():
+        raise RuntimeError(f"Golden AK input missing: donor={DONOR} weapon={PROJECT_AK}")
     OUT.mkdir(parents=True, exist_ok=True)
     RENDERS.mkdir(parents=True, exist_ok=True)
     setup_scene()
     rig = load_anatomy_rig()
     hold_pose = rebuild_idle_from_valid_contact_pose(rig)
+    rebuild_equip_from_idle(rig, hold_pose)
     rebuild_reload_v24(rig, hold_pose)
     dampen_shoot_recoil(rig, hold_pose)
     add_reload_bolt_cycle(rig, hold_pose)
     lock_strong_hand_to_project_grip(rig)
+    close_shoot_on_idle(rig)
     fit_project_ak(rig)
     setup_camera_and_lights()
     render_action(rig, "Idle", [0, 50, 100], "idle")
-    render_action(rig, "Shoot", [0, 5, 10], "fire")
+    render_action(rig, "Shoot", [0, 3, 5, 8, 10, 13], "fire")
     render_action(
         rig,
         "Reload",
@@ -1591,7 +1740,23 @@ def main() -> None:
         "reload",
     )
     export(rig)
-    print(f"AK_HIRES_PILOT blend={BLEND} glb={GLB} renders={RENDERS}")
+    report = {
+        "builder": str(Path(__file__).resolve()),
+        "blender": bpy.app.version_string,
+        "donor": {"path": str(DONOR), "sha256": sha256(DONOR)},
+        "weapon": {"path": str(PROJECT_AK), "sha256": sha256(PROJECT_AK)},
+        "cameraLateralShift": CAMERA_LATERAL_SHIFT,
+        "cameraVerticalShift": CAMERA_VERTICAL_SHIFT,
+        "blend": str(BLEND),
+        "glb": {"path": str(GLB), "sha256": sha256(GLB)},
+        "published": bool(args.publicar),
+    }
+    if args.publicar:
+        PUBLIC_GLB.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(GLB, PUBLIC_GLB)
+        report["publicGlb"] = {"path": str(PUBLIC_GLB), "sha256": sha256(PUBLIC_GLB)}
+    (OUT / "build-report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print("AK_HIRES_PILOT=" + json.dumps(report))
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { WEAPONS } from '../../public/js/data/weapons.js';
+import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 import { AUTHORED_VM_MODELS, AUTHORED_VM_URLS } from '../../public/js/authoredvm.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -55,8 +56,15 @@ const vmconfig = fs.readFileSync(path.join(ROOT, 'public/js/data/vmconfig.js'), 
 check(/from '\.\/data\/vmconfig\.js'/.test(runtime), 'mapa arma→família vem de data/vmconfig.js');
 check(/VM_FAMILY\[family\]\?\.ready === true/.test(runtime),
   'família só substitui o legado atrás do portão ready:true');
-check((vmconfig.match(/ready: false/g) || []).length === 15 && /grenade:\s*\{ ready: true/.test(vmconfig),
-  '15 famílias de arma nascem fechadas; granada preserva o arremesso que já funciona');
+const readyFamilies = Object.entries(VM_FAMILY)
+  .filter(([, config]) => config.ready === true)
+  .map(([family]) => family)
+  .sort();
+check(readyFamilies.join(',') === 'ak,grenade',
+  'somente AK golden e granada abrem o portão autorado', readyFamilies.join(', '));
+check(mutant !== 'sem-golden' && VM_WEAPON.ak?.golden === true
+    && /GOLDEN_AK[^;]+vmgolden/.test(runtime) && /gold#/.test(runtime),
+  'AK pronta seleciona a chave golden atrás de ?vmgolden=0');
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
   'setAim(id, amount) consome o blend do botão direito');

@@ -9,6 +9,32 @@ proprietários de Counter-Strike.
 As sequências de movimento enviadas por Emerson em 22/08/2026 são referência privada de
 enquadramento e cadência; não são redistribuídas nem incorporadas ao asset.
 
+## AK golden (`coro/ak-hires.glb`)
+
+O piloto golden é produzido por `tools/blender/viewmodels/build_ak_hires_pilot.py`. O doador
+local CC0 `ak-12animated.glb` (SHA-256
+`1cf28a31ad50a8f037bc04499896f40021dd2bf4d3739dafda9b026cf8759f70`) fornece somente
+topologia de braços, rig, estrutura das ações e um normal map neutro da manga. A arma do
+doador, mapas de luva com marca e relógio são apagados antes da exportação.
+
+A arma visível é `public/models/weapons/ak.glb` (SHA-256
+`aae400d6e93372ddd0e138b6ac24b2cd4b8efc7cd0169483ac0755703a456eca`), asset fictício e
+sem logos introduzido no commit `adab1e6d`. O relevo da luva reutiliza apenas o normal CC0
+`PaintedPlaster017`, cuja licença e hash moram em `public/img/FONTE.md`; nenhuma cor ou marca
+da textura entra no viewmodel.
+
+O relatório de build registra os insumos e o hash do produto em
+`artifacts/viewmodels/golden-ak/build-final-v2/build-report.json`. Comando reproduzível:
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender -b \
+  --python tools/blender/viewmodels/build_ak_hires_pilot.py -- \
+  --doador=/Users/ruben/Downloads/ak-12animated.glb \
+  --arma=public/models/weapons/ak.glb \
+  --saida=artifacts/viewmodels/golden-ak/build-final-v2 \
+  --publicar
+```
+
 ## Viewmodels GoldSrc completos (`goldsrc/`)
 
 Os 18 arquivos desta pasta são moldes completos em que arma, duas mãos, esqueleto e

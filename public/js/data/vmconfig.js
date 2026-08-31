@@ -6,7 +6,7 @@
 export const VM_FAMILY = {
   // mount/trim = resíduo arma↔mão; inclinação do PACOTE vive no FAMILY_FRAME.
   // cs16 = máquina de 6 estados dos QC (cadências: tools/viewmodels/cs16-timings.json).
-  ak:       { ready: false, mount: { pos: [-0.02, -0.03, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.432, shoot: 0.8 } },
+  ak:       { ready: true, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 2.432, shoot: 0.8 } },
   ar:       { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 1.0, reload: 3.054, shoot: 1.5 } },
   mp5:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 0.857, reload: 2.632, shoot: 0.667 } },
   smg:      { ready: false, mount: { pos: [0, 0, 0], rotDeg: [0, 0, 0], scale: 1 }, equip: 'rifle', camShake: 'Rifle_Light', reloadStyle: 'mag', cs16: { draw: 0.909, reload: 3.143, shoot: 0.926 } },
@@ -45,7 +45,7 @@ export const VM_WEAPON = {
   awp: W('sniper', { trim: { pos: [0, 0, 0], rotDeg: [0, 15, 0], scale: 1 } }),
   // baked: GLB assado OFFLINE com a Mint dentro (pente separado, sockets
   // nomeados) — o runtime só toca clipes. Caixa MAG: régua eval:cs16.
-  ak: W('ak', { baked: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
+  ak: W('ak', { baked: true, golden: true, parts: { mag: { box: { min: [-0.022, -0.145, 0.005], max: [0.022, 0.02, 0.2] }, bone: 'Mag' } } }),
   m4: W('ar'),
   mp5: W('mp5'),
   shotgun: W('shotgun'),

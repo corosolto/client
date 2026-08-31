@@ -6,6 +6,7 @@
    Uso: node tools/viewmodels/build_goldsrc_all.mjs [arma1,arma2,...] */
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { weaponCFG } from '../../public/js/weapons.js';
@@ -31,6 +32,7 @@ export const DOADORES = {
 const pedidos = (process.argv[2] || '').split(',').filter(Boolean);
 const armas = pedidos.length ? pedidos : Object.keys(DOADORES);
 let falhas = 0;
+const relatorio = {};
 for (const arma of armas) {
   const cs = DOADORES[arma];
   if (!cs) { console.error(`${arma}: sem doador`); falhas += 1; continue; }
@@ -46,10 +48,19 @@ for (const arma of armas) {
     `--saida=${SAIDA}`,
   ], { encoding: 'utf8' });
   const ok = r.status === 0 && r.stdout.includes('CORO_GS_BUILD=');
+  /* Os números do build (paridade, bone do pente, altura da alça) eram
+     impressos e jogados fora: quando a tela ficava errada não havia como saber
+     QUAL arma mediu o quê sem reassar. Agora cada arma deixa a folha dela. */
+  const marcas = Object.fromEntries(r.stdout.split('\n')
+    .map((l) => /^(CORO_GS_[A-Z_]+)=(.*)$/.exec(l.trim()))
+    .filter(Boolean)
+    .map((m) => { try { return [m[1], JSON.parse(m[2])]; } catch { return [m[1], m[2]]; } }));
+  relatorio[arma] = { cs, rot, ok, ...marcas };
   console.log(`${arma} (${cs}, rot ${rot}): ${ok ? 'ok' : 'FALHOU'}`);
   if (!ok) {
     falhas += 1;
     console.error(r.stdout.split('\n').filter((l) => /Error|Traceback/.test(l)).slice(0, 3).join('\n'));
   }
 }
+writeFileSync(path.join(SAIDA, 'build-report.json'), JSON.stringify(relatorio, null, 2));
 if (falhas) process.exit(1);
