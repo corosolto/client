@@ -7,8 +7,13 @@ internal magazine used by the reload contact animation.
 """
 from __future__ import annotations
 
+import argparse
+import hashlib
+import json
 import math
 import os
+import shutil
+import sys
 from pathlib import Path
 
 import bpy
@@ -48,6 +53,34 @@ CLIPS = {
     "Equip": list(range(112, 145, 2)),
     "Shoot": list(range(160, 185)),
 }
+
+
+def parse_args() -> argparse.Namespace:
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--doador", type=Path, default=DONOR)
+    parser.add_argument("--arma", type=Path, default=PROJECT)
+    parser.add_argument("--saida", type=Path, default=OUT)
+    parser.add_argument("--publicar", action="store_true")
+    return parser.parse_args(argv)
+
+
+def configure_paths(args: argparse.Namespace) -> None:
+    global DONOR, PROJECT, OUT, BLEND, GLB, RENDERS
+    DONOR = args.doador.resolve()
+    PROJECT = args.arma.resolve()
+    OUT = args.saida.resolve()
+    BLEND = OUT / "pistol-hires-pilot.blend"
+    GLB = OUT / "pistol-hires-pilot.glb"
+    RENDERS = OUT / "renders"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def import_glb(path: Path) -> list[bpy.types.Object]:
@@ -399,21 +432,33 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
         action = bpy.data.actions.new(action_name)
         action.use_fake_user = True
         rig.animation_data.action = action
-        # The source draw was framed for the deleted donor pistol and drives
-        # the replacement assembly out of view.  Keep a short, stable hold
-        # until a bespoke draw is authored instead of exporting a disappearing
-        # weapon and an isolated magazine.
         if action_name == "Equip":
-            for target_frame in (0, 6, 12):
+            camera_location = Vector((20.0, 36.0, 24.0))
+            camera_target = Vector((12.0, -19.0, 14.0))
+            camera_rotation = (camera_target - camera_location).to_track_quat("-Z", "Y")
+            screen_down_world = camera_rotation @ Vector((0.0, -1.0, 0.0))
+            screen_down_armature = (
+                rig.matrix_world.to_3x3().inverted() @ screen_down_world
+            ).normalized()
+            for target_frame, offset in (
+                (0, 50.0), (6, 36.0), (15, 16.0), (24, -1.2), (30, 0.0)
+            ):
                 bpy.context.scene.frame_set(target_frame)
                 for bone in rig.pose.bones:
                     if bone.name == "CoroFreshMagazine":
                         bone.matrix_basis = hidden_control
                     else:
                         bone.matrix_basis = idle_pose.get(bone.name, Matrix.Identity(4))
+                bpy.context.view_layer.update()
+                assembly = Matrix.Translation(screen_down_armature * offset)
+                for root_name in ("_rootJoint", "CoroWeapon", "CoroMagazine"):
+                    root = rig.pose.bones[root_name]
+                    root.matrix = assembly @ root.matrix
+                bpy.context.view_layer.update()
+                for bone in rig.pose.bones:
                     key_bone(bone, target_frame)
-            action["source_frames"] = "approved-idle-hold"
-            action["visual_policy"] = "stable project weapon and two-hand contact"
+            action["source_frames"] = "project-authored camera-space rise"
+            action["visual_policy"] = "rigid two-hand draw from below frame into Idle"
             continue
         if action_name == "Reload":
             # The reference clip never inserts a fresh magazine: after dropping
@@ -570,6 +615,7 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
                     idle_pose[bone_name]
                     @ Matrix.Rotation(math.radians(degrees), 4, "Y")
                 )
+            recoil_factors = {0: 0.0, 1: 1.0, 3: 0.82, 5: 0.22, 8: 0.0}
             for target_frame, pressed in (
                 (0, False), (1, True), (3, True), (5, False), (8, False)
             ):
@@ -587,11 +633,11 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
                 # during the shot.  This makes the authored clip unmistakable
                 # in the browser without breaking either hand contact or making
                 # the support hand look like it is holding a loose magazine.
-                recoil = Vector((0.10, 0.65, 0.42)) if pressed else Vector((0.0, 0.0, 0.0))
+                recoil = Vector((0.30, 2.05, 1.65)) * recoil_factors[target_frame]
                 assembly = Matrix.Translation(recoil)
                 for root_name in ("_rootJoint", "CoroWeapon", "CoroMagazine"):
                     root = rig.pose.bones[root_name]
-                    root.matrix = assembly @ root.matrix
+                    root.matrix_basis = assembly @ idle_pose.get(root_name, Matrix.Identity(4))
                 for bone in rig.pose.bones:
                     key_bone(bone, target_frame)
             action["source_frames"] = "project-authored trigger-chain compressed to frames 0-8"
@@ -715,11 +761,15 @@ def setup_camera_and_lights() -> None:
     camera.location = (20.0, 36.0, 24.0)
     target = Vector((12.0, -19.0, 14.0))
     camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
-    camera_data.lens = 46.0
-    camera_data.sensor_width = 36.0
+    camera_data.sensor_fit = "VERTICAL"
+    camera_data.angle_y = math.radians(58.0)
     camera_data.shift_x = 0.0
     camera_data.shift_y = 0.0
+    camera_data.clip_start = 0.03
+    camera_data.clip_end = 1000.0
     camera["coro_viewmodel_camera"] = True
+    camera["vertical_fov_deg"] = 58.0
+    camera["reference_aspect"] = "3:2"
     scene.camera = camera
 
     key_data = bpy.data.lights.new("Pistol_Key", "AREA")
@@ -743,7 +793,6 @@ def render_action(rig: bpy.types.Object, action: str, frames: list[int], prefix:
 
 def export(rig: bpy.types.Object) -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    PUBLIC.parent.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.save_as_mainfile(filepath=str(BLEND))
     bpy.ops.object.select_all(action="DESELECT")
     rig.select_set(True)
@@ -757,10 +806,13 @@ def export(rig: bpy.types.Object) -> None:
         export_skins=True, export_morph=True, export_cameras=True,
         export_extras=True, export_apply=False,
     )
-    PUBLIC.write_bytes(GLB.read_bytes())
 
 
 def main() -> None:
+    args = parse_args()
+    configure_paths(args)
+    if not DONOR.is_file() or not PROJECT.is_file():
+        raise RuntimeError(f"Pistol input missing: donor={DONOR} weapon={PROJECT}")
     OUT.mkdir(parents=True, exist_ok=True)
     RENDERS.mkdir(parents=True, exist_ok=True)
     # Never mix frames from an older iteration into the current visual gate.
@@ -781,9 +833,25 @@ def main() -> None:
         # allowed a visibly static trigger finger to pass the contact sheet.
         render_action(rig, "Shoot", [0, 1, 3, 5, 8], "shoot")
         render_action(rig, "Reload", list(range(0, 49, 2)), "reload")
-        render_action(rig, "Equip", [0, 3, 6, 9, 12], "equip")
+        render_action(rig, "Equip", [0, 6, 15, 24, 30], "equip")
     export(rig)
-    print(f"PISTOL_HIRES_PILOT blend={BLEND} glb={GLB} public={PUBLIC}")
+    report = {
+        "builder": str(Path(__file__).resolve()),
+        "blender": bpy.app.version_string,
+        "donor": {"path": str(DONOR), "sha256": sha256(DONOR)},
+        "weapon": {"path": str(PROJECT), "sha256": sha256(PROJECT)},
+        "blend": str(BLEND),
+        "glb": {"path": str(GLB), "sha256": sha256(GLB)},
+        "published": bool(args.publicar),
+    }
+    if args.publicar:
+        PUBLIC.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(GLB, PUBLIC)
+        report["publicGlb"] = {"path": str(PUBLIC), "sha256": sha256(PUBLIC)}
+    (OUT / "build-report.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"
+    )
+    print("PISTOL_HIRES_PILOT=" + json.dumps(report))
 
 
 if __name__ == "__main__":

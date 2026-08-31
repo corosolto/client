@@ -303,9 +303,10 @@ for (const arma of ARMAS) {
       const e = vm.entry(w);
       return { fonte: e ? (e.key || '?') : 'sem-entry', clipes: e ? [...(e.clips?.keys?.() || [])] : [] };
     }, arma);
-    if (r.chave.fonte === 'gold#ak') {
-      r.servedGlb = await page.evaluate(async () => {
-        const url = '/models/viewmodels/coro/ak-hires.glb?v=golden-ak-4';
+    if (r.chave.fonte === `gold#${arma}`) {
+      r.servedGlb = await page.evaluate(async (weapon) => {
+        const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
+        const url = `/models/viewmodels/coro/${weapon}-hires.glb?v=${version}`;
         const response = await fetch(url, { cache: 'no-store' });
         const bytes = await response.arrayBuffer();
         const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
@@ -315,7 +316,7 @@ for (const arma of ARMAS) {
           bytes: bytes.byteLength,
           sha256: [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join(''),
         };
-      });
+      }, arma);
       if (!/^[a-f0-9]{64}$/.test(r.servedGlb.sha256 || '')) r.erros.push('SHA do GLB servido ausente');
     }
 

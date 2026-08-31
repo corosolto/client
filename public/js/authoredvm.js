@@ -27,7 +27,7 @@ const CS16_TUDO = _QS?.get('cs16') === '1';
 // Evidência e custo da escolha: docs/reports/GOLDEN-AK-DECISION.md.
 const RETARGET_TUDO = _QS?.get('rt') === '1';
 const VM_FONTE = RETARGET_TUDO ? 'retarget' : CS16_TUDO ? 'goldsrc' : (_QS?.get('vmfonte') || '');
-const GOLDEN_AK = _QS?.get('vmgolden') !== '0';
+const GOLDEN_VM = _QS?.get('vmgolden') !== '0';
 // Kill-switch global do caminho autorado (?vmauthored=0): tudo cai no legado.
 const AUTHORED_KILLED = typeof window !== 'undefined'
   && new URLSearchParams(window.location.search).get('vmauthored') === '0';
@@ -215,12 +215,14 @@ const entryKeyFor = (weapon) => {
   if (!family) return '';
   if (VM_FONTE === 'retarget') return `rt#${weapon}`;
   if (VM_FONTE === 'goldsrc') return `gs#${weapon}`;
-  if (GOLDEN_AK && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
+  if (GOLDEN_VM && VM_WEAPON[weapon]?.golden === true) return `gold#${weapon}`;
   return weaponBaked(weapon) ? `${family}#${weapon}` : family;
 };
 const urlForKey = (key) => {
   if (key.startsWith('gold#')) {
-    return `/models/viewmodels/coro/${key.slice(5)}-hires.glb?v=golden-ak-4`;
+    const weapon = key.slice(5);
+    const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
+    return `/models/viewmodels/coro/${weapon}-hires.glb?v=${version}`;
   }
   if (key.startsWith('gs#') || key.startsWith('rt#')) {
     const dir = key.startsWith('rt#') ? 'retarget-vm' : 'goldsrc-vm';
@@ -649,7 +651,8 @@ export class AuthoredViewModels {
     const cs16 = VM_FAMILY[entry.family]?.cs16;
     // Fuzis sacam com o clipe autoral do pack; o arco procedural fica para as
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
-    if (VM_FAMILY[entry.family]?.equip !== 'pistol' && entry.clips.has('equip_rifle')) {
+    if ((entry.golden || VM_FAMILY[entry.family]?.equip !== 'pistol')
+      && entry.clips.has('equip_rifle')) {
       entry.drawTime = entry.drawDuration;
       const tocou = this._play(entry, 'equip_rifle', {
         duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,

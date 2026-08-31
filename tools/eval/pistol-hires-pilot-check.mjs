@@ -66,7 +66,7 @@ expect(source.includes('trigger_fingers = {"R_point1_031", "R_point2_032", "R_po
   'Shoot precisa animar a cadeia real do indicador dominante');
 expect(source.includes('(0, False), (1, True), (3, True), (5, False), (8, False)'),
   'pressão do gatilho precisa acontecer imediatamente no disparo e retornar à pegada');
-expect(source.includes('recoil = Vector((0.10, 0.65, 0.42)) if pressed'),
+expect(source.includes('recoil = Vector((0.30, 2.05, 1.65)) * recoil_factors[target_frame]'),
   'Shoot precisa ter recuo visual curto sem soltar as mãos da arma');
 expect(source.includes('for root_name in ("_rootJoint", "CoroWeapon", "CoroMagazine")'),
   'Shoot precisa mover mãos, arma e carregador acoplado como uma única montagem');

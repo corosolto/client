@@ -60,11 +60,12 @@ const readyFamilies = Object.entries(VM_FAMILY)
   .filter(([, config]) => config.ready === true)
   .map(([family]) => family)
   .sort();
-check(readyFamilies.join(',') === 'ak,grenade',
-  'somente AK golden e granada abrem o portão autorado', readyFamilies.join(', '));
+check(readyFamilies.join(',') === 'ak,grenade,pistol',
+  'somente AK/pistola golden e granada abrem o portão autorado', readyFamilies.join(', '));
 check(mutant !== 'sem-golden' && VM_WEAPON.ak?.golden === true
-    && /GOLDEN_AK[^;]+vmgolden/.test(runtime) && /gold#/.test(runtime),
-  'AK pronta seleciona a chave golden atrás de ?vmgolden=0');
+    && VM_WEAPON.pistol?.golden === true
+    && /GOLDEN_VM[^;]+vmgolden/.test(runtime) && /gold#/.test(runtime),
+  'AK e pistola prontas selecionam a chave golden atrás de ?vmgolden=0');
 check(/vmauthored/.test(runtime), 'kill-switch ?vmauthored=0 derruba o caminho autorado inteiro');
 check(/setAim\(id[^)]*amount/.test(runtime) && /this\.adsAmount/.test(runtime),
   'setAim(id, amount) consome o blend do botão direito');
