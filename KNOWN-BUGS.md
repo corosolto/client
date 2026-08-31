@@ -3666,6 +3666,14 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **~~BUG-99 · build da Vercel executava réguas que exigem o repositório Git~~ · RESOLVIDO
+  31/08.** O deploy `8nDm8KfBu61ToheWiqrBaE16dYCK` recebeu o pack completo, mas cinco
+  cláusulas ficaram vermelhas porque o sandbox não contém `.git` nem `origin/main`; uma delas
+  chegou a dizer que `pistol.glb` não era versionado embora o arquivo esteja no Git. O
+  `check:deploy` completo continua obrigatório no pre-push. A Vercel agora roda um recorte
+  reproduzível de sintaxe, fetch de assets, fronteira das APIs e catálogo de nós antes do build.
+  `eval:vercelbuild` reprova se o build voltar a depender do gate Git; o mutante confirma.
+
 - **~~BUG-98 · Preview limpo confundia o manifest versionado com o pacote de áudio
   instalado~~ · RESOLVIDO 31/08.** O deploy `5DdL9r1renbn2X3VhpR9obwFojZR` parou no
   `assert:assets`: 73 caminhos contra o piso do gate. A release `audio-pack-v8` foi conferida
