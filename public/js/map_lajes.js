@@ -1296,7 +1296,7 @@ export function buildLajes(scene, T) {
   place('deagle', 3, 7);    place('m4', -7, -6);
   // lajes sul
   place('ak', 7, 22);      place('shotgun', -7, 22);
-  place('m400', 5, 28);    place('mp5', 0, 28);
+  place('sks', 5, 28);    place('mp5', 0, 28);
   // escadas
   place('deagle', -20, 0); place('deagle', 20, 0);
 

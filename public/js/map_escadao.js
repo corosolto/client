@@ -750,7 +750,7 @@ export function buildEscadao(scene, T) {
   place('mp5', 10, 36);     place('deagle', -10, 38);
   place('m4', 1.5, (P1.z0 + P1.z1) / 2); place('shotgun', 1.5, (P2.z0 + P2.z1) / 2);
   place('mp5', 0, TOP_Z - 2); place('awp', -6, -22);
-  place('m400', 7, -28);    place('ak', 0, -33);
+  place('sks', 7, -28);    place('ak', 0, -33);
   place('deagle', 10, -25); place('mp5', 0.6, (P1.z0 + P1.z1) / 2);
   place('mp5', 1.8, (P1.z0 + P1.z1) / 2);
 

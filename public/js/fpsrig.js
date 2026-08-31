@@ -24,7 +24,7 @@ const rotParam = (key, fallback) => {
 const ROT_R = rotParam('fprrot', [0, 0, 0]);
 const ROT_L = rotParam('fplrot', [0, Math.PI, 0]);
 const ROT_L_OVERRIDE = qs.has('fplrot');
-const BOLT_ACTION = new Set(['awp', 'mosin', 'm400']);
+const BOLT_ACTION = new Set(['awp', 'mosin']);
 const ARMS_URL = '/models/viewmodels/fp-arms.glb';
 
 let template = null;

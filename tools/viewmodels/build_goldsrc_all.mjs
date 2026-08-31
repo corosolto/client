@@ -16,22 +16,19 @@ const SAIDA = '/Users/ruben/csbrasil-private-assets/generated/viewmodels/goldsrc
 
 // arma do jogo -> molde CS (doador mecânico)
 export const DOADORES = {
-  ak: 'ak47', akm: 'ak47', m4: 'm4a1', carbine: 'm4a1', mp5: 'mp5',
+  ak: 'ak47', m4: 'm4a1', carbine: 'm4a1', mp5: 'mp5',
   uzi: 'mac10', p90: 'p90', famas: 'famas', md97: 'famas',
-  scar: 'sg552', tavor: 'sg552', g3: 'g3sg1', g3sg1: 'g3sg1', svd: 'g3sg1',
-  sks: 'g3sg1', awp: 'awp', m400: 'scout', rem700: 'awp', mosin: 'scout',
-  deagle: 'deagle', revolver38: 'deagle', pistol: 'usp', m92: 'usp',
+  scar: 'sg552', svd: 'g3sg1',
+  sks: 'g3sg1', awp: 'awp', mosin: 'scout',
+  deagle: 'deagle', revolver38: 'deagle', pistol: 'usp', m92: 'ak47',
   shotgun: 'm3', lmg: 'm249', knife: 'knife',
 };
 
 // overrides visuais por arma (calibrados contra a referência — folhas par5)
 const AJUSTES = {
   pistol: { escala: 0.55 },   // molde USP traz silenciador no comprimento
-  m92: { escala: 0.55 },
   mosin: { escala: 0.72 },
-  m400: { escala: 0.72 },
   scar: { escala: 0.72 },
-  tavor: { escala: 0.72 },
 };
 
 const pedidos = (process.argv[2] || '').split(',').filter(Boolean);

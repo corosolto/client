@@ -1898,7 +1898,7 @@ export function buildHavan(scene, T) {
      fora do footprint"), só que pela borda da FRENTE (MZ.z1, lado da loja) em vez da de trás
      (MZ.z0, lado do muro). z: −44,9 -> −34,5 (10,40 m); x intocado (5 e −6). Medido depois:
      distância ao chão alcançado = 0,00 m nas duas. */
-  place('awp', 5, MZ.z1 + 0.5); place('m400', -6, MZ.z1 + 0.5);
+  place('awp', 5, MZ.z1 + 0.5); place('sks', -6, MZ.z1 + 0.5);
   /* DUAS ARMAS NOS CANTOS NOVOS DA LOJA. Duas razões, nesta ordem:
      (1) o dono vetou reduzir o número de armas no chão, e apagar a praça clássica levou as 2
          que ela tinha — estas duas devolvem o total de 246 sem mexer em mapa nenhum vivo;

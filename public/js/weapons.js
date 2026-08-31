@@ -8,9 +8,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const loader = new GLTFLoader();
 const _cache = new Map();
 export const WEAPON_IDS = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'pistol', 'knife',
-  'm92', 'akm', 'g3', 'revolver38', 'md97', 'carbine', 'm400', 'mosin', 'rem700',
-  'lmg', 'scar', 'tavor', 'famas', 'uzi', 'p90',
-  'svd', 'g3sg1', 'sks'];   // snipers semi-auto (reusam o modelo de outra arma via MODEL_ALIAS)
+  'm92', 'revolver38', 'md97', 'carbine', 'mosin', 'lmg', 'scar', 'famas', 'uzi', 'p90',
+  'svd', 'sks'];   // snipers semi-auto (reusam o modelo de outra arma via MODEL_ALIAS)
 // Modelos só de apresentação: não viram slot, pickup nem 27ª arma. O Bandeirante usa
 // o mosquete histórico no corpo de 3ª pessoa, enquanto a balística continua no id `mosin`.
 const DISPLAY_MODEL_IDS = ['mosquete'];
@@ -86,21 +85,16 @@ const CFG = {
      de 0,009); VM8 melhora porque a coronha encolhe para o fundo. Folga sobre o teto:
      0,57 p.p., ~4x o erro de borda do rasterizador (0,15 p.p.).                        */
   m92:       { len: 0.76, rot: [0, 270, 0], gripZ: 0.6, vm: 0.90 },   // +180: Zastava M92 estava invertido
-  g3:        { len: 1.10, rot: [0, 270, 0], gripZ: 0.58, vm: 0.75 },  // +180: HK G3 estava invertido
-  akm:       { len: 0.88, rot: [0, 90, 0], gripZ: 0.62 },
   revolver38:{ len: 0.24, rot: [0, 270, 0], gripZ: 0.68, vm: 0.92 },  // arma curta: deixa as duas mãos legíveis
   md97:      { len: 1.05, rot: [0, 270, 0], gripZ: 0.62, vm: 0.87 },  // +180: estava invertido
   carbine:   { len: 0.98, rot: [0, 0, 0], gripZ: 0.6, vm: 0.92 },   // natively +Z; [0,90,0] threw the barrel onto X (giant)
-  m400:      { len: 0.92, rot: [0, 270, 0], gripZ: 0.62, vm: 0.85 },  // +180: usuário confirmou invertido
   mosin:     { len: 1.20, rot: [0, 270, 0], gripZ: 0.66, vm: 0.75 },  // +180: estava invertido
   /* mosquete: o cano já nasce no eixo Z no GLB (medido; maior eixo, como nas outras) —
      rot em X jogava a seção transversal no eixo da normalização. Régua: weapon-scale-check. */
   mosquete:  { len: 1.45, rot: [0, 0, 0], gripZ: 0.68 },
-  rem700:    { len: 1.15, rot: [0, 270, 0], gripZ: 0.66, vm: 0.78 },  // +180: estava invertido
   // arsenal-3 (military)
   lmg:       { len: 1.10, rot: [0, 90, 0], gripZ: 0.58, vm: 0.72 },   // vm: caixão preto gigante na tela
   scar:      { len: 0.90, rot: [0, 90, 0], gripZ: 0.62 },
-  tavor:     { len: 0.72, rot: [0, 270, 0], gripZ: 0.5, vm: 0.96 },   // +180: usuário confirmou invertido
   famas:     { len: 0.76, rot: [0, 90, 0], gripZ: 0.5, vm: 0.87 },
   uzi:       { len: 0.47, rot: [0, 270, 0], gripZ: 0.58, vm: 0.81 },  // vm: encolhe no FP (estava grande)
   // len 0.60 -> 0.47 (P0): o dono reportou "a uzi do hipster alternativo esta gigante, maior que
@@ -118,7 +112,6 @@ const CFG = {
   p90:       { len: 0.52, rot: [0, 90, 0], gripZ: 0.55, vm: 1.22 },
   // snipers semi-auto — herdam a malha (MODEL_ALIAS) e o rot/len do modelo reusado
   svd:       { len: 1.15, rot: [0, 270, 0], gripZ: 0.64, vm: 0.8 },   // modelo próprio (Mint); +180 (estava invertida)
-  g3sg1:     { len: 1.12, rot: [0, 270, 0], gripZ: 0.58, vm: 0.71 },   // modelo do G3
   sks:       { len: 1.02, rot: [0, 270, 0], gripZ: 0.6, vm: 0.83 },    // modelo próprio (Mint), cano +Z como a SVD
 };
 

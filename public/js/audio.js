@@ -284,14 +284,14 @@ export class Sfx {
     lmg:     { lvl: 0.95, bodyF: 118, bodyF2: 44, bodyDecay: 0.11, subF: 50, subDecay: 0.16, crackF: 1920, crackQ: 0.85, crackDecay: 0.075, drive: 8, midF: 610, midDecay: 0.065, tailDecay: 0.36, tailF: 4000, tailEndF: 520, mechDelay: 0.03, mechLvl: 0.6, mechPartials: [1330, 2480, 4100] },
   };
   static GUN_CLASS = {
-    awp: 'sniper', mosin: 'sniper', rem700: 'sniper', m400: 'sniper', svd: 'sniper', g3sg1: 'sniper', sks: 'sniper',
+    awp: 'sniper', mosin: 'sniper', svd: 'sniper', sks: 'sniper',
     shotgun: 'shotgun', mp5: 'smg', uzi: 'smg', p90: 'smg', lmg: 'lmg',
     // MD97 = IMBEL MD97, o fuzil 5,56 do Exército Brasileiro — NÃO é espingarda. Estava em
     // 'shotgun' só porque o viewmodel dela reaproveita a malha da shotgun (STATIC_CLASS no
     // game.js), e a classe de SOM foi arrastada junto. Som de classe é calibre, não malha.
     pistol: 'pistol', deagle: 'pistol', revolver38: 'pistol', m92: 'pistol',   // m92 = Beretta 92 (era 'ak', errado)
-    ak: 'ak', akm: 'ak', g3: 'ak',                                              // 7.62 grave/soco
-    m4: 'ar', scar: 'ar', famas: 'ar', tavor: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
+    ak: 'ak', // 7.62 grave/soco
+    m4: 'ar', scar: 'ar', famas: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
   };
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
   // e decay curto — soa como ferrolho/mola, não como "beep atrasado" (o tal eco estranho).
@@ -479,8 +479,8 @@ export class Sfx {
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.
     const W = { deagle: 1.25, revolver38: 1.18, pistol: 0.90, m92: 0.95,
-      awp: 1.15, mosin: 1.10, rem700: 1.12, m400: 0.85, svd: 0.90, g3sg1: 0.88, sks: 0.80,
-      ak: 1.00, akm: 1.08, g3: 1.05, m4: 0.95, scar: 0.98, tavor: 0.93, famas: 0.90, carbine: 1.0,
+      awp: 1.15, mosin: 1.10, svd: 0.90, sks: 0.80,
+      ak: 1.00, m4: 0.95, scar: 0.98, famas: 0.90, carbine: 1.0,
       mp5: 0.90, uzi: 0.88, p90: 0.85, lmg: 1.10, shotgun: 1.15, md97: 0.96 };   // md97 = 5,56, peso de fuzil (era 1.08, de espingarda)
     if (dist === 0) this.duck(0.3, 0.09);   // PUNCH: o próprio tiro afunda o resto do mix por ~90 ms (o caminho por sample já fazia)
     this._gunshot(Sfx.GUN_CLASS[w] || 'rifle', dist, vol * (W[w] ?? 1), pan, propDelay);

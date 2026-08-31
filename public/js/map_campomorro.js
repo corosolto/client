@@ -578,8 +578,8 @@ export function buildCampoMorro(scene, T = {}) {
   };
   [
     ['ak', -30, 0], ['m4', -22, 18], ['shotgun', -17, 20], ['mp5', 10, 20],
-    ['awp', 27, 12], ['deagle', 30, 0], ['m400', 18, -20], ['mp5', 5, -22],
-    ['akm', -15, -20], ['shotgun', -29, -18], ['deagle', 19, 15], ['m4', -19, 16],
+    ['awp', 27, 12], ['deagle', 30, 0], ['sks', 18, -20], ['mp5', 5, -22],
+    ['ak', -15, -20], ['shotgun', -29, -18], ['deagle', 19, 15], ['m4', -19, 16],
   ].forEach(p => placePickup(...p));
 
   const preLote = new Set(root.children);

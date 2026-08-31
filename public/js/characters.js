@@ -679,7 +679,7 @@ export const CHAR_WEAPON = {
   coach: 'scar', gotinha: 'mp5', farialimer: 'm4', bombado: 'lmg', hipster: 'uzi',
   dollynho: 'p90', et: 'awp', ancap: 'mosin',
   bonzo: 'revolver38', canarinho: 'deagle', proerd: 'md97',
-  palhacomal: 'g3sg1', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
+  palhacomal: 'svd', jozo: 'shotgun', adjim: 'uzi', esbirro: 'mp5', titica: 'ak', padati: 'pistol', padata: 'p90', cadequinha: 'revolver38',
   mandrake: 'ak', raul: 'deagle', oakley: 'md97', criarj: 'uzi', chave: 'mp5',
   funkraiz: 'shotgun', trapfunk: 'scar', fluxo: 'p90', ostentacao: 'deagle', pagodeiro: 'pistol',
   // Time Mítico

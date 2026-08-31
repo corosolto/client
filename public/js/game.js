@@ -262,9 +262,9 @@ const BOT_TOKEN_REST = 1.1;      // s de descanso obrigatório depois de largar 
 const PLAYER_SPEED = 5.35;
 const MOVE_MUL = {
   knife: 1.0, pistol: 0.98, revolver38: 0.96, deagle: 0.94,
-  mp5: 0.95, uzi: 0.95, p90: 0.94, famas: 0.9, tavor: 0.9, m4: 0.9, scar: 0.89, carbine: 0.9,
-  ak: 0.88, akm: 0.86, m92: 0.88, g3: 0.85, md97: 0.86, shotgun: 0.88,
-  sks: 0.87, m400: 0.85, svd: 0.83, g3sg1: 0.8, lmg: 0.8, rem700: 0.79, mosin: 0.78, awp: 0.78,
+  mp5: 0.95, uzi: 0.95, p90: 0.94, famas: 0.9, m4: 0.9, scar: 0.89, carbine: 0.9,
+  ak: 0.88, m92: 0.88, md97: 0.86, shotgun: 0.88,
+  sks: 0.87, svd: 0.83, lmg: 0.8, mosin: 0.78, awp: 0.78,
 };
 const WALK_MUL = 0.52;            // Shift: 52% da velocidade, sem som de passo
 const MOVE2 = QS.get('move') !== '0';
@@ -351,7 +351,7 @@ const HS_MUL = { rifle: 4, smg: 4, pistol: 4, lmg: 3.6, shotgun: 1.7, sniper: 2.
 // Classe BALÍSTICA (≠ STATIC_CLASS, que é do viewmodel: lá SMG mora em 'rifle' e a M400
 // mora em 'awp'). Usada só por falloff/headshot.
 const BALL_CLASS = {};
-for (const w of ['awp', 'mosin', 'rem700', 'm400', 'svd', 'g3sg1', 'sks']) BALL_CLASS[w] = 'sniper';
+for (const w of ['awp', 'mosin', 'svd', 'sks']) BALL_CLASS[w] = 'sniper';
 BALL_CLASS.shotgun = 'shotgun';
 // MD97 saiu de 'shotgun' (fica no default 'rifle'). Ela é o IMBEL MD97, fuzil 5,56 do
 // Exército — estava na classe balística de espingarda só por herdar a malha do viewmodel.
@@ -366,7 +366,7 @@ BALL_CLASS.lmg = 'lmg';
 // fatiam o trecho da declaração até a linha do 'knife' e AVALIAM como JS — não citar a
 // declaração literal nos comentários deste bloco, senão a fatia começa no lugar errado).
 const STATIC_CLASS = {};
-for (const w of ['ak', 'akm', 'm4', 'm92', 'g3', 'carbine', 'mp5', 'uzi', 'p90', 'scar', 'tavor', 'famas', 'lmg']) STATIC_CLASS[w] = 'rifle';
+for (const w of ['ak', 'm4', 'm92', 'carbine', 'mp5', 'uzi', 'p90', 'scar', 'famas', 'lmg']) STATIC_CLASS[w] = 'rifle';
 for (const w of ['pistol', 'deagle', 'revolver38']) STATIC_CLASS[w] = 'pistol';
 /* MD97 SAIU DE 'shotgun' (game.js:269 até aquela rodada) — mesmo erro de classificação que já
    foi corrigido no BALÍSTICO (BALL_CLASS, logo acima) e no ÁUDIO (audio.js, GUN_CLASS 'ar':
@@ -384,7 +384,7 @@ for (const w of ['pistol', 'deagle', 'revolver38']) STATIC_CLASS[w] = 'pistol';
    arms_*.glb da Tripo não existem mais no repo (desta vez de verdade: `git log -- public/models/fpvm`). */
 STATIC_CLASS.shotgun = 'shotgun';
 STATIC_CLASS.md97 = 'rifle';
-for (const w of ['awp', 'mosin', 'rem700', 'm400', 'svd', 'g3sg1', 'sks']) STATIC_CLASS[w] = 'awp';
+for (const w of ['awp', 'mosin', 'svd', 'sks']) STATIC_CLASS[w] = 'awp';
 STATIC_CLASS['knife'] = 'knife';
 // FOV da vmCamera com HORIZONTAL constante (GAUNTLET 2.0 — bug 3:2): referência 16:9
 // (fov vertical 70). Em telas mais altas (MacBook 3024×1964 ≈ 1.54:1) o FOV horizontal
@@ -603,8 +603,8 @@ export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCha
 
 /* Pool dos bots em modo `all`: uma fonte só para o sorteio da partida (pickMatchWeapons) e
    para o fallback do Game — duas listas divergiriam em silêncio e furariam o preload. */
-const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'akm', 'md97',
-  'carbine', 'm400', 'mosin', 'rem700', 'lmg', 'scar', 'g3', 'tavor', 'famas', 'uzi', 'p90', 'revolver38'];
+const BOT_WEAPON_POOL = ['awp', 'ak', 'm4', 'mp5', 'shotgun', 'deagle', 'm92', 'md97',
+  'carbine', 'mosin', 'lmg', 'scar', 'famas', 'uzi', 'p90', 'revolver38'];
 
 /* Armas da partida sorteadas ANTES do preload, pelo mesmo motivo do roster: o main.js precisa
    saber o que carregar, e re-sortear no Game poria arma de caixa em bot. Régua: ARM1. */
@@ -2433,9 +2433,9 @@ export class Game {
     // FULL arsenal available AT each respawn — no map-wide scatter. Organized in rows by
     // category (snipers → rifles → bullpups/SMG → sidearms) like a spawn weapon rack.
     const rackRows = [
-      ['awp', 'mosin', 'rem700', 'm400', 'svd', 'g3sg1', 'sks'],  // snipers (+ semi-auto)
-      ['ak', 'akm', 'm4', 'md97', 'g3', 'scar', 'carbine', 'm92'], // rifles
-      ['tavor', 'famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],   // bullpups / SMG / shotgun / LMG
+      ['awp', 'mosin', 'svd', 'sks'],  // snipers (+ semi-auto)
+      ['ak', 'm4', 'md97', 'scar', 'carbine', 'm92'], // rifles
+      ['famas', 'p90', 'mp5', 'uzi', 'shotgun', 'lmg'],   // bullpups / SMG / shotgun / LMG
       ['deagle', 'revolver38', 'pistol'],                        // sidearms
     ].map(row => row.filter(w => this._pickupAllowed(w)));
     /* ARMÁRIO DO SPAWN — POSIÇÃO MEDIDA CONTRA A GEOMETRIA DO MAPA (P3, 01/08).
@@ -3119,8 +3119,8 @@ export class Game {
   _zoomFov(w) {
     // Zoom de ADS mais forte que antes (base é FOV 70): pedido "parece longe, dá pra ver no
     // ferrolho". Snipers com luneta = zoom pesado; marksman forte; rifles/SMG/pistola iron-sight.
-    const Z = { awp: 22, mosin: 20, rem700: 22, m400: 34, m400scope: 34, svd: 30, g3sg1: 30, sks: 32, md97: 40, carbine: 38, shotgun: 44,
-      ak: 42, m92: 42, akm: 42, g3: 42, m4: 42, scar: 42, tavor: 42, famas: 42,
+    const Z = { awp: 22, mosin: 20, m400scope: 34, svd: 30, sks: 32, md97: 40, carbine: 38, shotgun: 44,
+      ak: 42, m92: 42, m4: 42, scar: 42, famas: 42,
       mp5: 46, uzi: 46, p90: 46, lmg: 44, deagle: 47, pistol: 48, revolver38: 48 };
     return Z[w] || 46;
   }
@@ -3290,7 +3290,7 @@ export class Game {
     this._flash(this._muzzleWorld(_cls), this.camera.getWorldDirection(new THREE.Vector3()), _cls);
     this._ejectCasing();
     // bolt-action snipers drop the scope after each shot (CS-style); autos stay aimed
-    if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin' || p.weapon === 'rem700')) this._scope(false, true);
+    if (p.scoped && (p.weapon === 'awp' || p.weapon === 'mosin')) this._scope(false, true);
   }
   _tryKnifeAttack(kind = 'quick') {
     const p = this.player, w = WEAPONS.knife;

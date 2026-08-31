@@ -1209,7 +1209,7 @@ export function buildLajes(scene, T) {
   for (const [kind, x, z] of [
     ['ak', -2, -34], ['m4', 2, -34], ['awp', -11.3, -25], ['mp5', 11.3, -20],
     ['shotgun', -11.2, -10], ['deagle', 11.2, -10], ['ak', -11.2, 2], ['m4', 11.2, 2],
-    ['mp5', -11.2, 18], ['shotgun', 10.2, 18.3], ['deagle', -2, 34], ['m400', 2, 34],
+    ['mp5', -11.2, 18], ['shotgun', 10.2, 18.3], ['deagle', -2, 34], ['sks', 2, 34],
   ]) placeWeapon(kind, x, z);
 
   const D_LAJES = decalIds(T, ['pixo-lajes-01.png']);

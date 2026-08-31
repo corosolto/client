@@ -903,7 +903,7 @@ export function buildMansao(scene, T) {
   place('ak', 9, 1);       place('m4', -8, -4);
   place('awp', 0, -11);    place('shotgun', 8, -10);
   place('mp5', -8, 31);    place('deagle', 10, 28);
-  place('m400', 0, -22);   place('mp5', -12, -22);
+  place('sks', 0, -22);   place('mp5', -12, -22);
   place('deagle', 4, 4);   place('ak', -8, 11);
   place('shotgun', 0, 32); place('m4', 6, -20);
 

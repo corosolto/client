@@ -1856,7 +1856,7 @@ export function buildFerroVelho(scene, T) {
   const gmat = lam({ color: 0x20242a });
   const place = (kind, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
   place('shotgun', -12, -2); place('ak', 4, 0); place('m4', 0, 12); place('mp5', -2, -14);
-  place('awp', 29, -22); place('m400', -24, 14);
+  place('awp', 29, -22); place('sks', -24, 14);
   place('deagle', -4, 31); place('ak', 0, 31); place('shotgun', 4, 28); place('m4', 8, 33);
 
   // saia de contato: todas as bases registradas viram UMA malha mesclada = 1 draw call

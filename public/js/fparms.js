@@ -14,7 +14,7 @@ const BODY_Y = Number.parseFloat(qs.get('fpy')) || -1.48;
 const BODY_Z = Number.parseFloat(qs.get('fpz')) || 0.02;
 const FP_SCALE = Number.parseFloat(qs.get('fps')) || 0.93;
 const BASE_T = 0.58;
-const BOLT_ACTION = new Set(['awp', 'mosin', 'm400']);
+const BOLT_ACTION = new Set(['awp', 'mosin']);
 
 const vec = () => new THREE.Vector3();
 const _tmp = vec(), _eff = vec(), _shoulder = vec();

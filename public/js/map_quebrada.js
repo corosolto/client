@@ -1554,7 +1554,7 @@ export function buildQuebrada(scene, T) {
   const place = (kind, x, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.12, 1.0), gmat); m.position.set(x, 0.1, z); m.castShadow = true; root.add(m); pickups.push({ x, z, kind, weapon: kind, readyAt: 0, mesh: m }); };
   place('ak', 0.5, -13);         place('m4', 2.5, 12);
   place('shotgun', -16.6, 2.5);  place('mp5', 16.6, -3.5);
-  place('awp', -23, 16);         place('m400', 23, -14);
+  place('awp', -23, 16);         place('sks', 23, -14);
   place('deagle', -8, -25);      place('shotgun', 8, -35);
   place('ak', 10.5, 34);         place('m4', -10.5, 40);
   place('mp5', -20, 26);         place('deagle', 20, 26);

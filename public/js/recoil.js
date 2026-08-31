@@ -33,16 +33,16 @@ for (const c in RECOIL_PARAMS) RECOIL_PATTERN[c] = buildRecoilPattern(RECOIL_PAR
 export function rebuildPattern(cls) { RECOIL_PATTERN[cls] = buildRecoilPattern(RECOIL_PARAMS[cls]); }
 
 export const RECOIL_CLASS = {};
-for (const w of ['ak', 'akm', 'g3', 'm92', 'md97']) RECOIL_CLASS[w] = 'ak';
-for (const w of ['m4', 'scar', 'tavor', 'famas', 'carbine']) RECOIL_CLASS[w] = 'ar';
+for (const w of ['ak', 'm92', 'md97']) RECOIL_CLASS[w] = 'ak';
+for (const w of ['m4', 'scar', 'famas', 'carbine']) RECOIL_CLASS[w] = 'ar';
 for (const w of ['mp5', 'uzi', 'p90']) RECOIL_CLASS[w] = 'smg';
 RECOIL_CLASS.lmg = 'lmg';
 
 // Kick VERTICAL do 1º tiro em GRAUS por arma (o resto do padrão escala disso).
 export const REC_DEG = {
-  awp: 4.9, mosin: 4.7, rem700: 4.8, shotgun: 3.4, md97: 1.65,
-  m400: 1.5, svd: 1.9, g3sg1: 1.7, sks: 1.5, carbine: 1.9,
-  ak: 1.6, akm: 1.72, m92: 1.5, g3: 1.75, scar: 1.45, m4: 1.35, tavor: 1.3, famas: 1.25, lmg: 1.5,
+  awp: 4.9, mosin: 4.7, shotgun: 3.4, md97: 1.65,
+  svd: 1.9, sks: 1.5, carbine: 1.9,
+  ak: 1.6, m92: 1.5, scar: 1.45, m4: 1.35, famas: 1.25, lmg: 1.5,
   mp5: 0.95, uzi: 0.9, p90: 0.85,
   deagle: 2.3, revolver38: 2.0, pistol: 1.15, knife: 0.5,
 };
