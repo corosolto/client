@@ -1,5 +1,11 @@
 # P0 — ARMAS E VIEWMODEL
 
+> **SUPERADO em 22/08/2026:** a decisão abaixo de produzir só a arma foi
+> revogada. A especificação vigente é
+> [`24-VIEWMODEL-CS16-MAOS-ANIMADO.md`](24-VIEWMODEL-CS16-MAOS-ANIMADO.md), que
+> exige braços, mãos e animações reais por família. Este arquivo permanece como
+> diagnóstico histórico do enquadramento/recoil, não como contrato de produção.
+
 > **Decisão do dono: só arma, estilo Quake/UT. Sem braço nem luva na v2.**
 > Isso simplifica muito o plano — os braços (`fparms.js`, 360 linhas, IK que converge em 26/26)
 > ficam onde estão, atrás de `?hands=1`, e viram um experimento da v2.1.

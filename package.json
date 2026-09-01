@@ -47,6 +47,7 @@
     "eval:build": "npm run build && npm run eval:ssr",
     "eval:cena": "node tools/eval/cena-check.mjs",
     "eval:vm": "node tools/eval/vm-mint-audit.mjs",
+    "eval:fpvm-spec": "node tools/eval/fpvm-arsenal-check.mjs",
     "eval:kick": "node tools/eval/vm-kick-sim.mjs",
     "eval:bots": "node tools/eval/botsim.mjs 60 all",
     "eval:mantle": "node tools/eval/mantle-check.mjs all",

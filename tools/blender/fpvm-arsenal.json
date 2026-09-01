@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "baseRig": "public/models/viewmodels/fpvm_base_rig.blend",
+  "reference": "videos Emerson/Blender enviados pelo dono em 2026-08-22",
+  "weapons": {
+    "awp": { "family": "precision_bolt", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "ak": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "m4": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "mp5": { "family": "smg", "clips": ["idle_smg", "walk_smg", "draw_smg", "fire_smg", "reload_smg", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "shotgun": { "family": "shotgun", "clips": ["idle_shotgun", "walk_shotgun", "draw_shotgun", "fire_shotgun", "reload_shotgun", "holster"], "parts": ["pump", "shell"], "state": "authoring" },
+    "deagle": { "family": "pistol", "clips": ["idle_pistol", "walk_pistol", "draw_pistol", "fire_pistol", "reload_pistol", "holster"], "parts": ["magazine", "slide"], "state": "authoring" },
+    "pistol": { "family": "pistol", "clips": ["idle_pistol", "walk_pistol", "draw_pistol", "fire_pistol", "reload_pistol", "holster"], "parts": ["magazine", "slide"], "state": "authoring" },
+    "knife": { "family": "knife", "clips": ["idle_knife", "walk_knife", "draw_knife", "attack_primary", "attack_secondary", "holster"], "parts": [], "state": "authoring" },
+    "m92": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "akm": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "g3": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "revolver38": { "family": "revolver", "clips": ["idle_revolver", "walk_revolver", "draw_revolver", "fire_revolver", "reload_revolver", "holster"], "parts": ["cylinder"], "state": "authoring" },
+    "md97": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "carbine": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "m400": { "family": "precision_semi", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "mosin": { "family": "precision_bolt", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "rem700": { "family": "precision_bolt", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "lmg": { "family": "lmg", "clips": ["idle_lmg", "walk_lmg", "draw_lmg", "fire_lmg", "reload_lmg", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "scar": { "family": "rifle", "clips": ["idle_rifle", "walk_rifle", "draw_rifle", "fire_rifle", "reload_rifle", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "tavor": { "family": "bullpup", "clips": ["idle_bullpup", "walk_bullpup", "draw_bullpup", "fire_bullpup", "reload_bullpup", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "famas": { "family": "bullpup", "clips": ["idle_bullpup", "walk_bullpup", "draw_bullpup", "fire_bullpup", "reload_bullpup", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "uzi": { "family": "smg", "clips": ["idle_smg", "walk_smg", "draw_smg", "fire_smg", "reload_smg", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "p90": { "family": "smg", "clips": ["idle_smg", "walk_smg", "draw_smg", "fire_smg", "reload_smg", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "svd": { "family": "precision_semi", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "g3sg1": { "family": "precision_semi", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" },
+    "sks": { "family": "precision_semi", "clips": ["idle_precision", "walk_precision", "draw_precision", "fire_precision", "reload_precision", "holster"], "parts": ["magazine", "bolt"], "state": "authoring" }
+  }
+}

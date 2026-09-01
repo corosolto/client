@@ -194,18 +194,18 @@ export class ViewModelRig {
       const k = this.dur > 0 ? clamp(this.t / this.dur, 0, 1) : 1;
       if (this.state === 'reload') {
         this.reloadK = k;
-        // Fases (frações da duração declarada): desce/gira -> carregador sai ->
-        // carregador entra -> ferrolho -> sobe. A arma sai do centro da tela e
-        // volta; é a leitura de "recarregando" que faltava.
+        // Fases (frações da duração declarada): inclina só o suficiente para abrir
+        // a área do carregador. A arma permanece inteira no quadro: a leitura vem
+        // das mãos, do pente e do ferrolho, não de escondê-la fora da câmera.
         const dip = smooth(clamp(k / 0.18, 0, 1)) * (1 - smooth(clamp((k - 0.82) / 0.18, 0, 1)));
-        stPos.y = -0.085 * dip; stPos.z = 0.030 * dip; stPos.x = -0.020 * dip;
-        stRot.x = -0.42 * dip; stRot.y = 0.16 * dip; stRot.z = 0.30 * dip;
+        stPos.y = -0.020 * dip; stPos.z = 0.012 * dip; stPos.x = -0.008 * dip;
+        stRot.x = -0.13 * dip; stRot.y = 0.055 * dip; stRot.z = 0.085 * dip;
         // carregador: cai entre 20% e 45%, novo entra entre 45% e 70%
         this.magDrop = k < 0.20 ? 0 : k < 0.45 ? smooth((k - 0.20) / 0.25)
           : k < 0.70 ? 1 - smooth((k - 0.45) / 0.25) : 0;
         // tapa no carregador + ferrolho: dois solavancos curtos, o que dá peso
-        if (k > 0.66 && k < 0.74) stPos.y += -0.012 * Math.sin((k - 0.66) / 0.08 * Math.PI);
-        if (k > 0.80 && k < 0.88) stRot.x += 0.05 * Math.sin((k - 0.80) / 0.08 * Math.PI);
+        if (k > 0.66 && k < 0.74) stPos.y += -0.006 * Math.sin((k - 0.66) / 0.08 * Math.PI);
+        if (k > 0.80 && k < 0.88) stRot.x += 0.028 * Math.sin((k - 0.80) / 0.08 * Math.PI);
         if (k >= 1) { this.state = 'idle'; this.reloadK = 0; this.magDrop = 0; this._reloadDone = true; }
       } else if (this.state === 'holster') {
         const g = smooth(k);

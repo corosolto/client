@@ -1256,16 +1256,12 @@ export class Game {
   _buildViewModels() {
     const root = new THREE.Group();
     const dark = c => new THREE.MeshLambertMaterial({ color: c });
-    // First-person arms inherit the selected character's skin + sleeve colors.
+    // O fallback também usa luvas neutras: sem o GLB dedicado ele continua legível,
+    // em vez de expor uma mão cor-de-pele sem textura no canto da tela.
     const pdef = byId(this.playerCharId);
-    const pal = (pdef && pdef.pal) || { skin: 0xd9a066, shirt: 0x3a4a5a };
-    // LUVA POR TIME no fallback procedural também (mãos genéricas por time — pedido do dono):
-    // P vermelho, B verde, U roxo; blend 55% (igual ao fparms) pra não virar luva plástica.
-    const GLOVE = { E: 0xd83232, B: 0x28c858, U: 0x8a3ffc, C: 0xf0f0f0, F: 0xffc233, M: 0x9d4edd };
-    const skinMat = dark(pal.skin);
-    if (GLOVE[this.playerFaction]) skinMat.color.lerp(new THREE.Color(GLOVE[this.playerFaction]), 0.85);
+    const pal = (pdef && pdef.pal) || { shirt: 0x3a4a5a };
+    const gloveMat = dark(0x27323b);
     const sleeveMat = dark(pal.shirt);
-    const skin = skinMat; // legacy alias
     // A curled gripping hand built from two-segment fingers (proximal + distal phalanx),
     // a slimmer palm and an angled thumb — reads as an actual gripping hand, not a brick.
     const fpArm = (w = 0.08) => {
@@ -1273,7 +1269,7 @@ export class Game {
       const sc = w / 0.08; // callers pass a smaller w for pistols/knife → scale the whole hand
       const knuckle = new THREE.Group(); g.add(knuckle);
       // palm — flattened capsule laid across the grip (X axis), slimmer (mão menos "blocão")
-      const palm = new THREE.Mesh(new THREE.CapsuleGeometry(0.030, 0.052, 4, 8), skinMat);
+      const palm = new THREE.Mesh(new THREE.CapsuleGeometry(0.030, 0.052, 4, 8), gloveMat);
       palm.rotation.z = Math.PI / 2; palm.scale.set(1, 1, 0.5);
       palm.castShadow = false; knuckle.add(palm);
       // four two-segment fingers wrapping over the grip, spaced along Z (mais longos e finos)
@@ -1281,16 +1277,16 @@ export class Game {
       const distGeo = new THREE.CapsuleGeometry(0.0064, 0.026, 3, 6);
       for (let i = 0; i < 4; i++) {
         const f = new THREE.Group();
-        const prox = new THREE.Mesh(proxGeo, skinMat);
+        const prox = new THREE.Mesh(proxGeo, gloveMat);
         prox.rotation.set(0.5, 0, Math.PI / 2); prox.position.set(0, 0.012, 0);
-        const dist = new THREE.Mesh(distGeo, skinMat);
+        const dist = new THREE.Mesh(distGeo, gloveMat);
         dist.rotation.set(1.15, 0, Math.PI / 2); dist.position.set(-0.017, -0.006, 0);
         f.add(prox, dist);
         f.position.set(0.004, 0.024, -0.026 + i * 0.016);
         knuckle.add(f);
       }
       // thumb on the near side, angled up along the grip
-      const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.009, 0.038, 3, 6), skinMat);
+      const thumb = new THREE.Mesh(new THREE.CapsuleGeometry(0.009, 0.038, 3, 6), gloveMat);
       thumb.rotation.set(0.35, 0, 0.55); thumb.position.set(-0.03, 0.004, 0.026);
       thumb.castShadow = false; knuckle.add(thumb);
       knuckle.scale.setScalar(sc);
@@ -1302,7 +1298,7 @@ export class Game {
       const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(w * 0.46, L, 4, 10), sleeveMat);
       sleeve.rotation.x = Math.PI / 2; sleeve.position.set(0, 0, L * 0.5 + 0.04);
       sleeve.castShadow = false; fore.add(sleeve);
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.56, w * 0.52, 0.04, 12), skinMat);
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.56, w * 0.52, 0.04, 12), gloveMat);
       cuff.rotation.x = Math.PI / 2; cuff.position.set(0, 0, 0.05);
       cuff.castShadow = false; fore.add(cuff);
       g.add(fore);
@@ -1311,15 +1307,15 @@ export class Game {
     // Support (front) hand: palm + two-segment curled fingers only, no receding sleeve.
     const frontHand = (sc = 1) => {
       const g = new THREE.Group();
-      const palm = new THREE.Mesh(new THREE.CapsuleGeometry(0.029, 0.048, 4, 8), skinMat);
+      const palm = new THREE.Mesh(new THREE.CapsuleGeometry(0.029, 0.048, 4, 8), gloveMat);
       palm.rotation.z = Math.PI / 2; palm.scale.set(1, 1, 0.5); palm.castShadow = false; g.add(palm);
       const proxGeo = new THREE.CapsuleGeometry(0.0068, 0.028, 3, 6);
       const distGeo = new THREE.CapsuleGeometry(0.006, 0.024, 3, 6);
       for (let i = 0; i < 4; i++) {
         const f = new THREE.Group();
-        const prox = new THREE.Mesh(proxGeo, skinMat);
+        const prox = new THREE.Mesh(proxGeo, gloveMat);
         prox.rotation.set(0.55, 0, Math.PI / 2); prox.position.set(0, 0.011, 0);
-        const dist = new THREE.Mesh(distGeo, skinMat);
+        const dist = new THREE.Mesh(distGeo, gloveMat);
         dist.rotation.set(1.2, 0, Math.PI / 2); dist.position.set(-0.015, -0.006, 0);
         f.add(prox, dist);
         f.position.set(0.004, 0.022, -0.024 + i * 0.015);
@@ -1589,25 +1585,9 @@ export class Game {
     // MÃOS FP POR PADRÃO (decisão do dono 28/07 — "mãos genéricas por time", com luva por
     // facção; arma-sozinha virou opt-out via ?hands=0). Se o GLB falhar, cai nas mãos
     // procedurais (fpArm/frontHand — que ficam VISÍVEIS nesse caso, ver abaixo).
-    /* BRAÇOS FP DESLIGADOS NO CAMINHO MINT (P0.1, 31/07) — decisão medida, não estética.
-       Com o viewmodel novo (GLBs da Mint) os braços de `buildFPArms` entram com escala e
-       pose herdadas do pipeline Tripo, que tinha OUTRA distância de grip e OUTRA escala de
-       arma. O resultado, capturado em /root/shots/vm/ak.png e /root/shots/p0/ak-32-hip.png,
-       é uma massa rosa sem forma de mão ocupando o quadrante inferior direito, com a arma
-       solta em cima. Os números confirmam: gripErrR = 0,001 m (a mão DIREITA está travada
-       no grip, o cálculo está certo) — o que está errado é o TAMANHO do braço em relação à
-       arma, e isso é um rig a refazer, não um offset a tunar.
-       Entre entregar "arma com identidade + braço quebrado" e "arma com identidade, sem
-       braço", a régua nova decide: o critério nº1 é NÃO TER BUG PERCEPTÍVEL (o dono: "o
-       usuário tem que se preocupar em jogar e não com bugs"), e a referência que ele mesmo
-       escolheu — ev.io, CS 1.6 — mostra arma-sozinha ou mão mínima na maior parte do tempo.
-       Então: o padrão é ARMA SOZINHA, e `?hands=1` liga os braços pra quem
-       quiser continuar o trabalho de rig.
-       PENDÊNCIA REGISTRADA: refazer a escala/pose de buildFPArms contra o grip da Mint. */
     const _qsHands = new URLSearchParams(location.search).get('hands');
-    // SÓ-ARMA por padrão, estilo UNREAL TOURNAMENT (dono é fã de UT — arcade, só a arma no
-    // canto, sem mão). As mãos ficavam esquisitas/centralizadas. ?hands=1 liga o braço FP.
-    const WEAPON_ONLY = _qsHands !== '1';
+    // Mãos são parte do viewmodel. `?hands=0` preserva o A/B só-arma para diagnóstico.
+    const WEAPON_ONLY = _qsHands === '0';
     if (!FP_OFF && !WEAPON_ONLY) arms = buildFPArms({ id: this.playerCharId, team: this.playerFaction });
     if (arms) {
       root.add(arms.group);
@@ -5432,7 +5412,7 @@ export class Game {
     // vm.root (kick/dip/ADS/sway/bob/draw) — as mãos acompanham a arma em qualquer estado.
     if (this.vm.arms && this.vm.root.visible) {
       const wg = this.vm.models[p.weapon];
-      if (wg) poseToWeapon(this.vm.arms, wg, p.weapon);
+      if (wg) poseToWeapon(this.vm.arms, wg, p.weapon, this.vm.rig.reloadK);
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
     this._updateReplayCam(dt);
