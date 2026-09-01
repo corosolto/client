@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "package": "/Users/ruben/csbrasil-private-assets/sources/fpsanimationpack_ultimate.unitypackage",
+    "assetRoot": "Assets/KINEMATION/FPSAnimationPack/Animations",
+    "license": "Fab Standard License",
+    "redistributableAsSource": false
+  },
+  "output": {
+    "privateRoot": "/Users/ruben/csbrasil-private-assets/generated/viewmodels",
+    "runtimeUrl": "/private-assets/viewmodels",
+    "oneGlbPerFamily": true,
+    "lazyLoad": true
+  },
+  "hands": {
+    "default": "tactical",
+    "variants": ["tactical"],
+    "contract": {
+      "sharedSkeleton": true,
+      "replaceableHands": true,
+      "replaceableSleeves": true,
+      "characterMaterialOverrides": true
+    }
+  },
+  "families": {
+    "ak": { "source": "AK", "idleHint": "A_FP_AKX_Idle.FBX", "weaponHint": "AK-200.FBX" },
+    "ar": { "source": "MX16A4", "idleHint": "A_FP_MX16A4_Pose.FBX", "weaponHint": "MX16A4.FBX" },
+    "mp5": { "source": "MPS5", "idleHint": "A_FP_MPS5_Pose.FBX", "weaponHint": "MPS5.FBX" },
+    "smg": { "source": "Striker-V", "idleHint": "A_FP_Striker-V_Pose.FBX", "weaponHint": "SKM_Striker-V.fbx" },
+    "p90": { "source": "PDW90", "idleHint": "A_FP_PDW90_Inspect.FBX", "weaponHint": "PDW90.FBX" },
+    "g3": { "source": "G3", "idleHint": "A_FP_G3_Idle.FBX", "weaponHint": "G3.FBX" },
+    "marksman": { "source": "Mk14EBR", "idleHint": "A_FP_MK14_Idle.FBX", "weaponHint": "MK14.FBX" },
+    "svd": { "source": "SVD", "idleHint": "A_FP_SVD_Pose.FBX", "weaponHint": "SVD.FBX" },
+    "sniper": { "source": "L96X", "idleHint": "A_FP_L96X_Pose.FBX", "weaponHint": "L96X.FBX" },
+    "bolt": { "source": "Kar98K", "idleHint": "A_FP_Kar98K_Pose.FBX", "weaponHint": "A_W_Kar98K_Pose.FBX" },
+    "deagle": { "source": "DGL50", "idleHint": "A_FP_DGL50_Pose.FBX", "weaponHint": "DGL50.FBX" },
+    "pistol": { "source": "X18", "idleHint": "A_FP_X18_Pose.FBX", "weaponHint": "SK_X18.FBX" },
+    "revolver": { "source": "Viper-357", "idleHint": "A_FP_Viper-357_Reload_Empty.FBX", "weaponHint": "Viper-357.FBX" },
+    "shotgun": { "source": "KXG12", "idleHint": "A_FP_KXG12_Pose.FBX", "weaponHint": "KXG12_fixed.FBX" },
+    "lmg": { "source": "MGX5", "idleHint": "A_FP_MGX5_Idle.FBX", "weaponHint": "MGX5.FBX" },
+    "grenade": { "source": "Grenade", "idleHint": "A_FP_Grenade_Pose.FBX", "externalWeapon": "grenadepack1" }
+  },
+  "weapons": {
+    "awp": { "family": "sniper", "match": "close" },
+    "ak": { "family": "ak", "match": "close" },
+    "m4": { "family": "ar", "match": "close" },
+    "mp5": { "family": "mp5", "match": "close" },
+    "shotgun": { "family": "shotgun", "match": "close" },
+    "deagle": { "family": "deagle", "match": "close" },
+    "pistol": { "family": "pistol", "match": "close" },
+    "knife": { "family": "legacy-knife", "match": "exact", "pipeline": "existing-self-contained" },
+    "m92": { "family": "ak", "match": "close" },
+    "akm": { "family": "ak", "match": "close" },
+    "g3": { "family": "g3", "match": "close" },
+    "revolver38": { "family": "revolver", "match": "close" },
+    "md97": { "family": "ar", "match": "proxy" },
+    "carbine": { "family": "ar", "match": "proxy" },
+    "m400": { "family": "sniper", "match": "proxy" },
+    "mosin": { "family": "bolt", "match": "close" },
+    "rem700": { "family": "sniper", "match": "close" },
+    "lmg": { "family": "lmg", "match": "close" },
+    "scar": { "family": "ar", "match": "close" },
+    "tavor": { "family": "ar", "match": "proxy" },
+    "famas": { "family": "ar", "match": "proxy" },
+    "uzi": { "family": "smg", "match": "proxy" },
+    "p90": { "family": "p90", "match": "close" },
+    "svd": { "family": "svd", "match": "exact" },
+    "g3sg1": { "family": "marksman", "match": "close" },
+    "sks": { "family": "marksman", "match": "proxy" }
+  },
+  "grenades": {
+    "he": { "family": "grenade", "model": "he" },
+    "flash": { "family": "grenade", "model": "flash" },
+    "smoke": { "family": "grenade", "model": "smoke" }
+  }
+}

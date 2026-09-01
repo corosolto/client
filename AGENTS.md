@@ -145,6 +145,7 @@ Um assunto, um arquivo. Se você precisa da informação, é daqui que você sai
 | investigar e consertar um defeito | [`.claude/skills/bug-hunt/SKILL.md`](.claude/skills/bug-hunt/SKILL.md) | as leis viram passo a passo, com o caso real de cada uma |
 | criar personagem, mapa ou asset novo | [`.claude/skills/csbrasil/SKILL.md`](.claude/skills/csbrasil/SKILL.md) | pipeline com 6 portões; ficha validada por `npm run spec:check` |
 | revisar asset gerado (nota de fora) | [`.claude/skills/asset-review/SKILL.md`](.claude/skills/asset-review/SKILL.md) | crítico adversarial de contexto limpo — quem constrói não dá a nota |
+| limitar contexto, Graphify e Serena | [`docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa`](docs/docs/instrumentacao-ai.md#orçamento-de-contexto-por-tarefa) | um assunto, uma tarefa; checkpoint antes de trocar |
 | skills nativas visíveis pra todo agente | `npm run skills:sync` | symlink `.agents/skills/` → `.claude/skills/`; `skills:check` no `check:fast` |
 | podar over-engineering de um diff; entrevistar antes de codar | `.agents/skills/` (`ponytail-review`, `grill-me`, `handoff`, `to-spec`) | terceiras, gitignored, fixadas por hash — fontes em `.agents/skills/THIRD-PARTY.md` |
 | a documentação de dev inteira | [`docs/docs/`](docs/docs/) | site Docusaurus; `docs/INDICE.md` indexa os `.md` soltos |

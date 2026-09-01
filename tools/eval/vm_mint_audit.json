@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-17T12:02:21.062Z",
+ "gerado": "2026-08-28T07:41:39.226Z",
  "lente": {
   "V0deg": 42,
   "halfTanH": 0.6824,
@@ -31,7 +31,7 @@
     "fwdTan": 1.6
    },
    "sniper": {
-    "roll": -0.055,
+    "roll": 0.58,
     "pitch": 0.1571,
     "yaw": 0.2094,
     "tanH": 0.36,
@@ -58,13 +58,13 @@
     "fwdTan": 1.6
    },
    "pistol": {
-    "roll": -0.05,
-    "pitch": 0.4712,
-    "yaw": 0.5585,
-    "tanH": 0.28,
+    "roll": -0.105,
+    "pitch": 0.1745,
+    "yaw": 0.3142,
+    "tanH": 0.285,
     "clear": 0.02,
-    "minz": 0.27,
-    "fwdTan": 1.6
+    "minz": 0.35,
+    "fwdTan": 1.45
    },
    "knife": {
     "roll": 0,
@@ -77,11 +77,15 @@
    }
   },
   "knifeRot": [
-   0.45,
-   0.9,
-   -0.3
+   -0.1,
+   0.5,
+   -0.48
   ],
-  "zMul": {},
+  "zMul": {
+   "uzi": 1.34,
+   "p90": 1.16,
+   "mp5": 1.08
+  },
   "classOf": {
    "ak": "rifle",
    "akm": "rifle",
@@ -126,13 +130,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.64,
+    "dist": 0.645,
     "max": 0.577,
-    "folga": -0.063,
+    "folga": -0.068,
     "guardaMao": [
-     0.201,
-     -0.147,
-     -0.552
+     0.209,
+     -0.144,
+     -0.553
     ]
    },
    "len": 1.15,
@@ -168,53 +172,53 @@
      -0.503
     ],
     "boca": [
-     0.123,
-     -0.051,
-     -0.951
+     0.111,
+     -0.049,
+     -0.948
     ],
     "alca": [
-     0.195,
-     -0.036,
-     -0.627
+     0.144,
+     -0.045,
+     -0.618
     ]
    },
    "coronhaZ": -0.322,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.195,
-    0.036,
+    -0.144,
+    0.045,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.588,
-     "bordaDir": 1.1,
-     "topo": 0.558,
-     "base": 1.431,
-     "areaPct": 6.29,
-     "silBordaEsq": 0.588,
-     "anguloEixoGraus": 40.4,
-     "foraPct": 52.09,
-     "fatiaDir": 0.008,
-     "fatiaBaixo": 0.184,
-     "frenteVisivel": 1.027,
-     "trasVisivel": 0.722,
-     "gordura": 0.357,
+     "bordaEsq": 0.58,
+     "bordaDir": 1.144,
+     "topo": 0.555,
+     "base": 1.363,
+     "areaPct": 4.98,
+     "silBordaEsq": 0.58,
+     "anguloEixoGraus": 36.56,
+     "foraPct": 46.89,
+     "fatiaDir": 0.012,
+     "fatiaBaixo": 0.145,
+     "frenteVisivel": 1.026,
+     "trasVisivel": 0.717,
+     "gordura": 0.292,
      "ads": {
-      "areaPct": 5.32,
-      "silBordaEsq": 0.643,
-      "anguloEixoGraus": 43.29,
+      "areaPct": 4.36,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 36.32,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.65,
-       0.654
+       0.64,
+       0.652
       ],
-      "frenteVisivel": 1.042,
-      "trasVisivel": 1.307,
-      "gordura": 0.447,
+      "frenteVisivel": 1.037,
+      "trasVisivel": 1.273,
+      "gordura": 0.362,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -226,8 +230,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.595,
-      0.57
+      0.586,
+      0.568
      ],
      "adsAlcaTela": [
       0.5,
@@ -235,34 +239,34 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.588,
-     "bordaDir": 1.1,
-     "topo": 0.57,
-     "base": 1.345,
-     "areaPct": 5.94,
-     "silBordaEsq": 0.588,
-     "anguloEixoGraus": 43.22,
-     "foraPct": 47.01,
+     "bordaEsq": 0.58,
+     "bordaDir": 1.144,
+     "topo": 0.568,
+     "base": 1.287,
+     "areaPct": 4.52,
+     "silBordaEsq": 0.58,
+     "anguloEixoGraus": 38.89,
+     "foraPct": 41.9,
      "fatiaDir": 0.031,
-     "fatiaBaixo": 0.188,
-     "frenteVisivel": 1.026,
-     "trasVisivel": 0.762,
-     "gordura": 0.367,
+     "fatiaBaixo": 0.129,
+     "frenteVisivel": 1.025,
+     "trasVisivel": 0.745,
+     "gordura": 0.283,
      "ads": {
-      "areaPct": 5.13,
-      "silBordaEsq": 0.643,
-      "anguloEixoGraus": 47.27,
+      "areaPct": 3.98,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 39.74,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.65,
-       0.651
+       0.64,
+       0.649
       ],
-      "frenteVisivel": 1.042,
+      "frenteVisivel": 1.04,
       "trasVisivel": 1.325,
-      "gordura": 0.452,
+      "gordura": 0.339,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -274,8 +278,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.595,
-      0.58
+      0.586,
+      0.579
      ],
      "adsAlcaTela": [
       0.5,
@@ -636,19 +640,19 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.603,
+    "dist": 0.645,
     "max": 0.606,
-    "folga": 0.003
+    "folga": -0.039
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.644,
+    "dist": 0.687,
     "max": 0.577,
-    "folga": -0.067,
+    "folga": -0.11,
     "guardaMao": [
-     0.205,
-     -0.148,
-     -0.555
+     0.22,
+     -0.151,
+     -0.597
     ]
    },
    "len": 0.66,
@@ -679,122 +683,122 @@
    },
    "viewSpace": {
     "grip": [
-     0.219,
-     -0.142,
-     -0.525
+     0.234,
+     -0.145,
+     -0.567
     ],
     "boca": [
-     0.1,
-     -0.013,
-     -0.739
+     0.115,
+     -0.016,
+     -0.781
     ],
     "alca": [
-     0.194,
-     -0.04,
-     -0.567
+     0.209,
+     -0.043,
+     -0.609
     ]
    },
-   "coronhaZ": -0.325,
+   "coronhaZ": -0.367,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.194,
-    0.04,
+    -0.209,
+    0.043,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.593,
-     "bordaDir": 1.176,
-     "topo": 0.457,
-     "base": 1.362,
-     "areaPct": 7.34,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 36.98,
-     "foraPct": 33.64,
-     "fatiaDir": 0.055,
-     "fatiaBaixo": 0.219,
-     "frenteVisivel": 1.022,
-     "trasVisivel": 0.716,
-     "gordura": 0.372,
+     "bordaEsq": 0.602,
+     "bordaDir": 1.133,
+     "topo": 0.465,
+     "base": 1.287,
+     "areaPct": 6.72,
+     "silBordaEsq": 0.604,
+     "anguloEixoGraus": 37.27,
+     "foraPct": 27.57,
+     "fatiaDir": 0.063,
+     "fatiaBaixo": 0.215,
+     "frenteVisivel": 1.021,
+     "trasVisivel": 0.801,
+     "gordura": 0.366,
      "ads": {
-      "areaPct": 5.15,
-      "silBordaEsq": 0.662,
-      "anguloEixoGraus": 40.19,
+      "areaPct": 4.68,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 42.27,
       "gripTela": [
-       0.745,
-       0.815
+       0.746,
+       0.8
       ],
       "bocaTela": [
-       0.675,
-       0.665
+       0.679,
+       0.662
       ],
-      "frenteVisivel": 1.268,
-      "trasVisivel": 1.716,
-      "gordura": 0.58,
+      "frenteVisivel": 1.271,
+      "trasVisivel": 1.78,
+      "gordura": 0.568,
       "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
      "gripTela": [
-      0.806,
-      0.851
+      0.803,
+      0.833
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 12.279,
+     "bracoBordaDir": 2.222,
+     "bracoBordaBaixo": 10.627,
      "bocaTela": [
-      0.599,
-      0.523
+      0.608,
+      0.527
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.593,
-     "bordaDir": 1.176,
-     "topo": 0.493,
-     "base": 1.281,
-     "areaPct": 6.52,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 39.22,
-     "foraPct": 30.4,
-     "fatiaDir": 0.066,
-     "fatiaBaixo": 0.172,
-     "frenteVisivel": 1.024,
-     "trasVisivel": 0.743,
-     "gordura": 0.368,
+     "bordaEsq": 0.602,
+     "bordaDir": 1.133,
+     "topo": 0.498,
+     "base": 1.212,
+     "areaPct": 5.81,
+     "silBordaEsq": 0.604,
+     "anguloEixoGraus": 38.77,
+     "foraPct": 26.08,
+     "fatiaDir": 0.063,
+     "fatiaBaixo": 0.035,
+     "frenteVisivel": 1.021,
+     "trasVisivel": 0.815,
+     "gordura": 0.351,
      "ads": {
-      "areaPct": 4.68,
-      "silBordaEsq": 0.662,
-      "anguloEixoGraus": 45.07,
+      "areaPct": 4.2,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 46.8,
       "gripTela": [
-       0.745,
-       0.802
+       0.746,
+       0.787
       ],
       "bocaTela": [
-       0.675,
-       0.663
+       0.679,
+       0.66
       ],
-      "frenteVisivel": 1.256,
-      "trasVisivel": 1.79,
-      "gordura": 0.529,
+      "frenteVisivel": 1.254,
+      "trasVisivel": 1.879,
+      "gordura": 0.516,
       "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
      "gripTela": [
-      0.806,
-      0.835
+      0.803,
+      0.817
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 11.104,
+     "bracoBordaDir": 2.222,
+     "bracoBordaBaixo": 9.616,
      "bocaTela": [
-      0.599,
-      0.547
+      0.608,
+      0.549
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     }
@@ -980,15 +984,15 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.48,
+    "dist": 0.596,
     "max": 0.606,
-    "folga": 0.126
+    "folga": 0.01
    },
    "alcanceApoio": null,
    "len": 0.3,
    "gripZ": 0.7,
-   "vm": 0.94,
-   "escalaVM": 0.677,
+   "vm": 0.84,
+   "escalaVM": 0.605,
    "gunSpace": {
     "bboxMin": [
      -0.026,
@@ -1013,122 +1017,122 @@
    },
    "viewSpace": {
     "grip": [
-     0.143,
-     -0.125,
-     -0.405
+     0.18,
+     -0.133,
+     -0.525
     ],
     "boca": [
-     0.073,
-     -0.025,
-     -0.491
+     0.148,
+     -0.068,
+     -0.637
     ],
     "alca": [
-     0.126,
-     -0.057,
-     -0.414
+     0.175,
+     -0.077,
+     -0.554
     ]
    },
-   "coronhaZ": -0.344,
+   "coronhaZ": -0.471,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.126,
-    0.057,
+    -0.175,
+    0.077,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.591,
-     "bordaDir": 0.877,
-     "topo": 0.548,
-     "base": 1.138,
-     "areaPct": 4.98,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 42.38,
-     "foraPct": 15.37,
+     "bordaEsq": 0.655,
+     "bordaDir": 0.817,
+     "topo": 0.624,
+     "base": 0.995,
+     "areaPct": 2.54,
+     "silBordaEsq": 0.654,
+     "anguloEixoGraus": 61.86,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.133,
-     "frenteVisivel": 1.036,
-     "trasVisivel": 0.452,
-     "gordura": 0.419,
+     "fatiaBaixo": 0.031,
+     "frenteVisivel": 1.061,
+     "trasVisivel": 0.699,
+     "gordura": 0.547,
      "ads": {
-      "areaPct": 2.36,
-      "silBordaEsq": 0.592,
-      "anguloEixoGraus": 84.44,
+      "areaPct": 1.3,
+      "silBordaEsq": 0.619,
+      "anguloEixoGraus": 86.07,
       "gripTela": [
-       0.639,
-       0.818
+       0.657,
+       0.768
       ],
       "bocaTela": [
-       0.612,
-       0.629
+       0.635,
+       0.635
       ],
-      "frenteVisivel": 1.106,
-      "trasVisivel": 0.971,
-      "gordura": 0.446,
+      "frenteVisivel": 1.111,
+      "trasVisivel": 1.084,
+      "gordura": 0.465,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.759,
-      0.902
+      0.751,
+      0.83
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 10.801,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.609,
-      0.566
+      0.67,
+      0.639
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.591,
-     "bordaDir": 0.877,
-     "topo": 0.582,
-     "base": 1.09,
-     "areaPct": 4.48,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 46.1,
-     "foraPct": 10.2,
+     "bordaEsq": 0.655,
+     "bordaDir": 0.817,
+     "topo": 0.637,
+     "base": 0.959,
+     "areaPct": 2.18,
+     "silBordaEsq": 0.654,
+     "anguloEixoGraus": 62.41,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.098,
-     "frenteVisivel": 1.036,
-     "trasVisivel": 0.458,
-     "gordura": 0.457,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.058,
+     "trasVisivel": 0.695,
+     "gordura": 0.525,
      "ads": {
-      "areaPct": 2.19,
-      "silBordaEsq": 0.592,
-      "anguloEixoGraus": 84.48,
+      "areaPct": 1.13,
+      "silBordaEsq": 0.619,
+      "anguloEixoGraus": 85.2,
       "gripTela": [
-       0.639,
-       0.815
+       0.657,
+       0.763
       ],
       "bocaTela": [
-       0.612,
-       0.644
+       0.635,
+       0.643
       ],
-      "frenteVisivel": 1.093,
-      "trasVisivel": 1.084,
-      "gordura": 0.388,
+      "frenteVisivel": 1.101,
+      "trasVisivel": 1.038,
+      "gordura": 0.439,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.759,
-      0.889
+      0.751,
+      0.817
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 9.793,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.609,
-      0.597
+      0.67,
+      0.649
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     }
@@ -1142,15 +1146,15 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.48,
+    "dist": 0.596,
     "max": 0.606,
-    "folga": 0.126
+    "folga": 0.01
    },
    "alcanceApoio": null,
    "len": 0.26,
    "gripZ": 0.7,
-   "vm": 1.1,
-   "escalaVM": 0.792,
+   "vm": 0.8,
+   "escalaVM": 0.576,
    "gunSpace": {
     "bboxMin": [
      -0.024,
@@ -1175,122 +1179,122 @@
    },
    "viewSpace": {
     "grip": [
-     0.143,
-     -0.125,
-     -0.405
+     0.18,
+     -0.133,
+     -0.525
     ],
     "boca": [
-     0.071,
-     -0.029,
-     -0.493
+     0.152,
+     -0.083,
+     -0.617
     ],
     "alca": [
-     0.129,
-     -0.041,
-     -0.409
+     0.179,
+     -0.076,
+     -0.548
     ]
    },
-   "coronhaZ": -0.343,
+   "coronhaZ": -0.48,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.129,
-    0.041,
+    -0.179,
+    0.076,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.591,
-     "bordaDir": 0.9,
-     "topo": 0.509,
-     "base": 1.203,
-     "areaPct": 7.17,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 40.72,
-     "foraPct": 20.78,
+     "bordaEsq": 0.671,
+     "bordaDir": 0.813,
+     "topo": 0.632,
+     "base": 1.002,
+     "areaPct": 2.61,
+     "silBordaEsq": 0.67,
+     "anguloEixoGraus": 68.65,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.105,
-     "frenteVisivel": 1.115,
-     "trasVisivel": 0.374,
-     "gordura": 0.556,
+     "fatiaBaixo": 0.035,
+     "frenteVisivel": 1.173,
+     "trasVisivel": 0.841,
+     "gordura": 0.626,
      "ads": {
-      "areaPct": 3.26,
-      "silBordaEsq": 0.592,
-      "anguloEixoGraus": 87.04,
+      "areaPct": 1.38,
+      "silBordaEsq": 0.627,
+      "anguloEixoGraus": 88.03,
       "gripTela": [
-       0.639,
-       0.818
+       0.657,
+       0.768
       ],
       "bocaTela": [
-       0.609,
-       0.638
+       0.637,
+       0.662
       ],
-      "frenteVisivel": 1.35,
-      "trasVisivel": 1.034,
-      "gordura": 0.54,
+      "frenteVisivel": 1.356,
+      "trasVisivel": 1.399,
+      "gordura": 0.515,
       "fatiaDir": 0
      },
      "cruzaDir": false,
      "cruzaBaixo": true,
      "gripTela": [
-      0.759,
-      0.902
+      0.751,
+      0.83
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 10.801,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.606,
-      0.576
+      0.68,
+      0.675
      ],
      "adsAlcaTela": [
-      0.5,
+      0.501,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.591,
-     "bordaDir": 0.9,
-     "topo": 0.55,
-     "base": 1.145,
-     "areaPct": 6.34,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 44.95,
-     "foraPct": 17.01,
+     "bordaEsq": 0.671,
+     "bordaDir": 0.813,
+     "topo": 0.645,
+     "base": 0.965,
+     "areaPct": 2.22,
+     "silBordaEsq": 0.67,
+     "anguloEixoGraus": 68.87,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.105,
-     "frenteVisivel": 1.111,
-     "trasVisivel": 0.424,
-     "gordura": 0.551,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.171,
+     "trasVisivel": 0.843,
+     "gordura": 0.598,
      "ads": {
-      "areaPct": 3.03,
-      "silBordaEsq": 0.592,
-      "anguloEixoGraus": 86.93,
+      "areaPct": 1.19,
+      "silBordaEsq": 0.627,
+      "anguloEixoGraus": 87.44,
       "gripTela": [
-       0.639,
-       0.815
+       0.657,
+       0.763
       ],
       "bocaTela": [
-       0.609,
-       0.651
+       0.637,
+       0.667
       ],
-      "frenteVisivel": 1.335,
-      "trasVisivel": 1.145,
-      "gordura": 0.488,
+      "frenteVisivel": 1.337,
+      "trasVisivel": 1.351,
+      "gordura": 0.487,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.759,
-      0.889
+      0.751,
+      0.817
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 9.793,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.606,
-      0.605
+      0.68,
+      0.681
      ],
      "adsAlcaTela": [
-      0.5,
+      0.501,
       0.5
      ]
     }
@@ -1311,8 +1315,8 @@
    "alcanceApoio": null,
    "len": 0.3,
    "gripZ": 0.6,
-   "vm": 2.2,
-   "escalaVM": 1.584,
+   "vm": 1.15,
+   "escalaVM": 0.828,
    "gunSpace": {
     "bboxMin": [
      -0.013,
@@ -1342,57 +1346,57 @@
      -0.465
     ],
     "boca": [
-     -0.078,
-     -0.04,
-     -0.621
+     0.073,
+     -0.133,
+     -0.595
     ],
     "alca": [
-     0.084,
-     -0.061,
-     -0.504
+     0.13,
+     -0.11,
+     -0.511
     ]
    },
-   "coronhaZ": -0.275,
+   "coronhaZ": -0.366,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.084,
-    0.061,
+    -0.13,
+    0.11,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.405,
-     "bordaDir": 1.103,
-     "topo": 0.581,
-     "base": 1.233,
-     "areaPct": 9.08,
-     "silBordaEsq": 0.404,
-     "anguloEixoGraus": 20.55,
-     "foraPct": 29.62,
-     "fatiaDir": 0.074,
-     "fatiaBaixo": 0.211,
-     "frenteVisivel": 1.012,
-     "trasVisivel": 0.815,
-     "gordura": 0.219,
+     "bordaEsq": 0.588,
+     "bordaDir": 0.875,
+     "topo": 0.776,
+     "base": 0.958,
+     "areaPct": 2.76,
+     "silBordaEsq": 0.588,
+     "anguloEixoGraus": 11.1,
+     "foraPct": 0,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.011,
+     "trasVisivel": 1.113,
+     "gordura": 0.257,
      "ads": {
-      "areaPct": 4.71,
-      "silBordaEsq": 0.615,
-      "anguloEixoGraus": 34.9,
+      "areaPct": 1.5,
+      "silBordaEsq": 0.643,
+      "anguloEixoGraus": 48.41,
       "gripTela": [
        0.687,
        0.824
       ],
       "bocaTela": [
-       0.62,
-       0.689
+       0.645,
+       0.739
       ],
-      "frenteVisivel": 0.999,
-      "trasVisivel": 1.864,
-      "gordura": 0.493,
+      "frenteVisivel": 1.039,
+      "trasVisivel": 1.43,
+      "gordura": 0.458,
       "fatiaDir": 0
      },
-     "cruzaDir": true,
-     "cruzaBaixo": true,
+     "cruzaDir": false,
+     "cruzaBaixo": false,
      "gripTela": [
       0.723,
       0.849
@@ -1400,8 +1404,8 @@
      "bracoBordaDir": 2.127,
      "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.408,
-      0.584
+      0.589,
+      0.792
      ],
      "adsAlcaTela": [
       0.5,
@@ -1409,38 +1413,38 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.405,
-     "bordaDir": 1.103,
-     "topo": 0.601,
-     "base": 1.175,
-     "areaPct": 8.21,
-     "silBordaEsq": 0.404,
-     "anguloEixoGraus": 22.64,
-     "foraPct": 24.92,
-     "fatiaDir": 0.086,
-     "fatiaBaixo": 0.176,
+     "bordaEsq": 0.588,
+     "bordaDir": 0.875,
+     "topo": 0.77,
+     "base": 0.94,
+     "areaPct": 2.38,
+     "silBordaEsq": 0.588,
+     "anguloEixoGraus": 13.78,
+     "foraPct": 0,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0,
      "frenteVisivel": 1.012,
-     "trasVisivel": 0.834,
-     "gordura": 0.211,
+     "trasVisivel": 1.117,
+     "gordura": 0.257,
      "ads": {
-      "areaPct": 4.36,
-      "silBordaEsq": 0.615,
-      "anguloEixoGraus": 42.01,
+      "areaPct": 1.34,
+      "silBordaEsq": 0.643,
+      "anguloEixoGraus": 52.36,
       "gripTela": [
        0.687,
        0.816
       ],
       "bocaTela": [
-       0.62,
-       0.686
+       0.645,
+       0.734
       ],
-      "frenteVisivel": 1.004,
-      "trasVisivel": 1.831,
-      "gordura": 0.455,
+      "frenteVisivel": 1.032,
+      "trasVisivel": 1.402,
+      "gordura": 0.427,
       "fatiaDir": 0
      },
-     "cruzaDir": true,
-     "cruzaBaixo": true,
+     "cruzaDir": false,
+     "cruzaBaixo": false,
      "gripTela": [
       0.723,
       0.838
@@ -1448,8 +1452,8 @@
      "bracoBordaDir": 2.127,
      "bracoBordaBaixo": 10.024,
      "bocaTela": [
-      0.408,
-      0.603
+      0.589,
+      0.781
      ],
      "adsAlcaTela": [
       0.5,
@@ -1982,15 +1986,15 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.48,
+    "dist": 0.596,
     "max": 0.606,
-    "folga": 0.126
+    "folga": 0.01
    },
    "alcanceApoio": null,
    "len": 0.24,
    "gripZ": 0.68,
-   "vm": 1.3,
-   "escalaVM": 0.936,
+   "vm": 0.92,
+   "escalaVM": 0.662,
    "gunSpace": {
     "bboxMin": [
      -0.025,
@@ -2015,122 +2019,122 @@
    },
    "viewSpace": {
     "grip": [
-     0.143,
-     -0.125,
-     -0.405
+     0.18,
+     -0.133,
+     -0.525
     ],
     "boca": [
-     0.065,
-     -0.014,
-     -0.494
+     0.15,
+     -0.074,
+     -0.619
     ],
     "alca": [
-     0.122,
-     -0.042,
-     -0.408
+     0.175,
+     -0.077,
+     -0.548
     ]
    },
-   "coronhaZ": -0.333,
+   "coronhaZ": -0.474,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.122,
-    0.042,
+    -0.175,
+    0.077,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.583,
-     "bordaDir": 0.86,
-     "topo": 0.5,
-     "base": 1.26,
-     "areaPct": 5.79,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 49.1,
-     "foraPct": 27.39,
+     "bordaEsq": 0.669,
+     "bordaDir": 0.801,
+     "topo": 0.633,
+     "base": 1.018,
+     "areaPct": 2.29,
+     "silBordaEsq": 0.67,
+     "anguloEixoGraus": 64.18,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.094,
-     "frenteVisivel": 1.052,
-     "trasVisivel": 0.376,
-     "gordura": 0.418,
+     "fatiaBaixo": 0.051,
+     "frenteVisivel": 1.08,
+     "trasVisivel": 0.86,
+     "gordura": 0.464,
      "ads": {
-      "areaPct": 3.22,
-      "silBordaEsq": 0.588,
-      "anguloEixoGraus": 81.15,
+      "areaPct": 1.36,
+      "silBordaEsq": 0.627,
+      "anguloEixoGraus": 83.91,
       "gripTela": [
-       0.639,
-       0.818
+       0.657,
+       0.768
       ],
       "bocaTela": [
-       0.606,
-       0.607
+       0.636,
+       0.644
       ],
-      "frenteVisivel": 1.169,
-      "trasVisivel": 0.911,
-      "gordura": 0.425,
+      "frenteVisivel": 1.162,
+      "trasVisivel": 1.277,
+      "gordura": 0.408,
       "fatiaDir": 0
      },
      "cruzaDir": false,
      "cruzaBaixo": true,
      "gripTela": [
-      0.759,
-      0.902
+      0.751,
+      0.83
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 10.801,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 12.234,
      "bocaTela": [
-      0.597,
-      0.537
+      0.678,
+      0.656
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.583,
-     "bordaDir": 0.86,
-     "topo": 0.542,
-     "base": 1.195,
-     "areaPct": 5.12,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 51.19,
-     "foraPct": 24.02,
+     "bordaEsq": 0.669,
+     "bordaDir": 0.801,
+     "topo": 0.645,
+     "base": 0.979,
+     "areaPct": 2.01,
+     "silBordaEsq": 0.67,
+     "anguloEixoGraus": 65.33,
+     "foraPct": 0,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.094,
-     "frenteVisivel": 1.056,
-     "trasVisivel": 0.431,
-     "gordura": 0.385,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.08,
+     "trasVisivel": 0.891,
+     "gordura": 0.436,
      "ads": {
-      "areaPct": 3.03,
-      "silBordaEsq": 0.588,
-      "anguloEixoGraus": 82.09,
+      "areaPct": 1.18,
+      "silBordaEsq": 0.627,
+      "anguloEixoGraus": 83.84,
       "gripTela": [
-       0.639,
-       0.815
+       0.657,
+       0.763
       ],
       "bocaTela": [
-       0.606,
-       0.625
+       0.636,
+       0.652
       ],
-      "frenteVisivel": 1.149,
-      "trasVisivel": 1.01,
-      "gordura": 0.394,
+      "frenteVisivel": 1.151,
+      "trasVisivel": 1.248,
+      "gordura": 0.389,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.759,
-      0.889
+      0.751,
+      0.817
      ],
-     "bracoBordaDir": 2.146,
-     "bracoBordaBaixo": 9.793,
+     "bracoBordaDir": 2.349,
+     "bracoBordaBaixo": 11.066,
      "bocaTela": [
-      0.597,
-      0.572
+      0.678,
+      0.665
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     }
@@ -2494,13 +2498,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.629,
+    "dist": 0.634,
     "max": 0.577,
-    "folga": -0.052,
+    "folga": -0.057,
     "guardaMao": [
-     0.202,
-     -0.149,
-     -0.54
+     0.211,
+     -0.147,
+     -0.541
     ]
    },
    "len": 0.92,
@@ -2536,54 +2540,54 @@
      -0.503
     ],
     "boca": [
-     0.133,
-     -0.056,
-     -0.832
+     0.116,
+     -0.066,
+     -0.83
     ],
     "alca": [
-     0.185,
-     -0.022,
-     -0.586
+     0.125,
+     -0.047,
+     -0.577
     ]
    },
    "coronhaZ": -0.289,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.185,
-    0.022,
+    -0.125,
+    0.047,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.609,
-     "bordaDir": 1.165,
-     "topo": 0.563,
-     "base": 1.408,
-     "areaPct": 7.95,
-     "silBordaEsq": 0.611,
-     "anguloEixoGraus": 37.44,
-     "foraPct": 45.2,
-     "fatiaDir": 0.074,
-     "fatiaBaixo": 0.277,
-     "frenteVisivel": 1.029,
-     "trasVisivel": 0.8,
-     "gordura": 0.547,
+     "bordaEsq": 0.594,
+     "bordaDir": 1.164,
+     "topo": 0.591,
+     "base": 1.399,
+     "areaPct": 5.32,
+     "silBordaEsq": 0.596,
+     "anguloEixoGraus": 36.17,
+     "foraPct": 49.02,
+     "fatiaDir": 0.008,
+     "fatiaBaixo": 0.195,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.781,
+     "gordura": 0.286,
      "ads": {
-      "areaPct": 7.17,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 36.71,
+      "areaPct": 4.75,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 36.96,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.657,
-       0.655
+       0.642,
+       0.67
       ],
-      "frenteVisivel": 1.054,
-      "trasVisivel": 1.422,
-      "gordura": 0.593,
-      "fatiaDir": 0.051
+      "frenteVisivel": 1.055,
+      "trasVisivel": 1.271,
+      "gordura": 0.341,
+      "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -2594,44 +2598,44 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.617,
-      0.588
+      0.602,
+      0.604
      ],
      "adsAlcaTela": [
-      0.499,
+      0.501,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.609,
-     "bordaDir": 1.165,
-     "topo": 0.587,
-     "base": 1.334,
-     "areaPct": 7.34,
-     "silBordaEsq": 0.611,
-     "anguloEixoGraus": 41.93,
-     "foraPct": 40.68,
-     "fatiaDir": 0.086,
-     "fatiaBaixo": 0.262,
+     "bordaEsq": 0.594,
+     "bordaDir": 1.164,
+     "topo": 0.601,
+     "base": 1.326,
+     "areaPct": 4.87,
+     "silBordaEsq": 0.596,
+     "anguloEixoGraus": 38.62,
+     "foraPct": 44.08,
+     "fatiaDir": 0.027,
+     "fatiaBaixo": 0.172,
      "frenteVisivel": 1.028,
-     "trasVisivel": 0.834,
-     "gordura": 0.529,
+     "trasVisivel": 0.826,
+     "gordura": 0.274,
      "ads": {
-      "areaPct": 6.71,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 42.12,
+      "areaPct": 4.26,
+      "silBordaEsq": 0.635,
+      "anguloEixoGraus": 40.86,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.657,
-       0.655
+       0.642,
+       0.667
       ],
-      "frenteVisivel": 1.053,
-      "trasVisivel": 1.444,
-      "gordura": 0.578,
-      "fatiaDir": 0.043
+      "frenteVisivel": 1.048,
+      "trasVisivel": 1.323,
+      "gordura": 0.318,
+      "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -2642,11 +2646,11 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.617,
-      0.599
+      0.602,
+      0.613
      ],
      "adsAlcaTela": [
-      0.499,
+      0.501,
       0.5
      ]
     }
@@ -2666,13 +2670,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.636,
+    "dist": 0.64,
     "max": 0.577,
-    "folga": -0.059,
+    "folga": -0.063,
     "guardaMao": [
-     0.2,
-     -0.145,
-     -0.547
+     0.207,
+     -0.143,
+     -0.549
     ]
    },
    "len": 1.2,
@@ -2708,53 +2712,53 @@
      -0.503
     ],
     "boca": [
-     0.111,
-     -0.033,
-     -0.907
+     0.089,
+     -0.049,
+     -0.904
     ],
     "alca": [
-     0.175,
-     -0.039,
-     -0.612
+     0.129,
+     -0.062,
+     -0.605
     ]
    },
    "coronhaZ": -0.282,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.175,
-    0.039,
+    -0.129,
+    0.062,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.586,
-     "bordaDir": 1.147,
-     "topo": 0.524,
-     "base": 1.578,
-     "areaPct": 4.41,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 44.47,
-     "foraPct": 63.82,
+     "bordaEsq": 0.565,
+     "bordaDir": 1.184,
+     "topo": 0.551,
+     "base": 1.535,
+     "areaPct": 3.14,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 38.91,
+     "foraPct": 65.13,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.094,
-     "frenteVisivel": 1.022,
-     "trasVisivel": 0.482,
-     "gordura": 0.334,
+     "fatiaBaixo": 0.082,
+     "frenteVisivel": 1.036,
+     "trasVisivel": 0.451,
+     "gordura": 0.214,
      "ads": {
-      "areaPct": 3.5,
-      "silBordaEsq": 0.635,
-      "anguloEixoGraus": 53.76,
+      "areaPct": 2.58,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 42.78,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.639,
-       0.627
+       0.622,
+       0.648
       ],
-      "frenteVisivel": 1.053,
-      "trasVisivel": 0.824,
-      "gordura": 0.423,
+      "frenteVisivel": 1.067,
+      "trasVisivel": 0.815,
+      "gordura": 0.284,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -2766,43 +2770,43 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.589,
-      0.548
+      0.572,
+      0.571
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.586,
-     "bordaDir": 1.147,
-     "topo": 0.543,
-     "base": 1.476,
-     "areaPct": 4.1,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 46.93,
-     "foraPct": 60.79,
+     "bordaEsq": 0.565,
+     "bordaDir": 1.184,
+     "topo": 0.566,
+     "base": 1.438,
+     "areaPct": 2.87,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 40.98,
+     "foraPct": 61.98,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.105,
-     "frenteVisivel": 1.021,
-     "trasVisivel": 0.586,
-     "gordura": 0.298,
+     "fatiaBaixo": 0.09,
+     "frenteVisivel": 1.038,
+     "trasVisivel": 0.565,
+     "gordura": 0.207,
      "ads": {
-      "areaPct": 3.33,
-      "silBordaEsq": 0.635,
-      "anguloEixoGraus": 55.69,
+      "areaPct": 2.43,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 45.29,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.639,
-       0.629
+       0.622,
+       0.646
       ],
-      "frenteVisivel": 1.047,
-      "trasVisivel": 0.94,
-      "gordura": 0.393,
+      "frenteVisivel": 1.061,
+      "trasVisivel": 0.931,
+      "gordura": 0.281,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -2814,11 +2818,11 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.589,
-      0.563
+      0.572,
+      0.582
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     }
@@ -2838,13 +2842,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.636,
+    "dist": 0.64,
     "max": 0.577,
-    "folga": -0.059,
+    "folga": -0.063,
     "guardaMao": [
-     0.2,
-     -0.145,
-     -0.547
+     0.207,
+     -0.144,
+     -0.548
     ]
    },
    "len": 1.15,
@@ -2880,53 +2884,53 @@
      -0.503
     ],
     "boca": [
-     0.112,
-     -0.032,
-     -0.903
+     0.088,
+     -0.048,
+     -0.9
     ],
     "alca": [
-     0.176,
-     -0.028,
-     -0.609
+     0.123,
+     -0.053,
+     -0.602
     ]
    },
    "coronhaZ": -0.283,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.176,
-    0.028,
+    -0.123,
+    0.053,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.584,
-     "bordaDir": 1.153,
-     "topo": 0.534,
-     "base": 1.624,
-     "areaPct": 5.89,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 45.48,
-     "foraPct": 62.82,
+     "bordaEsq": 0.565,
+     "bordaDir": 1.198,
+     "topo": 0.557,
+     "base": 1.569,
+     "areaPct": 4.23,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 39.28,
+     "foraPct": 63.87,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.113,
-     "frenteVisivel": 1.025,
-     "trasVisivel": 0.482,
-     "gordura": 0.398,
+     "fatiaBaixo": 0.102,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.484,
+     "gordura": 0.237,
      "ads": {
-      "areaPct": 4.54,
-      "silBordaEsq": 0.635,
-      "anguloEixoGraus": 56.56,
+      "areaPct": 3.37,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 43.15,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.64,
-       0.625
+       0.622,
+       0.646
       ],
-      "frenteVisivel": 1.043,
-      "trasVisivel": 0.855,
-      "gordura": 0.5,
+      "frenteVisivel": 1.041,
+      "trasVisivel": 0.863,
+      "gordura": 0.311,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -2938,8 +2942,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.591,
-      0.546
+      0.572,
+      0.569
      ],
      "adsAlcaTela": [
       0.5,
@@ -2947,34 +2951,34 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.584,
-     "bordaDir": 1.153,
-     "topo": 0.552,
-     "base": 1.516,
-     "areaPct": 5.43,
-     "silBordaEsq": 0.584,
-     "anguloEixoGraus": 48.57,
-     "foraPct": 59.98,
+     "bordaEsq": 0.565,
+     "bordaDir": 1.198,
+     "topo": 0.57,
+     "base": 1.467,
+     "areaPct": 3.85,
+     "silBordaEsq": 0.564,
+     "anguloEixoGraus": 41.45,
+     "foraPct": 60.79,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.129,
-     "frenteVisivel": 1.025,
+     "fatiaBaixo": 0.105,
+     "frenteVisivel": 1.027,
      "trasVisivel": 0.586,
-     "gordura": 0.362,
+     "gordura": 0.225,
      "ads": {
-      "areaPct": 4.33,
-      "silBordaEsq": 0.635,
-      "anguloEixoGraus": 58.32,
+      "areaPct": 3.16,
+      "silBordaEsq": 0.615,
+      "anguloEixoGraus": 45.51,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.64,
-       0.627
+       0.622,
+       0.645
       ],
-      "frenteVisivel": 1.041,
-      "trasVisivel": 0.968,
-      "gordura": 0.474,
+      "frenteVisivel": 1.04,
+      "trasVisivel": 0.99,
+      "gordura": 0.299,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -2986,8 +2990,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.591,
-      0.562
+      0.572,
+      0.581
      ],
      "adsAlcaTela": [
       0.5,
@@ -3692,19 +3696,19 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.603,
+    "dist": 0.785,
     "max": 0.606,
-    "folga": 0.003
+    "folga": -0.179
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.635,
+    "dist": 0.818,
     "max": 0.577,
-    "folga": -0.058,
+    "folga": -0.241,
     "guardaMao": [
-     0.21,
-     -0.146,
-     -0.543
+     0.275,
+     -0.16,
+     -0.721
     ]
    },
    "len": 0.47,
@@ -3735,71 +3739,71 @@
    },
    "viewSpace": {
     "grip": [
-     0.219,
-     -0.142,
-     -0.525
+     0.283,
+     -0.156,
+     -0.703
     ],
     "boca": [
-     0.149,
-     -0.031,
-     -0.632
+     0.213,
+     -0.046,
+     -0.81
     ],
     "alca": [
-     0.204,
-     -0.038,
-     -0.529
+     0.268,
+     -0.052,
+     -0.708
     ]
    },
-   "coronhaZ": -0.41,
+   "coronhaZ": -0.588,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.204,
-    0.038,
+    -0.268,
+    0.052,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.667,
-     "bordaDir": 0.992,
-     "topo": 0.531,
-     "base": 1.113,
-     "areaPct": 7.06,
-     "silBordaEsq": 0.666,
-     "anguloEixoGraus": 33.4,
-     "foraPct": 6.56,
-     "fatiaDir": 0.02,
-     "fatiaBaixo": 0.246,
-     "frenteVisivel": 1.024,
-     "trasVisivel": 0.843,
-     "gordura": 0.672,
+     "bordaEsq": 0.689,
+     "bordaDir": 0.925,
+     "topo": 0.548,
+     "base": 0.968,
+     "areaPct": 4.14,
+     "silBordaEsq": 0.689,
+     "anguloEixoGraus": 39.3,
+     "foraPct": 0,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.025,
+     "trasVisivel": 0.875,
+     "gordura": 0.646,
      "ads": {
-      "areaPct": 4.38,
-      "silBordaEsq": 0.674,
-      "anguloEixoGraus": 77.91,
+      "areaPct": 2.54,
+      "silBordaEsq": 0.693,
+      "anguloEixoGraus": 82.58,
       "gripTela": [
-       0.745,
-       0.815
+       0.75,
+       0.764
       ],
       "bocaTela": [
-       0.696,
-       0.643
+       0.709,
+       0.635
       ],
-      "frenteVisivel": 1.268,
-      "trasVisivel": 1.049,
-      "gordura": 0.743,
+      "frenteVisivel": 1.259,
+      "trasVisivel": 0.962,
+      "gordura": 0.803,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.806,
-      0.851
+      0.795,
+      0.788
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 12.279,
+     "bracoBordaDir": 2.179,
+     "bracoBordaBaixo": 10.342,
      "bocaTela": [
-      0.672,
-      0.565
+      0.692,
+      0.573
      ],
      "adsAlcaTela": [
       0.5,
@@ -3807,46 +3811,46 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.667,
-     "bordaDir": 0.992,
-     "topo": 0.561,
-     "base": 1.063,
-     "areaPct": 6.24,
-     "silBordaEsq": 0.666,
-     "anguloEixoGraus": 36.66,
-     "foraPct": 2.51,
-     "fatiaDir": 0.016,
-     "fatiaBaixo": 0.055,
-     "frenteVisivel": 1.024,
-     "trasVisivel": 0.885,
-     "gordura": 0.637,
+     "bordaEsq": 0.689,
+     "bordaDir": 0.925,
+     "topo": 0.567,
+     "base": 0.927,
+     "areaPct": 3.5,
+     "silBordaEsq": 0.689,
+     "anguloEixoGraus": 40.15,
+     "foraPct": 0,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0,
+     "frenteVisivel": 1.021,
+     "trasVisivel": 0.876,
+     "gordura": 0.629,
      "ads": {
-      "areaPct": 3.83,
-      "silBordaEsq": 0.674,
-      "anguloEixoGraus": 79.3,
+      "areaPct": 2.17,
+      "silBordaEsq": 0.693,
+      "anguloEixoGraus": 80.98,
       "gripTela": [
-       0.745,
-       0.802
+       0.75,
+       0.75
       ],
       "bocaTela": [
-       0.696,
-       0.649
+       0.709,
+       0.636
       ],
-      "frenteVisivel": 1.24,
-      "trasVisivel": 1.049,
-      "gordura": 0.71,
+      "frenteVisivel": 1.26,
+      "trasVisivel": 0.957,
+      "gordura": 0.766,
       "fatiaDir": 0
      },
      "cruzaDir": false,
-     "cruzaBaixo": true,
+     "cruzaBaixo": false,
      "gripTela": [
-      0.806,
-      0.835
+      0.795,
+      0.772
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 11.104,
+     "bracoBordaDir": 2.179,
+     "bracoBordaBaixo": 9.351,
      "bocaTela": [
-      0.672,
+      0.692,
       0.587
      ],
      "adsAlcaTela": [
@@ -3864,19 +3868,19 @@
     "canoEmZmais": true
    },
    "alcanceBraco": {
-    "dist": 0.603,
+    "dist": 0.688,
     "max": 0.606,
-    "folga": 0.003
+    "folga": -0.082
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.643,
+    "dist": 0.729,
     "max": 0.577,
-    "folga": -0.066,
+    "folga": -0.152,
     "guardaMao": [
-     0.205,
-     -0.157,
-     -0.556
+     0.235,
+     -0.163,
+     -0.64
     ]
    },
    "len": 0.52,
@@ -3907,122 +3911,122 @@
    },
    "viewSpace": {
     "grip": [
-     0.219,
-     -0.142,
-     -0.525
+     0.249,
+     -0.148,
+     -0.609
     ],
     "boca": [
-     0.102,
-     -0.054,
-     -0.728
+     0.132,
+     -0.061,
+     -0.812
     ],
     "alca": [
-     0.19,
-     -0.043,
-     -0.557
+     0.22,
+     -0.05,
+     -0.641
     ]
    },
-   "coronhaZ": -0.319,
+   "coronhaZ": -0.403,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.19,
-    0.043,
+    -0.22,
+    0.05,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.591,
-     "bordaDir": 1.188,
-     "topo": 0.462,
-     "base": 1.479,
-     "areaPct": 9.79,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 35.65,
-     "foraPct": 51.82,
-     "fatiaDir": 0.059,
-     "fatiaBaixo": 0.266,
-     "frenteVisivel": 1.04,
-     "trasVisivel": 0.825,
-     "gordura": 0.446,
+     "bordaEsq": 0.609,
+     "bordaDir": 1.107,
+     "topo": 0.479,
+     "base": 1.321,
+     "areaPct": 8.92,
+     "silBordaEsq": 0.607,
+     "anguloEixoGraus": 35.9,
+     "foraPct": 38.1,
+     "fatiaDir": 0.07,
+     "fatiaBaixo": 0.234,
+     "frenteVisivel": 1.042,
+     "trasVisivel": 1.011,
+     "gordura": 0.419,
      "ads": {
-      "areaPct": 6.91,
-      "silBordaEsq": 0.658,
-      "anguloEixoGraus": 32.62,
+      "areaPct": 6.2,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 39.7,
       "gripTela": [
-       0.745,
-       0.815
+       0.748,
+       0.787
       ],
       "bocaTela": [
-       0.67,
-       0.722
+       0.679,
+       0.711
       ],
-      "frenteVisivel": 1.431,
-      "trasVisivel": 2.331,
-      "gordura": 0.585,
+      "frenteVisivel": 1.393,
+      "trasVisivel": 2.264,
+      "gordura": 0.653,
       "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
      "gripTela": [
-      0.806,
-      0.851
+      0.8,
+      0.817
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 12.279,
+     "bracoBordaDir": 2.041,
+     "bracoBordaBaixo": 9.385,
      "bocaTela": [
-      0.603,
+      0.619,
       0.597
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.591,
-     "bordaDir": 1.188,
-     "topo": 0.5,
-     "base": 1.38,
-     "areaPct": 9.21,
-     "silBordaEsq": 0.592,
-     "anguloEixoGraus": 38.67,
-     "foraPct": 46.49,
-     "fatiaDir": 0.082,
-     "fatiaBaixo": 0.238,
-     "frenteVisivel": 1.039,
-     "trasVisivel": 0.868,
-     "gordura": 0.437,
+     "bordaEsq": 0.609,
+     "bordaDir": 1.107,
+     "topo": 0.51,
+     "base": 1.236,
+     "areaPct": 8.39,
+     "silBordaEsq": 0.607,
+     "anguloEixoGraus": 38.73,
+     "foraPct": 31.27,
+     "fatiaDir": 0.098,
+     "fatiaBaixo": 0.188,
+     "frenteVisivel": 1.037,
+     "trasVisivel": 1.071,
+     "gordura": 0.4,
      "ads": {
-      "areaPct": 6.62,
-      "silBordaEsq": 0.658,
-      "anguloEixoGraus": 40.08,
+      "areaPct": 5.77,
+      "silBordaEsq": 0.67,
+      "anguloEixoGraus": 46.67,
       "gripTela": [
-       0.745,
-       0.802
+       0.748,
+       0.774
       ],
       "bocaTela": [
-       0.67,
-       0.713
+       0.679,
+       0.701
       ],
-      "frenteVisivel": 1.452,
-      "trasVisivel": 2.354,
-      "gordura": 0.562,
+      "frenteVisivel": 1.422,
+      "trasVisivel": 2.405,
+      "gordura": 0.58,
       "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
      "gripTela": [
-      0.806,
-      0.835
+      0.8,
+      0.801
      ],
-     "bracoBordaDir": 2.462,
-     "bracoBordaBaixo": 11.104,
+     "bracoBordaDir": 2.041,
+     "bracoBordaBaixo": 8.497,
      "bocaTela": [
-      0.603,
-      0.61
+      0.619,
+      0.607
      ],
      "adsAlcaTela": [
-      0.499,
+      0.5,
       0.5
      ]
     }
@@ -4042,13 +4046,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.636,
+    "dist": 0.641,
     "max": 0.577,
-    "folga": -0.059,
+    "folga": -0.064,
     "guardaMao": [
-     0.202,
-     -0.149,
-     -0.547
+     0.211,
+     -0.145,
+     -0.549
     ]
    },
    "len": 1.15,
@@ -4084,54 +4088,54 @@
      -0.503
     ],
     "boca": [
-     0.131,
-     -0.061,
-     -0.905
+     0.121,
+     -0.06,
+     -0.903
     ],
     "alca": [
-     0.195,
-     -0.052,
-     -0.615
+     0.153,
+     -0.061,
+     -0.607
     ]
    },
    "coronhaZ": -0.264,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.195,
-    0.052,
+    -0.153,
+    0.061,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.599,
-     "bordaDir": 1.244,
-     "topo": 0.563,
-     "base": 1.561,
-     "areaPct": 5.94,
-     "silBordaEsq": 0.6,
-     "anguloEixoGraus": 32.42,
-     "foraPct": 62.93,
-     "fatiaDir": 0.02,
-     "fatiaBaixo": 0.227,
-     "frenteVisivel": 1.024,
-     "trasVisivel": 0.777,
-     "gordura": 0.423,
+     "bordaEsq": 0.592,
+     "bordaDir": 1.269,
+     "topo": 0.569,
+     "base": 1.514,
+     "areaPct": 4.55,
+     "silBordaEsq": 0.592,
+     "anguloEixoGraus": 33.43,
+     "foraPct": 62.63,
+     "fatiaDir": 0.016,
+     "fatiaBaixo": 0.133,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.761,
+     "gordura": 0.235,
      "ads": {
-      "areaPct": 5.27,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 36.63,
+      "areaPct": 4.11,
+      "silBordaEsq": 0.639,
+      "anguloEixoGraus": 34.61,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.655,
-       0.666
+       0.647,
+       0.664
       ],
-      "frenteVisivel": 1.034,
-      "trasVisivel": 1.443,
-      "gordura": 0.505,
-      "fatiaDir": 0
+      "frenteVisivel": 1.081,
+      "trasVisivel": 1.431,
+      "gordura": 0.256,
+      "fatiaDir": 0.004
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -4142,8 +4146,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.606,
-      0.587
+      0.598,
+      0.586
      ],
      "adsAlcaTela": [
       0.5,
@@ -4151,35 +4155,35 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.599,
-     "bordaDir": 1.244,
-     "topo": 0.577,
-     "base": 1.467,
-     "areaPct": 5.53,
-     "silBordaEsq": 0.6,
-     "anguloEixoGraus": 36.87,
-     "foraPct": 59.85,
-     "fatiaDir": 0.043,
-     "fatiaBaixo": 0.137,
-     "frenteVisivel": 1.025,
-     "trasVisivel": 0.807,
-     "gordura": 0.402,
+     "bordaEsq": 0.592,
+     "bordaDir": 1.269,
+     "topo": 0.582,
+     "base": 1.426,
+     "areaPct": 4.15,
+     "silBordaEsq": 0.592,
+     "anguloEixoGraus": 36.17,
+     "foraPct": 59.19,
+     "fatiaDir": 0.035,
+     "fatiaBaixo": 0.109,
+     "frenteVisivel": 1.023,
+     "trasVisivel": 0.791,
+     "gordura": 0.213,
      "ads": {
-      "areaPct": 4.93,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 41.91,
+      "areaPct": 3.74,
+      "silBordaEsq": 0.639,
+      "anguloEixoGraus": 38.02,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.655,
-       0.662
+       0.647,
+       0.66
       ],
-      "frenteVisivel": 1.035,
-      "trasVisivel": 1.438,
-      "gordura": 0.463,
-      "fatiaDir": 0
+      "frenteVisivel": 1.076,
+      "trasVisivel": 1.479,
+      "gordura": 0.228,
+      "fatiaDir": 0.016
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -4190,8 +4194,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.606,
-      0.596
+      0.598,
+      0.595
      ],
      "adsAlcaTela": [
       0.5,
@@ -4214,13 +4218,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.628,
+    "dist": 0.632,
     "max": 0.577,
-    "folga": -0.051,
+    "folga": -0.055,
     "guardaMao": [
-     0.203,
-     -0.148,
-     -0.538
+     0.211,
+     -0.146,
+     -0.539
     ]
    },
    "len": 1.12,
@@ -4256,54 +4260,54 @@
      -0.503
     ],
     "boca": [
-     0.14,
-     -0.073,
-     -0.819
+     0.131,
+     -0.078,
+     -0.818
     ],
     "alca": [
-     0.192,
-     -0.044,
-     -0.586
+     0.145,
+     -0.06,
+     -0.578
     ]
    },
    "coronhaZ": -0.262,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.192,
-    0.044,
+    -0.145,
+    0.06,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.62,
-     "bordaDir": 1.228,
-     "topo": 0.592,
-     "base": 1.548,
-     "areaPct": 6.58,
-     "silBordaEsq": 0.619,
-     "anguloEixoGraus": 37.09,
-     "foraPct": 57.37,
-     "fatiaDir": 0.023,
-     "fatiaBaixo": 0.25,
-     "frenteVisivel": 1.035,
-     "trasVisivel": 0.864,
-     "gordura": 0.477,
+     "bordaEsq": 0.611,
+     "bordaDir": 1.247,
+     "topo": 0.609,
+     "base": 1.51,
+     "areaPct": 4.21,
+     "silBordaEsq": 0.611,
+     "anguloEixoGraus": 37.15,
+     "foraPct": 60,
+     "fatiaDir": 0,
+     "fatiaBaixo": 0.164,
+     "frenteVisivel": 1.027,
+     "trasVisivel": 0.816,
+     "gordura": 0.276,
      "ads": {
-      "areaPct": 5.71,
-      "silBordaEsq": 0.658,
-      "anguloEixoGraus": 38.78,
+      "areaPct": 3.85,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 37.59,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.664,
-       0.681
+       0.656,
+       0.688
       ],
-      "frenteVisivel": 1.058,
-      "trasVisivel": 1.654,
-      "gordura": 0.533,
-      "fatiaDir": 0.027
+      "frenteVisivel": 1.087,
+      "trasVisivel": 1.459,
+      "gordura": 0.313,
+      "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -4314,8 +4318,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.625,
-      0.616
+      0.617,
+      0.624
      ],
      "adsAlcaTela": [
       0.5,
@@ -4323,35 +4327,35 @@
      ]
     },
     "3:2": {
-     "bordaEsq": 0.62,
-     "bordaDir": 1.228,
-     "topo": 0.606,
-     "base": 1.457,
-     "areaPct": 6.15,
-     "silBordaEsq": 0.619,
-     "anguloEixoGraus": 41.24,
-     "foraPct": 53.31,
-     "fatiaDir": 0.043,
-     "fatiaBaixo": 0.234,
-     "frenteVisivel": 1.034,
-     "trasVisivel": 0.899,
-     "gordura": 0.468,
+     "bordaEsq": 0.611,
+     "bordaDir": 1.247,
+     "topo": 0.619,
+     "base": 1.424,
+     "areaPct": 3.81,
+     "silBordaEsq": 0.611,
+     "anguloEixoGraus": 38.97,
+     "foraPct": 56.17,
+     "fatiaDir": 0.016,
+     "fatiaBaixo": 0.129,
+     "frenteVisivel": 1.03,
+     "trasVisivel": 0.891,
+     "gordura": 0.248,
      "ads": {
-      "areaPct": 5.35,
-      "silBordaEsq": 0.658,
-      "anguloEixoGraus": 43.27,
+      "areaPct": 3.43,
+      "silBordaEsq": 0.65,
+      "anguloEixoGraus": 40.92,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.664,
-       0.676
+       0.656,
+       0.682
       ],
-      "frenteVisivel": 1.048,
-      "trasVisivel": 1.666,
-      "gordura": 0.504,
-      "fatiaDir": 0.031
+      "frenteVisivel": 1.083,
+      "trasVisivel": 1.507,
+      "gordura": 0.269,
+      "fatiaDir": 0
      },
      "cruzaDir": true,
      "cruzaBaixo": true,
@@ -4362,8 +4366,8 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.625,
-      0.623
+      0.617,
+      0.629
      ],
      "adsAlcaTela": [
       0.5,
@@ -4386,13 +4390,13 @@
    },
    "alcanceApoio": {
     "foreT": 0.11,
-    "dist": 0.63,
+    "dist": 0.635,
     "max": 0.577,
-    "folga": -0.053,
+    "folga": -0.058,
     "guardaMao": [
-     0.201,
-     -0.15,
-     -0.541
+     0.211,
+     -0.147,
+     -0.543
     ]
    },
    "len": 1.02,
@@ -4428,53 +4432,53 @@
      -0.503
     ],
     "boca": [
-     0.13,
-     -0.066,
-     -0.846
+     0.121,
+     -0.074,
+     -0.845
     ],
     "alca": [
-     0.185,
-     -0.087,
-     -0.601
+     0.165,
+     -0.097,
+     -0.598
     ]
    },
    "coronhaZ": -0.259,
    "anguloCanoGraus": 12.41,
    "adsDelta": [
-    -0.185,
-    0.087,
+    -0.165,
+    0.097,
     0.02
    ],
    "aspectos": {
     "16:9": {
-     "bordaEsq": 0.607,
-     "bordaDir": 1.224,
-     "topo": 0.562,
-     "base": 1.624,
-     "areaPct": 4.92,
-     "silBordaEsq": 0.607,
-     "anguloEixoGraus": 31.99,
-     "foraPct": 62.35,
+     "bordaEsq": 0.591,
+     "bordaDir": 1.253,
+     "topo": 0.58,
+     "base": 1.571,
+     "areaPct": 3.3,
+     "silBordaEsq": 0.592,
+     "anguloEixoGraus": 34.26,
+     "foraPct": 63.96,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.102,
-     "frenteVisivel": 1.057,
-     "trasVisivel": 0.621,
-     "gordura": 0.375,
+     "fatiaBaixo": 0.086,
+     "frenteVisivel": 1.081,
+     "trasVisivel": 0.603,
+     "gordura": 0.215,
      "ads": {
-      "areaPct": 3.71,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 44.52,
+      "areaPct": 2.52,
+      "silBordaEsq": 0.631,
+      "anguloEixoGraus": 39.65,
       "gripTela": [
        0.772,
        0.839
       ],
       "bocaTela": [
-       0.655,
-       0.671
+       0.647,
+       0.682
       ],
-      "frenteVisivel": 1.101,
-      "trasVisivel": 1.062,
-      "gordura": 0.459,
+      "frenteVisivel": 1.143,
+      "trasVisivel": 1.044,
+      "gordura": 0.264,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -4486,43 +4490,43 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 9.704,
      "bocaTela": [
-      0.613,
-      0.602
+      0.604,
+      0.614
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     },
     "3:2": {
-     "bordaEsq": 0.607,
-     "bordaDir": 1.224,
-     "topo": 0.576,
-     "base": 1.52,
-     "areaPct": 4.5,
-     "silBordaEsq": 0.607,
-     "anguloEixoGraus": 36.69,
-     "foraPct": 59.63,
+     "bordaEsq": 0.591,
+     "bordaDir": 1.253,
+     "topo": 0.592,
+     "base": 1.474,
+     "areaPct": 2.98,
+     "silBordaEsq": 0.592,
+     "anguloEixoGraus": 37.41,
+     "foraPct": 61.18,
      "fatiaDir": 0,
-     "fatiaBaixo": 0.113,
-     "frenteVisivel": 1.062,
-     "trasVisivel": 0.688,
-     "gordura": 0.342,
+     "fatiaBaixo": 0.078,
+     "frenteVisivel": 1.078,
+     "trasVisivel": 0.694,
+     "gordura": 0.186,
      "ads": {
-      "areaPct": 3.46,
-      "silBordaEsq": 0.65,
-      "anguloEixoGraus": 48.63,
+      "areaPct": 2.3,
+      "silBordaEsq": 0.631,
+      "anguloEixoGraus": 42.83,
       "gripTela": [
        0.772,
        0.825
       ],
       "bocaTela": [
-       0.655,
-       0.668
+       0.647,
+       0.677
       ],
-      "frenteVisivel": 1.097,
-      "trasVisivel": 1.172,
-      "gordura": 0.408,
+      "frenteVisivel": 1.137,
+      "trasVisivel": 1.194,
+      "gordura": 0.235,
       "fatiaDir": 0
      },
      "cruzaDir": true,
@@ -4534,11 +4538,11 @@
      "bracoBordaDir": 2.09,
      "bracoBordaBaixo": 8.792,
      "bocaTela": [
-      0.613,
-      0.61
+      0.604,
+      0.62
      ],
      "adsAlcaTela": [
-      0.501,
+      0.5,
       0.5
      ]
     }
@@ -4565,38 +4569,61 @@
   "alcanceL": 0.6136713361553475
  },
  "reprovacoes": [
-  "awp 16:9: fatia na borda direita 0.008 (ref 0,053-0,095)",
-  "awp 3:2: eixo 43.22° (ref CS 27,3° e 34,8°)",
-  "deagle 16:9: eixo 42.38° (ref CS 27,3° e 34,8°)",
+  "awp 16:9: fatia na borda direita 0.012 (ref 0,053-0,095)",
+  "mp5 16:9: borda esq da silhueta 0.604 (ref 0,520-0,565)",
+  "mp5 3:2: borda esq da silhueta 0.604 (ref 0,520-0,565)",
+  "deagle 16:9: borda esq da silhueta 0.654 (ref 0,520-0,565)",
+  "deagle 16:9: eixo 61.86° (ref CS 27,3° e 34,8°)",
   "deagle 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "deagle 3:2: eixo 46.1° (ref CS 27,3° e 34,8°)",
+  "deagle 16:9: área 2.54% (alvo 4-16, ref 9,76-13,09; gordura 0.547)",
+  "deagle 16:9: boca a 0.333 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "deagle 3:2: borda esq da silhueta 0.654 (ref 0,520-0,565)",
+  "deagle 3:2: eixo 62.41° (ref CS 27,3° e 34,8°)",
   "deagle 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
+  "deagle 3:2: área 2.18% (alvo 4-16, ref 9,76-13,09; gordura 0.525)",
+  "deagle 3:2: boca a 0.295 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "pistol 16:9: borda esq da silhueta 0.67 (ref 0,520-0,565)",
+  "pistol 16:9: eixo 68.65° (ref CS 27,3° e 34,8°)",
   "pistol 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "pistol 3:2: eixo 44.95° (ref CS 27,3° e 34,8°)",
+  "pistol 16:9: área 2.61% (alvo 4-16, ref 9,76-13,09; gordura 0.626)",
+  "pistol 16:9: boca a 0.365 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "pistol 3:2: borda esq da silhueta 0.67 (ref 0,520-0,565)",
+  "pistol 3:2: eixo 68.87° (ref CS 27,3° e 34,8°)",
   "pistol 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "knife 16:9: borda esq da silhueta 0.404 (ref 0,520-0,565)",
-  "knife 16:9: eixo 20.55° (ref CS 27,3° e 34,8°)",
-  "knife 3:2: borda esq da silhueta 0.404 (ref 0,520-0,565)",
+  "pistol 3:2: área 2.22% (alvo 4-16, ref 9,76-13,09; gordura 0.598)",
+  "pistol 3:2: boca a 0.325 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "knife 16:9: eixo 11.1° (ref CS 27,3° e 34,8°)",
+  "knife 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
+  "knife 16:9: área 2.76% (alvo 4-16, ref 9,76-13,09; gordura 0.257)",
+  "knife 16:9: boca a 0.332 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "knife 3:2: eixo 13.78° (ref CS 27,3° e 34,8°)",
+  "knife 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
+  "knife 3:2: área 2.38% (alvo 4-16, ref 9,76-13,09; gordura 0.257)",
+  "knife 3:2: boca a 0.311 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
   "m92 16:9: borda esq da silhueta 0.611 (ref 0,520-0,565)",
   "m92 16:9: fatia na borda direita 0.289 (ref 0,053-0,095)",
   "m92 3:2: borda esq da silhueta 0.611 (ref 0,520-0,565)",
   "m92 3:2: fatia na borda direita 0.27 (ref 0,053-0,095)",
   "g3 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "g3 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
-  "revolver38 16:9: eixo 49.1° (ref CS 27,3° e 34,8°)",
+  "revolver38 16:9: borda esq da silhueta 0.67 (ref 0,520-0,565)",
+  "revolver38 16:9: eixo 64.18° (ref CS 27,3° e 34,8°)",
   "revolver38 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "revolver38 3:2: eixo 51.19° (ref CS 27,3° e 34,8°)",
+  "revolver38 16:9: área 2.29% (alvo 4-16, ref 9,76-13,09; gordura 0.464)",
+  "revolver38 16:9: boca a 0.353 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "revolver38 3:2: borda esq da silhueta 0.67 (ref 0,520-0,565)",
+  "revolver38 3:2: eixo 65.33° (ref CS 27,3° e 34,8°)",
   "revolver38 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "m400 16:9: borda esq da silhueta 0.611 (ref 0,520-0,565)",
-  "m400 3:2: borda esq da silhueta 0.611 (ref 0,520-0,565)",
-  "mosin 16:9: eixo 44.47° (ref CS 27,3° e 34,8°)",
+  "revolver38 3:2: área 2.01% (alvo 4-16, ref 9,76-13,09; gordura 0.436)",
+  "revolver38 3:2: boca a 0.314 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "m400 16:9: fatia na borda direita 0.008 (ref 0,053-0,095)",
   "mosin 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "mosin 3:2: eixo 46.93° (ref CS 27,3° e 34,8°)",
+  "mosin 16:9: área 3.14% (alvo 4-16, ref 9,76-13,09; gordura 0.214)",
   "mosin 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "rem700 16:9: eixo 45.48° (ref CS 27,3° e 34,8°)",
+  "mosin 3:2: área 2.87% (alvo 4-16, ref 9,76-13,09; gordura 0.207)",
   "rem700 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "rem700 3:2: eixo 48.57° (ref CS 27,3° e 34,8°)",
   "rem700 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
+  "rem700 3:2: área 3.85% (alvo 4-16, ref 9,76-13,09; gordura 0.225)",
   "lmg 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
   "lmg 16:9: eixo 21.82° (ref CS 27,3° e 34,8°)",
   "lmg 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
@@ -4607,38 +4634,50 @@
   "famas 16:9: borda esq da silhueta 0.639 (ref 0,520-0,565)",
   "famas 16:9: boca a 0.297 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
   "famas 3:2: borda esq da silhueta 0.639 (ref 0,520-0,565)",
-  "uzi 16:9: borda esq da silhueta 0.666 (ref 0,520-0,565)",
-  "uzi 16:9: boca a 0.313 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
-  "uzi 3:2: borda esq da silhueta 0.666 (ref 0,520-0,565)",
-  "uzi 3:2: fatia na borda direita 0.016 (ref 0,053-0,095)",
-  "g3sg1 16:9: borda esq da silhueta 0.619 (ref 0,520-0,565)",
-  "g3sg1 3:2: borda esq da silhueta 0.619 (ref 0,520-0,565)",
-  "sks 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "uzi 16:9: borda esq da silhueta 0.689 (ref 0,520-0,565)",
+  "uzi 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
+  "uzi 16:9: boca a 0.349 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "uzi 3:2: borda esq da silhueta 0.689 (ref 0,520-0,565)",
+  "uzi 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
+  "uzi 3:2: área 3.5% (alvo 4-16, ref 9,76-13,09; gordura 0.629)",
+  "uzi 3:2: boca a 0.301 da mira (faixa 0,100-0,290; ref medida 0,103-0,277)",
+  "p90 16:9: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "p90 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "svd 16:9: fatia na borda direita 0.016 (ref 0,053-0,095)",
+  "g3sg1 16:9: borda esq da silhueta 0.611 (ref 0,520-0,565)",
+  "g3sg1 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
+  "g3sg1 3:2: borda esq da silhueta 0.611 (ref 0,520-0,565)",
+  "g3sg1 3:2: fatia na borda direita 0.016 (ref 0,053-0,095)",
+  "g3sg1 3:2: área 3.81% (alvo 4-16, ref 9,76-13,09; gordura 0.248)",
   "sks 16:9: fatia na borda direita 0 (ref 0,053-0,095)",
-  "sks 3:2: borda esq da silhueta 0.607 (ref 0,520-0,565)",
+  "sks 16:9: área 3.3% (alvo 4-16, ref 9,76-13,09; gordura 0.215)",
   "sks 3:2: fatia na borda direita 0 (ref 0,053-0,095)",
-  "awp: guarda-mão fora do alcance do braço L (folga -0.063 m) -> MÃO SOLTA NO AR",
+  "sks 3:2: área 2.98% (alvo 4-16, ref 9,76-13,09; gordura 0.186)",
+  "awp: guarda-mão fora do alcance do braço L (folga -0.068 m) -> MÃO SOLTA NO AR",
   "ak: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "ak: guarda-mão fora do alcance do braço L (folga -0.069 m) -> MÃO SOLTA NO AR",
   "m4: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "m4: guarda-mão fora do alcance do braço L (folga -0.068 m) -> MÃO SOLTA NO AR",
-  "mp5: grip fora do alcance do braço R (folga 0.003 m) -> MÃO SOLTA NO AR",
-  "mp5: guarda-mão fora do alcance do braço L (folga -0.067 m) -> MÃO SOLTA NO AR",
+  "mp5: grip fora do alcance do braço R (folga -0.039 m) -> MÃO SOLTA NO AR",
+  "mp5: guarda-mão fora do alcance do braço L (folga -0.11 m) -> MÃO SOLTA NO AR",
   "shotgun: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "shotgun: guarda-mão fora do alcance do braço L (folga -0.066 m) -> MÃO SOLTA NO AR",
+  "deagle: grip fora do alcance do braço R (folga 0.01 m) -> MÃO SOLTA NO AR",
+  "pistol: grip fora do alcance do braço R (folga 0.01 m) -> MÃO SOLTA NO AR",
   "m92: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "m92: guarda-mão fora do alcance do braço L (folga -0.061 m) -> MÃO SOLTA NO AR",
   "akm: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "akm: guarda-mão fora do alcance do braço L (folga -0.069 m) -> MÃO SOLTA NO AR",
   "g3: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "g3: guarda-mão fora do alcance do braço L (folga -0.066 m) -> MÃO SOLTA NO AR",
+  "revolver38: grip fora do alcance do braço R (folga 0.01 m) -> MÃO SOLTA NO AR",
   "md97: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "md97: guarda-mão fora do alcance do braço L (folga -0.07 m) -> MÃO SOLTA NO AR",
   "carbine: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "carbine: guarda-mão fora do alcance do braço L (folga -0.069 m) -> MÃO SOLTA NO AR",
-  "m400: guarda-mão fora do alcance do braço L (folga -0.052 m) -> MÃO SOLTA NO AR",
-  "mosin: guarda-mão fora do alcance do braço L (folga -0.059 m) -> MÃO SOLTA NO AR",
-  "rem700: guarda-mão fora do alcance do braço L (folga -0.059 m) -> MÃO SOLTA NO AR",
+  "m400: guarda-mão fora do alcance do braço L (folga -0.057 m) -> MÃO SOLTA NO AR",
+  "mosin: guarda-mão fora do alcance do braço L (folga -0.063 m) -> MÃO SOLTA NO AR",
+  "rem700: guarda-mão fora do alcance do braço L (folga -0.063 m) -> MÃO SOLTA NO AR",
   "lmg: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "lmg: guarda-mão fora do alcance do braço L (folga -0.065 m) -> MÃO SOLTA NO AR",
   "scar: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
@@ -4647,12 +4686,12 @@
   "tavor: guarda-mão fora do alcance do braço L (folga -0.057 m) -> MÃO SOLTA NO AR",
   "famas: grip fora do alcance do braço R (folga 0.011 m) -> MÃO SOLTA NO AR",
   "famas: guarda-mão fora do alcance do braço L (folga -0.056 m) -> MÃO SOLTA NO AR",
-  "uzi: grip fora do alcance do braço R (folga 0.003 m) -> MÃO SOLTA NO AR",
-  "uzi: guarda-mão fora do alcance do braço L (folga -0.058 m) -> MÃO SOLTA NO AR",
-  "p90: grip fora do alcance do braço R (folga 0.003 m) -> MÃO SOLTA NO AR",
-  "p90: guarda-mão fora do alcance do braço L (folga -0.066 m) -> MÃO SOLTA NO AR",
-  "svd: guarda-mão fora do alcance do braço L (folga -0.059 m) -> MÃO SOLTA NO AR",
-  "g3sg1: guarda-mão fora do alcance do braço L (folga -0.051 m) -> MÃO SOLTA NO AR",
-  "sks: guarda-mão fora do alcance do braço L (folga -0.053 m) -> MÃO SOLTA NO AR"
+  "uzi: grip fora do alcance do braço R (folga -0.179 m) -> MÃO SOLTA NO AR",
+  "uzi: guarda-mão fora do alcance do braço L (folga -0.241 m) -> MÃO SOLTA NO AR",
+  "p90: grip fora do alcance do braço R (folga -0.082 m) -> MÃO SOLTA NO AR",
+  "p90: guarda-mão fora do alcance do braço L (folga -0.152 m) -> MÃO SOLTA NO AR",
+  "svd: guarda-mão fora do alcance do braço L (folga -0.064 m) -> MÃO SOLTA NO AR",
+  "g3sg1: guarda-mão fora do alcance do braço L (folga -0.055 m) -> MÃO SOLTA NO AR",
+  "sks: guarda-mão fora do alcance do braço L (folga -0.058 m) -> MÃO SOLTA NO AR"
  ]
 }

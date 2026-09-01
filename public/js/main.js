@@ -9,7 +9,8 @@ import { preloadAmbientLife } from './ambientlife.js';
 import { MAPS, MAP_IDS, DEFAULT_MAP, resolveMapId, mapaDaSessao } from './maps.js';
 import { PALETA } from './paleta.js';
 import { setHavanCarSeed } from './map_havan.js';
-import { preloadWeapons } from './weapons.js';
+import { preloadWeapons, WEAPON_IDS } from './weapons.js';
+import { preloadAuthoredFamilies, authoredBootFamilies } from './authoredvm.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
@@ -1125,7 +1126,10 @@ async function _startGame(team, charId, enemyFaction) {
   /* Armas da partida sorteadas aqui pelo mesmo motivo do roster: as 26 custavam 164 MB de VRAM
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   const matchWeapons = pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: Math.max(1, Math.min(8, settings.bots || 4)) });
-  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
+  // A sonda de QA do viewmodel inclui a arma pedida no preload; sem isso a HUD podia
+  // selecionar uma arma de teste cujo GLB não tinha entrado nesta partida reduzida.
+  const _qaVmWeapon = testMode && WEAPON_IDS.includes(params.get('vmweapon')) ? params.get('vmweapon') : null;
+  const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons, _qaVmWeapon])].filter(Boolean);
   try {
     if (!navOnly) {
       await Promise.all([
@@ -1133,6 +1137,9 @@ async function _startGame(team, charId, enemyFaction) {
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         preloadAmbientLife((MAPS[currentMap] && MAPS[currentMap].ambience) || []),
         preloadFPArms(),   // braços FP dedicados (falha → fallback procedural, sem bloquear)
+        // Famílias PRONTAS do loadout + texturas de braço compartilhadas (~3 MB
+        // pós-de-dup): mata o pop legado→autorado do primeiro saque (BUG-75 M4).
+        preloadAuthoredFamilies(authoredBootFamilies(_armasDaPartida)),
       ]);
     }
   } catch (e) { console.error('preload da partida falhou parcialmente', e); }
@@ -1159,6 +1166,9 @@ async function _startGame(team, charId, enemyFaction) {
       clearInterval(espera);
       const ocioso = window.requestIdleCallback || ((f) => setTimeout(f, 1200));
       ocioso(() => preloadWeapons().catch(() => {}));
+      // Famílias autoradas restantes (só as ready) no mesmo ocioso — troca de
+      // arma no meio da partida não baixa nada na hora do saque.
+      ocioso(() => preloadAuthoredFamilies(authoredBootFamilies(WEAPON_IDS)).catch(() => {}));
     }, 250);
   }
   submitted = false;
