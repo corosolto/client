@@ -24,11 +24,13 @@ telemetria, versão e pipeline que já mudaram.
 online dentro do single-player, eliminar deriva de spawn/respawn/animação, restaurar CTF,
 reduzir a densidade oficial, evitar slots Rubao abandonados e restaurar o catálogo de áudio
 in-game. Definição de pronto para produção inclui canário jogável, painel coerente e rollout
-compatível; os checkpoints locais não autorizam deploy.
+compatível; os checkpoints enviados ao Git não autorizam deploy.
 
 **Checkout:** `/Users/ruben/csbrasil/worktrees/multiplayer`, branch
 `fix/prod-gameplay-diagnostics`, base `ef801c6a`. O backend correspondente fica em
-`/Users/ruben/csbrasil-backend`, branch `feat/servidor-pre-lancamento`.
+`/Users/ruben/csbrasil-backend`, branch `feat/servidor-pre-lancamento`. Checkpoints enviados:
+cliente funcional `6b53f8e2`, documentação gerada/final `acee42fb`; backend funcional
+`1e4682a` (fixado no cliente `acee42fb`).
 
 **Validado localmente:** `eval:netcode` 80/80; `eval:netcodecbin` 16/16; `eval:charvoice`
 verde com mutantes de versão; build Astro verde. No navegador: MP→sair→SP ficou sem overlay
