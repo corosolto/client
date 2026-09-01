@@ -1883,6 +1883,30 @@
     ],
     "finalSha256": "d5fdc03244bbb0acf4599ea6358b8083a1b6a1f91ce7f9a531c9413ec6052e1c"
    }
+  },
+  "arara-voo": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/ambient/arara_voo.glb"
+   ],
+   "source": {
+    "kind": "mint-model",
+    "assetId": "ks771w92vb973f6pj7acx41y7x8d7088",
+    "chatUrl": "https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709",
+    "displayName": "Arara em voo",
+    "frente": "lote-ceu",
+    "notes": "Vida de céu (plans/22 § \"Pombas voando\"): devolve a presença aérea que a v2.1 tirou ao remover o pigeon_flight.glb — ave de asas abertas PARADA. O rig Mint é humanoid-only e não existe ave CC0 riggada com voo (varredura 19/08 no FONTE.md), então o bater de asa é PROCEDURAL: tools/split-props-v21.mjs arara_voo separa `asa-esquerda` e `asa-direita` em nós com pivô na raiz (regra medida: |z| > 0,10 é asa, corpo fica em |z| <= 0,10; 512/515 tris por asa, simétrico), e o skylife.js gira os dois em SENTIDOS OPOSTOS. Otimizado por tools/optimize-ambient-fauna.mjs (simplify .6, WebP 256²): 4.923 -> 2.951 tris, 172 KiB. GLB normalizado com o NARIZ em -X (medido: a ponta -x concentra 1.257 tris de cabeça, a +x afina no rabo longo) — a constante BIRD_FORWARD_X do skylife.js. Consumido por fy_corrego (bando de 3) e fy_lajes (par)."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "mint text-to-3d (normalized original_glb)",
+    "tools": [
+     "mint.gg",
+     "tools/split-props-v21.mjs",
+     "tools/optimize-ambient-fauna.mjs"
+    ],
+    "finalSha256": "f7716f1f95896394e77d643d8947109a7c9ff0c9926823c94ef7cbeb0d6b854e"
+   }
   }
  }
 }

@@ -45,6 +45,36 @@ A lição do BUG-57: jacaré e capivara ficaram um ciclo inteiro gerados, otimiz
 | Pombas voando | vários | o `pigeon_flight.glb` existia e voava, mas era **arte estática de asas abertas** — removido na frente D a pedido do dono. Volta só com pássaro riggado de verdade (não existe CC0; rig Mint é humanoid-only) | régua de voo com flap visível |
 | Ratos, gatos, fauna urbana | todos os mapas | pipeline Quaternius da frente D (gato/galinha/vaca entregues em `v21/d-fauna`) | AR/AM existentes + espécie por bioma |
 
+## Lote céu — ENTREGUE (27/08/2026, branch `feat/lote-ceu`)
+
+Os três GLBs desta seção estavam prontos no disco desde a frente E da v2.1 e **sem
+call-site nenhum** — o defeito que este próprio plano descreve em "lore antes do asset",
+repetido com os próprios assets do plano. Agora vivem em `public/js/skylife.js`:
+
+| item | onde | como | régua |
+|---|---|---|---|
+| Pipa animada | fy_lajes (12, substituem os losangos de 2 tris) e fy_corrego (7, novas) | `pipa_papel.glb`; deriva de dois senos + rabiola com atraso no nó do split | CEU2 · CEU7 |
+| Helicóptero | fy_lajes, fy_corrego | `helicoptero_pm.glb`; órbita alta, `rotor_main`/`rotor_tail` girando | CEU3 |
+| Avião com faixa | fy_mansao, sobre o mar do Joá | `aviao_faixa.glb`; travessia reta, faixa = `PlaneGeometry` + `CanvasTexture` no nó `faixa` | CEU5 |
+| **Aves voando** | fy_corrego (3), fy_lajes (2) | **arara**, não pomba — ver abaixo | CEU4 |
+
+**A linha "Pombas voando" fica RESOLVIDA por substituição, não por cumprimento.** A
+condição escrita aqui era "volta só com pássaro riggado de verdade"; esse pássaro
+continua não existindo (rig Mint segue humanoid-only, acervo CC0 sem ave riggada). O que
+mudou é o CAMINHO: a asa vira NÓ pelo `split-props-v21.mjs` e o bater é procedural, a
+mesma saída que o tatu e o papagaio de poleiro já usavam. A espécie virou **arara**
+porque era o que já existia gerado no acervo Mint ("Arara em voo") e porque arara sobre
+valão lê melhor que pomba. Pomba de verdade voando continua em aberto — quem quiser
+fechar aquela linha ao pé da letra precisa de uma pomba nova, não de código novo.
+
+Portão: `npm run eval:skylife` (7 sondas, 6 mutantes). Figuras olhadas em
+`tools/eval/asset-evidence/lote-ceu/` — e vale ler o `LEIA.md` de lá: **duas coisas
+passaram VERDE na régua estando erradas na tela** (faixa ilegível, faixa 14× grande),
+as duas pegas só na figura.
+
+Segue em aberto do lote: `caixa_dagua_azul/_fibra/_preta` e `varal_roupas_01/_02`
+continuam gerados e sem call-site (`lajes_modulo_a..e` também, ~4 MB).
+
 ## Estado medido pela sondagem (19/08, contra a base 7125566)
 
 Três achados da sondagem **já estão resolvidos nas branches v21 aguardando integração** —
