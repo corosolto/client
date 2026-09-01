@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
+import { weaponCFG } from './weapons.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -280,14 +281,6 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   scene.applyMatrix4(cameraInverse);
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
-  // O molde CS 1.6 chega a ~23 unidades por metro; escalar em torno da câmera
-  // (já na origem) devolve o metro sem mexer um pixel da projeção.
-  if (molde) {
-    const k = Math.abs(scene.scale.x) || 1;
-    scene.scale.multiplyScalar(1 / k);
-    scene.position.multiplyScalar(1 / k);
-    scene.updateMatrixWorld(true);
-  }
   const golden = sourceKey.startsWith('gold#');
   const frame = golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
@@ -310,6 +303,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   const handMeshes = [];
   const weaponMeshes = [];
   const utilityModels = new Map();
+  const caixaArma = new THREE.Box3();
   scene.traverse((object) => {
     const utility = /^UTILITY_(HE|FLASH|SMOKE)$/.exec(object.name);
     if (utility) {
@@ -332,6 +326,10 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
       object.userData.authoredCharacterHand = profile.id || 'player';
     } else {
       weaponMeshes.push(object);
+      if (molde && !/MAG/i.test(object.name)) {
+        object.updateWorldMatrix(true, false);
+        caixaArma.expandByObject(object);
+      }
       for (const material of materialsOf(object)) {
         if (!material) continue;
         material.envMapIntensity = 0.85;
@@ -339,6 +337,15 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
       }
     }
   });
+  const _dim = caixaArma.isEmpty() ? null : caixaArma.getSize(new THREE.Vector3());
+  const weaponLength = _dim ? Math.max(_dim.x, _dim.y, _dim.z) : 0;
+  // O molde CS 1.6 chega a ~23 unidades por metro. Reescala em torno da câmera
+  // (na origem): a projeção não muda e frame, recuo e ADS voltam a valer metro.
+  if (molde && weaponLength > 0) {
+    const alvo = weaponCFG(sourceKey.split('#')[1]).len || 0.9;
+    const k = weaponLength / alvo;
+    if (k > 1.5) mount.scale.multiplyScalar(1 / k);
+  }
   return {
     scene, mount, cameraFov: golden || molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
