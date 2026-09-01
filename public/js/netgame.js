@@ -146,6 +146,7 @@ class Netcode {
     if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
+    if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
     let dorDoJogador = 0;
     for (const e of snap.ents) {
       const ent = this._netMap.get(e.id);
@@ -155,9 +156,14 @@ class Netcode {
       ent.kills = e.k | 0; ent.deaths = e.d | 0;     // scoreboard vem do servidor
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
+        const renasceu = !wasAlive && e.alive;
         if (game.state === 'live' && e.alive && e.hp < wasHp - 0.5) { game._playerHurtFx(); dorDoJogador = wasHp - e.hp; }
         if (wasAlive && !e.alive) this.playerDied(e, snap);
-        else if (!wasAlive && e.alive) this.playerRespawned();
+        else if (renasceu) this.playerRespawned();
+        /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
+           uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
+           Nestes dois marcos a autoridade precisa vencer imediatamente, inclusive no Y. */
+        if (primeiroSnap || renasceu) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); }
         if (e.respawnIn != null) game.player.respawnAt = game.time + e.respawnIn;
         this._srvX = e.x; this._srvY = e.y; this._srvZ = e.z; this._srvHas = 1;   // campos planos: zero alocação no hot path
         continue;
@@ -174,7 +180,12 @@ class Netcode {
       }
       const salto = Math.hypot(ent._ipx1 - ent._ipx0, ent._ipz1 - ent._ipz0);
       if (salto > 3) { ent._ipx0 = ent._ipx1; ent._ipy0 = ent._ipy1; ent._ipz0 = ent._ipz1; ent._ipyaw0 = ent._ipyaw1; }  // respawn/teleporte: colapsa
-      ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);   // alimenta a animação de andar
+      /* A animação mede o deslocamento no relógio AUTORITATIVO. Intervalo de chegada contém
+         jitter: usá-lo fazia o mesmo bot alternar câmera lenta/velocidade alta ("na lua"). */
+      const srvDt = ent._ipSrvT == null ? 0.05 : snap.t - ent._ipSrvT;
+      ent._ipSrvT = snap.t;
+      const moveDt = Number.isFinite(srvDt) && srvDt > 0 ? srvDt : Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);
+      ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, moveDt);   // alimenta a animação de andar
       if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; }
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
@@ -201,6 +212,37 @@ class Netcode {
       }
     }
     if (this.espectador) this.cameraEspectador();
+  }
+
+  /* Estado CTF do servidor. O cliente online não executa `_updateCTF`, então copiar só
+     round/score deixaria bandeiras permanentemente neutras. Mantém os objetos/meshes locais
+     e aplica somente os campos da simulação autoritativa. */
+  applyCtfState(state) {
+    const game = this.game;
+    if (!state || !Array.isArray(state.points) || !Array.isArray(game.ctfPts)) return;
+    game.ctfCaps.E = state.capsE | 0; game.ctfCaps.B = state.capsB | 0;
+    game.roundCaps.E = state.roundCapsE | 0; game.roundCaps.B = state.roundCapsB | 0;
+    if (Number.isFinite(state.capsToWin)) game.capsToWin = state.capsToWin;
+    if (Number.isFinite(state.matchLeft)) game.ctfMatchLeft = state.matchLeft;
+    const n = Math.min(game.ctfPts.length, state.points.length);
+    for (let i = 0; i < n; i++) {
+      const pt = game.ctfPts[i], src = state.points[i];
+      pt.owner = src.owner === 'E' || src.owner === 'B' ? src.owner : null;
+      pt.capTeam = src.capTeam === 'E' || src.capTeam === 'B' ? src.capTeam : null;
+      pt.contested = !!src.contested;
+      pt.prog = Math.max(0, Math.min(1, Number(src.prog) || 0));
+      if (pt.ring && pt.ring.material) {
+        if (pt.owner) pt.ring.material.color.set(game._teamColor(pt.owner)).lerp(game._ctfGray, 0.45);
+        else pt.ring.material.color.set(0xb8b4a8);
+        pt.ring.material.opacity = pt.contested ? 0.95 : 0.5 + 0.45 * (pt.prog || (pt.owner ? 1 : 0));
+      }
+      if (pt.flag && pt.flag.material) {
+        const fac = pt.owner ? game._factionOf(pt.owner) : null;
+        if (pt._flagFac !== fac) { pt._flagFac = fac; pt.flag.material.map = game._flagTexFor(fac); pt.flag.material.needsUpdate = true; }
+        pt.flag.material.color.set(pt.owner ? 0xe6e6e6 : 0xaaaaaa);
+      }
+    }
+    game._updateCtfHud();
   }
 
   // corpo local (ou o próprio jogador) pelo NOME que o servidor mandou no killedBy

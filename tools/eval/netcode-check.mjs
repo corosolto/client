@@ -17,10 +17,10 @@ const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { fa
 
 /* NetClient de mentira: mesma superfície que o netgame consome (snap/prev/yourEnt/meta/
    sendInput/startPing/stopPing/computeStats), sem socket. */
-function fakeNet(yourEnt, teamSize = 5) {
+function fakeNet(yourEnt, teamSize = 5, ctf = false) {
   return {
     yourEnt, yourTeam: 'E', espectador: yourEnt == null,
-    meta: { room: 'r1', map: 'praca_poderes', ctf: false, teamSize, maxPlayers: teamSize * 2 },
+    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2 },
     snap: null, prev: null, enviados: [],
     startPing() {}, stopPing() {},
     computeStats() { return { hz: 20, kbps: 1, gapMax: 50, sinceLast: 10, ents: 10, tick: 1, ping: 30 }; },
@@ -29,13 +29,13 @@ function fakeNet(yourEnt, teamSize = 5) {
   };
 }
 
-function montaJogo(net, { dedicated = false, teamSize = 5 } = {}) {
+function montaJogo(net, { dedicated = false, teamSize = 5, ctf = false } = {}) {
   seedRandom(4242);
   const g = new Game({
     renderer, textures: TEX, sfx,
     settings: { bots: teamSize, quality: 'low', difficulty: 'normal', sens: 1 },
     playerCharId: PCHAR, playerTeam: 'E', playerFaction: 'F', enemyFaction: 'C',
-    nickname: 'EU', mapId: 'praca_poderes', ctf: false, testMode: true, dedicated,
+    nickname: 'EU', mapId: 'praca_poderes', ctf, testMode: true, dedicated,
     onQuit() {}, onMatchEnd() {}, mpFactory: makeNetcode, net,
   });
   g._ensureDolly = () => {};
@@ -45,7 +45,10 @@ function montaJogo(net, { dedicated = false, teamSize = 5 } = {}) {
 }
 
 // snapshot com `yourEnt` no time E e o resto dividido 5/5, como o servidor manda
-function snapshot(t, tick, { yourEnt = 1, mover = 0, matarVoce = false, hpVoce = 100 } = {}) {
+function snapshot(t, tick, {
+  yourEnt = 1, mover = 0, matarVoce = false, hpVoce = 100,
+  jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null,
+} = {}) {
   const ents = [];
   for (let i = 0; i < 10; i++) {
     const id = i + 1;
@@ -53,7 +56,10 @@ function snapshot(t, tick, { yourEnt = 1, mover = 0, matarVoce = false, hpVoce =
     const meu = id === yourEnt;
     ents.push({
       id, name: meu ? 'EU' : `BOT${id}`, team, bot: meu ? 0 : 1,
-      x: i * 2 + mover, y: 0, z: 10 + i, yaw: 0.5, pitch: 0,
+      x: meu && jogadorX != null ? jogadorX : i * 2 + mover,
+      y: meu && jogadorY != null ? jogadorY : 0,
+      z: meu && jogadorZ != null ? jogadorZ : 10 + i,
+      yaw: 0.5, pitch: 0,
       hp: meu ? hpVoce : 100, alive: meu ? !matarVoce : true,
       weapon: 'ak', fire: 0, voice: 0, k: i, d: 0,
       respawnIn: meu && matarVoce ? 4.5 : 0,
@@ -62,7 +68,8 @@ function snapshot(t, tick, { yourEnt = 1, mover = 0, matarVoce = false, hpVoce =
   }
   return {
     type: 'snapshot', room: 'r1', tick, t, state: 'live', owner: null, players: 1, spectators: 0,
-    livre: { E: 4, B: 5 }, timeLeft: 77, roundNum: 3, scoreE: 2, scoreB: 1, ents,
+    livre: { E: 4, B: 5 }, timeLeft: 77, roundNum: 3, scoreE: 2, scoreB: 1,
+    ...(ctfState ? { ctf: ctfState } : {}), ents,
   };
 }
 
@@ -81,6 +88,9 @@ console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
   for (const e of net.snap.ents) { const c = mapa.get(e.id); if (c && c.team !== e.team) erradas++; }
   cobra(erradas === 0, `nenhum corpo ficou no time errado (${erradas} trocados) — amigo virar inimigo torna o jogo ininteligível`);
   cobra(g.bots.filter((b) => b._remote === 'ghost').length === 0, 'nenhum corpo local sobrou de fantasma quando o elenco tem o tamanho do servidor');
+  const eu0 = net.snap.ents.find((e) => e.id === net.yourEnt);
+  cobra(g.player.pos.distanceTo(new g.player.pos.constructor(eu0.x, eu0.y, eu0.z)) < 1e-6,
+    'o PRIMEIRO snapshot põe o jogador exatamente no spawn autoritativo — não conserva um spawn local diferente');
 
   /* CASAMENTO EXATO POR PERSONAGEM. O elenco local é montado a partir do roster do servidor,
      então cada entidade tem que cair no corpo do personagem CERTO — não num "inimigo qualquer"
@@ -172,13 +182,15 @@ console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
   cobra(!g.el.respawn.classList.contains('hidden'), 'a tela de morte acende (no online o _kill local não roda — sem este caminho o jogador morria sem tela)');
   cobra(g._lastHit && g._lastHit.name === 'BOT7', 'o "MORTO POR" traz quem matou');
   cobra(Math.abs(g.player.respawnAt - (g.time + 4.5)) < 0.01, 'o countdown de respawn vem do servidor');
-  net.snap = snapshot(100.20, 5);
+  net.snap = snapshot(100.20, 5, { jogadorX: 37, jogadorY: 2.5, jogadorZ: -19 });
   g._mp.applySnapshot();
   cobra(g.player.alive && g.el.respawn.classList.contains('hidden'), 'o respawn do servidor apaga a tela de morte');
+  cobra(g.player.pos.distanceTo(new g.player.pos.constructor(37, 2.5, -19)) < 1e-6,
+    'o respawn põe o jogador IMEDIATAMENTE na posição autoritativa, inclusive altura — não no meio/fora do mapa');
 
   console.log('\n· dano recebido tem retorno na tela');
   let bateu = 0; const orig = g._playerHurtFx.bind(g); g._playerHurtFx = () => { bateu++; orig(); };
-  net.snap = snapshot(100.25, 6, { hpVoce: 40 });
+  net.snap = snapshot(100.25, 6, { hpVoce: 40, jogadorX: 37, jogadorY: 2.5, jogadorZ: -19 });
   g._mp.applySnapshot();
   cobra(bateu === 1, 'queda de vida no snapshot dispara o feedback de "levei tiro"');
   g.dispose();
@@ -220,6 +232,55 @@ console.log('\n· espectador');
   g.player.nextShotAt = 0; g.player.drawUntil = 0;
   g._tryShoot();
   cobra(g.player.ammo[g.player.weapon].mag === municao, 'espectador NÃO atira (o tiro sairia de um corpo que não existe)');
+  g.dispose();
+}
+
+/* BUG-105 — velocidade da animação tem que vir da distância por TEMPO DO SERVIDOR. Medir
+   pelo intervalo de chegada transforma jitter de rede em câmera lenta/gravidade lunar mesmo
+   quando as posições autoritativas e o ping estão corretos. */
+console.log('\n· jitter de chegada não altera a velocidade visual dos bots (BUG-105)');
+{
+  const net = fakeNet(1);
+  const g = montaJogo(net);
+  let agora = 1000;
+  g._mp._now = () => agora;
+  net.snap = snapshot(600.00, 1); g._mp.applySnapshot();
+  const b = g._mp._netMap.get(6);
+  agora = 1200; // pacote chegou 200 ms depois, mas o servidor avançou só 50 ms
+  net.snap = snapshot(600.05, 2, { mover: 0.25 }); g._mp.applySnapshot();
+  cobra(Math.abs(b._netSpd - 5) < 0.01,
+    `0,25 m em 50 ms do SERVIDOR anima a 5 m/s mesmo com chegada atrasada (deu ${b._netSpd.toFixed(2)} m/s)`);
+  g.dispose();
+}
+
+/* BUG-108 — no online a máquina local de CTF não roda. Logo dono/progresso das bandeiras e
+   placares de captura precisam vir do snapshot autoritativo, não apenas existir no servidor. */
+console.log('\n· captura de bandeira online aplica o estado autoritativo (BUG-108)');
+{
+  const net = fakeNet(1, 5, true);
+  const g = montaJogo(net, { ctf: true });
+  let redesenhou = 0;
+  const hud0 = g._updateCtfHud.bind(g);
+  g._updateCtfHud = () => { redesenhou++; hud0(); };
+  const points = g.ctfPts.map((_, i) => ({
+    owner: i === 0 ? 'E' : i === 1 ? 'B' : null,
+    prog: i === 2 ? 0.625 : 0,
+    capTeam: i === 2 ? 'E' : null,
+    contested: i === 2,
+  }));
+  net.snap = snapshot(700, 1, { ctfState: {
+    capsE: 4, capsB: 2, roundCapsE: 2, roundCapsB: 1,
+    capsToWin: points.length, matchLeft: 318.5, points,
+  } });
+  g._mp.applySnapshot();
+  cobra(g.ctfCaps.E === 4 && g.ctfCaps.B === 2 && g.roundCaps.E === 2 && g.roundCaps.B === 1,
+    'placar acumulado e capturas da rodada vêm do servidor');
+  cobra(Math.abs(g.ctfMatchLeft - 318.5) < 1e-6 && g.capsToWin === points.length,
+    'relógio/objetivo da partida de captura vêm do servidor');
+  cobra(g.ctfPts.every((p, i) => p.owner === points[i].owner && Math.abs(p.prog - points[i].prog) < 1e-6
+      && p.capTeam === points[i].capTeam && !!p.contested === points[i].contested),
+    'cada bandeira recebe dono, progresso, lado capturando e contestação autoritativos');
+  cobra(redesenhou === 1, 'HUD/bandeiras são redesenhados depois de aplicar o snapshot CTF');
   g.dispose();
 }
 
@@ -460,6 +521,43 @@ console.log('\n· lado físico do multiplayer vem do servidor, não da facção 
   const mutSlot = main.replace('await startGame(currentTeam, currentChar, currentEnemyFaction, true);', '');
   cobra(!/net\.onSlot = async \(m\) =>[\s\S]*await transitionSlot\([\s\S]*await startGame\(currentTeam, currentChar, currentEnemyFaction, true\)/.test(mutSlot),
     'MUTANTE sem remount deixa a cláusula espectador→vaga vermelha');
+}
+
+/* BUG-101 — "eu escolho single player e ele vai pra um servidor online". O caminho de
+   SINGLE PLAYER passa `online=false`; esse valor tem que ser a fronteira que impede uma
+   sessão MP velha de instalar netcode, mesmo se outra limpeza falhar. Ao sair da partida,
+   a sessão também precisa ser zerada ANTES de fechar o socket, para o onClose síncrono não
+   remontar a tela online. */
+console.log('\n· multiplayer→sair→single player não reaproveita a sessão online (BUG-101)');
+{
+  const fs = await import('node:fs');
+  const main = fs.readFileSync('public/js/main.js', 'utf8');
+  const guard = /const sessao = online \? mpSessao : null;/;
+  const usosGuardados = [
+    /const tamanhoTime = sessao \?/,
+    /const matchRoster = sessao \?/,
+    /const matchWeapons = sessao\s*\?/,
+    /settings: sessao \?/,
+    /mpFactory: sessao \?/,
+    /net: sessao \?/,
+    /dedicated: !!\(sessao && sessao\.net\.espectador\)/,
+  ];
+  cobra(guard.test(main) && usosGuardados.every((re) => re.test(main)),
+    'online=false isola o start single-player de roster, socket e netcode de qualquer sessão MP velha');
+
+  const encerraAntes = /function mpEncerrarSessao\(\)\s*{[\s\S]{0,160}const s = mpSessao; mpSessao = null;[\s\S]{0,220}s\?\.net\.close\(\)/;
+  const quitLimpa = /function quitToMenu\(\)\s*{[\s\S]{0,3200}mpEncerrarSessao\(\);/;
+  cobra(encerraAntes.test(main) && quitLimpa.test(main),
+    'SAIR PRO MENU zera a sessão e fecha o WebSocket antes de permitir uma partida offline');
+  cobra(/localMp === '1'[\s\S]{0,120}return ''/.test(main),
+    '?mp=1 não tenta emitir ticket público para o nó local de desenvolvimento');
+
+  const mutSemFronteira = main.replace('const sessao = online ? mpSessao : null;', 'const sessao = mpSessao;');
+  cobra(!guard.test(mutSemFronteira),
+    'MUTANTE que ignora online=false acende a fronteira single-player');
+  const mutSemLimpeza = main.replace('  mpEncerrarSessao();', '');
+  cobra(!quitLimpa.test(mutSemLimpeza),
+    'MUTANTE que mantém o socket ao sair acende a limpeza multiplayer→menu');
 }
 
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);

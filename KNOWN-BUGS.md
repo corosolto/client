@@ -3666,6 +3666,74 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-109 · “os áudios do jogo sumiram, especialmente os in-game”** (dono, 02/09,
+  produção). **REPRODUZIDO PARCIALMENTE E CORRIGIDO LOCALMENTE; falta release e escuta no
+  canário.** O build baixa `audio-pack-v8`, mas `Sfx.loadManifest()` pedia
+  `manifest.json?v=7`. Em produção essa chave está presa na Cloudflare ao manifesto de
+  08/08: 291 arquivos únicos, contra 402 no v8 atual. O catálogo velho perde 24 vozes dos
+  Funkeiros, 4 de Tribos, todas as 56 da facção Mítica e os vínculos individuais de 18
+  personagens. Agora o runtime pede `?v=8`, a mesma versão de `fetch-audio.sh`.
+  `eval:charvoice` passa e os mutantes `manifest-antigo`/`pack-antigo` ficam vermelhos. Uma
+  amostra de 31 MP3 do manifesto velho respondeu 200: isto confirma catálogo incompleto,
+  não prova que todo WebAudio esteja mudo. **Régua:** `eval:charvoice`, VOICE13.
+
+- **BUG-108 · “captura de bandeira não está funcionando”** (dono, 02/09, produção,
+  multiplayer). **CONTRATO CORRIGIDO LOCALMENTE; falta capturar um ponto no canário.** O
+  servidor rodava CTF, mas o snapshot v2 não levava donos, progresso, placar ou relógio e o
+  cliente online não executa a máquina local. O snapshot v3 agora carrega esse estado; v2 e
+  JSON v1 continuam aceitos durante o rollout. O cliente aplica pontos, bandeiras, anéis e
+  HUD autoritativos. Smoke real do servidor passou 74/74; codec 16/16; navegador local abriu
+  `NET · captura`, oito entidades e HUD 1×1 visível. **Réguas:** `eval:netcodecbin`,
+  `eval:netcode`, `game/smoke.mjs`.
+
+- **BUG-107 · reconectar deixou três entradas “Rubao” simultâneas no mesmo placar** (dono,
+  02/09, produção, sala `funk-x-palhaco`). **CONFIRMADO E MITIGADO LOCALMENTE; identidade
+  estável ainda não existe.** A saída normal agora fecha e zera a sessão antes de desmontar o
+  jogo. Como defesa para socket zumbi, cada slot registra o último input e volta à IA após
+  45 s sem atividade. O smoke prova a liberação e o navegador confirmou a saída normal sem
+  overlay de rede remanescente. Duas abas ativas com o mesmo nick ainda são dois jogadores de
+  propósito; deduplicação imediata exigiria identidade autenticada. **Réguas:** `eval:netcode`
+  e `game/smoke.mjs`.
+
+- **BUG-106 · “acho que não precisa TANTOS bots na partida”** (dono, 02/09, produção,
+  multiplayer). **AJUSTADO LOCALMENTE: oficiais 5v5 → 4v4.** As quatro salas oficiais agora
+  têm oito corpos; salas criadas por jogadores continuam podendo usar dez. O smoke real
+  cobra quatro vagas por lado, oito snapshots e devolução do corpo à IA. Falta aceitação de
+  densidade em canário. **Régua:** `game/smoke.mjs`.
+
+- **BUG-105 · “os bots andam parecendo que estão na lua”** (dono, 02/09, produção,
+  multiplayer). **CAUSA DE ANIMAÇÃO CORRIGIDA LOCALMENTE; falta aceitação visual.** `_netSpd`
+  era calculada pelo intervalo de chegada dos pacotes, portanto jitter da rede virava passada
+  e animação irregulares. Agora usa o relógio do snapshot do servidor. A régua injeta jitter
+  de chegada mantendo tempo autoritativo constante e passa. **Régua:** `eval:netcode`.
+
+- **BUG-104 · “iniciei fora do respawn no meio do jogo”** (dono, 02/09, produção,
+  multiplayer). **CORRIGIDO LOCALMENTE POR AUTORIDADE; falta canário.** Na transição
+  morto→vivo o cliente agora teleporta para x/y/z do servidor e zera a velocidade, em vez de
+  interpolar desde o cadáver/local antigo. **Régua:** `eval:netcode`.
+
+- **BUG-103 · em mapas como Piscina e Loja H a partida às vezes inicia fora do mapa** (dono,
+  02/09, produção, multiplayer). **DERIVA CLIENTE/SERVIDOR CORRIGIDA LOCALMENTE; o caso de
+  produção não foi reproduzido visualmente.** O primeiro snapshot agora fixa exatamente
+  x/y/z e zera a velocidade local. Os spawns headless de Piscina e Loja H ficaram dentro do
+  mapa e sem penetração; isso refuta ponto-base inválido, mas ainda exige canário nesses dois
+  mapas. **Réguas:** `eval:netcode` e `eval:spawn`/map-check.
+
+- **BUG-102 · bots aparecem defasados e “não morrem” mesmo sob tiro** (dono, 02/09,
+  produção, multiplayer). **PARCIALMENTE VALIDADO; jogabilidade ainda pendente.** O smoke
+  controlado prova munição 30→20, HP 100→0, fogo amigo desligado e snapshots a 19,3 Hz; o
+  cálculo visual de movimento deixou de usar jitter de chegada. Isso confirma que a cadeia
+  autoritativa mata, mas não reproduz uma rajada humana contra bot em movimento nem fecha a
+  sensação de lag. **Réguas:** `game/smoke.mjs` e `eval:netcode`; falta canário jogável.
+
+- **BUG-101 · “eu escolho single player e ele vai pra um servidor online”** (dono, 01/09,
+  produção `www.csbrasil.online`). **CORRIGIDO E CONFIRMADO NO NAVEGADOR LOCAL; falta
+  release.** A causa era dupla: `quitToMenu()` não fechava/zerava `mpSessao`, e
+  `_startGame(..., online=false)` lia a sessão global. A saída agora encerra o socket e a
+  partida só recebe rede quando `online === true`. No fluxo real: entrou em MP, saiu pelo
+  menu de pausa, abriu SP e jogou sem `#netstats`. `eval:netcode` passa 80/80 e os mutantes
+  restauram as falhas. **Régua:** `tools/eval/netcode-check.mjs`, bloco BUG-101.
+
 - **BUG-100 · os campos novos de runtime/protocolo ainda não entram na visão diária.** A
   migration incremental `~/db-privado/supabase/migrations/027_mp_runtime_protocol_metrics.sql`
   está pronta e o contrato SQL passou 11/11, inclusive mutantes de RLS e frames binários, mas

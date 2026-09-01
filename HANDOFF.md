@@ -17,3 +17,30 @@ antigo como se fosse o estado atual.
 O handoff detalhado de 04/08/2026 foi preservado em
 `docs/historico/HANDOFF-2026-08-04.md`; ele explica decisões antigas, mas cita mapas,
 telemetria, versão e pipeline que já mudaram.
+
+## Incidente de produção — 02/09/2026
+
+**Objetivo inteiro:** estabilizar multiplayer sem tocar na lane de viewmodels: impedir sessão
+online dentro do single-player, eliminar deriva de spawn/respawn/animação, restaurar CTF,
+reduzir a densidade oficial, evitar slots Rubao abandonados e restaurar o catálogo de áudio
+in-game. Definição de pronto para produção inclui canário jogável, painel coerente e rollout
+compatível; os checkpoints locais não autorizam deploy.
+
+**Checkout:** `/Users/ruben/csbrasil/worktrees/multiplayer`, branch
+`fix/prod-gameplay-diagnostics`, base `ef801c6a`. O backend correspondente fica em
+`/Users/ruben/csbrasil-backend`, branch `feat/servidor-pre-lancamento`.
+
+**Validado localmente:** `eval:netcode` 80/80; `eval:netcodecbin` 16/16; `eval:charvoice`
+verde com mutantes de versão; build Astro verde. No navegador: MP→sair→SP ficou sem overlay
+de rede e a sala CTF exibiu HUD autoritativo. No backend: smoke 74/74, runtime 8/8, protocolo
+5/5, telemetria 38/38 e fronteiras de segurança verdes usando Node moderno.
+
+**Ainda não aceito:** BUG-102 precisa de partida humana contra bot em movimento; BUG-103/104
+precisam de canário em Piscina e Loja H; BUG-105 precisa de aceitação visual; BUG-107 não
+deduplica duas conexões realmente ativas com o mesmo nick; BUG-108 precisa de uma captura real;
+BUG-109 precisa de escuta no canário. A migration 027 e os números do game-admin continuam
+fora deste checkpoint.
+
+**Próximo passo:** publicar primeiro um backend compatível com v3/v2/v1, depois o cliente;
+jogar o roteiro acima no canário, observar `/metrics` e só então promover. Se qualquer etapa
+falhar, manter produção atual e não misturar este trabalho com armas/viewmodels.

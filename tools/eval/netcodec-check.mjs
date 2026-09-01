@@ -1,4 +1,5 @@
-/* Snapshot binário v2: round-trip do codec real, limites hostis e integração do NetClient.
+/* Snapshot binário v3: round-trip do codec real, CTF autoritativo, compatibilidade v2,
+   limites hostis e integração do NetClient.
    O formato roda como ES module puro em public/, sem bundler nem dependência de runtime. */
 import fs from 'node:fs';
 
@@ -22,7 +23,7 @@ if (MUT === 'sem-negociacao') {
   console.log(`mutante desconhecido: ${MUT}`); process.exit(1);
 }
 
-cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(netSrc), 'cliente negocia v2 binário com fallback v1 JSON');
+cobra(/new WebSocket\(this\.url, SNAPSHOT_PROTOCOLS\)/.test(netSrc), 'cliente negocia v3/v2 binário com fallback v1 JSON');
 cobra(/binaryType\s*=\s*['"]arraybuffer['"]/.test(netSrc), 'frames binários chegam como ArrayBuffer, não Blob');
 cobra(/decodeSnapshot\(ev\.data\)/.test(netSrc), 'o caminho de produção chama o decoder real');
 cobra(/MAX_SNAPSHOT_BYTES/.test(netSrc), 'cliente limita frame antes de alocar/decodificar');
@@ -42,7 +43,16 @@ if (codec) {
   const sample = {
     type: 'snapshot', room: 'livre', tick: 123456, t: 87.125, state: 'live', owner: null,
     players: 1, spectators: 2, livre: { E: 4, B: 5 }, timeLeft: 72,
-    roundNum: 2, scoreE: 1, scoreB: 0, ents,
+    roundNum: 2, scoreE: 1, scoreB: 0,
+    ctf: {
+      capsE: 4, capsB: 2, roundCapsE: 2, roundCapsB: 1, capsToWin: 3, matchLeft: 318.5,
+      points: [
+        { owner: 'E', prog: 1, capTeam: null, contested: false },
+        { owner: 'B', prog: 1, capTeam: null, contested: false },
+        { owner: null, prog: 0.625, capTeam: 'E', contested: true },
+      ],
+    },
+    ents,
   };
   const bin = codec.encodeSnapshot(sample);
   const out = codec.decodeSnapshot(bin);
@@ -55,11 +65,20 @@ if (codec) {
     'posição e orientação preservam precisão submilimétrica da régua');
   cobra(out.ents[9].alive === false && out.ents[9].killedBy === 'JOGADOR_1' && near(out.ents[9].respawnIn, 2.25),
     'morte, respawn e autoria sobrevivem');
+  cobra(out.ctf && out.ctf.capsE === 4 && out.ctf.roundCapsB === 1 && near(out.ctf.matchLeft, 318.5),
+    'placares e relógio de CTF sobrevivem ao round-trip v3');
+  cobra(out.ctf && out.ctf.points.length === 3 && out.ctf.points[2].capTeam === 'E'
+      && out.ctf.points[2].contested === true && near(out.ctf.points[2].prog, 0.625),
+    'dono/progresso/contestação das bandeiras sobrevivem ao round-trip v3');
+  const outV2 = codec.decodeSnapshot(codec.encodeSnapshot(sample, 2));
+  cobra(!('ctf' in outV2), 'snapshot v2 continua decodificável e omite somente a extensão CTF');
   const jsonBytes = Buffer.byteLength(JSON.stringify(sample));
   cobra(bin.byteLength < jsonBytes * 0.45,
     `payload binário fica abaixo de 45% do JSON (${bin.byteLength}/${jsonBytes} bytes)`);
-  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v2' && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
-    'versão binária é preferida e JSON continua negociável');
+  cobra(codec.SNAPSHOT_PROTOCOLS[0] === 'coro-snapshot-v3'
+      && codec.SNAPSHOT_PROTOCOLS[1] === 'coro-snapshot-v2'
+      && codec.SNAPSHOT_PROTOCOLS.includes('coro-json-v1'),
+    'ordem de negociação prefere v3 e preserva fallbacks v2/JSON');
 
   for (const ruim of [bin.slice(0, 12), new Uint8Array([0, 1, 2, 3]), new Uint8Array(codec.MAX_SNAPSHOT_BYTES + 1)]) {
     let recusou = false; try { codec.decodeSnapshot(ruim); } catch { recusou = true; }

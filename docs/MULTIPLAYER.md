@@ -38,7 +38,7 @@ placar envenenado, e o tal "bot bugado ali" que aparecia nas partidas.
 
 Com `dedicated: true` ele fica fora do elenco (não entra no scoreboard, não é alvo, não é
 atualizado) e o lado aliado leva `teamSize` corpos inteiros em vez de `teamSize - 1`. É isso
-que faz uma sala 5v5 ter **dez** vagas de gente e não nove com um manequim do lado.
+que faz uma sala ter exatamente o número de vagas configurado, sem um manequim do lado.
 
 O **espectador** usa o mesmo `dedicated`: sem ele o cliente teria nove bots locais para as dez
 entidades do servidor, e um jogador ficaria invisível.
@@ -67,7 +67,9 @@ prometia 3× mais salas do que cabem.
 
 HTTP (lobby): `GET /health` · `GET /maps` · `GET /rooms` · `POST /rooms`.
 WS: `/ws?room=&pw=&nome=&team=` → `welcome` (uma vez, com o **roster** da partida) + `snapshot`
-a 20 Hz. Cliente → servidor: `input`, `ping`, `time` (pedir vaga num lado), `espectar`.
+a 20 Hz. O servidor prefere `coro-snapshot-v3` (inclui CTF), mantém v2 binário durante o
+rollout e aceita JSON v1 como fallback. Cliente → servidor: `input`, `ping`, `time` (pedir vaga
+num lado), `espectar`.
 
 O **RTT é medido por ping/pong no próprio WebSocket**. O módulo antigo media por `fetch
 /health`: outra conexão, outro caminho, sem a fila do WS — um número bonito e errado justamente
@@ -83,19 +85,22 @@ Servidor cheio não dá porta na cara: você entra, assiste em primeira pessoa, 
 NO TIME" acende quando abre vaga (é assim no CS). A câmera anda sozinha para outro vivo quando
 o alvo morre — ficar preso num defunto é o defeito clássico do modo espectador.
 
-Quando um jogador sai ou vira espectador, o corpo **volta a ser bot**. A partida continua 5v5
-em vez de virar 4v5 com um manequim parado.
+Quando um jogador sai ou vira espectador, o corpo **volta a ser bot**. A partida mantém o
+tamanho configurado em vez de ficar com um manequim parado. Um socket vivo sem input perde o
+slot após 45 s, para uma reconexão não acumular corpos abandonados.
 
 ## Salas
 
-Três salas da casa, de pé para sempre (nunca recolhidas quando esvaziam), girando mapa a cada
-partida. A rotação sai do catálogo do jogo (`mapcat.js`), então mapa novo entra sozinho:
+As salas da casa ficam de pé para sempre (nunca são recolhidas quando esvaziam), usam 4v4 e
+giram mapa a cada partida. A rotação sai do catálogo do jogo (`mapcat.js`), então mapa novo
+entra sozinho:
 
 | Sala | Times | Mapas |
 |---|---|---|
 | `funk-x-palhaco` | Funkeiros × Palhaços | rotação `todos` |
 | `time-b-x-time-e` | Time E × Time B | rotação `oficiais` |
 | `livre` | sorteadas a cada partida | rotação `todos` |
+| `captura` | sorteadas a cada partida | rotação `captura`, modo CTF |
 
 Salas de usuário: públicas ou privadas com senha, rotação e facções à escolha, teto de 40 por
 nó (sala é RAM e CPU; sem teto um laço de POST derruba o nó e leva junto as três da casa).
@@ -148,9 +153,10 @@ hipóteses.
 | Régua | O que cobra |
 |---|---|
 | `tools/eval/movimento-golden.mjs` | a trajetória do jogador não mudou com a extração da física |
-| `tools/eval/netcode-check.mjs` | 35 cobranças do netcode, headless, com snapshots fabricados |
-| `server/smoke.mjs` | 51 cobranças do servidor de ponta a ponta, incluindo morte→respawn do slot |
-| `server/bench.mjs` | ms/tick → dimensionamento da VM |
+| `tools/eval/netcode-check.mjs` | netcode headless, sessão, spawn/respawn, relógio e CTF |
+| `tools/eval/netcodec-check.mjs` | codec v3 e compatibilidade v2 |
+| `game/smoke.mjs` no backend | servidor de ponta a ponta, incluindo CTF e slot abandonado |
+| `game/bench.mjs` no backend | ms/tick → dimensionamento da VM |
 
 ---
 

@@ -1008,6 +1008,7 @@ async function startGame(team, charId, enemyFaction, online = false) {
   }
 }
 async function _startGame(team, charId, enemyFaction, online = false) {
+  const sessao = online ? mpSessao : null;
   // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
   // "gire o celular" (CSS) cobre a tela até deitar.
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
@@ -1059,11 +1060,11 @@ async function _startGame(team, charId, enemyFaction, online = false) {
      (jogador + ~teamSize×2). Filtro vazio = rede de segurança: elenco inteiro. Régua: PL1. */
   /* Tamanho do time é do SERVIDOR, nunca do ajuste local de bots (senão sobram corpos e o
      casamento de ids fica adivinhando). */
-  const tamanhoTime = mpSessao ? mpSessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
+  const tamanhoTime = sessao ? sessao.net.meta.teamSize : Math.max(1, Math.min(8, settings.bots || 4));
   /* ELENCO: no multiplayer ele vem PRONTO do servidor (welcome.roster). Sortear o próprio faria
      cada jogador da mesma sala ver bonecos diferentes, e o nome do killfeed não bateria com o
      rosto que apareceu na tela. Fora do multiplayer, sorteio normal. */
-  const matchRoster = mpSessao ? rosterDoServidor(side, charId) : pickMatchRoster(faction, enemyFac, tamanhoTime, charId);
+  const matchRoster = sessao ? rosterDoServidor(side, charId) : pickMatchRoster(faction, enemyFac, tamanhoTime, charId);
   const _rosterGlb = [charId, ...matchRoster.allyDefs, ...matchRoster.enemyDefs]
     .map((d) => (typeof d === 'string' ? d : d.id))
     .filter((id, i, a) => GLB_CHARS.has(id) && a.indexOf(id) === i);
@@ -1072,8 +1073,8 @@ async function _startGame(team, charId, enemyFaction, online = false) {
      e 7,5 MB de download numa partida que usa ~9. O resto chega em ocioso. Régua: ARM1. */
   /* Armas: no multiplayer também são do servidor (ele é dono do estado de arma de cada corpo).
      Pré-carregar as erradas faria a arma certa chegar como caixa procedural no meio do tiroteio. */
-  const matchWeapons = mpSessao
-    ? mpSessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
+  const matchWeapons = sessao
+    ? sessao.net.meta.roster.map((r) => r.weapon).filter(Boolean)
     : pickMatchWeapons({ mode: settings.wpnMode || 'all', teamSize: tamanhoTime });
   const _armasDaPartida = [...new Set([charWeapon(charId), ...matchWeapons])].filter(Boolean);
   try {
@@ -1092,15 +1093,15 @@ async function _startGame(team, charId, enemyFaction, online = false) {
   if (_lstat.phase) _lstat.phase.set(1);
   game = new Game({
     renderer, textures, sfx,
-    settings: mpSessao ? { ...settings, bots: tamanhoTime } : settings,
+    settings: sessao ? { ...settings, bots: tamanhoTime } : settings,
     playerCharId: charId, playerTeam: side, playerFaction: faction, enemyFaction: enemyFac, mapId: currentMap,
     nickname: $('nick-input').value, testMode, mobile: TOUCH, matchRoster, matchWeapons,
     ctf: matchMode === 'ctf',   // o modo agora é 100% escolha do jogador (ctfMode só define o PADRÃO ao trocar de mapa)
     /* `mpFactory`+`net` ligam a autoridade do servidor. Espectador roda `dedicated`, senão
        sobrariam nove corpos locais para dez entidades e um jogador ficaria invisível. */
-    mpFactory: mpSessao ? makeNetcode : null,
-    net: mpSessao ? mpSessao.net : null,
-    dedicated: !!(mpSessao && mpSessao.net.espectador),
+    mpFactory: sessao ? makeNetcode : null,
+    net: sessao ? sessao.net : null,
+    dedicated: !!(sessao && sessao.net.espectador),
     roundsMax: matchRounds(),
     onMatchEnd: recordMatchStats,
     recordTraining: trainingEnabled(),
@@ -1202,6 +1203,7 @@ function quitToMenu() {
     }
   } catch {}
   switchMode = false;   // never carry an in-match team-switch into the menu
+  mpEncerrarSessao();
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
   // (antes, uma exceção aqui deixava o botão "SAIR PRO MENU" morto e o jogo zumbi)
   try { if (game) game.dispose(); } catch (e) { console.error('dispose falhou ao sair pro menu', e); }
@@ -2712,6 +2714,10 @@ let mpNos = [];
 let mpTimerLista = null;
 
 async function obterMpTicket(action) {
+  /* Nó local explícito (?mp=1/localhost) roda com MP_TICKET_REQUIRED=0. Pedir o ticket à API
+     pública com node=xx fazia o fluxo de desenvolvimento morrer ANTES do WebSocket. */
+  const localMp = new URLSearchParams(location.search).get('mp') || '';
+  if (localMp === '1' || /^(?:localhost|127\.0\.0\.1)(?::\d+)?$/i.test(localMp)) return '';
   const node = String(mpNoAtual?.ticketNode || mpNoAtual?.id || '').toLowerCase();
   if (!/^[a-z]{2}$/.test(node)) return '';
   const r = await fetch(apiUrl('/api/mp-ticket'), {
@@ -3157,12 +3163,15 @@ function mpFecharBarraSpec() {
   const bar = document.getElementById('mp-spec-bar');
   if (bar) { clearInterval(bar._timer); bar.remove(); }
 }
-/* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
-   liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
-function mpSair() {
+function mpEncerrarSessao() {
   const s = mpSessao; mpSessao = null;
   mpFecharBarraSpec();
   try { s?.net.close(); } catch { /* já fechado */ }
+}
+/* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
+   liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
+function mpSair() {
+  mpEncerrarSessao();
   try { if (game) game.dispose(); } catch { /* já foi */ }
   game = null; window.__game = null;
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }

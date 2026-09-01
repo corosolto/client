@@ -1,10 +1,11 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const VERSION = 2;
+const CURRENT_VERSION = 3;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
+const MAX_CTF_POINTS = 16;
 const MAX_STRING_BYTES = 64;
 const WEAPON_IDS = Object.freeze(Object.keys(WEAPONS));
 const WEAPON_INDEX = new Map(WEAPON_IDS.map((id, i) => [id, i]));
@@ -65,18 +66,39 @@ const integer = (value, max, name) => {
   return n;
 };
 
-export function encodeSnapshot(snapshot) {
+export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
+  if (version !== 2 && version !== 3) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
   const w = new Writer();
-  w.u8(0x43); w.u8(0x53); w.u8(0x42); w.u8(0x32); w.u8(VERSION); w.u8(KIND_SNAPSHOT);
+  w.u8(0x43); w.u8(0x53); w.u8(0x42); w.u8(0x32); w.u8(version); w.u8(KIND_SNAPSHOT);
   w.str(snapshot.room); w.u32(integer(snapshot.tick, 0xffffffff, 'tick')); w.f64(snapshot.t);
   w.str(snapshot.state); w.str(snapshot.owner); w.u8(integer(snapshot.players, 255, 'players'));
   w.u8(integer(snapshot.spectators, 255, 'spectators'));
   w.u8(integer(snapshot.livre?.E, 255, 'livre_e')); w.u8(integer(snapshot.livre?.B, 255, 'livre_b'));
   w.u16(integer(snapshot.timeLeft, 65535, 'time_left')); w.u16(integer(snapshot.roundNum, 65535, 'round'));
   w.u16(integer(snapshot.scoreE, 65535, 'score_e')); w.u16(integer(snapshot.scoreB, 65535, 'score_b'));
+  /* v3 acrescenta somente o estado autoritativo de captura. v2 fica byte-a-byte no formato
+     antigo para permitir rollout servidor-primeiro sem expulsar clientes já conectados. */
+  if (version >= 3) {
+    const ctf = snapshot.ctf;
+    w.u8(ctf ? 1 : 0);
+    if (ctf) {
+      const points = Array.isArray(ctf.points) ? ctf.points : [];
+      if (points.length > MAX_CTF_POINTS) throw new RangeError('too_many_ctf_points');
+      w.u16(integer(ctf.capsE, 65535, 'ctf_caps_e')); w.u16(integer(ctf.capsB, 65535, 'ctf_caps_b'));
+      w.u16(integer(ctf.roundCapsE, 65535, 'ctf_round_caps_e')); w.u16(integer(ctf.roundCapsB, 65535, 'ctf_round_caps_b'));
+      w.u16(integer(ctf.capsToWin, 65535, 'ctf_caps_to_win')); w.f32(ctf.matchLeft);
+      w.u8(points.length);
+      for (const point of points) {
+        const owner = point.owner === 'E' ? 1 : point.owner === 'B' ? 2 : 0;
+        const capTeam = point.capTeam === 'E' ? 4 : point.capTeam === 'B' ? 8 : 0;
+        w.u8(owner | capTeam | (point.contested ? 16 : 0));
+        w.f32(point.prog || 0);
+      }
+    }
+  }
   w.u8(ents.length);
   for (const ent of ents) {
     if (ent.team !== 'E' && ent.team !== 'B') throw new RangeError('team');
@@ -96,12 +118,29 @@ export function encodeSnapshot(snapshot) {
 export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
-  if (r.u8() !== VERSION || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  const version = r.u8();
+  if ((version !== 2 && version !== 3) || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
     timeLeft: r.u16(), roundNum: r.u16(), scoreE: r.u16(), scoreB: r.u16(), ents: [],
   };
+  if (version >= 3 && r.u8()) {
+    snapshot.ctf = {
+      capsE: r.u16(), capsB: r.u16(), roundCapsE: r.u16(), roundCapsB: r.u16(),
+      capsToWin: r.u16(), matchLeft: r.f32(), points: [],
+    };
+    const ctfCount = r.u8();
+    if (ctfCount > MAX_CTF_POINTS) throw new RangeError('too_many_ctf_points');
+    for (let i = 0; i < ctfCount; i++) {
+      const flags = r.u8();
+      snapshot.ctf.points.push({
+        owner: flags & 1 ? 'E' : flags & 2 ? 'B' : null,
+        capTeam: flags & 4 ? 'E' : flags & 8 ? 'B' : null,
+        contested: !!(flags & 16), prog: r.f32(),
+      });
+    }
+  }
   const count = r.u8();
   if (count > MAX_ENTITIES) throw new RangeError('too_many_entities');
   for (let i = 0; i < count; i++) {

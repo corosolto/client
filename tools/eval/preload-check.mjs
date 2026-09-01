@@ -41,7 +41,7 @@ const falhas = [];
    cada jogador da sala veria bonecos diferentes. A regra que importa não muda — o roster é
    resolvido ANTES do preload e é dele que sai o que carrega — então a régua aceita o ramo do
    multiplayer explicitamente, e continua exigindo o sorteio no ramo offline. */
-if (!/matchRoster\s*=\s*(?:mpSessao\s*\?\s*rosterDoServidor\([^)]*\)\s*:\s*)?pickMatchRoster\(/.test(main))
+if (!/matchRoster\s*=\s*(?:(?:mpSessao|sessao)\s*\?\s*rosterDoServidor\([^)]*\)\s*:\s*)?pickMatchRoster\(/.test(main))
   falhas.push('PL1 main.js não sorteia pickMatchRoster antes do preload');
 /* Percorre TODOS os call sites do preload (menu, preview, partida) e segue a CADEIA de definição
    do argumento: prender a régua ao nome `_charsToLoad` cegava o mutante quando ele mudava. */
