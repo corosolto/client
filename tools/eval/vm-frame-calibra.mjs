@@ -25,6 +25,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 import { WEAPON_IDS } from '../../public/js/weapons.js';
+import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
@@ -203,6 +204,38 @@ for (const arma of ARMAS) {
     }
     const fim = registro.passos.at(-1);
     registro.proposta = { x: +fim.x.toFixed(3), y: +fim.y.toFixed(3) };
+
+    /* Famílias de pistola sacam pelo arco procedural, e o `P6` cobra que o
+       primeiro quadro NÃO mostre a pose pronta: a caixa tem que nascer abaixo
+       de 75% da altura. `drawDrop` é o metro que empurra ela para lá. */
+    const familia = VM_WEAPON[arma]?.family;
+    if (VM_FAMILY[familia]?.equip === 'pistol') {
+      const noSaque = async (drop) => {
+        await page.evaluate(({ w, drop }) => {
+          const vm = window.__authoredVm; const e = vm.entry(w);
+          e.frame = { ...e.frame, drawDrop: drop };
+          e.drawDuration = Math.max(0.12, e.drawDuration || 0.32);
+          e.state = 'draw'; e.stateUntil = Infinity; e.drawTime = 0;
+          window.__game.__calibraVmUpdate(0);
+          vm.update = () => {};
+        }, { w: arma, drop });
+        await new Promise((r) => setTimeout(r, 120));
+        return mede(await page.screenshot({ type: 'png' }));
+      };
+      let drop = fim.y !== undefined ? 0.22 : 0.22;
+      let melhor = null;
+      for (let i = 0; i < 6; i += 1) {
+        const q = await noSaque(drop);
+        const topo = q ? q.vmFrac[1] : 1;
+        const pixels = q ? 1 : 0;
+        melhor = { drop: +drop.toFixed(3), topo: +topo.toFixed(3), visivel: pixels };
+        if (!q || topo >= 0.78) break;
+        drop += Math.max(0.05, (0.80 - topo) / Math.abs(dydY));
+        if (drop > 3) break;
+      }
+      registro.saque = melhor;
+      registro.proposta.drawDrop = melhor?.drop;
+    }
     registro.aprovado = fim.vmFrac[0] >= 0.50 && fim.vmFrac[0] <= 0.66 && fim.vmFrac[1] >= 0.45
       && fim.centroPx === 0 && fim.armaFrac <= 0.28 && fim.armaBordas < 3
       && !(fim.armaFrac < 0.02 && fim.armaDiagFrac < 0.12);
@@ -214,7 +247,8 @@ for (const arma of ARMAS) {
   saida[arma] = registro;
   const fim = registro.passos.at(-1);
   console.log(`${arma}: ${registro.erro ? `ERRO ${registro.erro}`
-    : `${registro.aprovado ? 'ok ' : 'RUIM'} x=${registro.proposta.x} y=${registro.proposta.y} `
+    : `${registro.aprovado ? 'ok ' : 'RUIM'} x=${registro.proposta.x} y=${registro.proposta.y}`
+      + `${registro.proposta.drawDrop ? ` drawDrop=${registro.proposta.drawDrop}` : ''} `
       + `caixa=${fim.vmFrac[0]},${fim.vmFrac[1]} centro=${fim.centroPx}px armaFrac=${fim.armaFrac}`}`);
 }
 await browser.close();

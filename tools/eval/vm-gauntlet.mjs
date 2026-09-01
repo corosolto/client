@@ -34,6 +34,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 
 import { WEAPON_IDS } from '../../public/js/weapons.js';
+import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
@@ -377,7 +378,7 @@ for (const arma of ARMAS) {
   const shot = () => page.screenshot({ type: 'png' });
   const dir = path.join(OUT, arma);
   if (SALVA_FRAMES) await fs.mkdir(dir, { recursive: true });
-  const r = { arma, erros: [] };
+  const r = { arma, familia: VM_WEAPON[arma]?.family || '', erros: [] };
   try {
     console.log(`${arma}: abrindo runtime`);
     await page.goto(
@@ -705,11 +706,16 @@ for (const arma of ARMAS) {
       const vm = window.__authoredVm;
       if (game.__gauntletVmUpdate) vm.update = game.__gauntletVmUpdate;
       const entry = vm?.entry?.(w);
-      const action = entry?.action;
-      if (action) {
+      /* Recarga em laço (shotgun/ferrolho) é uma FILA de clipes: terminar só o
+         primeiro deixava o estado em 'reload' e a régua acusava "não retorna a
+         Idle" numa arma que retorna. Esvazia a fila antes de julgar. */
+      for (let passo = 0; passo < 16; passo += 1) {
+        const action = vm?.entry?.(w)?.action;
+        if (!action) break;
         action.paused = false;
         action.time = Math.max(0, action.getClip().duration - 1e-4);
         entry.mixer.update(0.1);
+        if (entry.state === 'idle' && !entry.queue?.length) break;
       }
       return { state: entry?.state || null, clip: entry?.action?.getClip?.().name || null };
     }, arma);
@@ -822,7 +828,10 @@ for (const r of relatorio) {
     if (r.recargaResumo.armaExcursao > 0.55) {
       f.push(`P4 recarga: a ARMA anda ${(r.recargaResumo.armaExcursao * 100).toFixed(0)}% do próprio tamanho (arranca a arma toda)`);
     }
-    if (!r.recargaResumo.penteVisto) f.push('P4 recarga: pente independente não aparece');
+    /* Cinto (M249), laço de cartucho (M3) e tambor (revólver) não têm pente
+       destacável: cobrar um seria cobrar mentira, e é o que diz o vmconfig. */
+    const semPente = ['belt', 'pump_loop', 'cylinder'].includes(VM_FAMILY[r.familia]?.reloadStyle);
+    if (!r.recargaResumo.penteVisto && !semPente) f.push('P4 recarga: pente independente não aparece');
     if (r.recargaResumo.penteVisto && r.recargaResumo.penteExcursao < 0.12) {
       f.push('P4 recarga: o pente não sai do lugar');
     }

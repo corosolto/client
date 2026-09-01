@@ -13,6 +13,13 @@ const PORT = arg('porta') || '8341';
 const BASE = `http://127.0.0.1:${PORT}`;
 const OUT = path.resolve(ROOT, arg('saida') || `artifacts/viewmodels/golden-${WEAPON}/runtime-final`);
 const VIEWPORT = { width: Number(arg('largura')) || 1440, height: Number(arg('altura')) || 960 };
+/* --modo escolhe a MESMA trilha que o vm-gauntlet mede; sem ele nada muda e a
+   AK golden continua sendo capturada pelo caminho de produção. */
+const MODO = arg('modo') || 'golden';
+const FAMILIAS_A = 'ak,ar,mp5,smg,p90,g3,marksman,svd,sniper,bolt,deagle,pistol,shotgun,lmg';
+const QS_MODO = MODO === 'kinemation' ? `vmready=${FAMILIAS_A}&vmgolden=0`
+  : MODO === 'retarget' ? 'rt=1'
+  : MODO === 'goldsrc' ? 'cs16=1' : 'vmgolden=1';
 const CELL = { width: 720, height: 480 };
 
 const globalRoot = execSync('npm root -g').toString().trim();
@@ -60,7 +67,7 @@ async function openMap(map) {
     }
   });
   await page.goto(
-    `${BASE}/?debug=1&auto=E&vmweapon=${WEAPON}&map=${map}&armaslazy=0&vmgolden=1`,
+    `${BASE}/?debug=1&auto=E&vmweapon=${WEAPON}&map=${map}&armaslazy=0&${QS_MODO}`,
     { waitUntil: 'domcontentloaded', timeout: 180000 },
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
@@ -177,9 +184,12 @@ try {
     const game = window.__game;
     const entry = window.__authoredVm.entry(weapon);
     const resources = performance.getEntriesByType('resource').map((resource) => resource.name);
+    // gs#/rt# servem por ARMA em goldsrc-vm/retarget-vm, não na pasta da família.
+    const dir = entry.key.startsWith('gs#') ? 'goldsrc-vm'
+      : entry.key.startsWith('rt#') ? 'retarget-vm' : entry.family;
     const modelUrl = entry.key.startsWith('gold#')
       ? resources.find((url) => url.includes(`/models/viewmodels/coro/${weapon}-hires.glb`))
-      : resources.find((url) => url.includes(`/private-assets/viewmodels/${entry.family}/`)
+      : resources.find((url) => url.includes(`/private-assets/viewmodels/${dir}/`)
         && url.includes('.glb?v='));
     if (!modelUrl) throw new Error(`GLB servido não encontrado para ${entry.key}`);
     const response = await fetch(modelUrl, { cache: 'no-store' });
