@@ -255,8 +255,10 @@ export function buildSitio(scene, T = {}) {
     cabeca.position.set(HORTA.x0 + 2, 2.5, (HORTA.z0 + HORTA.z1) / 2); cabeca.castShadow = true; root.add(cabeca);
     addBox(1.4, 0.14, 0.14, MAT.wood, HORTA.x0 + 2, 1.7, (HORTA.z0 + HORTA.z1) / 2, { collide: false });
     addPlane(2.4, 0.9, lam({ map: signHorta }), HORTA.x0 - 0.8, 1.0, HORTA.z1 + 0.6, Math.PI / 2);
-    for (const [fx, fz, len, ry] of [[HORTA.x0 - 1, 11, 10, Math.PI / 2], [(HORTA.x0 + HORTA.x1) / 2, HORTA.z1 + 1.2, 11, 0]])
-      addBox(len, 0.9, 0.1, MAT.wood, fx, 0, fz, { ry });
+    /* Cercas ALINHADAS aos eixos (ry=0): cerca rotacionada tem AABB quadrado
+       cheio e vira paredão invisível — ilhou pickups dentro da horta (VM14). */
+    addBox(0.1, 0.9, 10, MAT.wood, HORTA.x0 - 1, 0, 11);
+    addBox(11, 0.9, 0.1, MAT.wood, (HORTA.x0 + HORTA.x1) / 2, 0, HORTA.z1 + 1.2);
   }
 
   /* ---------------- POMAR (leste) — árvores + cavalinho ---------------- */
@@ -271,8 +273,9 @@ export function buildSitio(scene, T = {}) {
       c2.position.set(tx + 0.7, 3.3, tz + 0.4); root.add(c2);
       colliders.push({ minX: tx - 0.35, maxX: tx + 0.35, minY: 0, maxY: 1.8, minZ: tz - 0.35, maxZ: tz + 0.35 });
     }
-    for (const [fx, fz, len, ry] of [[24, 12, 14, 0.35], [24, -12, 12, -0.3]])
-      addBox(len, 0.9, 0.1, MAT.wood, fx, 0, fz, { ry });
+    /* ry=0 nas cercas do pomar: AABB de cerca rotacionada é paredão (VM14). */
+    addBox(14, 0.9, 0.1, MAT.wood, 24, 0, -12);
+    addBox(14, 0.9, 0.1, MAT.wood, 24, 0, 12);
   }
 
   /* ---------------- MURO DE PEDRA (perímetro) + PORTEIRA SUL ---------------- */
@@ -327,8 +330,10 @@ export function buildSitio(scene, T = {}) {
     }
     colliders.push({ minX: x - 1.3, maxX: x + 1.3, minY: 0, maxY: 0.44 + n * 0.78, minZ: z - 1.2, maxZ: z + 1.2 });
   };
-  const troncoCaido = (x, z, ry = 0) => {
-    addBox(3.2, 0.75, 0.75, MAT.tronco, x, 0, z, { ry });
+  const troncoCaido = (x, z, vertical = false) => {
+    /* Sem rotação: AABB de tronco girado é bloco 3,2×3,2 — paredão (VM14). */
+    if (vertical) addBox(0.75, 0.75, 3.2, MAT.tronco, x, 0, z);
+    else addBox(3.2, 0.75, 0.75, MAT.tronco, x, 0, z);
   };
   const cocho = (x, z, ry = 0) => {
     addBox(1.8, 0.65, 0.9, MAT.wood, x, 0, z, { ry });
@@ -341,7 +346,7 @@ export function buildSitio(scene, T = {}) {
   pedraCampo(-19, -38); pedraCampo(31, -36); pedraCampo(16, -38);
   fardo(-25, -19); fardo(20, -18, 0.4);
   arbusto(-16, -19); arbusto(25, -27, 0.9); arbusto(8, -38, 1.1); arbusto(-31, -22, 0.8);
-  troncoCaido(2, -37, 0.3);
+  troncoCaido(2, -37);
   // telheiro/garagem aberta (NW)
   {
     const ZX = -27, ZZ = -31;
@@ -355,7 +360,7 @@ export function buildSitio(scene, T = {}) {
   pedraCampo(-28, 26, 1.3); pedraCampo(-30, 12, 1.2); pedraCampo(-19, 26);
   fardo(-23, 26, 0.7); fardo(-20, -2, 1.1);
   arbusto(-28, 33, 1.2); arbusto(-17, 28); arbusto(-24, 22, 0.8);
-  troncoCaido(-20, 34, 1.2); cocho(-27, 7);
+  troncoCaido(-20, 34); cocho(-27, 7);
   moyo(-25, 29); moyo(-15, 24);
   // miolo (entre lago e muros)
   pedraCampo(-16, -8, 1.0); pedraCampo(16, -8, 1.1); pedraCampo(28, 18, 1.2); pedraCampo(6, 26, 0.9);
@@ -365,16 +370,16 @@ export function buildSitio(scene, T = {}) {
   pilhaToras(24, 28, 2);
   // reforço do miolo: os quadrantes centrais eram deserto (MAP5 media espaçamento
   // de 10-17 m — hoje cobertos com o mesmo vocabulário rural, sem item urbano)
-  arbusto(-3, -16); pedraCampo(-14, -14, 0.9); troncoCaido(-8, -19, 0.8); moyo(-1, -19);
+  arbusto(-3, -16); pedraCampo(-14, -14, 0.9); troncoCaido(-8, -19); moyo(-1, -19);
   arbusto(4, -13); pedraCampo(13, -17, 0.9); fardo(11, -8, 0.9); arbusto(2, -9);
-  arbusto(-1, 12); pedraCampo(-15, 20, 0.8); moyo(-2, 17); troncoCaido(-15, 3, 1.5);
+  arbusto(-1, 12); pedraCampo(-15, 20, 0.8); moyo(-2, 17); troncoCaido(-15, 3, true);
   arbusto(12, 12); pedraCampo(1, 18, 0.8); arbusto(4, 16);
   // reforço dos quadrantes de borda (mesmo teto MAP5 da família dos mapas novos).
   // Faixa norte fica RENTE AO MURO (z ~-40,5) e os slots E desviados das
   // diagonais: o primeiro lote cercou o spawn — CTF2 caiu a 0 rota e folga a 0,3.
-  eucalipto(-5, -40.6); pedraCampo(-11, -40.4, 0.9); cocho(-4, -40.6); troncoCaido(-12, -40.9, 0.05); arbusto(-1, -40.5, 0.8); moyo(-8.75, -40.8);
+  eucalipto(-5, -40.6); pedraCampo(-11, -40.4, 0.9); cocho(-4, -40.6); troncoCaido(-12, -40.9); arbusto(-1, -40.5, 0.8); moyo(-8.75, -40.8);
   pedraCampo(5, -33, 1.0); arbusto(12, -33, 1.0);
-  pedraCampo(-21, -16, 1.0); arbusto(-29, -14, 1.1); troncoCaido(-24, -11, 0.4);
+  pedraCampo(-21, -16, 1.0); arbusto(-29, -14, 1.1); troncoCaido(-24, -11, true);
   arbusto(-10, 14, 0.8);
   /* Nota MAP5 (report-only): q1,0 (quintal da casa) mede 9,14 m de espaçamento
      contra 6,4-6,7 da família dos mapas novos — cada cover extra ali fechou
@@ -404,9 +409,9 @@ export function buildSitio(scene, T = {}) {
   }
   // cercas do pasto sul — a da coluna do meio é CURTA de propósito: AABB de
   // cerca rotacionada engole a diagonal e virava muro na saída leste do spawn B
-  for (const [fx, fz, len, ry] of [[-20, 36, 10, 0.6], [-6, 38, 8, -0.4], [15, 36.5, 7, 0.25], [28, 26, 7, 0.9]]) {
-    addBox(len, 0.12, 0.08, MAT.wood, fx, 0.85, fz, { ry });
-    addBox(len, 0.12, 0.08, MAT.wood, fx, 0.45, fz, { ry });
+  for (const [fx, fz, w, d] of [[-20, 36, 10, 0.1], [-6, 38, 8, 0.1], [15, 36.5, 7, 0.1], [28, 26, 7, 0.1]]) {
+    addBox(w, 0.12, d, MAT.wood, fx, 0.85, fz);
+    addBox(w, 0.12, d, MAT.wood, fx, 0.45, fz);
   }
 
   /* ---------------- PROPS do acervo (GLB + proxy) ---------------- */
@@ -442,9 +447,9 @@ export function buildSitio(scene, T = {}) {
     ['awp', 12.6, LAGO.maxZ + 1.8],     // na areia, ao lado do pedalinho (meme do PR #4)
     ['ak', -6, -14], ['m4', 16, -16], ['awp', 24, -10], ['deagle', 11, -24],
     ['shotgun', 18, -27], ['mp5', -15, -9], ['m400', -30, -19], ['akm', -26, -33],
-    ['g3', -6, 2], ['revolver38', -3, -10], ['md97', -20, 13], ['uzi', -28, 11],
+    ['g3', -5, -7], ['revolver38', -3, -10], ['md97', -20, 10.6], ['uzi', -28, 11],
     ['p90', -11, 28], ['mosin', -2, 34], ['scar', 9, 31], ['tavor', 21, 16],
-    ['famas', 28, 4], ['deagle', 31, -33], ['shotgun', 14, 26], ['mp5', -22, 33],
+    ['famas', 28, 4], ['deagle', 31, -33], ['shotgun', 14, 23], ['mp5', -22, 33],
     ['m4', 4, 24], ['ak', -31, 0], ['awp', 27, 24],
   ].forEach(p => placePickup(...p));
 
