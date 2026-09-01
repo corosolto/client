@@ -23,7 +23,8 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
 
-  await page.locator('.cs-item[data-act="jogar"]').click();
+  // O menu de 4 itens (c6ee8ea) tirou o item `jogar`: os dois modos ficaram diretos
+  // no menu principal, e o clique no item que sumiu travava este smoke por 15 min.
   await page.locator('.cs-item[data-act="sp"]').click();
   await expect(page.locator('#map-screen')).toBeVisible();
   await page.locator('#ms-continue').click();
@@ -33,7 +34,9 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   await page.locator('#btn-jogar').click();
   await expect(page.locator('#team-select')).toBeVisible({ timeout: 30_000 });
 
-  await page.locator('#btn-team-e').click();
+  // A escalação virou trilho de FACÇÕES (index.astro:836): os botões #btn-team-e/b
+  // não existem mais, e o card só é clicável com data-ready="1".
+  await page.locator('.team-card[data-faction][data-ready="1"]').first().click();
   // A seleção só abre depois que o preload real do elenco termina.
   await expect(page.locator('#char-select')).toBeVisible({ timeout: 360_000 });
 
@@ -57,6 +60,8 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   // partida também abre com o caminho real (já com elenco/modelos batidos em cache)
   await page.locator('#char-confirm').click();
   await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-b').click();
+  // 2º passo (adversário): o card da própria facção fica escondido, então o primeiro
+  // card pronto da lista já é um inimigo válido.
+  await page.locator('.team-card[data-faction][data-ready="1"]:visible').first().click();
   await expect(page.locator('#hud')).toBeVisible({ timeout: 180_000 });
 });

@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
 
 const PORT = parseInt(process.argv[2] || '8123', 10);
@@ -18,7 +19,7 @@ const CHARACTER_EVAL_SHELL = `<!doctype html>
 {"imports":{"three":"/vendor/three.module.js","three/addons/":"/vendor/addons/"}}
 </script>`;
 
-async function renderIndex() {
+export async function renderIndex() {
   const src = await readFile('src/pages/index.astro', 'utf8');
   const V = JSON.parse(await readFile('package.json', 'utf8')).version;
   const { modules: modulos, revision: JS_REV } = moduleCacheManifest(join(ROOT, 'js'));
@@ -105,7 +106,7 @@ async function renderIndex() {
    ERR_CONNECTION_REFUSED — justamente os 5 que o dono relatou como piores e que
    ninguém tinha frame para julgar. Servidor de arnês que morre falsifica a
    medição em silêncio: o log fica cheio de "fatal" que parece defeito do jogo. */
-http.createServer(async (req, res) => {
+const servidor = http.createServer(async (req, res) => {
   try {
     const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     let body, type;
@@ -125,7 +126,14 @@ http.createServer(async (req, res) => {
     if (res.headersSent) { res.destroy(); return; }
     res.writeHead(404); res.end('404');
   }
-}).listen(PORT, () => console.log(`eval server -> http://localhost:${PORT}`));
+});
+
+/* Só sobe o servidor quando ESTE arquivo é o executado. A SB7 do shader-budget importa
+   o `renderIndex` para medir a SAÍDA (o HTML servido leva o hash?) em vez de contar
+   string no fonte; sem esta guarda, importar a régua abriria uma porta. */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  servidor.listen(PORT, () => console.log(`eval server -> http://localhost:${PORT}`));
+}
 
 /* Rede de segurança final. Uma bateria de captura leva mais de uma hora; perder
    isso porque um socket morreu não paga. Nenhum destes derruba o servidor. */

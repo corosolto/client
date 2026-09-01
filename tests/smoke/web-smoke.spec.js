@@ -56,7 +56,8 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
   await page.locator('#ranking-back').click();
   await expect(page.locator('#main-menu')).toBeVisible();
 
-  await page.locator('.cs-item[data-act="jogar"]').click();
+  // O menu de 4 itens (c6ee8ea) tirou o item `jogar`: os dois modos ficaram diretos
+  // no menu principal, e o clique no item que sumiu travava este smoke por 15 min.
   await page.locator('.cs-item[data-act="sp"]').click();
   await expect(page.locator('#map-screen')).toBeVisible();
   await page.locator('#ms-continue').click();
@@ -70,7 +71,9 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
   await expect(page.locator('#team-select')).toBeVisible();
   marcar('team-select');
 
-  await page.locator('#btn-team-e').click();
+  // A escalação virou trilho de FACÇÕES (index.astro:836): os botões #btn-team-e/b
+  // não existem mais, e o card só é clicável com data-ready="1".
+  await page.locator('.team-card[data-faction][data-ready="1"]').first().click();
   await expect(page.locator('#char-select')).toBeVisible();
   const characters = page.locator('#char-list .char-row');
   await expect(characters.first()).toBeVisible();
@@ -78,7 +81,9 @@ test('menu, ranking, setup, teams, character and initial hud boot', async ({ pag
 
   await page.locator('#char-confirm').click();
   await expect(page.locator('#team-select')).toHaveAttribute('data-step', 'enemy');
-  await page.locator('#btn-team-f').click();
+  // 2º passo (adversário): FUNKEIROS por nome, não "o primeiro pronto" — a asserção
+  // seguinte cobra a facção escolhida, e sorteio implícito tiraria o sentido dela.
+  await page.locator('.team-card[data-faction="F"]').click();
   marcar('partida');
 
   await expect(page.locator('#hud')).toBeVisible({ timeout: 60_000 });

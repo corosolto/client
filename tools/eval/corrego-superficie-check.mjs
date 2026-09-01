@@ -147,9 +147,16 @@ function areaDe(o) {
 
 const fauna = [];
 const materiais = new Map();   // uuid -> { map: bool, malhas, area }
+/* VIDA DE CÉU fora do censo de superfície, pelo MESMO motivo que o parque-wheel-check
+   tira a fauna do dele: no arnês node os GLBs não baixam, os proxies procedurais entram
+   sem textura e mexem numa razão que mede SUPERFÍCIE DE MAPA. Pipa a 18 m de altura não
+   é parede. Medido: com os proxies dentro, 31,4% -> 39,0% contra teto de 40% — a régua
+   estaria reprovando o céu achando que reprovava o barraco. */
+const doCeu = (o) => { for (let p = o; p; p = p.parent) if (p.userData?.skyLife) return true; return false; };
 root.traverse((o) => {
   if (o.userData?.fauna) fauna.push(o);
   if (!o.isMesh || o.visible === false) return;
+  if (doCeu(o)) return;
   const arr = Array.isArray(o.material) ? o.material : [o.material];
   const m = arr.find((x) => x && x.map) || arr[0];
   if (!m || m.visible === false) return;   // colisor invisível da ponte: não chega no olho
