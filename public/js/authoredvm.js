@@ -12,7 +12,7 @@ export const AUTHORED_VM_MODELS = Object.freeze(Object.fromEntries(
   Object.entries(VM_WEAPON).map(([weapon, config]) => [weapon, config.family]),
 ));
 
-const CATALOG_VERSION = 'paid-aaa-2';
+const CATALOG_VERSION = 'paid-aaa-3';
 const NODE_RUNTIME = typeof process !== 'undefined' && Boolean(process.versions?.node);
 export const AUTHORED_VM_URLS = Object.freeze(Object.fromEntries(
   [...new Set([...Object.values(AUTHORED_VM_MODELS), 'grenade'])]
@@ -181,7 +181,7 @@ const FAMILY_FRAME = Object.freeze({
   deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
   p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
-  pistol:  { x: 0.036, y: -0.095, z: -0.085, fov: 84, rotDeg: [-9.7, -0.1, 0] },
+  pistol:  { x: 0.150, y: -0.015, z: -0.200, fov: 60, rotDeg: [-9, 12, -2], drawDrop: 0.34 },
   shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },
   sniper:  { x: 0.118, y: -0.128, z: 0.029, fov: 84, rotDeg: [-11.9, 0, 0] },
   bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },
@@ -230,6 +230,7 @@ const urlForKey = (key) => {
   }
   if (key.includes('#')) {
     const [family, weapon] = key.split('#');
+    if (VM_WEAPON[weapon]?.runtime === 'family') return AUTHORED_VM_URLS[family];
     return `/private-assets/viewmodels/${family}/${weapon}-baked-runtime.glb?v=${CATALOG_VERSION}`;
   }
   return AUTHORED_VM_URLS[key];
@@ -331,7 +332,7 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     }
   });
   return {
-    scene, mount, cameraFov: Math.max(cameraFov, frame.fov), cameraAspect,
+    scene, mount, cameraFov: golden || molde ? Math.max(cameraFov, frame.fov) : frame.fov, cameraAspect,
     frame, handMeshes, weaponMeshes, utilityModels,
   };
 }
@@ -536,7 +537,7 @@ export class AuthoredViewModels {
       active.drawTime = Math.min(active.drawDuration, active.drawTime + step);
       const t = active.drawTime / active.drawDuration;
       const eased = 1 - Math.pow(1 - t, 3);
-      drawY = THREE.MathUtils.lerp(-0.22, 0, eased);
+      drawY = THREE.MathUtils.lerp(-(active.frame.drawDrop ?? 0.22), 0, eased);
       drawRx = THREE.MathUtils.lerp(0.24, 0, eased);
     }
     const recoil = this.recoil.update(step, this.adsAmount);
@@ -662,12 +663,11 @@ export class AuthoredViewModels {
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
     // expiração no update (não há clipe para "terminar"). Revisão 29/08.
-    entry.drawDuration = cs16 ? cs16.draw : Math.max(0.12, duration || 0.32);
+    const useGameplayTiming = VM_WEAPON[id]?.timing === 'gameplay';
+    entry.drawDuration = cs16 && !useGameplayTiming ? cs16.draw : Math.max(0.12, duration || 0.32);
     entry.drawTime = 0;
-    if (cs16) {
-      entry.state = 'draw';
-      entry.stateUntil = this._time + entry.drawDuration;
-    }
+    entry.state = 'draw';
+    entry.stateUntil = this._time + entry.drawDuration;
     return true;
   }
 
@@ -677,7 +677,7 @@ export class AuthoredViewModels {
     const cs16 = VM_FAMILY[entry.family]?.cs16;
     // Sem cadência de reload no QC fonte (shotgun: recarga é laço de cartucho),
     // a duração do jogo segue valendo.
-    if (!entry.golden && cs16?.reload) {
+    if (!entry.golden && cs16?.reload && VM_WEAPON[id]?.timing !== 'gameplay') {
       // cadência do QC vale para o TÁTICO; o empty escala pelo MESMO
       // timeScale (forçar 2,43s no empty o acelerava 27%).
       const tactical = entry.clips.get('reload_tactical');
@@ -724,7 +724,7 @@ export class AuthoredViewModels {
       entry.state = 'fire';
       return this._play(entry, 'shoot', { fade: 0.01 });
     }
-    if (cs16) {
+    if (cs16 && VM_WEAPON[id]?.timing !== 'gameplay') {
       // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências
       // originais; recuo SÓ na câmera (GUNFEEL do game.js) — o mount não recua.
       entry.shootCycle = ((entry.shootCycle || 0) % 3) + 1;
@@ -739,7 +739,10 @@ export class AuthoredViewModels {
     // Recuo procedural em TODO tiro (12/15 famílias não têm clipe de fire);
     // clipe assado entra por cima onde existe, e a shotgun toca o pump.
     this.recoil.shoot(this._time);
-    if (entry.clips.has('shoot')) return this._play(entry, 'shoot', { fade: 0.01 });
+    if (entry.clips.has('shoot')) {
+      entry.state = 'fire';
+      return this._play(entry, 'shoot', { fade: 0.01 });
+    }
     if (entry.clips.has('pump')) return this._play(entry, 'pump', { fade: 0.02 });
     return true;
   }

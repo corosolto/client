@@ -229,6 +229,77 @@ function sampleTargets(gltf, targetNames, { foldRoot = false, targetNodes = null
   return { duration: clip.duration, times, tracks };
 }
 
+function sampleTrackMatrix(track, fraction) {
+  const count = track.translation.length / 3;
+  const cursor = Math.max(0, Math.min(count - 1, fraction * (count - 1)));
+  const first = Math.floor(cursor);
+  const second = Math.min(count - 1, first + 1);
+  const alpha = cursor - first;
+  const position = new Vector3().fromArray(track.translation, first * 3)
+    .lerp(new Vector3().fromArray(track.translation, second * 3), alpha);
+  const rotation = new Quaternion().fromArray(track.rotation, first * 4)
+    .slerp(new Quaternion().fromArray(track.rotation, second * 4), alpha);
+  const scale = new Vector3().fromArray(track.scale, first * 3)
+    .lerp(new Vector3().fromArray(track.scale, second * 3), alpha);
+  return new Matrix4().compose(position, rotation, scale);
+}
+
+function sampledWorldMatrix(node, fraction, samples, cache) {
+  if (cache.has(node)) return cache.get(node);
+  const track = samples.map((sample) => sample?.tracks.get(node.getName())).find(Boolean);
+  const local = track ? sampleTrackMatrix(track, fraction) : nodeMatrix(node);
+  const parent = node.getParentNode();
+  const world = parent
+    ? sampledWorldMatrix(parent, fraction, samples, cache).clone().multiply(local)
+    : local;
+  cache.set(node, world);
+  return world;
+}
+
+function bakeMagazineGrip(armsSample, weaponSample, targetsByName, grip) {
+  const mag = targetsByName.get('Mag');
+  const hand = targetsByName.get(grip.handBone);
+  const track = weaponSample.tracks.get('Mag');
+  if (!mag || !hand || !track || !mag.getParentNode()) throw new Error('magazine grip nodes are missing');
+  const samples = [armsSample, weaponSample];
+  const referenceCache = new Map();
+  const handReference = sampledWorldMatrix(hand, grip.reference, samples, referenceCache);
+  const magReference = sampledWorldMatrix(mag, grip.reference, samples, referenceCache);
+  const handToMag = handReference.clone().invert().multiply(magReference);
+  const smoothstep = (start, end, value) => {
+    const t = Math.max(0, Math.min(1, (value - start) / (end - start)));
+    return t * t * (3 - 2 * t);
+  };
+  const translations = [];
+  const rotations = [];
+  let previous = null;
+  const count = track.translation.length / 3;
+  for (let index = 0; index < count; index += 1) {
+    const fraction = count > 1 ? index / (count - 1) : 0;
+    const cache = new Map();
+    const currentLocal = sampleTrackMatrix(track, fraction);
+    const currentPosition = new Vector3();
+    const currentRotation = new Quaternion();
+    const currentScale = new Vector3();
+    currentLocal.decompose(currentPosition, currentRotation, currentScale);
+    const desiredWorld = sampledWorldMatrix(hand, fraction, samples, cache).clone().multiply(handToMag);
+    const desiredLocal = sampledWorldMatrix(mag.getParentNode(), fraction, samples, cache)
+      .clone().invert().multiply(desiredWorld);
+    const desiredPosition = new Vector3();
+    const desiredRotation = new Quaternion();
+    const desiredScale = new Vector3();
+    desiredLocal.decompose(desiredPosition, desiredRotation, desiredScale);
+    const weight = smoothstep(grip.engage[0], grip.engage[1], fraction)
+      * (1 - smoothstep(grip.release[0], grip.release[1], fraction));
+    currentPosition.lerp(desiredPosition, weight);
+    currentRotation.slerp(desiredRotation, weight);
+    translations.push(currentPosition.x, currentPosition.y, currentPosition.z);
+    previous = pushQuaternion(rotations, currentRotation, previous);
+  }
+  track.translation = translations;
+  track.rotation = rotations;
+}
+
 function addTrack(document, animation, buffer, targetNode, pathName, times, values) {
   const itemSize = pathName === 'rotation' ? 4 : 3;
   const input = document.createAccessor(`${animation.getName()}_${targetNode.getName()}_time`, buffer)
@@ -248,19 +319,24 @@ function addTrack(document, animation, buffer, targetNode, pathName, times, valu
   animation.addSampler(sampler).addChannel(channel);
 }
 
-function mergeSamples(document, clipName, samples, targetsByName) {
+function mergeSamples(document, clipName, samples, targetsByName, duration) {
   const root = document.getRoot();
   root.listAnimations().filter((animation) => animation.getName() === clipName).forEach((animation) => animation.dispose());
   const animation = document.createAnimation(clipName);
   const buffer = root.listBuffers()[0] || document.createBuffer('viewmodel-animation');
 
   for (const sample of samples) {
+    // Braços e arma têm contagens de frames diferentes, mas compartilham a
+    // mesma fase autoral; sem normalização o pente termina antes da mão chegar.
+    const timeScale = sample.duration > 0 ? duration / sample.duration : 1;
+    const times = Math.abs(timeScale - 1) < 1e-6
+      ? sample.times : Float32Array.from(sample.times, (time) => time * timeScale);
     for (const [name, track] of sample.tracks) {
       const target = targetsByName.get(name);
       if (!target) continue;
-      addTrack(document, animation, buffer, target, 'translation', sample.times, track.translation);
-      addTrack(document, animation, buffer, target, 'rotation', sample.times, track.rotation);
-      addTrack(document, animation, buffer, target, 'scale', sample.times, track.scale);
+      addTrack(document, animation, buffer, target, 'translation', times, track.translation);
+      addTrack(document, animation, buffer, target, 'rotation', times, track.rotation);
+      addTrack(document, animation, buffer, target, 'scale', times, track.scale);
     }
   }
   return animation;
@@ -284,6 +360,15 @@ async function main() {
   const document = await io.read(basePath);
   const root = document.getRoot();
   const targetsByName = new Map(root.listNodes().map((node) => [node.getName(), node]));
+  if (args.family === 'pistol') {
+    const socket = targetsByName.get('SOCKET_WEAPON_PISTOL');
+    const handGun = targetsByName.get('ik_hand_gun');
+    if (!socket || !handGun) throw new Error('pistol is missing its deferred weapon socket');
+    handGun.addChild(socket);
+    // O rig da arma traz a conversão FBX 0.01 e agora herda a mesma conversão
+    // dos braços; o socket cancela apenas essa segunda escala.
+    socket.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([100, 100, 100]);
+  }
   const armsSkin = root.listSkins().find((skin) => skin.getName() === 'RIG_FP_ARMS');
   const weaponSkin = root.listSkins().find((skin) => skin.getName() === `RIG_WEAPON_${args.family.toUpperCase()}`);
   if (!armsSkin || !weaponSkin) throw new Error('base GLB is missing the authored arm or weapon skin');
@@ -307,17 +392,36 @@ async function main() {
     if (weaponFbx) {
       const weaponGlb = path.join(rawRoot, `${clipName}-weapon.glb`);
       convertWeaponFbx(weaponFbx, weaponGlb);
+      await stripRenderables(weaponGlb);
       const weapon = await loadAnimation(weaponGlb);
       weaponSample = sampleTargets(weapon, weaponTargets, { targetNodes: targetsByName });
+      if (clipName.startsWith('reload') && family.magTranslationScale) {
+        const translation = weaponSample.tracks.get('Mag')?.translation;
+        const rest = targetsByName.get('Mag')?.getTranslation();
+        if (translation && rest) {
+          for (let index = 0; index < translation.length; index += 3) {
+            for (let axis = 0; axis < 3; axis += 1) {
+              translation[index + axis] = rest[axis]
+                + (translation[index + axis] - rest[axis]) * family.magTranslationScale;
+            }
+          }
+        }
+      }
+      if (clipName.startsWith('reload') && family.magGrip) {
+        bakeMagazineGrip(armsSample, weaponSample, targetsByName, family.magGrip);
+      }
       samples.push(weaponSample);
     }
-    const animation = mergeSamples(document, clipName, samples, targetsByName);
+    const duration = Math.max(armsSample.duration, weaponSample?.duration ?? 0);
+    const animation = mergeSamples(document, clipName, samples, targetsByName, duration);
     report.clips.push({
       name: clipName,
-      duration: Math.max(armsSample.duration, weaponSample?.duration ?? 0),
+      duration,
       channels: animation.listChannels().length,
       arms: armsSample.tracks.size,
       weapon: weaponSample?.tracks.size ?? 0,
+      weaponTimeScale: weaponSample ? duration / weaponSample.duration : null,
+      magazineGrip: weaponSample && clipName.startsWith('reload') ? family.magGrip || null : null,
     });
   }
   if (report.clips.length === 0) throw new Error(`no paired character/weapon clips found for ${args.family}`);

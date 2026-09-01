@@ -15,6 +15,8 @@ import { ALL_EXTENSIONS } from '../../node_modules/@gltf-transform/extensions/di
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '../..');
 const PRIVATE_ROOT = process.argv[2] || '/Users/ruben/csbrasil-private-assets/generated/viewmodels';
+const CHARACTER_TEXTURES = process.argv[3]
+  || '/Users/ruben/csbrasil-private-assets/generated/extracted/Assets/KINEMATION/FPSAnimationPack/Character/Textures';
 const ARM_TEXTURE = /^T_(?:Arm|Cloth|Glove)01_(B|N|ORM)$/;
 const TARGET = { B: { size: 1024, quality: 85 }, N: { size: 2048, quality: 80 }, ORM: { size: 1024, quality: 85 } };
 
@@ -34,6 +36,19 @@ const families = [...catalog.families.map((f) => f.family), 'grenade'];
 const shared = {};
 const report = { schemaVersion: 1, families: {}, shared: {} };
 
+for (const part of ['Arm', 'Cloth', 'Glove']) {
+  for (const [kind, spec] of Object.entries(TARGET)) {
+    const name = `T_${part}01_${kind}`;
+    const source = path.join(CHARACTER_TEXTURES, `${name}.png`);
+    const image = await sharp(source)
+      .resize(spec.size, spec.size, { fit: 'fill' })
+      .webp({ quality: spec.quality })
+      .toBuffer();
+    await fs.writeFile(path.join(sharedDir, `${name}.webp`), image);
+    shared[name] = image.byteLength;
+  }
+}
+
 for (const family of families) {
   const file = path.join(PRIVATE_ROOT, family, `${family}-runtime.glb`);
   const before = (await fs.stat(file)).size;
@@ -42,17 +57,7 @@ for (const family of families) {
   for (const texture of document.getRoot().listTextures()) {
     const match = ARM_TEXTURE.exec(texture.getName() || '');
     if (!match) continue;
-    const kind = match[1];
     const name = texture.getName();
-    if (!shared[name]) {
-      const spec = TARGET[kind];
-      const image = await sharp(Buffer.from(texture.getImage()))
-        .resize({ width: spec.size, height: spec.size, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: spec.quality })
-        .toBuffer();
-      await fs.writeFile(path.join(sharedDir, `${name}.webp`), image);
-      shared[name] = image.byteLength;
-    }
     texture.setImage(placeholder);
     texture.setMimeType('image/webp');
     replaced += 1;

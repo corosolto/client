@@ -19,10 +19,8 @@ bpy.ops.import_scene.fbx(filepath=entrada)
 scene = bpy.context.scene
 scene.render.fps = 60
 scene.render.fps_base = 1
-# só armature + ação interessam; malhas (se houver) saem para o GLB ficar leve
-for obj in list(scene.objects):
-    if obj.type == "MESH":
-        bpy.data.objects.remove(obj, do_unlink=True)
+# A skin precisa existir durante o export: sem ela o glTF serializa os bones
+# como nós genéricos e muda a base local dos pivôs de arma.
 bpy.ops.export_scene.gltf(
     filepath=saida,
     export_format="GLB",

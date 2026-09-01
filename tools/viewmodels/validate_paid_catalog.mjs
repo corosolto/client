@@ -6,6 +6,7 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import sharp from 'sharp';
 import { NodeIO } from '../../node_modules/@gltf-transform/core/dist/index.js';
 import { ALL_EXTENSIONS } from '../../node_modules/@gltf-transform/extensions/dist/index.js';
 
@@ -16,6 +17,7 @@ const PRIVATE_ROOT = '/Users/ruben/csbrasil-private-assets/generated/viewmodels'
 // nova tem que cair no mesmo lugar com o idle aplicado, agora seguindo o bone.
 const SOCKET_BASELINE_PATH = path.join(SCRIPT_DIR, 'vm-socket-baseline.json');
 const SOCKET_POS_TOLERANCE = 2e-3;
+const SHARED_TEXTURE_SIZE = Object.freeze({ B: 1024, N: 2048, ORM: 1024 });
 const REQUIRED_SPECIAL = Object.freeze({
   shotgun: ['idle', 'reload_start', 'reload_loop', 'reload_end', 'pump', 'pump_empty'],
   bolt: ['idle', 'reload_empty', 'reload_start', 'reload_loop', 'reload_end', 'shoot'],
@@ -100,7 +102,16 @@ async function main() {
   invariant(sharedNames.length === 9, `expected 9 shared arm textures, found ${sharedNames.length}`);
   let sharedTotal = 0;
   for (const [name, entry] of Object.entries(shared)) {
-    const stat = await fs.stat(path.join(privateRoot, 'shared', `${name}.webp`));
+    const texturePath = path.join(privateRoot, 'shared', `${name}.webp`);
+    const stat = await fs.stat(texturePath);
+    const kind = /_(B|N|ORM)$/.exec(name)?.[1];
+    invariant(kind, `shared texture ${name} has an unknown channel suffix`);
+    const metadata = await sharp(texturePath).metadata();
+    const expectedSize = SHARED_TEXTURE_SIZE[kind];
+    invariant(
+      metadata.width === expectedSize && metadata.height === expectedSize,
+      `shared texture ${name} is ${metadata.width}x${metadata.height}; expected ${expectedSize}x${expectedSize}`,
+    );
     invariant(stat.size === entry.bytes, `shared texture ${name} drifted from its manifest`);
     sharedTotal += stat.size;
   }

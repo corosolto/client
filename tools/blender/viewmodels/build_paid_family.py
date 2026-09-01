@@ -24,6 +24,14 @@ from mathutils import Matrix, Vector
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MANIFEST = REPO_ROOT / "tools/viewmodels/paid-pack-manifest.json"
 DEFAULT_EXTRACTED = Path("/Users/ruben/csbrasil-private-assets/generated/extracted")
+PISTOL_MATERIALS = {
+    "polymer": ("111820", 0.08, 0.42),
+    "finish_dark": ("171d24", 0.50, 0.58),
+    "finish_barrel": ("323a43", 0.78, 0.66),
+    "primer": ("8a5c18", 0.70, 0.65),
+    "casing": ("8a5c18", 0.70, 0.65),
+    "default": ("252c34", 0.50, 0.56),
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -185,7 +193,13 @@ def unity_material_values(path: Path) -> tuple[tuple[float, float, float, float]
     return color, metallic, smoothness
 
 
-def setup_weapon_materials(objects: list[bpy.types.Object], material_root: Path) -> None:
+def srgb_hex_to_linear(value: str) -> tuple[float, float, float, float]:
+    channels = [int(value[index:index + 2], 16) / 255.0 for index in (0, 2, 4)]
+    linear = [channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4 for channel in channels]
+    return (*linear, 1.0)
+
+
+def setup_weapon_materials(objects: list[bpy.types.Object], material_root: Path, family: str) -> None:
     material_files = {path.stem.lower(): path for path in material_root.glob("*.mat")}
     for obj in objects:
         if obj.type != "MESH":
@@ -195,6 +209,9 @@ def setup_weapon_materials(objects: list[bpy.types.Object], material_root: Path)
                 continue
             source = material_files.get(material.name.lower())
             color, metallic, smoothness = unity_material_values(source) if source else ((0.12, 0.13, 0.14, 1.0), 0.55, 0.55)
+            if family == "pistol":
+                recipe = PISTOL_MATERIALS.get(material.name.lower(), PISTOL_MATERIALS["default"])
+                color, metallic, smoothness = srgb_hex_to_linear(recipe[0]), recipe[1], recipe[2]
             material.use_nodes = True
             nodes = material.node_tree.nodes
             links = material.node_tree.links
@@ -312,18 +329,23 @@ def build() -> None:
     weapon_rig.name = f"RIG_WEAPON_{args.family.upper()}"
     if weapon_rig.animation_data:
         weapon_rig.animation_data_clear()
+    for pose_bone in weapon_rig.pose.bones:
+        pose_bone.matrix_basis = Matrix.Identity(4)
     weapon_root = next((obj for obj in weapon_objects if obj.parent is None and obj.type == "EMPTY"), None)
-    if weapon_root is None:
-        # Some newer pack families export the armature itself as the FBX root.
-        # Its 0.01 transform is the authored unit conversion, so it can be mounted
-        # directly without inventing another scaled parent.
+    if weapon_root is None and args.family == "pistol":
+        # O socket impede o glTF de colapsar o root bone no armature quando ele
+        # é montado depois, no assembler; a escala 0.01 continua no rig filho.
+        weapon_root = bpy.data.objects.new(f"SOCKET_WEAPON_{args.family.upper()}", None)
+        bpy.context.collection.objects.link(weapon_root)
+        weapon_rig.parent = weapon_root
+    elif weapon_root is None:
         weapon_root = weapon_rig
     else:
         weapon_root.name = f"SOCKET_WEAPON_{args.family.upper()}"
     for obj in weapon_objects:
         if obj.type == "MESH":
             obj.name = f"GEO_WEAPON_{args.family.upper()}_{obj.name}"
-    setup_weapon_materials(weapon_objects, asset_root / "Weapon/Materials_URP")
+    setup_weapon_materials(weapon_objects, asset_root / "Weapon/Materials_URP", args.family)
 
     # Unity ancora a arma na origem do ik_hand_gun, que os clipes ANIMAM: o parent
     # precisa ser o BONE (BUG-75: com "OBJECT" a arma ficava soldada no ar em rest pose).
@@ -331,15 +353,16 @@ def build() -> None:
     if socket_bone is None:
         raise RuntimeError("authored arms rig has no ik_hand_gun")
     socket_matrix = (arms_rig.matrix_world @ socket_bone.matrix).copy()
-    weapon_root.parent = arms_rig
-    weapon_root.parent_type = "BONE"
-    weapon_root.parent_bone = "ik_hand_gun"
-    bpy.context.view_layer.update()
-    # Blender pendura filho de bone no TAIL; compensa via parent_inverse para a arma
-    # cair exatamente na cabeça do bone (mesma posição do weld antigo, agora animada).
-    tail_world = arms_rig.matrix_world @ socket_bone.matrix @ Matrix.Translation((0.0, socket_bone.length, 0.0))
-    weapon_root.matrix_basis = Matrix.Identity(4)
-    weapon_root.matrix_parent_inverse = tail_world.inverted() @ socket_matrix
+    if args.family != "pistol":
+        weapon_root.parent = arms_rig
+        weapon_root.parent_type = "BONE"
+        weapon_root.parent_bone = "ik_hand_gun"
+        bpy.context.view_layer.update()
+        # Blender pendura filho de bone no TAIL; compensa via parent_inverse para a arma
+        # cair exatamente na cabeça do bone (mesma posição do weld antigo, agora animada).
+        tail_world = arms_rig.matrix_world @ socket_bone.matrix @ Matrix.Translation((0.0, socket_bone.length, 0.0))
+        weapon_root.matrix_basis = Matrix.Identity(4)
+        weapon_root.matrix_parent_inverse = tail_world.inverted() @ socket_matrix
 
     # The weapon idle FBX carries an object-level 0.01 import scale.  Reusing that
     # action on the already converted base rig applies the FBX scale twice and makes

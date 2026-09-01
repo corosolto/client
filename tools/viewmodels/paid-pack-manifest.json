@@ -34,7 +34,7 @@
     "sniper": { "source": "L96X", "idleHint": "A_FP_L96X_Pose.FBX", "weaponHint": "L96X.FBX" },
     "bolt": { "source": "Kar98K", "idleHint": "A_FP_Kar98K_Pose.FBX", "weaponHint": "A_W_Kar98K_Pose.FBX" },
     "deagle": { "source": "DGL50", "idleHint": "A_FP_DGL50_Pose.FBX", "weaponHint": "DGL50.FBX" },
-    "pistol": { "source": "X18", "idleHint": "A_FP_X18_Pose.FBX", "weaponHint": "SK_X18.FBX" },
+    "pistol": { "source": "X18", "idleHint": "A_FP_X18_Pose.FBX", "weaponHint": "A_X18_Reload_Tac.FBX", "magTranslationScale": 0.25, "magGrip": { "handBone": "hand_l", "reference": 0.84, "engage": [0.42, 0.52], "release": [0.84, 0.92] } },
     "revolver": { "source": "Viper-357", "idleHint": "A_FP_Viper-357_Reload_Empty.FBX", "weaponHint": "Viper-357.FBX" },
     "shotgun": { "source": "KXG12", "idleHint": "A_FP_KXG12_Pose.FBX", "weaponHint": "KXG12_fixed.FBX" },
     "lmg": { "source": "MGX5", "idleHint": "A_FP_MGX5_Idle.FBX", "weaponHint": "MGX5.FBX" },
