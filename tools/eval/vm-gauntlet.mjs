@@ -400,9 +400,13 @@ for (const arma of ARMAS) {
       r.servedGlb = await page.evaluate(async (weapon) => {
         const entry = window.__authoredVm.entry(weapon);
         const resources = performance.getEntriesByType('resource').map((resource) => resource.name);
+        // gs#/rt# servem por ARMA em goldsrc-vm/retarget-vm; procurar pela
+        // pasta da FAMÍLIA achava vazio e a régua morria antes de medir.
+        const dir = entry.key.startsWith('gs#') ? 'goldsrc-vm'
+          : entry.key.startsWith('rt#') ? 'retarget-vm' : entry.family;
         const url = entry.key.startsWith('gold#')
           ? resources.find((resource) => resource.includes(`/models/viewmodels/coro/${weapon}-hires.glb`))
-          : resources.find((resource) => resource.includes(`/private-assets/viewmodels/${entry.family}/`)
+          : resources.find((resource) => resource.includes(`/private-assets/viewmodels/${dir}/`)
             && resource.includes('.glb?v='));
         if (!url) throw new Error(`GLB servido não encontrado para ${entry.key}`);
         const response = await fetch(url, { cache: 'no-store' });
