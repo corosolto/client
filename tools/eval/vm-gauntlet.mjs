@@ -9,7 +9,7 @@
    nascem da COMPOSIÇÃO (escala do mount, fov, âncora) e só existem no frame.
 
    Como mede: liga a SONDA DE CORES no jogo (mãos = magenta, arma = ciano,
-   pente = amarelo, mundo apagado), tira frames nos estados reais (idle, tiro,
+    pente = amarelo, mundo apagado), tira frames nos estados reais (idle, tiro,
    recarga em 8 tempos) e conta pixels:
 
      P1 · maos     — existe silhueta de mão no quadro
@@ -23,7 +23,7 @@
 
    Uso: node tools/eval/vm-gauntlet.mjs [--armas=ak,m4] [--porta=8311]
         [--out=tools/eval/out/vm-gauntlet] [--frames] [--largura=1440]
-        [--altura=960] [--mutante=sem-pente|centro|mao-direita-alta|topo|draw-idle|tiro-estatico]
+        [--altura=960] [--mutante=sem-arma|sem-pente|pente-estatico|sem-mao-apoio|centro|topo|draw-idle|tiro-estatico]
    Ferramenta LOCAL: precisa dos private-assets, Playwright global e sharp.
    ============================================================================ */
 import fs from 'node:fs/promises';
@@ -105,8 +105,11 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X) => {
     }
   };
   const maos = new Set(e.handMeshes || []);
-  e.scene.traverse((o) => {
-    if (!o.isMesh) return;
+  e.qaMagSources = [];
+  const objetos = [];
+  e.scene.traverse((o) => { if (o.isMesh) objetos.push(o); });
+  for (const o of objetos) {
+    if (!o.isMesh) continue;
     // Pente e corpo compartilham material. Sem clone por malha, a última
     // pintura deixa ambos cianos e a régua inventa zero pixel de pente.
     o.material = Array.isArray(o.material)
@@ -117,8 +120,59 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X) => {
       if (MUTANTE === 'sem-pente') o.visible = false;
       pinta(o, 1, 1, 0);                                  // pente = amarelo
     }
-    else pinta(o, 0, 1, 1);                                // arma = ciano
-  });
+    else if (o.isSkinnedMesh && o.skeleton?.bones?.some((bone) => bone.name === 'Mag')) {
+      const magJoint = o.skeleton.bones.findIndex((bone) => bone.name === 'Mag');
+      const joints = o.geometry.getAttribute('skinIndex');
+      const weights = o.geometry.getAttribute('skinWeight');
+      const sourceIndex = o.geometry.index?.array;
+      const owns = (vertex) => {
+        let weight = 0;
+        const jointValues = [joints.getX(vertex), joints.getY(vertex), joints.getZ(vertex), joints.getW(vertex)];
+        const weightValues = [weights.getX(vertex), weights.getY(vertex), weights.getZ(vertex), weights.getW(vertex)];
+        for (let lane = 0; lane < 4; lane += 1) {
+          if (jointValues[lane] === magJoint) weight += weightValues[lane];
+        }
+        return weight > 0.5;
+      };
+      const bodyIndices = []; const magIndices = [];
+      for (let index = 0; index < sourceIndex.length; index += 3) {
+        const triangle = [sourceIndex[index], sourceIndex[index + 1], sourceIndex[index + 2]];
+        (triangle.filter(owns).length >= 2 ? magIndices : bodyIndices).push(...triangle);
+      }
+      const sourceGeometry = o.geometry;
+      const bodyMaterial = (Array.isArray(o.material) ? o.material[0] : o.material)?.clone?.() || o.material;
+      pinta({ material: bodyMaterial }, 0, 1, 1);
+      if (magIndices.length) {
+        const vertices = [...new Set(magIndices)];
+        if (MUTANTE !== 'sem-pente') {
+          const magMaterial = bodyMaterial.clone?.() || bodyMaterial;
+          pinta({ material: magMaterial }, 1, 1, 0);
+          const probeGeometry = sourceGeometry.clone();
+          probeGeometry.setIndex([...bodyIndices, ...magIndices]);
+          probeGeometry.clearGroups();
+          probeGeometry.addGroup(0, bodyIndices.length, 0);
+          probeGeometry.addGroup(bodyIndices.length, magIndices.length, 1);
+          o.geometry = probeGeometry;
+          o.material = [bodyMaterial, magMaterial];
+          e.qaMagVertices = (e.qaMagVertices || 0) + vertices.length;
+          e.qaMagSources.push({ source: o, vertices });
+        } else {
+          const probeGeometry = sourceGeometry.clone();
+          probeGeometry.setIndex(bodyIndices); probeGeometry.clearGroups(); probeGeometry.addGroup(0, bodyIndices.length, 0);
+          o.geometry = probeGeometry;
+          o.material = bodyMaterial;
+        }
+      } else {
+        o.geometry = sourceGeometry;
+        o.material = bodyMaterial;
+      }
+      if (MUTANTE === 'sem-arma') o.visible = false;
+    }
+    else {
+      if (MUTANTE === 'sem-arma') o.visible = false;
+      pinta(o, 0, 1, 1);                                  // arma = ciano
+    }
+  }
   e.frame.x += AJUSTE_X;
   if (MUTANTE === 'centro') e.frame.x -= 0.42;
   if (MUTANTE === 'topo') e.frame.y += 0.5;
@@ -175,25 +229,32 @@ async function medeFrame(buf) {
   const G = 8;
   const gw = Math.ceil(w / G); const gh = Math.ceil(h / G);
   const grade = new Uint8Array(gw * gh);
+  const gradePente = new Uint8Array(gw * gh);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const c = mapa[y * w + x];
       if (c === 2 || c === 3) grade[((y / G) | 0) * gw + ((x / G) | 0)] = 1;
+      if (c === 3) gradePente[((y / G) | 0) * gw + ((x / G) | 0)] = 1;
     }
   }
-  const gridDist = new Int16Array(gw * gh); gridDist.fill(-1);
-  const fila = new Int32Array(gw * gh); let qi = 0; let qf = 0;
-  for (let i = 0; i < grade.length; i++) {
-    if (grade[i]) { gridDist[i] = 0; fila[qf++] = i; }
-  }
-  while (qi < qf) {
-    const i = fila[qi++]; const x = i % gw; const y = (i / gw) | 0;
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if ((!dx && !dy) || x + dx < 0 || x + dx >= gw || y + dy < 0 || y + dy >= gh) continue;
-      const j = (y + dy) * gw + x + dx;
-      if (gridDist[j] < 0) { gridDist[j] = gridDist[i] + 1; fila[qf++] = j; }
+  const distanciaGrade = (sementes) => {
+    const dist = new Int16Array(gw * gh); dist.fill(-1);
+    const fila = new Int32Array(gw * gh); let qi = 0; let qf = 0;
+    for (let i = 0; i < sementes.length; i++) {
+      if (sementes[i]) { dist[i] = 0; fila[qf++] = i; }
     }
-  }
+    while (qi < qf) {
+      const i = fila[qi++]; const x = i % gw; const y = (i / gw) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if ((!dx && !dy) || x + dx < 0 || x + dx >= gw || y + dy < 0 || y + dy >= gh) continue;
+        const j = (y + dy) * gw + x + dx;
+        if (dist[j] < 0) { dist[j] = dist[i] + 1; fila[qf++] = j; }
+      }
+    }
+    return dist;
+  };
+  const gridDist = distanciaGrade(grade);
+  const magGridDist = distanciaGrade(gradePente);
   let encosta = 0;
   let distMin = Infinity;
   for (let y = 0; y < h; y += 2) {
@@ -223,11 +284,14 @@ async function medeFrame(buf) {
   for (let origem = 0; origem < mapa.length; origem++) {
     if (mapa[origem] !== 1 || vistos[origem]) continue;
     let ini = 0; let fim = 0; pxFila[fim++] = origem; vistos[origem] = 1;
-    let n = 0; let sx = 0; let sy = 0; let x0 = w; let y0 = h; let x1 = -1; let y1 = -1; let menor = 32767;
+    let n = 0; let sx = 0; let sy = 0; let x0 = w; let y0 = h; let x1 = -1; let y1 = -1;
+    let menor = 32767; let menorPente = 32767;
     while (ini < fim) {
       const p = pxFila[ini++]; const x = p % w; const y = (p / w) | 0;
       n++; sx += x; sy += y; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
       menor = Math.min(menor, gridDist[((y / G) | 0) * gw + ((x / G) | 0)]);
+      const dPente = magGridDist[((y / G) | 0) * gw + ((x / G) | 0)];
+      if (dPente >= 0) menorPente = Math.min(menorPente, dPente);
       for (const q of [p - 1, p + 1, p - w, p + w]) {
         if (q < 0 || q >= mapa.length || vistos[q] || mapa[q] !== 1) continue;
         if ((q === p - 1 || q === p + 1) && ((q / w) | 0) !== y) continue;
@@ -237,6 +301,7 @@ async function medeFrame(buf) {
     if (n >= 300) componentes.push({
       px: n, c: [+(sx / n).toFixed(1), +(sy / n).toFixed(1)],
       box: [x0, y0, x1, y1], armaDistPx: menor < 32767 ? menor * G : -1,
+      penteDistPx: menorPente < 32767 ? menorPente * G : -1,
     });
   }
   componentes.sort((a, b) => b.px - a.px);
@@ -303,10 +368,15 @@ for (const arma of ARMAS) {
       const e = vm.entry(w);
       return { fonte: e ? (e.key || '?') : 'sem-entry', clipes: e ? [...(e.clips?.keys?.() || [])] : [] };
     }, arma);
-    if (r.chave.fonte === `gold#${arma}`) {
+    if (r.chave.fonte?.endsWith(`#${arma}`)) {
       r.servedGlb = await page.evaluate(async (weapon) => {
-        const version = weapon === 'ak' ? 'golden-ak-4' : `golden-${weapon}-1`;
-        const url = `/models/viewmodels/coro/${weapon}-hires.glb?v=${version}`;
+        const entry = window.__authoredVm.entry(weapon);
+        const resources = performance.getEntriesByType('resource').map((resource) => resource.name);
+        const url = entry.key.startsWith('gold#')
+          ? resources.find((resource) => resource.includes(`/models/viewmodels/coro/${weapon}-hires.glb`))
+          : resources.find((resource) => resource.includes(`/private-assets/viewmodels/${entry.family}/`)
+            && resource.includes('.glb?v='));
+        if (!url) throw new Error(`GLB servido não encontrado para ${entry.key}`);
         const response = await fetch(url, { cache: 'no-store' });
         const bytes = await response.arrayBuffer();
         const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
@@ -325,6 +395,24 @@ for (const arma of ARMAS) {
     );
     r.sonda = sonda;
     if (sonda !== 'ok') r.erros.push(`sonda: ${sonda}`);
+    r.magProbeVertices = await page.evaluate((w) => window.__authoredVm.entry(w)?.qaMagVertices || 0, arma);
+    r.magProbe = await page.evaluate((w) => {
+      const entry = window.__authoredVm.entry(w);
+      const probes = [];
+      entry?.scene?.traverse((object) => {
+        if (!object.isSkinnedMesh || !object.skeleton?.bones?.some((bone) => bone.name === 'Mag')) return;
+        probes.push({
+          name: object.name,
+          parent: object.parent?.name || null,
+          visible: object.visible,
+          indices: object.geometry?.index?.count || 0,
+          vertices: object.geometry?.attributes?.position?.count || 0,
+          skinned: Boolean(object.isSkinnedMesh),
+          skeletonBones: object.skeleton?.bones?.length || 0,
+        });
+      });
+      return probes;
+    }, arma);
     /* Espera o SAQUE terminar. `_switchWeapon` arma `drawUntil = t+0,42s` e o rig
        entra pela borda de baixo: capturando a 300ms, 9 das 20 armas mediram
        ZERO pixel de arma e a régua acusou "arma some" — era a régua fotografando
@@ -339,6 +427,7 @@ for (const arma of ARMAS) {
     }
 
     // --- IDLE ---------------------------------------------------------------
+    await page.evaluate((w) => window.__authoredVm.entry(w)?.qaUpdateMag?.(), arma);
     let bIdle = await shot();
     r.idle = await medeFrame(bIdle);
     for (let tentativa = 0; tentativa < 3 && r.idle.armaPx + r.idle.maoPx === 0; tentativa += 1) {
@@ -362,29 +451,42 @@ for (const arma of ARMAS) {
       if (MUTANTE === 'draw-idle' && i === 1) {
         await page.evaluate((w) => window.__authoredVm?.draw?.(w, 1), arma);
       }
-      const animation = await page.evaluate(({ w, fraction }) => {
-        const entry = window.__authoredVm?.entry?.(w);
+      const animation = await page.evaluate(({ w, fraction, mutant }) => {
+        const game = window.__game;
+        const vm = window.__authoredVm;
+        const entry = vm?.entry?.(w);
         const action = entry?.action;
         const duration = action?.getClip?.().duration || 0;
-        if (action && duration) {
-          action.paused = false;
+        const procedural = !/equip/i.test(action?.getClip?.().name || '');
+        if (!game.__gauntletVmUpdate) game.__gauntletVmUpdate = vm.update.bind(vm);
+        if (procedural && mutant !== 'draw-idle') {
+          entry.state = 'draw'; entry.stateUntil = Infinity;
+          entry.drawTime = entry.drawDuration * fraction;
+          game.__gauntletVmUpdate(0);
+        } else if (action && duration) {
+          const timeScale = action.timeScale || 1;
+          entry.mixer.stopAllAction(); action.reset(); action.enabled = true;
+          action.setEffectiveWeight(1); action.setEffectiveTimeScale(timeScale);
           action.time = Math.min(duration - 1e-4, duration * fraction);
-          entry.mixer.update(1e-6);
-          action.paused = true;
-          window.__game.update(0, true);
+          action.play(); entry.mixer.update(0); action.paused = true;
         }
-        return { state: entry?.state || null, clip: action?.getClip?.().name || null };
-      }, { w: arma, fraction });
+        entry.qaUpdateMag?.();
+        vm.update = () => {};
+        return { state: entry?.state || null, clip: action?.getClip?.().name || null, procedural };
+      }, { w: arma, fraction, mutant: MUTANTE });
       const b = await shot();
       const m = await medeFrame(b);
       m.fraction = fraction;
       m.state = animation.state;
       m.clip = animation.clip;
+      m.procedural = animation.procedural;
       r.draw.push(m);
       if (SALVA_FRAMES) await fs.writeFile(path.join(dir, `draw-${i}.png`), b);
     }
     await page.evaluate((w) => {
+      const game = window.__game;
       const vm = window.__authoredVm;
+      if (game.__gauntletVmUpdate) vm.update = game.__gauntletVmUpdate;
       vm?._idle?.(vm.entry?.(w));
     }, arma);
 
@@ -404,16 +506,31 @@ for (const arma of ARMAS) {
     for (let i = 0; i < fireFractions.length; i++) {
       const fraction = fireFractions[i];
       const animation = await page.evaluate(({ w, fraction, staticShot }) => {
-        const entry = window.__authoredVm?.entry?.(w);
+        const game = window.__game;
+        const vm = window.__authoredVm;
+        const entry = vm?.entry?.(w);
         const action = entry?.action;
         const duration = action?.getClip?.().duration || 0;
-        if (action && duration) {
-          action.paused = false;
-          action.time = staticShot ? 0 : Math.min(duration - 1e-4, duration * fraction);
-          entry.mixer.update(1e-6);
-          action.paused = true;
-          window.__game.update(0, true);
+        if (!game.__gauntletVmUpdate) game.__gauntletVmUpdate = vm.update.bind(vm);
+        const effectiveDuration = action?.timeScale ? duration / Math.abs(action.timeScale) : duration;
+        const previousFraction = game.__gauntletFireFraction || 0;
+        if (staticShot) {
+          vm.recoil.t = Infinity;
+          for (const key of ['rx', 'ry', 'rz', 'px', 'py', 'pz']) vm.recoil.out[key] = 0;
+          game.__gauntletVmUpdate(0);
+        } else {
+          game.__gauntletVmUpdate(Math.max(0, fraction - previousFraction) * effectiveDuration);
         }
+        game.__gauntletFireFraction = fraction;
+        if (action && duration) {
+          const timeScale = action.timeScale || 1;
+          entry.mixer.stopAllAction(); action.reset(); action.enabled = true;
+          action.setEffectiveWeight(1); action.setEffectiveTimeScale(timeScale);
+          action.time = staticShot ? 0 : Math.min(duration - 1e-4, duration * fraction);
+          action.play(); entry.mixer.update(0); action.paused = true;
+        }
+        entry.qaUpdateMag?.();
+        vm.update = () => {};
         return { state: entry?.state || null, clip: action?.getClip?.().name || null };
       }, { w: arma, fraction, staticShot: MUTANTE === 'tiro-estatico' });
       const b = await shot();
@@ -425,6 +542,11 @@ for (const arma of ARMAS) {
       if (SALVA_FRAMES) await fs.writeFile(path.join(dir, `tiro-${i}.png`), b);
     }
     r.tiro = r.tiros[2];
+    await page.evaluate(() => {
+      const game = window.__game;
+      if (game.__gauntletVmUpdate) window.__authoredVm.update = game.__gauntletVmUpdate;
+      delete game.__gauntletFireFraction;
+    });
 
     // --- RECARGA (6 tempos reais) ------------------------------------------
     r.reloadStart = await page.evaluate((w) => {
@@ -453,16 +575,51 @@ for (const arma of ARMAS) {
     const reloadFractions = [0.2, 0.36, 0.52, 0.6, 0.68, 0.76, 0.84, 0.999];
     for (let i = 0; i < reloadFractions.length; i++) {
       const fraction = reloadFractions[i];
-      const animation = await page.evaluate(({ w, fraction }) => {
-        const entry = window.__authoredVm?.entry?.(w);
+      const animation = await page.evaluate(({ w, fraction, staticMagazine, hideSupport, hideMagazine, viewport }) => {
+        const game = window.__game;
+        const vm = window.__authoredVm;
+        const entry = vm?.entry?.(w);
         const action = entry?.action;
         const duration = action?.getClip?.().duration || 0;
+        if (!game.__gauntletVmUpdate) game.__gauntletVmUpdate = vm.update.bind(vm);
         if (action && duration) {
-          action.paused = false;
-          action.time = Math.min(duration - 1e-4, duration * fraction);
-          entry.mixer.update(1e-6);
-          action.paused = true;
-          window.__game.update(0, true);
+          const sampledFraction = staticMagazine ? 0.6 : fraction;
+          const timeScale = action.timeScale || 1;
+          entry.mixer.stopAllAction(); action.reset(); action.enabled = true;
+          action.setEffectiveWeight(1); action.setEffectiveTimeScale(timeScale);
+          action.time = Math.min(duration - 1e-4, duration * sampledFraction);
+          action.play(); entry.mixer.update(0); action.paused = true;
+          if (hideSupport) {
+            const support = entry.scene.getObjectByName('L_arm_01')
+              || entry.scene.getObjectByName('upperarm_l');
+            if (support) {
+              support.scale.setScalar(0);
+              entry.scene.updateMatrixWorld(true);
+            }
+          }
+        }
+        entry.qaUpdateMag?.();
+        vm.update = () => {};
+        entry.scene.updateWorldMatrix(true, true);
+        game.vmCamera.updateWorldMatrix(true, false);
+        let magBoneC = null; let magBoneVisible = false;
+        if (!hideMagazine && entry.qaMagSources?.length) {
+          const center = entry.scene.position.clone().set(0, 0, 0);
+          const point = entry.scene.position.clone(); let count = 0;
+          for (const probe of entry.qaMagSources) {
+            const positions = probe.source.geometry.getAttribute('position');
+            probe.source.updateWorldMatrix(true, false);
+            for (const vertex of probe.vertices) {
+              point.fromBufferAttribute(positions, vertex);
+              probe.source.applyBoneTransform(vertex, point);
+              probe.source.localToWorld(point); center.add(point); count += 1;
+            }
+          }
+          if (count) {
+            center.multiplyScalar(1 / count); center.project(game.vmCamera);
+            magBoneVisible = Math.abs(center.x) <= 1 && Math.abs(center.y) <= 1 && center.z >= -1 && center.z <= 1;
+            magBoneC = [(center.x + 1) * viewport.width / 2, (1 - center.y) * viewport.height / 2];
+          }
         }
         return {
           state: entry?.state || null,
@@ -471,8 +628,18 @@ for (const arma of ARMAS) {
           actionTime: action?.time || 0,
           timeScale: action?.timeScale || 0,
           effectiveDuration: action?.timeScale ? duration / Math.abs(action.timeScale) : null,
+          magBoneC,
+          magBoneVisible,
+          magVertices: entry.qaMagVertices || 0,
         };
-      }, { w: arma, fraction });
+      }, {
+        w: arma,
+        fraction,
+        staticMagazine: MUTANTE === 'pente-estatico',
+        hideSupport: MUTANTE === 'sem-mao-apoio',
+        hideMagazine: MUTANTE === 'sem-pente',
+        viewport: { width: W, height: H },
+      });
       const b = await shot();
       const m = await medeFrame(b);
       m.t = +((animation.effectiveDuration || 0) * fraction).toFixed(2);
@@ -481,11 +648,17 @@ for (const arma of ARMAS) {
       m.clipDuration = animation.clipDuration;
       m.actionTime = animation.actionTime;
       m.timeScale = animation.timeScale;
+      m.penteBoneC = animation.magBoneC;
+      m.penteBoneVisible = animation.magBoneVisible;
+      m.penteVertices = animation.magVertices;
       r.recarga.push(m);
       if (SALVA_FRAMES) await fs.writeFile(path.join(dir, `recarga-${i}.png`), b);
     }
     r.reloadEnd = await page.evaluate((w) => {
-      const entry = window.__authoredVm?.entry?.(w);
+      const game = window.__game;
+      const vm = window.__authoredVm;
+      if (game.__gauntletVmUpdate) vm.update = game.__gauntletVmUpdate;
+      const entry = vm?.entry?.(w);
       const action = entry?.action;
       if (action) {
         action.paused = false;
@@ -513,9 +686,18 @@ for (const r of relatorio) {
   const i = r.idle;
   if (i) {
     if (i.maoPx < 3000) f.push(`P1 mãos: só ${i.maoPx}px de mão no quadro`);
-    if ((i.maoComponentes || []).filter((c) => c.px >= 1000).length < 2) f.push('P1 mãos: não há duas silhuetas de braço independentes');
+    const handFrames = [i, ...(r.recarga || [])].filter(Boolean);
+    // gauntlet-final-v1: a menor mão separada mede 34,5% dos pixels de mão;
+    // mutante-sem-mao-apoio-v2 deixa só um artefato de 5,0% após colapsar o osso.
+    if (!handFrames.some((frame) =>
+      (frame.maoComponentes || []).filter((c) => c.px >= frame.maoPx * 0.18).length >= 2)) {
+      f.push('P1 mãos: a mão de apoio não se separa da dominante durante a recarga');
+    }
     if (i.armaFrac > 0.28) f.push(`P2 escala: arma ocupa ${(i.armaFrac * 100).toFixed(0)}% do quadro`);
-    if (i.armaFrac < 0.02) f.push(`P2 escala: arma some (${(i.armaFrac * 100).toFixed(1)}% do quadro)`);
+    const weaponDiagFraction = i.armaDiag / Math.hypot(W, H);
+    if (i.armaFrac < 0.02 && weaponDiagFraction < 0.12) {
+      f.push(`P2 escala: arma some (${(i.armaFrac * 100).toFixed(1)}% do quadro; diagonal ${(weaponDiagFraction * 100).toFixed(1)}%)`);
+    }
     if (i.armaBordas >= 3) f.push(`P2 quadro: arma estoura ${i.armaBordas} bordas`);
     if (i.vmFrac && (i.vmFrac[0] < 0.50 || i.vmFrac[0] > 0.66 || i.vmFrac[1] < 0.45)) {
       f.push(`P2 enquadramento: VM começa em ${i.vmFrac[0].toFixed(2)},${i.vmFrac[1].toFixed(2)}; contrato C5 = x 0,50–0,66 e y ≥0,45`);
@@ -536,8 +718,9 @@ for (const r of relatorio) {
       f.push(`P6 saque: primeiro frame pisca a pose pronta (${first.armaPx + first.maoPx + first.pentePx}px, topo ${first.vmBox?.[1] ?? 'ausente'})`);
     }
     if (!last.vmBox || last.armaPx < 500) f.push('P6 saque: não termina com a arma visível');
-    if (draw.some((q) => q.state !== 'draw' || !/equip/i.test(q.clip || ''))) {
-      f.push('P6 saque: frames intermediários não pertencem ao clip Equip');
+    if (draw.some((q) => q.state !== 'draw'
+      || (q.procedural ? !/idle/i.test(q.clip || '') : !/equip/i.test(q.clip || '')))) {
+      f.push('P6 saque: frames intermediários não pertencem ao saque ativo');
     }
   }
   const tiros = r.tiros || [];
@@ -550,7 +733,7 @@ for (const r of relatorio) {
     if (excursion < 0.04) {
       f.push(`P7 tiro: recuo ilegível, excursão ${(excursion * 100).toFixed(1)}% do tamanho da arma`);
     }
-    if (tiros.some((q) => q.state !== 'fire' || !/shoot/i.test(q.clip || ''))) {
+    if (tiros.some((q) => !/^(?:fire|shoot\d*)$/.test(q.state || '') || !/shoot/i.test(q.clip || ''))) {
       f.push('P7 tiro: frames intermediários não pertencem ao clip Shoot');
     }
   }
@@ -561,13 +744,28 @@ for (const r of relatorio) {
     let maxArma = 0; let maxPente = 0;
     for (const q of rec) {
       maxArma = Math.max(maxArma, desl(base, q, 'armaC') ?? 0);
-      maxPente = Math.max(maxPente, desl(base, q, 'penteC') ?? 0);
+    }
+    const magazinePoint = (frame) => frame.penteBoneC || frame.penteC;
+    const visibleMagazines = rec.filter((q) => magazinePoint(q));
+    for (let a = 0; a < visibleMagazines.length; a++) {
+      for (let b = a + 1; b < visibleMagazines.length; b++) {
+        maxPente = Math.max(maxPente, Math.hypot(
+          magazinePoint(visibleMagazines[a])[0] - magazinePoint(visibleMagazines[b])[0],
+          magazinePoint(visibleMagazines[a])[1] - magazinePoint(visibleMagazines[b])[1],
+        ));
+      }
     }
     const diag = base.armaDiag || 1;
+    const apoioPenteDist = rec
+      .filter((q) => q.pentePx > 2000 && (q.maoComponentes || []).length >= 2)
+      .flatMap((q) => q.maoComponentes.slice(1).map((component) => component.penteDistPx))
+      .filter((distance) => distance >= 0);
     r.recargaResumo = {
       armaExcursao: +(maxArma / diag).toFixed(2),
       penteExcursao: +(maxPente / diag).toFixed(2),
-      penteVisto: rec.some((q) => q.pentePx > 200),
+      penteVisto: rec.some((q) => q.pentePx > 200
+        || (q.penteVertices >= 1000 && q.penteBoneVisible)),
+      penteMaoApoioDistPx: apoioPenteDist.length ? Math.min(...apoioPenteDist) : -1,
     };
     if (r.recargaResumo.armaExcursao > 0.55) {
       f.push(`P4 recarga: a ARMA anda ${(r.recargaResumo.armaExcursao * 100).toFixed(0)}% do próprio tamanho (arranca a arma toda)`);
@@ -575,6 +773,10 @@ for (const r of relatorio) {
     if (!r.recargaResumo.penteVisto) f.push('P4 recarga: pente independente não aparece');
     if (r.recargaResumo.penteVisto && r.recargaResumo.penteExcursao < 0.12) {
       f.push('P4 recarga: o pente não sai do lugar');
+    }
+    if (r.recargaResumo.penteVisto
+      && (r.recargaResumo.penteMaoApoioDistPx < 0 || r.recargaResumo.penteMaoApoioDistPx > 24)) {
+      f.push(`P4 recarga: mão de apoio fica ${r.recargaResumo.penteMaoApoioDistPx < 0 ? '>192' : r.recargaResumo.penteMaoApoioDistPx}px longe do pente destacado`);
     }
     if (rec.some((q) => q.state !== 'reload' || !/reload/i.test(q.clip || ''))) {
       f.push('P4 recarga: os frames intermediários não pertencem ao clip Reload');

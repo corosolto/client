@@ -8,9 +8,10 @@ import sharp from 'sharp';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').split('=')[1] || '';
+const WEAPON = arg('arma') || 'ak';
 const PORT = arg('porta') || '8341';
 const BASE = `http://127.0.0.1:${PORT}`;
-const OUT = path.resolve(ROOT, arg('saida') || 'artifacts/viewmodels/golden-ak/runtime-final');
+const OUT = path.resolve(ROOT, arg('saida') || `artifacts/viewmodels/golden-${WEAPON}/runtime-final`);
 const VIEWPORT = { width: Number(arg('largura')) || 1440, height: Number(arg('altura')) || 960 };
 const CELL = { width: 720, height: 480 };
 
@@ -46,7 +47,7 @@ async function openMap(map) {
     if (response.status() < 400) return;
     const failure = `${map}: HTTP ${response.status()} ${response.url()}`;
     report.networkWarnings.push(failure);
-    if (/\/models\/viewmodels\/coro\/ak-hires\.glb|\/js\/(?:authoredvm|data\/vmconfig)\.js/.test(response.url())) {
+    if (/\/viewmodels\/|\/js\/(?:authoredvm|data\/vmconfig)\.js/.test(response.url())) {
       report.errors.push(failure);
     }
   });
@@ -59,11 +60,11 @@ async function openMap(map) {
     }
   });
   await page.goto(
-    `${BASE}/?debug=1&auto=E&vmweapon=ak&map=${map}&armaslazy=0&vmgolden=1`,
+    `${BASE}/?debug=1&auto=E&vmweapon=${WEAPON}&map=${map}&armaslazy=0&vmgolden=1`,
     { waitUntil: 'domcontentloaded', timeout: 180000 },
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
-  await page.waitForFunction(() => window.__authoredVm?.entry?.('ak')?.golden === true, null, { timeout: 120000 });
+  await page.waitForFunction((weapon) => window.__authoredVm?.entry?.(weapon), WEAPON, { timeout: 120000 });
   await page.waitForTimeout(1800);
   return page;
 }
@@ -77,12 +78,13 @@ async function snapshot(page, label, metadata = {}) {
 }
 
 async function startAction(page, kind) {
-  return page.evaluate((kind) => {
+  return page.evaluate(({ kind, weapon }) => {
     const game = window.__game;
     const vm = window.__authoredVm;
+    if (game.__qaAuthoredUpdate) vm.update = game.__qaAuthoredUpdate;
     if (kind === 'draw') {
       game.player.weapon = 'knife';
-      game._switchWeapon('ak');
+      game._switchWeapon(weapon);
     } else if (kind === 'fire') {
       game.player.reloadUntil = 0;
       game.player.nextShotAt = 0;
@@ -91,41 +93,54 @@ async function startAction(page, kind) {
       game._tryShoot();
       game.mouseDown0 = false;
     } else if (kind === 'reload') {
-      const ammo = game.player.ammo.ak;
+      const ammo = game.player.ammo[weapon];
       ammo.mag = Math.min(ammo.mag, 23);
       game.player.reloadUntil = 0;
       const ammoBefore = { ...ammo };
       game._startReload();
-      game.__goldenAkQaReload = {
+      game.__viewmodelQaReload = {
         duration: Math.max(0, game.player.reloadUntil - game.time),
         ammoBefore,
       };
     }
-    const entry = vm.entry('ak');
+    const entry = vm.entry(weapon);
     return { state: entry.state, clip: entry.action?.getClip?.().name || null };
-  }, kind);
+  }, { kind, weapon: WEAPON });
 }
 
 async function actionPose(page, kind, fraction) {
-  return page.evaluate(({ kind, fraction }) => {
+  return page.evaluate(({ kind, fraction, weapon }) => {
     const game = window.__game;
-    const entry = window.__authoredVm.entry('ak');
+    const vm = window.__authoredVm;
+    const entry = vm.entry(weapon);
+    if (!game.__qaAuthoredUpdate) game.__qaAuthoredUpdate = vm.update.bind(vm);
     const action = entry.action;
     const duration = action?.getClip?.().duration || 0;
     const playbackRate = Math.abs(action?.timeScale || 0);
     const effectiveDuration = playbackRate ? duration / playbackRate : null;
-    const reloadQa = game.__goldenAkQaReload;
+    const reloadQa = game.__viewmodelQaReload;
     if (kind === 'reload' && reloadQa) {
-      Object.assign(game.player.ammo.ak, reloadQa.ammoBefore);
+      Object.assign(game.player.ammo[weapon], reloadQa.ammoBefore);
       game.player.reloadUntil = game.time + reloadQa.duration * (1 - fraction);
     }
-    if (action && duration) {
-      action.paused = false;
+    if (kind === 'draw' && !/equip/i.test(action?.getClip?.().name || '')) {
+      entry.state = 'draw';
+      entry.stateUntil = Infinity;
+      entry.drawTime = entry.drawDuration * fraction;
+      game.__qaAuthoredUpdate(0);
+    } else if (action && duration) {
+      const currentTimeScale = action.timeScale || 1;
+      entry.mixer.stopAllAction();
+      action.reset();
+      action.enabled = true;
+      action.setEffectiveWeight(1);
+      action.setEffectiveTimeScale(currentTimeScale);
       action.time = Math.min(duration - 1e-4, Math.max(0, duration * fraction));
-      entry.mixer.update(1e-6);
+      action.play();
+      entry.mixer.update(0);
       action.paused = true;
-      game.update(0, true);
     }
+    vm.update = () => {};
     return {
       state: entry.state,
       clip: action?.getClip?.().name || null,
@@ -137,26 +152,36 @@ async function actionPose(page, kind, fraction) {
       gameReloadRemaining: Math.max(0, game.player.reloadUntil - game.time),
       reloadSyncError: kind === 'reload' && effectiveDuration != null && reloadQa
         ? Math.abs(effectiveDuration - reloadQa.duration) : null,
-      ammo: { ...game.player.ammo.ak },
+      ammo: { ...game.player.ammo[weapon] },
     };
-  }, { kind, fraction });
+  }, { kind, fraction, weapon: WEAPON });
 }
 
 async function capturePoseSeries(page, kind, fractions) {
   await startAction(page, kind);
   for (const fraction of fractions) {
     const state = await actionPose(page, kind, fraction);
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
     await snapshot(page, `${kind}-${String(Math.round(fraction * 100)).padStart(3, '0')}`, state);
   }
+  await page.evaluate(() => {
+    const game = window.__game;
+    if (game.__qaAuthoredUpdate) window.__authoredVm.update = game.__qaAuthoredUpdate;
+  });
 }
 
 try {
   console.log('runtime: abrindo Brasília');
   const open = await openMap('brasilia');
-  const asset = await open.evaluate(async () => {
+  const asset = await open.evaluate(async (weapon) => {
     const game = window.__game;
-    const entry = window.__authoredVm.entry('ak');
-    const modelUrl = '/models/viewmodels/coro/ak-hires.glb?v=golden-ak-4';
+    const entry = window.__authoredVm.entry(weapon);
+    const resources = performance.getEntriesByType('resource').map((resource) => resource.name);
+    const modelUrl = entry.key.startsWith('gold#')
+      ? resources.find((url) => url.includes(`/models/viewmodels/coro/${weapon}-hires.glb`))
+      : resources.find((url) => url.includes(`/private-assets/viewmodels/${entry.family}/`)
+        && url.includes('.glb?v='));
+    if (!modelUrl) throw new Error(`GLB servido não encontrado para ${entry.key}`);
     const response = await fetch(modelUrl, { cache: 'no-store' });
     const modelBytes = await response.arrayBuffer();
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', modelBytes));
@@ -184,7 +209,7 @@ try {
       camera: { fov: game.vmCamera.fov, aspect: game.vmCamera.aspect },
       materials,
     };
-  });
+  }, WEAPON);
   report.source = asset.source;
   report.servedGlb = asset.servedGlb;
   report.clips = asset.clips;
@@ -237,23 +262,23 @@ try {
   await capturePoseSeries(open, 'draw', [0, 0.25, 0.5, 0.75, 0.999]);
   await capturePoseSeries(open, 'fire', [0, 0.25, 0.5, 0.75, 0.999]);
   await capturePoseSeries(open, 'reload', [0, 0.2, 0.36, 0.52, 0.6, 0.68, 0.76, 0.84, 0.999]);
-  await open.evaluate(() => {
-    const entry = window.__authoredVm.entry('ak');
+  await open.evaluate((weapon) => {
+    const entry = window.__authoredVm.entry(weapon);
     entry.action.paused = false;
     entry.action.time = Math.max(0, entry.action.getClip().duration - 0.02);
     entry.mixer.update(0.1);
-  });
+  }, WEAPON);
   await open.waitForTimeout(450);
-  const postReload = await open.evaluate(() => {
+  const postReload = await open.evaluate((weapon) => {
     const game = window.__game;
-    const entry = window.__authoredVm.entry('ak');
+    const entry = window.__authoredVm.entry(weapon);
     return {
       state: entry.state,
       clip: entry.action?.getClip?.().name || null,
       gameReloadRemaining: Math.max(0, game.player.reloadUntil - game.time),
-      ammo: { ...game.player.ammo.ak },
+      ammo: { ...game.player.ammo[weapon] },
     };
-  });
+  }, WEAPON);
   await snapshot(open, 'pos-recarga', postReload);
   await open.close();
 
@@ -308,7 +333,7 @@ try {
   server.kill();
 }
 
-if (report.source !== 'gold#ak') throw new Error(`fonte inesperada: ${report.source}`);
+if (!report.source?.endsWith(`#${WEAPON}`)) throw new Error(`fonte inesperada: ${report.source}`);
 if (!/^[a-f0-9]{64}$/.test(report.servedGlb?.sha256 || '')) throw new Error('SHA do GLB servido ausente');
 if (report.states.some((state) => state.state === 'reload' && (state.reloadSyncError || 0) > 0.03)) {
   throw new Error('cadência de reload diverge entre gameplay e clip');

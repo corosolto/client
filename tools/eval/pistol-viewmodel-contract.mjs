@@ -1,256 +1,174 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import sharp from 'sharp';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const requestedFile = process.argv.slice(2).find((argument) => !argument.startsWith('--'));
-const file = requestedFile
-  ? path.resolve(process.cwd(), requestedFile)
-  : path.join(root, 'public/models/viewmodels/coro/pistol-hires.glb');
-const bytes = fs.readFileSync(file);
-
-if (bytes.toString('ascii', 0, 4) !== 'glTF') throw new Error('viewmodel da pistola não é GLB válido');
-const jsonLength = bytes.readUInt32LE(12);
-if (bytes.readUInt32LE(16) !== 0x4e4f534a) throw new Error('GLB sem chunk JSON');
-const gltf = JSON.parse(bytes.toString('utf8', 20, 20 + jsonLength).trim());
-
-const chunks = new Map();
-let chunkOffset = 12;
-while (chunkOffset + 8 <= bytes.length) {
-  const length = bytes.readUInt32LE(chunkOffset);
-  const type = bytes.readUInt32LE(chunkOffset + 4);
-  chunks.set(type, bytes.subarray(chunkOffset + 8, chunkOffset + 8 + length));
-  chunkOffset += 8 + length;
-}
-const bin = chunks.get(0x004e4942);
-const elementWidths = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
-
-function readAccessor(index) {
-  const accessor = gltf.accessors?.[index];
-  const view = accessor && gltf.bufferViews?.[accessor.bufferView];
-  const width = accessor && elementWidths[accessor.type];
-  if (!bin || !accessor || !view || accessor.componentType !== 5126 || !width) return [];
-  const stride = view.byteStride || 4 * width;
-  const base = (view.byteOffset || 0) + (accessor.byteOffset || 0);
-  return Array.from({ length: accessor.count }, (_, element) =>
-    Array.from({ length: width }, (_, lane) =>
-      bin.readFloatLE(base + element * stride + lane * 4)));
-}
-
-function animation(name) {
-  return (gltf.animations || []).find((candidate) => candidate.name?.split('-').at(-1) === name);
-}
-
-function animationTrack(animationName, nodeName, targetPath) {
-  const nodeIndex = (gltf.nodes || []).findIndex((node) => node.name === nodeName);
-  const action = animation(animationName);
-  const channel = action?.channels?.find((candidate) =>
-    candidate.target.node === nodeIndex && candidate.target.path === targetPath);
-  const sampler = channel && action.samplers?.[channel.sampler];
-  return sampler ? readAccessor(sampler.output) : [];
-}
-
-const vectorDistance = (left, right) =>
-  left?.length && right?.length
-    ? Math.hypot(...left.map((value, lane) => value - right[lane]))
-    : Infinity;
-const quaternionAngle = (left, right) => {
-  if (!left?.length || !right?.length) return Infinity;
-  const dot = left.reduce((sum, value, lane) => sum + value * right[lane], 0);
-  return 2 * Math.acos(Math.min(1, Math.abs(dot)));
-};
-
-function actionEndpoint(animationName, atEnd) {
-  const action = animation(animationName);
-  const endpoint = new Map();
-  for (const channel of action?.channels || []) {
-    const sampler = action.samplers?.[channel.sampler];
-    const values = sampler ? readAccessor(sampler.output) : [];
-    const nodeName = gltf.nodes?.[channel.target.node]?.name;
-    if (!nodeName || !values.length) continue;
-    endpoint.set(`${nodeName}:${channel.target.path}`, atEnd ? values.at(-1) : values[0]);
-  }
-  return endpoint;
-}
-
-function endpointError(actionName, atEnd = true, excludedNodes = new Set()) {
-  const action = actionEndpoint(actionName, atEnd);
-  const idle = actionEndpoint('Idle', false);
-  const worst = {
-    rotationDeg: 0, rotationTrack: null,
-    translation: 0, translationTrack: null,
-    scale: 0, scaleTrack: null,
-  };
-  for (const [key, actionValue] of action) {
-    const separator = key.lastIndexOf(':');
-    const nodeName = key.slice(0, separator);
-    const targetPath = key.slice(separator + 1);
-    const idleValue = idle.get(key);
-    if (!idleValue || excludedNodes.has(nodeName)) continue;
-    let error = 0;
-    let bucket = null;
-    if (targetPath === 'rotation') {
-      error = quaternionAngle(actionValue, idleValue) * 180 / Math.PI;
-      bucket = 'rotationDeg';
-    } else if (targetPath === 'translation') {
-      error = vectorDistance(actionValue, idleValue);
-      bucket = 'translation';
-    } else if (targetPath === 'scale') {
-      error = Math.max(...actionValue.map((value, lane) => Math.abs(value - idleValue[lane])));
-      bucket = 'scale';
-    }
-    if (bucket && error > worst[bucket]) {
-      worst[bucket] = error;
-      worst[`${bucket.replace(/Deg$/, '')}Track`] = key;
-    }
-  }
-  return worst;
-}
-
+const option = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').slice(name.length + 3);
+const requestedFile = process.argv.slice(2).find((value) => !value.startsWith('--'));
+const file = path.resolve(requestedFile || '/Users/ruben/csbrasil-private-assets/generated/viewmodels/pistol/pistol-runtime.glb');
+const reportFile = path.resolve(option('runtime-report') || path.join(root, 'artifacts/viewmodels/golden-pistol/runtime-final/runtime-report.json'));
+const document = await new NodeIO().registerExtensions(ALL_EXTENSIONS).read(file);
+const gltf = document.getRoot();
 const failures = [];
 const check = (condition, message) => { if (!condition) failures.push(message); };
-const mutantStaticDraw = process.argv.includes('--mutante-saque-estatico');
-const mutantBrokenDrawContact = process.argv.includes('--mutante-contato-saque');
-const mutantStaticShoot = process.argv.includes('--mutante-tiro-estatico');
-const mutantMagazineMissing = process.argv.includes('--mutante-sem-pente');
-const mutantReloadOpen = process.argv.includes('--mutante-final-recarga-aberto');
-const mutantRuntimeMissing = process.argv.includes('--mutante-sem-runtime');
+const hasMutant = (name) => process.argv.includes(`--mutante-${name}`);
 
-const cameraNode = (gltf.nodes || []).find((node) => node.name === 'Pistol_Hires_FP_Camera');
-const camera = cameraNode && Number.isInteger(cameraNode.camera) ? gltf.cameras?.[cameraNode.camera] : null;
-const fov = camera?.perspective?.yfov;
-const actions = new Set((gltf.animations || []).map((candidate) => candidate.name?.split('-').at(-1)));
-const nodeNames = new Set((gltf.nodes || []).map((node) => node.name));
-if (mutantMagazineMissing) {
-  nodeNames.delete('coro_solto_project_pistol_magazine');
-  nodeNames.delete('coro_solto_project_pistol_fresh_magazine');
+const requiredClips = ['idle', 'reload_tactical', 'reload_empty', 'shoot'];
+const clips = new Map(gltf.listAnimations().map((animation) => [animation.getName(), animation]));
+const skins = new Map(gltf.listSkins().map((skin) => [skin.getName(), skin]));
+const weaponSkin = skins.get('RIG_WEAPON_PISTOL');
+const armsSkin = skins.get('RIG_FP_ARMS');
+const weaponNodes = gltf.listNodes().filter((node) => node.getSkin() === weaponSkin && node.getMesh());
+
+function translationExcursion(animationName, nodeName) {
+  const animation = clips.get(animationName);
+  const channel = animation?.listChannels().find((candidate) =>
+    candidate.getTargetNode()?.getName() === nodeName && candidate.getTargetPath() === 'translation');
+  const values = channel?.getSampler()?.getOutput()?.getArray();
+  if (!values?.length) return 0;
+  const low = [Infinity, Infinity, Infinity];
+  const high = [-Infinity, -Infinity, -Infinity];
+  for (let index = 0; index < values.length; index += 3) {
+    for (let axis = 0; axis < 3; axis += 1) {
+      low[axis] = Math.min(low[axis], values[index + axis]);
+      high[axis] = Math.max(high[axis], values[index + axis]);
+    }
+  }
+  return Math.hypot(...high.map((value, axis) => value - low[axis]));
 }
 
-check(cameraNode, 'câmera Pistol_Hires_FP_Camera não foi exportada');
-check(camera?.type === 'perspective', 'câmera FP precisa ser perspective');
-check(Number.isFinite(fov) && Math.abs(fov * 180 / Math.PI - 58) < 0.05,
-  `VFOV exportado precisa repetir os 58° aprovados na AK, recebido ${Number.isFinite(fov) ? (fov * 180 / Math.PI).toFixed(3) : 'ausente'}°`);
-check(Math.abs((camera?.perspective?.aspectRatio || 0) - 1.5) < 1e-4,
-  `aspecto da câmera precisa ser 3:2, recebido ${camera?.perspective?.aspectRatio ?? 'ausente'}`);
-for (const name of ['Equip', 'Idle', 'Shoot', 'Reload']) check(actions.has(name), `ação ausente: ${name}`);
-check(actions.size === 4, `esperadas exatamente 4 ações, recebidas ${actions.size}: ${[...actions].join(', ')}`);
-check((gltf.skins || []).length === 1, `esperado 1 rig/skin, recebido ${(gltf.skins || []).length}`);
-for (const name of [
-  'CoroMagazine', 'CoroFreshMagazine',
-  'coro_solto_project_pistol_magazine', 'coro_solto_project_pistol_fresh_magazine',
-]) check(nodeNames.has(name), `carregador independente ausente: ${name}`);
+function verticesOwnedBy(skin, jointName) {
+  const jointIndex = skin?.listJoints().findIndex((joint) => joint.getName() === jointName) ?? -1;
+  if (jointIndex < 0) return 0;
+  let owned = 0;
+  for (const node of gltf.listNodes().filter((candidate) => candidate.getSkin() === skin && candidate.getMesh())) {
+    for (const primitive of node.getMesh().listPrimitives()) {
+      const joints = primitive.getAttribute('JOINTS_0')?.getArray();
+      const weights = primitive.getAttribute('WEIGHTS_0')?.getArray();
+      if (!joints || !weights) continue;
+      for (let vertex = 0; vertex < joints.length; vertex += 4) {
+        let weight = 0;
+        for (let lane = 0; lane < 4; lane += 1) {
+          if (joints[vertex + lane] === jointIndex) weight += weights[vertex + lane];
+        }
+        if (weight > 0.5) owned += 1;
+      }
+    }
+  }
+  return owned;
+}
 
-const equipRoot = animationTrack('Equip', '_rootJoint', 'translation');
-const equipWeapon = animationTrack('Equip', 'CoroWeapon', 'translation');
-const equipMagazine = animationTrack('Equip', 'CoroMagazine', 'translation');
-const equipTravel = mutantStaticDraw || equipRoot.length < 2
-  ? 0
-  : Math.max(...equipRoot.map((value) => vectorDistance(value, equipRoot.at(-1))));
-const rigidTrackError = (reference, candidate) => {
-  if (reference.length < 2 || reference.length !== candidate.length) return Infinity;
-  const referenceEnd = reference.at(-1);
-  const candidateEnd = candidate.at(-1);
-  return Math.max(...reference.map((value, index) => vectorDistance(
-    value.map((lane, axis) => lane - referenceEnd[axis]),
-    candidate[index].map((lane, axis) => lane - candidateEnd[axis]),
-  )));
-};
-const drawRigidError = mutantBrokenDrawContact
-  ? 1
-  : Math.max(rigidTrackError(equipRoot, equipWeapon), rigidTrackError(equipRoot, equipMagazine));
-check(equipRoot.length >= 3, 'Equip não possui amostras intermediárias suficientes');
-check(equipTravel >= 8,
-  `Equip não executa saque legível até Idle (curso da raiz ${equipTravel.toFixed(3)} unidades; mínimo 8)`);
-check(drawRigidError <= 0.05,
-  `Equip separa mão, arma ou pente (erro rígido ${Number.isFinite(drawRigidError) ? drawRigidError.toFixed(4) : 'ausente'} unidades)`);
+for (const clip of requiredClips) check(clips.has(clip), `clip obrigatório ausente: ${clip}`);
+check(armsSkin?.listJoints().length === 67, `rig de braços tem ${armsSkin?.listJoints().length ?? 0} ossos; esperado 67`);
+check(weaponSkin?.listJoints().length === 8, `rig da pistola tem ${weaponSkin?.listJoints().length ?? 0} ossos; esperado 8`);
+check(weaponSkin?.listJoints().some((joint) => joint.getName() === 'Mag'), 'osso Mag ausente');
+check(weaponNodes.length === 1, `esperado um mesh skinned da pistola, recebido ${weaponNodes.length}`);
 
-const shootRoot = animationTrack('Shoot', '_rootJoint', 'translation');
-const shootTravel = mutantStaticShoot || shootRoot.length < 2
-  ? 0
-  : Math.max(...shootRoot.map((value) => vectorDistance(value, shootRoot[0])));
-check(shootRoot.length >= 5, 'Shoot não possui amostras intermediárias suficientes');
-check(shootTravel >= 2.5,
-  `Shoot não tem recoil autorado legível (curso da raiz ${shootTravel.toFixed(3)} unidades; mínimo 2,5)`);
+const measuredMagExcursion = translationExcursion('reload_tactical', 'Mag');
+const magExcursion = hasMutant('pente-estatico') ? 0 : measuredMagExcursion;
+const measuredBarrelExcursion = translationExcursion('reload_tactical', 'Barrel');
+const measuredMagVertices = verticesOwnedBy(weaponSkin, 'Mag');
+const magVertices = hasMutant('sem-peso-pente') ? 0 : measuredMagVertices;
+check(magExcursion >= 18 && magExcursion <= 24,
+  `excursão do pente saiu da trajetória calibrada (${magExcursion.toFixed(3)} unidades; esperado 18–24)`);
+check(measuredBarrelExcursion <= 0.01, `corpo da arma acompanha indevidamente o pente (${measuredBarrelExcursion.toFixed(4)} unidades)`);
+check(magVertices >= 1000, `pente não possui geometria visível própria (${magVertices} vértices; mínimo 1000)`);
 
-const triggerTrack = animationTrack('Shoot', 'R_point2_032', 'rotation');
-const triggerTravel = triggerTrack.length
-  ? Math.max(...triggerTrack.map((value) => quaternionAngle(triggerTrack[0], value))) * 180 / Math.PI
-  : 0;
-const triggerReturn = triggerTrack.length > 1
-  ? quaternionAngle(triggerTrack[0], triggerTrack.at(-1)) * 180 / Math.PI
-  : Infinity;
-check(triggerTravel >= 10, `indicador não aperta o gatilho (curso ${triggerTravel.toFixed(3)}°)`);
-check(triggerReturn <= 1, `indicador não retorna após Shoot (erro ${triggerReturn.toFixed(3)}°)`);
-
-const oldMagazine = animationTrack('Reload', 'CoroMagazine', 'translation');
-const freshMagazine = animationTrack('Reload', 'CoroFreshMagazine', 'translation');
-const trackTravel = (track) => track.length
-  ? Math.max(...track.map((value) => vectorDistance(value, track[0])))
-  : 0;
-const oldMagazineTravel = trackTravel(oldMagazine);
-const freshMagazineTravel = trackTravel(freshMagazine);
-check(oldMagazineTravel >= 10,
-  `carregador usado não percorre extração legível (${oldMagazineTravel.toFixed(3)} unidades)`);
-check(freshMagazineTravel >= 10,
-  `carregador novo não percorre inserção legível (${freshMagazineTravel.toFixed(3)} unidades)`);
-
-const shootStart = endpointError('Shoot', false);
-const shootEnd = endpointError('Shoot');
-const equipEnd = endpointError('Equip');
-const reloadEnd = endpointError('Reload', true, new Set(['CoroMagazine', 'CoroFreshMagazine']));
-if (mutantReloadOpen) reloadEnd.rotationDeg = 12;
-for (const [label, endpoint] of [
-  ['início de Shoot', shootStart],
-  ['fim de Shoot', shootEnd],
-  ['fim de Equip', equipEnd],
-  ['fim de Reload', reloadEnd],
+const materials = new Map(gltf.listMaterials().map((material) => [material.getName(), material]));
+const polymer = materials.get('CoroSolto_polymer');
+const polymerColor = hasMutant('material-lavado') ? [0.5, 0.5, 0.5, 1] : polymer?.getBaseColorFactor();
+check(polymerColor?.slice(0, 3).every((channel) => channel < 0.02),
+  `polímero perdeu o acabamento escuro (${polymerColor?.slice(0, 3).map((value) => value.toFixed(4)).join(', ') || 'ausente'})`);
+for (const [materialName, mapName] of [
+  ['CoroSolto_FP_Cloth', 'T_Cloth01_B'],
+  ['CoroSolto_FP_Glove', 'T_Glove01_B'],
+  ['CoroSolto_FP_Hand', 'T_Arm01_B'],
 ]) {
-  check(endpoint.rotationDeg <= 1,
-    `${label} não fecha em Idle (rotação ${endpoint.rotationDeg.toFixed(3)}°, ${endpoint.rotationTrack})`);
-  check(endpoint.translation <= 0.05,
-    `${label} não fecha em Idle (translação ${endpoint.translation.toFixed(4)}, ${endpoint.translationTrack})`);
-  check(endpoint.scale <= 0.01,
-    `${label} não fecha em Idle (escala ${endpoint.scale.toFixed(5)}, ${endpoint.scaleTrack})`);
+  check(materials.get(materialName)?.getBaseColorTexture()?.getName() === mapName,
+    `${materialName} não referencia ${mapName}`);
 }
 
-const materials = new Map((gltf.materials || []).map((material) => [material.name, material]));
-const weaponMaterial = materials.get('pistol Material');
-check(Number.isInteger(weaponMaterial?.pbrMetallicRoughness?.baseColorTexture?.index),
-  'pistola sem base color exportado');
-check(Number.isInteger(weaponMaterial?.normalTexture?.index), 'pistola sem normal map exportado');
-check(Number.isInteger(weaponMaterial?.pbrMetallicRoughness?.metallicRoughnessTexture?.index),
-  'pistola sem ORM exportado');
-check((gltf.images || []).every((image) => Number.isInteger(image.bufferView)),
-  'GLB da pistola depende de textura externa');
+const sharedRoot = path.join(path.dirname(path.dirname(file)), 'shared');
+const textureSizes = {};
+for (const part of ['Arm', 'Cloth', 'Glove']) {
+  for (const [kind, expected] of Object.entries({ B: 1024, N: 2048, ORM: 1024 })) {
+    const name = `T_${part}01_${kind}`;
+    const metadata = await sharp(path.join(sharedRoot, `${name}.webp`)).metadata();
+    const actual = hasMutant('textura-1px') && name === 'T_Cloth01_N'
+      ? { width: 1, height: 1 }
+      : metadata;
+    textureSizes[name] = [metadata.width, metadata.height];
+    check(actual.width === expected && actual.height === expected,
+      `${name} mede ${actual.width}x${actual.height}; esperado ${expected}x${expected}`);
+  }
+}
 
-const vmconfigSource = fs.readFileSync(path.join(root, 'public/js/data/vmconfig.js'), 'utf8');
-const authoredVmSource = fs.readFileSync(path.join(root, 'public/js/authoredvm.js'), 'utf8');
-const goldenRuntime = !mutantRuntimeMissing
-  && /pistol:\s*\{\s*ready:\s*true/.test(vmconfigSource)
-  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*golden:\s*true/.test(vmconfigSource)
-  && /return `gold#\$\{weapon\}`/.test(authoredVmSource);
-check(goldenRuntime, 'pistola golden não está ligada ao carregador/câmera do GLB no runtime');
+const vmconfig = fs.readFileSync(path.join(root, 'public/js/data/vmconfig.js'), 'utf8');
+const authoredVm = fs.readFileSync(path.join(root, 'public/js/authoredvm.js'), 'utf8');
+const runtimeRoute = !hasMutant('sem-runtime')
+  && /pistol:\s*W\('pistol',\s*\{\s*baked:\s*true,\s*runtime:\s*'family',\s*timing:\s*'gameplay'\s*\}\)/.test(vmconfig)
+  && /VM_WEAPON\[weapon\]\?\.runtime === 'family'/.test(authoredVm);
+check(runtimeRoute, 'runtime não aponta pistol#pistol para o GLB canônico da família');
+
+const frameMatch = /pistol:\s*\{\s*x:\s*([\d.-]+),\s*y:\s*([\d.-]+),\s*z:\s*([\d.-]+),\s*fov:\s*([\d.-]+),\s*rotDeg:\s*\[([^\]]+)\],\s*drawDrop:\s*([\d.-]+)/.exec(authoredVm);
+const frame = frameMatch ? {
+  x: Number(frameMatch[1]), y: Number(frameMatch[2]), z: Number(frameMatch[3]),
+  fov: hasMutant('fov-pacote') ? 84 : Number(frameMatch[4]),
+  rotDeg: frameMatch[5].split(',').map(Number),
+  drawDrop: Number(frameMatch[6]),
+} : null;
+check(frame && Math.abs(frame.x - 0.15) < 1e-6 && Math.abs(frame.y + 0.015) < 1e-6 && Math.abs(frame.z + 0.2) < 1e-6,
+  `posição-base da pistola divergiu (${frame ? [frame.x, frame.y, frame.z].join(', ') : 'ausente'})`);
+check(frame?.fov === 60, `VFOV-base da pistola precisa ser 60°, recebido ${frame?.fov ?? 'ausente'}°`);
+check(frame?.drawDrop === 0.34, `saque da pistola precisa iniciar 0,34 m abaixo, recebido ${frame?.drawDrop ?? 'ausente'}`);
+check(frame?.rotDeg.join(',') === '-9,12,-2', `orientação-base divergiu (${frame?.rotDeg.join(', ') || 'ausente'})`);
+
+let runtime = null;
+try { runtime = JSON.parse(fs.readFileSync(reportFile, 'utf8')); } catch { /* reportado abaixo */ }
+check(runtime, `relatório do runtime ausente: ${reportFile}`);
+const fileBytes = fs.readFileSync(file);
+const sha256 = crypto.createHash('sha256').update(fileBytes).digest('hex');
+if (runtime) {
+  const actualAspect = runtime.viewport.width / runtime.viewport.height;
+  const expectedFov = 2 * Math.atan(Math.tan(60 * Math.PI / 360) * (16 / 9) / actualAspect) * 180 / Math.PI;
+  const reloadFrames = runtime.states.filter((state) => state.label.startsWith('reload-'));
+  const drawFrames = runtime.states.filter((state) => state.label.startsWith('draw-'));
+  const fireFrames = runtime.states.filter((state) => state.label.startsWith('fire-'));
+  const testedReloadSync = hasMutant('timing-cs16') ? 1.1 : Math.max(0, ...reloadFrames.map((state) => state.reloadSyncError || 0));
+  check(runtime.source === 'pistol#pistol', `browser carregou ${runtime.source}; esperado pistol#pistol`);
+  check(runtime.servedGlb?.sha256 === sha256, 'SHA do GLB servido diverge do arquivo validado');
+  check(runtime.errors?.length === 0, `runtime registrou erros: ${runtime.errors?.join('; ')}`);
+  check(Math.abs((runtime.camera?.fov ?? 0) - expectedFov) < 0.05,
+    `câmera 3:2 mede ${runtime.camera?.fov ?? 'ausente'}°; esperado ${expectedFov.toFixed(3)}°`);
+  check(drawFrames.length === 5 && drawFrames.every((state) => state.state === 'draw'), 'saque não foi amostrado em cinco frames intermediários');
+  check(fireFrames.length === 5 && fireFrames.every((state) => state.clip === 'shoot'), 'disparo não reproduziu o clip shoot em cinco frames');
+  check(reloadFrames.length === 9 && reloadFrames.every((state) => state.clip === 'reload_tactical'), 'recarga não reproduziu o clip tático completo');
+  check(testedReloadSync <= 0.03, `cadência do clip diverge do gameplay por ${testedReloadSync.toFixed(4)}s`);
+  check(runtime.states.some((state) => state.label === 'pos-recarga' && state.state === 'idle'), 'recarga não fecha em idle');
+  check(fs.existsSync(path.join(path.dirname(reportFile), 'contact-sheet.png')), 'contact sheet do mesmo runtime está ausente');
+}
 
 const result = {
-  file: path.relative(root, file),
-  camera: cameraNode?.name || null,
-  vfovDeg: Number.isFinite(fov) ? Number((fov * 180 / Math.PI).toFixed(3)) : null,
-  aspect: camera?.perspective?.aspectRatio || null,
-  actions: [...actions],
-  skins: (gltf.skins || []).length,
-  equipTravel: Number(equipTravel.toFixed(3)),
-  drawRigidError: Number.isFinite(drawRigidError) ? Number(drawRigidError.toFixed(5)) : null,
-  shootTravel: Number(shootTravel.toFixed(3)),
-  triggerTravelDeg: Number(triggerTravel.toFixed(3)),
-  triggerReturnDeg: Number.isFinite(triggerReturn) ? Number(triggerReturn.toFixed(3)) : null,
-  magazineTravel: {
-    spent: Number(oldMagazineTravel.toFixed(3)),
-    fresh: Number(freshMagazineTravel.toFixed(3)),
+  file,
+  sha256,
+  runtimeReport: reportFile,
+  clips: [...clips.keys()],
+  rigs: { arms: armsSkin?.listJoints().length || 0, weapon: weaponSkin?.listJoints().length || 0 },
+  magazine: {
+    excursion: Number(measuredMagExcursion.toFixed(3)),
+    barrelExcursion: Number(measuredBarrelExcursion.toFixed(4)),
+    ownedVertices: measuredMagVertices,
   },
-  endpointContinuity: { shootStart, shootEnd, equipEnd, reloadEnd },
-  goldenRuntime,
+  frame,
+  textureSizes,
+  runtimeRoute,
   ok: failures.length === 0,
   failures,
 };
