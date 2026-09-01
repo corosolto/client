@@ -4,6 +4,7 @@ import { makeAerialFog } from './bloom.js';
 import { decalIds } from './map_decals.js';
 import { grafitar } from './graffiti_pass.js';
 import { createFavelaAmbience, FAVELA_AMBIENCE_ASSETS } from './ambientlife.js';
+import { createSkyLife, SKY_KITE_ASSET, SKY_HELI_ASSET } from './skylife.js';
 import { AMB_LOOPS } from './soundscape.js';
 
 const QP = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
@@ -24,7 +25,9 @@ export const LAJES_LOOPS = Object.freeze({
 });
 export const LAJES_AMBIENCE = FAVELA_AMBIENCE_ASSETS;
 export const LAJES_PROPS = [...LAJES_AUTHORED_ASSETS,
-  'moto_cg', 'stall', 'dumpster', 'pilha_pneus', 'botijao_gas'];
+  'moto_cg', 'stall', 'dumpster', 'pilha_pneus', 'botijao_gas',
+  // vida de céu (skylife.js): a pipa de verdade e o helicóptero da PM
+  SKY_KITE_ASSET, SKY_HELI_ASSET];
 
 const ROOF_H = 5.2;
 const HALF_X = 15.5;
@@ -1011,25 +1014,21 @@ export function buildLajes(scene, T) {
   for (const [x, z] of [[-13.4, -10], [13.4, -2], [-13.4, 17], [13.4, 20]])
     addWire([x < 0 ? -5.8 : 5.7, 9.3, z - 2], [x, 8.4, z], .7, 0);
 
-  const kiteMaterials = [MAT.kiteRed, MAT.kiteBlue, MAT.kiteYellow];
-  const addKite = (x, y, z, scale, index) => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute([
-      0, scale, 0, -scale * .72, 0, 0, 0, -scale * 1.08, 0,
-      0, scale, 0, 0, -scale * 1.08, 0, scale * .72, 0, 0,
-    ], 3)); geometry.computeVertexNormals();
-    const kite = new THREE.Mesh(geometry, kiteMaterials[index % kiteMaterials.length]);
-    kite.position.set(x, y, z); kite.rotation.set(.08 * (index % 3), .35 * index, -.12 + .04 * index);
-    kite.userData.skyLife = 'pipa'; root.add(kite);
-    const tailCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(x, y - scale, z), new THREE.Vector3(x + .3, y - scale * 2.1, z + .15),
-      new THREE.Vector3(x - .15, y - scale * 3.2, z + .25),
-    ]);
-    const tail = new THREE.Mesh(new THREE.TubeGeometry(tailCurve, 8, .012, 4), MAT.woodDark); root.add(tail);
-  };
-  const kites = [[-15, 15, -30], [-8, 18, -20], [2, 16, -25], [11, 20, -14], [17, 17, -4],
+  /* Pipas: eram 12 losangos de 2 tris PARADOS enquanto pipa_papel.glb dormia no disco.
+     Mesmas posições de antes; só o corpo e o movimento mudaram. docs/SKYLIFE.md. */
+  const kitePositions = [[-15, 15, -30], [-8, 18, -20], [2, 16, -25], [11, 20, -14], [17, 17, -4],
     [-17, 19, 7], [-9, 14, 15], [1, 21, 7], [8, 17, 21], [15, 22, 29], [-3, 15, 34], [5, 19, 37]];
-  kites.forEach((kite, i) => addKite(kite[0], kite[1], kite[2], .42 + (i % 3) * .1, i));
+  const skyLife = createSkyLife(root, {
+    map: 'fy_lajes', low: LOWQ,
+    kites: kitePositions.map((pos, i) => ({ pos, scale: .82 + (i % 3) * .2, phase: i * 1.37 })),
+    // um só helicóptero, órbita alta: o da PM rondando a comunidade
+    helicopters: [{ center: [0, 38, -6], radius: 46, speed: .15, phase: .8 }],
+    // par de araras; menos que no córrego porque aqui as 12 pipas já disputam o céu
+    birds: [
+      { center: [0, 28, 2], radius: 24, speed: .31, phase: .6 },
+      { center: [0, 31, 2], radius: 27, speed: .26, phase: 2.9, scale: .9 },
+    ],
+  });
   for (const [x, z] of [[-8.7, 20], [2, -30]]) {
     const reel = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .34, 16), MAT.wood);
     reel.rotation.z = Math.PI / 2; reel.position.set(x, ROOF_H + .22, z); reel.userData.rooftopUse = 'carretel'; root.add(reel);
@@ -1252,6 +1251,8 @@ export function buildLajes(scene, T) {
 
   return {
     root, colliders, occluders, decalSolids: [root], groundHeightAt, spawns, sun, hemi,
+    skyLife,
+    update(dt, time) { skyLife.update(dt, time); },
     pickups, ctfPoints, ambience,sound:{loops:[{src:AMB_LOOPS.funk,pos:[0,3,0],radius:60,vol:.3},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:60,vol:.2}],bioma:'favela'}, waypoints: { nodes, adj }, nearestWaypoint, findPath,
     stairs: mapStairs, staircases: stairs,
     jumpImpulse: 5.85,

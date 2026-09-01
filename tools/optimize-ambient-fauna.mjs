@@ -40,6 +40,12 @@ const jobs = [
   // (2,4-2,9k) e o AM7 é por mapa. Barata 0,4 (14 cm na tela), tatu/papagaio 0,6.
   { src: 'references/glb/tatu_campo_mint.glb', out: `${outDir}/tatu_campo.glb`, skinned: false, noDecimate: true, simplify: .6 },
   { src: 'references/glb/papagaio_poleiro_mint.glb', out: `${outDir}/papagaio_poleiro.glb`, skinned: false, noDecimate: true, simplify: .6 },
+  /* ARARA EM VOO (plans/22 § "Pombas voando" — a presença aérea que a v2.1 tirou).
+     Entra pelo `arara_voo_split.glb` (tools/split-props-v21.mjs), não pelo bruto: o
+     bater de asa é procedural sobre os nós `asa-esquerda`/`asa-direita`, mesmo
+     recurso do tatu e da pipa. simplify .6 pelo mesmo motivo dos outros Mint: 4,9k
+     tris é o dobro do padrão Quaternius e a arara é lida a 20-30 m de altura. */
+  { src: 'references/glb/arara_voo_split.glb', out: `${outDir}/arara_voo.glb`, skinned: false, noDecimate: true, simplify: .6 },
   { src: 'references/glb/barata_urbana_mint.glb', out: `${outDir}/barata_urbana.glb`, skinned: false, noDecimate: true, simplify: .4,
     // o Mint entregou vermelho glossy de brinquedo: sob o sol laranja do córrego
     // o albedo vermelho satura ainda mais (medido na captura). Dessatura pro

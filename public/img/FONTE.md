@@ -364,20 +364,24 @@ gerador; a entrega é WebP `1774×887`. Nenhum prompt histórico foi reconstruí
   Output only the panorama."
 - `textures/sky_joa.webp` — source `exec-96737cf4-2c4d-408b-83b8-6cbf1297d1cb`,
   SHA-256 do PNG `0de83ba0cf362c1f8575887db6cf49f227ee227389d7d6257900e8935624887b`,
-  SHA-256 final `c8da24302739aa588524efd57107831aebcad94392a22fe12335b01a3d40a7fa`
-  (regerado em 8c5cfad, 12/08, para fechar a costura de wrap; hash anterior `872bb146…`).
-  Prompt: "Create a seamless equirectangular 2:1 environment panorama for a
-  stylized-realistic browser FPS set at a fictional ultra-modern coastal house on a
-  tropical Brazilian hillside. Upper 72% is a clear warm late-afternoon sky with
-  delicate cirrus; lower horizon shows a broad deep-blue Atlantic ocean, atmospheric
-  coastal headlands, green slopes and a few tiny generic hillside homes. The ocean
-  must remain unmistakably visible behind an infinity pool. No identifiable real
-  landmark, no people, no text, no logos, no flags, no brands, no copyrighted
-  artwork. PBR-friendly natural lighting, restrained contrast, horizon perfectly
-  level, left and right edges seamless, no sun disk, no fisheye distortion, no frame
-  or border. Output only the panorama." O processamento recortou o centro superior
-  `1240×620+480+190` antes do resize; o enquadramento coloca o horizonte na faixa
-  visível atrás da piscina real e remove o landmark montanhoso da borda esquerda.
+  SHA-256 final `7e7c52c51009e5daa7b95a93ea69a448201ee58d8da27c207b3abf4e465f88f2`
+  (regerado em 20/08/2026 via OpenRouter google/gemini-3-pro-image + composição local:
+  a versão anterior tinha piscina/deck/espreguiçadeiras ASSADOS na imagem — o horizonte
+  da piscina mostrava outra piscina, e os morros caíam atrás do mapa; hash anterior
+  `c8da2430…`). Prompt: "Seamless 360-degree equirectangular panorama photograph.
+  View from a high cliff in Joá, Rio de Janeiro, looking over the open Atlantic
+  Ocean. The horizon line sits EXACTLY at the vertical center of the image. Lower
+  half: deep blue open ocean with subtle waves, no land in the center. Upper half:
+  late-afternoon golden-blue sky with soft scattered clouds, warm haze near the
+  horizon. On the LEFT side of the image, the green mountain silhouettes of Pedra
+  da Gávea and Morro Dois Irmãos rise steeply from the sea into the sky, partially
+  wrapped in light haze. The right side is open sea fading into warm haze.
+  Photographic, natural colors, no buildings, no pool, no deck, no furniture, no
+  people, no boats in the center, no text, no watermark. The left and right edges
+  must tile seamlessly." Pós-processo: recorte do maciço espelhado no eixo do pico
+  (wrap contínuo por construção), faixas de mar aberto nos flancos, mirror-blend de
+  60 px nas emendas, resize 2048×1024 e roll de 200 px para o maciço cair a ~35°
+  à direita da vista norte (a leitura real do Joá: mar à frente, morros DE LADO).
 - `textures/water_normal_a.webp` e `textures/water_normal_b.webp` (RC2, 19/08):
   normal maps da água viva, derivados por sobel da luminância da textura de
   superfície gerada via OpenRouter (`tools/gen-image.mjs`, modelo

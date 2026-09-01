@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { posix } from 'node:path';
 import { moduleCacheManifest } from '../../scripts/module-cache.mjs';
+import { renderIndex } from './serve.mjs';
 
 const mutant = (process.argv.find((arg) => arg.startsWith('--mutante=')) || '').split('=')[1] || '';
 const mutants = [
@@ -343,8 +344,22 @@ const injectedCacheContract = (source) => source.includes('__MANIFESTO_JS__')
   && (source.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
 const buildCacheContract = /const MANIFESTO_JS = moduleCacheManifest\(\)/.test(astroConfig)
   && /__MANIFESTO_JS__:\s*JSON\.stringify\(MANIFESTO_JS\)/.test(astroConfig);
+/* MEDE A SAÍDA, NÃO A FORMA (20/08). A versão anterior contava DUAS ocorrências
+   literais de `?v=${V}-${JS_REV}` dentro do serve.mjs, e reprovava desde que o
+   renderizador trocou as regras por-atributo por uma varredura genérica: o HTML
+   servido continuava com versão+hash, mas a string sumiu do fonte. Régua que conta
+   string reprova refatoração correta e passa pano em comportamento errado. Agora
+   renderiza de verdade e cobra o hash NA URL — se o servidor voltar a servir módulo
+   sem hash de conteúdo (o BUG-39: edge montando página com módulos de deploys
+   diferentes), esta linha acende, seja qual for a forma do código.
+   O mutante `cache-antigo` continua mordendo pela cláusula irmã do indexPage. */
+const htmlServido = await renderIndex();
+/* O `-` do meio faz parte da VERSÃO (2.0.0-alpha.159), então o casamento vai até a
+   aspa final: `?v=<versao>-<12 hex>"`. Cobrar `[\w.]+` reprovava a versão real. */
+const COM_HASH = /\?v=[^"]*-[0-9a-f]{12}"/;
 const evalCacheContract = evalServer.includes('moduleCacheManifest')
-  && (evalServer.match(/\?v=\$\{V\}-\$\{JS_REV\}/g) || []).length >= 2;
+  && COM_HASH.test((htmlServido.match(/src="\/js\/main\.js[^"]*"/) || [''])[0])
+  && COM_HASH.test((htmlServido.match(/"\.\/js\/main\.js":"[^"]*"/) || [''])[0]);
 const prunedJsPrefixes = [...new Set([...pruneDist.matchAll(
   /['"](?:dist\/client|\.vercel\/output\/static)\/js\/([^'"]+)['"]/g,
 )].map((match) => `${match[1].replace(/\/$/, '')}/`))];
