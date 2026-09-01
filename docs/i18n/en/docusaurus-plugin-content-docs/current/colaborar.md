@@ -258,9 +258,9 @@ The registry, generated from the `MAPS` of `public/js/maps.js`:
 | `quebrada` | Quebrada (Rua do Baile) | **capture** | `map_quebrada.js` | 1,656 |
 | `fy_escadao` | Escadão (Morro) | **capture** | `map_escadao.js` | 813 |
 | `fy_campomorro` | Campo do Morro | **capture** | `map_campomorro.js` | 713 |
-| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,263 |
-| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,258 |
-| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 951 |
+| `fy_lajes` | Lajes (Comunidade) | **capture** | `map_lajes_authored.js` | 1,264 |
+| `fy_corrego` | Córrego (Favela de SP) | **capture** | `map_corrego.js` | 1,345 |
+| `fy_mansao` | Mansão do Joá | **capture** | `map_mansao.js` | 1,045 |
 | `posto_treta` | Posto da Treta | **capture** | `map_posto.js` | 506 |
 | `upa_24h` | UPA 24h da Treta | **capture** | `map_upa.js` | 302 |
 | `obras_prefeitura` | Obras da Prefeitura | **capture** | `map_obras.js` | 257 |
