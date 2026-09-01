@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-28T07:42:32.300Z",
+ "gerado": "2026-09-01T12:09:50.411Z",
  "protocolo": "node puro; DOM stubado + three vendorizado (mesmo protocolo de botsim.mjs/pickup-check.mjs); GLB lido por tp-mount-probe.mjs",
  "fontes": {
   "glb": 62,
@@ -71,53 +71,53 @@
   "porMapa": [
    {
     "mapa": "praca_poderes",
-    "materiais": 103,
-    "map": 75,
+    "materiais": 106,
+    "map": 78,
     "normalMap": 16,
     "roughnessMap": 16,
     "aoMap": 0,
-    "meshes": 221,
-    "triangulos": 6737
+    "meshes": 224,
+    "triangulos": 6739
    },
    {
     "mapa": "piscina_treta",
-    "materiais": 129,
-    "map": 99,
+    "materiais": 130,
+    "map": 100,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 503,
-    "triangulos": 7412
+    "meshes": 504,
+    "triangulos": 7398
    },
    {
     "mapa": "loja_h",
-    "materiais": 262,
-    "map": 86,
+    "materiais": 261,
+    "map": 85,
     "normalMap": 21,
     "roughnessMap": 21,
     "aoMap": 0,
-    "meshes": 505,
+    "meshes": 504,
     "triangulos": 20496
    },
    {
     "mapa": "ferro_velho",
-    "materiais": 283,
-    "map": 234,
+    "materiais": 284,
+    "map": 235,
     "normalMap": 9,
     "roughnessMap": 9,
     "aoMap": 0,
-    "meshes": 732,
-    "triangulos": 24836
+    "meshes": 733,
+    "triangulos": 24848
    },
    {
     "mapa": "quebrada",
-    "materiais": 319,
-    "map": 179,
+    "materiais": 322,
+    "map": 182,
     "normalMap": 10,
     "roughnessMap": 10,
     "aoMap": 0,
-    "meshes": 1685,
-    "triangulos": 28262
+    "meshes": 1688,
+    "triangulos": 28264
    },
    {
     "mapa": "fy_escadao",
@@ -150,14 +150,14 @@
     "triangulos": 32574
    },
    {
-    "mapa": "fy_corrego",
-    "materiais": 140,
+    "mapa": "corrego",
+    "materiais": 157,
     "map": 94,
     "normalMap": 9,
     "roughnessMap": 9,
     "aoMap": 0,
-    "meshes": 431,
-    "triangulos": 21854
+    "meshes": 453,
+    "triangulos": 23124
    },
    {
     "mapa": "fy_mansao",
@@ -171,43 +171,43 @@
    },
    {
     "mapa": "posto_treta",
-    "materiais": 123,
-    "map": 85,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 311,
-    "triangulos": 4424
-   },
-   {
-    "mapa": "upa_24h",
-    "materiais": 96,
-    "map": 52,
-    "normalMap": 0,
-    "roughnessMap": 0,
-    "aoMap": 0,
-    "meshes": 472,
-    "triangulos": 6426
-   },
-   {
-    "mapa": "obras_prefeitura",
-    "materiais": 63,
-    "map": 37,
+    "materiais": 125,
+    "map": 87,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
     "meshes": 313,
-    "triangulos": 13232
+    "triangulos": 4430
    },
    {
-    "mapa": "atacadao_treta",
-    "materiais": 105,
-    "map": 73,
+    "mapa": "upa_24h",
+    "materiais": 94,
+    "map": 50,
     "normalMap": 0,
     "roughnessMap": 0,
     "aoMap": 0,
-    "meshes": 362,
-    "triangulos": 5112
+    "meshes": 470,
+    "triangulos": 6424
+   },
+   {
+    "mapa": "obras_prefeitura",
+    "materiais": 61,
+    "map": 35,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 311,
+    "triangulos": 13228
+   },
+   {
+    "mapa": "atacadao_treta",
+    "materiais": 102,
+    "map": 70,
+    "normalMap": 0,
+    "roughnessMap": 0,
+    "aoMap": 0,
+    "meshes": 359,
+    "triangulos": 5110
    },
    {
     "mapa": "parque_treta",
@@ -241,8 +241,8 @@
    }
   ],
   "total": {
-   "materiais": 2653,
-   "map": 1289,
+   "materiais": 2672,
+   "map": 1291,
    "normalMap": 75,
    "roughnessMap": 75,
    "aoMap": 0

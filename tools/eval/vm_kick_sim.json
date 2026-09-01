@@ -1,5 +1,5 @@
 {
- "gerado": "2026-08-29T15:29:34.160Z",
+ "gerado": "2026-09-01T12:09:01.108Z",
  "fonte": {
   "recoilAxis": {
    "freq": 11,
@@ -75,29 +75,6 @@
    "atravessaNear": false,
    "tPicoS": 6.02
   },
-  "rem700": {
-   "classe": "awp",
-   "auto": false,
-   "rate": 1.5,
-   "cadenciaRPM": 40,
-   "recDeg": 4.8,
-   "vmAmp": 1.0334,
-   "kickMul": 1,
-   "vmAmpAplicado": 1.0334,
-   "kPico1Tiro": 0.858,
-   "kPicoRajada": 0.858,
-   "kSustentado": 0.858,
-   "pitchMaxGraus": 3.44,
-   "pitch1TiroGraus": 3.44,
-   "pullZmax": 0.043,
-   "liftYmax": 0.013,
-   "coronhaBack": 0.22,
-   "coronhaZrepouso": -0.283,
-   "coronhaZpico": -0.24,
-   "coronhaZpicoComPitch": -0.242,
-   "atravessaNear": false,
-   "tPicoS": 6.02
-  },
   "shotgun": {
    "classe": "?",
    "auto": false,
@@ -144,29 +121,6 @@
    "atravessaNear": false,
    "tPicoS": 3.62
   },
-  "m400": {
-   "classe": "awp",
-   "auto": true,
-   "rate": 0.11,
-   "cadenciaRPM": 545,
-   "recDeg": 1.5,
-   "vmAmp": 0.7629,
-   "kickMul": 1,
-   "vmAmpAplicado": 0.7629,
-   "kPico1Tiro": 0.633,
-   "kPicoRajada": 0.701,
-   "kSustentado": 0.701,
-   "pitchMaxGraus": 2.81,
-   "pitch1TiroGraus": 2.54,
-   "pullZmax": 0.035,
-   "liftYmax": 0.011,
-   "coronhaBack": 0.214,
-   "coronhaZrepouso": -0.289,
-   "coronhaZpico": -0.254,
-   "coronhaZpicoComPitch": -0.256,
-   "atravessaNear": false,
-   "tPicoS": 3.38
-  },
   "svd": {
    "classe": "awp",
    "auto": true,
@@ -189,29 +143,6 @@
    "coronhaZpicoComPitch": -0.233,
    "atravessaNear": false,
    "tPicoS": 3.97
-  },
-  "g3sg1": {
-   "classe": "awp",
-   "auto": true,
-   "rate": 0.22,
-   "cadenciaRPM": 273,
-   "recDeg": 1.7,
-   "vmAmp": 0.7851,
-   "kickMul": 1,
-   "vmAmpAplicado": 0.7851,
-   "kPico1Tiro": 0.652,
-   "kPicoRajada": 0.672,
-   "kSustentado": 0.672,
-   "pitchMaxGraus": 2.69,
-   "pitch1TiroGraus": 2.61,
-   "pullZmax": 0.034,
-   "liftYmax": 0.01,
-   "coronhaBack": 0.24,
-   "coronhaZrepouso": -0.262,
-   "coronhaZpico": -0.228,
-   "coronhaZpicoComPitch": -0.231,
-   "atravessaNear": false,
-   "tPicoS": 4.05
   },
   "sks": {
    "classe": "awp",
@@ -282,29 +213,6 @@
    "atravessaNear": false,
    "tPicoS": 0.51
   },
-  "akm": {
-   "classe": "rifle",
-   "auto": true,
-   "rate": 0.105,
-   "cadenciaRPM": 571,
-   "recDeg": 1.72,
-   "vmAmp": 0.7872,
-   "kickMul": 1,
-   "vmAmpAplicado": 0.7872,
-   "kPico1Tiro": 0.653,
-   "kPicoRajada": 0.736,
-   "kSustentado": 0.736,
-   "pitchMaxGraus": 2.95,
-   "pitch1TiroGraus": 2.62,
-   "pullZmax": 0.037,
-   "liftYmax": 0.011,
-   "coronhaBack": 0.24,
-   "coronhaZrepouso": -0.277,
-   "coronhaZpico": -0.24,
-   "coronhaZpicoComPitch": -0.242,
-   "atravessaNear": false,
-   "tPicoS": 3.14
-  },
   "m92": {
    "classe": "rifle",
    "auto": true,
@@ -327,29 +235,6 @@
    "coronhaZpicoComPitch": -0.285,
    "atravessaNear": false,
    "tPicoS": 0.51
-  },
-  "g3": {
-   "classe": "rifle",
-   "auto": true,
-   "rate": 0.11,
-   "cadenciaRPM": 545,
-   "recDeg": 1.75,
-   "vmAmp": 0.7904,
-   "kickMul": 1,
-   "vmAmpAplicado": 0.7904,
-   "kPico1Tiro": 0.656,
-   "kPicoRajada": 0.727,
-   "kSustentado": 0.727,
-   "pitchMaxGraus": 2.91,
-   "pitch1TiroGraus": 2.63,
-   "pullZmax": 0.036,
-   "liftYmax": 0.011,
-   "coronhaBack": 0.249,
-   "coronhaZrepouso": -0.268,
-   "coronhaZpico": -0.232,
-   "coronhaZpicoComPitch": -0.233,
-   "atravessaNear": false,
-   "tPicoS": 3.38
   },
   "scar": {
    "classe": "rifle",
@@ -394,29 +279,6 @@
    "coronhaZrepouso": -0.288,
    "coronhaZpico": -0.252,
    "coronhaZpicoComPitch": -0.253,
-   "atravessaNear": false,
-   "tPicoS": 2.66
-  },
-  "tavor": {
-   "classe": "rifle",
-   "auto": true,
-   "rate": 0.09,
-   "cadenciaRPM": 667,
-   "recDeg": 1.3,
-   "vmAmp": 0.7392,
-   "kickMul": 1,
-   "vmAmpAplicado": 0.7392,
-   "kPico1Tiro": 0.614,
-   "kPicoRajada": 0.717,
-   "kSustentado": 0.717,
-   "pitchMaxGraus": 2.88,
-   "pitch1TiroGraus": 2.46,
-   "pullZmax": 0.036,
-   "liftYmax": 0.011,
-   "coronhaBack": 0.249,
-   "coronhaZrepouso": -0.269,
-   "coronhaZpico": -0.233,
-   "coronhaZpicoComPitch": -0.234,
    "atravessaNear": false,
    "tPicoS": 2.66
   },
@@ -630,9 +492,9 @@
  },
  "reprovacoes": [],
  "resumo": {
-  "armas": 26,
+  "armas": 20,
   "atravessamNear": 0,
   "pitchMaxGraus": 3.46,
-  "pitchMedioGraus": 2.7
+  "pitchMedioGraus": 2.63
  }
 }
