@@ -189,7 +189,7 @@ const MOLDE_FRAME = Object.freeze({
   lmg:        { x: 0.356, y: 0.173, z: -0.08 },
   scar:       { x: 0.15, y: 0.013, z: 0 },
   famas:      { x: 0.046, y: 0.005, z: 0 },
-  uzi:        { x: 0.345, y: 0.177, z: 0 },
+  uzi:        { x: 0.345, y: 0.177, z: 0, drawDrop: 0.28 },
   p90:        { x: 0.042, y: -0.046, z: 0 },
   svd:        { x: 0.183, y: 0.12, z: -0.08 },
   sks:        { x: 0.158, y: 0.078, z: -0.08 },
@@ -698,11 +698,16 @@ export class AuthoredViewModels {
     // famílias de pistola (o pack não traz equip de pistola) e como fallback.
     if ((entry.golden || VM_FAMILY[entry.family]?.equip !== 'pistol')
       && entry.clips.has('equip_rifle')) {
-      entry.drawTime = entry.drawDuration;
+      // Arco procedural junto do clipe quando a arma declara drawDrop: o
+      // equip_rifle da UZI nasce com a pose já dentro do quadro (P6).
+      entry.drawTime = entry.frame?.drawDrop ? 0 : entry.drawDuration;
       const tocou = this._play(entry, 'equip_rifle', {
         duration: cs16 ? cs16.draw : Math.max(0.3, duration), fade: 0.03,
       });
-      if (tocou) entry.state = 'draw';
+      if (tocou) {
+        entry.state = 'draw';
+        if (entry.frame?.drawDrop) entry.drawDuration = cs16 ? cs16.draw : Math.max(0.3, duration);
+      }
       return tocou;
     }
     // Pistolas cs16: o arco procedural É o estado draw — cadência do QC e
@@ -763,8 +768,9 @@ export class AuthoredViewModels {
       return this._play(entry, 'shoot', { fade: 0.01 });
     }
     if (cs16 && VM_WEAPON[id]?.timing !== 'gameplay') {
-      // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências
-      // originais; recuo SÓ na câmera (GUNFEEL do game.js) — o mount não recua.
+      // Máquina de 6 estados do QC: shoot1→2→3 cicla como as três sequências.
+      // O recuo do mount voltou com a escala em metro (antes era invisível).
+      this.recoil.shoot(this._time);
       entry.shootCycle = ((entry.shootCycle || 0) % 3) + 1;
       entry.state = `shoot${entry.shootCycle}`;
       entry.stateUntil = this._time + cs16.shoot;

@@ -55,14 +55,16 @@ export const VM_WEAPON = {
   pistol: W('pistol', { baked: true, runtime: 'family', timing: 'gameplay' }),
   m92: W('ak'),
   revolver38: W('revolver'),
-  md97: W('ar'),
+  // Recuo de viewmodel abaixo de 4% da própria arma não se lê (P7 do gauntlet):
+  // as duas armas mais leves do REC_DEG precisam de amplitude no mount.
+  md97: W('ar', { recoilScale: 1.8 }),
   carbine: W('ar'),
   mosin: W('bolt'),
   lmg: W('lmg'),
   scar: W('ar'),
   famas: W('ar'),
   uzi: W('smg'),
-  p90: W('p90'),
+  p90: W('p90', { recoilScale: 1.6 }),
   svd: W('svd'),
   sks: W('marksman'),
 };
