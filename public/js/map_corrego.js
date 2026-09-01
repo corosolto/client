@@ -700,7 +700,10 @@ export function buildCorrego(scene, T) {
     /* GLB do Mint (ficha plans/21-FAUNA-CORREGO.md, revisão APROVADA com scale 1,0 —
        1,0 m comp × 0,58 alt). Pés no chão do alagado (groundHeightAt 0,05 em |z| ≥ 35),
        focinho +Z nativo com o mesmo ry = .35 do proxy. Fallback: proxy procedural. */
-    const capivaraGlb = placeFauna('capivara', { x: cx, y: 0.05, z: cz, ry: .35 });
+    /* y do TERRENO, não o 0,05 fixo: o comentário acima prometia "chão do alagado
+       (groundHeightAt 0,05 em |z| >= 35)", mas |cx| = 5,2 > ALAGADO_X, então ali o
+       terreno vale 0 e a capivara pairava 5 cm. */
+    const capivaraGlb = placeFauna('capivara', { x: cx, y: groundHeightAt(cx, cz), z: cz, ry: .35 });
     root.add(gCap);
     if (capivaraGlb) {
       capivaraGlb.userData.fauna = 'capivara'; capivaraGlb.userData.nonCollider = true;
@@ -970,8 +973,18 @@ export function buildCorrego(scene, T) {
     [-5.2, 4.5, 4.4, 4.2, 3.00], [5.45, -34, 4.2, 4.0, 3.15],
   ].entries()) {
     const ry = angAnexo(), baseY = 2.2;
-    for (const px2 of [-w * .40, w * .40]) for (const pz2 of [-d * .40, d * .40])
-      addBoxI(.18, baseY, .18, matPilar, x + px2, 0, z + pz2, { ry, collide: true });
+    /* PÉ DA ESTACA NO CHÃO (dono: "tem alguns barracos que nao estao no chao").
+       A estaca nascia em y = 0 fixo, mas o terreno aqui NÃO é 0: a estaca interna da
+       palafita de (-5,4 · -27) caía sobre a rampa oeste, onde `groundHeightAt` vale
+       -1,26 m — 1,26 m de ar debaixo do pé, com as outras três apoiadas. Agora cada
+       estaca nasce na cota do terreno DELA e cresce até o mesmo `baseY`, que é o que
+       mantém o corpo da casa nivelado. Palafita é casa sobre estaca de altura
+       desigual — é assim que ela existe na beira de córrego. */
+    for (const px2 of [-w * .40, w * .40]) for (const pz2 of [-d * .40, d * .40]) {
+      const pgx = x + px2, pgz = z + pz2, pgy = groundHeightAt(pgx, pgz);
+      const est = addBoxI(.18, baseY - pgy, .18, matPilar, pgx, pgy, pgz, { ry, collide: true });
+      if (est) est.userData.corregoEstaca = true;
+    }
     /* A casa sobre o canal e a mais vista do mapa (as tres pontes olham para ela): e ela
        que ganha o molde. Colisor identico ao da caixa que ela substitui. */
     const corpo = h - 0.4;
@@ -1093,7 +1106,14 @@ export function buildCorrego(scene, T) {
   const matRoupa = [0xd8d2c4, 0x8fa9c8, 0xc06a6a, 0xd8c46a, 0x7f9e78, 0xc9a2c2].map((color) => lam({ color, roughness: 1 }));
   /* Cinco dos doze vaos recebem o MOLDE (pedido literal do dono, BUG-66). Nenhum dos dois
      caminhos tem colisor: o mundo que as reguas de rota medem nao muda. */
-  const VARAL_MOLDE = new Set(['-1|-18.4', '1|-3.2', '-1|16.8', '1|28.4', '-1|-29']);
+  /* "tem alguns locais com prendedor de roupas low poly, mas devia ser realista" (dono).
+     Os 12 postos de varal existiam nos dois lados, mas só CINCO tinham molde — os
+     outros 7 eram cordão de 2 cm mais 6 caixas de cor chapada (42 quads no total), e
+     como o `VARAL_MOLDE` nomeava só um lado de cada par, um banco do beco tinha roupa
+     de verdade e o banco espelhado tinha quad. Agora todo posto recebe o
+     `varal_roupas.glb` do acervo. Nada gerado: é o molde que já estava no disco. */
+  const VARAL_MOLDE = new Set(['-1|-18.4', '1|-18.4', '-1|-3.2', '1|-3.2', '-1|16.8', '1|16.8',
+    '-1|28.4', '1|28.4', '-1|-29', '1|-29', '-1|9.6', '1|9.6']);
   for (const lado of [-1, 1]) for (const [z, xv] of [[-18.4, 13.65], [-3.2, 13.65], [16.8, 13.65], [28.4, 13.65], [-29.0, 6.0], [9.6, 6.0]]) {
     /* Os 6 angulos saem da tabela ANTES do desvio: `angAnexo()` e cursor compartilhado com
        o camelo e o portico, que TEM colisor — consumir numero diferente divergiria o ?glb=0. */

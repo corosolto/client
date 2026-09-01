@@ -62,7 +62,12 @@ const FACHADA_MIN = 4.00;               // fachada de casa, não de guarita
 const PROF_MIN = 3.00;                  // e tem fundo: parede de 1 m é cenário, não casa
 const CORDAO_MIN = 1.85;                // olho do jogador = 1,62 m (game.js)
 const VAO_MIN = 2.00;                   // vão útil de varal
-const CASAS_MIN = 16, VARAL_MIN = 3, VARAL_MAX = 5;
+/* VARAL_MIN subiu de 3 e o teto de 5 saiu (26/08 -> 27/08). O teto de 5 nasceu de um
+   mapa em que só 5 dos 12 postos tinham molde e os outros 7 eram quad de cor chapada;
+   ele congelava justamente o defeito que o dono relatou ("prendedor de roupas low
+   poly ... devia ser realista"). Teto de régua não pode proibir o conserto. O piso
+   virou 10: menos que isso e algum posto voltou pro quad. */
+const CASAS_MIN = 16, VARAL_MIN = 10, VARAL_MAX = 24;
 
 const MUTANTES = new Set(['ana', 'molde-unico', 'laje-unica', 'varal-baixo']);
 const mutar = (process.argv.find((a) => a.startsWith('--mutar=') || a.startsWith('--mutante=')) || '').split('=')[1] || null;
