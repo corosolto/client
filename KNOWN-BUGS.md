@@ -2087,6 +2087,29 @@ dominam o quadro e os contatos mecânicos não são demonstrados com clareza. O
 `eval:pistol-pilot` existente valida contrato/estrutura do arquivo; seu PASS não equivale a
 aprovação visual no navegador.
 
+**Rodada 01/09 — regressão “dois canos de PVC” reproduzida e substituída.** Relatos literais
+do dono: *"as mãos estão gigante e a pistola não existe mais"* e *"parece [...] dois canos de
+PVC"*. A captura das 09:50 confirma arma ausente e somente mangas/braços sem leitura de pele,
+luva ou anatomia. Não era um ajuste fino: a rota customizada anterior combinava câmera e bases
+de rig incompatíveis. Em paralelo, `optimize_paid_family.mjs` recopiava as nove texturas
+compartilhadas a partir de GLBs já reduzidos a placeholders 1 × 1; cada nova otimização
+preservava o apagamento.
+
+A trilha canônica passou para a família licenciada X18/G18. A montagem preserva a skin da arma
+ao obter as bases locais, cancela a segunda conversão FBX 0,01, normaliza a fase dos clips de
+braços/arma e assa o `Mag` relativo a `hand_l` durante o trecho destacado. Antes dessa última
+régua, o pente ficava 160 px longe da mão; depois, 0 px. As texturas voltam a ser geradas dos
+PNGs-fonte, e o URL do catálogo usa `paid-aaa-3` para impedir cache do GLB rejeitado.
+
+O runtime 3:2 final carrega `pistol#pistol`, SHA-256
+`0ac4e088b0c7195e8c3412052e9710ba2a4ff47398f7d0e26a1cd6f4a13a8eb6`. O idle começa em
+`(0,5965; 0,4906)`, o tiro percorre 11,5% da diagonal da arma, o corpo percorre 22% durante a
+recarga e o pente 97%. `gauntlet-mag-grip-v1/relatorio.json` passa 1/1; `sem-arma`,
+`sem-pente`, `pente-estatico`, `sem-mao-apoio`, `draw-idle` e `tiro-estatico` ficam vermelhos.
+A prancha do jogo está em `artifacts/viewmodels/golden-pistol/runtime-final/contact-sheet.png`.
+A candidata ainda aguarda aprovação visual do dono; decisão e reversão estão em
+`docs/reports/GOLDEN-PISTOL-DECISION.md`.
+
 **Rodada 28/08 (pack pago) — régua antes do conserto, causas MEDIDAS.** A integração do
 KINEMATION (29 commits em ~90 min, sem portões) trocou 25/26 armas pela malha genérica do
 pack e quebrou o resto por quatro causas confirmadas lendo o binário dos GLBs e o código:

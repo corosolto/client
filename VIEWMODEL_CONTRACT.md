@@ -1,13 +1,15 @@
-# Contrato do viewmodel golden da AK
+# Contrato dos viewmodels golden: AK e pistola
 
-Este é o contrato normativo da primeira arma em primeira pessoa do CoroSolto. A AK é o único
-piloto aberto. Pistola, arma pesada e o restante do arsenal ficam fora do lote até esta arma
-passar no jogo real.
+Este é o contrato normativo dos viewmodels golden do CoroSolto. A AK é a referência aprovada;
+a pistola é a segunda candidata técnica e ainda depende da revisão de gameplay do dono. Arma
+pesada e o restante do arsenal ficam fora do lote atual.
 
 Os princípios gerais e o histórico do caminho reprovado ficam em
 [`docs/development/VIEWMODEL-1P-PROFISSIONAL.md`](docs/development/VIEWMODEL-1P-PROFISSIONAL.md).
 A decisão da fonte canônica está em
 [`docs/reports/GOLDEN-AK-DECISION.md`](docs/reports/GOLDEN-AK-DECISION.md).
+A decisão específica da pistola está em
+[`docs/reports/GOLDEN-PISTOL-DECISION.md`](docs/reports/GOLDEN-PISTOL-DECISION.md).
 
 ## Escala, jogador e câmeras
 
@@ -18,6 +20,7 @@ A decisão da fonte canônica está em
 | AK no mundo | A referência de comprimento da AK é 0,88 m. O viewmodel pode cortar a coronha atrás do olho, mas não reescalar peças durante uma ação. | `rg -n '^  ak:' public/js/weapons.js` |
 | Câmera do mundo | VFOV de quadril de 70°, definido pelo jogo. | `rg -n 'new THREE.PerspectiveCamera\(70' public/js/game.js` |
 | Câmera do viewmodel | `AK_Hires_FP_Camera`, VFOV 58°, exportada no GLB. O runtime usa esta lente e matriz; não existe um segundo enquadramento escrito à mão. | `node tools/eval/ak-viewmodel-contract.mjs` |
+| Câmera da pistola | Base de 60° em 16:9, normalizada pelo runtime para preservar a meia-tangente horizontal; no quadro normativo 3:2 mede 68,765°. | `node tools/eval/pistol-viewmodel-contract.mjs` |
 | Enquadramento autorado | A câmera é deslocada 0,23 m no eixo lateral local e 0,08 m no eixo vertical local durante o build; o runtime não reaplica esses offsets. | `artifacts/viewmodels/golden-ak/build-final-v2/build-report.json` |
 | Aspecto | 3:2 é o quadro normativo de aprovação. Em outros aspectos, o runtime deriva o VFOV da lente e do aspecto exportados, preservando a meia-tangente horizontal conforme o C6 vigente. | [`tools/eval/BAR-CONSISTENCIA.md`](tools/eval/BAR-CONSISTENCIA.md) C6 |
 
@@ -168,3 +171,50 @@ Evidência aprovada desta versão:
 
 A AK só fica `ready` se todos os portões estiverem verdes e as imagens não mostrarem defeito
 anatômico ou mecânico. Um portão verde contra uma reprovação visual abre defeito na régua.
+
+## Candidata técnica: pistola
+
+A pistola usa a família licenciada X18/G18, construída por
+`tools/blender/viewmodels/build_paid_family.py` e assada por
+`tools/viewmodels/assemble_paid_family.mjs`. O produto servido é privado:
+`/private-assets/viewmodels/pistol/pistol-runtime.glb`, chave `pistol#pistol`. Braços e arma
+ficam em skins separados de 67 e 8 joints. Os estados canônicos são `idle`, `shoot`,
+`reload_tactical` e `reload_empty`; `draw` é o arco procedural da família de pistola.
+
+O frame-base é `x=0,150`, `y=-0,015`, `z=-0,200`, rotação `[-9°, 12°, -2°]`, base de FOV
+60° e `drawDrop=0,34`. O idle precisa iniciar a caixa completa em
+`x/W ∈ [0,50; 0,66]` e `y/H ≥ 0,45`, sem invadir o centro. Em 1440 × 960, a base mede
+`(0,5965; 0,4906)` e deixa o centro livre.
+
+O tiro desloca o centro da arma em pelo menos 4% da própria diagonal; a base mede 11,5%. Na
+recarga, o corpo da arma pode percorrer no máximo 55%, o pente precisa percorrer ao menos 12%
+e a mão de apoio precisa chegar a no máximo 24 px dele quando destacado. A base mede,
+respectivamente, 22%, 97% e 0 px. O pente possui 1.257 vértices dominados pelo joint `Mag`;
+sua excursão local calibrada fica entre 18 e 24 unidades e o corpo da arma não acompanha a
+translação.
+
+As texturas compartilhadas sempre são regeneradas dos PNGs licenciados: base/ORM em
+1024 × 1024 e normal em 2048 × 2048. Um GLB já otimizado nunca pode ser fonte dessas imagens.
+
+Build reproduzível:
+
+```bash
+python3 tools/viewmodels/build_paid_catalog.py --family pistol
+node tools/viewmodels/optimize_paid_family.mjs
+node tools/viewmodels/validate_paid_catalog.mjs
+```
+
+Portões específicos:
+
+1. `node tools/eval/pistol-viewmodel-contract.mjs
+   --runtime-report=artifacts/viewmodels/golden-pistol/runtime-final/runtime-report.json` valida
+   arquivo, rota, câmera, clips, materiais, texturas e SHA servido.
+2. `node tools/eval/vm-gauntlet.mjs --modo=kinemation --armas=pistol --largura=1440
+   --altura=960` mede o jogo real. Os seis mutantes visuais descritos em
+   `docs/reports/GOLDEN-PISTOL-DECISION.md` precisam ficar vermelhos.
+3. `artifacts/viewmodels/golden-pistol/runtime-final/contact-sheet.png` cobre draw, idle,
+   fire, nove fases da recarga, corrida, salto, espaço estreito e parede.
+4. A AK precisa continuar verde no mesmo gauntlet antes de qualquer liberação.
+
+Somente a AK está aprovada pelo dono. A pistola pode permanecer `ready` para revisão local,
+mas não autoriza expandir o restante do arsenal até receber aprovação visual explícita.
