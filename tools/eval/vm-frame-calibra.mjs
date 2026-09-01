@@ -39,7 +39,11 @@ const H = Number(arg('altura')) || 960;
    0,50 fica vermelho de novo assim que a pose muda um pixel. */
 const ALVO_X = Number(arg('alvo-x')) || 0.56;
 const ALVO_Y = Number(arg('alvo-y')) || 0.50;
-const ITER = Number(arg('iter')) || 4;
+/* Diagonal da arma como fração da diagonal da tela. Procedência: a AK golden
+   aprovada mede 761,9 px em 1440×960 (`regressao-ak-golden-v1/relatorio.json`),
+   ou 0,440. É o tamanho de arma que o dono já aceitou. */
+const ALVO_DIAG = Number(arg('alvo-diag')) || 0.44;
+const ITER = Number(arg('iter')) || 9;
 const ARMAS = (arg('armas') ? arg('armas').split(',') : WEAPON_IDS.filter((w) => w !== 'knife'))
   .filter(Boolean);
 
@@ -90,7 +94,7 @@ const SONDA = `((ARMA) => {
     else if (/MAG/i.test(o.name)) pinta(o, 1, 1, 0);
     else pinta(o, 0, 1, 1);
   }
-  window.__coroFrameBase = { x: e.frame.x, y: e.frame.y };
+  window.__coroFrameBase = { x: e.frame.x, y: e.frame.y, z: e.frame.z };
   g.scene.visible = false;
   for (const el of document.body.children) {
     if (el.id === 'game-container' || el.tagName === 'SCRIPT' || el.tagName === 'META') continue;
@@ -110,7 +114,7 @@ async function mede(buf) {
   const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
   const w = info.width; const h = info.height; const ch = info.channels;
   let x0 = 1e9; let y0 = 1e9; let x1 = -1; let y1 = -1; let n = 0;
-  let ax0 = 1e9; let ay0 = 1e9; let ax1 = -1; let ay1 = -1; let armaN = 0;
+  let ax0 = 1e9; let ay0 = 1e9; let ax1 = -1; let ay1 = -1; let armaN = 0; let maoN = 0;
   let centro = 0;
   const cx0 = Math.floor(w * 0.42); const cx1 = Math.ceil(w * 0.58);
   const cy0 = Math.floor(h * 0.42); const cy1 = Math.ceil(h * 0.58);
@@ -121,6 +125,7 @@ async function mede(buf) {
       n += 1;
       if (x < x0) x0 = x; if (x > x1) x1 = x;
       if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (c === 1) maoN += 1;
       if (c === 2) {
         armaN += 1;
         if (x < ax0) ax0 = x; if (x > ax1) ax1 = x;
@@ -134,6 +139,7 @@ async function mede(buf) {
     vmBox: [x0, y0, x1, y1],
     vmFrac: [+(x0 / w).toFixed(4), +(y0 / h).toFixed(4)],
     centroPx: centro,
+    maoArmaRazao: armaN ? +(maoN / armaN).toFixed(2) : null,
     armaFrac: +(armaN / (w * h)).toFixed(4),
     armaBordas: armaN
       ? (ax0 <= 1 ? 1 : 0) + (ay0 <= 1 ? 1 : 0) + (ax1 >= w - 2 ? 1 : 0) + (ay1 >= h - 2 ? 1 : 0)
@@ -160,29 +166,44 @@ for (const arma of ARMAS) {
     if (sonda !== 'ok') throw new Error(`sonda: ${sonda}`);
     registro.base = await page.evaluate(() => window.__coroFrameBase);
 
-    const aplica = async (x, y) => {
-      await page.evaluate(({ w, x: fx, y: fy }) => {
+    const aplica = async (x, y, z) => {
+      await page.evaluate(({ w, x: fx, y: fy, z: fz }) => {
         const g = window.__game; const vm = window.__authoredVm;
         const e = vm.entry(w);
-        e.frame = { ...e.frame, x: fx, y: fy };
+        e.frame = { ...e.frame, x: fx, y: fy, z: fz };
         if (!g.__calibraVmUpdate) g.__calibraVmUpdate = vm.update.bind(vm);
         g.__calibraVmUpdate(0);
         vm.update = () => {};
-      }, { w: arma, x, y });
+      }, { w: arma, x, y, z });
       await new Promise((r) => setTimeout(r, 120));
       return mede(await page.screenshot({ type: 'png' }));
     };
 
-    let x = registro.base.x; let y = registro.base.y;
-    let m = await aplica(x, y);
+    let x = registro.base.x; let y = registro.base.y; let z = registro.base.z;
+    /* PRIMEIRO o afastamento. A manga do pack nasce colada na lente e come o
+       quadro; afastar o pacote é perspectiva, não escala, e derruba a massa de
+       braço sem encolher a arma na mesma proporção (m4: razão mão/arma 3,19 →
+       1,16 com 20 cm). Enquadrar antes disso calibra o pacote errado. */
+    const varredura = [];
+    for (const dz of [0, -0.08, -0.16, -0.24, -0.32, -0.44, -0.6]) {
+      const q = await aplica(x, y, registro.base.z + dz);
+      if (q) varredura.push({ dz, diag: q.armaDiagFrac, razao: q.maoArmaRazao, armaFrac: q.armaFrac });
+    }
+    if (!varredura.length) throw new Error('sem silhueta em nenhuma distância');
+    const melhorZ = varredura.reduce((a, b) =>
+      (Math.abs(b.diag - ALVO_DIAG) < Math.abs(a.diag - ALVO_DIAG) ? b : a));
+    z = registro.base.z + melhorZ.dz;
+    registro.distancia = { varredura, escolhido: melhorZ };
+
+    let m = await aplica(x, y, z);
     if (!m) throw new Error('sem silhueta no frame base');
-    registro.passos.push({ x: +x.toFixed(4), y: +y.toFixed(4), ...m });
+    registro.passos.push({ x: +x.toFixed(4), y: +y.toFixed(4), z: +z.toFixed(4), ...m });
 
     /* Derivada MEDIDA, não assumida: um passo de 6 cm em cada eixo diz quanto
        a caixa anda por metro. Sem isso o ajuste vira varredura. */
     const D = 0.06;
-    const mx = await aplica(x + D, y);
-    const my = await aplica(x, y + D);
+    const mx = await aplica(x + D, y, z);
+    const my = await aplica(x, y + D, z);
     const dxdX = mx && m ? (mx.vmFrac[0] - m.vmFrac[0]) / D : 0;
     const dydY = my && m ? (my.vmFrac[1] - m.vmFrac[1]) / D : 0;
     registro.derivada = { dxdX: +dxdX.toFixed(4), dydY: +dydY.toFixed(4) };
@@ -190,20 +211,27 @@ for (const arma of ARMAS) {
       throw new Error(`derivada degenerada (dx/dX=${dxdX.toFixed(3)} dy/dY=${dydY.toFixed(3)})`);
     }
 
+    /* A caixa no alvo NÃO garante centro livre: o que conta é o pixel pintado, e
+       a AK aprovada fica em (0,53; 0,51) com zero no centro. Quando sobra pixel
+       no quadrado, o alvo anda para a direita e para baixo até limpar. */
+    let alvoX = ALVO_X; let alvoY = ALVO_Y;
+    const dentroDe = (q) => q.vmFrac[0] >= 0.50 && q.vmFrac[0] <= 0.66 && q.vmFrac[1] >= 0.45
+      && q.centroPx === 0 && q.armaFrac <= 0.28 && q.armaBordas < 3
+      && !(q.armaFrac < 0.02 && q.armaDiagFrac < 0.12);
     for (let i = 0; i < ITER; i += 1) {
-      const alvoX = x + (ALVO_X - m.vmFrac[0]) / dxdX;
-      const alvoY = y + (ALVO_Y - m.vmFrac[1]) / dydY;
-      x = alvoX; y = alvoY;
-      m = await aplica(x, y);
+      x += (alvoX - m.vmFrac[0]) / dxdX;
+      y += (alvoY - m.vmFrac[1]) / dydY;
+      m = await aplica(x, y, z);
       if (!m) throw new Error('viewmodel saiu do quadro durante a calibração');
-      registro.passos.push({ x: +x.toFixed(4), y: +y.toFixed(4), ...m });
-      const dentro = m.vmFrac[0] >= 0.50 && m.vmFrac[0] <= 0.66 && m.vmFrac[1] >= 0.45
-        && m.centroPx === 0 && m.armaFrac <= 0.28 && m.armaBordas < 3
-        && !(m.armaFrac < 0.02 && m.armaDiagFrac < 0.12);
-      if (dentro) break;
+      registro.passos.push({ x: +x.toFixed(4), y: +y.toFixed(4), z: +z.toFixed(4), alvo: [alvoX, alvoY], ...m });
+      if (dentroDe(m)) break;
+      if (m.centroPx > 0) {
+        alvoX = Math.min(0.64, alvoX + 0.025);
+        alvoY = Math.min(0.68, alvoY + 0.025);
+      }
     }
     const fim = registro.passos.at(-1);
-    registro.proposta = { x: +fim.x.toFixed(3), y: +fim.y.toFixed(3) };
+    registro.proposta = { x: +fim.x.toFixed(3), y: +fim.y.toFixed(3), z: +z.toFixed(3) };
 
     /* Famílias de pistola sacam pelo arco procedural, e o `P6` cobra que o
        primeiro quadro NÃO mostre a pose pronta: a caixa tem que nascer abaixo
@@ -236,9 +264,7 @@ for (const arma of ARMAS) {
       registro.saque = melhor;
       registro.proposta.drawDrop = melhor?.drop;
     }
-    registro.aprovado = fim.vmFrac[0] >= 0.50 && fim.vmFrac[0] <= 0.66 && fim.vmFrac[1] >= 0.45
-      && fim.centroPx === 0 && fim.armaFrac <= 0.28 && fim.armaBordas < 3
-      && !(fim.armaFrac < 0.02 && fim.armaDiagFrac < 0.12);
+    registro.aprovado = dentroDe(fim);
     await fs.writeFile(path.join(OUT, `${arma}-idle.png`), await page.screenshot({ type: 'png' }));
   } catch (e) {
     registro.erro = String(e.message || e).slice(0, 200);
@@ -248,8 +274,9 @@ for (const arma of ARMAS) {
   const fim = registro.passos.at(-1);
   console.log(`${arma}: ${registro.erro ? `ERRO ${registro.erro}`
     : `${registro.aprovado ? 'ok ' : 'RUIM'} x=${registro.proposta.x} y=${registro.proposta.y}`
-      + `${registro.proposta.drawDrop ? ` drawDrop=${registro.proposta.drawDrop}` : ''} `
-      + `caixa=${fim.vmFrac[0]},${fim.vmFrac[1]} centro=${fim.centroPx}px armaFrac=${fim.armaFrac}`}`);
+      + ` z=${registro.proposta.z}${registro.proposta.drawDrop ? ` drawDrop=${registro.proposta.drawDrop}` : ''} `
+      + `caixa=${fim.vmFrac[0]},${fim.vmFrac[1]} centro=${fim.centroPx}px armaFrac=${fim.armaFrac} `
+      + `diag=${fim.armaDiagFrac} mao/arma=${fim.maoArmaRazao}`}`);
 }
 await browser.close();
 srv.kill();
