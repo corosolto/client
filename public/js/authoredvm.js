@@ -280,6 +280,14 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
   scene.applyMatrix4(cameraInverse);
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
+  // O molde CS 1.6 chega a ~23 unidades por metro; escalar em torno da câmera
+  // (já na origem) devolve o metro sem mexer um pixel da projeção.
+  if (molde) {
+    const k = Math.abs(scene.scale.x) || 1;
+    scene.scale.multiplyScalar(1 / k);
+    scene.position.multiplyScalar(1 / k);
+    scene.updateMatrixWorld(true);
+  }
   const golden = sourceKey.startsWith('gold#');
   const frame = golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
