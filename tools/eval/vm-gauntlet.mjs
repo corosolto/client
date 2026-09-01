@@ -549,7 +549,11 @@ for (const arma of ARMAS) {
       await espera(120);
     }
     r.tiros = [];
-    const fireFractions = [0, 0.25, 0.5, 0.75, 0.999];
+    /* O coice mora nos primeiros 100 ms: as sequências do CS 1.6 saem do build
+       com a MESMA duração dentro de um GLB (m4: 2,4 s em equip, idle, reload e
+       shoot), então cinco frações iguais caíam todas depois do coice e a régua
+       media repouso. `vm-kick-perfil.mjs` mostra o pico em f≈0,04. Teto igual. */
+    const fireFractions = [0, 0.02, 0.04, 0.06, 0.09, 0.14, 0.25, 0.5, 0.999];
     for (let i = 0; i < fireFractions.length; i++) {
       const fraction = fireFractions[i];
       const animation = await page.evaluate(({ w, fraction, staticShot }) => {
@@ -588,7 +592,7 @@ for (const arma of ARMAS) {
       r.tiros.push(m);
       if (SALVA_FRAMES) await fs.writeFile(path.join(dir, `tiro-${i}.png`), b);
     }
-    r.tiro = r.tiros[2];
+    r.tiro = r.tiros[Math.min(2, r.tiros.length - 1)];
     await page.evaluate(() => {
       const game = window.__game;
       if (game.__gauntletVmUpdate) window.__authoredVm.update = game.__gauntletVmUpdate;
@@ -610,8 +614,12 @@ for (const arma of ARMAS) {
         clipDuration: entry?.action?.getClip?.().duration || null,
         actionTime: entry?.action?.time || 0,
         timeScale: entry?.action?.timeScale || 0,
+        /* Recarga em laço é FILA: medir só o primeiro clipe contava um terço do
+           tempo e acusava divergência de cadência numa arma sincronizada. */
         effectiveDuration: entry?.action?.timeScale
-          ? entry.action.getClip().duration / Math.abs(entry.action.timeScale) : null,
+          ? ([entry.action.getClip().duration,
+            ...(entry.queue || []).map((q) => entry.clips.get(q.name)?.duration || 0)]
+            .reduce((a, b) => a + b, 0)) / Math.abs(entry.action.timeScale) : null,
         gameplayRemaining: Math.max(0, g.player.reloadUntil - g.time),
       };
     }, arma);

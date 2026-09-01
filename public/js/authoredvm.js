@@ -178,7 +178,7 @@ const MOLDE_FRAME = Object.freeze({
   ak:         { x: 0.092, y: 0.064, z: 0 },
   m4:         { x: 0.092, y: 0.009, z: 0 },
   mp5:        { x: 0.133, y: 0.068, z: 0 },
-  shotgun:    { x: 0.549, y: 0.04, z: -0.24 },
+  shotgun:    { x: 0.355, y: 0.04, z: -0.24 },
   deagle:     { x: 0.012, y: 0.084, z: 0, drawDrop: 0.513 },
   pistol:     { x: 0.061, y: -0.043, z: 0, drawDrop: 0.367 },
   m92:        { x: 0.086, y: 0.012, z: 0 },
