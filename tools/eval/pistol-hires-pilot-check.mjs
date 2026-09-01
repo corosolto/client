@@ -38,23 +38,30 @@ if (supportRotation.length) {
 }
 
 const camera = tuple(
-  /camera\.location\s*=\s*\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)/,
+  /CAMERA_LOCATION\s*=\s*Vector\(\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)\)/,
   'câmera da pistola',
 );
 if (camera.length) {
   expect(camera[0] >= 18 && camera[0] <= 22,
-    `ângulo da pistola saiu do registro frontal atual (camera.x=${camera[0]}; faixa 18..22)`);
+    `ângulo da pistola saiu do registro seguro (camera.x=${camera[0]}; faixa 18..22)`);
+  expect(camera[1] >= 34 && camera[1] <= 38,
+    `distância lateral da câmera saiu do registro seguro (camera.y=${camera[1]}; faixa 34..38)`);
 }
 
 const target = tuple(
-  /target\s*=\s*Vector\(\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)\)/,
+  /CAMERA_TARGET\s*=\s*Vector\(\(\s*([-\d.]+)\s*,\s*([-\d.]+)\s*,\s*([-\d.]+)\s*\)\)/,
   'alvo óptico da pistola',
 );
 if (target.length) {
   expect(target[0] >= 10 && target[0] <= 14,
-    `alvo óptico saiu do registro frontal atual (target.x=${target[0]}; faixa 10..14)`);
+    `alvo óptico saiu do registro seguro (target.x=${target[0]}; faixa 10..14)`);
+  expect(target[2] >= 12 && target[2] <= 16,
+    `alvo óptico saiu do registro seguro (target.z=${target[2]}; faixa 12..16)`);
 }
 
+const vfov = Number(source.match(/CAMERA_VFOV_DEG\s*=\s*([-\d.]+)/)?.[1]);
+expect(Math.abs(vfov - 34) < 0.05,
+  `VFOV da pistola precisa preservar a leitura medida no runtime (recebido ${vfov})`);
 expect(/camera_data\.shift_x\s*=/.test(source), 'falta shift_x: o enquadramento frontal corta/desloca a pistola');
 expect(/camera_data\.shift_y\s*=/.test(source), 'falta shift_y: o enquadramento não possui correção óptica vertical');
 
@@ -66,7 +73,8 @@ expect(source.includes('trigger_fingers = {"R_point1_031", "R_point2_032", "R_po
   'Shoot precisa animar a cadeia real do indicador dominante');
 expect(source.includes('(0, False), (1, True), (3, True), (5, False), (8, False)'),
   'pressão do gatilho precisa acontecer imediatamente no disparo e retornar à pegada');
-expect(source.includes('recoil = Vector((0.30, 2.05, 1.65)) * recoil_factors[target_frame]'),
+expect(source.includes('recoil_direction = screen_up * 1.1 + screen_depth * 2.45')
+  && source.includes('recoil = recoil_direction * recoil_factors[target_frame]'),
   'Shoot precisa ter recuo visual curto sem soltar as mãos da arma');
 expect(source.includes('for root_name in ("_rootJoint", "CoroWeapon", "CoroMagazine")'),
   'Shoot precisa mover mãos, arma e carregador acoplado como uma única montagem');
@@ -76,6 +84,8 @@ expect(source.includes('spent-mag removal plus hand-led fresh-mag insertion'),
   'recarga precisa remover o usado e levar o novo com a mão até a arma');
 expect(source.includes('fresh_position - seated, fresh_visible'),
   'carregador novo precisa percorrer uma trajetória própria até o encaixe');
+expect(source.includes('magazine_contact_offset = Vector((-5.0, -2.5, 6.25))'),
+  'carregador precisa atravessar o plano da palma, não flutuar ao lado dos dedos');
 expect(source.includes('action.use_fake_user = True'),
   'todas as ações precisam ser preservadas no .blend e no GLB');
 expect(source.includes('idle.use_fake_user = True'),

@@ -23,7 +23,7 @@
 
    Uso: node tools/eval/vm-gauntlet.mjs [--armas=ak,m4] [--porta=8311]
         [--out=tools/eval/out/vm-gauntlet] [--frames] [--largura=1440]
-        [--altura=960] [--mutante=sem-arma|sem-pente|pente-estatico|sem-mao-apoio|centro|topo|draw-idle|tiro-estatico]
+        [--altura=960] [--mutante=sem-arma|sem-pente|pente-estatico|sem-mao-apoio|perfil-estreito|centro|topo|draw-idle|tiro-estatico]
    Ferramenta LOCAL: precisa dos private-assets, Playwright global e sharp.
    ============================================================================ */
 import fs from 'node:fs/promises';
@@ -43,6 +43,12 @@ const OUT = arg('out') || arg('saida') || path.join(ROOT, 'tools/eval/out/vm-gau
 const SALVA_FRAMES = process.argv.includes('--frames');
 const MUTANTE = arg('mutante');
 const AJUSTE_X = Number(arg('ajuste-x')) || 0;
+const quadroNumero = (name) => (arg(name) === '' ? null : Number(arg(name)));
+const QUADRO = {
+  x: quadroNumero('quadro-x'), y: quadroNumero('quadro-y'), z: quadroNumero('quadro-z'),
+  fov: quadroNumero('quadro-fov'), pitch: quadroNumero('quadro-pitch'),
+  yaw: quadroNumero('quadro-yaw'), roll: quadroNumero('quadro-roll'),
+};
 /* A faca não passa pelo caminho autorado (tem controlador melee próprio) e a
    espera pela entry estourava 120s por arma. Fica de fora por contrato. */
 const ARMAS = (arg('armas') ? arg('armas').split(',')
@@ -71,7 +77,7 @@ for (let i = 0; i < 60; i++) {
 await fs.mkdir(OUT, { recursive: true });
 
 // --- SONDA: pinta o pacote e apaga o resto, para o pixel virar medida --------
-const SONDA = `((ARMA, MUTANTE, AJUSTE_X) => {
+const SONDA = `((ARMA, MUTANTE, AJUSTE_X, QUADRO) => {
   const g = window.__game; const vm = window.__authoredVm;
   /* A sonda pegava a entry de \`g.player.weapon\` — que NEM SEMPRE é a arma
      pedida na URL (o loadout do spawn manda). Nessas armas a pintura não
@@ -174,6 +180,23 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X) => {
     }
   }
   e.frame.x += AJUSTE_X;
+  if (Object.values(QUADRO).some((value) => value !== null)) {
+    e.frame = {
+      ...e.frame,
+      x: QUADRO.x ?? e.frame.x, y: QUADRO.y ?? e.frame.y, z: QUADRO.z ?? e.frame.z,
+      rotDeg: [
+        QUADRO.pitch ?? e.frame.rotDeg[0],
+        QUADRO.yaw ?? e.frame.rotDeg[1],
+        QUADRO.roll ?? e.frame.rotDeg[2],
+      ],
+    };
+    if (QUADRO.fov !== null) e.cameraFov = QUADRO.fov;
+    g.vmCamera.fov = vm.fov(ARMA, g.vmCamera.aspect); g.vmCamera.updateProjectionMatrix();
+  }
+  if (MUTANTE === 'perfil-estreito') {
+    e.frame.z = -0.20; e.frame.rotDeg[0] = -9; e.frame.rotDeg[1] = 12; e.frame.rotDeg[2] = -2;
+    e.cameraFov = 60; g.vmCamera.fov = vm.fov(ARMA, g.vmCamera.aspect); g.vmCamera.updateProjectionMatrix();
+  }
   if (MUTANTE === 'centro') e.frame.x -= 0.42;
   if (MUTANTE === 'topo') e.frame.y += 0.5;
   g.scene.visible = false;                                 // mundo apagado
@@ -311,6 +334,8 @@ async function medeFrame(buf) {
     ? (arma.x0 <= 1 ? 1 : 0) + (arma.y0 <= 1 ? 1 : 0) + (arma.x1 >= w - 2 ? 1 : 0) + (arma.y1 >= h - 2 ? 1 : 0)
     : 0;
   const diag = arma.n ? Math.hypot(arma.x1 - arma.x0, arma.y1 - arma.y0) : 0;
+  const armaW = arma.n ? arma.x1 - arma.x0 + 1 : 0;
+  const armaH = arma.n ? arma.y1 - arma.y0 + 1 : 0;
   const presentes = [arma, mao, pente].filter((a) => a.n);
   const vmBox = presentes.length ? [
     Math.min(...presentes.map((a) => a.x0)), Math.min(...presentes.map((a) => a.y0)),
@@ -326,6 +351,9 @@ async function medeFrame(buf) {
     maoFrac: +(mao.n / areaTot).toFixed(4),
     armaBordas: bordas,
     armaDiag: +diag.toFixed(1),
+    armaBox: arma.n ? [arma.x0, arma.y0, arma.x1, arma.y1] : null,
+    armaAspecto: armaH ? +(armaW / armaH).toFixed(3) : 0,
+    maoArmaRazao: arma.n ? +(mao.n / arma.n).toFixed(3) : null,
     armaC: arma.n ? [+cx(arma).toFixed(1), +cy(arma).toFixed(1)] : null,
     maoC: mao.n ? [+cx(mao).toFixed(1), +cy(mao).toFixed(1)] : null,
     penteC: pente.n ? [+cx(pente).toFixed(1), +cy(pente).toFixed(1)] : null,
@@ -391,7 +419,7 @@ for (const arma of ARMAS) {
     }
 
     const sonda = await page.evaluate(
-      `(${SONDA})(${JSON.stringify(arma)}, ${JSON.stringify(MUTANTE)}, ${JSON.stringify(AJUSTE_X)})`,
+      `(${SONDA})(${JSON.stringify(arma)}, ${JSON.stringify(MUTANTE)}, ${JSON.stringify(AJUSTE_X)}, ${JSON.stringify(QUADRO)})`,
     );
     r.sonda = sonda;
     if (sonda !== 'ok') r.erros.push(`sonda: ${sonda}`);
@@ -436,6 +464,20 @@ for (const arma of ARMAS) {
       r.idle = await medeFrame(bIdle);
     }
     if (SALVA_FRAMES) await fs.writeFile(path.join(dir, 'idle.png'), bIdle);
+
+    await page.evaluate(() => {
+      const game = window.__game;
+      game.player.pitch = 1.05;
+      game.update(0, true);
+    });
+    const bLookUp = await shot();
+    r.olharCima = await medeFrame(bLookUp);
+    if (SALVA_FRAMES) await fs.writeFile(path.join(dir, 'olhar-cima.png'), bLookUp);
+    await page.evaluate(() => {
+      const game = window.__game;
+      game.player.pitch = 0;
+      game.update(0, true);
+    });
 
     // --- SAQUE (início, intermediários e fechamento) -----------------------
     r.draw = [];
@@ -699,6 +741,12 @@ for (const r of relatorio) {
       f.push(`P2 escala: arma some (${(i.armaFrac * 100).toFixed(1)}% do quadro; diagonal ${(weaponDiagFraction * 100).toFixed(1)}%)`);
     }
     if (i.armaBordas >= 3) f.push(`P2 quadro: arma estoura ${i.armaBordas} bordas`);
+    if (r.arma === 'pistol' && i.armaAspecto < 0.65) {
+      f.push(`P2 silhueta: pistola vira lâmina vertical (largura/altura ${i.armaAspecto.toFixed(2)}; mínimo 0,65)`);
+    }
+    if (r.arma === 'pistol' && i.maoArmaRazao > 4.0) {
+      f.push(`P2 proporção: mãos ocupam ${i.maoArmaRazao.toFixed(1)}× os pixels da arma; máximo 4,0×`);
+    }
     if (i.vmFrac && (i.vmFrac[0] < 0.50 || i.vmFrac[0] > 0.66 || i.vmFrac[1] < 0.45)) {
       f.push(`P2 enquadramento: VM começa em ${i.vmFrac[0].toFixed(2)},${i.vmFrac[1].toFixed(2)}; contrato C5 = x 0,50–0,66 e y ≥0,45`);
     }

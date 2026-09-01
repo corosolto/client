@@ -219,6 +219,17 @@ try {
   await snapshot(open, 'idle-inicio', { state: 'idle' });
   await open.waitForTimeout(3400);
   await snapshot(open, 'idle-prolongado', { state: 'idle', elapsed: 3.4 });
+  await open.evaluate(() => {
+    const game = window.__game;
+    game.player.pitch = 1.05;
+    game.update(0, true);
+  });
+  await snapshot(open, 'olhar-cima', { state: 'idle', pitch: 1.05 });
+  await open.evaluate(() => {
+    const game = window.__game;
+    game.player.pitch = 0;
+    game.update(0, true);
+  });
 
   const walkAttempts = [];
   for (const code of ['KeyW', 'KeyS', 'KeyA', 'KeyD']) {

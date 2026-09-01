@@ -46,6 +46,9 @@ SUPPORT_WRIST_OFFSET = Vector((6.0, -1.0, -0.35))
 # A measured local Z correction converts it into a compact two-hand firing
 # grip while preserving the donor's finger curl and high-resolution anatomy.
 SUPPORT_WRIST_ROTATION_DEG = (0.0, 0.0, 30.0)
+CAMERA_LOCATION = Vector((20.0, 36.0, 24.0))
+CAMERA_TARGET = Vector((12.0, -19.0, 14.0))
+CAMERA_VFOV_DEG = 34.0
 CLIPS = {
     # Frame 48 is the settled loaded pose.  Starting at 56 skipped the actual
     # hand-off and made the magazine appear already detached.
@@ -433,9 +436,7 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
         action.use_fake_user = True
         rig.animation_data.action = action
         if action_name == "Equip":
-            camera_location = Vector((20.0, 36.0, 24.0))
-            camera_target = Vector((12.0, -19.0, 14.0))
-            camera_rotation = (camera_target - camera_location).to_track_quat("-Z", "Y")
+            camera_rotation = (CAMERA_TARGET - CAMERA_LOCATION).to_track_quat("-Z", "Y")
             screen_down_world = camera_rotation @ Vector((0.0, -1.0, 0.0))
             screen_down_armature = (
                 rig.matrix_world.to_3x3().inverted() @ screen_down_world
@@ -488,37 +489,9 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
             # along the exact reverse path.  These are first-person framing
             # translations, not end-effector stretching.
             neutral_joint = (0.0, 0.0, 0.0)
-            # The magazine is held by its lower half, not by its centre.  The
-            # previous trajectory preserved the seated-magazine-to-idle-wrist
-            # separation, leaving the prop about 7.5 units behind the moving
-            # hand.  Author the contact from the evaluated wrist itself so the
-            # hand, rather than the pistol or an invisible world point, owns
-            # the prop throughout removal and insertion.
-            # In the production camera +X travels left and -Z travels down.
-            # Put the magazine beside/below the palm so its body remains
-            # visible instead of being completely swallowed by the glove.
-            # Measured on the final deformed support-hand mesh.  The palm
-            # surface sits about (-1, -5.5, +1) from L_wrist_02.  Put the
-            # magazine's upper third in that surface and leave its body below
-            # the fingers.  The former +8 Y offset was on the opposite side of
-            # the hand and is why the prop looked like a blue block in mid-air.
-            # Camera-space calibration on the evaluated production mesh:
-            # this offset leaves the upper magazine inside the closed palm
-            # while keeping the long body visible below it.  The old offset
-            # clipped most of the prop below the viewport.
-            # +Y is toward the production camera.  Keep the upper magazine in
-            # front of the closed fingers, while lowering its centre so the
-            # magazine body remains visible below the fist throughout travel.
-            # Projection QA showed the former contact box at screen Y
-            # -0.15..0.18: most of the magazine was literally below frame.
-            # Raise it into the palm and bring it slightly toward the camera so
-            # the fingers overlap the upper third while the body stays legible.
-            # Frame-14 frozen-pose calibration must move the visible spent
-            # magazine (CoroMagazine), not the hidden fresh prop.  With that
-            # corrected, -5 X seats the upper third between the opposed thumb
-            # and curled fingers; -2 X was visibly parked beside the palm.
-            # Reuse the same measured contact for the replacement magazine.
-            magazine_contact_offset = Vector((-5.0, 1.5, 6.25))
+            # The upper third must overlap the evaluated palm; the exported
+            # frame-16 contact is guarded by pistol-viewmodel-contract.mjs.
+            magazine_contact_offset = Vector((-5.0, -2.5, 6.25))
             reload_keys = (
                 # frame, hand shape, shoulder rotation, elbow rotation,
                 # rigid support-chain translation,
@@ -616,6 +589,11 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
                     @ Matrix.Rotation(math.radians(degrees), 4, "Y")
                 )
             recoil_factors = {0: 0.0, 1: 1.0, 3: 0.82, 5: 0.22, 8: 0.0}
+            camera_rotation = (CAMERA_TARGET - CAMERA_LOCATION).to_track_quat("-Z", "Y")
+            world_to_armature = rig.matrix_world.to_3x3().inverted()
+            screen_up = (world_to_armature @ (camera_rotation @ Vector((0.0, 1.0, 0.0)))).normalized()
+            screen_depth = (world_to_armature @ (camera_rotation @ Vector((0.0, 0.0, -1.0)))).normalized()
+            recoil_direction = screen_up * 1.1 + screen_depth * 2.45
             for target_frame, pressed in (
                 (0, False), (1, True), (3, True), (5, False), (8, False)
             ):
@@ -633,7 +611,7 @@ def bake_actions(rig: bpy.types.Object, source: bpy.types.Action,
                 # during the shot.  This makes the authored clip unmistakable
                 # in the browser without breaking either hand contact or making
                 # the support hand look like it is holding a loose magazine.
-                recoil = Vector((0.30, 2.05, 1.65)) * recoil_factors[target_frame]
+                recoil = recoil_direction * recoil_factors[target_frame]
                 assembly = Matrix.Translation(recoil)
                 for root_name in ("_rootJoint", "CoroWeapon", "CoroMagazine"):
                     root = rig.pose.bones[root_name]
@@ -742,33 +720,18 @@ def setup_camera_and_lights() -> None:
     camera_data = bpy.data.cameras.new("Pistol_Hires_FP_Camera")
     camera = bpy.data.objects.new("Pistol_Hires_FP_Camera", camera_data)
     bpy.context.collection.objects.link(camera)
-    # The donor preview camera sat inside the hands.  The production camera is
-    # deliberately farther back and slightly right, matching the readable
-    # CS-style screen occupancy established by the approved AK mold.
-    # Move closer to the pistol's longitudinal axis.  This replaces the flat
-    # side-profile silhouette with visible slide/top depth while preserving the
-    # complete hand/weapon registration authored in the rig.
-    # Keep the pistol on the classic lower-right FPS side, but view it much
-    # closer to its optical axis.  The previous 41-degree yaw exposed too much
-    # of the slide's side and made the two-hand grip read like a loose,
-    # one-handed pose in game.  This 28-degree yaw preserves the silhouette
-    # while letting the muzzle/front sight lead toward the crosshair.
-    # Physical, zero-shift composition selected from the render grid.  glTF
-    # does not serialize Blender's optical shift, so screen placement must be
-    # encoded entirely by the camera transform.  This angle keeps the slide
-    # readable from the front, preserves both hands, and occupies the classic
-    # lower-right FPS quadrant after the exported camera inverse is applied.
-    camera.location = (20.0, 36.0, 24.0)
-    target = Vector((12.0, -19.0, 14.0))
-    camera.rotation_euler = (target - camera.location).to_track_quat("-Z", "Y").to_euler()
+    # glTF não serializa optical shift: a composição aprovada mora só neste
+    # transform físico. Evidência: docs/reports/GOLDEN-PISTOL-DECISION.md.
+    camera.location = CAMERA_LOCATION
+    camera.rotation_euler = (CAMERA_TARGET - camera.location).to_track_quat("-Z", "Y").to_euler()
     camera_data.sensor_fit = "VERTICAL"
-    camera_data.angle_y = math.radians(58.0)
+    camera_data.angle_y = math.radians(CAMERA_VFOV_DEG)
     camera_data.shift_x = 0.0
     camera_data.shift_y = 0.0
     camera_data.clip_start = 0.03
     camera_data.clip_end = 1000.0
     camera["coro_viewmodel_camera"] = True
-    camera["vertical_fov_deg"] = 58.0
+    camera["vertical_fov_deg"] = CAMERA_VFOV_DEG
     camera["reference_aspect"] = "3:2"
     scene.camera = camera
 

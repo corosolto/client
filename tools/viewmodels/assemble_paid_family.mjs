@@ -244,6 +244,79 @@ function sampleTrackMatrix(track, fraction) {
   return new Matrix4().compose(position, rotation, scale);
 }
 
+const leftArmTrack = (name) => /_l$/i.test(name);
+
+function supportPoseAt(sample, fraction) {
+  const pose = new Map();
+  for (const [name, track] of sample.tracks) {
+    if (leftArmTrack(name)) pose.set(name, sampleTrackMatrix(track, fraction));
+  }
+  return pose;
+}
+
+function applySupportPose(sample, pose, blend = null) {
+  const smoothstep = (start, end, value) => {
+    const t = Math.max(0, Math.min(1, (value - start) / (end - start)));
+    return t * t * (3 - 2 * t);
+  };
+  for (const [name, targetMatrix] of pose) {
+    const track = sample.tracks.get(name);
+    if (!track) continue;
+    const targetPosition = new Vector3();
+    const targetRotation = new Quaternion();
+    const targetScale = new Vector3();
+    targetMatrix.decompose(targetPosition, targetRotation, targetScale);
+    const translations = [];
+    const rotations = [];
+    const scales = [];
+    let previous = null;
+    const count = track.translation.length / 3;
+    for (let index = 0; index < count; index += 1) {
+      const fraction = count > 1 ? index / (count - 1) : 0;
+      const weight = blend
+        ? Math.max(
+          1 - smoothstep(blend.release[0], blend.release[1], fraction),
+          smoothstep(blend.return[0], blend.return[1], fraction),
+        )
+        : 1;
+      const current = sampleTrackMatrix(track, fraction);
+      const position = new Vector3();
+      const rotation = new Quaternion();
+      const scale = new Vector3();
+      current.decompose(position, rotation, scale);
+      position.lerp(targetPosition, weight);
+      rotation.slerp(targetRotation, weight);
+      scale.lerp(targetScale, weight);
+      translations.push(position.x, position.y, position.z);
+      previous = pushQuaternion(rotations, rotation, previous);
+      scales.push(scale.x, scale.y, scale.z);
+    }
+    track.translation = translations;
+    track.rotation = rotations;
+    track.scale = scales;
+  }
+}
+
+function replaceAnimationSupportPose(document, clipName, pose) {
+  const animation = document.getRoot().listAnimations().find((candidate) => candidate.getName() === clipName);
+  if (!animation) throw new Error(`${clipName} animation is missing`);
+  for (const channel of animation.listChannels()) {
+    const target = channel.getTargetNode();
+    const matrix = target && pose.get(target.getName());
+    if (!matrix) continue;
+    const position = new Vector3();
+    const rotation = new Quaternion();
+    const scale = new Vector3();
+    matrix.decompose(position, rotation, scale);
+    const value = channel.getTargetPath() === 'translation' ? position.toArray()
+      : channel.getTargetPath() === 'rotation' ? rotation.toArray()
+      : scale.toArray();
+    const sampler = channel.getSampler();
+    const count = sampler.getInput().getCount();
+    sampler.getOutput().setArray(new Float32Array(Array.from({ length: count }, () => value).flat()));
+  }
+}
+
 function sampledWorldMatrix(node, fraction, samples, cache) {
   if (cache.has(node)) return cache.get(node);
   const track = samples.map((sample) => sample?.tracks.get(node.getName())).find(Boolean);
@@ -367,7 +440,9 @@ async function main() {
     handGun.addChild(socket);
     // O rig da arma traz a conversão FBX 0.01 e agora herda a mesma conversão
     // dos braços; o socket cancela apenas essa segunda escala.
-    socket.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1]).setScale([100, 100, 100]);
+    const weaponScale = family.weaponScale ?? 1;
+    socket.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1])
+      .setScale([100 * weaponScale, 100 * weaponScale, 100 * weaponScale]);
   }
   const armsSkin = root.listSkins().find((skin) => skin.getName() === 'RIG_FP_ARMS');
   const weaponSkin = root.listSkins().find((skin) => skin.getName() === `RIG_WEAPON_${args.family.toUpperCase()}`);
@@ -375,6 +450,7 @@ async function main() {
   const armsTargets = armsSkin.listJoints().map((node) => node.getName());
   const weaponTargets = weaponSkin.listJoints().map((node) => node.getName());
   const report = { schemaVersion: 1, family: args.family, input: basePath, output: outputPath, fps: FPS, clips: [] };
+  let supportPose = null;
 
   for (const [clipName, tests] of CLIP_PATTERNS) {
     const characterFbx = await findClip(path.join(familyRoot, 'Character'), tests);
@@ -387,6 +463,11 @@ async function main() {
     await stripRenderables(characterGlb);
     const character = await loadAnimation(characterGlb);
     const armsSample = sampleTargets(character, armsTargets, { foldRoot: true, targetNodes: targetsByName });
+    if (family.supportGrip && clipName === family.supportGrip.sourceClip) {
+      supportPose = supportPoseAt(armsSample, family.supportGrip.reference);
+    }
+    if (supportPose && clipName.startsWith('reload')) applySupportPose(armsSample, supportPose, family.supportGrip);
+    if (supportPose && clipName === 'shoot') applySupportPose(armsSample, supportPose);
     const samples = [armsSample];
     let weaponSample = null;
     if (weaponFbx) {
@@ -425,6 +506,11 @@ async function main() {
     });
   }
   if (report.clips.length === 0) throw new Error(`no paired character/weapon clips found for ${args.family}`);
+  if (family.supportGrip) {
+    if (!supportPose?.size) throw new Error(`${args.family} support grip source clip was not assembled`);
+    replaceAnimationSupportPose(document, 'idle', supportPose);
+    report.supportGrip = { ...family.supportGrip, tracks: supportPose.size };
+  }
 
   await io.write(outputPath, document);
   report.bytes = (await fs.stat(outputPath)).size;
