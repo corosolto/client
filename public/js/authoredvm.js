@@ -171,6 +171,31 @@ const CLIP_ALIASES = Object.freeze({
   pumpempty: 'pump_empty',
 });
 
+// Enquadramento por ARMA da trilha CS 1.6 (goldsrc). MEDIDO no jogo real por
+// `tools/eval/vm-frame-calibra.mjs`; o alvo de tamanho é a AK golden aprovada.
+const MOLDE_FRAME = Object.freeze({
+  awp:        { x: 0.141, y: 0.031, z: 0 },
+  ak:         { x: 0.092, y: 0.064, z: 0 },
+  m4:         { x: 0.092, y: 0.009, z: 0 },
+  mp5:        { x: 0.133, y: 0.068, z: 0 },
+  shotgun:    { x: 0.549, y: 0.04, z: -0.24 },
+  deagle:     { x: 0.012, y: 0.084, z: 0, drawDrop: 0.513 },
+  pistol:     { x: 0.061, y: -0.043, z: 0, drawDrop: 0.367 },
+  m92:        { x: 0.086, y: 0.012, z: 0 },
+  revolver38: { x: 0.053, y: 0.013, z: 0, drawDrop: 0.333 },
+  md97:       { x: 0.064, y: 0.099, z: 0 },
+  carbine:    { x: 0.117, y: 0.085, z: 0 },
+  mosin:      { x: 0.221, y: -0.14, z: -0.08 },
+  lmg:        { x: 0.356, y: 0.173, z: -0.08 },
+  scar:       { x: 0.15, y: 0.013, z: 0 },
+  famas:      { x: 0.046, y: 0.005, z: 0 },
+  uzi:        { x: 0.345, y: 0.177, z: 0 },
+  p90:        { x: 0.042, y: -0.046, z: 0 },
+  svd:        { x: 0.183, y: 0.12, z: -0.08 },
+  sks:        { x: 0.158, y: 0.078, z: -0.08 },
+  default:    { x: 0.1, y: 0.02, z: 0 },
+});
+
 // O enquadramento move o pacote inteiro e preserva contatos. Armas longas ganham
 // distância ocular para o aspecto largo do navegador.
 const FAMILY_FRAME = Object.freeze({
@@ -282,10 +307,14 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
 
   const molde = VM_FONTE === 'goldsrc' || VM_FONTE === 'retarget';
   const golden = sourceKey.startsWith('gold#');
+  // A trilha retarget ainda não tem enquadramento medido: a manga do pack entra
+  // por cima da arma e o C5 só fecha escondendo o cano (VIEWMODEL-INVENTARIO).
   const frame = golden
     ? { x: 0, y: 0, z: 0, fov: cameraFov }
     : molde
-    ? { x: 0, y: 0, z: 0, fov: 74 }
+    ? { ...(VM_FONTE === 'goldsrc'
+      ? MOLDE_FRAME[sourceKey.split('#')[1]] || MOLDE_FRAME.default
+      : { x: 0, y: 0, z: 0 }), fov: 74 }
     : (FAMILY_FRAME[family] || FAMILY_FRAME.default);
 
   const mount = new THREE.Group();
