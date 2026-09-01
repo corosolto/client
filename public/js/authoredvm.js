@@ -674,16 +674,8 @@ export class AuthoredViewModels {
   reload(id, duration, empty = false, faltamBalas = 1) {
     const entry = this.entry(id);
     if (!entry) return false;
-    const cs16 = VM_FAMILY[entry.family]?.cs16;
-    // Sem cadência de reload no QC fonte (shotgun: recarga é laço de cartucho),
-    // a duração do jogo segue valendo.
-    if (!entry.golden && cs16?.reload && VM_WEAPON[id]?.timing !== 'gameplay') {
-      // cadência do QC vale para o TÁTICO; o empty escala pelo MESMO
-      // timeScale (forçar 2,43s no empty o acelerava 27%).
-      const tactical = entry.clips.get('reload_tactical');
-      const alvo = empty && entry.clips.has('reload_empty') ? entry.clips.get('reload_empty') : tactical;
-      duration = tactical && alvo ? cs16.reload * (alvo.duration / tactical.duration) : cs16.reload;
-    }
+    // O clipe fecha no mesmo quadro que `reloadUntil` (game.js `_startReload`):
+    // a cadência do QC do CS 1.6 não manda aqui. Régua: P4 do vm-gauntlet.
     const direct = empty && entry.clips.has('reload_empty')
       ? 'reload_empty'
       : entry.clips.has('reload_tactical')
@@ -712,7 +704,9 @@ export class AuthoredViewModels {
         }
         return this._sequence(entry, sequence, duration);
       })();
-    if (tocou && cs16) entry.state = 'reload';
+    // Sem tabela cs16 (revólver) o estado ficava preso em 'fire' com o clipe de
+    // recarga tocando.
+    if (tocou) entry.state = 'reload';
     return tocou;
   }
 
