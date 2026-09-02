@@ -591,5 +591,90 @@ console.log('\n· multiplayer→sair→single player não reaproveita a sessão 
     'MUTANTE que mantém o socket ao sair acende a limpeza multiplayer→menu');
 }
 
+console.log('\n· remoto animado na velocidade REAL, nome vindo do servidor, tag [BOT] (02/09)');
+{
+  /* "Filme lento com glitch" (dono, 02/09): o animador GLB recebia `speed=0` — assinatura
+     update(dt, moving, hasTarget, speed) chamada como (dt, spd, false). O clipe de andar rodava
+     a 0,45× e nunca virava corrida enquanto o corpo deslizava a 2-6 m/s. Aqui o boneco remoto
+     ganha um ctrl FALSO que registra a chamada: a velocidade tem que chegar no 4º argumento. */
+  const net = fakeNet(1, 5);
+  const g = montaJogo(net);
+  net.snap = snapshot(1.00, 1); g.update(1 / 60);
+  net.snap = snapshot(1.05, 2, { mover: 0.2 }); g.update(1 / 60);   // 0,2 m em 50 ms = 4 m/s
+  const remoto = g.bots.find((b) => b._remote && b._remote !== 'ghost');
+  const chamadas = [];
+  remoto.mesh.isGLB = true;
+  remoto.mesh.ctrl = { update: (...a) => chamadas.push(a), shoot() { chamadas.push(['shoot']); }, die() {}, revive() {} };
+  g._mp.updateRemoteBot(remoto, 1 / 60);
+  const u = chamadas.find((c) => c.length >= 4);
+  cobra(!!u && u[3] > 3 && u[3] < 5, `a velocidade REAL (${u ? u[3].toFixed(2) : '?'} m/s) chega no argumento speed do animador`);
+  cobra(!!u && u[1] === 1, 'e `moving` é a flag 0/1 (não a velocidade crua)');
+  cobra(typeof remoto.mesh.ctrl.aimPitch === 'number', 'a cabeça do remoto recebe o pitch do servidor');
+  // tiro do snapshot toca o clipe de tiro
+  const s3 = snapshot(1.10, 3, { mover: 0.4 }); s3.ents.find((e) => e.id === remoto._netId).fire = 1;
+  net.snap = s3; g.update(1 / 60);
+  cobra(chamadas.some((c) => c[0] === 'shoot'), 'fire=1 no snapshot dispara o clipe de tiro do boneco remoto');
+  // nome: vem do servidor a cada snapshot; bot leva a tag
+  cobra(remoto.name === `[BOT] BOT${remoto._netId}` && remoto._nomeServidor === `BOT${remoto._netId}`,
+    `bot é rotulado [BOT] na tela (${remoto.name}) e guarda o nome cru do servidor`);
+  const s4 = snapshot(1.15, 4, { mover: 0.5 }); const e4 = s4.ents.find((e) => e.id === remoto._netId); e4.name = 'RUBAO'; e4.bot = 0;
+  net.snap = s4; g.update(1 / 60);
+  cobra(remoto.name === 'RUBAO', 'humano que toma o slot do bot aparece com o nome dele para quem já estava na sala');
+  cobra(g._mp._corpoPorNome('RUBAO') === remoto, 'e o killfeed acha o corpo pelo nome do servidor');
+  /* Fim de round: a máquina local está desligada no online; o feedback (placar, banner, tela
+     de fim) vem da TRANSIÇÃO de estado do snapshot. "Congelou e recomeçou do nada" (02/09). */
+  // morte de remoto: o feedback (sting, kill confirm quando VOCÊ mata) volta ao online
+  const sons = []; const sfx0 = g.sfx;   // o sfx do arnês é um Proxy mudo: troca o objeto inteiro por um que registra
+  g.sfx = new Proxy({}, { get: (_, k) => (...a) => { sons.push([k, ...a]); } });
+  const s45 = snapshot(1.17, 45, { mover: 0.5 }); const v = s45.ents.find((e) => e.id === remoto._netId); v.alive = false; v.hp = 0; v.killedBy = 'EU';
+  net.snap = s45; g.update(1 / 60);
+  cobra(sons.some((x) => x[0] === 'death') && sons.some((x) => x[0] === 'killConfirm'), `morte de remoto pelo JOGADOR toca sting + kill confirm (${sons.map((x) => x[0]).join(',')})`);
+  cobra(g.mk.count === 1 && g.mk.life === 1, 'e conta na sequência de abates (multikill)');
+  g.sfx = sfx0;
+  // pausa: um input parado a cada 2 s segura o slot (o servidor solta após 45 s sem input)
+  net.enviados.length = 0; g.paused = true;
+  g._mp._inputAt = 0; g._mp._pulsoDePausa();
+  cobra(net.enviados.length === 1 && net.enviados[0].ax === 0 && net.enviados[0].shoot === false, 'pausado, o cliente manda um input PARADO (sem tiro) para não perder o corpo');
+  g._mp._pulsoDePausa();
+  cobra(net.enviados.length === 1, 'e não repete antes de 2 s');
+  g.paused = false;
+  const s5 = snapshot(1.20, 5); s5.state = 'roundEnd'; s5.scoreE = 3;   // E levou o round (2 -> 3)
+  net.snap = s5; g.update(1 / 60);
+  cobra(g.state === 'roundEnd' && !!g._resultado && /LEVARAM O ROUND/.test(g._resultado.titulo),
+    `roundEnd do servidor abre o placar com o vencedor (${g._resultado && g._resultado.titulo})`);
+  cobra(!g.el.scoreboard.classList.contains('hidden'), 'e o scoreboard fica visível');
+  const s6 = snapshot(1.25, 6); s6.state = 'countdown'; s6.scoreE = 3; s6.roundNum = 4;
+  net.snap = s6; g.update(1 / 60);
+  cobra(g.state === 'countdown' && g._resultado === null && g.el.scoreboard.classList.contains('hidden'),
+    'countdown do servidor fecha o placar e abre a rodada seguinte');
+  const s7 = snapshot(1.30, 7); s7.state = 'matchEnd'; s7.scoreE = 3;
+  net.snap = s7; g.update(1 / 60);
+  cobra(g.state === 'matchEnd' && !g.el.matchEnd.classList.contains('hidden'), 'matchEnd do servidor mostra a tela de VITÓRIA/DERROTA');
+  g.dispose();
+}
+
+console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depois do preload (02/09)');
+{
+  const fs = await import('node:fs');
+  const net = fs.readFileSync('public/js/net.js', 'utf8');
+  const main = fs.readFileSync('public/js/main.js', 'utf8');
+  const game = fs.readFileSync('public/js/game.js', 'utf8');
+  cobra(/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;[\s\S]{0,200}this\.onPartida\?\.\(m\)/.test(net),
+    'net.js troca a meta (roster/ids/mapa) e avisa em `partida` — sem isto o cliente fica no mapa velho com ids mortos');
+  cobra(/net\.onPartida = async \(m\) => \{[\s\S]{0,400}mpMontarPartida\(net, m\)/.test(main),
+    'main.js remonta a partida por cima quando o servidor gira o mapa');
+  cobra(/mpMontarPartida\(net, welcome\)/.test(main), 'e o welcome usa o MESMO caminho (uma montagem só)');
+  cobra(/this\._vmMontarTardio = \(id\) => \{[\s\S]{0,300}mountRw\(g, id\)[\s\S]{0,300}this\._vmFrame\(true\)/.test(game),
+    'game.js monta o GLB do viewmodel que chegou depois do construtor e re-enquadra');
+  cobra(/_applyVmVisibility\(\) \{[\s\S]{0,120}this\._vmMontarTardio\?\.\(w\)/.test(game),
+    'a troca de arma tenta a montagem tardia (idempotente)');
+  cobra(/meuJogo\._applyVmVisibility\?\.\(\)/.test(main), 'o preload ocioso das 26 armas também tenta montar a arma na mão');
+  cobra(/else if \(this\.vm && this\.vm\.root\) this\.vm\.root\.visible = false;/.test(game),
+    'espectador (dedicated) não vê viewmodel parado na pose de construção');
+  cobra(/nomeE = meta\.nomeE \|\| 'TIME E'/.test(main), 'botão do espectador diz o nome da FACÇÃO, não a letra do lado');
+  const mutSemPartida = net.replace("m.type === 'partida'", "m.type === '__nunca__'");
+  cobra(!/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;/.test(mutSemPartida), 'MUTANTE sem o ramo `partida` acende a régua');
+}
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);
