@@ -3666,14 +3666,75 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-125 · “sei que é impossível mas se desse pra abaixar ainda mais o ping, porque dessa
+  forma um jogador de PT nunca vai poder jogar com um BR”** (dono, 02/09, produção).
+  **RELATADO.** O RTT é geografia (Lisboa↔São Paulo ~180-200 ms de ida e volta em fibra); o que
+  o jogo soma por cima é o intervalo de snapshot (33 ms a 30 Hz) + o buffer de interpolação
+  (80 ms) + um quadro. Com o buffer no relógio do servidor (BUG-118) dá para MEDIR se o buffer
+  pode cair sem congelar; hitscan já tem lag comp. **Régua:** nenhuma ainda.
+
+- **BUG-124 · “no singleplayer temos que indicar que são [BOT] também”** (dono, 02/09).
+  **RELATADO.** No online o rótulo `[BOT]` vem do snapshot (BUG-112); no local `name` é o do
+  personagem e o killfeed/placar/tela de morte mostram sem prefixo. **Régua:** nenhuma ainda.
+
+- **BUG-123 · “quando termina partida e tem vitória temos que mostrar um load carregando
+  próximo mapa pro usuário continuar no jogo, não pode ter botão jogar novamente (ele está no
+  multiplayer não singleplayer)”** (dono, 02/09, produção, captura VITÓRIA com JOGAR NOVAMENTE
+  e VOLTAR AO MENU). **RELATADO.** `_endMatch` é a tela do single player; no online o servidor
+  gira o mapa e manda `partida` (BUG-112), então a tela tem que dizer que o próximo mapa está
+  carregando e seguir sozinha. **Régua:** nenhuma ainda.
+
+- **BUG-122 · “o kill mostrando como se o bot tivesse me matando e não o contrário”** (dono,
+  02/09, produção). **RELATADO.** Nas capturas o painel NET cobre a coluna da vítima do
+  killfeed: só o primeiro chip (`[BOT] X 🔫`) fica visível. Hipóteses a medir: (a) só
+  sobreposição; (b) `_corpoPorNome(killedBy)` não casa o jogador local quando o servidor
+  trunca o apelido a 16 caracteres (`room.js`), e o abate do jogador sai sem atacante.
+  **Régua:** nenhuma ainda.
+
+- **BUG-121 · “as armas sem model direito” / “nenhuma arma pode ter model low poly assim, tem
+  que usar o model original da arma sempre”** (dono, 02/09, produção, capturas: AWP e MP5 como
+  caixa procedural no viewmodel, AK com GLB). **RELATADO.** Os 26 GLBs existem em
+  `public/models/weapons/`; a caixa é o fallback do viewmodel quando o GLB não montou
+  (BUG-111 tratou a chegada tardia na troca de arma). A medir: por que AWP/MP5 seguem na caixa
+  por mais de um minuto em produção. **Régua:** nenhuma ainda.
+
+- **BUG-120 · “eu iniciei no meio do mapa com 13 de vida”** (dono, 02/09, produção).
+  **RELATADO.** Ao tomar a vaga, o humano herda o corpo do bot como está: posição no meio da
+  rodada e HP corrente. **Régua:** nenhuma ainda.
+
 - **BUG-119 · “o jogo em single player tem uma jogabilidade 200% melhor que multiplayer.
-  eles tem que ter mesma jogabilidade e parecer imperceptiveis em diferenca”** (dono, 02/09,
-  produção). **RELATADO, AINDA NÃO DECOMPOSTO.** É o guarda-chuva dos relatos de 02/09: o que
-  já tem número está em BUG-117 (assistir) e BUG-118 (tranco dos remotos). O que falta medir
-  online contra o local, um a um: latência do hitmarker (no online o dano só chega no
-  snapshot seguinte, ~RTT + 33 ms, sem predição local de acerto), cadência do tiro dos remotos
-  (`fire` é um bit por snapshot a 30 Hz), e a heurística do arco de dano (BUG-90). **Régua:**
-  nenhuma ainda para o conjunto; as parciais em `eval:netcode`.
+  eles tem que ter mesma jogabilidade e parecer imperceptiveis em diferenca” / “porque em single
+  player tudo funciona e é smooth e em multiplayer quebrou? temos como fazer essa comparacao
+  entre os dois, e acertar ponto a ponto?”** (dono, 02/09, produção). **DECOMPOSTO; PARTE
+  CORRIGIDA LOCALMENTE.** A resposta estrutural: no single player tudo roda num processo só;
+  no online o cliente DESLIGA a simulação local em cinco portões (`this.online` em `game.js`:
+  dano do tiro, respawn do jogador, IA dos bots, máquina de rodada, predição) e replica o
+  servidor por snapshot a 30 Hz. Cada efeito colateral que `_damage`/`_kill`/`_respawnPlayer`/
+  `_startRound` faziam de graça precisa de uma réplica em `netgame.js`; cada réplica que falta é
+  um bug desta família. A tabela, ponto a ponto:
+
+  | SP faz em | Efeito | Online (02/09) |
+  |---|---|---|
+  | `_damage` | hitmarker, número de dano | **faltava** → `_acertoPrevisto` no raio local; hp segue do snapshot |
+  | `_damage` | vinheta, arco de dano ao levar tiro | heurístico pelo atirador mais próximo (BUG-90) |
+  | `_kill` | sting, kill confirm, multikill, poça | replicado (BUG-116) |
+  | `_kill` | killfeed | bots ok (BUG-90); **própria morte faltava** → BUG-122 |
+  | `_kill` | drop da arma do morto | **falta**: o servidor dropa no mundo dele e o snapshot não traz pickups |
+  | `_respawnPlayer` | posição, proteção | servidor |
+  | `_respawnPlayer` | munição cheia, câmera, som | **faltava** → `playerRespawned` |
+  | (não existe no SP) | entrar no meio da rodada | herdava corpo com 13 de vida → BUG-120 (servidor) |
+  | `_updateBot` | movimento/animação | interpolação no relógio do servidor (BUG-118), clipe pela velocidade (BUG-113) |
+  | `_updateBot` | rádio/voz | pelo `voice` do snapshot |
+  | `_startRound`/`_endRound` | placar, banner, sons | replicado (BUG-114) |
+  | `_endMatch` | tela de fim | **botão do SP** → BUG-123 |
+  | `_explodeFrag` | granada | **falta no servidor**: o cliente aplica dano local que o snapshot desfaz |
+  | `_buildViewModels` | GLB da arma na mão | tardio (BUG-111) + caixa escondida (BUG-121) |
+  | espectador | câmera | 3ª pessoa (BUG-117) |
+  | rede | ping | geografia (BUG-125) |
+
+  O que continua aberto desta tabela: drop de arma na morte e granadas, os dois precisam de
+  protocolo (o snapshot não carrega pickups nem projéteis). **Régua:** `eval:netcode`
+  (cláusulas BUG-119: acerto previsto com mutante `_acertoPrevisto`; respawn com munição).
 
 - **BUG-118 · “o jogo ainda parece travado e robotico um pouco, um pouco menos mas ainda. a
   band ta 10.1kb/s é muito pouco”** (dono, 02/09, produção, depois do alpha.209).
