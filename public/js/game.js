@@ -5454,7 +5454,7 @@ export class Game {
     if (this.el.pickupHint) {
       const sel2 = this.nearPickup;
       const w = sel2 ? sel2.pk.weapon : null;
-      let util = !!sel2 && this.state === 'live';
+      let util = !!sel2 && this.state === 'live' && !this.espectando();   // quem assiste não tem corpo pra pegar nada (BUG-117)
       if (util && w === p.weapon) {
         const a = p.ammo[w], W = WEAPONS[w];
         util = !(a && W && a.mag >= W.mag && a.res >= W.reserve);   // (a) mesma arma + munição cheia = nada a ganhar
@@ -7143,6 +7143,7 @@ export class Game {
       if (this._recorder.count >= 300) this._flushTraining();
     }
     for (const b of this.bots) this._updateBot(b, dt);
+    if (this.espectando()) this._mp.cameraEspectador();   // segue o corpo interpolado a cada quadro, não a cada snapshot (BUG-117)
     this._updatePickups();
     this._updateFx(dt);
     this._updateDoors(dt);

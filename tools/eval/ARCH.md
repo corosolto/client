@@ -9,7 +9,7 @@
 
 | Arquivo | Linhas | Símbolos |
 |---|---:|---:|
-| `public/js/game.js` | 7220 | 265 |
+| `public/js/game.js` | 7221 | 265 |
 | `public/js/main.js` | 3196 | 262 |
 | `public/js/glbchars.js` | 845 | 60 |
 | `public/js/characters.js` | 1069 | 40 |
@@ -19,7 +19,7 @@
 
 ## Maiores métodos de `game.js` — onde o conflito mora
 
-Os 15 maiores somam **3103 linhas (43% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
+Os 15 maiores somam **3104 linhas (43% do arquivo)**. Método grande = PR irrevisável e merge conflitante.
 
 | Linhas | Início | Método | |
 |---:|---:|---|---|
@@ -32,7 +32,7 @@ Os 15 maiores somam **3103 linhas (43% do arquivo)**. Método grande = PR irrevi
 | 133 | 4479 | `_botCtf()` |  |
 | 115 | 1958 | `_touchControls()` |  |
 | 92 | 5014 | `_moveEntity()` |  |
-| 87 | 7091 | `update()` | 🔴 append-only |
+| 88 | 7091 | `update()` | 🔴 append-only |
 | 84 | 3010 | `_tryShoot()` |  |
 | 84 | 4213 | `_initCTF()` |  |
 | 80 | 7011 | `_updateHud()` |  |
@@ -56,11 +56,11 @@ faixas disjuntas simultaneamente com zero conflito de conteúdo.
 | **PERSONAGENS** | — | `public/js/characters.js` `public/js/glbchars.js` |
 | **SITE / BACKEND** | — | `src/` `supabase/` |
 
-**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 7091–7177 · `_dom()` 1168–1210 · `constructor()` 590–1167
+**🔴 Zonas vermelhas (append-only, qualquer frente pode precisar):** `update()` 7091–7178 · `_dom()` 1168–1210 · `constructor()` 590–1167
 
 Nenhuma sobreposição entre frentes — todas as faixas são disjuntas. ✓
 
-Cobertura: **3683 de 7220 linhas (51%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
+Cobertura: **3683 de 7221 linhas (51%)** do `game.js` têm dono declarado. O resto é território neutro — declare a frente mesmo assim.
 
 <details><summary><strong>Índice completo de <code>game.js</code> (todos os símbolos)</strong></summary>
 
@@ -291,8 +291,8 @@ Cobertura: **3683 de 7220 linhas (51%)** do `game.js` têm dono declarado. O res
 | 6928 | `_showScoreboard()` | 48 |
 | 6976 | `_updateWeaponHud()` | 35 |
 | 7011 | `_updateHud()` | 80 |
-| 7091 | `update()` | 87 |
-| 7178 | `dispose()` | 42 |
+| 7091 | `update()` | 88 |
+| 7179 | `dispose()` | 42 |
 
 </details>
 
