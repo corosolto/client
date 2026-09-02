@@ -69,7 +69,11 @@ jobs:
           const response = await fetch('https://www.csbrasil.online/api/health');
           const body = await response.json().catch(() => ({}));
           console.log(JSON.stringify(body));
-          if (!response.ok || body.database !== true || body.telemetrySchema !== true || body.fresh !== true) {
+          // perf/match/city dependem de gente jogando e podem ficar ociosos legitimamente.
+          // operationalFresh cobre o heartbeat de máquina (multiplayer, a cada 5 min).
+          // O fresh geral continua no log para diagnóstico, mas não cria incidente sem tráfego.
+          if (body.fresh !== true) console.warn('pipelines humanos sem atividade recente:', body.stale ?? []);
+          if (!response.ok || body.database !== true || body.telemetrySchema !== true || body.operationalFresh !== true) {
             process.exit(1);
           }
           NODE
