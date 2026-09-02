@@ -1,0 +1,50 @@
+{
+ "velho_oeste": {
+  "map": "velho_oeste",
+  "bots": 7,
+  "latFlips": 6.478,
+  "latFlipsCombat": 4.044,
+  "latShare": 0.145,
+  "fwdFlips": 5.722,
+  "fwdFlipsCombat": 4.356,
+  "spinTurns": 0.27,
+  "spinRoam": 0.031,
+  "stuckPct": 2.622,
+  "eff": 0.232,
+  "laneSpread": 0.248,
+  "laneTargetSpread": 0.232,
+  "roamDepthSpread": 0.179
+ },
+ "upa_24h": {
+  "map": "upa_24h",
+  "bots": 7,
+  "latFlips": 12.467,
+  "latFlipsCombat": 4.178,
+  "latShare": 0.15,
+  "fwdFlips": 7.011,
+  "fwdFlipsCombat": 3.878,
+  "spinTurns": 0.214,
+  "spinRoam": 0.068,
+  "stuckPct": 7.033,
+  "eff": 0.256,
+  "laneSpread": 0.239,
+  "laneTargetSpread": 0.263,
+  "roamDepthSpread": 0.178
+ },
+ "piscina_treta": {
+  "map": "piscina_treta",
+  "bots": 7,
+  "latFlips": 10.978,
+  "latFlipsCombat": 6.1,
+  "latShare": 0.273,
+  "fwdFlips": 9.344,
+  "fwdFlipsCombat": 6.378,
+  "spinTurns": 0.333,
+  "spinRoam": 0.04,
+  "stuckPct": 4.289,
+  "eff": 0.147,
+  "laneSpread": 0.272,
+  "laneTargetSpread": 0.222,
+  "roamDepthSpread": 0.043
+ }
+}

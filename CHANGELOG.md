@@ -23,6 +23,15 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
+## Não lançado — 2026-09-02
+
+### Corrigido
+- Multiplayer não vaza mais para a partida single-player depois de voltar ao menu.
+- O primeiro spawn e o respawn online obedecem imediatamente à posição autoritativa.
+- Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
+- Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
+- O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
 ## [2.0.0-alpha.205] — 2026-08-30
 
 ### Mudado

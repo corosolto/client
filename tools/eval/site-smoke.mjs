@@ -31,11 +31,13 @@
 //   SITE_URL=https://... node tools/eval/site-smoke.mjs
 //   node tools/eval/site-smoke.mjs --json
 //   node tools/eval/site-smoke.mjs --mutante=jsonld # prova que o portão morde
+//   node tools/eval/site-smoke.mjs --mutante=proxy-sem-corpo
 //
 // Sai 1 se qualquer checagem falhar, então serve de gate no CI sem parser.
 // ============================================================================
 import { spawn, spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 
 // O CONTRATO DEPENDE DE UMA FLAG. `RANKING_ON` (src/lib/site.ts) muda o que
 // duas rotas devem responder, e a issue #45 escreveu o contrato assumindo ela
@@ -125,19 +127,17 @@ const CONTRATO = [
     checa: ({ status }) => (status === 200 ? null : `status ${status}`),
   })),
 
-  /* MIGRADA (PR #462): /api/leaderboard mora no corosolto/backend; o que o CLIENTE
-     serve aqui é a rede de segurança de src/pages/api/[rota].ts — 307 para o backend,
-     preservando método e corpo, para quem ainda tem o JS antigo em cache (docs/APIS.md).
-     O contrato de resposta ({disabled:true} / 503 not_configured) viajou com a rota e é
-     medido lá. `redirect: 'manual'` de propósito: seguir o 307 faria este portão medir
-     a REDE do CI (DNS do backend) em vez do contrato do cliente. */
-  { rota: '/api/leaderboard', redirect: 'manual',
-    esperado: '307 -> backend/api/leaderboard (rede de segurança da rota migrada)',
-    checa: ({ status, headers }) => {
-      if (status !== 307) return `status ${status} (esperado 307 da rede de segurança)`;
-      const loc = headers.get('location') || '';
-      if (!/^https?:\/\/[^/]+\/api\/leaderboard(?:$|\?)/.test(loc)) return `Location = ${JSON.stringify(loc)}`;
-      if ((headers.get('cache-control') || '') !== 'no-store') return `cache-control = ${JSON.stringify(headers.get('cache-control'))} — 307 cacheado prende o cliente na rota antiga`;
+  /* A rota migrada passa pelo proxy same-origin para previews dinâmicos não dependerem de
+     CORS. No CI, o upstream é o stub local abaixo; nunca a rede ou o backend publicado. */
+  { rota: '/api/leaderboard',
+    esperado: '200 + JSON do backend via proxy same-origin',
+    checa: ({ status, corpo, headers }) => {
+      if (status !== 200) return `status ${status}`;
+      if (!/application\/json/i.test(headers.get('content-type') || '')) return 'content-type não é JSON';
+      let payload;
+      try { payload = JSON.parse(corpo); } catch { return 'corpo não é JSON válido'; }
+      if (RANKING_ON ? !Array.isArray(payload.players) : payload.disabled !== true)
+        return `contrato inesperado: ${JSON.stringify(payload).slice(0, 120)}`;
       return null;
     } },
 
@@ -181,6 +181,8 @@ function checaJsonLd(rota, corpo) {
 // servidor
 // ---------------------------------------------------------------------------
 let subiuAqui = false;
+let upstream = null;
+const PORTA_UPSTREAM = 4326;
 async function noAr(ms = 90_000) {
   const fim = Date.now() + ms;
   while (Date.now() < fim) {
@@ -191,16 +193,34 @@ async function noAr(ms = 90_000) {
 }
 async function sobeServidor() {
   if (EXTERNO) return true;
+  upstream = createServer((req, res) => {
+    if (!req.url?.startsWith('/api/leaderboard')) {
+      res.writeHead(404).end();
+      return;
+    }
+    const payload = MUTANTE === 'proxy-sem-corpo'
+      ? {}
+      : RANKING_ON ? { players: [] } : { disabled: true };
+    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'public, max-age=300' });
+    res.end(JSON.stringify(payload));
+  });
+  await new Promise((resolve, reject) => {
+    upstream.once('error', reject);
+    upstream.listen(PORTA_UPSTREAM, '127.0.0.1', resolve);
+  });
   // `astro dev` daemoniza e o processo lançador sai — não dá pra segurar o pid.
   // Quem derruba é `astro dev stop`, no finally.
-  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], { stdio: 'ignore', detached: false })
+  spawn('npx', ['astro', 'dev', '--port', String(PORTA)], {
+    stdio: 'ignore', detached: false,
+    env: { ...process.env, PUBLIC_API_BASE: `http://127.0.0.1:${PORTA_UPSTREAM}` },
+  })
     .on('error', () => {});
   subiuAqui = true;
   return noAr();
 }
 function derrubaServidor() {
-  if (!subiuAqui) return;
-  spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' });
+  if (subiuAqui) spawnSync('npx', ['astro', 'dev', 'stop'], { stdio: 'ignore' });
+  upstream?.close();
 }
 
 // ---------------------------------------------------------------------------

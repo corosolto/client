@@ -561,10 +561,13 @@ const _rosterPool = (pool, want, quem, fallback) => {
   while (out.length < want) out.push(src[out.length % src.length]);   // rede de segurança
   return out.slice(0, want);
 };
-export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId) {
+/* `dedicado` = servidor autoritativo de multiplayer: não há jogador local ocupando vaga no
+   time aliado, então o lado aliado leva teamSize corpos inteiros (e não teamSize-1). É o que
+   faz uma sala 5v5 ter DEZ vagas de gente, e não nove com um manequim do lado. */
+export function pickMatchRoster(playerFaction, enemyFaction, teamSize, playerCharId, dedicado = false) {
   return {
     allyDefs: _rosterPool(CHARACTERS.filter(c => c.team === playerFaction && c.id !== playerCharId),
-      teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
+      dedicado ? teamSize : teamSize - 1, `aliados (${playerFaction})`, CHARACTERS.filter(c => c.id !== playerCharId)),
     enemyDefs: _rosterPool(CHARACTERS.filter(c => c.team === enemyFaction), teamSize, `inimigos (${enemyFaction})`, CHARACTERS),
   };
 }
@@ -584,7 +587,7 @@ export function pickMatchWeapons({ mode = 'all', teamSize = 8 } = {}) {
 }
 
 export class Game {
-  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false }) {
+  constructor({ renderer, textures, sfx, settings, playerCharId, playerTeam, playerFaction, enemyFaction, nickname, mapId, ctf, roundsMax, testMode = false, mobile = false, matchRoster = null, matchWeapons = null, onQuit, onMatchEnd, onTrainingFrames, recordTraining = false, dedicated = false, mpFactory = null, net = null }) {
     this._ctfOpt = ctf;
     this._matchWeapons = matchWeapons;
     this._armaN = 0;
@@ -640,7 +643,7 @@ export class Game {
           const rw = weaponModel(pk.weapon);            // swap the map's box gun for the real GLB
           if (rw && pk.mesh) {
             // ROTAÇÃO ANTES da altura: o assentamento mede a bbox JÁ girada (ver _assentarNoChao).
-            rw.rotation.set(0, pk.mesh.rotation.y || Math.random() * 6.28, 0.12);
+            rw.rotation.set(0, pk.mesh.rotation.y, 0.12);
             rw.traverse(o => { if (o.isMesh) o.castShadow = true; });
             pk.mesh.removeFromParent(); this.scene.add(rw); pk.mesh = rw;
           }
@@ -679,6 +682,14 @@ export class Game {
     this.playerDef = byId(playerCharId);
     this.playerCharId = playerCharId;   // usado por _buildViewModels (paleta/braços FP) e _resetPositions (loadout)
     this.combatants = [];   // scoreboard entries
+    /* Servidor dedicado: o `player` que ninguém controla fica FORA do elenco, senão vira corpo
+       parado e imortal que os inimigos abatem em loop. Ver docs/MULTIPLAYER.md. */
+    this.dedicated = !!dedicated;
+    /* `online` = autoridade do servidor. `_mp` é injetado pelo main.js; este arquivo nunca
+       importa rede. Single-player: `_mp` null e nada de rede roda. Ver docs/MULTIPLAYER.md. */
+    this.online = !!(mpFactory && net);
+    this._mp = null;
+    this._mpPend = this.online ? { mpFactory, net } : null;
 
     // Câmera 3ª pessoa (tecla B): modo de VISÃO, não de combate - mira e tiro seguem saindo
     // da câmera. Modos, rig, grip e pré-carga do corpo: docs/RIG-PEGA-ARMA.md.
@@ -707,7 +718,7 @@ export class Game {
       ammo: Object.fromEntries(Object.keys(WEAPONS).filter(w => w !== 'knife').map(w => [w, { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve }])),
       kills: 0, deaths: 0, headshots: 0, grounded: true, stepPhase: 0, revealedAt: -99, protUntil: 0, smokes: 5,
     };
-    this.combatants.push(this.player);
+    if (!this.dedicated) this.combatants.push(this.player);
     // TELEMETRIA DE ARMA (feat/telemetria): conta abates por id de arma nesta
     // partida. Zerado por partida (new Game por startGame), acumula entre rodadas
     // da mesma partida — mesma granularidade do kills/deaths. Lido pelo main.js
@@ -748,7 +759,7 @@ export class Game {
     this._botDmgPlayer = BOT_FAIR ? (BOT_DMG_BY_DIFF[diffKey(this.settings)] ?? 0.72) : BOT_DMG_PLAYER;
     // Equilíbrio de times: o roster (regra de N×N garantido, repete com aviso se a facção não
     // tem elenco — ver pickMatchRoster) vem sorteado do main.js ou é sorteado aqui (arnês/testes).
-    const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId);
+    const { allyDefs, enemyDefs } = matchRoster || pickMatchRoster(this.playerFaction, this.enemyFaction, teamSize, playerCharId, this.dedicated);
     const mkBot = (def, team, i) => {
       // arma sorteada no main.js (que preloadou por ela); sem lista, sorteia aqui. Contador
       // próprio: `i` reinicia por LADO e daria a mesma arma aos dois times.
@@ -778,7 +789,7 @@ export class Game {
        que contar). jogador + aliados de um lado, inimigos do outro; qualquer diferença é bug
        e vai pro console como ERRO, não como silêncio. */
     {
-      const nMine = this.bots.filter(b => b.team === playerTeam).length + 1;   // +1 = o jogador
+      const nMine = this.bots.filter(b => b.team === playerTeam).length + (this.dedicated ? 0 : 1);   // +1 = o jogador (no dedicado ele não joga)
       const nFoe = this.bots.filter(b => b.team === this.enemyTeam).length;
       const msg = `[times] ${this._teamTag(playerTeam)} ${nMine} × ${nFoe} ${this._teamTag(this.enemyTeam)} (teamSize ${teamSize})`;
       if (nMine !== nFoe) console.error(new Error(msg + ' — TIMES DESIGUAIS (bug de composição)'));
@@ -1144,6 +1155,9 @@ export class Game {
       const on = this.onToggleSpeech?.();
       this.el.hudSpeech.textContent = on ? '🔊' : '🔇';
     };
+    /* O netcode nasce por ÚLTIMO: ele lê `player`, `bots` e `el`, que só existem agora.
+       Construí-lo junto com o resto era pegar metade do jogo montada. */
+    if (this._mpPend) { this._mp = this._mpPend.mpFactory(this, this._mpPend.net); this._mpPend = null; }
   }
 
   /* ================= setup ================= */
@@ -2070,6 +2084,9 @@ export class Game {
 
   _requestLock() {
     if (this.mobile) return;   // sem pointer lock no toque
+    /* ESPECTADOR NÃO PRENDE O MOUSE. Ele não mira nada, e a barra de espectador (trocar de
+       alvo, entrar no time) só é clicável com cursor livre. */
+    if (this.espectando()) return;
     try { this.renderer.domElement.requestPointerLock()?.catch?.(() => {}); } catch {}
     this._travaAtalhos();
   }
@@ -2099,6 +2116,10 @@ export class Game {
   _soltaAtalhos() {
     try { navigator.keyboard?.unlock?.(); } catch {}
   }
+  /* Está ASSISTINDO? No multiplayer o servidor pode não ter dado corpo (sala cheia, ou o
+     jogador pediu para assistir). Sem corpo não há mira, tiro, arma nem pointer lock. */
+  espectando() { return !!(this.online && this._mp && this._mp.espectador); }
+
   _acceptInput() {
     if (this.paused || this.state !== 'live' && this.state !== 'countdown') return false;
     return this.testMode || this.mobile || !!document.pointerLockElement;   // mobile: toque, sem pointer lock
@@ -2971,6 +2992,7 @@ export class Game {
   }
   _tryShoot() {
     const p = this.player, w = WEAPONS[p.weapon];
+    if (this.espectando()) return;   // quem assiste não tem corpo: o tiro sairia do nada
     if (!p.alive || this.state !== 'live') return;
     if (this.time < p.nextShotAt || this._reloading() || this.time < p.drawUntil) return;
     if (p.weapon === 'knife') {
@@ -3064,6 +3086,19 @@ export class Game {
     }
     if (best) { this.sfx.knifeHit(); this._damage(best, WEAPONS.knife.dmg, this.player, 'FACA'); }
   }
+  /* Dano de um tiro: base × falloff por classe × multiplicador de headshot. O servidor usa a
+     MESMA conta — duas cópias envelheceriam separadas. Ver docs/MULTIPLAYER.md. */
+  _shotDamage(dmg, wid, dist, head) {
+    let d = dmg;
+    if (GUNFEEL && wid) {
+      const bc = BALL_CLASS[wid] || 'rifle';
+      const fo = DMG_FALLOFF[bc];
+      if (fo) { const [s0, s1, mn] = fo; d *= Math.max(mn, Math.min(1, 1 - (dist - s0) / (s1 - s0))); }
+      if (head) d *= HS_MUL[bc] ?? 4;
+    } else if (head && d < 100) d = 100;
+    return d;
+  }
+
   _fireHitscan(shooter, from, dir, dmg, byPlayer = false, weap = 'AWP', wid = null, tracer = true) {
     this.ray.set(from, dir); this.ray.far = 200;
     const enemyGroups = this.bots.filter(b => b.alive && (byPlayer ? b.team !== this.playerTeam : true)).map(b => b.mesh.group);
@@ -3082,17 +3117,9 @@ export class Game {
       if (bot) {
         if (bot.team === shooter.team) { /* friendly fire off */ }
         else {
-          let d = dmg;
-          if (GUNFEEL && wid) {
-            // falloff: o raycast ia a 200 m com dano constante (P90 a 40 m = AWP). Sniper não
-            // tem queda. Headshot virou MULTIPLICADOR por classe — era `dmg = 100` fixo em
-            // qualquer arma, o que apagava a identidade das 26.
-            const bc = BALL_CLASS[wid] || 'rifle';
-            const fo = DMG_FALLOFF[bc];
-            if (fo) { const [s0, s1, mn] = fo; d *= Math.max(mn, Math.min(1, 1 - (hC.distance - s0) / (s1 - s0))); }
-            if (head) d *= HS_MUL[bc] ?? 4;
-          } else if (head && d < 100) d = 100;
-          this._damage(bot, d, shooter, weap, head, end);
+          /* Online: o cliente desenha o impacto mas NÃO aplica dano — o hp vem no snapshot.
+             Aplicar aqui contaria o dano duas vezes. Ver docs/MULTIPLAYER.md. */
+          if (!this.online) this._damage(bot, this._shotDamage(dmg, wid, hC.distance, head), shooter, weap, head, end);
           this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
         }
       }
@@ -3258,6 +3285,14 @@ export class Game {
     }
     if (ent.hp <= 0) this._kill(ent, attacker, weap, head);
   }
+  /* Feedback de "levei tiro" no online: o `_damage` local não roda, então quem dispara é o
+     netcode ao ver a queda de hp no snapshot. */
+  _playerHurtFx() {
+    try { this.sfx.hurt?.(); } catch { /* ctx mudo */ }
+    this._tintFx(0xff2222, false, 96);
+    this.player.recoilP = (this.player.recoilP || 0) + 0.02;
+  }
+
   _kill(ent, attacker, weap = 'AWP', head = false) {
     // TRAVA DE IDEMPOTÊNCIA: `_damage` já barra o morto (`!ent.alive`), mas basta um caminho
     // novo chamar `_kill` direto (queda, zona, script de round) pra sair killfeed dobrado e
@@ -3265,6 +3300,7 @@ export class Game {
     if (ent._killT === this.time && ent._killT !== undefined) return;
     ent._killT = this.time;
     ent.alive = false; ent.hp = 0; ent.deaths++;
+    ent._killedBy = attacker ? (attacker.name || null) : null;   // tela de morte do multiplayer (vai no snapshot)
     ent.respawnAt = this.time + RESPAWN_DELAY;
     // Drop tem prazo e teto porque a versão sem eles foi retirada por virar lixo de mapa;
     // faca não dropa (todo mundo nasce com uma). Histórico e números: tools/eval/drop-check.mjs.
@@ -4942,42 +4978,29 @@ export class Game {
     else if (tp.mixer) tp.mixer.update(dt);
   }
 
-  _updatePlayer(dt) {
-    const p = this.player;
-    this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
-    if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
-    if (!p.alive) {
-      if (this._replayCam) this._replayCam = null;
-      const left = p.respawnAt - this.time;
-      this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
-      this._deathFeedback(dt);
-      this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
-      if (left <= 0) this._respawnPlayer();
-      this.camera.position.y = Math.max(0.5, this.camera.position.y - dt * 2);
-      this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
-      return;
+  /* Desarma o _tpDeath no respawn. No online o respawn vem por SNAPSHOT e não passa pelo
+     _respawnPlayer — sem esta reversão o corpo TP ficava DEITADO pra sempre, arrastado pelo
+     mundo (BUG-86, KNOWN-BUGS.md). Chamado pelo _respawnPlayer (SP) e pelo netgame (MP). */
+  _tpRevive() {
+    this._tpDead = false;
+    const tp = this.playerTP;
+    if (!tp) return;
+    if (tp.ctrl && tp.ctrl.revive) tp.ctrl.revive();
+    if (tp.group) {
+      tp.group.visible = this.camView !== 'first';
+      tp.group.rotation.set(0, this.player.yaw + Math.PI, 0);
     }
-    // ressuscitou: desfaz a morte do corpo TP e ajusta visibilidade ao modo atual.
-    if (this._tpDead) {
-      this._tpDead = false;
-      if (this.playerTP && this.playerTP.ctrl && this.playerTP.ctrl.revive) this.playerTP.ctrl.revive();
-      if (this.playerTP && this.playerTP.group) this.playerTP.group.visible = this.camView !== 'first';
-    }
-    if (this.mobile && this.state === 'live') this._aimAssist(dt);   // sticky aim (a mira é por arraste)
-    // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
-    // o _damage fica fora desta região de edição, então não dá pra marcar o timestamp lá.
-    if (p.hp < (p._lastHp === undefined ? 100 : p._lastHp)) p._hurtAt = this.time;
-    p._lastHp = p.hp;
-    if (REGEN && p.hp > 0 && p.hp < 100 && this.time - (p._hurtAt || -99) > REGEN_DELAY)
-      p.hp = Math.min(100, p.hp + dt * REGEN_RATE);
-    // crouch (CTRL ou C). Agora vale NO AR também (crouch-jump é movimento básico de FPS —
-    // encolhe a silhueta no pulo e ajuda a subir degrau). Transição ASSIMÉTRICA como no CS2:
-    // agacha rápido (7/s ≈ 140ms) e levanta devagar (4.2/s ≈ 240ms), o que tira o
-    // crouch-spam de graça e dá peso ao movimento.
-    const wantCrouch = !!(this.keys.ControlLeft || this.keys.ControlRight || this.keys.KeyC);
+  }
+
+  /* Física do corpo do jogador. O servidor aplica ESTA função ao slot remoto — duas
+     implementações divergiriam e o jogo viveria em rubber-band. Ver docs/MULTIPLAYER.md. */
+  _moveEntity(p, inp, dt) {
+    // Crouch (CTRL/C) vale NO AR também, e a transição é assimétrica como no CS2.
+    // Números e motivo: docs/MULTIPLAYER.md.
+    const wantCrouch = !!inp.crouch;
     p.crouchF = Math.max(0, Math.min(1, p.crouchF + (wantCrouch ? dt * 7 : -dt * (MOVE2 ? 4.2 : 7))));
-    const walking = MOVE2 && !!(this.keys.ShiftLeft || this.keys.ShiftRight);   // Shift = ANDAR (silencioso)
-    const sprint = !MOVE2 && !!(this.keys.ShiftLeft || this.keys.ShiftRight) && p.crouchF < 0.3;
+    const walking = MOVE2 && !!inp.shift;   // Shift = ANDAR (silencioso)
+    const sprint = !MOVE2 && !!inp.shift && p.crouchF < 0.3;
     const slowMul = this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 0.45 : 1;  // água/lago
     // velocidade base × ARMA (MOVE_MUL) × andar × ADS × agachado × água
     const wpnMul = MOVE2 ? (MOVE_MUL[p.weapon] !== undefined ? MOVE_MUL[p.weapon] : 0.9) : 1;
@@ -4985,17 +5008,16 @@ export class Game {
       // crouch só freia NO CHÃO: crouch-jump não deve perder velocidade no ar (CS)
       ? PLAYER_SPEED * wpnMul * (walking ? WALK_MUL : 1) * (p.scoped ? 0.55 : 1) * (1 - 0.48 * p.crouchF * (p.grounded ? 1 : 0)) * slowMul
       : (sprint && slowMul === 1 ? 6.6 : 4.7) * (p.scoped ? 0.5 : 1) * (1 - 0.5 * p.crouchF) * slowMul;
-    let ix = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
-    let iz = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
-    // mobile: o joystick de toque manda o vetor (sobrepõe as teclas quando fora da zona morta)
-    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { ix = this.touchMove.x; iz = this.touchMove.z; }
+    let ix = inp.ax, iz = inp.az;
     const il = Math.hypot(ix, iz) || 1; ix /= il; iz /= il;
     const sin = Math.sin(p.yaw), cos = Math.cos(p.yaw);
     // camera: forward = (-sin, -cos), right = (cos, -sin)  →  wish = right*ix + forward*(-iz)
     const wx = ix * cos + iz * sin, wz = -ix * sin + iz * cos;
     // CoD tuning (port tuning.js): chão 92 m/s² (velocidade cheia em ~50ms = "tight");
     // ar = 25% de autoridade e NÃO ganha velocidade além da que saiu do chão (cap).
-    const accel = p.grounded ? 92 : 23;
+    // `__mutAccel`: gancho da movimento-golden. Sem ele o `--mutar=n` era setado e nunca
+    // lido, e a régua passava verde com a física mudada. Zero em produção.
+    const accel = (p.grounded ? 92 : 23) + (this.__mutAccel || 0);
     const spBefore = Math.hypot(p.vel.x, p.vel.z);
     p.vel.x += wx * accel * dt; p.vel.z += wz * accel * dt;
     if (!p.grounded) {
@@ -5027,8 +5049,8 @@ export class Game {
     // jump: coyote time (90ms) + jump buffer (130ms) — tuning CoD/MW: pular logo depois de
     // sair da borda ou logo antes de tocar o chão ainda funciona (feel moderno, zero risco)
     p.coyoteUntil = p.grounded ? this.time + 0.09 : (p.coyoteUntil || 0);
-    if (this.keys.Space && !this._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
-    this._spaceHeld = !!this.keys.Space;
+    if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
+    p._spaceHeld = !!inp.jump;
     if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
       p.vel.y = 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();   // apex ~0.61m (CoD)
     }
@@ -5060,6 +5082,48 @@ export class Game {
       if (!p.grounded && p.vel.y < -4) { this.sfx.land(); p.landDip = Math.min(1, -p.vel.y / 14); } // landing dip, sized by impact
       p.pos.y = g2; p.vel.y = 0; p.grounded = true;
     } else if (p.pos.y > g2 + 0.05) p.grounded = false;
+    return { sp, walking, sprint };
+  }
+
+
+  _updatePlayer(dt) {
+    const p = this.player;
+    this._checkCtfAlvo();          // alvo de BANDEIRAS: única condição de vitória da rodada de CAPTURA (sem gate)
+    if (PACE) this._checkPace();   // alvo de abates / match point — vale também com o jogador morto
+    if (!p.alive) {
+      if (this._replayCam) this._replayCam = null;
+      const left = p.respawnAt - this.time;
+      this.el.respawnCount.textContent = Math.max(0, left).toFixed(1);
+      this._deathFeedback(dt);
+      this._tpDeath(dt);   // corpo TP cai (item: "boneco não caía morto")
+      if (left <= 0) this._respawnPlayer();
+      this.camera.position.y = Math.max(0.5, this.camera.position.y - dt * 2);
+      this.camera.rotation.z = Math.min(0.5, (this.camera.rotation.z || 0) + dt * 0.8);
+      return;
+    }
+    if (this.mobile && this.state === 'live') this._aimAssist(dt);
+
+    // REGEN fora de combate (ver comentário da constante). Detecta o dano pela QUEDA do hp —
+    // o _damage fica fora desta região de edição, então não dá pra marcar o timestamp lá.
+    if (p.hp < (p._lastHp === undefined ? 100 : p._lastHp)) p._hurtAt = this.time;
+    p._lastHp = p.hp;
+    if (REGEN && p.hp > 0 && p.hp < 100 && this.time - (p._hurtAt || -99) > REGEN_DELAY)
+      p.hp = Math.min(100, p.hp + dt * REGEN_RATE);
+    // Teclado/toque -> input abstrato: o MESMO formato que trafega pela rede no multiplayer
+    // e que o servidor aplica ao slot remoto (ver _moveEntity).
+    let _ax = (this.keys.KeyD ? 1 : 0) - (this.keys.KeyA ? 1 : 0);
+    let _az = (this.keys.KeyS ? 1 : 0) - (this.keys.KeyW ? 1 : 0);
+    if (this.touchMove && (this.touchMove.x || this.touchMove.z)) { _ax = this.touchMove.x; _az = this.touchMove.z; }
+    const _inp = {
+      ax: _ax, az: _az,
+      crouch: !!(this.keys.ControlLeft || this.keys.ControlRight || this.keys.KeyC),
+      shift: !!(this.keys.ShiftLeft || this.keys.ShiftRight),
+      jump: !!this.keys.Space,
+    };
+    const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
+    /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
+       input pro servidor, que roda esta MESMA função. */
+    if (this.online) this._mp?.stepPlayer(p, _inp);
     // auto-fire (ak/m4/mp5) enquanto o botão está segurado
     if (WEAPONS[p.weapon].auto && this.mouseDown0 && p.alive) this._tryShoot();
     this.bloom = Math.max(0, (this.bloom || 0) - dt * 1.8);
@@ -5487,9 +5551,34 @@ export class Game {
     mesh.updateWorldMatrix(true, true);
     return mesh.position.y;
   }
+  refreshPickupModels() {
+    const replace = (pk, mapPickup) => {
+      if (!pk.mesh) return;
+      if (pk.mesh.userData.weaponSource && pk.mesh.userData.weaponRequested === pk.mesh.userData.weaponSource) return;
+      const rw = weaponModel(pk.weapon);
+      if (!rw) return;
+      rw.rotation.set(0, pk.mesh.rotation.y, mapPickup ? 0.12 : pk.mesh.rotation.z);
+      rw.visible = pk.mesh.visible;
+      rw.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      pk.mesh.removeFromParent();
+      this.scene.add(rw);
+      pk.mesh = rw;
+      this._assentarNoChao(rw, pk.x, pk.z, pk.folga ?? 0.01);
+    };
+    for (const pk of this.world.pickups || []) replace(pk, true);
+    for (const pk of this.drops || []) replace(pk, false);
+    const pendentes = [...(this.world.pickups || []), ...(this.drops || [])]
+      .some((pk) => pk.mesh?.userData.weaponProceduralFallback);
+    if (!pendentes && this._pickupFallbackTpl) {
+      this._pickupFallbackTpl.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+      this._pickupFallbackTpl = null;
+    }
+  }
   // CS: morto larga a arma no chão
   _dropWeapon(x, z, weapon, rack = false, folga = 0.01, expiraEm = 0) {
-    const mesh = weaponModel(weapon) || buildRifle();  // real GLB on the ground
+    const loaded = weaponModel(weapon);
+    const mesh = loaded || (this._pickupFallbackTpl ||= buildRifle()).clone(true);
+    if (!loaded) mesh.userData.weaponProceduralFallback = true;
     // lay it FLAT on its side (roll 90° about the barrel) so it rests on the ground
     // instead of standing on its belly. Rack drops (spawn weapon rows) get an aligned
     // yaw so they read as a tidy line; death drops/scatter get a random yaw.
@@ -5498,7 +5587,7 @@ export class Game {
     this._assentarNoChao(mesh, x, z, folga);
     mesh.traverse(o => { if (o.isMesh) o.castShadow = true; });
     this.scene.add(mesh);
-    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, expiraEm });
+    this.drops.push({ x, z, weapon, readyAt: 0, mesh, rack, folga, expiraEm });
     // só quem tem prazo entra na fila do teto: rack de spawn e troca de arma nunca são despejados
     if (expiraEm) {
       const comPrazo = [];
@@ -5569,11 +5658,15 @@ export class Game {
     return best || list[0];
   }
   _respawnPlayer() {
+    /* Online quem revive é o servidor. Renascer local escolheria um spawn que ele não
+       escolheu, e o próximo snapshot arrastaria o jogador de volta. */
+    if (this.online) return;
     const p = this.player;
     const s = this._pickSpawn(p.team);
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
     p.hp = 100; p.alive = true; p.crouchF = 0;
     p._lifeDmg = 0;
+    this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
     p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;
@@ -5721,7 +5814,46 @@ export class Game {
     T.set(b, now + BOT_TOKEN_HOLD);
     return true;
   }
+  /* Mesmo respawn de sempre, agora chamável da IA E do slot de gente. Preso na IA, quem morria
+     no multiplayer não voltava mais. Ver docs/MULTIPLAYER.md. */
+  _respawnEntity(b) {
+    const g = b.mesh.group;
+    const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
+    b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
+    /* Renascem sobrepostos de propósito: jitter no spawn foi medido e reprovado. Quem
+       desempilha é a despenetração do _botSeparation. Números: docs/MULTIPLAYER.md. */
+    b.protUntil = this.time + SPAWN_PROT;
+    b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
+    b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
+    b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
+    b.target = null; b.path = null; b.yaw = b.team === 'E' ? 0 : Math.PI;
+    // Coluna, rota, juke e rumo são estado de VIDA: herdá-los repete rota e gira no spawn.
+    b.laneX = undefined; b.roamUntil = 0;
+    b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;
+    b._hdg = undefined; b._tokRest = 0; b._repathMin = 0;
+    if (this._duelTok) this._duelTok.delete(b);
+    b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
+    g.rotation.set(0, b.yaw, 0); g.position.copy(b.pos); g.visible = true;
+    if (b.mesh.isGLB) b.mesh.ctrl.revive();
+  }
+
   _updateBot(b, dt) {
+
+    if (b._remote) {
+      /* Corpo com dono: cliente interpola do snapshot; servidor cuida do ciclo de vida dele.
+         O respawn é chamado AQUI porque corpo de gente não passa pela IA. Ver docs/MULTIPLAYER.md. */
+      if (this.online) { this._mp?.updateRemoteBot(b, dt); return; }
+      if (!b.alive) {
+        b.deadT = (b.deadT || 0) + dt;
+        if (this.time >= b.respawnAt && this.state === 'live') this._respawnEntity(b);
+        return;
+      }
+      if (b._netInput) this._moveEntity(b, b._netInput, dt);
+      return;
+    }
+    // `__mutBotYaw`: gancho da botsim-golden (mesmo precedente do __mutAccel) — deriva o rumo
+    // do bot pra régua provar que morde. Zero em produção.
+    if (this.__mutBotYaw && b.alive) b.yaw += this.__mutBotYaw * dt;
     const g = b.mesh.group;
     // Sem alvo no CTF, mantém a navegação roteirizada até o objetivo.
     if (this._botBrain && this._botBrain.ready && this.botBrainMix > 0 && b.alive && this.state === 'live'
@@ -5740,30 +5872,7 @@ export class Game {
         g.position.y = b.pos.y + Math.max(-0.6, 0 - b.deadT * 0.3);
       }
       if (this.time >= b.respawnAt && (this.state === 'live')) {
-        const s = this._pickSpawn(b.team);   // mesmo critério de segurança do jogador
-        b.pos.set(s.x, this._spawnY(s.x, s.z), s.z); b.hp = 100; b.alive = true;
-        /* RENASCER NO MESMO PIXEL: o _pickSpawn devolve o ponto MAIS SEGURO, e ele é o mesmo
-           pra todo mundo que morreu junto — 3 bots renascem exatamente sobrepostos. Tentei
-           afastar com um jitter de 0,6-1,4 m e o harness reprovou pelo mesmo motivo do
-           _resetPositions: o spawn da Loja H é um bolsão de gôndolas, e empurrar o bot pra
-           fora do ponto custa segundos de contorno (time da loja na metade inimiga 19,9% ->
-           13,8%, rota falhando 18,5% -> 30,0%, 40 corridas × 150 s). Quem desempilha aqui é a
-           DESPENETRAÇÃO do _botSeparation — ela age no 1º frame e não tira ninguém do bolsão. */
-        b.protUntil = this.time + SPAWN_PROT;
-        b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
-        b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
-        b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
-        b.target = null; b.path = null; b.yaw = b.team === 'E' ? 0 : Math.PI;
-        b.laneX = undefined; b.roamUntil = 0;   // re-sorteia a coluna A CADA VIDA -> rotas variam (não "sempre a mesma")
-        b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;   // limpa estado de rota/juke da vida anterior (G2-R6A)
-        // rumo suavizado e turno de duelo também são estado de vida: nascer com o _hdg da
-        // vida anterior faz o bot sair do spawn girando pra alinhar com um rumo de outro
-        // lugar do mapa — de novo a pirueta, só que no respawn.
-        b._hdg = undefined; b._tokRest = 0; b._repathMin = 0;
-        if (this._duelTok) this._duelTok.delete(b);
-        b._lp = { x: s.x, z: s.z };   // evita spike de velocidade (teleporte) no 1º frame
-        g.rotation.set(0, b.yaw, 0); g.position.copy(b.pos); g.visible = true;
-        if (b.mesh.isGLB) b.mesh.ctrl.revive();
+        this._respawnEntity(b);
       }
       this._updateTeamMark(b);   // marcador some junto com o corpo (senão fica halo órfão no chão)
       return;
@@ -5869,8 +5978,13 @@ export class Game {
       // BOUNDS REAIS do mapa, com 12% de margem pra não colar na parede.
       const B = this.world.bounds;
       const m = (B.maxX - B.minX) * 0.18;   // margem: a 12% a coluna encostava no muro do perímetro e o bot raspava
-      b.laneX = BOT_MOVE2 ? (B.minX + m) + ((B.maxX - m) - (B.minX + m)) * Math.random() : -10.5 + 21 * Math.random();
-      b.roamSeed = (Math.random() * 3) | 0;   // varia a profundidade-alvo (deepZ) também
+      const mates = this.bots.filter((o) => o.team === b.team);
+      const ord = Math.max(0, mates.indexOf(b)), n = Math.max(1, mates.length);
+      const x0 = B.minX + m, x1 = B.maxX - m;
+      b.laneX = this.__mutBotLanes
+        ? x0 + (x1 - x0) * Math.random()
+        : x0 + (x1 - x0) * (n === 1 ? 0.5 : ord / (n - 1));
+      b.roamSeed = ord;
     }
     let moving = 0;
     if (b.target) {
@@ -6244,17 +6358,16 @@ export class Game {
           // direita. Agora cada bot recebe uma coluna x fixa e espalhada por toda a largura,
           // e o alvo é o nó da metade inimiga mais perto de (laneX, z-profundo) — força a
           // ocupar esquerda/centro/direita e evita o "andam em bando".
-          if (b.laneX === undefined) {
-            const mates = this.bots.filter(o => o.team === b.team);
-            const ord = mates.indexOf(b), n = Math.max(1, mates.length);
-            b.laneX = -18 + 36 * (n === 1 ? 0.5 : ord / (n - 1)) + (Math.random() * 4 - 2);
-            b.roamSeed = this.bots.indexOf(b);
-          }
           // z-alvo: fundo da metade inimiga, alternando profundidade por bot E POR DESTINO
           // (anti-milling G2-R6A: chegando ao fundo, o mesmo nó era re-alvejado pra sempre
           // com o jitter ±4 flipando entre 2 vizinhos — "andando pro lado e pro outro").
           b._roamN = (b._roamN || 0) + 1;
-          const deepZ = sign * (22 + ((b.roamSeed + b._roamN) % 3) * 16);
+          const zi = (b.roamSeed + b._roamN) % 3;
+          const midZ = (W.bounds.minZ + W.bounds.maxZ) * 0.5;
+          const edgeZ = sign > 0 ? W.bounds.maxZ : W.bounds.minZ;
+          const deepZ = this.__mutBotDepth
+            ? sign * (22 + zi * 16)
+            : midZ + (edgeZ - midZ) * [0.42, 0.65, 0.86][zi];
           if (b._unreach && b._unreach.size > 12) b._unreach.clear();   // não esgota o mapa
           let best = -1, bd = 1e9, bestAny = -1, bdAny = 1e9;
           let bestFar = -1, bdFar = 1e9, bestFree = -1, bdFree = 1e9;   // fora da ilha do bot (fallback)
@@ -6966,7 +7079,12 @@ export class Game {
       if (wallT < REPLAY_SLOWMO_DUR) dt *= REPLAY_SLOWMO;
     }
     this.time += dt;
-    if (this.state === 'countdown' && this.time >= this.stateUntil) {
+    // Snapshot ANTES de mover: aplicar depois renderizaria o frame com o mundo de ontem.
+    if (this.online) this._mp?.applySnapshot();
+    /* Máquina de rodada local só roda OFFLINE: duas girando são dois árbitros, e o cliente
+       mostraria um placar que ninguém mais vê. */
+    if (this.online) { /* servidor manda */ }
+    else if (this.state === 'countdown' && this.time >= this.stateUntil) {
       this.state = 'live';
       this._banner(frase('valendo'), 'A treta está liberada');
     } else if (this.state === 'live') {
@@ -6998,7 +7116,7 @@ export class Game {
       if (this._fimDaPartida()) this._endMatch();
       else this._startRound();
     }
-    this._updatePlayer(dt);
+    if (!this.dedicated) this._updatePlayer(dt);   // servidor dedicado: não há jogador local
     if (this._recorder && this._recordEnabled) {
       this._recorder.tick(dt);
       // envio PERIÓDICO (~300 frames ≈ 30s de jogo vivo): coleta contínua sem depender de
@@ -7020,6 +7138,7 @@ export class Game {
     /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
        passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */
     if (!render) return;
+    this._rafFrames = (this._rafFrames || 0) + 1;   // fps REAL de render (lido pelo overlay de rede)
     this.renderer.render(this.scene, this.camera);
     // VM overlay SEM pós (quality low / ?bloom=0): o composer não existe, então desenha
     // a vmScene por cima do mundo aqui (com pós, o RenderPass do bloom.js já faz isso).
@@ -7039,6 +7158,8 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    try { this._mp?.dispose(); } catch { /* já foi */ }
+    this._mp = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then
     if (this._envRT) { this._envRT.dispose(); this._envRT = null; this.scene.environment = null; }   // libera o env map (IBL)
     document.removeEventListener('keydown', this._kd);
@@ -7072,6 +7193,7 @@ export class Game {
     if (this._dolly) { this._dolly.renderer.dispose(); this._dolly.canvas.remove(); this._dolly = null; }
     this.world.ambience?.dispose();
     this.soundscape?.dispose(); this.soundscape = null;
+    this._pickupFallbackTpl?.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
     this.scene.clear();
   }
