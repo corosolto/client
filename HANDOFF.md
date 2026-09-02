@@ -58,8 +58,9 @@ salas, `officialTeamSize:3`, `snapshotHz:30`, os mesmos SHAs e protocolos 1/2/3.
 **Admin publicado:** `https://csbrasil-admin.vercel.app/multiplayer` mostra até 500 jornadas
 recentes com horário de Lisboa, jogador/anon, sessão curta, nó, sala oficial ou criada,
 mapa/modo, time, duração, K/D, FPS, RTT, snapshot/gap, classificação de experiência, saída e
-SHAs. Duas sessões reais `CANARIO` já apareceram com EU, FUNKEIROS × PALHAÇOS, penitenciária,
-rounds, time E, 2 s, 60 FPS, 45 ms, saída limpa e builds corretos. O painel não expõe IP.
+SHAs. Três sessões reais `CANARIO` já apareceram com EU, FUNKEIROS × PALHAÇOS, penitenciária,
+rounds, time E, 2 s, 60 FPS, 45 ms, saída limpa e builds corretos; a última também registrou
+30 Hz / gap de 40 ms e foi classificada como experiência `boa`. O painel não expõe IP.
 
 **Ainda não aceito / não confundir com pronto:** partidas reais ainda precisam de aceitação
 humana para animação dos remotos/bots, dano, spawn/respawn em Piscina e Loja H, CTF completo
