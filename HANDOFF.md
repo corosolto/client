@@ -43,6 +43,26 @@ deduplica duas conexões realmente ativas com o mesmo nick; BUG-108 precisa de u
 BUG-109 precisa de escuta no canário. A migration 027 e os números do game-admin continuam
 fora deste checkpoint.
 
-**Próximo passo:** publicar primeiro um backend compatível com v3/v2/v1, depois o cliente;
-jogar o roteiro acima no canário, observar `/metrics` e só então promover. Se qualquer etapa
-falhar, manter produção atual e não misturar este trabalho com armas/viewmodels.
+**Release consolidado em 02/09/2026:** o backend entrou em `main` pelos PRs
+[#5](https://github.com/corosolto/backend/pull/5),
+[#6](https://github.com/corosolto/backend/pull/6) e
+[#7](https://github.com/corosolto/backend/pull/7). A API do Cloud Run serve o SHA
+`dc06c1d90687aa6bd837c8760999ecd3de01f1f0` na revisão
+`csbrasil-backend-00005-gkj`. O cliente entrou pelo PR
+[#489](https://github.com/corosolto/client/pull/489), merge `f90901df`, e o release
+automático `57a263ee` publicou `2.0.0-alpha.206` no Vercel. No `main` final passaram
+`pr-fast`, `portao-browser`, release e o status de deploy do Vercel.
+
+**Fronteira de produção:** esse merge publicou a API e o cliente, mas não promoveu a imagem
+nova nos nós regionais BR/EU/US. Portanto, os consertos autoritativos do servidor só ficam
+live depois de canário e rollout explícitos dos nós. O `prod-watch` também continua vermelho:
+`/api/health` respondeu `fresh:false` para `presence`, `perf`, `telemetry`, `match` e `city`.
+A migration 027, a coerência histórica do game-admin e a aceitação humana de bots, spawns,
+CTF e áudio não foram concluídas. Os PRs antigos #3 e #4 do backend foram incorporados pelo
+PR #5 e não devem ser mergeados novamente; #1 precisa de auditoria separada e #2 ficou
+obsoleto diante do Terraform consolidado.
+
+**Próximo passo:** fazer canário de um nó com a imagem correspondente ao backend consolidado,
+jogar o roteiro acima, observar `/metrics` e os cinco sinais marcados como stale, aplicar e
+validar a migration 027 quando autorizada e só então promover BR/EU/US. Se qualquer etapa
+falhar, manter os nós atuais e não misturar este trabalho com armas/viewmodels.
