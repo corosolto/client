@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
 import { WEAPONS } from './game.js';
+import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
@@ -110,7 +111,7 @@ class Netcode {
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
-      bot.name = e.name;
+      bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
       bot.pos.set(e.x, e.y, e.z); bot.yaw = e.yaw;
       this._netMap.set(e.id, bot);
     }
@@ -131,10 +132,12 @@ class Netcode {
     /* Relógio, placar e ESTADO da rodada vêm do servidor — a máquina local está desligada no
        online (game.update). Sem copiar o estado, o cliente ficaria eternamente em 'countdown'
        e nada se moveria. */
+    const estadoAntes = game.state, placarAntes = game.roundsWon ? { E: game.roundsWon.E, B: game.roundsWon.B } : null;
     game.state = snap.state || game.state;
     if (Number.isFinite(snap.timeLeft)) game.timeLeft = snap.timeLeft;
     if (Number.isFinite(snap.roundNum)) game.roundNum = snap.roundNum;
     if (game.roundsWon && Number.isFinite(snap.scoreE)) { game.roundsWon.E = snap.scoreE; game.roundsWon.B = snap.scoreB; }
+    if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
 
     if (snap.tick === this._netTick) return;
@@ -156,6 +159,14 @@ class Netcode {
       const wasHp = ent.hp, wasAlive = ent.alive;
       ent.hp = e.hp; ent.alive = e.alive;
       ent.kills = e.k | 0; ent.deaths = e.d | 0;     // scoreboard vem do servidor
+      /* NOME vem do servidor a cada snapshot, não só no casamento: quando um humano toma o
+         slot de um bot (ou devolve), quem já estava na sala via o nome velho ("Padati" no
+         lugar do jogador — medido em 02/09 com duas abas na mesma sala). */
+      if (ent !== game.player && e.name) {
+        ent._nomeServidor = e.name;
+        const rotulo = e.bot ? `[BOT] ${e.name}` : e.name;   // pedido do dono (02/09): bot é bot, gente é gente
+        if (ent.name !== rotulo) ent.name = rotulo;
+      }
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
         const renasceu = !wasAlive && e.alive;
@@ -194,7 +205,8 @@ class Netcode {
       if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
       ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
       if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
-      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); }
+      ent._netPitch = e.pitch || 0;
+      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
       if (e.voice) this.voice(ent, e.voice);
       /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
          snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
@@ -214,6 +226,47 @@ class Netcode {
       }
     }
     if (this.espectador) this.cameraEspectador();
+  }
+
+  /* TRANSIÇÕES DE RODADA NO ONLINE. A máquina local (`_endRound`/`_startRound`/`_endMatch`)
+     está desligada; só o `state` é copiado. Sem este método o fim de round era "a imagem
+     congela e do nada recomeça" (dono, 02/09): nada de placar, nada de banner, nada de tela
+     de fim. Aqui replicamos SÓ o feedback — quem venceu sai da diferença do placar do
+     servidor; posição, relógio e estado continuam vindo do snapshot. */
+  transicaoDeEstado(antes, depois, placarAntes) {
+    const game = this.game;
+    if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
+    try {
+      if (depois === 'roundEnd') {
+        let winner = null;
+        if (placarAntes && game.roundsWon) {
+          if (game.roundsWon.E > placarAntes.E) winner = 'E';
+          else if (game.roundsWon.B > placarAntes.B) winner = 'B';
+        }
+        game.player.scoped = false; game.el.scope?.classList.remove('on');
+        game.radioOpen = null; game._radioUi?.();
+        if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
+        else {
+          const mine = winner === game.playerTeam;
+          game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          if (!game.sfx.roundSound(game._voiceKey(winner))) mine ? game.sfx.roundWin() : game.sfx.roundLose();
+        }
+        try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
+      } else if (depois === 'countdown') {
+        game._resultado = null;
+        game._showScoreboard(false);
+        game.mk.life = 0; game.mk.count = 0;
+        game._banner(frase('round', game.roundNum), game.ctf
+          ? frase('alvoBandeiras', game.capsToWin)
+          : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+        if (!game.sfx.csSound('roundstart')) game.sfx.vuvuzela(1.4);
+      } else if (depois === 'live' && antes === 'countdown') {
+        game._banner(frase('valendo'), 'A treta está liberada');
+      } else if (depois === 'matchEnd') {
+        game._showScoreboard(false);
+        game._endMatch();   // tela de VITÓRIA/DERROTA + envio do resultado; o servidor gira o mapa em ~8 s (`partida`)
+      }
+    } catch (e) { console.warn('[mp] transição de estado falhou (segue o jogo):', e && e.message); }
   }
 
   /* Estado CTF do servidor. O cliente online não executa `_updateCTF`, então copiar só
@@ -252,7 +305,7 @@ class Netcode {
     if (!nome) return null;
     const game = this.game;
     if (game.player && game.player.name === nome) return game.player;
-    for (const b of this._netMap.values()) if (b !== game.player && b.name === nome) return b;
+    for (const b of this._netMap.values()) if (b !== game.player && (b._nomeServidor === nome || b.name === nome)) return b;
     return null;
   }
   // rótulo curto da arma pro killfeed/painel (mesmo formato que o _damage usa no SP)
@@ -375,7 +428,15 @@ class Netcode {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
       g.position.copy(b.pos); g.rotation.set(0, b.yaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
-      if (b.mesh.isGLB) b.mesh.ctrl.update(dt, spd, false); else poseCharacter(b.mesh.parts, spd, 0, game.time);
+      if (b.mesh.isGLB) {
+        /* Assinatura do animador: update(dt, moving, hasTarget, speed, back). Antes ia
+           `(dt, spd, false)` — `speed` ficava 0, o clipe de andar rodava a 0,45× e nunca virava
+           corrida: o corpo deslizava a 2-6 m/s com as pernas em câmera lenta ("filme lento
+           com glitch", relato do dono em 02/09). Agora a velocidade real dirige o clipe, a
+           cabeça segue o pitch do servidor e o tiro do snapshot toca o clipe de tiro. */
+        b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, false);
+      } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
       if (b.mesh.isGLB) {

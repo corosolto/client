@@ -1660,6 +1660,23 @@ export class Game {
     // ~43% em 0,1 s e o k sustentado fica <= 1,0 — a curva volta a ~zero entre tiros, que é
     // o que dá a leitura de "cada tiro é um evento" em vez de "arma tremendo".
     this._vmFrame(true);   // 1º enquadramento (aspecto atual da câmera principal)
+    /* MONTAGEM TARDIA. O viewmodel é construído UMA vez, com os GLBs que o preload da partida
+       trouxe (~9 armas: o roster no multiplayer, o sorteio no single). O armário do spawn
+       oferece as 26, e o resto chega em ocioso (`preloadWeapons` no main.js) — mas nada
+       voltava aqui: quem pegava uma arma fora do preload ficava com um grupo só de mãos, sem
+       `rw`. Medido em 02/09 (akm, g3, m92... `children: [handR, handL]`) — "as armas não
+       aparecem no viewmodel". Agora a troca de arma (e o fim do preload ocioso) monta o GLB
+       que faltava e re-enquadra. Idempotente: com `rw` já montado não faz nada. */
+    this._vmMontarTardio = (id) => {
+      const g = models[id];
+      if (!g || g.getObjectByName('rw')) return false;
+      const rw = mountRw(g, id);
+      if (!rw) return false;
+      alignHands(g, id);
+      if (this._weaponOnly) g.traverse((o) => { if (o.name === 'handR' || o.name === 'handL') o.visible = false; });
+      this._vmFrame(true);
+      return true;
+    };
     return vmObj;
   }
 
@@ -2761,6 +2778,7 @@ export class Game {
   // 07/08/2026 — o histórico está no git.
   _applyVmVisibility() {
     const w = this.player.weapon;
+    this._vmMontarTardio?.(w);   // GLB que chegou depois do construtor (ver _buildViewModels)
     if (this.vm.arms) this.vm.arms.group.visible = true;
     for (const k in this.vm.models) this.vm.models[k].visible = k === w;
   }
@@ -7121,6 +7139,10 @@ export class Game {
       else this._startRound();
     }
     if (!this.dedicated) this._updatePlayer(dt);   // servidor dedicado: não há jogador local
+    /* ESPECTADOR (dedicated no cliente): sem _updatePlayer ninguém posiciona o viewmodel, e ele
+       ficava parado na pose de construção — uma pistola gigante na cara de quem assiste
+       (print do dono, 02/09). Quem assiste vê o mundo pelos olhos do outro, sem arma própria. */
+    else if (this.vm && this.vm.root) this.vm.root.visible = false;
     if (this._recorder && this._recordEnabled) {
       this._recorder.tick(dt);
       // envio PERIÓDICO (~300 frames ≈ 30s de jogo vivo): coleta contínua sem depender de
@@ -7137,7 +7159,7 @@ export class Game {
     // hint de pointer lock: visível só quando o jogo está ativo mas sem lock
     if (this.el.lockHint)
       this.el.lockHint.classList.toggle('hidden',
-        this.testMode || this.mobile || this.paused || !!document.pointerLockElement ||
+        this.testMode || this.mobile || this.paused || !!document.pointerLockElement || this.espectando() ||
         (this.state !== 'live' && this.state !== 'countdown'));
     /* #295: o main.js fatia frames longos em vários update() — só o ÚLTIMO
        passo desenha; render no meio multiplicaria custo de GPU em FPS baixo. */

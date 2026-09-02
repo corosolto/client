@@ -1121,7 +1121,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
       ocioso(async () => {
         try {
           await preloadWeapons();
-          if (window.__game === meuJogo) meuJogo.refreshPickupModels();
+          if (window.__game === meuJogo) { meuJogo.refreshPickupModels(); meuJogo._applyVmVisibility?.(); }   // + viewmodel da arma na mão, se chegou agora
         } catch { /* disponibilidade: o fallback procedural continua jogável */ }
       });
     }, 250);
@@ -3096,18 +3096,32 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
     });
   };
+  /* NOVA PARTIDA no servidor (o mapa girou). Mesmo conteúdo do welcome: mapa, modo, roster e
+     o seu slot vêm de novo, e o jogo é remontado por cima — é o mesmo caminho da entrada.
+     Sem isto o cliente ficava no mapa velho com ids mortos (bonecos congelados, "não mostra
+     nada", nome de bot no lugar do jogador, `PLH 4 × 3 FNK` ao pegar vaga). */
+  net.onPartida = async (m) => {
+    if (mpSessao?.net !== net) return;
+    if (MAPS[m.map]) currentMap = m.map;
+    matchMode = m.ctf ? 'ctf' : 'rounds';
+    await mpMontarPartida(net, m);
+  };
+  await mpMontarPartida(net, welcome);
+}
+
+/* Monta (ou remonta) a partida a partir de um welcome/partida do servidor: lado, facções e
+   personagem são do CORPO que o servidor deu. Espectador não tem corpo: usa qualquer um da
+   facção só para o preload não ficar vazio. */
+async function mpMontarPartida(net, m) {
   // o lado do jogador vem do servidor; a facção também (a sala LIVRE sorteia)
-  const lado = welcome.yourTeam === 'B' ? 'B' : 'E';
-  const faccaoMinha = lado === 'B' ? welcome.faccaoB : welcome.faccaoE;
-  const faccaoDele = lado === 'B' ? welcome.faccaoE : welcome.faccaoB;
-  /* Seu personagem é o do CORPO que o servidor te deu — no multiplayer o corpo vem antes da
-     escolha (você entra numa vaga que já existe, com um sujeito dentro). Espectador não tem
-     corpo: usa qualquer um da facção só para o preload não ficar vazio. */
-  const meuNoRoster = (welcome.roster || []).find((r) => r.id === welcome.yourEnt);
+  const lado = m.yourTeam === 'B' ? 'B' : 'E';
+  const faccaoMinha = lado === 'B' ? m.faccaoB : m.faccaoE;
+  const faccaoDele = lado === 'B' ? m.faccaoE : m.faccaoB;
+  const meuNoRoster = (m.roster || []).find((r) => r.id === m.yourEnt);
   const personagem = (meuNoRoster && CHARACTERS.some((c) => c.id === meuNoRoster.char) ? meuNoRoster.char : null)
     || (CHARACTERS.find((c) => c.team === faccaoMinha) || CHARACTERS[0]).id;
   await startGame(lado, personagem, faccaoDele, true);
-  mpAtualizarBarraSpec(welcome);
+  if (mpSessao?.net === net) mpAtualizarBarraSpec(m);
 }
 
 /* Conexão caiu no meio da partida. Nada de "reconectar sozinho e fingir que não houve nada":
@@ -3156,8 +3170,12 @@ function mpAtualizarBarraSpec(estado) {
       const quem = document.getElementById('mp-spec-quem');
       if (quem) quem.textContent = mp?.nomeAlvo || '—';
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
-      if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR NO TIME E${vagas ? ` (${vagas.E})` : ''}`; }
-      if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR NO TIME B${vagas ? ` (${vagas.B})` : ''}`; }
+      /* Nome da FACÇÃO, não a letra do lado: a sala é "FUNKEIROS × PALHAÇOS" e o botão dizia
+         "TIME E / TIME B" — ninguém sabe qual é qual (relato do dono, 02/09). */
+      const meta = mpSessao?.net?.meta || {};
+      const nomeE = meta.nomeE || 'TIME E', nomeB = meta.nomeB || 'TIME B';
+      if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }
+      if (bb) { bb.disabled = !(vagas && vagas.B > 0); bb.textContent = `ENTRAR: ${nomeB}${vagas ? ` (${vagas.B})` : ''}`; }
     }, 400);
   }
 }
