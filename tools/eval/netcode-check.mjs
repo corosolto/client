@@ -17,10 +17,10 @@ const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { fa
 
 /* NetClient de mentira: mesma superfície que o netgame consome (snap/prev/yourEnt/meta/
    sendInput/startPing/stopPing/computeStats), sem socket. */
-function fakeNet(yourEnt, teamSize = 5, ctf = false) {
+function fakeNet(yourEnt, teamSize = 5, ctf = false, snapshotHz = 20) {
   return {
     yourEnt, yourTeam: 'E', espectador: yourEnt == null,
-    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2 },
+    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2, snapshotHz },
     snap: null, prev: null, enviados: [],
     startPing() {}, stopPing() {},
     computeStats() { return { hz: 20, kbps: 1, gapMax: 50, sinceLast: 10, ents: 10, tick: 1, ping: 30 }; },
@@ -383,6 +383,15 @@ console.log('\n· remotos interpolam com BUFFER (~120 ms): pacote atrasado não 
   g2.dispose();
 }
 
+console.log('\n· cadência de 30 Hz reduz a latência visual sem perder o buffer');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  cobra(g._mp.snapshotHz === 30 && g._mp.interpAtrasoMs === 80,
+    `welcome de 30 Hz escolhe buffer de 80 ms (${g._mp.interpAtrasoMs} ms), não herda 120 ms de 20 Hz`);
+  g.dispose();
+}
+
 console.log('\n· troca de vaga preserva UI e remonta o casamento de corpos');
 {
   const net = fakeNet(1);
@@ -469,18 +478,40 @@ console.log('\n· server browser mede RTT aquecido, não o custo único de TLS')
   const [mutante] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 1000, 1);
   cobra(mutante.ping >= 150, `MUTANTE com uma amostra volta a misturar TLS no ping (${mutante.ping} ms)`);
 
+  let abortsDaSonda = 0;
   globalThis.fetch = async (_url, { signal } = {}) => new Promise((resolve, reject) => {
     const timer = setTimeout(() => resolve(new Response(JSON.stringify({ players: 0, rooms: 0 }), {
       status: 200, headers: { 'content-type': 'application/json' },
     })), 80);
-    signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('aborted', 'AbortError')); }, { once: true });
+    signal?.addEventListener('abort', () => {
+      abortsDaSonda++;
+      clearTimeout(timer);
+      reject(new DOMException('aborted', 'AbortError'));
+    }, { once: true });
   });
   const totalT0 = performance.now();
   const [expirou] = await sondarNos([{ id: 'xx', nome: 'Teste', url: 'wss://teste.invalid/ws' }], 100, 2);
   const totalDt = performance.now() - totalT0;
-  cobra(!expirou.online && totalDt < 145,
-    `o prazo cobre a sonda inteira, não reinicia por amostra (${totalDt.toFixed(0)} ms)`);
+  cobra(!expirou.online && abortsDaSonda >= 1 && totalDt < 300,
+    `o prazo cobre a sonda inteira e ABORTA as pendências, não reinicia por amostra (${totalDt.toFixed(0)} ms; ${abortsDaSonda} abort)`);
   globalThis.fetch = fetchReal;
+}
+
+console.log('\n· sair do multiplayer devolve o slot antes do close handshake');
+{
+  const { NetClient } = await import('../../public/js/net.js');
+  const enviados = [], fechamentos = [];
+  const net = new NetClient('wss://eu.example/ws', { room: 'funk-x-palhaco' });
+  net.ws = {
+    readyState: 1,
+    send: (payload) => enviados.push(JSON.parse(payload)),
+    close: (...args) => fechamentos.push(args),
+  };
+  net.close();
+  cobra(enviados.length === 1 && enviados[0].type === 'leave',
+    'NetClient envia leave explícito enquanto o socket ainda está aberto');
+  cobra(fechamentos.length === 1 && fechamentos[0][0] === 1000 && fechamentos[0][1] === 'client_quit',
+    'e depois inicia um close limpo e identificável');
 }
 
 console.log('\n· lado físico do multiplayer vem do servidor, não da facção visual');

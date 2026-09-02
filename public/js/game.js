@@ -703,7 +703,11 @@ export class Game {
     this._eyeWorld = new THREE.Vector3();   // posição do OLHO — origem de tiro/fumaça em 3ª pessoa
     /* Só o CORPO do jogador (tecla B) — sem `weapons` o glbchars pré-carrega as 26 armas
        BLOQUEANDO e desfaz o lazy da partida (ARM1/ARM3). BUG-85. */
-    try { preloadCharacterAssets([playerCharId], { weapons: [charWeapon(playerCharId)] }); } catch {}
+    /* O dedicado usa `testMode`: sem browser/GLB, preload inútil compete com snapshots.
+       No browser, main.js já aguarda o preload antes do `new Game`. */
+    if (!testMode) {
+      try { preloadCharacterAssets([playerCharId], { weapons: [charWeapon(playerCharId)] }); } catch {}
+    }
 
     // ---- player ----
     // Spawns holding the SAME weapon shown on the character-select screen (charWeapon).
