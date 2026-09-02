@@ -2722,7 +2722,7 @@ async function obterMpTicket(action) {
   if (!/^[a-z]{2}$/.test(node)) return '';
   const r = await fetch(apiUrl('/api/mp-ticket'), {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ node, action }),
+    body: JSON.stringify({ node, action, anonId: getAnonId(), sessionId: getSessionId() }),
   });
   if (!r.ok) throw new Error(`ticket_${r.status}`);
   const body = await r.json();
@@ -2978,6 +2978,7 @@ function mpMontarFormulario() {
         name: mpEl('mp-nome').value.trim(), rotacao: mpEl('mp-rotacao').value,
         faccaoE: mpEl('mp-fac-e').value, faccaoB: mpEl('mp-fac-b').value,
         ctf: mpEl('mp-modo').value === 'ctf', private: privada, password: senha, maxPlayers: 10,
+        creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
       let cheia = { ...sala, id: sala.room || sala.id };
       /* o convite pode não vir no POST — a lista é a fonte que já o carrega; busca a sala
@@ -3016,6 +3017,7 @@ function mpMontarFormulario() {
       const sala = await createRoom(mpNoAtual.http, {
         name: 'TRETA RÁPIDA', rotacao: 'todos', faccaoE: 'random', faccaoB: 'random',
         ctf: false, private: false, password: '', maxPlayers: 10,
+        creatorNick: ($('nick-input').value || '').trim() || null,
       }, ticket);
       mpEntrar({ ...sala, id: sala.room || sala.id }, 'auto');
     } catch {

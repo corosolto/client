@@ -167,10 +167,25 @@ export class NetClient {
   sendInput(inp) {
     if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ type: 'input', seq: ++this.seq, ...inp }));
   }
+  // Amostra de EXPERIÊNCIA do cliente (não autoridade): FPS só existe no navegador.
+  // O nó valida/taxa e junta isto à sessão autoritativa de sala para o painel interno.
+  sendClientStats(sample) {
+    if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ type: 'client_stats', ...sample }));
+  }
   // pedir vaga num time ('E' | 'B' | 'auto'); o servidor responde com `slot`.
   pedirTime(team = 'auto') { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ type: 'time', team })); }
   // sair de campo e assistir: o corpo volta a ser bot e a partida segue cheia.
   espectar() { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ type: 'espectar' })); }
 
-  close() { this.stopPing(); try { this.ws?.close(); } catch { /* já fechado */ } }
+  close() {
+    this.stopPing();
+    const ws = this.ws;
+    if (!ws) return;
+    try {
+      // O close handshake do navegador pode demorar; avisa o nó antes para devolver o slot
+      // humano imediatamente e não deixar Rubao fantasma no lobby até o timeout de 45 s.
+      if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'leave' }));
+      ws.close(1000, 'client_quit');
+    } catch { /* já fechado */ }
+  }
 }
