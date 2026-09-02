@@ -3666,6 +3666,13 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-115 · “dei pause e voltei: a mira não sobe, a arma sumiu”** (dono, 02/09, produção,
+  multiplayer). **CAUSA IDENTIFICADA E CORRIGIDA LOCALMENTE.** Pausado, o `update()` não roda
+  e nenhum input sai; após 45 s o servidor devolve o slot à IA (`releaseInactiveSlots`, defesa
+  do BUG-107) e manda `slot` espectador — o jogador volta do menu ASSISTINDO outro corpo (sem
+  arma própria, câmera presa). `Netcode._pulsoDePausa` manda um input parado a cada 2 s
+  enquanto pausado. **Régua:** `eval:netcode`.
+
 - **BUG-114 · “quando acabou o round ele só congelou a imagem e reiniciou do nada”** (dono,
   02/09, produção, multiplayer). **CORRIGIDO LOCALMENTE.** A máquina local de rodada está
   desligada no online e só o `state` era copiado do snapshot — nem `_endRound` nem

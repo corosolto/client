@@ -623,6 +623,13 @@ console.log('\n· remoto animado na velocidade REAL, nome vindo do servidor, tag
   cobra(g._mp._corpoPorNome('RUBAO') === remoto, 'e o killfeed acha o corpo pelo nome do servidor');
   /* Fim de round: a máquina local está desligada no online; o feedback (placar, banner, tela
      de fim) vem da TRANSIÇÃO de estado do snapshot. "Congelou e recomeçou do nada" (02/09). */
+  // pausa: um input parado a cada 2 s segura o slot (o servidor solta após 45 s sem input)
+  net.enviados.length = 0; g.paused = true;
+  g._mp._inputAt = 0; g._mp._pulsoDePausa();
+  cobra(net.enviados.length === 1 && net.enviados[0].ax === 0 && net.enviados[0].shoot === false, 'pausado, o cliente manda um input PARADO (sem tiro) para não perder o corpo');
+  g._mp._pulsoDePausa();
+  cobra(net.enviados.length === 1, 'e não repete antes de 2 s');
+  g.paused = false;
   const s5 = snapshot(1.20, 5); s5.state = 'roundEnd'; s5.scoreE = 3;   // E levou o round (2 -> 3)
   net.snap = s5; g.update(1 / 60);
   cobra(g.state === 'roundEnd' && !!g._resultado && /LEVARAM O ROUND/.test(g._resultado.titulo),

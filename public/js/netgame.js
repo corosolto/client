@@ -22,7 +22,7 @@ class Netcode {
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
-    this._nsTimer = setInterval(() => this.updateStats(), 250);
+    this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
     this._nextClientStats = this._now() + 2000;
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
@@ -86,6 +86,25 @@ class Netcode {
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
     });
+    this._inputAt = this._now();
+  }
+
+  /* PAUSA NÃO É ABANDONO. O servidor devolve o slot à IA depois de 45 s sem input
+     (releaseInactiveSlots, defesa contra socket zumbi do BUG-107). Pausado, o `update()` não
+     roda, o `stepPlayer` não manda nada — e o jogador voltava do menu como ESPECTADOR: "dei
+     pause e voltei, a arma sumiu, a mira não sobe" (dono, 02/09). Um input parado a cada 2 s
+     mantém o corpo dele; movimento zero, sem tiro. */
+  _pulsoDePausa() {
+    const game = this.game, p = game.player;
+    if (!game.paused || this.espectador || !p) return;
+    const now = this._now();
+    if (this._inputAt && now - this._inputAt < 2000) return;
+    this.net.sendInput({
+      ax: 0, az: 0, crouch: false, shift: false, jump: false,
+      yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
+      px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
+    });
+    this._inputAt = now;
   }
 
   /* Casa os ids do servidor com os corpos locais. POR TIME, nunca por ordem de chegada: um
