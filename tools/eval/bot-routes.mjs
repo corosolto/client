@@ -2,7 +2,9 @@
 // samples every bot's position over a whole round segment, and saves (a) screenshots for
 // a video and (b) an SVG trail map. Objective evidence for "rotas variadas": if the
 // trails spread across lanes/edges they work; if they stack on one corridor they don't.
-// Usage: node tools/eval/bot-routes.mjs [outDir] [seconds]
+// MODE=match: bots lutam entre si, sem o jogador artificial no centro.
+// MODE=roam: aquisição de alvo é desligada, isolando navegação sem combate.
+// Usage: MAP=piscina_treta MODE=match node tools/eval/bot-routes.mjs [outDir] [seconds]
 import { execSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -10,6 +12,9 @@ import { pathToFileURL } from 'node:url';
 const OUT = process.argv[2] || '/tmp/fase3/routes';
 const SECS = parseFloat(process.argv[3] || '45');
 const BASE = process.env.BASE || 'http://localhost:8123';
+const MAP = process.env.MAP || 'praca_poderes';
+const MODE = process.env.MODE || 'match';
+if (!['match', 'roam'].includes(MODE)) throw new Error(`MODE inválido: ${MODE}`);
 const FPS = 8, FRAMES = Math.round(SECS * FPS);
 
 const gRoot = execSync('npm root -g').toString().trim();
@@ -25,13 +30,18 @@ const browser = await chromium.launch({
 });
 const page = await browser.newPage({ viewport: { width: 760, height: 1080 } });
 page.on('pageerror', e => console.error('[pageerror]', e.message));
-await page.goto(`${BASE}/?debug=1&auto=E,mst`, { waitUntil: 'load' });
+await page.goto(`${BASE}/?debug=1&auto=E,mst&map=${MAP}`, { waitUntil: 'load' });
 await page.addStyleTag({ content: 'astro-dev-toolbar,#hud,.screen{display:none!important}' });
 await page.waitForFunction(() => window.__game && window.__game.state === 'live', null, { timeout: 60000 });
 await page.evaluate(() => {
   const g = window.__game;
-  if (g.player) g.player.hp = 1e9;
+  if (g.player) { g.player.alive = false; g.player.hp = 0; g.player.respawnAt = 1e12; }
   if (g.vm && g.vm.root) g.vm.root.visible = false;
+});
+if (MODE === 'roam') await page.evaluate(() => {
+  const g = window.__game;
+  g._enemyOf = () => [];
+  for (const b of g.bots) b.target = null;
 });
 
 // world reference data for the SVG overlay
@@ -51,7 +61,8 @@ for (let i = 0; i < FRAMES; i++) {
     if (!p) return null;
     p.pos.set(0, 78, 0); if (p.vel) p.vel.set(0, 0, 0);
     p.yaw = 0; p.pitch = -1.45;
-    p.hp = 1e9; if (p.alive === false) p.alive = true;
+    p.hp = 0; p.alive = false; p.respawnAt = 1e12;
+    if (g.vm?.root) g.vm.root.visible = false;
     if (g.vm && g.vm.models) for (const k in g.vm.models) g.vm.models[k].visible = false;
     return {
       t: +g.time.toFixed(2), state: g.state,

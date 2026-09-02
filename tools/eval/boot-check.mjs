@@ -272,8 +272,7 @@ try {
     await jornada.locator('#boot-splash').dispatchEvent('pointerdown');
     await jornada.waitForTimeout(3100);
     const entradaOk = await jornada.locator('#launch-error').evaluate((el) => el.classList.contains('hidden'));
-    await jornada.locator('.cs-item[data-act="jogar"]').click();
-    await jornada.locator('#cs-modos:not([hidden])').waitFor();
+    // SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
     await jornada.locator('.cs-item[data-act="sp"]').click();
     await jornada.evaluate(() => {
       const nick = document.getElementById('nick-input');
