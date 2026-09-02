@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { poseCharacter } from './characters.js';
 import { WEAPONS } from './game.js';
+import { frase } from './i18n.js';
 
 export function makeNetcode(game, net) { return new Netcode(game, net); }
 
@@ -21,7 +22,7 @@ class Netcode {
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
-    this._nsTimer = setInterval(() => this.updateStats(), 250);
+    this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
     this._nextClientStats = this._now() + 2000;
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
@@ -85,6 +86,22 @@ class Netcode {
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
     });
+    this._inputAt = this._now();
+  }
+
+  // Pausado o stepPlayer não manda nada e o servidor soltava o slot após 45 s (BUG-115):
+  // um input PARADO a cada 2 s segura o corpo. Movimento zero, sem tiro.
+  _pulsoDePausa() {
+    const game = this.game, p = game.player;
+    if (!game.paused || this.espectador || !p) return;
+    const now = this._now();
+    if (this._inputAt && now - this._inputAt < 2000) return;
+    this.net.sendInput({
+      ax: 0, az: 0, crouch: false, shift: false, jump: false,
+      yaw: p.yaw, pitch: p.pitch, shoot: false, weapon: p.weapon,
+      px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
+    });
+    this._inputAt = now;
   }
 
   /* Casa os ids do servidor com os corpos locais. POR TIME, nunca por ordem de chegada: um
@@ -110,7 +127,7 @@ class Netcode {
       if (!bot) continue;
       bot._remote = e.id; bot._netId = e.id;
       bot.team = e.team;                      // o lado do corpo passa a ser o do servidor
-      bot.name = e.name;
+      bot.name = e.bot ? `[BOT] ${e.name}` : e.name; bot._nomeServidor = e.name;
       bot.pos.set(e.x, e.y, e.z); bot.yaw = e.yaw;
       this._netMap.set(e.id, bot);
     }
@@ -131,10 +148,12 @@ class Netcode {
     /* Relógio, placar e ESTADO da rodada vêm do servidor — a máquina local está desligada no
        online (game.update). Sem copiar o estado, o cliente ficaria eternamente em 'countdown'
        e nada se moveria. */
+    const estadoAntes = game.state, placarAntes = game.roundsWon ? { E: game.roundsWon.E, B: game.roundsWon.B } : null;
     game.state = snap.state || game.state;
     if (Number.isFinite(snap.timeLeft)) game.timeLeft = snap.timeLeft;
     if (Number.isFinite(snap.roundNum)) game.roundNum = snap.roundNum;
     if (game.roundsWon && Number.isFinite(snap.scoreE)) { game.roundsWon.E = snap.scoreE; game.roundsWon.B = snap.scoreB; }
+    if (game.state !== estadoAntes) this.transicaoDeEstado(estadoAntes, game.state, placarAntes);
     this.vagas = snap.livre || null;
 
     if (snap.tick === this._netTick) return;
@@ -156,6 +175,12 @@ class Netcode {
       const wasHp = ent.hp, wasAlive = ent.alive;
       ent.hp = e.hp; ent.alive = e.alive;
       ent.kills = e.k | 0; ent.deaths = e.d | 0;     // scoreboard vem do servidor
+      // nome vem do servidor a cada snapshot (humano que toma o slot do bot) — BUG-112
+      if (ent !== game.player && e.name) {
+        ent._nomeServidor = e.name;
+        const rotulo = e.bot ? `[BOT] ${e.name}` : e.name;   // pedido do dono (02/09): bot é bot, gente é gente
+        if (ent.name !== rotulo) ent.name = rotulo;
+      }
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
         const renasceu = !wasAlive && e.alive;
@@ -194,13 +219,15 @@ class Netcode {
       if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
       ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
       if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
-      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); }
+      ent._netPitch = e.pitch || 0;
+      if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
       if (e.voice) this.voice(ent, e.voice);
       /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
          snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
       if (!primeiroSnap && wasAlive && !e.alive) {
         const att = this._corpoPorNome(e.killedBy);
         try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+        this.morteRemota(ent, att);
       }
     }
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
@@ -214,6 +241,70 @@ class Netcode {
       }
     }
     if (this.espectador) this.cameraEspectador();
+  }
+
+  /* Transições de rodada no online: a máquina local está desligada, só o feedback é replicado
+     (vencedor = diferença do placar do servidor). Sem isto: BUG-114 (KNOWN-BUGS.md). */
+  transicaoDeEstado(antes, depois, placarAntes) {
+    const game = this.game;
+    if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
+    try {
+      if (depois === 'roundEnd') {
+        let winner = null;
+        if (placarAntes && game.roundsWon) {
+          if (game.roundsWon.E > placarAntes.E) winner = 'E';
+          else if (game.roundsWon.B > placarAntes.B) winner = 'B';
+        }
+        game.player.scoped = false; game.el.scope?.classList.remove('on');
+        game.radioOpen = null; game._radioUi?.();
+        if (!winner) { game._resultadoDaRodada('EMPATE NA TRETA', 'ninguém convenceu ninguém'); game.sfx.roundLose(); }
+        else {
+          const mine = winner === game.playerTeam;
+          game._resultadoDaRodada(`${game._teamName(winner)} LEVARAM O ROUND`, mine ? '— o povo (você) agradece' : '— a oposição (você) pede revanche');
+          if (!game.sfx.roundSound(game._voiceKey(winner))) mine ? game.sfx.roundWin() : game.sfx.roundLose();
+        }
+        try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
+      } else if (depois === 'countdown') {
+        game._resultado = null;
+        game._showScoreboard(false);
+        game.mk.life = 0; game.mk.count = 0;
+        game._banner(frase('round', game.roundNum), game.ctf
+          ? frase('alvoBandeiras', game.capsToWin)
+          : (game.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta')));
+        if (!game.sfx.csSound('roundstart')) game.sfx.vuvuzela(1.4);
+      } else if (depois === 'live' && antes === 'countdown') {
+        game._banner(frase('valendo'), 'A treta está liberada');
+      } else if (depois === 'matchEnd') {
+        game._showScoreboard(false);
+        game._endMatch();   // tela de VITÓRIA/DERROTA + envio do resultado; o servidor gira o mapa em ~8 s (`partida`)
+      }
+    } catch (e) { console.warn('[mp] transição de estado falhou (segue o jogo):', e && e.message); }
+  }
+
+  /* Morte de remoto no online: o `_kill` local não roda — replica só o feedback dele (sting,
+     kill confirm/multikill quando VOCÊ mata, poça). A morte em si é do servidor. BUG-116. */
+  morteRemota(ent, att) {
+    const game = this.game, p = game.player;
+    try {
+      const d = ent.pos ? ent.pos.distanceTo(game.camera.position) : 0;
+      const rel = ent.pos ? Math.atan2(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) - p.yaw : 0;
+      const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
+      game.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
+    } catch { /* ctx mudo */ }
+    if (att === p && !this.espectador) {
+      try { game.sfx.killConfirm(); } catch { /* ctx mudo */ }
+      const mk = game.mk;
+      if (game.time < mk.until) mk.count++; else mk.count = 1;
+      mk.until = game.time + 4.5; mk.life++;
+      mk.best = Math.max(mk.best || 0, mk.count);
+      const tiers = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
+      const labels = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
+      const kind = mk.count >= 6 ? 'godlike' : (tiers[mk.count] || (mk.life === 5 ? 'killingspree' : null));
+      if (kind) { try { game._mkBanner(labels[kind]); game.sfx.general(kind); } catch { /* HUD */ } }
+    } else if (att && att.team === p.team) {
+      try { game.sfx.voice(game._voiceKey(att.team)); } catch { /* ctx mudo */ }   // o lado comemora (como no _kill)
+    }
+    try { if (ent.pos && game._bloodPoolAt) game._bloodPoolAt(ent.pos); } catch { /* sem fx */ }
   }
 
   /* Estado CTF do servidor. O cliente online não executa `_updateCTF`, então copiar só
@@ -252,7 +343,7 @@ class Netcode {
     if (!nome) return null;
     const game = this.game;
     if (game.player && game.player.name === nome) return game.player;
-    for (const b of this._netMap.values()) if (b !== game.player && b.name === nome) return b;
+    for (const b of this._netMap.values()) if (b !== game.player && (b._nomeServidor === nome || b.name === nome)) return b;
     return null;
   }
   // rótulo curto da arma pro killfeed/painel (mesmo formato que o _damage usa no SP)
@@ -318,6 +409,7 @@ class Netcode {
      FEEDBACK; posição, vida e instante do respawn continuam vindo do servidor. */
   playerDied(e, snap) {
     const game = this.game;
+    game.mk.life = 0;   // a sequência de abates morre com você (como no _kill)
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
     try { game.sfx.death(); } catch { /* ctx mudo */ }
@@ -375,7 +467,12 @@ class Netcode {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
       g.position.copy(b.pos); g.rotation.set(0, b.yaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
-      if (b.mesh.isGLB) b.mesh.ctrl.update(dt, spd, false); else poseCharacter(b.mesh.parts, spd, 0, game.time);
+      if (b.mesh.isGLB) {
+        // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
+        // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
+        b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
+        b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, false);
+      } else poseCharacter(b.mesh.parts, spd, 0, game.time);
     } else {
       b.deadT = (b.deadT || 0) + dt; b._deadShown = true;
       if (b.mesh.isGLB) {

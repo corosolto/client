@@ -3666,6 +3666,62 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-116 · “tem problemas de sons ainda” (multiplayer)** (dono, 02/09, produção).
+  **PARCIALMENTE CORRIGIDO LOCALMENTE.** No online o `_kill` local não roda, então toda morte
+  de remoto era MUDA: sem sting de morte (distância/pan), sem kill confirm nem multikill
+  quando você mata, sem poça. `Netcode.morteRemota` replica o feedback; fim de round e início
+  de rodada também ganharam os sons (BUG-114). O que o dono ouviu de errado além disso ainda
+  não foi detalhado. **Régua:** `eval:netcode`.
+
+- **BUG-115 · “dei pause e voltei: a mira não sobe, a arma sumiu”** (dono, 02/09, produção,
+  multiplayer). **CAUSA IDENTIFICADA E CORRIGIDA LOCALMENTE.** Pausado, o `update()` não roda
+  e nenhum input sai; após 45 s o servidor devolve o slot à IA (`releaseInactiveSlots`, defesa
+  do BUG-107) e manda `slot` espectador — o jogador volta do menu ASSISTINDO outro corpo (sem
+  arma própria, câmera presa). `Netcode._pulsoDePausa` manda um input parado a cada 2 s
+  enquanto pausado. **Régua:** `eval:netcode`.
+
+- **BUG-114 · “quando acabou o round ele só congelou a imagem e reiniciou do nada”** (dono,
+  02/09, produção, multiplayer). **CORRIGIDO LOCALMENTE.** A máquina local de rodada está
+  desligada no online e só o `state` era copiado do snapshot — nem `_endRound` nem
+  `_startRound` rodavam, então sem placar, sem banner, sem tela de fim. `Netcode.transicaoDeEstado`
+  replica só o feedback (vencedor sai da diferença do placar do servidor; `matchEnd` chama
+  `_endMatch`). **Régua:** `eval:netcode` (roundEnd/countdown/matchEnd do servidor).
+
+- **BUG-113 · “parece um filme com glitch lento e com lag, mesmo com ping baixo e fps alto”
+  / “os bots parecem que estão deslizando”** (dono, 02/09, produção). **CAUSA MEDIDA E
+  CORRIGIDA LOCALMENTE.** A interpolação estava lisa (medido na aba: 600 quadros a 8,3 ms,
+  zero quadro parado, deslocamento constante). O que arrastava era o ANIMADOR: `updateRemoteBot`
+  chamava `ctrl.update(dt, spd, false)` numa assinatura `(dt, moving, hasTarget, speed)` —
+  `speed` ficava 0, o clipe de andar rodava a 0,45× e nunca virava corrida enquanto o corpo
+  deslizava a 2-6 m/s. Agora a velocidade real dirige o clipe, a cabeça segue o pitch do
+  servidor e `fire=1` toca o clipe de tiro. **Régua:** `eval:netcode` (speed no 4º argumento).
+
+- **BUG-112 · virada de partida no servidor deixava todo cliente com ids mortos** (dono,
+  02/09, produção: “assistindo esquisito”, “numa aba não mostrava nada”, “Padati” no lugar do
+  jogador, `[times] PLH 4 × 3 FNK — TIMES DESIGUAIS` ao entrar num time, “ARENA DID NOT OPEN”).
+  **CORRIGIDO LOCALMENTE (cliente + servidor).** `Room._novaPartida` recriava o `Game` (mapa,
+  elenco e `_nid` novos) e reocupava os slots, mas não mandava NADA: o cliente ficava no mapa
+  velho com `meta.roster` velho e `_netMap` casado com ids que não existem mais. Agora o
+  servidor manda `partida` (mesmo conteúdo do welcome + o slot novo) e o cliente remonta a
+  partida pelo mesmo caminho da entrada (`mpMontarPartida`). O nome do boneco também passa a
+  vir do snapshot a cada quadro (humano que toma o slot do bot aparece com o nome dele para
+  quem já estava) e bots levam `[BOT]` (pedido do dono). **Réguas:** `eval:netcode`
+  (`partida`, nome, tag) e `game/partida-check.mjs` no backend.
+
+- **BUG-111 · “as armas não aparecem no view model”** (dono, 02/09, produção, multiplayer).
+  **CAUSA MEDIDA E CORRIGIDA LOCALMENTE.** Os viewmodels são montados UMA vez no construtor com
+  os GLBs do preload (no online: só as armas do `roster`, 4 nesta sala). O armário oferece as
+  26; `preloadWeapons()` em ocioso baixa o resto, mas nada voltava ao viewmodel. Medido na
+  aba: `vm.models.akm.children = [handR, handL]` — sem `rw`. `_vmMontarTardio(id)` monta o
+  GLB que chegou depois (na troca de arma e no fim do preload) e re-enquadra. **Régua:**
+  `eval:netcode` (montagem tardia).
+
+- **BUG-110 · espectador: “pistola gigante na cara”, hint de pointer lock, botões “TIME E /
+  TIME B” numa sala FUNKEIROS × PALHAÇOS** (dono, 02/09, produção). **CORRIGIDO LOCALMENTE.**
+  No `dedicated` o `_updatePlayer` não roda e o viewmodel ficava parado na pose de construção;
+  agora `vm.root` some e o hint respeita `espectando()`. Os botões usam `meta.nomeE/nomeB`.
+  **Régua:** `eval:netcode`.
+
 - **BUG-109 · “os áudios do jogo sumiram, especialmente os in-game”** (dono, 02/09,
   produção). **REPRODUZIDO PARCIALMENTE E CORRIGIDO LOCALMENTE; falta release e escuta no
   canário.** O build baixa `audio-pack-v8`, mas `Sfx.loadManifest()` pedia
