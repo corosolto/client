@@ -23,7 +23,6 @@ test('preload 3D real do elenco termina e renderiza GLB na vitrine', async ({ pa
   await page.keyboard.press('Enter');
   await expect(page.locator('#boot-splash')).toHaveCount(0);
 
-  await page.locator('.cs-item[data-act="jogar"]').click();
   await page.locator('.cs-item[data-act="sp"]').click();
   await expect(page.locator('#map-screen')).toBeVisible();
   await page.locator('#ms-continue').click();

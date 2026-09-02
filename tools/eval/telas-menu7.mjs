@@ -79,8 +79,7 @@ if (want('07')) {
 }
 
 /* PASSO 1: escolhe o modo; o catálogo completo de mapas é o PASSO 2 padrão. */
-await page.click('.cs-item[data-act="jogar"]');
-await page.waitForSelector('#cs-modos:not([hidden])', { timeout: 5000 });
+// SINGLE PLAYER é primeira instância do menu (30/08) — o degrau JOGAR morreu
 await page.click('.cs-item[data-act="sp"]');
 await page.waitForSelector('#map-screen:not(.hidden)', { timeout: 10000 });
 await page.waitForTimeout(700);

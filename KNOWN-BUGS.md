@@ -39,6 +39,75 @@ lista de "balão" do CHR1 tem os mesmos 13 antes e depois).
 
 ## P0 — quebram o jogo ou mentem para quem mede
 
+### ~~BUG-86 · no multiplayer o corpo TP do próprio jogador ficava DEITADO depois do respawn, arrastado pelo mundo~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, testador do preview MP contra o nó br, 30/08):** *"o personagem estava
+bugado, depois de morrer ficava deitado"*. **Evidência:** frames `f01–f05` do vídeo do
+testador (scratchpad `mp-video/`) — em modo de câmera 3ª pessoa, o corpo do próprio jogador
+segue na pose de morte (de costas, pernas pro ar) na MESMA posição de tela por 8 s de partida
+(relógio 1:00 → 0:52), ou seja, colado ao jogador enquanto ele anda.
+
+**Causa raiz — o desarme da pose de morte não existia.** `_tpDeath` (`public/js/game.js:4966`)
+arma `_tpDead = true` e toca `ctrl.die()` — cujo clipe segura o último quadro em peso cheio
+para sempre (`public/js/glbchars.js:705-708`). Nenhum caminho desarmava: `_tpDead` tinha
+**3 ocorrências no arquivo e nenhuma o zerava**, e `ctrl.revive()` nunca era chamado no corpo
+TP do jogador. No online morde SEMPRE porque o respawn chega por snapshot
+(`netgame.js playerRespawned`) e não passa pelo `_respawnPlayer`; em 3ª pessoa o
+`_updatePlayerTP` segue copiando `p.pos` todo frame — o cadáver anda junto. Em 1ª pessoa o
+cadáver ficava visível e abandonado no ponto da morte (o `_tpDeath` força
+`group.visible = true` e ninguém revertia). O mesmo defeito NÃO existe para remotos: o
+`updateRemoteBot` (`netgame.js:277`) já chama `revive()` na transição morto→vivo.
+
+**Conserto:** `_tpRevive()` (`public/js/game.js:4984`) — zera `_tpDead`, chama
+`ctrl.revive()` e devolve a visibilidade ao contrato do `camView`. Chamado do
+`_respawnPlayer` (SP, `game.js:5644`) e do `playerRespawned` (MP, `netgame.js:241`).
+
+**Régua:** `tools/eval/netcode-check.mjs` (`npm run eval:netcode`), bloco BUG-86 — morte e
+respawn por snapshot no harness; mutante que remove o reset (`_tpRevive` no-op) deixa a régua
+vermelha. Antes: 2 cláusulas FALHA; depois: 47/47 ok. Custo declarado: nenhum.
+
+### ~~BUG-87 · "Lags": a interpolação de remotos congelava a cada snapshot atrasado (sem buffer)~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, mesmo relato):** *"Lags"*. **Refutação do palpite óbvio:** a hipótese
+"não há interpolação nenhuma" é FALSA — o cliente já interpolava (cláusulas verdes no
+`netcode-check`). O defeito era o ESQUEMA: viajar prev→cur no gap de CHEGADA (~50 ms) com
+`a = (now − arrCur)/span` clampado em 1 — qualquer pacote atrasado deixava o boneco
+CONGELADO no último ponto até o próximo pacote. A 20 Hz com jitter real (o próprio overlay
+de rede amarela em gap > 70 ms), isso lê como lag mesmo com rede boa.
+
+**Conserto:** buffer de interpolação de **120 ms** (`netgame.js:18`, `interpAtrasoMs`) —
+amostras em arrays planos por eixo (cap 10, zero objeto por snapshot no hot path), render do
+remoto no passado com clamp nas duas pontas (nunca extrapola), teleporte esvazia o buffer.
+`renderTime()` (`netgame.js:41`) passou a mapear o MESMO instante renderizado para o relógio
+do servidor — o rewind do lag comp cai exatamente no que a tela mostrou (janela do servidor é
+0,25 s; 120 ms cabem). Só visual de REMOTOS: física local e predição intactas
+(`movimento-golden` OK, trajetória idêntica).
+
+**Régua:** `netcode-check.mjs`, bloco BUG-87 — relógio estubado (`_now`), snapshot atrasado
+50 ms fabricado; cobra posição INTERMEDIÁRIA entre dois snapshots e movimento contínuo
+durante o atraso; mutante `interpAtrasoMs = 0` deixa a régua vermelha. Antes: 2 FALHA
+(x clampado em 11.00; renderTime fora do segmento); depois: x=10.50, renderTime=500.025,
+47/47. **Custo declarado:** remotos são vistos ~70 ms mais no passado que antes (120 ms vs
+~50 ms) — compensado no hit reg pelo `rt`, mas quem foge de você ganha esses ms na sua tela.
+
+### ~~BUG-88 · "Problemas na hora de jogar": connect() sem prazo e sem feedback — nó mudo deixava o clique em ENTRAR "não fazer nada"~~ · RESOLVIDO 30/08 (PR #483)
+
+**Sintoma (literal, mesmo relato):** *"Problemas na hora de jogar"*. **Causa raiz:** o
+`NetClient.connect()` só assentava a promessa em `welcome`/`error`/`close` — um nó que aceita
+o TCP e nunca manda o `welcome` deixava o connect **pendente para sempre**, sem erro e sem
+mensagem (`public/js/net.js:97`); e o `mpEntrar` limpava o `mp-erro` e esperava em silêncio —
+segundos de tela parada entre o clique e o welcome numa região longe.
+
+**Conserto:** prazo de 8 s no `connect(timeoutMs)` com `timeout` como rejeição
+(`net.js:97-106`), mensagem própria no `mpEntrar` (*"O servidor demorou demais…"*), feedback
+*"Conectando na sala…"* durante a espera (`main.js:2905`) e trava de reentrada
+(`mpConectando`, `main.js:2715`) — dois cliques não abrem dois sockets.
+
+**Régua:** `netcode-check.mjs`, bloco BUG-88 — WebSocket estubado que abre e fica MUDO;
+cobra rejeição com `timeout` dentro do prazo; mutante sem prazo (Infinity) fica pendente e
+deixa a régua vermelha. Antes: 1 FALHA (`pendente_para_sempre`); depois: 47/47. Custo
+declarado: conexão legítima mais lenta que 8 s agora vira erro com "tente de novo".
+
 ### ~~BUG-80 · a promessa do `orientation.lock()` derrubava o launch — a partida abria com o painel "Falha ao abrir partida"~~ · RESOLVIDO 28/08 (issues #431 e #432)
 
 **Sintoma (literal, issues #431 e #432, abertas pelo `crash-fix.yml` em 24/08 18:07Z):**
@@ -3596,6 +3665,253 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **BUG-109 · “os áudios do jogo sumiram, especialmente os in-game”** (dono, 02/09,
+  produção). **REPRODUZIDO PARCIALMENTE E CORRIGIDO LOCALMENTE; falta release e escuta no
+  canário.** O build baixa `audio-pack-v8`, mas `Sfx.loadManifest()` pedia
+  `manifest.json?v=7`. Em produção essa chave está presa na Cloudflare ao manifesto de
+  08/08: 291 arquivos únicos, contra 402 no v8 atual. O catálogo velho perde 24 vozes dos
+  Funkeiros, 4 de Tribos, todas as 56 da facção Mítica e os vínculos individuais de 18
+  personagens. Agora o runtime pede `?v=8`, a mesma versão de `fetch-audio.sh`.
+  `eval:charvoice` passa e os mutantes `manifest-antigo`/`pack-antigo` ficam vermelhos. Uma
+  amostra de 31 MP3 do manifesto velho respondeu 200: isto confirma catálogo incompleto,
+  não prova que todo WebAudio esteja mudo. **Régua:** `eval:charvoice`, VOICE13.
+
+- **BUG-108 · “captura de bandeira não está funcionando”** (dono, 02/09, produção,
+  multiplayer). **CONTRATO CORRIGIDO LOCALMENTE; falta capturar um ponto no canário.** O
+  servidor rodava CTF, mas o snapshot v2 não levava donos, progresso, placar ou relógio e o
+  cliente online não executa a máquina local. O snapshot v3 agora carrega esse estado; v2 e
+  JSON v1 continuam aceitos durante o rollout. O cliente aplica pontos, bandeiras, anéis e
+  HUD autoritativos. Smoke real do servidor passou 74/74; codec 16/16; navegador local abriu
+  `NET · captura`, oito entidades e HUD 1×1 visível. **Réguas:** `eval:netcodecbin`,
+  `eval:netcode`, `game/smoke.mjs`.
+
+- **BUG-107 · reconectar deixou três entradas “Rubao” simultâneas no mesmo placar** (dono,
+  02/09, produção, sala `funk-x-palhaco`). **CONFIRMADO E MITIGADO LOCALMENTE; identidade
+  estável ainda não existe.** A saída normal agora fecha e zera a sessão antes de desmontar o
+  jogo. Como defesa para socket zumbi, cada slot registra o último input e volta à IA após
+  45 s sem atividade. O smoke prova a liberação e o navegador confirmou a saída normal sem
+  overlay de rede remanescente. Duas abas ativas com o mesmo nick ainda são dois jogadores de
+  propósito; deduplicação imediata exigiria identidade autenticada. **Réguas:** `eval:netcode`
+  e `game/smoke.mjs`.
+
+- **BUG-106 · “acho que não precisa TANTOS bots na partida”** (dono, 02/09, produção,
+  multiplayer). **AJUSTADO LOCALMENTE: oficiais 5v5 → 4v4.** As quatro salas oficiais agora
+  têm oito corpos; salas criadas por jogadores continuam podendo usar dez. O smoke real
+  cobra quatro vagas por lado, oito snapshots e devolução do corpo à IA. Falta aceitação de
+  densidade em canário. **Régua:** `game/smoke.mjs`.
+
+- **BUG-105 · “os bots andam parecendo que estão na lua”** (dono, 02/09, produção,
+  multiplayer). **CAUSA DE ANIMAÇÃO CORRIGIDA LOCALMENTE; falta aceitação visual.** `_netSpd`
+  era calculada pelo intervalo de chegada dos pacotes, portanto jitter da rede virava passada
+  e animação irregulares. Agora usa o relógio do snapshot do servidor. A régua injeta jitter
+  de chegada mantendo tempo autoritativo constante e passa. **Régua:** `eval:netcode`.
+
+- **BUG-104 · “iniciei fora do respawn no meio do jogo”** (dono, 02/09, produção,
+  multiplayer). **CORRIGIDO LOCALMENTE POR AUTORIDADE; falta canário.** Na transição
+  morto→vivo o cliente agora teleporta para x/y/z do servidor e zera a velocidade, em vez de
+  interpolar desde o cadáver/local antigo. **Régua:** `eval:netcode`.
+
+- **BUG-103 · em mapas como Piscina e Loja H a partida às vezes inicia fora do mapa** (dono,
+  02/09, produção, multiplayer). **DERIVA CLIENTE/SERVIDOR CORRIGIDA LOCALMENTE; o caso de
+  produção não foi reproduzido visualmente.** O primeiro snapshot agora fixa exatamente
+  x/y/z e zera a velocidade local. Os spawns headless de Piscina e Loja H ficaram dentro do
+  mapa e sem penetração; isso refuta ponto-base inválido, mas ainda exige canário nesses dois
+  mapas. **Réguas:** `eval:netcode` e `eval:spawn`/map-check.
+
+- **BUG-102 · bots aparecem defasados e “não morrem” mesmo sob tiro** (dono, 02/09,
+  produção, multiplayer). **PARCIALMENTE VALIDADO; jogabilidade ainda pendente.** O smoke
+  controlado prova munição 30→20, HP 100→0, fogo amigo desligado e snapshots a 19,3 Hz; o
+  cálculo visual de movimento deixou de usar jitter de chegada. Isso confirma que a cadeia
+  autoritativa mata, mas não reproduz uma rajada humana contra bot em movimento nem fecha a
+  sensação de lag. **Réguas:** `game/smoke.mjs` e `eval:netcode`; falta canário jogável.
+
+- **BUG-101 · “eu escolho single player e ele vai pra um servidor online”** (dono, 01/09,
+  produção `www.csbrasil.online`). **CORRIGIDO E CONFIRMADO NO NAVEGADOR LOCAL; falta
+  release.** A causa era dupla: `quitToMenu()` não fechava/zerava `mpSessao`, e
+  `_startGame(..., online=false)` lia a sessão global. A saída agora encerra o socket e a
+  partida só recebe rede quando `online === true`. No fluxo real: entrou em MP, saiu pelo
+  menu de pausa, abriu SP e jogou sem `#netstats`. `eval:netcode` passa 80/80 e os mutantes
+  restauram as falhas. **Régua:** `tools/eval/netcode-check.mjs`, bloco BUG-101.
+
+- **BUG-100 · os campos novos de runtime/protocolo ainda não entram na visão diária.** A
+  migration incremental `~/db-privado/supabase/migrations/027_mp_runtime_protocol_metrics.sql`
+  está pronta e o contrato SQL passou 11/11, inclusive mutantes de RLS e frames binários, mas
+  não foi aplicada: esta máquina não tem token da CLI Supabase, senha Postgres nem navegador
+  conectado com sessão administrativa. A migration 026 continua recebendo as janelas antigas —
+  `/api/health` já marca `multiplayer` como fresco — e ignora com compatibilidade os campos
+  extras. Até aplicar a 027, o painel publicado não consegue mostrar por dia event-loop lag,
+  passos descartados, bytes, adoção binária e SHAs, embora esses valores já apareçam ao vivo em
+  `/metrics` de cada nó. **Régua:** `node supabase/verify-mp-runtime-migration.mjs` na base
+  privada; falta o smoke contra o banco depois do DDL.
+
+- **~~BUG-99 · build da Vercel executava réguas que exigem o repositório Git~~ · RESOLVIDO
+  31/08.** O deploy `8nDm8KfBu61ToheWiqrBaE16dYCK` recebeu o pack completo, mas cinco
+  cláusulas ficaram vermelhas porque o sandbox não contém `.git` nem `origin/main`; uma delas
+  chegou a dizer que `pistol.glb` não era versionado embora o arquivo esteja no Git. O
+  `check:deploy` completo continua obrigatório no pre-push. A Vercel agora roda um recorte
+  reproduzível de sintaxe, fetch de assets, fronteira das APIs e catálogo de nós antes do build.
+  `eval:vercelbuild` reprova se o build voltar a depender do gate Git; o mutante confirma.
+
+- **~~BUG-98 · Preview limpo confundia o manifest versionado com o pacote de áudio
+  instalado~~ · RESOLVIDO 31/08.** O deploy `5DdL9r1renbn2X3VhpR9obwFojZR` parou no
+  `assert:assets`: 73 caminhos contra o piso do gate. A release `audio-pack-v8` foi conferida
+  separadamente e contém 445 arquivos e 434 caminhos no manifest; o defeito era o early-exit
+  de `fetch-audio.sh`, acionado pelo `public/audio/manifest.json` que já vem do Git. Na Vercel
+  o pacote agora é sempre baixado; em desenvolvimento o cache local continua preservado.
+  `eval:assetfetch` fica no `check:deploy`, e o mutante que restaura o early-exit fica vermelho.
+
+- **~~BUG-97 · snapshots completos em JSON repetem estado estático e ampliam tráfego e alocação
+  do multiplayer~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] tirando o fly.io
+  deixe tudo no gcp"*, após aprovar snapshots binários sobre o WebSocket atual. Reprodução real
+  no nó brasileiro, como espectador da sala `livre`: 20 snapshots com 10 entidades deram mediana
+  de 2.152 bytes, equivalentes a 42 KiB/s por cliente a 20 Hz. Um encoder-sonda com os mesmos
+  campos e regras de wire compatíveis com proto3 deu 624 bytes. O codec de produção agora negocia
+  `coro-snapshot-v2` no WebSocket e preserva `coro-json-v1`: no smoke com os dois clientes na mesma
+  sala, o frame real caiu de 1.992 para 522 bytes (26,2%). `eval:netcodecbin` passou 13/13 e
+  `game/protocol-check.mjs` passou 5/5; mutantes sem negociação, decoder, encoder e downgrade deixam
+  as respectivas réguas vermelhas. O painel mede frames/bytes binários e JSON separadamente.
+  Em produção, dois clientes Lisboa→Madri negociaram v2 e mediram 17,1/22,5 ms no ping aquecido;
+  o nó registrou 4/4 frames binários na primeira amostra.
+
+- **~~BUG-96 · scheduler do nó autoritativo acumula passos de 60 Hz e todas as salas oficiais
+  simulam vazias~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos fazer tudo [...] deixe tudo no gcp"*,
+  após aceitar a correção do scheduler e suspensão de sala vazia. Reprodução estática em
+  `backend/game/index.js`: `setInterval(..., 50)` envolve o acumulador de `DT=1/60`, portanto a
+  volta normal executa três `room.step()` consecutivos; o laço percorre `rooms.values()` antes de
+  conferir `clients.size`, então as salas oficiais vazias também avançam. Agora o scheduler de
+  60 Hz tem relógio próprio, catch-up limitado a quatro passos e broadcast independente a 20 Hz;
+  salas vazias permanecem publicadas, mas suspensas. `runtime-check.mjs` passou 8/8, o smoke real
+  passou 70/70 e `/metrics` expõe atraso do event loop, passos executados/descartados e salas
+  ativas/pausadas. Os mutantes de relógio do broadcast e simulação vazia deixam a régua vermelha.
+  Os três nós GCE expõem 60/20 Hz e iniciaram com 0 salas ativas e 4 pausadas.
+
+- **~~BUG-94 · preview da Vercel não consegue testar as APIs migradas e a ingestão
+  `mp-metrics` aceita remetente sem identidade~~ · RESOLVIDO 31/08.**
+  Pergunta literal do dono, 31/08:
+  *"pra testarmos tudo no preview do game da vercel como faz? voce ve algum risco de
+  seguranca?"* Reprodução: o cliente aponta as rotas migradas direto para o Cloud Run,
+  cujo CORS aceita apenas os domínios de produção; o fallback da Vercel devolve 307, então o
+  navegador termina no mesmo bloqueio cross-origin. Separadamente, um POST sem credencial a
+  `/api/mp-metrics` gravou uma linha de smoke no banco de produção — CORS não autentica
+  processos fora do navegador. O preview agora usa `/api` same-origin e a rota Astro faz o
+  proxy no servidor sem encaminhar cookie, `Authorization` nem cabeçalhos arbitrários do
+  browser. `eval:apis` cobre as rotas migradas, reprova o mutante que volta a apontar direto para o
+  Cloud Run e o que vaza cookie. A ingestão exige `MP_METRICS_TOKEN`, comparado em tempo
+  constante; o nó só envia com bearer e os caminhos de Cloud Run e VM recebem o mesmo segredo.
+  `api/smoke.mjs`, `game/telemetry-smoke.mjs` e `deploy-check.mjs` reprovam ausência de token.
+  A API está na revisão `csbrasil-backend-00004-j4g`, com SHA `71e0449f…`; POST sem identidade
+  devolve 401. O Preview `dpl_6Fq25JziQQbWEUtWQb7VYxKoEypm` respondeu 200 pelo proxy e contém
+  somente a anon key. Os três nós receberam a identidade dedicada e o pipeline `multiplayer`
+  passou de `never` para fresco no `/api/health` depois do primeiro flush.
+
+- **~~BUG-95 · fronteiras de segurança do multiplayer atravessam vários projetos sem um rollout
+  atômico documentado~~ · RESOLVIDO 31/08.** Pedido literal do dono, 31/08: *"vamos implementar tudo isso da
+  seguranca, a questao e que serao em varios projetos ne precisava entender a arquitetura"*.
+  Reprodução inicial: Preview continha segredos de produção; API e nó dependiam do mesmo token
+  sem versão implantada; rate limit aceita o primeiro `x-forwarded-for`; WebSocket aceita origem
+  arbitrária e criação de sala não exigia ticket. **Conserto:** tickets HMAC de 60 s presos a
+  região e ação, nonce descartável, Origin fechado no WebSocket, IP derivado do salto confiável,
+  rate limit fail-closed para emissão e service account exclusiva das VMs. Segredos saíram da
+  metadata e são lidos do Secret Manager no boot. `eval:security` e seis mutantes cobrem a cadeia;
+  o smoke real recusa ausência, reuso, ação/região erradas, expiração e origem hostil. API,
+  produção Vercel e os três nós foram implantados nessa ordem. O canário BR recusou criação sem
+  ticket com 401 e aceitou criação+WebSocket v2 com tickets distintos; EUA e Madri só foram
+  reiniciados depois. Deployments Preview antigos seguem protegidos, mas as credenciais históricas
+  privilegiadas já não existem no ambiente Preview.
+
+- **~~BUG-93 · navegador de servidores mostra ~200 ms em Madrid, mas dentro da partida o HUD
+  mostra ~20 ms~~ · RESOLVIDO 31/08.** Eram duas medidas com o mesmo rótulo: `sondarNos`
+  cronometrava o primeiro `/health`, incluindo DNS/TCP/TLS; o HUD cronometra `ping→pong` no
+  WebSocket já aberto. Medido de Lisboa no mesmo processo: Madrid 59–89 ms no primeiro HTTP,
+  21–22 ms no HTTP aquecido e 17–21 ms no WS. Brasil: 631–719 / 210–227 / 209–211 ms;
+  EUA: 327–350 / 106–118 / 106–109 ms. A sonda agora aquece a conexão e publica a segunda
+  amostra, sob um único prazo total. `eval:netcode` fabrica 180 ms de handshake + 20 ms de RTT:
+  antes publicava 180; depois publica 20–21. Mutante de uma amostra volta a 181–182 ms.
+
+- **~~BUG-92 · Piscina da Treta começa fora/na arena errada no multiplayer~~ · RESOLVIDO
+  31/08.** Os pontos do mapa foram refutados: `eval:spawn` deixou verdes as 208 colocações de
+  jogador+bot nos 13 mapas, inclusive os 16 casos da Piscina. A causa estava antes do mapa:
+  `_startGame` deduzia o lado físico pela facção do personagem. Em sala FNK×PLH, por exemplo,
+  o servidor podia atribuir lado B e o cliente reconstruía o jogador no lado E; o snapshot
+  depois o arrastava para a posição autoritativa. Online agora confia em `welcome.yourTeam`;
+  offline preserva a regra anterior. A confirmação posterior de vaga também preserva o
+  callback da UI e remonta o `Game`, porque promover um espectador in-place deixava o estado
+  `dedicated` sem input. `eval:netcode` cobre B+Palhaços, E+Funkeiros, troca de vaga, o caminho
+  real de entrada e mutantes que retiram a autoridade do servidor ou o remount.
+
+- **~~BUG-91 · mapas com AWPs gigantes/apontadas para cima~~ · RESOLVIDO 31/08.** Durante o
+  preload tardio, `weaponModel(id)` devolvia `_cache.get(id) || _cache.get('awp')`: qualquer
+  pickup cujo GLB ainda não tivesse chegado recebia uma AWP com a rotação/escala da arma
+  pedida, e nunca era corrigido. Existência de malha não media identidade, então ARM2 ficava
+  verde. `weaponModel` agora só devolve o modelo pedido e cada instância registra origem e
+  pedido; após a carga ociosa, `refreshPickupModels()` troca os fallbacks procedurais do mapa
+  e dos armários pelo GLB certo. ARM4/ARM5 ficaram em zero modelo errado ou ausente. O fallback
+  procedural dos armários também compartilha as seis geometrias do molde; ARM6 reprova o
+  mutante não-compartilhado, que aloca uma cópia por arma. O mutante que reintroduz a AWP deixa
+  pickups com o GLB errado e reprova ARM4. Figura de navegador olhada: AK e M4 distintos,
+  deitados no deck da Piscina, ambos em escala de arma de chão (`--foto=/tmp/armas.png`).
+
+- **BUG-89 · "eu testei o singleplayer dessa branch tambem e os bots estao malucos andando em
+  roda, esta tudo meio doido nessa branch"** (dono, 31/08, com screenshots de velho_oeste,
+  upa_24h e piscina_treta; branch merge/461 do multiplayer #483). **NÃO REPRODUZIDO no
+  instrumento — e a refutação é medida, não opinião.** `node tools/eval/botsim.mjs 180 <mapa>`
+  (9 sementes, determinístico) nos 3 mapas do relato, merge/461 × origin/main (`888928f7`,
+  worktrees limpos, 31/08): **todas as métricas idênticas até a 3ª casa** (velho_oeste
+  spinTurns 0.199/spinRoam 0.014/latFlips 5.0/stuck 2.5%/eff 0.061; upa_24h 0.211/0.078/
+  13.033/6.556%/0.06; piscina_treta 0.32/0.031/10.889/3.833%/0.04 — iguais nas duas árvores).
+  O instrumento MORDE nesta árvore: mutante de deriva de rumo (3 rad/s) injetado à mão levou
+  spinTurns de 0.199 → 1.847 (9×). A suspeita nº 1 (extração de `_moveEntity`/`_shotDamage`/
+  `_respawnEntity` do feat/multiplayer) foi conferida linha a linha contra o `_updatePlayer`
+  da main E pelo A/B acima: a extração preserva comportamento; o caminho offline dos bots não
+  toca `_ip*`/`_buf*`/`_remote`. Hipóteses restantes para o que o dono viu, por ordem de
+  precedente: (a) checkout velho servido na porta de teste (já aconteceu — ver memória "portas
+  de medição sequestradas"); (b) defeito só-browser que o headless não vê (BUG-28 é o
+  precedente); (c) o milling que JÁ existe na main (eff 0.04–0.06 é baixo nos dois lados) lido
+  como novidade.
+
+  **Reaberto pelo navegador, 31/08; resolução parcial medida.** O `bot-routes` existente
+  plantava o jogador imortal no centro: 63–93% das amostras tinham alvo, então o desenho que
+  parecia rota media sobretudo strafe de combate. O instrumento agora exclui o jogador e
+  separa `MODE=match` de `MODE=roam`. Isso revelou duas contradições reais no `_updateBot`:
+  (1) `laneX` era preenchido aleatoriamente antes do bloco que prometia distribuição ordinal,
+  tornando esse bloco inalcançável — os times cobriam só 23,9–27,2% da largura; (2) as três
+  profundidades de roam eram os literais 22/38/54 m, que na Piscina colapsavam na mesma fileira
+  de waypoints (spread 0,043). Agora as faixas são ordinais e derivadas dos bounds (spread
+  0,640), os destinos realmente escolhidos também superam o defeito congelado, e as
+  profundidades são 42/65/86% da metade inimiga (Piscina 0,191). Na simulação da
+  Piscina: latFlips 10,978→10,622, fwdFlips 9,344→9,000, spinRoam 0,040→0,036 e eficiência
+  0,147→0,152; custo observado: stuck 4,289→5,144%. Os mutantes `faixas-aleatorias` e
+  `profundidades-fixas` deixam o golden vermelho. A captura final ainda mostra voltas curtas
+  ao redor de alguns destinos; portanto o relato continua **ABERTO para aceite visual**, não
+  deve ser marcado como curado só pelo placar.
+
+- **BUG-90 · MP: "os bots andam devagar" + "morri várias vezes sem ver e matei várias vezes
+  sem ver"** (dono, 31/08, mesma sessão do BUG-89). **Causa raiz encontrada e medida — é o
+  BUG-28 propagado ao servidor v5.** O `game/room.js` do backend constrói o `Game` direto
+  (sem o `bootGame` do harness, que tem a correção) e nunca chama `updateMatrixWorld` — e o
+  Dockerfile do v5 clona exatamente merge/461. Medido em 31/08 com boot igual ao do servidor
+  (`dedicated:true`, 10 s de update): **velho_oeste 67/67 occluders com `matrixWorld`
+  identidade** (piscina_treta 14/92, upa_24h 0/122 — mapa-dependente, pior justamente no mapa
+  do screenshot). Consequência dupla: (1) a oclusão do `_scanHit` (tiro dos slots humanos)
+  raycasta geometria fantasma NA ORIGEM → parede não segura tiro = "morri/matei sem ver";
+  (2) a `_losClear` dos bots idem → bots em modo combate contra alvos fantasmas
+  (movimento de combate é `BOT_SPEED*0.55` = "andam devagar"). Junto: `_firedSnap` só era
+  setado no tiro HUMANO — todo tiro de bot chegava ao cliente sem `fire=1` (tiroteio mudo).
+  **Correção na causa: backend `2d0e04f`** (`game/room.js`: `updateMatrixWorld` no boot da
+  sala + wrapper de `_fireHitscan` marcando `_firedSnap` de bot; `game/smoke.mjs` 63/63 nos
+  runs verdes — a trinca "movimento/dano autoritativo" flakeia COM E SEM a mudança, 1/8 no
+  baseline: o smoke não é semeado). **No cliente (esta árvore):** o MP não tinha killfeed nem
+  direção de dano — `_kill`/`_damage` não rodam online. `netgame.js` agora: (a) killfeed pela
+  transição vivo→morto do snapshot + `killedBy`; (b) arco de dano (`_dmgArc`) e registro
+  `_noteHit` atribuídos ao inimigo mais próximo que atirou há <600 ms — HEURÍSTICA, porque o
+  snapshot não diz quem acertou; (c) painel de morte preserva o registro rico do `_noteHit`
+  quando o assassino confere. Tela de morte com QUEM matou já existia (`playerDied` → BUG-86).
+  **Pendência MP (recorte exato):** o servidor deveria mandar o evento de acerto (id do
+  atacante, arma, headshot) no snapshot — aí o arco deixa de ser heurística e o killfeed ganha
+  caveira de headshot. É mudança de protocolo (backend + cliente), não coube aqui. *Régua:
+  `game/smoke.mjs` (backend) cobre o respawn/tiro; a atribuição de dano do cliente fica sem
+  régua até o evento de acerto existir. Requer redeploy do servidor v5 para valer em produção.*
 
 - **~~BUG-85 · `eval:armas` vermelho na main: o preload bloqueante voltou às 26 armas~~ · RESOLVIDO 30/08.**
   Palavras literais do CI (`portao-browser.yml`, vermelho desde 28/08 06:30Z, último verde

@@ -12,7 +12,7 @@ cd "$(dirname "$0")/.."
 URL="${AUDIO_PACK_URL:-https://github.com/corosolto/client/releases/download/audio-pack-v8/audio-pack.zip}"
 DEST="public/audio"
 
-if [ -f "$DEST/manifest.json" ]; then
+if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
   echo "audio/ já configurado — nada a fazer."
   exit 0
 fi

@@ -5,13 +5,14 @@
 import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
-if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo'].includes(mutante)) {
+if (mutante && !['sem-clique', 'auto-fala', 'mesmo-som', 'sem-identidade', 'troca-clubber-rasta', 'faria-volta-lula', 'pack-antigo', 'manifest-antigo'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
 
 let main = readFileSync('public/js/main.js', 'utf8');
 let fetchAudio = readFileSync('scripts/fetch-audio.sh', 'utf8');
+let audio = readFileSync('public/js/audio.js', 'utf8');
 if (mutante === 'sem-clique') {
   main = main.replace(
     'row.onclick = () => selectCharacterFromAvatar(c, row, chars);',
@@ -21,7 +22,8 @@ if (mutante === 'sem-clique') {
 if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
-if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v6', 'audio-pack-v5');
+if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
+if (mutante === 'manifest-antigo') audio = audio.replace('audio/manifest.json?v=8', 'audio/manifest.json?v=7');
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -43,6 +45,10 @@ expect(!/row\?\.click\(\)/.test(main),
   'VOICE4 a query string simula clique humano e dispara fala');
 expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
   'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
+const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
+const manifestVersion = audio.match(/audio\/manifest\.json\?v=(\d+)/)?.[1];
+expect(packVersion && manifestVersion && packVersion === manifestVersion,
+  `VOICE13 pacote v${packVersion || '?'} diverge da chave do manifesto v${manifestVersion || '?'}; CDN pode servir catálogo antigo`);
 
 globalThis.location ||= { search: '' };
 const { Sfx } = await import('../../public/js/audio.js');
