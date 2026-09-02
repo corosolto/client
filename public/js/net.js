@@ -87,7 +87,7 @@ export class NetClient {
     this.snap = null;
     this.prev = null;
     this.seq = 0;
-    this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onClose = null;
+    this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
     // ── diagnóstico de rede (overlay do jogo) ──
     this.stats = { hz: 0, kbps: 0, gapMax: 0, sinceLast: 0, ents: 0, tick: 0, ping: 0, snaps: 0, bytes: 0 };
     this._snapT = []; this._byteT = []; this._lastSnapT = 0;
@@ -145,6 +145,11 @@ export class NetClient {
           assenta(reject, new Error(m.error || 'erro'));
         } else if (m.type === 'pong') {
           this.stats.ping = performance.now() - m.t;
+        } else if (m.type === 'partida') {
+          // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
+          this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
+          this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
+          this.onPartida?.(m);
         } else if (m.type === 'slot') {
           // entrou em campo / virou espectador (o servidor confirma; a UI nunca decide sozinha)
           this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
