@@ -27,7 +27,7 @@ usuário, tempo, FPS, RTT, mapa/modo e cidade/país, sem armazenar IP. Dados ant
 admin publicados e um evento novo confirmado de ponta a ponta.
 
 **Checkout:** `/private/tmp/csbrasil-client-player-analytics`, branch
-`codex/player-analytics-instrumentation`, iniciada em `6e8ed8ce`. O contexto agora acompanha
+`codex/player-analytics-instrumentation`, rebased sobre `9f13a8c3` (alpha.210). O contexto agora acompanha
 pick, performance e match com o mesmo `sessionId`/`matchEventId`, e é limpo ao sair/trocar de
 modo. A régua `eval:analytics` cobre a separação e a não contaminação.
 
@@ -36,12 +36,18 @@ modo. A régua `eval:analytics` cobre a separação e a não contaminação.
 `222ccfd49f8fd94d5f673973fc1107063adae121b78548fe011c243a8f5ca590`). Funções antigas e novas
 foram chamadas em transação revertida. Nenhum dado de smoke ficou gravado.
 
-**Validado:** syntax, analytics 6/6, netcode 83/83, codec 16/16 e APIs migradas verdes. O
-backend pareado passou o portão completo; o admin passou lint, Astro check, 34 testes,
-hidratação e build. Produção ainda não recebeu estes três commits.
+**Validado:** syntax, analytics 6/6, online 5/5, netcode 83/83, codec 16/16, `check:vercel`
+4/4 e build Astro/Vercel verdes. Os gates que exigem `sharp`/`@gltf-transform` passaram depois
+de `npm ci`; `audio:check` continua ambientalmente bloqueado porque os áudios privados não
+existem neste worktree (o manifesto não foi refeito vazio). O backend pareado passou o portão
+completo; o admin passou lint, Astro check, 34 testes, hidratação e build. Produção ainda não
+recebeu estes três commits.
 
-**Pendente imediato:** corrigir a corrida inicial do selo `N online`, rebasear sobre a main
-publicada (alpha.209), promover backend → cliente → admin e comprovar no painel um novo pick,
+**Selo `N online`:** a API e a view estavam respondendo, mas o primeiro refresh concorria com
+o heartbeat e escondia o primeiro visitante por até 60 s. O bootstrap agora espera o POST de
+presença antes de consultar o total; `eval:online` passa 5/5 e o mutante de ordem fica vermelho.
+
+**Pendente imediato:** promover backend → cliente → admin e comprovar no painel um novo pick,
 perf e match tipados. O `createdRoom` do cliente só fica completo após rollout do runtime dos
 nós; `mp_session.created_room` continua sendo a fonte autoritativa durante a transição.
 

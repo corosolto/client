@@ -830,14 +830,24 @@ function _picks(lote) {
    inflado num rodapé de social proof é pior que número pequeno.
    45 s contra a janela de 2 min da view (migration 014): perder um pacote não
    apaga ninguém da conta. */
-function _pingPresenca() {
-  if (testMode) return;
-  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+async function _pingPresenca(aguardar = false) {
+  if (testMode) return false;
+  if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return false;
   const payload = JSON.stringify({ anonId: getAnonId() });
+  if (aguardar) {
+    try {
+      const response = await fetch(apiUrl('/api/presence'), {
+        method: 'POST', keepalive: true,
+        headers: { 'content-type': 'application/json' }, body: payload,
+      });
+      if (response.ok) return true;
+    } catch { /* o beacon abaixo ainda tenta entregar */ }
+  }
   try {
     const blob = new Blob([payload], { type: 'application/json' });
     if (!navigator.sendBeacon(apiUrl('/api/presence'), blob)) api('/api/presence', JSON.parse(payload));
   } catch { /* presença nunca atrapalha o jogador */ }
+  return false;
 }
 
 /* ============ TELEMETRIA NOVA (feat/telemetria: funil · aquisição · perf · match) ============
@@ -985,8 +995,6 @@ async function _refreshOnline() {
     else if (box) box.hidden = true;
   } catch { /* rodapé segue sem contador */ }
 }
-_refreshOnline();
-setInterval(_refreshOnline, 60000);
 const params = new URLSearchParams(location.search);
 const inspectionScreen = resolveInspectionScreen(params);
 const testMode = params.get('debug') === '1' || !!inspectionScreen;
@@ -996,8 +1004,13 @@ const navOnly = params.get('nav') === '1';
 /* Presença: as chamadas descem para CÁ, depois de `testMode` existir (ver o comentário na
    linha em que elas moravam). O intervalo e o comportamento são os mesmos — o que muda é
    só a ordem, que era o defeito. */
-_pingPresenca();
+async function _iniciaPresencaOnline() {
+  await _pingPresenca(true);
+  await _refreshOnline();
+}
+void _iniciaPresencaOnline();
 setInterval(_pingPresenca, 45_000);
+setInterval(_refreshOnline, 60_000);
 
 /* Telemetria nova (feat/telemetria) — dispara UMA vez na carga, depois de `testMode`
    existir (mesma lição do BUG-34: estas leem testMode na 1ª linha). */
