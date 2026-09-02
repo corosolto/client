@@ -1660,13 +1660,8 @@ export class Game {
     // ~43% em 0,1 s e o k sustentado fica <= 1,0 — a curva volta a ~zero entre tiros, que é
     // o que dá a leitura de "cada tiro é um evento" em vez de "arma tremendo".
     this._vmFrame(true);   // 1º enquadramento (aspecto atual da câmera principal)
-    /* MONTAGEM TARDIA. O viewmodel é construído UMA vez, com os GLBs que o preload da partida
-       trouxe (~9 armas: o roster no multiplayer, o sorteio no single). O armário do spawn
-       oferece as 26, e o resto chega em ocioso (`preloadWeapons` no main.js) — mas nada
-       voltava aqui: quem pegava uma arma fora do preload ficava com um grupo só de mãos, sem
-       `rw`. Medido em 02/09 (akm, g3, m92... `children: [handR, handL]`) — "as armas não
-       aparecem no viewmodel". Agora a troca de arma (e o fim do preload ocioso) monta o GLB
-       que faltava e re-enquadra. Idempotente: com `rw` já montado não faz nada. */
+    // Monta o GLB de arma que chegou DEPOIS do preload (troca de arma / fim do preload
+    // ocioso) e re-enquadra. Idempotente. Causa e medição: BUG-111 (KNOWN-BUGS.md).
     this._vmMontarTardio = (id) => {
       const g = models[id];
       if (!g || g.getObjectByName('rw')) return false;
@@ -7139,9 +7134,7 @@ export class Game {
       else this._startRound();
     }
     if (!this.dedicated) this._updatePlayer(dt);   // servidor dedicado: não há jogador local
-    /* ESPECTADOR (dedicated no cliente): sem _updatePlayer ninguém posiciona o viewmodel, e ele
-       ficava parado na pose de construção — uma pistola gigante na cara de quem assiste
-       (print do dono, 02/09). Quem assiste vê o mundo pelos olhos do outro, sem arma própria. */
+    // espectador: sem _updatePlayer o viewmodel ficaria parado na pose de construção (BUG-110)
     else if (this.vm && this.vm.root) this.vm.root.visible = false;
     if (this._recorder && this._recordEnabled) {
       this._recorder.tick(dt);

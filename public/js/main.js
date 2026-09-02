@@ -3096,10 +3096,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
       if (mpSessao?.net === net) await startGame(currentTeam, currentChar, currentEnemyFaction, true);
     });
   };
-  /* NOVA PARTIDA no servidor (o mapa girou). Mesmo conteúdo do welcome: mapa, modo, roster e
-     o seu slot vêm de novo, e o jogo é remontado por cima — é o mesmo caminho da entrada.
-     Sem isto o cliente ficava no mapa velho com ids mortos (bonecos congelados, "não mostra
-     nada", nome de bot no lugar do jogador, `PLH 4 × 3 FNK` ao pegar vaga). */
+  // Nova partida no servidor (mapa girou): mesmo conteúdo do welcome, remonta por cima.
+  // Sem isto o cliente ficava no mapa velho com ids mortos — BUG-112 (KNOWN-BUGS.md).
   net.onPartida = async (m) => {
     if (mpSessao?.net !== net) return;
     if (MAPS[m.map]) currentMap = m.map;
@@ -3109,9 +3107,8 @@ async function mpEntrar(sala, team = 'auto', senha = '') {
   await mpMontarPartida(net, welcome);
 }
 
-/* Monta (ou remonta) a partida a partir de um welcome/partida do servidor: lado, facções e
-   personagem são do CORPO que o servidor deu. Espectador não tem corpo: usa qualquer um da
-   facção só para o preload não ficar vazio. */
+/* Monta (ou remonta) a partida a partir de um welcome/partida: lado, facções e personagem
+   são do CORPO que o servidor deu; espectador usa qualquer um da facção (preload não vazio). */
 async function mpMontarPartida(net, m) {
   // o lado do jogador vem do servidor; a facção também (a sala LIVRE sorteia)
   const lado = m.yourTeam === 'B' ? 'B' : 'E';
@@ -3170,8 +3167,7 @@ function mpAtualizarBarraSpec(estado) {
       const quem = document.getElementById('mp-spec-quem');
       if (quem) quem.textContent = mp?.nomeAlvo || '—';
       const be = document.getElementById('mp-spec-e'), bb = document.getElementById('mp-spec-b');
-      /* Nome da FACÇÃO, não a letra do lado: a sala é "FUNKEIROS × PALHAÇOS" e o botão dizia
-         "TIME E / TIME B" — ninguém sabe qual é qual (relato do dono, 02/09). */
+      // nome da FACÇÃO, não a letra do lado (BUG-110)
       const meta = mpSessao?.net?.meta || {};
       const nomeE = meta.nomeE || 'TIME E', nomeB = meta.nomeB || 'TIME B';
       if (be) { be.disabled = !(vagas && vagas.E > 0); be.textContent = `ENTRAR: ${nomeE}${vagas ? ` (${vagas.E})` : ''}`; }

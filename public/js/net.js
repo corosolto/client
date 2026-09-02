@@ -146,9 +146,7 @@ export class NetClient {
         } else if (m.type === 'pong') {
           this.stats.ping = performance.now() - m.t;
         } else if (m.type === 'partida') {
-          /* O servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot. Sem
-             este ramo o cliente ficava no mapa velho com ids mortos — bonecos congelados, nome
-             duplicado, composição de times quebrada ("PLH 4 × 3 FNK", 02/09). */
+          // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
           this.onPartida?.(m);

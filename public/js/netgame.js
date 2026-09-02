@@ -89,11 +89,8 @@ class Netcode {
     this._inputAt = this._now();
   }
 
-  /* PAUSA NÃO É ABANDONO. O servidor devolve o slot à IA depois de 45 s sem input
-     (releaseInactiveSlots, defesa contra socket zumbi do BUG-107). Pausado, o `update()` não
-     roda, o `stepPlayer` não manda nada — e o jogador voltava do menu como ESPECTADOR: "dei
-     pause e voltei, a arma sumiu, a mira não sobe" (dono, 02/09). Um input parado a cada 2 s
-     mantém o corpo dele; movimento zero, sem tiro. */
+  // Pausado o stepPlayer não manda nada e o servidor soltava o slot após 45 s (BUG-115):
+  // um input PARADO a cada 2 s segura o corpo. Movimento zero, sem tiro.
   _pulsoDePausa() {
     const game = this.game, p = game.player;
     if (!game.paused || this.espectador || !p) return;
@@ -178,9 +175,7 @@ class Netcode {
       const wasHp = ent.hp, wasAlive = ent.alive;
       ent.hp = e.hp; ent.alive = e.alive;
       ent.kills = e.k | 0; ent.deaths = e.d | 0;     // scoreboard vem do servidor
-      /* NOME vem do servidor a cada snapshot, não só no casamento: quando um humano toma o
-         slot de um bot (ou devolve), quem já estava na sala via o nome velho ("Padati" no
-         lugar do jogador — medido em 02/09 com duas abas na mesma sala). */
+      // nome vem do servidor a cada snapshot (humano que toma o slot do bot) — BUG-112
       if (ent !== game.player && e.name) {
         ent._nomeServidor = e.name;
         const rotulo = e.bot ? `[BOT] ${e.name}` : e.name;   // pedido do dono (02/09): bot é bot, gente é gente
@@ -248,11 +243,8 @@ class Netcode {
     if (this.espectador) this.cameraEspectador();
   }
 
-  /* TRANSIÇÕES DE RODADA NO ONLINE. A máquina local (`_endRound`/`_startRound`/`_endMatch`)
-     está desligada; só o `state` é copiado. Sem este método o fim de round era "a imagem
-     congela e do nada recomeça" (dono, 02/09): nada de placar, nada de banner, nada de tela
-     de fim. Aqui replicamos SÓ o feedback — quem venceu sai da diferença do placar do
-     servidor; posição, relógio e estado continuam vindo do snapshot. */
+  /* Transições de rodada no online: a máquina local está desligada, só o feedback é replicado
+     (vencedor = diferença do placar do servidor). Sem isto: BUG-114 (KNOWN-BUGS.md). */
   transicaoDeEstado(antes, depois, placarAntes) {
     const game = this.game;
     if (this._netTick < 0) return;   // 1º snapshot: entrou no meio de algo — sem cerimônia (e sem "empate" inventado)
@@ -289,10 +281,8 @@ class Netcode {
     } catch (e) { console.warn('[mp] transição de estado falhou (segue o jogo):', e && e.message); }
   }
 
-  /* MORTE de um remoto no online: o `_kill` local não roda, então o que ele toca/mostra
-     tinha sumido do multiplayer — sting de morte com distância e pan, kill confirm +
-     multikill quando VOCÊ é o assassino, poça de sangue. "Problemas de som" (dono, 02/09):
-     matar alguém era mudo. Só feedback; a morte em si é do servidor. */
+  /* Morte de remoto no online: o `_kill` local não roda — replica só o feedback dele (sting,
+     kill confirm/multikill quando VOCÊ mata, poça). A morte em si é do servidor. BUG-116. */
   morteRemota(ent, att) {
     const game = this.game, p = game.player;
     try {
@@ -478,11 +468,8 @@ class Netcode {
       g.position.copy(b.pos); g.rotation.set(0, b.yaw, 0); g.visible = true;
       const spd = Math.min(6, b._netSpd || 0);
       if (b.mesh.isGLB) {
-        /* Assinatura do animador: update(dt, moving, hasTarget, speed, back). Antes ia
-           `(dt, spd, false)` — `speed` ficava 0, o clipe de andar rodava a 0,45× e nunca virava
-           corrida: o corpo deslizava a 2-6 m/s com as pernas em câmera lenta ("filme lento
-           com glitch", relato do dono em 02/09). Agora a velocidade real dirige o clipe, a
-           cabeça segue o pitch do servidor e o tiro do snapshot toca o clipe de tiro. */
+        // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
+        // com speed=0 o clipe rodava a 0,45× e o boneco deslizava (BUG-113).
         b.mesh.ctrl.aimPitch = Math.max(-0.6, Math.min(0.6, b._netPitch || 0));
         b.mesh.ctrl.update(dt, spd < 0.35 ? 0 : 1, !!b._fireAtMs && this._now() - b._fireAtMs < 1500, spd, false);
       } else poseCharacter(b.mesh.parts, spd, 0, game.time);
