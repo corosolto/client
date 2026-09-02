@@ -43,6 +43,19 @@ const SOCIAL_KEY = 'awpbr_social';
 const STATS_KEY = 'awpbr_stats';   // declarado no bloco de storage: syncPlayState→renderPlayerPlate→loadStats roda ANTES da definição antiga (TDZ)
 const PLAYER_AVATAR_KEY = 'awpbr_player_avatar';
 
+/* Contexto declarado antes da música: picks de menu ficam sem gameType e nunca
+   herdam a partida anterior. */
+let telemetryGameContext = {
+  gameType: null, node: null, roomId: null, roomOfficial: null, createdRoom: null,
+};
+let _matchEventId = null;
+function clearTelemetryGameContext() {
+  telemetryGameContext = {
+    gameType: null, node: null, roomId: null, roomOfficial: null, createdRoom: null,
+  };
+  _matchEventId = null;
+}
+
 /* ---------------- renderer ---------------- */
 // Import extra (top-level, legal em ESM) em vez de mexer no bloco de imports lá de cima:
 // o tom do caminho SEM pós mora no bloom.js, que é o dono da tabela de exposição/piso por mapa.
@@ -787,10 +800,23 @@ if (LANG === 'en') for (const a of document.querySelectorAll('.menu-footer a')) 
 /* PICKS — "o que as pessoas escolhem" (dono, 06/08). sendBeacon: nunca atrasa nem
    quebra o jogo; o servidor conta por (kind, key) na picks_daily (migration 013). */
 function _pick(kind, key) {
-  try { navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({ kind, key })], { type: 'application/json' })); } catch { /* sem beacon: paciência */ }
+  try {
+    navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({
+      kind, key, eventId: clientUuid(), anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+    })], { type: 'application/json' }));
+  } catch { /* sem beacon: paciência */ }
 }
 function _picks(lote) {
-  try { navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({ picks: lote })], { type: 'application/json' })); } catch { /* idem */ }
+  try {
+    navigator.sendBeacon(apiUrl('/api/pick'), new Blob([JSON.stringify({
+      anonId: getAnonId(), sessionId: getSessionId(),
+      matchEventId: telemetryGameContext.gameType ? _matchEventId : null,
+      ...telemetryGameContext,
+      picks: lote.map((pick) => ({ ...pick, eventId: clientUuid() })),
+    })], { type: 'application/json' }));
+  } catch { /* idem */ }
 }
 /* PRESENÇA ANÔNIMA — o que o "N online" do rodapé passou a contar (07/08).
    Antes o único sinal de presença era o `/api/heartbeat`, que exige nick + token e
@@ -894,6 +920,7 @@ function _perfFinish(bootMs, frames) {
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const payload = {
     anonId: getAnonId(), version: VERSION,
+    sessionId: getSessionId(), ...telemetryGameContext,
     fps: frames, bootMs, loadMs: _perfLoadMs,
     cores: navigator.hardwareConcurrency || null,
     memoryGb: navigator.deviceMemory || null,
@@ -909,7 +936,6 @@ function _perfFinish(bootMs, frames) {
 // resultado. Complementa o submit-match (só registrado) e a telemetria agregada (012).
 // _wperf vem do game.js (abates por arma, zerado por partida no construtor).
 let _matchEventSent = false;
-let _matchEventId = null;
 function sendMatchEvent(result) {
   if (_matchEventSent || testMode || !game) return;
   _matchEventSent = true;
@@ -919,6 +945,7 @@ function sendMatchEvent(result) {
   const payload = {
     anonId: getAnonId(),
     sessionId: getSessionId(), eventId: _matchEventId, version: VERSION,
+    ...telemetryGameContext,
     map: currentMap, mode: matchMode === 'ctf' ? 'ctf' : 'rounds',
     character: currentChar, team: g.playerTeam,
     faction: g.playerFaction || currentFaction,
@@ -1009,6 +1036,20 @@ async function startGame(team, charId, enemyFaction, online = false) {
 }
 async function _startGame(team, charId, enemyFaction, online = false) {
   const sessao = online ? mpSessao : null;
+  const metaMp = sessao?.net?.meta || {};
+  const salaMp = sessao?.sala || {};
+  telemetryGameContext = online ? {
+    gameType: 'multiplayer',
+    node: String(metaMp.regiao || sessao?.no?.ticketNode || sessao?.no?.id || '').toLowerCase() || null,
+    roomId: metaMp.room || salaMp.id || salaMp.room || null,
+    roomOfficial: !!(metaMp.oficial ?? salaMp.oficial),
+    createdRoom: !!metaMp.createdRoom,
+  } : {
+    gameType: 'single_player', node: null, roomId: null, roomOfficial: null, createdRoom: null,
+  };
+  // Nasce ANTES dos picks: pick_event.match_event_id passa a ligar a escolha ao
+  // resultado/duração exatos desta partida, não apenas à aba do navegador.
+  _matchEventId = clientUuid();
   // MOBILE: não bloqueia mais — entra com controles de toque. No retrato o overlay
   // "gire o celular" (CSS) cobre a tela até deitar.
   // facção = time do personagem ('E'/'B'/'U'). O jogador ESCOLHE o adversário (enemyFaction);
@@ -1129,7 +1170,6 @@ async function _startGame(team, charId, enemyFaction, online = false) {
   submitted = false;
   telemetrySent = false;   // partida nova = uma linha nova de telemetria
   _matchEventSent = false;   // partida nova = um evento rico novo (feat/telemetria)
-  _matchEventId = clientUuid(); // idempotência no banco se o beacon for repetido
   _funnel('match_start');    // funil: começou a jogar (017)
   retryPending();
   armSwitchHook();
@@ -1204,6 +1244,7 @@ function quitToMenu() {
   } catch {}
   switchMode = false;   // never carry an in-match team-switch into the menu
   mpEncerrarSessao();
+  clearTelemetryGameContext();
   // dispose protegido: se a limpeza da partida falhar, o menu volta MESMO assim
   // (antes, uma exceção aqui deixava o botão "SAIR PRO MENU" morto e o jogo zumbi)
   try { if (game) game.dispose(); } catch (e) { console.error('dispose falhou ao sair pro menu', e); }
@@ -3125,7 +3166,9 @@ async function mpMontarPartida(net, m) {
    o jogador precisa SABER, porque o corpo dele já voltou a ser bot no servidor. */
 function mpDesconectou() {
   if (!mpSessao) return;
+  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
   mpSessao = null;
+  clearTelemetryGameContext();
   mpFecharBarraSpec();
   try { if (game) game.dispose(); } catch { /* já foi */ }
   game = null; window.__game = null;
@@ -3187,7 +3230,9 @@ function mpEncerrarSessao() {
 /* Sair da partida online. Fecha o socket ANTES de derrubar o jogo: o servidor precisa
    liberar o corpo (senão fica um manequim segurando vaga até o heartbeat derrubar). */
 function mpSair() {
+  try { if (game) sendMatchEvent('quit'); } catch { /* diagnóstico não bloqueia a saída */ }
   mpEncerrarSessao();
+  clearTelemetryGameContext();
   try { if (game) game.dispose(); } catch { /* já foi */ }
   game = null; window.__game = null;
   try { if (document.pointerLockElement) document.exitPointerLock(); } catch { /* sem lock */ }

@@ -18,6 +18,33 @@ O handoff detalhado de 04/08/2026 foi preservado em
 `docs/historico/HANDOFF-2026-08-04.md`; ele explica decisões antigas, mas cita mapas,
 telemetria, versão e pipeline que já mudaram.
 
+## Analytics consolidado por jogador — 02/09/2026
+
+**Objetivo inteiro:** dar ao game-admin uma única jornada por `anon_id` em Multiplayer,
+Usuários, Geografia e Picks: single-player × multiplayer, nó/sala oficial × sala criada por
+usuário, tempo, FPS, RTT, mapa/modo e cidade/país, sem armazenar IP. Dados antigos sem
+`game_type` permanecem explicitamente como legado; pronto significa banco, APIs, cliente e
+admin publicados e um evento novo confirmado de ponta a ponta.
+
+**Checkout:** `/private/tmp/csbrasil-client-player-analytics`, branch
+`codex/player-analytics-instrumentation`, iniciada em `6e8ed8ce`. O contexto agora acompanha
+pick, performance e match com o mesmo `sessionId`/`matchEventId`, e é limpo ao sair/trocar de
+modo. A régua `eval:analytics` cobre a separação e a não contaminação.
+
+**Banco validado:** migration 029 aplicada em produção a partir de
+`/Users/ruben/db-privado/supabase/migrations/029_player_analytics_context.sql` (SHA-256
+`222ccfd49f8fd94d5f673973fc1107063adae121b78548fe011c243a8f5ca590`). Funções antigas e novas
+foram chamadas em transação revertida. Nenhum dado de smoke ficou gravado.
+
+**Validado:** syntax, analytics 6/6, netcode 83/83, codec 16/16 e APIs migradas verdes. O
+backend pareado passou o portão completo; o admin passou lint, Astro check, 34 testes,
+hidratação e build. Produção ainda não recebeu estes três commits.
+
+**Pendente imediato:** corrigir a corrida inicial do selo `N online`, rebasear sobre a main
+publicada (alpha.209), promover backend → cliente → admin e comprovar no painel um novo pick,
+perf e match tipados. O `createdRoom` do cliente só fica completo após rollout do runtime dos
+nós; `mp_session.created_room` continua sendo a fonte autoritativa durante a transição.
+
 ## Incidente de produção — 02/09/2026
 
 **Objetivo inteiro:** estabilizar multiplayer sem tocar na lane de viewmodels: impedir sessão
