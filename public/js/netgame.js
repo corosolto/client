@@ -13,14 +13,16 @@ class Netcode {
     this._netMap = new Map();   // id do servidor -> entidade local
     this._netTick = -1;
     this._alvoSpec = null;      // quem o espectador está seguindo
-    /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots a 20 Hz). Renderizar o remoto ~120 ms no
+    /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots). Renderizar o remoto algumas amostras no
        passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
        pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
-    this.interpAtrasoMs = 120;
+    this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
+    this.interpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => this.updateStats(), 250);
+    this._nextClientStats = this._now() + 2000;
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
     this._onSlot = (m) => {
@@ -169,7 +171,7 @@ class Netcode {
         continue;
       }
       /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
-         propósito: um {x,y,z} por ent × 20 Hz gera GC que trava o vsync. */
+         propósito: um {x,y,z} por ent × frequência de rede gera GC que trava o vsync. */
       if (ent._ipT1 == null) {
         ent._ipx0 = ent._ipx1 = e.x; ent._ipy0 = ent._ipy1 = e.y; ent._ipz0 = ent._ipz1 = e.z;
         ent._ipyaw0 = ent._ipyaw1 = e.yaw; ent._ipT0 = nowMs - 50; ent._ipT1 = nowMs;
@@ -410,15 +412,22 @@ class Netcode {
       this._nsT0 = now; this._nsF0 = game._rafFrames || 0;
     }
     const s = this.net.computeStats();
+    if (now >= this._nextClientStats && this._nsFps > 0) {
+      this._nextClientStats = now + 10000;
+      this.net.sendClientStats?.({
+        fps: this._nsFps, rtt: s.ping, snap: s.hz, gap: s.gapMax,
+        quality: game.settings?.quality || null,
+      });
+    }
     const c = (v, aviso, bom) => (v >= bom ? '#7fe17f' : v >= aviso ? '#f2d06b' : '#f27b7b');
-    const hzc = s.hz >= 19 ? '#7fe17f' : s.hz >= 15 ? '#f2d06b' : '#f27b7b';
+    const hzc = s.hz >= this.snapshotHz - 1 ? '#7fe17f' : s.hz >= this.snapshotHz * 0.75 ? '#f2d06b' : '#f27b7b';
     const gapc = s.gapMax <= 70 ? '#7fe17f' : s.gapMax <= 130 ? '#f2d06b' : '#f27b7b';
     const pingc = s.ping <= 0 ? '#f27b7b' : s.ping <= 40 ? '#7fe17f' : s.ping <= 120 ? '#f2d06b' : '#f27b7b';
     const row = (rot, val, cor) => `<span style="color:#7a8794">${rot}</span> <b style="color:${cor || '#e6eef6'}">${val}</b>`;
     el.innerHTML = [
       `<span style="color:#61afef;font-weight:700">NET · ${this.net.meta?.room || '?'}${this.espectador ? ' · ASSISTINDO' : ''}</span>`,
       row('fps ', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)),
-      row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/20</span>`,
+      row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/${this.snapshotHz}</span>`,
       row('gap ', `${Math.round(s.gapMax)} ms`, gapc) + ` <span style="color:#5f6f7e">últ ${Math.round(s.sinceLast)}</span>`,
       row('band', `${s.kbps.toFixed(1)} KB/s`),
       row('ents', `${s.ents}`) + `  ` + row('tick', `${s.tick}`),

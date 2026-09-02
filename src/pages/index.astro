@@ -172,7 +172,7 @@ window.__GEO_LANG__ = (function () {
     var msg = String((r && r.message) || r || '');
     // `name` vale só para o painel de falha; quem decide o balde é a mensagem.
     if (r && r.name === 'AbortError') return true;
-    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted/i.test(msg);
+    return /The play\(\) request was interrupted|(?:fetching process for the )?media resource was aborted|^AbortError: The operation was aborted|The play method is not allowed by the user agent or the platform in the current context|play\(\) failed because the user didn't interact with the document first/i.test(msg);
   }
   /* MESMA redação do `CONTEXT_LOSS_RE` de `src/lib/error-provenance.mjs` (BUG-82): segura só
      o painel de launch - o reporta() segue enviando, e a perda persistente escala pelo fatal de 8 s. */
