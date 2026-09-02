@@ -20,49 +20,57 @@ telemetria, versão e pipeline que já mudaram.
 
 ## Incidente de produção — 02/09/2026
 
-**Objetivo inteiro:** estabilizar multiplayer sem tocar na lane de viewmodels: impedir sessão
-online dentro do single-player, eliminar deriva de spawn/respawn/animação, restaurar CTF,
-reduzir a densidade oficial, evitar slots Rubao abandonados e restaurar o catálogo de áudio
-in-game. Definição de pronto para produção inclui canário jogável, painel coerente e rollout
-compatível; os checkpoints enviados ao Git não autorizam deploy.
+**Objetivo inteiro:** estabilizar multiplayer sem tocar na lane de viewmodels: separar
+single-player da sessão online, reduzir saltos de rede, restaurar CTF/spawns/áudio, eliminar
+slots fantasmas, reduzir bots e salas oficiais e tornar cada experiência diagnosticável no
+admin. Pronto significa os três nós no mesmo build, canário WebSocket real, saída sem slot
+fantasma, dados individuais no banco/painel e aceitação humana de jogabilidade. Ranking fica
+separado até distinguir SP, kill em bot e kill em humano de forma autoritativa.
 
-**Checkout:** `/Users/ruben/csbrasil/worktrees/multiplayer`, branch
-`fix/prod-gameplay-diagnostics`, base `ef801c6a`. O backend correspondente fica em
-`/Users/ruben/csbrasil-backend`, branch `feat/servidor-pre-lancamento`. Checkpoints enviados:
-cliente funcional `6b53f8e2`, documentação gerada/final `acee42fb`; backend funcional
-`1e4682a` (fixado no cliente `acee42fb`).
+**Checkouts e fontes de verdade:** este ledger fica em
+`/Users/ruben/csbrasil/worktrees/multiplayer`, branch `fix/prod-gameplay-diagnostics`. As
+mudanças finais foram preparadas em worktrees efêmeras e já chegaram às branches `main`:
 
-**Validado localmente:** `eval:netcode` 80/80; `eval:netcodecbin` 16/16; `eval:charvoice`
-verde com mutantes de versão; build Astro verde. No navegador: MP→sair→SP ficou sem overlay
-de rede e a sala CTF exibiu HUD autoritativo. No backend: smoke 74/74, runtime 8/8, protocolo
-5/5, telemetria 38/38 e fronteiras de segurança verdes usando Node moderno.
+- cliente: PR [#492](https://github.com/corosolto/client/pull/492), merge `545f44f7`, release
+  `6e8ed8ce` / `2.0.0-alpha.208`;
+- backend: PR [#11](https://github.com/corosolto/backend/pull/11), merge `2d9c3cab`; o PR
+  [#12](https://github.com/corosolto/backend/pull/12), merge `8b31b1d5`, fixa a imagem
+  aprovada em `deploy/IMAGEM`;
+- game-admin: PR [#2](https://github.com/rubenmarcus/csbrasil-admin/pull/2), merge `c70b3466`;
+- schema privado: `/Users/ruben/db-privado/supabase/migrations/028_mp_sessions.sql`, SHA-256
+  `a4333dcdd226518d2900de15a671d14b37efed5979cdc7d193d96bdfcb20bbbf`.
 
-**Ainda não aceito:** BUG-102 precisa de partida humana contra bot em movimento; BUG-103/104
-precisam de canário em Piscina e Loja H; BUG-105 precisa de aceitação visual; BUG-107 não
-deduplica duas conexões realmente ativas com o mesmo nick; BUG-108 precisa de uma captura real;
-BUG-109 precisa de escuta no canário. A migration 027 e os números do game-admin continuam
-fora deste checkpoint.
+**Concluído e validado:** migration 028 aplicada no Supabase `zdzxhnrplqoykswcjvay`; foram
+confirmados `public.mp_session`, `track_mp_sessions(jsonb)` e contagem inicial zero. A tabela
+tem RLS, acesso de `service_role`, lote máximo de 200 e não guarda IP. Cliente passou
+`eval:netcode` 83/83 e `check:deploy` 36/36. Backend passou telemetria 40/40, deploy 23/23,
+runtime 8/8, protocolo 5/5, segurança/observabilidade e API smoke 15/15. Admin passou 30/30,
+multiplayer 7/7, typecheck sem erros, build e hidratação.
 
-**Release consolidado em 02/09/2026:** o backend entrou em `main` pelos PRs
-[#5](https://github.com/corosolto/backend/pull/5),
-[#6](https://github.com/corosolto/backend/pull/6) e
-[#7](https://github.com/corosolto/backend/pull/7). A API do Cloud Run serve o SHA
-`dc06c1d90687aa6bd837c8760999ecd3de01f1f0` na revisão
-`csbrasil-backend-00005-gkj`. O cliente entrou pelo PR
-[#489](https://github.com/corosolto/client/pull/489), merge `f90901df`, e o release
-automático `57a263ee` publicou `2.0.0-alpha.206` no Vercel. No `main` final passaram
-`pr-fast`, `portao-browser`, release e o status de deploy do Vercel.
+**Produção aceita tecnicamente:** imagem
+`southamerica-east1-docker.pkg.dev/csbrasil-backend/coro-solto/servidor:runtime-2d9c3ca`
+(digest `sha256:eb0f40e32b2ec78cc977d03f4a02310fdb0c721279a54d4d91cec9564e08f9ad`), fixada no
+cliente `6e8ed8ce` e servidor `2d9c3cab`. Madrid foi o canário vazio; um WebSocket real
+negociou `coro-snapshot-v3`, mediu 30,4 Hz, recebeu 6 entidades 3v3 e devolveu o total a zero
+após `leave`. Depois disso BR e US foram promovidos vazios. `/health` dos três expõe duas
+salas, `officialTeamSize:3`, `snapshotHz:30`, os mesmos SHAs e protocolos 1/2/3.
 
-**Fronteira de produção:** esse merge publicou a API e o cliente, mas não promoveu a imagem
-nova nos nós regionais BR/EU/US. Portanto, os consertos autoritativos do servidor só ficam
-live depois de canário e rollout explícitos dos nós. O `prod-watch` também continua vermelho:
-`/api/health` respondeu `fresh:false` para `presence`, `perf`, `telemetry`, `match` e `city`.
-A migration 027, a coerência histórica do game-admin e a aceitação humana de bots, spawns,
-CTF e áudio não foram concluídas. Os PRs antigos #3 e #4 do backend foram incorporados pelo
-PR #5 e não devem ser mergeados novamente; #1 precisa de auditoria separada e #2 ficou
-obsoleto diante do Terraform consolidado.
+**Admin publicado:** `https://csbrasil-admin.vercel.app/multiplayer` mostra até 500 jornadas
+recentes com horário de Lisboa, jogador/anon, sessão curta, nó, sala oficial ou criada,
+mapa/modo, time, duração, K/D, FPS, RTT, snapshot/gap, classificação de experiência, saída e
+SHAs. Duas sessões reais `CANARIO` já apareceram com EU, FUNKEIROS × PALHAÇOS, penitenciária,
+rounds, time E, 2 s, 60 FPS, 45 ms, saída limpa e builds corretos. O painel não expõe IP.
 
-**Próximo passo:** fazer canário de um nó com a imagem correspondente ao backend consolidado,
-jogar o roteiro acima, observar `/metrics` e os cinco sinais marcados como stale, aplicar e
-validar a migration 027 quando autorizada e só então promover BR/EU/US. Se qualquer etapa
-falhar, manter os nós atuais e não misturar este trabalho com armas/viewmodels.
+**Ainda não aceito / não confundir com pronto:** partidas reais ainda precisam de aceitação
+humana para animação dos remotos/bots, dano, spawn/respawn em Piscina e Loja H, CTF completo
+e áudio in-game. O cabeçalho legado de presença ainda pode divergir momentaneamente dos nós
+(foi observado `online 0 · partida 1` enquanto `/health` tinha zero jogadores); a jornada
+nova é correta, mas histórico agregado mistura builds antigos. Ranking seguro não foi
+implementado: separar SP/MP e atribuir pesos distintos a humano, bot e objetivo exige evento
+de kill/objetivo assinado pelo servidor, não `submit-match` do cliente.
+
+**Próximo passo concreto:** jogar em produção 10–15 minutos em Madrid e São Paulo, incluindo
+Piscina, Loja H e CTF, e conferir no admin uma jornada longa com amostras completas de FPS,
+RTT, snap e gap. Se os saltos persistirem, comparar FPS local contra snap/gap/RTT da mesma
+linha antes de mexer em tick rate. Depois, criar a lane de ranking autoritativo SP/MP; não
+misturar esse trabalho nem novos ajustes de multiplayer com armas/viewmodels.
