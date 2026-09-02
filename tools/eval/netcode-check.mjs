@@ -676,5 +676,111 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(!/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;/.test(mutSemPartida), 'MUTANTE sem o ramo `partida` acende a régua');
 }
 
+
+/* BUG-117 — "o assistir ta meio esquisito". A câmera do espectador ficava nos OLHOS do alvo,
+   dentro do corpo remoto (captura: o interior do chapéu), só andava a cada snapshot, e o HUD
+   oferecia "[E] PEGAR SKS" a quem não tem corpo. */
+console.log('\n· espectador assiste em 3ª pessoa, por quadro, e sem hint de pickup (BUG-117)');
+{
+  const net = fakeNet(null, 5, false, 30);
+  const g = montaJogo(net, { dedicated: true });
+  let agora = 1000;
+  g._mp._now = () => agora;
+  net.snap = snapshot(200.00, 1, { yourEnt: -1 }); g._mp.applySnapshot();
+  const a = g._mp._alvoSpec;
+  const olhos = () => ({ x: a.pos.x, y: a.pos.y + 1.62, z: a.pos.z });
+  const cam = g.camera.position;
+  const dist = () => { const o = olhos(); return Math.hypot(cam.x - o.x, cam.y - o.y, cam.z - o.z); };
+  cobra(dist() >= 1.2, `câmera a ≥ 1,2 m dos olhos do alvo, não dentro da cabeça (${dist().toFixed(2)} m)`);
+  // bot da IA anda e olha para (sin yaw, cos yaw) — "mesh forward is +Z" (game.js); a câmera fica ATRÁS disso
+  const fx = Math.sin(a.yaw || 0), fz = Math.cos(a.yaw || 0);
+  const o = olhos();
+  cobra((cam.x - o.x) * fx + (cam.z - o.z) * fz < -0.5, 'câmera ATRÁS do bot (vê as costas dele), olhando na direção em que ele anda');
+  cobra(Math.abs(Math.abs(g.camera.rotation.y - (a.yaw || 0)) - Math.PI) < 1e-6, 'a câmera olha para onde o bot anda (yaw + π na convenção da câmera)');
+  // humano remoto: yaw vem da câmera dele (frente = -sin/-cos); o corpo tem que girar +π para não andar de costas
+  const h = g._mp._netMap.get(7); h._netBot = false; h.alive = true;
+  g._mp.updateRemoteBot(h, 1 / 60);
+  const rotH = h.mesh.group.rotation.y, rotB = (() => { const bb = g._mp._netMap.get(8); g._mp.updateRemoteBot(bb, 1 / 60); return bb.mesh.group.rotation.y; })();
+  cobra(Math.abs(Math.abs(rotH - h.yaw) - Math.PI) < 1e-6 && Math.abs(rotB - g._mp._netMap.get(8).yaw) < 1e-6,
+    `corpo do humano remoto gira yaw+π e o do bot gira yaw (humano ${rotH.toFixed(2)}, bot ${rotB.toFixed(2)})`);
+  g._mp._alvoSpec = h; g._mp.cameraEspectador();
+  const oh = { x: h.pos.x, z: h.pos.z }, hx = -Math.sin(h.yaw), hz = -Math.cos(h.yaw);
+  cobra((cam.x - oh.x) * hx + (cam.z - oh.z) * hz < -0.5, 'assistindo um HUMANO a câmera também fica atrás dele (convenção da câmera)');
+  g._mp._alvoSpec = a; g._mp.cameraEspectador();
+  // segue por quadro: entre dois snapshots o corpo interpola e a câmera vai junto
+  agora = 1033; net.snap = snapshot(200.0333, 2, { yourEnt: -1, mover: 0.1 }); g._mp.applySnapshot();
+  agora = 1066; net.snap = snapshot(200.0667, 3, { yourEnt: -1, mover: 0.2 }); g._mp.applySnapshot();
+  agora = 1100; net.snap = snapshot(200.1000, 4, { yourEnt: -1, mover: 0.3 }); g._mp.applySnapshot();
+  g.state = 'live';
+  agora = 1120; g.update(1 / 60); const cx1 = cam.x;
+  agora = 1136; g.update(1 / 60); const cx2 = cam.x;
+  cobra(cx2 > cx1 + 0.001, `a câmera anda ENTRE snapshots, com o corpo interpolado (${cx1.toFixed(3)} → ${cx2.toFixed(3)})`);
+  // hint de pickup: arma aos pés do "jogador" do espectador, e o HUD não pode oferecer
+  const p = g.player;
+  g._dropWeapon(p.pos.x, p.pos.z, 'ak', true, 0.01);
+  g._updatePickups();
+  cobra(g.el.pickupHint.classList.contains('hidden'), 'espectador NÃO vê "[E] PEGAR" (não tem corpo pra pegar nada)');
+  // MUTANTE 1: hint sem saber que é espectador — a cláusula acima morde
+  g.espectando = () => false;
+  g._pkHintW = null; g._pkHintLivre = 0; g._updatePickups();
+  cobra(!g.el.pickupHint.classList.contains('hidden'), 'MUTANTE sem a guarda de espectador mostra o hint (a cláusula morde)');
+  g.espectando = () => true;
+  // MUTANTE 2: câmera colada nos olhos (specDist 0) — volta para dentro da cabeça
+  g._mp.specDist = 0; g._mp.cameraEspectador();
+  cobra(dist() < 1.2, `MUTANTE com a câmera nos olhos fica dentro da cabeça (${dist().toFixed(2)} m) — a cláusula morde`);
+  g.dispose();
+}
+
+/* BUG-118 — "ainda parece travado e robótico". O buffer do BUG-87 era indexado pelo instante
+   de CHEGADA: em produção a HUD mostrava `gap 35 ms · últ 0` (dois snapshots no mesmo ms). No
+   relógio de chegada isso é um tick inteiro em 0 ms seguido de meio tick por ms — o boneco
+   anda 0,5× · salta · 1×. Indexado pelo tempo do SERVIDOR, a rajada some: quem chega
+   atrasado só encurta a folga do buffer, nunca deforma a estrada. */
+console.log('\n· chegada em RAJADA não altera a velocidade visual dos remotos (BUG-118)');
+function medeRajada(g, net) {
+  const HZ = 30, TICK = 1000 / HZ, V = 3;          // bot a 3 m/s, servidor a 30 Hz
+  const eventos = [];
+  for (let k = 0; k < 14; k++) {
+    // a cada 3 ticks um pacote chega 1 tick atrasado — junto com o seguinte (rajada de 2)
+    const chegada = 1000 + k * TICK + (k % 3 === 1 ? TICK : 0);
+    eventos.push({ chegada, snap: snapshot(k * TICK / 1000, k + 1, { mover: V * k * TICK / 1000 }) });
+  }
+  eventos.sort((a, b) => a.chegada - b.chegada || a.snap.tick - b.snap.tick);
+  let agora = 1000, i = 0;
+  g._mp._now = () => agora;
+  const b = () => g._mp._netMap.get(6);
+  const xs = [];
+  for (agora = 1000; agora <= 1400; agora += 4) {
+    while (i < eventos.length && eventos[i].chegada <= agora) { net.snap = eventos[i].snap; g._mp.applySnapshot(); i++; }
+    if (!b()) continue;
+    g._mp.updateRemoteBot(b(), 0.004);
+    if (agora >= 1200) xs.push(b().pos.x);        // buffer aquecido: mede 200 ms de estrada
+  }
+  const dx = xs.slice(1).map((x, j) => x - xs[j]);
+  const esperado = V * 0.004;
+  return { max: Math.max(...dx), min: Math.min(...dx), esperado, quadros: dx.length };
+}
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  const m = medeRajada(g, net);
+  cobra(m.quadros >= 40, `mediu ${m.quadros} quadros de 4 ms com o buffer aquecido`);
+  cobra(m.min > m.esperado * 0.7 && m.max < m.esperado * 1.3,
+    `deslocamento por quadro fica entre 0,7× e 1,3× do esperado (${(m.min * 1000).toFixed(1)}–${(m.max * 1000).toFixed(1)} mm, esperado ${(m.esperado * 1000).toFixed(1)} mm)`);
+  cobra(m.min > 0, `nenhum quadro parado durante a rajada (mínimo ${(m.min * 1000).toFixed(2)} mm)`);
+  g.dispose();
+
+  // MUTANTE: volta ao relógio de CHEGADA (buffer e instante renderizado no wall-clock). A
+  // cláusula da faixa 0,7×–1,3× TEM que ficar vermelha.
+  const net2 = fakeNet(1, 5, false, 30);
+  const g2 = montaJogo(net2);
+  g2._mp._relogioSnap = (snap, nowMs) => nowMs;
+  g2._mp._relogioAgora = () => g2._mp._now();
+  const m2 = medeRajada(g2, net2);
+  cobra(!(m2.min > m2.esperado * 0.7 && m2.max < m2.esperado * 1.3),
+    `MUTANTE no relógio de chegada sai da faixa (${(m2.min * 1000).toFixed(1)}–${(m2.max * 1000).toFixed(1)} mm) — a cláusula morde`);
+  g2.dispose();
+}
+
 console.log(`\n${falhas ? 'REPROVADO' : 'APROVADO'} — ${ok} ok, ${falhas} falha(s)`);
 process.exit(falhas ? 1 : 0);

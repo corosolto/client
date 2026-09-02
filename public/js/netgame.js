@@ -14,12 +14,14 @@ class Netcode {
     this._netMap = new Map();   // id do servidor -> entidade local
     this._netTick = -1;
     this._alvoSpec = null;      // quem o espectador está seguindo
+    this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
     /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots). Renderizar o remoto algumas amostras no
        passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
        pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
     this.snapshotHz = Math.max(1, Number(net.meta?.snapshotHz) || 20);
     this.interpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
+    this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
@@ -54,20 +56,19 @@ class Netcode {
      snapshots). Vai no input para o servidor rebobinar as hitboxes exatamente para cá (lag
      compensation) — é o que faz o tiro cair onde você VIU o alvo, e não onde ele já está. */
   renderTime() {
-    /* Mapeia o instante RENDERIZADO (agora − buffer) para o relógio do servidor pela mesma
-       tabela chegada↔t que a interpolação usa — o rewind cai exatamente no que a tela mostrou. */
-    const at = this._tAt, t = this._tT;
-    if (at.length) {
-      const rAt = this._now() - this.interpAtrasoMs;
-      if (rAt <= at[0]) return t[0];
-      if (rAt >= at[at.length - 1]) return t[t.length - 1];   // clampa: nunca à frente do último snapshot
-      let j = at.length - 2;
-      while (j > 0 && at[j] > rAt) j--;
-      const a = (rAt - at[j]) / Math.max(1, at[j + 1] - at[j]);
-      return t[j] + (t[j + 1] - t[j]) * a;
+    // Mesmo relógio da interpolação (BUG-118): o rewind cai exatamente no que a tela mostrou.
+    const t = this._tT;
+    if (t.length) {
+      const rt = (this._relogioAgora() - this.interpAtrasoMs) / 1000;
+      return Math.min(t[t.length - 1], Math.max(t[0], rt));   // nunca à frente do último snapshot
     }
     return this._snapCurT || 0;
   }
+
+  // Relógio do buffer dos remotos = tempo do SERVIDOR, não a chegada (BUG-118, KNOWN-BUGS.md).
+  // Costura da régua: o mutante troca os dois pelo relógio de chegada.
+  _relogioSnap(snap, nowMs) { return Number.isFinite(snap.t) ? snap.t * 1000 : nowMs; }
+  _relogioAgora() { return this._offMs == null ? this._now() : this._now() - this._offMs; }
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
@@ -165,6 +166,12 @@ class Netcode {
     this._snapCurT = snap.t; this._snapArrCur = nowMs;
     this._tAt.push(nowMs); this._tT.push(snap.t);
     if (this._tAt.length > 10) { this._tAt.shift(); this._tT.shift(); }
+    // Offset local↔servidor = MÍNIMO da janela (atraso só aumenta chegada−t); desliza ≤ 4 ms
+    // por snapshot, e salto > 1 s é relógio novo (partida nova) — BUG-118.
+    let off = Infinity;
+    for (let i = 0; i < this._tAt.length; i++) { const o = this._tAt[i] - this._tT[i] * 1000; if (o < off) off = o; }
+    if (this._offMs == null || Math.abs(off - this._offMs) > 1000) this._offMs = off;
+    else this._offMs += Math.max(-4, Math.min(4, off - this._offMs));
 
     const primeiroSnap = this._tAt.length <= 1;   // no casamento inicial, alive true->false é estado herdado, não morte
     if (game.ctf && snap.ctf) this.applyCtfState(snap.ctf);
@@ -181,6 +188,7 @@ class Netcode {
         const rotulo = e.bot ? `[BOT] ${e.name}` : e.name;   // pedido do dono (02/09): bot é bot, gente é gente
         if (ent.name !== rotulo) ent.name = rotulo;
       }
+      if (ent !== game.player) ent._netBot = !!e.bot;   // IA: frente +Z (yaw); humano: convenção da câmera (yaw+π) — BUG-117
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
         const renasceu = !wasAlive && e.alive;
@@ -213,12 +221,15 @@ class Netcode {
       ent._ipSrvT = snap.t;
       const moveDt = Number.isFinite(srvDt) && srvDt > 0 ? srvDt : Math.max(0.001, (ent._ipT1 - ent._ipT0) / 1000);
       ent._netSpd = salto > 3 ? 0 : salto / Math.max(0.001, moveDt);   // alimenta a animação de andar
-      if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; }
+      if (!ent._bufAt) { ent._bufAt = []; ent._bufX = []; ent._bufY = []; ent._bufZ = []; ent._bufYaw = []; ent._bufPitch = []; }
       /* BUFFER de amostras (BUG-87, KNOWN-BUGS.md): arrays planos, cap 10 (zero objeto no
          hot path). Teleporte esvazia — interpolar através de respawn varreria o mapa. */
-      if (salto > 3) { ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; }
-      ent._bufAt.push(nowMs); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw);
-      if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); }
+      const tBuf = this._relogioSnap(snap, nowMs), nb = ent._bufAt.length;
+      if (salto > 3 || (nb && tBuf < ent._bufAt[nb - 1])) {   // teleporte, ou relógio do servidor voltou (partida nova)
+        ent._bufAt.length = 0; ent._bufX.length = 0; ent._bufY.length = 0; ent._bufZ.length = 0; ent._bufYaw.length = 0; ent._bufPitch.length = 0;
+      }
+      ent._bufAt.push(tBuf); ent._bufX.push(e.x); ent._bufY.push(e.y); ent._bufZ.push(e.z); ent._bufYaw.push(e.yaw); ent._bufPitch.push(e.pitch || 0);
+      if (ent._bufAt.length > 10) { ent._bufAt.shift(); ent._bufX.shift(); ent._bufY.shift(); ent._bufZ.shift(); ent._bufYaw.shift(); ent._bufPitch.shift(); }
       ent._netPitch = e.pitch || 0;
       if (e.fire && ent.alive) { ent._fireAtMs = nowMs; this.gunshot(ent); if (ent.mesh && ent.mesh.isGLB) { try { ent.mesh.ctrl.shoot(); } catch { /* sem clipe */ } } }
       if (e.voice) this.voice(ent, e.voice);
@@ -372,8 +383,21 @@ class Netcode {
       this._alvoSpec = vivos.slice().sort((a, b) => (b.kills | 0) - (a.kills | 0))[0];
     }
     const a = this._alvoSpec;
-    game.camera.position.set(a.pos.x, a.pos.y + 1.62 - 0.52 * (a.crouchF || 0), a.pos.z);
-    game.camera.rotation.set(a.pitch || 0, a.yaw || 0, 0);
+    // 3ª pessoa atrás do ombro (números do camView 'third'), por QUADRO — BUG-117, KNOWN-BUGS.md.
+    const yaw = (a.yaw || 0) + (a._netBot === false ? 0 : Math.PI);   // para onde o corpo OLHA, na convenção da câmera
+    const pitch = Math.max(-1.2, Math.min(1.2, a._netPitch || 0));
+    const eye = a.pos.y + 1.62 - 0.52 * (a.crouchF || 0);
+    game._tpEul.set(pitch, yaw, 0, 'YXZ');
+    const fwd = game._tpFwd.set(0, 0, -1).applyEuler(game._tpEul);
+    const right = game._tpRight.set(1, 0, 0).applyEuler(game._tpEul);
+    const cam = game.camera;
+    cam.position.set(a.pos.x, eye, a.pos.z).addScaledVector(fwd, -this.specDist).addScaledVector(right, 0.28);
+    cam.position.y += 0.18;
+    if (game.world && game.world.groundHeightAt) {
+      const gy = game.world.groundHeightAt(cam.position.x, cam.position.z, cam.position.y) + 0.2;
+      if (cam.position.y < gy) cam.position.y = gy;   // não atravessa o chão
+    }
+    cam.rotation.set(pitch, yaw, 0);
     this.nomeAlvo = a.name;
   }
   /* Passa para o próximo jogador (a UI liga isto no clique/seta). */
@@ -447,7 +471,7 @@ class Netcode {
       /* Renderiza o remoto `interpAtrasoMs` no PASSADO, interpolando no buffer: absorve o
          jitter que congelava o boneco a cada pacote atrasado (BUG-87). NUNCA extrapola. */
       const at = b._bufAt, n = at.length;
-      const rAt = this._now() - this.interpAtrasoMs;
+      const rAt = this._relogioAgora() - this.interpAtrasoMs;
       let j, a = 0;
       if (rAt <= at[0]) j = 0;
       else if (rAt >= at[n - 1]) j = n - 1;
@@ -462,10 +486,11 @@ class Netcode {
       b.pos.z = b._bufZ[j] + (b._bufZ[k] - b._bufZ[j]) * a;
       let dy = b._bufYaw[k] - b._bufYaw[j]; while (dy > Math.PI) dy -= Math.PI * 2; while (dy < -Math.PI) dy += Math.PI * 2;
       b.yaw = b._bufYaw[j] + dy * a;
+      if (b._bufPitch) b._netPitch = b._bufPitch[j] + (b._bufPitch[k] - b._bufPitch[j]) * a;   // cabeça também sem degrau de 30 Hz
     }
     if (b.alive) {
       if (b._deadShown) { if (b.mesh.isGLB) b.mesh.ctrl.revive && b.mesh.ctrl.revive(); b._deadShown = false; b.deadT = 0; }
-      g.position.copy(b.pos); g.rotation.set(0, b.yaw, 0); g.visible = true;
+      g.position.copy(b.pos); g.rotation.set(0, b._netBot === false ? b.yaw + Math.PI : b.yaw, 0); g.visible = true;   // humano remoto olhava pra trás
       const spd = Math.min(6, b._netSpd || 0);
       if (b.mesh.isGLB) {
         // update(dt, moving, hasTarget, speed, back): a velocidade REAL vai no 4º argumento —
