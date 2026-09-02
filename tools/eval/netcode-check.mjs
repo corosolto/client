@@ -623,6 +623,14 @@ console.log('\n· remoto animado na velocidade REAL, nome vindo do servidor, tag
   cobra(g._mp._corpoPorNome('RUBAO') === remoto, 'e o killfeed acha o corpo pelo nome do servidor');
   /* Fim de round: a máquina local está desligada no online; o feedback (placar, banner, tela
      de fim) vem da TRANSIÇÃO de estado do snapshot. "Congelou e recomeçou do nada" (02/09). */
+  // morte de remoto: o feedback (sting, kill confirm quando VOCÊ mata) volta ao online
+  const sons = []; const sfx0 = g.sfx;   // o sfx do arnês é um Proxy mudo: troca o objeto inteiro por um que registra
+  g.sfx = new Proxy({}, { get: (_, k) => (...a) => { sons.push([k, ...a]); } });
+  const s45 = snapshot(1.17, 45, { mover: 0.5 }); const v = s45.ents.find((e) => e.id === remoto._netId); v.alive = false; v.hp = 0; v.killedBy = 'EU';
+  net.snap = s45; g.update(1 / 60);
+  cobra(sons.some((x) => x[0] === 'death') && sons.some((x) => x[0] === 'killConfirm'), `morte de remoto pelo JOGADOR toca sting + kill confirm (${sons.map((x) => x[0]).join(',')})`);
+  cobra(g.mk.count === 1 && g.mk.life === 1, 'e conta na sequência de abates (multikill)');
+  g.sfx = sfx0;
   // pausa: um input parado a cada 2 s segura o slot (o servidor solta após 45 s sem input)
   net.enviados.length = 0; g.paused = true;
   g._mp._inputAt = 0; g._mp._pulsoDePausa();

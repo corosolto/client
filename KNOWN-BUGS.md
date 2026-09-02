@@ -3666,6 +3666,13 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-116 · “tem problemas de sons ainda” (multiplayer)** (dono, 02/09, produção).
+  **PARCIALMENTE CORRIGIDO LOCALMENTE.** No online o `_kill` local não roda, então toda morte
+  de remoto era MUDA: sem sting de morte (distância/pan), sem kill confirm nem multikill
+  quando você mata, sem poça. `Netcode.morteRemota` replica o feedback; fim de round e início
+  de rodada também ganharam os sons (BUG-114). O que o dono ouviu de errado além disso ainda
+  não foi detalhado. **Régua:** `eval:netcode`.
+
 - **BUG-115 · “dei pause e voltei: a mira não sobe, a arma sumiu”** (dono, 02/09, produção,
   multiplayer). **CAUSA IDENTIFICADA E CORRIGIDA LOCALMENTE.** Pausado, o `update()` não roda
   e nenhum input sai; após 45 s o servidor devolve o slot à IA (`releaseInactiveSlots`, defesa

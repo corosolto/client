@@ -232,6 +232,7 @@ class Netcode {
       if (!primeiroSnap && wasAlive && !e.alive) {
         const att = this._corpoPorNome(e.killedBy);
         try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+        this.morteRemota(ent, att);
       }
     }
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
@@ -286,6 +287,34 @@ class Netcode {
         game._endMatch();   // tela de VITÓRIA/DERROTA + envio do resultado; o servidor gira o mapa em ~8 s (`partida`)
       }
     } catch (e) { console.warn('[mp] transição de estado falhou (segue o jogo):', e && e.message); }
+  }
+
+  /* MORTE de um remoto no online: o `_kill` local não roda, então o que ele toca/mostra
+     tinha sumido do multiplayer — sting de morte com distância e pan, kill confirm +
+     multikill quando VOCÊ é o assassino, poça de sangue. "Problemas de som" (dono, 02/09):
+     matar alguém era mudo. Só feedback; a morte em si é do servidor. */
+  morteRemota(ent, att) {
+    const game = this.game, p = game.player;
+    try {
+      const d = ent.pos ? ent.pos.distanceTo(game.camera.position) : 0;
+      const rel = ent.pos ? Math.atan2(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) - p.yaw : 0;
+      const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
+      game.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
+    } catch { /* ctx mudo */ }
+    if (att === p && !this.espectador) {
+      try { game.sfx.killConfirm(); } catch { /* ctx mudo */ }
+      const mk = game.mk;
+      if (game.time < mk.until) mk.count++; else mk.count = 1;
+      mk.until = game.time + 4.5; mk.life++;
+      mk.best = Math.max(mk.best || 0, mk.count);
+      const tiers = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
+      const labels = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
+      const kind = mk.count >= 6 ? 'godlike' : (tiers[mk.count] || (mk.life === 5 ? 'killingspree' : null));
+      if (kind) { try { game._mkBanner(labels[kind]); game.sfx.general(kind); } catch { /* HUD */ } }
+    } else if (att && att.team === p.team) {
+      try { game.sfx.voice(game._voiceKey(att.team)); } catch { /* ctx mudo */ }   // o lado comemora (como no _kill)
+    }
+    try { if (ent.pos && game._bloodPoolAt) game._bloodPoolAt(ent.pos); } catch { /* sem fx */ }
   }
 
   /* Estado CTF do servidor. O cliente online não executa `_updateCTF`, então copiar só
@@ -390,6 +419,7 @@ class Netcode {
      FEEDBACK; posição, vida e instante do respawn continuam vindo do servidor. */
   playerDied(e, snap) {
     const game = this.game;
+    game.mk.life = 0;   // a sequência de abates morre com você (como no _kill)
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
     try { game.sfx.death(); } catch { /* ctx mudo */ }
