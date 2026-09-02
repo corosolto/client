@@ -3666,6 +3666,52 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-119 · “o jogo em single player tem uma jogabilidade 200% melhor que multiplayer.
+  eles tem que ter mesma jogabilidade e parecer imperceptiveis em diferenca”** (dono, 02/09,
+  produção). **RELATADO, AINDA NÃO DECOMPOSTO.** É o guarda-chuva dos relatos de 02/09: o que
+  já tem número está em BUG-117 (assistir) e BUG-118 (tranco dos remotos). O que falta medir
+  online contra o local, um a um: latência do hitmarker (no online o dano só chega no
+  snapshot seguinte, ~RTT + 33 ms, sem predição local de acerto), cadência do tiro dos remotos
+  (`fire` é um bit por snapshot a 30 Hz), e a heurística do arco de dano (BUG-90). **Régua:**
+  nenhuma ainda para o conjunto; as parciais em `eval:netcode`.
+
+- **BUG-118 · “o jogo ainda parece travado e robotico um pouco, um pouco menos mas ainda. a
+  band ta 10.1kb/s é muito pouco”** (dono, 02/09, produção, depois do alpha.209).
+  **CAUSA MEDIDA E CORRIGIDA LOCALMENTE.** A banda está REFUTADA como causa: o codec
+  (`netcodec.js`) gasta ~39 bytes fixos + nome + `killedBy` por entidade e ~60 de cabeçalho;
+  com 6 entidades a 30 Hz dá ~11 KB/s, e a HUD mostrava `snap 30 Hz /30` — chegam TODOS os
+  snapshots. O tranco vem do RELÓGIO da interpolação: o buffer dos remotos (BUG-87) era
+  indexado pelo instante de CHEGADA (`_bufAt.push(nowMs)`), e a HUD em produção mostrava
+  `gap 35 ms · últ 0` e `últ 13` — pacotes em rajada. Dois snapshots que chegam no mesmo ms
+  viram um salto de um tick inteiro em 0 ms, e o intervalo esticado de antes vira meia
+  velocidade: o boneco anda 0,5× · salta · 1×, a 120 fps isso lê como “robótico”. O BUG-113
+  mediu “deslocamento constante” numa aba com chegada regular, e por isso não viu. Correção:
+  o buffer passa a ser indexado pelo TEMPO DO SERVIDOR (`snap.t`), e o instante renderizado é
+  `agora − offset − atraso`, com o offset relógio-local↔servidor estimado pelo mínimo da
+  janela `_tAt/_tT` (rajada atrasa pacote, nunca adianta; o mínimo ignora os atrasados). O
+  `renderTime()` do lag comp usa o mesmo relógio. **Régua:** `eval:netcode` (cláusula BUG-118:
+  chegada em rajada, velocidade visual constante; mutante volta ao relógio de chegada).
+
+- **BUG-117 · “o assistir ta meio esquisito”** (dono, 02/09, produção, captura: câmera
+  dentro do chapéu vermelho do bot assistido, e `[E] PEGAR SKS` na tela do espectador).
+  **CAUSA IDENTIFICADA E CORRIGIDA LOCALMENTE.** `Netcode.cameraEspectador` punha a câmera
+  nos OLHOS do alvo (`pos.y + 1,62`) sem esconder o corpo dele — no local o corpo do jogador
+  em 1ª pessoa não existe, o remoto existe, então você via o interior da cabeça. Vira câmera
+  de 3ª pessoa atrás do ombro do alvo (mesma família do `camView` local, com o corpo inteiro
+  visível, que é o que o dono pediu: “colocar a view do jogador em 3ª pessoa”). Não existe PR
+  do Emerson com isso: dos PRs dele, o mergeado é o #364 (kill replay cam), e o aberto é o
+  #449 (mobile). E `_updatePickups` rodava para o espectador, que não tem corpo nem pode
+  pegar nada — o hint fica escondido enquanto `espectando()`. **Achado no meio (figura, não
+  régua):** a 1ª versão da câmera mostrava o bot DE FRENTE. Há duas convenções de yaw no
+  jogo: a IA anda e olha para `(sin yaw, cos yaw)` ("mesh forward is +Z", `game.js`), e o
+  humano para `(-sin yaw, -cos yaw)` (câmera). O snapshot manda o yaw cru de cada um, então
+  o espectador escolhe pelo `bot` do snapshot (`ent._netBot`): bot → yaw+π, humano → yaw. O
+  mesmo achado expôs um defeito latente: `updateRemoteBot` girava TODO corpo remoto com
+  `rotation.y = yaw`, e um humano remoto aparecia de costas para onde olha e anda (só se
+  vê com 2+ humanos na sala); agora humano gira yaw+π, como o corpo TP local. **Régua:**
+  `eval:netcode` (cláusula BUG-117: câmera a ≥ 1,2 m dos olhos, atrás do alvo pela
+  convenção dele, segue entre snapshots; corpo do humano remoto yaw+π; hint escondido).
+
 - **BUG-116 · “tem problemas de sons ainda” (multiplayer)** (dono, 02/09, produção).
   **PARCIALMENTE CORRIGIDO LOCALMENTE.** No online o `_kill` local não roda, então toda morte
   de remoto era MUDA: sem sting de morte (distância/pan), sem kill confirm nem multikill
