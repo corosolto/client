@@ -15,6 +15,7 @@ class Netcode {
     this._netTick = -1;
     this._alvoSpec = null;      // quem o espectador está seguindo
     this.specDist = 1.7;        // câmera do espectador: metros atrás do ombro do alvo (BUG-117)
+    this._evOn = !!(net.meta && net.meta.events);   // servidor manda `ev`; sem a flag, heurística velha (BUG-90)
     /* BUFFER DE INTERPOLAÇÃO (~2,4 snapshots). Renderizar o remoto algumas amostras no
        passado é o que absorve o jitter: um pacote atrasado ainda tem estrada bufferizada
        pela frente, em vez de clampar no último ponto e CONGELAR o boneco (BUG-87). */
@@ -195,8 +196,10 @@ class Netcode {
         const renasceu = !wasAlive && e.alive;
         if (game.state === 'live' && e.alive && e.hp < wasHp - 0.5) { game._playerHurtFx(); dorDoJogador = wasHp - e.hp; }
         if (wasAlive && !e.alive) {
-          const att = this._corpoPorNome(e.killedBy);   // a própria morte também entra no killfeed (BUG-122)
-          try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+          if (!this._evOn) {   // com `ev` o `kill` do servidor faz o feed (autor, arma, headshot)
+            const att = this._corpoPorNome(e.killedBy);   // a própria morte também entra no killfeed (BUG-122)
+            try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+          }
           this.playerDied(e, snap);
         }
         else if (renasceu) this.playerRespawned();
@@ -240,15 +243,16 @@ class Netcode {
       if (e.voice) this.voice(ent, e.voice);
       /* Killfeed do MP: o `_kill` local não roda online — a transição vivo->morto do
          snapshot + `killedBy` é o evento de morte (BUG-90, KNOWN-BUGS.md). */
-      if (!primeiroSnap && wasAlive && !e.alive) {
+      if (!this._evOn && !primeiroSnap && wasAlive && !e.alive) {
         const att = this._corpoPorNome(e.killedBy);
         try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
         this.morteRemota(ent, att);
       }
     }
+    if (this._evOn) this._drenar(snap, primeiroSnap);
     /* Arco de dano no MP: heurística do atirador mais próximo <600 ms — o snapshot não diz
        QUEM acertou; causa, medição e pendência de protocolo no BUG-90 (KNOWN-BUGS.md). */
-    if (dorDoJogador > 0 && !this.espectador) {
+    if (!this._evOn && dorDoJogador > 0 && !this.espectador) {
       const att = this._atacanteProvavel(nowMs);
       if (att) {
         try { game._dmgArc(att, game.player, dorDoJogador); } catch { /* HUD ainda não montado */ }
@@ -257,6 +261,35 @@ class Netcode {
       }
     }
     if (this.espectador) this.cameraEspectador();
+  }
+
+  /* EVENTOS DO SERVIDOR: lotes `ev` (tick ≤ snapshot) viram feedback com o autor REAL. O lote do
+     tick de entrada é estado herdado (como `primeiroSnap`), e lote com 3 s de atraso (pausa) some. */
+  _drenar(snap, primeiroSnap) {
+    const fila = this.net.events;
+    if (!fila || !fila.length) return;
+    while (fila.length && fila[0].tick <= snap.tick) {
+      const lote = fila.shift();
+      if (primeiroSnap || snap.tick - lote.tick > 90) continue;
+      for (const e of lote.list) { try { this._evento(e); } catch { /* HUD ainda não montado */ } }
+    }
+  }
+  _evento(e) {
+    const game = this.game, p = game.player, meu = this.net.yourEnt;
+    if (!e || typeof e !== 'object') return;
+    const att = this._netMap.get(e.a | 0) || null, vic = this._netMap.get(e.v | 0) || null;
+    const d = Math.max(0, Math.min(999, e.d | 0)), h = e.h === 1 || e.h === true, w = String(e.w || '').slice(0, 8);
+    const dist = (a) => (a && a.pos && p && p.pos) ? Math.hypot(a.pos.x - p.pos.x, a.pos.z - p.pos.z) : 0;
+    if (e.k === 'hit') {
+      if (!att || this.espectador || (e.v | 0) !== meu) return;
+      try { game._dmgArc(att, p, d); } catch { /* HUD */ }
+      game._noteHit(att, w, d, h, dist(att));
+    } else if (e.k === 'kill') {
+      if (!vic) return;
+      try { game._feed(att, vic, w, h); } catch { /* HUD */ }
+      if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
+      else this.morteRemota(vic, att);
+    }
   }
 
   /* Transições de rodada no online: a máquina local está desligada, só o feedback é replicado
@@ -563,7 +596,7 @@ class Netcode {
       row('fps ', `${this._nsFps ?? '--'}`, c(this._nsFps || 0, 45, 55)),
       row('snap', `${s.hz} Hz`, hzc) + ` <span style="color:#5f6f7e">/${this.snapshotHz}</span>`,
       row('gap ', `${Math.round(s.gapMax)} ms`, gapc) + ` <span style="color:#5f6f7e">últ ${Math.round(s.sinceLast)}</span>`,
-      row('band', `${s.kbps.toFixed(1)} KB/s`),
+      row('band', `${s.kbps.toFixed(1)} KB/s`) + (this._evOn ? ` <span style="color:#5f6f7e">ev ${this.net.stats.evs | 0}</span>` : ''),
       row('ents', `${s.ents}`) + `  ` + row('tick', `${s.tick}`),
       row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc),
     ].join('\n');

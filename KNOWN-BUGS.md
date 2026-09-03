@@ -3718,9 +3718,9 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   | SP faz em | Efeito | Online (02/09) |
   |---|---|---|
   | `_damage` | hitmarker, número de dano | **faltava** → `_acertoPrevisto` no raio local; hp segue do snapshot |
-  | `_damage` | vinheta, arco de dano ao levar tiro | heurístico pelo atirador mais próximo (BUG-90) |
+  | `_damage` | vinheta, arco de dano ao levar tiro | **evento `hit` do servidor com autor, arma e headshot** (fase 1 do canal `ev`, 03/09); heurística só sem a flag |
   | `_kill` | sting, kill confirm, multikill, poça | replicado (BUG-116) |
-  | `_kill` | killfeed | bots ok (BUG-90); **própria morte faltava** → BUG-122 |
+  | `_kill` | killfeed | **evento `kill` do servidor** (autor, arma, caveira), uma linha por morte; `killedBy` fica só como compat sem a flag |
   | `_kill` | drop da arma do morto | **falta**: o servidor dropa no mundo dele e o snapshot não traz pickups |
   | `_respawnPlayer` | posição, proteção | servidor |
   | `_respawnPlayer` | munição cheia, câmera, som | **faltava** → `playerRespawned` |
@@ -4283,6 +4283,17 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   fonte e todos estão guardados, o do fade inclusive. O produtor da promessa solta em
   produção continua sem nome, e o BUG-73 diz por quê (não há browser na máquina que
   consertou).
+
+  **03/09 — pendência de protocolo fechada (fase 1 do canal `ev`).** O servidor manda
+  `{type:'ev', tick, t, list:[{k:'hit'|'kill', a, v, d, h, w}]}` como TEXTO, antes do snapshot do
+  tick, por um gancho único em `_damage` (`room.js _instalarGanchos`); `hit` só quando a vítima
+  é gente, `kill` sempre, teto 32/tick derrubando `hit` antes de `kill`. O cliente drena por tick
+  (`netgame._drenar/_evento`) e deixa de usar `_atacanteProvavel`; sem `events: 1` no welcome cai
+  na heurística velha (rollout servidor-primeiro). Réguas: backend `game/eventos-check.mjs`
+  (10 ok; mutantes sem-gancho, hit-e-kill, sem-teto), `game/protocol-check.mjs` (ev-binario,
+  snapshot-antes, sem-flag), `game/smoke.mjs` (pela rede); cliente `eval:netcode` (arco para o
+  atacante REAL com outro inimigo mais perto que atirou há 100 ms; mutante sem a flag cai na
+  heurística). Drops e granadas: fases 2 e 3.
 
 - **BUG-38 · "Andando não consigo mexer a mira, só quando para" — touchpad de notebook.**
   Palavras de quem reportou (Matheus Paz, 07/08): *"Andando não consigo mexer a mira, só

@@ -85,6 +85,7 @@ export class NetClient {
     // welcome (meta) + os dois últimos snapshots, que é o que a interpolação consome.
     this.meta = null;
     this.snap = null;
+    this.events = [];   // lotes `ev` (tick, t, list) — ver netgame._drenar
     this.prev = null;
     this.seq = 0;
     this.onWelcome = null; this.onSnapshot = null; this.onSlot = null; this.onPartida = null; this.onClose = null;
@@ -149,11 +150,19 @@ export class NetClient {
           // o servidor girou o mapa: meta NOVA (roster, ids, mapa, facções) + o seu slot (BUG-112)
           this.meta = m; this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.snap = null; this.prev = null;   // snapshots do jogo velho não servem para o novo
+          this.events.length = 0;               // eventos do jogo velho idem
           this.onPartida?.(m);
         } else if (m.type === 'slot') {
           // entrou em campo / virou espectador (o servidor confirma; a UI nunca decide sozinha)
           this.yourEnt = m.yourEnt; this.yourTeam = m.yourTeam; this.espectador = !!m.espectador;
           this.onSlot?.(m);
+        } else if (m.type === 'ev') {
+          // eventos do servidor (acerto/abate com autor): texto, drenados pelo netgame no tick deles
+          if (Array.isArray(m.list) && Number.isInteger(m.tick)) {
+            this.events.push({ tick: m.tick, t: m.t, list: m.list.slice(0, 32) });
+            if (this.events.length > 256) this.events.splice(0, this.events.length - 256);
+            this.stats.evs = (this.stats.evs || 0) + 1;
+          }
         } else if (m.type === 'snapshot') {
           this.prev = this.snap; this.snap = m;
           const now = performance.now();
