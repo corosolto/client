@@ -3606,7 +3606,9 @@ a folha da Bombing Science ensina, e usar o decalque CC0 como peça grande pontu
 licença é dele, não minha — e é irreversível na prática, porque asset entra em commit, em
 build e em deploy antes de alguém revisar.
 
-### BUG-18 · O trabalho de duas semanas nunca saiu desta máquina · **o mais grave da lista**
+### ~~BUG-18 · O trabalho de duas semanas nunca saiu desta máquina~~ · RESOLVIDO 03/09
+
+> Desatualizado: a main tem releases contínuos até v2.0.0-alpha.212 (03/09) e todo trabalho sobe por PR. Mantido pelo histórico.
 
 `main` está no commit **`b4ee2b3`, de 18/07** (`v1.12.4`). A branch de trabalho tinha
 **143 commits à frente** e **nenhum upstream** — nunca foi enviada. Verificado de fora:
@@ -3674,18 +3676,18 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   pode cair sem congelar; hitscan já tem lag comp. **Régua:** nenhuma ainda.
 
 - **BUG-124 · “no singleplayer temos que indicar que são [BOT] também”** (dono, 02/09).
-  **RELATADO.** No online o rótulo `[BOT]` vem do snapshot (BUG-112); no local `name` é o do
+  **RESOLVIDO 03/09 (v2.0.0-alpha.212).** Bot nasce `[BOT] Nome` no local (`mkBot`, game.js); online o rótulo segue vindo do snapshot, uma vez só. **Régua:** `eval:netcode` (cláusula BUG-124). No online o rótulo `[BOT]` vem do snapshot (BUG-112); no local `name` é o do
   personagem e o killfeed/placar/tela de morte mostram sem prefixo. **Régua:** nenhuma ainda.
 
 - **BUG-123 · “quando termina partida e tem vitória temos que mostrar um load carregando
   próximo mapa pro usuário continuar no jogo, não pode ter botão jogar novamente (ele está no
   multiplayer não singleplayer)”** (dono, 02/09, produção, captura VITÓRIA com JOGAR NOVAMENTE
-  e VOLTAR AO MENU). **RELATADO.** `_endMatch` é a tela do single player; no online o servidor
+  e VOLTAR AO MENU). **RESOLVIDO 03/09 (v2.0.0-alpha.212).** `_endMatch` online esconde JOGAR NOVAMENTE e mostra PRÓXIMO MAPA CARREGANDO…; o `partida` do servidor remonta. **Régua:** `eval:netcode` (cláusula BUG-123). `_endMatch` é a tela do single player; no online o servidor
   gira o mapa e manda `partida` (BUG-112), então a tela tem que dizer que o próximo mapa está
   carregando e seguir sozinha. **Régua:** nenhuma ainda.
 
 - **BUG-122 · “o kill mostrando como se o bot tivesse me matando e não o contrário”** (dono,
-  02/09, produção). **RELATADO.** Nas capturas o painel NET cobre a coluna da vítima do
+  02/09, produção). **RESOLVIDO 03/09 (v2.0.0-alpha.212).** Três causas: a própria morte não entrava no feed (`applySnapshot` só chamava `_feed` para remotos); `_corpoPorNome(killedBy)` não casava o apelido truncado a 16 pelo servidor (agora casa por `_meuNomeServidor`, o nome que vem no snapshot); e o painel NET cobria a coluna da vítima (`body.net-overlay #killfeed`). **Régua:** `eval:netcode` (cláusula BUG-122, mutante sem o nome do servidor). Nas capturas o painel NET cobre a coluna da vítima do
   killfeed: só o primeiro chip (`[BOT] X 🔫`) fica visível. Hipóteses a medir: (a) só
   sobreposição; (b) `_corpoPorNome(killedBy)` não casa o jogador local quando o servidor
   trunca o apelido a 16 caracteres (`room.js`), e o abate do jogador sai sem atacante.
@@ -3693,13 +3695,13 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 - **BUG-121 · “as armas sem model direito” / “nenhuma arma pode ter model low poly assim, tem
   que usar o model original da arma sempre”** (dono, 02/09, produção, capturas: AWP e MP5 como
-  caixa procedural no viewmodel, AK com GLB). **RELATADO.** Os 26 GLBs existem em
+  caixa procedural no viewmodel, AK com GLB). **RESOLVIDO 03/09 (v2.0.0-alpha.212).** O GLB que chegava depois do construtor montava DENTRO da caixa procedural e só o construtor escondia as malhas da caixa; `_vmMontarTardio` agora esconde também. Os 26 GLBs respondem 200 em produção. **Régua:** `eval:netcode` (cláusula BUG-121 com `unloadWeaponModel`/`setWeaponModel`). Os 26 GLBs existem em
   `public/models/weapons/`; a caixa é o fallback do viewmodel quando o GLB não montou
   (BUG-111 tratou a chegada tardia na troca de arma). A medir: por que AWP/MP5 seguem na caixa
   por mais de um minuto em produção. **Régua:** nenhuma ainda.
 
 - **BUG-120 · “eu iniciei no meio do mapa com 13 de vida”** (dono, 02/09, produção).
-  **RELATADO.** Ao tomar a vaga, o humano herda o corpo do bot como está: posição no meio da
+  **RESOLVIDO 03/09 (servidor runtime-1f39881, backend PR #14).** `claimSlot` passa o corpo tomado por `_respawnEntity` quando a rodada está em live: spawn do time, 100 de vida, proteção. **Régua:** `game/partida-check.mjs` (15 ok; mutante sem respawn entrega 13 de vida). Ao tomar a vaga, o humano herda o corpo do bot como está: posição no meio da
   rodada e HP corrente. **Régua:** nenhuma ainda.
 
 - **BUG-119 · “o jogo em single player tem uma jogabilidade 200% melhor que multiplayer.
@@ -3738,7 +3740,7 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 - **BUG-118 · “o jogo ainda parece travado e robotico um pouco, um pouco menos mas ainda. a
   band ta 10.1kb/s é muito pouco”** (dono, 02/09, produção, depois do alpha.209).
-  **CAUSA MEDIDA E CORRIGIDA LOCALMENTE.** A banda está REFUTADA como causa: o codec
+  **RESOLVIDO 02/09 (v2.0.0-alpha.210).** A banda está REFUTADA como causa: o codec
   (`netcodec.js`) gasta ~39 bytes fixos + nome + `killedBy` por entidade e ~60 de cabeçalho;
   com 6 entidades a 30 Hz dá ~11 KB/s, e a HUD mostrava `snap 30 Hz /30` — chegam TODOS os
   snapshots. O tranco vem do RELÓGIO da interpolação: o buffer dos remotos (BUG-87) era
@@ -3755,7 +3757,7 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 - **BUG-117 · “o assistir ta meio esquisito”** (dono, 02/09, produção, captura: câmera
   dentro do chapéu vermelho do bot assistido, e `[E] PEGAR SKS` na tela do espectador).
-  **CAUSA IDENTIFICADA E CORRIGIDA LOCALMENTE.** `Netcode.cameraEspectador` punha a câmera
+  **RESOLVIDO 02/09 (v2.0.0-alpha.210).** `Netcode.cameraEspectador` punha a câmera
   nos OLHOS do alvo (`pos.y + 1,62`) sem esconder o corpo dele — no local o corpo do jogador
   em 1ª pessoa não existe, o remoto existe, então você via o interior da cabeça. Vira câmera
   de 3ª pessoa atrás do ombro do alvo (mesma família do `camView` local, com o corpo inteiro
@@ -4226,7 +4228,7 @@ pós-live, loadMs no payload). Mutação `--mutante=perf-no-live` devolve a medi
 e acende. O lag relatado pelo jogador **não foi refutado** — com fps de jogo + connection +
 quality na mesma amostra, a próxima leitura do painel separa máquina fraca de rede lenta.
 
-- **BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**
+- ~~**BUG-41 · `crypto.randomUUID` derruba presença em navegador incompatível (#143).**~~ · RESOLVIDO (conserto medido 0/3→3/3 já registrado abaixo; fechado em 03/09).
   O cliente chamava o método diretamente ao criar `cs_anon` e `awpbr_token`; quando
   `crypto` existia sem `randomUUID`, `getAnonId()` lançava antes do primeiro ping.
   `npm run eval:uuid` reproduz esse ambiente e exige UUID v4 nos caminhos nativo,
