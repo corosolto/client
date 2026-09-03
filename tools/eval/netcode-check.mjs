@@ -20,11 +20,11 @@ const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { fa
 
 /* NetClient de mentira: mesma superfície que o netgame consome (snap/prev/yourEnt/meta/
    sendInput/startPing/stopPing/computeStats), sem socket. */
-function fakeNet(yourEnt, teamSize = 5, ctf = false, snapshotHz = 20) {
+function fakeNet(yourEnt, teamSize = 5, ctf = false, snapshotHz = 20, events = 0) {
   return {
     yourEnt, yourTeam: 'E', espectador: yourEnt == null,
-    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2, snapshotHz },
-    snap: null, prev: null, enviados: [],
+    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2, snapshotHz, ...(events ? { events: 1 } : {}) },
+    snap: null, prev: null, enviados: [], events: [],
     startPing() {}, stopPing() {},
     computeStats() { return { hz: 20, kbps: 1, gapMax: 50, sinceLast: 10, ents: 10, tick: 1, ping: 30 }; },
     sendInput(i) { this.enviados.push(i); },
@@ -662,7 +662,7 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   const net = fs.readFileSync('public/js/net.js', 'utf8');
   const main = fs.readFileSync('public/js/main.js', 'utf8');
   const game = fs.readFileSync('public/js/game.js', 'utf8');
-  cobra(/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;[\s\S]{0,200}this\.onPartida\?\.\(m\)/.test(net),
+  cobra(/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;[\s\S]{0,400}this\.onPartida\?\.\(m\)/.test(net),   // janela: entre a meta e o aviso entrou o zerar dos eventos
     'net.js troca a meta (roster/ids/mapa) e avisa em `partida` — sem isto o cliente fica no mapa velho com ids mortos');
   cobra(/net\.onPartida = async \(m\) => \{[\s\S]{0,400}mpMontarPartida\(net, m\)/.test(main),
     'main.js remonta a partida por cima quando o servidor gira o mapa');
@@ -796,6 +796,104 @@ console.log('\n· bots rotulados [BOT] no single player, uma vez só no online (
   cobra(r.name === 'BOT6' || r.name === '[BOT] BOT6', `online: rótulo vem do snapshot uma vez só (${r.name})`);
   cobra(!/\[BOT\] \[BOT\]/.test(r.name), 'sem rótulo dobrado');
   g2.dispose();
+}
+
+/* EVENTOS DO SERVIDOR (`ev`) — fecha a pendência de protocolo da BUG-90: o servidor conta
+   acerto e abate com autor, arma e headshot; o cliente para de deduzir de deltas. Sem a flag
+   `events` no welcome o caminho velho (killedBy + atirador mais próximo) continua. */
+console.log('\n· eventos do servidor: arco de dano para o atacante REAL, não para o mais perto (BUG-90)');
+function cenarioEv(events = 1) {
+  const net = fakeNet(1, 5, false, 30, events);
+  const g = montaJogo(net);
+  let agora = 1000; g._mp._now = () => agora;
+  net.snap = snapshot(900.00, 1); g._mp.applySnapshot();
+  g.state = 'live';
+  const p = g.player, perto = g._mp._netMap.get(6), longe = g._mp._netMap.get(7);
+  perto.pos.set(p.pos.x + 2, p.pos.y, p.pos.z); longe.pos.set(p.pos.x + 20, p.pos.y, p.pos.z);
+  perto._fireAtMs = agora - 100;                       // o mais perto atirou há 100 ms: a heurística escolheria ele
+  const arcos = []; g._dmgArc = (att) => { arcos.push(att); };
+  const feeds = []; g._feed = (a, v, w, h) => { feeds.push({ a, v, w, h }); };
+  return { net, g, p, perto, longe, arcos, feeds, tick: (n) => { agora += 33; return n; } };
+}
+{
+  const c = cenarioEv(1);
+  const { net, g, perto, longe, arcos } = c;
+  net.events.push({ type: 'ev', tick: 2, t: 900.033, list: [{ k: 'hit', a: longe._netId, v: 1, d: 20, h: 0, w: 'AK' }] });
+  net.snap = snapshot(900.033, 2, { hpVoce: 80 }); g._mp.applySnapshot();
+  cobra(arcos.length === 1 && arcos[0] === longe, `o arco aponta para quem o SERVIDOR disse (${arcos[0] && arcos[0].name}), não para o mais perto`);
+  cobra(!!g._lastHit && g._lastHit.name === longe.name && g._lastHit.dmg === 20, 'o painel de morte guarda o atacante, a arma e o dano do evento');
+  g.dispose();
+  // MUTANTE: sem a flag o cliente volta à heurística e aponta para o mais perto — a cláusula morde
+  const m = cenarioEv(0);
+  m.net.events.push({ type: 'ev', tick: 2, t: 900.033, list: [{ k: 'hit', a: m.longe._netId, v: 1, d: 20, h: 0, w: 'AK' }] });
+  m.net.snap = snapshot(900.033, 2, { hpVoce: 80 }); m.g._mp.applySnapshot();
+  cobra(m.arcos.length === 1 && m.arcos[0] === m.perto, 'MUTANTE sem `events` no welcome cai na heurística (compat com nó velho) — a cláusula morde');
+  m.g.dispose();
+}
+
+console.log('\n· `kill` do servidor: uma linha de feed, com caveira, e a própria morte com painel rico');
+{
+  const c = cenarioEv(1);
+  const { net, g, perto, feeds } = c;
+  const vitima = g._mp._netMap.get(8);
+  // abate remoto: o evento e a transição alive chegam no MESMO tick — só UMA linha
+  net.events.push({ type: 'ev', tick: 2, t: 900.033, list: [{ k: 'kill', a: perto._netId, v: 8, d: 35, h: 1, w: 'AWP' }] });
+  const s2 = snapshot(900.033, 2); const e8 = s2.ents.find((e) => e.id === 8); e8.alive = false; e8.hp = 0; e8.killedBy = 'BOT6';
+  net.snap = s2; g._mp.applySnapshot();
+  cobra(feeds.length === 1 && feeds[0].a === perto && feeds[0].v === vitima && feeds[0].h === true && feeds[0].w === 'AWP', `abate remoto: UMA linha (${feeds.length}), atacante do evento, caveira e arma do evento`);
+  // a própria morte: painel rico vem do `kill` (autor, arma, headshot), sem depender do nome
+  net.events.push({ type: 'ev', tick: 3, t: 900.066, list: [{ k: 'kill', a: perto._netId, v: 1, d: 100, h: 1, w: 'AWP' }] });
+  net.snap = snapshot(900.066, 3, { matarVoce: true }); g._mp.applySnapshot();
+  cobra(feeds.length === 2 && feeds[1].a === perto && feeds[1].v === g.player, 'a própria morte entra no feed pelo evento, com o atacante certo');
+  cobra(!!g._lastHit && g._lastHit.name === perto.name && g._lastHit.head === true && g._lastHit.weap === 'AWP', 'MORTO POR com arma e headshot do servidor');
+  g.dispose();
+}
+
+console.log('\n· eventos antes do primeiro snapshot, fora de ordem e para espectador');
+{
+  const net = fakeNet(1, 5, false, 30, 1);
+  const g = montaJogo(net);
+  const feeds = []; g._feed = (a, v) => { feeds.push([a, v]); };
+  const sons = []; g.sfx = new Proxy({}, { get: (_, k) => (...a) => { sons.push(k); } });
+  net.events.push({ type: 'ev', tick: 1, t: 910.00, list: [{ k: 'kill', a: 6, v: 8, d: 1, h: 0, w: 'AK' }] });
+  const s1 = snapshot(910.00, 1); const e8 = s1.ents.find((e) => e.id === 8); e8.alive = false; e8.hp = 0;
+  net.snap = s1; g._mp.applySnapshot();
+  cobra(feeds.length === 0 && !sons.includes('death'), 'lote do tick de entrada é estado herdado: sem feed, sem som');
+  cobra(net.events.length === 0, 'e foi consumido (não fica pendurado)');
+  net.events.push({ type: 'ev', tick: 9, t: 910.30, list: [{ k: 'kill', a: 6, v: 9, d: 1, h: 0, w: 'AK' }] });
+  net.snap = snapshot(910.033, 2); g._mp.applySnapshot();
+  cobra(feeds.length === 0 && net.events.length === 1, 'lote de tick FUTURO espera o snapshot dele');
+  net.snap = snapshot(910.30, 9); g._mp.applySnapshot();
+  cobra(feeds.length === 1 && net.events.length === 0, 'e é aplicado quando o snapshot do tick chega');
+  g.dispose();
+  const netS = fakeNet(null, 5, false, 30, 1);
+  const gs = montaJogo(netS, { dedicated: true });
+  const arcos = []; gs._dmgArc = (a) => { arcos.push(a); };
+  netS.snap = snapshot(920.00, 1, { yourEnt: -1 }); gs._mp.applySnapshot();
+  netS.events.push({ type: 'ev', tick: 2, t: 920.033, list: [{ k: 'hit', a: 6, v: 1, d: 20, h: 0, w: 'AK' }, { k: 'kill', a: 6, v: 1, d: 80, h: 0, w: 'AK' }] });
+  netS.snap = snapshot(920.033, 2, { yourEnt: -1 }); gs._mp.applySnapshot();
+  cobra(arcos.length === 0, 'espectador nunca recebe arco de dano nem "você" por evento');
+  gs.dispose();
+}
+
+console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande é cortado');
+{
+  const { NetClient } = await import('../../public/js/net.js');
+  class WsFalso { constructor() { WsFalso.ultimo = this; this.readyState = 1; this.OPEN = 1; } send() {} close() {} }
+  const ws0 = globalThis.WebSocket; globalThis.WebSocket = WsFalso;
+  const cli = new NetClient('ws://x/ws');
+  const conectando = cli.connect();
+  const ws = WsFalso.ultimo;
+  ws.onopen && ws.onopen();
+  ws.onmessage({ data: JSON.stringify({ type: 'welcome', yourEnt: 1, yourTeam: 'E', espectador: false, events: 1, snapshotHz: 30 }) });
+  await conectando;
+  ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 5, t: 1, list: Array.from({ length: 40 }, () => ({ k: 'hit', a: 1, v: 2, d: 1, h: 0, w: 'AK' })) }) });
+  cobra(cli.events.length === 1 && cli.events[0].list.length === 32, `lote de 40 vira 32 no cliente (${cli.events[0] && cli.events[0].list.length})`);
+  ws.onmessage({ data: JSON.stringify({ type: 'ev', tick: 'x', list: [] }) });
+  cobra(cli.events.length === 1, 'lote sem tick inteiro é ignorado');
+  ws.onmessage({ data: JSON.stringify({ type: 'partida', yourEnt: 2, yourTeam: 'E', espectador: false, events: 1 }) });
+  cobra(cli.events.length === 0, '`partida` zera o buffer de eventos (junto com snap/prev)');
+  globalThis.WebSocket = ws0;
 }
 
 /* BUG-117 — "o assistir ta meio esquisito". A câmera do espectador ficava nos OLHOS do alvo,
