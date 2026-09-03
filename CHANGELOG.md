@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.211`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.212`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -31,6 +31,12 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.212] — 2026-09-03
+
+### Mudado
+- fix(multiplayer): paridade com o single player — acerto previsto, killfeed, respawn, fim de partida, viewmodel e [BOT] (BUG-119, 121-124) (#498)
+- fix(multiplayer): paridade com o single player — acerto previsto, killfeed, respawn, fim de partida, caixa do viewmodel e [BOT] (BUG-119, 121-124)
 
 ## [2.0.0-alpha.211] — 2026-09-02
 
