@@ -43,7 +43,7 @@ class Netcode {
   dispose() {
     if (this._nsTimer) { clearInterval(this._nsTimer); this._nsTimer = null; }
     try { this.net.stopPing(); } catch { /* já fechada */ }
-    if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; }
+    if (this._nsEl) { this._nsEl.remove(); this._nsEl = null; try { document.body.classList.remove('net-overlay'); } catch { /* sem DOM */ } }
     if (this.net.onSlot === this._onSlot) this.net.onSlot = this._prevOnSlot;
   }
 
@@ -191,9 +191,14 @@ class Netcode {
       if (ent !== game.player) ent._netBot = !!e.bot;   // IA: frente +Z (yaw); humano: convenção da câmera (yaw+π) — BUG-117
       if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
       if (ent === game.player) {
+        this._meuNomeServidor = e.name || this._meuNomeServidor;   // o servidor trunca o apelido; é este nome que vem em `killedBy`
         const renasceu = !wasAlive && e.alive;
         if (game.state === 'live' && e.alive && e.hp < wasHp - 0.5) { game._playerHurtFx(); dorDoJogador = wasHp - e.hp; }
-        if (wasAlive && !e.alive) this.playerDied(e, snap);
+        if (wasAlive && !e.alive) {
+          const att = this._corpoPorNome(e.killedBy);   // a própria morte também entra no killfeed (BUG-122)
+          try { game._feed(att, ent, att ? this._armaCurta(att.weapon) : '', false); } catch { /* HUD ainda não montado */ }
+          this.playerDied(e, snap);
+        }
         else if (renasceu) this.playerRespawned();
         /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
            uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
@@ -353,7 +358,7 @@ class Netcode {
   _corpoPorNome(nome) {
     if (!nome) return null;
     const game = this.game;
-    if (game.player && game.player.name === nome) return game.player;
+    if (game.player && (game.player.name === nome || nome === this._meuNomeServidor)) return game.player;
     for (const b of this._netMap.values()) if (b !== game.player && (b._nomeServidor === nome || b.name === nome)) return b;
     return null;
   }
@@ -458,6 +463,12 @@ class Netcode {
     if (game.el.respawn) game.el.respawn.classList.add('hidden');
     if (game._deathPanel) { try { game._deathPanel.remove(); } catch { /* já foi */ } game._deathPanel = null; }
     game._lastHit = null;
+    // O que o _respawnPlayer faz no SP e o servidor não faz por nós: munição, rolagem da câmera, som (BUG-119).
+    const p = game.player;
+    for (const w of [p.primary, p.secondary]) if (w && WEAPONS[w] && p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
+    p._lifeDmg = 0; p.crouchF = 0;
+    if (game.camera) game.camera.rotation.z = 0;
+    try { game.sfx.respawn(); } catch { /* ctx mudo */ }
   }
 
   /* Render de um boneco REMOTO. Chamado pelo game._updateBot para corpos com `_remote`.
@@ -519,6 +530,7 @@ class Netcode {
     let el = this._nsEl;
     if (!el) {
       el = this._nsEl = document.createElement('div');
+      try { document.body.classList.add('net-overlay'); } catch { /* sem DOM */ }   // o killfeed se afasta (style.css)
       el.id = 'netstats';
       el.style.cssText = 'position:fixed;top:10px;right:10px;z-index:100000;font:12px/1.55 ui-monospace,Menlo,Consolas,monospace;'
         + 'color:#cfe;background:rgba(8,10,14,.86);border:1px solid #2a3340;border-radius:7px;padding:7px 11px;'

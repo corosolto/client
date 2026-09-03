@@ -243,6 +243,9 @@ export async function preloadWeapons(ids) {
 }
 
 export function hasWeapon(id) { return _cache.has(MODEL_ALIAS[id] || id); }
+// Costura da régua (BUG-121): simula o GLB que ainda não chegou. Nada de produção chama isto.
+export function unloadWeaponModel(id) { _cache.delete(MODEL_ALIAS[id] || id); }
+export function setWeaponModel(id, scene) { _cache.set(MODEL_ALIAS[id] || id, scene); }
 
 // Geometry facts for aligning hands/mounts: real length + grip point (fraction from muzzle).
 export function weaponCFG(id) { return CFG[id] || CFG.awp; }

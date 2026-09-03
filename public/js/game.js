@@ -771,7 +771,7 @@ export class Game {
       const c = buildCharacterModel(def, { weaponId: wpn }) || buildCharacter(def);
       c.group.traverse(o => { o.userData.botOwner = null; });
       const bot = {
-        isPlayer: false, name: def.name, def, team,
+        isPlayer: false, name: (this.online || this.dedicated) ? def.name : `[BOT] ${def.name}`, def, team,   // SP rotula aqui; online o snapshot rotula (BUG-124)
         mesh: c, pos: new THREE.Vector3(), yaw: 0, hp: 100, alive: true,
         respawnAt: 0, protUntil: 0, kills: 0, deaths: 0,
         target: null, reactAt: 0, nextShotAt: 0, skill: rollBotSkill(this._diffMul) * (0.9 + Math.random() * 0.2), weapon: wpn,
@@ -1187,6 +1187,7 @@ export class Game {
       prot: $('prot-badge'), protCount: $('prot-count'),
       scoreboard: $('scoreboard'), sbCols: $('sb-cols'),
       matchEnd: $('match-end'), matchTitle: $('match-title'), matchSub: $('match-sub'), matchStats: $('match-stats'),
+      btnAgain: $('btn-again'), matchNext: $('match-next'),
       pause: $('pause-menu'), radar: $('radar'),
       // painel de botões do pause: a JANELA DE GUARDA (PAUSE_ARM_MS) desliga o ponteiro
       // NELE, não no overlay inteiro — o fundo continua clicável, e é ele que retoma
@@ -1667,6 +1668,7 @@ export class Game {
       if (!g || g.getObjectByName('rw')) return false;
       const rw = mountRw(g, id);
       if (!rw) return false;
+      g.children.forEach((ch) => { if (ch.isMesh) ch.visible = false; });   // a caixa ficava visível por cima do GLB (BUG-121)
       alignHands(g, id);
       if (this._weaponOnly) g.traverse((o) => { if (o.name === 'handR' || o.name === 'handL') o.visible = false; });
       this._vmFrame(true);
@@ -2563,6 +2565,9 @@ export class Game {
     const pose = mine ? 'vitoria' : 'derrota';
     const setHeroArt = (id) => { if (heroEl) heroEl.style.setProperty('--me-art', `url("/img/resultado/${id}-${pose}.webp")`); };
     setHeroArt(this.playerCharId || rep);
+    // Online o servidor gira o mapa e manda `partida`: sem JOGAR NOVAMENTE, com aviso de carga (BUG-123).
+    if (this.el.btnAgain) this.el.btnAgain.classList.toggle('hidden', !!this.online);
+    if (this.el.matchNext) this.el.matchNext.classList.toggle('hidden', !this.online);
     this.el.matchEnd.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
     /* MAPA, MODO, PERSONAGEM E DURAÇÃO ENTRAM AQUI (07/08) porque sem eles o `match_end`
@@ -3137,6 +3142,7 @@ export class Game {
           /* Online: o cliente desenha o impacto mas NÃO aplica dano — o hp vem no snapshot.
              Aplicar aqui contaria o dano duas vezes. Ver docs/MULTIPLAYER.md. */
           if (!this.online) this._damage(bot, this._shotDamage(dmg, wid, hC.distance, head), shooter, weap, head, end);
+          else if (byPlayer) this._acertoPrevisto(bot, this._shotDamage(dmg, wid, hC.distance, head), head, end);
           this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
         }
       }
@@ -3471,6 +3477,13 @@ export class Game {
     b.classList.add('show');
     clearTimeout(this._mkT);
     this._mkT = setTimeout(() => b.classList.remove('show'), 1900);
+  }
+  // Online o `_damage` não roda no cliente: o feedback do atirador (hitmarker, número) é PREVISTO
+  // pelo raio local e o hp vem do snapshot — sem isto o tiro que acerta era mudo (BUG-119).
+  _acertoPrevisto(ent, dmg, head, point) {
+    if (!ent.alive || this.state !== 'live' || this.espectando()) return;
+    this._hitmarker(false, head);
+    this._dmgNumber(point || ent.pos, dmg, head, false);
   }
   _hitmarker(isKill, isHead) {
     const h = this.el.hitmarker;
