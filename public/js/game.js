@@ -1867,8 +1867,10 @@ export class Game {
       if (e.code === 'KeyE' && this.nearPickup) {
         const { pk, dropIdx } = this.nearPickup;
         this._grabPickup(pk, this.player, true);
-        // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário)
-        if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
+        // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário).
+        // Drop de rede (`_nid`) é do servidor: pede `pick` e espera o `gone` (fase 2 do `ev`).
+        if (pk._nid) this._mp?.pedirPick(pk);
+        else if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
         this.nearPickup = null;
       }
       if (e.code === 'KeyM') { if (this.onRequestSwitch) this.onRequestSwitch(); else this._switchTeam(); }
@@ -5488,9 +5490,9 @@ export class Game {
       // respawn a taken weapon
       if (pk.mesh && !pk.mesh.visible && this.time >= pk.readyAt) pk.mesh.visible = true;
       if (this.time < pk.readyAt) continue;        // still taken
-      // bot grab (andando por cima)
+      // bot grab (andando por cima) — slot humano e corpo remoto não: o servidor decide (`pick`)
       for (const b of this.bots) {
-        if (!b.alive) continue;
+        if (!b.alive || b._remote) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); break; }
       }
@@ -5503,7 +5505,7 @@ export class Game {
       if (pk.expiraEm && this.time >= pk.expiraEm) { this._sumirDrop(i); continue; }
       if (pk.rack) continue;
       for (const b of this.bots) {
-        if (!b.alive) continue;
+        if (!b.alive || b._remote) continue;
         const dx = pk.x - b.pos.x, dz = pk.z - b.pos.z;
         if (dx * dx + dz * dz <= 1.7 * 1.7) { this._grabPickup(pk, b, false); this._sumirDrop(i); break; }
       }
@@ -5549,7 +5551,7 @@ export class Game {
         this._switchWeapon(w); this.sfx.reloadEnd();
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
-        if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);
+        if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack && !this.online) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);   // online o servidor manda o `drop`
       }
     } else {
       who.weapon = w === 'knife' ? 'awp' : w;      // bot grabs it

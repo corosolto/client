@@ -87,8 +87,25 @@ class Netcode {
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
+      ...(this._pickPendente ? { pick: this._pickPendente } : {}),
     });
+    this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
     this._inputAt = this._now();
+  }
+  // E num drop de rede: pede ao servidor (fase 2 do canal `ev`); a troca local é predição.
+  pedirPick(pk) { if (pk && pk._nid) this._pickPendente = pk._nid; }
+  // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
+  limparDropsDeRede() {
+    const game = this.game;
+    for (let i = game.drops.length - 1; i >= 0; i--) if (game.drops[i]._nid) game._sumirDrop(i);
+  }
+  _dropDeRede(e) {
+    const game = this.game;
+    if (!e || !Number.isInteger(e.i) || game.drops.some((d) => d._nid === e.i)) return;
+    if (!WEAPONS[e.w]) return;
+    game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // sem prazo local: quem some é o `gone`
+    const d = game.drops[game.drops.length - 1];
+    if (d) d._nid = e.i;
   }
 
   // Pausado o stepPlayer não manda nada e o servidor soltava o slot após 45 s (BUG-115):
@@ -145,7 +162,10 @@ class Netcode {
     const game = this.game, net = this.net;
     if (!net || !net.snap || !Array.isArray(net.snap.ents)) return;
     const snap = net.snap;
-    if (this._netMap.size === 0) this._casar(snap);
+    if (this._netMap.size === 0) {
+      this._casar(snap);
+      if (this._evOn && Array.isArray(net.meta?.drops)) for (const d of net.meta.drops) this._dropDeRede(d);   // quem entra no meio vê os drops vivos
+    }
 
     /* Relógio, placar e ESTADO da rodada vêm do servidor — a máquina local está desligada no
        online (game.update). Sem copiar o estado, o cliente ficaria eternamente em 'countdown'
@@ -289,6 +309,11 @@ class Netcode {
       try { game._feed(att, vic, w, h); } catch { /* HUD */ }
       if (vic === p) { if (att && !this.espectador) game._noteHit(att, w, d, h, dist(att)); }
       else this.morteRemota(vic, att);
+    } else if (e.k === 'drop') {
+      this._dropDeRede(e);
+    } else if (e.k === 'gone') {
+      const i = game.drops.findIndex((x) => x._nid === e.i);
+      if (i >= 0) game._sumirDrop(i);
     }
   }
 
@@ -314,6 +339,7 @@ class Netcode {
         }
         try { game._ensureDolly(); } catch { /* sem canvas do dollynho */ }
       } else if (depois === 'countdown') {
+        if (this._evOn) this.limparDropsDeRede();   // o servidor zera `drops` no _startRound sem mandar `gone`
         game._resultado = null;
         game._showScoreboard(false);
         game.mk.life = 0; game.mk.count = 0;
