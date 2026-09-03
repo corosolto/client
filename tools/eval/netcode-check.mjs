@@ -896,6 +896,72 @@ console.log('\n· NetClient: `ev` entra no buffer, `partida` zera, lote grande �
   globalThis.WebSocket = ws0;
 }
 
+/* FASE 2 DO CANAL `ev` — drops. O servidor manda `drop {i,x,z,w,ttl}` e `gone {i}`; o cliente
+   cria e remove por id, o rack do spawn fica intocado, o E manda `pick` e não dropa a arma
+   antiga localmente (o servidor manda o `drop` dela), e quem entra no meio recebe `meta.drops`. */
+console.log('\n· drops do servidor: cria e some por id, rack intocado, countdown limpa (fase 2)');
+{
+  const net = fakeNet(1, 5, false, 30, 1);
+  const g = montaJogo(net);
+  net.snap = snapshot(930.00, 1); g._mp.applySnapshot();
+  g.state = 'live';
+  const rackAntes = g.drops.filter((d) => d.rack).length;
+  const p = g.player;
+  net.events.push({ type: 'ev', tick: 2, t: 930.033, list: [
+    { k: 'drop', i: 9001, x: p.pos.x + 1, z: p.pos.z + 1, w: 'ak', ttl: 18 },
+    { k: 'drop', i: 9002, x: p.pos.x + 3, z: p.pos.z + 1, w: 'awp', ttl: 18 },
+  ] });
+  net.snap = snapshot(930.033, 2); g._mp.applySnapshot();
+  const rede = () => g.drops.filter((d) => d._nid);
+  cobra(rede().length === 2 && rede().every((d) => !d.rack && d.mesh) && g.drops.filter((d) => d.rack).length === rackAntes, `dois drops de rede com id, com malha, e o rack do spawn intocado (${rackAntes})`);
+  net.events.push({ type: 'ev', tick: 3, t: 930.066, list: [{ k: 'drop', i: 9001, x: 0, z: 0, w: 'ak', ttl: 18 }] });
+  net.snap = snapshot(930.066, 3); g._mp.applySnapshot();
+  cobra(rede().length === 2, '`drop` repetido com o mesmo id não duplica');
+  net.events.push({ type: 'ev', tick: 4, t: 930.10, list: [{ k: 'gone', i: 9001 }, { k: 'gone', i: 7777 }] });
+  net.snap = snapshot(930.10, 4); g._mp.applySnapshot();
+  cobra(rede().length === 1 && rede()[0]._nid === 9002, '`gone` some com o drop certo e ignora id desconhecido');
+  // E num drop de rede: manda `pick` UMA vez, troca a arma na hora (predição) e NÃO dropa a antiga localmente
+  const alvo = rede()[0]; const armaAntes = p.weapon;
+  g.nearPickup = { pk: alvo, dropIdx: g.drops.indexOf(alvo) };
+  const dropsAntes = g.drops.length;
+  g._kd({ code: 'KeyE', preventDefault() {} });
+  net.enviados.length = 0;
+  g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(net.enviados.length === 2 && net.enviados[0].pick === 9002 && net.enviados[1].pick === undefined, 'o E manda `pick` com o id do drop UMA vez');
+  cobra(p.weapon === 'awp' && armaAntes !== 'awp', `a arma troca na hora (predição): ${armaAntes} → ${p.weapon}`);
+  cobra(g.drops.length === dropsAntes && !g.drops.some((d) => !d.rack && !d._nid), 'a arma antiga NÃO vira drop local (o servidor manda o `drop` dela)');
+  // countdown (rodada nova): o servidor limpa `drops` sem `gone`; o cliente espelha
+  const s5 = snapshot(930.50, 5); s5.state = 'countdown'; net.snap = s5; g._mp.applySnapshot();
+  cobra(rede().length === 0 && g.drops.filter((d) => d.rack).length === rackAntes, 'countdown remove os drops de rede e deixa o rack');
+  g.dispose();
+}
+
+console.log('\n· quem entra no meio recebe os drops vivos por `meta.drops`');
+{
+  const net = fakeNet(1, 5, false, 30, 1);
+  net.meta.drops = [{ i: 9101, x: 4, z: 14, w: 'mp5', ttl: 9 }, { i: 9102, x: 6, z: 14, w: 'ak', ttl: 3 }];
+  const g = montaJogo(net);
+  net.snap = snapshot(940.00, 1); g._mp.applySnapshot();
+  const rede = g.drops.filter((d) => d._nid);
+  cobra(rede.length === 2 && rede.some((d) => d._nid === 9101 && d.weapon === 'mp5'), 'os drops da meta nascem no primeiro snapshot, por id');
+  g.dispose();
+}
+
+console.log('\n· online, ninguém pega drop andando por cima no cliente (o servidor é quem decide)');
+{
+  const net = fakeNet(1, 5, false, 30, 1);
+  const g = montaJogo(net);
+  net.snap = snapshot(950.00, 1); g._mp.applySnapshot();
+  g.state = 'live';
+  const b = g._mp._netMap.get(6);
+  net.events.push({ type: 'ev', tick: 2, t: 950.033, list: [{ k: 'drop', i: 9201, x: b.pos.x, z: b.pos.z, w: 'ak', ttl: 18 }] });
+  net.snap = snapshot(950.033, 2); g._mp.applySnapshot();
+  g._updatePickups();
+  cobra(g.drops.some((d) => d._nid === 9201), 'o corpo remoto em cima do drop não o consome localmente (sem `gone`, o drop fica)');
+  g.dispose();
+}
+
 /* BUG-117 — "o assistir ta meio esquisito". A câmera do espectador ficava nos OLHOS do alvo,
    dentro do corpo remoto (captura: o interior do chapéu), só andava a cada snapshot, e o HUD
    oferecia "[E] PEGAR SKS" a quem não tem corpo. */
