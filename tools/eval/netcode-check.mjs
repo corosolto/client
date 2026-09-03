@@ -11,6 +11,9 @@
    Roda o Game de verdade (harness) com `mpFactory`, como o main.js faz. */
 import { Game, MAPS, initTextures, renderer, sfx, PCHAR, seedRandom, mkEl } from './harness.mjs';
 import { makeNetcode } from '../../public/js/netgame.js';
+import { WEAPONS } from '../../public/js/game.js';
+import { unloadWeaponModel, setWeaponModel, hasWeapon } from '../../public/js/weapons.js';
+import * as THREE from 'three';
 
 let ok = 0, falhas = 0;
 const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { falhas++; console.log(`  FALHA ${m}`); } };
@@ -664,7 +667,7 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(/net\.onPartida = async \(m\) => \{[\s\S]{0,400}mpMontarPartida\(net, m\)/.test(main),
     'main.js remonta a partida por cima quando o servidor gira o mapa');
   cobra(/mpMontarPartida\(net, welcome\)/.test(main), 'e o welcome usa o MESMO caminho (uma montagem só)');
-  cobra(/this\._vmMontarTardio = \(id\) => \{[\s\S]{0,300}mountRw\(g, id\)[\s\S]{0,300}this\._vmFrame\(true\)/.test(game),
+  cobra(/this\._vmMontarTardio = \(id\) => \{[\s\S]{0,300}mountRw\(g, id\)[\s\S]{0,600}this\._vmFrame\(true\)/.test(game),   // janela: entre o mount e o enquadramento entrou o esconder da caixa (BUG-121)
     'game.js monta o GLB do viewmodel que chegou depois do construtor e re-enquadra');
   cobra(/_applyVmVisibility\(\) \{[\s\S]{0,120}this\._vmMontarTardio\?\.\(w\)/.test(game),
     'a troca de arma tenta a montagem tardia (idempotente)');
@@ -676,6 +679,124 @@ console.log('\n· nova partida do servidor (`partida`) e viewmodel montado depoi
   cobra(!/m\.type === 'partida'[\s\S]{0,400}this\.meta = m;/.test(mutSemPartida), 'MUTANTE sem o ramo `partida` acende a régua');
 }
 
+
+/* BUG-119 — "single player 200% melhor": paridade ponto a ponto. Online o _damage não roda no
+   cliente, e com ele iam o hitmarker, o número de dano e a munição do respawn. */
+console.log('\n· tiro que acerta online dá hitmarker e número de dano PREVISTOS, sem mexer no hp (BUG-119)');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  net.snap = snapshot(800.00, 1); g._mp.applySnapshot();
+  g.state = 'live';
+  const p = g.player, alvo = g.bots.find((b) => b.team !== p.team && b.alive);
+  alvo.pos.set(p.pos.x, p.pos.y, p.pos.z - 3); alvo.mesh.group.position.copy(alvo.pos); alvo.mesh.group.updateMatrixWorld(true);
+  let marcas = 0, numeros = 0;
+  g._hitmarker = () => { marcas++; }; g._dmgNumber = () => { numeros++; };
+  const from = new (alvo.pos.constructor)(p.pos.x, p.pos.y + 1.5, p.pos.z), dir = new (alvo.pos.constructor)(0, -0.1, -1).normalize();
+  const hp0 = alvo.hp;
+  g._fireHitscan(p, from, dir, 30, true, 'AK', 'ak');
+  cobra(marcas === 1 && numeros === 1, `o raio local acertou o inimigo: hitmarker ${marcas}, número de dano ${numeros}`);
+  cobra(alvo.hp === hp0, 'e o hp do remoto NÃO muda no cliente (autoridade é o snapshot)');
+  // MUTANTE: sem o feedback previsto o tiro volta a ser mudo — a cláusula morde
+  marcas = 0; numeros = 0; g._acertoPrevisto = () => {};
+  g._fireHitscan(p, from, dir, 30, true, 'AK', 'ak');
+  cobra(marcas === 0 && numeros === 0, 'MUTANTE sem _acertoPrevisto deixa o tiro mudo (a cláusula morde)');
+  g.dispose();
+}
+
+console.log('\n· respawn por snapshot repõe munição e som como o _respawnPlayer do SP (BUG-119)');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  net.snap = snapshot(810.00, 1); g._mp.applySnapshot();
+  const p = g.player, w = p.weapon;
+  p.ammo[w].mag = 1; p.ammo[w].res = 0;
+  const sons = []; const sfx0 = g.sfx; g.sfx = new Proxy({}, { get: (_, k) => (...a) => { sons.push(k); } });
+  net.snap = snapshot(810.05, 2, { matarVoce: true }); g._mp.applySnapshot();
+  net.snap = snapshot(810.10, 3); g._mp.applySnapshot();
+  cobra(p.ammo[w].mag === WEAPONS[w].mag && p.ammo[w].res === WEAPONS[w].reserve, `renasceu com o pente cheio (${p.ammo[w].mag}/${p.ammo[w].res})`);
+  cobra(sons.includes('respawn'), 'e com o som de respawn');
+  g.sfx = sfx0; g.dispose();
+}
+
+/* BUG-122 — "o kill mostrando como se o bot tivesse me matando e não o contrário". A própria
+   morte não entrava no killfeed, e o abate seu podia sair sem atacante quando o servidor
+   trunca o apelido a 16 caracteres (room.js). */
+console.log('\n· killfeed online: própria morte entra, e o abate SEU sai como VOCÊ mesmo com apelido truncado (BUG-122)');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  g.player.name = 'RUBENMARCUSDOSSANTOS';               // 20 caracteres: o servidor manda 16
+  const feeds = []; g._feed = (a, v) => { feeds.push([a, v]); };
+  const s1 = snapshot(820.00, 1); s1.ents[0].name = 'RUBENMARCUSDOSSA'; net.snap = s1; g._mp.applySnapshot();
+  g.state = 'live';
+  const bot = g._mp._netMap.get(6);
+  const s2 = snapshot(820.05, 2); s2.ents[0].name = 'RUBENMARCUSDOSSA';
+  const v2 = s2.ents.find((e) => e.id === 6); v2.alive = false; v2.hp = 0; v2.killedBy = 'RUBENMARCUSDOSSA';
+  net.snap = s2; g._mp.applySnapshot();
+  cobra(feeds.length === 1 && feeds[0][0] === g.player && feeds[0][1] === bot, 'você mata o bot: a linha é VOCÊ → bot (atacante primeiro), achado pelo nome do servidor');
+  const s3 = snapshot(820.10, 3, { matarVoce: true }); s3.ents[0].name = 'RUBENMARCUSDOSSA'; s3.ents[0].killedBy = 'BOT7';
+  net.snap = s3; g._mp.applySnapshot();
+  cobra(feeds.length === 2 && feeds[1][0] === g._mp._netMap.get(7) && feeds[1][1] === g.player, 'o bot mata você: a linha é bot → VOCÊ (a própria morte entra no killfeed)');
+  // MUTANTE: sem o nome do servidor o abate seu sai sem atacante
+  g._mp._meuNomeServidor = null; feeds.length = 0;
+  const s4 = snapshot(820.15, 4); s4.ents[0].name = ''; const v4 = s4.ents.find((e) => e.id === 8); v4.alive = false; v4.hp = 0; v4.killedBy = 'RUBENMARCUSDOSSA';
+  net.snap = s4; g._mp.applySnapshot();
+  cobra(feeds.length === 1 && feeds[0][0] === null, 'MUTANTE sem o nome do servidor perde o atacante (a cláusula morde)');
+  g.dispose();
+}
+
+/* BUG-121 — "as armas sem model direito": o GLB que chega depois do construtor montava por
+   DENTRO da caixa procedural, que continuava visível (só o construtor escondia a caixa). */
+console.log('\n· GLB de arma que chega tarde esconde a caixa procedural (BUG-121)');
+{
+  unloadWeaponModel('awp');
+  cobra(!hasWeapon('awp'), 'costura: a AWP ainda não chegou quando o jogo nasce');
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  const caixa = g.vm.models.awp;
+  const malhas = () => caixa.children.filter((c) => c.isMesh);
+  cobra(!caixa.getObjectByName('rw') && malhas().length > 0 && malhas().every((m) => m.visible), `sem GLB o viewmodel da AWP é a caixa (${malhas().length} malhas visíveis)`);
+  // "chegou": um GLB sintético no cache (o arnês não tem rede nem GLTFLoader de disco)
+  const glb = new THREE.Group(); glb.add(new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1.1), new THREE.MeshStandardMaterial()));
+  setWeaponModel('awp', glb);
+  cobra(g._vmMontarTardio('awp') === true, 'a AWP chega e monta tarde');
+  cobra(!!caixa.getObjectByName('rw') && malhas().every((m) => !m.visible), 'com o GLB montado TODAS as malhas da caixa somem');
+  unloadWeaponModel('awp');
+  g.dispose();
+}
+
+/* BUG-123 — fim de partida online: o servidor gira o mapa (`partida`), então a tela não pode
+   oferecer JOGAR NOVAMENTE; ela avisa que o próximo mapa está carregando. */
+console.log('\n· fim de partida online esconde JOGAR NOVAMENTE e avisa o próximo mapa (BUG-123)');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  net.snap = snapshot(830.00, 1); g._mp.applySnapshot();
+  g._endMatch();
+  cobra(g.el.btnAgain.classList.contains('hidden') && !g.el.matchNext.classList.contains('hidden'), 'online: sem JOGAR NOVAMENTE, com PRÓXIMO MAPA CARREGANDO');
+  g.dispose();
+  const g2 = montaJogo(null);
+  g2._endMatch();
+  cobra(!g2.el.btnAgain.classList.contains('hidden') && g2.el.matchNext.classList.contains('hidden'), 'single player: JOGAR NOVAMENTE continua');
+  g2.dispose();
+}
+
+/* BUG-124 — "no singleplayer temos que indicar que são [BOT] também". */
+console.log('\n· bots rotulados [BOT] no single player, uma vez só no online (BUG-124)');
+{
+  const g = montaJogo(null);
+  cobra(g.bots.length > 0 && g.bots.every((b) => b.name.startsWith('[BOT] ')), `single player: ${g.bots[0].name}`);
+  g.dispose();
+  const net = fakeNet(1, 5, false, 30);
+  const g2 = montaJogo(net);
+  cobra(g2.bots.every((b) => !b.name.startsWith('[BOT] ')), 'online: o corpo local nasce sem rótulo (o snapshot rotula)');
+  net.snap = snapshot(840.00, 1); g2._mp.applySnapshot();
+  const r = g2._mp._netMap.get(6);
+  cobra(r.name === 'BOT6' || r.name === '[BOT] BOT6', `online: rótulo vem do snapshot uma vez só (${r.name})`);
+  cobra(!/\[BOT\] \[BOT\]/.test(r.name), 'sem rótulo dobrado');
+  g2.dispose();
+}
 
 /* BUG-117 — "o assistir ta meio esquisito". A câmera do espectador ficava nos OLHOS do alvo,
    dentro do corpo remoto (captura: o interior do chapéu), só andava a cada snapshot, e o HUD
