@@ -962,6 +962,48 @@ console.log('\n· online, ninguém pega drop andando por cima no cliente (o serv
   g.dispose();
 }
 
+/* FASE 3 DO CANAL `ev` — granadas. Online o cliente só PEDE (`nade` no input); o servidor lança,
+   manda `nade {i,kind,x,y,z,vx,vy,vz,o,f}` e `boom {i,kind,x,y,z}`; o cliente desenha a granada
+   pelo evento e estoura na posição do servidor SEM aplicar dano (o hp é do snapshot). */
+console.log('\n· granada online: o 5 pede ao servidor e não spawna local; `nade`/`boom` desenham sem dano (fase 3)');
+{
+  const net = fakeNet(1, 5, false, 30, 1);
+  const g = montaJogo(net);
+  net.snap = snapshot(960.00, 1); g._mp.applySnapshot();
+  g.state = 'live';
+  const p = g.player; p.frags = 1; p.smokes = 1; p._nextNade = 0;
+  g._kd({ code: 'Digit5', preventDefault() {} });
+  cobra(g._grenades.length === 0 && p.frags === 0, 'o 5 online NÃO spawna granada local e desconta o HUD (predição)');
+  net.enviados.length = 0;
+  g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  g._mp.stepPlayer(p, { ax: 0, az: 0, crouch: false, shift: false, jump: false });
+  cobra(net.enviados[0].nade === 'frag' && net.enviados[1].nade === undefined, 'o pedido `nade: frag` vai no input UMA vez');
+  const b = g._mp._netMap.get(6); const hp0 = b.hp;
+  net.events.push({ type: 'ev', tick: 2, t: 960.033, list: [{ k: 'nade', i: 9301, kind: 'frag', x: b.pos.x, y: 1.5, z: b.pos.z + 3, vx: 0, vy: 3, vz: -15, o: 1, f: 1.5 }] });
+  net.snap = snapshot(960.033, 2); g._mp.applySnapshot();
+  const gr = g._grenades.find((x) => x._nid === 9301);
+  cobra(!!gr && gr.kind === 'frag' && Math.abs(gr.v.z - (-15)) < 1e-6 && gr.owner === p, 'o `nade` do servidor desenha a granada com a velocidade dele e o dono certo');
+  cobra(gr.fuse > 1000, 'o pavio local é infinito: quem estoura é o `boom`');
+  let explosoes = 0; const ex0 = g._explodeFrag.bind(g); g._explodeFrag = (...a) => { explosoes++; return ex0(...a); };
+  net.events.push({ type: 'ev', tick: 3, t: 960.066, list: [{ k: 'boom', i: 9301, kind: 'frag', x: b.pos.x, y: 0.2, z: b.pos.z }] });
+  net.snap = snapshot(960.066, 3); g._mp.applySnapshot();
+  cobra(explosoes === 1 && !g._grenades.some((x) => x._nid === 9301), 'o `boom` estoura na posição do servidor e some com a granada');
+  cobra(b.hp === hp0, `o estouro online NÃO aplica dano local (hp ${hp0} → ${b.hp}; o hp é do snapshot)`);
+  // MUTANTE: sem a guarda online no _explodeFrag o dano local volta — a cláusula morde
+  g.online = false; g._explodeFrag(new (b.pos.constructor)(b.pos.x, b.pos.y, b.pos.z), p); g.online = true;
+  cobra(b.hp < hp0, 'MUTANTE sem a guarda online aplica dano local no estouro (a cláusula morde)');
+  // fumaça: `nade` de smoke + `boom` vira nuvem
+  const fum0 = g._smokes.length;
+  net.events.push({ type: 'ev', tick: 4, t: 960.10, list: [{ k: 'nade', i: 9302, kind: 'smoke', x: b.pos.x, y: 1.5, z: b.pos.z, vx: 0, vy: 0, vz: 0, o: 6, f: 2.2 }, { k: 'boom', i: 9302, kind: 'smoke', x: b.pos.x, y: 0.2, z: b.pos.z }] });
+  net.snap = snapshot(960.10, 4); g._mp.applySnapshot();
+  cobra(g._smokes.length === fum0 + 1 && !g._grenades.some((x) => x._nid === 9302), 'fumaça do servidor vira nuvem no `boom`');
+  // respawn repõe frags/smokes como o _startRound
+  net.snap = snapshot(960.20, 5, { matarVoce: true }); g._mp.applySnapshot();
+  net.snap = snapshot(960.30, 6); g._mp.applySnapshot();
+  cobra(p.frags === 1 && p.smokes === 5, `o respawn repõe 1 frag e 5 fumaças (${p.frags}/${p.smokes})`);
+  g.dispose();
+}
+
 /* BUG-117 — "o assistir ta meio esquisito". A câmera do espectador ficava nos OLHOS do alvo,
    dentro do corpo remoto (captura: o interior do chapéu), só andava a cada snapshot, e o HUD
    oferecia "[E] PEGAR SKS" a quem não tem corpo. */

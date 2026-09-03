@@ -3721,7 +3721,7 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   | `_damage` | vinheta, arco de dano ao levar tiro | **evento `hit` do servidor com autor, arma e headshot** (fase 1 do canal `ev`, 03/09); heurística só sem a flag |
   | `_kill` | sting, kill confirm, multikill, poça | replicado (BUG-116) |
   | `_kill` | killfeed | **evento `kill` do servidor** (autor, arma, caveira), uma linha por morte; `killedBy` fica só como compat sem a flag |
-  | `_kill` | drop da arma do morto | **falta**: o servidor dropa no mundo dele e o snapshot não traz pickups |
+  | `_kill` | drop da arma do morto | **evento `drop`/`gone` por id** (fase 2, 03/09): morte e troca largam arma, E manda `pick`, rack fica |
   | `_respawnPlayer` | posição, proteção | servidor |
   | `_respawnPlayer` | munição cheia, câmera, som | **faltava** → `playerRespawned` |
   | (não existe no SP) | entrar no meio da rodada | herdava corpo com 13 de vida → BUG-120 (servidor) |
@@ -3729,13 +3729,13 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   | `_updateBot` | rádio/voz | pelo `voice` do snapshot |
   | `_startRound`/`_endRound` | placar, banner, sons | replicado (BUG-114) |
   | `_endMatch` | tela de fim | **botão do SP** → BUG-123 |
-  | `_explodeFrag` | granada | **falta no servidor**: o cliente aplica dano local que o snapshot desfaz |
+  | `_explodeFrag` | granada | **`nade` no input, `nade`/`boom` do servidor** (fase 3, 03/09): o cliente só desenha; dano é `hit`/`kill` com w:FRAG |
   | `_buildViewModels` | GLB da arma na mão | tardio (BUG-111) + caixa escondida (BUG-121) |
   | espectador | câmera | 3ª pessoa (BUG-117) |
   | rede | ping | geografia (BUG-125) |
 
-  O que continua aberto desta tabela: drop de arma na morte e granadas, os dois precisam de
-  protocolo (o snapshot não carrega pickups nem projéteis). **Régua:** `eval:netcode`
+  Nada desta tabela continua em "falta" depois das três fases do canal `ev` (03/09); o que
+  resta é medir em produção com dois humanos (canário do fim da semana). **Régua:** `eval:netcode`
   (cláusulas BUG-119: acerto previsto com mutante `_acertoPrevisto`; respawn com munição).
 
 - **BUG-118 · “o jogo ainda parece travado e robotico um pouco, um pouco menos mas ainda. a
@@ -4293,7 +4293,11 @@ quality na mesma amostra, a próxima leitura do painel separa máquina fraca de 
   (10 ok; mutantes sem-gancho, hit-e-kill, sem-teto), `game/protocol-check.mjs` (ev-binario,
   snapshot-antes, sem-flag), `game/smoke.mjs` (pela rede); cliente `eval:netcode` (arco para o
   atacante REAL com outro inimigo mais perto que atirou há 100 ms; mutante sem a flag cai na
-  heurística). Drops e granadas: fases 2 e 3.
+  heurística). Fase 2 (03/09): `drop {i,x,z,w,ttl}`/`gone {i}`, `pick:<id>` no input validado a
+  2,6 m, `meta.drops` para quem entra no meio, guarda `_remote` no `_updatePickups`. Fase 3 (03/09):
+  `nade` no input latchado no servidor (inventário 5/1 por rodada, cooldown 0,6 s), `nade`/`boom`
+  por id, o cliente só desenha e o dano vem como `hit`/`kill` com w:FRAG. Réguas: eventos-check
+  DR1-DR5 e GR1-GR4 (mutantes sem-distancia, sem-latch); `eval:netcode` fases 2 e 3.
 
 - **BUG-38 · "Andando não consigo mexer a mira, só quando para" — touchpad de notebook.**
   Palavras de quem reportou (Matheus Paz, 07/08): *"Andando não consigo mexer a mira, só

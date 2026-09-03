@@ -4011,6 +4011,7 @@ export class Game {
     const p = this.player;
     if (!p.alive || (p.smokes | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.smokes--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
+    if (this._mp?.pedirNade?.('smoke')) return;   // online quem lança é o servidor (`nade`/`boom`)
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
     this._spawnGrenade(this.camera.position, dir, 'smoke', p);
   }
@@ -4019,6 +4020,7 @@ export class Game {
     const p = this.player;
     if (!p.alive || (p.frags | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.frags--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
+    if (this._mp?.pedirNade?.('frag')) return;
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
     this._spawnGrenade(this.camera.position, dir, 'frag', p);
   }
@@ -4032,6 +4034,7 @@ export class Game {
     if (this.sfx.explosion) this.sfx.explosion();
     const team = owner ? owner.team : this.playerTeam;
     for (const c of this.combatants) {
+      if (this.online) break;   // dano é do servidor (fase 3 do `ev`); aqui só o efeito
       if (!c.alive || c.team === team) continue;
       const d = Math.hypot(c.pos.x - pos.x, c.pos.z - pos.z);
       const dy = Math.abs((c.pos.y || 0) - pos.y);

@@ -88,12 +88,16 @@ class Netcode {
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       ...(this._pickPendente ? { pick: this._pickPendente } : {}),
+      ...(this._nadePendente ? { nade: this._nadePendente } : {}),
     });
     this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
+    this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
     this._inputAt = this._now();
   }
   // E num drop de rede: pede ao servidor (fase 2 do canal `ev`); a troca local é predição.
   pedirPick(pk) { if (pk && pk._nid) this._pickPendente = pk._nid; }
+  // 4/5 online: pede a granada ao servidor; devolve false sem a flag (aí o local lança, como antes).
+  pedirNade(kind) { if (!this._evOn || this.espectador) return false; this._nadePendente = kind; return true; }
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
   limparDropsDeRede() {
     const game = this.game;
@@ -314,6 +318,19 @@ class Netcode {
     } else if (e.k === 'gone') {
       const i = game.drops.findIndex((x) => x._nid === e.i);
       if (i >= 0) game._sumirDrop(i);
+    } else if (e.k === 'nade') {
+      if (!Number.isInteger(e.i) || game._grenades.some((x) => x._nid === e.i)) return;
+      const kind = e.kind === 'smoke' ? 'smoke' : 'frag';
+      const dono = this._netMap.get(e.o | 0) || ((e.o | 0) === meu ? p : null);
+      const origem = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0), dir = new THREE.Vector3(+e.vx || 0, +e.vy || 0, +e.vz || 0);
+      game._spawnGrenade(origem, dir.lengthSq() ? dir.clone().normalize() : new THREE.Vector3(0, 0, -1), kind, dono);
+      const gr = game._grenades[game._grenades.length - 1];
+      if (gr) { gr._nid = e.i; gr.v.copy(dir); gr.mesh.position.copy(origem); gr.fuse = 1e9; }   // quem estoura é o `boom`
+    } else if (e.k === 'boom') {
+      const i = game._grenades.findIndex((x) => x._nid === e.i);
+      if (i >= 0) { game.scene.remove(game._grenades[i].mesh); game._grenades.splice(i, 1); }
+      const pos = new THREE.Vector3(+e.x || 0, +e.y || 0, +e.z || 0);
+      if (e.kind === 'smoke') game._popSmoke(pos); else game._explodeFrag(pos, this._netMap.get(e.o | 0) || null);
     }
   }
 
@@ -526,6 +543,7 @@ class Netcode {
     const p = game.player;
     for (const w of [p.primary, p.secondary]) if (w && WEAPONS[w] && p.ammo[w]) p.ammo[w] = { mag: WEAPONS[w].mag, res: WEAPONS[w].reserve };
     p._lifeDmg = 0; p.crouchF = 0;
+    p.smokes = 5; p.frags = 1; game._updateSmokeHud?.();   // como o _startRound (fase 3 do `ev`)
     if (game.camera) game.camera.rotation.z = 0;
     try { game.sfx.respawn(); } catch { /* ctx mudo */ }
   }
