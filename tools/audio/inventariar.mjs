@@ -27,9 +27,15 @@
    ── SAÍDA ──────────────────────────────────────────────────────────────────
    Por arquivo: `caminho` (relativo à raiz inventariada), `bytes`, `sha256`,
    `formato`, `codec`, `duracaoS`, `canais`, `taxaHz`, `bitsPorAmostra`,
-   `picoDb` e `loudnessLufs`. Pico e loudness só aparecem quando o `ffmpeg`
-   local os calcula; quando não, o campo vem `null` e o cabeçalho DIZ que não
-   foram medidos — campo ausente disfarçado de zero é a lição 5.
+   `picoDb`, `loudnessLufs` e `medicao`. Pico e loudness só aparecem quando o
+   `ffmpeg` local os calcula; quando não, o campo vem `null` e o cabeçalho DIZ que
+   não foram medidos — campo ausente disfarçado de zero é a lição 5.
+
+   `medicao` é POR ARQUIVO (`ok` · `falhou` · `ausente` · `pulado`) porque a
+   ferramenta pode existir e mesmo assim falhar num arquivo: um WAV truncado saía
+   com tudo `null`, `ffprobe: true` e `naoMedido: []` — indistinguível de uma
+   medição bem-sucedida que achou null. O topo traz `falhas` e
+   `arquivosComFalha`, e o processo SAI 1 (salvo `--tolerante`).
 
    `sha256` é o que liga este inventário ao `sha256Fonte` do
    `docs/audio/proveniencia.json`: é ele que prova de qual arquivo do pacote
@@ -37,6 +43,7 @@
 
    ── USO ────────────────────────────────────────────────────────────────────
      node tools/audio/inventariar.mjs <dir> [--saida=<arquivo.json>] [--rapido]
+                                            [--tolerante]
      node tools/audio/inventariar.mjs --autoteste
 
    `--rapido` pula pico/loudness (uma passada de ffmpeg por arquivo). `--saida`
@@ -74,7 +81,7 @@ function listar(dir) {
 function sonda(abs) {
   const bruto = execFileSync('ffprobe', ['-v', 'error', '-show_entries',
     'format=format_name,duration:stream=codec_name,channels,sample_rate,bits_per_sample,bits_per_raw_sample',
-    '-of', 'json', abs], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+    '-of', 'json', abs], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
   const j = JSON.parse(bruto);
   const s = (j.streams || [])[0] || {};
   return {
@@ -98,7 +105,12 @@ function nivel(abs) {
   const pico = texto.match(/Peak level dB:\s*(-?[\d.]+|-inf)/);
   /* O `I:` do ebur128 aparece várias vezes (por bloco); o último é o integrado. */
   const lufs = [...texto.matchAll(/I:\s*(-?[\d.]+)\s*LUFS/g)].pop();
+  /* Código de saída != 0 OU nenhum dos dois números = falha, não "deu null". */
+  if (r.status !== 0 || (!pico && !lufs)) {
+    return { ok: false, erro: (texto.trim().split('\n').pop() || `ffmpeg saiu ${r.status}`).slice(0, 200) };
+  }
   return {
+    ok: true,
     picoDb: pico ? (pico[1] === '-inf' ? null : +(+pico[1]).toFixed(2)) : null,
     loudnessLufs: lufs ? +(+lufs[1]).toFixed(2) : null,
   };
@@ -116,14 +128,31 @@ function inventariar(dirAbs, { rapido = RAPIDO } = {}) {
       extensao: extname(abs).toLowerCase().slice(1),
       formato: null, codec: null, duracaoS: null, canais: null, taxaHz: null,
       bitsPorAmostra: null, picoDb: null, loudnessLufs: null,
+      /* ESTADO POR ARQUIVO. Antes, um WAV ilegível saía com todos os campos `null`,
+         `ferramentas.ffprobe: true` e `naoMedido: []` — a mesma cara de uma medição
+         que deu certo e achou null. Lição 5. Régua: `--autoteste`, INV6/INV7/INV8. */
+      medicao: { ffprobe: temFfprobe ? 'ok' : 'ausente', nivel: temFfmpeg ? 'ok' : (rapido ? 'pulado' : 'ausente') },
+      erro: null,
     };
-    if (temFfprobe) { try { Object.assign(base, sonda(abs)); } catch { /* fica null: não medido */ } }
-    if (temFfmpeg) Object.assign(base, nivel(abs));
+    if (temFfprobe) {
+      try { Object.assign(base, sonda(abs)); } catch (e) {
+        base.medicao.ffprobe = 'falhou';
+        base.erro = String(e.stderr || e.message || e).trim().split('\n').pop().slice(0, 200);
+      }
+    }
+    if (temFfmpeg) {
+      const n = nivel(abs);
+      if (n.ok) { base.picoDb = n.picoDb; base.loudnessLufs = n.loudnessLufs; }
+      else { base.medicao.nivel = 'falhou'; base.erro = base.erro || n.erro; }
+    }
     return base;
   });
+  const falhas = arquivos.filter((f) => f.medicao.ffprobe === 'falhou' || f.medicao.nivel === 'falhou');
   return {
     _leia: 'Metadado técnico de arquivos privados. NÃO contém áudio, forma de onda nem transcrição.'
-      + ' `sha256` liga ao campo `sha256Fonte` de docs/audio/proveniencia.json.',
+      + ' `sha256` liga ao campo `sha256Fonte` de docs/audio/proveniencia.json.'
+      + ' `medicao` por arquivo diz o que foi medido: campo null com `medicao.ffprobe: "falhou"'
+      + '` é ausência de dado, não valor.',
     ferramentas: {
       ffprobe: temFfprobe,
       ffmpeg: temFfmpeg,
@@ -131,6 +160,8 @@ function inventariar(dirAbs, { rapido = RAPIDO } = {}) {
         !temFfmpeg && 'pico/loudness (ffmpeg ausente ou --rapido)'].filter(Boolean),
     },
     total: arquivos.length,
+    falhas: falhas.length,
+    arquivosComFalha: falhas.map((f) => ({ caminho: f.caminho, medicao: f.medicao, erro: f.erro })),
     arquivos,
   };
 }
@@ -156,12 +187,15 @@ if (process.argv.includes('--autoteste')) {
     writeFileSync(join(tmp, 'b', 'dois.wav'), wav(24000, 7));
     writeFileSync(join(tmp, 'um.wav'), wav(12000, 3));
     writeFileSync(join(tmp, 'leiame.txt'), 'não é áudio');
+    /* Arquivo com extensão de áudio e conteúdo que não é áudio: é assim que um
+       WAV truncado ou meio-baixado chega. */
+    writeFileSync(join(tmp, 'quebrado.wav'), 'isto nao e um wav valido');
 
     const a = inventariar(tmp), b = inventariar(tmp);
     const falhas = [];
     if (JSON.stringify(a) !== JSON.stringify(b)) falhas.push('INV1 duas execuções no mesmo diretório deram saídas diferentes — não é determinístico.');
-    if (a.total !== 2) falhas.push(`INV2 esperava 2 arquivos de áudio, veio ${a.total} (o .txt não pode entrar).`);
-    if (a.arquivos.map((f) => f.caminho).join(',') !== 'b/dois.wav,um.wav') {
+    if (a.total !== 3) falhas.push(`INV2 esperava 3 arquivos de áudio, veio ${a.total} (o .txt não pode entrar).`);
+    if (a.arquivos.map((f) => f.caminho).join(',') !== 'b/dois.wav,quebrado.wav,um.wav') {
       falhas.push(`INV3 ordem instável: ${a.arquivos.map((f) => f.caminho).join(',')}.`);
     }
     if (a.arquivos[0].sha256 === a.arquivos[1].sha256) falhas.push('INV4 arquivos diferentes com o mesmo sha256.');
@@ -171,9 +205,26 @@ if (process.argv.includes('--autoteste')) {
         falhas.push(`INV5 ${f.caminho}: nível preenchido sem ffmpeg — campo não medido tem que vir null, não zero.`);
       }
     }
+    /* O DEFEITO QUE ESTAS TRÊS FECHAM: com ffprobe presente e um arquivo ilegível, a
+       saída trazia `naoMedido: []`, `ffprobe: true` e todos os campos `null` — a mesma
+       cara de uma medição que deu certo e achou null. Lição 5: não saber tem que custar
+       o mesmo que estar errado, e aqui não custava nada. */
+    const q = a.arquivos.find((f) => f.caminho === 'quebrado.wav');
+    if (!q) falhas.push('INV6 o arquivo ilegível sumiu do inventário.');
+    else if (q.medicao?.ffprobe !== 'falhou') {
+      falhas.push(`INV6 arquivo ilegível marcado como \`${q.medicao?.ffprobe}\`; tinha que ser \`falhou\`.`
+        + ' Campo null sem estado é indistinguível de medição bem-sucedida que deu null.');
+    }
+    if (a.falhas !== 1) falhas.push(`INV7 \`falhas\` no topo veio ${a.falhas}; esperado 1.`);
+    const bons = a.arquivos.filter((f) => f.medicao?.ffprobe === 'ok');
+    if (a.ferramentas.ffprobe && bons.length !== 2) {
+      falhas.push(`INV8 IRMÃ: ${bons.length} de 2 arquivos válidos medidos com sucesso —`
+        + ' marcar tudo como falha não é sinalizar falha.');
+    }
     if (a.ferramentas.naoMedido.length) console.log(`  (não medido nesta máquina: ${a.ferramentas.naoMedido.join('; ')})`);
     if (falhas.length) { for (const f of falhas) console.error(`  ✗ ${f}`); process.exit(1); }
-    console.log(`  ✓ autoteste: ${a.total} arquivos, saída determinística, campo não medido fica null.`);
+    console.log(`  ✓ autoteste: ${a.total} arquivos, saída determinística, falha por arquivo sinalizada`
+    + ` (${a.falhas} de ${a.total}), campo não medido fica null.`);
     process.exit(0);
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
@@ -201,3 +252,10 @@ const texto = JSON.stringify(inv, null, 1) + '\n';
 if (saida) { writeFileSync(resolve(saida), texto); console.error(`${inv.total} arquivo(s) -> ${saida}`); }
 else process.stdout.write(texto);
 if (inv.ferramentas.naoMedido.length) console.error(`NÃO MEDIDO: ${inv.ferramentas.naoMedido.join('; ')}`);
+/* Sai 1 quando algum arquivo não pôde ser medido: quem chama isto em pipeline
+   precisa saber sem reler o JSON. `--tolerante` para inventariar mesmo assim. */
+if (inv.falhas) {
+  console.error(`FALHA EM ${inv.falhas} de ${inv.total} arquivo(s):`);
+  for (const f of inv.arquivosComFalha.slice(0, 10)) console.error(`  ${f.caminho} — ${f.erro}`);
+  if (!process.argv.includes('--tolerante')) process.exitCode = 1;
+}
