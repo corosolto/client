@@ -45,6 +45,8 @@
            Sem ela, apagar a espacialização dos dois lados deixaria a régua verde.
      ESP6  fallback preservado: sem `weaponSamples`, ou com a arma fora de
            `weapons`, o synth toca. O veto do dono é que o fallback não morra.
+     ESP8  sample que não carrega (404/decode) cai no SYNTH — na primeira chamada
+           e em todas as seguintes —, nunca em HTMLAudio numa URL morta.
      ESP7  o volume do usuário entra UMA vez. `_sample` aplica `this.vol` na mão
            porque HTMLAudio não passa pelo `master`; um BufferSource passa, e
            repetir a conta ali derruba o sample em `this.vol`× sem erro nenhum.
@@ -162,7 +164,12 @@ class AudioFalso {
   play() { this.tocou = true; return Promise.resolve(); }
 }
 globalThis.Audio = AudioFalso;
-globalThis.fetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(32) });
+/* `FETCH_404` deixa a régua simular o pacote que não chegou — release trocada, zip
+   parcial, caminho errado no manifest. É o cenário da ESP8. */
+let FETCH_404 = false;
+globalThis.fetch = async () => (FETCH_404
+  ? { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }
+  : { ok: true, arrayBuffer: async () => new ArrayBuffer(32) });
 
 const { Sfx } = await import('../../public/js/audio.js');
 
@@ -173,7 +180,8 @@ const LONGE = { dist: 40, pan: -0.8, prop: 40 / 343 };
 /* Um Sfx por cenário: cache de buffer e round-robin guardam estado entre tiros,
    e cenário que herda estado do anterior mede o anterior. */
 let mutouAlgo = false;
-async function tiro({ samples, dist, pan, prop, arma = ARMA, aquecer = true, vol = 1 }) {
+async function tiro({ samples, dist, pan, prop, arma = ARMA, aquecer = true, vol = 1, fetch404 = false }) {
+  FETCH_404 = fetch404;
   LOG = novoLog();
   const sfx = new Sfx();
   sfx.pack = samples ? { weaponSamples: true, weapons: { [ARMA]: [SRC] } } : { weapons: {} };
@@ -290,6 +298,30 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     + ' aplica `this.vol` na mão; o BufferSource passa, e repetir a conta ali deixa o sample'
     + ` ${r.sfx.vol}× mais baixo que antes. O synth (\`_gunshot\`) não multiplica por this.vol.`,
     `volume do usuário aplicado uma vez só (ganho ${g?.toFixed(4)} = ${esperado.toFixed(4)}).`);
+}
+
+// ── ESP8: sample que não carrega cai no SYNTH, não em silêncio ────────────
+{
+  const r = await tiro({ samples: true, ...LONGE, fetch404: true });
+  /* Primeira chamada: o buffer ainda não existe. Segunda: o `_shotBuf` já guarda a
+     falha. As duas têm que tocar, e por synth — repetir HTMLAudio numa URL que
+     acabou de dar 404 é tocar silêncio com cara de som. */
+  /* O limiar não é escolhido: é MEDIDO. O mesmo tiro pelo caminho synth puro, na
+     mesma distância, é o controle — o 404 tem que produzir o mesmo tanto de som,
+     porque é literalmente o synth que assume. */
+  const controle = (await tiro({ samples: false, ...LONGE })).log.starts.length;
+  const nosFrio = r.frio.starts.length;
+  const nosDepois = r.log.starts.length;
+  const htmlDepois = r.log.html.length;
+  conferir('ESP8', controle > 0 && nosFrio === controle && nosDepois === controle && htmlDepois === 0,
+    `com o sample em 404, a 1ª chamada agendou ${nosFrio} disparo(s) e a 2ª ${nosDepois},`
+    + ` contra ${controle} do synth puro na mesma distância, e ${htmlDepois} HTMLAudio criado(s).`
+    + ' O esperado é o synth nas duas e ZERO HTMLAudio:'
+    + ' `_shotSample` devolvia `true` mesmo depois de gravar a falha, então `shotWeapon`'
+    + ' retornava antes do synth e o jogo repetia `new Audio()` numa URL que não existe —'
+    + ' silêncio a cada tiro, para sempre, com um warn só no console.',
+    `sample em 404 cai no synth na 1ª e nas seguintes (${nosFrio} e ${nosDepois} disparos,`
+    + ` iguais aos ${controle} do synth puro), sem nenhum HTMLAudio.`);
 }
 
 // ── ESP5: cláusula IRMÃ — o synth continua espacializando ─────────────────

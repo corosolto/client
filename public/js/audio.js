@@ -451,11 +451,13 @@ export class Sfx {
   /* Tiro por sample no grafo: HTMLAudio não tem pan nem `start(t)`, então pan e
      propDelay que o game.js calcula eram descartados. Régua ESP2/ESP3. */
   _shotSample(url, dist, vol, pan, propDelay) {
-    this.duck(Sfx.duckTiro(dist), 0.16);
     this.ensure();
     this._shotBuf = this._shotBuf || new Map();
     const buf = this._shotBuf.get(url);
-    if (!this.ctx || buf === null) { this._sample(url, vol); return true; }   // null = falhou antes: não retenta
+    /* SEM BUFFER, QUEM TOCA É O SYNTH — não `_sample`. Repetir `new Audio()` numa URL
+       que deu 404 é tocar silêncio com cara de som, e o synth nunca chegava a rodar
+       porque isto devolvia `true`. Régua ESP8. `null` = falhou antes, não retenta. */
+    if (!this.ctx || buf === null) return false;
     if (buf === undefined) {
       this._shotBuf.set(url, undefined);
       (async () => {
@@ -465,14 +467,14 @@ export class Sfx {
           this._shotBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
         } catch (error) {
           this._shotBuf.set(url, null);
-          console.warn('[sfx] sample de tiro não carregou; seguindo no synth/HTMLAudio', url, error?.message || error);
+          console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
         }
       })();
-      /* Cache frio toca pelo caminho antigo: sem pan, mas o primeiro tiro da arma
-         não pode sumir esperando o decode. Régua ESP1. */
-      this._sample(url, vol);
-      return true;
+      return false;   // cache frio: o synth cobre este tiro; o próximo já sai do buffer
     }
+    /* O duck fica DEPOIS das saídas por false: quem devolve false não tocou, e o
+       `_gunshot` que assume ducka sozinho — duckar aqui duplicaria o sidechain. */
+    this.duck(Sfx.duckTiro(dist), 0.16);
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
     /* `vol` puro: quem passa pelo `master` já leva o volume do usuário. `_sample`
