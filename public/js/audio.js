@@ -453,23 +453,30 @@ export class Sfx {
   _shotSample(url, dist, vol, pan, propDelay) {
     this.ensure();
     this._shotBuf = this._shotBuf || new Map();
+    this._shotCarregando = this._shotCarregando || new Map();
     const buf = this._shotBuf.get(url);
     /* SEM BUFFER, QUEM TOCA É O SYNTH — não `_sample`. Repetir `new Audio()` numa URL
        que deu 404 é tocar silêncio com cara de som, e o synth nunca chegava a rodar
        porque isto devolvia `true`. Régua ESP8. `null` = falhou antes, não retenta. */
     if (!this.ctx || buf === null) return false;
     if (buf === undefined) {
-      this._shotBuf.set(url, undefined);
-      (async () => {
-        try {
-          const res = await fetch(encodeURI(url));
-          if (!res.ok) throw new Error(`http ${res.status}`);
-          this._shotBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
-        } catch (error) {
-          this._shotBuf.set(url, null);
-          console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
-        }
-      })();
+      /* Mapa SEPARADO para "carregando": pôr `undefined` no `_shotBuf` não sentinelava
+         nada — `get()` devolve `undefined` para chave ausente também, e em rajada cada
+         tiro reabria fetch e decode do mesmo arquivo. Régua ESP9. */
+      if (!this._shotCarregando.has(url)) {
+        this._shotCarregando.set(url, (async () => {
+          try {
+            const res = await fetch(encodeURI(url));
+            if (!res.ok) throw new Error(`http ${res.status}`);
+            this._shotBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
+          } catch (error) {
+            this._shotBuf.set(url, null);
+            console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
+          } finally {
+            this._shotCarregando.delete(url);
+          }
+        })());
+      }
       return false;   // cache frio: o synth cobre este tiro; o próximo já sai do buffer
     }
     /* O duck fica DEPOIS das saídas por false: quem devolve false não tocou, e o

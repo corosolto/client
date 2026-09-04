@@ -47,6 +47,7 @@
            `weapons`, o synth toca. O veto do dono é que o fallback não morra.
      ESP8  sample que não carrega (404/decode) cai no SYNTH — na primeira chamada
            e em todas as seguintes —, nunca em HTMLAudio numa URL morta.
+     ESP9  rajada com cache frio faz UMA requisição, não uma por tiro.
      ESP7  o volume do usuário entra UMA vez. `_sample` aplica `this.vol` na mão
            porque HTMLAudio não passa pelo `master`; um BufferSource passa, e
            repetir a conta ali derruba o sample em `this.vol`× sem erro nenhum.
@@ -144,7 +145,7 @@ class CtxFalso {
     const dados = Array.from({ length: ch }, () => new Float32Array(n));
     return { numberOfChannels: ch, length: n, sampleRate: sr, duration: n / sr, getChannelData: (i) => dados[i] };
   }
-  decodeAudioData() { return Promise.resolve(this.createBuffer(1, 12000, this.sampleRate)); }
+  decodeAudioData() { DECODES++; return Promise.resolve(this.createBuffer(1, 12000, this.sampleRate)); }
 }
 
 /* ── ambiente de navegador mínimo ─────────────────────────────────────────── */
@@ -167,9 +168,13 @@ globalThis.Audio = AudioFalso;
 /* `FETCH_404` deixa a régua simular o pacote que não chegou — release trocada, zip
    parcial, caminho errado no manifest. É o cenário da ESP8. */
 let FETCH_404 = false;
-globalThis.fetch = async () => (FETCH_404
-  ? { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }
-  : { ok: true, arrayBuffer: async () => new ArrayBuffer(32) });
+let FETCHES = 0, DECODES = 0;
+globalThis.fetch = async () => {
+  FETCHES++;
+  return FETCH_404
+    ? { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }
+    : { ok: true, arrayBuffer: async () => new ArrayBuffer(32) };
+};
 
 const { Sfx } = await import('../../public/js/audio.js');
 
@@ -322,6 +327,27 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     + ' silêncio a cada tiro, para sempre, com um warn só no console.',
     `sample em 404 cai no synth na 1ª e nas seguintes (${nosFrio} e ${nosDepois} disparos,`
     + ` iguais aos ${controle} do synth puro), sem nenhum HTMLAudio.`);
+}
+
+// ── ESP9: rajada com cache frio faz UMA requisição, não uma por tiro ──────
+{
+  /* `_shotBuf.set(url, undefined)` era sentinela que não sentinelava: `.get()`
+     devolve `undefined` tanto para chave ausente quanto para chave posta como
+     undefined. Em full-auto (8 bots, ~50 tiros/s no `game.js:6329`) cada tiro
+     antes do decode terminar reabria fetch e decode do MESMO arquivo. */
+  FETCHES = 0; DECODES = 0; FETCH_404 = false;
+  LOG = novoLog();
+  const sfx = new Sfx();
+  sfx.pack = { weaponSamples: true, weapons: { [ARMA]: [SRC] } };
+  sfx.ensure();
+  const RAJADA = 10;
+  for (let i = 0; i < RAJADA; i++) sfx.shotWeapon(ARMA, LONGE.dist, 1, LONGE.pan, LONGE.prop);
+  for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r));
+  conferir('ESP9', FETCHES === 1 && DECODES === 1,
+    `rajada de ${RAJADA} tiros com cache frio disparou ${FETCHES} fetch(es) e ${DECODES} decode(s)`
+    + ' do MESMO arquivo; o esperado é 1 e 1. Sem estado in-flight, `_shotBuf.get()` devolve'
+    + ' `undefined` tanto para ausente quanto para carregando, e cada tiro reabre o download.',
+    `rajada de ${RAJADA} tiros com cache frio: ${FETCHES} fetch, ${DECODES} decode.`);
 }
 
 // ── ESP5: cláusula IRMÃ — o synth continua espacializando ─────────────────
