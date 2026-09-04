@@ -88,7 +88,42 @@
    "usoComIA": "nao",
    "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
    "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. `derivados` segue vazio porque nada foi escutado nem aprovado."
+  },
+  "legado-nominal-cs-valve-ut": {
+   "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
+   "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",
+   "url": "public/audio/manifest.example.json",
+   "licenca": "DESCONHECIDA — nenhuma licença foi verificada para estes arquivos",
+   "redistribuicao": "proibida",
+   "usoComIA": "nao",
+   "stagingPrivado": null,
+   "notas": "Herdado, NAO substituido por esta branch. Sao os nomes que o manifest.example.json versionado carrega: `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`... O proprio public/js/audio.js:2 diz que sample real de CS nao pode ser embutido. NAO HA HASH: os arquivos nao estao neste clone, entao a cobertura por sha-256 da PRV5 NAO os alcanca. Estao catalogados e marcados `proibida` para que o empacotador os recuse assim que um hash existir, e para que ninguem diga que a lane resolveu o legado — ela nao resolveu."
   }
  },
- "derivados": []
+ "derivados": [],
+ "legado": {
+  "decisao": "bloqueado-por-procedencia-desconhecida",
+  "fonte": "legado-nominal-cs-valve-ut",
+  "ondeEstao": "public/audio/manifest.example.json",
+  "cobertoPorPRV5": false,
+  "porqueNaoCoberto": "PRV5 casa por sha-256 e estes arquivos nao existem em clone limpo. Sem hash nao ha o que casar. A regua PRV9 cobra a CATALOGACAO por nome; a cobertura por conteudo so existe quando alguem inventariar o pacote real.",
+  "padroes": [
+   {
+    "padrao": "cs-1-6|cs-go|counter-strike|half-life",
+    "porque": "cita Counter-Strike/Half-Life no nome"
+   },
+   {
+    "padrao": "^audio/game/ut-",
+    "porque": "locucoes de Unreal Tournament (double kill, godlike...)"
+   },
+   {
+    "padrao": "knife_(slash|hit|stab|deploy)",
+    "porque": "nomes de arquivo de faca do CS 1.6"
+   },
+   {
+    "padrao": "awp(_clip(in|out)|1)?\\.|usp_|glock18|deagle-|m4a1_unsil|mp5-|p90-|galil-|famas-|aug-|sg55[02]-|xm1014-|m249-|scout_fire|m3-1|mac10-|g3sg1-|sg550-|generic_reload",
+    "porque": "nomes de arma do arsenal do CS 1.6/CS:S"
+   }
+  ]
+ }
 }

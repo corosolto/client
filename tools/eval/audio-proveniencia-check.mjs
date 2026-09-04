@@ -31,6 +31,8 @@
            aprovado sobrevive (cláusula irmã).
      PRV8  `sha256Fonte` bate com o arquivo em `origemNoPack`, recalculado no
            staging privado. Sem staging, declara NÃO MEDIDA — nunca finge prova.
+     PRV9  o legado nominal CS/Valve/UT do `manifest.example.json` está
+           catalogado e bloqueado, e a régua não deixa declará-lo substituído.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
@@ -407,6 +409,75 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     }
     if (conferidos.length) {
       notas.push(`PRV8 ok: ${conferidos.length} derivado(s) com sha256Fonte conferido contra o arquivo real.`);
+    }
+  }
+}
+
+/* ── PRV9: o LEGADO está catalogado, e ninguém diz que foi substituído ─────
+   `public/audio/manifest.example.json` é VERSIONADO e é o que o `fetch-audio.sh`
+   copia quando o zip não traz manifest. Ele nomeia arquivos que apontam para
+   Valve (`awp-cs-1-6`, `usp_unsil`, `knife_slash`, `half-life`) e Epic
+   (`ut-double-kill`) — e o próprio `public/js/audio.js:2` diz que sample real de
+   CS não pode ser embutido. **Esta lane não substituiu nada disso.**
+
+   PRV5 casa por sha-256 e estes arquivos não existem em clone limpo: sem hash não
+   há o que casar, então eles estão FORA daquela cobertura. Esta cláusula cobra o
+   que dá para cobrar sem os bytes — a catalogação por nome — e cobra nos dois
+   sentidos, para a lista não envelhecer:
+
+     · toda folha suspeita do manifest de exemplo casa um padrão declarado;
+     · todo padrão declarado casa pelo menos uma folha (padrão morto vira falso
+       conforto de "está catalogado").
+
+   A lista de arquivos NÃO é escrita à mão: ela é recomputada do manifest a cada
+   execução. Lista à mão de 45 caminhos envelhece no primeiro som novo. */
+{
+  const EXEMPLO = 'public/audio/manifest.example.json';
+  const leg = L.legado;
+  if (!leg) {
+    erros.push('PRV9 o ledger não tem a seção `legado`. Os sons herdados de nome CS/Valve/UT'
+      + ' precisam estar catalogados ou explicitamente bloqueados — não declarados resolvidos.');
+  } else if (!existsSync(EXEMPLO)) {
+    erros.push(`PRV9 NÃO MEDIDA: ${EXEMPLO} não existe, e é dele que a lista de legado é derivada.`);
+  } else {
+    const folhas = [];
+    (function rec(o) {
+      if (Array.isArray(o)) o.forEach(rec);
+      else if (o && typeof o === 'object') Object.values(o).forEach(rec);
+      else if (typeof o === 'string') folhas.push(o);
+    })(JSON.parse(readFileSync(EXEMPLO, 'utf8')));
+
+    if (!L.fontes?.[leg.fonte]) {
+      erros.push(`PRV9 \`legado.fonte\` aponta para \`${leg.fonte}\`, que não existe em \`fontes\`.`);
+    } else if (L.fontes[leg.fonte].redistribuicao !== 'proibida') {
+      erros.push(`PRV9 a fonte do legado está como \`${L.fontes[leg.fonte].redistribuicao}\`;`
+        + ' procedência desconhecida tem que ser `proibida` até alguém verificar.');
+    }
+
+    const padroes = (leg.padroes || []).map((p) => ({ ...p, re: new RegExp(p.padrao, 'i') }));
+    /* O que "cheira" a legado, independente dos padrões declarados: é a rede que
+       pega padrão que alguém esqueceu de declarar. */
+    const SUSPEITO = /cs-1-6|cs-go|counter-strike|half-life|^audio\/game\/ut-|knife_|usp_|awp|glock18|deagle|m4a1|mp5-|p90-|galil|famas|aug-|sg55|xm1014|m249|scout_|m3-1|mac10|g3sg1|sg550|generic_reload/i;
+    const suspeitas = folhas.filter((f) => SUSPEITO.test(f));
+    const semPadrao = suspeitas.filter((f) => !padroes.some((p) => p.re.test(f)));
+    if (semPadrao.length) {
+      erros.push(`PRV9 ${semPadrao.length} caminho(s) de aparência legada no ${EXEMPLO} não casam`
+        + ` nenhum padrão declarado em \`legado.padroes\` (ex.: ${semPadrao.slice(0, 3).join(', ')}).`
+        + ' Som herdado novo entrando sem catalogação é o legado crescendo calado.');
+    }
+    const mortos = padroes.filter((p) => !folhas.some((f) => p.re.test(f)));
+    if (mortos.length) {
+      erros.push(`PRV9 ${mortos.length} padrão(ões) de legado não casam nada (ex.: ${mortos[0].padrao}).`
+        + ' Padrão morto dá falso conforto de "está catalogado".');
+    }
+    if (leg.cobertoPorPRV5 !== false) {
+      erros.push('PRV9 `legado.cobertoPorPRV5` tem que ser `false`: sem hash, a PRV5 não alcança estes'
+        + ' arquivos, e dizer que alcança é a régua mentindo sobre a própria cobertura.');
+    }
+    if (!semPadrao.length && !mortos.length) {
+      notas.push(`PRV9 ok: ${suspeitas.length} de ${folhas.length} caminhos do manifest de exemplo são`
+        + ` legado nominal CS/Valve/UT, todos catalogados como \`${leg.decisao}\`.`
+        + ' NÃO foram substituídos — e a régua não deixa dizer que foram.');
     }
   }
 }

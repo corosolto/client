@@ -19,6 +19,8 @@ não é "asset ainda não catalogado" — é asset que não pode entrar numa bui
 | `npm run eval:audioproc` | PRV1–PRV4: forma do ledger, aprovação, cobertura do piloto | `check:fast` (node puro) |
 | `npm run assert:assets` | PRV5: nenhum arquivo instalado casa (por sha-256) derivado proibido ou não aprovado | build da Vercel |
 | `npm run eval:audioproc` | PRV6: o empacotador recusa derivado `proibida-standalone` — fixture end-to-end | `check:fast` |
+| `npm run eval:audioproc` | PRV7: a decisão do ledger controla o gerador · PRV8: `sha256Fonte` conferido contra o arquivo real · PRV9: o legado CS/Valve/UT catalogado | `check:fast` |
+| `npm run eval:audiocapacidade` | CAP1–CAP4: só se aprova evento que o runtime sabe tocar especificamente | `check:fast` |
 
 `eval:audioproc --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` é a
 prova de que elas mordem.
@@ -102,6 +104,28 @@ jogo" e "redistribuído" nesses cenários é julgamento jurídico. **O piloto fi
 neste ponto** até o dono decidir — ver o bloqueio 1 de
 [`FAB-PILOT-HANDOFF.md`](FAB-PILOT-HANDOFF.md). Enquanto isso, a trava garante que nada
 vaze por engano.
+
+## O legado que esta lane NÃO resolveu
+
+`public/audio/manifest.example.json` é **versionado** e é o que o `fetch-audio.sh` copia
+quando o zip não traz manifest. Medido: **45 de 62** caminhos dele são nomes que apontam
+para Valve e Epic — `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `half-life`,
+`ut-double-kill`, `m4a1_unsil`. O próprio `public/js/audio.js:2` diz que sample real de CS
+não pode ser embutido.
+
+**Esta branch não substituiu nenhum deles.** Dizer o contrário seria a mentira mais fácil de
+contar aqui, então há uma régua que impede: a PRV9 cobra que eles estejam catalogados como
+`bloqueado-por-procedencia-desconhecida`, com a fonte marcada `redistribuicao: "proibida"`,
+e reprova se alguém marcar essa fonte como `livre` ou declarar que a PRV5 os cobre.
+
+**A PRV5 não os cobre, e isso está escrito no ledger** (`legado.cobertoPorPRV5: false`): ela
+casa por sha-256 e estes arquivos não existem em clone limpo. Sem hash não há o que casar.
+A cobertura por conteúdo só passa a existir quando alguém inventariar o pacote real.
+
+A catalogação é por PADRÃO, recomputada do manifest a cada execução — lista de 45 caminhos
+escrita à mão envelheceria no primeiro som novo. A PRV9 cobra nos dois sentidos: caminho
+suspeito sem padrão declarado reprova, e padrão declarado que não casa nada também, porque
+padrão morto dá falso conforto de "está catalogado".
 
 ## A regra que não se negocia
 
