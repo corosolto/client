@@ -50,6 +50,7 @@ const SHORTLIST = join(PACK, 'shortlist-piloto.json');
 const PORTA = +arg('porta', '8130');
 const POR = arg('por', 'ruben');
 const DECISOES = join(PACK, 'decisoes-escuta.jsonl');
+const TRIAGEM = join(PACK, 'triagem-escuta.jsonl');
 
 if (!relative(RAIZ_REPO, PACK).startsWith('..')) {
   console.error(`recusado: ${PACK} está dentro do repositório. O staging privado fica fora.`);
@@ -59,6 +60,8 @@ for (const p of [WAVS, SHORTLIST]) {
   if (!existsSync(p)) { console.error(`não achei ${p} — rode antes: node tools/audio/shortlist.mjs ${dir} --saida=${SHORTLIST}`); process.exit(2); }
 }
 const lista = JSON.parse(readFileSync(SHORTLIST, 'utf8'));
+const PERMITIDOS = new Set((lista.biblioteca || lista.eventos.flatMap((e) => e.candidatos || []))
+  .map((a) => a.arquivo));
 
 const PAGINA = `<!doctype html><meta charset=utf-8><title>Escuta A/B — piloto Fab</title>
 <style>
@@ -93,6 +96,12 @@ const PAGINA = `<!doctype html><meta charset=utf-8><title>Escuta A/B — piloto 
   border-radius:6px;padding:4px 8px;width:190px}
  .rodape{position:fixed;bottom:0;left:0;right:0;background:#0e0c0b;border-top:1px solid var(--lin);
   padding:8px 22px;font-size:12px;color:var(--mut);display:flex;gap:16px;justify-content:space-between}
+ .biblioteca{margin-top:28px;border-top:1px solid var(--lin);padding-top:18px}
+ .biblioteca h2{font-size:17px;margin:0 0 5px}
+ .filtros{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+ .filtros input{width:min(460px,100%)}
+ select{font:inherit;background:#0e0c0b;color:var(--fg);border:1px solid var(--lin);border-radius:6px;padding:5px 8px}
+ .contador{color:var(--mut);font-size:12px}
 </style>
 <header>
  <h1>Escuta A/B — piloto de áudio Fab</h1>
@@ -181,6 +190,51 @@ for (const e of dados.eventos) {
   }
   app.appendChild(d);
 }
+
+const sec = document.createElement('section'); sec.className='biblioteca';
+const h = document.createElement('h2'); h.textContent='Biblioteca completa — triagem local';
+const intro = document.createElement('p'); intro.className='sub';
+intro.textContent='Todos os arquivos permitidos pela linha editorial. “Interessante” apenas registra uma pista; não aprova nem integra o áudio.';
+const filtros = document.createElement('div'); filtros.className='filtros';
+const busca = document.createElement('input'); busca.type='search'; busca.placeholder='buscar por nome (ex.: rain, door, explosion, metal)…';
+const categoria = document.createElement('select');
+const categorias = ['Todas', ...new Set(dados.biblioteca.map(a => a.categoria))];
+for (const c of categorias) { const o=document.createElement('option'); o.value=c; o.textContent=c; categoria.appendChild(o); }
+const contador = document.createElement('span'); contador.className='contador';
+filtros.append(busca, categoria, contador);
+const tabela = document.createElement('table');
+tabela.innerHTML='<thead><tr><th>arquivo</th><th>dur</th><th>pico</th><th>LUFS</th><th>triagem</th></tr></thead><tbody></tbody>';
+const corpoTabela = tabela.querySelector('tbody');
+async function registrarTriagem(btn, a, decisao){
+  const nota = btn.closest('tr').querySelector('input').value || '';
+  const r = await fetch('/triagem', {method:'POST', headers:{'content-type':'application/json'},
+    body:JSON.stringify({arquivo:a.arquivo, sha256:a.sha256, categoria:a.categoria, decisao, nota})});
+  if (!r.ok) { status.textContent='falhou ao gravar triagem'; return; }
+  const tr=btn.closest('tr'); tr.querySelectorAll('button.ok,button.no').forEach(b=>b.removeAttribute('data-on'));
+  btn.setAttribute('data-on','1'); status.textContent=decisao+' registrado para '+a.arquivo;
+}
+function renderBiblioteca(){
+  const termo=busca.value.trim().toLowerCase(); const cat=categoria.value;
+  const filtrados=dados.biblioteca.filter(a => (cat==='Todas'||a.categoria===cat) && (!termo||a.arquivo.toLowerCase().includes(termo)));
+  contador.textContent=filtrados.length+' de '+dados.biblioteca.length+' arquivos'; corpoTabela.replaceChildren();
+  for (const a of filtrados) {
+    const tr=document.createElement('tr');
+    const nome=document.createElement('td'); nome.textContent=a.arquivo;
+    const dur=document.createElement('td'); dur.className='num'; dur.textContent=(a.duracaoS??'—')+'s';
+    const pico=document.createElement('td'); pico.className='num'; pico.textContent=a.picoDb??'—';
+    const lufs=document.createElement('td'); lufs.className='num'; lufs.textContent=a.loudnessLufs??'—';
+    const acao=document.createElement('td'); acao.className='barra';
+    const play=document.createElement('button'); play.className='play'; play.textContent='▶ ouvir';
+    play.onclick=()=>tocar('/wav/'+a.arquivo.split('/').map(encodeURIComponent).join('/'));
+    const ok=document.createElement('button'); ok.className='ok'; ok.textContent='interessante';
+    const no=document.createElement('button'); no.className='no'; no.textContent='descartar';
+    const nota=document.createElement('input'); nota.type='text'; nota.placeholder='possível uso';
+    ok.onclick=()=>registrarTriagem(ok,a,'interessante'); no.onclick=()=>registrarTriagem(no,a,'descartado');
+    acao.append(play,ok,no,nota); tr.append(nome,dur,pico,lufs,acao); corpoTabela.appendChild(tr);
+  }
+}
+busca.oninput=renderBiblioteca; categoria.onchange=renderBiblioteca;
+sec.append(h,intro,filtros,tabela); app.appendChild(sec); renderBiblioteca();
 </script>`;
 
 const TIPOS = { '.wav': 'audio/wav', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8' };
@@ -209,8 +263,27 @@ const servidor = createServer((req, res) => {
     return;
   }
 
+  if (req.method === 'POST' && caminho === '/triagem') {
+    let corpo = '';
+    req.on('data', (c) => { corpo += c; if (corpo.length > 1e5) req.destroy(); });
+    req.on('end', () => {
+      try {
+        const d = JSON.parse(corpo);
+        const permitido = (lista.biblioteca || []).find((a) => a.arquivo === d.arquivo && a.sha256 === d.sha256);
+        if (!permitido) { res.writeHead(400); res.end('{}'); return; }
+        appendFileSync(TRIAGEM, JSON.stringify({
+          arquivo: permitido.arquivo, sha256: permitido.sha256, categoria: permitido.categoria,
+          decisao: d.decisao === 'interessante' ? 'interessante' : 'descartado',
+          por: POR, quando: new Date().toISOString(), nota: String(d.nota || '').slice(0, 500),
+        }) + '\n');
+        res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"ok":true}');
+      } catch { res.writeHead(400); res.end('{}'); }
+    });
+    return;
+  }
+
   if (caminho === '/' || caminho === '/index.html') {
-    const dados = JSON.stringify({ eventos: lista.eventos, decisoes: DECISOES });
+    const dados = JSON.stringify({ eventos: lista.eventos, biblioteca: lista.biblioteca || [], decisoes: DECISOES });
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     res.end(PAGINA.replace('__DADOS__', dados));
     return;
@@ -223,7 +296,9 @@ const servidor = createServer((req, res) => {
   const rotas = [['/wav/', WAVS], ['/js/', join(RAIZ_REPO, 'public', 'js')]];
   for (const [prefixo, raiz] of rotas) {
     if (!caminho.startsWith(prefixo)) continue;
-    const abs = resolve(join(raiz, caminho.slice(prefixo.length)));
+    const pedido = caminho.slice(prefixo.length);
+    if (prefixo === '/wav/' && !PERMITIDOS.has(pedido)) break;
+    const abs = resolve(join(raiz, pedido));
     if (relative(raiz, abs).startsWith('..') || !existsSync(abs) || !statSync(abs).isFile()) break;
     res.writeHead(200, { 'content-type': TIPOS[extname(abs).toLowerCase()] || 'application/octet-stream' });
     res.end(readFileSync(abs));
@@ -238,7 +313,9 @@ servidor.listen(PORTA, '127.0.0.1', () => {
   const n = lista.eventos.reduce((a, e) => a + e.total, 0);
   console.log(`escuta A/B em http://127.0.0.1:${PORTA}`);
   console.log(`  ${lista.eventos.length} eventos · ${n} candidatos · WAVs lidos de ${WAVS}`);
+  console.log(`  ${(lista.biblioteca || []).length} arquivos seguros disponíveis na biblioteca completa`);
   console.log(`  decisões vão para ${DECISOES} (fora do repositório)`);
+  console.log(`  triagem livre vai para ${TRIAGEM} (fora do repositório)`);
   console.log('  NADA aqui aprova sozinho: o clique grava registro de escuta, e o ledger continua manual.');
   console.log(`  sha256 do catálogo conferido: ${createHash('sha256').update(readFileSync(join(WAVS, 'catalog.json'))).digest('hex').slice(0, 16)}…`);
 });

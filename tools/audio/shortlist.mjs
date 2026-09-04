@@ -148,11 +148,29 @@ export function montar(catalogo, inventario) {
     };
   });
 
+  /* Biblioteca de escuta livre: expõe somente metadados dos arquivos que
+     sobreviveram ao veto editorial. Não sugere evento nem aprovação. */
+  const biblioteca = arquivos.map((f) => {
+    const inv = porHash.get(f.sha256) || {};
+    return {
+      arquivo: f.output,
+      categoria: f.output.split('/')[0] || 'Sem categoria',
+      sha256: f.sha256,
+      duracaoS: f.durationSeconds ?? inv.duracaoS ?? null,
+      canais: f.channels ?? inv.canais ?? null,
+      taxaHz: f.sampleRate ?? inv.taxaHz ?? null,
+      bits: f.bitsPerSample ?? inv.bitsPorAmostra ?? null,
+      picoDb: inv.picoDb ?? null,
+      loudnessLufs: inv.loudnessLufs ?? null,
+    };
+  }).sort((a, b) => a.arquivo.localeCompare(b.arquivo));
+
   return {
     _leia: 'Shortlist METADATA-ONLY do pacote privado. Não contém áudio. Nome não é som:'
       + ' a escolha é do ouvido do dono na página A/B, não desta lista.',
     veto: { regras: VETO_GORE, arquivosVetados: vetados.length },
     total: arquivos.length,
+    biblioteca,
     eventos,
   };
 }
@@ -193,6 +211,11 @@ if (process.argv.includes('--autoteste')) {
     falhas.push(`SL9 família de ak.shot veio "${ev('ak.shot').familias[0]}"; esperado terminar em Gunshot_1.`);
   }
   if (JSON.stringify(montar(cat, inv)) !== JSON.stringify(r)) falhas.push('SL8 duas execuções deram saídas diferentes.');
+  if (r.biblioteca.length !== 3) falhas.push(`SL10 a biblioteca segura deveria ter 3 arquivos, tem ${r.biblioteca.length}.`);
+  if (r.biblioteca.some((a) => temGore(a.arquivo))) falhas.push('SL11 gore vazou para a biblioteca completa.');
+  if (!r.biblioteca.some((a) => a.arquivo === 'Guns/Gun_Shot/Gunshot_1-1.wav')) {
+    falhas.push('SL12 arquivo seguro sumiu da biblioteca completa.');
+  }
 
   if (falhas.length) { for (const f of falhas) console.error(`  ✗ ${f}`); process.exit(1); }
   console.log('  ✓ autoteste shortlist: veto de gore morde, distante não contamina o tiro seco,'
