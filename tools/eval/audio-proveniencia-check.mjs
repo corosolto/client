@@ -39,6 +39,9 @@
      PRV11 fail-closed também no GERADOR, com a mesma irmã.
      PRV12 ledger AUSENTE aborta o gerador — em modo normal e em `--check` —
            dizendo por quê; com ledger válido ele gera (cláusula irmã).
+     PRV13 o `assets-check` REAL medido contra fixture: não catalogado e legado
+           reprovam, catalogado/aprovado/livre passa (irmã). As três camadas
+           passam a ter prova automatizada — antes esta era só manual.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO — e
@@ -704,6 +707,78 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         + ' o caminho do manifest mesmo assim.');
     } else {
       notas.push('PRV12 ok: sem ledger o gerador aborta nos dois modos e diz por quê; com ledger válido gera.');
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV13: o ASSETS-CHECK medido pelo chamador real ───────────────────────
+   PRV10 e PRV11 rodam o empacotador e o gerador de verdade. A terceira camada —
+   `tools/eval/assets-check.mjs` — só tinha prova MANUAL, feita à mão numa rodada
+   e não repetida em nenhuma outra. Prova manual não roda no portão: ela vale no
+   dia em que alguém a digita e envelhece no dia seguinte.
+
+   Aqui o script real roda contra fixture, com `--raiz`/`--ledger`/`--so=audio`.
+   Três cenários e a irmã, iguais aos do empacotador — porque é a mesma política
+   e a mesma pergunta, só que sobre o pacote instalado. */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv13-'));
+  try {
+    const PUB = join(tmp, 'public');
+    mkdirSync(join(PUB, 'audio', 'piloto'), { recursive: true });
+    mkdirSync(join(PUB, 'audio', 'game'), { recursive: true });
+    const grava = (sub, nome, txt) => {
+      writeFileSync(join(PUB, 'audio', sub, nome), txt);
+      return createHash('sha256').update(txt).digest('hex');
+    };
+    const shaOk = grava('piloto', 'aprovado.wav', 'fixture aprovado assets\n');
+    grava('piloto', 'nao-catalogado.wav', 'fixture nao catalogado assets\n');
+    grava('game', 'awp-cs-1-6.mp3', 'fixture legado assets\n');
+
+    const ledgerPath = join(tmp, 'ledger.json');
+    writeFileSync(ledgerPath, JSON.stringify({
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'f', decisao: 'derivado', caminhoRuntime: 'arma' }],
+      fontes: {
+        propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' },
+        legado: { titulo: 'f', autor: 'f', url: 'f', licenca: 'DESCONHECIDA', redistribuicao: 'proibida', usoComIA: 'nao', notas: 'f' },
+      },
+      derivados: [{ arquivo: 'audio/piloto/aprovado.wav', evento: 'ak.shot', fonte: 'propria',
+        origemNoPack: 'x', sha256: shaOk, sha256Fonte: 'e'.repeat(64), transformacao: 'x',
+        aprovacao: 'aprovado', escutaAB: { por: 'fixture', data: '2026-09-04' } }],
+      legado: { decisao: 'bloqueado-por-procedencia-desconhecida', fonte: 'legado', ondeEstao: 'x',
+        cobertoPorPRV5: false, porqueNaoCoberto: 'x', padroes: [{ padrao: 'cs-1-6', porque: 'fixture' }] },
+    }));
+
+    const rodar = (caminho) => {
+      writeFileSync(join(PUB, 'audio', 'manifest.json'), JSON.stringify({ weapons: { ak: [caminho] } }));
+      try {
+        const out = execFileSync('node', [join(RAIZ, 'tools', 'eval', 'assets-check.mjs'),
+          `--raiz=${PUB}`, `--ledger=${ledgerPath}`, '--so=audio'], { encoding: 'utf8', stdio: 'pipe' });
+        return { saida: 0, texto: out };
+      } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
+    };
+
+    const a = rodar('audio/piloto/nao-catalogado.wav');
+    if (a.saida === 0) {
+      erros.push('PRV13a o `assets-check` ACEITOU `audio/piloto/nao-catalogado.wav` no pacote instalado.'
+        + ' Sob o prefixo derivado o desconhecido tem que reprovar — é a mesma allowlist do empacotador.');
+    }
+    const c = rodar('audio/game/awp-cs-1-6.mp3');
+    if (c.saida === 0) {
+      erros.push('PRV13c o `assets-check` aceitou um caminho do LEGADO catalogado como bloqueado'
+        + ' (`audio/game/awp-cs-1-6.mp3`). O bloqueio é por NOME — sem hash não há bloqueio por conteúdo.');
+    }
+    /* IRMÃ: o catalogado, aprovado e de fonte livre TEM que passar. Sem ela, um
+       `assets-check` que recusasse tudo passaria em (a) e (c) sem proteger nada. */
+    const b = rodar('audio/piloto/aprovado.wav');
+    if (b.saida !== 0) {
+      erros.push(`PRV13b IRMÃ: o \`assets-check\` REPROVOU o derivado catalogado, aprovado e de fonte`
+        + ` \`livre\` (saiu ${b.saida}: ${b.texto.trim().split('\n').pop()}).`
+        + ' Régua que recusa tudo não protege nada.');
+    }
+    if (a.saida !== 0 && c.saida !== 0 && b.saida === 0) {
+      notas.push('PRV13 ok: o `assets-check` real reprova o não catalogado e o legado, e aceita o'
+        + ' catalogado/aprovado/livre — prova automatizada, não mais manual.');
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }

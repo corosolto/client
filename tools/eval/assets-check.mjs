@@ -73,9 +73,17 @@ import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { AMB_LOOPS, BIOME_SHOTS } from '../../public/js/soundscape.js';
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
-const MANIFEST = 'public/audio/manifest.json';
-const DIR_DECALS = 'public/img/decals';
-const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10);
+/* `--raiz=`, `--ledger=` e `--so=audio` existem para a régua PRV13 rodar ESTE
+   script — o chamador real — contra uma fixture sintética. A prova adversarial
+   da procedência era manual até a 5ª rodada, e prova manual não roda no portão.
+   Sem os flags, nada muda. */
+const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
+const PUBLICO = arg('raiz') || 'public';
+const LEDGER = arg('ledger') || 'docs/audio/proveniencia.json';
+const SO = arg('so');
+const MANIFEST = path.join(PUBLICO, 'audio', 'manifest.json');
+const DIR_DECALS = path.join(PUBLICO, 'img', 'decals');
+const mutante = process.argv.find((arg2) => arg2.startsWith('--mutante='))?.slice(10);
 
 if (mutante && mutante !== 'grafite-orfa') {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -100,10 +108,10 @@ if (!existsSync(MANIFEST)) {
       else if (typeof o === 'string') folhas.push(o);
     })(m);
 
-    if (folhas.length < PISO_AUDIO) {
+    if (folhas.length < PISO_AUDIO && SO !== 'audio') {
       /* O caso mais provável tem nome: o fallback da linha 23 do fetch-audio.sh. Dizer
          isso na mensagem é a diferença entre "conserta em 1 min" e "investiga 1 h". */
-      const exemplo = 'public/audio/manifest.example.json';
+      const exemplo = path.join(PUBLICO, 'audio', 'manifest.example.json');
       const igual = existsSync(exemplo)
         && readFileSync(exemplo, 'utf8').trim() === readFileSync(MANIFEST, 'utf8').trim();
       erros.push(`áudio: manifest com ${folhas.length} caminhos, piso ${PISO_AUDIO}.`
@@ -114,7 +122,7 @@ if (!existsSync(MANIFEST)) {
           : ' Pacote incompleto — confira AUDIO_PACK_URL e a release apontada.'));
     }
 
-    const semArquivo = folhas.filter((f) => !existsSync(path.join('public', f)));
+    const semArquivo = folhas.filter((f) => !existsSync(path.join(PUBLICO, f)));
     if (semArquivo.length) {
       erros.push(`áudio: ${semArquivo.length} de ${folhas.length} caminhos do manifest não existem`
         + ` no disco (ex.: ${semArquivo.slice(0, 3).join(', ')}) — o zip veio parcial.`);
@@ -127,7 +135,8 @@ if (!existsSync(MANIFEST)) {
        o warn de `soundscape.js:59` como único sinal. */
     const doCodigo = new Set(Object.values(AMB_LOOPS));
     for (const pools of Object.values(BIOME_SHOTS)) for (const p of pools) for (const src of p.srcs) doCodigo.add(src);
-    const semAmbiente = [...doCodigo].filter((f) => !folhas.includes(f) || !existsSync(path.join('public', f)));
+    const semAmbiente = SO === 'audio' ? []
+      : [...doCodigo].filter((f) => !folhas.includes(f) || !existsSync(path.join(PUBLICO, f)));
     if (semAmbiente.length) {
       erros.push(`áudio ambiente: ${semAmbiente.length} de ${doCodigo.size} caminhos que \`soundscape.js\` nomeia`
         + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
@@ -153,12 +162,12 @@ if (!existsSync(MANIFEST)) {
          o prefixo some e um derivado não catalogado fica indistinguível de
          qualquer outro áudio. Por isso a camada decisiva é o EMPACOTADOR, que roda
          antes do rename. Aqui medimos o que ainda dá para medir. */
-      const pol = carregarPolitica('docs/audio/proveniencia.json');
+      const pol = carregarPolitica(LEDGER);
       const recusados = [];
       let sobPrefixo = 0;
       if (!pol.erro) {
         for (const f of folhas) {
-          const abs = path.join('public', f);
+          const abs = path.join(PUBLICO, f);
           if (!existsSync(abs)) continue;             // já reportado pela cláusula acima
           if (f.startsWith(pol.prefixo)) sobPrefixo++;
           const motivo = motivoDeRecusa(f, readFileSync(abs), pol, 'pack');
@@ -185,7 +194,8 @@ if (!existsSync(MANIFEST)) {
 
 /* -------------------------------- DECALQUES -------------------------------- */
 let T;
-try { T = initTextures(); } catch (e) {
+if (SO === 'audio') T = null;
+else try { T = initTextures(); } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
 }
 if (T) try {
