@@ -514,6 +514,46 @@ O LAYOUT ASSADO (public/js/graffiti_layout.js) não envelhece em silêncio (issu
 npm run eval:grafitelayout
 ```
 
+## `eval:audioalcance`
+
+O som que o código nomeia chega na build? `public/js/soundscape.js` nomeia os arquivos de ambiente e nenhum deles era alcançado pela pipeline: o gerador não tinha regra para `ambiente/` (entravam como órfãos), o empacotador copia só o que o manifest nomeia, e o que falta no zip vira 404 que `soundscape.js:59` engole com um warn — lição 5 e lição 12 juntas. A régua ARMA uma fixture sintética em pasta temporária e roda o gerador e o empacotador REAIS contra ela (`--raiz=`), em vez de depender do pacote privado, que não existe em clone limpo. ALC1 mede o gerador, ALC2 o pack; sem `zip` no PATH a ALC2 se declara NÃO MEDIDA e a régua reprova assim mesmo. A irmã de produção é a cláusula de ambiente do `assert:assets`, que mede o pacote instalado e lê a lista da mesma fonte. `--mutante=nome-trocado|sem-copia` prova que morde.
+
+```bash
+npm run eval:audioalcance
+```
+
+## `eval:audioespacial`
+
+O tiro por sample ouve a distância? `game.js:6336` calcula distância, pan e atraso de propagação em todo tiro de bot; o caminho por sample (`weaponSamples: true`, que é o que o piloto Fab liga) descartava os três e tocava por HTMLAudio, que não tem grafo nem `start(t)`. Bot a 40 m às suas costas soava igual a bot a 2 m à sua frente. A régua planta um `AudioContext` falso que grava o grafo e importa o `public/js/audio.js` de produção — nenhum WAV entra, `fetch` devolve 32 bytes sintéticos. ESP1 cache frio não silencia, ESP2 pan, ESP3 propagação, ESP4 duck pela mesma regra do synth, ESP5 é a cláusula IRMÃ (o synth continua espacializando — sem ela, apagar os dois lados ficaria verde) e ESP6 o fallback synth intacto. A LEI DE VOLUME por distância fica de fora de propósito: é decisão de ouvido, e vira bloqueio no `docs/audio/FAB-PILOT-HANDOFF.md`. `--mutante=sem-pan|sem-propagacao|duck-fixo` prova que morde.
+
+```bash
+npm run eval:audioespacial
+```
+
+## `eval:audioproc`
+
+Asset sem origem declarada não entra numa build. O `.gitignore` protege o GIT e só ele: o pacote de áudio é montado à parte e servido em produção, então arquivo de procedência desconhecida chega ao jogador sem passar por commit nenhum. Cobra a forma do ledger `docs/audio/proveniencia.json` — PRV1 campos obrigatórios, PRV2 `aprovado` exige `escutaAB` (nenhuma régua desta base ouve som: quem aprova é o dono, A/B no jogo real), PRV3 todo evento do piloto com decisão declarada (`synth` ou `derivado`), PRV4 fonte citada existe e nenhum áudio está rastreado pelo git. A cláusula de build é a PRV5 do `assert:assets`, que confere sha-256 contra o pacote instalado. O contrato inteiro está em `docs/audio/PROVENIENCIA.md`. `--mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` prova que morde.
+
+```bash
+npm run eval:audioproc
+```
+
+## `audio:inventario`
+
+Metadado do staging privado, e só metadado. O pacote fonte do piloto mora fora do git e a listagem diz `Allows usage with AI: No` — abrir os WAVs com um agente no meio é o que a licença proíbe. Lê o áudio LOCALMENTE com ffprobe/ffmpeg e emite nome, sha-256, formato, codec, duração, canais, taxa, bits, pico e loudness. Não copia, não converte, não move um WAV, não fala com a rede e RECUSA `--saida=` dentro do repositório. O `sha256` liga ao `sha256Fonte` do ledger de procedência. Campo que a máquina não sabe medir vem `null`, com `ferramentas.naoMedido` dizendo qual e por quê — zero disfarçado de medição é a lição 5.
+
+```bash
+npm run audio:inventario -- <dir> --saida=<fora-do-repo>.json
+```
+
+## `audio:inventario:autoteste`
+
+A fixture do inventariador: WAVs gerados na hora com ruído determinístico. Prova saída idêntica entre duas execuções, arquivo não-áudio de fora, hashes distintos para conteúdos distintos, e nenhum campo de nível preenchido quando a ferramenta falta. Está no check:fast porque ferramenta de decisão sem fixture é o furo que o `eval:fixture` existe para fechar.
+
+```bash
+npm run audio:inventario:autoteste
+```
+
 ## `eval:backendhints`
 
 O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o jogo vê o JOGO — 'sem dar pistas se usamos supabase, postgres o que'. Mede no fonte (sem build) toda superfície servida crua: public/js, public/llms.txt, src/pages (corpo .astro, fora do frontmatter de servidor), CHANGELOG.md (renderizado em /changelog). A doc Docusaurus fica FORA, como dívida declarada — virar neutra é decisão editorial. Em 15/08 a primeira corrida achou 8 vazamentos, um deles TEXTO DE UI ('envs do Supabase pendentes'). --mutante=inject prova que morde; lista de padrões vazia se denuncia sozinha.
