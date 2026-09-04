@@ -3466,6 +3466,76 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-128 · A régua de alcance declarava verde um empacotador que morria em toda execução~~ · RESOLVIDO 04/09
+
+**Sintoma.** `npm run eval:audioalcance` verde, e o `audio-pack.zip` nunca era gerado.
+
+**Causa raiz.** A própria régua engolia o código de saída do empacotador com um `catch {}`
+e um comentário que racionalizava a escolha ("o veredito é o pack, não o código de saída").
+`scripts/build-audio-pack.mjs:66` fazia `readdirSync` numa `menu-music/` que a fixture não
+criava, quebrava com `ENOENT` — e quebrava **depois** de já ter escrito o
+`pack/manifest.json`. A cláusula ALC2 lia esse rastro e declarava sucesso.
+
+Medido com `node tools/eval/audio-alcance-check.mjs --verboso`: stack de ENOENT no meio da
+saída, `✓ ALC2 ok` logo abaixo. É a lição 5 dentro da régua que existe para pegar a lição 5.
+
+**Conserto.** Cláusula ALC3 (o empacotador tem que sair 0 **e** gerar o zip), fixture com
+`menu-music/`, e o empacotador diz o que falta em vez de cuspir stack depois de escrever o
+manifest. `--mutante=sem-menu-music` é a mutação que prova. Commit `86cebd8d`.
+
+---
+### ~~BUG-129 · Cláusula de procedência filtrava por prefixo que o empacotador apaga~~ · RESOLVIDO 04/09
+
+**Sintoma.** A cláusula PRV5 do `assets-check` nunca disparava em produção, em nenhum
+cenário.
+
+**Causa raiz.** Ela filtrava folhas do manifest por `f.startsWith('audio/piloto/')`, e
+`scripts/build-audio-pack.mjs:49` reescreve **todo** caminho para `audio/a/<sha1>` antes de
+empacotar. Medido rodando o empacotador real sobre uma fixture: no manifest que o jogador
+recebe, o filtro casa **0 de 1**. Régua estruturalmente incapaz de ver o defeito que ela
+nomeia — família da lição 1.
+
+**Conserto.** A chave passou a ser o **sha-256**, que sobrevive ao rename. Provado com um
+derivado Fab instalado como `audio/a/b1b3d9230e48b0a1.wav`: a cláusula acende e mapeia o
+nome hasheado de volta para a entrada do ledger. Commit `fa513890`.
+
+---
+### ~~BUG-130 · Sample de tiro que não carrega repetia HTMLAudio morto; o synth nunca tocava~~ · RESOLVIDO 04/09
+
+**Sintoma, se o caminho por sample estivesse ligado.** Release trocada, zip parcial ou
+caminho errado no manifest davam 404, e o jogo ficava **sem som de tiro para sempre**, com
+um `console.warn` só. O `_shotBuf` gravava `null` e cada tiro seguinte chamava
+`new Audio()` na mesma URL morta.
+
+**Causa raiz.** `public/js/audio.js`, `_shotSample` devolvia `true` nessa saída, então
+`shotWeapon` retornava antes de chegar ao `_gunshot`. O comentário dizia "seguindo no
+synth/HTMLAudio" e o synth nunca era alcançado.
+
+**Conserto.** As duas saídas sem buffer (cache frio e falha permanente) devolvem `false`, e
+o `shotWeapon` cai no synth — que ainda vem espacializado, melhor que o HTMLAudio de antes.
+
+**Régua:** `npm run eval:audioespacial`, cláusula ESP8, com o limiar MEDIDO (o mesmo tiro
+pelo synth puro é o controle): antes 0 e 0 disparos com 1 HTMLAudio; depois 11 e 11 com 0,
+contra 11 do controle. Commit `a35e3bd1`.
+
+---
+### ~~BUG-131 · `weaponSamples` ligava derivado pendente ou rejeitado~~ · RESOLVIDO 04/09
+
+**Sintoma.** O ledger `docs/audio/proveniencia.json` declarava `decisao` e `aprovacao`, e
+**nada lia**. Com `weaponSamples: true`, o runtime sorteia por `_pick(pack.weapons[w])` e
+tocaria qualquer caminho presente — inclusive um som que ninguém aprovou.
+
+**Conserto.** `tools/gen-audio-manifest.mjs` poda dos curados (`cs`, `weapons`, `general`)
+todo caminho cujo sha-256 case um derivado fora de `aprovado`, ou cujo evento esteja em
+`decisao: "synth"`, e **relata** o que barrou. O runtime é controlado através do manifest,
+que é o único canal que ele tem — não existe ledger no navegador.
+
+**Régua:** `eval:audioproc`, cláusula PRV7, com fixture de três derivados do mesmo evento:
+antes saíam os 3, depois sobra 1. Cláusula irmã junto (se o aprovado sumisse, reprova).
+Commit `2b66bc80`.
+
+---
+
 ### ~~BUG-126 · Áudio de ambiente nunca entrou no pack: 17 arquivos que o código nomeia dão 404~~ · RESOLVIDO 04/09
 
 **Sintoma.** `public/js/soundscape.js` nomeia 17 arquivos em `audio/ambiente/`

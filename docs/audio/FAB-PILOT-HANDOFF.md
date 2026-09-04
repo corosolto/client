@@ -1,6 +1,6 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04.
+Atualizado em 2026-09-04 (segunda rodada: bloqueadores da revisão independente).
 
 ## Objetivo e definição de pronto
 
@@ -41,6 +41,12 @@ integração ia herdar calada.
 | `d7a38530` | contrato de procedência por asset (PRV) + PRV5 no `assert:assets` |
 | `4f6e7361` | inventariador local do staging privado + `.gitignore` |
 | `7ec05c95` | conserto de defeito **introduzido** pelo `b4065a67`, achado pela ESP7 |
+| `1462c8d0` | BUG-126 e BUG-127 no `KNOWN-BUGS.md` |
+| `86cebd8d` | **ALC2 era falso-verde** — o empacotador morria em toda execução |
+| `a35e3bd1` | sample que não carrega cai no synth, não em silêncio (ESP8) |
+| `fa513890` | **P0**: trava de redistribuição Fab + PRV5 volta a poder disparar |
+| `2b66bc80` | a decisão do ledger controla o gerador (PRV7) |
+| `c9f5e49f` | shortlist por metadado e escuta A/B local |
 
 ## Fonte e licença
 
@@ -205,6 +211,92 @@ PRV5 foi medida numa fixture local de 301 caminhos: caminho sob o prefixo sem en
 ledger **reprova**; com hash correto **passa**; com o hash trocado **reprova** por "o
 arquivo que a build serve não é o que foi aprovado".
 
+## Os cinco bloqueadores da revisão independente — todos fechados
+
+Cada um com teste vermelho antes do conserto. Dois deles eram defeitos **nas minhas
+próprias réguas da rodada anterior**, e é isso que o corolário do `AGENTS.md` prevê: quem
+constrói não dá a nota.
+
+### ALC2 era falso-verde — a régua tinha dentro o defeito que ela caça
+
+A régua engolia o código de saída do empacotador com um `catch {}` e um comentário que
+racionalizava a escolha. Medido com `--verboso`: **o empacotador quebrava com `ENOENT` em
+`menu-music` em TODA execução**, nunca gerava o zip, e a ALC2 declarava verde — ela lia o
+`pack/manifest.json` que o builder escreve *antes* de morrer. O "ALC2 verde" do commit
+`fd4481ef` nunca mediu um build inteiro. Lição 5, escrita por mim, dentro da régua da
+lição 5. Conserto: cláusula ALC3 (código de saída 0 **e** zip existe), fixture com
+`menu-music/`, e o builder diz o que falta em vez de cuspir stack. Mutação:
+`--mutante=sem-menu-music`.
+
+### PRV5 era letra morta — filtrava por prefixo que o empacotador apaga
+
+A cláusula filtrava folhas do manifest por `audio/piloto/`, e o empacotador reescreve todo
+caminho para `audio/a/<sha1>`. Medido rodando o empacotador real: no manifest que o jogador
+recebe, o filtro casa **zero**. Cláusula estruturalmente incapaz de ver o defeito que ela
+nomeia — lição 1. Conserto: casa por **sha-256**, que é o que sobrevive ao rename. Provado
+com um derivado Fab instalado como `audio/a/b1b3d9230e48b0a1.wav`: acende e ainda mapeia o
+nome hasheado de volta para a entrada do ledger.
+
+### O fallback nunca chegava ao synth
+
+`_shotSample` devolvia `true` mesmo depois de gravar a falha de fetch/decode, então
+`shotWeapon` retornava antes do synth e o jogo repetia `new Audio()` numa URL que acabou de
+dar 404 — silêncio a cada tiro, para sempre. Conserto: as duas saídas sem buffer devolvem
+`false`. Cláusula ESP8, com o limiar **medido** (o mesmo tiro pelo synth puro é o controle):
+
+| | 1ª chamada | 2ª chamada | HTMLAudio |
+|---|---|---|---|
+| antes | 0 disparos | 0 | 1, numa URL morta |
+| depois | 11 | 11 | 0 |
+| controle (synth puro) | 11 | — | — |
+
+### O ledger não controlava nada
+
+`decisao` e `aprovacao` estavam declarados e ninguém lia. Com `weaponSamples: true` o
+runtime sorteia por `_pick(pack.weapons[w])` e toca qualquer caminho que esteja lá.
+Conserto: o gerador poda dos curados todo caminho cujo sha-256 case derivado não aprovado,
+ou cujo evento esteja em `synth` — e **relata** o que barrou. PRV7 monta três derivados do
+mesmo evento (aprovado, pendente, rejeitado) com `weaponSamples: true`: antes saíam os 3,
+depois sobra 1. Cláusula irmã junto — se o aprovado também sumisse, reprova.
+
+### P0: o empacotador aceitava derivado que não pode ser redistribuído
+
+Ver o bloqueio 1. PRV6 é a régua end-to-end com o builder real, e traz a irmã: sem o
+derivado Fab, o mesmo empacotador tem que **aceitar** — senão um builder que recusasse tudo
+passaria sem proteger nada.
+
+## Shortlist do pacote — o que ele tem e o que ele não tem
+
+Gerada por `npm run audio:shortlist`, só de metadado, com 14 arquivos barrados pelo veto de
+gore (sangue, osso, grito).
+
+| Evento | Candidatos | Famílias |
+|---|---|---|
+| `ak.shot` | 43 | `Gunshot_1` … `Gunshot_8` |
+| `ak.shot.distante` | 16 | `Gunshot_Distant_1/2/3` |
+| `ak.magOut` | 6 | `Unload_1` |
+| `ak.magIn` | 9 | `Insert_Ammo_1`, `Loading_Ammo_1` |
+| `passo.concreto` | 24 | `Concrete_Walk_1`, `Concrete_Run_1` |
+| `morte.corpo` | 4 | `Body_Falling_1/2` |
+| `ak.bolt` | **sem candidato** | — |
+| `impacto.concreto` | **sem candidato** | — |
+| `impacto.metal` | **sem candidato** | — |
+
+**Nenhum arquivo do pacote identifica a arma.** Os 43 candidatos de tiro são "gunshot"
+genéricos em 8 famílias numeradas; qual soa como AK é pergunta para o ouvido, não para o
+nome. É por isso que a shortlist preserva o número da família — colapsar `Gunshot_3-5` em
+`Gunshot` apagaria exatamente a comparação que decide.
+
+**Os três sem candidato têm motivo, e não foram forçados.** O pacote de combate é corpo a
+corpo e medieval — arco, flecha, escudo, estocada — e **não tem impacto de projétil em
+superfície**: `Hit_Generic` é pancada de luta, não bala em parede. E o ferrolho que existe
+é de revólver (`Hammer_Back`, `Spinning_Cylinder`), bombeada (`Pumping`) e alavanca
+(`Loading_Gate`), não de fuzil. Forçar um casamento aqui seria inventar procedência sonora
+— o mesmo erro do contrato de licença, com outra roupa.
+
+Achado útil de graça: as 3 famílias `Gunshot_Distant_` são matéria-prima pronta para o
+bloqueio 2 (lei de distância), por camada em vez de curva inventada.
+
 ## Seleção reversível e o fallback
 
 `derivados` está **vazio** e os 8 eventos do piloto estão em `decisao: "synth"`. Esse é o
@@ -234,14 +326,22 @@ desta rodada.
 Depois das alterações, com os 4 passos novos no `check:fast`:
 
 ```
-npm run check:fast   ->  73/74 passaram (107,6 s)
+npm run check:fast   ->  73/74 passaram (107,6 s)   [1ª rodada]
+                         falhou: audio:check
+
+npm run check:fast   ->  74/75 passaram ( 92,7 s)   [2ª rodada]
                          falhou: audio:check
 ```
 
-**Nenhuma regressão nova.** Os 4 passos acrescentados (`eval:audioalcance`,
-`eval:audioespacial`, `eval:audioproc`, `audio:inventario:autoteste`) entram verdes, os 69
-que passavam continuam passando, e o único vermelho é o mesmo do baseline, pelo mesmo
-motivo de ambiente. `docs:check` e `arch:check` verdes com os blocos regerados.
+**Nenhuma regressão nova em nenhuma das duas.** Os 5 passos acrescentados no total
+(`eval:audioalcance`, `eval:audioespacial`, `eval:audioproc`, `audio:inventario:autoteste`,
+`audio:shortlist:autoteste`) entram verdes, os 69 do baseline continuam passando, e o único
+vermelho é sempre o mesmo, pelo mesmo motivo de ambiente. `docs:check` e `arch:check`
+verdes com os blocos regerados.
+
+As nove mutações das três réguas foram rodadas contra o código já verde e **todas as nove
+saem 1**: ALC `nome-trocado|sem-copia|sem-menu-music`, ESP `sem-pan|sem-propagacao|duck-fixo`,
+PRV `aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao`.
 
 ## Resultados aceitos e rejeitados
 
@@ -265,74 +365,128 @@ Rejeitado:
 
 ## Limitações desta rodada
 
-- **Nenhum som foi ouvido.** Oito cláusulas verdes não são um som bom. Elas provam alcance,
-  espacialização, procedência e determinismo — nenhuma delas é evidência estética.
+- **Nenhuma escuta humana aconteceu.** Nem uma. Todas as réguas provam alcance,
+  espacialização, procedência, recusa de redistribuição e determinismo — **nenhuma delas
+  ouve nada**. O único registro de escuta gravado foi um teste de fumaça do servidor, e ele
+  foi apagado justamente para que ninguém confunda smoke test com aprovação.
+- **Nenhum byte de áudio entrou no modelo.** O que foi lido foi `catalog.json` e
+  `inventory.json` — nome, hash, duração, canais, taxa, pico, loudness. A listagem diz
+  `Allows usage with AI: No` e isso foi respeitado.
 - **O caminho por sample nunca rodou num navegador.** `_shotSample` foi medido num
-  `AudioContext` falso; `decodeAudioData` real, latência real e o custo de uma rajada de
-  full-auto com `BufferSource` por tiro continuam não medidos.
+  `AudioContext` falso; `decodeAudioData` real e latência real seguem não medidos.
+- **A página A/B nunca foi aberta por uma pessoa.** Ela responde 200 e grava a linha; se a
+  comparação é *útil* para decidir, só o Ruben responde.
 - **`audio:check` e `assert:assets` seguem vermelhos nesta worktree**, por ausência de
-  insumo. A cláusula de ambiente do `assets-check` e a PRV5 foram provadas em fixture local,
-  não contra o pacote de produção.
-- **Só `map_corrego.js` declara `world.sound` hoje.** O conserto do alcance vale para os
-  17 caminhos que o código nomeia; quantos deles existem no pacote publicado é uma pergunta
-  que só o `assert:assets` com o pack instalado responde.
-- **O pacote publicado é anterior à regra `ambiente`.** Mesmo com o gerador consertado, a
-  release `audio-pack-v8` que o `fetch-audio.sh` aponta não contém `ambiente/`. O ambiente
-  só chega ao jogador depois de regerar o pack e publicar uma release nova.
+  insumo (`public/audio/` é gitignored e o `fetch-audio.sh` nunca rodou aqui).
+- **O pacote publicado é anterior à regra `ambiente`**, e agora também é anterior à trava de
+  redistribuição. Regerar o pack é obrigatório antes de qualquer deploy.
 
 ## Bloqueios
 
-### 1. Download do pacote (herdado, não resolvido)
+### 1. Como o derivado Fab chega ao jogador — P0, ABERTO
 
-Falta autorização do dono para executar o código comunitário fixado do `epic-fab` e concluir
-o OAuth da conta Epic. A execução proposta usa um `XDG_CONFIG_HOME` temporário, baixa somente
-o asset comprado para staging privado e apaga o token local ao terminar.
+**Este é o bloqueio que trava o piloto.** O `audio-pack.zip` é publicado como asset de
+release (`fetch-audio.sh` aponta para `audio-pack-v8`) e é um arquivo **só de áudio**:
+qualquer pessoa baixa um pacote de sons navegável, sem o jogo. É literalmente a forma que a
+Fab Standard License proíbe — `redistribuicao: proibida-standalone`. **Nome hasheado não
+resolve**: o que é redistribuído é o conteúdo, não o nome.
 
-Auditoria estática já feita, no commit `d9721b9a178df161f42d876881ef0fe75444ec0b`: sem
-dependência de runtime, listener, subprocesso ou telemetria; token gravado com modo `0600`;
-downloads verificam SHA-1. A ferramenta é nova, pouco usada, sem testes funcionais, com
-commit não assinado e um pequeno erro de versão — **não deve ser executada sem aprovação
-explícita**.
+O que está feito é a **proibição**, em duas camadas, para que nada vaze por engano:
 
-### 2. Lei de volume por distância do sample (novo, exige ouvido)
+| Camada | Onde | O que faz |
+|---|---|---|
+| trava | `scripts/build-audio-pack.mjs` | recusa por sha-256 e sai 1 **antes** de o zip existir |
+| 2ª camada | `tools/eval/assets-check.mjs` | reprova o pacote instalado que contenha derivado proibido |
 
-O caminho por sample agora honra pan, propagação e duck. **Não** honra atenuação de nível
-por distância, e isso é deliberado: o synth não atenua nível — ele troca o timbre (perto =
-crack, longe = boom) — e o chamador manda `vol` fixo em `0.45` para bot de qualquer
-distância. Um sample é plano e não tem esse mecanismo, então alguma lei de nível
-provavelmente é necessária.
+**O que NÃO está decidido, e não foi inventado:** como o derivado chega ao jogador sem ser
+redistribuído como pacote separado. As opções — servir individualmente a partir do build,
+zip privado fora de release pública, ou não usar Fab e ficar no synth/fonte livre — têm
+implicações jurídicas que não são minhas para escolher. Estão escritas em
+[`PROVENIENCIA.md`](PROVENIENCIA.md). **Decisão do dono.**
 
-Qual lei é decisão de ouvido, não de teste, e teto sem procedência é opinião (lei 2 do
-`AGENTS.md`). Precisa de escuta A/B do dono, com um bot atirando a 5, 20 e 40 m, antes de
-virar número. A régua ESP declara essa ausência no cabeçalho em vez de fingir que mediu.
+### 2. Lei de volume por distância do sample — exige ouvido
 
-### 3. Rajada com `BufferSource` (novo, exige navegador)
+O caminho por sample honra pan, propagação e duck; **não** honra atenuação de nível por
+distância. O synth não atenua nível, troca timbre, e o chamador manda `vol` fixo em `0.45`
+para bot de qualquer distância. Um sample é plano e não tem esse mecanismo.
 
-Em full-auto, 8 bots podem disparar ~50 tiros/s (`game.js:6329`). Cada um agora cria
+Novidade desta rodada: **o pacote tem 16 arquivos `Gunshot_Distant_` em 3 famílias**, que é
+matéria-prima pronta para resolver isto por camada em vez de por curva inventada. Continua
+sendo decisão de ouvido — teto sem procedência é opinião (lei 2 do `AGENTS.md`).
+
+### 3. Rajada com `BufferSource` — exige navegador
+
+Em full-auto, 8 bots podem disparar ~50 tiros/s (`game.js:6329`). Cada um cria
 `BufferSource + gain + panner`. O synth já criava mais nós que isso por tiro, então o custo
-tende a cair — mas isso é raciocínio, não medição. Precisa de uma rodada com `eval:boot` ou
-captura de navegador antes de o pack entrar em produção.
+tende a cair — mas isso é raciocínio, não medição.
+
+### 4. Três eventos do piloto sem candidato no pacote
+
+`ak.bolt`, `impacto.concreto` e `impacto.metal` não têm som semanticamente bom no Action
+Game Sounds Pack (ver a seção da shortlist). Não foram forçados. Ou saem do piloto, ou
+saem de outra fonte, ou ficam no synth. **Decisão do dono.**
 
 ## Próximo passo concreto
 
-Ordem, com o que já está pronto marcado:
+1. ~~mapear o caminho real de áudio e registrar o baseline~~ **feito**;
+2. ~~fechar o alcance do empacotamento~~ **feito**;
+3. ~~fechar a espacialização do tiro por sample~~ **feito**;
+4. ~~contrato de procedência e ferramenta de inventário~~ **feito**;
+5. ~~baixar o pacote~~ **feito pelo dono** — 900/900 WAVs, PCM estéreo 44,1 kHz/16 bits,
+   2022 s no total, em staging privado fora do Git;
+6. ~~fechar os cinco bloqueadores da revisão independente~~ **feito** (ver a tabela de
+   commits);
+7. ~~shortlist por metadado e página de escuta A/B~~ **feito**;
+8. **[bloqueado — decisão do dono]** escolher a forma de incorporação do bloqueio 1. Nada
+   de Fab pode entrar numa build antes disso, e a trava garante que não entre;
+9. **[para o Ruben, de manhã]** abrir a escuta A/B e decidir:
 
-1. ~~mapear o caminho real de áudio e registrar o baseline dos portões~~ **feito**;
-2. ~~fechar o alcance do empacotamento, com régua vermelha antes~~ **feito**;
-3. ~~fechar a espacialização do tiro por sample, com régua vermelha antes~~ **feito**;
-4. ~~contrato de procedência por asset e ferramenta de inventário~~ **feito**;
-5. **[bloqueado]** autorizar e executar o `epic-fab` fixado, sem instalação global,
-   autenticando só em endpoints oficiais da Epic/Fab;
-6. baixar para `/Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack`
-   (já ignorado pelo git);
-7. `node tools/audio/inventariar.mjs <staging> --saida=<fora-do-repo>.json` — metadado, sem
-   mandar áudio a modelo;
-8. selecionar candidatos cegos pelos metadados, converter, e escrever a entrada de cada
-   derivado em `docs/audio/proveniencia.json` com os dois hashes;
-9. regerar o pack (`node scripts/build-audio-pack.mjs <out>`) e publicar a release nova —
-   é o que finalmente leva `ambiente/` e os derivados ao jogador;
-10. rodar `assert:assets` contra o pack instalado: é lá que a cláusula de ambiente e a PRV5
-    saem de fixture e viram medição de produção;
-11. **escuta A/B do dono no jogo real**, incluindo a decisão do bloqueio 2 (lei de volume
-    por distância). Só depois disso um evento sai de `synth` para `derivado`;
+   ```bash
+   npm run audio:ab -- /Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack --por=ruben
+   ```
+
+   Comparar cada candidato contra o synth (lado B). As perguntas abertas são: qual das 8
+   famílias de `Gunshot_` soa como AK; se `Load_1` serve de ferrolho ou não; e o que fazer
+   com os três eventos sem candidato (bloqueio 4);
+10. só depois disso escrever as entradas de `derivados` no ledger, com os dois hashes e
+    `escutaAB` preenchido — a PRV2 reprova `aprovado` sem escuta;
+11. regerar o pack e rodar `assert:assets` contra ele: é lá que a cláusula de ambiente e a
+    PRV5 saem de fixture e viram medição de produção;
 12. medir o custo de rajada num navegador antes de expandir para outras armas.
+
+## Comandos de validação
+
+```bash
+npm run eval:audioalcance      # ALC1-ALC3  pipeline alcança o que o código nomeia
+npm run eval:audioespacial     # ESP1-ESP8  pan, propagação, duck, fallback, volume
+npm run eval:audioproc         # PRV1-PRV7  ledger, redistribuição, controle do gerador
+npm run audio:inventario:autoteste
+npm run audio:shortlist:autoteste
+npm run check:fast             # os cinco acima entram aqui
+npm run assert:assets          # PRV5 + ambiente contra o pacote instalado (precisa do pack)
+```
+
+Mutações que provam que cada uma morde:
+
+```bash
+node tools/eval/audio-alcance-check.mjs --mutante=nome-trocado|sem-copia|sem-menu-music
+node tools/eval/audio-espacial-check.mjs --mutante=sem-pan|sem-propagacao|duck-fixo
+node tools/eval/audio-proveniencia-check.mjs --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao
+```
+
+## Estado privado e hashes
+
+Fora do Git, ignorado por `.gitignore` (`private-assets/`):
+
+```
+/Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack/
+  extracted-wav/catalog.json   sha256 51de2264a7c764053bda638d0eb40a852d2eb9942a54de0f3840c60a8b2dbea1
+  inventory.json               sha256 cde11d7759e2f81f6909035991999d08266537b777cb761a42e8b775283c27c6
+  shortlist-piloto.json        gerado por `npm run audio:shortlist`
+  decisoes-escuta.jsonl        criado pela página A/B (não existe até alguém escutar)
+```
+
+Os dois primeiros hashes foram conferidos nesta rodada e batem com o estado declarado.
+900 WAVs, PCM estéreo 44,1 kHz/16 bits, 2022 s. Categorias: Combat 146, Doors 50,
+Environment 103, Explosions 70, Footstep 168, Guns 127, Human_Vocalizations 66,
+Interface 92, Misc 78.
