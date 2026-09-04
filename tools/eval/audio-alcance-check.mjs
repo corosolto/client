@@ -27,8 +27,9 @@
 
      ALC1  gerador: todo caminho nomeado pelo código vira folha do manifest.
      ALC2  empacotador: todo caminho nomeado pelo código chega ao `pack/`.
-     ALC3  a leitura é por NOME, não por índice (lição 14): o caminho que o
-           código nomeia é comparado string a string com o que a pipeline emite.
+     ALC3  o empacotador termina com código 0 e gera o zip. Processo que morre
+           no meio deixa `pack/manifest.json` escrito e engana quem olha o rastro.
+     A leitura é sempre por NOME, não por índice (lição 14).
 
    ALC2 depende de `zip`. Sem `zip` no PATH a cláusula se declara NÃO MEDIDA e a
    régua sai 1 assim mesmo — não saber custa o mesmo que estar errado (lição 5).
@@ -39,6 +40,9 @@
                                ALC1/ALC2 têm que ficar vermelhas.
      --mutante=sem-copia       o empacotador roda com a fixture sem um arquivo.
                                Só ALC2 fica vermelha — separa gerador de pack.
+     --mutante=sem-menu-music  a fixture não cria `menu-music/` e o empacotador
+                               morre. ALC3 fica vermelha — é a mutação que prova
+                               que o código de saída voltou a ser olhado.
 
    Uso: node tools/eval/audio-alcance-check.mjs [--mutante=…] [--verboso]
    ============================================================================ */
@@ -53,7 +57,7 @@ const RAIZ = fileURLToPath(new URL('../..', import.meta.url));
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
 const mutante = arg('mutante');
 const VERBOSO = process.argv.includes('--verboso');
-if (mutante && !['nome-trocado', 'sem-copia'].includes(mutante)) {
+if (mutante && !['nome-trocado', 'sem-copia', 'sem-menu-music'].includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
   process.exit(2);
 }
@@ -90,6 +94,12 @@ try {
        contando um arquivo por vários. */
     writeFileSync(abs, `fixture ${alvo}\n`);
     gravados.set(rel, abs);
+  }
+  /* A fixture representa uma ÁRVORE DE ÁUDIO VÁLIDA, e o empacotador exige
+     `menu-music/`. Sem isto a ALC2 media um build que morreu no meio. */
+  if (mutante !== 'sem-menu-music') {
+    mkdirSync(join(AUDIO, 'menu-music'), { recursive: true });
+    writeFileSync(join(AUDIO, 'menu-music', 'm01.mp3'), 'fixture menu m01\n');
   }
   /* A mutação `nome-trocado` só faz sentido se ALGUMA coisa mudou de fato
      (lição 8: mutação que não aplica parece mutação que passou). */
@@ -139,12 +149,28 @@ try {
       rmSync(vitima);
     }
     const out = join(tmp, 'out');
-    let pack = null;
+    let pack = null, saida = 0, erroBuild = '';
     try {
       execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), out, `--raiz=${AUDIO}`],
-        { encoding: 'utf8', stdio: VERBOSO ? 'inherit' : 'ignore' });
-    } catch { /* o empacotador sai 1 quando falta arquivo; o veredito é o pack, não o código de saída */ }
+        { encoding: 'utf8', stdio: VERBOSO ? 'inherit' : 'pipe' });
+    } catch (e) { saida = e.status ?? 1; erroBuild = String(e.stderr || e.message || '').trim(); }
     try { pack = JSON.parse(readFileSync(join(out, 'pack', 'manifest.json'), 'utf8')); } catch { pack = null; }
+
+    /* ALC3 — O PROCESSO TEM QUE TERMINAR BEM, não só deixar rastro.
+       A primeira versão desta régua engolia o código de saída com um `catch {}` e um
+       comentário que racionalizava ("o veredito é o pack, não o código de saída").
+       Resultado medido: o empacotador quebrava com ENOENT em `menu-music` em TODA
+       execução, nunca gerava o zip, e a ALC2 declarava verde — ela lia o
+       `pack/manifest.json` que o builder escreve ANTES de morrer. Falha silenciosa
+       escrita dentro da própria régua que existe para pegar falha silenciosa (lição 5). */
+    const zip = join(out, 'audio-pack.zip');
+    if (saida !== 0 || !existsSync(zip)) {
+      erros.push(`ALC3 o empacotador terminou com código ${saida} e ${existsSync(zip) ? 'gerou' : 'NÃO gerou'}`
+        + ` o \`audio-pack.zip\`. Processo que morre no meio deixa \`pack/manifest.json\` escrito e`
+        + ` engana quem só olha o rastro.${erroBuild ? ` Erro: ${erroBuild.split('\n')[0]}` : ''}`);
+    } else {
+      notas.push('ALC3 ok: o empacotador terminou com código 0 e gerou o zip.');
+    }
 
     if (!pack) {
       erros.push('ALC2 o empacotador não produziu `pack/manifest.json` na fixture.');

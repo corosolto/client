@@ -61,6 +61,12 @@ writeFileSync(path.join(PACK, 'manifest.json'), JSON.stringify(novoManifesto, nu
 
 // menu-music: nomes já opacos (m01..mNN); o mapa de nomes reais fica de fora.
 const MM = path.join(AUDIO, 'menu-music');
+/* Ausente, isto morria com um ENOENT cru DEPOIS de escrever o pack/manifest.json —
+   deixando rastro de sucesso e código de saída 1. Régua: eval:audioalcance, ALC3. */
+if (!existsSync(MM)) {
+  console.error(`FALTA ${path.relative(RAIZ, MM)}: o pacote não sai sem a música de menu.`);
+  process.exit(1);
+}
 mkdirSync(path.join(PACK, 'menu-music'), { recursive: true });
 let menu = 0;
 for (const f of readdirSync(MM)) {
