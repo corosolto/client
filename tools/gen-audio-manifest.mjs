@@ -31,6 +31,7 @@
  *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -90,8 +91,43 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
   out.round[team] = take(listAudio(join(AUDIO, dir, 'round')));
 }
 
-// ── curados: vêm do manifest anterior, intocados ────────────────────────────
-for (const k of CURATED) if (prev[k] !== undefined) out[k] = prev[k];
+// ── curados: vêm do manifest anterior, menos o que o ledger barra ───────────
+/* A `decisao`/`aprovacao` de docs/audio/proveniencia.json CONTROLA o que sai daqui.
+   Sem isto o contrato existia só no papel: `weaponSamples: true` ligava o caminho
+   por sample para qualquer caminho em `weapons`, e o runtime sorteia com `_pick`
+   sem saber de aprovação nenhuma. Chave é o sha-256, que sobrevive ao rename do
+   empacotador. Régua: `npm run eval:audioproc`, cláusula PRV7. */
+const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
+  || join(ROOT, 'docs', 'audio', 'proveniencia.json');
+const barrados = new Map();
+if (existsSync(LEDGER)) {
+  const L = JSON.parse(readFileSync(LEDGER, 'utf8'));
+  const decisao = new Map((L.piloto || []).map((p) => [p.evento, p.decisao]));
+  for (const d of L.derivados || []) {
+    const motivo = d.aprovacao !== 'aprovado' ? `aprovação \`${d.aprovacao}\``
+      : decisao.get(d.evento) === 'synth' ? `o evento \`${d.evento}\` está em \`synth\``
+      : null;
+    if (motivo) barrados.set(d.sha256, motivo);
+  }
+}
+const barrado = (rel) => {
+  if (!barrados.size) return null;
+  const abs = join(PUBLICO, decodeURIComponent(rel));
+  if (!existsSync(abs)) return null;
+  return barrados.get(createHash('sha256').update(readFileSync(abs)).digest('hex')) || null;
+};
+const tirados = [];
+const podar = (v) => {
+  if (typeof v === 'string') { const m = barrado(v); if (m) { tirados.push(`${v} (${m})`); return undefined; } return v; }
+  if (Array.isArray(v)) return v.map(podar).filter((x) => x !== undefined);
+  if (v && typeof v === 'object') {
+    const r = {};
+    for (const [k, val] of Object.entries(v)) { const p = podar(val); if (p !== undefined) r[k] = p; }
+    return r;
+  }
+  return v;
+};
+for (const k of CURATED) if (prev[k] !== undefined) out[k] = podar(prev[k]);
 // marca os curados como "usados" pra não aparecerem como órfãos no relatório
 const markUsed = (v) => {
   if (typeof v === 'string') { const p = join(PUBLICO, decodeURIComponent(v)); if (existsSync(p)) used.add(p); }
@@ -193,6 +229,10 @@ for (const [k, v] of Object.entries(byFolder).sort((a, b) => b[1] - a[1])) conso
 console.log(`  voice ${Object.entries(out.voice).map(([t, a]) => t + ':' + a.length).join(' ')}`);
 console.log(`  round ${Object.entries(out.round).map(([t, a]) => t + ':' + a.length).join(' ')}`);
 console.log(`  capture ${out.capture.length} · soundtrack ${out.soundtrack.length} · menuMusic ${out.menuMusic.length}`);
+if (tirados.length) {
+  console.log(`  ⚠ ${tirados.length} caminho(s) BARRADO(S) pelo ledger de procedência — não entram no manifest:`);
+  for (const t of tirados) console.log(`     ${t}`);
+}
 if (longas === null) console.log('  (ffprobe ausente — teto de 8 s da voz in-game NÃO foi verificado)');
 else if (longas.length) {
   console.log(`  ⚠ ${longas.length} fala(s) de ingame acima de ${LIMITE_INGAME}s (tocam por cima do jogo):`);

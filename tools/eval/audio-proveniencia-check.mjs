@@ -26,6 +26,9 @@
            rastreado pelo git.
      PRV6  o EMPACOTADOR recusa derivado de fonte `proibida-standalone`, e aceita
            obra própria (cláusula irmã). Fixture end-to-end com o builder real.
+     PRV7  a `decisao`/`aprovacao` do ledger CONTROLA o gerador: derivado pendente
+           ou rejeitado não sai no manifest nem com `weaponSamples: true`, e o
+           aprovado sobrevive (cláusula irmã).
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
@@ -275,6 +278,73 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     }
     if (comFab.saida !== 0 && semFab.saida === 0) {
       notas.push('PRV6 ok: o empacotador recusa derivado `proibida-standalone` e aceita obra própria.');
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV7: a DECISÃO do ledger controla o manifest ─────────────────────────
+   O ledger dizia `decisao`/`aprovacao` e nada lia. `weaponSamples: true` no
+   manifest ligava o caminho por sample para qualquer caminho que estivesse em
+   `weapons`, aprovado ou não — o contrato existia no papel e o runtime não sabia
+   dele. O gerador é o ponto de autoria: derivado pendente ou rejeitado não pode
+   sair do outro lado, nem com `weaponSamples` ligado.
+
+   A chave é o sha-256, igual à PRV5/PRV6 — caminho não sobrevive ao empacotador
+   e nome de arquivo não é contrato (lição 14). */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv7-'));
+  try {
+    const AUD = join(tmp, 'public', 'audio');
+    mkdirSync(join(AUD, 'piloto'), { recursive: true });
+    const grava = (nome, txt) => {
+      writeFileSync(join(AUD, 'piloto', nome), txt);
+      return createHash('sha256').update(txt).digest('hex');
+    };
+    const shaOk = grava('aprovado.wav', 'fixture aprovado\n');
+    const shaPendente = grava('pendente.wav', 'fixture pendente\n');
+    const shaRejeitado = grava('rejeitado.wav', 'fixture rejeitado\n');
+    const base = (sha, aprovacao) => ({
+      arquivo: `audio/piloto/${aprovacao}.wav`, evento: 'ak.shot', fonte: 'propria',
+      origemNoPack: 'x', sha256: sha, sha256Fonte: 'e'.repeat(64), transformacao: 'x',
+      aprovacao, escutaAB: aprovacao === 'aprovado' ? { por: 'fixture', data: '2026-09-04' } : null,
+    });
+    const ledgerPath = join(tmp, 'ledger.json');
+    writeFileSync(ledgerPath, JSON.stringify({
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'derivado' }],
+      fontes: { propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' } },
+      derivados: [base(shaOk, 'aprovado'), base(shaPendente, 'pendente'), base(shaRejeitado, 'rejeitado')],
+    }));
+    /* `weaponSamples: true` de propósito: é o cenário do defeito. */
+    writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({
+      weaponSamples: true,
+      weapons: { ak: ['audio/piloto/aprovado.wav', 'audio/piloto/pendente.wav', 'audio/piloto/rejeitado.wav'] },
+    }));
+
+    let saiu = null;
+    try {
+      execFileSync('node', [join(RAIZ, 'tools', 'gen-audio-manifest.mjs'), `--raiz=${AUD}`, `--ledger=${ledgerPath}`],
+        { encoding: 'utf8', stdio: 'pipe' });
+      saiu = JSON.parse(readFileSync(join(AUD, 'manifest.json'), 'utf8'));
+    } catch (e) {
+      erros.push(`PRV7 o gerador não rodou na fixture (${String(e.stderr || e.message).split('\n')[0]}).`);
+    }
+    if (saiu) {
+      const armas = saiu.weapons?.ak || [];
+      const vazou = armas.filter((f) => /pendente|rejeitado/.test(f));
+      if (vazou.length) {
+        erros.push(`PRV7 o gerador deixou ${vazou.length} derivado(s) NÃO APROVADO(S) no manifest`
+          + ` (${vazou.join(', ')}) com \`weaponSamples: true\`. A \`decisao\`/\`aprovacao\` do ledger`
+          + ' não controla nada: o runtime sorteia por `_pick(pack.weapons[w])` e pode tocar um som'
+          + ' que ninguém aprovou.');
+      } else if (!armas.includes('audio/piloto/aprovado.wav')) {
+        /* IRMÃ: um gerador que apagasse TUDO passaria na cláusula de cima sem
+           entregar nada. O aprovado tem que sobreviver. */
+        erros.push('PRV7 IRMÃ: o gerador tirou também o derivado APROVADO'
+          + ` (sobrou ${JSON.stringify(armas)}). Apagar tudo não é filtrar.`);
+      } else {
+        notas.push(`PRV7 ok: o gerador manteve o aprovado e tirou pendente e rejeitado (${armas.length} de 3).`);
+      }
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
