@@ -475,7 +475,9 @@ export class Sfx {
     }
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
-    const g = R.createGain(); g.gain.value = Math.min(1, this.vol * vol);
+    /* `vol` puro: quem passa pelo `master` já leva o volume do usuário. `_sample`
+       multiplica por `this.vol` na mão porque HTMLAudio não passa por lá. Régua ESP7. */
+    const g = R.createGain(); g.gain.value = vol;
     src.connect(g);
     if (pan) {
       const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
