@@ -20,10 +20,15 @@ import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 
-const OUT = process.argv[2];
-if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir>'); process.exit(1); }
+const OUT = process.argv.filter((a) => !a.startsWith('--'))[2];
+if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir de audio>]'); process.exit(1); }
 const RAIZ = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
-const AUDIO = path.join(RAIZ, 'public', 'audio');
+/* `--raiz=<dir>` troca a pasta de áudio de entrada. Mesma razão do flag homônimo em
+   tools/gen-audio-manifest.mjs: a régua de alcance mede este empacotador numa fixture
+   sintética. Sem o flag, nada muda. */
+const RAIZ_AUDIO = (process.argv.find((a) => a.startsWith('--raiz=')) || '').slice(7);
+const AUDIO = RAIZ_AUDIO ? path.resolve(RAIZ_AUDIO) : path.join(RAIZ, 'public', 'audio');
+const PUBLICO = RAIZ_AUDIO ? path.dirname(AUDIO) : path.join(RAIZ, 'public');
 const PACK = path.join(OUT, 'pack');
 // LAYOUT DO ZIP: entradas SEM o prefixo audio/ — o fetch-audio.sh descompacta
 // DENTRO de public/audio/, então 'a/x.mp3' vira public/audio/a/x.mp3, que é o que a
@@ -33,7 +38,7 @@ mkdirSync(path.join(PACK, 'a'), { recursive: true });
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
 let copiados = 0, faltando = [];
 const hashNome = (rel) => {
-  const src = path.join(RAIZ, 'public', rel);
+  const src = path.join(PUBLICO, rel);
   if (!existsSync(src)) { faltando.push(rel); return rel; }
   const h = createHash('sha1').update(readFileSync(src)).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;

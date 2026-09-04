@@ -32,11 +32,16 @@
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { join, relative } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
-const AUDIO = join(ROOT, 'public', 'audio');
+/* `--raiz=<dir>` troca a pasta de áudio inteira. Existe para a régua de alcance
+   (tools/eval/audio-alcance-check.mjs) medir gerador+empacotador numa fixture
+   sintética, sem depender do pacote privado. Sem o flag, nada muda. */
+const RAIZ = (process.argv.find((a) => a.startsWith('--raiz=')) || '').slice(7);
+const AUDIO = RAIZ ? resolve(RAIZ) : join(ROOT, 'public', 'audio');
+const PUBLICO = RAIZ ? dirname(AUDIO) : join(ROOT, 'public');
 const MANIFEST = join(AUDIO, 'manifest.json');
 const CHECK = process.argv.includes('--check');
 
@@ -70,7 +75,7 @@ function listAudio(dir) {
    pro funkeiro".
 
    Quem grava o caminho não codifica; quem monta a URL codifica. Um lado só. */
-const toUrl = (abs) => relative(join(ROOT, 'public'), abs).split('/').join('/');
+const toUrl = (abs) => relative(PUBLICO, abs).split('/').join('/');
 
 const used = new Set();
 const take = (files) => { files.forEach(f => used.add(f)); return files.map(toUrl); };
@@ -89,7 +94,7 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
 for (const k of CURATED) if (prev[k] !== undefined) out[k] = prev[k];
 // marca os curados como "usados" pra não aparecerem como órfãos no relatório
 const markUsed = (v) => {
-  if (typeof v === 'string') { const p = join(ROOT, 'public', decodeURIComponent(v)); if (existsSync(p)) used.add(p); }
+  if (typeof v === 'string') { const p = join(PUBLICO, decodeURIComponent(v)); if (existsSync(p)) used.add(p); }
   else if (Array.isArray(v)) v.forEach(markUsed);
   else if (v && typeof v === 'object') Object.values(v).forEach(markUsed);
 };
