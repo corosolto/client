@@ -29,15 +29,16 @@
    confere que **todo caminho citado existe no disco** — manifest cheio apontando pra
    arquivo que não veio é a mesma falha com outra cara.
 
-   PROCEDÊNCIA (PRV5). Casa cada folha do manifest instalado com o ledger POR
-   SHA-256 e reprova quando o arquivo é derivado de fonte que não permite
-   redistribuição standalone, ou quando ainda não foi aprovado por escuta.
+   PROCEDÊNCIA (PRV5). Aplica `tools/audio/politica.mjs` — a MESMA regra do
+   gerador e do empacotador — a cada folha do manifest instalado. É ALLOWLIST sob
+   o prefixo derivado: a versão anterior dava `continue` em hash desconhecido, e
+   arquivo não catalogado passava calado (o escape P0 da 4ª rodada).
 
-   Por que por hash e não por caminho: a versão anterior filtrava pelo prefixo
-   `audio/piloto/` e o empacotador reescreve TODO caminho para `audio/a/<sha1>`.
-   Medido no manifest que o jogador recebe, o filtro casava ZERO — cláusula
-   estruturalmente incapaz de disparar. O que sobrevive ao rename é o conteúdo.
-   A trava forte fica no próprio empacotador (PRV6); esta é a segunda camada.
+   LIMITE DECLARADO, não coberto: depois que o empacotador renomeia para
+   `audio/a/<sha1>` o prefixo some, e um derivado não catalogado fica
+   indistinguível de qualquer outro áudio — sem hash no ledger não há o que casar.
+   Por isso a camada DECISIVA é o empacotador, que roda antes do rename e ainda vê
+   o caminho (PRV10). Esta aqui é segunda linha.
 
    AMBIENTE. O piso não pega pacote que chegou inteiro MENOS uma família: 17 arquivos
    de ambiente faltando num manifest de 308 deixam 291, acima do piso, verde. Por isso
@@ -64,7 +65,7 @@
    Issue #77: `node tools/eval/assets-check.mjs --mutante=grafite-orfa` tira em
    memória um nome usado pelo layout e exige que a contagem de peças fique vermelha.
    ============================================================================ */
-import { createHash } from 'node:crypto';
+import { carregarPolitica, motivoDeRecusa } from '../audio/politica.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { initTextures } from './harness.mjs';
@@ -143,39 +144,37 @@ if (!existsSync(MANIFEST)) {
         + ' sem o ledger não dá para saber a origem de nada que a build serve.');
     }
     if (ledger) {
-      /* A CHAVE É O SHA-256, NÃO O CAMINHO. A versão anterior filtrava por prefixo
-         (`audio/piloto/`) e o empacotador reescreve todo caminho para
-         `audio/a/<sha1>` — medido: no manifest que o jogador recebe, o filtro por
-         prefixo casava ZERO. Cláusula estruturalmente incapaz de disparar, que é a
-         régua cega da lição 1. O que sobrevive ao rename é o conteúdo. */
-      const porHash = new Map((ledger.derivados || []).map((d) => [d.sha256, d]));
-      const proibidos = [], naoAprovados = [];
-      for (const f of folhas) {
-        const abs = path.join('public', f);
-        if (!existsSync(abs)) continue;                 // já reportado pela cláusula acima
-        const d = porHash.get(createHash('sha256').update(readFileSync(abs)).digest('hex'));
-        if (!d) continue;
-        const fonte = ledger.fontes?.[d.fonte];
-        if (!fonte || fonte.redistribuicao !== 'livre') {
-          proibidos.push(`${f} = ${d.arquivo} (fonte \`${d.fonte}\`: ${fonte?.redistribuicao || 'sem fonte no ledger'})`);
-        } else if (d.aprovacao !== 'aprovado') {
-          naoAprovados.push(`${f} = ${d.arquivo} (aprovação \`${d.aprovacao}\`)`);
+      /* FAIL-CLOSED, e a mesma política do gerador e do empacotador
+         (`tools/audio/politica.mjs`). A versão anterior dava `continue` em hash
+         desconhecido: arquivo não catalogado passava calado — o escape P0 da 4ª
+         rodada. Aqui o desconhecido SOB O PREFIXO reprova.
+
+         LIMITE DECLARADO: depois que o empacotador renomeia para `audio/a/<sha1>`,
+         o prefixo some e um derivado não catalogado fica indistinguível de
+         qualquer outro áudio. Por isso a camada decisiva é o EMPACOTADOR, que roda
+         antes do rename. Aqui medimos o que ainda dá para medir. */
+      const pol = carregarPolitica('docs/audio/proveniencia.json');
+      const recusados = [];
+      let sobPrefixo = 0;
+      if (!pol.erro) {
+        for (const f of folhas) {
+          const abs = path.join('public', f);
+          if (!existsSync(abs)) continue;             // já reportado pela cláusula acima
+          if (f.startsWith(pol.prefixo)) sobPrefixo++;
+          const motivo = motivoDeRecusa(f, readFileSync(abs), pol, 'pack');
+          if (motivo) recusados.push(`${f} — ${motivo}`);
         }
       }
-      if (proibidos.length) {
-        erros.push(`procedência: ${proibidos.length} arquivo(s) do pacote instalado são derivados de fonte`
-          + ` que NÃO permite redistribuição standalone (ex.: ${proibidos.slice(0, 3).join('; ')}).`
-          + ' O `audio-pack.zip` é publicado como asset de release e é um pacote só de áudio.'
-          + ' Ver docs/audio/PROVENIENCIA.md.');
-      }
-      if (naoAprovados.length) {
-        erros.push(`procedência: ${naoAprovados.length} arquivo(s) do pacote instalado ainda não foram`
-          + ` aprovados por escuta (ex.: ${naoAprovados.slice(0, 3).join('; ')}).`);
-      }
-      const declaradosPresentes = [...porHash.values()].length;
-      if (!proibidos.length && !naoAprovados.length) {
-        avisos.push(`procedência ok: nenhum dos ${folhas.length} caminhos casa derivado proibido ou não aprovado`
-          + ` (${declaradosPresentes} derivado(s) no ledger).`);
+      if (pol.erro) {
+        erros.push(`procedência: ${pol.erro}. Sem o ledger não dá para saber a origem de nada`
+          + ' que a build serve.');
+      } else if (recusados.length) {
+        erros.push(`procedência: ${recusados.length} arquivo(s) do pacote instalado não podem ser`
+          + ` servidos (ex.: ${recusados.slice(0, 3).join('; ')}). Ver docs/audio/PROVENIENCIA.md.`);
+      } else {
+        avisos.push(`procedência ok: ${folhas.length} caminhos conferidos contra o ledger`
+          + ` (${sobPrefixo} sob \`${pol.prefixo}\`, todos catalogados).`
+          + ' Pós-rename o prefixo some — a trava decisiva é a do empacotador.');
       }
     }
     if (!erros.length) {

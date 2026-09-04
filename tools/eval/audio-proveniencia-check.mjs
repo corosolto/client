@@ -33,6 +33,10 @@
            staging privado. Sem staging, declara NÃO MEDIDA — nunca finge prova.
      PRV9  o legado nominal CS/Valve/UT do `manifest.example.json` está
            catalogado e bloqueado, e a régua não deixa declará-lo substituído.
+     PRV10 FAIL-CLOSED: sob `prefixoDerivado`, arquivo NÃO catalogado reprova no
+           empacotador; o legado reprova por NOME; e o derivado catalogado,
+           aprovado e de fonte livre continua passando (cláusula irmã).
+     PRV11 fail-closed também no GERADOR, com a mesma irmã.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
@@ -241,7 +245,9 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     const shaFab = grava('fab.wav', 'fixture derivado fab\n');
     const ledger = {
       versao: 1, prefixoDerivado: 'audio/piloto/',
-      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'synth' }],
+      /* O evento precisa estar em `derivado` com caminho `arma`: a política é
+         allowlist e cobra o contrato inteiro, não só a licença da fonte. */
+      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'derivado', caminhoRuntime: 'arma' }],
       fontes: {
         propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' },
         fab: { titulo: 'f', autor: 'f', url: 'f', licenca: 'Fab Standard License', redistribuicao: 'proibida-standalone', usoComIA: 'nao', notas: 'f' },
@@ -322,7 +328,7 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     const ledgerPath = join(tmp, 'ledger.json');
     writeFileSync(ledgerPath, JSON.stringify({
       versao: 1, prefixoDerivado: 'audio/piloto/',
-      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'derivado' }],
+      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'derivado', caminhoRuntime: 'arma' }],
       fontes: { propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' } },
       derivados: [base(shaOk, 'aprovado'), base(shaPendente, 'pendente'), base(shaRejeitado, 'rejeitado')],
     }));
@@ -480,6 +486,156 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
         + ' NÃO foram substituídos — e a régua não deixa dizer que foram.');
     }
   }
+}
+
+/* ── PRV10: FAIL-CLOSED no prefixo derivado ────────────────────────────────
+   O ESCAPE P0 QUE ESTA CLÁUSULA FECHA (auditoria independente, 4ª rodada):
+
+   A trava do empacotador montava uma DENYLIST a partir de `ledger.derivados`.
+   Arquivo que não estava no ledger não casava hash nenhum, não era barrado, e era
+   copiado. Reproduzido: fonte `proibida-standalone`, `derivados: []`, manifest
+   apontando `audio/piloto/nao-catalogado.wav` — o builder saiu **0** e gerou o
+   zip com o arquivo dentro.
+
+   É a lição 1 na veia: a régua perguntava "este arquivo é um mau conhecido?" e era
+   estruturalmente incapaz de ver o desconhecido. Denylist onde o contrato pedia
+   ALLOWLIST — e o estado ruim (asset não catalogado) era justamente o que passava.
+
+   A regra certa: sob `prefixoDerivado`, NADA atravessa sem estar no ledger com
+   hash coerente, aprovação e fonte compatível. Desconhecido REPROVA.
+
+   Três cenários no mesmo builder real:
+     a) não catalogado sob o prefixo  -> tem que RECUSAR (era o escape)
+     b) catalogado, aprovado, `livre` -> tem que ACEITAR (IRMÃ: builder que
+        recusa tudo não protege nada, só quebra)
+     c) caminho do legado por NOME    -> tem que RECUSAR sem depender de hash */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv10-'));
+  try {
+    const AUD = join(tmp, 'public', 'audio');
+    mkdirSync(join(AUD, 'piloto'), { recursive: true });
+    mkdirSync(join(AUD, 'game'), { recursive: true });
+    mkdirSync(join(AUD, 'menu-music'), { recursive: true });
+    writeFileSync(join(AUD, 'menu-music', 'm01.mp3'), 'fixture menu\n');
+    const grava = (sub, nome, txt) => {
+      writeFileSync(join(AUD, sub, nome), txt);
+      return createHash('sha256').update(txt).digest('hex');
+    };
+    const shaOk = grava('piloto', 'aprovado.wav', 'fixture obra propria aprovada\n');
+    grava('piloto', 'nao-catalogado.wav', 'fixture NAO catalogado\n');
+    grava('game', 'awp-cs-1-6.mp3', 'fixture legado valve\n');
+
+    const ledgerBase = {
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'f', decisao: 'derivado', caminhoRuntime: 'arma' }],
+      fontes: {
+        propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' },
+        legado: { titulo: 'f', autor: 'f', url: 'f', licenca: 'DESCONHECIDA', redistribuicao: 'proibida', usoComIA: 'nao', notas: 'f' },
+      },
+      derivados: [{
+        arquivo: 'audio/piloto/aprovado.wav', evento: 'ak.shot', fonte: 'propria', origemNoPack: 'x',
+        sha256: shaOk, sha256Fonte: 'e'.repeat(64), transformacao: 'x', aprovacao: 'aprovado',
+        escutaAB: { por: 'fixture', data: '2026-09-04' },
+      }],
+      legado: {
+        decisao: 'bloqueado-por-procedencia-desconhecida', fonte: 'legado',
+        ondeEstao: 'x', cobertoPorPRV5: false, porqueNaoCoberto: 'x',
+        padroes: [{ padrao: 'cs-1-6', porque: 'fixture' }],
+      },
+    };
+    const ledgerPath = join(tmp, 'ledger.json');
+    const rodar = (manifest, tag) => {
+      writeFileSync(ledgerPath, JSON.stringify(ledgerBase));
+      writeFileSync(join(AUD, 'manifest.json'), JSON.stringify(manifest));
+      const out = join(tmp, 'out-' + tag);
+      try {
+        execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), out,
+          `--raiz=${AUD}`, `--ledger=${ledgerPath}`], { encoding: 'utf8', stdio: 'pipe' });
+        return { saida: 0, texto: '', zip: existsSync(join(out, 'audio-pack.zip')) };
+      } catch (e) {
+        return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || ''),
+          zip: existsSync(join(out, 'audio-pack.zip')) };
+      }
+    };
+
+    const a = rodar({ weapons: { ak: ['audio/piloto/nao-catalogado.wav'] } }, 'a');
+    if (a.saida === 0 || a.zip) {
+      erros.push('PRV10a ESCAPE: o empacotador ACEITOU `audio/piloto/nao-catalogado.wav`, que não existe'
+        + ` no ledger (saiu ${a.saida}, zip ${a.zip ? 'gerado' : 'não gerado'}). A trava era DENYLIST:`
+        + ' só barrava hash conhecido, e o desconhecido passava. Sob o prefixo derivado a regra tem'
+        + ' que ser allowlist — desconhecido REPROVA.');
+    }
+
+    const b = rodar({ weapons: { ak: ['audio/piloto/aprovado.wav'] } }, 'b');
+    if (b.saida !== 0 || !b.zip) {
+      erros.push(`PRV10b IRMÃ: o empacotador RECUSOU o derivado catalogado, aprovado e de fonte \`livre\``
+        + ` (saiu ${b.saida}: ${b.texto.trim().split('\n')[0]}). Builder que recusa tudo não protege`
+        + ' nada — a cláusula (a) passaria por construção.');
+    }
+
+    const c = rodar({ cs: { awp: ['audio/game/awp-cs-1-6.mp3'] } }, 'c');
+    if (c.saida === 0 || c.zip) {
+      erros.push('PRV10c o empacotador aceitou um caminho do LEGADO catalogado como bloqueado'
+        + ` (\`audio/game/awp-cs-1-6.mp3\`, saiu ${c.saida}). Sem hash não dá para barrar por conteúdo,`
+        + ' mas dá para barrar por NOME — e é o que o catálogo do legado existe para permitir.');
+    }
+
+    if (a.saida !== 0 && !a.zip && b.saida === 0 && b.zip && c.saida !== 0 && !c.zip) {
+      notas.push('PRV10 ok: sob o prefixo derivado o empacotador é fail-closed — recusa o não catalogado,'
+        + ' recusa o legado por nome, e aceita o derivado catalogado e aprovado de fonte livre.');
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV11: fail-closed também no GERADOR ──────────────────────────────────
+   O empacotador é a camada decisiva, mas não é a única: `npm run audio` escreve
+   o manifest que o runtime lê em desenvolvimento, e ele também montava denylist.
+   Um arquivo não catalogado sob o prefixo entrava no manifest e o jogo local
+   tocava um som que ninguém catalogou. Mesma regra, mesmo módulo. */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv11-'));
+  try {
+    const AUD = join(tmp, 'public', 'audio');
+    mkdirSync(join(AUD, 'piloto'), { recursive: true });
+    const grava = (nome, txt) => {
+      writeFileSync(join(AUD, 'piloto', nome), txt);
+      return createHash('sha256').update(txt).digest('hex');
+    };
+    const shaOk = grava('aprovado.wav', 'fixture aprovado gerador\n');
+    grava('nao-catalogado.wav', 'fixture nao catalogado gerador\n');
+    const ledgerPath = join(tmp, 'ledger.json');
+    writeFileSync(ledgerPath, JSON.stringify({
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'f', decisao: 'derivado', caminhoRuntime: 'arma' }],
+      fontes: { propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' } },
+      derivados: [{ arquivo: 'audio/piloto/aprovado.wav', evento: 'ak.shot', fonte: 'propria',
+        origemNoPack: 'x', sha256: shaOk, sha256Fonte: 'e'.repeat(64), transformacao: 'x',
+        aprovacao: 'aprovado', escutaAB: { por: 'fixture', data: '2026-09-04' } }],
+    }));
+    writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({
+      weaponSamples: true,
+      weapons: { ak: ['audio/piloto/aprovado.wav', 'audio/piloto/nao-catalogado.wav'] },
+    }));
+    let saiu = null;
+    try {
+      execFileSync('node', [join(RAIZ, 'tools', 'gen-audio-manifest.mjs'), `--raiz=${AUD}`, `--ledger=${ledgerPath}`],
+        { encoding: 'utf8', stdio: 'pipe' });
+      saiu = JSON.parse(readFileSync(join(AUD, 'manifest.json'), 'utf8'));
+    } catch (e) { erros.push(`PRV11 o gerador não rodou (${String(e.stderr || e.message).split('\n')[0]}).`); }
+    if (saiu) {
+      const armas = saiu.weapons?.ak || [];
+      if (armas.includes('audio/piloto/nao-catalogado.wav')) {
+        erros.push('PRV11 o gerador deixou `audio/piloto/nao-catalogado.wav` no manifest.'
+          + ' Sob o prefixo derivado a regra é allowlist: o que não está no ledger não entra,'
+          + ' nem no manifest de desenvolvimento.');
+      } else if (!armas.includes('audio/piloto/aprovado.wav')) {
+        erros.push(`PRV11 IRMÃ: o gerador tirou também o derivado catalogado e aprovado`
+          + ` (sobrou ${JSON.stringify(armas)}). Apagar tudo não é filtrar.`);
+      } else {
+        notas.push('PRV11 ok: o gerador manteve o catalogado e tirou o não catalogado.');
+      }
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
 
 const rotulo = mutante ? `PROVENIENCIA [mutante=${mutante}]` : 'PROVENIENCIA';

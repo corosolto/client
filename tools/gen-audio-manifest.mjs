@@ -31,7 +31,7 @@
  *   node tools/gen-audio-manifest.mjs --check   não escreve; sai 1 se estiver defasado
  */
 import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { carregarPolitica, motivoDeRecusa } from './audio/politica.mjs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -92,29 +92,19 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
 }
 
 // ── curados: vêm do manifest anterior, menos o que o ledger barra ───────────
-/* A `decisao`/`aprovacao` de docs/audio/proveniencia.json CONTROLA o que sai daqui.
-   Sem isto o contrato existia só no papel: `weaponSamples: true` ligava o caminho
-   por sample para qualquer caminho em `weapons`, e o runtime sorteia com `_pick`
-   sem saber de aprovação nenhuma. Chave é o sha-256, que sobrevive ao rename do
-   empacotador. Régua: `npm run eval:audioproc`, cláusula PRV7. */
+/* O ledger CONTROLA o que sai daqui, e a regra é ALLOWLIST sob o prefixo
+   derivado: o que não está catalogado não entra, nem no manifest local. A
+   decisão mora em `tools/audio/politica.mjs`, a mesma que o empacotador e o
+   `assets-check` usam — três cópias divergiriam na próxima edição (lição 2).
+   Régua: `npm run eval:audioproc`, cláusulas PRV7 e PRV11. */
 const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
   || join(ROOT, 'docs', 'audio', 'proveniencia.json');
-const barrados = new Map();
-if (existsSync(LEDGER)) {
-  const L = JSON.parse(readFileSync(LEDGER, 'utf8'));
-  const decisao = new Map((L.piloto || []).map((p) => [p.evento, p.decisao]));
-  for (const d of L.derivados || []) {
-    const motivo = d.aprovacao !== 'aprovado' ? `aprovação \`${d.aprovacao}\``
-      : decisao.get(d.evento) === 'synth' ? `o evento \`${d.evento}\` está em \`synth\``
-      : null;
-    if (motivo) barrados.set(d.sha256, motivo);
-  }
-}
+const politica = carregarPolitica(LEDGER);
 const barrado = (rel) => {
-  if (!barrados.size) return null;
+  if (politica.erro) return null;
   const abs = join(PUBLICO, decodeURIComponent(rel));
   if (!existsSync(abs)) return null;
-  return barrados.get(createHash('sha256').update(readFileSync(abs)).digest('hex')) || null;
+  return motivoDeRecusa(rel, readFileSync(abs), politica, 'manifest');
 };
 const tirados = [];
 const podar = (v) => {

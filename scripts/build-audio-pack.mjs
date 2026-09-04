@@ -19,6 +19,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
+import { carregarPolitica, motivoDeRecusa } from '../tools/audio/politica.mjs';
 
 const OUT = process.argv.filter((a) => !a.startsWith('--'))[2];
 if (!OUT) { console.error('uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir de audio>]'); process.exit(1); }
@@ -37,29 +38,20 @@ mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
 
-/* ── TRAVA DE REDISTRIBUIÇÃO ────────────────────────────────────────────────
+/* ── TRAVA DE PROCEDÊNCIA: ALLOWLIST, NÃO DENYLIST ─────────────────────────
    Este zip é publicado como asset de release: um pacote SÓ DE ÁUDIO, que é a
-   forma que a Fab Standard License proíbe (`redistribuicao: proibida-standalone`
-   em docs/audio/proveniencia.json). Renomear por sha1 não muda nada — o que é
-   redistribuído é o conteúdo, não o nome.
-   A chave é o sha-256 do arquivo, porque é o que sobrevive ao rename.
-   Régua: `npm run eval:audioproc`, cláusula PRV6. */
+   forma que a Fab Standard License proíbe. A versão anterior montava uma
+   DENYLIST a partir de `ledger.derivados` e deixava passar tudo que não estava
+   catalogado — a auditoria da 4ª rodada provou o escape com `derivados: []`.
+   A regra agora mora em `tools/audio/politica.mjs`, uma vez só para as três
+   camadas. Régua: `npm run eval:audioproc`, cláusula PRV10. */
 const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
   || path.join(RAIZ, 'docs', 'audio', 'proveniencia.json');
-let bloqueados = new Map();
-if (existsSync(LEDGER)) {
-  const L = JSON.parse(readFileSync(LEDGER, 'utf8'));
-  for (const d of L.derivados || []) {
-    const fonte = L.fontes?.[d.fonte];
-    const motivo = !fonte ? `fonte \`${d.fonte}\` não existe no ledger`
-      : fonte.redistribuicao !== 'livre' ? `fonte \`${d.fonte}\` é \`${fonte.redistribuicao}\``
-      : d.aprovacao !== 'aprovado' ? `aprovação está \`${d.aprovacao}\``
-      : null;
-    if (motivo) bloqueados.set(d.sha256, { rel: d.arquivo, motivo });
-  }
-} else {
-  console.error(`FALTA ${path.relative(RAIZ, LEDGER)}: sem o ledger não dá para saber o que pode ser`
-    + ' redistribuído, e não saber custa o mesmo que estar errado.');
+const politica = carregarPolitica(LEDGER);
+if (politica.erro) {
+  console.error(`FALTA o ledger de procedência (${politica.erro}).`
+    + ' Sem ele não dá para saber o que pode ser redistribuído, e não saber custa o mesmo'
+    + ' que estar errado. O pacote NÃO é montado.');
   process.exit(1);
 }
 
@@ -68,8 +60,8 @@ const hashNome = (rel) => {
   const src = path.join(PUBLICO, rel);
   if (!existsSync(src)) { faltando.push(rel); return rel; }
   const bytes = readFileSync(src);
-  const barrado = bloqueados.get(createHash('sha256').update(bytes).digest('hex'));
-  if (barrado) { recusados.push(`${rel} (${barrado.motivo})`); return rel; }
+  const motivo = motivoDeRecusa(rel, bytes, politica, 'pack');
+  if (motivo) { recusados.push(`${rel} — ${motivo}`); return rel; }
   const h = createHash('sha1').update(bytes).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;
   cpSync(src, path.join(PACK, novo.replace(/^audio\//, '')));
@@ -109,9 +101,10 @@ for (const f of readdirSync(MM)) {
 if (recusados.length) {
   console.error(`RECUSADO: ${recusados.length} arquivo(s) não podem entrar num pacote só de áudio.`);
   for (const r of recusados) console.error('  ' + r);
-  console.error('\nEste zip vira asset de release, e release de pacote de áudio é redistribuição'
-    + '\nstandalone. Ver docs/audio/PROVENIENCIA.md. A forma de incorporação que NÃO'
-    + '\nredistribui o pack está BLOQUEADA aguardando decisão do dono.');
+  console.error('\nSob o prefixo derivado a regra é ALLOWLIST: o que não está catalogado no ledger'
+    + '\nnão passa. Este zip vira asset de release, e release de pacote de áudio é'
+    + '\nredistribuição standalone. Ver docs/audio/PROVENIENCIA.md — a forma de incorporação'
+    + '\nque NÃO redistribui está BLOQUEADA aguardando decisão do dono.');
   process.exit(1);
 }
 
