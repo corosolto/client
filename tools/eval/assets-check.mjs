@@ -148,8 +148,8 @@ if (!existsSync(MANIFEST)) {
        produção, então asset sem origem declarada chega ao jogador sem passar por commit
        nenhum. Aqui ele para. As PRV1-PRV4 (forma do ledger) rodam no `eval:audioproc`. */
     let ledger = null;
-    try { ledger = JSON.parse(readFileSync('docs/audio/proveniencia.json', 'utf8')); } catch (e) {
-      erros.push(`procedência: docs/audio/proveniencia.json ilegível (${e.message}) —`
+    try { ledger = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch (e) {
+      erros.push(`procedência: ${LEDGER} ilegível (${e.message}) —`
         + ' sem o ledger não dá para saber a origem de nada que a build serve.');
     }
     if (ledger) {

@@ -753,7 +753,11 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
       writeFileSync(join(PUB, 'audio', 'manifest.json'), JSON.stringify({ weapons: { ak: [caminho] } }));
       try {
         const out = execFileSync('node', [join(RAIZ, 'tools', 'eval', 'assets-check.mjs'),
-          `--raiz=${PUB}`, `--ledger=${ledgerPath}`, '--so=audio'], { encoding: 'utf8', stdio: 'pipe' });
+          `--raiz=${PUB}`, `--ledger=${ledgerPath}`, '--so=audio'], {
+          cwd: tmp,
+          encoding: 'utf8',
+          stdio: 'pipe',
+        });
         return { saida: 0, texto: out };
       } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
     };
