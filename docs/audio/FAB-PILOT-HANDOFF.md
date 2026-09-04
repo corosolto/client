@@ -72,8 +72,16 @@ Antes de qualquer conserto, o inventário do caminho que um som percorre hoje:
 | runtime ambiente | `public/js/soundscape.js` | `AMB_LOOPS` + `BIOME_SHOTS`; `map_corrego.js` é o único mapa com `world.sound` hoje |
 | chamador | `public/js/game.js:3035` e `:6336` | player = distância 0; bot = distância, pan e `dist/343` |
 
-Foi esse mapa que produziu os dois defeitos abaixo. Os dois eram invisíveis: um só aparece
-em produção, o outro só aparece depois que o pack de samples é ligado.
+Foi esse mapa que produziu os dois defeitos abaixo — registrados como **BUG-126** e
+**BUG-127** no `KNOWN-BUGS.md`. Os dois eram invisíveis: um só aparece em produção, o outro
+só aparece depois que o pack de samples é ligado.
+
+**O segundo é LATENTE, e isso muda o risco desta rodada.** `grep -rn weaponSamples` acha a
+leitura em `audio.js`, a preservação em `gen-audio-manifest.mjs:54` e as sondas
+aposentadas, que o forçam a `false` — **nada no repositório liga o caminho por sample**. O
+jogo de hoje roda o sintetizado, então a única mudança de `public/js/audio.js` que alcança
+produção agora é o `duck(dist < 12 ? 0.3 : 0.55)` virar `duck(Sfx.duckTiro(dist))`: a mesma
+expressão, com nome. Todo o resto do conserto está no caminho que o piloto vai ligar.
 
 ## Réguas escritas, e a mutação de cada uma
 

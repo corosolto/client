@@ -3466,6 +3466,85 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-126 · Áudio de ambiente nunca entrou no pack: 17 arquivos que o código nomeia dão 404~~ · RESOLVIDO 04/09
+
+**Sintoma.** `public/js/soundscape.js` nomeia 17 arquivos em `audio/ambiente/`
+(`AMB_LOOPS` + `BIOME_SHOTS`). Em produção, nenhum toca. O único sinal é um
+`console.warn` por arquivo em `soundscape.js:59`, uma vez cada, e depois silêncio.
+
+**Causa raiz — três elos, e o primeiro é uma ausência.** `tools/gen-audio-manifest.mjs`
+não tinha regra para `ambiente/`: arquivo posto lá aparecia no relatório como ÓRFÃO e não
+virava folha do manifest. `scripts/build-audio-pack.mjs:38` copia **só** o que o manifest
+nomeia (mais `menu-music/`), então o que não estava no manifest não entrava no zip; e
+`scripts/fetch-audio.sh` instala o zip. Família da lição 12 (`docs/LICOES.md`): o caminho
+só é percorrido em produção, e na máquina de quem desenvolve o `public/audio/` já
+populado esconde tudo.
+
+**Por que o `assert:assets` não pegou.** O piso é de 250 caminhos e a outra cláusula
+confere que todo caminho do manifest existe no disco. As duas ficam VERDES com a família
+inteira ausente: se ela não está no manifest, não há o que conferir. Medido nesta árvore
+com uma fixture de 317 caminhos e a chave `ambiente` removida — piso verde, "existe no
+disco" verde, e só a cláusula nova acende, por 17 de 17.
+
+**Conserto.** Regra `ambiente` no gerador (`tools/gen-audio-manifest.mjs`, a pasta é a
+verdade como nas outras famílias) e cláusula NOMINAL no `tools/eval/assets-check.mjs`, que
+lê a lista do próprio `soundscape.js` — mesma fonte que a régua usa (lição 2).
+
+**Régua:** `npm run eval:audioalcance`. Arma uma fixture sintética e roda o gerador e o
+empacotador reais contra ela (`--raiz=`), sem depender do pacote privado. Antes do
+conserto: ALC1 17/17 fora do manifest, ALC2 17/17 fora do pack. Mutantes:
+`--mutante=nome-trocado` (prova que lê por NOME, lição 14) e `--mutante=sem-copia`
+(separa gerador de empacotador). Commits `d84dbca5` (régua vermelha) e `fd4481ef`.
+
+**O que ainda NÃO está resolvido:** a release `audio-pack-v8` que o `fetch-audio.sh`
+aponta é anterior à regra e não contém `ambiente/`. O jogador só ouve depois de regerar o
+pack e publicar release nova — ver `docs/audio/FAB-PILOT-HANDOFF.md`.
+
+---
+### ~~BUG-127 · Tiro por sample descarta distância, pan e propagação (latente)~~ · RESOLVIDO 04/09
+
+**Sintoma, se ligado.** Com `weaponSamples: true` no manifest, bot atirando às suas costas
+a 40 m soa idêntico a bot atirando à sua frente a 2 m. É a informação de jogo que o dono
+cobrou em 29/08 ("não vejo de onde vem o tiro, parece cheater"), resolvida no sintetizado
+e perdida no instante em que o pack de samples entrasse.
+
+**LATENTE, não ativo.** `weaponSamples` não é ligado em lugar nenhum do repositório —
+`grep -rn weaponSamples` só acha a leitura em `audio.js`, a preservação em
+`gen-audio-manifest.mjs:54` e as sondas aposentadas, que o forçam a `false`. O defeito
+esperava o piloto Fab.
+
+**Causa raiz.** `game.js:6336` calcula os três valores e os entrega
+(`shotWeapon(b.weapon, _sd, 0.45, _pan, Math.min(0.25, _sd / 343))`). O caminho por sample
+chamava `this._sample(f, vol)`, que é `new Audio(...).play()`: HTMLAudio não tem grafo,
+então pan e `start(t)` não têm onde entrar. O `duck` era `0.3` fixo enquanto o synth
+duckava `dist < 12 ? 0.3 : 0.55` — duas rotinas, mesmo conceito, limiares diferentes
+(lição 2).
+
+**Conserto.** `_shotSample` em `public/js/audio.js`: decodifica uma vez por arma e toca por
+`BufferSource → gain → StereoPanner → master`, agendado em `currentTime + propDelay`. O
+duck virou `Sfx.duckTiro(dist)`, chamado pelos dois caminhos. Cache frio toca pelo
+`_sample` antigo — sem pan, mas audível.
+
+**Régua:** `npm run eval:audioespacial`, com `AudioContext` falso que grava o grafo e o
+`audio.js` de produção importado de verdade. Nenhum WAV entra. Antes do conserto, ESP2,
+ESP3 e ESP4 vermelhas. Mutantes `--mutante=sem-pan|sem-propagacao|duck-fixo`.
+Commits `e86bb393` (régua vermelha), `b4065a67` e `7ec05c95`.
+
+**Defeito introduzido pelo próprio conserto, e pego pela régua.** O `b4065a67` aplicava
+`this.vol` no ganho do `_shotSample` E o `master` aplicava de novo — `_sample` multiplica
+na mão porque HTMLAudio não passa pelo `master`, e um `BufferSource` passa. Medido com
+vol 0,5, `this.vol` 0,7 e `GUN_VOL` 0,62: ganho até o destino **0,1519** contra os
+**0,2170** de antes, 30% mais baixo, sem erro no console. Cada nó, isolado, parecia certo;
+só o produto do trajeto inteiro mostra. Virou a cláusula ESP7, que percorre o grafo do
+`BufferSource` até o `destination` multiplicando todo ganho. Consertado em `7ec05c95`.
+
+**O que NÃO foi verificado:** nada disso foi ouvido, e o caminho por sample nunca rodou num
+navegador. `decodeAudioData` real, latência real e o custo de uma rajada full-auto com um
+`BufferSource` por tiro seguem não medidos — bloqueios 2 e 3 do
+`docs/audio/FAB-PILOT-HANDOFF.md`.
+
+---
+
 ### ~~BUG-57 · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
 
 **Sintoma.** Deploys da Vercel falhando desde `ef0a392` (16/08 ~01:52) com
