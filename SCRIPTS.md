@@ -554,6 +554,14 @@ A fixture do inventariador: WAVs gerados na hora com ruído determinístico. Pro
 npm run audio:inventario:autoteste
 ```
 
+## `eval:audiocapacidade`
+
+O runtime sabe tocar isso? O ledger deixava qualquer um dos 8 eventos do piloto virar `derivado` aprovado, e o runtime não tem caminho específico para a maioria: `shotWeapon(w, …)` recebe a arma, mas `bolt()`/`reloadStart()`/`reloadEnd()` não recebem — leem `cs.bolt`/`cs.reload`/`cs.reloadend`, que valem para o arsenal inteiro; `step(surface)` recebe a superfície e mesmo assim sorteia de `cs.footsteps`, pool única; `death()` e `ricochet()` não consultam o pack. Aprovar um "passo em concreto" aprovaria um passo que toca em grama e metal igual; "morte corporal" e os impactos ficariam aprovados no papel e mudos no jogo. A régua NÃO lê assinatura de função (isso seria ler a declaração, lição 3): ela instala a chave que um caminho específico usaria, dispara o evento e olha o que tocou — `arma` se trocar a arma troca o arquivo, `global` se a chave específica nunca é lida, `nenhum` se só sai synth. Medido: 1 em arma, 4 em global, 3 em nenhum. CAP4 é a IRMÃ — a sonda tem que achar pelo menos um `arma`, senão uma sonda cega bate com um ledger todo `nenhum`. Foi ela que pegou a primeira versão da própria sonda medindo errado. `--mutante=declara-errado|aprova-sem-caminho` prova que morde.
+
+```bash
+npm run eval:audiocapacidade
+```
+
 ## `audio:shortlist`
 
 Candidatos por evento do piloto, SÓ por metadado. Lê `catalog.json` e `inventory.json` do staging privado — nome, hash, duração, canais, taxa, pico, loudness — e nunca um byte de áudio: a listagem do pacote diz `Allows usage with AI: No`. O casamento é por família de nome, e a saída é SHORTLIST, não escolha: nome não é som, e quem escolhe é o ouvido do dono no `audio:ab`. Quando o pacote não cobre o evento, `semCandidato` diz isso com o motivo em vez de forçar um casamento ruim — forçar `Hit_Generic` de luta corpo a corpo como "impacto de bala em concreto" seria inventar procedência sonora. `VETO_GORE` barra sangue, osso e grito por linha editorial, e é uma denylist conferida no autoteste. Recusa `--saida=` dentro do repositório.
