@@ -160,11 +160,15 @@ const frame = frameMatch ? {
   rotDeg: frameMatch[5].split(',').map(Number),
   drawDrop: Number(frameMatch[6]),
 } : null;
-check(frame && Math.abs(frame.x - 0.15) < 1e-6 && Math.abs(frame.y + 0.015) < 1e-6 && Math.abs(frame.z + 0.2) < 1e-6,
+/* Frame-base = candidato H da varredura medida sobre a X18 nivelada
+   (docs/reports/VIEWMODEL-FABLE51-PISTOL-HANDOFF.md, fable51-grid/H-y20):
+   único quadro limpo no gauntlet — cano a 20°, mão/arma 3,78, caixa 0,51;0,70. */
+const FRAME_BASE = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: '0,20,-5', drawDrop: 0.34 };
+check(frame && Math.abs(frame.x - FRAME_BASE.x) < 1e-6 && Math.abs(frame.y - FRAME_BASE.y) < 1e-6 && Math.abs(frame.z - FRAME_BASE.z) < 1e-6,
   `posição-base da pistola divergiu (${frame ? [frame.x, frame.y, frame.z].join(', ') : 'ausente'})`);
-check(frame?.fov === 60, `VFOV-base da pistola precisa ser 60°, recebido ${frame?.fov ?? 'ausente'}°`);
-check(frame?.drawDrop === 0.34, `saque da pistola precisa iniciar 0,34 m abaixo, recebido ${frame?.drawDrop ?? 'ausente'}`);
-check(frame?.rotDeg.join(',') === '-9,12,-2', `orientação-base divergiu (${frame?.rotDeg.join(', ') || 'ausente'})`);
+check(frame?.fov === FRAME_BASE.fov, `VFOV-base da pistola precisa ser ${FRAME_BASE.fov}°, recebido ${frame?.fov ?? 'ausente'}°`);
+check(frame?.drawDrop === FRAME_BASE.drawDrop, `saque da pistola precisa iniciar ${FRAME_BASE.drawDrop} m abaixo, recebido ${frame?.drawDrop ?? 'ausente'}`);
+check(frame?.rotDeg.join(',') === FRAME_BASE.rotDeg, `orientação-base divergiu (${frame?.rotDeg.join(', ') || 'ausente'})`);
 
 let runtime = null;
 try { runtime = JSON.parse(fs.readFileSync(reportFile, 'utf8')); } catch { /* reportado abaixo */ }
@@ -173,7 +177,7 @@ const fileBytes = fs.readFileSync(file);
 const sha256 = crypto.createHash('sha256').update(fileBytes).digest('hex');
 if (runtime) {
   const actualAspect = runtime.viewport.width / runtime.viewport.height;
-  const expectedFov = 2 * Math.atan(Math.tan(60 * Math.PI / 360) * (16 / 9) / actualAspect) * 180 / Math.PI;
+  const expectedFov = 2 * Math.atan(Math.tan(FRAME_BASE.fov * Math.PI / 360) * (16 / 9) / actualAspect) * 180 / Math.PI;
   const reloadFrames = runtime.states.filter((state) => state.label.startsWith('reload-'));
   const drawFrames = runtime.states.filter((state) => state.label.startsWith('draw-'));
   const fireFrames = runtime.states.filter((state) => state.label.startsWith('fire-'));

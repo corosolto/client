@@ -14,8 +14,12 @@ import { ALL_EXTENSIONS } from '../../node_modules/@gltf-transform/extensions/di
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '../..');
-const PRIVATE_ROOT = process.argv[2] || '/Users/ruben/csbrasil-private-assets/generated/viewmodels';
-const CHARACTER_TEXTURES = process.argv[3]
+const positional = process.argv.slice(2).filter((value) => !value.startsWith('--'));
+/* --familia=pistol: só reescreve o GLB dessa família e deixa shared/ como está.
+   Rebuild de uma família não pode tocar o binário das outras 14. */
+const SO_FAMILIA = (process.argv.find((value) => value.startsWith('--familia=')) || '').slice(10);
+const PRIVATE_ROOT = positional[0] || '/Users/ruben/csbrasil-private-assets/generated/viewmodels';
+const CHARACTER_TEXTURES = positional[1]
   || '/Users/ruben/csbrasil-private-assets/generated/extracted/Assets/KINEMATION/FPSAnimationPack/Character/Textures';
 const ARM_TEXTURE = /^T_(?:Arm|Cloth|Glove)01_(B|N|ORM)$/;
 const TARGET = { B: { size: 1024, quality: 85 }, N: { size: 2048, quality: 80 }, ORM: { size: 1024, quality: 85 } };
@@ -32,11 +36,12 @@ const placeholder = await sharp({
 }).webp({ quality: 60 }).toBuffer();
 
 const catalog = JSON.parse(await fs.readFile(path.join(PRIVATE_ROOT, 'catalog.json'), 'utf8'));
-const families = [...catalog.families.map((f) => f.family), 'grenade'];
+const families = [...catalog.families.map((f) => f.family), 'grenade'].filter((f) => !SO_FAMILIA || f === SO_FAMILIA);
+if (SO_FAMILIA && !families.length) throw new Error(`família ${SO_FAMILIA} não está no catálogo`);
 const shared = {};
 const report = { schemaVersion: 1, families: {}, shared: {} };
 
-for (const part of ['Arm', 'Cloth', 'Glove']) {
+for (const part of SO_FAMILIA ? [] : ['Arm', 'Cloth', 'Glove']) {
   for (const [kind, spec] of Object.entries(TARGET)) {
     const name = `T_${part}01_${kind}`;
     const source = path.join(CHARACTER_TEXTURES, `${name}.png`);
@@ -68,9 +73,17 @@ for (const family of families) {
   console.log(`${family.padEnd(9)} ${(before / 1048576).toFixed(1).padStart(5)} MiB -> ${(after / 1048576).toFixed(1).padStart(5)} MiB (${replaced} texturas)`);
 }
 
-report.shared = Object.fromEntries(Object.entries(shared).map(([name, bytes]) => [name, { url: `shared/${name}.webp`, bytes }]));
+if (SO_FAMILIA) {
+  // Relatório e manifesto de shared/ ficam como estavam; só a família pedida muda.
+  const previous = JSON.parse(await fs.readFile(path.join(PRIVATE_ROOT, 'optimize-report.json'), 'utf8').catch(() => '{"families":{},"shared":{}}'));
+  report.shared = previous.shared || {};
+  report.families = { ...(previous.families || {}), ...report.families };
+  for (const [name, entry] of Object.entries(report.shared)) shared[name] = entry.bytes;
+} else {
+  report.shared = Object.fromEntries(Object.entries(shared).map(([name, bytes]) => [name, { url: `shared/${name}.webp`, bytes }]));
+  await fs.writeFile(path.join(sharedDir, 'shared-manifest.json'), `${JSON.stringify(report.shared, null, 2)}\n`);
+}
 const sharedTotal = Object.values(shared).reduce((sum, bytes) => sum + bytes, 0);
-await fs.writeFile(path.join(sharedDir, 'shared-manifest.json'), `${JSON.stringify(report.shared, null, 2)}\n`);
 await fs.writeFile(path.join(PRIVATE_ROOT, 'optimize-report.json'), `${JSON.stringify(report, null, 2)}\n`);
 const total = Object.values(report.families).reduce((sum, f) => sum + f.afterBytes, 0);
 console.log(`shared: ${(sharedTotal / 1048576).toFixed(1)} MiB em ${Object.keys(shared).length} texturas · catálogo: ${(total / 1048576).toFixed(1)} MiB`);
