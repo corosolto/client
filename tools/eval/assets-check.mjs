@@ -29,6 +29,13 @@
    confere que **todo caminho citado existe no disco** — manifest cheio apontando pra
    arquivo que não veio é a mesma falha com outra cara.
 
+   PROCEDÊNCIA (PRV5). Todo caminho do manifest sob o `prefixoDerivado` de
+   `docs/audio/proveniencia.json` precisa de entrada no ledger, com sha-256 batendo
+   com o arquivo em disco. `.gitignore` protege o GIT e só ele — o pacote é montado
+   à parte e servido em produção, então asset sem origem declarada chega ao jogador
+   sem passar por commit nenhum. A forma do ledger é medida no `eval:audioproc`; o
+   contrato inteiro está em `docs/audio/PROVENIENCIA.md`.
+
    AMBIENTE. O piso não pega pacote que chegou inteiro MENOS uma família: 17 arquivos
    de ambiente faltando num manifest de 308 deixam 291, acima do piso, verde. Por isso
    a cláusula do ambiente é NOMINAL e a lista vem de `soundscape.js` — a mesma fonte
@@ -54,6 +61,7 @@
    Issue #77: `node tools/eval/assets-check.mjs --mutante=grafite-orfa` tira em
    memória um nome usado pelo layout e exige que a contagem de peças fique vermelha.
    ============================================================================ */
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { initTextures } from './harness.mjs';
@@ -121,6 +129,37 @@ if (!existsSync(MANIFEST)) {
         + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
         + ' O pacote instalado é anterior à regra `ambiente` do gerador — regere o pack'
         + ' (`node scripts/build-audio-pack.mjs <out>`) e publique a release nova.');
+    }
+    /* PRV5 — a cláusula de BUILD do contrato de procedência (docs/audio/PROVENIENCIA.md).
+       `.gitignore` protege o git e só ele: o pacote é montado à parte e servido em
+       produção, então asset sem origem declarada chega ao jogador sem passar por commit
+       nenhum. Aqui ele para. As PRV1-PRV4 (forma do ledger) rodam no `eval:audioproc`. */
+    let ledger = null;
+    try { ledger = JSON.parse(readFileSync('docs/audio/proveniencia.json', 'utf8')); } catch (e) {
+      erros.push(`procedência: docs/audio/proveniencia.json ilegível (${e.message}) —`
+        + ' sem o ledger não dá para saber a origem de nada que a build serve.');
+    }
+    if (ledger) {
+      const porArquivo = new Map((ledger.derivados || []).map((d) => [d.arquivo, d]));
+      const semLedger = folhas.filter((f) => f.startsWith(ledger.prefixoDerivado) && !porArquivo.has(f));
+      if (semLedger.length) {
+        erros.push(`procedência: ${semLedger.length} caminho(s) do manifest sob \`${ledger.prefixoDerivado}\``
+          + ` sem entrada em docs/audio/proveniencia.json (ex.: ${semLedger.slice(0, 3).join(', ')}).`);
+      }
+      const hashRuim = [];
+      for (const [arq, d] of porArquivo) {
+        const abs = path.join('public', arq);
+        if (!existsSync(abs)) { hashRuim.push(`${arq} (não está no disco)`); continue; }
+        const h = createHash('sha256').update(readFileSync(abs)).digest('hex');
+        if (h !== d.sha256) hashRuim.push(`${arq} (${h.slice(0, 12)}… ≠ ${String(d.sha256).slice(0, 12)}…)`);
+      }
+      if (hashRuim.length) {
+        erros.push(`procedência: ${hashRuim.length} derivado(s) com hash divergente do ledger`
+          + ` (ex.: ${hashRuim.slice(0, 3).join(', ')}) — o arquivo que a build serve não é o que foi aprovado.`);
+      }
+      if (!semLedger.length && !hashRuim.length) {
+        avisos.push(`procedência ok: ${porArquivo.size} derivado(s) com origem, licença e hash conferidos.`);
+      }
     }
     if (!erros.length) {
       avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco (${doCodigo.size} de ambiente).`);
