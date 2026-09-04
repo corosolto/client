@@ -100,8 +100,18 @@ for (const [dir, team] of Object.entries(FACTIONS)) {
 const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
   || join(ROOT, 'docs', 'audio', 'proveniencia.json');
 const politica = carregarPolitica(LEDGER);
+/* SEM LEDGER, ABORTA — antes de escrever qualquer coisa, e nos dois modos.
+   Isto fazia `return null` e seguia: "não consigo verificar" virava "pode passar",
+   e o manifest saía com o não catalogado dentro, exit 0, sem diagnóstico. O
+   empacotador e o `assets-check` já falhavam fechados; era esta camada que
+   contradizia a política. Régua: PRV12. */
+if (politica.erro) {
+  console.error(`FALTA o ledger de procedência (${politica.erro}).`);
+  console.error('Sem ele não dá para saber o que pode entrar no manifest, e não saber custa o'
+    + ' mesmo que estar errado. Nada foi escrito.');
+  process.exit(1);
+}
 const barrado = (rel) => {
-  if (politica.erro) return null;
   const abs = join(PUBLICO, decodeURIComponent(rel));
   if (!existsSync(abs)) return null;
   return motivoDeRecusa(rel, readFileSync(abs), politica, 'manifest');

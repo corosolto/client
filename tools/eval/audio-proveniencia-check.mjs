@@ -37,6 +37,8 @@
            empacotador; o legado reprova por NOME; e o derivado catalogado,
            aprovado e de fonte livre continua passando (cláusula irmã).
      PRV11 fail-closed também no GERADOR, com a mesma irmã.
+     PRV12 ledger AUSENTE aborta o gerador — em modo normal e em `--check` —
+           dizendo por quê; com ledger válido ele gera (cláusula irmã).
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO — e
@@ -635,6 +637,73 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
       } else {
         notas.push('PRV11 ok: o gerador manteve o catalogado e tirou o não catalogado.');
       }
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV12: ledger AUSENTE aborta o gerador ────────────────────────────────
+   O empacotador e o `assets-check` já falhavam fechados sem ledger. O gerador
+   não: `barrado()` fazia `if (politica.erro) return null`, então com o ledger
+   inexistente ele saía **0**, sem diagnóstico, mantendo
+   `audio/piloto/nao-catalogado.wav` no manifest de desenvolvimento.
+
+   "Não consigo verificar" virava "pode passar" — que é o contrário do que a
+   política diz e o oposto da lição 5: não saber tem que custar o mesmo que estar
+   errado. E cobre os dois modos, porque `--check` é o que roda no portão. */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv12-'));
+  try {
+    const AUD = join(tmp, 'public', 'audio');
+    mkdirSync(join(AUD, 'piloto'), { recursive: true });
+    const conteudo = 'fixture nao catalogado\n';
+    writeFileSync(join(AUD, 'piloto', 'nao-catalogado.wav'), conteudo);
+    const manifestInicial = { weaponSamples: true, weapons: { ak: ['audio/piloto/nao-catalogado.wav'] } };
+
+    const rodar = (ledger, extra = []) => {
+      writeFileSync(join(AUD, 'manifest.json'), JSON.stringify(manifestInicial));
+      try {
+        execFileSync('node', [join(RAIZ, 'tools', 'gen-audio-manifest.mjs'), `--raiz=${AUD}`,
+          `--ledger=${ledger}`, ...extra], { encoding: 'utf8', stdio: 'pipe' });
+        return { saida: 0, texto: '' };
+      } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
+    };
+    const manifestAgora = () => JSON.parse(readFileSync(join(AUD, 'manifest.json'), 'utf8'));
+
+    const ausente = join(tmp, 'nao-existe.json');
+    for (const [modo, extra] of [['normal', []], ['--check', ['--check']]]) {
+      const r = rodar(ausente, extra);
+      const ficou = (manifestAgora().weapons?.ak || []).includes('audio/piloto/nao-catalogado.wav');
+      if (r.saida === 0) {
+        erros.push(`PRV12 com o ledger AUSENTE o gerador (${modo}) saiu 0${ficou ? ' e manteve' : ' mas tirou'}`
+          + ' `audio/piloto/nao-catalogado.wav` no manifest. "Não consigo verificar" virou "pode passar" —'
+          + ' o gerador tem que abortar, como o empacotador e o `assets-check` já fazem.');
+      } else if (!/ledger|procedência|procedencia/i.test(r.texto)) {
+        erros.push(`PRV12 o gerador (${modo}) abortou sem dizer que o motivo é o ledger`
+          + ` (saída: ${r.texto.trim().split('\n')[0] || '(vazia)'}).`);
+      }
+    }
+
+    /* IRMÃ: com ledger VÁLIDO o gerador tem que rodar. Um gerador que abortasse
+       sempre passaria na cláusula de cima sem gerar nada (lição 1). */
+    const shaOk = createHash('sha256').update(conteudo).digest('hex');
+    const bom = join(tmp, 'ledger.json');
+    writeFileSync(bom, JSON.stringify({
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'f', decisao: 'derivado', caminhoRuntime: 'arma' }],
+      fontes: { propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' } },
+      derivados: [{ arquivo: 'audio/piloto/nao-catalogado.wav', evento: 'ak.shot', fonte: 'propria',
+        origemNoPack: 'x', sha256: shaOk, sha256Fonte: 'e'.repeat(64), transformacao: 'x',
+        aprovacao: 'aprovado', escutaAB: { por: 'fixture', data: '2026-09-04' } }],
+    }));
+    const irma = rodar(bom);
+    if (irma.saida !== 0) {
+      erros.push(`PRV12 IRMÃ: com ledger VÁLIDO o gerador ainda saiu ${irma.saida}`
+        + ` (${irma.texto.trim().split('\n')[0]}). Abortar sempre não é falhar fechado, é não funcionar.`);
+    } else if (!(manifestAgora().weapons?.ak || []).includes('audio/piloto/nao-catalogado.wav')) {
+      erros.push('PRV12 IRMÃ: com ledger válido e o arquivo catalogado/aprovado, o gerador tirou'
+        + ' o caminho do manifest mesmo assim.');
+    } else {
+      notas.push('PRV12 ok: sem ledger o gerador aborta nos dois modos e diz por quê; com ledger válido gera.');
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
