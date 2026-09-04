@@ -438,7 +438,14 @@ const relatorio = [];
 for (const arma of ARMAS) {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   const espera = (ms) => page.waitForTimeout(ms);
-  const shot = () => page.screenshot({ type: 'png' });
+  /* Dois requestAnimationFrame antes de cada foto: o canvas WebGL só muda no
+     laço do jogo, e a foto logo após o evaluate saía com o render ANTERIOR —
+     na AK, recarga 0,9 e 1,3 vieram idênticas (99 775 px) e o P1 reprovou
+     uma arma golden (fable51-ak-regressao, 04/09). */
+  const shot = async () => {
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    return page.screenshot({ type: 'png' });
+  };
   const dir = path.join(OUT, arma);
   if (SALVA_FRAMES) await fs.mkdir(dir, { recursive: true });
   const r = { arma, familia: VM_WEAPON[arma]?.family || '', erros: [] };
@@ -744,6 +751,13 @@ for (const arma of ARMAS) {
           for (const probe of entry.qaMagSources) {
             const positions = probe.source.geometry.getAttribute('position');
             probe.source.updateWorldMatrix(true, false);
+            /* applyBoneTransform usa bindMatrixInverse, que o three só refresca
+               em SkinnedMesh.updateMatrixWorld() (render), não em
+               updateWorldMatrix(). A malha da arma desce de ik_hand_gun (animado):
+               o 1º frame da recarga projetava o pente com a matriz da pose
+               ANTERIOR e inventava 0,24 de excursão — o mutante pente-estatico
+               passava (fable51, 04/09). */
+            probe.source.updateMatrixWorld(true);
             for (const vertex of probe.vertices) {
               point.fromBufferAttribute(positions, vertex);
               probe.source.applyBoneTransform(vertex, point);
@@ -756,6 +770,10 @@ for (const arma of ARMAS) {
             magBoneC = [(center.x + 1) * viewport.width / 2, (1 - center.y) * viewport.height / 2];
           }
         }
+        // Diagnóstico da projeção analítica: osso Mag, mount e câmera no momento da medida.
+        const magBone = entry.scene.getObjectByName('Mag');
+        const magBoneWorld = magBone ? magBone.getWorldPosition(entry.scene.position.clone()).toArray().map((v) => +v.toFixed(4)) : null;
+        const camWorld = game.vmCamera.getWorldPosition(entry.scene.position.clone()).toArray().map((v) => +v.toFixed(4));
         return {
           state: entry?.state || null,
           clip: action?.getClip?.().name || null,
@@ -766,6 +784,13 @@ for (const arma of ARMAS) {
           magBoneC,
           magBoneVisible,
           magVertices: entry.qaMagVertices || 0,
+          diag: {
+            magBoneWorld, camWorld, camFov: game.vmCamera.fov,
+            mount: entry.mount.position.toArray().map((v) => +v.toFixed(4)),
+            mountRot: entry.mount.rotation.toArray().slice(0, 3).map((v) => +v.toFixed(4)),
+            recoil: { t: vm.recoil?.t, out: vm.recoil?.out ? { ...vm.recoil.out } : null },
+            drawTime: entry.drawTime, drawDuration: entry.drawDuration,
+          },
         };
       }, {
         w: arma,
@@ -786,6 +811,7 @@ for (const arma of ARMAS) {
       m.penteBoneC = animation.magBoneC;
       m.penteBoneVisible = animation.magBoneVisible;
       m.penteVertices = animation.magVertices;
+      m.diag = animation.diag;
       r.recarga.push(m);
       if (SALVA_FRAMES) await fs.writeFile(path.join(dir, `recarga-${i}.png`), b);
     }
