@@ -29,6 +29,11 @@
    confere que **todo caminho citado existe no disco** — manifest cheio apontando pra
    arquivo que não veio é a mesma falha com outra cara.
 
+   AMBIENTE. O piso não pega pacote que chegou inteiro MENOS uma família: 17 arquivos
+   de ambiente faltando num manifest de 308 deixam 291, acima do piso, verde. Por isso
+   a cláusula do ambiente é NOMINAL e a lista vem de `soundscape.js` — a mesma fonte
+   que a `eval:audioalcance` usa na fixture (lição 2: mesmo conceito, mesma fonte).
+
    DECALQUES. A lista NÃO é lida do texto do textures.js: ela vem do módulo importado
    em node (`initTextures().decalFiles`), porque `DECAL_FILES` são 196 entradas
    estáticas + os `or-*` empurrados em runtime, e vai crescer. Parse de linha ficaria
@@ -53,6 +58,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { initTextures } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
+import { AMB_LOOPS, BIOME_SHOTS } from '../../public/js/soundscape.js';
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
 const MANIFEST = 'public/audio/manifest.json';
@@ -101,7 +107,24 @@ if (!existsSync(MANIFEST)) {
       erros.push(`áudio: ${semArquivo.length} de ${folhas.length} caminhos do manifest não existem`
         + ` no disco (ex.: ${semArquivo.slice(0, 3).join(', ')}) — o zip veio parcial.`);
     }
-    if (!erros.length) avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco.`);
+    /* AMBIENTE — a irmã de produção da `eval:audioalcance`. A régua de alcance mede
+       a PIPELINE numa fixture; esta mede o PACOTE QUE CHEGOU. Duas coisas medem o
+       mesmo conceito, então compartilham a fonte da lista (`soundscape.js`) em vez
+       de cada uma manter a sua — lição 2 do `docs/LICOES.md`. Sem esta cláusula,
+       um pacote velho (sem `ambiente/`) passaria verde e o mapa subiria mudo, com
+       o warn de `soundscape.js:59` como único sinal. */
+    const doCodigo = new Set(Object.values(AMB_LOOPS));
+    for (const pools of Object.values(BIOME_SHOTS)) for (const p of pools) for (const src of p.srcs) doCodigo.add(src);
+    const semAmbiente = [...doCodigo].filter((f) => !folhas.includes(f) || !existsSync(path.join('public', f)));
+    if (semAmbiente.length) {
+      erros.push(`áudio ambiente: ${semAmbiente.length} de ${doCodigo.size} caminhos que \`soundscape.js\` nomeia`
+        + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
+        + ' O pacote instalado é anterior à regra `ambiente` do gerador — regere o pack'
+        + ' (`node scripts/build-audio-pack.mjs <out>`) e publique a release nova.');
+    }
+    if (!erros.length) {
+      avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco (${doCodigo.size} de ambiente).`);
+    }
   }
 }
 

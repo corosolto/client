@@ -120,6 +120,14 @@ out.soundtrack = take(listAudio(join(AUDIO, 'soundtrack')));
 // lista antiga, e o `--check` cobra a 27ª faixa no dia em que ela entrar.
 out.menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
 
+// ── áudio ambiente por mapa ─────────────────────────────────────────────────
+// `public/js/soundscape.js` nomeia esses arquivos, e ANTES DISTO nenhum deles era
+// alcançado: sem regra aqui eles entravam como ÓRFÃOS, não viravam folha do
+// manifest, e `scripts/build-audio-pack.mjs` — que copia só o que o manifest
+// nomeia — não os punha no zip. Em produção viravam 404 que `soundscape.js:59`
+// engolia com um warn. Régua: `npm run eval:audioalcance`.
+out.ambiente = take(listAudio(join(AUDIO, 'ambiente')));
+
 /* ── TETO DE DURAÇÃO DA VOZ IN-GAME ─────────────────────────────────────────
    Regra do dono (04/08): fala de `ingame/` tem no máximo **8 s**. Ela toca por cima do
    jogo — uma linha de 28 s (era o caso do "coe rapaziada" dos funkeiros, contra 5,8 s do
