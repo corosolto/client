@@ -554,6 +554,30 @@ A fixture do inventariador: WAVs gerados na hora com ruído determinístico. Pro
 npm run audio:inventario:autoteste
 ```
 
+## `audio:shortlist`
+
+Candidatos por evento do piloto, SÓ por metadado. Lê `catalog.json` e `inventory.json` do staging privado — nome, hash, duração, canais, taxa, pico, loudness — e nunca um byte de áudio: a listagem do pacote diz `Allows usage with AI: No`. O casamento é por família de nome, e a saída é SHORTLIST, não escolha: nome não é som, e quem escolhe é o ouvido do dono no `audio:ab`. Quando o pacote não cobre o evento, `semCandidato` diz isso com o motivo em vez de forçar um casamento ruim — forçar `Hit_Generic` de luta corpo a corpo como "impacto de bala em concreto" seria inventar procedência sonora. `VETO_GORE` barra sangue, osso e grito por linha editorial, e é uma denylist conferida no autoteste. Recusa `--saida=` dentro do repositório.
+
+```bash
+npm run audio:shortlist -- <dir-do-pack> --saida=<fora-do-repo>.json
+```
+
+## `audio:shortlist:autoteste`
+
+A fixture da shortlist. Prova cinco coisas num catálogo sintético: o veto de gore barra os 3 arquivos de sangue/osso/grito, `Gunshot_Distant_` não contamina o evento de tiro seco (os dois começam com `Gunshot_`), evento sem candidato fica vazio em vez de forçado, o metadado do inventário é juntado pelo sha-256, e a família preserva o número da arma (`Gunshot_3`, não `Gunshot`) — sem isso as 8 famílias viram uma e a escuta A/B perde a comparação que decide qual soa como AK. No check:fast.
+
+```bash
+npm run audio:shortlist:autoteste
+```
+
+## `audio:ab`
+
+Escuta A/B local e privada, para o dono decidir. Sobe um servidor em `127.0.0.1` que serve a página e os WAVs lidos do staging privado onde eles estão — não copia nada para o repositório, não escreve em `public/`, só aceita loopback e recusa caminho que escape da raiz do pacote. O lado B é o `public/js/audio.js` REAL do jogo, não uma imitação: comparar contra outra coisa não responderia a pergunta. O clique grava `{evento, arquivo, sha256, decisao, por, quando, nota}` num JSONL fora do repositório — isso é REGISTRO DE ESCUTA, não aprovação: virar `aprovado` no ledger continua sendo passo manual, e a PRV2 cobra `escutaAB.por` e `escutaAB.data`. Aprovação automática é o que o contrato existe para impedir.
+
+```bash
+npm run audio:ab -- <dir-do-pack> --porta=8130 --por=ruben
+```
+
 ## `eval:backendhints`
 
 O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o jogo vê o JOGO — 'sem dar pistas se usamos supabase, postgres o que'. Mede no fonte (sem build) toda superfície servida crua: public/js, public/llms.txt, src/pages (corpo .astro, fora do frontmatter de servidor), CHANGELOG.md (renderizado em /changelog). A doc Docusaurus fica FORA, como dívida declarada — virar neutra é decisão editorial. Em 15/08 a primeira corrida achou 8 vazamentos, um deles TEXTO DE UI ('envs do Supabase pendentes'). --mutante=inject prova que morde; lista de padrões vazia se denuncia sozinha.
