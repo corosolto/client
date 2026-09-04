@@ -23,7 +23,7 @@
 
    Uso: node tools/eval/vm-gauntlet.mjs [--armas=ak,m4] [--porta=8311]
         [--out=tools/eval/out/vm-gauntlet] [--frames] [--largura=1440]
-        [--altura=960] [--mutante=sem-arma|sem-pente|pente-estatico|sem-mao-apoio|perfil-estreito|centro|topo|draw-idle|tiro-estatico]
+        [--altura=960] [--mutante=sem-arma|sem-pente|pente-estatico|sem-mao-apoio|perfil-estreito|cano-vertical|centro|topo|draw-idle|tiro-estatico]
    Ferramenta LOCAL: precisa dos private-assets, Playwright global e sharp.
    ============================================================================ */
 import fs from 'node:fs/promises';
@@ -63,6 +63,18 @@ const QS_MODO = MODO === 'kinemation' ? `vmready=${FAMILIAS_A}&vmgolden=0`
   : MODO === 'golden' ? 'vmgolden=1' : 'cs16=1';
 const W = Number(arg('largura')) || 1440;
 const H = Number(arg('altura')) || 960;
+/* Mínimo de pixels por LUVA em idle/fire (1440×960). Procedência
+   (artifacts/viewmodels/golden-pistol/fable51-gauntlet-red-antes e fable51-grid):
+   a X18 mede ≥11 000 px por luva em todo frame de idle/fire, e o mutante
+   `sem-mao-apoio` zera a esquerda. NÃO é a régua que pegou a X18 de 01/09 —
+   lá as duas luvas estavam no quadro, lado a lado; o que a pegou é `P2 cano`.
+   Escala com a área do quadro. */
+const LUVA_MIN_PX = Math.round(2500 * (W * H) / (1440 * 960));
+/* Ângulo máximo entre o eixo do cano (Slider→Barrel) e o eixo óptico, em idle.
+   Procedência: a X18 de 01/09 nascia com o cano VERTICAL (contrato:
+   pistol-viewmodel-contract.mjs, slide longo em Y); nivelada e com o yaw de
+   leitura lateral do gabarito CS 1.6 (≤35°) fica bem abaixo. */
+const CANO_MAX_DEG = 60;
 
 const gRoot = execSync('npm root -g').toString().trim();
 const _pw = await import(pathToFileURL(`${gRoot}/playwright/index.js`).href);
@@ -122,7 +134,43 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X, QUADRO) => {
     o.material = Array.isArray(o.material)
       ? o.material.map((m) => m?.clone?.() || m)
       : (o.material?.clone?.() || o.material);
-    if (maos.has(o)) pinta(o, 1, 0, 1);                    // mão = magenta
+    if (maos.has(o)) {
+      /* Mão por LADO: luva esquerda = verde, luva direita = azul, resto do
+         braço = magenta. "Existe mão no quadro" não vê a dominante escondida
+         atrás da de apoio (X18, 01/09: 12 mil px de mão e UMA luva visível). */
+      const jo = o.geometry.getAttribute('skinIndex'); const we = o.geometry.getAttribute('skinWeight');
+      const idx = o.geometry.index?.array;
+      if (!o.isSkinnedMesh || !jo || !we || !idx) { pinta(o, 1, 0, 1); continue; }
+      const ESQ = /(_l|\.l(?:_metarig)?)$/i; const DIR = /(_r|\.r(?:_metarig)?)$/i;
+      const lado = (v) => {
+        let l = 0; let r = 0;
+        for (const k of ['X', 'Y', 'Z', 'W']) {
+          const name = o.skeleton.bones[jo['get' + k](v)]?.name || ''; const w = we['get' + k](v);
+          if (ESQ.test(name)) l += w; else if (DIR.test(name)) r += w;
+        }
+        return l > r ? 0 : r > l ? 1 : 2;
+      };
+      const part = [[], [], []];
+      for (let i = 0; i < idx.length; i += 3) {
+        const tri = [idx[i], idx[i + 1], idx[i + 2]];
+        const votos = [0, 0, 0]; tri.forEach((v) => votos[lado(v)]++);
+        part[votos[0] >= 2 ? 0 : votos[1] >= 2 ? 1 : 2].push(...tri);
+      }
+      const base = Array.isArray(o.material) ? o.material[0] : o.material;
+      const luva = /Glove/i.test(base?.name || '');
+      const mat = (r, gg, b) => { const m = base.clone(); pinta({ material: m }, r, gg, b); return m; };
+      const mEsq = luva ? mat(0, 1, 0) : mat(1, 0, 1);
+      const mDir = luva ? mat(0, 0, 1) : mat(1, 0, 1);
+      const mOutro = mat(1, 0, 1);
+      if (MUTANTE === 'sem-mao-apoio') mEsq.visible = false;
+      const geo = o.geometry.clone();
+      geo.setIndex([...part[0], ...part[1], ...part[2]]); geo.clearGroups();
+      geo.addGroup(0, part[0].length, 0);
+      geo.addGroup(part[0].length, part[1].length, 1);
+      geo.addGroup(part[0].length + part[1].length, part[2].length, 2);
+      o.geometry = geo; o.material = [mEsq, mDir, mOutro];
+      e.qaLuvaTris = (e.qaLuvaTris || 0) + (luva ? (part[0].length + part[1].length) / 3 : 0);
+    }
     else if (/MAG/i.test(o.name)) {
       if (MUTANTE === 'sem-pente') o.visible = false;
       pinta(o, 1, 1, 0);                                  // pente = amarelo
@@ -199,6 +247,11 @@ const SONDA = `((ARMA, MUTANTE, AJUSTE_X, QUADRO) => {
     e.cameraFov = 60; g.vmCamera.fov = vm.fov(ARMA, g.vmCamera.aspect); g.vmCamera.updateProjectionMatrix();
   }
   if (MUTANTE === 'centro') e.frame.x -= 0.42;
+  if (MUTANTE === 'cano-vertical') {
+    // desfaz a rotação de filho-de-bone do socket: é o estado de 01/09
+    const socket = e.scene.getObjectByName('SOCKET_WEAPON_PISTOL');
+    if (socket) socket.rotation.set(0, 0, 0);
+  }
   if (MUTANTE === 'topo') e.frame.y += 0.5;
   g.scene.visible = false;                                 // mundo apagado
   // o canvas mora DENTRO de #game-container: esconder "tudo que não é canvas"
@@ -219,6 +272,8 @@ function classifica(r, g, b) {
   if (r > 200 && b > 200 && g < 70) return 1;  // magenta = mão
   if (g > 200 && b > 200 && r < 70) return 2;  // ciano = arma
   if (r > 200 && g > 200 && b < 70) return 3;  // amarelo = pente
+  if (g > 200 && r < 70 && b < 70) return 4;   // verde = LUVA esquerda (apoio)
+  if (b > 200 && r < 70 && g < 70) return 5;   // azul = LUVA direita (dominante)
   return 0;
 }
 
@@ -226,20 +281,25 @@ async function medeFrame(buf) {
   const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
   const w = info.width; const h = info.height; const ch = info.channels;
   const mapa = new Uint8Array(w * h);
-  const acc = [null,
-    { n: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1 },
-    { n: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1 },
-    { n: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1 }];
+  const novoAcc = () => ({ n: 0, sx: 0, sy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1 });
+  const acc = [null, novoAcc(), novoAcc(), novoAcc()];
+  // Luvas por lado entram como MÃO em todas as métricas antigas e ainda
+  // ganham contagem própria (P1 duas mãos em idle/fire).
+  const luvas = [novoAcc(), novoAcc()];
+  const soma = (a, x, y) => {
+    a.n += 1; a.sx += x; a.sy += y;
+    if (x < a.x0) a.x0 = x; if (x > a.x1) a.x1 = x;
+    if (y < a.y0) a.y0 = y; if (y > a.y1) a.y1 = y;
+  };
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * ch;
-      const c = classifica(data[i], data[i + 1], data[i + 2]);
+      const c0 = classifica(data[i], data[i + 1], data[i + 2]);
+      const c = c0 >= 4 ? 1 : c0;
       mapa[y * w + x] = c;
       if (!c) continue;
-      const a = acc[c];
-      a.n += 1; a.sx += x; a.sy += y;
-      if (x < a.x0) a.x0 = x; if (x > a.x1) a.x1 = x;
-      if (y < a.y0) a.y0 = y; if (y > a.y1) a.y1 = y;
+      if (c0 >= 4) soma(luvas[c0 - 4], x, y);
+      soma(acc[c], x, y);
     }
   }
   const cx = (a) => (a.n ? a.sx / a.n : null);
@@ -364,6 +424,9 @@ async function medeFrame(buf) {
     maoComponentes: componentes.slice(0, 4),
     apertoFrac: mao.n ? +(encosta / (mao.n / 4)).toFixed(3) : 0,
     maoArmaDistPx: distMin,
+    luvaEsqPx: luvas[0].n, luvaDirPx: luvas[1].n,
+    luvaEsqC: luvas[0].n ? [+cx(luvas[0]).toFixed(1), +cy(luvas[0]).toFixed(1)] : null,
+    luvaDirC: luvas[1].n ? [+cx(luvas[1]).toFixed(1), +cy(luvas[1]).toFixed(1)] : null,
   };
 }
 
@@ -429,6 +492,7 @@ for (const arma of ARMAS) {
     r.sonda = sonda;
     if (sonda !== 'ok') r.erros.push(`sonda: ${sonda}`);
     r.magProbeVertices = await page.evaluate((w) => window.__authoredVm.entry(w)?.qaMagVertices || 0, arma);
+    r.luvaTris = await page.evaluate((w) => window.__authoredVm.entry(w)?.qaLuvaTris || 0, arma);
     r.magProbe = await page.evaluate((w) => {
       const entry = window.__authoredVm.entry(w);
       const probes = [];
@@ -469,6 +533,22 @@ for (const arma of ARMAS) {
       r.idle = await medeFrame(bIdle);
     }
     if (SALVA_FRAMES) await fs.writeFile(path.join(dir, 'idle.png'), bIdle);
+    /* Eixo do cano em idle, no espaço da vmCamera: Slider→Barrel (ossos do rig
+       da arma paga) contra o eixo óptico. Só existe onde o rig tem os dois ossos. */
+    r.cano = await page.evaluate((w) => {
+      const game = window.__game; const entry = window.__authoredVm.entry(w);
+      const slider = entry.scene.getObjectByName('Slider'); const barrel = entry.scene.getObjectByName('Barrel');
+      if (!slider || !barrel) return null;
+      entry.scene.updateWorldMatrix(true, true); game.vmCamera.updateWorldMatrix(true, false);
+      const a = new (slider.position.constructor)(); const b = a.clone();
+      slider.getWorldPosition(a); barrel.getWorldPosition(b);
+      game.vmCamera.worldToLocal(a); game.vmCamera.worldToLocal(b);
+      const d = b.clone().sub(a); const len = d.length(); if (!len) return null;
+      d.divideScalar(len);
+      // câmera olha -Z: ângulo entre o cano e o eixo óptico
+      const anguloDeg = Math.acos(Math.max(-1, Math.min(1, -d.z))) * 180 / Math.PI;
+      return { anguloDeg: +anguloDeg.toFixed(1), dir: [+d.x.toFixed(3), +d.y.toFixed(3), +d.z.toFixed(3)], comprimentoM: +len.toFixed(4) };
+    }, arma);
 
     await page.evaluate(() => {
       const game = window.__game;
@@ -753,6 +833,17 @@ for (const r of relatorio) {
       (frame.maoComponentes || []).filter((c) => c.px >= frame.maoPx * 0.18).length >= 2)) {
       f.push('P1 mãos: a mão de apoio não se separa da dominante durante a recarga');
     }
+    /* P1 duas mãos em IDLE e FIRE: cada LUVA precisa aparecer por si. Só vale
+       para rig com luva por lado (pack pago e AK golden); o molde CS 1.6 não
+       tem luva nem lado. Procedência do teto em LUVA_MIN_PX. */
+    if (r.luvaTris > 0) {
+      for (const [nome, frame] of [['idle', i], ['fire', r.tiro]]) {
+        if (!frame) continue;
+        if (frame.luvaEsqPx < LUVA_MIN_PX || frame.luvaDirPx < LUVA_MIN_PX) {
+          f.push(`P1 duas mãos (${nome}): luva esquerda ${frame.luvaEsqPx}px, direita ${frame.luvaDirPx}px; mínimo ${LUVA_MIN_PX}px cada`);
+        }
+      }
+    }
     if (i.armaFrac > 0.28) f.push(`P2 escala: arma ocupa ${(i.armaFrac * 100).toFixed(0)}% do quadro`);
     const weaponDiagFraction = i.armaDiag / Math.hypot(W, H);
     if (i.armaFrac < 0.02 && weaponDiagFraction < 0.12) {
@@ -761,6 +852,9 @@ for (const r of relatorio) {
     if (i.armaBordas >= 3) f.push(`P2 quadro: arma estoura ${i.armaBordas} bordas`);
     if (r.arma === 'pistol' && i.armaAspecto < 0.65) {
       f.push(`P2 silhueta: pistola vira lâmina vertical (largura/altura ${i.armaAspecto.toFixed(2)}; mínimo 0,65)`);
+    }
+    if (r.cano && r.cano.anguloDeg > CANO_MAX_DEG) {
+      f.push(`P2 cano: eixo do cano a ${r.cano.anguloDeg}° do eixo óptico (máximo ${CANO_MAX_DEG}°; cano vertical/lâmina)`);
     }
     if (r.arma === 'pistol' && i.maoArmaRazao > 4.0) {
       f.push(`P2 proporção: mãos ocupam ${i.maoArmaRazao.toFixed(1)}× os pixels da arma; máximo 4,0×`);
