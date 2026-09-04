@@ -3466,6 +3466,46 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-137 · P0: arquivo não catalogado sob `audio/piloto/` entrava no pacote~~ · RESOLVIDO 04/09
+
+**Sintoma.** A trava de licença declarada fechada na 2ª rodada não estava fechada.
+Reproduzido pela auditoria independente e confirmado aqui, com o empacotador real:
+
+```
+fonte `proibida-standalone`, derivados: [], manifest -> audio/piloto/nao-catalogado.wav
+node scripts/build-audio-pack.mjs out --raiz=… --ledger=…
+  -> PACK: 1 arquivos hasheados | exit 0 | zip gerado com o arquivo dentro
+```
+
+**Causa raiz — a FORMA da régua.** `scripts/build-audio-pack.mjs` montava uma **denylist**
+a partir de `ledger.derivados`: barrava o hash conhecido e deixava passar o desconhecido.
+`tools/eval/assets-check.mjs` dava `continue` em hash desconhecido, e
+`tools/gen-audio-manifest.mjs` tinha a terceira cópia da mesma decisão errada.
+
+É a lição 1 do `docs/LICOES.md` com outra roupa: a régua perguntava *"este arquivo é um mau
+conhecido?"* e era **estruturalmente incapaz** de ver o estado ruim — "asset não
+catalogado" era justamente o que passava.
+
+**Conserto.** A regra virou **allowlist** e passou a morar em `tools/audio/politica.mjs`,
+uma vez só para as três camadas (lição 2 — três cópias divergem na próxima edição). Sob
+`prefixoDerivado`, nada atravessa sem estar no ledger com hash coerente, `aprovado`, evento
+em `derivado` com `caminhoRuntime: "arma"` e fonte compatível. Legado reprova por NOME.
+
+**Régua:** `eval:audioproc` PRV10 (empacotador, três cenários) e PRV11 (gerador), mais a
+cláusula de procedência do `assets-check`. Cada uma com IRMÃ, porque um empacotador que
+recusasse tudo passaria na cláusula principal sem proteger nada. Commit `58d6dc10`.
+
+**O que NÃO ficou coberto, e está escrito:** pós-rename para `audio/a/<sha1>` o prefixo
+some e um derivado não catalogado fica indistinguível de qualquer outro áudio; o legado é
+barrado por nome e renomeá-lo o faria escapar. A camada decisiva é o empacotador, que roda
+antes do rename.
+
+**Lição de processo:** as rodadas 2 e 3 declararam "todos os bloqueadores fechados". A
+lista estava completa **até onde aquela revisão olhou** — não é a mesma coisa. Os títulos
+do handoff foram corrigidos para "fechados na Nª rodada".
+
+---
+
 ### ~~BUG-132 · Rajada com cache frio baixava e decodificava o mesmo sample uma vez por tiro~~ · RESOLVIDO 04/09
 
 **Causa raiz.** `public/js/audio.js`, `_shotSample` marcava "carregando" com

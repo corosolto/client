@@ -1,6 +1,6 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (terceira rodada: achados da segunda revisão independente).
+Atualizado em 2026-09-04 (quarta rodada: escape P0 achado pela auditoria final).
 
 ## Objetivo e definição de pronto
 
@@ -53,6 +53,8 @@ integração ia herdar calada.
 | `f8b1eb7c` | `sha256Fonte` exige formato E é conferido contra o arquivo real (PRV8) |
 | `159d6fe7` | **gate de capacidade**: só se aprova o que o runtime sabe tocar (CAP) |
 | `a6fe38c7` | legado CS/Valve/UT catalogado e bloqueado (PRV9) |
+| `7cec535f` | handoff da 3ª rodada e BUG-132..136 |
+| `58d6dc10` | **P0 fail-closed**: allowlist no prefixo derivado, nas três camadas |
 
 ## Fonte e licença
 
@@ -217,6 +219,54 @@ PRV5 foi medida numa fixture local de 301 caminhos: caminho sob o prefixo sem en
 ledger **reprova**; com hash correto **passa**; com o hash trocado **reprova** por "o
 arquivo que a build serve não é o que foi aprovado".
 
+## O ESCAPE P0 DA 4ª RODADA — e a correção que ele forçou
+
+**A auditoria final provou que a trava de licença que eu declarei fechada não estava
+fechada.** Reproduzido com o empacotador real:
+
+```
+fonte `proibida-standalone`, derivados: [], manifest -> audio/piloto/nao-catalogado.wav
+node scripts/build-audio-pack.mjs out --raiz=… --ledger=…
+  -> PACK: 1 arquivos hasheados | exit 0 | zip gerado, com o arquivo dentro
+```
+
+**A causa é a forma da régua, não um descuido pontual.** Eu montava uma DENYLIST a partir
+de `ledger.derivados`: ela barrava o hash conhecido e deixava passar o desconhecido. É a
+lição 1 do `docs/LICOES.md` na veia — a régua perguntava *"este arquivo é um mau
+conhecido?"* e era **estruturalmente incapaz** de ver o estado ruim, que era exatamente
+"não catalogado". O `assets-check` dava `continue` no mesmo caso, e o gerador carregava uma
+terceira cópia da mesma decisão errada.
+
+**Correção:** a regra virou ALLOWLIST e passou a morar em `tools/audio/politica.mjs`, uma
+vez só para as três camadas — três cópias divergiriam na próxima edição (lição 2). Sob
+`prefixoDerivado`, nada atravessa sem estar no ledger com hash coerente, `aprovacao:
+"aprovado"`, evento em `derivado` com `caminhoRuntime: "arma"` e fonte compatível. Caminho
+do legado reprova por NOME.
+
+| Prova | Camada | Antes | Depois |
+|---|---|---|---|
+| PRV10a não catalogado sob o prefixo | empacotador | **exit 0, zip gerado** | recusa |
+| PRV10b IRMÃ: catalogado/aprovado/livre | empacotador | — | aceita e gera o zip |
+| PRV10c caminho do legado por nome | empacotador | aceitava | recusa |
+| PRV11 + irmã | gerador | deixava no manifest | tira o não catalogado, mantém o outro |
+| PRV5 + irmã | `assets-check` | `continue` mudo | recusa; a irmã passa |
+
+As irmãs não são enfeite: sem elas, um empacotador que recusasse tudo passaria em PRV10a
+sem proteger nada.
+
+### O que esta correção NÃO cobre, dito na cara
+
+- **Pós-rename não há cobertura por conteúdo.** Depois que o empacotador reescreve para
+  `audio/a/<sha1>`, o prefixo some e um derivado não catalogado fica indistinguível de
+  qualquer outro áudio. Por isso a camada **decisiva** é o empacotador, que roda antes do
+  rename. O `assets-check` é segunda linha.
+- **O legado é barrado por NOME, não por conteúdo.** Não há hash porque os arquivos não
+  existem em clone limpo. Renomear um arquivo legado o faria escapar do bloqueio nominal.
+  Isso é limitação declarada, não cobertura.
+- **A 2ª e a 3ª rodada superdeclararam.** Os títulos "todos fechados" viraram "fechados na
+  Nª rodada", porque o P0 mostra que a lista de bloqueadores nunca esteve completa — ela
+  estava completa *até onde aquela revisão olhou*.
+
 ## ESTADO POR EVENTO — as cinco situações, sem misturar
 
 O piloto tem 8 eventos. Chamar tudo de "pendente" esconde que os motivos são
@@ -261,7 +311,7 @@ mudos no jogo. **7 dos 8 eventos estão neste estado.** Bloqueio 5.
 nome de Valve/Epic. **Esta lane não substituiu nenhum**, e a PRV5 não os cobre porque não há
 hash em clone limpo. Catalogados e bloqueados. Bloqueio 6.
 
-## Os cinco achados da segunda revisão — todos fechados
+## Os cinco achados da segunda revisão — fechados na 3ª rodada
 
 | Achado | O que era | Régua |
 |---|---|---|
@@ -288,7 +338,7 @@ Detalhes medidos:
   e exit 1. Inventário real regerado: 900 arquivos, 900 `ok/ok`, 0 falhas, com os sha-256 e
   os valores de pico/loudness idênticos aos de antes.
 
-## Os cinco bloqueadores da revisão independente — todos fechados
+## Os cinco bloqueadores da 1ª revisão — fechados na 2ª rodada
 
 Cada um com teste vermelho antes do conserto. Dois deles eram defeitos **nas minhas
 próprias réguas da rodada anterior**, e é isso que o corolário do `AGENTS.md` prevê: quem
@@ -377,8 +427,9 @@ bloqueio 2 (lei de distância), por camada em vez de curva inventada.
 ## Seleção reversível e o fallback
 
 `derivados` está **vazio** e os 8 eventos do piloto estão em `decisao: "synth"`. Esse é o
-estado correto: o pacote não foi baixado, e preencher hash e origem de arquivo que ninguém
-viu seria inventar a procedência que o contrato existe para impedir.
+estado correto **mesmo com o pacote já baixado** — ele foi baixado, inventariado e
+catalogado em 04/09, com 900 WAVs em staging privado. O que falta não é o arquivo: é a
+ESCUTA. Derivado nasce de som ouvido e aprovado, e nada foi ouvido.
 
 O A/B é uma palavra no ledger: `synth` ↔ `derivado` por evento. No runtime, o interruptor
 que já existia continua valendo — `weaponSamples` no manifest liga o caminho por sample, e
@@ -476,12 +527,16 @@ qualquer pessoa baixa um pacote de sons navegável, sem o jogo. É literalmente 
 Fab Standard License proíbe — `redistribuicao: proibida-standalone`. **Nome hasheado não
 resolve**: o que é redistribuído é o conteúdo, não o nome.
 
-O que está feito é a **proibição**, em duas camadas, para que nada vaze por engano:
+O que está feito é a **proibição**, em três camadas e **fail-closed desde a 4ª rodada**
+(até ela, era fail-open — ver o escape P0 acima):
 
 | Camada | Onde | O que faz |
 |---|---|---|
-| trava | `scripts/build-audio-pack.mjs` | recusa por sha-256 e sai 1 **antes** de o zip existir |
-| 2ª camada | `tools/eval/assets-check.mjs` | reprova o pacote instalado que contenha derivado proibido |
+| autoria | `tools/gen-audio-manifest.mjs` | não deixa entrar no manifest local |
+| **decisiva** | `scripts/build-audio-pack.mjs` | recusa e sai 1 **antes** de o zip existir |
+| 2ª linha | `tools/eval/assets-check.mjs` | reprova o pacote instalado |
+
+As três chamam `tools/audio/politica.mjs`, a mesma função — não três cópias da decisão.
 
 **O que NÃO está decidido, e não foi inventado:** como o derivado chega ao jogador sem ser
 redistribuído como pacote separado. As opções — servir individualmente a partir do build,
@@ -574,7 +629,7 @@ Substituir isso é outra frente, do tamanho do piloto inteiro. **Decisão do don
 ```bash
 npm run eval:audioalcance      # ALC1-ALC3  pipeline alcança o que o código nomeia
 npm run eval:audioespacial     # ESP1-ESP9  pan, propagação, duck, fallback, volume, rajada
-npm run eval:audioproc         # PRV1-PRV9  ledger, redistribuição, gerador, sha-fonte, legado
+npm run eval:audioproc         # PRV1-PRV11 ledger, redistribuição, fail-closed, sha-fonte, legado
 npm run eval:audiocapacidade   # CAP1-CAP4  só se aprova o que o runtime sabe tocar
 npm run audio:inventario:autoteste
 npm run audio:shortlist:autoteste

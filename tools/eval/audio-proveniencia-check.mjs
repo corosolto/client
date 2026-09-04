@@ -39,11 +39,12 @@
      PRV11 fail-closed também no GERADOR, com a mesma irmã.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
-   `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
-   enquanto o pacote não foi baixado. Preencher hash e origem de arquivo que
-   ninguém viu seria inventar procedência — exatamente o que o contrato existe
-   para impedir. A régua fica verde nesse estado e vermelha no instante em que
-   alguém escrever um derivado incompleto.
+   `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO — e
+   continua sendo DEPOIS do download (o pacote foi baixado, inventariado e
+   catalogado em 04/09). O que falta não é o arquivo: é a ESCUTA. Derivado nasce
+   de som ouvido e aprovado, e nada foi ouvido. Preencher hash e origem sem isso
+   seria inventar procedência. A régua fica verde nesse estado e vermelha no
+   instante em que alguém escrever um derivado incompleto.
 
    ── AS MUTAÇÕES QUE PROVAM ─────────────────────────────────────────────────
      --mutante=aprovado-sem-escuta  derivado sintético `aprovado` com escutaAB

@@ -46,8 +46,9 @@ proíbe o WAV solto num release, num zip navegável e no repositório.
 ## `derivados`
 
 Uma entrada por arquivo que chega ao jogador. Hoje a lista está **vazia**, e isso é o
-estado correto: o pack ainda não foi baixado, e campo de asset inexistente preenchido com
-palpite é pior que campo ausente.
+estado correto **mesmo com o pack já baixado** (04/09, 900 WAVs em staging privado): nada
+foi escutado, nada foi aprovado, e derivado só existe depois de escuta. Campo de asset
+preenchido com palpite é pior que campo ausente.
 
 | Campo | O que é |
 |---|---|
@@ -77,17 +78,27 @@ que a Fab Standard License proíbe — `redistribuicao: proibida-standalone`. **
 não resolve**: o que é redistribuído é o conteúdo, não o nome, e um zip de 300 WAVs com
 nomes opacos continua sendo um pacote de sons.
 
-O que está implementado é a **proibição**, em duas camadas:
+O que está implementado é a **proibição**, em três camadas e **fail-closed**:
 
 | Camada | Onde | O que faz |
 |---|---|---|
-| trava | `scripts/build-audio-pack.mjs` | recusa por sha-256 e sai 1 **antes** de o zip existir |
-| segunda camada | `tools/eval/assets-check.mjs` | reprova o pacote instalado que contenha um derivado proibido |
+| autoria | `tools/gen-audio-manifest.mjs` | não deixa entrar no manifest local |
+| **decisiva** | `scripts/build-audio-pack.mjs` | recusa e sai 1 **antes** de o zip existir |
+| 2ª linha | `tools/eval/assets-check.mjs` | reprova o pacote instalado |
 
-A trava é no empacotador porque é ele que monta o zip, e ele tem os bytes. A régua do
-`assets-check` casa por **sha-256**, não por caminho — o empacotador reescreve todo caminho
-para `audio/a/<sha1>`, e a versão anterior desta cláusula filtrava por prefixo
-`audio/piloto/`, o que casava **zero** no manifest que o jogador recebe.
+As três chamam `tools/audio/politica.mjs` — a mesma função, não três cópias da decisão
+(lição 2). A camada decisiva é o empacotador porque ele roda **antes** do rename para
+`audio/a/<sha1>` e ainda vê o caminho.
+
+**A regra é ALLOWLIST.** Até a 4ª rodada era denylist, montada de `ledger.derivados`: um
+arquivo não catalogado sob `audio/piloto/` não casava hash nenhum, não era barrado, e o
+empacotador saía **0** gerando o zip com ele dentro. A régua perguntava "é um mau
+conhecido?" quando o estado ruim era "desconhecido" — lição 1. Agora, sob o prefixo
+derivado, o silêncio do ledger é recusa.
+
+**Limites declarados, não cobertos:** pós-rename o prefixo some e um derivado não
+catalogado é indistinguível de qualquer outro áudio; e o legado é barrado por NOME, porque
+não há hash — renomear um arquivo legado o faria escapar.
 
 ### O que NÃO está decidido
 
