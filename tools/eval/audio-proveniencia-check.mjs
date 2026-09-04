@@ -29,6 +29,8 @@
      PRV7  a `decisao`/`aprovacao` do ledger CONTROLA o gerador: derivado pendente
            ou rejeitado não sai no manifest nem com `weaponSamples: true`, e o
            aprovado sobrevive (cláusula irmã).
+     PRV8  `sha256Fonte` bate com o arquivo em `origemNoPack`, recalculado no
+           staging privado. Sem staging, declara NÃO MEDIDA — nunca finge prova.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
@@ -51,7 +53,7 @@
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,8 +135,15 @@ for (const d of L.derivados || []) {
   if (d.aprovacao && !APROVACAO.includes(d.aprovacao)) {
     erros.push(`PRV1 derivado \`${d.arquivo}\`: aprovacao "${d.aprovacao}" fora de ${APROVACAO.join('|')}.`);
   }
-  if (d.sha256 && !/^[0-9a-f]{64}$/.test(d.sha256)) {
-    erros.push(`PRV1 derivado \`${d.arquivo}\`: sha256 não é hash sha-256 hexadecimal.`);
+  /* Os DOIS hashes exigem formato. `sha256Fonte` só era cobrado como "texto não
+     vazio", então "conferido" ou "TODO" passavam por procedência — campo com cara de
+     prova e conteúdo de bilhete. */
+  for (const campo of ['sha256', 'sha256Fonte']) {
+    if (d[campo] && !/^[0-9a-f]{64}$/.test(d[campo])) {
+      erros.push(`PRV1 derivado \`${d.arquivo}\`: \`${campo}\` não é hash sha-256 hexadecimal`
+        + ` (veio "${String(d[campo]).slice(0, 24)}"). Campo de procedência que aceita texto livre`
+        + ' não prova nada.');
+    }
   }
 }
 if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fonte(s) e ${(L.derivados || []).length} derivado(s) com a forma completa.`);
@@ -347,6 +356,59 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
       }
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV8: `sha256Fonte` bate com `origemNoPack` no staging privado ────────
+   Formato certo não é prova: um hash bem formado e inventado passa na PRV1. A
+   prova é recalcular o hash do arquivo FONTE e comparar.
+
+   Isto só é mensurável onde o staging privado existe. Em clone limpo — e é assim
+   que a Vercel builda — a cláusula se declara **NÃO MEDIDA** e diz o que falta,
+   em vez de passar calada fingindo prova (lição 5). Ela não reprova a régua nesse
+   caso, porque a ausência do pacote privado é o estado normal de um clone: o que
+   ela não pode fazer é dizer "conferido" sem ter conferido. */
+{
+  const stagingDe = (id) => L.fontes?.[id]?.stagingPrivado;
+  const derivados = (L.derivados || []).filter((d) => stagingDe(d.fonte));
+  if (!derivados.length) {
+    notas.push('PRV8 nada a conferir: nenhum derivado aponta para fonte com staging privado.');
+  } else {
+    const semStaging = [], divergentes = [], conferidos = [];
+    for (const d of derivados) {
+      /* `stagingPrivado` é relativo ao HOME do dono, não ao repositório — o staging
+         mora fora da árvore de propósito. */
+      const base = join(process.env.HOME || '', 'csbrasil', stagingDe(d.fonte));
+      const alvo = join(base, 'extracted-wav', d.origemNoPack);
+      /* Duas ausências DIFERENTES. Staging inteiro ausente = clone limpo, não medido.
+         Staging presente e o arquivo apontado ausente = `origemNoPack` errado, que é
+         defeito e tem que reprovar. Misturar os dois deixaria um caminho inventado
+         passar como "não medido" na máquina que TEM o pacote. */
+      if (!existsSync(alvo)) {
+        if (existsSync(base)) {
+          erros.push(`PRV8 \`origemNoPack\` de ${d.arquivo} aponta para \`${d.origemNoPack}\`, que não`
+            + ' existe no staging privado — e o staging ESTÁ nesta máquina. Caminho de origem errado.');
+        } else semStaging.push(`${d.arquivo} -> ${d.origemNoPack}`);
+        continue;
+      }
+      const real = createHash('sha256').update(readFileSync(alvo)).digest('hex');
+      if (real !== d.sha256Fonte) {
+        divergentes.push(`${d.arquivo}: origemNoPack tem ${real.slice(0, 12)}…, ledger diz ${String(d.sha256Fonte).slice(0, 12)}…`);
+      } else conferidos.push(d.arquivo);
+    }
+    if (divergentes.length) {
+      erros.push(`PRV8 ${divergentes.length} derivado(s) com \`sha256Fonte\` que NÃO bate com o arquivo`
+        + ` apontado por \`origemNoPack\` (${divergentes.slice(0, 3).join('; ')}).`
+        + ' O derivado não veio do arquivo que o ledger diz que ele veio.');
+    }
+    if (semStaging.length) {
+      notas.push(`PRV8 NÃO MEDIDA para ${semStaging.length} derivado(s): o staging privado não existe`
+        + ` nesta máquina (ex.: ${semStaging[0]}). Em clone limpo isso é o normal — a cláusula`
+        + ' diz que não conferiu em vez de dizer que conferiu.');
+    }
+    if (conferidos.length) {
+      notas.push(`PRV8 ok: ${conferidos.length} derivado(s) com sha256Fonte conferido contra o arquivo real.`);
+    }
+  }
 }
 
 const rotulo = mutante ? `PROVENIENCIA [mutante=${mutante}]` : 'PROVENIENCIA';
