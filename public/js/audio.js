@@ -319,7 +319,7 @@ export class Sfx {
     this.ensure(); if (!this.ctx) return;
     const R = this.ctx, t = R.currentTime + propDelay;
     // sidechain: tiro abaixa vozes/rádio/jingles por ~160ms (tiro perto ducka mais)
-    this.duck(dist < 12 ? 0.3 : 0.55, 0.16);
+    this.duck(Sfx.duckTiro(dist), 0.16);
     const bus = R.createGain(); const lim = R.createDynamicsCompressor();
     lim.threshold.value = -5; lim.knee.value = 8; lim.ratio.value = 14; lim.attack.value = 0.002; lim.release.value = 0.12;
     if (pan) {   // StereoPanner entre o bus da voz e o compressor (pan simples, sem HRTF)
@@ -444,6 +444,46 @@ export class Sfx {
     }
     this._send(out, 0.06 + far * 0.14);   // reverb opt-in: mais "sala" de longe, quase nada em 1ª pessoa
   }
+  /* UMA regra de duck para sample e synth — o sample usava 0.3 fixo (lição 2).
+     Régua: `npm run eval:audioespacial`, cláusula ESP4. */
+  static duckTiro(dist) { return dist < 12 ? 0.3 : 0.55; }
+
+  /* Tiro por sample no grafo: HTMLAudio não tem pan nem `start(t)`, então pan e
+     propDelay que o game.js calcula eram descartados. Régua ESP2/ESP3. */
+  _shotSample(url, dist, vol, pan, propDelay) {
+    this.duck(Sfx.duckTiro(dist), 0.16);
+    this.ensure();
+    this._shotBuf = this._shotBuf || new Map();
+    const buf = this._shotBuf.get(url);
+    if (!this.ctx || buf === null) { this._sample(url, vol); return true; }   // null = falhou antes: não retenta
+    if (buf === undefined) {
+      this._shotBuf.set(url, undefined);
+      (async () => {
+        try {
+          const res = await fetch(encodeURI(url));
+          if (!res.ok) throw new Error(`http ${res.status}`);
+          this._shotBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
+        } catch (error) {
+          this._shotBuf.set(url, null);
+          console.warn('[sfx] sample de tiro não carregou; seguindo no synth/HTMLAudio', url, error?.message || error);
+        }
+      })();
+      /* Cache frio toca pelo caminho antigo: sem pan, mas o primeiro tiro da arma
+         não pode sumir esperando o decode. Régua ESP1. */
+      this._sample(url, vol);
+      return true;
+    }
+    const R = this.ctx, t = R.currentTime + propDelay;
+    const src = R.createBufferSource(); src.buffer = buf;
+    const g = R.createGain(); g.gain.value = Math.min(1, this.vol * vol);
+    src.connect(g);
+    if (pan) {
+      const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
+      g.connect(pz); pz.connect(this.master);
+    } else g.connect(this.master);
+    src.start(t); src.stop(t + buf.duration + 0.05);
+    return true;
+  }
   // tiro por arma: synth por classe é PRIMÁRIO (samples CC0 = opt-in via "weaponSamples":true).
   // dist em metros (game.js: 0 = player, _sd = distância do bot). pan/propDelay só de bots.
   shotWeapon(w, dist = 0, vol = 1, pan = 0, propDelay = 0) {
@@ -459,7 +499,7 @@ export class Sfx {
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
     vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f) { this.duck(0.3, 0.16); this._sample(f, vol); return; } }
+    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f && this._shotSample(f, dist, vol, pan, propDelay)) return; }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.

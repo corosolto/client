@@ -164,6 +164,7 @@ const LONGE = { dist: 40, pan: -0.8, prop: 40 / 343 };
 
 /* Um Sfx por cenário: cache de buffer e round-robin guardam estado entre tiros,
    e cenário que herda estado do anterior mede o anterior. */
+let mutouAlgo = false;
 async function tiro({ samples, dist, pan, prop, arma = ARMA, aquecer = true }) {
   LOG = novoLog();
   const sfx = new Sfx();
@@ -178,8 +179,18 @@ async function tiro({ samples, dist, pan, prop, arma = ARMA, aquecer = true }) {
     return duck0(amt, hold);
   };
   sfx.ensure();
-  const p = mutante === 'sem-pan' ? 0 : pan;
-  const d = mutante === 'sem-propagacao' ? 0 : prop;
+  /* A mutação entra DENTRO do Sfx e a cláusula continua cobrando o valor PEDIDO.
+     Mutar o valor pedido seria mutação que se auto-anula: com propDelay 0 dos dois
+     lados, "começou cedo demais" nunca acontece e a régua ficaria verde num código
+     quebrado — lição 8. */
+  const p = pan, d = prop;
+  if (mutante === 'sem-pan' || mutante === 'sem-propagacao') {
+    const s0 = sfx.shotWeapon.bind(sfx);
+    sfx.shotWeapon = (w, dd, vv, pp, tt) => {
+      mutouAlgo = mutouAlgo || (mutante === 'sem-pan' ? pp !== 0 : tt !== 0);
+      return s0(w, dd, vv, mutante === 'sem-pan' ? 0 : pp, mutante === 'sem-propagacao' ? 0 : tt);
+    };
+  }
   if (aquecer) {
     /* Primeiro tiro = cache frio (ESP1). O segundo é o que ESP2/ESP3 medem: é o
        regime do jogo, onde a mesma arma dispara centenas de vezes por partida. */
@@ -266,6 +277,17 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     + ` (${armaSemSample.log.nos} nós) o synth tinha que tocar. Veto do dono: o fallback`
     + ' sintetizado não morre quando o piloto Fab entra.',
     'fallback synth intacto sem `weaponSamples` e para arma fora do pack.');
+}
+
+/* Lição 8: mutação que não aplicou parece mutação que passou. A conferência é no
+   fim porque só os cenários com pan/propagação não-zero têm o que mutar. */
+if ((mutante === 'sem-pan' || mutante === 'sem-propagacao') && !mutouAlgo) {
+  console.error(`mutante ${mutante} não interceptou nenhuma chamada com valor não-zero — não aplicou.`);
+  process.exit(2);
+}
+if (mutante === 'duck-fixo' && Sfx.duckTiro(40) === 0.3) {
+  console.error('mutante duck-fixo não muda nada: o duck do synth a 40 m já é 0.3 — não aplicou.');
+  process.exit(2);
 }
 
 const rotulo = mutante ? `ESPACIAL-AUDIO [mutante=${mutante}]` : 'ESPACIAL-AUDIO';
