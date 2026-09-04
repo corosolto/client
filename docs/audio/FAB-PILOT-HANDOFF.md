@@ -1,6 +1,6 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (segunda rodada: bloqueadores da revisão independente).
+Atualizado em 2026-09-04 (terceira rodada: achados da segunda revisão independente).
 
 ## Objetivo e definição de pronto
 
@@ -47,6 +47,12 @@ integração ia herdar calada.
 | `fa513890` | **P0**: trava de redistribuição Fab + PRV5 volta a poder disparar |
 | `2b66bc80` | a decisão do ledger controla o gerador (PRV7) |
 | `c9f5e49f` | shortlist por metadado e escuta A/B local |
+| `9940d631` | handoff da 2ª rodada e BUG-128..131 |
+| `68b9f862` | rajada com cache frio faz 1 requisição, não 1 por tiro (ESP9) |
+| `0ce13b40` | inventariador sinaliza falha POR ARQUIVO e sai 1 |
+| `f8b1eb7c` | `sha256Fonte` exige formato E é conferido contra o arquivo real (PRV8) |
+| `159d6fe7` | **gate de capacidade**: só se aprova o que o runtime sabe tocar (CAP) |
+| `a6fe38c7` | legado CS/Valve/UT catalogado e bloqueado (PRV9) |
 
 ## Fonte e licença
 
@@ -211,6 +217,77 @@ PRV5 foi medida numa fixture local de 301 caminhos: caminho sob o prefixo sem en
 ledger **reprova**; com hash correto **passa**; com o hash trocado **reprova** por "o
 arquivo que a build serve não é o que foi aprovado".
 
+## ESTADO POR EVENTO — as cinco situações, sem misturar
+
+O piloto tem 8 eventos. Chamar tudo de "pendente" esconde que os motivos são
+diferentes e as saídas também.
+
+| Evento | Candidato no pacote | Caminho de runtime | Estado |
+|---|---|---|---|
+| `ak.shot` | 43, em 8 famílias | **`arma`** (específico) | **pronto para escuta** |
+| `ak.magOut` | 6 (`Unload_1`) | `global` | **sem caminho runtime** |
+| `ak.magIn` | 9 | `global` | **sem caminho runtime** |
+| `ak.bolt` | — | `global` | **sem candidato** + sem caminho |
+| `passo.concreto` | 24 | `global` | **sem caminho runtime** |
+| `morte.corpo` | 4 (`Body_Falling`) | `nenhum` | **sem caminho runtime** |
+| `impacto.concreto` | — | `nenhum` | **sem candidato** + sem caminho |
+| `impacto.metal` | — | `nenhum` | **sem candidato** + sem caminho |
+
+E, atravessando todos eles, o **bloqueio de licença/canal**: mesmo `ak.shot`, que é o único
+pronto dos dois lados, não pode chegar ao jogador enquanto a forma de incorporação não for
+decidida.
+
+### O que cada estado significa
+
+**Fechado** — a pipeline faz e há régua com mutação que prova. Alcance do empacotamento,
+espacialização do tiro, procedência, recusa de redistribuição, capacidade, inventário.
+
+**Bloqueado por licença/canal** — `audio-pack.zip` é asset de release e é um pacote só de
+áudio, que é a forma que a Fab Standard License proíbe. A trava está implementada; a rota de
+incorporação **não foi escolhida** porque a diferença entre "incorporado" e "redistribuído"
+é julgamento jurídico do dono. Bloqueio 1.
+
+**Sem candidato** — o pacote não tem som semanticamente bom: `ak.bolt`,
+`impacto.concreto`, `impacto.metal`. Não foram forçados. Bloqueio 4.
+
+**Sem caminho runtime** — o jogo não sabe tocar aquele som *especificamente*. Medido por
+sonda: `reloadStart()`, `reloadEnd()` e `bolt()` não recebem arma e leem chaves globais;
+`step(surface)` recebe a superfície e mesmo assim sorteia de `cs.footsteps`, pool única;
+`death()` e `ricochet()` não consultam o pack. Aprovar aqui poria o mesmo ferrolho em 26
+armas, o mesmo passo em grama e metal, e deixaria morte e impactos aprovados no papel e
+mudos no jogo. **7 dos 8 eventos estão neste estado.** Bloqueio 5.
+
+**Legado ainda pendente** — 45 de 62 caminhos do `manifest.example.json` versionado têm
+nome de Valve/Epic. **Esta lane não substituiu nenhum**, e a PRV5 não os cobre porque não há
+hash em clone limpo. Catalogados e bloqueados. Bloqueio 6.
+
+## Os cinco achados da segunda revisão — todos fechados
+
+| Achado | O que era | Régua |
+|---|---|---|
+| `sha256Fonte` era texto livre | "conferido a olho" passava por procedência | PRV1 + **PRV8** |
+| ledger aprovava o que o runtime não toca | 7 de 8 eventos sem caminho específico | **CAP1–CAP4** |
+| legado fora de cobertura | 45 caminhos CS/Valve/UT sem catalogação | **PRV9** |
+| inventariador mascarava falha | WAV ilegível saía com tudo `null`, exit 0 | INV6–INV8 |
+| cache duplicava download | rajada de 10 tiros = 10 fetch + 10 decode | **ESP9** |
+
+Detalhes medidos:
+
+- **PRV8** — formato não é prova. Um hash bem formado e inventado passa na PRV1 e morre na
+  PRV8, que recalcula o sha-256 do arquivo em `origemNoPack`. Em clone limpo declara **NÃO
+  MEDIDA** em vez de fingir. E separa duas ausências que pareciam uma: staging inteiro
+  ausente é não medido; staging presente com o arquivo apontado ausente é `origemNoPack`
+  errado, e reprova.
+- **CAP4 pegou a própria sonda.** A primeira versão gravava só `new Audio()`, e como
+  `ak.shot` agora toca por WebAudio ela mediu `nenhum` para tudo — o que bateria com um
+  ledger todo `nenhum` e ficaria verde pelos dois lados errados. A cláusula irmã existe
+  exatamente para isso.
+- **ESP9** — `_shotBuf.set(url, undefined)` era sentinela que não sentinelava: `.get()`
+  devolve `undefined` para chave ausente também. 10 fetch e 10 decode viraram 1 e 1.
+- **INV6–INV8** — `medicao` por arquivo (`ok · falhou · ausente · pulado`), `falhas` no topo
+  e exit 1. Inventário real regerado: 900 arquivos, 900 `ok/ok`, 0 falhas, com os sha-256 e
+  os valores de pico/loudness idênticos aos de antes.
+
 ## Os cinco bloqueadores da revisão independente — todos fechados
 
 Cada um com teste vermelho antes do conserto. Dois deles eram defeitos **nas minhas
@@ -331,17 +408,25 @@ npm run check:fast   ->  73/74 passaram (107,6 s)   [1ª rodada]
 
 npm run check:fast   ->  74/75 passaram ( 92,7 s)   [2ª rodada]
                          falhou: audio:check
+
+npm run check:fast   ->  75/76 passaram ( 92,4 s)   [3ª rodada]
+                         falhou: audio:check
 ```
 
-**Nenhuma regressão nova em nenhuma das duas.** Os 5 passos acrescentados no total
-(`eval:audioalcance`, `eval:audioespacial`, `eval:audioproc`, `audio:inventario:autoteste`,
-`audio:shortlist:autoteste`) entram verdes, os 69 do baseline continuam passando, e o único
-vermelho é sempre o mesmo, pelo mesmo motivo de ambiente. `docs:check` e `arch:check`
-verdes com os blocos regerados.
+**Nenhuma regressão nova em nenhuma das três.** Os 6 passos acrescentados no total
+(`eval:audioalcance`, `eval:audioespacial`, `eval:audioproc`, `eval:audiocapacidade`,
+`audio:inventario:autoteste`, `audio:shortlist:autoteste`) entram verdes, os 69 do baseline
+continuam passando, e o único vermelho é sempre o mesmo, pelo mesmo motivo de ambiente.
+`docs:check` e `arch:check` verdes com os blocos regerados.
 
-As nove mutações das três réguas foram rodadas contra o código já verde e **todas as nove
-saem 1**: ALC `nome-trocado|sem-copia|sem-menu-music`, ESP `sem-pan|sem-propagacao|duck-fixo`,
-PRV `aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao`.
+As onze mutações das quatro réguas foram rodadas contra o código já verde e **todas saem 1**:
+ALC `nome-trocado|sem-copia|sem-menu-music`, ESP `sem-pan|sem-propagacao|duck-fixo`,
+PRV `aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao`,
+CAP `declara-errado|aprova-sem-caminho`.
+
+Fora dos mutantes nomeados, esta rodada mediu ainda: ESP9 com a guarda revertida (10 fetch e
+10 decode), PRV8 nos quatro estados de `sha256Fonte`, PRV9 nas quatro formas de furar o
+catálogo do legado, e INV6–INV8 com um WAV ilegível.
 
 ## Resultados aceitos e rejeitados
 
@@ -423,8 +508,35 @@ tende a cair — mas isso é raciocínio, não medição.
 ### 4. Três eventos do piloto sem candidato no pacote
 
 `ak.bolt`, `impacto.concreto` e `impacto.metal` não têm som semanticamente bom no Action
-Game Sounds Pack (ver a seção da shortlist). Não foram forçados. Ou saem do piloto, ou
-saem de outra fonte, ou ficam no synth. **Decisão do dono.**
+Game Sounds Pack. Não foram forçados. Ou saem do piloto, ou saem de outra fonte, ou ficam
+no synth. **Decisão do dono.**
+
+### 5. Sete dos oito eventos não têm caminho de runtime específico — NOVO
+
+Medido por sonda causal (`npm run eval:audiocapacidade`), só `ak.shot` tem caminho
+específico. `reloadStart()`, `reloadEnd()` e `bolt()` não recebem arma; `step(surface)`
+recebe a superfície e sorteia de uma pool única; `death()` e `ricochet()` não consultam o
+pack.
+
+**Não implementei os sete caminhos** — seria expandir escopo sem o dono pedir, e cada um é
+uma decisão de arquitetura de áudio (chave por arma? por superfície? pool por evento?). O
+que existe é a trava: CAP3 impede marcar `derivado` ou aprovar derivado para evento sem
+caminho `arma`. O estado bloqueado é honesto e a régua o mantém honesto.
+
+Para sair daqui é preciso decidir **e implementar** o formato de pack por evento. Ordem de
+custo/benefício sugerida, se o dono quiser seguir: `passo.<superfície>` (o jogo já sabe a
+superfície, falta só a chave), depois `weaponFoley.<arma>.<magOut|magIn|bolt>`, e por
+último morte e impactos, que precisam de caminho de sample do zero.
+
+### 6. Legado CS/Valve/UT ainda no manifest de exemplo — NOVO
+
+45 de 62 caminhos do `public/audio/manifest.example.json` versionado têm nome de Valve ou
+Epic. **Esta lane não substituiu nenhum deles.** Estão catalogados como
+`bloqueado-por-procedencia-desconhecida`, com a fonte marcada `redistribuicao: "proibida"`,
+e a PRV9 impede declarar que foram resolvidos ou que a PRV5 os cobre — ela não cobre, por
+falta de hash em clone limpo.
+
+Substituir isso é outra frente, do tamanho do piloto inteiro. **Decisão do dono.**
 
 ## Próximo passo concreto
 
@@ -445,24 +557,28 @@ saem de outra fonte, ou ficam no synth. **Decisão do dono.**
    npm run audio:ab -- /Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack --por=ruben
    ```
 
-   Comparar cada candidato contra o synth (lado B). As perguntas abertas são: qual das 8
-   famílias de `Gunshot_` soa como AK; se `Load_1` serve de ferrolho ou não; e o que fazer
-   com os três eventos sem candidato (bloqueio 4);
-10. só depois disso escrever as entradas de `derivados` no ledger, com os dois hashes e
-    `escutaAB` preenchido — a PRV2 reprova `aprovado` sem escuta;
-11. regerar o pack e rodar `assert:assets` contra ele: é lá que a cláusula de ambiente e a
-    PRV5 saem de fixture e viram medição de produção;
-12. medir o custo de rajada num navegador antes de expandir para outras armas.
+   **Vale a pena escutar só `ak.shot` agora** — é o único evento que está pronto dos dois
+   lados (tem candidato e tem caminho de runtime). A pergunta é qual das 8 famílias
+   `Gunshot_` soa como AK. Os outros eventos aparecem na página, mas aprovar qualquer um
+   deles hoje não chegaria ao jogo: a CAP3 reprova, e com razão;
+10. decidir os bloqueios 1 (canal), 5 (implementar caminho de runtime) e 6 (legado). Os
+    três são decisões de arquitetura ou jurídicas, não de execução;
+11. só depois escrever as entradas de `derivados` no ledger, com os dois hashes e
+    `escutaAB` preenchido — PRV2 reprova `aprovado` sem escuta, PRV8 confere o
+    `sha256Fonte` contra o arquivo real e CAP3 barra evento sem caminho;
+12. regerar o pack e rodar `assert:assets` contra ele;
+13. medir o custo de rajada num navegador antes de expandir para outras armas.
 
 ## Comandos de validação
 
 ```bash
 npm run eval:audioalcance      # ALC1-ALC3  pipeline alcança o que o código nomeia
-npm run eval:audioespacial     # ESP1-ESP8  pan, propagação, duck, fallback, volume
-npm run eval:audioproc         # PRV1-PRV7  ledger, redistribuição, controle do gerador
+npm run eval:audioespacial     # ESP1-ESP9  pan, propagação, duck, fallback, volume, rajada
+npm run eval:audioproc         # PRV1-PRV9  ledger, redistribuição, gerador, sha-fonte, legado
+npm run eval:audiocapacidade   # CAP1-CAP4  só se aprova o que o runtime sabe tocar
 npm run audio:inventario:autoteste
 npm run audio:shortlist:autoteste
-npm run check:fast             # os cinco acima entram aqui
+npm run check:fast             # os seis acima entram aqui
 npm run assert:assets          # PRV5 + ambiente contra o pacote instalado (precisa do pack)
 ```
 
@@ -472,6 +588,7 @@ Mutações que provam que cada uma morde:
 node tools/eval/audio-alcance-check.mjs --mutante=nome-trocado|sem-copia|sem-menu-music
 node tools/eval/audio-espacial-check.mjs --mutante=sem-pan|sem-propagacao|duck-fixo
 node tools/eval/audio-proveniencia-check.mjs --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao
+node tools/eval/audio-capacidade-check.mjs --mutante=declara-errado|aprova-sem-caminho
 ```
 
 ## Estado privado e hashes
@@ -481,7 +598,9 @@ Fora do Git, ignorado por `.gitignore` (`private-assets/`):
 ```
 /Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack/
   extracted-wav/catalog.json   sha256 51de2264a7c764053bda638d0eb40a852d2eb9942a54de0f3840c60a8b2dbea1
-  inventory.json               sha256 cde11d7759e2f81f6909035991999d08266537b777cb761a42e8b775283c27c6
+  inventory.json               sha256 abc2e6df2289159f2e8c648b913147d3b9006c791836cf5bbff93ccfdd533289
+                               (mudou na 3ª rodada: campo `medicao` por arquivo;
+                                os sha-256 e os níveis por arquivo são idênticos)
   shortlist-piloto.json        gerado por `npm run audio:shortlist`
   decisoes-escuta.jsonl        criado pela página A/B (não existe até alguém escutar)
 ```

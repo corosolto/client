@@ -3466,6 +3466,93 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-132 · Rajada com cache frio baixava e decodificava o mesmo sample uma vez por tiro~~ · RESOLVIDO 04/09
+
+**Causa raiz.** `public/js/audio.js`, `_shotSample` marcava "carregando" com
+`this._shotBuf.set(url, undefined)` — sentinela que não sentinela, porque `.get()` devolve
+`undefined` para chave ausente também. Todo tiro disparado antes do decode terminar
+reentrava no ramo de carga.
+
+**Medido** com rajada de 10 tiros e cache frio: **10 fetch e 10 decode** do mesmo arquivo.
+No jogo a rajada é maior — 8 bots podem disparar ~50 tiros/s (`game.js:6329`).
+
+**Conserto.** Mapa `_shotCarregando` separado guardando a Promise em voo, com `finally` que
+limpa. Depois: 1 fetch, 1 decode. **Régua:** `eval:audioespacial` ESP9; mutação trocando a
+guarda por `if (true)` volta a 10 e 10. Commit `68b9f862`.
+
+---
+### ~~BUG-133 · Inventariador mascarava falha por arquivo~~ · RESOLVIDO 04/09
+
+**Causa raiz.** `tools/audio/inventariar.mjs` decidia "ffprobe existe?" uma vez, no começo,
+e engolia a falha POR ARQUIVO num `catch {}`. Um WAV truncado saía com todos os campos
+`null`, `ferramentas.ffprobe: true`, `naoMedido: []` e código de saída 0 — indistinguível de
+uma medição bem-sucedida que achou null. Lição 5 dentro da ferramenta que existe para não
+mentir sobre o que mediu.
+
+**Conserto.** `medicao: {ffprobe, nivel}` por arquivo em `ok · falhou · ausente · pulado`,
+mais `erro`; `falhas` e `arquivosComFalha` no topo; exit 1 salvo `--tolerante`. O `nivel()`
+passou a olhar o código de saída do ffmpeg em vez de só procurar números no texto.
+**Régua:** `--autoteste` INV6/INV7, com INV8 IRMÃ exigindo que os arquivos válidos continuem
+medindo `ok` — marcar tudo como falha não é sinalizar falha. Commit `0ce13b40`.
+
+---
+### ~~BUG-134 · `sha256Fonte` aceitava texto livre~~ · RESOLVIDO 04/09
+
+**Causa raiz.** A PRV1 só cobrava `sha256Fonte` como "texto não vazio". `"conferido a olho"`
+passava por procedência — campo com cara de prova e conteúdo de bilhete.
+
+**Conserto em duas camadas, porque formato não é prova.** PRV1 exige 64 hex nos dois hashes;
+**PRV8** recalcula o sha-256 do arquivo em `origemNoPack` no staging privado e compara — um
+hash bem formado e inventado passa na PRV1 e morre ali. Em clone limpo a PRV8 declara **NÃO
+MEDIDA**, porque fingir prova é pior que não medir. E separa staging ausente (não medido) de
+`origemNoPack` errado com staging presente (reprova). Commit `f8b1eb7c`.
+
+---
+### ~~BUG-135 · Ledger podia aprovar evento que o runtime não sabe tocar~~ · RESOLVIDO 04/09
+
+**Causa raiz.** O ledger deixava qualquer um dos 8 eventos do piloto virar `derivado`
+aprovado. Medido por sonda causal, só **1 de 8** tem caminho específico:
+
+| evento | caminho | por quê |
+|---|---|---|
+| `ak.shot` | `arma` | `shotWeapon(w, …)` recebe a arma |
+| `ak.magOut`/`magIn`/`bolt` | `global` | `reloadStart`/`reloadEnd`/`bolt` não recebem arma |
+| `passo.concreto` | `global` | `step(surface)` sorteia de `cs.footsteps`, pool única |
+| `morte.corpo`, impactos | `nenhum` | `death()` e `ricochet()` não consultam o pack |
+
+Aprovar aqui poria o mesmo ferrolho em 26 armas, o mesmo passo em grama e metal, e deixaria
+morte e impactos aprovados no papel e mudos no jogo — falha silenciosa com carimbo de
+aprovação humana em cima.
+
+**Conserto.** `tools/eval/audio-capacidade-check.mjs`: a sonda INSTALA a chave que um caminho
+específico usaria, dispara o evento e olha o que tocou — não lê assinatura de função, que
+seria ler a declaração (lição 3). CAP3 barra `derivado`/`aprovado` para evento sem caminho
+`arma`. **CAP4 é a IRMÃ e pegou a própria sonda**: a primeira versão gravava só
+`new Audio()` e mediu `nenhum` para tudo, o que bateria com um ledger todo `nenhum`.
+Nenhum caminho de runtime novo foi implementado — o estado é bloqueado e honesto.
+Commit `159d6fe7`.
+
+---
+### BUG-136 · 45 de 62 caminhos do manifest de exemplo têm nome de Valve/Epic · ABERTO, catalogado
+
+**Evidência.** `public/audio/manifest.example.json` é versionado e é o que o
+`fetch-audio.sh` copia quando o zip não traz manifest. Medido: **45 de 62** folhas citam
+Counter-Strike, Half-Life ou Unreal Tournament — `awp-cs-1-6`, `usp_unsil`, `knife_slash`,
+`ut-double-kill`, `m4a1_unsil`. O próprio `public/js/audio.js:2` diz que sample real de CS
+não pode ser embutido.
+
+**NÃO RESOLVIDO.** A lane do piloto Fab não substituiu nenhum deles, e substituir é frente
+do tamanho do piloto inteiro. O que existe é catalogação e bloqueio: fonte
+`legado-nominal-cs-valve-ut` com `redistribuicao: "proibida"` e `licenca: "DESCONHECIDA"`,
+seção `legado` no ledger, e a **PRV9** cobrando por padrão (recomputado do manifest, não
+lista à mão) nos dois sentidos.
+
+**A régua admite o próprio limite:** `legado.cobertoPorPRV5: false`. A PRV5 casa por sha-256
+e estes arquivos não existem em clone limpo — sem hash não há o que casar. PRV9 reprova se
+alguém puser `true` ali. Commit `a6fe38c7`.
+
+---
+
 ### ~~BUG-128 · A régua de alcance declarava verde um empacotador que morria em toda execução~~ · RESOLVIDO 04/09
 
 **Sintoma.** `npm run eval:audioalcance` verde, e o `audio-pack.zip` nunca era gerado.
