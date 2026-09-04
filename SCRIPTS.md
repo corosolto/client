@@ -562,6 +562,15 @@ O runtime sabe tocar isso? O ledger deixava qualquer um dos 8 eventos do piloto 
 npm run eval:audiocapacidade
 ```
 
+## `eval:audiofablocal`
+
+Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4.
+
+```bash
+npm run eval:audiofablocal
+node tools/eval/audio-fab-local-check.mjs --mutante=sem-veto
+```
+
 ## `audio:shortlist`
 
 Candidatos por evento do piloto, SÓ por metadado. Lê `catalog.json` e `inventory.json` do staging privado — nome, hash, duração, canais, taxa, pico, loudness — e nunca um byte de áudio: a listagem do pacote diz `Allows usage with AI: No`. O casamento é por família de nome, e a saída é SHORTLIST, não escolha: nome não é som, e quem escolhe é o ouvido do dono no `audio:ab`. Quando o pacote não cobre o evento, `semCandidato` diz isso com o motivo em vez de forçar um casamento ruim — forçar `Hit_Generic` de luta corpo a corpo como "impacto de bala em concreto" seria inventar procedência sonora. `VETO_GORE` barra sangue, osso e grito por linha editorial, e é uma denylist conferida no autoteste. Recusa `--saida=` dentro do repositório.
@@ -584,6 +593,14 @@ Escuta A/B local e privada, para o dono decidir. Sobe um servidor em `127.0.0.1`
 
 ```bash
 npm run audio:ab -- <dir-do-pack> --porta=8130 --por=ruben
+```
+
+## `audio:game:local`
+
+Liga o staging privado do Action Game Sounds Pack ao jogo local sem copiar WAVs: cria `public/audio/fab-dev` como symlink ignorado e escreve um `manifest.json` também ignorado. Recusa pack dentro do repositório, caminho que escape da raiz, arquivo ausente, nome vetado e qualquer manifest/symlink preexistente que não pertença ao laboratório. Mapeia um tiro da AK e todas as variações disponíveis de recarga, ferrolho e passo concreto; os quatro eventos sem caminho compatível continuam apenas na escuta A/B. É laboratório, não aprovação nem pacote de release.
+
+```bash
+npm run audio:game:local -- <dir-do-pack>
 ```
 
 ## `eval:backendhints`
