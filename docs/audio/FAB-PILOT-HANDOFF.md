@@ -1,6 +1,43 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (quinta rodada: ledger ausente no gerador e prova persistente do assets-check).
+Atualizado em 2026-09-04 (sexta rodada: laboratório Fab audível dentro do jogo local).
+
+## Sexta rodada — escuta dentro do jogo, sem publicar o pack
+
+O checkpoint `fe169ff1` adiciona um instalador local que mantém os WAVs no staging privado e
+cria somente dois itens ignorados pelo Git: `public/audio/fab-dev` (symlink) e
+`public/audio/manifest.json`. Ele recusa pack dentro do repositório, arquivo ausente, path
+traversal, nome vetado por gore e qualquer manifest/symlink preexistente que não pertença ao
+laboratório.
+
+Estado validado nesta máquina:
+
+- jogo local: `http://127.0.0.1:8131/`;
+- escuta A/B e biblioteca segura completa: `http://127.0.0.1:8130/`;
+- manifest servido com HTTP 200 e sample da AK servido como `audio/wav`, PCM 16-bit, 44,1 kHz,
+  estéreo;
+- 48 candidatos ligados a 5 eventos que o runtime alcança: um tiro fixo da AK, 6 saídas de
+  carregador, 9 entradas, 8 foleys ambíguos de ferrolho e 24 passos em concreto;
+- tiro distante, morte corporal e os dois impactos continuam somente em A/B porque o runtime
+  ainda não tem caminho compatível; nenhum deles foi forçado para outra semântica;
+- nenhum candidato Fab foi aprovado, copiado para o Git, empacotado ou autorizado para release.
+
+Para reinstalar depois de reiniciar a máquina, mantenha o volume `Zenith` montado e rode:
+
+```bash
+npm run audio:game:local -- /Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack
+env PATH=/Users/ruben/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH \
+  npm run dev -- --host 127.0.0.1 --port 8131
+```
+
+O primeiro disparo da AK aquece o buffer e cai no synth; do segundo em diante o sample toca.
+Recarga, ferrolho e passos ainda são pools globais no runtime e só podem ser julgados usando a
+AK neste laboratório — não estão tecnicamente prontos para aprovação por arma/superfície.
+
+Validação do checkpoint: `eval:audiofablocal`, `eval:audioproc`, `eval:audiocapacidade`,
+`eval:audioespacial`, `audio:shortlist:autoteste`, `docs:check`, `eval:docsautoria`, syntax com
+Node 24 e `git diff --check` verdes. O mutante `sem-veto` acendeu LAB4. A escuta humana dentro
+do jogo continua pendente e é o próximo passo autoritativo.
 
 ## Objetivo e definição de pronto
 
