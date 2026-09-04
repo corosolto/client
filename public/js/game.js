@@ -5193,7 +5193,7 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete');
+      if (prev >= 0 && now < 0) this.sfx.step(this._footstepSurface(p.pos));
     }
     // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
     // Every other weapon does light iron-sight ADS — the gun stays on screen and the
@@ -5366,6 +5366,17 @@ export class Game {
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
     this._updateReplayCam(dt);
+  }
+
+  /* O mapa ainda não expõe material sob o pé. Até essa API existir, cada arena
+     ganha um piso dominante explícito; água continua tendo precedência espacial. */
+  _footstepSurface(pos) {
+    if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
+    return {
+      ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
+      obras_prefeitura: 'dirt', parque_treta: 'grass', velho_oeste: 'wood',
+      penitenciaria: 'metal',
+    }[this._mapId] || 'concrete';
   }
   // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without

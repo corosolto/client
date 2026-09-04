@@ -1,6 +1,6 @@
 {
  "versao": 1,
- "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Réguas: `npm run eval:audioproc` (PRV1-PRV8), `npm run eval:audiocapacidade` (CAP1-CAP4) e `npm run assert:assets` (PRV5). `caminhoRuntime` é MEDIDO por sonda, não declarado à mão — ver docs/audio/PROVENIENCIA.md.",
+ "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Réguas: `npm run eval:audioproc` (PRV1-PRV13), `npm run eval:audiocapacidade` (CAP1-CAP5) e `npm run assert:assets` (PRV5). `caminhoRuntime` é MEDIDO por sonda, não declarado à mão — ver docs/audio/PROVENIENCIA.md.",
  "prefixoDerivado": "audio/piloto/",
  "piloto": [
   {
@@ -9,7 +9,7 @@
    "decisao": "synth",
    "caminhoRuntime": "arma",
    "bloqueio": null,
-   "notaRuntime": "`shotWeapon(w, …)` recebe a arma: `weapons.ak` é só da AK"
+   "notaRuntime": "`shotWeapon(w, …)` recebe a arma: `weapons.ak` é só da AK. O take fonte Gunshot_1-1 foi aprovado pelo dono para continuar no laboratório local; a decisão de release permanece synth até existir derivado publicável e aprovado."
   },
   {
    "evento": "ak.magOut",
@@ -39,17 +39,17 @@
    "evento": "passo.concreto",
    "descricao": "passo em concreto",
    "decisao": "synth",
-   "caminhoRuntime": "global",
-   "bloqueio": "sem-caminho-runtime",
-   "notaRuntime": "a chamada não recebe o discriminador — o sample vale para todas as armas/superfícies"
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`step(surface)` consulta `cs.footstepsBySurface[surface]`; o game escolhe água espacialmente e piso dominante por arena enquanto o mapa não expõe material sob o pé"
   },
   {
    "evento": "morte.corpo",
    "descricao": "morte corporal",
    "decisao": "synth",
-   "caminhoRuntime": "nenhum",
-   "bloqueio": "sem-caminho-runtime",
-   "notaRuntime": "não consulta o pack em lugar nenhum; só existe synth"
+   "caminhoRuntime": "evento",
+   "bloqueio": null,
+   "notaRuntime": "`death(vol, pan, propDelay)` consulta `cs.death`, com fallback synth e espacialização após o cache aquecer"
   },
   {
    "evento": "impacto.concreto",
@@ -66,6 +66,21 @@
    "caminhoRuntime": "nenhum",
    "bloqueio": "sem-caminho-runtime",
    "notaRuntime": "não consulta o pack em lugar nenhum; só existe synth"
+  }
+ ],
+ "escutasLocais": [
+  {
+   "evento": "ak.shot",
+   "fonte": "fab-action-game-sounds-pack",
+   "origemNoPack": "Guns/Gun_Shot/Gunshot_1-1.wav",
+   "sha256Fonte": "b662e13914e59e4f57813d6ae377e204e0533bc2bd6b426895f05d9639a836b7",
+   "por": "Ruben",
+   "data": "2026-09-04",
+   "contexto": "jogo local em http://127.0.0.1:8131/ na branch claude/audio-fab-pilot",
+   "decisao": "aprovado-candidato-local",
+   "nota": "A AK ficou muito boa.",
+   "publicacaoAutorizada": false,
+   "derivadoRelease": null
   }
  ],
  "fontes": {
@@ -87,7 +102,7 @@
    "redistribuicao": "proibida-standalone",
    "usoComIA": "nao",
    "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
-   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. `derivados` segue vazio porque nada foi escutado nem aprovado."
+   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. A fonte Gunshot_1-1 foi aprovada apenas como candidato no jogo local; `derivados` segue vazio porque nenhum arquivo de release foi criado, escutado e aprovado."
   },
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",

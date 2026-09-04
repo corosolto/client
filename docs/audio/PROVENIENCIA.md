@@ -21,7 +21,7 @@ não é "asset ainda não catalogado" — é asset que não pode entrar numa bui
 | `npm run eval:audioproc` | PRV6: o empacotador recusa derivado `proibida-standalone` — fixture end-to-end | `check:fast` |
 | `npm run eval:audioproc` | PRV7: a decisão do ledger controla o gerador · PRV8: `sha256Fonte` conferido contra o arquivo real · PRV9: o legado CS/Valve/UT catalogado | `check:fast` |
 | `npm run eval:audioproc` | PRV10–PRV13: fail-closed nas três camadas, cada uma medida pelo script real contra fixture, com irmã | `check:fast` |
-| `npm run eval:audiocapacidade` | CAP1–CAP4: só se aprova evento que o runtime sabe tocar especificamente | `check:fast` |
+| `npm run eval:audiocapacidade` | CAP1–CAP5: só se aprova evento que o runtime sabe tocar especificamente | `check:fast` |
 
 `eval:audioproc --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` é a
 prova de que elas mordem.
@@ -47,9 +47,11 @@ proíbe o WAV solto num release, num zip navegável e no repositório.
 ## `derivados`
 
 Uma entrada por arquivo que chega ao jogador. Hoje a lista está **vazia**, e isso é o
-estado correto **mesmo com o pack já baixado** (04/09, 900 WAVs em staging privado): nada
-foi escutado, nada foi aprovado, e derivado só existe depois de escuta. Campo de asset
-preenchido com palpite é pior que campo ausente.
+estado correto **mesmo com o pack já baixado** (04/09, 900 WAVs em staging privado): o
+take fonte `Gunshot_1-1.wav` foi aprovado pelo dono dentro do laboratório local, mas nenhum
+arquivo de release foi criado, transformado e aprovado. Aprovação de fonte para teste não
+vira derivado nem autorização de publicação. Campo de asset preenchido com palpite é pior
+que campo ausente.
 
 | Campo | O que é |
 |---|---|
@@ -69,6 +71,18 @@ comprou?". Com um só, trocar o arquivo fonte por outro passaria despercebido.
 
 `origemNoPack` e `sha256Fonte` são preenchidos pelo
 `node tools/audio/inventariar.mjs`, que lê o staging privado e emite **só metadado**.
+
+## `escutasLocais`
+
+Registra uma decisão humana sobre o arquivo **fonte** tocado diretamente pelo symlink do
+laboratório. Ela fixa evento, origem e `sha256Fonte`, além de quem ouviu, quando e em qual
+contexto. Não é a mesma coisa que `derivados[].escutaAB`: ainda não existe um asset de
+release para comparar e aprovar.
+
+Por isso toda escuta local declara `publicacaoAutorizada: false` e
+`derivadoRelease: null`. A PRV2b reprova se uma automação tentar inferir publicação ou
+derivado a partir da frase de aprovação do dono. A PRV8b confere o hash da fonte contra o
+staging quando ele está presente, sem entregar bytes do WAV a modelo algum.
 
 ## O bloqueio da redistribuição — P0, e sem solução inventada
 

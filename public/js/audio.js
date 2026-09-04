@@ -8,6 +8,11 @@ const GUN_VOL = (() => {
   const q = +new URLSearchParams(location.search).get('gunvol');
   return Number.isFinite(q) && q > 0 ? q : 0.62;
 })();
+/* Samples de tiro do Fab têm caudas de até 3,5 s, enquanto uma automática chega a
+   disparar a cada 65–120 ms. Sem estes tetos, uma única arma acumula dezenas de
+   BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
+const MAX_SHOT_VOICES_PER_SAMPLE = 4;
+const MAX_SHOT_VOICES = 16;
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -274,8 +279,8 @@ export class Sfx {
     // MD97 = IMBEL MD97, o fuzil 5,56 do Exército Brasileiro — NÃO é espingarda. Estava em
     // 'shotgun' só porque o viewmodel dela reaproveita a malha da shotgun (STATIC_CLASS no
     // game.js), e a classe de SOM foi arrastada junto. Som de classe é calibre, não malha.
-    pistol: 'pistol', deagle: 'pistol', revolver38: 'pistol', m92: 'pistol',   // m92 = Beretta 92 (era 'ak', errado)
-    ak: 'ak', akm: 'ak', g3: 'ak',                                              // 7.62 grave/soco
+    pistol: 'pistol', deagle: 'pistol', revolver38: 'pistol',
+    m92: 'ak', ak: 'ak', akm: 'ak', g3: 'ak',   // M92 daqui = Zastava 7,62 curta, não Beretta
     m4: 'ar', scar: 'ar', famas: 'ar', tavor: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
   };
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
@@ -484,6 +489,21 @@ export class Sfx {
     this.duck(Sfx.duckTiro(dist), 0.16);
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
+    this._shotVoices = this._shotVoices || [];
+    const cortar = (i) => {
+      const [antiga] = this._shotVoices.splice(i, 1);
+      try { antiga?.src.stop(); } catch {}
+    };
+    while (this._shotVoices.filter((v) => v.url === url).length >= MAX_SHOT_VOICES_PER_SAMPLE) {
+      cortar(this._shotVoices.findIndex((v) => v.url === url));
+    }
+    while (this._shotVoices.length >= MAX_SHOT_VOICES) cortar(0);
+    const voz = { src, url };
+    this._shotVoices.push(voz);
+    src.onended = () => {
+      const i = this._shotVoices?.indexOf(voz) ?? -1;
+      if (i >= 0) this._shotVoices.splice(i, 1);
+    };
     /* `vol` puro: quem passa pelo `master` já leva o volume do usuário. `_sample`
        multiplica por `this.vol` na mão porque HTMLAudio não passa por lá. Régua ESP7. */
     const g = R.createGain(); g.gain.value = vol;
@@ -492,6 +512,41 @@ export class Sfx {
       const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
       g.connect(pz); pz.connect(this.master);
     } else g.connect(this.master);
+    src.start(t); src.stop(t + buf.duration + 0.05);
+    return true;
+  }
+  /* Eventos posicionais curtos (morte/explosão) usam o mesmo contrato espacial
+     do tiro. No primeiro uso, HTMLAudio garante que o dono já ouça o candidato;
+     usos seguintes saem do buffer com pan e atraso. */
+  _eventSample(url, vol = 1, pan = 0, propDelay = 0, direct = false) {
+    this.ensure();
+    this._eventBuf = this._eventBuf || new Map();
+    this._eventCarregando = this._eventCarregando || new Map();
+    const buf = this._eventBuf.get(url);
+    if (!this.ctx || buf === null) return false;
+    if (buf === undefined) {
+      if (!this._eventCarregando.has(url)) {
+        this._eventCarregando.set(url, (async () => {
+          try {
+            const res = await fetch(encodeURI(url));
+            if (!res.ok) throw new Error(`http ${res.status}`);
+            this._eventBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
+          } catch (error) {
+            this._eventBuf.set(url, null);
+            console.warn('[sfx] sample de evento não carregou; synth assume', url, error?.message || error);
+          } finally { this._eventCarregando.delete(url); }
+        })());
+      }
+      return !!this._sample(url, vol);
+    }
+    const R = this.ctx, t = R.currentTime + propDelay;
+    const src = R.createBufferSource(); src.buffer = buf;
+    const gain = R.createGain(); gain.gain.value = vol; src.connect(gain);
+    const output = direct ? this.master : (this.duckBus || this.master);
+    if (pan) {
+      const panner = R.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan));
+      gain.connect(panner); panner.connect(output);
+    } else gain.connect(output);
     src.start(t); src.stop(t + buf.duration + 0.05);
     return true;
   }
@@ -551,7 +606,8 @@ export class Sfx {
   knifeHit()  { const s = this._cs('knifehit'); if (s) { this._sample(s); return; }
     this.ensure(); this._burst(.08, .3, 1200); }
   knifeDeploy(){ const s = this._cs('knifedeploy'); if (s) { this._sample(s, .7); } }
-  dryFire()   { this.ensure(); this._beep('square', 1200, 900, .03, .1); }
+  dryFire()   { const s = this._cs('dryfire'); if (s) { this._sample(s, .75); return; }
+    this.ensure(); this._beep('square', 1200, 900, .03, .1); }
   // bolt da AWP: sample real do pack quando houver; fallback = 2 cliques de metal filtrado
   // (antes: 2 beeps square "game boy" a +420ms — soava como eco digital depois do estouro)
   bolt()      { const s = this._cs('bolt'); if (s) { this._sample(s, .8); return; }
@@ -570,6 +626,8 @@ export class Sfx {
     // ouvido do player (antes: sting completo em TODA morte, somava com tiro = "eco estranho").
     // pan/propDelay: posição estéreo + delay de propagação da morte de bots (player = 0).
     if (vol < 0.12) return;
+    const sample = this._cs('death');
+    if (sample && this._eventSample(sample, 0.72 * vol, pan, propDelay)) return;
     this.ensure(); if (!this.ctx) return;
     let out = false;
     if (pan) { out = this.ctx.createStereoPanner(); out.pan.value = pan; out.connect(this.duckBus || this.master); }
@@ -583,10 +641,10 @@ export class Sfx {
   // volume ±15%. Fallback synth: timbre por surface (água do piscinão = splash grave+ruído,
   // metal = brilho agudo, concreto = seco). surface vem do game.js (world.slowAt).
   step(surface = 'concrete') {
-    const arr = this.pack?.cs?.footsteps;
+    const arr = this.pack?.cs?.footstepsBySurface?.[surface] || this.pack?.cs?.footsteps;
     if (arr && arr.length) {
       this._stepI = (this._stepI + 1) % arr.length;
-      const a = this._sample(arr[this._stepI], 0.5 * (0.85 + Math.random() * 0.3));
+      const a = this._sample(arr[this._stepI], 0.68 * (0.85 + Math.random() * 0.3));
       if (a) a.playbackRate = 0.92 + Math.random() * 0.16;
       return;
     }
@@ -603,8 +661,12 @@ export class Sfx {
   }
   respawn()   { this.ensure(); this._beep('sine', 440, 880, .18, .18); }
   ricochet()  { this.ensure(); this._beep('sine', 2400, 700, .12, .08); }
-  explosion() { this.ensure(); if (!this.ctx) return;   // frag: crack agudo + corpo grave + rumble
-    this.duck(0.22, 0.3);                  // explosão ducka tudo (vozes/rádio/música)
+  explosion() { // frag: crack agudo + corpo grave + rumble
+    const sample = this._cs('explosion');
+    this.duck(0.22, 0.3);
+    if (sample && this._eventSample(sample, 0.68, 0, 0, true)) return;
+    this.ensure(); if (!this.ctx) return;
+                                               // explosão ducka tudo (vozes/rádio/música)
     // bus próprio (direct no master — explosão é ducker, não vítima) + send de reverb opt-in
     const bus = this.ctx.createGain(); bus.connect(this.master);
     this._send(bus, 0.2);
@@ -615,6 +677,8 @@ export class Sfx {
     }
 
   vuvuzela(dur = 1.2) { // round start — Brazilian stadium energy
+    const sample = this._cs('roundstart');
+    if (sample) { this._sample(sample, .75); return; }
     this.ensure();
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
@@ -629,7 +693,10 @@ export class Sfx {
       o.start(t); o.stop(t + dur + .05);
     });
   }
-  roundWin()  { this.ensure(); [523, 659, 784, 1047].forEach((f, i) => this._beep('square', f, f, .16, .2, i * .13)); }
-  roundLose() { this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
-  matchWin()  { this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
+  roundWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .8); return; }
+    this.ensure(); [523, 659, 784, 1047].forEach((f, i) => this._beep('square', f, f, .16, .2, i * .13)); }
+  roundLose() { const s = this._cs('roundlose'); if (s) { this._sample(s, .8); return; }
+    this.ensure(); [392, 330, 262].forEach((f, i) => this._beep('square', f, f * .9, .22, .2, i * .16)); }
+  matchWin()  { const s = this._cs('roundwin'); if (s) { this._sample(s, .9); return; }
+    this.ensure(); [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => this._beep('square', f, f, .18, .22, i * .14)); this.vuvuzela(1.8); }
 }

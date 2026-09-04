@@ -48,6 +48,7 @@
      ESP8  sample que não carrega (404/decode) cai no SYNTH — na primeira chamada
            e em todas as seguintes —, nunca em HTMLAudio numa URL morta.
      ESP9  rajada com cache frio faz UMA requisição, não uma por tiro.
+     ESP10 rajada com buffer quente limita caudas simultâneas do mesmo sample.
      ESP7  o volume do usuário entra UMA vez. `_sample` aplica `this.vol` na mão
            porque HTMLAudio não passa pelo `master`; um BufferSource passa, e
            repetir a conta ali derruba o sample em `this.vol`× sem erro nenhum.
@@ -86,7 +87,7 @@ if (mutante && !['sem-pan', 'sem-propagacao', 'duck-fixo'].includes(mutante)) {
    quem liga em quem, que valor o parâmetro recebeu e em que instante um nó
    começou. Sem simular DSP — a régua pergunta pela DECISÃO, não pelo som. */
 let LOG = null;
-const novoLog = () => ({ starts: [], panners: [], html: [], ducks: [], nos: 0 });
+const novoLog = () => ({ starts: [], stops: [], panners: [], html: [], ducks: [], nos: 0 });
 
 function param(valor = 0) {
   const p = {
@@ -138,7 +139,7 @@ class CtxFalso {
   createBufferSource() {
     const n = no('src', { buffer: null, loop: false, playbackRate: param(1), detune: param(0) });
     n.start = (t = this.currentTime) => LOG.starts.push({ tipo: 'src', t, no: n });
-    n.stop = () => {};
+    n.stop = (t) => LOG.stops.push({ t, no: n });
     return n;
   }
   createBuffer(ch, n, sr) {
@@ -348,6 +349,36 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     + ' do MESMO arquivo; o esperado é 1 e 1. Sem estado in-flight, `_shotBuf.get()` devolve'
     + ' `undefined` tanto para ausente quanto para carregando, e cada tiro reabre o download.',
     `rajada de ${RAJADA} tiros com cache frio: ${FETCHES} fetch, ${DECODES} decode.`);
+}
+
+// ── ESP10: caudas longas não acumulam dezenas de vozes por arma ───────────
+{
+  LOG = novoLog();
+  const sfx = new Sfx();
+  sfx.pack = { weaponSamples: true, weapons: { [ARMA]: [SRC] } };
+  sfx.ensure();
+  sfx._shotBuf = new Map([[SRC, { duration: 3.5 }]]);
+  const RAJADA = 12;
+  for (let i = 0; i < RAJADA; i++) sfx.shotWeapon(ARMA, PERTO.dist, 1, PERTO.pan, PERTO.prop);
+  const ativas = sfx._shotVoices?.filter((v) => v.url === SRC).length ?? RAJADA;
+  const cortesImediatos = LOG.stops.filter((s) => s.t === undefined || s.t <= sfx.ctx.currentTime).length;
+  conferir('ESP10', ativas <= 4 && cortesImediatos >= RAJADA - 4,
+    `rajada de ${RAJADA} tiros com cauda de 3,5 s deixou ${ativas} vozes do mesmo sample ativas`
+    + ` e fez ${cortesImediatos} corte(s) imediato(s). O teto é 4 por sample; sem ele, automáticas`
+    + ' acumulam dezenas de BufferSources e mascaram passos, granadas e vozes.',
+    `rajada de ${RAJADA} tiros manteve ${ativas} vozes do sample e cortou ${cortesImediatos} caudas antigas.`);
+
+  LOG = novoLog();
+  const mistura = new Sfx(); mistura.ensure();
+  const urls = Array.from({ length: 20 }, (_, i) => `audio/fab/arma-${i}.wav`);
+  mistura._shotBuf = new Map(urls.map((url) => [url, { duration: 3.5 }]));
+  for (const url of urls) mistura._shotSample(url, 20, 1, 0, 0);
+  const totalAtivas = mistura._shotVoices?.length ?? urls.length;
+  const cortesGlobais = LOG.stops.filter((s) => s.t === undefined || s.t <= mistura.ctx.currentTime).length;
+  conferir('ESP10b', totalAtivas <= 16 && cortesGlobais >= urls.length - 16,
+    `mistura de ${urls.length} samples deixou ${totalAtivas} vozes ativas e fez ${cortesGlobais} cortes imediatos;`
+    + ' o teto global é 16 para bots com armas diferentes não contornarem o teto por take.',
+    `mistura de ${urls.length} samples respeitou o teto global (${totalAtivas} ativas, ${cortesGlobais} cortes).`);
 }
 
 // ── ESP5: cláusula IRMÃ — o synth continua espacializando ─────────────────

@@ -10,9 +10,9 @@
      · `shotWeapon(w, …)` recebe a arma  -> `weapons.ak` é específico da AK;
      · `bolt()`, `reloadStart()`, `reloadEnd()` NÃO recebem arma — leem
        `cs.bolt` / `cs.reload` / `cs.reloadend`, que valem para o arsenal inteiro;
-     · `step(surface)` recebe a superfície e mesmo assim sorteia de
-       `cs.footsteps`, uma pool única: a superfície só muda o SYNTH;
-     · `death()` e `ricochet()` não consultam o pack em lugar nenhum.
+     · `step(surface)` agora consulta `cs.footstepsBySurface[surface]`;
+     · `death()` agora consulta `cs.death` como evento próprio;
+     · `ricochet()` ainda não consulta o pack.
 
    Aprovar um "passo em concreto" hoje aprovaria um passo que toca em grama,
    metal e água igual. Aprovar um "ferrolho da AK" poria o mesmo ferrolho em 26
@@ -29,14 +29,16 @@
    dispara o evento, olhando o que de fato tocou:
 
      `arma`    a chave específica da arma toca, e trocar a arma troca o arquivo;
+     `superficie` trocar o piso troca o arquivo;
+     `evento`  o método consulta a chave exclusiva daquele evento;
      `global`  toca uma chave compartilhada, e a chave específica NUNCA é lida;
      `nenhum`  nenhuma chave de pack é lida — só sai synth.
 
-     CAP1  todo evento do piloto declara `caminhoRuntime` em arma|global|nenhum.
+     CAP1  todo evento declara caminho em arma|superficie|evento|global|nenhum.
      CAP2  o declarado bate com o que a sonda mede (impede a declaração de
            envelhecer sem ninguém notar).
-     CAP3  só evento com caminho `arma` pode ser `decisao: "derivado"`, e só ele
-           pode ter derivado `aprovado`. O resto fica em `synth`, bloqueado.
+     CAP3  só caminho específico (arma|superficie|evento) pode virar derivado.
+           Global e nenhum ficam em `synth`, bloqueados.
      CAP4  IRMÃ: a sonda tem que achar PELO MENOS um `arma`. Sem isso, uma sonda
            quebrada mediria `nenhum` para tudo e bateria com um ledger todo
            `nenhum` — verde por cegueira dos dois lados (lição 1).
@@ -47,7 +49,9 @@
 
    Uso: node tools/eval/audio-capacidade-check.mjs [--mutante=…]
    ============================================================================ */
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { motivoDeRecusa } from '../audio/politica.mjs';
 
 const LEDGER = 'docs/audio/proveniencia.json';
 const arg = (n) => (process.argv.find((a) => a.startsWith(`--${n}=`)) || '').split('=')[1] || '';
@@ -102,6 +106,7 @@ const SONDAS = {
     pack: { weaponSamples: true, weapons: { ak: [ESP], m4: [OUTRA] } },
     dispara: (s) => s.shotWeapon('ak', 0, 1, 0, 0),
     disparaOutra: (s) => s.shotWeapon('m4', 0, 1, 0, 0),
+    caminhoEspecifico: 'arma',
   },
   'ak.magOut': {
     pack: { weaponSamples: true, cs: { reload: [GLB] }, weapons: { ak: [ESP] }, weaponFoley: { ak: { magOut: [ESP] } } },
@@ -116,12 +121,15 @@ const SONDAS = {
     dispara: (s) => s.bolt(),
   },
   'passo.concreto': {
-    pack: { cs: { footsteps: [GLB], footstepsConcrete: [ESP] }, footsteps: { concrete: [ESP] } },
+    pack: { cs: { footsteps: [GLB], footstepsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
     dispara: (s) => s.step('concrete'),
+    disparaOutra: (s) => s.step('metal'),
+    caminhoEspecifico: 'superficie',
   },
   'morte.corpo': {
     pack: { cs: { death: [ESP], morte: [ESP] }, general: { death: [ESP] }, death: [ESP] },
     dispara: (s) => s.death(1, 0, 0),
+    caminhoEspecifico: 'evento',
   },
   'impacto.concreto': {
     pack: { cs: { impact: [ESP], impactConcrete: [ESP] }, impacts: { concrete: [ESP] } },
@@ -145,12 +153,15 @@ function sondar(evento) {
   /* Tocou a chave específica. Ela é MESMO específica? Só é se trocar o
      discriminador trocar o arquivo. Sem `disparaOutra` não há como variar — e
      não poder variar já é a resposta: o caminho não distingue. */
-  if (!d.disparaOutra) return { caminho: 'global', motivo: 'tocou a chave, mas a chamada não aceita discriminador' };
+  if (!d.disparaOutra) {
+    if (d.caminhoEspecifico === 'evento') return { caminho: 'evento', motivo: 'tocou a chave exclusiva do evento' };
+    return { caminho: 'global', motivo: 'tocou a chave, mas a chamada não aceita discriminador' };
+  }
   TOCADOS = [];
   d.disparaOutra(novo());
   const outros = TOCADOS.slice();
   if (outros.includes(OUTRA) && !outros.includes(ESP)) {
-    return { caminho: 'arma', motivo: 'trocar a arma trocou o arquivo' };
+    return { caminho: d.caminhoEspecifico || 'arma', motivo: 'trocar o discriminador trocou o arquivo' };
   }
   return { caminho: 'global', motivo: `trocar o discriminador não trocou o arquivo (${outros.join(',') || 'nada'})` };
 }
@@ -161,7 +172,8 @@ try { L = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch (e) {
   process.exit(1);
 }
 
-const CAMINHOS = ['arma', 'global', 'nenhum'];
+const CAMINHOS = ['arma', 'superficie', 'evento', 'global', 'nenhum'];
+const CAMINHOS_ESPECIFICOS = ['arma', 'superficie', 'evento'];
 const erros = [], notas = [];
 const piloto = L.piloto || [];
 
@@ -171,8 +183,8 @@ if (mutante === 'declara-errado') {
   alvo.caminhoRuntime = alvo.caminhoRuntime === 'arma' ? 'nenhum' : 'arma';
 }
 if (mutante === 'aprova-sem-caminho') {
-  const alvo = piloto.find((p) => p.caminhoRuntime && p.caminhoRuntime !== 'arma');
-  if (!alvo) { console.error('mutante aprova-sem-caminho: nenhum evento sem caminho `arma` — não aplicou.'); process.exit(2); }
+  const alvo = piloto.find((p) => p.caminhoRuntime && !CAMINHOS_ESPECIFICOS.includes(p.caminhoRuntime));
+  if (!alvo) { console.error('mutante aprova-sem-caminho: nenhum evento global/sem caminho — não aplicou.'); process.exit(2); }
   alvo.decisao = 'derivado';
 }
 
@@ -198,9 +210,9 @@ if (!erros.length && piloto.length) {
     + Object.entries(por).map(([k, v]) => `${v} em ${k}`).join(', ') + '.');
 }
 
-// ── CAP3: só `arma` pode virar derivado ───────────────────────────────────
+// ── CAP3: só caminho específico pode virar derivado ──────────────────────
 {
-  const semCaminho = piloto.filter((p) => p.decisao === 'derivado' && p.caminhoRuntime !== 'arma');
+  const semCaminho = piloto.filter((p) => p.decisao === 'derivado' && !CAMINHOS_ESPECIFICOS.includes(p.caminhoRuntime));
   if (semCaminho.length) {
     erros.push(`CAP3 ${semCaminho.length} evento(s) marcados \`derivado\` sem caminho de runtime específico`
       + ` (${semCaminho.map((p) => `${p.evento}:${p.caminhoRuntime}`).join(', ')}).`
@@ -208,7 +220,7 @@ if (!erros.length && piloto.length) {
   }
   const aprovadosRuins = (L.derivados || []).filter((d) => {
     const p = piloto.find((x) => x.evento === d.evento);
-    return d.aprovacao === 'aprovado' && p && p.caminhoRuntime !== 'arma';
+    return d.aprovacao === 'aprovado' && p && !CAMINHOS_ESPECIFICOS.includes(p.caminhoRuntime);
   });
   if (aprovadosRuins.length) {
     erros.push(`CAP3 ${aprovadosRuins.length} derivado(s) APROVADOS para evento sem caminho específico`
@@ -229,6 +241,28 @@ if (!erros.length && piloto.length) {
   } else {
     notas.push('CAP4 ok: a sonda enxerga — `ak.shot` mede `arma` porque trocar a arma troca o arquivo.');
   }
+  const achouSuperficie = [...medido.values()].some((m) => m.caminho === 'superficie');
+  if (!achouSuperficie) erros.push('CAP4b IRMÃ: a sonda não achou caminho `superficie`; passos poderiam voltar ao pool global sem alarme.');
+  else notas.push('CAP4b ok: trocar concreto por metal troca o arquivo de passo observado.');
+}
+
+// ── CAP5: a política de publicação reconhece os mesmos caminhos específicos ─
+{
+  const rel = 'audio/piloto/fixture.wav';
+  const bytes = Buffer.from('fixture capacidade específica\n');
+  const sha = createHash('sha256').update(bytes).digest('hex');
+  const testar = (caminhoRuntime) => motivoDeRecusa(rel, bytes, {
+    prefixo: 'audio/piloto/', legadoRes: [],
+    porHash: new Map([[sha, { arquivo: rel, evento: 'fixture', fonte: 'propria', aprovacao: 'aprovado' }]]),
+    fontes: { propria: { redistribuicao: 'livre' } },
+    evento: new Map([['fixture', { decisao: 'derivado', caminhoRuntime }]]),
+  }, 'manifest');
+  const especificos = CAMINHOS_ESPECIFICOS.filter((c) => testar(c) === null);
+  const globaisBarrados = ['global', 'nenhum'].every((c) => testar(c) !== null);
+  if (especificos.length !== CAMINHOS_ESPECIFICOS.length || !globaisBarrados) {
+    erros.push(`CAP5 a política aceitou ${especificos.join(', ') || 'nenhum'} dos caminhos específicos`
+      + ' e/ou deixou global/nenhum passar. A sonda e a allowlist precisam usar a mesma definição.');
+  } else notas.push('CAP5 ok: política aceita arma, superfície e evento; continua barrando global e nenhum.');
 }
 
 const rotulo = mutante ? `CAPACIDADE [mutante=${mutante}]` : 'CAPACIDADE';

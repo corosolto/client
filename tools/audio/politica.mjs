@@ -21,7 +21,8 @@
    1. Caminho que casa um padrão do `legado` bloqueado: RECUSA, por NOME.
    2. Caminho sob `prefixoDerivado`: só passa se o sha-256 do conteúdo estiver no
       ledger, o caminho catalogado for o mesmo, a aprovação for `aprovado`, o
-      evento estiver em `derivado` com `caminhoRuntime: "arma"`, e a fonte
+      evento estiver em `derivado` com caminho específico (`arma`, `superficie`
+      ou `evento`), e a fonte
       existir. No contexto `pack`, a fonte ainda precisa ser `livre`.
       Qualquer outra coisa — inclusive "não sei o que é isto" — RECUSA.
    3. Fora do prefixo: se o conteúdo casar um derivado de fonte não-`livre`,
@@ -92,7 +93,7 @@ export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
   const ev = pol.evento.get(d.evento);
   if (!ev) return `evento \`${d.evento}\` não está na lista do piloto`;
   if (ev.decisao !== 'derivado') return `o evento \`${d.evento}\` está em \`${ev.decisao}\``;
-  if (ev.caminhoRuntime !== 'arma') {
+  if (!['arma', 'superficie', 'evento'].includes(ev.caminhoRuntime)) {
     return `o evento \`${d.evento}\` não tem caminho de runtime específico (\`${ev.caminhoRuntime}\`)`;
   }
   return null;

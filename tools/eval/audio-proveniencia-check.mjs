@@ -19,6 +19,8 @@
      PRV2  `aprovacao: "aprovado"` exige `escutaAB` com quem ouviu e quando.
            Régua verde não aprova som: nenhuma delas ouve nada. A aprovação é
            do dono, no jogo real, comparando A/B contra o synth.
+     PRV2b escuta da FONTE no laboratório local fica separada de derivado/release
+           e nunca vira autorização de publicação por inferência.
      PRV3  todo evento do piloto tem decisão declarada — `synth` (fallback) ou
            `derivado` com um derivado aprovado apontando para ele. Evento sem
            decisão é o fallback morrendo calado.
@@ -46,10 +48,10 @@
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO — e
    continua sendo DEPOIS do download (o pacote foi baixado, inventariado e
-   catalogado em 04/09). O que falta não é o arquivo: é a ESCUTA. Derivado nasce
-   de som ouvido e aprovado, e nada foi ouvido. Preencher hash e origem sem isso
-   seria inventar procedência. A régua fica verde nesse estado e vermelha no
-   instante em que alguém escrever um derivado incompleto.
+   catalogado em 04/09). A fonte da AK já foi aprovada para o laboratório local,
+   em `escutasLocais`; o que ainda não existe é um derivado de release criado e
+   aprovado. A régua fica verde nesse estado e vermelha no instante em que alguém
+   transformar escuta local em publicação por inferência.
 
    ── AS MUTAÇÕES QUE PROVAM ─────────────────────────────────────────────────
      --mutante=aprovado-sem-escuta  derivado sintético `aprovado` com escutaAB
@@ -83,6 +85,8 @@ if (mutante && !MUTANTES.includes(mutante)) {
 const CAMPOS_FONTE = ['titulo', 'autor', 'url', 'licenca', 'redistribuicao', 'usoComIA', 'notas'];
 const CAMPOS_DERIVADO = ['arquivo', 'evento', 'fonte', 'origemNoPack', 'sha256', 'sha256Fonte',
   'transformacao', 'aprovacao', 'escutaAB'];
+const CAMPOS_ESCUTA_LOCAL = ['evento', 'fonte', 'origemNoPack', 'sha256Fonte', 'por', 'data',
+  'contexto', 'decisao', 'nota', 'publicacaoAutorizada', 'derivadoRelease'];
 const REDISTRIBUICAO = ['livre', 'proibida-standalone', 'proibida'];
 const APROVACAO = ['pendente', 'aprovado', 'rejeitado'];
 const DECISAO = ['synth', 'derivado'];
@@ -172,6 +176,31 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
   } else {
     notas.push('PRV2 ok: nenhum `aprovado` sem escuta A/B registrada.');
   }
+}
+
+// ── PRV2b: escuta local da fonte não é derivado nem publicação ────────────
+{
+  const decisoes = ['aprovado-candidato-local', 'rejeitado-candidato-local'];
+  for (const e of L.escutasLocais || []) {
+    const faltando = CAMPOS_ESCUTA_LOCAL.filter((c) => ['derivadoRelease', 'publicacaoAutorizada'].includes(c)
+      ? !(c in e) : vazio(e[c]));
+    if (faltando.length) erros.push(`PRV2b escuta local de \`${e.evento || '(sem evento)'}\` sem ${faltando.join(', ')}.`);
+    if (!decisoes.includes(e.decisao)) {
+      erros.push(`PRV2b escuta local de \`${e.evento}\`: decisão \`${e.decisao}\` fora de ${decisoes.join('|')}.`);
+    }
+    if (!/^[0-9a-f]{64}$/.test(e.sha256Fonte || '')) {
+      erros.push(`PRV2b escuta local de \`${e.evento}\` sem sha256Fonte válido — o nome sozinho não fixa o take ouvido.`);
+    }
+    if (!L.fontes?.[e.fonte]) erros.push(`PRV2b escuta local de \`${e.evento}\` cita fonte inexistente \`${e.fonte}\`.`);
+    if (!(L.piloto || []).some((p) => p.evento === e.evento)) {
+      erros.push(`PRV2b escuta local cita evento \`${e.evento}\` fora do piloto.`);
+    }
+    if (e.publicacaoAutorizada !== false || e.derivadoRelease !== null) {
+      erros.push(`PRV2b escuta local de \`${e.evento}\` tentou autorizar publicação ou apontar derivado de release.`
+        + ' Aprovar o take fonte no jogo local não cria nem aprova um asset publicável.');
+    }
+  }
+  if (!erros.length) notas.push(`PRV2b ok: ${(L.escutasLocais || []).length} escuta(s) local(is) separada(s) de release/publicação.`);
 }
 
 // ── PRV3: todo evento do piloto tem decisão ───────────────────────────────
@@ -423,6 +452,28 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
       notas.push(`PRV8 ok: ${conferidos.length} derivado(s) com sha256Fonte conferido contra o arquivo real.`);
     }
   }
+}
+
+/* PRV8b aplica a mesma prova do hash às fontes ouvidas diretamente no lab.
+   Isso identifica o take exato sem criar a ficção de que já existe derivado. */
+{
+  const conferidos = [], semStaging = [];
+  for (const e of L.escutasLocais || []) {
+    const staging = L.fontes?.[e.fonte]?.stagingPrivado;
+    if (!staging) continue;
+    const base = join(process.env.HOME || '', 'csbrasil', staging);
+    const alvo = join(base, 'extracted-wav', e.origemNoPack);
+    if (!existsSync(alvo)) {
+      if (existsSync(base)) erros.push(`PRV8b fonte ouvida \`${e.origemNoPack}\` não existe no staging presente.`);
+      else semStaging.push(e.evento);
+      continue;
+    }
+    const real = createHash('sha256').update(readFileSync(alvo)).digest('hex');
+    if (real !== e.sha256Fonte) erros.push(`PRV8b hash da fonte ouvida em \`${e.evento}\` diverge do take no staging.`);
+    else conferidos.push(e.evento);
+  }
+  if (conferidos.length) notas.push(`PRV8b ok: ${conferidos.length} fonte(s) ouvida(s) conferida(s) por sha-256 no staging.`);
+  if (semStaging.length) notas.push(`PRV8b NÃO MEDIDA: staging ausente para ${semStaging.length} escuta(s) local(is).`);
 }
 
 /* ── PRV9: o LEGADO está catalogado, e ninguém diz que foi substituído ─────

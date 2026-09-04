@@ -2,7 +2,7 @@
 /* Instala o pack Fab somente no jogo local. Os WAVs continuam fora do Git: um
    symlink ignorado aponta para o staging privado e o manifest também é ignorado. */
 import {
-  existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, realpathSync,
+  existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync,
   renameSync, symlinkSync, writeFileSync,
 } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -38,6 +38,20 @@ try { lista = JSON.parse(readFileSync(SHORTLIST, 'utf8')); }
 catch (e) { console.error(`shortlist inválida: ${e.message}`); process.exit(2); }
 const porEvento = new Map((lista.eventos || []).map((e) => [e.evento, e]));
 
+/* Identidade provisória de escuta, não aprovação artística. Cada arma recebe um
+   take exclusivo; a AK preserva exatamente o take aprovado pelo dono. */
+const TIRO_POR_ARMA = Object.freeze({
+  ak: 'Gunshot_1-1.wav', akm: 'Gunshot_1-2.wav', m92: 'Gunshot_1-3.wav',
+  m4: 'Gunshot_1-4.wav', md97: 'Gunshot_1-5.wav', pistol: 'Gunshot_2-1.wav',
+  revolver38: 'Gunshot_2-2.wav', mp5: 'Gunshot_3-1.wav', uzi: 'Gunshot_3-2.wav',
+  p90: 'Gunshot_3-3.wav', tavor: 'Gunshot_3-4.wav', famas: 'Gunshot_3-5.wav',
+  carbine: 'Gunshot_3-6.wav', scar: 'Gunshot_4-1.wav', g3: 'Gunshot_4-2.wav',
+  g3sg1: 'Gunshot_4-3.wav', sks: 'Gunshot_4-4.wav', svd: 'Gunshot_4-5.wav',
+  m400: 'Gunshot_4-6.wav', deagle: 'Gunshot_5-1.wav', lmg: 'Gunshot_5-2.wav',
+  awp: 'Gunshot_7-1.wav', mosin: 'Gunshot_7-2.wav', rem700: 'Gunshot_7-3.wav',
+  shotgun: 'Gunshot_8-1.wav',
+});
+
 function candidatos(evento, { primeiro = false } = {}) {
   const vistos = new Set();
   const saida = [];
@@ -56,14 +70,79 @@ function candidatos(evento, { primeiro = false } = {}) {
   return saida;
 }
 
+function todosArquivos(dir = WAVS, prefixo = '') {
+  const saida = [];
+  for (const item of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefixo ? `${prefixo}/${item.name}` : item.name;
+    if (item.isDirectory()) saida.push(...todosArquivos(join(dir, item.name), rel));
+    else if (item.isFile() && item.name.endsWith('.wav')) saida.push(rel);
+  }
+  return saida;
+}
+const biblioteca = todosArquivos().sort();
+function seguros(nomes) {
+  return nomes.filter((nome) => {
+    const baixo = nome.toLowerCase();
+    if (!nome.endsWith('.wav') || nome.startsWith('/') || nome.split(/[\\/]/).includes('..')) return false;
+    if (!MUTANTE_SEM_VETO && VETO.some((v) => baixo.includes(v))) return false;
+    const absoluto = resolve(WAVS, nome);
+    return absoluto.startsWith(WAVS + sep) && existsSync(absoluto);
+  }).map((nome) => `audio/fab-dev/${nome}`);
+}
+const filtrar = (predicate) => seguros(biblioteca.filter(predicate));
+
 /* O tiro fixa um candidato por execução. Com dezenas de URLs sorteadas, cada
    disparo pegaria cache frio e cairia no synth; o restante continua no A/B. */
-const shot = candidatos('ak.shot', { primeiro: true });
+const weapons = Object.fromEntries(Object.entries(TIRO_POR_ARMA).map(([arma, nome]) => [
+  arma, seguros([`Guns/Gun_Shot/${nome}`]),
+]));
+/* A shortlist é a entrada editorial da AK. Assim o mutante sem veto continua
+   provando que um nome gore plantado não atravessa o laboratório. */
+weapons.ak = candidatos('ak.shot', { primeiro: true }).length
+  ? candidatos('ak.shot', { primeiro: true })
+  : weapons.ak;
 const magOut = candidatos('ak.magOut');
 const magIn = candidatos('ak.magIn');
 const bolt = candidatos('ak.bolt');
-const footsteps = candidatos('passo.concreto');
-const obrigatorios = [['ak.shot', shot], ['ak.magOut', magOut], ['ak.magIn', magIn], ['ak.bolt', bolt], ['passo.concreto', footsteps]];
+const footstepsBySurface = {
+  concrete: filtrar((f) => f.startsWith('Footstep/Concrete/')),
+  metal: filtrar((f) => f.startsWith('Footstep/Metal/')),
+  wood: filtrar((f) => f.startsWith('Footstep/Wood/')),
+  dirt: filtrar((f) => f.startsWith('Footstep/Dirt/')),
+  grass: filtrar((f) => f.startsWith('Footstep/Grass/')),
+  gravel: filtrar((f) => f.startsWith('Footstep/Gravel/')),
+  water: filtrar((f) => /^Environment\/Water_Splash_/.test(f)),
+};
+/* A fixture de gate tem um único arquivo por superfície; o pack real oferece
+   24 variações em cada piso seco. */
+for (const [surface, event] of Object.entries({ concrete: 'passo.concreto', metal: 'passo.metal', wood: 'passo.madeira', dirt: 'passo.terra', grass: 'passo.grama', gravel: 'passo.cascalho', water: 'passo.agua' })) {
+  if (!footstepsBySurface[surface].length) footstepsBySurface[surface] = candidatos(event);
+}
+const death = filtrar((f) => /^Combat\/Body_Falling_/.test(f));
+const explosion = filtrar((f) => /^Explosions\/Small_Explosion_Realistic_/.test(f));
+/* Stingers <=1,5 s pelo catalog.json. Os Special_Interface 5/6/7 duram
+   2,75–9,52 s e invadiriam a rodada. Semântica ainda depende de escuta. */
+const roundstart = seguros(['Interface/Interface_12-1.wav', 'Interface/Interface_12-4.wav']);
+const roundwin = seguros(['Interface/Interface_5-1.wav', 'Interface/Interface_5-3.wav']);
+const roundlose = seguros(['Interface/Interface_6-1.wav']);
+const knife = seguros(['Combat/Whoosh_Metal_1-1.wav', 'Combat/Whoosh_Metal_1-2.wav', 'Combat/Whoosh_Metal_2-1.wav']);
+const knifehit = seguros(['Combat/Stab_1-2.wav', 'Combat/Stab_1-5.wav', 'Combat/Stab_2-1.wav']);
+const knifedeploy = seguros(['Combat/Draw_Weapon_Metal_1-1.wav', 'Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_2-1.wav']);
+const dryfire = filtrar((f) => /^Guns\/Foley\/Dry_Fire_/.test(f));
+const fallback = (pool, evento) => pool.length ? pool : candidatos(evento);
+const runtime = {
+  death: fallback(death, 'morte.corpo'), explosion: fallback(explosion, 'granada.explosao'),
+  roundstart: fallback(roundstart, 'round.inicio'), roundwin: fallback(roundwin, 'round.vitoria'),
+  roundlose: fallback(roundlose, 'round.derrota'), knife: fallback(knife, 'faca.swing'),
+  knifehit: fallback(knifehit, 'faca.hit'), knifedeploy: fallback(knifedeploy, 'faca.deploy'),
+  dryfire: fallback(dryfire, 'arma.dryfire'),
+};
+const obrigatorios = [
+  ...Object.entries(weapons).map(([arma, pool]) => [`${arma}.shot`, pool]),
+  ['ak.magOut', magOut], ['ak.magIn', magIn], ['ak.bolt', bolt],
+  ...Object.entries(footstepsBySurface).map(([surface, pool]) => [`passo.${surface}`, pool]),
+  ...Object.entries(runtime),
+];
 const vazios = obrigatorios.filter(([, arr]) => !arr.length).map(([evento]) => evento);
 if (vazios.length) {
   console.error(`recusado: shortlist não tem arquivo seguro/existente para ${vazios.join(', ')}`);
@@ -74,16 +153,23 @@ const manifest = {
   _localLab: {
     tipo: 'local-fab-game-lab',
     aviso: 'Somente escuta local. Nenhum candidato está aprovado para release.',
-    mapeados: 5,
-    somenteEscuta: 4,
+    armasComTiroProprio: Object.keys(weapons).length,
+    eventosRuntime: 4 + Object.keys(footstepsBySurface).length + Object.keys(runtime).length,
+    somenteEscuta: 3,
     limitacoes: [
-      'reload, reloadend, bolt e footsteps ainda são pools globais no runtime',
-      'tiro distante, morte corporal e impactos permanecem no laboratório A/B',
+      'a identidade das 24 armas além da AK é candidata e exige escuta humana',
+      'reload, reloadend e bolt ainda são pools globais no runtime',
+      'tiro distante e impactos permanecem no laboratório A/B',
     ],
   },
   weaponSamples: true,
-  weapons: { ak: shot },
-  cs: { reload: magOut, reloadend: magIn, bolt, footsteps },
+  weapons,
+  cs: {
+    reload: magOut, reloadend: magIn, bolt,
+    footsteps: footstepsBySurface.concrete,
+    footstepsBySurface,
+    ...runtime,
+  },
 };
 
 mkdirSync(PUBLICO, { recursive: true });
@@ -117,7 +203,7 @@ const temporario = `${MANIFEST}.tmp`;
 writeFileSync(temporario, JSON.stringify(manifest, null, 2) + '\n');
 renameSync(temporario, MANIFEST);
 
-const total = shot.length + magOut.length + magIn.length + bolt.length + footsteps.length;
-console.log(`laboratório Fab instalado: ${total} candidato(s) em 5 eventos audíveis no jogo local.`);
-console.log('AK: o primeiro disparo aquece o buffer e usa o synth; do segundo em diante o sample toca.');
-console.log('Abra o jogo local; para os demais sons, mantenha a escuta A/B em http://127.0.0.1:8130/.');
+const total = obrigatorios.reduce((sum, [, pool]) => sum + pool.length, 0);
+console.log(`laboratório Fab instalado: ${total} amostras em ${Object.keys(weapons).length} armas e ${Object.keys(footstepsBySurface).length} superfícies.`);
+console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos para escuta, não aprovados.');
+console.log('Abra o jogo local; o primeiro disparo por arma aquece o buffer e ainda usa o synth.');
