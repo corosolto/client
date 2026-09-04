@@ -13,7 +13,7 @@
 // O que NÃO entra: soundtrack/ (fontes com nome comercial), TRACKS.txt, qualquer arquivo
 // não referenciado.
 //
-// Uso: node scripts/build-audio-pack.mjs <outDir>
+// Uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir>] [--ledger=<json>]
 //   -> <outDir>/pack/  (conteúdo) e <outDir>/audio-pack.zip
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
@@ -36,11 +36,41 @@ const PACK = path.join(OUT, 'pack');
 mkdirSync(path.join(PACK, 'a'), { recursive: true });
 
 const manifesto = JSON.parse(readFileSync(path.join(AUDIO, 'manifest.json'), 'utf8'));
-let copiados = 0, faltando = [];
+
+/* ── TRAVA DE REDISTRIBUIÇÃO ────────────────────────────────────────────────
+   Este zip é publicado como asset de release: um pacote SÓ DE ÁUDIO, que é a
+   forma que a Fab Standard License proíbe (`redistribuicao: proibida-standalone`
+   em docs/audio/proveniencia.json). Renomear por sha1 não muda nada — o que é
+   redistribuído é o conteúdo, não o nome.
+   A chave é o sha-256 do arquivo, porque é o que sobrevive ao rename.
+   Régua: `npm run eval:audioproc`, cláusula PRV6. */
+const LEDGER = (process.argv.find((a) => a.startsWith('--ledger=')) || '').slice(9)
+  || path.join(RAIZ, 'docs', 'audio', 'proveniencia.json');
+let bloqueados = new Map();
+if (existsSync(LEDGER)) {
+  const L = JSON.parse(readFileSync(LEDGER, 'utf8'));
+  for (const d of L.derivados || []) {
+    const fonte = L.fontes?.[d.fonte];
+    const motivo = !fonte ? `fonte \`${d.fonte}\` não existe no ledger`
+      : fonte.redistribuicao !== 'livre' ? `fonte \`${d.fonte}\` é \`${fonte.redistribuicao}\``
+      : d.aprovacao !== 'aprovado' ? `aprovação está \`${d.aprovacao}\``
+      : null;
+    if (motivo) bloqueados.set(d.sha256, { rel: d.arquivo, motivo });
+  }
+} else {
+  console.error(`FALTA ${path.relative(RAIZ, LEDGER)}: sem o ledger não dá para saber o que pode ser`
+    + ' redistribuído, e não saber custa o mesmo que estar errado.');
+  process.exit(1);
+}
+
+let copiados = 0, faltando = [], recusados = [];
 const hashNome = (rel) => {
   const src = path.join(PUBLICO, rel);
   if (!existsSync(src)) { faltando.push(rel); return rel; }
-  const h = createHash('sha1').update(readFileSync(src)).digest('hex').slice(0, 16);
+  const bytes = readFileSync(src);
+  const barrado = bloqueados.get(createHash('sha256').update(bytes).digest('hex'));
+  if (barrado) { recusados.push(`${rel} (${barrado.motivo})`); return rel; }
+  const h = createHash('sha1').update(bytes).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;
   cpSync(src, path.join(PACK, novo.replace(/^audio\//, '')));
   copiados++;
@@ -73,6 +103,16 @@ for (const f of readdirSync(MM)) {
   if (!/^m\d+\.mp3$/.test(f)) continue;   // exclui TRACKS.txt e qualquer nome legível
   cpSync(path.join(MM, f), path.join(PACK, 'menu-music', f));
   menu++;
+}
+
+/* A recusa vem ANTES do zip: pacote proibido não pode chegar a existir em disco. */
+if (recusados.length) {
+  console.error(`RECUSADO: ${recusados.length} arquivo(s) não podem entrar num pacote só de áudio.`);
+  for (const r of recusados) console.error('  ' + r);
+  console.error('\nEste zip vira asset de release, e release de pacote de áudio é redistribuição'
+    + '\nstandalone. Ver docs/audio/PROVENIENCIA.md. A forma de incorporação que NÃO'
+    + '\nredistribui o pack está BLOQUEADA aguardando decisão do dono.');
+  process.exit(1);
 }
 
 execSync(`cd "${PACK}" && zip -q -r ../audio-pack.zip .`, { stdio: 'inherit' });

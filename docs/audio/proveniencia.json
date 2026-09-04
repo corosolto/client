@@ -3,14 +3,46 @@
  "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Régua: `npm run eval:audioproc` (PRV1-PRV4) e `npm run assert:assets` (PRV5). O formato de cada campo está em docs/audio/PROVENIENCIA.md.",
  "prefixoDerivado": "audio/piloto/",
  "piloto": [
-  { "evento": "ak.shot", "descricao": "AK em 1ª pessoa: tiro", "decisao": "synth" },
-  { "evento": "ak.magOut", "descricao": "AK em 1ª pessoa: carregador sai", "decisao": "synth" },
-  { "evento": "ak.magIn", "descricao": "AK em 1ª pessoa: carregador entra", "decisao": "synth" },
-  { "evento": "ak.bolt", "descricao": "AK em 1ª pessoa: ferrolho", "decisao": "synth" },
-  { "evento": "passo.concreto", "descricao": "passo em concreto", "decisao": "synth" },
-  { "evento": "morte.corpo", "descricao": "morte corporal", "decisao": "synth" },
-  { "evento": "impacto.concreto", "descricao": "impacto em concreto", "decisao": "synth" },
-  { "evento": "impacto.metal", "descricao": "impacto em metal", "decisao": "synth" }
+  {
+   "evento": "ak.shot",
+   "descricao": "AK em 1ª pessoa: tiro",
+   "decisao": "synth"
+  },
+  {
+   "evento": "ak.magOut",
+   "descricao": "AK em 1ª pessoa: carregador sai",
+   "decisao": "synth"
+  },
+  {
+   "evento": "ak.magIn",
+   "descricao": "AK em 1ª pessoa: carregador entra",
+   "decisao": "synth"
+  },
+  {
+   "evento": "ak.bolt",
+   "descricao": "AK em 1ª pessoa: ferrolho",
+   "decisao": "synth"
+  },
+  {
+   "evento": "passo.concreto",
+   "descricao": "passo em concreto",
+   "decisao": "synth"
+  },
+  {
+   "evento": "morte.corpo",
+   "descricao": "morte corporal",
+   "decisao": "synth"
+  },
+  {
+   "evento": "impacto.concreto",
+   "descricao": "impacto em concreto",
+   "decisao": "synth"
+  },
+  {
+   "evento": "impacto.metal",
+   "descricao": "impacto em metal",
+   "decisao": "synth"
+  }
  ],
  "fontes": {
   "synth": {
@@ -31,7 +63,7 @@
    "redistribuicao": "proibida-standalone",
    "usoComIA": "nao",
    "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
-   "notas": "Comprado pelo dono; aparece na biblioteca Fab da conta dele. `Allows usage with AI: No` na listagem — os WAVs não podem ser entrada de modelo. Ainda NÃO baixado: por isso `derivados` está vazio."
+   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. `derivados` segue vazio porque nada foi escutado nem aprovado."
   }
  },
  "derivados": []

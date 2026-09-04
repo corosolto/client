@@ -24,6 +24,8 @@
            decisão é o fallback morrendo calado.
      PRV4  todo derivado cita uma fonte que existe, e nenhum áudio derivado está
            rastreado pelo git.
+     PRV6  o EMPACOTADOR recusa derivado de fonte `proibida-standalone`, e aceita
+           obra própria (cláusula irmã). Fixture end-to-end com o builder real.
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO
@@ -45,7 +47,10 @@
    Uso: node tools/eval/audio-proveniencia-check.mjs [--mutante=…]
    ============================================================================ */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const LEDGER = 'docs/audio/proveniencia.json';
@@ -191,6 +196,87 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
   } else if (!orfaos.length) {
     notas.push('PRV4 ok: toda fonte citada existe e nenhum áudio está rastreado pelo git.');
   }
+}
+
+/* ── PRV6: o EMPACOTADOR recusa o que não pode ser redistribuído ───────────
+   A cláusula PRV5 do `assets-check` filtrava por PREFIXO (`audio/piloto/`), e o
+   empacotador reescreve todo caminho para `audio/a/<sha1>`. Medido: no manifest
+   que o jogador recebe, `folhas.filter(f => f.startsWith('audio/piloto/'))` dá
+   ZERO — a cláusula era estruturalmente incapaz de disparar em produção.
+
+   O que sobrevive ao rename é o CONTEÚDO, então a chave passa a ser o sha-256. E
+   a checagem forte não é no manifest instalado: é no próprio empacotador, que é
+   quem monta o zip. `audio-pack.zip` é publicado como asset de release — um
+   pacote SÓ DE ÁUDIO, que é exatamente a forma que a Fab Standard License proíbe
+   (`redistribuicao: proibida-standalone`). Nome hasheado não muda isso.
+
+   A fixture monta uma árvore com um derivado `livre` e um derivado Fab, roda o
+   empacotador REAL contra ela e exige que ele RECUSE por causa do Fab. */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv6-'));
+  try {
+    const AUD = join(tmp, 'public', 'audio');
+    mkdirSync(join(AUD, 'piloto'), { recursive: true });
+    mkdirSync(join(AUD, 'menu-music'), { recursive: true });
+    writeFileSync(join(AUD, 'menu-music', 'm01.mp3'), 'fixture menu\n');
+    const grava = (nome, txt) => {
+      writeFileSync(join(AUD, 'piloto', nome), txt);
+      return createHash('sha256').update(txt).digest('hex');
+    };
+    const shaLivre = grava('proprio.wav', 'fixture obra propria\n');
+    const shaFab = grava('fab.wav', 'fixture derivado fab\n');
+    const ledger = {
+      versao: 1, prefixoDerivado: 'audio/piloto/',
+      piloto: [{ evento: 'ak.shot', descricao: 'fixture', decisao: 'synth' }],
+      fontes: {
+        propria: { titulo: 'f', autor: 'f', url: 'f', licenca: 'AGPL', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' },
+        fab: { titulo: 'f', autor: 'f', url: 'f', licenca: 'Fab Standard License', redistribuicao: 'proibida-standalone', usoComIA: 'nao', notas: 'f' },
+      },
+      derivados: [
+        { arquivo: 'audio/piloto/proprio.wav', evento: 'ak.shot', fonte: 'propria', origemNoPack: 'x', sha256: shaLivre, sha256Fonte: 'e'.repeat(64), transformacao: 'x', aprovacao: 'aprovado', escutaAB: { por: 'fixture', data: '2026-09-04' } },
+        { arquivo: 'audio/piloto/fab.wav', evento: 'ak.shot', fonte: 'fab', origemNoPack: 'x', sha256: shaFab, sha256Fonte: 'e'.repeat(64), transformacao: 'x', aprovacao: 'aprovado', escutaAB: { por: 'fixture', data: '2026-09-04' } },
+      ],
+    };
+    const ledgerPath = join(tmp, 'ledger.json');
+    writeFileSync(ledgerPath, JSON.stringify(ledger));
+    writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({
+      weapons: { ak: ['audio/piloto/proprio.wav', 'audio/piloto/fab.wav'] },
+    }));
+
+    const rodar = () => {
+      try {
+        execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), join(tmp, 'out'),
+          `--raiz=${AUD}`, `--ledger=${ledgerPath}`], { encoding: 'utf8', stdio: 'pipe' });
+        return { saida: 0, texto: '' };
+      } catch (e) { return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') }; }
+    };
+    const comFab = rodar();
+    if (comFab.saida === 0) {
+      erros.push('PRV6 o empacotador ACEITOU um derivado de fonte `proibida-standalone`.'
+        + ' `audio-pack.zip` é publicado como asset de release e é um pacote só de áudio —'
+        + ' a forma exata que a Fab Standard License proíbe. Nome hasheado não resolve:'
+        + ' o que é redistribuído é o conteúdo, não o nome.');
+    } else if (!/fab\.wav|proibida-standalone|redistribu/i.test(comFab.texto)) {
+      erros.push(`PRV6 o empacotador saiu ${comFab.saida}, mas sem dizer que o motivo é redistribuição`
+        + ` proibida (saída: ${comFab.texto.trim().split('\n')[0] || '(vazia)'}). Recusa sem diagnóstico`
+        + ' manda quem builda procurar no lugar errado.');
+    }
+
+    /* IRMÃ: sem o derivado Fab, o mesmo empacotador tem que ACEITAR. Sem isto, um
+       empacotador que recusasse tudo passaria na cláusula acima (lição 1). */
+    ledger.derivados = ledger.derivados.filter((d) => d.fonte !== 'fab');
+    writeFileSync(ledgerPath, JSON.stringify(ledger));
+    writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({ weapons: { ak: ['audio/piloto/proprio.wav'] } }));
+    const semFab = rodar();
+    if (semFab.saida !== 0) {
+      erros.push(`PRV6 IRMÃ: sem nenhum derivado Fab o empacotador ainda saiu ${semFab.saida}`
+        + ` (${semFab.texto.trim().split('\n')[0]}). Um empacotador que recusa tudo passaria na`
+        + ' cláusula de cima sem proteger nada.');
+    }
+    if (comFab.saida !== 0 && semFab.saida === 0) {
+      notas.push('PRV6 ok: o empacotador recusa derivado `proibida-standalone` e aceita obra própria.');
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
 }
 
 const rotulo = mutante ? `PROVENIENCIA [mutante=${mutante}]` : 'PROVENIENCIA';

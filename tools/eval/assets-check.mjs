@@ -29,12 +29,15 @@
    confere que **todo caminho citado existe no disco** — manifest cheio apontando pra
    arquivo que não veio é a mesma falha com outra cara.
 
-   PROCEDÊNCIA (PRV5). Todo caminho do manifest sob o `prefixoDerivado` de
-   `docs/audio/proveniencia.json` precisa de entrada no ledger, com sha-256 batendo
-   com o arquivo em disco. `.gitignore` protege o GIT e só ele — o pacote é montado
-   à parte e servido em produção, então asset sem origem declarada chega ao jogador
-   sem passar por commit nenhum. A forma do ledger é medida no `eval:audioproc`; o
-   contrato inteiro está em `docs/audio/PROVENIENCIA.md`.
+   PROCEDÊNCIA (PRV5). Casa cada folha do manifest instalado com o ledger POR
+   SHA-256 e reprova quando o arquivo é derivado de fonte que não permite
+   redistribuição standalone, ou quando ainda não foi aprovado por escuta.
+
+   Por que por hash e não por caminho: a versão anterior filtrava pelo prefixo
+   `audio/piloto/` e o empacotador reescreve TODO caminho para `audio/a/<sha1>`.
+   Medido no manifest que o jogador recebe, o filtro casava ZERO — cláusula
+   estruturalmente incapaz de disparar. O que sobrevive ao rename é o conteúdo.
+   A trava forte fica no próprio empacotador (PRV6); esta é a segunda camada.
 
    AMBIENTE. O piso não pega pacote que chegou inteiro MENOS uma família: 17 arquivos
    de ambiente faltando num manifest de 308 deixam 291, acima do piso, verde. Por isso
@@ -140,25 +143,39 @@ if (!existsSync(MANIFEST)) {
         + ' sem o ledger não dá para saber a origem de nada que a build serve.');
     }
     if (ledger) {
-      const porArquivo = new Map((ledger.derivados || []).map((d) => [d.arquivo, d]));
-      const semLedger = folhas.filter((f) => f.startsWith(ledger.prefixoDerivado) && !porArquivo.has(f));
-      if (semLedger.length) {
-        erros.push(`procedência: ${semLedger.length} caminho(s) do manifest sob \`${ledger.prefixoDerivado}\``
-          + ` sem entrada em docs/audio/proveniencia.json (ex.: ${semLedger.slice(0, 3).join(', ')}).`);
+      /* A CHAVE É O SHA-256, NÃO O CAMINHO. A versão anterior filtrava por prefixo
+         (`audio/piloto/`) e o empacotador reescreve todo caminho para
+         `audio/a/<sha1>` — medido: no manifest que o jogador recebe, o filtro por
+         prefixo casava ZERO. Cláusula estruturalmente incapaz de disparar, que é a
+         régua cega da lição 1. O que sobrevive ao rename é o conteúdo. */
+      const porHash = new Map((ledger.derivados || []).map((d) => [d.sha256, d]));
+      const proibidos = [], naoAprovados = [];
+      for (const f of folhas) {
+        const abs = path.join('public', f);
+        if (!existsSync(abs)) continue;                 // já reportado pela cláusula acima
+        const d = porHash.get(createHash('sha256').update(readFileSync(abs)).digest('hex'));
+        if (!d) continue;
+        const fonte = ledger.fontes?.[d.fonte];
+        if (!fonte || fonte.redistribuicao !== 'livre') {
+          proibidos.push(`${f} = ${d.arquivo} (fonte \`${d.fonte}\`: ${fonte?.redistribuicao || 'sem fonte no ledger'})`);
+        } else if (d.aprovacao !== 'aprovado') {
+          naoAprovados.push(`${f} = ${d.arquivo} (aprovação \`${d.aprovacao}\`)`);
+        }
       }
-      const hashRuim = [];
-      for (const [arq, d] of porArquivo) {
-        const abs = path.join('public', arq);
-        if (!existsSync(abs)) { hashRuim.push(`${arq} (não está no disco)`); continue; }
-        const h = createHash('sha256').update(readFileSync(abs)).digest('hex');
-        if (h !== d.sha256) hashRuim.push(`${arq} (${h.slice(0, 12)}… ≠ ${String(d.sha256).slice(0, 12)}…)`);
+      if (proibidos.length) {
+        erros.push(`procedência: ${proibidos.length} arquivo(s) do pacote instalado são derivados de fonte`
+          + ` que NÃO permite redistribuição standalone (ex.: ${proibidos.slice(0, 3).join('; ')}).`
+          + ' O `audio-pack.zip` é publicado como asset de release e é um pacote só de áudio.'
+          + ' Ver docs/audio/PROVENIENCIA.md.');
       }
-      if (hashRuim.length) {
-        erros.push(`procedência: ${hashRuim.length} derivado(s) com hash divergente do ledger`
-          + ` (ex.: ${hashRuim.slice(0, 3).join(', ')}) — o arquivo que a build serve não é o que foi aprovado.`);
+      if (naoAprovados.length) {
+        erros.push(`procedência: ${naoAprovados.length} arquivo(s) do pacote instalado ainda não foram`
+          + ` aprovados por escuta (ex.: ${naoAprovados.slice(0, 3).join('; ')}).`);
       }
-      if (!semLedger.length && !hashRuim.length) {
-        avisos.push(`procedência ok: ${porArquivo.size} derivado(s) com origem, licença e hash conferidos.`);
+      const declaradosPresentes = [...porHash.values()].length;
+      if (!proibidos.length && !naoAprovados.length) {
+        avisos.push(`procedência ok: nenhum dos ${folhas.length} caminhos casa derivado proibido ou não aprovado`
+          + ` (${declaradosPresentes} derivado(s) no ledger).`);
       }
     }
     if (!erros.length) {
