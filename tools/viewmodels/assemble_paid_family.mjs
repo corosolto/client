@@ -440,8 +440,11 @@ async function main() {
     handGun.addChild(socket);
     // O rig da arma traz a conversão FBX 0.01 e agora herda a mesma conversão
     // dos braços; o socket cancela apenas essa segunda escala.
+    // Rotação: filho de BONE no glTF exportado pelo Blender carrega +90° em X
+    // (é o que SOCKET_WEAPON_AK/DEAGLE recebem via parent_inverse). Com
+    // identidade a X18 nascia com o cano VERTICAL — a "lâmina" do 01/09.
     const weaponScale = family.weaponScale ?? 1;
-    socket.setTranslation([0, 0, 0]).setRotation([0, 0, 0, 1])
+    socket.setTranslation([0, 0, 0]).setRotation([Math.SQRT1_2, 0, 0, Math.SQRT1_2])
       .setScale([100 * weaponScale, 100 * weaponScale, 100 * weaponScale]);
   }
   const armsSkin = root.listSkins().find((skin) => skin.getName() === 'RIG_FP_ARMS');
