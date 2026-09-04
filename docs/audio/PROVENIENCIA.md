@@ -20,6 +20,7 @@ não é "asset ainda não catalogado" — é asset que não pode entrar numa bui
 | `npm run assert:assets` | PRV5: nenhum arquivo instalado casa (por sha-256) derivado proibido ou não aprovado | build da Vercel |
 | `npm run eval:audioproc` | PRV6: o empacotador recusa derivado `proibida-standalone` — fixture end-to-end | `check:fast` |
 | `npm run eval:audioproc` | PRV7: a decisão do ledger controla o gerador · PRV8: `sha256Fonte` conferido contra o arquivo real · PRV9: o legado CS/Valve/UT catalogado | `check:fast` |
+| `npm run eval:audioproc` | PRV10–PRV13: fail-closed nas três camadas, cada uma medida pelo script real contra fixture, com irmã | `check:fast` |
 | `npm run eval:audiocapacidade` | CAP1–CAP4: só se aprova evento que o runtime sabe tocar especificamente | `check:fast` |
 
 `eval:audioproc --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` é a
@@ -89,6 +90,16 @@ O que está implementado é a **proibição**, em três camadas e **fail-closed*
 As três chamam `tools/audio/politica.mjs` — a mesma função, não três cópias da decisão
 (lição 2). A camada decisiva é o empacotador porque ele roda **antes** do rename para
 `audio/a/<sha1>` e ainda vê o caminho.
+
+**Sem ledger, as três abortam.** O gerador era a exceção até a 5ª rodada: ele fazia
+`return null` e seguia, então com o ledger ausente saía 0 e mantinha o não catalogado no
+manifest. "Não consigo verificar" virava "pode passar". Agora aborta nos dois modos,
+inclusive `--check`, que é o que roda no portão.
+
+**As três têm prova automatizada** — PRV10 (empacotador), PRV11/PRV12 (gerador) e PRV13
+(`assets-check`), cada uma rodando o script real contra fixture, e cada uma com cláusula
+irmã que impede "recusar tudo" de passar por proteção. Até a 5ª rodada a do `assets-check`
+era manual, e prova manual não roda no portão.
 
 **A regra é ALLOWLIST.** Até a 4ª rodada era denylist, montada de `ledger.derivados`: um
 arquivo não catalogado sob `audio/piloto/` não casava hash nenhum, não era barrado, e o

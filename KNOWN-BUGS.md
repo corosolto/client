@@ -3466,6 +3466,46 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-138 · Gerador de manifest falhava ABERTO quando o ledger não existia~~ · RESOLVIDO 04/09
+
+**Sintoma.** `tools/gen-audio-manifest.mjs --ledger=<inexistente>` saía **0**, sem
+diagnóstico, e mantinha `audio/piloto/nao-catalogado.wav` no manifest. Nos dois modos,
+inclusive `--check`, que é o que roda no portão.
+
+**Causa raiz.** Em `barrado()`, `if (politica.erro) return null` — "não consigo verificar"
+virava "pode passar". O empacotador (`58d6dc10`) e o `assets-check` já abortavam sem
+ledger; o gerador era a única das três camadas que contradizia a política escrita em
+`docs/audio/PROVENIENCIA.md`. É a lição 5 de novo: não saber tem que custar o mesmo que
+estar errado.
+
+**Conserto.** Aborta com exit 1 **antes de escrever qualquer coisa**, dizendo que falta o
+ledger. Medido depois: exit 1 nos dois modos, manifest intocado.
+
+**Régua:** `eval:audioproc` PRV12, com os dois modos e a IRMÃ (com ledger válido o gerador
+tem que gerar — abortar sempre não é falhar fechado, é não funcionar). Commit `6a1bc05b`.
+
+---
+### ~~BUG-139 · A prova adversarial do `assets-check` era manual~~ · RESOLVIDO 04/09
+
+**Sintoma.** PRV10 e PRV11 rodavam o empacotador e o gerador reais contra fixture. A
+terceira camada — `tools/eval/assets-check.mjs` — só tinha prova digitada à mão numa
+rodada e não repetida em nenhuma outra. Prova manual não roda no portão: ela vale no dia em
+que alguém a executa e envelhece no dia seguinte, e foi assim que o escape P0 sobreviveu a
+duas revisões.
+
+**Conserto.** PRV13 roda o script REAL contra fixture, nos mesmos três cenários do
+empacotador: não catalogado reprova, legado reprova por nome, e o catalogado/aprovado/livre
+**passa** (irmã, que impede um `assets-check` que recuse tudo de passar por proteção).
+
+Conferido que os dois cenários vermelhos reprovam pelo motivo certo — a mensagem é a da
+cláusula de procedência, não o piso de 250. O script ganhou `--raiz=`, `--ledger=` e
+`--so=audio`, no padrão que gerador e empacotador já tinham; sem os flags nada muda.
+
+**Mutação:** devolver a semântica de denylist em `tools/audio/politica.mjs` acende PRV10a,
+PRV11 e PRV13a juntas — as três leem a mesma função. Commit `9f278f56`.
+
+---
+
 ### ~~BUG-137 · P0: arquivo não catalogado sob `audio/piloto/` entrava no pacote~~ · RESOLVIDO 04/09
 
 **Sintoma.** A trava de licença declarada fechada na 2ª rodada não estava fechada.

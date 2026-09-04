@@ -1,6 +1,6 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (quarta rodada: escape P0 achado pela auditoria final).
+Atualizado em 2026-09-04 (quinta rodada: ledger ausente no gerador e prova persistente do assets-check).
 
 ## Objetivo e definição de pronto
 
@@ -55,6 +55,10 @@ integração ia herdar calada.
 | `a6fe38c7` | legado CS/Valve/UT catalogado e bloqueado (PRV9) |
 | `7cec535f` | handoff da 3ª rodada e BUG-132..136 |
 | `58d6dc10` | **P0 fail-closed**: allowlist no prefixo derivado, nas três camadas |
+| `b0d3d1a4` | registra o escape P0 e corrige o que os docs superdeclaravam |
+| `6b9b744f` | resultados da 4ª rodada; `audio:check` registrado como vermelho |
+| `6a1bc05b` | **P1**: ledger ausente aborta o gerador, nos dois modos (PRV12) |
+| `9f278f56` | **P2**: prova automatizada do `assets-check` contra fixture (PRV13) |
 
 ## Fonte e licença
 
@@ -267,6 +271,52 @@ sem proteger nada.
   Nª rodada", porque o P0 mostra que a lista de bloqueadores nunca esteve completa — ela
   estava completa *até onde aquela revisão olhou*.
 
+## A 5ª rodada — os dois pontos que sobraram do P0
+
+A reauditoria confirmou o escape fechado nas três camadas e apontou dois restos.
+
+### P1 — o gerador falhava ABERTO sem ledger
+
+O empacotador e o `assets-check` abortavam sem ledger. O gerador não: `barrado()` fazia
+`if (politica.erro) return null` e seguia.
+
+```
+node tools/gen-audio-manifest.mjs --raiz=… --ledger=<inexistente>
+  antes   exit 0 nos dois modos, sem diagnóstico,
+          `audio/piloto/nao-catalogado.wav` MANTIDO no manifest
+  depois  exit 1 nos dois modos, dizendo que falta o ledger, manifest intocado
+```
+
+"Não consigo verificar" virava "pode passar" — o oposto da lição 5, e a única das três
+camadas que contradizia a própria documentação. **PRV12** cobre os dois modos de propósito:
+`--check` é o que roda no portão, e era o que abortava sem dizer o motivo (saía pelo diff
+do manifest, não pela procedência). A irmã exige que, com ledger válido, o gerador gere —
+abortar sempre não é falhar fechado, é não funcionar.
+
+### P2 — a prova do `assets-check` era manual
+
+PRV10 e PRV11 rodavam o empacotador e o gerador de verdade; a terceira camada só tinha
+prova feita à mão numa rodada e não repetida. Prova manual vale no dia em que alguém a
+digita. **PRV13** roda o script real contra fixture, com os mesmos três cenários:
+
+| | cenário | resultado |
+|---|---|---|
+| PRV13a | `audio/piloto/nao-catalogado.wav` | reprova — `NÃO CATALOGADO` |
+| PRV13c | `audio/game/awp-cs-1-6.mp3` | reprova — legado bloqueado, por nome |
+| PRV13b | IRMÃ: catalogado/aprovado/livre | **passa** |
+
+Conferido que a e c reprovam pelo motivo **certo** — a mensagem é a da cláusula de
+procedência, não o piso de 250 nem outro efeito colateral da fixture. Para isso o script
+ganhou `--raiz=`, `--ledger=` e `--so=audio`, no padrão que o gerador e o empacotador já
+tinham; sem os flags nada muda.
+
+**A mutação viva** — devolver a semântica de denylist em `tools/audio/politica.mjs` —
+acende **PRV10a, PRV11 e PRV13a juntas**. As três camadas leem a mesma função, e é assim
+que se vê que leem.
+
+Nada disso muda os limites já declarados: **pós-rename continua sem cobertura por
+conteúdo**, e o **legado continua barrado só por NOME**, porque não há hash.
+
 ## ESTADO POR EVENTO — as cinco situações, sem misturar
 
 O piloto tem 8 eventos. Chamar tudo de "pendente" esconde que os motivos são
@@ -465,6 +515,9 @@ npm run check:fast   ->  75/76 passaram ( 92,4 s)   [3ª rodada]
 
 npm run check:fast   ->  75/76 passaram ( 92,4 s)   [4ª rodada]
                          falhou: audio:check
+
+npm run check:fast   ->  75/76 passaram ( 92,6 s)   [5ª rodada]
+                         falhou: audio:check
 ```
 
 **`audio:check` NÃO é verde e não vai ser chamado de verde.** Ele é o vermelho herdado
@@ -644,7 +697,7 @@ Substituir isso é outra frente, do tamanho do piloto inteiro. **Decisão do don
 ```bash
 npm run eval:audioalcance      # ALC1-ALC3  pipeline alcança o que o código nomeia
 npm run eval:audioespacial     # ESP1-ESP9  pan, propagação, duck, fallback, volume, rajada
-npm run eval:audioproc         # PRV1-PRV11 ledger, redistribuição, fail-closed, sha-fonte, legado
+npm run eval:audioproc         # PRV1-PRV13 ledger, redistribuição, fail-closed nas 3 camadas
 npm run eval:audiocapacidade   # CAP1-CAP4  só se aprova o que o runtime sabe tocar
 npm run audio:inventario:autoteste
 npm run audio:shortlist:autoteste
