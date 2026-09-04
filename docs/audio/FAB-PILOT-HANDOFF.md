@@ -462,7 +462,16 @@ npm run check:fast   ->  74/75 passaram ( 92,7 s)   [2ª rodada]
 
 npm run check:fast   ->  75/76 passaram ( 92,4 s)   [3ª rodada]
                          falhou: audio:check
+
+npm run check:fast   ->  75/76 passaram ( 92,4 s)   [4ª rodada]
+                         falhou: audio:check
 ```
+
+**`audio:check` NÃO é verde e não vai ser chamado de verde.** Ele é o vermelho herdado
+desde o baseline, e o motivo é ambiente, não regressão: `public/audio/` é gitignored e
+`fetch-audio.sh` nunca rodou nesta worktree, então o gerador vê 0 arquivos no disco e acusa
+"manifest DEFASADO". `assert:assets` reprova pelo mesmo motivo. Nenhum dos dois é medível
+aqui sem baixar o pacote público de áudio do jogo, o que está fora do escopo desta lane.
 
 **Nenhuma regressão nova em nenhuma das três.** Os 6 passos acrescentados no total
 (`eval:audioalcance`, `eval:audioespacial`, `eval:audioproc`, `eval:audiocapacidade`,
@@ -470,14 +479,20 @@ npm run check:fast   ->  75/76 passaram ( 92,4 s)   [3ª rodada]
 continuam passando, e o único vermelho é sempre o mesmo, pelo mesmo motivo de ambiente.
 `docs:check` e `arch:check` verdes com os blocos regerados.
 
-As onze mutações das quatro réguas foram rodadas contra o código já verde e **todas saem 1**:
+As onze mutações das quatro réguas foram rodadas contra o código já verde na 4ª rodada e
+**todas saem 1**:
 ALC `nome-trocado|sem-copia|sem-menu-music`, ESP `sem-pan|sem-propagacao|duck-fixo`,
 PRV `aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao`,
 CAP `declara-errado|aprova-sem-caminho`.
 
-Fora dos mutantes nomeados, esta rodada mediu ainda: ESP9 com a guarda revertida (10 fetch e
-10 decode), PRV8 nos quatro estados de `sha256Fonte`, PRV9 nas quatro formas de furar o
-catálogo do legado, e INV6–INV8 com um WAV ilegível.
+Fora dos mutantes nomeados, as rodadas mediram ainda: ESP9 com a guarda revertida (10 fetch
+e 10 decode), PRV8 nos quatro estados de `sha256Fonte`, PRV9 nas quatro formas de furar o
+catálogo do legado, INV6–INV8 com um WAV ilegível, e — na 4ª rodada — a **mutação viva da
+política**, devolvendo a semântica de denylist em `tools/audio/politica.mjs`, que acende
+PRV10a e PRV11 juntas.
+
+A reprodução manual do escape original, contra o código consertado, sai **1 sem gerar
+zip**, com o diagnóstico `NÃO CATALOGADO: nenhum derivado do ledger tem o sha-256 638b216e…`.
 
 ## Resultados aceitos e rejeitados
 
