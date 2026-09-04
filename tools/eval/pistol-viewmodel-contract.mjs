@@ -1,6 +1,8 @@
 #!/usr/bin/env node
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -70,6 +72,40 @@ check(armsSkin?.listJoints().length === 67, `rig de braços tem ${armsSkin?.list
 check(weaponSkin?.listJoints().length === 8, `rig da pistola tem ${weaponSkin?.listJoints().length ?? 0} ossos; esperado 8`);
 check(weaponSkin?.listJoints().some((joint) => joint.getName() === 'Mag'), 'osso Mag ausente');
 check(weaponNodes.length === 1, `esperado um mesh skinned da pistola, recebido ${weaponNodes.length}`);
+
+/* Orientação do cano (01/09: a X18 nascia com o cano VERTICAL porque o socket sob
+   ik_hand_gun ia com rotação identidade; a "lâmina preta" contra o céu era isso).
+   A medida vem do MESMO instrumento que a diagnosticou — vm-glb-inventory.mjs com o
+   skinning avaliado no idle@0 — para que régua e diagnóstico não discordem. */
+const socketNode = gltf.listNodes().find((node) => node.getName() === 'SOCKET_WEAPON_PISTOL');
+const socketRotation = hasMutant('cano-vertical') ? [0, 0, 0, 1] : socketNode?.getRotation();
+check(socketNode && socketRotation
+  && Math.abs(socketRotation[0] - Math.SQRT1_2) < 1e-3 && Math.abs(socketRotation[3] - Math.SQRT1_2) < 1e-3
+  && Math.abs(socketRotation[1]) < 1e-3 && Math.abs(socketRotation[2]) < 1e-3,
+  `SOCKET_WEAPON_PISTOL precisa da rotação de filho-de-bone [√½,0,0,√½]; recebido ${JSON.stringify(socketRotation?.map((v) => Number(v.toFixed(4))))}`);
+const inventoryPath = path.join(os.tmpdir(), `pistol-inventory-${process.pid}.json`);
+const inventoryRun = spawnSync(process.execPath, [
+  path.join(root, 'tools/eval/vm-glb-inventory.mjs'), file, '--pose=idle:0', `--saida=${inventoryPath}`,
+], { encoding: 'utf8' });
+check(inventoryRun.status === 0, `inventário estrutural falhou: ${(inventoryRun.stderr || '').slice(-300)}`);
+let orientation = null;
+if (inventoryRun.status === 0) {
+  const inventory = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+  fs.rmSync(inventoryPath, { force: true });
+  const primitives = inventory.poses[0].primitives;
+  const slide = primitives.find((primitive) => primitive.material === 'CoroSolto_finish_dark');
+  const barrel = primitives.find((primitive) => primitive.material === 'CoroSolto_finish_barrel');
+  const size = slide?.aabbWorld.size.slice();
+  if (size && hasMutant('cano-vertical')) [size[1], size[2]] = [size[2], size[1]];
+  orientation = size && barrel ? {
+    slideSize: size,
+    barrelAheadOfSlideM: Number((barrel.centerWorld[2] - slide.centerWorld[2]).toFixed(4)),
+  } : null;
+  check(orientation && size[2] > 0.15 && size[2] > 3 * size[1] && size[2] > 3 * size[0],
+    `slide não é longo em +Z (cano vertical?): tamanho ${JSON.stringify(size)}`);
+  check(orientation && orientation.barrelAheadOfSlideM > 0.02,
+    `boca do cano não está à frente do slide (${orientation?.barrelAheadOfSlideM ?? 'ausente'} m)`);
+}
 
 const measuredMagExcursion = translationExcursion('reload_tactical', 'Mag');
 const magExcursion = hasMutant('pente-estatico') ? 0 : measuredMagExcursion;
@@ -161,6 +197,7 @@ const result = {
   runtimeReport: reportFile,
   clips: [...clips.keys()],
   rigs: { arms: armsSkin?.listJoints().length || 0, weapon: weaponSkin?.listJoints().length || 0 },
+  orientation,
   magazine: {
     excursion: Number(measuredMagExcursion.toFixed(3)),
     barrelExcursion: Number(measuredBarrelExcursion.toFixed(4)),
