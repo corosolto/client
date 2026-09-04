@@ -1,6 +1,44 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (sexta rodada: laboratório Fab audível dentro do jogo local).
+Atualizado em 2026-09-04 (sétima rodada: arsenal e eventos audíveis no jogo local).
+
+## Sétima rodada — cobertura do jogo e primeira decisão humana
+
+Depois de testar `http://127.0.0.1:8131/`, Ruben aprovou explicitamente o take
+`Guns/Gun_Shot/Gunshot_1-1.wav` para a AK: “a AK ficou muito boa”. Essa é uma aprovação
+do **candidato fonte no laboratório local**. Não existe derivado de release, autorização de
+publicação nem liberação do WAV; a separação está registrada em
+`docs/audio/proveniencia.json` e coberta por PRV2b/PRV8b.
+
+O laboratório local agora instala 233 referências seguras do pack:
+
+- 25 armas de fogo com 25 takes distintos; só a AK tem aprovação humana, as outras 24 são
+  hipóteses de escuta e não identidades confirmadas pelo nome genérico `Gunshot_N-M`;
+- passos com pools separados para concreto, metal, madeira, terra, grama, cascalho e água;
+  enquanto os mapas não expõem material sob o pé, `game.js` usa água espacial e um piso
+  dominante por arena;
+- 4 quedas corporais, 6 explosões de frag, dry fire, swing/hit/deploy de faca e vinhetas
+  curtas distintas para início, vitória e derrota do round;
+- os tiros por sample preservam pan, atraso de propagação, fallback synth e agora têm teto
+  de 4 caudas simultâneas por take e 16 no total. A ESP10 reproduz a rajada de 12 tiros e
+  exige o corte das oito caudas mais antigas.
+
+Limites honestos deste checkpoint:
+
+- reload/reloadend/bolt ainda são pools globais, não foley próprio por arma;
+- o pack não oferece candidato nominal confiável para pino, lançamento e quique de granada;
+  a frag tem explosão, mas `explosion()` ainda não recebe posição;
+- tiros distantes e impactos de bala seguem fora do jogo e disponíveis só para avaliação;
+- o primeiro tiro de cada arma usa synth enquanto o buffer decodifica; os seguintes usam o
+  take próprio;
+- os 24 tiros novos, passos e eventos ainda exigem escuta humana. Verde técnico não é
+  aprovação visual/auditiva nem prontidão de release.
+
+O pack comprado já oferece candidato para toda arma e para os eventos pedidos, portanto
+nenhum arquivo externo foi baixado nesta rodada. Se um take for rejeitado, o fallback
+prioritário é avaliar a [Free Firearm Sound Library](https://opengameart.org/content/the-free-firearm-sound-library),
+marcada como CC0, e conferir licença, autoria, arquivo e hash no momento da importação.
+“CC0” no título ou no upload não basta quando o conteúdo remasteriza áudio de outro jogo.
 
 ## Sexta rodada — escuta dentro do jogo, sem publicar o pack
 
@@ -96,6 +134,12 @@ integração ia herdar calada.
 | `6b9b744f` | resultados da 4ª rodada; `audio:check` registrado como vermelho |
 | `6a1bc05b` | **P1**: ledger ausente aborta o gerador, nos dois modos (PRV12) |
 | `9f278f56` | **P2**: prova automatizada do `assets-check` contra fixture (PRV13) |
+| `f57d8b9f` | handoff da 5ª rodada e BUG-138/139 |
+| `4531147e` | fixture PRV13 isolada do ledger real |
+| `de1c83b8` | biblioteca Fab segura completa disponível na escuta local |
+| `fe169ff1` | laboratório Fab ligado ao jogo local sem versionar os WAVs |
+| `b46d452f` | escuta no jogo local registrada e servidor 8131 documentado |
+| `cfe7f7ed` | 25 tiros próprios, eventos, pisos, limites de voz e gates CAP5/ESP10 |
 
 ## Fonte e licença
 
@@ -281,8 +325,8 @@ terceira cópia da mesma decisão errada.
 **Correção:** a regra virou ALLOWLIST e passou a morar em `tools/audio/politica.mjs`, uma
 vez só para as três camadas — três cópias divergiriam na próxima edição (lição 2). Sob
 `prefixoDerivado`, nada atravessa sem estar no ledger com hash coerente, `aprovacao:
-"aprovado"`, evento em `derivado` com `caminhoRuntime: "arma"` e fonte compatível. Caminho
-do legado reprova por NOME.
+"aprovado"`, evento em `derivado` com caminho específico (`arma`, `superficie` ou
+`evento`) e fonte compatível. Caminho do legado reprova por NOME.
 
 | Prova | Camada | Antes | Depois |
 |---|---|---|---|
@@ -361,12 +405,12 @@ diferentes e as saídas também.
 
 | Evento | Candidato no pacote | Caminho de runtime | Estado |
 |---|---|---|---|
-| `ak.shot` | 43, em 8 famílias | **`arma`** (específico) | **pronto para escuta** |
+| `ak.shot` | 43, em 8 famílias | **`arma`** (específico) | fonte local **aprovada**; release bloqueado |
 | `ak.magOut` | 6 (`Unload_1`) | `global` | **sem caminho runtime** |
 | `ak.magIn` | 9 | `global` | **sem caminho runtime** |
-| `ak.bolt` | — | `global` | **sem candidato** + sem caminho |
-| `passo.concreto` | 24 | `global` | **sem caminho runtime** |
-| `morte.corpo` | 4 (`Body_Falling`) | `nenhum` | **sem caminho runtime** |
+| `ak.bolt` | 8 (`Load_1`, ambíguo) | `global` | candidato semântico fraco + sem caminho por arma |
+| `passo.concreto` | 24 | **`superficie`** | **pronto para escuta** |
+| `morte.corpo` | 4 (`Body_Falling`) | **`evento`** | **pronto para escuta** |
 | `impacto.concreto` | — | `nenhum` | **sem candidato** + sem caminho |
 | `impacto.metal` | — | `nenhum` | **sem candidato** + sem caminho |
 
@@ -403,7 +447,7 @@ hash em clone limpo. Catalogados e bloqueados. Bloqueio 6.
 | Achado | O que era | Régua |
 |---|---|---|
 | `sha256Fonte` era texto livre | "conferido a olho" passava por procedência | PRV1 + **PRV8** |
-| ledger aprovava o que o runtime não toca | 7 de 8 eventos sem caminho específico | **CAP1–CAP4** |
+| ledger aprovava o que o runtime não toca | agora 5 de 8 sem caminho específico | **CAP1–CAP5** |
 | legado fora de cobertura | 45 caminhos CS/Valve/UT sem catalogação | **PRV9** |
 | inventariador mascarava falha | WAV ilegível saía com tudo `null`, exit 0 | INV6–INV8 |
 | cache duplicava download | rajada de 10 tiros = 10 fetch + 10 decode | **ESP9** |
@@ -515,8 +559,10 @@ bloqueio 2 (lei de distância), por camada em vez de curva inventada.
 
 `derivados` está **vazio** e os 8 eventos do piloto estão em `decisao: "synth"`. Esse é o
 estado correto **mesmo com o pacote já baixado** — ele foi baixado, inventariado e
-catalogado em 04/09, com 900 WAVs em staging privado. O que falta não é o arquivo: é a
-ESCUTA. Derivado nasce de som ouvido e aprovado, e nada foi ouvido.
+catalogado em 04/09, com 900 WAVs em staging privado. Desde a sétima rodada, a fonte da AK
+foi ouvida e aprovada para o laboratório local; o que falta é criar uma arquitetura e um
+asset de release permitido, então aprovar esse derivado no jogo. Escuta da fonte não cria
+derivado automaticamente.
 
 O A/B é uma palavra no ledger: `synth` ↔ `derivado` por evento. No runtime, o interruptor
 que já existia continua valendo — `weaponSamples` no manifest liga o caminho por sample, e
@@ -606,17 +652,17 @@ Rejeitado:
 
 ## Limitações desta rodada
 
-- **Nenhuma escuta humana aconteceu.** Nem uma. Todas as réguas provam alcance,
-  espacialização, procedência, recusa de redistribuição e determinismo — **nenhuma delas
-  ouve nada**. O único registro de escuta gravado foi um teste de fumaça do servidor, e ele
-  foi apagado justamente para que ninguém confunda smoke test com aprovação.
+- **Há uma decisão humana, e só uma:** Ruben aprovou `Gunshot_1-1.wav` como candidato fonte
+  da AK no laboratório local. Todas as demais escolhas continuam pendentes. As réguas
+  provam alcance, espacialização, procedência, recusa de redistribuição e determinismo —
+  **nenhuma delas ouve nada**.
 - **Nenhum byte de áudio entrou no modelo.** O que foi lido foi `catalog.json` e
   `inventory.json` — nome, hash, duração, canais, taxa, pico, loudness. A listagem diz
   `Allows usage with AI: No` e isso foi respeitado.
-- **O caminho por sample nunca rodou num navegador.** `_shotSample` foi medido num
-  `AudioContext` falso; `decodeAudioData` real e latência real seguem não medidos.
-- **A página A/B nunca foi aberta por uma pessoa.** Ela responde 200 e grava a linha; se a
-  comparação é *útil* para decidir, só o Ruben responde.
+- **O caminho por sample rodou no navegador local e a AK foi ouvida**, mas os demais takes,
+  a latência sob carga e a mistura de uma partida cheia ainda não tiveram aprovação humana.
+- **A página A/B não é o registro autoritativo da aprovação da AK:** a decisão ocorreu no
+  jogo real local e foi fixada no ledger por caminho e sha-256.
 - **`audio:check` e `assert:assets` seguem vermelhos nesta worktree**, por ausência de
   insumo (`public/audio/` é gitignored e o `fetch-audio.sh` nunca rodou aqui).
 - **O pacote publicado é anterior à regra `ambiente`**, e agora também é anterior à trava de
@@ -671,22 +717,19 @@ tende a cair — mas isso é raciocínio, não medição.
 Game Sounds Pack. Não foram forçados. Ou saem do piloto, ou saem de outra fonte, ou ficam
 no synth. **Decisão do dono.**
 
-### 5. Sete dos oito eventos não têm caminho de runtime específico — NOVO
+### 5. Cinco dos oito eventos ainda não têm caminho de runtime específico
 
-Medido por sonda causal (`npm run eval:audiocapacidade`), só `ak.shot` tem caminho
-específico. `reloadStart()`, `reloadEnd()` e `bolt()` não recebem arma; `step(surface)`
-recebe a superfície e sorteia de uma pool única; `death()` e `ricochet()` não consultam o
-pack.
+Medido por sonda causal (`npm run eval:audiocapacidade`), `ak.shot`, `passo.concreto` e
+`morte.corpo` têm caminho específico. `reloadStart()`, `reloadEnd()` e `bolt()` ainda não
+recebem arma; `ricochet()` ainda não consulta o pack.
 
-**Não implementei os sete caminhos** — seria expandir escopo sem o dono pedir, e cada um é
-uma decisão de arquitetura de áudio (chave por arma? por superfície? pool por evento?). O
-que existe é a trava: CAP3 impede marcar `derivado` ou aprovar derivado para evento sem
-caminho `arma`. O estado bloqueado é honesto e a régua o mantém honesto.
+Passos agora leem `footstepsBySurface[surface]` e morte lê `cs.death`; CAP4b varia concreto
+contra metal e CAP5 mantém a allowlist alinhada com `arma|superficie|evento`. CAP3 continua
+impedindo derivado para caminhos `global|nenhum`.
 
-Para sair daqui é preciso decidir **e implementar** o formato de pack por evento. Ordem de
-custo/benefício sugerida, se o dono quiser seguir: `passo.<superfície>` (o jogo já sabe a
-superfície, falta só a chave), depois `weaponFoley.<arma>.<magOut|magIn|bolt>`, e por
-último morte e impactos, que precisam de caminho de sample do zero.
+Para fechar o restante: implementar `weaponFoley.<arma>.<magOut|magIn|bolt>` e depois
+impactos por material. O som de passo já está separado por superfície, mas a superfície
+seca ainda é uma aproximação dominante por mapa.
 
 ### 6. Legado CS/Valve/UT ainda no manifest de exemplo — NOVO
 
@@ -717,25 +760,24 @@ Substituir isso é outra frente, do tamanho do piloto inteiro. **Decisão do don
    npm run audio:ab -- /Users/ruben/csbrasil/private-assets/audio/action-game-sounds-pack --por=ruben
    ```
 
-   **Vale a pena escutar só `ak.shot` agora** — é o único evento que está pronto dos dois
-   lados (tem candidato e tem caminho de runtime). A pergunta é qual das 8 famílias
-   `Gunshot_` soa como AK. Os outros eventos aparecem na página, mas aprovar qualquer um
-   deles hoje não chegaria ao jogo: a CAP3 reprova, e com razão;
-10. decidir os bloqueios 1 (canal), 5 (implementar caminho de runtime) e 6 (legado). Os
+   A AK já foi escolhida. Agora vale escutar as outras 24 armas, passos, morte, frag e os
+   três estados de round dentro do jogo. Aprovação continua individual por take/evento;
+10. decidir os bloqueios 1 (canal), 5 (foley por arma e impactos) e 6 (legado). Os
     três são decisões de arquitetura ou jurídicas, não de execução;
 11. só depois escrever as entradas de `derivados` no ledger, com os dois hashes e
     `escutaAB` preenchido — PRV2 reprova `aprovado` sem escuta, PRV8 confere o
     `sha256Fonte` contra o arquivo real e CAP3 barra evento sem caminho;
 12. regerar o pack e rodar `assert:assets` contra ele;
-13. medir o custo de rajada num navegador antes de expandir para outras armas.
+13. ~~limitar caudas de rajada~~ **feito por ESP10**; ainda medir mistura e custo numa
+    partida cheia no navegador antes de considerar o arsenal aprovado.
 
 ## Comandos de validação
 
 ```bash
 npm run eval:audioalcance      # ALC1-ALC3  pipeline alcança o que o código nomeia
-npm run eval:audioespacial     # ESP1-ESP9  pan, propagação, duck, fallback, volume, rajada
+npm run eval:audioespacial     # ESP1-ESP10 pan, propagação, duck, fallback, volume, rajada
 npm run eval:audioproc         # PRV1-PRV13 ledger, redistribuição, fail-closed nas 3 camadas
-npm run eval:audiocapacidade   # CAP1-CAP4  só se aprova o que o runtime sabe tocar
+npm run eval:audiocapacidade   # CAP1-CAP5  só se aprova o que o runtime sabe tocar
 npm run audio:inventario:autoteste
 npm run audio:shortlist:autoteste
 npm run check:fast             # os seis acima entram aqui
