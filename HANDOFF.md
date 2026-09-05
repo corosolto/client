@@ -31,6 +31,7 @@ linha de base, não como troca de transporte sem medição.
 `/Users/ruben/csbrasil-backend/worktrees/mp-round-presence`, branch `feat/mp-round-presence`,
 base `00c679a33b9f`; admin `/Users/ruben/csbrasil/worktrees/admin-mp-round-truth`, branch
 `codex/mp-round-player-truth`, base `8a5eedc866e6`. Nenhum deploy deste corte foi feito ainda.
+Checkpoint funcional do cliente: `e83af234a61c`.
 
 **Implementado:** `coro-snapshot-v4` leva ACK do input e estado autoritativo de arma, slots,
 pente, reserva e recarga; v3/v2/JSON continuam negociáveis. A reconciliação usa a pose do mesmo
