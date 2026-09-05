@@ -512,7 +512,7 @@ export class Sfx {
   }
   _weaponPack(weapon) {
     const query = new URLSearchParams(location.search);
-    const id = query.get('gunpack');
+    const id = query.has('gunpack') ? query.get('gunpack') : this.pack?.defaultWeaponPack;
     const pack = id ? this.pack?.weaponPacks?.[id] : null;
     const cfg = pack?.weapons?.[weapon];
     if (!cfg) return null;

@@ -31,7 +31,10 @@ as aproximações.
 - **proxy provisório:** LMG, Tavor, Famas, SCAR, G3, Deagle, AWP, Remington 700, M400 e G3SG1;
 - **sem gravação BOOM neste produto:** Uzi e P90, que continuam no pack CC0 da décima rodada.
 
-O A/B é opt-in por URL e não substitui a base silenciosamente. `gunpack=boom` escolhe o pack,
+Após a primeira entrega, o dono informou que a raiz ainda tocava os sons anteriores. A causa
+foi confirmada no manifest servido: o pack BOOM existia, mas `defaultWeaponPack` estava vazio
+e o runtime só o selecionava com `?gunpack=boom`. O laboratório agora declara BOOM como padrão
+e o runtime respeita essa chave. `gunpack=base` retorna explicitamente à base anterior;
 `gunstyle` escolhe o desenho e `guntake` fixa um disparo para comparação repetível. Sem
 `guntake`, um dos takes do estilo é sorteado. A shotgun oferece 16 takes por estilo, reunindo
 Ithaca M37, Maverick 88, Maverick 88 FM e Winchester 1300. As gravações BOOM tocam neutras,
@@ -44,8 +47,9 @@ das armas ocorre no início da partida:
 
 | Comparação | Link |
 |---|---|
-| Base atual (AK Fab + restante CC0) | `http://127.0.0.1:8131/` |
-| BOOM `huge` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=huge` |
+| BOOM `huge` padrão | `http://127.0.0.1:8131/` |
+| Base anterior (AK Fab + restante CC0) | `http://127.0.0.1:8131/?gunpack=base` |
+| BOOM `huge` explícito | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=huge` |
 | BOOM `natural` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=natural` |
 | BOOM `crispy` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=crispy` |
 | BOOM `light` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=light` |
@@ -63,8 +67,9 @@ Validação executada:
 - `build`, `syntax`, `eval:audiofablocal`, `eval:audioespacial`, `eval:audiocapacidade`,
   `eval:audioproc`, `eval:audioalcance`, `docs:check`, `arch:check`, `eval:docsautoria` e
   `git diff --check`: verdes;
-- ESP1e prova seleção exata por pack, estilo e take; ESP1b continua exigindo zero synth
-  sobreposto ao WAV pré-carregado;
+- ESP1e prova seleção exata por pack, estilo e take; ESP1f prova BOOM padrão sem query;
+  ESP1g prova o retorno explícito à base; ESP1b continua exigindo zero synth sobreposto ao
+  WAV pré-carregado;
 - mutante `sem-veto`: vermelho em LAB4/LAB5d, como esperado.
 
 Próximo passo concreto: o dono escuta os quatro estilos no jogo e aprova/rejeita por arma ou

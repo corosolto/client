@@ -43,6 +43,8 @@
      ESP1c seletor de shotgun escolhe exatamente o take pedido na URL.
      ESP1d gravação real toca neutra, sem pitch/EQ de família.
      ESP1e BOOM A/B respeita pack, estilo e take pedidos na URL.
+     ESP1f manifest local pode tornar BOOM padrão sem parâmetro na URL.
+     ESP1g `gunpack=base` continua permitindo comparar a base anterior.
      ESP2  pan: `pan` ≠ 0 vira um `StereoPanner` com esse valor no caminho sample.
      ESP3  propagação: o som começa em `currentTime + propDelay`, não em zero.
      ESP4  duck: o caminho sample ducka pela MESMA regra do synth (`<12 ? .3 : .55`).
@@ -331,6 +333,29 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
   conferir('ESP1e', selected === 'boom-c2.wav',
     `A/B BOOM escolheu ${selected || '(nada)'} em vez de boom-c2.wav; pack, estilo e take precisam ser reproduzíveis.`,
     'A/B BOOM respeita pack, estilo e segundo take pedidos na URL.');
+}
+
+{
+  const oldSearch = location.search;
+  const sfx = new Sfx();
+  sfx.pack = {
+    defaultWeaponPack: 'boom',
+    weapons: { m4: ['base.wav'] },
+    weaponPacks: { boom: { weapons: { m4: {
+      defaultStyle: 'huge', styles: { huge: ['boom-h1.wav', 'boom-h2.wav'] },
+    } } } },
+  };
+  location.search = '?gunstyle=huge&guntake=1';
+  const selectedDefault = sfx._weaponSample('m4');
+  location.search = '?gunpack=base&guntake=1';
+  const selectedBase = sfx._weaponSample('m4');
+  location.search = oldSearch;
+  conferir('ESP1f', selectedDefault === 'boom-h1.wav',
+    `manifest pediu BOOM como padrão, mas a raiz escolheu ${selectedDefault || '(nada)'}; o servidor local não pode exigir parâmetro oculto.`,
+    'manifest local torna BOOM o padrão mesmo sem gunpack na URL.');
+  conferir('ESP1g', selectedBase === 'base.wav',
+    `?gunpack=base escolheu ${selectedBase || '(nada)'}; a comparação com a base precisa continuar disponível.`,
+    '`gunpack=base` retorna explicitamente à base anterior.');
 }
 
 // ── ESP2 / ESP3 / ESP4: o caminho sample honra pan, propagação e duck ─────

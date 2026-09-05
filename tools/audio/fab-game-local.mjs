@@ -347,6 +347,7 @@ const manifest = {
   },
   weaponSamples: true,
   ...(firearmsCc0 ? { weaponSamplesAuthentic: true } : {}),
+  ...(boomWeaponPack ? { defaultWeaponPack: 'boom' } : {}),
   weapons,
   ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
   ...(boomWeaponPack ? { weaponPacks: { boom: boomWeaponPack } } : {}),

@@ -150,6 +150,9 @@ if (manifest) {
     || Object.values(boomM4?.styles || {}).flat().some((url) => !url.startsWith('audio/boom-guns-dev/'))) {
     erros.push('LAB5db BOOM Designed não entrou como pack A/B por arma e estilo.');
   }
+  if (manifest.defaultWeaponPack !== 'boom') {
+    erros.push('LAB5dd BOOM Designed não virou o padrão do laboratório local.');
+  }
   const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
   if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
     erros.push(`LAB5da arsenal sem AK mapeado semanticamente para CC0: ${cc0Mapped.length}/${FIREARM_IDS.length - 1}.`);
