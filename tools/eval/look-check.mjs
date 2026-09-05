@@ -9,10 +9,11 @@
    O que ela mede, no MESMO mundo em que o jogo roda:
      1. sobe o mapa de verdade pelo harness (bootGame) e lê `scene.fog.color` —
         a névoa que o jogo desenha, não a declaração;
-     2. lê `scene.userData.skyUrl` — o céu que o mapa REALMENTE pediu (setMapSky
-        grava ao aplicar; régua que lê declaração em vez de uso é o BUG-02);
-     3. amostra o horizonte DESSE webp com tools/eval/look-horizonte.py
-        (mediana das 12 linhas acima do equador equiretangular — ver a docstring);
+     2. distingue skySource webp/procedural, recusando origem desconhecida;
+     3. webp: mede skyUrl solicitado com look-horizonte.py (não atesta download no browser).
+        Procedural: mede os bytes de scene.background criados pelo MESMO código runtime,
+        com banda de 12 linhas acima do equador; ausência/formato errado são vermelhos;
+        os extremos analíticos representam a mesma longitude e devem ter bytes iguais;
      4. compara em ΔE CIE76 (Lab D65, a partir do sRGB dos dois lados).
 
    O TETO E SUA PROCEDÊNCIA (Lei 2):
@@ -37,15 +38,17 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import * as THREE from '../../public/vendor/three.module.js';
 import { initTextures, bootGame } from './harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(HERE, '../..');
 const MUT = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 const TETO_DE = 8;
-// Piloto do RC1 (plans/23): os 3 primeiros mapas do look por mapa. O rollout
-// estende esta lista aos demais mapas com céu webp — velho_oeste entrou na r2
-// da frente map2 (sky_sertao.webp medido por look-horizonte.py: #a6794d).
+const MUTANTES = ['fog', 'ceu', 'costura', 'ceu-ausente'];
+if (MUT && !MUTANTES.includes(MUT)) throw new Error(`mutante desconhecido: ${MUT}`);
+let mutou = false;
+// RC1: panoramas dos três mapas piloto e céu analítico do Sertão.
 const MAPAS = ['mansao', 'corrego', 'campomorro', 'velho_oeste'];
 
 /* ---------- sRGB -> Lab (D65), ΔE CIE76 ---------- */
@@ -70,6 +73,7 @@ const dE76 = (h1, h2) => {
 /* ---------- horizonte: fresco (python3+PIL) ou assado ---------- */
 function horizontes(skies) {
   const problemas = [];
+  if (!skies.length) return { tab: {}, origem: 'runtime', problemas };
   const assPath = path.join(HERE, 'look-horizonte.json');
   const assado = existsSync(assPath) ? JSON.parse(readFileSync(assPath, 'utf8')) : null;
   const r = spawnSync('python3', [path.join(HERE, 'look-horizonte.py'), ...skies.map((s) => path.join(RAIZ, 'public', s))], { encoding: 'utf8' });
@@ -91,47 +95,96 @@ function horizontes(skies) {
   return { tab: assado, origem: 'assado', problemas };
 }
 
-/* ---------- medição ---------- */
+/* A DataTexture tem origem inferior (flipY=false). A banda usa os mesmos 12
+   texels acima do equador do sampler webp, refletidos no eixo vertical. */
+function horizonteProcedural(tex) {
+  const im = tex?.image;
+  if (!tex?.isDataTexture || !(im?.data instanceof Uint8Array) ||
+      im.width !== 1024 || im.height !== 512 || im.data.length !== im.width * im.height * 4 ||
+      tex.format !== THREE.RGBAFormat || tex.type !== THREE.UnsignedByteType ||
+      tex.colorSpace !== THREE.SRGBColorSpace || tex.flipY !== false ||
+      tex.mapping !== THREE.EquirectangularReflectionMapping || tex.wrapS !== THREE.RepeatWrapping)
+    throw new Error('céu procedural usado não é DataTexture RGBA sRGB equiretangular 1024×512 mensurável');
+  const channels = [[], [], []];
+  let seam = 0;
+  for (let y = im.height / 2; y < im.height; y++) {
+    for (let c = 0; c < 3; c++) seam = Math.max(seam, Math.abs(im.data[y * im.width * 4 + c] - im.data[((y + 1) * im.width - 1) * 4 + c]));
+  }
+  for (let y = im.height / 2 + 2; y < im.height / 2 + 14; y++) {
+    for (let x = Math.floor(im.width * .04); x < Math.floor(im.width * .96); x++) {
+      for (let c = 0; c < 3; c++) channels[c].push(im.data[(y * im.width + x) * 4 + c]);
+    }
+  }
+  const rgb = channels.map(values => { values.sort((a, b) => a - b); return Math.round((values[(values.length - 1) >> 1] + values[values.length >> 1]) / 2); });
+  return { horizonte: ((rgb[0] << 16) | (rgb[1] << 8) | rgb[2]).toString(16).padStart(6, '0'), seam };
+}
+
 const T = initTextures();
 const falhas = [];
 const porMapa = [];
 for (const mapId of MAPAS) {
   const g = bootGame(mapId, { textures: T });
   const fog = g.scene.fog;
-  if (!fog || !fog.color) { falhas.push(`${mapId}: scene.fog ausente — não sei medir (névoa desligada é vermelho, não silêncio)`); continue; }
+  if (!fog || !fog.color) { falhas.push(`${mapId}: scene.fog ausente — não sei medir`); continue; }
   if (MUT === 'fog') {
     const antes = fog.color.getHex();
     fog.color.r = Math.min(1, fog.color.r + 0.3);
-    if (fog.color.getHex() === antes) { console.log('LOOK VERMELHA · mutante fog NÃO aplicou'); process.exit(1); }
+    if (fog.color.getHex() === antes) throw new Error('mutante fog NÃO aplicou');
+    mutou = true;
   }
-  const skyUrl = g.scene.userData.skyUrl;
-  if (!skyUrl) { falhas.push(`${mapId}: scene.userData.skyUrl ausente — o mapa não passou pelo setMapSky instrumentado`); continue; }
-  if (!existsSync(path.join(RAIZ, 'public', skyUrl))) { falhas.push(`${mapId}: céu ${skyUrl} não existe em public/`); continue; }
-  porMapa.push({ mapId, fogHex: fog.color.getHex(), sky: skyUrl.split('/').pop(), skyUrl });
+  try {
+    const source = g.scene.userData.skySource;
+    const skyUrl = g.scene.userData.skyUrl;
+    if (source?.kind === 'procedural') {
+      if (source.model !== 'dry-afternoon' || skyUrl) throw new Error('fonte procedural desconhecida ou skyUrl obsoleto');
+      if (mapId !== 'velho_oeste') throw new Error('céu procedural vazou para outro mapa');
+      if (MUT === 'ceu-ausente') { g.scene.background = null; mutou = true; }
+      if (MUT === 'ceu' || MUT === 'costura') {
+        const d = g.scene.background?.image?.data;
+        if (!d) throw new Error('mutante sem DataTexture');
+        const before = d.slice();
+        if (MUT === 'ceu') {
+          for (let i = 0; i < d.length; i += 4) { d[i] = 255; d[i + 1] = 0; d[i + 2] = 255; }
+        } else {
+          for (let y = 256; y < 512; y++) d[y * 1024 * 4] ^= 255;
+        }
+        if (!d.some((v, i) => v !== before[i])) throw new Error('mutante céu NÃO aplicou');
+        mutou = true;
+      }
+      const am = horizonteProcedural(g.scene.background);
+      console.log(`  ${mapId} costura=${am.seam} níveis sRGB (extremos representam a mesma longitude)`);
+      if (am.seam !== 0) falhas.push(`${mapId}: costura procedural ${am.seam} ≠ 0 — extremos não coincidem`);
+      porMapa.push({ mapId, fogHex: fog.color.getHex(), sky: source.model, am });
+    } else {
+      if (mapId === 'velho_oeste') throw new Error('Sertão ainda usa panorama sem contrato de continuidade; esperado céu procedural medido em scene.background');
+      if (source?.kind !== 'webp' || source.url !== skyUrl) throw new Error('fonte webp ausente/desconhecida ou URL usada divergente');
+      if (!skyUrl || !existsSync(path.join(RAIZ, 'public', skyUrl))) throw new Error(`céu ${skyUrl} ausente em public/`);
+      porMapa.push({ mapId, fogHex: fog.color.getHex(), sky: skyUrl.split('/').pop(), skyUrl });
+    }
+  } catch (e) { falhas.push(`${mapId}: ${e.message}`); }
 }
 
-const { tab, origem, problemas } = horizontes([...new Set(porMapa.map((m) => m.skyUrl))]);
+const { tab, origem, problemas } = horizontes([...new Set(porMapa.filter(m => m.skyUrl).map(m => m.skyUrl))]);
 falhas.push(...problemas);
-
 let verdes = 0;
 for (const m of porMapa) {
-  const am = tab[m.sky];
+  const am = m.am || tab[m.sky];
   if (!am) { falhas.push(`${m.mapId}: horizonte de ${m.sky} não medido (${origem})`); continue; }
   const horHex = parseInt(am.horizonte, 16);
   const dE = dE76(m.fogHex, horHex);
   const ok = dE <= TETO_DE;
   if (ok) verdes++;
   const hx = (h) => '#' + h.toString(16).padStart(6, '0');
-  console.log(`  ${m.mapId.padEnd(15)} fog=${hx(m.fogHex)} horizonte=${hx(horHex)} (${m.sky}, ${origem})  ΔE76=${dE.toFixed(1)} ${ok ? `≤ ${TETO_DE}` : `> ${TETO_DE}  ← VERMELHA`}`);
+  console.log(`  ${m.mapId.padEnd(15)} fog=${hx(m.fogHex)} horizonte=${hx(horHex)} (${m.sky}, ${m.am ? 'texel runtime' : origem})  ΔE76=${dE.toFixed(1)} ${ok ? `≤ ${TETO_DE}` : `> ${TETO_DE}  ← VERMELHA`}`);
 }
-
+for (const f of falhas) console.log(`  LOOK VERMELHA · ${f}`);
 if (MUT) {
+  if (!mutou) { console.log(`LOOK VERMELHA · mutante '${MUT}' NÃO aplicou`); process.exit(1); }
   if (verdes < porMapa.length || falhas.length) { console.log(`LOOK ok · mutante '${MUT}' reprovado como esperado`); process.exit(0); }
   console.log(`LOOK VERMELHA · mutante '${MUT}' passou — a régua NÃO morde`); process.exit(1);
 }
-for (const f of falhas) console.log(`  LOOK VERMELHA · ${f}`);
-if (falhas.length || verdes < porMapa.length) {
-  console.log(`LOOK VERMELHA · ${verdes}/${porMapa.length} mapas com fog == horizonte (teto ΔE76 ${TETO_DE})`);
+if (falhas.length || verdes !== MAPAS.length) {
+  console.log(`LOOK VERMELHA · ${verdes}/${MAPAS.length} mapas com fog == horizonte (teto ΔE76 ${TETO_DE})`);
   process.exit(1);
 }
-console.log(`LOOK ok · ${verdes}/${porMapa.length} mapas com fog == horizonte (teto ΔE76 ${TETO_DE}, horizonte ${origem})`);
+console.log(`LOOK ok · ${verdes}/${MAPAS.length} mapas com fog == horizonte (teto ΔE76 ${TETO_DE}, webp ${origem}, procedural runtime)`);

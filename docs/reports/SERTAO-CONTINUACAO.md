@@ -22,3 +22,12 @@ Pesquisa de referências e acervo em `SERTAO-REFERENCIAS.md`; crítico independe
 
 ## Em andamento / próximo passo
 Criar réguas antes da correção para textura íntegra, vegetação não obstrutiva, semântica ligada à malha, correspondência física e três rotas. Corrigir céu, casario e entorno; recapturar e testar. Registrar commits e resultado integral dos gates antes da entrega. Nenhum resultado visual está aprovado.
+
+## Marco técnico — 06/09
+Checkpoint de diagnóstico/procedência: `727f3c84`. Alterações de runtime permanecem nesta branch exclusiva. As réguas espaciais passam 8/8 com 11 mutantes isolados; runtime GLB passa 5/5 e quatro mutantes isolados, incluindo varanda falsa, corpo ausente, batching desligado e spawn exposto. Semântica dos GLBs ligada à malha real; 10 postes finos substituem bloqueios de varanda; igreja corresponde ao footprint observado. Quatro abrigos novos eliminam LOS entre olhos dos spawns opostos sem mover coordenadas.
+
+Custo mapview intermediário: máximo 420 calls / 354401 tris; comparação baseline 503 / 320181. Folga de tris de 15% declarada conforme cena-tetos; não é FPS de partida. A revisão adversarial de uma iteração rejeitou copas/texto/fundo; versões corrigidas aguardam nova crítica. Capturas correntes em `artifacts/sertao-astra/runtime/`; relatório crítico tem hashes para distinguir a iteração avaliada.
+
+`check:fast` fresco: 100/104; falhas docs:check, audio:check, skills:check, eval:docsautoria. Pacotes oficiais audio-v6 e decals-v2 baixados apenas nesta worktree: assert:assets agora passa. Sync local de skills e docs geradas executados; recheck pendente. Pacote audio-v6 tem manifesto incompatível com o gerador atual e não contém a pasta ambiente; não reescrever o manifesto removendo falas para forçar verde. `eval:ambience` tinha path `map_${id.slice(3)}.js` inexistente; corrigido para mapa real, execução de browser pendente.
+
+Próximos passos: movimento real antes/depois e mapa pesado de referência; terminar ambiência/global/build; recapturar após correção do solo contínuo; revisão adversarial; commits pequenos e relatório de integração. Não houve push, PR novo, merge ou deploy. Nada está aprovado visualmente.
