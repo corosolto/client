@@ -31,9 +31,11 @@ const tmp = mkdtempSync(join(tmpdir(), 'audio-fab-local-'));
 const pack = join(tmp, 'pack-privado');
 const wavs = join(pack, 'extracted-wav');
 const firearmsCc0 = join(tmp, 'firearms-cc0');
+const boomGuns = join(tmp, 'boom-guns-designed');
 const publico = join(tmp, 'public', 'audio');
 mkdirSync(wavs, { recursive: true });
 mkdirSync(firearmsCc0, { recursive: true });
+mkdirSync(boomGuns, { recursive: true });
 mkdirSync(publico, { recursive: true });
 const shotgunFixture = [
   'shotgun-01-mossberg-room.wav', 'shotgun-02-model12-room.wav', 'shotgun-03-nova-room.wav',
@@ -48,6 +50,16 @@ for (const nome of new Set([...Object.values(firearmFixture).flat(), ...shotgunF
 writeFileSync(join(firearmsCc0, 'manifest.json'), JSON.stringify({
   license: 'CC0-1.0', approval: 'local-candidates-only',
   weapons: firearmFixture, weaponCandidates: { shotgun: shotgunFixture },
+}));
+const boomStyles = Object.fromEntries(['natural', 'crispy', 'huge', 'light'].map((style) => [
+  style, [`m4-${style}-01.wav`, `m4-${style}-02.wav`],
+]));
+for (const nome of Object.values(boomStyles).flat()) writeFileSync(join(boomGuns, nome), 'fixture-boom-sem-audio');
+writeFileSync(join(boomGuns, 'manifest.json'), JSON.stringify({
+  license: 'BOOM-MEDIA-LICENSE-2022', approval: 'local-candidates-only',
+  aiUse: false, weapons: {
+    m4: { defaultStyle: 'huge', match: 'exact', sourceWeapons: ['Colt M4'], styles: boomStyles },
+  },
 }));
 
 const candidato = (arquivo) => ({ arquivo, sha256: 'a'.repeat(64), familia: arquivo.replace(/-\d+\.wav$/, '') });
@@ -106,7 +118,9 @@ for (const e of eventos) for (const c of e.candidatos) {
 }
 writeFileSync(join(pack, 'shortlist-piloto.json'), JSON.stringify({ eventos, biblioteca: [] }));
 
-const run = spawnSync(process.execPath, [SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`], {
+const run = spawnSync(process.execPath, [
+  SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`, `--boom-guns=${boomGuns}`,
+], {
   encoding: 'utf8', env: { ...process.env, FAB_GAME_LOCAL_MUTANTE: mutante },
 });
 const erros = [];
@@ -130,6 +144,11 @@ if (manifest) {
   if (manifest.weapons?.ak?.[0] !== 'audio/fab-dev/Guns/Gun_Shot/Gunshot_1-1.wav') erros.push('LAB5d AK aprovada pelo dono foi alterada.');
   if (manifest.weaponSamplesAuthentic !== true) {
     erros.push('LAB5dc arsenal CC0 real não ativou o caminho de reprodução neutra.');
+  }
+  const boomM4 = manifest.weaponPacks?.boom?.weapons?.m4;
+  if (boomM4?.defaultStyle !== 'huge' || Object.keys(boomM4?.styles || {}).length !== 4
+    || Object.values(boomM4?.styles || {}).flat().some((url) => !url.startsWith('audio/boom-guns-dev/'))) {
+    erros.push('LAB5db BOOM Designed não entrou como pack A/B por arma e estilo.');
   }
   const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
   if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
@@ -198,7 +217,7 @@ for (const [label, needle] of [
 if (!/m92:\s*'ak'/.test(AUDIO_RUNTIME)) erros.push('LAB11 runtime classifica a Zastava M92 como pistola.');
 if (!AUDIO_RUNTIME.includes('SAMPLE_WEAPON_SIGNATURE')
   || !AUDIO_RUNTIME.includes('SAMPLE_CLASS_SIGNATURE')
-  || !AUDIO_RUNTIME.includes('this._shotSample(f, w, dist, vol, pan, propDelay)')) {
+  || !AUDIO_RUNTIME.includes('this._shotSample(f, w, dist, vol, pan, propDelay, neutral)')) {
   erros.push('LAB11a samples continuam sem assinatura de fonte por arma e fallback por família.');
 }
 if (AUDIO_RUNTIME.includes('_sampleGunSignature(')) {
@@ -226,9 +245,13 @@ if (!AUDIO_RUNTIME.includes('async preloadWeaponSamples(weapons = [])')
   erros.push('LAB11af primeiro tiro ainda pode cair no synth enquanto o WAV carrega.');
 }
 if (!AUDIO_RUNTIME.includes('_weaponSample(weapon)')
-  || !AUDIO_RUNTIME.includes("get('shotguntake')")
-  || AUDIO_RUNTIME.includes("this._pick(this.pack?.weapons?.[w])")) {
+  || !AUDIO_RUNTIME.includes("'shotguntake'")
+  || !AUDIO_RUNTIME.includes("weapon === 'shotgun' ? 'shotguntake'")) {
   erros.push('LAB11ag jogo não permite comparar takes reais de shotgun de forma determinística.');
+}
+if (!AUDIO_RUNTIME.includes("get('gunpack')") || !AUDIO_RUNTIME.includes("get('gunstyle')")
+  || !AUDIO_RUNTIME.includes("selectedPack ? 'guntake'") || !AUDIO_RUNTIME.includes('weaponPacks')) {
+  erros.push('LAB11ai jogo não permite A/B determinístico do BOOM por pack, estilo e take.');
 }
 if (!AUDIO_RUNTIME.includes('this.pack?.weaponSamplesAuthentic')
   || !AUDIO_RUNTIME.includes('Sfx.SAMPLE_SOURCE_NEUTRAL')) {
@@ -271,6 +294,11 @@ try {
     erros.push('LAB10b symlink CC0 não aponta para a raiz privada exata do arsenal derivado.');
   }
 } catch (e) { erros.push(`LAB10b symlink CC0 local ausente/inválido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'boom-guns-dev'))) !== resolve(boomGuns)) {
+    erros.push('LAB10c symlink BOOM não aponta para a raiz privada exata dos candidatos derivados.');
+  }
+} catch (e) { erros.push(`LAB10c symlink BOOM local ausente/inválido: ${e.message}`); }
 
 rmSync(tmp, { recursive: true, force: true });
 if (erros.length) {

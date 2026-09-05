@@ -507,22 +507,41 @@ export class Sfx {
   async preloadWeaponSamples(weapons = []) {
     this.ensure();
     if (!this.ctx || !this.pack?.weaponSamples) return;
-    const urls = [...new Set(weapons.flatMap((weapon) => [
-      ...(this.pack?.weapons?.[weapon] || []),
-      ...(this.pack?.weaponCandidates?.[weapon] || []),
-    ]))];
+    const urls = [...new Set(weapons.flatMap((weapon) => this._weaponPool(weapon)))];
     await Promise.all(urls.map((url) => this._loadShotSample(url)));
   }
-  _weaponSample(weapon) {
-    const candidates = this.pack?.weaponCandidates?.[weapon];
-    if (weapon === 'shotgun' && candidates?.length) {
-      const requested = Number.parseInt(new URLSearchParams(location.search).get('shotguntake') || '1', 10);
-      const index = Number.isFinite(requested) ? Math.max(1, Math.min(candidates.length, requested)) - 1 : 0;
-      return candidates[index];
-    }
-    return this._pick(this.pack?.weapons?.[weapon]);
+  _weaponPack(weapon) {
+    const query = new URLSearchParams(location.search);
+    const id = query.get('gunpack');
+    const pack = id ? this.pack?.weaponPacks?.[id] : null;
+    const cfg = pack?.weapons?.[weapon];
+    if (!cfg) return null;
+    const requestedStyle = query.get('gunstyle');
+    const style = cfg.styles?.[requestedStyle] ? requestedStyle : cfg.defaultStyle;
+    const pool = cfg.styles?.[style] || [];
+    return pool.length ? { id, pool, neutral: pack.neutralPlayback === true } : null;
   }
-  _shotSample(url, weapon, dist, vol, pan, propDelay) {
+  _weaponPool(weapon) {
+    const selectedPack = this._weaponPack(weapon);
+    if (selectedPack) return selectedPack.pool;
+    const candidates = this.pack?.weaponCandidates?.[weapon];
+    if (weapon === 'shotgun' && candidates?.length) return candidates;
+    return this.pack?.weapons?.[weapon] || [];
+  }
+  _weaponSample(weapon) {
+    const query = new URLSearchParams(location.search);
+    const selectedPack = this._weaponPack(weapon);
+    const pool = selectedPack?.pool || this._weaponPool(weapon);
+    if (!pool.length) return undefined;
+    const key = selectedPack ? 'guntake' : (weapon === 'shotgun' ? 'shotguntake' : null);
+    if (key && query.has(key)) {
+      const requested = Number.parseInt(query.get(key) || '1', 10);
+      const index = Number.isFinite(requested) ? Math.max(1, Math.min(pool.length, requested)) - 1 : 0;
+      return pool[index];
+    }
+    return this._pick(pool);
+  }
+  _shotSample(url, weapon, dist, vol, pan, propDelay, neutral = this.pack?.weaponSamplesAuthentic === true) {
     this.ensure();
     this._shotBuf = this._shotBuf || new Map();
     const buf = this._shotBuf.get(url);
@@ -535,7 +554,7 @@ export class Sfx {
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
     const cls = Sfx.GUN_CLASS[weapon] || 'rifle';
-    const signature = this.pack?.weaponSamplesAuthentic
+    const signature = neutral
       ? Sfx.SAMPLE_SOURCE_NEUTRAL
       : (Sfx.SAMPLE_WEAPON_SIGNATURE[weapon]
         || Sfx.SAMPLE_CLASS_SIGNATURE[cls]
@@ -634,7 +653,11 @@ export class Sfx {
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
     vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._weaponSample(w); if (f && this._shotSample(f, w, dist, vol, pan, propDelay)) return; }
+    if (this.pack?.weaponSamples) {
+      const f = this._weaponSample(w);
+      const neutral = this._weaponPack(w)?.neutral || this.pack?.weaponSamplesAuthentic === true;
+      if (f && this._shotSample(f, w, dist, vol, pan, propDelay, neutral)) return;
+    }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.

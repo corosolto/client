@@ -114,6 +114,16 @@
    "stagingPrivado": "private-assets/audio/csbr-firearms-cc0",
    "notas": "Biblioteca de armas reais publicada como CC0 pelos autores. O arquivo Prepared SFX Library.7z foi baixado em 05/09/2026 com sha256 cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6. A ferramenta tools/audio/prepare-free-firearm-cc0.mjs isola one-shots por silêncio, registra fonte, modelo, distância, correspondência e hashes em manifest privado. Os 29 WAVs são candidatos locais: nenhum recebeu aprovação humana ou autorização de release. A AK continua no take Fab já aprovado localmente."
   },
+  "boom-guns-designed": {
+   "titulo": "BOOM Library GUNS Designed",
+   "autor": "BOOM Library",
+   "url": "https://www.boomlibrary.com/sound-effects/gun-sounds/",
+   "licenca": "BOOM Media License 2022",
+   "redistribuicao": "proibida-standalone",
+   "usoComIA": "nao",
+   "stagingPrivado": "private-assets/audio/boom-guns-designed",
+   "notas": "Produto comprado pelo dono; ZIP guns_ds_719mb.zip verificado com sha256 ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa. A EULA permite adaptar e incorporar o material em videogame com outros elementos de audio, mas exige comprovante de compra, proibe redistribuicao standalone/audio-only e proibe treino de IA/ML. Nenhum WAV foi enviado a modelo. A ferramenta tools/audio/prepare-boom-guns-designed.mjs separa deterministicamente quatro one-shots por gravacao em staging privado. Os resultados sao candidatos locais de escuta, sem aprovacao humana ou autorizacao de release."
+  },
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
    "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",

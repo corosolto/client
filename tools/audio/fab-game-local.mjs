@@ -12,7 +12,7 @@ const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
 const dir = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!dir) {
-  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir]');
+  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir]');
   process.exit(2);
 }
 
@@ -24,6 +24,9 @@ const LINK = join(PUBLICO, 'fab-dev');
 const FIREARMS_CC0_ARG = arg('firearms-cc0');
 const FIREARMS_CC0 = FIREARMS_CC0_ARG ? resolve(FIREARMS_CC0_ARG) : null;
 const FIREARMS_LINK = join(PUBLICO, 'firearms-cc0-dev');
+const BOOM_GUNS_ARG = arg('boom-guns');
+const BOOM_GUNS = BOOM_GUNS_ARG ? resolve(BOOM_GUNS_ARG) : null;
+const BOOM_GUNS_LINK = join(PUBLICO, 'boom-guns-dev');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
@@ -42,6 +45,17 @@ if (FIREARMS_CC0) {
   catch (error) { console.error(`manifest CC0 de armas inválido: ${sourceManifest} (${error.message})`); process.exit(2); }
   if (firearmsCc0.license !== 'CC0-1.0' || firearmsCc0.approval !== 'local-candidates-only') {
     console.error('recusado: manifest de armas precisa declarar CC0-1.0 e local-candidates-only.');
+    process.exit(2);
+  }
+}
+let boomGuns = null;
+if (BOOM_GUNS) {
+  const sourceManifest = join(BOOM_GUNS, 'manifest.json');
+  try { boomGuns = JSON.parse(readFileSync(sourceManifest, 'utf8')); }
+  catch (error) { console.error(`manifest BOOM GUNS inválido: ${sourceManifest} (${error.message})`); process.exit(2); }
+  if (boomGuns.license !== 'BOOM-MEDIA-LICENSE-2022'
+    || boomGuns.approval !== 'local-candidates-only' || boomGuns.aiUse !== false) {
+    console.error('recusado: manifest BOOM precisa declarar licença, local-candidates-only e aiUse=false.');
     process.exit(2);
   }
 }
@@ -79,6 +93,24 @@ function firearmCc0Urls(nomes) {
       process.exit(2);
     }
     urls.push(`audio/firearms-cc0-dev/${nome}`);
+  }
+  return urls;
+}
+
+function boomUrls(nomes) {
+  if (!BOOM_GUNS || !Array.isArray(nomes)) return [];
+  const urls = [];
+  for (const nome of nomes) {
+    if (typeof nome !== 'string' || !nome.endsWith('.wav') || nome.startsWith('/') || nome.split(/[\\/]/).includes('..')) {
+      console.error(`recusado: caminho BOOM de arma inválido: ${nome}`);
+      process.exit(2);
+    }
+    const absoluto = resolve(BOOM_GUNS, nome);
+    if (!absoluto.startsWith(BOOM_GUNS + sep) || !existsSync(absoluto)) {
+      console.error(`não achei candidato BOOM de arma: ${absoluto}`);
+      process.exit(2);
+    }
+    urls.push(`audio/boom-guns-dev/${nome}`);
   }
   return urls;
 }
@@ -140,6 +172,38 @@ const weaponCandidates = firearmsCc0
   ? Object.fromEntries(Object.entries(firearmsCc0.weaponCandidates || {})
     .map(([arma, nomes]) => [arma, firearmCc0Urls(nomes)]))
   : {};
+let boomWeaponPack = null;
+if (boomGuns) {
+  const conhecidos = new Set(Object.keys(TIRO_POR_ARMA));
+  const desconhecidos = Object.keys(boomGuns.weapons || {}).filter((arma) => !conhecidos.has(arma));
+  if (desconhecidos.length) {
+    console.error(`recusado: manifest BOOM contém armas desconhecidas: ${desconhecidos.join(', ')}`);
+    process.exit(2);
+  }
+  const boomWeapons = {};
+  for (const [arma, cfg] of Object.entries(boomGuns.weapons || {})) {
+    const styles = Object.fromEntries(Object.entries(cfg?.styles || {})
+      .map(([style, nomes]) => [style, boomUrls(nomes)]));
+    if (!styles[cfg?.defaultStyle]?.length || Object.values(styles).some((pool) => !pool.length)) {
+      console.error(`recusado: estilos BOOM incompletos para ${arma}`);
+      process.exit(2);
+    }
+    boomWeapons[arma] = {
+      defaultStyle: cfg.defaultStyle,
+      match: cfg.match,
+      sourceWeapons: cfg.sourceWeapons,
+      styles,
+    };
+  }
+  if (!Object.keys(boomWeapons).length) {
+    console.error('recusado: manifest BOOM não contém arma jogável.');
+    process.exit(2);
+  }
+  boomWeaponPack = {
+    label: 'BOOM Library GUNS Designed — escuta local',
+    approval: 'local-candidates-only', neutralPlayback: true, weapons: boomWeapons,
+  };
+}
 /* A shortlist é a entrada editorial da AK. Assim o mutante sem veto continua
    provando que um nome gore plantado não atravessa o laboratório. */
 weapons.ak = candidatos('ak.shot', { primeiro: true }).length
@@ -272,6 +336,7 @@ const manifest = {
     eventosRuntime: 4 + Object.keys(footstepsBySurface).length + Object.keys(runtime).length,
     mapasComAmbiencia: Object.keys(mapSoundscapes).length,
     perfisFisicos: Object.keys(physicalProfiles).length,
+    ...(boomWeaponPack ? { armasBoomDesigned: Object.keys(boomWeaponPack.weapons).length } : {}),
     somenteEscuta: 3,
     limitacoes: [
       'a identidade das 24 armas além da AK é candidata e exige escuta humana',
@@ -284,6 +349,7 @@ const manifest = {
   ...(firearmsCc0 ? { weaponSamplesAuthentic: true } : {}),
   weapons,
   ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
+  ...(boomWeaponPack ? { weaponPacks: { boom: boomWeaponPack } } : {}),
   cs: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
@@ -312,6 +378,7 @@ function garantirSymlink(link, alvo) {
 }
 garantirSymlink(LINK, WAVS);
 if (FIREARMS_CC0) garantirSymlink(FIREARMS_LINK, FIREARMS_CC0);
+if (BOOM_GUNS) garantirSymlink(BOOM_GUNS_LINK, BOOM_GUNS);
 
 if (existsSync(MANIFEST)) {
   try {
@@ -335,4 +402,5 @@ console.log(`laboratório Fab instalado: ${total} referências em ${Object.keys(
 console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos para escuta, não aprovados.');
 if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
 if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
+if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas disponíveis via ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
 console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

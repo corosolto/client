@@ -42,6 +42,7 @@
            do WAV, sem synth de contingência nem camadas sobrepostas.
      ESP1c seletor de shotgun escolhe exatamente o take pedido na URL.
      ESP1d gravação real toca neutra, sem pitch/EQ de família.
+     ESP1e BOOM A/B respeita pack, estilo e take pedidos na URL.
      ESP2  pan: `pan` ≠ 0 vira um `StereoPanner` com esse valor no caminho sample.
      ESP3  propagação: o som começa em `currentTime + propDelay`, não em zero.
      ESP4  duck: o caminho sample ducka pela MESMA regra do synth (`<12 ? .3 : .55`).
@@ -313,6 +314,23 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     `sample real saiu com rate ${source?.playbackRate.value ?? '(sem fonte)'} e filtro=${hasFilter};`
       + ' gravação semanticamente escolhida não pode voltar ao timbre genérico por DSP de classe.',
     'gravação real toca em rate 1 e sem EQ de família.');
+}
+
+{
+  const oldSearch = location.search;
+  location.search = '?gunpack=boom&gunstyle=crispy&guntake=2';
+  const sfx = new Sfx();
+  sfx.pack = {
+    weapons: { m4: ['base.wav'] },
+    weaponPacks: { boom: { weapons: { m4: {
+      defaultStyle: 'huge', styles: { crispy: ['boom-c1.wav', 'boom-c2.wav'] },
+    } } } },
+  };
+  const selected = sfx._weaponSample('m4');
+  location.search = oldSearch;
+  conferir('ESP1e', selected === 'boom-c2.wav',
+    `A/B BOOM escolheu ${selected || '(nada)'} em vez de boom-c2.wav; pack, estilo e take precisam ser reproduzíveis.`,
+    'A/B BOOM respeita pack, estilo e segundo take pedidos na URL.');
 }
 
 // ── ESP2 / ESP3 / ESP4: o caminho sample honra pan, propagação e duck ─────
