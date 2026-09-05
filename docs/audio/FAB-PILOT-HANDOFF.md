@@ -1,6 +1,43 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima sexta rodada: gate real de publicação).
+Atualizado em 2026-09-05 (décima sétima rodada: Blob privado e fetch autenticado).
+
+## Décima sétima rodada — canal privado criado
+
+O dono autorizou criar o armazenamento privado e incorporar ao build as famílias já
+aprovadas no jogo. O store Vercel Blob privado `csbrasil-audio-private` foi conectado ao
+projeto `rubenmarcus-projects/csbrasil`. O artefato jogável contém Fab, BOOM, CC0, a
+ambiência derivada do Action Game Sounds Pack e somente as oito músicas aprovadas. Ele tem
+SHA-256 `c56660a4034aa38f68a1f8958ced3f287f16dc05ebf7ae294c3a7fb47abbe3de` e, depois do
+download autenticado, entrega 558 arquivos únicos para 770 referências sem nenhum faltante.
+
+`scripts/fetch-audio.sh` só envia `BLOB_READ_WRITE_TOKEN` para
+`*.private.blob.vercel-storage.com`, exige a credencial e `AUDIO_PACK_SHA256` nesse host e
+confere o hash antes de extrair. `AUDIO_PACK_URL` e `AUDIO_PACK_SHA256` foram configuradas
+para Production, Preview e Development na Vercel; o token veio da integração do Blob e não
+foi escrito no Git.
+
+O builder ganhou o modo `--private-build`. Ele continua recusando Fab/BOOM no modo público,
+mas aceita no modo privado somente raízes com `fontes.*.deployPrivado.build: true`. O gate
+`eval:audioprivate` prova a allowlist, o bloqueio do pack público e a exclusão de Fish sem
+direitos verificados e de callouts antigos. `eval:assetfetch` prova autenticação restrita ao
+host e verificação de integridade. `eval:audioruntimeassets` corrige o falso bloqueio que
+exigia os 17 nomes da ambiência antiga mesmo quando os 13 mapas tinham `mapSoundscapes`
+completo; retirar o override de um mapa deixa o mutante vermelho.
+
+Os 16 WAVs Fish também foram enviados ao mesmo store, em um objeto de staging privado de
+SHA-256 `0983617e382ac5fd96641d50bbaffec6d4691aec633db811e8a1f656547b2906`, como o dono pediu.
+Eles não entram no manifest nem no build entregue ao jogador: a voz pública está rotulada
+“Mortal Kombat” e a própria Fish exige que o usuário confirme direitos e consentimentos da
+voz. Os callouts legados continuam fora do Blob. Promover Fish exige substituir a voz ou
+apresentar permissão verificável; armazenamento privado não cria esse direito.
+
+Validação local desta rodada: `check:fast` passou 82/82, `check:deploy` passou 37/37 e um
+checkout limpo baixou o objeto privado com autenticação, confirmou o SHA-256 e encontrou
+770 referências, 558 arquivos únicos e zero ausentes. O gate de aceite final continua sendo
+o preview Vercel verde com `assert:assets` contra o pack baixado; depois disso o dono pode
+jogar no preview. As seções abaixo preservam a cronologia das rodadas anteriores; bloqueios
+de canal descritos nelas são históricos e foram substituídos por esta décima sétima rodada.
 
 ## Décima sexta rodada — o pack local não é publicável
 
