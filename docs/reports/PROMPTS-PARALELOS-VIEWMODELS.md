@@ -8,17 +8,25 @@ Este documento não cria tarefas, não inicia agentes e não muda o portão de p
 
 `AGENTS.md` exige um responsável pelo sistema arma/mão/animação/câmera/HUD e um
 único navegador. `VIEWMODEL-1P-PROFISSIONAL.md` exige pilotos sequenciais. Portanto,
-as frentes abaixo fazem **pré-produção offline**, não três implementações concorrentes.
+as frentes abaixo fazem **pré-produção offline**, não implementações concorrentes.
 Elas entregam diagnóstico medido e especificação executável por família; a integradora
 produz e valida no Game, na ordem do contrato. A autorização para preparar prompts
 não é autorização para mudar esse contrato ou promover famílias ainda não aprovadas.
 
-| Frente | Responsabilidade exclusiva | Entrega |
-|---|---|---|
-| Integradora atual | faca/pistola, identidade por time, escala, runtime e browser | candidato revisado e integração sequencial |
-| AWP | inspeção do asset e mecânica da sniper | `docs/reports/VM-PREP-AWP.md` |
-| Escopeta | inspeção do asset e mecânica da bomba/recarga | `docs/reports/VM-PREP-SHOTGUN.md` |
-| Armas curtas | inspeção separada da Deagle e do revólver .38 | `docs/reports/VM-PREP-ARMAS-CURTAS.md` |
+| Frente | Worktree exclusivo | Responsabilidade exclusiva | Entrega |
+|---|---|---|---|
+| Integradora atual | `vm-astra-pistol` | faca/pistola, identidade por time, escala, runtime e browser | candidato revisado e integração sequencial |
+| AWP | `vm-prep-awp` | inspeção do asset e mecânica do piloto sniper | `docs/reports/VM-PREP-AWP.md` |
+| Escopeta | `vm-prep-shotgun` | inspeção do asset e mecânica da bomba/recarga | `docs/reports/VM-PREP-SHOTGUN.md` |
+| Armas curtas | `vm-prep-armas-curtas` | inspeção separada da Deagle e do revólver .38 | `docs/reports/VM-PREP-ARMAS-CURTAS.md` |
+| Rifles | `vm-prep-rifles` | M4, MD97, carabina, SCAR, FAMAS e M92 | `docs/reports/VM-PREP-RIFLES.md` |
+| Snipers e precisão restantes | `vm-prep-precisao` | Mosin, SVD e SKS; exclui AWP | `docs/reports/VM-PREP-PRECISAO.md` |
+
+Ruben reforçou em 06/09 que cada tarefa deve ter seu próprio worktree e pediu
+incluir rifles e snipers. AWP continua exclusiva do piloto; não duplicar esse
+trabalho na frente de precisão. A classificação da fila não implica que SKS
+seja mecanicamente uma sniper. As branches seguem `codex/<nome-do-worktree>`.
+Os destinos acima são especificações, não comprovantes de tarefas criadas.
 
 O restante do catálogo continua em `VIEWMODEL-INVENTARIO.md`; não está descartado
 nem declarado pronto. Não restaurar armas removidas pelo dono. Os estados da tabela
@@ -45,6 +53,14 @@ crie o worktree e sua branch a partir do checkpoint acima. A criação altera s�
 metadados Git necessários, não o checkout integrador. Se o destino já existir,
 verifique identidade e trabalho existente; não faça reset, checkout destrutivo,
 limpeza ou reutilização de uma tarefa alheia. Não trabalhe em primary/Fable/retarget.
+
+Worktree separado não isola um destino de symlink. Antes de qualquer saída,
+confira o caminho real dos diretórios de artefatos, dos assets privados e de
+`node_modules`. Insumos compartilhados são somente leitura; não grave através
+de symlinks em outra lane. Se uma ferramenta exigir uma cópia editável, faça
+uma cópia local explícita apenas do insumo necessário, sem sobrescrever origem,
+após confirmar espaço e licença. Dependências existentes podem ser lidas, não
+reinstaladas ou alteradas através de um symlink compartilhado.
 
 Faixa de escrita de cada frente: seu relatório, scripts novos com prefixo exclusivo
 em `tools/viewmodels/prep/` e artefatos em `artifacts/viewmodels/prep/<frente>/`.
@@ -152,3 +168,58 @@ Entregue `docs/reports/VM-PREP-ARMAS-CURTAS.md` com uma seção por arma: hashes
 medições, defeitos, receita mínima, contatos a validar e ordem sugerida de produção.
 Deixe explícito que a implementação dessas armas espera os pilotos obrigatórios;
 o resultado desta tarefa é pré-produção executável, não armas certificadas.
+
+## Frente Rifles
+
+Prepare os rifles do CSBrasil, seguindo as instruções comuns deste documento.
+Worktree `vm-prep-rifles`, branch `codex/vm-prep-rifles`, saída de artefatos
+`rifles`, scripts prefixados `rifles-`. Escopo: `m4`, `md97`, `carbine`, `scar`,
+`famas` e `m92`. A AK golden está fora do escopo de escrita, mesmo que M92
+compartilhe sua família de configuração. AWP, SVD, SKS, Mosin, LMG e SMGs
+não pertencem a esta frente.
+
+Comece pela M4 como caso de inspeção, depois percorra cada arma concretamente.
+Confirme a associação arma/família em `public/js/data/vmconfig.js` e o catálogo
+em `public/js/weapons.js`; nomes de família não garantem que geometria, contatos
+ou recarga possam ser compartilhados. Levante por arma: fonte/licença, GLBs,
+hashes, unidades, câmera exportada, rig, UV, sockets, peças e clipes reais.
+
+Inspecione empunhadura, mão de apoio, carregador e sua inserção, ferrolho/alavanca,
+ejeção e retorno ao idle. Trate geometrias bullpup e pontos de operação diferentes
+conforme o asset observado, sem transplantar gestos de M4 automaticamente. Compare
+duração dos clipes e eventos com os tempos do Game sem editar balanceamento.
+Verifique no código a possibilidade de reaproveitar o contrato de luvas por time,
+mas não altere ou regenere materiais centrais.
+
+Entregue `docs/reports/VM-PREP-RIFLES.md`: matriz por arma de insumo existente,
+defeito comprovado, reaproveitamento seguro, adaptação necessária, contato crítico
+e próximo passo reproduzível. Inclua uma receita de produção específica para M4
+e as diferenças necessárias para cada restante, sem transformar essa inspeção
+em produção concorrente. A saída deve permitir ao integrador começar sem repetir
+a busca de assets e sem presumir que o `ready` herdado equivale a aprovação.
+
+## Frente Snipers e Precisão
+
+Prepare as armas longas de precisão restantes do CSBrasil, seguindo as instruções
+comuns deste documento. Worktree `vm-prep-precisao`, branch `codex/vm-prep-precisao`,
+saída de artefatos `precisao`, scripts prefixados `precisao-`. Escopo somente
+`mosin`, `svd` e `sks`. AWP tem frente própria: não criar outro piloto nem editar
+seus assets. Não tratar todas essas armas como sniper de ferrolho.
+
+Inspecione cada pacote: fontes/licença, GLBs, hashes, escala, transforms, rig,
+câmera, UV, sockets, partes móveis e ações. Distinga a operação manual de ferrolho
+da Mosin dos mecanismos presentes nos assets de SVD e SKS. Determine a recarga
+realmente suportada por cada modelo e pelo Game; não invente pente, carregador
+removível, luneta ou clipe que o insumo não tenha.
+
+Meça contatos e limitações observáveis das mãos, incluindo operação de peças e
+retorno à empunhadura. Documente o enquadramento de arma longa e mira/luneta quando
+existir, sem mexer na câmera comum ou extrapolar dimensões físicas pelo FOV.
+Compare os tempos de ações e do Game, marque dados insuficientes e proponha os
+frames críticos para a validação futura em Blender e no navegador.
+
+Entregue `docs/reports/VM-PREP-PRECISAO.md` com uma seção por arma, evidências
+reproduzíveis e receita mínima de produção. Registre o que pode aproveitar do
+piloto AWP depois de aprovado e o que exige solução própria, sem depender de uma
+AWP ainda não certificada como se já estivesse pronta. Preserve a identidade de
+luva central e deixe a produção/browser para a integradora.

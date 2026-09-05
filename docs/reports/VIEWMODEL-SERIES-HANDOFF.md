@@ -370,6 +370,13 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
   `PROMPTS-PARALELOS-VIEWMODELS.md`: AWP, escopeta e Deagle/revólver, somente
   pré-produção offline em worktrees próprios. Nenhuma tarefa foi criada ou
   disparada aqui. Não altera o portão sequencial nem distribui o runtime/browser.
+- Ampliação pedida em seguida: cada frente com worktree/branch próprios; prompts
+  de rifles e precisão acrescentados ao mesmo documento. Rifles ficam com M4,
+  MD97, carabina, SCAR, FAMAS e M92; precisão com Mosin, SVD e SKS. AWP continua
+  exclusiva de sua frente. Instruções exigem conferir destinos reais de symlinks
+  para não escrever em assets/dependências de outra lane. Nenhum worktree ou
+  chat foi criado pela tarefa integradora nesta atualização; o escopo continua
+  pré-produção offline, com incorporação e aprovação sequenciais.
 - Revisão independente v3 concluída: reprovou a continuidade dos punhos nos
   times inspecionados; a pistola expunha pele entre luva e manga, diferente da faca.
   Esta rejeição substitui o estado "visual em revisão" do marco 29.
