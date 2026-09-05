@@ -21,6 +21,7 @@ Não marcar tudo pronto só porque testes estruturais passam.
 - Branch `codex/vm-astra-pistol`; início desta rodada em `1afbf01e`, limpo.
 - Checkpoint da aprovação da pistola e do prompt: `946cd4c6`.
 - Integração D e primeira identidade por time (revisão ainda pendente): `2bd18e04`.
+- Calibração de aspecto e acabamento v3 candidato: `961c70d2`.
 - Mãos/enquadramento da faca e BUG-84 validados: `6d0b02b2`.
 - Correção da transição da faca, capturador e testes: `a60c0f3e`.
 - Não trabalhar em `primary`, Fable, retarget ou outros checkouts.
@@ -362,6 +363,33 @@ Os comandos com mutantes DEVEM sair 1; normal sai 0. Omitir `--quadro-z`
 captura o padrão real. Não sobrescrever controles/artefatos de antes do conserto.
 
 ## Próxima ação concreta
+
+### Checkpoint de continuidade — pedido de prompts paralelos, 06/09
+
+- Ruben pediu prompts para abrir outras frentes. Preparados em
+  `PROMPTS-PARALELOS-VIEWMODELS.md`: AWP, escopeta e Deagle/revólver, somente
+  pré-produção offline em worktrees próprios. Nenhuma tarefa foi criada ou
+  disparada aqui. Não altera o portão sequencial nem distribui o runtime/browser.
+- Revisão independente v3 concluída: reprovou a continuidade dos punhos nos
+  times inspecionados; a pistola expunha pele entre luva e manga, diferente da faca.
+  Esta rejeição substitui o estado "visual em revisão" do marco 29.
+- Candidato de acabamento v4 gerado: fecha essa faixa pela classificação do atlas,
+  reforça costura/bainha e inclui estrela/quadriculado também no painel da mão.
+  A geometria e os ataques aprovados não foram reconstruídos. Fonte e texturas
+  v4 permanecem modificados **sem commit**, fora do checkpoint documental dos prompts.
+- `hand-continuity/teams-frame50-finish4/report.json`: captura encerrada normalmente,
+  60 fotos, 121 verificações passando, zero erros; 48 texturas geradas,
+  1.195.938 bytes. Isso prova carregamento/identidade, não aprovação visual.
+  O candidato FOV 50 continua interceptado apenas na página de teste; o GLB público
+  continua com FOV 29,241747°. Nenhum vídeo v4 está certificado.
+- Processo próprio 52205 terminou; não há captura desta rodada aguardando polling.
+  Retomar pela inspeção das fotos v4, depois revisão independente, movimento contínuo
+  3:2/16:9, testes e checkpoint de implementação. Não regenerar antes de olhar.
+  Inspeção QA `inspect-pistol` eleva o pacote .14 m e não é frame normal do Game.
+- Verificação deste checkpoint documental: `git diff --check` e `arch:check`
+  passam. `docs:check` aponta sete arquivos com blocos gerados desatualizados
+  na árvore atual; não foram incluídos no commit dos prompts. Após fechar v4,
+  executar `npm run docs` e repetir a checagem antes do checkpoint de implementação.
 
 Movimento D aprovado e promovido localmente. Concluir revisão da continuidade
 de luvas e medir/corrigir escala pistola/faca, com captura real nas duas proporções.
