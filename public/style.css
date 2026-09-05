@@ -2049,6 +2049,36 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
   align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:7px}
 .menu-footer .mf-social svg{width:16px;height:16px;fill:currentColor;display:block}
 
+/* Curadoria local das músicas do menu. Só existe quando main.js recebe
+   ?menumusiclab=1; não ocupa DOM, rede ou layout no jogo normal. */
+#menu-music-review{position:fixed;top:82px;right:min(4vw,42px);z-index:75;width:340px;
+  display:flex;flex-direction:column;gap:10px;padding:16px;background:rgba(9,7,4,.94);
+  border:1px solid var(--line-2);border-left:4px solid var(--am);color:var(--ink-100);
+  box-shadow:0 12px 36px rgba(0,0,0,.45)}
+#menu-music-review .mmr-kicker{font:700 10px/1 var(--aaa-font-body);letter-spacing:3px;color:var(--am)}
+#menu-music-review strong{font:700 25px/1 var(--aaa-font-body);letter-spacing:2px}
+#menu-music-review #mmr-progress{font:600 11px/1.3 var(--font);letter-spacing:.5px;color:var(--ink-300)}
+#menu-music-review .mmr-row{display:flex;gap:6px}
+#menu-music-review button{flex:1;min-height:34px;padding:7px 8px;background:var(--bg-700);
+  border:1px solid var(--line-2);border-radius:0;color:var(--ink-200);cursor:pointer;
+  font:700 11px/1 var(--aaa-font-body);letter-spacing:1px}
+#menu-music-review button:hover,#menu-music-review button:focus-visible{border-color:var(--am);color:var(--ink-100)}
+#menu-music-review[data-verdict="manter"] #mmr-keep{background:var(--ok);border-color:var(--ok);color:#07110b}
+#menu-music-review[data-verdict="remover"] #mmr-reject{background:var(--crit);border-color:var(--crit);color:#190505}
+#menu-music-review .mmr-catalog-title{font:700 9px/1 var(--aaa-font-body);letter-spacing:1.5px;color:var(--ink-400)}
+#menu-music-review .mmr-list{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-height:190px;overflow-y:auto;
+  padding:1px;scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+#menu-music-review .mmr-list-item{min-width:0;min-height:29px;padding:5px 6px;display:flex;align-items:center;
+  justify-content:space-between;gap:3px;font-size:10px;letter-spacing:.5px}
+#menu-music-review .mmr-list-item b{font:800 13px/1 var(--font);color:var(--ink-500)}
+#menu-music-review .mmr-list-item.current{outline:2px solid var(--am);outline-offset:-2px;color:var(--ink-100)}
+#menu-music-review .mmr-list-item[data-verdict="manter"] b{color:var(--ok)}
+#menu-music-review .mmr-list-item[data-verdict="remover"] b{color:var(--crit)}
+#menu-music-review .mmr-copy{width:100%}
+@media (max-width:760px),(max-height:620px){
+  #menu-music-review{top:12px;right:12px;width:min(340px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto}
+}
+
 /* ---- MENU EM CELULAR RETRATO (print do dono, 07/08: logo cortado no meio e o
    rodapé atropelando o último item). O logo é PINTADO no wallpaper 16:9; com
    `cover` num viewport em pé a imagem escala pela ALTURA e o logo estoura a

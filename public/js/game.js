@@ -35,6 +35,7 @@ export { WEAPONS };
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
 const REPLAY_CAM = QS.get('replaycam') !== '0';
+const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';
 /* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
    janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
 const REPLAY_DUR = 1.2;
@@ -297,7 +298,7 @@ const RADIO = {
   c: { title: 'ZOAÇÃO', items: ['Chora na live!', 'É fake news!', 'Vem pra treta!'] },
 };
 const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
-const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
+const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', ultrakill: 'ULTRA KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
 /* ===================== GUNFEEL (recuo / spread / feedback) =====================
    Kill-switch: ?gunfeel=0 volta ao modelo antigo (impulso escalar de w.recoil, spread em
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
@@ -2187,6 +2188,16 @@ export class Game {
   start() {
     this.el.hud.classList.remove('hidden');
     this._startRound();
+    if (ANNOUNCER_LAB) this._startAnnouncerLab(ANNOUNCER_LAB);
+  }
+  _startAnnouncerLab(mode) {
+    const kills = ['headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike']
+      .map((key) => () => this.sfx.general(key));
+    const rounds = Array.from({ length: 7 }, (_, i) => () => this.sfx.roundNumber(i + 1));
+    const sequence = mode === 'kills' ? kills : (mode === 'rounds' ? rounds : [...kills, ...rounds]);
+    this._announcerLabTimers = sequence.map((play, i) => setTimeout(() => {
+      if (!this._disposed) play();
+    }, 2300 * (i + 1)));
   }
   _startRound() {
     /* A vinheta do round anterior SEGUE por ~10 s dentro do round novo (dono, 07/08:
@@ -2221,7 +2232,7 @@ export class Game {
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
         : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
-    if (!this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
+    if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
     /* COLOCAÇÃO NO SPAWN — deixada COMO ESTAVA, de propósito (registro de experimento).
@@ -2867,7 +2878,7 @@ export class Game {
     }
   }
   _fxSet(p) { this._fxTune = { light: 1, flash: 1, spark: 1, ...(this._fxTune || {}), ...(p || {}) }; }
-  _switchWeapon(w) {
+  _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
     if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
@@ -2894,7 +2905,9 @@ export class Game {
     this._applyVmVisibility();
     this.el.weaponName.textContent = WEAPONS[w].name;
     this.el.reloadNote.classList.add('hidden');
-    if (w === 'knife') this.sfx.knifeDeploy(); else this._deploySfx(_dcls);
+    if (pickup) this.sfx.pickup('weapon');
+    else if (w === 'knife') this.sfx.knifeDeploy();
+    else if (!this.sfx.weaponSwitch(w, _dcls)) this._deploySfx(_dcls);
   }
   // Som de SAQUE por classe: 2 ressonadores metálicos a ~28ms (ferrolho + trava), grave nas
   // armas pesadas. Era `sfx.uiClick()` — um beep de MENU pra sacar uma AWP. Usa os helpers
@@ -3147,7 +3160,7 @@ export class Game {
              Aplicar aqui contaria o dano duas vezes. Ver docs/MULTIPLAYER.md. */
           if (!this.online) this._damage(bot, this._shotDamage(dmg, wid, hC.distance, head), shooter, weap, head, end);
           else if (byPlayer) this._acertoPrevisto(bot, this._shotDamage(dmg, wid, hC.distance, head), head, end);
-          this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
+          this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer, this._armoredTarget(bot));
         }
       }
     } else if (hW) {
@@ -3157,7 +3170,7 @@ export class Game {
       this._puff(hW.point, n, surf);
       // som de impacto em 100% dos tiros do jogador (era `ricochet()` — um BIP de sine — em
       // 30%: 70% dos tiros na parede eram literalmente mudos).
-      if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, from.distanceTo(hW.point)); }
+      if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, hW.point, from.distanceTo(hW.point)); }
       else if (Math.random() < 0.3) this.sfx.ricochet();
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
@@ -3199,7 +3212,10 @@ export class Game {
   }
   // Impacto em CARNE: puff vermelho curto + som próprio. Antes o único sinal de que você
   // acertou uma PESSOA era o mesmo bip de acertar uma parede (grep blood = 0 ocorrências).
-  _fleshImpact(pos, dir, head, footY = null, byPlayer = true) {
+  _armoredTarget(ent) {
+    return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
+  }
+  _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
     // acerto alheio (parceiro levando tiro, bot×bot): só rende se perto — longe, espirra sangue invisível e come frame
     if (!byPlayer && this.camera.position.distanceToSquared(pos) > 3600) return;   // >60 m: pula
@@ -3227,7 +3243,10 @@ export class Game {
     // sangue grudado: mancha na parede atrás do alvo + gota no chão sob ele (footY = pés do alvo)
     if (BLOOD) this._bloodSpatter(pos, dir, head, footY);
     if (!voice) return;
-    const s = this.sfx; s.ensure(); if (!s.ctx) return;
+    const spatial = this._grenadeSpatial(pos, 55);
+    const s = this.sfx;
+    if (s.bodyImpact(head || armored, Math.max(.2, spatial.vol), spatial.pan, spatial.delay)) return;
+    s.ensure(); if (!s.ctx) return;
     s._burst(0.05, head ? 0.30 : 0.20, head ? 420 : 620, 1.1);              // baque úmido
     s._burst(0.08, 0.10, 1500, 2.2, 'bandpass', 0.012);
   }
@@ -3243,10 +3262,13 @@ export class Game {
   }
   // Som de impacto por MATERIAL (o projeto não expõe API de foley no Sfx — usa os helpers
   // internos, mesmo padrão do _deploySfx). dist só atenua.
-  _impactSfx(surf, dist = 0) {
+  _impactSfx(surf, pos, dist = 0) {
     if (!this._fxVoice(2)) return;
-    const s = this.sfx; s.ensure(); if (!s.ctx) return;
     const a = Math.max(0.12, 1 - dist / 55);
+    const spatial = this._grenadeSpatial(pos, 55);
+    const s = this.sfx;
+    if (this.sfx.impact(surf, a, spatial.pan, spatial.delay)) return;
+    s.ensure(); if (!s.ctx) return;
     if (surf === 'metal') { s._burst(0.05, 0.24 * a, 2000, 4, 'bandpass'); s._beep('triangle', 3200, 1500, 0.1, 0.06 * a, 0.006); }
     else if (surf === 'madeira') { s._burst(0.05, 0.22 * a, 900, 1.6); s._burst(0.06, 0.09 * a, 2600, 2, 'bandpass', 0.008); }
     else if (surf === 'vidro') { for (let i = 0; i < 3; i++) s._burst(0.05, 0.13 * a, 4200 + Math.random() * 2600, 6, 'bandpass', i * 0.03); }
@@ -3292,7 +3314,7 @@ export class Game {
       }, 400);
       // INDICADOR DIRECIONAL — ver _dmgArc (item nº 1 da tarefa: "não vejo de onde veio o tiro")
       if (attacker && attacker.pos) this._dmgArc(attacker, ent, dmg);
-      this.sfx.hurt();
+      this.sfx.hurt(ent.def?.id);
     } else if (attacker === this.player) {
       this._hitmarker(ent.hp <= 0, head);   // som suprimido SÓ em kill; visual vermelho em kill OU headshot
       this._dmgNumber(point || ent.pos, dmg, head, ent.hp <= 0);
@@ -3315,7 +3337,7 @@ export class Game {
   /* Feedback de "levei tiro" no online: o `_damage` local não roda, então quem dispara é o
      netcode ao ver a queda de hp no snapshot. */
   _playerHurtFx() {
-    try { this.sfx.hurt?.(); } catch { /* ctx mudo */ }
+    try { this.sfx.hurt?.(this.player.def?.id); } catch { /* ctx mudo */ }
     this._tintFx(0xff2222, false, 96);
     this.player.recoilP = (this.player.recoilP || 0) + 0.02;
   }
@@ -3336,19 +3358,21 @@ export class Game {
     }
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
-      this.sfx.voice(this._voiceKey(attacker.team));   // killer's side celebrates (meme audio)
       // TELEMETRIA DE ARMA: quando o JOGADOR mata, conta a arma usada (param `weap`
       // já vem do _damage/_tryShoot). Bot mata não conta — não há balanço a inferir.
       if (attacker.isPlayer && weap) this._wperf[weap] = (this._wperf[weap] || 0) + 1;
       if (attacker.isPlayer) {
         this.sfx.killConfirm();
-        if (head) { this.sfx.general('headshot'); attacker.headshots++; }
+        if (head) attacker.headshots++;
         const mk = this.mk;
         if (this.time < mk.until) mk.count++; else mk.count = 1;
         mk.until = this.time + 4.5; mk.life++;
         mk.best = Math.max(mk.best || 0, mk.count);
         const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
-        if (kind) { this._mkBanner(MK_LABELS[kind]); this.sfx.general(kind); }
+        if (kind) this._mkBanner(MK_LABELS[kind]);
+        // Um unico callout por abate: tier > headshot > kill. Sem locucao no
+        // pack, preserva a comemoracao antiga da faccao como fallback.
+        if (!this.sfx.general(kind || (head ? 'headshot' : 'kill'))) this.sfx.voice(this._voiceKey(attacker.team));
         if (REPLAY_CAM && head && ent.pos) {
           this._replayCam = {
             t: 0,
@@ -3362,7 +3386,7 @@ export class Game {
       this._scope(false, true);
       this.mk.life = 0;
       this.el.respawn.classList.remove('hidden');
-      this.sfx.death();
+      this.sfx.death(ent.def?.id);
     } else {
       ent.target = null; ent.deadT = 0;
       // sting de morte de BOT escala com a distância (sumia o "eco": toda morte no mapa
@@ -3371,7 +3395,7 @@ export class Game {
       const d = ent.pos ? ent.pos.distanceTo(this.camera.position) : 0;
       const rel = ent.pos ? Math.atan2(ent.pos.x - this.player.pos.x, ent.pos.z - this.player.pos.z) - this.player.yaw : 0;
       const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
-      this.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
+      this.sfx.death(ent.def?.id, Math.max(0, 1 - d / 55), pan, Math.min(0.25, d / 343));
     }
     // poça que cresce sob o cadáver (qualquer morte com posição — inclui bot×bot)
     if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
@@ -3996,6 +4020,18 @@ export class Game {
     if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0);
   }
 
+  _grenadeSpatial(pos, maxDistance = 70) {
+    const origin = this.player?.pos || this.camera.position;
+    const dx = pos.x - origin.x, dz = pos.z - origin.z;
+    const d = Math.hypot(dx, dz);
+    const rel = Math.atan2(dx, dz) - (this.player?.yaw || 0);
+    return {
+      vol: Math.max(0, 1 - d / maxDistance),
+      pan: Math.max(-.9, Math.min(.9, Math.sin(rel) * .82)),
+      delay: Math.min(.25, d / 343),
+    };
+  }
+
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
   _spawnGrenade(origin, dir, kind, owner) {
@@ -4007,24 +4043,30 @@ export class Game {
       v: dir.clone().multiplyScalar(kind === 'frag' ? 17 : 15).add(new THREE.Vector3(0, 3.2, 0)),
       fuse: kind === 'frag' ? 1.5 : 2.2,
     });
+    const spatial = this._grenadeSpatial(origin);
+    this.sfx.grenadeThrow(kind, spatial.vol, spatial.pan, spatial.delay);
   }
 
   _throwSmoke() {
+    const kind = 'smoke';
     const p = this.player;
     if (!p.alive || (p.smokes | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.smokes--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    if (this._mp?.pedirNade?.('smoke')) return;   // online quem lança é o servidor (`nade`/`boom`)
+    this.sfx.grenadePin(kind);
+    if (this._mp?.pedirNade?.(kind)) return;   // online quem lança é o servidor (`nade`/`boom`)
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'smoke', p);
+    this._spawnGrenade(this.camera.position, dir, kind, p);
   }
 
   _throwFrag() {
+    const kind = 'frag';
     const p = this.player;
     if (!p.alive || (p.frags | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.frags--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    if (this._mp?.pedirNade?.('frag')) return;
+    this.sfx.grenadePin(kind);
+    if (this._mp?.pedirNade?.(kind)) return;
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'frag', p);
+    this._spawnGrenade(this.camera.position, dir, kind, p);
   }
 
   // Explosão de frag: dano em área SÓ nos inimigos do dono (sem fogo amigo, arcade), com
@@ -4033,7 +4075,8 @@ export class Game {
     const R = 6.5;
     this._flash(pos.clone());
     for (let i = 0; i < 7; i++) this._puff(pos.clone().add(new THREE.Vector3((Math.random() - .5) * 1.4, Math.random() * 1.3, (Math.random() - .5) * 1.4)), null);
-    if (this.sfx.explosion) this.sfx.explosion();
+    const spatial = this._grenadeSpatial(pos, 90);
+    if (this.sfx.explosion) this.sfx.explosion(spatial.vol, spatial.pan, spatial.delay);
     const team = owner ? owner.team : this.playerTeam;
     for (const c of this.combatants) {
       if (this.online) break;   // dano é do servidor (fase 3 do `ev`); aqui só o efeito
@@ -4084,6 +4127,8 @@ export class Game {
   }
 
   _popSmoke(pos) {
+    const spatial = this._grenadeSpatial(pos, 70);
+    this.sfx.smokePop(spatial.vol, spatial.pan, spatial.delay);
     const R = 2.6;
     const group = new THREE.Group();
     group.position.set(pos.x, Math.max(0.5, pos.y), pos.z);
@@ -4107,7 +4152,15 @@ export class Game {
       const g = this._grenades[i];
       g.fuse -= dt; g.v.y -= 12 * dt;
       g.mesh.position.addScaledVector(g.v, dt);
-      if (g.mesh.position.y < 0.1) { g.mesh.position.y = 0.1; g.v.y = Math.abs(g.v.y) * 0.4; g.v.x *= 0.6; g.v.z *= 0.6; }
+      if (g.mesh.position.y < 0.1) {
+        const impact = Math.abs(g.v.y);
+        g.mesh.position.y = 0.1; g.v.y = impact * 0.4; g.v.x *= 0.6; g.v.z *= 0.6;
+        if (impact > 1.35 && this.time - (g._lastBounce || -9) > .11) {
+          g._lastBounce = this.time;
+          const spatial = this._grenadeSpatial(g.mesh.position, 50);
+          this.sfx.grenadeBounce(g.kind, spatial.vol * Math.min(1, impact / 8), spatial.pan, spatial.delay);
+        }
+      }
       if (g.fuse <= 0) {
         if (g.kind === 'frag') this._explodeFrag(g.mesh.position.clone(), g.owner);
         else this._popSmoke(g.mesh.position.clone());
@@ -5195,7 +5248,7 @@ export class Game {
     if (moving) {
       p.stepPhase += dt * sp * 1.6;
       const prev = Math.sin(p.stepPhase - dt * sp * 1.6), now = Math.sin(p.stepPhase);
-      if (prev >= 0 && now < 0) this.sfx.step(this.world.slowAt && this.world.slowAt(p.pos.x, p.pos.z) ? 'water' : 'concrete');
+      if (prev >= 0 && now < 0) this.sfx.step(this._footstepSurface(p.pos));
     }
     // Aim: real scopes (AWP / Mosin / Rem700) hide the gun and show the scope overlay.
     // Every other weapon does light iron-sight ADS — the gun stays on screen and the
@@ -5368,6 +5421,17 @@ export class Game {
     }
     if (VMLAB) this._vmlabFrame(p, a);   // ?vmlab=1: troca pelo viewmodel do editor (isolado)
     this._updateReplayCam(dt);
+  }
+
+  /* O mapa ainda não expõe material sob o pé. Até essa API existir, cada arena
+     ganha um piso dominante explícito; água continua tendo precedência espacial. */
+  _footstepSurface(pos) {
+    if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
+    return {
+      ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
+      obras_prefeitura: 'dirt', parque_treta: 'grass', velho_oeste: 'wood',
+      penitenciaria: 'metal',
+    }[this._mapId] || 'concrete';
   }
   // piscina_treta ground weapons: anyone who runs over one grabs it (CS-1.6 style).
   // The gun vanishes and respawns after PICKUP_RESPAWN. No-op on maps without
@@ -5553,7 +5617,7 @@ export class Game {
       who.ammo[w].res = WEAPONS[w].reserve;
       {
         const oldW = who.weapon;                   // arma que estava na mão
-        this._switchWeapon(w); this.sfx.reloadEnd();
+        this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack && !this.online) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);   // online o servidor manda o `drop`
@@ -7214,7 +7278,8 @@ export class Game {
     }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
-    if (!this.soundscape && this.world.sound) this.soundscape = createSoundscape(this.sfx, this.world.sound);
+    const mapSound = this.sfx.pack?.mapSoundscapes?.[this._mapId] || this.world.sound;
+    if (!this.soundscape && mapSound) this.soundscape = createSoundscape(this.sfx, mapSound);
     this.soundscape?.update(dt, this.player.pos);
     this.world.update?.(dt, this.time);
   }
@@ -7222,6 +7287,8 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    for (const timer of this._announcerLabTimers || []) clearTimeout(timer);
+    this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }
     this._mp = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then

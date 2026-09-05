@@ -514,6 +514,95 @@ O LAYOUT ASSADO (public/js/graffiti_layout.js) não envelhece em silêncio (issu
 npm run eval:grafitelayout
 ```
 
+## `eval:audioalcance`
+
+O som que o código nomeia chega na build? `public/js/soundscape.js` nomeia os arquivos de ambiente e nenhum deles era alcançado pela pipeline: o gerador não tinha regra para `ambiente/` (entravam como órfãos), o empacotador copia só o que o manifest nomeia, e o que falta no zip vira 404 que `soundscape.js:59` engole com um warn — lição 5 e lição 12 juntas. A régua ARMA uma fixture sintética em pasta temporária e roda o gerador e o empacotador REAIS contra ela (`--raiz=`), em vez de depender do pacote privado, que não existe em clone limpo. ALC1 mede o gerador, ALC2 o pack; sem `zip` no PATH a ALC2 se declara NÃO MEDIDA e a régua reprova assim mesmo. A irmã de produção é a cláusula de ambiente do `assert:assets`, que mede o pacote instalado e lê a lista da mesma fonte. `--mutante=nome-trocado|sem-copia` prova que morde.
+
+```bash
+npm run eval:audioalcance
+```
+
+## `eval:audioespacial`
+
+O tiro por sample ouve a distância? `game.js:6336` calcula distância, pan e atraso de propagação em todo tiro de bot; o caminho por sample (`weaponSamples: true`, que é o que o piloto Fab liga) descartava os três e tocava por HTMLAudio, que não tem grafo nem `start(t)`. Bot a 40 m às suas costas soava igual a bot a 2 m à sua frente. A régua planta um `AudioContext` falso que grava o grafo e importa o `public/js/audio.js` de produção — nenhum WAV entra, `fetch` devolve 32 bytes sintéticos. ESP1 cache frio não silencia, ESP2 pan, ESP3 propagação, ESP4 duck pela mesma regra do synth, ESP5 é a cláusula IRMÃ (o synth continua espacializando — sem ela, apagar os dois lados ficaria verde) e ESP6 o fallback synth intacto. A LEI DE VOLUME por distância fica de fora de propósito: é decisão de ouvido, e vira bloqueio no `docs/audio/FAB-PILOT-HANDOFF.md`. `--mutante=sem-pan|sem-propagacao|duck-fixo` prova que morde.
+
+```bash
+npm run eval:audioespacial
+```
+
+## `eval:audioproc`
+
+Asset sem origem declarada não entra numa build. O `.gitignore` protege o GIT e só ele: o pacote de áudio é montado à parte e servido em produção, então arquivo de procedência desconhecida chega ao jogador sem passar por commit nenhum. Cobra a forma do ledger `docs/audio/proveniencia.json` — PRV1 campos obrigatórios, PRV2 `aprovado` exige `escutaAB` (nenhuma régua desta base ouve som: quem aprova é o dono, A/B no jogo real), PRV3 todo evento do piloto com decisão declarada (`synth` ou `derivado`), PRV4 fonte citada existe e nenhum áudio está rastreado pelo git. A cláusula de build é a PRV5 do `assert:assets`, que confere sha-256 contra o pacote instalado. O contrato inteiro está em `docs/audio/PROVENIENCIA.md`. `--mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` prova que morde.
+
+```bash
+npm run eval:audioproc
+```
+
+## `audio:inventario`
+
+Metadado do staging privado, e só metadado. O pacote fonte do piloto mora fora do git e a listagem diz `Allows usage with AI: No` — abrir os WAVs com um agente no meio é o que a licença proíbe. Lê o áudio LOCALMENTE com ffprobe/ffmpeg e emite nome, sha-256, formato, codec, duração, canais, taxa, bits, pico e loudness. Não copia, não converte, não move um WAV, não fala com a rede e RECUSA `--saida=` dentro do repositório. O `sha256` liga ao `sha256Fonte` do ledger de procedência. Campo que a máquina não sabe medir vem `null`, com `ferramentas.naoMedido` dizendo qual e por quê — zero disfarçado de medição é a lição 5.
+
+```bash
+npm run audio:inventario -- <dir> --saida=<fora-do-repo>.json
+```
+
+## `audio:inventario:autoteste`
+
+A fixture do inventariador: WAVs gerados na hora com ruído determinístico. Prova saída idêntica entre duas execuções, arquivo não-áudio de fora, hashes distintos para conteúdos distintos, e nenhum campo de nível preenchido quando a ferramenta falta. Está no check:fast porque ferramenta de decisão sem fixture é o furo que o `eval:fixture` existe para fechar.
+
+```bash
+npm run audio:inventario:autoteste
+```
+
+## `eval:audiocapacidade`
+
+O runtime sabe tocar isso? O ledger deixava qualquer um dos 8 eventos do piloto virar `derivado` aprovado, e o runtime não tem caminho específico para a maioria: `shotWeapon(w, …)` recebe a arma, mas `bolt()`/`reloadStart()`/`reloadEnd()` não recebem — leem `cs.bolt`/`cs.reload`/`cs.reloadend`, que valem para o arsenal inteiro; `step(surface)` recebe a superfície e mesmo assim sorteia de `cs.footsteps`, pool única; `death()` e `ricochet()` não consultam o pack. Aprovar um "passo em concreto" aprovaria um passo que toca em grama e metal igual; "morte corporal" e os impactos ficariam aprovados no papel e mudos no jogo. A régua NÃO lê assinatura de função (isso seria ler a declaração, lição 3): ela instala a chave que um caminho específico usaria, dispara o evento e olha o que tocou — `arma` se trocar a arma troca o arquivo, `global` se a chave específica nunca é lida, `nenhum` se só sai synth. Medido: 1 em arma, 4 em global, 3 em nenhum. CAP4 é a IRMÃ — a sonda tem que achar pelo menos um `arma`, senão uma sonda cega bate com um ledger todo `nenhum`. Foi ela que pegou a primeira versão da própria sonda medindo errado. `--mutante=declara-errado|aprova-sem-caminho` prova que morde.
+
+```bash
+npm run eval:audiocapacidade
+```
+
+## `eval:audiofablocal`
+
+Prova o instalador do laboratório Fab sem ler áudio comprado: a fixture usa arquivos de texto e exige symlink para a raiz privada exata, manifest sem caminho absoluto, somente os 5 eventos que o runtime alcança hoje e tiro da AK fixado em um candidato para não cair eternamente em cache frio. Também planta gore dentro de `ak.shot`; `--mutante=sem-veto` desliga o filtro do instalador e precisa acender LAB4.
+
+```bash
+npm run eval:audiofablocal
+node tools/eval/audio-fab-local-check.mjs --mutante=sem-veto
+```
+
+## `audio:shortlist`
+
+Candidatos por evento do piloto, SÓ por metadado. Lê `catalog.json` e `inventory.json` do staging privado — nome, hash, duração, canais, taxa, pico, loudness — e nunca um byte de áudio: a listagem do pacote diz `Allows usage with AI: No`. O casamento é por família de nome, e a saída é SHORTLIST, não escolha: nome não é som, e quem escolhe é o ouvido do dono no `audio:ab`. Quando o pacote não cobre o evento, `semCandidato` diz isso com o motivo em vez de forçar um casamento ruim — forçar `Hit_Generic` de luta corpo a corpo como "impacto de bala em concreto" seria inventar procedência sonora. `VETO_GORE` barra sangue, osso e grito por linha editorial, e é uma denylist conferida no autoteste. Recusa `--saida=` dentro do repositório.
+
+```bash
+npm run audio:shortlist -- <dir-do-pack> --saida=<fora-do-repo>.json
+```
+
+## `audio:shortlist:autoteste`
+
+A fixture da shortlist. Prova cinco coisas num catálogo sintético: o veto de gore barra os 3 arquivos de sangue/osso/grito, `Gunshot_Distant_` não contamina o evento de tiro seco (os dois começam com `Gunshot_`), evento sem candidato fica vazio em vez de forçado, o metadado do inventário é juntado pelo sha-256, e a família preserva o número da arma (`Gunshot_3`, não `Gunshot`) — sem isso as 8 famílias viram uma e a escuta A/B perde a comparação que decide qual soa como AK. No check:fast.
+
+```bash
+npm run audio:shortlist:autoteste
+```
+
+## `audio:ab`
+
+Escuta A/B local e privada, para o dono decidir. Sobe um servidor em `127.0.0.1` que serve a página e os WAVs lidos do staging privado onde eles estão — não copia nada para o repositório, não escreve em `public/`, só aceita loopback e recusa caminho que escape da raiz do pacote. O lado B é o `public/js/audio.js` REAL do jogo, não uma imitação: comparar contra outra coisa não responderia a pergunta. O clique grava `{evento, arquivo, sha256, decisao, por, quando, nota}` num JSONL fora do repositório — isso é REGISTRO DE ESCUTA, não aprovação: virar `aprovado` no ledger continua sendo passo manual, e a PRV2 cobra `escutaAB.por` e `escutaAB.data`. Aprovação automática é o que o contrato existe para impedir.
+
+```bash
+npm run audio:ab -- <dir-do-pack> --porta=8130 --por=ruben
+```
+
+## `audio:game:local`
+
+Liga o staging privado do Action Game Sounds Pack ao jogo local sem copiar WAVs: cria `public/audio/fab-dev` como symlink ignorado e escreve um `manifest.json` também ignorado. Recusa pack dentro do repositório, caminho que escape da raiz, arquivo ausente, nome vetado e qualquer manifest/symlink preexistente que não pertença ao laboratório. Mapeia um tiro da AK e todas as variações disponíveis de recarga, ferrolho e passo concreto; os quatro eventos sem caminho compatível continuam apenas na escuta A/B. É laboratório, não aprovação nem pacote de release.
+
+```bash
+npm run audio:game:local -- <dir-do-pack>
+```
+
 ## `eval:backendhints`
 
 O BUNDLE PÚBLICO NÃO NOMEIA O BACKEND. Decisão do dono (15/08): quem abre o jogo vê o JOGO — 'sem dar pistas se usamos supabase, postgres o que'. Mede no fonte (sem build) toda superfície servida crua: public/js, public/llms.txt, src/pages (corpo .astro, fora do frontmatter de servidor), CHANGELOG.md (renderizado em /changelog). A doc Docusaurus fica FORA, como dívida declarada — virar neutra é decisão editorial. Em 15/08 a primeira corrida achou 8 vazamentos, um deles TEXTO DE UI ('envs do Supabase pendentes'). --mutante=inject prova que morde; lista de padrões vazia se denuncia sozinha.

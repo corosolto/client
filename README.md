@@ -34,9 +34,9 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 
 | O que | Quanto | Onde confere |
 |---|---:|---|
-| Código do jogo | 37.223 linhas em 57 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
-| `game.js` | **7.264** linhas | `wc -l public/js/game.js` |
-| `main.js` | 3.253 linhas | `wc -l public/js/main.js` |
+| Código do jogo | 37.725 linhas em 58 arquivos | `git ls-files public/js/*.js \| xargs wc -l` |
+| `game.js` | **7.331** linhas | `wc -l public/js/game.js` |
+| `main.js` | 3.364 linhas | `wc -l public/js/main.js` |
 | Armas com GLB | 26 | `git ls-files 'public/models/weapons/*.glb' \| wc -l` |
 | GLBs de personagem | 45 | `git ls-files 'public/models/characters/*.glb' \| wc -l` |
 | Props em GLB | 116 | `git ls-files 'public/models/props/*.glb' \| wc -l` |
@@ -44,8 +44,8 @@ contra bots, direto na aba. Sem download, sem instalação, sem cadastro.
 | Personagens jogáveis | 44, em 5 facções | array `CHARACTERS` de `characters.js` |
 | Mapas no registro | 13 | objeto `MAPS` de `maps.js` |
 | Arnêses visuais em HTML | 15 | `git ls-files 'public/*.html' \| wc -l` |
-| Scripts do arnês | 221 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
-| Scripts de pipeline | 62 | `git ls-files 'tools/*.mjs' \| wc -l` |
+| Scripts do arnês | 229 | `git ls-files 'tools/eval/*.mjs' 'tools/eval/*.py' \| wc -l` |
+| Scripts de pipeline | 58 | `git ls-files 'tools/*.mjs' \| wc -l` |
 | Tarefas de entrada escritas | 26 | `git ls-files 'docs/issues/[0-9]*.md' \| wc -l` |
 | Versão | `2.0.0-alpha.218` | `public/js/version.js` e `package.json` (batem) |
 
@@ -89,7 +89,7 @@ arquitetura): `cd docs && npm install && npm start` → <http://localhost:3000/d
 | Camada | Ferramenta | Versão |
 |---|---|---|
 | Motor 3D (WebGL) | **Three.js**, vendorizado | `r160` |
-| Jogo | ES modules vanilla, **zero build** | 57 arquivos |
+| Jogo | ES modules vanilla, **zero build** | 58 arquivos |
 | Site | **Astro** com SSR | `^7.1.1` |
 | Hospedagem | adapter **Vercel** | `^11.0.6` |
 | Banco | **Postgres gerenciado** (RLS; schema privado, fora do repo) | `^2.110.7` |

@@ -19,6 +19,7 @@ import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
+import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
@@ -396,16 +397,24 @@ applyHomeWall();
 // ATENÇÃO: use uma faixa CC0/licenciada — NÃO usar música protegida (ex.: YouTube/MPB) no
 // build público (risco de copyright, igual aos sons da Valve a trocar).
 const MENU_MUSIC_VOL = 0.3;
+const MENU_MUSIC_REVIEW_PARAMS = new URLSearchParams(location.search);
+const MENU_MUSIC_REVIEW = MENU_MUSIC_REVIEW_PARAMS.get('menumusiclab') === '1';
+const _menuMusicRequested = /^m(\d{2})$/.exec(MENU_MUSIC_REVIEW_PARAMS.get('menutrack') || '');
+let menuMusicReviewIndex = _menuMusicRequested ? Math.max(0, Number(_menuMusicRequested[1]) - 1) : 0;
 // Trilhas do menu (public/audio/menu-music/mNN.mp3 — trims de ~105s normalizados via ffmpeg,
 // ver HANDOFF). Uma aleatória POR VISITA ao menu; troca a cada partida/retorno.
 //
-// Este array é só o FALLBACK do primeiro quadro: a fonte de verdade é a pasta, via
-// audio/manifest.json (chave `menuMusic`). Falha de rede mantém o fallback.
-const MENU_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
+// A curadoria aprovada é nominal para a remoção de uma faixa não deslocar as demais.
+// O laboratório mantém o catálogo completo; o jogo normal e o release usam só a seleção.
+const MENU_REVIEW_TRACKS = Array.from({ length: 26 }, (_, i) => `/audio/menu-music/m${String(i + 1).padStart(2, '0')}.mp3`);
+const MENU_TRACKS = (MENU_MUSIC_REVIEW ? MENU_REVIEW_TRACKS : MENU_MUSIC_ACTIVE_IDS.map((id) => `/audio/menu-music/${id}.mp3`));
 fetch(`/audio/manifest.json?v=${VERSION}`)
   .then((response) => (response.ok ? response.json() : null))
   .then((manifest) => {
-    const list = manifest && Array.isArray(manifest.menuMusic) ? manifest.menuMusic : null;
+    if (MENU_MUSIC_REVIEW) return;
+    const active = new Set(MENU_MUSIC_ACTIVE_IDS);
+    const list = manifest && Array.isArray(manifest.menuMusic)
+      ? manifest.menuMusic.filter((url) => active.has(_menuTrackId(url))) : null;
     if (!list || !list.length) return;
     // manifest grava caminho relativo (`audio/...`); a URL do <Audio> é absoluta (`/audio/...`).
     const novas = list.map((u) => (u.startsWith('/') ? u : `/${u}`));
@@ -420,16 +429,21 @@ fetch(`/audio/manifest.json?v=${VERSION}`)
   })
   .catch(() => {});
 let menuMusic = null, musicArmed = false, musicFade = null, tracksTrocadas = false;
+const _menuTrackId = (url) => url.match(/([^/]+)\.\w+$/)?.[1] || 'desconhecida';
 function _ensureMusic() {
   if (menuMusic && !tracksTrocadas) return menuMusic;
   if (menuMusic) { menuMusic.pause(); menuMusic = null; }
   tracksTrocadas = false;
-  { const _mi = (Math.random() * MENU_TRACKS.length) | 0;
+  { const _mi = MENU_MUSIC_REVIEW
+      ? Math.max(0, Math.min(MENU_TRACKS.length - 1, menuMusicReviewIndex))
+      : (Math.random() * MENU_TRACKS.length) | 0;
     const _url = MENU_TRACKS[_mi];
-    menuMusic = new Audio(_url);
+    // O laboratório pode trocar a fonte local mantendo o mesmo mNN; o sufixo evita que o
+    // browser reutilize no A/B um MP3 antigo que já estava em cache sob a mesma URL.
+    menuMusic = new Audio(MENU_MUSIC_REVIEW ? `${_url}?review=${encodeURIComponent(VERSION)}` : _url);
     // rótulo vem do NOME do arquivo, não do índice: com lista vinda da pasta o índice pode
     // não casar mais com o número da faixa (some uma no meio e o telemetry mentiria).
-    _pick('musica', _url.match(/([^/]+)\.\w+$/)?.[1] || `m${String(_mi + 1).padStart(2, '0')}`); }
+    if (!MENU_MUSIC_REVIEW) _pick('musica', _menuTrackId(_url)); }
   menuMusic.loop = true; menuMusic.volume = MENU_MUSIC_VOL;
   window.__mm = menuMusic;   // hook de debug/teste (estado da música do menu)
   return menuMusic;
@@ -507,6 +521,100 @@ window.addEventListener('keydown', dismissSplash, true);
 window.addEventListener('pointerdown', _armMusic);
 window.addEventListener('keydown', _armMusic);
 startMenuMusic();   // boot: começa MUDA imediatamente (loop rolando antes do 1º clique)
+
+/* Laboratório local de curadoria (?menumusiclab=1). O jogo normal continua escolhendo uma
+   faixa aleatória por visita; aqui a escolha é determinística e o veredito fica somente no
+   localStorage. Assim dá para ouvir no contexto real do menu sem apagar um MP3 por engano. */
+function mountMenuMusicReview() {
+  if (!MENU_MUSIC_REVIEW || document.getElementById('menu-music-review')) return;
+  const host = document.getElementById('main-menu');
+  if (!host) return;
+  const key = 'csbr-menu-music-review-v1';
+  let verdicts = {};
+  try { verdicts = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { verdicts = {}; }
+  const lab = document.createElement('aside');
+  lab.id = 'menu-music-review';
+  lab.setAttribute('aria-label', 'Revisão das músicas do menu');
+  lab.innerHTML = `
+    <span class="mmr-kicker">CURADORIA LOCAL</span>
+    <strong id="mmr-track">FAIXA</strong>
+    <span id="mmr-progress"></span>
+    <div class="mmr-row">
+      <button id="mmr-prev" type="button" title="Faixa anterior">‹ ANTERIOR</button>
+      <button id="mmr-restart" type="button" title="Ouvir esta faixa desde o início">REOUVIR</button>
+      <button id="mmr-next" type="button" title="Próxima faixa">PRÓXIMA ›</button>
+    </div>
+    <div class="mmr-row mmr-verdicts">
+      <button id="mmr-keep" type="button">MANTER</button>
+      <button id="mmr-reject" type="button">REMOVER</button>
+      <button id="mmr-clear" type="button">LIMPAR</button>
+    </div>
+    <span class="mmr-catalog-title">CATÁLOGO · CLIQUE PARA OUVIR</span>
+    <div id="mmr-list" class="mmr-list" aria-label="Lista das músicas do menu"></div>
+    <button id="mmr-copy" class="mmr-copy" type="button">COPIAR RESULTADO</button>`;
+  host.appendChild(lab);
+
+  const byId = (id) => document.getElementById(id);
+  const normalizeIndex = (i) => (i + MENU_TRACKS.length) % MENU_TRACKS.length;
+  const currentId = () => _menuTrackId(MENU_TRACKS[menuMusicReviewIndex]);
+  const catalog = byId('mmr-list');
+  catalog.innerHTML = MENU_TRACKS.map((url, index) => {
+    const id = _menuTrackId(url);
+    return `<button type="button" class="mmr-list-item" data-track-index="${index}" data-track-id="${id}" title="Ouvir ${id.toUpperCase()}"><span>${id.toUpperCase()}</span><b aria-hidden="true">?</b></button>`;
+  }).join('');
+  const sync = () => {
+    const id = currentId();
+    const atuais = MENU_TRACKS.map(_menuTrackId).map((track) => verdicts[track]);
+    const keep = atuais.filter((v) => v === 'manter').length;
+    const reject = atuais.filter((v) => v === 'remover').length;
+    byId('mmr-track').textContent = `${id.toUpperCase()} · ${menuMusicReviewIndex + 1}/${MENU_TRACKS.length}`;
+    byId('mmr-progress').textContent = `MANTER ${keep} · REMOVER ${reject} · PENDENTES ${MENU_TRACKS.length - keep - reject}`;
+    lab.dataset.verdict = verdicts[id] || 'pendente';
+    for (const item of catalog.querySelectorAll('[data-track-index]')) {
+      const verdict = verdicts[item.dataset.trackId] || 'pendente';
+      item.dataset.verdict = verdict;
+      item.classList.toggle('current', Number(item.dataset.trackIndex) === menuMusicReviewIndex);
+      item.querySelector('b').textContent = verdict === 'manter' ? '✓' : verdict === 'remover' ? '×' : '?';
+    }
+  };
+  const play = (index, restart = false) => {
+    menuMusicReviewIndex = normalizeIndex(index);
+    tracksTrocadas = true;
+    const m = _ensureMusic();
+    if (restart) m.currentTime = 0;
+    musicArmed = true; m.muted = false; m.volume = MENU_MUSIC_VOL;
+    m.play().catch(() => {});
+    const url = new URL(location.href);
+    url.searchParams.set('menutrack', currentId());
+    history.replaceState(null, '', url);
+    sync();
+  };
+  const mark = (verdict) => {
+    const id = currentId();
+    if (verdict) verdicts[id] = verdict; else delete verdicts[id];
+    localStorage.setItem(key, JSON.stringify(verdicts));
+    sync();
+    if (verdict) play(menuMusicReviewIndex + 1);
+  };
+  byId('mmr-prev').onclick = () => play(menuMusicReviewIndex - 1);
+  byId('mmr-next').onclick = () => play(menuMusicReviewIndex + 1);
+  byId('mmr-restart').onclick = () => play(menuMusicReviewIndex, true);
+  byId('mmr-keep').onclick = () => mark('manter');
+  byId('mmr-reject').onclick = () => mark('remover');
+  byId('mmr-clear').onclick = () => mark(null);
+  for (const item of catalog.querySelectorAll('[data-track-index]')) {
+    item.onclick = () => play(Number(item.dataset.trackIndex));
+  }
+  byId('mmr-copy').onclick = async () => {
+    const list = (v) => MENU_TRACKS.map(_menuTrackId).filter((id) => verdicts[id] === v);
+    const text = `MANTER: ${list('manter').join(', ') || '(nenhuma)'}\nREMOVER: ${list('remover').join(', ') || '(nenhuma)'}`;
+    try { await navigator.clipboard.writeText(text); byId('mmr-copy').textContent = 'COPIADO'; }
+    catch { prompt('Copie o resultado:', text); }
+  };
+  sync();
+}
+mountMenuMusicReview();
+
 const isMobile = matchMedia('(pointer: coarse)').matches || innerWidth < 820;
 /* TOUCH = aparelho de toque DE VERDADE (dedo, sem mouse). Separado do isMobile porque este
    inclui "janela estreita" — um desktop com a janela apertada NÃO deve entrar em modo toque
@@ -997,6 +1105,9 @@ async function _refreshOnline() {
 }
 const params = new URLSearchParams(location.search);
 const inspectionScreen = resolveInspectionScreen(params);
+// A curadoria é uma sessão de teste, mas mantemos a expressão canônica abaixo porque
+// screenquery-check também prova a integração do modo de inspeção por query.
+if (MENU_MUSIC_REVIEW) params.set('debug', '1');
 const testMode = params.get('debug') === '1' || !!inspectionScreen;
 // ?nav=1 isola transições de tela; web-assets.spec.js cobre preload e render 3D.
 const navOnly = params.get('nav') === '1';
@@ -1135,6 +1246,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     if (!navOnly) {
       await Promise.all([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
+        sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
            no fallback procedural sem textura — verde na régua de registro, feio na tela.
@@ -1322,13 +1434,12 @@ $('avatar-file').onchange = async e => {
 };
 
 /* ---------------- menu CS 1.6 (Coro Solto) ---------------- */
-/* Som de UI: um menu AAA tem TRÊS sons (mover, confirmar, voltar) e o "mover" é o que dá
-   a sensação tátil. Só existia uiClick(); hover/back são compostos aqui com as primitivas
-   do Sfx (audio.js pertence a outro agente — nada é adicionado lá). Falha em silêncio. */
+/* Som de UI: mover, confirmar e voltar usam contratos distintos do manifest.
+   O Sfx preserva synth como fallback quando o laboratorio local nao esta instalado. */
 const ui = {
   click() { try { sfx.uiClick(); } catch {} },
-  hover() { try { sfx.ensure(); sfx._beep('square', 1240, 1240, .02, .04, 0, true); } catch {} },
-  back()  { try { sfx.ensure(); sfx.duck(0.5, 0.1); sfx._beep('square', 560, 400, .06, .10, 0, true); } catch {} },
+  hover() { try { sfx.uiHover(); } catch {} },
+  back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu
