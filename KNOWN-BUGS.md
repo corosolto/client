@@ -3677,7 +3677,8 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   reserva, recarga e `ackSeq`; pickup/reload são pedidos validados pelo servidor e a troca remota
   remonta a arma visível. `eval:netcode` 178/178, `eval:netcodecbin` 18/18,
   `game/authority-check.mjs` 15/15 e smoke do servidor 86/86. O mutante que volta a confiar na
-  arma declarada é detectado. **Ainda não publicado; não marcar como resolvido em produção.**
+  arma declarada é detectado. **RESOLVIDO EM PRODUÇÃO 05/09/2026:** protocolo v4 publicado nos
+  três nós e cliente `0090ab82`; canário v4 confirmou ACK e inventário autoritativo.
 
 - **BUG-126 · correção de posição do jogador local não reconhece inputs processados.**
   **Sintoma literal (feedback de 04/09/2026):** *“as vezes quando vai andar para o lado agachado
@@ -3688,7 +3689,9 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   **CORRIGIDO LOCALMENTE 05/09/2026:** o cliente guarda a predição por `seq`; o `ackSeq` v4
   corrige contra a mesma base, preserva inputs pendentes e converge suavemente. A régua reproduz
   o strafe agachado e mede 1,000 → 1,042 → 1,200 m sem teleporte; sem ack ela volta a falhar.
-  As correções agora são agregadas por sessão e por round. **Ainda não publicado.**
+  As correções agora são agregadas por sessão e por round. **RESOLVIDO EM PRODUÇÃO 05/09/2026:**
+  dois clientes fecharam um round com 36 janelas persistidas; o canário de correção registrou
+  p95 de 0,02 m e máximo de 0,03 m sem teleporte.
 
 - **BUG-125 · “sei que é impossível mas se desse pra abaixar ainda mais o ping, porque dessa
   forma um jogador de PT nunca vai poder jogar com um BR”** (dono, 02/09, produção).
