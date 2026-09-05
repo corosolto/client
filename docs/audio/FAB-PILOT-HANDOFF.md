@@ -1,6 +1,74 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (nona rodada: uma fonte por tiro, pistolas distintas e morte seca).
+Atualizado em 2026-09-05 (décima rodada: gravações reais CC0 para o arsenal inteiro).
+
+## Décima rodada — M4, pistolas, Uzi e o restante do arsenal deixam o pool genérico
+
+Checkpoint de implementação: `e2ae2c5c` (`feat(audio): mapear arsenal para gravacoes cc0`).
+
+Depois da nona rodada, a escuta do dono continuou rejeitando o resultado artístico: os tiros
+pareciam genéricos e a shotgun parecia um estilingue. A pergunta seguinte tornou o escopo
+explícito: rifles como M4A1, pistolas e Uzi também precisam ter fontes próprias. Portanto,
+esta rodada substitui o mapeamento Fab por número por um mapeamento semântico do arsenal
+inteiro; a AK mantém `Gunshot_1-1`, única fonte aprovada na escuta local.
+
+A fonte nova é a **The Free Firearm Sound Library — Prepared SFX Library**, publicada em CC0
+por Ben Jaszczak, Brian Nelson, Kevin Heras e Matthew Nanney. O arquivo original ficou fora do
+Git em `private-assets/audio/free-firearm-sfx-cc0/Prepared-SFX-Library.7z`, com SHA-256
+`cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6`. Nenhum WAV entrou em
+modelo: `tools/audio/prepare-free-firearm-cc0.mjs` usa somente `ffmpeg` local, com detecção de
+silêncio, corte determinístico e fade. O resultado privado contém 29 WAVs e `manifest.json`
+com fonte, arma gravada, distância, tipo de correspondência e hashes.
+
+Correspondência registrada — e não mascarada como exata:
+
+- **exata:** Revólver .38, Mosin, SKS e os seis candidatos 12-gauge de shotgun;
+- **família/calibre próximo:** M4/AR-15, MD-97, Tavor, Famas, AKM, M92, G3, carabina,
+  MP5, Uzi, PT-38 genérica, Remington 700, SVD e G3SG1;
+- **proxy provisório:** SCAR, LMG, P90, Deagle, AWP e M400. Esses casos precisam ser
+  substituídos se a escuta não reconhecer a personalidade esperada.
+
+O jogo local agora instala 25 armas: AK Fab preservada e 24 armas com gravações CC0. Para
+estas gravações autênticas, o runtime usa `playbackRate = 1` e não aplica EQ de classe; pitch
+e filtros não podem voltar a transformar fontes diferentes num mesmo timbre genérico. A
+shotgun tem seis escolhas determinísticas, todas pré-carregadas, por
+`?shotguntake=1..6`. Todos os 29 URLs CC0 servidos em `8131` responderam HTTP 200 como
+`audio/wav`.
+
+Validação executada:
+
+- `build` com Node 23, `syntax`, `eval:audiofablocal`, `eval:audioespacial`,
+  `eval:audiocapacidade`, `eval:audioproc`, `eval:audioalcance`, `docs:check`, `arch:check`,
+  `eval:docsautoria` e `git diff --check`: verdes;
+- ESP1b: primeiro tiro pré-carregado continua com uma fonte WAV e zero synth sobreposto;
+- ESP1c: `?shotguntake=4` escolhe exatamente o quarto candidato;
+- ESP1d: gravação autêntica sai a rate 1 e sem filtro de família;
+- mutante `sem-veto`: vermelho em LAB4/LAB5d, como esperado;
+- build com o Node 16 encontrado primeiro no PATH foi bloqueado pelo requisito do Astro;
+  repetido com `/opt/homebrew/bin/node` v23.6.0, ficou verde.
+
+### Escuta autoritativa em `8131`
+
+Fazer recarga completa e iniciar uma **partida nova** depois de cada troca de URL. Primeiro,
+comparar grupos que deveriam soar claramente diferentes:
+
+1. AK, M4, G3 e AWP;
+2. PT-38, Revólver .38 e Deagle;
+3. MP5, Uzi e P90;
+4. shotgun nos seis links abaixo.
+
+| Take | Gravação real | Link |
+|---:|---|---|
+| 1 | Mossberg Model 190, distância média/sala | `http://127.0.0.1:8131/?shotguntake=1` |
+| 2 | Winchester Model 12, distância média/sala | `http://127.0.0.1:8131/?shotguntake=2` |
+| 3 | Benelli Nova, distância média/sala | `http://127.0.0.1:8131/?shotguntake=3` |
+| 4 | Mossberg Model 190, perto | `http://127.0.0.1:8131/?shotguntake=4` |
+| 5 | Winchester Model 12, perto | `http://127.0.0.1:8131/?shotguntake=5` |
+| 6 | Benelli Nova, perto | `http://127.0.0.1:8131/?shotguntake=6` |
+
+Feedback mínimo útil: `M4 boa; Uzi fraca; Deagle sem peso; shotgun 2`. Verde técnico,
+gravação real e CC0 **não equivalem** a aprovação artística. Nenhum resultado desta rodada
+autoriza release, publicação, derivado distribuível, push ou merge.
 
 ## Nona rodada — remover o som antigo e devolver personalidade
 
