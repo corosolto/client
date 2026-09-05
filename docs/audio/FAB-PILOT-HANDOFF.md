@@ -17,6 +17,13 @@ builder e o `assets-check` reais nos dois casos. O manifest local continua permi
 escuta, mas `build-audio-pack.mjs` deve falhar antes de criar um zip de release com Fab,
 BOOM, Fish ou legado.
 
+Checkpoint da correção: `3ccf6573`. Depois dele, `check:fast` passou 80/80 com Node 24;
+os mutantes `aprovado-sem-escuta`, `derivado-sem-fonte` e `evento-sem-decisao` ficaram
+vermelhos nas cláusulas esperadas. O builder real recusou 747 referências e comprovou
+`zip=no`. `assert:assets --so=audio` também recusou as mesmas raízes. Portanto o antigo
+`check:deploy` 37/37 é evidência anterior ao fechamento desta borda, não estado atual de
+release.
+
 Consequência: #504 continua uma candidata local e de código, não launch-ready. Para servir
 Fab/BOOM no jogo web, o input de build precisa sair de um armazenamento privado e os sons
 precisam ser incorporados ao produto sem publicar um pack de áudio navegável. Fish e legado
