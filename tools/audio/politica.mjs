@@ -70,12 +70,21 @@ export function carregarPolitica(caminhoLedger) {
 
 /* Devolve `null` quando pode passar, ou o MOTIVO da recusa. Motivo é string
    porque quem chama imprime — recusa sem diagnóstico manda procurar no lugar
-   errado. `contexto`: 'pack' (zip standalone) ou 'manifest' (autoria local). */
+   errado. `contexto`: 'pack' (zip público standalone), 'private-build'
+   (artefato privado incorporado ao jogo) ou 'manifest' (autoria local). */
 export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
   const legado = pol.legadoRes.find((p) => p.re.test(rel));
   if (legado) return `caminho de legado bloqueado por procedência (${legado.porque})`;
 
   const raiz = (pol.raizesRuntime || []).find((r) => r.prefixo && rel.startsWith(r.prefixo));
+  if (raiz && contexto === 'private-build') {
+    const fonte = pol.fontes[raiz.fonte];
+    if (!fonte) return `raiz de runtime cita fonte inexistente \`${raiz.fonte}\``;
+    if (fonte.deployPrivado?.build !== true) {
+      return `raiz de runtime \`${raiz.prefixo}\` não tem autorização explícita para o build privado`;
+    }
+    return null;
+  }
   if (raiz && contexto === 'pack') {
     const fonte = pol.fontes[raiz.fonte];
     if (!fonte) return `raiz de runtime cita fonte inexistente \`${raiz.fonte}\``;
@@ -87,6 +96,10 @@ export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
 
   const sha = createHash('sha256').update(bytes).digest('hex');
   const d = pol.porHash.get(sha);
+
+  if (contexto === 'private-build' && !raiz) {
+    return `caminho fora das raízes autorizadas do build privado: \`${rel}\``;
+  }
 
   if (!rel.startsWith(pol.prefixo)) {
     if (d && pol.fontes[d.fonte]?.redistribuicao !== 'livre' && contexto === 'pack') {

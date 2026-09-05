@@ -81,8 +81,20 @@ if (!nomeadosPeloCodigo.length) {
    (`toUrl` do gerador) e o empacotador resolve a partir do mesmo lugar. */
 const tmp = mkdtempSync(join(tmpdir(), 'csbr-audio-alcance-'));
 const AUDIO = join(tmp, 'public', 'audio');
+const LEDGER = join(tmp, 'fixture-proveniencia.json');
 const gravados = new Map();   // caminho de manifest -> caminho em disco
 try {
+  /* A fixture mede alcance, não as licenças reais do checkout. Use um ledger
+     próprio e explicitamente livre para que uma raiz privada adicionada ao
+     ledger de produção não transforme esta régua num teste acidental de
+     procedência. A política e o empacotador continuam sendo os reais. */
+  writeFileSync(LEDGER, JSON.stringify({
+    prefixoDerivado: 'audio/piloto/',
+    raizesRuntime: [{ prefixo: 'audio/menu-music/', fonte: 'fixture-livre' }],
+    fontes: { 'fixture-livre': { redistribuicao: 'livre' } },
+    derivados: [],
+    piloto: [],
+  }));
   for (const rel of nomeadosPeloCodigo) {
     const alvo = mutante === 'nome-trocado' && rel.endsWith('/galo.mp3')
       ? rel.replace(/galo\.mp3$/, 'galo2.mp3')
@@ -111,7 +123,7 @@ try {
   // ── ALC1: o gerador alcança o que o código nomeia ────────────────────────
   let manifest = null;
   try {
-    execFileSync('node', [join(RAIZ, 'tools', 'gen-audio-manifest.mjs'), `--raiz=${AUDIO}`],
+    execFileSync('node', [join(RAIZ, 'tools', 'gen-audio-manifest.mjs'), `--raiz=${AUDIO}`, `--ledger=${LEDGER}`],
       { encoding: 'utf8', stdio: VERBOSO ? 'inherit' : 'ignore' });
     manifest = JSON.parse(readFileSync(join(AUDIO, 'manifest.json'), 'utf8'));
   } catch (e) {
@@ -151,7 +163,7 @@ try {
     const out = join(tmp, 'out');
     let pack = null, saida = 0, erroBuild = '';
     try {
-      execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), out, `--raiz=${AUDIO}`],
+      execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), out, `--raiz=${AUDIO}`, `--ledger=${LEDGER}`],
         { encoding: 'utf8', stdio: VERBOSO ? 'inherit' : 'pipe' });
     } catch (e) { saida = e.status ?? 1; erroBuild = String(e.stderr || e.message || '').trim(); }
     try { pack = JSON.parse(readFileSync(join(out, 'pack', 'manifest.json'), 'utf8')); } catch { pack = null; }

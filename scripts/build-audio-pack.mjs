@@ -13,7 +13,7 @@
 // O que NÃO entra: soundtrack/ (fontes com nome comercial), TRACKS.txt, qualquer arquivo
 // não referenciado.
 //
-// Uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir>] [--ledger=<json>]
+// Uso: node scripts/build-audio-pack.mjs <outDir> [--raiz=<dir>] [--ledger=<json>] [--private-build]
 //   -> <outDir>/pack/  (conteúdo) e <outDir>/audio-pack.zip
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
@@ -31,6 +31,7 @@ const RAIZ_AUDIO = (process.argv.find((a) => a.startsWith('--raiz=')) || '').sli
 const AUDIO = RAIZ_AUDIO ? path.resolve(RAIZ_AUDIO) : path.join(RAIZ, 'public', 'audio');
 const PUBLICO = RAIZ_AUDIO ? path.dirname(AUDIO) : path.join(RAIZ, 'public');
 const PACK = path.join(OUT, 'pack');
+const CONTEXTO = process.argv.includes('--private-build') ? 'private-build' : 'pack';
 // LAYOUT DO ZIP: entradas SEM o prefixo audio/ — o fetch-audio.sh descompacta
 // DENTRO de public/audio/, então 'a/x.mp3' vira public/audio/a/x.mp3, que é o que a
 // string 'audio/a/x.mp3' do manifesto resolve no site. Com o prefixo dobraria o caminho.
@@ -60,7 +61,7 @@ const hashNome = (rel) => {
   const src = path.join(PUBLICO, rel);
   if (!existsSync(src)) { faltando.push(rel); return rel; }
   const bytes = readFileSync(src);
-  const motivo = motivoDeRecusa(rel, bytes, politica, 'pack');
+  const motivo = motivoDeRecusa(rel, bytes, politica, CONTEXTO);
   if (motivo) { recusados.push(`${rel} — ${motivo}`); return rel; }
   const h = createHash('sha1').update(bytes).digest('hex').slice(0, 16);
   const novo = `audio/a/${h}${path.extname(rel).toLowerCase()}`;
@@ -103,10 +104,9 @@ if (recusados.length) {
   console.error(`RECUSADO: ${recusados.length} arquivo(s) não podem entrar num pacote só de áudio.`);
   for (const r of recusados.slice(0, 12)) console.error('  ' + r);
   if (recusados.length > 12) console.error(`  … e mais ${recusados.length - 12} arquivo(s).`);
-  console.error('\nSob o prefixo derivado a regra é ALLOWLIST: o que não está catalogado no ledger'
-    + '\nnão passa. Este zip vira asset de release, e release de pacote de áudio é'
-    + '\nredistribuição standalone. Ver docs/audio/PROVENIENCIA.md — a forma de incorporação'
-    + '\nque NÃO redistribui está BLOQUEADA aguardando decisão do dono.');
+  console.error('\nSob o prefixo derivado e no build privado a regra é ALLOWLIST: o que não está'
+    + '\nexplicitamente autorizado no ledger não passa. O modo padrão continua sendo um pacote'
+    + '\npúblico standalone e recusa fontes restritas. Ver docs/audio/PROVENIENCIA.md.');
   process.exit(1);
 }
 
