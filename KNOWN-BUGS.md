@@ -2111,9 +2111,10 @@ A candidata ainda aguarda aprovação visual do dono; decisão e reversão estã
 `docs/reports/GOLDEN-PISTOL-DECISION.md`.
 
 **Rodada 05/09 — captura e diagnóstico corrigidos; pistola ainda não golden.**
-Na lane `codex/vm-astra-pistol`, a reprodução em 1440×960 mostrou os cinco frames
-de saque presos em idle no `golden-ak-runtime.mjs`. O capturador amostrava só o
-mixer, sem recompor o mount procedural nem assegurar render da nova pose. O
+Na lane `codex/vm-astra-pistol`, a reprodução em 1440×960 mostrou o frame de
+saque 0% com a pose pronta e o frame 50% defasado no `golden-ak-runtime.mjs`.
+O mount do saque já recebia `update(0)`, mas faltava assegurar o render da nova
+pose/matriz; no tiro, amostrar só o mixer também congelava o recuo. O
 helper agora avança o controlador em subpassos (inclusive na recarga), preserva
 idle pausado, restaura os estados ao terminar e espera retorno natural a idle,
 sem forçar `action.time` ao fim da recarga. O saque zero corrigido fica fora da

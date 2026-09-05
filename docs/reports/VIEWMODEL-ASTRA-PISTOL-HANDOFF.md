@@ -33,11 +33,14 @@ declara a pistola golden nem libera outras famílias.
 
 ## Marco 1 — captura fiel e teste independente
 
-- `baseline-runtime/` reproduziu o bug: todos os cinco frames de saque mostravam
-  idle. `capture-fixed/` mostra saída fora da tela e entrada progressiva; o
+- `baseline-runtime/` reproduziu o bug: o frame de saque 0% mostrava a pose
+  pronta; em 50% a imagem ainda estava defasada. `capture-fixed/` mostra
+  saída fora da tela e entrada progressiva; o
   contrato da pistola passa contra seu `runtime-report.json`.
-- Causa: amostragem do mixer sem atualizar o mount procedural e sem garantir
-  render da nova pose. O tiro também congelava o recuo do controlador.
+- Causa: a pose do saque já era aplicada ao mount com `update(0)`, mas a foto
+  não garantia render da nova pose/matriz. No tiro, a amostragem só do mixer
+  também congelava o recuo do controlador. O nome `idle` no clipe subjacente
+  de saque procedural, sozinho, não prova que o frame está parado.
 - `golden-ak-runtime.mjs` agora usa o helper autocontido de captura, avança
   o recuo em subpassos de até 1/60 s (o controlador limita dt a 0,05 s), não
   amostra idle como se fosse tiro, renderiza explicitamente e restaura update,
