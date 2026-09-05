@@ -3466,6 +3466,322 @@ invisível hoje, porque `WEAPON_ONLY` é o padrão.
 
 ## P2 — infra, repo e deploy
 
+### ~~BUG-138 · Gerador de manifest falhava ABERTO quando o ledger não existia~~ · RESOLVIDO 04/09
+
+**Sintoma.** `tools/gen-audio-manifest.mjs --ledger=<inexistente>` saía **0**, sem
+diagnóstico, e mantinha `audio/piloto/nao-catalogado.wav` no manifest. Nos dois modos,
+inclusive `--check`, que é o que roda no portão.
+
+**Causa raiz.** Em `barrado()`, `if (politica.erro) return null` — "não consigo verificar"
+virava "pode passar". O empacotador (`58d6dc10`) e o `assets-check` já abortavam sem
+ledger; o gerador era a única das três camadas que contradizia a política escrita em
+`docs/audio/PROVENIENCIA.md`. É a lição 5 de novo: não saber tem que custar o mesmo que
+estar errado.
+
+**Conserto.** Aborta com exit 1 **antes de escrever qualquer coisa**, dizendo que falta o
+ledger. Medido depois: exit 1 nos dois modos, manifest intocado.
+
+**Régua:** `eval:audioproc` PRV12, com os dois modos e a IRMÃ (com ledger válido o gerador
+tem que gerar — abortar sempre não é falhar fechado, é não funcionar). Commit `6a1bc05b`.
+
+---
+### ~~BUG-139 · A prova adversarial do `assets-check` era manual~~ · RESOLVIDO 04/09
+
+**Sintoma.** PRV10 e PRV11 rodavam o empacotador e o gerador reais contra fixture. A
+terceira camada — `tools/eval/assets-check.mjs` — só tinha prova digitada à mão numa
+rodada e não repetida em nenhuma outra. Prova manual não roda no portão: ela vale no dia em
+que alguém a executa e envelhece no dia seguinte, e foi assim que o escape P0 sobreviveu a
+duas revisões.
+
+**Conserto.** PRV13 roda o script REAL contra fixture, nos mesmos três cenários do
+empacotador: não catalogado reprova, legado reprova por nome, e o catalogado/aprovado/livre
+**passa** (irmã, que impede um `assets-check` que recuse tudo de passar por proteção).
+
+Conferido que os dois cenários vermelhos reprovam pelo motivo certo — a mensagem é a da
+cláusula de procedência, não o piso de 250. O script ganhou `--raiz=`, `--ledger=` e
+`--so=audio`, no padrão que gerador e empacotador já tinham; sem os flags nada muda.
+
+**Mutação:** devolver a semântica de denylist em `tools/audio/politica.mjs` acende PRV10a,
+PRV11 e PRV13a juntas — as três leem a mesma função. Commit `9f278f56`.
+
+---
+
+### ~~BUG-137 · P0: arquivo não catalogado sob `audio/piloto/` entrava no pacote~~ · RESOLVIDO 04/09
+
+**Sintoma.** A trava de licença declarada fechada na 2ª rodada não estava fechada.
+Reproduzido pela auditoria independente e confirmado aqui, com o empacotador real:
+
+```
+fonte `proibida-standalone`, derivados: [], manifest -> audio/piloto/nao-catalogado.wav
+node scripts/build-audio-pack.mjs out --raiz=… --ledger=…
+  -> PACK: 1 arquivos hasheados | exit 0 | zip gerado com o arquivo dentro
+```
+
+**Causa raiz — a FORMA da régua.** `scripts/build-audio-pack.mjs` montava uma **denylist**
+a partir de `ledger.derivados`: barrava o hash conhecido e deixava passar o desconhecido.
+`tools/eval/assets-check.mjs` dava `continue` em hash desconhecido, e
+`tools/gen-audio-manifest.mjs` tinha a terceira cópia da mesma decisão errada.
+
+É a lição 1 do `docs/LICOES.md` com outra roupa: a régua perguntava *"este arquivo é um mau
+conhecido?"* e era **estruturalmente incapaz** de ver o estado ruim — "asset não
+catalogado" era justamente o que passava.
+
+**Conserto.** A regra virou **allowlist** e passou a morar em `tools/audio/politica.mjs`,
+uma vez só para as três camadas (lição 2 — três cópias divergem na próxima edição). Sob
+`prefixoDerivado`, nada atravessa sem estar no ledger com hash coerente, `aprovado`, evento
+em `derivado` com `caminhoRuntime: "arma"` e fonte compatível. Legado reprova por NOME.
+
+**Régua:** `eval:audioproc` PRV10 (empacotador, três cenários) e PRV11 (gerador), mais a
+cláusula de procedência do `assets-check`. Cada uma com IRMÃ, porque um empacotador que
+recusasse tudo passaria na cláusula principal sem proteger nada. Commit `58d6dc10`.
+
+**O que NÃO ficou coberto, e está escrito:** pós-rename para `audio/a/<sha1>` o prefixo
+some e um derivado não catalogado fica indistinguível de qualquer outro áudio; o legado é
+barrado por nome e renomeá-lo o faria escapar. A camada decisiva é o empacotador, que roda
+antes do rename.
+
+**Lição de processo:** as rodadas 2 e 3 declararam "todos os bloqueadores fechados". A
+lista estava completa **até onde aquela revisão olhou** — não é a mesma coisa. Os títulos
+do handoff foram corrigidos para "fechados na Nª rodada".
+
+---
+
+### ~~BUG-132 · Rajada com cache frio baixava e decodificava o mesmo sample uma vez por tiro~~ · RESOLVIDO 04/09
+
+**Causa raiz.** `public/js/audio.js`, `_shotSample` marcava "carregando" com
+`this._shotBuf.set(url, undefined)` — sentinela que não sentinela, porque `.get()` devolve
+`undefined` para chave ausente também. Todo tiro disparado antes do decode terminar
+reentrava no ramo de carga.
+
+**Medido** com rajada de 10 tiros e cache frio: **10 fetch e 10 decode** do mesmo arquivo.
+No jogo a rajada é maior — 8 bots podem disparar ~50 tiros/s (`game.js:6329`).
+
+**Conserto.** Mapa `_shotCarregando` separado guardando a Promise em voo, com `finally` que
+limpa. Depois: 1 fetch, 1 decode. **Régua:** `eval:audioespacial` ESP9; mutação trocando a
+guarda por `if (true)` volta a 10 e 10. Commit `68b9f862`.
+
+---
+### ~~BUG-133 · Inventariador mascarava falha por arquivo~~ · RESOLVIDO 04/09
+
+**Causa raiz.** `tools/audio/inventariar.mjs` decidia "ffprobe existe?" uma vez, no começo,
+e engolia a falha POR ARQUIVO num `catch {}`. Um WAV truncado saía com todos os campos
+`null`, `ferramentas.ffprobe: true`, `naoMedido: []` e código de saída 0 — indistinguível de
+uma medição bem-sucedida que achou null. Lição 5 dentro da ferramenta que existe para não
+mentir sobre o que mediu.
+
+**Conserto.** `medicao: {ffprobe, nivel}` por arquivo em `ok · falhou · ausente · pulado`,
+mais `erro`; `falhas` e `arquivosComFalha` no topo; exit 1 salvo `--tolerante`. O `nivel()`
+passou a olhar o código de saída do ffmpeg em vez de só procurar números no texto.
+**Régua:** `--autoteste` INV6/INV7, com INV8 IRMÃ exigindo que os arquivos válidos continuem
+medindo `ok` — marcar tudo como falha não é sinalizar falha. Commit `0ce13b40`.
+
+---
+### ~~BUG-134 · `sha256Fonte` aceitava texto livre~~ · RESOLVIDO 04/09
+
+**Causa raiz.** A PRV1 só cobrava `sha256Fonte` como "texto não vazio". `"conferido a olho"`
+passava por procedência — campo com cara de prova e conteúdo de bilhete.
+
+**Conserto em duas camadas, porque formato não é prova.** PRV1 exige 64 hex nos dois hashes;
+**PRV8** recalcula o sha-256 do arquivo em `origemNoPack` no staging privado e compara — um
+hash bem formado e inventado passa na PRV1 e morre ali. Em clone limpo a PRV8 declara **NÃO
+MEDIDA**, porque fingir prova é pior que não medir. E separa staging ausente (não medido) de
+`origemNoPack` errado com staging presente (reprova). Commit `f8b1eb7c`.
+
+---
+### ~~BUG-135 · Ledger podia aprovar evento que o runtime não sabe tocar~~ · RESOLVIDO 04/09
+
+**Causa raiz.** O ledger deixava qualquer um dos 8 eventos do piloto virar `derivado`
+aprovado. Medido por sonda causal, só **1 de 8** tem caminho específico:
+
+| evento | caminho | por quê |
+|---|---|---|
+| `ak.shot` | `arma` | `shotWeapon(w, …)` recebe a arma |
+| `ak.magOut`/`magIn`/`bolt` | `global` | `reloadStart`/`reloadEnd`/`bolt` não recebem arma |
+| `passo.concreto` | `global` | `step(surface)` sorteia de `cs.footsteps`, pool única |
+| `morte.corpo`, impactos | `nenhum` | `death()` e `ricochet()` não consultam o pack |
+
+Aprovar aqui poria o mesmo ferrolho em 26 armas, o mesmo passo em grama e metal, e deixaria
+morte e impactos aprovados no papel e mudos no jogo — falha silenciosa com carimbo de
+aprovação humana em cima.
+
+**Conserto.** `tools/eval/audio-capacidade-check.mjs`: a sonda INSTALA a chave que um caminho
+específico usaria, dispara o evento e olha o que tocou — não lê assinatura de função, que
+seria ler a declaração (lição 3). CAP3 barra `derivado`/`aprovado` para evento sem caminho
+`arma`. **CAP4 é a IRMÃ e pegou a própria sonda**: a primeira versão gravava só
+`new Audio()` e mediu `nenhum` para tudo, o que bateria com um ledger todo `nenhum`.
+Nenhum caminho de runtime novo foi implementado — o estado é bloqueado e honesto.
+Commit `159d6fe7`.
+
+---
+### BUG-136 · 45 de 62 caminhos do manifest de exemplo têm nome de Valve/Epic · ABERTO, catalogado
+
+**Evidência.** `public/audio/manifest.example.json` é versionado e é o que o
+`fetch-audio.sh` copia quando o zip não traz manifest. Medido: **45 de 62** folhas citam
+Counter-Strike, Half-Life ou Unreal Tournament — `awp-cs-1-6`, `usp_unsil`, `knife_slash`,
+`ut-double-kill`, `m4a1_unsil`. O próprio `public/js/audio.js:2` diz que sample real de CS
+não pode ser embutido.
+
+**NÃO RESOLVIDO.** A lane do piloto Fab não substituiu nenhum deles, e substituir é frente
+do tamanho do piloto inteiro. O que existe é catalogação e bloqueio: fonte
+`legado-nominal-cs-valve-ut` com `redistribuicao: "proibida"` e `licenca: "DESCONHECIDA"`,
+seção `legado` no ledger, e a **PRV9** cobrando por padrão (recomputado do manifest, não
+lista à mão) nos dois sentidos.
+
+**A régua admite o próprio limite:** `legado.cobertoPorPRV5: false`. A PRV5 casa por sha-256
+e estes arquivos não existem em clone limpo — sem hash não há o que casar. PRV9 reprova se
+alguém puser `true` ali. Commit `a6fe38c7`.
+
+---
+
+### ~~BUG-128 · A régua de alcance declarava verde um empacotador que morria em toda execução~~ · RESOLVIDO 04/09
+
+**Sintoma.** `npm run eval:audioalcance` verde, e o `audio-pack.zip` nunca era gerado.
+
+**Causa raiz.** A própria régua engolia o código de saída do empacotador com um `catch {}`
+e um comentário que racionalizava a escolha ("o veredito é o pack, não o código de saída").
+`scripts/build-audio-pack.mjs:66` fazia `readdirSync` numa `menu-music/` que a fixture não
+criava, quebrava com `ENOENT` — e quebrava **depois** de já ter escrito o
+`pack/manifest.json`. A cláusula ALC2 lia esse rastro e declarava sucesso.
+
+Medido com `node tools/eval/audio-alcance-check.mjs --verboso`: stack de ENOENT no meio da
+saída, `✓ ALC2 ok` logo abaixo. É a lição 5 dentro da régua que existe para pegar a lição 5.
+
+**Conserto.** Cláusula ALC3 (o empacotador tem que sair 0 **e** gerar o zip), fixture com
+`menu-music/`, e o empacotador diz o que falta em vez de cuspir stack depois de escrever o
+manifest. `--mutante=sem-menu-music` é a mutação que prova. Commit `86cebd8d`.
+
+---
+### ~~BUG-129 · Cláusula de procedência filtrava por prefixo que o empacotador apaga~~ · RESOLVIDO 04/09
+
+**Sintoma.** A cláusula PRV5 do `assets-check` nunca disparava em produção, em nenhum
+cenário.
+
+**Causa raiz.** Ela filtrava folhas do manifest por `f.startsWith('audio/piloto/')`, e
+`scripts/build-audio-pack.mjs:49` reescreve **todo** caminho para `audio/a/<sha1>` antes de
+empacotar. Medido rodando o empacotador real sobre uma fixture: no manifest que o jogador
+recebe, o filtro casa **0 de 1**. Régua estruturalmente incapaz de ver o defeito que ela
+nomeia — família da lição 1.
+
+**Conserto.** A chave passou a ser o **sha-256**, que sobrevive ao rename. Provado com um
+derivado Fab instalado como `audio/a/b1b3d9230e48b0a1.wav`: a cláusula acende e mapeia o
+nome hasheado de volta para a entrada do ledger. Commit `fa513890`.
+
+---
+### ~~BUG-130 · Sample de tiro que não carrega repetia HTMLAudio morto; o synth nunca tocava~~ · RESOLVIDO 04/09
+
+**Sintoma, se o caminho por sample estivesse ligado.** Release trocada, zip parcial ou
+caminho errado no manifest davam 404, e o jogo ficava **sem som de tiro para sempre**, com
+um `console.warn` só. O `_shotBuf` gravava `null` e cada tiro seguinte chamava
+`new Audio()` na mesma URL morta.
+
+**Causa raiz.** `public/js/audio.js`, `_shotSample` devolvia `true` nessa saída, então
+`shotWeapon` retornava antes de chegar ao `_gunshot`. O comentário dizia "seguindo no
+synth/HTMLAudio" e o synth nunca era alcançado.
+
+**Conserto.** As duas saídas sem buffer (cache frio e falha permanente) devolvem `false`, e
+o `shotWeapon` cai no synth — que ainda vem espacializado, melhor que o HTMLAudio de antes.
+
+**Régua:** `npm run eval:audioespacial`, cláusula ESP8, com o limiar MEDIDO (o mesmo tiro
+pelo synth puro é o controle): antes 0 e 0 disparos com 1 HTMLAudio; depois 11 e 11 com 0,
+contra 11 do controle. Commit `a35e3bd1`.
+
+---
+### ~~BUG-131 · `weaponSamples` ligava derivado pendente ou rejeitado~~ · RESOLVIDO 04/09
+
+**Sintoma.** O ledger `docs/audio/proveniencia.json` declarava `decisao` e `aprovacao`, e
+**nada lia**. Com `weaponSamples: true`, o runtime sorteia por `_pick(pack.weapons[w])` e
+tocaria qualquer caminho presente — inclusive um som que ninguém aprovou.
+
+**Conserto.** `tools/gen-audio-manifest.mjs` poda dos curados (`cs`, `weapons`, `general`)
+todo caminho cujo sha-256 case um derivado fora de `aprovado`, ou cujo evento esteja em
+`decisao: "synth"`, e **relata** o que barrou. O runtime é controlado através do manifest,
+que é o único canal que ele tem — não existe ledger no navegador.
+
+**Régua:** `eval:audioproc`, cláusula PRV7, com fixture de três derivados do mesmo evento:
+antes saíam os 3, depois sobra 1. Cláusula irmã junto (se o aprovado sumisse, reprova).
+Commit `2b66bc80`.
+
+---
+
+### ~~BUG-126 · Áudio de ambiente nunca entrou no pack: 17 arquivos que o código nomeia dão 404~~ · RESOLVIDO 04/09
+
+**Sintoma.** `public/js/soundscape.js` nomeia 17 arquivos em `audio/ambiente/`
+(`AMB_LOOPS` + `BIOME_SHOTS`). Em produção, nenhum toca. O único sinal é um
+`console.warn` por arquivo em `soundscape.js:59`, uma vez cada, e depois silêncio.
+
+**Causa raiz — três elos, e o primeiro é uma ausência.** `tools/gen-audio-manifest.mjs`
+não tinha regra para `ambiente/`: arquivo posto lá aparecia no relatório como ÓRFÃO e não
+virava folha do manifest. `scripts/build-audio-pack.mjs:38` copia **só** o que o manifest
+nomeia (mais `menu-music/`), então o que não estava no manifest não entrava no zip; e
+`scripts/fetch-audio.sh` instala o zip. Família da lição 12 (`docs/LICOES.md`): o caminho
+só é percorrido em produção, e na máquina de quem desenvolve o `public/audio/` já
+populado esconde tudo.
+
+**Por que o `assert:assets` não pegou.** O piso é de 250 caminhos e a outra cláusula
+confere que todo caminho do manifest existe no disco. As duas ficam VERDES com a família
+inteira ausente: se ela não está no manifest, não há o que conferir. Medido nesta árvore
+com uma fixture de 317 caminhos e a chave `ambiente` removida — piso verde, "existe no
+disco" verde, e só a cláusula nova acende, por 17 de 17.
+
+**Conserto.** Regra `ambiente` no gerador (`tools/gen-audio-manifest.mjs`, a pasta é a
+verdade como nas outras famílias) e cláusula NOMINAL no `tools/eval/assets-check.mjs`, que
+lê a lista do próprio `soundscape.js` — mesma fonte que a régua usa (lição 2).
+
+**Régua:** `npm run eval:audioalcance`. Arma uma fixture sintética e roda o gerador e o
+empacotador reais contra ela (`--raiz=`), sem depender do pacote privado. Antes do
+conserto: ALC1 17/17 fora do manifest, ALC2 17/17 fora do pack. Mutantes:
+`--mutante=nome-trocado` (prova que lê por NOME, lição 14) e `--mutante=sem-copia`
+(separa gerador de empacotador). Commits `d84dbca5` (régua vermelha) e `fd4481ef`.
+
+**O que ainda NÃO está resolvido:** a release `audio-pack-v8` que o `fetch-audio.sh`
+aponta é anterior à regra e não contém `ambiente/`. O jogador só ouve depois de regerar o
+pack e publicar release nova — ver `docs/audio/FAB-PILOT-HANDOFF.md`.
+
+---
+### ~~BUG-127 · Tiro por sample descarta distância, pan e propagação (latente)~~ · RESOLVIDO 04/09
+
+**Sintoma, se ligado.** Com `weaponSamples: true` no manifest, bot atirando às suas costas
+a 40 m soa idêntico a bot atirando à sua frente a 2 m. É a informação de jogo que o dono
+cobrou em 29/08 ("não vejo de onde vem o tiro, parece cheater"), resolvida no sintetizado
+e perdida no instante em que o pack de samples entrasse.
+
+**LATENTE, não ativo.** `weaponSamples` não é ligado em lugar nenhum do repositório —
+`grep -rn weaponSamples` só acha a leitura em `audio.js`, a preservação em
+`gen-audio-manifest.mjs:54` e as sondas aposentadas, que o forçam a `false`. O defeito
+esperava o piloto Fab.
+
+**Causa raiz.** `game.js:6336` calcula os três valores e os entrega
+(`shotWeapon(b.weapon, _sd, 0.45, _pan, Math.min(0.25, _sd / 343))`). O caminho por sample
+chamava `this._sample(f, vol)`, que é `new Audio(...).play()`: HTMLAudio não tem grafo,
+então pan e `start(t)` não têm onde entrar. O `duck` era `0.3` fixo enquanto o synth
+duckava `dist < 12 ? 0.3 : 0.55` — duas rotinas, mesmo conceito, limiares diferentes
+(lição 2).
+
+**Conserto.** `_shotSample` em `public/js/audio.js`: decodifica uma vez por arma e toca por
+`BufferSource → gain → StereoPanner → master`, agendado em `currentTime + propDelay`. O
+duck virou `Sfx.duckTiro(dist)`, chamado pelos dois caminhos. Cache frio toca pelo
+`_sample` antigo — sem pan, mas audível.
+
+**Régua:** `npm run eval:audioespacial`, com `AudioContext` falso que grava o grafo e o
+`audio.js` de produção importado de verdade. Nenhum WAV entra. Antes do conserto, ESP2,
+ESP3 e ESP4 vermelhas. Mutantes `--mutante=sem-pan|sem-propagacao|duck-fixo`.
+Commits `e86bb393` (régua vermelha), `b4065a67` e `7ec05c95`.
+
+**Defeito introduzido pelo próprio conserto, e pego pela régua.** O `b4065a67` aplicava
+`this.vol` no ganho do `_shotSample` E o `master` aplicava de novo — `_sample` multiplica
+na mão porque HTMLAudio não passa pelo `master`, e um `BufferSource` passa. Medido com
+vol 0,5, `this.vol` 0,7 e `GUN_VOL` 0,62: ganho até o destino **0,1519** contra os
+**0,2170** de antes, 30% mais baixo, sem erro no console. Cada nó, isolado, parecia certo;
+só o produto do trajeto inteiro mostra. Virou a cláusula ESP7, que percorre o grafo do
+`BufferSource` até o `destination` multiplicando todo ganho. Consertado em `7ec05c95`.
+
+**O que NÃO foi verificado:** nada disso foi ouvido, e o caminho por sample nunca rodou num
+navegador. `decodeAudioData` real, latência real e o custo de uma rajada full-auto com um
+`BufferSource` por tiro seguem não medidos — bloqueios 2 e 3 do
+`docs/audio/FAB-PILOT-HANDOFF.md`.
+
+---
+
 ### ~~BUG-57 · Régua casava literal de formatação e travou TODO deploy da main por meio dia~~ · RESOLVIDO 16/08
 
 **Sintoma.** Deploys da Vercel falhando desde `ef0a392` (16/08 ~01:52) com

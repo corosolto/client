@@ -1,0 +1,196 @@
+{
+ "versao": 1,
+ "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Réguas: `npm run eval:audioproc` (PRV1-PRV14), `npm run eval:audiocapacidade` (CAP1-CAP5) e `npm run assert:assets` (PRV5). `caminhoRuntime` é MEDIDO por sonda, não declarado à mão — ver docs/audio/PROVENIENCIA.md.",
+ "prefixoDerivado": "audio/piloto/",
+ "raizesRuntime": [
+  {
+   "prefixo": "audio/fab-dev/",
+   "fonte": "fab-action-game-sounds-pack"
+  },
+  {
+   "prefixo": "audio/boom-guns-dev/",
+   "fonte": "boom-guns-designed"
+  },
+  {
+   "prefixo": "audio/firearms-cc0-dev/",
+   "fonte": "free-firearm-sfx-cc0"
+  },
+  {
+   "prefixo": "audio/fish-announcer-dev/",
+   "fonte": "fish-audio-mortal-kombat-public-model"
+  },
+  {
+   "prefixo": "audio/legacy-callouts-dev/",
+   "fonte": "legado-nominal-cs-valve-ut"
+  }
+ ],
+ "piloto": [
+  {
+   "evento": "ak.shot",
+   "descricao": "AK em 1ª pessoa: tiro",
+   "decisao": "synth",
+   "caminhoRuntime": "arma",
+   "bloqueio": null,
+   "notaRuntime": "`shotWeapon(w, …)` recebe a arma: `weapons.ak` é só da AK. O take fonte Gunshot_1-1 foi aprovado pelo dono para continuar no laboratório local; a decisão de release permanece synth até existir derivado publicável e aprovado."
+  },
+  {
+   "evento": "ak.magOut",
+   "descricao": "AK em 1ª pessoa: carregador sai",
+   "decisao": "synth",
+   "caminhoRuntime": "global",
+   "bloqueio": "sem-caminho-runtime",
+   "notaRuntime": "a chamada não recebe o discriminador — o sample vale para todas as armas/superfícies"
+  },
+  {
+   "evento": "ak.magIn",
+   "descricao": "AK em 1ª pessoa: carregador entra",
+   "decisao": "synth",
+   "caminhoRuntime": "global",
+   "bloqueio": "sem-caminho-runtime",
+   "notaRuntime": "a chamada não recebe o discriminador — o sample vale para todas as armas/superfícies"
+  },
+  {
+   "evento": "ak.bolt",
+   "descricao": "AK em 1ª pessoa: ferrolho",
+   "decisao": "synth",
+   "caminhoRuntime": "global",
+   "bloqueio": "sem-caminho-runtime",
+   "notaRuntime": "a chamada não recebe o discriminador — o sample vale para todas as armas/superfícies"
+  },
+  {
+   "evento": "passo.concreto",
+   "descricao": "passo em concreto",
+   "decisao": "synth",
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`step(surface)` consulta `cs.footstepsBySurface[surface]`; o game escolhe água espacialmente e piso dominante por arena enquanto o mapa não expõe material sob o pé"
+  },
+  {
+   "evento": "morte.corpo",
+   "descricao": "morte corporal",
+   "decisao": "synth",
+   "caminhoRuntime": "evento",
+   "bloqueio": null,
+   "notaRuntime": "`death(vol, pan, propDelay)` consulta `cs.death`, com fallback synth e espacialização após o cache aquecer"
+  },
+  {
+   "evento": "impacto.concreto",
+   "descricao": "impacto em concreto",
+   "decisao": "synth",
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`impact(surface, ...)` consulta `cs.impactsBySurface[surface]`; concreto e metal escolhem pools diferentes no laboratório local, mantendo synth como fallback e decisão de release"
+  },
+  {
+   "evento": "impacto.metal",
+   "descricao": "impacto em metal",
+   "decisao": "synth",
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`impact(surface, ...)` consulta `cs.impactsBySurface[surface]`; concreto e metal escolhem pools diferentes no laboratório local, mantendo synth como fallback e decisão de release"
+  }
+ ],
+ "escutasLocais": [
+  {
+   "evento": "ak.shot",
+   "fonte": "fab-action-game-sounds-pack",
+   "origemNoPack": "Guns/Gun_Shot/Gunshot_1-1.wav",
+   "sha256Fonte": "b662e13914e59e4f57813d6ae377e204e0533bc2bd6b426895f05d9639a836b7",
+   "por": "Ruben",
+   "data": "2026-09-04",
+   "contexto": "jogo local em http://127.0.0.1:8131/ na branch claude/audio-fab-pilot",
+   "decisao": "aprovado-candidato-local",
+   "nota": "A AK ficou muito boa.",
+   "publicacaoAutorizada": false,
+   "derivadoRelease": null
+  }
+ ],
+ "fontes": {
+  "synth": {
+   "titulo": "Síntese procedural do próprio jogo",
+   "autor": "CS BRASIL / CORO SOLTO",
+   "url": "public/js/audio.js",
+   "licenca": "AGPL-3.0-or-later (mesma do código)",
+   "redistribuicao": "livre",
+   "usoComIA": "sim",
+   "stagingPrivado": null,
+   "notas": "Obra própria: o som é gerado em WebAudio, não é arquivo. É o fallback de todo evento ainda não aprovado."
+  },
+  "fab-action-game-sounds-pack": {
+   "titulo": "Action Game Sounds Pack",
+   "autor": "PlaceHolder Inc.",
+   "url": "https://www.fab.com/listings/4950a0c3-ace9-4cce-86dc-ce551263b6ce",
+   "licenca": "Fab Standard License",
+   "redistribuicao": "proibida-standalone",
+   "usoComIA": "nao",
+   "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
+   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. A fonte Gunshot_1-1 foi aprovada apenas como candidato no jogo local; `derivados` segue vazio porque nenhum arquivo de release foi criado, escutado e aprovado."
+  },
+  "free-firearm-sfx-cc0": {
+   "titulo": "The Free Firearm Sound Library — Prepared SFX Library",
+   "autor": "Ben Jaszczak, Brian Nelson, Kevin Heras e Matthew Nanney",
+   "url": "https://opengameart.org/content/the-free-firearm-sound-library",
+   "licenca": "CC0-1.0",
+   "redistribuicao": "livre",
+   "usoComIA": "sim",
+   "stagingPrivado": "private-assets/audio/csbr-firearms-cc0",
+   "notas": "Biblioteca de armas reais publicada como CC0 pelos autores. O arquivo Prepared SFX Library.7z foi baixado em 05/09/2026 com sha256 cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6. A ferramenta tools/audio/prepare-free-firearm-cc0.mjs isola one-shots por silêncio, registra fonte, modelo, distância, correspondência e hashes em manifest privado. Os 29 WAVs são candidatos locais: nenhum recebeu aprovação humana ou autorização de release. A AK continua no take Fab já aprovado localmente."
+  },
+  "boom-guns-designed": {
+   "titulo": "BOOM Library GUNS Designed",
+   "autor": "BOOM Library",
+   "url": "https://www.boomlibrary.com/sound-effects/gun-sounds/",
+   "licenca": "BOOM Media License 2022",
+   "redistribuicao": "proibida-standalone",
+   "usoComIA": "nao",
+   "stagingPrivado": "private-assets/audio/boom-guns-designed",
+   "notas": "Produto comprado pelo dono; ZIP guns_ds_719mb.zip verificado com sha256 ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa. A EULA permite adaptar e incorporar o material em videogame com outros elementos de audio, mas exige comprovante de compra, proibe redistribuicao standalone/audio-only e proibe treino de IA/ML. Nenhum WAV foi enviado a modelo. A ferramenta tools/audio/prepare-boom-guns-designed.mjs separa deterministicamente quatro one-shots por gravacao em staging privado. Os resultados sao candidatos locais de escuta, sem aprovacao humana ou autorizacao de release."
+  },
+  "fish-audio-mortal-kombat-public-model": {
+   "titulo": "Fish Audio public voice model rotulado Mortal Kombat",
+   "autor": "modelo publico de terceiro; titularidade da voz nao verificada",
+   "url": "https://fish.audio/m/63e61b8d29cf4279b03b6a59b3d2de98",
+   "licenca": "NAO VERIFICADA para uso desta voz em jogo",
+   "redistribuicao": "proibida",
+   "usoComIA": "sim",
+   "stagingPrivado": "private-assets/audio/fish-announcer-mk",
+   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao 16 candidatos locais para kill/headshot/tier e Round 1-7. A pagina do provedor rotula a voz como Mortal Kombat; disponibilidade publica nao demonstra direitos de voz, personagem ou marca. Bloqueado para Git, audio-pack e release ate voz original/licenciada ou liberacao verificavel."
+  },
+  "legado-nominal-cs-valve-ut": {
+   "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
+   "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",
+   "url": "public/audio/manifest.example.json",
+   "licenca": "DESCONHECIDA — nenhuma licença foi verificada para estes arquivos",
+   "redistribuicao": "proibida",
+   "usoComIA": "nao",
+   "stagingPrivado": null,
+   "notas": "Herdado, NAO substituido por esta branch. Sao os nomes que o manifest.example.json versionado carrega: `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`... O proprio public/js/audio.js:2 diz que sample real de CS nao pode ser embutido. NAO HA HASH: os arquivos nao estao neste clone, entao a cobertura por sha-256 da PRV5 NAO os alcanca. Estao catalogados e marcados `proibida` para que o empacotador os recuse assim que um hash existir, e para que ninguem diga que a lane resolveu o legado — ela nao resolveu."
+  }
+ },
+ "derivados": [],
+ "legado": {
+  "decisao": "bloqueado-por-procedencia-desconhecida",
+  "fonte": "legado-nominal-cs-valve-ut",
+  "ondeEstao": "public/audio/manifest.example.json",
+  "cobertoPorPRV5": false,
+  "porqueNaoCoberto": "PRV5 casa por sha-256 e estes arquivos nao existem em clone limpo. Sem hash nao ha o que casar. A regua PRV9 cobra a CATALOGACAO por nome; a cobertura por conteudo so existe quando alguem inventariar o pacote real.",
+  "padroes": [
+   {
+    "padrao": "cs-1-6|cs-go|counter-strike|half-life",
+    "porque": "cita Counter-Strike/Half-Life no nome"
+   },
+   {
+    "padrao": "^audio/game/ut-",
+    "porque": "locucoes de Unreal Tournament (double kill, godlike...)"
+   },
+   {
+    "padrao": "knife_(slash|hit|stab|deploy)",
+    "porque": "nomes de arquivo de faca do CS 1.6"
+   },
+   {
+    "padrao": "awp(_clip(in|out)|1)?\\.|usp_|glock18|deagle-|m4a1_unsil|mp5-|p90-|galil-|famas-|aug-|sg55[02]-|xm1014-|m249-|scout_fire|m3-1|mac10-|g3sg1-|sg550-|generic_reload",
+    "porque": "nomes de arma do arsenal do CS 1.6/CS:S"
+   }
+  ]
+ }
+}

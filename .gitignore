@@ -20,6 +20,25 @@ dist/
 public/audio/
 !public/audio/manifest.example.json
 
+# ── Staging privado de asset comprado ───────────────────────────────────────
+# Pacote fonte do piloto Fab (Action Game Sounds Pack, PlaceHolder Inc., Fab
+# Standard License). A licença proíbe redistribuição STANDALONE: o som pode ser
+# incorporado ao jogo, e não pode ser republicado como pacote de sons — e um
+# repositório público é publicação. A listagem ainda diz `Allows usage with AI:
+# No`, então os WAVs também não podem ser entrada de modelo.
+#
+# O que fica versionado é o METADADO: `docs/audio/proveniencia.json` (origem,
+# licença, hash, aprovação) e o inventário que `tools/audio/inventariar.mjs`
+# emite — nome, hash, duração, canais, taxa, pico, loudness. Nunca o áudio.
+# Contrato completo: docs/audio/PROVENIENCIA.md. Réguas: `npm run eval:audioproc`
+# (forma do ledger) e `npm run assert:assets` (PRV5, hash contra a build).
+private-assets/
+audio-src/
+# token de OAuth de loja de asset — segredo, mesma regra do .env
+*.epic-token
+.fab-token
+.egs-token
+
 # ── Skills de terceiros ─────────────────────────────────────────────────────
 # 13 MB de skills de terceiros (incluindo 8 GIFs de demonstração, 3,2 MB o
 # maior) que eram versionadas junto do produto. Elas são declaradas em

@@ -485,7 +485,7 @@ class Netcode {
       const d = ent.pos ? ent.pos.distanceTo(game.camera.position) : 0;
       const rel = ent.pos ? Math.atan2(ent.pos.x - p.pos.x, ent.pos.z - p.pos.z) - p.yaw : 0;
       const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
-      game.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
+      game.sfx.death(ent.def?.id, Math.max(0, 1 - d / 55), pan, Math.min(0.25, d / 343));
     } catch { /* ctx mudo */ }
     if (att === p && !this.espectador) {
       try { game.sfx.killConfirm(); } catch { /* ctx mudo */ }
@@ -621,7 +621,7 @@ class Netcode {
     game.mk.life = 0;   // a sequência de abates morre com você (como no _kill)
     try { game._scope(false, true); } catch { /* sem luneta */ }
     if (game.el.respawn) game.el.respawn.classList.remove('hidden');
-    try { game.sfx.death(); } catch { /* ctx mudo */ }
+    try { game.sfx.death(game.player.def?.id); } catch { /* ctx mudo */ }
     // o assassino vem como NOME; procuramos o corpo dele no snapshot para a killcam apontar.
     const nome = e && e.killedBy;
     /* Se o _noteHit do arco de dano já registrou este assassino há <3 s, o painel de morte
