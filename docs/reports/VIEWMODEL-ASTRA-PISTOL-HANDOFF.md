@@ -129,3 +129,44 @@ Próximo passo concreto, sem novo ciclo cego de offsets:
 Não verificado: celular/Safari/ultrawide, FPS/custo comparativo, blends contínuos,
 contato 3D de superfícies e publicação. O gate amplo tem os três vermelhos
 preexistentes documentados, além das quatro falhas do contrato geral de catálogo.
+
+## Rodada autorizada — yaw isolado contra referências CS 1.6
+
+Após as duas referências de pistola do CS 1.6 enviadas pelo Ruben, o usuário
+aprovou testar **somente yaw 15° e 10°**, contra o controle de 20°. Isso é uma
+comparação controlada nova; B/C acima mudavam também x/y e não a substituem.
+
+- Branch `codex/vm-astra-pistol`, início limpo em `2c47fb00`.
+- Fixos: x 0,100; y -0,100; z -0,220; FOV 55°; pitch 0°; roll -5°;
+  mesmo GLB, mãos, animações e escala. Overrides apenas em memória.
+- Capturas 1440×960 concluídas em `yaw-only-15/` e `yaw-only-10/`;
+  controle anterior `final-pistol-3x2/`. Todas sob o diretório de evidências
+  deste piloto, com 27 fases/estados por série, materiais reais e relatório.
+- As três séries serviram a pistola de SHA `edb77908…7e05`, sem erros de
+  runtime. As duas novas completam naturalmente a recarga e retornam a idle.
+- `yaw-only-comparison/`: `idle-comparison.png`,
+  `gameplay-comparison.png`, `index.html` autocontido, manifesto das referências,
+  metadados e resumo de parâmetros/SHAs. Gerador local gitignored:
+  `make-yaw-comparison.mjs`; recorte idêntico, sem esticar as imagens.
+- As referências são gameplay 4:3 de outro jogo/asset e FOV desconhecido;
+  IoU/SSIM e overlay ortográfico foram declarados **não aplicáveis**, não
+  transformados em um gate artificial. Sessões independentes variam o mundo;
+  a comparação está limitada à composição do viewmodel, não ao cenário.
+- Estado deste marco: captura validada; gauntlets 20°/15°/10° em sequência
+  e crítica independente pendentes. Nenhuma candidata promovida. O próximo
+  passo é comparar proporção, enquadramento e recarga nas três réguas antes
+  de recomendar uma mudança. AK e código servido continuam inalterados.
+
+Reprodução de cada candidata (Node de `/opt/homebrew/bin`):
+
+```sh
+node tools/eval/golden-ak-runtime.mjs --arma=pistol --modo=kinemation \
+  --porta=8347 --largura=1440 --altura=960 --quadro-yaw=15 \
+  --saida=artifacts/viewmodels/astra-pistol/yaw-only-15
+node tools/eval/vm-gauntlet.mjs --armas=pistol --modo=kinemation \
+  --porta=8347 --largura=1440 --altura=960 --quadro-yaw=15 --frames \
+  --out=artifacts/viewmodels/astra-pistol/yaw-only-15-gauntlet
+```
+
+Repetir com yaw 10 e paths próprios; o gauntlet do controle usa yaw 20.
+Um navegador por vez. Não alterar os limiares nem reconstruir os GLBs.
