@@ -179,7 +179,10 @@ export class NetClient {
 
   // input compacto — o servidor sanitiza tudo de novo (cliente = território inimigo).
   sendInput(inp) {
-    if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify({ type: 'input', seq: ++this.seq, ...inp }));
+    if (!this.ws || this.ws.readyState !== 1) return 0;
+    const seq = ++this.seq;
+    this.ws.send(JSON.stringify({ type: 'input', seq, ...inp }));
+    return seq;   // netgame ancora a pose predita no mesmo input que o servidor reconhece no v4
   }
   // Amostra de EXPERIÊNCIA do cliente (não autoridade): FPS só existe no navegador.
   // O nó valida/taxa e junta isto à sessão autoritativa de sala para o painel interno.

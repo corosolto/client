@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.217`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.218`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -23,14 +23,23 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## Não lançado — 2026-09-02
+## Não lançado — 2026-09-05
 
 ### Corrigido
+- O multiplayer reconhece inputs por sequência e suaviza correções sem apagar movimento pendente.
+- Arma, slots, pente, reserva e recarga passam a ser autoritativos no protocolo snapshot v4.
+- Trocas de arma remotas remontam a malha visível; clientes lentos não acumulam snapshots obsoletos.
+- A qualidade envia magnitude das correções para diagnóstico por sessão e round.
 - Multiplayer não vaza mais para a partida single-player depois de voltar ao menu.
 - O primeiro spawn e o respawn online obedecem imediatamente à posição autoritativa.
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.218] — 2026-09-05
+
+### Mudado
+- fix(multiplayer): reconcile authoritative state and quality telemetry (#505)
 
 ## [2.0.0-alpha.217] — 2026-09-03
 

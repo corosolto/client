@@ -23,6 +23,13 @@ class Netcode {
     this.interpAtrasoMs = Math.max(75, Math.min(140, 2400 / this.snapshotHz));
     this._tAt = []; this._tT = [];   // chegada ↔ tempo-de-servidor dos últimos snapshots
     this._offMs = null;               // chegada − t·1000 (mínimo da janela, deslizado) — BUG-118
+    // Predições indexadas pelo seq que o snapshot v4 reconhece. Arrays planos evitam objeto
+    // por quadro no hot path; 180 entradas cobrem 3 s a 60 fps antes do fallback de desync.
+    this._predSeq = []; this._predX = []; this._predY = []; this._predZ = [];
+    this._corrX = 0; this._corrY = 0; this._corrZ = 0;
+    this._ackSeq = 0; this._ackOn = false; this._authWeapon = null;
+    this._loadoutSeq = 0;
+    this._reconcileSamples = []; this._reconcileWindow = []; this._reconcileCount = 0; this._reconcileMax = 0;
     net.startPing();
     // Interval PRÓPRIO: o overlay segue vivo na pausa (o WS continua recebendo snapshots).
     this._nsTimer = setInterval(() => { this.updateStats(); this._pulsoDePausa(); }, 250);
@@ -30,7 +37,7 @@ class Netcode {
     // trocar de time / virar espectador remonta o casamento de ids na próxima nevada
     this._prevOnSlot = net.onSlot;
     this._onSlot = (m) => {
-      this._netMap.clear(); this._srvHas = 0;
+      this._netMap.clear(); this._srvHas = 0; this._clearPrediction();
       if (m.yourTeam === 'E' || m.yourTeam === 'B') {
         this.game.playerTeam = m.yourTeam;
         this.game.enemyTeam = m.yourTeam === 'B' ? 'E' : 'B';
@@ -73,9 +80,21 @@ class Netcode {
 
   /* Chamado pelo game._updatePlayer logo DEPOIS do _moveEntity (a predição já aconteceu na
      tela). Reconcilia com a pose autoritativa e manda o input pro servidor. */
-  stepPlayer(p, input) {
+  stepPlayer(p, input, dt = 1 / 60) {
     if (this.espectador) return;
-    if (this._srvHas) {
+    if (this._ackOn) {
+      const a = 1 - Math.exp(-14 * Math.max(0, Math.min(0.05, Number(dt) || 0)));
+      const dx = this._corrX * a, dy = this._corrY * a, dz = this._corrZ * a;
+      if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 1e-7) {
+        p.pos.x += dx; p.pos.y += dy; p.pos.z += dz;
+        // A base local mudou; poses antigas precisam mudar junto para o próximo ack não
+        // cobrar de novo a parcela que já foi aplicada.
+        for (let i = 0; i < this._predSeq.length; i++) {
+          this._predX[i] += dx; this._predY[i] += dy; this._predZ[i] += dz;
+        }
+        this._corrX -= dx; this._corrY -= dy; this._corrZ -= dz;
+      }
+    } else if (this._srvHas) {
       const err = Math.hypot(this._srvX - p.pos.x, this._srvZ - p.pos.z);
       /* Só corrige desync REAL: o adiantamento normal da predição é esperado, e "corrigi-lo"
          é justamente o rubber-banding que as pessoas chamam de lag. */
@@ -83,19 +102,35 @@ class Netcode {
     }
     // px/py/pz = a posição PREDITA de onde você mira. O servidor atira DESTA origem (validada
     // dentro de 3 m); sem isso o raio sai da posição dele — atrasada pelo RTT — e passa ao lado.
-    this.net.sendInput({
+    const tinhaIntent = p.weapon !== this._authWeapon || this._pickPendente
+      || this._pickupWeaponPendente || this._reloadPendente;
+    const seq = this.net.sendInput({
       ax: input.ax, az: input.az, crouch: input.crouch, shift: input.shift, jump: input.jump,
       yaw: p.yaw, pitch: p.pitch, shoot: !!this.game.mouseDown0, weapon: p.weapon,
       px: p.pos.x, py: p.pos.y, pz: p.pos.z, rt: this.renderTime(),
       ...(this._pickPendente ? { pick: this._pickPendente } : {}),
+      ...(this._pickupWeaponPendente ? { pickupWeapon: this._pickupWeaponPendente } : {}),
+      ...(this._reloadPendente ? { reload: this._reloadPendente } : {}),
       ...(this._nadePendente ? { nade: this._nadePendente } : {}),
     });
-    this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
-    this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
+    if (seq > 0) {
+      this._predSeq.push(seq); this._predX.push(p.pos.x); this._predY.push(p.pos.y); this._predZ.push(p.pos.z);
+      if (this._predSeq.length > 180) { this._predSeq.shift(); this._predX.shift(); this._predY.shift(); this._predZ.shift(); }
+      if (tinhaIntent) this._loadoutSeq = seq;
+      this._pickPendente = 0;   // um pedido por E; o servidor responde com `gone` + `drop` da antiga
+      this._pickupWeaponPendente = '';
+      this._reloadPendente = '';
+      this._nadePendente = '';  // um pedido por tecla; o servidor responde com `nade` (fase 3)
+    }
     this._inputAt = this._now();
   }
-  // E num drop de rede: pede ao servidor (fase 2 do canal `ev`); a troca local é predição.
-  pedirPick(pk) { if (pk && pk._nid) this._pickPendente = pk._nid; }
+  // E num drop/rack: pede ao servidor; a troca local é só predição até o ack do v4.
+  pedirPick(pk) {
+    if (!pk) return;
+    if (pk._nid) this._pickPendente = pk._nid;
+    else if (WEAPONS[pk.weapon]) this._pickupWeaponPendente = pk.weapon;
+  }
+  pedirReload(w) { if (!this.espectador && WEAPONS[w]) this._reloadPendente = w; }
   // 4/5 online: pede a granada ao servidor; devolve false sem a flag (aí o local lança, como antes).
   pedirNade(kind) { if (!this._evOn || this.espectador) return false; this._nadePendente = kind; return true; }
   // Drops de rede (com `_nid`) somem; o rack do spawn fica. Chamado no countdown e no `partida`.
@@ -110,6 +145,67 @@ class Netcode {
     game._dropWeapon(+e.x || 0, +e.z || 0, e.w, false, 0.01, 0);   // sem prazo local: quem some é o `gone`
     const d = game.drops[game.drops.length - 1];
     if (d) d._nid = e.i;
+  }
+
+  _clearPrediction() {
+    this._predSeq.length = 0; this._predX.length = 0; this._predY.length = 0; this._predZ.length = 0;
+    this._corrX = 0; this._corrY = 0; this._corrZ = 0; this._ackOn = false; this._ackSeq = 0;
+    this._loadoutSeq = 0;
+  }
+
+  _ackPlayer(e, p, imediato = false) {
+    if (!Number.isInteger(e.ackSeq) || e.ackSeq < 0) return;
+    this._ackOn = true;
+    const i = this._predSeq.indexOf(e.ackSeq);
+    if (!imediato && i >= 0 && e.ackSeq >= this._ackSeq) {
+      const dx = e.x - this._predX[i], dy = e.y - this._predY[i], dz = e.z - this._predZ[i];
+      const err = Math.hypot(dx, dy, dz);
+      if (err > 6) {
+        p.pos.set(e.x, e.y, e.z); p.vel.set(0, 0, 0); this._clearPrediction(); this._ackOn = true;
+      } else {
+        this._corrX = dx; this._corrY = dy; this._corrZ = dz;
+        if (err >= 0.005) {
+          this._reconcileCount++; this._reconcileMax = Math.max(this._reconcileMax, err);
+          this._reconcileSamples.push(err);
+          if (this._reconcileSamples.length > 240) this._reconcileSamples.shift();
+          this._reconcileWindow.push(err);
+        }
+      }
+    }
+    this._ackSeq = Math.max(this._ackSeq, e.ackSeq);
+    let n = 0;
+    while (n < this._predSeq.length && this._predSeq[n] <= e.ackSeq) n++;
+    if (n) { this._predSeq.splice(0, n); this._predX.splice(0, n); this._predY.splice(0, n); this._predZ.splice(0, n); }
+  }
+
+  _syncPlayerLoadout(e, p) {
+    if (!Number.isInteger(e.ackSeq) || e.ackSeq < this._loadoutSeq) return;
+    if (e.weapon && WEAPONS[e.weapon] && p.weapon !== e.weapon) {
+      this.game._switchWeapon(e.weapon);
+      // Morto/estado transitório pode bloquear o helper visual; a autoridade ainda precisa
+      // assentar o dado para o próximo respawn/snapshot.
+      if (p.weapon !== e.weapon) { p.weapon = e.weapon; this.game._applyVmVisibility?.(); }
+    }
+    this._authWeapon = e.weapon || this._authWeapon;
+    if (e.primary && WEAPONS[e.primary]) p.primary = e.primary;
+    if (e.secondary && WEAPONS[e.secondary]) p.secondary = e.secondary;
+    if (e.weapon && WEAPONS[e.weapon] && Number.isInteger(e.mag) && Number.isInteger(e.res)) {
+      p.ammo[e.weapon] ||= { mag: 0, res: 0 };
+      p.ammo[e.weapon].mag = e.mag; p.ammo[e.weapon].res = e.res;
+    }
+    const reloadIn = Math.max(0, Number(e.reloadIn) || 0);
+    const estava = !!this._authReloading;
+    this._authReloading = reloadIn > 0;
+    if (reloadIn > 0) {
+      if (!estava) {
+        try { this.game.vm?.rig?.startReload(reloadIn); } catch { /* viewmodel ainda não montado */ }
+        this.game.el?.reloadNote?.classList.remove('hidden');
+      }
+      p.reloadUntil = this.game.time + reloadIn;
+    } else if (estava) {
+      p.reloadUntil = 0;
+      this.game.el?.reloadNote?.classList.add('hidden');
+    }
   }
 
   // Pausado o stepPlayer não manda nada e o servidor soltava o slot após 45 s (BUG-115):
@@ -214,7 +310,12 @@ class Netcode {
         if (ent.name !== rotulo) ent.name = rotulo;
       }
       if (ent !== game.player) ent._netBot = !!e.bot;   // IA: frente +Z (yaw); humano: convenção da câmera (yaw+π) — BUG-117
-      if (ent !== game.player && e.weapon) ent.weapon = e.weapon;   // a arma do jogador local é escolha LOCAL (pega com mira+E); o snapshot não reverte
+      if (ent !== game.player && e.weapon) {
+        // O id lógico sozinho não troca a arma que foi montada dentro do GLB do personagem.
+        // O helper remonta a 3ª pessoa quando pickup/respawn muda a arma autoritativa.
+        if (ent.weapon !== e.weapon || ent._meshWeapon !== e.weapon) game._syncRemoteWeapon?.(ent, e.weapon);
+        else ent.weapon = e.weapon;
+      }
       if (ent === game.player) {
         this._meuNomeServidor = e.name || this._meuNomeServidor;   // o servidor trunca o apelido; é este nome que vem em `killedBy`
         const renasceu = !wasAlive && e.alive;
@@ -230,9 +331,12 @@ class Netcode {
         /* O cliente também cria um spawn local. No primeiro snapshot e no respawn ele não é
            uma predição adiantada: é uma posição concorrente, às vezes de outro slot/mapa.
            Nestes dois marcos a autoridade precisa vencer imediatamente, inclusive no Y. */
-        if (primeiroSnap || renasceu) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); }
+        const imediato = primeiroSnap || renasceu;
+        if (imediato) { ent.pos.set(e.x, e.y, e.z); ent.vel.set(0, 0, 0); }
         if (e.respawnIn != null) game.player.respawnAt = game.time + e.respawnIn;
         this._srvX = e.x; this._srvY = e.y; this._srvZ = e.z; this._srvHas = 1;   // campos planos: zero alocação no hot path
+        this._ackPlayer(e, ent, imediato);
+        this._syncPlayerLoadout(e, ent);
         continue;
       }
       /* Interpolação contínua entre pacotes (reiniciar picota o boneco). Campos PLANOS de
@@ -625,10 +729,17 @@ class Netcode {
     const s = this.net.computeStats();
     if (now >= this._nextClientStats && this._nsFps > 0) {
       this._nextClientStats = now + 10000;
+      const correcoes = this._reconcileWindow;
       this.net.sendClientStats?.({
         fps: this._nsFps, rtt: s.ping, snap: s.hz, gap: s.gapMax,
+        reconcileP95: this._percentil(correcoes, 0.95),
+        reconcileMax: correcoes.length ? +Math.max(...correcoes).toFixed(3) : null,
+        reconcileCount: correcoes.length,
         quality: game.settings?.quality || null,
       });
+      // A próxima janela não repete os mesmos eventos. Os totais acima continuam vivos
+      // para o overlay da sessão; o servidor soma somente os eventos novos de cada 10 s.
+      correcoes.length = 0;
     }
     const c = (v, aviso, bom) => (v >= bom ? '#7fe17f' : v >= aviso ? '#f2d06b' : '#f27b7b');
     const hzc = s.hz >= this.snapshotHz - 1 ? '#7fe17f' : s.hz >= this.snapshotHz * 0.75 ? '#f2d06b' : '#f27b7b';
@@ -643,7 +754,14 @@ class Netcode {
       row('band', `${s.kbps.toFixed(1)} KB/s`) + (this._evOn ? ` <span style="color:#5f6f7e">ev ${this.net.stats.evs | 0}</span>` : ''),
       row('ents', `${s.ents}`) + `  ` + row('tick', `${s.tick}`),
       row('ping', s.ping <= 0 ? '—' : `${Math.round(s.ping)} ms`, pingc),
+      row('corr', this._reconcileCount ? `${this._reconcileMax.toFixed(2)} m máx` : '—'),
     ].join('\n');
     el.style.borderColor = (s.hz < 15 || s.gapMax > 130) ? '#7a2b2b' : '#2a3340';
+  }
+
+  _percentil(values, q) {
+    if (!values || !values.length) return null;
+    const a = [...values].sort((x, y) => x - y);
+    return +a[Math.min(a.length - 1, Math.floor((a.length - 1) * q))].toFixed(3);
   }
 }
