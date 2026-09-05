@@ -32,10 +32,12 @@ const pack = join(tmp, 'pack-privado');
 const wavs = join(pack, 'extracted-wav');
 const firearmsCc0 = join(tmp, 'firearms-cc0');
 const boomGuns = join(tmp, 'boom-guns-designed');
+const fishAnnouncer = join(tmp, 'fish-announcer');
 const publico = join(tmp, 'public', 'audio');
 mkdirSync(wavs, { recursive: true });
 mkdirSync(firearmsCc0, { recursive: true });
 mkdirSync(boomGuns, { recursive: true });
+mkdirSync(fishAnnouncer, { recursive: true });
 mkdirSync(publico, { recursive: true });
 const shotgunFixture = [
   'shotgun-01-mossberg-room.wav', 'shotgun-02-model12-room.wav', 'shotgun-03-nova-room.wav',
@@ -60,6 +62,23 @@ writeFileSync(join(boomGuns, 'manifest.json'), JSON.stringify({
   aiUse: false, weapons: {
     m4: { defaultStyle: 'huge', match: 'exact', sourceWeapons: ['Colt M4'], styles: boomStyles },
   },
+}));
+const fishGeneralKeys = [
+  'kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill',
+  'megakill', 'killingspree', 'godlike',
+];
+const fishGeneral = Object.fromEntries(fishGeneralKeys.map((key) => [key, [`general/${key}.wav`]]));
+const fishRounds = Object.fromEntries(Array.from({ length: 7 }, (_, i) => {
+  const key = String(i + 1); return [key, [`rounds/round-${key.padStart(2, '0')}.wav`]];
+}));
+for (const path of [...Object.values(fishGeneral).flat(), ...Object.values(fishRounds).flat()]) {
+  const target = join(fishAnnouncer, path); mkdirSync(resolve(target, '..'), { recursive: true });
+  writeFileSync(target, 'fixture-fish-sem-audio');
+}
+writeFileSync(join(fishAnnouncer, 'manifest.json'), JSON.stringify({
+  provider: 'fish-audio-api', referenceId: '63e61b8d29cf4279b03b6a59b3d2de98',
+  approval: 'local-candidates-only', legalStatus: 'rights-review-required',
+  general: fishGeneral, roundNumbers: fishRounds,
 }));
 
 const tactileFixture = [
@@ -143,6 +162,7 @@ writeFileSync(join(pack, 'shortlist-piloto.json'), JSON.stringify({ eventos, bib
 
 const run = spawnSync(process.execPath, [
   SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`, `--boom-guns=${boomGuns}`,
+  `--fish-announcer=${fishAnnouncer}`,
 ], {
   encoding: 'utf8', env: { ...process.env, FAB_GAME_LOCAL_MUTANTE: mutante },
 });
@@ -182,6 +202,13 @@ if (manifest) {
   }
   if (manifest.defaultWeaponPack !== 'boom') {
     erros.push('LAB5dd BOOM Designed não virou o padrão do laboratório local.');
+  }
+  if (fishGeneralKeys.some((key) => manifest.general?.[key]?.[0] !== `audio/fish-announcer-dev/general/${key}.wav`)) {
+    erros.push('LAB5dg locucoes Fish de kill/tier nao entraram no manifest local.');
+  }
+  if (Object.keys(fishRounds).some((key) => manifest.roundNumbers?.[key]?.[0]
+    !== `audio/fish-announcer-dev/rounds/round-${key.padStart(2, '0')}.wav`)) {
+    erros.push('LAB5dh locucoes Fish de round 1..7 nao entraram no manifest local.');
   }
   const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
   if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
@@ -363,6 +390,11 @@ try {
     erros.push('LAB10c symlink BOOM não aponta para a raiz privada exata dos candidatos derivados.');
   }
 } catch (e) { erros.push(`LAB10c symlink BOOM local ausente/inválido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'fish-announcer-dev'))) !== resolve(fishAnnouncer)) {
+    erros.push('LAB10d symlink Fish nao aponta para a raiz privada exata das locucoes.');
+  }
+} catch (e) { erros.push(`LAB10d symlink Fish local ausente/invalido: ${e.message}`); }
 
 rmSync(tmp, { recursive: true, force: true });
 if (erros.length) {
@@ -370,4 +402,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas e vozes físicas do elenco audíveis; veto ativo e nenhum caminho privado serializado.');
+console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, vozes fisicas e locucoes Fish audiveis; veto ativo e nenhum caminho privado serializado.');

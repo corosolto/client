@@ -12,7 +12,7 @@ const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
 const dir = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!dir) {
-  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir]');
+  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir] [--fish-announcer=dir]');
   process.exit(2);
 }
 
@@ -27,6 +27,9 @@ const FIREARMS_LINK = join(PUBLICO, 'firearms-cc0-dev');
 const BOOM_GUNS_ARG = arg('boom-guns');
 const BOOM_GUNS = BOOM_GUNS_ARG ? resolve(BOOM_GUNS_ARG) : null;
 const BOOM_GUNS_LINK = join(PUBLICO, 'boom-guns-dev');
+const FISH_ANNOUNCER_ARG = arg('fish-announcer');
+const FISH_ANNOUNCER = FISH_ANNOUNCER_ARG ? resolve(FISH_ANNOUNCER_ARG) : null;
+const FISH_ANNOUNCER_LINK = join(PUBLICO, 'fish-announcer-dev');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
@@ -58,6 +61,50 @@ if (BOOM_GUNS) {
     console.error('recusado: manifest BOOM precisa declarar licença, local-candidates-only e aiUse=false.');
     process.exit(2);
   }
+}
+
+const FISH_REFERENCE_ID = '63e61b8d29cf4279b03b6a59b3d2de98';
+const FISH_GENERAL_KEYS = [
+  'kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill',
+  'megakill', 'killingspree', 'godlike',
+];
+let fishAnnouncer = null;
+if (FISH_ANNOUNCER) {
+  const sourceManifest = join(FISH_ANNOUNCER, 'manifest.json');
+  let source;
+  try { source = JSON.parse(readFileSync(sourceManifest, 'utf8')); }
+  catch (error) { console.error(`manifest Fish announcer invalido: ${sourceManifest} (${error.message})`); process.exit(2); }
+  if (source.provider !== 'fish-audio-api' || source.referenceId !== FISH_REFERENCE_ID
+    || source.approval !== 'local-candidates-only' || source.legalStatus !== 'rights-review-required') {
+    console.error('recusado: manifest Fish precisa declarar provedor, reference_id, escuta local e revisao de direitos.');
+    process.exit(2);
+  }
+  const pool = (group, key) => {
+    const paths = source?.[group]?.[key];
+    if (!Array.isArray(paths) || !paths.length) return [];
+    return paths.map((path) => {
+      if (typeof path !== 'string' || !path.endsWith('.wav') || path.startsWith('/') || path.split(/[\\/]/).includes('..')) {
+        console.error(`recusado: caminho Fish invalido: ${path}`); process.exit(2);
+      }
+      const absolute = resolve(FISH_ANNOUNCER, path);
+      const rel = relative(FISH_ANNOUNCER, absolute);
+      if (!rel || rel.startsWith('..') || !existsSync(absolute)) {
+        console.error(`recusado: arquivo Fish ausente/fora do staging: ${path}`); process.exit(2);
+      }
+      return `audio/fish-announcer-dev/${path.split(sep).join('/')}`;
+    });
+  };
+  fishAnnouncer = {
+    general: Object.fromEntries(FISH_GENERAL_KEYS.map((key) => [key, pool('general', key)])),
+    roundNumbers: Object.fromEntries(Array.from({ length: 7 }, (_, i) => {
+      const key = String(i + 1); return [key, pool('roundNumbers', key)];
+    })),
+  };
+  const missing = [
+    ...FISH_GENERAL_KEYS.filter((key) => !fishAnnouncer.general[key].length).map((key) => `general.${key}`),
+    ...Object.keys(fishAnnouncer.roundNumbers).filter((key) => !fishAnnouncer.roundNumbers[key].length).map((key) => `roundNumbers.${key}`),
+  ];
+  if (missing.length) { console.error(`recusado: Fish announcer incompleto: ${missing.join(', ')}`); process.exit(2); }
 }
 
 let lista;
@@ -354,6 +401,10 @@ const obrigatorios = [
   ...Object.entries(pickupByKind).map(([kind, pool]) => [`pickup.${kind}`, pool]),
   ...Object.entries(weaponSwitchByClass).map(([cls, pool]) => [`troca.${cls}`, pool]),
   ...Object.entries(uiByAction).map(([action, pool]) => [`ui.${action}`, pool]),
+  ...(fishAnnouncer ? [
+    ...Object.entries(fishAnnouncer.general).map(([key, pool]) => [`locucao.${key}`, pool]),
+    ...Object.entries(fishAnnouncer.roundNumbers).map(([key, pool]) => [`locucao.round.${key}`, pool]),
+  ] : []),
   ...Object.entries(physicalProfiles).flatMap(([profile, cfg]) => [
     [`personagem.${profile}.hurt`, cfg.hurt], [`personagem.${profile}.death`, cfg.death],
   ]),
@@ -374,6 +425,7 @@ const manifest = {
     mapasComAmbiencia: Object.keys(mapSoundscapes).length,
     perfisFisicos: Object.keys(physicalProfiles).length,
     ...(boomWeaponPack ? { armasBoomDesigned: Object.keys(boomWeaponPack.weapons).length } : {}),
+    ...(fishAnnouncer ? { locucoesFish: FISH_GENERAL_KEYS.length + 7 } : {}),
     somenteEscuta: 3,
     limitacoes: [
       'a identidade das 24 armas além da AK é candidata e exige escuta humana',
@@ -388,6 +440,7 @@ const manifest = {
   weapons,
   ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
   ...(boomWeaponPack ? { weaponPacks: { boom: boomWeaponPack } } : {}),
+  ...(fishAnnouncer ? { general: fishAnnouncer.general, roundNumbers: fishAnnouncer.roundNumbers } : {}),
   cs: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
@@ -422,6 +475,7 @@ function garantirSymlink(link, alvo) {
 garantirSymlink(LINK, WAVS);
 if (FIREARMS_CC0) garantirSymlink(FIREARMS_LINK, FIREARMS_CC0);
 if (BOOM_GUNS) garantirSymlink(BOOM_GUNS_LINK, BOOM_GUNS);
+if (FISH_ANNOUNCER) garantirSymlink(FISH_ANNOUNCER_LINK, FISH_ANNOUNCER);
 
 if (existsSync(MANIFEST)) {
   try {
@@ -446,4 +500,5 @@ console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos pa
 if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
 if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
 if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas a ganho 0,70; ${boomWeaponPack.fallbackWeapons.join(', ')} usam o pack anterior pré-carregado. A/B: ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
+if (fishAnnouncer) console.log('Fish announcer: kill/headshot, 7 tiers e rounds 1..7 ativos somente para escuta local.');
 console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

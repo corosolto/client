@@ -30,6 +30,7 @@ export class Sfx {
     this.speechEnabled = true;   // falas dos times (memes) — vitória/UT/arma sempre tocam
     this._lastVoice = 0;
     this._radioAudio = null;
+    this._announcerAudio = null; // locucao prioritaria: um callout por vez
     this._live = new Set();      // samples HTMLAudio tocando (pra duck de vozes)
     this._stepI = -1;            // round-robin dos passos
     this.reverbOn = false;       // send de reverb leve (opt-in: ?reverb=1) — OFF por padrão
@@ -175,7 +176,16 @@ export class Sfx {
     step();
   }
   csSound(key) { const f = this._cs(key); if (f) { this._sample(f); return true; } return false; }
-  general(kind) { const f = this._pick(this.pack?.general?.[kind]); if (f) { this._sample(f); return true; } return false; }
+  _announcer(pool, vol = 0.78) {
+    const f = this._pick(pool);
+    if (!f) return false;
+    if (this._announcerAudio) { try { this._announcerAudio.pause(); } catch {} }
+    // Callout curto nao entra no duck dos tiros: precisa continuar inteligivel.
+    this._announcerAudio = this._sample(f, vol, false);
+    return !!this._announcerAudio;
+  }
+  general(kind) { return this._announcer(this.pack?.general?.[kind]); }
+  roundNumber(number) { return this._announcer(this.pack?.roundNumbers?.[String(number)], 0.72); }
   captureSound(faction) { const arr = (faction && this.pack?.captureByTeam?.[faction]) || this.pack?.capture; const f = this._pick(arr); if (f) { this._sample(f); return true; } return false; }   // captura de bandeira (CTF): pool por facção (captureByTeam) c/ fallback global
   _cs(key) { const v = this.pack?.cs?.[key]; return v && v.length ? this._pick(v) : null; }
 

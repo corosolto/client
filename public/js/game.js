@@ -35,6 +35,7 @@ export { WEAPONS };
    Motivo: as três mudam COMPORTAMENTO sentido pelo jogador; o dono precisa do A/B. */
 const QS = new URLSearchParams(location.search);
 const REPLAY_CAM = QS.get('replaycam') !== '0';
+const ANNOUNCER_LAB = ['kills', 'rounds', 'all'].includes(QS.get('announcerlab')) ? QS.get('announcerlab') : '';
 /* Replay cam (kill-switch ?replaycam=0): duração total em s, escala de dt do hit-stop e a
    janela dele em tempo real, e o raio/altura da órbita em torno da vítima. */
 const REPLAY_DUR = 1.2;
@@ -296,8 +297,8 @@ const RADIO = {
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
   c: { title: 'ZOAÇÃO', items: ['Chora na live!', 'É fake news!', 'Vem pra treta!'] },
 };
-const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
-const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
+const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'ultrakill', 6: 'megakill' };
+const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', ultrakill: 'ULTRA KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
 /* ===================== GUNFEEL (recuo / spread / feedback) =====================
    Kill-switch: ?gunfeel=0 volta ao modelo antigo (impulso escalar de w.recoil, spread em
    caixa, sem padrão, sem falloff). Existe porque isto muda o COMPORTAMENTO de mira das 26
@@ -2186,6 +2187,16 @@ export class Game {
   start() {
     this.el.hud.classList.remove('hidden');
     this._startRound();
+    if (ANNOUNCER_LAB) this._startAnnouncerLab(ANNOUNCER_LAB);
+  }
+  _startAnnouncerLab(mode) {
+    const kills = ['kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill', 'megakill', 'killingspree', 'godlike']
+      .map((key) => () => this.sfx.general(key));
+    const rounds = Array.from({ length: 7 }, (_, i) => () => this.sfx.roundNumber(i + 1));
+    const sequence = mode === 'kills' ? kills : (mode === 'rounds' ? rounds : [...kills, ...rounds]);
+    this._announcerLabTimers = sequence.map((play, i) => setTimeout(() => {
+      if (!this._disposed) play();
+    }, 2300 * (i + 1)));
   }
   _startRound() {
     /* A vinheta do round anterior SEGUE por ~10 s dentro do round novo (dono, 07/08:
@@ -2220,7 +2231,7 @@ export class Game {
       ? frase('alvoBandeiras', this.capsToWin)
       : (PACE ? frase('alvoAbates', this.killsToWin)
         : (this.roundNum === 1 ? frase('comeceTreta') : frase('voltaTreta'))));
-    if (!this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
+    if (!this.sfx.roundNumber(this.roundNum) && !this.sfx.csSound('roundstart')) this.sfx.vuvuzela(1.4);
   }
   _resetPositions() {
     /* COLOCAÇÃO NO SPAWN — deixada COMO ESTAVA, de propósito (registro de experimento).
@@ -3345,19 +3356,21 @@ export class Game {
     }
     if (attacker) {
       attacker.kills++; this.roundKills[attacker.team]++;
-      this.sfx.voice(this._voiceKey(attacker.team));   // killer's side celebrates (meme audio)
       // TELEMETRIA DE ARMA: quando o JOGADOR mata, conta a arma usada (param `weap`
       // já vem do _damage/_tryShoot). Bot mata não conta — não há balanço a inferir.
       if (attacker.isPlayer && weap) this._wperf[weap] = (this._wperf[weap] || 0) + 1;
       if (attacker.isPlayer) {
         this.sfx.killConfirm();
-        if (head) { this.sfx.general('headshot'); attacker.headshots++; }
+        if (head) attacker.headshots++;
         const mk = this.mk;
         if (this.time < mk.until) mk.count++; else mk.count = 1;
         mk.until = this.time + 4.5; mk.life++;
         mk.best = Math.max(mk.best || 0, mk.count);
-        const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
-        if (kind) { this._mkBanner(MK_LABELS[kind]); this.sfx.general(kind); }
+        const kind = mk.count >= 7 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
+        if (kind) this._mkBanner(MK_LABELS[kind]);
+        // Um unico callout por abate: tier > headshot > kill. Sem locucao no
+        // pack, preserva a comemoracao antiga da faccao como fallback.
+        if (!this.sfx.general(kind || (head ? 'headshot' : 'kill'))) this.sfx.voice(this._voiceKey(attacker.team));
         if (REPLAY_CAM && head && ent.pos) {
           this._replayCam = {
             t: 0,
@@ -7248,6 +7261,8 @@ export class Game {
   /* ================= teardown ================= */
   dispose() {
     this._disposed = true;
+    for (const timer of this._announcerLabTimers || []) clearTimeout(timer);
+    this._announcerLabTimers = [];
     try { this._mp?.dispose(); } catch { /* já foi */ }
     this._mp = null;
     try { this.sfx.stopRound(); } catch {}   // vinheta não sobrevive ao fim da partida   // lazy-load de VM em voo (_ensureStaticVm) aborta no then
