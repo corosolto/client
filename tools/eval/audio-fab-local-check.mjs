@@ -20,6 +20,7 @@ const MAP_IDS = [
   'posto_treta', 'upa_24h', 'obras_prefeitura', 'atacadao_treta', 'parque_treta',
   'velho_oeste', 'penitenciaria',
 ];
+const FIREARM_IDS = Object.keys(WEAPONS).filter((id) => id !== 'knife');
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && mutante !== 'sem-veto') {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -29,9 +30,25 @@ if (mutante && mutante !== 'sem-veto') {
 const tmp = mkdtempSync(join(tmpdir(), 'audio-fab-local-'));
 const pack = join(tmp, 'pack-privado');
 const wavs = join(pack, 'extracted-wav');
+const firearmsCc0 = join(tmp, 'firearms-cc0');
 const publico = join(tmp, 'public', 'audio');
 mkdirSync(wavs, { recursive: true });
+mkdirSync(firearmsCc0, { recursive: true });
 mkdirSync(publico, { recursive: true });
+const shotgunFixture = [
+  'shotgun-01-mossberg-room.wav', 'shotgun-02-model12-room.wav', 'shotgun-03-nova-room.wav',
+  'shotgun-04-mossberg-near.wav', 'shotgun-05-model12-near.wav', 'shotgun-06-nova-near.wav',
+];
+const firearmFixture = Object.fromEntries(FIREARM_IDS.filter((id) => id !== 'ak').map((id) => [
+  id, [id === 'shotgun' ? shotgunFixture[0] : `${id}.wav`],
+]));
+for (const nome of new Set([...Object.values(firearmFixture).flat(), ...shotgunFixture])) {
+  writeFileSync(join(firearmsCc0, nome), 'fixture-cc0-sem-audio');
+}
+writeFileSync(join(firearmsCc0, 'manifest.json'), JSON.stringify({
+  license: 'CC0-1.0', approval: 'local-candidates-only',
+  weapons: firearmFixture, weaponCandidates: { shotgun: shotgunFixture },
+}));
 
 const candidato = (arquivo) => ({ arquivo, sha256: 'a'.repeat(64), familia: arquivo.replace(/-\d+\.wav$/, '') });
 const tiros = [
@@ -89,7 +106,7 @@ for (const e of eventos) for (const c of e.candidatos) {
 }
 writeFileSync(join(pack, 'shortlist-piloto.json'), JSON.stringify({ eventos, biblioteca: [] }));
 
-const run = spawnSync(process.execPath, [SCRIPT, pack, `--publico=${publico}`], {
+const run = spawnSync(process.execPath, [SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`], {
   encoding: 'utf8', env: { ...process.env, FAB_GAME_LOCAL_MUTANTE: mutante },
 });
 const erros = [];
@@ -106,12 +123,25 @@ if (manifest) {
     erros.push('LAB4 veto editorial não mordeu: gore apareceu no manifest local.');
   }
   if (manifest.weapons?.ak?.length !== 1) erros.push(`LAB5 tiro da AK deve fixar 1 candidato por vez; veio ${manifest.weapons?.ak?.length}.`);
-  const firearms = Object.keys(WEAPONS).filter((id) => id !== 'knife');
-  const mapped = firearms.filter((id) => manifest.weapons?.[id]?.length === 1);
-  if (mapped.length !== firearms.length) erros.push(`LAB5b armas com tiro próprio: ${mapped.length}/${firearms.length}.`);
-  const uniqueShots = new Set(firearms.flatMap((id) => manifest.weapons?.[id] || []));
-  if (uniqueShots.size !== firearms.length) erros.push(`LAB5c tiros distintos: ${uniqueShots.size}/${firearms.length}.`);
+  const mapped = FIREARM_IDS.filter((id) => manifest.weapons?.[id]?.length === 1);
+  if (mapped.length !== FIREARM_IDS.length) erros.push(`LAB5b armas com tiro próprio: ${mapped.length}/${FIREARM_IDS.length}.`);
+  const uniqueShots = new Set(FIREARM_IDS.flatMap((id) => manifest.weapons?.[id] || []));
+  if (uniqueShots.size !== FIREARM_IDS.length) erros.push(`LAB5c tiros distintos: ${uniqueShots.size}/${FIREARM_IDS.length}.`);
   if (manifest.weapons?.ak?.[0] !== 'audio/fab-dev/Guns/Gun_Shot/Gunshot_1-1.wav') erros.push('LAB5d AK aprovada pelo dono foi alterada.');
+  if (manifest.weaponSamplesAuthentic !== true) {
+    erros.push('LAB5dc arsenal CC0 real não ativou o caminho de reprodução neutra.');
+  }
+  const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
+  if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
+    erros.push(`LAB5da arsenal sem AK mapeado semanticamente para CC0: ${cc0Mapped.length}/${FIREARM_IDS.length - 1}.`);
+  }
+  if (manifest.weapons?.shotgun?.[0] !== 'audio/firearms-cc0-dev/shotgun-01-mossberg-room.wav') {
+    erros.push('LAB5e shotgun rejeitada continua usando o take Fab que soa como estilingue.');
+  }
+  const shotgunCandidates = manifest.weaponCandidates?.shotgun || [];
+  if (shotgunCandidates.length !== 6 || !shotgunCandidates.every((url) => url.startsWith('audio/firearms-cc0-dev/'))) {
+    erros.push(`LAB5f candidatos reais de shotgun no seletor local: ${shotgunCandidates.length}/6.`);
+  }
   if (manifest.cs?.reload?.length !== 1 || manifest.cs?.reloadend?.length !== 1 || manifest.cs?.bolt?.length !== 1) {
     erros.push('LAB6 foley disponível não foi ligado aos caminhos globais do runtime.');
   }
@@ -147,7 +177,7 @@ if (manifest) {
   const signatures = new Set(MAP_IDS.map((id) => JSON.stringify(soundscapes[id])));
   if (signatures.size < 8) erros.push(`LAB8h ambiências distintas insuficientes: ${signatures.size}/8.`);
   if (texto.includes('Distant')) erros.push('LAB8b tiro distante foi forçado sem contrato de mix por distância.');
-  if (manifest._localLab?.armasComTiroProprio !== firearms.length) {
+  if (manifest._localLab?.armasComTiroProprio !== FIREARM_IDS.length) {
     erros.push('LAB9 resumo do que entra no jogo e do que fica só em escuta divergiu.');
   }
 }
@@ -188,12 +218,21 @@ if (new Set(pistolProfiles).size !== pistolProfiles.length) {
 if (!/ak:\s*\{\s*rate:\s*1(?:\.00)?,\s*hp:\s*0,\s*lp:\s*22000,\s*gain:\s*1(?:\.00)?\s*\}/.test(signatureBlock)) {
   erros.push('LAB11ad a AK aprovada deixou de usar o take neutro.');
 }
-if (!/shotgun:\s*\{\s*rate:\s*\.9[0-9],\s*hp:\s*[0-9]+,\s*lp:\s*(?:[7-9][0-9]{3}|[1-9][0-9]{4}),\s*gain:\s*1\.[0-9]+\s*\}/.test(signatureBlock)) {
-  erros.push('LAB11ae shotgun continua lenta/abafada em vez de preservar o estouro do take Fab.');
+if (!/shotgun:\s*\{\s*rate:\s*1(?:\.00)?,\s*hp:\s*0,\s*lp:\s*22000,\s*gain:\s*\.95\s*\}/.test(signatureBlock)) {
+  erros.push('LAB11ae shotgun real ainda recebe pitch/EQ que descaracteriza a gravação.');
 }
 if (!AUDIO_RUNTIME.includes('async preloadWeaponSamples(weapons = [])')
   || !MAIN_RUNTIME.includes('sfx.preloadWeaponSamples(_armasDaPartida)')) {
   erros.push('LAB11af primeiro tiro ainda pode cair no synth enquanto o WAV carrega.');
+}
+if (!AUDIO_RUNTIME.includes('_weaponSample(weapon)')
+  || !AUDIO_RUNTIME.includes("get('shotguntake')")
+  || AUDIO_RUNTIME.includes("this._pick(this.pack?.weapons?.[w])")) {
+  erros.push('LAB11ag jogo não permite comparar takes reais de shotgun de forma determinística.');
+}
+if (!AUDIO_RUNTIME.includes('this.pack?.weaponSamplesAuthentic')
+  || !AUDIO_RUNTIME.includes('Sfx.SAMPLE_SOURCE_NEUTRAL')) {
+  erros.push('LAB11ah gravações reais ainda passam por pitch/EQ genérico de família.');
 }
 if (!GAME_RUNTIME.includes('this.sfx.step(this._footstepSurface(p.pos))')) erros.push('LAB11 game não escolhe passos por arena/superfície.');
 for (const [label, needle] of [
@@ -227,6 +266,11 @@ try {
     erros.push('LAB10 symlink não aponta para a raiz privada exata dos WAVs.');
   }
 } catch (e) { erros.push(`LAB10 symlink local ausente/inválido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'firearms-cc0-dev'))) !== resolve(firearmsCc0)) {
+    erros.push('LAB10b symlink CC0 não aponta para a raiz privada exata do arsenal derivado.');
+  }
+} catch (e) { erros.push(`LAB10b symlink CC0 local ausente/inválido: ${e.message}`); }
 
 rmSync(tmp, { recursive: true, force: true });
 if (erros.length) {

@@ -12,7 +12,7 @@ const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
 const dir = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!dir) {
-  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio]');
+  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir]');
   process.exit(2);
 }
 
@@ -21,6 +21,9 @@ const WAVS = join(PACK, 'extracted-wav');
 const SHORTLIST = join(PACK, 'shortlist-piloto.json');
 const PUBLICO = resolve(arg('publico', join(RAIZ_REPO, 'public/audio')));
 const LINK = join(PUBLICO, 'fab-dev');
+const FIREARMS_CC0_ARG = arg('firearms-cc0');
+const FIREARMS_CC0 = FIREARMS_CC0_ARG ? resolve(FIREARMS_CC0_ARG) : null;
+const FIREARMS_LINK = join(PUBLICO, 'firearms-cc0-dev');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
@@ -31,6 +34,16 @@ if (!relative(RAIZ_REPO, PACK).startsWith('..')) {
 }
 for (const p of [WAVS, SHORTLIST]) {
   if (!existsSync(p)) { console.error(`não achei ${p}`); process.exit(2); }
+}
+let firearmsCc0 = null;
+if (FIREARMS_CC0) {
+  const sourceManifest = join(FIREARMS_CC0, 'manifest.json');
+  try { firearmsCc0 = JSON.parse(readFileSync(sourceManifest, 'utf8')); }
+  catch (error) { console.error(`manifest CC0 de armas inválido: ${sourceManifest} (${error.message})`); process.exit(2); }
+  if (firearmsCc0.license !== 'CC0-1.0' || firearmsCc0.approval !== 'local-candidates-only') {
+    console.error('recusado: manifest de armas precisa declarar CC0-1.0 e local-candidates-only.');
+    process.exit(2);
+  }
 }
 
 let lista;
@@ -51,6 +64,24 @@ const TIRO_POR_ARMA = Object.freeze({
   awp: 'Gunshot_7-1.wav', mosin: 'Gunshot_7-2.wav', rem700: 'Gunshot_7-3.wav',
   shotgun: 'Gunshot_8-1.wav',
 });
+
+function firearmCc0Urls(nomes) {
+  if (!FIREARMS_CC0 || !Array.isArray(nomes)) return [];
+  const urls = [];
+  for (const nome of nomes) {
+    if (typeof nome !== 'string' || !nome.endsWith('.wav') || nome.startsWith('/') || nome.split(/[\\/]/).includes('..')) {
+      console.error(`recusado: caminho CC0 de arma inválido: ${nome}`);
+      process.exit(2);
+    }
+    const absoluto = resolve(FIREARMS_CC0, nome);
+    if (!absoluto.startsWith(FIREARMS_CC0 + sep) || !existsSync(absoluto)) {
+      console.error(`não achei candidato CC0 de arma: ${absoluto}`);
+      process.exit(2);
+    }
+    urls.push(`audio/firearms-cc0-dev/${nome}`);
+  }
+  return urls;
+}
 
 function candidatos(evento, { primeiro = false } = {}) {
   const vistos = new Set();
@@ -96,6 +127,19 @@ const filtrar = (predicate) => seguros(biblioteca.filter(predicate));
 const weapons = Object.fromEntries(Object.entries(TIRO_POR_ARMA).map(([arma, nome]) => [
   arma, seguros([`Guns/Gun_Shot/${nome}`]),
 ]));
+if (firearmsCc0) {
+  const esperado = Object.keys(TIRO_POR_ARMA).filter((arma) => arma !== 'ak');
+  const ausentes = esperado.filter((arma) => !firearmsCc0.weapons?.[arma]?.length);
+  if (ausentes.length) {
+    console.error(`recusado: manifest CC0 não cobre ${ausentes.join(', ')}`);
+    process.exit(2);
+  }
+  for (const arma of esperado) weapons[arma] = firearmCc0Urls(firearmsCc0.weapons[arma]);
+}
+const weaponCandidates = firearmsCc0
+  ? Object.fromEntries(Object.entries(firearmsCc0.weaponCandidates || {})
+    .map(([arma, nomes]) => [arma, firearmCc0Urls(nomes)]))
+  : {};
 /* A shortlist é a entrada editorial da AK. Assim o mutante sem veto continua
    provando que um nome gore plantado não atravessa o laboratório. */
 weapons.ak = candidatos('ak.shot', { primeiro: true }).length
@@ -237,7 +281,9 @@ const manifest = {
     ],
   },
   weaponSamples: true,
+  ...(firearmsCc0 ? { weaponSamplesAuthentic: true } : {}),
   weapons,
+  ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
   cs: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
@@ -249,19 +295,23 @@ const manifest = {
 };
 
 mkdirSync(PUBLICO, { recursive: true });
-if (existsSync(LINK) || (() => { try { lstatSync(LINK); return true; } catch { return false; } })()) {
-  if (!lstatSync(LINK).isSymbolicLink()) {
-    console.error(`recusado: ${LINK} já existe e não é symlink.`);
-    process.exit(2);
+function garantirSymlink(link, alvo) {
+  if (existsSync(link) || (() => { try { lstatSync(link); return true; } catch { return false; } })()) {
+    if (!lstatSync(link).isSymbolicLink()) {
+      console.error(`recusado: ${link} já existe e não é symlink.`);
+      process.exit(2);
+    }
+    const atual = realpathSync(resolve(dirname(link), readlinkSync(link)));
+    if (atual !== realpathSync(alvo)) {
+      console.error(`recusado: ${link} já aponta para outro lugar.`);
+      process.exit(2);
+    }
+  } else {
+    symlinkSync(alvo, link, 'dir');
   }
-  const atual = realpathSync(resolve(dirname(LINK), readlinkSync(LINK)));
-  if (atual !== realpathSync(WAVS)) {
-    console.error(`recusado: ${LINK} já aponta para outro lugar.`);
-    process.exit(2);
-  }
-} else {
-  symlinkSync(WAVS, LINK, 'dir');
 }
+garantirSymlink(LINK, WAVS);
+if (FIREARMS_CC0) garantirSymlink(FIREARMS_LINK, FIREARMS_CC0);
 
 if (existsSync(MANIFEST)) {
   try {
@@ -279,7 +329,10 @@ const temporario = `${MANIFEST}.tmp`;
 writeFileSync(temporario, JSON.stringify(manifest, null, 2) + '\n');
 renameSync(temporario, MANIFEST);
 
-const total = obrigatorios.reduce((sum, [, pool]) => sum + pool.length, 0);
+const total = obrigatorios.reduce((sum, [, pool]) => sum + pool.length, 0)
+  + Object.values(weaponCandidates).reduce((sum, pool) => sum + Math.max(0, pool.length - 1), 0);
 console.log(`laboratório Fab instalado: ${total} referências em ${Object.keys(weapons).length} armas, ${Object.keys(footstepsBySurface).length} superfícies e ${Object.keys(mapSoundscapes).length} mapas.`);
 console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos para escuta, não aprovados.');
-console.log('Abra o jogo local; o primeiro disparo por arma aquece o buffer e ainda usa o synth.');
+if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
+if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
+console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

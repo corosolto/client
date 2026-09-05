@@ -293,7 +293,7 @@ export class Sfx {
     revolver38: { rate: .98,  hp: 85,  lp: 9000,  gain: 1.02 },
     deagle:     { rate: .88,  hp: 35,  lp: 7200,  gain: 1.12 },
     m92:        { rate: .98,  hp: 55,  lp: 9000,  gain: 1.04 },
-    shotgun:    { rate: .96,  hp: 28,  lp: 7800,  gain: 1.08 },
+    shotgun:    { rate: 1.00, hp: 0,   lp: 22000, gain: .95 },
   };
   static SAMPLE_CLASS_SIGNATURE = {
     ak:      { rate: 1.00, hp: 0,   lp: 22000, gain: 1.00 },
@@ -305,6 +305,7 @@ export class Sfx {
     sniper:  { rate: .90,  hp: 28,  lp: 6800,  gain: 1.08 },
     shotgun: { rate: .96,  hp: 28,  lp: 7800,  gain: 1.08 },
   };
+  static SAMPLE_SOURCE_NEUTRAL = Object.freeze({ rate: 1, hp: 0, lp: 22000, gain: 1 });
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
   // e decay curto — soa como ferrolho/mola, não como "beep atrasado" (o tal eco estranho).
   _resonator(t, freqs, lvl) {
@@ -506,8 +507,20 @@ export class Sfx {
   async preloadWeaponSamples(weapons = []) {
     this.ensure();
     if (!this.ctx || !this.pack?.weaponSamples) return;
-    const urls = [...new Set(weapons.flatMap((weapon) => this.pack?.weapons?.[weapon] || []))];
+    const urls = [...new Set(weapons.flatMap((weapon) => [
+      ...(this.pack?.weapons?.[weapon] || []),
+      ...(this.pack?.weaponCandidates?.[weapon] || []),
+    ]))];
     await Promise.all(urls.map((url) => this._loadShotSample(url)));
+  }
+  _weaponSample(weapon) {
+    const candidates = this.pack?.weaponCandidates?.[weapon];
+    if (weapon === 'shotgun' && candidates?.length) {
+      const requested = Number.parseInt(new URLSearchParams(location.search).get('shotguntake') || '1', 10);
+      const index = Number.isFinite(requested) ? Math.max(1, Math.min(candidates.length, requested)) - 1 : 0;
+      return candidates[index];
+    }
+    return this._pick(this.pack?.weapons?.[weapon]);
   }
   _shotSample(url, weapon, dist, vol, pan, propDelay) {
     this.ensure();
@@ -522,9 +535,11 @@ export class Sfx {
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
     const cls = Sfx.GUN_CLASS[weapon] || 'rifle';
-    const signature = Sfx.SAMPLE_WEAPON_SIGNATURE[weapon]
-      || Sfx.SAMPLE_CLASS_SIGNATURE[cls]
-      || Sfx.SAMPLE_CLASS_SIGNATURE.rifle;
+    const signature = this.pack?.weaponSamplesAuthentic
+      ? Sfx.SAMPLE_SOURCE_NEUTRAL
+      : (Sfx.SAMPLE_WEAPON_SIGNATURE[weapon]
+        || Sfx.SAMPLE_CLASS_SIGNATURE[cls]
+        || Sfx.SAMPLE_CLASS_SIGNATURE.rifle);
     src.playbackRate.value = signature.rate;
     this._shotVoices = this._shotVoices || [];
     const cortar = (i) => {
@@ -619,7 +634,7 @@ export class Sfx {
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
     vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f && this._shotSample(f, w, dist, vol, pan, propDelay)) return; }
+    if (this.pack?.weaponSamples) { const f = this._weaponSample(w); if (f && this._shotSample(f, w, dist, vol, pan, propDelay)) return; }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.

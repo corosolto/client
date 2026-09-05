@@ -104,6 +104,16 @@
    "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
    "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. A fonte Gunshot_1-1 foi aprovada apenas como candidato no jogo local; `derivados` segue vazio porque nenhum arquivo de release foi criado, escutado e aprovado."
   },
+  "free-firearm-sfx-cc0": {
+   "titulo": "The Free Firearm Sound Library — Prepared SFX Library",
+   "autor": "Ben Jaszczak, Brian Nelson, Kevin Heras e Matthew Nanney",
+   "url": "https://opengameart.org/content/the-free-firearm-sound-library",
+   "licenca": "CC0-1.0",
+   "redistribuicao": "livre",
+   "usoComIA": "sim",
+   "stagingPrivado": "private-assets/audio/csbr-firearms-cc0",
+   "notas": "Biblioteca de armas reais publicada como CC0 pelos autores. O arquivo Prepared SFX Library.7z foi baixado em 05/09/2026 com sha256 cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6. A ferramenta tools/audio/prepare-free-firearm-cc0.mjs isola one-shots por silêncio, registra fonte, modelo, distância, correspondência e hashes em manifest privado. Os 29 WAVs são candidatos locais: nenhum recebeu aprovação humana ou autorização de release. A AK continua no take Fab já aprovado localmente."
+  },
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
    "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",

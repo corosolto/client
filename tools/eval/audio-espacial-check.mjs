@@ -40,6 +40,8 @@
      ESP1  cache frio não silencia: o primeiro tiro toca de algum jeito.
      ESP1b pré-carga da partida: o primeiro tiro real usa um único BufferSource
            do WAV, sem synth de contingência nem camadas sobrepostas.
+     ESP1c seletor de shotgun escolhe exatamente o take pedido na URL.
+     ESP1d gravação real toca neutra, sem pitch/EQ de família.
      ESP2  pan: `pan` ≠ 0 vira um `StereoPanner` com esse valor no caminho sample.
      ESP3  propagação: o som começa em `currentTime + propDelay`, não em zero.
      ESP4  duck: o caminho sample ducka pela MESMA regra do synth (`<12 ? .3 : .55`).
@@ -276,6 +278,41 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
       + ` e ${tons} oscilador(es). O primeiro tiro da partida deve ser só o WAV já decodificado,`
       + ' sem synth de cache frio e sem ataque/sub sobreposto.',
     'pré-carga deixa o primeiro tiro com uma única fonte WAV, sem synth sobreposto.');
+}
+
+// ── ESP1c / ESP1d: seleção determinística e reprodução autêntica ─────────
+{
+  const oldSearch = location.search;
+  location.search = '?gunvol=1&shotguntake=4';
+  const sfx = new Sfx();
+  sfx.pack = { weaponCandidates: { shotgun: ['s1.wav', 's2.wav', 's3.wav', 's4.wav', 's5.wav', 's6.wav'] } };
+  const selected = sfx._weaponSample('shotgun');
+  location.search = oldSearch;
+  conferir('ESP1c', selected === 's4.wav',
+    `?shotguntake=4 escolheu ${selected || '(nada)'}; a escuta A/B dentro do jogo precisa ser determinística.`,
+    'seletor escolhe exatamente o quarto take de shotgun pedido na URL.');
+}
+
+{
+  LOG = novoLog();
+  const sfx = new Sfx();
+  const src = 'pistol-real.wav';
+  sfx.pack = { weaponSamples: true, weaponSamplesAuthentic: true, weapons: { pistol: [src] } };
+  sfx.ensure();
+  sfx._shotBuf = new Map([[src, { duration: .8 }]]);
+  sfx.shotWeapon('pistol', 0, 1, 0, 0);
+  const source = LOG.starts.find((s) => s.tipo === 'src')?.no;
+  let hasFilter = false;
+  (function walk(node, seen = new Set()) {
+    if (!node || seen.has(node)) return;
+    seen.add(node);
+    if (node.tipo === 'biquad') hasFilter = true;
+    for (const next of node.saidas || []) walk(next, seen);
+  })(source);
+  conferir('ESP1d', source?.playbackRate.value === 1 && !hasFilter,
+    `sample real saiu com rate ${source?.playbackRate.value ?? '(sem fonte)'} e filtro=${hasFilter};`
+      + ' gravação semanticamente escolhida não pode voltar ao timbre genérico por DSP de classe.',
+    'gravação real toca em rate 1 e sem EQ de família.');
 }
 
 // ── ESP2 / ESP3 / ESP4: o caminho sample honra pan, propagação e duck ─────

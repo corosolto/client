@@ -102,6 +102,7 @@
     "audio:shortlist": "node tools/audio/shortlist.mjs",
     "audio:shortlist:autoteste": "node tools/audio/shortlist.mjs --autoteste",
     "audio:ab": "node tools/audio/ab-local.mjs",
+    "audio:firearms:cc0": "node tools/audio/prepare-free-firearm-cc0.mjs",
     "audio:game:local": "node tools/audio/fab-game-local.mjs",
     "eval:backendhints": "node tools/eval/backend-hints-check.mjs",
     "changelog:check": "node scripts/sync-changelog.mjs --check",
