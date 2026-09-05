@@ -1,6 +1,77 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-04 (sétima rodada: arsenal e eventos audíveis no jogo local).
+Atualizado em 2026-09-05 (oitava rodada: identidade das armas, granadas, personagens e 13 mapas).
+
+## Oitava rodada — o jogo deixa de soar como tiro + passos
+
+Checkpoint de implementação: `44d39ba1` (`feat(audio): dar identidade a armas mapas e eventos`).
+
+O relato autoritativo do dono foi que os tiros Fab estavam bons, porém genéricos — rifle,
+pistola e sniper se distinguiam quase só pela cadência — e que morte, granadas, personagens
+e a maior parte dos mapas continuavam mudos. A investigação confirmou duas causas, não uma
+falha de codec:
+
+- a morte tocava no mesmo barramento que o tiro e era reduzida pelo duck justamente no
+  abate; a morte de bot ainda zerava em apenas 34 m;
+- só Córrego declarava `world.sound`; os outros 12 mapas não tinham soundscape ligado.
+
+O runtime e o laboratório local agora entregam:
+
+- **morte audível e contextual:** queda corporal a `0,92 × volume` e vocal físico a
+  `0,46 × volume`, ambos direto no master, fora do duck do tiro; alcance de bot aumentado
+  para 55 m e posição/pan/propagação preservados no single-player e multiplayer;
+- **compatibilidade:** `death(characterId, vol, pan, delay)` aceita também a assinatura antiga
+  `death(vol, pan, delay)`. A primeira implementação quebrou essa compatibilidade e CAP2 ficou
+  vermelho; o overload é o conserto validado, não uma precaução teórica;
+- **granada completa:** pino mecânico procedural, arremesso Fab, quique Fab com força mínima e
+  limite temporal, explosão Fab espacial e abertura procedural da fumaça. Os eventos `nade` e
+  `boom` do multiplayer passam pelos mesmos caminhos;
+- **personagens:** os 44 ids têm perfil físico `male`, `female` ou `creature`, com pools de dor
+  e morte sem `scream`. É feedback corporal provisório, não 44 dublagens autorais; vozes de
+  seleção/time existentes continuam separadas;
+- **13 mapas:** todos recebem configuração local. Praça, Loja H, Ferro Velho, Quebrada, Córrego,
+  Posto, Obras, Parque e Velho Oeste usam vento/água e eventos semanticamente compatíveis do
+  Fab; Piscina usa água; UPA, Atacadão e Penitenciária usam hum procedural discreto com portas
+  ou metal. One-shots são pré-carregados para o primeiro evento não desaparecer;
+- **identidade de arma no sample:** pistola, SMG, AR, rifle, LMG, sniper e shotgun recebem
+  pitch, faixa espectral, transiente e corpo próprios. A AK usa perfil neutro — `rate 1`, sem
+  filtro nem camada — para preservar o take já aprovado na escuta local.
+
+O manifest instalado contém 285 referências (265 URLs únicas): 25 armas, 7 pisos, 13 mapas,
+3 perfis físicos, 2 takes de arremesso, 4 de quique e 4 quedas corporais. Os WAVs continuam no
+staging privado e o Git contém somente código, contrato e fixtures de texto.
+
+Validação executada neste checkpoint:
+
+- `build`, `syntax`, `eval:audiofablocal`, `eval:audioalcance`, `eval:audioespacial`,
+  `eval:audiocapacidade`, `eval:audioproc`, `docs:check`, `arch:check`, `eval:docsautoria` e
+  `git diff --check`: verdes;
+- mutante `eval:audiofablocal -- --mutante=sem-veto`: vermelho em LAB4/LAB5d, como esperado;
+- servidor `http://127.0.0.1:8131/`: raiz e manifest HTTP 200;
+- 265/265 URLs únicas do manifest: HTTP 200 com MIME `audio/wav`;
+- amostras críticas de morte, vocal masculino/feminino, arremesso, quique, Córrego e UPA:
+  HTTP 206 com cabeçalho `RIFF/WAVE`.
+
+A automação do navegador não conseguiu entrar no localhost porque a checagem de política do
+browser ficou indisponível em duas tentativas. Isso não foi contornado. Portanto, a prova HTTP
+e os gates estão verdes, mas a escuta humana abaixo continua obrigatória.
+
+### Escuta manual autoritativa em `8131`
+
+1. Recarregar `http://127.0.0.1:8131/` e iniciar single-player.
+2. Atirar duas vezes com a AK: o primeiro tiro aquece o buffer e pode usar synth; o segundo
+   preserva o take aprovado. Trocar entre pistola/SMG/rifle/sniper/shotgun para julgar a nova
+   assinatura, não apenas a cadência.
+3. Tecla `4`: ouvir pino, arremesso, pelo menos um quique e abertura da fumaça após 2,2 s.
+4. Tecla `5`: ouvir pino, arremesso, quique e explosão após 1,5 s. Há uma frag por round.
+5. Matar um bot perto e a média distância: ouvir vocal físico + queda corporal. Deixar o
+   jogador morrer uma vez para conferir a versão central/prioritária.
+6. Entrar ao menos em Córrego, UPA e Ferro Velho: o leito começa após decodificação; eventos
+   pontuais têm intervalos deliberados de 16–95 s e não devem competir com informação de jogo.
+
+Próximo passo concreto: o dono marca cada família/evento/mapa como `aprovado`, `baixo`, `alto`,
+`genérico` ou `semântico errado`. Nenhum resultado técnico desta rodada autoriza release,
+publicação, derivado distribuível, push ou merge.
 
 ## Sétima rodada — cobertura do jogo e primeira decisão humana
 
@@ -140,6 +211,7 @@ integração ia herdar calada.
 | `fe169ff1` | laboratório Fab ligado ao jogo local sem versionar os WAVs |
 | `b46d452f` | escuta no jogo local registrada e servidor 8131 documentado |
 | `cfe7f7ed` | 25 tiros próprios, eventos, pisos, limites de voz e gates CAP5/ESP10 |
+| `44d39ba1` | assinaturas de arma, granadas, morte prioritária, perfis físicos e 13 soundscapes |
 
 ## Fonte e licença
 
