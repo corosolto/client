@@ -150,6 +150,13 @@ if (manifest) {
     || Object.values(boomM4?.styles || {}).flat().some((url) => !url.startsWith('audio/boom-guns-dev/'))) {
     erros.push('LAB5db BOOM Designed não entrou como pack A/B por arma e estilo.');
   }
+  if (manifest.weaponPacks?.boom?.gain !== 0.7) {
+    erros.push('LAB5de BOOM Designed não aplica a redução de 3,1 dB pedida na escuta.');
+  }
+  if (!manifest.weaponPacks?.boom?.fallbackWeapons?.includes('uzi')
+    || !manifest.weaponPacks?.boom?.fallbackWeapons?.includes('p90')) {
+    erros.push('LAB5df BOOM Designed não declara Uzi/P90 para pré-carga do pack anterior.');
+  }
   if (manifest.defaultWeaponPack !== 'boom') {
     erros.push('LAB5dd BOOM Designed não virou o padrão do laboratório local.');
   }

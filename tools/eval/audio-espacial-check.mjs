@@ -45,6 +45,8 @@
      ESP1e BOOM A/B respeita pack, estilo e take pedidos na URL.
      ESP1f manifest local pode tornar BOOM padrão sem parâmetro na URL.
      ESP1g `gunpack=base` continua permitindo comparar a base anterior.
+     ESP1h BOOM baixa o próprio ganho e pré-carrega Uzi/P90 do pack anterior,
+           mesmo quando elas não estavam na lista inicial da partida.
      ESP2  pan: `pan` ≠ 0 vira um `StereoPanner` com esse valor no caminho sample.
      ESP3  propagação: o som começa em `currentTime + propDelay`, não em zero.
      ESP4  duck: o caminho sample ducka pela MESMA regra do synth (`<12 ? .3 : .55`).
@@ -356,6 +358,43 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
   conferir('ESP1g', selectedBase === 'base.wav',
     `?gunpack=base escolheu ${selectedBase || '(nada)'}; a comparação com a base precisa continuar disponível.`,
     '`gunpack=base` retorna explicitamente à base anterior.');
+}
+
+{
+  const oldSearch = location.search;
+  location.search = '?gunvol=1';
+  FETCH_404 = false; FETCHES = 0; DECODES = 0; LOG = novoLog();
+  const sfx = new Sfx();
+  sfx.pack = {
+    weaponSamples: true, weaponSamplesAuthentic: true, defaultWeaponPack: 'boom',
+    weapons: { uzi: ['uzi-base.wav'], p90: ['p90-base.wav'] },
+    weaponPacks: { boom: { gain: 0.7, neutralPlayback: true, fallbackWeapons: ['uzi', 'p90'], weapons: { m4: {
+      defaultStyle: 'huge', styles: { huge: ['m4-boom.wav'] },
+    } } } },
+  };
+  sfx.ensure();
+  /* Simula a causa real: a partida começou com M4 e as SMGs só apareceram depois.
+     O manifest sabe que são exceções do BOOM e precisa aquecê-las mesmo assim. */
+  await sfx.preloadWeaponSamples(['m4']);
+  LOG = novoLog();
+  sfx.shotWeapon('m4', 0, 1, 0, 0);
+  const ganhoBoom = ganhoAteDestino(LOG);
+  const fonteBoom = LOG.starts.filter((start) => start.tipo === 'src').length;
+  LOG = novoLog();
+  sfx.shotWeapon('uzi', 0, 1, 0, 0);
+  const ganhoUzi = ganhoAteDestino(LOG);
+  const fonteUzi = LOG.starts.filter((start) => start.tipo === 'src').length;
+  LOG = novoLog();
+  sfx.shotWeapon('p90', 0, 1, 0, 0);
+  const ganhoP90 = ganhoAteDestino(LOG);
+  const fonteP90 = LOG.starts.filter((start) => start.tipo === 'src').length;
+  location.search = oldSearch;
+  const perto = (a, b) => a !== null && Math.abs(a - b) < 1e-6;
+  conferir('ESP1h', fonteBoom === 1 && fonteUzi === 1 && fonteP90 === 1
+    && perto(ganhoBoom, sfx.vol * 0.7) && perto(ganhoUzi, sfx.vol) && perto(ganhoP90, sfx.vol),
+  `ganhos/fontes BOOM=${ganhoBoom}/${fonteBoom}, Uzi=${ganhoUzi}/${fonteUzi}, P90=${ganhoP90}/${fonteP90};`
+    + ' o pack alto deve baixar sozinho e as exceções precisam estar pré-carregadas no ganho integral.',
+  'BOOM baixa 3,1 dB; Uzi e P90 usam o WAV anterior pré-carregado no ganho integral.');
 }
 
 // ── ESP2 / ESP3 / ESP4: o caminho sample honra pan, propagação e duck ─────

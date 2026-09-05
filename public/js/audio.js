@@ -507,7 +507,13 @@ export class Sfx {
   async preloadWeaponSamples(weapons = []) {
     this.ensure();
     if (!this.ctx || !this.pack?.weaponSamples) return;
-    const urls = [...new Set(weapons.flatMap((weapon) => this._weaponPool(weapon)))];
+    const query = new URLSearchParams(location.search);
+    const packId = query.has('gunpack') ? query.get('gunpack') : this.pack?.defaultWeaponPack;
+    const fallbackWeapons = this.pack?.weaponPacks?.[packId]?.fallbackWeapons || [];
+    /* Armas que o pack ativo não cobre podem aparecer depois do preload inicial
+       (pickup/troca). Aquecê-las aqui evita que o primeiro uso caia no synth genérico. */
+    const requestedWeapons = [...new Set([...weapons, ...fallbackWeapons])];
+    const urls = [...new Set(requestedWeapons.flatMap((weapon) => this._weaponPool(weapon)))];
     await Promise.all(urls.map((url) => this._loadShotSample(url)));
   }
   _weaponPack(weapon) {
@@ -519,7 +525,8 @@ export class Sfx {
     const requestedStyle = query.get('gunstyle');
     const style = cfg.styles?.[requestedStyle] ? requestedStyle : cfg.defaultStyle;
     const pool = cfg.styles?.[style] || [];
-    return pool.length ? { id, pool, neutral: pack.neutralPlayback === true } : null;
+    const gain = Number.isFinite(pack.gain) && pack.gain >= 0 ? pack.gain : 1;
+    return pool.length ? { id, pool, neutral: pack.neutralPlayback === true, gain } : null;
   }
   _weaponPool(weapon) {
     const selectedPack = this._weaponPack(weapon);
@@ -652,10 +659,11 @@ export class Sfx {
 
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
-    vol *= GUN_VOL;
+    const selectedPack = this._weaponPack(w);
+    vol *= GUN_VOL * (selectedPack?.gain ?? 1);
     if (this.pack?.weaponSamples) {
       const f = this._weaponSample(w);
-      const neutral = this._weaponPack(w)?.neutral || this.pack?.weaponSamplesAuthentic === true;
+      const neutral = selectedPack?.neutral || this.pack?.weaponSamplesAuthentic === true;
       if (f && this._shotSample(f, w, dist, vol, pan, propDelay, neutral)) return;
     }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle

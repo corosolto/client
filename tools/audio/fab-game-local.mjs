@@ -201,7 +201,9 @@ if (boomGuns) {
   }
   boomWeaponPack = {
     label: 'BOOM Library GUNS Designed — escuta local',
-    approval: 'local-candidates-only', neutralPlayback: true, weapons: boomWeapons,
+    approval: 'local-candidates-only', neutralPlayback: true, gain: 0.7,
+    fallbackWeapons: Object.keys(weapons).filter((arma) => !boomWeapons[arma]),
+    weapons: boomWeapons,
   };
 }
 /* A shortlist é a entrada editorial da AK. Assim o mutante sem veto continua
@@ -403,5 +405,5 @@ console.log(`laboratório Fab instalado: ${total} referências em ${Object.keys(
 console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos para escuta, não aprovados.');
 if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
 if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
-if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas disponíveis via ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
+if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas a ganho 0,70; ${boomWeaponPack.fallbackWeapons.join(', ')} usam o pack anterior pré-carregado. A/B: ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
 console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

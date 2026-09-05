@@ -76,6 +76,26 @@ Próximo passo concreto: o dono escuta os quatro estilos no jogo e aprova/rejeit
 família. Só depois se reduz o pack a uma seleção artística. Nada desta rodada autoriza release,
 publicação, derivado distribuível, push ou merge.
 
+### Escuta do dono e correção de fechamento
+
+O dono avaliou os novos tiros como bons e estimou que o resultado chegou a **80–90% do que
+queria**, mas apontou duas pendências: o BOOM estava um pouco alto e Uzi/P90 tocavam o som
+genérico, não o pack anterior. Isso é aprovação local parcial, não autorização de release.
+
+A investigação reproduziu o segundo defeito: quando a partida começava sem Uzi/P90 na lista
+de preload, elas apareciam depois sem buffer e o primeiro caminho acionava oito fontes do
+synth genérico. O pack BOOM agora declara `fallbackWeapons: ["uzi", "p90"]`; o preload aquece
+esses dois WAVs CC0 mesmo que a partida comece com outra arma. A ESP1h exige uma única fonte
+WAV para cada fallback e nenhum synth. O ganho BOOM passou a `0.70` (-3,1 dB); Uzi/P90 não
+recebem essa atenuação e permanecem no ganho integral do pack anterior.
+
+O Action Game Sounds Pack tem material adicional útil já inventariado. Vários grupos já estão
+ativos — 168 passos, explosão/quique/arremesso de granada, corpo/morte, perfis físicos,
+início/fim de round, faca, dry-fire, foley de recarga e soundscapes de 13 mapas. O próximo
+incremento de maior valor deve ser estreito: impactos por material/corpo, feedback de armadura,
+foley de pickup/troca de arma e UI. Isso exige criar caminhos específicos no runtime e escuta;
+não se deve ligar centenas de `Interface`/`Hit_Generic` aleatoriamente.
+
 ## Décima rodada — M4, pistolas, Uzi e o restante do arsenal deixam o pool genérico
 
 Checkpoint de implementação: `e2ae2c5c` (`feat(audio): mapear arsenal para gravacoes cc0`).
