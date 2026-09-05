@@ -97,16 +97,32 @@ declara a pistola golden nem libera outras famílias.
   0,38 m. Não houve alteração da AK nem dos arquivos servidos de gameplay.
 - `final-pistol-3x2/` é a última recaptura, incluindo HUD congelado; a captura
   16:9 e o controle AK antecedem somente essa proteção atômica de screenshot.
+  Contrato verde, sem erros, caminhada 0,92 m, salto 0,151 m, parede 0,38 m;
+  retorno natural para idle. `reload-100` registra em `rendered.ammo` 12/47,
+  conferido no PNG; os 11/48 no metadado de fase são explicitamente anteriores.
+- `arch:check` e `docs:check` revalidados após integração das réguas. Código
+  do segundo marco em `e242dc12`. Comparativos regenerados com o frame final.
 
-## Pendências e próximo passo
+## Resultado, limites e continuação
 
-1. Concluir C e capturar comparação com materiais reais usando o helper final;
-   `capture-fixed/` antecede a última proteção de retomada da série.
-2. Comparar até três propostas com os mesmos assets, aspectos 3:2 e 16:9,
-   mantendo pegada, arma reconhecível, recarga, saque e disparo completos.
-3. Rodar contratos e mutantes pertinentes, regressão AK e crítico independente;
-   guardar rejeitados com motivo. Checkpoint recuperável antes da entrega.
-4. Entregar imagens e preview local para a decisão visual do Ruben.
+Piloto de enquadramento encerrado **sem nova candidata aprovada**. Aceitos:
+correções do instrumento e diagnósticos. B/C foram barradas em 3:2; não houve
+motivo para promovê-las a validação 16:9. A baseline foi conferida nos dois
+aspectos. AK preservada. Nenhum merge, push, deploy ou publicação foi feito.
 
-Até aqui: captura corrigida, teste independente e B rejeitada. A pistola não
-foi declarada golden; a leitura do carregador e das mãos ainda precisa melhorar.
+Próximo passo concreto, sem novo ciclo cego de offsets:
+
+1. Na cópia local do Blender/GLB, inspecionar superfícies deformadas da mão
+   esquerda, Mag e Cartridge em reload .52/.60/.68, com vistas ortogonais e
+   câmera do jogo. Medir o contato das superfícies, não só os pivôs dos ossos.
+2. Se houver defeito autoral, corrigir apenas os canais/rig comprovados e
+   exportar com `privateRoot` explícito para esta cópia. Preservar a AK e o
+   baseline por SHA; não compensar a arma com escalas de mãos sem referência.
+3. Capturar uma sequência contínua curta de recarga para validar as misturas
+   de entrada/saída: as séries atuais isolam fases do clipe e não provam blends.
+4. Repetir gauntlet e materiais reais em 3:2/16:9, crítica independente e
+   aprovação visual do Ruben. O BUG-75 continua aberto; nada foi declarado golden.
+
+Não verificado: celular/Safari/ultrawide, FPS/custo comparativo, blends contínuos,
+contato 3D de superfícies e publicação. O gate amplo tem os três vermelhos
+preexistentes documentados, além das quatro falhas do contrato geral de catálogo.
