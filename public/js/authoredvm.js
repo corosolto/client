@@ -207,9 +207,8 @@ const FAMILY_FRAME = Object.freeze({
   deagle:  { x: 0.089, y: -0.152, z: -0.217, fov: 84, rotDeg: [-15.8, -0.2, 0] },
   smg:     { x: 0.206, y: -0.141, z: -0.462, fov: 84, rotDeg: [15.4, 6.0, 0] },
   p90:     { x: 0.075, y: -0.02, z: -0.141, fov: 84, rotDeg: [0, 0, 0] },
-  // X18 nivelada (socket de filho-de-bone): candidato H da varredura medida
-  // (docs/reports/VIEWMODEL-FABLE51-PISTOL-HANDOFF.md) — único limpo no gauntlet.
-  pistol:  { x: 0.100, y: -0.100, z: -0.220, fov: 55, rotDeg: [0, 20, -5], drawDrop: 0.34 },
+  // Yaw 15° aprovado em 05/09: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
+  pistol:  { x: 0.100, y: -0.100, z: -0.220, fov: 55, rotDeg: [0, 15, -5], drawDrop: 0.34 },
   shotgun: { x: 0.057, y: -0.114, z: -0.159, fov: 84, rotDeg: [-8.9, 0, 0] },
   sniper:  { x: 0.118, y: -0.128, z: 0.029, fov: 84, rotDeg: [-11.9, 0, 0] },
   bolt:    { x: 0.055, y: -0.083, z: -0.254, fov: 84, rotDeg: [-1.6, -0.3, 0] },

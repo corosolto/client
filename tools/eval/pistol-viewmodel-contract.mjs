@@ -157,13 +157,12 @@ const frameMatch = /pistol:\s*\{\s*x:\s*([\d.-]+),\s*y:\s*([\d.-]+),\s*z:\s*([\d
 const frame = frameMatch ? {
   x: Number(frameMatch[1]), y: Number(frameMatch[2]), z: Number(frameMatch[3]),
   fov: hasMutant('fov-pacote') ? 84 : Number(frameMatch[4]),
-  rotDeg: frameMatch[5].split(',').map(Number),
+  rotDeg: hasMutant('quadro-antigo') ? [0, 20, -5] : frameMatch[5].split(',').map(Number),
   drawDrop: Number(frameMatch[6]),
 } : null;
-/* Frame-base = candidato H da varredura medida sobre a X18 nivelada
-   (docs/reports/VIEWMODEL-FABLE51-PISTOL-HANDOFF.md, fable51-grid/H-y20):
-   único quadro limpo no gauntlet — cano a 20°, mão/arma 3,78, caixa 0,51;0,70. */
-const FRAME_BASE = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: '0,20,-5', drawDrop: 0.34 };
+// Yaw 15° aprovado pelo Ruben em 05/09, mantendo os demais parâmetros.
+// Evidência e limite P4 widescreen: VIEWMODEL-ASTRA-PISTOL-HANDOFF.md.
+const FRAME_BASE = { x: 0.1, y: -0.1, z: -0.22, fov: 55, rotDeg: '0,15,-5', drawDrop: 0.34 };
 check(frame && Math.abs(frame.x - FRAME_BASE.x) < 1e-6 && Math.abs(frame.y - FRAME_BASE.y) < 1e-6 && Math.abs(frame.z - FRAME_BASE.z) < 1e-6,
   `posição-base da pistola divergiu (${frame ? [frame.x, frame.y, frame.z].join(', ') : 'ausente'})`);
 check(frame?.fov === FRAME_BASE.fov, `VFOV-base da pistola precisa ser ${FRAME_BASE.fov}°, recebido ${frame?.fov ?? 'ausente'}°`);
@@ -176,6 +175,11 @@ check(runtime, `relatório do runtime ausente: ${reportFile}`);
 const fileBytes = fs.readFileSync(file);
 const sha256 = crypto.createHash('sha256').update(fileBytes).digest('hex');
 if (runtime) {
+  const renderedFrame = hasMutant('runtime-quadro-antigo')
+    ? { ...runtime.frame, rotDeg: [0, 20, -5] } : runtime.frame;
+  check(renderedFrame && ['x', 'y', 'z', 'fov', 'drawDrop'].every((key) => renderedFrame[key] === FRAME_BASE[key])
+    && renderedFrame.rotDeg?.join(',') === FRAME_BASE.rotDeg,
+  'frame efetivo do browser diverge do enquadramento aprovado; recapture sem overrides');
   const actualAspect = runtime.viewport.width / runtime.viewport.height;
   const expectedFov = 2 * Math.atan(Math.tan(FRAME_BASE.fov * Math.PI / 360) * (16 / 9) / actualAspect) * 180 / Math.PI;
   const reloadFrames = runtime.states.filter((state) => state.label.startsWith('reload-'));

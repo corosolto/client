@@ -4,7 +4,7 @@
 
 - **Versão:** `2.0.0-alpha.196`
 - **Conteúdo jogável:** 10 facções, 62 personagens, 17 mapas e 27 armas com GLB
-- **Código do jogo:** 43.862 linhas em 65 módulos JavaScript
+- **Código do jogo:** 43.861 linhas em 65 módulos JavaScript
 - **Automação:** 200 comandos npm, 330 scripts de avaliação e 77 scripts de pipeline
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `package.json · CHARACTERS · MAPS · public/models/weapons · public/js · tools/`
@@ -17,8 +17,10 @@ O jogo é um FPS de navegador em Three.js, servido como módulos ES nativos. O s
 rotas de API e as páginas públicas usam Astro e Vercel. O modo principal continua sendo
 single-player contra bots, com rodadas e captura de bandeiras.
 
-Nos viewmodels, a AK é a referência golden aprovada. A pistola X18/G18 está tecnicamente
-verde no jogo real e aguarda revisão visual do dono; nenhuma terceira família está liberada.
+Nos viewmodels, a AK é a referência golden aprovada. Ruben aprovou o enquadramento da
+pistola X18/G18 a 15° de yaw; o P4 de contato em 16:9 ainda tem amostra insuficiente.
+A sequência autorizada é faca → sniper/AWP → escopeta, com a faca em avaliação.
+Estado e retomada: `docs/reports/VIEWMODEL-SERIES-HANDOFF.md`.
 
 O ranking está desligado por `RANKING_ON`. A telemetria anônima continua ativa e registra
 funil, performance, partidas, mapas, modos, personagens, armas e facções. O mapa público

@@ -222,3 +222,21 @@ Para continuar: colher a escolha visual de 15° e resolver/medir a visibilidade
 da troca de carregador em 16:9 antes de promover o conjunto. A inspeção de
 superfícies deformadas e a recarga contínua, já previstas acima, continuam
 pendentes. Não girar/recentralizar outras armas nem reconstruir a AK.
+
+## Aprovação e aplicação — 05/09/2026
+
+Ruben aprovou 15° e autorizou a próxima série. `FAMILY_FRAME.pistol` agora
+usa `[0, 15, -5]`, sem mudar posição, FOV, drawDrop, GLBs ou outras famílias.
+O contrato foi primeiro tornado vermelho contra o yaw 20° e depois passou
+com o runtime corrigido. Os mutantes `--mutante-quadro-antigo` e
+`--mutante-runtime-quadro-antigo` reprovam respectivamente fonte e relatório
+do browser a 20°, sem tocar arquivos de produção.
+
+Recaptura **sem overrides**, 1440×960: `artifacts/viewmodels/astra-pistol/approved-runtime/`
+(27 frames, sem erros). `approved-contract-final.json` passou; hashes da AK e
+da pistola conferidos, iguais aos controles. A folha foi inspecionada. Isso
+consolida a escolha de enquadramento, não apaga a dívida P4 em 16:9 acima.
+
+O objetivo completo, validações finais e próxima ação passam a ser mantidos
+em `VIEWMODEL-SERIES-HANDOFF.md`. Prompt de transferência manual ao Claude:
+`PROMPT-CLAUDE-VIEWMODELS.md`. Nenhuma transferência, publicação ou compra feita.
