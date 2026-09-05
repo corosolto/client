@@ -1,8 +1,8 @@
 import { WEAPONS } from './data/weapons.js';
 
-export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
+export const SNAPSHOT_PROTOCOLS = Object.freeze(['coro-snapshot-v4', 'coro-snapshot-v3', 'coro-snapshot-v2', 'coro-json-v1']);
 export const MAX_SNAPSHOT_BYTES = 32768;
-const CURRENT_VERSION = 3;
+const CURRENT_VERSION = 4;
 const KIND_SNAPSHOT = 1;
 const MAX_ENTITIES = 64;
 const MAX_CTF_POINTS = 16;
@@ -68,7 +68,7 @@ const integer = (value, max, name) => {
 
 export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   if (!snapshot || snapshot.type !== 'snapshot') throw new TypeError('snapshot_required');
-  if (version !== 2 && version !== 3) throw new TypeError('snapshot_version');
+  if (version !== 2 && version !== 3 && version !== 4) throw new TypeError('snapshot_version');
   const ents = Array.isArray(snapshot.ents) ? snapshot.ents : [];
   if (ents.length > MAX_ENTITIES) throw new RangeError('too_many_entities');
   const w = new Writer();
@@ -103,7 +103,11 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
   for (const ent of ents) {
     if (ent.team !== 'E' && ent.team !== 'B') throw new RangeError('team');
     const weapon = ent.weapon == null ? 255 : WEAPON_INDEX.get(ent.weapon);
+    const primary = ent.primary == null ? 255 : WEAPON_INDEX.get(ent.primary);
+    const secondary = ent.secondary == null ? 255 : WEAPON_INDEX.get(ent.secondary);
     if (weapon == null) throw new RangeError('weapon');
+    if (primary == null) throw new RangeError('primary');
+    if (secondary == null) throw new RangeError('secondary');
     w.u32(integer(ent.id, 0xffffffff, 'entity_id')); w.str(ent.name);
     w.u8((ent.team === 'B' ? 1 : 0) | (ent.bot ? 2 : 0) | (ent.alive ? 4 : 0) | (ent.fire ? 8 : 0));
     w.f32(ent.x); w.f32(ent.y); w.f32(ent.z); w.f32(ent.yaw); w.f32(ent.pitch);
@@ -111,6 +115,15 @@ export function encodeSnapshot(snapshot, version = CURRENT_VERSION) {
     w.u8(ent.voice === 'radio' ? 1 : ent.voice ? 2 : 0);
     w.u16(integer(ent.k, 65535, 'kills')); w.u16(integer(ent.d, 65535, 'deaths'));
     w.f32(ent.respawnIn); w.str(ent.killedBy);
+    /* v4 fecha a segunda cópia de estado do slot no navegador. O ack é da mesma entidade
+       que todos já recebem; munição/slots ausentes usam 65535/255 para bots e fallbacks. */
+    if (version >= 4) {
+      w.u32(integer(ent.ackSeq ?? 0, 0xffffffff, 'ack_seq'));
+      w.u16(ent.mag == null ? 65535 : integer(ent.mag, 65534, 'mag'));
+      w.u16(ent.res == null ? 65535 : integer(ent.res, 65534, 'reserve'));
+      w.f32(Math.max(0, Number(ent.reloadIn) || 0));
+      w.u8(primary); w.u8(secondary);
+    }
   }
   return w.done();
 }
@@ -119,7 +132,7 @@ export function decodeSnapshot(data) {
   const r = new Reader(data);
   if (r.u8() !== 0x43 || r.u8() !== 0x53 || r.u8() !== 0x42 || r.u8() !== 0x32) throw new TypeError('snapshot_magic');
   const version = r.u8();
-  if ((version !== 2 && version !== 3) || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
+  if ((version !== 2 && version !== 3 && version !== 4) || r.u8() !== KIND_SNAPSHOT) throw new TypeError('snapshot_version');
   const snapshot = {
     type: 'snapshot', room: r.str(), tick: r.u32(), t: r.f64(), state: r.str(), owner: r.str() || null,
     players: r.u8(), spectators: r.u8(), livre: { E: r.u8(), B: r.u8() },
@@ -149,12 +162,27 @@ export function decodeSnapshot(data) {
     const hp = r.u16(), weaponId = r.u8(), voiceId = r.u8(), k = r.u16(), d = r.u16();
     const respawnIn = r.f32(), killedBy = r.str();
     if (weaponId !== 255 && !WEAPON_IDS[weaponId]) throw new RangeError('weapon');
-    snapshot.ents.push({
+    const ent = {
       id, name, team: flags & 1 ? 'B' : 'E', bot: flags & 2 ? 1 : 0,
       x, y, z, yaw, pitch, hp, alive: !!(flags & 4), weapon: weaponId === 255 ? null : WEAPON_IDS[weaponId],
       fire: flags & 8 ? 1 : 0, voice: voiceId === 1 ? 'radio' : voiceId === 2 ? 'voice' : 0,
       k, d, respawnIn, ...(killedBy ? { killedBy } : {}),
-    });
+    };
+    if (version >= 4) {
+      const ackSeq = r.u32(), mag = r.u16(), res = r.u16(), reloadIn = r.f32();
+      const primaryId = r.u8(), secondaryId = r.u8();
+      if (primaryId !== 255 && !WEAPON_IDS[primaryId]) throw new RangeError('primary');
+      if (secondaryId !== 255 && !WEAPON_IDS[secondaryId]) throw new RangeError('secondary');
+      Object.assign(ent, {
+        ackSeq,
+        mag: mag === 65535 ? null : mag,
+        res: res === 65535 ? null : res,
+        reloadIn,
+        primary: primaryId === 255 ? null : WEAPON_IDS[primaryId],
+        secondary: secondaryId === 255 ? null : WEAPON_IDS[secondaryId],
+      });
+    }
+    snapshot.ents.push(ent);
   }
   r.finish();
   return snapshot;
