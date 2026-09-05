@@ -14,8 +14,8 @@ function create() {
   const scene = new THREE.Group();
   const hand = new THREE.Object3D(); hand.name = 'Hand'; scene.add(hand);
   scene.add(new THREE.PerspectiveCamera(32, 1.5, 0.01, 100));
-  const animations = ['Idle', 'Draw', 'Slash', 'Stab'].map((name, i) => new THREE.AnimationClip(name,
-    [2, 2 / 3, 11 / 15, 0.8][i], [new THREE.NumberKeyframeTrack('Hand.position[x]', [0, 0.1], [i + 1, i + 1])]));
+  const animations = ['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab'].map((name, i) => new THREE.AnimationClip(name,
+    [2, 2 / 3, 11 / 15, 0.8, 0.8, 0.8][i], [new THREE.NumberKeyframeTrack('Hand.position[x]', [0, 0.1], [i + 1, i + 1])]));
   const vm = new KnifeMeleeViewModel({ parent: new THREE.Group() });
   vm._accept({ scene, animations }); vm.setWeapon('knife'); vm.update(0.1);
   if (mutant === '--mutante=quadro-antigo') {
@@ -68,7 +68,7 @@ for (const kind of ['draw', 'quick', 'heavy']) {
   // Um evento atrasado de uma ação substituída não pode encerrar a atual.
   vm.mixer.dispatchEvent({ type: 'finished', action: oldAction, direction: 1 });
   checks.push({ name: 'finished de ação substituída não interrompe ataque',
-    ok: vm.current === current && vm.state === 'Stab' && vm.attackMotion !== null });
+    ok: vm.current === current && vm.state === 'QuickThrust' && vm.attackMotion !== null });
   vm.dispose();
 }
 {

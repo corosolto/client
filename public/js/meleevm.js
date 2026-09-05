@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
 
-const KNIFE_URL = '/models/viewmodels/coro/melee/knife-hires.glb?v=knife-pilot-12';
-const REQUIRED_CLIPS = Object.freeze(['Idle', 'Draw', 'Slash', 'Stab']);
+const KNIFE_URL = '/models/viewmodels/coro/melee/knife-hires.glb?v=knife-motion-d-1';
+const REQUIRED_CLIPS = Object.freeze(['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab']);
 const QA_SLOW_MOTION = typeof location !== 'undefined'
   && new URLSearchParams(location.search).get('meleeqa') === '1';
 const ACTION_SECONDS = Object.freeze(QA_SLOW_MOTION
@@ -13,86 +14,14 @@ const ACTION_SECONDS = Object.freeze(QA_SLOW_MOTION
 const PACKAGE_SCALE = 0.0135;
 const PACKAGE_OFFSET = new THREE.Vector3(0.18, -0.12, -0.25);
 const STAB_PROFILES = Object.freeze({
-  quick: Object.freeze({ seconds: QA_SLOW_MOTION ? 4.0 : 0.36, depth: 0.052 }),
-  heavy: Object.freeze({ seconds: QA_SLOW_MOTION ? 5.0 : 0.62, depth: 0.105 }),
+  quick: Object.freeze({ clip: 'QuickThrust', seconds: QA_SLOW_MOTION ? 4.0 : 0.36, depth: 0 }),
+  heavy: Object.freeze({ clip: 'HeavyStab', seconds: QA_SLOW_MOTION ? 5.0 : 0.62, depth: 0 }),
 });
 const APPROVED_GLOVE_MATERIAL = /CoroSolto_FP_Gloves/i;
-const CHARACTER_TEXTURES = new Map();
-
-const colorCss = (value, fallback) => `#${new THREE.Color(value ?? fallback).getHexString()}`;
-
-function characterGloveTexture(profile, donorMap = null) {
-  if (typeof document === 'undefined') return null;
-  const key = `${profile.id || 'player'}:glove:${profile.skin}:${profile.sleeve}:${profile.accent}`;
-  if (CHARACTER_TEXTURES.has(key)) return CHARACTER_TEXTURES.get(key);
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 128;
-  const context = canvas.getContext('2d');
-  const sleeve = colorCss(profile.sleeve, 0x27364a);
-  const accent = colorCss(profile.accent, 0xb02b36);
-  const gradient = context.createLinearGradient(0, 0, 128, 128);
-  gradient.addColorStop(0, sleeve);
-  gradient.addColorStop(0.52, sleeve);
-  gradient.addColorStop(1, accent);
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 128, 128);
-  const donorImage = donorMap?.image;
-  if (donorImage) {
-    try {
-      const relief = document.createElement('canvas');
-      relief.width = relief.height = 128;
-      const reliefContext = relief.getContext('2d');
-      reliefContext.drawImage(donorImage, 0, 0, 128, 128);
-      const pixels = reliefContext.getImageData(0, 0, 128, 128);
-      for (let i = 0; i < pixels.data.length; i += 4) {
-        const luminance = (pixels.data[i] * 0.2126 + pixels.data[i + 1] * 0.7152
-          + pixels.data[i + 2] * 0.0722) / 255;
-        const reliefValue = Math.round(150 + luminance * 105);
-        pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = reliefValue;
-      }
-      reliefContext.putImageData(pixels, 0, 0);
-      context.save();
-      context.globalCompositeOperation = 'multiply';
-      context.globalAlpha = 0.72;
-      context.drawImage(relief, 0, 0);
-      context.restore();
-    } catch { /* The palette texture remains usable without the donor relief. */ }
-  }
-  context.globalAlpha = 0.38;
-  context.fillStyle = accent;
-  for (let x = -96; x < 192; x += 38) {
-    context.beginPath(); context.moveTo(x, 128); context.lineTo(x + 24, 128);
-    context.lineTo(x + 104, 0); context.lineTo(x + 80, 0); context.closePath(); context.fill();
-  }
-  context.globalAlpha = 0.28;
-  context.strokeStyle = '#10151b'; context.lineWidth = 3;
-  for (let y = 12; y < 128; y += 24) {
-    context.beginPath(); context.moveTo(0, y); context.lineTo(128, y + 5); context.stroke();
-  }
-  context.globalAlpha = 0.13;
-  context.fillStyle = '#ffffff';
-  for (let y = 0; y < 128; y += 4) {
-    for (let x = (y / 4) % 2; x < 128; x += 8) context.fillRect(x, y, 1, 1);
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.name = `coro_character_hand_${profile.id || 'player'}_glove`;
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
-  texture.userData.coroCharacterTexture = true;
-  CHARACTER_TEXTURES.set(key, texture);
-  return texture;
-}
 
 function approvedGloveMaterial(material, profile) {
   if (!APPROVED_GLOVE_MATERIAL.test(material?.name || '')) return material;
-  const copy = material.clone();
-  const sleeve = new THREE.Color(profile.sleeve ?? 0x27364a).multiplyScalar(0.72);
-  copy.map = characterGloveTexture(profile, material.map);
-  copy.color.copy(sleeve).multiplyScalar(0.38);
-  copy.roughness = Math.max(0.74, copy.roughness ?? 1);
-  copy.metalness = 0;
-  copy.needsUpdate = true;
-  return copy;
+  return applyTeamHandMaterial(material, profile, 'knife');
 }
 
 export class KnifeMeleeViewModel {
@@ -123,6 +52,13 @@ export class KnifeMeleeViewModel {
   get loaded() { return !!this.scene; }
   get active() { return this.loaded && this.weapon === 'knife'; }
   get state() { return this.current?.getClip()?.name || ''; }
+
+  setProfile(profile) {
+    this.profile = profile;
+    const meshes = [];
+    this.scene?.traverse((object) => { if (object.isMesh) meshes.push(object); });
+    refreshTeamHands(meshes, profile, 'knife');
+  }
 
   _accept(gltf) {
     const scene = gltf.scene;
@@ -210,9 +146,7 @@ export class KnifeMeleeViewModel {
     if (!this.active) return false;
     const profile = STAB_PROFILES[kind] || STAB_PROFILES.quick;
     this.attackMotion = { elapsed: 0, duration: profile.seconds, depth: profile.depth };
-    // Os dois ataques são estocadas. O esquerdo é rápido; o direito é a cravada
-    // completa, com a pose fechada do clipe Stab e avanço mais profundo do pacote.
-    return this._play('Stab', profile.seconds);
+    return this._play(profile.clip, profile.seconds);
   }
 
   playState(name) { return this.active && REQUIRED_CLIPS.includes(name) && this._play(name); }

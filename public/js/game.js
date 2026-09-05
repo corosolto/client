@@ -844,7 +844,7 @@ export class Game {
     const authoredPal = authoredDef?.pal || { skin: 0xd9a066, shirt: 0x27364a };
     this.vm.authored = createAuthoredViewModels(this.vm.root, () => {
       if (!this._disposed && this.vm) this._applyVmVisibility();
-    }, { id: this.playerCharId, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants });
+    }, { id: this.playerCharId, faction: this.playerFaction, skin: authoredPal.skin, sleeve: authoredPal.shirt, accent: authoredPal.pants });
     {
       /* ORÇAMENTO DE LUZ DO VIEWMODEL — MAT2. O rig abaixo (key/fill/sky/rim/bounce+hemi)
          somava 7,60 unidades FIXAS, contra 2,60 (ferro_velho) a 3,60 (praca_poderes) dos mapas:
@@ -1025,6 +1025,7 @@ export class Game {
       parent: this.vmScene,
       profile: {
         id: this.playerCharId,
+        faction: this.playerFaction,
         skin: this.playerDef?.pal?.skin,
         sleeve: this.playerDef?.pal?.shirt,
         accent: factionColor(this.playerFaction),
@@ -2899,6 +2900,9 @@ export class Game {
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
     this.playerFaction = this.enemyFaction;
     this.enemyFaction = oldFaction;
+    const handProfile = { id: this.playerCharId, faction: this.playerFaction };
+    this.vm.authored?.setProfile(handProfile);
+    this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
     // rebalanceia 4×4: um bot do time novo deserta pro time velho
     const candidates = this.bots.filter(b => b.team === newTeam);

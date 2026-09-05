@@ -181,7 +181,9 @@ try {
     for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
       await advance(duration * fraction - elapsed); elapsed = duration * fraction;
       const state = await snapshot(`${kind}-${Math.round(fraction * 100).toString().padStart(3, '0')}`);
-      if (fraction === 0.5) check(state.state === (kind === 'draw' ? 'Draw' : candidate && kind === 'heavy' ? 'Slash' : 'Stab'), `${kind} animação no meio da ação`, state.state);
+      const expected = kind === 'draw' ? 'Draw' : candidate
+        ? (kind === 'heavy' ? 'Slash' : 'Stab') : (kind === 'heavy' ? 'HeavyStab' : 'QuickThrust');
+      if (fraction === 0.5) check(state.state === expected, `${kind} animação no meio da ação`, state.state);
     }
     await advance(0.1);
     const returned = await snapshot(`${kind}-retorno`);

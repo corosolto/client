@@ -4,6 +4,7 @@ import { VM_FAMILY, VM_WEAPON } from './data/vmconfig.js';
 import { attachMintWeapon, mintPointWorld, mintPointScene } from './vmweapon.js';
 import { VmRecoil } from './vmrecoil.js';
 import { weaponCFG } from './weapons.js';
+import { applyTeamHandMaterial, refreshTeamHands } from './vmhands.js';
 
 const DEG2RAD = Math.PI / 180;
 
@@ -90,7 +91,7 @@ function bindSharedArmTextures(handMeshes, shared) {
       const kind = /CoroSolto_FP_(Hand|Glove|Cloth)/.exec(material?.name || '')?.[1];
       if (!kind) continue;
       const base = MATERIAL_TEXTURE_BASE[kind];
-      material.map = shared.get(`${base}_B`) || material.map;
+      if (!material.userData.teamHands) material.map = shared.get(`${base}_B`) || material.map;
       material.normalMap = shared.get(`${base}_N`) || material.normalMap;
       const orm = shared.get(`${base}_ORM`);
       if (orm) {
@@ -162,8 +163,6 @@ const _adsBlend = new THREE.Quaternion();
 const _adsForward = new THREE.Vector3();
 const _ADS_AXIS = new THREE.Vector3(0, 0, -1);
 const HAND_MATERIAL = /CoroSolto_(?:FP_(?:Hand|Gloves?|Cloth)|Mandrake_Sleeves)/i;
-const SKIN_MATERIAL = /CoroSolto_FP_Hand/i;
-const GLOVE_MATERIAL = /CoroSolto_FP_Gloves?/i;
 const CLIP_ALIASES = Object.freeze({
   equip: 'equip_rifle', reload: 'reload_tactical', fire: 'shoot',
   reloadtactical: 'reload_tactical', reloadempty: 'reload_empty',
@@ -268,26 +267,8 @@ const clipKey = (name = '') => {
 };
 const materialsOf = (object) => Array.isArray(object.material) ? object.material : [object.material];
 
-// Tint multiplica a textura; estes pesos preservam a camuflagem de luva e manga.
-// Evidência da manga chapada: docs/reports/GOLDEN-AK-DECISION.md.
-const PESO_TINT = Object.freeze({ pele: 1, luva: 0.55, manga: 0.5 });
-
 function tintHandMaterial(material, profile) {
-  const copy = material.clone();
-  if (copy.color) {
-    // O tint antecede bindSharedArmTextures; `copy.map` ainda é null neste ponto.
-    const aplica = (hex, peso) => {
-      copy.color.set(hex);
-      if (peso < 1) copy.color.lerp(new THREE.Color(0xffffff), 1 - peso);
-    };
-    if (SKIN_MATERIAL.test(copy.name)) aplica(profile.skin ?? 0xd19a72, PESO_TINT.pele);
-    else if (GLOVE_MATERIAL.test(copy.name)) aplica(profile.accent ?? 0x202735, PESO_TINT.luva);
-    else aplica(profile.sleeve ?? 0x27364a, PESO_TINT.manga);
-  }
-  copy.roughness = Math.max(0.48, copy.roughness ?? 0.6);
-  copy.metalness = Math.min(0.08, copy.metalness ?? 0);
-  copy.needsUpdate = true;
-  return copy;
+  return applyTeamHandMaterial(material, profile, 'pistol');
 }
 
 function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
@@ -347,7 +328,9 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
     const hand = materialsOf(object).some((material) => HAND_MATERIAL.test(material?.name || ''));
     if (hand) {
       handMeshes.push(object);
-      if (!golden) {
+      // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget e AK golden
+      // conservam seus materiais até terem inspeção de UV e aprovação próprias.
+      if (!golden && !molde) {
         object.material = Array.isArray(object.material)
           ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
             ? tintHandMaterial(material, profile) : material)
@@ -399,6 +382,11 @@ export class AuthoredViewModels {
     this.utility = null;
     this._utilityPrime = null;
     this._disposed = false;
+  }
+
+  setProfile(profile) {
+    this.profile = profile;
+    for (const entry of this.entries.values()) refreshTeamHands(entry.handMeshes, profile, 'pistol');
   }
 
   async load() {

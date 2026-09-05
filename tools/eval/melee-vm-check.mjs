@@ -44,8 +44,8 @@ if (fs.existsSync(glbFull)) {
   const jsonLength = glb.readUInt32LE(12);
   const json = JSON.parse(glb.subarray(20, 20 + jsonLength).toString('utf8').replace(/\0+$/g, ''));
   const clips = new Set((json.animations || []).map((animation) => animation.name));
-  const missing = ['Idle', 'Draw', 'Slash', 'Stab'].filter((name) => !clips.has(name));
-  check(missing.length === 0, 'MV2c clipes Idle/Draw/Slash/Stab presentes', missing.join(', '));
+  const missing = ['Idle', 'Draw', 'Slash', 'Stab', 'QuickThrust', 'HeavyStab'].filter((name) => !clips.has(name));
+  check(missing.length === 0, 'MV2c biblioteca original e ataques aprovados presentes', missing.join(', '));
   check((json.cameras || []).length >= 1, 'MV2d câmera autoral exportada no GLB');
 }
 

@@ -1937,6 +1937,24 @@ mudar.
 
 ## P1 — o jogador vê
 
+### BUG-85 · luva e tamanho aparente mudam na troca pistola → faca · RELATADO 05/09
+
+**Relato literal:** "a luva muda da pistola pra faca? tem que ser a mesma luva?"
+e "a pistola parece menor que a favca, quando na vida real ela é maior".
+Movimento D da faca aprovado pelo dono na mesma mensagem. O requisito é manter
+a mesma identidade de mãos/braços por facção em todas as armas; comparar
+proporções sem assumir dimensões reais universais. Baseline visual na prévia
+`artifacts/viewmodels/astra-series/knife-motion-candidate-d-runtime-retry-3x2/overview-sheet.png`.
+**Em correção local, não encerrado:** `vm-hand-continuity-check.mjs` executa
+os dois aplicadores e o bind tardio reais: 21/21 falhas na primeira régua antes;
+31/31 passam após identidade por time e refresh, mutante falha em 15/31.
+Atlas separados respeitam UVs dos dois rigs; isso não certifica aparência.
+`vm-hand-continuity-runtime.mjs` captura times e proporções no Game real.
+FOV servido da faca = 29,241747°; pistola = 55° de referência 16:9.
+Escala, acabamento visual e extensão às demais rotas ainda em revisão.
+Movimento D já integrado sem sobrescrever clipes originais; runtime 3:2
+com 225 frames, 26/26 verificações. Evidências: `astra-series/hand-continuity/`.
+
 ### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
 
 Na revisão contínua da faca, o crítico viu clarões isolados nos frames

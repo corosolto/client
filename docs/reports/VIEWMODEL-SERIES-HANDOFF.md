@@ -8,7 +8,9 @@ gastos, publicação nem transferência automática para outro serviço.
 
 Objetivo completo: consolidar AK e pistola, depois os pilotos **faca →
 sniper/AWP → escopeta**, conforme `docs/development/VIEWMODEL-1P-PROFISSIONAL.md`,
-antes de ampliar ao restante do arsenal. A próxima frente ativa é a faca.
+antes de ampliar ao restante do arsenal. Em 05/09 Ruben pediu explicitamente
+continuar **até terminar todas as armas**. O objetivo inclui a matriz completa
+do catálogo, não termina nos pilotos. A frente ativa é continuidade faca/pistola.
 Cada piloto exige evidência real em 3:2/16:9, mãos/arma legíveis, ações corretas,
 retorno natural ao idle, revisão independente e aprovação visual do Ruben.
 Não marcar tudo pronto só porque testes estruturais passam.
@@ -243,6 +245,52 @@ Não marcar tudo pronto só porque testes estruturais passam.
 
 ## Revisão visual / limites da próxima família
 
+### Aprovação e novo requisito de continuidade — 05/09
+
+Ruben aprovou o movimento D: "os ataques a faca estao bom". A aprovação é
+dos ataques, não da troca de luvas ou das proporções entre famílias. Novo relato:
+"a luva muda da pistola pra faca? tem que ser a mesma luva?" e "a pistola
+parece menor que a favca". Mesma facção deve manter a identidade de luva,
+dedos e manga ao trocar de arma. Medir escala aparente e mão/arma nas duas
+rotas; não presumir dimensões reais universais nem aumentar arma sem revisar
+contato. Baseline visual: `knife-motion-candidate-d-runtime-retry-3x2/overview-sheet.png`.
+Ataques promovidos localmente com nomes QuickThrust/HeavyStab e biblioteca
+original preservada. A sincronização de impacto continua pendente: o dano do
+Game ainda é imediato. Testar continuidade antes de ampliar o catálogo;
+preservar AK e poses/mãos aprovadas.
+
+### Marco 27 — integração D e identidade por time (local, em revisão)
+
+- `tools/viewmodels/promote-knife-motion.mjs` verifica os hashes do original
+  em `8f7c7280` e do D aprovado; conserva malhas, rig, câmera, materiais,
+  buffer original e quatro clipes, acrescentando QuickThrust/HeavyStab.
+  GLB promovido: 1.131.064 bytes, SHA-256
+  `264eeee9e8f5dfcfa40d84f5e2d6a4ed2df681375b8074faaa078f2d1eb76acb`.
+- Controlador real usa quick=.36 s, heavy=.62 s, sem avanço procedural extra.
+  Régua nova: 4/6 falhavam antes; 6/6 passam depois; mutante mesmo-golpe falha.
+  `hand-continuity/first-runtime-3x2/`: 19 fotos, 225 frames contínuos em tempo
+  simulado, 26/26 verificações e zero erros; GLB servido com o hash acima.
+- `vmhands.js` centraliza C branca, F preta sem dedos, B camuflada, E estrela,
+  U sem dedos/quadriculado. Dois atlas UV diferentes, não duas identidades.
+  `Game._switchTeam` atualiza ambos os controladores, inclusive armas já carregadas.
+  O bind tardio de texturas compartilhadas não sobrescreve a identidade.
+  31/31 verificações de continuidade/refresh; mutante falha em 15/31.
+- Atlas próprios gerados por `tools/viewmodels/inspect-hand-continuity.py`
+  (Blender isolado) e `build-team-hand-textures.mjs`: 24 WebP, 843.928 bytes.
+  Dados intermediários ficam em `hand-continuity/`; não versionar malhas privadas.
+  As superfícies ainda precisam de revisão visual por time, inclusive dedos,
+  punho e relevo. Teste de identidade não certifica aparência idêntica de dois rigs.
+- AK golden, GoldSrc e retarget ficam explicitamente fora desta primeira aplicação
+  de atlas: não usar UV de KINEMATION neles sem inspeção. A extensão a TODAS as
+  armas permanece no objetivo, não foi declarada pronta.
+- Escala ainda em calibração. FOV carregado da faca = 29,241747° (32° era
+  apenas fallback do controlador); pistola usa 55° de referência 16:9, convertido
+  para o aspecto da tela. `vm-hand-continuity-runtime.mjs --sweep` captura as
+  duas proporções e mede punho→base do dedo médio no Game; não mede comprimento
+  físico universal nem certifica contato entre mão e arma.
+- O usuário autorizou instalar Blender MCP se necessário. CLI Blender funciona;
+  nada foi instalado e a sessão Blender do usuário não foi tocada.
+
 - Abrir `artifacts/viewmodels/astra-series/review.html`, autocontido, e
   `knife-comparison.png` (antes/candidata 3:2). Gerador local `make-review.mjs`.
 - Enquadramento e mãos aprovados pelo Ruben e aplicados (marco 12).
@@ -280,14 +328,13 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
 
 ## Próxima ação concreta
 
-Mostrar `knife-motion-review.html` ao Ruben e colher aprovação do MOVIMENTO D,
-em especial a leitura do esquerdo. A aprovação das mãos/skins não a substitui.
-Se aprovado, promover os clipes com nomes semânticos próprios, preservar a
-biblioteca original, integrar quick/heavy sem override e recapturar a rota real.
+Movimento D aprovado e promovido localmente. Concluir revisão da continuidade
+de luvas e medir/corrigir escala pistola/faca, com captura real nas duas proporções.
 Conferir timing de dano: `_tryKnifeAttack` chama `_meleeHit` imediatamente;
 o candidato é VISUAL, não resolve sincronização de impacto ou multiplayer.
-Preparar skins por time conforme marco 17, incluindo F/U sem dedos; nenhuma
-textura de time foi implementada. Não avançar a AWP antes da faca passar.
+Skins por time implementadas como candidato conforme marco 27, incluindo F/U
+sem dedos; faltam aprovação visual e propagação às outras rotas. Não avançar
+a AWP antes da faca passar. AWP → escopeta → matriz completa do catálogo.
 Atualizar este ledger após cada marco e guardar checkpoint apenas dos arquivos próprios.
 
 Prompt pronto para outra ferramenta: `PROMPT-CLAUDE-VIEWMODELS.md`.

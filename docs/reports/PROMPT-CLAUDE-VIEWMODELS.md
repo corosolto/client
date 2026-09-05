@@ -27,7 +27,7 @@ Leia primeiro, integralmente:
 Objetivo completo: preservar AK e pistola aprovadas e avançar os pilotos
 **faca → sniper/AWP → escopeta**, uma família por vez, antes do restante do
 arsenal. Ruben aprovou a pistola a **15° de yaw** em 05/09/2026 e autorizou
-seguir para as próximas armas. Não volte para 20° nem reaplique o teste de
+seguir até terminar TODAS as armas, não apenas os pilotos. Não volte para 20° nem reaplique o teste de
 10°: ele falhou no tamanho mínimo. O enquadramento aprovado não resolve
 automaticamente o P4 widescreen de contato com o carregador; leia o ledger.
 
@@ -52,7 +52,14 @@ A faca usa `game.vm.melee`/`KnifeMeleeViewModel`, NÃO `__authoredVm`. Reutilize
 as mãos e o enquadramento aprovados pelo Ruben em 05/09 (`z=-0,25` já aplicado).
 Não reconstrua essa geometria para "polir" sem novo pedido. Ruben rejeitou
 o movimento antigo: esquerdo deve dar estocada frontal; direito levantar
-a faca e apunhalar de cima para baixo. Vídeo do movimento antigo não é aprovação.
+a faca e apunhalar de cima para baixo. Em 05/09 Ruben aprovou os ataques D:
+"os ataques a faca estao bom". Já estão promovidos localmente como QuickThrust
+e HeavyStab, preservando a biblioteca original. Não pedir essa aprovação novamente.
+O novo problema é continuidade: mesma luva por time entre pistola/faca, e faca
+desproporcionalmente grande na tela. Leia o marco 27 e os posteriores do ledger.
+Não confundir o fallback 32° com o FOV real exportado da faca (29,241747° antes
+da calibração), nem comparar FOV da pistola sem sua conversão de aspecto.
+Vídeo do movimento antigo não é aprovação.
 Há também skins por time: Palhaços/C branca, Funkeiros/F preta SEM DEDOS,
 B camuflada, E com estrela e Tribos Urbanas/U preta SEM DEDOS com punho
 quadriculado. Ruben aceitou essa distinção F/U; não volte a cobrir os dedos
