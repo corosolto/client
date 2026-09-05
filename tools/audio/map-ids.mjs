@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 
+const CAMINHO_MAPS_PADRAO = new URL('../../public/js/maps.js', import.meta.url);
+
 /* Lê somente as chaves do registro, sem importar `maps.js`: importar o módulo em
  * Node carrega a árvore 3D inteira e cria uma dependência de `three` que o CI de
  * assets não precisa ter. A fonte continua sendo o objeto MAPS autoritativo. */
-export function carregarMapIds(caminho = 'public/js/maps.js') {
+export function carregarMapIds(caminho = CAMINHO_MAPS_PADRAO) {
   const fonte = readFileSync(caminho, 'utf8');
   const inicio = fonte.indexOf('export const MAPS = {');
   const fim = inicio < 0 ? -1 : fonte.indexOf('\n};', inicio);
