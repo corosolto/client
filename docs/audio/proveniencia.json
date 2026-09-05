@@ -124,6 +124,16 @@
    "stagingPrivado": "private-assets/audio/boom-guns-designed",
    "notas": "Produto comprado pelo dono; ZIP guns_ds_719mb.zip verificado com sha256 ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa. A EULA permite adaptar e incorporar o material em videogame com outros elementos de audio, mas exige comprovante de compra, proibe redistribuicao standalone/audio-only e proibe treino de IA/ML. Nenhum WAV foi enviado a modelo. A ferramenta tools/audio/prepare-boom-guns-designed.mjs separa deterministicamente quatro one-shots por gravacao em staging privado. Os resultados sao candidatos locais de escuta, sem aprovacao humana ou autorizacao de release."
   },
+  "fish-audio-mortal-kombat-public-model": {
+   "titulo": "Fish Audio public voice model rotulado Mortal Kombat",
+   "autor": "modelo publico de terceiro; titularidade da voz nao verificada",
+   "url": "https://fish.audio/m/63e61b8d29cf4279b03b6a59b3d2de98",
+   "licenca": "NAO VERIFICADA para uso desta voz em jogo",
+   "redistribuicao": "proibida",
+   "usoComIA": "sim",
+   "stagingPrivado": "private-assets/audio/fish-announcer-mk",
+   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao 16 candidatos locais para kill/headshot/tier e Round 1-7. A pagina do provedor rotula a voz como Mortal Kombat; disponibilidade publica nao demonstra direitos de voz, personagem ou marca. Bloqueado para Git, audio-pack e release ate voz original/licenciada ou liberacao verificavel."
+  },
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
    "autor": "desconhecido — os nomes apontam para Valve (Counter-Strike/Half-Life) e Epic (UT)",

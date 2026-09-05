@@ -31,6 +31,11 @@ prova de que elas mordem.
 Uma entrada por origem, incluindo a obra própria (`synth`). Sem fonte declarada, nenhum
 derivado é aceito.
 
+O laboratório também pode apontar para uma geração Fish feita somente de texto. O modelo
+público escolhido nesta rodada é rotulado pelo próprio provedor como “Mortal Kombat”; estar
+visível na biblioteca não prova licença para publicar a voz em um jogo. Por isso o staging
+declara `rights-review-required`, permanece fora do Git e não pode entrar no pacote de áudio.
+
 | Campo | O que é |
 |---|---|
 | `titulo`, `autor`, `url` | de onde veio, com link verificável |

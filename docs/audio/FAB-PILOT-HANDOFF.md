@@ -1,6 +1,58 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima segunda rodada: feedback tátil completo no jogo local).
+Atualizado em 2026-09-05 (décima terceira rodada: locução Fish para kills e rounds).
+
+## Décima terceira rodada — locução de combate e rounds
+
+O dono aprovou localmente a camada tátil da décima segunda rodada com “está tudo bom”. Isso
+fecha a escuta daquela família, mas não autoriza publicação ou merge dos assets privados.
+Na mesma escuta, ele informou que não ouvia os callouts de kill/multikill dentro do jogo e
+pediu que `ultra kill`, `multi kill`, `double kill`, `godlike` e os números de round usassem
+a voz do modelo Fish Audio `63e61b8d29cf4279b03b6a59b3d2de98`.
+
+A causa do silêncio foi reproduzida: o `public/audio/manifest.json` do laboratório local
+substituía o pacote normal, mas não tinha as chaves `general`, `voice` ou números de round.
+O runtime chamava `general('doublekill')`/`general('godlike')` e recebia pool vazio. A correção
+não restaura o legado UT/Valve: ela cria um contrato privado novo, próprio para os candidatos
+gerados no Fish.
+
+O script `tools/audio/generate-fish-announcer.mjs` lê a credencial somente de
+`FISH_API_KEY`, recusa chave na linha de comando, chama `POST /v1/tts` com S2.1 Pro e grava
+fora do Git em `private-assets/audio/fish-announcer-mk`. A chave recebida para este lote
+existiu somente no ambiente de um shell temporário e foi removida ao terminar. Foram gerados
+16 WAVs distintos, 2.262.502 bytes no total:
+
+- `kill`, `headshot`, `doublekill`, `triplekill`, `multikill`, `ultrakill`, `megakill`,
+  `killingspree` e `godlike`;
+- `Round one` até `Round seven`. O jogo aceita partidas de 1, 3, 5 ou 7 rounds; portanto 7 é
+  a cobertura do contrato atual, não uma escolha arbitrária.
+
+O runtime agora escolhe exatamente um callout por abate, com prioridade tier > headshot >
+kill; o callout novo interrompe o anterior para não empilhar vozes e não entra no duck de
+tiro. A progressão é 2 double, 3 triple, 4 multi, 5 ultra, 6 mega e 7+ godlike. No começo do
+round, a fala numerada substitui o sting anterior quando existe; sem Fish, o caminho antigo
+continua sendo o fallback. A comemoração de facção também continua fallback quando não há
+callout no manifest.
+
+Escuta dentro da própria partida, após recarga completa e clique em **Jogar**:
+
+| Sequência | Link |
+|---|---|
+| kills/callouts, um a cada 2,3 s | `http://127.0.0.1:8131/?tactile=1&announcerlab=kills` |
+| Round 1–7, um a cada 2,3 s | `http://127.0.0.1:8131/?tactile=1&announcerlab=rounds` |
+| todos os 16 | `http://127.0.0.1:8131/?tactile=1&announcerlab=all` |
+
+Validação até este checkpoint: gate `eval:audioannouncer` verde; mutante
+`--mutante=colapsa-tiers` vermelho em ANN2; `eval:audiofablocal`, `eval:audioeventos` e
+`syntax` verdes; 16/16 URLs Fish respondem HTTP 200 com `audio/wav`. O controle do browser
+foi bloqueado porque a política administrativa não pôde ser verificada e não foi contornado;
+a escuta do dono continua sendo o gate artístico.
+
+**Bloqueio de release:** a própria página pública rotula a voz como “Mortal Kombat”. O
+manifest privado declara `legalStatus: rights-review-required`, e o instalador exige esse
+estado. Os WAVs não entram no Git, no `audio-pack.zip` ou numa publicação até existir voz
+original/licenciada ou liberação verificável dos direitos de voz/IP. O código do pipeline e
+o fallback podem entrar no draft PR sem publicar os candidatos.
 
 ## Décima segunda rodada — impactos, armadura, pickup/troca e UI
 
