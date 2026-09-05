@@ -174,3 +174,29 @@ central — escala no call-site do `map_mansao.js` (tabela JARDIM_VEG).
 - `samambaia.glb` — "Emerald Feather Clump", touceira densa de samambaia.
   3.757 tris. Chat: <https://mint.gg/chat/ph738vqqdc08zxxy7912d24w1n8cteh0>.
   Registro: `samambaia-jardim`.
+
+## Sertão — lote existente, registro documental de 05/09/2026
+
+Procedência dos GLBs existentes: [mint-assets.json](../../../mint-assets.json), entradas listadas abaixo. O registro declara geração Mint text-to-3D a partir de prompt próprio do projeto, sem referência de terceiro; o texto integral do prompt não está arquivado no manifesto. `source.notes` registra o propósito e o pipeline, `source.chatUrl`/`source.assetId` identificam a geração, e `processing.finalSha256` identifica o arquivo final. Não reconstruir o prompt de memória.
+
+**Licença específica e autor humano de cada geração: pendentes de documentação.** A declaração Mint Pro dos outros lotes não substitui termos específicos destes registros. Não declarar CC0, autoria individual, licença comercial verificada nem atribuição dispensada. Nenhum asset externo novo foi baixado para esta revisão.
+
+Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivos em 05/09/2026. O manifesto permanece a fonte canônica; método de reprodução e inventário técnico em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
+
+| Arquivo / registro | Chat de geração / assetId | SHA-256 final conferido |
+|---|---|---|
+| [`sertao_mandacaru.glb`](sertao_mandacaru.glb) / `sertao-mandacaru` | [chat](https://mint.gg/chat/ph7f0hkpjjh01qcf95zt46dddd8d43ct) / `ks7epv9ghtz5c8fabqgte1j1ch8d5mra` | `7b442f1abb6ec86a800aef9594c76dd2f9052522b58a9aa8a004449357a9b83f` |
+| [`sertao_macambira.glb`](sertao_macambira.glb) / `sertao-macambira` | [chat](https://mint.gg/chat/ph77kaaqh5ecv3mwaw421gabgx8d52yk) / `ks7e9pqet1sbvcwayfddb0x0318d5mw8` | `9522205f3b3f2e2a997f53f828a58b2ae4a8fc6202b71f27c47f0d1d4ca6486e` |
+| [`sertao_juazeiro.glb`](sertao_juazeiro.glb) / `sertao-juazeiro` | [chat](https://mint.gg/chat/ph72w8yaxsgj6y271nvqjaxr2d8d4rr2) / `ks759j8fhf1yezybjze0qf8vg98d54bf` | `70579e4e2d8e85ffb07a0adfed0e496d99649321eadaccd6dbc033f2a441dbc9` |
+| [`sertao_xique_xique.glb`](sertao_xique_xique.glb) / `sertao-xique-xique` | [chat](https://mint.gg/chat/ph7djxxjydj383me4g5t43r3ps8d5sgc) / `ks73za0ws181wynvwqsn3dap4s8d5nmv` | `1881c4c579f8fb5e93256ecbb33626ed8dc6f1643c6e8e8feb842566646e29b0` |
+| [`sertao_poco_roda.glb`](sertao_poco_roda.glb) / `sertao-poco-roda` | [chat](https://mint.gg/chat/ph78jzf7pmyqqwffg89w8s664h8d41cs) / `ks74qcvmcfs2ta4ceajggjhq798d542a` | `28b3427934987e7cfeddb990decd38f9f5455f2c412bd9621ccdcc79a69ac449` |
+| [`sertao_capelinha.glb`](sertao_capelinha.glb) / `sertao-capelinha` | [chat](https://mint.gg/chat/ph7e200kx20sn17p6cfmn2sc958d4c8h) / `ks735ddr0k5a30npwhwb8td67h8d5bwh` | `ee11deecc0da61f3e6559b2be67d5d02c43f700d63ad19b68228f22cdcadb07b` |
+| [`sertao_palhoca_forro.glb`](sertao_palhoca_forro.glb) / `sertao-palhoca-forro` | [chat](https://mint.gg/chat/ph7dscqp85wk184t4xqw6teq6h8d56bn) / `ks7eqkc0jj7jmnbazd4yvx2me58d4f2d` | `56e823736b800f1a418dd81183b793c17a20f9f0ab708e4d81b8e8711eafc9a1` |
+| [`casa_pau_a_pique.glb`](casa_pau_a_pique.glb) / `casa-pau-a-pique` | [chat](https://mint.gg/chat/ph78ys61n792at10xms9e053ax8d7cdr) / `ks77vk4kbf3k8k6ygs987np1658d73p5` | `d544c6e94cfc3834dc3b9a74182909a433add5dadb399c5f2f28bf90f0844e4e` |
+| [`igrejinha.glb`](igrejinha.glb) / `igrejinha-sertao` | [chat](https://mint.gg/chat/ph78ys61n792at10xms9e053ax8d7cdr) / `ks7d2mgq7myde6mrjmtha7t1yx8d70bw` | `6e26688b5fa406f8b336fada2d263d6dbc90536b67e50c774d4a4f0857722fe5` |
+| [`caminhao_antigo.glb`](caminhao_antigo.glb) / `caminhao-antigo` | [chat](https://mint.gg/chat/ph78ys61n792at10xms9e053ax8d7cdr) / `ks7fc2f1c7kyeqyrydgf6p33hd8d7rdx` | `e01ea2fe9ddf50f29ad2ddafae110ec28a2a2ddfc580231ddd82bda11d663b6d` |
+| [`casa_pedra.glb`](casa_pedra.glb) / `casa-pedra` | [chat](https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy) / `ks7e1dx5vzctmbe1qesp5fmhad8d63eg` | `b1ad7443257c9e608050dd40057937a5554d3e19c5b5776eb3f04142d913a578` |
+| [`casa_platibanda.glb`](casa_platibanda.glb) / `casa-platibanda` | [chat](https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy) / `ks77rz2hj7kenbdpgm0z9tf72d8d6yek` | `770b0dec15c3e8593c1ca338111e4e8a7b5c6cbf269dec603f90770b907be48f` |
+| [`casa_geminada.glb`](casa_geminada.glb) / `casa-geminada` | [chat](https://mint.gg/chat/ph7ck5kbnh4syt5gsbnan3m4ah8d6qsy) / `ks72vcqrhyehnsm5mky7ppe5198d7pp6` | `bc7a2b9149b4139e9f446b9c5ce44807a64b4a304f28da68808542752e3f4673` |
+
+As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas referências de observação do agente principal no Chrome; não foram incorporadas aos GLBs nem copiadas como textura nesta revisão. Créditos, observações atribuídas e limites em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).

@@ -73,3 +73,18 @@ Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
 espécies v2.1). Referências de silhueta/procedência de medidas:
 `references/fauna-corrego/FONTE.md`; ficha: `plans/21-FAUNA-CORREGO.md`;
 evidência e revisão: `tools/eval/asset-evidence/fauna/`.
+
+## Sertão — lote existente, registro documental de 05/09/2026
+
+Procedência dos GLBs existentes: [mint-assets.json](../../../mint-assets.json), entradas listadas abaixo. O registro declara geração Mint text-to-3D a partir de prompt próprio do projeto, sem referência de terceiro; o texto integral do prompt não está arquivado no manifesto. `source.notes` registra o propósito e o pipeline, `source.chatUrl`/`source.assetId` identificam a geração, e `processing.finalSha256` identifica o arquivo final. Não reconstruir o prompt de memória.
+
+**Licença específica e autor humano de cada geração: pendentes de documentação.** A declaração Mint Pro dos outros lotes não substitui termos específicos destes registros. Não declarar CC0, autoria individual, licença comercial verificada nem atribuição dispensada. Nenhum asset externo novo foi baixado para esta revisão.
+
+Hashes abaixo são snapshot extraído do manifesto e conferido contra os arquivos em 05/09/2026. O manifesto permanece a fonte canônica; método de reprodução e inventário técnico em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
+
+| Arquivo / registro | Chat de geração / assetId | SHA-256 final conferido |
+|---|---|---|
+| [`lagarto_sertao.glb`](lagarto_sertao.glb) / `lagarto-sertao` | [chat](https://mint.gg/chat/ph70g5cch8yt9tqm4aj55n2t9d8d59sj) / `ks7b9n65cxtmvfkxcc8a3rm93d8d4p9j` | `5ef08bdcf2390e44a0e1956568392b2f5885fd450257c077257a50c3b5b4650a` |
+| [`calango.glb`](calango.glb) / `calango-sertao` | [chat](https://mint.gg/chat/ph78ys61n792at10xms9e053ax8d7cdr) / `ks77c1dphgsvbxfar88b6080jh8d7bf2` | `0dcb851d6d1a20e9c9161fc2b559175a10e264b91bfbdf0f0b441a5617cc3d07` |
+
+As fotografias de Maranguape e da capela da Fazenda Colônia foram apenas referências de observação do agente principal no Chrome; não foram incorporadas aos GLBs nem copiadas como textura nesta revisão. Créditos, observações atribuídas e limites em [SERTAO-REFERENCIAS.md](../../../docs/reports/SERTAO-REFERENCIAS.md).
