@@ -55,17 +55,17 @@
    "evento": "impacto.concreto",
    "descricao": "impacto em concreto",
    "decisao": "synth",
-   "caminhoRuntime": "nenhum",
-   "bloqueio": "sem-caminho-runtime",
-   "notaRuntime": "não consulta o pack em lugar nenhum; só existe synth"
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`impact(surface, ...)` consulta `cs.impactsBySurface[surface]`; concreto e metal escolhem pools diferentes no laboratório local, mantendo synth como fallback e decisão de release"
   },
   {
    "evento": "impacto.metal",
    "descricao": "impacto em metal",
    "decisao": "synth",
-   "caminhoRuntime": "nenhum",
-   "bloqueio": "sem-caminho-runtime",
-   "notaRuntime": "não consulta o pack em lugar nenhum; só existe synth"
+   "caminhoRuntime": "superficie",
+   "bloqueio": null,
+   "notaRuntime": "`impact(surface, ...)` consulta `cs.impactsBySurface[surface]`; concreto e metal escolhem pools diferentes no laboratório local, mantendo synth como fallback e decisão de release"
   }
  ],
  "escutasLocais": [

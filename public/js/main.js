@@ -1323,13 +1323,12 @@ $('avatar-file').onchange = async e => {
 };
 
 /* ---------------- menu CS 1.6 (Coro Solto) ---------------- */
-/* Som de UI: um menu AAA tem TRÊS sons (mover, confirmar, voltar) e o "mover" é o que dá
-   a sensação tátil. Só existia uiClick(); hover/back são compostos aqui com as primitivas
-   do Sfx (audio.js pertence a outro agente — nada é adicionado lá). Falha em silêncio. */
+/* Som de UI: mover, confirmar e voltar usam contratos distintos do manifest.
+   O Sfx preserva synth como fallback quando o laboratorio local nao esta instalado. */
 const ui = {
   click() { try { sfx.uiClick(); } catch {} },
-  hover() { try { sfx.ensure(); sfx._beep('square', 1240, 1240, .02, .04, 0, true); } catch {} },
-  back()  { try { sfx.ensure(); sfx.duck(0.5, 0.1); sfx._beep('square', 560, 400, .06, .10, 0, true); } catch {} },
+  hover() { try { sfx.uiHover(); } catch {} },
+  back()  { try { sfx.uiBack(); } catch {} },
 };
 let matchMode = 'rounds';   // 'rounds' | 'ctf' — lido em startGame (ctf)
 /* O JOGADOR JÁ DISSE QUAL MODO QUER? (defeito: "esse mapa está como CAPTURA, mas eu

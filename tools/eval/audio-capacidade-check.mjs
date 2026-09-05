@@ -12,13 +12,12 @@
        `cs.bolt` / `cs.reload` / `cs.reloadend`, que valem para o arsenal inteiro;
      · `step(surface)` agora consulta `cs.footstepsBySurface[surface]`;
      · `death()` agora consulta `cs.death` como evento próprio;
-     · `ricochet()` ainda não consulta o pack.
+     · `impact(surface, ...)` consulta `cs.impactsBySurface[surface]`.
 
    Aprovar um "passo em concreto" hoje aprovaria um passo que toca em grama,
    metal e água igual. Aprovar um "ferrolho da AK" poria o mesmo ferrolho em 26
-   armas. E "morte corporal" e os impactos não têm por onde entrar: o derivado
-   ficaria aprovado no papel e mudo no jogo — falha silenciosa (lição 5) com
-   carimbo de aprovação humana em cima, que é pior.
+   armas. "Morte corporal" e impactos hoje têm caminho próprio; a régua impede
+   que essa capacidade volte a ser global ou silenciosa.
 
    ── COMO ELA MEDE: SONDA CAUSAL, NÃO DECLARAÇÃO ────────────────────────────
    Ler a assinatura de `step(surface)` e concluir "é específico por superfície"
@@ -132,12 +131,16 @@ const SONDAS = {
     caminhoEspecifico: 'evento',
   },
   'impacto.concreto': {
-    pack: { cs: { impact: [ESP], impactConcrete: [ESP] }, impacts: { concrete: [ESP] } },
-    dispara: (s) => s.ricochet(),
+    pack: { cs: { impactsBySurface: { concrete: [ESP], metal: [OUTRA] } } },
+    dispara: (s) => s.impact('concreto'),
+    disparaOutra: (s) => s.impact('metal'),
+    caminhoEspecifico: 'superficie',
   },
   'impacto.metal': {
-    pack: { cs: { impact: [ESP], impactMetal: [ESP] }, impacts: { metal: [ESP] } },
-    dispara: (s) => s.ricochet(),
+    pack: { cs: { impactsBySurface: { metal: [ESP], concrete: [OUTRA] } } },
+    dispara: (s) => s.impact('metal'),
+    disparaOutra: (s) => s.impact('concreto'),
+    caminhoEspecifico: 'superficie',
   },
 };
 

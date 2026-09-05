@@ -300,6 +300,36 @@ const knife = seguros(['Combat/Whoosh_Metal_1-1.wav', 'Combat/Whoosh_Metal_1-2.w
 const knifehit = seguros(['Combat/Stab_1-2.wav', 'Combat/Stab_1-5.wav', 'Combat/Stab_2-1.wav']);
 const knifedeploy = seguros(['Combat/Draw_Weapon_Metal_1-1.wav', 'Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_2-1.wav']);
 const dryfire = filtrar((f) => /^Guns\/Foley\/Dry_Fire_/.test(f));
+/* Feedback tatil do laboratorio. Pools curtos e semanticamente separados: nao
+   reutilizar tiro/reload como substituto de impacto, pickup ou navegacao. */
+const impactsBySurface = {
+  concrete: seguros(['Environment/Rock_Impact_21.wav', 'Environment/Rock_Impact_35.wav']),
+  metal: seguros(['Combat/Shield_Metal_1-1.wav', 'Combat/Shield_Metal_1-2.wav']),
+  wood: seguros(['Combat/Shield_Wood_2-1.wav', 'Combat/Shield_Wood_2-2.wav']),
+  glass: seguros(['Misc/Glass_2-1.wav', 'Misc/Glass_2-2.wav']),
+  dirt: seguros(['Environment/Soil_Impact_1-1.wav', 'Environment/Soil_Impact_1-2.wav']),
+  water: seguros(['Environment/Water_Splash_6-1.wav', 'Environment/Water_Splash_6-3.wav']),
+};
+const characterImpact = {
+  body: seguros(['Combat/Hit_Generic_1-1.wav', 'Combat/Hit_Generic_1-2.wav']),
+  armor: seguros(['Combat/Armor_Foley_1-2.wav', 'Combat/Armor_Foley_1-3.wav']),
+};
+const pickupByKind = {
+  weapon: seguros(['Guns/Foley/Handle_Ammo_1-1.wav', 'Guns/Foley/Handle_Ammo_1-14.wav']),
+  ammo: seguros(['Guns/Foley/Insert_Ammo_1-7.wav', 'Guns/Foley/Insert_Ammo_1-17.wav']),
+};
+const weaponSwitchByClass = {
+  pistol: seguros(['Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_1-3.wav']),
+  smg: seguros(['Combat/Draw_Weapon_Metal_2-6.wav', 'Combat/Draw_Weapon_Metal_1-3.wav']),
+  rifle: seguros(['Combat/Draw_Weapon_Metal_2-1.wav', 'Combat/Draw_Weapon_Metal_2-3.wav']),
+  shotgun: seguros(['Combat/Draw_Weapon_Metal_1-1.wav', 'Combat/Draw_Weapon_Metal_2-1.wav']),
+  awp: seguros(['Combat/Draw_Weapon_Metal_2-3.wav', 'Combat/Draw_Weapon_Metal_1-1.wav']),
+};
+const uiByAction = {
+  click: seguros(['Interface/Interface_2-01.wav', 'Interface/Interface_2-02.wav']),
+  hover: seguros(['Interface/Interface_9-3.wav', 'Interface/Interface_9-4.wav']),
+  back: seguros(['Interface/Interface_10-1.wav', 'Interface/Interface_10-3.wav']),
+};
 const fallback = (pool, evento) => pool.length ? pool : candidatos(evento);
 const runtime = {
   death: fallback(death, 'morte.corpo'), explosion: fallback(explosion, 'granada.explosao'),
@@ -319,6 +349,11 @@ const obrigatorios = [
   ['ak.magOut', magOut], ['ak.magIn', magIn], ['ak.bolt', bolt],
   ...Object.entries(footstepsBySurface).map(([surface, pool]) => [`passo.${surface}`, pool]),
   ...Object.entries(runtime),
+  ...Object.entries(impactsBySurface).map(([surface, pool]) => [`impacto.${surface}`, pool]),
+  ...Object.entries(characterImpact).map(([kind, pool]) => [`impacto.${kind}`, pool]),
+  ...Object.entries(pickupByKind).map(([kind, pool]) => [`pickup.${kind}`, pool]),
+  ...Object.entries(weaponSwitchByClass).map(([cls, pool]) => [`troca.${cls}`, pool]),
+  ...Object.entries(uiByAction).map(([action, pool]) => [`ui.${action}`, pool]),
   ...Object.entries(physicalProfiles).flatMap(([profile, cfg]) => [
     [`personagem.${profile}.hurt`, cfg.hurt], [`personagem.${profile}.death`, cfg.death],
   ]),
@@ -343,7 +378,7 @@ const manifest = {
     limitacoes: [
       'a identidade das 24 armas além da AK é candidata e exige escuta humana',
       'reload, reloadend e bolt ainda são pools globais no runtime',
-      'tiro distante e impactos permanecem no laboratório A/B',
+      'impactos, pickup, troca e UI sao candidatos locais e ainda exigem escuta humana',
       'vozes físicas são perfis provisórios; não substituem dublagem autoral por personagem',
     ],
   },
@@ -357,6 +392,11 @@ const manifest = {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
     footstepsBySurface,
+    impactsBySurface,
+    characterImpact,
+    pickupByKind,
+    weaponSwitchByClass,
+    uiByAction,
     ...runtime,
   },
   characterPhysical: { profiles: physicalProfiles, byCharacter: physicalByCharacter },

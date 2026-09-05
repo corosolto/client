@@ -633,10 +633,8 @@ export class Sfx {
     return true;
   }
 
-  /* Dor/morte FÍSICAS seguem o personagem, mas não fingem ser dublagem autoral.
-     O manifest local escolhe um perfil e pode, no futuro, trocar cada id por voz própria
-     sem reabrir game.js. Estes cues vão direto ao master: o tiro que causou o dano não
-     pode apagar a informação de que alguém foi atingido ou morreu. */
+  /* Dor/morte FÍSICAS não fingem ser dublagem; o manifest pode trocar cada perfil no futuro.
+     Cues vão direto ao master para o tiro não apagar a informação de dano ou morte. */
   _characterPhysical(kind, characterId, vol = 1, pan = 0, propDelay = 0) {
     const physical = this.pack?.characterPhysical;
     const profileId = physical?.byCharacter?.[characterId] || 'male';
@@ -687,7 +685,38 @@ export class Sfx {
     s.connect(bp); bp.connect(g); g.connect(this.master); s.start(t); s.stop(t + 0.25);
   }
 
-  uiClick()   { this.ensure(); this.duck(0.5, 0.12); this._beep('square', 880, 660, .06, .12, 0, true); }
+  /* Feedback tatil por contrato. Cada familia consulta uma chave propria do
+     manifest; false deixa o game executar o synth legado sem sobrepor sample. */
+  impact(surface, vol = 1, pan = 0, propDelay = 0) {
+    const key = ({ concreto: 'concrete', madeira: 'wood', vidro: 'glass', areia: 'dirt', agua: 'water' })[surface] || surface;
+    const sample = this._pick(this.pack?.cs?.impactsBySurface?.[key]);
+    return !!(sample && this._eventSample(sample, .34 * vol, pan, propDelay, true));
+  }
+  bodyImpact(armored = false, vol = 1, pan = 0, propDelay = 0) {
+    const sample = this._pick(this.pack?.cs?.characterImpact?.[armored ? 'armor' : 'body']);
+    return !!(sample && this._eventSample(sample, (armored ? .30 : .26) * vol, pan, propDelay, true));
+  }
+  pickup(kind = 'weapon') {
+    const sample = this._pick(this.pack?.cs?.pickupByKind?.[kind]);
+    if (sample && this._eventSample(sample, .42, 0, 0, true)) return true;
+    this.reloadEnd();
+    return false;
+  }
+  weaponSwitch(weapon, cls = 'rifle') {
+    const exact = this.pack?.cs?.weaponSwitchByWeapon?.[weapon];
+    const sample = this._pick(exact?.length ? exact : this.pack?.cs?.weaponSwitchByClass?.[cls]);
+    return !!(sample && this._eventSample(sample, .32, 0, 0, true));
+  }
+  _uiAction(action, vol) {
+    const sample = this._pick(this.pack?.cs?.uiByAction?.[action]);
+    return !!(sample && this._eventSample(sample, vol, 0, 0, true));
+  }
+  uiClick()   { this.ensure(); this.duck(0.5, 0.12); if (this._uiAction('click', .30)) return true;
+    this._beep('square', 880, 660, .06, .12, 0, true); return false; }
+  uiHover()   { this.ensure(); if (this._uiAction('hover', .18)) return true;
+    this._beep('square', 1240, 1240, .02, .04, 0, true); return false; }
+  uiBack()    { this.ensure(); this.duck(0.5, 0.1); if (this._uiAction('back', .26)) return true;
+    this._beep('square', 560, 400, .06, .10, 0, true); return false; }
   scopeIn()   { const s = this._cs('scope'); if (s) { this._sample(s); return; }
     this.ensure(); this._beep('sine', 500, 900, .09, .15); }
   scopeOut()  { this.ensure(); this._beep('sine', 900, 500, .09, .12); }
@@ -807,9 +836,10 @@ export class Sfx {
     if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; bus.connect(panner); panner.connect(this.master); }
     else bus.connect(this.master);
     this._send(bus, 0.2);
-    this._burst(.18, .95, 1800, 0.7, 'lowpass', propDelay, bus);   // crack inicial
-    this._burst(.6, .8, 300, 1, 'lowpass', propDelay, bus);        // corpo
-    this._beep('sine', 90, 30, .55, .6, propDelay, bus);           // rumble grave
+    /* Crack inicial, corpo e rumble grave formam uma explosão; sem sting tonal separado. */
+    this._burst(.18, .95, 1800, 0.7, 'lowpass', propDelay, bus);
+    this._burst(.6, .8, 300, 1, 'lowpass', propDelay, bus);
+    this._beep('sine', 90, 30, .55, .6, propDelay, bus);
     this._beep('sawtooth', 160, 45, .35, .3, .02 + propDelay, bus);
     }
 

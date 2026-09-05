@@ -62,6 +62,24 @@ writeFileSync(join(boomGuns, 'manifest.json'), JSON.stringify({
   },
 }));
 
+const tactileFixture = [
+  'Combat/Armor_Foley_1-2.wav', 'Combat/Armor_Foley_1-3.wav',
+  'Combat/Hit_Generic_1-1.wav', 'Combat/Hit_Generic_1-2.wav',
+  'Combat/Shield_Metal_1-1.wav', 'Combat/Shield_Metal_1-2.wav',
+  'Combat/Shield_Wood_2-1.wav', 'Combat/Shield_Wood_2-2.wav',
+  'Environment/Rock_Impact_21.wav', 'Environment/Rock_Impact_35.wav',
+  'Environment/Soil_Impact_1-1.wav', 'Environment/Soil_Impact_1-2.wav',
+  'Environment/Water_Splash_6-1.wav', 'Environment/Water_Splash_6-3.wav',
+  'Misc/Glass_2-1.wav', 'Misc/Glass_2-2.wav',
+  'Guns/Foley/Handle_Ammo_1-1.wav', 'Guns/Foley/Handle_Ammo_1-14.wav',
+  'Guns/Foley/Insert_Ammo_1-7.wav', 'Guns/Foley/Insert_Ammo_1-17.wav',
+  'Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_1-3.wav',
+  'Combat/Draw_Weapon_Metal_2-1.wav', 'Combat/Draw_Weapon_Metal_2-3.wav', 'Combat/Draw_Weapon_Metal_2-6.wav',
+  'Interface/Interface_2-01.wav', 'Interface/Interface_2-02.wav',
+  'Interface/Interface_9-3.wav', 'Interface/Interface_9-4.wav',
+  'Interface/Interface_10-1.wav', 'Interface/Interface_10-3.wav',
+];
+
 const candidato = (arquivo) => ({ arquivo, sha256: 'a'.repeat(64), familia: arquivo.replace(/-\d+\.wav$/, '') });
 const tiros = [
   'Gunshot_1-1.wav', 'Gunshot_1-2.wav', 'Gunshot_1-3.wav', 'Gunshot_1-4.wav', 'Gunshot_1-5.wav',
@@ -113,6 +131,11 @@ const eventos = [
 eventos[0].candidatos.unshift(candidato('Guns/Gore/Gunshot_Blood-1.wav'));
 for (const e of eventos) for (const c of e.candidatos) {
   const alvo = join(wavs, c.arquivo);
+  mkdirSync(resolve(alvo, '..'), { recursive: true });
+  writeFileSync(alvo, 'fixture-sem-audio');
+}
+for (const arquivo of tactileFixture) {
+  const alvo = join(wavs, arquivo);
   mkdirSync(resolve(alvo, '..'), { recursive: true });
   writeFileSync(alvo, 'fixture-sem-audio');
 }
@@ -175,13 +198,28 @@ if (manifest) {
     erros.push('LAB6 foley disponível não foi ligado aos caminhos globais do runtime.');
   }
   for (const surface of ['concrete', 'metal', 'wood', 'dirt', 'grass', 'gravel', 'water']) {
-    if (manifest.cs?.footstepsBySurface?.[surface]?.length !== 1) erros.push(`LAB7 passos de ${surface} não foram ligados por superfície.`);
+    if (!manifest.cs?.footstepsBySurface?.[surface]?.length) erros.push(`LAB7 passos de ${surface} não foram ligados por superfície.`);
   }
   for (const key of ['death', 'explosion', 'roundstart', 'roundwin', 'roundlose', 'knife', 'knifehit', 'knifedeploy', 'dryfire']) {
     if (!manifest.cs?.[key]?.length) erros.push(`LAB8 evento ${key} continua sem sample no runtime.`);
   }
   for (const key of ['grenadethrow', 'grenadebounce']) {
     if (!manifest.cs?.[key]?.length) erros.push(`LAB8c evento ${key} continua sem sample no runtime.`);
+  }
+  for (const surface of ['concrete', 'metal', 'wood', 'glass', 'dirt', 'water']) {
+    if (!manifest.cs?.impactsBySurface?.[surface]?.length) erros.push(`LAB8i impacto de ${surface} continua sem pool proprio.`);
+  }
+  for (const key of ['body', 'armor']) {
+    if (!manifest.cs?.characterImpact?.[key]?.length) erros.push(`LAB8j impacto de ${key} continua sem pool proprio.`);
+  }
+  for (const key of ['weapon', 'ammo']) {
+    if (!manifest.cs?.pickupByKind?.[key]?.length) erros.push(`LAB8k pickup de ${key} continua sem pool proprio.`);
+  }
+  for (const key of ['pistol', 'smg', 'rifle', 'shotgun', 'awp']) {
+    if (!manifest.cs?.weaponSwitchByClass?.[key]?.length) erros.push(`LAB8l troca de ${key} continua sem pool proprio.`);
+  }
+  for (const key of ['click', 'hover', 'back']) {
+    if (!manifest.cs?.uiByAction?.[key]?.length) erros.push(`LAB8m UI ${key} continua sem pool proprio.`);
   }
   const profiles = manifest.characterPhysical?.profiles || {};
   for (const profile of ['male', 'female', 'creature']) {
@@ -223,6 +261,12 @@ for (const [label, needle] of [
   ['quique de granada', 'grenadeBounce(kind'],
   ['abertura da fumaça', 'smokePop(vol'],
   ['vocal físico por personagem', '_characterPhysical(kind, characterId'],
+  ['impactos por material', 'impact(surface, vol'],
+  ['impacto de corpo e armadura', 'bodyImpact(armored'],
+  ['pickup por tipo', 'pickup(kind'],
+  ['troca de arma por classe', 'weaponSwitch(weapon, cls'],
+  ['hover de UI por sample', 'uiHover()'],
+  ['voltar de UI por sample', 'uiBack()'],
 ]) if (!AUDIO_RUNTIME.includes(needle)) erros.push(`LAB11 runtime não consome ${label}.`);
 if (!/m92:\s*'ak'/.test(AUDIO_RUNTIME)) erros.push('LAB11 runtime classifica a Zastava M92 como pistola.');
 if (!AUDIO_RUNTIME.includes('SAMPLE_WEAPON_SIGNATURE')
@@ -275,7 +319,17 @@ for (const [label, needle] of [
   ['fumaça abrindo', 'this.sfx.smokePop('],
   ['explosão espacial', 'this.sfx.explosion(spatial.vol, spatial.pan, spatial.delay)'],
   ['ambiência do manifest por mapa', 'this.sfx.pack?.mapSoundscapes?.[this._mapId]'],
+  ['impacto por material no Sfx', 'this.sfx.impact(surf'],
+  ['impacto corporal no Sfx', 's.bodyImpact(head || armored'],
+  ['troca sem sobrepor pickup', 'this._switchWeapon(w, { pickup: true })'],
+  ['pickup dedicado sem reload', "this.sfx.pickup('weapon')"],
 ]) if (!GAME_RUNTIME.includes(needle)) erros.push(`LAB11 game não dispara ${label}.`);
+if (GAME_RUNTIME.includes('this._switchWeapon(w); this.sfx.reloadEnd();')) {
+  erros.push('LAB11f pickup ainda sobrepoe troca de arma e fim de recarga.');
+}
+if (!MAIN_RUNTIME.includes('sfx.uiHover()') || !MAIN_RUNTIME.includes('sfx.uiBack()')) {
+  erros.push('LAB11g menu ainda compoe hover/back por fora da API publica de audio.');
+}
 if (!/this\._eventSample\(sample,\s*0\.72\s*\*\s*vol,\s*pan,\s*propDelay,\s*true/.test(AUDIO_RUNTIME)) {
   erros.push('LAB11b morte corporal ainda passa pelo duck do tiro.');
 }

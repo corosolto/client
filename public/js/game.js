@@ -2866,7 +2866,7 @@ export class Game {
     }
   }
   _fxSet(p) { this._fxTune = { light: 1, flash: 1, spark: 1, ...(this._fxTune || {}), ...(p || {}) }; }
-  _switchWeapon(w) {
+  _switchWeapon(w, { pickup = false } = {}) {
     const p = this.player;
     if (p.weapon === w || !p.alive || !WEAPONS[w]) return;
     if (!this._pickupAllowed(w)) return;   // #268: modo arma-única - slot proibido não equipa
@@ -2893,7 +2893,9 @@ export class Game {
     this._applyVmVisibility();
     this.el.weaponName.textContent = WEAPONS[w].name;
     this.el.reloadNote.classList.add('hidden');
-    if (w === 'knife') this.sfx.knifeDeploy(); else this._deploySfx(_dcls);
+    if (pickup) this.sfx.pickup('weapon');
+    else if (w === 'knife') this.sfx.knifeDeploy();
+    else if (!this.sfx.weaponSwitch(w, _dcls)) this._deploySfx(_dcls);
   }
   // Som de SAQUE por classe: 2 ressonadores metálicos a ~28ms (ferrolho + trava), grave nas
   // armas pesadas. Era `sfx.uiClick()` — um beep de MENU pra sacar uma AWP. Usa os helpers
@@ -3145,7 +3147,7 @@ export class Game {
              Aplicar aqui contaria o dano duas vezes. Ver docs/MULTIPLAYER.md. */
           if (!this.online) this._damage(bot, this._shotDamage(dmg, wid, hC.distance, head), shooter, weap, head, end);
           else if (byPlayer) this._acertoPrevisto(bot, this._shotDamage(dmg, wid, hC.distance, head), head, end);
-          this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer);
+          this._fleshImpact(end, dir, head, bot.pos ? bot.pos.y : null, byPlayer, this._armoredTarget(bot));
         }
       }
     } else if (hW) {
@@ -3155,7 +3157,7 @@ export class Game {
       this._puff(hW.point, n, surf);
       // som de impacto em 100% dos tiros do jogador (era `ricochet()` — um BIP de sine — em
       // 30%: 70% dos tiros na parede eram literalmente mudos).
-      if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, from.distanceTo(hW.point)); }
+      if (GUNFEEL) { if (byPlayer || Math.random() < 0.35) this._impactSfx(surf, hW.point, from.distanceTo(hW.point)); }
       else if (Math.random() < 0.3) this.sfx.ricochet();
     } else {
       end = from.clone().add(dir.clone().multiplyScalar(120));
@@ -3197,7 +3199,10 @@ export class Game {
   }
   // Impacto em CARNE: puff vermelho curto + som próprio. Antes o único sinal de que você
   // acertou uma PESSOA era o mesmo bip de acertar uma parede (grep blood = 0 ocorrências).
-  _fleshImpact(pos, dir, head, footY = null, byPlayer = true) {
+  _armoredTarget(ent) {
+    return /colete|cota de malha|armadura|capacete/i.test(ent?.def?.blurb || '');
+  }
+  _fleshImpact(pos, dir, head, footY = null, byPlayer = true, armored = false) {
     if (!GUNFEEL) return;
     // acerto alheio (parceiro levando tiro, bot×bot): só rende se perto — longe, espirra sangue invisível e come frame
     if (!byPlayer && this.camera.position.distanceToSquared(pos) > 3600) return;   // >60 m: pula
@@ -3225,7 +3230,10 @@ export class Game {
     // sangue grudado: mancha na parede atrás do alvo + gota no chão sob ele (footY = pés do alvo)
     if (BLOOD) this._bloodSpatter(pos, dir, head, footY);
     if (!voice) return;
-    const s = this.sfx; s.ensure(); if (!s.ctx) return;
+    const spatial = this._grenadeSpatial(pos, 55);
+    const s = this.sfx;
+    if (s.bodyImpact(head || armored, Math.max(.2, spatial.vol), spatial.pan, spatial.delay)) return;
+    s.ensure(); if (!s.ctx) return;
     s._burst(0.05, head ? 0.30 : 0.20, head ? 420 : 620, 1.1);              // baque úmido
     s._burst(0.08, 0.10, 1500, 2.2, 'bandpass', 0.012);
   }
@@ -3241,10 +3249,13 @@ export class Game {
   }
   // Som de impacto por MATERIAL (o projeto não expõe API de foley no Sfx — usa os helpers
   // internos, mesmo padrão do _deploySfx). dist só atenua.
-  _impactSfx(surf, dist = 0) {
+  _impactSfx(surf, pos, dist = 0) {
     if (!this._fxVoice(2)) return;
-    const s = this.sfx; s.ensure(); if (!s.ctx) return;
     const a = Math.max(0.12, 1 - dist / 55);
+    const spatial = this._grenadeSpatial(pos, 55);
+    const s = this.sfx;
+    if (this.sfx.impact(surf, a, spatial.pan, spatial.delay)) return;
+    s.ensure(); if (!s.ctx) return;
     if (surf === 'metal') { s._burst(0.05, 0.24 * a, 2000, 4, 'bandpass'); s._beep('triangle', 3200, 1500, 0.1, 0.06 * a, 0.006); }
     else if (surf === 'madeira') { s._burst(0.05, 0.22 * a, 900, 1.6); s._burst(0.06, 0.09 * a, 2600, 2, 'bandpass', 0.008); }
     else if (surf === 'vidro') { for (let i = 0; i < 3; i++) s._burst(0.05, 0.13 * a, 4200 + Math.random() * 2600, 6, 'bandpass', i * 0.03); }
@@ -5591,7 +5602,7 @@ export class Game {
       who.ammo[w].res = WEAPONS[w].reserve;
       {
         const oldW = who.weapon;                   // arma que estava na mão
-        this._switchWeapon(w); this.sfx.reloadEnd();
+        this._switchWeapon(w, { pickup: true });
         // dropa a arma antiga no chão (estilo CS) — MAS não no rack: o rack é armário, você
         // só troca de arma lá sem largar a anterior (senão o spawn vira um monte de armas).
         if (oldW && oldW !== w && oldW !== 'knife' && pk.mesh && !pk.rack && !this.online) this._dropWeapon(pk.mesh.position.x, pk.mesh.position.z, oldW, false);   // online o servidor manda o `drop`

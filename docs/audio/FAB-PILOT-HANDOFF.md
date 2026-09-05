@@ -1,6 +1,56 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima primeira rodada: BOOM GUNS Designed em A/B local).
+Atualizado em 2026-09-05 (décima segunda rodada: feedback tátil completo no jogo local).
+
+## Décima segunda rodada — impactos, armadura, pickup/troca e UI
+
+Branch: `claude/audio-fab-pilot`. Base anterior preservada no checkpoint `d648a136`
+(`fix(audio): preservar fallbacks e balancear boom`). Nenhum WAV entrou no Git.
+
+O Action Game Sounds Pack agora alimenta cinco contratos específicos do manifest local:
+
+- impacto por superfície: concreto, metal, madeira, vidro, terra e água;
+- impacto de corpo e impacto rígido/armadura; headshot usa o segundo cue sem criar HP ou
+  mecânica de colete;
+- pickup de arma e de munição;
+- saque separado por classe: pistola, SMG, rifle, shotgun e sniper;
+- UI separada em confirmar, mover/hover e voltar.
+
+O pickup não soma mais três foleys: ao pegar uma arma, toca somente `pickup.weapon`; uma
+troca normal por `1`, `2`, `3` ou `Q` toca o saque da classe. Sem manifest local, todos os
+caminhos preservam o synth anterior. Os samples de impacto carregam pan, atraso e distância;
+o limitador de duas vozes do `game.js` continua protegendo rajadas e pellets de shotgun.
+
+Assets privados usados pelo instalador:
+
+- concreto: `Environment/Rock_Impact_*`;
+- metal/madeira: `Combat/Shield_Metal_*` / `Combat/Shield_Wood_*`;
+- vidro/terra/água: `Misc/Glass_*`, `Environment/Soil_Impact_*`,
+  `Environment/Water_Splash_*`;
+- corpo/armadura: `Combat/Hit_Generic_*` / `Combat/Armor_Foley_*`;
+- pickup/saque: `Guns/Foley/{Handle,Insert}_Ammo_*` e `Combat/Draw_Weapon_Metal_*`;
+- UI: famílias curtas `Interface_2`, `Interface_9` e `Interface_10`.
+
+Validação automatizada já verde: `eval:audioeventos`, `eval:audiofablocal`,
+`eval:audiocapacidade`, `eval:audioespacial`, `eval:audioproc`, `syntax`,
+`eval:pickuparma`, `eval:charvoice` e `eval:screenquery`. O mutante
+`audio-eventos-check --mutante=colapsa-pools` falha em cinco cláusulas, provando que a régua
+detecta a volta a um único som genérico. O ledger mede concreto e metal como caminho
+`superficie`, mas mantém `decisao: synth`: escuta local não autoriza release.
+
+Roteiro manual em `http://127.0.0.1:8131/?tactile=1` após recarga completa:
+
+1. No menu, mover entre itens, confirmar e voltar devem produzir três assinaturas curtas.
+2. Em partida, alternar `1`, `2`, `3` e `Q`: cada classe saca sem o beep de menu.
+3. Pegar uma arma com `E`: deve haver um único cue de pickup, sem fim de recarga por cima.
+4. Atirar em concreto, metal/carro, madeira/caixa, vidro, terra e água: o material muda o
+   ataque do impacto; distância e lado da superfície continuam audíveis.
+5. Atirar no corpo e acertar um headshot/personagem de colete: o segundo usa o cue rígido de
+   armadura, sem alterar dano, HP ou balanceamento.
+
+Tudo desta rodada ainda é candidato de escuta. A próxima ação autoritativa é o dono marcar
+`aprovado`, `rejeitado` ou ajuste de volume por família; merge e publicação continuam fora
+de escopo até essa decisão.
 
 ## Décima primeira rodada — BOOM GUNS Designed dentro do jogo
 
