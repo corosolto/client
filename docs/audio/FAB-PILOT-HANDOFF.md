@@ -1,6 +1,63 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (oitava rodada: identidade das armas, granadas, personagens e 13 mapas).
+Atualizado em 2026-09-05 (nona rodada: uma fonte por tiro, pistolas distintas e morte seca).
+
+## Nona rodada — remover o som antigo e devolver personalidade
+
+Checkpoint de implementação: `5bb8b95d` (`fix(audio): remover sobreposicao e distinguir pistolas`).
+
+A escuta do dono rejeitou quatro pontos da oitava rodada: shotgun ruim; som antigo audível
+junto do Fab; morte com dramatização de jogo de luta; e pistolas difíceis de distinguir. Esse
+relato é o estado autoritativo — o verde técnico anterior não substitui a escuta.
+
+A investigação encontrou **duas** origens do som antigo:
+
+- `_sampleGunSignature()` criava ataque de ruído e subgrave procedural por cima de cada WAV;
+- o primeiro disparo de cada arma caía inteiro no synth enquanto o WAV fazia fetch/decode.
+
+O runtime agora:
+
+- usa **uma única fonte por disparo**: o WAV pode receber somente `playbackRate`, filtros e
+  ganho. A camada procedural sobreposta foi removida;
+- pré-carrega apenas os WAVs das armas sorteadas para a partida junto dos GLBs. A ESP1b exige
+  que o primeiro tiro depois do preload tenha 1 `BufferSource` e 0 osciladores;
+- mantém synth apenas como contingência para URL ausente/falha de decode ou chamada fora do
+  fluxo normal de início de partida;
+- dá perfis exatos e distintos a PT-38 (`pistol`), Revólver .38 e Deagle. A Zastava M92
+  continua corretamente na família AK, não como pistola;
+- preserva a AK neutra (`rate 1`, sem high-pass/low-pass audível e ganho 1), conforme a única
+  aprovação humana vigente;
+- aproxima a shotgun do take original (`rate 0,96`, low-pass 7,8 kHz) em vez de deixá-la lenta
+  e abafada (`0,78`/`4,6 kHz`) com subgrave sintético;
+- toca na morte somente a queda corporal, a `0,72 × volume`. Vocal de morte e dois stings
+  tonais saíram do caminho padrão; o fallback virou um único baque seco. Vozes físicas de dor
+  continuam ativas e os takes de morte permanecem no manifest para avaliação futura, não
+  sobrepostos no jogo.
+
+Validação executada:
+
+- `build`, `syntax`, `eval:audiofablocal`, `eval:audioespacial`, `eval:audiocapacidade`,
+  `eval:audioproc`, `eval:audioalcance`, `docs:check`, `arch:check`, `eval:docsautoria` e
+  `git diff --check`: verdes;
+- ESP1b: 1 fetch, 1 decode, 1 fonte WAV e 0 osciladores no primeiro tiro pré-carregado;
+- servidor `http://127.0.0.1:8131/`: raiz HTTP 200; shotgun HTTP 200 como `audio/wav`.
+
+### Próxima escuta autoritativa em `8131`
+
+1. Fazer recarga completa da página e iniciar uma partida nova — partidas já abertas não
+   executaram a pré-carga nova.
+2. Atirar já no primeiro clique e depois em rajada com AK; não deve existir um segundo ataque,
+   grave ou synth por baixo do WAV.
+3. Comparar PT-38, Revólver .38 e Deagle. A ordem esperada é leve/seca, intermediária e
+   pesada; se ainda parecer apenas mudança de pitch/EQ, os takes Fab precisam ser rejeitados e
+   substituídos por gravações licenciadas realmente próprias, não receber mais synth.
+4. Testar shotgun perto e em rajada. Esta rodada corrige o processamento que a estragava, mas
+   **não declara o take aprovado**.
+5. Matar um bot perto e morrer uma vez. Deve tocar somente queda/baque corporal curto, sem
+   vocal dramático nem nota descendente.
+
+Esta seção substitui as instruções de escuta da oitava rodada. Nada aqui autoriza release,
+publicação, derivado distribuível, push ou merge.
 
 ## Oitava rodada — o jogo deixa de soar como tiro + passos
 
@@ -212,6 +269,7 @@ integração ia herdar calada.
 | `b46d452f` | escuta no jogo local registrada e servidor 8131 documentado |
 | `cfe7f7ed` | 25 tiros próprios, eventos, pisos, limites de voz e gates CAP5/ESP10 |
 | `44d39ba1` | assinaturas de arma, granadas, morte prioritária, perfis físicos e 13 soundscapes |
+| `5bb8b95d` | fonte única, preload do primeiro tiro, pistolas distintas, shotgun recuperada e morte seca |
 
 ## Fonte e licença
 
