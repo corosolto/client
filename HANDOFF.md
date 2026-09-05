@@ -18,6 +18,44 @@ O handoff detalhado de 04/08/2026 foi preservado em
 `docs/historico/HANDOFF-2026-08-04.md`; ele explica decisões antigas, mas cita mapas,
 telemetria, versão e pipeline que já mudaram.
 
+## Qualidade multiplayer, autoridade de slot e comparação com single-player — 05/09/2026
+
+**Objetivo e definição de pronto:** reduzir a sensação de travada no strafe agachado, impedir
+arma/munição visual divergente e medir a experiência pela causa real, por sessão e por round.
+Pronto para produção exige protocolo compatível, persistência, painel, rollout gradual dos três
+nós e canário com dois clientes; WebRTC só entra depois como experimento comparável contra esta
+linha de base, não como troca de transporte sem medição.
+
+**Checkouts:** cliente `/Users/ruben/csbrasil/worktrees/mp-round-presence`, branch
+`v2/mp-round-presence`, base `dcd8858edc7e` (alpha.217); backend pareado
+`/Users/ruben/csbrasil-backend/worktrees/mp-round-presence`, branch `feat/mp-round-presence`,
+base `00c679a33b9f`; admin `/Users/ruben/csbrasil/worktrees/admin-mp-round-truth`, branch
+`codex/mp-round-player-truth`, base `8a5eedc866e6`. Nenhum deploy deste corte foi feito ainda.
+
+**Implementado:** `coro-snapshot-v4` leva ACK do input e estado autoritativo de arma, slots,
+pente, reserva e recarga; v3/v2/JSON continuam negociáveis. A reconciliação usa a pose do mesmo
+`seq`, preserva inputs ainda não reconhecidos e assenta correções pequenas progressivamente. O
+cliente envia pedidos de rack/drop/reload; arma de jogador remoto remonta a malha de terceira
+pessoa quando o snapshot muda o equipamento. A cada 10 s seguem eventos, p95 e máximo de
+correção sem repetir a janela anterior.
+
+**Evidência local:** `eval:netcodecbin` 18/18, `eval:netcode` 178/178 e build Astro/Vercel
+verdes. `check:fast` passou 69/70; a única régua vermelha é `audio:check`, também vermelha no
+checkout primário sem estas mudanças porque o gerador antigo interpreta o pacote hasheado v8
+como 275 órfãos. O manifesto não foi regenerado nem esvaziado.
+
+**Persistência e painel:** migration 031 está em
+`/Users/ruben/db-privado/supabase/migrations/031_mp_reconciliation_quality.sql`, SHA-256
+`2a3ba6aa359e4c407e84d16490faf888357f4fb94f2db9b26617a3b6071d1a98`, ainda não aplicada.
+Ela adiciona qualidade/reconciliação a `mp_session` e `mp_round`, preservando os RPCs das
+migrations 029/030. O admin classifica cada round pela causa e compara FPS apenas nos mesmos
+players que têm amostra em single e multiplayer.
+
+**Rollout pendente:** fazer checkpoints dos três repositórios; aplicar migration 031; publicar
+cliente primeiro (ele cai em v3 nos nós antigos), depois API/runtime v4 por nó, e por último o
+admin. No canário, cobrar `/health` com protocolos 1/2/3/4 e `slot-state`, dois clientes,
+pickup/reload/strafe agachado, dois players no round e colunas de correção persistidas.
+
 ## Analytics consolidado por jogador — 02/09/2026
 
 **Objetivo inteiro:** dar ao game-admin uma única jornada por `anon_id` em Multiplayer,

@@ -775,6 +775,7 @@ export class Game {
         mesh: c, pos: new THREE.Vector3(), yaw: 0, hp: 100, alive: true,
         respawnAt: 0, protUntil: 0, kills: 0, deaths: 0,
         target: null, reactAt: 0, nextShotAt: 0, skill: rollBotSkill(this._diffMul) * (0.9 + Math.random() * 0.2), weapon: wpn,
+        _meshWeapon: wpn,
         mag: (WEAPONS[wpn] && WEAPONS[wpn].mag) || 30, aimErr: 0.2, burst: 0, alertUntil: 0,
         path: null, pathIdx: 0, repathAt: 0, roamIdx: 0, phase: 0, think: Math.random() * 0.2,
         deadT: 0, strafeT: Math.random() * 10, revealedAt: -99,
@@ -1869,7 +1870,7 @@ export class Game {
         this._grabPickup(pk, this.player, true);
         // consome só drops NÃO-rack (armas largadas/mortes); o rack persiste (armário).
         // Drop de rede (`_nid`) é do servidor: pede `pick` e espera o `gone` (fase 2 do `ev`).
-        if (pk._nid) this._mp?.pedirPick(pk);
+        if (this.online) this._mp?.pedirPick(pk);
         else if (dropIdx >= 0 && !pk.rack) this._sumirDrop(dropIdx);
         this.nearPickup = null;
       }
@@ -2938,6 +2939,7 @@ export class Game {
     if (a.mag >= WEAPONS[w].mag || a.res <= 0) return;
     this._scope(false, true);
     p.reloadUntil = this.time + WEAPONS[w].reload;
+    if (this.online) this._mp?.pedirReload(w);
     // BUG-04: MESMA duração da tabela de armas nos dois lados — o relógio de jogo
     // (reloadUntil, que devolve a munição) e a animação terminam no mesmo quadro.
     this.vm.rig.startReload(WEAPONS[w].reload);
@@ -5158,7 +5160,7 @@ export class Game {
     const { sp, walking, sprint } = this._moveEntity(p, _inp, dt);
     /* O movimento acima já aconteceu na tela (predição). Aqui o netcode reconcilia e manda o
        input pro servidor, que roda esta MESMA função. */
-    if (this.online) this._mp?.stepPlayer(p, _inp);
+    if (this.online) this._mp?.stepPlayer(p, _inp, dt);
     // auto-fire (ak/m4/mp5) enquanto o botão está segurado
     if (WEAPONS[p.weapon].auto && this.mouseDown0 && p.alive) this._tryShoot();
     this.bloom = Math.max(0, (this.bloom || 0) - dt * 1.8);
@@ -5812,6 +5814,33 @@ export class Game {
     halo.rotation.x = -Math.PI / 2; halo.scale.setScalar(1.45); halo.renderOrder = 3;
     this.scene.add(halo);
     bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
+  }
+  /* A arma de 3ª pessoa é parte da malha criada por buildCharacterModel; trocar apenas
+     `bot.weapon` muda som e regra, mas deixa o modelo antigo na mão. No multiplayer o
+     snapshot pode trocar a arma a qualquer momento (pickup/respawn), então remonta o corpo
+     preservando transform, visibilidade e o vínculo usado pelo raycast. Se o GLB da arma
+     não estiver carregado, buildCharacterModel já cai na arma procedural visível. */
+  _syncRemoteWeapon(bot, weapon) {
+    if (!bot || !bot.def || !WEAPONS[weapon]) return false;
+    bot.weapon = weapon;
+    if (bot._meshWeapon === weapon) return false;
+    const old = bot.mesh, oldGroup = old?.group;
+    const next = buildCharacterModel(bot.def, { weaponId: weapon }) || buildCharacter(bot.def);
+    if (!next?.group) return false;
+    if (oldGroup) {
+      next.group.position.copy(oldGroup.position);
+      next.group.quaternion.copy(oldGroup.quaternion);
+      next.group.scale.copy(oldGroup.scale);
+      next.group.visible = oldGroup.visible;
+      this.scene.remove(oldGroup);
+      // Clones GLB compartilham geometria com o template; só o fallback procedural é dono.
+      if (!old?.isGLB) oldGroup.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+    }
+    next.group.traverse((o) => { o.userData.botOwner = bot; });
+    this.scene.add(next.group);
+    bot.mesh = next;
+    bot._meshWeapon = weapon;
+    return true;
   }
   _updateTeamMark(b) {
     const m = b._mark;

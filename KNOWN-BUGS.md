@@ -1,6 +1,6 @@
 # BUGS CONHECIDOS — CORO SOLTO: Treta Suprema
 
-> Estado revisado: **2026-08-17**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
+> Estado revisado: **2026-09-05**. Só entra aqui defeito com **evidência**: `arquivo:linha`, saída de
 > régua ou passo de reprodução. Suspeita sem medição vai para o fim, na seção
 > *Relatos recentes e resolução*.
 >
@@ -3667,6 +3667,28 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 ---
 
 ## Relatos recentes e resolução
+
+- **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
+  **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
+  **Evidência inicial:** `public/js/netgame.js` mantém a arma do jogador local fora da aplicação
+  do snapshot; o protocolo v3 não devolve pente, reserva, recarga nem o último input processado.
+  O servidor valida tiro e munição, mas a tela conserva uma segunda cópia independente desses
+  estados. **CORRIGIDO LOCALMENTE 05/09/2026:** o protocolo v4 devolve arma, slots, pente,
+  reserva, recarga e `ackSeq`; pickup/reload são pedidos validados pelo servidor e a troca remota
+  remonta a arma visível. `eval:netcode` 178/178, `eval:netcodecbin` 18/18,
+  `game/authority-check.mjs` 15/15 e smoke do servidor 86/86. O mutante que volta a confiar na
+  arma declarada é detectado. **Ainda não publicado; não marcar como resolvido em produção.**
+
+- **BUG-126 · correção de posição do jogador local não reconhece inputs processados.**
+  **Sintoma literal (feedback de 04/09/2026):** *“as vezes quando vai andar para o lado agachado
+  dá uma travada”*. **Evidência inicial:** `NetClient` numera o input, o servidor guarda `_lastSeq`,
+  mas o snapshot v3 não devolve esse reconhecimento; `stepPlayer` ignora divergências até 2,5 m e
+  então teleporta. Agachar + strafe é um roteiro determinístico da régua de movimento, portanto a
+  hipótese “a física do agachamento é diferente” precisa ser separada da reconciliação de rede.
+  **CORRIGIDO LOCALMENTE 05/09/2026:** o cliente guarda a predição por `seq`; o `ackSeq` v4
+  corrige contra a mesma base, preserva inputs pendentes e converge suavemente. A régua reproduz
+  o strafe agachado e mede 1,000 → 1,042 → 1,200 m sem teleporte; sem ack ela volta a falhar.
+  As correções agora são agregadas por sessão e por round. **Ainda não publicado.**
 
 - **BUG-125 · “sei que é impossível mas se desse pra abaixar ainda mais o ping, porque dessa
   forma um jogador de PT nunca vai poder jogar com um BR”** (dono, 02/09, produção).

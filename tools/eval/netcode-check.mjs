@@ -23,11 +23,12 @@ const cobra = (c, m) => { if (c) { ok++; console.log(`  ok   ${m}`); } else { fa
 function fakeNet(yourEnt, teamSize = 5, ctf = false, snapshotHz = 20, events = 0) {
   return {
     yourEnt, yourTeam: 'E', espectador: yourEnt == null,
-    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2, snapshotHz, ...(events ? { events: 1 } : {}) },
+    meta: { room: 'r1', map: 'praca_poderes', ctf, teamSize, maxPlayers: teamSize * 2, snapshotHz, protocolVersion: 4, ...(events ? { events: 1 } : {}) },
     snap: null, prev: null, enviados: [], events: [],
+    seq: 0,
     startPing() {}, stopPing() {},
     computeStats() { return { hz: 20, kbps: 1, gapMax: 50, sinceLast: 10, ents: 10, tick: 1, ping: 30 }; },
-    sendInput(i) { this.enviados.push(i); },
+    sendInput(i) { this.enviados.push(i); return ++this.seq; },
     pedirTime() {}, espectar() {},
   };
 }
@@ -51,6 +52,8 @@ function montaJogo(net, { dedicated = false, teamSize = 5, ctf = false } = {}) {
 function snapshot(t, tick, {
   yourEnt = 1, mover = 0, matarVoce = false, hpVoce = 100,
   jogadorX = null, jogadorY = null, jogadorZ = null, ctfState = null,
+  ackSeq = null, mag = null, res = null, reloadIn = null,
+  weapon = 'ak', primary = null, secondary = null,
 } = {}) {
   const ents = [];
   for (let i = 0; i < 10; i++) {
@@ -64,9 +67,15 @@ function snapshot(t, tick, {
       z: meu && jogadorZ != null ? jogadorZ : 10 + i,
       yaw: 0.5, pitch: 0,
       hp: meu ? hpVoce : 100, alive: meu ? !matarVoce : true,
-      weapon: 'ak', fire: 0, voice: 0, k: i, d: 0,
+      weapon: meu ? weapon : 'ak', fire: 0, voice: 0, k: i, d: 0,
       respawnIn: meu && matarVoce ? 4.5 : 0,
       killedBy: meu && matarVoce ? 'BOT7' : undefined,
+      ...(meu && ackSeq != null ? { ackSeq } : {}),
+      ...(meu && mag != null ? { mag } : {}),
+      ...(meu && res != null ? { res } : {}),
+      ...(meu && reloadIn != null ? { reloadIn } : {}),
+      ...(meu && primary != null ? { primary } : {}),
+      ...(meu && secondary != null ? { secondary } : {}),
     });
   }
   return {
@@ -77,6 +86,51 @@ function snapshot(t, tick, {
 }
 
 const TEX = initTextures();
+
+console.log('\n· ack e loadout autoritativos do slot (BUG-126/127)');
+{
+  const net = fakeNet(1, 5, false, 30);
+  const g = montaJogo(net);
+  net.snap = snapshot(50, 1, {
+    ackSeq: 0, weapon: 'm4', mag: 11, res: 47, reloadIn: 1.2,
+    primary: 'm4', secondary: 'pistol', jogadorX: 0, jogadorY: 0, jogadorZ: 0,
+  });
+  g._mp.applySnapshot();
+  cobra(g.player.weapon === 'm4' && g.player.primary === 'm4' && g.player.secondary === 'pistol',
+    'snapshot v4 corrige arma atual e slots locais pela autoridade do servidor');
+  cobra(g.player.ammo.m4.mag === 11 && g.player.ammo.m4.res === 47,
+    'HUD usa pente e reserva autoritativos, não uma segunda munição independente');
+  cobra(g.player.reloadUntil > g.time + 1,
+    'recarga autoritativa chega à máquina visual do cliente');
+
+  // O input 1 foi previsto em x=0. Depois dele o jogador avançou localmente até x=1.
+  // O servidor confirma o input 1 em x=0,2: a correção correta preserva o metro ainda não
+  // reconhecido (destino 1,2), em vez de teleportar de volta para 0,2.
+  g.player.pos.set(0, 0, 0);
+  g._mp.stepPlayer(g.player, { ax: 1, az: 0, crouch: true, shift: false, jump: false }, 1 / 60);
+  g.player.pos.x = 1;
+  net.snap = snapshot(50.033, 2, { ackSeq: 1, jogadorX: 0.2, jogadorY: 0, jogadorZ: 0,
+    weapon: 'm4', mag: 11, res: 47, reloadIn: 1.16, primary: 'm4', secondary: 'pistol' });
+  g._mp.applySnapshot();
+  g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: true, shift: false, jump: false }, 1 / 60);
+  cobra(g.player.pos.x > 1 && g.player.pos.x < 1.2,
+    `ack corrige strafe agachado suavemente sem apagar input ainda pendente (x=${g.player.pos.x.toFixed(3)})`);
+  for (let i = 0; i < 120; i++) g._mp.stepPlayer(g.player, { ax: 0, az: 0, crouch: true, shift: false, jump: false }, 1 / 60);
+  cobra(Math.abs(g.player.pos.x - 1.2) < 0.01,
+    `correção converge ao referencial autoritativo + predição pendente (x=${g.player.pos.x.toFixed(3)})`);
+  cobra((g._mp._reconcileCount | 0) > 0 && (g._mp._reconcileMax || 0) >= 0.19,
+    'netcode mede correções aplicadas para comparar qualidade por sessão');
+
+  // Mutante: sem ack não existe base comum para preservar os inputs ainda pendentes.
+  const net2 = fakeNet(1, 5, false, 30), g2 = montaJogo(net2);
+  net2.meta.protocolVersion = 3;
+  net2.snap = snapshot(60, 1, { jogadorX: 0, jogadorY: 0, jogadorZ: 0 }); g2._mp.applySnapshot();
+  g2.player.pos.x = 1;
+  net2.snap = snapshot(60.033, 2, { jogadorX: 0.2, jogadorY: 0, jogadorZ: 0 }); g2._mp.applySnapshot();
+  g2._mp.stepPlayer(g2.player, { ax: 0, az: 0, crouch: true, shift: false, jump: false }, 1 / 60);
+  cobra(g2.player.pos.x === 1, 'MUTANTE/protocolo v3 sem ack não consegue reconciliar a divergência pequena (a régua morde)');
+  g2.dispose(); g.dispose();
+}
 
 console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
 {
@@ -138,6 +192,23 @@ console.log('\n· casamento de ids (quem é amigo, quem é inimigo)');
   cobra(g.roundsWon.E === 2 && g.roundsWon.B === 1, 'o placar vem do snapshot');
   const umBot = mapa.get(6);
   cobra(umBot.kills === 5, 'abates de cada um vêm do snapshot (scoreboard do servidor)');
+
+  // A malha de 3ª pessoa nasce com a arma passada no construtor. Alterar apenas
+  // `ent.weapon` muda som/dano, mas deixa o modelo antigo na mão — o jogador remoto
+  // parece ter equipado uma arma que não existe. A régua cobra o rebuild visual.
+  {
+    const netArma = fakeNet(1), jogoArma = montaJogo(netArma);
+    netArma.snap = snapshot(90, 1); jogoArma._mp.applySnapshot();
+    const remoto = jogoArma._mp._netMap.get(6);
+    let trocasVisuais = 0;
+    jogoArma._syncRemoteWeapon = (ent, weapon) => { trocasVisuais++; ent.weapon = weapon; ent._meshWeapon = weapon; return true; };
+    const troca = snapshot(90.05, 2);
+    troca.ents.find((e) => e.id === 6).weapon = 'm4';
+    netArma.snap = troca; jogoArma._mp.applySnapshot();
+    cobra(trocasVisuais === 1 && remoto.weapon === 'm4',
+      'troca autoritativa remota também troca a malha da arma visível, não só o id lógico');
+    jogoArma.dispose();
+  }
 
   console.log('\n· dano é do servidor, nunca do cliente');
   const alvo = mapa.get(6);
