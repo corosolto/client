@@ -170,3 +170,55 @@ node tools/eval/vm-gauntlet.mjs --armas=pistol --modo=kinemation \
 
 Repetir com yaw 10 e paths próprios; o gauntlet do controle usa yaw 20.
 Um navegador por vez. Não alterar os limiares nem reconstruir os GLBs.
+
+### Resultado final do teste de yaw
+
+Captura foi checkpointada em `7920ef5c`. As cinco execuções abaixo estão
+concluídas; `relatorio.json` e logs correspondentes preservados no diretório
+de evidências. Diagonal = diagonal da caixa da arma / diagonal da tela.
+
+| Aspecto / yaw | Diagonal | Mãos/arma | Resultado do gauntlet |
+|---|---:|---:|---|
+| 3:2 / 20° | 12,55% | 3,779× | sem falhas |
+| 3:2 / 15° | 12,15% | 3,890× | sem falhas |
+| 3:2 / 10° | 11,85% | 3,952× | P2 tamanho: mínimo existente 12% |
+| 16:9 / 20° | 13,15% | 2,046× | P4: amostra insuficiente de mão/pente; máximo 18 px |
+| 16:9 / 15° | 12,73% | 2,122× | mesmo P4: máximo 38 px |
+
+- Os três enquadramentos 3:2 preservam centro livre e ficam no intervalo C5.
+  Borda esquerda medida: 20° = 0,5111; 15° = 0,5403; 10° = 0,5674.
+- Em 3:2 o diagnóstico de contato retorna 0 px nos três, mas apenas **um
+  frame elegível por execução**: não certifica contato em toda a animação.
+- Em 16:9 o filtro exige pente >2000 px e mão de apoio separada. As duas
+  versões têm amostra insuficiente, com distância `null`. Isso confirma
+  uma limitação já existente no controle, não uma nova desconexão causada
+  pelo yaw. **O portão continua vermelho**, sem relaxamento de limiar.
+- A crítica independente, sem justificativa do builder, preferiu **10°
+  visualmente** por reduzir mais a leitura transversal; 15° foi melhoria
+  parcial. Conferiu as duas referências e nove fotos 3:2, sem regressão
+  evidente nas poses de recarga .60/.76. Nenhuma equivalência 1:1 foi alegada.
+- O veto de tamanho de 10° prevalece. **15° é a recomendação conservadora
+  para revisão visual do Ruben**, não uma nova golden nem uma mudança aplicada.
+- `yaw-only-15-16x9/` contém 27 capturas novas, mesmo GLB servido, sem erros,
+  caminhada 1,035 m, salto 0,185 m, parede 0,38 m e retorno natural da recarga
+  a idle com 12/47. A revisão independente dos três pares 16:9 não encontrou
+  corte adicional da arma ou perda evidente de leitura das mãos.
+- O controle `final-pistol-16x9/` antecede o congelamento atômico do HUD;
+  em recarga .76 seu HUD já mostra 12/47, contra 11/48 da candidata. O
+  comparativo limita-se às poses: não prova sincronização entre essas fotos.
+- Comparativos finais: `yaw-only-comparison/index.html` (autocontido),
+  `idle-comparison.png`, `gameplay-comparison.png`, `wide-comparison.png`,
+  `gauntlet-summary.json` e `wide-gauntlet-summary.json`. O HTML mostra os
+  portões vermelhos e os limites, além das imagens.
+
+**Fechamento e próximo passo:** teste isolado concluído; padrão permanece
+`rotDeg: [0, 20, -5]`. Nenhum `.js` servido, GLB, AK, source lane, threshold,
+merge, push ou deploy foi alterado. Só o handoff foi versionado; artefatos
+e gerador de comparativo são locais e gitignored. `docs:check`, `arch:check`
+e `git diff --check` foram conferidos; não foi repetido build/check:fast,
+pois não houve mudança de código desde o marco anterior.
+
+Para continuar: colher a escolha visual de 15° e resolver/medir a visibilidade
+da troca de carregador em 16:9 antes de promover o conjunto. A inspeção de
+superfícies deformadas e a recarga contínua, já previstas acima, continuam
+pendentes. Não girar/recentralizar outras armas nem reconstruir a AK.
