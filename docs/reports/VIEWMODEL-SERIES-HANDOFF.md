@@ -18,6 +18,7 @@ Não marcar tudo pronto só porque testes estruturais passam.
 - Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-astra-pistol`.
 - Branch `codex/vm-astra-pistol`; início desta rodada em `1afbf01e`, limpo.
 - Checkpoint da aprovação da pistola e do prompt: `946cd4c6`.
+- Correção da transição da faca, capturador e testes: `a60c0f3e`.
 - Não trabalhar em `primary`, Fable, retarget ou outros checkouts.
 - `export PATH=/opt/homebrew/bin:$PATH` (Node 23); Node 16 sombreia o ambiente sem isso.
 - `node_modules` é symlink para dependências Fable, somente leitura.
