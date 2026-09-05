@@ -48,6 +48,16 @@ Validação até este checkpoint: gate `eval:audioannouncer` verde; mutante
 foi bloqueado porque a política administrativa não pôde ser verificada e não foi contornado;
 a escuta do dono continua sendo o gate artístico.
 
+Checkpoint publicado no draft PR #504: código em `559604e2`, documentação/proveniência em
+`e0efaba2` e autoria gerada em `329be20f`. `check:fast` fechou 79/79, o pre-push
+`check:deploy` fechou 37/37, o build Astro local ficou verde e 565/565 URLs únicas do
+manifest local responderam HTTP 200 com MIME de áudio. CodeQL e as análises do GitHub
+ficaram verdes. O preview Vercel falhou por um bloqueio anterior e independente do Fish:
+o `audio-pack-v8` publicado não contém 17 caminhos de ambiência já exigidos pelo
+`assets-check` (exemplos: `funk-bar.mp3`, `grilos.mp3`, `passaros.mp3`). O gate foi mantido;
+resolver exige regenerar/publicar o pacote por um canal compatível com as licenças, não
+desligar a validação.
+
 **Bloqueio de release:** a própria página pública rotula a voz como “Mortal Kombat”. O
 manifest privado declara `legalStatus: rights-review-required`, e o instalador exige esse
 estado. Os WAVs não entram no Git, no `audio-pack.zip` ou numa publicação até existir voz
