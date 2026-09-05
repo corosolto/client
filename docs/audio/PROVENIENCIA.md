@@ -95,10 +95,10 @@ Por isso toda escuta local declara `publicacaoAutorizada: false` e
 derivado a partir da frase de aprovação do dono. A PRV8b confere o hash da fonte contra o
 staging quando ele está presente, sem entregar bytes do WAV a modelo algum.
 
-## O bloqueio da redistribuição — P0, e sem solução inventada
+## O bloqueio da redistribuição pública e o canal privado
 
-**O `audio-pack.zip` não pode levar derivado Fab.** Ele é publicado como asset de release
-(`scripts/fetch-audio.sh` aponta para `audio-pack-v8`), e é um arquivo **só de áudio**:
+**O `audio-pack.zip` público não pode levar derivado Fab.** Um asset de GitHub Release é um
+arquivo **só de áudio** disponível separadamente do jogo:
 qualquer pessoa baixa um pacote de sons navegável, sem o jogo. Essa é literalmente a forma
 que a Fab Standard License proíbe — `redistribuicao: proibida-standalone`. **Nome hasheado
 não resolve**: o que é redistribuído é o conteúdo, não o nome, e um zip de 300 WAVs com
@@ -141,21 +141,29 @@ CC0 livre.
 catalogado é indistinguível de qualquer outro áudio; e o legado é barrado por NOME, porque
 não há hash — renomear um arquivo legado o faria escapar.
 
-### O que NÃO está decidido
+### Canal escolhido pelo dono
 
-**Como o derivado Fab chega ao jogador sem ser redistribuído como pacote separado é uma
-questão em aberto, e este documento não a responde.** As opções que existem têm implicações
-legais e de arquitetura que não são minhas para escolher:
+Em 05/09/2026 o dono escolheu manter o pacote de transporte em um Vercel Blob **privado**,
+acessível apenas pelo build, e incorporar seus arquivos ao produto web. O modo padrão de
+`build-audio-pack.mjs` continua sendo público e mantém todas as recusas acima. O modo
+`--private-build` é uma segunda fronteira, fail-closed: somente uma raiz de runtime cuja
+fonte declare `deployPrivado.build: true` atravessa. Caminho desconhecido e raiz sem decisão
+explícita reprovam.
 
-- servir os arquivos individualmente a partir do build do jogo, sem zip navegável;
-- manter o zip, mas privado e fora de release pública (bucket com credencial de build);
-- não usar Fab para o piloto e ficar no synth ou em fonte `livre`.
+O fetch reconhece somente o host `*.private.blob.vercel-storage.com`, exige
+`BLOB_READ_WRITE_TOKEN` e `AUDIO_PACK_SHA256`, envia o bearer apenas para esse host e
+verifica o SHA-256 antes de extrair. Assim, o ZIP não é um asset público navegável e uma URL
+adulterada não recebe a credencial. `eval:audioprivate`, `eval:assetfetch` e
+`eval:audioruntimeassets` medem allowlist, transporte e cobertura dos mapas, com mutantes que
+retiram autorização, autenticação, hash ou o override de um mapa.
 
-Nenhuma delas foi escolhida, nenhuma foi implementada, e a diferença entre "incorporado ao
-jogo" e "redistribuído" nesses cenários é julgamento jurídico. **O piloto fica bloqueado
-neste ponto** até o dono decidir — ver o bloqueio 1 de
-[`FAB-PILOT-HANDOFF.md`](FAB-PILOT-HANDOFF.md). Enquanto isso, a trava garante que nada
-vaze por engano.
+Essa decisão permite Fab e BOOM conforme as licenças de incorporação registradas no ledger;
+não libera qualquer origem marcada apenas para armazenamento. Fish permanece
+`deployPrivado.build: false`: foi preservado no Blob privado, mas não é entregue ao jogador
+porque os direitos da voz pública rotulada “Mortal Kombat” não foram verificados. A
+[documentação oficial da Fish](https://docs.fish.audio/developer-guide/best-practices/voice-cloning)
+atribui ao usuário a responsabilidade de obter permissão para a voz clonada. Os callouts
+legados permanecem excluídos.
 
 ## O legado que esta lane NÃO resolveu
 
