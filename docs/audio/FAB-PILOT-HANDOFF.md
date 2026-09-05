@@ -27,11 +27,20 @@ abertura da fumaça e explosão. Os disparos já existem em single player e mult
 régua causal confirma que pin/throw/bounce/explosion usam quatro fontes distintas e que o
 mutante que colapsa os pools fica vermelho.
 
-Estado deste checkpoint: `eval:audiofablocal`, `eval:audioeventos`,
-`eval:audioannouncer` e `eval:menumusicreview` verdes; mutações `sem-veto`,
-`colapsa-pools` e `colapsa-tiers` vermelhas pelo motivo esperado. Ainda faltam, antes de
-declarar a branch pronta, o gate completo, build/smoke HTTP, conflito do draft PR #504 e a
-revalidação visual/auditiva do preview após a sincronização com `origin/main`.
+Checkpoints: implementação `71a121d2`, documentação `d5afa8e0` e merge sem squash de
+`origin/main` em `1bc50a0f`. Os oito conflitos eram somente blocos gerados; foram resolvidos
+regenerando docs e arquitetura sobre as duas fontes, preservando os commits de multiplayer
+da alpha218. Depois do merge, `check:fast` fechou 80/80, `check:deploy` 37/37 e o build Astro
+com Node 24 ficou verde. O smoke do manifest local respondeu 572/572 URLs com HTTP 200 e MIME
+de áudio; GETs representativos confirmaram bytes não vazios para callout antigo, round Fish,
+pino, arremesso, quique, explosão e música. O preview recarregado está em
+`http://127.0.0.1:8131/?tactile=1` sem erro de console; avisos de decalques locais ausentes
+são independentes desta lane.
+
+Tecnicamente a branch está pronta para o PR. O que continua bloqueado para release dos
+assets é jurídico/editorial: os callouts antigos e a voz Fish não têm liberação verificável,
+e os packs privados continuam fora do Git. A aprovação auditiva final do novo equilíbrio e
+das granadas também continua pertencendo ao dono, no jogo.
 
 ## Décima quarta rodada — curadoria da música da main e leitura do tracer
 
