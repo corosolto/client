@@ -49,6 +49,14 @@ confunda captura de poses isoladas com vídeo contínuo ou medição de contato
 3D. Não relaxe limites para produzir verde; dados insuficientes ficam explícitos.
 
 A faca usa `game.vm.melee`/`KnifeMeleeViewModel`, NÃO `__authoredVm`. Reutilize
+as mãos e o enquadramento aprovados pelo Ruben em 05/09 (`z=-0,25` já aplicado).
+Não reconstrua essa geometria para "polir" sem novo pedido. Ruben rejeitou
+o movimento antigo: esquerdo deve dar estocada frontal; direito levantar
+a faca e apunhalar de cima para baixo. Vídeo do movimento antigo não é aprovação.
+Há também skins por time: Palhaços/C branca, Funkeiros/F preta, B camuflada,
+E com estrela e pesquisa de Tribos Urbanas/U. A proposta U é preta sem dedos,
+punho quadriculado e detalhe roxo, ainda não aprovada. Confira progresso no ledger.
+Reutilize
 o capturador/testes que o ledger disser que já foram criados; não tente rodar
 o capturador de arma de fogo esperando uma entry autorada de knife. Depois
 da revisão da faca, AWP e escopeta são os próximos pilotos. Não declare uma

@@ -11,7 +11,7 @@ const ACTION_SECONDS = Object.freeze(QA_SLOW_MOTION
 // O enquadramento v12 acertou os contatos, mas ocupava tela demais. Escalar o pacote
 // completo preserva rigorosamente arma, mãos, rig e câmera relativa.
 const PACKAGE_SCALE = 0.0135;
-const PACKAGE_OFFSET = new THREE.Vector3(0.18, -0.12, 0);
+const PACKAGE_OFFSET = new THREE.Vector3(0.18, -0.12, -0.25);
 const STAB_PROFILES = Object.freeze({
   quick: Object.freeze({ seconds: QA_SLOW_MOTION ? 4.0 : 0.36, depth: 0.052 }),
   heavy: Object.freeze({ seconds: QA_SLOW_MOTION ? 5.0 : 0.62, depth: 0.105 }),

@@ -3948,8 +3948,8 @@ export class Game {
     }
     const l = this._mzLights.pop();
     if (l) { l.position.copy(pos).addScaledVector(d, 0.12); l.intensity = 18 * ((this._fxTune && this._fxTune.light) ?? 1) * (PUNCH ? 1.35 : 1); this._mzLightActive.push({ l, t: 0, life: 0.05 }); }
-    // flash na CENA DO VM: pulso breve sincronizado (ilumina a arma em 1ª pessoa)
-    if (this._vmFlash) { this._vmFlash.t = 0; if (this._vmFlashLight) this._vmFlashLight.intensity = this._vmFlash.peak * ((this._fxTune && this._fxTune.light) ?? 1); }
+    // BUG-84: tiros alheios não acionam a luz exclusiva da arma em primeira pessoa.
+    if (fpCls && this._vmFlash) { this._vmFlash.t = 0; if (this._vmFlashLight) this._vmFlashLight.intensity = this._vmFlash.peak * ((this._fxTune && this._fxTune.light) ?? 1); }
     // faíscas 3D (partículas com velocidade, encolhendo) + fumacinha. No tiro do PRÓPRIO
     // jogador a boca fica a ~0.35m da lente — velocidade/tamanho reduzidos pra não virar um
     // blob flutuante deslocado do cano (crítico R7.6).

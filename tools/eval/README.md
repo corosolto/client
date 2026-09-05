@@ -30,12 +30,17 @@ amostragem de fase não devem ser confundidos com o estado posterior do HUD.
 passos <=1/120 s e registra 19 fotos, estados, pesos e caixas projetadas. Não
 usa a rota authored. `--quadro-z` compara profundidade do pacote só em memória;
 `--mutante=sem-ataque` precisa reprovar os estados intermediários. É diagnóstico
-de browser, não aprovação de contato, anatomia ou movimento contínuo.
+de browser, não aprovação de contato ou anatomia. `--video` acrescenta uma
+sequência sem cortes em tempo simulado: troca para pistola, tiro, recarga,
+retorno à faca e ataques, com quadros a 30 Hz e MP4 via ffmpeg. Não mede FPS
+real nem áudio. Sem override, também cobra o enquadramento aprovado no browser.
 
-`npm run eval:melee-vm` também executa `melee-motion-check.mjs`: sete cláusulas
+`npm run eval:melee-vm` também executa `melee-motion-check.mjs`: transições e enquadramento
 com o controlador e AnimationMixer reais, fixture mínima sem assets privados.
 Os mutantes `--mutante=sem-clamp` e `--mutante=evento-antigo` deste segundo
 script recompõem o salto para bind pose e o evento obsoleto que cancela um ataque.
+`--mutante=quadro-antigo` restaura o wrapper anterior em memória e deve reprovar
+o retorno de cada ação ao enquadramento aprovado.
 
 `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` verifica oito
 contratos do diagnóstico P4 e duas regressões. O gauntlet reporta distância

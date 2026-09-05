@@ -1937,6 +1937,21 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-84 · tiros alheios acendem a luz do viewmodel da faca~~ · CORRIGIDO LOCALMENTE 05/09
+
+Na revisão contínua da faca, o crítico viu clarões isolados nos frames
+144, 177 e 223 de `artifacts/viewmodels/astra-series/knife-approved-motion-3x2/`.
+O jogador estava com faca, sem disparar. `Game._flash` distingue `fpCls`
+para criar sprites locais, mas reacende `_vmFlash` incondicionalmente,
+inclusive para os tiros de bots. Geometria e pose não mudam nesses frames.
+Correção: só iniciar o pulso local quando há `fpCls`; luz do mundo preservada.
+`melee-motion-check.mjs` chama `_flash` REAL: antes uma falha, depois 14/14;
+mutante `flash-externo` reintroduz a falha. Browser normal em
+`knife-final-motion-3x2/`: 27 verificações, 21 fotos e vídeo de 225 frames.
+Mutante em `knife-flash-mutant-runtime/`: falha só o pulso externo, que muda
+intensidade de 0 para 1,6; fotos antes/depois confirmam o clarão na mão.
+Régua permanente via `eval:melee-vm`/CI; não é defeito da geometria aprovada.
+
 ### ~~BUG-83 · faca abre a mão por um quadro ao terminar o saque/ataque~~ · CORRIGIDO LOCALMENTE 05/09
 
 **Sintoma observado na revisão visual:** `draw-100` e `quick-100` do piloto
@@ -1952,7 +1967,8 @@ se o evento pertencia à ação atual.
 **Correção:** sustentar a pose final durante o crossfade (`clampWhenFinished=true`)
 e ignorar `finished` de ações substituídas. Não trocar câmera, GLB ou controles
 de ataque para esconder esse defeito. O experimento de profundidade da faca
-é separado e ainda não aplicado ao runtime.
+é separado: foi aplicado depois, por aprovação do dono em 05/09; ver
+`docs/reports/VIEWMODEL-SERIES-HANDOFF.md`.
 
 **Régua:** `npm run eval:melee-vm`, também no CI e em `check:vm`. A nova
 `tools/eval/melee-motion-check.mjs` executa a classe e o AnimationMixer reais:

@@ -114,20 +114,80 @@ Não marcar tudo pronto só porque testes estruturais passam.
     `audio:check`, `feet:check` herdados. Docs e arquitetura em dia. Build
     `astra-series/build.log` passou. Não há navegador/servidor/captura próprios
     ativos. Nenhum GLB alterado; nenhum push, merge, deploy ou envio ao Claude.
+12. Retomada em `fd7d9c53`. Ruben disse **"aprovo as maos da faca"** em
+    05/09, após a pergunta sobre o enquadramento candidato. Aplicado somente
+    `PACKAGE_OFFSET.z=-0,25`, preservando malha, pose, escala e lente.
+    Recapturas **sem override** `knife-approved-{3x2,16x9}/`: 19 fotos e
+    16 verificações em cada aspecto, sem erros. Inspeção da folha confirma
+    a candidata aprovada como padrão real, com centro livre e retornos coerentes.
+13. Guarda de enquadramento em `melee-motion-check.mjs`: antes, três falhas
+    (wrapper real voltando a z=0); depois 10/10. Mutante `quadro-antigo`
+    reintroduz as três falhas. Logs `knife-approved-frame-{before,after,mutant}.json`.
+    `eval:melee-vm` e `eval:shaderbudget` passaram; nova recaptura de browser
+    também cobra o wrapper servido, não só o texto da constante.
+14. Inspeção isolada no Blender, sem alterar GLB nem sessão do usuário:
+    `knife-blender-inspection/`. GLB importado e deformado nas fases exatas
+    de idle/Draw/Stab, 3:2 e 16:9. Oito quadros; maior divergência de limites
+    projetados Blender/browser = 0,000005903 da tela (<0,009 px em 1440 px).
+    Workbench usa cores diagnósticas; não é comparação de materiais.
+    Distâncias até superfície por dedo estão no JSON, **não certificam
+    penetração nem empunhadura integral**. Primeiro close ficou ocluído e
+    não serve como prova de contato. Crítico novo não viu defeito estático
+    demonstrável nos pares nem no close externo mais aberto, mas manteve
+    superfícies internas ocultas como inconclusivas.
+15. Vídeo contínuo `knife-approved-motion-{3x2,16x9}/`: 225 frames por
+    aspecto, 7,5 s a 30 fps, oito comandos reais aceitos (troca, tiro,
+    recarga, saque, ataques), sem erros. Tempo SIMULADO, não benchmark de
+    desempenho/áudio. Crítico inspecionou transições e detectou clarões
+    locais causados por tiros de bots. BUG-84: `_flash` agora só reacende
+    a luz de primeira pessoa com `fpCls`. Fixture real: antes 1 falha,
+    depois 14/14; mutante `flash-externo` volta a falhar. Browser normal
+    `knife-final-motion-3x2/`: 21 fotos mais 225 frames, sem falhas/erros.
+    Esses vídeos documentam o movimento ANTIGO, rejeitado no marco 16.
+16. Ruben rejeitou explicitamente o ataque: "só dá uma batidinha com a
+    ponta". Pedido atual: **esquerdo = estocada frontal; direito = levantar
+    a faca e apunhalar de cima para baixo**, interpretação comunicada a
+    partir da referência anexada. Isso substitui a pergunta antiga sobre
+    slash/stab. Mãos e enquadramento permanecem aprovados; não reconstruí-los.
+    Ambos ainda usam Stab; a nova animação NÃO está implementada.
+17. Novo requisito: **uma skin de mãos/braços por TIME**, não por personagem.
+    IDs conferidos em `public/js/factions.js`: C branca (Palhaços), F preta
+    (Funkeiros), B camuflada, E com estrela, U Tribos Urbanas. M/Míticos
+    existe, mas ainda não recebeu direção visual específica do dono.
+    Proposta para U, ainda NÃO aprovada: luva preta sem dedos com desgaste,
+    punho quadriculado e pequeno detalhe roxo. Inspirações de construção,
+    sem baixar/copiar texturas, marcas ou malhas:
+    [Dents Gripper](https://de.dentsgloves.com/products/men-s-the-suited-racer-fingerless-water-resistant-leather-driving-gloves)
+    e [Vans Checkerboard](https://www.vans.com/en-us/p/shoes/icons/classic-slip-on-5315/classic-slip-on-checkerboard-shoe-VN000EYEX1L).
+    Inspecionar UVs antes de colocar estrela/punho; preservar normal/ORM e
+    separar material de luva/manga/pele. Hoje a faca usa um material único
+    e textura por personagem; authored pode sobrescrever mapas ao carregar
+    o pack compartilhado. Não anunciar skins como implementadas.
+18. `knife-approved-check-fast.log`: 63/66, apenas os três vermelhos
+    herdados (`eval:mapid`, `audio:check`, `feet:check`). Não misturar sua
+    regeneração nesta frente.
+19. BUG-84 fechado localmente: browser mutante
+    `knife-flash-mutant-runtime/` falha só o pulso alheio (1,6 em vez de 0).
+    Par de fotos inspecionado confirma a luz indevida; normal preserva a mão.
+    `knife-checkpoint-{contract,cache,build}.log`: contrato, cache e build
+    passam. Nenhum GLB mudou. Inspeção UV da faca em
+    `knife-blender-inspection/uv-{faces,summary}.json`: os dois braços
+    reutilizam o atlas, mãos aproximadamente v>0,54, mangas abaixo.
+    Delimitar punho/dedos com regiões reais antes de pintar.
 
 ## Revisão visual / limites da próxima família
 
 - Abrir `artifacts/viewmodels/astra-series/review.html`, autocontido, e
   `knife-comparison.png` (antes/candidata 3:2). Gerador local `make-review.mjs`.
-- Não aplicar o z da candidata como se já tivesse aprovação do Ruben.
+- Enquadramento e mãos aprovados pelo Ruben e aplicados (marco 12).
 - Mão livre ainda tem acabamento anatômico simples; contato da mão forte
   parcialmente oculto por borda/HUD. Não chamar a família de golden.
-- Mecânica: o contrato antigo pede slash/stab, mas o controlador herdado
-  documenta quick/heavy como duas estocadas. O crítico aceitou registrar
-  essa divergência como decisão pendente; **nenhuma mecânica foi trocada**.
-- Ainda faltam inspeção de superfícies deformadas/contato no Blender,
-  comparação Blender→GLB→browser e vídeo contínuo, além da aprovação do dono.
-  Não substituir isso pelas caixas projetadas ou por pesos de ações.
+- Mecânica rejeitada pelo Ruben: ver marco 16. Nova direção é estocada
+  frontal / apunhalada de cima para baixo, preservando empunhadura.
+- Comparação Blender→GLB→browser registrada no marco 14. Ainda falta concluir
+  contato nas partes ocultas e revisar vídeo contínuo. A aprovação das mãos
+  não é aprovação automática de toda mecânica/animação. Não substituir isso
+  por caixas projetadas ou por pesos de ações.
 - `tools/blender/viewmodels/inspect_knife_registration.py` aponta o donor
   `/Users/ruben/Downloads/knife_animated.glb` (existe, 5,3 MB). O builder exato
   do pacote atual não foi localizado entre os scripts versionados; não assumir
@@ -154,10 +214,12 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
 
 ## Próxima ação concreta
 
-Colher revisão do Ruben sobre o enquadramento candidato. Se aprovado, aplicar
-somente z=-0,25 em PACKAGE_OFFSET e recapturar **sem override**; preservar os
-outros parâmetros. Depois fechar contato/Blender/vídeo e reconciliar o contrato
-dos ataques antes de liberar o piloto. Não avançar a AWP antes da faca passar.
+Concluir validação causal do flash e checkpoint; depois inspecionar o rig
+e criar os dois ataques pedidos, preservando as mãos aprovadas. Conferir
+também timing de dano: hoje `_tryKnifeAttack` chama `_meleeHit` imediatamente.
+Preparar skins por time, incluindo a pesquisa de Tribos Urbanas (marco 17).
+Não avançar a AWP antes da faca passar. Não promover os vídeos antigos como
+aprovação do movimento novo.
 Atualizar este ledger após cada marco e guardar checkpoint apenas dos arquivos próprios.
 
 Prompt pronto para outra ferramenta: `PROMPT-CLAUDE-VIEWMODELS.md`.

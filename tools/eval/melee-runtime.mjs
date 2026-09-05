@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Piloto faca: captura o controlador REAL do Game, não a rota authored de rifles.
 // Avança o jogo em subpassos de 1/120 s, incluindo blends e finished do mixer.
-// Fotos são pausas determinísticas da simulação, não vídeo nem prova de contato 3D.
+// Fotos e --video usam tempo simulado: não medem FPS nem certificam contato 3D.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
@@ -11,12 +11,14 @@ import sharp from 'sharp';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const flags = new Map(process.argv.slice(2).map((arg) => arg.replace(/^--/, '').split('=')));
 for (const key of flags.keys()) {
-  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
+  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z', 'video', 'flash-check'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
 }
+const video = flags.has('video');
+if (video) execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
 const frameZ = flags.has('quadro-z') ? Number(flags.get('quadro-z')) : null;
 if (frameZ !== null && !Number.isFinite(frameZ)) throw new Error('quadro-z inválido');
 const mutant = flags.get('mutante') || '';
-if (mutant && mutant !== 'sem-ataque') throw new Error(`mutante desconhecido: ${mutant}`);
+if (mutant && !['sem-ataque', 'flash-externo'].includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
 const viewport = { width: Number(flags.get('largura') || 1440), height: Number(flags.get('altura') || 960) };
 const port = Number(flags.get('porta') || 8347);
 if (![viewport.width, viewport.height, port].every((n) => Number.isInteger(n) && n > 0)) throw new Error('dimensão/porta inválida');
@@ -77,6 +79,8 @@ try {
       scale: vm.packageRoot.scale.toArray(), position: vm.basePosition.toArray(),
       clips: [...vm.actions].map(([name, action]) => ({ name, duration: action.getClip().duration })) };
   });
+  if (frameZ === null) check(report.asset.position.every((v, i) => Math.abs(v - [0.18, -0.12, -0.25][i]) < 1e-9),
+    'wrapper servido usa enquadramento aprovado', report.asset.position);
   // Congela apenas este Game desta página; todo avanço chama sua implementação real.
   await page.evaluate((mutant) => {
     const game = window.__game;
@@ -84,6 +88,13 @@ try {
     game.__meleeQaUpdate = game.update;
     game.update = () => {};
     if (mutant === 'sem-ataque') game.vm.melee.attack = () => false;
+    if (mutant === 'flash-externo') {
+      const flash = game._flash;
+      game._flash = function (...args) {
+        flash.apply(this, args);
+        if (!args[2]) { this._vmFlash.t = 0; this._vmFlashLight.intensity = this._vmFlash.peak; }
+      };
+    }
   }, mutant);
   const advance = async (seconds) => page.evaluate((seconds) => {
     const game = window.__game;
@@ -159,6 +170,61 @@ try {
     const returned = await snapshot(`${kind}-retorno`);
     check(returned.state === 'Idle' && returned.motion === null, `${kind} terminou naturalmente`, returned.state);
     check(returned.position.every((value, i) => Math.abs(value - report.asset.position[i]) < 1e-9), `${kind} restaurou posição base`, returned.position);
+  }
+  if (flags.has('flash-check')) {
+    await page.evaluate(() => {
+      const g = window.__game; g._vmFlash.t = 1; g._vmFlashLight.intensity = 0;
+    });
+    await snapshot('flash-externo-antes');
+    const light = await page.evaluate(() => {
+      const g = window.__game, position = g.player.pos.clone().addScalar(50);
+      g._flash(position, position.clone().set(0, 0, -1));
+      return { intensity: g._vmFlashLight.intensity, time: g._vmFlash.t };
+    });
+    await snapshot('flash-externo-depois');
+    check(light.intensity === 0 && light.time === 1, 'flash alheio não ilumina faca no browser', light);
+  }
+  if (video) {
+    console.log('melee: vídeo contínuo em tempo simulado');
+    await page.evaluate(() => window.__game._switchWeapon('pistol'));
+    await page.waitForFunction(() => window.__authoredVm?.entry('pistol'), null, { timeout: 120000 });
+    await page.evaluate(() => window.__game._switchWeapon('knife'));
+    await advance(1);
+    const dir = path.join(out, 'video-frames');
+    await fs.mkdir(dir);
+    report.video = { fps: 30, duration: 7.5, sampling: 'Game.update <=1/120 s; render/screenshot a cada 1/30 s, sem cortes; sem áudio; não é benchmark de FPS', events: [], frames: [] };
+    const events = new Map([[12, 'pistol'], [30, 'fire'], [42, 'reload'], [120, 'knife'],
+      [135, 'quick'], [156, 'heavy'], [183, 'quick'], [204, 'heavy']]);
+    for (let i = 0; i < 225; i++) {
+      const event = events.get(i);
+      if (event) {
+        const result = await page.evaluate((event) => {
+          const g = window.__game, before = g.player.ammo.pistol?.mag;
+          if (event === 'pistol' || event === 'knife') {
+            g._switchWeapon(event); return { ok: g.player.weapon === event };
+          }
+          if (event === 'fire') { g._tryShoot(); return { ok: g.player.ammo.pistol.mag === before - 1 }; }
+          if (event === 'reload') { g._startReload(); return { ok: g._reloading(), until: g.player.reloadUntil }; }
+          return { ok: g._tryKnifeAttack(event) };
+        }, event);
+        report.video.events.push({ frame: i, event, ...result });
+        check(result.ok, `vídeo: ${event} aceito no frame ${i}`, result);
+      }
+      if (i) await advance(1 / 30);
+      const state = await page.evaluate(() => {
+        const g = window.__game; g.__meleeQaUpdate.call(g, 0, true);
+        return { time: g.time, weapon: g.player.weapon, alive: g.player.alive,
+          melee: g.vm.melee.state, position: g.vm.melee.packageRoot.position.toArray(),
+          mag: g.player.ammo.pistol.mag, reload: g._reloading() };
+      });
+      report.video.frames.push({ frame: i, ...state });
+      await page.screenshot({ path: path.join(dir, `${String(i).padStart(4, '0')}.png`) });
+      if (i % 60 === 0) console.log(`melee: vídeo ${i}/225`);
+    }
+    check(report.video.frames.every((f) => f.alive), 'vídeo: jogador vivo durante sequência', report.video.frames.length);
+    check(report.video.frames.at(-1).melee === 'Idle', 'vídeo: último ataque voltou ao idle', report.video.frames.at(-1));
+    execFileSync('ffmpeg', ['-n', '-framerate', '30', '-i', path.join(dir, '%04d.png'), '-c:v', 'libx264',
+      '-pix_fmt', 'yuv420p', '-crf', '21', path.join(out, 'motion.mp4')], { stdio: 'ignore' });
   }
   await page.evaluate(() => {
     const game = window.__game; game.update = game.__meleeQaUpdate; delete game.__meleeQaUpdate;
