@@ -105,7 +105,10 @@ if (!existsSync(MANIFEST)) {
     (function rec(o) {
       if (Array.isArray(o)) o.forEach(rec);
       else if (o && typeof o === 'object') Object.values(o).forEach(rec);
-      else if (typeof o === 'string') folhas.push(o);
+      // O manifest também carrega metadados de laboratório (`label`, `approval`,
+      // notas). Só strings que são caminhos de runtime pertencem ao contrato de
+      // assets; tratar texto editorial como arquivo produz falsos 404.
+      else if (typeof o === 'string' && o.startsWith('audio/')) folhas.push(o);
     })(m);
 
     if (folhas.length < PISO_AUDIO && SO !== 'audio') {

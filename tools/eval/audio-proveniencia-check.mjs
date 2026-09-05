@@ -44,6 +44,9 @@
      PRV13 o `assets-check` REAL medido contra fixture: não catalogado e legado
            reprovam, catalogado/aprovado/livre passa (irmã). As três camadas
            passam a ter prova automatizada — antes esta era só manual.
+     PRV14 raízes locais do instalador não escapam por viver fora de
+           `prefixoDerivado`: builder e assets-check recusam Fish/Fab/BOOM/legado
+           por fonte, e a raiz CC0 livre continua passando (irmã).
 
    ── O QUE UM LEDGER VAZIO SIGNIFICA ────────────────────────────────────────
    `derivados: []` com os 8 eventos do piloto em `synth` é o estado CORRETO — e
@@ -132,6 +135,23 @@ const vazio = (v) => v === undefined || v === null || v === '';
 if (vazio(L.prefixoDerivado) || !String(L.prefixoDerivado).startsWith('audio/')) {
   erros.push(`PRV1 \`prefixoDerivado\` ausente ou fora de \`audio/\` (${L.prefixoDerivado}).`
     + ' É por ele que o `assets-check` sabe qual caminho do manifest exige procedência.');
+}
+if (!Array.isArray(L.raizesRuntime) || !L.raizesRuntime.length) {
+  erros.push('PRV1 `raizesRuntime` vazio — os diretórios locais do instalador ficariam fora'
+    + ' do contrato de procedência e poderiam atravessar o empacotador por não viverem em'
+    + ' `prefixoDerivado`.');
+} else {
+  const vistos = new Set();
+  for (const r of L.raizesRuntime) {
+    if (vazio(r.prefixo) || !String(r.prefixo).startsWith('audio/') || !String(r.prefixo).endsWith('/')) {
+      erros.push(`PRV1 raiz de runtime inválida: \`${r.prefixo}\` (esperado \`audio/.../\`).`);
+    }
+    if (vistos.has(r.prefixo)) erros.push(`PRV1 raiz de runtime duplicada: \`${r.prefixo}\`.`);
+    vistos.add(r.prefixo);
+    if (vazio(r.fonte) || !L.fontes?.[r.fonte]) {
+      erros.push(`PRV1 raiz de runtime \`${r.prefixo}\` cita fonte inexistente \`${r.fonte}\`.`);
+    }
+  }
 }
 for (const [id, f] of Object.entries(L.fontes || {})) {
   const faltando = CAMPOS_FONTE.filter((c) => vazio(f[c]));
@@ -834,6 +854,99 @@ if (!erros.length) notas.push(`PRV1 ok: ${Object.keys(L.fontes || {}).length} fo
     if (a.saida !== 0 && c.saida !== 0 && b.saida === 0) {
       notas.push('PRV13 ok: o `assets-check` real reprova o não catalogado e o legado, e aceita o'
         + ' catalogado/aprovado/livre — prova automatizada, não mais manual.');
+    }
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+
+/* ── PRV14: raízes LOCAIS também obedecem à licença ────────────────────────
+   O escape encontrado no pack real de 05/09: o instalador usa `audio/fab-dev`,
+   `audio/boom-guns-dev`, `audio/fish-announcer-dev` e
+   `audio/legacy-callouts-dev`, todos FORA de `audio/piloto/`. A allowlist do
+   prefixo estava correta e, justamente por isso, não via 747 arquivos dessas
+   raízes. O builder montou 161 MB e saiu 0 apesar do ledger dizer proibido.
+
+   Esta fixture mede os dois chamadores de publicação. A fonte proibida precisa
+   falhar e a irmã CC0 precisa passar; recusar tudo não satisfaz a régua. */
+{
+  const tmp = mkdtempSync(join(tmpdir(), 'csbr-prv14-'));
+  try {
+    const PUB = join(tmp, 'public');
+    const AUD = join(PUB, 'audio');
+    mkdirSync(join(AUD, 'fish-announcer-dev'), { recursive: true });
+    mkdirSync(join(AUD, 'firearms-cc0-dev'), { recursive: true });
+    mkdirSync(join(AUD, 'menu-music'), { recursive: true });
+    writeFileSync(join(AUD, 'fish-announcer-dev', 'round.wav'), 'fixture fish proibida\n');
+    writeFileSync(join(AUD, 'firearms-cc0-dev', 'shot.wav'), 'fixture cc0 livre\n');
+    writeFileSync(join(AUD, 'menu-music', 'm01.mp3'), 'fixture menu\n');
+
+    const ledgerPath = join(tmp, 'ledger.json');
+    writeFileSync(ledgerPath, JSON.stringify({
+      versao: 1,
+      prefixoDerivado: 'audio/piloto/',
+      raizesRuntime: [
+        { prefixo: 'audio/fish-announcer-dev/', fonte: 'fish' },
+        { prefixo: 'audio/firearms-cc0-dev/', fonte: 'cc0' },
+      ],
+      piloto: [],
+      fontes: {
+        fish: { titulo: 'f', autor: 'f', url: 'f', licenca: 'não verificada', redistribuicao: 'proibida', usoComIA: 'sim', notas: 'f' },
+        cc0: { titulo: 'f', autor: 'f', url: 'f', licenca: 'CC0', redistribuicao: 'livre', usoComIA: 'sim', notas: 'f' },
+      },
+      derivados: [],
+    }));
+
+    const rodarBuilder = (caminho, tag) => {
+      writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({ general: { cue: [caminho] } }));
+      const out = join(tmp, `out-${tag}`);
+      try {
+        execFileSync('node', [join(RAIZ, 'scripts', 'build-audio-pack.mjs'), out,
+          `--raiz=${AUD}`, `--ledger=${ledgerPath}`], { encoding: 'utf8', stdio: 'pipe' });
+        return { saida: 0, texto: '', zip: existsSync(join(out, 'audio-pack.zip')) };
+      } catch (e) {
+        return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || ''),
+          zip: existsSync(join(out, 'audio-pack.zip')) };
+      }
+    };
+    const rodarAssets = (caminho) => {
+      writeFileSync(join(AUD, 'manifest.json'), JSON.stringify({
+        _localLab: { mode: 'local-only', note: 'metadado editorial não é caminho de asset' },
+        general: { cue: [caminho] },
+      }));
+      try {
+        execFileSync('node', [join(RAIZ, 'tools', 'eval', 'assets-check.mjs'),
+          `--raiz=${PUB}`, `--ledger=${ledgerPath}`, '--so=audio'], {
+          cwd: tmp, encoding: 'utf8', stdio: 'pipe',
+        });
+        return { saida: 0, texto: '' };
+      } catch (e) {
+        return { saida: e.status ?? 1, texto: String(e.stdout || '') + String(e.stderr || '') };
+      }
+    };
+
+    const proibido = 'audio/fish-announcer-dev/round.wav';
+    const livre = 'audio/firearms-cc0-dev/shot.wav';
+    const bp = rodarBuilder(proibido, 'proibido');
+    const bl = rodarBuilder(livre, 'livre');
+    const ap = rodarAssets(proibido);
+    const al = rodarAssets(livre);
+
+    if (bp.saida === 0 || bp.zip) {
+      erros.push('PRV14a ESCAPE: o empacotador aceitou uma raiz Fish declarada `proibida` fora de'
+        + ' `prefixoDerivado`. Foi assim que o pack real de 161 MB atravessou.');
+    }
+    if (ap.saida === 0) {
+      erros.push('PRV14b ESCAPE: o `assets-check` aceitou uma raiz Fish declarada `proibida`.');
+    }
+    if (bl.saida !== 0 || !bl.zip) {
+      erros.push(`PRV14c IRMÃ: o empacotador recusou a raiz CC0 livre (saiu ${bl.saida}: `
+        + `${bl.texto.trim().split('\n')[0]}).`);
+    }
+    if (al.saida !== 0) {
+      erros.push(`PRV14d IRMÃ: o \`assets-check\` recusou a raiz CC0 livre (saiu ${al.saida}: `
+        + `${al.texto.trim().split('\n').pop()}). Metadado editorial do laboratório não é caminho.`);
+    }
+    if (bp.saida !== 0 && !bp.zip && ap.saida !== 0 && bl.saida === 0 && bl.zip && al.saida === 0) {
+      notas.push('PRV14 ok: builder e assets-check recusam raiz local proibida e aceitam a irmã CC0 livre.');
     }
   } finally { rmSync(tmp, { recursive: true, force: true }); }
 }

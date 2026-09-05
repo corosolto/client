@@ -1,7 +1,29 @@
 {
  "versao": 1,
- "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Réguas: `npm run eval:audioproc` (PRV1-PRV13), `npm run eval:audiocapacidade` (CAP1-CAP5) e `npm run assert:assets` (PRV5). `caminhoRuntime` é MEDIDO por sonda, não declarado à mão — ver docs/audio/PROVENIENCIA.md.",
+ "_leia": "Contrato de procedência do áudio. É METADADO, não áudio: nenhum byte de som mora aqui nem no git público. Réguas: `npm run eval:audioproc` (PRV1-PRV14), `npm run eval:audiocapacidade` (CAP1-CAP5) e `npm run assert:assets` (PRV5). `caminhoRuntime` é MEDIDO por sonda, não declarado à mão — ver docs/audio/PROVENIENCIA.md.",
  "prefixoDerivado": "audio/piloto/",
+ "raizesRuntime": [
+  {
+   "prefixo": "audio/fab-dev/",
+   "fonte": "fab-action-game-sounds-pack"
+  },
+  {
+   "prefixo": "audio/boom-guns-dev/",
+   "fonte": "boom-guns-designed"
+  },
+  {
+   "prefixo": "audio/firearms-cc0-dev/",
+   "fonte": "free-firearm-sfx-cc0"
+  },
+  {
+   "prefixo": "audio/fish-announcer-dev/",
+   "fonte": "fish-audio-mortal-kombat-public-model"
+  },
+  {
+   "prefixo": "audio/legacy-callouts-dev/",
+   "fonte": "legado-nominal-cs-valve-ut"
+  }
+ ],
  "piloto": [
   {
    "evento": "ak.shot",

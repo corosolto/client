@@ -5,8 +5,8 @@ Continue a lane de áudio do CORO SOLTO no worktree
 PR #504. Não trabalhe na lane `primary`, não toque em outros checkouts e preserve
 `viewmodel-blender` intacto.
 
-Checkpoint autoritativo atual: implementação `71a121d2`, docs `d5afa8e0` e merge de
-`origin/main` `1bc50a0f`. Após o merge, `check:fast` passou 80/80, `check:deploy` 37/37, o
+Checkpoint autoritativo anterior: implementação `71a121d2`, docs `d5afa8e0`, merge de
+`origin/main` `1bc50a0f` e handoff pós-merge `5582314c`. Após o merge, `check:fast` passou 80/80, `check:deploy` 37/37, o
 build Astro passou em Node 24 e o smoke HTTP passou 572/572. Revalide se o HEAD ou a base
 tiverem avançado; não repita a investigação se esses identificadores continuarem iguais.
 
@@ -19,6 +19,11 @@ Objetivo imediato: acompanhar o PR #504 já sincronizado com `origin/main`, corr
 falha real de CI/preview e preparar o caminho de release sem incluir assets privados sem
 direitos. A curadoria de oito músicas, callouts antigos locais, rounds Fish, tiros
 balanceados, troca sem som de faca e o ciclo completo da granada já estão implementados.
+
+Leia primeiro a décima sexta rodada do handoff. O builder real montou um zip local de 161 MB
+porque as raízes do instalador viviam fora de `prefixoDerivado`. Esse zip não foi publicado.
+`raizesRuntime` e a PRV14 devem fazer o builder/`assets-check` recusarem a raiz Fish e
+aceitarem a irmã CC0. Não remova esse bloqueio para deixar a Vercel verde.
 
 Não publique nenhum WAV/MP3 privado e não interprete aprovação de escuta como liberação de
 direitos. Os callouts alpha218 e a voz Fish continuam `rights-review-required`; assets Fab e

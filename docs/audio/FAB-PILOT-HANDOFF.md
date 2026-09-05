@@ -1,6 +1,27 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima quinta rodada: curadoria final, mix e granadas).
+Atualizado em 2026-09-05 (décima sexta rodada: gate real de publicação).
+
+## Décima sexta rodada — o pack local não é publicável
+
+Depois do CI, o empacotador foi executado contra o manifest privado completo. Ele montou um
+zip de 161 MB, 784 arquivos hasheados e oito músicas, com exit 0. Isso contradizia o ledger:
+os diretórios `audio/fab-dev`, `audio/boom-guns-dev`, `audio/fish-announcer-dev` e
+`audio/legacy-callouts-dev` vivem fora de `audio/piloto/`, único prefixo fail-closed até então.
+Por isso 747 arquivos de fontes restritas escapavam como "fora do contrato".
+
+O zip foi apenas local e **não foi publicado**. `raizesRuntime` agora liga cada raiz criada
+pelo instalador à sua fonte. No contexto de pacote público, a política recusa qualquer raiz
+cuja fonte não seja `livre`; a irmã `firearms-cc0-dev` continua passando. A PRV14 roda o
+builder e o `assets-check` reais nos dois casos. O manifest local continua permitido para
+escuta, mas `build-audio-pack.mjs` deve falhar antes de criar um zip de release com Fab,
+BOOM, Fish ou legado.
+
+Consequência: #504 continua uma candidata local e de código, não launch-ready. Para servir
+Fab/BOOM no jogo web, o input de build precisa sair de um armazenamento privado e os sons
+precisam ser incorporados ao produto sem publicar um pack de áudio navegável. Fish e legado
+ainda exigem voz original/licenciada ou liberação verificável; armazenamento privado não
+resolve direitos ausentes.
 
 ## Décima quinta rodada — seleção final do menu, mix e granadas
 

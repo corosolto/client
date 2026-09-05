@@ -25,9 +25,13 @@
       ou `evento`), e a fonte
       existir. No contexto `pack`, a fonte ainda precisa ser `livre`.
       Qualquer outra coisa — inclusive "não sei o que é isto" — RECUSA.
-   3. Fora do prefixo: se o conteúdo casar um derivado de fonte não-`livre`,
-      recusa no contexto `pack` (derivado escondido fora da pasta ainda é
-      redistribuição). Senão passa: está fora deste contrato.
+   3. Uma raiz de runtime declarada em `raizesRuntime` herda a licença da fonte.
+      No contexto `pack`, qualquer raiz de fonte não-`livre` é recusada mesmo sem
+      hash em `derivados`. Isto cobre os diretórios locais do instalador — Fab,
+      BOOM, Fish e callouts legados — que não vivem sob `prefixoDerivado`.
+   4. Fora do prefixo e das raízes: se o conteúdo casar um derivado de fonte
+      não-`livre`, recusa no contexto `pack` (derivado escondido fora da pasta
+      ainda é redistribuição). Senão passa: está fora deste contrato.
 
    ── O QUE ELA NÃO CONSEGUE VER, E ESTÁ ESCRITO ─────────────────────────────
    Depois que o empacotador renomeia para `audio/a/<sha1>`, o prefixo some. Um
@@ -51,6 +55,10 @@ export function carregarPolitica(caminhoLedger) {
   const legadoAtivo = L.legado && String(L.legado.decisao || '').startsWith('bloqueado');
   return {
     prefixo: L.prefixoDerivado || 'audio/piloto/',
+    raizesRuntime: (L.raizesRuntime || []).map((r) => ({
+      prefixo: String(r.prefixo || ''),
+      fonte: String(r.fonte || ''),
+    })),
     porHash: new Map((L.derivados || []).map((d) => [d.sha256, d])),
     fontes: L.fontes || {},
     evento: new Map((L.piloto || []).map((p) => [p.evento, p])),
@@ -66,6 +74,16 @@ export function carregarPolitica(caminhoLedger) {
 export function motivoDeRecusa(rel, bytes, pol, contexto = 'pack') {
   const legado = pol.legadoRes.find((p) => p.re.test(rel));
   if (legado) return `caminho de legado bloqueado por procedência (${legado.porque})`;
+
+  const raiz = (pol.raizesRuntime || []).find((r) => r.prefixo && rel.startsWith(r.prefixo));
+  if (raiz && contexto === 'pack') {
+    const fonte = pol.fontes[raiz.fonte];
+    if (!fonte) return `raiz de runtime cita fonte inexistente \`${raiz.fonte}\``;
+    if (fonte.redistribuicao !== 'livre') {
+      return `raiz de runtime \`${raiz.prefixo}\` vem da fonte \`${raiz.fonte}\` `
+        + `(\`${fonte.redistribuicao}\`) e não pode entrar num pacote público só de áudio`;
+    }
+  }
 
   const sha = createHash('sha256').update(bytes).digest('hex');
   const d = pol.porHash.get(sha);

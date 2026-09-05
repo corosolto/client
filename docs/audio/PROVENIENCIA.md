@@ -21,6 +21,7 @@ não é "asset ainda não catalogado" — é asset que não pode entrar numa bui
 | `npm run eval:audioproc` | PRV6: o empacotador recusa derivado `proibida-standalone` — fixture end-to-end | `check:fast` |
 | `npm run eval:audioproc` | PRV7: a decisão do ledger controla o gerador · PRV8: `sha256Fonte` conferido contra o arquivo real · PRV9: o legado CS/Valve/UT catalogado | `check:fast` |
 | `npm run eval:audioproc` | PRV10–PRV13: fail-closed nas três camadas, cada uma medida pelo script real contra fixture, com irmã | `check:fast` |
+| `npm run eval:audioproc` | PRV14: raízes locais Fab/BOOM/Fish/legado fora de `audio/piloto/` também obedecem à licença; CC0 livre passa | `check:fast` |
 | `npm run eval:audiocapacidade` | CAP1–CAP5: só se aprova evento que o runtime sabe tocar especificamente | `check:fast` |
 
 `eval:audioproc --mutante=aprovado-sem-escuta|derivado-sem-fonte|evento-sem-decisao` é a
@@ -48,6 +49,11 @@ declara `rights-review-required`, permanece fora do Git e não pode entrar no pa
 `redistribuicao: "proibida-standalone"` é o caso da Fab Standard License: o som pode ser
 incorporado ao jogo, e **não** pode ser publicado como pacote de sons. Na prática isso
 proíbe o WAV solto num release, num zip navegável e no repositório.
+
+`raizesRuntime` liga os diretórios criados pelo instalador local às respectivas fontes. Eles
+não ficam sob `prefixoDerivado`; sem essa ligação, Fab, BOOM, Fish e callouts legados
+atravessavam o empacotador como caminhos "fora do contrato". O contexto local continua
+permitido para escuta. O contexto de pack público herda `redistribuicao` da fonte e recusa.
 
 ## `derivados`
 
@@ -125,6 +131,11 @@ arquivo não catalogado sob `audio/piloto/` não casava hash nenhum, não era ba
 empacotador saía **0** gerando o zip com ele dentro. A régua perguntava "é um mau
 conhecido?" quando o estado ruim era "desconhecido" — lição 1. Agora, sob o prefixo
 derivado, o silêncio do ledger é recusa.
+
+Em 05/09 apareceu a mesma falha numa segunda borda: os diretórios do instalador não viviam
+sob esse prefixo. O builder real montou 161 MB e saiu 0 mesmo contendo raízes que o ledger
+declarava proibidas. A PRV14 fecha essa borda por origem de runtime e prova também a irmã
+CC0 livre.
 
 **Limites declarados, não cobertos:** pós-rename o prefixo some e um derivado não
 catalogado é indistinguível de qualquer outro áudio; e o legado é barrado por NOME, porque

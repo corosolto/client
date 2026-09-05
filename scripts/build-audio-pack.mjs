@@ -101,7 +101,8 @@ for (const f of readdirSync(MM)) {
 /* A recusa vem ANTES do zip: pacote proibido não pode chegar a existir em disco. */
 if (recusados.length) {
   console.error(`RECUSADO: ${recusados.length} arquivo(s) não podem entrar num pacote só de áudio.`);
-  for (const r of recusados) console.error('  ' + r);
+  for (const r of recusados.slice(0, 12)) console.error('  ' + r);
+  if (recusados.length > 12) console.error(`  … e mais ${recusados.length - 12} arquivo(s).`);
   console.error('\nSob o prefixo derivado a regra é ALLOWLIST: o que não está catalogado no ledger'
     + '\nnão passa. Este zip vira asset de release, e release de pacote de áudio é'
     + '\nredistribuição standalone. Ver docs/audio/PROVENIENCIA.md — a forma de incorporação'
