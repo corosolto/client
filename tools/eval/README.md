@@ -36,8 +36,9 @@ retorno à faca e ataques, com quadros a 30 Hz e MP4 via ffmpeg. Não mede FPS
 real nem áudio. Sem override, também cobra o enquadramento aprovado no browser.
 `--asset-candidate=artifacts/.../arquivo.glb` intercepta somente o GLB da faca
 nesta página, sem substituir o arquivo público. É preview experimental:
-quick usa Stab e heavy usa Slash, sem deslocamento extra do wrapper. O relatório
-marca `candidateOverride`; um resultado verde NÃO valida a rota de produção.
+nos candidatos antigos quick usa Stab e heavy usa Slash, sem avanço extra.
+Candidatos com QuickThrust/HeavyStab preservam o roteamento real. O relatório
+marca `candidateOverride` e o hash servido; um verde não aprova visualmente o asset.
 
 `npm run eval:melee-vm` também executa `melee-motion-check.mjs`: transições e enquadramento
 com o controlador e AnimationMixer reais, fixture mínima sem assets privados.
@@ -45,6 +46,17 @@ Os mutantes `--mutante=sem-clamp` e `--mutante=evento-antigo` deste segundo
 script recompõem o salto para bind pose e o evento obsoleto que cancela um ataque.
 `--mutante=quadro-antigo` restaura o wrapper anterior em memória e deve reprovar
 o retorno de cada ação ao enquadramento aprovado.
+
+A mesma cadeia executa `melee-approved-attacks-check.mjs` (quick/heavy distintos),
+`vm-hand-continuity-check.mjs` (identidade, refresh e donor tardio; mutantes
+`luva-por-arma`/`pbr-por-arma`) e `melee-framing-check.mjs` (Game.onResize real;
+mutante `fov-fixo`). `vm-hand-continuity-runtime.mjs` captura os cinco times em
+3:2/16:9 com atlas realmente carregados. `--reload` acrescenta três fases de
+recarga; `--inspection` eleva o pacote .14 m apenas em QA e marca os frames.
+Não usar essa pose elevada como evidência do enquadramento normal do jogo.
+`--sweep` testa lentes candidatas; `--asset-candidate` serve um GLB local de
+artifacts sem sobrescrever o público. Fotos/identificadores não certificam
+contato, anatomia oculta, qualidade humana ou sincronização multiplayer.
 
 `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` verifica oito
 contratos do diagnóstico P4 e duas regressões. O gauntlet reporta distância

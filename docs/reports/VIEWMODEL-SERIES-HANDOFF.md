@@ -20,6 +20,7 @@ Não marcar tudo pronto só porque testes estruturais passam.
 - Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-astra-pistol`.
 - Branch `codex/vm-astra-pistol`; início desta rodada em `1afbf01e`, limpo.
 - Checkpoint da aprovação da pistola e do prompt: `946cd4c6`.
+- Integração D e primeira identidade por time (revisão ainda pendente): `2bd18e04`.
 - Mãos/enquadramento da faca e BUG-84 validados: `6d0b02b2`.
 - Correção da transição da faca, capturador e testes: `a60c0f3e`.
 - Não trabalhar em `primary`, Fable, retarget ou outros checkouts.
@@ -259,7 +260,7 @@ original preservada. A sincronização de impacto continua pendente: o dano do
 Game ainda é imediato. Testar continuidade antes de ampliar o catálogo;
 preservar AK e poses/mãos aprovadas.
 
-### Marco 27 — integração D e identidade por time (local, em revisão)
+### Marco 28 — integração D e identidade por time (local, em revisão)
 
 - `tools/viewmodels/promote-knife-motion.mjs` verifica os hashes do original
   em `8f7c7280` e do D aprovado; conserva malhas, rig, câmera, materiais,
@@ -290,6 +291,40 @@ preservar AK e poses/mãos aprovadas.
   físico universal nem certifica contato entre mão e arma.
 - O usuário autorizou instalar Blender MCP se necessário. CLI Blender funciona;
   nada foi instalado e a sessão Blender do usuário não foi tocada.
+
+### Marco 29 — calibração de tela e acabamento (06/09, candidatos)
+
+- `lens-sweep-v2/`: 12 fotos reais, 3:2 e 16:9, câmera nativa/40/45/50/55°.
+  Crítico independente prefere 50°, aceita 45° como alternativa de idle;
+  rejeita a 29,24° como dominante e cortada. Não são medidas físicas de armas reais.
+- `melee-framing-check.mjs` chama `Game.onResize` real: regra antiga falha
+  em 1/2 verificações; correção e mutante demonstram preservação de largura
+  em 3:2, 16:9 e 20:9. A câmera vem do GLB; nenhum segundo FOV oculto no runtime.
+- Candidato `hand-continuity/knife-frame-50.glb`: apenas FOV exportado alterado,
+  escala .0135 e offset [.18,-.12,-.25] preservados; SHA-256
+  `3e04fbcb67480cec0638ca552d308379c5bff7c5689ae39c8aa88e566c992621`.
+  `motion50-3x2/`: 19 fotos, 225 frames, 26/26; clipes semânticos do controlador
+  real, sem override de ataque. Caixa completa da faca em idle passou de
+  x/W [.6432,1.0687] para [.5801,.8181]; vértices visíveis 4.329→5.262/5.262.
+  O enquadramento 50° ainda é candidato local; não foi aprovado pelo Ruben.
+- `teams-frame45/` e `teams-frame50-finish2/`: 20 fotos e 41 verificações por
+  rodada. Crítico aprovou cor/identidade básica E/C/F, mas reprovou a superfície
+  lisa da segunda tentativa e a borda sem dedos serrilhada. B precisa rever
+  escala aparente do padrão; E/U precisam mostrar punhos da pistola.
+- Acabamento v3 candidato: costura/dobra/bainha em atlas e height map próprios,
+  sem normal/ORM gasto de outro donor. `bindSharedArmTextures` mantém o tratamento
+  original somente em GoldSrc/retarget. Native não baixa os nove mapas descartados.
+  Nova régua de acabamento: 5 falhas antes, depois zero; mutante PBR por arma falha.
+  Não confundir este teste com aprovação visual. Recarga e inspeção de punho em
+  `vm-hand-continuity-runtime.mjs --reload --inspection`; inspect sobe o pacote
+  .14 m SOMENTE em QA, não representa o enquadramento normal do jogo.
+  `teams-frame50-finish3/`: 60 fotos, 121 verificações, zero erros; visual em revisão.
+  Inspeção do construtor identificou uma faixa de pele no punho da pistola E,
+  ausente na faca; corrigir classificação dessa parte do atlas antes de aprovar.
+- Fila completa atualizada em `VIEWMODEL-INVENTARIO.md`: 20 armas nesta lane,
+  incluindo faca. Remoções de seis duplicatas foram decisão do dono em `84f691d1`;
+  não ressuscitar a tabela de 26 da referência main. AWP e escopeta ainda não
+  começaram nesta rodada; aguardam fechamento da revisão da faca.
 
 - Abrir `artifacts/viewmodels/astra-series/review.html`, autocontido, e
   `knife-comparison.png` (antes/candidata 3:2). Gerador local `make-review.mjs`.
@@ -332,7 +367,7 @@ Movimento D aprovado e promovido localmente. Concluir revisão da continuidade
 de luvas e medir/corrigir escala pistola/faca, com captura real nas duas proporções.
 Conferir timing de dano: `_tryKnifeAttack` chama `_meleeHit` imediatamente;
 o candidato é VISUAL, não resolve sincronização de impacto ou multiplayer.
-Skins por time implementadas como candidato conforme marco 27, incluindo F/U
+Skins por time implementadas como candidato conforme marcos 28–29, incluindo F/U
 sem dedos; faltam aprovação visual e propagação às outras rotas. Não avançar
 a AWP antes da faca passar. AWP → escopeta → matriz completa do catálogo.
 Atualizar este ledger após cada marco e guardar checkpoint apenas dos arquivos próprios.

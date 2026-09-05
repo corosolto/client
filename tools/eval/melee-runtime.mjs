@@ -22,6 +22,12 @@ if (mutant && !['sem-ataque', 'flash-externo'].includes(mutant)) throw new Error
 const candidate = flags.has('asset-candidate') ? path.resolve(ROOT, flags.get('asset-candidate')) : null;
 if (candidate && (!candidate.startsWith(`${ROOT}/artifacts/`) || path.extname(candidate) !== '.glb' || mutant)) throw new Error('candidato deve ser GLB local em artifacts, sem mutante');
 if (candidate) await fs.access(candidate);
+let candidateLegacyRouting = false;
+if (candidate) {
+  const bytes = await fs.readFile(candidate);
+  const json = JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)));
+  candidateLegacyRouting = !['QuickThrust','HeavyStab'].every(name=>json.animations.some(a=>a.name===name));
+}
 const viewport = { width: Number(flags.get('largura') || 1440), height: Number(flags.get('altura') || 960) };
 const port = Number(flags.get('porta') || 8347);
 if (![viewport.width, viewport.height, port].every((n) => Number.isInteger(n) && n > 0)) throw new Error('dimensão/porta inválida');
@@ -67,8 +73,9 @@ try {
   await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?.vm?.melee?.active, null, { timeout: 180000 });
   await page.waitForTimeout(1000);
-  if (candidate) {
-    report.candidateOverride = { path: candidate, attackRouting: 'TEST ONLY: quick=Stab, heavy=Slash, sem avanço adicional do wrapper' };
+  if (candidate) report.candidateOverride = { path: candidate, attackRouting: candidateLegacyRouting
+    ? 'TEST ONLY: quick=Stab, heavy=Slash, sem avanço adicional do wrapper' : 'controlador de produção, clipes semânticos presentes' };
+  if (candidateLegacyRouting) {
     await page.evaluate(() => {
       const vm = window.__game.vm.melee;
       vm.attack = function (kind = 'quick') {
@@ -181,7 +188,7 @@ try {
     for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
       await advance(duration * fraction - elapsed); elapsed = duration * fraction;
       const state = await snapshot(`${kind}-${Math.round(fraction * 100).toString().padStart(3, '0')}`);
-      const expected = kind === 'draw' ? 'Draw' : candidate
+      const expected = kind === 'draw' ? 'Draw' : candidateLegacyRouting
         ? (kind === 'heavy' ? 'Slash' : 'Stab') : (kind === 'heavy' ? 'HeavyStab' : 'QuickThrust');
       if (fraction === 0.5) check(state.state === expected, `${kind} animação no meio da ação`, state.state);
     }

@@ -17,6 +17,8 @@ function actualFunction(name, end) {
 const tint = actualFunction('tintHandMaterial', '\nfunction cameraSpacePackage');
 const bind = actualFunction('bindSharedArmTextures', '\n// Clipes gerais');
 const checks = [];
+const mutant = process.argv[2] || '';
+if (process.argv.length>3 || (mutant&&!['--mutante=luva-por-arma','--mutante=pbr-por-arma'].includes(mutant))) throw Error('mutante desconhecido');
 for (const faction of ['E','B','C','F','U']) {
   const profile = { id: 'player-a', faction, skin: 0xb78968, sleeve: 0xaa3333, accent: 0xdd2222 };
   const scene = new THREE.Group(); scene.add(new THREE.PerspectiveCamera(32,1.5,.01,100));
@@ -33,8 +35,9 @@ for (const faction of ['E','B','C','F','U']) {
   checks.push({name:`${faction}: dedos seguem direção aprovada`,ok:mesh.material.userData.teamHands?.fingerless===expected.fingerless && pistol.userData.teamHands?.fingerless===expected.fingerless});
   const teamMap = new THREE.Texture(), donor = new THREE.Texture(), normal = new THREE.Texture(), orm = new THREE.Texture();
   pistol.map = teamMap;
+  if (mutant==='--mutante=pbr-por-arma') delete pistol.userData.teamHands;
   bind([{material:pistol}],new Map([['T_Glove01_B',donor],['T_Glove01_N',normal],['T_Glove01_ORM',orm]]));
-  checks.push({name:`${faction}: carregamento tardio não troca skin e mantém PBR`,ok:pistol.map===teamMap && pistol.normalMap===normal && pistol.roughnessMap===orm});
+  checks.push({name:`${faction}: donor tardio não troca atlas nem acabamento por time`,ok:pistol.map===teamMap && pistol.normalMap===null && pistol.roughnessMap===null});
   const authored = new AuthoredViewModels(new THREE.Group(), null, profile);
   const gunMesh = new THREE.Mesh(new THREE.BoxGeometry(), pistol);
   authored.entries.set('pistol', { handMeshes: [gunMesh] });
@@ -44,6 +47,13 @@ for (const faction of ['E','B','C','F','U']) {
   vm.setProfile({ faction: 'B', id: 'outro-personagem' });
   checks.push({name:`${faction}: mesmo time não recria material`,ok:mesh.material===cached});
   vm.dispose();
+}
+{
+  const material=new THREE.MeshStandardMaterial();material.name='CoroSolto_FP_Glove';
+  const legacy=tint(material,{accent:0x202735},true),donor=new THREE.Texture(),normal=new THREE.Texture(),orm=new THREE.Texture();
+  bind([{material:legacy}],new Map([['T_Glove01_B',donor],['T_Glove01_N',normal],['T_Glove01_ORM',orm]]));
+  checks.push({name:'UV legado mantém donor e PBR próprios',ok:legacy.map===donor&&legacy.normalMap===normal&&legacy.roughnessMap===orm&&!legacy.userData.teamHands});
+  checks.push({name:'UV legado mantém tint anterior',ok:legacy.color.equals(new THREE.Color(0x202735).lerp(new THREE.Color(0xffffff),.45))});
 }
 const game = fs.readFileSync(new URL('../../public/js/game.js',import.meta.url),'utf8');
 checks.push({name:'Game passa facção para as duas rotas',ok:(game.match(/faction: this\.playerFaction/g)||[]).length>=2});

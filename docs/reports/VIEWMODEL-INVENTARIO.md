@@ -5,8 +5,13 @@ inclusa. Famílias e portão de rollout: `public/js/data/vmconfig.js`. Este arqu
 de controle da frente; o estado narrativo mora em `STATUS.md` e o contrato normativo em
 `VIEWMODEL_CONTRACT.md`.
 
-A faca não entra: ela tem controlador melee próprio (`public/js/meleevm.js`) e não passa
-pelo caminho autorado. Restam **19 armas em 14 famílias**.
+A faca tem controlador melee próprio (`public/js/meleevm.js`), não passa pelo
+caminho autorado, mas faz parte do objetivo completo. São **19 armas de fogo em
+14 famílias + faca**. Os 20 IDs foram conferidos em 06/09/2026; as seis remoções
+do commit `84f691d1` são decisão anterior do dono, não lacunas a recriar.
+Não confundir com a referência local `main`, ainda com a tabela antiga de 26.
+As colunas B/C abaixo são histórico herdado; não foram recertificadas nesta rodada.
+Progresso atual e evidências: `VIEWMODEL-SERIES-HANDOFF.md`.
 
 ## Como reproduzir cada coluna
 
@@ -31,9 +36,9 @@ Os relatórios ficam em `artifacts/viewmodels/arsenal/` (fora do Git, por tamanh
 | **B · goldsrc** | moldes CC0 do CS 1.6 + arma Mint | 596 triângulos, sem dedos | `equip_rifle`, `idle`, `reload*`, `shoot`×3 — completos, por ARMA | `private-assets/viewmodels/goldsrc-vm/` |
 | **C · retarget** | mecânica da B com os braços da A | 67 juntas, luva + manga | os da B, retargetados | `private-assets/viewmodels/retarget-vm/` |
 
-Nenhuma das três é alcançável em produção hoje: `?cs16=1` liga a B, `?rt=1` liga a C, e sem
-parâmetro as famílias `ready` caem na A. Trocar a fonte padrão é decisão do dono e continua
-aberta.
+Na lane atual, AK usa golden e a pistola seu pacote dedicado KINEMATION;
+`?cs16=1` liga B e `?rt=1` liga C. Famílias não prontas continuam no legado.
+Isso descreve o checkout, não comprova publicação em produção.
 
 ## A referência de qualidade
 
@@ -65,7 +70,7 @@ Esses números são o alvo do calibrador — não um teto inventado.
 | Arma | Família | Rig/base | Trilha B | Trilha C | Estado |
 |---|---|---|---|---|---|
 | ak | ak | golden dedicado | construída | construída | **GOLDEN_CONGELADA** |
-| pistol | pistol | X18/G18 KINEMATION | construída | construída | **TECNICAMENTE_VERDE_AGUARDANDO_VISUAL** |
+| pistol | pistol | X18/G18 KINEMATION | construída | construída | **PARCIAL**: yaw 15° aprovado; P4 16:9 pendente; luvas em revisão |
 | awp | sniper | molde `awp` + Mint | construída | construída | PARCIAL |
 | m4 | ar | molde `m4a1` + Mint | construída | construída | PARCIAL |
 | mp5 | mp5 | molde `mp5` + Mint | construída | construída | PARCIAL |
@@ -83,9 +88,25 @@ Esses números são o alvo do calibrador — não um teto inventado.
 | p90 | p90 | molde `p90` + Mint | construída | construída | PARCIAL |
 | svd | svd | molde `g3sg1` + Mint | construída | construída | PARCIAL |
 | sks | marksman | molde `g3sg1` + Mint | construída | construída | PARCIAL |
-| knife | melee | pipeline próprio | fora do caminho autorado | — | fora do lote |
+| knife | melee | pipeline próprio | fora do caminho autorado | — | **PARCIAL**: mãos e ataques D aprovados; proporção e luvas em revisão |
 
 O doador de cada arma está em `DOADORES` de `tools/viewmodels/build_goldsrc_all.mjs`.
+
+## Fila completa — 06/09/2026
+
+1. Fechar continuidade pistola/faca (mesmo time, escala, recarga/troca e ataques).
+2. Piloto AWP/sniper; depois shotgun, conforme contrato profissional.
+3. Pistolas restantes: Deagle e revólver .38.
+4. Rifles: M4, MD97, carabina, SCAR, FAMAS; M92 na família AK.
+5. SMGs: MP5, Uzi, P90.
+6. Longas restantes: Mosin, SVD, SKS, LMG.
+7. Regressão de AK/pistola/faca, extensão de identidade por time à AK golden
+   sem mudar sua geometria, e utilitários HE/flash/smoke.
+
+`ready: true` não é aprovação humana (M92 herda o portão AK mas continua PARCIAL).
+Cada linha só fecha após asset servido, movimentos/contato no Game, fotos e
+sequências 3:2/16:9, crítico independente e aprovação do dono. Nada desta lista
+autoriza recriar armas removidas ou publicar a lane automaticamente.
 
 ## Defeitos de raiz encontrados e consertados
 

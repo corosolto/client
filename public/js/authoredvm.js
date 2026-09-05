@@ -88,10 +88,11 @@ function bindSharedArmTextures(handMeshes, shared) {
   if (!shared) return;
   for (const mesh of handMeshes) {
     for (const material of materialsOf(mesh)) {
+      if (material?.userData.teamHands) continue; // acabamento do time, não PBR de outro par de luvas
       const kind = /CoroSolto_FP_(Hand|Glove|Cloth)/.exec(material?.name || '')?.[1];
       if (!kind) continue;
       const base = MATERIAL_TEXTURE_BASE[kind];
-      if (!material.userData.teamHands) material.map = shared.get(`${base}_B`) || material.map;
+      material.map = shared.get(`${base}_B`) || material.map;
       material.normalMap = shared.get(`${base}_N`) || material.normalMap;
       const orm = shared.get(`${base}_ORM`);
       if (orm) {
@@ -267,8 +268,20 @@ const clipKey = (name = '') => {
 };
 const materialsOf = (object) => Array.isArray(object.material) ? object.material : [object.material];
 
-function tintHandMaterial(material, profile) {
-  return applyTeamHandMaterial(material, profile, 'pistol');
+function tintHandMaterial(material, profile, legacy = false) {
+  if (!legacy) return applyTeamHandMaterial(material, profile, 'pistol');
+  // Preserva o tratamento antigo dos UVs GoldSrc/retarget até sua rodada própria.
+  const copy = material.clone();
+  if (copy.color) {
+    const skin = /CoroSolto_FP_Hand/i.test(copy.name);
+    const glove = /CoroSolto_FP_Gloves?/i.test(copy.name);
+    copy.color.set(skin ? profile.skin ?? 0xd19a72 : glove ? profile.accent ?? 0x202735 : profile.sleeve ?? 0x27364a);
+    copy.color.lerp(new THREE.Color(0xffffff), skin ? 0 : glove ? 0.45 : 0.5);
+  }
+  copy.roughness = Math.max(0.48, copy.roughness ?? 0.6);
+  copy.metalness = Math.min(0.08, copy.metalness ?? 0);
+  copy.needsUpdate = true;
+  return copy;
 }
 
 function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
@@ -330,11 +343,11 @@ function cameraSpacePackage(gltf, profile, parent, family, sourceKey = '') {
       handMeshes.push(object);
       // Estes atlas pertencem ao rig KINEMATION. GoldSrc/retarget e AK golden
       // conservam seus materiais até terem inspeção de UV e aprovação próprias.
-      if (!golden && !molde) {
+      if (!golden) {
         object.material = Array.isArray(object.material)
           ? object.material.map((material) => HAND_MATERIAL.test(material?.name || '')
-            ? tintHandMaterial(material, profile) : material)
-          : tintHandMaterial(object.material, profile);
+            ? tintHandMaterial(material, profile, molde) : material)
+          : tintHandMaterial(object.material, profile, molde);
       }
       object.userData.authoredCharacterHand = profile.id || 'player';
     } else {
@@ -418,9 +431,10 @@ export class AuthoredViewModels {
       ? (VM_WEAPON[armaDaChave]?.family || bruta) : bruta;
     const bakedWeapon = key.includes('#') ? key.split('#')[1] : '';
     const golden = key.startsWith('gold#');
+    const legacyHands = key.startsWith('gs#') || key.startsWith('rt#');
     const pending = Promise.all([
       loadFamilyGltf(key),
-      golden ? Promise.resolve(null) : sharedArmTextures(),
+      legacyHands ? sharedArmTextures() : Promise.resolve(null),
       golden ? Promise.resolve(null) : generalMotions(),
     ])
       .then(async ([gltf, shared, general]) => {

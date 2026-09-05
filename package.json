@@ -142,7 +142,7 @@
     "eval:authored-vm": "node tools/eval/authored-vm-check.mjs",
     "eval:authored-capture": "node tools/eval/authored-pose-capture-check.mjs",
     "eval:vmrecoil": "node tools/eval/vmrecoil-sim.mjs",
-    "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && node tools/eval/vm-hand-continuity-check.mjs",
+    "eval:melee-vm": "node tools/eval/melee-vm-check.mjs && node tools/eval/melee-motion-check.mjs && node tools/eval/melee-approved-attacks-check.mjs && node tools/eval/vm-hand-continuity-check.mjs && node tools/eval/melee-framing-check.mjs",
     "eval:vm-catalog": "node tools/viewmodels/validate_paid_catalog.mjs",
     "eval:vm-identity": "node tools/eval/authored-identity-check.mjs",
     "eval:vm-ads": "node tools/eval/authored-ads-check.mjs",

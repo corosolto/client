@@ -36,6 +36,7 @@ export class KnifeMeleeViewModel {
     this.actions = new Map();
     this.current = null;
     this.cameraFov = 32;
+    this.cameraAspect = 1.5;
     this.attackMotion = null;
     this.basePosition = PACKAGE_OFFSET.clone();
     this.suspended = false;
@@ -52,6 +53,11 @@ export class KnifeMeleeViewModel {
   get loaded() { return !!this.scene; }
   get active() { return this.loaded && this.weapon === 'knife'; }
   get state() { return this.current?.getClip()?.name || ''; }
+
+  fov(aspect = this.cameraAspect) {
+    const actual = Number.isFinite(aspect) && aspect > 0 ? aspect : this.cameraAspect;
+    return 2 * Math.atan(Math.tan(this.cameraFov * Math.PI / 360) * this.cameraAspect / actual) * 180 / Math.PI;
+  }
 
   setProfile(profile) {
     this.profile = profile;
@@ -72,6 +78,7 @@ export class KnifeMeleeViewModel {
     scene.updateMatrixWorld(true);
     camera.updateMatrixWorld(true);
     this.cameraFov = camera.fov;
+    this.cameraAspect = camera.aspect;
     scene.applyMatrix4(camera.matrixWorld.clone().invert());
     camera.removeFromParent();
     scene.traverse((object) => {

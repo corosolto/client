@@ -2881,7 +2881,7 @@ export class Game {
       const melee = this.vm?.melee?.active;
       const authored = !melee && this.vm?.authored?.active(this.player?.weapon);
       this.vmCamera.fov = melee
-        ? this.vm.melee.cameraFov
+        ? this.vm.melee.fov(this.camera.aspect)
         : authored
         ? this.vm.authored.fov(this.player?.weapon, this.camera.aspect)
         : vmFovForAspect(this.camera.aspect);
@@ -2900,7 +2900,8 @@ export class Game {
     this.playerTeam = newTeam; this.enemyTeam = oldTeam;
     this.playerFaction = this.enemyFaction;
     this.enemyFaction = oldFaction;
-    const handProfile = { id: this.playerCharId, faction: this.playerFaction };
+    const handProfile = { id: this.playerCharId, faction: this.playerFaction,
+      skin: this.playerDef?.pal?.skin, sleeve: this.playerDef?.pal?.shirt, accent: this.playerDef?.pal?.pants };
     this.vm.authored?.setProfile(handProfile);
     this.vm.melee?.setProfile(handProfile);
     p.team = newTeam;
@@ -2969,7 +2970,7 @@ export class Game {
     }
     if (this.vmCamera) {
       this.vmCamera.fov = melee
-        ? this.vm.melee.cameraFov
+        ? this.vm.melee.fov(this.vmCamera.aspect)
         : authored
         ? this.vm.authored.fov(w, this.vmCamera.aspect)
         : vmFovForAspect(this.vmCamera.aspect);

@@ -14,6 +14,12 @@ const sub = (a, b) => a.map((v, i) => v - b[i]);
 const dot = (a, b) => a.reduce((s, v, i) => s + v * b[i], 0);
 const normalize = a => a.map(v => v / Math.hypot(...a));
 const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const smooth=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
+const gauss=(v,w)=>Math.exp(-(v*v)/(w*w));
+const star=Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2,r=i%2?.085:.2;return [Math.cos(a)*r,Math.sin(a)*r];});
+const inStar=(x,y)=>{let hit=false;for(let i=0,j=9;i<10;j=i++){
+  const [a,b]=star[i],[c,d]=star[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;
+}return hit;};
 const report = [];
 for (const [layout, inventory] of Object.entries(inspection)) {
   const rig = inventory.rigs[0];
@@ -70,10 +76,15 @@ for (const [layout, inventory] of Object.entries(inspection)) {
     for(const style of styles){
       const glove=parse(style.glove),sleeve=parse(style.sleeve),accent=parse(style.accent);
       const pixels=Buffer.alloc(size*size*3);
+      const heights=Buffer.alloc(size*size);
       for(let ix=0;ix<size*size;ix++){
         const [x,y,z,tip]=fields.subarray(ix*4,ix*4+4);
         const isSleeve=role==='cloth'||(role==='combined'&&y<-.15);
         const exposed=(role==='skin'&&(style.fingerless||y<-.15))||(style.fingerless&&tip>.48);
+        const edge=style.fingerless&&role!=='skin'?gauss(tip-.445,.035):0;
+        const cuffSeam=gauss(y+.15,.015);
+        const panel=(gauss(x-.23,.012)+gauss(x+.23,.012))*smooth(.05,.2,y)*(1-smooth(.72,.9,y));
+        const fold=gauss(y-.08,.16)*(Math.sin(y*65+x*5+z*8)+Math.sin(y*98-x*4))*.5;
         let color=exposed?skin:isSleeve?sleeve:glove;
         const cuff=y>-.38&&y<.06;
         if(!exposed&&style.motif==='camo'){
@@ -83,17 +94,29 @@ for (const [layout, inventory] of Object.entries(inspection)) {
         if(!exposed&&cuff&&style.motif==='checker')color=(Math.floor(x*9)+Math.floor(y*10))%2===0?accent:glove;
         if(!exposed&&style.motif==='star'&&cuff){
           color=sleeve;
-          const dx=x,dy=(y+.15)*1.4,r=Math.hypot(dx,dy),angle=Math.atan2(dx,dy);
-          if(r<.13+.065*Math.cos(5*angle))color=accent;
+          if(inStar(x,(y+.15)*1.4))color=accent;
         }
+        // Bainha contínua + costura; transição antialias segue pesos reais dos dedos.
+        if(style.fingerless&&role!=='skin'&&tip>.38){
+          const t=smooth(.465,.505,tip);
+          const hem=glove.map(c=>c*.58);
+          color=hem.map((c,i)=>c*(1-t)+skin[i]*t);
+        }
+        const seam=Math.max(cuffSeam,panel,edge);
+        const stitch=seam*Math.pow(Math.max(0,Math.sin(x*120+y*85+z*50)),8);
         const noise=Math.sin(ix*12.9898)*43758.5453%1;
-        const weave=(ix%size)%3===0?.95:1;
-        const value=exposed?1:(.94+noise*.045)*weave;
+        const weave=(ix%size)%3===0?.99:1;
+        const value=exposed&&edge<.1?1:(.97+noise*.025-.18*seam+.10*stitch+fold*.035)*weave;
         for(let c=0;c<3;c++)pixels[ix*3+c]=Math.round(Math.max(0,Math.min(255,color[c]*value)));
+        const grain=Math.sin(x*180+z*90)*Math.cos(y*190-z*45);
+        heights[ix]=Math.round(Math.max(0,Math.min(255,128+(exposed?0:grain*3+fold*10)+seam*46+stitch*10)));
       }
       const file=path.join(output,layout,`${role}-${style.id}.webp`);
       await sharp(pixels,{raw:{width:size,height:size,channels:3}}).webp({quality:92}).toFile(file);
+      const heightFile=file.replace('.webp','-height.webp');
+      await sharp(heights,{raw:{width:size,height:size,channels:1}}).webp({quality:95}).toFile(heightFile);
       report.push({layout,role,faction:style.id,file:path.relative(root,file),bytes:(await fs.stat(file)).size});
+      report.push({layout,role,faction:style.id,file:path.relative(root,heightFile),bytes:(await fs.stat(heightFile)).size});
     }
   }
 }
