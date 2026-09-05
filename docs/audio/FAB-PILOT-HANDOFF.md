@@ -4,8 +4,10 @@ Atualizado em 2026-09-05 (décima segunda rodada: feedback tátil completo no jo
 
 ## Décima segunda rodada — impactos, armadura, pickup/troca e UI
 
-Branch: `claude/audio-fab-pilot`. Base anterior preservada no checkpoint `d648a136`
-(`fix(audio): preservar fallbacks e balancear boom`). Nenhum WAV entrou no Git.
+Branch: `claude/audio-fab-pilot`. Draft PR:
+[#504](https://github.com/corosolto/client/pull/504). Base anterior preservada no checkpoint
+`d648a136`; implementação em `62f743f8` e docs sincronizados em `236890a8`/`f2430b87`.
+Nenhum WAV entrou no Git.
 
 O Action Game Sounds Pack agora alimenta cinco contratos específicos do manifest local:
 
@@ -37,6 +39,11 @@ Validação automatizada já verde: `eval:audioeventos`, `eval:audiofablocal`,
 `audio-eventos-check --mutante=colapsa-pools` falha em cinco cláusulas, provando que a régua
 detecta a volta a um único som genérico. O ledger mede concreto e metal como caminho
 `superficie`, mas mantém `decisao: synth`: escuta local não autoriza release.
+
+Fechamento técnico: `check:fast` 78/78, pre-push `check:deploy` 37/37 e build Astro/Vercel
+verdes com Node 23; 549/549 URLs únicas do manifest responderam HTTP 200 com MIME de áudio.
+O Browser Use não obteve a verificação administrativa necessária para abrir `localhost` e
+não foi contornado; a escuta humana permanece o gate real do draft.
 
 Roteiro manual em `http://127.0.0.1:8131/?tactile=1` após recarga completa:
 
