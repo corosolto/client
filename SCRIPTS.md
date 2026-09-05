@@ -928,3 +928,10 @@ Este repo é multi-agente (Claude, Kimi, OpenCode). Skills NATIVAS (csbrasil, as
 ## `eval:propsuv1`
 
 Geometria normalizada pelo PropBatch não pode perder o uv1 do GLB: material com textura em canal 1 (Mini Cooper + 6 carros) sem uv1 na geometria compila shader com `uv1` não declarado e cobre a captura de erro vermelho (mansão, 20/08). `--mutante=dropa-uv1` prova que morde.
+
+## `eval:authored-capture`
+
+Régua Node da captura de saque, tiro e recarga autorados: conserva tempo completo
+do recuo apesar do clamp de dt, preserva idle pausado e restaura o controlador
+depois das fotos. `--mutate` exige que seis regressões sejam detectadas. Não
+substitui o gauntlet de pixels nem a aprovação visual das mãos e da arma.

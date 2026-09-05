@@ -5,6 +5,7 @@ import { execSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import sharp from 'sharp';
+import { startAuthoredAction, sampleAuthoredPose, finishAuthoredAction } from './lib/authored-pose-capture.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').split('=')[1] || '';
@@ -13,6 +14,15 @@ const PORT = arg('porta') || '8341';
 const BASE = `http://127.0.0.1:${PORT}`;
 const OUT = path.resolve(ROOT, arg('saida') || `artifacts/viewmodels/golden-${WEAPON}/runtime-final`);
 const VIEWPORT = { width: Number(arg('largura')) || 1440, height: Number(arg('altura')) || 960 };
+const quadroNumero = (name) => (arg(name) === '' ? null : Number(arg(name)));
+const QUADRO = {
+  x: quadroNumero('quadro-x'), y: quadroNumero('quadro-y'), z: quadroNumero('quadro-z'),
+  fov: quadroNumero('quadro-fov'), pitch: quadroNumero('quadro-pitch'),
+  yaw: quadroNumero('quadro-yaw'), roll: quadroNumero('quadro-roll'),
+};
+if (Object.values(QUADRO).some((value) => value !== null && !Number.isFinite(value))) {
+  throw new Error('override de enquadramento não numérico');
+}
 /* --modo escolhe a MESMA trilha que o vm-gauntlet mede; sem ele nada muda e a
    AK golden continua sendo capturada pelo caminho de produção. */
 const MODO = arg('modo') || 'golden';
@@ -72,109 +82,65 @@ async function openMap(map) {
   );
   await page.waitForFunction(() => window.__game?.state === 'live', null, { timeout: 180000 });
   await page.waitForFunction((weapon) => window.__authoredVm?.entry?.(weapon), WEAPON, { timeout: 120000 });
+  if (Object.values(QUADRO).some((value) => value !== null)) {
+    await page.evaluate(({ weapon, frame }) => {
+      const game = window.__game;
+      const vm = window.__authoredVm;
+      const entry = vm.entry(weapon);
+      entry.frame = {
+        ...entry.frame,
+        x: frame.x ?? entry.frame.x, y: frame.y ?? entry.frame.y, z: frame.z ?? entry.frame.z,
+        rotDeg: [frame.pitch ?? entry.frame.rotDeg?.[0] ?? 0,
+          frame.yaw ?? entry.frame.rotDeg?.[1] ?? 0, frame.roll ?? entry.frame.rotDeg?.[2] ?? 0],
+      };
+      if (frame.fov !== null) entry.cameraFov = frame.fov;
+      game.vmCamera.fov = vm.fov(weapon, game.vmCamera.aspect);
+      game.vmCamera.updateProjectionMatrix();
+      game.update(0, true);
+    }, { weapon: WEAPON, frame: QUADRO });
+  }
   await page.waitForTimeout(1800);
   return page;
 }
 
 async function snapshot(page, label, metadata = {}) {
   const file = `${String(cells.length).padStart(2, '0')}-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
+  const rendered = await page.evaluate((weapon) => {
+    const game = window.__game;
+    if (game.paused) throw new Error('captura recusada: jogo pausado');
+    game.update(0, true);
+    const entry = window.__authoredVm.entry(weapon);
+    return {
+      frame: game.renderer.info.render.frame,
+      mountPosition: entry.mount.position.toArray(),
+      mountMatrixPosition: entry.mount.matrix.elements.slice(12, 15),
+    };
+  }, WEAPON);
   const png = await page.screenshot({ type: 'png' });
   await fs.writeFile(path.join(OUT, file), png);
   cells.push({ label, file, png });
-  report.states.push({ label, file, ...metadata });
+  report.states.push({ label, file, ...metadata, rendered });
 }
 
 async function startAction(page, kind) {
-  return page.evaluate(({ kind, weapon }) => {
-    const game = window.__game;
-    const vm = window.__authoredVm;
-    if (game.__qaAuthoredUpdate) vm.update = game.__qaAuthoredUpdate;
-    if (kind === 'draw') {
-      game.player.weapon = 'knife';
-      game._switchWeapon(weapon);
-    } else if (kind === 'fire') {
-      game.player.reloadUntil = 0;
-      game.player.nextShotAt = 0;
-      game.player.drawUntil = 0;
-      game.mouseDown0 = true;
-      game._tryShoot();
-      game.mouseDown0 = false;
-    } else if (kind === 'reload') {
-      const ammo = game.player.ammo[weapon];
-      ammo.mag = Math.min(ammo.mag, 23);
-      game.player.reloadUntil = 0;
-      const ammoBefore = { ...ammo };
-      game._startReload();
-      game.__viewmodelQaReload = {
-        duration: Math.max(0, game.player.reloadUntil - game.time),
-        ammoBefore,
-      };
-    }
-    const entry = vm.entry(weapon);
-    return { state: entry.state, clip: entry.action?.getClip?.().name || null };
-  }, { kind, weapon: WEAPON });
+  return page.evaluate(startAuthoredAction, { kind, weapon: WEAPON });
 }
 
 async function actionPose(page, kind, fraction) {
-  return page.evaluate(({ kind, fraction, weapon }) => {
-    const game = window.__game;
-    const vm = window.__authoredVm;
-    const entry = vm.entry(weapon);
-    if (!game.__qaAuthoredUpdate) game.__qaAuthoredUpdate = vm.update.bind(vm);
-    const action = entry.action;
-    const duration = action?.getClip?.().duration || 0;
-    const playbackRate = Math.abs(action?.timeScale || 0);
-    const effectiveDuration = playbackRate ? duration / playbackRate : null;
-    const reloadQa = game.__viewmodelQaReload;
-    if (kind === 'reload' && reloadQa) {
-      Object.assign(game.player.ammo[weapon], reloadQa.ammoBefore);
-      game.player.reloadUntil = game.time + reloadQa.duration * (1 - fraction);
-    }
-    if (kind === 'draw' && !/equip/i.test(action?.getClip?.().name || '')) {
-      entry.state = 'draw';
-      entry.stateUntil = Infinity;
-      entry.drawTime = entry.drawDuration * fraction;
-      game.__qaAuthoredUpdate(0);
-    } else if (action && duration) {
-      const currentTimeScale = action.timeScale || 1;
-      entry.mixer.stopAllAction();
-      action.reset();
-      action.enabled = true;
-      action.setEffectiveWeight(1);
-      action.setEffectiveTimeScale(currentTimeScale);
-      action.time = Math.min(duration - 1e-4, Math.max(0, duration * fraction));
-      action.play();
-      entry.mixer.update(0);
-      action.paused = true;
-    }
-    vm.update = () => {};
-    return {
-      state: entry.state,
-      clip: action?.getClip?.().name || null,
-      clipDuration: duration,
-      timeScale: action?.timeScale || 0,
-      effectiveDuration,
-      clipTime: action?.time || 0,
-      gameReloadDuration: kind === 'reload' ? reloadQa?.duration ?? null : null,
-      gameReloadRemaining: Math.max(0, game.player.reloadUntil - game.time),
-      reloadSyncError: kind === 'reload' && effectiveDuration != null && reloadQa
-        ? Math.abs(effectiveDuration - reloadQa.duration) : null,
-      ammo: { ...game.player.ammo[weapon] },
-    };
-  }, { kind, fraction, weapon: WEAPON });
+  return page.evaluate(sampleAuthoredPose, { kind, fraction, weapon: WEAPON });
 }
 
 async function capturePoseSeries(page, kind, fractions) {
   await startAction(page, kind);
-  for (const fraction of fractions) {
-    const state = await actionPose(page, kind, fraction);
-    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-    await snapshot(page, `${kind}-${String(Math.round(fraction * 100)).padStart(3, '0')}`, state);
+  try {
+    for (const fraction of fractions) {
+      const state = await actionPose(page, kind, fraction);
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await snapshot(page, `${kind}-${String(Math.round(fraction * 100)).padStart(3, '0')}`, state);
+    }
+  } finally {
+    await page.evaluate(finishAuthoredAction);
   }
-  await page.evaluate(() => {
-    const game = window.__game;
-    if (game.__qaAuthoredUpdate) window.__authoredVm.update = game.__qaAuthoredUpdate;
-  });
 }
 
 try {
@@ -217,6 +183,7 @@ try {
       servedGlb: { url: response.url, status: response.status, bytes: modelBytes.byteLength, sha256 },
       clips: [...entry.clips.entries()].map(([alias, clip]) => ({ alias, name: clip.name, duration: clip.duration })),
       camera: { fov: game.vmCamera.fov, aspect: game.vmCamera.aspect },
+      frame: { ...entry.frame },
       materials,
     };
   }, WEAPON);
@@ -224,6 +191,7 @@ try {
   report.servedGlb = asset.servedGlb;
   report.clips = asset.clips;
   report.camera = asset.camera;
+  report.frame = asset.frame;
   report.materials = asset.materials;
 
   await snapshot(open, 'idle-inicio', { state: 'idle' });

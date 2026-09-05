@@ -9,6 +9,19 @@ e pra que os **geracionais aposentados** parem de ser reabertos por engano.
 
 ---
 
+## Captura local dos viewmodels autorados
+
+`golden-ak-runtime.mjs` captura o jogo com materiais reais, amostrando saque,
+tiro e recarga pelo helper `lib/authored-pose-capture.mjs`. Avança o recuo em
+subpassos, preserva o idle procedural e renderiza a pose antes da foto. Aceita
+`--quadro-x/y/z/fov/pitch/yaw/roll` para comparar enquadramentos sem editar o
+runtime; os valores e a matriz renderizada ficam no relatório.
+
+`npm run eval:authored-capture -- --mutate` verifica oito contratos com
+`AnimationMixer` e `VmRecoil` reais e seis regressões injetadas em cópias
+temporárias. É uma régua Node do capturador, **não** aprovação visual ou do GLB;
+a folha de contato e o gauntlet de pixels continuam necessários.
+
 ## 1. Portões (rodam no CI, reprovam PR)
 
 Todos rodam em **Node puro**, sem Chrome, e terminam em segundos. Todos saem
