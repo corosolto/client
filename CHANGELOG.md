@@ -10,7 +10,7 @@
 >
 <!-- BEGIN:GERADO:versao_atual — não edite à mão, rode `npm run docs` -->
 
-**O jogo está em `2.0.0-alpha.218`.** Prerelease do semver ordena sozinho
+**O jogo está em `2.0.0-alpha.219`.** Prerelease do semver ordena sozinho
 (`alpha` < `beta` < release), e o fluxo automático cuida do bump.
 
 > Bloco gerado por `node tools/gen-docs.mjs`. Fonte: `grep VERSION public/js/version.js · node -p "require('./package.json').version"`
@@ -35,6 +35,68 @@
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
 - Slots abandonados voltam à IA e as salas oficiais passam de 5v5 para 4v4.
 - O catálogo in-game usa a mesma versão v8 do pacote de áudio baixado no build.
+
+## [2.0.0-alpha.219] — 2026-09-05
+
+### Mudado
+- feat(audio): consolidar arsenal e feedback tatil no jogo (#504)
+- docs(audio): fechar handoff do gate de publicação
+- fix(audio): impedir pack restrito fora da allowlist
+- docs(audio): fechar handoff pos-merge
+- docs(audio): registrar seleção e continuação da lane
+- fix(audio): consolidar curadoria e feedback de combate
+- docs(audio): registrar bloqueio do preview
+- docs: atualizar autoria da locucao Fish
+- docs(audio): registrar locucao e bloqueio de direitos
+- feat(audio): adicionar locucao Fish local
+- docs(audio): registrar PR e validacao final
+- docs: registrar gate de eventos de audio
+- docs: sincronizar contratos de audio
+- feat(audio): completar feedback tatil local
+- fix(audio): preservar fallbacks e balancear boom
+- fix(audio): tornar boom padrao no laboratorio
+- docs(audio): registrar boom guns designed para escuta
+- feat(audio): integrar boom guns designed em ab local
+- docs(audio): registrar arsenal cc0 para escuta
+- feat(audio): mapear arsenal para gravacoes cc0
+- docs(audio): registrar rejeicoes da escuta
+- fix(audio): remover sobreposicao e distinguir pistolas
+- docs(audio): registrar escuta de eventos e mapas
+- feat(audio): dar identidade a armas mapas e eventos
+- docs(audio): registrar cobertura e validacao local
+- feat(audio): cobrir arsenal e eventos no jogo local
+- docs(audio): registrar escuta Fab no jogo local
+- feat(audio): ligar laboratorio Fab ao jogo local
+- feat(audio): ampliar escuta local para biblioteca segura
+- test(audio): isolar ledger da fixture PRV13
+- docs(audio): 5ª rodada — BUG-138/139, três camadas com prova automatizada
+- test(audio): prova automatizada do assets-check contra fixture (PRV13)
+- fix(audio): ledger ausente aborta o gerador, nos dois modos (PRV12)
+- docs(audio): resultados da 4ª rodada e audio:check registrado como vermelho
+- docs(audio): registra o escape P0 e corrige o que os docs superdeclaravam
+- fix(audio): P0 fail-closed — allowlist no prefixo derivado, nas três camadas
+- docs(audio): estados por evento, BUG-132..136 e handoff da 3ª rodada
+- feat(audio): legado CS/Valve/UT catalogado e bloqueado, sem fingir substituição
+- feat(audio): gate de capacidade — só se aprova o que o runtime sabe tocar
+- fix(audio): sha256Fonte exige formato E é conferido contra o arquivo real (PRV8)
+- fix(audio): inventariador sinaliza falha POR ARQUIVO, e sai 1
+- fix(audio): rajada com cache frio faz uma requisição, não uma por tiro (ESP9)
+- docs(audio): handoff da 2ª rodada e BUG-128..131 no KNOWN-BUGS
+- feat(audio): shortlist por metadado e escuta A/B local, sem aprovar nada sozinho
+- fix(audio): a decisão do ledger passa a controlar o gerador (PRV7)
+- fix(audio): P0 trava a redistribuição Fab e PRV5 volta a poder disparar
+- fix(audio): sample que não carrega cai no synth, não em silêncio (ESP8)
+- fix(audio): ALC2 era falso-verde — o empacotador morria em toda execução
+- docs(audio): BUG-126 e BUG-127 no KNOWN-BUGS, com régua e reprodução
+- docs(audio): handoff do piloto Fab, SCRIPTS.md e blocos regerados
+- fix(audio): volume do usuário entra uma vez no caminho por sample (ESP7)
+- feat(audio): inventariador local do staging privado — só metadado
+- feat(audio): contrato de procedência por asset — origem, licença, hash e aprovação
+- fix(audio): tiro por sample entra no grafo — pan, propagação e duck do synth
+- test(audio): régua espacial do tiro por sample (ESP) — 3 cláusulas vermelhas
+- fix(audio): ambiente entra no manifest e no pack — ALC 17/17 verde
+- test(audio): régua de alcance do empacotamento (ALC) — vermelha por 17 de 17
+- docs(audio): iniciar piloto Fab
 
 ## [2.0.0-alpha.218] — 2026-09-05
 
