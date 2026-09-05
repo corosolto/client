@@ -76,6 +76,8 @@ jobs:
         run: node tools/eval/invariants.mjs
       - name: Coice do viewmodel (near plane + pitch em rajada)
         run: node tools/eval/vm-kick-sim.mjs
+      - name: Faca construída e transições sem bind pose
+        run: npm run eval:melee-vm
       - name: Navegação dos bots (60 s × 5 mapas, sementes fixas)
         run: node tools/eval/botsim.mjs 60 all
 

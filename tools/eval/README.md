@@ -25,6 +25,18 @@ O bloco `rendered` registra HUD e pose no frame fotografado; `game.update` fica
 congelado apenas durante o screenshot, com retomada em `finally`. Campos da
 amostragem de fase não devem ser confundidos com o estado posterior do HUD.
 
+`melee-runtime.mjs` é o capturador da faca (`--saida`, `--porta`, `--largura`,
+`--altura`): usa `Game._switchWeapon/_tryKnifeAttack`, avança a simulação em
+passos <=1/120 s e registra 19 fotos, estados, pesos e caixas projetadas. Não
+usa a rota authored. `--quadro-z` compara profundidade do pacote só em memória;
+`--mutante=sem-ataque` precisa reprovar os estados intermediários. É diagnóstico
+de browser, não aprovação de contato, anatomia ou movimento contínuo.
+
+`npm run eval:melee-vm` também executa `melee-motion-check.mjs`: sete cláusulas
+com o controlador e AnimationMixer reais, fixture mínima sem assets privados.
+Os mutantes `--mutante=sem-clamp` e `--mutante=evento-antigo` deste segundo
+script recompõem o salto para bind pose e o evento obsoleto que cancela um ataque.
+
 `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` verifica oito
 contratos do diagnóstico P4 e duas regressões. O gauntlet reporta distância
 `null` e amostra insuficiente quando o filtro de visibilidade não permite medir

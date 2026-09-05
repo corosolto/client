@@ -1937,6 +1937,35 @@ mudar.
 
 ## P1 — o jogador vê
 
+### ~~BUG-83 · faca abre a mão por um quadro ao terminar o saque/ataque~~ · CORRIGIDO LOCALMENTE 05/09
+
+**Sintoma observado na revisão visual:** `draw-100` e `quick-100` do piloto
+faca voltavam à pose aberta do rig antes de retornar ao idle (3:2 e 16:9).
+Evidência: `artifacts/viewmodels/astra-series/knife-runtime-{3x2,16x9}/`.
+
+**Causa confirmada:** `public/js/meleevm.js` desabilitava o clipe terminado
+(`clampWhenFinished=false`) e iniciava Idle com fade de peso zero. A fixture
+do controlador real mediu mão x=0 em vez do intervalo válido [1,4] no término
+de quick/heavy; em draw x≈0. Havia também handler de `finished` sem verificar
+se o evento pertencia à ação atual.
+
+**Correção:** sustentar a pose final durante o crossfade (`clampWhenFinished=true`)
+e ignorar `finished` de ações substituídas. Não trocar câmera, GLB ou controles
+de ataque para esconder esse defeito. O experimento de profundidade da faca
+é separado e ainda não aplicado ao runtime.
+
+**Régua:** `npm run eval:melee-vm`, também no CI e em `check:vm`. A nova
+`tools/eval/melee-motion-check.mjs` executa a classe e o AnimationMixer reais:
+antes 4/7 cláusulas falhavam; depois 7/7 passaram. `--mutante=sem-clamp`
+reintroduz três falhas de pose; `--mutante=evento-antigo` reintroduz a falha
+de interrupção. Logs `knife-motion-{before,after,mutant-clamp,mutant-event}.json`.
+O palpite de asset deformado não explica o salto: a fixture sem esse asset
+reproduz o defeito. Custo de GPU não medido; não há malhas/texturas novas.
+Recaptura `knife-fixed-candidate-{3x2,16x9}/` e revisão independente confirmam
+que os quadros finais não caem mais na pose aberta/baixa. O A/B de 3:2 usa
+igual profundidade; em 16:9 a pose foi avaliada separadamente do enquadramento.
+O acabamento/contato da faca e vídeo contínuo seguem pendentes. Não publicado.
+
 ### BUG-75 · mãos genéricas, encaixe torto e anatomia deformada — REABERTO 24/08
 
 **Sintoma (do dono):** *"mãos genéricas que não se parecem nada com mãos, mal encaixe nas

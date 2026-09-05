@@ -162,7 +162,8 @@ export class KnifeMeleeViewModel {
     this.packageRoot = packageRoot;
     this.mixer = new THREE.AnimationMixer(scene);
     for (const name of REQUIRED_CLIPS) this.actions.set(name, this.mixer.clipAction(clips.get(name)));
-    this.mixer.addEventListener('finished', () => {
+    this.mixer.addEventListener('finished', ({ action }) => {
+      if (action !== this.current) return; // término de ação substituída não encerra a atual
       this.attackMotion = null;
       if (this.packageRoot) this.packageRoot.position.copy(this.basePosition);
       if (this.active) this._play('Idle');
@@ -184,7 +185,8 @@ export class KnifeMeleeViewModel {
     const seconds = secondsOverride ?? ACTION_SECONDS[name];
     if (seconds) action.setDuration(seconds);
     if (name === 'Idle') action.setLoop(THREE.LoopRepeat, Infinity);
-    else { action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = false; }
+    // Sustenta a pose final durante o fade para Idle: sem clamp havia um quadro de bind pose.
+    else { action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; }
     action.fadeIn(0.025).play();
     this.current = action;
     return true;
