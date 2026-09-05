@@ -60,16 +60,26 @@ VM com o mesmo script de deploy.
 
 Medição de dimensionamento (`server/bench.mjs`): **0,084 ms/tick** para uma sala 5v5, ou 0,5%
 de um core. ~199 salas por core; ~280 em 2 cores com 30% de folga. Atenção à conta: a
-simulação anda a **60 Hz** — só o broadcast é 20 Hz. A versão anterior do bench dividia por 20 e
+simulação anda a **60 Hz** — só o broadcast é 30 Hz. A versão anterior do bench dividia por 20 e
 prometia 3× mais salas do que cabem.
 
 ## Protocolo
 
 HTTP (lobby): `GET /health` · `GET /maps` · `GET /rooms` · `POST /rooms`.
 WS: `/ws?room=&pw=&nome=&team=` → `welcome` (uma vez, com o **roster** da partida) + `snapshot`
-a 20 Hz. O servidor prefere `coro-snapshot-v3` (inclui CTF), mantém v2 binário durante o
-rollout e aceita JSON v1 como fallback. Cliente → servidor: `input`, `ping`, `time` (pedir vaga
-num lado), `espectar`.
+a 30 Hz. O servidor prefere `coro-snapshot-v4`: além do estado de CTF do v3, cada slot recebe
+o último `seq` processado e arma/pente/reserva/recarga/slots autoritativos. Mantém v3 e v2
+binários durante o rollout e aceita JSON v1 como fallback. Cliente → servidor: `input`, `ping`,
+`time` (pedir vaga num lado) e `espectar`; pickup e reload são intenções dentro do `input`.
+
+O cliente guarda a posição predita de cada `seq`. Quando o v4 reconhece um input, a correção é
+calculada contra a posição daquele mesmo `seq`, preservando o movimento ainda não reconhecido,
+e aplicada suavemente. Isso substitui o limiar antigo que ignorava tudo até 2,5 m e então
+teleportava — causa direta de travada perceptível no strafe agachado.
+
+Snapshot é estado substituível. Se um socket acumula mais de 256 KiB pendentes, o nó pula o
+snapshot velho e volta no estado mais novo assim que a fila drena; enfileirar posições obsoletas
+só transforma conexão lenta em latência crescente. Eventos continuam confiáveis em JSON.
 
 O **RTT é medido por ping/pong no próprio WebSocket**. O módulo antigo media por `fetch
 /health`: outra conexão, outro caminho, sem a fila do WS — um número bonito e errado justamente
@@ -91,8 +101,8 @@ slot após 45 s, para uma reconexão não acumular corpos abandonados.
 
 ## Salas
 
-As salas da casa ficam de pé para sempre (nunca são recolhidas quando esvaziam), usam 4v4 e
-giram mapa a cada partida. A rotação sai do catálogo do jogo (`mapcat.js`), então mapa novo
+As salas da casa ficam de pé para sempre (nunca são recolhidas quando esvaziam), usam 3v3 por
+padrão e giram mapa a cada partida. A rotação sai do catálogo do jogo (`mapcat.js`), então mapa novo
 entra sozinho:
 
 | Sala | Times | Mapas |
@@ -110,7 +120,8 @@ nó (sala é RAM e CPU; sem teto um laço de POST derruba o nó e leva junto as 
 Tudo que chega pela rede é sanitizado de novo no servidor. Em particular:
 
 - **Dano**: o cliente desenha o impacto e o tracer; quem decide acerto e dano é o servidor.
-- **Munição e cadência**: gate de servidor, em ticks — não no relógio do cliente.
+- **Inventário, munição e recarga**: o cliente pede troca/pickup/reload; o servidor valida posse
+  e distância, consome pente/reserva em ticks e devolve a decisão no snapshot v4.
 - **Origem do tiro**: o cliente manda a posição predita de onde mirou (senão o raio sai da
   posição do servidor, atrasada pelo RTT, e passa ao lado), mas ela é validada dentro de 3 m da
   posição autoritativa. Acima disso usa a do servidor.
@@ -131,7 +142,7 @@ de graça: basta abrir o `game.js`.
 IA desligada. Resultado: quem morria no multiplayer ficava morto **para sempre**, com a tela
 travada em "Respawn em 0.0s". Nenhuma régua pegou porque todas mediam o corpo **vivo** — foi
 achado jogando. Extraído para `_respawnEntity`, chamado dos dois caminhos, e cobrado agora pelo
-`server/smoke.mjs` (mutação prova que morde).
+`game/smoke.mjs` (mutação prova que morde).
 
 **Elenco do cliente com o tamanho errado.** Com "8 bots" salvo nas configurações e uma sala
 5v5, o cliente montava 15 corpos para as 10 entidades do servidor. O tamanho do time é do
@@ -154,7 +165,8 @@ hipóteses.
 |---|---|
 | `tools/eval/movimento-golden.mjs` | a trajetória do jogador não mudou com a extração da física |
 | `tools/eval/netcode-check.mjs` | netcode headless, sessão, spawn/respawn, relógio e CTF |
-| `tools/eval/netcodec-check.mjs` | codec v3 e compatibilidade v2 |
+| `tools/eval/netcodec-check.mjs` | codec v4, ack/loadout e compatibilidade v3/v2/JSON |
+| `game/authority-check.mjs` no backend | inventário, pickup, munição, recarga e mutante que volta a confiar no cliente |
 | `game/smoke.mjs` no backend | servidor de ponta a ponta, incluindo CTF e slot abandonado |
 | `game/bench.mjs` no backend | ms/tick → dimensionamento da VM |
 

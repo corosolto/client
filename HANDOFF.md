@@ -18,6 +18,60 @@ O handoff detalhado de 04/08/2026 foi preservado em
 `docs/historico/HANDOFF-2026-08-04.md`; ele explica decisões antigas, mas cita mapas,
 telemetria, versão e pipeline que já mudaram.
 
+## Qualidade multiplayer, autoridade de slot e comparação com single-player — 05/09/2026
+
+**Objetivo e definição de pronto:** reduzir a sensação de travada no strafe agachado, impedir
+arma/munição visual divergente e medir a experiência pela causa real, por sessão e por round.
+Pronto para produção exige protocolo compatível, persistência, painel, rollout gradual dos três
+nós e canário com dois clientes; WebRTC só entra depois como experimento comparável contra esta
+linha de base, não como troca de transporte sem medição.
+
+**Checkouts:** cliente `/Users/ruben/csbrasil/worktrees/mp-round-presence`, branch
+`v2/mp-round-presence`, base `dcd8858edc7e` (alpha.217); backend pareado
+`/Users/ruben/csbrasil-backend/worktrees/mp-round-presence`, branch `feat/mp-round-presence`,
+base `00c679a33b9f`; admin `/Users/ruben/csbrasil/worktrees/admin-mp-round-truth`, branch
+`codex/mp-round-player-truth`, base `8a5eedc866e6`. O corte completo foi publicado e validado
+em produção em 05/09/2026. Checkpoint funcional do cliente: `e83af234a61c`; SHA publicada:
+`0090ab82e064d729d2415bf7f281a34562b9203a`.
+
+**Implementado:** `coro-snapshot-v4` leva ACK do input e estado autoritativo de arma, slots,
+pente, reserva e recarga; v3/v2/JSON continuam negociáveis. A reconciliação usa a pose do mesmo
+`seq`, preserva inputs ainda não reconhecidos e assenta correções pequenas progressivamente. O
+cliente envia pedidos de rack/drop/reload; arma de jogador remoto remonta a malha de terceira
+pessoa quando o snapshot muda o equipamento. A cada 10 s seguem eventos, p95 e máximo de
+correção sem repetir a janela anterior.
+
+**Evidência local:** `eval:netcodecbin` 18/18, `eval:netcode` 178/178 e build Astro/Vercel
+verdes. `check:fast` passou 69/70; a única régua vermelha é `audio:check`, também vermelha no
+checkout primário sem estas mudanças porque o gerador antigo interpreta o pacote hasheado v8
+como 275 órfãos. O manifesto não foi regenerado nem esvaziado.
+
+**Persistência e painel:** migration 031 está em
+`/Users/ruben/db-privado/supabase/migrations/031_mp_reconciliation_quality.sql`, SHA-256
+`2a3ba6aa359e4c407e84d16490faf888357f4fb94f2db9b26617a3b6071d1a98`.
+Ela adiciona qualidade/reconciliação a `mp_session` e `mp_round`, preservando os RPCs das
+migrations 029/030. O admin classifica cada round pela causa e compara FPS apenas nos mesmos
+players que têm amostra em single e multiplayer.
+
+**Banco publicado:** migration 031 aplicada em transação explícita; as quatro colunas de sessão
+e oito de round foram conferidas. `anon` não executa `track_mp_sessions`/`track_mp_rounds`,
+`service_role` executa, e os dois RPCs vazios respondem `0`.
+
+**Publicado e validado em produção:** API no Cloud Run `csbrasil-backend-00023-rhr`, 100% do
+tráfego, imagem `d05c00a` (`sha256:5cc832b50017377db6ab1fb9c10a16f517ceb3d4def4424775efc2c9b88fed8f`);
+runtime `runtime-d05c00a` (`sha256:2acc05dde8206ab49c9063db73a2a346491827c77a3889118d032c4e46c3bed5`)
+promovido com zero jogadores por EUA → Madri → São Paulo. Os três nós expõem servidor
+`d05c00a`, cliente `0090ab82`, protocolos 1/2/3/4, `ev`/`slot-state`, simulação 60 Hz e
+snapshot 30 Hz. O cliente Vercel `dpl_HQ7QCZbPaDWbRdhHcsg2msJYQ11C` está nos três aliases;
+`prod-watch` `33942856245` confirmou edge, purge, banco e telemetria.
+
+**Canário controlado:** dois clientes v4, `CANARIO-E` e `CANARIO-B`, ocuparam a mesma sala e
+round; API e site mostraram `online:2/inGame:2`, o round persistiu pico 2, dois participantes,
+36 janelas, FPS 60, RTT p95 209 ms, snapshot 30 Hz e gap 44 ms. Um cliente injetou 18 correções
+para provar a coluna (`p95 0,02 m`, máximo `0,03 m`), o outro permaneceu em zero. Round,
+participantes e sessões sintéticas foram removidos e conferidos em zero. Próxima evidência:
+acompanhar rounds orgânicos; WebRTC permanece um canário posterior comparado à mesma régua.
+
 ## Analytics consolidado por jogador — 02/09/2026
 
 **Objetivo inteiro:** dar ao game-admin uma única jornada por `anon_id` em Multiplayer,

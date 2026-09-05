@@ -23,9 +23,13 @@
 > O conteúdo e as datas das entradas continuam intactos; só o rótulo mudou, porque chamar de
 > 3.3.0 um build com P0 em aberto promete ao jogador uma estabilidade que ele não tem.
 
-## Não lançado — 2026-09-02
+## Não lançado — 2026-09-05
 
 ### Corrigido
+- O multiplayer reconhece inputs por sequência e suaviza correções sem apagar movimento pendente.
+- Arma, slots, pente, reserva e recarga passam a ser autoritativos no protocolo snapshot v4.
+- Trocas de arma remotas remontam a malha visível; clientes lentos não acumulam snapshots obsoletos.
+- A qualidade envia magnitude das correções para diagnóstico por sessão e round.
 - Multiplayer não vaza mais para a partida single-player depois de voltar ao menu.
 - O primeiro spawn e o respawn online obedecem imediatamente à posição autoritativa.
 - Captura de bandeira passa a receber placar, progresso, donos e relógio pelo snapshot v3.
