@@ -71,9 +71,9 @@ import path from 'node:path';
 import { initTextures } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { AMB_LOOPS, BIOME_SHOTS } from '../../public/js/soundscape.js';
+import { carregarMapIds } from '../audio/map-ids.mjs';
 
-globalThis.location ??= { search: '' };
-const { MAP_IDS } = await import('../../public/js/maps.js');
+const MAP_IDS = carregarMapIds();
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
 /* `--raiz=`, `--ledger=` e `--so=audio` existem para a régua PRV13 rodar ESTE

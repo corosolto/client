@@ -8,9 +8,9 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { carregarMapIds } from './map-ids.mjs';
 
-globalThis.location ??= { search: '' };
-const { MAP_IDS } = await import('../../public/js/maps.js');
+const MAP_IDS = carregarMapIds();
 
 const arg = (nome) => (process.argv.find((item) => item.startsWith(`--${nome}=`)) || '').split('=')[1] || '';
 const publico = arg('raiz') || 'public';

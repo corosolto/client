@@ -3,9 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { carregarMapIds } from '../audio/map-ids.mjs';
 
-globalThis.location = { search: '' };
-const { MAP_IDS } = await import('../../public/js/maps.js');
+const MAP_IDS = carregarMapIds();
 
 const raiz = fileURLToPath(new URL('../..', import.meta.url));
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.split('=')[1] || '';
