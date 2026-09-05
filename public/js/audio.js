@@ -284,18 +284,26 @@ export class Sfx {
     m92: 'ak', ak: 'ak', akm: 'ak', g3: 'ak',   // M92 daqui = Zastava 7,62 curta, não Beretta
     m4: 'ar', scar: 'ar', famas: 'ar', tavor: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
   };
-  /* O pack chama todos os takes de `Gunshot_N-M`: arquivo diferente não cria identidade
-     sozinho. Esta camada dá assinatura ao SAMPLE (pitch/EQ/transiente/sub) por família.
-     AK fica neutra para preservar o take que o dono já aprovou na escuta local. */
-  static SAMPLE_GUN_SIGNATURE = {
-    ak:      { rate: 1.00, hp: 0,   lp: 22000, snap: 0,    punch: 0 },
-    pistol:  { rate: 1.10, hp: 180, lp: 11000, snap: .13,  punch: .025 },
-    smg:     { rate: 1.06, hp: 130, lp: 9000,  snap: .09,  punch: .035 },
-    ar:      { rate: 1.02, hp: 80,  lp: 11000, snap: .065, punch: .065 },
-    rifle:   { rate: .98,  hp: 65,  lp: 9000,  snap: .05,  punch: .09 },
-    lmg:     { rate: .91,  hp: 35,  lp: 7200,  snap: .035, punch: .18 },
-    sniper:  { rate: .84,  hp: 28,  lp: 6000,  snap: .02,  punch: .23 },
-    shotgun: { rate: .78,  hp: 24,  lp: 4600,  snap: 0,    punch: .27 },
+  /* Um disparo tem UMA fonte. O WAV Fab pode receber apenas rate/EQ/gain; nunca outro
+     transiente/sub sintetizado por cima. Perfis exatos separam armas da mesma família.
+     A AK fica totalmente neutra para preservar o take aprovado na escuta local. */
+  static SAMPLE_WEAPON_SIGNATURE = {
+    ak:         { rate: 1.00, hp: 0,   lp: 22000, gain: 1.00 },
+    pistol:     { rate: 1.12, hp: 220, lp: 11000, gain: .84 },
+    revolver38: { rate: .98,  hp: 85,  lp: 9000,  gain: 1.02 },
+    deagle:     { rate: .88,  hp: 35,  lp: 7200,  gain: 1.12 },
+    m92:        { rate: .98,  hp: 55,  lp: 9000,  gain: 1.04 },
+    shotgun:    { rate: .96,  hp: 28,  lp: 7800,  gain: 1.08 },
+  };
+  static SAMPLE_CLASS_SIGNATURE = {
+    ak:      { rate: 1.00, hp: 0,   lp: 22000, gain: 1.00 },
+    pistol:  { rate: 1.06, hp: 150, lp: 10000, gain: .92 },
+    smg:     { rate: 1.04, hp: 120, lp: 9500,  gain: .92 },
+    ar:      { rate: 1.01, hp: 75,  lp: 11000, gain: .98 },
+    rifle:   { rate: .99,  hp: 60,  lp: 9500,  gain: 1.00 },
+    lmg:     { rate: .94,  hp: 35,  lp: 7600,  gain: 1.05 },
+    sniper:  { rate: .90,  hp: 28,  lp: 6800,  gain: 1.08 },
+    shotgun: { rate: .96,  hp: 28,  lp: 7800,  gain: 1.08 },
   };
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
   // e decay curto — soa como ferrolho/mola, não como "beep atrasado" (o tal eco estranho).
@@ -469,56 +477,54 @@ export class Sfx {
 
   /* Tiro por sample no grafo: HTMLAudio não tem pan nem `start(t)`, então pan e
      propDelay que o game.js calcula eram descartados. Régua ESP2/ESP3. */
-  _sampleGunSignature(cls, t, vol, out) {
-    const P = Sfx.SAMPLE_GUN_SIGNATURE[cls] || Sfx.SAMPLE_GUN_SIGNATURE.rifle;
-    if (P.snap > 0) {
-      const src = this._noise(.018); const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3200;
-      const gain = this.ctx.createGain(); this._env(gain, t, .0003, P.snap * vol, .008);
-      src.connect(hp); hp.connect(gain); gain.connect(out); src.start(t); src.stop(t + .025);
-    }
-    if (P.punch > 0) {
-      const low = cls === 'shotgun' ? 54 : cls === 'sniper' ? 62 : 76;
-      const osc = this._osc('sine', low); osc.frequency.exponentialRampToValueAtTime(Math.max(24, low * .55), t + .12);
-      const gain = this.ctx.createGain(); this._env(gain, t, .001, P.punch * vol, .13);
-      osc.connect(gain); gain.connect(out); osc.start(t); osc.stop(t + .18);
-    }
-  }
-  _shotSample(url, weapon, dist, vol, pan, propDelay) {
+  _loadShotSample(url) {
     this.ensure();
     this._shotBuf = this._shotBuf || new Map();
     this._shotCarregando = this._shotCarregando || new Map();
     const buf = this._shotBuf.get(url);
-    /* SEM BUFFER, QUEM TOCA É O SYNTH — não `_sample`. Repetir `new Audio()` numa URL
-       que deu 404 é tocar silêncio com cara de som, e o synth nunca chegava a rodar
-       porque isto devolvia `true`. Régua ESP8. `null` = falhou antes, não retenta. */
-    if (!this.ctx || buf === null) return false;
-    if (buf === undefined) {
-      /* Mapa SEPARADO para "carregando": pôr `undefined` no `_shotBuf` não sentinelava
-         nada — `get()` devolve `undefined` para chave ausente também, e em rajada cada
-         tiro reabria fetch e decode do mesmo arquivo. Régua ESP9. */
-      if (!this._shotCarregando.has(url)) {
-        this._shotCarregando.set(url, (async () => {
-          try {
-            const res = await fetch(encodeURI(url));
-            if (!res.ok) throw new Error(`http ${res.status}`);
-            this._shotBuf.set(url, await this.ctx.decodeAudioData(await res.arrayBuffer()));
-          } catch (error) {
-            this._shotBuf.set(url, null);
-            console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
-          } finally {
-            this._shotCarregando.delete(url);
-          }
-        })());
-      }
-      return false;   // cache frio: o synth cobre este tiro; o próximo já sai do buffer
+    if (!this.ctx || buf === null) return Promise.resolve(buf || null);
+    if (buf !== undefined) return Promise.resolve(buf);
+    if (!this._shotCarregando.has(url)) {
+      this._shotCarregando.set(url, (async () => {
+        try {
+          const res = await fetch(encodeURI(url));
+          if (!res.ok) throw new Error(`http ${res.status}`);
+          const decoded = await this.ctx.decodeAudioData(await res.arrayBuffer());
+          this._shotBuf.set(url, decoded);
+          return decoded;
+        } catch (error) {
+          this._shotBuf.set(url, null);
+          console.warn('[sfx] sample de tiro não carregou; o synth assume', url, error?.message || error);
+          return null;
+        } finally {
+          this._shotCarregando.delete(url);
+        }
+      })());
     }
+    return this._shotCarregando.get(url);
+  }
+  async preloadWeaponSamples(weapons = []) {
+    this.ensure();
+    if (!this.ctx || !this.pack?.weaponSamples) return;
+    const urls = [...new Set(weapons.flatMap((weapon) => this.pack?.weapons?.[weapon] || []))];
+    await Promise.all(urls.map((url) => this._loadShotSample(url)));
+  }
+  _shotSample(url, weapon, dist, vol, pan, propDelay) {
+    this.ensure();
+    this._shotBuf = this._shotBuf || new Map();
+    const buf = this._shotBuf.get(url);
+    /* O jogo pré-carrega os WAVs das armas da partida. Se uma URL falhar ou uma chamada
+       externa chegar antes do preload, false mantém o synth apenas como contingência. */
+    if (!this.ctx || !buf) { if (buf !== null) this._loadShotSample(url); return false; }
     /* O duck fica DEPOIS das saídas por false: quem devolve false não tocou, e o
        `_gunshot` que assume ducka sozinho — duckar aqui duplicaria o sidechain. */
     this.duck(Sfx.duckTiro(dist), 0.16);
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
     const cls = Sfx.GUN_CLASS[weapon] || 'rifle';
-    const signature = Sfx.SAMPLE_GUN_SIGNATURE[cls] || Sfx.SAMPLE_GUN_SIGNATURE.rifle;
+    const signature = Sfx.SAMPLE_WEAPON_SIGNATURE[weapon]
+      || Sfx.SAMPLE_CLASS_SIGNATURE[cls]
+      || Sfx.SAMPLE_CLASS_SIGNATURE.rifle;
     src.playbackRate.value = signature.rate;
     this._shotVoices = this._shotVoices || [];
     const cortar = (i) => {
@@ -535,19 +541,17 @@ export class Sfx {
       const i = this._shotVoices?.indexOf(voz) ?? -1;
       if (i >= 0) this._shotVoices.splice(i, 1);
     };
-    /* `vol` puro: quem passa pelo `master` já leva o volume do usuário. `_sample`
-       multiplica por `this.vol` na mão porque HTMLAudio não passa por lá. Régua ESP7. */
-    const g = R.createGain(); g.gain.value = vol;
+    /* `vol` entra uma vez e o perfil pode acertar o nível relativo da arma; quem passa
+       pelo `master` já leva o volume do usuário. Régua ESP7. */
+    const g = R.createGain(); g.gain.value = vol * signature.gain;
     let sampleOut = src;
     if (signature.hp > 0) { const hp = R.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = signature.hp; sampleOut.connect(hp); sampleOut = hp; }
     if (signature.lp < 20000) { const lp = R.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = signature.lp; sampleOut.connect(lp); sampleOut = lp; }
     sampleOut.connect(g);
-    const mix = R.createGain(); g.connect(mix);
-    this._sampleGunSignature(cls, t, vol, mix);
     if (pan) {
       const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
-      mix.connect(pz); pz.connect(this.master);
-    } else mix.connect(this.master);
+      g.connect(pz); pz.connect(this.master);
+    } else g.connect(this.master);
     src.start(t); src.stop(t + buf.duration / signature.rate + 0.05);
     return true;
   }
@@ -678,23 +682,20 @@ export class Sfx {
     if (typeof characterId !== 'string') {
       propDelay = pan; pan = vol; vol = characterId; characterId = '';
     }
-    // morte: thud de corpo (ruído grave filtrado) + queda de tom suave em sine/sub — em vez do
-    // beep sawtooth "minecraft". Mais encorpado e menos game-boy.
+    // Morte padrão = apenas a queda corporal seca. O vocal Fab foi rejeitado na escuta por
+    // soar como jogo de luta, e stings tonais por cima transformavam informação em drama.
     // vol escala por distância (game.js) — bot morrendo do outro lado do mapa não "canta" no
     // ouvido do player (antes: sting completo em TODA morte, somava com tiro = "eco estranho").
     // pan/propDelay: posição estéreo + delay de propagação da morte de bots (player = 0).
     if (vol < 0.08) return;
     const sample = this._cs('death');
-    const bodyPlayed = sample && this._eventSample(sample, 0.92 * vol, pan, propDelay, true);
-    const voicePlayed = this._characterPhysical('death', characterId, 0.46 * vol, pan, propDelay + 0.035);
-    if (bodyPlayed || voicePlayed) return;
+    const bodyPlayed = sample && this._eventSample(sample, 0.72 * vol, pan, propDelay, true);
+    if (bodyPlayed) return;
     this.ensure(); if (!this.ctx) return;
     let out = this.ctx.createGain();
     if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
     else out.connect(this.master);
-    this._burst(0.2, 0.5 * vol, 240, 0.8, 'lowpass', propDelay, out);        // baque grave (corpo caindo)
-    this._beep('sine', 180, 55, 0.5, 0.26 * vol, propDelay, out);            // queda de tom
-    this._beep('triangle', 90, 28, 0.7, 0.18 * vol, 0.04 + propDelay, out);  // sub grave curto
+    this._burst(0.14, 0.34 * vol, 220, 0.8, 'lowpass', propDelay, out);
   }
   jump()      { this.ensure(); this._beep('sine', 220, 330, .08, .1); }
   land()      { this.ensure(); this._burst(.08, .18, 400); }

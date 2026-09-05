@@ -10,6 +10,7 @@ import { WEAPONS } from '../../public/js/data/weapons.js';
 const RAIZ = resolve(new URL('../..', import.meta.url).pathname);
 const SCRIPT = join(RAIZ, 'tools/audio/fab-game-local.mjs');
 const AUDIO_RUNTIME = readFileSync(join(RAIZ, 'public/js/audio.js'), 'utf8');
+const MAIN_RUNTIME = readFileSync(join(RAIZ, 'public/js/main.js'), 'utf8');
 const GAME_RUNTIME = readFileSync(join(RAIZ, 'public/js/game.js'), 'utf8');
 const NET_RUNTIME = readFileSync(join(RAIZ, 'public/js/netgame.js'), 'utf8');
 const CHARACTERS_RUNTIME = readFileSync(join(RAIZ, 'public/js/characters.js'), 'utf8');
@@ -165,15 +166,34 @@ for (const [label, needle] of [
   ['vocal físico por personagem', '_characterPhysical(kind, characterId'],
 ]) if (!AUDIO_RUNTIME.includes(needle)) erros.push(`LAB11 runtime não consome ${label}.`);
 if (!/m92:\s*'ak'/.test(AUDIO_RUNTIME)) erros.push('LAB11 runtime classifica a Zastava M92 como pistola.');
-if (!AUDIO_RUNTIME.includes('SAMPLE_GUN_SIGNATURE')
-  || !AUDIO_RUNTIME.includes('this._shotSample(f, w, dist, vol, pan, propDelay)')
-  || !AUDIO_RUNTIME.includes('this._sampleGunSignature(cls, t, vol, mix)')) {
-  erros.push('LAB11a samples continuam sem assinatura tímbrica por família de arma.');
+if (!AUDIO_RUNTIME.includes('SAMPLE_WEAPON_SIGNATURE')
+  || !AUDIO_RUNTIME.includes('SAMPLE_CLASS_SIGNATURE')
+  || !AUDIO_RUNTIME.includes('this._shotSample(f, w, dist, vol, pan, propDelay)')) {
+  erros.push('LAB11a samples continuam sem assinatura de fonte por arma e fallback por família.');
 }
-const signatureBlock = AUDIO_RUNTIME.split('static SAMPLE_GUN_SIGNATURE = {')[1]?.split('};')[0] || '';
-const signatureRates = new Set([...signatureBlock.matchAll(/rate:\s*([0-9.]+)/g)].map((m) => m[1]));
-if (signatureRates.size < 6 || !/ak:\s*\{\s*rate:\s*1\.00,\s*hp:\s*0/.test(signatureBlock)) {
-  erros.push(`LAB11aa assinaturas distintas insuficientes ou a AK aprovada foi processada (${signatureRates.size}/6).`);
+if (AUDIO_RUNTIME.includes('_sampleGunSignature(')) {
+  erros.push('LAB11aa sample ainda recebe transiente/sub sintetizado por cima do WAV.');
+}
+const signatureBlock = AUDIO_RUNTIME.split('static SAMPLE_WEAPON_SIGNATURE = {')[1]?.split('};')[0] || '';
+for (const id of ['ak', 'pistol', 'revolver38', 'deagle', 'shotgun']) {
+  if (!new RegExp(`${id}:\\s*\\{[^}]*rate:[^}]*hp:[^}]*lp:[^}]*gain:`).test(signatureBlock)) {
+    erros.push(`LAB11ab arma ${id} continua sem perfil próprio de fonte.`);
+  }
+}
+const pistolProfiles = ['pistol', 'revolver38', 'deagle'].map((id) =>
+  signatureBlock.match(new RegExp(`${id}:\\s*\\{([^}]*)\\}`))?.[1]?.replace(/\\s+/g, '') || '');
+if (new Set(pistolProfiles).size !== pistolProfiles.length) {
+  erros.push('LAB11ac pistolas continuam compartilhando a mesma assinatura.');
+}
+if (!/ak:\s*\{\s*rate:\s*1(?:\.00)?,\s*hp:\s*0,\s*lp:\s*22000,\s*gain:\s*1(?:\.00)?\s*\}/.test(signatureBlock)) {
+  erros.push('LAB11ad a AK aprovada deixou de usar o take neutro.');
+}
+if (!/shotgun:\s*\{\s*rate:\s*\.9[0-9],\s*hp:\s*[0-9]+,\s*lp:\s*(?:[7-9][0-9]{3}|[1-9][0-9]{4}),\s*gain:\s*1\.[0-9]+\s*\}/.test(signatureBlock)) {
+  erros.push('LAB11ae shotgun continua lenta/abafada em vez de preservar o estouro do take Fab.');
+}
+if (!AUDIO_RUNTIME.includes('async preloadWeaponSamples(weapons = [])')
+  || !MAIN_RUNTIME.includes('sfx.preloadWeaponSamples(_armasDaPartida)')) {
+  erros.push('LAB11af primeiro tiro ainda pode cair no synth enquanto o WAV carrega.');
 }
 if (!GAME_RUNTIME.includes('this.sfx.step(this._footstepSurface(p.pos))')) erros.push('LAB11 game não escolhe passos por arena/superfície.');
 for (const [label, needle] of [
@@ -184,8 +204,12 @@ for (const [label, needle] of [
   ['explosão espacial', 'this.sfx.explosion(spatial.vol, spatial.pan, spatial.delay)'],
   ['ambiência do manifest por mapa', 'this.sfx.pack?.mapSoundscapes?.[this._mapId]'],
 ]) if (!GAME_RUNTIME.includes(needle)) erros.push(`LAB11 game não dispara ${label}.`);
-if (!/this\._eventSample\(sample,\s*0\.9[02]\s*\*\s*vol,\s*pan,\s*propDelay,\s*true/.test(AUDIO_RUNTIME)) {
+if (!/this\._eventSample\(sample,\s*0\.72\s*\*\s*vol,\s*pan,\s*propDelay,\s*true/.test(AUDIO_RUNTIME)) {
   erros.push('LAB11b morte corporal ainda passa pelo duck do tiro.');
+}
+const deathBlock = AUDIO_RUNTIME.split("death(characterId = ''")[1]?.split('\n  jump()')[0] || '';
+if (deathBlock.includes("_characterPhysical('death'") || deathBlock.includes('this._beep(')) {
+  erros.push('LAB11ba morte padrão ainda sobrepõe vocal dramático ou sting tonal ao corpo.');
 }
 if (!AUDIO_RUNTIME.includes('this._sample(url, vol, !direct')) erros.push('LAB11c cache frio do evento ignora barramento direto.');
 if (!GAME_RUNTIME.includes('this.sfx.death(ent.def?.id') || !NET_RUNTIME.includes('game.sfx.death(ent.def?.id')) {

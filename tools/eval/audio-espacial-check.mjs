@@ -38,6 +38,8 @@
    entra aqui, hoje ou depois.
 
      ESP1  cache frio não silencia: o primeiro tiro toca de algum jeito.
+     ESP1b pré-carga da partida: o primeiro tiro real usa um único BufferSource
+           do WAV, sem synth de contingência nem camadas sobrepostas.
      ESP2  pan: `pan` ≠ 0 vira um `StereoPanner` com esse valor no caminho sample.
      ESP3  propagação: o som começa em `currentTime + propDelay`, não em zero.
      ESP4  duck: o caminho sample ducka pela MESMA regra do synth (`<12 ? .3 : .55`).
@@ -255,6 +257,25 @@ const conferir = (id, ok, msgRuim, msgBoa) => (ok ? notas.push(`${id} ${msgBoa}`
     'o PRIMEIRO tiro por sample (cache de buffer frio) não produziu som nenhum —'
     + ' trocar HTMLAudio por WebAudio não pode custar o tiro que abre a partida.',
     'cache frio não silencia: o primeiro tiro toca.');
+}
+
+// ── ESP1b: partida pré-carregada não cai no synth nem soma fontes ─────────
+{
+  FETCHES = 0; DECODES = 0; FETCH_404 = false;
+  LOG = novoLog();
+  const sfx = new Sfx();
+  sfx.pack = { weaponSamples: true, weapons: { [ARMA]: [SRC] } };
+  sfx.ensure();
+  await sfx.preloadWeaponSamples([ARMA]);
+  LOG = novoLog();
+  sfx.shotWeapon(ARMA, PERTO.dist, 1, PERTO.pan, PERTO.prop);
+  const fontes = LOG.starts.filter((s) => s.tipo === 'src').length;
+  const tons = LOG.starts.filter((s) => s.tipo === 'osc').length;
+  conferir('ESP1b', FETCHES === 1 && DECODES === 1 && fontes === 1 && tons === 0,
+    `depois do preload houve ${FETCHES} fetch(es), ${DECODES} decode(s), ${fontes} BufferSource(s)`
+      + ` e ${tons} oscilador(es). O primeiro tiro da partida deve ser só o WAV já decodificado,`
+      + ' sem synth de cache frio e sem ataque/sub sobreposto.',
+    'pré-carga deixa o primeiro tiro com uma única fonte WAV, sem synth sobreposto.');
 }
 
 // ── ESP2 / ESP3 / ESP4: o caminho sample honra pan, propagação e duck ─────

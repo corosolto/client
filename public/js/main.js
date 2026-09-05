@@ -1135,6 +1135,7 @@ async function _startGame(team, charId, enemyFaction, online = false) {
     if (!navOnly) {
       await Promise.all([
         preloadCharacterAssets(_charsToLoad, { weapons: _armasDaPartida }),
+        sfx.preloadWeaponSamples(_armasDaPartida),
         preloadMapProps([...MAP_PROPS, ...((MAPS[currentMap] && MAPS[currentMap].props) || [])]),   // + props do mapa (Havan: carros/estátua)
         /* fauna: sem esta linha o mapa constrói, o `ambience` existe e TODO bicho cai
            no fallback procedural sem textura — verde na régua de registro, feio na tela.
