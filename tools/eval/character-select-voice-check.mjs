@@ -23,7 +23,7 @@ if (mutante === 'auto-fala') {
   main = main.replace('if (row) selectChar(character, row);', 'row?.click();');
 }
 if (mutante === 'pack-antigo') fetchAudio = fetchAudio.replace('audio-pack-v8', 'audio-pack-v7');
-if (mutante === 'manifest-antigo') audio = audio.replace('audio/manifest.json?v=8', 'audio/manifest.json?v=7');
+if (mutante === 'manifest-antigo') audio = audio.replace('audio/manifest.json?v=9', 'audio/manifest.json?v=8');
 
 const failures = [];
 const expect = (ok, message) => { if (!ok) failures.push(message); };
@@ -47,8 +47,8 @@ expect(/releases\/download\/audio-pack-v8\/audio-pack\.zip/.test(fetchAudio),
   'VOICE12 o build não baixa o pacote com as vozes do time Mítico e o upgrade dos funkeiros (v8; inclui o Faria Limer corrigido e o menu Suno do v7)');
 const packVersion = fetchAudio.match(/audio-pack-v(\d+)\/audio-pack\.zip/)?.[1];
 const manifestVersion = audio.match(/audio\/manifest\.json\?v=(\d+)/)?.[1];
-expect(packVersion && manifestVersion && packVersion === manifestVersion,
-  `VOICE13 pacote v${packVersion || '?'} diverge da chave do manifesto v${manifestVersion || '?'}; CDN pode servir catálogo antigo`);
+expect(packVersion === '8' && manifestVersion === '9',
+  `VOICE13 fallback público v${packVersion || '?'} e chave privada v${manifestVersion || '?'} não identificam o canal atual; CDN pode servir catálogo antigo`);
 
 globalThis.location ||= { search: '' };
 const { Sfx } = await import('../../public/js/audio.js');

@@ -42,7 +42,7 @@ export class Sfx {
     // production plays real shots instead of the synth. Never throws.
     // A chave acompanha a release de fetch-audio.sh; se atrasar, a CDN conserva catálogo
     // antigo mesmo com os MP3 novos presentes no deployment (BUG-109).
-    for (const url of ['audio/manifest.json?v=8', 'audio/manifest.default.json?v=1']) {
+    for (const url of ['audio/manifest.json?v=9', 'audio/manifest.default.json?v=1']) {
       try {
         const r = await fetch(url, { cache: 'no-cache' });
         if (r.ok) { this.pack = await r.json(); return; }

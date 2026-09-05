@@ -2,6 +2,20 @@
 
 Atualizado em 2026-09-05 (décima sétima rodada: Blob privado e fetch autenticado).
 
+## Pós-merge — cache-bust do catálogo privado
+
+O PR [#506](https://github.com/corosolto/client/pull/506) foi mergeado em `f55cd04f` e o
+deployment de produção `dpl_2K71UJeMt3ePX2pKvMtp1gsTNguN` ficou `READY`. O objeto publicado
+continha 770 referências, 558 arquivos únicos, 13 mapas com `mapSoundscapes`, zero Fish e
+zero callout legado. Um WAV hasheado respondeu por range HTTP.
+
+A validação pelo domínio encontrou um problema depois do deploy: a Cloudflare ainda servia
+`audio/manifest.json?v=8` do fallback público anterior (434 referências, zero mapa), porque
+`/audio/*` tem TTL de edge longo. `main.js` já pede a versão da aplicação, mas `Sfx` ainda
+usava a chave fixa v8. A correção autoritativa é `audio/manifest.json?v=9`; o mutante
+`manifest-antigo` volta para v8 e precisa reprovar. Esse cache-bust é obrigatório para que
+os tiros, passos e ambiência do Blob cheguem aos jogadores que já visitaram o site.
+
 ## Décima sétima rodada — canal privado criado
 
 O dono autorizou criar o armazenamento privado e incorporar ao build as famílias já
