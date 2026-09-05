@@ -1,6 +1,70 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima terceira rodada: locução Fish para kills e rounds).
+Atualizado em 2026-09-05 (décima quinta rodada: curadoria final, mix e granadas).
+
+## Décima quinta rodada — seleção final do menu, mix e granadas
+
+O dono encerrou a curadoria da música do menu. A rotação aprovada é nominal: `m03`, `m05`,
+`m10`, `m11`, `m14`, `m16`, `m17` e `m22`. As outras dezoito faixas saem do jogo e do
+pacote de release, mas permanecem no acervo privado para reversão. A fonte única dessa
+decisão é `public/js/menu-music-selection.js`; o runtime, o gerador do manifest e o
+empacotador a consomem sem renumerar arquivos. O laboratório ainda pode abrir o catálogo
+completo para auditoria, mas não altera a rotação normal.
+
+Na escuta seguinte, o dono preferiu os callouts de combate antigos e aprovou manter a
+narração Fish de `Round one` até `Round seven`. Os sete callouts exatos da produção alpha218
+foram espelhados em `private-assets/audio/legacy-callouts-alpha218`, fora do Git, e o
+instalador agora aceita as duas famílias de forma independente. A progressão voltou a ser
+double, triple, multi, mega e godlike; `kill` simples volta ao fallback de voz da facção e
+`ultrakill` não fica ativo. Esses MP3 antigos continuam com `rights-review-required`: o
+resultado está disponível para escuta local, mas não está liberado para um novo pacote.
+
+O ganho global dos tiros caiu de `0,62` para `0,52` (aproximadamente 1,5 dB a menos sem
+alterar o timbre aprovado). A troca de arma caiu de `0,32` para `0,26` e armas de fogo agora
+usam somente mecanismos de `Guns/Foley`; `Combat/Draw_Weapon_Metal` ficou restrito à faca.
+O ciclo da granada ganhou sample de pino e ganhos audíveis para pino, arremesso, quique,
+abertura da fumaça e explosão. Os disparos já existem em single player e multiplayer; a
+régua causal confirma que pin/throw/bounce/explosion usam quatro fontes distintas e que o
+mutante que colapsa os pools fica vermelho.
+
+Estado deste checkpoint: `eval:audiofablocal`, `eval:audioeventos`,
+`eval:audioannouncer` e `eval:menumusicreview` verdes; mutações `sem-veto`,
+`colapsa-pools` e `colapsa-tiers` vermelhas pelo motivo esperado. Ainda faltam, antes de
+declarar a branch pronta, o gate completo, build/smoke HTTP, conflito do draft PR #504 e a
+revalidação visual/auditiva do preview após a sincronização com `origin/main`.
+
+## Décima quarta rodada — curadoria da música da main e leitura do tracer
+
+O dono pediu para rever as músicas atuais do menu, marcar as rejeitadas e avaliar um traçado
+visual dos tiros. A primeira abertura do laboratório apontou por engano para os 26 MP3 do
+checkout primário, que eram o acervo antigo; o dono reconheceu imediatamente que `m02` não
+era a faixa atual. Nenhum veredito ou remoção foi aplicado nesse acervo.
+
+A fonte foi então verificada contra a produção autoritativa
+`https://www.csbrasil.online`, versão `2.0.0-alpha.218`. A produção ainda resolve os nomes
+`m01` até `m26` pelo fallback de `main.js`, mas 23 dos 26 conteúdos diferem do checkout
+antigo; apenas `m18`, `m23` e `m26` preservam o mesmo hash. Os 26 MP3 públicos foram
+espelhados só para escuta em `private-assets/audio/menu-main-alpha218` (38.547.456 bytes),
+com origem, duração, tamanho e SHA-256 em `SOURCE.md`. O symlink ignorado
+`public/audio/menu-music` aponta para esse espelho. Todos os 26 responderam HTTP 200 no
+servidor `8131`, e o `m02` local bateu byte a byte com o `m02` da produção:
+`9e1a2376c2c8f08fa70b434c7935cd42be048f59eed923ccfd3a2e6d9d292458`.
+
+O modo `?menumusiclab=1&menutrack=m02` toca uma faixa determinística no contexto real da
+home. Ele oferece anterior, reouvir, próxima, manter, remover, limpar, copiar resultado e um
+catálogo clicável das 26 faixas. Cada item mostra `?` enquanto pendente, `✓` para manter e
+`×` para remover, além de destacar a música que está tocando. Os vereditos ficam somente em
+`localStorage`; o modo entra em `testMode`, não envia presença/telemetria, e adiciona um
+sufixo de versão à URL do MP3 para não reutilizar o acervo antigo do cache. Nenhum MP3 foi
+apagado. O próximo passo é o dono copiar a lista final; só então a playlist deve ser reduzida.
+
+Sobre os tiros: o traçado já existe no single player, mas foi afinado para raio `0,0035`,
+segmento de no máximo `1,2 m`, viagem de `32 ms`, opacidade inicial `0,75` e apenas um em
+cada três disparos automáticos. Esses números explicam por que o dono percebeu que não há
+traço. No multiplayer a lacuna é maior: `netgame.js::gunshot()` produz áudio e clarão para
+o remoto, mas não chama `_tracer`; a direção do clarão ainda usa o yaw da câmera local em
+vez da orientação remota. A correção deve ficar fora do PR de áudio: uma lane curta própria,
+com A/B visual, aumentando legibilidade sem desenhar um laser contínuo e cobrindo SP e MP.
 
 ## Décima terceira rodada — locução de combate e rounds
 
