@@ -120,6 +120,67 @@ for (const [surface, event] of Object.entries({ concrete: 'passo.concreto', meta
 }
 const death = filtrar((f) => /^Combat\/Body_Falling_/.test(f));
 const explosion = filtrar((f) => /^Explosions\/Small_Explosion_Realistic_/.test(f));
+const grenadeThrow = seguros(['Combat/Whoosh_1-1.wav', 'Combat/Whoosh_2-1.wav']);
+const grenadeBounce = seguros([
+  'Environment/Rock_Impact_21.wav', 'Environment/Rock_Impact_34.wav',
+  'Environment/Rock_Impact_35.wav', 'Environment/Rock_Impact_37.wav',
+]);
+/* Camada física, não dublagem autoral: dor/morte precisam sobreviver ao tiro e
+   carregar ao menos o tipo corporal do personagem. Screams continuam vetados. */
+const physicalProfiles = {
+  male: {
+    rate: 1,
+    hurt: seguros(['Human_Vocalizations/Male_1_-_Effort_2-01.wav', 'Human_Vocalizations/Male_1_-_Effort_2-05.wav', 'Human_Vocalizations/Male_1_-_Effort_2-13.wav']),
+    death: seguros(['Human_Vocalizations/Male_1_-_Grunt_20.wav', 'Human_Vocalizations/Male_1_-_Grunt_35.wav', 'Human_Vocalizations/Male_1_-_Grunt_48.wav']),
+  },
+  female: {
+    rate: 1,
+    hurt: seguros(['Human_Vocalizations/Female_1_-_Effort_1-06.wav', 'Human_Vocalizations/Female_1_-_Effort_1-11.wav', 'Human_Vocalizations/Female_1_-_Grunt_12.wav']),
+    death: seguros(['Human_Vocalizations/Female_1_-_Grunt_29.wav', 'Human_Vocalizations/Female_1_-_Grunt_34.wav', 'Human_Vocalizations/Female_1_-_Grunt_39.wav']),
+  },
+  creature: {
+    rate: 1.14,
+    hurt: seguros(['Human_Vocalizations/Male_1_-_Effort_2-01.wav', 'Human_Vocalizations/Male_1_-_Effort_2-13.wav']),
+    death: seguros(['Human_Vocalizations/Male_1_-_Grunt_18.wav', 'Human_Vocalizations/Male_1_-_Grunt_26.wav']),
+  },
+};
+const CHARACTER_IDS = [
+  'esquerdomacho', 'sindicato', 'mst', 'doutora', 'mistico', 'caminhoneiro', 'sertanejo', 'coach',
+  'gotinha', 'farialimer', 'bombado', 'hipster', 'dollynho', 'et', 'ancap', 'canarinho', 'proerd',
+  'bonzo', 'palhacomal', 'jozo', 'adjim', 'esbirro', 'titica', 'padati', 'padata', 'cadequinha',
+  'emo', 'blackmetal', 'metaleiro', 'punk', 'skatista', 'clubber', 'rapper', 'reggae', 'pagodeiro',
+  'mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao',
+];
+const FEMALE_CHARACTERS = new Set(['doutora']);
+const CREATURE_CHARACTERS = new Set(['gotinha', 'dollynho', 'et', 'canarinho', 'proerd']);
+const physicalByCharacter = Object.fromEntries(CHARACTER_IDS.map((id) => [
+  id, FEMALE_CHARACTERS.has(id) ? 'female' : (CREATURE_CHARACTERS.has(id) ? 'creature' : 'male'),
+]));
+
+/* Soundscapes do laboratório: somente nomes semanticamente defensáveis do pack.
+   Mapas internos recebem hum procedural no runtime em vez de chuva/vento falsos. */
+function arquivo(nome) {
+  const [url] = seguros([nome]);
+  if (!url) { console.error(`recusado: asset Fab obrigatório ausente ou vetado: ${nome}`); process.exit(1); }
+  return url;
+}
+const loop = (nome, vol) => ({ src: arquivo(nome), global: true, pos: [0, 0, 0], radius: 240, vol });
+const shot = (nomes, minGap, maxGap, vol) => ({ srcs: nomes.map(arquivo), minGap, maxGap, vol });
+const mapSoundscapes = {
+  praca_poderes: { loops: [loop('Environment/Wind_Loop_6.wav', .075)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 28, 70, .16)] },
+  piscina_treta: { loops: [loop('Environment/Water_Stream_Calm_1.wav', .045)], shots: [shot(['Environment/Water_Splash_1-1.wav'], 22, 60, .13)] },
+  loja_h: { loops: [loop('Environment/Wind_Loop_1.wav', .055)], shots: [shot(['Doors/Door_Open_3-1.wav', 'Doors/Door_Close_3-1.wav'], 30, 85, .12)] },
+  ferro_velho: { loops: [loop('Environment/Wind_Loop_6.wav', .085)], shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 18, 52, .18)] },
+  quebrada: { loops: [loop('Environment/Wind_Loop_1.wav', .06)], shots: [shot(['Environment/Tree_Rustling_1-4.wav'], 24, 68, .15)] },
+  corrego: { loops: [loop('Environment/Water_Stream_Moderate_1.wav', .13)], shots: [shot(['Environment/Water_Splash_1-1.wav'], 18, 48, .16)] },
+  posto_treta: { loops: [loop('Environment/Wind_Loop_1.wav', .07)], shots: [shot(['Doors/Door_Open_3-1.wav'], 34, 90, .1)] },
+  upa_24h: { synth: { kind: 'indoor-hum', vol: .027 }, shots: [shot(['Doors/Door_Open_3-1.wav', 'Doors/Door_Close_3-1.wav'], 38, 95, .09)] },
+  obras_prefeitura: { loops: [loop('Environment/Wind_Loop_6.wav', .085)], shots: [shot(['Environment/Rock_Impact_21.wav', 'Environment/Wood_Move_1-1.wav'], 20, 58, .14)] },
+  atacadao_treta: { synth: { kind: 'indoor-hum', vol: .022 }, shots: [shot(['Doors/Door_Open_3-1.wav'], 42, 110, .08)] },
+  parque_treta: { loops: [loop('Environment/Wind_Loop_1.wav', .055), loop('Environment/Water_Stream_Calm_1.wav', .035)], shots: [shot(['Environment/Tree_Rustling_1-1.wav'], 18, 52, .14)] },
+  velho_oeste: { loops: [loop('Environment/Wind_Loop_6.wav', .09)], shots: [shot(['Environment/Wood_Move_1-1.wav', 'Environment/Wood_Move_2-1.wav'], 16, 46, .17)] },
+  penitenciaria: { synth: { kind: 'indoor-hum', vol: .02 }, shots: [shot(['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav'], 22, 64, .14)] },
+};
 /* Stingers <=1,5 s pelo catalog.json. Os Special_Interface 5/6/7 duram
    2,75–9,52 s e invadiriam a rodada. Semântica ainda depende de escuta. */
 const roundstart = seguros(['Interface/Interface_12-1.wav', 'Interface/Interface_12-4.wav']);
@@ -136,12 +197,22 @@ const runtime = {
   roundlose: fallback(roundlose, 'round.derrota'), knife: fallback(knife, 'faca.swing'),
   knifehit: fallback(knifehit, 'faca.hit'), knifedeploy: fallback(knifedeploy, 'faca.deploy'),
   dryfire: fallback(dryfire, 'arma.dryfire'),
+  grenadethrow: fallback(grenadeThrow, 'granada.arremesso'),
+  grenadebounce: fallback(grenadeBounce, 'granada.quique'),
 };
+const mapAudioRefs = Object.values(mapSoundscapes).flatMap((cfg) => [
+  ...(cfg.loops || []).map((entry) => entry.src),
+  ...(cfg.shots || []).flatMap((entry) => entry.srcs || []),
+]);
 const obrigatorios = [
   ...Object.entries(weapons).map(([arma, pool]) => [`${arma}.shot`, pool]),
   ['ak.magOut', magOut], ['ak.magIn', magIn], ['ak.bolt', bolt],
   ...Object.entries(footstepsBySurface).map(([surface, pool]) => [`passo.${surface}`, pool]),
   ...Object.entries(runtime),
+  ...Object.entries(physicalProfiles).flatMap(([profile, cfg]) => [
+    [`personagem.${profile}.hurt`, cfg.hurt], [`personagem.${profile}.death`, cfg.death],
+  ]),
+  ['ambiencias.mapa', mapAudioRefs],
 ];
 const vazios = obrigatorios.filter(([, arr]) => !arr.length).map(([evento]) => evento);
 if (vazios.length) {
@@ -155,11 +226,14 @@ const manifest = {
     aviso: 'Somente escuta local. Nenhum candidato está aprovado para release.',
     armasComTiroProprio: Object.keys(weapons).length,
     eventosRuntime: 4 + Object.keys(footstepsBySurface).length + Object.keys(runtime).length,
+    mapasComAmbiencia: Object.keys(mapSoundscapes).length,
+    perfisFisicos: Object.keys(physicalProfiles).length,
     somenteEscuta: 3,
     limitacoes: [
       'a identidade das 24 armas além da AK é candidata e exige escuta humana',
       'reload, reloadend e bolt ainda são pools globais no runtime',
       'tiro distante e impactos permanecem no laboratório A/B',
+      'vozes físicas são perfis provisórios; não substituem dublagem autoral por personagem',
     ],
   },
   weaponSamples: true,
@@ -170,6 +244,8 @@ const manifest = {
     footstepsBySurface,
     ...runtime,
   },
+  characterPhysical: { profiles: physicalProfiles, byCharacter: physicalByCharacter },
+  mapSoundscapes,
 };
 
 mkdirSync(PUBLICO, { recursive: true });
@@ -204,6 +280,6 @@ writeFileSync(temporario, JSON.stringify(manifest, null, 2) + '\n');
 renameSync(temporario, MANIFEST);
 
 const total = obrigatorios.reduce((sum, [, pool]) => sum + pool.length, 0);
-console.log(`laboratório Fab instalado: ${total} amostras em ${Object.keys(weapons).length} armas e ${Object.keys(footstepsBySurface).length} superfícies.`);
+console.log(`laboratório Fab instalado: ${total} referências em ${Object.keys(weapons).length} armas, ${Object.keys(footstepsBySurface).length} superfícies e ${Object.keys(mapSoundscapes).length} mapas.`);
 console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos para escuta, não aprovados.');
 console.log('Abra o jogo local; o primeiro disparo por arma aquece o buffer e ainda usa o synth.');

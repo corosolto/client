@@ -3290,7 +3290,7 @@ export class Game {
       }, 400);
       // INDICADOR DIRECIONAL — ver _dmgArc (item nº 1 da tarefa: "não vejo de onde veio o tiro")
       if (attacker && attacker.pos) this._dmgArc(attacker, ent, dmg);
-      this.sfx.hurt();
+      this.sfx.hurt(ent.def?.id);
     } else if (attacker === this.player) {
       this._hitmarker(ent.hp <= 0, head);   // som suprimido SÓ em kill; visual vermelho em kill OU headshot
       this._dmgNumber(point || ent.pos, dmg, head, ent.hp <= 0);
@@ -3313,7 +3313,7 @@ export class Game {
   /* Feedback de "levei tiro" no online: o `_damage` local não roda, então quem dispara é o
      netcode ao ver a queda de hp no snapshot. */
   _playerHurtFx() {
-    try { this.sfx.hurt?.(); } catch { /* ctx mudo */ }
+    try { this.sfx.hurt?.(this.player.def?.id); } catch { /* ctx mudo */ }
     this._tintFx(0xff2222, false, 96);
     this.player.recoilP = (this.player.recoilP || 0) + 0.02;
   }
@@ -3360,7 +3360,7 @@ export class Game {
       this._scope(false, true);
       this.mk.life = 0;
       this.el.respawn.classList.remove('hidden');
-      this.sfx.death();
+      this.sfx.death(ent.def?.id);
     } else {
       ent.target = null; ent.deadT = 0;
       // sting de morte de BOT escala com a distância (sumia o "eco": toda morte no mapa
@@ -3369,7 +3369,7 @@ export class Game {
       const d = ent.pos ? ent.pos.distanceTo(this.camera.position) : 0;
       const rel = ent.pos ? Math.atan2(ent.pos.x - this.player.pos.x, ent.pos.z - this.player.pos.z) - this.player.yaw : 0;
       const pan = Math.max(-0.85, Math.min(0.85, Math.sin(rel) * 0.8));
-      this.sfx.death(Math.max(0, 1 - d / 34), pan, Math.min(0.25, d / 343));
+      this.sfx.death(ent.def?.id, Math.max(0, 1 - d / 55), pan, Math.min(0.25, d / 343));
     }
     // poça que cresce sob o cadáver (qualquer morte com posição — inclui bot×bot)
     if (BLOOD && ent.pos) this._bloodPoolAt(ent.pos);
@@ -3994,6 +3994,18 @@ export class Game {
     if (this.el && this.el.smokeCount) this.el.smokeCount.textContent = '💨 ' + (this.player.smokes | 0) + '   🧨 ' + (this.player.frags | 0);
   }
 
+  _grenadeSpatial(pos, maxDistance = 70) {
+    const origin = this.player?.pos || this.camera.position;
+    const dx = pos.x - origin.x, dz = pos.z - origin.z;
+    const d = Math.hypot(dx, dz);
+    const rel = Math.atan2(dx, dz) - (this.player?.yaw || 0);
+    return {
+      vol: Math.max(0, 1 - d / maxDistance),
+      pan: Math.max(-.9, Math.min(.9, Math.sin(rel) * .82)),
+      delay: Math.min(.25, d / 343),
+    };
+  }
+
   // Spawner genérico: projétil físico com pavio; ao estourar vira fumaça OU explosão de frag.
   // Usado pelo jogador (câmera) e pelos bots (olho + direção do alvo).
   _spawnGrenade(origin, dir, kind, owner) {
@@ -4005,24 +4017,30 @@ export class Game {
       v: dir.clone().multiplyScalar(kind === 'frag' ? 17 : 15).add(new THREE.Vector3(0, 3.2, 0)),
       fuse: kind === 'frag' ? 1.5 : 2.2,
     });
+    const spatial = this._grenadeSpatial(origin);
+    this.sfx.grenadeThrow(kind, spatial.vol, spatial.pan, spatial.delay);
   }
 
   _throwSmoke() {
+    const kind = 'smoke';
     const p = this.player;
     if (!p.alive || (p.smokes | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.smokes--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    if (this._mp?.pedirNade?.('smoke')) return;   // online quem lança é o servidor (`nade`/`boom`)
+    this.sfx.grenadePin(kind);
+    if (this._mp?.pedirNade?.(kind)) return;   // online quem lança é o servidor (`nade`/`boom`)
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'smoke', p);
+    this._spawnGrenade(this.camera.position, dir, kind, p);
   }
 
   _throwFrag() {
+    const kind = 'frag';
     const p = this.player;
     if (!p.alive || (p.frags | 0) <= 0 || this.time < (p._nextNade || 0)) return;
     p.frags--; p._nextNade = this.time + 0.6; this._updateSmokeHud();
-    if (this._mp?.pedirNade?.('frag')) return;
+    this.sfx.grenadePin(kind);
+    if (this._mp?.pedirNade?.(kind)) return;
     const dir = new THREE.Vector3(); this.camera.getWorldDirection(dir);
-    this._spawnGrenade(this.camera.position, dir, 'frag', p);
+    this._spawnGrenade(this.camera.position, dir, kind, p);
   }
 
   // Explosão de frag: dano em área SÓ nos inimigos do dono (sem fogo amigo, arcade), com
@@ -4031,7 +4049,8 @@ export class Game {
     const R = 6.5;
     this._flash(pos.clone());
     for (let i = 0; i < 7; i++) this._puff(pos.clone().add(new THREE.Vector3((Math.random() - .5) * 1.4, Math.random() * 1.3, (Math.random() - .5) * 1.4)), null);
-    if (this.sfx.explosion) this.sfx.explosion();
+    const spatial = this._grenadeSpatial(pos, 90);
+    if (this.sfx.explosion) this.sfx.explosion(spatial.vol, spatial.pan, spatial.delay);
     const team = owner ? owner.team : this.playerTeam;
     for (const c of this.combatants) {
       if (this.online) break;   // dano é do servidor (fase 3 do `ev`); aqui só o efeito
@@ -4082,6 +4101,8 @@ export class Game {
   }
 
   _popSmoke(pos) {
+    const spatial = this._grenadeSpatial(pos, 70);
+    this.sfx.smokePop(spatial.vol, spatial.pan, spatial.delay);
     const R = 2.6;
     const group = new THREE.Group();
     group.position.set(pos.x, Math.max(0.5, pos.y), pos.z);
@@ -4105,7 +4126,15 @@ export class Game {
       const g = this._grenades[i];
       g.fuse -= dt; g.v.y -= 12 * dt;
       g.mesh.position.addScaledVector(g.v, dt);
-      if (g.mesh.position.y < 0.1) { g.mesh.position.y = 0.1; g.v.y = Math.abs(g.v.y) * 0.4; g.v.x *= 0.6; g.v.z *= 0.6; }
+      if (g.mesh.position.y < 0.1) {
+        const impact = Math.abs(g.v.y);
+        g.mesh.position.y = 0.1; g.v.y = impact * 0.4; g.v.x *= 0.6; g.v.z *= 0.6;
+        if (impact > 1.35 && this.time - (g._lastBounce || -9) > .11) {
+          g._lastBounce = this.time;
+          const spatial = this._grenadeSpatial(g.mesh.position, 50);
+          this.sfx.grenadeBounce(g.kind, spatial.vol * Math.min(1, impact / 8), spatial.pan, spatial.delay);
+        }
+      }
       if (g.fuse <= 0) {
         if (g.kind === 'frag') this._explodeFrag(g.mesh.position.clone(), g.owner);
         else this._popSmoke(g.mesh.position.clone());
@@ -7199,7 +7228,8 @@ export class Game {
     }
     this._tickDolly(dt);
     this.world.ambience?.update(dt, this.player.pos);
-    if (!this.soundscape && this.world.sound) this.soundscape = createSoundscape(this.sfx, this.world.sound);
+    const mapSound = this.sfx.pack?.mapSoundscapes?.[this._mapId] || this.world.sound;
+    if (!this.soundscape && mapSound) this.soundscape = createSoundscape(this.sfx, mapSound);
     this.soundscape?.update(dt, this.player.pos);
     this.world.update?.(dt, this.time);
   }

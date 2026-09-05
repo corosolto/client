@@ -11,6 +11,14 @@ const RAIZ = resolve(new URL('../..', import.meta.url).pathname);
 const SCRIPT = join(RAIZ, 'tools/audio/fab-game-local.mjs');
 const AUDIO_RUNTIME = readFileSync(join(RAIZ, 'public/js/audio.js'), 'utf8');
 const GAME_RUNTIME = readFileSync(join(RAIZ, 'public/js/game.js'), 'utf8');
+const NET_RUNTIME = readFileSync(join(RAIZ, 'public/js/netgame.js'), 'utf8');
+const CHARACTERS_RUNTIME = readFileSync(join(RAIZ, 'public/js/characters.js'), 'utf8');
+const SOUNDSCAPE_RUNTIME = readFileSync(join(RAIZ, 'public/js/soundscape.js'), 'utf8');
+const MAP_IDS = [
+  'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada', 'corrego',
+  'posto_treta', 'upa_24h', 'obras_prefeitura', 'atacadao_treta', 'parque_treta',
+  'velho_oeste', 'penitenciaria',
+];
 const mutante = (process.argv.find((a) => a.startsWith('--mutante=')) || '').split('=')[1] || '';
 if (mutante && mutante !== 'sem-veto') {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -56,6 +64,19 @@ const eventos = [
   ['arma.dryfire', ['Guns/Foley/Dry_Fire_1-1.wav']],
   ['impacto.concreto', []],
   ['impacto.metal', []],
+  ['granada.arremesso', ['Combat/Whoosh_1-1.wav', 'Combat/Whoosh_2-1.wav']],
+  ['granada.quique', ['Environment/Rock_Impact_21.wav', 'Environment/Rock_Impact_35.wav']],
+  ['personagem.masculino.dor', ['Human_Vocalizations/Male_1_-_Effort_2-01.wav', 'Human_Vocalizations/Male_1_-_Effort_2-05.wav']],
+  ['personagem.masculino.morte', ['Human_Vocalizations/Male_1_-_Grunt_20.wav', 'Human_Vocalizations/Male_1_-_Grunt_35.wav']],
+  ['personagem.feminino.dor', ['Human_Vocalizations/Female_1_-_Effort_1-06.wav', 'Human_Vocalizations/Female_1_-_Effort_1-11.wav']],
+  ['personagem.feminino.morte', ['Human_Vocalizations/Female_1_-_Grunt_29.wav', 'Human_Vocalizations/Female_1_-_Grunt_34.wav']],
+  ['personagem.criatura.morte', ['Human_Vocalizations/Male_1_-_Grunt_18.wav', 'Human_Vocalizations/Male_1_-_Grunt_26.wav']],
+  ['ambiente.vento', ['Environment/Wind_Loop_1.wav', 'Environment/Wind_Loop_6.wav']],
+  ['ambiente.agua', ['Environment/Water_Stream_Calm_1.wav', 'Environment/Water_Stream_Moderate_1.wav']],
+  ['ambiente.arvores', ['Environment/Tree_Rustling_1-1.wav', 'Environment/Tree_Rustling_1-4.wav']],
+  ['ambiente.madeira', ['Environment/Wood_Move_1-1.wav', 'Environment/Wood_Move_2-1.wav']],
+  ['ambiente.metal', ['Doors/Rusty_Metal_Creak_01.wav', 'Doors/Rusty_Metal_Creak_03.wav']],
+  ['ambiente.porta', ['Doors/Door_Open_3-1.wav', 'Doors/Door_Close_3-1.wav']],
 ].map(([evento, arquivos]) => ({ evento, candidatos: arquivos.map(candidato) }));
 /* Um nome proibido é plantado dentro de um evento aparentemente permitido. O
    instalador tem que barrá-lo por conta própria, não confiar cegamente na shortlist. */
@@ -99,6 +120,31 @@ if (manifest) {
   for (const key of ['death', 'explosion', 'roundstart', 'roundwin', 'roundlose', 'knife', 'knifehit', 'knifedeploy', 'dryfire']) {
     if (!manifest.cs?.[key]?.length) erros.push(`LAB8 evento ${key} continua sem sample no runtime.`);
   }
+  for (const key of ['grenadethrow', 'grenadebounce']) {
+    if (!manifest.cs?.[key]?.length) erros.push(`LAB8c evento ${key} continua sem sample no runtime.`);
+  }
+  const profiles = manifest.characterPhysical?.profiles || {};
+  for (const profile of ['male', 'female', 'creature']) {
+    if (!profiles[profile]?.hurt?.length || !profiles[profile]?.death?.length) {
+      erros.push(`LAB8d perfil físico ${profile} não cobre dor e morte.`);
+    }
+  }
+  const rosterBlock = CHARACTERS_RUNTIME.split('export const CHARACTERS = [')[1]?.split('];\nexport const byId')[0] || '';
+  const characterIds = [...rosterBlock.matchAll(/\bid:\s*'([^']+)'/g)].map((m) => m[1]);
+  const mappedCharacters = characterIds.filter((id) => profiles[manifest.characterPhysical?.byCharacter?.[id]]);
+  if (mappedCharacters.length !== characterIds.length || characterIds.length < 40) {
+    erros.push(`LAB8e personagens com perfil físico: ${mappedCharacters.length}/${characterIds.length}.`);
+  }
+  if (/scream/i.test(JSON.stringify(manifest.characterPhysical))) erros.push('LAB8f vocal físico vetado atravessou o manifest.');
+  const soundscapes = manifest.mapSoundscapes || {};
+  for (const id of MAP_IDS) {
+    const cfg = soundscapes[id];
+    if (!cfg || (!(cfg.loops?.length) && !(cfg.shots?.length) && !cfg.synth)) {
+      erros.push(`LAB8g mapa ${id} continua sem ambiência local.`);
+    }
+  }
+  const signatures = new Set(MAP_IDS.map((id) => JSON.stringify(soundscapes[id])));
+  if (signatures.size < 8) erros.push(`LAB8h ambiências distintas insuficientes: ${signatures.size}/8.`);
   if (texto.includes('Distant')) erros.push('LAB8b tiro distante foi forçado sem contrato de mix por distância.');
   if (manifest._localLab?.armasComTiroProprio !== firearms.length) {
     erros.push('LAB9 resumo do que entra no jogo e do que fica só em escuta divergiu.');
@@ -113,9 +159,44 @@ for (const [label, needle] of [
   ['vitória de round por sample', "this._cs('roundwin')"],
   ['derrota de round por sample', "this._cs('roundlose')"],
   ['dry fire por sample', "this._cs('dryfire')"],
+  ['arremesso de granada', 'grenadeThrow(kind'],
+  ['quique de granada', 'grenadeBounce(kind'],
+  ['abertura da fumaça', 'smokePop(vol'],
+  ['vocal físico por personagem', '_characterPhysical(kind, characterId'],
 ]) if (!AUDIO_RUNTIME.includes(needle)) erros.push(`LAB11 runtime não consome ${label}.`);
 if (!/m92:\s*'ak'/.test(AUDIO_RUNTIME)) erros.push('LAB11 runtime classifica a Zastava M92 como pistola.');
+if (!AUDIO_RUNTIME.includes('SAMPLE_GUN_SIGNATURE')
+  || !AUDIO_RUNTIME.includes('this._shotSample(f, w, dist, vol, pan, propDelay)')
+  || !AUDIO_RUNTIME.includes('this._sampleGunSignature(cls, t, vol, mix)')) {
+  erros.push('LAB11a samples continuam sem assinatura tímbrica por família de arma.');
+}
+const signatureBlock = AUDIO_RUNTIME.split('static SAMPLE_GUN_SIGNATURE = {')[1]?.split('};')[0] || '';
+const signatureRates = new Set([...signatureBlock.matchAll(/rate:\s*([0-9.]+)/g)].map((m) => m[1]));
+if (signatureRates.size < 6 || !/ak:\s*\{\s*rate:\s*1\.00,\s*hp:\s*0/.test(signatureBlock)) {
+  erros.push(`LAB11aa assinaturas distintas insuficientes ou a AK aprovada foi processada (${signatureRates.size}/6).`);
+}
 if (!GAME_RUNTIME.includes('this.sfx.step(this._footstepSurface(p.pos))')) erros.push('LAB11 game não escolhe passos por arena/superfície.');
+for (const [label, needle] of [
+  ['pino da granada', 'this.sfx.grenadePin(kind)'],
+  ['arremesso da granada', 'this.sfx.grenadeThrow(kind'],
+  ['quique da granada', 'this.sfx.grenadeBounce(g.kind'],
+  ['fumaça abrindo', 'this.sfx.smokePop('],
+  ['explosão espacial', 'this.sfx.explosion(spatial.vol, spatial.pan, spatial.delay)'],
+  ['ambiência do manifest por mapa', 'this.sfx.pack?.mapSoundscapes?.[this._mapId]'],
+]) if (!GAME_RUNTIME.includes(needle)) erros.push(`LAB11 game não dispara ${label}.`);
+if (!/this\._eventSample\(sample,\s*0\.9[02]\s*\*\s*vol,\s*pan,\s*propDelay,\s*true/.test(AUDIO_RUNTIME)) {
+  erros.push('LAB11b morte corporal ainda passa pelo duck do tiro.');
+}
+if (!AUDIO_RUNTIME.includes('this._sample(url, vol, !direct')) erros.push('LAB11c cache frio do evento ignora barramento direto.');
+if (!GAME_RUNTIME.includes('this.sfx.death(ent.def?.id') || !NET_RUNTIME.includes('game.sfx.death(ent.def?.id')) {
+  erros.push('LAB11d morte local/remota não carrega a identidade do personagem.');
+}
+for (const [label, needle] of [
+  ['one-shots declarados pelo mapa', '...(state.config.shots || [])'],
+  ['pré-carga dos eventos ambientais', 'Promise.all([...wanted].map((src) => load(src)))'],
+  ['leito global sem queda pelo centro', 'loop.global ? 1'],
+  ['hum procedural dos mapas internos', "state.config.synth?.kind === 'indoor-hum'"],
+]) if (!SOUNDSCAPE_RUNTIME.includes(needle)) erros.push(`LAB11e soundscape não consome ${label}.`);
 
 try {
   if (resolve(publico, readlinkSync(join(publico, 'fab-dev'))) !== resolve(wavs)) {
@@ -129,4 +210,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log('AUDIO FAB LOCAL: verde — 25 armas, 7 superfícies e 9 eventos adicionais audíveis; veto ativo e nenhum caminho privado serializado.');
+console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas e vozes físicas do elenco audíveis; veto ativo e nenhum caminho privado serializado.');

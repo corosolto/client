@@ -49,15 +49,16 @@ export class Sfx {
     }
     this.pack = null;
   }
-  _sample(url, vol = 1) {
+  _sample(url, vol = 1, duckable = true, rate = 1) {
     try {
       const a = new Audio(encodeURI(url));
       // o "fahhh...bro" é MUITO alto — abaixa bastante onde quer que toque (ingame + captura)
       if (/fah{4,}/i.test(url)) vol *= 0.35;
+      if (Number.isFinite(rate) && rate > 0) a.playbackRate = rate;
       a._baseVol = Math.min(1, this.vol * vol);
-      a.volume = a._baseVol * (this._ducked ? this._duckAmt : 1);
-      this._live.add(a);
-      const off = () => this._live.delete(a);
+      a.volume = a._baseVol * (duckable && this._ducked ? this._duckAmt : 1);
+      if (duckable) this._live.add(a);
+      const off = () => { if (duckable) this._live.delete(a); };
       a.addEventListener('ended', off); a.addEventListener('pause', off); a.addEventListener('error', off);
       a.play().catch(() => off());
       return a;
@@ -283,6 +284,19 @@ export class Sfx {
     m92: 'ak', ak: 'ak', akm: 'ak', g3: 'ak',   // M92 daqui = Zastava 7,62 curta, não Beretta
     m4: 'ar', scar: 'ar', famas: 'ar', tavor: 'ar', carbine: 'ar', md97: 'ar', // 5.56 crisp (era fallback 'rifle')
   };
+  /* O pack chama todos os takes de `Gunshot_N-M`: arquivo diferente não cria identidade
+     sozinho. Esta camada dá assinatura ao SAMPLE (pitch/EQ/transiente/sub) por família.
+     AK fica neutra para preservar o take que o dono já aprovou na escuta local. */
+  static SAMPLE_GUN_SIGNATURE = {
+    ak:      { rate: 1.00, hp: 0,   lp: 22000, snap: 0,    punch: 0 },
+    pistol:  { rate: 1.10, hp: 180, lp: 11000, snap: .13,  punch: .025 },
+    smg:     { rate: 1.06, hp: 130, lp: 9000,  snap: .09,  punch: .035 },
+    ar:      { rate: 1.02, hp: 80,  lp: 11000, snap: .065, punch: .065 },
+    rifle:   { rate: .98,  hp: 65,  lp: 9000,  snap: .05,  punch: .09 },
+    lmg:     { rate: .91,  hp: 35,  lp: 7200,  snap: .035, punch: .18 },
+    sniper:  { rate: .84,  hp: 28,  lp: 6000,  snap: .02,  punch: .23 },
+    shotgun: { rate: .78,  hp: 24,  lp: 4600,  snap: 0,    punch: .27 },
+  };
   // Ressonador metálico (mini struckResonator do CoD): burst de ruído em bandpass com Q alto
   // e decay curto — soa como ferrolho/mola, não como "beep atrasado" (o tal eco estranho).
   _resonator(t, freqs, lvl) {
@@ -455,7 +469,21 @@ export class Sfx {
 
   /* Tiro por sample no grafo: HTMLAudio não tem pan nem `start(t)`, então pan e
      propDelay que o game.js calcula eram descartados. Régua ESP2/ESP3. */
-  _shotSample(url, dist, vol, pan, propDelay) {
+  _sampleGunSignature(cls, t, vol, out) {
+    const P = Sfx.SAMPLE_GUN_SIGNATURE[cls] || Sfx.SAMPLE_GUN_SIGNATURE.rifle;
+    if (P.snap > 0) {
+      const src = this._noise(.018); const hp = this.ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3200;
+      const gain = this.ctx.createGain(); this._env(gain, t, .0003, P.snap * vol, .008);
+      src.connect(hp); hp.connect(gain); gain.connect(out); src.start(t); src.stop(t + .025);
+    }
+    if (P.punch > 0) {
+      const low = cls === 'shotgun' ? 54 : cls === 'sniper' ? 62 : 76;
+      const osc = this._osc('sine', low); osc.frequency.exponentialRampToValueAtTime(Math.max(24, low * .55), t + .12);
+      const gain = this.ctx.createGain(); this._env(gain, t, .001, P.punch * vol, .13);
+      osc.connect(gain); gain.connect(out); osc.start(t); osc.stop(t + .18);
+    }
+  }
+  _shotSample(url, weapon, dist, vol, pan, propDelay) {
     this.ensure();
     this._shotBuf = this._shotBuf || new Map();
     this._shotCarregando = this._shotCarregando || new Map();
@@ -489,6 +517,9 @@ export class Sfx {
     this.duck(Sfx.duckTiro(dist), 0.16);
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
+    const cls = Sfx.GUN_CLASS[weapon] || 'rifle';
+    const signature = Sfx.SAMPLE_GUN_SIGNATURE[cls] || Sfx.SAMPLE_GUN_SIGNATURE.rifle;
+    src.playbackRate.value = signature.rate;
     this._shotVoices = this._shotVoices || [];
     const cortar = (i) => {
       const [antiga] = this._shotVoices.splice(i, 1);
@@ -507,18 +538,23 @@ export class Sfx {
     /* `vol` puro: quem passa pelo `master` já leva o volume do usuário. `_sample`
        multiplica por `this.vol` na mão porque HTMLAudio não passa por lá. Régua ESP7. */
     const g = R.createGain(); g.gain.value = vol;
-    src.connect(g);
+    let sampleOut = src;
+    if (signature.hp > 0) { const hp = R.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = signature.hp; sampleOut.connect(hp); sampleOut = hp; }
+    if (signature.lp < 20000) { const lp = R.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = signature.lp; sampleOut.connect(lp); sampleOut = lp; }
+    sampleOut.connect(g);
+    const mix = R.createGain(); g.connect(mix);
+    this._sampleGunSignature(cls, t, vol, mix);
     if (pan) {
       const pz = R.createStereoPanner(); pz.pan.value = Math.max(-1, Math.min(1, pan));
-      g.connect(pz); pz.connect(this.master);
-    } else g.connect(this.master);
-    src.start(t); src.stop(t + buf.duration + 0.05);
+      mix.connect(pz); pz.connect(this.master);
+    } else mix.connect(this.master);
+    src.start(t); src.stop(t + buf.duration / signature.rate + 0.05);
     return true;
   }
   /* Eventos posicionais curtos (morte/explosão) usam o mesmo contrato espacial
      do tiro. No primeiro uso, HTMLAudio garante que o dono já ouça o candidato;
      usos seguintes saem do buffer com pan e atraso. */
-  _eventSample(url, vol = 1, pan = 0, propDelay = 0, direct = false) {
+  _eventSample(url, vol = 1, pan = 0, propDelay = 0, direct = false, rate = 1) {
     this.ensure();
     this._eventBuf = this._eventBuf || new Map();
     this._eventCarregando = this._eventCarregando || new Map();
@@ -537,18 +573,32 @@ export class Sfx {
           } finally { this._eventCarregando.delete(url); }
         })());
       }
-      return !!this._sample(url, vol);
+      return !!this._sample(url, vol, !direct, rate);
     }
     const R = this.ctx, t = R.currentTime + propDelay;
     const src = R.createBufferSource(); src.buffer = buf;
+    if (src.playbackRate && Number.isFinite(rate) && rate > 0) src.playbackRate.value = rate;
     const gain = R.createGain(); gain.gain.value = vol; src.connect(gain);
     const output = direct ? this.master : (this.duckBus || this.master);
     if (pan) {
       const panner = R.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan));
       gain.connect(panner); panner.connect(output);
     } else gain.connect(output);
-    src.start(t); src.stop(t + buf.duration + 0.05);
+    src.start(t); src.stop(t + buf.duration / Math.max(0.01, rate) + 0.05);
     return true;
+  }
+
+  /* Dor/morte FÍSICAS seguem o personagem, mas não fingem ser dublagem autoral.
+     O manifest local escolhe um perfil e pode, no futuro, trocar cada id por voz própria
+     sem reabrir game.js. Estes cues vão direto ao master: o tiro que causou o dano não
+     pode apagar a informação de que alguém foi atingido ou morreu. */
+  _characterPhysical(kind, characterId, vol = 1, pan = 0, propDelay = 0) {
+    const physical = this.pack?.characterPhysical;
+    const profileId = physical?.byCharacter?.[characterId] || 'male';
+    const profile = physical?.profiles?.[profileId];
+    const sample = this._pick(profile?.[kind]);
+    if (!sample) return false;
+    return this._eventSample(sample, vol, pan, propDelay, true, profile?.rate || 1);
   }
   // tiro por arma: synth por classe é PRIMÁRIO (samples CC0 = opt-in via "weaponSamples":true).
   // dist em metros (game.js: 0 = player, _sd = distância do bot). pan/propDelay só de bots.
@@ -565,7 +615,7 @@ export class Sfx {
        Vale para os dois caminhos — sample CC0 e synth — porque o volume alto se ouve nos
        dois. `?gunvol=N` para ajustar ao vivo sem recompilar nada. */
     vol *= GUN_VOL;
-    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f && this._shotSample(f, dist, vol, pan, propDelay)) return; }
+    if (this.pack?.weaponSamples) { const f = this._pick(this.pack?.weapons?.[w]); if (f && this._shotSample(f, w, dist, vol, pan, propDelay)) return; }
     // GUNFEEL: peso POR ARMA dentro da classe — só a classe fazia .38, PT-38 e Deagle
     // soarem idênticos (e a SKS soar igual à AWP). `vol` é o único parâmetro por tiro que o
     // synth aceita, então a hierarquia de calibre entra por aqui.
@@ -618,19 +668,30 @@ export class Sfx {
     this.ensure(); this._beep('square', 180, 420, .09, .2); this._burst(.06, .25, 2600); }
   hitmark()   { this.ensure(); this._beep('sine', 1400, 1100, .05, .22); }
   killConfirm(){ this.ensure(); this._beep('sine', 660, 660, .07, .25); this._beep('sine', 990, 990, .1, .25, .08); }
-  hurt()      { this.ensure(); this._beep('sawtooth', 180, 90, .18, .3); this._burst(.1, .2, 500); }
-  death(vol = 1, pan = 0, propDelay = 0)     {
+  hurt(characterId = '') {
+    if (this._characterPhysical('hurt', characterId, .52, 0, 0)) return;
+    this.ensure(); this._beep('sawtooth', 180, 90, .18, .3); this._burst(.1, .2, 500);
+  }
+  death(characterId = '', vol = 1, pan = 0, propDelay = 0)     {
+    /* Compatibilidade com chamadores/sondas anteriores: death(vol, pan, delay).
+       Sem o overload, `death(1, 0, 0)` virava characterId=1, vol=0 e retornava mudo. */
+    if (typeof characterId !== 'string') {
+      propDelay = pan; pan = vol; vol = characterId; characterId = '';
+    }
     // morte: thud de corpo (ruído grave filtrado) + queda de tom suave em sine/sub — em vez do
     // beep sawtooth "minecraft". Mais encorpado e menos game-boy.
     // vol escala por distância (game.js) — bot morrendo do outro lado do mapa não "canta" no
     // ouvido do player (antes: sting completo em TODA morte, somava com tiro = "eco estranho").
     // pan/propDelay: posição estéreo + delay de propagação da morte de bots (player = 0).
-    if (vol < 0.12) return;
+    if (vol < 0.08) return;
     const sample = this._cs('death');
-    if (sample && this._eventSample(sample, 0.72 * vol, pan, propDelay)) return;
+    const bodyPlayed = sample && this._eventSample(sample, 0.92 * vol, pan, propDelay, true);
+    const voicePlayed = this._characterPhysical('death', characterId, 0.46 * vol, pan, propDelay + 0.035);
+    if (bodyPlayed || voicePlayed) return;
     this.ensure(); if (!this.ctx) return;
-    let out = false;
-    if (pan) { out = this.ctx.createStereoPanner(); out.pan.value = pan; out.connect(this.duckBus || this.master); }
+    let out = this.ctx.createGain();
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
+    else out.connect(this.master);
     this._burst(0.2, 0.5 * vol, 240, 0.8, 'lowpass', propDelay, out);        // baque grave (corpo caindo)
     this._beep('sine', 180, 55, 0.5, 0.26 * vol, propDelay, out);            // queda de tom
     this._beep('triangle', 90, 28, 0.7, 0.18 * vol, 0.04 + propDelay, out);  // sub grave curto
@@ -661,19 +722,48 @@ export class Sfx {
   }
   respawn()   { this.ensure(); this._beep('sine', 440, 880, .18, .18); }
   ricochet()  { this.ensure(); this._beep('sine', 2400, 700, .12, .08); }
-  explosion() { // frag: crack agudo + corpo grave + rumble
+  grenadePin(kind = 'frag') {
+    this.ensure(); if (!this.ctx) return;
+    const base = kind === 'smoke' ? 1180 : 1440;
+    this._beep('square', base, base * .72, .035, .1, 0, true);
+    this._beep('square', base * .62, base * .48, .045, .08, .055, true);
+  }
+  grenadeThrow(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
+    const sample = this._cs('grenadethrow');
+    const rate = kind === 'smoke' ? .92 : 1.04;
+    if (sample && this._eventSample(sample, .34 * vol, pan, propDelay, false, rate)) return;
+    this.ensure(); this._burst(.12, .13 * vol, kind === 'smoke' ? 950 : 1250, 2.2, 'bandpass', propDelay);
+  }
+  grenadeBounce(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
+    if (vol < .06) return;
+    const sample = this._cs('grenadebounce');
+    const rate = kind === 'smoke' ? 1.12 : .96;
+    if (sample && this._eventSample(sample, .24 * vol, pan, propDelay, false, rate)) return;
+    this.ensure(); this._burst(.055, .11 * vol, kind === 'smoke' ? 1500 : 950, 1.8, 'bandpass', propDelay);
+  }
+  smokePop(vol = 1, pan = 0, propDelay = 0) {
+    this.ensure(); if (!this.ctx) return;
+    let out = this.ctx.createGain();
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
+    else out.connect(this.master);
+    this._burst(.42, .24 * vol, 720, 1.1, 'lowpass', propDelay, out);
+    this._burst(.18, .11 * vol, 2400, 1.8, 'bandpass', propDelay + .035, out);
+  }
+  explosion(vol = 1, pan = 0, propDelay = 0) { // frag: crack agudo + corpo grave + rumble
     const sample = this._cs('explosion');
     this.duck(0.22, 0.3);
-    if (sample && this._eventSample(sample, 0.68, 0, 0, true)) return;
+    if (sample && this._eventSample(sample, 0.78 * vol, pan, propDelay, true)) return;
     this.ensure(); if (!this.ctx) return;
                                                // explosão ducka tudo (vozes/rádio/música)
     // bus próprio (direct no master — explosão é ducker, não vítima) + send de reverb opt-in
-    const bus = this.ctx.createGain(); bus.connect(this.master);
+    const bus = this.ctx.createGain(); bus.gain.value = vol;
+    if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; bus.connect(panner); panner.connect(this.master); }
+    else bus.connect(this.master);
     this._send(bus, 0.2);
-    this._burst(.18, .95, 1800, 0.7, 'lowpass', 0, bus);   // crack inicial
-    this._burst(.6, .8, 300, 1, 'lowpass', 0, bus);        // corpo
-    this._beep('sine', 90, 30, .55, .6, 0, bus);           // rumble grave
-    this._beep('sawtooth', 160, 45, .35, .3, .02, bus);
+    this._burst(.18, .95, 1800, 0.7, 'lowpass', propDelay, bus);   // crack inicial
+    this._burst(.6, .8, 300, 1, 'lowpass', propDelay, bus);        // corpo
+    this._beep('sine', 90, 30, .55, .6, propDelay, bus);           // rumble grave
+    this._beep('sawtooth', 160, 45, .35, .3, .02 + propDelay, bus);
     }
 
   vuvuzela(dur = 1.2) { // round start — Brazilian stadium energy
