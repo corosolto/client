@@ -32,6 +32,7 @@ import { execSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import sharp from 'sharp';
+import { summarizeMagazineSupportContact } from './lib/vm-contact-diagnostic.mjs';
 
 import { WEAPON_IDS } from '../../public/js/weapons.js';
 import { VM_FAMILY, VM_WEAPON } from '../../public/js/data/vmconfig.js';
@@ -942,16 +943,14 @@ for (const r of relatorio) {
       }
     }
     const diag = base.armaDiag || 1;
-    const apoioPenteDist = rec
-      .filter((q) => q.pentePx > 2000 && (q.maoComponentes || []).length >= 2)
-      .flatMap((q) => q.maoComponentes.slice(1).map((component) => component.penteDistPx))
-      .filter((distance) => distance >= 0);
+    const apoioPente = summarizeMagazineSupportContact(rec);
     r.recargaResumo = {
       armaExcursao: +(maxArma / diag).toFixed(2),
       penteExcursao: +(maxPente / diag).toFixed(2),
       penteVisto: rec.some((q) => q.pentePx > 200
         || (q.penteVertices >= 1000 && q.penteBoneVisible)),
-      penteMaoApoioDistPx: apoioPenteDist.length ? Math.min(...apoioPenteDist) : -1,
+      penteMaoApoioDistPx: apoioPente.distancePx,
+      penteMaoApoio: apoioPente,
     };
     if (r.recargaResumo.armaExcursao > 0.55) {
       f.push(`P4 recarga: a ARMA anda ${(r.recargaResumo.armaExcursao * 100).toFixed(0)}% do próprio tamanho (arranca a arma toda)`);
@@ -963,10 +962,7 @@ for (const r of relatorio) {
     if (r.recargaResumo.penteVisto && r.recargaResumo.penteExcursao < 0.12) {
       f.push('P4 recarga: o pente não sai do lugar');
     }
-    if (r.recargaResumo.penteVisto
-      && (r.recargaResumo.penteMaoApoioDistPx < 0 || r.recargaResumo.penteMaoApoioDistPx > 24)) {
-      f.push(`P4 recarga: mão de apoio fica ${r.recargaResumo.penteMaoApoioDistPx < 0 ? '>192' : r.recargaResumo.penteMaoApoioDistPx}px longe do pente destacado`);
-    }
+    if (r.recargaResumo.penteVisto && apoioPente.failure) f.push(apoioPente.failure);
     if (rec.some((q) => q.state !== 'reload' || !/reload/i.test(q.clip || ''))) {
       f.push('P4 recarga: os frames intermediários não pertencem ao clip Reload');
     }

@@ -2110,6 +2110,32 @@ A prancha do jogo está em `artifacts/viewmodels/golden-pistol/runtime-final/con
 A candidata ainda aguarda aprovação visual do dono; decisão e reversão estão em
 `docs/reports/GOLDEN-PISTOL-DECISION.md`.
 
+**Rodada 05/09 — captura e diagnóstico corrigidos; pistola ainda não golden.**
+Na lane `codex/vm-astra-pistol`, a reprodução em 1440×960 mostrou os cinco frames
+de saque presos em idle no `golden-ak-runtime.mjs`. O capturador amostrava só o
+mixer, sem recompor o mount procedural nem assegurar render da nova pose. O
+helper agora avança o controlador em subpassos (inclusive na recarga), preserva
+idle pausado, restaura os estados ao terminar e espera retorno natural a idle,
+sem forçar `action.time` ao fim da recarga. O saque zero corrigido fica fora da
+tela; o intermediário entra progressivamente.
+
+O candidato C também expôs um diagnóstico falso do `vm-gauntlet.mjs`: pico do
+pente **1777 px**, abaixo do filtro **>2000 px**, produzia resumo `-1`, exibido
+como mão a **>192 px**. Ausência de amostra agora é `distancePx: null`, com
+reprovação explícita por medição insuficiente; nenhum limiar foi relaxado. A
+hipótese de mão desconectada não é sustentada por esse número. B e C foram
+rejeitados por proporção/enquadramento; não substituiram a baseline nem a AK.
+
+Réguas independentes: `npm run eval:authored-capture -- --mutate` (**10/10**, oito
+mutantes) e `node tools/eval/vm-contact-diagnostic-check.mjs --mutate` (**8/8**,
+dois mutantes), com retorno ao verde. Custo: mais subpassos na ferramenta de
+captura; nenhum módulo servido do jogo foi alterado. O HUD é registrado no
+bloco `rendered`, congelado junto com a simulação durante a foto para impedir
+deriva de munição entre metadata e pixels. Tempo adicional de captura
+não foi benchmarkado. Antes/depois, SHAs e limitações ficam no
+[`VIEWMODEL-ASTRA-PISTOL-HANDOFF.md`](docs/reports/VIEWMODEL-ASTRA-PISTOL-HANDOFF.md).
+Isso corrige o instrumento, **não encerra o BUG-75** nem aprova visualmente mãos.
+
 **Rodada 28/08 (pack pago) — régua antes do conserto, causas MEDIDAS.** A integração do
 KINEMATION (29 commits em ~90 min, sem portões) trocou 25/26 armas pela malha genérica do
 pack e quebrou o resto por quatro causas confirmadas lendo o binário dos GLBs e o código:

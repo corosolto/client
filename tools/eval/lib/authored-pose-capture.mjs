@@ -69,18 +69,18 @@ export function sampleAuthoredPose({ kind, fraction, weapon }) {
   if (sampleElapsed < pose.sampleElapsed) throw new Error('reinicie a série antes de retroceder');
   entry.state = pose.state;
   entry.stateUntil = Infinity;
+  let remaining = sampleElapsed - pose.sampleElapsed;
+  // Toda ação avança o controlador: inclui decaimento do recoil na recarga
+  // e overlay procedural de equip híbrido. update limita dt a 0,05 s.
+  while (remaining > 1e-9) {
+    const step = Math.min(1 / 60, remaining);
+    game.__qaAuthoredUpdate(step);
+    remaining -= step;
+  }
+  if (sampleElapsed === 0) game.__qaAuthoredUpdate(0);
   if (pose.proceduralDraw) {
     entry.drawTime = entry.drawDuration * fraction;
     game.__qaAuthoredUpdate(0);
-  } else if (kind === 'fire') {
-    let remaining = sampleElapsed - pose.sampleElapsed;
-    // AuthoredViewModels.update limita dt: um salto de fase exige subpassos.
-    while (remaining > 1e-9) {
-      const step = Math.min(1 / 60, remaining);
-      game.__qaAuthoredUpdate(step);
-      remaining -= step;
-    }
-    if (sampleElapsed === 0) game.__qaAuthoredUpdate(0);
   }
   pose.sampleElapsed = sampleElapsed;
   if (!pose.proceduralDraw && !pose.proceduralFire && action && duration) {
@@ -132,4 +132,31 @@ export function finishAuthoredAction() {
     delete game.__qaAuthoredPose;
   }
   if (game.__qaAuthoredUpdate) vm.update = game.__qaAuthoredUpdate;
+}
+
+export function beginAuthoredSnapshot(weapon) {
+  const game = window.__game;
+  if (game.paused) throw new Error('captura recusada: jogo pausado');
+  if (game.__qaSnapshotUpdate) throw new Error('captura já iniciada');
+  game.update(0, true);
+  const entry = window.__authoredVm.entry(weapon);
+  game.__qaSnapshotUpdate = game.update;
+  game.update = () => {};
+  return {
+    frame: game.renderer.info.render.frame, weapon,
+    state: entry.state, clip: entry.action?.getClip?.().name || null,
+    clipTime: entry.action?.time || 0, gameTime: game.time,
+    ammo: { ...game.player.ammo[weapon] },
+    gameReloadRemaining: Math.max(0, game.player.reloadUntil - game.time),
+    mountPosition: entry.mount.position.toArray(),
+    mountMatrixPosition: entry.mount.matrix.elements.slice(12, 15),
+  };
+}
+
+export function finishAuthoredSnapshot() {
+  const game = window.__game;
+  if (game.__qaSnapshotUpdate) {
+    game.update = game.__qaSnapshotUpdate;
+    delete game.__qaSnapshotUpdate;
+  }
 }

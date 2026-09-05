@@ -5,7 +5,8 @@ import { execSync, spawn } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import sharp from 'sharp';
-import { startAuthoredAction, sampleAuthoredPose, finishAuthoredAction } from './lib/authored-pose-capture.mjs';
+import { startAuthoredAction, sampleAuthoredPose, finishAuthoredAction,
+  beginAuthoredSnapshot, finishAuthoredSnapshot } from './lib/authored-pose-capture.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const arg = (name) => (process.argv.find((value) => value.startsWith(`--${name}=`)) || '').split('=')[1] || '';
@@ -90,6 +91,7 @@ async function openMap(map) {
       entry.frame = {
         ...entry.frame,
         x: frame.x ?? entry.frame.x, y: frame.y ?? entry.frame.y, z: frame.z ?? entry.frame.z,
+        fov: frame.fov ?? entry.frame.fov,
         rotDeg: [frame.pitch ?? entry.frame.rotDeg?.[0] ?? 0,
           frame.yaw ?? entry.frame.rotDeg?.[1] ?? 0, frame.roll ?? entry.frame.rotDeg?.[2] ?? 0],
       };
@@ -105,18 +107,14 @@ async function openMap(map) {
 
 async function snapshot(page, label, metadata = {}) {
   const file = `${String(cells.length).padStart(2, '0')}-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
-  const rendered = await page.evaluate((weapon) => {
-    const game = window.__game;
-    if (game.paused) throw new Error('captura recusada: jogo pausado');
-    game.update(0, true);
-    const entry = window.__authoredVm.entry(weapon);
-    return {
-      frame: game.renderer.info.render.frame,
-      mountPosition: entry.mount.position.toArray(),
-      mountMatrixPosition: entry.mount.matrix.elements.slice(12, 15),
-    };
-  }, WEAPON);
-  const png = await page.screenshot({ type: 'png' });
+  let rendered;
+  let png;
+  try {
+    rendered = await page.evaluate(beginAuthoredSnapshot, WEAPON);
+    png = await page.screenshot({ type: 'png' });
+  } finally {
+    await page.evaluate(finishAuthoredSnapshot);
+  }
   await fs.writeFile(path.join(OUT, file), png);
   cells.push({ label, file, png });
   report.states.push({ label, file, ...metadata, rendered });
@@ -251,19 +249,19 @@ try {
   await capturePoseSeries(open, 'draw', [0, 0.25, 0.5, 0.75, 0.999]);
   await capturePoseSeries(open, 'fire', [0, 0.25, 0.5, 0.75, 0.999]);
   await capturePoseSeries(open, 'reload', [0, 0.2, 0.36, 0.52, 0.6, 0.68, 0.76, 0.84, 0.999]);
-  await open.evaluate((weapon) => {
+  await open.waitForFunction((weapon) => {
+    const game = window.__game;
     const entry = window.__authoredVm.entry(weapon);
-    entry.action.paused = false;
-    entry.action.time = Math.max(0, entry.action.getClip().duration - 0.02);
-    entry.mixer.update(0.1);
-  }, WEAPON);
-  await open.waitForTimeout(450);
+    return entry.state === 'idle' && /^idle$/i.test(entry.action?.getClip?.().name || '')
+      && game.player.reloadUntil <= game.time;
+  }, WEAPON, { timeout: 10000 });
   const postReload = await open.evaluate((weapon) => {
     const game = window.__game;
     const entry = window.__authoredVm.entry(weapon);
     return {
       state: entry.state,
       clip: entry.action?.getClip?.().name || null,
+      naturalCompletion: true,
       gameReloadRemaining: Math.max(0, game.player.reloadUntil - game.time),
       ammo: { ...game.player.ammo[weapon] },
     };

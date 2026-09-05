@@ -17,10 +17,18 @@ subpassos, preserva o idle procedural e renderiza a pose antes da foto. Aceita
 `--quadro-x/y/z/fov/pitch/yaw/roll` para comparar enquadramentos sem editar o
 runtime; os valores e a matriz renderizada ficam no relatório.
 
-`npm run eval:authored-capture -- --mutate` verifica oito contratos com
-`AnimationMixer` e `VmRecoil` reais e seis regressões injetadas em cópias
+`npm run eval:authored-capture -- --mutate` verifica dez contratos com
+`AnimationMixer` e `VmRecoil` reais e oito regressões injetadas em cópias
 temporárias. É uma régua Node do capturador, **não** aprovação visual ou do GLB;
 a folha de contato e o gauntlet de pixels continuam necessários.
+O bloco `rendered` registra HUD e pose no frame fotografado; `game.update` fica
+congelado apenas durante o screenshot, com retomada em `finally`. Campos da
+amostragem de fase não devem ser confundidos com o estado posterior do HUD.
+
+`node tools/eval/vm-contact-diagnostic-check.mjs --mutate` verifica oito
+contratos do diagnóstico P4 e duas regressões. O gauntlet reporta distância
+`null` e amostra insuficiente quando o filtro de visibilidade não permite medir
+o contato: isso continua reprovando, mas não significa mão distante a >192 px.
 
 ## 1. Portões (rodam no CI, reprovam PR)
 

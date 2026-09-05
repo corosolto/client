@@ -54,16 +54,49 @@ declara a pistola golden nem libera outras famílias.
   escolha da rota golden da pistola. Não alterar esses contratos neste piloto.
   Logs: `authored-vm.log` e `authored-vm-source-baseline.log`.
 
-## Comparações em andamento
+## Comparações — A mantida; B e C rejeitadas
 
 - A = baseline H: x 0,100; y -0,100; z -0,220; yaw 20°; FOV 55°.
 - B = x 0,125; y -0,075; z -0,220; yaw 10°; FOV 55°.
   **Rejeitada em 3:2**: arma pequena (diagonal 11,9%) e mãos/arma 5,5×
   contra máximo existente 4,0×. `candidate-b-gauntlet/relatorio.json`.
 - C = mesmo B com yaw 30°: **rejeitada em 3:2**: mãos/arma 4,9×,
-  início do pacote x 0,48 fora do intervalo 0,50–0,66 e apoio distante do pente
-  na projeção de recarga (P4). `candidate-c-gauntlet/relatorio.json`.
-  Captura com materiais reais em andamento; nenhum limite foi relaxado.
+  início do pacote x 0,48 fora do intervalo 0,50–0,66 e **amostra insuficiente**
+  de contato na recarga. A crítica independente encontrou um erro no P4:
+  pico de pente 1777 px, abaixo do filtro >2000; o resumo -1 era traduzido
+  incorretamente como distância >192 px. Isso NÃO prova mão desconectada.
+  `candidate-c-gauntlet/relatorio.json` conserva o relatório original para
+  reproduzir o defeito. O helper novo mantém o portão reprovado por ausência
+  de medição, sem inventar distância nem relaxar limites.
+  Materiais reais: `candidate-c-runtime/`, `candidate-a-vs-c.png`.
+
+## Marco 2 — crítica adversarial e diagnóstico honesto
+
+- Checkpoint anterior: `66608e77` (preparação); `c3282daf` (captura e oito
+  contratos iniciais). Esta rodada acrescentou avanço temporal durante draw e
+  reload, retorno natural de recarga e diagnóstico P4 sem distância inventada.
+- Réguas finais: **APC 10/10 + MCD 8/8**, oito + dois mutantes mortos. Logs:
+  `capture-regression.log`, `contact-diagnostic-regression.log`.
+- Crítico: contato não pode ser negado por oclusão ou por ausência de amostra.
+  O inventário confirma Mag animado e com vértices; distância entre pivôs não
+  prova contato entre superfícies. A troca do carregador segue mal legível.
+- `capture-fix-before-after.png` compara o instrumento antes/depois; não é
+  propaganda de um novo asset. `candidate-a-vs-c.png` compara materiais reais.
+- Crítica adicional de fidelidade: a pose isolada não demonstra blends naturais.
+  C mostrava HUD 12/47 enquanto o metadado pré-RAF registrava 11/48. Agora
+  `rendered` lê HUD/pose após o render e congela a simulação até terminar a foto,
+  com restauração em `finally` e teste de mutação próprio.
+- `vmrecoil-sim` passou sem falhas; `npm run build` passou. `check:fast`:
+  **63/66**, falhas `eval:mapid`, `audio:check`, `feet:check`; reproduzidas na
+  lane Fable limpa, sem alterar mapas, áudio ou offsets neste piloto.
+- Pistola 16:9: `final-pistol-16x9/runtime-report.json`, contrato verde, sem
+  erros, retorno natural para idle, caminhada 2,80 m, salto 0,078 m, parede
+  0,38 m. A manipulação do pente continua junto ao rodapé.
+- AK 3:2: `final-ak-control/runtime-report.json`, fonte `gold#ak`, mesmo SHA
+  original, sem erros, retorno natural a Idle, caminhada 2,47 m e parede
+  0,38 m. Não houve alteração da AK nem dos arquivos servidos de gameplay.
+- `final-pistol-3x2/` é a última recaptura, incluindo HUD congelado; a captura
+  16:9 e o controle AK antecedem somente essa proteção atômica de screenshot.
 
 ## Pendências e próximo passo
 

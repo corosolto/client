@@ -306,6 +306,102 @@ function runSuite(module) {
     }
     return { resumedScenarios: scenarios.length };
   });
+
+  check('APC9 draw e reload avançam relógio e dissipam recoil anterior', () => {
+    for (const [kind, duration] of [['draw', DRAW_DURATION], ['reload', RELOAD_DURATION]]) {
+      const f = fixture();
+      f.vm.recoil.shoot(f.vm._time);
+      begin(f, kind);
+      const baseTime = f.vm._time;
+      const oracle = makeRecoil();
+      oracle.shoot(baseTime);
+      let previous = 0;
+      for (const fraction of FRACTIONS) {
+        at(f, kind, fraction);
+        const elapsed = duration * fraction;
+        near(f.vm._time - baseTime, elapsed, `APC9 ${kind} precisa avançar o controlador`);
+        near(f.vm.recoil.t, elapsed * f.vm.recoil.params.playRate, `APC9 ${kind} relógio do recoil`);
+        const expected = oracle.update(elapsed - previous);
+        for (const [axis, key] of [['x', 'rx'], ['y', 'ry'], ['z', 'rz']]) {
+          near(f.entry.mount.rotation[axis], expected[key], `APC9 ${kind} conserva recoil antigo no mount.${axis}`);
+        }
+        const drawY = kind === 'draw' ? -f.entry.frame.drawDrop * (1 - fraction) : 0;
+        near(f.entry.mount.position.y, f.entry.frame.y + drawY + expected.py,
+          `APC9 ${kind} overlay e recoil precisam compartilhar o tempo`);
+        previous = elapsed;
+      }
+      assert.ok(f.updates.every((dt) => dt <= 0.05), `APC9 ${kind}: subpassos ausentes`);
+    }
+    return { actions: 2, samplesPerAction: FRACTIONS.length };
+  });
+
+  check('APC10 snapshot congela simulação e registra HUD já atualizado', () => {
+    const beginSnapshot = pageFunction(module.beginAuthoredSnapshot);
+    const finishSnapshot = pageFunction(module.finishAuthoredSnapshot);
+    const f = fixture();
+    const gameUpdates = [];
+    f.game.paused = false;
+    f.game.renderer = { info: { render: { frame: 40 } } };
+    f.game.player.ammo[WEAPON] = { mag: 11, res: 48 };
+    f.game.player.reloadUntil = f.game.time;
+    f.entry.state = 'reload';
+    f.game.update = function update(dt, forceRender) {
+      gameUpdates.push({ dt, forceRender });
+      this.time += dt;
+      f.vm.update(dt);
+      if (this.player.reloadUntil > 0 && this.player.reloadUntil <= this.time) {
+        this.player.ammo[WEAPON] = { mag: 12, res: 47 };
+        this.player.reloadUntil = 0;
+        f.entry.state = 'idle';
+      }
+      if (forceRender) {
+        f.entry.mount.updateMatrixWorld(true);
+        this.renderer.info.render.frame += 1;
+      }
+    };
+    const liveState = () => ({ gameTime: f.game.time, ammo: { ...f.game.player.ammo[WEAPON] },
+      reloadUntil: f.game.player.reloadUntil, state: f.entry.state,
+      frame: f.game.renderer.info.render.frame, calls: gameUpdates.length, pose: snapshot(f) });
+    const rendered = beginSnapshot(f.window, WEAPON);
+    try {
+      assert.deepEqual(gameUpdates, [{ dt: 0, forceRender: true }],
+        'APC10 snapshot precisa atualizar e renderizar antes de ler o HUD');
+      assert.deepEqual(rendered.ammo, { mag: 12, res: 47 }, 'APC10 HUD anterior à atualização');
+      assert.equal(rendered.frame, 41, 'APC10 número de frame anterior à renderização');
+      assert.equal(rendered.weapon, WEAPON, 'APC10 arma incorreta');
+      assert.equal(rendered.state, 'idle', 'APC10 estado anterior à conclusão da recarga');
+      assert.equal(rendered.clip, 'idle', 'APC10 clipe incorreto');
+      near(rendered.clipTime, f.entry.action.time, 'APC10 tempo do clipe');
+      near(rendered.gameTime, f.game.time, 'APC10 relógio do jogo');
+      near(rendered.gameReloadRemaining, 0, 'APC10 restante anterior à conclusão da recarga');
+      assert.deepEqual(rendered.mountPosition, f.entry.mount.position.toArray(), 'APC10 posição do mount');
+      assert.deepEqual(rendered.mountMatrixPosition, f.entry.mount.matrix.elements.slice(12, 15),
+        'APC10 matriz de renderização divergente');
+      const frozenState = liveState();
+      f.game.update(0.025, true);
+      f.game.update(0.025, true);
+      assert.deepEqual(liveState(), frozenState,
+        'APC10 simulação/HUD deriva entre leitura e screenshot; congele game.update');
+    } finally {
+      finishSnapshot(f.window);
+    }
+    assert.equal(Object.hasOwn(f.game, '__qaSnapshotUpdate'), false, 'APC10 marcador de snapshot não foi removido');
+    finishSnapshot(f.window);
+    const beforeResume = liveState();
+    f.game.update(0.025, true);
+    near(f.game.time - beforeResume.gameTime, 0.025, 'APC10 finish repetido não retomou jogo');
+    near(f.vm._time - beforeResume.pose.time, 0.025, 'APC10 finish não retomou controlador');
+    assert.equal(gameUpdates.length, beforeResume.calls + 1, 'APC10 retomada perdeu update');
+    assert.equal(f.game.renderer.info.render.frame, beforeResume.frame + 1, 'APC10 retomada perdeu render');
+    f.game.player.ammo[WEAPON].mag = 10;
+    assert.equal(rendered.ammo.mag, 12, 'APC10 relatório contém referência mutável ao HUD');
+    beginSnapshot(f.window, WEAPON);
+    finishSnapshot(f.window);
+    const beforeSecondResume = f.game.time;
+    f.game.update(0.025, true);
+    near(f.game.time - beforeSecondResume, 0.025, 'APC10 segundo snapshot empilhou congelamento');
+    return { captures: 2, repeatedFinish: true, ammoRendered: rendered.ammo };
+  });
   return cases;
 }
 
@@ -322,6 +418,9 @@ if (process.argv.includes('--mutate')) {
       replacement: 'game.__qaAuthoredUpdate(0)', contract: 'APC1', error: /APC1 controlador perde dt/ },
     { name: 'dt-sem-subpassos', pattern: /const step = Math\.min\(1 \/ 60, remaining\);/g,
       replacement: 'const step = remaining;', contract: 'APC1', error: /APC1 controlador perde dt/ },
+    { name: 'avanco-so-fire', pattern: /while \(remaining > 1e-9\)/g,
+      replacement: "while (kind === 'fire' && remaining > 1e-9)",
+      contract: 'APC9', error: /APC9 draw precisa avançar o controlador/ },
     { name: 'idle-como-tiro', pattern: /!pose\.proceduralFire && /g,
       replacement: '', contract: 'APC7', error: /APC7 idle pausado/ },
     { name: 'sem-retomada', pattern: /if \(game\.__qaAuthoredUpdate\) vm\.update = game\.__qaAuthoredUpdate;/g,
@@ -331,6 +430,9 @@ if (process.argv.includes('--mutate')) {
       replacement: 'entry.stateUntil = Infinity;', contract: 'APC8', error: /APC8 prazo finito/ },
     { name: 'idle-despausado', pattern: /if \(pose\.action\) pose\.action\.paused = pose\.actionPaused;/g,
       replacement: 'if (pose.action) pose.action.paused = false;', contract: 'APC8', error: /APC8 pausa original/ },
+    { name: 'snapshot-sem-congelar', pattern: /game\.update = \(\) => \{\};/g,
+      replacement: 'game.update = game.__qaSnapshotUpdate;',
+      contract: 'APC10', error: /APC10 simulação\/HUD deriva/ },
   ];
   const directory = await mkdtemp(path.join(tmpdir(), 'authored-pose-capture-mutant-'));
   try {
