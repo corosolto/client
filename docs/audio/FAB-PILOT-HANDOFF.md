@@ -1,6 +1,75 @@
 # Piloto de áudio Fab — handoff
 
-Atualizado em 2026-09-05 (décima rodada: gravações reais CC0 para o arsenal inteiro).
+Atualizado em 2026-09-05 (décima primeira rodada: BOOM GUNS Designed em A/B local).
+
+## Décima primeira rodada — BOOM GUNS Designed dentro do jogo
+
+Checkpoint de implementação: `f6f0e027` (`feat(audio): integrar boom guns designed em ab local`).
+
+O ZIP comprado pelo dono foi localizado em `~/Downloads/guns_ds_719mb.zip`, testado com
+`unzip -t` e conferido pelo SHA-256
+`ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa`. Ele contém 109 WAVs,
+a EULA BOOM de 2022 e metadados PDF/XLSX. A fonte extraída permanece fora do Git em
+`private-assets/audio/boom-guns-designed`; os candidatos preparados ficam em
+`private-assets/audio/boom-guns-designed-game`.
+
+A EULA local permite adaptar e incorporar os sons em videogame e produção audiovisual com
+outros elementos de áudio. Ela proíbe redistribuição standalone/audio-only e uso para treinar
+IA/ML, além de exigir prova de compra. Por isso nenhum WAV foi enviado a modelo: o script
+`tools/audio/prepare-boom-guns-designed.mjs` usa `ffmpeg` local e determinístico. Somente nomes,
+metadados e hashes entram no código/ledger.
+
+O processamento encontrou 76 WAVs `4x SingleShots`, isolou quatro disparos por gravação e
+gerou 304 WAVs privados com hashes únicos. O pack de runtime usa 256 desses candidatos em 23
+armas do jogo, com estilos `huge`, `natural`, `crispy` e `light`; o Ruger 1022 oferece `bright`
+no lugar de `light`. O manifest não contém caminho absoluto. O mapeamento declara se a
+correspondência é exata, de família ou proxy — possuir o pack não torna artisticamente exatas
+as aproximações.
+
+- **exata:** AK, M4, Mosin e SKS;
+- **família:** AKM, M92, MD-97, carabina, MP5, PT-38, Revólver .38, SVD e shotgun;
+- **proxy provisório:** LMG, Tavor, Famas, SCAR, G3, Deagle, AWP, Remington 700, M400 e G3SG1;
+- **sem gravação BOOM neste produto:** Uzi e P90, que continuam no pack CC0 da décima rodada.
+
+O A/B é opt-in por URL e não substitui a base silenciosamente. `gunpack=boom` escolhe o pack,
+`gunstyle` escolhe o desenho e `guntake` fixa um disparo para comparação repetível. Sem
+`guntake`, um dos takes do estilo é sorteado. A shotgun oferece 16 takes por estilo, reunindo
+Ithaca M37, Maverick 88, Maverick 88 FM e Winchester 1300. As gravações BOOM tocam neutras,
+sem synth, pitch ou EQ genérico por cima.
+
+### Escuta autoritativa em `8131`
+
+Fazer recarga completa e iniciar uma **partida nova** após trocar de link, porque a pré-carga
+das armas ocorre no início da partida:
+
+| Comparação | Link |
+|---|---|
+| Base atual (AK Fab + restante CC0) | `http://127.0.0.1:8131/` |
+| BOOM `huge` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=huge` |
+| BOOM `natural` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=natural` |
+| BOOM `crispy` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=crispy` |
+| BOOM `light` | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=light` |
+| BOOM `huge`, take 1 fixo | `http://127.0.0.1:8131/?gunpack=boom&gunstyle=huge&guntake=1` |
+
+Prioridade de escuta: shotgun, M4, PT-38, Revólver .38, Deagle, MP5, AK, Mosin/SVD e SKS.
+Feedback mínimo útil: `huge: shotgun boa, M4 exagerada; natural: pistola boa; take 2 melhor`.
+Uzi e P90 não servem para avaliar este pack porque continuam deliberadamente na fonte CC0.
+
+Validação executada:
+
+- `unzip -t`: verde; `--inspect`: 76/76 gravações com quatro regiões;
+- 304/304 derivados privados com hash único; 23 armas e 256 URLs usadas pelo runtime;
+- 256/256 URLs BOOM: HTTP 200 com MIME de áudio em `127.0.0.1:8131`;
+- `build`, `syntax`, `eval:audiofablocal`, `eval:audioespacial`, `eval:audiocapacidade`,
+  `eval:audioproc`, `eval:audioalcance`, `docs:check`, `arch:check`, `eval:docsautoria` e
+  `git diff --check`: verdes;
+- ESP1e prova seleção exata por pack, estilo e take; ESP1b continua exigindo zero synth
+  sobreposto ao WAV pré-carregado;
+- mutante `sem-veto`: vermelho em LAB4/LAB5d, como esperado.
+
+Próximo passo concreto: o dono escuta os quatro estilos no jogo e aprova/rejeita por arma ou
+família. Só depois se reduz o pack a uma seleção artística. Nada desta rodada autoriza release,
+publicação, derivado distribuível, push ou merge.
 
 ## Décima rodada — M4, pistolas, Uzi e o restante do arsenal deixam o pool genérico
 
