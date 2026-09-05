@@ -11,7 +11,7 @@ import sharp from 'sharp';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const flags = new Map(process.argv.slice(2).map((arg) => arg.replace(/^--/, '').split('=')));
 for (const key of flags.keys()) {
-  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z', 'video', 'flash-check'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
+  if (!['saida', 'porta', 'largura', 'altura', 'mutante', 'quadro-z', 'video', 'flash-check', 'asset-candidate'].includes(key)) throw new Error(`flag desconhecida: ${key}`);
 }
 const video = flags.has('video');
 if (video) execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
@@ -19,6 +19,9 @@ const frameZ = flags.has('quadro-z') ? Number(flags.get('quadro-z')) : null;
 if (frameZ !== null && !Number.isFinite(frameZ)) throw new Error('quadro-z inválido');
 const mutant = flags.get('mutante') || '';
 if (mutant && !['sem-ataque', 'flash-externo'].includes(mutant)) throw new Error(`mutante desconhecido: ${mutant}`);
+const candidate = flags.has('asset-candidate') ? path.resolve(ROOT, flags.get('asset-candidate')) : null;
+if (candidate && (!candidate.startsWith(`${ROOT}/artifacts/`) || path.extname(candidate) !== '.glb' || mutant)) throw new Error('candidato deve ser GLB local em artifacts, sem mutante');
+if (candidate) await fs.access(candidate);
 const viewport = { width: Number(flags.get('largura') || 1440), height: Number(flags.get('altura') || 960) };
 const port = Number(flags.get('porta') || 8347);
 if (![viewport.width, viewport.height, port].every((n) => Number.isInteger(n) && n > 0)) throw new Error('dimensão/porta inválida');
@@ -47,11 +50,14 @@ try {
   if (!ready) throw new Error('servidor não abriu');
   browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
   const page = await browser.newPage({ viewport });
+  if (candidate) await page.route('**/models/viewmodels/coro/melee/knife-hires.glb*', (route) => route.fulfill({ path: candidate, contentType: 'model/gltf-binary' }));
   page.on('pageerror', (error) => report.errors.push(error.message));
   page.on('console', (message) => {
     if (message.type() === 'error' && !/^(Failed to load resource:|The AudioContext encountered an error)/.test(message.text())) report.errors.push(message.text());
   });
+  let knifeResourceUrl = null;
   page.on('response', (response) => {
+    if (/\/melee\/knife-hires\.glb(?:\?|$)/.test(response.url()) && response.ok()) knifeResourceUrl = response.url();
     if (response.status() < 400) return;
     const text = `${response.status()} ${response.url()}`;
     report.warnings.push(text);
@@ -61,15 +67,26 @@ try {
   await page.goto(`${base}/?debug=1&auto=E&vmweapon=knife&map=brasilia&armaslazy=0`, { waitUntil: 'domcontentloaded', timeout: 180000 });
   await page.waitForFunction(() => window.__game?.state === 'live' && window.__game?.vm?.melee?.active, null, { timeout: 180000 });
   await page.waitForTimeout(1000);
+  if (candidate) {
+    report.candidateOverride = { path: candidate, attackRouting: 'TEST ONLY: quick=Stab, heavy=Slash, sem avanço adicional do wrapper' };
+    await page.evaluate(() => {
+      const vm = window.__game.vm.melee;
+      vm.attack = function (kind = 'quick') {
+        if (!this.active) return false;
+        const duration = kind === 'heavy' ? 0.62 : 0.36;
+        this.attackMotion = { elapsed: 0, duration, depth: 0 };
+        return this._play(kind === 'heavy' ? 'Slash' : 'Stab', duration);
+      };
+    });
+  }
   if (frameZ !== null) await page.evaluate((z) => {
     const vm = window.__game.vm.melee;
     vm.basePosition.z = z; vm.packageRoot.position.z = z;
   }, frameZ);
   report.frameOverride = frameZ === null ? null : { z: frameZ };
-  report.asset = await page.evaluate(async () => {
+  if (!knifeResourceUrl) throw new Error('resposta do GLB servido não encontrada');
+  report.asset = await page.evaluate(async (url) => {
     const game = window.__game, vm = game.vm.melee;
-    const url = performance.getEntriesByType('resource').map((r) => r.name).find((name) => name.includes('/melee/knife-hires.glb'));
-    if (!url) throw new Error('GLB servido não encontrado');
     const response = await fetch(url, { cache: 'no-store' });
     const bytes = await response.arrayBuffer();
     const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
@@ -78,7 +95,7 @@ try {
       camera: { fov: game.vmCamera.fov, aspect: game.vmCamera.aspect },
       scale: vm.packageRoot.scale.toArray(), position: vm.basePosition.toArray(),
       clips: [...vm.actions].map(([name, action]) => ({ name, duration: action.getClip().duration })) };
-  });
+  }, knifeResourceUrl);
   if (frameZ === null) check(report.asset.position.every((v, i) => Math.abs(v - [0.18, -0.12, -0.25][i]) < 1e-9),
     'wrapper servido usa enquadramento aprovado', report.asset.position);
   // Congela apenas este Game desta página; todo avanço chama sua implementação real.
@@ -164,7 +181,7 @@ try {
     for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
       await advance(duration * fraction - elapsed); elapsed = duration * fraction;
       const state = await snapshot(`${kind}-${Math.round(fraction * 100).toString().padStart(3, '0')}`);
-      if (fraction === 0.5) check(state.state === (kind === 'draw' ? 'Draw' : 'Stab'), `${kind} animação no meio da ação`, state.state);
+      if (fraction === 0.5) check(state.state === (kind === 'draw' ? 'Draw' : candidate && kind === 'heavy' ? 'Slash' : 'Stab'), `${kind} animação no meio da ação`, state.state);
     }
     await advance(0.1);
     const returned = await snapshot(`${kind}-retorno`);

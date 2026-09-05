@@ -18,6 +18,7 @@ Não marcar tudo pronto só porque testes estruturais passam.
 - Worktree exclusivo: `/Volumes/Zenith/Projects/game/corosolto/csbrasil/worktrees/vm-astra-pistol`.
 - Branch `codex/vm-astra-pistol`; início desta rodada em `1afbf01e`, limpo.
 - Checkpoint da aprovação da pistola e do prompt: `946cd4c6`.
+- Mãos/enquadramento da faca e BUG-84 validados: `6d0b02b2`.
 - Correção da transição da faca, capturador e testes: `a60c0f3e`.
 - Não trabalhar em `primary`, Fable, retarget ou outros checkouts.
 - `export PATH=/opt/homebrew/bin:$PATH` (Node 23); Node 16 sombreia o ambiente sem isso.
@@ -151,11 +152,13 @@ Não marcar tudo pronto só porque testes estruturais passam.
     slash/stab. Mãos e enquadramento permanecem aprovados; não reconstruí-los.
     Ambos ainda usam Stab; a nova animação NÃO está implementada.
 17. Novo requisito: **uma skin de mãos/braços por TIME**, não por personagem.
-    IDs conferidos em `public/js/factions.js`: C branca (Palhaços), F preta
+    IDs conferidos em `public/js/factions.js`: C branca (Palhaços), F preta sem dedos
     (Funkeiros), B camuflada, E com estrela, U Tribos Urbanas. M/Míticos
     existe, mas ainda não recebeu direção visual específica do dono.
-    Proposta para U, ainda NÃO aprovada: luva preta sem dedos com desgaste,
-    punho quadriculado e pequeno detalhe roxo. Inspirações de construção,
+    Direção para U aceita pelo dono em seguida: luva preta sem dedos com
+    quadriculado no punho para diferenciar de F, que TAMBÉM é sem dedos.
+    A proposta inclui desgaste e pequeno detalhe roxo; aprovação de direção
+    não é aprovação de uma textura/render ainda não produzidos. Inspirações de construção,
     sem baixar/copiar texturas, marcas ou malhas:
     [Dents Gripper](https://de.dentsgloves.com/products/men-s-the-suited-racer-fingerless-water-resistant-leather-driving-gloves)
     e [Vans Checkerboard](https://www.vans.com/en-us/p/shoes/icons/classic-slip-on-5315/classic-slip-on-checkerboard-shoe-VN000EYEX1L).
@@ -174,6 +177,69 @@ Não marcar tudo pronto só porque testes estruturais passam.
     `knife-blender-inspection/uv-{faces,summary}.json`: os dois braços
     reutilizam o atlas, mãos aproximadamente v>0,54, mangas abaixo.
     Delimitar punho/dedos com regiões reais antes de pintar.
+20. Ataques, candidato A **rejeitado**: criado em Blender isolado,
+    `knife-motion-candidate-a/`. Preview real com override explícito em
+    `knife-motion-candidate-a-runtime-3x2/`: esquerda avança, direita levanta
+    e desce, porém o antebraço deforma/ocupa demais e encobre lâmina/mão livre.
+    Crítico independente confirmou esses defeitos; não publicar. Versão
+    `knife-animation-only.glb` incorpora APENAS Stab/Slash novos ao GLB de
+    controle; `preservation.json` verifica buffers originais, meshes, nodes,
+    skins, materiais, câmera, Idle e Draw intocados. Vídeo dessa versão em
+    `knife-animation-only-runtime-3x2/` passou estado, não qualidade visual.
+    Capturador `--asset-candidate` registra que é experimento, incluindo
+    quick=Stab / heavy=Slash apenas nesta página; produção continua antiga.
+21. Candidato B em `knife-motion-candidate-b/`: ombro/cotovelo/punho
+    resolvidos juntos com comprimentos do rig existente, sem esticar o braço
+    inteiro para alcançar a pose. `build-knife-motion-candidate.py` e
+    `merge-knife-animation-candidate.mjs knife-motion-candidate-b` ficam em
+    `artifacts/viewmodels/astra-series/`; .blend recuperável e GLB local.
+    Preview `knife-motion-candidate-b-runtime-3x2/` passou estado, mas foi
+    rejeitado visualmente: resolveu volume do braço, ainda esconde a lâmina.
+22. Candidato C: corrige ponta legível no rápido e altura da descida.
+    `knife-motion-candidate-c-runtime-3x2/` tem fotos/vídeo, porém a ponta
+    aparenta atingir os dedos da mão livre. Rejeitado para promover.
+    Candidato D recolhe a mão livre durante o pesado, preservando Idle e
+    Draw; `knife-motion-candidate-d/knife-animation-only.glb`, com a mesma
+    verificação de preservação. Preview D em andamento, ainda não aprovado.
+    O script Blender local agora gera D; fontes A/B/C permanecem nos .blend
+    e relatórios de suas pastas, não no script sobrescrito.
+23. Skins: atlas UV real fotografado em `knife-blender-inspection/uv-regions.png`,
+    derivado dos triângulos da malha (não concept art). Mãos e mangas ocupam
+    ilhas separadas, os lados compartilham UV. É possível manter malha e rig
+    e fazer textura por time, mas dedos sem luva exigem máscara própria.
+    Esse atlas diagnóstico NÃO é textura final nem implementação das skins.
+24. D em `knife-motion-candidate-d-runtime-retry-3x2/`: 19 fotos, 225 frames,
+    comandos aceitos, sem erros. Crítico independente aprovou APENAS poses:
+    ataques distintos, lâmina inteira, mão livre não cruza golpe, idle/retorno
+    preservados. Ressalva: estocada rápida ainda discreta/diagonal. Não houve
+    aprovação de timing nem do Ruben. Captura 16:9 concluída no marco 26.
+    Primeira tentativa D (`knife-motion-candidate-d-runtime-3x2/`) é INVÁLIDA:
+    zero frames; GLB carregou, mas sumiu da lista limitada de Resource Timing.
+    Capturador agora registra URL da resposta real de rede no evento response,
+    sem depender desse buffer. Não atribuir falha do diagnóstico ao jogo.
+25. Medição de preservação de pegada em `knife-motion-candidate-d/grip-preservation.json`:
+    dez poses no Blender, vértices por dedo no espaço da arma comparados ao
+    Idle original. Indicador/médio/anelar/mínimo desviam <=0,001 mm; região do
+    polegar até 4,234 mm e palma até 2,029 mm, por influência do rig durante
+    a flexão. Não é transformação perfeitamente rígida de toda a mão nem
+    certificado de contato/ausência de penetração. Não editar geometria para
+    apagar essa diferença sem demonstrar defeito visual.
+26. D também capturado em `knife-motion-candidate-d-runtime-16x9/`: 19 fotos,
+    225 frames, 26 verificações, zero erros. Ambos os browsers receberam o
+    mesmo candidato SHA-256 `bb349ccd19413159943fa84fe15aab82af4978f7453121699bb1239b72705ab2`,
+    conferido contra o arquivo local. Folha 16:9 inspecionada: mantém lâmina
+    legível, recolhe mão livre e retorna. Crítico reviu em 3:2 os quadros
+    118–150, 156–180, 220–224 e overview espaçado: sem sumiço, salto evidente,
+    mão cruzando lâmina ou clarão alheio nesse recorte. Não assistiu ao MP4,
+    não conferiu todos os 225 quadros nem o 16:9. Sensação temporal pendente.
+27. Revisão para o dono: `artifacts/viewmodels/astra-series/knife-motion-review.html`
+    (autocontido, dois vídeos e três fotos; `make-knife-motion-review.mjs`).
+    Verificado no browser: ambos vídeos 7,5 s, resoluções 960×640/960×540,
+    sem erro, preview em `knife-motion-review-preview.png`. Declara claramente
+    que é candidato e que skins ainda não estão aplicadas. Contrato da faca
+    e docs continuam passando (`knife-candidate-tools-{contract,docs}.log`);
+    sintaxe/diff limpos. Nenhum processo próprio de browser, servidor ou
+    Blender permanece ativo. Os GLBs públicos/privados aprovados mantêm hashes.
 
 ## Revisão visual / limites da próxima família
 
@@ -214,12 +280,14 @@ captura o padrão real. Não sobrescrever controles/artefatos de antes do conser
 
 ## Próxima ação concreta
 
-Concluir validação causal do flash e checkpoint; depois inspecionar o rig
-e criar os dois ataques pedidos, preservando as mãos aprovadas. Conferir
-também timing de dano: hoje `_tryKnifeAttack` chama `_meleeHit` imediatamente.
-Preparar skins por time, incluindo a pesquisa de Tribos Urbanas (marco 17).
-Não avançar a AWP antes da faca passar. Não promover os vídeos antigos como
-aprovação do movimento novo.
+Mostrar `knife-motion-review.html` ao Ruben e colher aprovação do MOVIMENTO D,
+em especial a leitura do esquerdo. A aprovação das mãos/skins não a substitui.
+Se aprovado, promover os clipes com nomes semânticos próprios, preservar a
+biblioteca original, integrar quick/heavy sem override e recapturar a rota real.
+Conferir timing de dano: `_tryKnifeAttack` chama `_meleeHit` imediatamente;
+o candidato é VISUAL, não resolve sincronização de impacto ou multiplayer.
+Preparar skins por time conforme marco 17, incluindo F/U sem dedos; nenhuma
+textura de time foi implementada. Não avançar a AWP antes da faca passar.
 Atualizar este ledger após cada marco e guardar checkpoint apenas dos arquivos próprios.
 
 Prompt pronto para outra ferramenta: `PROMPT-CLAUDE-VIEWMODELS.md`.

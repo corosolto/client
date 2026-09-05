@@ -34,6 +34,10 @@ de browser, não aprovação de contato ou anatomia. `--video` acrescenta uma
 sequência sem cortes em tempo simulado: troca para pistola, tiro, recarga,
 retorno à faca e ataques, com quadros a 30 Hz e MP4 via ffmpeg. Não mede FPS
 real nem áudio. Sem override, também cobra o enquadramento aprovado no browser.
+`--asset-candidate=artifacts/.../arquivo.glb` intercepta somente o GLB da faca
+nesta página, sem substituir o arquivo público. É preview experimental:
+quick usa Stab e heavy usa Slash, sem deslocamento extra do wrapper. O relatório
+marca `candidateOverride`; um resultado verde NÃO valida a rota de produção.
 
 `npm run eval:melee-vm` também executa `melee-motion-check.mjs`: transições e enquadramento
 com o controlador e AnimationMixer reais, fixture mínima sem assets privados.

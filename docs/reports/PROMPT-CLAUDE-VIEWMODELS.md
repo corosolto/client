@@ -53,9 +53,10 @@ as mãos e o enquadramento aprovados pelo Ruben em 05/09 (`z=-0,25` já aplicado
 Não reconstrua essa geometria para "polir" sem novo pedido. Ruben rejeitou
 o movimento antigo: esquerdo deve dar estocada frontal; direito levantar
 a faca e apunhalar de cima para baixo. Vídeo do movimento antigo não é aprovação.
-Há também skins por time: Palhaços/C branca, Funkeiros/F preta, B camuflada,
-E com estrela e pesquisa de Tribos Urbanas/U. A proposta U é preta sem dedos,
-punho quadriculado e detalhe roxo, ainda não aprovada. Confira progresso no ledger.
+Há também skins por time: Palhaços/C branca, Funkeiros/F preta SEM DEDOS,
+B camuflada, E com estrela e Tribos Urbanas/U preta SEM DEDOS com punho
+quadriculado. Ruben aceitou essa distinção F/U; não volte a cobrir os dedos
+de F. Direção aceita não certifica textura/render final. Confira progresso no ledger.
 Reutilize
 o capturador/testes que o ledger disser que já foram criados; não tente rodar
 o capturador de arma de fogo esperando uma entry autorada de knife. Depois
