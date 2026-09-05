@@ -71,6 +71,9 @@ import path from 'node:path';
 import { initTextures } from './harness.mjs';
 import { GRAFITE } from '../../public/js/graffiti_layout.js';
 import { AMB_LOOPS, BIOME_SHOTS } from '../../public/js/soundscape.js';
+import { carregarMapIds } from '../audio/map-ids.mjs';
+
+const MAP_IDS = carregarMapIds();
 
 const PISO_AUDIO = 250;          // real 308 · exemplo 62 — ver o bloco de medição acima
 /* `--raiz=`, `--ledger=` e `--so=audio` existem para a régua PRV13 rodar ESTE
@@ -138,13 +141,22 @@ if (!existsSync(MANIFEST)) {
        o warn de `soundscape.js:59` como único sinal. */
     const doCodigo = new Set(Object.values(AMB_LOOPS));
     for (const pools of Object.values(BIOME_SHOTS)) for (const p of pools) for (const src of p.srcs) doCodigo.add(src);
-    const semAmbiente = SO === 'audio' ? []
+    const overrideValido = (cfg) => !!(cfg?.synth?.kind
+      || cfg?.loops?.some((loop) => typeof loop?.src === 'string')
+      || cfg?.shots?.some((shot) => shot?.srcs?.some((src) => typeof src === 'string')));
+    const overrides = m.mapSoundscapes || {};
+    const usaOverrides = Object.keys(overrides).length > 0;
+    const mapasSemOverride = usaOverrides ? MAP_IDS.filter((id) => !overrideValido(overrides[id])) : [];
+    const semAmbiente = SO === 'audio' || usaOverrides ? []
       : [...doCodigo].filter((f) => !folhas.includes(f) || !existsSync(path.join(PUBLICO, f)));
-    if (semAmbiente.length) {
+    if (mapasSemOverride.length) {
+      erros.push(`áudio ambiente: mapSoundscapes existe, mas ${mapasSemOverride.length} de ${MAP_IDS.length} mapas`
+        + ` não têm loop, one-shot ou synth válido (ex.: ${mapasSemOverride.slice(0, 3).join(', ')}).`
+        + ' Override parcial silencia apenas alguns mapas e não pode substituir o pack legado.');
+    } else if (semAmbiente.length) {
       erros.push(`áudio ambiente: ${semAmbiente.length} de ${doCodigo.size} caminhos que \`soundscape.js\` nomeia`
         + ` não estão no manifest OU não estão no disco (ex.: ${semAmbiente.slice(0, 3).join(', ')}).`
-        + ' O pacote instalado é anterior à regra `ambiente` do gerador — regere o pack'
-        + ' (`node scripts/build-audio-pack.mjs <out>`) e publique a release nova.');
+        + ' Sem mapSoundscapes completo, o fallback legado precisa chegar inteiro.');
     }
     /* PRV5 — a cláusula de BUILD do contrato de procedência (docs/audio/PROVENIENCIA.md).
        `.gitignore` protege o git e só ele: o pacote é montado à parte e servido em
@@ -190,14 +202,15 @@ if (!existsSync(MANIFEST)) {
       }
     }
     if (!erros.length) {
-      avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco (${doCodigo.size} de ambiente).`);
+      avisos.push(`áudio ok: ${folhas.length} caminhos, todos no disco (`
+        + (usaOverrides ? `${MAP_IDS.length} mapas com override` : `${doCodigo.size} de ambiente legado`) + ').');
     }
   }
 }
 
 /* -------------------------------- DECALQUES -------------------------------- */
 let T;
-if (SO === 'audio') T = null;
+if (SO === 'audio' || SO === 'runtime-audio') T = null;
 else try { T = initTextures(); } catch (e) {
   erros.push(`decalques: não deu pra importar o textures.js em node (${e.message}).`);
 }

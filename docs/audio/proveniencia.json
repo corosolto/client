@@ -22,6 +22,10 @@
   {
    "prefixo": "audio/legacy-callouts-dev/",
    "fonte": "legado-nominal-cs-valve-ut"
+  },
+  {
+   "prefixo": "audio/menu-music/",
+   "fonte": "menu-main-alpha218"
   }
  ],
  "piloto": [
@@ -124,7 +128,14 @@
    "redistribuicao": "proibida-standalone",
    "usoComIA": "nao",
    "stagingPrivado": "private-assets/audio/action-game-sounds-pack",
-   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA a entrada no audio-pack.zip, que e asset de release e e um pacote so de audio: ver a secao de bloqueio em docs/audio/PROVENIENCIA.md. A fonte Gunshot_1-1 foi aprovada apenas como candidato no jogo local; `derivados` segue vazio porque nenhum arquivo de release foi criado, escutado e aprovado."
+   "notas": "Comprado pelo dono e baixado em 04/09 com autorizacao; fica em staging privado fora do Git. `Allows usage with AI: No` na listagem — os WAVs nao podem ser entrada de modelo. `proibida-standalone` BLOQUEIA pacote publico de audio, mas a incorporacao ao build do jogo via Blob privado foi autorizada pelo dono em 05/09/2026.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": true,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "Blob privado e incorporacao ao build do jogo"
+   }
   },
   "free-firearm-sfx-cc0": {
    "titulo": "The Free Firearm Sound Library — Prepared SFX Library",
@@ -134,7 +145,14 @@
    "redistribuicao": "livre",
    "usoComIA": "sim",
    "stagingPrivado": "private-assets/audio/csbr-firearms-cc0",
-   "notas": "Biblioteca de armas reais publicada como CC0 pelos autores. O arquivo Prepared SFX Library.7z foi baixado em 05/09/2026 com sha256 cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6. A ferramenta tools/audio/prepare-free-firearm-cc0.mjs isola one-shots por silêncio, registra fonte, modelo, distância, correspondência e hashes em manifest privado. Os 29 WAVs são candidatos locais: nenhum recebeu aprovação humana ou autorização de release. A AK continua no take Fab já aprovado localmente."
+   "notas": "Biblioteca de armas reais publicada como CC0 pelos autores. O arquivo Prepared SFX Library.7z foi baixado em 05/09/2026 com sha256 cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6. A ferramenta tools/audio/prepare-free-firearm-cc0.mjs isola one-shots por silêncio e registra metadados no manifest privado.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": true,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "Blob privado e incorporacao ao build do jogo"
+   }
   },
   "boom-guns-designed": {
    "titulo": "BOOM Library GUNS Designed",
@@ -144,7 +162,14 @@
    "redistribuicao": "proibida-standalone",
    "usoComIA": "nao",
    "stagingPrivado": "private-assets/audio/boom-guns-designed",
-   "notas": "Produto comprado pelo dono; ZIP guns_ds_719mb.zip verificado com sha256 ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa. A EULA permite adaptar e incorporar o material em videogame com outros elementos de audio, mas exige comprovante de compra, proibe redistribuicao standalone/audio-only e proibe treino de IA/ML. Nenhum WAV foi enviado a modelo. A ferramenta tools/audio/prepare-boom-guns-designed.mjs separa deterministicamente quatro one-shots por gravacao em staging privado. Os resultados sao candidatos locais de escuta, sem aprovacao humana ou autorizacao de release."
+   "notas": "Produto comprado pelo dono; ZIP guns_ds_719mb.zip verificado com sha256 ad47c32d9b82c932c52169b30ab0e038c2d7a7228a3bf21c13fa821807ee76aa. A EULA permite adaptar e incorporar o material em videogame com outros elementos de audio, proibe redistribuicao standalone/audio-only e treino de IA/ML. A incorporacao ao build via Blob privado foi autorizada pelo dono em 05/09/2026.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": true,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "Blob privado e incorporacao ao build do jogo"
+   }
   },
   "fish-audio-mortal-kombat-public-model": {
    "titulo": "Fish Audio public voice model rotulado Mortal Kombat",
@@ -154,7 +179,14 @@
    "redistribuicao": "proibida",
    "usoComIA": "sim",
    "stagingPrivado": "private-assets/audio/fish-announcer-mk",
-   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao 16 candidatos locais para kill/headshot/tier e Round 1-7. A pagina do provedor rotula a voz como Mortal Kombat; disponibilidade publica nao demonstra direitos de voz, personagem ou marca. Bloqueado para Git, audio-pack e release ate voz original/licenciada ou liberacao verificavel."
+   "notas": "Geracao TTS feita em 05/09/2026 via API Fish S2.1 Pro usando somente texto, sem enviar WAVs Fab/BOOM. Sao 16 candidatos para kill/headshot/tier e Round 1-7. O dono autorizou armazenamento no Blob privado em 05/09/2026, mas a pagina do provedor rotula a voz como Mortal Kombat e os direitos de voz, personagem ou marca seguem nao verificados; por isso ela nao entra no build entregue ao jogador.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": false,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "somente armazenamento privado; fora do build ate verificacao dos direitos"
+   }
   },
   "legado-nominal-cs-valve-ut": {
    "titulo": "Sons legados de procedência nominalmente CS/Valve/Unreal Tournament",
@@ -164,7 +196,31 @@
    "redistribuicao": "proibida",
    "usoComIA": "nao",
    "stagingPrivado": null,
-   "notas": "Herdado, NAO substituido por esta branch. Sao os nomes que o manifest.example.json versionado carrega: `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`... O proprio public/js/audio.js:2 diz que sample real de CS nao pode ser embutido. NAO HA HASH: os arquivos nao estao neste clone, entao a cobertura por sha-256 da PRV5 NAO os alcanca. Estao catalogados e marcados `proibida` para que o empacotador os recuse assim que um hash existir, e para que ninguem diga que a lane resolveu o legado — ela nao resolveu."
+   "notas": "Herdado, NAO substituido por esta branch. Sao os nomes que o manifest.example.json versionado carrega: `awp-cs-1-6`, `usp_unsil`, `knife_slash`, `ut-double-kill`, `m4a1_unsil`... O proprio public/js/audio.js:2 diz que sample real de CS nao pode ser embutido. Continua excluido do Blob e do build.",
+   "deployPrivado": {
+    "armazenamento": false,
+    "build": false,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "excluido"
+   }
+  },
+  "menu-main-alpha218": {
+   "titulo": "Rotacao de menu curada da producao alpha218",
+   "autor": "CS BRASIL / CORO SOLTO; origem detalhada nao reconstituida nesta lane",
+   "url": "https://www.csbrasil.online/audio/menu-music/",
+   "licenca": "Acervo ja publicado pelo projeto; comprovacao detalhada pendente",
+   "redistribuicao": "proibida-standalone",
+   "usoComIA": "nao",
+   "stagingPrivado": "private-assets/audio/menu-main-alpha218",
+   "notas": "O dono ouviu a producao alpha218 e aprovou somente m03, m05, m10, m11, m14, m16, m17 e m22. O Blob preserva essa selecao sem republicar o acervo completo.",
+   "deployPrivado": {
+    "armazenamento": true,
+    "build": true,
+    "autorizadoPor": "Ruben",
+    "data": "2026-09-05",
+    "escopo": "oito faixas aprovadas incorporadas ao build do jogo"
+   }
   }
  },
  "derivados": [],
