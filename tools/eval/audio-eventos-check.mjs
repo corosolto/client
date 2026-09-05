@@ -20,6 +20,8 @@ const pack = {
     pickupByKind: { weapon: [url('pickup-weapon')], ammo: [url('pickup-ammo')] },
     weaponSwitchByClass: { pistol: [url('switch-pistol')], rifle: [url('switch-rifle')] },
     uiByAction: { click: [url('ui-click')], hover: [url('ui-hover')], back: [url('ui-back')] },
+    grenadepin: [url('grenade-pin')], grenadethrow: [url('grenade-throw')],
+    grenadebounce: [url('grenade-bounce')], explosion: [url('grenade-explosion')],
   },
 };
 
@@ -38,6 +40,7 @@ const novo = () => {
   sfx.ensure = () => {};
   sfx.duck = () => {};
   sfx._beep = () => tocados.push({ src: 'SYNTH-BEEP' });
+  sfx._burst = () => tocados.push({ src: 'SYNTH-BURST' });
   sfx.reloadEnd = () => tocados.push({ src: 'SYNTH-RELOAD' });
   return sfx;
 };
@@ -84,6 +87,19 @@ igual('EVT6 UI mover/confirmar/voltar distinta', [
   disparar((s) => s.uiHover()).tocados[0],
   disparar((s) => s.uiBack()).tocados[0],
 ], ['ui-click.wav', 'ui-hover.wav', 'ui-back.wav']);
+const granadas = [
+  disparar((s) => s.grenadePin('frag')),
+  disparar((s) => s.grenadeThrow('frag', 1, -.2, .06)),
+  disparar((s) => s.grenadeBounce('frag', 1, -.2, .06)),
+  disparar((s) => s.explosion(1, -.2, .06)),
+];
+igual('EVT6b ciclo da granada usa quatro samples', granadas.map((r) => r.tocados[0]), [
+  'grenade-pin.wav', 'grenade-throw.wav', 'grenade-bounce.wav', 'grenade-explosion.wav',
+]);
+igual('EVT6c ganhos mínimos audíveis da granada', granadas.map((r) => r.eventos[0]?.vol), [.52, .58, .38, .88]);
+if (granadas.some((r) => r.tocados.length !== 1 || r.resultado !== true)) {
+  erros.push('EVT6d um estágio da granada sobrepõe synth ao sample ou não confirma reprodução.');
+}
 
 const semPack = new Sfx();
 semPack.pack = null;
@@ -91,6 +107,7 @@ semPack.ensure = () => {};
 semPack.duck = () => {};
 let fallbacks = 0;
 semPack._beep = () => { fallbacks++; };
+semPack._burst = () => { fallbacks++; };
 semPack.reloadEnd = () => { fallbacks++; };
 for (const fn of [() => semPack.uiClick(), () => semPack.uiHover(), () => semPack.uiBack(), () => semPack.pickup('weapon')]) fn();
 if (fallbacks !== 4) erros.push(`EVT7 fallbacks audiveis: esperado 4, veio ${fallbacks}.`);
@@ -104,4 +121,4 @@ if (erros.length) {
   for (const erro of erros) console.error(`  x ${erro}`);
   process.exit(1);
 }
-console.log('AUDIO EVENTOS: verde - materiais, corpo/armadura, pickup/troca e UI usam pools distintos com fallback.');
+console.log('AUDIO EVENTOS: verde - feedback tátil e ciclo pin/throw/bounce/explosion usam pools e ganhos distintos.');

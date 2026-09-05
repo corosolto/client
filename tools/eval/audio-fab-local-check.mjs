@@ -15,6 +15,7 @@ const GAME_RUNTIME = readFileSync(join(RAIZ, 'public/js/game.js'), 'utf8');
 const NET_RUNTIME = readFileSync(join(RAIZ, 'public/js/netgame.js'), 'utf8');
 const CHARACTERS_RUNTIME = readFileSync(join(RAIZ, 'public/js/characters.js'), 'utf8');
 const SOUNDSCAPE_RUNTIME = readFileSync(join(RAIZ, 'public/js/soundscape.js'), 'utf8');
+const MANIFEST_GENERATOR = readFileSync(join(RAIZ, 'tools/gen-audio-manifest.mjs'), 'utf8');
 const MAP_IDS = [
   'praca_poderes', 'piscina_treta', 'loja_h', 'ferro_velho', 'quebrada', 'corrego',
   'posto_treta', 'upa_24h', 'obras_prefeitura', 'atacadao_treta', 'parque_treta',
@@ -33,11 +34,13 @@ const wavs = join(pack, 'extracted-wav');
 const firearmsCc0 = join(tmp, 'firearms-cc0');
 const boomGuns = join(tmp, 'boom-guns-designed');
 const fishAnnouncer = join(tmp, 'fish-announcer');
+const legacyCallouts = join(tmp, 'legacy-callouts');
 const publico = join(tmp, 'public', 'audio');
 mkdirSync(wavs, { recursive: true });
 mkdirSync(firearmsCc0, { recursive: true });
 mkdirSync(boomGuns, { recursive: true });
 mkdirSync(fishAnnouncer, { recursive: true });
+mkdirSync(legacyCallouts, { recursive: true });
 mkdirSync(publico, { recursive: true });
 const shotgunFixture = [
   'shotgun-01-mossberg-room.wav', 'shotgun-02-model12-room.wav', 'shotgun-03-nova-room.wav',
@@ -80,6 +83,19 @@ writeFileSync(join(fishAnnouncer, 'manifest.json'), JSON.stringify({
   approval: 'local-candidates-only', legalStatus: 'rights-review-required',
   general: fishGeneral, roundNumbers: fishRounds,
 }));
+const legacyGeneralKeys = [
+  'headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike',
+];
+const legacyGeneral = Object.fromEntries(legacyGeneralKeys.map((key) => [key, [`general/${key}.mp3`]]));
+for (const path of Object.values(legacyGeneral).flat()) {
+  const target = join(legacyCallouts, path); mkdirSync(resolve(target, '..'), { recursive: true });
+  writeFileSync(target, 'fixture-legado-sem-audio');
+}
+writeFileSync(join(legacyCallouts, 'manifest.json'), JSON.stringify({
+  provider: 'csbr-production-audio', sourceVersion: '2.0.0-alpha.218',
+  approval: 'local-candidates-only', legalStatus: 'rights-review-required',
+  general: legacyGeneral,
+}));
 
 const tactileFixture = [
   'Combat/Armor_Foley_1-2.wav', 'Combat/Armor_Foley_1-3.wav',
@@ -92,6 +108,9 @@ const tactileFixture = [
   'Misc/Glass_2-1.wav', 'Misc/Glass_2-2.wav',
   'Guns/Foley/Handle_Ammo_1-1.wav', 'Guns/Foley/Handle_Ammo_1-14.wav',
   'Guns/Foley/Insert_Ammo_1-7.wav', 'Guns/Foley/Insert_Ammo_1-17.wav',
+  'Guns/Foley/Safety_Off_1-1.wav', 'Guns/Foley/Hammer_Back_1-1.wav',
+  'Guns/Foley/Handle_Ammo_1-4.wav', 'Guns/Foley/Pumping_2-1.wav',
+  'Guns/Foley/Loading_Gate_1-1.wav',
   'Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_1-3.wav',
   'Combat/Draw_Weapon_Metal_2-1.wav', 'Combat/Draw_Weapon_Metal_2-3.wav', 'Combat/Draw_Weapon_Metal_2-6.wav',
   'Interface/Interface_2-01.wav', 'Interface/Interface_2-02.wav',
@@ -122,6 +141,7 @@ const eventos = [
   ['passo.agua', ['Environment/Water_Splash_1-1.wav']],
   ['morte.corpo', ['Combat/Body_Falling_1-1.wav']],
   ['granada.explosao', ['Explosions/Small_Explosion_Realistic_1-1.wav']],
+  ['granada.pino', ['Guns/Foley/Safety_Off_1-1.wav']],
   ['round.inicio', ['Interface/Interface_12-1.wav']],
   ['round.vitoria', ['Interface/Interface_5-1.wav']],
   ['round.derrota', ['Interface/Interface_6-1.wav']],
@@ -162,7 +182,7 @@ writeFileSync(join(pack, 'shortlist-piloto.json'), JSON.stringify({ eventos, bib
 
 const run = spawnSync(process.execPath, [
   SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`, `--boom-guns=${boomGuns}`,
-  `--fish-announcer=${fishAnnouncer}`,
+  `--fish-announcer=${fishAnnouncer}`, `--legacy-callouts=${legacyCallouts}`,
 ], {
   encoding: 'utf8', env: { ...process.env, FAB_GAME_LOCAL_MUTANTE: mutante },
 });
@@ -203,8 +223,11 @@ if (manifest) {
   if (manifest.defaultWeaponPack !== 'boom') {
     erros.push('LAB5dd BOOM Designed não virou o padrão do laboratório local.');
   }
-  if (fishGeneralKeys.some((key) => manifest.general?.[key]?.[0] !== `audio/fish-announcer-dev/general/${key}.wav`)) {
-    erros.push('LAB5dg locucoes Fish de kill/tier nao entraram no manifest local.');
+  if (legacyGeneralKeys.some((key) => manifest.general?.[key]?.[0] !== `audio/legacy-callouts-dev/general/${key}.mp3`)) {
+    erros.push('LAB5dg callouts antigos de combate não entraram no manifest local.');
+  }
+  if (manifest.general?.kill || manifest.general?.ultrakill) {
+    erros.push('LAB5dga callouts Fish rejeitados de kill/ultra continuam ativos.');
   }
   if (Object.keys(fishRounds).some((key) => manifest.roundNumbers?.[key]?.[0]
     !== `audio/fish-announcer-dev/rounds/round-${key.padStart(2, '0')}.wav`)) {
@@ -230,7 +253,7 @@ if (manifest) {
   for (const key of ['death', 'explosion', 'roundstart', 'roundwin', 'roundlose', 'knife', 'knifehit', 'knifedeploy', 'dryfire']) {
     if (!manifest.cs?.[key]?.length) erros.push(`LAB8 evento ${key} continua sem sample no runtime.`);
   }
-  for (const key of ['grenadethrow', 'grenadebounce']) {
+  for (const key of ['grenadepin', 'grenadethrow', 'grenadebounce']) {
     if (!manifest.cs?.[key]?.length) erros.push(`LAB8c evento ${key} continua sem sample no runtime.`);
   }
   for (const surface of ['concrete', 'metal', 'wood', 'glass', 'dirt', 'water']) {
@@ -244,6 +267,12 @@ if (manifest) {
   }
   for (const key of ['pistol', 'smg', 'rifle', 'shotgun', 'awp']) {
     if (!manifest.cs?.weaponSwitchByClass?.[key]?.length) erros.push(`LAB8l troca de ${key} continua sem pool proprio.`);
+    if (manifest.cs?.weaponSwitchByClass?.[key]?.some((url) => !url.includes('/Guns/Foley/'))) {
+      erros.push(`LAB8la troca de ${key} ainda usa um efeito que não é mecanismo da arma.`);
+    }
+  }
+  if (JSON.stringify(manifest.cs?.weaponSwitchByClass || {}).includes('Combat/Draw_Weapon_Metal')) {
+    erros.push('LAB8lb troca de arma de fogo ainda soa como saque de faca.');
   }
   for (const key of ['click', 'hover', 'back']) {
     if (!manifest.cs?.uiByAction?.[key]?.length) erros.push(`LAB8m UI ${key} continua sem pool proprio.`);
@@ -357,6 +386,11 @@ if (GAME_RUNTIME.includes('this._switchWeapon(w); this.sfx.reloadEnd();')) {
 if (!MAIN_RUNTIME.includes('sfx.uiHover()') || !MAIN_RUNTIME.includes('sfx.uiBack()')) {
   erros.push('LAB11g menu ainda compoe hover/back por fora da API publica de audio.');
 }
+for (const key of ['weaponPacks', 'roundNumbers', 'characterPhysical', 'mapSoundscapes']) {
+  if (!MANIFEST_GENERATOR.match(new RegExp(`['"]${key}['"]`))) {
+    erros.push(`LAB11h gerador de manifest apaga o contrato curado ${key}.`);
+  }
+}
 if (!/this\._eventSample\(sample,\s*0\.72\s*\*\s*vol,\s*pan,\s*propDelay,\s*true/.test(AUDIO_RUNTIME)) {
   erros.push('LAB11b morte corporal ainda passa pelo duck do tiro.');
 }
@@ -395,6 +429,11 @@ try {
     erros.push('LAB10d symlink Fish nao aponta para a raiz privada exata das locucoes.');
   }
 } catch (e) { erros.push(`LAB10d symlink Fish local ausente/invalido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'legacy-callouts-dev'))) !== resolve(legacyCallouts)) {
+    erros.push('LAB10e symlink de callouts antigos não aponta para o staging privado exato.');
+  }
+} catch (e) { erros.push(`LAB10e symlink de callouts antigos ausente/inválido: ${e.message}`); }
 
 rmSync(tmp, { recursive: true, force: true });
 if (erros.length) {
@@ -402,4 +441,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, vozes fisicas e locucoes Fish audiveis; veto ativo e nenhum caminho privado serializado.');
+console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, callouts antigos e rounds Fish; staging privado e veto preservados.');

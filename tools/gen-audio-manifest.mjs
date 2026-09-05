@@ -35,6 +35,7 @@ import { carregarPolitica, motivoDeRecusa } from './audio/politica.mjs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { MENU_MUSIC_ACTIVE_IDS } from '../public/js/menu-music-selection.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /* `--raiz=<dir>` troca a pasta de áudio inteira. Existe para a régua de alcance
@@ -50,9 +51,13 @@ const CHECK = process.argv.includes('--check');
 const FACTIONS = { 'time-e': 'E', 'time-b': 'B', tribos: 'U', palhacos: 'C', funkeiros: 'F' };
 const AUDIO_EXT = /\.(mp3|wav|ogg|m4a|webm)$/i;
 
-// Preservados do manifest atual: cada entrada aqui é uma escolha (qual tiro é da AWP),
-// não um pool. Regenerar do disco trocaria som de arma por ordem alfabética.
-const CURATED = ['cs', 'weapons', 'general', 'weaponSamples'];
+// Contratos curados não podem ser reconstruídos pela ordem dos arquivos no disco. Isso inclui
+// os packs locais e seus metadados: `audio:check` precisa medir o mesmo jogo instalado.
+const CURATED = [
+  '_localLab', 'cs', 'weapons', 'weaponSamples', 'weaponSamplesAuthentic',
+  'defaultWeaponPack', 'weaponCandidates', 'weaponPacks', 'general', 'roundNumbers',
+  'characterPhysical', 'mapSoundscapes',
+];
 
 function listAudio(dir) {
   if (!existsSync(dir)) return [];
@@ -154,7 +159,9 @@ out.soundtrack = take(listAudio(join(AUDIO, 'soundtrack')));
 // outras listas: main.js trazia `Array.from({ length: 26 })` e a faixa nova na pasta sumia
 // calada (issue #47). Agora a pasta manda — main.js lê `menuMusic` daqui com fallback pra
 // lista antiga, e o `--check` cobra a 27ª faixa no dia em que ela entrar.
-out.menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
+const menuMusic = take(listAudio(join(AUDIO, 'menu-music')));
+const activeMenuPaths = new Set(MENU_MUSIC_ACTIVE_IDS.map((id) => `audio/menu-music/${id}.mp3`));
+out.menuMusic = RAIZ ? menuMusic : menuMusic.filter((url) => activeMenuPaths.has(url));
 
 // ── áudio ambiente por mapa ─────────────────────────────────────────────────
 // `public/js/soundscape.js` nomeia esses arquivos, e ANTES DISTO nenhum deles era

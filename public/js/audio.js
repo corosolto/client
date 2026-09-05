@@ -1,12 +1,12 @@
 // Procedural WebAudio SFX + user sample packs (audio/manifest.json).
 // Real CS 1.6 samples are NOT bundled (Valve copyright) — drop your own legally-owned
 // files in audio/cs/ and register them under "cs" in audio/manifest.json.
-/* Fator global do tiro — ver shotWeapon(). 0,62 = -4,2 dB, escolhido pra deixar a arma
+/* Fator global do tiro — ver shotWeapon(). 0,52 = -5,7 dB, escolhido pra deixar a arma
    audivelmente à frente da voz e do passo sem cobri-los (era 1,0: o tiro dominava tudo, e
    o duck de 0,3 em cima ainda derrubava a voz de propósito). Tunável ao vivo: ?gunvol=N */
 const GUN_VOL = (() => {
   const q = +new URLSearchParams(location.search).get('gunvol');
-  return Number.isFinite(q) && q > 0 ? q : 0.62;
+  return Number.isFinite(q) && q > 0 ? q : 0.52;
 })();
 /* Samples de tiro do Fab têm caudas de até 3,5 s, enquanto uma automática chega a
    disparar a cada 65–120 ms. Sem estes tetos, uma única arma acumula dezenas de
@@ -715,7 +715,7 @@ export class Sfx {
   weaponSwitch(weapon, cls = 'rifle') {
     const exact = this.pack?.cs?.weaponSwitchByWeapon?.[weapon];
     const sample = this._pick(exact?.length ? exact : this.pack?.cs?.weaponSwitchByClass?.[cls]);
-    return !!(sample && this._eventSample(sample, .32, 0, 0, true));
+    return !!(sample && this._eventSample(sample, .26, 0, 0, true));
   }
   _uiAction(action, vol) {
     const sample = this._pick(this.pack?.cs?.uiByAction?.[action]);
@@ -809,36 +809,41 @@ export class Sfx {
   respawn()   { this.ensure(); this._beep('sine', 440, 880, .18, .18); }
   ricochet()  { this.ensure(); this._beep('sine', 2400, 700, .12, .08); }
   grenadePin(kind = 'frag') {
+    const sample = this._cs('grenadepin');
+    if (sample && this._eventSample(sample, .52, 0, 0, true, kind === 'smoke' ? .94 : 1.04)) return true;
     this.ensure(); if (!this.ctx) return;
     const base = kind === 'smoke' ? 1180 : 1440;
     this._beep('square', base, base * .72, .035, .1, 0, true);
     this._beep('square', base * .62, base * .48, .045, .08, .055, true);
+    return false;
   }
   grenadeThrow(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
     const sample = this._cs('grenadethrow');
     const rate = kind === 'smoke' ? .92 : 1.04;
-    if (sample && this._eventSample(sample, .34 * vol, pan, propDelay, false, rate)) return;
-    this.ensure(); this._burst(.12, .13 * vol, kind === 'smoke' ? 950 : 1250, 2.2, 'bandpass', propDelay);
+    if (sample && this._eventSample(sample, .58 * vol, pan, propDelay, false, rate)) return true;
+    this.ensure(); this._burst(.12, .22 * vol, kind === 'smoke' ? 950 : 1250, 2.2, 'bandpass', propDelay);
+    return false;
   }
   grenadeBounce(kind = 'frag', vol = 1, pan = 0, propDelay = 0) {
-    if (vol < .06) return;
+    if (vol < .06) return false;
     const sample = this._cs('grenadebounce');
     const rate = kind === 'smoke' ? 1.12 : .96;
-    if (sample && this._eventSample(sample, .24 * vol, pan, propDelay, false, rate)) return;
-    this.ensure(); this._burst(.055, .11 * vol, kind === 'smoke' ? 1500 : 950, 1.8, 'bandpass', propDelay);
+    if (sample && this._eventSample(sample, .38 * vol, pan, propDelay, false, rate)) return true;
+    this.ensure(); this._burst(.055, .17 * vol, kind === 'smoke' ? 1500 : 950, 1.8, 'bandpass', propDelay);
+    return false;
   }
   smokePop(vol = 1, pan = 0, propDelay = 0) {
     this.ensure(); if (!this.ctx) return;
     let out = this.ctx.createGain();
     if (pan) { const panner = this.ctx.createStereoPanner(); panner.pan.value = pan; out.connect(panner); panner.connect(this.master); }
     else out.connect(this.master);
-    this._burst(.42, .24 * vol, 720, 1.1, 'lowpass', propDelay, out);
-    this._burst(.18, .11 * vol, 2400, 1.8, 'bandpass', propDelay + .035, out);
+    this._burst(.42, .36 * vol, 720, 1.1, 'lowpass', propDelay, out);
+    this._burst(.18, .16 * vol, 2400, 1.8, 'bandpass', propDelay + .035, out);
   }
   explosion(vol = 1, pan = 0, propDelay = 0) { // frag: crack agudo + corpo grave + rumble
     const sample = this._cs('explosion');
     this.duck(0.22, 0.3);
-    if (sample && this._eventSample(sample, 0.78 * vol, pan, propDelay, true)) return;
+    if (sample && this._eventSample(sample, 0.88 * vol, pan, propDelay, true)) return true;
     this.ensure(); if (!this.ctx) return;
                                                // explosão ducka tudo (vozes/rádio/música)
     // bus próprio (direct no master — explosão é ducker, não vítima) + send de reverb opt-in
@@ -851,6 +856,7 @@ export class Sfx {
     this._burst(.6, .8, 300, 1, 'lowpass', propDelay, bus);
     this._beep('sine', 90, 30, .55, .6, propDelay, bus);
     this._beep('sawtooth', 160, 45, .35, .3, .02 + propDelay, bus);
+    return false;
     }
 
   vuvuzela(dur = 1.2) { // round start — Brazilian stadium energy

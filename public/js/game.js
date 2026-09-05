@@ -297,7 +297,7 @@ const RADIO = {
   x: { title: 'RESPOSTAS', items: ['Recebido!', 'Negativo!', 'Bonito tiro!'] },
   c: { title: 'ZOAÇÃO', items: ['Chora na live!', 'É fake news!', 'Vem pra treta!'] },
 };
-const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'ultrakill', 6: 'megakill' };
+const MK_TIERS = { 2: 'doublekill', 3: 'triplekill', 4: 'multikill', 5: 'megakill' };
 const MK_LABELS = { doublekill: 'DOUBLE KILL', triplekill: 'TRIPLE KILL', multikill: 'MULTI KILL', ultrakill: 'ULTRA KILL', megakill: 'MEGA KILL', killingspree: 'KILLING SPREE', godlike: 'GODLIKE' };
 /* ===================== GUNFEEL (recuo / spread / feedback) =====================
    Kill-switch: ?gunfeel=0 volta ao modelo antigo (impulso escalar de w.recoil, spread em
@@ -2190,7 +2190,7 @@ export class Game {
     if (ANNOUNCER_LAB) this._startAnnouncerLab(ANNOUNCER_LAB);
   }
   _startAnnouncerLab(mode) {
-    const kills = ['kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill', 'megakill', 'killingspree', 'godlike']
+    const kills = ['headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike']
       .map((key) => () => this.sfx.general(key));
     const rounds = Array.from({ length: 7 }, (_, i) => () => this.sfx.roundNumber(i + 1));
     const sequence = mode === 'kills' ? kills : (mode === 'rounds' ? rounds : [...kills, ...rounds]);
@@ -3366,7 +3366,7 @@ export class Game {
         if (this.time < mk.until) mk.count++; else mk.count = 1;
         mk.until = this.time + 4.5; mk.life++;
         mk.best = Math.max(mk.best || 0, mk.count);
-        const kind = mk.count >= 7 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
+        const kind = mk.count >= 6 ? 'godlike' : (MK_TIERS[mk.count] || (mk.life === 5 ? 'killingspree' : null));
         if (kind) this._mkBanner(MK_LABELS[kind]);
         // Um unico callout por abate: tier > headshot > kill. Sem locucao no
         // pack, preserva a comemoracao antiga da faccao como fallback.

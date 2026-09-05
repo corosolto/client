@@ -12,7 +12,7 @@ const RAIZ_REPO = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const arg = (nome, padrao = '') => (process.argv.find((a) => a.startsWith(`--${nome}=`)) || '').split('=').slice(1).join('=') || padrao;
 const dir = process.argv.slice(2).find((a) => !a.startsWith('--'));
 if (!dir) {
-  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir] [--fish-announcer=dir]');
+  console.error('uso: node tools/audio/fab-game-local.mjs <dir-do-pack> [--publico=public/audio] [--firearms-cc0=dir] [--boom-guns=dir] [--fish-announcer=dir] [--legacy-callouts=dir]');
   process.exit(2);
 }
 
@@ -30,6 +30,9 @@ const BOOM_GUNS_LINK = join(PUBLICO, 'boom-guns-dev');
 const FISH_ANNOUNCER_ARG = arg('fish-announcer');
 const FISH_ANNOUNCER = FISH_ANNOUNCER_ARG ? resolve(FISH_ANNOUNCER_ARG) : null;
 const FISH_ANNOUNCER_LINK = join(PUBLICO, 'fish-announcer-dev');
+const LEGACY_CALLOUTS_ARG = arg('legacy-callouts');
+const LEGACY_CALLOUTS = LEGACY_CALLOUTS_ARG ? resolve(LEGACY_CALLOUTS_ARG) : null;
+const LEGACY_CALLOUTS_LINK = join(PUBLICO, 'legacy-callouts-dev');
 const MANIFEST = join(PUBLICO, 'manifest.json');
 const MUTANTE_SEM_VETO = process.env.FAB_GAME_LOCAL_MUTANTE === 'sem-veto';
 const VETO = ['blood', 'gore', 'bone', 'scream', 'screaming'];
@@ -106,6 +109,47 @@ if (FISH_ANNOUNCER) {
   ];
   if (missing.length) { console.error(`recusado: Fish announcer incompleto: ${missing.join(', ')}`); process.exit(2); }
 }
+
+const LEGACY_GENERAL_KEYS = [
+  'headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike',
+];
+let legacyCallouts = null;
+if (LEGACY_CALLOUTS) {
+  const sourceManifest = join(LEGACY_CALLOUTS, 'manifest.json');
+  let source;
+  try { source = JSON.parse(readFileSync(sourceManifest, 'utf8')); }
+  catch (error) { console.error(`manifest de callouts legados invalido: ${sourceManifest} (${error.message})`); process.exit(2); }
+  if (source.provider !== 'csbr-production-audio' || !source.sourceVersion
+    || source.approval !== 'local-candidates-only' || source.legalStatus !== 'rights-review-required') {
+    console.error('recusado: callouts legados precisam declarar origem, versao, escuta local e revisao de direitos.');
+    process.exit(2);
+  }
+  const pool = (key) => {
+    const paths = source?.general?.[key];
+    if (!Array.isArray(paths) || !paths.length) return [];
+    return paths.map((path) => {
+      if (typeof path !== 'string' || !/\.(mp3|wav)$/i.test(path) || path.startsWith('/') || path.split(/[\\/]/).includes('..')) {
+        console.error(`recusado: caminho de callout legado invalido: ${path}`); process.exit(2);
+      }
+      const absolute = resolve(LEGACY_CALLOUTS, path);
+      const rel = relative(LEGACY_CALLOUTS, absolute);
+      if (!rel || rel.startsWith('..') || !existsSync(absolute)) {
+        console.error(`recusado: callout legado ausente/fora do staging: ${path}`); process.exit(2);
+      }
+      return `audio/legacy-callouts-dev/${path.split(sep).join('/')}`;
+    });
+  };
+  legacyCallouts = {
+    general: Object.fromEntries(LEGACY_GENERAL_KEYS.map((key) => [key, pool(key)])),
+  };
+  const missing = LEGACY_GENERAL_KEYS.filter((key) => !legacyCallouts.general[key].length);
+  if (missing.length) { console.error(`recusado: callouts legados incompletos: ${missing.join(', ')}`); process.exit(2); }
+}
+
+// O dono preferiu os callouts antigos, mas aprovou os rounds Fish. As duas familias ficam
+// selecionaveis de forma independente para nao obrigar um pacote inteiro por causa de 7 falas.
+const selectedGeneral = legacyCallouts?.general || fishAnnouncer?.general || null;
+const selectedRoundNumbers = fishAnnouncer?.roundNumbers || null;
 
 let lista;
 try { lista = JSON.parse(readFileSync(SHORTLIST, 'utf8')); }
@@ -277,6 +321,7 @@ for (const [surface, event] of Object.entries({ concrete: 'passo.concreto', meta
 }
 const death = filtrar((f) => /^Combat\/Body_Falling_/.test(f));
 const explosion = filtrar((f) => /^Explosions\/Small_Explosion_Realistic_/.test(f));
+const grenadePin = seguros(['Guns/Foley/Safety_Off_1-1.wav']);
 const grenadeThrow = seguros(['Combat/Whoosh_1-1.wav', 'Combat/Whoosh_2-1.wav']);
 const grenadeBounce = seguros([
   'Environment/Rock_Impact_21.wav', 'Environment/Rock_Impact_34.wav',
@@ -366,11 +411,11 @@ const pickupByKind = {
   ammo: seguros(['Guns/Foley/Insert_Ammo_1-7.wav', 'Guns/Foley/Insert_Ammo_1-17.wav']),
 };
 const weaponSwitchByClass = {
-  pistol: seguros(['Combat/Draw_Weapon_Metal_1-2.wav', 'Combat/Draw_Weapon_Metal_1-3.wav']),
-  smg: seguros(['Combat/Draw_Weapon_Metal_2-6.wav', 'Combat/Draw_Weapon_Metal_1-3.wav']),
-  rifle: seguros(['Combat/Draw_Weapon_Metal_2-1.wav', 'Combat/Draw_Weapon_Metal_2-3.wav']),
-  shotgun: seguros(['Combat/Draw_Weapon_Metal_1-1.wav', 'Combat/Draw_Weapon_Metal_2-1.wav']),
-  awp: seguros(['Combat/Draw_Weapon_Metal_2-3.wav', 'Combat/Draw_Weapon_Metal_1-1.wav']),
+  pistol: seguros(['Guns/Foley/Hammer_Back_1-1.wav']),
+  smg: seguros(['Guns/Foley/Safety_Off_1-1.wav']),
+  rifle: seguros(['Guns/Foley/Handle_Ammo_1-4.wav']),
+  shotgun: seguros(['Guns/Foley/Pumping_2-1.wav']),
+  awp: seguros(['Guns/Foley/Loading_Gate_1-1.wav']),
 };
 const uiByAction = {
   click: seguros(['Interface/Interface_2-01.wav', 'Interface/Interface_2-02.wav']),
@@ -384,6 +429,7 @@ const runtime = {
   roundlose: fallback(roundlose, 'round.derrota'), knife: fallback(knife, 'faca.swing'),
   knifehit: fallback(knifehit, 'faca.hit'), knifedeploy: fallback(knifedeploy, 'faca.deploy'),
   dryfire: fallback(dryfire, 'arma.dryfire'),
+  grenadepin: fallback(grenadePin, 'granada.pino'),
   grenadethrow: fallback(grenadeThrow, 'granada.arremesso'),
   grenadebounce: fallback(grenadeBounce, 'granada.quique'),
 };
@@ -401,10 +447,8 @@ const obrigatorios = [
   ...Object.entries(pickupByKind).map(([kind, pool]) => [`pickup.${kind}`, pool]),
   ...Object.entries(weaponSwitchByClass).map(([cls, pool]) => [`troca.${cls}`, pool]),
   ...Object.entries(uiByAction).map(([action, pool]) => [`ui.${action}`, pool]),
-  ...(fishAnnouncer ? [
-    ...Object.entries(fishAnnouncer.general).map(([key, pool]) => [`locucao.${key}`, pool]),
-    ...Object.entries(fishAnnouncer.roundNumbers).map(([key, pool]) => [`locucao.round.${key}`, pool]),
-  ] : []),
+  ...(selectedGeneral ? Object.entries(selectedGeneral).map(([key, pool]) => [`locucao.${key}`, pool]) : []),
+  ...(selectedRoundNumbers ? Object.entries(selectedRoundNumbers).map(([key, pool]) => [`locucao.round.${key}`, pool]) : []),
   ...Object.entries(physicalProfiles).flatMap(([profile, cfg]) => [
     [`personagem.${profile}.hurt`, cfg.hurt], [`personagem.${profile}.death`, cfg.death],
   ]),
@@ -425,7 +469,8 @@ const manifest = {
     mapasComAmbiencia: Object.keys(mapSoundscapes).length,
     perfisFisicos: Object.keys(physicalProfiles).length,
     ...(boomWeaponPack ? { armasBoomDesigned: Object.keys(boomWeaponPack.weapons).length } : {}),
-    ...(fishAnnouncer ? { locucoesFish: FISH_GENERAL_KEYS.length + 7 } : {}),
+    ...(fishAnnouncer ? { locucoesFishRounds: 7 } : {}),
+    ...(legacyCallouts ? { locucoesLegadas: LEGACY_GENERAL_KEYS.length } : {}),
     somenteEscuta: 3,
     limitacoes: [
       'a identidade das 24 armas além da AK é candidata e exige escuta humana',
@@ -440,7 +485,8 @@ const manifest = {
   weapons,
   ...(Object.keys(weaponCandidates).length ? { weaponCandidates } : {}),
   ...(boomWeaponPack ? { weaponPacks: { boom: boomWeaponPack } } : {}),
-  ...(fishAnnouncer ? { general: fishAnnouncer.general, roundNumbers: fishAnnouncer.roundNumbers } : {}),
+  ...(selectedGeneral ? { general: selectedGeneral } : {}),
+  ...(selectedRoundNumbers ? { roundNumbers: selectedRoundNumbers } : {}),
   cs: {
     reload: magOut, reloadend: magIn, bolt,
     footsteps: footstepsBySurface.concrete,
@@ -476,6 +522,7 @@ garantirSymlink(LINK, WAVS);
 if (FIREARMS_CC0) garantirSymlink(FIREARMS_LINK, FIREARMS_CC0);
 if (BOOM_GUNS) garantirSymlink(BOOM_GUNS_LINK, BOOM_GUNS);
 if (FISH_ANNOUNCER) garantirSymlink(FISH_ANNOUNCER_LINK, FISH_ANNOUNCER);
+if (LEGACY_CALLOUTS) garantirSymlink(LEGACY_CALLOUTS_LINK, LEGACY_CALLOUTS);
 
 if (existsSync(MANIFEST)) {
   try {
@@ -500,5 +547,6 @@ console.log('AK preservada: Gunshot_1-1. Demais armas/eventos são candidatos pa
 if (firearmsCc0) console.log('Arsenal: 24 armas usam gravações CC0 semanticamente mapeadas; AK preserva o Fab aprovado.');
 if (weaponCandidates.shotgun?.length) console.log('Shotgun: 6 takes reais disponíveis via ?shotguntake=1..6; padrão = Mossberg Model 190.');
 if (boomWeaponPack) console.log(`BOOM GUNS Designed: ${Object.keys(boomWeaponPack.weapons).length} armas a ganho 0,70; ${boomWeaponPack.fallbackWeapons.join(', ')} usam o pack anterior pré-carregado. A/B: ?gunpack=boom&gunstyle=huge|natural|crispy|light&guntake=1..N.`);
-if (fishAnnouncer) console.log('Fish announcer: kill/headshot, 7 tiers e rounds 1..7 ativos somente para escuta local.');
+if (fishAnnouncer) console.log('Fish announcer: rounds 1..7 ativos somente para escuta local.');
+if (legacyCallouts) console.log('Callouts legados: headshot e tiers antigos restaurados somente para escuta local; kill simples volta para a voz da faccao.');
 console.log('Abra uma partida nova; os WAVs das armas sorteadas são pré-carregados antes do primeiro disparo.');

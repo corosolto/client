@@ -8,8 +8,8 @@
 // O que entra:
 //   · todo arquivo referenciado pelo public/audio/manifest.json, copiado para
 //     audio/a/<sha1-16>.<ext>, com o manifesto REESCRITO para os nomes novos;
-//   · menu-music/m01..mNN.mp3 como estão (o main.js referencia m01..m26 por padrão fixo
-//     e os nomes já são opacos). TRACKS.txt (o mapa nome-real -> mNN) NÃO entra.
+//   · somente os menu-music/mNN.mp3 ainda referenciados pelo manifest; os nomes já são
+//     opacos. TRACKS.txt (o mapa nome-real -> mNN) NÃO entra.
 // O que NÃO entra: soundtrack/ (fontes com nome comercial), TRACKS.txt, qualquer arquivo
 // não referenciado.
 //
@@ -81,7 +81,7 @@ const reescreve = (o) => {
 const novoManifesto = reescreve(manifesto);
 writeFileSync(path.join(PACK, 'manifest.json'), JSON.stringify(novoManifesto, null, 1));
 
-// menu-music: nomes já opacos (m01..mNN); o mapa de nomes reais fica de fora.
+// menu-music: nomes já opacos; só a curadoria nominal do manifest entra no fallback.
 const MM = path.join(AUDIO, 'menu-music');
 /* Ausente, isto morria com um ENOENT cru DEPOIS de escrever o pack/manifest.json —
    deixando rastro de sucesso e código de saída 1. Régua: eval:audioalcance, ALC3. */
@@ -91,8 +91,9 @@ if (!existsSync(MM)) {
 }
 mkdirSync(path.join(PACK, 'menu-music'), { recursive: true });
 let menu = 0;
+const menuFiles = new Set((manifesto.menuMusic || []).map((url) => path.basename(url)));
 for (const f of readdirSync(MM)) {
-  if (!/^m\d+\.mp3$/.test(f)) continue;   // exclui TRACKS.txt e qualquer nome legível
+  if (!menuFiles.has(f) || !/^m\d+\.mp3$/.test(f)) continue;
   cpSync(path.join(MM, f), path.join(PACK, 'menu-music', f));
   menu++;
 }
