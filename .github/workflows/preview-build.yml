@@ -44,11 +44,14 @@ jobs:
       - run: npm ci
 
       # Os pacotes de asset vêm de release público — sem segredo, e com retry para
-      # soluço de rede não virar PR vermelho (é a DG2).
+      # soluço de rede não virar PR vermelho (é a DG2). O pack público não carrega
+      # a ambiência licenciada do Blob; o preview de fork recebe um hum sintetizado
+      # nos 13 mapas, sem expor credencial nem redistribuir os WAVs privados.
       - name: Assets
         run: |
           bash scripts/fetch-audio.sh
           bash scripts/fetch-decals.sh
+          node tools/audio/prepare-public-preview.mjs
           npm run strip:decalbg
           npm run assert:assets
 

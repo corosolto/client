@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,16 +22,23 @@ const asset = 'audio/a/ambient.wav';
 try {
   mkdirSync(join(publico, 'audio', 'a'), { recursive: true });
   writeFileSync(join(publico, asset), 'fixture ambiente privado\n');
-  const mapSoundscapes = Object.fromEntries(MAP_IDS.map((id) => [id, {
-    loops: [{ src: asset, global: true, pos: [0, 0, 0], radius: 100, vol: 0.1 }],
-  }]));
-  if (mutante === 'mapa-sem-override') delete mapSoundscapes[MAP_IDS[0]];
   const manifest = {
-    mapSoundscapes,
     fixtureCapacity: Array.from({ length: 250 }, () => asset),
   };
   mkdirSync(audio, { recursive: true });
   writeFileSync(join(audio, 'manifest.json'), JSON.stringify(manifest));
+  const prepare = spawnSync(process.execPath, [
+    join(raiz, 'tools', 'audio', 'prepare-public-preview.mjs'), `--raiz=${publico}`,
+  ], { encoding: 'utf8' });
+  if (prepare.status !== 0) {
+    console.error(prepare.stderr.trim() || prepare.stdout.trim());
+    process.exit(1);
+  }
+  if (mutante === 'mapa-sem-override') {
+    const preparado = JSON.parse(readFileSync(join(audio, 'manifest.json'), 'utf8'));
+    delete preparado.mapSoundscapes[MAP_IDS[0]];
+    writeFileSync(join(audio, 'manifest.json'), JSON.stringify(preparado));
+  }
   const ledger = join(tmp, 'ledger.json');
   writeFileSync(ledger, JSON.stringify({
     prefixoDerivado: 'audio/piloto/', raizesRuntime: [], fontes: {}, derivados: [], piloto: [],
