@@ -5815,11 +5815,8 @@ export class Game {
     this.scene.add(halo);
     bot._mark = { halo, ally };   // SEM chevron/seta na cabeça (pedido do dono) — só o halo no chão
   }
-  /* A arma de 3ª pessoa é parte da malha criada por buildCharacterModel; trocar apenas
-     `bot.weapon` muda som e regra, mas deixa o modelo antigo na mão. No multiplayer o
-     snapshot pode trocar a arma a qualquer momento (pickup/respawn), então remonta o corpo
-     preservando transform, visibilidade e o vínculo usado pelo raycast. Se o GLB da arma
-     não estiver carregado, buildCharacterModel já cai na arma procedural visível. */
+  /* A arma de 3ª pessoa pertence à malha do personagem; remonte-a quando o snapshot trocar
+     a arma, preservando transform/visibilidade/raycast e o fallback procedural visível. */
   _syncRemoteWeapon(bot, weapon) {
     if (!bot || !bot.def || !WEAPONS[weapon]) return false;
     bot.weapon = weapon;
