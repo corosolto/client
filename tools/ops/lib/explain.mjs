@@ -35,6 +35,8 @@ const n = (x) => (x == null ? '—' : x);
 export function explicar(res = {}) {
   const A = [];
   const ctx = res.contexto || {};
+  // package.json ilegível desliga em silêncio versaoLocal, mesmaVersao e o motivo do veredito: tem de custar como erro
+  if (ctx.erroPackage) ach(A, { id: 'arvore-ilegivel', sonda: 'boot-local', severidade: 'alto', titulo: 'package.json da árvore não pôde ser lido', causa: 'raiz errada (--raiz), checkout incompleto ou JSON inválido', evidencia: String(ctx.erroPackage).slice(0, 200), impacto: 'sem versão local: comparação com a produção, tamanho de assets e o veredito de candidato ficam desligados', proximo: 'conferir a raiz passada e `node -e "require(\'./package.json\')"`' });
   explicaBootRemoto(A, res.boot, ctx);
   explicaApi(A, res.api, ctx);
   explicaRanking(A, res.ranking, ctx);
@@ -164,10 +166,17 @@ function explicaApi(A, api, ctx) {
     if (c.fresh === false && !(Array.isArray(c.never) && c.never.length)) {
       const ativos = api.rotas?.find((r) => r.rota === 'online')?.chamadas?.find((x) => x.corpo)?.corpo || '';
       const online = /"online":(\d+)/.exec(ativos)?.[1];
-      ach(A, {
-        id: 'pipelines-parados', sonda: 'api', severidade: 'aviso', titulo: `sem linha recente em: ${(c.stale || []).join(', ')}`,
+      const stale = c.stale || [];
+      // `city` nasce da presença: presence fresca (janela de 30 min no health) e city parada há >24 h
+      // (janela de 24 h) não é "ninguém jogou" — é o escritor de city_daily que parou (visto em 06/09/2026)
+      const derivados = { city: 'presence' };
+      const parados = stale.filter((p) => derivados[p] && !stale.includes(derivados[p]) && !(c.never || []).includes(derivados[p]));
+      for (const p of parados) ach(A, { id: `ingestao-parada:${p}`, sonda: 'api', severidade: 'medio', titulo: `pipeline ${p} parado enquanto ${derivados[p]} continua gravando`, causa: `quem escreve ${p} (a partir de ${derivados[p]}) parou: rota/cron do backend ou migration que a tabela espera`, evidencia: `health.stale=${JSON.stringify(stale)} · ${derivados[p]} fresco · /api/online=${ativos.slice(0, 80) || '—'}`, impacto: 'painel cego nessa métrica desde a última linha; não é falta de tráfego', proximo: `backend (csbrasil-backend): logs de quem grava ${p} e a linha em telemetry_ingest_health; conferir migration pendente` });
+      const restantes = stale.filter((p) => !parados.includes(p));
+      if (restantes.length) ach(A, {
+        id: 'pipelines-parados', sonda: 'api', severidade: 'aviso', titulo: `sem linha recente em: ${restantes.join(', ')}`,
         causa: online === '0' || online === undefined ? 'provavelmente ninguém jogou na janela (online baixo) — ou ingestão parada' : `há ${online} online e mesmo assim nada gravou — suspeitar da ingestão`,
-        evidencia: `health.fresh=false stale=${JSON.stringify(c.stale)} · /api/online=${ativos.slice(0, 80) || '—'}`,
+        evidencia: `health.fresh=false stale=${JSON.stringify(restantes)} · /api/online=${ativos.slice(0, 80) || '—'}`,
         impacto: 'painel sem dado novo; se for ingestão, DAU medido cai sem o jogo ter caído (o "40 vs 1")',
         proximo: 'jogar uma partida de teste sem ?debug e re-sondar em 5 min: `match` continuar stale = ingestão quebrada',
       });

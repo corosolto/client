@@ -85,6 +85,7 @@ function servidor(cenario, raiz) {
   if (cenario === 'mp-sem-heartbeat') { saude.operationalFresh = false; saude.operationalStale = ['eu']; }
   if (cenario === 'pipeline-nunca-gravou') saude.never = ['perf'];
   if (cenario === 'pipelines-parados') { saude.fresh = false; saude.stale = ['match']; }
+  if (cenario === 'ingestao-city-parada') { saude.fresh = false; saude.stale = ['city']; }
   const srv = createServer((req, res) => {
     const caminho = req.url.split('?')[0];
     if (req.method !== 'GET' && req.method !== 'HEAD') escritas.push(`${req.method} ${caminho}`);
@@ -143,6 +144,7 @@ const CENARIOS = {
   'mp-sem-heartbeat': ['mp-sem-heartbeat', 'alto'],
   'pipeline-nunca-gravou': ['pipeline-nunca-gravou', 'alto'],
   'pipelines-parados': ['pipelines-parados', 'aviso'],
+  'ingestao-city-parada': ['ingestao-parada:city', 'medio'],
   'rota-intermitente': ['rota-intermitente:online', 'medio'],
   'rota-fora': ['rota-fora:online', 'alto'],
   'rota-404': ['rota-4xx:map-plays', 'alto'],

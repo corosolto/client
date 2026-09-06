@@ -80,8 +80,8 @@ export async function diagnosticar(flags, { log = () => {} } = {}) {
   const comandos = [];
   const limitacoes = [];
   const sondas = {};
-  const contexto = { raiz, base: flags.remoto ? flags.base : null, backend: null, versaoLocal: null };
-  try { contexto.versaoLocal = lerPackage(raiz).version; } catch (e) { limitacoes.push(`package.json ilegível: ${e.message}`); }
+  const contexto = { raiz, base: flags.remoto ? flags.base : null, backend: null, versaoLocal: null, erroPackage: null };
+  try { contexto.versaoLocal = lerPackage(raiz).version; } catch (e) { contexto.erroPackage = e.message; limitacoes.push(`package.json ilegível: ${e.message}`); }
   try { contexto.backend = flags.backend || backendPadrao(raiz); } catch (e) { limitacoes.push(`backend padrão não lido de apibase.js: ${e.message}`); }
   sondas.contexto = contexto;
 

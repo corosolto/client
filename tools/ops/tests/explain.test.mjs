@@ -181,6 +181,8 @@ const CASOS = [
   ['mp-sem-heartbeat', 'alto', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, operationalFresh: false, operationalStale: ['eu'] } } } }],
   ['pipeline-nunca-gravou', 'alto', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, never: ['perf'] } } } }],
   ['pipelines-parados', 'aviso', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, fresh: false, stale: ['match'] } } } }],
+  ['ingestao-parada:city', 'medio', { api: { ...apiOk(), health: { status: 200, corpo: { ok: true, fresh: false, stale: ['city'] } } } }],
+  ['arvore-ilegivel', 'alto', { contexto: { erroPackage: 'ENOENT: package.json' } }],
   ['health-site-vs-backend', 'medio', { api: { ...apiOk(), healthBackend: { status: 200, corpo: { ok: true, database: false, telemetrySchema: true } } } }],
   ['rota-fora:online', 'alto', { api: { ...apiOk(), rotas: [rota({ padrao: 'sempre-falha', ok: 0, cincoXx: 5, chamadas: [{ status: 503 }] })] } }],
   ['rota-fora:leaderboard', 'medio', { api: { ...apiOk(), rotas: [rota({ rota: 'leaderboard', padrao: 'sempre-falha', ok: 0, cincoXx: 5, chamadas: [{ status: 503 }] })] } }],
