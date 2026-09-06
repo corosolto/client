@@ -5,7 +5,7 @@ const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(
 const mutantes = [
   'ganho-alto', 'sem-round-mp',
   'sem-fallback-kill-mp', 'sem-voz-propria', 'fish-volta-fallback', 'menu-rejeitada-volta',
-  'voz-generica-cf', 'fala-sintetica-volta',
+  'memes-historicos-silenciados', 'fala-sintetica-volta',
 ];
 if (mutante && !mutantes.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -29,7 +29,10 @@ if (mutante === 'fish-volta-fallback') installer = installer.replace(
   'const selectedGeneral = legacyCallouts?.general || fishAnnouncer?.general || null;',
 );
 if (mutante === 'menu-rejeitada-volta') menuSelection = menuSelection.replace("'m03',", "'m01', 'm03',");
-if (mutante === 'voz-generica-cf') audio = audio.replace("new Set(['C', 'F'])", 'new Set([])');
+if (mutante === 'memes-historicos-silenciados') audio = audio.replace(
+  "const genericPool = this.pack?.voice?.[fallbackFaction];",
+  "const genericPool = null;",
+);
 if (mutante === 'fala-sintetica-volta') audio += '\nconst regressao = globalThis.speechSynthesis;';
 
 globalThis.location = { search: '', href: 'http://regua/' };
@@ -57,7 +60,7 @@ expect(sfx.characterSelectVoice('dollynho', 'B', ['dollynho']) === false,
 expect(sfx.voice('C', 0) === false && sfx.radioVoice('F') === false
   && sfx.characterVoice('sem-take', 'radio', { fallbackFaction: 'F' }) === false
   && sfx.characterSelectVoice('palhaco-sem-take', 'C', ['palhaco-sem-take']) === false,
-  'MIX2c Palhaços/Funkeiros sem take próprio voltam a tocar dublagem genérica.');
+  'MIX2c pool vazio não pode produzir fala, inclusive para Palhaços/Funkeiros.');
 expect(sfx.general('multikill') === false,
   'MIX3 multikill sem asset sintetiza uma locução não aprovada.');
 expect(sfx.roundNumber(1) === false,
@@ -68,6 +71,18 @@ expect(sfx.general('inexistente') === false && sfx.roundNumber(8) === false,
 sfx.pack.general = { multikill: ['audio/licenciado.wav'] };
 expect(sfx.general('multikill') === true && samples.at(-1) === 'audio/licenciado.wav',
   'MIX6 locutor não prioriza o sample aprovado.');
+
+samples.length = 0;
+sfx.pack.voice = {
+  ...sfx.pack.voice,
+  C: ['audio/memes/palhaco-historico.mp3'],
+  F: ['audio/memes/funkeiro-historico.mp3'],
+};
+expect(sfx.voice('C', 0) === true && samples.at(-1) === 'audio/memes/palhaco-historico.mp3'
+  && sfx.radioVoice('F') === true && samples.at(-1) === 'audio/memes/funkeiro-historico.mp3'
+  && sfx.characterVoice('funkeiro-sem-take', 'radio', { fallbackFaction: 'F' }) === true
+  && samples.at(-1) === 'audio/memes/funkeiro-historico.mp3',
+  'MIX7 takes históricos aprovados não chegam aos eventos ingame de Palhaços/Funkeiros.');
 
 let tiro = NaN;
 const mix = new Sfx();
