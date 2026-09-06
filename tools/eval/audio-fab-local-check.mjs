@@ -35,12 +35,16 @@ const firearmsCc0 = join(tmp, 'firearms-cc0');
 const boomGuns = join(tmp, 'boom-guns-designed');
 const fishAnnouncer = join(tmp, 'fish-announcer');
 const legacyCallouts = join(tmp, 'legacy-callouts');
+const characterVoices = join(tmp, 'character-voices');
+const menuMusic = join(tmp, 'menu-music');
 const publico = join(tmp, 'public', 'audio');
 mkdirSync(wavs, { recursive: true });
 mkdirSync(firearmsCc0, { recursive: true });
 mkdirSync(boomGuns, { recursive: true });
 mkdirSync(fishAnnouncer, { recursive: true });
 mkdirSync(legacyCallouts, { recursive: true });
+mkdirSync(characterVoices, { recursive: true });
+mkdirSync(menuMusic, { recursive: true });
 mkdirSync(publico, { recursive: true });
 const shotgunFixture = [
   'shotgun-01-mossberg-room.wav', 'shotgun-02-model12-room.wav', 'shotgun-03-nova-room.wav',
@@ -96,6 +100,28 @@ writeFileSync(join(legacyCallouts, 'manifest.json'), JSON.stringify({
   approval: 'local-candidates-only', legalStatus: 'rights-review-required',
   general: legacyGeneral,
 }));
+const funkeiros = ['mandrake', 'raul', 'oakley', 'criarj', 'chave', 'funkraiz', 'trapfunk', 'fluxo', 'ostentacao'];
+const characterEvents = ['select', 'kill', 'radio', 'round'];
+const characterFixture = {};
+const characterVoiceText = {};
+for (const id of funkeiros) {
+  characterFixture[id] = {};
+  for (const event of characterEvents) {
+    const path = `characters/${id}/${event}/${event}-01.mp3`;
+    const target = join(characterVoices, path);
+    mkdirSync(resolve(target, '..'), { recursive: true });
+    writeFileSync(target, 'fixture-voz-sem-audio');
+    characterFixture[id][event] = [path];
+    characterVoiceText[path] = `${id}.${event}`;
+  }
+}
+writeFileSync(join(characterVoices, 'manifest.json'), JSON.stringify({
+  provider: 'openrouter', modelId: 'google/gemini-3.1-flash-tts-preview',
+  noVoiceCloning: true, approval: 'owner-approved-private-build',
+  characters: characterFixture, characterVoiceText,
+}));
+const menuIds = ['m03', 'm05', 'm10', 'm11', 'm14', 'm16', 'm17', 'm22'];
+for (const id of menuIds) writeFileSync(join(menuMusic, `${id}.mp3`), 'fixture-menu-sem-audio');
 
 const tactileFixture = [
   'Combat/Armor_Foley_1-2.wav', 'Combat/Armor_Foley_1-3.wav',
@@ -183,6 +209,7 @@ writeFileSync(join(pack, 'shortlist-piloto.json'), JSON.stringify({ eventos, bib
 const run = spawnSync(process.execPath, [
   SCRIPT, pack, `--publico=${publico}`, `--firearms-cc0=${firearmsCc0}`, `--boom-guns=${boomGuns}`,
   `--fish-announcer=${fishAnnouncer}`, `--legacy-callouts=${legacyCallouts}`,
+  `--character-voices=${characterVoices}`, `--menu-music=${menuMusic}`,
 ], {
   encoding: 'utf8', env: { ...process.env, FAB_GAME_LOCAL_MUTANTE: mutante },
 });
@@ -223,15 +250,19 @@ if (manifest) {
   if (manifest.defaultWeaponPack !== 'boom') {
     erros.push('LAB5dd BOOM Designed não virou o padrão do laboratório local.');
   }
-  if (legacyGeneralKeys.some((key) => manifest.general?.[key]?.[0] !== `audio/legacy-callouts-dev/general/${key}.mp3`)) {
-    erros.push('LAB5dg callouts antigos de combate não entraram no manifest local.');
-  }
-  if (manifest.general?.kill || manifest.general?.ultrakill) {
-    erros.push('LAB5dga callouts Fish rejeitados de kill/ultra continuam ativos.');
+  if (fishGeneralKeys.some((key) => manifest.general?.[key]?.[0] !== `audio/fish-announcer-dev/general/${key}.wav`)) {
+    erros.push('LAB5dg os nove callouts Fish exatos não entraram no manifest local.');
   }
   if (Object.keys(fishRounds).some((key) => manifest.roundNumbers?.[key]?.[0]
     !== `audio/fish-announcer-dev/rounds/round-${key.padStart(2, '0')}.wav`)) {
     erros.push('LAB5dh locucoes Fish de round 1..7 nao entraram no manifest local.');
+  }
+  if (funkeiros.some((id) => characterEvents.some((event) =>
+    manifest.characterVoice?.[id]?.[event]?.[0] !== `audio/character-voices-dev/characters/${id}/${event}/${event}-01.mp3`))) {
+    erros.push('LAB5di as 36 vozes finais dos nove Funkeiros não entraram estruturadas no manifest.');
+  }
+  if (JSON.stringify(manifest.menuMusic) !== JSON.stringify(menuIds.map((id) => `audio/menu-music/${id}.mp3`))) {
+    erros.push(`LAB5dj menu não ficou preso às oito faixas mantidas (${JSON.stringify(manifest.menuMusic)}).`);
   }
   const cc0Mapped = FIREARM_IDS.filter((id) => id !== 'ak' && manifest.weapons?.[id]?.[0]?.startsWith('audio/firearms-cc0-dev/'));
   if (cc0Mapped.length !== FIREARM_IDS.length - 1) {
@@ -434,6 +465,16 @@ try {
     erros.push('LAB10e symlink de callouts antigos não aponta para o staging privado exato.');
   }
 } catch (e) { erros.push(`LAB10e symlink de callouts antigos ausente/inválido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'character-voices-dev'))) !== resolve(characterVoices)) {
+    erros.push('LAB10f symlink de vozes próprias não aponta para o staging aprovado exato.');
+  }
+} catch (e) { erros.push(`LAB10f symlink de vozes próprias ausente/inválido: ${e.message}`); }
+try {
+  if (resolve(publico, readlinkSync(join(publico, 'menu-music'))) !== resolve(menuMusic)) {
+    erros.push('LAB10g symlink de música não aponta para a curadoria aprovada exata.');
+  }
+} catch (e) { erros.push(`LAB10g symlink de música ausente/inválido: ${e.message}`); }
 
 rmSync(tmp, { recursive: true, force: true });
 if (erros.length) {
@@ -441,4 +482,4 @@ if (erros.length) {
   for (const e of erros) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, callouts antigos e rounds Fish; staging privado e veto preservados.');
+console.log('AUDIO FAB LOCAL: verde — arsenal, granadas, 13 mapas, 16 Fish, 36 vozes próprias e 8 músicas; staging privado e veto preservados.');

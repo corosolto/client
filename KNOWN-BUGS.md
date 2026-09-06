@@ -3984,6 +3984,30 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
 
 ## Relatos recentes e resolução
 
+- **BUG-140 · regressão de mix e vozes após o pack privado.**
+  **Sintoma literal (dono, 05/09/2026, produção):** *“os sons estao ok, mas estao altos, os
+  audios ingame sumiram, e os de voz round1, mult kill etc tb sumiram preciasa arrumar isso”*.
+  **REPRODUZIDO 05/09 E CORRIGIDO LOCALMENTE 06/09/2026.** O pack privado de produção, SHA-256
+  `c56660a4…`, entrega 558 arquivos únicos, mas `voice.E/B/U/C/F`, `round.E/B/U/C/F`,
+  `general` e `roundNumbers` têm zero arquivos. O runtime não tinha contingência para nenhum
+  deles; no multiplayer o countdown também não chamava `roundNumber`, e o kill streak não
+  voltava à voz da facção se o callout faltasse. A primeira contingência por Web Speech foi
+  rejeitada pelo dono: *“essas vozes nao sao as vozes que fizemos no fish audio”*, *“e a
+  musica do menu eu tinha tirado”* e *“inclusive varios audios de funkeiros estao genericos e
+  nao vozes pre aprovadas do fish audio”*. O novo pack torna obrigatórios os nove callouts +
+  sete rounds Fish, os 36 takes finais dos nove Funkeiros e somente as oito músicas mantidas.
+  Os takes dos Funkeiros vêm do lote Gemini TTS/OpenRouter do commit `282ff734`, sem clonagem,
+  e foram preservados byte a byte; Fish é o locutor de combate/round. O ganho dos tiros caiu
+  de 0,52 para 0,42. O pack local tem 823 referências, 611 arquivos únicos, zero ausente,
+  zero órfão e zero legado. `eval:audiovoicemix`, `eval:audioannouncer`,
+  `eval:audioprivate`, `eval:audiofablocal` e `eval:audioproc` ficam verdes. O Blob privado
+  final tem SHA-256 `71e5c7fa…`; URL e hash foram confirmados nos três ambientes Vercel.
+  **PENDENTE:** PR/deploy e escuta final no jogo. **Régua:** `eval:audiovoicemix`.
+  **Refino de escuta (06/09):** *“ALGumas falas dos funkeiros e dos palhacos ainda estao
+  genericas eu nao gosto melhor tirarmos por agora e depois refazer”*. Funkeiros ficam só com
+  os 36 takes próprios; Palhaços ficam sem fala até nova dublagem aprovada. Voz genérica de
+  facção/síntese para `C` e `F` é agora uma regressão coberta por mutante.
+
 - **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
   **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
   **Evidência inicial:** `public/js/netgame.js` mantém a arma do jogador local fora da aplicação

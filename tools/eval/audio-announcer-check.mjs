@@ -16,7 +16,8 @@ const INSTALLER = readFileSync('tools/audio/fab-game-local.mjs', 'utf8');
 const GENERATOR = readFileSync('tools/audio/generate-fish-announcer.mjs', 'utf8');
 const tierUrl = (key) => mutante === 'colapsa-tiers' ? 'COLAPSADO.wav' : `${key}.wav`;
 const tierKeys = [
-  'headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike',
+  'kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill',
+  'megakill', 'killingspree', 'godlike',
 ];
 const pack = {
   general: Object.fromEntries(tierKeys.map((key) => [key, [tierUrl(key)]])),
@@ -60,9 +61,6 @@ if (rounds.some((r) => r.ok !== true || r.src !== `round-${r.n}.wav`)) {
 if (sfx.roundNumber(8) !== false || sfx.general('inexistente') !== false) {
   erros.push('ANN4 chave ausente precisa devolver false para o fallback atual assumir.');
 }
-if (sfx.general('kill') !== false || sfx.general('ultrakill') !== false) {
-  erros.push('ANN4b kill simples/ultra precisam cair no fallback legado, não numa fala Fish rejeitada.');
-}
 if (pausados < tierKeys.length - 1) erros.push('ANN5 locucoes podem se sobrepor em vez de interromper a anterior.');
 
 if (!/const MK_TIERS = \{[^}]*4:\s*'multikill'[^}]*5:\s*'megakill'/s.test(GAME)
@@ -70,18 +68,20 @@ if (!/const MK_TIERS = \{[^}]*4:\s*'multikill'[^}]*5:\s*'megakill'/s.test(GAME)
   erros.push('ANN6 progressao antiga double/triple/multi/mega/godlike não foi restaurada.');
 }
 if (!GAME.includes('this.sfx.roundNumber(this.roundNum)')) erros.push('ANN7 inicio da rodada nao dispara o numero falado.');
-if (!GAME.includes("this.sfx.general(kind || (head ? 'headshot' : 'kill'))")) {
-  erros.push('ANN8 tier, headshot e kill simples nao compartilham a locucao prioritaria.');
+if (!GAME.includes("? this.sfx.general(kind || 'headshot')")
+  || !GAME.includes("if (!announced && !this.sfx.general('kill'))")) {
+  erros.push('ANN8 tier/headshot e fallback de kill simples não usam o locutor Fish prioritário.');
 }
 if (!AUDIO.includes('roundNumber(number)')) erros.push('ANN9 Sfx nao oferece contrato de round numerado.');
 if (!GAME.includes("ANNOUNCER_LAB = ['kills', 'rounds', 'all']")
-  || !GAME.includes("['headshot', 'doublekill', 'triplekill', 'multikill', 'megakill', 'killingspree', 'godlike']")
+  || !GAME.includes("['kill', 'headshot', 'doublekill', 'triplekill', 'multikill', 'ultrakill', 'megakill', 'killingspree', 'godlike']")
   || !GAME.includes('for (const timer of this._announcerLabTimers || []) clearTimeout(timer)')) {
   erros.push('ANN9b laboratorio ingame nao cobre/encerra a sequencia de escuta.');
 }
 if (!INSTALLER.includes("arg('fish-announcer')") || !INSTALLER.includes("arg('legacy-callouts')")
-  || !INSTALLER.includes('legacyCallouts?.general') || !INSTALLER.includes('fishAnnouncer?.roundNumbers')) {
-  erros.push('ANN10 instalador não separa callouts antigos dos rounds Fish.');
+  || !INSTALLER.includes('const selectedGeneral = fishAnnouncer?.general || legacyCallouts?.general || null;')
+  || !INSTALLER.includes('fishAnnouncer?.roundNumbers')) {
+  erros.push('ANN10 instalador não prioriza os nove callouts e sete rounds Fish exatos.');
 }
 for (const key of tierKeys) {
   if (!GENERATOR.includes(`${key}:`)) erros.push(`ANN11 gerador Fish nao declara frase para ${key}.`);
@@ -95,4 +95,4 @@ if (erros.length) {
   for (const erro of erros) console.error(`  x ${erro}`);
   process.exit(1);
 }
-console.log('AUDIO ANNOUNCER: verde - callouts antigos e rounds Fish ficam independentes, sem sobreposição.');
+console.log('AUDIO ANNOUNCER: verde - nove callouts e rounds 1..7 usam o catálogo Fish exato, sem sobreposição.');
