@@ -1651,6 +1651,10 @@ html[data-ui="legacy"] .cs-menu:not(:has(.cs-item[aria-current="true"])) > .cs-i
    nome). Agora é um cartaz 16:9 com o nome sobreposto, badge de modo e setas nas
    bordas — o jogador escolhe pela imagem, não pelo texto. */
 .map-picker{position:relative;display:block;width:100%}
+#map-preview{position:relative;display:block;width:100%;padding:0;border:0;background:none;cursor:pointer;clip-path:var(--cut)}
+#map-preview:focus-visible{outline:2px solid var(--ink-100);outline-offset:2px}
+.map-preview-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;opacity:0}
+.map-preview-playing>.map-preview-video{opacity:1}
 #map-thumb{width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;display:block;
   background:var(--bg-800);border:1px solid var(--line);clip-path:var(--cut);
   transition:opacity var(--t-slow) var(--ease)}
@@ -1914,6 +1918,7 @@ html[data-ui="legacy"] #splash-enter{font-family:var(--font)}
 .ms-thumb-video{position:absolute;top:0;left:0;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;pointer-events:none;opacity:0}
 .ms-thumb.preview-playing .ms-thumb-video{opacity:1}
 .ms-thumb .ms-diamond{z-index:1}
+.ms-thumb-media{position:relative;display:block;width:100%}
 .ms-thumb-copy{display:flex;flex-direction:column;gap:3px;padding:8px 11px 10px;background:rgba(10,10,12,.85)}
 .ms-thumb-name{font-weight:700;font-size:12px;letter-spacing:2px;color:#c9c9cc;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

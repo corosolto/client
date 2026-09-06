@@ -1,94 +1,139 @@
-import { chromium } from 'playwright';
+#!/usr/bin/env node
+// Pedido V7: vídeo real no hover, sem baixar no boot ou continuar escondido.
+// Contratos de interação; captura/codec reais são verificados no browser pelo roteiro da doc.
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
-import { MAP_PREVIEWS } from '../../public/js/map_preview_assets.js';
-const preview = { ...MAP_PREVIEWS.escadao };
-if(process.argv.includes('--mutante=preview-antigo'))preview.source='desatualizado';
-const hash=file=>createHash('sha256').update(readFileSync(file)).digest('hex');
-for(const [key,file] of Object.entries({source:'map_escadao.js',home:'map_escadao_home.js',details:'map_escadao_details.js',layout:'graffiti_layout.js'}))
-  assert.equal(preview[key],hash(`public/js/${file}`),`Preview desatualizado: ${file}`);
-assert.ok(Object.keys(preview.assets).length>0,'Manifesto inclui modelos capturados');
-for(const [file,expected] of Object.entries(preview.assets))assert.equal(hash(file),expected,`Modelo mudou: ${file}`);
-for(const key of ['poster','video']){const [file,version]=preview[key].split('?v=');assert.equal(hash(`public${file}`).slice(0,12),version,'Mídia corresponde ao cache-bust');}
-if(process.argv.includes('--procedencia')){console.log('PREVIEW SOURCE PASS: fontes, modelos e mídia atuais');process.exit(0);}
+import { readFile } from 'node:fs/promises';
 
-const base = process.env.BASE || 'http://127.0.0.1:8148';
-const out = 'artifacts/escadao-visual/hover-preview';
-const mutant = process.argv.includes('--mutante=sem-hover');
-mkdirSync(out, { recursive: true });
-const browser = await chromium.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
-let applied = false;
-try {
-  const page = await browser.newPage({ viewport: { width: 1536, height: 1024 } });
-  page.setDefaultTimeout(20000);
-  if (mutant) await page.route('**/map_preview.js*', async route => {
-    const response = await route.fetch();
-    const source = await response.text();
-    const changed = source.replace('function startPreview(card) {', 'function startPreview(card) { return;');
-    assert.notEqual(changed, source, 'Mutação precisa aplicar');
-    applied = true;
-    await route.fulfill({ response, body: changed });
-  });
-  const requests = [], errors = [];
-  page.on('request', r => { if (r.url().includes('escadao.webm')) requests.push(r.url()); });
-  page.on('pageerror', e => errors.push(e.message));
-  await page.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
-  const card = page.locator('.ms-thumb[data-id="escadao"]');
-  await card.waitFor({ state: 'visible' });
-  await page.mouse.move(0, 0);
-  assert.equal(requests.length, 0, 'Vídeo não pode carregar ao abrir o menu');
-  await page.screenshot({ path: `${out}/selection.png` });
-  await card.hover();
-  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .15, null, { timeout: 12000 });
-  assert.ok(!mutant, 'Mutação sem hover precisa reprovar');
-  const media = await card.locator('video').evaluate(v => ({ muted: v.muted, loop: v.loop, width: v.videoWidth, height: v.videoHeight, frames: v.getVideoPlaybackQuality().totalVideoFrames }));
-  assert.ok(media.muted && media.loop && media.width === 640 && media.height === 480 && media.frames > 1);
-  await page.screenshot({ path: `${out}/hover.png` });
-  await page.mouse.move(0, 0);
-  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Sair do card libera o vídeo');
-  await page.keyboard.press('Tab');
-  await card.focus();
-  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
-  await page.locator('#ms-continue').focus();
-  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Blur libera o vídeo');
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  const count = requests.length;
-  await card.hover();
-  await page.waitForTimeout(400);
-  assert.equal(await card.locator('video').count(), 0, 'Movimento reduzido mantém imagem');
-  assert.equal(requests.length, count);
-  await page.mouse.move(0, 0);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await card.hover();
-  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
-  const previous = await card.locator('video').elementHandle();
-  await card.click();
-  assert.ok(await previous.evaluate(v => !v.isConnected && v.paused && !v.getAttribute('src')), 'Rerender libera vídeo anterior');
-  assert.ok(await page.locator('.ms-thumb video').count() <= 1, 'Só uma prévia ativa');
-  await page.mouse.move(0, 0);
-  await card.hover();
-  await page.waitForFunction(() => document.querySelector('.ms-thumb video')?.currentTime > .1);
-  await page.locator('#ms-continue').click();
-  assert.equal(await page.locator('.ms-thumb video').count(), 0, 'Sair da tela libera vídeo');
-  await page.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
-  await card.waitFor({ state: 'visible' });
-  await page.route('**/escadao.webm*', route => route.abort());
-  await card.hover();
-  await page.waitForFunction(() => !document.querySelector('.ms-thumb video'));
-  assert.ok(await card.locator('img').evaluate(i => i.complete && i.naturalWidth > 0), 'Erro de vídeo mantém poster');
-  await page.close();
-  const touch = await browser.newPage({ viewport: { width: 1024, height: 768 }, isMobile: true, hasTouch: true });
-  const touchRequests = [];
-  touch.on('request', r => { if (r.url().includes('escadao.webm')) touchRequests.push(r.url()); });
-  await touch.goto(`${base}/?tela=mapas&map=escadao&lang=pt`, { waitUntil: 'domcontentloaded' });
-  await touch.locator('.ms-thumb[data-id="escadao"]').tap();
-  await touch.screenshot({ path: `${out}/mobile.png` });
-  assert.equal(touchRequests.length, 0, 'Toque não carrega vídeo');
-  assert.deepEqual(errors, []);
-  writeFileSync(`${out}/behavior.json`, JSON.stringify({ status: 'passed', media, requests, errors }, null, 2));
-  console.log('PREVIEW PASS: carga sob demanda, frames reais, hover/foco, cleanup, movimento reduzido');
-} catch (error) {
-  console.error(JSON.stringify({ status: 'failed', mutant, applied, error: error.message }));
-  process.exitCode = 1;
-} finally { await browser.close(); }
+const path = new URL('../../public/js/map_preview.js', import.meta.url);
+let source = await readFile(path, 'utf8');
+if (process.argv.includes('--mutante=aba-oculta')) {
+  const mutant = source.replace('doc.hidden ||', 'false ||');
+  assert.notEqual(mutant, source, 'MUTANTE NÃO APLICOU');
+  source = mutant;
+}
+const { createMapPreview } = await import(`data:text/javascript,${encodeURIComponent(source)}`);
+let checks = 0;
+class Surface extends EventTarget {
+  constructor(doc) {
+    super(); this.ownerDocument = doc; this.children = []; this.attrs = {};
+    this.classWrites = 0;
+    this.classList = {
+      toggle: (key, value) => { this[key] = value; this.classWrites++; }, contains: key => this[key] === true,
+    };
+    this.isConnected = true; this.visible = true;
+  }
+  setAttribute(key, value) { this.attrs[key] = value; }
+  removeAttribute(key) { delete this.attrs[key]; if (key === 'src') this.src = ''; }
+  append(child) { this.children.push(child); child.parent = this; }
+  remove() { this.parent.children = this.parent.children.filter(child => child !== this); }
+  contains(target) { return target === this; }
+  getClientRects() { return this.visible ? [{}] : []; }
+}
+function setup({ reduced = false, saveData = false, reject = false, delayed = false, id = 'lajes' } = {}) {
+  const doc = new EventTarget(), mediaQuery = new EventTarget(), connection = new EventTarget();
+  doc.hidden = false; doc.documentElement = {};
+  mediaQuery.matches = reduced; connection.saveData = saveData;
+  const observers = [], videos = [];
+  doc.defaultView = {
+    matchMedia: () => mediaQuery, navigator: { connection },
+    MutationObserver: class {
+      constructor(fn) { this.fn = fn; observers.push(this); }
+      observe() {} disconnect() { this.closed = true; }
+    },
+  };
+  let resolvePlay;
+  doc.createElement = tag => {
+    assert.equal(tag, 'video');
+    const video = new Surface(doc);
+    Object.assign(video, {
+      playCount: 0, paused: true, currentTime: 0, load() {},
+      pause() { this.paused = true; },
+      play() {
+        this.playCount++; this.paused = false;
+        if (reject) return Promise.reject(new Error('codec unavailable'));
+        if (delayed) return new Promise(resolve => { resolvePlay = resolve; });
+        return Promise.resolve();
+      },
+    });
+    videos.push(video); return video;
+  };
+  const host = new Surface(doc), media = new Surface(doc);
+  const controller = createMapPreview(host, { id, version: 'test', media, isActive: () => host.active !== false });
+  return { host, media, doc, mediaQuery, connection, observers, videos, controller, resolve: () => resolvePlay() };
+}
+const fire = (target, event) => target.dispatchEvent(new Event(event));
+const flush = async () => { await Promise.resolve(); await Promise.resolve(); };
+async function scenario(name, fn) { await fn(); checks++; console.log(`PASS MP${checks} ${name}`); }
+
+await scenario('fonte lazy, loop mudo inline e início somente na interação', async () => {
+  const s = setup(); assert.equal(s.videos.length, 0);
+  fire(s.host, 'pointerenter'); await flush();
+  const video = s.videos[0]; assert.ok(video, 'Hover de Lajes não criou vídeo');
+  assert.equal(video.src, '/video/map-previews/lajes.webm?v=test');
+  assert.equal(video.preload, 'none'); assert.ok(video.muted && video.loop && video.playsInline);
+  assert.equal(video.paused, false); assert.equal(s.media.classList.contains('map-preview-playing'), true);
+  fire(s.host, 'pointerleave'); assert.equal(video.paused, true); assert.equal(video.currentTime, 0);
+  assert.equal(s.media.classList.contains('map-preview-playing'), false); s.controller.dispose();
+});
+await scenario('foco de teclado inicia, blur pausa', async () => {
+  const s = setup(); fire(s.host, 'focusin'); await flush();
+  assert.equal(s.videos[0].paused, false); fire(s.host, 'focusout');
+  assert.equal(s.videos[0].paused, true); s.controller.dispose();
+});
+await scenario('aba oculta interrompe e impede novo play', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush();
+  s.doc.hidden = true; fire(s.doc, 'visibilitychange'); assert.equal(s.videos[0].paused, true, 'Vídeo continua na aba oculta');
+  fire(s.host, 'pointerenter'); await flush(); assert.equal(s.videos[0].playCount, 1, 'Vídeo reiniciou na aba oculta');
+  s.controller.dispose();
+});
+await scenario('reduced-motion e saveData não carregam vídeo', async () => {
+  for (const options of [{ reduced: true }, { saveData: true }]) {
+    const s = setup(options); fire(s.host, 'pointerenter'); fire(s.host, 'focusin'); await flush();
+    assert.equal(s.videos.length, 0); s.controller.dispose();
+  }
+});
+await scenario('preferência alterada em execução pausa', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush();
+  s.mediaQuery.matches = true; fire(s.mediaQuery, 'change'); assert.equal(s.videos[0].paused, true);
+  s.mediaQuery.matches = false; fire(s.host, 'pointerenter'); await flush();
+  s.connection.saveData = true; fire(s.connection, 'change'); assert.equal(s.videos[0].paused, true);
+  s.controller.dispose();
+});
+await scenario('falha de playback preserva poster e não repete download', async () => {
+  const s = setup({ reject: true }); fire(s.host, 'pointerenter'); await flush();
+  assert.equal(s.media.classList.contains('map-preview-playing'), false); assert.equal(s.videos[0].paused, true);
+  fire(s.host, 'pointerenter'); await flush(); assert.equal(s.videos[0].playCount, 1); s.controller.dispose();
+});
+await scenario('erro do arquivo de mídia restaura poster durante reprodução', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush();
+  s.videos[0].onerror(); assert.equal(s.media.classList.contains('map-preview-playing'), false);
+  assert.equal(s.videos[0].paused, true); s.controller.dispose();
+});
+await scenario('promise tardia não ressuscita vídeo após saída', async () => {
+  const s = setup({ delayed: true }); fire(s.host, 'pointerenter'); fire(s.host, 'pointerleave');
+  s.resolve(); await flush(); assert.equal(s.videos[0].paused, true);
+  assert.equal(s.media.classList.contains('map-preview-playing'), false); s.controller.dispose();
+});
+await scenario('menu escondido pausa e remoção descarta listeners', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush();
+  s.host.visible = false; s.observers.forEach(o => o.fn()); assert.equal(s.videos[0].paused, true);
+  const writes = s.media.classWrites;
+  for (let i = 0; i < 10; i++) s.observers.forEach(o => o.fn());
+  assert.equal(s.media.classWrites, writes, 'Observer reescreve classes de vídeo parado e causa realimentação');
+  s.host.visible = true; s.host.isConnected = false; s.observers.forEach(o => o.fn());
+  fire(s.host, 'pointerenter'); assert.equal(s.videos[0].playCount, 1); assert.equal(s.media.children.length, 0);
+});
+await scenario('painel fechado por opacity/transform pausa mesmo mantendo retângulos', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush();
+  s.host.active = false; s.observers.forEach(o => o.fn());
+  assert.equal(s.videos[0].paused, true); fire(s.host, 'focusin'); await flush();
+  assert.equal(s.videos[0].playCount, 1); s.controller.dispose();
+});
+await scenario('troca de mapa elimina vídeo anterior e outros mapas seguem estáticos', async () => {
+  const s = setup(); fire(s.host, 'pointerenter'); await flush(); s.controller.setMap('havan');
+  assert.equal(s.videos[0].paused, true); assert.equal(s.media.children.length, 0);
+  fire(s.host, 'pointerenter'); await flush(); assert.equal(s.videos.length, 1);
+  s.controller.setMap('lajes'); fire(s.host, 'focusin'); await flush(); assert.equal(s.videos.length, 2);
+  s.controller.dispose();
+});
+console.log(`${checks}/${checks} contratos de preview aprovados; codec e pixels exigem browser.`);

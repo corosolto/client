@@ -23,6 +23,7 @@ esac
 
 if [ -f "$DEST/manifest.json" ] && [ "${VERCEL:-}" != "1" ]; then
   node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
+  node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
   echo "audio/ já configurado — nada a fazer."
   exit 0
 fi
@@ -36,4 +37,5 @@ fi
 unzip -o -q /tmp/csbrasil-audio.zip -d "$DEST/"
 [ -f "$DEST/manifest.json" ] || cp "$DEST/manifest.example.json" "$DEST/manifest.json"
 node tools/audio/extend-map-soundscapes.mjs "$DEST/manifest.json"
+node tools/audio/lajes-soundscape.mjs "$DEST/manifest.json"
 echo "Pronto. Áudio instalado em $DEST/."

@@ -209,3 +209,8 @@ Elevar Escadão (Morro) do PR #436: subida, becos e patamares de um bairro brasi
 - Previewfinal JPG42.881bytes/WebM232.305bytes6s; hashesHTTP dosarquivosservidosverificados, hover-finalPASS. Fonte divergente ainda terá mutante executado antesdoPR.
 - Node-release9/9 e build-releasePASS; guardamutantreproduzqueda. Novo pisoP2 eguardas passam no críticofísico; grafo453/453 ealcance32/32zonas, saídaoestediretapassa.
 - origin/main avançou durantevalidação para971342e4(alpha.225). Próximo: incorporar atualizaçãooperacional/menu, regenchecks/docs, fecharA/B+mutanteproveniência, pushPR e CI/mergeautorizado.
+
+## Integração PR515 e main alpha.226
+- PR autorizado: https://github.com/corosolto/client/pull/515, branch codex/escadao-main. Main225 incorporada em67b09f03; preview-build, portão browser e smoke CI passaram. Vercel falhou por pack privado com13soundscapes semEscadão; correção683ac582 reutiliza Quebrada, preserva override curado e passa RED/GREEN do assets-check real. Revisão independente aprovada.
+- Main avançou2786fa48(alpha.226) comLajes. Conflitos de áudio resolvidos mantendo os dois adaptadores; controles de preview mantidos em módulos separados para preservar testes/lifecycle de cada implementação. Metadata Mint e scripts de ambas frentes preservados; docs regeneradas.
+- CI pr-fast também revelou CTF2: rotas separadas insuficientes para quatro pares. Investigação causal em andamento; não afrouxar limite nem recolocar arestas impossíveis. Próximo: corrigir CTF2, validar integração/preview/build, publicar e concluir merge com CI. FPS exclusivo e AM7 permanecem pendentes.

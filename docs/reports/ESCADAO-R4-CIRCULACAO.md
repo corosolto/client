@@ -2,7 +2,7 @@
 
 O relato de 06/09 reabriu a entrega visual: o usuário mostrou pisos vistos por baixo, objetos aparentemente suspensos, passagens pouco claras e o gato cúbico. Pediu escadas mais íngremes, becos jogáveis e acesso à casa frontal com uma janela para atirar. A direção de jogabilidade existente foi preservada.
 
-Trabalho local em `codex/escadao-main`, com a main `a551204f` (alpha.224), integrada em `5a6da9cf`. A branch visual anterior continua preservada. O servidor de teste é `http://127.0.0.1:8148/`; a galeria na porta 58555 é histórica, da R3. O usuário autorizou push/PR/merge em 06/09; os recibos de integração ficam no ledger.
+Trabalho local em `codex/escadao-main`, com a main `2786fa48` (alpha.226), incluindo a integração de Lajes. A branch visual anterior continua preservada. O servidor de teste é `http://127.0.0.1:8148/`; a galeria na porta 58555 é histórica, da R3. O usuário autorizou push/PR/merge em 06/09; os recibos de integração ficam no ledger.
 
 ## Mudanças
 

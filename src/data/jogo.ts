@@ -128,7 +128,7 @@ export interface Mapa {
   ctf: boolean;
 }
 
-/** 5 arenas jogáveis - a ordem é a do registro (public/js/maps.js, objeto MAPS). */
+/** Arenas com apresentação editorial; o registro jogável vive em public/js/maps.js. */
 export const MAPAS: Mapa[] = [
   {
     id: 'praca_poderes', nome: 'Praça dos Três Poderes', modo: 'Rounds · padrão', ctf: false,
@@ -170,6 +170,14 @@ export const MAPAS: Mapa[] = [
       'calçada e barricadas. As duas vielas do fundo não são enfeite - são a rota alternativa que ' +
       'impede a rua virar corredor de sniper. Quatro bandeiras: campinho, bar de esquina, ponto de ' +
       'ônibus e praça do baile.',
+  },
+  {
+    id: 'lajes', nome: 'Lajes (Comunidade)', modo: 'CTF · rounds opcional', ctf: true,
+    resumo: 'Becos estreitos entre casas de alvenaria, um campo aberto no centro e combate nas lajes.',
+    detalhe: 'Os dois times começam no térreo. Três caminhos entre as casas ligam os respawns, ' +
+      'e só o campo central oferece uma abertura ampla no chão. Quatro escadas conectam os becos ' +
+      'às duas travessias superiores, com caixas de água, muretas e varais. As quatro bandeiras ' +
+      'ficam nas lajes: subir amplia a visão, mas exige disputar os acessos e a cobertura.',
   },
 ];
 

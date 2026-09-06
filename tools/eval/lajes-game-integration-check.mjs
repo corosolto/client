@@ -1,0 +1,21 @@
+import { bootGame, initTextures } from './harness.mjs';
+const g = bootGame('lajes', { textures: initTextures(), bots: 4, seed: 12345 });
+const mutant=process.argv.find(a=>a.startsWith('--mutante='))?.split('=')[1];
+if(mutant==='spawn-invertido'){g._spawnYaw=()=>0;g._startRound();}
+if(mutant==='nav-sem-camadas')g.world.layeredNavigation=false;
+const angle = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b))) < .001;
+const yaw = (team, bot = false) => g.world.spawns[team][0].yaw + (bot ? Math.PI : 0);
+const rows = [];
+rows.push(['LGI1 jogador começa olhando saída do spawn', angle(g.player.yaw, yaw(g.playerTeam))]);
+rows.push(['LGI2 bots começam olhando saída do spawn', g.bots.every(b => angle(b.yaw, yaw(b.team, true)))]);
+g._respawnPlayer(); for (const b of g.bots) g._respawnEntity(b);
+rows.push(['LGI3 respawn preserva orientação jogador e bots', angle(g.player.yaw, yaw(g.player.team)) && g.bots.every(b => angle(b.yaw, yaw(b.team, true)))]);
+rows.push(['LGI4 passos diferenciam terra e laje', g._footstepSurface({x:0,z:0,y:0}) === 'dirt' && g._footstepSurface({x:-9,z:-12,y:3.1}) === 'concrete']);
+const bot = g.bots[0]; g.player.alive = false; for(const other of g.bots)other.alive=other===bot;
+bot.pos.set(-9,0,0); bot.target=null; g._updateBot(bot,1/60);
+rows.push(['LGI5 bot sob ponte conserva piso térreo', Math.abs(bot.pos.y)<.01]);
+rows.push(['LGI6 nó de laje não é alcançável verticalmente do chão', !g._walkReach({pos:{x:-9,y:0,z:0}}, {x:-9,y:3.1,z:0})]);
+const control=bootGame('piscina_treta',{textures:initTextures(),bots:2,seed:12345});
+rows.push(['LGI7 orientação main preservada na piscina',angle(control.player.yaw,control.playerTeam==='E'?Math.PI:0)&&control.bots.every(b=>angle(b.yaw,b.team==='E'?0:Math.PI))]);
+for (const [label, pass] of rows) console.log(`${pass ? '✓' : '✗'} ${label}`);
+if (rows.some(r => !r[1])) process.exitCode = 1;
