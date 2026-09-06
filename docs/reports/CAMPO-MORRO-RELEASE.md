@@ -58,8 +58,12 @@ O primeiro build local encontrou apenas o shim de Three em `node_modules`;
 `npm ci --ignore-scripts` na própria lane instalou as dependências e o build
 subsequente passou.
 
-Próximo passo: checkpoint e atualização do PR após os portões finais. Aceite
-humano de assets/render real e partida manual, staging e release seguem pendentes.
+Checkpoint funcional: `d564559c`. O build da documentação estática também
+passou, em português e inglês. `check:deploy` passou inicialmente 36/37;
+`eval:docsautoria` exigiu que os arquivos gerados estivessem commitados, por
+isso será repetido no checkout com os checkpoints concluídos.
+Próximo passo: portão final e push para atualizar o PR #530. Aceite humano de
+assets/render real e partida manual, staging e release seguem pendentes.
 
 ### Capturas offline e limites
 
@@ -75,6 +79,10 @@ leste/oeste e fundo do campo em 1200×800. `before` é o candidato anterior aos
 consertos finais, já com as coberturas do PR; não é a base anterior ao PR.
 Foram inspecionados os PNGs: o `0–0` lê da entrada e junto ao gol, sem tapar a
 abertura; as correções de colisão preservam a disposição das coberturas.
+As vistas laterais da travessa mostram as muretas baixas antes dos portões,
+com a passagem aberta entre elas e o muro principal. As primeiras câmeras em
+`z=23` nasceram dentro do casario e foram rejeitadas; as finais em
+`x=±19,5; z=25,5` foram conferidas com `_collide` antes de renderizar.
 
 O exportador lê vértices do mundo construído, mas a evidência visual usa
 somente geometria procedural e cores; não reproduz GLBs assíncronos, texturas
