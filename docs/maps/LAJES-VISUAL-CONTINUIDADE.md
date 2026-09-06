@@ -20,6 +20,10 @@ anteriores preservados; não iniciar trabalho, merge ou deploy até novo despach
   Amazônia tem uma rota entre spawn B e as bandeiras E/MID/B, embora Lajes mantenha
   duas. A diferença desta branch contra `origin/main` não toca Amazônia ou CTF; é
   regressão da main alpha.228, não mascarada nesta frente.
+- CTF2 foi corrigido pela main alpha.230 (`bee6d13e`/PR521). Integração normal no
+  commit `08415068`; documentos regenerados. LRP1, integração e respawn Lajes,
+  contrato dos mapas, docs/autoria e `check:deploy` 37/37 passaram com Node23.
+  O aviso headless da arara da Amazônia não invalida MC1–MC3, que passaram.
 - Candidato pronto para revisão: correção `c1397d67`, quatro mutantes causais,
   stress 220/220 e 189 raios sem divergências; revisão independente sem bloqueante.
   Visual V6/V7 aceito preservado, nenhuma simplificação nesta correção. Protótipo
@@ -31,10 +35,8 @@ anteriores preservados; não iniciar trabalho, merge ou deploy até novo despach
   Histórico visual e vídeos preservados em `artifacts/lajes-visual/`.
 - Servidor próprio PID68351/porta8147 encerrado; nenhum browser, worker ou despacho
   automático próprio ativo. CI remoto já disparado pode terminar autonomamente.
-- Próximo marco após despacho: a frente Amazônia deve corrigir/revalidar CTF2 na
-  main; então incorporar o novo head, repetir somente os checks afetados e integrar
-  com SHA conferido. A entrega Lajes permanece candidata pronta, mas bloqueada pelo
-  gate crítico compartilhado; não há estimativa de merge sem a correção upstream.
+- Próximo marco após despacho: enviar o head alpha.230 limpo para PR517 e aguardar
+  revisão/CI. Não fazer merge ou deploy até o novo CI concluir verde.
 - Retomar servidor se necessário: `node tools/eval/serve.mjs 8147` neste worktree.
 
 Pedido de 06/09/2026 após revisão V6: manter ruas estreitas e apenas campo amplo;
