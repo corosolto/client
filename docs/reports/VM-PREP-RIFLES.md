@@ -452,3 +452,21 @@ importação aninhada, contato 3D integral, alimentação da carabina, procedên
 individual Mint e revisão das mãos centrais. Próximo comando concreto de retomada:
 `python3 tools/viewmodels/prep/rifles-summary.py`, depois ler esta matriz e abrir
 os insumos M4 já identificados, quando a integradora liberar a produção.
+
+
+### Continuação: publicação do PR
+
+Ruben autorizou abrir PR desta frente após a preparação. Checkpoint documental
+concluído: `bb7bda10`; descrição preparada em `A/pr-body.md`. Na verificação de
+06/09/2026, nem `codex/vm-astra-pistol` nem uma branch remota contendo a base
+`961c70d2` estavam disponíveis. A branch remota `vm-cs16-gabarito` deixaria entrar
+33 commits anteriores da integradora no diff. Publicação adicional de uma base
+congelada `codex/vm-prep-base-961c70d2` foi proposta a Ruben e aguarda resposta;
+a alternativa é aguardar a integradora publicar a base. Nenhum push ou PR feito
+neste checkpoint. A produção das armas continua fora desta frente.
+
+Sintaxe, escopo dos cinco arquivos e `git diff --check` reconferidos; hashes dos
+seis modelos próprios, pacotes nativos ar/ak/pistol e AK golden preservados.
+Próximo passo: conferir a resposta de Ruben e os refs remotos, publicar a branch
+Rifles e abrir o PR contra a base autorizada usando `A/pr-body.md`; confirmar que
+o diff remoto contém somente o relatório e os quatro scripts de preparação.
