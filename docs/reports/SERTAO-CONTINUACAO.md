@@ -248,3 +248,12 @@ conservam os registros e lacunas documentais; nenhum termo foi inventado.
 Próximo passo: concluir gates e capturas na main integrada, registrar o resultado,
 push sem força na codex/sertao-astra, retarget do PR511 para main e merge autorizado
 com SHA verificado. PR445 será indicado como substituído, sem reescrever a branch.
+
+### Checkpoint da integração ea90bc2c
+
+Build passou; RV12/12, LP4/4, PV6/6 e SI3/3+3mutantes passaram.
+Crítico independente não encontrou P1/P2 e confirmou os sete PNGs de main-runtime
+idênticos byte a byte aos de fauna2-horizon-r5. O preview foi recapturado da
+árvore integrada e preservou os bytes das mídias; recibo atualizado com os fontes
+da main. Check global, benchmark em movimento e sincronização do backend
+seguem em validação.
