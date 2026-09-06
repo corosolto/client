@@ -4019,6 +4019,20 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   `--mutante=manifest-antigo` acende VOICE13. **Pendente:** deploy e escuta final; os MP3
   content-addressed continuam `immutable`.
 
+- **BUG-141 · fallback de fala sintética toma o lugar dos memes quando o pack está vazio.**
+  **Sintoma literal (dono, 06/09/2026, produção):** *“durante o jogo os audios de meme ingame
+  nao reproduz, alias ele fica reproduzindo um gerado com ia ‘bora pra treta’”* e *“é horrivel
+  apaga esses gerados com IA sao muito ruins”*. **Reproduzido:** o manifesto de produção da
+  `alpha.229` tem `voice.E/B/U/C/F = 0` e `round.E/B/U/C/F = 0`, embora o ZIP passe no SHA-256;
+  `Sfx.voice()` então chamava `speechSynthesis` e sorteava `Bora pra treta!`. O arquivo não é
+  um MP3 do pacote: é a Web Speech do navegador. **Correção local:** nenhuma voz, rádio,
+  personagem, callout ou número de round inventa fala quando não existe take no manifesto;
+  o caminho fica silencioso e os takes Fish/personagem já presentes continuam prioritários.
+  **Régua:** `npm run eval:audiovoicemix`; antes, MIX1 fica vermelho porque o runtime contém
+  `speechSynthesis`; depois, o mutante `--mutante=fala-sintetica-volta` acende MIX1. **Pendente:**
+  publicar e escutar uma partida; a configuração do Blob ainda precisa receber um pack com os
+  pools de memes/round aprovados, pois o hash atual é íntegro mas incompleto para esses eventos.
+
 - **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
   **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
   **Evidência inicial:** `public/js/netgame.js` mantém a arma do jogador local fora da aplicação

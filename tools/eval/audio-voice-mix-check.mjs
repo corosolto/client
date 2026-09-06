@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 
 const mutante = process.argv.find((arg) => arg.startsWith('--mutante='))?.slice(10) || '';
 const mutantes = [
-  'ganho-alto', 'sem-fallback-voz', 'sem-fallback-personagem', 'sem-round-mp',
+  'ganho-alto', 'sem-round-mp',
   'sem-fallback-kill-mp', 'sem-voz-propria', 'fish-volta-fallback', 'menu-rejeitada-volta',
-  'voz-generica-cf',
+  'voz-generica-cf', 'fala-sintetica-volta',
 ];
 if (mutante && !mutantes.includes(mutante)) {
   console.error(`mutante desconhecido: ${mutante}`);
@@ -18,8 +18,6 @@ let game = readFileSync('public/js/game.js', 'utf8');
 let installer = readFileSync('tools/audio/fab-game-local.mjs', 'utf8');
 let menuSelection = readFileSync('public/js/menu-music-selection.js', 'utf8');
 if (mutante === 'ganho-alto') audio = audio.replace('return Number.isFinite(q) && q > 0 ? q : 0.42;', 'return Number.isFinite(q) && q > 0 ? q : 0.52;');
-if (mutante === 'sem-fallback-voz') audio = audio.replace(': this._speak(this._voiceFallback(team), { volume: 0.72 });', ': false;');
-if (mutante === 'sem-fallback-personagem') audio = audio.replace('if (!file) return this._speak(this._voiceFallback(faction), { volume: 0.78, interrupt: true });', 'if (!file) return false;');
 if (mutante === 'sem-round-mp') netgame = netgame.replace("if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart'))", "if (!game.sfx.csSound('roundstart'))");
 if (mutante === 'sem-fallback-kill-mp') netgame = netgame.replace(
   "if (!announced && !game.sfx.general('kill')) game.sfx.voice(game._voiceKey(att.team));",
@@ -32,6 +30,7 @@ if (mutante === 'fish-volta-fallback') installer = installer.replace(
 );
 if (mutante === 'menu-rejeitada-volta') menuSelection = menuSelection.replace("'m03',", "'m01', 'm03',");
 if (mutante === 'voz-generica-cf') audio = audio.replace("new Set(['C', 'F'])", 'new Set([])');
+if (mutante === 'fala-sintetica-volta') audio += '\nconst regressao = globalThis.speechSynthesis;';
 
 globalThis.location = { search: '', href: 'http://regua/' };
 globalThis.window = globalThis;
@@ -42,16 +41,6 @@ globalThis.Audio = class {
   play() { return Promise.resolve(); }
   pause() {}
 };
-const spoken = [];
-let cancelled = 0;
-globalThis.SpeechSynthesisUtterance = class {
-  constructor(text) { this.text = text; this.volume = 1; this.rate = 1; this.pitch = 1; this.lang = ''; }
-};
-globalThis.speechSynthesis = {
-  speak(utterance) { spoken.push(utterance); },
-  cancel() { cancelled += 1; },
-};
-
 const failures = [];
 const expect = (condition, message) => { if (!condition) failures.push(message); };
 const moduleUrl = `data:text/javascript;base64,${Buffer.from(audio).toString('base64')}#${mutante || 'normal'}`;
@@ -59,28 +48,26 @@ const { Sfx } = await import(moduleUrl);
 const sfx = new Sfx();
 sfx.pack = { voice: { E: [], B: [], U: [], C: [], F: [] }, round: {} };
 
-expect(sfx.voice('E', 0) === true && spoken.at(-1)?.lang === 'pt-BR',
-  'MIX1 pool de faccao vazio deixa a voz ingame muda em vez de usar locucao original.');
-expect(sfx.radioVoice('E') === true && spoken.length >= 2,
-  'MIX2 radio sem sample fica mudo.');
-expect(sfx.characterSelectVoice('dollynho', 'B', ['dollynho']) === true && spoken.length >= 3,
-  'MIX2b personagem sem arquivo no pack privado fica mudo.');
+expect(!/speechSynthesis|SpeechSynthesisUtterance/.test(audio),
+  'MIX1 runtime voltou a sintetizar fala quando o pack não oferece um take aprovado.');
+expect(sfx.voice('E', 0) === false && sfx.radioVoice('E') === false,
+  'MIX2 pool vazio não fica silencioso: o runtime inventa uma voz em vez de usar um arquivo aprovado.');
+expect(sfx.characterSelectVoice('dollynho', 'B', ['dollynho']) === false,
+  'MIX2b personagem sem arquivo no pack privado não fica silencioso.');
 expect(sfx.voice('C', 0) === false && sfx.radioVoice('F') === false
   && sfx.characterVoice('sem-take', 'radio', { fallbackFaction: 'F' }) === false
   && sfx.characterSelectVoice('palhaco-sem-take', 'C', ['palhaco-sem-take']) === false,
   'MIX2c Palhaços/Funkeiros sem take próprio voltam a tocar dublagem genérica.');
-expect(sfx.general('multikill') === true && spoken.at(-1)?.text === 'Multi kill!',
-  'MIX3 multikill sem asset nao usa a locucao segura de contingencia.');
-expect(sfx.roundNumber(1) === true && spoken.at(-1)?.text === 'Round one!',
-  'MIX4 Round 1 sem asset nao usa a locucao segura de contingencia.');
+expect(sfx.general('multikill') === false,
+  'MIX3 multikill sem asset sintetiza uma locução não aprovada.');
+expect(sfx.roundNumber(1) === false,
+  'MIX4 Round 1 sem asset sintetiza uma locução não aprovada.');
 expect(sfx.general('inexistente') === false && sfx.roundNumber(8) === false,
   'MIX5 chave desconhecida inventa uma fala.');
-expect(cancelled >= 2, 'MIX6 locucoes prioritarias podem se sobrepor.');
 
-spoken.length = 0;
 sfx.pack.general = { multikill: ['audio/licenciado.wav'] };
-expect(sfx.general('multikill') === true && samples.at(-1) === 'audio/licenciado.wav' && spoken.length === 0,
-  'MIX7 fallback fala por cima do sample licenciado.');
+expect(sfx.general('multikill') === true && samples.at(-1) === 'audio/licenciado.wav',
+  'MIX6 locutor não prioriza o sample aprovado.');
 
 let tiro = NaN;
 const mix = new Sfx();
@@ -91,7 +78,7 @@ expect(Math.abs(tiro - 0.42) < 1e-9,
   `MIX8 ganho padrao da AK deveria ser 0.42 e chegou a ${Number.isFinite(tiro) ? tiro : 'nada'}.`);
 expect(audio.includes("get('gunvol')"), 'MIX9 ajuste A/B ?gunvol=N deixou de existir.');
 
-samples.length = 0; spoken.length = 0;
+samples.length = 0;
 sfx.pack.characterVoice = {
   mandrake: {
     select: ['audio/characters/mandrake/select/select-01.mp3'],
@@ -101,11 +88,11 @@ sfx.pack.characterVoice = {
   },
 };
 expect(sfx.characterSelectVoice('mandrake', 'F', ['mandrake']) === true
-  && samples.at(-1)?.endsWith('/select/select-01.mp3') && spoken.length === 0,
+  && samples.at(-1)?.endsWith('/select/select-01.mp3'),
   'MIX9b seleção do funkeiro não prioriza a fala própria aprovada.');
 expect(typeof sfx.characterVoice === 'function'
   && sfx.characterVoice('mandrake', 'kill', { fallbackFaction: 'F' }) === true
-  && samples.at(-1)?.endsWith('/kill/kill-01.mp3') && spoken.length === 0,
+  && samples.at(-1)?.endsWith('/kill/kill-01.mp3'),
   'MIX9c kill do funkeiro não prioriza a fala própria aprovada.');
 
 expect(netgame.includes("if (!game.sfx.roundNumber(game.roundNum) && !game.sfx.csSound('roundstart'))"),
@@ -141,4 +128,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`  x ${failure}`));
   process.exit(1);
 }
-console.log('AUDIO VOICE MIX VERDE - efeitos equilibrados; vozes e rounds nunca ficam mudos.');
+console.log('AUDIO VOICE MIX VERDE - somente takes aprovados reproduzem; pool vazio permanece silencioso.');
