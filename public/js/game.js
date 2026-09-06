@@ -2260,8 +2260,8 @@ export class Game {
       ent.hp = 100; ent.alive = true; ent.respawnAt = 0; ent.protUntil = 0;
       return s;
     };
-    place(this.player, this.playerTeam, 0);
-    this.player.yaw = this.playerTeam === 'E' ? Math.PI : 0;
+    const playerSpawn = place(this.player, this.playerTeam, 0);
+    this.player.yaw = this._spawnYaw(playerSpawn, this.playerTeam);
     this.player.pitch = 0; this.player.vel.set(0, 0, 0); this.player.crouchF = 0;
     this.player.ammo.awp = { mag: WEAPONS.awp.mag, res: WEAPONS.awp.reserve };
     this.player.ammo.pistol = { mag: WEAPONS.pistol.mag, res: WEAPONS.pistol.reserve };
@@ -2444,8 +2444,8 @@ export class Game {
     this.el.weaponName.textContent = WEAPONS[this.player.weapon].name;
     const slots = { E: 1, B: 0 };
     for (const b of this.bots) {
-      place(b, b.team, slots[b.team]++);
-      b.yaw = b.team === 'E' ? 0 : Math.PI;   // mesh forward is +Z
+      const botSpawn = place(b, b.team, slots[b.team]++);
+      b.yaw = this._spawnYaw(botSpawn, b.team, true);
       b.target = null; b.path = null; b.repathAt = 0;
       b.mesh.group.rotation.set(0, b.yaw, 0);
       b.mesh.group.position.copy(b.pos);
@@ -2782,7 +2782,7 @@ export class Game {
       swapBot.target = null; swapBot.path = null; swapBot.hp = 100; swapBot.alive = true;
       const s = this.world.spawns[oldTeam][(Math.random() * 4) | 0];
       swapBot.pos.set(s.x, this._spawnY(s.x, s.z), s.z);
-      swapBot.yaw = oldTeam === 'E' ? 0 : Math.PI;
+      swapBot.yaw = this._spawnYaw(s, oldTeam, true);
       swapBot.mesh.group.rotation.set(0, swapBot.yaw, 0);
       swapBot.mesh.group.position.copy(swapBot.pos);
       swapBot.mesh.group.visible = true;
@@ -2790,7 +2790,7 @@ export class Game {
     // respawn do jogador no lado novo
     const s = this.world.spawns[newTeam][(Math.random() * 4) | 0];
     p.pos.set(s.x, this._spawnY(s.x, s.z), s.z); p.vel.set(0, 0, 0);
-    p.yaw = newTeam === 'E' ? Math.PI : 0; p.pitch = 0; p.hp = 100;
+    p.yaw = this._spawnYaw(s, newTeam); p.pitch = 0; p.hp = 100;
     this._scope(false, true);
     this._banner(frase('agoraVoceE', this._teamName(newTeam)), 'trocou de lado na treta — sem penalty, só julgamento');
     this.sfx.uiClick();
@@ -4335,7 +4335,9 @@ export class Game {
       }
       flag.position.set(x + 0.9, gy + 3.55, z);
       this.scene.add(zone); this.scene.add(ring); this.scene.add(pole); this.scene.add(flag);
-      return { id, label, x, z, r: 4.5, owner: null, prog: 0, ring, zone, pole, flag };
+      const point = { id, label, x, z, r: 4.5, owner: null, prog: 0, ring, zone, pole, flag };
+      this.world.configureCTFPoint?.(point);
+      return point;
     };
     // Bandeiras por-mapa: o mapa pode fornecer world.ctfPoints (Havan = 4 bandeiras, ferro velho
     // = 4, etc.). Senão, layout padrão do Brasília (2 spawns + ônibus no meio).
@@ -4511,6 +4513,16 @@ export class Game {
   _walkReach(b, n, tol = 1.2) {
     if (!n) return false;
     const dx = n.x - b.pos.x, dz = n.z - b.pos.z, d = Math.hypot(dx, dz);
+    if (this.world.layeredNavigation) {
+      const sim = { x: b.pos.x, y: b.pos.y, z: b.pos.z };
+      const steps = Math.max(1, Math.min(24, Math.ceil(d / .3)));
+      const reach = d > 0 ? Math.min(1, steps * .3 / d) : 1;
+      for (let i = 0; i < steps; i++) {
+        sim.x += dx * reach / steps; sim.z += dz * reach / steps; this._collide(sim, .38);
+        sim.y = this.world.groundHeightAt(sim.x, sim.z, sim.y);
+      }
+      return Math.hypot(n.x - sim.x, n.z - sim.z) < tol && Math.abs((n.y ?? sim.y) - sim.y) < .55;
+    }
     if (d < 0.8) return true;
     const sim = { x: b.pos.x, y: b.pos.y, z: b.pos.z };
     const steps = Math.min(24, Math.ceil(d / 0.3));
@@ -4622,13 +4634,13 @@ export class Game {
       if (BOT_MOVE2) {
         // mesmo tratamento do roam: nó de partida FISICAMENTE alcançável + A* que pula os
         // hops que o bot já provou não caber (senão ele serrilha a quina pra sempre).
-        let from = W.nearestWaypoint(b.pos.x, b.pos.z);
+        let from = W.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
         if (!this._walkReach(b, W.waypoints.nodes[from])) {
           const cands = W.waypoints.nodes.map((n, i) => ({ i, d: (n.x - b.pos.x) ** 2 + (n.z - b.pos.z) ** 2 })).sort((a, c) => a.d - c.d);
           for (let k = 0; k < Math.min(6, cands.length); k++) if (this._walkReach(b, W.waypoints.nodes[cands[k].i])) { from = cands[k].i; break; }
         }
-        b.path = this._findPathLocal(W, from, W.nearestWaypoint(pt.x, pt.z), b._banNodes);
-      } else b.path = W.findPath(W.nearestWaypoint(b.pos.x, b.pos.z), W.nearestWaypoint(pt.x, pt.z));
+        b.path = this._findPathLocal(W, from, W.nearestWaypoint(pt.x, pt.z, pt.y), b._banNodes);
+      } else b.path = W.findPath(W.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y), W.nearestWaypoint(pt.x, pt.z, pt.y));
       b.pathIdx = 1;
     }
     if (BOT_MOVE2 && b.path) {
@@ -5157,7 +5169,7 @@ export class Game {
     if (inp.jump && !p._spaceHeld) p.jumpBufferedUntil = this.time + 0.13;
     p._spaceHeld = !!inp.jump;
     if ((p.jumpBufferedUntil || 0) > this.time && this.time < (p.coyoteUntil || 0) && this._acceptInput()) {
-      p.vel.y = 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();   // apex ~0.61m (CoD)
+      p.vel.y = this.world.jumpImpulse ?? 5.0; p.grounded = false; p.jumpBufferedUntil = 0; p.coyoteUntil = 0; this.sfx.jump();
     }
     p.vel.y -= 20.6 * dt;   // gravidade exagerada do CoD — arco de pulo "snappy", não flutuante
     // integrate with step-limit so platform fronts block
@@ -5442,6 +5454,7 @@ export class Game {
      ganha um piso dominante explícito; água continua tendo precedência espacial. */
   _footstepSurface(pos) {
     if (this.world.slowAt && this.world.slowAt(pos.x, pos.z)) return 'water';
+    if (this.world.footstepSurfaceAt) return this.world.footstepSurfaceAt(pos.x, pos.z, pos.y);
     return {
       ferro_velho: 'gravel', quebrada: 'dirt', corrego: 'dirt', posto_treta: 'gravel',
       obras_prefeitura: 'dirt', parque_treta: 'grass', velho_oeste: 'wood',
@@ -5750,6 +5763,11 @@ export class Game {
   _spawnY(x, z) {
     return this.world && this.world.groundHeightAt ? this.world.groundHeightAt(x, z) : 0;
   }
+  _spawnYaw(spawn, team, bot = false) {
+    if (!this.world.authoredSpawnYaw || !Number.isFinite(spawn?.yaw)) return bot ? (team === 'E' ? 0 : Math.PI) : (team === 'E' ? Math.PI : 0);
+    // A câmera olha para -Z; o corpo do bot para +Z.
+    return spawn.yaw + (bot ? Math.PI : 0);
+  }
   _pickSpawn(team) {
     const list = this.world.spawns[team] || [];
     if (!list.length) return { x: 0, z: 0 };
@@ -5785,7 +5803,7 @@ export class Game {
     this._tpRevive();   // o corpo TP não pode renascer deitado (BUG-86)
     if (this._deathPanel) this._deathPanel.innerHTML = '';   // painel de morte não vaza pra vida nova
     p.protUntil = this.time + SPAWN_PROT;
-    p.yaw = p.team === 'E' ? Math.PI : 0; p.pitch = 0;
+    p.yaw = this._spawnYaw(s, p.team); p.pitch = 0;
     // Top off the CURRENT loadout's mags (primary could be any weapon now, not just AWP).
     // #268: em modo arma-única só recarrega slot PERMITIDO pelo modo (pistola não sai de
     // 0/0 no SÓ AWP), e quem morreu com arma proibida renasce com a arma do modo.
@@ -5970,7 +5988,7 @@ export class Game {
     b.mag = (WEAPONS[b.weapon] && WEAPONS[b.weapon].mag) || 30;
     b.aimErr = 0.2; b.burst = 0; b.alertUntil = 0; b._hurtAt = 0; b.reloadUntil = 0;
     b.focusUntil = 0; b._spinAcc = 0; b._spinAt = 0; b._sideUntil = 0;   // estado de mira/anti-pirueta da vida anterior
-    b.target = null; b.path = null; b.yaw = b.team === 'E' ? 0 : Math.PI;
+    b.target = null; b.path = null; b.yaw = this._spawnYaw(s, b.team, true);
     // Coluna, rota, juke e rumo são estado de VIDA: herdá-los repete rota e gira no spawn.
     b.laneX = undefined; b.roamUntil = 0;
     b._banNodes = null; b._unreach = null; b._escapeUntil = 0; b._jukeAt = 0;
@@ -6467,7 +6485,7 @@ export class Game {
         // path[0] e ficava serrilhando a quina do muro ("andando pro lado e pro outro",
         // latFlips 68-94/min medido). Agora escolhe o nó mais próximo FISICAMENTE
         // ALCANÇÁVEL: simula a caminhada reta com _collide (a mesma física do bot).
-        let from = W.nearestWaypoint(b.pos.x, b.pos.z);
+        let from = W.nearestWaypoint(b.pos.x, b.pos.z, b.pos.y);
         let pocket = false;
         if (!this._walkReach(b, W.waypoints.nodes[from])) {
           let found = -1;
@@ -6741,7 +6759,7 @@ export class Game {
        5× mais bot travado é regressão que o dono VÊ; o jogador não perde nada, porque
        quem usa o vão é ele. Grafo com camada continua sendo a segunda metade desta
        frente (BUG-22) — e é exatamente o que falta pra devolver o `yRef` aqui. */
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z);
+    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z, this.world.layeredNavigation ? b.pos.y : undefined);
     g.position.copy(b.pos);
     g.rotation.set(0, b.yaw, 0);
     if (b.mesh.isGLB) {
@@ -6837,7 +6855,7 @@ export class Game {
     b.pos.x += wx * spd * dt; b.pos.z += wz * spd * dt;
     this._collide(b.pos, 0.38);
     this._botSeparation(b, dt);   // reusa a despenetração (evita empilhar bots)
-    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z);
+    b.pos.y = this.world.groundHeightAt(b.pos.x, b.pos.z, this.world.layeredNavigation ? b.pos.y : undefined);
     const moving = Math.hypot(wx, wz) > 0.15 ? 1 : 0;
 
     // TIRO: a rede decide QUANDO; a resolução reusa as primitivas honestas do jogo

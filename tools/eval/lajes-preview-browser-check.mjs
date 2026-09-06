@@ -1,0 +1,30 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const out = 'artifacts/lajes-visual/v7/preview'; fs.mkdirSync(out,{recursive:true});
+const browser=await chromium.launch({channel:'chrome',headless:true});
+try {
+ const page=await browser.newPage({viewport:{width:1536,height:1024}}), errors=[], requests=[];
+ page.on('pageerror',e=>errors.push(e.message)); page.on('request',r=>{if(r.url().includes('/video/map-previews/'))requests.push(r.url());});
+ await page.goto('http://127.0.0.1:8147/?debug=1&tela=mapas&map=lajes&perfilauto=0');
+ const card=page.locator('.ms-thumb[data-id="lajes"]'); await card.waitFor({state:'visible',timeout:120000});
+ const rows=[]; rows.push(['lazy antes de hover',requests.length===0]);
+ await card.hover(); await page.waitForFunction(()=>{const v=document.querySelector('.ms-thumb[data-id="lajes"] video');return v&&!v.paused&&v.currentTime>.15;},null,{timeout:20000});
+ await page.screenshot({path:`${out}/hover-card.png`}); rows.push(['hover reproduz vídeo real',true]);
+ await page.mouse.move(1500,20); await page.waitForTimeout(150);
+ rows.push(['saída pausa e reseta',await card.locator('video').evaluate(v=>v.paused&&v.currentTime===0)]);
+ await card.focus(); await page.waitForFunction(()=>{const v=document.querySelector('.ms-thumb[data-id="lajes"] video');return v&&!v.paused;});rows.push(['foco teclado reproduz',true]);
+ await page.emulateMedia({reducedMotion:'reduce'}); await page.waitForTimeout(100);
+ rows.push(['movimento reduzido interrompe',await card.locator('video').evaluate(v=>v.paused)]);
+ await page.locator('#ms-back').click();await page.locator('#mf-mapa').click();await page.emulateMedia({reducedMotion:'no-preference'});
+ const poster=page.locator('#map-preview'); await poster.hover();
+ await page.waitForFunction(()=>{const v=document.querySelector('#map-preview video');return v&&!v.paused&&v.currentTime>.15;});
+ rows.push(['cartaz principal reproduz',true]);await page.screenshot({path:`${out}/hover-cartaz.png`});
+ await page.locator('#setup-back').click(); await page.waitForTimeout(150);
+ rows.push(['fechar setup pausa',await poster.locator('video').evaluate(v=>v.paused)]);
+ const denied=await browser.newContext();await denied.addInitScript(()=>Object.defineProperty(navigator,'connection',{value:{saveData:true,addEventListener(){},removeEventListener(){}}}));
+ const safe=await denied.newPage();await safe.goto('http://127.0.0.1:8147/?debug=1&tela=mapas&map=lajes&perfilauto=0');
+ const safeCard=safe.locator('.ms-thumb[data-id="lajes"]');await safeCard.waitFor({state:'visible',timeout:120000});await safeCard.hover();await safe.waitForTimeout(200);
+ rows.push(['saveData mantém poster',await safeCard.locator('video').count()===0]); await denied.close();
+ rows.push(['sem erros JS',errors.length===0]); fs.writeFileSync(`${out}/browser-check.json`,JSON.stringify({rows,errors,requests},null,2));
+ console.log(rows); if(rows.some(r=>!r[1]))process.exitCode=1;
+} finally {await browser.close();}

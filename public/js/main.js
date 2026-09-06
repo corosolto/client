@@ -20,6 +20,7 @@ import { enableStylize } from './stylize.js';
 import { resolveInspectionScreen } from './screenquery.js';
 import { LoadingCharacterStage } from './loading3d.js';
 import { MENU_MUSIC_ACTIVE_IDS } from './menu-music-selection.js';
+import { createMapPreview } from './map_preview.js';
 /* Multiplayer. O game.js NÃO importa nada disto: o netcode é injetado por aqui
    (`new Game({ mpFactory, net })`), e sem sessão de rede nenhuma linha dele executa. */
 import { NOS, mpUrls, sondarNos, listRooms, createRoom, NetClient, parseConvite, linkDeConvite, salaPorConvite, httpDoNo, resolvePlayerSide, transitionSlot } from './net.js';
@@ -1677,6 +1678,11 @@ $('fb-send').onclick = async () => {
 // carrossel de mapas: setas ‹ › trocam o mapa E o fundo 3D do menu + thumbnail real do mapa
 const mapNameEl = $('map-name');
 const mapThumb = $('map-thumb');
+const mapPreviewHost = $('map-preview');
+const mapPreview = mapPreviewHost ? createMapPreview(mapPreviewHost, {
+  id: currentMap, version: VERSION, isActive: () => $('menu-setup').classList.contains('open'),
+}) : null;
+let mapCardPreviews = [];
 if (mapThumb) {
   mapThumb.decoding = 'async';   // decode fora da thread principal
   mapThumb.onload = () => { mapThumb.style.opacity = '1'; };
@@ -1684,8 +1690,10 @@ if (mapThumb) {
 }
 function setMapThumb() {
   if (!mapThumb) return;
+  mapPreview?.setMap(currentMap);
   mapThumb.style.opacity = '0';
   mapThumb.src = `/img/map-previews/${currentMap}.jpg?v=${VERSION}`;
+  mapThumb.alt = MAPS[currentMap].name;
 }
 // Badge de modo + pontinhos de posição: o carrossel não dizia onde o jogador estava
 // (quantos mapas existem, qual é este) nem que Havan/Ferro Velho SÃO CTF por natureza.
@@ -1843,10 +1851,12 @@ function renderMapScreen() {
     plays.textContent = n ? `${n.toLocaleString('pt-BR')} ${tr(n === 1 ? 'PARTIDA' : 'PARTIDAS')}` : '';
   }
   const shown = visibleMapIds();
+  mapCardPreviews.forEach(preview => preview.dispose());
+  mapCardPreviews = [];
   $('ms-strip').style.setProperty('--map-count', shown.length);
   $('ms-strip').innerHTML = shown.map((id) =>
       `<button class="ms-thumb${id === currentMap ? ' on' : ''}" data-id="${id}" aria-pressed="${id === currentMap}" type="button">` +
-      `<img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt="">` +
+      `<span class="ms-thumb-media"><img class="ms-thumb-img" loading="lazy" decoding="async" src="/img/map-previews/${id}.jpg?v=${VERSION}" alt=""></span>` +
       `<span class="ms-thumb-copy"><span class="ms-thumb-name">${MAPS[id].name}</span>` +
       `<span class="ms-thumb-sub"><span class="ms-thumb-cat" data-cat="${catsDe(id)[0]}">${catsDe(id).map((c) => tr(c)).join('·')}</span>` +
       (playsDe(id) ? `<span class="ms-thumb-plays">${playsDe(id).toLocaleString('pt-BR')}</span>` : '') +
@@ -1863,12 +1873,14 @@ function renderMapScreen() {
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
+    if (b.dataset.id === 'lajes') mapCardPreviews.push(createMapPreview(b, {
+      id: b.dataset.id, version: VERSION, media: b.querySelector('.ms-thumb-media'),
+    }));
   });
   requestAnimationFrame(() => $('ms-strip').querySelector('.ms-thumb.on')?.scrollIntoView({ block: 'nearest', inline: 'center' }));
 }
-mapThumb.title = tr('Ver mapa em tela cheia');
-mapThumb.style.cursor = 'pointer';
-mapThumb.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
+mapPreviewHost.title = tr('Ver mapa em tela cheia');
+mapPreviewHost.onclick = () => { ui.click(); renderMapScreen(); show('map-screen'); };
 $('ms-back').onclick = () => { ui.back(); show('main-menu'); };
 $('ms-prev').onclick = () => stepMap(-1, visibleMapIds());
 $('ms-next').onclick = () => stepMap(1, visibleMapIds());
