@@ -31,7 +31,7 @@ verifiable official source.
 
 ## Recebimento e integração
 
-Geração3D concluída no Mint; nenhum GLB baixado ou integrado. Não declarar autor humano, licença comercial verificada,
+Snapshot inicial: geração3D concluída no Mint; nenhum GLB então baixado ou integrado. Não declarar autor humano, licença comercial verificada,
 triângulos, tamanho ou animações a partir do prompt. Medir os arquivos reais e
 registrar hashes, URL de geração, termos vigentes e transformações antes de
 integrar. Se os termos não puderem ser verificados, guardar somente como candidato.
@@ -53,10 +53,10 @@ Não há animação animal recebida. A documentação de animação do Mint
 (https://mint.gg/features/3d-animation) descreve rig humanoide; preparar
 locomoção animal local após recebimento autorizado dos arquivos.
 
-A busca oficial, a interface e o próprio assistente Mint não forneceram termos
+Na busca inicial, a interface e o próprio assistente Mint não forneceram termos
 verificáveis de uso comercial/atribuição. A resposta Mint indicou hello@mint.gg;
 nenhuma mensagem externa enviada. Solicitado ao dono link/trecho dos termos,
-conforme sua exigência inicial. Modelos permanecem candidatos, sem download.
+conforme sua exigência inicial. Modelos permaneceram candidatos nessa etapa.
 
 O pintinho excedeu o alvo de2000tri solicitado (UI informa4910faces); reduzir
 antes de instanciar três seguidores. Vista frontal parece mais lisa que o
@@ -81,3 +81,22 @@ concept; ainda exige crítica independente e visualização na escala real.
 - GLBs brutos preservados em artefatos, derivados por script reproduzível;
   FONTE/mint-assets com fonte real, licença/atribuição, hashes e transformações.
   Rever imagem em3:2 e movimento antes de substituir fauna aceita.
+
+## Atualização: recebimento documentado em 06/09/2026
+
+Termos oficiais encontrados: https://docs.mint.gg/terms-of-service, versão
+atualizada em 07/05/2026. A seção 4 cede ao usuário os direitos que Mint tiver
+no output criado para ele, condicionados ao cumprimento dos termos e direitos
+de terceiros. A seção 6 prevê revisão pelo usuário antes de uso e distribuição.
+Não há exigência específica de atribuição ou restrição não comercial nesses
+termos; isso não é CC0 e não comprova autoria humana ou exclusividade.
+
+Download realizado pelo botão Download ZIP do próprio pack autenticado.
+ZIP SHA256: `09585b01a540c6050c1ed5cbf06d08ad4095e353016b975219e06ea37c7f88df`.
+Termos em Markdown SHA256: `1b91654d70dbebe9b0c3766060c920a8078447208038521fe848419416171957`.
+Originais em `artifacts/sertao-astra/mint-livestock/raw/` e inspeção em
+`animation/raw-inspection.json`: galinha 977.012 bytes/5.078 tris; pintinho
+656.008 bytes/4.910 tris; cabra 1.153.108 bytes/4.790 tris, todos sem clipes.
+Animação e otimização locais em andamento; não atribuir os novos clipes ao Mint.
+Integração substitui as galinhas antigas por uma família em terreiro livre e
+dois caprinos em trajetos laterais medidos, preservando a geometria competitiva.

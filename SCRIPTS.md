@@ -823,7 +823,7 @@ A régua de navegador carrega o mapa real em3:2, confere os bytes servidos,
 deformação durante caminhada contínua, percurso contra os colisores do jogo,
 orçamento, low, reset, descarte e contato em pixels. Fica fora do portão rápido.
 Mutantes: `sem-caprinos`, `patas-paradas`, `parede`, `sombra`, `low-cheio`,
-`reset-ausente`, `sem-contato` e `dispose-ausente`. Relatório e imagens em
+`reset-ausente`, `sem-contato`, `dispose-ausente` e `rig-nao-descartado`. Relatório e imagens em
 `artifacts/sertao-astra/livestock-runtime/`; `ARTIFACT_DIR` muda a pasta.
 
 ```bash

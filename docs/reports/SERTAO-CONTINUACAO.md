@@ -257,3 +257,82 @@ idênticos byte a byte aos de fauna2-horizon-r5. O preview foi recapturado da
 árvore integrada e preservou os bytes das mídias; recibo atualizado com os fontes
 da main. Check global, benchmark em movimento e sincronização do backend
 seguem em validação.
+
+### Retomada dos caprinos e da família de galinhas — 06/09/2026
+
+HEAD `fe21db15`, publicado sem força na branch exclusiva. A integração com main
+passou nos gates específicos e no pre-push; detalhes nos logs `main-*.log` em
+`artifacts/sertao-astra/logs/`. Nenhum merge ou deploy executado.
+
+Os termos oficiais foram finalmente localizados em
+https://docs.mint.gg/terms-of-service (atualização de 07/05/2026). A seção 4
+cede ao usuário os direitos que Mint tiver no output criado para ele, sujeita às
+condições contratuais e direitos de terceiros. Isso substitui o bloqueio anterior
+de fonte não encontrada; não equivale a CC0 nem garante exclusividade.
+O pacote próprio `vd7azjz400t2sy4g2h4z14ff318dx0mb` foi baixado pela UI autorizada.
+Originais e cópia dos termos: `artifacts/sertao-astra/mint-livestock/raw/`.
+
+Cabra, galinha e pintinho ainda NÃO estão no jogo. Próximo passo: examinar os GLBs,
+criar animação local, integrar somente no Sertão e provar presença, contato,
+movimento e orçamento com imagens reais e mutantes; depois atualizar preview e PR.
+Memorial continua sem resultado aceito. O backend foi apenas inspecionado e seu
+build preparado em `artifacts/sertao-astra/backend-runtime/`; nenhuma VM alterada.
+Antes de eventual sincronização, revalidar SHA/ocupação e manter o código de servidor
+implantado, trocando somente a revisão de cliente após validação final.
+
+### Presença comprovada da criação — checkpoint R1
+
+Os dois caprinos, a galinha Mint e três pintinhos estão agora integrados no mapa
+local. Capturas reais 1536×1024 e relatório em
+`artifacts/sertao-astra/livestock-r1/`: LG1–LG6 passaram, com 14.400 amostras de
+percurso sem colisão, seis meshes e 24.228 triângulos na qualidade normal; quatro
+animais em low. Isso substitui o estado “NÃO estão no jogo” do checkpoint anterior.
+ST6/6, WO9/9 e SI3/3 com três mutantes também passaram nesta integração.
+
+R1 não aprova a entrega final: o crítico confirmou a leitura dos caprinos e
+pintinhos, mas apontou ausência de contato suave no solo e pediu conjunto de
+animações congelado. O builder está refinando pesos da barriga da cabra e dos pés
+da galinha; sheets intermediários divergiram dos GLBs novos e não são evidência
+final. Um passe instanciado de contato foi adicionado após essa crítica e ainda
+precisa ser capturado. A régua local distingue seis rigs mais esse passe; o teto
+global RV3 de 503 draw calls e 368.208 triângulos não foi alterado.
+
+Próximo passo: congelar os três GLBs, registrar hashes/procedência, validar LG1–LG8
+e mutantes, recapturar preview e movimento, receber crítica final e checkpointar.
+PR511 foi retargetado para main, continua draft e não foi mergeado. A faixa de
+280 commits importados contém 25 sem DCO; preservar esta branch e preparar uma
+branch de submissão limpa a partir da main, na mesma worktree exclusiva, depois
+da validação. Não usar force-push nem afrouxar checks para contornar o histórico.
+
+### Criação congelada e crítica independente
+
+Checkpoint `c9b05881`: três GLBs próprios Mint, rigs locais e procedência. O trio
+foi reimportado; hashes finais em `mint-assets.json` e
+`artifacts/sertao-astra/mint-livestock/animation/asset-manifest.json`. Crítico
+aprovou48 poses e33 quadros temporais em jogo, sem bloqueador visual observado;
+não assistiu vídeo contínuo, portanto cadência fina continua sujeita à revisão
+humana. Vídeos reais16s por grupo, incluindo pausa/retomada, em
+`artifacts/sertao-astra/livestock-final/`; cópias compactas versionadas em
+`tools/eval/asset-evidence/sertao-criacao/`.
+
+LA4/4, LG8/8 e RV12/12 passaram. Mutantes revelaram dois instrumentos inadequados
+(troca de pose contada como Walk e sombra anulada por política posterior), ambos
+corrigidos e comprovados vermelhos na cláusula correta. Partida30s/7bots: p50
+8,3ms, p95 10,1ms, sem pageerror. Relatório `SERTAO-CRIACAO.md`.
+
+O descarte de texturas de ossos está recebendo uma medição adicional antes do
+checkpoint do runtime. `check:fast` está em curso; `eval:docsautoria` ainda rejeita
+documentação gerada não commitada, o que será resolvido pelo checkpoint normal.
+Main avançou para `971342e4` (alpha225/PR514). Simulação de três vias confirmou
+preservação de retries/beacon em main.js e oito conflitos documentais gerados.
+Próximo: concluir descarte/gates, checkpointar runtime/evidências, criar branch
+limpa nesta mesma worktree a partir da main atual e aplicar squash de três vias.
+Não houve merge no GitHub nem alteração nas VMs; memorial segue reprovado/fora.
+
+Checkpoint de runtime `06463c49`: contato e boneTextures descartados sem destruir
+texturas compartilhadas. LA4/4+5mutantes; LG8/8+9mutantes, com a ausência de
+caprinos isolada emLG1; RV12/12. `check:fast` concluiu94/95 em464,5s: apenas
+DOCSAUT, que recusa medir enquanto colaborar.md gerado está não commitado.
+Gates e evidências novos estão em commits locais; ainda sem push posterior a
+fe21db15. Próxima ação é checkpointar documentação/evidências e executar DOCSAUT,
+depois aplicar a submissão limpa na main225 e validar build/preview nessa árvore.
