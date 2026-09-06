@@ -52,9 +52,11 @@ export function bindMapPreview(host, mapId) {
     if (video.getAttribute('src') !== url) video.src = url;
     video.currentTime = 0;
     try {
-      await video.play();
-      if (active === state && token === state.token) video.classList.add('playing');
-      else if (active !== state) video.pause();
+      const playing = video.play();
+      await playing.then(() => {
+        if (active === state && token === state.token) video.classList.add('playing');
+        else if (active !== state) video.pause();
+      });
     } catch { if (active === state && token === state.token) stop(); }
   };
   host.addEventListener('pointerenter', start);
