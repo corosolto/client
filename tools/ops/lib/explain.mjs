@@ -24,6 +24,11 @@
 
 export const PESO = { critico: 5, alto: 4, medio: 3, aviso: 2, info: 1, inconclusivo: 6 };
 
+/* Limiares de latência. Procedência: DUAS medições só (06/09/2026, madrugada, sem pico) —
+   raiz 132–252 ms · /api/* p95 224–1085 ms · assets p95 632 ms com cache frio. Sem medição em
+   pico eles são AVISO; promover a MÉDIO exige a série dos diagnostico.json de artifacts/ops. */
+export const LIMIARES = { htmlLentoMs: 2500, apiP95Ms: 2000, assetsP95Ms: 3000 };
+
 const ach = (lista, a) => { lista.push(a); return a; };
 const n = (x) => (x == null ? '—' : x);
 
@@ -122,8 +127,8 @@ function explicaBootRemoto(A, boot, ctx) {
   if (!h.csp) {
     ach(A, { id: 'sem-csp', sonda: 'boot', severidade: 'aviso', titulo: 'a raiz saiu sem Content-Security-Policy', causa: 'headers do vercel.json não aplicados nesta resposta (edge/rewrite) — ou alvo não é a Vercel', evidencia: `GET ${alvo}/ sem header content-security-policy`, impacto: 'script injetado por extensão/terceiro roda sem trava', proximo: 'conferir `headers` em vercel.json e o que o edge repassa' });
   }
-  if (h.ms > 2500) {
-    ach(A, { id: 'html-lento', sonda: 'boot', severidade: 'medio', titulo: `a raiz levou ${h.ms} ms`, causa: 'função SSR fria, edge sem cache ou rede', evidencia: `GET ${alvo}/ → 200 em ${h.ms} ms (cf-cache-status ${n(h.cfCache)})`, impacto: 'splash demora; funil perde jogador antes do menu', proximo: 'repetir a sonda; se o p95 seguir > 2,5 s, olhar cache da raiz e região da função' });
+  if (h.ms > LIMIARES.htmlLentoMs) {
+    ach(A, { id: 'html-lento', sonda: 'boot', severidade: 'aviso', titulo: `a raiz levou ${h.ms} ms (limiar ${LIMIARES.htmlLentoMs} ms, sem procedência de pico)`, causa: 'função SSR fria, edge sem cache ou rede', evidencia: `GET ${alvo}/ → 200 em ${h.ms} ms (cf-cache-status ${n(h.cfCache)})`, impacto: 'splash demora; funil perde jogador antes do menu', proximo: 'repetir a sonda em pico; se o p95 seguir acima do limiar, olhar cache da raiz e região da função — e promover a régua a MÉDIO com a série' });
   }
   if (boot.opsJs && !boot.opsJs.noHtml) {
     ach(A, { id: 'ops-runtime-ausente', sonda: 'boot', severidade: 'info', titulo: 'a versão publicada ainda não carrega public/js/ops.js', causa: 'camada operacional não deployada', evidencia: `HTML de ${boot.versaoHtml || alvo} sem <script src="/js/ops.js">`, impacto: 'sem FPS/falhas de carga/abandono por sessão no navegador', proximo: 'publicar a branch com o ops.js' });
@@ -173,7 +178,7 @@ function explicaApi(A, api, ctx) {
     if (r.padrao === 'inalcancavel') continue; // a rede de quem sondou: o health já virou achado inconclusivo
     if (r.padrao === 'sempre-falha') ach(A, { id: `rota-fora:${r.rota}`, sonda: 'api', severidade: r.rota === 'leaderboard' ? 'medio' : 'alto', titulo: `/api/${r.rota} falhou em ${r.total}/${r.total} chamadas`, causa: 'rota quebrada nesta revisão do backend ou upstream (banco) recusando', evidencia: r.chamadas.map((c) => c.status || c.erro).join(','), impacto: r.rota === 'online' ? 'contador "N online" vazio no menu' : r.rota === 'map-plays' ? 'partidas por mapa somem do menu' : 'ranking sem dados', proximo: 'logs do backend para a rota; comparar com a revisão anterior' });
     else if (r.padrao === 'intermitente') ach(A, { id: `rota-intermitente:${r.rota}`, sonda: 'api', severidade: 'medio', titulo: `/api/${r.rota} falhou em ${r.cincoXx + r.semResposta}/${r.total} chamadas`, causa: 'cold start / instância do Cloud Run subindo (min-instances 0) ou rate limit', evidencia: `status: ${r.chamadas.map((c) => c.status || c.erro).join(',')} · p50 ${r.p50} ms · p95 ${r.p95} ms`, impacto: 'primeira carga do menu sem contador/estatística; ticket de MP pode falhar na 1ª tentativa', proximo: 'min-instances=1 no Cloud Run ou retry com backoff no cliente; medir de novo em horário de pico' });
-    else if (r.p95 != null && r.p95 > 2000) ach(A, { id: `latencia-api:${r.rota}`, sonda: 'api', severidade: 'medio', titulo: `/api/${r.rota} com p95 de ${r.p95} ms`, causa: 'backend frio ou consulta lenta no banco', evidencia: `latências: ${r.chamadas.map((c) => c.ms).join(',')} ms`, impacto: 'menu demora a preencher', proximo: 'medir em pico; se persistir, índice/cache na rota' });
+    else if (r.p95 != null && r.p95 > LIMIARES.apiP95Ms) ach(A, { id: `latencia-api:${r.rota}`, sonda: 'api', severidade: 'aviso', titulo: `/api/${r.rota} com p95 de ${r.p95} ms (limiar ${LIMIARES.apiP95Ms} ms, sem procedência de pico)`, causa: 'backend frio ou consulta lenta no banco', evidencia: `latências: ${r.chamadas.map((c) => c.ms).join(',')} ms`, impacto: 'menu demora a preencher', proximo: 'medir em pico; se persistir, índice/cache na rota' });
   }
   const rs = api.redeSeguranca;
   if (rs && rs.status !== 404 && rs.status !== 0) ach(A, { id: 'rede-seguranca-rota-desconhecida', sonda: 'api', severidade: rs.status === 200 ? 'medio' : 'aviso', titulo: `rota /api inexistente respondeu ${rs.status}`, causa: '[rota].ts não está filtrando por MIGRADAS, ou o edge reescreve /api/* para outro lugar', evidencia: `GET /api/ops-diag-rota-inexistente → ${rs.status} ${rs.corpo || ''}`, impacto: 'cliente antigo pode bater em rota errada sem 404 claro', proximo: 'conferir src/pages/api/[rota].ts e rewrites do vercel.json' });
@@ -209,7 +214,7 @@ function explicaAssetsRemoto(A, as, ctx) {
   if (as.tamanhoDiverge.length) ach(A, { id: 'asset-tamanho-diverge', sonda: 'assets', severidade: 'medio', titulo: `${as.tamanhoDiverge.length} asset(s) com tamanho diferente do disco na MESMA versão`, causa: 'edge segurando arquivo de deploy anterior (immutable + mesmo ?v=) ou build alterando o asset (otimização)', evidencia: as.tamanhoDiverge.slice(0, 4).join(' · '), impacto: 'jogador recebe asset velho até o cache expirar', proximo: 'purge dos caminhos citados; se o build otimiza GLB, registrar isso na régua' });
   if (as.outrosErros.length) ach(A, { id: 'asset-erro-http', sonda: 'assets', severidade: 'medio', titulo: `${as.outrosErros.length} asset(s) com erro HTTP fora de 404`, causa: 'edge/origem instável (5xx) ou bloqueio (403)', evidencia: as.outrosErros.slice(0, 5).join(' · '), impacto: 'carga da partida falha de forma intermitente', proximo: 're-sondar; olhar status do Cloudflare/Vercel' });
   if (as.semResposta.length) ach(A, { id: 'asset-sem-resposta', sonda: 'assets', severidade: 'medio', titulo: `${as.semResposta.length} asset(s) sem resposta (timeout/rede)`, causa: 'edge lento para arquivo grande ou rede da sonda', evidencia: as.semResposta.slice(0, 4).join(' · '), impacto: 'carga longa; watchdog de boot pode acusar rede lenta', proximo: 're-sondar com timeout maior (`--timeout=30000`)' });
-  if (as.p95ms != null && as.p95ms > 3000) ach(A, { id: 'assets-lentos', sonda: 'assets', severidade: 'aviso', titulo: `p95 de ${as.p95ms} ms para pedir 16 bytes de asset`, causa: 'cache do edge frio (MISS) ou origem longe', evidencia: `${as.cacheHits}/${as.total} com cf-cache-status HIT`, impacto: 'primeira partida depois de um deploy carrega devagar', proximo: 'aquecer o cache depois do deploy (pedir os GLB das armas) ou aceitar' });
+  if (as.p95ms != null && as.p95ms > LIMIARES.assetsP95Ms) ach(A, { id: 'assets-lentos', sonda: 'assets', severidade: 'aviso', titulo: `p95 de ${as.p95ms} ms para pedir 16 bytes de asset (limiar ${LIMIARES.assetsP95Ms} ms, sem procedência de pico)`, causa: 'cache do edge frio (MISS) ou origem longe', evidencia: `${as.cacheHits}/${as.total} com cf-cache-status HIT`, impacto: 'primeira partida depois de um deploy carrega devagar', proximo: 'aquecer o cache depois do deploy (pedir os GLB das armas) ou aceitar' });
 }
 
 function explicaBootLocal(A, bl, ctx) {
