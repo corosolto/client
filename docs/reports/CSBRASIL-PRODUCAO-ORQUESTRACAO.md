@@ -65,8 +65,8 @@ integração e publicação; não declarar pronto somando somente PRs ou gates v
 | Preparar frente Snipers e Precisão | 01a073e4-50fa-7c52-9ac7-729a088fc976 | Coordenação; catálogo integral no ledger específico abaixo |
 | Prepare a frente Rifles do CSBrasil. Leia integralmente: /V… | 01a073e3-1632-73d3-9683-e1394339fa8e | DESPACHADA Terra/high: M4 tactical do checkpoint Claude, somente offline, aguardando início confirmado |
 | Elevar visual do Escadão | 01a073e5-b003-7993-afd6-41d31e25d98d | PAUSADO ada21d8d, codex/escadao-passagens-horizonte limpa; duas divergências do grafo e horizonte pendentes; próximo marco45–90min, R5 estimado2–4h; Astro8148/PID94385 ativo sem captura |
-| Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | PAUSADO 098a6fc2; candidato c26a40cf/PR517 pronto para revisão, 15–30min estimados se CI verde; sem browser/servidor próprio |
-| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | PR439 já integrado em alpha.228; hotfix CTF2 agora em PR521 draft, commit 24397a04, `check:deploy` 37/37. Aguardar CI antes de merge; sem release/deploy novo |
+| Elevar visual de Lajes | 01a073e5-35e9-7312-b6a7-7beecc8df714 | RETOMADA: atualizar o checkpoint 2af96c26 contra main alpha.230, validar e publicar head limpo; PR517 aguarda revisão/CI antes de merge, sem browser/servidor |
+| Elevar visual da Amazônia | 01a073de-ee16-74a1-8deb-c92763271450 | PR439 integrado em alpha.228; hotfix CTF2 PR521 integrado como 3d4fdaa, release main bee6d13e alpha.230. Gates remotos verdes; nenhuma pendência de integração desta correção |
 | Elevar visualmente o mapa Sertão | 01a073c0-b824-7503-b28a-f7522cececcc | DESPACHADA Terra/high: PR516 prioritário; resolver conflito contra main atual e deixar MERGEABLE. Candidato ca8d569f; merge/publicação aguardam reserva depois de Lajes |
 | Revisar e shipar PR Miticos | 01a07485-2ddf-7052-b858-f814cabc30f7 | Cuca IK candidata reprovada no checkpoint 7c116d97: converge ao alvo projetado, mas não segura a arma e piora o custo; sem mudança pública. Zumbi textura/integração e outros personagens pendentes; PR481 conflitante |
 | Corrigir modo CTF na home | 01a07540-471d-7a60-9448-2692d52ab8dd | Implementado 4abeaa40; relato build/browser3:2 aprovados; não publicado; três falhas gerais fora do menu |
@@ -133,8 +133,11 @@ A contraverificação percorreu continuamente os 26 pontos nos dois sentidos, co
 real e sem recuperação. Recibos fixed/mutant foram regenerados contra esta fonte final:
 duas rotas nos seis pares; o mutante reduz B→E/B→MID/B→B a uma. Há degrau de
 aproximadamente 0,406 m junto ao pontão; a prova é de transitabilidade, não suavidade.
-O branch `origin/codex/amazonia-ctf2-hotfix` e PR521 draft foram criados; `check:deploy`
-passou 37/37 com o Node do workspace. Aguardar CI antes de integrar a `main`.
+O branch `origin/codex/amazonia-ctf2-hotfix` e PR521 foram publicados; `check:deploy`
+passou 37/37 com o Node do workspace. Em 06/09 às 07:13:27Z o PR foi integrado como
+`3d4fdaa22358f373c3fb08d01df21af700c98f07`; `main` recebeu a release alpha.230
+`bee6d13e`. Build global (11m48s), portão, smoke, DCO, CodeQL e Vercel passaram. A fila
+de integração foi liberada para Lajes, depois Sertão e Escadão.
 
 ## Viewmodels e substituição Claude
 
