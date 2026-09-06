@@ -36,10 +36,20 @@ if (process.argv.includes('--mutante=parede')) {
   const a=world.nearestWaypoint(-16,-4),b=world.nearestWaypoint(-12.6,-4);
   assert.notEqual(a,b);adj[a].push(b);
 }
+const physicalEdge=(a,b)=>{
+  const count=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.z-a.z)/.1));let y=a.y??world.groundHeightAt(a.x,a.z);
+  for(let k=0;k<=count;k++) {
+    const x=a.x+(b.x-a.x)*k/count,z=a.z+(b.z-a.z)*k/count,ground=world.groundHeightAt(x,z,y);
+    if(Math.abs(ground-y)>.3)return false;
+    const p=new THREE.Vector3(x,ground,z);game._collide(p,.38);
+    if(Math.hypot(p.x-x,p.z-z)>.001)return false;y=ground;
+  }
+  return Math.abs(y-(b.y??world.groundHeightAt(b.x,b.z)))<.025;
+};
 const impossible=[];
 for(let i=0;i<nodes.length;i++)for(const j of adj[i]) {
   const a=nodes[i],b=nodes[j];
-  if(!game._retaAndavel(a.x,a.z,b.x,b.z,.38,.3))impossible.push({from:a,to:b});
+  if(!physicalEdge(a,b))impossible.push({from:a,to:b});
 }
 writeFileSync(`${out}/physical-edges.json`,JSON.stringify({edges:adj.flat().length,impossible},null,2));
 assert.equal(impossible.length,0,'Todas as arestas do grafo precisam caber no corpo e limite de passo reais');
