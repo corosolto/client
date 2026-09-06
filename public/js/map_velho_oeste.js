@@ -5,13 +5,16 @@ import { createFavelaAmbience, placeFauna, FAVELA_AMBIENCE_ASSETS } from './ambi
 import { placeProp, hasProp } from './mapprops.js';
 import { applyLook } from './map_sky.js';
 import { AMB_LOOPS } from './soundscape.js';
+import { sertaoLandscape, batchSertaoDecor } from './map_sertao_landscape.js';
+import { copaJuazeiro as addCopaJuazeiro, mandacaruSertao } from './map_sertao_flora.js';
+import { finishTaipa, finishVenda, crateBattens, settlementGround } from './map_sertao_architecture.js';
 
 const HALF_X = 34;
 const HALF_Z = 46;
 
-export const VELHO_OESTE_PROPS = ['sertao_mandacaru', 'sertao_macambira', 'sertao_juazeiro',
-  'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'sertao_palhoca_forro', 'caixa_som_baile',
-  'casa_pau_a_pique', 'casa_pedra', 'casa_platibanda', 'casa_geminada', 'igrejinha', 'caminhao_antigo'];
+export const VELHO_OESTE_PROPS = ['sertao_macambira', 'sertao_juazeiro',
+  'sertao_xique_xique', 'sertao_poco_roda', 'sertao_capelinha', 'caixa_som_baile',
+  'casa_pedra', 'casa_geminada', 'igrejinha', 'caminhao_antigo'];
 export const VELHO_OESTE_AMBIENCE = Object.freeze([...FAVELA_AMBIENCE_ASSETS, 'lagarto', 'calango']);
 
 export function buildVelhoOeste(scene, T) {
@@ -96,10 +99,18 @@ export function buildVelhoOeste(scene, T) {
      em node, que é onde a ST2 da eval:sertao lê o material da parede. */
   const texProcedural = (S, fn) => {
     const data = new Uint8Array(S * S * 4);
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) data.set([...fn(x, y)], 255, (y * S + x) * 4);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) data.set([...fn(x, y), 255], (y * S + x) * 4);
     const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
     t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.needsUpdate = true;
+    t.minFilter = THREE.LinearMipmapLinearFilter; t.magFilter = THREE.LinearFilter; t.generateMipmaps = true; t.anisotropy = 4;
     return t;
+  };
+  const patchNoise = (x, y, cells, size = 256) => {
+    const u=x/size*cells, v=y/size*cells, ix=Math.floor(u), iy=Math.floor(v);
+    const smooth=t=>t*t*(3-2*t), fx=smooth(u-ix), fy=smooth(v-iy);
+    const sample=(a,b)=>((Math.imul(((a+cells)%cells)*374761393 ^ ((b+cells)%cells)*668265263,1274126177)>>>8)%65536)/32768-1;
+    const a=sample(ix,iy)*(1-fx)+sample(ix+1,iy)*fx, b=sample(ix,iy+1)*(1-fx)+sample(ix+1,iy+1)*fx;
+    return a*(1-fy)+b*fy;
   };
   const texturaAdobe = () => {
     const t = texProcedural(128, (x, y) => {
@@ -111,16 +122,12 @@ export function buildVelhoOeste(scene, T) {
     });
     t.repeat.set(3, 2); t.name = 'oeste-adobe'; return t;
   };
-  /* Pau a pique (r2): troncos verticais ~25 cm entre face e face e varas horizontais
-     mais finas achatadas no barro (Wikipédia "Pau a pique"). Nome oeste-adobe-paupique
-     porque pau a pique É taipa de mão — a ST2 da eval:sertao lê o prefixo. */
+  // Reboco de taipa sem trama carimbada. O dano é localizado na malha da casa.
   const texturaPaupique = () => {
     const t = texProcedural(128, (x, y) => {
-      const tronco = (x % 32) < 4, vara = (y % 17) < 2, n = ((x * 23 + y * 11) % 15) - 7;
-      if (tronco) { const b = 112 + n; return [b, b - 24, b - 48]; }
-      if (vara) return [150, 121, 90];
-      const b = 190 + n;
-      return [b, b - 22, b - 52];
+      const n = ((Math.imul(x ^ (y * 373), 1597334677) >>> 16) % 11) - 5;
+      const wear = patchNoise(x,y,4,128)*12 + patchNoise(x,y,11,128)*4;
+      return [219 + n + wear, 212 + n + wear, 195 + n + wear];
     });
     t.repeat.set(2, 2); t.name = 'oeste-adobe-paupique'; return t;
   };
@@ -152,7 +159,7 @@ export function buildVelhoOeste(scene, T) {
     }
     const t = new THREE.DataTexture(data, S, S, THREE.RGBAFormat);
     t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.repeat.set(6, 7); t.needsUpdate = true; t.name = 'oeste-rachado';
+    t.repeat.set(48, 47); t.needsUpdate = true; t.name = 'oeste-rachado';
     return t;
   };
 
@@ -170,7 +177,7 @@ export function buildVelhoOeste(scene, T) {
   if (GLB_ON) {
     TX.wood = realTexture('wood-real-v1.webp', 'oeste-wood-real', 3, 5);
     TX.paleWood = realTexture('wood-real-v1.webp', 'oeste-wood-pale-real', 3, 5);
-    TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 12, 14);
+    TX.sand = realTexture('dirt-real-v1.webp', 'oeste-sand-real', 96, 94);
     TX.roof = realTexture('roof-real-v1.webp', 'oeste-roof-real', 4, 7);
     TX.cactus = realTexture('cactus-real-v1.webp', 'oeste-cactus-real', 2, 4);
     TX.hay = realTexture('hay-real-v1.webp', 'oeste-hay-real', 3, 3);
@@ -181,17 +188,25 @@ export function buildVelhoOeste(scene, T) {
   }
   const mat = (color, map = TX.wood, roughness = .9, metalness = 0, bumpScale = .045) => new THREE.MeshStandardMaterial({ color, map, bumpMap: map, bumpScale, roughness, metalness });
   const adobeDe = (color) => mat(color, TX.adobe || (TX.adobe = texturaAdobe()), .96, 0, .05);
-  const paupiqueDe = (color) => mat(color, TX.paupique || (TX.paupique = texturaPaupique()), .97, 0, .06);
+  const paupiqueDe = (color) => { const m = mat(color, TX.paupique || (TX.paupique = texturaPaupique()), .97, 0, .035); if (TX.adobe) m.bumpMap = TX.adobe; return m; };
+  const solo = texProcedural(256, (x, y) => {
+    const grain = ((Math.imul(x ^ (y * 373), 1597334677) >>> 16) % 7) - 3;
+    const patch = patchNoise(x,y,4)*22 + patchNoise(x,y,9)*9 + patchNoise(x,y,23)*3;
+    return [181 + grain + patch, 164 + grain + patch, 133 + grain + patch];
+  });
+  solo.name = 'oeste-sand'; solo.repeat.set(180, 180);
+  const mineral = texProcedural(128, (x,y) => { const n = ((Math.imul(x ^ (y * 373), 1597334677) >>> 16) % 15) - 7; return [167+n,163+n,149+n]; });
+  mineral.name = 'sertao-mineral'; mineral.repeat.set(2, 2);
   const MAT = {
-    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: TX.sand, bumpMap: TX.rachado || (TX.rachado = texturaRachado()), bumpScale: .22, roughness: 1, metalness: 0 }),
+    sand: new THREE.MeshStandardMaterial({ color: 0xffffff, map: solo, bumpMap: TX.rachado || (TX.rachado = texturaRachado()), bumpScale: .035, roughness: 1, metalness: 0 }),
     wood: mat(0xffffff), pale: mat(0xd9b17a, TX.paleWood), dark: mat(0x3b2115),
-    roof: mat(0xffffff, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
+    roof: mat(0xe1a582, TX.roof, .94, 0, .1), trim: mat(0xd8ad6b, TX.paleWood), metal: mat(0x8c8174, TX.metal, .55, .35, .035),
     black: mat(0x191411, TX.metal, .6, .25), cactus: mat(0xffffff, TX.cactus, 1, 0, .075), cactusLight: mat(0xaed09a, TX.cactus, 1, 0, .075),
     hay: mat(0xffffff, TX.hay, 1, 0, .09), red: mat(0x7e271f, TX.wood), blue: mat(0x2d5361, TX.wood), glass: mat(0x87b2ba, TX.metal, .25, .05, .01),
     windowVoid: new THREE.MeshBasicMaterial({ color: 0x1b110b }),
     adobe: adobeDe(0xffffff), adobeCaiado: adobeDe(0xf3ecdc), adobeOcre: adobeDe(0xd8b98c),
     paupiqueCru: paupiqueDe(0xffffff), paupiqueCaiado: paupiqueDe(0xf6efdd), paupiqueOcre: paupiqueDe(0xd8b98c),
-    pedra: mat(0x9a8d7c, TX.sand, 1, 0, .14),
+    pedra: mat(0xffffff, mineral, 1, 0, .025),
   };
 
   function addBox(w, h, d, material, x, y, z, opts = {}) {
@@ -217,10 +232,10 @@ export function buildVelhoOeste(scene, T) {
   }
   function signTexture(title, sub = '') {
     const c = document.createElement('canvas'); c.width = 512; c.height = 180; const x = c.getContext('2d');
-    x.fillStyle = '#3a1c10'; x.fillRect(0, 0, c.width, c.height); x.strokeStyle = '#d6a35e'; x.lineWidth = 12; x.strokeRect(8, 8, 496, 164);
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#f0c87d';
-    x.font = 'bold 58px Georgia,serif'; x.fillText(title, 256, sub ? 70 : 90);
-    if (sub) { x.font = 'bold 25px Georgia,serif'; x.fillText(sub, 256, 132); }
+    x.fillStyle = '#e1d7ba'; x.fillRect(0, 0, c.width, c.height); x.strokeStyle = '#406c65'; x.lineWidth = 12; x.strokeRect(8, 8, 496, 164);
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#334e4a';
+    x.font = 'bold 58px sans-serif'; x.fillText(title, 256, sub ? 70 : 90, 472);
+    if (sub) { x.font = 'bold 25px sans-serif'; x.fillText(sub, 256, 132); }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   }
   function addSign(title, sub, x, y, z, ry = 0, w = 6, h = 2.1) {
@@ -236,8 +251,9 @@ export function buildVelhoOeste(scene, T) {
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -48; sun.shadow.camera.right = 48;
   sun.shadow.camera.top = 58; sun.shadow.camera.bottom = -58; sun.shadow.camera.far = 160; sun.shadow.bias = -.00045;
 
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 180), MAT.sand); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
-  for (let z = -HALF_Z; z <= HALF_Z; z += 8) addBox(8, .025, .11, MAT.pale, 0, .02, z, { collide: false, cast: false });
+  sertaoLandscape(root, MAT.sand);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1200, 1200), MAT.sand); ground.name = 'sertao-solo'; ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; root.add(ground);
+
 
   /* ── O ARRAIAL r2 ── faroeste demolido; casas de pau a pique (Mint) em 2-3
      ruas de terra ao redor da PRAÇA DA MATRIZ com a igrejinha de landmark. */
@@ -250,8 +266,15 @@ export function buildVelhoOeste(scene, T) {
   for (const z of [-HALF_Z, HALF_Z]) {
     addBox(22, 1.5, .22, MAT.pale, -22, 0, z); addBox(22, 1.5, .22, MAT.pale, 22, 0, z);
     addSign('SERTÃO', 'DA TRETA', 0, 6.4, z, z > 0 ? Math.PI : 0, 10, 3);
-    for (const x of [-6, 6]) addBox(.35, 7.6, .35, MAT.dark, x, 0, z);
-    addBox(12.4, .35, .35, MAT.dark, 0, 7.3, z, { collide: false });
+    for (const x of [-6, 6]) addBox(.35, 7.6, .35, MAT.adobeCaiado, x, 0, z);
+    addBox(12.4, .35, .35, MAT.adobeCaiado, 0, 7.3, z, { collide: false });
+  }
+
+  // RV5 reproduziu visão direta entre bases. Abrigos deixam seis metros centrais
+  // e ambos os flancos livres; spawn/arsenal continuam atrás, CTF continua adiante.
+  for (const z of [-37, 37]) for (const x of [-8.5, 8.5]) {
+    addBox(11, 1.85, .45, MAT.adobeCaiado, x, 0, z, { name: `abrigo-spawn-${x}-${z}`, tag: 'abrigo-spawn' });
+    addBox(11.1, .12, .52, MAT.roof, x, 1.85, z, { collide: false });
   }
 
   /* GLB (Mint) OU proxy procedural, nunca os dois: mesh invisível como occluder
@@ -259,21 +282,19 @@ export function buildVelhoOeste(scene, T) {
      casa o casario com a rua (a r1 girava tudo por id*1.7 — sem controle de face). */
   function sertaoElement(name, id, x, z, buildProxy, propId, targetH, collider, opts = {}) {
     const group = new THREE.Group(); group.name = `sertao-${name}-${id}`; group.position.set(x, 0, z); root.add(group);
-    let visualRoot = group;
-    if (GLB_ON && propId && hasProp(propId)) {
-      const prop = placeProp(propId, { x, z, targetH: opts.targetH ?? targetH, targetLen: opts.targetLen ?? 0, ry: opts.ry ?? id * 1.7 });
-      if (prop) { root.add(prop); visualRoot = prop; }
-    }
-    if (visualRoot === group) {
-      group.rotation.y = opts.ry ?? id * 1.7;
-      buildProxy(group, opts);
-    }
+    group.rotation.y = opts.ry ?? id * 1.7;
+    const prop = GLB_ON && !opts.authored && propId && hasProp(propId)
+      ? placeProp(propId, { targetH: opts.targetH ?? targetH, targetLen: opts.targetLen ?? 0 }) : null;
+    if (prop) group.add(prop); else buildProxy(group, opts);
+    if (opts.after) opts.after(group);
+    if (/mandacaru|macambira|juazeiro|xique/.test(name)) group.traverse(m => { if (m.isMesh) m.castShadow = false; });
     if (collider) {
-      const c = Math.abs(Math.cos(group.rotation.y)), s = Math.abs(Math.sin(group.rotation.y));
-      const hx = c * collider[0] + s * collider[2], hz = s * collider[0] + c * collider[2];
-      colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: collider[1], minZ: z - hz, maxZ: z + hz, tag: opts.tag });
-      const base = visualRoot === group ? group : visualRoot;
-      occluders.push(base);
+      const cos = Math.cos(group.rotation.y), sin = Math.sin(group.rotation.y);
+      const hx = Math.abs(cos) * collider[0] + Math.abs(sin) * collider[2];
+      const hz = Math.abs(sin) * collider[0] + Math.abs(cos) * collider[2];
+      colliders.push({ minX: x - hx, maxX: x + hx, minY: 0, maxY: collider[1], minZ: z - hz, maxZ: z + hz,
+        cx: x, cz: z, hx: collider[0], hz: collider[2], cos, sin, ry: group.rotation.y, tag: opts.tag ?? group.name });
+      occluders.push(group);
     }
     return group;
   }
@@ -283,24 +304,31 @@ export function buildVelhoOeste(scene, T) {
   const CAIACOES = [MAT.paupiqueCaiado, MAT.paupiqueCru, MAT.paupiqueOcre];
   function casaProxy(group, opts = {}) {
     const cor = CAIACOES[opts.variante ?? 0], w = opts.w ?? 5.4, d = opts.d ?? 6.8, h = 3.1;
-    const parede = new THREE.Mesh(boxGeo(w, h, d), cor);
-    parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .55 + h / 2;
+    const wallGeo = new THREE.BoxGeometry(w, h, d, 4, 4, 4), points = wallGeo.attributes.position;
+    for (let j=0;j<points.count;j++) { const x=points.getX(j),y=points.getY(j),z=points.getZ(j); points.setXYZ(j,x+Math.sin(y*3+z)*.025,y,z+Math.cos(y*4+x)*.02); }
+    wallGeo.computeVertexNormals();
+    const parede = new THREE.Mesh(wallGeo, cor);
+    parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .15 + h / 2;
     parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
-    const base = new THREE.Mesh(boxGeo(w + .25, .55, d + .25), MAT.pedra);
-    base.position.y = .275; base.castShadow = true; base.receiveShadow = true; group.add(base);
+    const base = new THREE.Mesh(boxGeo(w + .25, .15, d + .25), MAT.pedra);
+    base.position.y = .075; base.castShadow = true; base.receiveShadow = true; group.add(base);
     for (const sx of [-1, 1]) {
-      const agua = new THREE.Mesh(boxGeo(w * .56, .3, d + 1), MAT.roof);
-      agua.position.set(sx * w * .27, .55 + h + .15, 0); agua.rotation.z = sx * .16; agua.castShadow = true; group.add(agua);
+      const agua = new THREE.Mesh(boxGeo(w * .59, .18, d + 1), MAT.roof);
+      agua.position.set(sx * w * .27, 3.72, 0); agua.rotation.z = -sx * .30; agua.castShadow = true; group.add(agua);
     }
-    const cumeeira = new THREE.Mesh(boxGeo(.34, .22, d + 1.25), MAT.dark);
-    cumeeira.position.set(0, .55 + h + w * .28, 0); cumeeira.castShadow = true; group.add(cumeeira);
+    const gableGeo = new THREE.BufferGeometry();
+    gableGeo.setAttribute('position', new THREE.Float32BufferAttribute([-w/2,3.25,d/2, w/2,3.25,d/2, 0,4.15,d/2, w/2,3.25,-d/2, -w/2,3.25,-d/2, 0,4.15,-d/2], 3));
+    gableGeo.setAttribute('uv', new THREE.Float32BufferAttribute([0,0,1,0,.5,1,0,0,1,0,.5,1], 2)); gableGeo.computeVertexNormals();
+    group.add(new THREE.Mesh(gableGeo, cor));
+    const cumeeira = new THREE.Mesh(boxGeo(.34, .22, d + 1.25), MAT.roof);
+    cumeeira.position.set(0, 4.17, 0); cumeeira.castShadow = true; group.add(cumeeira);
     const porta = new THREE.Mesh(boxGeo(1.15, 2.05, .14), MAT.dark);
-    porta.position.set(0, .55 + 1.02, d / 2 + .02); group.add(porta);
+    porta.position.set(0, .15 + 1.02, d / 2 + .02); group.add(porta);
     for (const sx of [-1.55, 1.55]) {
-      const jan = new THREE.Mesh(boxGeo(.8, .8, .12), MAT.dark);
-      jan.position.set(sx, .55 + 1.9, d / 2 + .02); group.add(jan);
+      const jan = new THREE.Mesh(boxGeo(.8, .8, .12), opts.id % 2 ? MAT.blue : MAT.red);
+      jan.position.set(sx, .15 + 1.9, d / 2 + .02); group.add(jan);
       const moldura = new THREE.Mesh(boxGeo(.98, .98, .1), MAT.pale);
-      moldura.position.set(sx, .55 + 1.9, d / 2 - .01); group.add(moldura);
+      moldura.position.set(sx, .15 + 1.9, d / 2 - .01); group.add(moldura);
     }
     for (const sx of [-1, 1]) {
       const esteio = new THREE.Mesh(boxGeo(.16, 2.55, .16), MAT.dark);
@@ -308,6 +336,7 @@ export function buildVelhoOeste(scene, T) {
     }
     const beiral = new THREE.Mesh(boxGeo(w + .7, .16, 1.5), MAT.roof);
     beiral.position.set(0, 2.85, d / 2 + 1.05); beiral.rotation.x = -.14; beiral.castShadow = true; group.add(beiral);
+    finishTaipa(group, MAT.roof, MAT.paupiqueOcre, opts.id ?? 0, w, d);
   }
   /* r3b: as 3 famílias novas do mix (feedback r3). Pedra usa MAT.pedra de propósito —
      casa de pedra é construto sertanejo; a ST2 da eval:sertao conta a folga. */
@@ -334,7 +363,7 @@ export function buildVelhoOeste(scene, T) {
     }
   }
   function casaPlatibandaProxy(group, opts = {}) {
-    const cor = opts.variante ? MAT.adobeOcre : MAT.adobeCaiado, w = 7.8, d = 6.4, h = 3.6;
+    const cor = opts.variante ? MAT.paupiqueOcre : MAT.paupiqueCaiado, w = 7.8, d = 6.4, h = 3.6;
     const parede = new THREE.Mesh(boxGeo(w, h, d), cor);
     parede.name = `parede-casa-${opts.id ?? 0}`; parede.position.y = .5 + h / 2;
     parede.castShadow = true; parede.receiveShadow = true; group.add(parede);
@@ -342,7 +371,7 @@ export function buildVelhoOeste(scene, T) {
     base.position.y = .25; base.castShadow = true; base.receiveShadow = true; group.add(base);
     const platibanda = new THREE.Mesh(boxGeo(w + .35, .85, .32), cor);
     platibanda.position.set(0, .5 + h + .42, d / 2 - .12); platibanda.castShadow = true; group.add(platibanda);
-    const cornija = new THREE.Mesh(boxGeo(w + .5, .14, .48), MAT.trim);
+    const cornija = new THREE.Mesh(boxGeo(w + .5, .14, .48), cor);
     cornija.position.set(0, .5 + h + .88, d / 2 - .12); cornija.castShadow = true; group.add(cornija);
     const oitao = new THREE.Mesh(boxGeo(w + .4, .2, d + .5), MAT.roof);
     oitao.position.set(0, .5 + h - .3, 0); oitao.rotation.x = -.07; oitao.castShadow = true; group.add(oitao);
@@ -405,14 +434,19 @@ export function buildVelhoOeste(scene, T) {
   CASAS.forEach((c, i) => {
     const F = FAMILIAS_CASA[c.fam];
     sertaoElement(`casa-${c.fam}`, i, c.x, c.z, F.proxy, F.prop, F.h(i),
-      F.col, { ry: c.ry, variante: c.v ?? 0, id: i, targetLen: F.len });
-    /* Alpendre com colisor PRÓPRIO e fino (idioma r1): no colisor grosso da casa
-       o _collide ejeta só 0,38 do centro; colador na parede espreme o corpo (0,16). */
-    const oz = 4.4, aw = 2.6, ad = .8;
-    const cx = c.x + Math.sin(c.ry) * oz, cz = c.z + Math.cos(c.ry) * oz;
-    const ca = Math.abs(Math.cos(c.ry)), sa = Math.abs(Math.sin(c.ry));
-    colliders.push({ minX: cx - (ca * aw + sa * ad), maxX: cx + (ca * aw + sa * ad), minY: 0, maxY: 2.6,
-      minZ: cz - (sa * aw + ca * ad), maxZ: cz + (sa * aw + ca * ad), tag: `varanda-casa-${i}` });
+      F.col, { ry: c.ry, variante: c.v ?? 0, id: i, targetLen: F.len, authored: ['paupique', 'platibanda'].includes(c.fam),
+        after: c.fam === 'platibanda' ? g => finishVenda(g, MAT, i) : undefined });
+    if (i === 0) {
+      const placa = addSign('VENDA DO SERTÃO', 'FARINHA • ÁGUA • PROSA', c.x + Math.sin(c.ry) * 3.55, 4.48, c.z + Math.cos(c.ry) * 3.55, c.ry, 5.2, .85);
+      placa.name = 'sertao-venda-placa';
+    }
+    // Apenas os esteios VISÍVEIS bloqueiam a varanda aberta. O vão central é transitável.
+    if (c.fam === 'paupique') for (const sx of [-2.2, 2.2]) {
+      const cos = Math.cos(c.ry), sin = Math.sin(c.ry), oz = 4.5;
+      const cx = c.x + cos * sx + sin * oz, cz = c.z - sin * sx + cos * oz;
+      colliders.push({ minX: cx - .08, maxX: cx + .08, minY: 0, maxY: 2.55,
+        minZ: cz - .08, maxZ: cz + .08, tag: `varanda-casa-${i}-${sx}` });
+    }
   });
 
   /* ── IGREJINHA DA MATRIZ — landmark da praça, porta pro sul (pro largo). Proxy:
@@ -438,7 +472,8 @@ export function buildVelhoOeste(scene, T) {
     }
     const adro = new THREE.Mesh(boxGeo(8.6, .18, 2.2), MAT.pedra);
     adro.position.set(0, .09, 5.4); adro.receiveShadow = true; group.add(adro);
-  }, 'igrejinha', 7.2, [4.4, 7.4, 6.7], { ry: 0, targetLen: 0 });
+    group.children.forEach(m => { m.position.multiply(new THREE.Vector3(.66, .797, .69)); m.scale.multiply(new THREE.Vector3(.66, .797, .69)); });
+  }, 'igrejinha', 7.2, [2.18, 7.2, 3.15], { ry: 0, targetLen: 0 });
 
   /* ── CAMINHÃO ANTIGO estacionado na lateral leste (cover grande) — genérico
      anos 60 SEM marca (linha editorial). Visual centrado no colisor: MAP1. */
@@ -469,21 +504,14 @@ export function buildVelhoOeste(scene, T) {
     const estepe = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, .36, 12), MAT.black);
     estepe.rotation.z = Math.PI / 2; estepe.position.set(0, 1.35, -3.15); carroceria.add(estepe);
   }, 'caminhao_antigo', 2.9, [1.55, 2.9, 3.45], { ry: .14, targetLen: 6.8 });
-  const mandacaruProxy = (scale, light) => (group) => {
-    const material = light ? MAT.cactusLight : MAT.cactus;
-    const trunk = new THREE.Mesh(cylGeo(.38 * scale, 3.8 * scale, 10), material); trunk.position.y = 3.8 * scale / 2; trunk.castShadow = true; group.add(trunk);
-    for (const dir of [-1, 1]) {
-      const arm = new THREE.Mesh(cylGeo(.22 * scale, 1.5 * scale, 9), material); arm.position.set(dir * .65 * scale, 1.35 * scale + .75 * scale, 0); arm.castShadow = true; group.add(arm);
-      const elbow = new THREE.Mesh(cylGeo(.2 * scale, .85 * scale, 9), material); elbow.rotation.z = Math.PI / 2; elbow.position.set(dir * .35 * scale, 1.25 * scale + .425 * scale, 0); elbow.castShadow = true; group.add(elbow);
-    }
-  };
+  const mandacaruProxy = (scale, light, id) => group => mandacaruSertao(group, light ? MAT.cactusLight : MAT.cactus, scale, id);
   /* Caatinga DENSA (r2): "mata branca" espinhosa, não deserto de faroeste — o dono
      pediu leitura de CATINGA. Mandacaru em moitas, xique-xique em touceira,
      juazeiro tortuoso e macambira fechando as faixas além do casario. */
-  [[-21,-39,1],[22,-38,.8],[-22,-20,.7],[23,1,1],[-21,18,.9],[22,41,1.1],[17,24,.65],[-18,40,.7],
+  [[-21,-39,1],[22,-38,.8],[-22,-20,.7],[23,1,1],[-29,20,.9],[22,41,1.1],[17,24,.65],[-18,40,.7],
    [-28,-33,1.2],[28,-30,.9],[-29,-10,.75],[29,-24,1],[-28,6,1.05],[29,12,.8],[-27,30,.95],[28,34,.7],
    [-25.5,-22,.85],[25.5,20,1],[-19,-44,.9],[14,-40,.75]].forEach((p, i) =>
-    sertaoElement('mandacaru', i, p[0], p[1], mandacaruProxy(p[2], i % 2), 'sertao_mandacaru', 3.8 * p[2] + .5, [.38 * p[2], 3.8 * p[2], .38 * p[2]]));
+    sertaoElement('mandacaru', i, p[0], p[1], mandacaruProxy(p[2], i % 2, i), 'sertao_mandacaru', 3.8 * p[2] + .5, [.38 * p[2], 3.8 * p[2], .38 * p[2]], { authored: true }));
   const macambiraProxy = (group) => {
     const material = new THREE.MeshStandardMaterial({ color: 0x93a06b, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .06, roughness: 1 });
     for (let i = 0; i < 10; i++) {
@@ -508,16 +536,16 @@ export function buildVelhoOeste(scene, T) {
     /* juazeiro é das poucas folhas que ficam na caatinga seca (Wikipédia "Juazeiro"):
        copa verde-clara miúda por cima dos ramos tortuosos. Map TX.cactus: tufo
        sem textura era material chapado contando na SUP1 do portão de mapa. */
-    for (let i = 0; i < 5; i++) {
-      const tufo = new THREE.Mesh(new THREE.SphereGeometry(.62, 7, 5),
-        new THREE.MeshStandardMaterial({ color: 0x8fae6f, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .05, roughness: 1 }));
-      tufo.scale.set(1, .62, 1);
-      tufo.position.set(Math.sin(i * 2.1) * .9, 3.9 + (i % 3) * .3, Math.cos(i * 1.7) * .9);
-      tufo.castShadow = true; group.add(tufo);
-    }
   };
+  const folhaTex = texProcedural(128, (x, y) => {
+    const n = ((Math.imul(x ^ (y * 373), 1597334677) >>> 16) % 27) - 13;
+    return [101 + n, 119 + n, 70 + n];
+  });
+  folhaTex.name = 'sertao-folhagem';
+  const folha = new THREE.MeshStandardMaterial({ map: folhaTex, roughness: 1 });
+  function copaJuazeiro(group) { addCopaJuazeiro(group, folha); }
   [[-25.5, -13], [25.5, 14], [-20.5, 34], [27, -8]].forEach((p, i) =>
-    sertaoElement('juazeiro', i, p[0], p[1], juazeiroProxy, 'sertao_juazeiro', 4.6, [.3, 3.2, .3]));
+    sertaoElement('juazeiro', i, p[0], p[1], juazeiroProxy, 'sertao_juazeiro', 4.6, [.3, 3.2, .3], { after: copaJuazeiro }));
   const xiqueProxy = (group) => {
     const material = new THREE.MeshStandardMaterial({ color: 0x5e7d5a, map: TX.cactus, bumpMap: TX.cactus, bumpScale: .05, roughness: 1 });
     for (let i = 0; i < 7; i++) {
@@ -533,7 +561,14 @@ export function buildVelhoOeste(scene, T) {
      é o "anel atravessável" que o MAP1 pega. O lagarto baska em duas delas. */
   const pedras = [[26.5, -25, 1.5, 1.1], [-26.5, -27, 1.2, .9], [26, 36, 1.7, 1.25], [-25, 25, 1.1, .8], [20, -12.5, .9, .65]];
   pedras.forEach((p, i) => sertaoElement('pedra', i, p[0], p[1], (group) => {
-    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(p[2], 0), MAT.pedra);
+    const geo = new THREE.DodecahedronGeometry(p[2], 1), vertices = geo.attributes.position;
+    for (let j = 0; j < vertices.count; j++) {
+      const x = vertices.getX(j), y = vertices.getY(j), z = vertices.getZ(j);
+      const warp = .9 + .1 * Math.sin(x * 6 + z * 3 + i) * Math.cos(y * 4);
+      vertices.setXYZ(j, x * warp, y * (.85 + .12 * Math.sin(x * 3 + i)), z * warp);
+    }
+    geo.computeVertexNormals();
+    const rock = new THREE.Mesh(geo, MAT.pedra);
     rock.scale.set(1, p[3] / p[2], .82); rock.position.y = p[3] * .42; rock.rotation.y = i * 1.3;
     rock.castShadow = true; rock.receiveShadow = true; group.add(rock);
   }, null, 0, [p[2], p[3] * 1.42, p[2] * .82]));
@@ -581,18 +616,19 @@ export function buildVelhoOeste(scene, T) {
     const cruzH = new THREE.Mesh(boxGeo(.42, .1, .1), MAT.dark); cruzH.position.set(0, 3.72, 0); group.add(cruzH);
   }, 'sertao_capelinha', 3.4, [1.3, 2.4, 1.3]);
 
+  const tecidos = [];
   sertaoElement('palhoca', 0, -22, 20, (group) => {
     const piso = new THREE.Mesh(boxGeo(9, .14, 7), MAT.pale); piso.position.y = .07; piso.receiveShadow = true; group.add(piso);
     const palco = new THREE.Mesh(boxGeo(3.6, .55, 2.2), MAT.wood); palco.position.set(0, .14 + .275, 0); palco.castShadow = true; group.add(palco);
     for (const px of [-1.55, 1.55]) for (const pz of [-.6, .6]) {
-      const poste = new THREE.Mesh(boxGeo(.16, 2.9, .16), MAT.dark); poste.position.set(px, .69 + 1.45, pz); poste.castShadow = true; group.add(poste);
+      const poste = new THREE.Mesh(boxGeo(.16, 2.3, .16), MAT.dark); poste.position.set(px, .69 + 1.15, pz); poste.castShadow = true; group.add(poste);
     }
     const telhadoPalha = new THREE.Mesh(new THREE.ConeGeometry(3.1, 1.15, 4), MAT.hay);
     telhadoPalha.position.set(0, 3.55, 0); telhadoPalha.rotation.y = Math.PI / 4; telhadoPalha.castShadow = true; group.add(telhadoPalha);
     for (let i = 0; i < 7; i++) {
       const bandeirola = new THREE.Mesh(new THREE.PlaneGeometry(.22, .3), new THREE.MeshStandardMaterial({ color: [0xc23b4e, 0x2f7fbf, 0xd9a521, 0x3f9455][i % 4], side: THREE.DoubleSide, roughness: .8 }));
       const fx = -3.9 + i * 1.3;
-      bandeirola.position.set(fx, 2.45, 3.3); bandeirola.rotation.z = .18; group.add(bandeirola);
+      bandeirola.position.set(fx, 2.45, 3.3); bandeirola.rotation.z = .18; bandeirola.name = `tecido-forro-${i}`; group.add(bandeirola); tecidos.push(bandeirola);
       if (i < 6) { const corda = new THREE.Mesh(boxGeo(1.3, .02, .02), MAT.black); corda.position.set(fx + .65, 2.55, 3.3); group.add(corda); }
     }
     for (const bx of [-3.4, 3.4]) {
@@ -602,7 +638,7 @@ export function buildVelhoOeste(scene, T) {
     const caixa = GLB_ON && hasProp('caixa_som_baile') ? placeProp('caixa_som_baile', { x: -22, z: 19.6, y: .69, targetH: 1.05 }) : null;
     if (caixa) root.add(caixa);
     else { const caixaProxy = new THREE.Mesh(boxGeo(1.0, .95, .6), MAT.black); caixaProxy.position.set(0, .69 + .475, -.4); caixaProxy.castShadow = true; group.add(caixaProxy); }
-  }, 'sertao_palhoca_forro', 4.4, [1.9, .95, .85]);
+  }, 'sertao_palhoca_forro', 4.4, [1.8, .69, 1.1], { authored: true, ry: 0 });
   /* bancos da quadra: colisor próprio — topo .66 m é cover de corpo agachado,
      atravessá-lo é o mesmo defeito do palco (MAP1). */
   for (const bx of [-25.4, -18.6]) {
@@ -616,12 +652,11 @@ export function buildVelhoOeste(scene, T) {
     const c = document.createElement('canvas'); c.width = 512; c.height = 170; const x = c.getContext('2d');
     x.fillStyle = '#7a5a33'; x.fillRect(0, 0, 512, 170);
     for (let i = 0; i < 260; i++) { const v = 70 + (i * 37 % 50); x.fillStyle = `rgba(${v + 60},${v + 30},${v},${.2})`; x.fillRect((i * 89) % 512, (i * 53) % 170, 2, 2); }
-    x.textAlign = 'left'; x.fillStyle = '#2e1c0c'; x.font = 'bold 40px Georgia,serif';
-    x.fillText('SÃO PAULO  3.022 km', 26, 62);
-    x.font = 'bold 40px Georgia,serif'; x.fillText('FORTALEZA  789 km', 26, 116);
-    x.textAlign = 'right'; x.fillStyle = '#5a2e14'; x.font = '900 52px Georgia,serif';
-    x.fillText('TRETA 0 km', 486, 150);
-    x.strokeStyle = '#3d2812'; x.lineWidth = 8; x.strokeRect(6, 6, 500, 158);
+    x.fillStyle = '#ded3b4'; x.fillRect(0, 0, 512, 170);
+    x.textAlign = 'left'; x.fillStyle = '#34544e'; x.font = 'bold 32px sans-serif';
+    x.fillText('← POÇO / FORRÓ', 24, 53);
+    x.fillText('PRAÇA DA MATRIZ →', 24, 108);
+    x.font = '18px sans-serif'; x.fillText('SERTÃO DA TRETA', 24, 146);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.name = 'oeste-placa-distancias';
     const placa = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 1.55), new THREE.MeshStandardMaterial({ map: t, roughness: .9 }));
     placa.position.set(0, 2.55, .12); group.add(placa);
@@ -679,23 +714,26 @@ export function buildVelhoOeste(scene, T) {
     for (const px of [-2.05, 2.05]) part(.16, .55, 1.35, MAT.pale, px, .28, 0);
     part(3.8, .04, 1.15, MAT.glass, 0, .31, 0); for (const px of [-1.65, 1.65]) part(.18, .5, .18, MAT.dark, px, 0, 0);
   });
-  obstacle('caixas-feira', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder) => {
+  obstacle('caixas-feira', -3, 9, -.12, 1.45, 1.1, 1.75, (part, cylinder, group) => {
     part(1.8, 1.05, 1.55, MAT.pale, -.45, 0, 0); part(1.35, .85, 1.35, MAT.wood, .65, 1.02, .05);
     for (const pz of [-.42, 0, .42]) cylinder(.16, .35, MAT.red, .65 + (pz === 0 ? .3 : -.1), 1.44, pz, { rz: Math.PI / 2, segments: 9 });
     part(1.42, .08, .12, MAT.dark, .65, 1.84, 0);
+    crateBattens(group, MAT.pale, [[-.45,0,0,1.8,1.05,1.55],[.65,1.02,.05,1.35,.85,1.35]]);
   });
+  // Mantém o volume competitivo antigo; agora é mureta de banco da praça.
   obstacle('amarra-cavalos', 4, -8, .04, 2.7, .35, 1.45, (part) => {
-    for (const px of [-2.35, 0, 2.35]) { part(.25, 1.45, .25, MAT.dark, px, 0, 0); part(.46, .12, .46, MAT.metal, px, 1.45, 0); }
-    part(5.2, .22, .22, MAT.pale, 0, .88, 0); part(5.2, .12, .12, MAT.dark, 0, 1.08, 0);
+    part(5.4, 1.35, .7, MAT.adobeCaiado, 0, 0, 0);
+    part(5.4, .1, .7, MAT.blue, 0, 1.35, 0);
   });
   obstacle('barricada', 10, -10, -.28, 2.15, .55, 1.65, (part) => {
     part(4.2, .32, .34, MAT.pale, 0, .55, 0, { rz: .23 }); part(4.2, .32, .34, MAT.wood, 0, 1.02, 0, { rz: -.18 });
     for (const px of [-1.75, 1.75]) part(.28, 1.65, .3, MAT.dark, px, 0, 0);
     for (const px of [-1.6, 1.6]) part(1.35, .22, .25, MAT.dark, px, .05, 0, { rz: px < 0 ? .55 : -.55 });
   });
-  obstacle('caixotes-carga', -9, -8, .16, 1.65, 1.15, 1.8, (part) => {
+  obstacle('caixotes-carga', -9, -8, .16, 1.65, 1.15, 1.8, (part, cylinder, group) => {
     part(1.8, 1.1, 1.7, MAT.wood, -.65, 0, 0); part(1.55, 1.05, 1.5, MAT.pale, .75, 0, .15);
     part(1.25, .72, 1.25, MAT.dark, .15, 1.08, -.05);
+    crateBattens(group, MAT.pale, [[-.65,0,0,1.8,1.1,1.7],[.75,0,.15,1.55,1.05,1.5],[.15,1.08,-.05,1.25,.72,1.25]]);
   });
   obstacle('barris-empilhados', 8, 3, -.12, 1.55, 1.05, 1.9, (part, cylinder) => {
     for (const px of [-.72, .72]) cylinder(.62, 1.25, MAT.dark, px, 0, 0, { segments: 12 });
@@ -720,21 +758,7 @@ export function buildVelhoOeste(scene, T) {
     addCylinder(.67, .1, MAT.metal, x, .98, z, { segments: 12 });
   }
 
-  // Plantas rolantes: malhas abertas, sem colisão, atravessando a rua com rajadas diferentes.
-  const tumbleweeds = [];
-  function tumbleweed(index, z, radius) {
-    const group = new THREE.Group(); group.name = `tumbleweed-${index}`; root.add(group);
-    const twigMat = new THREE.MeshStandardMaterial({ color: 0x76502a, roughness: 1 });
-    for (let i = 0; i < 9; i++) {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(radius * (.62 + (i % 3) * .15), .035, 5, 14), twigMat);
-      ring.rotation.set(i * .61, i * .93, i * .37); group.add(ring);
-    }
-    const collider = { minX: 0, maxX: 0, minY: 0, maxY: radius * 2 + .36, minZ: 0, maxZ: 0 };
-    group.userData = { index, z, radius, speed: 3.2 + index * .65, phase: index * 19.7, collider };
-    colliders.push(collider);
-    tumbleweeds.push(group); return group;
-  }
-  tumbleweed(0, -12, .75); tumbleweed(1, 9, .58); tumbleweed(2, 32, .88);
+  // Microvida não é obstáculo móvel: somente tecidos oscilam com o vento.
 
   const GM = { dark: MAT.black, steel: MAT.metal, wood: MAT.pale };
   function gun(kind, x, z, yaw) {
@@ -783,16 +807,7 @@ export function buildVelhoOeste(scene, T) {
     return [fromIdx];
   }
   function update(dt, elapsed) {
-    for (const weed of tumbleweeds) {
-      const { index, z, radius, speed, phase, collider } = weed.userData;
-      weed.position.x = -29 + ((elapsed * speed + phase) % 58);
-      weed.position.z = z + Math.sin(elapsed * .72 + index * 2.3) * 2.1;
-      weed.position.y = radius + Math.abs(Math.sin(elapsed * 2.4 + index)) * .18;
-      weed.rotation.z = -elapsed * speed / radius; weed.rotation.x = Math.sin(elapsed + index) * .28;
-      const footprint = radius * .72;
-      collider.minX = weed.position.x - footprint; collider.maxX = weed.position.x + footprint;
-      collider.minZ = weed.position.z - footprint; collider.maxZ = weed.position.z + footprint;
-    }
+    tecidos.forEach((tecido, i) => { tecido.rotation.x = Math.sin(elapsed * 1.8 + i * .6) * .16; });
   }
 
   update(0, 0);
@@ -815,7 +830,7 @@ export function buildVelhoOeste(scene, T) {
       { pos: [12, 0, 33], to: [14, 0, 35], phase: 2 },
     ],
     parrots: [
-      { pos: [-21, 3.4, 17.8], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
+      { pos: [-22, 4.15, 20], phase: .4 }, { pos: [22.5, 2.9, 28.9], phase: 1.8 },
     ],
     calangos: [
       { pos: [21.6, 0, -21], to: [21.8, 0, -14.8], phase: .2 },
@@ -824,8 +839,10 @@ export function buildVelhoOeste(scene, T) {
     ],
   });
 
+  settlementGround(root);
+  batchSertaoDecor(root, occluders);
   return {
-    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:26,vol:.4}],bioma:'campo'},
+    ambience,sound:{loops:[{src:AMB_LOOPS.vento,pos:[0,3,0],radius:70,vol:.34},{src:AMB_LOOPS.passaros,pos:[0,3,0],radius:70,vol:.22},{src:AMB_LOOPS.sanfona,pos:[-22,2.6,19.6],radius:12,vol:.12}],bioma:'campo'},
     root, colliders, occluders, decalSolids: [root], groundHeightAt, slowAt, pickups, sun, update,
     spawns: {
       E: [-12, -4, 4, 12].map(x => ({ x, z: -41, yaw: 0 })),

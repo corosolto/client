@@ -199,3 +199,6 @@ tmp/
 url_verification_cache.json
 # Logs de eval/serve do scratchpad (os PROMPT-HANDOFF-*.md são HISTÓRIA e ficam).
 scratchpad/*.log
+
+# Evidência local 3:2, logs e pacotes baixados da frente isolada Sertão.
+/artifacts/sertao-astra/
