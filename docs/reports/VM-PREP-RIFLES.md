@@ -1,5 +1,104 @@
 # Preparação offline dos rifles
 
+## Continuação atual — candidata de pose M4, sem aprovação final
+
+Após Ruben dizer “entao vamos lá”, foi produzida uma candidata **própria e
+estática da M4**, disponível por opção de QA no servidor exclusivo 8160.
+O objetivo completo continua sendo as seis armas no Game; nenhuma está
+finalizada. Esta seção prevalece sobre os estados anteriores de “nenhum asset
+exportado” e “servidor somente com baseline”. O baseline anterior continua
+acessível sem `vmrifles=m4-c1` e continua reprovado pelo dono.
+
+- Comparação: http://127.0.0.1:8160/rifles-m4/review.html.
+- Teste da pose no Game: http://127.0.0.1:8160/?debug=1&auto=E&vmweapon=m4&map=brasilia&armaslazy=0&vmready=ar&vmrifles=m4-c1.
+- Artefatos privados: `A/m4-candidate/`; fonte editável `m4-candidate.blend`,
+  exportação `m4-baked-runtime.glb`, SHA-256
+  `0d12f0822dbf0ebe5c5a67a4bf8a6d11ba64a0f1cc7f6503b4da4bf5895b48e7`.
+- Fonte ar original somente leitura: `P/ar/ar.blend`, SHA-256
+  `d85375f6b1bf6b06fa995a1cceeebcf559632f6b26da8a5c965fe8a64bd8414e`.
+  A fonte Blender mostra o doador alinhado aos braços; não tem a divergência
+  extrema do GLB nativo montado. Não foi reutilizada sua importação glTF defeituosa.
+
+### O que mudou na candidata
+
+Arma Mint normalizada a 0,84, sem reduzir as mãos. Arma, contatos e câmera foram
+compostos juntos: diagonal para o centro, mira traseira visível, receptor lateral
+e coronha recortada. O apoio próprio no grip vertical usa pose fechada; ombros,
+cotovelos, punhos e indicador foram ajustados. A solução não copia malha ou ação
+de CS 1.6. Tentativas de apenas girar o punho 90° em X/Y foram reprovadas por
+flexão excessiva ou dedos abertos.
+
+O rig mantém 67 bones, com bind dedicado à pose. A fonte tinha 950 vértices de
+luva com mais de quatro influências; a candidata limita e normaliza os pesos
+para quatro antes de avaliar/exportar. As escalas residuais de importação foram
+normalizadas, mantendo a escala 0,01 do objeto rig. A deformação foi incorporada
+ao bind da candidata, conservando skin e grupos para autoria posterior. Esse
+bind não é uma base intercambiável para transplantar os clipes do doador.
+Os atlas centrais E foram apenas lidos para o render; nenhum atlas/material
+compartilhado foi escrito. A identidade no Game continua passando por `vmhands`.
+
+`rifles-m4-stage.py` materializa **cópias locais** de `vmconfig.js` e
+`authoredvm.js` apenas em `A/local-server-8160/public/js`. Com a opção exata
+`vmrifles=m4-c1`, a M4 usa baked por arma e a câmera exportada, sem os offsets
+de família. O General equip é omitido somente nesse preview, porque arrancaria
+os contatos da pose própria. Sem a opção, a configuração permanece a da base.
+Os fontes em `R/public`, os GLBs compartilhados e os outros servidores não
+foram editados. Não houve `ready:true`, promoção, merge ou deploy.
+
+### Evidência atual e limites
+
+`rifles-m4-check.mjs` executa o GLTFLoader vendorizado e o `cameraSpacePackage`
+da cópia servida, com materiais sem textura para inspeção CPU. Compara todos
+os vértices exportados com a pose Blender no espaço da câmera, buscando o ponto
+mais próximo para admitir reordenação/seams. O máximo medido foi 8,46e-7 unidade,
+abaixo da tolerância numérica explícita de 1e-5; essa tolerância não é uma régua
+visual CS 1.6. Reintroduzir os offsets antigos reprova a comparação. A primeira
+exportação divergira até 0,001861 unidade na luva; somente limitar os pesos ainda
+deixava resíduo no tecido. O bind dedicado eliminou essa divergência sem afrouxar
+o teste. O controle do ramo golden preserva sua câmera; o GLB AK servido confere
+com os bytes da base. Isso não substitui uma regressão visual da AK.
+
+HTTP 200 e hashes conferidos para GLB M4, runtime/config locais, `vmhands.js`
+central e AK golden. A aba antiga do servidor já não estava aberta; não foi
+aberto outro navegador. Portanto **WebGL, Game visual e ações não foram
+certificados nesta rodada**. Há somente `idle` com dois quadros iguais. Saque,
+tiro, recargas, inspeção, ADS e contatos em movimento seguem pendentes; não
+confundir o arco/recuo procedural disponível no preview com ações finalizadas.
+
+`rifles-m4-review.py` apresenta a referência CS 1.6 ao lado do render, ambos
+1024×768 sem deformação. Caixa candidata `[600,452,1024,768]` versus marca manual
+`[535,458,1024,768]`: o antebraço ocupa menos largura. Socket manual da boca em
+`[643,84;485,13]`, delta `[+6,84;+1,13]` px ante a marca `[637;484]` da referência.
+São diferenças medidas, não aprovação ou projeções idênticas. O socket é uma
+marcação na geometria e ainda exige conferência visual fina. Recortes 3:2 e
+16:9 também foram renderizados; faltam referências equivalentes desses aspectos.
+
+Crítico independente olhou a versão final: apresentável como candidata de idle,
+com mais receptor/mira traseira e antebraço. Apontou apoio ainda diferente devido
+ao grip, leitura arredondada das luvas e contato direito parcialmente oculto,
+mesmo em `trigger-close.png`. Não certificou ausência de penetração, ações ou Game.
+O material central não foi alterado para acomodar esse achado.
+
+### Reprodução e próximo passo
+
+No cwd R, usar Blender CLI isolado com `--background --threads 2
+--python-exit-code 1 --python` nos scripts `rifles-m4-source.py` (diagnóstico),
+`rifles-m4-candidate.py` e `rifles-m4-export.py`, nessa ordem. Depois:
+
+```sh
+python3 tools/viewmodels/prep/rifles-m4-stage.py
+/opt/homebrew/bin/node tools/viewmodels/prep/rifles-m4-check.mjs
+python3 tools/viewmodels/prep/rifles-m4-review.py
+```
+
+Marcos novos: candidata Blender/GLB; comparação CS 1.6; paridade CPU e mutação;
+montagem opcional no servidor; revisão independente. Próximo passo concreto:
+revisar o enquadramento no link do Game, conferir indicador/guarda-mato por
+superfície e autorar peças/ações da M4 sobre este bind. MD97, SCAR, M92, FAMAS
+e carabina continuam com suas receitas específicas abaixo, sem candidatos
+produzidos nesta rodada. O PR #509 continua sendo preparação e candidata local,
+não entrega de seis viewmodels prontos. Assets e dumps privados ficam fora do Git.
+
 ## Correção de direção do dono: CS 1.6 obrigatório por categoria
 
 Ruben reprovou o teste local: **“está muito ruim”**. Em seguida determinou que
