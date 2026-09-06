@@ -73,3 +73,11 @@ Pipeline reproduzível: `node tools/optimize-ambient-fauna.mjs` (filtre por
 espécies v2.1). Referências de silhueta/procedência de medidas:
 `references/fauna-corrego/FONTE.md`; ficha: `plans/21-FAUNA-CORREGO.md`;
 evidência e revisão: `tools/eval/asset-evidence/fauna/`.
+
+### Arara em voo reutilizada na Amazônia — 06/09/2026
+
+`arara_voo.glb` e `public/js/skylife.js` copiados sem alteração da main69555790.
+Fonte original: Mint,27/08/2026, prompt próprio, uso sob licença da conta Mint.
+[Chat](https://mint.gg/chat/ph7ajvsqfqtnafkh23jjd5dpsh8d6709). Asas separadas
+por `tools/split-props-v21.mjs` na main;2.951triângulos. Não é asset recém-gerado.
+SHA256 do GLB: `f7716f1f95896394e77d643d8947109a7c9ff0c9926823c94ef7cbeb0d6b854e`.

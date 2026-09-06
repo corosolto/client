@@ -203,3 +203,22 @@ continuam sendo a origem. Medição atual por índices: árvore 4.334 tri/399.16
 palmeira 4.694 tri/529.844 bytes, palafita 3.522 tri/440.420 bytes; substitui apenas
 as estimativas aproximadas anteriores. Referências e limites:
 `docs/reports/AMAZONIA-REFERENCIAS.md`.
+
+### Feedback de navegação e ambiência — 06/09/2026
+
+Derivados exclusivos da Amazônia, sob a mesma procedência/licença dos originais
+Mint acima. Pipeline reproduzível `tools/amazonia-assets.mjs`; hashes e ligações
+`derivedFrom` no `mint-assets.json`. Os três originais permanecem intactos.
+
+- `palafita_pro_amazonia.glb`: 3.522 → 3.048 triângulos. Retira a escada embutida
+  estreita; builder fornece lance lateral com degraus, piso e colisão até a varanda.
+- `arvore_mata_amazonia.glb`: 4.334 → 3.324 triângulos; simplificação Meshopt.
+- `palmeira_babacu_amazonia.glb`: 4.694 → 2.830 triângulos; simplificação Meshopt.
+- `canoa_rabeta_amazonia.glb`: Teal Stripe Riverboat, Mint / Tripo P1, prompt próprio
+  autorizado em06/09. [Chat](https://mint.gg/project/zd7cbsyxbzmf05b3w084t51ymd8c5hfr?chat=ph741qaase7ng7c5gbq3348t658dwt3n).
+  Licença de uso da conta Mint, sem referência de terceiro. Original4.819tris,
+  derivado3.758tris/360.236bytes: `tools/amazonia-boat-asset.mjs`, Meshopt .78/.004
+  e três mapas WebP1024. Casco+motor estáticos; navegação pertence ao builder.
+
+`arara_voo.glb` foi reutilizada sem modificar bytes da main69555790; procedência
+no FONTE de ambient. As aves usam o módulo skylife idêntico àquela main.

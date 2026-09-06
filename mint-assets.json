@@ -2150,6 +2150,102 @@
     ],
     "finalSha256": "f6a1d16a43fbe2e6bc338066a43889817d48ebfeb4a6e8d22d0975d24aadb433"
    }
+  },
+  "arvore-mata-amazonia-visual": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/arvore_mata_amazonia.glb"
+   ],
+   "source": {
+    "kind": "local-derivative",
+    "assetId": "ks7am6p11456x6jmrbj8kg9b398d6e2h",
+    "packAssetId": "th74btzfmyqgvrwzv97c3svtad8d7shz",
+    "chatUrl": "https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye",
+    "displayName": "Árvore de mata densa",
+    "notes": "Derivado exclusivo Amazônia; original preservado. Meshopt simplify ratio .5/error .015, UV/material preservados.",
+    "derivedFrom": "arvore-mata-amazonia",
+    "sourceSHA256": "ebf89e8e01e57a6f4b6fe8ebe5051898e607184f92035b729ac8ec0a7034a459"
+   },
+   "processing": {
+    "provider": "local",
+    "tools": [
+     "tools/amazonia-assets.mjs"
+    ],
+    "finalSha256": "9ef9e0574dd475a60281a8ee54c12d6c4efdacf95cb8b0e3729fae6ff3e1e381",
+    "triangles": 3324
+   }
+  },
+  "palmeira-babacu-amazonia-visual": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/palmeira_babacu_amazonia.glb"
+   ],
+   "source": {
+    "kind": "local-derivative",
+    "assetId": "ks79cjyt9ppqsw67c057cw733x8d6ja9",
+    "packAssetId": "th74btzfmyqgvrwzv97c3svtad8d7shz",
+    "chatUrl": "https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye",
+    "displayName": "Palmeira babaçu",
+    "notes": "Derivado exclusivo Amazônia; original preservado. Meshopt simplify ratio .5/error .015, UV/material preservados.",
+    "derivedFrom": "palmeira-babacu-amazonia",
+    "sourceSHA256": "f6a1d16a43fbe2e6bc338066a43889817d48ebfeb4a6e8d22d0975d24aadb433"
+   },
+   "processing": {
+    "provider": "local",
+    "tools": [
+     "tools/amazonia-assets.mjs"
+    ],
+    "finalSha256": "08eedfb386dfa6fe69894f4be00fd431469030b511948de73c1f1126e0d41313",
+    "triangles": 2830
+   }
+  },
+  "palafita-pro-amazonia-visual": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/palafita_pro_amazonia.glb"
+   ],
+   "source": {
+    "kind": "local-derivative",
+    "assetId": "ks78sxjjcd26vpnktrwcd2596h8d7few",
+    "packAssetId": "th74btzfmyqgvrwzv97c3svtad8d7shz",
+    "chatUrl": "https://mint.gg/chat/ph7ajexkae9z6baym58jt1ekf18d73ye",
+    "displayName": "Palafita com passarela",
+    "notes": "Derivado exclusivo Amazônia; original preservado. Remove somente as faces da escada embutida, substituída por acesso físico no builder.",
+    "derivedFrom": "palafita-pro-amazonia",
+    "sourceSHA256": "70ad2bff5431aa4b3ecc4024af05bf693d362949c53703a91dbec5acdc394c66"
+   },
+   "processing": {
+    "provider": "local",
+    "tools": [
+     "tools/amazonia-assets.mjs"
+    ],
+    "finalSha256": "0acc6dd66fd3e4f25281c124f6b87a96fcd5a7e61c43d4bc21cf473e15b65594",
+    "triangles": 3048
+   }
+  },
+  "canoa-rabeta-amazonia": {
+   "artifactType": "model/gltf-binary",
+   "files": [
+    "public/models/props/canoa_rabeta_amazonia.glb"
+   ],
+   "source": {
+    "kind": "mint-text-to-3d",
+    "frente": "v21-e-models",
+    "chatUrl": "https://mint.gg/project/zd7cbsyxbzmf05b3w084t51ymd8c5hfr?chat=ph741qaase7ng7c5gbq3348t658dwt3n",
+    "url": "https://cdn.mint.gg/glb/teal-stripe-riverboat-normalized-47262040d7fd2207.glb",
+    "displayName": "Teal Stripe Riverboat",
+    "sourceSHA256": "47262040d7fd2207db662c8fb8a65c12d158b18e5b20a11d8878e3a28f2c7a20",
+    "notes": "Gerado 06/09/2026 por prompt próprio, modelo Tripo P1 no Mint, autorizado pelo usuário. Canoa aberta de madeira com faixa verde-azulada e rabeta; sem pessoas. Uso conforme licença da conta Mint; sem atribuição de Creative Commons."
+   },
+   "processing": {
+    "provider": "mint",
+    "model": "Tripo P1",
+    "tools": [
+     "tools/amazonia-boat-asset.mjs"
+    ],
+    "finalSha256": "60bfb8ed6387a00fb3b863a8b3e9de1343a704cfdf56555a74a1a948252c7fc7",
+    "triangles": 3758
+   }
   }
  }
 }

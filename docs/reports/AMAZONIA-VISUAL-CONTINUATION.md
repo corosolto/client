@@ -249,3 +249,39 @@ Estado: preview para teste disponível8157, branch e avaliação visual anterior
 preservadas. Nenhum merge/rebase/push/deploy. Próxima ação: revisão humana nesse
 endereço; melhorias C18/C23/C25 e performance continuam pendentes. Não propagar
 aprovação dos gates antigos para o runtime composto da main.
+
+## Rodada de feedback humano: escadas, custo, mata e vida
+
+Usuário aprovou a direção geral (“num geral esta bom”, “tirando isso tá muito bom”)
+mas pediu escadas acessíveis, menos lentidão, mata mais densa, aves voando, barco
+navegando e thumbnail fiel. Autorizou Mint.gg para assets se necessário. Preservar
+arquitetura/identidade atuais. Fonte começa em97eeb516, preview continua main69555790.
+Fotos em /Users/ruben/Documents/screen/Screenshot 2026-09-06 at 03.16.{07,21}.png.
+Baseline browser main+map em artifacts/amazonia-visual/user-feedback-before/:
+7 câmeras1536×1024 med, mesmo builder hash da entrega. Faltavam3 texturas e2 plantas
+no snapshot, a corrigir antes de qualquer aceitação. Crítico stairs_audit mede
+GLB real: escadas embutidas não têm chão físico e intersectam colisor da casa.
+Plano: corrigir acessos reais e completar assets do preview; reduzir custo estrutural
+por batching/LOD/sombras conforme diagnóstico; adensar fora do combate; reutilizar
+arara_voo da main e avaliar pequena canoa no Mint; capturar thumbnail do runtime.
+Próximo: régua vermelha dos acessos do GLB e correção, depois walk real no runtime
+main e PR, mutantes, A/B, gates/build e crítico limpo. Performance permanece sem
+aceite de FPS enquanto houver renderers concorrentes; não interromper outros.
+
+Marco validado desta rodada: os nove acessos laterais novos passam AMA1 e os dois
+mutantes de fonte (piso retirado / colisor antigo sobre escada) falham9/9. O runtime
+main8157 passou42percursos, incluindo18subidas/descidas das varandas, sem erro de
+página/HTTP e sem linha direta entre spawns. Revisão independente achou oclusão de
+tiro ausente nas duas casas de chapa; corrigida e revalidada2/2 por raycast. Provas:
+artifacts/amazonia-visual/feedback-final-med/, access-mutants/ e
+feedback-independent-review.md. Capturas finais serão refeitas após fechamento
+da mata ao fundo e thumbnail sem HUD; não confundir o recorte intermediário.
+
+Assets validados Khronos: cinco GLBs, zero erros (7avisos). Originais preservados;
+três derivados exclusivos registrados, arara/copião skylife idênticos à main69555790.
+Mint gerou canoa-rabeta em chat ph741qaase7ng7c5gbq3348t658dwt3n (TripoP1): fonte
+4.819tris, otimizado3.758tris/360.236bytes, hash60bfb8ed6387a00fb3b863a8b3e9de1343a704cfdf56555a74a1a948252c7fc7.
+Pipeline e procedência em tools/amazonia-boat-asset.mjs e FONTEs. Barco move além dos
+bounds (z mínimo45,38>44); quatro araras GLB em med, duas em low. Próximo: fechar
+A/B controlado com assets completos, gates/build, capturar e servir thumbnail real,
+revalidar menu e entregar link local. Não publicar nem propagar aprovação de FPS.
