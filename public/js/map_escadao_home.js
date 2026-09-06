@@ -35,21 +35,17 @@ export function buildEscadaoHome({ addBox, occluders, wall, concrete, dark, meta
   box(1.7,1.2,.25,wall,7.75,h.floor+1,h.z0+.125);
   box(1.7,.1,.4,concrete,6.15,h.floor+.95,h.z0+.1);
   // Janela traseira aberta, mirando a rua/respawn: duas direções de tiro reais.
-  box(3.65,1,.25,wall,3.175,h.floor,h.z1-.125);
-  box(1.6,.5,.25,wall,5.8,h.floor,h.z1-.125);
-  box(2.0,1,.25,wall,7.6,h.floor,h.z1-.125);
-  box(3.65,1.2,.25,wall,3.175,h.floor+1,h.z1-.125);
-  box(2.0,1.2,.25,wall,7.6,h.floor+1,h.z1-.125);
-  box(1.35,.1,.4,concrete,5.85,h.floor+.95,h.z1-.1);
+  box(7.05,1.45,.25,wall,5.075,h.floor,h.z1-.125);
+  box(7.05,1.2,.25,wall,5.075,h.floor+2.2,h.z1-.125);
+  box(.2,.1,.4,concrete,1.45,h.floor+1.40,h.z1-.1);
   box(width+.12,.16,depth+.12,concrete,x,h.floor+3.35,z);
-  for(const wx of [3.05]) {
+  for(const wx of [1.45]) {
     const detail=(w,h,d,mat,x,y,z)=>{const mesh=addBox(w,h,d,mat,x,y,z,{collide:false,cast:false,skirt:false,vao:false});mesh.name='janela_casa';return mesh;};
-    detail(1.26,1.25,.06,glass,wx,h.floor+1.05,h.z1+.025);
-    for(const dx of [-.67,.67]) detail(.08,1.4,.14,concrete,wx+dx,h.floor+.98,h.z1+.045);
-    detail(1.5,.10,.24,concrete,wx,h.floor+.98,h.z1+.08);
-    detail(1.42,.08,.14,concrete,wx,h.floor+2.3,h.z1+.045);
-    for(const dx of [-.4,0,.4]) detail(.025,1.23,.04,metal,wx+dx,h.floor+1.06,h.z1+.075);
-    detail(1.26,.025,.04,metal,wx,h.floor+1.67,h.z1+.075);
+    for(const dx of [-.1,.1]) detail(.08,.95,.14,concrete,wx+dx,h.floor+1.43,h.z1+.045);
+    detail(.3,.10,.24,concrete,wx,h.floor+1.43,h.z1+.08);
+    detail(.22,.08,.14,concrete,wx,h.floor+2.3,h.z1+.045);
+    detail(.025,.78,.04,metal,wx,h.floor+1.51,h.z1+.075);
+    detail(.12,.025,.04,metal,wx,h.floor+1.75,h.z1+.075);
   }
 
   // Passarela alta: liga a porta frontal ao PATAMAR 1 sem fechar o lance central.
