@@ -174,5 +174,14 @@ cláusula sai vazia e passa). Fora do escopo desta lane (mapa quebrada não foi 
 inflados pelo ambiente local (mat_*, char_probe, map_check, timestamps de vm_*) foram revertidos;
 só `pickup_check.json` (evidência da VM14) entrou no commit.
 
+## Resolução de conflitos do PR #527 — 07/09/2026
+
+O branch foi integrado à `origin/main` em `ddb5473f` (`merge(main): resolve conflitos do PR 527`).
+Os conflitos ficaram em documentação gerada e `package.json`; os blocos foram regenerados,
+os checks `eval:amazonia`, `eval:amazonia-8x8`, `eval:penetration` e `docs:check` passaram,
+e nenhum arquivo permaneceu em estado não mesclado. A alteração local não publicada em
+`map_amazonia.js` e os overlays de `tools/eval/asset-evidence/maps/` foram preservados no
+`stash@{0}` `preserva trabalho local antes de resolver conflitos do PR 527`.
+
 Node local padrão é 16 (sem `structuredClone`); os gates desta sessão rodaram com Node 23.6.0 do
 Homebrew, a mesma família de versão do CI (22).
