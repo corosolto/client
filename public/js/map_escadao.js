@@ -771,12 +771,14 @@ export function buildEscadao(scene, T) {
     const abrigoBox = (...args) => tag(addBox(...args));
     addFloor(4.4, 3.6, 0, z, MAT.concrete, y + .02);
     abrigoBox(4.4, 1.1, .25, MAT_TIJOLO, 0, y, z + 1.8 - .125);
-    abrigoBox(1.6, 1.2, .25, MAT_TIJOLO, -1.4, y + 2.0, z + 1.8 - .125);
-    abrigoBox(1.6, 1.2, .25, MAT_TIJOLO, 1.4, y + 2.0, z + 1.8 - .125);
+    abrigoBox(1.6, 1.1, .25, MAT_TIJOLO, -1.4, y + 1.1, z + 1.8 - .125);
+    abrigoBox(1.6, 1.1, .25, MAT_TIJOLO, 1.4, y + 1.1, z + 1.8 - .125);
+    abrigoBox(4.4, 1.0, .25, MAT_TIJOLO, 0, y + 2.2, z + 1.8 - .125);
     abrigoBox(4.4, 3.2, .25, MAT_CIMENTO, 0, y, z - 1.8 + .125);
     for (const x of [-2.2, 2.2]) {
       abrigoBox(.25, 3.2, .8, MAT_CIMENTO, x, y, z - 1.4);
       abrigoBox(.25, 3.2, .8, MAT_CIMENTO, x, y, z + 1.4);
+      abrigoBox(.25, .9, 2, MAT_CIMENTO, x, y + 2.3, z);
     }
     abrigoBox(4.65, .18, 3.85, MAT_CIMENTO, 0, y + 3.2, z);
   }
