@@ -1,5 +1,8 @@
 # Amazônia — fauna e resposta na água
 
+Registro da rodada anterior. Para cabanas abertas e animação local da fauna, veja
+[AMAZONIA-CABANAS-FAUNA.md](AMAZONIA-CABANAS-FAUNA.md).
+
 Rodada local de 06/09/2026 sobre 7153bed4, branch `codex/amazonia-visual`.
 Objetivo: integrar galinha/pintinhos gerados pelo usuário, jacaré legível, peixes
 saltando, corrigir canoas retangulares e retirar a lentidão de caminhar na água.

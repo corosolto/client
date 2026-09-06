@@ -1,5 +1,10 @@
 # Amazônia — thumbnail real com vídeo no hover
 
+Histórico inicial; entrega atual regravada na main integrada a551204f, após
+cabanas/fauna/bots. Recibo `amazonia.capture.json` identifica cada fonte servida;
+fonte do mapa23f6f611, vídeo468838bytes e poster89011bytes. A porta8157 serve
+a worktree atual. Validação desta rodada em `cabin-round/hover-main/`.
+
 Pedido retomado em 06/09/2026: manter thumbnail real e mostrar vídeo do mapa ao
 passar o mouse. Implementado somente para Amazônia na branch isolada
 `codex/amazonia-visual`, partindo de 7ac7b2c7, sem merge/push/deploy. Implementação em c6431e5e;

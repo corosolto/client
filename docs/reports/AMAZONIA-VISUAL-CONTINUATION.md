@@ -433,3 +433,16 @@ Custo isolado normalopt caiu6.15–8.79ms→0.53–1.87ms em ABBA concorrente;
 não equivale a FPS. Bots reproduzidos4/6rotas; correção do grafo em andamento.
 Próximo: validar todas rotas de bots, captura integrada e mídia, gates/CI e
 merge PR439 para main conforme autorização explícita do dono.
+
+Marco final runtime: bots seeds7/42 passam71/71, mutante sem camadas mata
+3rotas/27arestas, golden dos demais mapas passou. Fontes finais Game25373881
+e mapa23f6f611; mídia real regravada com esses hashes. Porta8157 agora serve
+a árvore integrada (snapshot antigo arquivado),8156 alternativa. Captura
+main-low valida51rotas, apoios/animação, portas/janelas e contraprovas;
+menu integrado permite facção/personagem/adversário e chega ao estado live.
+Checkfast integrado completou81/86; mapid (artefatos), audiofab (hook de
+superfície) e audio:check (metadado local ignorado) corrigidos e retestados.
+Arch e autoria/docs serão regenerados no checkpoint final. Próximo: gates
+finais, revisão independente dos bots e histórico limpo baseado em main.
+A história antiga será preservada em checkpoint/tag; não falsificar trailers
+de commits antigos. AtualizarPR439 por lease após backup, CI e merge autorizado.
