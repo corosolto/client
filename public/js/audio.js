@@ -13,9 +13,6 @@ const GUN_VOL = (() => {
    BufferSources e cobre passos/vozes; vários bots ainda multiplicam o problema. */
 const MAX_SHOT_VOICES_PER_SAMPLE = 4;
 const MAX_SHOT_VOICES = 16;
-// Sem dublagem genérica: Funkeiros usam apenas takes próprios estruturados;
-// Palhaços ficam sem fala até existir catálogo aprovado. Fish e SFX são separados.
-const NO_GENERIC_VOICE_FACTIONS = new Set(['C', 'F']);
 
 export const CHARACTER_SELECT_VOICE = Object.freeze({
   gotinha: 'audio/a/cc77ec4f134a71ba.mp3',
@@ -94,7 +91,6 @@ export class Sfx {
   // team voice line (kill celebration / random), throttled
   voice(team, minGap = 3.5) {
     if (!this.speechEnabled) return false;
-    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const now = performance.now();
     if (this._lastVoice > 0 && now - this._lastVoice < minGap * 1000) return false;
     const arr = this.pack?.voice?.[team];
@@ -108,7 +104,6 @@ export class Sfx {
   // player-triggered radio line (CS-style) — always plays, stops previous
   radioVoice(team) {
     if (!this.speechEnabled) return false;
-    if (NO_GENERIC_VOICE_FACTIONS.has(team)) return false;
     const f = this._pick(this.pack?.voice?.[team]);
     if (f) {
       if (this._radioAudio) this._radioAudio.pause();
@@ -123,7 +118,7 @@ export class Sfx {
     const now = performance.now();
     if (event === 'kill' && this._lastKillVoice > 0 && now - this._lastKillVoice < 3500) return false;
     const own = this.pack?.characterVoice?.[characterId]?.[event];
-    const genericPool = NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction) ? null : this.pack?.voice?.[fallbackFaction];
+    const genericPool = this.pack?.voice?.[fallbackFaction];
     const file = this._pick(own?.length ? own : genericPool);
     if (file) {
       if (interrupt && this._characterAudio) this._characterAudio.pause();
@@ -137,7 +132,6 @@ export class Sfx {
       }
       return true;
     }
-    if (NO_GENERIC_VOICE_FACTIONS.has(fallbackFaction)) return false;
     return false;
   }
   characterSelectVoice(characterId, faction, rosterIds) {
@@ -155,7 +149,6 @@ export class Sfx {
       }
       return !!this._characterSelectAudio;
     }
-    if (NO_GENERIC_VOICE_FACTIONS.has(faction)) return false;
     const pool = this.pack?.voice?.[faction];
     const configuredVoice = this.pack?.characterVoice || {};
     const flatConfigured = Object.fromEntries(Object.entries(configuredVoice)

@@ -4029,9 +4029,12 @@ publicação em potencial, e o `.gitignore` não protege de um deploy local.
   personagem, callout ou número de round inventa fala quando não existe take no manifesto;
   o caminho fica silencioso e os takes Fish/personagem já presentes continuam prioritários.
   **Régua:** `npm run eval:audiovoicemix`; antes, MIX1 fica vermelho porque o runtime contém
-  `speechSynthesis`; depois, o mutante `--mutante=fala-sintetica-volta` acende MIX1. **Pendente:**
-  publicar e escutar uma partida; a configuração do Blob ainda precisa receber um pack com os
-  pools de memes/round aprovados, pois o hash atual é íntegro mas incompleto para esses eventos.
+  `speechSynthesis`; depois, o mutante `--mutante=fala-sintetica-volta` acende MIX1. **Reposição
+  06/09:** o Blob privado `48a97edb…` preserva os efeitos atuais e recoloca os takes históricos:
+  `voice E/B/U/C/F = 17/16/15/31/69`, `round E/B/U/C/F = 14/14/16/25/22` e sete callouts
+  históricos. Os 16 arquivos Fish/números de round gerados foram retirados do novo artefato;
+  o runtime voltou a aceitar takes históricos de C/F, mas continua silencioso sem arquivo real.
+  **Pendente:** merge, deploy e escuta de uma partida em produção.
 
 - **BUG-127 · estado de arma/munição/recarga ainda diverge entre cliente e servidor no multiplayer.**
   **Sintoma literal (feedback de 04/09/2026):** *“algumas armas não aparecem quando equipadas”*.
