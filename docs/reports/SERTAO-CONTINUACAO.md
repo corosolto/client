@@ -71,3 +71,13 @@ Runner global executado105/108: falhasaudio:check herdada,comentário de3linhas 
 Oclusão validada: OC1–4 verdes, sete mutantes isolados; RV1–11 verdes, treze mutantes isolados. Duas partidas pós-correção p95=10.0/10.1ms, semerros, contra9.5ms semcorreção na rodada controlada. Browser:379Mesh oclusores, zeroGroups; casters351→228 e meshes502→481. Contratos/implementação prontos para checkpoint. Resta mapcheck pós-oclusão, docs geradas commitadas, globalfinal e fechar relatório; nenhuma nova alteração visual prevista.
 
 Última correção física: barril no centroCTFB deslocado[12,34]→[14,34], coordenadas doCTF preservadas. SP9mede _collide e sonda vertical:zero deslocamento/penetração nos3pontos. SP9/9 e14mutantesisolados; RV12/12 e14mutantesisolados; travessia ebarreira repetidas:3rotasverdes, leste131.76m/26.25s apósodesvio. Produto congelado novamente para registrofinal, sem nova alteração prevista. Runnerglobal107/109falhouaudioherdado edocsautoriapor linha de mapa alterada duranteexecução; regenerar/commitar docs antesdoúltimorun.
+
+## Resultado final dos gates
+
+Produto final486cc3cd; índices/documentaçãoa53ec67c. Runner fresco sobre estado congelado:108/109, únicafalhaaudio:check(manifestoherdadoDEFASADO). Docs/autoria/comentário corrigidos e verdes. Build5.83s, assert:assets e eval:maptex verdes. Artefatosclosed-global-runs.json e logs/closed-*.log. Runtime12/12,14mutantes; Spatial9/9,14mutantes; OC4/4,7mutantes; trêsrotas físicas e barreiravalidadas. Nenhuma alteração restante de produto. Relatório final/galeria e amostra final de desempenho em fechamento documental.
+
+## Entrega e próximo passo
+
+Amostrafinal pósbarril: p50=8.3/p95=10.0ms,7bots,30s,sem erros; motion-final-controlled-velho_oeste/report.json. Capturasafter/atuais eCTFBexaminadas; notaindependente7/10 permanece atribuídaàiteraçãoanterioraosajustesfinais, semaprovaçãoautomática. Entrega documental emSERTAO-ENTREGA.md:47arquivoslistados, gates,mutantes,rejeições,referências,pendências. Galeria emartifacts/sertao-astra/review.html; port8145continua disponívelpara revisão local.
+
+Implementaçãoautorizada econtraprovas encerradas nesta entrega; próximo passo é revisãoadversarialhumana do mapa e dos commits locais, seguida de decisão sobre refinamentosvisuais. Antesdepublicar:resolver sanfona/distribuição/manifestodeáudio,termos/procedênciadoacervoherdado econflitosdoPR445. Nenhum push,PRnovo,mergeoudeploy. Não interpretarbranchlocalcomoaprovaçãofinaldojogo.
