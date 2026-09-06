@@ -14,7 +14,9 @@ import { preloadWeapons } from './weapons.js';
 import { Sfx } from './audio.js';
 import { Game, confirmGate, CONFIRM_MAX_MS, pickMatchRoster, pickMatchWeapons } from './game.js';
 import { VERSION } from './version.js';
-import { mapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
+import { bindMapPreview, stopMapPreviews, previewRevision } from './amazonia_map_preview.js';
+import { mapPreviewPoster as escadaoMapPreviewPoster, bindMapPreviews, stopMapPreview } from './escadao_preview.js';
+const mapPreviewPoster = (id, version) => escadaoMapPreviewPoster(id, `${version}${previewRevision(id)}`);
 import { LANG, resolveGeoLang, translateDom, tr, frase } from './i18n.js';
 import { enableLightBloom } from './bloom.js';
 import { enableStylize } from './stylize.js';
@@ -305,6 +307,7 @@ preloadMapProps(MAP_PROPS).then(() => { rebuildMenuBackdrop(); _splashSetReady()
 /* ---------------- screens ---------------- */
 const screens = ['mobile-warning', 'main-menu', 'map-screen', 'team-select', 'char-select', 'settings-panel', 'howto-panel', 'ranking-panel', 'mp-panel', 'feedback-panel', 'support-panel', 'pause-menu', 'match-end'];
 function show(id) {
+  stopMapPreviews();
   for (const s of screens) document.getElementById(s).classList.toggle('hidden', s !== id);
   if (!id) for (const s of screens) document.getElementById(s).classList.add('hidden');
   if (id !== 'char-select') pvStopVideo();
@@ -1697,6 +1700,7 @@ function setMapThumb() {
   mapPreview?.setMap(currentMap);
   mapThumb.style.opacity = '0';
   mapThumb.src = mapPreviewPoster(currentMap, VERSION);
+  bindMapPreview(mapThumb.parentElement, currentMap);
   mapThumb.alt = MAPS[currentMap].name;
 }
 // Badge de modo + pontinhos de posição: o carrossel não dizia onde o jogador estava
@@ -1772,6 +1776,7 @@ $('map-next').onclick = () => stepMap(1);
    Abre pelo cartaz do mapa no setup. Lê o MESMO estado do carrossel (currentMap/mapIdx) —
    trocar aqui troca lá, e vice-versa. CONTINUAR segue o fluxo normal (nick → facção). */
 const MAP_DESC = {
+  amazonia: 'Comunidade ribeirinha: palafitas com interiores, janelas de cobertura e travessias sobre o igarapé.',
   praca_poderes: 'O coração do poder vira arena: rampas do Planalto, espelho d\'água e linhas de tiro longas entre os ministérios.',
   piscina_treta: 'Salão fechado, eco de tiro e briga de faca no raso. Quem controla a borda controla o round.',
   loja_h: 'Estacionamento de megastore: corredores de vaga, mezanino de sniper e a estátua te olhando atirar.',
@@ -1817,6 +1822,7 @@ function visibleMapIds() {
   return MAP_IDS.filter((id) => catsDe(id).includes(mapCategory));
 }
 function renderMapScreen() {
+  stopMapPreviews();
   stopMapPreview();
   const img = $('ms-bg-img'); if (!img) return;
   /* O mapa em foco manda na aba: se não pertence à aba atual, troca pra aba que o contém.
@@ -1876,6 +1882,10 @@ function renderMapScreen() {
   // de paginação eram falsos — marcavam páginas que não existem. Removidos.
   $('ms-dashes').innerHTML = '';
   $('ms-strip').querySelectorAll('.ms-thumb').forEach(b => {
+    const stopOtherPreview = () => b.dataset.id === 'escadao' ? stopMapPreviews() : stopMapPreview();
+    b.addEventListener('pointerenter', stopOtherPreview);
+    b.addEventListener('focusin', stopOtherPreview);
+    bindMapPreview(b, b.dataset.id);
     b.onclick = () => { ui.click(); gotoMap(MAP_IDS.indexOf(b.dataset.id)); };
     b.onmouseenter = () => ui.hover();
     if (b.dataset.id === 'lajes') mapCardPreviews.push(createMapPreview(b, {
